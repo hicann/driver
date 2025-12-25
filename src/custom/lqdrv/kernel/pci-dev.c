@@ -501,14 +501,13 @@ STATIC int show_bar_map(struct pci_dev *pdev)
 
 STATIC void pci_bar_free(struct pci_dev *pdev)
 {
-    int i;
     struct pci_dev_info *tc_pci_dev = ka_pci_get_drvdata(pdev);
 
     if (tc_pci_dev->bar_mem_addr != NULL) {
         ka_mm_iounmap(tc_pci_dev->bar_mem_addr);
         tc_pci_dev->bar_mem_addr = NULL;
         tc_pci_dev->bar_mem_len = 0;
-        printk(KA_KERN_ERR "[lqdcmi]bar[%d] mem free OK\n", i);
+        printk(KA_KERN_ERR "[lqdcmi]bar mem free OK\n");
     }
 }
 

@@ -243,6 +243,7 @@ trap cleanup INT
 build_abl()
 {
   echo "create build directory and build ABL";
+  export PROJECT_VERSION=$(cat scripts/package/driver/ascend910B/scripts/sys_version/sys_version.conf)
   mk_dir "${BUILD_PATH}"
   cd "${BUILD_PATH}"
 

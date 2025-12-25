@@ -684,7 +684,7 @@ static int debug_drv_open(ka_inode_t *a, ka_file_t *fd)
 static int debug_drv_release(ka_inode_t *a, ka_file_t *fd)
 {
     int i;
-    int ret;
+    int ret = 0;
     TD_PRINT_INFO("misc file release pid=%d\n", ka_task_get_current_pid());
     for (i = 0; i < DEVICE_NUM_MAX; ++i) {
         TD_PRINT_INFO("debugger_pid = %d\n", g_sqcq_chn_info_list[i].debugger_pid);
