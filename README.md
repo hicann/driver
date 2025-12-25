@@ -3,6 +3,9 @@
 - [2025/12] driver项目首次上线。
 ## 🚀概述
 Driver仓的代码是CANN（Compute Architecture for Neural Networks）的驱动模块，提供基础驱动和资源管理及调度等功能，使能昇腾芯片。当前开源仓内主要包含了如图所示三部分内容：DCMI层（DaVinci Card Management Interface，达芬奇卡管理接口层）、HAL层（Hardware Abstraction Layer，硬件抽象层）和SDK-driver层（Driver Software Development Kit，驱动软件开发套件层）。
+
+Driver在CANN软件栈的位置参考[昇腾社区](https://www.hiascend.com/cann)的描述。
+
 <center>
     <img src="./docs/figures/Driver架构分层图.png" alt="Driver架构分层图" />
 </center>
