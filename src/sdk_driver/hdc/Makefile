@@ -23,6 +23,7 @@ EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/hdc/command/ioctl
 EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/hdc/pcie/host
 EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/inc
 EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/dms/command/ioctl
+EXTRA_CFLAGS += -isystem $(shell $(CC) -print-file-name=include)
 
 EXTRA_CFLAGS += -DDRV_HOST
 EXTRA_CFLAGS += -DCFG_EDGE_HOST

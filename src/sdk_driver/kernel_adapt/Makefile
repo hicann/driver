@@ -35,6 +35,7 @@ EXTRA_CFLAGS += -I$(TARGET_SRC_DIR)/kernel_adapt/pci
 EXTRA_CFLAGS += -I$(TARGET_SRC_DIR)/kernel_adapt/system
 EXTRA_CFLAGS += -I$(TARGET_SRC_DIR)/kernel_adapt/task
 
+EXTRA_CFLAGS += -isystem $(shell $(CC) -print-file-name=include)
 EXTRA_CFLAGS += -Wno-type-limits # for kernel 5.15
 ccflags-y += -Wno-implicit-function-declaration
 

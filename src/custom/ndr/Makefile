@@ -24,6 +24,7 @@ EXTRA_CFLAGS += -I${C_SEC_INCLUDE}
 EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/inc
 EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/kernel_adapt/include
 EXTRA_CFLAGS += -I$(DRIVER_CUST_INC_DIR)
+EXTRA_CFLAGS += -isystem $(shell $(CC) -print-file-name=include)
 EXTRA_CFLAGS += -DCFG_FEATURE_HOST_LOG
 EXTRA_CFLAGS += -DCFG_FEATURE_SRIOV
 EXTRA_CFLAGS += -fstack-protector-all

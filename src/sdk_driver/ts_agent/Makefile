@@ -44,6 +44,7 @@ ifeq ($(ENABLE_OPEN_SRC), y)
 	obj-m := ts_agent.o
     EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/trs/inc
     EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/trs/trs_core/command/ioctl/
+    EXTRA_CFLAGS += -isystem $(shell $(CC) -print-file-name=include)
 
     ts_agent-objs := src/ts_agent_module.o \
                     src/ts_agent_update_sqe.o
@@ -151,7 +152,7 @@ else
     ccflags-y += -Wall -Werror
     obj-m := ts_agent.o
 
-
+    EXTRA_CFLAGS += -isystem $(shell $(CC) -print-file-name=include)
     ifeq ($(STARS_FLAG), y) 
         ifeq ($(DAVINCI_HIAI_DKMS), y)
             EXTRA_CFLAGS += -I$(TMP_TOP_DIR)/rms/trs_drv/inc/

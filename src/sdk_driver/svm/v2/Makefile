@@ -41,6 +41,7 @@ ifeq ($(ENABLE_OPEN_SRC), y)
         EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/dms/devmng/include
         EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/kernel_adapt/include
         EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/dms/command/ioctl
+        EXTRA_CFLAGS += -isystem $(shell $(CC) -print-file-name=include)
 
         EXTRA_CFLAGS += -DDRV_HOST
         EXTRA_CFLAGS += -DCFG_FEATURE_SHARE_LOG
@@ -155,6 +156,7 @@ else
         EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/dms/devmng/include
         EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/kernel_adapt/include
         EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/dms/command/ioctl
+        EXTRA_CFLAGS += -isystem $(shell $(CC) -print-file-name=include)
 
         EXTRA_CFLAGS += -DDRV_HOST
         EXTRA_CFLAGS += -DCFG_FEATURE_SHARE_LOG

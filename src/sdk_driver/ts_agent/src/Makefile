@@ -26,7 +26,7 @@ ifeq ($(ENABLE_OPEN_SRC), y)
     TMP_DEV_INC_DIR = $(TMP_TOP_DIR)/inc
     TMP_OPEN_INC_DIR = $(DRIVER_HAL_INC_DIR)
     TMP_OPEN_KA_INC_DIR = $(DRIVER_KERNEL_DIR)/kernel_adapt/include
-
+    EXTRA_CFLAGS += -isystem $(shell $(CC) -print-file-name=include)
 
     EXTRA_CFLAGS += -DCFG_SOC_PLATFORM_CLOUD_V2
     EXTRA_CFLAGS += -DCFG_SOC_PLATFORM_STARS

@@ -27,7 +27,7 @@ ifeq ($(ENABLE_OPEN_SRC), y)
         include $(DRIVER_KERNEL_DIR)/trs/shr_id/shr_id.mk
         include $(DRIVER_KERNEL_DIR)/trs/lba/near/sriov_sec_enhanced/agent/lba_sec_eh_agent.mk
     endif
-
+    EXTRA_CFLAGS += -isystem $(shell $(CC) -print-file-name=include)
     ccflags-y += -fno-common -fstack-protector-all -funsigned-char -pipe -s -Wall -Wcast-align -Wdate-time -Werror -Wfloat-equal -Wformat -Wstack-usage=2048 -Wstrict-prototypes -Wtrampolines -Wundef -Wunused -Wvla
 
 else
@@ -90,4 +90,5 @@ else
         CC = hitest_gcc
         LD = hitest_ld
     endif
+    EXTRA_CFLAGS += -isystem $(shell $(CC) -print-file-name=include)
 endif

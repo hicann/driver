@@ -38,6 +38,7 @@ else
     EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/vpc/virt
 endif
 
+EXTRA_CFLAGS += -isystem $(shell $(CC) -print-file-name=include)
 EXTRA_CFLAGS += -DCFG_FEATURE_KA_ALLOC_INTERFACE
 EXTRA_CFLAGS += -DCFG_FEATURE_HOST_LOG
 

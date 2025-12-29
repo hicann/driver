@@ -21,6 +21,7 @@ ifeq ($(ENABLE_OPEN_SRC), y)
     include ${DRIVER_KERNEL_DIR}/dpa/rmo/rmo.mk
 
     EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/dpa/inc
+    EXTRA_CFLAGS += -isystem $(shell $(CC) -print-file-name=include)
 
     ccflags-y += -fno-common -fstack-protector-all -funsigned-char -pipe -s -Wall -Wcast-align -Wdate-time -Werror -Wfloat-equal -Wformat -Wstack-usage=2048 -Wstrict-prototypes -Wtrampolines -Wundef -Wunused -Wvla
 

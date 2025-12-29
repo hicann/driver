@@ -46,6 +46,7 @@ EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/comm/pcie/dc/host/mini_v3/
 EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/comm/pcie/inc/
 EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/comm/pcie/host/
 EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/comm/pcie/host/soc_adapt/
+EXTRA_CFLAGS += -isystem $(shell $(CC) -print-file-name=include)
 
 EXTRA_CFLAGS += -DCFG_FEATURE_DMI
 EXTRA_CFLAGS += -DCFG_FEATURE_SRIOV

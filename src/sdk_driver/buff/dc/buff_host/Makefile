@@ -17,6 +17,7 @@ EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/inc/
 EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/inc/pbl
 EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/buff/dc/buff_host
 EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/buff/dc/command/ioctl
+EXTRA_CFLAGS += -isystem $(shell $(CC) -print-file-name=include)
 
 EXTRA_CFLAGS += -DCFG_FEATURE_EXTERNAL_CDEV
 EXTRA_CFLAGS += -DCFG_FEATURE_SUPPORT_VMA

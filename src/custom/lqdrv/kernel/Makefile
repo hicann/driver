@@ -12,6 +12,7 @@ EXTRA_CFLAGS += -I$(DRIVER_HAL_INC_DIR)
 EXTRA_CFLAGS += -I${C_SEC_INCLUDE}
 EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/inc
 EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/kernel_adapt/include
+EXTRA_CFLAGS += -isystem $(shell $(CC) -print-file-name=include)
 
 obj-m += tc_pcidev.o
 tc_pcidev-objs := ioctl_comm.o pci-dev.o

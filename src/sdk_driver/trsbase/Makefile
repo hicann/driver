@@ -13,9 +13,9 @@ ifeq ($(ENABLE_OPEN_SRC), y)
 
     include ${DRIVER_KERNEL_DIR}/trsbase/chan/chan.mk
     include ${DRIVER_KERNEL_DIR}/trsbase/id_allocator/id_allocator.mk
+    EXTRA_CFLAGS += -isystem $(shell $(CC) -print-file-name=include)
 
     ccflags-y += -fno-common -fstack-protector-all -funsigned-char -pipe -s -Wall -Wcast-align -Wdate-time -Werror -Wfloat-equal -Wformat -Wstack-usage=2048 -Wstrict-prototypes -Wtrampolines -Wundef -Wunused -Wvla
-
 else
     obj-m += asdrv_trsbase.o
     asdrv_trsbase-objs := trsbase_init.o

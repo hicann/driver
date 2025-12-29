@@ -24,6 +24,7 @@ ifeq ($(ENABLE_OPEN_SRC), y)
 	EXTRA_CFLAGS += -I$(DRIVER_CUST_INC_DIR)
 	EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/trs/trs_core/command/msg/
 	EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/trs/trs_core/command/ioctl/
+	EXTRA_CFLAGS += -isystem $(shell $(CC) -print-file-name=include)
 
 	EXTRA_CFLAGS += -DCFG_FEATURE_KTHREAD_BIND_CORE
 	EXTRA_CFLAGS += -DCFG_FEATURE_HOST_COLLECTION
@@ -128,4 +129,5 @@ else
 	obj-m += debug_switch.o
 	ts_debug-objs := debug_drv_dev.o debug_dma.o
 	EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/src/rms/trs_drv/inc
+	EXTRA_CFLAGS += -isystem $(shell $(CC) -print-file-name=include)
 endif
