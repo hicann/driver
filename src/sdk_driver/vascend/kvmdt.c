@@ -62,23 +62,12 @@ enum {
     NUM_REGION_INDEX
 };
 
-STATIC DEFINE_MUTEX(mdev_register_lock);
-
-struct mdev_driver hw_vdavinci_mdev_driver;
-
 static unsigned int g_vdavinci_rw_support_size[] = {1, 2, 4, 8};
 
 STATIC void kvmdt_guest_exit(struct kvmdt_guest_info *info);
 STATIC void hw_vdavinci_release_work(struct work_struct *work);
 STATIC int kvmdt_guest_init(struct mdev_device *mdev);
 STATIC int hw_vdavinci_get_irq_count(struct hw_vdavinci *vdavinci, unsigned int type);
-
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(6,1,0))
-STATIC inline struct hw_vfio_vdavinci *vfio_dev_to_vfio_vnpu(struct vfio_device *vfio_dev)
-{
-    return container_of(vfio_dev, struct hw_vfio_vdavinci, vfio_dev);
-}
-#endif
 
 bool handle_valid(uintptr_t handle)
 {
@@ -181,7 +170,7 @@ STATIC void guid_to_uuid(struct device *dev, uuid_le *dst, const guid_t *src)
 }
 #endif
 
-STATIC struct hw_vdavinci *hw_vdavinci_create(struct kobject *kobj, struct mdev_device *mdev)
+struct hw_vdavinci *hw_vdavinci_create(struct kobject *kobj, struct mdev_device *mdev)
 {
     int ret = 0;
     struct hw_vdavinci *vdavinci = NULL;
@@ -249,43 +238,7 @@ unlock:
     return NULL;
 }
 
-#if (LINUX_VERSION_CODE < KERNEL_VERSION(6,1,0))
-#if (LINUX_VERSION_CODE <= KERNEL_VERSION(5,12,0))
-STATIC int hw_vdavinci_create_ops(struct kobject *kobj, struct mdev_device *mdev)
-{
-    struct hw_vdavinci *vdavinci = NULL;
-
-    vdavinci = hw_vdavinci_create(kobj, mdev);
-    if (vdavinci == NULL) {
-        return -EINVAL;
-    }
-
-    return 0;
-}
-#else
-STATIC int hw_vdavinci_create_ops(struct mdev_device *mdev)
-{
-    struct hw_vdavinci *vdavinci = NULL;
-    struct kobject *kobj = NULL;
-
-    if (mdev == NULL || mdev->type == NULL) {
-        return -EINVAL;
-    }
-    kobj = (struct kobject *)mdev->type;
-    if (kobj == NULL || kobj->name == NULL) {
-        return -EINVAL;
-    }
-    vdavinci = hw_vdavinci_create(kobj, mdev);
-    if (vdavinci == NULL) {
-        return -EINVAL;
-    }
-
-    return 0;
-}
-#endif
-#endif
-
-STATIC int hw_vdavinci_remove(struct mdev_device *mdev)
+int hw_vdavinci_remove(struct mdev_device *mdev)
 {
     struct hw_vdavinci *vdavinci = get_mdev_drvdata(mdev_dev(mdev));
     struct hw_dvt *dvt = vdavinci->dvt;
@@ -412,7 +365,7 @@ STATIC void hw_put_vfio_group(struct mdev_device *mdev)
 }
 #endif /* KERNEL_VERSION(6,0,0) */
 
-STATIC int hw_vdavinci_open(struct mdev_device *mdev)
+int hw_vdavinci_open(struct mdev_device *mdev)
 {
     int ret = 0;
 #if ((LINUX_VERSION_CODE < KERNEL_VERSION(6,0,0)))
@@ -465,8 +418,8 @@ STATIC int hw_vdavinci_open(struct mdev_device *mdev)
     ret = kvmdt_guest_init(mdev);
     if (ret != 0) {
         vascend_err(vdavinci_to_dev(vdavinci), "kvmdt_guest_init failed, "
-            "vid: %u, ret: %d\n", vdavinci->id, ret);
-        goto undo_group;
+                    "vid: %u, ret: %d\n", vdavinci->id, ret);
+        goto out_module;
     }
 
     g_hw_vdavinci_ops.vdavinci_activate(vdavinci);
@@ -476,6 +429,8 @@ STATIC int hw_vdavinci_open(struct mdev_device *mdev)
         vdavinci->id);
     return ret;
 
+out_module:
+    module_put(THIS_MODULE);
 undo_group:
 #if ((LINUX_VERSION_CODE <= KERNEL_VERSION(5,18,0)))
     hw_put_vfio_group(mdev);
@@ -576,7 +531,7 @@ STATIC void __hw_vdavinci_release(struct hw_vdavinci *vdavinci)
                  vdavinci->id);
 }
 
-STATIC void hw_vdavinci_release(struct mdev_device *mdev)
+void hw_vdavinci_release(struct mdev_device *mdev)
 {
     struct hw_vdavinci *vdavinci = get_mdev_drvdata(mdev_dev(mdev));
 
@@ -591,8 +546,8 @@ STATIC void hw_vdavinci_release_work(struct work_struct *work)
     __hw_vdavinci_release(vdavinci);
 }
 
-STATIC ssize_t hw_vdavinci_read(struct mdev_device *mdev, char __user *buf,
-                                size_t count, loff_t *ppos)
+ssize_t hw_vdavinci_read(struct mdev_device *mdev, char __user *buf,
+                         size_t count, loff_t *ppos)
 {
     int i = 0;
     unsigned int done = 0;
@@ -639,9 +594,9 @@ STATIC ssize_t hw_vdavinci_read(struct mdev_device *mdev, char __user *buf,
     return done;
 }
 
-STATIC ssize_t hw_vdavinci_write(struct mdev_device *mdev,
-                                 const char __user *buf,
-                                 size_t count, loff_t *ppos)
+size_t hw_vdavinci_write(struct mdev_device *mdev,
+                         const char __user *buf,
+                         size_t count, loff_t *ppos)
 {
     int i = 0;
     unsigned int done = 0;
@@ -738,7 +693,7 @@ STATIC struct vdavinci_mapinfo *hw_vdavinci_get_bar_sparse(struct hw_vdavinci *v
     }
 }
 
-STATIC int hw_vdavinci_mmap(struct mdev_device *mdev, struct vm_area_struct *vma)
+int hw_vdavinci_mmap(struct mdev_device *mdev, struct vm_area_struct *vma)
 {
     int ret;
     unsigned long pgoff = 0;
@@ -1310,8 +1265,8 @@ STATIC long _hw_vdavinci_device_reset(struct hw_vdavinci* vdavinci)
     return g_hw_vdavinci_ops.vdavinci_reset(vdavinci);
 }
 
-STATIC long hw_vdavinci_ioctl(struct mdev_device *mdev, unsigned int cmd,
-                              unsigned long arg)
+long hw_vdavinci_ioctl(struct mdev_device *mdev, unsigned int cmd,
+                       unsigned long arg)
 {
     struct hw_vdavinci *vdavinci = get_mdev_drvdata(mdev_dev(mdev));
     uintptr_t arg_uptr = arg;
@@ -1342,69 +1297,13 @@ STATIC long hw_vdavinci_ioctl(struct mdev_device *mdev, unsigned int cmd,
 
 STATIC int kvmdt_register_mdev(struct device *dev, struct hw_dvt *dvt)
 {
-    int ret = -1;
-#if (LINUX_VERSION_CODE < KERNEL_VERSION(6,1,0))
-    const char *tmp = NULL;
-    struct mdev_parent_ops *vdavinci_mdev_ops = NULL;
-#endif
-
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(6,1,0))
-    hw_vdavinci_mdev_driver.driver.dev_groups = get_hw_vdavinci_groups();
-    ret = mdev_register_parent(&dvt->parent, dev, &hw_vdavinci_mdev_driver,
-                               dvt->mdev_types, dvt->vdavinci_type_num * dvt->dev_num);
-    if (ret != 0) {
-        vascend_err(dev, "Failed to register mdev parent, err: %d\n", ret);
-        return ret;
-    }
-#else
-    vdavinci_mdev_ops = kzalloc(sizeof(struct mdev_parent_ops), GFP_KERNEL);
-    if (vdavinci_mdev_ops == NULL) {
-        return -ENOMEM;
-    }
-
-    vdavinci_mdev_ops->create = hw_vdavinci_create_ops;
-    vdavinci_mdev_ops->remove = hw_vdavinci_remove;
-#if (LINUX_VERSION_CODE < KERNEL_VERSION(5,15,0))
-    vdavinci_mdev_ops->open = hw_vdavinci_open;
-    vdavinci_mdev_ops->release = hw_vdavinci_release;
-#else
-    vdavinci_mdev_ops->open_device = hw_vdavinci_open;
-    vdavinci_mdev_ops->close_device = hw_vdavinci_release;
-#endif
-    vdavinci_mdev_ops->read = hw_vdavinci_read;
-    vdavinci_mdev_ops->write = hw_vdavinci_write;
-    vdavinci_mdev_ops->mmap = hw_vdavinci_mmap;
-    vdavinci_mdev_ops->ioctl = hw_vdavinci_ioctl;
-
-    dvt->vdavinci_mdev_ops = vdavinci_mdev_ops;
-
-    mutex_lock(&mdev_register_lock);
-    vdavinci_mdev_ops->supported_type_groups = dvt->groups;
-    vdavinci_mdev_ops->mdev_attr_groups = get_hw_vdavinci_groups();
-
-    tmp = dev->driver->name;
-    dev->driver->name = VDAVINCI_NAME;
-    ret = mdev_register_device(dev, vdavinci_mdev_ops);
-    dev->driver->name = tmp;
-    mutex_unlock(&mdev_register_lock);
-
-    if (ret) {
-        kfree(dvt->vdavinci_mdev_ops);
-        dvt->vdavinci_mdev_ops = NULL;
-    }
-#endif
-    return ret;
+    dvt->drv = &hw_vdavinci_mdev_driver;
+    return vdavinci_register_device(dev, dvt, VDAVINCI_NAME);
 }
 
 STATIC void kvmdt_unregister_mdev(struct device *dev, struct hw_dvt *dvt)
 {
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(6,1,0))
-    mdev_unregister_parent(&dvt->parent);
-#else
-    mdev_unregister_device(dev);
-    kfree(dvt->vdavinci_mdev_ops);
-    dvt->vdavinci_mdev_ops = NULL;
-#endif
+    vdavinci_unregister_device(dev, dvt);
 }
 
 STATIC int kvmdt_inject_msix(uintptr_t handle, u32 vector)
@@ -1799,152 +1698,3 @@ struct hw_kvmdt_ops g_hw_kvmdt_ops = {
     .dma_put_iova = hw_vdavinci_put_iova,
     .dma_get_iova_batch = hw_vdavinci_get_iova_batch,
 };
-
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(6,1,0))
-STATIC int hw_vdavinci_vfio_init(struct vfio_device *vfio_dev)
-{
-    struct mdev_device *mdev = get_mdev_device(vfio_dev->dev);
-    struct hw_vfio_vdavinci *vfio_vdavinci = vfio_dev_to_vfio_vnpu(vfio_dev);
-
-    vfio_vdavinci->vdavinci = hw_vdavinci_create(&mdev->type->kobj, mdev);
-    if (vfio_vdavinci->vdavinci == NULL) {
-        return -EINVAL;
-    }
-
-    return 0;
-}
-
-STATIC void hw_vdavinci_vfio_release(struct vfio_device *vfio_dev)
-{
-    struct mdev_device *mdev = get_mdev_device(vfio_dev->dev);
-
-    hw_vdavinci_release(mdev);
-}
-
-STATIC int hw_vdavinci_vfio_open(struct vfio_device *vfio_dev)
-{
-    struct mdev_device *mdev = get_mdev_device(vfio_dev->dev);
-
-    return hw_vdavinci_open(mdev);
-}
-
-STATIC void hw_vdavinci_vfio_close(struct vfio_device *vfio_dev)
-{
-    struct mdev_device *mdev = get_mdev_device(vfio_dev->dev);
-
-    (void)hw_vdavinci_remove(mdev);
-}
-
-STATIC ssize_t hw_vdavinci_vfio_read(struct vfio_device *vfio_dev, char __user *buf,
-                                     size_t count, loff_t *ppos)
-{
-    struct mdev_device *mdev = get_mdev_device(vfio_dev->dev);
-
-    return hw_vdavinci_read(mdev, buf, count, ppos);
-}
-
-STATIC ssize_t hw_vdavinci_vfio_write(struct vfio_device *vfio_dev,
-                                      const char __user *buf,
-                                      size_t count, loff_t *ppos)
-{
-    struct mdev_device *mdev = get_mdev_device(vfio_dev->dev);
-
-    return hw_vdavinci_write(mdev, buf, count, ppos);
-}
-
-STATIC int hw_vdavinci_vfio_mmap(struct vfio_device *vfio_dev, struct vm_area_struct *vma)
-{
-    struct mdev_device *mdev = get_mdev_device(vfio_dev->dev);
-
-    return hw_vdavinci_mmap(mdev, vma);
-}
-
-STATIC long hw_vdavinci_vfio_ioctl(struct vfio_device *vfio_dev,
-                                   unsigned int cmd, unsigned long arg)
-{
-    struct mdev_device *mdev = get_mdev_device(vfio_dev->dev);
-
-    return hw_vdavinci_ioctl(mdev, cmd, arg);
-}
-
-STATIC void hw_vdavinci_vfio_dma_unmap(struct vfio_device *vfio_dev,
-                                       u64 iova, u64 length)
-{
-    unsigned long start_gfn = iova >> PAGE_SHIFT;
-    struct hw_vfio_vdavinci *vfio_vdavinci = vfio_dev_to_vfio_vnpu(vfio_dev);
-    struct hw_vdavinci *vdavinci = vfio_vdavinci->vdavinci;
-
-    mutex_lock(&vdavinci->vdev.cache_lock);
-    hw_vdavinci_unplug_ram(vdavinci, start_gfn, length);
-    mutex_unlock(&vdavinci->vdev.cache_lock);
-}
-
-STATIC const struct vfio_device_ops hw_vnpu_vfio_dev_ops = {
-    .init = hw_vdavinci_vfio_init,
-    .release = hw_vdavinci_vfio_release,
-    .open_device = hw_vdavinci_vfio_open,
-    .close_device = hw_vdavinci_vfio_close,
-    .read = hw_vdavinci_vfio_read,
-    .write = hw_vdavinci_vfio_write,
-    .mmap = hw_vdavinci_vfio_mmap,
-    .dma_unmap = hw_vdavinci_vfio_dma_unmap,
-    .ioctl = hw_vdavinci_vfio_ioctl,
-    .bind_iommufd	= vfio_iommufd_emulated_bind,
-    .unbind_iommufd = vfio_iommufd_emulated_unbind,
-    .attach_ioas	= vfio_iommufd_emulated_attach_ioas,
-    .detach_ioas	= vfio_iommufd_emulated_detach_ioas,
-};
-
-STATIC int hw_vdavinci_vfio_probe(struct mdev_device *mdev)
-{
-    int ret = 0;
-    struct device *pdev;
-    struct hw_dvt *dvt;
-    struct hw_vfio_vdavinci *vfio_vdavinci = NULL;
-
-    pdev = get_mdev_parent(mdev);
-    dvt = kdev_to_davinci(pdev)->dvt;
-    if (!hw_vdavinci_is_enabled(dvt)) {
-        vascend_err(pdev, "driver is not in vm mode or device's sriov is not enabled\n");
-        return -EINVAL;
-    }
-
-    vfio_vdavinci = vfio_alloc_device(hw_vfio_vdavinci, vfio_dev, &mdev->dev, &hw_vnpu_vfio_dev_ops);
-    if (IS_ERR(vfio_vdavinci)) {
-        vascend_err(pdev, "vdavinci probe failed\n");
-        return -EINVAL;
-    }
-    vfio_vdavinci->vdavinci->vdev.vfio_device = &vfio_vdavinci->vfio_dev;
-    ret = vfio_register_emulated_iommu_dev(&vfio_vdavinci->vfio_dev);
-    if (ret != 0) {
-        vascend_err(pdev, "register iommu error\n");
-        goto out_put_vdev;
-    }
-
-    return 0;
-
-out_put_vdev:
-    vfio_put_device(&vfio_vdavinci->vfio_dev);
-    return ret;
-}
-
-STATIC void hw_vdavinci_vfio_remove(struct mdev_device *mdev)
-{
-	struct hw_vfio_vdavinci *vfio_vdavinci = get_mdev_drvdata(&mdev->dev);
-
-	vfio_unregister_group_dev(&vfio_vdavinci->vfio_dev);
-	vfio_put_device(&vfio_vdavinci->vfio_dev);
-}
-
-struct mdev_driver hw_vdavinci_mdev_driver = {
-    .device_api = VFIO_DEVICE_API_PCI_STRING,
-    .driver = {
-        .name = "vnpu_mdev",
-        .owner = THIS_MODULE,
-    },
-    .probe = hw_vdavinci_vfio_probe,
-    .remove = hw_vdavinci_vfio_remove,
-    .get_available = available_instances_show,
-    .show_description = description_show
-};
-#endif

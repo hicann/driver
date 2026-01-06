@@ -20,7 +20,11 @@ int hw_dvt_init(void *vdavinci_priv)
     if (!hw_vdavinci_priv_callback_check(vdavinci_priv)) {
         return -EINVAL;
     }
-
+    if (!IS_ENABLED(CONFIG_VFIO_MDEV)) {
+        vascend_warn(((struct vdavinci_priv *)vdavinci_priv)->dev,
+                     "mdev is not enable");
+        return 0;
+    }
     ret = hw_dvt_init_device((struct vdavinci_priv *)vdavinci_priv);
     if (ret == -ENOTSUPP) {
         vascend_warn(((struct vdavinci_priv *)vdavinci_priv)->dev,

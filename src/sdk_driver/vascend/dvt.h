@@ -239,10 +239,12 @@ struct hw_dvt {
     struct dentry *debugfs_root;
     unsigned int dev_num;
     unsigned int vdavinci_type_num;
-    struct mdev_parent_ops *vdavinci_mdev_ops;
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(6,1,0)
     struct mdev_parent parent;
-#endif
+#else
+    struct mdev_parent_ops *vdavinci_mdev_ops;
+#endif /* KERNEL_VERSION(6,1,0) */
+    struct mdev_driver *drv;
     struct hw_pf_info pf[HW_DVT_MAX_DEV_NUM];
 };
 

@@ -93,4 +93,16 @@ bool get_node_cpu_by_page(struct hw_vdavinci *vdavinci,
                           unsigned int current_cpu,
                           struct page *page,
                           struct cpumask *cpumask);
+struct hw_vdavinci *hw_vdavinci_create(struct kobject *kobj, struct mdev_device *mdev);
+int hw_vdavinci_remove(struct mdev_device *mdev);
+int hw_vdavinci_open(struct mdev_device *mdev);
+void hw_vdavinci_release(struct mdev_device *mdev);
+ssize_t hw_vdavinci_read(struct mdev_device *mdev, char __user *buf,
+                         size_t count, loff_t *ppos);
+size_t hw_vdavinci_write(struct mdev_device *mdev,
+                         const char __user *buf,
+                         size_t count, loff_t *ppos);
+int hw_vdavinci_mmap(struct mdev_device *mdev, struct vm_area_struct *vma);
+long hw_vdavinci_ioctl(struct mdev_device *mdev, unsigned int cmd,
+                       unsigned long arg);
 #endif

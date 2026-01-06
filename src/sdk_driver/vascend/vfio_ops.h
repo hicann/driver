@@ -24,6 +24,8 @@ struct vdavinci_pin_info {
     struct page **pages;
 };
 
+extern struct mdev_driver hw_vdavinci_mdev_driver;
+
 struct device *get_mdev_parent(struct mdev_device *mdev);
 bool device_is_mdev(struct device *dev);
 struct mdev_device *get_mdev_device(struct device *dev);
@@ -37,5 +39,11 @@ int vdavinci_iommu_map(struct device *dev, unsigned long iova,
                        phys_addr_t paddr, size_t size, int prot);
 void vdavinci_unpin_pages(struct hw_vdavinci *vdavinci, struct vdavinci_pin_info *pin_info);
 int vdavinci_pin_pages(struct hw_vdavinci *vdavinci, struct vdavinci_pin_info *pin_info);
+int vdavinci_register_device(struct device *dev,
+                             struct hw_dvt *dvt,
+                             const char *name);
+void vdavinci_unregister_device(struct device *dev, struct hw_dvt *dvt);
+int vdavinci_register_driver(struct mdev_driver *drv);
+void vdavinci_unregister_driver(struct mdev_driver *drv);
 
 #endif

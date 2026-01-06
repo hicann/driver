@@ -1118,8 +1118,13 @@ bool hw_vdavinci_sriov_support(struct hw_dvt *dvt)
 STATIC int __init dvt_init(void)
 {
     int ret;
+
     ret = register_vdavinci_virtual_ops(&g_vascend_drv_ops);
-    if (ret) {
+    if (ret != 0) {
+        return ret;
+    }
+    ret = vdavinci_register_driver(&hw_vdavinci_mdev_driver);
+    if (ret != 0) {
         return ret;
     }
 
@@ -1128,6 +1133,7 @@ STATIC int __init dvt_init(void)
 
 STATIC void __exit dvt_exit(void)
 {
+    vdavinci_unregister_driver(&hw_vdavinci_mdev_driver);
     unregister_vdavinci_virtual_ops();
 }
 
