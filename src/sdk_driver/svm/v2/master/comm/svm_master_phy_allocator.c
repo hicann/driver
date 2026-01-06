@@ -70,7 +70,7 @@ void devmm_obmm_put(struct devmm_host_obmm_info *info)
 #if (defined CFG_SOC_PLATFORM_CLOUD_V2) && (defined __aarch64__)
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 10, 0)
 /* This func is time-consuming operation, may cause performance problem. */
-bool devmm_pa_is_local_mem(u64 pa)
+static bool devmm_pa_is_local_mem(u64 pa)
 {
     return page_is_ram(PFN_DOWN(pa));
 }
