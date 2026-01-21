@@ -26,9 +26,10 @@ examples目录下提供了一系列Driver接口样例，包括DCMI等，供开�
 export LD_LIBRARY_PATH=~/usr/local/dcmi/:$LD_LIBRARY_PATH
 ```
 
-2.下载样例代码并传至安装npu-smi工具软件的环境，切换到样例目录。
+2.下载Driver仓代码并传至安装npu-smi工具软件的环境，切换到样例目录。
 
 ```bash
+# ${git_clone_path} 是Driver仓代码上传到环境上的路径。
 # 此处以0_configure_manager(user)下的0_set_user_config样例为例
 # 目录与模块对应关系
 # 0_configure_manager -- user

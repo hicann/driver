@@ -15,7 +15,8 @@ MAIN_DIR_ALIASES=(
     "upgrade=3_mcu_upgrade"
 )
 
-BUILD_CMD="gcc main.c -I/usr/local/dcmi/ -L/usr/local/dcmi/ -ldcmi -o main"
+TOPDIR=${PWD}/../../..
+BUILD_CMD="gcc main.c -I/usr/local/dcmi/ -I${TOPDIR}/src/custom/include -I${PWD}/pkg_inc -L/usr/local/dcmi/ -ldcmi -o main"
 AVAILABLE_TARGETS=()
 
 get_real_main_dir() {
