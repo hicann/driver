@@ -7,9 +7,9 @@
 # INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
 # See LICENSE in the root of the software repository for the full text of the License.
 # ------------------------------------------------------------------------------------------------------------
-#set(drv_vascend_stub_depends drv_seclib_host)
+set(drv_vascend_stub_depends drv_seclib_host ascend_kernel_open_adapt)
 add_host_ko(LOCAL_MODULE drv_vascend_stub
 			OUTPUT_NAME drv_vascend_stub
 			KO_SRC_FOLDER ${CMAKE_CURRENT_SOURCE_DIR}
 			MAKE_ARGS ${MAKE_ARGS}
-			TARGETE_DPENDS "${drv_vascend_stub_depends}")
+			TARGETE_DPENDS "${drv_vascend_stub_depends}" ascend_kernel_open_adapt)

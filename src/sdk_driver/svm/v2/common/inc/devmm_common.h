@@ -13,22 +13,19 @@
 
 #ifndef DEVMM_COMMON_H
 #define DEVMM_COMMON_H
-#include <linux/fs.h>
-#include <linux/uaccess.h>
 
 #include "ka_base_pub.h"
-#include "ka_common_pub.h"
 #include "ka_memory_pub.h"
 #include "ka_task_pub.h"
 #include "ka_net_pub.h"
 #include "ka_common_pub.h"
 #include "ka_list_pub.h"
-#include "ka_base_pub.h"
 #include "ka_fs_pub.h"
 #include "ka_driver_pub.h"
 #include "ka_errno_pub.h"
 #include "ka_system_pub.h"
-#include "ka_driver_pub.h"
+#include "ka_kernel_def_pub.h"
+#include "ka_compiler_pub.h"
 
 #include "devmm_proc_info.h"
 #include "svm_proc_gfp.h"
@@ -47,7 +44,7 @@
 #endif
 
 #define DEVMM_BITS_PER_CHAR 8
-#define DEVMM_PAGENUM_PER_HPAGE (HPAGE_SIZE / PAGE_SIZE)
+#define DEVMM_PAGENUM_PER_HPAGE (KA_HPAGE_SIZE / KA_MM_PAGE_SIZE)
 
 #define DEVMM_WAKEUP_TIMEINTERVAL 500 /* 0.5s */
 
@@ -58,6 +55,12 @@
 
 #define SVM_MASTER_HUGE_PAGE_SIZE 0x200000ULL  /* 0x200000 master use 2M huge page size */
 #define SVM_MASTER_GIANT_PAGE_SIZE 0x40000000ULL    /* 0x40000000 master use 1G giant page size */
+
+#if MAX_NUMNODES > 256
+#define SVM_MASTER_NUMA_MAX     256
+#else
+#define SVM_MASTER_NUMA_MAX     MAX_NUMNODES
+#endif
 
 #define DEVMM_S2S_HOST_GLOBAL_BASE_OFFSET           0x800000000000   /* 128TB */
 #define DEVMM_S2S_HOST_NODE_NUM                     4
@@ -173,7 +176,7 @@ bool devmm_check_input_heap_info(struct devmm_svm_process *svm_pro,
     struct devmm_update_heap_para *cmd, u32 devid);
 ssize_t devmm_read_file(ka_file_t *fp, char *dst_addr, size_t fsize, loff_t *pos);
 char *devmm_read_line(ka_file_t *fp, loff_t *offset, char *buf, u32 buf_len);
-void *devmm_kvalloc(u64 size, gfp_t flags);
+void *devmm_kvalloc(u64 size, ka_gfp_t flags);
 void *devmm_kvzalloc(u64 size);
 void devmm_kvfree(const void *ptr);
 void devmm_set_heap_used_status(struct devmm_svm_heap *heap, u64 va, u64 size);
@@ -211,7 +214,7 @@ u64 devmm_get_tgid_start_time(void);
 #ifdef EMU_ST
 ka_vm_area_struct_t *devmm_find_vma_from_mm(ka_mm_struct_t *mm, u64 vaddr);
 #endif
-extern u32 uda_get_host_id(void); /* todo: delete it later, inlcude uda.h report error */
+extern u32 uda_get_host_id(void); /* todo: delete it later, include uda.h report error */
 bool devmm_palist_is_continuous(u64 *pa, u32 num, u32 page_size);
 bool devmm_palist_is_specify_continuous(u64 *pa, u32 page_size, u32 total_num, u32 min_con_num);
 

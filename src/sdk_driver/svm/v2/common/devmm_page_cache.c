@@ -10,19 +10,15 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#include <linux/dma-mapping.h>
-#include <linux/types.h>
-#include <linux/slab.h>
-#include <linux/hugetlb.h>
-#include <linux/mm.h>
-#include <linux/list.h>
 
-#include "svm_ioctl.h"
+#include <linux/hugetlb.h>
+
 #include "devmm_proc_info.h"
 #include "svm_kernel_msg.h"
 #include "devmm_common.h"
 #include "svm_master_dev_capability.h"
 #include "devmm_page_cache.h"
+#include "svm_ioctl.h"
 
 struct devmm_dev_page_node {
     ka_list_head_t list;
@@ -228,7 +224,7 @@ STATIC u32 devmm_free_page_node(u64 va, u32 page_num, struct devmm_dev_page_node
     if (reuse) {
         page_idx = devmm_get_dev_pages_idx(node, va);
         free_num = node->blk_num - page_idx;
-        free_num = min(page_num, free_num);
+        free_num = ka_base_min(page_num, free_num);
         for (j = 0; j < free_num; j++) {
             node->blks[page_idx + j].dma_addr = 0;
             node->blks[page_idx + j].phy_addr = 0;
@@ -351,7 +347,7 @@ STATIC void devmm_insert_pa_info_to_node(struct devmm_dev_pages_cache *dev_pages
 
         if (node != NULL) {
             page_idx = devmm_get_dev_pages_idx(node, va);
-            insert_num = min((info->pg_num - i), (u64)(node->blk_num - page_idx));
+            insert_num = ka_base_min((info->pg_num - i), (u64)(node->blk_num - page_idx));
             for (j = 0; j < insert_num; j++) {
                 devmm_set_dma_phy_addr_to_node(info, i + j, node, page_idx + j);
                 devmm_drv_debug("Enter. (va=0x%llx; num=%llu; i=%llu; j=%llu; page_idx=%u; psize=%llu; blk_sz=%u)\n",
@@ -544,7 +540,7 @@ int hal_kernel_svm_dev_va_to_dma_addr(int hostpid, u32 logical_devid, u64 va, u6
     devmm_svm_proc_put(svm_proc);
     return ret;
 }
-EXPORT_SYMBOL_GPL(hal_kernel_svm_dev_va_to_dma_addr);
+KA_EXPORT_SYMBOL_GPL(hal_kernel_svm_dev_va_to_dma_addr);
 #endif
 
 int devmm_find_pa_cache(struct devmm_svm_process *svm_process, u32 logic_id, u64 va, u32 page_size, u64 *pa)

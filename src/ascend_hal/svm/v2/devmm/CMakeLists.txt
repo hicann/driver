@@ -14,6 +14,7 @@ target_sources(devmm_obj PRIVATE
     devmm_virt_com_heap.c
     devmm_virt_dvpp_heap.c
     devmm_virt_read_only_heap.c
+    devmm_virt_host_pin_heap.c
     devmm_cache_coherence.c
     devmm_map_dev_reserve.c
     svm_mem_statistics.c

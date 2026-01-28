@@ -16,6 +16,10 @@
 #include "fms_define.h"
 #include "kernel_version_adapt.h"
 #include "dms_sensor_notify.h"
+#include "ka_base_pub.h"
+#include "ka_list_pub.h"
+#include "ka_system_pub.h"
+#include "ka_task_pub.h"
 
 struct dms_sensor_notify_queue g_sensor_notify_queue; /* device0  hbm ddr soc */
 
@@ -25,7 +29,7 @@ void dms_sensor_notify_init(void)
     g_sensor_notify_queue.tail = 0;
     g_sensor_notify_queue.size = DMS_MAX_NOTIFY_SENSOR_OBJ_NUM;
     g_sensor_notify_queue.count = 0;
-    spin_lock_init(&g_sensor_notify_queue.notify_lock);
+    ka_task_spin_lock_init(&g_sensor_notify_queue.notify_lock);
     return;
 }
 
@@ -45,9 +49,9 @@ static int dms_sensor_add_notify_event(unsigned int dev_id, struct dms_sensor_ob
     struct dms_sensor_notify_queue *notify_queue = &g_sensor_notify_queue;
 
     /* multiple producer add notify event at tail, need notify_lock for notify_queue->tail */
-    spin_lock_irqsave(&notify_queue->notify_lock, flags);
+    ka_task_spin_lock_irqsave(&notify_queue->notify_lock, flags);
     if ((notify_queue->tail + 1) % notify_queue->size == notify_queue->head) {
-        spin_unlock_irqrestore(&notify_queue->notify_lock, flags);
+        ka_task_spin_unlock_irqrestore(&notify_queue->notify_lock, flags);
         dms_err("notify queue is full, (dev_id=%u; sensor_type=%u; sensor_name=%.*s; size=%u; head=%u; tail=%u).\n",
             dev_id, psensor_obj_cfg->sensor_type, DMS_SENSOR_DESCRIPT_LENGTH, psensor_obj_cfg->sensor_name,
             notify_queue->size, notify_queue->head, notify_queue->tail);
@@ -57,7 +61,7 @@ static int dms_sensor_add_notify_event(unsigned int dev_id, struct dms_sensor_ob
     notify_queue->sensor_obj_queue[notify_queue->tail].notify_sensor_obj = *psensor_obj_cfg;
     notify_queue->sensor_obj_queue[notify_queue->tail].dev_id = dev_id;
     notify_queue->tail = (notify_queue->tail + 1) % notify_queue->size;
-    spin_unlock_irqrestore(&notify_queue->notify_lock, flags);
+    ka_task_spin_unlock_irqrestore(&notify_queue->notify_lock, flags);
 
     return 0;
 }
@@ -71,9 +75,9 @@ static int dms_sensor_scan_notify_sensor_obj(struct dms_dev_sensor_cb *dev_senso
     struct dms_sensor_scan_time_recorder ptime_recorder = {0};
 
     ptime_recorder.record_scan_time_flag = DMS_SENSOR_CHECK_NOT_RECORD;
-    list_for_each_entry_safe(psensor_obj_cb, tmp_sensor_ctl, &(node_sensor_cb->sensor_object_table), list) {
+    ka_list_for_each_entry_safe(psensor_obj_cb, tmp_sensor_ctl, &(node_sensor_cb->sensor_object_table), list) {
         if ((psensor_obj_cb->sensor_object_cfg.sensor_type != psensor_obj_cfg->sensor_type) ||
-            (strcmp(psensor_obj_cb->sensor_object_cfg.sensor_name, psensor_obj_cfg->sensor_name) != 0) ||
+            (ka_base_strcmp(psensor_obj_cb->sensor_object_cfg.sensor_name, psensor_obj_cfg->sensor_name) != 0) ||
             (psensor_obj_cb->sensor_object_cfg.private_data != psensor_obj_cfg->private_data)) {
             continue;
         }
@@ -100,9 +104,9 @@ static void dms_sensor_scan_notify_sensor(struct dms_dev_sensor_cb *dev_sensor_c
     unsigned short dev_health = dev_sensor_cb->health;
 
     if (scan_mode == DMS_SERSOR_SCAN_NOTIFY) {
-        mutex_lock(&dev_sensor_cb->dms_sensor_mutex);
+        ka_task_mutex_lock(&dev_sensor_cb->dms_sensor_mutex);
     }
-    list_for_each_entry_safe(node_sensor_cb, tmp_ctl, &(dev_sensor_cb->dms_node_sensor_cb_list), list)
+    ka_list_for_each_entry_safe(node_sensor_cb, tmp_ctl, &(dev_sensor_cb->dms_node_sensor_cb_list), list)
     {
         if (node_sensor_cb->sensor_object_num == 0) {
             dms_warn("not sensor type and obj, (nodeid = 0x%x)\n", node_sensor_cb->node_id);
@@ -120,7 +124,7 @@ static void dms_sensor_scan_notify_sensor(struct dms_dev_sensor_cb *dev_sensor_c
     }
     dev_sensor_cb->health = dev_health;
     if (scan_mode == DMS_SERSOR_SCAN_NOTIFY) {
-        mutex_unlock(&dev_sensor_cb->dms_sensor_mutex);
+        ka_task_mutex_unlock(&dev_sensor_cb->dms_sensor_mutex);
     }
 }
 
@@ -145,7 +149,7 @@ static void dms_sensor_report_notify_event(unsigned int scan_mode)
         notify_queue->head = (notify_queue->head + 1) % notify_queue->size;
 
         if (notify_queue->count++ >= notify_queue->size) {
-            msleep(1); /* sleep 1 ms to release cpu */
+            ka_system_msleep(1); /* sleep 1 ms to release cpu */
             dms_sensor_notify_count_clear();
         }
     }
@@ -183,8 +187,8 @@ int dms_sensor_event_notify(unsigned int dev_id, struct dms_sensor_object_cfg *p
         return -EINVAL;
     }
 
-    atomic_inc(&sys_cb->sensor_scan_task_state);
-    wake_up(&sys_cb->sensor_scan_wait);
+    ka_base_atomic_inc(&sys_cb->sensor_scan_task_state);
+    ka_task_wake_up(&sys_cb->sensor_scan_wait);
 
     return 0;
 }

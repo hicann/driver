@@ -234,7 +234,6 @@ enum dmanager_tsensor_id {
 #define DEVDRV_VNIC (0)
 #define DEVDRV_ROCE (1)
 #define DEVDRV_BOND (2)
-#define DEVDRV_UNIC (3)
 #define DEVDRV_MAX_SYS_DEV_NUM (4)
 #define DEVDRV_IPV6_ARRAY_LEN (16)
 #define DEVDRV_MAX_MAC_LEN (6)
@@ -558,7 +557,7 @@ struct ioctl_ipc {
 /**
 * @ingroup driver
 * @brief  set or get imu,ts info from ipc channel
-* @attention this interface use only in deivce side, not support in host side
+* @attention this interface use only in device side, not support in host side
 * if the type you input is not compatitable with the table below, then will return failed
 * ---------------------------------------------------------------------------------------------------------
 * targetId               | mainCmd             | subCmd                 | support board type              |

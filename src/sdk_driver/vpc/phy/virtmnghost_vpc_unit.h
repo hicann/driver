@@ -13,13 +13,13 @@
 #ifndef VIRTMNGHOST_VPC_UNIT_H
 #define VIRTMNGHOST_VPC_UNIT_H
 
-#include <linux/pci.h>
 #include "virtmng_msg_pub.h"
 #include "virtmng_public_def.h"
+#include "ka_common_pub.h"
 
 struct vmngh_vpc_unit {
     void *vdavinci;
-    struct pci_dev *pdev;                       /* pci dev */
+    ka_pci_dev_t *pdev;                       /* pci dev */
     void __iomem *db_base;                      /* doorbell base address VA , bar0 */
     void __iomem *msg_base;                     /* msg base address VA ; part of bar2 */
     void __iomem *ts_msg_base;                  /* ts msg base address VA, bar4 */

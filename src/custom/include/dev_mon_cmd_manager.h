@@ -163,6 +163,8 @@ typedef struct outband_xspf_base_info {
     unsigned char optical_lane_cnt;
     unsigned char reserve;
     unsigned int optical_speed;
+    unsigned char electrical_lane_cnt;
+    unsigned char reserve_ext[3];           // Reserve space for data used solely for recording.
 }OUTBAND_XSPF_BASE_INFO;
 
 typedef struct outband_xsfp_threshold_info {
@@ -224,13 +226,14 @@ typedef struct outband_extend_power_runtime_info {
     unsigned short laser_temp;              // BYTE[30:31], 2字节, 单位1/256 degree
     unsigned short laser_core_temp;         // BYTE[32:33]
 }OUTBAND_EXTEND_POWER_RUNTIME_INFO;
- 
+
 typedef struct outband_extend_power_alarm_info {
     STRUCT_HEAD struct_head;
-    unsigned int hard_bad;                      // BYTE[8:11], 4字节, hard_bad
-    unsigned int hard_err;                      // BYTE[12:15], 4字节, hard_err
-    unsigned short electrical_link_detection;   // BYTE[16:17], 2字节, 电链路检测
-    unsigned short optical_link_detection;      // BYTE[18:19], 2字节, 光链路检测
+    unsigned int hard_bad;                          // BYTE[8:11], 4字节, hard_bad
+    unsigned int hard_err;                          // BYTE[12:15], 4字节, hard_err
+    unsigned short electrical_link_detection;       // BYTE[16:17], 2字节, 电链路检测
+    unsigned short optical_link_detection;          // BYTE[18:19], 2字节, 光链路检测
+    unsigned char severe_optical_link_detection;    // BYTE[20:20], 1字节, 光链路严重告警检测
 }OUTBAND_EXTEND_POWER_ALARM_INFO;
 #pragma pack(pop) // 恢复默认的字节对齐
 
@@ -301,7 +304,7 @@ typedef struct inner_outband_linkdown_info {
     float media_snr[XSFP_SNR_LEN];
     unsigned int device_id;
 } INNER_OUTBAND_LINKDOWN_INFO;
- 
+
 typedef struct outband_port_linkdown_info { // 闪断时端口统计信息
     unsigned int time;                          // 时间戳
     float npu_rx_snr[DEV_MON_LANE_NUM];         // NPU端口SNR, 当前使用4个通道, 需要在xxx函数转换获取到的数据
@@ -313,19 +316,19 @@ typedef struct outband_port_linkdown_info { // 闪断时端口统计信息
     float cdr_media_snr[DEV_MON_LANE_NUM];      // cdr host snr, qilian和5901都转换成float
     unsigned int device_id;                     // 区分cdr snr的闪断信息来自于主die或从die
 } outband_port_linkdown_info_t;
- 
+
 typedef struct outband_linkdown_info_head {
     unsigned char type;    // 标志数据包类型(如何解析)
     unsigned char all;     // 队列中有多少数据包
     unsigned char num;     // 本帧中有多少数据包
     unsigned char len;     // 一个数据包有多长
 } outband_linkdown_info_head_t;
- 
+
 typedef struct outband_xsfp_linkdown_info {
     outband_linkdown_info_head_t info_head;
     INNER_OUTBAND_LINKDOWN_INFO inner_info[LINKDOWN_INFO_NUM]; // 一帧最多包含1个数据包
 } OUTBAND_XSFP_LINKDOWN_INFO;
- 
+
 typedef struct outband_port_linkdown_packet {
     STRUCT_HEAD struct_head;
     outband_linkdown_info_head_t info_head;
@@ -479,9 +482,11 @@ struct get_node_info_para {
 #define NET_DATA            2048
 #define MAX_CMD_PAYLOAD_LEN 2000
 
+#ifndef CFG_SOC_PLATFORM_CLOUD_V4
 void dev_mon_api_get_chip_pcie_err_rate(SYSTEM_CB_T* cb, DM_INTF_S* intf, DM_RECV_ST* msg);
 void dev_mon_api_clear_chip_pcie_err_rate(SYSTEM_CB_T* cb, DM_INTF_S* intf, DM_RECV_ST* msg);
 void dev_mon_board_passthru_mcu(SYSTEM_CB_T *cb, DM_INTF_S *intf, DM_RECV_ST *msg);
+#endif
 
 #if defined(CFG_SOC_PLATFORM_MINIV2) || defined(CFG_SOC_PLATFORM_CLOUD)
 void dev_mon_get_vrd_temperature(SYSTEM_CB_T *cb, DM_INTF_S *intf, DM_RECV_ST *msg);

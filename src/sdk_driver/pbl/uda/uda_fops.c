@@ -25,6 +25,10 @@
 #include "uda_proc_fs.h"
 #include "uda_pub_def.h"
 #include "uda_fops.h"
+#include "ka_base_pub.h"
+#include "ka_kernel_def_pub.h"
+#include "ka_ioctl_pub.h"
+#include "ka_compiler_pub.h"
 
 static int ioctl_uda_get_user_info(unsigned int cmd, unsigned long arg)
 {
@@ -40,7 +44,7 @@ static int ioctl_uda_get_user_info(unsigned int cmd, unsigned long arg)
         info.support_udev_mng = uda_cur_is_admin() ? 1 : 0;
     }
 
-    return (int)copy_to_user((struct uda_user_info __user *)arg, &info, sizeof(info));
+    return (int)ka_base_copy_to_user((struct uda_user_info __ka_user *)arg, &info, sizeof(info));
 }
 
 static int ioctl_uda_setup_dev_table(unsigned int cmd, unsigned long arg)
@@ -48,7 +52,7 @@ static int ioctl_uda_setup_dev_table(unsigned int cmd, unsigned long arg)
     struct uda_setup_table para;
     int ret;
 
-    ret = (int)copy_from_user(&para, (struct uda_setup_table __user *)arg, sizeof(para));
+    ret = (int)ka_base_copy_from_user(&para, (struct uda_setup_table __ka_user *)arg, sizeof(para));
     if (ret != 0) {
         uda_err("Copy from user failed. (ret=%d)\n", ret);
         return ret;
@@ -72,14 +76,14 @@ static int check_uda_dev_list_para(struct uda_dev_list* para)
 
 static int ioctl_uda_get_dev_list(unsigned int cmd, unsigned long arg)
 {
-    struct uda_dev_list *usr_arg = (struct uda_dev_list __user *)arg;
+    struct uda_dev_list *usr_arg = (struct uda_dev_list __ka_user *)arg;
     struct uda_dev_list para;
     u32 devid;
     int ret;
     bool is_admin = false;
     bool is_first_read = true;
 
-    ret = (int)copy_from_user(&para, usr_arg, sizeof(para));
+    ret = (int)ka_base_copy_from_user(&para, usr_arg, sizeof(para));
     if (ret != 0) {
         uda_err("Copy from user failed. (ret=%d)\n", ret);
         return ret;
@@ -142,7 +146,7 @@ static int ioctl_uda_get_dev_list(unsigned int cmd, unsigned long arg)
 
         uda_dev_inst_put(dev_inst);
 
-        ret = copy_to_user(&para.logic_dev[devid], &logic_dev, sizeof(logic_dev));
+        ret = ka_base_copy_to_user(&para.logic_dev[devid], &logic_dev, sizeof(logic_dev));
         if (ret != 0) {
             uda_err("Copy to user failed. (ret=%d; devid=%u)\n", ret, devid);
             break;
@@ -153,30 +157,30 @@ static int ioctl_uda_get_dev_list(unsigned int cmd, unsigned long arg)
 }
 
 static int (*const uda_devid_trans_func[UDA_MAX_CMD])(u32 raw_devid, u32 *trans_devid) = {
-    [_IOC_NR(UDA_UDEVID_TO_DEVID)] = uda_udevid_to_devid,
-    [_IOC_NR(UDA_DEVID_TO_UDEVID)] = uda_devid_to_udevid,
-    [_IOC_NR(UDA_LUDEVID_TO_RUDEVID)] = uda_udevid_to_remote_udevid,
-    [_IOC_NR(UDA_RUDEVID_TO_LUDEVID)] = uda_remote_udevid_to_udevid,
+    [_KA_IOC_NR(UDA_UDEVID_TO_DEVID)] = uda_udevid_to_devid,
+    [_KA_IOC_NR(UDA_DEVID_TO_UDEVID)] = uda_devid_to_udevid,
+    [_KA_IOC_NR(UDA_LUDEVID_TO_RUDEVID)] = uda_udevid_to_remote_udevid,
+    [_KA_IOC_NR(UDA_RUDEVID_TO_LUDEVID)] = uda_remote_udevid_to_udevid,
 };
 
 static int ioctl_uda_devid_trans(unsigned int cmd, unsigned long arg)
 {
-    struct uda_devid_trans *usr_arg = (struct uda_devid_trans __user *)arg;
+    struct uda_devid_trans *usr_arg = (struct uda_devid_trans __ka_user *)arg;
     struct uda_devid_trans trans;
     int ret;
 
-    ret = (int)copy_from_user(&trans, usr_arg, sizeof(trans));
+    ret = (int)ka_base_copy_from_user(&trans, usr_arg, sizeof(trans));
     if (ret != 0) {
         uda_err("Copy from user failed. (ret=%d)\n", ret);
         return ret;
     }
 
-    ret = uda_devid_trans_func[_IOC_NR(cmd)](trans.raw_devid, &trans.trans_devid);
+    ret = uda_devid_trans_func[_KA_IOC_NR(cmd)](trans.raw_devid, &trans.trans_devid);
     if (ret != 0) {
         return ret;
     }
 
-    return (int)put_user(trans.trans_devid, &usr_arg->trans_devid);
+    return (int)ka_base_put_user(trans.trans_devid, &usr_arg->trans_devid);
 }
 
 #ifdef CFG_FEATURE_ASCEND910_95_STUB
@@ -186,7 +190,7 @@ static int ioctl_uda_set_raw_proc_is_contain_flag(unsigned int cmd, unsigned lon
 {
     int ret;
 
-    ret = (int)copy_from_user(&g_raw_proc_contain_flag, (u32 __user *)arg, sizeof(g_raw_proc_contain_flag));
+    ret = (int)ka_base_copy_from_user(&g_raw_proc_contain_flag, (u32 __ka_user *)arg, sizeof(g_raw_proc_contain_flag));
     if (ret != 0) {
         uda_err("Copy from user failed. (ret=%d)\n", ret);
         return ret;
@@ -199,7 +203,7 @@ static int ioctl_uda_get_raw_proc_is_contain_flag(unsigned int cmd, unsigned lon
 {
     int ret;
 
-    ret = (int)copy_to_user((u32 __user *)arg, &g_raw_proc_contain_flag, sizeof(g_raw_proc_contain_flag));
+    ret = (int)ka_base_copy_to_user((u32 __ka_user *)arg, &g_raw_proc_contain_flag, sizeof(g_raw_proc_contain_flag));
     if (ret != 0) {
         uda_err("Copy to user failed. (ret=%d)\n", ret);
     }
@@ -213,23 +217,23 @@ u32 uda_get_raw_proc_is_contain_flag(void)
 #endif
 
 static int (*const uda_ioctl_handles[UDA_MAX_CMD])(unsigned int cmd, unsigned long arg) = {
-    [_IOC_NR(UDA_GET_USER_INFO)] = ioctl_uda_get_user_info,
-    [_IOC_NR(UDA_SETUP_DEV_TABLE)] = ioctl_uda_setup_dev_table,
-    [_IOC_NR(UDA_GET_DEV_LIST)] = ioctl_uda_get_dev_list,
-    [_IOC_NR(UDA_UDEVID_TO_DEVID)] = ioctl_uda_devid_trans,
-    [_IOC_NR(UDA_DEVID_TO_UDEVID)] = ioctl_uda_devid_trans,
-    [_IOC_NR(UDA_LUDEVID_TO_RUDEVID)] = ioctl_uda_devid_trans,
-    [_IOC_NR(UDA_RUDEVID_TO_LUDEVID)] = ioctl_uda_devid_trans,
+    [_KA_IOC_NR(UDA_GET_USER_INFO)] = ioctl_uda_get_user_info,
+    [_KA_IOC_NR(UDA_SETUP_DEV_TABLE)] = ioctl_uda_setup_dev_table,
+    [_KA_IOC_NR(UDA_GET_DEV_LIST)] = ioctl_uda_get_dev_list,
+    [_KA_IOC_NR(UDA_UDEVID_TO_DEVID)] = ioctl_uda_devid_trans,
+    [_KA_IOC_NR(UDA_DEVID_TO_UDEVID)] = ioctl_uda_devid_trans,
+    [_KA_IOC_NR(UDA_LUDEVID_TO_RUDEVID)] = ioctl_uda_devid_trans,
+    [_KA_IOC_NR(UDA_RUDEVID_TO_LUDEVID)] = ioctl_uda_devid_trans,
 #ifdef CFG_FEATURE_ASCEND910_95_STUB
-    [_IOC_NR(UDA_SET_RAW_PROC_IS_CONTAIN_FLAG)] = ioctl_uda_set_raw_proc_is_contain_flag,
-    [_IOC_NR(UDA_GET_RAW_PROC_IS_CONTAIN_FLAG)] = ioctl_uda_get_raw_proc_is_contain_flag,
+    [_KA_IOC_NR(UDA_SET_RAW_PROC_IS_CONTAIN_FLAG)] = ioctl_uda_set_raw_proc_is_contain_flag,
+    [_KA_IOC_NR(UDA_GET_RAW_PROC_IS_CONTAIN_FLAG)] = ioctl_uda_get_raw_proc_is_contain_flag,
 #endif
 };
 
 #ifdef CFG_FEATURE_DEVID_TRANS
 static long uda_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 {
-    int cmd_nr = _IOC_NR(cmd);
+    int cmd_nr = _KA_IOC_NR(cmd);
     if ((cmd_nr < 0) || (cmd_nr >= UDA_MAX_CMD) || (uda_ioctl_handles[cmd_nr] == NULL)) {
         uda_err("Unsupported command. (cmd_nr=%d)\n", cmd_nr);
         return -EINVAL;
@@ -249,7 +253,7 @@ static int uda_release(struct inode *inode, struct file *file)
 }
 
 static struct file_operations uda_fops = {
-    .owner = THIS_MODULE,
+    .owner = KA_THIS_MODULE,
     .open = uda_open,
     .release = uda_release,
     .unlocked_ioctl = uda_ioctl,

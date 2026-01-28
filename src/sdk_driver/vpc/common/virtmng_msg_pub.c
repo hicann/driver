@@ -18,11 +18,11 @@
 #include "virtmng_msg_pub.h"
 #include "vmng_mem_alloc_interface.h"
 
-#include <linux/slab.h>
-#include <linux/sched.h>
-#include <linux/delay.h>
-#include <linux/random.h>
-#include <linux/mutex.h>
+#include "ka_system_pub.h"
+#include "ka_barrier_pub.h"
+#include "ka_memory_pub.h"
+#include "ka_common_pub.h"
+#include "ka_list_pub.h"
 
 STATIC void vmng_uninit_msg_cluster_rx_chan(struct vmng_msg_cluster *msg_cluster, const struct vmng_msg_ops *ops);
 
@@ -122,12 +122,12 @@ void vmng_msg_push_rx_queue_work(struct vmng_msg_chan_rx *msg_chan)
         vmng_err("sq_rx is NULL or rx_wq is NULL. (type=%u;chan_id=%u).\n", msg_chan->chan_type, msg_chan->chan_id);
         return;
     }
-    msg_chan->stamp = jiffies;
+    msg_chan->stamp = ka_jiffies;
     vmng_debug("Get message channel. (vpc=%u; channel=%u)\n", msg_chan->chan_type, msg_chan->chan_id);
     desc = (struct vmng_msg_desc *)msg_chan->sq_rx;
     if ((desc->out_data_len < VMNG_MSG_SQ_DATA_MAX_SIZE) && (desc->in_data_len < VMNG_MSG_SQ_DATA_MAX_SIZE) &&
         (desc->status == VMNG_MSG_SQ_STATUS_PREPARE)) {
-        queue_work(msg_chan->rx_wq, &msg_chan->rx_work);
+        ka_task_queue_work(msg_chan->rx_wq, &msg_chan->rx_work);
     } else {
         vmng_err("desc_status is error. (vpc=%u; chan=%u; desc_status=0x%x)\n",
                  msg_chan->chan_type, msg_chan->chan_id, desc->status);
@@ -142,8 +142,8 @@ int vmng_sync_msg_wait_undesire(const u32 *status, int status_init, int status_e
         if (((*status) != status_init) && ((*status) != status_enter_proc)) {
             return 0;
         }
-        rmb();
-        usleep_range(cycle, cycle);
+        ka_rmb();
+        ka_system_usleep_range(cycle, cycle);
         timeout -= (int)cycle;
     }
     return -EINVAL;
@@ -155,11 +155,11 @@ STATIC int vmng_wait_tx_finish_irq(struct vmng_msg_chan_tx *msg_chan)
     u32 exit_wait_cnt = VMNG_MSG_TX_FINISH_WAIT_CNT;
 
     /*lint -e666*/
-    ret = wait_event_interruptible(msg_chan->tx_block_wq, (msg_chan->tx_block_status == VMNG_NO_BLK_STATUS));
+    ret = ka_task_wait_event_interruptible(msg_chan->tx_block_wq, (msg_chan->tx_block_status == VMNG_NO_BLK_STATUS));
     /*lint +e666*/
     if (ret == -ERESTARTSYS) {
         while (exit_wait_cnt-- > 0) {
-            usleep_range(1000000, 1000000);
+            ka_system_usleep_range(1000000, 1000000); // 1000000 microseconds
             if (msg_chan->tx_block_status == VMNG_NO_BLK_STATUS) {
                 break;
             }
@@ -178,8 +178,8 @@ void vmng_msg_tx_finish_task(unsigned long data)
     struct vmng_msg_chan_tx *msg_chan = (struct vmng_msg_chan_tx *)(uintptr_t)data;
 
     msg_chan->tx_block_status = VMNG_NO_BLK_STATUS;
-    wmb();
-    wake_up_interruptible(&msg_chan->tx_block_wq);
+    ka_wmb();
+    ka_task_wake_up_interruptible(&msg_chan->tx_block_wq);
 }
 
 int vmng_msg_reply_data(struct vmng_msg_chan_tx *msg_chan, void *data, u32 out_data_len, u32 *real_out_data_len)
@@ -224,7 +224,7 @@ int vmng_msg_reply_data(struct vmng_msg_chan_tx *msg_chan, void *data, u32 out_d
     }
     /* real_out_len could be zero */
     if (*real_out_data_len > 0) {
-        memcpy_fromio(data, (void *)bd_desc->data, *real_out_data_len);
+        ka_mm_memcpy_fromio(data, (void *)bd_desc->data, *real_out_data_len);
     }
 
     return 0;
@@ -247,7 +247,7 @@ int vmng_msg_fill_desc(const struct vmng_tx_msg_proc_info *tx_info, u32 opcode_d
     bd_desc->real_out_len = 0;
     bd_desc->opcode_d1 = opcode_d1;
     bd_desc->opcode_d2 = opcode_d2;
-    memcpy_toio(bd_desc->data, tx_info->data, tx_info->in_data_len);
+    ka_mm_memcpy_toio(bd_desc->data, tx_info->data, tx_info->in_data_len);
     *p_sq_status = &(bd_desc->status);
 
     return 0;
@@ -268,25 +268,25 @@ STATIC int vmng_alloc_chan_wait(struct vmng_msg_cluster *msg_cluster)
         return -EINVAL;
     }
 
-    time = (int)msecs_to_jiffies(VMNG_MSG_ALLOC_WAIT_TIMEOUT_MS);
-    ret = down_timeout(&msg_cluster->cluster_sema, time);
+    time = (int)ka_system_msecs_to_jiffies(VMNG_MSG_ALLOC_WAIT_TIMEOUT_MS);
+    ret = ka_task_down_timeout(&msg_cluster->cluster_sema, time);
     if (ret != 0) {
         vmng_info("Down wait timeout.\n");
         return -ENOSPC;
     }
 
-    mutex_lock(&msg_cluster->mutex);
+    ka_task_mutex_lock(&msg_cluster->mutex);
     if (msg_cluster->alloc_stack == NULL) {
-        mutex_unlock(&msg_cluster->mutex);
-        up(&msg_cluster->cluster_sema);
+        ka_task_mutex_unlock(&msg_cluster->mutex);
+        ka_task_up(&msg_cluster->cluster_sema);
         vmng_err("Input parameter is error.\n");
         return -EINVAL;
     }
     stack = msg_cluster->alloc_stack;
     ret = vmng_stack_pop(stack, msg_cluster->res.tx_num, &chn_alloc);
     if (ret != 0) {
-        mutex_unlock(&msg_cluster->mutex);
-        up(&msg_cluster->cluster_sema);
+        ka_task_mutex_unlock(&msg_cluster->mutex);
+        ka_task_up(&msg_cluster->cluster_sema);
         vmng_err_limit("Call vmng_stack_pop error. (ret=%d)\n", ret);
         return ret;
     }
@@ -294,13 +294,13 @@ STATIC int vmng_alloc_chan_wait(struct vmng_msg_cluster *msg_cluster)
     msg_chan = msg_cluster->msg_chan_tx_beg + chn_alloc;
     if (msg_chan->status != VMNG_MSG_CHAN_STATUS_IDLE) {
         vmng_stack_push(msg_cluster->alloc_stack, msg_cluster->res.tx_num, chn_alloc);
-        mutex_unlock(&msg_cluster->mutex);
-        up(&msg_cluster->cluster_sema);
+        ka_task_mutex_unlock(&msg_cluster->mutex);
+        ka_task_up(&msg_cluster->cluster_sema);
         vmng_err("Status not idle. (index=%u; status=%u)\n", chn_alloc, msg_chan->status);
         return -EINVAL;
     }
     msg_chan->status = VMNG_MSG_CHAN_STATUS_USED;
-    mutex_unlock(&msg_cluster->mutex);
+    ka_task_mutex_unlock(&msg_cluster->mutex);
     vmng_debug("Alloc success. (index=%u; chan_id=%u)\n", chn_alloc, msg_chan->chan_id);
     return (int)chn_alloc;
 #else
@@ -325,12 +325,12 @@ STATIC void vmng_wakup_alloc_wait(struct vmng_msg_cluster *msg_cluster, int chan
     msg_chan = msg_cluster->msg_chan_tx_beg + chan;
     msg_chan->status = VMNG_MSG_CHAN_STATUS_IDLE;
 
-    mutex_lock(&msg_cluster->mutex);
+    ka_task_mutex_lock(&msg_cluster->mutex);
     if (vmng_stack_push(msg_cluster->alloc_stack, msg_cluster->res.tx_num, (u32)chan) != 0) {
         vmng_err("Stack push failed. (dev_id=%u; fid=%u)\n", msg_cluster->dev_id, msg_cluster->fid);
     }
-    mutex_unlock(&msg_cluster->mutex);
-    up(&msg_cluster->cluster_sema);
+    ka_task_mutex_unlock(&msg_cluster->mutex);
+    ka_task_up(&msg_cluster->cluster_sema);
 #endif
 }
 
@@ -407,7 +407,7 @@ int vmng_sync_msg_send(struct vmng_msg_cluster *msg_cluster, struct vmng_tx_msg_
         goto wake_up_and_release_chan;
     }
     *p_sq_status = VMNG_MSG_SQ_STATUS_PREPARE;
-    mb();
+    ka_mb();
 
     if (vmng_is_blk_chan(msg_cluster->chan_type) == false) {
         msg_chan->send_irq_to_remote(msg_chan->msg_dev, msg_chan->tx_send_irq);
@@ -442,9 +442,9 @@ wake_up_and_release_chan:
  * |--> rx_chan_proc_call_cluster --> common_rx_proc
  * |--> vpc_rx_proc
  */
-void vmng_msg_rx_msg_task(struct work_struct *p_work)
+void vmng_msg_rx_msg_task(ka_work_struct_t *p_work)
 {
-    struct vmng_msg_chan_rx *msg_chan = container_of(p_work, struct vmng_msg_chan_rx, rx_work);
+    struct vmng_msg_chan_rx *msg_chan = ka_container_of(p_work, struct vmng_msg_chan_rx, rx_work);
     struct vmng_msg_desc *desc = NULL;
     struct vmng_msg_chan_rx_proc_info proc_info;
     struct vmng_msg_dev *msg_dev = NULL;
@@ -484,7 +484,7 @@ void vmng_msg_rx_msg_task(struct work_struct *p_work)
                      msg_dev->dev_id, msg_dev->fid, desc->status, ret);
             desc->status = VMNG_MSG_SQ_STATUS_PROC_RET_FAILED;
         }
-        wmb();
+        ka_wmb();
         vmng_msg_dfx_resq_time(msg_dev->dev_id, msg_dev->fid, msg_chan, "vpc msg process time", VMNG_MSG_PROCESS_TIME);
         if ((msg_chan->chan_type > VMNG_MSG_CHAN_TYPE_VPC) && (msg_chan->chan_type <= VMNG_MSG_CHAN_TYPE_BLOCK)) {
             msg_dev->ops.send_irq_to_remote(msg_chan->msg_dev, msg_chan->resp_int_id);
@@ -519,10 +519,10 @@ STATIC int vmng_init_msg_cluster(struct vmng_msg_dev *msg_dev, enum vmng_msg_cha
     msg_cluster->msg_chan_tx_beg = &(msg_dev->msg_chan_tx[msg_cluster->res.tx_base]);
     msg_cluster->msg_chan_rx_beg = &(msg_dev->msg_chan_rx[msg_cluster->res.rx_base]);
     /* tx alloc varavious alloc */
-    init_waitqueue_head(&msg_cluster->tx_alloc_wq);
-    mutex_init(&msg_cluster->mutex);
-    sema_init(&msg_cluster->cluster_sema, res->tx_num);
-    alloc_stack = vmng_kzalloc(sizeof(struct vmng_stack) + msg_cluster->res.tx_num * sizeof(u32), GFP_KERNEL);
+    ka_task_init_waitqueue_head(&msg_cluster->tx_alloc_wq);
+    ka_task_mutex_init(&msg_cluster->mutex);
+    ka_task_sema_init(&msg_cluster->cluster_sema, res->tx_num);
+    alloc_stack = vmng_kzalloc(sizeof(struct vmng_stack) + msg_cluster->res.tx_num * sizeof(u32), KA_GFP_KERNEL);
     if (alloc_stack == NULL) {
         vmng_err("Alloc stack failed. (dev_id=%u; fid=%u)\n", msg_dev->dev_id, msg_dev->fid);
         return -EINVAL;
@@ -545,13 +545,13 @@ STATIC void vmng_uninit_msg_cluseter(struct vmng_msg_dev *msg_dev, enum vmng_msg
         return;
     }
     vmng_debug("Cluster free. (vpc=%u)\n", chan_type);
-    mutex_lock(&msg_cluster->mutex);
+    ka_task_mutex_lock(&msg_cluster->mutex);
     if (msg_cluster->alloc_stack != NULL) {
         vmng_kfree(msg_cluster->alloc_stack);
         msg_cluster->alloc_stack = NULL;
     }
-    mutex_unlock(&msg_cluster->mutex);
-    wake_up_interruptible(&msg_cluster->tx_alloc_wq);
+    ka_task_mutex_unlock(&msg_cluster->mutex);
+    ka_task_wake_up_interruptible(&msg_cluster->tx_alloc_wq);
     msg_cluster->status = VMNG_MSG_CLUSTER_STATUS_DISABLE;
 }
 
@@ -571,7 +571,7 @@ STATIC void vmng_init_msg_cluster_tx_chan(struct vmng_msg_cluster *msg_cluster, 
         msg_chan->tx_finish_irq = *(tx_finish_irq + i);
         msg_chan->send_irq_to_remote = ops->send_irq_to_remote;
         if (msg_cluster->msg_proc.tx_finish_proc != NULL) {
-            init_waitqueue_head(&msg_chan->tx_block_wq);
+            ka_task_init_waitqueue_head(&msg_chan->tx_block_wq);
         }
         if ((ops->tx_irq_init != NULL) && (ops->tx_irq_init(msg_chan) != 0)) {
             vmng_err("Tx irq init failed. (dev_id=%u; fid=%u; chan_type=%u)\n", msg_cluster->dev_id, msg_cluster->fid,
@@ -579,7 +579,7 @@ STATIC void vmng_init_msg_cluster_tx_chan(struct vmng_msg_cluster *msg_cluster, 
             return;
         }
 
-        mutex_init(&msg_chan->mutex);
+        ka_task_mutex_init(&msg_chan->mutex);
         msg_chan->status = VMNG_MSG_CHAN_STATUS_IDLE;
     }
 }
@@ -649,17 +649,17 @@ STATIC void vmng_init_msg_cluster_rx_chan(struct vmng_msg_cluster *msg_cluster, 
         /* rx msg proc */
         msg_chan->rx_recv_irq = *(rx_recv_irq + i);
         msg_chan->rx_proc = vmng_rx_chan_proc_call_cluster;
-        msg_chan->rx_wq = create_singlethread_workqueue("vpc_msg_chan_proc");
+        msg_chan->rx_wq = ka_task_create_singlethread_workqueue("vpc_msg_chan_proc");
         if (msg_chan->rx_wq == NULL) {
             vmng_uninit_msg_cluster_rx_chan(msg_cluster, ops);
             vmng_err("Creat workqueue failed. (dev_id=%u; fid=%u; chan_id=%u)\n", msg_cluster->dev_id,
                 msg_cluster->fid, msg_chan->chan_id);
             return;
         }
-        INIT_WORK(&msg_chan->rx_work, vmng_msg_rx_msg_task); /* init workqueue of irq half bottom */
+        KA_TASK_INIT_WORK(&msg_chan->rx_work, vmng_msg_rx_msg_task); /* init workqueue of irq half bottom */
         ret = ops->rx_irq_init(msg_chan);
         if (ret != 0) {
-            destroy_workqueue(msg_chan->rx_wq);
+            ka_task_destroy_workqueue(msg_chan->rx_wq);
             msg_chan->rx_wq = NULL;
             vmng_uninit_msg_cluster_rx_chan(msg_cluster, ops);
             vmng_err("Rx irq init failed. (dev_id=%u; fid=%u; chan_id=%u; ret=%d)\n",
@@ -694,7 +694,7 @@ STATIC void vmng_uninit_msg_cluster_rx_chan(struct vmng_msg_cluster *msg_cluster
         msg_chan->resp_int_id = 0;
         msg_chan->status = VMNG_MSG_CHAN_STATUS_DISABLE;
         if (msg_chan->rx_wq != NULL) {
-            destroy_workqueue(msg_chan->rx_wq);
+            ka_task_destroy_workqueue(msg_chan->rx_wq);
             msg_chan->rx_wq = NULL;
         }
     }
@@ -710,9 +710,9 @@ int vmng_alloc_local_msg_cluster(struct vmng_msg_dev *msg_dev, enum vmng_msg_cha
     msg_cluster = &(msg_dev->msg_cluster[chan_type]);
     admin_msg_cluster = &(msg_dev->msg_cluster[VMNG_MSG_CHAN_TYPE_ADMIN]);
 
-    mutex_lock(&admin_msg_cluster->mutex);
+    ka_task_mutex_lock(&admin_msg_cluster->mutex);
     if (msg_cluster->status != VMNG_MSG_CLUSTER_STATUS_DISABLE) {
-        mutex_unlock(&admin_msg_cluster->mutex);
+        ka_task_mutex_unlock(&admin_msg_cluster->mutex);
         vmng_err("Message cluster already register. (dev_id=%u; fid=%u; chan_type=%u)\n",
             msg_dev->dev_id, msg_dev->fid, chan_type);
         return -EINVAL;
@@ -721,11 +721,11 @@ int vmng_alloc_local_msg_cluster(struct vmng_msg_dev *msg_dev, enum vmng_msg_cha
     /* init cluster process */
     ret = vmng_init_msg_cluster(msg_dev, chan_type, res, msg_proc);
     if (ret != 0) {
-        mutex_unlock(&admin_msg_cluster->mutex);
+        ka_task_mutex_unlock(&admin_msg_cluster->mutex);
         vmng_err("Cluster init error. (dev_id=%u; fid=%u; ret=%d)\n", msg_dev->dev_id, msg_dev->fid, ret);
         return ret;
     }
-    mutex_unlock(&admin_msg_cluster->mutex);
+    ka_task_mutex_unlock(&admin_msg_cluster->mutex);
 
     vmng_init_msg_cluster_tx_chan(&(msg_dev->msg_cluster[chan_type]), &(msg_dev->ops), int_irq_ary->tx_send_irq,
         int_irq_ary->tx_finish_irq);
@@ -780,7 +780,7 @@ int vmng_msg_chan_init(u32 side, struct vmng_msg_dev *msg_dev)
         msg_chan_rx->msg_dev = msg_dev;
         msg_chan_rx->sq_rx = msg_dev->mem_base + (u64)((u64)i * VMNG_MSG_SQ_TXRX + sq_rx_beg) * VMNG_MSG_QUEUE_SQ_SIZE;
 
-        msg_chan_rx->sq_rx_safe_data = vmng_kzalloc(VMNG_MSG_SQ_DATA_MAX_SIZE, GFP_KERNEL);
+        msg_chan_rx->sq_rx_safe_data = vmng_kzalloc(VMNG_MSG_SQ_DATA_MAX_SIZE, KA_GFP_KERNEL);
         if (msg_chan_rx->sq_rx_safe_data == NULL) {
             vmng_err("Kzalloc safe data failed. (size=%lu)\n", VMNG_MSG_SQ_DATA_MAX_SIZE);
             goto failed;
@@ -826,8 +826,8 @@ void vmng_free_msg_dev(struct vmng_msg_dev *msg_dev)
         vmng_free_msg_cluster(msg_dev, i);
     }
     vmng_msg_chan_uninit(msg_dev);
-    destroy_workqueue(msg_dev->work_queue);
-    list_del(&msg_dev->list);
+    ka_task_destroy_workqueue(msg_dev->work_queue);
+    ka_list_del(&msg_dev->list);
     vmng_kfree(msg_dev);
 }
 
@@ -836,7 +836,7 @@ void vmng_msg_dfx_resq_time(u32 dev_id, u32 fid, struct vmng_msg_chan_rx *msg_ch
     u32 resq_time;
 
     if (vmng_is_blk_chan(msg_chan->chan_type) == false) {
-        resq_time = jiffies_to_msecs(jiffies - msg_chan->stamp);
+        resq_time = ka_system_jiffies_to_msecs(ka_jiffies - msg_chan->stamp);
         if (resq_time > timeout) {
             vmng_info("Get resq time. (dev_id=%u; fid=%u; resq_time=%ums; chan_type=%d; chan_id=%d; err=\"%s\")\n",
                 dev_id, fid, resq_time, msg_chan->chan_type, msg_chan->chan_id, errstr);

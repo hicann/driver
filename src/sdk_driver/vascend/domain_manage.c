@@ -17,6 +17,7 @@
 #include "dvt.h"
 #include "dma_pool.h"
 #include "domain_manage.h"
+#include "vfio_ops.h"
 
 LIST_HEAD(g_vm_domains);
 DEFINE_MUTEX(g_vm_domains_lock);
@@ -150,12 +151,7 @@ struct vm_dom_info *vm_dom_info_new(struct kvm *kvm)
     INIT_LIST_HEAD(&(vm_dom->dev_dom_list_head));
     list_add_tail(&(vm_dom->node), &g_vm_domains);
 
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4,14,0))
-    init_iova_domain(&vm_dom->iovad, PAGE_SIZE, 1);
-#else
-    init_iova_domain(&vm_dom->iovad, PAGE_SIZE, 1,
-                     DMA_BIT_MASK(DOMAIN_DMA_BIT_MASK_32) >> PAGE_SHIFT);
-#endif
+    vdavinci_init_iova_domain(&vm_dom->iovad);
 
     return vm_dom;
 }

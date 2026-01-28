@@ -50,6 +50,11 @@
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 11, 0)
 #include <linux/refcount.h>
 #endif
+#include <linux/irq.h>
+#include <linux/irqdesc.h>
+#if defined(__sw_64__)
+#include <linux/irqdomain.h>
+#endif
 #include <linux/seq_file.h>
 #include <linux/uaccess.h>
 #include <linux/device.h>
@@ -68,6 +73,10 @@
 #include <linux/jhash.h>
 #include <linux/stat.h>
 #include <linux/posix_types.h>
+#include <linux/msi.h>
+#if LINUX_VERSION_CODE > KERNEL_VERSION(6, 6, 0)
+#include <linux/pci_regs.h>
+#endif
 
 #include "ka_common_pub.h"
 #include "ka_custom_header_pub.h"
@@ -136,6 +145,7 @@ typedef struct device_type ka_device_type_t;
 
 #define ka_base_round_up(x, y) round_up(x, y)
 #define ka_base_round_down(x, y) round_down(x, y)
+#define ka_base_roundup(x, y) roundup(x, y)
 #define ka_base_rounddown(x, y) rounddown(x, y)
 #define KA_BASE_DIV_ROUND_UP(n, d) DIV_ROUND_UP(n, d)
 
@@ -151,6 +161,13 @@ typedef struct device_type ka_device_type_t;
 #define ka_base_find_first_bit(addr, size) find_first_bit(addr, size)
 #define _ka_base_copy_from_user(to, from, n) _copy_from_user(to, from, n)
 #define _ka_base_copy_to_user(to, from, n) _copy_to_user(to, from, n)
+
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 17, 0)
+#define ka_base_for_each_msi_entry(desc, dev) msi_for_each_desc((desc), (dev), (MSI_DESC_ASSOCIATED))
+#else
+#define ka_base_for_each_msi_entry(desc, dev) for_each_msi_entry((desc), (dev))
+#endif
+#define ka_base_irq_has_action(irq) irq_has_action(irq)
 
 #define ka_base_rb_entry(ptr, type, member) rb_entry(ptr, type, member)
 #define ka_base_rb_insert_color(node, root) rb_insert_color(node, root)
@@ -202,7 +219,6 @@ static inline ka_rb_node_t **ka_base_get_rb_node_right_addr(ka_rb_node_t *node)
 #define ka_base_idr_init_base(idr, base) idr_init_base(idr, base)
 #define ka_base_idr_is_empty(idr) idr_is_empty(idr)
 
-
 #define ka_base_ida_destroy(ida) ida_destroy(ida)
 #define ka_base_ida_alloc_range(ida, min, max, gfp) ida_alloc_range(ida, min, max, gfp)
 #define ka_base_ida_free(ida, id) ida_free(ida, id)
@@ -210,7 +226,6 @@ static inline ka_rb_node_t **ka_base_get_rb_node_right_addr(ka_rb_node_t *node)
 #define ka_base_strnlen_user(str, count) strnlen_user(str, count)
 #define ka_base_print_hex_dump(level, prefix_str, prefix_type, rowsize, groupsize, buf, len, ascii) print_hex_dump(level, prefix_str, prefix_type, rowsize, groupsize, buf, len, ascii)
 #define ka_base_print_hex_dump_bytes(prefix_str, prefix_type, buf, len) print_hex_dump_bytes(prefix_str, prefix_type, buf, len)
-
 
 #define __ka_base_kfifo_alloc(fifo, size, esize, gfp_mask) __kfifo_alloc(fifo, size, esize, gfp_mask)
 #define __ka_base_kfifo_free(fifo) __kfifo_free(fifo)
@@ -222,10 +237,8 @@ static inline ka_rb_node_t **ka_base_get_rb_node_right_addr(ka_rb_node_t *node)
 #define __ka_base_udelay(usecs) __udelay(usecs)
 #define __ka_base_const_udelay(xloops) __const_udelay(xloops)
 
-
 #define ka_base_dql_completed(dql, count) dql_completed(dql, count)
 #define ka_base_dql_reset(dql) dql_reset(dql)
-
 
 static inline void ka_base_set_kobj_parent(ka_kobject_t *kobj, ka_kobject_t *parent)
 {
@@ -233,7 +246,6 @@ static inline void ka_base_set_kobj_parent(ka_kobject_t *kobj, ka_kobject_t *par
 }
 #define ka_base_kobject_put(kobj) kobject_put(kobj)
 #define ka_base_kobject_name(kobj) kobject_name(kobj)
-
 
 #define ka_base_fasync_helper(fd, filp, on, fap) fasync_helper(fd, filp, on, fap)
 #define ka_base_kill_fasync(fp, sig, band) kill_fasync(fp, sig, band)
@@ -382,6 +394,13 @@ typedef struct scatterlist ka_scatterlist_t;
 #define ka_base_put_user(x, ptr) put_user(x, ptr)
 
 u32 ka_base_get_random_u32(void);
+ka_module_t *ka_base_find_module(const char *name);
+typedef bool (*func_by_string)(const char *name);
+func_by_string ka_base_register_func_by_string(bool (*func_high_v)(const char *name),
+    bool (*func_low_v)(const char *name));
+typedef bool (*func_by_pdev)(ka_pci_dev_t *pdev);
+func_by_pdev ka_base_register_func_by_pdev(bool (*func_high_v)(ka_pci_dev_t *pdev),
+    bool (*func_low_v)(ka_pci_dev_t *pdev));
 #define ka_base_device_initialize(dev) device_initialize(dev)
 #define ka_base_kref_init(ka_kref_t) kref_init(ka_kref_t)
 #define ka_base_kref_get(ka_kref_t) kref_get(ka_kref_t)
@@ -437,14 +456,20 @@ void *ka_base_pde_data(const ka_inode_t *inode);
 #define ka_base_atomic64_set(v, i) atomic64_set(v, i)
 #define ka_base_atomic_inc(v) atomic_inc(v)
 #define ka_base_atomic_add(i, v) atomic_add(i, v)
+#define ka_base_atomic_sub(i, v) atomic_sub(i, v)
 #define ka_base_atomic_add_return(i, v) atomic_add_return(i, v)
+#define ka_base_device_attach(dev) device_attach(dev)
+#define ka_base_device_release_driver(dev) device_release_driver(dev)
+#define ka_base_kstrtoul(s, base, res) kstrtoul(s, base, res)
+#define ka_base_set_dev_node(dev, node) set_dev_node(dev, node)
 
+void ka_base_set_cdev_owner(ka_cdev_t *cdev, ka_module_t *owner);
 static inline void ka_base_set_device_devt(ka_device_t *dev, ka_dev_t devt)
 {
     dev->devt = devt;
 }
 
-#if (!defined EMU_ST) && (!defined UT_VCAST)
+#if (!defined __cplusplus) && (!defined EMU_ST) && (!defined UT_VCAST)
 static inline void ka_base_set_device_class(ka_device_t *dev, ka_class_t *class)
 {
     dev->class = class;

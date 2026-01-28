@@ -13,22 +13,23 @@
 
 #include "vmng_kernel_interface.h"
 #include "virtmng_public_def.h"
+#include "ka_kernel_def_pub.h"
 
 int vmngh_common_msg_send(u32 dev_id, u32 fid, enum vmng_msg_common_type cmn_type,
     struct vmng_tx_msg_proc_info *tx_info)
 {
     return 0;
 }
-EXPORT_SYMBOL(vmngh_common_msg_send);
+KA_EXPORT_SYMBOL(vmngh_common_msg_send);
 
 int vmngh_register_common_msg_client(u32 dev_id, u32 fid, const struct vmng_common_msg_client *msg_client)
 {
     return 0;
 }
-EXPORT_SYMBOL(vmngh_register_common_msg_client);
+KA_EXPORT_SYMBOL(vmngh_register_common_msg_client);
 
 int vmngh_unregister_common_msg_client(u32 dev_id, u32 fid, const struct vmng_common_msg_client *msg_client)
 {
     return 0;
 }
-EXPORT_SYMBOL(vmngh_unregister_common_msg_client);
+KA_EXPORT_SYMBOL(vmngh_unregister_common_msg_client);

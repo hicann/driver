@@ -14,12 +14,9 @@
 #ifndef HW_VDAVINCI_H_
 #define HW_VDAVINCI_H_
 
-#include <uapi/linux/uuid.h>
-#include <linux/list.h>
-#include <linux/scatterlist.h>
-#include <linux/uuid.h>
-#include <linux/types.h>
-#include <linux/dma-mapping.h>
+#include "ka_common_pub.h"
+#include "ka_base_pub.h"
+#include "ka_memory_pub.h"
 
 #define RESERVE_SIZE 40
 #define HW_DVT_MAX_TYPE_NAME 32
@@ -141,8 +138,8 @@ struct vdavinci_bar_map {
     size_t offset;
     enum HW_MAP_TYPE map_type;
     union {
-        u64 paddr;      /* vaild when map_type is MAP_TYPE_PASSTHROUGH */
-        void *vaddr;    /* vaild when map_type is MAP_TYPE_BACKEND */
+        u64 paddr;      /* valid when map_type is MAP_TYPE_PASSTHROUGH */
+        void *vaddr;    /* valid when map_type is MAP_TYPE_BACKEND */
     };
     size_t size;
 };
@@ -152,15 +149,15 @@ struct vdavinci_mapinfo {
     struct vdavinci_bar_map map_info[HW_BAR_SPARSE_MAP_MAX];
 };
 struct vdavinci_dev {
-    struct device *dev;
+    ka_device_t *dev;
     u32 dev_index;
     u32 fid;
-    struct device *resource_dev;
+    ka_device_t *resource_dev;
 };
 
 struct vdavinci_priv_ops {
     int (*vdavinci_create)(struct vdavinci_dev *dev, void *vdavinci,
-                           struct vdavinci_type *type, uuid_le uuid);
+                           struct vdavinci_type *type, ka_uuid_le_t uuid);
     void (*vdavinci_destroy)(struct vdavinci_dev *dev);
     void (*vdavinci_release)(struct vdavinci_dev *dev);
     int (*vdavinci_reset)(struct vdavinci_dev *dev);
@@ -170,14 +167,14 @@ struct vdavinci_priv_ops {
                                struct vdavinci_type *type, u32 bar_id,
                                struct vdavinci_mapinfo *mapinfo);
     int (*vdavinci_putmapinfo)(struct vdavinci_dev *dev);
-    int (*davinci_getdevnum)(struct device *dev);
-    int (*davinci_getdevinfo)(struct device *dev, u32 dev_index,
+    int (*davinci_getdevnum)(ka_device_t *dev);
+    int (*davinci_getdevinfo)(ka_device_t *dev, u32 dev_index,
             struct dvt_devinfo* dev_info);
-    int (*vascend_enable_sriov)(struct pci_dev *pdev, int numvfs);
+    int (*vascend_enable_sriov)(ka_pci_dev_t *pdev, int numvfs);
 };
 
 struct vdavinci_priv {
-	struct device *dev;
+	ka_device_t *dev;
 	void *dvt;
 	struct vdavinci_priv_ops *ops;
 	char reserve[RESERVE_SIZE];
@@ -193,8 +190,8 @@ struct vdavinci_drv_ops {
     int (*vdavinci_hypervisor_dma_pool_init)(void *__vdavinci);
     void (*vdavinci_hypervisor_dma_pool_uninit)(void *__vdavinci);
     int (*vdavinci_hypervisor_dma_map_guest_page)(void *__vdavinci, unsigned long gfn, unsigned long size,
-        struct sg_table **dma_sgt);
-    void (*vdavinci_hypervisor_dma_unmap_guest_page)(void *__vdavinci, struct sg_table *dma_sgt);
+        ka_sg_table_t **dma_sgt);
+    void (*vdavinci_hypervisor_dma_unmap_guest_page)(void *__vdavinci, ka_sg_table_t *dma_sgt);
     bool (*vdavinci_hypervisor_dma_pool_active)(void *__vdavinci);
     int (*vdavinci_hypervisor_dma_map_guest_page_batch)(void *__vdavinci, unsigned long *gfn, unsigned long *dma_addr,
         unsigned long count);
@@ -202,18 +199,18 @@ struct vdavinci_drv_ops {
         unsigned long *dma_addr, unsigned long count);
     bool (*vdavinci_hypervisor_is_valid_gfn)(void *__vdavinci, unsigned long gfn);
     int (*vdavinci_hypervisor_mmio_get)(void **dst, int *size, void *__vdavinci, int bar);
-    void *(*vdavinci_hypervisor_dma_alloc_coherent)(struct device *dev, size_t size, dma_addr_t *dma_handle, gfp_t gfp);
-    void (*vdavinci_hypervisor_dma_free_coherent)(struct device *dev, size_t size,
-                                                  void *cpu_addr, dma_addr_t dma_handle);
-    dma_addr_t (*vdavinci_hypervisor_dma_map_single)(struct device *dev, void *ptr,
-                                                     size_t size, enum dma_data_direction dir);
-    void (*vdavinci_hypervisor_dma_unmap_single)(struct device *dev, dma_addr_t addr,
-                                                 size_t size, enum dma_data_direction dir);
-    dma_addr_t (*vdavinci_hypervisor_dma_map_page)(struct device *dev, struct page *page, size_t offset,
-        size_t size, enum dma_data_direction dir);
-    void (*vdavinci_hypervisor_dma_unmap_page)(struct device *dev, dma_addr_t addr, size_t size,
-        enum dma_data_direction dir);
-    int (*vdavinci_get_reserve_iova_for_check)(struct device *dev, dma_addr_t *iova_addr, size_t *size);
+    void *(*vdavinci_hypervisor_dma_alloc_coherent)(ka_device_t *dev, size_t size, ka_dma_addr_t *dma_handle, ka_gfp_t gfp);
+    void (*vdavinci_hypervisor_dma_free_coherent)(ka_device_t *dev, size_t size,
+                                                  void *cpu_addr, ka_dma_addr_t dma_handle);
+    ka_dma_addr_t (*vdavinci_hypervisor_dma_map_single)(ka_device_t *dev, void *ptr,
+                                                     size_t size, ka_dma_data_direction_t dir);
+    void (*vdavinci_hypervisor_dma_unmap_single)(ka_device_t *dev, ka_dma_addr_t addr,
+                                                 size_t size, ka_dma_data_direction_t dir);
+    ka_dma_addr_t (*vdavinci_hypervisor_dma_map_page)(ka_device_t *dev, ka_page_t *page, size_t offset,
+        size_t size, ka_dma_data_direction_t dir);
+    void (*vdavinci_hypervisor_dma_unmap_page)(ka_device_t *dev, ka_dma_addr_t addr, size_t size,
+        ka_dma_data_direction_t dir);
+    int (*vdavinci_get_reserve_iova_for_check)(ka_device_t *dev, ka_dma_addr_t *iova_addr, size_t *size);
 
 };
 
@@ -225,7 +222,7 @@ typedef enum {
 
 struct vdavinci_mode_info {
     VDAVINCI_MODE mode;
-    struct rw_semaphore rw_sem;
+    ka_rw_semaphore_t rw_sem;
 };
 
 struct vdavinci_drv_ops *get_vdavinci_virtual_ops(void);
@@ -310,7 +307,7 @@ void hw_dvt_hypervisor_dma_pool_uninit(void *__vdavinci);
  */
 int hw_dvt_hypervisor_dma_map_guest_page(void *__vdavinci, unsigned long gfn,
 					unsigned long size,
-					struct sg_table **dma_sgt);
+					ka_sg_table_t **dma_sgt);
 
 /**
  * hw_dvt_hypervisor_dma_unmap_guest_page - cancel dma map for guest page
@@ -318,7 +315,7 @@ int hw_dvt_hypervisor_dma_map_guest_page(void *__vdavinci, unsigned long gfn,
  * @dma_sgt: the dma addr list(sg_table)
  */
 void hw_dvt_hypervisor_dma_unmap_guest_page(void *__vdavinci,
-					struct sg_table *dma_sgt);
+					ka_sg_table_t *dma_sgt);
 
 /**
  * hw_dvt_hypervisor_dma_pool_active - dma pool active or not
@@ -371,7 +368,7 @@ bool hw_dvt_hypervisor_is_valid_gfn(void *__vdavinci, unsigned long gfn);
 /**
  * hw_dvt_hypervisor_mmio_get - get the mmio address and size of specified bar
  * @dst: return the mmio address to host driver
- * @size: retrun the mmio size to host driver
+ * @size: return the mmio size to host driver
  * @vdavinci: a vdavinci
  * @bar: specify the bar[2/4]
  *
@@ -381,16 +378,16 @@ bool hw_dvt_hypervisor_is_valid_gfn(void *__vdavinci, unsigned long gfn);
 
 int hw_dvt_hypervisor_mmio_get(void **dst, int *size, void *vdavinci, int bar);
 
-void *hw_dvt_hypervisor_dma_alloc_coherent(struct device *dev, size_t size, dma_addr_t *dma_handle, gfp_t gfp);
-void hw_dvt_hypervisor_dma_free_coherent(struct device *dev, size_t size, void *cpu_addr, dma_addr_t dma_handle);
-dma_addr_t hw_dvt_hypervisor_dma_map_single(struct device *dev, void *ptr, size_t size,
-    enum dma_data_direction dir);
-void hw_dvt_hypervisor_dma_unmap_single(struct device *dev, dma_addr_t addr, size_t size,
-    enum dma_data_direction dir);
-dma_addr_t hw_dvt_hypervisor_dma_map_page(struct device *dev, struct page *page, size_t offset,
-                                          size_t size, enum dma_data_direction dir);
-void hw_dvt_hypervisor_dma_unmap_page(struct device *dev, dma_addr_t addr, size_t size, enum dma_data_direction dir);
+void *hw_dvt_hypervisor_dma_alloc_coherent(ka_device_t *dev, size_t size, ka_dma_addr_t *dma_handle, ka_gfp_t gfp);
+void hw_dvt_hypervisor_dma_free_coherent(ka_device_t *dev, size_t size, void *cpu_addr, ka_dma_addr_t dma_handle);
+ka_dma_addr_t hw_dvt_hypervisor_dma_map_single(ka_device_t *dev, void *ptr, size_t size,
+    ka_dma_data_direction_t dir);
+void hw_dvt_hypervisor_dma_unmap_single(ka_device_t *dev, ka_dma_addr_t addr, size_t size,
+    ka_dma_data_direction_t dir);
+ka_dma_addr_t hw_dvt_hypervisor_dma_map_page(ka_device_t *dev, ka_page_t *page, size_t offset,
+                                          size_t size, ka_dma_data_direction_t dir);
+void hw_dvt_hypervisor_dma_unmap_page(ka_device_t *dev, ka_dma_addr_t addr, size_t size, ka_dma_data_direction_t dir);
 
-int hw_dvt_hypervisor_get_reserve_iova(struct device *dev, dma_addr_t *iova_addr, size_t *size);
+int hw_dvt_hypervisor_get_reserve_iova(ka_device_t *dev, ka_dma_addr_t *iova_addr, size_t *size);
 
 #endif /* HW_VDAVINCI_H_ */

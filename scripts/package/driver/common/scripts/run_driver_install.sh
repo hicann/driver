@@ -612,7 +612,8 @@ is_pci_link_success()
 }
 
 is_ub_link_success() {
-    # 该功能跟随后续通信组维测需求开发，当前打桩
+    # This feature will be developed according to the subsequent communication
+    # module maintenance and testing requirements.
     return 0
 }
 
@@ -891,7 +892,7 @@ if [ $? -ne 0 ];then
 fi
 progress_bar $percent $weight 40
 
-# drvier ko auto insmod
+# driver ko auto insmod
 driver_ko_install
 if [ $? -ne 0 ];then
     drvColorEcho "[ERROR]\033[31mDriver_ko_install failed, details in : $logFile \033[0m"

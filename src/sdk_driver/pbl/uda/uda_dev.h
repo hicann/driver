@@ -178,7 +178,7 @@ struct uda_dev_inst *uda_dev_inst_get_ex(u32 udevid);
 void uda_dev_inst_put(struct uda_dev_inst *dev_inst);
 int uda_udevid_to_remote_udevid(u32 udevid, u32 *remote_udevid);
 int uda_guid_compare(u32 *guid, u32 *other_guid);
-void uda_guid_sort(unsigned int start, unsigned int end);
+void uda_module_id_sort(unsigned int start, unsigned int end);
 
 int uda_dev_init(void);
 void uda_dev_uninit(void);

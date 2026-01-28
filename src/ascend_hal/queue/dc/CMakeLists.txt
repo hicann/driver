@@ -9,18 +9,26 @@
 # ------------------------------------------------------------------------------------------------------------
 add_library(queue_obj OBJECT)
 
+if (${PRODUCT} STREQUAL ascend910_95)
+    if (${CMAKE_HOST_SYSTEM_PROCESSOR} STREQUAL aarch64)
+        if(${ENABLE_UBE})
+            set(support_ub "ascend910_95")
+        endif ()
+    endif ()
+endif ()
+
 target_include_directories(queue_obj PRIVATE
-    ${DRIVER_USER_DIR}/ascend_base_hal
     ${DRIVER_USER_DIR}/buff/dc/comm
     ${DRIVER_USER_DIR}/buff/dc/comm/lib
     ${DRIVER_USER_DIR}/buff/dc/comm/common
-    ${DRIVER_USER_DIR}/commlib
+    ${DRIVER_USER_DIR}/pbl/commlib
     ${DRIVER_USER_DIR}/queue/command
     ${DRIVER_USER_DIR}/queue/dc/core
     ${DRIVER_USER_DIR}/queue/dc/interface
     ${C_SEC_INCLUDE}
     ${DRIVER_HAL_INC_DIR}
     ${DRIVER_USER_DIR}/inc
+    ${DRIVER_USER_DIR}/inc/pbl
     ${DRIVER_KERNEL_DIR}/queue/command/ioctl
     ${DRIVER_KERNEL_DIR}/esched/command/ioctl
     ${DRIVER_KERNEL_DIR}/queue/command/msg
@@ -35,8 +43,10 @@ target_include_directories(queue_obj PRIVATE
 
 target_compile_definitions(queue_obj PRIVATE
     DRV_HOST
-    CFG_FEATURE_REQ_DMA_SRC_DST_ADDR_ALIGN
+    $<$<STREQUAL:${PRODUCT},ascend910B>:CFG_FEATURE_REQ_DMA_SRC_DST_ADDR_ALIGN>
     CFG_FEATURE_HOST_SUPPORT_LOCAL_QUEUE
+    $<$<IN_LIST:${PRODUCT},${support_ub}>:CFG_FEATURE_QUE_SUPPORT_UB>
+    $<$<AND:$<STREQUAL:${PRODUCT},ascend910_95>,$<STREQUAL:${CMAKE_HOST_SYSTEM_PROCESSOR},aarch64>>:SSAPI_USE_MAMI>
 )
 
 target_link_libraries(queue_obj PRIVATE

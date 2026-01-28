@@ -13,12 +13,10 @@
 #include <sys/sysinfo.h>
 #include <sys/mman.h>
 
-#include "ascend_hal.h"
 #include "esched_user_interface.h"
 #include "dms_user_interface.h"
 #include "hdc_cmn.h"
 #include "hdc_cfg_parse.h"
-#include "hdc_core.h"
 #include "hdc_server.h"
 #include "hdc_client.h"
 #include "hdc_pcie_drv.h"
@@ -160,8 +158,7 @@ void hdc_pcie_close_bind_fd(mmProcess fd)
     }
 }
 
-#ifndef CFG_ENV_DEV
-STATIC bool hdc_is_in_ub(void)
+bool hdc_is_in_ub(void)
 {
     if ((g_hdcConfig.trans_type != HDC_TRANS_USE_PCIE) || (g_hdcConfig.h2d_type != HDC_TRANS_USE_UB)) {
         return false;
@@ -169,7 +166,6 @@ STATIC bool hdc_is_in_ub(void)
 
     return true;
 }
-#endif
 
 STATIC hdcError_t hdc_get_trans_type(PCFGPARSE_CB_T handle, struct hdcConfig *config)
 {
@@ -186,11 +182,11 @@ STATIC hdcError_t hdc_get_trans_type(PCFGPARSE_CB_T handle, struct hdcConfig *co
             trans_type = atoi(value[0]);
             if ((trans_type > (int)HDC_TRANS_USE_PCIE) || (trans_type < 0)) {
                 HDC_LOG_INFO("Hdc Config File(hdcBasic.cfg) TRANS_TYPE not correct, "
-                    "Please Correct it And Restart Process hdcd. Use Defaule Type(PCIE)\n");
+                    "Please Correct it And Restart Process hdcd. Use Default Type(PCIE)\n");
             }
         } else {
             HDC_LOG_INFO("Hdc Config File(hdcBasic.cfg) TRANS_TYPE not correct, "
-                "Please Correct it And Restart Process hdcd. Use Defaule Type(PCIE)\n");
+                "Please Correct it And Restart Process hdcd. Use Default Type(PCIE)\n");
         }
         config->trans_type = (enum halHdcTransType)trans_type;
     } else {
@@ -786,7 +782,7 @@ signed int drv_hdc_socket_recv(signed int sockfd, char *pBuf, unsigned int msgLe
  * 3.That is, last_len = 4k*n, keeping n aligned upwards yto align_len = 4k*2^m.
  * 4.alloc_len = alloc_len
  */
-STATIC unsigned int hdc_get_alloc_len(unsigned int len, unsigned int flag)
+unsigned int hdc_get_alloc_len(unsigned int len, unsigned int flag)
 {
     unsigned int alloc_len, last_len, align_len;
     unsigned int n_bit = 0;
@@ -817,26 +813,6 @@ STATIC unsigned int hdc_get_alloc_len(unsigned int len, unsigned int flag)
     return alloc_len;
 }
 
-STATIC void *drv_hdc_mmap(mmProcess fd, void *addr, unsigned int alloc_len, unsigned int flag)
-{
-    unsigned int map_flags = MAP_SHARED;
-    mmProcess mmap_fd = fd;
-
-#ifndef CFG_ENV_HOST
-    if (flag & HDC_FLAG_MAP_HUGE) {
-        map_flags = MAP_SHARED | MAP_ANONYMOUS | MAP_HUGETLB;
-        mmap_fd = -1;
-    }
-
-    if (flag & HDC_FLAG_MAP_VA32BIT) {
-        map_flags |= MEM_DVPP;
-    }
-#else
-    (void)flag;
-#endif  // CFG_ENV_HOST
-    return (void *)mmap(addr, alloc_len, PROT_READ | PROT_WRITE, (signed int)map_flags, mmap_fd, 0);
-}
-
 STATIC void drv_hdc_init_buf(const void *buf, unsigned int init_flag, unsigned int alloc_len, unsigned int page_size)
 {
     unsigned int offset = 0;
@@ -850,10 +826,6 @@ STATIC void drv_hdc_init_buf(const void *buf, unsigned int init_flag, unsigned i
 STATIC signed int drv_hdc_malloc_para_check(enum drvHdcMemType mem_type, unsigned int align,
     unsigned int len, unsigned int flag)
 {
-#ifdef CFG_ENV_HOST
-    unsigned int alloc_len;
-#endif
-
     if (g_hdcConfig.trans_type != HDC_TRANS_USE_PCIE) {
         HDC_LOG_ERR("Socket mode not support. (mem_type=%d)\n", mem_type);
         return DRV_ERROR_INVALID_VALUE;
@@ -883,16 +855,7 @@ STATIC signed int drv_hdc_malloc_para_check(enum drvHdcMemType mem_type, unsigne
         return DRV_ERROR_INVALID_VALUE;
     }
 
-#ifdef CFG_ENV_HOST
-    alloc_len = hdc_get_alloc_len(len, flag);
-    if (((mem_type == HDC_MEM_TYPE_TX_CTRL) || (mem_type == HDC_MEM_TYPE_RX_CTRL)) &&
-        (alloc_len > HDCDRV_CTRL_MEM_MAX_LEN)) {
-        HDC_LOG_ERR("alloc_len is not support for ctrl. (alloc_len=%d)\n", alloc_len);
-        return DRV_ERROR_INVALID_VALUE;
-    }
-#endif
-
-    return DRV_ERROR_NONE;
+    return drv_hdc_alloc_len_check(mem_type, len, flag);
 }
 
 STATIC void drv_hdc_mmap_fail_info_show(enum drvHdcMemType mem_type, unsigned int alloc_len,
@@ -926,9 +889,7 @@ void *drvHdcMallocEx(enum drvHdcMemType mem_type, void *addr, unsigned int align
         return NULL;
     }
 
-#ifdef CFG_ENV_HOST
-    flag = 0;
-#endif
+    drv_hdc_set_malloc_flag(&flag);
 
     if ((devid >= hdc_get_max_device_num()) || (devid < 0)) {
         map = 0;
@@ -1782,15 +1743,12 @@ hdcError_t halHdcSessionCloseEx(HDC_SESSION session, int type)
         return DRV_ERROR_INVALID_VALUE;
     }
 
-    if (type == HDC_SESSION_CLOSE_FLAG_LOCAL) {
-#ifdef CFG_ENV_DEV
-        return DRV_ERROR_NOT_SUPPORT;
-#else
-        if (!hdc_is_in_ub()) {
-            HDC_LOG_WARN("local close only support in UB.\n");
+    if (type == HDC_SESSION_CLOSE_FLAG_LOCAL)
+    {
+        if (!drv_hdc_is_support_session_close())
+        {
             return DRV_ERROR_NOT_SUPPORT;
         }
-#endif
     }
 
     if (session == NULL) {
@@ -2026,7 +1984,7 @@ STATIC signed int drv_hdc_send_check(const struct hdc_session *pSession, const s
    Input Parameters      : HDC_SESSION session        Specify in which session to send data
                            struct drvHdcMsg *pMsg     Descriptor pointer for sending messages. The maximum sending length
                            UINT64 flag                Reserved parameter, currently fixed 0
-                           unsigned int timout        Allow time for send timeout determined by user mode
+                           unsigned int timeout        Allow time for send timeout determined by user mode
    Output Parameters     : None
    Return Value          : DRV_ERROR_NONE
                            DRV_ERROR_INVALID_VALUE

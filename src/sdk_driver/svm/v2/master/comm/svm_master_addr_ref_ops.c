@@ -12,7 +12,6 @@
  */
 
 #include <linux/types.h>
-#include <linux/kernel.h>
 
 #include "svm_master_addr_ref_ops.h"
 

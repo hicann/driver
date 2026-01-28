@@ -14,28 +14,30 @@
 #ifndef VIRTMNGAGENT_VPC_UNIT_H
 #define VIRTMNGAGENT_VPC_UNIT_H
 
-#include <linux/interrupt.h>
-#include <linux/pci.h>
 #include "virtmng_msg_pub.h"
 #include "virtmng_public_def.h"
 #include "vpc_kernel_interface.h"
+#include "ka_pci_pub.h"
+#include "ka_task_pub.h"
+#include "ka_base_pub.h"
+#include "ka_common_pub.h"
 
 struct vmnga_vpc_msxi_ctrl {
-    struct msix_entry entries[VIRTMNGAGENT_MSIX_MAX];
+    ka_msix_entry_t entries[VIRTMNGAGENT_MSIX_MAX];
     u32 msix_irq_num;
     u32 msix_irq_base;
 };
 
 struct vmnga_vpc_start_dev {
-    wait_queue_head_t wq;      /* wait queue for start check */
-    wait_queue_head_t wq_stop; /* wait queue for stop host */
-    atomic_t start_flag;       /* start flag for irq to work */
+    ka_wait_queue_head_t wq;      /* wait queue for start check */
+    ka_wait_queue_head_t wq_stop; /* wait queue for stop host */
+    ka_atomic_t start_flag;       /* start flag for irq to work */
     u32 db_id;
     u32 msix_id;
 };
 
 struct vmnga_vpc_unit {
-    struct pci_dev *pdev;                       /* pci dev */
+    ka_pci_dev_t *pdev;                       /* pci dev */
     void __iomem *db_base;                      /* doorbell base address VA , bar0 */
     void __iomem *msg_base;                     /* msg base address VA ; part of bar2 */
     void __iomem *ts_msg_base;                  /* ts msg base address VA, bar4 */
@@ -50,7 +52,7 @@ struct vmnga_vpc_unit {
 void vmnga_bar_wr(void __iomem *io_base, u32 offset, u32 val);
 void vmnga_bar_rd(const void __iomem *io_base, u32 offset, u32 *val);
 void vmnga_set_doorbell(void __iomem *io_base, u32 db_id, u32 val);
-int vmnga_register_vpc_irq_func(void *drvdata, u32 vector_index, irqreturn_t (*callback_func)(int, void *), void *para,
+int vmnga_register_vpc_irq_func(void *drvdata, u32 vector_index, ka_irqreturn_t (*callback_func)(int, void *), void *para,
     const char *name);
 int vmnga_unregister_vpc_irq_func(void *drvdata, u32 vector_index, void *para);
 

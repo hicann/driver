@@ -19,6 +19,14 @@
 
 #include "securec.h"
 
+#define TRS_IS_ALIGNED(x, a)    (((x) & ((typeof(x))(a) - 1)) == 0)
+
+#define TRS_BITS_PER_BYTE       (8ULL)
+
+#define TRS_BYTES_PER_KB        (1024ULL)
+#define TRS_BYTES_PER_MB        (1024ULL * TRS_BYTES_PER_KB)
+#define TRS_BYTES_PER_GB        (1024ULL * TRS_BYTES_PER_MB)
+#define TRS_BYTES_PER_TB        (1024ULL * TRS_BYTES_PER_GB)
 
 #define TRS_DEV_NUM 1124
 #define TRS_DEVICE_DEV_NUM 64

@@ -21,8 +21,8 @@
 
 #include "uda_cmd.h"
 #include "uda_user_kernel_api.h"
-#include "uda_user_base.h"
-#include "uda_inner.h"
+#include "uda_user.h"
+#include "pbl_uda_user.h"
 
 #ifndef ASCEND_BACKUP_DEV_NUM
 #define ASCEND_BACKUP_DEV_NUM 0

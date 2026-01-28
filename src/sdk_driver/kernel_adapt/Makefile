@@ -37,6 +37,9 @@ EXTRA_CFLAGS += -I$(TARGET_SRC_DIR)/kernel_adapt/task
 
 EXTRA_CFLAGS += -isystem $(shell $(CC) -print-file-name=include)
 EXTRA_CFLAGS += -Wno-type-limits # for kernel 5.15
+ifeq ($(PRODUCT_SIDE), host)
+    EXTRA_CFLAGS += -DDRV_HOST
+endif
 ccflags-y += -Wno-implicit-function-declaration
 
 # check if gcc support -Wno-error=cast-function-type

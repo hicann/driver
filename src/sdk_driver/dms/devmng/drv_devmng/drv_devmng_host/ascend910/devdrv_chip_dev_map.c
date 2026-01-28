@@ -16,6 +16,9 @@
 #include "devdrv_manager.h"
 #include "devdrv_manager_container.h"
 #include "pbl_mem_alloc_interface.h"
+#include "ka_memory_pub.h"
+#include "ka_list_pub.h"
+#include "ka_base_pub.h"
 #include "devdrv_chip_dev_map.h"
 
 STATIC int devdrv_manager_chip_dev_map_init(devdrv_chip_dev_map_t **map_info)
@@ -25,12 +28,12 @@ STATIC int devdrv_manager_chip_dev_map_init(devdrv_chip_dev_map_t **map_info)
         return -EINVAL;
     }
 
-    *map_info = (devdrv_chip_dev_map_t *)dbl_kzalloc(sizeof(devdrv_chip_dev_map_t), GFP_KERNEL | __GFP_ACCOUNT);
+    *map_info = (devdrv_chip_dev_map_t *)dbl_kzalloc(sizeof(devdrv_chip_dev_map_t), KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
     if ((*map_info) == NULL) {
         devdrv_drv_err("Alloc memory for chip dev map structure fail.\n");
         return -ENOMEM;
     }
-    INIT_LIST_HEAD(&(*map_info)->chip_head);
+    KA_INIT_LIST_HEAD(&(*map_info)->chip_head);
     return 0;
 }
 
@@ -111,7 +114,7 @@ STATIC int devdrv_dev_list_init(devdrv_chip_dev_map_t *map_info)
 
         for (j = i + 1; j < map_info->dev_num; j++) {
             dev_node_cmp = dev_list_head + j;
-            ret = memcmp(dev_node_cur->random_number, dev_node_cmp->random_number, RANDOM_SIZE);
+            ret = ka_base_memcmp(dev_node_cur->random_number, dev_node_cmp->random_number, RANDOM_SIZE);
             if (ret != 0) {
                 continue;
             }
@@ -152,41 +155,41 @@ STATIC int devdrv_creat_chip_and_dev_linklist(devdrv_chip_dev_map_t *map_info)
     devdrv_chip_dev_node_t *dev_node = NULL;
 
     for (i = 0; i < map_info->chip_num; i++) {
-        chip_node = (devdrv_chip_node_t *)dbl_kzalloc(sizeof(devdrv_chip_node_t), GFP_KERNEL | __GFP_ACCOUNT);
+        chip_node = (devdrv_chip_node_t *)dbl_kzalloc(sizeof(devdrv_chip_node_t), KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
         if (chip_node == NULL) {
             devdrv_drv_err("alloc memory for chip node fail.\n");
             return -ENOMEM;
         }
 
-        list_add_tail(&chip_node->chip_node_list, &map_info->chip_head);
-        INIT_LIST_HEAD(&chip_node->dev_head);
+        ka_list_add_tail(&chip_node->chip_node_list, &map_info->chip_head);
+        KA_INIT_LIST_HEAD(&chip_node->dev_head);
         chip_node->chip_id = i;
 
         /* devices has the same chip_num assign to the same chip */
         for (j = 0; j < map_info->dev_num; j++) {
             dev_node = map_info->all_dev_info + j;
             if ((dev_node->assign_to_chip_flag == ASSIGN_TO_CHIP) && (dev_node->belong_to_chip == i)) {
-                list_add_tail(&dev_node->dev_node_list, &chip_node->dev_head);
+                ka_list_add_tail(&dev_node->dev_node_list, &chip_node->dev_head);
                 chip_node->dev_num++;
             }
         }
     }
 
     /* dfx info */
-    if (list_empty_careful(&map_info->chip_head)) {
+    if (ka_list_empty_careful(&map_info->chip_head)) {
         devdrv_drv_debug("chip link list is empty.\n");
         return 0;
     }
 
-    list_for_each_safe(pos, n, &map_info->chip_head) {
-        chip_node = list_entry(pos, devdrv_chip_node_t, chip_node_list);
-        if (list_empty_careful(&chip_node->dev_head)) {
+    ka_list_for_each_safe(pos, n, &map_info->chip_head) {
+        chip_node = ka_list_entry(pos, devdrv_chip_node_t, chip_node_list);
+        if (ka_list_empty_careful(&chip_node->dev_head)) {
             devdrv_drv_debug("device link list is empty.\n");
             continue;
         }
 
-        list_for_each_safe(pos_dev, n_dev, &chip_node->dev_head) {
-            dev_node = list_entry(pos_dev, devdrv_chip_dev_node_t, dev_node_list);
+        ka_list_for_each_safe(pos_dev, n_dev, &chip_node->dev_head) {
+            dev_node = ka_list_entry(pos_dev, devdrv_chip_dev_node_t, dev_node_list);
             devdrv_drv_debug("dev[%u] belong to chip[%u].\n", dev_node->dev_id, dev_node->belong_to_chip);
         }
     }
@@ -204,10 +207,10 @@ STATIC void devdrv_chip_dev_map_resource_free(devdrv_chip_dev_map_t **map_info)
         return;
     }
     chip_dev_map = *map_info;
-    if (!list_empty_careful(&chip_dev_map->chip_head)) {
-        list_for_each_safe(pos, n, &chip_dev_map->chip_head) {
-            chip_node = list_entry(pos, devdrv_chip_node_t, chip_node_list);
-            list_del(&chip_node->chip_node_list);
+    if (!ka_list_empty_careful(&chip_dev_map->chip_head)) {
+        ka_list_for_each_safe(pos, n, &chip_dev_map->chip_head) {
+            chip_node = ka_list_entry(pos, devdrv_chip_node_t, chip_node_list);
+            ka_list_del(&chip_node->chip_node_list);
             dbl_kfree(chip_node);
             chip_node = NULL;
         }
@@ -238,7 +241,7 @@ STATIC int devdrv_creat_chip_dev_map(devdrv_chip_dev_map_t *chip_dev_map)
     }
 
     /* 1 get device number and device id list */
-    dev_id_list = (unsigned int*)dbl_kzalloc(sizeof(unsigned int) * ASCEND_DEV_MAX_NUM, GFP_ATOMIC | __GFP_ACCOUNT);
+    dev_id_list = (unsigned int*)dbl_kzalloc(sizeof(unsigned int) * ASCEND_DEV_MAX_NUM, KA_GFP_ATOMIC | __KA_GFP_ACCOUNT);
     if (dev_id_list == NULL) {
         devdrv_drv_err("Allocate memory for device list failed.\n");
         return -ENOMEM;
@@ -252,7 +255,7 @@ STATIC int devdrv_creat_chip_dev_map(devdrv_chip_dev_map_t *chip_dev_map)
     }
 
     /* 2 get random num of all device */
-    dev_node = (devdrv_chip_dev_node_t *)dbl_kzalloc(dev_num * sizeof(devdrv_chip_dev_node_t),  GFP_ATOMIC | __GFP_ACCOUNT);
+    dev_node = (devdrv_chip_dev_node_t *)dbl_kzalloc(dev_num * sizeof(devdrv_chip_dev_node_t),  KA_GFP_ATOMIC | __KA_GFP_ACCOUNT);
     if (dev_node == NULL) {
         dbl_kfree(dev_id_list);
         dev_id_list = NULL;
@@ -338,10 +341,10 @@ int devdrv_manager_get_chip_list(struct devdrv_chip_list *chip_info)
         return -EINVAL;
     }
 
-    if (!list_empty_careful(&chip_dev_map->chip_head)) {
+    if (!ka_list_empty_careful(&chip_dev_map->chip_head)) {
         int num = 0;
-        list_for_each_safe(pos, n, &chip_dev_map->chip_head) {
-            chip_node = list_entry(pos, devdrv_chip_node_t, chip_node_list);
+        ka_list_for_each_safe(pos, n, &chip_dev_map->chip_head) {
+            chip_node = ka_list_entry(pos, devdrv_chip_node_t, chip_node_list);
             if (num >= DEVDRV_MAX_CHIP_NUM) {
                 devdrv_drv_err("chip node num[%d] invalid.\n", num);
                 devdrv_chip_dev_map_resource_free(&chip_dev_map);
@@ -387,20 +390,20 @@ int devdrv_manager_get_device_from_chip(struct devdrv_chip_dev_list *chip_dev_li
         goto ERROR_OUT;
     }
 
-    if (list_empty_careful(&chip_dev_map->chip_head)) {
+    if (ka_list_empty_careful(&chip_dev_map->chip_head)) {
         devdrv_drv_err("Chip head list is empty.\n");
         goto ERROR_OUT;
     }
-    list_for_each_safe(pos_chip, n_chip, &chip_dev_map->chip_head) {
-        chip_node = list_entry(pos_chip, devdrv_chip_node_t, chip_node_list);
+    ka_list_for_each_safe(pos_chip, n_chip, &chip_dev_map->chip_head) {
+        chip_node = ka_list_entry(pos_chip, devdrv_chip_node_t, chip_node_list);
         if (chip_node->chip_id == chip_dev_list->chip_id) {
-            if (list_empty_careful(&chip_node->dev_head)) {
+            if (ka_list_empty_careful(&chip_node->dev_head)) {
                 devdrv_drv_err("Device list is empty. (chip_id=%d)\n", chip_dev_list->chip_id);
                 goto ERROR_OUT;
             }
 
-            list_for_each_safe(pos_dev, n_dev, &chip_node->dev_head) {
-                dev_node = list_entry(pos_dev, devdrv_chip_dev_node_t, dev_node_list);
+            ka_list_for_each_safe(pos_dev, n_dev, &chip_node->dev_head) {
+                dev_node = ka_list_entry(pos_dev, devdrv_chip_dev_node_t, dev_node_list);
                 chip_dev_list->dev_list[num] = dev_node->dev_id;
                 num++;
             }
@@ -443,19 +446,19 @@ int devdrv_manager_get_chip_from_device(struct devdrv_get_dev_chip_id *chip_from
     }
 
     /* 3 get chip_id by device_id */
-    if (list_empty_careful(&chip_dev_map->chip_head)) {
+    if (ka_list_empty_careful(&chip_dev_map->chip_head)) {
         devdrv_drv_err("Chip head list is empty.\n");
         goto ERR_OUT;
     }
-    list_for_each_safe(pos_chip, n_chip, &chip_dev_map->chip_head) {
-        chip_node = list_entry(pos_chip, devdrv_chip_node_t, chip_node_list);
-        if (list_empty_careful(&chip_node->dev_head)) {
+    ka_list_for_each_safe(pos_chip, n_chip, &chip_dev_map->chip_head) {
+        chip_node = ka_list_entry(pos_chip, devdrv_chip_node_t, chip_node_list);
+        if (ka_list_empty_careful(&chip_node->dev_head)) {
             devdrv_drv_err("device link list is empty.\n");
             goto ERR_OUT;
         }
 
-        list_for_each_safe(pos_dev, n_dev, &chip_node->dev_head) {
-            dev_node = list_entry(pos_dev, devdrv_chip_dev_node_t, dev_node_list);
+        ka_list_for_each_safe(pos_dev, n_dev, &chip_node->dev_head) {
+            dev_node = ka_list_entry(pos_dev, devdrv_chip_dev_node_t, dev_node_list);
             if (chip_from_dev->dev_id == dev_node->dev_id) {
                 chip_from_dev->chip_id = chip_node->chip_id;
                 devdrv_chip_dev_map_resource_free(&chip_dev_map);

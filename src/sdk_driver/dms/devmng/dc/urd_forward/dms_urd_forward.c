@@ -26,8 +26,9 @@
 #include "dms_hotreset.h"
 #include "ascend_kernel_hal.h"
 #include "devmng_forward_info.h"
-#include "dms_urd_forward.h"
 #include "pbl/pbl_runenv_config.h"
+#include "ka_base_pub.h"
+#include "dms_urd_forward.h"
 
 #define MAX_PACKET_SIZE 300
 
@@ -43,6 +44,10 @@ ADD_FEATURE_COMMAND(DMS_URD_FORWARD_CMD_NAME, DMS_MAIN_CMD_LPM, DMS_SUBCMD_GET_F
 #endif
 #ifdef CFG_FEATURE_QUERY_QOS_CFG_INFO
 ADD_FEATURE_COMMAND(DMS_URD_FORWARD_CMD_NAME, DMS_MAIN_CMD_QOS, DMS_SUBCMD_GET_CONFIG_INFO, NULL, NULL,
+                    DMS_SUPPORT_ALL, dms_send_msg_to_device_by_h2d)
+#endif
+#ifdef CFG_FEATURE_GET_QOS_MASTER_CFG
+ADD_FEATURE_COMMAND(DMS_URD_FORWARD_CMD_NAME, DMS_GET_GET_DEVICE_INFO_CMD, ZERO_CMD, "module=0x9,info=0x3a", NULL,
                     DMS_SUPPORT_ALL, dms_send_msg_to_device_by_h2d)
 #endif
 #ifdef CFG_FEATURE_QUERY_VA_INFO
@@ -144,7 +149,7 @@ int dms_set_urd_msg(DMS_FEATURE_S *feature_cfg, char *in, u32 in_len, u32 out_le
     urd_msg->main_cmd = feature_cfg->main_cmd;
     urd_msg->sub_cmd = feature_cfg->sub_cmd;
     if (feature_cfg->filter != NULL) {
-        urd_msg->filter_len = strlen(feature_cfg->filter);
+        urd_msg->filter_len = ka_base_strlen(feature_cfg->filter);
         if (urd_msg->filter_len > FILTER_LEN_MAX) {
             dms_err("Invalid parameter, filter is oversized. (filter_len=%u)\n", urd_msg->filter_len);
             return -EINVAL;
@@ -228,7 +233,7 @@ int dms_send_msg_to_device_by_h2d(void *feature, char *in, u32 in_len, char *out
         return ret;
     }
 
-    atomic_inc(&dev_info->occupy_ref);
+    ka_base_atomic_inc(&dev_info->occupy_ref);
     if (dev_info->status == DEVINFO_STATUS_REMOVED) {
         dms_warn("Device has been reset. (phy_id=%u)\n", phys_id);
         ret = -EINVAL;
@@ -248,7 +253,7 @@ int dms_send_msg_to_device_by_h2d(void *feature, char *in, u32 in_len, char *out
     }
 
 OCCUPY_AND_TASK_CNT_OUT:
-    atomic_dec(&dev_info->occupy_ref);
+    ka_base_atomic_dec(&dev_info->occupy_ref);
     dms_hotreset_task_cnt_decrease(phys_id);
     return ret;
 }
@@ -281,7 +286,7 @@ int dms_send_msg_to_device_by_h2d_kernel(void *feature, char *in, u32 in_len, ch
         return ret;
     }
  
-    atomic_inc(&dev_info->occupy_ref);
+    ka_base_atomic_inc(&dev_info->occupy_ref);
     if (dev_info->status == DEVINFO_STATUS_REMOVED) {
         dms_warn("Device has been reset. (dev_id=%u)\n", dev_id);
         ret = -EINVAL;
@@ -301,7 +306,7 @@ int dms_send_msg_to_device_by_h2d_kernel(void *feature, char *in, u32 in_len, ch
     }
  
 OCCUPY_AND_TASK_CNT_OUT:
-    atomic_dec(&dev_info->occupy_ref);
+    ka_base_atomic_dec(&dev_info->occupy_ref);
     dms_hotreset_task_cnt_decrease(dev_id);
     return ret;
 }
@@ -519,7 +524,7 @@ int dms_send_msg_to_device_by_h2d_multi_packets(void *feature, char *in, u32 in_
         cfg_in_temp.current_packet = i;
         cfg_in_temp.total_size = cfg_in->buff_size;
         memset_s(cfg_in_temp.buff, MAX_PACKET_SIZE, 0, MAX_PACKET_SIZE);
-        ret = copy_from_user(cfg_in_temp.buff, cfg_in->buff + start, len);
+        ret = ka_base_copy_from_user(cfg_in_temp.buff, cfg_in->buff + start, len);
         if (ret != 0) {
             dms_err("Copy from user fail.(ret=%d;param_size=%u)\n", ret, len);
             return -EINVAL;

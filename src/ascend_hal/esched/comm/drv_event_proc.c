@@ -104,7 +104,7 @@ static drvError_t drv_event_proc_dispatch(unsigned int dev_id, struct event_info
 {
 #ifndef EMU_ST
     return g_drv_event_proc[event->comm.subevent_id].proc_func(dev_id,
-        (void *)(msg_buffer->msg + sizeof(struct event_sync_msg)), msg_buffer->msg_len, rsp);
+        (void *)(msg_buffer->msg + sizeof(struct event_sync_msg)), (int)msg_buffer->msg_len, rsp);
 #else
     char msg[EVENT_MAX_MSG_LEN];
     drvError_t ret;
@@ -168,7 +168,7 @@ int drv_event_proc(unsigned int dev_id, struct event_info *event, esched_event_b
     DRV_EVENT_LOG_DBG("Event_proc start. (devid=%u)\n", dev_id);
 
     rsp.rsp_data_buf = (void *)DRV_EVENT_REPLY_BUFFER_DATA_PTR(rsp_buffer->buffer);
-    rsp.rsp_data_buf_len = rsp_buffer->buffer_len - sizeof(int);
+    rsp.rsp_data_buf_len = (int)(rsp_buffer->buffer_len - (int)sizeof(int));
     rsp.need_rsp = true;
 
     ret = drv_event_proc_dispatch(dev_id, event, msg_buffer, &rsp);
@@ -178,7 +178,7 @@ int drv_event_proc(unsigned int dev_id, struct event_info *event, esched_event_b
 
     if (rsp.real_rsp_data_len > rsp.rsp_data_buf_len) {
         DRV_EVENT_LOG_ERR("Rsp_len beyond. (rsp_len=%d; max=%d)\n", rsp.real_rsp_data_len,
-            rsp_buffer->buffer_len - sizeof(int));
+            rsp_buffer->buffer_len - (int)sizeof(int));
 #ifndef EMU_ST
         return DRV_ERROR_INNER_ERR;
 #endif
@@ -198,7 +198,7 @@ int drv_event_proc(unsigned int dev_id, struct event_info *event, esched_event_b
     back_event.grp_id = msg_head->gid;
     back_event.event_id = msg_head->event_id;
     back_event.subevent_id = msg_head->subevent_id;
-    back_event.msg_len = rsp.real_rsp_data_len + sizeof(ret);
+    back_event.msg_len = (uint32_t)(rsp.real_rsp_data_len + (int)sizeof(ret));
     back_event.msg = rsp_buffer->buffer;
     back_event.tid = (msg_head->event_id == EVENT_DRV_MSG_EX) ? msg_head->tid : tid;
     ret = halEschedSubmitEventEx(dev_id, dst_dev_id, &back_event);

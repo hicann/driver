@@ -36,6 +36,18 @@ ssize_t ka_fs_kernel_write(ka_file_t *file, const void *buf, size_t count, loff_
 }
 EXPORT_SYMBOL_GPL(ka_fs_kernel_write);
 
+#ifndef EMU_ST
+ssize_t ka_fs_kernel_write_ret(struct file *file, const void *buf, size_t count, loff_t *pos)
+{
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 18, 0)
+    return __kernel_write(file, buf, count, pos);
+#else
+    return kernel_write(file, buf, count, *pos);
+#endif
+}
+EXPORT_SYMBOL_GPL(ka_fs_kernel_write_ret);
+#endif
+
 int ka_fs_vfs_getattr(ka_path_t *path, ka_kstat_t *stat, u32 request_mask, unsigned int query_flags)
 {
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 11, 0)

@@ -14,18 +14,18 @@
 #ifndef _PCIVNIC_MAIN_H_
 #define _PCIVNIC_MAIN_H_
 
-#include <linux/types.h>
-#include <linux/device.h>
-#include <linux/netdevice.h>
-#include <linux/skbuff.h>
-#include <linux/bitops.h>
-#include <linux/interrupt.h>
-
 #include "dmc_kernel_interface.h"
 #include "comm_kernel_interface.h"
 #include "pcivnic_config.h"
 #include "vnic_cmd_msg.h"
 #include "pcivnic_adapt.h"
+#include "ka_base_pub.h"
+#include "ka_net_pub.h"
+#include "ka_task_pub.h"
+#include "ka_memory_pub.h"
+#include "ka_common_pub.h"
+#include "ka_system_pub.h"
+#include "ka_driver_pub.h"
 
 #ifdef DRV_UT
 #define STATIC
@@ -38,15 +38,15 @@
 #define module_devdrv "pcivnic"
 #define devdrv_err(fmt, ...) do { \
     drv_err(module_devdrv, "<%s:%d:%d> " fmt, \
-    current->comm, current->tgid, current->pid, ##__VA_ARGS__); \
+    ka_task_get_current_comm(), ka_task_get_current_tgid(), ka_task_get_current_pid(), ##__VA_ARGS__); \
 } while (0)
 #define devdrv_warn(fmt, ...) do { \
     drv_warn(module_devdrv, "<%s:%d:%d> " fmt, \
-    current->comm, current->tgid, current->pid, ##__VA_ARGS__); \
+    ka_task_get_current_comm(), ka_task_get_current_tgid(), ka_task_get_current_pid(), ##__VA_ARGS__); \
 } while (0)
 #define devdrv_info(fmt, ...) do { \
     drv_info(module_devdrv, "<%s:%d:%d> " fmt, \
-    current->comm, current->tgid, current->pid, ##__VA_ARGS__); \
+    ka_task_get_current_comm(), ka_task_get_current_tgid(), ka_task_get_current_pid(), ##__VA_ARGS__); \
 } while (0)
 #define devdrv_debug(fmt...) drv_debug(module_devdrv, fmt)
 
@@ -87,14 +87,14 @@
 #define PCIVNIC_CONF_FILE_SIZE  4096
 #define PCIVNIC_CONF_SSCANF_OK  7
 
-#define BIT_STATUS_LINK BIT(0)
-#define BIT_STATUS_TQ_FULL BIT(1)
-#define BIT_STATUS_RQ_FULL BIT(2)
+#define BIT_STATUS_LINK KA_BASE_BIT(0)
+#define BIT_STATUS_TQ_FULL KA_BASE_BIT(1)
+#define BIT_STATUS_RQ_FULL KA_BASE_BIT(2)
 
 #define PCIVNIC_NEXT_HOP_LOCAL_NETDEV 0xd3
 #define PCIVNIC_NEXT_HOP_BROADCAST 0xff
 #define PCIVNIC_NEXT_HOP_S2S 0xFFFF
-#define PCIVNIC_INIT_INSTANCE_TIMEOUT (4 * HZ)
+#define PCIVNIC_INIT_INSTANCE_TIMEOUT (4 * KA_HZ)
 
 #define PCIVNIC_MAC_0 0
 #define PCIVNIC_MAC_1 1
@@ -129,13 +129,13 @@
 #define VNIC_S2S_MAX_BUFF_DEPTH 64
 struct vnic_s2s_queue {
     struct pcivnic_pcidev *pcidev;
-    struct sk_buff *skb[VNIC_S2S_MAX_BUFF_DEPTH];
+    ka_sk_buff_t *skb[VNIC_S2S_MAX_BUFF_DEPTH];
     u32 front;
     u32 rear;
     u32 queue_index;
-    struct workqueue_struct *s2s_send_workqueue;
-    struct work_struct s2s_send_work;
-    spinlock_t s2s_queue_lock;
+    ka_workqueue_struct_t *s2s_send_workqueue;
+    ka_work_struct_t s2s_send_work;
+    ka_task_spinlock_t s2s_queue_lock;
 };
 
 #define VNIC_S2S_RECYCLE_DELAY_TIME 10
@@ -146,11 +146,11 @@ struct vnic_s2s_queue {
 #define PCIVNIC_CQ_DESC_SIZE sizeof(struct pcivnic_cq_desc)
 
 struct pcivnic_skb_addr {
-    struct sk_buff *skb;
+    ka_sk_buff_t *skb;
     u64 addr;
     int len;
     void *netdev;
-    spinlock_t skb_lock;
+    ka_task_spinlock_t skb_lock;
     unsigned long tx_seq;
     unsigned long timestamp;
 };
@@ -158,7 +158,7 @@ struct pcivnic_skb_addr {
 #define PCIVNIC_MAX_SKB_BUFF_SIZE 0x1000 /* 4K */
 struct pcivnic_skb_data_buff {
     void *addr;
-    dma_addr_t dma_addr;
+    ka_dma_addr_t dma_addr;
 };
 
 #define PCIVNIC_FLOW_CTRL_PERIOD 100 /* ms */
@@ -192,12 +192,12 @@ struct pcivnic_fwd_stat {
 struct pcivnic_sched_stat {
     u64 in;
     u64 out;
-    u64 triger;
+    u64 trigger;
     u64 last_in;
 };
 
 struct pcivnic_pcidev {
-    struct device *dev;
+    ka_device_t *dev;
     u32 queue_depth;
     u32 dev_id;
     u32 status;
@@ -209,13 +209,13 @@ struct pcivnic_pcidev {
     void *msg_chan;
     void *priv;
     void *netdev;
-    spinlock_t lock;
-    struct tasklet_struct tx_finish_task;
-    struct tasklet_struct rx_notify_task;
-    struct workqueue_struct *rx_workqueue;
-    struct work_struct rx_notify_work;
+    ka_task_spinlock_t lock;
+    ka_tasklet_struct_t tx_finish_task;
+    ka_tasklet_struct_t rx_notify_task;
+    ka_workqueue_struct_t *rx_workqueue;
+    ka_work_struct_t rx_notify_work;
 #ifdef CFG_FEATURE_S2S
-    struct delayed_work s2s_recycle;
+    ka_delayed_work_t s2s_recycle;
     struct vnic_s2s_queue s2s_send_queue[PCIVNIC_S2S_MAX_CHAN_NUM];
 #endif
     struct pcivnic_skb_addr tx[PCIVNIC_DESC_QUEUE_DEPTH];
@@ -227,7 +227,7 @@ struct pcivnic_pcidev {
 #endif
     int sysfs_create_flag;
     /* msg guard work */
-    struct delayed_work guard_work;
+    ka_delayed_work_t guard_work;
     bool is_mdev_vm_boot_mode;
 };
 
@@ -237,17 +237,17 @@ struct pcivnic_net_dev_stat {
 };
 
 struct pcivnic_netdev {
-    struct net_device *ndev;
-    struct napi_struct napi;
+    ka_net_device_t *ndev;
+    ka_napi_struct_t napi;
     u32 ndev_register;
     u32 status;
     u32 pciedev_num;
     struct pcivnic_net_dev_stat stat;
-    spinlock_t lock;
-    spinlock_t rx_lock;
-    struct delayed_work timeout;
+    ka_task_spinlock_t lock;
+    ka_task_spinlock_t rx_lock;
+    ka_delayed_work_t timeout;
     struct pcivnic_pcidev *pcidev[NETDEV_PCIDEV_NUM];
-    struct sk_buff_head skbq;
+    ka_sk_buff_head_t skbq;
 };
 
 #define PCIVNIC_CTRL_MSG_TYPE_SET_MAC 0
@@ -265,7 +265,7 @@ struct pcivnic_ctrl_msg_head {
 
 struct pcivnic_ctrl_msg_set_mac {
     struct pcivnic_ctrl_msg_head head;
-    unsigned char mac[ETH_ALEN];
+    unsigned char mac[KA_ETH_ALEN];
 };
 
 struct pcivnic_ctrl_msg_register_netdev {
@@ -280,17 +280,17 @@ struct pcivnic_ctrl_msg_dev_instance {
 struct pcivnic_ctrl_msg_get_stat {
     struct pcivnic_ctrl_msg_head head;
     u32 msg_len;
-    char msg[PAGE_SIZE];
+    char msg[KA_MM_PAGE_SIZE];
 };
 
 #define PCIVNIC_DIE_NUM_ONE_CHIP 2
 #define VNIC_MAX_SERVER_NUM 48
 #define VNIC_DEFAULT_IP 168
 
-void pcivnic_rx_packet(struct sk_buff *skb, struct pcivnic_netdev *vnic_dev, u32 dev_id);
-void pcivnic_s2s_send_guard_work(struct work_struct *p_work);
+void pcivnic_rx_packet(ka_sk_buff_t *skb, struct pcivnic_netdev *vnic_dev, u32 dev_id);
+void pcivnic_s2s_send_guard_work(ka_work_struct_t *p_work);
 struct pcivnic_netdev *pcivnic_get_netdev(u32 dev_id);
-void pcivnic_s2s_npi_work(struct work_struct *p_work);
+void pcivnic_s2s_npi_work(ka_work_struct_t *p_work);
 int pcivnic_get_server_id(void);
 int pcivnic_get_addr_mode(void);
 extern struct pcivnic_pcidev *pcivnic_get_pcidev(void *msg_chan);
@@ -307,9 +307,9 @@ extern void pcivnic_copy_cq_desc_to_remote(struct pcivnic_pcidev *pcidev, const 
 extern struct pcivnic_cq_desc *pcivnic_get_r_cq_desc(void *msg_chan);
 extern void pcivnic_move_r_cq_desc(void *msg_chan);
 
-extern struct pcivnic_pcidev *pcivnic_get_pciedev(const struct device *dev);
-extern ssize_t pcivnic_get_dev_stat(struct device *dev, struct device_attribute *attr, char *buf);
-extern ssize_t pcivnic_get_dev_stat_inner(struct device *dev, char *buf);
+extern struct pcivnic_pcidev *pcivnic_get_pciedev(const ka_device_t *dev);
+extern ssize_t pcivnic_get_dev_stat(ka_device_t *dev, ka_device_attribute_t *attr, char *buf);
+extern ssize_t pcivnic_get_dev_stat_inner(ka_device_t *dev, char *buf);
 
 extern bool pcivnic_is_p2p_enabled(u32 dev_id, u32 peer_dev_id);
 
@@ -319,15 +319,15 @@ extern int pcivnic_down_get_next_hop(const unsigned char *dmac);
 void pcivnic_skb_data_buff_uninit(struct pcivnic_pcidev *pcidev);
 int pcivnic_skb_data_buff_init(struct pcivnic_pcidev *pcidev);
 
-u64 pcivnic_dma_map_single(struct pcivnic_pcidev *pcidev, struct sk_buff *skb, u32 buff_type, u32 index);
-void pcivnic_dma_unmap_single(struct pcivnic_pcidev *pcidev, struct sk_buff *skb, u32 buff_type, u32 index);
+u64 pcivnic_dma_map_single(struct pcivnic_pcidev *pcidev, ka_sk_buff_t *skb, u32 buff_type, u32 index);
+void pcivnic_dma_unmap_single(struct pcivnic_pcidev *pcidev, ka_sk_buff_t *skb, u32 buff_type, u32 index);
 
 extern void pcivnic_get_mac(unsigned char last_byte, unsigned char *mac);
 extern void pcivnic_set_netdev_mac(struct pcivnic_netdev *vnic_dev, const unsigned char *mac);
 
 extern void pcivnic_rx_msg_notify(void *msg_chan);
 extern void pcivnic_tx_finish_notify(void *msg_chan);
-extern struct pcivnic_pcidev *pcivnic_add_dev(struct pcivnic_netdev *vnic_dev, struct device *dev, u32 queue_depth,
+extern struct pcivnic_pcidev *pcivnic_add_dev(struct pcivnic_netdev *vnic_dev, ka_device_t *dev, u32 queue_depth,
                                               int net_dev_id);
 extern void pcivnic_del_dev(struct pcivnic_netdev *vnic_dev, int dev_id);
 extern struct pcivnic_netdev *pcivnic_alloc_netdev(const char *ndev_name, int ndev_name_len);
@@ -338,5 +338,6 @@ extern bool pcivnic_is_register_netdev(u32 dev_id);
 extern void pcivnic_init_msgchan_cq_desc(void *msg_chan);
 
 extern int pcivnic_device_status_abnormal(const void *msg_chan);
-extern bool pcivnic_get_sysfs_creat_group_capbility(struct device *dev, int dev_id);
+extern bool pcivnic_get_sysfs_creat_group_capbility(ka_device_t *dev, int dev_id);
+void pcivnic_net_timeout_new(ka_net_device_t *dev, unsigned int txqueue);
 #endif  // _DEVDRV_MAIN_H_

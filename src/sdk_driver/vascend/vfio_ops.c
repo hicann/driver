@@ -15,6 +15,15 @@
 #include <linux/device.h>
 #include <linux/uuid.h>
 #include <linux/mdev.h>
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5,10,0))
+#include <linux/dma-map-ops.h>
+#include <linux/vfio.h>
+#elif ((LINUX_VERSION_CODE >= KERNEL_VERSION(4,19,36)) || (defined(DRV_UT)))
+#include <linux/dma-noncoherent.h>
+#include <linux/vfio.h>
+#elif ((LINUX_VERSION_CODE >= KERNEL_VERSION(4,14,0)) || (defined(DRV_UT)))
+#include <linux/vfio.h>
+#endif
 #include "dvt_sysfs.h"
 #include "domain_manage.h"
 #include "dma_pool.h"
@@ -22,6 +31,25 @@
 #include "vfio_ops.h"
 
 STATIC DEFINE_MUTEX(mdev_register_lock);
+
+#ifndef __ASM_DEVICE_H
+bool is_dev_dma_coherent(struct device *dev)
+{
+    return true;
+}
+#else
+#if ((LINUX_VERSION_CODE == KERNEL_VERSION(4,19,36)) || (LINUX_VERSION_CODE == KERNEL_VERSION(4,19,90)))
+bool is_dev_dma_coherent(struct device *dev)
+{
+    return dev->archdata.dma_coherent;
+}
+#else
+bool is_dev_dma_coherent(struct device *dev)
+{
+        return true;
+}
+#endif
+#endif /* __ASM_DEVICE_H */
 
 void vdavinci_iommu_unmap(struct device *dev, unsigned long iova, size_t size)
 {
@@ -44,13 +72,18 @@ int vdavinci_iommu_map(struct device *dev, unsigned long iova,
 #else
     return iommu_map(domain, iova, paddr, size, prot);
 #endif
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4,19,36))
+    if (!is_dev_dma_coherent(dev)) {
+        dma_sync_single_for_device(dev, iova, size, DMA_BIDIRECTIONAL);
+    }
+#endif
 }
 
 void vdavinci_unpin_pages(struct hw_vdavinci *vdavinci, struct vdavinci_pin_info *pin_info)
 {
     int ret = pin_info->npage;
 
-    if (pin_info->npage <= 0 || pin_info->npage > VFIO_PIN_PAGES_MAX_ENTRIES) {
+    if (pin_info->npage <= 0 || pin_info->npage > (int)VFIO_PIN_PAGES_MAX_ENTRIES) {
         vascend_err(vdavinci_to_dev(vdavinci), "vdavinci error npage: %d\n", pin_info->npage);
         return;
     }
@@ -80,7 +113,7 @@ int vdavinci_pin_pages(struct hw_vdavinci *vdavinci, struct vdavinci_pin_info *p
 {
     int ret = -1;
 
-    if (pin_info->npage <= 0 || pin_info->npage > VFIO_PIN_PAGES_MAX_ENTRIES) {
+    if (pin_info->npage <= 0 || pin_info->npage > (int)VFIO_PIN_PAGES_MAX_ENTRIES) {
         vascend_err(vdavinci_to_dev(vdavinci), "vdavinci error npage: %d\n", pin_info->npage);
         return -EINVAL;
     }
@@ -594,4 +627,17 @@ void vdavinci_unregister_device(struct device *dev, struct hw_dvt *dvt)
     dvt->vdavinci_mdev_ops = NULL;
 #endif
 #endif /* CONFIG_VFIO_MDEV */
+}
+
+void vdavinci_init_iova_domain(struct iova_domain *iovad)
+{
+    if (iovad == NULL) {
+        return;
+    }
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4,14,0))
+    init_iova_domain(iovad, PAGE_SIZE, 1);
+#else
+    init_iova_domain(iovad, PAGE_SIZE, 1,
+                     DMA_BIT_MASK(DOMAIN_DMA_BIT_MASK_32) >> PAGE_SHIFT);
+#endif
 }

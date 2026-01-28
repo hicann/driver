@@ -66,7 +66,7 @@ static int esched_drv_fill_task_pid(u32 chip_id, u32 topic_type, u32 dst_pid, u3
 }
 
 int esched_drv_fill_sqe(u32 chip_id, u32 event_src, struct topic_sched_sqe *sqe,
-    struct sched_published_event_info *event_info)
+    struct sched_published_event_info *event_info, bool wait_thread_check)
 {
     int ret;
 
@@ -85,7 +85,7 @@ int esched_drv_fill_sqe(u32 chip_id, u32 event_src, struct topic_sched_sqe *sqe,
     sqe->batch_mode = 0;           /* no use. */
     sqe->topic_type = esched_drv_get_topic_type(event_info->policy, event_info->dst_engine);
     sqe->type = sched_sqe_type[sqe->topic_type];
-    ret = esched_drv_fill_sqe_qos(chip_id, event_info, sqe);
+    ret = esched_drv_fill_sqe_qos(chip_id, event_info, sqe, wait_thread_check);
     if (ret != 0) {
         sched_err("Failed to fill qos. (pid=%d; gid=%u; eventid=%u; ret=%d)\n",
             event_info->pid, event_info->gid, event_info->event_id, ret);

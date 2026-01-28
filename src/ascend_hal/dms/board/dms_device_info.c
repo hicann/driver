@@ -595,6 +595,30 @@ drvError_t DmsGetAiCoreDieNum(unsigned int dev_id, long long *value)
     return DRV_ERROR_NONE;
 }
 
+drvError_t dms_get_hcom_cpu_num(unsigned int dev_id, long long *value)
+{
+    struct urd_cmd cmd = {0};
+    struct urd_cmd_para cmd_para = {0};
+    unsigned int hcom_cpu_num = 0;
+    int ret;
+
+    if (value == NULL) {
+        DMS_ERR("Invalid parameter. (dev_id=%u; value_is_NULL=%d)\n", dev_id, (value == NULL));
+        return DRV_ERROR_INVALID_VALUE;
+    }
+
+    urd_usr_cmd_fill(&cmd, DMS_MAIN_CMD_BASIC, DMS_SUBCMD_GET_HCOM_CPU_NUM, NULL, 0);
+    urd_usr_cmd_para_fill(&cmd_para, NULL, 0, (void *)&hcom_cpu_num, sizeof(unsigned int));
+    ret = urd_dev_usr_cmd(dev_id, &cmd, &cmd_para);
+    if (ret != 0) {
+        DMS_EX_NOTSUPPORT_ERR(ret, "Get hcom cpu num failed. (dev_id=%u; ret=%d)\n", dev_id, ret);
+        return ret;
+    }
+    *value = (long long)hcom_cpu_num;
+
+    return DRV_ERROR_NONE;
+}
+
 drvError_t dms_get_connect_type(int64_t *type)
 {
     struct urd_cmd cmd = {0};
@@ -643,7 +667,7 @@ drvError_t DmsSetTrsMode(unsigned int dev_id, unsigned int main_cmd,
     unsigned int sub_cmd, const void *buf, unsigned int size)
 {
 #ifdef CFG_FEATURE_TRS_MODE
-    DSMI_TRS_CONFIG_STRU *input = NULL;
+    const DSMI_TRS_CONFIG_STRU *input = NULL;
     struct trs_mode_info info = {0};
     int ret;
     (void)main_cmd;
@@ -653,7 +677,7 @@ drvError_t DmsSetTrsMode(unsigned int dev_id, unsigned int main_cmd,
         return DRV_ERROR_PARA_ERROR;
     }
 
-    input = (DSMI_TRS_CONFIG_STRU *)buf;
+    input = (const DSMI_TRS_CONFIG_STRU *)buf;
     info.dev_id = dev_id;
     info.ts_id = input->ts_id;
     info.mode = input->mode;

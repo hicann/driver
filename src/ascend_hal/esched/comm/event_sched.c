@@ -22,7 +22,7 @@
 #include "davinci_interface.h"
 #endif
 #include "dms_user_interface.h"
-#include "uda_inner.h"
+#include "pbl_uda_user.h"
 
 #include "esched_ioctl.h"
 #include "esched_user_interface.h"

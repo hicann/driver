@@ -46,6 +46,7 @@ STATIC void devmm_virt_com_heap_update_info(struct devmm_virt_com_heap *heap,
     heap->side = MEM_MAX_SIDE;
     heap->devid = DEVMM_MAX_DEVICE_NUM;
     heap->mapped_size = 0;
+    heap->reserve_size = 0;
 
     heap->sys_mem_alloced = 0;
     heap->sys_mem_freed = 0;
@@ -82,7 +83,7 @@ STATIC DVresult devmm_init_rbtree_queue(struct devmm_virt_com_heap *heap, uint32
 
     node = devmm_alloc_rbtree_node(&heap->rbtree_queue);
     if (node == NULL) {
-        DEVMM_DRV_ERR("Alloc init rbtree ndoe failed. (heap_idx=%u)\n", heap->heap_idx);
+        DEVMM_DRV_ERR("Alloc init rbtree node failed. (heap_idx=%u)\n", heap->heap_idx);
         return DRV_ERROR_OUT_OF_MEMORY;
     }
 
@@ -737,7 +738,7 @@ STATIC DVresult devmm_map_node(struct devmm_virt_com_heap *heap, struct devmm_rb
     virt_addr_t ret_val;
 
     ret_val = heap->ops->heap_alloc(heap, node->data.va, map_size, advise);
-    if (ret_val < DEVMM_SVM_MEM_START) {
+    if ((ret_val < DEVMM_SVM_MEM_START && ret_val > DEVMM_HOST_PIN_END) || (ret_val < DEVMM_HOST_PIN_START)) {
         DEVMM_DRV_INFO("Can not alloc physical address. (va=0x%llx; ret_val=0x%lx)\n", node->data.va, ret_val);
         return ptr_to_errcode(ret_val);
     }
@@ -1261,7 +1262,7 @@ DVresult devmm_free_mem(uint64_t va, struct devmm_virt_com_heap *heap, uint64_t 
     (void)pthread_rwlock_rdlock(&heap->heap_rw_lock);
     if (heap->heap_type == DEVMM_HEAP_IDLE) {
         (void)pthread_rwlock_unlock(&heap->heap_rw_lock);
-        DEVMM_DRV_ERR("Heap is destory, is error.\n");
+        DEVMM_DRV_ERR("Heap is destroy, is error.\n");
         return DRV_ERROR_INVALID_VALUE;
     }
 
@@ -1285,6 +1286,19 @@ DVresult devmm_free_mem(uint64_t va, struct devmm_virt_com_heap *heap, uint64_t 
     }
     (void)pthread_rwlock_unlock(&heap->heap_rw_lock);
     return ret;
+}
+
+bool devmm_is_mem_allocated(uint64_t va, struct devmm_virt_com_heap *heap)
+{
+    struct devmm_rbtree_node *node = NULL;
+ 
+    (void)pthread_rwlock_rdlock(&heap->heap_rw_lock);
+    (void)pthread_mutex_lock(&heap->tree_lock);
+    node = devmm_rbtree_get_alloced_node(va, &heap->rbtree_queue);
+    (void)pthread_mutex_unlock(&heap->tree_lock);
+    (void)pthread_rwlock_unlock(&heap->heap_rw_lock);
+ 
+    return (node != NULL);
 }
 
 DVresult devmm_rbtree_insert_idle_mapped_tree(struct devmm_rbtree_node *rbtree_node,

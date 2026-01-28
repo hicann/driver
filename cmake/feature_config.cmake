@@ -23,7 +23,7 @@ execute_process(
 )
 
 if(NOT result EQUAL 0)
-    message(FATAL_ERROR "Faile to create feature config:\r ${output} ${error}")
+    message(FATAL_ERROR "Failed to create feature config:\r ${output} ${error}")
 endif()
 
 set(FEATURE_CMAKE_PATH ${OUTPUT_CONFIG_PATH}/feature.cmake)

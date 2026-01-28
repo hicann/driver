@@ -13,7 +13,6 @@
 
 #include <linux/types.h>
 
-#include "svm_ioctl.h"
 #include "devmm_proc_info.h"
 #include "svm_kernel_msg.h"
 #include "devmm_common.h"
@@ -21,6 +20,7 @@
 #include "svm_host_msg_client.h"
 #include "svm_dev_res_mng.h"
 #include "svm_msg_client.h"
+#include "svm_ioctl.h"
 
 typedef int (*svm_agent_msg_send_handle)(u32 agent_id, void *msg, u32 len, u32 out_len);
 

@@ -14,8 +14,6 @@
 #ifndef DEVMM_PROC_MEM_COPY_H
 #define DEVMM_PROC_MEM_COPY_H
 
-#include <linux/hashtable.h>
-
 #include "devmm_proc_info.h"
 #include "svm_ioctl.h"
 #include "svm_shm_msg.h"

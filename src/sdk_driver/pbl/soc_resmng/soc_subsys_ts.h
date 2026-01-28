@@ -13,19 +13,19 @@
 
 #ifndef SUBSYS_TS_H__
 #define SUBSYS_TS_H__
-#include <linux/types.h>
-#include <linux/mutex.h>
-#include <linux/atomic.h>
+#include "ka_base_pub.h"
+#include "ka_list_pub.h"
+#include "ka_task_pub.h"
 
 #include "soc_resmng.h"
 
 struct soc_resmng_ts {
-    struct mutex mutex;
+    ka_mutex_t mutex;
 
-    atomic_t ts_status;
-    struct list_head io_bases_head;
-    struct list_head rsv_mems_head;
-    struct list_head key_value_head;
+    ka_atomic_t ts_status;
+    ka_list_head_t io_bases_head;
+    ka_list_head_t rsv_mems_head;
+    ka_list_head_t key_value_head;
     struct soc_irq_info irq_infos[TS_IRQ_TYPE_MAX];
     struct soc_mia_res_info_ex res_info_ex[MIA_MAX_RES_TYPE];
 };

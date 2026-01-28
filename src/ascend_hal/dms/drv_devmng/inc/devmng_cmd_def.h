@@ -213,6 +213,7 @@
 #define DEVDRV_MANAGER_IPC_NOTIFY_SET_ATTR                      _IO(DEVDRV_MANAGER_MAGIC, 205)
 #define DEVDRV_MANAGER_IPC_NOTIFY_GET_INFO                      _IO(DEVDRV_MANAGER_MAGIC, 206)
 #define DEVDRV_MANAGER_IPC_NOTIFY_GET_ATTR                      _IO(DEVDRV_MANAGER_MAGIC, 207)
-#define DEVDRV_MANAGER_CMD_MAX_NR                               208
+#define DEVDRV_MANAGER_CONFIG_DEVICE_SHARE                      _IO(DEVDRV_MANAGER_MAGIC, 208)
+#define DEVDRV_MANAGER_CMD_MAX_NR                               209
 
 #endif

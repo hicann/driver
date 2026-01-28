@@ -16,27 +16,66 @@ target_sources(eventsched_obj PRIVATE
     esched_adapt.c
 )
 
+if (${PRODUCT} STREQUAL ascend910_95)
+    if( ${CMAKE_HOST_SYSTEM_PROCESSOR} STREQUAL aarch64)
+        if(${ENABLE_UBE})
+            set(support_ub "ascend910_95")
+        endif ()
+    endif ()
+endif ()
+
+if (${PRODUCT} IN_LIST support_ub)
+target_sources(eventsched_obj PRIVATE
+    esched_topic_sqe.c
+)
+endif ()
+
 target_include_directories(eventsched_obj PRIVATE
     ${BASE_DIR}
     ${BASE_DIR}/comm
     ${DRIVER_HAL_INC_DIR}
     ${DRIVER_USER_DIR}/inc
+    ${DRIVER_USER_DIR}/inc/pbl
     ${DRIVER_KERNEL_DIR}/dpa/apm/command/ioctl
     ${DRIVER_KERNEL_DIR}/esched/command/ioctl
     ${DRIVER_KERNEL_DIR}/esched/command/msg
-    ${DRIVER_USER_DIR}/ascend_base_hal
     ${DRIVER_USER_DIR}/esched/command
     ${C_SEC_INCLUDE}
     ${DRIVER_USER_DIR}/msnpureport/inc/slog
     ${DRIVER_KERNEL_DIR}/dms/command/ioctl
 )
 
-target_compile_definitions(eventsched_obj PRIVATE
-    CFG_FEATURE_EXTERNAL_CDEV
-    CFG_ENV_HOST
-    DRV_HOST
-)
-
 target_link_libraries(eventsched_obj PRIVATE
     $<BUILD_INTERFACE:intf_pub>
+)
+
+target_compile_definitions(eventsched_obj PRIVATE
+    CFG_ENV_HOST
+    DRV_HOST
+    $<$<STREQUAL:${PRODUCT},ascend910_95>:CFG_SOC_PLATFORM_CLOUD_V4>
+    CFG_FEATURE_EXTERNAL_CDEV
+)
+
+add_library(drv_event_obj OBJECT)
+
+target_sources(drv_event_obj PRIVATE
+    comm/drv_event_proc.c
+)
+
+target_link_libraries(drv_event_obj PRIVATE
+    $<BUILD_INTERFACE:intf_pub>
+)
+
+target_include_directories(drv_event_obj PRIVATE
+    ${C_SEC_INCLUDE}
+    ${DRIVER_USER_DIR}/inc
+    ${DRIVER_HAL_INC_DIR}
+    ${DRIVER_KERNEL_DIR}/src/dpa/apm/command/ioctl
+    ${DRIVER_KERNEL_DIR}/src/esched/command/ioctl
+    ${DRIVER_KERNEL_DIR}/src/esched/command/msg
+    ${DRIVER_USER_DIR}/msnpureport/inc/slog
+)
+
+target_compile_definitions(drv_event_obj PRIVATE
+    DRV_HOST
 )

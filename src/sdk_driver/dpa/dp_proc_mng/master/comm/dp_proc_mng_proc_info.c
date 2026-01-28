@@ -10,14 +10,11 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-
-#include <linux/types.h>
-#include <linux/fs.h>
-#include <linux/slab.h>
-#include <linux/spinlock.h>
-#include <linux/list.h>
-#include <linux/hashtable.h>
-#include <linux/mutex.h>
+#include "ka_fs_pub.h"
+#include "ka_common_pub.h"
+#include "ka_type.h"
+#include "ka_ioctl_pub.h"
+#include "ka_memory_pub.h"
 
 #include "pbl/pbl_davinci_api.h"
 #include "dp_proc_mng_ioctl.h"
@@ -39,7 +36,7 @@ struct dp_proc_mng_info *dp_proc_get_manager_info(void)
 
 int dp_proc_mng_info_init(void)
 {
-    dp_proc_mng = dp_proc_kzalloc(sizeof(struct dp_proc_mng_info), GFP_KERNEL);
+    dp_proc_mng = dp_proc_kzalloc(sizeof(struct dp_proc_mng_info), KA_GFP_KERNEL);
     if (dp_proc_mng == NULL) {
         dp_proc_mng_drv_err("dp_proc_kzalloc return NULL, failed to alloc mem for manager struct.\n");
         return -ENOMEM;
@@ -54,7 +51,7 @@ void dp_proc_mng_info_unint(void)
     dp_proc_mng = NULL;
 }
 
-int dp_proc_mng_davinci_module_init(const struct file_operations *ops)
+int dp_proc_mng_davinci_module_init(const ka_file_operations_t *ops)
 {
     int ret;
 
@@ -87,7 +84,7 @@ static void dp_proc_mng_mem_stats_info_pack(struct dp_proc_mng_get_mem_stats *pa
     para->hccp_used_size = msg->hccp_used_size;
 }
 
-static int dp_proc_mng_ioctl_get_mem_stats(struct file *file, struct dp_proc_mng_ioctl_arg *arg)
+static int dp_proc_mng_ioctl_get_mem_stats(ka_file_t *file, struct dp_proc_mng_ioctl_arg *arg)
 {
     struct dp_proc_mng_chan_mem_stats mem_stats_msg = {{{0}}};
     int ret;
@@ -107,9 +104,9 @@ static int dp_proc_mng_ioctl_get_mem_stats(struct file *file, struct dp_proc_mng
     return 0;
 }
 
-int (* const dp_proc_mng_ioctl_handlers[DP_PROC_MNG_CMD_MAX_CMD])(struct file *file,
+int (* const dp_proc_mng_ioctl_handlers[DP_PROC_MNG_CMD_MAX_CMD])(ka_file_t *file,
     struct dp_proc_mng_ioctl_arg *arg) = {
-        [_IOC_NR(DP_PROC_MNG_GET_MEM_STATS)] = dp_proc_mng_ioctl_get_mem_stats,
+        [_KA_IOC_NR(DP_PROC_MNG_GET_MEM_STATS)] = dp_proc_mng_ioctl_get_mem_stats,
 };
 
 int dp_proc_mng_create_work(void)

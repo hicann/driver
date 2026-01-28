@@ -207,10 +207,11 @@ int dcmi_set_npu_device_share_enable(int card_id, int device_id, int enable_flag
     err = dsmi_set_device_info(device_logic_id, device_share_main_cmd, device_share_sub_cmd,
         (void *)&enable_flag, (unsigned int)sizeof(int));
     if (err != DCMI_OK) {
-        gplog(LOG_ERR, "call dsmi_set_device_info failed.%d.", err);
+        gplog(LOG_ERR, "call dsmi_set_device_info failed. erris %d.", err);
+        return dcmi_convert_error_code(err);
     }
 
-    return dcmi_convert_error_code(err);
+    return handle_device_share_cfg(card_id, device_id, (void *)&enable_flag);
 }
 
 int dcmi_set_sleep_state(int card_id, int device_id, struct dcmi_power_state_info_stru power_info)
@@ -755,7 +756,7 @@ STATIC int dcmi_clear_npu_syslog_cfg_inner(int device_count, int *device_id_list
             (void)pclose(fp);
             return DCMI_ERR_CODE_SECURE_FUN_FAIL;
         }
-        
+
         ret = system(clear_cmd);
         if (ret != 0) {
             gplog(LOG_ERR, "Failed to run the clear command on system. card_id:%d", device_id_list[num_id]);
@@ -817,17 +818,17 @@ int dcmi_clear_syslog_cfg()
     int ret, err;
     int persistence_enable;
     char cfg[SYS_LOG_MAX_CMD_LINE] = {0};
-    
+
     ret = access(DCMI_SYSLOG_CONF, F_OK);
     if (ret != 0) {
         goto CREAT_CFG_DEFAULT;
     }
- 
+
     ret = dcmi_check_syslog_cfg_legal(cfg, sizeof(cfg) / sizeof(char));
     if (ret != DCMI_OK) {
         goto CREAT_CFG_DEFAULT;
     }
- 
+
     err = dcmi_get_syslog_cfg_recover_mode(&persistence_enable);
     if (err != DCMI_OK) {
         gplog(LOG_ERR, "dcmi_cfg_get_config_recover_mode failed. err is %d", err);
@@ -855,7 +856,7 @@ int dcmi_set_syslog_persistence_mode(int mode)
 {
     int ret;
     char cfg[SYS_LOG_MAX_CMD_LINE] = {0};
-    
+
     ret = access(DCMI_SYSLOG_CONF, F_OK);
     if (ret != 0) {
         ret = dcmi_cfg_create_default_syslog_file();
@@ -921,11 +922,126 @@ int dcmi_save_custom_op_cfg(int card_id, int device_id, int enable_value)
     return DCMI_OK;
 }
 
+int dcmi_save_device_share_cfg(int card_id, int device_id, int enable_value)
+{
+    int err;
+    unsigned int recover_enable;
+
+    if ((!dcmi_board_chip_type_is_ascend_910_93()) && (!dcmi_board_chip_type_is_ascend_310p()) &&
+        (!dcmi_board_chip_type_is_ascend_910b())) {
+        gplog(LOG_OP, "This device does not support save device-share config recover mode %s.",
+            (enable_value == DCMI_CFG_RECOVER_ENABLE) ? "enable" : "disable");
+        return DCMI_ERR_CODE_NOT_SUPPORT;
+    } else if ((dcmi_is_in_phy_privileged_docker_root() == TRUE) || (dcmi_is_in_phy_machine_root() == TRUE)) {
+        err = dcmi_cfg_get_device_share_config_recover_mode(&recover_enable);
+        if (err != DCMI_OK) {
+            gplog(LOG_ERR, "dcmi_cfg_get_device_share_config_recover_mode failed. err is %d", err);
+            return err;
+        }
+
+        if (recover_enable == DCMI_CFG_RECOVER_ENABLE) {
+            err = dcmi_cfg_insert_set_device_share_cmdline(card_id, device_id, enable_value);
+            if (err != DCMI_OK) {
+                gplog(LOG_ERR, "dcmi_cfg_insert_set_device_share_cmdline failed. err is %d", err);
+                return err;
+            }
+        }
+    }
+    return DCMI_OK;
+}
+
+// 处理 SOC 信息自定义操作
+static int handle_soc_info_custom_op(int card_id, int device_id, const void *buf)
+{
+    int ret = dcmi_save_custom_op_cfg(card_id, device_id, *(int *)buf);
+    if (ret != DCMI_OK) {
+        gplog(LOG_ERR, "dcmi_save_custom_op_cfg failed. err is %d", ret);
+    }
+    return DCMI_OK;
+}
+
+// 处理算子超时设置命令
+static int handle_op_timeout(int card_id, int device_id, const void *buf)
+{
+    int ret;
+    unsigned int timeout;
+    const struct ts_dcmi_ctrl_msg_body_t *ts_msg = (const struct ts_dcmi_ctrl_msg_body_t *)buf;
+    timeout = ts_msg->u.set_task_timeout_info.timeout_limit_exp;
+
+    ret = dcmi_cfg_insert_set_op_timeout_cmdline(card_id, device_id, timeout);
+    if (ret != DCMI_OK) {
+        gplog(LOG_ERR, "dcmi_cfg_insert_set_op_timeout_cmdline failed. err is %d", ret);
+    }
+    return DCMI_OK;
+}
+
+// 处理容器共享配置保存
+int handle_device_share_cfg(int card_id, int device_id, const void *buf)
+{
+    if (dcmi_board_chip_type_is_ascend_310b()) {
+        // 310B rc 支持容器共享功能，但不支持持久化配置
+        return DCMI_OK;
+    }
+
+    int ret = dcmi_save_device_share_cfg(card_id, device_id, *(int *)buf);
+    if (ret != DCMI_OK) {
+        gplog(LOG_ERR, "dcmi_save_device_share_cfg failed. err is %d", ret);
+    }
+    return DCMI_OK;
+}
+
+int dcmi_cmd_write_into_recover_cfg(unsigned int main_cmd, unsigned int sub_cmd, int card_id, int device_id,
+    const void *buf)
+{
+    size_t index, table_size;
+
+    static struct dcmi_device_info_main_cmd_cfg_recover_table cmd_recov_support_table[] = {
+        {DCMI_MAIN_CMD_SOC_INFO, DCMI_SOC_INFO_SUB_CMD_CUSTOM_OP, handle_soc_info_custom_op},
+        {DCMI_MAIN_CMD_DEVICE_SHARE, DCMI_DEVICE_SHARE_SUB_CMD_COMMON, handle_device_share_cfg},
+        {DCMI_MAIN_CMD_TS, DCMI_TS_SUB_CMD_COMMON_MSG, handle_op_timeout},
+    };
+    table_size = sizeof(cmd_recov_support_table) / sizeof(cmd_recov_support_table[0]);
+    for (index = 0; index < table_size; ++index) {
+        if ((main_cmd == cmd_recov_support_table[index].main_cmd) &&
+            (sub_cmd == cmd_recov_support_table[index].sub_cmd) &&
+            (cmd_recov_support_table[index].cmd_persist_handle_func != NULL)) {
+            return cmd_recov_support_table[index].cmd_persist_handle_func(card_id, device_id, buf);
+        }
+    }
+
+    return DCMI_OK;
+}
+
+// 校验参数
+static int dcmi_device_info_check_param(enum dcmi_main_cmd main_cmd, unsigned int sub_cmd, const void *buf)
+{
+    if (!buf) {
+        gplog(LOG_ERR, "dcmi_device_info_check_param failed. buf is NULL");
+        return DCMI_ERR_CODE_INVALID_PARAMETER;
+    }
+    if (main_cmd == DCMI_MAIN_CMD_TS && sub_cmd == DCMI_TS_SUB_CMD_COMMON_MSG) {
+        const struct ts_dcmi_ctrl_msg_body_t *ts_msg = (const struct ts_dcmi_ctrl_msg_body_t *)buf;
+        unsigned int timeout = ts_msg->u.set_task_timeout_info.timeout_limit_exp;
+
+        if (timeout < (unsigned int)MIN_TIMEOUT_EXPONENT || timeout > (unsigned int)MAX_TIMEOUT_EXPONENT) {
+            gplog(LOG_ERR, "dcmi_device_info_check_param failed. timeout value is %u", timeout);
+            return DCMI_ERR_CODE_INVALID_PARAMETER;
+        }
+    }
+    return DCMI_OK;
+}
+
 int dcmi_set_npu_device_info(
     int card_id, int device_id, enum dcmi_main_cmd main_cmd, unsigned int sub_cmd, const void *buf, unsigned int size)
 {
     int ret;
     int device_logic_id = 0;
+
+    ret = dcmi_device_info_check_param((DSMI_MAIN_CMD)main_cmd, sub_cmd, buf);
+    if (ret != DCMI_OK) {
+        gplog(LOG_ERR, "call dcmi_check_param failed. err is %d.", ret);
+        return ret;
+    }
 
     if (main_cmd == DCMI_MAIN_CMD_SEC && sub_cmd == DCMI_SEC_SUB_CMD_PSS) {
         // pkcs使能整机生效，与device_id, card_id无关，参数不会使用，此处强制写0
@@ -939,25 +1055,22 @@ int dcmi_set_npu_device_info(
     }
 
     ret = dcmi_get_device_logic_id(&device_logic_id, card_id, device_id);
-    if (ret != DCMI_OK) {
-        gplog(LOG_ERR, "call dcmi_get_device_logic_id failed. err is %d.", ret);
+    if (ret != DSMI_OK) {
+        gplog(LOG_ERR, "call dsmi_set_device_info failed. err is %d.", ret);
         return ret;
     }
 
     ret = dsmi_set_device_info(device_logic_id, (DSMI_MAIN_CMD)main_cmd, sub_cmd, buf, size);
-    if ((ret != DSMI_OK) && (ret != DSMI_ERR_NOT_SUPPORT)) {
-        gplog(LOG_ERR, "call dsmi_set_device_info failed. err is %d.", ret);
-    }
-
-    if (main_cmd == DCMI_MAIN_CMD_SOC_INFO && sub_cmd == DCMI_SOC_INFO_SUB_CMD_CUSTOM_OP) {
-        ret = dcmi_save_custom_op_cfg(card_id, device_id, *(int *)(buf));
-        if (ret != DCMI_OK) {
-            gplog(LOG_ERR, "dcmi_save_custom_op_cfg failed. err is %d", ret);
+    if ((ret != DSMI_OK)) {
+        if (ret != DSMI_ERR_NOT_SUPPORT) {
+            gplog(LOG_ERR, "call dsmi_set_device_info failed. err is %d.", ret);
         }
-        ret = DCMI_OK;
+        return dcmi_convert_error_code(ret);
     }
 
-    return dcmi_convert_error_code(ret);
+    // 根据具体子命令分发处理
+    ret = dcmi_cmd_write_into_recover_cfg(main_cmd, sub_cmd, card_id, device_id, buf);
+    return ret;
 }
 
 #if defined DCMI_VERSION_2
@@ -993,3 +1106,33 @@ int dcmi_switch_boot_area(int card_id, int device_id)
     return DCMI_OK;
 }
 #endif
+
+int dcmi_set_device_share_for_910_93(int card_id, enum dcmi_unit_type device_type, enum dcmi_main_cmd main_cmd,
+    unsigned int sub_cmd, const void *buf, unsigned int buf_size)
+{
+    int err;
+    int npu_count = 0, npu_id = 0;
+
+    if (device_type != NPU_TYPE) {
+        gplog(LOG_ERR, "device_type %d is not support.", device_type);
+        return DCMI_ERR_CODE_NOT_SUPPORT;
+    }
+
+    err = dcmi_get_device_num_in_card(card_id, &npu_count);
+    if (err != DCMI_OK) {
+        gplog(LOG_ERR, "dcmi_get_device_num_in_card failed. err is %d.", err);
+        return err;
+    }
+
+    for (npu_id = 0; npu_id < npu_count; npu_id++) {
+        err = dcmi_set_npu_device_info(card_id, npu_id, main_cmd, sub_cmd, buf, buf_size);
+        if (err != DCMI_OK) {
+            gplog(LOG_ERR, "Set share enable failed. card_id=%d, device_id=%d, main_cmd=%d, sub_cmd=%u, err=%d",
+                card_id, npu_id, main_cmd, sub_cmd, err);
+            return err;
+        }
+        gplog(LOG_OP, "Set share enable success. card_id=%d, device_id=%d, main_cmd=%d, sub_cmd=%u", card_id, npu_id,
+            main_cmd, sub_cmd);
+    }
+    return DCMI_OK;
+}

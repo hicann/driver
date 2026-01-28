@@ -14,14 +14,14 @@
 #include "virtmnghost_vpc_unit.h"
 #include "vpc_soc_adapt.h"
 
-#include <linux/pci.h>
+#include "ka_pci_pub.h"
 
 static inline bool vmngh_is_support_sriov(struct vmng_msg_dev *msg_dev)
 {
     if (msg_dev->msg_dev_type != VMNG_MSG_DEV_UNDEFINE) {
         return msg_dev->msg_dev_type == VMNG_MSG_DEV_SRIOV;
     }
-    if (pci_sriov_get_totalvfs(((struct vmngh_vpc_unit *)(msg_dev->unit))->pdev) == 0) {
+    if (ka_pci_sriov_get_totalvfs(((struct vmngh_vpc_unit *)(msg_dev->unit))->pdev) == 0) {
         msg_dev->msg_dev_type = VMNG_MSG_DEV_NORMAL;
     } else {
         msg_dev->msg_dev_type = VMNG_MSG_DEV_SRIOV;

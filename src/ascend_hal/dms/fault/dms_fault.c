@@ -19,7 +19,7 @@
 #include "dms/dms_misc_interface.h"
 #include "dsmi_common_interface.h"
 #include "devdrv_user_common.h"
-#include "uda_inner.h"
+#include "pbl_uda_user.h"
 #include "dms_fault.h"
 #include "ascend_dev_num.h"
 

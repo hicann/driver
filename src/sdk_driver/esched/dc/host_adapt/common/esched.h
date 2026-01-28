@@ -50,9 +50,7 @@
 #include <linux/pid.h>
 #else
 #include <linux/version.h>
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 11, 0)
-#include <linux/sched/task.h>
-#endif
+#include "ka_task_pub.h"
 #endif
 
 #ifdef CFG_FEATURE_VFIO
@@ -781,17 +779,6 @@ struct sched_numa_node {
     struct sched_dev_ops ops;
 };
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 0, 0)
-static inline void esched_get_ktime(struct timeval *tv)
-{
-    ktime_t kt;
-    u64 nsec;
-    kt = ktime_get_boottime();
-    nsec = ktime_to_us(kt);
-    tv->tv_sec = nsec / USEC_PER_SEC;
-    tv->tv_usec = nsec % USEC_PER_SEC;
-}
-#endif
 /* inline */
 /* get cpu tick */
 static inline u64 sched_get_cur_cpu_tick(void)

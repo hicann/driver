@@ -9,8 +9,9 @@
 # ------------------------------------------------------------------------------------------------------------
 
 set(DRIVER_DEVICE_NAME "driver-device")
-set(DRIVER_DEVICE_SERVER "https://ascend.devcloud.huaweicloud.com/cann/run/dependency")
+set(DRIVER_DEVICE_SERVER "https://ascend.devcloud.huaweicloud.com/artifactory/cann-run-release/dependency")
 set(DRIVER_DEVICE_VERSION "8.5.0-beta.1")
+set(DRIVER_DEVICE_DATE "20260127000324761")
 
 if(POLICY CMP0135)
     cmake_policy(SET CMP0135 NEW)
@@ -46,7 +47,7 @@ if(NOT DRIVER_DEVICE_ARCHIVE_FILE)
     endif()
 
     set(DRIVER_DEVICE_FILE "cann-driver-device-${DRIVER_DEVICE_PRODUCT}-${DRIVER_DEVICE_RELEASE}_${DRIVER_DEVICE_VERSION}_linux-${CMAKE_HOST_SYSTEM_PROCESSOR}.tar.gz")
-    set(DRIVER_DEVICE_URL "${DRIVER_DEVICE_SERVER}/${DRIVER_DEVICE_VERSION}/${DRIVER_DEVICE_PLATFORM}/basic/${DRIVER_DEVICE_FILE}")
+    set(DRIVER_DEVICE_URL "${DRIVER_DEVICE_SERVER}/${DRIVER_DEVICE_VERSION}/${DRIVER_DEVICE_DATE}/${DRIVER_DEVICE_PLATFORM}/basic/${DRIVER_DEVICE_FILE}")
     message(STATUS "Not find driver-device package, downloading ${DRIVER_DEVICE_NAME} from ${DRIVER_DEVICE_URL}")
     include(FetchContent)
     FetchContent_Declare(

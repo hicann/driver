@@ -10,7 +10,6 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#include <linux/delay.h>
 
 #include "comm_kernel_interface.h"
 
@@ -56,11 +55,11 @@ int vmngh_alloc_vfid_comm(u32 dev_id, u32 dtype, u32 *fid)
 STATIC int vmngh_alloc_vdev_ctrl_comm(u32 dev_id, u32 vfid, struct vmng_ctrl_msg_info *info)
 {
     struct vmngh_vdev_ctrl *ctrl = vmngh_get_ctrl(dev_id, vfid);
-    struct mutex *ctrl_mutex = vmngh_get_ctrl_mutex();
+    ka_mutex_t *ctrl_mutex = vmngh_get_ctrl_mutex();
     struct vmng_vdev_ctrl *vdev_ctrl = &ctrl->vdev_ctrl;
     int ret;
 
-    mutex_lock(ctrl_mutex);
+    ka_task_mutex_lock(ctrl_mutex);
     (void)devdrv_get_devid_by_pfvf_id(dev_id, vfid, &vdev_ctrl->dev_id);
     vdev_ctrl->vfid = 0;
     vdev_ctrl->dtype = info->dtype;
@@ -68,11 +67,11 @@ STATIC int vmngh_alloc_vdev_ctrl_comm(u32 dev_id, u32 vfid, struct vmng_ctrl_msg
     vdev_ctrl->total_core_num = info->total_core_num;
     if (memcpy_s(&vdev_ctrl->vf_cfg, sizeof(vmng_vf_cfg_t), &info->vf_cfg, sizeof(vmng_vf_cfg_t)) != EOK) {
         vmng_err("Call memcpy_s failed.\n");
-        mutex_unlock(ctrl_mutex);
+        ka_task_mutex_unlock(ctrl_mutex);
         return VMNG_ERR;
     }
     vdev_ctrl->status = VMNG_VDEV_STATUS_ALLOC;
-    mutex_unlock(ctrl_mutex);
+    ka_task_mutex_unlock(ctrl_mutex);
 
     info->dev_id = dev_id;
     info->vfid = vfid;
@@ -283,7 +282,7 @@ int vmngh_res_enable_sriov_comm(u32 dev_id, u32 boot_mode)
             vmng_err("Sriov enable failed. (dev_id=%u)\n", dev_id);
             return VMNG_ERR;
         }
-        ssleep(1);
+        ka_system_ssleep(1);
     }
 
     info.dev_id = dev_id;

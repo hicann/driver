@@ -10,17 +10,14 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#include <linux/pci.h>
-#include <linux/version.h>
-#include <linux/module.h>
-#include <linux/errno.h>
-#include <linux/sched.h>
-#include <linux/delay.h>
 
 #include "pbl/pbl_feature_loader.h"
 #include "pbl/pbl_uda.h"
 #include "pbl/pbl_soc_res.h"
 
+#include "ka_system_pub.h"
+#include "ka_memory_pub.h"
+#include "ka_pci_pub.h"
 #include "virtmnghost_vpc_unit.h"
 #include "virtmnghost_unit.h"
 #include "virtmnghost_ctrl.h"
@@ -40,21 +37,29 @@
 #include "virtmnghost_proc_fs.h"
 #include "vmng_mem_alloc_interface.h"
 #include "virtmnghost_pci.h"
+#include "ka_pci_pub.h"
+#include "ka_task_pub.h"
+#include "ka_base_pub.h"
+#include "ka_system_pub.h"
+#include "ka_memory_pub.h"
+#include "ka_barrier_pub.h"
+#include "ka_common_pub.h"
+#include "ka_kernel_def_pub.h"
 
-static const struct pci_device_id g_vmngh_tbl[] = {{ PCI_VDEVICE(HUAWEI, HISI_EP_DEVICE_ID_MINIV2), 0 },
-                                                   { PCI_VDEVICE(HUAWEI, HISI_EP_DEVICE_ID_CLOUD), 0 },
-                                                   { PCI_VDEVICE(HUAWEI, HISI_EP_DEVICE_ID_CLOUD_V2), 0 },
+static const ka_pci_device_id_t g_vmngh_tbl[] = {{ KA_PCI_VDEVICE(HUAWEI, HISI_EP_DEVICE_ID_MINIV2), 0 },
+                                                   { KA_PCI_VDEVICE(HUAWEI, HISI_EP_DEVICE_ID_CLOUD), 0 },
+                                                   { KA_PCI_VDEVICE(HUAWEI, HISI_EP_DEVICE_ID_CLOUD_V2), 0 },
                                                    { DEVDRV_DIVERSITY_PCIE_VENDOR_ID, 0xd500,
-                                                     PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 },
-                                                   { PCI_VDEVICE(HUAWEI, HISI_EP_DEVICE_ID_CLOUD_V5), 0 },
-                                                   { 0x20C6, 0xd500, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 },
-                                                   { 0x203F, 0xd500, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 },
-                                                   { 0x20C6, 0xd802, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 },
-                                                   { 0x203F, 0xd802, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 },
+                                                     KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0 },
+                                                   { KA_PCI_VDEVICE(HUAWEI, HISI_EP_DEVICE_ID_CLOUD_V5), 0 },
+                                                   { 0x20C6, 0xd500, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0 },
+                                                   { 0x203F, 0xd500, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0 },
+                                                   { 0x20C6, 0xd802, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0 },
+                                                   { 0x203F, 0xd802, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0 },
 						   {}};
-MODULE_DEVICE_TABLE(pci, g_vmngh_tbl);
+KA_MODULE_DEVICE_TABLE(pci, g_vmngh_tbl);
 
-struct mutex g_vmngh_pci_mutex;
+ka_mutex_t g_vmngh_pci_mutex;
 u32 procfs_valid;
 u32 g_max_msix_num;
 u32 g_max_pass_to_vm_msix_num;
@@ -72,7 +77,7 @@ static inline u32 vmngh_get_dtype_by_aicore(unsigned int aicore_num)
 {
     // __builtin_clz return the front 0 bit num of (u32)BIT(N) equal to 31 - N
     // dtype is equal to log(aicore), this function return the highest 1 bit index
-    return (u32)(__builtin_clz((u32)BIT(0)) - __builtin_clz(aicore_num));
+    return (u32)(__builtin_clz((u32)KA_BASE_BIT(0)) - __builtin_clz(aicore_num));
 }
 
 STATIC int vmngh_ctrl_msg_send(u32 devid, void *data, u32 in_data_len, u32 out_data_len, u32 *real_out_len)
@@ -122,7 +127,7 @@ int vmngh_add_mia_dev(u32 dev_id, u32 vfid, u32 agent_flag)
     enum uda_dev_prop prop = devdrv_is_sriov_support(dev_id) ? UDA_REAL : UDA_VIRTUAL;
     enum uda_dev_object object = (agent_flag == 0) ? UDA_ENTITY : UDA_AGENT;
     u32 udevid = dev_id;
-    struct device *dev = NULL;
+    ka_device_t *dev = NULL;
     int ret;
 
     if (devdrv_is_sriov_support(dev_id)) {
@@ -388,10 +393,10 @@ STATIC int vmngh_notify_vdev_probe_bottom_half(struct vmngh_vd_dev *vd_dev)
     u32 msix_offset;
     int ret;
 
-    /* update infomation use shr para */
+    /* update information use shr para */
     vd_dev->shr_para->dtype = (u32)vd_dev->dtype.type;
     vd_dev->shr_para->start_flag = VMNG_VM_START_SUCCESS;
-    wmb();
+    ka_wmb();
     msix_offset = vd_dev->shr_para->msix_offset;
     /* notice vm to start bottom half probe */
     ret = hw_dvt_hypervisor_inject_msix(vd_dev->vdavinci, start_dev->msix_irq + msix_offset);
@@ -596,32 +601,25 @@ STATIC int vmngh_vdev_unfeature(struct vmngh_vd_dev *vd_dev)
     return 0;
 }
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 15, 0)
-static void vmngh_start_timer_task(struct timer_list *t)
+static void vmngh_start_timer_task(ka_timer_list_t *t)
 {
-    struct vmngh_start_dev *start_dev = from_timer(start_dev, t, wd_timer);
-    struct vmngh_vd_dev *vd_dev = container_of(start_dev, struct vmngh_vd_dev, start_dev);
-#else
-static void vmngh_start_timer_task(unsigned long data)
-{
-    struct vmngh_vd_dev *vd_dev = (struct vmngh_vd_dev *)((uintptr_t)data);
-    struct vmngh_start_dev *start_dev = &(vd_dev->start_dev);
-#endif
+    struct vmngh_start_dev *start_dev = ka_system_from_timer(start_dev, t, wd_timer);
+    struct vmngh_vd_dev *vd_dev = ka_container_of(start_dev, struct vmngh_vd_dev, start_dev);
     u32 dev_id = vd_dev->dev_id;
     u32 fid = vd_dev->fid;
 
-    if (atomic_read(&start_dev->start_flag) == VMNG_TASK_SUCCESS) {
+    if (ka_base_atomic_read(&start_dev->start_flag) == VMNG_TASK_SUCCESS) {
         vmng_info("Startup success, timer close. (devid=%u; fid=%u)\n", dev_id, fid);
         return;
     }
     if (start_dev->timer_remain > 0) {
         start_dev->timer_remain--;
-        start_dev->wd_timer.expires = jiffies + start_dev->timer_cycle;
-        add_timer(&(start_dev->wd_timer));
+        start_dev->wd_timer.expires = ka_jiffies + start_dev->timer_cycle;
+        ka_system_add_timer(&(start_dev->wd_timer));
         vmng_debug("Startup timer rebuild. (devid=%u; fid=%u)\n", dev_id, fid);
     } else {
         vmng_err("Startup timeout. (devid=%u; fid=%u)\n", dev_id, fid);
-        atomic_set(&start_dev->start_flag, VMNG_TASK_TIMEOUT);
+        ka_base_atomic_set(&start_dev->start_flag, VMNG_TASK_TIMEOUT);
     }
 }
 
@@ -632,19 +630,15 @@ STATIC void vmngh_set_start_timer(struct vmngh_vd_dev *vd_dev)
     /* create start check timer, vmngh_vm_load_irq to set status to close timer */
     start_dev->timer_remain = VMNG_START_TIMER_OUT;
     start_dev->timer_cycle = VMNG_START_TIMER_CYCLE;
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 15, 0)
-    timer_setup(&start_dev->wd_timer, vmngh_start_timer_task, 0);
-#else
-    setup_timer(&start_dev->wd_timer, vmngh_start_timer_task, (uintptr_t)vd_dev);
-#endif
-    start_dev->wd_timer.expires = jiffies + start_dev->timer_cycle;
-    add_timer(&(start_dev->wd_timer));
+    ka_system_timer_setup(&start_dev->wd_timer, vmngh_start_timer_task, 0);
+    start_dev->wd_timer.expires = ka_jiffies + start_dev->timer_cycle;
+    ka_system_add_timer(&(start_dev->wd_timer));
 }
 
 STATIC void vmngh_del_start_timer(struct vmngh_vd_dev *vd_dev)
 {
     if (vd_dev->start_dev.timer_cycle != 0) {
-        del_timer_sync(&vd_dev->start_dev.wd_timer);
+        ka_system_del_timer_sync(&vd_dev->start_dev.wd_timer);
         vd_dev->start_dev.timer_cycle = 0;
         vmng_info("Delete start timer. (devid=%u; fid=%u)\n", vd_dev->dev_id, vd_dev->fid);
     }
@@ -652,28 +646,28 @@ STATIC void vmngh_del_start_timer(struct vmngh_vd_dev *vd_dev)
 
 #define MAX_PCIE_MSIX_NUM 64
 #define MAX_PASS_TO_VM_MSIX_NUM 44
-STATIC irqreturn_t msi_inject_interrupt(int irq, void *data)
+STATIC ka_irqreturn_t msi_inject_interrupt(int irq, void *data)
 {
     struct vm_msix_struct *vm_msix = (struct vm_msix_struct *)data;
     int ret;
 
     if ((vm_msix == NULL) || (vm_msix->vdavinci == NULL)) {
         vmng_err("Vdavinci is null. (irq=%d)\n", irq);
-        return IRQ_NONE;
+        return KA_IRQ_NONE;
     }
 
     if (((u32)vm_msix->irq_vector >= g_max_pass_to_vm_msix_num) || (vm_msix->irq_vector < 0)) {
         vmng_err("Invalid irq vector. (vector=%d, irq=%d)\n", vm_msix->irq_vector, irq);
-        return IRQ_NONE;
+        return KA_IRQ_NONE;
     }
 
     ret = hw_dvt_hypervisor_inject_msix(vm_msix->vdavinci, (u32)vm_msix->irq_vector);
     if (ret != 0) {
         vmng_err("Inject msix irq fail.(irq=%d;vector=%d;ret=%d)\n", irq, vm_msix->irq_vector, ret);
-        return IRQ_NONE;
+        return KA_IRQ_NONE;
     }
 
-    return IRQ_HANDLED;
+    return KA_IRQ_HANDLED;
 }
 
 int vmngh_hypervisor_inject_msix(unsigned int dev_id, unsigned int irq_vector)
@@ -692,12 +686,12 @@ int vmngh_hypervisor_inject_msix(unsigned int dev_id, unsigned int irq_vector)
     }
     return hw_dvt_hypervisor_inject_msix(vdavinci, irq_vector);
 }
-EXPORT_SYMBOL(vmngh_hypervisor_inject_msix);
+KA_EXPORT_SYMBOL(vmngh_hypervisor_inject_msix);
 
 STATIC int vmngh_passthrough_msix_irq_to_vm(unsigned int dev_id, struct vmngh_vd_dev *vd_dev)
 {
     struct vm_msix_struct *vm_msix;
-    struct pci_dev *pdev;
+    ka_pci_dev_t *pdev;
     int ret;
     int irq;
     int i;
@@ -708,7 +702,7 @@ STATIC int vmngh_passthrough_msix_irq_to_vm(unsigned int dev_id, struct vmngh_vd
         return -EINVAL;
     }
 
-    vm_msix = vmng_kzalloc(sizeof(struct vm_msix_struct) * g_max_msix_num, GFP_KERNEL);
+    vm_msix = vmng_kzalloc(sizeof(struct vm_msix_struct) * g_max_msix_num, KA_GFP_KERNEL);
     if (vm_msix == NULL) {
         vmng_err("Alloc vm msix failed. (dev_id=%u;vfid=%u)\n", vd_dev->dev_id, vd_dev->fid);
         return -ENOMEM;
@@ -718,12 +712,8 @@ STATIC int vmngh_passthrough_msix_irq_to_vm(unsigned int dev_id, struct vmngh_vd
     for (i = 0; (u32)i < g_max_pass_to_vm_msix_num; i++) {
         vm_msix[i].vdavinci = vd_dev->vdavinci;
         vm_msix[i].irq_vector = i;
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 8, 0)
-        irq = pci_irq_vector(pdev, (u32)i);
-#else
-        (void)devdrv_get_irq_vector(dev_id, (u32)i, (u32 *)&irq);
-#endif
-        ret = request_irq((u32)irq, msi_inject_interrupt, 0, "msix_inject", vm_msix + i);
+        ka_pci_irq_vector(pdev, (u32)i, dev_id, (u32 *)&irq, devdrv_get_irq_vector);
+        ret = ka_system_request_irq((u32)irq, msi_inject_interrupt, 0, "msix_inject", vm_msix + i);
         if (ret < 0) {
             vmng_err("request irq failed, ret : %d\n", ret);
             goto failed;
@@ -733,8 +723,8 @@ STATIC int vmngh_passthrough_msix_irq_to_vm(unsigned int dev_id, struct vmngh_vd
 
 failed:
     for (--i; i >= 0; --i) {
-        irq = pci_irq_vector(pdev, (u32)i);
-        free_irq(irq,  vm_msix + i);
+        ka_pci_irq_vector(pdev, (u32)i, dev_id, (u32 *)&irq, devdrv_get_irq_vector);
+        ka_system_free_irq(irq, vm_msix + i);
     }
     vmng_kfree(vm_msix);
     vd_dev->vm_msix = NULL;
@@ -743,7 +733,7 @@ failed:
 
 STATIC void vmngh_release_passthrough_to_vm_msix_irq(unsigned int dev_id, struct vmngh_vd_dev *vd_dev)
 {
-    struct pci_dev *pdev;
+    ka_pci_dev_t *pdev;
     int irq;
     u32 i;
 
@@ -753,12 +743,8 @@ STATIC void vmngh_release_passthrough_to_vm_msix_irq(unsigned int dev_id, struct
         return;
     }
     for (i = 0; i < g_max_pass_to_vm_msix_num; i++) {
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 8, 0)
-        irq = pci_irq_vector(pdev, i);
-#else
-        (void)devdrv_get_irq_vector(dev_id, i, (u32 *)&irq);
-#endif
-        (void)free_irq((u32)irq, vd_dev->vm_msix + i);
+        ka_pci_irq_vector(pdev, (u32)i, dev_id, (u32 *)&irq, devdrv_get_irq_vector);
+        (void)ka_system_free_irq((u32)irq, vd_dev->vm_msix + i);
     }
     vmng_kfree(vd_dev->vm_msix);
     vd_dev->vm_msix = NULL;
@@ -788,7 +774,7 @@ STATIC void vmngh_disable_pcie_feature(struct vmngh_vd_dev *vd_dev)
     (void)vmngh_ctrl_msg_send(vd_dev->dev_id, (void *)&msg, sizeof(msg), sizeof(msg), &len);
 
     // info pcie
-    (void)devdrv_mdev_set_pm_iova_addr_range(dev_id, (dma_addr_t)0, (size_t)0);
+    (void)devdrv_mdev_set_pm_iova_addr_range(dev_id, (ka_dma_addr_t)0, (size_t)0);
     vmngh_release_passthrough_to_vm_msix_irq(dev_id, vd_dev);
     devdrv_mdev_pm_uninit_msi_interrupt(dev_id);
     devdrv_mdev_free_vf_dma_sqcq_on_pm(dev_id);
@@ -852,7 +838,7 @@ STATIC int vmngh_enable_pcie_feature(struct vmngh_vd_dev *vd_dev)
     ret = vmngh_ctrl_msg_send(vd_dev->dev_id, (void *)&msg, sizeof(msg), sizeof(msg), &len);
     if ((ret != VMNG_OK) || (len != sizeof(msg)) || (msg.error_code != VMNG_OK)) {
         vmng_err("Send iova msg to device failed.(ret=%d;error_code=%d)\n", ret, msg.error_code);
-        devdrv_mdev_set_pm_iova_addr_range(dev_id, (dma_addr_t)0, 0);
+        devdrv_mdev_set_pm_iova_addr_range(dev_id, (ka_dma_addr_t)0, 0);
         vmngh_release_passthrough_to_vm_msix_irq(dev_id, vd_dev);
         devdrv_mdev_pm_uninit_msi_interrupt(dev_id);
         return VMNG_ERR;
@@ -861,9 +847,9 @@ STATIC int vmngh_enable_pcie_feature(struct vmngh_vd_dev *vd_dev)
     return 0;
 }
 
-STATIC void vmngh_vdev_create_bottom(struct work_struct *p_work)
+STATIC void vmngh_vdev_create_bottom(ka_work_struct_t *p_work)
 {
-    struct vmngh_vd_dev *vd_dev = container_of(p_work, struct vmngh_vd_dev, start_work);
+    struct vmngh_vd_dev *vd_dev = ka_container_of(p_work, struct vmngh_vd_dev, start_work);
     int ret;
     u32 dev_id = vd_dev->dev_id;
     u32 fid = vd_dev->fid;
@@ -877,7 +863,7 @@ STATIC void vmngh_vdev_create_bottom(struct work_struct *p_work)
         return;
     }
 
-    if (atomic_read(&vd_dev->reset_ref_flag) != VMNGH_MDEV_FLR_STATE) {
+    if (ka_base_atomic_read(&vd_dev->reset_ref_flag) != VMNGH_MDEV_FLR_STATE) {
         ret = hw_dvt_hypervisor_dma_pool_init(vd_dev->vdavinci);
         if (ret != 0) {
             vmng_err("Dma pool init failed. (dev_id=%u; fid=%u; ret=%d)\n", dev_id, fid, ret);
@@ -915,7 +901,7 @@ STATIC void vmngh_vdev_create_bottom(struct work_struct *p_work)
 
     /* success */
     vd_dev->init_status = VMNG_STARTUP_BOTTOM_HALF_OK;
-    atomic_set(&vd_dev->reset_ref_flag, VMNGH_MDEV_RUNNING_STATE);
+    ka_base_atomic_set(&vd_dev->reset_ref_flag, VMNGH_MDEV_RUNNING_STATE);
     vmng_info("Bottom create success. (dev_id=%u; fid=%u)\n", dev_id, fid);
 
     return;
@@ -925,10 +911,10 @@ vdev_unprepare:
 msix_disable:
     vmngh_disable_pcie_feature(vd_dev);
 dma_pool_uninit:
-    if (atomic_read(&vd_dev->reset_ref_flag) != VMNGH_MDEV_FLR_STATE) {
+    if (ka_base_atomic_read(&vd_dev->reset_ref_flag) != VMNGH_MDEV_FLR_STATE) {
         hw_dvt_hypervisor_dma_pool_uninit(vd_dev->vdavinci);
     }
-    atomic_set(&vd_dev->reset_ref_flag, VMNGH_MDEV_RUNNING_STATE);
+    ka_base_atomic_set(&vd_dev->reset_ref_flag, VMNGH_MDEV_RUNNING_STATE);
 directly_out:
     vmng_err("Create half bottom failed. (dev_id=%u; fid=%u)\n", dev_id, fid);
     return;
@@ -946,7 +932,7 @@ STATIC int vmngh_vdev_free_bottom(struct vmngh_vd_dev *vd_dev)
     (void)vmngh_vdev_unfeature(vd_dev);
     vmngh_vdev_unprepare(vd_dev);
     vmngh_disable_pcie_feature(vd_dev);
-    if (atomic_read(&vd_dev->reset_ref_flag) != VMNGH_MDEV_FLR_STATE) {
+    if (ka_base_atomic_read(&vd_dev->reset_ref_flag) != VMNGH_MDEV_FLR_STATE) {
         hw_dvt_hypervisor_dma_pool_uninit(vd_dev->vdavinci);
         vmng_info("Dma pool uninit end. (dev_id=%u; fid=%u)\n", dev_id, fid);
     } else {
@@ -955,7 +941,7 @@ STATIC int vmngh_vdev_free_bottom(struct vmngh_vd_dev *vd_dev)
     vmngh_del_start_timer(vd_dev);
     vmngh_ctrl_set_startup_flag(vd_dev->dev_id, vd_dev->fid, VMNG_STARTUP_TOP_HALF_OK);
     /* vdavinci will invoke reset to clear create bottom, when vm start */
-    atomic_set(&(vd_dev->start_dev.start_flag), VMNG_TASK_WAIT);
+    ka_base_atomic_set(&(vd_dev->start_dev.start_flag), VMNG_TASK_WAIT);
     vmng_info("Free bottom finish. (dev_id=%u; fid=%u)\n", dev_id, fid);
 
     return 0;
@@ -964,21 +950,21 @@ STATIC int vmngh_vdev_free_bottom(struct vmngh_vd_dev *vd_dev)
 static void vmngh_wait_vm_start(struct vmngh_vd_dev *vd_dev)
 {
     /* create half bottom, when vm start, we get a doorbell then schule. */
-    INIT_WORK(&vd_dev->start_work, vmngh_vdev_create_bottom);
+    KA_TASK_INIT_WORK(&vd_dev->start_work, vmngh_vdev_create_bottom);
 
     /* set status */
-    atomic_set(&(vd_dev->start_dev.start_flag), VMNG_TASK_WAIT);
+    ka_base_atomic_set(&(vd_dev->start_dev.start_flag), VMNG_TASK_WAIT);
 }
 
 static void vmngh_start_exit(struct vmngh_vd_dev *vd_dev)
 {
     if (vd_dev->start_work.func != NULL) {
-        cancel_work_sync(&vd_dev->start_work);
+        ka_task_cancel_work_sync(&vd_dev->start_work);
     }
 }
 
 static struct vmngh_vd_dev *vmngh_alloc_vdev(u32 fid, void *vdavinci, struct vmngh_pci_dev *vm_pdev,
-    struct vdavinci_type *vd_type, uuid_le uuid)
+    struct vdavinci_type *vd_type, ka_uuid_le_t uuid)
 {
     struct vmngh_vd_dev *vd_dev = NULL;
     int ret;
@@ -988,7 +974,7 @@ static struct vmngh_vd_dev *vmngh_alloc_vdev(u32 fid, void *vdavinci, struct vmn
         return NULL;
     }
 
-    vd_dev = vmng_kzalloc(sizeof(struct vmngh_vd_dev), GFP_KERNEL);
+    vd_dev = vmng_kzalloc(sizeof(struct vmngh_vd_dev), KA_GFP_KERNEL);
     if (vd_dev == NULL) {
         vmng_err("Alloc device failed. (dev_id=%u; fid=%u)\n", vm_pdev->dev_id, fid);
         return NULL;
@@ -1027,7 +1013,7 @@ static struct vmngh_vd_dev *vmngh_alloc_vdev(u32 fid, void *vdavinci, struct vmn
     }
     vd_dev->shr_para->hbmmem_size = vd_type->hbmmem_size;
     vd_dev->shr_para->ddrmem_size = vd_type->ddrmem_size;
-    atomic_set(&vd_dev->reset_ref_flag, VMNGH_MDEV_RUNNING_STATE);
+    ka_base_atomic_set(&vd_dev->reset_ref_flag, VMNGH_MDEV_RUNNING_STATE);
 
     /* mount at last, to avoid heap use after free, if mmio get failed */
     vm_pdev->vd_dev[fid] = vd_dev;
@@ -1045,7 +1031,7 @@ STATIC int vmngh_alloc_vpc_unit(struct vmngh_vd_dev *vd_dev)
     struct vmngh_pci_dev *vm_pdev = vd_dev->vm_pdev;
     struct vmngh_vpc_unit *vpc_unit;
 
-    vpc_unit = vmng_kzalloc(sizeof(struct vmngh_vpc_unit), GFP_KERNEL);
+    vpc_unit = vmng_kzalloc(sizeof(struct vmngh_vpc_unit), KA_GFP_KERNEL);
     if (vpc_unit == NULL) {
         vmng_err("Kzalloc vpc unit failed.\n");
         return -ENOMEM;
@@ -1208,7 +1194,7 @@ void vmngh_free_vdev_host_stop(u32 dev_id, u32 fid)
 STATIC int vmngh_adapt_vfresource_for_vm(struct vmng_vf_res_info *vf_resource, struct vdavinci_type *type)
 {
     int ret;
-    vf_resource->vfg.vfg_id = U32_MAX; // -1
+    vf_resource->vfg.vfg_id = KA_U32_MAX; // -1
     vf_resource->stars_refresh.device_aicpu = type->aicpu_num;
     if (SHARE_WITH_FOUR_DEVICES(type->share)) {
         vf_resource->stars_refresh.device_aicpu = VMNG_SHARE_CORE_NUM;
@@ -1221,7 +1207,7 @@ STATIC int vmngh_adapt_vfresource_for_vm(struct vmng_vf_res_info *vf_resource, s
     vf_resource->stars_refresh.jpege = type->jpege_num;
     vf_resource->stars_refresh.vpc = type->vpc_num;
     vf_resource->stars_refresh.vdec = type->vdec_num;
-    vf_resource->stars_refresh.pngd = U32_MAX;
+    vf_resource->stars_refresh.pngd = KA_U32_MAX;
     vf_resource->stars_refresh.venc = type->venc_num;
     ret = strcpy_s(vf_resource->name, VMNG_VF_TEMP_NAME_LEN, type->template_name);
     if (ret != 0) {
@@ -1246,7 +1232,7 @@ STATIC void vmngh_adapt_vfresource_for_vf_vnic_support(u32 dev_id, struct vmng_v
     vf_resource->stars_refresh.jpege = vm_pdev->dev_info.jpege_num;
     vf_resource->stars_refresh.vpc = vm_pdev->dev_info.vpc_num;
     vf_resource->stars_refresh.vdec = vm_pdev->dev_info.vdec_num;
-    vf_resource->stars_refresh.pngd = U32_MAX;
+    vf_resource->stars_refresh.pngd = KA_U32_MAX;
     vf_resource->stars_refresh.venc = vm_pdev->dev_info.venc_num;
     vf_resource->stars_static.aic = vm_pdev->dev_info.aicore_num;
     memset_s(vf_resource->name, VMNG_VF_TEMP_NAME_LEN, 0, VMNG_VF_TEMP_NAME_LEN);
@@ -1297,15 +1283,15 @@ STATIC void vmngh_free_vf(u32 dev_id, u32 fid)
 }
 
 STATIC int _vmngh_vdev_create(struct vdavinci_dev *vdev, void *vdavinci,
-    struct vdavinci_type *type, uuid_le uuid, u32 fid)
+    struct vdavinci_type *type, ka_uuid_le_t uuid, u32 fid)
 {
     struct vmngh_pci_dev *vm_pdev = NULL;
     struct vmngh_vd_dev *vd_dev = NULL;
-    struct pci_dev *pdev = NULL;
+    ka_pci_dev_t *pdev = NULL;
     u32 dev_id;
     int ret;
 
-    pdev = to_pci_dev(vdev->dev);
+    pdev = ka_pci_to_pci_dev(vdev->dev);
     vmng_info("Create mdev through pf.\n");
 
     dev_id = (u32)devdrv_get_dev_id_by_pdev_with_dev_index(pdev, (int)vdev->dev_index);
@@ -1407,7 +1393,7 @@ STATIC bool vmngh_check_is_support_vdev(void)
 }
 
 STATIC int vmngh_vdev_create(struct vdavinci_dev *vdev, void *vdavinci,
-    struct vdavinci_type *type, uuid_le uuid)
+    struct vdavinci_type *type, ka_uuid_le_t uuid)
 {
     struct vmngh_pci_dev *vm_pdev = NULL;
     u32 fid;
@@ -1424,7 +1410,7 @@ STATIC int vmngh_vdev_create(struct vdavinci_dev *vdev, void *vdavinci,
         return -EOPNOTSUPP;
     }
 
-    dev_id = (u32)devdrv_get_dev_id_by_pdev_with_dev_index(to_pci_dev(vdev->dev), (int)vdev->dev_index);
+    dev_id = (u32)devdrv_get_dev_id_by_pdev_with_dev_index(ka_pci_to_pci_dev(vdev->dev), (int)vdev->dev_index);
     if (dev_id >= ASCEND_PDEV_MAX_NUM) {
         vmng_err("dev_id is invalid. (dev_id=%d)\n", dev_id);
         return -EINVAL;
@@ -1432,11 +1418,11 @@ STATIC int vmngh_vdev_create(struct vdavinci_dev *vdev, void *vdavinci,
 
     fid = vmngh_get_fid_for_host(vdev);
     vm_pdev = vmngh_get_pdev_from_unit(dev_id);
-    mutex_lock(&vm_pdev->vpdev_mutex);
+    ka_task_mutex_lock(&vm_pdev->vpdev_mutex);
     if (vm_pdev->vdev_ref == 0) {
         ret = uda_dev_ctrl(dev_id, UDA_CTRL_TO_MIA);
         if (ret != 0) {
-            mutex_unlock(&vm_pdev->vpdev_mutex);
+            ka_task_mutex_unlock(&vm_pdev->vpdev_mutex);
             vmng_err("To mia mode failed. (dev_id=%u)\n", dev_id);
             return ret;
         }
@@ -1455,7 +1441,7 @@ STATIC int vmngh_vdev_create(struct vdavinci_dev *vdev, void *vdavinci,
         }
     }
 
-    mutex_unlock(&vm_pdev->vpdev_mutex);
+    ka_task_mutex_unlock(&vm_pdev->vpdev_mutex);
     return ret;
 }
 
@@ -1478,7 +1464,7 @@ STATIC void vmngh_vdev_destroy(struct vdavinci_dev *vdev)
 {
     u32 dev_id;
     struct vmngh_vd_dev *vd_dev = NULL;
-    struct pci_dev *pdev = NULL;
+    ka_pci_dev_t *pdev = NULL;
     u32 fid;
     int ret;
 
@@ -1489,7 +1475,7 @@ STATIC void vmngh_vdev_destroy(struct vdavinci_dev *vdev)
     }
 
     fid = vmngh_get_fid_for_host(vdev);
-    pdev = to_pci_dev(vdev->dev);
+    pdev = ka_pci_to_pci_dev(vdev->dev);
     dev_id = (u32)devdrv_get_dev_id_by_pdev_with_dev_index(pdev, (int)vdev->dev_index);
     if (dev_id >= ASCEND_PDEV_MAX_NUM) {
         vmng_err("device_id is invalid. (dev_id=%u)\n", dev_id);
@@ -1498,7 +1484,7 @@ STATIC void vmngh_vdev_destroy(struct vdavinci_dev *vdev)
     vmng_debug("Destroy begin. (dev_id=%d; fid=%u)\n", dev_id, fid);
 
     // Prevent vd_dev from being used concurrently
-    mutex_lock(vmngh_get_vdev_lock_from_unit(dev_id, fid));
+    ka_task_mutex_lock(vmngh_get_vdev_lock_from_unit(dev_id, fid));
     vd_dev = vmngh_get_vdev_from_unit(dev_id, fid);
     if (vd_dev != NULL) {
         struct vmngh_pci_dev *vm_pdev = vmngh_get_pdev_from_unit(dev_id);
@@ -1507,15 +1493,15 @@ STATIC void vmngh_vdev_destroy(struct vdavinci_dev *vdev)
             vmngh_vdev_free_bottom(vd_dev);
         }
         vmngh_vdev_free_top(vd_dev);
-        mutex_lock(&vm_pdev->vpdev_mutex);
+        ka_task_mutex_lock(&vm_pdev->vpdev_mutex);
         vm_pdev->vdev_ref--;
         if (vm_pdev->vdev_ref == 0) {
             vmng_set_device_split_mode(dev_id, VMNG_NORMAL_NONE_SPLIT_MODE);
             (void)uda_dev_ctrl(dev_id, UDA_CTRL_TO_SIA);
         }
-        mutex_unlock(&vm_pdev->vpdev_mutex);
+        ka_task_mutex_unlock(&vm_pdev->vpdev_mutex);
     }
-    mutex_unlock(vmngh_get_vdev_lock_from_unit(dev_id, fid));
+    ka_task_mutex_unlock(vmngh_get_vdev_lock_from_unit(dev_id, fid));
     vmng_info("Release finish. (dev_id=%d; fid=%u)\n", dev_id, fid);
 }
 
@@ -1523,7 +1509,7 @@ STATIC void vmngh_vdev_release(struct vdavinci_dev *vdev)
 {
     u32 dev_id, vdev_id;
     struct vmngh_vd_dev *vd_dev = NULL;
-    struct pci_dev *pdev = NULL;
+    ka_pci_dev_t *pdev = NULL;
     u32 fid;
     int ret;
 
@@ -1534,7 +1520,7 @@ STATIC void vmngh_vdev_release(struct vdavinci_dev *vdev)
     }
 
     fid = vmngh_get_fid_for_host(vdev);
-    pdev = to_pci_dev(vdev->dev);
+    pdev = ka_pci_to_pci_dev(vdev->dev);
     dev_id = (u32)devdrv_get_dev_id_by_pdev_with_dev_index(pdev, (int)vdev->dev_index);
     if (dev_id >= ASCEND_PDEV_MAX_NUM) {
         vmng_err("dev_id is invalid. (dev_id=%u)\n", dev_id);
@@ -1542,7 +1528,7 @@ STATIC void vmngh_vdev_release(struct vdavinci_dev *vdev)
     }
 
     // Prevent vd_dev from being used concurrently
-    mutex_lock(vmngh_get_vdev_lock_from_unit(dev_id, fid));
+    ka_task_mutex_lock(vmngh_get_vdev_lock_from_unit(dev_id, fid));
     vd_dev = vmngh_get_vdev_from_unit(dev_id, fid);
     if (vd_dev != NULL) {
         if (vd_dev->init_status == VMNG_STARTUP_BOTTOM_HALF_OK) {
@@ -1556,7 +1542,7 @@ STATIC void vmngh_vdev_release(struct vdavinci_dev *vdev)
             (void)devdrv_hot_reset_device(vdev_id);
         }
     }
-    mutex_unlock(vmngh_get_vdev_lock_from_unit(dev_id, fid));
+    ka_task_mutex_unlock(vmngh_get_vdev_lock_from_unit(dev_id, fid));
     vmng_info("Release finish. (dev_id=%d; fid=%u)\n", dev_id, fid);
 }
 
@@ -1564,7 +1550,7 @@ STATIC int vmngh_vdev_reset(struct vdavinci_dev *vdev)
 {
     u32 dev_id, vdev_id;
     struct vmngh_vd_dev *vd_dev = NULL;
-    struct pci_dev *pdev = NULL;
+    ka_pci_dev_t *pdev = NULL;
     u32 fid;
     int ret;
 
@@ -1575,7 +1561,7 @@ STATIC int vmngh_vdev_reset(struct vdavinci_dev *vdev)
     }
 
     fid = vmngh_get_fid_for_host(vdev);
-    pdev = to_pci_dev(vdev->dev);
+    pdev = ka_pci_to_pci_dev(vdev->dev);
     dev_id = (u32)devdrv_get_dev_id_by_pdev_with_dev_index(pdev, (int)vdev->dev_index);
     if (dev_id >= ASCEND_PDEV_MAX_NUM) {
         vmng_err("device_id is invalid. (dev_id=%u)\n", dev_id);
@@ -1583,11 +1569,11 @@ STATIC int vmngh_vdev_reset(struct vdavinci_dev *vdev)
     }
     vmng_debug("Reset begin. (dev_id=%d; fid=%u)\n", dev_id, fid);
     // Prevent vd_dev from being used concurrently
-    mutex_lock(vmngh_get_vdev_lock_from_unit(dev_id, fid));
+    ka_task_mutex_lock(vmngh_get_vdev_lock_from_unit(dev_id, fid));
     vd_dev = vmngh_get_vdev_from_unit(dev_id, fid);
     if (vd_dev != NULL) {
-        atomic_set(&vd_dev->reset_ref_flag, VMNGH_MDEV_VM_RESET_STATE);
-        vd_dev->vm_pid = (u32)current->tgid;
+        ka_base_atomic_set(&vd_dev->reset_ref_flag, VMNGH_MDEV_VM_RESET_STATE);
+        vd_dev->vm_pid = (u32)ka_task_get_current_tgid();
         if (vd_dev->init_status == VMNG_STARTUP_BOTTOM_HALF_OK) {
             vmngh_suspend_instance_remove_vdev(dev_id, fid);
             vmngh_vdev_free_bottom(vd_dev);
@@ -1604,7 +1590,7 @@ STATIC int vmngh_vdev_reset(struct vdavinci_dev *vdev)
     } else {
         vmng_err("vd_dev is NULL. (dev_id=%d; fid=%u)\n", dev_id, fid);
     }
-    mutex_unlock(vmngh_get_vdev_lock_from_unit(dev_id, fid));
+    ka_task_mutex_unlock(vmngh_get_vdev_lock_from_unit(dev_id, fid));
     return 0;
 }
 
@@ -1612,7 +1598,7 @@ STATIC int vmngh_vdev_flr(struct vdavinci_dev *vdev)
 {
     u32 dev_id;
     struct vmngh_vd_dev *vd_dev = NULL;
-    struct pci_dev *pdev = NULL;
+    ka_pci_dev_t *pdev = NULL;
     u32 fid;
     int ret;
 
@@ -1623,7 +1609,7 @@ STATIC int vmngh_vdev_flr(struct vdavinci_dev *vdev)
     }
 
     fid = vmngh_get_fid_for_host(vdev);
-    pdev = to_pci_dev(vdev->dev);
+    pdev = ka_pci_to_pci_dev(vdev->dev);
     dev_id = (u32)devdrv_get_dev_id_by_pdev_with_dev_index(pdev, (int)vdev->dev_index);
     if (dev_id >= ASCEND_PDEV_MAX_NUM) {
         vmng_err("device_id is invalid. (dev_id=%u)\n", dev_id);
@@ -1631,12 +1617,12 @@ STATIC int vmngh_vdev_flr(struct vdavinci_dev *vdev)
     }
     vmng_debug("Reset begin. (dev_id=%d; fid=%u)\n", dev_id, fid);
     // Prevent vd_dev from being used concurrently
-    mutex_lock(vmngh_get_vdev_lock_from_unit(dev_id, fid));
+    ka_task_mutex_lock(vmngh_get_vdev_lock_from_unit(dev_id, fid));
     vd_dev = vmngh_get_vdev_from_unit(dev_id, fid);
     if (vd_dev != NULL) {
-        vd_dev->vm_pid = (u32)current->tgid;
+        vd_dev->vm_pid = (u32)ka_task_get_current_tgid();
         if (vd_dev->init_status == VMNG_STARTUP_BOTTOM_HALF_OK) {
-            atomic_set(&vd_dev->reset_ref_flag, VMNGH_MDEV_FLR_STATE);
+            ka_base_atomic_set(&vd_dev->reset_ref_flag, VMNGH_MDEV_FLR_STATE);
             vmngh_suspend_instance_remove_vdev(dev_id, fid);
             vmngh_vdev_free_bottom(vd_dev);
         }
@@ -1648,7 +1634,7 @@ STATIC int vmngh_vdev_flr(struct vdavinci_dev *vdev)
     } else {
         vmng_err("vd_dev is NULL. (dev_id=%d; fid=%u)\n", dev_id, fid);
     }
-    mutex_unlock(vmngh_get_vdev_lock_from_unit(dev_id, fid));
+    ka_task_mutex_unlock(vmngh_get_vdev_lock_from_unit(dev_id, fid));
     return 0;
 }
 
@@ -1659,8 +1645,8 @@ static int vmngh_vm_startup_irq(void *data)
     vd_dev = (struct vmngh_vd_dev *)data;
     if (vd_dev->shr_para->start_flag == VMNG_VM_START_WAIT) {
         vmng_info("Start wait. (dev_id=%u; fid=%u)\n", vd_dev->dev_id, vd_dev->fid);
-        atomic_set(&(vd_dev->start_dev.start_flag), VMNG_TASK_SUCCESS);
-        schedule_work_on(smp_processor_id(), &vd_dev->start_work);
+        ka_base_atomic_set(&(vd_dev->start_dev.start_flag), VMNG_TASK_SUCCESS);
+        ka_task_schedule_work_on(ka_system_smp_processor_id(), &vd_dev->start_work);
     }
     return 0;
 }
@@ -1668,7 +1654,7 @@ static int vmngh_vm_startup_irq(void *data)
 STATIC void vmngh_vdev_notify(struct vdavinci_dev *vdev, int db_index)
 {
     struct vmngh_vd_dev *vd_dev = NULL;
-    struct pci_dev *pdev = NULL;
+    ka_pci_dev_t *pdev = NULL;
     u32 dev_id;
     int ret;
     u32 fid;
@@ -1680,7 +1666,7 @@ STATIC void vmngh_vdev_notify(struct vdavinci_dev *vdev, int db_index)
     }
 
     fid = vmngh_get_fid_for_host(vdev);
-    pdev = to_pci_dev(vdev->dev);
+    pdev = ka_pci_to_pci_dev(vdev->dev);
     dev_id = (u32)devdrv_get_dev_id_by_pdev_with_dev_index(pdev, (int)vdev->dev_index);
     if (dev_id >= ASCEND_PDEV_MAX_NUM) {
         vmng_err("dev_id is invalid. (dev_id=%d)\n", dev_id);
@@ -1706,7 +1692,7 @@ STATIC void vmngh_vdev_notify(struct vdavinci_dev *vdev, int db_index)
         return;
     }
     if (ret != 0) {
-        vmng_err("Hanlder is error. (dev_id=%d; fid=%u; db_index=%u; ret=%d)\n", dev_id, fid, db_index, ret);
+        vmng_err("Handler is error. (dev_id=%d; fid=%u; db_index=%u; ret=%d)\n", dev_id, fid, db_index, ret);
     } else {
         vmng_debug("Doorbell finish. (dev_id=%d; fid=%u; db_index=%u)\n", dev_id, fid, db_index);
     }
@@ -1718,7 +1704,7 @@ STATIC int vmngh_vdev_get_map_info(struct vdavinci_dev *vdev, struct vdavinci_ty
     struct vmngh_map_info client_map_info = {0};
     struct vmngh_client_instance instance = {0};
     struct vmng_vdev_ctrl dev_ctrl = {0};
-    struct pci_dev *pdev = NULL;
+    ka_pci_dev_t *pdev = NULL;
     u32 vfid;
     u32 dev_id;
     u64 i;
@@ -1731,7 +1717,7 @@ STATIC int vmngh_vdev_get_map_info(struct vdavinci_dev *vdev, struct vdavinci_ty
     }
 
     vfid = vmngh_get_fid_for_host(vdev);
-    pdev = to_pci_dev(vdev->dev);
+    pdev = ka_pci_to_pci_dev(vdev->dev);
     dev_id = (u32)devdrv_get_dev_id_by_pdev_with_dev_index(pdev, (int)vdev->dev_index);
     if (dev_id >= ASCEND_PDEV_MAX_NUM) {
         vmng_err("dev_id is invalid. (dev_id=%d)\n", dev_id);
@@ -1774,7 +1760,7 @@ STATIC int vmngh_vdev_put_map_info(struct vdavinci_dev *vdev)
 {
     struct vmngh_client_instance instance = {0};
     struct vmng_vdev_ctrl dev_ctrl = {0};
-    struct pci_dev *pdev = NULL;
+    ka_pci_dev_t *pdev = NULL;
     u32 vfid;
     u32 dev_id;
     int ret;
@@ -1786,7 +1772,7 @@ STATIC int vmngh_vdev_put_map_info(struct vdavinci_dev *vdev)
     }
 
     vfid = vmngh_get_fid_for_host(vdev);
-    pdev = to_pci_dev(vdev->dev);
+    pdev = ka_pci_to_pci_dev(vdev->dev);
     dev_id = (u32)devdrv_get_dev_id_by_pdev_with_dev_index(pdev, (int)vdev->dev_index);
     if (dev_id >= ASCEND_PDEV_MAX_NUM) {
         vmng_err("dev_id is invalid. (dev_id=%d)\n", dev_id);
@@ -1807,16 +1793,16 @@ STATIC int vmngh_vdev_put_map_info(struct vdavinci_dev *vdev)
     return 0;
 }
 
-STATIC int vmngh_vdev_get_devnum_by_pdev(struct device *dev)
+STATIC int vmngh_vdev_get_devnum_by_pdev(ka_device_t *dev)
 {
-    struct pci_dev *pdev = NULL;
+    ka_pci_dev_t *pdev = NULL;
     int dev_num;
 
     if (dev == NULL) {
         vmng_err("Input parameter is error.\n");
         return -EINVAL;
     }
-    pdev = to_pci_dev(dev);
+    pdev = ka_pci_to_pci_dev(dev);
     dev_num = devdrv_get_davinci_dev_num_by_pdev(pdev);
 
     return dev_num;
@@ -1831,8 +1817,8 @@ STATIC int vmngh_vdev_wait_aicore_ready(u32 dev_id)
         if (aicore_num != 0) {
             break;
         }
-        rmb();
-        usleep_range(100000, 200000);
+        ka_rmb();
+        ka_system_usleep_range(100000, 200000); // 100000 ~ 200000 microseconds
         timeout--;
     }
 
@@ -1845,7 +1831,7 @@ STATIC int vmngh_vdev_wait_aicore_ready(u32 dev_id)
 }
 
 #define MAX_CPU_NUM 32
-#define GET_MEMORY_MODULE_SIZE(mem) DIV_ROUND_UP((mem) / 1024, 8) * 8
+#define GET_MEMORY_MODULE_SIZE(mem) KA_BASE_DIV_ROUND_UP((mem) / 1024, 8) * 8
 STATIC int vmngh_vdev_wait_dev_resource_ready(u32 dev_id, struct dvt_devinfo *dev_info)
 {
     struct vmng_soc_resource_enquire info;
@@ -1865,7 +1851,7 @@ STATIC int vmngh_vdev_wait_dev_resource_ready(u32 dev_id, struct dvt_devinfo *de
         return ret;
     }
     aicpu_bitmap = (unsigned long)info.total.stars_refresh.device_aicpu;
-    dev_info->aicpu_num = (u32)bitmap_weight(&aicpu_bitmap, MAX_CPU_NUM);
+    dev_info->aicpu_num = (u32)ka_base_bitmap_weight(&aicpu_bitmap, MAX_CPU_NUM);
     dev_info->mem_size = GET_MEMORY_MODULE_SIZE(info.total.base.memory_spec);
     dev_info->jpegd_num = info.total.stars_refresh.jpegd;
     dev_info->jpege_num = info.total.stars_refresh.jpege;
@@ -1875,10 +1861,10 @@ STATIC int vmngh_vdev_wait_dev_resource_ready(u32 dev_id, struct dvt_devinfo *de
     return 0;
 }
 
-STATIC int vmngh_vdev_get_devinfo(struct device *dev, u32 dev_index, struct dvt_devinfo *dev_info)
+STATIC int vmngh_vdev_get_devinfo(ka_device_t *dev, u32 dev_index, struct dvt_devinfo *dev_info)
 {
     struct vmngh_pci_dev *vm_pdev = NULL;
-    struct pci_dev *pdev = NULL;
+    ka_pci_dev_t *pdev = NULL;
     u32 dev_id;
     int ret;
 
@@ -1886,7 +1872,7 @@ STATIC int vmngh_vdev_get_devinfo(struct device *dev, u32 dev_index, struct dvt_
         vmng_err("Input parameter is error.\n");
         return -EINVAL;
     }
-    pdev = to_pci_dev(dev);
+    pdev = ka_pci_to_pci_dev(dev);
     dev_id = (u32)devdrv_get_dev_id_by_pdev_with_dev_index(pdev, (int)dev_index);
     if (dev_id >= ASCEND_PDEV_MAX_NUM) {
         vmng_err("device_id is invalid. (dev_id=%d)\n", dev_id);
@@ -1917,20 +1903,20 @@ STATIC int vmngh_vdev_get_devinfo(struct device *dev, u32 dev_index, struct dvt_
     return 0;
 }
 
-void *vmngh_dma_alloc_coherent(struct device *dev, size_t size, dma_addr_t *dma_handle, gfp_t gfp)
+void *vmngh_dma_alloc_coherent(ka_device_t *dev, size_t size, ka_dma_addr_t *dma_handle, ka_gfp_t gfp)
 {
     return hw_dvt_hypervisor_dma_alloc_coherent(dev, size, dma_handle, gfp);
 }
-EXPORT_SYMBOL(vmngh_dma_alloc_coherent);
+KA_EXPORT_SYMBOL(vmngh_dma_alloc_coherent);
 
-void vmngh_dma_free_coherent(struct device *dev, size_t size, void *cpu_addr, dma_addr_t dma_handle)
+void vmngh_dma_free_coherent(ka_device_t *dev, size_t size, void *cpu_addr, ka_dma_addr_t dma_handle)
 {
     hw_dvt_hypervisor_dma_free_coherent(dev, size, cpu_addr, dma_handle);
 }
-EXPORT_SYMBOL(vmngh_dma_free_coherent);
+KA_EXPORT_SYMBOL(vmngh_dma_free_coherent);
 
 #define VMNG_SUPPORT_SRIOV_VF_NUM 8
-STATIC int vmngh_vm_enable_sriov(struct pci_dev *pdev, int numvfs)
+STATIC int vmngh_vm_enable_sriov(ka_pci_dev_t *pdev, int numvfs)
 {
     struct vmngh_pci_dev *vm_pdev = NULL;
     u32 dev_id;
@@ -1948,7 +1934,7 @@ STATIC int vmngh_vm_enable_sriov(struct pci_dev *pdev, int numvfs)
     }
 
     vm_pdev = vmngh_get_pdev_from_unit(dev_id);
-    mutex_lock(&vm_pdev->vpdev_mutex);
+    ka_task_mutex_lock(&vm_pdev->vpdev_mutex);
 
     if (numvfs == VMNG_SUPPORT_SRIOV_VF_NUM) {
         vmng_info("vmng enable sriov. (dev_id=%u)\n", dev_id);
@@ -1961,7 +1947,7 @@ STATIC int vmngh_vm_enable_sriov(struct pci_dev *pdev, int numvfs)
         ret = -EINVAL;
     }
 
-    mutex_unlock(&vm_pdev->vpdev_mutex);
+    ka_task_mutex_unlock(&vm_pdev->vpdev_mutex);
     return ret;
 }
 
@@ -1979,7 +1965,7 @@ struct vdavinci_priv_ops g_vmngh_ops = {
     .vascend_enable_sriov = vmngh_vm_enable_sriov,
 };
 
-static void vmngh_init_pci_pdev(struct vmngh_pci_dev *vmngh_pcidev, u32 dev_id, struct device *dev)
+static void vmngh_init_pci_pdev(struct vmngh_pci_dev *vmngh_pcidev, u32 dev_id, ka_device_t *dev)
 {
     int i;
     /* add info to unit */
@@ -1987,12 +1973,12 @@ static void vmngh_init_pci_pdev(struct vmngh_pci_dev *vmngh_pcidev, u32 dev_id, 
     vmngh_pcidev->dev = dev;
     vmngh_pcidev->vdev_num = VMNG_FID_BEGIN; /* vdev_num begin as 1. */
     if (devdrv_get_connect_protocol(dev_id) != CONNECT_PROTOCOL_UB) {
-        vmngh_pcidev->pdev = to_pci_dev(dev);
-        vmngh_pcidev->ep_devic_id = vmngh_pcidev->pdev->device;
+        vmngh_pcidev->pdev = ka_pci_to_pci_dev(dev);
+        vmngh_pcidev->ep_devic_id = ka_pci_get_device_id(vmngh_pcidev->pdev);
     }
-    mutex_init(&vmngh_pcidev->vpdev_mutex);
+    ka_task_mutex_init(&vmngh_pcidev->vpdev_mutex);
     for (i = 0; i < VMNG_VDEV_MAX_PER_PDEV; i++) {
-        mutex_init(&vmngh_pcidev->vddev_mutex[i]);
+        ka_task_mutex_init(&vmngh_pcidev->vddev_mutex[i]);
     }
     vmngh_pcidev->vdev_ref = 0;
 }
@@ -2016,8 +2002,8 @@ static bool vmngh_all_devices_are_valid(struct vmngh_pci_dev *vmngh_dev)
     int i;
 
     dev_num = devdrv_get_davinci_dev_num_by_pdev(vmngh_dev->pdev);
-    start_dev_id = rounddown((int)vmngh_dev->dev_id, dev_num);
-    vmng_info("Get rounddown dev_id = %u;dev_num=%d\n", start_dev_id, dev_num);
+    start_dev_id = ka_base_rounddown((int)vmngh_dev->dev_id, dev_num);
+    vmng_info("Get ka_base_rounddown dev_id = %u;dev_num=%d\n", start_dev_id, dev_num);
     for (i = 0; i < dev_num; ++i) {
         ctrl_ops = vmngh_get_ctrl_ops((u32)(start_dev_id + i));
         if (ctrl_ops->valid == VMNG_INVALID) {
@@ -2042,14 +2028,14 @@ STATIC int vmngh_dvt_init(struct vmngh_pci_dev *vmngh_dev)
         return VMNG_ERR;
     }
 
-    mutex_lock(&g_vmngh_pci_mutex);
+    ka_task_mutex_lock(&g_vmngh_pci_mutex);
     if (!vmngh_all_devices_are_valid(vmngh_dev)) {
-        mutex_unlock(&g_vmngh_pci_mutex);
+        ka_task_mutex_unlock(&g_vmngh_pci_mutex);
         return 0;
     }
 
     if (vdavinci_set->ops != NULL) {
-        mutex_unlock(&g_vmngh_pci_mutex);
+        ka_task_mutex_unlock(&g_vmngh_pci_mutex);
         return 0;
     }
 
@@ -2060,11 +2046,11 @@ STATIC int vmngh_dvt_init(struct vmngh_pci_dev *vmngh_dev)
     if (ret != 0) {
         vmng_err("Register vdavinci failed. (dev_id=%u; ret=%d)\n", vmngh_dev->dev_id, ret);
         vdavinci_set->ops = NULL;
-        mutex_unlock(&g_vmngh_pci_mutex);
+        ka_task_mutex_unlock(&g_vmngh_pci_mutex);
         return VMNG_ERR;
     }
 
-    mutex_unlock(&g_vmngh_pci_mutex);
+    ka_task_mutex_unlock(&g_vmngh_pci_mutex);
     return VMNG_OK;
 }
 
@@ -2098,7 +2084,7 @@ STATIC int vmngh_sync_udevid_to_remote(u32 udevid)
         vmng_err("Sync udevid to remote failed. (dev_id=%u;ret=%d;error_code=%d)\n", udevid, ret, msg.error_code);
         return ret != 0 ? ret : msg.error_code;
     }
-    // para was ckecked in previous process
+    // para was checked in previous process
     remote_id = msg.info_msg.id_info.remote_udevid;
     (void)uda_dev_set_remote_udevid(udevid, remote_id);
     vmng_info("Set remote id success.(udevid=%u;remote_udevid=%u)\n", udevid, remote_id);
@@ -2139,15 +2125,15 @@ STATIC int vmngh_init_vpc_msg_chan(struct vmngh_pci_dev *vmngh_dev)
 
     vmngh_set_device_status(vmngh_dev->dev_id, VMNG_VALID);
 
-    mutex_lock(&g_vmngh_pci_mutex);
+    ka_task_mutex_lock(&g_vmngh_pci_mutex);
     vmngh_dev->status = VMNG_STARTUP_PROBED;
-    mutex_unlock(&g_vmngh_pci_mutex);
+    ka_task_mutex_unlock(&g_vmngh_pci_mutex);
     vmng_info("Device work end. (dev_id=%d; peer_dev_id=%d)\n", vmngh_dev->dev_id, vmngh_dev->peer_dev_id);
 
     return 0;
 }
 
-// Chip hardware limiations
+// Chip hardware limitations
 #define MAX_HCCS_MSIX_NUM 33
 #define MAX_HCCS_VM_MSIX_NUM 29
 STATIC void vmngh_init_msix_num(u32 dev_id)
@@ -2164,7 +2150,7 @@ STATIC void vmngh_init_msix_num(u32 dev_id)
 }
 
 /* pcie_host => vmngh_pdev => vdavinci */
-STATIC int vmngh_pci_init_instance(u32 dev_id, struct device *dev)
+STATIC int vmngh_pci_init_instance(u32 dev_id, ka_device_t *dev)
 {
     struct vmngh_pci_dev *vmngh_pdev = NULL;
     int ret, sysfs_ret;
@@ -2284,10 +2270,10 @@ STATIC int vmngh_pci_uninit_instance(u32 dev_id)
         return -EINVAL;
     }
 
-    mutex_lock(&g_vmngh_pci_mutex);
+    ka_task_mutex_lock(&g_vmngh_pci_mutex);
     if (vmngh_pdev->status == VMNG_STARTUP_PROBED) {
         vmngh_pdev->status = VMNG_STARTUP_UNPROBED;
-        mutex_unlock(&g_vmngh_pci_mutex);
+        ka_task_mutex_unlock(&g_vmngh_pci_mutex);
         if (dev_id % dev_num == 0) {
             ret = hw_dvt_uninit((void *)vdavinci_set);
             if (ret != 0) {
@@ -2297,7 +2283,7 @@ STATIC int vmngh_pci_uninit_instance(u32 dev_id)
             }
         }
     } else {
-        mutex_unlock(&g_vmngh_pci_mutex);
+        ka_task_mutex_unlock(&g_vmngh_pci_mutex);
     }
 exit:
     vmngh_sysfs_exit(dev_id, vmngh_pdev->pdev);
@@ -2469,7 +2455,7 @@ int vmngh_init_module(void)
         return ret;
     }
 
-    mutex_init(&g_vmngh_pci_mutex);
+    ka_task_mutex_init(&g_vmngh_pci_mutex);
 
     /* vmnghost <=> pcie host
      * description: register client, wait for pcie host module callback init_intance

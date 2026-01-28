@@ -238,16 +238,17 @@ static DVresult devmm_restore_no_primary_heap_mem(struct devmm_virt_com_heap *he
 
 static DVresult devmm_restore_primary_heap_mem(struct devmm_virt_com_heap *heap)
 {
+    size_t alloc_size = (heap->heap_sub_type == SUB_RESERVE_TYPE) ? heap->reserve_size : heap->mapped_size;
     virt_addr_t ret_ptr;
 
-    ret_ptr = devmm_virt_heap_alloc_ops(heap, heap->start, heap->mapped_size, heap->advise);
+    ret_ptr = devmm_virt_heap_alloc_ops(heap, heap->start, alloc_size, heap->advise);
     if (ret_ptr < DEVMM_SVM_MEM_START) {
         DEVMM_DRV_ERR("Can not alloc ptr. (out=0x%lx; alloc_ptr=0x%lx; alloc_size=%lu; advise=%u; heap_sub_type=%u)\n",
-            ret_ptr, heap->start, heap->mapped_size, heap->advise, heap->heap_sub_type);
+            ret_ptr, heap->start, alloc_size, heap->advise, heap->heap_sub_type);
         return DRV_ERROR_OUT_OF_MEMORY;
     } else {
         DEVMM_RUN_INFO("Restore primary_heap_mem succ. (ptr=0x%lx; alloc_size=%lu; advise=%u; heap_sub_type=%u)\n",
-            heap->start, heap->mapped_size, heap->advise, heap->heap_sub_type);
+            heap->start, alloc_size, heap->advise, heap->heap_sub_type);
     }
     return DRV_ERROR_NONE;
 }
@@ -361,7 +362,7 @@ DVresult devmm_virt_restore_heap_mgmt(void)
 struct devmm_virt_com_heap *devmm_virt_get_heap_mgmt_virt_heap(uint32_t heap_idx)
 {
     if (heap_idx >= DEVMM_MAX_HEAP_NUM) {
-        DEVMM_DRV_ERR("Heap id error.\n");
+        DEVMM_DRV_ERR("Heap id error, heap_index=%u.\n", heap_idx);
         return NULL;
     }
     if (g_heap_mgmt != NULL && g_heap_mgmt->heap_queue.heaps[heap_idx] != NULL) {
@@ -471,6 +472,11 @@ struct devmm_virt_com_heap *devmm_va_to_heap(virt_addr_t va)
         /* do not printf, p_heap_mgmt == NULL is allowable here, will be judged in other process */
         return NULL;
     }
+
+    if (devmm_is_in_host_pin_range(va)) {
+        return &p_heap_mgmt->heap_queue.host_base_heap;
+    }
+
     if ((va < p_heap_mgmt->start) || (va >= p_heap_mgmt->end)) {
         /* do not printf ,printf too much */
         DEVMM_DRV_SWITCH("Address is not reserved. (addr=0x%lx; start=0x%lx; end=0x%lx)\n",
@@ -577,6 +583,9 @@ STATIC virt_addr_t devmm_virt_heap_alloc_reserve(struct devmm_virt_com_heap *hea
     if (devmm_ioctl_alloc_and_advise(ret_val, alloc_size, 0, advise) != DRV_ERROR_NONE) {
         return DEVMM_INVALID_STOP;
     }
+    if (devmm_virt_heap_is_primary(heap)) {
+        heap->reserve_size = alloc_size;
+    }
 
     return ret_val;
 }
@@ -667,6 +676,7 @@ STATIC void devmm_virt_destory_all_heap(void)
     }
 
     devmm_rbtree_destory(&g_heap_mgmt->heap_queue.base_heap.rbtree_queue);
+    devmm_rbtree_destory(&g_heap_mgmt->heap_queue.host_base_heap.rbtree_queue);
 }
 
 STATIC DVresult devmm_virt_alloc_heap_mgmt(void)
@@ -749,6 +759,8 @@ STATIC DVresult devmm_virt_init_mgmt_page_size_and_addr(struct devmm_virt_heap_m
     }
     mgmt->start = start;
     mgmt->end = end;
+    mgmt->host_pin_start = (virt_addr_t)(DEVMM_HOST_PIN_START);
+    mgmt->host_pin_end = (virt_addr_t)(DEVMM_HOST_PIN_START + DEVMM_HOST_PIN_SIZE);
 
     return DRV_ERROR_NONE;
 }
@@ -848,7 +860,7 @@ DVresult devmm_virt_init_heap_mgmt(void)
 
     /* 3.init heap queue and lists
      * heap queue is used for mgmt heaps
-     * huge, normal, host list is used for cache diffrent heaps
+     * huge, normal, host list is used for cache different heaps
      */
     ret = devmm_virt_init_mgmt_queue_and_lists(mgmt);
     if (ret != DRV_ERROR_NONE) {
@@ -959,13 +971,17 @@ DVresult devmm_free_to_normal_heap(struct devmm_virt_heap_mgmt *p_heap_mgmt,
         /* will not return err, heap_type is not pass by user */
         return ret;
     }
-    /* use heap list lock to ensure heap donot destory when oper pg */
+    /* use heap list lock to ensure heap do not destroy when oper pg */
     (void)pthread_rwlock_rdlock(&heap_list->list_lock);
     ret = devmm_free_mem(p, heap, free_len);
     (void)pthread_rwlock_unlock(&heap_list->list_lock);
     if (ret != DRV_ERROR_NONE) {
         DEVMM_DRV_ERR("Virt_heap_free_mem failed. (ret=%d; va=0x%llx)\n", ret, p);
         return ret;
+    }
+ 
+    if (heap == &p_heap_mgmt->heap_queue.host_base_heap) {
+        return DRV_ERROR_NONE;
     }
     DEVMM_DRV_DEBUG_ARG("Free normal heap details. (free_ptr=0x%llx; "
                         "heap_type=0x%x; heap_sub_type=%u)\n", p, heap->heap_type, heap->heap_sub_type);
@@ -1298,7 +1314,7 @@ static DVresult devmm_alloc_com_heap(struct devmm_virt_heap_type *heap_type, uin
 
     mgmt = (struct devmm_virt_heap_mgmt *)devmm_virt_get_heap_mgmt();
     if (mgmt == NULL) {
-        DEVMM_DRV_ERR("Get heap mangement error.\n");
+        DEVMM_DRV_ERR("Get heap management error.\n");
         return DRV_ERROR_INVALID_HANDLE;
     }
 

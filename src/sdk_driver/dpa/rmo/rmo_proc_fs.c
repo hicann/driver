@@ -10,11 +10,11 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#include <linux/version.h>
-#include <linux/proc_fs.h>
-
 #include "rmo_auto_init.h"
 
+#include "ka_common_pub.h"
+#include "ka_fs_pub.h"
+#include "ka_kernel_def_pub.h"
 #include "securec.h"
 #include "rmo_kern_log.h"
 #include "rmo_proc_fs.h"
@@ -23,9 +23,9 @@
 #define RMO_PROC_FS_MODE     0444
 #define RMO_PROC_NAME_LEN   64
 
-static struct proc_dir_entry *rmo_top_entry;
+static ka_proc_dir_entry_t *rmo_top_entry;
 
-static int rmo_proc_show(struct seq_file *seq, void *offset)
+static int rmo_proc_show(ka_seq_file_t *seq, void *offset)
 {
     int tgid = (int)(uintptr_t)(seq->private);
 
@@ -33,33 +33,33 @@ static int rmo_proc_show(struct seq_file *seq, void *offset)
     return 0;
 }
 
-int rmo_proc_open(struct inode *inode, struct file *file)
+int rmo_proc_open(ka_inode_t *inode, ka_file_t *file)
 {
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 17, 0)
-    return single_open(file, rmo_proc_show, pde_data(inode));
+    return ka_fs_single_open(file, rmo_proc_show, pde_data(inode));
 #else
-    return single_open(file, rmo_proc_show, PDE_DATA(inode));
+    return ka_fs_single_open(file, rmo_proc_show, (*ka_base_pde_data)(inode));
 #endif
 }
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(5, 5, 0)
-static const struct file_operations rmo_proc = {
-    .owner = THIS_MODULE,
+static const ka_file_operations_t rmo_proc = {
+    .owner = KA_THIS_MODULE,
     .open    = rmo_proc_open,
-    .read    = seq_read,
-    .llseek  = seq_lseek,
-    .release = single_release,
+    .read    = ka_fs_seq_read,
+    .llseek  = ka_fs_seq_lseek,
+    .release = ka_fs_single_release,
 };
 #else
-static const struct proc_ops rmo_proc = {
+static const ka_procfs_ops_t rmo_proc = {
     .proc_open    = rmo_proc_open,
-    .proc_read    = seq_read,
-    .proc_lseek   = seq_lseek,
-    .proc_release = single_release,
+    .proc_read    = ka_fs_seq_read,
+    .proc_lseek   = ka_fs_seq_lseek,
+    .proc_release = ka_fs_single_release,
 };
 #endif
 
-struct proc_dir_entry *rmo_proc_fs_add_task(const char *domain, int tgid)
+ka_proc_dir_entry_t *rmo_proc_fs_add_task(const char *domain, int tgid)
 {
     char name[RMO_PROC_NAME_LEN];
 
@@ -68,26 +68,26 @@ struct proc_dir_entry *rmo_proc_fs_add_task(const char *domain, int tgid)
     }
 
     (void)sprintf_s(name, RMO_PROC_NAME_LEN, "%s-%d", domain, tgid);
-    return proc_create_data((const char *)name, RMO_PROC_FS_MODE, rmo_top_entry, &rmo_proc, (void *)(uintptr_t)tgid);
+    return ka_fs_proc_create_data((const char *)name, RMO_PROC_FS_MODE, rmo_top_entry, &rmo_proc, (void *)(uintptr_t)tgid);
 }
 
-void rmo_proc_fs_del_task(struct proc_dir_entry *task_entry)
+void rmo_proc_fs_del_task(ka_proc_dir_entry_t *task_entry)
 {
     if (task_entry != NULL) {
-        proc_remove(task_entry);
+        ka_fs_proc_remove(task_entry);
     }
 }
 
 int rmo_proc_fs_init(void)
 {
-    rmo_top_entry = proc_mkdir(RMO_PROC_TOP_NAME, NULL);
+    rmo_top_entry = ka_fs_proc_mkdir(RMO_PROC_TOP_NAME, NULL);
     if (rmo_top_entry == NULL) {
         rmo_err("Rmo proc top dir create fail\n");
         return -ENODEV;
     }
 
     /* pid 0 means global show */
-    (void)proc_create_data("summury", RMO_PROC_FS_MODE, rmo_top_entry, &rmo_proc, (void *)(uintptr_t)0);
+    (void)ka_fs_proc_create_data("summary", RMO_PROC_FS_MODE, rmo_top_entry, &rmo_proc, (void *)(uintptr_t)0);
 
     return 0;
 }
@@ -95,7 +95,7 @@ int rmo_proc_fs_init(void)
 void rmo_proc_fs_uninit(void)
 {
     if (rmo_top_entry != NULL) {
-        remove_proc_subtree(RMO_PROC_TOP_NAME, NULL);
+        ka_fs_remove_proc_subtree(RMO_PROC_TOP_NAME, NULL);
         rmo_top_entry = NULL;
     }
 }

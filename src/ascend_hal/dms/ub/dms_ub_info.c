@@ -240,7 +240,7 @@ drvError_t DmsGetUbInfo(unsigned int dev_id, int module_type, int info_type,
     struct urd_cmd cmd = {0};
     struct urd_cmd_para cmd_para = {0};
     struct dms_hal_device_info_stru in = {0};
-    
+
     if ((buf == NULL) || (size == NULL) || (*size == 0)) {
         return DRV_ERROR_PARA_ERROR;
     }
@@ -256,7 +256,7 @@ drvError_t DmsGetUbInfo(unsigned int dev_id, int module_type, int info_type,
     urd_usr_cmd_para_fill(&cmd_para, (void *)&in, DMS_HAL_DEV_INFO_HEAD_LEN, buf, *size);
     ret = urd_dev_usr_cmd(dev_id, &cmd, &cmd_para);
     if (ret != 0) {
-        DMS_ERR("Ioctl failed. (ret=%d; dev_id=%u)\n", ret, dev_id);
+        DMS_EX_NOTSUPPORT_ERR(ret, "Get ub_info failed. (dev_id=%u; ret=%d)\n", dev_id, ret);
         return ret;
     }
     return ret;
@@ -293,4 +293,70 @@ drvError_t dms_get_ub_info(uint32_t devId, int32_t infoType, void *buf, int32_t 
         return ret;
     }
     return DRV_ERROR_NONE;
+}
+
+drvError_t dms_get_ub_d2d_eid(unsigned int dev_id, struct dms_ub_d2d_eid *d2d_eid)
+{
+#if (defined CFG_FEATURE_SUPPORT_UB) && (!defined DRV_HOST)
+    struct urd_cmd cmd = {0};
+    struct urd_cmd_para cmd_para = {0};
+    int ret;
+
+    if (d2d_eid == NULL) {
+        DMS_ERR("d2d_eid is Null.(devid=%u)\n", dev_id);
+        return DRV_ERROR_PARA_ERROR;
+    }
+
+    if (dev_id >= DMS_MAX_DEV_NUM) {
+        DMS_ERR("dev_id is invalid.(devid=%u)\n", dev_id);
+        return DRV_ERROR_PARA_ERROR;
+    }
+
+    urd_usr_cmd_fill(&cmd, ASCEND_UB_CMD_BASIC, ASCEND_UB_SUBCMD_GET_D2D_EID, NULL, 0);
+    urd_usr_cmd_para_fill(&cmd_para, (void *)&dev_id, sizeof(unsigned int),
+        (void *)d2d_eid, sizeof(struct dms_ub_d2d_eid));
+    ret = urd_dev_usr_cmd(dev_id, &cmd, &cmd_para);
+    if (ret != 0) {
+        DMS_EX_NOTSUPPORT_ERR(ret, "Get d2d_eid failed. (dev_id=%u; ret=%d)\n", dev_id, ret);
+        return DRV_ERROR_IOCRL_FAIL;
+    }
+    return DRV_ERROR_NONE;
+#else
+    (void)dev_id;
+    (void)d2d_eid;
+    return DRV_ERROR_NOT_SUPPORT;
+#endif
+}
+
+drvError_t dms_get_ub_bus_inst_eid(unsigned int dev_id, struct dms_ub_bus_inst_eid *bus_inst_eid)
+{
+#if (defined CFG_FEATURE_SUPPORT_UB) && (!defined DRV_HOST)
+    struct urd_cmd cmd = {0};
+    struct urd_cmd_para cmd_para = {0};
+    int ret;
+
+    if (bus_inst_eid == NULL) {
+        DMS_ERR("bus_inst_eid is Null.(devid=%u)\n", dev_id);
+        return DRV_ERROR_PARA_ERROR;
+    }
+
+    if (dev_id >= DMS_MAX_DEV_NUM) {
+        DMS_ERR("dev_id is invalid.(devid=%u)\n", dev_id);
+        return DRV_ERROR_PARA_ERROR;
+    }
+
+    urd_usr_cmd_fill(&cmd, ASCEND_UB_CMD_BASIC, ASCEND_UB_SUBCMD_GET_BUS_INST_EID, NULL, 0);
+    urd_usr_cmd_para_fill(&cmd_para, (void *)&dev_id, sizeof(unsigned int),
+        (void *)bus_inst_eid, sizeof(struct dms_ub_bus_inst_eid));
+    ret = urd_dev_usr_cmd(dev_id, &cmd, &cmd_para);
+    if (ret != 0) {
+        DMS_EX_NOTSUPPORT_ERR(ret, "Get bus_inst_eid failed. (dev_id=%u; ret=%d)\n", dev_id, ret);
+        return DRV_ERROR_IOCRL_FAIL;
+    }
+    return DRV_ERROR_NONE;
+#else
+    (void)dev_id;
+    (void)bus_inst_eid;
+    return DRV_ERROR_NOT_SUPPORT;
+#endif
 }

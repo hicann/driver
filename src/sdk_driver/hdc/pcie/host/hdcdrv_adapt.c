@@ -14,11 +14,14 @@
 #include "hdcdrv_core.h"
 #include "hdcdrv_core_com.h"
 
+#include "ka_base_pub.h"
+#include "ka_common_pub.h"
+#include "ka_memory_pub.h"
 #ifndef CFG_FEATURE_VHDC_ADAPT
 u32 hdcdrv_gen_unique_value(void)
 {
     u32 value;
-    value = (u32)atomic_inc_return(&hdc_ctrl->unique_val);
+    value = (u32)ka_base_atomic_inc_return(&hdc_ctrl->unique_val);
     value = HDCDRV_SESSION_UNIQUE_VALUE_HOST_FLAG | (value & HDCDRV_SESSION_UNIQUE_VALUE_MASK);
     return value;
 }
@@ -98,20 +101,20 @@ void hdcdrv_set_session_run_env(u32 dev_id, u32 fid, int *run_env)
 }
 #endif
 
-struct page *hdcdrv_alloc_pages_node_inner(u32 dev_id, gfp_t gfp_mask, u32 order)
+ka_page_t *hdcdrv_alloc_pages_node_inner(u32 dev_id, ka_gfp_t gfp_mask, u32 order)
 {
     return hdcdrv_alloc_pages(gfp_mask, order, KA_SUB_MODULE_TYPE_2);
 }
 
-void *hdcdrv_kzalloc_mem_node_inner(u32 dev_id, gfp_t gfp_mask, u32 size, u32 level)
+void *hdcdrv_kzalloc_mem_node_inner(u32 dev_id, ka_gfp_t gfp_mask, u32 size, u32 level)
 {
     return hdcdrv_kzalloc(size, gfp_mask, level);
 }
 
-gfp_t hdcdrv_init_mem_pool_get_gfp(void)
+ka_gfp_t hdcdrv_init_mem_pool_get_gfp(void)
 {
     /* declare __GFP_RECLAIM (GFP_KERNEL) to allow blocking, alloc cma firstly */
-    return GFP_KERNEL;
+    return KA_GFP_KERNEL;
 }
 
 u64 hdcdrv_get_hash_fid(u32 fid)

@@ -10,10 +10,6 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#include <linux/mm.h>
-#include <linux/mm_types.h>
-#include <linux/spinlock_types.h>
-#include <linux/rbtree.h>
 
 #include "devmm_proc_info.h"
 #include "devmm_common.h"
@@ -41,7 +37,7 @@
 u32 devmm_get_proc_dev_async_task_cnt(struct devmm_svm_process *svm_proc, u32 devid)
 {
     struct devmm_svm_proc_master *master_data = (struct devmm_svm_proc_master *)svm_proc->priv_data;
-    return atomic_read(&(master_data->async_copy_record.task_cnt[devid]));
+    return ka_base_atomic_read(&(master_data->async_copy_record.task_cnt[devid]));
 }
 
 bool devmm_proc_dev_async_task_is_empty(struct devmm_svm_process *svm_proc, u32 devid)
@@ -105,7 +101,7 @@ static inline void devmm_proc_init_convert_dma_tree(struct devmm_svm_proc_master
     u32 i;
 
     for (i = 0; i < DEVMM_CONVERT_TREE_NUM; i++) {
-        master_data->convert_dma[i].dma_rbtree = RB_ROOT;
+        master_data->convert_dma[i].dma_rbtree = KA_RB_ROOT;
         ka_task_spin_lock_init(&master_data->convert_dma[i].rbtree_lock);
     }
 }
@@ -115,7 +111,7 @@ static void devmm_init_dma_desc_node_rb_info(struct devmm_dma_desc_node_rb_info 
     u32 i;
 
     for (i = 0; i < array_num; i++) {
-        rb_info[i].root = RB_ROOT;
+        rb_info[i].root = KA_RB_ROOT;
         ka_task_spin_lock_init(&rb_info[i].spinlock);
 
         rb_info[i].node_num = 0;
@@ -128,14 +124,14 @@ static void devmm_init_share_id_map(struct devmm_share_id_map_mng *share_id_map_
     u32 i;
 
     for (i = 0; i < SVM_MAX_AGENT_NUM; i++) {
-        share_id_map_mng[i].rbtree = RB_ROOT;
+        share_id_map_mng[i].rbtree = KA_RB_ROOT;
         ka_task_init_rwsem(&share_id_map_mng[i].sem);
     }
 }
 
 static void devmm_init_master_share_id_map(struct devmm_share_id_map_mng *share_id_map_mng)
 {
-    share_id_map_mng->rbtree = RB_ROOT;
+    share_id_map_mng->rbtree = KA_RB_ROOT;
     ka_task_init_rwsem(&share_id_map_mng->sem);
 }
 
@@ -153,7 +149,7 @@ static void devmm_init_svm_proc_register_dma_mng(struct devmm_svm_proc_master *m
     u32 i;
 
     for (i = 0; i < SVM_MAX_AGENT_NUM; i++) {
-        master_data->register_dma_mng[i].rbtree = RB_ROOT;
+        master_data->register_dma_mng[i].rbtree = KA_RB_ROOT;
         ka_task_rwlock_init(&master_data->register_dma_mng[i].rbtree_rwlock);
     }
 }
@@ -174,8 +170,8 @@ static void devmm_init_master_p2p_mem_mng(struct devmm_master_p2p_mem_mng *p2p_m
     u32 i;
 
     for (i = 0; i < SVM_MAX_AGENT_NUM; i++) {
-        mutex_init(&p2p_mem_mng[i].lock);
-        INIT_LIST_HEAD(&p2p_mem_mng[i].list_head);
+        ka_task_mutex_init(&p2p_mem_mng[i].lock);
+        KA_INIT_LIST_HEAD(&p2p_mem_mng[i].list_head);
         p2p_mem_mng[i].get_cnt = 0;
         p2p_mem_mng[i].put_cnt = 0;
         p2p_mem_mng[i].free_cb_cnt = 0;
@@ -244,10 +240,6 @@ void devmm_svm_release_private_proc(struct devmm_svm_process *svm_proc)
     }
     devmm_free_proc_priv_data(svm_proc);
     devmm_remove_pid_from_all_business(svm_proc->process_id.hostpid);
-
-    if (svm_proc->is_enable_host_giant_page) {
-        devmm_obmm_put(&devmm_svm->obmm_info);
-    }
 }
 
 void devmm_proc_debug_info_print(struct devmm_svm_process *svm_proc)

@@ -16,6 +16,7 @@
 #include "virtmng_public_def.h"
 #include "virtmng_msg_pub.h"
 #include "virtmngagent_vpc.h"
+#include "ka_kernel_def_pub.h"
 
 int vmnga_msg_cluster_recv_vpc(void *msg_chan_in, struct vmng_msg_chan_rx_proc_info *proc_info)
 {
@@ -54,7 +55,7 @@ int vmnga_msg_cluster_recv_vpc(void *msg_chan_in, struct vmng_msg_chan_rx_proc_i
     }
     ret = msg_dev->vpc_clients[vpc_type].msg_recv(dev_id, 0, &client_proc_info);
     if (ret != 0) {
-        vmng_err("Client mesage recv error. (vpc_type=%u; dev_id=%u; ret=%d)\n", vpc_type, dev_id, ret);
+        vmng_err("Client message recv error. (vpc_type=%u; dev_id=%u; ret=%d)\n", vpc_type, dev_id, ret);
         return ret;
     }
     return 0;
@@ -120,7 +121,7 @@ int vmnga_vpc_msg_send(u32 dev_id, enum vmng_vpc_type vpc_type, struct vmng_tx_m
     ret = vmng_sync_msg_send(msg_cluster, tx_info, chan_type, OPCODE_IDLE, timeout);
     return ret;
 }
-EXPORT_SYMBOL(vmnga_vpc_msg_send);
+KA_EXPORT_SYMBOL(vmnga_vpc_msg_send);
 
 int vmnga_vpc_register_client(u32 dev_id, const struct vmng_vpc_client *vpc_client)
 {
@@ -147,7 +148,7 @@ int vmnga_vpc_register_client(u32 dev_id, const struct vmng_vpc_client *vpc_clie
 
     return 0;
 }
-EXPORT_SYMBOL(vmnga_vpc_register_client);
+KA_EXPORT_SYMBOL(vmnga_vpc_register_client);
 
 int vmnga_vpc_unregister_client(u32 dev_id, const struct vmng_vpc_client *vpc_client)
 {
@@ -178,4 +179,4 @@ int vmnga_vpc_unregister_client(u32 dev_id, const struct vmng_vpc_client *vpc_cl
 
     return 0;
 }
-EXPORT_SYMBOL(vmnga_vpc_unregister_client);
+KA_EXPORT_SYMBOL(vmnga_vpc_unregister_client);

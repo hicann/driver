@@ -13,6 +13,7 @@
 
 #include <linux/uaccess.h>
 
+#include "ka_base_pub.h"
 #include "securec.h"
 #include "pbl/pbl_uda.h"
 #include "urd_acc_ctrl.h"
@@ -33,14 +34,14 @@ EXIT_MODULE_FUNC(DMS_MODULE_UDIS);
 BEGIN_DMS_MODULE_DECLARATION(DMS_MODULE_UDIS)
 BEGIN_FEATURE_COMMAND()
 #ifdef DRV_HOST
-ADD_DEV_FEATURE_COMMAND(DMS_MODULE_UDIS, DMS_GET_UDIS_DEVICE_INFO_CMD, ZERO_CMD,
+ADD_DEV_FEATURE_COMMAND(DMS_MODULE_UDIS, DMS_MAIN_CMD_BASIC, DMS_SUBCMD_GET_UDIS_DEVICE_INFO,
     NULL, NULL, DMS_SUPPORT_ALL, udis_feature_get_device_info)
-ADD_DEV_FEATURE_COMMAND(DMS_MODULE_UDIS, DMS_SET_UDIS_DEVICE_INFO_CMD, ZERO_CMD,
+ADD_DEV_FEATURE_COMMAND(DMS_MODULE_UDIS, DMS_MAIN_CMD_BASIC, DMS_SUBCMD_SET_UDIS_DEVICE_INFO,
     NULL, NULL, DMS_ACC_ROOT_ONLY | DMS_ENV_ALL | DMS_VDEV_ALL, udis_feature_set_device_info)
 #else
-ADD_DEV_FEATURE_COMMAND(DMS_MODULE_UDIS, DMS_GET_UDIS_DEVICE_INFO_CMD, ZERO_CMD,
+ADD_DEV_FEATURE_COMMAND(DMS_MODULE_UDIS, DMS_MAIN_CMD_BASIC, DMS_SUBCMD_GET_UDIS_DEVICE_INFO,
     NULL, NULL, DMS_SUPPORT_ALL_USER, udis_feature_get_device_info)
-ADD_DEV_FEATURE_COMMAND(DMS_MODULE_UDIS, DMS_SET_UDIS_DEVICE_INFO_CMD, ZERO_CMD,
+ADD_DEV_FEATURE_COMMAND(DMS_MODULE_UDIS, DMS_MAIN_CMD_BASIC, DMS_SUBCMD_SET_UDIS_DEVICE_INFO,
     NULL, "dmp_daemon", DMS_SUPPORT_ALL, udis_feature_set_device_info)
 #endif
 END_FEATURE_COMMAND()
@@ -57,7 +58,7 @@ STATIC int udis_ioctl_input_check(unsigned int udevid, unsigned int module_type,
         return -EINVAL;
     }
 
-    name_len = strnlen(name, UDIS_MAX_NAME_LEN);
+    name_len = ka_base_strnlen(name, UDIS_MAX_NAME_LEN);
     if ((name_len == 0) || (name_len>= UDIS_MAX_NAME_LEN)) {
         udis_err("Invalid name. (udevid=%u; module_type=%u; name_len=%u; max_name_len=%d)\n",
             udevid, module_type, name_len, UDIS_MAX_NAME_LEN - 1);
@@ -109,7 +110,7 @@ STATIC int udis_get_device_info(unsigned int udevid, struct udis_get_ioctl_in *i
         return -EINVAL;
     }
 
-    ret = (int)copy_to_user((void *)((uintptr_t)input->data), &info.data, info.data_len);
+    ret = (int)ka_base_copy_to_user((void *)((uintptr_t)input->data), &info.data, info.data_len);
     if (ret != 0) {
         udis_err("Copy_to_user failed. (udevid=%u; module_type=%u; name=%s; ret=%d)\n",
             udevid, input->module_type, info.name, ret);
@@ -135,7 +136,7 @@ STATIC int udis_set_device_info(unsigned int udevid, const struct udis_set_ioctl
         return -EINVAL;
     }
 
-    ret = (int)copy_from_user(&info.data, (void *)((uintptr_t)input->data), input->data_len);
+    ret = (int)ka_base_copy_from_user(&info.data, (void *)((uintptr_t)input->data), input->data_len);
     if (ret != 0) {
         udis_err("Copy_from_user failed. (udevid=%u; module_type=%u; name=%s; ret=%d)\n",
             udevid, input->module_type, info.name, ret);

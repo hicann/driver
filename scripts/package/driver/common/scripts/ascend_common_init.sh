@@ -45,12 +45,12 @@ check_cpu_cfg_validity() {
 
     if [ "$check_type" == "unlimit_aicpu" ];then
         if [ $ctrl_cpu_num -lt 1 ];then
-            echo "cpu cfg is not vaild"
+            echo "cpu cfg is not valid"
             return 1
         fi
     else
         if [[ $ctrl_cpu_num -lt 1 || $aicpu_num -lt 1 ]];then
-            echo "cpu cfg is not vaild"
+            echo "cpu cfg is not valid"
             return 1
         fi
     fi

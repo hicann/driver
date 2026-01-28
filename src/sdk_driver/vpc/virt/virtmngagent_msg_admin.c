@@ -18,6 +18,8 @@
 #include "virtmng_msg_admin.h"
 #include "virtmng_public_def.h"
 #include "virtmng_resource.h"
+#include "ka_kernel_def_pub.h"
+#include "ka_task_pub.h"
 
 STATIC int vmnga_admin_para_check(const struct vmng_msg_dev *msg_dev,
     const struct vmng_msg_chan_rx_proc_info *proc_info)
@@ -164,7 +166,7 @@ int vmnga_register_admin_rx_func(int opcode, vmnga_admin_func admin_func)
     g_vmnga_msg_admin_func_ops[opcode] = admin_func;
     return 0;
 }
-EXPORT_SYMBOL(vmnga_register_admin_rx_func);
+KA_EXPORT_SYMBOL(vmnga_register_admin_rx_func);
 
 void vmnga_unregister_admin_rx_func(int opcode)
 {
@@ -174,7 +176,7 @@ void vmnga_unregister_admin_rx_func(int opcode)
     }
     g_vmnga_msg_admin_func_ops[opcode] = NULL;
 }
-EXPORT_SYMBOL(vmnga_unregister_admin_rx_func);
+KA_EXPORT_SYMBOL(vmnga_unregister_admin_rx_func);
 
 STATIC int vmnga_admin_rx_msg_proc(void *msg_chan, struct vmng_msg_chan_rx_proc_info *proc_info)
 {
@@ -222,28 +224,28 @@ int vmnga_init_msg_admin(struct vmng_msg_dev *msg_dev)
     vmng_info("Init message admin. (dev_id=%u)\n", msg_dev->dev_id);
 
     msg_cluster = &(msg_dev->msg_cluster[VMNG_MSG_CHAN_TYPE_ADMIN]);
-    mutex_init(&msg_cluster->mutex);
+    ka_task_mutex_init(&msg_cluster->mutex);
 
     msg_dev->admin_tx = &(msg_dev->msg_chan_tx[VMNG_MSG_CHAN_TYPE_ADMIN]);
     msg_chan_tx = msg_dev->admin_tx;
     msg_chan_tx->tx_send_irq = msg_dev->db_irq_base + VMNG_DB_MSG_ADMIN;
     msg_chan_tx->tx_finish_irq = 0;
     msg_chan_tx->send_irq_to_remote = msg_dev->ops.send_irq_to_remote;
-    mutex_init(&msg_chan_tx->mutex);
+    ka_task_mutex_init(&msg_chan_tx->mutex);
 
     msg_dev->admin_rx = &(msg_dev->msg_chan_rx[VMNG_MSG_CHAN_TYPE_ADMIN]);
     msg_chan_rx = msg_dev->admin_rx;
     msg_chan_rx->rx_recv_irq = msg_dev->msix_irq_base + VMNG_MSIX_MSG_ADMIN;
     msg_chan_rx->rx_proc = vmnga_admin_rx_msg_proc;
-    msg_chan_rx->rx_wq = create_singlethread_workqueue("vpc_admin_msg_chan_proc");
+    msg_chan_rx->rx_wq = ka_task_create_singlethread_workqueue("vpc_admin_msg_chan_proc");
     if (msg_chan_rx->rx_wq == NULL) {
         vmng_err("Create workqueue failed. (dev_id=%u)\n", msg_dev->dev_id);
         return -EINVAL;
     }
-    INIT_WORK(&msg_chan_rx->rx_work, vmng_msg_rx_msg_task);
+    KA_TASK_INIT_WORK(&msg_chan_rx->rx_work, vmng_msg_rx_msg_task);
     ret = vmnga_rx_irq_init(msg_chan_rx);
     if (ret != 0) {
-        destroy_workqueue(msg_chan_rx->rx_wq);
+        ka_task_destroy_workqueue(msg_chan_rx->rx_wq);
         msg_chan_rx->rx_wq = NULL;
         vmng_err("Call vmnga_rx_irq_init failed. (dev_id=%u)\n", msg_dev->dev_id);
         return -EINVAL;
@@ -271,7 +273,7 @@ void vmnga_uninit_vpc_msg_admin(struct vmng_msg_dev *msg_dev)
 
     msg_chan_tx->status = VMNG_MSG_CHAN_STATUS_DISABLE;
     if (msg_chan_rx->rx_wq != NULL) {
-        destroy_workqueue(msg_chan_rx->rx_wq);
+        ka_task_destroy_workqueue(msg_chan_rx->rx_wq);
         msg_chan_rx->rx_wq = NULL;
     }
 }

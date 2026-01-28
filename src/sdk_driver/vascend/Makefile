@@ -12,8 +12,7 @@ ifeq ($(ENABLE_OPEN_SRC), y)
     MODULE_NAME := drv_vascend
     obj-m += ${MODULE_NAME}.o
     ${MODULE_NAME}-objs := dvt.o vdavinci.o cfg_space.o mmio.o interface.o kvmdt.o hw_dvt.o debugfs.o dma_pool.o \
-        domain_manage.o dma_pool_map.o dvt_sysfs.o dvt_sriov.o dma_pool_pt.o vdavinci_rdwr.o vfio_ops.o \
-        kvmdt_dma.o
+        domain_manage.o dma_pool_map.o dvt_sysfs.o dvt_sriov.o dma_pool_pt.o vdavinci_rdwr.o vfio_ops.o
 else
     ifeq ($(TOP_DIR),)
 
@@ -38,8 +37,7 @@ else
 
     obj-m := drv_vascend.o
     drv_vascend-objs := dvt.o vdavinci.o cfg_space.o mmio.o interface.o kvmdt.o hw_dvt.o debugfs.o dma_pool.o \
-            domain_manage.o dma_pool_map.o dvt_sysfs.o dvt_sriov.o dma_pool_pt.o vdavinci_rdwr.o vfio_ops.o \
-            kvmdt_dma.o
+            domain_manage.o dma_pool_map.o dvt_sysfs.o dvt_sriov.o dma_pool_pt.o vdavinci_rdwr.o vfio_ops.o
 
     default:
 		$(MAKE) -C $(KERNEL_DIR) M=$(DVT_DIR) modules
@@ -63,8 +61,7 @@ else
 
     obj-m := drv_vascend.o
     drv_vascend-objs := dvt.o vdavinci.o cfg_space.o mmio.o interface.o kvmdt.o hw_dvt.o debugfs.o dma_pool.o \
-            domain_manage.o dma_pool_map.o dvt_sysfs.o dvt_sriov.o dma_pool_pt.o vdavinci_rdwr.o vfio_ops.o \
-            kvmdt_dma.o
+            domain_manage.o dma_pool_map.o dvt_sysfs.o dvt_sriov.o dma_pool_pt.o vdavinci_rdwr.o vfio_ops.o
 
     endif
 endif

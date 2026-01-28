@@ -7,8 +7,11 @@
 # INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
 # See LICENSE in the root of the software repository for the full text of the License.
 # ------------------------------------------------------------------------------------------------------------
-set(asdrv_esched_depends drv_seclib_host drv_pcie_host asdrv_pbl asdrv_trsbase asdrv_dpa)
-
+if (${PRODUCT} STREQUAL ascend910B)
+    set(asdrv_esched_depends asdrv_dms drv_seclib_host drv_pcie_host asdrv_pbl asdrv_trsbase asdrv_dpa ascend_kernel_open_adapt)
+elseif (${PRODUCT} STREQUAL ascend910_95)
+    set(asdrv_esched_depends asdrv_dms drv_seclib_host asdrv_pbl asdrv_vmng asdrv_trsbase ascend_kernel_open_adapt drv_pcie_host asdrv_dpa)
+endif()
 add_host_ko(LOCAL_MODULE asdrv_esched
             KO_SRC_FOLDER ${CMAKE_CURRENT_SOURCE_DIR}
             MAKE_ARGS ${MAKE_ARGS}

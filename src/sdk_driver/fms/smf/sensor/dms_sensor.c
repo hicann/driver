@@ -25,6 +25,15 @@
 #include "dms_event_converge.h"
 #include "kernel_version_adapt.h"
 #include "dms_sensor.h"
+#include "ka_dfx_pub.h"
+#include "ka_system_pub.h"
+#include "ka_list_pub.h"
+#include "ka_memory_pub.h"
+#include "ka_errno_pub.h"
+#include "ka_task_pub.h"
+#include "ka_base_pub.h"
+#include "ka_fs_pub.h"
+#include "ka_kernel_def_pub.h"
 
 #ifdef CFG_FEATURE_CLOCKID_CONFIG
 #include <linux/virt_wall_time.h>
@@ -51,10 +60,10 @@ struct dms_eventinfo_from_config g_event_configs = {
     .event_configs = {{0}},
     .config_cnt = 0
 };
-EXPORT_SYMBOL(g_event_configs);
+KA_EXPORT_SYMBOL(g_event_configs);
 
 /* Globally unique number */
-static atomic_t g_dms_sensor_alarm_serial = ATOMIC_INIT(0);
+static ka_atomic_t g_dms_sensor_alarm_serial = KA_BASE_ATOMIC_INIT(0);
 
 DMS_EVENT_LIST_ITEM g_event_list_cb[DMS_MAX_EVENT_NUM];
 struct mutex g_sensor_event_list_mutex;
@@ -63,43 +72,43 @@ static void sensor_init_event_list_cb(void)
 {
     (void)memset_s(&g_event_list_cb, sizeof(DMS_EVENT_LIST_ITEM) * DMS_MAX_EVENT_NUM,\
                    0, sizeof(DMS_EVENT_LIST_ITEM) * DMS_MAX_EVENT_NUM);
-    mutex_init(&g_sensor_event_list_mutex);
+    ka_task_mutex_init(&g_sensor_event_list_mutex);
 }
 static void sensor_exit_event_list_cb(void)
 {
-    mutex_destroy(&g_sensor_event_list_mutex);
+    ka_task_mutex_destroy(&g_sensor_event_list_mutex);
 }
 
-unsigned long dms_get_time_change(ktime_t start, ktime_t end)
+unsigned long dms_get_time_change(ka_ktime_t start, ka_ktime_t end)
 {
     unsigned long time_use;
 
-    time_use = (unsigned long)(ktime_to_ns(end) - ktime_to_ns(start)) / NSEC_PER_USEC;
+    time_use = (unsigned long)(ka_system_ktime_to_ns(end) - ka_system_ktime_to_ns(start)) / NSEC_PER_USEC;
     return time_use;
 }
 
-unsigned long dms_get_time_change_ms(ktime_t start, ktime_t end)
+unsigned long dms_get_time_change_ms(ka_ktime_t start, ka_ktime_t end)
 {
     unsigned long time_use;
 
-    time_use = (unsigned long)(ktime_to_ns(end) - ktime_to_ns(start)) / NSEC_PER_MSEC;
+    time_use = (unsigned long)(ka_system_ktime_to_ns(end) - ka_system_ktime_to_ns(start)) / KA_NSEC_PER_MSEC;
     return time_use;
 }
 
 static void dms_start_record_sensor_scan_time(struct dms_dev_sensor_cb *pdev_sen_cb)
 {
-    pdev_sen_cb->scan_time_recorder.sensor_start_time = ktime_get();
+    pdev_sen_cb->scan_time_recorder.sensor_start_time = ka_system_ktime_get();
 }
 
 static void dms_stop_record_sensor_scan_time(struct dms_dev_sensor_cb *pdev_sen_cb,
     struct dms_sensor_object_cb *psensor_obj_cb)
 {
-    ktime_t current_time;
+    ka_ktime_t current_time;
     unsigned long all_time_use;
     int ret;
     struct dms_sensor_scan_time_recorder *ptime_recorder;
     ptime_recorder = &pdev_sen_cb->scan_time_recorder;
-    current_time = ktime_get();
+    current_time = ka_system_ktime_get();
     all_time_use = dms_get_time_change(ptime_recorder->sensor_start_time, current_time);
     if (all_time_use > DMS_SENSOR_SCAN_OUT_TIME) {
         if (ptime_recorder->sensor_record_index >= DMS_MAX_TIME_RECORD_COUNT) {
@@ -128,16 +137,16 @@ static void dms_stop_record_sensor_scan_time(struct dms_dev_sensor_cb *pdev_sen_
 
 static void dms_start_record_dev_scan_time(struct dms_dev_sensor_cb *pdev_sen_cb)
 {
-    pdev_sen_cb->scan_time_recorder.dev_start_time = ktime_get();
+    pdev_sen_cb->scan_time_recorder.dev_start_time = ka_system_ktime_get();
 }
 
 static void dms_stop_record_dev_scan_time(struct dms_dev_sensor_cb *pdev_sen_cb)
 {
-    ktime_t current_time;
+    ka_ktime_t current_time;
     unsigned long all_time_use;
     struct dms_sensor_scan_time_recorder *ptime_recorder;
     ptime_recorder = &pdev_sen_cb->scan_time_recorder;
-    current_time = ktime_get();
+    current_time = ka_system_ktime_get();
     all_time_use = dms_get_time_change(ptime_recorder->dev_start_time, current_time);
     if (all_time_use > DMS_DEV_SENSOR_SCAN_OUT_TIME) {
         if (ptime_recorder->dev_record_index >= DMS_MAX_TIME_RECORD_COUNT) {
@@ -190,7 +199,7 @@ STATIC int dms_get_node_sensor_cb_by_nodeid(struct dms_dev_sensor_cb *dev_sensor
         return DRV_ERROR_PARA_ERROR;
     }
     *node_sensor_cb = NULL;
-    list_for_each_entry_safe(pnode_ctrl, tmp_ctl, &(dev_sensor_cb->dms_node_sensor_cb_list), list)
+    ka_list_for_each_entry_safe(pnode_ctrl, tmp_ctl, &(dev_sensor_cb->dms_node_sensor_cb_list), list)
     {
         if ((pnode_ctrl->node_id == node_id) && (pnode_ctrl->node_type == node_type)) {
             *node_sensor_cb = pnode_ctrl;
@@ -234,7 +243,7 @@ static struct dms_node_sensor_cb *dms_get_or_create_node_sensor_cb(struct dms_de
 
     /* Allocate memory for sensor status query table node data */
     node_sensor_cb = (struct dms_node_sensor_cb *)dbl_kzalloc(sizeof(struct dms_node_sensor_cb),
-        GFP_KERNEL | __GFP_ACCOUNT);
+        KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
     if (node_sensor_cb == NULL) {
         /* Print error message: memory request failed */
         dms_err("Malloc memory failed!\n");
@@ -251,9 +260,9 @@ static struct dms_node_sensor_cb *dms_get_or_create_node_sensor_cb(struct dms_de
     node_sensor_cb->owner_node = owner_node;
     node_sensor_cb->version = 0;
     node_sensor_cb->health = 0;
-    INIT_LIST_HEAD(&node_sensor_cb->sensor_object_table);
+    KA_INIT_LIST_HEAD(&node_sensor_cb->sensor_object_table);
     /* Add the created node to the node list of the device */
-    list_add(&node_sensor_cb->list, &dev_sensor_cb->dms_node_sensor_cb_list);
+    ka_list_add(&node_sensor_cb->list, &dev_sensor_cb->dms_node_sensor_cb_list);
     dev_sensor_cb->node_cb_num++;
     return node_sensor_cb;
 }
@@ -287,7 +296,7 @@ STATIC unsigned int dms_add_sensor_object_table(struct dms_node_sensor_cb *node_
     }
     /* Allocate memory for sensor status query table node data */
     temp_sensor = (struct dms_sensor_object_cb *)dbl_kzalloc(sizeof(struct dms_sensor_object_cb),
-        GFP_KERNEL | __GFP_ACCOUNT);
+        KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
     if (temp_sensor == NULL) {
         /* Print error message: memory request failed */
         dms_err("Malloc memory failed!\n");
@@ -313,7 +322,7 @@ STATIC unsigned int dms_add_sensor_object_table(struct dms_node_sensor_cb *node_
     (void)dms_sensor_class_init(psensor_cfg->sensor_class, temp_sensor);
 
     /* Add the created node to the node list of the device */
-    list_add(&temp_sensor->list, &node_sensor_cb->sensor_object_table);
+    ka_list_add(&temp_sensor->list, &node_sensor_cb->sensor_object_table);
     node_sensor_cb->sensor_object_num++;
     return DRV_ERROR_NONE;
 }
@@ -427,7 +436,7 @@ static bool dms_compare_sensor_object(struct dms_sensor_object_cfg *psensor_obj_
 {
     if ((psensor_obj_cfg1->sensor_type == psensor_obj_cfg2->sensor_type) &&
         (psensor_obj_cfg1->pf_scan_func == psensor_obj_cfg2->pf_scan_func) &&
-        (strcmp(psensor_obj_cfg1->sensor_name, psensor_obj_cfg2->sensor_name) == 0)) {
+        (ka_base_strcmp(psensor_obj_cfg1->sensor_name, psensor_obj_cfg2->sensor_name) == 0)) {
         return true;
     } else {
         return false;
@@ -451,7 +460,7 @@ static unsigned int dms_is_sensor_object_repeat(struct dms_dev_sensor_cb *pdev_s
     /* Traverse all sensor types and all sensor instances under each type for detection. If the detection result is an
      * event that needs to be reported, then report the event */
     if (pnode_sen_cb != NULL) {
-        list_for_each_entry_safe(sensor_type_item, tmp_sensor_ctl, &(pnode_sen_cb->sensor_object_table), list)
+        ka_list_for_each_entry_safe(sensor_type_item, tmp_sensor_ctl, &(pnode_sen_cb->sensor_object_table), list)
         {
             if (dms_compare_sensor_object(&sensor_type_item->sensor_object_cfg, psensor_obj_cfg) == true) {
                 *repeat = DMS_SENSOR_TABLE_REPEAT;
@@ -502,7 +511,7 @@ static unsigned int dms_sensor_add_obj_node(struct dms_node *owner_node, struct 
         /* Print error message: duplicate sensor information table */
         dms_err("add sensor type fail. (node_type=0x%x, node_id=%d)\n", owner_node->node_type, owner_node->node_id);
         if (node_sensor_cb->sensor_object_num == 0) {
-            list_del(&node_sensor_cb->list);
+            ka_list_del(&node_sensor_cb->list);
             dbl_kfree(node_sensor_cb);
             node_sensor_cb = NULL;
             dev_sensor_cb->node_cb_num--;
@@ -544,18 +553,18 @@ static unsigned int dms_sensor_register_all(struct dms_node *owner_node, struct 
         return DRV_ERROR_PARA_ERROR;
     }
     /* Get mutex semaphore */
-    mutex_lock(&dev_sensor_cb->dms_sensor_mutex);
+    ka_task_mutex_lock(&dev_sensor_cb->dms_sensor_mutex);
 
     /* Find whether the sensor information table has been registered */
     result = dms_sensor_add_obj_node(owner_node, dev_sensor_cb, psensor_obj_cfg, env_type);
     if (result != DRV_ERROR_NONE) {
-        mutex_unlock(&dev_sensor_cb->dms_sensor_mutex);
+        ka_task_mutex_unlock(&dev_sensor_cb->dms_sensor_mutex);
         /* Print error message: duplicate sensor information table */
         dms_err("add sensor type fail. (nodeid=%d)\n", owner_node->node_id);
         return DRV_ERROR_PARA_ERROR;
     }
     /* Release the mutex semaphore */
-    mutex_unlock(&dev_sensor_cb->dms_sensor_mutex);
+    ka_task_mutex_unlock(&dev_sensor_cb->dms_sensor_mutex);
 
     return DRV_ERROR_NONE;
 }
@@ -614,7 +623,7 @@ unsigned int dms_fill_event_data(const struct dms_sensor_object_cb *psensor_obj_
     p_event_obj->time_stamp = event_item->timestamp;
     /* fill alarm_serial number */
     p_event_obj->alarm_serial_num = event_item->alarm_serial_num;
-    pr_debug("[dms_module][dms_fill_event_data] node type(0x%x) event type(0x%x)"
+    ka_dfx_pr_debug("[dms_module][dms_fill_event_data] node type(0x%x) event type(0x%x)"
         "serial num(%u) sensor name:%.*s\n", psensor_obj_cb->owner_node_type, event_item->event_data,
         event_item->alarm_serial_num, DMS_SENSOR_DESCRIPT_LENGTH, event_item->sensor_name);
     ret = strcpy_s(p_event_obj->event.sensor_event.sensor_name, DMS_SENSOR_DESCRIPT_LENGTH, event_item->sensor_name);
@@ -681,7 +690,7 @@ static unsigned int dms_sensor_report_event(struct dms_sensor_object_cb *psensor
 /* The sensor generates an alarm flow */
 static int dms_generated_alarm_serial(unsigned int *alarm_serial_no)
 {
-    *alarm_serial_no = atomic_inc_return(&g_dms_sensor_alarm_serial);
+    *alarm_serial_no = ka_base_atomic_inc_return(&g_dms_sensor_alarm_serial);
     return DRV_ERROR_NONE;
 }
 
@@ -694,37 +703,34 @@ int dms_mgnt_clockid_init(void)
     long read_num;
     loff_t pos = 0;
 
-    buffer = (char *)dbl_kzalloc(CMDLINE_BUFFER_SIZE, GFP_KERNEL | __GFP_ACCOUNT);
+    buffer = (char *)dbl_kzalloc(CMDLINE_BUFFER_SIZE, KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
     if (buffer == NULL) {
         dms_err("Failed to malloc for cmdline.\n");
         return -ENOMEM;
     }
 
-    fp = filp_open(CMDLINE_FILE_PATH, O_RDONLY, 0);
-    if (IS_ERR_OR_NULL(fp)) {
-        dms_err("Open file failed. (file=%s; errno=%ld)\n", CMDLINE_FILE_PATH, PTR_ERR(fp));
+    fp = ka_fs_filp_open(CMDLINE_FILE_PATH, KA_O_RDONLY, 0);
+    if (KA_IS_ERR_OR_NULL(fp)) {
+        dms_err("Open file failed. (file=%s; errno=%ld)\n", CMDLINE_FILE_PATH, KA_PTR_ERR(fp));
         ret = -EINVAL;
         goto buff_free_exit;
     }
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 14, 0)
-    read_num = kernel_read(fp, buffer, CMDLINE_BUFFER_SIZE - 1, &pos);
-#else
-    read_num = kernel_read(fp, pos, buffer, CMDLINE_BUFFER_SIZE - 1);
-#endif
+
+    read_num = ka_fs_kernel_read(fp, buffer, CMDLINE_BUFFER_SIZE - 1, &pos);
     if ((read_num <= 0) || (read_num >= CMDLINE_BUFFER_SIZE)) {
         dms_err("Read len error. (read_num=%ld; valid_range=[%d, %d])\n", read_num, 0, CMDLINE_BUFFER_SIZE - 1);
         ret = -EINVAL;
         goto file_close_exit;
     }
     buffer[read_num] = '\0';
-    ptr = strstr(buffer, "dpclk=100");
+    ptr = ka_base_strstr(buffer, "dpclk=100");
     if ((ptr != NULL) && ((*(ptr + CLOCK_ID_STRLEN) == '\0') || (*(ptr + CLOCK_ID_STRLEN) == ' '))) {
         g_dms_mgnt_clock_id = CLOCK_REAL;
     }
     dms_info("Parse clock config. (clock_id=%d)\n", g_dms_mgnt_clock_id);
 
 file_close_exit:
-    (void)filp_close(fp, NULL);
+    (void)ka_fs_filp_close(fp, NULL);
     fp = NULL;
 buff_free_exit:
     dbl_kfree(buffer);
@@ -744,19 +750,19 @@ static int dms_sensor_get_timestamp(unsigned long long *timestamp)
     if (g_dms_mgnt_clock_id == CLOCK_VIRTUAL) {
         ktime_get_virtual_ts64(&ts);
     } else {
-        ktime_get_real_ts64(&ts);
+        ka_system_ktime_get_real_ts64(&ts);
     }
     sys_time.tv_sec = ts.tv_sec;
     sys_time.tv_usec = ts.tv_nsec / NSEC_PER_USEC;
     *timestamp = (sys_time.tv_sec * MSEC_PER_SEC) + (sys_time.tv_usec / USEC_PER_MSEC);
 
 #else
-    ktime_t sys_time = 0;
+    ka_ktime_t sys_time = 0;
     if (timestamp == NULL) {
         return DRV_ERROR_PARA_ERROR;
     }
-    sys_time = ktime_get();
-    *timestamp = (unsigned long long)ktime_to_ns(sys_time) / NSEC_PER_MSEC;
+    sys_time = ka_system_ktime_get();
+    *timestamp = (unsigned long long)ka_system_ktime_to_ns(sys_time) / KA_NSEC_PER_MSEC;
 #endif
 
     return DRV_ERROR_NONE;
@@ -768,16 +774,16 @@ static DMS_EVENT_LIST_ITEM *sensor_alloc_event_list_cb(void)
 
     /* Add a mutex lock to prevent simultaneous access between multiple threads and apply for the same memory space,
     which will cause an alarm exception */
-    mutex_lock(&g_sensor_event_list_mutex);
+    ka_task_mutex_lock(&g_sensor_event_list_mutex);
 
     for (i = 0; i < DMS_MAX_EVENT_NUM; i++) {
         if (!g_event_list_cb[i].in_use) {
             g_event_list_cb[i].in_use = 1;
-            mutex_unlock(&g_sensor_event_list_mutex);
+            ka_task_mutex_unlock(&g_sensor_event_list_mutex);
             return &g_event_list_cb[i];
         }
     }
-    mutex_unlock(&g_sensor_event_list_mutex);
+    ka_task_mutex_unlock(&g_sensor_event_list_mutex);
 
     dms_err("No enough sensor event space! (event_num_limit=%d)\n", DMS_MAX_EVENT_NUM);
     return 0;
@@ -792,7 +798,7 @@ static int sensor_delete_event_list(DMS_EVENT_LIST_ITEM *p_list)
     if (p_list->p_next != NULL) {
         (void)sensor_delete_event_list(p_list->p_next);
     }
-    mutex_lock(&g_sensor_event_list_mutex);
+    ka_task_mutex_lock(&g_sensor_event_list_mutex);
     p_list->in_use = 0;
     p_list->p_next = NULL;
     if (p_list->event_paras != NULL) {
@@ -800,7 +806,7 @@ static int sensor_delete_event_list(DMS_EVENT_LIST_ITEM *p_list)
         p_list->event_paras = NULL;
         p_list->para_len = 0;
     }
-    mutex_unlock(&g_sensor_event_list_mutex);
+    ka_task_mutex_unlock(&g_sensor_event_list_mutex);
     return DRV_ERROR_NONE;
 }
 
@@ -834,7 +840,7 @@ STATIC int sensor_init_event_node(struct dms_sensor_event_data_item *pevent_data
     }
 
     if ((pevent_data->data_size > 0) && (pevent_data->data_size <= DMS_MAX_EVENT_DATA_LENGTH)) {
-        p_list->event_paras = (unsigned char *)dbl_kmalloc(pevent_data->data_size, GFP_KERNEL | __GFP_ACCOUNT);
+        p_list->event_paras = (unsigned char *)dbl_kmalloc(pevent_data->data_size, KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
         if (p_list->event_paras == NULL) {
             /* If the memory is not enough, give up recording additional parameters and continue processing */
             p_list->para_len = 0;
@@ -1245,9 +1251,9 @@ static void dms_exit_node_sensor_cb(struct dms_node_sensor_cb *node_sensor_cb)
 {
     struct dms_sensor_object_cb *pobject_cb = NULL;
     struct dms_sensor_object_cb *tmp_ctl = NULL;
-    list_for_each_entry_safe(pobject_cb, tmp_ctl, &(node_sensor_cb->sensor_object_table), list)
+    ka_list_for_each_entry_safe(pobject_cb, tmp_ctl, &(node_sensor_cb->sensor_object_table), list)
     {
-        list_del(&pobject_cb->list);
+        ka_list_del(&pobject_cb->list);
         dms_exit_sensor_object_cb(pobject_cb);
         dbl_kfree(pobject_cb);
         pobject_cb = NULL;
@@ -1267,7 +1273,7 @@ STATIC int dms_check_sensor_type_table(void)
             return DRV_ERROR_PARA_ERROR;
         }
 
-        if (strlen(dms_sensor_type[i].type_name) > DMS_MAX_SENSOR_TYPE_NAME_SIZE) {
+        if (ka_base_strlen(dms_sensor_type[i].type_name) > DMS_MAX_SENSOR_TYPE_NAME_SIZE) {
             dms_err("type name too long. (sensor_type=0x%x)\n",
                 dms_sensor_type[i].sensor_type);
             return DRV_ERROR_PARA_ERROR;
@@ -1292,10 +1298,10 @@ STATIC void dms_printf_sensor_obj_info(struct dms_dev_sensor_cb *dev_sensor_cb)
     struct dms_sensor_object_cb *tmp_sensor_ctl = NULL;
 
     /* Sensor list resource lock acquires mutex semaphore */
-    mutex_lock(&dev_sensor_cb->dms_sensor_mutex);
+    ka_task_mutex_lock(&dev_sensor_cb->dms_sensor_mutex);
     dms_info("node_sensor_cb info. device id: %u\n", dev_sensor_cb->deviceid);
     /* Traverse the list of module nodes */
-    list_for_each_entry_safe(node_sensor_cb, tmp_ctl, &(dev_sensor_cb->dms_node_sensor_cb_list), list)
+    ka_list_for_each_entry_safe(node_sensor_cb, tmp_ctl, &(dev_sensor_cb->dms_node_sensor_cb_list), list)
     {
         print_sysfs("==================================\n");
         print_sysfs("node_id: %u\n", node_sensor_cb->node_id);
@@ -1310,7 +1316,7 @@ STATIC void dms_printf_sensor_obj_info(struct dms_dev_sensor_cb *dev_sensor_cb)
 
         /* Traverse all sensor types and all sensor instances under each type for detection. If the detection result is
          * an event that needs to be reported, then report the event */
-        list_for_each_entry_safe(sensor_type_item, tmp_sensor_ctl, &(node_sensor_cb->sensor_object_table), list)
+        ka_list_for_each_entry_safe(sensor_type_item, tmp_sensor_ctl, &(node_sensor_cb->sensor_object_table), list)
         {
             print_sysfs(" - object_index: %u\n", sensor_type_item->object_index);
             print_sysfs("   owner_node_id: %u\n", sensor_type_item->owner_node_id);
@@ -1346,7 +1352,7 @@ STATIC void dms_printf_sensor_obj_info(struct dms_dev_sensor_cb *dev_sensor_cb)
         }
     }
     /* Sensor list resource lock acquires mutex semaphore */
-    mutex_unlock(&dev_sensor_cb->dms_sensor_mutex);
+    ka_task_mutex_unlock(&dev_sensor_cb->dms_sensor_mutex);
 }
 
 /* *************************************************************************
@@ -1385,28 +1391,28 @@ ssize_t dms_sensor_print_sensor_list(char *buf)
     ssize_t buf_ret = 0;
 
     if (buf == NULL) {
-        buf_ret += strcpy_s(buf, PAGE_SIZE, "buffer is null\n");
+        buf_ret += strcpy_s(buf, KA_MM_PAGE_SIZE, "buffer is null\n");
         goto _out;
     }
 
     dev_cb = dms_get_dev_cb(0);
     if (dev_cb == NULL) {
-        buf_ret += strcpy_s(buf, PAGE_SIZE, "device cb is null\n");
+        buf_ret += strcpy_s(buf, KA_MM_PAGE_SIZE, "device cb is null\n");
         goto _out;
     }
 
     /* print the sensor info to kernel logs */
-    mutex_lock(&dev_cb->node_lock);
+    ka_task_mutex_lock(&dev_cb->node_lock);
     dms_printf_sensor_obj_info(&dev_cb->dev_sensor_cb);
-    mutex_unlock(&dev_cb->node_lock);
+    ka_task_mutex_unlock(&dev_cb->node_lock);
 
-    buf_ret += strcpy_s(buf, PAGE_SIZE,
+    buf_ret += strcpy_s(buf, KA_MM_PAGE_SIZE,
         "the sensor info has saved to the kernel log.\n");
 
 _out:
     return buf_ret;
 }
-EXPORT_SYMBOL(dms_sensor_print_sensor_list);
+KA_EXPORT_SYMBOL(dms_sensor_print_sensor_list);
 
 static int dms_get_event_def_severity(unsigned char sensor_type, unsigned char event_offset, unsigned int *severity)
 {
@@ -1638,7 +1644,7 @@ static void dms_sensor_scan_node_sensor(struct dms_dev_sensor_cb *dev_sensor_cb,
     struct dms_sensor_scan_time_recorder *ptime_recorder;
 
     ptime_recorder = &dev_sensor_cb->scan_time_recorder;
-    list_for_each_entry_safe(psensor_obj_cb, tmp_sensor_ctl, &(node_sensor_cb->sensor_object_table), list) {
+    ka_list_for_each_entry_safe(psensor_obj_cb, tmp_sensor_ctl, &(node_sensor_cb->sensor_object_table), list) {
         dms_sensor_notify_event_proc(DMS_SERSOR_SCAN_PERIOD); /* quickly process all sensor notify */
         if (psensor_obj_cb->sensor_object_cfg.pf_scan_func == NULL) {
             dev_sensor_cb->sensor_scan_fail_record.null_scan_func_fail++;
@@ -1680,10 +1686,10 @@ void dms_sensor_scan_proc(struct dms_dev_sensor_cb *dev_sensor_cb)
         ptime_recorder->start_dev_scan_record(dev_sensor_cb);
     }
     /* Sensor list resource lock acquires mutex semaphore */
-    mutex_lock(&dev_sensor_cb->dms_sensor_mutex);
+    ka_task_mutex_lock(&dev_sensor_cb->dms_sensor_mutex);
     dev_health = 0;
     /* Traverse the list of module nodes */
-    list_for_each_entry_safe(node_sensor_cb, tmp_ctl, &(dev_sensor_cb->dms_node_sensor_cb_list), list)
+    ka_list_for_each_entry_safe(node_sensor_cb, tmp_ctl, &(dev_sensor_cb->dms_node_sensor_cb_list), list)
     {
         if (node_sensor_cb->sensor_object_num == 0) {
             dms_warn("dms_sensor_scan_task: not sensor type and obj! (nodetype=0x%x, nodeid = 0x%x)",
@@ -1705,7 +1711,7 @@ void dms_sensor_scan_proc(struct dms_dev_sensor_cb *dev_sensor_cb)
     }
     dev_sensor_cb->health = dev_health;
     /* Release the mutex semaphore */
-    mutex_unlock(&dev_sensor_cb->dms_sensor_mutex);
+    ka_task_mutex_unlock(&dev_sensor_cb->dms_sensor_mutex);
     /* Determine whether it is necessary to record the detection time */
     if (ptime_recorder->record_scan_time_flag == DMS_SENSOR_CHECK_RECORD) {
         /* Record scan task time */
@@ -1733,7 +1739,7 @@ STATIC int dms_sensor_get_one_node_health_events(struct dms_node_sensor_cb *node
     }
     /* Traverse all sensor types and all sensor instances under each type for detection. If the detection result is
         * an event that needs to be reported, then report the event */
-    list_for_each_entry_safe(psensor_obj_cb, tmp_sensor_ctl, &(node_sensor_cb->sensor_object_table), list) {
+    ka_list_for_each_entry_safe(psensor_obj_cb, tmp_sensor_ctl, &(node_sensor_cb->sensor_object_table), list) {
         p_temp_event_list = psensor_obj_cb->p_event_list;
         if (p_temp_event_list == NULL) {
             continue;
@@ -1775,10 +1781,10 @@ int dms_sensor_get_health_events(struct dms_dev_sensor_cb *dev_sensor_cb, struct
         return DRV_ERROR_PARA_ERROR;
     }
     /* Sensor list resource lock acquires mutex semaphore */
-    mutex_lock(&dev_sensor_cb->dms_sensor_mutex);
+    ka_task_mutex_lock(&dev_sensor_cb->dms_sensor_mutex);
 
     /* Traverse the list of module nodes */
-    list_for_each_entry_safe(node_sensor_cb, tmp_ctl, &(dev_sensor_cb->dms_node_sensor_cb_list), list) {
+    ka_list_for_each_entry_safe(node_sensor_cb, tmp_ctl, &(dev_sensor_cb->dms_node_sensor_cb_list), list) {
         ret = dms_sensor_get_one_node_health_events(node_sensor_cb, event_buff, input_count, &temp_out_count);
         if (ret != 0) {
             goto sensor_exit;
@@ -1786,11 +1792,11 @@ int dms_sensor_get_health_events(struct dms_dev_sensor_cb *dev_sensor_cb, struct
     }
 sensor_exit:
     /* Release the mutex semaphore */
-    mutex_unlock(&dev_sensor_cb->dms_sensor_mutex);
+    ka_task_mutex_unlock(&dev_sensor_cb->dms_sensor_mutex);
     *output_count = temp_out_count;
     return DRV_ERROR_NONE;
 }
-EXPORT_SYMBOL(dms_sensor_get_health_events);
+KA_EXPORT_SYMBOL(dms_sensor_get_health_events);
 
 STATIC void dms_sensor_clean_report_event_list(struct dms_sensor_object_cb *psensor_obj_cb)
 {
@@ -1827,10 +1833,10 @@ int dms_sensor_clean_health_events(struct dms_dev_sensor_cb *dev_sensor_cb)
     }
 
     /* Sensor list resource lock acquires mutex semaphore */
-    mutex_lock(&dev_sensor_cb->dms_sensor_mutex);
+    ka_task_mutex_lock(&dev_sensor_cb->dms_sensor_mutex);
 
     /* Traverse the list of module nodes */
-    list_for_each_entry_safe(node_sensor_cb, tmp_ctl, &(dev_sensor_cb->dms_node_sensor_cb_list), list)
+    ka_list_for_each_entry_safe(node_sensor_cb, tmp_ctl, &(dev_sensor_cb->dms_node_sensor_cb_list), list)
     {
         if (node_sensor_cb->sensor_object_num == 0) {
             dms_warn("dms_sensor_scan_task: not sensor type and obj! nodeid = %u", node_sensor_cb->node_id);
@@ -1844,7 +1850,7 @@ int dms_sensor_clean_health_events(struct dms_dev_sensor_cb *dev_sensor_cb)
         }
         /* Traverse all sensor types and all sensor instances under each type for detection. If the detection result is
          * an event that needs to be reported, then report the event */
-        list_for_each_entry_safe(psensor_obj_cb, tmp_sensor_ctl, &(node_sensor_cb->sensor_object_table), list)
+        ka_list_for_each_entry_safe(psensor_obj_cb, tmp_sensor_ctl, &(node_sensor_cb->sensor_object_table), list)
         {
             /* if the sensor has fault event */
             if (psensor_obj_cb->p_event_list != NULL) {
@@ -1866,7 +1872,7 @@ int dms_sensor_clean_health_events(struct dms_dev_sensor_cb *dev_sensor_cb)
     /* set dev is health */
     dev_sensor_cb->health = DMS_SENSOR_STATUS_GOOD;
     /* Release the mutex semaphore */
-    mutex_unlock(&dev_sensor_cb->dms_sensor_mutex);
+    ka_task_mutex_unlock(&dev_sensor_cb->dms_sensor_mutex);
     return DRV_ERROR_NONE;
 }
 
@@ -1882,13 +1888,13 @@ int dms_sensor_mask_events(struct dms_dev_sensor_cb *dev_sensor_cb, u8 mask,
         return DRV_ERROR_PARA_ERROR;
     }
 
-    mutex_lock(&dev_sensor_cb->dms_sensor_mutex);
+    ka_task_mutex_lock(&dev_sensor_cb->dms_sensor_mutex);
     /* Traverse the list of module nodes */
-    list_for_each_entry_safe(node_sensor_cb, tmp_ctl, &(dev_sensor_cb->dms_node_sensor_cb_list), list) {
+    ka_list_for_each_entry_safe(node_sensor_cb, tmp_ctl, &(dev_sensor_cb->dms_node_sensor_cb_list), list) {
         if ((node_sensor_cb->node_type != node_type) || (node_sensor_cb->sensor_object_num == 0)) {
             continue;
         }
-        list_for_each_entry_safe(psensor_obj_cb, tmp_sensor_ctl, &(node_sensor_cb->sensor_object_table), list) {
+        ka_list_for_each_entry_safe(psensor_obj_cb, tmp_sensor_ctl, &(node_sensor_cb->sensor_object_table), list) {
             if (psensor_obj_cb->sensor_object_cfg.sensor_type !=  sensor_type) {
                 continue;
             }
@@ -1903,7 +1909,7 @@ int dms_sensor_mask_events(struct dms_dev_sensor_cb *dev_sensor_cb, u8 mask,
             }
         }
     }
-    mutex_unlock(&dev_sensor_cb->dms_sensor_mutex);
+    ka_task_mutex_unlock(&dev_sensor_cb->dms_sensor_mutex);
 
     return DRV_ERROR_NONE;
 }
@@ -1938,7 +1944,7 @@ unsigned int dms_sensor_register_for_userspace(struct dms_node *owner_node,
 {
     return dms_sensor_register_all(owner_node, psensor_obj_cfg, DMS_SENSOR_ENV_USER_SPACE);
 }
-EXPORT_SYMBOL(dms_sensor_register_for_userspace);
+KA_EXPORT_SYMBOL(dms_sensor_register_for_userspace);
 
 /* *************************************************************************
 Function:    unsigned int dms_sensor_node_unregister(struct dms_node *owner_node)
@@ -1957,34 +1963,34 @@ unsigned int dms_sensor_object_unregister(struct dms_node *owner_node, struct dm
         dms_err("dms get sensor cb fail. (nodeid=%d)\n", owner_node->node_id);
         return DRV_ERROR_PARA_ERROR;
     }
-    mutex_lock(&dev_sensor_cb->dms_sensor_mutex);
+    ka_task_mutex_lock(&dev_sensor_cb->dms_sensor_mutex);
 
     rec = dms_get_node_sensor_cb_by_nodeid(dev_sensor_cb, owner_node->node_type, owner_node->node_id, &pnode_sen_cb);
     if (rec != DRV_ERROR_NONE) {
         dms_err("get node sensor cb fail. (nodeid=%d, nodetype=%d)\n", owner_node->node_type, owner_node->node_id);
-        mutex_unlock(&dev_sensor_cb->dms_sensor_mutex);
+        ka_task_mutex_unlock(&dev_sensor_cb->dms_sensor_mutex);
         return rec;
     }
     /* Traverse all sensor types and all sensor instances under each type for detection. If the detection result is an
      * event that needs to be reported, then report the event */
     if (pnode_sen_cb != NULL) {
-        list_for_each_entry_safe(sensor_type_item, tmp_sensor_ctl, &(pnode_sen_cb->sensor_object_table), list)
+        ka_list_for_each_entry_safe(sensor_type_item, tmp_sensor_ctl, &(pnode_sen_cb->sensor_object_table), list)
         {
             if (dms_compare_sensor_object(&sensor_type_item->sensor_object_cfg, psensor_obj_cfg) == true) {
-                list_del(&sensor_type_item->list);
+                ka_list_del(&sensor_type_item->list);
                 dms_exit_sensor_object_cb(sensor_type_item);
                 dbl_kfree(sensor_type_item);
                 sensor_type_item = NULL;
                 pnode_sen_cb->sensor_object_num -= (pnode_sen_cb->sensor_object_num >= 1) ? 1 : 0;
-                mutex_unlock(&dev_sensor_cb->dms_sensor_mutex);
+                ka_task_mutex_unlock(&dev_sensor_cb->dms_sensor_mutex);
                 return DRV_ERROR_NONE;
             }
         }
     }
-    mutex_unlock(&dev_sensor_cb->dms_sensor_mutex);
+    ka_task_mutex_unlock(&dev_sensor_cb->dms_sensor_mutex);
     return DRV_ERROR_NONE;
 }
-EXPORT_SYMBOL(dms_sensor_object_unregister);
+KA_EXPORT_SYMBOL(dms_sensor_object_unregister);
 
 /* *************************************************************************
 Function:    unsigned int dms_sensor_node_unregister(struct dms_node *owner_node)
@@ -2007,21 +2013,21 @@ unsigned int dms_sensor_node_unregister(struct dms_node *owner_node)
         dms_err("dms get sensor cb fail. (nodeid=%d)\n", owner_node->node_id);
         return DRV_ERROR_PARA_ERROR;
     }
-    mutex_lock(&dev_sensor_cb->dms_sensor_mutex);
+    ka_task_mutex_lock(&dev_sensor_cb->dms_sensor_mutex);
 
-    list_for_each_entry_safe(pnode_sensor_cb, tmp_ctl, &(dev_sensor_cb->dms_node_sensor_cb_list), list)
+    ka_list_for_each_entry_safe(pnode_sensor_cb, tmp_ctl, &(dev_sensor_cb->dms_node_sensor_cb_list), list)
     {
         if ((pnode_sensor_cb->node_id == (unsigned int)(owner_node->node_id)) &&
             (pnode_sensor_cb->node_type == owner_node->node_type)) {
-            list_del(&pnode_sensor_cb->list);
+            ka_list_del(&pnode_sensor_cb->list);
             dms_exit_node_sensor_cb(pnode_sensor_cb);
             dbl_kfree(pnode_sensor_cb);
             pnode_sensor_cb = NULL;
-            mutex_unlock(&dev_sensor_cb->dms_sensor_mutex);
+            ka_task_mutex_unlock(&dev_sensor_cb->dms_sensor_mutex);
             return DRV_ERROR_NONE;
         }
     }
-    mutex_unlock(&dev_sensor_cb->dms_sensor_mutex);
+    ka_task_mutex_unlock(&dev_sensor_cb->dms_sensor_mutex);
     return DRV_ERROR_NONE;
 }
 EXPORT_SYMBOL_ADAPT(dms_sensor_node_unregister);
@@ -2037,8 +2043,8 @@ unsigned int dms_init_dev_sensor_cb(int deviceid, struct dms_dev_sensor_cb *sens
         return DRV_ERROR_PARA_ERROR;
     }
 
-    mutex_init(&sensor_cb->dms_sensor_mutex);
-    INIT_LIST_HEAD(&sensor_cb->dms_node_sensor_cb_list);
+    ka_task_mutex_init(&sensor_cb->dms_sensor_mutex);
+    KA_INIT_LIST_HEAD(&sensor_cb->dms_node_sensor_cb_list);
     sensor_cb->node_cb_num = 0;
     sensor_cb->deviceid = deviceid;
     sensor_cb->health = 0;
@@ -2101,17 +2107,17 @@ void dms_exit_dev_sensor_cb(struct dms_dev_sensor_cb *dev_sensor_cb)
     struct dms_node_sensor_cb *pnode_sensor_cb = NULL;
     struct dms_node_sensor_cb *tmp_ctl = NULL;
 
-    mutex_lock(&dev_sensor_cb->dms_sensor_mutex);
-    list_for_each_entry_safe(pnode_sensor_cb, tmp_ctl, &(dev_sensor_cb->dms_node_sensor_cb_list), list)
+    ka_task_mutex_lock(&dev_sensor_cb->dms_sensor_mutex);
+    ka_list_for_each_entry_safe(pnode_sensor_cb, tmp_ctl, &(dev_sensor_cb->dms_node_sensor_cb_list), list)
     {
-        list_del(&pnode_sensor_cb->list);
+        ka_list_del(&pnode_sensor_cb->list);
         dms_exit_node_sensor_cb(pnode_sensor_cb);
         dbl_kfree(pnode_sensor_cb);
         pnode_sensor_cb = NULL;
     }
-    mutex_unlock(&dev_sensor_cb->dms_sensor_mutex);
+    ka_task_mutex_unlock(&dev_sensor_cb->dms_sensor_mutex);
     dev_sensor_cb->node_cb_num = 0;
-    mutex_destroy(&dev_sensor_cb->dms_sensor_mutex);
+    ka_task_mutex_destroy(&dev_sensor_cb->dms_sensor_mutex);
 }
 
 void dms_sensor_release(int owner_pid)
@@ -2126,20 +2132,20 @@ void dms_sensor_release(int owner_pid)
         if (cb == NULL) {
             continue;
         }
-        mutex_lock(&cb->dev_sensor_cb.dms_sensor_mutex);
-        list_for_each_entry_safe(pnode_sensor_cb, tmp_ctl, &(cb->dev_sensor_cb.dms_node_sensor_cb_list), list)
+        ka_task_mutex_lock(&cb->dev_sensor_cb.dms_sensor_mutex);
+        ka_list_for_each_entry_safe(pnode_sensor_cb, tmp_ctl, &(cb->dev_sensor_cb.dms_node_sensor_cb_list), list)
         {
             if ((pnode_sensor_cb->env_type == DMS_SENSOR_ENV_USER_SPACE) && (pnode_sensor_cb->pid == owner_pid)) {
                 dms_info("release sensor. (node_type=0x%x; owner_pid=%d)\n", pnode_sensor_cb->node_type, owner_pid);
-                list_del(&pnode_sensor_cb->list);
+                ka_list_del(&pnode_sensor_cb->list);
                 dms_exit_node_sensor_cb(pnode_sensor_cb);
                 dbl_kfree(pnode_sensor_cb);
                 pnode_sensor_cb = NULL;
             }
         }
-        mutex_unlock(&cb->dev_sensor_cb.dms_sensor_mutex);
+        ka_task_mutex_unlock(&cb->dev_sensor_cb.dms_sensor_mutex);
     }
 
     return;
 }
-EXPORT_SYMBOL(dms_sensor_release);
+KA_EXPORT_SYMBOL(dms_sensor_release);

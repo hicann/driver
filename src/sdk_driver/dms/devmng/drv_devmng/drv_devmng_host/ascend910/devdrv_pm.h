@@ -20,6 +20,7 @@
 
 #include "tsdrv_status.h"
 #include "devdrv_common.h"
+#include "ka_system_pub.h"
 
 #define DEVDRV_HEART_BEAT_DEATH 3 /* times */
 #define DEVDRV_HEART_BEAT_INTERVAL_TIME_15 15 /* second */
@@ -34,7 +35,7 @@ struct devdrv_aicore_info {
     u32 inited_flag;
     const void *exception_info;
     struct hrtimer hrtimer;
-    ktime_t kt;
+    ka_ktime_t kt;
     struct work_struct work;
     struct workqueue_struct *aicore_info_wq;
 };

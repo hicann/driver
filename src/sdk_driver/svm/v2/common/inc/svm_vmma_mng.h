@@ -13,11 +13,8 @@
 #ifndef SVM_VMMA_MNG_H
 #define SVM_VMMA_MNG_H
 
-#include <linux/rwsem.h>
-#include <linux/kref.h>
-
-#include "svm_define.h"
 #include "devmm_proc_info.h"
+#include "svm_define.h"
 
 #define DEVMM_MAX_ACCESS_DEVICE_NUM (DEVMM_MAX_PHY_DEVICE_NUM + 2) /* +2: include host: david 64 + 1, host is 65 */
 

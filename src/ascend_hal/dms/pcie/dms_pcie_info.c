@@ -25,10 +25,12 @@
 #include "dms_pcie.h"
 #include "ascend_dev_num.h"
 
-#ifdef __linux
-#define fd_is_invalid(fd) ((fd) < 0)
-#else
-#define fd_is_invalid(fd) ((fd) == (mmProcess)DEVDRV_INVALID_FD_OR_INDEX)
+#ifdef CFG_FEATURE_DMS_ARCH_V1
+    #ifdef __linux
+        #define fd_is_invalid(fd) ((fd) < 0)
+    #else
+        #define fd_is_invalid(fd) ((fd) == (mmProcess)DEVDRV_INVALID_FD_OR_INDEX)
+    #endif
 #endif
 
 #ifndef CFG_DMS_HOT_RESET_USER_UNSUPPORT

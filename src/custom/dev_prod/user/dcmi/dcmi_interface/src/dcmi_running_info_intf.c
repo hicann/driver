@@ -15,7 +15,8 @@
 #include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
- 
+#include <unistd.h>
+
 #include "securec.h"
 #include "dsmi_common_interface_custom.h"
 #include "dcmi_interface_api.h"
@@ -878,7 +879,7 @@ int dcmi_get_npu_work_mode(int card_id, unsigned char *work_mode)
     unsigned int value = DCMI_NPU_WORK_MODE_INVALID;
 
     if ((dcmi_board_type_is_server() == FALSE) || dcmi_board_chip_type_is_ascend_910b() ||
-        dcmi_board_chip_type_is_ascend_910_93()) {
+        dcmi_board_chip_type_is_ascend_910_93() || dcmi_board_chip_type_is_ascend_910_95()) {
         return DCMI_ERR_CODE_NOT_SUPPORT;
     }
 
@@ -1097,6 +1098,35 @@ int dcmi_get_device_share_enable(int card_id, int device_id, int *enable_flag)
         gplog(LOG_INFO, "device_type is not support.%d.", device_type);
         return DCMI_ERR_CODE_NOT_SUPPORT;
     }
+}
+
+// 查询当前是否开启了容器共享持久化
+int dcmi_get_device_share_config_recover_mode(unsigned int *enable_flag)
+{
+    int err;
+
+    err = dcmi_check_device_share_config_recover_mode_is_permitted("get");
+    if (err != DCMI_OK) {
+        return err;
+    }
+
+    if (enable_flag == NULL) {
+        gplog(LOG_ERR, "enable_flag is NULL");
+        return DCMI_ERR_CODE_INVALID_PARAMETER;
+    }
+
+    if (access(DCMI_DEVICE_SHARE_CONF, F_OK) != DCMI_OK) { // 配置文件不存在, 则返回默认值
+        gplog(LOG_OP, "Query device-share config info: Success.");
+        *enable_flag = DCMI_CFG_RECOVER_DISABLE;
+        return DCMI_OK;
+    }
+
+    err = dcmi_cfg_get_device_share_config_recover_mode(enable_flag);
+    if (err != DCMI_OK) {
+        gplog(LOG_ERR, "get config recover enable_flag failed. err=%d", err);
+        return DCMI_ERR_CODE_INNER_ERR;
+    }
+    return DCMI_OK;
 }
 
 int dcmi_get_device_cpu_num_config(int card_id, int device_id, unsigned char *buf, unsigned int buf_size)

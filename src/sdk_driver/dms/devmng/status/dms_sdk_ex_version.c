@@ -24,6 +24,8 @@
 #include "ascend_dev_num.h"
 #include "devdrv_user_common.h"
 
+#include "ka_task_pub.h"
+#include "ka_base_pub.h"
 #include "dms_sdk_ex_version.h"
 
 #ifndef STATIC_SKIP
@@ -38,7 +40,7 @@
 #define DMS_OP_SET_SDK_EX_VERSION       1
 #define DMS_OP_CLEAR_SDK_EX_VERSION     2
 
-static rwlock_t g_sdk_ex_ver_lock;
+static ka_rwlock_t g_sdk_ex_ver_lock;
 char sdk_pf_ex_version[ASCEND_PDEV_MAX_NUM][DMS_SDK_EX_VERSION_LEN_MAX + 1];
 char sdk_vf_ex_version[ASCEND_VDEV_MAX_NUM][DMS_SDK_EX_VERSION_LEN_MAX + 1];
 
@@ -76,8 +78,8 @@ STATIC int dms_operate_sdk_ex_version(int opcode, unsigned int udevid, char *buf
     }
 
     if (opcode == DMS_OP_GET_SDK_EX_VERSION) {
-        read_lock(&g_sdk_ex_ver_lock);
-        *len = (u32)strnlen(p_ver, DMS_SDK_EX_VERSION_LEN_MAX);
+        ka_task_read_lock(&g_sdk_ex_ver_lock);
+        *len = (u32)ka_base_strnlen(p_ver, DMS_SDK_EX_VERSION_LEN_MAX);
         if (*len != 0) {
             ret = memcpy_s(buff, DMS_SDK_EX_VERSION_LEN_MAX, p_ver, *len);
             if (ret != 0) {
@@ -88,9 +90,9 @@ STATIC int dms_operate_sdk_ex_version(int opcode, unsigned int udevid, char *buf
             /* no set version */
             ret = 0;
         }
-        read_unlock(&g_sdk_ex_ver_lock);
+        ka_task_read_unlock(&g_sdk_ex_ver_lock);
     } else if (opcode == DMS_OP_SET_SDK_EX_VERSION) {
-        write_lock(&g_sdk_ex_ver_lock);
+        ka_task_write_lock(&g_sdk_ex_ver_lock);
         ret = memcpy_s(p_ver, DMS_SDK_EX_VERSION_LEN_MAX, buff, *len);
         if (ret != 0) {
             dms_err("Failed to invoke memcpy_s. (ret=%d)", ret);
@@ -99,14 +101,14 @@ STATIC int dms_operate_sdk_ex_version(int opcode, unsigned int udevid, char *buf
             p_ver[*len] = '\0';
             dms_event("Set SDK Ex success. (udevid=%u; ver=%s)\n", udevid, p_ver);
         }
-        write_unlock(&g_sdk_ex_ver_lock);
+        ka_task_write_unlock(&g_sdk_ex_ver_lock);
     } else if (opcode == DMS_OP_CLEAR_SDK_EX_VERSION) {
-        write_lock(&g_sdk_ex_ver_lock);
+        ka_task_write_lock(&g_sdk_ex_ver_lock);
         ret = memset_s(p_ver, DMS_SDK_EX_VERSION_LEN_MAX + 1, 0, DMS_SDK_EX_VERSION_LEN_MAX + 1);
         if (ret != 0) {
             dms_warn("Can not clear sdk ex version. (udevid=%u)", udevid);
         }
-        write_unlock(&g_sdk_ex_ver_lock);
+        ka_task_write_unlock(&g_sdk_ex_ver_lock);
         ret = 0;
     } else {
         ret = -EINVAL;
@@ -217,7 +219,7 @@ int dms_sdK_ex_ver_init(void)
     int ret;
     struct uda_dev_type type = { 0 };
 
-    rwlock_init(&g_sdk_ex_ver_lock);
+    ka_task_rwlock_init(&g_sdk_ex_ver_lock);
 
     uda_davinci_local_real_entity_type_pack(&type);
     ret = uda_real_virtual_notifier_register(DMS_SDK_EX_VER_NOTIFIER, &type, UDA_PRI2,

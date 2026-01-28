@@ -10,13 +10,6 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#include <linux/slab.h>
-#include <linux/workqueue.h>
-#include <linux/delay.h>
-#include <linux/sched.h>
-#include <linux/list.h>
-#include <linux/spinlock.h>
-
 #include "svm_log.h"
 #include "devmm_adapt.h"
 #include "devmm_common.h"
@@ -66,7 +59,7 @@ static struct devmm_srcu_node *devmm_erase_one_srcu_node(struct devmm_srcu_work 
     return srcu_node;
 }
 
-static void devmm_srcu_base_work(struct work_struct *work)
+static void devmm_srcu_base_work(ka_work_struct_t *work)
 {
     struct devmm_srcu_work *srcu_work = ka_container_of(work, struct devmm_srcu_work, dwork.work);
     struct devmm_srcu_node *srcu_node = NULL;
@@ -104,7 +97,7 @@ int devmm_srcu_subwork_add(struct devmm_srcu_work *srcu_work, u32 type, srcu_sub
 {
     struct devmm_srcu_work *srcu_work_tmp = srcu_work;
     struct devmm_srcu_node *srcu_node = NULL;
-    gfp_t flags = (in_softirq() != 0) ? (KA_GFP_ATOMIC | __KA_GFP_ACCOUNT) : (KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
+    ka_gfp_t flags = (in_softirq() != 0) ? (KA_GFP_ATOMIC | __KA_GFP_ACCOUNT) : (KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
     int ret;
 
     if (srcu_work_tmp == NULL) {

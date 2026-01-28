@@ -18,6 +18,10 @@
 #include "pbl_mem_alloc_interface.h"
 #include "dms_sensor_interface.h"
 #include "ascend_dev_num.h"
+#include "ka_base_pub.h"
+#include "ka_list_pub.h"
+#include "ka_memory_pub.h"
+#include "ka_task_pub.h"
 
 #define SOFT_PARSE_HANDLE(node_type, sensor_idx, sensor_type, handle) \
 do { \
@@ -164,7 +168,7 @@ STATIC int user_dev_node_register(unsigned int dev_id, unsigned int user_id, str
     for (sensor_idx = 0; sensor_idx < SF_SUB_ID_MAX; sensor_idx++) {
         if ((user_node->sensor_obj_registered[sensor_idx]) &&
             (user_node->sensor_obj_table[sensor_idx].sensor_type == cfg->sensor_type) &&
-            (strcmp(user_node->sensor_obj_table[sensor_idx].sensor_name, cfg->name) == 0)) {
+            (ka_base_strcmp(user_node->sensor_obj_table[sensor_idx].sensor_name, cfg->name) == 0)) {
             soft_drv_warn("sensor already register. (dev_id=%u; sensor_type=0x%x; name=%s)\n",
                 dev_id, cfg->sensor_type, cfg->name);
             goto OUT;
@@ -213,7 +217,7 @@ STATIC struct soft_dev *soft_dev_node_get(unsigned int dev_id, struct soft_dev_c
     struct soft_dev *s_dev = NULL;
 
     *first_register = 1;
-    list_for_each_entry_safe(pos, n, &client->head, list) {
+    ka_list_for_each_entry_safe(pos, n, &client->head, list) {
         if ((pos->registered == 1) && (pos->dev_node.node_type == cfg->node_type)) {
             *first_register = 0;
             break;
@@ -221,9 +225,9 @@ STATIC struct soft_dev *soft_dev_node_get(unsigned int dev_id, struct soft_dev_c
     }
 
     if (*first_register) {
-        s_dev =  dbl_kzalloc(sizeof(struct soft_dev), GFP_KERNEL | __GFP_ACCOUNT);
+        s_dev =  dbl_kzalloc(sizeof(struct soft_dev), KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
         if (s_dev == NULL) {
-            soft_drv_err("kzalloc soft_dev failed. (user_name=%s)\n", current->comm);
+            soft_drv_err("ka_mm_kzalloc soft_dev failed. (user_name=%s)\n", current->comm);
             return NULL;
         }
         soft_one_dev_init(s_dev);
@@ -247,7 +251,7 @@ STATIC void soft_dev_client_add(struct soft_dev_client *client, struct soft_dev 
     }
 
     if (first_register != 0) {
-        list_add(&user_node->list, &client->head);
+        ka_list_add(&user_node->list, &client->head);
         client->node_num++; /* first register, node_num add 1 */
     }
 
@@ -285,25 +289,25 @@ STATIC int dms_soft_node_register(unsigned int dev_id, struct dms_sensor_node_cf
     struct soft_dev *user_node = NULL;
     struct drv_soft_ctrl *soft_ctrl = soft_get_ctrl();
 
-    mutex_lock(&soft_ctrl->mutex[dev_id]);
+    ka_task_mutex_lock(&soft_ctrl->mutex[dev_id]);
 
     client = dms_soft_get_client(dev_id, soft_ctrl, &user_id);
     if (client == NULL) {
         soft_drv_warn("exceed max user num. (dev_id=%u; user_num=%u)\n", dev_id, soft_ctrl->user_num[dev_id]);
-        mutex_unlock(&soft_ctrl->mutex[dev_id]);
+        ka_task_mutex_unlock(&soft_ctrl->mutex[dev_id]);
         return -EBUSY;
     }
 
     if (client->node_num >= SF_USER_NODE_MAX) {
         soft_drv_warn("Exceed max user node num. (dev_id=%u; node_num=%u)\n", dev_id, client->node_num);
-        mutex_unlock(&soft_ctrl->mutex[dev_id]);
+        ka_task_mutex_unlock(&soft_ctrl->mutex[dev_id]);
         return -EBUSY;
     }
 
     user_node = soft_dev_node_get(dev_id, client, cfg, user_id, &first_register);
     if (user_node == NULL) {
         soft_drv_err("get new user soft_dev failed. (user_name=%s)\n", current->comm);
-        mutex_unlock(&soft_ctrl->mutex[dev_id]);
+        ka_task_mutex_unlock(&soft_ctrl->mutex[dev_id]);
         return -ENOMEM;
     }
 
@@ -322,7 +326,7 @@ STATIC int dms_soft_node_register(unsigned int dev_id, struct dms_sensor_node_cf
     SOFT_PRINT_REGISTER_LOG(client, user_node, cfg, handle, soft_ctrl->user_num[dev_id], first_register);
 
 out:
-    mutex_unlock(&soft_ctrl->mutex[dev_id]);
+    ka_task_mutex_unlock(&soft_ctrl->mutex[dev_id]);
     return ret;
 }
 
@@ -350,7 +354,7 @@ STATIC struct soft_dev* dms_soft_dev_node_get(struct soft_dev_client *client, un
     struct soft_dev *pos_temp = NULL;
     struct soft_dev *n = NULL;
 
-    list_for_each_entry_safe(pos_temp, n, &client->head, list) {
+    ka_list_for_each_entry_safe(pos_temp, n, &client->head, list) {
         if ((pos_temp->registered == 1) && (pos_temp->dev_node.node_type == node_type)) {
             pos = pos_temp;
             break;
@@ -368,7 +372,7 @@ STATIC int dms_soft_node_unregister(unsigned int dev_id, uint64_t handle)
     struct soft_dev *pos = NULL;
     struct drv_soft_ctrl *soft_ctrl = soft_get_ctrl();
 
-    mutex_lock(&soft_ctrl->mutex[dev_id]);
+    ka_task_mutex_lock(&soft_ctrl->mutex[dev_id]);
     for (i = SF_SENSOR_USER; i < SF_USER_MAX; i++) {
         if ((soft_ctrl->s_dev_t[dev_id][i]->pid == current->tgid) && (soft_ctrl->s_dev_t[dev_id][i]->registered == 1)) {
             client = soft_ctrl->s_dev_t[dev_id][i];
@@ -379,14 +383,14 @@ STATIC int dms_soft_node_unregister(unsigned int dev_id, uint64_t handle)
     SOFT_PARSE_HANDLE(node_type, sensor_idx, sensor_type, handle);
     if ((client == NULL) || (sensor_idx >= SF_SUB_ID_MAX)) {
         soft_drv_err("Invalid para. (dev_id=%u; handle=0x%llx)\n", dev_id, handle);
-        mutex_unlock(&soft_ctrl->mutex[dev_id]);
+        ka_task_mutex_unlock(&soft_ctrl->mutex[dev_id]);
         return -EINVAL;
     }
 
     pos = dms_soft_dev_node_get(client, node_type);
     if (pos == NULL) {
         soft_drv_err("Invalid para. (node_type=%u; sensor_index=%u)\n", node_type, sensor_idx);
-        mutex_unlock(&soft_ctrl->mutex[dev_id]);
+        ka_task_mutex_unlock(&soft_ctrl->mutex[dev_id]);
         return DRV_ERROR_PARA_ERROR;
     }
 
@@ -395,7 +399,7 @@ STATIC int dms_soft_node_unregister(unsigned int dev_id, uint64_t handle)
         soft_drv_err("user sensor object unregister failed."
             " (dev_id=%u; pid=%d; user_id=%u; node_type=%u; sensor_idx=%u; sensor_type=%u)\n",
             dev_id, client->pid, client->user_id, node_type, sensor_idx, sensor_type);
-        mutex_unlock(&soft_ctrl->mutex[dev_id]);
+        ka_task_mutex_unlock(&soft_ctrl->mutex[dev_id]);
         return ret;
     }
 
@@ -407,7 +411,7 @@ STATIC int dms_soft_node_unregister(unsigned int dev_id, uint64_t handle)
         " sensor_type=0x%x; user_num=%u; handle=0x%llx)\n", dev_id, client->pid, client->user_id,
         handle >> SF_OFFSET_32BIT, sensor_type, soft_ctrl->user_num[dev_id], handle);
 
-    mutex_unlock(&soft_ctrl->mutex[dev_id]);
+    ka_task_mutex_unlock(&soft_ctrl->mutex[dev_id]);
     return DRV_ERROR_NONE;
 }
 
@@ -432,7 +436,7 @@ STATIC int dms_update_sensor_state(unsigned int dev_id, uint64_t handle, int val
     struct soft_dev *user_node = NULL;
     struct drv_soft_ctrl *soft_ctrl = soft_get_ctrl();
 
-    mutex_lock(&soft_ctrl->mutex[dev_id]);
+    ka_task_mutex_lock(&soft_ctrl->mutex[dev_id]);
     for (i = SF_SENSOR_USER; i < SF_USER_MAX; i++) {
         if ((soft_ctrl->s_dev_t[dev_id][i]->pid == current->tgid) && (soft_ctrl->s_dev_t[dev_id][i]->registered == 1)) {
             client = soft_ctrl->s_dev_t[dev_id][i];
@@ -443,11 +447,11 @@ STATIC int dms_update_sensor_state(unsigned int dev_id, uint64_t handle, int val
     SOFT_PARSE_HANDLE(node_type, sensor_idx, sensor_type, handle);
     if ((client == NULL) || (sensor_idx >= SF_SUB_ID_MAX)) {
         soft_drv_err("Invalid para. (dev_id=%u; handle=0x%llx; client=%u)\n", dev_id, handle, (client != NULL));
-        mutex_unlock(&soft_ctrl->mutex[dev_id]);
+        ka_task_mutex_unlock(&soft_ctrl->mutex[dev_id]);
         return -EINVAL;
     }
 
-    list_for_each_entry_safe(pos, n, &client->head, list) {
+    ka_list_for_each_entry_safe(pos, n, &client->head, list) {
         if ((pos->dev_node.node_type == node_type) && (pos->registered == 1)) {
             user_node = pos;
             break;
@@ -455,7 +459,7 @@ STATIC int dms_update_sensor_state(unsigned int dev_id, uint64_t handle, int val
     }
 
     if (user_node == NULL) {
-        mutex_unlock(&soft_ctrl->mutex[dev_id]);
+        ka_task_mutex_unlock(&soft_ctrl->mutex[dev_id]);
         soft_drv_err("Can not find a matching node. (handle=%llu; node_type=0x%x; sensor_type=0x%x; sensor_idx=%u)\n",
             handle, node_type, sensor_type, sensor_idx);
         return -EINVAL;
@@ -474,7 +478,7 @@ STATIC int dms_update_sensor_state(unsigned int dev_id, uint64_t handle, int val
         event_type = sensor_event_state_convert_assertion(p_cfg, val);
         /* if not resume and event_type mismatched, it will return fail here. */
         if ((assertion != GENERAL_EVENT_TYPE_RESUME) && (event_type != assertion)) {
-            mutex_unlock(&soft_ctrl->mutex[dev_id]);
+            ka_task_mutex_unlock(&soft_ctrl->mutex[dev_id]);
             soft_drv_err("The assertion type is mismatched. "
                 "(devid=%u; handle=%llu; node_type=0x%x; sensor_type=0x%x; sensor_idx=%u; type0=0x%x; type1=0x%x)\n",
                 dev_id, handle, node_type, sensor_type, sensor_idx, event_type, assertion);
@@ -499,7 +503,7 @@ STATIC int dms_update_sensor_state(unsigned int dev_id, uint64_t handle, int val
         break;
     }
 
-    mutex_unlock(&soft_ctrl->mutex[dev_id]);
+    ka_task_mutex_unlock(&soft_ctrl->mutex[dev_id]);
     return 0;
 }
 
@@ -521,7 +525,7 @@ int soft_node_register(void *feature, char *in, u32 in_len, char *out, u32 out_l
     dev_id = arg->dev_id;
     cfg = arg->cfg;
 
-    name_len = strnlen(cfg.name, CFG_NAME_MAX_LENGTH);
+    name_len = ka_base_strnlen(cfg.name, CFG_NAME_MAX_LENGTH);
     if (name_len >= CFG_NAME_MAX_LENGTH) {
         soft_drv_err("Cfg name is invalid, length of name should be less than 20. (len=%zu)\n", name_len);
         return -EINVAL;
@@ -613,7 +617,7 @@ STATIC void soft_dev_free_registered_dev(struct soft_dev_client *client)
     int  i;
     struct soft_dev *pos = NULL;
     struct soft_dev *n = NULL;
-    list_for_each_entry_safe(pos, n, &client->head, list) {
+    ka_list_for_each_entry_safe(pos, n, &client->head, list) {
         if (pos->registered == 0) {
             continue;
         }
@@ -624,7 +628,7 @@ STATIC void soft_dev_free_registered_dev(struct soft_dev_client *client)
             }
         }
         soft_one_dev_exit(pos);
-        list_del(&pos->list);
+        ka_list_del(&pos->list);
         dbl_kfree(pos);
         pos = NULL;
     }
@@ -637,7 +641,7 @@ void soft_dev_exit(void)
     struct drv_soft_ctrl *soft_ctrl = soft_get_ctrl();
 
     for (i = 0; i < ASCEND_DEV_MAX_NUM; i++) {
-        mutex_lock(&soft_ctrl->mutex[i]);
+        ka_task_mutex_lock(&soft_ctrl->mutex[i]);
         for (j = SF_SENSOR_USER; j < SF_USER_MAX; j++) {
             client = soft_ctrl->s_dev_t[i][j];
             soft_dev_free_registered_dev(client);
@@ -647,7 +651,7 @@ void soft_dev_exit(void)
         }
 
         soft_ctrl->user_num[i] = 0;
-        mutex_unlock(&soft_ctrl->mutex[i]);
+        ka_task_mutex_unlock(&soft_ctrl->mutex[i]);
     }
 
     return;
@@ -661,10 +665,10 @@ void soft_client_release(int owner_pid)
     struct drv_soft_ctrl *soft_ctrl = soft_get_ctrl();
 
     for (i = 0; i < ASCEND_DEV_MAX_NUM; i++) {
-        mutex_lock(&soft_ctrl->mutex[i]);
+        ka_task_mutex_lock(&soft_ctrl->mutex[i]);
         user_num = soft_ctrl->user_num[i];
         if (user_num == 0) {
-            mutex_unlock(&soft_ctrl->mutex[i]);
+            ka_task_mutex_unlock(&soft_ctrl->mutex[i]);
             continue;
         }
         for (j = SF_SENSOR_USER; j < SF_USER_MAX; j++) {
@@ -680,7 +684,7 @@ void soft_client_release(int owner_pid)
             soft_ctrl->user_num[i]--;
             break;
         }
-        mutex_unlock(&soft_ctrl->mutex[i]);
+        ka_task_mutex_unlock(&soft_ctrl->mutex[i]);
     }
 
     return;

@@ -251,3 +251,103 @@ int ka_system_get_rtc_time_year(ka_rtc_time_t *tm)
     return tm->tm_year;
 }
 EXPORT_SYMBOL_GPL(ka_system_get_rtc_time_year);
+
+#ifndef EMU_ST
+
+void ka_system_esched_get_ktime(struct timeval *tv)
+{
+#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 0, 0)
+    ktime_t kt;
+    u64 nsec;
+    kt = ktime_get_boottime();
+    nsec = ktime_to_us(kt);
+    tv->tv_sec = nsec / USEC_PER_SEC;
+    tv->tv_usec = nsec % USEC_PER_SEC;
+#endif
+}
+EXPORT_SYMBOL_GPL(ka_system_esched_get_ktime);
+
+u64 ka_system_sched_get_abs_or_rel_mstime(void)
+{
+    u64 time_now;
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 0, 0)
+    struct timespec64 submit_event_time;
+    ktime_get_real_ts64(&submit_event_time);
+    time_now = ((u64)submit_event_time.tv_sec * NSEC_PER_SEC) + (u64)submit_event_time.tv_nsec;
+#else
+    struct timeval submit_event_time;
+    ka_system_esched_get_ktime(&submit_event_time);
+    time_now = ((u64)submit_event_time.tv_sec * USEC_PER_SEC) + (u64)submit_event_time.tv_usec;
+#endif
+    return time_now;
+}
+EXPORT_SYMBOL_GPL(ka_system_sched_get_abs_or_rel_mstime);
+
+bool ka_system_log_limited(u32 type)
+{
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 0, 0)
+    static struct timespec64 last_stamp[SCHED_LOG_LIMIT_MAX_NUM] = {{0}};
+    struct timespec64 cur_stamp;
+    ktime_get_real_ts64(&cur_stamp);
+#else
+    static struct timeval last_stamp[SCHED_LOG_LIMIT_MAX_NUM] = {{0}};
+    struct timeval cur_stamp;
+    ka_system_esched_get_ktime(&cur_stamp);
+#endif
+    if ((cur_stamp.tv_sec - last_stamp[type].tv_sec) > LOG_TIME_INTERVAL) {
+        last_stamp[type].tv_sec = cur_stamp.tv_sec;
+        return false;
+    }
+    return true;
+}
+
+EXPORT_SYMBOL_GPL(ka_system_log_limited);
+
+
+int ka_system_xsm_proc_start_time_compare(TASK_TIME_TYPE *proc_start_time, TASK_TIME_TYPE *start_time)
+{
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 1, 0)	
+    if (*proc_start_time == *start_time)  {
+        return 0;
+    }
+    return (*proc_start_time - *start_time > 0) ? 1 : -1;
+#else
+    return timespec_compare(proc_start_time, start_time);
+#endif
+}
+EXPORT_SYMBOL_GPL(ka_system_xsm_proc_start_time_compare);
+
+#ifdef DRV_HOST
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 6, 0)
+#define ka_system_rtc_ktime_to_tm(kt)    rtc_ktime_to_tm(kt)
+#else
+#define ka_system_rtc_time_to_tm(time, tm)   rtc_time_to_tm(time, tm)
+#endif
+void ka_system_rtc_time_convert(ka_rtc_time_t *tm, ka_timespec64_t sys_time)
+{
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 6, 0)
+    *tm = ka_system_rtc_ktime_to_tm(ka_system_timespec64_to_ktime(sys_time));
+#else
+    ka_system_rtc_time_to_tm(sys_time.tv_sec, tm);
+#endif
+}
+EXPORT_SYMBOL_GPL(ka_system_rtc_time_convert);
+#endif
+
+#endif
+
+u64 ka_system_get_real_ustime()
+{
+    u64 micro_time;
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 0, 0)
+    struct timespec64 real_time;
+    ktime_get_real_ts64(&(real_time));
+    micro_time = ((u64)(real_time.tv_sec)) * USEC_PER_SEC + ((u64)(real_time.tv_nsec)) / NSEC_PER_USEC;
+#else
+    struct timeval real_time;
+    do_gettimeofday(&(real_time));
+    micro_time = ((u64)(real_time.tv_sec)) * USEC_PER_SEC + real_time.tv_usec;
+#endif
+    return micro_time;
+}
+EXPORT_SYMBOL_GPL(ka_system_get_real_ustime);

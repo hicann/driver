@@ -74,7 +74,7 @@ enum log_slog_mem_type {
 };
 
 struct bbox_dma_dump {
-    unsigned int devId;
+    unsigned int dev_id;
     unsigned int offset;
     void *dst_buf;
     unsigned int len;

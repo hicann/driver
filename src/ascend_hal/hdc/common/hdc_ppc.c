@@ -79,9 +79,7 @@ STATIC void drv_hdc_socket_create_dir(void)
 #endif
 
     if (mmAccess(g_ppc_dirs) == -1) {
-#ifndef CFG_ENV_HOST
-        HDC_LOG_INFO("Ppc directory check.\n");
-#endif
+        hdc_create_dir_info_output();
 #if defined (CFG_PLATFORM_EQUIP) && defined (CFG_SOC_PLATFORM_RC)
         if (drv_hdc_ppc_check_user(user)) {
             ret = mkdir((const char *)g_ppc_dirs, (mode_t)(S_IRWXU | S_IRGRP | S_IXGRP)); // 0750

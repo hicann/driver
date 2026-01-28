@@ -11,8 +11,6 @@
  * GNU General Public License for more details.
  */
 
-#include <linux/gfp.h>
-
 #include "svm_rbtree.h"
 #include "devmm_adapt.h"
 #include "devmm_common.h"

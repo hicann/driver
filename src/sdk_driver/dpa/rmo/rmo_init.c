@@ -10,9 +10,6 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#include <linux/init.h>
-#include <linux/module.h>
-
 #include "rmo_auto_init.h"
 #include "pbl/pbl_kernel_adapt.h"
 

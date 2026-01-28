@@ -14,11 +14,16 @@
 #ifndef _DEVDRV_PCI_H_
 #define _DEVDRV_PCI_H_
 
-#include <linux/pci.h>
 #include "devdrv_device_load.h"
 #include "devdrv_atu.h"
 #include "devdrv_dma.h"
 #include "securec.h"
+#include "ka_base_pub.h"
+#include "ka_pci_pub.h"
+#include "ka_system_pub.h"
+#include "ka_common_pub.h"
+#include "ka_task_pub.h"
+#include "ka_memory_pub.h"
 
 #define PCI_VENDOR_ID_HUAWEI 0x19e5
 #define PCI_VENDOR_ID_HX 0x2092
@@ -33,10 +38,6 @@
 #define MINI_V3_DEVICE 0xd105
 #define CLOUD_V4_DEVICE 0xd806
 #define CLOUD_V5_DEVICE 0xd807
-
-/* rc reg offset , for 3559 and 3519 */
-#define DEVDRV_RC_REG_BASE_3559 0x12200000
-#define DEVDRV_RC_REG_BASE_3519 0xEFF0000
 
 #define DEVDRV_RC_MSI_ADDR 0x820
 #define DEVDRV_RC_MSI_UPPER_ADDR 0x824
@@ -135,12 +136,12 @@ struct devdrv_pgtab_info;
 
 struct devdrv_msix_ctrl {
     u32 next_entry; /* for assign */
-    struct msix_entry entries[MSI_X_MAX_VECTORS];
+    ka_msix_entry_t entries[MSI_X_MAX_VECTORS];
 };
 
 struct devdrv_msi_info {
     void *data;
-    irqreturn_t (*callback_func)(int, void *);
+    ka_irqreturn_t (*callback_func)(int, void *);
 };
 
 /* command to get ram info from device */
@@ -153,7 +154,7 @@ struct devdrv_device_mem_info {
 
 struct devdrv_dma_test {
     u32 flag;
-    struct timer_list test_timer; /* device os load time out timer */
+    ka_timer_list_t test_timer; /* device os load time out timer */
     int timer_remain;             /* timer_remain <= 0 means time out */
     int timer_expires;
 };
@@ -319,7 +320,7 @@ struct devdrv_res_info {
 #define DEVDRV_VDAVINCI_VIRTUAL_RESERVE_BYTES 40
 
 struct devdrv_priv {
-    struct device *dev;
+    ka_device_t *dev;
     void *dvt;
     void *ops;
     char reserve[DEVDRV_VDAVINCI_VIRTUAL_RESERVE_BYTES];
@@ -342,7 +343,7 @@ struct devdrv_dev_ops {
     int (*devdrv_deal_suspend_handshake)(struct devdrv_pci_ctrl *pci_ctrl);
     bool (*is_all_dev_unified_addr)(void);
     void (*flush_cache)(u64 base, size_t len, u32 mode);
-    int (*get_peh_link_info)(struct pci_dev *pdev, u32 *link_speed, u32 *link_width, u32 *link_status);
+    int (*get_peh_link_info)(ka_pci_dev_t *pdev, u32 *link_speed, u32 *link_width, u32 *link_status);
     void (*set_dev_shr_info)(struct devdrv_pci_ctrl *pci_ctrl);
     void (*link_speed_slow_to_normal)(struct devdrv_pci_ctrl *pci_ctrl);
     int (*get_p2p_addr)(struct devdrv_pci_ctrl *pci_ctrl, u32 remote_dev_id, enum devdrv_p2p_addr_type type,
@@ -363,11 +364,11 @@ struct devdrv_dev_ops {
 struct devdrv_pci_ctrl {
     struct devdrv_agent_load *agent_loader;
     struct devdrv_msg_dev *msg_dev;
-    struct workqueue_struct *work_queue[DEVDRV_MAX_MSG_CHAN_NUM];
+    ka_workqueue_struct_t *work_queue[DEVDRV_MAX_MSG_CHAN_NUM];
     struct devdrv_dma_dev *dma_dev;
     struct devdrv_load_work load_work;
     struct devdrv_dma_test *dma_test;
-    struct pci_dev *pdev;
+    ka_pci_dev_t *pdev;
     struct devdrv_pgtab_info *pgtab_info;
     struct devdrv_shr_para __iomem *shr_para;
     struct devdrv_res_info res;
@@ -403,7 +404,7 @@ struct devdrv_pci_ctrl {
     u32 load_half_probe;
     u32 add_davinci_flag;
     int load_vector;
-    struct work_struct half_probe_work;
+    ka_work_struct_t half_probe_work;
     /* device boot status */
     u32 device_boot_status;
     /* devdrv_remove is called by prereset or module_exit */
@@ -424,7 +425,7 @@ struct devdrv_pci_ctrl {
 
     /* defined for 3559 */
     void *msi_addr;
-    dma_addr_t msi_dma_addr;
+    ka_dma_addr_t msi_dma_addr;
     struct devdrv_msi_info msi_info[DEVDRV_MSI_MAX_VECTORS];
     u32 mem_bar_id;
     struct devdrv_iob_atu mem_rx_atu[DEVDRV_MAX_RX_ATU_NUM];
@@ -432,9 +433,9 @@ struct devdrv_pci_ctrl {
     /* resved dma mem for bbox to ddr dump */
     u32 bbox_resv_size;
     u64 bbox_resv_dmaAddr;
-    struct page *bbox_resv_dmaPages;
+    ka_page_t *bbox_resv_dmaPages;
     /* msg guard work */
-    struct delayed_work guard_work;
+    ka_delayed_work_t guard_work;
     u32 guard_work_delay;
     u32 dev_id_in_pdev;
     int vector_num;
@@ -444,10 +445,10 @@ struct devdrv_pci_ctrl {
     phys_addr_t io_bar_offset;
 
     /* reference count for pci_ctrl */
-    atomic_t ref_cnt;
+    ka_atomic_t ref_cnt;
     struct devdrv_dma_iova_addr_range *iova_range;
-    struct rb_root dma_desc_rbtree;
-    spinlock_t dma_desc_rblock;
+    ka_rb_root_t dma_desc_rbtree;
+    ka_task_spinlock_t dma_desc_rblock;
     u32 hccs_status;
     u32 hccs_group_id[HCCS_GROUP_SUPPORT_MAX_CHIPNUM];
     u32 bar_wc_flag;
@@ -468,7 +469,6 @@ void devdrv_set_pcie_info_to_dbl(struct devdrv_pci_ctrl *pci_ctrl);
 void devdrv_set_resmng_hccs_link_status_and_group_id(struct devdrv_pci_ctrl *pci_ctrl);
 void devdrv_set_resmng_pdev_by_devid(struct devdrv_pci_ctrl *pci_ctrl);
 void devdrv_set_resmng_host_phy_match_flag(struct devdrv_pci_ctrl *pci_ctrl);
-int devdrv_pci_irq_vector(struct pci_dev *dev, unsigned int nr);
 bool devdrv_is_tsdrv_irq(const struct devdrv_intr_info *intr, int irq);
 void devdrv_bind_irq(struct devdrv_pci_ctrl *pci_ctrl);
 void devdrv_unbind_irq(struct devdrv_pci_ctrl *pci_ctrl);
@@ -479,13 +479,13 @@ int devdrv_get_dev_num(void);
 void devdrv_notify_dev_init_status(struct devdrv_pci_ctrl *pci_ctrl);
 void devdrv_guard_work_sched_immediate(struct devdrv_pci_ctrl *pci_ctrl);
 
-extern int devdrv_sysfs_init(struct pci_dev *pdev);
-extern void devdrv_sysfs_exit(struct pci_dev *pdev);
+extern int devdrv_sysfs_init(ka_pci_dev_t *pdev);
+extern void devdrv_sysfs_exit(ka_pci_dev_t *pdev);
 bool devdrv_is_pdev_main_davinci_dev(struct devdrv_pci_ctrl *pci_ctrl);
-struct devdrv_pci_ctrl *devdrv_get_dev_by_index_in_pdev(struct pci_dev *pdev, int dev_index);
-struct devdrv_pci_ctrl *devdrv_get_pdev_main_davinci_dev(struct pci_dev *pdev);
-int devdrv_get_davinci_dev_num_by_pdev(struct pci_dev *pdev);
-u32 devdrv_get_main_davinci_devid_by_pdev(struct pci_dev *pdev);
+struct devdrv_pci_ctrl *devdrv_get_dev_by_index_in_pdev(ka_pci_dev_t *pdev, int dev_index);
+struct devdrv_pci_ctrl *devdrv_get_pdev_main_davinci_dev(ka_pci_dev_t *pdev);
+int devdrv_get_davinci_dev_num_by_pdev(ka_pci_dev_t *pdev);
+u32 devdrv_get_main_davinci_devid_by_pdev(ka_pci_dev_t *pdev);
 
 int devdrv_init_interrupt_normal(struct devdrv_pci_ctrl *pci_ctrl);
 int devdrv_uninit_interrupt(struct devdrv_pci_ctrl *pci_ctrl);
@@ -494,16 +494,12 @@ int devdrv_vf_half_free(u32 index_id);
 void devdrv_init_shr_info_after_half_probe(struct devdrv_pci_ctrl *pci_ctrl);
 void devdrv_pcictrl_shr_para_init(struct devdrv_pci_ctrl *pci_ctrl);
 int devdrv_get_product(void);
-extern struct pci_driver g_devdrv_driver_ver;
+extern ka_pci_driver_t g_devdrv_driver_ver;
 int devdrv_get_pdev_davinci_dev_num(u32 device, u16 subsystem_device);
 void devdrv_guard_work_uninit(struct devdrv_pci_ctrl *pci_ctrl);
 void devdrv_guard_work_init(struct devdrv_pci_ctrl *pci_ctrl);
-irqreturn_t devdrv_half_probe_irq(int irq, void *data);
-int devdrv_cfg_pdev(struct pci_dev *pdev);
-void devdrv_uncfg_pdev(struct pci_dev *pdev);
-void drv_pcie_remove(struct pci_dev *pdev);
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 6, 0)
-int pci_enable_pcie_error_reporting(struct pci_dev *dev);
-int pci_disable_pcie_error_reporting(struct pci_dev *dev);
-#endif
+ka_irqreturn_t devdrv_half_probe_irq(int irq, void *data);
+int devdrv_cfg_pdev(ka_pci_dev_t *pdev);
+void devdrv_uncfg_pdev(ka_pci_dev_t *pdev);
+void drv_pcie_remove(ka_pci_dev_t *pdev);
 #endif

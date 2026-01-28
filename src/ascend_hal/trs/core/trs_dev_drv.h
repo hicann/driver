@@ -33,7 +33,7 @@ struct trs_dev_init_ops {
 };
 
 int trs_svm_proc_bind(void);
-void trs_register_dev_init_ops(struct trs_dev_init_ops *ops);
+int trs_register_dev_init_ops(struct trs_dev_init_ops *ops);
 void *trs_dev_mmap(uint32_t dev_id, void *addr, size_t length, int prot, int flags);
 int trs_dev_munmap(void *addr, size_t length);
 drvError_t trs_urma_proc_ctx_init_by_devid(uint32_t dev_id);

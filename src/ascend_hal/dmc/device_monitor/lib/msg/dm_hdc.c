@@ -295,7 +295,7 @@ STATIC void *__dm_server_accept_proc(void *arg)
             continue;
         }
 
-        /* the pointer recv_msg_proc_st get value bellow, so not need memset */
+        /* the pointer recv_msg_proc_st get value below, so not need memset */
         recv_msg_proc_st->intf = intf;
         recv_msg_proc_st->session = session;
         (void)pthread_attr_init(&attr);

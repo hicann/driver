@@ -74,6 +74,12 @@ typedef enum {
     CPU_CFG_INDEX_MAX,
 } DCMI_CPU_CFG_INDEX;
 
+struct dcmi_device_info_main_cmd_cfg_recover_table {
+    unsigned int main_cmd;
+    unsigned int sub_cmd;
+    int (*cmd_persist_handle_func)(int card_id, int device_id, const void *buf);
+};
+
 int dcmi_set_npu_device_sec_revocation(
     int card_id, int device_id, enum dcmi_revo_type input_type, const unsigned char *file_data, unsigned int file_size);
 
@@ -123,7 +129,11 @@ int dcmi_switch_boot_area(int card_id, int device_id);
 
 int dcmi_save_custom_op_cfg(int card_id, int device_id, int enable_value);
 
+int dcmi_save_device_share_cfg(int card_id, int device_id, int enable_value);
+
 int dcmi_check_custom_op_config_recover_mode_is_permitted(const char *operate_mode);
+
+int dcmi_check_device_share_config_recover_mode_is_permitted(const char *operate_mode);
 
 int dcmi_set_npu_device_info(int card_id, int device_id, enum dcmi_main_cmd main_cmd, unsigned int sub_cmd,
     const void *buf, unsigned int buf_size);
@@ -133,6 +143,11 @@ int dcmi_set_custom_op_secverify_enable(int card_id, int device_id, const char *
 
 int dcmi_set_custom_op_secverify_mode(int card_id, int device_id, enum dcmi_main_cmd main_cmd, unsigned int sub_cmd,
     const void *buf, unsigned int buf_size);
+
+int dcmi_set_device_share_for_910_93(int card_id, enum dcmi_unit_type device_type, enum dcmi_main_cmd main_cmd,
+    unsigned int sub_cmd, const void *buf, unsigned int buf_size);
+
+int handle_device_share_cfg(int card_id, int device_id, const void *buf);
 
 #ifdef __cplusplus
 #if __cplusplus

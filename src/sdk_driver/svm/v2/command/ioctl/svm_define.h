@@ -27,6 +27,7 @@
 #define DV_ADVISE_DEV_READONLY 0x2000
 #define DV_ADVISE_NOCACHE 0x4000
 #define DV_ADVISE_GIANTPAGE 0x8000
+#define DV_ADVISE_HOST_UVA 0x10000
 
 #define DV_ADVISE_MODULE_ID_BIT 24
 #define DV_ADVISE_MODULE_ID_MASK 0xff
@@ -69,7 +70,8 @@
 
 #define DEVMM_MAX_LOGIC_DEVICE_NUM 66ULL    /* 64 + 1 + 1, host id is 65 */
 #define SVM_HOST_AGENT_ID 64
-#define DEVMM_NORMAL_MAX_VMA_NUM (DEVMM_MAX_PHY_DEVICE_NUM + 3) /* 64 dvpp + 1 read + 1 dev_readonly  + 1 normal */
+/* 64 dvpp + 1 read + 1 dev_readonly + 1 normal + 1 pcie through*/
+#define DEVMM_NORMAL_MAX_VMA_NUM (DEVMM_MAX_PHY_DEVICE_NUM + 4)
 #define DEVMM_MAX_VMA_NUM (DEVMM_NORMAL_MAX_VMA_NUM * 2)
 
 #define DEVMM_NORMAL_UNSPLIT_MAX_VMA_NUM 4 /* vma0: dvpp mem, vma1 read  vma2: dev readonly, vma3 normal mem */
@@ -77,12 +79,21 @@
 #define DEVMM_SVM_DEV_NAME "devmm_svm"
 #define DEVMM_SVM_AGENT_DEV_NAME "devmm_svm_agent"
 #define DEVMM_SVM_DEV_PATH "/dev/"
+
+#define DEVMM_DEFAULT_HOST_UVA_START 0x70000000000UL   /* 7TB */
+#define DEVMM_HCCS_HOST_UVA_START    0x80000000000UL   /* 8TB */
 #ifndef CFG_FEATURE_ENABLE_ASAN
 /* orther addr not test, dev mmap fail because program segments loading random */
-#define DEVMM_SVM_MEM_START 0x100000000000ULL
+#define DEVMM_SVM_MEM_START  0x100000000000ULL /* 16TB */
+uint64_t devmm_get_host_uva_start(void);
+#define DEVMM_HOST_PIN_START devmm_get_host_uva_start()
 #else
 #define DEVMM_SVM_MEM_START 0x210000000000ULL /* device asan 0x100000000000ULL mmap fail */
+#define DEVMM_HOST_PIN_START 0x140000000000UL   /* 20TB */
 #endif
+
+#define DEVMM_HOST_PIN_SIZE 0x10000000000UL    /* 1TB */
+#define DEVMM_HOST_PIN_END  (DEVMM_HOST_PIN_START + DEVMM_HOST_PIN_SIZE)
 #define DEVMM_DEV_MAPPED_RANGE 37   /* 128G */
 #define DEVMM_MAPPEDSZ_PER_DEV (1ULL << DEVMM_DEV_MAPPED_RANGE)                 /* 128G */
 #define DEVMM_MAX_MAPPED_RANGE (DEVMM_MAPPEDSZ_PER_DEV * DEVMM_MAX_PHY_DEVICE_NUM) /* 8T */
@@ -134,6 +145,8 @@
 
 #define DEVMM_DCACHE_OFFSET           0x1000000000ULL /* 64G  */
 #define DEVMM_DCACHE_ADDR_START         (DEVMM_SVM_MEM_START - DEVMM_DCACHE_OFFSET)
+
+#define HCCS_AGENT_EXCLUSIVE_SPACE_MAX_ADDR 0X40000000 /* low 1G */
 
 #define DEVMM_INVALID_ADDR 0UL
 #define DEVMM_INVALID_ADDR2 1UL /* for ioctl err */
@@ -253,9 +266,19 @@ enum devmm_heap_sub_type {
 #define SVM_MEM_HANDLE_IMPORT_TYPE 2
 #define SVM_MEM_HANDLE_SHARE_TYPE  3
 
-static inline bool devmm_va_is_in_svm_range(unsigned long long va)
+static inline bool devmm_is_in_mapped_range(unsigned long long va)
 {
     return ((va >= DEVMM_SVM_MEM_START) && (va < DEVMM_SVM_MEM_START + DEVMM_SVM_MEM_SIZE));
+}
+
+static inline bool devmm_is_in_host_pin_range(unsigned long long va)
+{
+    return ((va >= DEVMM_HOST_PIN_START) && (va < DEVMM_HOST_PIN_END));
+}
+
+static inline bool devmm_va_is_in_svm_range(unsigned long long va)
+{
+    return devmm_is_in_mapped_range(va) || devmm_is_in_host_pin_range(va);
 }
 
 /*=============================== mem stats start =============================*/
@@ -325,55 +348,6 @@ static inline const char *svm_get_mem_type_str(uint32_t mem_val, uint32_t page_t
     return mem_type_str[page_type][phy_memtype];
 }
 #endif
-
-#define SVM_DECLARE_MODULE_NAME(name)                   \
-        static const char *name[MAX_MODULE_ID] = {      \
-            [UNKNOWN_MODULE_ID] = "UNKNOWN",            \
-            [IDEDD_MODULE_ID] = "IDEDD",                \
-            [IDEDH_MODULE_ID] = "IDEDH",                \
-            [HCCL_HAL_MODULE_ID] = "HCCL",              \
-            [FMK_MODULE_ID] = "FMK",                    \
-            [HIAIENGINE_MODULE_ID] = "HIAIENGINE",      \
-            [DVPP_MODULE_ID] = "DVPP",                  \
-            [RUNTIME_MODULE_ID] = "RUNTIME",            \
-            [CCE_MODULE_ID] = "CCE",                    \
-            [HLT_MODULE_ID] = "HLT",                    \
-            [DEVMM_MODULE_ID] = "DEVMM",                \
-            [LIBMEDIA_MODULE_ID] = "LIBMEDIA",          \
-            [CCECPU_MODULE_ID] = "CCECPU",              \
-            [ASCENDDK_MODULE_ID] = "ASCENDDK",          \
-            [HCCP_HAL_MODULE_ID] = "HCCP",              \
-            [ROCE_MODULE_ID] = "ROCE",                  \
-            [TEFUSION_MODULE_ID] = "TEFUSION",          \
-            [PROFILING_MODULE_ID] = "PROFILING",        \
-            [DP_MODULE_ID] = "DP",                      \
-            [APP_MODULE_ID] = "APP",                    \
-            [TSDUMP_MODULE_ID] = "TSDUMP",              \
-            [AICPU_MODULE_ID] = "AICPU",                \
-            [TDT_MODULE_ID] = "TDT",                    \
-            [FE_MODULE_ID] = "FE",                      \
-            [MD_MODULE_ID] = "MD",                      \
-            [MB_MODULE_ID] = "MB",                      \
-            [ME_MODULE_ID] = "ME",                      \
-            [GE_MODULE_ID] = "GE",                      \
-            [ASCENDCL_MODULE_ID] = "ASCENDCL",          \
-            [AIVECTOR_MODULE_ID] = "AIVECTOR",          \
-            [TBE_MODULE_ID] = "TBE",                    \
-            [FV_MODULE_ID] = "FV",                      \
-            [TUNE_MODULE_ID] = "TUNE",                  \
-            [HSS_MODULE_ID] = "HSS",                    \
-            [FFTS_MODULE_ID] = "FFTS",                  \
-            [OP_MODULE_ID] = "OP",                      \
-            [UDF_MODULE_ID] = "UDF",                    \
-            [HICAID_MODULE_ID] = "HICAID",              \
-            [TSYNC_MODULE_ID] = "TSYNC",                \
-            [MBUFF_MODULE_ID] = "MBUFF",                \
-            [AICPU_SCHE_MODULE_ID] = "AICPU_SCHEDULE",  \
-            [CUSTOM_SCHE_MODULE_ID] = "CUSTOM_SCHEDULE",\
-            [HCCP_SCHE_MODULE_ID] = "HCCP_SCHEDULE",    \
-        }
-
-#define SVM_GET_MODULE_NAME(name, module_id) ((name[module_id] == NULL) ? "Reserved" : name[module_id])
 
 /*=============================== mem stats end =============================*/
 

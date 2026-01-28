@@ -13,12 +13,6 @@
 #ifndef SVM_PHY_ADDR_BLK_MNG_H
 #define SVM_PHY_ADDR_BLK_MNG_H
 
-#include <linux/spinlock.h>
-#include <linux/rwsem.h>
-#include <linux/kref.h>
-#include <linux/mm.h>
-#include <linux/idr.h>
-
 #include "devmm_proc_info.h"
 #include "svm_dma_map.h"
 #include "svm_gfp.h"
@@ -99,9 +93,7 @@ void devmm_master_free_huge_pages(struct devmm_phy_addr_attr *attr, ka_page_t **
 int devmm_master_alloc_huge_pages(struct devmm_phy_addr_attr *attr, ka_page_t **pages, u64 pg_num);
 void devmm_master_free_giant_pages(struct devmm_phy_addr_attr *attr, ka_page_t **pages, u64 pg_num);
 int devmm_master_alloc_giant_pages(struct devmm_phy_addr_attr *attr, ka_page_t **pages, u64 pg_num);
-
-int devmm_obmm_get(struct devmm_host_obmm_info *info);
-void devmm_obmm_put(struct devmm_host_obmm_info *info);
+bool devmm_support_host_giant_page(void);
 
 #endif /* SVM_PHY_ADDR_BLK_MNG_H */
 

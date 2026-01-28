@@ -58,6 +58,10 @@ STATIC const struct pci_device_id g_queue_driver_tbl[] = {{ PCI_VDEVICE(HUAWEI, 
                                                           { PCI_VDEVICE(HUAWEI, 0xd807), 0 },
                                                           { DEVDRV_DIVERSITY_PCIE_VENDOR_ID, 0xd500,
                                                             PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 },
+                                                          { 0x20C6, 0xd500, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0},
+                                                          { 0x203F, 0xd500, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0},
+                                                          { 0x20C6, 0xd802, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0},
+                                                          { 0x203F, 0xd802, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0},
                                                           {}};
 MODULE_DEVICE_TABLE(pci, g_queue_driver_tbl);
 

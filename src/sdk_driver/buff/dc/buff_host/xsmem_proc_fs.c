@@ -18,6 +18,7 @@
 #include "xsmem_framework_log.h"
 #include "xsmem_framework.h"
 #include "xsmem_proc_fs.h"
+#include "ka_system_pub.h"
 
 #define PROC_FS_NAME_LEN 32
 #define PROC_FS_MODE 0444
@@ -56,29 +57,10 @@ static int task_node_show(struct seq_file *seq, void *offset)
 
 STATIC int task_node_open(struct inode *inode, struct file *file)
 {
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 17, 0)
-    return single_open(file, task_node_show, pde_data(inode));
-#else
-    return single_open(file, task_node_show, PDE_DATA(inode));
-#endif
+    return ka_single_open(inode, file, task_node_show);
 }
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 5, 0)
-static const struct file_operations task_node_ops = {
-    .owner = THIS_MODULE,
-    .open    = task_node_open,
-    .read    = seq_read,
-    .llseek  = seq_lseek,
-    .release = single_release,
-};
-#else
-static const struct proc_ops task_node_ops = {
-    .proc_open    = task_node_open,
-    .proc_read    = seq_read,
-    .proc_lseek  = seq_lseek,
-    .proc_release = single_release,
-};
-#endif
+STATIC_PROCFS_FILE_FUNC_OPS_OPEN(task_node_ops, task_node_open);
 
 
 static void proc_fs_format_task_dir_name(const struct xsm_task *task, char *name, int len)
@@ -184,30 +166,11 @@ static int task_info_show(struct seq_file *seq, void *offset)
 
 STATIC int task_sum_open(struct inode *inode, struct file *file)
 {
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 17, 0)
-    return single_open(file, task_info_show, pde_data(inode));
-#else
-    return single_open(file, task_info_show, PDE_DATA(inode));
-#endif
+    return ka_single_open(inode, file, task_info_show);
 }
 
+STATIC_PROCFS_FILE_FUNC_OPS_OPEN(task_sum_ops, task_sum_open);
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 5, 0)
-static const struct file_operations task_sum_ops = {
-    .owner = THIS_MODULE,
-    .open    = task_sum_open,
-    .read    = seq_read,
-    .llseek  = seq_lseek,
-    .release = single_release,
-};
-#else
-static const struct proc_ops task_sum_ops = {
-    .proc_open    = task_sum_open,
-    .proc_read    = seq_read,
-    .proc_lseek   = seq_lseek,
-    .proc_release = single_release,
-};
-#endif
 
 void proc_fs_add_task(struct xsm_task *task)
 {
@@ -262,29 +225,10 @@ static int pool_info_show(struct seq_file *seq, void *offset)
 
 STATIC int xsmem_pool_sum_open(struct inode *inode, struct file *file)
 {
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 17, 0)
-    return single_open(file, pool_info_show, pde_data(inode));
-#else
-    return single_open(file, pool_info_show, PDE_DATA(inode));
-#endif
+    return ka_single_open(inode, file, pool_info_show);
 }
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 5, 0)
-static const struct file_operations pool_sum_ops = {
-    .owner = THIS_MODULE,
-    .open    = xsmem_pool_sum_open,
-    .read    = seq_read,
-    .llseek  = seq_lseek,
-    .release = single_release,
-};
-#else
-static const struct proc_ops pool_sum_ops = {
-    .proc_open    = xsmem_pool_sum_open,
-    .proc_read    = seq_read,
-    .proc_lseek   = seq_lseek,
-    .proc_release = single_release,
-};
-#endif
+STATIC_PROCFS_FILE_FUNC_OPS_OPEN(pool_sum_ops, xsmem_pool_sum_open);
 
 void xsmem_proc_fs_init(void)
 {

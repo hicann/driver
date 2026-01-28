@@ -12,7 +12,7 @@ ASCEND_SECLOG="/var/log/ascend_seclog"
 logFile="${ASCEND_SECLOG}/ascend_install.log"
 installInfo="/etc/ascend_install.info"
 crldir="/root/ascend_check"
-crltool="unknow"
+crltool="unknown"
 driverCrlStatusFile="$crldir/driver_crl_status_tmp"
 nvcntFile="$crldir/nvcnt_tmp"
 image_nvcnt_get_flag=0
@@ -27,7 +27,7 @@ Driver_Install_Path_Param=$(getInstallParam "Driver_Install_Path_Param" "${insta
 first_flag=y
 upgrade_crl_log="/var/log/upgradetool/upgrade_crl.log"
 
-# user's crl varibles
+# user's crl variables
 user_crl_dir="${Driver_Install_Path_Param}"/CMS
 user_root_cer="${user_crl_dir}"/user.xer
 user_root_crl="${user_crl_dir}"/user.crl
@@ -86,7 +86,7 @@ device_images_nvcnt_check() {
         return 0
     fi
 
-    # use crltool get nvcnt ,input param :$1:input type(0:get crl file, 1:compare crl newer, 2:check vaild,3:verification signature,4:get nvcnt), 
+    # use crltool get nvcnt ,input param :$1:input type(0:get crl file, 1:compare crl newer, 2:check valid,3:verification signature,4:get nvcnt), 
     # $2:image type(0:cms type,1:soc type),$3:image, $4:nvcnt file
     # return value: 0-success, 1-cannot get nvcnt, 2-get nvcnt failed
     "$crltool" 4 0 "$sourcedir"/device/$source_tee $nvcntFile > /dev/null 2>&1
@@ -137,7 +137,7 @@ device_images_nvcnt_check() {
 # case 1: First installation scenario
 gen_cur_image_crl_check_valid() {
     local ret=0
-    log "[INFO]case one start: generate new images crl, check vaild and cms "
+    log "[INFO]case one start: generate new images crl, check valid and cms "
 
     if [ ! -f $crldir/$crlFile ] ;then
         touch $crldir/$crlFile
@@ -158,7 +158,7 @@ gen_cur_image_crl_check_valid() {
         return 0
     fi
     log "[INFO]1.generate new images crl success , start check valid"
-    # check crl vaild, input param: $1:input type, $2: crl file
+    # check crl valid, input param: $1:input type, $2: crl file
     # return value: 0-success, others:check invalid
     "$crltool" 2  $crldir/$crlFile >& /dev/null && ret=$? || ret=$?
     if [ ${ret} -ne 0 ]; then
@@ -195,7 +195,7 @@ gen_cur_image_crl_check_valid() {
     cp -f "$sourcedir"/tools/ascend_upgrade_crl.sh $crldir/ascend_upgrade_crl.sh
     chmod 500 $crldir/ascend_upgrade_crl.sh
     log "[INFO]4.update /root/ascend_check/$crltool_bin, ascend_upgrade_crl.sh and crl success"
-    log "[INFO]case one end: generate new images crl, check vaild and cms "
+    log "[INFO]case one end: generate new images crl, check valid and cms "
     logOperationCrl "UPGRADE" "${LOG_LEVEL_MAJOR}" "${start_time}" "${MODULE}" "upgrade $crltool_bin,crl file and ascend_upgrade_crl.sh success"
     return 0
 

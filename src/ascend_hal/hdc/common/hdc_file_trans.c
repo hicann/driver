@@ -904,7 +904,7 @@ hdcError_t send_file_in_session(signed int user_mode, HDC_SESSION session, const
 
     // create recv thread
     if (pthread_create(&recv_thread, &attr, process_recv_thread, (void *)fs) != 0) {
-        HDC_LOG_ERR("Create recv_thread erro. (strerror=\"%s\")\n", strerror(errno));
+        HDC_LOG_ERR("Create recv_thread error. (strerror=\"%s\")\n", strerror(errno));
         ret = DRV_ERROR_INVALID_VALUE;
         goto error3;
     }
@@ -934,44 +934,6 @@ error1:
     p_sndbuf = NULL;
 error0:
     (void)pthread_attr_destroy(&attr);
-    return ret;
-}
-
-signed int get_local_trusted_base_path(signed int user_mode, char *path, signed int dev_id)
-{
-    signed int ret;
-
-#ifdef CFG_ENV_HOST
-    ret = sprintf_s(path, HDC_NAME_MAX, "%s", HDC_HOST_BASE_PATH_NAME);
-    (void)user_mode;
-    (void)dev_id;
-#else
-    if (user_mode == HDC_FILE_TRANS_MODE_UPGRADE) {
-        ret = sprintf_s(path, HDC_NAME_MAX, "%s%d", HDC_SLAVE_DM_PATH_NAME, dev_id);
-    } else if (user_mode == HDC_FILE_TRANS_MODE_CANN) {
-        ret = sprintf_s(path, HDC_NAME_MAX, "%s%d%s", HDC_SLAVE_BASE_PATH_NAME, dev_id, HDC_SLAVE_CANN_FOLDER_NAME);
-    } else {
-        ret = sprintf_s(path, HDC_NAME_MAX, "%s%d", HDC_SLAVE_BASE_PATH_NAME, dev_id);
-    }
-#endif
-    return ret;
-}
-
-STATIC signed int get_peer_trusted_base_path(signed int user_mode, char *path, signed int peer_devid)
-{
-    signed int ret;
-
-#ifdef CFG_ENV_HOST
-    if (user_mode == HDC_FILE_TRANS_MODE_UPGRADE) {
-        ret = sprintf_s(path, HDC_NAME_MAX, "%s%d", HDC_SLAVE_DM_PATH_NAME, peer_devid);
-    } else if (user_mode == HDC_FILE_TRANS_MODE_CANN) {
-        ret = sprintf_s(path, HDC_NAME_MAX, "%s%d%s", HDC_SLAVE_BASE_PATH_NAME, peer_devid, HDC_SLAVE_CANN_FOLDER_NAME);
-    } else {
-        ret = sprintf_s(path, HDC_NAME_MAX, "%s%d", HDC_SLAVE_BASE_PATH_NAME, peer_devid);
-    }
-#else
-    ret = sprintf_s(path, HDC_NAME_MAX, "%s", HDC_HOST_BASE_PATH_NAME);
-#endif
     return ret;
 }
 
@@ -1128,5 +1090,391 @@ hdcError_t drvHdcSendFileEx(signed int user_mode, signed int peer_node, signed i
 out:
     (void)drvHdcSessionClose(session);
     (void)drvHdcClientDestroy(client);
+    return ret;
+}
+
+bool is_dir(const char *name, size_t len)
+{
+    struct stat s_buf;
+    (void)len;
+
+    if (name == NULL) {
+        HDC_LOG_ERR("Input parameter is error.\n");
+        return false;
+    }
+
+    if (access(name, F_OK) != 0) {
+        return false;
+    }
+
+    if (stat(name, &s_buf) < 0) {
+        return false;
+    }
+
+    if (S_ISDIR(s_buf.st_mode)) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+STATIC uint16_t set_option_mkdir(char *sndbuf, signed int bufsize, uint32_t offset, const char *dir)
+{
+    struct fileopt *fopt = NULL;
+    uint16_t len = sizeof(struct fileopt);
+    char name[HDC_NAME_MAX];
+    uint16_t name_len;
+    uint32_t sppos = 0;
+    uint32_t i = 0;
+    uint32_t resspace;
+    char *pinfo = NULL;
+
+    while (*(dir + i) != '\0') {
+        if (*(dir + i) == '/') {
+            sppos = i + 1;
+        }
+        i++;
+    }
+
+    if (strcpy_s(name, HDC_NAME_MAX, dir + sppos) != 0) {
+        return 0;
+    }
+
+    name_len = (uint16_t)(strlen(name) + 1);
+    if ((sndbuf == NULL) || (bufsize < 0) || ((uint32_t)bufsize < offset) || ((uint32_t)bufsize - offset < len) ||
+        ((uint32_t)bufsize - offset - len < name_len)) {
+        return 0;
+    }
+
+    fopt = (struct fileopt *)(sndbuf + offset);
+    fopt->kind = htons(FILE_OPT_MKDIR);
+    fopt->opt_len = htons(name_len);
+    pinfo = fopt->info;
+    resspace = (uint32_t)bufsize - offset - len;
+    if (strcpy_s(pinfo, resspace, name) != 0) {
+        return 0;
+    }
+
+    len = (uint16_t)(len + name_len);
+    return len;
+}
+
+STATIC hdcError_t send_cmd(HDC_SESSION session, char *sndbuf, signed int bufsize, const char *local_dir,
+    const char *dst_path)
+{
+    struct filehdr *fh = (struct filehdr *)sndbuf;
+    uint32_t len;
+    uint16_t hdrlen;
+    uint16_t offset;
+    hdcError_t ret;
+    struct stat s_buf;
+
+    if (stat(local_dir, &s_buf) < 0) {
+        HDC_LOG_ERR("Calling stat error. (local_dir=\"%s\"; strerror=\"%s\")\n", local_dir, strerror(errno));
+        return DRV_ERROR_INVALID_VALUE;
+    }
+
+    set_flag(fh, FILE_FLAGS_CMD);
+    hdrlen = sizeof(struct filehdr);
+    offset = set_option_mkdir(sndbuf, bufsize, hdrlen, local_dir);
+    if (offset == 0) {
+        HDC_LOG_ERR("Calling set_option_mkdir error. (local_dir=\"%s\")\n", local_dir);
+        return DRV_ERROR_INVALID_VALUE;
+    }
+
+    hdrlen = (uint16_t)(hdrlen + offset);
+    offset = set_option_dstpth(sndbuf, bufsize, hdrlen, dst_path);
+    if (offset == 0) {
+        HDC_LOG_ERR("Calling set_option_dstpth error. (destination_path=\"%s\")\n", dst_path);
+        return DRV_ERROR_INVALID_VALUE;
+    }
+
+    hdrlen = (uint16_t)(hdrlen + offset);
+    offset = set_option_mode(sndbuf, bufsize, hdrlen, s_buf.st_mode & 0xfff);
+    if (offset == 0) {
+        HDC_LOG_ERR("Calling set_option_mode error. (dir_mode=%d)\n", s_buf.st_mode & 0xfff);
+        return DRV_ERROR_INVALID_VALUE;
+    }
+
+    hdrlen = (uint16_t)(hdrlen + offset);
+    len = hdrlen;
+    fh->len = htonl(len);
+    fh->seq = htonl(0);
+    fh->hdrlen = htons(hdrlen);
+
+    ret = hdc_session_send(session, sndbuf, (int)len);
+    if (ret != DRV_ERROR_NONE) {
+        HDC_LOG_ERR("Calling hdc_session_send error. (hdcError_t=%d)\n", ret);
+    }
+
+    return ret;
+}
+
+hdcError_t get_new_dir_name(char *dst_path, int dst_len, const char *src_path, const char *d_name)
+{
+    if ((strcpy_s(dst_path, (size_t)dst_len, src_path) != EOK) ||
+        (*(dst_path + strlen(dst_path) - 1) != '/' &&
+        (strcat_s(dst_path, (size_t)dst_len, "/") != EOK)) ||
+        (strcat_s(dst_path, (size_t)dst_len, d_name) != EOK)) {
+        return DRV_ERROR_INVALID_VALUE;
+    }
+
+    return DRV_ERROR_NONE;
+}
+
+STATIC hdcError_t __send_current_dir(HDC_SESSION session, const char *local_dir, size_t local_dir_len,
+    char *new_local_dir, size_t new_local_len, char *new_dst_path, size_t new_dst_len,
+    signed int count, void (*progress_notifier)(struct drvHdcProgInfo *))
+{
+    DIR *dir = NULL;
+    struct dirent *ptr = NULL;
+    hdcError_t ret = DRV_ERROR_NONE;
+    (void)local_dir_len;
+    (void)new_dst_len;
+
+    if ((dir = opendir(local_dir)) == NULL) {
+        HDC_LOG_ERR("Calling opendir error. (strerror=\"%s\")\n", strerror(errno));
+        ret = DRV_ERROR_FILE_OPS;
+        return ret;
+    }
+
+    while ((ptr = readdir(dir)) != NULL) {
+        if ((strcmp(ptr->d_name, ".") == 0) || (strcmp(ptr->d_name, "..") == 0)) {
+            continue;
+        }
+
+        ret = get_new_dir_name(new_local_dir, (int)new_local_len, local_dir, ptr->d_name);
+        if (ret != DRV_ERROR_NONE) {
+            HDC_LOG_ERR("Calling strcpy_s or strcat_s error. (strerror=\"%s\")\n", strerror(errno));
+            break;
+        }
+
+        if (is_dir(new_local_dir, new_local_len)) {
+            ret = send_dir_in_session(session, new_local_dir, new_dst_path, count, progress_notifier);
+            if (ret != DRV_ERROR_NONE) {
+                HDC_LOG_ERR("Calling send_dir_in_session error. (local_dir=\"%s\"; dst_path=\"%s\")\n",
+                            new_local_dir, new_dst_path);
+                break;
+            }
+        } else {
+            ret = send_file_in_session(0, session, new_local_dir, new_dst_path, progress_notifier);
+            if (ret != DRV_ERROR_NONE) {
+                HDC_LOG_ERR("Calling send_file_in_session error. (file_name=\"%s\"; dst_path=\"%s\")\n",
+                            new_local_dir, new_dst_path);
+                break;
+            }
+        }
+    }
+
+    (void)closedir(dir);
+    dir = NULL;
+    ptr = NULL;
+    return ret;
+}
+
+STATIC hdcError_t send_current_dir(HDC_SESSION session, const char *local_dir, size_t local_len,
+    const char *dst_path, size_t dst_len, signed int count,
+    void (*progress_notifier)(struct drvHdcProgInfo *))
+{
+    char *new_dst_path = NULL;
+    char *new_local_dir = NULL;
+    uint32_t sppos = 0;
+    uint32_t i = 0;
+    hdcError_t ret;
+    (void)local_len;
+    (void)dst_len;
+
+    new_dst_path = (char *)malloc(PATH_MAX);
+    if (new_dst_path == NULL) {
+        HDC_LOG_ERR("Calling malloc new_dst_path error.\n");
+        ret = DRV_ERROR_MALLOC_FAIL;
+        goto error2;
+    }
+
+    new_local_dir = (char *)malloc(PATH_MAX);
+    if (new_local_dir == NULL) {
+        HDC_LOG_ERR("Calling malloc new_local_dir error.\n");
+        ret = DRV_ERROR_MALLOC_FAIL;
+        goto error1;
+    }
+
+    while (*(local_dir + i) != '\0') {
+        if (*(local_dir + i) == '/') {
+            sppos = i + 1;
+        }
+        i++;
+    }
+
+    if ((strcpy_s(new_dst_path, PATH_MAX, dst_path) != 0) ||
+        (*(new_dst_path + strlen(new_dst_path) - 1) != '/' && (strcat_s(new_dst_path, PATH_MAX, "/") != 0)) ||
+        (strcpy_s(new_dst_path + strlen(new_dst_path), PATH_MAX - strlen(new_dst_path), local_dir + sppos) != 0)) {
+        HDC_LOG_ERR("Calling strcpy_s or strcat_s error. (strerror=\"%s\")\n", strerror(errno));
+        ret = DRV_ERROR_INVALID_VALUE;
+        goto error0;
+    }
+
+    ret = __send_current_dir(session, local_dir, PATH_MAX, new_local_dir, PATH_MAX, new_dst_path, PATH_MAX, count,
+                             progress_notifier);
+
+error0:
+
+    free(new_local_dir);
+    new_local_dir = NULL;
+error1:
+    free(new_dst_path);
+    new_dst_path = NULL;
+error2:
+    return ret;
+}
+
+hdcError_t send_dir_in_session(HDC_SESSION session, const char *plocal_dir, const char *pdst_path, signed int count,
+    void (*progress_notifier)(struct drvHdcProgInfo *))
+{
+    hdcError_t ret;
+    struct drvHdcCapacity capacity = {0};
+    char *p_sndbuf = NULL;
+    uint16_t is_rcvok;
+    char *local_dir = NULL;
+    signed int is_null;
+    signed int is_count = count;
+
+    if (is_count-- <= 0) {
+        HDC_LOG_ERR("Only support direction maxdepth. (maxdepth=%d)\n", DIR_SEND_MAX_DEPTH);
+        return DRV_ERROR_INVALID_VALUE;
+    }
+
+    is_null = (plocal_dir == NULL) || (pdst_path == NULL);
+    if (is_null != 0) {
+        HDC_LOG_ERR("Input parameter plocal_dir or pdst_path is NULL.\n");
+        return DRV_ERROR_INVALID_VALUE;
+    }
+
+    if (!is_dir(plocal_dir, PATH_MAX)) {
+        HDC_LOG_ERR("Input path isn't dir, please check. (path=\"%s\")\n", plocal_dir);
+        return DRV_ERROR_INVALID_VALUE;
+    }
+
+    if ((ret = get_hdc_capacity(&capacity)) != DRV_ERROR_NONE) {
+        HDC_LOG_ERR("Calling get_hdc_capacity error. (hdcError_t=%d)\n", ret);
+        goto error0;
+    }
+
+    p_sndbuf = malloc((uint32_t)capacity.maxSegment);
+    if (p_sndbuf == NULL) {
+        HDC_LOG_ERR("Calling malloc p_sndbuf failed.\n");
+        ret = DRV_ERROR_MALLOC_FAIL;
+        goto error0;
+    }
+    local_dir = (char *)malloc(PATH_MAX);
+    if (local_dir == NULL) {
+        HDC_LOG_ERR("Calling malloc local_dir failed.\n");
+        ret = DRV_ERROR_MALLOC_FAIL;
+        goto error1;
+    }
+
+    if (strcpy_s(local_dir, PATH_MAX, plocal_dir) != 0) {
+        HDC_LOG_ERR("Calling strcpy_s error. (strerror=\"%s\")\n", strerror(errno));
+        ret = DRV_ERROR_INVALID_VALUE;
+        goto error2;
+    }
+
+    if (*(local_dir + strlen(local_dir) - 1) == '/') {
+        *(local_dir + strlen(local_dir) - 1) = '\0';
+    }
+
+    ret = send_cmd(session, p_sndbuf, (int)capacity.maxSegment, local_dir, pdst_path);
+    if (ret != DRV_ERROR_NONE) {
+        HDC_LOG_ERR("Calling send_cmd error. (local_dir=\"%s\"; dst_path=\"%s\")\n", local_dir, pdst_path);
+        goto error2;
+    }
+
+    ret = recv_reply(session, &is_rcvok);
+    if (ret != DRV_ERROR_NONE) {
+        HDC_LOG_ERR("Calling recv_reply error.\n");
+        goto error2;
+    }
+
+    if (is_rcvok == FILE_OPT_WRPTH) {
+        HDC_LOG_ERR("Create destination path error. (local_dir=\"%s\"; dst_path=\"%s\")\n", local_dir, pdst_path);
+        ret = DRV_ERROR_INVALID_VALUE;
+        goto error2;
+    }
+
+    ret = send_current_dir(session, local_dir, PATH_MAX, pdst_path, PATH_MAX, is_count,
+                           progress_notifier);
+    if (ret != DRV_ERROR_NONE) {
+        HDC_LOG_ERR("Calling send_current_dir error. (local_dir=\"%s\"; dst_path=\"%s\")\n", local_dir, pdst_path);
+    }
+
+error2:
+    free(local_dir);
+    local_dir = NULL;
+error1:
+    free(p_sndbuf);
+    p_sndbuf = NULL;
+
+error0:
+    return ret;
+}
+
+hdcError_t drvHdcSendDir(signed int peer_node, signed int peer_devid, const char *plocal_dir, const char *pdst_path,
+    void (*progress_notifier)(struct drvHdcProgInfo *))
+{
+    HDC_CLIENT client = NULL;
+    HDC_SESSION session = NULL;
+    hdcError_t ret;
+    struct drvHdcCapacity capacity = {0};
+    char *p_sndbuf = NULL;
+    signed int is_null;
+
+    /* progress_notifier is designed as a hook-function,could be null for real-use */
+    is_null = (plocal_dir == NULL) || (pdst_path == NULL);
+    if (is_null != 0) {
+        HDC_LOG_ERR("Input parameter is error.\n");
+        return DRV_ERROR_INVALID_VALUE;
+    }
+
+    if ((ret = drvHdcClientCreate(&client, 1, HDC_SERVICE_TYPE_FILE_TRANS, 0)) != DRV_ERROR_NONE) {
+        HDC_LOG_ERR("Calling drvHdcClientCreate error. (hdcError_t=%d)\n", ret);
+        return ret;
+    }
+
+    if ((ret = drvHdcSessionConnect(peer_node, peer_devid, client, &session)) != DRV_ERROR_NONE) {
+        HDC_LOG_ERR("Calling drvHdcSessionConnect error. (hdcError_t=%d)\n", ret);
+        (void)drvHdcClientDestroy(client);
+        return ret;
+    }
+
+    (void)drvHdcSetSessionReference(session);
+    ret = send_dir_in_session(session, plocal_dir, pdst_path, DIR_SEND_MAX_DEPTH, progress_notifier);
+    if (ret != DRV_ERROR_NONE) {
+        HDC_LOG_ERR("Calling send_dir_in_session error.\n");
+        goto out;
+    }
+
+    if ((ret = get_hdc_capacity(&capacity)) != DRV_ERROR_NONE) {
+        HDC_LOG_ERR("Calling get_hdc_capacity error. (hdcError_t=%d)\n", ret);
+        goto out;
+    }
+
+    p_sndbuf = malloc((uint32_t)capacity.maxSegment);
+    if (p_sndbuf == NULL) {
+        HDC_LOG_ERR("Calling malloc error. (strerror=\"%s\")\n", strerror(errno));
+        ret = DRV_ERROR_MALLOC_FAIL;
+        goto out;
+    }
+
+    ret = send_end(session, p_sndbuf, (int)capacity.maxSegment);
+    if (ret != DRV_ERROR_NONE) {
+        HDC_LOG_ERR("Calling send_end error.\n");
+    }
+
+    free(p_sndbuf);
+    p_sndbuf = NULL;
+
+out:
+    (void)drvHdcSessionClose(session);
+    (void)drvHdcClientDestroy(client);
+
     return ret;
 }

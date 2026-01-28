@@ -211,4 +211,33 @@ int dsmi_get_serdes_info(unsigned int device_id, SERDES_MAIN_CMD main_cmd, unsig
  */
 int dsmi_set_serdes_info(unsigned int device_id, SERDES_MAIN_CMD main_cmd, unsigned int sub_cmd,
     void *buf, unsigned int size);
+
+/**
+ * @ingroup driver
+ * @brief Get custom op secverify sert show info
+ * @attention NULL
+ * @param [in] device_id  The device id
+ * @param [in] buf  Buf send to device
+ * @param [in] buf_size  The size of buf
+ * @param [in] show_info_size  The size of cert show info
+ * @param [out] show_info  cert show info
+ * @return  0 for success, others for fail
+ */
+int dsmi_get_custom_op_secverify_cert_show_info(unsigned int device_id, const char *buf,
+    unsigned int buf_size, void *show_info, unsigned int show_info_size);
+
+/**
+ * @ingroup driver
+ * @brief Get custom op secverify sert show info
+ * @attention NULL
+ * @param [in] device_id  The device id
+ * @param [in] buf  Buf send to device
+ * @param [in] buf_size  The size of buf
+ * @param [in] show_info_size  The size of cert show info
+ * @param [out] show_info  cert show info
+ * @return  0 for success, others for fail
+ */
+int dsmi_cmd_get_custom_cert_show_info(unsigned int device_id, const char *buf,
+ 	unsigned int buf_size, void *show_info, unsigned int show_info_size);
+
 #endif

@@ -12,9 +12,6 @@ target_sources(dms_obj PRIVATE
     dms_ub_info.c
 )
 target_include_directories(dms_obj PRIVATE
-    ${TOP_DIR}/inc/driver
-    ${DRIVER_USER_DIR}/inc
-    ${BASE_DIR}
-    ${TOP_DIR}/ubengine/ssapi/kernelspace/urma/code/include
-    ${TOP_DIR}/ubengine/ssapi/kernelspace/urma/code/lib/urma/include
+    # ${TOP_DIR}/ubengine/ssapi/kernelspace/urma/code/include
+    # ${TOP_DIR}/ubengine/ssapi/kernelspace/urma/code/lib/urma/include
 )

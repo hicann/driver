@@ -14,7 +14,7 @@
 #ifndef VIRTMNG_RESOURCE_H
 #define VIRTMNG_RESOURCE_H
 
-#include <linux/types.h>
+#include "ka_type.h"
 
 /* load irq and amdin irq, based on protocol. beside msg base 1 */
 #define VMNG_MSIX_MSG_ADMIN 0

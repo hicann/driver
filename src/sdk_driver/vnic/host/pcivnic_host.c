@@ -11,21 +11,22 @@
  * GNU General Public License for more details.
  */
 
-#include <linux/errno.h>
-#include <linux/netdevice.h>
-#include <linux/etherdevice.h>
-#include <linux/pci.h>
-#include <linux/jiffies.h>
-#include <linux/io.h>
-#include <linux/module.h>
-
 #include "pbl/pbl_uda.h"
 
 #include "pcivnic_host.h"
 #include "pcivnic_main.h"
+#include "ka_barrier_pub.h"
+#include "ka_net_pub.h"
+#include "ka_common_pub.h"
+#include "ka_driver_pub.h"
+#include "ka_memory_pub.h"
+#include "ka_task_pub.h"
+#include "ka_system_pub.h"
+#include "ka_pci_pub.h"
+
 
 struct pcivnic_netdev *g_vnic_dev = NULL;
-unsigned char g_pcivnic_mac[ETH_ALEN] = {0};
+unsigned char g_pcivnic_mac[KA_ETH_ALEN] = {0};
 struct pcivnic_ctrl_msg_get_stat pcivnic_stat = {{0}};
 
 struct pcivnic_pcidev *pcivnic_get_pcidev(void *msg_chan)
@@ -55,7 +56,7 @@ void pcivnic_copy_sq_desc_to_remote(struct pcivnic_pcidev *pcidev, const struct 
     devdrv_move_msg_chan_slave_sq_tail(msg_chan);
 
     /* shared memory without copying */
-    wmb();
+    ka_wmb();
 
     /* trigger doorbell irq */
     devdrv_msg_ring_doorbell(msg_chan);
@@ -112,7 +113,7 @@ void pcivnic_copy_cq_desc_to_remote(struct pcivnic_pcidev *pcidev, const struct 
     devdrv_move_msg_chan_slave_cq_tail(msg_chan);
 
     /* shared memory without copying */
-    wmb();
+    ka_wmb();
 
     /* trigger doorbell irq */
     devdrv_msg_ring_cq_doorbell(msg_chan);
@@ -132,7 +133,7 @@ void pcivnic_move_r_cq_desc(void *msg_chan)
     devdrv_move_msg_chan_host_cq_head(msg_chan);
 }
 
-struct pcivnic_pcidev *pcivnic_get_pciedev(const struct device *dev)
+struct pcivnic_pcidev *pcivnic_get_pciedev(const ka_device_t *dev)
 {
     struct pcivnic_pcidev *pcidev = NULL;
     u32 dev_id;
@@ -182,7 +183,7 @@ int pcivnic_down_get_next_hop(const unsigned char *dmac)
     return PCIVNIC_NEXT_HOP_BROADCAST;
 }
 
-ssize_t pcivnic_get_dev_stat(struct device *dev, struct device_attribute *attr, char *buf)
+ssize_t pcivnic_get_dev_stat(ka_device_t *dev, ka_device_attribute_t *attr, char *buf)
 {
     struct pcivnic_pcidev *pcidev = pcivnic_get_pciedev(dev);
     ssize_t offset = 0;
@@ -197,7 +198,7 @@ ssize_t pcivnic_get_dev_stat(struct device *dev, struct device_attribute *attr, 
 
     offset = pcivnic_get_dev_stat_inner(dev, buf);
 
-    ret = snprintf_s(buf + offset, PAGE_SIZE - offset, PAGE_SIZE - offset - 1, "\ndevice stat:\n");
+    ret = snprintf_s(buf + offset, KA_MM_PAGE_SIZE - offset, KA_MM_PAGE_SIZE - offset - 1, "\ndevice stat:\n");
     if (ret >= 0) {
         offset += ret;
     }
@@ -211,9 +212,9 @@ ssize_t pcivnic_get_dev_stat(struct device *dev, struct device_attribute *attr, 
 
     ret = devdrv_common_msg_send(pcidev->dev_id, (void *)&pcivnic_stat, sizeof(pcivnic_stat.head),
         msg_len, &out_len, DEVDRV_COMMON_MSG_PCIVNIC);
-    if ((ret == 0) && (pcivnic_stat.msg_len < PAGE_SIZE - offset)) {
+    if ((ret == 0) && (pcivnic_stat.msg_len < KA_MM_PAGE_SIZE - offset)) {
         pcivnic_stat.msg[pcivnic_stat.msg_len] = '\0';
-        ret = snprintf_s(buf + offset, PAGE_SIZE - offset, PAGE_SIZE - offset - 1, "%s\n", pcivnic_stat.msg);
+        ret = snprintf_s(buf + offset, KA_MM_PAGE_SIZE - offset, KA_MM_PAGE_SIZE - offset - 1, "%s\n", pcivnic_stat.msg);
         if (ret >= 0) {
             offset += ret;
         }
@@ -246,25 +247,25 @@ STATIC void pcivnic_msg_chan_guard_work_sched(struct pcivnic_pcidev *pcidev)
     pcivnic_rx_msg_notify(pcidev->msg_chan);
 }
 
-STATIC void pcivnic_guard_work_sched(struct work_struct *p_work)
+STATIC void pcivnic_guard_work_sched(ka_work_struct_t *p_work)
 {
     struct pcivnic_pcidev *pcidev =
-        container_of(p_work, struct pcivnic_pcidev, guard_work.work);
+        ka_container_of(p_work, struct pcivnic_pcidev, guard_work.work);
 
     pcivnic_msg_chan_guard_work_sched(pcidev);
-    schedule_delayed_work(&pcidev->guard_work, msecs_to_jiffies(PCIVNIC_GUARD_WORK_DELAY_TIME));
+    ka_task_schedule_delayed_work(&pcidev->guard_work, ka_system_msecs_to_jiffies(PCIVNIC_GUARD_WORK_DELAY_TIME));
 }
 
 STATIC void pcivnic_guard_work_init(struct pcivnic_pcidev *pcidev)
 {
     /* msg guard work */
-    INIT_DELAYED_WORK(&pcidev->guard_work, pcivnic_guard_work_sched);
-    schedule_delayed_work(&pcidev->guard_work, 0);
+    KA_TASK_INIT_DELAYED_WORK(&pcidev->guard_work, pcivnic_guard_work_sched);
+    ka_task_schedule_delayed_work(&pcidev->guard_work, 0);
 }
 
 STATIC void pcivnic_guard_work_uninit(struct pcivnic_pcidev *pcidev)
 {
-    cancel_delayed_work_sync(&pcidev->guard_work);
+    ka_task_cancel_delayed_work_sync(&pcidev->guard_work);
 }
 
 STATIC int pcivnic_init_msg_chan(struct pcivnic_pcidev *pcidev)
@@ -300,12 +301,14 @@ STATIC int pcivnic_init_msg_instance(struct pcivnic_pcidev *pcidev)
     struct pcivnic_netdev *vnic_dev = (struct pcivnic_netdev *)pcidev->netdev;
     struct pcivnic_ctrl_msg_register_netdev register_msg;
     struct pcivnic_ctrl_msg_set_mac msg;
-    u32 len = 0;
+    u32 i, len = 0;
     int ret;
 
     msg.head.msg_type = PCIVNIC_CTRL_MSG_TYPE_SET_MAC;
     msg.head.host_udevid = pcidev->dev_id;
-    ether_addr_copy(msg.mac, g_pcivnic_mac);
+    for (i = 0; i < KA_ETH_ALEN; i++) {
+        msg.mac[i] = g_pcivnic_mac[i];
+    }
     ret = devdrv_common_msg_send(pcidev->dev_id, (void *)&msg, sizeof(msg), sizeof(msg), &len,
         DEVDRV_COMMON_MSG_PCIVNIC);
     if (ret != 0) {
@@ -338,7 +341,7 @@ STATIC int pcivnic_init_msg_instance(struct pcivnic_pcidev *pcidev)
      * do not change it. !!!!!
      */
     devdrv_info("dev id %d: %s, alloc new pcivnic device <%s> success (locked and finish).\n",
-        pcidev->dev_id, dev_driver_string(pcidev->dev), vnic_dev->ndev->name);
+        pcidev->dev_id, ka_driver_dev_driver_string(pcidev->dev), vnic_dev->ndev->name);
 
     return 0;
 }
@@ -355,13 +358,13 @@ struct devdrv_common_msg_client g_pcivnic_host_comm_msg_client = {
     .common_msg_recv = pcivnic_ctrl_msg_recv,
 };
 
-u64 pcivnic_dma_map_single(struct pcivnic_pcidev *pcidev, struct sk_buff *skb, u32 buff_type, u32 index)
+u64 pcivnic_dma_map_single(struct pcivnic_pcidev *pcidev, ka_sk_buff_t *skb, u32 buff_type, u32 index)
 {
-    enum dma_data_direction dma_dir;
-    u64 dma_addr = (~(dma_addr_t)0);
+    ka_dma_data_direction_t dma_dir;
+    u64 dma_addr = (~(ka_dma_addr_t)0);
     size_t len;
 
-    dma_dir = (buff_type == PCIVNIC_DESC_QUEUE_TX) ? DMA_TO_DEVICE : DMA_FROM_DEVICE;
+    dma_dir = (buff_type == PCIVNIC_DESC_QUEUE_TX) ? KA_DMA_TO_DEVICE : KA_DMA_FROM_DEVICE;
     len = (buff_type == PCIVNIC_DESC_QUEUE_TX) ? skb->len : PCIVNIC_MAX_PKT_SIZE;
 
 #ifdef CFG_FEATURE_AGENT_SMMU
@@ -370,7 +373,7 @@ u64 pcivnic_dma_map_single(struct pcivnic_pcidev *pcidev, struct sk_buff *skb, u
         if (buff_type == PCIVNIC_DESC_QUEUE_TX) {
             if (memcpy_s(pcidev->tx_buff[index].addr, len, skb->data, len) != 0) {
                 devdrv_err_spinlock("device %d memcpy_s fail.\n", pcidev->dev_id);
-                return (~(dma_addr_t)0);
+                return (~(ka_dma_addr_t)0);
             }
             dma_addr = pcidev->tx_buff[index].dma_addr;
         }
@@ -383,15 +386,15 @@ u64 pcivnic_dma_map_single(struct pcivnic_pcidev *pcidev, struct sk_buff *skb, u
 #endif
 
     dma_addr = hal_kernel_devdrv_dma_map_single(pcidev->dev, skb->data, len, dma_dir);
-    if (dma_mapping_error(pcidev->dev, dma_addr) != 0) {
+    if (ka_mm_dma_mapping_error(pcidev->dev, dma_addr) != 0) {
         devdrv_err_spinlock("device %d dma map is error\n", pcidev->dev_id);
-        return (~(dma_addr_t)0);
+        return (~(ka_dma_addr_t)0);
     }
 
     return dma_addr;
 }
 
-void pcivnic_dma_unmap_single(struct pcivnic_pcidev *pcidev, struct sk_buff *skb, u32 buff_type, u32 index)
+void pcivnic_dma_unmap_single(struct pcivnic_pcidev *pcidev, ka_sk_buff_t *skb, u32 buff_type, u32 index)
 {
 #ifdef CFG_FEATURE_AGENT_SMMU
     if ((devdrv_get_connect_protocol(pcidev->dev_id) == CONNECT_PROTOCOL_HCCS) && (pcidev->host_phy_mach_flag == 0)) {
@@ -406,12 +409,12 @@ void pcivnic_dma_unmap_single(struct pcivnic_pcidev *pcidev, struct sk_buff *skb
 #endif
 
     if (buff_type == PCIVNIC_DESC_QUEUE_TX) {
-        hal_kernel_devdrv_dma_unmap_single(pcidev->dev, pcidev->tx[index].addr, skb->len, DMA_TO_DEVICE);
-        pcidev->tx[index].addr = (~(dma_addr_t)0);
+        hal_kernel_devdrv_dma_unmap_single(pcidev->dev, pcidev->tx[index].addr, skb->len, KA_DMA_TO_DEVICE);
+        pcidev->tx[index].addr = (~(ka_dma_addr_t)0);
     }
     if (buff_type == PCIVNIC_DESC_QUEUE_RX) {
-        hal_kernel_devdrv_dma_unmap_single(pcidev->dev, pcidev->rx[index].addr, PCIVNIC_MAX_PKT_SIZE, DMA_FROM_DEVICE);
-        pcidev->rx[index].addr = (~(dma_addr_t)0);
+        hal_kernel_devdrv_dma_unmap_single(pcidev->dev, pcidev->rx[index].addr, PCIVNIC_MAX_PKT_SIZE, KA_DMA_FROM_DEVICE);
+        pcidev->rx[index].addr = (~(ka_dma_addr_t)0);
     }
 }
 
@@ -438,14 +441,14 @@ void pcivnic_skb_data_buff_uninit(struct pcivnic_pcidev *pcidev)
                 pcidev->tx_buff[i].dma_addr);
             pcidev->tx_buff[i].addr = NULL;
         }
-        pcidev->tx_buff[i].dma_addr = (~(dma_addr_t)0);
+        pcidev->tx_buff[i].dma_addr = (~(ka_dma_addr_t)0);
 
         if (pcidev->rx_buff[i].addr != NULL) {
             hal_kernel_devdrv_dma_free_coherent(pcidev->dev, PCIVNIC_MAX_SKB_BUFF_SIZE, pcidev->rx_buff[i].addr,
                 pcidev->rx_buff[i].dma_addr);
             pcidev->rx_buff[i].addr = NULL;
         }
-        pcidev->rx_buff[i].dma_addr = (~(dma_addr_t)0);
+        pcidev->rx_buff[i].dma_addr = (~(ka_dma_addr_t)0);
     }
 #endif
 }
@@ -471,7 +474,7 @@ int pcivnic_skb_data_buff_init(struct pcivnic_pcidev *pcidev)
 
     for (i = 0; i < PCIVNIC_DESC_QUEUE_DEPTH; i++) {
         pcidev->tx_buff[i].addr = hal_kernel_devdrv_dma_zalloc_coherent(pcidev->dev, PCIVNIC_MAX_SKB_BUFF_SIZE,
-            &pcidev->tx_buff[i].dma_addr, GFP_KERNEL);
+            &pcidev->tx_buff[i].dma_addr, KA_GFP_KERNEL);
         if (pcidev->tx_buff[i].addr == NULL) {
             pcivnic_skb_data_buff_uninit(pcidev);
             devdrv_err("Call skb_data tx buff failed. (dev_id=%d)\n", pcidev->dev_id);
@@ -479,7 +482,7 @@ int pcivnic_skb_data_buff_init(struct pcivnic_pcidev *pcidev)
         }
 
         pcidev->rx_buff[i].addr = hal_kernel_devdrv_dma_zalloc_coherent(pcidev->dev, PCIVNIC_MAX_SKB_BUFF_SIZE,
-            &pcidev->rx_buff[i].dma_addr, GFP_KERNEL);
+            &pcidev->rx_buff[i].dma_addr, KA_GFP_KERNEL);
         if (pcidev->rx_buff[i].addr == NULL) {
             pcivnic_skb_data_buff_uninit(pcidev);
             devdrv_err("Call skb_data rx buff failed. (dev_id=%d)\n", pcidev->dev_id);
@@ -526,7 +529,7 @@ STATIC int pcivnic_init_npu_instance(u32 dev_id)
     return 0;
 }
 
-STATIC int pcivnic_init_instance(u32 dev_id, struct device *dev)
+STATIC int pcivnic_init_instance(u32 dev_id, ka_device_t *dev)
 {
     struct pcivnic_netdev *vnic_dev = g_vnic_dev;
     struct pcivnic_pcidev *pcidev = NULL;
@@ -603,12 +606,12 @@ STATIC int pcivnic_uninit_instance(u32 dev_id)
     return 0;
 }
 
-bool pcivnic_get_sysfs_creat_group_capbility(struct device *dev, int dev_id)
+bool pcivnic_get_sysfs_creat_group_capbility(ka_device_t *dev, int dev_id)
 {
-    struct pci_dev *pdev = NULL;
+    ka_pci_dev_t *pdev = NULL;
     int devnum_by_pdev;
 
-    pdev = to_pci_dev(dev);
+    pdev = ka_pci_to_pci_dev(dev);
     devnum_by_pdev = devdrv_get_davinci_dev_num_by_pdev(pdev);
     if (devnum_by_pdev <= 0) {
         return false;
@@ -726,7 +729,7 @@ retry:
     if ((cycle_times != dev_num) && (retry_times <= PCIVNIC_INIT_NETDEV_RETRY_TIMES)) {
         cycle_times = 0;
         retry_times++;
-        msleep(1000);
+        ka_system_msleep(1000); // 1000 milliseconds
         goto retry;
     }
 

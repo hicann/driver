@@ -10,11 +10,6 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#include <linux/slab.h>
-#include <linux/list.h>
-#include <linux/rwsem.h>
-#include <linux/kref.h>
-#include <linux/rbtree.h>
 
 #include "devmm_proc_info.h"
 #include "svm_master_proc_mng.h"
@@ -22,6 +17,7 @@
 #include "svm_master_dma_desc_mng.h"
 #include "devmm_mem_alloc_interface.h"
 #include "svm_task_dev_res_mng.h"
+#include "ka_base_pub.h"
 
 struct devmm_task_dev_res_node *devmm_task_dev_res_node_create(struct devmm_svm_process *svm_proc,
     struct svm_id_inst *id_inst)
@@ -53,7 +49,7 @@ struct devmm_task_dev_res_node *devmm_task_dev_res_node_create(struct devmm_svm_
     KA_INIT_LIST_HEAD(&node->dev_res_node);
     ka_base_kref_init(&node->ref);
 
-    node->convert_rb_info.root = RB_ROOT;
+    node->convert_rb_info.root = KA_RB_ROOT;
     ka_task_init_rwsem(&node->convert_rb_info.rw_sem);
 
     ka_task_down_write(&info->rw_sem);

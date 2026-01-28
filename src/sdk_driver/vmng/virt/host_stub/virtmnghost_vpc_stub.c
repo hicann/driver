@@ -11,52 +11,52 @@
  * GNU General Public License for more details.
  */
 
-#include <linux/module.h>
 #include "vmng_kernel_interface.h"
 #include "virtmng_public_def.h"
+#include "ka_kernel_def_pub.h"
 
 int vmngh_vpc_msg_send(u32 dev_id, u32 fid, enum vmng_vpc_type vpc_type, struct vmng_tx_msg_proc_info *tx_info,
     u32 timeout)
 {
     return 0;
 }
-EXPORT_SYMBOL(vmngh_vpc_msg_send);
+KA_EXPORT_SYMBOL(vmngh_vpc_msg_send);
 
 
 int vmngh_vpc_register_client(u32 dev_id, u32 fid, const struct vmng_vpc_client *vpc_client)
 {
     return 0;
 }
-EXPORT_SYMBOL(vmngh_vpc_register_client);
+KA_EXPORT_SYMBOL(vmngh_vpc_register_client);
 
 int vmngh_vpc_unregister_client(u32 dev_id, u32 fid, const struct vmng_vpc_client *vpc_client)
 {
     return 0;
 }
-EXPORT_SYMBOL(vmngh_vpc_unregister_client);
+KA_EXPORT_SYMBOL(vmngh_vpc_unregister_client);
 
 int vmngh_register_client(struct vmngh_client *client)
 {
     return 0;
 }
-EXPORT_SYMBOL(vmngh_register_client);
+KA_EXPORT_SYMBOL(vmngh_register_client);
 
 int vmngh_unregister_client(struct vmngh_client *client)
 {
     return 0;
 }
-EXPORT_SYMBOL(vmngh_unregister_client);
+KA_EXPORT_SYMBOL(vmngh_unregister_client);
 
 int vmngh_register_vascend_client(struct vmngh_vascend_client *client)
 {
     return 0;
 }
-EXPORT_SYMBOL(vmngh_register_vascend_client);
+KA_EXPORT_SYMBOL(vmngh_register_vascend_client);
 
 int vmngh_unregister_vascend_client(struct vmngh_vascend_client *client)
 {
     return 0;
 }
-EXPORT_SYMBOL(vmngh_unregister_vascend_client);
+KA_EXPORT_SYMBOL(vmngh_unregister_vascend_client);
 
-MODULE_LICENSE("GPL");
+KA_MODULE_LICENSE("GPL");

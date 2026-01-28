@@ -17,10 +17,12 @@
 #include <linux/atomic.h>
 #include <linux/types.h>
 #include "dms/dms_cmd_def.h"
+#include "ka_task_pub.h"
+#include "ka_base_pub.h"
 
 struct urd_file_private_stru {
-    pid_t owner_pid;
-    atomic_t work_count;
+    ka_pid_t owner_pid;
+    ka_atomic_t work_count;
 };
 
 #define MSG_FROM_USER           0

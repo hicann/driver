@@ -14,7 +14,6 @@ ${MODULE_NAME}-objs += host/virtmnghost_pci.o host/virtmnghost_ctrl.o host/virtm
 ${MODULE_NAME}-objs += host/virtmnghost_external.o host/virtmnghost_sysfs.o host/virtmnghost_proc_fs.o
 ${MODULE_NAME}-objs += host/soc_adapt/virtmng_res_drv.o host/soc_adapt/virtmng_res_cloud_v1.o host/soc_adapt/virtmng_res_cloud_v2.o
 ${MODULE_NAME}-objs += host/soc_adapt/virtmng_res_mini_v2.o host/soc_adapt/virtmng_res_cloud_v4.o host/soc_adapt/virtmng_res_comm.o
-${MODULE_NAME}-objs += host/mia_mng/mia_mng_ctrl.o host/mia_mng/mia_mng_group.o
 
 EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/inc
 EXTRA_CFLAGS += -I${C_SEC_INCLUDE}
@@ -24,11 +23,11 @@ EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/vpc/common
 EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/vpc/phy
 EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/vmng/phy/host
 EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/vmng/phy/host/soc_adapt
-EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/vmng/phy/host/mia_mng
 EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/vmng/phy/vascend_drv_stub
 EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/pbl/dev_urd
 EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/pbl/dev_urd/dc
 EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/pbl/uda/command/ioctl
+EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/kernel_adapt/include
 EXTRA_CFLAGS += -I$(DRIVER_HAL_INC_DIR)
 EXTRA_CFLAGS += -isystem $(shell $(CC) -print-file-name=include)
 
@@ -37,10 +36,17 @@ EXTRA_CFLAGS += -DCFG_FEATURE_HOST_LOG
 EXTRA_CFLAGS += -DCFG_FEATURE_KA_ALLOC_INTERFACE
 EXTRA_CFLAGS += -DDRV_HOST
 EXTRA_CFLAGS += -DCFG_ENV_HOST
-EXTRA_CFLAGS += -DCFG_SOC_PLATFORM_CLOUD_V2
 
 include $(FEATURE_MK_PATH)
 EXTRA_CFLAGS += $(CONFIG_DEFINES)
+
+ifneq ($(filter $(PRODUCT), ascend910B),)
+	EXTRA_CFLAGS += -DCFG_SOC_PLATFORM_CLOUD_V2
+endif
+
+ifneq ($(filter $(PRODUCT), ascend910_95),)
+	EXTRA_CFLAGS += -DCFG_SOC_PLATFORM_CLOUD_V4
+endif
 
 ccflags-y += -fno-common -fstack-protector-all -funsigned-char -pipe -s -Wall -Wcast-align -Werror -Wfloat-equal
 ccflags-y += -Wformat=2 -Wstack-usage=2048 -Wstrict-prototypes -Wtrampolines -Wundef -Wunused -Wvla -Wno-format-nonliteral

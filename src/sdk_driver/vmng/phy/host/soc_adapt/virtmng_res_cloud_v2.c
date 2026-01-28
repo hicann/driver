@@ -10,7 +10,6 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#include <linux/delay.h>
 
 #include "comm_kernel_interface.h"
 
@@ -25,7 +24,7 @@ STATIC int vmngh_check_pci_reset_finish(u32 dev_id)
     int count = 0;
 
     while ((devdrv_check_half_probe_finish(dev_id) == false) && (count < VMNG_WAIT_REMOTE_ID_S)) {
-        ssleep(1);
+        ka_system_ssleep(1);
         count++;
     }
 
@@ -61,11 +60,11 @@ static int vmngh_sriov_reset_vdev_cloud_v2(u32 dev_id)
         vmng_err("Sriov not enable. (dev_id=%u)\n", dev_id);
         return VMNG_ERR;
     }
-    mutex_lock(&vmngh_get_ctrl(pf_id, vf_id)->reset_mutex);
+    ka_task_mutex_lock(&vmngh_get_ctrl(pf_id, vf_id)->reset_mutex);
 
     ret = vmngh_container_client_offline_comm(pf_id, vf_id);
     if (ret != 0) {
-        mutex_unlock(&vmngh_get_ctrl(pf_id, vf_id)->reset_mutex);
+        ka_task_mutex_unlock(&vmngh_get_ctrl(pf_id, vf_id)->reset_mutex);
         vmng_err("Vf device offline failed.(dev_id=%u;vfid=%u;ret=%d)\n", pf_id, vf_id, ret);
         return ret;
     }
@@ -73,7 +72,7 @@ static int vmngh_sriov_reset_vdev_cloud_v2(u32 dev_id)
     if (devdrv_hot_reset_device(dev_id) < 0) {
         vmng_err("devdrv_hot_reset_device error.(dev_id=%u)\n", dev_id);
         ret = VMNG_ERR;
-        ssleep(VMNG_WAIT_RESET_S);  // wait for device RM process finish
+        ka_system_ssleep(VMNG_WAIT_RESET_S);  // wait for device RM process finish
         goto vf_recover;
     }
 
@@ -101,8 +100,8 @@ vf_recover:
         vmng_err("Call vmngh_add_mia_dev failed. (dev_id=%u; vfid=%u)\n", pf_id, vf_id);
     }
 
-    mutex_unlock(&vmngh_get_ctrl(pf_id, vf_id)->reset_mutex);
-    ssleep(VMNG_WAIT_RESET_S);
+    ka_task_mutex_unlock(&vmngh_get_ctrl(pf_id, vf_id)->reset_mutex);
+    ka_system_ssleep(VMNG_WAIT_RESET_S);
 
     return ret;
 }

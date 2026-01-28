@@ -247,6 +247,7 @@ int hal_kernel_dms_get_pg_info(unsigned int dev_id, HAL_DMS_PG_INFO_TYPE info_ty
 /**
 * @ingroup driver-stub
 * @brief   This interface is used to switch chip id to numa id.
+* @attention mc62cm12a is not supported
 * @param [in]  unsigned int device_id: device id
 * @param [in]  unsigned int type: memory type
 * @return   success return numa id, fail return fail code
@@ -442,12 +443,23 @@ struct qos_allow_config_type {
     unsigned long long bitmap[4];       /* max support 64 * 4 */
 };
 
+struct qos_latency_config_type {
+    enum qos_master_type master;
+    unsigned char state;
+    unsigned int interval;
+    unsigned int run_time;
+    unsigned long long bitmap;
+    void *buf_addr;
+    unsigned int buf_size;
+};
+
 typedef int (*set_qos_cfg)(int dev_id, const struct qos_master_config_type *cfg);
 typedef int (*get_qos_cfg)(int dev_id, struct qos_master_config_type *cfg);
 typedef int (*set_allow_cfg)(int dev_id, const struct qos_allow_config_type *cfg);
 typedef int (*get_allow_cfg)(int dev_id, struct qos_allow_config_type *cfg);
 typedef int (*set_otsd_cfg)(int dev_id, const struct qos_otsd_config_type *cfg);
 typedef int (*get_otsd_cfg)(int dev_id, struct qos_otsd_config_type *cfg);
+typedef int (*set_latency_cfg)(int dev_id, const struct qos_latency_config_type *cfg);
 
 struct qos_master_node {
     char name[MAX_QOS_MASTER_NODE_NAME_LEN]; /* master name */
@@ -458,6 +470,7 @@ struct qos_master_node {
     get_allow_cfg get_allow;    /* if support cfg qos allow, can't be null */
     set_otsd_cfg set_otsd;      /* if support cfg otsd, can't be null */
     get_otsd_cfg get_otsd;      /* if support cfg otsd, can't be null */
+    set_latency_cfg set_latency;/* if support cfg ddr latency, can't be null */
 };
 
 #define MAX_QOS_MASTER_NAME_LEN 256

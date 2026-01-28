@@ -173,7 +173,7 @@ STATIC int hw_vdavinci_add_pfn_to_dma_list(struct hw_vdavinci *vdavinci,
 #endif
     struct page_info_entry *dma_page_info, *tmp;
 
-    if (dma_page_list->elem_num) {
+    if (dma_page_list->elem_num != 0 || user_pfn == NULL) {
         return -EINVAL;
     }
 
@@ -313,7 +313,7 @@ STATIC int gfn_array_init_2m(unsigned long gfn, int npage,
     int i;
 #endif
 
-    if (npage > VFIO_PIN_PAGES_MAX_ENTRIES) {
+    if (npage > (int)VFIO_PIN_PAGES_MAX_ENTRIES) {
         return -EINVAL;
     }
     pin_info->gfn = gfn;
@@ -376,7 +376,7 @@ STATIC void hw_vdavinci_unpin_page_2m(struct hw_vdavinci *vdavinci,
 
     list_for_each_safe(pos, next, &(dma_page_list->head)) {
         dma_page_info = list_entry(pos, struct page_info_entry, list);
-        npage = DIV_ROUND_UP(dma_page_info->length, PAGE_SIZE);
+        npage = (int)DIV_ROUND_UP(dma_page_info->length, PAGE_SIZE);
 
         (void)gfn_array_init_2m(dma_page_info->gfn, npage, pin_info);
         hw_vdavinci_unpin_page(vdavinci, pin_info);
@@ -772,24 +772,18 @@ STATIC void hw_vdavinci_set_dev_dom_ops(struct dev_dom_info *dom,
 {
     dom->is_passthrough = is_passthrough;
     vascend_debug("set dom is vf passthrough %d\n", is_passthrough);
-#ifdef __x86_64__
+
     if (is_passthrough) {
+        dom->ops.dev_dma_map_ram_range = vf_map_ram_range;
+        dom->ops.dev_dma_unmap_ram_range = vf_unmap_ram_range;
+        dom->ops.hw_vdavinci_get_iova_sg = vf_get_iova_sg;
+        dom->ops.hw_vdavinci_get_iova_array = vf_get_iova_array;
+    } else {
         dom->ops.dev_dma_map_ram_range = dev_dma_map_ram_range;
         dom->ops.dev_dma_unmap_ram_range = dev_dma_unmap_ram_range;
         dom->ops.hw_vdavinci_get_iova_sg = hw_vdavinci_get_iova_sg;
         dom->ops.hw_vdavinci_get_iova_array = hw_vdavinci_get_iova_array;
-    } else {
-        dom->ops.dev_dma_map_ram_range = dev_dma_map_ram_range_x86;
-        dom->ops.dev_dma_unmap_ram_range = dev_dma_unmap_ram_range_x86;
-        dom->ops.hw_vdavinci_get_iova_sg = hw_vdavinci_get_iova_sg_x86;
-        dom->ops.hw_vdavinci_get_iova_array = hw_vdavinci_get_iova_array_x86;
     }
-#else
-    dom->ops.dev_dma_map_ram_range = dev_dma_map_ram_range;
-    dom->ops.dev_dma_unmap_ram_range = dev_dma_unmap_ram_range;
-    dom->ops.hw_vdavinci_get_iova_sg = hw_vdavinci_get_iova_sg;
-    dom->ops.hw_vdavinci_get_iova_array = hw_vdavinci_get_iova_array;
-#endif
 }
 
 STATIC int hw_vdavinci_dma_pool_init_locked(struct hw_vdavinci *vdavinci)
@@ -1057,7 +1051,7 @@ STATIC void set_gfn_sgl(struct scatterlist *new,
 STATIC int hw_vdavinci_get_gfn_sg(struct hw_vdavinci *vdavinci,
                                   struct vdavinci_iova_info *iova_info)
 {
-    int i;
+    unsigned int i;
     unsigned int sg_len = 0;
     unsigned long sg_gfn_len = 0, dma_length = 0, gfn_sg_offset = 0;
     struct dev_dma_sgt **sgt_array = iova_info->sgt_array;
@@ -1198,10 +1192,10 @@ sgt_free:
     return ret;
 }
 
-int hw_vdavinci_get_iova_sg_x86(struct hw_vdavinci *vdavinci,
-                                struct vm_dom_info *vm_dom,
-                                unsigned long gfn, unsigned long size,
-                                struct sg_table **dma_sgt)
+int hw_vdavinci_get_iova_sg(struct hw_vdavinci *vdavinci,
+                            struct vm_dom_info *vm_dom,
+                            unsigned long gfn, unsigned long size,
+                            struct sg_table **dma_sgt)
 {
     int ret;
     struct vdavinci_iova_info iova_info;
@@ -1232,7 +1226,7 @@ STATIC int get_iova_by_sg(struct hw_vdavinci *vdavinci,
                           struct dev_dma_sgt **sgt_array_base,
                           unsigned long gfn, unsigned long *dma_addr)
 {
-    int i;
+    unsigned int i;
     unsigned long sg_gfn_len;
     unsigned long gfn_sg_offset = 0;
     unsigned long sgl_gfn_base = 0;
@@ -1264,11 +1258,11 @@ STATIC int get_iova_by_sg(struct hw_vdavinci *vdavinci,
     return -ENODEV;
 }
 
-int hw_vdavinci_get_iova_array_x86(struct hw_vdavinci *vdavinci,
-                                   struct vm_dom_info *vm_dom,
-                                   unsigned long *gfn,
-                                   unsigned long *dma_addr,
-                                   unsigned long count)
+int hw_vdavinci_get_iova_array(struct hw_vdavinci *vdavinci,
+                               struct vm_dom_info *vm_dom,
+                               unsigned long *gfn,
+                               unsigned long *dma_addr,
+                               unsigned long count)
 {
     int ret = 0;
     unsigned long index = 0, array_base = 0;
@@ -1309,10 +1303,10 @@ int hw_vdavinci_get_iova_array_x86(struct hw_vdavinci *vdavinci,
     return ret;
 }
 
-int hw_vdavinci_get_iova_sg(struct hw_vdavinci *vdavinci,
-                            struct vm_dom_info *vm_dom,
-                            unsigned long gfn, unsigned long size,
-                            struct sg_table **dma_sgt)
+int vf_get_iova_sg(struct hw_vdavinci *vdavinci,
+                   struct vm_dom_info *vm_dom,
+                   unsigned long gfn, unsigned long size,
+                   struct sg_table **dma_sgt)
 {
     int ret;
     struct ram_range_info *ram_info = NULL;
@@ -1356,10 +1350,10 @@ free_sgt:
     return ret;
 }
 
-int hw_vdavinci_get_iova_array(struct hw_vdavinci *vdavinci,
-                               struct vm_dom_info *vm_dom,
-                               unsigned long *gfn, unsigned long *dma_addr,
-                               unsigned long count)
+int vf_get_iova_array(struct hw_vdavinci *vdavinci,
+                      struct vm_dom_info *vm_dom,
+                      unsigned long *gfn, unsigned long *dma_addr,
+                      unsigned long count)
 {
     unsigned long index = 0;
     struct ram_range_info *ram_info = NULL;

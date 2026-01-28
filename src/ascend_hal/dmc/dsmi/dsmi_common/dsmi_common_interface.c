@@ -1376,12 +1376,8 @@ int dsmi_get_gateway_addr(int device_id, int port_type, int port_id, ip_addr_t *
 
     DRV_CHECK_RETV(((port_type >= 0) && (port_type <= UCHAR_MAX)), DRV_ERROR_PARA_ERROR);
     DRV_CHECK_RETV(((port_id >= 0) && (port_id <= UCHAR_MAX)), DRV_ERROR_PARA_ERROR);
-/* 910_A5: ROCE+UNIC; 910/910B/910_A3: ROCE */
-#ifdef CFG_FEATURE_NETWORK_UNIC
-    DRV_CHECK_RETV_DO_SOMETHING((port_type == DEVDRV_ROCE || port_type == DEVDRV_UNIC), DRV_ERROR_PARA_ERROR,
-        DEV_MON_ERR("Can not get non-roce or non-unic ip. (devid=%d; port_id=%d)\n", device_id, port_type));
-#endif
-#if defined(CFG_FEATURE_NETWORK_ROCE) && !defined(CFG_FEATURE_NETWORK_UNIC)
+/* 910_A5/910/910B/910_A3: ROCE */
+#if defined(CFG_FEATURE_NETWORK_ROCE)
     DRV_CHECK_RETV_DO_SOMETHING((port_type == DEVDRV_ROCE), DRV_ERROR_PARA_ERROR,
         DEV_MON_ERR("devid %d Cloud can not set non-roce ip, port_id %d.\n", device_id, port_type));
 #endif
@@ -1603,7 +1599,7 @@ int g_dsmi_hotreset_cmd_convert[DSMI_SUBCMD_HOTRESET_BUTT] =
 
 int dsmi_hot_reset_atomic(int device_id, int dsmi_hotreset_subcmd)
 {
-    DEV_MON_EVENT("dsmi_hot_reset_atomic, (user id=%u; device_id=%d, dsmi_hotreset_subcmd=%d)\n", 
+    DEV_MON_EVENT("dsmi_hot_reset_atomic, (user id=%u; device_id=%d, dsmi_hotreset_subcmd=%d)\n",
                 getuid(), device_id, dsmi_hotreset_subcmd);
 
     if (((device_id >= ASCEND_DEV_MAX_NUM) || (device_id < DEVDRV_MIN_DAVINCI_NUM)) &&
@@ -1622,9 +1618,9 @@ int dsmi_hot_reset_atomic(int device_id, int dsmi_hotreset_subcmd)
             DEV_MON_ERR("Dsmi_pcie_inform_bbox failed. (ret=%d)\n", ret);
             return ret;
         }
-    }   
+    }
     ret = dms_power_hotreset_common((unsigned int) device_id, ioctl_sub_cmd);
-    return ret;          
+    return ret;
 }
 
 int dsmi_get_device_boot_status(int device_id, enum dsmi_boot_status *boot_status)
@@ -3043,7 +3039,6 @@ STATIC drvError_t dsmi_set_muti_device_info(unsigned int device_id, DSMI_MAIN_CM
 {
     int ret, i = 0, device_count = 0, sem_id = 0;
     int *device_list = NULL;
-    drvError_t err = DRV_ERROR_NONE;
 
     if (device_id != 0) {
         DEV_MON_ERR("Failed to check device_id. (device_id=%u)\n", device_id);
@@ -3066,21 +3061,18 @@ STATIC drvError_t dsmi_set_muti_device_info(unsigned int device_id, DSMI_MAIN_CM
     ret = memset_s(device_list, (unsigned long)device_count * sizeof(int), INVALID_DEVICE_ID, (unsigned long)device_count * sizeof(int));
     if (ret != 0) {
         DEV_MON_ERR("memset_s failed. (ret=%d)\n", ret);
-        err = DRV_ERROR_MEMORY_OPT_FAIL;
         goto device_id_resource_free;
     }
 
     ret = dsmi_list_device(device_list, device_count);
     if (ret != 0) {
         DEV_MON_ERR("Failed to get device list. (ret=%d)\n", ret);
-        err = DRV_ERROR_INVALID_DEVICE;
         goto device_id_resource_free;
     }
 
     ret = dsmi_mutex_p((key_t)(ASCEND_DEV_MAX_NUM + DSMI_UPGRADE_LOCK_TAG), &sem_id, DSMI_MUTEX_WAIT_FOR_EVER);
     if (ret != 0) {
         dev_upgrade_err("Failed to get lock for updating pss conf.\n");
-        err = DRV_ERROR_INNER_ERR;
         goto device_id_resource_free;
     }
 
@@ -3089,7 +3081,6 @@ STATIC drvError_t dsmi_set_muti_device_info(unsigned int device_id, DSMI_MAIN_CM
         if (ret != 0) {
             DEV_MON_EX_NOTSUPPORT_ERR(ret, "Failed to invoke dsmi_cmd_set_device_info. (device_id=%d; ret=%d)\n",
                 device_list[i], ret);
-            err = DRV_ERROR_INVALID_DEVICE;
             goto sem_free;
         }
     }
@@ -3097,7 +3088,6 @@ STATIC drvError_t dsmi_set_muti_device_info(unsigned int device_id, DSMI_MAIN_CM
     ret = dsmi_main_cmd_sec_update_sign(buf, buf_size);
     if (ret != 0) {
         DEV_MON_EX_NOTSUPPORT_ERR(ret, "Failed to invoke dsmi_main_cmd_sec_update_sign. \n");
-        err = DRV_ERROR_INNER_ERR;
     }
 
 sem_free:
@@ -3105,7 +3095,7 @@ sem_free:
 device_id_resource_free:
     free(device_list);
     device_list = NULL;
-    return err;
+    return (drvError_t)ret;
 }
 
 int dsmi_get_muti_device_info(unsigned int device_id, DSMI_MAIN_CMD main_cmd, unsigned int sub_cmd,
@@ -3552,7 +3542,7 @@ int dsmi_device_replace(struct dsmi_device_attr *src_dev_attr, struct dsmi_devic
         dst_dev_attr->phy_dev_id, dst_dev_attr->type, dst_dev_attr->eid_num, timeout);
     ret = DmsDevReplace(src_dev_attr, dst_dev_attr, timeout, flag);
     if (ret != 0) {
-        DEV_MON_EX_NOTSUPPORT_ERR(ret, "Dev repalce failed. (ret=%d)\n", ret);
+        DEV_MON_EX_NOTSUPPORT_ERR(ret, "Dev replace failed. (ret=%d)\n", ret);
         return ret;
     }
     return 0;
@@ -3585,13 +3575,16 @@ int dsmi_cmd_get_sec_info(unsigned int device_id, DSMI_MAIN_CMD main_cmd, unsign
         case DSMI_SEC_SUB_CMD_PSS:
             ret = dsmi_get_muti_device_info(device_id, main_cmd, sub_cmd, buf, size);
             break;
+        case DSMI_SEC_SUB_CMD_CC:
+            ret = dsmi_cmd_get_device_info(device_id, main_cmd, sub_cmd, buf, size);
+            break;
         case DSMI_SEC_SUB_CMD_CUST_SIGN_FLAG:
             ret = dsmi_cmd_get_custom_sign_flag(device_id, main_cmd, sub_cmd, buf, size);
             break;
         case DSMI_SEC_SUB_CMD_CUST_SIGN_USER_CERT:
             ret = dsmi_cmd_get_sign_cert(device_id, main_cmd, sub_cmd, buf, size);
             break;
-        default :
+        default:
             return DRV_ERROR_NOT_SUPPORT;
     }
     return ret;

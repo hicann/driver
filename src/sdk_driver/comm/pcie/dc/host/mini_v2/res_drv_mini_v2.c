@@ -10,7 +10,6 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#include <linux/delay.h>
 
 #include "res_drv.h"
 #include "devdrv_util.h"
@@ -488,8 +487,8 @@ STATIC void devdrv_mini_v2_set_dev_shr_info(struct devdrv_pci_ctrl *pci_ctrl)
     pci_ctrl->shr_para->host_dev_id = (int)pci_ctrl->dev_id;
     pci_ctrl->shr_para->driver_version = DEVDRV_DRIVER_VERSION;
     /* chip1 use chip0 bar base */
-    pci_ctrl->shr_para->host_mem_bar_base = (u64)pci_resource_start(pci_ctrl->pdev, PCI_BAR_MEM);
-    pci_ctrl->shr_para->host_io_bar_base = (u64)pci_resource_start(pci_ctrl->pdev, PCI_BAR_IO);
+    pci_ctrl->shr_para->host_mem_bar_base = (u64)ka_pci_resource_start(pci_ctrl->pdev, PCI_BAR_MEM);
+    pci_ctrl->shr_para->host_io_bar_base = (u64)ka_pci_resource_start(pci_ctrl->pdev, PCI_BAR_IO);
 }
 
 STATIC int devdrv_mini_v2_get_p2p_addr(struct devdrv_pci_ctrl *pci_ctrl, u32 remote_dev_id,
@@ -611,9 +610,9 @@ int devdrv_mini_v2_res_init(struct devdrv_pci_ctrl *pci_ctrl)
         devdrv_err("davinci_dev_num is invalid.\n");
         return -ENODEV;
     }
-    davinci_dev_mem_bar_len = pci_resource_len(pci_ctrl->pdev, PCI_BAR_MEM) / (u64)davinci_dev_num;
-    davinci_dev_rsv_mem_bar_len = pci_resource_len(pci_ctrl->pdev, PCI_BAR_RSV_MEM) / (u64)davinci_dev_num;
-    davinci_dev_io_bar_len = pci_resource_len(pci_ctrl->pdev, PCI_BAR_IO) / (u64)davinci_dev_num;
+    davinci_dev_mem_bar_len = ka_pci_resource_len(pci_ctrl->pdev, PCI_BAR_MEM) / (u64)davinci_dev_num;
+    davinci_dev_rsv_mem_bar_len = ka_pci_resource_len(pci_ctrl->pdev, PCI_BAR_RSV_MEM) / (u64)davinci_dev_num;
+    davinci_dev_io_bar_len = ka_pci_resource_len(pci_ctrl->pdev, PCI_BAR_IO) / (u64)davinci_dev_num;
 
     if (!devdrv_is_pdev_main_davinci_dev(pci_ctrl)) {
         pci_ctrl->mem_bar_offset += davinci_dev_mem_bar_len;
@@ -623,17 +622,17 @@ int devdrv_mini_v2_res_init(struct devdrv_pci_ctrl *pci_ctrl)
 
     pci_ctrl->mem_bar_id = PCI_BAR_MEM;
 
-    pci_ctrl->mem_phy_base = (phys_addr_t)pci_resource_start(pci_ctrl->pdev, PCI_BAR_MEM);
+    pci_ctrl->mem_phy_base = (phys_addr_t)ka_pci_resource_start(pci_ctrl->pdev, PCI_BAR_MEM);
     pci_ctrl->mem_phy_size = (u64)davinci_dev_mem_bar_len;
     pci_ctrl->mem_phy_base += pci_ctrl->mem_bar_offset;
 
-    pci_ctrl->rsv_mem_phy_base = (phys_addr_t)pci_resource_start(pci_ctrl->pdev, PCI_BAR_RSV_MEM);
+    pci_ctrl->rsv_mem_phy_base = (phys_addr_t)ka_pci_resource_start(pci_ctrl->pdev, PCI_BAR_RSV_MEM);
     pci_ctrl->rsv_mem_phy_size = (u64)davinci_dev_rsv_mem_bar_len;
     pci_ctrl->rsv_mem_phy_base += pci_ctrl->rsv_mem_bar_offset;
 
     offset = pci_ctrl->rsv_mem_phy_base + DEVDRV_RESERVE_MEM_MSG_OFFSET;
     size = DEVDRV_RESERVE_MEM_MSG_SIZE;
-    pci_ctrl->mem_base = ioremap(offset, size);
+    pci_ctrl->mem_base = ka_mm_ioremap(offset, size);
     if (pci_ctrl->mem_base == NULL) {
         devdrv_err("Ioremap mem_base failed. (size=%lu)\n", size);
         devdrv_res_uninit(pci_ctrl);
@@ -642,18 +641,18 @@ int devdrv_mini_v2_res_init(struct devdrv_pci_ctrl *pci_ctrl)
 
     offset = pci_ctrl->rsv_mem_phy_base + DEVDRV_RESERVE_MEM_DB_BASE;
     size = DEVDRV_DB_IOMAP_SIZE;
-    pci_ctrl->msi_base = ioremap(offset, size);
+    pci_ctrl->msi_base = ka_mm_ioremap(offset, size);
     if (pci_ctrl->msi_base == NULL) {
         devdrv_err("Ioremap msi_base failed. (size=%lu)\n", size);
         devdrv_res_uninit(pci_ctrl);
         return -ENOMEM;
     }
 
-    pci_ctrl->io_phy_base = (phys_addr_t)pci_resource_start(pci_ctrl->pdev, PCI_BAR_IO);
+    pci_ctrl->io_phy_base = (phys_addr_t)ka_pci_resource_start(pci_ctrl->pdev, PCI_BAR_IO);
     pci_ctrl->io_phy_size = (u64)davinci_dev_io_bar_len;
     pci_ctrl->io_phy_base += pci_ctrl->io_bar_offset;
 
-    pci_ctrl->io_base = ioremap(pci_ctrl->io_phy_base, pci_ctrl->io_phy_size);
+    pci_ctrl->io_base = ka_mm_ioremap(pci_ctrl->io_phy_base, pci_ctrl->io_phy_size);
     if (pci_ctrl->io_base == NULL) {
         devdrv_err("Ioremap io_base failed. (size=%lu)\n", size);
         devdrv_res_uninit(pci_ctrl);
@@ -679,9 +678,9 @@ int devdrv_mini_v2_res_init(struct devdrv_pci_ctrl *pci_ctrl)
             pci_ctrl_main->res.nvme_db_base +
             DEVDRV_RM_DOORBELL_QUEUE_PER_PF * DEVDRV_DB_QUEUE_TYPE * DEVDRV_MSG_CHAN_DB_OFFSET;
     } else if (davinci_dev_num > 1) {
-        /* P0 wait for hccs link ready, then P1 probe can acess P1 resource */
+        /* P0 wait for hccs link ready, then P1 probe can access P1 resource */
         while (1) {
-            flag_r = readq(pci_ctrl->res.load_sram_base);
+            flag_r = ka_mm_readq(pci_ctrl->res.load_sram_base);
             if ((flag_r == DEVDRV_NORMAL_BOOT_MODE) || (flag_r == DEVDRV_SLOW_BOOT_MODE)) {
                 break;
             }
@@ -691,7 +690,7 @@ int devdrv_mini_v2_res_init(struct devdrv_pci_ctrl *pci_ctrl)
                 devdrv_res_uninit(pci_ctrl);
                 return -ENODEV;
             }
-            msleep(DEVDRV_WAIT_BOOT_MODE_SLEEP_TIME);
+            ka_system_msleep(DEVDRV_WAIT_BOOT_MODE_SLEEP_TIME);
         }
     }
 

@@ -22,10 +22,6 @@
 #include "tls.h"
 #include "xsfp_comm.h"
 
-int dsmi_cmd_get_network_device_info(int device_id, const char *inbuf,
-                                     unsigned int size_in, char *outbuf,
-                                     unsigned int *size_out);
-
 #define MAX_CMD_SEND_LEN 2048
 
 #define INFO_PAYLOAD_LEN 1000

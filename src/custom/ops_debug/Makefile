@@ -15,15 +15,16 @@ ifeq ($(ENABLE_OPEN_SRC), y)
 	EXTRA_CFLAGS += -I$(DRIVER_HAL_INC_DIR)
 	EXTRA_CFLAGS += -I${C_SEC_INCLUDE}
 	EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/inc
+	EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/inc/trs
 	EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/inc/pbl
 	EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/kernel_adapt/include
-	EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/trs/inc
+	EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/trsdrv/trs/inc
 	EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/tsdrv/ts_drv/ts_drv_common
 	EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/kernel_adapt/include
-	EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/trsbase/inc
+	EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/trsdrv/trsbase/inc
 	EXTRA_CFLAGS += -I$(DRIVER_CUST_INC_DIR)
-	EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/trs/trs_core/command/msg/
-	EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/trs/trs_core/command/ioctl/
+	EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/trsdrv/trs/trs_core/command/msg/
+	EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/trsdrv/trs/trs_core/command/ioctl/
 	EXTRA_CFLAGS += -isystem $(shell $(CC) -print-file-name=include)
 
 	EXTRA_CFLAGS += -DCFG_FEATURE_KTHREAD_BIND_CORE
@@ -43,6 +44,7 @@ ifeq ($(ENABLE_OPEN_SRC), y)
 		EXTRA_CFLAGS += -I$(HIAI_DKMS_DIR)/inc/dbl
 		EXTRA_CFLAGS += -I$(HIAI_DKMS_DIR)/tsdrv/ts_drv/ts_drv_common
 		EXTRA_CFLAGS += -I$(HIAI_DKMS_DIR)/inc
+		EXTRA_CFLAGS += -I$(HIAI_DKMS_DIR)/inc/trs
 		EXTRA_CFLAGS += -I$(HIAI_DKMS_DIR)/inc/driver/
 		EXTRA_CFLAGS += -I$(HIAI_DKMS_DIR)/dev_inc/inc/
 		EXTRA_CFLAGS += -I$(HIAI_DKMS_DIR)/dev_inc/inc/dbl/
@@ -90,6 +92,7 @@ else
 	EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/src/prof/prof_inc
 	EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/src/prof/prof_mem_sample
 	EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/inc/
+	EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/inc/trs
 	EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/inc/dbl
 	EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/src/drv_devmng/drv_devmng_inc/
 	EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/src/tsdrv/ts_drv/ts_drv_common/tsdrv_dev
@@ -117,6 +120,7 @@ else
 		EXTRA_CFLAGS += -I$(HIAI_DKMS_DIR)/inc/dbl
 		EXTRA_CFLAGS += -I$(HIAI_DKMS_DIR)/tsdrv/ts_drv/ts_drv_common
 		EXTRA_CFLAGS += -I$(HIAI_DKMS_DIR)/inc
+		EXTRA_CFLAGS += -I$(HIAI_DKMS_DIR)/inc/trs
 		EXTRA_CFLAGS += -I$(HIAI_DKMS_DIR)/inc/driver/
 		EXTRA_CFLAGS += -I$(HIAI_DKMS_DIR)/dev_inc/inc/
 		EXTRA_CFLAGS += -I$(HIAI_DKMS_DIR)/dev_inc/inc/dbl/

@@ -14,6 +14,8 @@
 #include "fms/fms_dtm.h"
 #include "fms_define.h"
 #include "ascend_hal_error.h"
+#include "ka_base_pub.h"
+#include "ka_kernel_def_pub.h"
 
 struct dms_node_type_string {
     unsigned short node_type;
@@ -189,9 +191,9 @@ int dms_get_node_type_str(unsigned short node_type,
         if (g_dms_node_type[i].node_type != node_type) {
             continue;
         }
-        if (strlen(g_dms_node_type[i].string) >= str_len) {
+        if (ka_base_strlen(g_dms_node_type[i].string) >= str_len) {
             dms_err("Invalid parameter. (node_str=%lu; str_len=%u)\n",
-                    strlen(g_dms_node_type[i].string), str_len);
+                    ka_base_strlen(g_dms_node_type[i].string), str_len);
             return DRV_ERROR_PARA_ERROR;
         }
         if (strcpy_s(node_str, str_len, g_dms_node_type[i].string) != 0) {
@@ -205,6 +207,4 @@ int dms_get_node_type_str(unsigned short node_type,
     dms_err("Cannot find this node_type in table. (node_type=%u)\n", node_type);
     return DRV_ERROR_INVALID_HANDLE;
 }
-EXPORT_SYMBOL(dms_get_node_type_str);
-
-
+KA_EXPORT_SYMBOL(dms_get_node_type_str);

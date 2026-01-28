@@ -18,4 +18,5 @@
 #endif
 
 int dms_set_p2p_com_info(unsigned int dev_id, unsigned int sub_cmd, void *buf, unsigned int size);
+int dms_get_p2p_com_info(unsigned int dev_id, unsigned int vfid, unsigned int sub_cmd, void *buf, unsigned int *size);
 #endif

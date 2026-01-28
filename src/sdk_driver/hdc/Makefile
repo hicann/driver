@@ -9,20 +9,29 @@
 # ------------------------------------------------------------------------------------------------------------
 MODULE_NAME := drv_pcie_hdc_host
 obj-m += $(MODULE_NAME).o
-$(MODULE_NAME)-objs := common/hdc_host_init.o
-$(MODULE_NAME)-objs += pcie/host/hdcdrv_core.o pcie/host/hdcdrv_adapt.o pcie/host/hdcdrv_core_com.o pcie/host/hdcdrv_host.o
-$(MODULE_NAME)-objs += pcie/host/hdcdrv_mem.o pcie/host/hdcdrv_mem_com.o pcie/host/hdcdrv_epoll.o pcie/host/hdcdrv_host_adapt.o
-$(MODULE_NAME)-objs += pcie/host/hdcdrv_sysfs.o
+$(MODULE_NAME)-objs := common/hdc_init.o
+$(MODULE_NAME)-objs += pcie/host/hdcdrv_adapt.o pcie/host/hdcdrv_host.o pcie/host/hdcdrv_host_adapt.o
+$(MODULE_NAME)-objs += pcie/common/hdcdrv_core.o pcie/common/hdcdrv_core_com.o pcie/common/hdcdrv_mem.o
+$(MODULE_NAME)-objs += pcie/common/hdcdrv_epoll.o pcie/common/hdcdrv_sysfs.o pcie/common/hdcdrv_mem_com.o
+
+ifneq ($(filter $(PRODUCT), ascend910_95),)
+	$(MODULE_NAME)-objs += ub/common/hdcdrv_core_ub.o ub/common/hdcdrv_proc_fs_ub.o ub/common/hdcdrv_mem_pool_ub.o
+	$(MODULE_NAME)-objs += ub/common/hdcdrv_mem_com_ub.o ub/host/hdcdrv_adapt_ub.o
+endif
 
 EXTRA_CFLAGS += -I$(DRIVER_HAL_INC_DIR)
 EXTRA_CFLAGS += -I${C_SEC_INCLUDE}
-EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/hdc/common
 EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/hdc/inc
+EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/hdc/ub/inc
+EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/hdc/ub/host
 EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/hdc/command/msg
 EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/hdc/command/ioctl
+EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/hdc/pcie/inc
 EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/hdc/pcie/host
 EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/inc
 EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/dms/command/ioctl
+EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/kernel_adapt/include
+EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/inc/pbl
 EXTRA_CFLAGS += -isystem $(shell $(CC) -print-file-name=include)
 
 EXTRA_CFLAGS += -DDRV_HOST
@@ -32,7 +41,14 @@ EXTRA_CFLAGS += -DCFG_FEATURE_SRIOV
 EXTRA_CFLAGS += -DCFG_FEATURE_DISABLE_TSD_NOTIFY
 EXTRA_CFLAGS += -DCFG_FEATURE_OPTIMIZE_CHAN_MEM
 EXTRA_CFLAGS += -DCFG_FEATURE_HOST_LOG
-EXTRA_CFLAGS += -DCFG_FEATURE_KA_ALLOC_INTERFACE
+ifneq ($(filter $(PRODUCT), ascend910B),)
+	EXTRA_CFLAGS += -DCFG_FEATURE_KA_ALLOC_INTERFACE
+endif
+
+ifneq ($(filter $(PRODUCT), ascend910_95),)
+	EXTRA_CFLAGS += -Iinclude/linux
+	EXTRA_CFLAGS += -DCFG_FEATURE_UB_COMM
+endif
 EXTRA_CFLAGS += -DCFG_FEATURE_SHARE_LOG
 
 ccflags-y += -fno-common -fstack-protector-all -funsigned-char -pipe -s -Wall -Wcast-align -Werror -Wfloat-equal

@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (c) Huawei Technologies Co., Ltd. 2025-2025. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -26,6 +26,10 @@
 #include "urd_acc_ctrl.h"
 #include "urd_init.h"
 #include "pbl/pbl_urd.h"
+#include "ka_system_pub.h"
+#include "ka_memory_pub.h"
+#include "ka_kernel_def_pub.h"
+#include "ka_base_pub.h"
 
 STATIC DMS_FEATURE_NODE_S* feature_get_key_node(const char* key)
 {
@@ -87,9 +91,9 @@ STATIC DMS_FEATURE_NODE_S* feature_alloc_feature_node(DMS_FEATURE_S* feature)
 {
     DMS_FEATURE_NODE_S* node = NULL;
     int ret;
-    node = (DMS_FEATURE_NODE_S*)kzalloc(sizeof(DMS_FEATURE_NODE_S), GFP_KERNEL | __GFP_ACCOUNT);
+    node = (DMS_FEATURE_NODE_S*)ka_mm_kzalloc(sizeof(DMS_FEATURE_NODE_S), KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
     if (node == NULL) {
-        dms_err("kzalloc failed.\n");
+        dms_err("ka_mm_kzalloc failed.\n");
         return NULL;
     }
     node->feature = feature;
@@ -98,7 +102,7 @@ STATIC DMS_FEATURE_NODE_S* feature_alloc_feature_node(DMS_FEATURE_S* feature)
     ret = dms_feature_parse_proc_ctrl(feature->proc_ctrl_str, &node->proc_buf, &node->proc_ctrl, &node->proc_num);
     if (ret != 0) {
         dms_err("Parse proc failed. (ret=%d)\n", ret);
-        kfree(node);
+        ka_mm_kfree(node);
         node = NULL;
         return NULL;
     }
@@ -108,15 +112,15 @@ STATIC DMS_FEATURE_NODE_S* feature_alloc_feature_node(DMS_FEATURE_S* feature)
 STATIC void feature_free_feature_node(DMS_FEATURE_NODE_S* node)
 {
     if (node->proc_ctrl != NULL) {
-        kfree(node->proc_ctrl);
+        ka_mm_kfree(node->proc_ctrl);
         node->proc_ctrl = NULL;
     }
     if (node->proc_buf != NULL) {
-        kfree(node->proc_buf);
+        ka_mm_kfree(node->proc_buf);
         node->proc_buf = NULL;
     }
 
-    kfree(node);
+    ka_mm_kfree(node);
     return;
 }
 
@@ -132,13 +136,13 @@ int feature_inc_work(DMS_FEATURE_NODE_S* node)
         dms_err("Not support in the status. (state=%u)\n", node->state);
         return -EBUSY;
     }
-    atomic_inc(&node->count);
+    ka_base_atomic_inc(&node->count);
     return 0;
 }
 
 static inline void feature_dec_work(DMS_FEATURE_NODE_S* node)
 {
-    atomic_dec(&node->count);
+    ka_base_atomic_dec(&node->count);
     return;
 }
 
@@ -146,22 +150,22 @@ STATIC int feature_wait_work_finish(DMS_FEATURE_NODE_S* node)
 {
     int wait_count = 0;
     /* Check file not in used */
-    while ((atomic_read(&node->count) != 0) && (wait_count < FEATURE_WAIT_MAX_TIME)) {
+    while ((ka_base_atomic_read(&node->count) != 0) && (wait_count < FEATURE_WAIT_MAX_TIME)) {
         wait_count++;
         if ((wait_count % FEATURE_CONFIRM_WARN_MASK) == 0) {
             dms_warn("Wait process finish. (main_cmd=%u; sub_cmd=%u; "
                      "work_count=%d)\n",
                 node->feature->main_cmd,
                 node->feature->sub_cmd,
-                atomic_read(&node->count));
+                ka_base_atomic_read(&node->count));
         }
-        msleep(FEATURE_WAIT_EACH_TIME);
+        ka_system_msleep(FEATURE_WAIT_EACH_TIME);
     }
     if (wait_count >= FEATURE_WAIT_MAX_TIME) {
         dms_err("Wait process time out. (main_cmd=%u; sub_cmd=%u; work_count=%d)\n",
             node->feature->main_cmd,
             node->feature->sub_cmd,
-            atomic_read(&node->count));
+            ka_base_atomic_read(&node->count));
         return -EBUSY;
     }
     return 0;
@@ -171,7 +175,7 @@ STATIC ssize_t dms_feature_print_feature(void *data, char *buf, ssize_t *offset)
 {
     DMS_FEATURE_NODE_S* node = *((DMS_FEATURE_NODE_S **)data);
     ssize_t buf_ret = 0;
-    buf_ret = snprintf_s(buf + *offset, PAGE_SIZE - *offset, PAGE_SIZE - 1 - *offset,
+    buf_ret = snprintf_s(buf + *offset, KA_MM_PAGE_SIZE - *offset, KA_MM_PAGE_SIZE - 1 - *offset,
         "%s\t0x%x\t0x%x\t%s\t%s\t0x%x\t%u\t%d\t%llu\t%llu\t%llu\t%llu\t%llu\t%d\n",
         node->feature->owner_name, node->feature->main_cmd, node->feature->sub_cmd,
         (node->feature->filter == NULL) ? "null" : node->feature->filter,
@@ -187,15 +191,15 @@ STATIC ssize_t dms_feature_print_feature(void *data, char *buf, ssize_t *offset)
 ssize_t dms_feature_print_feature_list(char *buf)
 {
     ssize_t offset = 0;
-    offset = snprintf_s(buf, PAGE_SIZE, PAGE_SIZE - 1,
+    offset = snprintf_s(buf, KA_MM_PAGE_SIZE, KA_MM_PAGE_SIZE - 1,
         "owner\tmain\tsub\tfilter\tprocess\tpri\tstate"
-        "\tcount\ttotal\tfailed\ts-max\ts-min\ts-last\ts_l_ret\n");
+        "\tcount\ttotal\tfailed\ts-max\ts-ka_base_min\ts-last\ts_l_ret\n");
     if (offset >= 0) {
         dms_kv_dump(buf, &offset, dms_feature_print_feature);
     }
     return offset;
 }
-EXPORT_SYMBOL(dms_feature_print_feature_list);
+KA_EXPORT_SYMBOL(dms_feature_print_feature_list);
 
 int dms_feature_register(DMS_FEATURE_S* feature)
 {
@@ -235,7 +239,7 @@ int dms_feature_register(DMS_FEATURE_S* feature)
         feature->privilege);
     return 0;
 }
-EXPORT_SYMBOL(dms_feature_register);
+KA_EXPORT_SYMBOL_GPL(dms_feature_register);
 
 int dms_feature_unregister(DMS_FEATURE_S* feature)
 {
@@ -279,7 +283,7 @@ int dms_feature_unregister(DMS_FEATURE_S* feature)
     dms_info("unregister OK. (main_cmd=%u; sub_cmd=%u)\n", feature->main_cmd, feature->sub_cmd);
     return 0;
 }
-EXPORT_SYMBOL(dms_feature_unregister);
+KA_EXPORT_SYMBOL_GPL(dms_feature_unregister);
 
 STATIC void dms_update_static(FEATURE_STATISTIC_S *s,
     int ret, u64 start, u64 end)
@@ -292,7 +296,7 @@ STATIC void dms_update_static(FEATURE_STATISTIC_S *s,
     if (end >= start) {
         s->time_last = end - start;
     } else {
-        s->time_last = end + (ULLONG_MAX - start);
+        s->time_last = end + (KA_ULLONG_MAX - start);
     }
     if (s->time_last > s->time_max) {
         s->time_max = s->time_last;
@@ -306,7 +310,7 @@ STATIC void urd_feature_make_handle_para(DMS_FEATURE_ARG_S* arg, DMS_FEATURE_S* 
                                          struct urd_cmd *cmd, struct urd_cmd_para *cmd_para)
 {
     cmd->filter = feature->filter;
-    cmd->filter_len = (feature->filter != NULL) ? strlen(feature->filter) : 0;
+    cmd->filter_len = (feature->filter != NULL) ? ka_base_strlen(feature->filter) : 0;
     cmd->main_cmd = feature->main_cmd;
     cmd->sub_cmd = feature->sub_cmd;
 

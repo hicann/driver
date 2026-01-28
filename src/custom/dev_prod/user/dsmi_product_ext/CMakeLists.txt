@@ -29,10 +29,10 @@ target_include_directories(drvdsmi_host PRIVATE
     ${DRIVER_USER_DIR}/dmc/dsmi/include/
     ${DRIVER_USER_DIR}/dmc/dms/common/
     ${DRIVER_USER_DIR}/inc/
+    ${DRIVER_USER_DIR}/inc/pbl
     ${DRIVER_USER_DIR}/inc/dmc
     ${DRIVER_USER_DIR}/inc/dms/
     ${DRIVER_USER_DIR}/dms/common
-    ${DRIVER_USER_DIR}/ascend_base_hal
     ${DRIVER_USER_DIR}/dms/drv_devmng/inc
     ${DRIVER_KERNEL_DIR}/pbl/dev_urd
     ${DRIVER_CUST_INC_DIR}
@@ -68,4 +68,5 @@ target_compile_definitions(drvdsmi_host PRIVATE
     $<$<STREQUAL:${PRODUCT},ascend910B>:CFG_FEATURE_SERDES_INFO>
     $<$<STREQUAL:${PRODUCT},ascend910B>:CFG_FEATURE_INIT_MCU_BOARD_ID>
     $<$<STREQUAL:${PRODUCT},ascend910B>:CFG_FEATURE_HCCS_BANDWIDTH>
+    $<$<STREQUAL:${PRODUCT},ascend910B>:CFG_FEATURE_AICPU_CUSTOM_CERT>
 )

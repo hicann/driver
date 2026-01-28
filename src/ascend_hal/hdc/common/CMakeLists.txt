@@ -16,6 +16,7 @@ target_sources(hdc_obj PRIVATE
     hdc_ppc.c
     hdc_epoll.c
     hdc_file_trans.c
+    ${DRIVER_USER_DIR}/hdc/host/hdc_adapter.c
 )
 
 add_subdirectory(pcie)

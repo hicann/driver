@@ -17,6 +17,7 @@
 
 #include "dms/dms_cmd_def.h"
 #include "fms/fms_smf.h"
+#include "ka_task_pub.h"
 
 #define DMS_EVENT_DISTRIBUTE_FUNC_MAX 64
 #define DISTRIBUTE_FUNC_HEAD_INDEX(priority) (DMS_EVENT_DISTRIBUTE_FUNC_MAX /               \
@@ -53,12 +54,12 @@ typedef struct timespec TASK_TIME_TYPE;
 
 typedef struct {
     struct kfifo event_fifo;
-    wait_queue_head_t event_wait;
+    ka_wait_queue_head_t event_wait;
     struct mutex process_mutex;
 
     u32 exception_num;
-    pid_t process_pid;
-    pid_t process_tid;
+    ka_pid_t process_pid;
+    ka_pid_t process_tid;
     u64 start_time; /* pid start time, not tgid */
     u8 process_status;
 } DMS_EVENT_PROCESS_STRU;

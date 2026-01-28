@@ -93,8 +93,8 @@ struct bus_adpater_stu *get_adapter_by_module(unsigned int index);
 void put_adapter(struct bus_adpater_stu *adap);
 
 void init_module_func(const struct module *mod, const struct symbol_list *fun_name_list,
-    unsigned int count, struct bus_adpater_stu *adpat);
-void uninit_module_func(const struct symbol_list *fun_name_list, unsigned int count, struct bus_adpater_stu *adpat);
+    unsigned int count, struct bus_adpater_stu *adapt);
+void uninit_module_func(const struct symbol_list *fun_name_list, unsigned int count, struct bus_adpater_stu *adapt);
 
 int ascend_adapter_init(void);
 void ascend_adapter_exit(void);

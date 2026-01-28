@@ -15,6 +15,7 @@
 #include <unistd.h>
 #include "dms_devdrv_info_comm.h"
 #include "ascend_hal.h"
+#include "ascend_inpackage_hal.h"
 #include "hccn_comm.h"
 #include "hccn_tool.h"
 #include "dsmi_device_info.h"

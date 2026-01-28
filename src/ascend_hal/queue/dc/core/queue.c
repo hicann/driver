@@ -24,7 +24,7 @@
 #include "drv_buff_unibuff.h"
 #include "drv_buff_mbuf.h"
 #include "esched_user_interface.h"
-#include "uda_inner.h"
+#include "pbl_uda_user.h"
 #include "queue_user_manage.h"
 #include "queue_interface.h"
 #include "queue.h"
@@ -214,7 +214,7 @@ static drvError_t queue_init_mng_info(struct queue_manages *que_mng, const Queue
     unsigned int qid, unsigned int dev_id)
 {
     int ret;
-
+    struct timeval create_time;
     init_atomic_lock(&que_mng->merge_atomic_lock);
     ret = strncpy_s(que_mng->name, MAX_STR_LEN, que_attr->name, strnlen(que_attr->name, MAX_STR_LEN));
     if (ret != 0) {
@@ -225,6 +225,8 @@ static drvError_t queue_init_mng_info(struct queue_manages *que_mng, const Queue
     que_mng->dev_id = dev_id;
     que_mng->id = qid;
     que_mng->queue_head.head_value = 0;
+    que_get_time(&create_time);
+    que_mng->create_time = (unsigned long)(create_time.tv_usec + create_time.tv_sec * USEC_PER_SEC);
     que_mng->creator_pid = getpid();
     atomic_value_init(&que_mng->tail_status);
     que_mng->enque_cas = 0;
@@ -243,7 +245,7 @@ static drvError_t queue_init_mng_info(struct queue_manages *que_mng, const Queue
     return DRV_ERROR_NONE;
 }
 
-STATIC drvError_t queue_create_local(unsigned int dev_id, const QueueAttr *que_attr, unsigned int *qid)
+static drvError_t queue_create_local(unsigned int dev_id, const QueueAttr *que_attr, unsigned int *qid)
 {
     struct queue_local_info local_info;
     drvError_t ret;
@@ -457,7 +459,7 @@ static drvError_t queue_destroy_res(struct queue_manages *que_manage, unsigned i
     return DRV_ERROR_NONE;
 }
 
-STATIC drvError_t queue_destroy_local(unsigned int dev_id, unsigned int qid)
+static drvError_t queue_destroy_local(unsigned int dev_id, unsigned int qid)
 {
     struct queue_manages *que_manage = NULL;
     drvError_t ret;
@@ -578,6 +580,28 @@ drvError_t queue_reset_local(unsigned int dev_id, unsigned int qid)
     }
     queue_put(qid);
     return ret;
+}
+
+drvError_t queue_query_alive(unsigned int devid, unsigned int qid)
+{
+    struct queue_manages *que_manage = NULL;
+    drvError_t ret;
+
+    ret = get_queue_manage_by_qid(devid, qid, &que_manage);
+    if (ret != DRV_ERROR_NONE) {
+        return ret;
+    }
+
+    if (!queue_get(qid)) {
+        return DRV_ERROR_NOT_EXIST;
+    }
+
+    if (que_manage->valid != QUEUE_CREATED) {
+        queue_put(qid);
+        return DRV_ERROR_NOT_EXIST;
+    }
+    queue_put(qid);  
+    return DRV_ERROR_NONE;
 }
 
 static drvError_t submit_queue_event(unsigned int devid, unsigned int qid, struct sub_info *sub_event)
@@ -2319,6 +2343,31 @@ void queue_update_time(unsigned int dev_id, unsigned int qid, unsigned int host_
     return;
 }
 
+drvError_t queue_get_qid_create_time(unsigned int dev_id, unsigned int qid, unsigned long *create_time)
+{
+    struct queue_manages *que_mng = NULL;
+    drvError_t ret;
+
+    ret = get_queue_manage_by_qid(dev_id, qid, &que_mng);
+    if (ret != DRV_ERROR_NONE) {
+        QUEUE_LOG_ERR("get queue manage failed. (qid=%u; ret=%d)\n", qid, ret);
+        return ret;
+    }
+
+    if (!queue_get(qid)) {
+        QUEUE_LOG_ERR("queue get failed. (qid=%u)\n", qid);
+        return DRV_ERROR_NOT_EXIST;
+    }
+
+    if (que_mng->valid != QUEUE_CREATED) {
+        queue_put(qid);
+        QUEUE_LOG_ERR("queue is not created. (qid=%u)\n", qid);
+        return DRV_ERROR_NOT_EXIST;
+    }
+    *create_time = que_mng->create_time;
+    queue_put(qid);
+    return DRV_ERROR_NONE;
+}
 STATIC struct queue_comm_interface_list g_core_interface = {
     .queue_dc_init = queue_init_local,
     .queue_uninit = NULL,

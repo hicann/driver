@@ -35,7 +35,7 @@ static pid_t devmm_get_devpid(uint32_t devid, enum devdrv_process_type proc_type
         hostpidinfo.vfid = 0;
         ret = halQueryDevpid(hostpidinfo, &devpid);
         if (ret == 0) {
-            /* if cp2 not exsit, query will return cp1 pid */
+            /* if cp2 not exist, query will return cp1 pid */
             if ((proc_type == DEVDRV_PROCESS_CP2) && (devpid == g_svm_devpid[devid][DEVDRV_PROCESS_CP1])) {
                 return 0;
             }

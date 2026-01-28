@@ -65,6 +65,31 @@
 #define DCMI_CFG_CUSTOM_OP_LOCK_DIR                 "/run/custom_op_cfg_lock"
 #define DCMI_CFG_CUSTOM_OP_LOCK_FILE_NAME           "/run/custom_op_cfg_lock/custom_op_cfg_lock_flag"
 
+#define DCMI_OP_TIMEOUT_CONF                      "/etc/op_timeout.cfg"
+#define DCMI_OP_TIMEOUT_CONF_BAK                  "/etc/op_timeout.cfg.bak"
+#define DCMI_OP_TIMEOUT_CONF_DEFAULT_COMMENT                                \
+    ("op-timeout-exponent\n[op-timeout-config start]\n[op-timeout-config end]\n")
+#define DCMI_OP_TIMEOUT_FLAG_NOT_FIND             0
+#define DCMI_ERR_CODE_OP_TIMEOUT_CONFIG_ILLEGAL   10
+#define DCMI_OP_TIMEOUT_CONF_ONE_LINE_MAX_LEN     256
+#define DCMI_CFG_OP_TIMEOUT_LOCK_DIR              "/run/op_timeout_cfg_lock"
+#define DCMI_CFG_OP_TIMEOUT_LOCK_FILE_NAME        "/run/op_timeout_cfg_lock/op_timeout_cfg_lock_flag"
+#define DCMI_CFG_OP_TIMEOUT_DLINE_LEN             4
+#define DCMI_CFG_OP_TIMEOUT_CMD_LINE_LEN          42
+
+#define DCMI_DEVICE_SHARE_CONF                      "/etc/device_share.cfg"  // 容器共享的配置文件
+#define DCMI_DEVICE_SHARE_CONF_BAK                  "/etc/device_share.cfg.bak"  // 备份的配置文件
+#define DCMI_DEVICE_SHARE_MAX_SIZE                  (0x400000)
+#define DCMI_DEVICE_SHARE_CONF_ONE_LINE_MAX_LEN     256
+#define DCMI_DEVICE_SHARE_CONF_DEFAULT_COMMENT                                  \
+    ("device-share-recover:disable\n[device-share-config start]\n[device-share-config end]\n")
+#define DCMI_CFG_DEVICE_SHARE_DLINE_LEN             4   // 命令字末尾4个字符
+#define DCMI_CFG_DEVICE_SHARE_CMD_LINE_LEN          40  // 命令字一行最大值
+#define DCMI_DEVICE_SHARE_FLAG_NOT_FIND             0
+#define DCMI_ERR_CODE_DEVICE_SHARE_CONFIG_ILLEGAL   10
+#define DCMI_CFG_DEVICE_SHARE_LOCK_DIR              "/run/device_share_cfg_lock"
+#define DCMI_CFG_DEVICE_SHARE_LOCK_FILE_NAME        "/run/device_share_cfg_lock/device_share_cfg_lock_flag"
+
 enum dcmi_cfg_line_type {
     DCMI_CFG_NOT_NEED_INSERT = 0,
     DCMI_CFG_NEED_INSERT,
@@ -122,5 +147,18 @@ int dcmi_cfg_set_custom_op_config_recover_mode(unsigned int mode);
 
 int dcmi_cfg_get_custom_op_config_recover_mode(unsigned int *mode);
 
+int dcmi_cfg_get_device_share_config_recover_mode(unsigned int *enable_flag);
+
+int dcmi_cfg_set_device_share_config_recover_mode(unsigned int enable_flag);
+
 int dcmi_cfg_insert_set_custom_op_cmdline(int card_id, int chip_id, int enable_value);
+
+int dcmi_cfg_malloc_buffer_and_init(char **buf_out, unsigned int buf_size);
+void dcmi_cfg_write_default_context(char *path, char *default_comment);
+int dcmi_cfg_process_action(int action, struct cfg_buf_info *buf_info, unsigned int *len,
+    const char *cmdline, const char *buf_tmp);
+
+int dcmi_cfg_insert_set_op_timeout_cmdline(int card_id, int chip_id, unsigned int enable_value);
+int dcmi_cfg_insert_set_device_share_cmdline(int card_id, int chip_id, int enable_value);
+int dcmi_cfg_insert_device_share_cmdline_to_buffer(const char *cmdline, FILE *fp, char **buf_out, unsigned int *len);
 #endif

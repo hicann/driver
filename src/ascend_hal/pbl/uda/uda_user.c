@@ -9,7 +9,7 @@
  */
 
 #include "ascend_hal.h"
-#include "uda_user_base.h"
+#include "uda_user.h"
 
 drvError_t drvGetDevNum(uint32_t *devNum)
 {

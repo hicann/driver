@@ -21,7 +21,6 @@
 #include "devdrv_manager.h"
 #include "devdrv_common.h"
 #include "devdrv_pcie.h"
-#include "dev_mnt_vdevice.h"
 #include "devdrv_manager_common.h"
 #include "devdrv_manager_container.h"
 #include "pbl_mem_alloc_interface.h"
@@ -32,6 +31,13 @@
 #include "hvdevmng_init.h"
 #include "devdrv_manager_msg.h"
 #endif
+
+#include "ka_kernel_def_pub.h"
+#include "ka_task_pub.h"
+#include "ka_base_pub.h"
+#include "ka_memory_pub.h"
+#include "ka_list_pub.h"
+#include "dev_mnt_vdevice.h"
 
 #define DEVDRV_DESTROY_ALL_VDEVICE 0xffff
 #define VDEVMNG_AICPU_BITMAP_LEN 16
@@ -75,7 +81,7 @@ const u32 g_vdev_dtype[VDAVINCI_SUPPORT_DIVIDE_AICORE_NUM + 1] = {
 STATIC struct dev_mnt_vdev_inform g_vdev_inform;
 STATIC DEV_MNT_VDEV_CB_T *g_mnt_vdev_cb = NULL;
 static struct file_operations dev_mnt_vdev_fops_real = {
-    .owner = THIS_MODULE,
+    .owner = KA_THIS_MODULE,
     .open = NULL,
     .release = NULL,
     .unlocked_ioctl = NULL,
@@ -155,17 +161,17 @@ STATIC struct vdavinci_info *dev_mnt_vdevice_alloc(u32 phy_id, u32 core_num,
     u32 vdev_index;
 
     vdev_index = dev_mnt_vdevice_get_vdev_id(phy_id, vfid);
-    mutex_lock(&g_mnt_vdev_cb->vdev[vdev_index].lock);
+    ka_task_mutex_lock(&g_mnt_vdev_cb->vdev[vdev_index].lock);
     if (g_mnt_vdev_cb->vdev[vdev_index].alloc_state == VDAVINCI_IDLE) {
         g_mnt_vdev_cb->vdev[vdev_index].alloc_state = VDAVINCI_INIT;
         g_mnt_vdev_cb->vdev[vdev_index].info.phy_devid = phy_id;
         g_mnt_vdev_cb->vdev[vdev_index].info.vfid = vfid;
         g_mnt_vdev_cb->vdev[vdev_index].info.spec_info.core_num = core_num;
         *vdev_id = vdev_index;
-        mutex_unlock(&g_mnt_vdev_cb->vdev[vdev_index].lock);
+        ka_task_mutex_unlock(&g_mnt_vdev_cb->vdev[vdev_index].lock);
         return &g_mnt_vdev_cb->vdev[vdev_index].info;
     }
-    mutex_unlock(&g_mnt_vdev_cb->vdev[vdev_index].lock);
+    ka_task_mutex_unlock(&g_mnt_vdev_cb->vdev[vdev_index].lock);
     return NULL;
 }
 
@@ -196,16 +202,16 @@ STATIC int dev_mnt_destory_vdevice_single(u32 phy_id, u32 vdev_id)
     }
 
     info_cb = &g_mnt_vdev_cb->vdev[vdev_id].info;
-    mutex_lock(&g_mnt_vdev_cb->vdev[vdev_id].lock);
+    ka_task_mutex_lock(&g_mnt_vdev_cb->vdev[vdev_id].lock);
     if (g_mnt_vdev_cb->vdev[vdev_id].alloc_state == VDAVINCI_IDLE) {
-        mutex_unlock(&g_mnt_vdev_cb->vdev[vdev_id].lock);
+        ka_task_mutex_unlock(&g_mnt_vdev_cb->vdev[vdev_id].lock);
         devdrv_drv_warn("vdev_id(%u) is not alloced.\n", VDAVINCI_VDEV_OFFSET_PLUS(vdev_id));
         return -ENODEV;
     }
 
     if ((info_cb->phy_devid != phy_id) ||
         (g_mnt_vdev_cb->vdev[vdev_id].info.used == VDAVINCI_STATE_INUSED)) {
-        mutex_unlock(&g_mnt_vdev_cb->vdev[vdev_id].lock);
+        ka_task_mutex_unlock(&g_mnt_vdev_cb->vdev[vdev_id].lock);
             devdrv_drv_warn("vdev_id(%u) is inused. phy_id(%u), info_phy_id(%d)\n",
                 VDAVINCI_VDEV_OFFSET_PLUS(vdev_id), phy_id, info_cb->phy_devid);
         return -EINVAL;
@@ -221,7 +227,7 @@ STATIC int dev_mnt_destory_vdevice_single(u32 phy_id, u32 vdev_id)
     ret = vmngh_destory_container_vdev(phy_id, g_mnt_vdev_cb->vdev[vdev_id].info.vfid);
 #endif
     if (ret != 0) {
-        mutex_unlock(&g_mnt_vdev_cb->vdev[vdev_id].lock);
+        ka_task_mutex_unlock(&g_mnt_vdev_cb->vdev[vdev_id].lock);
         devdrv_drv_err("destroy_container failed, phy_id:%u,vfid:%u,ret:%d\n", phy_id,
             g_mnt_vdev_cb->vdev[vdev_id].info.vfid, ret);
         return ret;
@@ -231,7 +237,7 @@ STATIC int dev_mnt_destory_vdevice_single(u32 phy_id, u32 vdev_id)
     g_split_details.splitted_total -= g_split_details.vdev_pieces[vdev_id];
     g_split_details.vdev_pieces[vdev_id] = 0;
 #endif
-    mutex_unlock(&g_mnt_vdev_cb->vdev[vdev_id].lock);
+    ka_task_mutex_unlock(&g_mnt_vdev_cb->vdev[vdev_id].lock);
     return 0;
 }
 
@@ -242,7 +248,7 @@ STATIC int dev_mnt_destory_all_vdevice(u32 phy_id)
     int ret;
     u32 i;
 
-    mutex_lock(&g_mnt_vdev_cb->global_lock);
+    ka_task_mutex_lock(&g_mnt_vdev_cb->global_lock);
     for (i = (phy_id * VDAVINCI_MAX_VFID_NUM); i < next_count; i++) {
         ret = dev_mnt_destory_vdevice_single(phy_id, i);
         if ((ret != 0) && (ret != -ENODEV)) {
@@ -250,7 +256,7 @@ STATIC int dev_mnt_destory_all_vdevice(u32 phy_id)
             continue;
         }
     }
-    mutex_unlock(&g_mnt_vdev_cb->global_lock);
+    ka_task_mutex_unlock(&g_mnt_vdev_cb->global_lock);
     if (destroy_succ) {
         return 0;
     }
@@ -378,9 +384,9 @@ STATIC int dev_mnt_create_vdevice_single(u32 phy_id, struct vdev_create_info *vi
         return -EINVAL;
     }
 
-    mutex_lock(&g_mnt_vdev_cb->vdev[vinfo->vdevid].lock);
+    ka_task_mutex_lock(&g_mnt_vdev_cb->vdev[vinfo->vdevid].lock);
     g_mnt_vdev_cb->vdev[vinfo->vdevid].alloc_state = VDAVINCI_USED;
-    mutex_unlock(&g_mnt_vdev_cb->vdev[vinfo->vdevid].lock);
+    ka_task_mutex_unlock(&g_mnt_vdev_cb->vdev[vinfo->vdevid].lock);
     return 0;
 }
 
@@ -393,9 +399,9 @@ STATIC int dev_mnt_destory_vdevice(u32 phy_id, u32 vdev_id)
         ret = dev_mnt_destory_all_vdevice(phy_id);
     } else {
         offset_id = VDAVINCI_VDEV_OFFSET_SUB(vdev_id);
-        mutex_lock(&g_mnt_vdev_cb->global_lock);
+        ka_task_mutex_lock(&g_mnt_vdev_cb->global_lock);
         ret = dev_mnt_destory_vdevice_single(phy_id, offset_id);
-        mutex_unlock(&g_mnt_vdev_cb->global_lock);
+        ka_task_mutex_unlock(&g_mnt_vdev_cb->global_lock);
     }
 
     return ret;
@@ -425,7 +431,7 @@ int dev_mnt_vdevice_logical_id_to_phy_id(u32 logical_id, u32 *phy_id, u32 *vfid)
     }
     return 0;
 }
-EXPORT_SYMBOL(dev_mnt_vdevice_logical_id_to_phy_id);
+KA_EXPORT_SYMBOL(dev_mnt_vdevice_logical_id_to_phy_id);
 
 #ifdef CFG_FEATURE_VFIO
 STATIC inline void dev_mng_get_media_info(struct devdrv_media_resource_vdev *media,
@@ -455,7 +461,7 @@ STATIC int get_single_vdev_info(struct vdev_query_info *query_info, struct vmng_
 #endif
     stars_refresh = &vm_info->each.stars_refresh;
     aicpu_bitmap = (unsigned long)stars_refresh->device_aicpu;
-    query_info->computing.device_aicpu = bitmap_weight(&aicpu_bitmap, VDEVMNG_AICPU_BITMAP_LEN);
+    query_info->computing.device_aicpu = ka_base_bitmap_weight(&aicpu_bitmap, VDEVMNG_AICPU_BITMAP_LEN);
     query_info->base.vfg_id = vm_info->each.vfg.vfg_id;
     query_info->base.vip_mode = vm_info->each.vfg.vfg_type;
     query_info->base.token = vm_info->each.vfg.vfg_refresh.token;
@@ -493,7 +499,7 @@ STATIC int get_device_total_info(u32 phy_id, struct vdev_query_info *query_info,
 #endif
     stars_refresh = &vm_info->total.stars_refresh;
     aicpu_bitmap = (unsigned long)stars_refresh->device_aicpu;
-    query_info->computing.device_aicpu = bitmap_weight(&aicpu_bitmap, VDEVMNG_AICPU_BITMAP_LEN);
+    query_info->computing.device_aicpu = ka_base_bitmap_weight(&aicpu_bitmap, VDEVMNG_AICPU_BITMAP_LEN);
     dev_mng_get_media_info(&query_info->media, stars_refresh);
 
     return 0;
@@ -530,7 +536,7 @@ STATIC int get_device_free_memory_info(u32 phy_id, struct vdev_query_info *query
         return -ENOMEM;
     }
 
-    mutex_lock(&g_mnt_vdev_cb->global_lock);
+    ka_task_mutex_lock(&g_mnt_vdev_cb->global_lock);
     for (i = (phy_id * VDAVINCI_MAX_VFID_NUM); i < (phy_id + 1) * VDAVINCI_MAX_VFID_NUM; i++) {
         if (g_mnt_vdev_cb->vdev[i].alloc_state == VDAVINCI_USED) {
             vdevices[vdev_num] = VDAVINCI_VDEV_OFFSET_PLUS(i);
@@ -538,7 +544,7 @@ STATIC int get_device_free_memory_info(u32 phy_id, struct vdev_query_info *query
         }
     }
 
-    mutex_unlock(&g_mnt_vdev_cb->global_lock);
+    ka_task_mutex_unlock(&g_mnt_vdev_cb->global_lock);
     for (i = 0; i < vdev_num; i++) {
         info_tmp.info_type = DEVDRV_DEV_HBM_TOTAL;
         ret = hvdevmng_get_dev_resource(vdevices[i], 0, &info_tmp);
@@ -582,7 +588,7 @@ STATIC int get_device_free_info(u32 phy_id, struct vdev_query_info *query_info,
 
     stars_refresh = &vm_info->remain.stars_refresh;
     aicpu_bitmap = (unsigned long)stars_refresh->device_aicpu;
-    query_info->computing.device_aicpu = bitmap_weight(&aicpu_bitmap, VDEVMNG_AICPU_BITMAP_LEN);
+    query_info->computing.device_aicpu = ka_base_bitmap_weight(&aicpu_bitmap, VDEVMNG_AICPU_BITMAP_LEN);
     dev_mng_get_media_info(&query_info->media, stars_refresh);
 
     return 0;
@@ -677,7 +683,7 @@ STATIC int dev_mnt_get_vdevice_info(u32 phy_id, struct vdev_query_info *vdev_inf
     u32 vf_dev_id = 0;
 #endif
 
-    vm_info = dbl_kzalloc(sizeof(struct vmng_soc_resource_enquire), GFP_KERNEL | __GFP_ACCOUNT);
+    vm_info = dbl_kzalloc(sizeof(struct vmng_soc_resource_enquire), KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
     if (vm_info == NULL) {
         devdrv_drv_err("Kzalloc failed. (phy_id=%u)\n", phy_id);
         return -ENOMEM;
@@ -723,7 +729,7 @@ STATIC int dev_mnt_get_vdevice_info(u32 phy_id, struct vdev_query_info *vdev_inf
         goto VM_INFO_KFREE;
     }
 
-    mutex_lock(&g_mnt_vdev_cb->global_lock);
+    ka_task_mutex_lock(&g_mnt_vdev_cb->global_lock);
     for (i = (phy_id * VDAVINCI_MAX_VFID_NUM); i < next_count; i++) {
         if (i >= ASCEND_VDEV_MAX_NUM) {
             break;
@@ -742,7 +748,7 @@ STATIC int dev_mnt_get_vdevice_info(u32 phy_id, struct vdev_query_info *vdev_inf
 #ifdef CFG_FEATURE_VF_SINGLE_AICORE
     core_used = ((g_split_details.splitted_total == 0) ? 0 : VDEV_PF_AICORE_NUM);
 #endif
-    mutex_unlock(&g_mnt_vdev_cb->global_lock);
+    ka_task_mutex_unlock(&g_mnt_vdev_cb->global_lock);
     if (core_used > core_total) {
         devdrv_drv_err("ai core num error,phyid:%u core_used:%u,total:%d\n", phy_id, core_used, core_total);
 #ifndef CFG_FEATURE_ASCEND910_95_FPGA_STUB
@@ -768,19 +774,19 @@ int dev_mnt_vdevice_init(void)
 {
     int i;
 
-    g_mnt_vdev_cb = dbl_kzalloc(sizeof(DEV_MNT_VDEV_CB_T), GFP_KERNEL | __GFP_ACCOUNT);
+    g_mnt_vdev_cb = dbl_kzalloc(sizeof(DEV_MNT_VDEV_CB_T), KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
     if (g_mnt_vdev_cb == NULL) {
         devdrv_drv_err("stream alloc_chrdev_region failed.\n");
         return -ENOMEM;
     }
 
-    mutex_init(&g_mnt_vdev_cb->global_lock);
+    ka_task_mutex_init(&g_mnt_vdev_cb->global_lock);
     for (i = 0; i < ASCEND_VDEV_MAX_NUM; i++) {
-        mutex_init(&g_mnt_vdev_cb->vdev[i].lock);
+        ka_task_mutex_init(&g_mnt_vdev_cb->vdev[i].lock);
     }
 
-    INIT_LIST_HEAD(&g_vdev_inform.vdev_action_head);
-    spin_lock_init(&g_vdev_inform.spinlock);
+    KA_INIT_LIST_HEAD(&g_vdev_inform.vdev_action_head);
+    ka_task_spin_lock_init(&g_vdev_inform.spinlock);
     return 0;
 }
 
@@ -792,11 +798,11 @@ void dev_mnt_vdevice_uninit(void)
         return;
     }
 
-    mutex_lock(&g_mnt_vdev_cb->global_lock);
+    ka_task_mutex_lock(&g_mnt_vdev_cb->global_lock);
     for (i = 0; i < ASCEND_VDEV_MAX_NUM; i++) {
-        mutex_destroy(&g_mnt_vdev_cb->vdev[i].lock);
+        ka_task_mutex_destroy(&g_mnt_vdev_cb->vdev[i].lock);
     }
-    mutex_unlock(&g_mnt_vdev_cb->global_lock);
+    ka_task_mutex_unlock(&g_mnt_vdev_cb->global_lock);
 
     dev_mnt_vdevice_inform_release();
     dbl_kfree(g_mnt_vdev_cb);
@@ -815,7 +821,7 @@ int dev_mnt_vdev_register_client(u32 phy_id, u32 vfid,
     dev_mnt_vdev_set_ops(ops);
     return 0;
 }
-EXPORT_SYMBOL(dev_mnt_vdev_register_client);
+KA_EXPORT_SYMBOL(dev_mnt_vdev_register_client);
 
 int dev_mnt_vdev_unregister_client(u32 phy_id, u32 vfid)
 {
@@ -826,7 +832,7 @@ int dev_mnt_vdev_unregister_client(u32 phy_id, u32 vfid)
 
     return 0;
 }
-EXPORT_SYMBOL(dev_mnt_vdev_unregister_client);
+KA_EXPORT_SYMBOL(dev_mnt_vdev_unregister_client);
 
 #if (defined CFG_FEATURE_VFIO) && (defined CFG_FEATURE_RC_MODE)
 STATIC int dev_mnt_check_create_para_single(u32 phy_id, struct vdev_create_info *vinfo)
@@ -930,10 +936,10 @@ STATIC void dev_mnt_vdevice_bind(u32 vdev_id, struct mnt_namespace *ns, u64 cont
         return;
     }
 
-    mutex_lock(&g_mnt_vdev_cb->vdev[offset_id].lock);
+    ka_task_mutex_lock(&g_mnt_vdev_cb->vdev[offset_id].lock);
     info = &g_mnt_vdev_cb->vdev[offset_id].info;
     if (info->used == VDAVINCI_STATE_INUSED) {
-        mutex_unlock(&g_mnt_vdev_cb->vdev[offset_id].lock);
+        ka_task_mutex_unlock(&g_mnt_vdev_cb->vdev[offset_id].lock);
         devdrv_drv_err_spinlock("bind failed, vdev_id(%u) is in use\n", vdev_id);
         return;
     }
@@ -941,7 +947,7 @@ STATIC void dev_mnt_vdevice_bind(u32 vdev_id, struct mnt_namespace *ns, u64 cont
     info->container_id = container_id;
     info->ns = ns;
     info->used = VDAVINCI_STATE_INUSED;
-    mutex_unlock(&g_mnt_vdev_cb->vdev[offset_id].lock);
+    ka_task_mutex_unlock(&g_mnt_vdev_cb->vdev[offset_id].lock);
 }
 
 STATIC void dev_mnt_vdevice_unbind(u32 vdev_id)
@@ -964,10 +970,10 @@ STATIC void dev_mnt_vdevice_unbind(u32 vdev_id)
         return;
     }
 
-    mutex_lock(&g_mnt_vdev_cb->vdev[offset_id].lock);
+    ka_task_mutex_lock(&g_mnt_vdev_cb->vdev[offset_id].lock);
     info = &g_mnt_vdev_cb->vdev[offset_id].info;
     if (info->used == VDAVINCI_STATE_IDLE) {
-        mutex_unlock(&g_mnt_vdev_cb->vdev[offset_id].lock);
+        ka_task_mutex_unlock(&g_mnt_vdev_cb->vdev[offset_id].lock);
         devdrv_drv_err_spinlock("unbind failed, vdev_id(%u) had not bind\n", vdev_id);
         return;
     }
@@ -976,7 +982,7 @@ STATIC void dev_mnt_vdevice_unbind(u32 vdev_id)
     info->container_id = 0;
     info->ns = NULL;
     info->used = VDAVINCI_STATE_IDLE;
-    mutex_unlock(&g_mnt_vdev_cb->vdev[offset_id].lock);
+    ka_task_mutex_unlock(&g_mnt_vdev_cb->vdev[offset_id].lock);
 }
 
 int dev_mnt_vdevice_add_inform(unsigned int vdev_id, vdev_action action, struct mnt_namespace *ns, u64 container_id)
@@ -987,7 +993,7 @@ int dev_mnt_vdevice_add_inform(unsigned int vdev_id, vdev_action action, struct 
         return 0;
     }
 
-    new_vdev_action = dbl_kzalloc(sizeof(struct dev_mnt_vdev_action), GFP_ATOMIC | __GFP_ACCOUNT);
+    new_vdev_action = dbl_kzalloc(sizeof(struct dev_mnt_vdev_action), KA_GFP_ATOMIC | __KA_GFP_ACCOUNT);
     if (new_vdev_action == NULL) {
         devdrv_drv_err_spinlock("kzalloc new_vdev_action failed.\n");
         return -ENOMEM;
@@ -997,9 +1003,9 @@ int dev_mnt_vdevice_add_inform(unsigned int vdev_id, vdev_action action, struct 
     new_vdev_action->ns = ns;
     new_vdev_action->container_id = container_id;
 
-    spin_lock(&g_vdev_inform.spinlock);
-    list_add_tail(&new_vdev_action->list_node, &g_vdev_inform.vdev_action_head);
-    spin_unlock(&g_vdev_inform.spinlock);
+    ka_task_spin_lock(&g_vdev_inform.spinlock);
+    ka_list_add_tail(&new_vdev_action->list_node, &g_vdev_inform.vdev_action_head);
+    ka_task_spin_unlock(&g_vdev_inform.spinlock);
     return 0;
 }
 
@@ -1010,17 +1016,17 @@ void dev_mnt_vdevice_inform(void)
     struct list_head *n = NULL;
     struct list_head head;
 
-    if (list_empty(&g_vdev_inform.vdev_action_head)) {
+    if (ka_list_empty(&g_vdev_inform.vdev_action_head)) {
         return;
     }
 
-    spin_lock(&g_vdev_inform.spinlock);
-    list_replace(&g_vdev_inform.vdev_action_head, &head);
-    INIT_LIST_HEAD(&g_vdev_inform.vdev_action_head);
-    spin_unlock(&g_vdev_inform.spinlock);
+    ka_task_spin_lock(&g_vdev_inform.spinlock);
+    ka_list_replace(&g_vdev_inform.vdev_action_head, &head);
+    KA_INIT_LIST_HEAD(&g_vdev_inform.vdev_action_head);
+    ka_task_spin_unlock(&g_vdev_inform.spinlock);
 
-    list_for_each_safe(pos, n, &head) {
-        vdev_action = list_entry(pos, struct dev_mnt_vdev_action, list_node);
+    ka_list_for_each_safe(pos, n, &head) {
+        vdev_action = ka_list_entry(pos, struct dev_mnt_vdev_action, list_node);
         if (vdev_action->action == VDEV_BIND) {
             dev_mnt_vdevice_bind(vdev_action->vdev_id, vdev_action->ns,
                                  vdev_action->container_id);
@@ -1029,7 +1035,7 @@ void dev_mnt_vdevice_inform(void)
         } else {
             devdrv_drv_err("Invalid vdev action. (action = %d)\n", vdev_action->action);
         }
-        list_del(&vdev_action->list_node);
+        ka_list_del(&vdev_action->list_node);
         dbl_kfree(vdev_action);
         vdev_action = NULL;
     }
@@ -1041,18 +1047,18 @@ STATIC void dev_mnt_vdevice_inform_release(void)
     struct list_head *pos = NULL;
     struct list_head *n = NULL;
 
-    if (list_empty(&g_vdev_inform.vdev_action_head)) {
+    if (ka_list_empty(&g_vdev_inform.vdev_action_head)) {
         return;
     }
 
-    spin_lock(&g_vdev_inform.spinlock);
-    list_for_each_safe(pos, n, &g_vdev_inform.vdev_action_head) {
-        vdev_action = list_entry(pos, struct dev_mnt_vdev_action, list_node);
-        list_del(&vdev_action->list_node);
+    ka_task_spin_lock(&g_vdev_inform.spinlock);
+    ka_list_for_each_safe(pos, n, &g_vdev_inform.vdev_action_head) {
+        vdev_action = ka_list_entry(pos, struct dev_mnt_vdev_action, list_node);
+        ka_list_del(&vdev_action->list_node);
         dbl_kfree(vdev_action);
         vdev_action = NULL;
     }
-    spin_unlock(&g_vdev_inform.spinlock);
+    ka_task_spin_unlock(&g_vdev_inform.spinlock);
 }
 
 #ifndef CFG_FEATURE_RC_MODE
@@ -1098,7 +1104,7 @@ int devmng_get_vdavinci_info(u32 vdev_id, u32 *phy_id, u32 *vfid)
 
     return 0;
 }
-EXPORT_SYMBOL(devmng_get_vdavinci_info);
+KA_EXPORT_SYMBOL_GPL(devmng_get_vdavinci_info);
 #endif
 
 #if (defined CFG_FEATURE_VFIO) && (!defined CFG_FEATURE_RC_MODE)
@@ -1191,17 +1197,17 @@ int devdrv_manager_ioctl_create_vdev(struct file *filep, unsigned int cmd, unsig
     }
 #endif
 
-    mutex_lock(&g_mnt_vdev_cb->global_lock);
+    ka_task_mutex_lock(&g_mnt_vdev_cb->global_lock);
     ret = dev_mnt_check_create_para_single(phy_id, &vinfo);
     if (ret) {
-        mutex_unlock(&g_mnt_vdev_cb->global_lock);
+        ka_task_mutex_unlock(&g_mnt_vdev_cb->global_lock);
         devdrv_drv_err("Failed to create vdev info. (dev_id=%u; ret=%d)\n", vinfo.devid, ret);
         return ret;
     }
 
     ret = dev_mnt_create_vdevice_single(phy_id, &vinfo);
     if (ret) {
-        mutex_unlock(&g_mnt_vdev_cb->global_lock);
+        ka_task_mutex_unlock(&g_mnt_vdev_cb->global_lock);
         devdrv_drv_err("Failed to create vdevice. (dev_id=%u; ret=%d)\n", vinfo.devid, ret);
         return ret;
     }
@@ -1210,7 +1216,7 @@ int devdrv_manager_ioctl_create_vdev(struct file *filep, unsigned int cmd, unsig
     g_split_details.vdev_pieces[vinfo.vdevid] = VDEV_TOKEN_MAP_VALUE(vinfo.vdev_info.base.token) + 1;
 #endif
     vinfo.vdevid = VDAVINCI_VDEV_OFFSET_PLUS(vinfo.vdevid);
-    mutex_unlock(&g_mnt_vdev_cb->global_lock);
+    ka_task_mutex_unlock(&g_mnt_vdev_cb->global_lock);
 
 #if (defined CFG_HOST_ENV) && (defined CFG_FEATURE_VF_USE_DEVID)
     /* It is to wait for device vf to go online, or flr may fail and it should skip in RC mode. */
@@ -1336,7 +1342,7 @@ int devdrv_manager_ioctl_get_vdevinfo(struct file *filep, unsigned int cmd, unsi
     int ret;
     struct vdev_query_info *vinfo = NULL;
 
-    vinfo = dbl_kzalloc(sizeof(struct vdev_query_info), GFP_KERNEL | __GFP_ACCOUNT);
+    vinfo = dbl_kzalloc(sizeof(struct vdev_query_info), KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
     if (vinfo == NULL) {
         devdrv_drv_err("Kzalloc failed.\n");
         return -EPERM;

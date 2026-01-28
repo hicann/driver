@@ -13,11 +13,10 @@
 #ifndef SVM_DYNAMIC_ADDR_H
 #define SVM_DYNAMIC_ADDR_H
 
-#include <linux/spinlock.h>
 #include <linux/types.h>
-#include <linux/rbtree.h>
 
 #include "ka_base_pub.h"
+#include "ka_common_pub.h"
 
 struct devmm_svm_process;
 struct devmm_svm_heap;

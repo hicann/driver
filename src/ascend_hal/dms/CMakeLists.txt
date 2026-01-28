@@ -10,8 +10,6 @@
 get_filename_component(MODULE_SRC_DIR "${CMAKE_CURRENT_LIST_DIR}" ABSOLUTE)
 
 add_library(dms_obj OBJECT)
-target_sources(dms_obj PRIVATE
-)
 
 target_include_directories(dms_obj PRIVATE
     ${DRIVER_HAL_INC_DIR}
@@ -26,8 +24,8 @@ target_include_directories(dms_obj PRIVATE
     ${DRIVER_KERNEL_DIR}/pbl/uda/command/ioctl
     ${MODULE_SRC_DIR}/common
     ${MODULE_SRC_DIR}/include
-    ${DRIVER_USER_DIR}/ascend_base_hal
     ${DRIVER_USER_DIR}/inc/dms
+    ${DRIVER_USER_DIR}/inc/pbl
     ${DRIVER_USER_DIR}/dms/drv_devmng
     ${DRIVER_USER_DIR}/dms/drv_devmng/ascend910
 )
@@ -35,37 +33,6 @@ target_include_directories(dms_obj PRIVATE
 target_link_libraries(dms_obj PRIVATE
     $<BUILD_INTERFACE:c_sec_headers>
     $<BUILD_INTERFACE:intf_pub>
-    # $<BUILD_INTERFACE:slog_headers>
-)
-
-set(utilization_ts_product_list "ascend910B")
-set(boot_status_no_device_error_list "ascend910B")
-set(err_code_not_optimization_list "ascend910B")
-
-include(${FEATURE_CMAKE_PATH})
-target_compile_definitions(dms_obj PRIVATE
-    ${CONFIG_DEFINES}
-    $<$<STREQUAL:${PRODUCT_SIDE},host>:CFG_EDGE_HOST>
-    $<$<STREQUAL:${PRODUCT_SIDE},host>:DMS_HOST>
-    $<$<STREQUAL:${PRODUCT_SIDE},host>:DRV_HOST>
-    $<$<STREQUAL:${PRODUCT_SIDE},host>:CFG_HOST_ENV>
-    $<$<STREQUAL:${PRODUCT},ascend910B>:CFG_FEATURE_SRIOV>
-
-    $<$<STREQUAL:${PRODUCT},ascend910B>:CFG_FEATURE_SOC_VERSION>
-    $<$<STREQUAL:${PRODUCT},ascend910B>:CFG_FEATURE_VF_USE_DEVID>
-    $<$<STREQUAL:${PRODUCT},ascend910B>:CFG_FEATURE_FREQ_ADJUSTABLE>
-    $<$<STREQUAL:${PRODUCT},ascend910B>:CFG_FEATURE_PASS_THROUGH_MCU_BY_IMU>
-    $<$<STREQUAL:${PRODUCT},ascend910B>:CFG_FEATURE_HBM_FLASH>
-    $<$<STREQUAL:${PRODUCT},ascend910B>:CFG_FEATURE_SET_PAGE_RATIO>
-    $<$<STREQUAL:${PRODUCT},ascend910B>:CFG_FEATURE_SET_HPAGE_CLEAR>
-    $<$<STREQUAL:${PRODUCT},ascend910B>:CFG_SOC_PLATFORM_CLOUD>
-    $<$<STREQUAL:${PRODUCT},ascend910B>:CFG_FEATURE_MEMORY>
-    $<$<STREQUAL:${PRODUCT},ascend910B>:CORE_NUM_PER_CHIP=8>
-    $<$<STREQUAL:${PRODUCT},ascend910B>:CFG_FEATURE_RECONSITUTION_TEMPORARY>
-    $<$<STREQUAL:${PRODUCT},ascend910B>:CFG_FEATURE_SUPPORT_GET_SPOD_PING_INFO>
-    $<$<IN_LIST:${PRODUCT},${utilization_ts_product_list}>:CFG_FEATURE_AIC_AIV_UTIL_FROM_TS>
-    $<$<IN_LIST:${PRODUCT},${boot_status_no_device_error_list}>:CFG_FEATURE_NO_DEVICE_NO_ERR>
-    $<$<IN_LIST:${PRODUCT},${err_code_not_optimization_list}>:CFG_FEATURE_ERR_CODE_NOT_OPTIMIZATION>
 )
 
 target_compile_options(dms_obj PRIVATE
@@ -95,3 +62,9 @@ add_subdirectory(communication)
 add_subdirectory(udis)
 add_subdirectory(drv_devmng)
 add_subdirectory(dc)
+
+# configuring module feature
+include(${MODULE_SRC_DIR}/feature/host/module.cmake)
+
+# configuring product feature
+include(${MODULE_SRC_DIR}/feature/host/${PRODUCT}.cmake)

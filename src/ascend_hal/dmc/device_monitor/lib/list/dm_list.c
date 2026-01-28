@@ -676,7 +676,7 @@ int list_insert_descend(LIST_T *list, void *item, LIST_CMP_T custom_cmp)
 }
 
 /*
- *  Handle node operations. Paramter remove is used for deletion; delete the node and decrease the reference count by 1
+ *  Handle node operations. Parameter remove is used for deletion; delete the node and decrease the reference count by 1
  */
 STATIC void __node_put(LIST_NODE_T *node, int remove)
 {

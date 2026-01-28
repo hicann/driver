@@ -23,7 +23,7 @@ hash_table *hash_table_new(void);
 
 /*
 delete an instance of hash_table,
-all values are removed auotmatically.
+all values are removed automatically.
 */
 void hash_table_delete(hash_table *ht); //lint !e101 !e132
 

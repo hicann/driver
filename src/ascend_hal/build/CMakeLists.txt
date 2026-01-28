@@ -10,32 +10,64 @@
 add_library(ascend_hal SHARED)
 add_dependencies(ascend_hal secure_c)
 
-target_link_libraries(ascend_hal PRIVATE
-    $<BUILD_INTERFACE:intf_pub>
-    urd_obj
-    devdrv_obj
-    dms_obj
-    prof_obj
-    eventsched_obj
-    hdc_obj
-    queue_obj
-    commlib_obj
-    uda_obj
-    uda_base_obj
-    trs_drv_obj
-    rbtree_obj
-    devmm_obj
-    drvaibuff_obj
-    drvaibuff_base_obj
-    rmo_obj
-    drv_log_obj
-    drv_log_base_obj
-    queryfeature_obj
-    dp_proc_mng_obj
-    -ldl
-    c_sec
-    rt
-)
+if(${PRODUCT} STREQUAL ascend910B)
+    target_link_libraries(ascend_hal PRIVATE
+        $<BUILD_INTERFACE:intf_pub>
+        urd_obj
+        devdrv_obj
+        dms_obj
+        prof_obj
+        eventsched_obj
+        hdc_obj
+        queue_obj
+        commlib_obj
+        uda_obj
+        uda_base_obj
+        trs_drv_obj
+        rbtree_obj
+        devmm_obj
+        drvaibuff_obj
+        drvaibuff_base_obj
+        rmo_obj
+        drv_log_obj
+        drv_log_base_obj
+        queryfeature_obj
+        dp_proc_mng_obj
+        -ldl
+        c_sec
+        rt
+    )
+
+elseif(${PRODUCT} STREQUAL ascend910_95)
+    target_link_libraries(ascend_hal PRIVATE
+        $<BUILD_INTERFACE:intf_pub>
+        urd_obj
+        devdrv_obj
+        dms_obj
+        prof_obj
+        eventsched_obj
+        hdc_obj
+        queue_obj
+        commlib_obj
+        uda_obj
+        uda_base_obj
+        trs_drv_obj
+        rbtree_obj
+        devmm_obj
+        drvaibuff_obj
+        drvaibuff_base_obj
+        apm_obj
+        rmo_obj
+        mem_prof_obj
+        drv_log_obj
+        drv_log_base_obj
+        queryfeature_obj
+        drv_event_obj
+        -ldl
+        c_sec
+        rt
+    )
+endif()
 
 install(TARGETS ascend_hal
     LIBRARY DESTINATION ${INSTALL_LIBRARY_DIR} OPTIONAL

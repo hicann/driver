@@ -102,6 +102,8 @@ int devmm_get_host_mem_alloc_mode(void);
 bool devmm_va_is_svm(virt_addr_t va);
 uint32_t devmm_get_cached_mem_type(DVdeviceptr p);
 
+bool devmm_is_host_pin_memory_map_failed(void);
+
 static inline bool svm_is_dcache_addr(unsigned long long va, unsigned long long size)
 {
     return ((va >= DEVMM_DCACHE_ADDR_START) && (size <= DEVMM_DCACHE_OFFSET)

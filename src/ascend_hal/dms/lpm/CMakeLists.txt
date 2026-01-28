@@ -10,8 +10,3 @@
 target_sources(dms_obj PRIVATE
     dms_lpm.c
 )
-
-target_compile_definitions(dms_obj PRIVATE
-    $<$<STREQUAL:${PRODUCT},ascend910>:CFG_FEATURE_VDEVMNG_IN_VIRTUAL>
-    $<$<STREQUAL:${PRODUCT},ascend310p>:CFG_FEATURE_VDEVMNG_IN_VIRTUAL>
-)

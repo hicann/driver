@@ -10,92 +10,100 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#include <linux/mm.h>
+
 #include "virtmngagent_vpc_unit.h"
 #include "virtmngagent_msg.h"
 #include "virtmng_public_def.h"
 #include "virtmngagent_msg_common.h"
 #include "vmng_mem_alloc_interface.h"
 #include "vpc_kernel_interface.h"
+#include "ka_kernel_def_pub.h"
+#include "ka_dfx_pub.h"
+#include "ka_base_pub.h"
+#include "ka_task_pub.h"
+#include "ka_barrier_pub.h"
+#include "ka_system_pub.h"
+#include "ka_pci_pub.h"
+#include "ka_memory_pub.h"
 
 int vpc_register_client(u32 dev_id, u32 fid, const struct vmng_vpc_client *vpc_client)
 {
     return vmnga_vpc_register_client(dev_id, vpc_client);
 }
-EXPORT_SYMBOL(vpc_register_client);
+KA_EXPORT_SYMBOL(vpc_register_client);
 
 int vpc_register_client_safety(u32 dev_id, u32 fid, const struct vmng_vpc_client *vpc_client)
 {
     return vmnga_vpc_register_client(dev_id, vpc_client);
 }
-EXPORT_SYMBOL(vpc_register_client_safety);
+KA_EXPORT_SYMBOL(vpc_register_client_safety);
 
 int vpc_unregister_client(u32 dev_id, u32 fid, const struct vmng_vpc_client *vpc_client)
 {
     return vmnga_vpc_unregister_client(dev_id, vpc_client);
 }
-EXPORT_SYMBOL(vpc_unregister_client);
+KA_EXPORT_SYMBOL(vpc_unregister_client);
 
 int vpc_msg_send(u32 dev_id, u32 fid, enum vmng_vpc_type vpc_type, struct vmng_tx_msg_proc_info *tx_info,
     u32 timeout)
 {
     return vmnga_vpc_msg_send(dev_id, vpc_type, tx_info, timeout);
 }
-EXPORT_SYMBOL(vpc_msg_send);
+KA_EXPORT_SYMBOL(vpc_msg_send);
 
 int vpc_register_common_msg_client(u32 dev_id, u32 fid, const struct vmng_common_msg_client *msg_client)
 {
     return vmnga_register_common_msg_client(dev_id, msg_client);
 }
-EXPORT_SYMBOL(vpc_register_common_msg_client);
+KA_EXPORT_SYMBOL(vpc_register_common_msg_client);
 
 int vpc_unregister_common_msg_client(u32 dev_id, u32 fid, const struct vmng_common_msg_client *msg_client)
 {
     return vmnga_unregister_common_msg_client(dev_id, msg_client);
 }
-EXPORT_SYMBOL(vpc_unregister_common_msg_client);
+KA_EXPORT_SYMBOL(vpc_unregister_common_msg_client);
 
 int vpc_common_msg_send(u32 dev_id, u32 fid, enum vmng_msg_common_type cmn_type,
                         struct vmng_tx_msg_proc_info *tx_info)
 {
     return vmnga_common_msg_send(dev_id, cmn_type, tx_info);
 }
-EXPORT_SYMBOL(vpc_common_msg_send);
+KA_EXPORT_SYMBOL(vpc_common_msg_send);
 
 #define VMNG_DB_MEM_BAR_SIZE 0x20000
 #define VMNG_DB_MEM_BAR_OFFSET (VMNG_DB_MEM_BAR_SIZE)
 STATIC int vmnga_map_bar_va_cloud_v2(const struct vmng_vpc_unit *unit, struct vmnga_vpc_unit *vpc_unit)
 {
-    struct pci_dev *pdev = unit->pdev;
+    ka_pci_dev_t *pdev = unit->pdev;
 
-    vpc_unit->db_base = ioremap(unit->mmio.bar0_base, VMNG_DB_MEM_BAR_SIZE);
+    vpc_unit->db_base = ka_mm_ioremap(unit->mmio.bar0_base, VMNG_DB_MEM_BAR_SIZE);
     if (vpc_unit->db_base == NULL) {
-        pr_err("Ioremap db_base failed. (bdf=%02x:%02x.%d)\n", pdev->bus->number,
-            PCI_SLOT(pdev->devfn), PCI_FUNC(pdev->devfn));
+        ka_dfx_pr_err("Ioremap db_base failed. (bdf=%02x:%02x.%d)\n", ka_pci_get_bus_number(pdev),
+            KA_PCI_SLOT(ka_pci_get_devfn(pdev)), KA_PCI_FUNC(ka_pci_get_devfn(pdev)));
         goto db_err;
     }
-    vpc_unit->shr_para = ioremap(unit->mmio.bar0_base + VMNG_SHR_PARA_ADDR_BASE + VMNG_DB_MEM_BAR_OFFSET,
+    vpc_unit->shr_para = ka_mm_ioremap(unit->mmio.bar0_base + VMNG_SHR_PARA_ADDR_BASE + VMNG_DB_MEM_BAR_OFFSET,
                                  VMNG_SHR_PARA_ADDR_SIZE);
     if (vpc_unit->shr_para == NULL) {
-        pr_err("Ioremap shr failed. (bdf=%02x:%02x.%d)\n", pdev->bus->number,
-            PCI_SLOT(pdev->devfn), PCI_FUNC(pdev->devfn));
+        ka_dfx_pr_err("Ioremap shr failed. (bdf=%02x:%02x.%d)\n", ka_pci_get_bus_number(pdev),
+            KA_PCI_SLOT(ka_pci_get_devfn(pdev)), KA_PCI_FUNC(ka_pci_get_devfn(pdev)));
         goto shr_err;
     }
-    vpc_unit->msg_base = ioremap(unit->mmio.bar0_base + VMNG_MSG_ADDR_BASE + VMNG_DB_MEM_BAR_OFFSET,
+    vpc_unit->msg_base = ka_mm_ioremap(unit->mmio.bar0_base + VMNG_MSG_ADDR_BASE + VMNG_DB_MEM_BAR_OFFSET,
                                  VMNG_MSG_ADDR_SIZE);
     if (vpc_unit->msg_base == NULL) {
-        pr_err("Ioremap msg base failed. (bdf=%02x:%02x.%d)\n", pdev->bus->number,
-            PCI_SLOT(pdev->devfn), PCI_FUNC(pdev->devfn));
+        ka_dfx_pr_err("Ioremap msg base failed. (bdf=%02x:%02x.%d)\n", ka_pci_get_bus_number(pdev),
+            KA_PCI_SLOT(ka_pci_get_devfn(pdev)), KA_PCI_FUNC(ka_pci_get_devfn(pdev)));
         goto msg_err;
     }
 
     return 0;
 
 msg_err:
-    iounmap(vpc_unit->shr_para);
+    ka_mm_iounmap(vpc_unit->shr_para);
     vpc_unit->shr_para = NULL;
 shr_err:
-    iounmap(vpc_unit->db_base);
+    ka_mm_iounmap(vpc_unit->db_base);
     vpc_unit->db_base = NULL;
 db_err:
     return -ENOMEM;
@@ -103,25 +111,25 @@ db_err:
 
 STATIC void vmnga_unmap_bar_va_cloud_v2(struct vmnga_vpc_unit *vpc_unit)
 {
-    iounmap(vpc_unit->msg_base);
+    ka_mm_iounmap(vpc_unit->msg_base);
     vpc_unit->msg_base = NULL;
-    iounmap(vpc_unit->shr_para);
+    ka_mm_iounmap(vpc_unit->shr_para);
     vpc_unit->shr_para = NULL;
-    iounmap(vpc_unit->db_base);
+    ka_mm_iounmap(vpc_unit->db_base);
     vpc_unit->db_base = NULL;
 }
 
-STATIC irqreturn_t vmnga_vpc_start_irq(int irq, void *data)
+STATIC ka_irqreturn_t vmnga_vpc_start_irq(int irq, void *data)
 {
     struct vmnga_vpc_unit *unit = data;
 
     if (data == NULL) {
         vmng_err("Input parameter is error. (irq=%d)\n", irq);
-        return IRQ_NONE; /* IRQ_NONE: interrupt was not from this device or was handled */
+        return KA_IRQ_NONE; /* KA_IRQ_NONE: interrupt was not from this device or was handled */
     }
-    atomic_set(&unit->start_dev.start_flag, VMNG_TASK_SUCCESS);
-    wake_up_interruptible(&unit->start_dev.wq);
-    return IRQ_HANDLED;
+    ka_base_atomic_set(&unit->start_dev.start_flag, VMNG_TASK_SUCCESS);
+    ka_task_wake_up_interruptible(&unit->start_dev.wq);
+    return KA_IRQ_HANDLED;
 }
 
 #define VMNGA_START_FB_TIMEOUT_MS 1000
@@ -146,25 +154,25 @@ STATIC int vpc_top_half_init_finish(struct vmnga_vpc_unit *vpc_unit)
 
     /* prepare for wait */
     start_dev->db_id = VMNG_DB_BASE_LOAD;
-    init_waitqueue_head(&start_dev->wq);
+    ka_task_init_waitqueue_head(&start_dev->wq);
 
     /* set bar shr para, then ring doorbell. */
     vpc_unit->shr_para->start_flag = VMNG_VM_START_WAIT;
-    wmb();
+    ka_wmb();
     /* notify srv */
     vmnga_set_doorbell(vpc_unit->db_base, start_dev->db_id, 1);
 
     vmnga_register_extended_common_msg_client(vpc_unit->msg_dev);
 
     si_meminfo(&mem_info);
-    mem_size = mem_info.totalram * PAGE_SIZE / GB_UNIT + 1;
+    mem_size = mem_info.totalram * KA_MM_PAGE_SIZE / GB_UNIT + 1;
     if (mem_size < MIN_MEM_SIZE) {
         mem_size = MIN_MEM_SIZE;
     }
     vmng_info("Start wait begin. (dev_id=%u; size=%llu)\n", vpc_unit->dev_id, mem_size);
-    time = (u32)msecs_to_jiffies((unsigned int)(VMNGA_START_FB_TIMEOUT_MS * mem_size));
-    ret = (int)wait_event_interruptible_timeout(start_dev->wq,
-        (atomic_read(&start_dev->start_flag) == VMNG_TASK_SUCCESS), time);
+    time = (u32)ka_system_msecs_to_jiffies((unsigned int)(VMNGA_START_FB_TIMEOUT_MS * mem_size));
+    ret = (int)ka_task_wait_event_interruptible_timeout(start_dev->wq,
+        (ka_base_atomic_read(&start_dev->start_flag) == VMNG_TASK_SUCCESS), time);
     if (ret <= 0) {
         vmng_err("Wait host time out. (dev_id=%u;ret=%d)\n", vpc_unit->dev_id, ret);
         vmnga_unregister_extended_common_msg_client(vpc_unit->msg_dev);
@@ -190,7 +198,7 @@ int vmng_vpc_init(struct vmng_vpc_unit *unit_in, int server_type)
     int ret;
 
     if (server_type == SERVER_TYPE_VM_PCIE) {
-        vpc_unit = vmng_kzalloc(sizeof(struct vmnga_vpc_unit), GFP_KERNEL);
+        vpc_unit = vmng_kzalloc(sizeof(struct vmnga_vpc_unit), KA_GFP_KERNEL);
         if (vpc_unit == NULL) {
             vmng_err("vmng_kzalloc vpc unit failed.\n");
             return -ENOMEM;
@@ -205,9 +213,9 @@ int vmng_vpc_init(struct vmng_vpc_unit *unit_in, int server_type)
         }
 
         vpc_unit->pdev = unit->pdev;
-        ret = memcpy_s(vpc_unit->msix_ctrl.entries, sizeof(struct msix_entry) * VIRTMNGAGENT_MSIX_MAX,
+        ret = memcpy_s(vpc_unit->msix_ctrl.entries, sizeof(ka_msix_entry_t) * VIRTMNGAGENT_MSIX_MAX,
             unit->msix_info.entries + unit->msix_info.msix_irq_offset,
-            sizeof(struct msix_entry) * unit->msix_info.msix_irq_num);
+            sizeof(ka_msix_entry_t) * unit->msix_info.msix_irq_num);
         if (ret != 0) {
             vmng_err("Memcpy failed. (dev_id=%u;ret=%d)\n", vpc_unit->dev_id, ret);
             vmnga_unmap_bar_va_cloud_v2(vpc_unit);
@@ -236,7 +244,7 @@ int vmng_vpc_init(struct vmng_vpc_unit *unit_in, int server_type)
     }
     return 0;
 }
-EXPORT_SYMBOL(vmng_vpc_init);
+KA_EXPORT_SYMBOL(vmng_vpc_init);
 
 int vmng_vpc_uninit(struct vmng_vpc_unit *unit_in, int server_type)
 {
@@ -262,4 +270,4 @@ int vmng_vpc_uninit(struct vmng_vpc_unit *unit_in, int server_type)
     }
     return 0;
 }
-EXPORT_SYMBOL(vmng_vpc_uninit);
+KA_EXPORT_SYMBOL(vmng_vpc_uninit);

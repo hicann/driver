@@ -16,9 +16,7 @@
 #ifndef SVM_HOST_ADAPT_H
 #define SVM_HOST_ADAPT_H
 
-#include <linux/mm.h>
 #include <linux/hugetlb.h>
-#include <linux/gfp.h>
 
 #include <securec.h>
 

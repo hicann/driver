@@ -31,7 +31,7 @@ struct svm_da_mng {
     struct devmm_virt_list_head head;
 };
 
-struct svm_da_mng g_da_mng;
+static struct svm_da_mng g_da_mng;
 
 static struct svm_da_mng *svm_get_da_mng(void)
 {
@@ -114,8 +114,8 @@ static int svm_da_mmap_agent(uint32_t devid, uint64_t *va, uint64_t size, int fi
 
     /*
         case1: cp2 is luanched up before mmap cp1, mmap success here
-        case2: cp2 is luanched up after mmap cp1, before mmap cp2, cp2 mmaped when init with map seg getted by cp1
-        case2: cp2 is luanched up after mmap cp2, cp2 mmaped when init with map seg getted by cp1
+        case2: cp2 is luanched up after mmap cp1, before mmap cp2, cp2 mapped when init with map seg getted by cp1
+        case3: cp2 is luanched up after mmap cp2, cp2 mapped when init with map seg getted by cp1
     */
     ret = devmm_process_task_mmap(devid, DEVDRV_PROCESS_CP2, &tmp_va, size, fixed_va_flag);
     if (ret != 0) {
@@ -225,7 +225,7 @@ static uint64_t svm_da_negotiate_va(uint32_t negotiate_devid, uint64_t negotiate
     while (negotiate_va < negotiate_va_max) {
         int ret = svm_da_mmap_agent(negotiate_devid, &negotiate_va, size, 1);
         if (ret == 0) {
-            /* negotiate success, diffrent device not need negotiate */
+            /* negotiate success, different device not need negotiate */
             if (!svm_da_has_master(flag)) {
                 return negotiate_va;
             }
@@ -483,7 +483,7 @@ void svm_da_del_dev(uint32_t devid)
     struct svm_da_mng *da_mng = svm_get_da_mng();
 
     (void)pthread_rwlock_wrlock(&da_mng->lock);
-    /* agent proccess has been exit, not need to unmap */
+    /* agent process has been exit, not need to unmap */
     da_mng->dev_valid_flag[devid] = 0;
     (void)pthread_rwlock_unlock(&da_mng->lock);
 }

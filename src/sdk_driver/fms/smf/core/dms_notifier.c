@@ -14,24 +14,26 @@
 #include <linux/export.h>
 
 #include "dms/dms_notifier.h"
+#include "ka_dfx_pub.h"
+#include "ka_kernel_def_pub.h"
 
 static RAW_NOTIFIER_HEAD(g_dms_chain);
 
 int dms_notifyer_call(u64 mode, void* v)
 {
-    return raw_notifier_call_chain(&g_dms_chain, mode, v);
+    return ka_dfx_raw_notifier_call_chain(&g_dms_chain, mode, v);
 }
-EXPORT_SYMBOL(dms_notifyer_call);
+KA_EXPORT_SYMBOL(dms_notifyer_call);
 
 int dms_register_notifier(struct notifier_block* nb)
 {
-    return raw_notifier_chain_register(&g_dms_chain, nb);
+    return ka_dfx_raw_notifier_chain_register(&g_dms_chain, nb);
 }
-EXPORT_SYMBOL(dms_register_notifier);
+KA_EXPORT_SYMBOL(dms_register_notifier);
 
 int dms_unregister_notifier(struct notifier_block* nb)
 {
-    return raw_notifier_chain_unregister(&g_dms_chain, nb);
+    return ka_dfx_raw_notifier_chain_unregister(&g_dms_chain, nb);
 }
-EXPORT_SYMBOL(dms_unregister_notifier);
+KA_EXPORT_SYMBOL(dms_unregister_notifier);
 

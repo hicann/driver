@@ -39,6 +39,9 @@ int dms_power_hotreset_common(unsigned int dev_id, int ioctl_sub_cmd)
     ret = DmsIoctl(DMS_IOCTL_CMD, &ioarg);
     if (ret != 0) {
         DMS_EX_NOTSUPPORT_ERR(ret, "Dms hotreset common failed. (dev_id=%u; ret=%d)\n", dev_id, ret);
+        if (ret == ENODEV) {
+            ret = DRV_ERROR_CONNECT; /* H2D communication is abnormal */
+        }
         return ret;
     }
 

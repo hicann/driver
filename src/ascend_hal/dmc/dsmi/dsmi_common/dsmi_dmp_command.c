@@ -103,7 +103,7 @@ int dsmi_cmd_get_deviceid(int device_id, unsigned short *pdevice_id)
 
 /*****************************************************************************
  Prototype    : dsmi_cmd_get_venderid
- Description  : get vender id command proc
+ Description  : get vendor id command proc
  Return Value : 0 success
 
 *****************************************************************************/
@@ -117,7 +117,7 @@ int dsmi_cmd_get_venderid(int device_id, unsigned short *pvenderid)
 
 /*****************************************************************************
  Prototype    : dsmi_cmd_get_sub_venderid
- Description  : get sub vender id command proc
+ Description  : get sub vendor id command proc
  Return Value : 0 success
 
 *****************************************************************************/

@@ -180,7 +180,7 @@ int dmanage_get_soc_info(uint32_t dev_id, uint32_t vfid, uint32_t sub_cmd, void 
     int ret;
 
     if (out_buf == NULL || ret_size == NULL) {
-        DEVDRV_DRV_ERR("Invaild parameter. (dev_id=%u; vfid=%u; buf_is_null=%d; size_is_null=%d)\n",
+        DEVDRV_DRV_ERR("Invalid parameter. (dev_id=%u; vfid=%u; buf_is_null=%d; size_is_null=%d)\n",
             dev_id, vfid, (out_buf == NULL), (ret_size == NULL));
         return DRV_ERROR_PARA_ERROR;
     }
@@ -197,7 +197,7 @@ int dmanage_get_soc_info(uint32_t dev_id, uint32_t vfid, uint32_t sub_cmd, void 
             break;
 
         default:
-            DEVDRV_DRV_ERR("Invaild sub cmd. (dev_id=%u; sub_cmd=%u)\n", dev_id, sub_cmd);
+            DEVDRV_DRV_ERR("Invalid sub cmd. (dev_id=%u; sub_cmd=%u)\n", dev_id, sub_cmd);
             return DRV_ERROR_PARA_ERROR;
     }
 

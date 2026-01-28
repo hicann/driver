@@ -27,11 +27,10 @@
 #if ((!defined(LOG_UT)) && (!defined(EMU_ST)) && (!defined(EVENT_SCHED_UT)) && (!defined(TSDRV_UT)) && \
     (!defined(DRV_UT)) && (!defined(DEVDRV_UT)))
 #include <linux/sched/mm.h>
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 11, 0)
-#include <linux/sched/task.h>
+#include "ka_task_pub.h"
 #endif
-
-#endif
+#include "ka_memory_pub.h"
+#include "kernel_version_adapt.h"
 
 #define SHARE_LOG_PAGE_WRITE      1
 #define SHARE_LOG_MAGIC_LENGTH    24
@@ -103,11 +102,7 @@ void __attribute__((weak)) share_log_record_sub(struct share_log_info *info, con
 
 struct rw_semaphore* __attribute__((weak)) share_log_sem(struct mm_struct *mm)
 {
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 8, 0)
-    return &mm->mmap_lock;
-#else
-    return &mm->mmap_sem;
-#endif
+    return get_mmap_sem(mm);
 }
 
 void __attribute__((weak)) share_log_record(struct page *page, unsigned long start, const char* fmt,
@@ -140,12 +135,7 @@ void __attribute__((weak)) _share_log_no_kthread_or_no_interrupt_record(unsigned
         down_write_trylock(share_log_sem(current->mm)) != 0) { /* Prevent read_lock nested */
         struct page *sha_page = NULL;
         up_write(share_log_sem(current->mm));
-#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 2, 0)
-        if (get_user_pages_fast(start, SHARE_LOG_PAGE_NUM, SHARE_LOG_PAGE_WRITE, &sha_page) ==
-            (int)SHARE_LOG_PAGE_NUM) {
-#else
-        if (get_user_pages_fast(start, SHARE_LOG_PAGE_NUM, FOLL_WRITE, &sha_page) == (int)SHARE_LOG_PAGE_NUM) {
-#endif
+        if (get_user_pages_fast(start, SHARE_LOG_PAGE_NUM, KA_FOLL_WRITE, &sha_page) == (int)SHARE_LOG_PAGE_NUM) {
             share_log_record(sha_page, start, fmt, current->mm, arg);
             put_page(sha_page);
         }
@@ -182,9 +172,7 @@ long __attribute__((weak)) _log_get_user_pages_remote(struct task_struct *tsk, s
     u64 va, u32 num, struct page **pages)
 {
     long got_num = -1;
-    int locked;
 
-    locked = 1;
     if (down_write_trylock(share_log_sem(mm)) == 0) { /* Prevent read_lock nested */
         return got_num;
     }
@@ -193,23 +181,8 @@ long __attribute__((weak)) _log_get_user_pages_remote(struct task_struct *tsk, s
     if (down_read_trylock(share_log_sem(mm)) == 0) {
         return got_num;
     }
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 5, 0)
-    got_num = pin_user_pages_remote(mm, va, num, 1, pages, NULL);
-#elif LINUX_VERSION_CODE >= KERNEL_VERSION(5, 10, 0)
-    got_num = pin_user_pages_remote(mm, va, num, FOLL_WRITE, pages, NULL, NULL);
-#elif LINUX_VERSION_CODE >= KERNEL_VERSION(5, 9, 0)
-    got_num = get_user_pages_remote(mm, va, num, FOLL_WRITE, pages, NULL, NULL);
-#elif LINUX_VERSION_CODE >= KERNEL_VERSION(4, 10, 0)
-    got_num = get_user_pages_remote(tsk, mm, va, num, FOLL_WRITE, pages, NULL, NULL);
-#elif LINUX_VERSION_CODE >= KERNEL_VERSION(4, 9, 0)
-    got_num = get_user_pages_remote(tsk, mm, va, num, FOLL_WRITE, pages, NULL);
-#elif LINUX_VERSION_CODE >= KERNEL_VERSION(4, 6, 0)
-    got_num = get_user_pages_remote(tsk, mm, va, num, FOLL_WRITE, 0, pages, NULL);
-#else
-    got_num = get_user_pages_locked(tsk, mm, va, num, FOLL_WRITE, 0, pages, &locked);
-#endif
+    got_num = ka_mm_get_user_pages_remote(tsk, mm, va, KA_FOLL_WRITE, num, pages);
     up_read(share_log_sem(mm));
-
     return got_num;
 }
 

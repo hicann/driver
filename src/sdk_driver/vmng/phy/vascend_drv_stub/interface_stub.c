@@ -11,6 +11,7 @@
  * GNU General Public License for more details.
  */
 #include "hw_vdavinci.h"
+#include "ka_kernel_def_pub.h"
 
 
 /**
@@ -27,7 +28,7 @@ int hw_dvt_hypervisor_inject_msix(void *__vdavinci, u32 vector)
 
     return 0;
 }
-EXPORT_SYMBOL_GPL(hw_dvt_hypervisor_inject_msix);
+KA_EXPORT_SYMBOL_GPL(hw_dvt_hypervisor_inject_msix);
 
 /**
  * hw_dvt_hypervisor_read_gpa - copy data from GPA to host data buffer
@@ -48,7 +49,7 @@ int hw_dvt_hypervisor_read_gpa(void *__vdavinci,
 
     return 0;
 }
-EXPORT_SYMBOL_GPL(hw_dvt_hypervisor_read_gpa);
+KA_EXPORT_SYMBOL_GPL(hw_dvt_hypervisor_read_gpa);
 
 /**
  * hw_dvt_hypervisor_write_gpa - copy data from host data buffer to GPA
@@ -69,7 +70,7 @@ int hw_dvt_hypervisor_write_gpa(void *__vdavinci,
 
     return 0;
 }
-EXPORT_SYMBOL_GPL(hw_dvt_hypervisor_write_gpa);
+KA_EXPORT_SYMBOL_GPL(hw_dvt_hypervisor_write_gpa);
 
 /**
  * hw_dvt_hypervisor_gfn_to_mfn - translate a GFN to MFN
@@ -88,7 +89,7 @@ unsigned long hw_dvt_hypervisor_gfn_to_mfn(
 
     return 0;
 }
-EXPORT_SYMBOL_GPL(hw_dvt_hypervisor_gfn_to_mfn);
+KA_EXPORT_SYMBOL_GPL(hw_dvt_hypervisor_gfn_to_mfn);
 
 int hw_dvt_hypervisor_dma_pool_init(void *__vdavinci)
 {
@@ -98,7 +99,7 @@ int hw_dvt_hypervisor_dma_pool_init(void *__vdavinci)
 
     return 0;
 }
-EXPORT_SYMBOL_GPL(hw_dvt_hypervisor_dma_pool_init);
+KA_EXPORT_SYMBOL_GPL(hw_dvt_hypervisor_dma_pool_init);
 
 void hw_dvt_hypervisor_dma_pool_uninit(void *__vdavinci)
 {
@@ -108,7 +109,7 @@ void hw_dvt_hypervisor_dma_pool_uninit(void *__vdavinci)
 
     return;
 }
-EXPORT_SYMBOL_GPL(hw_dvt_hypervisor_dma_pool_uninit);
+KA_EXPORT_SYMBOL_GPL(hw_dvt_hypervisor_dma_pool_uninit);
 
 
 /**
@@ -123,7 +124,7 @@ EXPORT_SYMBOL_GPL(hw_dvt_hypervisor_dma_pool_uninit);
  */
 int hw_dvt_hypervisor_dma_map_guest_page(
 		void *__vdavinci, unsigned long gfn, unsigned long size,
-		struct sg_table **dma_sgt)
+		ka_sg_table_t **dma_sgt)
 {
     if (hw_dvt_check_is_vm_mode() && get_vdavinci_virtual_ops()->vdavinci_hypervisor_dma_map_guest_page != NULL) {
         return get_vdavinci_virtual_ops()->vdavinci_hypervisor_dma_map_guest_page(__vdavinci, gfn, size, dma_sgt);
@@ -131,7 +132,7 @@ int hw_dvt_hypervisor_dma_map_guest_page(
 
     return 0;
 }
-EXPORT_SYMBOL_GPL(hw_dvt_hypervisor_dma_map_guest_page);
+KA_EXPORT_SYMBOL_GPL(hw_dvt_hypervisor_dma_map_guest_page);
 
 
 /**
@@ -140,7 +141,7 @@ EXPORT_SYMBOL_GPL(hw_dvt_hypervisor_dma_map_guest_page);
  * @dma_sgt: the dma addr list(sg_table)
  */
 void hw_dvt_hypervisor_dma_unmap_guest_page(
-		void *__vdavinci, struct sg_table *dma_sgt)
+		void *__vdavinci, ka_sg_table_t *dma_sgt)
 {
     if (hw_dvt_check_is_vm_mode() && get_vdavinci_virtual_ops()->vdavinci_hypervisor_dma_unmap_guest_page != NULL) {
         return get_vdavinci_virtual_ops()->vdavinci_hypervisor_dma_unmap_guest_page(__vdavinci, dma_sgt);
@@ -148,7 +149,7 @@ void hw_dvt_hypervisor_dma_unmap_guest_page(
 
     return;
 }
-EXPORT_SYMBOL_GPL(hw_dvt_hypervisor_dma_unmap_guest_page);
+KA_EXPORT_SYMBOL_GPL(hw_dvt_hypervisor_dma_unmap_guest_page);
 
 bool hw_dvt_hypervisor_dma_pool_active(void *__vdavinci)
 {
@@ -158,7 +159,7 @@ bool hw_dvt_hypervisor_dma_pool_active(void *__vdavinci)
 
     return true;
 }
-EXPORT_SYMBOL_GPL(hw_dvt_hypervisor_dma_pool_active);
+KA_EXPORT_SYMBOL_GPL(hw_dvt_hypervisor_dma_pool_active);
 
 int hw_dvt_hypervisor_dma_map_guest_page_batch(void *__vdavinci,
     unsigned long *gfn, unsigned long *dma_addr, unsigned long count)
@@ -170,7 +171,7 @@ int hw_dvt_hypervisor_dma_map_guest_page_batch(void *__vdavinci,
 
     return 0;
 }
-EXPORT_SYMBOL_GPL(hw_dvt_hypervisor_dma_map_guest_page_batch);
+KA_EXPORT_SYMBOL_GPL(hw_dvt_hypervisor_dma_map_guest_page_batch);
 
 void hw_dvt_hypervisor_dma_unmap_guest_page_batch(void *__vdavinci,
     unsigned long *gfn, unsigned long *dma_addr, unsigned long count)
@@ -181,7 +182,7 @@ void hw_dvt_hypervisor_dma_unmap_guest_page_batch(void *__vdavinci,
             count);
     }
 }
-EXPORT_SYMBOL_GPL(hw_dvt_hypervisor_dma_unmap_guest_page_batch);
+KA_EXPORT_SYMBOL_GPL(hw_dvt_hypervisor_dma_unmap_guest_page_batch);
 
 bool hw_dvt_hypervisor_is_valid_gfn(
 		void *__vdavinci, unsigned long gfn)
@@ -192,7 +193,7 @@ bool hw_dvt_hypervisor_is_valid_gfn(
 
     return 0;
 }
-EXPORT_SYMBOL_GPL(hw_dvt_hypervisor_is_valid_gfn);
+KA_EXPORT_SYMBOL_GPL(hw_dvt_hypervisor_is_valid_gfn);
 
 int hw_dvt_hypervisor_mmio_get(void **dst, int *size, void *__vdavinci, int bar)
 {
@@ -202,9 +203,9 @@ int hw_dvt_hypervisor_mmio_get(void **dst, int *size, void *__vdavinci, int bar)
 
     return 0;
 }
-EXPORT_SYMBOL(hw_dvt_hypervisor_mmio_get);
+KA_EXPORT_SYMBOL(hw_dvt_hypervisor_mmio_get);
 
-void *hw_dvt_hypervisor_dma_alloc_coherent(struct device *dev, size_t size, dma_addr_t *dma_handle, gfp_t gfp)
+void *hw_dvt_hypervisor_dma_alloc_coherent(ka_device_t *dev, size_t size, ka_dma_addr_t *dma_handle, ka_gfp_t gfp)
 {
     if (hw_dvt_check_is_vm_mode() && get_vdavinci_virtual_ops()->vdavinci_hypervisor_dma_alloc_coherent != NULL) {
         return get_vdavinci_virtual_ops()->vdavinci_hypervisor_dma_alloc_coherent(dev, size, dma_handle, gfp);
@@ -212,56 +213,56 @@ void *hw_dvt_hypervisor_dma_alloc_coherent(struct device *dev, size_t size, dma_
 
     return NULL;
 }
-EXPORT_SYMBOL_GPL(hw_dvt_hypervisor_dma_alloc_coherent);
+KA_EXPORT_SYMBOL_GPL(hw_dvt_hypervisor_dma_alloc_coherent);
 
-void hw_dvt_hypervisor_dma_free_coherent(struct device *dev, size_t size, void *cpu_addr, dma_addr_t dma_handle)
+void hw_dvt_hypervisor_dma_free_coherent(ka_device_t *dev, size_t size, void *cpu_addr, ka_dma_addr_t dma_handle)
 {
     if (hw_dvt_check_is_vm_mode() && get_vdavinci_virtual_ops()->vdavinci_hypervisor_dma_free_coherent != NULL) {
         return get_vdavinci_virtual_ops()->vdavinci_hypervisor_dma_free_coherent(dev, size, cpu_addr, dma_handle);
     }
 }
-EXPORT_SYMBOL(hw_dvt_hypervisor_dma_free_coherent);
+KA_EXPORT_SYMBOL(hw_dvt_hypervisor_dma_free_coherent);
 
-dma_addr_t hw_dvt_hypervisor_dma_map_single(struct device *dev, void *ptr, size_t size, enum dma_data_direction dir)
+ka_dma_addr_t hw_dvt_hypervisor_dma_map_single(ka_device_t *dev, void *ptr, size_t size, ka_dma_data_direction_t dir)
 {
     if (hw_dvt_check_is_vm_mode() && get_vdavinci_virtual_ops()->vdavinci_hypervisor_dma_map_single != NULL) {
         return get_vdavinci_virtual_ops()->vdavinci_hypervisor_dma_map_single(dev, ptr, size, dir);
     }
 
-    return (~(dma_addr_t)0);
+    return (~(ka_dma_addr_t)0);
 }
-EXPORT_SYMBOL_GPL(hw_dvt_hypervisor_dma_map_single);
+KA_EXPORT_SYMBOL_GPL(hw_dvt_hypervisor_dma_map_single);
 
-void hw_dvt_hypervisor_dma_unmap_single(struct device *dev, dma_addr_t addr, size_t size, enum dma_data_direction dir)
+void hw_dvt_hypervisor_dma_unmap_single(ka_device_t *dev, ka_dma_addr_t addr, size_t size, ka_dma_data_direction_t dir)
 {
     if (hw_dvt_check_is_vm_mode() && get_vdavinci_virtual_ops()->vdavinci_hypervisor_dma_unmap_single != NULL) {
         return get_vdavinci_virtual_ops()->vdavinci_hypervisor_dma_unmap_single(dev, addr, size, dir);
     }
 }
-EXPORT_SYMBOL(hw_dvt_hypervisor_dma_unmap_single);
+KA_EXPORT_SYMBOL(hw_dvt_hypervisor_dma_unmap_single);
 
-dma_addr_t hw_dvt_hypervisor_dma_map_page(struct device *dev, struct page *page, size_t offset,
-                                          size_t size, enum dma_data_direction dir)
+ka_dma_addr_t hw_dvt_hypervisor_dma_map_page(ka_device_t *dev, ka_page_t *page, size_t offset,
+                                          size_t size, ka_dma_data_direction_t dir)
 {
     if (hw_dvt_check_is_vm_mode() && get_vdavinci_virtual_ops()->vdavinci_hypervisor_dma_map_page != NULL) {
         return get_vdavinci_virtual_ops()->vdavinci_hypervisor_dma_map_page(dev, page, offset, size, dir);
     }
-    return (~(dma_addr_t)0);
+    return (~(ka_dma_addr_t)0);
 }
-EXPORT_SYMBOL(hw_dvt_hypervisor_dma_map_page);
-void hw_dvt_hypervisor_dma_unmap_page(struct device *dev, dma_addr_t addr, size_t size, enum dma_data_direction dir)
+KA_EXPORT_SYMBOL(hw_dvt_hypervisor_dma_map_page);
+void hw_dvt_hypervisor_dma_unmap_page(ka_device_t *dev, ka_dma_addr_t addr, size_t size, ka_dma_data_direction_t dir)
 {
     if (hw_dvt_check_is_vm_mode() && get_vdavinci_virtual_ops()->vdavinci_hypervisor_dma_unmap_page != NULL) {
         return get_vdavinci_virtual_ops()->vdavinci_hypervisor_dma_unmap_page(dev, addr, size, dir);
     }
 }
-EXPORT_SYMBOL(hw_dvt_hypervisor_dma_unmap_page);
+KA_EXPORT_SYMBOL(hw_dvt_hypervisor_dma_unmap_page);
 
-int hw_dvt_hypervisor_get_reserve_iova(struct device *dev, dma_addr_t *iova_addr, size_t *size)
+int hw_dvt_hypervisor_get_reserve_iova(ka_device_t *dev, ka_dma_addr_t *iova_addr, size_t *size)
 {
     if (hw_dvt_check_is_vm_mode() && get_vdavinci_virtual_ops()->vdavinci_get_reserve_iova_for_check != NULL) {
         return get_vdavinci_virtual_ops()->vdavinci_get_reserve_iova_for_check(dev, iova_addr, size);
     }
     return 0;
 }
-EXPORT_SYMBOL(hw_dvt_hypervisor_get_reserve_iova);
+KA_EXPORT_SYMBOL(hw_dvt_hypervisor_get_reserve_iova);

@@ -13,10 +13,10 @@
 #ifndef SVM_MASTER_MEM_CREATE_H
 #define SVM_MASTER_MEM_CREATE_H
 
-#include "svm_ioctl.h"
 #include "svm_kernel_msg.h"
 #include "devmm_proc_info.h"
 #include "devmm_common.h"
+#include "svm_ioctl.h"
 
 int devmm_ioctl_mem_create(struct devmm_svm_process *svm_proc, struct devmm_ioctl_arg *arg);
 int devmm_ioctl_mem_release(struct devmm_svm_process *svm_proc, struct devmm_ioctl_arg *arg);

@@ -315,7 +315,7 @@ enum vmng_split_mode {
 
 /* @Function: vmng_get_device_split_mode
  * @Description: get device runtime environment
- * @Returun: 0: normal, none split 1: vritual split 2: container split
+ * @Returun: 0: normal, none split 1: virtual split 2: container split
  */
 enum vmng_split_mode vmng_get_device_split_mode(u32 dev_id);
 

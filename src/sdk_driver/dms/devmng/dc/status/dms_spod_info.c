@@ -21,6 +21,9 @@
 #include "devdrv_common.h"
 #include "ascend_kernel_hal.h"
 #include "pbl_mem_alloc_interface.h"
+#include "ka_base_pub.h"
+#include "ka_task_pub.h"
+#include "ka_memory_pub.h"
 #include "dms/dms_notifier.h"
 
 #ifdef CFG_HOST_ENV
@@ -172,9 +175,9 @@ int dms_get_spod_info(void *feature, char *in, u32 in_len, char *out, u32 out_le
         dms_err("Failed to get spod info. (dev_id=%u; ret=%d)\n", input->dev_id, ret);
         return ret;
     }
-    ret = copy_to_user(input->buff, &spod_stru, sizeof(spod_stru));
+    ret = ka_base_copy_to_user(input->buff, &spod_stru, sizeof(spod_stru));
     if (ret != 0) {
-        dms_err("copy_to_user failed. (dev_id=%u; ret=%d)\n", input->dev_id, ret);
+        dms_err("ka_base_copy_to_user failed. (dev_id=%u; ret=%d)\n", input->dev_id, ret);
         return ret;
     }
     output->out_size = sizeof(spod_stru);
@@ -206,9 +209,9 @@ int dms_get_spod_ping_info(void *feature, char *in, u32 in_len, char *out, u32 o
         return ret;
     }
 
-    ret = copy_from_user(&sdid, (void *)((uintptr_t)input->buff), sizeof(u32));
+    ret = ka_base_copy_from_user(&sdid, (void *)((uintptr_t)input->buff), sizeof(u32));
     if (ret != 0) {
-        dms_err("Failed to invoke copy_from_user for sdid. (devid=%u; udevid=%u; ret=%d)\n",
+        dms_err("Failed to invoke ka_base_copy_from_user for sdid. (devid=%u; udevid=%u; ret=%d)\n",
             input->dev_id, udevid, ret);
         return ret;
     }
@@ -284,16 +287,16 @@ int hal_kernel_get_spod_node_status(unsigned int local_udevid, unsigned int remo
 
     index = sdid_info.server_id * DMS_SPOD_MAX_UDEVID_NUM + sdid_info.udevid;
 
-    down_read(&g_spod_node_status_lock[local_udevid]);
+    ka_task_down_read(&g_spod_node_status_lock[local_udevid]);
 
     nodes_status = g_spod_node_status[local_udevid];
     if (nodes_status == NULL) {
-        up_read(&g_spod_node_status_lock[local_udevid]);
+        ka_task_up_read(&g_spod_node_status_lock[local_udevid]);
         return -ENODATA;
     }
 
     *status = nodes_status->status[index];
-    up_read(&g_spod_node_status_lock[local_udevid]);
+    ka_task_up_read(&g_spod_node_status_lock[local_udevid]);
     return 0;
 #else
     (void)local_udevid;
@@ -337,18 +340,18 @@ STATIC int dms_spod_set_node_status(unsigned int local_udevid, unsigned int remo
 
     index = sdid_info.server_id * DMS_SPOD_MAX_UDEVID_NUM + sdid_info.udevid;
 
-    down_write(&g_spod_node_status_lock[local_udevid]);
+    ka_task_down_write(&g_spod_node_status_lock[local_udevid]);
 
     nodes_status = g_spod_node_status[local_udevid];
     if (nodes_status == NULL) {
-        up_write(&g_spod_node_status_lock[local_udevid]);
+        ka_task_up_write(&g_spod_node_status_lock[local_udevid]);
         dms_err("Spod node status has not been inited. (local_udevid=%u)\n", local_udevid);
         return -ENODATA;
     }
 
     nodes_status->status[index] = status;
 
-    up_write(&g_spod_node_status_lock[local_udevid]);
+    ka_task_up_write(&g_spod_node_status_lock[local_udevid]);
 
     return 0;
 #else
@@ -380,9 +383,9 @@ int dms_get_spod_node_status(void *feature, char *in, u32 in_len, char *out, u32
         return ret;
     }
 
-    ret = copy_from_user(&sdid, (void *)((uintptr_t)input->buff), sizeof(u32));
+    ret = ka_base_copy_from_user(&sdid, (void *)((uintptr_t)input->buff), sizeof(u32));
     if (ret != 0) {
-        dms_err("Failed to invoke copy_from_user for sdid. (devid=%u; udevid=%u; ret=%d)\n",
+        dms_err("Failed to invoke ka_base_copy_from_user for sdid. (devid=%u; udevid=%u; ret=%d)\n",
             input->dev_id, udevid, ret);
         return ret;
     }
@@ -394,9 +397,9 @@ int dms_get_spod_node_status(void *feature, char *in, u32 in_len, char *out, u32
          return (ret != -ERANGE ? ret : -EINVAL);
     }
 
-    ret = copy_to_user((void *)((uintptr_t)input->buff), &status, sizeof(u32));
+    ret = ka_base_copy_to_user((void *)((uintptr_t)input->buff), &status, sizeof(u32));
     if (ret != 0) {
-        dms_err("Failed to invoke copy_to_user for status. (devid=%u; udevid=%u; ret=%d)\n",
+        dms_err("Failed to invoke ka_base_copy_to_user for status. (devid=%u; udevid=%u; ret=%d)\n",
             input->dev_id, udevid, ret);
         return ret;
     }
@@ -432,9 +435,9 @@ int dms_set_spod_node_status(void *feature, char *in, u32 in_len, char *out, u32
         return ret;
     }
 
-    ret = copy_from_user(&para, (void *)((uintptr_t)input->buff), sizeof(struct sdid_status));
+    ret = ka_base_copy_from_user(&para, (void *)((uintptr_t)input->buff), sizeof(struct sdid_status));
     if (ret != 0) {
-        dms_err("Failed to invoke copy_from_user for sdid and status. (devid=%u; udevid=%u; ret=%d)\n",
+        dms_err("Failed to invoke ka_base_copy_from_user for sdid and status. (devid=%u; udevid=%u; ret=%d)\n",
             input->dev_id, udevid, ret);
         return ret;
     }
@@ -456,23 +459,23 @@ STATIC int dms_spod_node_status_init(unsigned int udevid, unsigned int soc_type)
         return 0;
     }
 
-    down_write(&g_spod_node_status_lock[udevid]);
+    ka_task_down_write(&g_spod_node_status_lock[udevid]);
 
     if (g_spod_node_status[udevid] != NULL) {
-        up_write(&g_spod_node_status_lock[udevid]);
+        ka_task_up_write(&g_spod_node_status_lock[udevid]);
         dms_info("Spod node status has been inited. (udevid=%u)", udevid);
         return 0;
     }
 
-    nodes_status = (struct spod_node_status *)dbl_kzalloc(sizeof(struct spod_node_status), GFP_KERNEL | __GFP_ACCOUNT);
+    nodes_status = (struct spod_node_status *)dbl_kzalloc(sizeof(struct spod_node_status), KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
     if (nodes_status == NULL) {
-        up_write(&g_spod_node_status_lock[udevid]);
+        ka_task_up_write(&g_spod_node_status_lock[udevid]);
         dms_err("malloc spod node status failed. (udevid=%u)", udevid);
         return -ENOMEM;
     }
 
     g_spod_node_status[udevid] = nodes_status;
-    up_write(&g_spod_node_status_lock[udevid]);
+    ka_task_up_write(&g_spod_node_status_lock[udevid]);
 #endif
     return 0;
 }
@@ -484,17 +487,17 @@ STATIC void dms_spod_node_status_uninit(unsigned int udevid, unsigned int soc_ty
         return;
     }
 
-    down_write(&g_spod_node_status_lock[udevid]);
+    ka_task_down_write(&g_spod_node_status_lock[udevid]);
 
     if (g_spod_node_status[udevid] == NULL) {
-        up_write(&g_spod_node_status_lock[udevid]);
+        ka_task_up_write(&g_spod_node_status_lock[udevid]);
         return;
     }
 
     dbl_kfree(g_spod_node_status[udevid]);
     g_spod_node_status[udevid] = NULL;
 
-    up_write(&g_spod_node_status_lock[udevid]);
+    ka_task_up_write(&g_spod_node_status_lock[udevid]);
 #endif
     return;
 }
@@ -575,7 +578,7 @@ STATIC int dms_spod_status_module_init(void)
 #ifdef CFG_HOST_ENV
     int i;
     for (i = 0; i < DEVDRV_PF_DEV_MAX_NUM; ++i) {
-        init_rwsem(&g_spod_node_status_lock[i]);
+        ka_task_init_rwsem(&g_spod_node_status_lock[i]);
     }
 #endif
 

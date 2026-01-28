@@ -51,9 +51,9 @@ void udis_cb_write_lock(unsigned int udevid);
 void udis_cb_write_unlock(unsigned int udevid);
 void udis_cb_read_lock(unsigned int udevid);
 void udis_cb_read_unlock(unsigned int udevid);
-int udis_alloc_info_block(unsigned int udevid, const struct udis_dma_node *addr_node, dma_addr_t *host_dma_addr);
+int udis_alloc_info_block(unsigned int udevid, const struct udis_dma_node *addr_node, ka_dma_addr_t *host_dma_addr);
 void udis_free_info_block(unsigned int udevid, UDIS_MODULE_TYPE module_type, const char *name,
-    dma_addr_t host_dma_addr);
+    ka_dma_addr_t host_dma_addr);
 struct udis_link_dma_nodes *udis_get_link_dma_nodes(unsigned int udevid);
 int udis_link_dma_nodes_init(unsigned int udevid);
 void udis_link_dma_nodes_uninit(unsigned int udevid);

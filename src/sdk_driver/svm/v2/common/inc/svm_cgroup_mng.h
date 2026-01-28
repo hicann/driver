@@ -14,8 +14,8 @@
 #ifndef DEVMM_CGROUP_MNG_H
 #define DEVMM_CGROUP_MNG_H
 
-#include <linux/cgroup.h>
-#include <linux/mm.h>
+#include "ka_memory_pub.h"
+
 #include "devmm_addr_mng.h"
 
 ka_mem_cgroup_t *devmm_enable_cgroup(ka_mem_cgroup_t **memcg, ka_pid_t pid);

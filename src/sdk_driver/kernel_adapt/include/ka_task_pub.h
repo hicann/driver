@@ -54,6 +54,12 @@
 
 #include "ka_common_pub.h"
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 1, 0)
+typedef u64 TASK_TIME_TYPE;
+#else
+typedef struct timespec TASK_TIME_TYPE;
+#endif
+
 #ifdef FUNC_GET_PID_LINK_NODE
     #define KA_TASK_PID_ENTRY(PARAM_PIDTYPE_PID) pid_links[(PARAM_PIDTYPE_PID)]
 #else

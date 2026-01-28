@@ -73,9 +73,10 @@ function(add_host_ko)
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
     add_custom_target(${HOST_LOCAL_MODULE} ALL DEPENDS ${HOST_OUT_INTERMEDIATES}/src/${LOCAL_MODULE}.ko ${HOST_OUT_INTERMEDIATES}/src/Module.symvers)
 
-   foreach(depends ${HOST_TARGETE_DPENDS})
-       add_dependencies(${HOST_LOCAL_MODULE} ${depends})
-   endforeach()
+    foreach(depends ${HOST_TARGETE_DPENDS})
+        add_dependencies(${HOST_LOCAL_MODULE} ${depends})
+    endforeach()
+
     INSTALL(FILES ${HOST_OUT_INTERMEDIATES}/src/Module.symvers
             DESTINATION ${CMAKE_INSTALL_PREFIX}/${MODULE_KO_DIR} OPTIONAL)
     INSTALL(FILES ${HOST_OUT_INTERMEDIATES}/src/${LOCAL_MODULE}.ko

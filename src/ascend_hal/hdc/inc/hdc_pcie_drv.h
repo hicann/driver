@@ -15,7 +15,7 @@
 #include "hdc_cmn.h"
 #include "hdcdrv_cmd_ioctl.h"
 
-/* pcie Çý¶¯¶¨Òå */
+/* pcie driver definition */
 #define PCIE_DEV_NAME "/dev/hisi_hdc"
 
 #define HDC_DFX

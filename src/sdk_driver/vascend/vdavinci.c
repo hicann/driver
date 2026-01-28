@@ -15,6 +15,7 @@
 #include <linux/log2.h>
 
 #include "dvt.h"
+#include "hw_vdavinci.h"
 #include "mmio.h"
 #include "domain_manage.h"
 #include "vfio_ops.h"
@@ -87,7 +88,7 @@ STATIC void remove_vdavinci_node(struct hw_vdavinci *vdavinci)
 STATIC int hw_get_available_vf(struct hw_vdavinci *vdavinci)
 {
     struct hw_dvt *dvt = vdavinci->dvt;
-    int i;
+    unsigned int i;
     for (i = 0; i < dvt->sriov.vf_num; i++) {
         if (!dvt->sriov.vf_array[i].used) {
             vdavinci->vf_index = i;
@@ -143,12 +144,73 @@ STATIC int hw_dvt_reclaim_vf(struct hw_vdavinci *vdavinci)
     return 0;
 }
 
+int init_vdavinci_type(struct hw_vdavinci_type *type,
+                       struct vdavinci_type *tp)
+{
+    int ret = 0;
+
+    if (type == NULL || tp == NULL) {
+        return -EINVAL;
+    }
+    ret = snprintf_s(tp->template_name, HW_DVT_MAX_TYPE_NAME,
+                     HW_DVT_MAX_TYPE_NAME - 1, "%s", type->template_name);
+    if (ret < 0) {
+        pr_err("vdavinci type init failed, ret: %d\n", ret);
+        return ret;
+    }
+    tp->type = type->type;
+    tp->bar0_size = type->bar0_size;
+    tp->bar2_size = type->bar2_size;
+    tp->bar4_size = type->bar4_size;
+    tp->aicore_num = type->aicore_num;
+    tp->mem_size = type->mem_size;
+    tp->aicpu_num = type->aicpu_num;
+    tp->vpc_num = type->vpc_num;
+    tp->jpegd_num = type->jpegd_num;
+    tp->jpege_num = type->jpege_num;
+    tp->venc_num = type->venc_num;
+    tp->vdec_num = type->vdec_num;
+    tp->share = type->share;
+    tp->ddrmem_size = type->ddrmem_size;
+    tp->hbmmem_size = type->hbmmem_size;
+
+    return 0;
+}
+
+STATIC int hw_dvt_ops_create_vdavinci(struct hw_vdavinci *vdavinci,
+                                      struct hw_vdavinci_type *type,
+                                      uuid_le uuid)
+{
+    struct hw_dvt *dvt = vdavinci->dvt;
+    struct vdavinci_type tp;
+    int ret = 0;
+
+    if (dvt->vdavinci_priv->ops == NULL ||
+        dvt->vdavinci_priv->ops->vdavinci_create == NULL) {
+        vascend_err(vdavinci_to_dev(vdavinci), "vdavinci_priv's ops is null\n");
+        return -EINVAL;
+    }
+    ret = init_vdavinci_type(type, &tp);
+    if (ret != 0) {
+        vascend_err(vdavinci_to_dev(vdavinci), "init vdavinci type failed\n");
+        return ret;
+    }
+    ret = dvt->vdavinci_priv->ops->vdavinci_create(&vdavinci->dev, vdavinci,
+                                                   &tp, uuid);
+    if (ret != 0) {
+        vascend_err(vdavinci_to_dev(vdavinci), "create vdavinci failed, call vdavinci_create failed, "
+                    "pf : %u, vid: %u, ret: %d\n", vdavinci->dev.dev_index, vdavinci->id, ret);
+        return ret;
+    }
+
+    return 0;
+}
+
 struct hw_vdavinci *hw_dvt_create_vdavinci(struct hw_dvt *dvt,
                                            struct hw_vdavinci_type *type, uuid_le uuid)
 {
     struct hw_vdavinci *vdavinci;
     int ret;
-    struct device *dev = NULL;
     struct hw_pf_info *pf_info = &dvt->pf[type->dev_index];
 
     vdavinci = vzalloc(sizeof(*vdavinci));
@@ -176,18 +238,10 @@ struct hw_vdavinci *hw_dvt_create_vdavinci(struct hw_dvt *dvt,
     }
 
     hw_vdavinci_init_cfg_space(vdavinci);
-    dev = dvt->vdavinci_priv->dev;
-    if (dvt->vdavinci_priv->ops &&
-        dvt->vdavinci_priv->ops->vdavinci_create) {
-        ret = dvt->vdavinci_priv->ops->vdavinci_create(&vdavinci->dev, vdavinci,
-                                                       (struct vdavinci_type *)type, uuid);
-        if (ret) {
-            vascend_err(dev, "create vdavinci failed, call vdavinci_create failed, "
-                "pf : %u, vid: %u, ret: %d\n", vdavinci->dev.dev_index, vdavinci->id, ret);
-            goto mmio_uninit;
-        }
+    ret = hw_dvt_ops_create_vdavinci(vdavinci, type, uuid);
+    if (ret != 0) {
+        goto mmio_uninit;
     }
-
     hw_dvt_debugfs_add_vdavinci(vdavinci);
     mutex_init(&vdavinci->ioeventfds_lock);
     INIT_LIST_HEAD(&vdavinci->ioeventfds_list);

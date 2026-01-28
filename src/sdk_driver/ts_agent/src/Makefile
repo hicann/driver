@@ -24,6 +24,7 @@ ifeq ($(ENABLE_OPEN_SRC), y)
     TMP_TOP_DIR := $(DRIVER_KERNEL_DIR)
     TMP_CURRENT_DIR = $(DRIVER_KERNEL_DIR)/ts_agent
     TMP_DEV_INC_DIR = $(TMP_TOP_DIR)/inc
+    TMP_DEV_INC_DIR = $(TMP_TOP_DIR)/inc/trs
     TMP_OPEN_INC_DIR = $(DRIVER_HAL_INC_DIR)
     TMP_OPEN_KA_INC_DIR = $(DRIVER_KERNEL_DIR)/kernel_adapt/include
     EXTRA_CFLAGS += -isystem $(shell $(CC) -print-file-name=include)
@@ -47,8 +48,8 @@ ifeq ($(ENABLE_OPEN_SRC), y)
 
 	ccflags-y += -Wall -Werror
 	obj-m := ts_agent_vm.o
-    EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/trs/inc
-    EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/trs/trs_core/command/ioctl/
+    EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/trsdrv/trs/inc
+    EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/trsdrv/trs/trs_core/command/ioctl/
 
     ts_agent_vm-objs := ts_agent_module.o \
                     ts_agent_update_sqe.o
@@ -58,6 +59,7 @@ else
         TMP_TOP_DIR := $(DRIVER_KERNEL_DIR)
         TMP_CURRENT_DIR = $(DRIVER_KERNEL_DIR)/ts_agent
         TMP_DEV_INC_DIR = $(TMP_TOP_DIR)/inc
+        TMP_DEV_INC_DIR = $(TMP_TOP_DIR)/inc/trs
         TMP_OPEN_INC_DIR = $(DRIVER_HAL_INC_DIR)
         TMP_OPEN_KA_INC_DIR = $(DRIVER_KERNEL_DIR)/kernel_adapt/include
         TMP_LIBC_SEC_BASE_DIR = $(TMP_OPEN_INC_DIR)/depends/libc_sec
@@ -75,7 +77,7 @@ else
         TMP_TOP_DIR = $(TMP_CURRENT_DIR)/../../
         TMP_DEV_INC_DIR = $(TMP_TOP_DIR)/drivers/ai_sdk/arc/linux/kernel_space/inc
         TMP_LIBC_SEC_BASE_DIR = $(TMP_TOP_DIR)/abl/libc_sec/include/
-        TMP_OPEN_KA_INC_DIR = $(TMP_TOP_DIR)/drivers/ai_sdk/arc/linux/kernel_open/src/kernel_adapt/include
+        TMP_OPEN_KA_INC_DIR = $(TMP_TOP_DIR)/drivers/ai_sdk/arc/linux/kernel_space/src/kernel_adapt/include
     endif
 
 
@@ -89,6 +91,7 @@ else
                     -I$(TMP_DEV_INC_DIR)/ \
 					-I$(TMP_TOP_DIR) \
 					-I$(TMP_TOP_DIR)/inc \
+					-I$(TMP_TOP_DIR)/inc/trs \
 					-I$(TMP_OPEN_INC_DIR) \
 					-I$(TMP_TOP_DIR)/inc/driver \
 					-I$(TMP_TOP_DIR)/ace/csruntime/inc \

@@ -138,43 +138,56 @@ drvError_t __attribute__((weak)) halResAddrUnmap(unsigned int devId, struct res_
 static int trs_res_id_info_init(uint32_t dev_id, drvIdType_t type, struct trs_res_id_para *para)
 {
     struct res_id_usr_info *id_info = NULL;
-    struct res_addr_info res_info = {0};
-    unsigned long notify_va;
-    uint32_t notify_len;
-    int ret;
 
     id_info = _trs_get_res_id_info(dev_id, para->tsid, type, para->id);
     if (id_info == NULL) {
         return DRV_ERROR_UNINIT;
     }
-    res_info.id = para->tsid;
+
+    id_info->valid = 1;
+    id_info->res_addr = 0;
+    id_info->res_len = 0;
+    return DRV_ERROR_NONE;
+}
+
+
+int trs_res_map_reg_init(uint32_t dev_id, uint32_t ts_id, uint32_t res_id, drvIdType_t type, struct res_id_usr_info *id_info)
+{
+    struct res_addr_info res_info = {0};
+    unsigned long notify_va;
+    uint32_t notify_len;
+    int ret;
+
+    if (id_info == NULL) {
+        return DRV_ERROR_UNINIT;
+    }
+    res_info.id = ts_id;
+    res_info.res_id = res_id;
     res_info.target_proc_type = PROCESS_CP1;
-    res_info.res_id = para->id;
     res_info.res_type = (type == DRV_NOTIFY_ID) ?
         RES_ADDR_TYPE_STARS_NOTIFY_RECORD : RES_ADDR_TYPE_STARS_CNT_NOTIFY_RECORD;
     ret = halResAddrMap(dev_id, &res_info, &notify_va, &notify_len);
     if (ret != DRV_ERROR_NONE) {
 #ifndef EMU_ST /* Don't delete for UT compile */
-        trs_err("Failed to map notify. (dev_id=%u; tsid=%u; res_id=%u)\n", dev_id, para->tsid, para->id);
+        trs_err("Failed to map notify. (dev_id=%u; tsid=%u; res_id=%u)\n", dev_id, ts_id, res_id);
         return ret;
 #endif
     }
 
-    id_info->valid = 1;
     id_info->res_addr = (uint64_t)notify_va;
     id_info->res_len = notify_len;
     ret = trs_register_reg(dev_id, id_info->res_addr, id_info->res_len);
     if (ret != 0) {
         trs_err("Register addr failed. (dev_id=%u; type=%d; addr=0x%llx; len=%u; id=%u; ret=%d)\n", dev_id, type,
-            id_info->res_addr, id_info->res_len, para->id, ret);
+            id_info->res_addr, id_info->res_len, res_id, ret);
         return ret;
     }
-    trs_debug("Id info init. (dev_id=%u; type=%d; id=%u; addr=0x%llx; len=%u)\n", dev_id, type, para->id,
+    trs_debug("Id map reg init. (dev_id=%u; type=%d; id=%u; addr=0x%llx; len=%u)\n", dev_id, type, res_id,
         id_info->res_addr, id_info->res_len);
     return DRV_ERROR_NONE;
 }
 
-static void _trs_res_id_info_un_init(uint32_t dev_id, uint32_t tsid, uint32_t res_id, drvIdType_t type,
+void trs_res_map_reg_un_init(uint32_t dev_id, uint32_t tsid, uint32_t res_id, drvIdType_t type,
     struct res_id_usr_info *id_info)
 {
     struct res_addr_info res_info = {0};
@@ -185,9 +198,6 @@ static void _trs_res_id_info_un_init(uint32_t dev_id, uint32_t tsid, uint32_t re
     }
 
     trs_unregister_reg(dev_id, (uint64_t)id_info->res_addr, id_info->res_len);
-    id_info->res_addr = 0;
-    id_info->res_len = 0;
-    id_info->valid = 0;
 
     res_info.id = tsid;
     res_info.target_proc_type = PROCESS_CP1;
@@ -200,12 +210,22 @@ static void _trs_res_id_info_un_init(uint32_t dev_id, uint32_t tsid, uint32_t re
     }
 }
 
-static void trs_res_id_info_un_init(uint32_t dev_id, drvIdType_t type, struct trs_res_id_para *para)
+static void trs_res_id_info_un_init(uint32_t dev_id, uint32_t ts_id, uint32_t res_id, drvIdType_t type)
 {
-    struct res_id_usr_info *id_info = _trs_get_res_id_info(dev_id, para->tsid, type, para->id);
-    if (id_info != NULL) {
-        _trs_res_id_info_un_init(dev_id, para->tsid, para->id, type, id_info);
+    struct res_id_usr_info *id_info = NULL;
+
+    id_info = _trs_get_res_id_info(dev_id, ts_id, type, res_id);
+    if (id_info == NULL) {
+        return;
     }
+
+    if (id_info->res_addr != 0) {
+        trs_res_map_reg_un_init(dev_id, ts_id, res_id, type, id_info);
+    }
+
+    id_info->valid = 0;
+    id_info->res_addr = 0;
+    id_info->res_len = 0;
 }
 
 static int trs_res_type_init(uint32_t dev_id, uint32_t ts_id, int id_type, struct res_id_usr_info **id_info, uint32_t *id_num)
@@ -254,7 +274,7 @@ static void trs_res_type_un_init(uint32_t dev_id, uint32_t ts_id, drvIdType_t id
             continue;
         }
 
-        _trs_res_id_info_un_init(dev_id, ts_id, i, id_type, &info[i]);
+        trs_res_id_info_un_init(dev_id, ts_id, i, id_type);
     }
 
     free(info);
@@ -461,6 +481,10 @@ static drvError_t trs_res_alloc_post_proc(uint32_t devId, struct halResourceIdIn
             return DRV_ERROR_NO_MODEL_RESOURCES;
         }
     }
+#else
+    (void)devId;
+    (void)in;
+    (void)id;
 #endif
     return DRV_ERROR_NONE;
 }
@@ -531,7 +555,7 @@ static drvError_t trs_local_res_free(uint32_t dev_id, struct halResourceIdInputI
 
     if ((trs_get_connection_type(dev_id) == TRS_CONNECT_PROTOCOL_UB) &&
         ((in->type == DRV_NOTIFY_ID) || (in->type == DRV_CNT_NOTIFY_ID))) {
-        trs_res_id_info_un_init(dev_id, in->type, &para);
+        trs_res_id_info_un_init(dev_id, in->tsId, in->resourceId, in->type);
     }
 
     ret = trs_dev_io_ctrl(dev_id, TRS_RES_ID_FREE, &para);

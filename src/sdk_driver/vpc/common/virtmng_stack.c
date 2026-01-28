@@ -11,8 +11,6 @@
  * GNU General Public License for more details.
  */
 
-#include <linux/printk.h>
-#include <linux/errno.h>
 #include "virtmng_stack.h"
 #include "virtmng_public_def.h"
 

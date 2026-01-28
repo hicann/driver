@@ -11,12 +11,12 @@
  * GNU General Public License for more details.
  */
 
-#include <linux/sched.h>
+#include "ka_base_pub.h"
 #include "svm_rbtree.h"
 
 ka_rb_node_t *devmm_rb_first(ka_rb_root_t *root)
 {
-    if (RB_EMPTY_ROOT(root)) {
+    if (KA_BASE_RB_EMPTY_ROOT(root)) {
         return NULL;
     }
 
@@ -56,23 +56,23 @@ int devmm_rb_insert(ka_rb_root_t *root, ka_rb_node_t *node, rb_handle_func get_h
 
         parent = *cur_node;
         if (handle < tmp_handle) {
-            cur_node = &((*cur_node)->rb_left);
+            cur_node = ka_base_get_rb_node_left_addr(*cur_node);
         } else if (handle > tmp_handle) {
-            cur_node = &((*cur_node)->rb_right);
+            cur_node = ka_base_get_rb_node_right_addr(*cur_node);
         } else {
             return -EINVAL;
         }
     }
 
     /* Add new node and rebalance tree. */
-    rb_link_node(node, parent, cur_node);
+    ka_base_rb_link_node(node, parent, cur_node);
     ka_base_rb_insert_color(node, root);
     return 0;
 }
 
 int devmm_rb_insert_by_range(ka_rb_root_t *root, ka_rb_node_t *node, rb_range_handle_func get_range)
 {
-    ka_rb_node_t **cur_node = &root->rb_node;
+    ka_rb_node_t **cur_node = ka_base_get_rb_root_node_addr(root);
     ka_rb_node_t *parent = NULL;
     struct rb_range_handle range;
     get_range(node, &range);
@@ -84,16 +84,16 @@ int devmm_rb_insert_by_range(ka_rb_root_t *root, ka_rb_node_t *node, rb_range_ha
 
         parent = *cur_node;
         if (range.end < tmp_range.start) {
-            cur_node = &((*cur_node)->rb_left);
+            cur_node = ka_base_get_rb_node_left_addr(*cur_node);
         } else if (range.start > tmp_range.end) {
-            cur_node = &((*cur_node)->rb_right);
+            cur_node = ka_base_get_rb_node_right_addr(*cur_node);
         } else {
             return -EINVAL;
         }
     }
 
     /* Add new node and rebalance tree. */
-    rb_link_node(node, parent, cur_node);
+    ka_base_rb_link_node(node, parent, cur_node);
     ka_base_rb_insert_color(node, root);
     return 0;
 }
@@ -102,13 +102,13 @@ ka_rb_node_t *devmm_rb_search(ka_rb_root_t *root, u64 handle, rb_handle_func get
 {
     ka_rb_node_t *node = NULL;
 
-    node = root->rb_node;
+    node = ka_base_get_rb_root_node(root);
     while (node != NULL) {
         u64 tmp_handle = get_handle(node);
         if (handle < tmp_handle) {
-            node = node->rb_left;
+            node = ka_base_get_rb_node_left(node);
         } else if (handle > tmp_handle) {
-            node = node->rb_right;
+            node = ka_base_get_rb_node_right(node);
         } else {
             return node;
         }
@@ -120,16 +120,16 @@ ka_rb_node_t *devmm_rb_search(ka_rb_root_t *root, u64 handle, rb_handle_func get
 ka_rb_node_t *devmm_rb_search_by_range(ka_rb_root_t *root, struct rb_range_handle *range,
     rb_range_handle_func get_range)
 {
-    ka_rb_node_t *node = root->rb_node;
+    ka_rb_node_t *node = ka_base_get_rb_root_node(root);
 
     while (node != NULL) {
         struct rb_range_handle tmp_range;
 
         get_range(node, &tmp_range);
         if (range->end < tmp_range.start) {
-            node = node->rb_left;
+            node = ka_base_get_rb_node_left(node);
         } else if (range->start > tmp_range.end) {
-            node = node->rb_right;
+            node = ka_base_get_rb_node_right(node);
         } else if (range->start >= tmp_range.start && range->end <= tmp_range.end) {
             return node;
         } else {
@@ -144,7 +144,7 @@ ka_rb_node_t *devmm_rb_erase_one_node(ka_rb_root_t *root, rb_erase_condition con
 {
     ka_rb_node_t *node = NULL;
 
-    if (RB_EMPTY_ROOT(root) == true) {
+    if (KA_BASE_RB_EMPTY_ROOT(root) == true) {
         return NULL;
     }
 
@@ -162,7 +162,7 @@ ka_rb_node_t *devmm_rb_erase_one_node(ka_rb_root_t *root, rb_erase_condition con
 
     if (node != NULL) {
         ka_base_rb_erase(node, root);
-        RB_CLEAR_NODE(node);
+        KA_BASE_RB_CLEAR_NODE(node);
     }
 
     return node;
@@ -173,7 +173,7 @@ void devmm_rb_erase_all_node(ka_rb_root_t *root, rb_release_func release)
     ka_rb_node_t *node = NULL;
     ka_rb_node_t *next_node = NULL;
 
-    if (RB_EMPTY_ROOT(root) == true) {
+    if (KA_BASE_RB_EMPTY_ROOT(root) == true) {
         return;
     }
 
@@ -181,7 +181,7 @@ void devmm_rb_erase_all_node(ka_rb_root_t *root, rb_release_func release)
     while (node != NULL) {
         next_node = ka_base_rb_next(node);
         ka_base_rb_erase(node, root);
-        RB_CLEAR_NODE(node);
+        KA_BASE_RB_CLEAR_NODE(node);
 
         release(node);
         node = next_node;

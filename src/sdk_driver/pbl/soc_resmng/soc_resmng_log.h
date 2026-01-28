@@ -14,8 +14,6 @@
 #ifndef SOC_RESMNG_LOG_H__
 #define SOC_RESMNG_LOG_H__
 
-#include <linux/sched.h>
-
 #define module_soc_resmng "soc_resmng"
 
 #include "dmc_kernel_interface.h"

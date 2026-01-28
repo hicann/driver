@@ -15,6 +15,11 @@
 #include <linux/jiffies.h>
 
 #include "devdrv_manager.h"
+#include "ka_fs_pub.h"
+#include "ka_errno_pub.h"
+#include "ka_system_pub.h"
+#include "ka_base_pub.h"
+#include "ka_kernel_def_pub.h"
 #include "devdrv_manager_rand.h"
 
 int devdrv_get_random(char *random, u32 len)
@@ -31,19 +36,19 @@ int devdrv_get_random(char *random, u32 len)
         return -EINVAL;
     }
 
-    file = filp_open("/dev/random", O_RDONLY, 0);
-    if (IS_ERR_OR_NULL(file)) {
-        devdrv_drv_err("open file:/dev/random failed, file(%pK), errcode(%ld).\n", file, PTR_ERR(file));
+    file = ka_fs_filp_open("/dev/random", KA_O_RDONLY, 0);
+    if (KA_IS_ERR_OR_NULL(file)) {
+        devdrv_drv_err("open file:/dev/random failed, file(%pK), errcode(%ld).\n", file, KA_PTR_ERR(file));
         return -EINVAL;
     }
 
-    time = jiffies;
+    time = ka_jiffies;
     do {
         pos = 0;
         tmp_len = len - out_size;
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 14, 0)
-        ret = kernel_read(file, random + out_size, (ssize_t)tmp_len, &pos);
+        ret = ka_fs_kernel_read(file, random + out_size, (ssize_t)tmp_len, &pos);
 #else
         ret = devdrv_load_file_read(file, &pos, random + out_size, (ssize_t)tmp_len);
 #endif
@@ -53,20 +58,20 @@ int devdrv_get_random(char *random, u32 len)
         }
         if (ret < 0) {
             devdrv_drv_err("kernel read failed, ret(%d).\n", ret);
-            filp_close(file, NULL);
+            ka_fs_filp_close(file, NULL);
             file = NULL;
             return -EINVAL;
         }
         out_size += ret;
     } while (out_size < len);
 
-    if (time_is_before_jiffies(time + HZ / 10)) {
-        devdrv_drv_warn("spend time : %u ms.\n", jiffies_to_msecs(jiffies - time));
+    if (time_is_before_jiffies(time + KA_HZ / 10)) {
+        devdrv_drv_warn("spend time : %u ms.\n", ka_system_jiffies_to_msecs(ka_jiffies - time));
     }
 
-    filp_close(file, NULL);
+    ka_fs_filp_close(file, NULL);
     file = NULL;
 
     return 0;
 }
-EXPORT_SYMBOL(devdrv_get_random);
+KA_EXPORT_SYMBOL(devdrv_get_random);

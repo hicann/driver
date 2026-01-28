@@ -69,7 +69,7 @@ drvError_t __attribute__((weak)) trs_sq_task_args_async_copy(uint32_t dev_id, st
     return DRV_ERROR_NOT_SUPPORT;
 }
 
-drvError_t __attribute__((weak)) trs_async_dma_wqe_create(uint32_t dev_id, struct halAsyncDmaInputPara *in,
+drvError_t __attribute__((weak)) trs_async_dma_wqe_create(uint32_t dev_id, struct trs_async_dma_input_para *in,
     struct halAsyncDmaOutputPara *out)
 {
     (void)dev_id;
@@ -78,7 +78,7 @@ drvError_t __attribute__((weak)) trs_async_dma_wqe_create(uint32_t dev_id, struc
     return DRV_ERROR_NOT_SUPPORT;
 }
 
-drvError_t __attribute__((weak)) trs_async_dma_wqe_destory(uint32_t dev_id, struct halAsyncDmaDestoryPara *para)
+drvError_t __attribute__((weak)) trs_async_dma_wqe_destory(uint32_t dev_id, struct trs_async_dma_destroy_para *para)
 {
     (void)dev_id;
     (void)para;
@@ -95,6 +95,32 @@ drvError_t __attribute__((weak)) trs_sq_task_send_urma(uint32_t dev_id, struct h
     (void)time_arraylen;
     return DRV_ERROR_NOT_SUPPORT;
 }
+
+drvError_t __attribute__((weak)) trs_get_urma_tseg_info_by_va(uint32_t devid, uint64_t va, uint64_t size, uint32_t flag,
+    struct halTsegInfo *tsegInfo)
+{
+    (void)devid;
+    (void)va;
+    (void)size;
+    (void)flag;
+    (void)tsegInfo;
+    return DRV_ERROR_NOT_SUPPORT;
+}
+
+drvError_t __attribute__((weak)) trs_put_urma_tseg_info(uint32_t devid, struct halTsegInfo *tsegInfo)
+{
+    (void)devid;
+    (void)tsegInfo;
+    return DRV_ERROR_NOT_SUPPORT;
+}
+
+drvError_t __attribute__((weak)) trs_sq_jetty_info_query(uint32_t devid, struct halSqCqQueryInfo *info)
+{
+    (void)devid;
+    (void)info;
+    return DRV_ERROR_NOT_SUPPORT;
+}
+
 #endif
 
 static bool trs_is_remote_res_config_ops(uint32_t flag)
@@ -242,8 +268,16 @@ drvError_t halSqCqQuery(uint32_t devId, struct halSqCqQueryInfo *info)
             case TRS_CONNECT_PROTOCOL_PCIE:
             case TRS_CONNECT_PROTOCOL_HCCS:
             case TRS_CONNECT_PROTOCOL_RC:
+                if ((info->type == DRV_NORMAL_TYPE) && ((info->prop == DRV_SQCQ_PROP_H2D_ASYNC_JETTY_INFO) ||
+                    (info->prop == DRV_SQCQ_PROP_D2D_ASYNC_JETTY_INFO))) {
+                    return DRV_ERROR_NOT_SUPPORT;
+                }
                 return trs_sq_cq_query(devId, info);
             case TRS_CONNECT_PROTOCOL_UB:
+                if ((info->type == DRV_NORMAL_TYPE) && ((info->prop == DRV_SQCQ_PROP_H2D_ASYNC_JETTY_INFO) ||
+                    (info->prop == DRV_SQCQ_PROP_D2D_ASYNC_JETTY_INFO))) {
+                    return trs_sq_jetty_info_query(devId, info);
+                }
                 if ((info->type == DRV_NORMAL_TYPE) &&
                     ((info->prop == DRV_SQCQ_PROP_SQ_HEAD) || (info->prop == DRV_SQCQ_PROP_SQ_CQE_STATUS) ||
                     (info->prop == DRV_SQCQ_PROP_SQ_DEPTH) || (info->prop == DRV_SQCQ_PROP_SQ_MEM_ATTR) ||
@@ -280,6 +314,8 @@ static bool trs_is_support_sq_cq_ops(struct halSqCqConfigInfo *info)
     if (info->prop == DRV_SQCQ_PROP_SQCQ_RESET) {
         return false;
     }
+#else
+    (void)info;
 #endif
     return true;
 }
@@ -330,7 +366,7 @@ drvError_t halSqCqConfig(uint32_t devId, struct halSqCqConfigInfo *info)
                         return ret;
                     }
                 }
-                return trs_sq_cq_config_sync(devId, info); /* UB scene: set sq register should compelete remotely */
+                return trs_sq_cq_config_sync(devId, info); /* UB scene: set sq register should complete remotely */
             default:
                 trs_err("Invalid connection type. (dev_id=%u; connection_type=%d)\n", devId, connection_type);
                 return DRV_ERROR_INVALID_DEVICE;
@@ -396,11 +432,16 @@ static drvError_t trs_async_para_check(uint32_t dev_id, struct halAsyncDmaInputP
         return DRV_ERROR_NOT_SUPPORT;
     }
 
+    if (in->async_dma_type >= DRV_ASYNC_DMA_TYPE_MAX) {
+        return DRV_ERROR_NOT_SUPPORT;
+    }
+
     return 0;
 }
 
 drvError_t halAsyncDmaCreate(uint32_t devId, struct halAsyncDmaInputPara *in, struct halAsyncDmaOutputPara *out)
 {
+    struct trs_async_dma_input_para input_para = {0};
     int connection_type;
     drvError_t ret;
 
@@ -414,7 +455,9 @@ drvError_t halAsyncDmaCreate(uint32_t devId, struct halAsyncDmaInputPara *in, st
         case TRS_CONNECT_PROTOCOL_PCIE:
             return trs_async_dma_desc_create(devId, in, out);
         case TRS_CONNECT_PROTOCOL_UB:
-            return trs_async_dma_wqe_create(devId, in, out);
+            input_para = trs_pack_async_dma_input_para(in, (enum trs_async_dma_type)in->async_dma_type, in->type,
+                in->tsId, in->sqId);
+            return trs_async_dma_wqe_create(devId, &input_para, out);
         default:
             return DRV_ERROR_NOT_SUPPORT;
     }
@@ -427,6 +470,7 @@ drvError_t halAsyncDmaWqeCreate(uint32_t devId, struct halAsyncDmaInputPara *in,
 
 drvError_t halAsyncDmaDestory(uint32_t devId, struct halAsyncDmaDestoryPara *para)
 {
+    struct trs_async_dma_destroy_para destroy_para = {0};
     int connection_type;
 
     if (para == NULL) {
@@ -444,7 +488,8 @@ drvError_t halAsyncDmaDestory(uint32_t devId, struct halAsyncDmaDestoryPara *par
         case TRS_CONNECT_PROTOCOL_PCIE:
             return trs_async_dma_destory(devId, para);
         case TRS_CONNECT_PROTOCOL_UB:
-            return trs_async_dma_wqe_destory(devId, para);
+            destroy_para = trs_pack_async_dma_destroy_para(para, TRS_ASYNC_DMA_TYPE_NORMAL, para->type, para->tsId, para->sqId);
+            return trs_async_dma_wqe_destory(devId, &destroy_para);
         default:
             return DRV_ERROR_NOT_SUPPORT;
     }
@@ -453,6 +498,185 @@ drvError_t halAsyncDmaDestory(uint32_t devId, struct halAsyncDmaDestoryPara *par
 drvError_t halAsyncDmaWqeDestory(uint32_t devId, struct halAsyncDmaDestoryPara *para)
 {
     return halAsyncDmaDestory(devId, para);
+}
+
+#define TRS_2D_HEIGHT_MAX 2048ULL
+static inline int trs_async_2d_para_check(uint32_t devId, struct halAsyncDmaInput2DPara *in,
+    struct halAsyncDmaOutputPara *out)
+{
+    if ((in == NULL) || (out == NULL)) {
+        trs_err("Invalid para.\n");
+        return DRV_ERROR_INVALID_VALUE;
+    }
+
+    if ((devId >= TRS_DEV_NUM) || (in->tsId >= TRS_TS_NUM) || (in->type != DRV_NORMAL_TYPE)) {
+        trs_err("Invalid para. (dev_id=%u; ts_id=%u; type=%d)\n", devId, in->tsId, in->type);
+        return DRV_ERROR_INVALID_VALUE;
+    }
+
+    if ((in->src == NULL) || (in->dst == NULL) || (in->width == 0) || (in->height == 0) ||
+        (in->dpitch < in->width) || (in->spitch < in->width) || (in->height > TRS_2D_HEIGHT_MAX)) {
+        trs_err("Invalid para. (src_null=%d; dst_null=%d; width=%u; height=%u; dpitch=%d; spitch=%d)\n",
+            (in->src == NULL), (in->dst == NULL), in->width, in->height, in->dpitch, in->spitch);
+        return DRV_ERROR_INVALID_VALUE;
+    }
+
+    if (in->fixedSize != 0) {
+        return DRV_ERROR_NOT_SUPPORT;
+    }
+
+    if ((in->height != 1) && (((uintptr_t)((char *)in->src + in->spitch) < (uintptr_t)in->src) ||
+        ((uintptr_t)((char *)in->dst + in->dpitch) < (uintptr_t)in->dst))) {
+        trs_err("Invalid para. (src=%p; dst=%p; spitch=%llu; dpitch=%llu)\n", in->src, in->dst, in->spitch, in->dpitch);
+        return DRV_ERROR_INVALID_VALUE;
+    }
+
+    if ((in->dir != TRS_ASYNC_HOST_TO_DEVICE) && (in->dir != TRS_ASYNC_DEVICE_TO_HOST)) {
+        return DRV_ERROR_NOT_SUPPORT;
+    }
+
+    return 0;
+}
+
+drvError_t halAsyncDmaCreate2D(uint32_t devId, struct halAsyncDmaInput2DPara *in, struct halAsyncDmaOutputPara *out)
+{
+    struct trs_async_dma_input_para input_para = {0};
+    int connection_type;
+    drvError_t ret = 0;
+
+    ret = trs_async_2d_para_check(devId, in, out);
+    if (ret != 0) {
+        return ret;
+    }
+
+    connection_type = trs_get_connection_type(devId);
+    switch (connection_type) {
+        case TRS_CONNECT_PROTOCOL_PCIE:
+            return DRV_ERROR_NOT_SUPPORT;
+        case TRS_CONNECT_PROTOCOL_UB:
+            input_para = trs_pack_async_dma_input_para(in, TRS_ASYNC_DMA_TYPE_2D, in->type, in->tsId, in->sqId);
+            return trs_async_dma_wqe_create(devId, &input_para, out);
+        default:
+            return DRV_ERROR_NOT_SUPPORT;
+    }
+
+    return ret;
+}
+
+drvError_t halAsyncDmaDestroy2D(uint32_t devId, struct halAsyncDmaDestroy2DPara *para)
+{
+    struct trs_async_dma_destroy_para destroy_para = {0};
+    int connection_type;
+
+    if (para == NULL) {
+        trs_err("Invalid para.\n");
+        return DRV_ERROR_INVALID_VALUE;
+    }
+
+    if (devId >= TRS_DEV_NUM || para->tsId >= TRS_TS_NUM) {
+        trs_err("Invalid para. (dev_id=%u; ts_id=%u)\n", devId, para->tsId);
+        return DRV_ERROR_INVALID_VALUE;
+    }
+
+    connection_type = trs_get_connection_type(devId);
+    switch (connection_type) {
+        case TRS_CONNECT_PROTOCOL_PCIE:
+            return DRV_ERROR_NOT_SUPPORT;
+        case TRS_CONNECT_PROTOCOL_UB:
+            destroy_para = trs_pack_async_dma_destroy_para(para, TRS_ASYNC_DMA_TYPE_2D, para->type, para->tsId, para->sqId);
+            return trs_async_dma_wqe_destory(devId, &destroy_para);
+        default:
+            return DRV_ERROR_NOT_SUPPORT;
+    }
+}
+
+#define TRS_CPY_BATCH_MAX_COUNT 2048ULL
+static inline int trs_async_batch_para_check(uint32_t devId, struct halAsyncDmaInputBatchPara *in,
+    struct halAsyncDmaOutputPara *out)
+{
+    if ((in == NULL) || (out == NULL)) {
+        trs_err("Invalid para.\n");
+        return DRV_ERROR_INVALID_VALUE;
+    }
+
+    if ((devId >= TRS_DEV_NUM) || (in->tsId >= TRS_TS_NUM) || (in->type != DRV_NORMAL_TYPE)) {
+        trs_err("Invalid para. (dev_id=%u; ts_id=%u; type=%d)\n", devId, in->tsId, in->type);
+        return DRV_ERROR_INVALID_VALUE;
+    }
+
+    if ((in->src == NULL) || (in->dst == NULL) || (in->len == NULL)) {
+        trs_err("Invalid para. (src_is_null=%d; dst_is_null=%d; size_is_null=%d)\n",
+            (in->src == NULL), (in->dst == NULL), (in->len == NULL));
+        return DRV_ERROR_INVALID_VALUE;
+    }
+
+    if (in->fixedSize != 0) {
+        return DRV_ERROR_NOT_SUPPORT;
+    }
+
+    if ((in->count == 0) || (in->count > TRS_CPY_BATCH_MAX_COUNT)) {
+        trs_err("Invalid count. (count=%llu)\n", in->count);
+        return DRV_ERROR_INVALID_VALUE;
+    }
+
+    if ((in->dir != TRS_ASYNC_HOST_TO_DEVICE) && (in->dir != TRS_ASYNC_DEVICE_TO_HOST)) {
+        return DRV_ERROR_NOT_SUPPORT;
+    }
+
+    return 0;
+}
+
+drvError_t halAsyncDmaCreateBatch(uint32_t devId, struct halAsyncDmaInputBatchPara *in,
+    struct halAsyncDmaOutputPara *out)
+{
+    struct trs_async_dma_input_para input_para = {0};
+    int connection_type;
+    drvError_t ret = 0;
+
+    ret = trs_async_batch_para_check(devId, in, out);
+    if (ret != 0) {
+        return ret;
+    }
+
+    connection_type = trs_get_connection_type(devId);
+    switch (connection_type) {
+        case TRS_CONNECT_PROTOCOL_PCIE:
+            return DRV_ERROR_NOT_SUPPORT;
+        case TRS_CONNECT_PROTOCOL_UB:
+            input_para = trs_pack_async_dma_input_para(in, TRS_ASYNC_DMA_TYPE_BATCH, in->type, in->tsId, in->sqId);
+            return trs_async_dma_wqe_create(devId, &input_para, out);
+        default:
+            return DRV_ERROR_NOT_SUPPORT;
+    }
+
+    return ret;
+}
+
+drvError_t halAsyncDmaDestroyBatch(uint32_t devId, struct halAsyncDmaDestroyBatchPara *para)
+{
+    struct trs_async_dma_destroy_para destroy_para = {0};
+    int connection_type;
+
+    if (para == NULL) {
+        trs_err("Invalid para.\n");
+        return DRV_ERROR_INVALID_VALUE;
+    }
+
+    if (devId >= TRS_DEV_NUM || para->tsId >= TRS_TS_NUM) {
+        trs_err("Invalid para. (dev_id=%u; ts_id=%u)\n", devId, para->tsId);
+        return DRV_ERROR_INVALID_VALUE;
+    }
+
+    connection_type = trs_get_connection_type(devId);
+    switch (connection_type) {
+        case TRS_CONNECT_PROTOCOL_PCIE:
+            return DRV_ERROR_NOT_SUPPORT;
+        case TRS_CONNECT_PROTOCOL_UB:
+            destroy_para = trs_pack_async_dma_destroy_para(para, TRS_ASYNC_DMA_TYPE_BATCH, para->type, para->tsId, para->sqId);
+            return trs_async_dma_wqe_destory(devId, &destroy_para);
+        default:
+            return DRV_ERROR_NOT_SUPPORT;
+    }
 }
 
 drvError_t halSqTaskSend(uint32_t devId, struct halTaskSendInfo *info)
@@ -507,4 +731,59 @@ drvError_t halSqTaskSend(uint32_t devId, struct halTaskSendInfo *info)
 
     TRS_TRACE_TIME_CONSUME_END;
     return ret;
+}
+
+drvError_t halGetTsegInfoByVa(uint32_t devid, uint64_t va, uint64_t size, uint32_t flag,
+    struct halTsegInfo *tsegInfo)
+{
+    int connection_type;
+
+    if (devid >= TRS_DEV_NUM) {
+        trs_err("Invalid para. (dev_id=%u)\n", devid);
+        return DRV_ERROR_INVALID_VALUE;
+    }
+
+    if (tsegInfo == NULL) {
+        trs_err("Invalid NULL tsegInfo. (devid=%u)\n", devid);
+        return DRV_ERROR_INVALID_VALUE;
+    }
+
+    connection_type = trs_get_connection_type(devid);
+    switch (connection_type) {
+        case TRS_CONNECT_PROTOCOL_PCIE:
+            return DRV_ERROR_NOT_SUPPORT;
+        case TRS_CONNECT_PROTOCOL_UB:
+            return trs_get_urma_tseg_info_by_va(devid, va, size, flag, tsegInfo);
+        default:
+            return DRV_ERROR_NOT_SUPPORT;
+    }
+
+    return 0;
+}
+
+drvError_t halPutTsegInfo(uint32_t devid, struct halTsegInfo *tsegInfo)
+{
+    int connection_type;
+
+    if (devid >= TRS_DEV_NUM) {
+        trs_err("Invalid para. (dev_id=%u)\n", devid);
+        return DRV_ERROR_INVALID_VALUE;
+    }
+
+    if (tsegInfo == NULL) {
+        trs_err("Invalid NULL tsegInfo. (devid=%u)\n", devid);
+        return DRV_ERROR_INVALID_VALUE;
+    }
+
+    connection_type = trs_get_connection_type(devid);
+    switch (connection_type) {
+        case TRS_CONNECT_PROTOCOL_PCIE:
+            return DRV_ERROR_NOT_SUPPORT;
+        case TRS_CONNECT_PROTOCOL_UB:
+            return trs_put_urma_tseg_info(devid, tsegInfo);
+        default:
+            return DRV_ERROR_NOT_SUPPORT;
+    }
+
+    return 0;
 }

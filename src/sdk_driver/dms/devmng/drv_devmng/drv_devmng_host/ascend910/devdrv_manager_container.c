@@ -35,11 +35,14 @@
 #endif
 #include "devdrv_manager.h"
 #include "devdrv_manager_common.h"
-#include "devdrv_manager_container.h"
 #include "pbl_mem_alloc_interface.h"
 #include "devdrv_pcie.h"
 #include "pbl/pbl_uda.h"
 #include "pbl/pbl_runenv_config.h"
+
+#ifdef CFG_FEATURE_DEVICE_SHARE
+#include "devdrv_manager_dev_share.h"
+#endif
 
 #ifndef DEVDRV_MANAGER_HOST_UT_TEST
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 11, 0)
@@ -49,6 +52,12 @@
 #endif
 
 #include "pbl/pbl_uda.h"
+#include "ka_task_pub.h"
+#include "ka_fs_pub.h"
+#include "ka_errno_pub.h"
+#include "ka_base_pub.h"
+#include "ka_kernel_def_pub.h"
+#include "devdrv_manager_container.h"
 
 struct mnt_namespace *devdrv_manager_get_host_mnt_ns(void)
 {
@@ -70,18 +79,14 @@ int devdrv_devpid_container_convert(int *ipid)
         return 0;
     }
 
-    rcu_read_lock_bh();
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 11, 0)
-    kpid = find_pid_ns(*ipid, init_task.nsproxy->pid_ns_for_children);
-#else
-    kpid = find_pid_ns(*ipid, init_task.nsproxy->pid_ns);
-#endif
+    ka_task_rcu_read_lock_bh();
+    kpid = ka_task_find_pid_ns(*ipid, ka_task_get_pid_ns_for_task(&init_task));
     if (kpid != NULL) {
         *ipid = kpid->numbers[kpid->level].nr;
-        rcu_read_unlock_bh();
+        ka_task_rcu_read_unlock_bh();
         return 0;
     } else {
-        rcu_read_unlock_bh();
+        ka_task_rcu_read_unlock_bh();
         return -ESRCH;
     }
 #endif
@@ -99,7 +104,7 @@ int devdrv_get_tgid_by_pid(int pid, int *tgid)
         return -EINVAL;
     }
 
-    pro_id = find_get_pid(pid);
+    pro_id = ka_task_find_get_pid(pid);
     if (pro_id == NULL) {
         devdrv_drv_err("Failed to find get pid. (pid=%d)\n", pid);
         return -EINVAL;
@@ -109,7 +114,7 @@ int devdrv_get_tgid_by_pid(int pid, int *tgid)
     * The value of tsk is NULL, which means the PID and current process are not in the same pid_ns.
     * Even if we find it, it doesn't mean it really is, because each container may has its own pid_ns.
     */
-    tsk = get_pid_task(pro_id, PIDTYPE_PID);
+    tsk = ka_task_get_pid_task(pro_id, KA_PIDTYPE_PID);
     if (tsk == NULL) {
         devdrv_drv_err("Failed to find task struct in current process's pid_ns. (pid=%d)\n", pid);
         ret = -EINVAL;
@@ -137,9 +142,9 @@ int devdrv_get_tgid_by_pid(int pid, int *tgid)
     ret = -EINVAL;
     devdrv_drv_err("The PID does not exist in the container. (pid=%d)\n", pid);
 OUT:
-    put_task_struct(tsk);
+    ka_task_put_task_struct(tsk);
 OUT_PUT_PID:
-    put_pid(pro_id);
+    ka_task_put_pid(pro_id);
     return ret;
 }
 #endif
@@ -171,15 +176,15 @@ STATIC int new_cpuset_read(char *buf, size_t count)
     struct cgroup_subsys_state *css = NULL;
     int retval;
 
-    css = task_get_css(current, cpuset_cgrp_id);
+    css = ka_task_task_get_css(current, cpuset_cgrp_id);
     if (css == NULL) {
         devdrv_drv_err("task get css failed.\n");
         return -EINVAL;
     }
 
-    retval = cgroup_path_ns(css->cgroup, buf,
+    retval = ka_task_cgroup_path_ns(css->cgroup, buf,
         count, current->nsproxy->cgroup_ns);
-    css_put(css);
+    ka_task_css_put(css);
     if (retval <= 0) {
         devdrv_drv_err("read buf failed. (retval=%d)\n", retval);
         return -EINVAL;
@@ -214,37 +219,37 @@ STATIC void devdrv_manager_get_container_id(unsigned long long *container_id)
      * inside docker the context of this file is
      * "/docker/<container_id>" or "/system.slice/docker-<container_id>"
      */
-    fp = filp_open("/proc/self/cpuset", O_RDONLY, 0);
-    if (IS_ERR(fp)) {
-        devdrv_drv_err("open cpuset file failed, err = %ld.\n", PTR_ERR(fp));
+    fp = ka_fs_filp_open("/proc/self/cpuset", KA_O_RDONLY, 0);
+    if (KA_IS_ERR(fp)) {
+        devdrv_drv_err("open cpuset file failed, err = %ld.\n", KA_PTR_ERR(fp));
         return;
     }
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 14, 0)
     ret = new_cpuset_read(cpuset_file_text, DEVMNG_MAX_TEXT_LENGTH);
 #else
-    ret = kernel_read(fp, pos, cpuset_file_text, DEVMNG_MAX_TEXT_LENGTH);
+    ret = ka_fs_kernel_read(fp, cpuset_file_text, DEVMNG_MAX_TEXT_LENGTH, &pos);
 #endif
-    (void)filp_close(fp, NULL);
+    (void)ka_fs_filp_close(fp, NULL);
     if ((ret <= 0) || (ret > DEVMNG_MAX_TEXT_LENGTH)) {
         devdrv_drv_err("get cpuset file context failed, ret = %d.\n", ret);
         return;
     }
 
     cpuset_file_text[DEVMNG_MAX_TEXT_LENGTH - 1] = '\0';
-    res = strstr(cpuset_file_text, "docker");
+    res = ka_base_strstr(cpuset_file_text, "docker");
     if (res == NULL) {
         devdrv_drv_debug("cannot find docker in /proc/self/cpuset.\n");
         return;
     }
 
-    ret = strncpy_s(container_id_string, DEVMNG_MAX_TEXT_LENGTH, res + strlen("docker") + 1, container_id_len);
+    ret = strncpy_s(container_id_string, DEVMNG_MAX_TEXT_LENGTH, res + ka_base_strlen("docker") + 1, container_id_len);
     if (ret != 0) {
         devdrv_drv_err("strncpy_s container id failed. (ret=%d)\n", ret);
         return;
     }
 
-    ret = kstrtoull(container_id_string, HEXADECIMAL, container_id);
+    ret = ka_base_kstrtoull(container_id_string, HEXADECIMAL, container_id);
     if (ret < 0) {
         devdrv_drv_err("kstrtoul failed. (ret=%d)\n", ret);
         return;
@@ -281,7 +286,7 @@ int devdrv_manager_container_get_docker_id(u32 *docker_id)
 
     return 0;
 }
-EXPORT_SYMBOL(devdrv_manager_container_get_docker_id);
+KA_EXPORT_SYMBOL(devdrv_manager_container_get_docker_id);
 
 #define DMS_MNG_NOTIFIER "dms_mng"
 static int dms_mng_notifier_func(u32 udevid, enum uda_notified_action action)
@@ -356,7 +361,7 @@ void devdrv_manager_container_table_exit(struct devdrv_manager_info *manager_inf
 
 STATIC int devdrv_manager_container_get_bare_pid(struct devdrv_container_para *cmd)
 {
-    pid_t pid;
+    ka_pid_t pid;
     int ret;
 
     if (cmd->para.out == NULL) {
@@ -364,7 +369,7 @@ STATIC int devdrv_manager_container_get_bare_pid(struct devdrv_container_para *c
         return -EINVAL;
     }
     pid = current->pid;
-    ret = copy_to_user_safe(cmd->para.out, &pid, sizeof(pid_t));
+    ret = copy_to_user_safe(cmd->para.out, &pid, sizeof(ka_pid_t));
     if (ret != 0) {
         devdrv_drv_err("pid = %d, copy to user failed: %d.\n", pid, ret);
         return -ENOMEM;
@@ -375,7 +380,7 @@ STATIC int devdrv_manager_container_get_bare_pid(struct devdrv_container_para *c
 
 STATIC int devdrv_manager_container_get_bare_tgid(struct devdrv_container_para *cmd)
 {
-    pid_t tgid;
+    ka_pid_t tgid;
     int ret;
 
     if (cmd->para.out == NULL) {
@@ -383,7 +388,7 @@ STATIC int devdrv_manager_container_get_bare_tgid(struct devdrv_container_para *
         return -EINVAL;
     }
     tgid = current->tgid;
-    ret = copy_to_user_safe(cmd->para.out, &tgid, sizeof(pid_t));
+    ret = copy_to_user_safe(cmd->para.out, &tgid, sizeof(ka_pid_t));
     if (ret != 0) {
         devdrv_drv_err("tgid = %d, copy to user failed: %d.\n", tgid, ret);
         return -ENOMEM;
@@ -418,7 +423,7 @@ int devdrv_manager_container_is_in_container(void)
 
     return is_in;
 }
-EXPORT_SYMBOL_GPL(devdrv_manager_container_is_in_container);
+KA_EXPORT_SYMBOL(devdrv_manager_container_is_in_container);
 
 int devdrv_manager_container_is_in_admin_container(void)
 {
@@ -436,19 +441,19 @@ int devdrv_manager_container_is_in_admin_container(void)
 
     return false;
 }
-EXPORT_SYMBOL(devdrv_manager_container_is_in_admin_container);
+KA_EXPORT_SYMBOL(devdrv_manager_container_is_in_admin_container);
 
-int devdrv_manager_container_check_devid_in_container(u32 devid, pid_t hostpid)
+int devdrv_manager_container_check_devid_in_container(u32 devid, ka_pid_t hostpid)
 {
     return uda_proc_can_access_udevid(hostpid, devid) ? 0 : -EINVAL;
 }
-EXPORT_SYMBOL(devdrv_manager_container_check_devid_in_container);
+KA_EXPORT_SYMBOL(devdrv_manager_container_check_devid_in_container);
 int devdrv_manager_container_check_devid_in_container_ns(u32 devid, struct task_struct *task)
 {
     bool ret = (task == current) ? uda_can_access_udevid(devid) : uda_proc_can_access_udevid(task->tgid, devid);
     return ret ? 0 : -EINVAL;
 }
-EXPORT_SYMBOL(devdrv_manager_container_check_devid_in_container_ns);
+KA_EXPORT_SYMBOL(devdrv_manager_container_check_devid_in_container_ns);
 
 STATIC int (*CONST devdrv_manager_container_process_handler[DEVDRV_CONTAINER_MAX_CMD])(
     struct devdrv_container_para *cmd) = {

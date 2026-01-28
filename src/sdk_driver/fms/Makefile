@@ -11,20 +11,12 @@
 obj-m += asdrv_fms.o
 asdrv_fms-objs := fms_module.o
 
-ifeq ($(DAVINCI_HIAI_DKMS),y)
-	DRIVER_SOURCE_DIR := $(HIAI_DKMS_DIR)
-else
-	DRIVER_SOURCE_DIR := $(DRIVER_KERNEL_DIR)
-endif
+DRIVER_SOURCE_DIR := $(DRIVER_KERNEL_DIR)
 
 include ${DRIVER_SOURCE_DIR}/fms/dtm/dtm.mk
 include ${DRIVER_SOURCE_DIR}/fms/smf/smf.mk
 
-ifeq ($(DAVINCI_HIAI_DKMS),y)
-    include ${DRIVER_SOURCE_DIR}/fms/soft_fault/soft_fault.mk
-else
-    include ${DRIVER_SOURCE_DIR}/fms/soft_fault/soft_fault.mk
-endif
+include ${DRIVER_SOURCE_DIR}/fms/soft_fault/soft_fault.mk
 
 EXTRA_CFLAGS += -Wno-type-limits
 

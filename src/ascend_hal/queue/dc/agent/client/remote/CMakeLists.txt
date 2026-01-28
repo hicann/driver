@@ -14,6 +14,7 @@ target_sources(queue_obj PRIVATE
 target_include_directories(queue_obj PRIVATE
     ${DRIVER_USER_DIR}/queue/dc/agent/client/remote/comm
     ${DRIVER_USER_DIR}/queue/dc/agent/client/remote/que_clt_pcie
+    ${DRIVER_USER_DIR}/queue/dc/agent/common
 )
 
 target_compile_definitions(queue_obj PRIVATE
@@ -22,3 +23,6 @@ target_compile_definitions(queue_obj PRIVATE
 )
 
 add_subdirectory(que_clt_pcie)
+if(${PRODUCT} IN_LIST support_ub)
+    add_subdirectory(que_clt_ub)
+endif ()

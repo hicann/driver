@@ -9,3 +9,5 @@
 # ------------------------------------------------------------------------------------------------------------
 add_subdirectory(uda)
 add_subdirectory(urd)
+add_subdirectory(queryfeature)
+add_subdirectory(commlib)

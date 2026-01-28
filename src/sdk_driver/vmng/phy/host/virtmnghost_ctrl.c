@@ -11,10 +11,6 @@
  * GNU General Public License for more details.
  */
 
-#include <linux/io.h>
-#include <linux/errno.h>
-#include <linux/delay.h>
-
 #include "pbl/pbl_uda.h"
 
 #include "vmng_mem_alloc_interface.h"
@@ -26,13 +22,18 @@
 #include "virtmnghost_pci.h"
 #include "virtmng_res_drv.h"
 #include "virtmnghost_ctrl.h"
+#include "ka_task_pub.h"
+#include "ka_kernel_def_pub.h"
+#include "ka_system_pub.h"
+#include "ka_base_pub.h"
+#include "ka_memory_pub.h"
 
 struct vmngh_client *g_vmngh_clients[VMNG_CLIENT_TYPE_MAX];
 struct vmngh_vascend_client *g_vmngh_vascend_clients[VMNG_CLIENT_TYPE_MAX];
 
-struct mutex g_vmngh_ctrl_mutex;
+ka_mutex_t g_vmngh_ctrl_mutex;
 
-struct mutex g_vmngh_vm_ctrl_mutex;
+ka_mutex_t g_vmngh_vm_ctrl_mutex;
 struct vmngh_vm_ctrl g_vmngh_vm_ctrl[VMNG_VM_MAX];
 
 struct vmngh_clear_timer g_clear_timer;
@@ -60,7 +61,7 @@ enum vmng_split_mode vmng_get_device_split_mode(u32 dev_id)
     }
     return g_vmngh_device_ctrl[phy_devid].split_mode;
 }
-EXPORT_SYMBOL(vmng_get_device_split_mode);
+KA_EXPORT_SYMBOL(vmng_get_device_split_mode);
 
 void vmng_set_device_split_mode(u32 dev_id, enum vmng_split_mode split_mode)
 {
@@ -115,7 +116,7 @@ STATIC struct vmngh_client_instance *vmngh_get_client_instance(u32 dev_id, u32 v
     return &g_vmngh_device_ctrl[dev_id].vdev_ctrl[vfid].client_instance[client_type];
 }
 
-struct mutex *vmngh_get_ctrl_mutex(void)
+ka_mutex_t *vmngh_get_ctrl_mutex(void)
 {
     return &g_vmngh_ctrl_mutex;
 }
@@ -187,9 +188,9 @@ int vmngh_alloc_vfid(u32 dev_id, u32 *fid)
 void vmngh_free_vdev_ctrl(u32 dev_id, u32 vfid)
 {
     struct vmngh_vdev_ctrl *ctrl = vmngh_get_ctrl(dev_id, vfid);
-    struct mutex *ctrl_mutex = vmngh_get_ctrl_mutex();
+    ka_mutex_t *ctrl_mutex = vmngh_get_ctrl_mutex();
 
-    mutex_lock(ctrl_mutex);
+    ka_task_mutex_lock(ctrl_mutex);
     (void)memset_s(&ctrl->memory, sizeof(struct vmng_vf_memory_info), 0, sizeof(struct vmng_vf_memory_info));
     ctrl->vdev_ctrl.dev_id = 0;
     ctrl->vdev_ctrl.vfid = 0;
@@ -197,7 +198,7 @@ void vmngh_free_vdev_ctrl(u32 dev_id, u32 vfid)
     ctrl->vdev_ctrl.core_num = 0;
     ctrl->vdev_ctrl.total_core_num = 0;
     ctrl->vdev_ctrl.status = VMNG_VDEV_STATUS_FREE;
-    mutex_unlock(ctrl_mutex);
+    ka_task_mutex_unlock(ctrl_mutex);
 }
 
 /* get unit by id */
@@ -297,16 +298,16 @@ STATIC void vmngh_bw_clear_remote_hostcpu_data(u32 dev_id, u32 vfid)
     vf_ptr = vmngh_pdev->bw_ctrl.io_base_bwctrl + (vfid - VMNG_VDEV_FIRST_VFID);
     local = &vmngh_pdev->bw_ctrl.local_data[vfid - VMNG_VDEV_FIRST_VFID];
 
-    spin_lock_irqsave(&g_clear_timer.bandwidth_update_lock, flags);
+    ka_task_spin_lock_irqsave(&g_clear_timer.bandwidth_update_lock, flags);
     vf_ptr->hostcpu_flow_cnt[VMNG_PCIE_FLOW_H2D] = 0;
     vf_ptr->hostcpu_flow_cnt[VMNG_PCIE_FLOW_D2H] = 0;
     vf_ptr->hostcpu_pack_cnt[VMNG_PCIE_FLOW_H2D] = 0;
     vf_ptr->hostcpu_pack_cnt[VMNG_PCIE_FLOW_D2H] = 0;
     (void)memset_s((void *)local, local_size, 0, local_size);
-    spin_unlock_irqrestore(&g_clear_timer.bandwidth_update_lock, flags);
+    ka_task_spin_unlock_irqrestore(&g_clear_timer.bandwidth_update_lock, flags);
 }
 
-STATIC enum hrtimer_restart vmngh_bw_data_clear_event(struct hrtimer *t)
+STATIC ka_hrtimer_restart_t vmngh_bw_data_clear_event(ka_hrtimer_t *t)
 {
     u32 dev_id, vfid;
 
@@ -319,26 +320,25 @@ STATIC enum hrtimer_restart vmngh_bw_data_clear_event(struct hrtimer *t)
         }
     }
 
-    hrtimer_forward_now(&g_clear_timer.timer, g_clear_timer.kt);
-    return HRTIMER_RESTART;
+    ka_system_hrtimer_forward_now(&g_clear_timer.timer, g_clear_timer.kt);
+    return KA_HRTIMER_RESTART;
 }
 
 void vmngh_bw_data_clear_timer_uninit(void)
 {
-    mutex_lock(&g_vmngh_ctrl_mutex);
+    ka_task_mutex_lock(&g_vmngh_ctrl_mutex);
     if (g_clear_timer.vaild_dev <= 0) {
-        mutex_unlock(&g_vmngh_ctrl_mutex);
+        ka_task_mutex_unlock(&g_vmngh_ctrl_mutex);
         return;
     }
 
     g_clear_timer.vaild_dev--;
     if (g_clear_timer.vaild_dev > 0) {
-        mutex_unlock(&g_vmngh_ctrl_mutex);
+        ka_task_mutex_unlock(&g_vmngh_ctrl_mutex);
         return;
     }
-    mutex_unlock(&g_vmngh_ctrl_mutex);
-
-    hrtimer_cancel(&g_clear_timer.timer);
+    ka_task_mutex_unlock(&g_vmngh_ctrl_mutex);
+    ka_system_hrtimer_cancel(&g_clear_timer.timer);
 
     vmng_info("used bandwidth clear timer canceled.\n");
 }
@@ -350,20 +350,20 @@ void vmngh_bw_data_clear_timer_init(u32 dev_id, u32 vfid)
     }
     vmngh_bw_clear_remote_hostcpu_data(dev_id, vfid);
 
-    mutex_lock(&g_vmngh_ctrl_mutex);
+    ka_task_mutex_lock(&g_vmngh_ctrl_mutex);
     g_clear_timer.vaild_dev++;
     if (g_clear_timer.vaild_dev > 1) {
-        mutex_unlock(&g_vmngh_ctrl_mutex);
+        ka_task_mutex_unlock(&g_vmngh_ctrl_mutex);
         return;
     }
-    mutex_unlock(&g_vmngh_ctrl_mutex);
+    ka_task_mutex_unlock(&g_vmngh_ctrl_mutex);
 
-    spin_lock_init(&g_clear_timer.bandwidth_update_lock);
+    ka_task_spin_lock_init(&g_clear_timer.bandwidth_update_lock);
 
-    hrtimer_init(&g_clear_timer.timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
-    g_clear_timer.timer.function = vmngh_bw_data_clear_event;
-    g_clear_timer.kt = ktime_set(1, 0);
-    hrtimer_start(&g_clear_timer.timer, g_clear_timer.kt, HRTIMER_MODE_REL);
+    ka_system_hrtimer_init(&g_clear_timer.timer, KA_CLOCK_MONOTONIC, KA_HRTIMER_MODE_REL);
+    ka_system_set_hrtimer_func(&g_clear_timer.timer, vmngh_bw_data_clear_event);
+    g_clear_timer.kt = ka_system_ktime_set(1, 0);
+    ka_system_hrtimer_start(&g_clear_timer.timer, g_clear_timer.kt, KA_HRTIMER_MODE_REL);
 
     vmng_info("used bandwidth clear timer init finish.\n");
 }
@@ -408,9 +408,9 @@ void vmngh_bw_ctrl_info_init(u32 dev_id)
     }
 
     vmngh_pdev->bw_ctrl.io_base_bwctrl =
-        (struct vf_bandwidth_ctrl_remote*)devm_ioremap(vmngh_pdev->dev, addr, size);
+        (struct vf_bandwidth_ctrl_remote*)ka_base_devm_ioremap(vmngh_pdev->dev, addr, size);
     if (vmngh_pdev->bw_ctrl.io_base_bwctrl == NULL) {
-        vmng_err("Bandwidth ctrl ioremap failed. (dev_id=%u)\n", dev_id);
+        vmng_err("Bandwidth ctrl ka_mm_ioremap failed. (dev_id=%u)\n", dev_id);
         return;
     }
 #endif
@@ -428,7 +428,7 @@ void vmngh_bw_ctrl_info_uninit(u32 dev_id)
     }
 
     if (vmngh_pdev->bw_ctrl.io_base_bwctrl != NULL) {
-        devm_iounmap(vmngh_pdev->dev, vmngh_pdev->bw_ctrl.io_base_bwctrl);
+        ka_base_devm_iounmap(vmngh_pdev->dev, vmngh_pdev->bw_ctrl.io_base_bwctrl);
         vmngh_pdev->bw_ctrl.io_base_bwctrl = NULL;
     }
 
@@ -510,10 +510,10 @@ STATIC int vmngh_init_instance_proc(u32 dev_id, u32 fid, struct vmngh_client_ins
         vmng_info("init_container_instance is NULL. (dev_id=%u;fid=%u;client_type=%u)\n", dev_id, fid, client->type);
         return 0;
     }
-    mutex_lock(&instance->flag_mutex);
+    ka_task_mutex_lock(&instance->flag_mutex);
     if (instance->flag == VMNG_INSTANCE_FLAG_UNINIT) {
         instance->flag = VMNG_INSTANCE_FLAG_INIT;
-        mutex_unlock(&instance->flag_mutex);
+        ka_task_mutex_unlock(&instance->flag_mutex);
         vmng_info("Init instance begin. (dev_id=%u;fid=%u;client_type=%u;vdev_type=%u;vdev_id=%u)\n", dev_id, fid,
             client->type, vdev_type, instance->dev_ctrl->dev_id);
         if (vdev_type == VMNGH_VM) {
@@ -522,9 +522,9 @@ STATIC int vmngh_init_instance_proc(u32 dev_id, u32 fid, struct vmngh_client_ins
             ret = client->init_container_instance(instance);
         }
         if (ret != 0) {
-            mutex_lock(&instance->flag_mutex);
+            ka_task_mutex_lock(&instance->flag_mutex);
             instance->flag = VMNG_INSTANCE_FLAG_UNINIT;
-            mutex_unlock(&instance->flag_mutex);
+            ka_task_mutex_unlock(&instance->flag_mutex);
             vmng_err("Init failed. (dev_id=%u;fid=%u;client_type=%u;ret=%d;vdev_id=%u)\n", dev_id, fid,
                 client->type, ret, instance->dev_ctrl->dev_id);
             return ret;
@@ -532,7 +532,7 @@ STATIC int vmngh_init_instance_proc(u32 dev_id, u32 fid, struct vmngh_client_ins
         vmng_info("Client init success. (dev_id=%u;fid=%u;client_type=%u;vdev_id=%u)\n", dev_id, fid, client->type,
             instance->dev_ctrl->dev_id);
     } else {
-        mutex_unlock(&instance->flag_mutex);
+        ka_task_mutex_unlock(&instance->flag_mutex);
     }
 
     return 0;
@@ -566,9 +566,9 @@ STATIC int vmngh_uninit_instance_proc(u32 dev_id, u32 fid, struct vmngh_client_i
                       dev_id, fid, client->type);
             return 0;
         }
-        mutex_lock(&instance->flag_mutex);
+        ka_task_mutex_lock(&instance->flag_mutex);
         instance->flag = VMNG_INSTANCE_FLAG_UNINIT;
-        mutex_unlock(&instance->flag_mutex);
+        ka_task_mutex_unlock(&instance->flag_mutex);
         vmng_info("Uninit begin. (dev_id=%u; fid=%u; client_type=%u; vdev_type=%u)\n", dev_id, fid, client->type,
             instance->vdev_type);
         if (vdev_type == VMNGH_VM) {
@@ -913,7 +913,7 @@ int vmngh_register_client(struct vmngh_client *client)
 
     return 0;
 }
-EXPORT_SYMBOL(vmngh_register_client);
+KA_EXPORT_SYMBOL(vmngh_register_client);
 
 int vmngh_unregister_client(struct vmngh_client *client)
 {
@@ -937,7 +937,7 @@ int vmngh_unregister_client(struct vmngh_client *client)
 
     return 0;
 }
-EXPORT_SYMBOL(vmngh_unregister_client);
+KA_EXPORT_SYMBOL(vmngh_unregister_client);
 
 int vmngh_register_vascend_client(struct vmngh_vascend_client *client)
 {
@@ -958,7 +958,7 @@ int vmngh_register_vascend_client(struct vmngh_vascend_client *client)
 
     return 0;
 }
-EXPORT_SYMBOL(vmngh_register_vascend_client);
+KA_EXPORT_SYMBOL(vmngh_register_vascend_client);
 
 int vmngh_unregister_vascend_client(struct vmngh_vascend_client *client)
 {
@@ -975,7 +975,7 @@ int vmngh_unregister_vascend_client(struct vmngh_vascend_client *client)
 
     return 0;
 }
-EXPORT_SYMBOL(vmngh_unregister_vascend_client);
+KA_EXPORT_SYMBOL(vmngh_unregister_vascend_client);
 
 void vmngh_ctrl_set_startup_flag(u32 dev_id, u32 fid, enum vmng_startup_flag_type flag)
 {
@@ -984,9 +984,9 @@ void vmngh_ctrl_set_startup_flag(u32 dev_id, u32 fid, enum vmng_startup_flag_typ
         return;
     }
 
-    mutex_lock(&g_vmngh_ctrl_mutex);
+    ka_task_mutex_lock(&g_vmngh_ctrl_mutex);
     vmngh_get_ctrl(dev_id, fid)->startup_flag = flag;
-    mutex_unlock(&g_vmngh_ctrl_mutex);
+    ka_task_mutex_unlock(&g_vmngh_ctrl_mutex);
 }
 
 int vmngh_get_ctrl_startup_flag(u32 dev_id, u32 fid)
@@ -1035,7 +1035,7 @@ int vmngh_register_ctrls(struct vmngh_vd_dev *vd_dev)
     ctrl = vmngh_get_ctrl(dev_id, fid);
     vm_pdev = (struct vmngh_pci_dev *)vd_dev->vm_pdev;
 
-    mutex_lock(&g_vmngh_ctrl_mutex);
+    ka_task_mutex_lock(&g_vmngh_ctrl_mutex);
     ctrl->vdavinci = vd_dev->vdavinci;
     ctrl->vd_dev = vd_dev;
     if (devdrv_is_sriov_support(vd_dev->dev_id)) {
@@ -1056,8 +1056,8 @@ int vmngh_register_ctrls(struct vmngh_vd_dev *vd_dev)
     ctrl->vdev_ctrl.hbm_size = vd_dev->dtype.hbmmem_size;
     ctrl->vdev_ctrl.status = VMNG_VDEV_STATUS_ALLOC;
     ctrl->startup_flag = VMNG_STARTUP_PROBED;
-    mutex_init(&ctrl->reset_mutex);
-    mutex_unlock(&g_vmngh_ctrl_mutex);
+    ka_task_mutex_init(&ctrl->reset_mutex);
+    ka_task_mutex_unlock(&g_vmngh_ctrl_mutex);
 
     return 0;
 }
@@ -1072,8 +1072,8 @@ void vmngh_unregister_ctrls(u32 dev_id, u32 fid)
     }
 
     ctrl = vmngh_get_ctrl(dev_id, fid);
-    mutex_lock(&g_vmngh_ctrl_mutex);
-    mutex_destroy(&ctrl->reset_mutex);
+    ka_task_mutex_lock(&g_vmngh_ctrl_mutex);
+    ka_task_mutex_destroy(&ctrl->reset_mutex);
     ctrl->vdavinci = NULL;
     ctrl->vd_dev = NULL;
     ctrl->vdev_ctrl.dev_id = 0;
@@ -1085,7 +1085,7 @@ void vmngh_unregister_ctrls(u32 dev_id, u32 fid)
     ctrl->vdev_ctrl.hbm_size = 0;
     ctrl->vdev_ctrl.status = VMNG_VDEV_STATUS_FREE;
     ctrl->startup_flag = VMNG_STARTUP_UNPROBED;
-    mutex_unlock(&g_vmngh_ctrl_mutex);
+    ka_task_mutex_unlock(&g_vmngh_ctrl_mutex);
 }
 
 int vmngh_init_ctrl(void)
@@ -1103,9 +1103,9 @@ int vmngh_init_ctrl(void)
         return -EINVAL;
     }
 
-    g_vmngh_device_ctrl = vmng_kzalloc(sizeof(struct vmngh_device_ctrl) * ASCEND_PDEV_MAX_NUM, GFP_KERNEL);
+    g_vmngh_device_ctrl = vmng_kzalloc(sizeof(struct vmngh_device_ctrl) * ASCEND_PDEV_MAX_NUM, KA_GFP_KERNEL);
     if (g_vmngh_device_ctrl == NULL) {
-        vmng_err("kzalloc g_vmngh_device_ctrl failed.\n");
+        vmng_err("ka_mm_kzalloc g_vmngh_device_ctrl failed.\n");
         return -ENOMEM;
     }
 
@@ -1114,12 +1114,12 @@ int vmngh_init_ctrl(void)
             for (fid = 0; fid < VMNG_VDEV_MAX_PER_PDEV; fid++) {
                 vmngh_get_client_instance(dev_id, fid, type)->type = type;
                 vmngh_get_client_instance(dev_id, fid, type)->flag = VMNG_INSTANCE_FLAG_UNINIT;
-                mutex_init(&vmngh_get_client_instance(dev_id, fid, type)->flag_mutex);
+                ka_task_mutex_init(&vmngh_get_client_instance(dev_id, fid, type)->flag_mutex);
             }
         }
     }
 
-    mutex_init(&g_vmngh_ctrl_mutex);
+    ka_task_mutex_init(&g_vmngh_ctrl_mutex);
 
     /* VM id relative var init, set vmid of ctrls to default. */
     if (memset_s(g_vmngh_vm_ctrl, sizeof(g_vmngh_vm_ctrl), 0, sizeof(g_vmngh_vm_ctrl)) != EOK) {
@@ -1128,7 +1128,7 @@ int vmngh_init_ctrl(void)
         g_vmngh_device_ctrl = NULL;
         return -EINVAL;
     }
-    mutex_init(&g_vmngh_vm_ctrl_mutex);
+    ka_task_mutex_init(&g_vmngh_vm_ctrl_mutex);
     for (dev_id = 0; dev_id < ASCEND_PDEV_MAX_NUM; dev_id++) {
         for (fid = 0; fid < VMNG_VDEV_MAX_PER_PDEV; fid++) {
             vmngh_get_ctrl(dev_id, fid)->vdev_ctrl.vm_id = (u32)VMNGH_VM_ID_DEFAULT;
@@ -1207,13 +1207,13 @@ int vmngh_get_virtual_addr_info(u32 dev_id, u32 fid, enum vmng_get_addr_type typ
     }
     return 0;
 }
-EXPORT_SYMBOL(vmngh_get_virtual_addr_info);
+KA_EXPORT_SYMBOL(vmngh_get_virtual_addr_info);
 
-dma_addr_t vmngh_dma_map_guest_page(u32 dev_id, u32 fid, unsigned long addr, unsigned long size,
-    struct sg_table **dma_sgt)
+ka_dma_addr_t vmngh_dma_map_guest_page(u32 dev_id, u32 fid, unsigned long addr, unsigned long size,
+    ka_sg_table_t **dma_sgt)
 {
     struct vmngh_vd_dev *vd_dev = NULL;
-    const u32 PA_TO_GFN_BITS = PAGE_SHIFT;
+    const u32 PA_TO_GFN_BITS = KA_MM_PAGE_SHIFT;
     int ret;
 
     if (dma_sgt == NULL) {
@@ -1234,11 +1234,11 @@ dma_addr_t vmngh_dma_map_guest_page(u32 dev_id, u32 fid, unsigned long addr, uns
     }
 
     /* Adding offset in PAGE, in case of PM PAGE_SIZE is larger than VM */
-    return (dma_addr_t)(sg_dma_address((*dma_sgt)->sgl) + (addr & (PAGE_SIZE - 1)));
+    return (ka_dma_addr_t)(ka_mm_sg_dma_address((*dma_sgt)->sgl) + (addr & (KA_MM_PAGE_SIZE - 1)));
 }
-EXPORT_SYMBOL(vmngh_dma_map_guest_page);
+KA_EXPORT_SYMBOL(vmngh_dma_map_guest_page);
 
-void vmngh_dma_unmap_guest_page(u32 dev_id, u32 fid, struct sg_table *dma_sgt)
+void vmngh_dma_unmap_guest_page(u32 dev_id, u32 fid, ka_sg_table_t *dma_sgt)
 {
     struct vmngh_vd_dev *vd_dev = NULL;
 
@@ -1254,7 +1254,7 @@ void vmngh_dma_unmap_guest_page(u32 dev_id, u32 fid, struct sg_table *dma_sgt)
 
     hw_dvt_hypervisor_dma_unmap_guest_page(vd_dev->vdavinci, dma_sgt);
 }
-EXPORT_SYMBOL(vmngh_dma_unmap_guest_page);
+KA_EXPORT_SYMBOL(vmngh_dma_unmap_guest_page);
 
 bool vmngh_dma_pool_active(u32 dev_id, u32 fid)
 {
@@ -1268,7 +1268,7 @@ bool vmngh_dma_pool_active(u32 dev_id, u32 fid)
 
     return hw_dvt_hypervisor_dma_pool_active(vd_dev->vdavinci);
 }
-EXPORT_SYMBOL(vmngh_dma_pool_active);
+KA_EXPORT_SYMBOL(vmngh_dma_pool_active);
 
 int vmngh_dma_map_guest_page_batch(u32 dev_id, u32 fid, unsigned long *gfn,
     unsigned long *dma_addr, unsigned long count)
@@ -1283,7 +1283,7 @@ int vmngh_dma_map_guest_page_batch(u32 dev_id, u32 fid, unsigned long *gfn,
 
     return hw_dvt_hypervisor_dma_map_guest_page_batch(vd_dev->vdavinci, gfn, dma_addr, count);
 }
-EXPORT_SYMBOL(vmngh_dma_map_guest_page_batch);
+KA_EXPORT_SYMBOL(vmngh_dma_map_guest_page_batch);
 
 void vmngh_dma_unmap_guest_page_batch(u32 dev_id, u32 fid,
     unsigned long *gfn, unsigned long *dma_addr, unsigned long count)
@@ -1298,7 +1298,7 @@ void vmngh_dma_unmap_guest_page_batch(u32 dev_id, u32 fid,
 
     hw_dvt_hypervisor_dma_unmap_guest_page_batch(vd_dev->vdavinci, gfn, dma_addr, count);
 }
-EXPORT_SYMBOL(vmngh_dma_unmap_guest_page_batch);
+KA_EXPORT_SYMBOL(vmngh_dma_unmap_guest_page_batch);
 
 int vmngh_alloc_vm_id(u32 dev_id, u32 fid, u32 vm_pid, u32 vm_devid)
 {
@@ -1309,7 +1309,7 @@ int vmngh_alloc_vm_id(u32 dev_id, u32 fid, u32 vm_pid, u32 vm_devid)
         return -EINVAL;
     }
 
-    mutex_lock(&g_vmngh_vm_ctrl_mutex);
+    ka_task_mutex_lock(&g_vmngh_vm_ctrl_mutex);
 
     /* find pid match */
     for (i = 0; i < VMNG_VM_MAX; i++) {
@@ -1320,7 +1320,7 @@ int vmngh_alloc_vm_id(u32 dev_id, u32 fid, u32 vm_pid, u32 vm_devid)
             } else {
                 vmng_err("vm_devid is exceed MAX. (dev_id=%u; fid=%u; vm_pid=%u; vm_devid=%u)",
                          dev_id, fid, vm_pid, vm_devid);
-                mutex_unlock(&g_vmngh_vm_ctrl_mutex);
+                ka_task_mutex_unlock(&g_vmngh_vm_ctrl_mutex);
                 return -EINVAL;
             }
             vmng_info("Find pid match. (dev_id=%u; fid=%u; vm_pid=%u; vm_id=%u; vm_devid=%u; pdev_num=%u)\n",
@@ -1346,7 +1346,7 @@ int vmngh_alloc_vm_id(u32 dev_id, u32 fid, u32 vm_pid, u32 vm_devid)
     /* fail */
     if (vm_id == VMNGH_VM_ID_DEFAULT) {
         vmng_err("Alloc vm_id failed. (dev_id=%u; fid=%u; vm_pid=%u; vm_devid=%u)", dev_id, fid, vm_pid, vm_devid);
-        mutex_unlock(&g_vmngh_vm_ctrl_mutex);
+        ka_task_mutex_unlock(&g_vmngh_vm_ctrl_mutex);
         return -1;
     }
 
@@ -1358,7 +1358,7 @@ int vmngh_alloc_vm_id(u32 dev_id, u32 fid, u32 vm_pid, u32 vm_devid)
     vmngh_get_ctrl(dev_id, fid)->vdev_ctrl.vm_id = (u32)vm_id;
     vmngh_get_ctrl(dev_id, fid)->vdev_ctrl.vm_devid = vm_devid;
 
-    mutex_unlock(&g_vmngh_vm_ctrl_mutex);
+    ka_task_mutex_unlock(&g_vmngh_vm_ctrl_mutex);
     return 0;
 }
 
@@ -1371,11 +1371,11 @@ void vmngh_ctrl_rm_vm_id(u32 dev_id, u32 fid, u32 vm_devid)
         return;
     }
 
-    mutex_lock(&g_vmngh_vm_ctrl_mutex);
+    ka_task_mutex_lock(&g_vmngh_vm_ctrl_mutex);
 
     rm_vm_id = vmngh_get_ctrl(dev_id, fid)->vdev_ctrl.vm_id;
     if (rm_vm_id >= VMNG_VM_MAX) {
-        mutex_unlock(&g_vmngh_vm_ctrl_mutex);
+        ka_task_mutex_unlock(&g_vmngh_vm_ctrl_mutex);
         vmng_err("rm_vm_id is invalid. (dev_id=%u; fid=%u; vm_id=%u)\n", dev_id, fid, rm_vm_id);
         return;
     }
@@ -1396,7 +1396,7 @@ void vmngh_ctrl_rm_vm_id(u32 dev_id, u32 fid, u32 vm_devid)
     }
 
     vmngh_get_ctrl(dev_id, fid)->vdev_ctrl.vm_id = (u32)VMNGH_VM_ID_DEFAULT;
-    mutex_unlock(&g_vmngh_vm_ctrl_mutex);
+    ka_task_mutex_unlock(&g_vmngh_vm_ctrl_mutex);
 }
 
 int vmngh_ctrl_get_vm_id(u32 dev_id, u32 fid)
@@ -1412,7 +1412,7 @@ int vmngh_ctrl_get_vm_id(u32 dev_id, u32 fid)
 
     return (int)vmngh_get_ctrl(dev_id, fid)->vdev_ctrl.vm_id;
 }
-EXPORT_SYMBOL(vmngh_ctrl_get_vm_id);
+KA_EXPORT_SYMBOL(vmngh_ctrl_get_vm_id);
 
 int vmngh_ctrl_get_devid_fid(u32 vm_id, u32 vm_devid, u32 *dev_id, u32 *fid)
 {
@@ -1433,7 +1433,7 @@ int vmngh_ctrl_get_devid_fid(u32 vm_id, u32 vm_devid, u32 *dev_id, u32 *fid)
     vmng_err("No devid fid. (vm_id=%u; vm_devid=%u)\n", vm_id, vm_devid);
     return -EINVAL;
 }
-EXPORT_SYMBOL(vmngh_ctrl_get_devid_fid);
+KA_EXPORT_SYMBOL(vmngh_ctrl_get_devid_fid);
 
 void vmngh_set_dev_info(u32 dev_id, enum vmngh_dev_info_type type, u64 val)
 {
@@ -1470,7 +1470,7 @@ void vmngh_set_dev_info(u32 dev_id, enum vmngh_dev_info_type type, u64 val)
 
     return;
 }
-EXPORT_SYMBOL(vmngh_set_dev_info);
+KA_EXPORT_SYMBOL(vmngh_set_dev_info);
 
 void vmngh_set_total_core_num(u32 dev_id, u32 total_core_num)
 {
@@ -1486,19 +1486,19 @@ void vmngh_set_total_core_num(u32 dev_id, u32 total_core_num)
         return;
     }
 
-    mutex_lock(&g_vmngh_ctrl_mutex);
+    ka_task_mutex_lock(&g_vmngh_ctrl_mutex);
     for (i = 0; i < VMNG_VDEV_MAX_PER_PDEV; i++) {
         ctrl = &vmngh_get_ctrl(dev_id, i)->vdev_ctrl;
         ctrl->total_core_num = total_core_num;
     }
 
     vmngh_set_dev_info(dev_id, VMNGH_DEV_CORE_NUM, total_core_num);
-    mutex_unlock(&g_vmngh_ctrl_mutex);
+    ka_task_mutex_unlock(&g_vmngh_ctrl_mutex);
 
     g_vmngh_device_ctrl[dev_id].total_core_num = total_core_num;
     vmng_info("Get total_core_num. (dev_id=%u; total_core_num=%u)\n", dev_id, total_core_num);
 }
-EXPORT_SYMBOL(vmngh_set_total_core_num);
+KA_EXPORT_SYMBOL(vmngh_set_total_core_num);
 
 int vmngh_init_instance_client_device(u32 dev_id, u32 vfid)
 {
@@ -1672,11 +1672,11 @@ int vmngh_create_container_vdev(u32 dev_id, u32 dtype, u32 *vfid, struct vmng_vf
 
     pdev = vmngh_get_pdev_from_unit(dev_id);
 
-    mutex_lock(&pdev->vpdev_mutex);
+    ka_task_mutex_lock(&pdev->vpdev_mutex);
     if (pdev->vdev_ref == 0) {
         ret = uda_dev_ctrl(dev_id, UDA_CTRL_TO_MIA);
         if (ret != 0) {
-            mutex_unlock(&pdev->vpdev_mutex);
+            ka_task_mutex_unlock(&pdev->vpdev_mutex);
             vmng_err("To mia mode failed. (dev_id=%u)\n", dev_id);
             return ret;
         }
@@ -1695,10 +1695,10 @@ int vmngh_create_container_vdev(u32 dev_id, u32 dtype, u32 *vfid, struct vmng_vf
         }
     }
 
-    mutex_unlock(&pdev->vpdev_mutex);
+    ka_task_mutex_unlock(&pdev->vpdev_mutex);
     return ret;
 }
-EXPORT_SYMBOL(vmngh_create_container_vdev);
+KA_EXPORT_SYMBOL(vmngh_create_container_vdev);
 
 STATIC int vmngh_destory_single_container_vdev(u32 dev_id, u32 vfid)
 {
@@ -1737,13 +1737,13 @@ STATIC int vmngh_destory_single_container_vdev(u32 dev_id, u32 vfid)
     vmng_ops_free_vfid(ops, dev_id, vfid);
 
     pdev = vmngh_get_pdev_from_unit(dev_id);
-    mutex_lock(&pdev->vpdev_mutex);
+    ka_task_mutex_lock(&pdev->vpdev_mutex);
     pdev->vdev_ref--;
     if (pdev->vdev_ref == 0) {
         vmng_set_device_split_mode(dev_id, VMNG_NORMAL_NONE_SPLIT_MODE);
         (void)uda_dev_ctrl(dev_id, UDA_CTRL_TO_SIA);
     }
-    mutex_unlock(&pdev->vpdev_mutex);
+    ka_task_mutex_unlock(&pdev->vpdev_mutex);
     vmng_info("Call vmngh_free_vfid success. (dev_id=%u; vfid=%u)\n", dev_id, vfid);
     return VMNG_OK;
 }
@@ -1788,7 +1788,7 @@ int vmngh_destory_container_vdev(u32 dev_id, u32 vfid)
         return vmngh_destory_single_container_vdev(dev_id, vfid);
     }
 }
-EXPORT_SYMBOL(vmngh_destory_container_vdev);
+KA_EXPORT_SYMBOL(vmngh_destory_container_vdev);
 
 STATIC int vmngh_notify_sriov_info(u32 dev_id, enum vmng_pf_sriov_status sriov_status)
 {
@@ -1905,23 +1905,23 @@ int vmngh_enable_sriov(u32 dev_id)
     }
 
     pdev = vmngh_get_pdev_from_unit(dev_id);
-    mutex_lock(&pdev->vpdev_mutex);
+    ka_task_mutex_lock(&pdev->vpdev_mutex);
     if (is_sriov_enable(dev_id)) {
         vmng_info("Already enable. (dev_id=%u)\n", dev_id);
-        mutex_unlock(&pdev->vpdev_mutex);
+        ka_task_mutex_unlock(&pdev->vpdev_mutex);
         return VMNG_OK;
     }
 
     ret = vmngh_common_enable_sriov(dev_id, DEVDRV_BOOT_ONLY_SRIOV);
     if (ret != 0) {
         vmng_err("Enable sriov failed. (ret=%d;dev_id=%u)\n", ret, dev_id);
-        mutex_unlock(&pdev->vpdev_mutex);
+        ka_task_mutex_unlock(&pdev->vpdev_mutex);
         return ret;
     }
-    mutex_unlock(&pdev->vpdev_mutex);
+    ka_task_mutex_unlock(&pdev->vpdev_mutex);
     return 0;
 }
-EXPORT_SYMBOL(vmngh_enable_sriov);
+KA_EXPORT_SYMBOL(vmngh_enable_sriov);
 
 int vmngh_disable_sriov(u32 dev_id)
 {
@@ -1934,23 +1934,23 @@ int vmngh_disable_sriov(u32 dev_id)
     }
 
     pdev = vmngh_get_pdev_from_unit(dev_id);
-    mutex_lock(&pdev->vpdev_mutex);
+    ka_task_mutex_lock(&pdev->vpdev_mutex);
     if (!is_sriov_enable(dev_id)) {
         vmng_info("Already disable. (dev_id=%u)\n", dev_id);
-        mutex_unlock(&pdev->vpdev_mutex);
+        ka_task_mutex_unlock(&pdev->vpdev_mutex);
         return VMNG_OK;
     }
 
     ret = vmngh_common_disable_sriov(dev_id, DEVDRV_BOOT_DEFAULT_MODE);
     if (ret != 0) {
         vmng_err("Disable sriov failed. (ret=%d;dev_id=%u)\n", ret, dev_id);
-        mutex_unlock(&pdev->vpdev_mutex);
+        ka_task_mutex_unlock(&pdev->vpdev_mutex);
         return ret;
     }
-    mutex_unlock(&pdev->vpdev_mutex);
+    ka_task_mutex_unlock(&pdev->vpdev_mutex);
     return VMNG_OK;
 }
-EXPORT_SYMBOL(vmngh_disable_sriov);
+KA_EXPORT_SYMBOL(vmngh_disable_sriov);
 
 int vmngh_enquire_soc_resource(u32 dev_id, u32 vfid, struct vmng_soc_resource_enquire *info)
 {
@@ -1987,7 +1987,7 @@ int vmngh_enquire_soc_resource(u32 dev_id, u32 vfid, struct vmng_soc_resource_en
 
     ops = vmngh_get_ctrl_ops(pf_id);
     if ((ops == NULL) || (ops->enquire_vf == NULL)) {
-        vmng_warn("enquire_vf hasn't been initialzed. (dev_id=%u)\n", pf_id);
+        vmng_warn("enquire_vf hasn't been initialized. (dev_id=%u)\n", pf_id);
         return VMNG_OK;
     }
 
@@ -1998,7 +1998,7 @@ int vmngh_enquire_soc_resource(u32 dev_id, u32 vfid, struct vmng_soc_resource_en
 
     return VMNG_OK;
 }
-EXPORT_SYMBOL(vmngh_enquire_soc_resource);
+KA_EXPORT_SYMBOL(vmngh_enquire_soc_resource);
 
 int vmngh_refresh_vdev_resource(u32 dev_id, u32 vfid, struct vmng_soc_resource_refresh *info)
 {
@@ -2027,7 +2027,7 @@ int vmngh_refresh_vdev_resource(u32 dev_id, u32 vfid, struct vmng_soc_resource_r
 
     return VMNG_OK;
 }
-EXPORT_SYMBOL(vmngh_refresh_vdev_resource);
+KA_EXPORT_SYMBOL(vmngh_refresh_vdev_resource);
 
 int vmngh_sriov_reset_vdev(u32 dev_id, u32 vfid)
 {
@@ -2057,7 +2057,7 @@ int vmngh_sriov_reset_vdev(u32 dev_id, u32 vfid)
 
     return VMNG_OK;
 }
-EXPORT_SYMBOL(vmngh_sriov_reset_vdev);
+KA_EXPORT_SYMBOL(vmngh_sriov_reset_vdev);
 
 STATIC int vmngh_get_dev_numa_info(unsigned int dev_id, struct vmng_vf_memory_info **mem_info)
 {
@@ -2102,7 +2102,7 @@ int vmngh_check_vdev_phy_address(unsigned int dev_id, u64 phy_address, u64 lengt
     }
     return -EINVAL;
 }
-EXPORT_SYMBOL(vmngh_check_vdev_phy_address);
+KA_EXPORT_SYMBOL(vmngh_check_vdev_phy_address);
 
 STATIC int vmngh_bw_calcu_token_limit(u32 dev_id, u32 vfid, u64 *flow_limit, u64 *pack_limit)
 {
@@ -2163,7 +2163,7 @@ STATIC int vmngh_bw_set_remote_hostcpu_data(u32 dev_id, u32 vfid, u32 dir, u64 d
         return ret;
     }
 
-    spin_lock_irqsave(&g_clear_timer.bandwidth_update_lock, flags);
+    ka_task_spin_lock_irqsave(&g_clear_timer.bandwidth_update_lock, flags);
 
     ptr_local->hostcpu_flow_cnt[dir] += data_len;
     ptr_local->hostcpu_pack_cnt[dir] += node_cnt;
@@ -2174,7 +2174,7 @@ STATIC int vmngh_bw_set_remote_hostcpu_data(u32 dev_id, u32 vfid, u32 dir, u64 d
     }
     ptr_local->write_cnt = (ptr_local->write_cnt + 1) % VMNG_BW_BANDWIDTH_RENEW_CNT;
 
-    spin_unlock_irqrestore(&g_clear_timer.bandwidth_update_lock, flags);
+    ka_task_spin_unlock_irqrestore(&g_clear_timer.bandwidth_update_lock, flags);
 
     return 0;
 }
@@ -2329,7 +2329,7 @@ retry_check:
             (info->handle_mode == VMNG_BW_BANDWIDTH_CHECK_NON_SLEEP)) {
             return -EBUSY;
         }
-        msleep(VMNG_BW_BANDWIDTH_CHECK_WAIT_TIME);
+        ka_system_msleep(VMNG_BW_BANDWIDTH_CHECK_WAIT_TIME);
         retry_cnt++;
         goto retry_check;
     } else {
@@ -2342,7 +2342,7 @@ retry_check:
 
     return 0;
 }
-EXPORT_SYMBOL(vmng_bandwidth_limit_check);
+KA_EXPORT_SYMBOL(vmng_bandwidth_limit_check);
 
 int vmngh_ctrl_sriov_init_instance(u32 dev_id, u32 vf_id)
 {

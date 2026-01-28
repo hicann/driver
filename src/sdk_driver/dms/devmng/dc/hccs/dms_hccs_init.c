@@ -23,6 +23,7 @@
 #include "pbl/pbl_feature_loader.h"
 #include "devdrv_common.h"
 #include "dms/dms_notifier.h"
+#include "ka_dfx_pub.h"
 #include "dms_hccs_init.h"
 
 BEGIN_DMS_MODULE_DECLARATION(DMS_MODULE_HCCS)
@@ -127,21 +128,21 @@ STATIC int dms_hccs_notifier_handle(struct notifier_block *nb, unsigned long mod
         (mode >= DMS_DEVICE_NOTIFIER_MAX)) {
         dms_err("Invalid parameter. (mode=0x%lx; data=\"%s\")\n",
                 mode, data == NULL ? "NULL" : "OK");
-        return NOTIFY_BAD;
+        return KA_NOTIFY_BAD;
     }
 
     if (mode != DMS_DEVICE_UP3 && mode != DMS_DEVICE_DOWN3) {
-        return NOTIFY_DONE;
+        return KA_NOTIFY_DONE;
     }
 
     ret = dms_hccs_notifier_handle_func[mode](dev_info);
     if (ret != 0) {
         dms_err("Credit num qurey task handle failed. (dev_id=%u; mode=%ld; ret=%d)\n",
             dev_info->dev_id, mode, ret);
-        return NOTIFY_BAD;
+        return KA_NOTIFY_BAD;
     }
 
-    return NOTIFY_DONE;
+    return KA_NOTIFY_DONE;
 }
 
 STATIC struct notifier_block g_dms_hccs_notifier = {

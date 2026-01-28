@@ -7,7 +7,7 @@
 # INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
 # See LICENSE in the root of the software repository for the full text of the License.
 # ------------------------------------------------------------------------------------------------------------
-set(asdrv_vnic_depends drv_pcie_host drv_seclib_host asdrv_pbl)
+set(asdrv_vnic_depends drv_pcie_host drv_seclib_host asdrv_pbl ascend_kernel_open_adapt)
 
 add_host_ko(LOCAL_MODULE asdrv_vnic
             KO_SRC_FOLDER ${CMAKE_CURRENT_SOURCE_DIR}

@@ -49,6 +49,44 @@
 #include <linux/topology.h>
 
 #include "ka_common_pub.h"
+#include "ka_task_pub.h"
+
+#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 5, 0)
+#define STATIC_PROCFS_FILE_FUNC_OPS_OPEN(ops, open_func)             \
+    const struct file_operations ops = {                 \
+        .owner   = THIS_MODULE,                                 \
+        .open    = (open_func),                                   \
+        .read    = seq_read,                                    \
+        .llseek  = seq_lseek,                                   \
+        .release = single_release,                              \
+    }
+
+#define STATIC_PROCFS_FILE_FUNC_OPS_WRITE(ops, open_func, write_func) \
+    const struct file_operations ops = {                       \
+        .owner   = THIS_MODULE,                                       \
+        .open    = (open_func),                                         \
+        .read    = seq_read,                                          \
+        .llseek  = seq_lseek,                                         \
+        .release = single_release,                                    \
+        .write   = (write_func),                                        \
+    }
+#else
+#define STATIC_PROCFS_FILE_FUNC_OPS_OPEN(ops, open_func)             \
+    const struct proc_ops ops = {                        \
+        .proc_open    = (open_func),                              \
+        .proc_read    = seq_read,                               \
+        .proc_lseek   = seq_lseek,                              \
+        .proc_release = single_release,                         \
+    }
+#define STATIC_PROCFS_FILE_FUNC_OPS_WRITE(ops, open_func, write_func) \
+    const struct proc_ops ops = {                              \
+        .proc_open    = (open_func),                                    \
+        .proc_read    = seq_read,                                     \
+        .proc_lseek   = seq_lseek,                                    \
+        .proc_release = single_release,                               \
+        .proc_write   = (write_func),                                   \
+    }
+#endif
 
 #define KA_NSEC_PER_SEC         NSEC_PER_SEC
 #define KA_NSEC_PER_MSEC	    NSEC_PER_MSEC
@@ -156,6 +194,7 @@ typedef struct kernel_param_ops ka_kernel_param_ops_t;
 #define __ka_system_request_module    __request_module
 #define  __ka_system_module_get(module)     __module_get(module)
 #define  __ka_system_symbol_put(symbol)     __symbol_put(symbol)
+#define ka_system_symbol_put(symbol)     symbol_put(symbol)
 #define ka_system_module_refcount(mod)    module_refcount(mod)
 #define ka_system_try_module_get(module)    try_module_get(module)
 #define ka_system_module_put(module)     module_put(module)
@@ -220,14 +259,11 @@ static inline void ka_system_set_hrtimer_func(ka_hrtimer_t *timer, ka_hrtimer_re
 #define ka_system_schedule_timeout_idle(timeout)   schedule_timeout_idle(timeout)
 #define ka_system_jiffies_to_timeval(jiffies, value)  jiffies_to_timeval(jiffies, value)
 #define ka_system_hrtimer_forward_now(timer, interval)    hrtimer_forward_now(timer, interval)
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 6, 0)
-#define ka_system_rtc_ktime_to_tm(kt)    rtc_ktime_to_tm(kt)
-#else
-#define ka_system_rtc_time_to_tm(time, tm)   rtc_time_to_tm(time, tm)
-#endif
 #define ka_system_time_is_before_jiffies(a)              ka_system_time_after(ka_jiffies, a)
 #define ka_system_hrtimer_init(timer, clock_id, mode)    hrtimer_init(timer, clock_id, mode)
 #define ka_system_ssleep(seconds) ssleep(seconds)
+#define LOG_TIME_INTERVAL (10)
+#define SCHED_LOG_LIMIT_MAX_NUM       6
 
 ka_system_states_t ka_system_get_system_state(void);
 const ka_cpumask_t *ka_system_get_cpu_online_mask(void);
@@ -271,4 +307,10 @@ int ka_system_get_rtc_time_hour(ka_rtc_time_t *tm);
 int ka_system_get_rtc_time_mday(ka_rtc_time_t *tm);
 int ka_system_get_rtc_time_mon(ka_rtc_time_t *tm);
 int ka_system_get_rtc_time_year(ka_rtc_time_t *tm);
+u64 ka_system_sched_get_abs_or_rel_mstime(void);
+bool ka_system_log_limited(u32 type);
+int ka_system_xsm_proc_start_time_compare(TASK_TIME_TYPE *proc_start_time, TASK_TIME_TYPE *start_time);
+void ka_system_esched_get_ktime(struct timeval *tv);
+void ka_system_rtc_time_convert(ka_rtc_time_t *tm, ka_timespec64_t sys_time);
+u64 ka_system_get_real_ustime(void);
 #endif

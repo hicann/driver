@@ -19,9 +19,9 @@
 #include <linux/uaccess.h>
 #include <linux/nsproxy.h>
 #include <linux/version.h>
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 11, 0))
-#include <linux/sched/task.h>
-#endif
+#include "kernel_version_adapt.h"
+#include "ka_task_pub.h"
+#include "ka_system_pub.h"
 
 #include "securec.h"
 
@@ -47,29 +47,10 @@ static int queue_normal_status_show(struct seq_file *seq, void *offset)
 
 static int queue_normal_status_open(struct inode *inode, struct file *file)
 {
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 17, 0)
-    return single_open(file, queue_normal_status_show, pde_data(inode));
-#else
-    return single_open(file, queue_normal_status_show, PDE_DATA(inode));
-#endif
+    return ka_single_open(inode, file, queue_normal_status_show);
 }
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 5, 0)
-static const struct file_operations normal_status_ops = {
-    .owner   = THIS_MODULE,
-    .open    = queue_normal_status_open,
-    .read    = seq_read,
-    .llseek  = seq_lseek,
-    .release = single_release,
-};
-#else
-static const struct proc_ops normal_status_ops = {
-    .proc_open    = queue_normal_status_open,
-    .proc_read    = seq_read,
-    .proc_lseek   = seq_lseek,
-    .proc_release = single_release,
-};
-#endif
+STATIC_PROCFS_FILE_FUNC_OPS_OPEN(normal_status_ops, queue_normal_status_open);
 
 static int queue_abnormal_status_show(struct seq_file *seq, void *offset)
 {
@@ -81,29 +62,10 @@ static int queue_abnormal_status_show(struct seq_file *seq, void *offset)
 
 static int queue_abnormal_status_open(struct inode *inode, struct file *file)
 {
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 17, 0)
-    return single_open(file, queue_abnormal_status_show, pde_data(inode));
-#else
-    return single_open(file, queue_abnormal_status_show, PDE_DATA(inode));
-#endif
+    return ka_single_open(inode, file, queue_abnormal_status_show);
 }
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 5, 0)
-static const struct file_operations abnormal_status_ops = {
-    .owner   = THIS_MODULE,
-    .open    = queue_abnormal_status_open,
-    .read    = seq_read,
-    .llseek  = seq_lseek,
-    .release = single_release,
-};
-#else
-static const struct proc_ops abnormal_status_ops = {
-    .proc_open    = queue_abnormal_status_open,
-    .proc_read    = seq_read,
-    .proc_lseek   = seq_lseek,
-    .proc_release = single_release,
-};
-#endif
+STATIC_PROCFS_FILE_FUNC_OPS_OPEN(abnormal_status_ops, queue_abnormal_status_open);
 
 #ifndef EMU_ST
 static int queue_perf_switch_show(struct seq_file *seq, void *offset)
@@ -116,11 +78,7 @@ static int queue_perf_switch_show(struct seq_file *seq, void *offset)
 
 static int queue_perf_switch_open(struct inode *inode, struct file *file)
 {
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 17, 0)
-    return single_open(file, queue_perf_switch_show, pde_data(inode));
-#else
-    return single_open(file, queue_perf_switch_show, PDE_DATA(inode));
-#endif
+    return ka_single_open(inode, file, queue_perf_switch_show);
 }
 
 #define PERF_SWITCH_MAX_LEN 10
@@ -171,25 +129,7 @@ static ssize_t queue_perf_switch_write(struct file *file, const char __user *buf
     return (ssize_t)count;
 }
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 5, 0)
-static const struct file_operations perf_switch_ops = {
-    .owner   = THIS_MODULE,
-    .open    = queue_perf_switch_open,
-    .read    = seq_read,
-    .write   = queue_perf_switch_write,
-    .llseek  = seq_lseek,
-    .release = single_release,
-
-};
-#else
-static const struct proc_ops perf_switch_ops = {
-    .proc_open    = queue_perf_switch_open,
-    .proc_read    = seq_read,
-    .proc_write   = queue_perf_switch_write,
-    .proc_lseek   = seq_lseek,
-    .proc_release = single_release,
-};
-#endif
+STATIC_PROCFS_FILE_FUNC_OPS_WRITE(perf_switch_ops, queue_perf_switch_open, queue_perf_switch_write);
 
 static int queue_perf_status_show(struct seq_file *seq, void *offset)
 {
@@ -201,29 +141,10 @@ static int queue_perf_status_show(struct seq_file *seq, void *offset)
 
 static int queue_perf_status_open(struct inode *inode, struct file *file)
 {
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 17, 0)
-    return single_open(file, queue_perf_status_show, pde_data(inode));
-#else
-    return single_open(file, queue_perf_status_show, PDE_DATA(inode));
-#endif
+    return ka_single_open(inode, file, queue_perf_status_show);
 }
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 5, 0)
-static const struct file_operations perf_status_ops = {
-    .owner   = THIS_MODULE,
-    .open    = queue_perf_status_open,
-    .read    = seq_read,
-    .llseek  = seq_lseek,
-    .release = single_release,
-};
-#else
-static const struct proc_ops perf_status_ops = {
-    .proc_open    = queue_perf_status_open,
-    .proc_read    = seq_read,
-    .proc_lseek   = seq_lseek,
-    .proc_release = single_release,
-};
-#endif
+STATIC_PROCFS_FILE_FUNC_OPS_OPEN(perf_status_ops, queue_perf_status_open);
 #endif
 
 static void proc_fs_format_qid_dir_name(u32 qid, char *name, u32 len)

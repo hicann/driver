@@ -11,6 +11,9 @@ target_sources(dms_obj PRIVATE
     dms_soc.c
     cpu_utilization.c
     $<$<STREQUAL:${PRODUCT},ascend910B>:${CMAKE_CURRENT_SOURCE_DIR}/spod_info.c>
+    $<$<STREQUAL:${PRODUCT},ascend910B>:${CMAKE_CURRENT_SOURCE_DIR}/spod_info_common.c>
+    $<$<STREQUAL:${PRODUCT},ascend910_95>:${CMAKE_CURRENT_SOURCE_DIR}/spod_info.c>
+    $<$<STREQUAL:${PRODUCT},ascend910_95>:${CMAKE_CURRENT_SOURCE_DIR}/spod_info_common.c>
 )
 
 target_include_directories(dms_obj PRIVATE

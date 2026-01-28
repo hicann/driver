@@ -13,7 +13,7 @@
 
 #include "drv_type.h"
 
-#if defined(CFG_SOC_PLATFORM_CLOUD_V4) || defined(EMU_ST)
+#if (defined(CFG_SOC_PLATFORM_CLOUD_V4) && defined(CFG_FEATURE_SUPPORT_UB)) || defined(EMU_ST)
 #include "urma_types.h"
 #endif
 
@@ -29,7 +29,7 @@ struct trs_res_addr_info {
     uint32_t res;
 };
 
-#if defined(CFG_SOC_PLATFORM_CLOUD_V4) || defined(EMU_ST)
+#if (defined(CFG_SOC_PLATFORM_CLOUD_V4) && defined(CFG_FEATURE_SUPPORT_UB)) || defined(EMU_ST)
 /* trs_urma.h */
 struct trs_remote_sync_info {
     struct halSqCqOutputInfo out;
@@ -42,6 +42,7 @@ struct trs_remote_sync_info {
     urma_eid_t eid;
     urma_token_t token;
     uint32_t tpn;
+    uint64_t sq_que_addr;
 };
 
 struct trs_d2d_sync_info {

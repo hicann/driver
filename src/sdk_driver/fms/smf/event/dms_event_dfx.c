@@ -18,6 +18,8 @@
 #include "dms/dms_interface.h"
 #include "fms_define.h"
 #include "dms_event_dfx.h"
+#include "ka_base_pub.h"
+#include "ka_kernel_def_pub.h"
 
 #define EVENT_DFX_SCANF_ONE_ELEMENT 1
 #define EVENT_DFX_SCANF_TWO_ELEMENT 2
@@ -58,15 +60,15 @@ ssize_t dms_event_dfx_channel_flux_store(const char *buf, size_t count)
     dms_info("Store dfx channel flux succ. (dev_id=%u)\n", g_event_dfx.channel_devid);
     return count;
 }
-EXPORT_SYMBOL(dms_event_dfx_channel_flux_store);
+KA_EXPORT_SYMBOL(dms_event_dfx_channel_flux_store);
 
 static int dms_event_dfx_channel_flux_show_item(const char *flux_name,
-    const char *event_type, atomic_t *channel, char **str, int *avl_len)
+    const char *event_type, ka_atomic_t *channel, char **str, int *avl_len)
 {
     int len;
 
     len = snprintf_s(*str, *avl_len, *avl_len - 1, "%s[%s]:\t\t\t%d\n",
-                     flux_name, event_type, atomic_read(channel));
+                     flux_name, event_type, ka_base_atomic_read(channel));
     EVENT_DFX_CHECK_DO_SOMETHING(len < 0, return len);
     *str += len;
     *avl_len -= len;
@@ -142,7 +144,7 @@ out:
     dms_warn("snprintf_s warn. (dev_id=%u)\n", g_event_dfx.channel_devid);
     return 0;
 }
-EXPORT_SYMBOL(dms_event_dfx_channel_flux_show);
+KA_EXPORT_SYMBOL(dms_event_dfx_channel_flux_show);
 
 ssize_t dms_event_dfx_convergent_diagrams_store(const char *buf, size_t count)
 {
@@ -166,7 +168,7 @@ ssize_t dms_event_dfx_convergent_diagrams_store(const char *buf, size_t count)
              g_event_dfx.diagrams_devid, g_event_dfx.diagrams_opt);
     return count;
 }
-EXPORT_SYMBOL(dms_event_dfx_convergent_diagrams_store);
+KA_EXPORT_SYMBOL(dms_event_dfx_convergent_diagrams_store);
 
 /*
   convergent diagrams example
@@ -197,7 +199,7 @@ ssize_t dms_event_dfx_convergent_diagrams_show(char *str)
     EVENT_DFX_CHECK_DO_SOMETHING(str == NULL, return 0);
     return dms_event_print_convergent_diagrams(g_event_dfx.diagrams_devid, g_event_dfx.diagrams_opt, str);
 }
-EXPORT_SYMBOL(dms_event_dfx_convergent_diagrams_show);
+KA_EXPORT_SYMBOL(dms_event_dfx_convergent_diagrams_show);
 
 ssize_t dms_event_dfx_event_list_store(const char *buf, size_t count)
 {
@@ -219,7 +221,7 @@ ssize_t dms_event_dfx_event_list_store(const char *buf, size_t count)
     dms_info("Store dfx event list succ. (dev_id=%u)\n", g_event_dfx.event_list_devid);
     return count;
 }
-EXPORT_SYMBOL(dms_event_dfx_event_list_store);
+KA_EXPORT_SYMBOL(dms_event_dfx_event_list_store);
 
 /*
   Print convergent event_list example
@@ -233,7 +235,7 @@ ssize_t dms_event_dfx_event_list_show(char *str)
     EVENT_DFX_CHECK_DO_SOMETHING(str == NULL, return 0);
     return dms_event_print_event_list(g_event_dfx.event_list_devid, str);
 }
-EXPORT_SYMBOL(dms_event_dfx_event_list_show);
+KA_EXPORT_SYMBOL(dms_event_dfx_event_list_show);
 
 ssize_t dms_event_dfx_mask_list_store(const char *buf, size_t count)
 {
@@ -255,7 +257,7 @@ ssize_t dms_event_dfx_mask_list_store(const char *buf, size_t count)
     dms_info("Store dfx mask list succ. (dev_id=%u)\n", g_event_dfx.mask_list_devid);
     return count;
 }
-EXPORT_SYMBOL(dms_event_dfx_mask_list_store);
+KA_EXPORT_SYMBOL(dms_event_dfx_mask_list_store);
 
 /*
   Print convergent mask_list example
@@ -269,7 +271,7 @@ ssize_t dms_event_dfx_mask_list_show(char *str)
     EVENT_DFX_CHECK_DO_SOMETHING(str == NULL, return 0);
     return dms_event_print_mask_list(g_event_dfx.mask_list_devid, str);
 }
-EXPORT_SYMBOL(dms_event_dfx_mask_list_show);
+KA_EXPORT_SYMBOL(dms_event_dfx_mask_list_show);
 
 /*
   Print subscribe handle function example
@@ -283,7 +285,7 @@ ssize_t dms_event_dfx_subscribe_handle_show(char *str)
     EVENT_DFX_CHECK_DO_SOMETHING(str == NULL, return 0);
     return dms_event_print_subscribe_handle(str);
 }
-EXPORT_SYMBOL(dms_event_dfx_subscribe_handle_show);
+KA_EXPORT_SYMBOL(dms_event_dfx_subscribe_handle_show);
 
 /*
   Print subscribe handle function example
@@ -298,5 +300,5 @@ ssize_t dms_event_dfx_subscribe_process_show(char *str)
     EVENT_DFX_CHECK_DO_SOMETHING(str == NULL, return 0);
     return dms_event_print_subscribe_process(str);
 }
-EXPORT_SYMBOL(dms_event_dfx_subscribe_process_show);
+KA_EXPORT_SYMBOL(dms_event_dfx_subscribe_process_show);
 

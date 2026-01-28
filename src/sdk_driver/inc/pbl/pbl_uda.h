@@ -66,7 +66,7 @@ struct uda_mia_dev_para {
 
 #define GUID_NUM 4
 #define UB_PORT_NUM 36
-#define UDEVID_REORDER_RESV_NUM 5
+#define UDEVID_REORDER_RESV_NUM 4
 struct udevid_reorder_para {
     u32 guid[GUID_NUM];   /* GUID of the current device */
     u32 guid1[GUID_NUM]; /* GUID of other devices1 in the same group */
@@ -75,6 +75,7 @@ struct udevid_reorder_para {
     u32 ub_link_status;
     u8 ub_port_status[UB_PORT_NUM]; /* port num 36 */
     u32 group_dev_num; /* 1p,2p,4p */
+    u32 module_id;
     u32 resv[UDEVID_REORDER_RESV_NUM]; /* resv */
 };
 
@@ -212,7 +213,7 @@ static inline int uda_real_virtual_notifier_unregister(const char *notifier, str
 }
 
 /* Method of the device probe or notifier */
-bool uda_is_support_udev_mng(void); /* obp not surport, milan surport */
+bool uda_is_support_udev_mng(void); /* obp not support, milan support */
 bool uda_is_phy_dev(u32 udevid); /* Check whether the device is a physical device, not mia device. */
 /* Check whether the device is a pf device , not vf device, applicable to physical env, virtual env */
 bool uda_is_pf_dev(u32 udevid);
@@ -264,7 +265,7 @@ int uda_get_dev_share(u32 udevid, u8 *share_flag);
 void uda_release_idle_ns_by_vdev_id(unsigned int phy_id, unsigned int vdev_id);
 
 /* chip_type define in pbl_dev_identity.h */
-/* only surport phy device which udevid < 100 */
+/* only support phy device which udevid < 100 */
 int uda_set_chip_type(u32 udevid, u32 chip_type);
 u32 uda_get_chip_type(u32 udevid);
 u32 uda_get_master_id(u32 udevid);
@@ -272,9 +273,9 @@ u32 uda_get_master_id(u32 udevid);
 u32 uda_get_host_id(void);
 
 void uda_set_udevid_reorder_flag(bool flag);
+bool uda_udevid_is_reorder(void);
 int uda_set_udevid_reorder_para(u32 add_id, struct udevid_reorder_para *para);
 int uda_get_udevid_reorder_para(u32 udevid, struct udevid_reorder_para *para);
 int uda_udevid_to_add_id(u32 udevid, u32 *add_id);
 int uda_add_id_to_udevid(u32 add_id, u32 *udevid);
 #endif
-

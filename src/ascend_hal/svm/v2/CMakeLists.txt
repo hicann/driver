@@ -29,7 +29,7 @@ target_include_directories(devmm_obj PRIVATE
     ${DRIVER_USER_DIR}/dmc/device_monitor/lib/include
     ${DRIVER_USER_DIR}/svm/v2/devmm
     ${DRIVER_USER_DIR}/svm/v2/command/msg
-    ${DRIVER_USER_DIR}/commlib
+    ${DRIVER_USER_DIR}/pbl/commlib
     ${DRIVER_KERNEL_DIR}/dpa/apm/command/ioctl
     ${DRIVER_KERNEL_DIR}/svm/v2/command/ioctl
     ${DRIVER_KERNEL_DIR}/dms/command/ioctl
@@ -45,4 +45,3 @@ set(INSTALL_RUNTIME_DIR bin)
 
 target_link_libraries(devmm_obj PRIVATE
     $<BUILD_INTERFACE:intf_pub>)
-    

@@ -12,7 +12,7 @@
 #define __DCMI_VIRTUAL_INTF_H__
 
 #include "dcmi_interface_api.h"
- 
+
 #ifdef __cplusplus
 #if __cplusplus
 extern "C" {
@@ -27,6 +27,7 @@ extern "C" {
 #define DCMI_910B_BIN0_TEMPLATE_NUM        2
 #define DCMI_910B_BIN2_TEMPLATE_NUM        4
 #define DCMI_910B_BIN1_TEMPLATE_NUM        2
+#define DCMI_910B_BIN2_1_TEMPLATE_NUM      2
 
 extern const char *template_name_310p[DCMI_310P_TEMPLATE_NUM];
 extern const char *template_name_910[DCMI_910_TEMPLATE_NUM];
@@ -90,5 +91,5 @@ int dcmi_set_sriov_cfg(int card_id, int device_id, unsigned int* sriov_cfg);
 }
 #endif
 #endif /* __cplusplus */
- 
+
 #endif /* __DCMI_VIRTUAL_INTF_H__ */

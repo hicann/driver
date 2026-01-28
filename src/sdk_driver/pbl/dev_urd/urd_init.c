@@ -37,6 +37,14 @@
 #include "urd_init.h"
 #include "pbl/pbl_urd.h"
 #include "urd_cmd.h"
+#include "ka_compiler_pub.h"
+#include "ka_ioctl_pub.h"
+#include "ka_fs_pub.h"
+#include "ka_task_pub.h"
+#include "ka_system_pub.h"
+#include "ka_memory_pub.h"
+#include "ka_kernel_def_pub.h"
+#include "ka_base_pub.h"
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 20, 0)
 #include <linux/namei.h>
@@ -47,12 +55,12 @@
 
 STATIC int copy_from_user_local(void *to, unsigned long to_len, const void *from, unsigned long from_len)
 {
-    return (int)copy_from_user(to, (void __user *)from, from_len);
+    return (int)ka_base_copy_from_user(to, (void __ka_user *)from, from_len);
 }
 
 STATIC int copy_to_user_local(void *to, unsigned long to_len, const void *from, unsigned long from_len)
 {
-    return (int)copy_to_user((void __user *)to, from, from_len);
+    return (int)ka_base_copy_to_user((void __ka_user *)to, from, from_len);
 }
 
 STATIC int memcpy_s_local(void *to, unsigned long to_len, const void *from, unsigned long from_len)
@@ -79,20 +87,20 @@ STATIC int dms_open(struct inode* inode, struct file* filep)
         return -EINVAL;
     }
 
-    if (!try_module_get(THIS_MODULE)) {
+    if (!ka_system_try_module_get(KA_THIS_MODULE)) {
         return -EBUSY;
     }
 
     file_private =
-        (struct urd_file_private_stru*)kzalloc(sizeof(struct urd_file_private_stru), GFP_KERNEL | __GFP_ACCOUNT);
+        (struct urd_file_private_stru*)ka_mm_kzalloc(sizeof(struct urd_file_private_stru), KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
     if (file_private == NULL) {
-        dms_err("kzalloc failed. (size=%lu)\n", sizeof(struct urd_file_private_stru));
-        module_put(THIS_MODULE);
+        dms_err("ka_mm_kzalloc failed. (size=%lu)\n", sizeof(struct urd_file_private_stru));
+        ka_system_module_put(KA_THIS_MODULE);
         return -ENOMEM;
     }
     file_private->owner_pid = current->tgid;
     filep->private_data = (void *)file_private;
-    atomic_set(&file_private->work_count, 0);
+    ka_base_atomic_set(&file_private->work_count, 0);
     return 0;
 }
 
@@ -103,7 +111,7 @@ STATIC int dms_release(struct inode* inode, struct file* filep)
     if (filep == NULL) {
         return -EINVAL;
     }
-    module_put(THIS_MODULE);
+    ka_system_module_put(KA_THIS_MODULE);
 
     file_private = filep->private_data;
     if (file_private == NULL) {
@@ -111,14 +119,14 @@ STATIC int dms_release(struct inode* inode, struct file* filep)
     }
     urd_notifier_call(URD_NOTIFIER_RELEASE, file_private);
 
-    kfree(file_private);
+    ka_mm_kfree(file_private);
     file_private = NULL;
     return 0;
 }
 
 STATIC unsigned int dms_msg_poll(struct file* filep, struct poll_table_struct* wait)
 {
-    return POLLERR;
+    return KA_POLLERR;
 }
 
 STATIC int dms_make_feature_key(struct urd_cmd* cmd, DMS_FEATURE_ARG_S* arg)
@@ -130,16 +138,16 @@ STATIC int dms_make_feature_key(struct urd_cmd* cmd, DMS_FEATURE_ARG_S* arg)
         dms_err("filter_len is error. (filter_len=%u)", cmd->filter_len);
         return -EINVAL;
     }
-    arg->key = (char*)kzalloc(KV_KEY_MAX_LEN + 1, GFP_KERNEL | __GFP_ACCOUNT);
+    arg->key = (char*)ka_mm_kzalloc(KV_KEY_MAX_LEN + 1, KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
     if (arg->key == NULL) {
-        dms_err("kzalloc failed. (size=%d)\n", KV_KEY_MAX_LEN);
+        dms_err("ka_mm_kzalloc failed. (size=%d)\n", KV_KEY_MAX_LEN);
         return -ENOMEM;
     }
     if (cmd->filter != NULL) {
-        filter = kzalloc(cmd->filter_len + 1, GFP_KERNEL | __GFP_ACCOUNT);
+        filter = ka_mm_kzalloc(cmd->filter_len + 1, KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
         if (filter == NULL) {
-            dms_err("kzalloc failed. (size=%u)\n", cmd->filter_len + 1);
-            kfree(arg->key);
+            dms_err("ka_mm_kzalloc failed. (size=%u)\n", cmd->filter_len + 1);
+            ka_mm_kfree(arg->key);
             arg->key = NULL;
             return -ENOMEM;
         }
@@ -147,9 +155,9 @@ STATIC int dms_make_feature_key(struct urd_cmd* cmd, DMS_FEATURE_ARG_S* arg)
             (void*)cmd->filter, (unsigned long)cmd->filter_len);
         if (ret != 0) {
             dms_err("copy_func_from failed. (ret=%d; size=%u)\n", ret, cmd->filter_len);
-            kfree(arg->key);
+            ka_mm_kfree(arg->key);
             arg->key = NULL;
-            kfree(filter);
+            ka_mm_kfree(filter);
             filter = NULL;
             return -EFAULT;
         }
@@ -158,11 +166,11 @@ STATIC int dms_make_feature_key(struct urd_cmd* cmd, DMS_FEATURE_ARG_S* arg)
     if (ret != 0) {
         dms_err(
             "make feature's key failed. (ret=%d; main_cmd=%u; sub_cmd=%u)\n", ret, cmd->main_cmd, cmd->sub_cmd);
-        kfree(arg->key);
+        ka_mm_kfree(arg->key);
         arg->key = NULL;
     }
     if (filter != NULL) {
-        kfree(filter);
+        ka_mm_kfree(filter);
         filter = NULL;
     }
     return ret;
@@ -179,9 +187,9 @@ STATIC int dms_make_feature_input(struct urd_cmd_para* cmd_para, DMS_FEATURE_ARG
     }
 
     if ((cmd_para->input_len != 0) && (cmd_para->input != NULL) && (cmd_para->input_len <= DMS_MAX_INPUT_LEN)) {
-        arg->input = kmalloc(cmd_para->input_len, GFP_KERNEL | __GFP_ACCOUNT);
+        arg->input = ka_mm_kmalloc(cmd_para->input_len, KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
         if (arg->input == NULL) {
-            dms_err("kzalloc failed. (size=%u)\n", cmd_para->input_len);
+            dms_err("ka_mm_kzalloc failed. (size=%u)\n", cmd_para->input_len);
             return -ENOMEM;
         }
         arg->input_len = cmd_para->input_len;
@@ -189,7 +197,7 @@ STATIC int dms_make_feature_input(struct urd_cmd_para* cmd_para, DMS_FEATURE_ARG
             (void*)cmd_para->input, (unsigned long)cmd_para->input_len);
         if (ret != 0) {
             dms_err("copy_func_from failed. (ret=%d; size=%u)\n", ret, cmd_para->input_len);
-            kfree(arg->input);
+            ka_mm_kfree(arg->input);
             arg->input = NULL;
             return -EFAULT;
         }
@@ -209,9 +217,9 @@ STATIC int dms_make_feature_max_output(struct urd_cmd_para* cmd_para, DMS_FEATUR
         return -EINVAL;
     }
 
-    arg->output = kzalloc(cmd_para->output_len, GFP_KERNEL | __GFP_ACCOUNT);
+    arg->output = ka_mm_kzalloc(cmd_para->output_len, KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
     if (arg->output == NULL) {
-        dms_err("kzalloc failed. (size=%u)\n", cmd_para->output_len);
+        dms_err("ka_mm_kzalloc failed. (size=%u)\n", cmd_para->output_len);
         return -ENOMEM;
     }
     arg->output_len = cmd_para->output_len;
@@ -249,9 +257,9 @@ STATIC int dms_make_feature_output(struct urd_cmd *cmd, struct urd_cmd_para *cmd
     }
 
     if (cmd_para->output_len <= DMS_MAX_OUTPUT_LEN) {
-        arg->output = kzalloc(cmd_para->output_len, GFP_KERNEL | __GFP_ACCOUNT);
+        arg->output = ka_mm_kzalloc(cmd_para->output_len, KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
         if (arg->output == NULL) {
-            dms_err("kzalloc failed. (size=%u)\n", cmd_para->output_len);
+            dms_err("ka_mm_kzalloc failed. (size=%u)\n", cmd_para->output_len);
             return -ENOMEM;
         }
         arg->output_len = cmd_para->output_len;
@@ -281,15 +289,15 @@ STATIC int dms_proc_feature_output(struct urd_cmd_para *cmd_para, DMS_FEATURE_AR
 STATIC void dms_free_msg(DMS_FEATURE_ARG_S* arg)
 {
     if (arg->key != NULL) {
-        kfree(arg->key);
+        ka_mm_kfree(arg->key);
         arg->key = NULL;
     }
     if (arg->input != NULL) {
-        kfree(arg->input);
+        ka_mm_kfree(arg->input);
         arg->input = NULL;
     }
     if (arg->output != NULL) {
-        kfree(arg->output);
+        ka_mm_kfree(arg->output);
         arg->output = NULL;
     }
     return;
@@ -328,10 +336,10 @@ STATIC int dms_cmd_process(u32 devid, struct urd_cmd *cmd, struct urd_cmd_para *
     arg.msg_source = msg_source;
     arg.devid = devid;
 
-    /* make up call arg */
+    /* make ka_task_up call arg */
     ret = dms_make_up_msg_arg(cmd, cmd_para, &arg);
     if (ret != 0) {
-        dms_err("Make up message arg failed. (ret=%d)\n", ret);
+        dms_err("Make ka_task_up message arg failed. (ret=%d)\n", ret);
         return ret;
     }
 
@@ -356,7 +364,7 @@ out:
 #define CMD_MASK (0x0000FFFFU)
 STATIC bool check_cmd_arg_valid(unsigned int cmd, struct urd_ioctl_arg ctl_arg)
 {
-    if ((cmd & CMD_MASK) == ((ctl_arg.cmd.main_cmd << _IOC_TYPESHIFT) + (ctl_arg.cmd.sub_cmd << _IOC_NRSHIFT))) {
+    if ((cmd & CMD_MASK) == ((ctl_arg.cmd.main_cmd << _KA_IOC_TYPESHIFT) + (ctl_arg.cmd.sub_cmd << _KA_IOC_NRSHIFT))) {
         return true;
     } else {
         return false;
@@ -372,7 +380,7 @@ int dms_cmd_process_from_kernel(u32 devid, struct urd_cmd *cmd, struct urd_cmd_p
 
     return dms_cmd_process(devid, cmd, cmd_para, MSG_FROM_KERNEL);
 }
-EXPORT_SYMBOL(dms_cmd_process_from_kernel);
+KA_EXPORT_SYMBOL(dms_cmd_process_from_kernel);
 
 STATIC long dms_ioctl(struct file* filep, unsigned int ioctl_cmd, unsigned long arg)
 {
@@ -386,7 +394,7 @@ STATIC long dms_ioctl(struct file* filep, unsigned int ioctl_cmd, unsigned long 
     }
 
     /* copy ioctl arg from user */
-    ret = copy_from_user(&ctl_arg, (void*)((uintptr_t)arg), sizeof(struct urd_ioctl_arg));
+    ret = ka_base_copy_from_user(&ctl_arg, (void*)((uintptr_t)arg), sizeof(struct urd_ioctl_arg));
     if (ret != 0) {
         dms_err("copy_from_user_safe failed.\n");
         return ret;
@@ -402,7 +410,7 @@ STATIC long dms_ioctl(struct file* filep, unsigned int ioctl_cmd, unsigned long 
 }
 
 const struct file_operations g_dms_file_operations = {
-    .owner = THIS_MODULE,
+    .owner = KA_THIS_MODULE,
     .open = dms_open,
     .release = dms_release,
     .poll = dms_msg_poll,
@@ -425,7 +433,7 @@ STATIC int urd_release_prepare(struct file *file_op, unsigned long mode)
 }
 
 static const struct notifier_operations urd_notifier_ops = {
-    .owner = THIS_MODULE,
+    .owner = KA_THIS_MODULE,
     .notifier_call = urd_release_prepare,
 };
 

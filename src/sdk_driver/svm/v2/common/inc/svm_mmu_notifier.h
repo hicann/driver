@@ -19,6 +19,6 @@
 int devmm_mmu_notifier_register(struct devmm_svm_process *svm_proc);
 void devmm_svm_mmu_notifier_unreg(struct devmm_svm_process *svm_proc);
 void devmm_mmu_notifier_unregister_no_release(struct devmm_svm_process *svm_proc);
-bool devmm_mem_is_in_vma_range(u64 start, u64 end);
+bool devmm_mem_is_in_vma_range(ka_vm_area_struct_t *vma[], u32 vma_num, u64 start, u64 end);
 
 #endif /* __SVM_MMU_NOTIFIER_H__ */

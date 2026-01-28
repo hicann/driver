@@ -14,10 +14,7 @@
 #ifndef RMO_KERN_LOG_H
 #define RMO_KERN_LOG_H
 
-#include <linux/types.h>
-#include <linux/sched.h>
-#include <linux/smp.h>
-
+#include "ka_system_pub.h"
 #ifndef EMU_ST
 #include "dmc_kernel_interface.h"
 #else
@@ -28,22 +25,22 @@
 
 #define rmo_err(fmt, ...) do { \
     drv_err(MODULE_RMO, "<%s:%d:%d:%d> " fmt, \
-        current->comm, current->tgid, current->pid, smp_processor_id(), ##__VA_ARGS__); \
+        current->comm, current->tgid, current->pid, ka_system_smp_processor_id(), ##__VA_ARGS__); \
 } while (0)
 
 #define rmo_warn(fmt, ...) do { \
     drv_warn(MODULE_RMO, "<%s:%d:%d:%d> " fmt, \
-        current->comm, current->tgid, current->pid, smp_processor_id(), ##__VA_ARGS__); \
+        current->comm, current->tgid, current->pid, ka_system_smp_processor_id(), ##__VA_ARGS__); \
 } while (0)
 
 #define rmo_info(fmt, ...) do { \
     drv_info(MODULE_RMO, "<%s:%d:%d:%d> " fmt, \
-        current->comm, current->tgid, current->pid, smp_processor_id(), ##__VA_ARGS__); \
+        current->comm, current->tgid, current->pid, ka_system_smp_processor_id(), ##__VA_ARGS__); \
 } while (0)
 
 #define rmo_debug(fmt, ...) do { \
     drv_pr_debug(MODULE_RMO, "<%s:%d:%d:%d> " fmt, \
-        current->comm, current->tgid, current->pid, smp_processor_id(), ##__VA_ARGS__); \
+        current->comm, current->tgid, current->pid, ka_system_smp_processor_id(), ##__VA_ARGS__); \
 } while (0)
 
 #endif

@@ -22,16 +22,15 @@
 #include "virtmng_resource.h"
 #include "vmng_mem_alloc_interface.h"
 
-#include <linux/delay.h>
-#include <linux/sched.h>
-#include <linux/random.h>
-#include <linux/workqueue.h>
-#include <linux/list.h>
-#include <linux/module.h>
+#include "ka_list_pub.h"
+#include "ka_task_pub.h"
+#include "ka_base_pub.h"
+#include "ka_memory_pub.h"
+#include "ka_kernel_def_pub.h"
 
 struct vmng_msg_dev_head {
-    struct list_head msg_dev_head;
-    struct mutex mutex;
+    ka_list_head_t msg_dev_head;
+    ka_mutex_t mutex;
 };
 
 struct vmng_msg_dev_head g_msg_dev_head;
@@ -40,7 +39,7 @@ struct vmng_msg_dev *vmnga_get_msg_dev_by_id(u32 dev_id)
 {
     struct vmng_msg_dev *pos;
 
-    list_for_each_entry(pos, &g_msg_dev_head.msg_dev_head, list) {
+    ka_list_for_each_entry(pos, &g_msg_dev_head.msg_dev_head, list) {
         if (pos->dev_id == dev_id) {
             return pos;
         }
@@ -53,8 +52,8 @@ STATIC void vmnga_msg_dev_list_free(void)
     struct vmng_msg_dev *pos;
     struct vmng_msg_dev *n;
 
-    list_for_each_entry_safe(pos, n, &g_msg_dev_head.msg_dev_head, list) {
-        list_del(&pos->list);
+    ka_list_for_each_entry_safe(pos, n, &g_msg_dev_head.msg_dev_head, list) {
+        ka_list_del(&pos->list);
         vmng_kfree(pos);
         pos = NULL;
     }
@@ -67,7 +66,7 @@ STATIC void vmnga_send_int_to_remote(void *msg_dev_in, u32 vector)
     vmnga_set_doorbell(msg_dev->db_base, vector, 0x1);
 }
 
-STATIC irqreturn_t vmnga_tx_finish_msix_hander(int irq, void *data)
+STATIC ka_irqreturn_t vmnga_tx_finish_msix_hander(int irq, void *data)
 {
     struct vmng_msg_chan_tx *msg_chan = (struct vmng_msg_chan_tx *)data;
     struct vmng_msg_cluster *msg_cluster = NULL;
@@ -75,12 +74,12 @@ STATIC irqreturn_t vmnga_tx_finish_msix_hander(int irq, void *data)
     msg_cluster = msg_chan->msg_cluster;
     if (msg_cluster->msg_proc.tx_finish_proc == NULL) {
         vmng_err("tx_finish_proc is NULL. (dev_id=%u; chan_type=%u)\n", msg_cluster->dev_id, msg_cluster->chan_type);
-        return IRQ_NONE;
+        return KA_IRQ_NONE;
     }
 
     msg_cluster->msg_proc.tx_finish_proc((unsigned long)(uintptr_t)msg_chan);
 
-    return IRQ_HANDLED;
+    return KA_IRQ_HANDLED;
 }
 
 STATIC int vmnga_tx_irq_init(struct vmng_msg_chan_tx *msg_chan)
@@ -120,13 +119,13 @@ STATIC int vmnga_tx_irq_uninit(struct vmng_msg_chan_tx *msg_chan)
     return 0;
 }
 
-STATIC irqreturn_t vmnga_msg_msix_hander(int irq, void *data)
+STATIC ka_irqreturn_t vmnga_msg_msix_hander(int irq, void *data)
 {
     struct vmng_msg_chan_rx *msg_chan = (struct vmng_msg_chan_rx *)data;
 
     vmng_msg_push_rx_queue_work(msg_chan);
 
-    return IRQ_HANDLED;
+    return KA_IRQ_HANDLED;
 }
 
 int vmnga_rx_irq_init(struct vmng_msg_chan_rx *msg_chan)
@@ -171,9 +170,9 @@ STATIC struct vmng_msg_dev *vmnga_msg_dev_alloc(struct vmnga_vpc_unit *unit)
     int ret = 0;
 
     vmng_info("Get msg_dev size. (dev_id=%u; size=%lu)\n", unit->dev_id, sizeof(struct vmng_msg_dev));
-    msg_dev = vmng_kzalloc(sizeof(struct vmng_msg_dev), GFP_KERNEL);
+    msg_dev = vmng_kzalloc(sizeof(struct vmng_msg_dev), KA_GFP_KERNEL);
     if (msg_dev == NULL) {
-        vmng_err("Call kzalloc failed. (dev_id=%u; size=%lu)\n", unit->dev_id, sizeof(struct vmng_msg_dev));
+        vmng_err("Call ka_mm_kzalloc failed. (dev_id=%u; size=%lu)\n", unit->dev_id, sizeof(struct vmng_msg_dev));
         return NULL;
     }
     unit->msg_dev = msg_dev;
@@ -193,7 +192,7 @@ STATIC struct vmng_msg_dev *vmnga_msg_dev_alloc(struct vmnga_vpc_unit *unit)
     msg_dev->ops.rx_irq_init = vmnga_rx_irq_init;
     msg_dev->ops.rx_irq_uninit = vmnga_rx_irq_uninit;
 
-    msg_dev->work_queue = create_workqueue("vmnga_wq");
+    msg_dev->work_queue = ka_task_create_workqueue("vmnga_wq");
     if (msg_dev->work_queue == NULL) {
         vmng_err("Create msg work_queue failed. (dev_id=%u)\n", unit->dev_id);
         vmng_kfree(msg_dev);
@@ -203,14 +202,14 @@ STATIC struct vmng_msg_dev *vmnga_msg_dev_alloc(struct vmnga_vpc_unit *unit)
     ret = vmng_msg_chan_init(VMNG_AGENT_SIDE, msg_dev);
     if (ret != 0) {
         vmng_err("Call vmng_msg_chan_init failed. (dev_id=%u; ret=%d)\n", unit->dev_id, ret);
-        destroy_workqueue(msg_dev->work_queue);
+        ka_task_destroy_workqueue(msg_dev->work_queue);
         vmng_kfree(msg_dev);
         msg_dev = NULL;
         return NULL;
     }
-    mutex_lock(&g_msg_dev_head.mutex);
-    list_add(&msg_dev->list, &g_msg_dev_head.msg_dev_head);
-    mutex_unlock(&g_msg_dev_head.mutex);
+    ka_task_mutex_lock(&g_msg_dev_head.mutex);
+    ka_list_add(&msg_dev->list, &g_msg_dev_head.msg_dev_head);
+    ka_task_mutex_unlock(&g_msg_dev_head.mutex);
 
     return msg_dev;
 }
@@ -240,31 +239,31 @@ int vmnga_vpc_msg_init(void *unit_in)
     }
     return ret;
 }
-EXPORT_SYMBOL(vmnga_vpc_msg_init);
+KA_EXPORT_SYMBOL(vmnga_vpc_msg_init);
 
 void vmnga_uninit_vpc_msg(struct vmng_msg_dev *msg_dev)
 {
     vmnga_uninit_vpc_msg_admin(msg_dev);
     vmng_free_msg_dev(msg_dev);
 }
-EXPORT_SYMBOL(vmnga_uninit_vpc_msg);
+KA_EXPORT_SYMBOL(vmnga_uninit_vpc_msg);
 
 STATIC int __init vmnga_vpc_init_module(void)
 {
     vmng_info("Init vmnga vpc module finish.\n");
-    INIT_LIST_HEAD(&g_msg_dev_head.msg_dev_head);
-    mutex_init(&g_msg_dev_head.mutex);
+    KA_INIT_LIST_HEAD(&g_msg_dev_head.msg_dev_head);
+    ka_task_mutex_init(&g_msg_dev_head.mutex);
     return 0;
 }
-module_init(vmnga_vpc_init_module);
+ka_module_init(vmnga_vpc_init_module);
 
 STATIC void __exit vmnga_vpc_exit_module(void)
 {
     vmng_info("Exit vmnga vpc module finish.\n");
     vmnga_msg_dev_list_free();
 }
-module_exit(vmnga_vpc_exit_module);
+ka_module_exit(vmnga_vpc_exit_module);
 
-MODULE_AUTHOR("Huawei Tech. Co., Ltd.");
-MODULE_DESCRIPTION("virt vpc agent driver");
-MODULE_LICENSE("GPL");
+KA_MODULE_AUTHOR("Huawei Tech. Co., Ltd.");
+KA_MODULE_DESCRIPTION("virt vpc agent driver");
+KA_MODULE_LICENSE("GPL");

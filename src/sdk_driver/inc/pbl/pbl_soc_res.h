@@ -199,6 +199,7 @@ enum soc_ts_irq_type {
     TS_TSCPU_FFTS_IRQ,
     TS_STARS_SRAM_IRQ,
     TS_TSCPU_HB_ACK_IRQ,
+    TS_STARS_AST_IRQ,
     TS_IRQ_TYPE_MAX
 };
 
@@ -217,6 +218,7 @@ static const char *ts_irq_name[TS_IRQ_TYPE_MAX] = {
     [TS_TSCPU_FFTS_IRQ] = "tscpu_ffts_irq",
     [TS_STARS_SRAM_IRQ] = "stars_sram_irq",
     [TS_TSCPU_HB_ACK_IRQ] = "tscpu_hb_ack_irq",
+    [TS_STARS_AST_IRQ] = "stars_ast_irq",
 };
 
 static inline u32 soc_resmng_get_dev_irq_type_by_name(const char *name)
@@ -356,9 +358,6 @@ int soc_resmng_get_mia_res_ex(struct res_inst_info *inst, enum soc_mia_res_type 
 
 int soc_resmng_subsys_set_num(u32 devid, enum soc_sub_type type, u32 subnum);
 int soc_resmng_subsys_get_num(u32 devid, enum soc_sub_type type, u32 *subnum);
-
-int soc_resmng_subsys_set_ts_ids(u32 devid, enum soc_sub_type type, u32 ts_ids[], u32 ts_num);
-int soc_resmng_subsys_get_ts_ids(u32 devid, enum soc_sub_type type, u32 ts_ids[], u32 num);
 
 /* for dev */
 int soc_resmng_dev_set_rsv_mem(u32 devid, const char *name, struct soc_rsv_mem_info *rsv_mem);

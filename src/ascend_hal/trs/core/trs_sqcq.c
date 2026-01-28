@@ -673,7 +673,7 @@ static void trs_sq_usr_info_init(uint32_t dev_id, struct sqcq_usr_info *info, st
 
     info->sq_ctrl.mem_local_flag = uio_info->sq_mem_local_flag;
     info->sq_que_spec_addr = (sq_map->que.addr != (void *)(uintptr_t)uio_info->sq_que_addr) ?
-        (void *)(uintptr_t)uio_info->sq_que_addr : NULL; /* set specificed alloced mem */
+        (void *)(uintptr_t)uio_info->sq_que_addr : NULL; /* set specified alloced mem */
     if (uio_info->uio_flag == 0) { /* sq not support user op */
         trs_sq_munmap(sq_map);
         info->sq_ctrl.que_addr = NULL;
@@ -715,7 +715,7 @@ static void trs_sq_usr_info_init(uint32_t dev_id, struct sqcq_usr_info *info, st
 static void trs_sq_usr_info_un_init(uint32_t dev_id, struct sqcq_usr_info *info)
 {
     if ((info->sq_que_spec_addr != NULL) && (trs_get_sqcq_mem_ops()->mem_free != NULL)) {
-        trs_get_sqcq_mem_ops()->mem_free(dev_id, info->sq_que_spec_addr);
+        trs_get_sqcq_mem_ops()->mem_free(dev_id, (uint64_t)info->sq_que_spec_addr, trs_get_sq_que_len(info->depth, info->e_size));
         info->sq_que_spec_addr = NULL;
     }
 
@@ -922,7 +922,7 @@ drvError_t trs_local_sqcq_alloc(uint32_t dev_id, struct halSqCqInputInfo *in, st
     in->flag &= (~TSDRV_FLAG_SPECIFIED_SQ_MEM);
     if ((trs_is_support_sq_mem_ops(dev_id, in)) && (trs_get_sqcq_mem_ops()->mem_alloc != NULL)) {
         in->flag |= TSDRV_FLAG_SPECIFIED_SQ_MEM;
-        ret = trs_get_sqcq_mem_ops()->mem_alloc(dev_id, &sq_que_va, trs_get_sq_que_len(in->sqeDepth, in->sqeSize));
+        ret = trs_get_sqcq_mem_ops()->mem_alloc(dev_id, (uint64_t *)&sq_que_va, trs_get_sq_que_len(in->sqeDepth, in->sqeSize));
         if (ret != DRV_ERROR_NONE) {
             return ret;
         }
@@ -964,7 +964,7 @@ sq_munmap:
     trs_sq_munmap(&sq_map);
 sq_mem_free:
     if ((trs_is_support_sq_mem_ops(dev_id, in)) && (trs_get_sqcq_mem_ops()->mem_free != NULL)) {
-        trs_get_sqcq_mem_ops()->mem_free(dev_id, sq_que_va);
+        trs_get_sqcq_mem_ops()->mem_free(dev_id, (uint64_t)sq_que_va, trs_get_sq_que_len(in->sqeDepth, in->sqeSize));
     }
     return ret;
 }
@@ -1005,7 +1005,7 @@ drvError_t trs_sqcq_alloc(uint32_t dev_id, struct halSqCqInputInfo *in, struct h
         trs_err("Failed to alloc sqcq. (dev_id=%u)\n", dev_id);
         return ret;
     }
-    trs_debug("Alloc sqcq succcess. (dev_id=%u; sq_id=%u; cq_id=%u)\n", dev_id, out->sqId, out->cqId);
+    trs_debug("Alloc sqcq success. (dev_id=%u; sq_id=%u; cq_id=%u)\n", dev_id, out->sqId, out->cqId);
     return ret;
 }
 
@@ -1954,17 +1954,19 @@ drvError_t trs_async_dma_desc_create(uint32_t dev_id, struct halAsyncDmaInputPar
         unsigned long long dst_addr;
         struct sqcq_usr_info *sq_info = NULL;
 
-        sq_info = trs_get_sq_info(dev_id, in->tsId, in->type, in->sqId);
+        sq_info = trs_get_sq_info(dev_id, in->tsId, in->type, in->info.sq_id);
         if (sq_info == NULL) {
-            trs_err("Invalid para. (dev_id=%u; ts_id=%u; type=%d; sq_id=%u)\n", dev_id, in->tsId, in->type, in->sqId);
+            trs_err("Invalid para. (dev_id=%u; ts_id=%u; type=%d; sq_id=%u)\n",
+                dev_id, in->tsId, in->type, in->info.sq_id);
             return DRV_ERROR_INVALID_VALUE;
         }
 
-        dst_addr = trs_get_sq_que_addr(sq_info) + in->sqe_pos * sq_info->e_size;
+        dst_addr = trs_get_sq_que_addr(sq_info) + in->info.sqe_pos * sq_info->e_size;
         out->dma_addr.offsetAddr.devid = dev_id; /* sqe update h2d only, use dev addr devid */
         ret = drvMemConvertAddr((uintptr_t)in->src, dst_addr, in->len, &out->dma_addr);
         if (ret != 0) {
-            trs_err("Convert dma failed. (dev_id=%u; ts_id=%u; type=%d; sq_id=%u)\n", dev_id, in->tsId, in->type, in->sqId);
+            trs_err("Convert dma failed. (dev_id=%u; ts_id=%u; type=%d; sq_id=%u)\n",
+                dev_id, in->tsId, in->type, in->info.sq_id);
             return ret;
         }
     } else { /* check and convert dma desc in kernel when high security mode */
@@ -1972,8 +1974,8 @@ drvError_t trs_async_dma_desc_create(uint32_t dev_id, struct halAsyncDmaInputPar
         para.tsid = in->tsId;
         para.type = in->type;
         para.src = (void *)in->src;
-        para.sq_id = in->sqId;
-        para.sqe_pos = in->sqe_pos;
+        para.sq_id = in->info.sq_id;
+        para.sqe_pos = in->info.sqe_pos;
         para.len = in->len;
         para.dir = in->dir;
         ret = trs_dev_io_ctrl(dev_id, TRS_DMA_DESC_CREATE, &para);
@@ -2003,7 +2005,7 @@ drvError_t trs_async_dma_destory(uint32_t dev_id, struct halAsyncDmaDestoryPara 
     if (trs_get_sq_send_mode(dev_id) == TRS_MODE_TYPE_SQ_SEND_HIGH_PERFORMANCE) {
         ret = drvMemDestroyAddr(para->dma_addr);
         if (ret != 0) {
-            trs_err("Destory dma desc failed. (dev_id=%u; type=%d; sq_id=%u)\n", dev_id, para->type, para->sqId);
+            trs_err("Destroy dma desc failed. (dev_id=%u; type=%d; sq_id=%u)\n", dev_id, para->type, para->sqId);
             return ret;
         }
     }
@@ -2130,28 +2132,26 @@ static int trs_sq_restore(uint32_t dev_id, struct stream_backup_info *in)
 
     if (g_backup_sq_mem == NULL) {
         trs_err("Backup fail.(dev_id=%u)\n", dev_id);
-        return DRV_ERROR_OUT_OF_MEMORY;
+        return DRV_ERROR_INVALID_VALUE;
     }
  
     for (i = 0; i < (int)in->id_num; i++) {
         sq_id = in->id_list[i];
         sq_info = trs_get_sq_info(dev_id, 0, DRV_NORMAL_TYPE, sq_id);
         if ((sq_info == NULL) || (!trs_is_sq_use_soft_que(sq_info))) {
-            trs_err("Invalid type sq. (dev_id=%u; sq_id=%u)\n", dev_id, sq_id);
-            ret = DRV_ERROR_NO_RESOURCES;
-            goto free_g_backup_mem;
+            trs_err("Fail to get sq info.(dev_id=%u; sq_id=%u)\n", dev_id, sq_id);
+            return DRV_ERROR_NO_RESOURCES;
         }
         ret = trs_flush_user_sq(dev_id, sq_id, sq_info);
         if (ret != 0) {
-            goto free_g_backup_mem;
+            return ret;
         }
         if (sq_info->tail == 0) continue;
         que_va = (char *)g_backup_sq_mem + sq_id * sq_info->e_size * sq_info->depth;
         ret = memcpy_s(sq_info->sq_map.que.addr, sq_info->e_size * sq_info->depth, que_va, sq_info->tail * sq_info->e_size);
         if (ret != 0) {
             trs_err("Memcpy fail.(dev_id=%u; sq_id=%u)\n", dev_id, sq_id);
-            ret = DRV_ERROR_INNER_ERR;
-            goto free_g_backup_mem;
+            return DRV_ERROR_INNER_ERR;
         }
         trs_set_sq_tail(sq_info, sq_info->tail);
         if (trs_sq_has_specified_num_task(sq_info, sq_info->tail)) {
@@ -2159,10 +2159,6 @@ static int trs_sq_restore(uint32_t dev_id, struct stream_backup_info *in)
         }
     }
     return 0;
-free_g_backup_mem:
-    free(g_backup_sq_mem);
-    g_backup_sq_mem = NULL;
-    return ret;
 }
 
 drvError_t halStreamRestore(uint32_t dev_id, struct stream_backup_info *in)

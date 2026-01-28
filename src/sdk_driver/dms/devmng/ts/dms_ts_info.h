@@ -21,6 +21,7 @@
 #define DMS_AI_TIMEOUT_RET 7
 #define START_MSG 0
 #define END_MSG 1
+#define NPU_CORE_NUM 5
 
 int dms_ts_init(void);
 void dms_ts_uninit(void);

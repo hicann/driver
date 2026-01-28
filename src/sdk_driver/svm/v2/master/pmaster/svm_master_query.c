@@ -10,9 +10,6 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#include <linux/types.h>
-#include <linux/mm.h>
-#include <linux/rwsem.h>
 
 #include "ascend_kernel_hal.h"
 #include "comm_kernel_interface.h"
@@ -20,7 +17,6 @@
 #include "pbl_kernel_interface.h"
 #include "kernel_version_adapt.h"
 
-#include "svm_ioctl.h"
 #include "svm_kernel_interface.h"
 #include "devmm_common.h"
 #include "devmm_proc_info.h"
@@ -31,6 +27,7 @@
 #include "svm_master_proc_mng.h"
 #include "svm_mem_query.h"
 #include "svm_master_query.h"
+#include "svm_ioctl.h"
 
 #ifdef EMU_ST
 int __thread g_no_need_free_preprocess = 0;
@@ -43,7 +40,7 @@ struct svm_p2p_mem_info {
     void (*free_callback)(void *data);
     void *data;
     struct p2p_page_table page_table;
-    struct list_head node;
+    ka_list_head_t node;
 };
 
 struct svm_mem_info {
@@ -106,22 +103,22 @@ static int devmm_svm_get_host_pa_list(struct devmm_svm_process *svm_process, u64
     ka_vm_area_struct_t *vma = NULL;
     int ret;
 
-    ka_task_down_read(get_mmap_sem(current->mm));
+    ka_task_down_read(get_mmap_sem(ka_task_get_current_mm()));
     vma = devmm_find_vma(svm_process, (unsigned long)addr);
-    if ((vma == NULL) || (vma->vm_start > addr)) {
-        ka_task_up_read(get_mmap_sem(current->mm));
+    if ((vma == NULL) || (ka_mm_get_vm_start(vma) > addr)) {
+        ka_task_up_read(get_mmap_sem(ka_task_get_current_mm()));
         devmm_drv_err("Find vma failed.\n");
         return -EINVAL;
     }
 
     ret = devmm_va_to_palist(vma, addr, size, pa_list, &pa_num);
     if (ret != 0) {
-        ka_task_up_read(get_mmap_sem(current->mm));
+        ka_task_up_read(get_mmap_sem(ka_task_get_current_mm()));
         devmm_drv_err("Failed to convert va to pa. (ret=%d; pa_num=%u)\n", ret, pa_num);
         return ret;
     }
 
-    ka_task_up_read(get_mmap_sem(current->mm));
+    ka_task_up_read(get_mmap_sem(ka_task_get_current_mm()));
     devmm_drv_debug("Convert va to pa. (ret=%d; pa_num=%u)\n", ret, pa_num);
     return 0;
 }
@@ -218,7 +215,7 @@ int devmm_shm_get_pa_list(struct devmm_svm_process_id *process_id, u64 aligned_v
 void devmm_svm_put_pa_list(struct devmm_svm_process_id *process_id, u64 va, u64 *pa_list, u32 pa_num)
 {
     struct devmm_svm_process *svm_process = NULL;
-    u64 size = pa_num << PAGE_SHIFT;
+    u64 size = pa_num << KA_MM_PAGE_SHIFT;
 
     svm_process = devmm_svm_proc_get_by_process_id_ex(process_id);
     if (svm_process == NULL) {
@@ -238,7 +235,7 @@ bool devmm_svm_need_ib_register_peer(void)
 {
     return false;
 }
-EXPORT_SYMBOL_GPL(devmm_svm_need_ib_register_peer);
+KA_EXPORT_SYMBOL_GPL(devmm_svm_need_ib_register_peer);
 
 static bool devmm_is_support_p2p_get_pages(struct devmm_svm_process *svm_proc, u64 va, u64 len)
 {
@@ -261,7 +258,7 @@ static bool devmm_is_support_p2p_get_pages(struct devmm_svm_process *svm_proc, u
     }
 
     page_size = (heap->heap_type == DEVMM_HEAP_HUGE_PAGE) ? devmm_svm->device_hpage_size : devmm_svm->device_page_size;
-    if (IS_ALIGNED(va, page_size) == false) {
+    if (KA_DRIVER_IS_ALIGNED(va, page_size) == false) {
         devmm_drv_err("Va is not aligned. (va=0x%llx; len=0x%llx; page_size=%u)\n", va, len, page_size);
         devmm_svm_heap_put(heap);
         return false;
@@ -308,9 +305,9 @@ static int devmm_fill_p2p_pages_info(struct devmm_svm_process *svm_proc, struct 
 {
     u32 logic_devid = devmm_svm_va_to_devid(svm_proc, mem_info->va);
     u32 page_size = mem_info->page_table.page_size;
-    u64 aligned_va = round_down(mem_info->va, page_size);
+    u64 aligned_va = ka_base_round_down(mem_info->va, page_size);
     u64 page_num = mem_info->page_table.page_num;
-    u32 stamp = (u32)jiffies;
+    u32 stamp = (u32)ka_jiffies;
     u64 i, tmp_va, dev_pa;
     int ret;
 
@@ -335,7 +332,7 @@ static int devmm_fill_p2p_pages_info(struct devmm_svm_process *svm_proc, struct 
 
 static int devmm_init_p2p_page_table(struct devmm_svm_process *svm_proc, struct p2p_page_table *page_table)
 {
-    struct svm_p2p_mem_info *mem_info = container_of(page_table, struct svm_p2p_mem_info, page_table);
+    struct svm_p2p_mem_info *mem_info = ka_container_of(page_table, struct svm_p2p_mem_info, page_table);
     struct devmm_svm_heap *heap = NULL;
     u64 aligned_va, aligned_len;
     int ret;
@@ -349,8 +346,8 @@ static int devmm_init_p2p_page_table(struct devmm_svm_process *svm_proc, struct 
     page_table->page_size = (heap->heap_type == DEVMM_HEAP_HUGE_PAGE) ?
         devmm_svm->device_hpage_size : devmm_svm->device_page_size;
     devmm_svm_heap_put(heap);
-    aligned_va = round_down(mem_info->va, page_table->page_size);
-    aligned_len = round_up(mem_info->len + (mem_info->va - aligned_va), page_table->page_size);
+    aligned_va = ka_base_round_down(mem_info->va, page_table->page_size);
+    aligned_len = ka_base_round_up(mem_info->len + (mem_info->va - aligned_va), page_table->page_size);
     page_table->page_num = aligned_len / page_table->page_size;
     page_table->pages_info = (struct p2p_page_info *)
         devmm_kvzalloc(page_table->page_num * sizeof(struct p2p_page_info));
@@ -404,7 +401,7 @@ static struct svm_p2p_mem_info *devmm_create_p2p_mem_info(struct devmm_svm_proce
     mem_info->udevid = devmm_get_phyid_devid_from_svm_process(svm_proc, logic_devid);
     mem_info->free_callback = free_callback;
     mem_info->data = data;
-    INIT_LIST_HEAD(&mem_info->node);
+    KA_INIT_LIST_HEAD(&mem_info->node);
 
     ret = devmm_init_p2p_page_table(svm_proc, &mem_info->page_table);
     if (ret != 0) {
@@ -432,10 +429,10 @@ static struct p2p_page_table *devmm_create_p2p_page_table(struct devmm_svm_proce
     if (mem_info == NULL) {
         return NULL;
     }
-    mutex_lock(&master_data->p2p_mem_mng[mem_info->udevid].lock);
-    list_add_tail(&mem_info->node, &master_data->p2p_mem_mng[mem_info->udevid].list_head);
+    ka_task_mutex_lock(&master_data->p2p_mem_mng[mem_info->udevid].lock);
+    ka_list_add_tail(&mem_info->node, &master_data->p2p_mem_mng[mem_info->udevid].list_head);
     master_data->p2p_mem_mng[mem_info->udevid].get_cnt++;
-    mutex_unlock(&master_data->p2p_mem_mng[mem_info->udevid].lock);
+    ka_task_mutex_unlock(&master_data->p2p_mem_mng[mem_info->udevid].lock);
 
     devmm_drv_debug("Success. (va=0x%llx; len=0x%llx)\n", va, len);
     return &mem_info->page_table;
@@ -443,7 +440,7 @@ static struct p2p_page_table *devmm_create_p2p_page_table(struct devmm_svm_proce
 
 static void devmm_destroy_p2p_page_table(struct p2p_page_table **page_table)
 {
-    struct svm_p2p_mem_info *mem_info = container_of(*page_table, struct svm_p2p_mem_info, page_table);
+    struct svm_p2p_mem_info *mem_info = ka_container_of(*page_table, struct svm_p2p_mem_info, page_table);
     struct devmm_svm_process_id process_id = {.hostpid = mem_info->hostpid, .devid = 0, .vfid = 0};
     struct devmm_svm_proc_master *master_data = NULL;
     struct devmm_svm_process *svm_proc = NULL;
@@ -456,12 +453,12 @@ static void devmm_destroy_p2p_page_table(struct p2p_page_table **page_table)
     }
 
     master_data = (struct devmm_svm_proc_master *)svm_proc->priv_data;
-    mutex_lock(&master_data->p2p_mem_mng[mem_info->udevid].lock);
+    ka_task_mutex_lock(&master_data->p2p_mem_mng[mem_info->udevid].lock);
     if (mem_info->free_callback != NULL) {
-        list_del(&mem_info->node);
+        ka_list_del(&mem_info->node);
     }
     master_data->p2p_mem_mng[mem_info->udevid].put_cnt++;
-    mutex_unlock(&master_data->p2p_mem_mng[mem_info->udevid].lock);
+    ka_task_mutex_unlock(&master_data->p2p_mem_mng[mem_info->udevid].lock);
     devmm_svm_proc_put(svm_proc);
 OUT:
     devmm_drv_debug("Success. (va=0x%llx; len=0x%llx)\n", mem_info->va, mem_info->len);
@@ -474,9 +471,9 @@ static void devmm_show_p2p_mem_stat(struct devmm_svm_process *svm_proc, u32 devi
     struct devmm_svm_proc_master *master_data = (struct devmm_svm_proc_master *)svm_proc->priv_data;
     struct devmm_master_p2p_mem_mng *mem_mng = &master_data->p2p_mem_mng[devid];
 
-    mutex_lock(&mem_mng->lock);
+    ka_task_mutex_lock(&mem_mng->lock);
     if (mem_mng->get_cnt == 0) {
-        mutex_unlock(&mem_mng->lock);
+        ka_task_mutex_unlock(&mem_mng->lock);
         return;
     }
     if ((mem_mng->get_cnt == mem_mng->put_cnt)) {
@@ -486,7 +483,7 @@ static void devmm_show_p2p_mem_stat(struct devmm_svm_process *svm_proc, u32 devi
         devmm_drv_run_info("Stat show. (devid=%u; get_cnt=%llu; put_cnt=%llu; free_callback_cnt=%llu)\n",
             devid, mem_mng->get_cnt, mem_mng->put_cnt, mem_mng->free_cb_cnt);
     }
-    mutex_unlock(&mem_mng->lock);
+    ka_task_mutex_unlock(&mem_mng->lock);
 }
 
 typedef bool (*preprocess_cmp_fun)(struct svm_p2p_mem_info *mem_info, u64 va, u64 len);
@@ -503,21 +500,21 @@ static void devmm_mem_free_preprocess_inner(struct devmm_svm_process *svm_proc, 
 {
     struct devmm_svm_proc_master *master_data = (struct devmm_svm_proc_master *)svm_proc->priv_data;
     struct devmm_master_p2p_mem_mng *mem_mng = &master_data->p2p_mem_mng[devid];
-    struct list_head *pos = NULL;
-    struct list_head *n = NULL;
-    u32 stamp = (u32)jiffies;
+    ka_list_head_t *pos = NULL;
+    ka_list_head_t *n = NULL;
+    u32 stamp = (u32)ka_jiffies;
 
-    mutex_lock(&mem_mng->lock);
-    if (list_empty_careful(&mem_mng->list_head)) {
-        mutex_unlock(&mem_mng->lock);
+    ka_task_mutex_lock(&mem_mng->lock);
+    if (ka_list_empty_careful(&mem_mng->list_head)) {
+        ka_task_mutex_unlock(&mem_mng->lock);
         return;
     }
 
-    list_for_each_safe(pos, n, &mem_mng->list_head) {
-        struct svm_p2p_mem_info *mem_info = list_entry(pos, struct svm_p2p_mem_info, node);
+    ka_list_for_each_safe(pos, n, &mem_mng->list_head) {
+        struct svm_p2p_mem_info *mem_info = ka_list_entry(pos, struct svm_p2p_mem_info, node);
         bool need_callback = (cmp_fun != NULL) ? cmp_fun(mem_info, free_va, free_len) : true;
         if (need_callback) {
-            list_del(&mem_info->node);
+            ka_list_del(&mem_info->node);
             devmm_drv_debug("free_callback devid=%u; cmp_fun_is_null=%u; va=%llx; len=%llx)\n", devid, (cmp_fun == NULL), free_va, free_len);
             if (mem_info->free_callback != NULL) {
                 mem_info->free_callback(mem_info->data);
@@ -527,11 +524,11 @@ static void devmm_mem_free_preprocess_inner(struct devmm_svm_process *svm_proc, 
                 devmm_drv_debug("free_callback finish. (devid=%u; va=%llx; len=%llx; free_cb_cnt=%llu)",
                     mem_info->udevid, mem_info->va, mem_info->len, mem_mng->free_cb_cnt);
             }
-            INIT_LIST_HEAD(&mem_info->node);
+            KA_INIT_LIST_HEAD(&mem_info->node);
         }
         devmm_try_cond_resched(&stamp);
     }
-    mutex_unlock(&mem_mng->lock);
+    ka_task_mutex_unlock(&mem_mng->lock);
 }
 
 void devmm_mem_free_preprocess_by_dev_and_va(struct devmm_svm_process *svm_proc, u32 devid, u64 free_va, u64 free_len)
@@ -541,7 +538,7 @@ void devmm_mem_free_preprocess_by_dev_and_va(struct devmm_svm_process *svm_proc,
 
 void devmm_mem_free_preprocess_by_dev(struct devmm_svm_process *svm_proc, u32 devid)
 {
-    u32 stamp = (u32)jiffies;
+    u32 stamp = (u32)ka_jiffies;
     u32 i;
 
     devmm_drv_debug("Free preprocess by dev. (devid=%u)\n", devid);
@@ -567,60 +564,60 @@ void devmm_mem_free_preprocess_by_dev(struct devmm_svm_process *svm_proc, u32 de
 int hal_kernel_p2p_get_pages(u64 va, u64 len, void (*free_callback)(void *data), void *data,
     struct p2p_page_table **page_table)
 {
-    struct devmm_svm_process_id process_id = {.hostpid = current->tgid, .devid = 0, .vfid = 0};
+    struct devmm_svm_process_id process_id = {.hostpid = ka_task_get_current_tgid(), .devid = 0, .vfid = 0};
     struct devmm_svm_process *svm_proc = NULL;
 
-    if (!try_module_get(THIS_MODULE)) {
+    if (!ka_system_try_module_get(KA_THIS_MODULE)) {
         return -EPERM;
     }
 
-    might_sleep();
+    ka_task_might_sleep();
     devmm_drv_debug("Start. (va=0x%llx; len=0x%llx)\n", va, len);
     if ((devmm_va_is_in_svm_range(va) == false) || (len == 0) || (va + len < va) ||
         (devmm_va_is_in_svm_range(va + len - 1) == false) || (free_callback == NULL) || (page_table == NULL)) {
         devmm_drv_err("Invalid para. (va=0x%llx; len=0x%llx; page_table_is_null=%u; free_callback_is_null=%u)\n",
             va, len, free_callback == NULL, page_table == NULL);
-        module_put(THIS_MODULE);
+        ka_system_module_put(KA_THIS_MODULE);
         return -EINVAL;
     }
 
     svm_proc = devmm_svm_proc_get_by_process_id(&process_id);
     if (svm_proc == NULL) {
         devmm_drv_err("Can not find svm_proc. (hostpid=%d; va=0x%llx; len=0x%llx)\n", process_id.hostpid, va, len);
-        module_put(THIS_MODULE);
+        ka_system_module_put(KA_THIS_MODULE);
         return -ESRCH;
     }
 
     if (devmm_is_support_p2p_get_pages(svm_proc, va, len) == false) {
         devmm_svm_proc_put(svm_proc);
-        module_put(THIS_MODULE);
+        ka_system_module_put(KA_THIS_MODULE);
         return -EOPNOTSUPP;
     }
 
     *page_table = devmm_create_p2p_page_table(svm_proc, va, len, free_callback, data);
     devmm_svm_proc_put(svm_proc);
-    module_put(THIS_MODULE);
+    ka_system_module_put(KA_THIS_MODULE);
 
     return (*page_table == NULL) ? -EINVAL : 0;
 }
-EXPORT_SYMBOL_GPL(hal_kernel_p2p_get_pages);
+KA_EXPORT_SYMBOL_GPL(hal_kernel_p2p_get_pages);
 
 int hal_kernel_p2p_put_pages(struct p2p_page_table *page_table)
 {
-    if (!try_module_get(THIS_MODULE)) {
+    if (!ka_system_try_module_get(KA_THIS_MODULE)) {
         return -EBUSY;
     }
 
     if (page_table == NULL) {
         devmm_drv_err("Invalid para. (page_table_is_null=%u)\n", page_table == NULL);
-        module_put(THIS_MODULE);
+        ka_system_module_put(KA_THIS_MODULE);
         return -EINVAL;
     }
 
-    might_sleep();
+    ka_task_might_sleep();
     devmm_destroy_p2p_page_table(&page_table);
 
-    module_put(THIS_MODULE);
+    ka_system_module_put(KA_THIS_MODULE);
     return 0;
 }
-EXPORT_SYMBOL_GPL(hal_kernel_p2p_put_pages);
+KA_EXPORT_SYMBOL_GPL(hal_kernel_p2p_put_pages);

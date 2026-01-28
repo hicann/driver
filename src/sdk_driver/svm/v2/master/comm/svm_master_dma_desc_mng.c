@@ -11,11 +11,6 @@
  * GNU General Public License for more details.
  */
 
-#include <linux/slab.h>
-#include <linux/kref.h>
-#include <linux/spinlock_types.h>
-#include <linux/preempt.h>
-
 #include "comm_kernel_interface.h"
 
 #include "svm_proc_mng.h"
@@ -26,6 +21,7 @@
 #include "svm_task_dev_res_mng.h"
 #include "svm_dma_prepare_pool.h"
 #include "svm_master_dma_desc_mng.h"
+#include "ka_kernel_def_pub.h"
 
 struct devmm_dma_desc_node_info {
     struct svm_id_inst id_inst;
@@ -194,7 +190,7 @@ static int devmm_dma_desc_node_create(struct devmm_svm_process *svm_proc, struct
     ka_base_kref_init(&node->ref);
 
     node->rb_handle = keys_to_rb_handle(node->info.key, node->info.subkey);
-    RB_CLEAR_NODE(&node->task_node);
+    KA_BASE_RB_CLEAR_NODE(&node->task_node);
 
     ka_task_spin_lock_bh(&rb_info->spinlock);
     ret = devmm_dma_desc_node_insert(rb_info, node);
@@ -437,7 +433,7 @@ int hal_kernel_svm_dma_desc_create(struct svm_dma_desc_addr_info *addr_info,
     }
 
     process_id.hostpid = handle->pid;
-    might_sleep();
+    ka_task_might_sleep();
 
     if (handle->subkey == SVM_DMA_DESC_INVALID_SUB_KEY) {
         return -EINVAL;
@@ -454,7 +450,7 @@ int hal_kernel_svm_dma_desc_create(struct svm_dma_desc_addr_info *addr_info,
     devmm_svm_proc_put(svm_proc);
     return ret;
 }
-EXPORT_SYMBOL_GPL(hal_kernel_svm_dma_desc_create);
+KA_EXPORT_SYMBOL_GPL(hal_kernel_svm_dma_desc_create);
 
 /* destroy will be called in tasklet */
 void hal_kernel_svm_dma_desc_destroy(struct svm_dma_desc_handle *handle)
@@ -477,5 +473,5 @@ void hal_kernel_svm_dma_desc_destroy(struct svm_dma_desc_handle *handle)
     devmm_dma_desc_destroy(svm_proc, handle->key, handle->subkey);
     devmm_svm_proc_put(svm_proc);
 }
-EXPORT_SYMBOL_GPL(hal_kernel_svm_dma_desc_destroy);
+KA_EXPORT_SYMBOL_GPL(hal_kernel_svm_dma_desc_destroy);
 

@@ -14,12 +14,6 @@
 #ifndef _DEVDRV_SYSFS_H_
 #define _DEVDRV_SYSFS_H_
 
-#include <linux/interrupt.h>
-#include <linux/module.h>
-#include <linux/pci.h>
-#include <linux/types.h>
-#include <linux/workqueue.h>
-
 #include "devdrv_device_load.h"
 #include "devdrv_atu.h"
 #include "devdrv_dma.h"

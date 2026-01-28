@@ -13,7 +13,7 @@
 
 #ifndef DEVMM_DEV_H
 #define DEVMM_DEV_H
-#include "svm_ioctl.h"
+
 #include "ka_base_pub.h"
 #include "ka_base_pub.h"
 #include "ka_common_pub.h"
@@ -25,6 +25,7 @@
 #include "ka_base_pub.h"
 #include "ka_fs_pub.h"
 #include "ka_driver_pub.h"
+#include "svm_ioctl.h"
 
 struct devmm_private_data {
     void *process;

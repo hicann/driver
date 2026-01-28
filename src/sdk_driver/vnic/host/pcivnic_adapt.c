@@ -10,7 +10,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#include <linux/types.h>
+
 #include "pbl_dev_identity.h"
 #include "comm/comm_pcie.h"
 #include "pcivnic_main.h"

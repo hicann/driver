@@ -158,7 +158,7 @@ typedef struct dev_mon_request_tag_value {
 
 enum davinchi_info_enum {
     REQ_D_INFO_DEV_TYPE_MEM = 1,  // DDR
-    REQ_D_INFO_DEV_TYPE_CPU = 2,  // CTRL_CPU or AI_CORE
+    REQ_D_INFO_DEV_TYPE_CPU = 2,  // AI core and AI Vector accelerator old util
     REQ_D_INFO_DEV_TYPE_AI_CPU = 3,
     REQ_D_INFO_DEV_TYPE_CTRL_CPU = 4,
     REQ_D_INFO_DEV_TYPE_MEM_BANDWIDTH = 5,
@@ -169,7 +169,8 @@ enum davinchi_info_enum {
     REQ_D_INFO_DEV_TYPE_HBM_BW = 10,
     REQ_D_INFO_DEV_TYPE_AICORE = 11,
     REQ_D_INFO_DEV_TYPE_VECTOR = 12,
-    REQ_D_INFO_DEV_TYPE_ACC = 13, // AI core and AI vector accelerator
+    REQ_D_INFO_DEV_TYPE_ACC = 13, // AI core and AI vector accelerator new util
+ 	REQ_D_INFO_DEV_TYPE_AI_CUBE = 14, // AI cube accelerator
     REQ_D_INFO_DEV_TYPE_MAX_INVALID_VALUE
 };
 

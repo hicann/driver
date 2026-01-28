@@ -10,7 +10,6 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#include <linux/slab.h>
 
 #include "devmm_proc_info.h"
 #include "devmm_chan_handlers.h"
@@ -63,7 +62,7 @@ STATIC int devmm_svm_vm_fault_host_sync_device_data(struct devmm_svm_process *sv
         devmm_svm_free_share_page_msg(svm_proc, heap, start, heap->chunk_page_size, page_bitmap);
         devmm_svm_clear_mapped_with_heap(svm_proc, start, heap->chunk_page_size, dev_id, heap);
     } else if (devmm_is_host_agent(dev_id)) {
-        /* host agent not surport page fault */
+        /* host agent not support page fault */
         devmm_drv_err("Dev_id is error. (dev_id=%u)\n", dev_id);
         return -EINVAL;
     }
@@ -190,9 +189,9 @@ static int _devmm_svm_vm_fault_host(struct devmm_svm_process *svm_proc,
      return (ret == 0) ? DEVMM_FAULT_OK : DEVMM_FAULT_ERROR;
 }
 
-STATIC int devmm_svm_vm_fault_host(ka_vm_area_struct_t *vma, struct vm_fault *vmf)
+STATIC int devmm_svm_vm_fault_host(ka_vm_area_struct_t *vma, ka_vm_fault_struct_t *vmf)
 {
-    u64 start = vma->vm_start + (vmf->pgoff << PAGE_SHIFT);
+    u64 start = ka_mm_get_vm_start(vma) + (vmf->pgoff << KA_MM_PAGE_SHIFT);
     struct devmm_svm_process *svm_proc = NULL;
     int ret;
 
@@ -216,27 +215,58 @@ STATIC int devmm_svm_vm_fault_host(ka_vm_area_struct_t *vma, struct vm_fault *vm
 }
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 11, 0)
-STATIC vm_fault_t devmm_svm_vmf_fault_host(struct vm_fault *vmf)
+STATIC ka_vm_fault_t devmm_svm_vmf_fault_host(ka_vm_fault_struct_t *vmf)
 {
-    return (vm_fault_t)devmm_svm_vm_fault_host(vmf->vma, vmf);
+    return (ka_vm_fault_t)devmm_svm_vm_fault_host(vmf->vma, vmf);
 }
 #endif
 
 #ifndef EMU_ST
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 3, 0)
-static int devmm_mremap(struct vm_area_struct *area)
+static int devmm_mremap(ka_vm_area_struct_t *area)
 {
     return -EACCES;
 }
 #endif
 #endif
 
-static struct vm_operations_struct svm_master_vma_ops = {
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 17, 0)
+static vm_fault_t devmm_mkf_write(struct vm_fault *vmf)
+{
+    u64 start = vmf->address;
+    devmm_drv_debug("Host mem enter devmm_mkf_write. (start=0x%llx)\n", start);
+ 
+    return VM_FAULT_SIGSEGV;
+}
+#elif LINUX_VERSION_CODE >= KERNEL_VERSION(4, 11, 0)
+static int devmm_mkf_write(struct vm_fault *vmf)
+{
+    u64 start = vmf->address;
+    devmm_drv_debug("Host mem enter devmm_mkf_write. (start=0x%llx)\n", start);
+ 
+    return VM_FAULT_SIGSEGV;
+}
+#else
+static int devmm_mk_write(struct vm_area_struct *vma, struct vm_fault *vmf)
+{
+    u64 start = vma->vm_start + (vmf->pgoff << PAGE_SHIFT);
+    devmm_drv_debug("Host mem enter devmm_mk_write. (start=0x%llx)\n", start);
+    
+    return VM_FAULT_SIGSEGV;
+}
+#endif
+ 
+static ka_vm_operations_struct_t svm_master_vma_ops = {
     .open = devmm_vm_open,
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 11, 0)
     .fault = devmm_svm_vmf_fault_host,
 #else
     .fault = devmm_svm_vm_fault_host,
+#endif
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 11, 0)
+    .pfn_mkwrite = devmm_mkf_write,
+#else
+    .pfn_mkwrite = devmm_mk_write,
 #endif
 #ifndef EMU_ST
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 3, 0)
@@ -247,6 +277,6 @@ static struct vm_operations_struct svm_master_vma_ops = {
 
 void devmm_svm_setup_vma_ops(ka_vm_area_struct_t *vma)
 {
-    vma->vm_ops = &svm_master_vma_ops;
+    ka_mm_set_vm_ops(vma, &svm_master_vma_ops);
 }
 

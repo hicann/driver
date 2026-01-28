@@ -13,20 +13,18 @@
 #ifndef _DEVDRV_RBTREE_H_
 #define _DEVDRV_RBTREE_H_
 
-#include <linux/rbtree.h>
-
 #include "comm_cmd_msg.h"
 #include "devdrv_pci.h"
 
 struct devdrv_dma_pasid_rbtree_node {
-    struct rb_node node;
+    ka_rb_node_t node;
     u32 dev_id;
     u64 hash_va;  // process pasid
 };
 
 struct devdrv_dma_pasid_rbtree_ctrl {
-    spinlock_t rb_lock;
-    struct rb_root rbtree;
+    ka_task_spinlock_t rb_lock;
+    ka_rb_root_t rbtree;
     struct devdrv_msg_chan *msg_chan;
 };
 

@@ -15,13 +15,14 @@
 #include "svm_vmma_mng.h"
 #include "devmm_common.h"
 #include "svm_mem_map.h"
+#include "ka_compiler_pub.h"
 
 void devmm_mem_unmap(struct devmm_svm_process *svm_proc, struct devmm_vmma_info *info)
 {
     struct devmm_phy_addr_blk *blk = NULL;
 
     blk = devmm_phy_addr_blk_get(&svm_proc->phy_addr_blk_mng, info->phy_addr_blk_id);
-    if (unlikely(blk == NULL)) {
+    if (ka_unlikely(blk == NULL)) {
         devmm_drv_warn("Get phy_addr_blk failed. (id=%d)\n", info->phy_addr_blk_id);
         return;
     }
@@ -206,7 +207,7 @@ int devmm_mem_map(struct devmm_svm_process *svm_proc, struct devmm_vmma_info *in
     }
 
     ret = devmm_phy_addr_blk_occupy_inc(blk);
-    if (unlikely(ret != 0)) {
+    if (ka_unlikely(ret != 0)) {
         devmm_phy_addr_blk_put(blk);
         return ret;
     }

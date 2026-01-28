@@ -11,10 +11,8 @@
  * GNU General Public License for more details.
  */
 #ifndef EMU_ST
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <linux/pci.h>
-#include <linux/delay.h>
+#include "ka_kernel_def_pub.h"
+#include "ka_pci_pub.h"
 
 #include "comm_kernel_interface.h"
 #include "pbl/pbl_soc_res.h"
@@ -24,21 +22,25 @@
 
 #define PCI_VENDOR_ID_HUAWEI 0x19e5
 
-static const struct pci_device_id soc_driver_tbl[] = {
-    {PCI_VDEVICE(HUAWEI, 0xd100), 0},
-    {PCI_VDEVICE(HUAWEI, 0xd105), 0},
-    {PCI_VDEVICE(HUAWEI, PCI_DEVICE_CLOUD), 0},
-    {PCI_VDEVICE(HUAWEI, 0xd801), 0},
-    {PCI_VDEVICE(HUAWEI, 0xd500), 0},
-    {PCI_VDEVICE(HUAWEI, 0xd501), 0},
-    {PCI_VDEVICE(HUAWEI, 0xd802), 0},
-    {PCI_VDEVICE(HUAWEI, 0xd803), 0},
-    {PCI_VDEVICE(HUAWEI, 0xd804), 0},
-    {PCI_VDEVICE(HUAWEI, 0xd805), 0},
-    {DEVDRV_DIVERSITY_PCIE_VENDOR_ID, 0xd500, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0},
+static const ka_pci_device_id_t soc_driver_tbl[] = {
+    {KA_PCI_VDEVICE(HUAWEI, 0xd100), 0},
+    {KA_PCI_VDEVICE(HUAWEI, 0xd105), 0},
+    {KA_PCI_VDEVICE(HUAWEI, PCI_DEVICE_CLOUD), 0},
+    {KA_PCI_VDEVICE(HUAWEI, 0xd801), 0},
+    {KA_PCI_VDEVICE(HUAWEI, 0xd500), 0},
+    {KA_PCI_VDEVICE(HUAWEI, 0xd501), 0},
+    {KA_PCI_VDEVICE(HUAWEI, 0xd802), 0},
+    {KA_PCI_VDEVICE(HUAWEI, 0xd803), 0},
+    {KA_PCI_VDEVICE(HUAWEI, 0xd804), 0},
+    {KA_PCI_VDEVICE(HUAWEI, 0xd805), 0},
+    {DEVDRV_DIVERSITY_PCIE_VENDOR_ID, 0xd500, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0},
+    { 0x20C6, 0xd500, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0 },
+    { 0x203F, 0xd500, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0 },
+    { 0x20C6, 0xd802, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0 },
+    { 0x203F, 0xd802, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0 },
     {}
 };
-MODULE_DEVICE_TABLE(pci, soc_driver_tbl);
+KA_MODULE_DEVICE_TABLE(pci, soc_driver_tbl);
 
 static int soc_platform_set_mb_irq(u32 devid, u32 tsid)
 {
@@ -461,7 +463,7 @@ static int __init soc_platform_init(void)
 
     return 0;
 }
-module_init(soc_platform_init);
+ka_module_init(soc_platform_init);
 
 static void __exit soc_platform_exit(void)
 {
@@ -472,11 +474,11 @@ static void __exit soc_platform_exit(void)
     uda_dev_type_pack(&type, UDA_DAVINCI, UDA_ENTITY, UDA_NEAR, UDA_REAL_SEC_EH);
     (void)uda_notifier_unregister(SOC_PLATFORM_HOST_NOTIFIER, &type);
 }
-module_exit(soc_platform_exit);
+ka_module_exit(soc_platform_exit);
 
-MODULE_LICENSE("GPL");
-MODULE_AUTHOR("Huawei Tech. Co., Ltd.");
-MODULE_DESCRIPTION("soc platform driver");
+KA_MODULE_LICENSE("GPL");
+KA_MODULE_AUTHOR("Huawei Tech. Co., Ltd.");
+KA_MODULE_DESCRIPTION("soc platform driver");
 #else
 void soc_platform_stub_test(void)
 {

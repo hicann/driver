@@ -24,8 +24,8 @@
 
 struct udis_dma_addr {
     struct list_head node;
-    dma_addr_t host_dma_addr;
-    dma_addr_t dev_dma_addr;
+    ka_dma_addr_t host_dma_addr;
+    ka_dma_addr_t dev_dma_addr;
     u32 data_len; /* Length of source data. */
     UDIS_UPDATE_TYPE update_type;
     UDIS_MODULE_TYPE module_id;
@@ -35,7 +35,7 @@ struct udis_dma_addr {
 struct udis_msg_head {
     unsigned int dev_id;
     unsigned int msg_id;
-    unsigned short valid;  /* validity judgement, 0x5A5A is valide */
+    unsigned short valid;  /* validity judgement, 0x5A5A is valid */
     unsigned short result; /* process result from rp, zero for succ, non zero for fail */
     unsigned int tsid;
     unsigned int vfid;

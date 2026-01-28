@@ -29,12 +29,14 @@ target_include_directories(asdrv_esched_obj PRIVATE
     ${DRIVER_KERNEL_DIR}/src/event_sched/device/comm/
     ${DRIVER_KERNEL_DIR}/src/event_sched/device/bind_cpu/
     ${DRIVER_KERNEL_DIR}/inc/
+    ${DRIVER_KERNEL_DIR}/inc/trs
     ${DRIVER_KERNEL_DIR}/src/esched/command/ioctl/
     ${DRIVER_KERNEL_DIR}/src/esched/command/msg/
     ${TOP_DIR}/inc/driver/
     ${TOP_DIR}/inc/driver/errcode/
     ${TOP_DIR}/inc/common/
     ${TOP_DIR}/abl/libc_sec/include
+    ${TOP_DIR}/driver/driver/src/sdk_driver/kernel_adapt/include
 )
 
 add_custom_command(

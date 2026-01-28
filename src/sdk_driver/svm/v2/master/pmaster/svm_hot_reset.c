@@ -11,13 +11,10 @@
  * GNU General Public License for more details.
  */
 
-#include <linux/sched.h>
-#include <linux/delay.h>
-#include <linux/reboot.h>
-
 #include "pbl/pbl_uda.h"
 #include "devmm_common.h"
 #include "svm_hot_reset.h"
+#include "ka_dfx_pub.h"
 
 #define DEVMM_IS_READY 1
 
@@ -272,11 +269,11 @@ int devmm_hotreset_cancel_handle(u32 dev_id)
     return 0;
 }
 
-STATIC int devmm_reboot_notify_handle(struct notifier_block *notifier, unsigned long event, void *data)
+STATIC int devmm_reboot_notify_handle(ka_notifier_block_t *notifier, unsigned long event, void *data)
 {
 #ifndef EMU_ST
     if (event != SYS_RESTART && event != SYS_HALT && event != SYS_POWER_OFF) {
-        return NOTIFY_DONE;
+        return KA_NOTIFY_DONE;
     }
 
     g_svm_active_reboot = true;
@@ -285,18 +282,18 @@ STATIC int devmm_reboot_notify_handle(struct notifier_block *notifier, unsigned 
     return NOTIFY_OK;
 }
 
-STATIC struct notifier_block devmm_reboot_notifier = {
+STATIC ka_notifier_block_t devmm_reboot_notifier = {
     .notifier_call = devmm_reboot_notify_handle,
     .priority = 1,
 };
 
 int devmm_register_reboot_notifier(void)
 {
-    return register_reboot_notifier(&devmm_reboot_notifier);
+    return ka_dfx_register_reboot_notifier(&devmm_reboot_notifier);
 }
 
 void devmm_unregister_reboot_notifier(void)
 {
-    (void)unregister_reboot_notifier(&devmm_reboot_notifier);
+    (void)ka_dfx_unregister_reboot_notifier(&devmm_reboot_notifier);
 }
 

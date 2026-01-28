@@ -88,15 +88,15 @@ static memZoneCfg g_mz_cfg_cache_default[] = {
 };
 #else
 static memZoneCfg g_mz_cfg_cache_default[] = {
-    { 0, 2 * 1024 * 1024, 256, 8 * 1024, BUFF_SP_NORMAL, 1, 0, 0, 0, 6},
-    { 1, 32 * 1024 * 1024, 8 * 1024, 8 * 1024 * 1024, BUFF_SP_NORMAL, 1, 0, 0, 0, 6},
+    { 0, 2 * 1024 * 1024, 256, 8 * 1024, BUFF_SP_NORMAL, 1, 0, 0, 0, 6, {0}},
+    { 1, 32 * 1024 * 1024, 8 * 1024, 8 * 1024 * 1024, BUFF_SP_NORMAL, 1, 0, 0, 0, 6, {0}},
 #ifdef CFG_FEATURE_SURPORT_HUGE_PAGE
-    { 2, 2 * 1024 * 1024, 256, 8 * 1024, BUFF_SP_HUGEPAGE_ONLY, 1, 0, 0, 0, 6},
-    { 3, MZ_DEFAULT_CFG_MAX_SIZE, 8 * 1024, 64 * 1024 * 1024, BUFF_SP_HUGEPAGE_ONLY, 1, 0, 0, 0, 6},
+    { 2, 2 * 1024 * 1024, 256, 8 * 1024, BUFF_SP_HUGEPAGE_ONLY, 1, 0, 0, 0, 6, {0}},
+    { 3, MZ_DEFAULT_CFG_MAX_SIZE, 8 * 1024, 64 * 1024 * 1024, BUFF_SP_HUGEPAGE_ONLY, 1, 0, 0, 0, 6, {0}},
 #endif
-    { 4, 2 * 1024 * 1024, 4 * 1024, 384 * 1024, BUFF_SP_NORMAL | BUFF_SP_DVPP, 1, 0, 0, 0, 6},
+    { 4, 2 * 1024 * 1024, 4 * 1024, 384 * 1024, BUFF_SP_NORMAL | BUFF_SP_DVPP, 1, 0, 0, 0, 6, {0}},
 #ifdef CFG_FEATURE_SURPORT_HUGE_PAGE
-    { 5, 2 * 1024 * 1024, 4 * 1024, 384 * 1024, BUFF_SP_HUGEPAGE_ONLY | BUFF_SP_DVPP, 1, 0, 0, 0, 6},
+    { 5, 2 * 1024 * 1024, 4 * 1024, 384 * 1024, BUFF_SP_HUGEPAGE_ONLY | BUFF_SP_DVPP, 1, 0, 0, 0, 6, {0}},
 #endif
 };
 #endif

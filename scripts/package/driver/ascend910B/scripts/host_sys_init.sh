@@ -253,7 +253,7 @@ init_signature_configuration() {
             mkdir -p /var/asdrv/dev${devid}/device-sw-plugin/verify
             chmod 755 /var/asdrv/dev${devid}/device-sw-plugin/verify
 
-            echo "verify_flag=1" > "/var/asdrv/dev${devid}/device-sw-plugin/verify/flag";
+            echo "verify_flag=5" > "/var/asdrv/dev${devid}/device-sw-plugin/verify/flag";
             touch "/var/asdrv/dev${devid}/device-sw-plugin/verify/user-certificate";
             chmod 644 "/var/asdrv/dev${devid}/device-sw-plugin/verify/flag";
             chmod 644 "/var/asdrv/dev${devid}/device-sw-plugin/verify/user-certificate";

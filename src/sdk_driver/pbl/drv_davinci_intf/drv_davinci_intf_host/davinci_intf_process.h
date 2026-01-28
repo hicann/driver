@@ -14,6 +14,8 @@
 #ifndef __DAVINCI_INTF_PROCESS_H__
 #define __DAVINCI_INTF_PROCESS_H__
 
+#include "ka_task_pub.h"
+
 #ifndef __GFP_ACCOUNT
 #  ifdef __GFP_KMEMCG
 #    define __GFP_ACCOUNT __GFP_KMEMCG /* for linux version 3.10 */
@@ -34,15 +36,15 @@ unsigned int get_file_module_cnt(struct davinci_intf_process_stru *proc, const c
 void destory_file_proc_list(struct davinci_intf_process_stru *proc);
 struct davinci_intf_process_stru *create_process_entry(
     struct davinci_intf_stru *cb,
-    pid_t proc_pid,
+    ka_pid_t proc_pid,
     TASK_TIME_TYPE start_time);
 struct davinci_intf_process_stru *get_process_entry(
     struct davinci_intf_stru *cb,
-    pid_t proc_pid,
+    ka_pid_t proc_pid,
     TASK_TIME_TYPE start_time);
 struct davinci_intf_process_stru *get_process_entry_latest(
     struct davinci_intf_stru *cb,
-    pid_t proc_pid);
+    ka_pid_t proc_pid);
 void free_process_entry(struct davinci_intf_process_stru *proc);
 void destroy_process_list(struct davinci_intf_stru *cb);
 int add_file_to_list(struct davinci_intf_stru *cb, struct file *file,
@@ -52,7 +54,7 @@ int add_module_to_list(struct davinci_intf_stru *cb,
     struct file *file,
     const char *module_name);
 void remove_file_from_list(struct davinci_intf_stru *cb,
-    pid_t owner_pid,
+    ka_pid_t owner_pid,
     struct file *file);
 int check_module_file_close(struct davinci_intf_stru *cb,
     const char *module_name);

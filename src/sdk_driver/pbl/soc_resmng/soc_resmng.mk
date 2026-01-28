@@ -37,23 +37,27 @@ ifeq ($(DAVINCI_HIAI_DKMS),y)
 	EXTRA_CFLAGS += -I$(HIAI_DKMS_DIR)/dev_inc/inc
 	EXTRA_CFLAGS += -I$(HIAI_DKMS_DIR)/dev_inc/inc/ascend_platform
 	EXTRA_CFLAGS += -I$(HIAI_DKMS_DIR)/inc/driver
+	EXTRA_CFLAGS += -I$(HIAI_DKMS_DIR)/pbl/soc_resmng/command/ioctl
+	EXTRA_CFLAGS += -I$(HIAI_DKMS_DIR)/kernel_adapt/include
 else
 	DRIVER_SRC_BASE_DIR := $(DRIVER_KERNEL_DIR)/src
 	$(MODULE_NAME)-objs += soc_resmng/soc_topo_query.o
 
 	EXTRA_CFLAGS += -DCFG_FEATURE_HOST_LOG
 	EXTRA_CFLAGS += -DCFG_HOST_ENV
-	EXTRA_CFLAGS += -DCFG_FEATURE_TOPOLOGY_BY_HCCS_LINK_STATUS
-	EXTRA_CFLAGS += -DCFG_FEATURE_CHIP_DIE
-
+	ifeq ($(PRODUCT), ascend910B)
+		EXTRA_CFLAGS += -DCFG_FEATURE_TOPOLOGY_BY_HCCS_LINK_STATUS
+		EXTRA_CFLAGS += -DCFG_FEATURE_CHIP_DIE
+	endif
 	EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/inc
 	EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/inc/ascend_platform
 	EXTRA_CFLAGS += -I${C_SEC_INCLUDE}
 	EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/pbl/soc_resmng/command/ioctl
+	EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/kernel_adapt/include
 	EXTRA_CFLAGS += -I$(DRIVER_HAL_INC_DIR)
 
 endif
 
 EXTRA_CFLAGS += -isystem $(shell $(CC) -print-file-name=include)
-EXTRA_CFLAGS += -I$(DRIVER_SRC_BASE_DIR)/trsbase/inc
-EXTRA_CFLAGS += -I$(DRIVER_SRC_BASE_DIR)/trs/inc
+EXTRA_CFLAGS += -I$(DRIVER_SRC_BASE_DIR)/trsdrv/trsbase/inc
+EXTRA_CFLAGS += -I$(DRIVER_SRC_BASE_DIR)/trsdrv/trs/inc

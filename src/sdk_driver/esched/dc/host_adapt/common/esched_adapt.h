@@ -41,6 +41,7 @@ void esched_ts_platform_uninit(void);
 int esched_drv_init_cpu_port_adapt(u32 chip_id, u32 start_id, u32 chan_num);
 void esched_drv_uninit_cpu_port_adapt(u32 chip_id, u32 start_id, u32 chan_num);
 int esched_drv_init_msgq_config_adapt(struct sched_numa_node *node, u32 start_id, u32 aicpu_chan_num, u32 comcpu_chan_num);
+int sched_get_sentry_mode(struct sched_numa_node *node, int *mode);
 
 #endif
 

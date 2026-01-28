@@ -15,6 +15,14 @@ EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/inc/pbl
 EXTRA_CFLAGS += -I${C_SEC_INCLUDE}
 EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/pbl/log_host/
 EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/pbl
+ifeq ($(DAVINCI_HIAI_DKMS), y)
+	EXTRA_CFLAGS += -I$(HIAI_DKMS_DIR)/kernel_adapt/include
+else
+	EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/kernel_adapt/include
+endif
 
-EXTRA_CFLAGS += -DCFG_FEATURE_KA_ALLOC_INTERFACE
+ifeq ($(filter $(PRODUCT), ascend910_95),)
+	EXTRA_CFLAGS += -DCFG_FEATURE_KA_ALLOC_INTERFACE
+endif
+
 ccflags-y += -fno-common -fstack-protector-all -funsigned-char -pipe -s -Wall -Wcast-align -Wdate-time -Wfloat-equal -Wformat -Wstack-usage=2048 -Wstrict-prototypes -Wtrampolines -Wundef -Wunused -Wvla

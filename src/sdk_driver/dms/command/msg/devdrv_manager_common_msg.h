@@ -146,7 +146,7 @@ struct devdrv_pid_map_sync {
 struct devdrv_manager_msg_head {
     u32 dev_id;
     u32 msg_id;
-    u16 valid;  /* validity judgement, 0x5A5A is valide */
+    u16 valid;  /* validity judgement, 0x5A5A is valid */
     u16 result; /* process result from rp, zero for succ, non zero for fail */
     u32 tsid;
     u32 vfid;

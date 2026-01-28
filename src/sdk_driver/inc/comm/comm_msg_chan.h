@@ -20,6 +20,7 @@
 #include <linux/device.h>
 #include "pbl/pbl_soc_res_attr.h"
 #include "addr_trans.h"
+#include "pair_dev_info.h"
 
 /* ******************** non trans for host and device ******************** */
 /* **************************** host ************************************* */
@@ -201,6 +202,7 @@ int devdrv_get_device_boot_status_inner(u32 index_id, u32 *boot_status);
 #define CONNECT_PROTOCOL_UB 2
 #define CONNECT_PROTOCOL_UNKNOWN 3
 int devdrv_get_connect_protocol(u32 dev_id);
+int devdrv_get_global_connect_protocol(void);
 int agentdrv_get_msg_chan_devid(void *msg_chan);
 int devdrv_get_msg_chan_devid(void *msg_chan);
 int devdrv_get_msg_chan_devid_inner(void *msg_chan);
@@ -276,6 +278,29 @@ struct devdrv_ub_dev_info {
     void *udma_dev[MAX_EID_NUM_PER_DEV];
 };
 
+enum devdrv_urma_copy_dir
+{
+    LOCAL_TO_PEER = 0,
+    PEER_TO_LOCAL,
+    DIR_MAX
+};
+
+enum devdrv_urma_chan_type
+{
+    URMA_CHAN_TSDRV = 0,
+    URMA_CHAN_COMMON,
+    URMA_CHAN_MAX
+};
+
+struct devdrv_urma_copy {
+    u64 len;
+    u64 offset;
+    void *seg;  //struct ubcore_target_seg*
+};
+
+int devdrv_urma_copy(u32 dev_id, enum devdrv_urma_chan_type type, enum devdrv_urma_copy_dir dir, 
+        struct devdrv_urma_copy *local, struct devdrv_urma_copy *peer);
+
 struct devdrv_comm_ops {
     atomic_t ref_cnt;
     enum devdrv_communication_type comm_type;
@@ -330,6 +355,11 @@ struct devdrv_comm_ops {
     int (*get_token_val)(u32 dev_id, u32 *token_val);
     int (*add_pasid)(u32 dev_id, u64 pasid);
     int (*del_pasid)(u32 dev_id, u64 pasid);
+    int (*get_d2d_eid)(u32 udevid, struct devdrv_pair_info_eid *eid);
+    int (*get_bus_instance_eid)(u32 udevid, struct devdrv_pair_info_eid *eid);
+    int (*addr_trans_cs_p2p)(u32 udevid, u32 peer_udevid, struct devdrv_addr_desc *addr_desc, u64 *trans_addr);
+    int (*urma_copy)(u32 dev_id, enum devdrv_urma_chan_type type, enum devdrv_urma_copy_dir dir, 
+        struct devdrv_urma_copy *local, struct devdrv_urma_copy *peer);
 };
 
 int devdrv_register_communication_ops(struct devdrv_comm_ops *ops);

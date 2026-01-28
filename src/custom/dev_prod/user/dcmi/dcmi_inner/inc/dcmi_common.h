@@ -131,7 +131,7 @@ extern "C"{
 #define MAP_SIZE 4096UL
 #define MAP_MASK (MAP_SIZE - 1)
 
-#define MAX_PROC_NUM_IN_DEVICE 32
+#define MAX_PROC_NUM_IN_DEVICE 64
 
 #define MAX_CHAR_LEN 64
 
@@ -243,6 +243,11 @@ struct dcmi_pcie_pre_index {
     int switch_pre_index;
 };
 
+enum dcmi_op_timeout_exponent {
+    MIN_TIMEOUT_EXPONENT = 20,
+    MAX_TIMEOUT_EXPONENT = 32
+};
+
 enum dcmi_pcie_info_index {
     CHIP_PCIE_INFO_INDEX = 0,
     SWITCH_PCIE_INFO_INDEX,
@@ -297,6 +302,7 @@ enum dcmi_chip_type {
     DCMI_CHIP_TYPE_D310B = 3,
     DCMI_CHIP_TYPE_D910B = 4,
     DCMI_CHIP_TYPE_D910_93 = 5,
+    DCMI_CHIP_TYPE_D910_95 = 6,
     DCMI_CHIP_TYPE_INVALID = 0xFF
 };
 

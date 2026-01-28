@@ -15,6 +15,8 @@
 #define VIRTMNG_RES_CLOUD_V2_H
 
 #include "virtmnghost_ctrl.h"
+#include "ka_system_pub.h"
+#include "ka_task_pub.h"
 
 #define VMNG_WAIT_REMOTE_ID_S 15
 #define VMNG_WAIT_RESET_S 5

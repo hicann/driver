@@ -16,6 +16,7 @@
 
 /* Die ID */
 #define DMS_PMU_DIEID_DATA_SIZE 8
+#define DMS_DIEID_DATA_V2_SIZE 8
 typedef struct dms_soc_dieid_stru {
     unsigned int dev_id;
     unsigned int soc_type;
@@ -25,10 +26,16 @@ typedef struct dms_soc_dieid_stru {
     unsigned int data[DMS_PMU_DIEID_DATA_SIZE];
 } dms_soc_die_id_t;
 
+typedef struct dms_soc_dieid_v2_stru {
+    unsigned int dev_id;
+    unsigned int part_id;
+    unsigned int data[DMS_DIEID_DATA_V2_SIZE];
+} dms_soc_die_id_v2_t;
+
 /* PCIE ID */
 typedef struct dms_pcie_id_info {
-    unsigned int venderid;    /* Vender id */
-    unsigned int subvenderid; /* Sub vender id */
+    unsigned int venderid;    /* Vendor id */
+    unsigned int subvenderid; /* Sub vendor id */
     unsigned int deviceid;    /* Device id */
     unsigned int subdeviceid; /* Sub device id */
     unsigned int bus;         /* Bus id */
@@ -58,6 +65,7 @@ drvError_t DmsGetSlotId(unsigned int dev_id, unsigned int *slot_id);
 drvError_t DmsGetPcieIdInfo(unsigned int dev_id, dms_pcie_id_info_t *pcie_idinfo);
 drvError_t DmsGetCpuInfo(unsigned int dev_id, drvCpuInfo_t *cpu_info);
 drvError_t DmsGetSocDieId(dms_soc_die_id_t *soc_die_id);
+drvError_t DmsGetSocDieIdV2(dms_soc_die_id_v2_t *soc_die_id);
 drvError_t DmsGetChipInfo(dms_query_chip_info_t *chip_info);
 drvError_t dms_user_get_reboot_reason(unsigned int dev_id, void *reboot_reason, unsigned int len);
 drvError_t DmsSetBistInfo(unsigned int dev_id, unsigned int cmd, unsigned char *in_buf, unsigned int buf_len);

@@ -20,7 +20,7 @@
 
 STATIC int vmngh_alloc_vdev_ctrl_mini_v2(u32 dev_id, u32 dtype, const u32 *fid)
 {
-    struct mutex *ctrl_mutex = vmngh_get_ctrl_mutex();
+    ka_mutex_t *ctrl_mutex = vmngh_get_ctrl_mutex();
     struct vmngh_vdev_ctrl *ctrl = NULL;
     u32 vfid;
 
@@ -36,14 +36,14 @@ STATIC int vmngh_alloc_vdev_ctrl_mini_v2(u32 dev_id, u32 dtype, const u32 *fid)
     }
 
     vfid = *fid;
-    mutex_lock(ctrl_mutex);
+    ka_task_mutex_lock(ctrl_mutex);
     ctrl->vdev_ctrl.dev_id = dev_id;
     ctrl->vdev_ctrl.vfid = vfid;
     ctrl->vdev_ctrl.dtype = dtype;
     ctrl->vdev_ctrl.core_num = VMNGH_DTYPE_TO_AICORE_NUM(dtype);
     ctrl->vdev_ctrl.total_core_num = vmngh_get_total_core_num(dev_id);
     ctrl->vdev_ctrl.status = VMNG_VDEV_STATUS_ALLOC;
-    mutex_unlock(ctrl_mutex);
+    ka_task_mutex_unlock(ctrl_mutex);
 
     return VMNG_OK;
 }

@@ -13,7 +13,7 @@
 
 #ifndef SVM_RES_IDR_H
 #define SVM_RES_IDR_H
-#include <linux/idr.h>
+#include "ka_base_pub.h"
 
 struct svm_idr {
     ka_idr_t idr;

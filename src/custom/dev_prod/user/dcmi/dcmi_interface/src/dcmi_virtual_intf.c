@@ -44,6 +44,10 @@ const char *template_name_910b_bin2[DCMI_910B_BIN2_TEMPLATE_NUM] = {
     "vir10_3c_16g", "vir10_4c_16g_m", "vir10_3c_16g_nm", "vir05_1c_8g"
 };
 
+const char *template_name_910b_bin2_1[DCMI_910B_BIN2_1_TEMPLATE_NUM] = {
+    "vir10_3c_32g", "vir05_1c_16g"
+};
+
 int dcmi_get_template_conf_for_310p(int card_id, const char *template_name, struct dcmi_create_vdev_in *vdev_conf)
 {
     int ret, idx;
@@ -135,7 +139,7 @@ int dcmi_check_910b_template_name_inner(const char *template_name, struct dcmi_b
             break;
         }
     }
-    
+
     if (type_map->supported_template == NULL) {
         return DCMI_ERR_CODE_INNER_ERR;
     }
@@ -169,13 +173,12 @@ int dcmi_check_910b_template_name(const char *template_name)
         {DCMI_A900T_POD_A1_BIN2_P3_BOARD_ID, DCMI_910B_BIN2_TEMPLATE_NUM, template_name_910b_bin2},
         {DCMI_A900T_POD_A1_BIN2X_BOARD_ID, DCMI_910B_BIN2_TEMPLATE_NUM, template_name_910b_bin2},
         {DCMI_A900T_POD_A1_BIN2X_P3_BOARD_ID, DCMI_910B_BIN2_TEMPLATE_NUM, template_name_910b_bin2},
-        {DCMI_A900T_POD_A1_BIN2X_1_BOARD_ID, DCMI_910B_BIN2_TEMPLATE_NUM, template_name_910b_bin2},
         {DCMI_A800I_POD_A2_BIN4_1_PCIE_BOARD_ID, DCMI_910B_BIN2_TEMPLATE_NUM, template_name_910b_bin2},
-        {DCMI_A900T_POD_A1_BIN2X_1_P3_BOARD_ID, DCMI_910B_BIN2_TEMPLATE_NUM, template_name_910b_bin2},
         {DCMI_A300T_A1_BIN2_BOARD_ID, DCMI_910B_BIN2_TEMPLATE_NUM, template_name_910b_bin2},
         {DCMI_A200T_BOX_A1_BIN2_BOARD_ID, DCMI_910B_BIN2_TEMPLATE_NUM, template_name_910b_bin2},
         {DCMI_A800I_POD_A2_BIN2_BOARD_ID, DCMI_910B_BIN2_TEMPLATE_NUM, template_name_910b_bin2},
         {DCMI_A800I_POD_A2_BIN2_1_BOARD_ID, DCMI_910B_BIN2_TEMPLATE_NUM, template_name_910b_bin2},
+        {DCMI_A200I_BOX_A1_BIN2X_1_BOARD_ID, DCMI_910B_BIN2_TEMPLATE_NUM, template_name_910b_bin2},
         {DCMI_A900T_POD_A1_BIN1_BOARD_ID, DCMI_910B_BIN1_TEMPLATE_NUM, template_name_910b_bin1},
         {DCMI_A900T_POD_A1_BIN1_P3_BOARD_ID, DCMI_910B_BIN1_TEMPLATE_NUM, template_name_910b_bin1},
         {DCMI_A300T_A1_BIN1_300W_BOARD_ID, DCMI_910B_BIN1_TEMPLATE_NUM, template_name_910b_bin1},
@@ -184,6 +187,8 @@ int dcmi_check_910b_template_name(const char *template_name)
         {DCMI_A800T_POD_A2_BIN1_BOARD_ID, DCMI_910B_BIN1_TEMPLATE_NUM, template_name_910b_bin1},
         {DCMI_A300I_A2_BIN2_BOARD_ID, DCMI_910B_BIN2_TEMPLATE_NUM, template_name_910b_bin2},
         {DCMI_A300I_A2_BIN2_64G_BOARD_ID, DCMI_910B_BIN2_TEMPLATE_NUM, template_name_910b_bin2},
+        {DCMI_A900T_POD_A1_BIN2X_1_BOARD_ID, DCMI_910B_BIN2_1_TEMPLATE_NUM, template_name_910b_bin2_1},
+        {DCMI_A900T_POD_A1_BIN2X_1_P3_BOARD_ID, DCMI_910B_BIN2_1_TEMPLATE_NUM, template_name_910b_bin2_1},
         {0, 0, NULL}
     };
 
@@ -369,7 +374,7 @@ int dcmi_find_vnpu_in_vm_mode(void)
     for (card_index = 0; card_index < card_count; card_index++) {
         ret = dcmi_get_device_id_in_card(card_id_list[card_index], &npu_count, &mcu_id, &cpu_id);
         if (ret != DCMI_OK) {
-            gplog(LOG_ERR, "dcmi_get_device_id_in_card card %d failed. err is %d\n", card_id_list[card_index], ret);
+            gplog(LOG_ERR, "dcmi_get_device_id_in_card card %d failed. err is %d", card_id_list[card_index], ret);
             continue;
         }
 
@@ -407,7 +412,7 @@ int dcmi_find_vnpu_in_docker_mode(void)
     for (card_index = 0; card_index < card_count; card_index++) {
         ret = dcmi_get_device_id_in_card(card_id_list[card_index], &npu_count, &mcu_id, &cpu_id);
         if (ret != DCMI_OK) {
-            gplog(LOG_ERR, "dcmi_get_device_id_in_card card %d failed. err is %d\n", card_id_list[card_index], ret);
+            gplog(LOG_ERR, "dcmi_get_device_id_in_card card %d failed. err is %d", card_id_list[card_index], ret);
             continue;
         }
 

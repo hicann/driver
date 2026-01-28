@@ -29,6 +29,15 @@ int g_trs_hostpid[TRS_DEV_NUM] = {0};
 int g_trs_devpid[TRS_DEV_NUM] = {0};
 static sem_t g_trs_event_sem;
 
+enum trs_event_grp_type {
+    TRS_SYNC_EVENT_GROUP_TYPE_DRV_MSG = 0,
+    TRS_SYNC_EVENT_GROUP_TYPE_PROXY_HOST_QUEUE,
+    TRS_SYNC_EVENT_GROUP_TYPE_MAX,
+};
+
+const char *g_trs_grp_name[TRS_SYNC_EVENT_GROUP_TYPE_MAX] = {EVENT_DRV_MSG_GRP_NAME, PROXY_HOST_QUEUE_GRP_NAME};
+static int g_trs_devgid[TRS_DEV_NUM][TRS_SYNC_EVENT_GROUP_TYPE_MAX] = {{0}};
+
 static pid_t trs_get_hostpid(uint32_t dev_id)
 {
     if (g_trs_hostpid[dev_id] == 0) {
@@ -63,42 +72,47 @@ static pid_t trs_get_dev_pid(uint32_t dev_id)
     return g_trs_devpid[dev_id];
 }
 
-static drvError_t trs_get_event_grp_id(uint32_t devid, uint32_t *grp_id, const char *grp_name)
+static drvError_t trs_get_event_grp_id(uint32_t devid, uint32_t *grp_id, enum trs_event_grp_type grp_type)
 {
-    struct esched_query_gid_output gid_out = {0};
-    struct esched_query_gid_input gid_in = {0};
-    struct esched_output_info output = {0};
-    struct esched_input_info input = {0};
-    size_t grp_name_len;
-    drvError_t ret;
+    drvError_t ret = 0;
 
-    gid_in.pid = trs_get_dev_pid(devid);
-    grp_name_len = strlen(grp_name);
-    (void)memcpy_s(gid_in.grp_name, EVENT_MAX_GRP_NAME_LEN, grp_name, grp_name_len);
-    input.inBuff = &gid_in;
-    input.inLen = sizeof(struct esched_query_gid_input);
-    output.outBuff = &gid_out;
-    output.outLen = sizeof(struct esched_query_gid_output);
-    ret = halEschedQueryInfo(devid, QUERY_TYPE_REMOTE_GRP_ID, &input, &output);
-    if (ret == DRV_ERROR_NONE) {
-        *grp_id = gid_out.grp_id;
-        return DRV_ERROR_NONE;
-    } else if (ret == DRV_ERROR_UNINIT) {
-        *grp_id = 0; // PROXY_HOST_GRP_NAME grp not exist, use default grpid 0.
-        return DRV_ERROR_NONE;
+    if (g_trs_devgid[devid][grp_type] == -1) {
+        const char *grp_name = g_trs_grp_name[grp_type];
+        struct esched_query_gid_output gid_out = {0};
+        struct esched_query_gid_input gid_in = {0};
+        struct esched_output_info output = {0};
+        struct esched_input_info input = {0};
+        size_t grp_name_len;
+
+        gid_in.pid = trs_get_dev_pid(devid);
+        grp_name_len = strlen(grp_name);
+        (void)memcpy_s(gid_in.grp_name, EVENT_MAX_GRP_NAME_LEN, grp_name, grp_name_len);
+        input.inBuff = &gid_in;
+        input.inLen = sizeof(struct esched_query_gid_input);
+        output.outBuff = &gid_out;
+        output.outLen = sizeof(struct esched_query_gid_output);
+        ret = halEschedQueryInfo(devid, QUERY_TYPE_REMOTE_GRP_ID, &input, &output);
+        if (ret == DRV_ERROR_NONE) {
+            g_trs_devgid[devid][grp_type] = (int)gid_out.grp_id;
+        } else if (ret == DRV_ERROR_UNINIT) {
+            g_trs_devgid[devid][grp_type] = 0; // PROXY_HOST_GRP_NAME grp not exist, use default grpid 0.
+        } else {
+            trs_err("Query grpid failed. (ret=%d; devid=%u; devpid=%d).\n", ret, devid, gid_in.pid);
+            return ret;
+        }
     }
 
-    trs_err("Query grpid failed. (ret=%d; devid=%u; devpid=%d).\n", ret, devid, gid_in.pid);
-    return ret;
+    *grp_id = (uint32_t)g_trs_devgid[devid][grp_type];
+    return DRV_ERROR_NONE;
 }
 
-static const char *trs_get_group_name(uint32_t subevent_id)
+static inline enum trs_event_grp_type trs_get_group_type(uint32_t subevent_id)
 {
     if ((subevent_id >= DRV_SUBEVENT_TRS_ALLOC_SQCQ_WITH_URMA_MSG) &&
         (subevent_id <= DRV_SUBEVENT_TRS_FILL_WQE_MSG)) {
-        return EVENT_DRV_MSG_GRP_NAME;
+        return TRS_SYNC_EVENT_GROUP_TYPE_DRV_MSG;
     }
-    return PROXY_HOST_QUEUE_GRP_NAME;
+    return TRS_SYNC_EVENT_GROUP_TYPE_PROXY_HOST_QUEUE;
 }
 
 static uint32_t trs_get_dst_engine(uint32_t subevent_id)
@@ -116,7 +130,7 @@ static drvError_t trs_fill_event(struct event_summary *event_info, uint32_t devi
     struct event_sync_msg *msg_head = NULL;
     drvError_t ret;
 
-    ret = trs_get_event_grp_id(devid, &event_info->grp_id, trs_get_group_name(subevent_id));
+    ret = trs_get_event_grp_id(devid, &event_info->grp_id, trs_get_group_type(subevent_id));
     if (ret != DRV_ERROR_NONE) {
         return ret;
     }
@@ -301,7 +315,11 @@ static drvError_t trs_submit_event_sync(uint32_t dev_id, struct event_summary *e
 }
 #endif
 
+#if defined(CFG_SOC_PLATFORM_CLOUD_V4) && defined(CFG_SOC_PLATFORM_ESL_FPGA)
+#define TRS_SYNC_EVENT_WAIT_TIME_MS 1200000
+#else
 #define TRS_SYNC_EVENT_WAIT_TIME_MS 100000
+#endif
 drvError_t trs_svm_mem_event_sync(uint32_t dev_id, void *in, UINT64 size,
     uint32_t subevent_id, struct event_reply *reply)
 {
@@ -641,6 +659,7 @@ static int trs_shr_id_deonfig(uint32_t dev_id, struct drvShrIdInfo *info)
 static int trs_master_event_init(uint32_t dev_id)
 {
     int ret;
+    int i;
 
     ret = trs_sq_cq_event_init(dev_id);
     if (ret != 0) {
@@ -649,14 +668,23 @@ static int trs_master_event_init(uint32_t dev_id)
 
     g_trs_hostpid[dev_id] = 0;
     g_trs_devpid[dev_id] = 0;
+    for (i = 0; i < TRS_SYNC_EVENT_GROUP_TYPE_MAX; i++) {
+        g_trs_devgid[dev_id][i] = -1;
+    }
 
     return 0;
 }
 
 static void trs_master_event_un_init(uint32_t dev_id)
 {
+    int i;
+
     g_trs_hostpid[dev_id] = 0;
     g_trs_devpid[dev_id] = 0;
+    for (i = 0; i < TRS_SYNC_EVENT_GROUP_TYPE_MAX; i++) {
+        g_trs_devgid[dev_id][i] = -1;
+    }
+
     trs_sq_cq_event_un_init(dev_id);
 }
 
@@ -665,7 +693,8 @@ static int __attribute__((constructor)) trs_master_event_construct(void)
     struct trs_res_remote_ops res_ops;
     struct trs_sqcq_remote_ops sqcq_ops;
     struct trs_shrid_remote_ops shrid_ops;
-    struct trs_dev_init_ops dev_init_ops;
+    static struct trs_dev_init_ops event_dev_ops;
+    int ret;
 
     res_ops.resid_alloc = trs_res_id_alloc_sync;
     res_ops.resid_free = trs_res_id_free_sync;
@@ -680,11 +709,14 @@ static int __attribute__((constructor)) trs_master_event_construct(void)
     shrid_ops.shrid_deconfig = trs_shr_id_deonfig;
     trs_register_shrid_remote_ops(&shrid_ops);
 
-    dev_init_ops.dev_init = trs_master_event_init;
-    dev_init_ops.dev_uninit = trs_master_event_un_init;
-    trs_register_dev_init_ops(&dev_init_ops);
     (void)sem_init(&g_trs_event_sem, 0, TRS_MAX_CONCURRENCY_NUM);
-
+    event_dev_ops.dev_init = trs_master_event_init;
+    event_dev_ops.dev_uninit = trs_master_event_un_init;
+    ret = trs_register_dev_init_ops(&event_dev_ops);
+    if (ret != DRV_ERROR_NONE) {
+        trs_err("Register event dev ops failed. (ret=%d)\n", ret);
+        return ret;
+    }
     trs_info("Register master event.\n");
 
     return 0;

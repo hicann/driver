@@ -16,7 +16,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <fcntl.h>
- 
+
 #include "securec.h"
 #include "dsmi_common_interface_custom.h"
 #include "dcmi_interface_api.h"
@@ -281,7 +281,9 @@ int dcmi_get_device_pcie_error_cnt(int card_id, int device_id, struct dcmi_chip_
         return err;
     }
 
-    if (dcmi_board_chip_type_is_ascend_910() == TRUE || dcmi_board_chip_type_is_ascend_910b() == TRUE) {
+    if (dcmi_board_chip_type_is_ascend_910() == TRUE || dcmi_board_chip_type_is_ascend_910b() == TRUE ||
+        (dcmi_board_chip_type_is_ascend_910_95() &&
+        dcmi_mainboard_is_a900_a5_ub(g_mainboard_info.mainboard_id))) {
         gplog(LOG_ERR, "This device does not support.");
         return DCMI_ERR_CODE_NOT_SUPPORT;
     }

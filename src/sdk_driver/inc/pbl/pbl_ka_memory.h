@@ -42,6 +42,8 @@ enum ka_sub_module_type {
 };
 
 #define KA_MODULE_TYPE_BIT 16U
+#define KA_ALLOC_MEM_BY_HUGE_PAGE 0
+#define KA_ALLOC_MEM_BY_PAGE_NODE 1
 
 static inline void *ka_vmalloc_ex(size_t size, gfp_t gfp_mask, pgprot_t prot)
 {
@@ -152,7 +154,7 @@ void *ka_kvmalloc_node(size_t size, gfp_t flags, int node, unsigned int module_i
 void *ka_kvmalloc(size_t size, gfp_t flags, unsigned int module_id);
 void ka_kvfree(const void *addr, unsigned int module_id);
 
-/* 
+/*
  * dma_alloc_coherent --      ka_dma_alloc_coherent --      ka_dma_free_coherent
  */
 void *ka_dma_alloc_coherent(struct device *dev, size_t size, dma_addr_t *dma_handle,
@@ -160,7 +162,7 @@ void *ka_dma_alloc_coherent(struct device *dev, size_t size, dma_addr_t *dma_han
 void ka_dma_free_coherent(struct device *dev, size_t size, void *cpu_addr, dma_addr_t dma_handle,
     unsigned int module_id);
 
-/* 
+/*
  * hugetlb_alloc_hugepage --      ka_hugetlb_alloc_hugepage --   ka_hugetlb_free_hugepage
  * alloc_hugetlb_folio_size    -- ka_alloc_hugetlb_folio_size -- ka_hugetlb_free_hugepage
  */
@@ -172,4 +174,10 @@ struct folio *ka_alloc_hugetlb_folio_size(int nid, unsigned long size, unsigned 
 
 #endif
 
+void ka_free_single_page(struct page *page_addr, unsigned int order, int alloc_flag, unsigned int module_type,
+                         unsigned int level);
+struct page *ka_alloc_hugetlb(int nid, unsigned int size, int flag, unsigned int module_type,
+                              unsigned int level);
+struct page *ka_alloc_hugepage(int nid, gfp_t gfp_mask, unsigned int order, int *alloc_flag, int flag,
+                               unsigned int module_type, unsigned int level);
 #endif

@@ -13,12 +13,12 @@
 #ifndef SVM_MASTER_PROC_MNG_H
 #define SVM_MASTER_PROC_MNG_H
 
-#include <linux/spinlock.h>
 #include <linux/types.h>
-#include <linux/rbtree.h>
 
 #include "svm_res_idr.h"
 #include "svm_task_dev_res_mng.h"
+#include "ka_task_pub.h"
+#include "ka_list_pub.h"
 
 struct devmm_proc_async_copy_record {
     struct svm_idr task_idr;
@@ -57,8 +57,8 @@ struct devmm_mem_stats_va_mng {
 };
 
 struct devmm_master_p2p_mem_mng {
-    struct mutex lock;
-    struct list_head list_head;
+    ka_mutex_t lock;
+    ka_list_head_t list_head;
     u64 get_cnt;
     u64 put_cnt;
     u64 free_cb_cnt;

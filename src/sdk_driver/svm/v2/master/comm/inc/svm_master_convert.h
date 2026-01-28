@@ -13,16 +13,14 @@
 #ifndef SVM_MASTER_CONVERT_H
 #define SVM_MASTER_CONVERT_H
 
-#include <linux/spinlock_types.h>
-#include <linux/rbtree.h>
-#include <linux/kref.h>
+#include "ka_base_pub.h"
 
 #include "ascend_kernel_hal.h"
 
-#include "svm_ioctl.h"
 #include "devmm_common.h"
 #include "devmm_proc_info.h"
 #include "svm_task_dev_res_mng.h"
+#include "svm_ioctl.h"
 
 struct devmm_convert_node_info {
     struct DMA_ADDR dma_addr;

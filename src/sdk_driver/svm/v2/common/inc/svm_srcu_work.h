@@ -13,11 +13,6 @@
 #ifndef SVM_SRCU_WORK_H
 #define SVM_SRCU_WORK_H
 
-#include <linux/delay.h>
-#include <linux/sched.h>
-#include <linux/list.h>
-#include <linux/spinlock.h>
-
 #include "ka_task_pub.h"
 #include "ka_net_pub.h"
 #include "ka_list_pub.h"

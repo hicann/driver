@@ -59,8 +59,8 @@ static void devmm_giant_page_mem_set_pages_cache(struct devmm_svm_process *svm_p
     blk[0].dma_addr = mem_repair->blk.dma_addr;
     blk[0].phy_addr = mem_repair->blk.phy_addr;
     for (i = 1; i < DEVMM_GIANT_TO_HUGE_PAGE_NUM; i++) {
-        blk[i].dma_addr = blk[0].dma_addr + i * HPAGE_SIZE;
-        blk[i].phy_addr = blk[0].phy_addr + i * HPAGE_SIZE;
+        blk[i].dma_addr = blk[0].dma_addr + i * KA_HPAGE_SIZE;
+        blk[i].phy_addr = blk[0].phy_addr + i * KA_HPAGE_SIZE;
     }
     cache_info->pg_num = DEVMM_GIANT_TO_HUGE_PAGE_NUM;
     cache_info->blks = blk;

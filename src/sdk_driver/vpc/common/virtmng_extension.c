@@ -10,10 +10,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#include <linux/version.h>
-#include <linux/delay.h>
-#include <linux/random.h>
 
+#include "ka_base_pub.h"
 #include "virtmng_public_def.h"
 #include "virtmng_extension.h"
 
@@ -23,13 +21,8 @@ void vmng_msg_cmn_verify_send_prepare(struct vmng_msg_common_pcie_txd_verify *x1
     u32 data_len = sizeof(struct vmng_msg_common_pcie_txd_verify);
 
     x1->cmd = VMNG_V2P_MSG_COMMON_PCIE_CMD_TEST;
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 12, 0)
-    x1->d1 = get_random_u32();
-    x1->d2 = get_random_u32();
-#else
-    x1->d1 = get_random_int();
-    x1->d2 = get_random_int();
-#endif
+    x1->d1 = ka_base_get_random_u32();
+    x1->d2 = ka_base_get_random_u32();
     x2->cnt = x1->cnt;
     x2->d1 = x1->d1;
     x2->d2 = x1->d2;

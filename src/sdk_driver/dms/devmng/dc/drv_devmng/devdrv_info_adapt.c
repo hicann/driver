@@ -13,6 +13,7 @@
 
 #include <linux/securec.h>
 #include <linux/securectype.h>
+#include "ka_kernel_def_pub.h"
 #include "devdrv_common.h"
 #include "devdrv_user_common.h"
 #include "devdrv_manager_common.h"
@@ -24,7 +25,7 @@ int devdrv_manager_get_chip_type(int *chip_type)
     *chip_type = CHIP_TYPE_NOT_ASCEND;
     return 0;
 }
-EXPORT_SYMBOL(devdrv_manager_get_chip_type);
+KA_EXPORT_SYMBOL_GPL(devdrv_manager_get_chip_type);
 
 int devdrv_fresh_event_code_to_shm(u32 devid, u32 *health_code, u32 health_len,
     struct shm_event_code *event_code, u32 event_len)

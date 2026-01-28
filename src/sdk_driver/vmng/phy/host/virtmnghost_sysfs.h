@@ -14,10 +14,15 @@
 #ifndef VIRTMNGHOST_SYSFS_H
 #define VIRTMNGHOST_SYSFS_H
 
-#include <linux/pci.h>
+#include "ka_common_pub.h"
+#include "ka_pci_pub.h"
+#include "ka_memory_pub.h"
+#include "ka_driver_pub.h"
+#include "ka_fs_pub.h"
+#include "ka_task_pub.h"
 
 #define VMNG_VDEV_AGENT_BDF_SHIFT_8 8
 
-int vmngh_sysfs_init(u32 dev_id, struct pci_dev *pcidev);
-void vmngh_sysfs_exit(u32 dev_id, struct pci_dev *pcidev);
+int vmngh_sysfs_init(u32 dev_id, ka_pci_dev_t *pcidev);
+void vmngh_sysfs_exit(u32 dev_id, ka_pci_dev_t *pcidev);
 #endif

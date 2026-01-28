@@ -117,6 +117,7 @@ extern "C"{
 #define DCMI_A200T_BOX_A1_BIN0_BOARD_ID  0x51
 #define DCMI_A200T_BOX_A1_BIN2_BOARD_ID  0x52
 #define DCMI_A200T_BOX_A1_BIN1_BOARD_ID  0x53
+#define DCMI_A200I_BOX_A1_BIN2X_1_BOARD_ID  0x54
 // A300T_A1 有2个bin1，功率不同
 #define DCMI_A300T_A1_BIN1_350W_BOARD_ID 0x10
 #define DCMI_A300T_A1_BIN2_BOARD_ID      0x11
@@ -155,6 +156,22 @@ extern "C"{
 #define DCMI_A800T_POD_A2_BIN1_BOARD_ID  0x42
 #define DCMI_A800T_POD_A2_BIN0_BOARD_ID  0x43
 #define DCMI_A800I_POD_A2_BIN4_1_PCIE_BOARD_ID 0x37 // Atlas 800I A2 280T-64G no-HCCS规格
+
+// 适配A5
+#define DCMI_A5_POD_2D_BACKUP_MAIN_BOARD_ID     0x03    // 天成 POD  2D场景 David NPU节点
+#define DCMI_A5_POD_2D_MAIN_BOARD_ID            0x05    // 天成 POD  2D场景 David BackUp节点
+#define DCMI_A5_POD_1D_MAIN_BOARD_ID            0x07    // 天成 POD  1D 2+6场景 David NPU节点
+#define DCMI_A5_POD_2D_MAIN_BOARD_ID_TMP        0x00    // esl临时
+#define DCMI_A5_POD_EVB_MAIN_BOARD_ID_TMP       0xE0    // evb回片
+#define DCMI_A5_POD_EVB_MAIN_BOARD_ID_UB_TMP    0xE9    // ub临时
+
+#define DCMI_A_X_910_95_MAIN_BOARD_ID           0x40    // A+X  2+2 SERVER DAVID NPU节点/port 8 UB(装备模组FT)
+#define DCMI_A_X_910_95_UBOE_MAIN_BOARD_ID      0x42    // A+X  2+2 SERVER DAVID NPU节点/port 8 2*UBoE X2(装备A+X整机ST)
+
+#define DCMI_A_K_910_95_MAIN_BOARD_ID           0x21    // A+K  2+4 SERVER DAVID NPU节点/port 8 UB
+#define DCMI_A_K_910_95_UBOE_MAIN_BOARD_ID      0x23    // A+K  2+4 SERVER DAVID NPU节点/port 8 2*UBoE X2
+#define DCMI_A_K_910_95_2_6_MAIN_BOARD_ID       0x25    // A+K  2+6 SERVER DAVID NPU节点/port 8 UB
+#define DCMI_A_K_910_95_2_6_UBOE_MAIN_BOARD_ID  0x27    // A+K  2+6 SERVER DAVID NPU节点/port 8 2*UBoE X2
 
 struct dcmi_product_type_table {
     int product_type;
@@ -195,6 +212,8 @@ int dcmi_board_chip_type_is_ascend_910b(void);
 
 int dcmi_board_chip_type_is_ascend_910_93(void);
 
+int dcmi_board_chip_type_is_ascend_910_95(void);
+
 int dcmi_board_chip_type_is_ascend_910b_300i_a2(void);
 
 int dcmi_board_chip_type_is_ascend_910b_200t_box_a2(void);
@@ -220,6 +239,10 @@ int dcmi_mainboard_is_910_93(unsigned int main_board_id);
 int dcmi_mainboard_is_a9000_a3_superpod(unsigned int main_board_id);
 
 int dcmi_mainboard_is_arm_910_93(unsigned int main_board_id);
+
+int dcmi_mainboard_is_a900_a5_pcie(unsigned int main_board_id);
+
+int dcmi_mainboard_is_a900_a5_ub(unsigned int main_board_id);
 
 int dcmi_a900_a3_superpod_fp_card_id_convert(int card_id, int device_id);
 

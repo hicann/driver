@@ -7,21 +7,12 @@
 # INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
 # See LICENSE in the root of the software repository for the full text of the License.
 # ------------------------------------------------------------------------------------------------------------
-ifeq ($(DAVINCI_HIAI_DKMS),y)
-	ifeq ($(DAVINCI_HIAI_DKMS),y) #for DKMS
-		asdrv_dms-y += devmng/core/dms_init.o
-		asdrv_dms-y += devmng/core/dms_probe.o
-		asdrv_dms-y += devmng/core/dms_sysfs.o
-		asdrv_dms-y += devmng/core/dms_timer.o
-		EXTRA_CFLAGS += -I$(DRIVER_MODULE_DEVMNG_DIR)/core
-		EXTRA_CFLAGS += -I$(DRIVER_MODULE_DEVMNG_DIR)/product
-	endif
-else #for CMake & ctrl cpu open
-	asdrv_dms-y += devmng/core/dms_init.o
-	asdrv_dms-y += devmng/core/dms_probe.o
-	asdrv_dms-y += devmng/core/dms_sysfs.o
-	asdrv_dms-y += devmng/core/dms_timer.o
 
-	EXTRA_CFLAGS += -I$(DRIVER_MODULE_DEVMNG_DIR)/core
-	EXTRA_CFLAGS += -I$(DRIVER_MODULE_DEVMNG_DIR)/product
-endif
+asdrv_dms-y += devmng/core/dms_init.o
+asdrv_dms-y += devmng/core/dms_probe.o
+asdrv_dms-y += devmng/core/dms_sysfs.o
+asdrv_dms-y += devmng/core/dms_timer.o
+
+EXTRA_CFLAGS += -I$(DRIVER_MODULE_DEVMNG_DIR)/core
+EXTRA_CFLAGS += -I$(DRIVER_MODULE_DEVMNG_DIR)/product
+EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/src/kernel_adapt/include

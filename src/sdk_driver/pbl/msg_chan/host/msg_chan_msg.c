@@ -10,8 +10,9 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
- 
+
 #include "msg_chan_main.h"
+#include "ka_kernel_def_pub.h"
 
 void *devdrv_pcimsg_alloc_non_trans_queue_inner_msg(u32 index_id, struct devdrv_non_trans_msg_chan_info *chan_info)
 {
@@ -27,7 +28,7 @@ void *devdrv_pcimsg_alloc_non_trans_queue_inner_msg(u32 index_id, struct devdrv_
     devdrv_sub_ops_ref(dev_ops);
     return ret;
 }
-EXPORT_SYMBOL(devdrv_pcimsg_alloc_non_trans_queue_inner_msg);
+KA_EXPORT_SYMBOL(devdrv_pcimsg_alloc_non_trans_queue_inner_msg);
 
 void *devdrv_pcimsg_alloc_non_trans_queue(u32 dev_id, struct devdrv_non_trans_msg_chan_info *chan_info)
 {
@@ -36,7 +37,7 @@ void *devdrv_pcimsg_alloc_non_trans_queue(u32 dev_id, struct devdrv_non_trans_ms
     (void)uda_udevid_to_add_id(dev_id, &index_id);
     return devdrv_pcimsg_alloc_non_trans_queue_inner_msg(index_id, chan_info);
 }
-EXPORT_SYMBOL(devdrv_pcimsg_alloc_non_trans_queue);
+KA_EXPORT_SYMBOL(devdrv_pcimsg_alloc_non_trans_queue);
 
 int devdrv_pcimsg_free_non_trans_queue(void *msg_chan)
 {
@@ -50,19 +51,19 @@ int devdrv_pcimsg_free_non_trans_queue(void *msg_chan)
     devdrv_sub_ops_ref(dev_ops);
     return ret;
 }
-EXPORT_SYMBOL(devdrv_pcimsg_free_non_trans_queue);
+KA_EXPORT_SYMBOL(devdrv_pcimsg_free_non_trans_queue);
 
 int devdrv_sync_msg_send(void *msg_chan, void *data, u32 in_data_len, u32 out_data_len, u32 *real_out_len)
 {
     return devdrv_sync_msg_send_proc(msg_chan, data, in_data_len, out_data_len, real_out_len);
 }
-EXPORT_SYMBOL(devdrv_sync_msg_send);
+KA_EXPORT_SYMBOL(devdrv_sync_msg_send);
 
 int devdrv_get_msg_chan_devid_inner(void *msg_chan)
 {
     return devdrv_get_msg_chan_devid_proc(msg_chan);
 }
-EXPORT_SYMBOL(devdrv_get_msg_chan_devid_inner);
+KA_EXPORT_SYMBOL(devdrv_get_msg_chan_devid_inner);
 
 int devdrv_get_msg_chan_devid(void *msg_chan)
 {
@@ -70,22 +71,22 @@ int devdrv_get_msg_chan_devid(void *msg_chan)
     u32 udevid;
 
     index_id = devdrv_get_msg_chan_devid_proc(msg_chan);
-    if (index_id == -EINVAL) {
-        return -EINVAL;
+    if (index_id < 0) {
+        return index_id;
     }
-    uda_udevid_to_add_id((u32)index_id, &udevid);
+    (void)uda_add_id_to_udevid((u32)index_id, &udevid);
     return (int)udevid;
 }
-EXPORT_SYMBOL(devdrv_get_msg_chan_devid);
+KA_EXPORT_SYMBOL(devdrv_get_msg_chan_devid);
 
 int devdrv_set_msg_chan_priv(void *msg_chan, void *priv)
 {
     return devdrv_set_msg_chan_priv_proc(msg_chan, priv);
 }
-EXPORT_SYMBOL(devdrv_set_msg_chan_priv);
+KA_EXPORT_SYMBOL(devdrv_set_msg_chan_priv);
 
 void *devdrv_get_msg_chan_priv(void *msg_chan)
 {
     return devdrv_get_msg_chan_priv_proc(msg_chan);
 }
-EXPORT_SYMBOL(devdrv_get_msg_chan_priv);
+KA_EXPORT_SYMBOL(devdrv_get_msg_chan_priv);

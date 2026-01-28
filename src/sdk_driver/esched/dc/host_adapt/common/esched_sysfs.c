@@ -25,6 +25,7 @@
 
 #include "esched.h"
 #include "esched_sysfs.h"
+#include "ka_fs_pub.h"
 
 #define SCHED_FILE_PATH "/var/log/esched_trace"
 #define SCHED_FILE_MODE 0640
@@ -80,11 +81,7 @@ STATIC void pid_list_for_each_handle(char *buf, ssize_t *offset, pid_handle hand
 STATIC void sched_sysfs_write_file(struct file *file, const void *buf, size_t count, loff_t *pos)
 {
     ssize_t ret;
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 18, 0)
-    ret = __kernel_write(file, buf, count, pos);
-#else
-    ret = kernel_write(file, buf, count, *pos);
-#endif
+    ret = ka_fs_kernel_write_ret(file, buf, count, pos);
 #if !defined (EVENT_SCHED_UT) && !defined (EMU_ST)
     if (ret != (ssize_t)count) {
         sched_warn("Unable to invoke the kernel_write. (count=%lu; ret=%ld)\n", count, ret);

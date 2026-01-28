@@ -20,6 +20,7 @@
 #include "pbl_mem_alloc_interface.h"
 #include "dms_define.h"
 #include "devdrv_manager_container.h"
+#include "ka_memory_pub.h"
 #include "dpa/dpa_pids_map.h"
 
 #define DMS_PROCESS_INFO_CMD_NAME "DMS_PROCESS_INFO"
@@ -65,7 +66,7 @@ STATIC int _dms_get_process_list(struct urd_cmd_kernel_para *kernel_para, struct
 
     dms_get_valid_dev_list(kernel_para, dev_list, &dev_num);
 
-    pid_list = (int *)dbl_kmalloc(sizeof(int) * DMS_PROCESS_MAX_NUM, GFP_KERNEL | __GFP_ACCOUNT);
+    pid_list = (int *)dbl_kmalloc(sizeof(int) * DMS_PROCESS_MAX_NUM, KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
     if (pid_list == NULL) {
         dms_err("kmalloc buf failed.\n");
         return -ENOMEM;
@@ -118,7 +119,7 @@ int dms_get_process_list(const struct urd_cmd *cmd,
         return -EINVAL;
     }
 
-    master_tgids = (int *)dbl_kmalloc(sizeof(int) * DMS_MASTER_PROC_MAX_NUM, GFP_KERNEL | __GFP_ACCOUNT);
+    master_tgids = (int *)dbl_kmalloc(sizeof(int) * DMS_MASTER_PROC_MAX_NUM, KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
     if (master_tgids == NULL) {
         dms_err("kmalloc buf failed.\n");
         return -ENOMEM;

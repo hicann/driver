@@ -18,6 +18,7 @@
 #include <linux/rwsem.h>
 #include <linux/slab.h>
 
+#include "ka_memory_pub.h"
 #include "comm_kernel_interface.h"
 #include "udis.h"
 
@@ -39,8 +40,8 @@ struct udis_info_stu {
 
 struct udis_dma_node {
     struct list_head list;
-    dma_addr_t host_dma_addr;
-    dma_addr_t dev_dma_addr;
+    ka_dma_addr_t host_dma_addr;
+    ka_dma_addr_t dev_dma_addr;
     unsigned int acc_ctrl;
     unsigned int data_len;
     UDIS_UPDATE_TYPE update_type;
@@ -81,7 +82,7 @@ struct udis_ctrl_block {
     struct rw_semaphore addr_list_lock;
     struct udis_info_stu *udis_info_buf;
     struct rw_semaphore udis_info_lock;
-    dma_addr_t udis_info_buf_dma;
+    ka_dma_addr_t udis_info_buf_dma;
     enum udis_dev_state state;
 };
 

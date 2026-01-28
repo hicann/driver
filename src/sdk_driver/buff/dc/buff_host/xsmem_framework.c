@@ -33,9 +33,6 @@
 #include <linux/pid.h>
 
 #include <linux/version.h>
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 11, 0))
-#include <linux/sched/task.h>
-#endif
 
 #include "securec.h"
 #include "ascend_kernel_hal.h"
@@ -518,14 +515,7 @@ static void xsmem_pool_notice_other_task(struct xsm_pool *xp, struct xsm_task_po
 
 static inline int xsm_proc_start_time_compare(TASK_TIME_TYPE *proc_start_time, TASK_TIME_TYPE *start_time)
 {
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 1, 0)
-    if (*proc_start_time == *start_time)  {
-        return 0;
-    }
-    return (*proc_start_time - *start_time > 0) ? 1 : -1;
-#else
-    return timespec_compare(proc_start_time, start_time);
-#endif
+    return ka_system_xsm_proc_start_time_compare(proc_start_time, start_time);
 }
 
 STATIC int xsm_get_task_start_time(int tgid, TASK_TIME_TYPE *start_time)
@@ -2230,12 +2220,7 @@ STATIC int xsmem_open(struct inode *inode, struct file *file)
 
     /* mmget in open avoid share pool group exit in mm_exit before fput release */
     task->mm = current->mm;
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 11, 0))
-    mmget(task->mm);
-#else
-    atomic_inc(&task->mm->mm_users);
-#endif
-
+    ka_mm_mmget(task->mm);
     task->pid = current->tgid;
     task->vpid = xsmem_get_vpid(current);
     task->attached_pool_count = 0;

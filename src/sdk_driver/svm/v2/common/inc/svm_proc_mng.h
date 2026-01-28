@@ -13,9 +13,9 @@
 
 #ifndef SVM_PROC_MNG_H
 #define SVM_PROC_MNG_H
-#include <linux/fs.h>
-#include <linux/mm_types.h>
 
+#include "ka_memory_pub.h"
+#include "ka_fs_pub.h"
 #include "devmm_proc_info.h"
 #include "svm_ioctl.h"
 
@@ -54,7 +54,7 @@ struct devmm_svm_process *devmm_get_svm_proc_from_file(ka_file_t *file);
 struct devmm_custom_process *devmm_get_svm_custom_proc_by_mm(ka_mm_struct_t *mm);
 struct devmm_svm_process *devmm_get_svm_proc_by_custom_mm(ka_mm_struct_t *mm);
 
-struct devmm_svm_process *devmm_svm_proc_get_by_custom_mm(struct mm_struct *mm);
+struct devmm_svm_process *devmm_svm_proc_get_by_custom_mm(ka_mm_struct_t *mm);
 struct devmm_svm_process *devmm_svm_proc_get_by_mm(ka_mm_struct_t *mm);
 struct devmm_svm_process *devmm_svm_proc_get_by_devpid(int dev_pid);
 struct devmm_svm_process *devmm_svm_proc_get_by_both_pid(int dev_pid, int hostpid);
@@ -110,5 +110,6 @@ void devmm_free_proc_priv_data(struct devmm_svm_process *svm_proc);
 bool devmm_thread_is_run_in_docker(void);
 
 int devmm_get_real_phy_devid(u32 devid, u32 vfid, u32 *phy_devid);
+void devmm_destroy_svm_proc_host_pin_heap(struct devmm_svm_process *svm_proc);
 
 #endif /* __SVM_PROC_MNG_H__ */

@@ -114,6 +114,7 @@ int dms_feature_get_pcie_bandwidth_info(void *feature, char *in, u32 in_len, cha
 #if (defined(CFG_FEATURE_HBM_MANUFACTURER_ID) && !defined(DCFG_FEATURE_DMS_PRODUCT_HOST))
 #define CONNECT_PROTOCOL_PCIE       0
 #define CONNECT_PROTOCOL_HCCS       1
+#define CONNECT_PROTOCOL_UNKNOWN    2
 
 #define FULLMESH_CHIP_BASE_ADDR         0x0
 #define FULLMESH_CHIP_OFFSET            0x80000000000ULL

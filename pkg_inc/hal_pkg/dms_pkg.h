@@ -31,7 +31,7 @@ struct memory_fault_timestamp {
     unsigned int host_pid;
     unsigned int event_id;
     unsigned int reserved; /* for byte alignment */
-    unsigned long long syscnt; /* event occurr syscnt*/
+    unsigned long long syscnt; /* event occur syscnt*/
 };
 
 #endif

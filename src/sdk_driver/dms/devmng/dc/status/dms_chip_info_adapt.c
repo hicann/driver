@@ -22,6 +22,9 @@
 #include "devdrv_common.h"
 #include "hvtsdrv_tsagent.h"
 #include "devdrv_manager_container.h"
+#include "ka_base_pub.h"
+#include "ka_errno_pub.h"
+#include "ka_task_pub.h"
 #include "dms_feature_pub.h"
 
 typedef enum {
@@ -74,7 +77,7 @@ STATIC chip_value_name_map_t g_chip_value_name_map[] = {
 #ifdef CFG_FEATURE_GET_DEV_UUID
 #define UUID_MAX_LEN 16
 STATIC char g_mac_info[ASCEND_PDEV_MAX_NUM][UUID_MAX_LEN];
-STATIC atomic_t g_mac_init_flag[ASCEND_PDEV_MAX_NUM] = {ATOMIC_INIT(0)};
+STATIC ka_atomic_t g_mac_init_flag[ASCEND_PDEV_MAX_NUM] = {KA_BASE_ATOMIC_INIT(0)};
 #define UUID_VENDOR_ID 0xCC08
 #endif
 
@@ -220,23 +223,23 @@ static int dms_set_chip_name_by_soc_version(u32 dev_id, u8 *chip_name)
         return DRV_ERROR_INVALID_VALUE;
     }
 #ifdef CFG_FEATURE_REFACTOR
-    if (strlen(dev_info->soc_version) <= strlen("Ascend")) {
+    if (ka_base_strlen(dev_info->soc_version) <= ka_base_strlen("Ascend")) {
         dms_err("soc version is too short. (ver=\"%s\")\n", dev_info->soc_version);
         return DRV_ERROR_INVALID_VALUE;
     }
     /* the soc_version read from hsm is like Ascend910xx, Ascend is not wanted */
-    ret = strcpy_s(chip_name, MAX_CHIP_NAME, (u8 *)dev_info->soc_version + strlen("Ascend"));
+    ret = strcpy_s(chip_name, MAX_CHIP_NAME, (u8 *)dev_info->soc_version + ka_base_strlen("Ascend"));
     if (ret) {
         dms_err("Call strcpy_s failed. (dev_id=%u)\n", dev_id);
         return DRV_ERROR_INVALID_VALUE;
     }
 #else
-    if (strlen(dev_info->pg_info.spePgInfo.socVersion) <= strlen("Ascend")) {
+    if (ka_base_strlen(dev_info->pg_info.spePgInfo.socVersion) <= ka_base_strlen("Ascend")) {
         dms_err("soc version is too short. (ver=\"%s\")\n", dev_info->pg_info.spePgInfo.socVersion);
         return DRV_ERROR_INVALID_VALUE;
     }
     /* the soc_version read from hsm is like Ascend910xx, Ascend is not wanted */
-    ret = strcpy_s(chip_name, MAX_CHIP_NAME, (u8 *)dev_info->pg_info.spePgInfo.socVersion + strlen("Ascend"));
+    ret = strcpy_s(chip_name, MAX_CHIP_NAME, (u8 *)dev_info->pg_info.spePgInfo.socVersion + ka_base_strlen("Ascend"));
     if (ret) {
         dms_err("Call strcpy_s failed. (dev_id=%u)\n", dev_id);
         return DRV_ERROR_INVALID_VALUE;
@@ -484,7 +487,7 @@ STATIC int dms_make_up_uuid(unsigned int phy_id, unsigned int vfid, unsigned int
     int i = 0;
     int ret = 0;
 
-    if (atomic_read(&g_mac_init_flag[phy_id]) == 0) {
+    if (ka_base_atomic_read(&g_mac_init_flag[phy_id]) == 0) {
         dms_err("Mac info init failed. (phy_id=%u; vfid=%u; ret=%d)\n", phy_id, vfid, ret);
         return -EINVAL;
     }
@@ -588,7 +591,7 @@ STATIC int dms_get_uuid_thread(void *arg)
         return ret;
     }
 
-    atomic_set(&g_mac_init_flag[dev_id], 1);
+    ka_base_atomic_set(&g_mac_init_flag[dev_id], 1);
     dms_info("Get mac info success from flash.\n");
     (void)arg;
 
@@ -604,13 +607,13 @@ STATIC void dms_mac_info_init(unsigned int dev_id)
         return;
     }
 
-    release_task = kthread_create(dms_get_uuid_thread, (void *)(uintptr_t)dev_id, "dms_get_uuid");
-    if (IS_ERR(release_task) || (release_task == NULL)) {
+    release_task = ka_task_kthread_create(dms_get_uuid_thread, (void *)(uintptr_t)dev_id, "dms_get_uuid");
+    if (KA_IS_ERR(release_task) || (release_task == NULL)) {
         dms_err("get uuid Kthread not up to expectations.\n");
         return;
     }
 
-    (void)wake_up_process(release_task);
+    (void)ka_task_wake_up_process(release_task);
     return;
 }
 

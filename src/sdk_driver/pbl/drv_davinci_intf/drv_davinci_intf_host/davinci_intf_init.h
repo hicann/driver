@@ -18,6 +18,8 @@
 #include <linux/version.h>
 
 #include "ascend_dev_num.h"
+#include "ka_task_pub.h"
+#include "ka_base_pub.h"
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 1, 0)
 typedef u64 TASK_TIME_TYPE;
@@ -64,7 +66,7 @@ typedef struct timespec TASK_TIME_TYPE;
 #define MODULE_NAME_MAX_LEN 384
 
 struct davinci_intf_file_stru {
-    pid_t owner_pid;
+    ka_pid_t owner_pid;
     char module_name[DAVINIC_MODULE_NAME_MAX];
     struct inode *inode;
     struct file *file_op;
@@ -77,22 +79,22 @@ struct davinci_intf_file_stru {
 struct davinci_intf_process_stru;
 
 struct davinci_intf_free_list_stru {
-    pid_t owner_pid;
+    ka_pid_t owner_pid;
     struct davinci_intf_process_stru *owner_proc;
     struct list_head list;
     struct work_struct release_work;
-    atomic_t current_count;
+    ka_atomic_t current_count;
     unsigned int current_free_index;
     int all_flag;
 };
 
 struct davinci_intf_process_stru {
     void *owner_cb;
-    pid_t owner_pid;
+    ka_pid_t owner_pid;
     struct list_head list;
     struct list_head file_list;
     struct mutex res_lock;
-    atomic_t work_count;
+    ka_atomic_t work_count;
     unsigned int  status;
     TASK_TIME_TYPE start_time;
     struct davinci_intf_free_list_stru *free_list;
@@ -115,7 +117,7 @@ struct davinci_intf_sub_module_stru {
 };
 
 struct davinci_intf_stru {
-    atomic_t count;
+    ka_atomic_t count;
     struct rw_semaphore cb_sem;
     struct cdev cdev;
     struct device *device;
@@ -126,7 +128,7 @@ struct davinci_intf_stru {
 };
 
 struct davinci_intf_free_file_stru {
-    pid_t owner_pid;
+    ka_pid_t owner_pid;
     struct davinci_intf_free_list_stru *owner_list;
     char module_name[DAVINIC_MODULE_NAME_MAX];
     struct davinci_intf_private_stru *file_private;
@@ -138,9 +140,9 @@ struct davinci_intf_free_file_stru {
 struct davinci_intf_private_stru {
     char module_name[DAVINIC_MODULE_NAME_MAX];
     unsigned int device_id;
-    pid_t owner_pid;
+    ka_pid_t owner_pid;
     int close_flag;
-    atomic_t work_count;
+    ka_atomic_t work_count;
     int release_status;
     struct mutex fmutex;
     struct file_operations fops;

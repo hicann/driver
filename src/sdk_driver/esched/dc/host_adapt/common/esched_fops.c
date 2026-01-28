@@ -31,6 +31,8 @@
 #include "esched_sysfs.h"
 #include "esched_adapt.h"
 #include "esched_fops.h"
+#include "ka_system_pub.h"
+#include "ka_driver_pub.h"
 
 
 struct sched_char_dev char_dev;
@@ -52,6 +54,10 @@ const struct pci_device_id g_esched_driver_tbl[] = {{ PCI_VDEVICE(HUAWEI, 0xd100
                                                     { PCI_VDEVICE(HUAWEI, 0xd807), 0 },
                                                     { DEVDRV_DIVERSITY_PCIE_VENDOR_ID, 0xd500,
                                                       PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 },
+                                                    { 0x20C6, 0xd500, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0},
+                                                    { 0x203F, 0xd500, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0},
+                                                    { 0x20C6, 0xd802, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0},
+                                                    { 0x203F, 0xd802, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0},
                                                     {}};
 MODULE_DEVICE_TABLE(pci, g_esched_driver_tbl);
 #endif
@@ -686,11 +692,6 @@ int32_t hal_kernel_sched_submit_event(uint32_t chip_id, struct sched_published_e
 {
     struct sched_published_event_info *event_info = NULL;
     struct sched_numa_node *node = NULL;
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 0, 0)
-    struct timespec64 submit_event_time;
-#else
-    struct timeval submit_event_time;
-#endif
     int32_t ret;
 
     if (event == NULL) {
@@ -699,18 +700,7 @@ int32_t hal_kernel_sched_submit_event(uint32_t chip_id, struct sched_published_e
     }
 
     event->event_info.publish_timestamp = sched_get_cur_timestamp();
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 0, 0)
-    ktime_get_real_ts64(&submit_event_time);
-    event->event_info.publish_timestamp_of_day =
-        ((u64)submit_event_time.tv_sec * NSEC_PER_SEC) + (u64)submit_event_time.tv_nsec;
-#else
-#ifndef EMU_ST
-    esched_get_ktime(&submit_event_time);
-#endif
-    event->event_info.publish_timestamp_of_day =
-        ((u64)submit_event_time.tv_sec * USEC_PER_SEC) + (u64)submit_event_time.tv_usec;
-#endif
-
+    event->event_info.publish_timestamp_of_day = ka_system_sched_get_abs_or_rel_mstime();
     event_info = &event->event_info;
 #if defined(CFG_SOC_PLATFORM_CLOUD_V4) || defined(CFG_FEATURE_STARS_V2)
     /* call_back event publish to the specific thread */
@@ -742,11 +732,6 @@ int32_t sched_submit_event_to_thread(uint32_t chip_id, struct sched_published_ev
 {
     struct sched_published_event_info *event_info = NULL;
     struct sched_numa_node *node = NULL;
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 0, 0)
-    struct timespec64 submit_event_time;
-#else
-    struct timeval submit_event_time;
-#endif
     int32_t ret;
 
     if (event == NULL) {
@@ -761,18 +746,7 @@ int32_t sched_submit_event_to_thread(uint32_t chip_id, struct sched_published_ev
 
     event->event_info.publish_timestamp = sched_get_cur_timestamp();
     event->event_info.dst_devid = SCHED_INVALID_DEVID;
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 0, 0)
-    ktime_get_real_ts64(&submit_event_time);
-    event->event_info.publish_timestamp_of_day =
-        ((u64)submit_event_time.tv_sec * NSEC_PER_SEC) + (u64)submit_event_time.tv_nsec;
-#else
-#ifndef EMU_ST
-    esched_get_ktime(&submit_event_time);
-#endif
-    event->event_info.publish_timestamp_of_day =
-        ((u64)submit_event_time.tv_sec * USEC_PER_SEC) + (u64)submit_event_time.tv_usec;
-#endif
-
+    event->event_info.publish_timestamp_of_day = ka_system_sched_get_abs_or_rel_mstime();
     event_info = &event->event_info;
     ret = sched_publish_event_para_check(event_info);
     if (ret != 0) {
@@ -1161,21 +1135,12 @@ STATIC int32_t sched_register_driver(void)
         goto unregister_chrdev_region;
     }
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 4, 0)
-    char_dev.dev_class = class_create(SCHED_CHAR_DEV_NAME);
-#else
-    char_dev.dev_class = class_create(THIS_MODULE, SCHED_CHAR_DEV_NAME);
-#endif
+    char_dev.dev_class = ka_driver_class_create(THIS_MODULE, SCHED_CHAR_DEV_NAME);
     if (IS_ERR(char_dev.dev_class)) {
         sched_err("Failed to invoke the class_create.\n");
         goto cdev_del;
     }
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 2, 0)
-    char_dev.dev_class->devnode = (const_sched_devnode)sched_devnode;
-#else
-    char_dev.dev_class->devnode = sched_devnode;
-#endif
-
+    ka_driver_class_set_devnode(char_dev.dev_class, sched_devnode);
     char_dev.device = device_create(char_dev.dev_class, NULL, char_dev.devno, NULL, SCHED_CHAR_DEV_NAME);
     if (IS_ERR(char_dev.device)) {
         sched_err("Failed to invoke the device_create.\n");

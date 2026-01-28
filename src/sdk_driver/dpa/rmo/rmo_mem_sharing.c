@@ -10,8 +10,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#include <linux/mm.h>
-#include <linux/dma-mapping.h>
+#include "ka_base_pub.h"
+#include "ka_common_pub.h"
+#include "ka_compiler_pub.h"
+#include "ka_ioctl_pub.h"
+#include "ka_memory_pub.h"
+#include "ka_kernel_def_pub.h"
 #include "ascend_hal_define.h"
 #include "rmo_auto_init.h"
 #include "comm_kernel_interface.h"
@@ -55,7 +59,7 @@ void rmo_mem_sharing_register(mem_sharing_func handle, accessMember_t accessor)
         rmo_debug("Register mem dispatch func success. (accessor=%d)\n", accessor);
     }
 }
-EXPORT_SYMBOL_GPL(rmo_mem_sharing_register);
+KA_EXPORT_SYMBOL_GPL(rmo_mem_sharing_register);
 
 void rmo_mem_sharing_unregister(accessMember_t accessor)
 {
@@ -64,13 +68,13 @@ void rmo_mem_sharing_unregister(accessMember_t accessor)
         rmo_debug("Unregister mem dispatch func success. (accessor=%d)\n", accessor);
     }
 }
-EXPORT_SYMBOL_GPL(rmo_mem_sharing_unregister);
+KA_EXPORT_SYMBOL_GPL(rmo_mem_sharing_unregister);
 
 static int rmo_mng_addr_update(u32 devid, u64 *addr, u64 size)
 {
     phys_addr_t paddr = (phys_addr_t)(*addr);
-    dma_addr_t dma_addr;
-    struct device *dev = NULL;
+    ka_dma_addr_t dma_addr;
+    ka_device_t *dev = NULL;
 
     dev = hal_kernel_devdrv_get_pci_dev_by_devid(devid);
     if (dev == NULL) {
@@ -78,10 +82,11 @@ static int rmo_mng_addr_update(u32 devid, u64 *addr, u64 size)
         return -ENODEV;
     }
 
-    dma_addr = hal_kernel_devdrv_dma_map_page(dev, pfn_to_page(PFN_DOWN(paddr)), 0, size, DMA_BIDIRECTIONAL);
-    if (dma_mapping_error(dev, dma_addr)) {
+    dma_addr = hal_kernel_devdrv_dma_map_page(dev, ka_mm_pfn_to_page(KA_MM_PFN_DOWN(paddr)), 0, size,
+                                              KA_DMA_BIDIRECTIONAL);
+    if (ka_mm_dma_mapping_error(dev, dma_addr)) {
         rmo_err("Dma_map_page failed. (devid=%u; error=%d; size=%llu)\n",
-            devid, dma_mapping_error(dev, dma_addr), size);
+            devid, ka_mm_dma_mapping_error(dev, dma_addr), size);
         return -ENOMEM;
     }
     *addr = (u64)dma_addr;
@@ -147,11 +152,11 @@ err_to_put:
 
 static int rmo_ioctl_mem_sharing(u32 cmd, unsigned long arg)
 {
-    struct rmo_cmd_mem_sharing *usr_arg = (struct rmo_cmd_mem_sharing __user *)(uintptr_t)arg;
+    struct rmo_cmd_mem_sharing *usr_arg = (struct rmo_cmd_mem_sharing __ka_user *)(uintptr_t)arg;
     struct rmo_cmd_mem_sharing mem_sharing;
     int ret;
 
-    ret = (int)copy_from_user(&mem_sharing, usr_arg, sizeof(mem_sharing));
+    ret = (int)ka_base_copy_from_user(&mem_sharing, usr_arg, sizeof(mem_sharing));
     if (ret != 0) {
         rmo_err("Copy from user failed. (ret=%d)\n", ret);
         return -EFAULT;
@@ -198,7 +203,7 @@ int rmo_mem_sharing_init(void)
         return -ENOMEM;
     }
 
-    rmo_register_ioctl_cmd_func(_IOC_NR(RMO_MEM_SHARING), rmo_ioctl_mem_sharing);
+    rmo_register_ioctl_cmd_func(_KA_IOC_NR(RMO_MEM_SHARING), rmo_ioctl_mem_sharing);
 
     return 0;
 }

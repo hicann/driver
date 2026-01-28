@@ -136,8 +136,8 @@ struct trs_sqcq_remote_ops {
 void trs_register_sqcq_remote_ops(struct trs_sqcq_remote_ops *ops);
 
 struct trs_sqcq_mem_ops {
-    drvError_t (*mem_alloc)(uint32_t dev_id, void **va, uint64_t size);
-    void (*mem_free)(uint32_t dev_id, void *va);
+    int (*mem_alloc)(uint32_t dev_id, uint64_t *va, uint64_t size);
+    void (*mem_free)(uint32_t dev_id, uint64_t va, uint64_t size);
 };
 
 void trs_register_sqcq_mem_ops(struct trs_sqcq_mem_ops *ops);

@@ -599,3 +599,10 @@ int _dsmi_get_device_info(unsigned int device_id, DSMI_MAIN_CMD main_cmd, unsign
 
     return ret;
 }
+
+int dsmi_get_device_die_v2(struct dsmi_device_info device_info, struct dsmi_soc_die_stru *pdevice_die)
+{
+    (void)device_info;
+    (void)pdevice_die;
+    return DRV_ERROR_NOT_SUPPORT;
+}

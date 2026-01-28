@@ -14,18 +14,21 @@
 #ifndef VIRTMNGHOST_UNIT_H
 #define VIRTMNGHOST_UNIT_H
 
-#include <linux/workqueue.h>
-#include <linux/semaphore.h>
 #include "vmng_kernel_interface.h"
 #include "ascend_dev_num.h"
 #include "hw_vdavinci.h"
+#include "ka_task_pub.h"
+#include "ka_common_pub.h"
+#include "ka_memory_pub.h"
+#include "ka_base_pub.h"
+#include "ka_kernel_def_pub.h"
 
 #define VMNGA_VD_DEV_ALIVE_NOK 0
 #define VMNGA_VD_DEV_ALIVE_OK 1
 
 struct vmngh_start_dev {
-    struct timer_list wd_timer;
-    atomic_t start_flag;
+    ka_timer_list_t wd_timer;
+    ka_atomic_t start_flag;
     u32 msix_irq;
     int timer_remain;
     u32 timer_cycle;
@@ -70,17 +73,17 @@ enum VMNGH_MDEV_STATE_FLAG {
 struct vmngh_vd_dev {
     void *vm_pdev;
     void *vdavinci;
-    struct device *resource_dev;        // for sriov resource dev
-    dma_addr_t iova_addr;
+    ka_device_t *resource_dev;        // for sriov resource dev
+    ka_dma_addr_t iova_addr;
     size_t size;
     struct vmngh_db_mng db_mng;
     struct vmngh_mmio_addr mm_res;
     struct vmngh_vdev_dfx dfx;
     struct vmngh_start_dev start_dev;
-    struct work_struct start_work;
+    ka_work_struct_t start_work;
     struct vmng_shr_para *shr_para;
     struct vmng_msg_dev *msg_dev;
-    uuid_le vascend_uuid;
+    ka_uuid_le_t vascend_uuid;
     struct vdavinci_type dtype;
     u32 init_status;
     u32 dev_id;
@@ -93,17 +96,17 @@ struct vmngh_vd_dev {
     u64 bandwidth_limit;
     struct vm_msix_struct *vm_msix;
     struct vmngh_vpc_unit *vpc_unit;
-    atomic_t reset_ref_flag;
+    ka_atomic_t reset_ref_flag;
 };
 
 struct vmngh_pci_dev {
     void *unit_priv;
-    struct pci_dev *pdev;
-    struct device *dev;
+    ka_pci_dev_t *pdev;
+    ka_device_t *dev;
     struct vmngh_vd_dev *vd_dev[VMNG_VDEV_MAX_PER_PDEV];
-    struct mutex vddev_mutex[VMNG_VDEV_MAX_PER_PDEV];
+    ka_mutex_t vddev_mutex[VMNG_VDEV_MAX_PER_PDEV];
     struct dvt_devinfo dev_info;
-    struct mutex vpdev_mutex;
+    ka_mutex_t vpdev_mutex;
     u32 dev_id; /* dev_id in pcie module */
     u32 vdev_num;
     u32 status;
@@ -125,13 +128,13 @@ int vmngh_dev_id_check(u32 dev_id, u32 fid);
 int vmngh_vm_id_check(u32 vm_id, u32 vm_devid);
 struct vmng_msg_dev *vmngh_get_msg_dev_by_id(u32 dev_id, u32 fid);
 struct vmngh_vd_dev *vmngh_get_vddev_by_id(u32 dev_id, u32 fid);
-struct mutex *vmngh_get_vdev_lock_from_unit(u32 dev_id, u32 fid);
+ka_mutex_t *vmngh_get_vdev_lock_from_unit(u32 dev_id, u32 fid);
 struct vmngh_vd_dev *vmngh_get_vdev_from_unit(u32 dev_id, u32 fid);
 struct vmngh_pci_dev *vmngh_get_pdev_from_unit(u32 dev_id);
 void vmngh_free_vdev(struct vmngh_vd_dev *vd_dev);
 u32 vmngh_vd_dev_alive(void);
 int vmngh_init_unit(void);
-void vmngh_print_uuid(u32 dev_id, u32 fid, uuid_le uuid);
+void vmngh_print_uuid(u32 dev_id, u32 fid, ka_uuid_le_t uuid);
 void vmngh_set_device_status(u32 dev_id, u32 valid);
 u32 vmngh_get_device_status(u32 dev_id);
 void vmngh_set_peer_dev_id(u32 dev_id, int peer_dev_id);

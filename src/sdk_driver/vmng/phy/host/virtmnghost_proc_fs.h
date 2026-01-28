@@ -13,6 +13,12 @@
 
 #ifndef VIRTMNGHOST_PROC_FS_H
 #define VIRTMNGHOST_PROC_FS_H
+#include "ka_base_pub.h"
+#include "ka_fs_pub.h"
+#include "ka_memory_pub.h"
+#include "ka_common_pub.h"
+#include "ka_compiler_pub.h"
+#include "ka_kernel_def_pub.h"
 
 struct vmngh_user_input {
     u32 dev_id;
@@ -20,9 +26,9 @@ struct vmngh_user_input {
 };
 
 struct vmngh_procfs_entry {
-    struct proc_dir_entry *dev_id;
-    struct proc_dir_entry *vf_id;
-    struct proc_dir_entry *each_resource_info;
+    ka_proc_dir_entry_t *dev_id;
+    ka_proc_dir_entry_t *vf_id;
+    ka_proc_dir_entry_t *each_resource_info;
 };
 
 int vmngh_proc_fs_init(void);

@@ -225,7 +225,7 @@ param_info.sport = 40000;
 param_info.waittime = 5;
 strncpy_s(param_info.dest_ip, sizeof(param_info.dest_ip), "x.x.x.x", strlen("x.x.x.x"));
 
-ret = dcmi_set_traceroute(card_id, device_id, param_info, &ret_info, ret_info_size);
+ret = dcmi_set_traceroute_get_info(card_id, device_id, param_info, &ret_info, ret_info_size);
 if (ret != 0){
     //todo：记录日志
     return ret;

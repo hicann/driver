@@ -19,6 +19,10 @@
 #include "fms_define.h"
 #include "kernel_version_adapt.h"
 #include "ascend_hal_error.h"
+#include "ka_list_pub.h"
+#include "ka_memory_pub.h"
+#include "ka_kernel_def_pub.h"
+#include "ka_task_pub.h"
 
 #define print_sysfs (void)printk
 
@@ -38,7 +42,7 @@ int dms_check_node_type(int node_type)
 
     return DRV_ERROR_PARA_ERROR;
 }
-EXPORT_SYMBOL(dms_check_node_type);
+KA_EXPORT_SYMBOL(dms_check_node_type);
 
 void dev_node_release(int owner_pid)
 {
@@ -48,29 +52,29 @@ void dev_node_release(int owner_pid)
     struct list_head tmp_node;
     struct dms_dev_ctrl_block *dev_cb = NULL;
 
-    INIT_LIST_HEAD(&tmp_node);
+    KA_INIT_LIST_HEAD(&tmp_node);
     for (i = 0; i < ASCEND_DEV_MAX_NUM; i++) {
         dev_cb = dms_get_dev_cb(i);
         if (dev_cb == NULL) {
             continue;
         }
-        mutex_lock(&dev_cb->node_lock);
-        if (list_empty_careful(&dev_cb->dev_node_list) != 0) {
-            mutex_unlock(&dev_cb->node_lock);
+        ka_task_mutex_lock(&dev_cb->node_lock);
+        if (ka_list_empty_careful(&dev_cb->dev_node_list) != 0) {
+            ka_task_mutex_unlock(&dev_cb->node_lock);
             continue;
         }
-        list_for_each_entry_safe(node, next, &dev_cb->dev_node_list, list) {
+        ka_list_for_each_entry_safe(node, next, &dev_cb->dev_node_list, list) {
             if ((node->pid == owner_pid) && (DMS_EVENT_OBJ_TYPE(node->node_type) == DMS_EVENT_OBJ_USER)) {
                 dms_info("release dev_node. (devid=%d; node_type=0x%x; owner_pid=%d)\n", i, node->node_type, owner_pid);
-                list_del(&node->list);
-                list_add(&node->list, &tmp_node);
+                ka_list_del(&node->list);
+                ka_list_add(&node->list, &tmp_node);
             }
         }
-        mutex_unlock(&dev_cb->node_lock);
+        ka_task_mutex_unlock(&dev_cb->node_lock);
     }
 
-    list_for_each_entry_safe(node, next, &tmp_node, list) {
-        list_del(&node->list);
+    ka_list_for_each_entry_safe(node, next, &tmp_node, list) {
+        ka_list_del(&node->list);
         if ((node->ops != NULL) && (node->ops->uninit != NULL)) {
             /* Release all nodes of all devices under the PID. Only need to do it once. */
             node->ops->uninit(node);
@@ -79,7 +83,7 @@ void dev_node_release(int owner_pid)
     }
     return;
 }
-EXPORT_SYMBOL(dev_node_release);
+KA_EXPORT_SYMBOL(dev_node_release);
 
 #ifdef CFG_FEATURE_DEVICE_STATE_TABLE
 static void dms_state_table_item_set(struct dms_node *node, struct dms_node *val)
@@ -116,12 +120,12 @@ static int _add_dev_node_to_list(struct dms_node *node)
     if (dev_cb == NULL) {
         return -ENODEV;
     }
-    mutex_lock(&dev_cb->node_lock);
-    list_add(&node->list, &dev_cb->dev_node_list);
+    ka_task_mutex_lock(&dev_cb->node_lock);
+    ka_list_add(&node->list, &dev_cb->dev_node_list);
 #ifdef CFG_FEATURE_DEVICE_STATE_TABLE
     dms_state_table_enable(node);
 #endif
-    mutex_unlock(&dev_cb->node_lock);
+    ka_task_mutex_unlock(&dev_cb->node_lock);
     return 0;
 }
 static int _remove_dev_node_from_list(struct dms_node *node)
@@ -131,12 +135,12 @@ static int _remove_dev_node_from_list(struct dms_node *node)
     if (dev_cb == NULL) {
         return -ENODEV;
     }
-    mutex_lock(&dev_cb->node_lock);
-    list_del(&node->list);
+    ka_task_mutex_lock(&dev_cb->node_lock);
+    ka_list_del(&node->list);
 #ifdef CFG_FEATURE_DEVICE_STATE_TABLE
     dms_state_table_disable(node);
 #endif
-    mutex_unlock(&dev_cb->node_lock);
+    ka_task_mutex_unlock(&dev_cb->node_lock);
     return 0;
 }
 static int _devnode_check_para(struct dms_node *node)
@@ -232,10 +236,10 @@ struct dms_node *dms_get_devnode_cb_nolock(u32 dev_id, int node_type, int node_i
         return NULL;
     }
 
-    if (list_empty_careful(&dev_cb->dev_node_list) != 0) {
+    if (ka_list_empty_careful(&dev_cb->dev_node_list) != 0) {
         return NULL;
     }
-    list_for_each_entry_safe(node, next, &dev_cb->dev_node_list, list)
+    ka_list_for_each_entry_safe(node, next, &dev_cb->dev_node_list, list)
     {
         if ((node->node_id == node_id) && (node->node_type == node_type)) {
             return node;
@@ -254,23 +258,23 @@ struct dms_node *dms_get_devnode_cb(u32 dev_id, int node_type, int node_id)
     if (dev_cb == NULL) {
         return NULL;
     }
-    mutex_lock(&dev_cb->node_lock);
-    if (list_empty_careful(&dev_cb->dev_node_list) != 0) {
-        mutex_unlock(&dev_cb->node_lock);
+    ka_task_mutex_lock(&dev_cb->node_lock);
+    if (ka_list_empty_careful(&dev_cb->dev_node_list) != 0) {
+        ka_task_mutex_unlock(&dev_cb->node_lock);
         return NULL;
     }
-    list_for_each_entry_safe(node, next, &dev_cb->dev_node_list, list)
+    ka_list_for_each_entry_safe(node, next, &dev_cb->dev_node_list, list)
     {
         if ((node->node_id == node_id) && (node->node_type == node_type)) {
-            mutex_unlock(&dev_cb->node_lock);
+            ka_task_mutex_unlock(&dev_cb->node_lock);
             return node;
         }
     }
 
-    mutex_unlock(&dev_cb->node_lock);
+    ka_task_mutex_unlock(&dev_cb->node_lock);
     return NULL;
 }
-EXPORT_SYMBOL(dms_get_devnode_cb);
+KA_EXPORT_SYMBOL(dms_get_devnode_cb);
 
 int dms_update_devnode_cb(u32 dev_id, int node_type, int node_id,
     int (*update_dms_node)(struct dms_node *node))
@@ -282,30 +286,30 @@ int dms_update_devnode_cb(u32 dev_id, int node_type, int node_id,
     if (dev_cb == NULL) {
         return -EINVAL;
     }
-    mutex_lock(&dev_cb->node_lock);
+    ka_task_mutex_lock(&dev_cb->node_lock);
     node = dms_get_devnode_cb_nolock(dev_id, node_type, node_id);
     if (node == NULL) {
         dms_err("node is unregister, node_type=%d, node_id=%d\n", node_type, node_id);
-        mutex_unlock(&dev_cb->node_lock);
+        ka_task_mutex_unlock(&dev_cb->node_lock);
         return -ENODEV;
     }
 
     if (update_dms_node == NULL) {
         dms_err("update_dms_node is NULL, node_type=%d, node_id=%d\n", node_type, node_id);
-        mutex_unlock(&dev_cb->node_lock);
+        ka_task_mutex_unlock(&dev_cb->node_lock);
         return -EINVAL;
     }
 
     ret = update_dms_node(node);
     if (ret != 0) {
-        mutex_unlock(&dev_cb->node_lock);
+        ka_task_mutex_unlock(&dev_cb->node_lock);
         dms_err("update_dms_node failed, node_type=%d, node_id=%d\n", node_type, node_id);
         return ret;
     }
-    mutex_unlock(&dev_cb->node_lock);
+    ka_task_mutex_unlock(&dev_cb->node_lock);
     return DRV_ERROR_NONE;
 }
-EXPORT_SYMBOL(dms_update_devnode_cb);
+KA_EXPORT_SYMBOL(dms_update_devnode_cb);
 
 int dms_traverse_devnode_get_capacity(u32 dev_id, struct dsmi_dtm_node_s node_info[],
     unsigned int size, unsigned int *out_size)
@@ -327,18 +331,18 @@ int dms_traverse_devnode_get_capacity(u32 dev_id, struct dsmi_dtm_node_s node_in
     if (dev_cb == NULL) {
         return -EINVAL;
     }
-    mutex_lock(&dev_cb->node_lock);
-    if (list_empty_careful(&dev_cb->dev_node_list) != 0) {
-        mutex_unlock(&dev_cb->node_lock);
+    ka_task_mutex_lock(&dev_cb->node_lock);
+    if (ka_list_empty_careful(&dev_cb->dev_node_list) != 0) {
+        ka_task_mutex_unlock(&dev_cb->node_lock);
         return -EINVAL;
     }
-    list_for_each_entry_safe(node, next, &dev_cb->dev_node_list, list)
+    ka_list_for_each_entry_safe(node, next, &dev_cb->dev_node_list, list)
     {
         if ((node->ops != NULL) && (node->ops->get_capacity != NULL)) {
             ret = node->ops->get_capacity(node, &capacity);
             if (ret != (int)DRV_ERROR_NONE) {
                 dms_err("get_capacity failed, node_type=%d, node_id=%d\n", node->node_type, node->node_id);
-                mutex_unlock(&dev_cb->node_lock);
+                ka_task_mutex_unlock(&dev_cb->node_lock);
                 return ret;
             }
 
@@ -352,16 +356,16 @@ int dms_traverse_devnode_get_capacity(u32 dev_id, struct dsmi_dtm_node_s node_in
 
             if (*out_size >= size) {
                 dms_warn("dms_traverse_devnode_get_capacity out_size=%u, size=%d\n", *out_size, size);
-                mutex_unlock(&dev_cb->node_lock);
+                ka_task_mutex_unlock(&dev_cb->node_lock);
                 return DRV_ERROR_NONE;
             }
         }
     }
 
-    mutex_unlock(&dev_cb->node_lock);
+    ka_task_mutex_unlock(&dev_cb->node_lock);
     return DRV_ERROR_NONE;
 }
-EXPORT_SYMBOL(dms_traverse_devnode_get_capacity);
+KA_EXPORT_SYMBOL(dms_traverse_devnode_get_capacity);
 
 int dms_devnode_get_state(u32 dev_id, int node_type, int node_id, u32 *state)
 {
@@ -400,35 +404,35 @@ int dms_devnode_enable_device(u32 dev_id, int node_type, int node_id)
     if (dev_cb == NULL) {
         return -EINVAL;
     }
-    mutex_lock(&dev_cb->node_lock);
+    ka_task_mutex_lock(&dev_cb->node_lock);
     node = dms_get_devnode_cb_nolock(dev_id, node_type, node_id);
     if (node == NULL) {
         dms_err("node is unregister, node_type=%d, node_id=%d\n", node_type, node_id);
-        mutex_unlock(&dev_cb->node_lock);
+        ka_task_mutex_unlock(&dev_cb->node_lock);
         return -ENODEV;
     }
     if (node->ops == NULL) {
         dms_err("node->ops is NULL, node_type=%d, node_id=%d\n", node_type, node_id);
-        mutex_unlock(&dev_cb->node_lock);
+        ka_task_mutex_unlock(&dev_cb->node_lock);
         return -EINVAL;
     }
 
     if (node->ops->enable_device == NULL) {
         dms_err("enable_device is NULL, node_type=%d, node_id=%d\n", node_type, node_id);
-        mutex_unlock(&dev_cb->node_lock);
+        ka_task_mutex_unlock(&dev_cb->node_lock);
         return -EINVAL;
     }
     ret = node->ops->enable_device(node);
     if (ret != 0) {
         dms_err("enable_device failed, node_type=%d, node_id=%d\n", node_type, node_id);
-        mutex_unlock(&dev_cb->node_lock);
+        ka_task_mutex_unlock(&dev_cb->node_lock);
         return ret;
     }
 
-    mutex_unlock(&dev_cb->node_lock);
+    ka_task_mutex_unlock(&dev_cb->node_lock);
     return ret;
 }
-EXPORT_SYMBOL(dms_devnode_enable_device);
+KA_EXPORT_SYMBOL(dms_devnode_enable_device);
 
 int dms_devnode_disable_device(u32 dev_id, int node_type, int node_id)
 {
@@ -440,36 +444,36 @@ int dms_devnode_disable_device(u32 dev_id, int node_type, int node_id)
     if (dev_cb == NULL) {
         return -EINVAL;
     }
-    mutex_lock(&dev_cb->node_lock);
+    ka_task_mutex_lock(&dev_cb->node_lock);
     node = dms_get_devnode_cb_nolock(dev_id, node_type, node_id);
     if (node == NULL) {
         dms_err("node is unregister, node_type=%d, node_id=%d\n", node_type, node_id);
-        mutex_unlock(&dev_cb->node_lock);
+        ka_task_mutex_unlock(&dev_cb->node_lock);
         return -ENODEV;
     }
 
     if (node->ops == NULL) {
         dms_err("node->ops is NULL, node_type=%d, node_id=%d\n", node_type, node_id);
-        mutex_unlock(&dev_cb->node_lock);
+        ka_task_mutex_unlock(&dev_cb->node_lock);
         return -EINVAL;
     }
 
     if (node->ops->disable_device == NULL) {
         dms_err("disable_device is NULL, node_type=%d, node_id=%d\n", node_type, node_id);
-        mutex_unlock(&dev_cb->node_lock);
+        ka_task_mutex_unlock(&dev_cb->node_lock);
         return -EINVAL;
     }
     ret = node->ops->disable_device(node);
     if (ret != 0) {
-        mutex_unlock(&dev_cb->node_lock);
+        ka_task_mutex_unlock(&dev_cb->node_lock);
         dms_err("disable_device failed, node_type=%d, node_id=%d\n", node_type, node_id);
         return ret;
     }
 
-    mutex_unlock(&dev_cb->node_lock);
+    ka_task_mutex_unlock(&dev_cb->node_lock);
     return ret;
 }
-EXPORT_SYMBOL(dms_devnode_disable_device);
+KA_EXPORT_SYMBOL(dms_devnode_disable_device);
 
 int dms_devnode_get_power_info(u32 dev_id, int node_type, int node_id, void *buf, unsigned int size)
 {
@@ -485,36 +489,36 @@ int dms_devnode_get_power_info(u32 dev_id, int node_type, int node_id, void *buf
     if (dev_cb == NULL) {
         return -EINVAL;
     }
-    mutex_lock(&dev_cb->node_lock);
+    ka_task_mutex_lock(&dev_cb->node_lock);
     node = dms_get_devnode_cb_nolock(dev_id, node_type, node_id);
     if (node == NULL) {
         dms_err("node is unregister, node_type=%d, node_id=%d\n", node_type, node_id);
-        mutex_unlock(&dev_cb->node_lock);
+        ka_task_mutex_unlock(&dev_cb->node_lock);
         return -ENODEV;
     }
 
     if (node->ops == NULL) {
         dms_err("node->ops is NULL, node_type=%d, node_id=%d\n", node_type, node_id);
-        mutex_unlock(&dev_cb->node_lock);
+        ka_task_mutex_unlock(&dev_cb->node_lock);
         return -EINVAL;
     }
 
     if (node->ops->get_power_info == NULL) {
         dms_err("get_power_info is NULL, node_type=%d, node_id=%d\n", node_type, node_id);
-        mutex_unlock(&dev_cb->node_lock);
+        ka_task_mutex_unlock(&dev_cb->node_lock);
         return -EINVAL;
     }
     ret = node->ops->get_power_info(node, buf, size);
     if (ret != 0) {
-        mutex_unlock(&dev_cb->node_lock);
+        ka_task_mutex_unlock(&dev_cb->node_lock);
         dms_err("get_power_info failed, node_type=%d, node_id=%d\n", node_type, node_id);
         return ret;
     }
 
-    mutex_unlock(&dev_cb->node_lock);
+    ka_task_mutex_unlock(&dev_cb->node_lock);
     return ret;
 }
-EXPORT_SYMBOL(dms_devnode_get_power_info);
+KA_EXPORT_SYMBOL(dms_devnode_get_power_info);
 
 int dms_devnode_set_power_info(u32 dev_id, int node_type, int node_id, void *buf, unsigned int size)
 {
@@ -530,36 +534,36 @@ int dms_devnode_set_power_info(u32 dev_id, int node_type, int node_id, void *buf
     if (dev_cb == NULL) {
         return -EINVAL;
     }
-    mutex_lock(&dev_cb->node_lock);
+    ka_task_mutex_lock(&dev_cb->node_lock);
     node = dms_get_devnode_cb_nolock(dev_id, node_type, node_id);
     if (node == NULL) {
-        mutex_unlock(&dev_cb->node_lock);
+        ka_task_mutex_unlock(&dev_cb->node_lock);
         dms_err("node is unregister, node_type=%d, node_id=%d\n", node_type, node_id);
         return -ENODEV;
     }
 
     if (node->ops == NULL) {
-        mutex_unlock(&dev_cb->node_lock);
+        ka_task_mutex_unlock(&dev_cb->node_lock);
         dms_err("node->ops is NULL, node_type=%d, node_id=%d\n", node_type, node_id);
         return -EINVAL;
     }
 
     if (node->ops->set_power_info == NULL) {
-        mutex_unlock(&dev_cb->node_lock);
+        ka_task_mutex_unlock(&dev_cb->node_lock);
         dms_err("set_power_info is NULL, node_type=%d, node_id=%d\n", node_type, node_id);
         return -EINVAL;
     }
     ret = node->ops->set_power_info(node, buf, size);
     if (ret != 0) {
-        mutex_unlock(&dev_cb->node_lock);
+        ka_task_mutex_unlock(&dev_cb->node_lock);
         dms_err("set_power_info failed, node_type=%d, node_id=%d\n", node_type, node_id);
         return ret;
     }
 
-    mutex_unlock(&dev_cb->node_lock);
+    ka_task_mutex_unlock(&dev_cb->node_lock);
     return ret;
 }
-EXPORT_SYMBOL(dms_devnode_set_power_info);
+KA_EXPORT_SYMBOL(dms_devnode_set_power_info);
 
 int dms_devnode_set_power_state(u32 dev_id, int node_type, int node_id,
     DSMI_POWER_STATE state)
@@ -596,7 +600,7 @@ ssize_t dms_devnode_print_node_list(char *buf)
     int i;
     ssize_t buf_ret = 0;
     ssize_t offset = 0;
-    offset = snprintf_s(buf, PAGE_SIZE, PAGE_SIZE - 1UL,
+    offset = snprintf_s(buf, KA_MM_PAGE_SIZE, KA_MM_PAGE_SIZE - 1UL,
         "dev_id\ttype\tnode_id\tname\tcap\tperm\tstate\towner\n");
     print_sysfs("==================================\n");
     print_sysfs("dev_id\ttype\tnode_id\tname\tcap\tperm\tstate\towner\n");
@@ -609,17 +613,17 @@ ssize_t dms_devnode_print_node_list(char *buf)
         if (dev_cb == NULL) {
             continue;
         }
-        mutex_lock(&dev_cb->node_lock);
-        if (list_empty_careful(&dev_cb->dev_node_list) != 0) {
-            mutex_unlock(&dev_cb->node_lock);
+        ka_task_mutex_lock(&dev_cb->node_lock);
+        if (ka_list_empty_careful(&dev_cb->dev_node_list) != 0) {
+            ka_task_mutex_unlock(&dev_cb->node_lock);
             continue;
         }
-        list_for_each_entry_safe(node, next, &dev_cb->dev_node_list, list)
+        ka_list_for_each_entry_safe(node, next, &dev_cb->dev_node_list, list)
         {
             print_sysfs("%d\t%d\t%d\t%s\t%llx\t%x\t%d\t%s\n", i, node->node_type, node->node_id, node->node_name,
                 node->capacity, node->permission, node->state,
                 (node->owner_device == NULL) ? "null" : node->owner_device->node_name);
-            offset = snprintf_s(buf + buf_ret, PAGE_SIZE - buf_ret, PAGE_SIZE - 1 - buf_ret,
+            offset = snprintf_s(buf + buf_ret, KA_MM_PAGE_SIZE - buf_ret, KA_MM_PAGE_SIZE - 1 - buf_ret,
                 "%d\t%d\t%d\t%s\t%llx\t%x\t%d\t%s\n", i, node->node_type, node->node_id, node->node_name,
                 node->capacity, node->permission, node->state,
                 (node->owner_device == NULL) ? "null" : node->owner_device->node_name);
@@ -627,10 +631,10 @@ ssize_t dms_devnode_print_node_list(char *buf)
                 buf_ret += offset;
             }
         }
-        mutex_unlock(&dev_cb->node_lock);
+        ka_task_mutex_unlock(&dev_cb->node_lock);
     }
 
     return buf_ret;
 }
-EXPORT_SYMBOL(dms_devnode_print_node_list);
+KA_EXPORT_SYMBOL(dms_devnode_print_node_list);
 

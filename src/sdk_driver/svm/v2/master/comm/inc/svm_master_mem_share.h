@@ -13,9 +13,9 @@
 #ifndef SVM_MASTER_MEM_SHARE_H
 #define SVM_MASTER_MEM_SHARE_H
 
-#include "svm_ioctl.h"
 #include "devmm_proc_info.h"
 #include "svm_dev_res_mng.h"
+#include "svm_ioctl.h"
 
 struct devmm_shid_map_node_info {
     int id;

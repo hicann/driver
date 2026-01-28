@@ -10,11 +10,6 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#include <linux/kernel.h>
-#include <linux/mm.h>
-#include <linux/types.h>
-#include <linux/dma-mapping.h>
-#include <linux/mutex.h>
 
 #include "ascend_kernel_hal.h"
 #include "ka_base_pub.h"
@@ -32,14 +27,14 @@ static struct devmm_mem_node *devmm_search_mem_node_no_lock(struct devmm_addr_mn
     tmp_len = ka_base_round_up((va - ka_base_round_down(va, DEVMM_MEM_NODE_VA_ALIGN)) + len, DEVMM_MEM_NODE_VA_ALIGN);
     tmp_va = ka_base_round_down(va, DEVMM_MEM_NODE_VA_ALIGN);
 
-    node = addr_mng->rbtree.rb_node;
+    node = ka_base_get_rb_root_node(&addr_mng->rbtree);
     while (node != NULL) {
         mem_node = (struct devmm_mem_node *)ka_base_rb_entry(node, struct devmm_mem_node, node);
 
         if ((tmp_va + tmp_len) <= mem_node->va) {
-            node = node->rb_left;
+            node = ka_base_get_rb_node_left(node);
         } else if (tmp_va >= (mem_node->va + mem_node->len)) {
-            node = node->rb_right;
+            node = ka_base_get_rb_node_right(node);
         } else {
             break;
         }
@@ -72,7 +67,7 @@ STATIC int devmm_insert_mem_node(struct devmm_addr_mng *addr_mng, struct devmm_m
 
     ka_task_down_write(&addr_mng->rbtree_mutex);
 
-    new_node = &(addr_mng->rbtree.rb_node);
+    new_node = ka_base_get_rb_root_node_addr(&addr_mng->rbtree);
 
     /* Figure out where to put new node */
     while (*new_node) {
@@ -81,9 +76,9 @@ STATIC int devmm_insert_mem_node(struct devmm_addr_mng *addr_mng, struct devmm_m
 
         parent = *new_node;
         if ((mem_node->va + mem_node->len) <= this->va) {
-            new_node = &((*new_node)->rb_left);
+            new_node = ka_base_get_rb_node_left_addr(*new_node);
         } else if (mem_node->va >= (this->va + this->len)) {
-            new_node = &((*new_node)->rb_right);
+            new_node = ka_base_get_rb_node_right_addr(*new_node);
         } else {
             ka_task_up_write(&addr_mng->rbtree_mutex);
             return -EFAULT;
@@ -91,7 +86,7 @@ STATIC int devmm_insert_mem_node(struct devmm_addr_mng *addr_mng, struct devmm_m
     }
 
     /* Add new node and rebalance tree. */
-    rb_link_node(&mem_node->node, parent, new_node);
+    ka_base_rb_link_node(&mem_node->node, parent, new_node);
     ka_base_rb_insert_color(&mem_node->node, &addr_mng->rbtree);
 
     ka_task_up_write(&addr_mng->rbtree_mutex);
@@ -101,7 +96,7 @@ STATIC int devmm_insert_mem_node(struct devmm_addr_mng *addr_mng, struct devmm_m
 
 STATIC void devmm_erase_mem_node(struct devmm_addr_mng *addr_mng, struct devmm_mem_node *mem_node)
 {
-    rb_erase(&mem_node->node, &addr_mng->rbtree);
+    ka_base_rb_erase(&mem_node->node, &addr_mng->rbtree);
 }
 
 /* Returning true means that the corresponding add_info is saved, including the page structure and dma address. */
@@ -224,7 +219,7 @@ int devmm_dma_map_page(u32 dev_id, ka_page_t *page, u32 len,
     /* null of host agent dev is normal */
     dev = devmm_device_get_by_devid(dev_id);
     if (dev != NULL) {
-        dma_addr = hal_kernel_devdrv_dma_map_page(dev, page, 0, len, DMA_BIDIRECTIONAL);
+        dma_addr = hal_kernel_devdrv_dma_map_page(dev, page, 0, len, KA_DMA_BIDIRECTIONAL);
         ret = ka_mm_dma_mapping_error(dev, dma_addr);
         devmm_device_put_by_devid(dev_id);
         if (ret != 0) {
@@ -254,7 +249,7 @@ void devmm_dma_unmap_page(struct devmm_mem_node *mem_node, struct devmm_addr_inf
             ka_device_t *dev = devmm_device_get_by_devid(addr_info->dev_id);
             devmm_drv_debug("Dma unmap page details. (addr=%llx; len=%x)\n", (u64)addr_info->addr, addr_info->len);
             if (dev != NULL) {
-                hal_kernel_devdrv_dma_unmap_page(dev, addr_info->addr, addr_info->len, DMA_BIDIRECTIONAL);
+                hal_kernel_devdrv_dma_unmap_page(dev, addr_info->addr, addr_info->len, KA_DMA_BIDIRECTIONAL);
                 devmm_device_put_by_devid(addr_info->dev_id);
             }
         }

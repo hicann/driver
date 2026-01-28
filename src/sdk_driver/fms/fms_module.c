@@ -15,6 +15,7 @@
 
 #include "fms_module.h"
 #include "pbl_feature_loader.h"
+#include "ka_kernel_def_pub.h"
 
 struct submodule_ops {
     int (*init) (void);
@@ -59,9 +60,9 @@ STATIC void __exit exit_fms_base(void)
     }
 }
 
-module_init(init_fms_base);
-module_exit(exit_fms_base);
+ka_module_init(init_fms_base);
+ka_module_exit(exit_fms_base);
 
-MODULE_LICENSE("GPL");
-MODULE_AUTHOR("Huawei Tech. Co., Ltd.");
-MODULE_DESCRIPTION("DAVINCI driver");
+KA_MODULE_LICENSE("GPL");
+KA_MODULE_AUTHOR("Huawei Tech. Co., Ltd.");
+KA_MODULE_DESCRIPTION("DAVINCI driver");

@@ -10,11 +10,6 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#include <linux/types.h>
-#include <linux/spinlock.h>
-#include <linux/workqueue.h>
-#include <linux/rwlock_types.h>
-
 #include "ka_task_pub.h"
 #include "svm_msg_client.h"
 #include "svm_hot_reset.h"
@@ -48,7 +43,7 @@ static void devmm_uninit_ipc_mem_node_info(struct devmm_ipc_mem_node_info *info)
 
 static void devmm_init_share_agent_blk_mng(struct devmm_share_phy_addr_agent_blk_mng *share_agent_blk_mng)
 {
-    share_agent_blk_mng->rbtree = RB_ROOT;
+    share_agent_blk_mng->rbtree = KA_RB_ROOT;
     ka_task_init_rwsem(&share_agent_blk_mng->rw_sem);
 }
 

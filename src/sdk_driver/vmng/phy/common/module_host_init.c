@@ -11,8 +11,8 @@
  * GNU General Public License for more details.
  */
 
-#include <linux/module.h>
 #include "module_host_init.h"
+#include "ka_kernel_def_pub.h"
 
 STATIC int __init asdrv_vmngh_init_module(void)
 {
@@ -31,9 +31,9 @@ STATIC void __exit asdrv_vmngh_exit_module(void)
     vmngh_exit_module();
 }
 
-module_init(asdrv_vmngh_init_module);
-module_exit(asdrv_vmngh_exit_module);
+ka_module_init(asdrv_vmngh_init_module);
+ka_module_exit(asdrv_vmngh_exit_module);
 
-MODULE_AUTHOR("Huawei Tech. Co., Ltd.");
-MODULE_DESCRIPTION("asdrv vmng driver");
-MODULE_LICENSE("GPL");
+KA_MODULE_AUTHOR("Huawei Tech. Co., Ltd.");
+KA_MODULE_DESCRIPTION("asdrv vmng driver");
+KA_MODULE_LICENSE("GPL");

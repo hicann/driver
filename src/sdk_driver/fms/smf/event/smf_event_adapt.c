@@ -18,6 +18,7 @@
 #include "ascend_hal_error.h"
 #include "dms_event.h"
 #include "smf_event_adapt.h"
+#include "ka_kernel_def_pub.h"
 
 static struct smf_event_adapt g_event_adapt = {0};
 
@@ -148,11 +149,11 @@ int smf_event_adapt_init(struct smf_event_adapt *apt)
     (void)memcpy_s(&g_event_adapt, sizeof(struct smf_event_adapt), apt, sizeof(struct smf_event_adapt));
     return DRV_ERROR_NONE;
 }
-EXPORT_SYMBOL(smf_event_adapt_init);
+KA_EXPORT_SYMBOL(smf_event_adapt_init);
 
 void smf_event_adapt_uninit(void)
 {
     (void)memset_s(&g_event_adapt, sizeof(struct smf_event_adapt), 0, sizeof(struct smf_event_adapt));
 }
-EXPORT_SYMBOL(smf_event_adapt_uninit);
+KA_EXPORT_SYMBOL(smf_event_adapt_uninit);
 

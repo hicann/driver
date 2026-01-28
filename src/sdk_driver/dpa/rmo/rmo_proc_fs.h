@@ -13,15 +13,15 @@
 #ifndef RMO_PROC_FS_H
 #define RMO_PROC_FS_H
 
-#include <linux/proc_fs.h>
-#include <linux/seq_file.h>
+#include "ka_base_pub.h"
+#include "ka_common_pub.h"
 
 int rmo_proc_fs_init(void);
 void rmo_proc_fs_uninit(void);
 
-struct proc_dir_entry *rmo_proc_fs_add_task(const char *domain, int tgid);
-void rmo_proc_fs_del_task(struct proc_dir_entry *task_entry);
+ka_proc_dir_entry_t *rmo_proc_fs_add_task(const char *domain, int tgid);
+void rmo_proc_fs_del_task(ka_proc_dir_entry_t *task_entry);
 
-int rmo_proc_open(struct inode *inode, struct file *file);
+int rmo_proc_open(ka_inode_t *inode, ka_file_t *file);
 
 #endif /* RMO_PROC_FS_H__ */

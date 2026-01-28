@@ -11,8 +11,6 @@
  * GNU General Public License for more details.
  */
 #include <linux/types.h>
-#include <linux/atomic.h>
-#include <linux/mm.h>
 
 #include "svm_log.h"
 #include "svm_define.h"
@@ -43,7 +41,7 @@ static void devmm_update_peak_page_cnt(ka_atomic64_t *peak_pg_cnt, u64 new_cnt)
         if (new_cnt <= cur_cnt) {
             break;
         }
-        if ((u64)atomic64_cmpxchg(peak_pg_cnt, cur_cnt, new_cnt) == cur_cnt) {
+        if ((u64)ka_base_atomic64_cmpxchg(peak_pg_cnt, cur_cnt, new_cnt) == cur_cnt) {
             break;
         }
     }
@@ -65,8 +63,8 @@ void devmm_used_page_cnt_add(struct devmm_page_cnt_stats *stats, u32 page_type, 
         }
     }
 
-    tmp_cdm_pg_cnt = (u64)atomic64_add_return((long)cdm_pg_cnt, &stats->cdm_pg_cnt[page_type]);
-    tmp_cgroup_pg_cnt = (u64)atomic64_add_return((long)cgroup_pg_cnt, &stats->cgroup_pg_cnt[page_type]);
+    tmp_cdm_pg_cnt = (u64)ka_base_atomic64_add_return((long)cdm_pg_cnt, &stats->cdm_pg_cnt[page_type]);
+    tmp_cgroup_pg_cnt = (u64)ka_base_atomic64_add_return((long)cgroup_pg_cnt, &stats->cgroup_pg_cnt[page_type]);
     devmm_update_peak_page_cnt(&stats->peak_pg_cnt[page_type], tmp_cdm_pg_cnt + tmp_cgroup_pg_cnt);
 }
 
@@ -86,13 +84,13 @@ void devmm_used_page_cnt_sub(struct devmm_page_cnt_stats *stats, u32 page_type, 
         }
     }
 
-    tmp_pg_cnt = (u64)atomic64_sub_return((long)cdm_pg_cnt, &stats->cdm_pg_cnt[page_type]);
-    if (tmp_pg_cnt >= UINT_MAX) {
+    tmp_pg_cnt = (u64)ka_base_atomic64_sub_return((long)cdm_pg_cnt, &stats->cdm_pg_cnt[page_type]);
+    if (tmp_pg_cnt >= KA_UINT_MAX) {
         ka_base_atomic64_set(&stats->cdm_pg_cnt[page_type], 0);
     }
 
-    tmp_pg_cnt = (u64)atomic64_sub_return((long)cgroup_pg_cnt, &stats->cgroup_pg_cnt[page_type]);
-    if (tmp_pg_cnt >= UINT_MAX) {
+    tmp_pg_cnt = (u64)ka_base_atomic64_sub_return((long)cgroup_pg_cnt, &stats->cgroup_pg_cnt[page_type]);
+    if (tmp_pg_cnt >= KA_UINT_MAX) {
         ka_base_atomic64_set(&stats->cgroup_pg_cnt[page_type], 0);
     }
 }

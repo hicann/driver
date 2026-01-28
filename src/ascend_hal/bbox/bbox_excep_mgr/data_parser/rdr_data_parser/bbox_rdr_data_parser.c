@@ -874,7 +874,7 @@ bbox_status bbox_cdr_min_dump(enum plain_text_table_type type, const buff *buffe
     BBOX_CHK_NULL_PTR(log_path, return BBOX_FAILURE);
     BBOX_CHK_NULL_PTR(buffer, return BBOX_FAILURE);
     BBOX_CHK_EXPR_ACTION(len > CDR_SRAM_DATA_MAX_LEN, return BBOX_FAILURE,
-        "data len invalid, %u bytes, out of range[1 - %d].", len, CDR_SRAM_DATA_MAX_LEN);
+        "data len invalid, %u bytes, out of range[1 - %d].", len, (int)CDR_SRAM_DATA_MAX_LEN);
 
     char path[DIR_MAXLEN] = {0};
     bbox_status ret = bbox_age_add_folder(log_path, DIR_MNTN, path, DIR_MAXLEN);

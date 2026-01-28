@@ -25,6 +25,10 @@
 #include "devdrv_common.h"
 #include "ascend_kernel_hal.h"
 #include "ascend_platform.h"
+#include "ka_memory_pub.h"
+#include "ka_base_pub.h"
+#include "ka_kernel_def_pub.h"
+#include "ka_task_pub.h"
 #include "dms_hccs_feature.h"
 
 #ifdef CFG_FEATURE_HCCS_GET_STATISTIC_BY_CHANNEL
@@ -37,7 +41,7 @@ unsigned int hccs_reg_read(unsigned long vir_addr)
 
     p_dst = (void __iomem *)(uintptr_t)vir_addr;
     if (p_dst != NULL) {
-        val = readl((const volatile void __iomem *)p_dst);
+        val = ka_mm_readl((const volatile void __iomem *)p_dst);
     }
 
     devdrv_drv_debug("rd,addr:0x%016lX:0x%08X\n", vir_addr, val);
@@ -51,7 +55,7 @@ void hccs_reg_write(unsigned long vir_addr, unsigned int val)
 
     p_dst = (void __iomem *)(uintptr_t)vir_addr;
     if (p_dst != NULL) {
-        writel(val, (volatile void __iomem *)p_dst);
+        ka_mm_writel(val, (volatile void __iomem *)p_dst);
     }
 }
 #else
@@ -145,14 +149,14 @@ int dms_get_hpcs_status_by_dev_id(unsigned int dev_id, unsigned long long pcs_bi
             continue;
         }
 
-        hccs_base_addr = ioremap(pcs_phy_addr[i] + phy_addr_offset, PAGE_SIZE);
+        hccs_base_addr = ka_mm_ioremap(pcs_phy_addr[i] + phy_addr_offset, KA_MM_PAGE_SIZE);
         if (hccs_base_addr == NULL) {
             dms_err("Remap addr for pcs status failed. (dev_id=%u)\n", dev_id);
             return -ENOMEM;
         }
 
         pcs_status_reg = HCCS_REG_RD(hccs_base_addr, ST_CH_PCS_LANE_MODE_CHANGE_OFFSET);
-        iounmap(hccs_base_addr);
+        ka_mm_iounmap(hccs_base_addr);
         hccs_base_addr = NULL;
 
         if ((((hccs_pcs_status_reg_t *)&pcs_status_reg)->st_pcs_mode_working == ST_PCS_MODE_WORKING_X4) &&
@@ -178,13 +182,13 @@ int dms_get_hdlc_status_by_dev_id(unsigned int dev_id, unsigned long long pcs_bi
         if (!(pcs_bitmap & (1 << i))) {
             continue;
         }
-        hccs_base_addr = ioremap(hdlc_phy_addr[i] + phy_addr_offset, HDLC_REG_MAP_SIZE);
+        hccs_base_addr = ka_mm_ioremap(hdlc_phy_addr[i] + phy_addr_offset, HDLC_REG_MAP_SIZE);
         if (hccs_base_addr == NULL) {
             dms_err("Remap addr for hdlc status failed. (dev_id=%u)\n", dev_id);
             return -ENOMEM;
         }
         hdlc_status_reg = HCCS_REG_RD(hccs_base_addr, HDLC_FSM_ADDR + (i % HDLC_LINK_NUM * HDLC_REG_SIZE));
-        iounmap(hccs_base_addr);
+        ka_mm_iounmap(hccs_base_addr);
         hccs_base_addr = NULL;
         if ((hdlc_status_reg & HDLC_INIT_SUCCESS) == HDLC_INIT_SUCCESS) {
             hccs_status->hdlc_status = HDLC_INIT_SUCCESS;
@@ -250,9 +254,9 @@ STATIC int dms_get_hccs_status(struct dms_get_device_info_in *in, unsigned int *
         return ret;
     }
 
-    ret = copy_to_user((void *)(uintptr_t)in->buff, &hccs_status, sizeof(hccs_info_t));
+    ret = ka_base_copy_to_user((void *)(uintptr_t)in->buff, &hccs_status, sizeof(hccs_info_t));
     if (ret != 0) {
-        dms_err("copy_to_user failed. (dev_id=%u; ret=%d)\n", in->dev_id, ret);
+        dms_err("ka_base_copy_to_user failed. (dev_id=%u; ret=%d)\n", in->dev_id, ret);
         return ret;
     }
 
@@ -302,14 +306,14 @@ int dms_get_hccs_lane_details(unsigned int dev_id, hccs_lane_info_t *hccs_lane_i
             continue;
         }
 
-        hccs_base_addr = ioremap(pcs_phy_addr[i] + hardware_info.phy_addr_offset, PAGE_SIZE);
+        hccs_base_addr = ka_mm_ioremap(pcs_phy_addr[i] + hardware_info.phy_addr_offset, KA_MM_PAGE_SIZE);
         if (hccs_base_addr == NULL) {
-            dms_err("Failed to ioremap for hpcs info. (dev_id=%u)\n", dev_id);
+            dms_err("Failed to ka_mm_ioremap for hpcs info. (dev_id=%u)\n", dev_id);
             return -ENOMEM;
         }
 
         pcs_status_reg = HCCS_REG_RD(hccs_base_addr, ST_CH_PCS_LANE_MODE_CHANGE_OFFSET);
-        iounmap(hccs_base_addr);
+        ka_mm_iounmap(hccs_base_addr);
         hccs_base_addr = NULL;
 
         /* if the switch is not complete, it will skip here. */
@@ -327,7 +331,7 @@ int dms_get_hccs_lane_details(unsigned int dev_id, hccs_lane_info_t *hccs_lane_i
     }
     return 0;
 }
-EXPORT_SYMBOL(dms_get_hccs_lane_details);
+KA_EXPORT_SYMBOL(dms_get_hccs_lane_details);
 
 STATIC int dms_get_hccs_lane_info(struct dms_get_device_info_in *in, unsigned int *out_size)
 {
@@ -344,9 +348,9 @@ STATIC int dms_get_hccs_lane_info(struct dms_get_device_info_in *in, unsigned in
         return ret;
     }
 
-    ret = copy_to_user((void *)(uintptr_t)in->buff, &hccs_lane_info, sizeof(hccs_lane_info_t));
+    ret = ka_base_copy_to_user((void *)(uintptr_t)in->buff, &hccs_lane_info, sizeof(hccs_lane_info_t));
     if (ret != 0) {
-        dms_err("copy_to_user failed. (dev_id=%u; ret=%d)\n", in->dev_id, ret);
+        dms_err("ka_base_copy_to_user failed. (dev_id=%u; ret=%d)\n", in->dev_id, ret);
         return ret;
     }
 
@@ -433,9 +437,9 @@ STATIC int read_hccs_statistic_info(unsigned int dev_id, struct hccs_statistic_c
     }
 
     for (i = 0; i < PCS_NUM; i++) {
-        hccs_base_addr = ioremap(hdlc_phy_addr[i] + hardware_info.phy_addr_offset, HDLC_REG_MAP_SIZE);
+        hccs_base_addr = ka_mm_ioremap(hdlc_phy_addr[i] + hardware_info.phy_addr_offset, HDLC_REG_MAP_SIZE);
         if (hccs_base_addr == NULL) {
-            dms_err_ratelimited("Failed to ioremap for hdlc info. (dev_id=%u)\n", dev_id);
+            dms_err_ratelimited("Failed to ka_mm_ioremap for hdlc info. (dev_id=%u)\n", dev_id);
             return -ENOMEM;
         }
 
@@ -457,7 +461,7 @@ STATIC int read_hccs_statistic_info(unsigned int dev_id, struct hccs_statistic_c
         HCCS_REG_RD_ACC(&cache->info.tx_cnt[i], hccs_base_addr, HDLC_TX_CNT_ADDR + (link_index * HDLC_REG_SIZE));
         HCCS_REG_RD_ACC(&cache->info.rx_cnt[i], hccs_base_addr, HDLC_RX_CNT_ADDR + (link_index * HDLC_REG_SIZE));
 #endif
-        iounmap(hccs_base_addr);
+        ka_mm_iounmap(hccs_base_addr);
         hccs_base_addr = NULL;
 
         dms_debug("Get hccs staticstic info. (hpcs_id=%d; tx_cnt=0x%llx; rx_cnt=0x%llx; retry_cnt=0x%llx; crc_err_cnt=0x%llx)\n", i,
@@ -483,7 +487,7 @@ STATIC int dms_refresh_hccs_statistic_cache(u64 user_data)
         return -EFAULT;
     }
 
-    mutex_lock(&cache->lock);
+    ka_task_mutex_lock(&cache->lock);
     ret = read_hccs_statistic_info(dev_id, cache);
     if (ret != 0) {
         cache->read_err_cnt += 1;
@@ -496,7 +500,7 @@ STATIC int dms_refresh_hccs_statistic_cache(u64 user_data)
         cache->read_err_cnt = 0;
         cache->read_status = 0;
     }
-    mutex_unlock(&cache->lock);
+    ka_task_mutex_unlock(&cache->lock);
 
     return ret;
 }
@@ -518,18 +522,18 @@ STATIC int dms_get_hccs_statistic_info_ext(struct dms_get_device_info_in *in, un
     }
 
     cache = &g_hccs_statistic_cache[in->dev_id];
-    mutex_lock(&cache->lock);
+    ka_task_mutex_lock(&cache->lock);
     ret = cache->read_status;
     if (ret != 0) {
-        mutex_unlock(&cache->lock);
+        ka_task_mutex_unlock(&cache->lock);
         return ret;
     }
 
-    ret = (int)copy_to_user((void *)(uintptr_t)in->buff, &cache->info, sizeof(hccs_statistic_info_ext_t));
-    mutex_unlock(&cache->lock);
+    ret = (int)ka_base_copy_to_user((void *)(uintptr_t)in->buff, &cache->info, sizeof(hccs_statistic_info_ext_t));
+    ka_task_mutex_unlock(&cache->lock);
 
     if (ret != 0) {
-        dms_err("copy_to_user failed. (dev_id=%u; ret=%d)\n", in->dev_id, ret);
+        dms_err("ka_base_copy_to_user failed. (dev_id=%u; ret=%d)\n", in->dev_id, ret);
         return ret;
     }
 
@@ -550,10 +554,10 @@ STATIC int dms_get_hccs_statistic_details(unsigned int dev_id, hccs_statistic_in
     }
 
     cache = &g_hccs_statistic_cache[dev_id];
-    mutex_lock(&cache->lock);
+    ka_task_mutex_lock(&cache->lock);
     ret = cache->read_status;
     if (ret != 0) {
-        mutex_unlock(&cache->lock);
+        ka_task_mutex_unlock(&cache->lock);
         return ret;
     }
     for (pcs = 0; pcs < PCS_NUM; pcs++) {
@@ -562,7 +566,7 @@ STATIC int dms_get_hccs_statistic_details(unsigned int dev_id, hccs_statistic_in
         hccs_statistic->rx_cnt[pcs] = cache->info.rx_cnt[pcs];
         hccs_statistic->tx_cnt[pcs] = cache->info.tx_cnt[pcs];
     }
-    mutex_unlock(&cache->lock);
+    ka_task_mutex_unlock(&cache->lock);
     return 0;
 }
 
@@ -582,9 +586,9 @@ STATIC int dms_get_hccs_statistic_info(struct dms_get_device_info_in *in, unsign
         return ret;
     }
 
-    ret = (int)copy_to_user((void *)(uintptr_t)in->buff, &hccs_statistic_info, sizeof(hccs_statistic_info_t));
+    ret = (int)ka_base_copy_to_user((void *)(uintptr_t)in->buff, &hccs_statistic_info, sizeof(hccs_statistic_info_t));
     if (ret != 0) {
-        dms_err("copy_to_user failed. (dev_id=%u; ret=%d)\n", in->dev_id, ret);
+        dms_err("ka_base_copy_to_user failed. (dev_id=%u; ret=%d)\n", in->dev_id, ret);
         return ret;
     }
 
@@ -694,7 +698,7 @@ int dms_hccs_statistic_task_register(u32 dev_id)
     }
 
     cache = &g_hccs_statistic_cache[dev_id];
-    mutex_lock(&cache->lock);
+    ka_task_mutex_lock(&cache->lock);
     for (pcs = 0; pcs < PCS_NUM; pcs++) {
         cache->info.rx_cnt[pcs] = 0;
         cache->info.tx_cnt[pcs] = 0;
@@ -720,7 +724,7 @@ int dms_hccs_statistic_task_register(u32 dev_id)
         cache->task_id = DMS_TIMER_TASK_INVALID_ID;
         dms_err("Dms timer hccs statistic task register failed. (ret=%d)\n", ret);
     }
-    mutex_unlock(&cache->lock);
+    ka_task_mutex_unlock(&cache->lock);
     return ret;
 }
 
@@ -740,7 +744,7 @@ int dms_hccs_statistic_task_unregister(u32 dev_id)
     }
 
     cache = &g_hccs_statistic_cache[dev_id];
-    mutex_lock(&cache->lock);
+    ka_task_mutex_lock(&cache->lock);
     if (cache->task_id != DMS_TIMER_TASK_INVALID_ID) {
         ret = dms_timer_task_unregister(cache->task_id);
         if (ret != 0) {
@@ -749,7 +753,7 @@ int dms_hccs_statistic_task_unregister(u32 dev_id)
     }
     cache->task_id = DMS_TIMER_TASK_INVALID_ID;
     cache->read_status = -ENODEV;
-    mutex_unlock(&cache->lock);
+    ka_task_mutex_unlock(&cache->lock);
 
     return ret;
 }
@@ -759,7 +763,7 @@ int dms_hccs_feature_init(void)
     unsigned int i;
 
     for (i = 0; i < ASCEND_PDEV_MAX_NUM; ++i) {
-        mutex_init(&g_hccs_statistic_cache[i].lock);
+        ka_task_mutex_init(&g_hccs_statistic_cache[i].lock);
     }
     return 0;
 }
@@ -769,6 +773,6 @@ void dms_hccs_feature_exit(void)
     unsigned int i;
 
     for (i = 0; i < ASCEND_PDEV_MAX_NUM; ++i) {
-        mutex_destroy(&g_hccs_statistic_cache[i].lock);
+        ka_task_mutex_destroy(&g_hccs_statistic_cache[i].lock);
     }
 }

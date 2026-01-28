@@ -56,7 +56,6 @@
 #endif
 
 #define DVT_MAX_VDAVINCI 16
-#define DEV_AICORE_MAX_NUM 32
 #define BYTES_TO_KB(b) ((b) >> 10ULL)
 #define HW_DVT_MAX_DEV_NUM 2
 #define HW_DVT_MAX_BAR_NUM 6
@@ -228,7 +227,6 @@ struct hw_dvt {
     unsigned short device;
     int (*mmio_init)(struct hw_vdavinci *vdavinci);
     void (*mmio_uninit)(struct hw_vdavinci *vdavinci);
-    bool dma_pool_active;
     struct vdavinci_priv *vdavinci_priv;
     bool is_sriov_enabled;
     struct {
@@ -316,20 +314,9 @@ struct hw_vdavinci {
     struct {
         struct mdev_device *mdev;
         struct vfio_region *region;
-        int num_regions;
+        u32 num_regions;
         struct eventfd_ctx *intx_trigger;
         struct eventfd_ctx **msix_triggers;
-
-        /*
-         * Two caches are used to reduce dma setup overhead;
-         */
-        struct rb_root gfn_cache;
-        struct rb_root dma_cache;
-#if ((LINUX_VERSION_CODE < KERNEL_VERSION(4,19,0)) && (!defined(DRV_UT)))
-        unsigned long long nr_cache_entries;
-#else
-        unsigned long nr_cache_entries;
-#endif
         struct mutex cache_lock;
         struct notifier_block iommu_notifier;
         struct notifier_block group_notifier;
@@ -391,7 +378,6 @@ void hw_dvt_debugfs_add_vdavinci(struct hw_vdavinci *vdavinci);
 void hw_dvt_debugfs_remove_vdavinci(struct hw_vdavinci *vdavinci);
 void hw_dvt_debugfs_init(struct hw_dvt *dvt);
 void hw_dvt_debugfs_clean(struct hw_dvt *dvt);
-void hw_dvt_debugfs_add_cache_info(struct hw_vdavinci *vdavinci);
 bool davinci_vfg_support(unsigned short vendor, unsigned short device);
 int get_reserve_iova_for_check(struct device *dev, dma_addr_t *iova_addr, size_t *size);
 
@@ -483,4 +469,6 @@ void hw_vdavinci_ioeventfd_deactive(struct hw_vdavinci *vdavinci,
 
 ssize_t hw_vdavinci_rw(struct hw_vdavinci *vdavinci, char *buf,
                        size_t count, loff_t *ppos, bool write);
+int init_vdavinci_type(struct hw_vdavinci_type *type,
+                       struct vdavinci_type *tp);
 #endif /* DVT_H_ */

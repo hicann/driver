@@ -169,6 +169,7 @@ enum hdcdrv_cmd_type {
     HDCDRV_CMD_GET_PEER_DEV_ID = 0x7,
     HDCDRV_CMD_CONFIG = 0x8,
     HDCDRV_CMD_SET_SERVICE_LEVEL = 0x9,
+    HDCDRV_CMD_GET_SPEC_DEVID = 0xa,
     HDCDRV_CMD_SERVER_CREATE = 0x10,
     HDCDRV_CMD_SERVER_DESTROY = 0x11,
     HDCDRV_CMD_ACCEPT = 0x12,
@@ -622,6 +623,15 @@ struct hdcdrv_cmd_server_wakeup_wait {
     int service_type; /* input */
 };
 
+#define HDCDRV_CHIP_OS_NAME_STRING_MAX_LEN  15
+#define HDCDRV_CHIP_OS_NAME_LEN_MAX (HDCDRV_CHIP_OS_NAME_STRING_MAX_LEN + 1)
+struct hdcdrv_cmd_get_spec_devid {
+    int ret;
+    char chip_name[HDCDRV_CHIP_OS_NAME_LEN_MAX];
+    char os_name[HDCDRV_CHIP_OS_NAME_LEN_MAX];
+    unsigned int dev_id;    /* output */
+};
+
 union hdcdrv_cmd {
     struct hdcdrv_cmd_common cmd_com;
     struct hdcdrv_cmd_get_peer_dev_id get_peer_dev_id;
@@ -631,7 +641,7 @@ union hdcdrv_cmd {
     struct hdcdrv_cmd_server_create server_create;
     struct hdcdrv_cmd_server_destroy server_destroy;
     struct hdcdrv_cmd_accept accept;
-    struct hdcdrv_cmd_connect conncet;
+    struct hdcdrv_cmd_connect connect;
     struct hdcdrv_cmd_close close;
     struct hdcdrv_cmd_send send;
     struct hdcdrv_cmd_recv_peek recv_peek;
@@ -658,6 +668,7 @@ union hdcdrv_cmd {
     struct hdcdrv_cmd_get_session_info get_session_info;
     struct hdcdrv_cmd_client_wakeup_wait client_wakeup_wait;
     struct hdcdrv_cmd_server_wakeup_wait server_wakeup_wait;
+    struct hdcdrv_cmd_get_spec_devid get_spec_devid;
 };
 
 typedef struct hdcdrv_jetty_info {

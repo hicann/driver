@@ -37,6 +37,7 @@
 #include <linux/mdev.h>
 #include <linux/vfio.h>
 #include <linux/workqueue.h>
+#include <linux/pci.h>
 
 #include "ka_common_pub.h"
 
@@ -60,6 +61,26 @@ typedef struct miscdevice ka_miscdevice_t;
     .name = md_name,
 #define ka_driver_init_md_fops(md_fops) \
     .fops = md_fops,
+
+#define ka_driver_init_drv_name(drv_name) \
+    .name = drv_name,
+#define ka_driver_init_drv_id_table(drv_id_table) \
+    .id_table = drv_id_table,
+#define ka_driver_init_drv_probe(drv_probe) \
+    .probe = drv_probe,
+#define ka_driver_init_drv_remove(drv_remove) \
+    .remove = drv_remove,
+#define ka_driver_init_drv_driver(drv_name, drv_pm) \
+    .driver = { \
+        .name = drv_name, \
+        .pm = drv_pm, \
+    },
+#define ka_driver_init_drv_err_handler(drv_err_handler) \
+    .err_handler = drv_err_handler,
+#define ka_driver_init_drv_shutdown(drv_shutdown) \
+    .shutdown = drv_shutdown,
+#define ka_driver_init_drv_virt_configure(drv_virt_configure) \
+    .virt_configure = drv_virt_configure,
 
 typedef struct dmi_system_id ka_dmi_system_id_t;
 typedef struct dmi_device ka_dmi_device_t;
@@ -169,5 +190,6 @@ int ka_driver_class_set_devnode(ka_class_t *cls, ka_class_devnode devnode);
 #define ka_driver_vfio_unpin_pages(dev, user_pfn, npage) vfio_unpin_pages(dev, user_pfn, npage)
 #define ka_driver_vfio_unregister_notifier(dev, type, nb) vfio_unregister_notifier(dev, type, nb)
 #define ka_driver_dev_to_node(dev) dev_to_node(dev)
+int ka_driver_dmi_find_devid(ka_pci_dev_t *pdev, int DMI_DEV_TYPE_DEV_SLOT, int *dev_id);
 
 #endif

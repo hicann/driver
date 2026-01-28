@@ -14,11 +14,6 @@
 #ifndef __DEVDRV_MSG_H_
 #define __DEVDRV_MSG_H_
 
-#include <linux/interrupt.h>
-#include <linux/pci.h>
-#include <linux/mutex.h>
-#include <linux/jiffies.h>
-
 #include "devdrv_dma.h"
 #include "devdrv_pci.h"
 #include "devdrv_common_msg.h"
@@ -27,6 +22,7 @@
 #ifdef CFG_FEATURE_S2S
 #include "devdrv_s2s_msg.h"
 #endif
+#include "ka_list_pub.h"
 
 #define DEVDRV_SUCCESS 0x5a
 #define DEVDRV_FAILED 0xa5
@@ -61,7 +57,7 @@ typedef union {
 struct devdrv_msg_queue_info {
     u32 depth;
     u32 desc_size;
-    dma_addr_t dma_handle; /* host alloc msg queue dma addr */
+    ka_dma_addr_t dma_handle; /* host alloc msg queue dma addr */
     void *desc_h;
     void *desc_d;
     u32 slave_mem_offset; /* host & slave reserve mem offset */
@@ -71,8 +67,8 @@ struct devdrv_msg_queue_info {
     u32 tail_d;
     s32 irq_vector;
     void *base_reserve_h; /* host reserve msg queue virt addr */
-    dma_addr_t dma_reserve_h; /* host reserve msg queue dma addr */
-    dma_addr_t dma_reserve_d; /* device reserve msg queue dma addr */
+    ka_dma_addr_t dma_reserve_h; /* host reserve msg queue dma addr */
+    ka_dma_addr_t dma_reserve_d; /* device reserve msg queue dma addr */
 };
 
 struct devdrv_msg_chan_stat {
@@ -97,7 +93,7 @@ struct devdrv_msg_chan_sched_status {
     u64 schedule_in;
     u64 schedule_in_last;
     int no_schedule_cnt;
-    atomic_t state;
+    ka_atomic_t state;
 };
 
 struct devdrv_msg_chan {
@@ -117,9 +113,9 @@ struct devdrv_msg_chan {
     void (*tx_finish_notify)(void *msg_chan);
     int (*rx_msg_process)(void *msg_chan, void *data, u32 in_data_len, u32 out_data_len, u32 *real_out_len);
     int rx_work_flag;
-    struct work_struct rx_work;
-    struct mutex mutex; /* tx mutex */
-    struct mutex rx_mutex; /* rx mutex */
+    ka_work_struct_t rx_work;
+    ka_mutex_t mutex; /* tx mutex */
+    ka_mutex_t rx_mutex; /* rx mutex */
     u64 stamp;
     struct devdrv_msg_chan_stat chan_stat;
     enum msg_queue_type queue_type;
@@ -133,7 +129,7 @@ struct devdrv_msg_slave_mem {
 
 struct devdrv_msg_slave_mem_node {
     struct devdrv_msg_slave_mem mem;
-    struct list_head list;
+    ka_list_head_t list;
 };
 
 struct devdrv_non_trans_msg_send_data_para {
@@ -145,7 +141,7 @@ struct devdrv_non_trans_msg_send_data_para {
 
 struct devdrv_msg_dev {
     struct devdrv_pci_ctrl *pci_ctrl;
-    struct device *dev;
+    ka_device_t *dev;
     void __iomem *db_io_base;   /* the base addr of doorbell */
     void __iomem *ctrl_io_base; /* the base addr of nvme ctrl reg */
     void __iomem *reserve_mem_base; /* device reserve mem base, access by ATU */
@@ -153,14 +149,14 @@ struct devdrv_msg_dev {
     u32 chan_cnt;
     u32 func_id;
     struct devdrv_common_msg common_msg;
-    struct mutex mutex;
+    ka_mutex_t mutex;
     struct devdrv_msg_chan *admin_msg_chan;
     void *agent_smmu_chan;
 
-    struct workqueue_struct *work_queue[DEVDRV_MAX_MSG_CHAN_NUM];
+    ka_workqueue_struct_t *work_queue[DEVDRV_MAX_MSG_CHAN_NUM];
 
     struct devdrv_msg_slave_mem slave_mem;
-    struct list_head slave_mem_list; /* for realloc msg chan */
+    ka_list_head_t slave_mem_list; /* for realloc msg chan */
 #ifdef CFG_FEATURE_S2S
     struct devdrv_s2s_msg_chan s2s_chan[DEVDRV_S2S_SUPPORT_MAX_CHAN_NUM];
     struct devdrv_s2s_non_trans_ctrl s2s_non_trans;

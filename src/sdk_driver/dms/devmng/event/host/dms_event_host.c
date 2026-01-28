@@ -24,10 +24,14 @@
 #include "dms_event.h"
 #include "dms_event_distribute.h"
 #include "dms_event_converge.h"
-#include "dms_event_host.h"
 #include "devdrv_black_box.h"
 #include "hvdevmng_init.h"
 #include "dms/dms_interface.h"
+#include "ka_task_pub.h"
+#include "ka_list_pub.h"
+#include "ka_memory_pub.h"
+#include "ka_errno_pub.h"
+#include "dms_event_host.h"
 
 static struct mutex g_hvdms_subscribe_status_mutex;
 static u32 g_hvdms_subscribe_status_bitmap[ASCEND_DEV_MAX_NUM] = {0};
@@ -236,16 +240,16 @@ int dms_get_event_code_from_local(u32 devid, u32 *health_code, struct shm_event_
         return -EINVAL;
     }
 
-    mutex_lock(&device_fault_event->lock);
+    ka_task_mutex_lock(&device_fault_event->lock);
     *health_code = device_fault_event->highest_severity;
-    list_for_each_entry_safe(pos, n, &device_fault_event->head, node) {
+    ka_list_for_each_entry_safe(pos, n, &device_fault_event->head, node) {
         event_code[i].event_code = pos->event.event_code;
         i++;
         if (i >= event_len) {
             break;
         }
     }
-    mutex_unlock(&device_fault_event->lock);
+    ka_task_mutex_unlock(&device_fault_event->lock);
     return 0;
 }
 
@@ -269,9 +273,9 @@ int dms_get_health_code_from_local(u32 devid, u32 *health_code)
         return -EINVAL;
     }
 
-    mutex_lock(&device_fault_event->lock);
+    ka_task_mutex_lock(&device_fault_event->lock);
     *health_code = device_fault_event->highest_severity;
-    mutex_unlock(&device_fault_event->lock);
+    ka_task_mutex_unlock(&device_fault_event->lock);
     return 0;
 }
 
@@ -289,11 +293,11 @@ int dms_get_event_para(int dev_id, struct dms_event_para *dms_event, unsigned in
         return DRV_ERROR_INNER_ERR;
     }
 
-    mutex_lock(&device_event->lock);
-    list_for_each_entry_safe(pos, n, &device_event->head, node) {
+    ka_task_mutex_lock(&device_event->lock);
+    ka_list_for_each_entry_safe(pos, n, &device_event->head, node) {
         ret = memcpy_s(&dms_event[num], sizeof(struct dms_event_para), &pos->event, sizeof(struct dms_event_para));
         if (ret != 0) {
-            mutex_unlock(&device_event->lock);
+            ka_task_mutex_unlock(&device_event->lock);
             dms_err("Call memcpy_s failed. (ret=%d)\n", ret);
             return DRV_ERROR_INNER_ERR;
         }
@@ -305,7 +309,7 @@ int dms_get_event_para(int dev_id, struct dms_event_para *dms_event, unsigned in
     }
 
 OUT:
-    mutex_unlock(&device_event->lock);
+    ka_task_mutex_unlock(&device_event->lock);
     *event_num = num;
     return DRV_ERROR_NONE;
 }
@@ -333,7 +337,7 @@ STATIC DMS_EVENT_NODE_STRU* get_an_event_node_from_list(struct dms_device_event*
     DMS_EVENT_NODE_STRU* pos = NULL;
     DMS_EVENT_NODE_STRU* n = NULL;
 
-    list_for_each_entry_safe(pos, n, &event_ctrl->head, node) {
+    ka_list_for_each_entry_safe(pos, n, &event_ctrl->head, node) {
         if (is_fault_event_node_same(&pos->event, fault_event)) {
             return pos;
         }
@@ -352,7 +356,7 @@ STATIC void update_event_highest_severity(struct dms_device_event *event_ctrl, s
     }
 
     event_ctrl->highest_severity = 0;
-    list_for_each_entry_safe(pos, n, &event_ctrl->head, node) {
+    ka_list_for_each_entry_safe(pos, n, &event_ctrl->head, node) {
         event_ctrl->highest_severity = (pos->event.severity > event_ctrl->highest_severity) ?
             pos->event.severity : event_ctrl->highest_severity;
     }
@@ -377,17 +381,17 @@ int dms_add_event_in_local(struct dms_event_para* fault_event)
         return DRV_ERROR_PARA_ERROR;
     }
 
-    mutex_lock(&device_fault_event->lock);
+    ka_task_mutex_lock(&device_fault_event->lock);
     event_node = get_an_event_node_from_list(device_fault_event, fault_event);
     if (event_node != NULL) {
-        mutex_unlock(&device_fault_event->lock);
+        ka_task_mutex_unlock(&device_fault_event->lock);
         /* the same event already exists in the chain; there is no need to add it again */
         return 0;
     }
 
-    event_node = (DMS_EVENT_NODE_STRU *)dbl_kzalloc(sizeof(DMS_EVENT_NODE_STRU), GFP_KERNEL | __GFP_ACCOUNT);
+    event_node = (DMS_EVENT_NODE_STRU *)dbl_kzalloc(sizeof(DMS_EVENT_NODE_STRU), KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
     if (event_node == NULL) {
-        mutex_unlock(&device_fault_event->lock);
+        ka_task_mutex_unlock(&device_fault_event->lock);
         dms_err("Malloc memory failed!\n");
         return DRV_ERROR_OUT_OF_MEMORY;
     }
@@ -400,15 +404,15 @@ int dms_add_event_in_local(struct dms_event_para* fault_event)
     device_fault_event->highest_severity = (fault_event->severity > device_fault_event->highest_severity) ?
         fault_event->severity : device_fault_event->highest_severity;
 
-    list_add(&event_node->node, &device_fault_event->head);
+    ka_list_add(&event_node->node, &device_fault_event->head);
     device_fault_event->event_num++;
-    mutex_unlock(&device_fault_event->lock);
+    ka_task_mutex_unlock(&device_fault_event->lock);
 
     dms_info("save an event succ. (event_id=0x%x, dev_id=%u)\n", fault_event->event_id, fault_event->deviceid);
     return 0;
 
 FREE:
-    mutex_unlock(&device_fault_event->lock);
+    ka_task_mutex_unlock(&device_fault_event->lock);
     dbl_kfree(event_node);
     event_node = NULL;
     return ret;
@@ -432,20 +436,20 @@ int dms_del_event_in_local(struct dms_event_para* fault_event)
         return DRV_ERROR_PARA_ERROR;
     }
 
-    mutex_lock(&device_fault_event->lock);
+    ka_task_mutex_lock(&device_fault_event->lock);
     event_node = get_an_event_node_from_list(device_fault_event, fault_event);
     if (event_node == NULL) {
-        mutex_unlock(&device_fault_event->lock);
+        ka_task_mutex_unlock(&device_fault_event->lock);
         dms_warn("cannot find the event node. (event_id=0x%x, dev_id=%u)\n",
                  fault_event->event_id, fault_event->deviceid);
         /* the event to be deleted does not exist in the linked list */
         return 0;
     }
 
-    list_del(&event_node->node);
+    ka_list_del(&event_node->node);
     device_fault_event->event_num--;
     update_event_highest_severity(device_fault_event, fault_event);
-    mutex_unlock(&device_fault_event->lock);
+    ka_task_mutex_unlock(&device_fault_event->lock);
     dbl_kfree(event_node);
     event_node = NULL;
 
@@ -477,7 +481,7 @@ int dms_save_exception_in_local(void *arg)
     struct dms_event_para fault_event = {0};
 
     dms_info("dms save remote exception in local task start\n");
-    while (!kthread_should_stop()) {
+    while (!ka_task_kthread_should_stop()) {
         ret = dms_event_get_exception(&fault_event, timeout, FROM_KERNEL);
         if (ret != 0) {
             continue;
@@ -498,21 +502,21 @@ int dms_save_exception_in_local(void *arg)
 int dms_remote_event_save_in_local_init(void)
 {
 #ifndef DMS_UT
-    g_event_save_task = kthread_create(dms_save_exception_in_local, (void *)NULL, "dms_save_exception_task");
-    if (IS_ERR(g_event_save_task)) {
-        dms_err("kthread_create failed.\n");
+    g_event_save_task = ka_task_kthread_create(dms_save_exception_in_local, (void *)NULL, "dms_save_exception_task");
+    if (KA_IS_ERR(g_event_save_task)) {
+        dms_err("ka_task_kthread_create failed.\n");
         return DRV_ERROR_INNER_ERR;
     }
 
-    (void)wake_up_process(g_event_save_task);
+    (void)ka_task_wake_up_process(g_event_save_task);
 #endif
     return DRV_ERROR_NONE;
 }
 
 void dms_remote_event_save_in_local_exit(void)
 {
-    if (!IS_ERR(g_event_save_task)) {
-        kthread_stop(g_event_save_task);
+    if (!KA_IS_ERR(g_event_save_task)) {
+        ka_task_kthread_stop(g_event_save_task);
     }
 
     g_event_save_task = NULL;
@@ -523,23 +527,23 @@ void dms_event_host_init(void)
 {
     u32 i;
 
-    mutex_init(&g_hvdms_subscribe_status_mutex);
-    mutex_lock(&g_hvdms_subscribe_status_mutex);
+    ka_task_mutex_init(&g_hvdms_subscribe_status_mutex);
+    ka_task_mutex_lock(&g_hvdms_subscribe_status_mutex);
     for (i = 0; i < ASCEND_DEV_MAX_NUM; i++) {
         g_hvdms_subscribe_status_bitmap[i] = 0;
     }
-    mutex_unlock(&g_hvdms_subscribe_status_mutex);
+    ka_task_mutex_unlock(&g_hvdms_subscribe_status_mutex);
 }
 
 void dms_event_host_uninit(void)
 {
     u32 i;
 
-    mutex_lock(&g_hvdms_subscribe_status_mutex);
+    ka_task_mutex_lock(&g_hvdms_subscribe_status_mutex);
     for (i = 0; i < ASCEND_DEV_MAX_NUM; i++) {
         g_hvdms_subscribe_status_bitmap[i] = 0;
     }
-    mutex_unlock(&g_hvdms_subscribe_status_mutex);
-    mutex_destroy(&g_hvdms_subscribe_status_mutex);
+    ka_task_mutex_unlock(&g_hvdms_subscribe_status_mutex);
+    ka_task_mutex_destroy(&g_hvdms_subscribe_status_mutex);
 }
 

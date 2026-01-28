@@ -10,7 +10,6 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#include <linux/slab.h>
 
 #include "pbl/pbl_feature_loader.h"
 #include "pbl/pbl_runenv_config.h"
@@ -19,14 +18,16 @@
 #include "devdrv_user_common.h"
 
 #include "msg_chan_main.h"
+#include "ka_memory_pub.h"
+#include "ka_kernel_def_pub.h"
 
 #ifndef BITS_PER_LONG_LONG
 #define BITS_PER_LONG_LONG 64
 #endif
 
-#ifndef __GFP_ACCOUNT
+#ifndef __KA_GFP_ACCOUNT
 #ifdef __GFP_KMEMCG
-#define __GFP_ACCOUNT __GFP_KMEMCG /* for linux version 3.10 */
+#define __KA_GFP_ACCOUNT __GFP_KMEMCG /* for linux version 3.10 */
 #endif
 #endif
 
@@ -109,19 +110,19 @@ void devdrv_set_probe_dev_bitmap(u32 devid)
 {
     SET_BIT_64(g_prob_device_bitmap[devid / BITS_PER_LONG_LONG], devid % BITS_PER_LONG_LONG);
 }
-EXPORT_SYMBOL(devdrv_set_probe_dev_bitmap);
+KA_EXPORT_SYMBOL(devdrv_set_probe_dev_bitmap);
 
 void devdrv_clr_probe_dev_bitmap(u32 devid)
 {
     CLR_BIT_64(g_prob_device_bitmap[devid / BITS_PER_LONG_LONG], devid % BITS_PER_LONG_LONG);
 }
-EXPORT_SYMBOL(devdrv_clr_probe_dev_bitmap);
+KA_EXPORT_SYMBOL(devdrv_clr_probe_dev_bitmap);
 
 u64 devdrv_check_probe_dev_bitmap(u32 devid)
 {
     return CHECK_BIT_64(g_prob_device_bitmap[devid / BITS_PER_LONG_LONG], devid % BITS_PER_LONG_LONG);
 }
-EXPORT_SYMBOL(devdrv_check_probe_dev_bitmap);
+KA_EXPORT_SYMBOL(devdrv_check_probe_dev_bitmap);
 
 STATIC int devdrv_get_device_probe_list_inner(u32 *devids, u32 *count)
 {
@@ -150,7 +151,7 @@ int devdrv_get_device_probe_list_urd(void *feature, char *in, u32 in_len, char *
         return -EINVAL;
     }
 
-    probe_devinfo = (struct urd_probe_dev_info *)kmalloc(sizeof(struct urd_probe_dev_info), GFP_KERNEL | __GFP_ACCOUNT);
+    probe_devinfo = (struct urd_probe_dev_info *)ka_mm_kmalloc(sizeof(struct urd_probe_dev_info), KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
     if (probe_devinfo == NULL) {
         devdrv_err("No mem. (size=%lu)\n", sizeof(struct urd_probe_dev_info));
         return -EINVAL;
@@ -180,7 +181,7 @@ int devdrv_get_device_probe_list_urd(void *feature, char *in, u32 in_len, char *
 
 ret_out:
     devdrv_debug("Get probe list. (num=%u; ret=%d)\n", probe_devinfo->num_dev, ret);
-    kfree(probe_devinfo);
+    ka_mm_kfree(probe_devinfo);
     return ret;
 }
 

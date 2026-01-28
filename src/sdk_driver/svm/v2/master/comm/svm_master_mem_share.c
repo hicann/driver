@@ -13,8 +13,9 @@
 #include "pbl_feature_loader.h"
 #include "pbl_spod_info.h"
 
+#include "ka_base_pub.h"
+#include "ka_compiler_pub.h"
 #include "svm_msg_client.h"
-#include "svm_define.h"
 #include "svm_kernel_msg.h"
 #include "svm_rbtree.h"
 #include "svm_dev_res_mng.h"
@@ -24,6 +25,8 @@
 #include "svm_master_mem_share.h"
 #include "svm_mem_create.h"
 #include "svm_mem_share.h"
+#include "svm_define.h"
+
 #ifdef CFG_SOC_PLATFORM_CLOUD_V2
 #include "svm_shmem_node_pod.h"
 #endif
@@ -189,7 +192,7 @@ static int devmm_pid_set_share_status(struct devmm_share_phy_addr_agent_blk *blk
             ka_task_up_write(&mng->rw_sem);
             /* The log cannot be modified, because in the failure mode library. */
             devmm_drv_err("Can not import multi times. (pid=%d; devid=%u)\n", pid, devid);
-            /* EFAULT cann't change, user will get invalid handle err code. */
+            /* EFAULT can't change, user will get invalid handle err code. */
             return -EFAULT;
         }
 
@@ -457,7 +460,7 @@ static struct devmm_share_id_map_node *devmm_share_id_map_node_create(struct dev
     ret = devmm_rb_insert(&mng->rbtree, &map_node->proc_node, rb_handle_of_share_id_map_node);
     ka_task_up_write(&mng->sem);
     if (ret != 0) {
-        devmm_drv_err("Current proc export or import repeatly. (devid=%u; id=%d; blk_type=%u)\n",
+        devmm_drv_err("Current proc export or import repeatedly. (devid=%u; id=%d; blk_type=%u)\n",
             info->devid, info->id, blk_type);
         devmm_kvfree_ex(map_node);
         map_node = NULL;
@@ -535,7 +538,7 @@ static void devmm_share_agent_blk_node_init(struct devmm_share_mem_info *info,
     blk->share_id = info->share_id;
 
     blk->export_pid = devmm_get_current_pid();
-    blk->pid_list_mng.rbtree = RB_ROOT;
+    blk->pid_list_mng.rbtree = KA_RB_ROOT;
     ka_task_init_rwsem(&blk->pid_list_mng.rw_sem);
     blk->pid_list_mng.pid_cnt = 0;
     blk->pid_list_mng.need_set_wlist = true;
@@ -846,6 +849,11 @@ static int devmm_agent_mem_import(struct devmm_svm_process *svm_proc, struct dev
     u64 total_pg_num, created_num, tmp_num;
     int ret;
 
+    if ((info->side == DEVMM_SIDE_MASTER) && (info->pg_type == MEM_NORMAL_PAGE_TYPE)) {
+        devmm_drv_run_info("Not support import.\n");
+        return -EOPNOTSUPP;
+    }
+
     msg.head.msg_id = DEVMM_CHAN_MEM_IMPORT_H2D_ID;
     msg.head.process_id.hostpid = svm_proc->process_id.hostpid;
     msg.head.process_id.vfid = (u16)devids->vfid;
@@ -861,7 +869,7 @@ static int devmm_agent_mem_import(struct devmm_svm_process *svm_proc, struct dev
 
     total_pg_num = info->pg_num;
     for (created_num = 0; created_num < total_pg_num; created_num += tmp_num) {
-        tmp_num = min((u64)DEVMM_PAGE_NUM_PER_MSG, (total_pg_num - created_num));
+        tmp_num = ka_base_min((u64)DEVMM_PAGE_NUM_PER_MSG, (total_pg_num - created_num));
 
         msg.to_create_pg_num = (u32)tmp_num;
         msg.is_create_to_new_blk = (created_num == 0) ? 1 : 0;
@@ -909,7 +917,8 @@ static int devmm_get_agent_target_blk_info(struct devmm_share_mem_info *info, st
     u64 num_pre_msg, saved_num, i, offset, msg_len;
     int ret;
 
-    msg_len = sizeof(struct devmm_chan_target_blk_query) + SVM_CS_HOST_BLK_MAX_NUM * sizeof(struct devmm_target_blk);
+    msg_len = sizeof(struct devmm_chan_target_blk_query) +
+        DEVMM_P2P_PAGE_MAX_NUM_QUERY_MSG * sizeof(struct devmm_target_blk);
     query_msg = devmm_kvzalloc_ex(msg_len, KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
     if (query_msg == NULL) {
         devmm_drv_err("Kzalloc query_msg is NULL.\n");
@@ -924,7 +933,7 @@ static int devmm_get_agent_target_blk_info(struct devmm_share_mem_info *info, st
 
     offset = 0;
     for (saved_num = 0; saved_num < info->pg_num;) {
-        num_pre_msg = min((u64)SVM_CS_HOST_BLK_MAX_NUM, (info->pg_num - saved_num));
+        num_pre_msg = ka_base_min((u64)DEVMM_P2P_PAGE_MAX_NUM_QUERY_MSG, (info->pg_num - saved_num));
         query_msg->msg.num = num_pre_msg;
         query_msg->msg.offset = offset;
         query_msg->head.extend_num = num_pre_msg;
@@ -980,7 +989,7 @@ static int devmm_get_cs_host_target_blk_info(struct devmm_share_mem_info *info, 
 
     offset = 0;
     for (saved_num = 0; saved_num < info->pg_num;) {
-        num_pre_msg = min((u64)SVM_CS_HOST_BLK_MAX_NUM, (info->pg_num - saved_num));
+        num_pre_msg = ka_base_min((u64)SVM_CS_HOST_BLK_MAX_NUM, (info->pg_num - saved_num));
         /* other dev return real num */
         query_msg->num = num_pre_msg;
         query_msg->offset = offset;
@@ -1287,7 +1296,8 @@ int devmm_get_remote_share_mem_info_process(u32 devid, struct devmm_ipc_pod_msg_
     devmm_share_agent_blk_put(blk);
 
     ka_base_atomic64_inc(&g_remote_occupy_num);
-
+    devmm_drv_debug("Get remote share mem. (dst_sdid=%llu; devid=%u; share_id=%d)\n", dst_sdid, share_info->devid, share_info->share_id);
+    
     return 0;
 }
 
@@ -1349,6 +1359,7 @@ int devmm_put_remote_share_mem_info_process(u32 devid, struct devmm_ipc_pod_msg_
     }
 
     ka_base_atomic64_dec(&g_remote_occupy_num);
+    devmm_drv_debug("Put remote share mem. (dst_sdid=%llu; devid=%u; share_id=%d)\n", dst_sdid, share_info->devid, share_info->share_id);
 
     return 0;
 }
@@ -1642,7 +1653,7 @@ static int devmm_set_pids(struct devmm_share_phy_addr_agent_blk *blk, int *pid_l
         set_pid_num++;
     }
 
-    if (unlikely(set_pid_num == 0)) {
+    if (ka_unlikely(set_pid_num == 0)) {
         return -EINVAL;
     }
 
@@ -1669,7 +1680,7 @@ int devmm_ioctl_mem_set_pid(struct devmm_svm_process *svm_proc, struct devmm_ioc
         return -ENOMEM;
     }
 
-    if (ka_base_copy_from_user(pid_list, (void __user *)para->pid_list, size) != 0) {
+    if (ka_base_copy_from_user(pid_list, (void __ka_user *)para->pid_list, size) != 0) {
         devmm_drv_err("Copy_from_user fail. (size=%llu)\n", size);
         ret = -EFAULT;
         goto free_pid_list;
@@ -1677,7 +1688,7 @@ int devmm_ioctl_mem_set_pid(struct devmm_svm_process *svm_proc, struct devmm_ioc
 
     blk = devmm_share_agent_blk_get(arg->head.devid, para->share_id);
     if (blk == NULL) {
-        /* EFAULT cann't change, user will get invalid handle err code. */
+        /* EFAULT can't change, user will get invalid handle err code. */
         ret = -EFAULT;
         goto free_pid_list;
     }

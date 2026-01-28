@@ -161,7 +161,7 @@ struct devmm_vpc_mng_msg_convert_addr {
     struct devmm_vpc_memory_attributes src_attr;
     struct devmm_vpc_memory_attributes dst_attr;
     u32 page_size;
-    /* pa_list must be the last one, cann't be changed */
+    /* pa_list must be the last one, can't be changed */
     struct devmm_pa_list pa_list;
 };
 

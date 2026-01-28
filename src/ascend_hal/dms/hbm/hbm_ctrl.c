@@ -158,9 +158,9 @@ int dev_ecc_config_get_multi_ecc_info(unsigned int dev_id, unsigned int data_ind
     ecc_detail_info->reg_addr_l = (uint32_t)(ecc_config_udata.multi_ecc_data.rank << HIGH_ADDR_SID_BITS_COUNT) |
         ecc_config_udata.multi_ecc_data.bank;
 #else
-    ecc_detail_info->reg_addr_h = (ecc_config_udata.multi_ecc_data.row << HIGH_ADDR_COLUMN_BITS_COUNT) |
+    ecc_detail_info->reg_addr_h = (uint32_t)(ecc_config_udata.multi_ecc_data.row << HIGH_ADDR_COLUMN_BITS_COUNT) |
         ecc_config_udata.multi_ecc_data.column;
-    ecc_detail_info->reg_addr_l = (ecc_config_udata.multi_ecc_data.rank << LOW_ADDR_RANK_BITS_OFFSET) |
+    ecc_detail_info->reg_addr_l = (uint32_t)(ecc_config_udata.multi_ecc_data.rank << LOW_ADDR_RANK_BITS_OFFSET) |
         ecc_config_udata.multi_ecc_data.bank;
 #endif
     return ret;

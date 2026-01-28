@@ -13,6 +13,10 @@
 
 #include <linux/delay.h>
 
+#include "ka_task_pub.h"
+#include "ka_system_pub.h"
+#include "ka_base_pub.h"
+#include "ka_list_pub.h"
 #include "securec.h"
 #include "pbl_mem_alloc_interface.h"
 #include "udis_log.h"
@@ -33,7 +37,7 @@ struct devdrv_common_msg_client *udis_get_common_msg_client(void)
 struct udis_link_dma_nodes *udis_get_link_dma_nodes(unsigned int udevid)
 {
     if (udevid >= UDIS_DEVICE_UDEVID_MAX) {
-        udis_err("Invalide param. (udevid=%u)\n", udevid);
+        udis_err("Invalid param. (udevid=%u)\n", udevid);
         return NULL;
     }
     return  &g_link_dma_nodes[udevid];
@@ -44,7 +48,7 @@ int udis_link_dma_nodes_init(unsigned int udevid)
     struct udis_link_dma_nodes *link_dma_nodes = NULL;
 
     if (udevid >= UDIS_DEVICE_UDEVID_MAX) {
-        udis_err("Invalide param. (udevid=%u)\n", udevid);
+        udis_err("Invalid param. (udevid=%u)\n", udevid);
         return -EINVAL;
     }
 
@@ -60,7 +64,7 @@ int udis_link_dma_nodes_init(unsigned int udevid)
     }
 
     link_dma_nodes->dma_nodes = (struct devdrv_dma_node *)dbl_kzalloc((sizeof(struct devdrv_dma_node) *
-        UDIS_DMA_NODE_NUM_INIT), GFP_KERNEL | __GFP_ACCOUNT);
+        UDIS_DMA_NODE_NUM_INIT), KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
     if (link_dma_nodes->dma_nodes == NULL) {
         udis_err("Failed to alloc dma node array. (udevid=%u)\n", udevid);
         return -ENOMEM;
@@ -75,7 +79,7 @@ void udis_link_dma_nodes_uninit(unsigned int udevid)
     struct udis_link_dma_nodes *link_dma_nodes = NULL;
 
     if (udevid >= UDIS_DEVICE_UDEVID_MAX) {
-        udis_err("Invalide param. (udevid=%u)\n", udevid);
+        udis_err("Invalid param. (udevid=%u)\n", udevid);
         return;
     }
 
@@ -107,7 +111,7 @@ int udis_link_dma_nodes_scale_up(unsigned int udevid)
     unsigned int old_capacity = 0;
 
     if (udevid >= UDIS_DEVICE_UDEVID_MAX) {
-        udis_err("Invalide param. (udevid=%u)\n", udevid);
+        udis_err("Invalid param. (udevid=%u)\n", udevid);
         return -EINVAL;
     }
 
@@ -127,7 +131,7 @@ int udis_link_dma_nodes_scale_up(unsigned int udevid)
     old_nodes = link_dma_nodes->dma_nodes;
 
     new_nodes = (struct devdrv_dma_node*)dbl_kzalloc(sizeof(struct devdrv_dma_node) * new_capacity,
-        GFP_KERNEL | __GFP_ACCOUNT);
+        KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
     if (new_nodes == NULL) {
         udis_err("Failed to alloc new dma node array. (udevid=%u)\n", udevid);
         return -ENOMEM;
@@ -169,7 +173,7 @@ STATIC int udis_update_link_dma_nodes(unsigned int udevid, const struct udis_ctr
         return -ENOMEM;
     }
 
-    list_for_each_entry(cur, &udis_cb->addr_list[update_type], list) {
+    ka_list_for_each_entry(cur, &udis_cb->addr_list[update_type], list) {
         link_dma_nodes->dma_nodes[node_num].src_addr = cur->dev_dma_addr;
         link_dma_nodes->dma_nodes[node_num].dst_addr = cur->host_dma_addr;
         link_dma_nodes->dma_nodes[node_num].size = cur->data_len;
@@ -207,7 +211,7 @@ STATIC int udis_check_addr_node(const struct udis_dma_node *addr_node)
         return -EINVAL;
     }
 
-    name_len = strnlen(addr_node->name, UDIS_MAX_NAME_LEN);
+    name_len = ka_base_strnlen(addr_node->name, UDIS_MAX_NAME_LEN);
     if ((name_len == 0) || (name_len >= UDIS_MAX_NAME_LEN)) {
         udis_err("Invalid name_len. (module_type=%u; name_len=%u; max_name_len=%u)\n",
             addr_node->module_type, name_len, UDIS_MAX_NAME_LEN - 1);
@@ -220,7 +224,7 @@ STATIC int udis_check_addr_node(const struct udis_dma_node *addr_node)
         return -EINVAL;
     }
 
-    is_discrete_info = strcmp(addr_node->name, UDIS_UNIFIED_MODULE_INFO);
+    is_discrete_info = ka_base_strcmp(addr_node->name, UDIS_UNIFIED_MODULE_INFO);
     if (((addr_node->dev_dma_addr == UDIS_BAD_DMA_ADDR)) || (addr_node->data_len == 0) ||
         ((is_discrete_info != 0) && (addr_node->data_len > UDIS_MAX_DATA_LEN)) ||
         ((is_discrete_info == 0) && (addr_node->data_len != UDIS_UNIFIED_MODULE_OFFSET))) {
@@ -236,7 +240,7 @@ STATIC int udis_addr_node_register(unsigned int udevid, struct udis_ctrl_block *
     struct udis_dma_node *addr_node)
 {
     int ret;
-    dma_addr_t host_dma_addr = 0;
+    ka_dma_addr_t host_dma_addr = 0;
 
     ret = udis_alloc_info_block(udevid, addr_node, &host_dma_addr);
     if (ret != 0) {
@@ -294,7 +298,7 @@ STATIC int udis_register_addr(void *msg, u32 *ack_len)
         goto unlock_cb_read_lock;
     }
 
-    down_write(&udis_cb->addr_list_lock);
+    ka_task_down_write(&udis_cb->addr_list_lock);
     repeat_node = udis_addr_list_find_node(udis_cb, addr_node->module_type, addr_node->name);
     if (repeat_node != NULL) {
         udis_info("Already have the same addr node. (udevid=%u; module_type=%u; name=%s)\n",
@@ -319,7 +323,7 @@ STATIC int udis_register_addr(void *msg, u32 *ack_len)
         addr_node->name, addr_node->update_type, addr_node->acc_ctrl, addr_node->data_len);
 
 unlock_addr_list_lock:
-    up_write(&udis_cb->addr_list_lock);
+    ka_task_up_write(&udis_cb->addr_list_lock);
 unlock_cb_read_lock:
     udis_cb_read_unlock(udevid);
     return ret;
@@ -351,7 +355,7 @@ STATIC int udis_unregister_addr(void *msg, u32 *ack_len)
         return -ENODEV;
     }
 
-    down_write(&udis_cb->addr_list_lock);
+    ka_task_down_write(&udis_cb->addr_list_lock);
 
     target_node = udis_addr_list_find_node(udis_cb, addr_node->module_type, addr_node->name);
     if (target_node == NULL) {
@@ -362,10 +366,10 @@ STATIC int udis_unregister_addr(void *msg, u32 *ack_len)
         goto out;
     }
 
-    list_del(&target_node->list);
+    ka_list_del(&target_node->list);
     ret = udis_update_link_dma_nodes(udevid, udis_cb, addr_node->update_type);
     if (ret != 0) {
-        list_add(&target_node->list, &udis_cb->addr_list[target_node->update_type]);
+        ka_list_add(&target_node->list, &udis_cb->addr_list[target_node->update_type]);
         udis_err("Update link dma nodes failed. (udevid=%u; module_type=%u; name=%s; ret=%d)\n", udevid,
             addr_node->module_type, addr_node->name, ret);
         goto out;
@@ -379,7 +383,7 @@ STATIC int udis_unregister_addr(void *msg, u32 *ack_len)
  (udevid=%u; module_type=%u; name=%s; update_type=%u; acc_ctrl=%u; data_len=%u)\n", udevid, addr_node->module_type,
         addr_node->name, addr_node->update_type, addr_node->acc_ctrl, addr_node->data_len);
 out:
-    up_write(&udis_cb->addr_list_lock);
+    ka_task_up_write(&udis_cb->addr_list_lock);
     udis_cb_read_unlock(udevid);
     return ret;
 }
@@ -443,7 +447,7 @@ int udis_send_host_vf_uninit_notify(unsigned int udevid)
         } else {
             break;
         }
-        ssleep(UDIS_MSG_RETRY_INTERVAL_S);
+        ka_system_ssleep(UDIS_MSG_RETRY_INTERVAL_S);
     } while (retry_times);
 
     if (ret != 0) {
@@ -481,7 +485,7 @@ int udis_send_host_ready_msg_to_device(unsigned int udevid)
         } else {
             break;
         }
-        ssleep(UDIS_MSG_RETRY_INTERVAL_S); /* Delay 2s */
+        ka_system_ssleep(UDIS_MSG_RETRY_INTERVAL_S); /* Delay 2s */
     } while (retry_times);
 
     if (ret != 0) {

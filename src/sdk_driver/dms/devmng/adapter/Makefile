@@ -9,38 +9,34 @@
 # ------------------------------------------------------------------------------------------------------------
 KERNEL_DIR :=$(srctree)
 
-ifeq ($(DAVINCI_HIAI_DKMS),y) # for DKMS cmake
-	ifneq ($(NOT_SUPPORT_SP), y)
-		EXTRA_CFLAGS += -fstack-protector-all
-	endif
+EXTRA_CFLAGS += -I$(C_SEC_INCLUDE)
+EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/inc
+EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/dms/devmng/include
+EXTRA_CFLAGS += -I$(DRIVER_HAL_INC_DIR)
+EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/inc/pbl
+EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/kernel_adapt/include
+EXTRA_CFLAGS += -isystem $(shell $(CC) -print-file-name=include)
+EXTRA_CFLAGS += -Iinclude/linux
 
-	EXTRA_CFLAGS += -I$(HIAI_DKMS_DIR)/libc_sec/include
-	EXTRA_CFLAGS += -I$(HIAI_DKMS_DIR)/dev_inc/inc
-	EXTRA_CFLAGS += -I$(HIAI_DKMS_DIR)/dms/devmng/include
-	EXTRA_CFLAGS += -I$(HIAI_DKMS_DIR)/inc/driver
-	EXTRA_CFLAGS += -DCFG_HOST_ENV
-else # for cmake
-
-	EXTRA_CFLAGS += -DCFG_HOST_ENV
-	ifeq ($(ENABLE_UBE), true)
-		EXTRA_CFLAGS += -DCFG_FEATURE_UB
-	endif
-	ifneq ($(NOT_SUPPORT_SP), y)
-		EXTRA_CFLAGS += -fstack-protector-all
-	endif
-	EXTRA_CFLAGS += -I$(DRIVER_SOURCE_DIR)/libc_sec
-	EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/inc
-	EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/src/dms/devmng/include
-	EXTRA_CFLAGS += -I$(DRIVER_HAL_INC_DIR)
-	EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/inc/pbl
-	EXTRA_CFLAGS += -isystem $(shell $(CC) -print-file-name=include)
-	EXTRA_CFLAGS += -Iinclude/linux
-endif
-ccflags-y += -Wall -Werror
+EXTRA_CFLAGS += -DCFG_HOST_ENV
 
 ifeq ($(TARGET_BUILD_TYPE),debug)
 	EXTRA_CFLAGS += -DCFG_BUILD_DEBUG
 endif
+
+ifeq ($(ENABLE_UBE), true)
+	EXTRA_CFLAGS += -DCFG_FEATURE_UB
+endif
+
+ifneq ($(filter $(PRODUCT), ascend910_95),)
+	EXTRA_CFLAGS += -DCFG_FEATURE_USE_ADPATER_FUNC
+endif
+
+ifneq ($(NOT_SUPPORT_SP), y)
+	EXTRA_CFLAGS += -fstack-protector-all
+endif
+
+ccflags-y += -Wall -Werror
 
 obj-m += ascend_adapter.o
 ascend_adapter-objs := adapter_api.o adapter_func_init.o adapter_init.o

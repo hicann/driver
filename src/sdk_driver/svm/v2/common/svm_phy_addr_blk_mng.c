@@ -11,10 +11,6 @@
  * GNU General Public License for more details.
  */
 
-#include <linux/version.h>
-#include <linux/mm_types.h>
-#include <linux/mm.h>
-
 #include "svm_proc_gfp.h"
 #include "devmm_common.h"
 #include "devmm_mem_alloc_interface.h"
@@ -24,7 +20,7 @@ void devmm_phy_addr_blk_mng_init(struct devmm_phy_addr_blk_mng *mng)
 {
     ka_base_idr_init(&mng->idr);
     mng->id_start = 0;
-    mng->id_end = INT_MAX;
+    mng->id_end = KA_INT_MAX;
     ka_task_init_rwsem(&mng->rw_sem);
 }
 
@@ -43,13 +39,9 @@ static void devmm_phy_addr_blk_release(ka_kref_t *kref)
     devmm_kvfree_ex(blk);
 }
 
-int __attribute__((weak)) devmm_obmm_get(struct devmm_host_obmm_info *info)
+bool __attribute__((weak)) devmm_support_host_giant_page(void)
 {
-    return -EINVAL;
-}
-
-void __attribute__((weak)) devmm_obmm_put(struct devmm_host_obmm_info *info)
-{
+    return false;
 }
 
 void __attribute__((weak)) devmm_master_free_huge_pages(struct devmm_phy_addr_attr *attr, ka_page_t **pages, u64 pg_num)
@@ -120,7 +112,7 @@ void devmm_phy_addr_blk_put(struct devmm_phy_addr_blk *blk)
 static void devmm_phy_addr_blk_info_init(struct devmm_phy_addr_blk *blk,
     struct devmm_phy_addr_attr *attr, u64 pg_num, ka_page_t **pages, struct devmm_dma_blk *dma_blks)
 {
-    u64 pg_size = (attr->pg_type == DEVMM_HUGE_PAGE_TYPE) ? HPAGE_SIZE : PAGE_SIZE;
+    u64 pg_size = (attr->pg_type == DEVMM_HUGE_PAGE_TYPE) ? KA_HPAGE_SIZE : KA_MM_PAGE_SIZE;
     if (attr->pg_type == DEVMM_GIANT_PAGE_TYPE) {
         pg_size = SVM_MASTER_GIANT_PAGE_SIZE;
     }
@@ -225,8 +217,8 @@ static void _devmm_phy_addr_blk_uninit(struct devmm_svm_process *svm_proc,
     u64 freed_dma_blk_num, freed_pg_num;
 
     /* dma_blk_info->save_num must <= pg_info->saved_num */
-    freed_pg_num = min(to_free_pg_num, pg_info->saved_num);
-    freed_dma_blk_num = min(to_free_pg_num, dma_blk_info->saved_num);
+    freed_pg_num = ka_base_min(to_free_pg_num, pg_info->saved_num);
+    freed_dma_blk_num = ka_base_min(to_free_pg_num, dma_blk_info->saved_num);
 
     pages = &pg_info->pages[pg_info->saved_num - freed_pg_num];
     dma_blks = &dma_blk_info->dma_blks[dma_blk_info->saved_num - freed_dma_blk_num];

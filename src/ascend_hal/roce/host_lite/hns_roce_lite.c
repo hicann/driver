@@ -243,14 +243,14 @@ STATIC int hns_roce_lite_init_cq(struct hns_roce_lite_cq *cq, struct rdma_lite_c
     cq->cq_buf.mem_idx = lite_cq_attr->mem_idx;
     ret = hns_roce_lite_mmap_hva(&lite_cq_attr->device_cq_attr.cq_buf, &cq->cq_buf, ctx);
     if (ret != 0) {
-        roce_err("%s hns_roce_lite_mmap_hva cq->cq_buf.hva fail", __func__);
+        roce_err("%s hns_roce_lite_mmap_hva cq->cq_buf.hva failed", __func__);
         return ret;
     }
 
     cq->swdb_buf.mem_idx = lite_cq_attr->mem_idx;
     ret = hns_roce_lite_mmap_hdb(&lite_cq_attr->device_cq_attr.swdb_buf, &cq->swdb_buf, ctx);
     if (ret != 0) {
-        roce_err("%s hns_roce_lite_mmap_hdb cq->swdb_buf.hva fail", __func__);
+        roce_err("%s hns_roce_lite_mmap_hdb cq->swdb_buf.hva failed", __func__);
         goto unregister_cq_buf;
     }
 
@@ -258,7 +258,7 @@ STATIC int hns_roce_lite_init_cq(struct hns_roce_lite_cq *cq, struct rdma_lite_c
 
     ret = pthread_spin_init(&cq->lock, PTHREAD_PROCESS_PRIVATE);
     if (ret) {
-        roce_err("hns_roce_lite_init_cq spin lock init fail, ret = %d", ret);
+        roce_err("hns_roce_lite_init_cq spin lock init failed, ret = %d", ret);
         goto unregister_cq_swdb;
     }
 
@@ -267,12 +267,12 @@ STATIC int hns_roce_lite_init_cq(struct hns_roce_lite_cq *cq, struct rdma_lite_c
 unregister_cq_swdb:
     ret_temp = hns_roce_lite_unmmap_hdb(&cq->swdb_buf, ctx);
     if (ret_temp) {
-        roce_err("hns_roce_lite_unmmap_hdb fail, ret = %d", ret_temp);
+        roce_err("hns_roce_lite_unmmap_hdb failed, ret = %d", ret_temp);
     }
 unregister_cq_buf:
     ret_temp = hns_roce_lite_unmmap_hva(&cq->cq_buf, ctx);
     if (ret_temp) {
-        roce_err("hns_roce_lite_unmmap_hva fail, ret = %d", ret_temp);
+        roce_err("hns_roce_lite_unmmap_hva failed, ret = %d", ret_temp);
     }
     return ret;
 }
@@ -314,12 +314,12 @@ STATIC void hns_roce_lite_deinit_cq(struct hns_roce_lite_cq *cq, struct hns_roce
 
     ret = hns_roce_lite_unmmap_hdb(&cq->swdb_buf, ctx);
     if (ret) {
-        roce_err("hns_roce_lite_unmmap_hdb fail, ret = %d", ret);
+        roce_err("hns_roce_lite_unmmap_hdb failed, ret = %d", ret);
     }
 
     ret = hns_roce_lite_unmmap_hva(&cq->cq_buf, ctx);
     if (ret) {
-        roce_err("hns_roce_lite_unmmap_hva fail, ret = %d", ret);
+        roce_err("hns_roce_lite_unmmap_hva failed, ret = %d", ret);
     }
 }
 
@@ -381,28 +381,28 @@ STATIC int hns_roce_lite_create_qp_init(struct hns_roce_lite_context *context, s
 
     ret = hns_roce_lite_alloc_qp_wrid_init(qp);
     if (ret != 0) {
-        roce_err("%s hns_roce_lite_alloc_qp_wrid_init fail, ret %d", __func__, ret);
+        roce_err("%s hns_roce_lite_alloc_qp_wrid_init failed, ret %d", __func__, ret);
         return ret;
     }
 
     qp->buf.mem_idx = attr->mem_idx;
     ret = hns_roce_lite_mmap_hva(&attr->device_qp_attr.qp_buf, &qp->buf, context);
     if (ret != 0) {
-        roce_err("%s hns_roce_lite_mmap_hva qp->buf.hva fail", __func__);
+        roce_err("%s hns_roce_lite_mmap_hva qp->buf.hva failed", __func__);
         goto alloc_wr_id_err;
     }
 
     qp->sdb_buf.mem_idx = attr->mem_idx;
     ret = hns_roce_lite_mmap_hdb(&attr->device_qp_attr.sq.db_buf, &qp->sdb_buf, context);
     if (ret != 0) {
-        roce_err("%s hns_roce_lite_mmap_hdb qp->sdb_buf.hva fail", __func__);
+        roce_err("%s hns_roce_lite_mmap_hdb qp->sdb_buf.hva failed", __func__);
         goto mmap_sdb_buf_err;
     }
 
     qp->rdb_buf.mem_idx = attr->mem_idx;
     ret = hns_roce_lite_mmap_hdb(&attr->device_qp_attr.rq.db_buf, &qp->rdb_buf, context);
     if (ret != 0) {
-        roce_err("%s hns_roce_lite_mmap_hdb qp->rdb_buf.hva fail", __func__);
+        roce_err("%s hns_roce_lite_mmap_hdb qp->rdb_buf.hva failed", __func__);
         goto mmap_rdb_buf_err;
     }
 
@@ -430,21 +430,21 @@ store_lite_qp_err:
 init_qp_lock_err:
     ret = hns_roce_lite_unmmap_hdb(&qp->rdb_buf, context);
     if (ret) {
-        roce_err("hns_roce_lite_unmmap_hdb fail, ret = %d", ret);
+        roce_err("hns_roce_lite_unmmap_hdb failed, ret = %d", ret);
     }
     qp->rdb_buf.hva = NULL;
 
 mmap_rdb_buf_err:
     ret = hns_roce_lite_unmmap_hdb(&qp->sdb_buf, context);
     if (ret) {
-        roce_err("hns_roce_lite_unmmap_hdb fail, ret = %d", ret);
+        roce_err("hns_roce_lite_unmmap_hdb failed, ret = %d", ret);
     }
     qp->sdb_buf.hva = NULL;
 
 mmap_sdb_buf_err:
     ret = hns_roce_lite_unmmap_hva(&qp->buf, context);
     if (ret) {
-        roce_err("hns_roce_lite_unmmap_hva fail, ret = %d", ret);
+        roce_err("hns_roce_lite_unmmap_hva failed, ret = %d", ret);
     }
     qp->buf.hva = NULL;
 
@@ -510,17 +510,17 @@ int hns_roce_lite_destroy_qp(struct rdma_lite_qp *lite_qp)
 
     ret = hns_roce_lite_unmmap_hdb(&qp->rdb_buf, ctx);
     if (ret) {
-        roce_err("hns_roce_lite_unmmap_hdb fail, ret = %d", ret);
+        roce_err("hns_roce_lite_unmmap_hdb failed, ret = %d", ret);
     }
 
     ret = hns_roce_lite_unmmap_hdb(&qp->sdb_buf, ctx);
     if (ret) {
-        roce_err("hns_roce_lite_unmmap_hdb fail, ret = %d", ret);
+        roce_err("hns_roce_lite_unmmap_hdb failed, ret = %d", ret);
     }
 
     ret = hns_roce_lite_unmmap_hva(&qp->buf, ctx);
     if (ret) {
-        roce_err("hns_roce_lite_unmmap_hva fail, ret = %d", ret);
+        roce_err("hns_roce_lite_unmmap_hva failed, ret = %d", ret);
     }
 
     free(qp->rq.wrid);

@@ -16,6 +16,7 @@
 
 #include "comm_kernel_interface.h"
 #include "comm_cmd_msg.h"
+#include "ka_memory_pub.h"
 
 #if defined(CFG_PLATFORM_ESL) || defined(CFG_PLATFORM_FPGA)
 #define DEVDRV_P2P_SUPPORT_MAX_DEVNUM 4U
@@ -127,7 +128,7 @@ enum msg_queue_type {
 #define DEVDRV_VF_BANDWIDTH_OFFSET 0x400 /* TS SRAM 1k~3k resv for bandwidth ctrl */
 #define DEVDRV_VF_BANDWIDTH_SIZE 0x800 /* 2K */
 
-/* cmd opreation code, first 8 bits is mudule name, later 8 bits is op type */
+/* cmd operation code, first 8 bits is module name, later 8 bits is op type */
 enum devdrv_admin_msg_opcode {
     /* msg chan */
     DEVDRV_CREATE_MSG_QUEUE,
@@ -197,8 +198,8 @@ struct devdrv_ep_suspend_cmd {
 };
 
 struct devdrv_alloc_msg_chan_reply {
-    dma_addr_t sq_rsv_dma_addr_d;
-    dma_addr_t cq_rsv_dma_addr_d;
+    ka_dma_addr_t sq_rsv_dma_addr_d;
+    ka_dma_addr_t cq_rsv_dma_addr_d;
 };
 
 #define DMA_CHAN_REMOTE_OP_RESET 0

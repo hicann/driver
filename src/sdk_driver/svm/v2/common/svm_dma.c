@@ -10,9 +10,6 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#include <linux/delay.h>
-#include <linux/module.h>
-
 #include "kernel_version_adapt.h"
 #include "vmng_kernel_interface.h"
 
@@ -77,7 +74,7 @@ int devmm_dma_sync_link_copy(u32 dev_id, u32 vfid, struct devdrv_dma_node *dma_n
     int ret, wait_type;
     int retry_cnt = 0;
     u32 size;
-    static ka_atomic_t copy_num = ATOMIC_INIT(0);
+    static ka_atomic_t copy_num = KA_BASE_ATOMIC_INIT(0);
 
     if (devmm_get_stop_business_flag(dev_id)) {
         devmm_drv_err("Device is offline, can not dma copy. (devid=%u)\n", dev_id);
@@ -103,7 +100,7 @@ int devmm_dma_sync_link_copy(u32 dev_id, u32 vfid, struct devdrv_dma_node *dma_n
 
     while (g_devmm_true) {
         ret = hal_kernel_devdrv_dma_sync_link_copy(dev_id, type, wait_type, dma_node, node_cnt);
-        if (likely(((ret == -ENOSPC) && (retry_cnt < DEVMM_DMA_RETRY_CNT)) == false)) {
+        if (ka_likely(((ret == -ENOSPC) && (retry_cnt < DEVMM_DMA_RETRY_CNT)) == false)) {
             break;
         }
          /* dma queue is full, delay resubmit */
@@ -132,7 +129,7 @@ STATIC int devmm_dma_sync_link_copy_plus(struct devmm_copy_res *res, int instanc
         /* d2d use source device dma. h2d&d2h use device dma */
         ret = hal_kernel_devdrv_dma_sync_link_copy_plus((u32)res->dev_id, DEVDRV_DMA_DATA_TRAFFIC, DEVDRV_DMA_WAIT_INTR,
             instance, res->dma_node, res->dma_node_num);
-        if (likely(((ret == -ENOSPC) && (retry_cnt < DEVMM_ASYNC_DMA_RETRY_CNT)) == false)) {
+        if (ka_likely(((ret == -ENOSPC) && (retry_cnt < DEVMM_ASYNC_DMA_RETRY_CNT)) == false)) {
             break;
         }
         /* dma queue is full, delay resubmit */

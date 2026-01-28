@@ -37,7 +37,7 @@ ifeq ($(DAVINCI_HIAI_DKMS),y)
         include $(HIAI_DKMS_DIR)/pbl/uda/uda.mk
         include $(HIAI_DKMS_DIR)/pbl/runenv_config/runenv_config.mk
         include $(HIAI_DKMS_DIR)/pbl/dev_urd/dev_urd.mk
-        include $(HIAI_DKMS_DIR)/pbl/kernel_adapt/kernel_adapt.mk
+        include $(HIAI_DKMS_DIR)/pbl/mem_ops/mem_ops.mk
         include ${HIAI_DKMS_DIR}/pbl/msg_chan/msg_chan.mk
     else
         include $(HIAI_DKMS_DIR)/pbl/drv_davinci_intf_host/drv_davinci_intf.mk
@@ -45,7 +45,7 @@ ifeq ($(DAVINCI_HIAI_DKMS),y)
         include $(HIAI_DKMS_DIR)/pbl/uda/uda.mk
         include $(HIAI_DKMS_DIR)/pbl/runenv_config/runenv_config.mk
         include $(HIAI_DKMS_DIR)/pbl/dev_urd/dev_urd.mk
-        include $(HIAI_DKMS_DIR)/pbl/kernel_adapt/kernel_adapt.mk
+        include $(HIAI_DKMS_DIR)/pbl/mem_ops/mem_ops.mk
         include ${HIAI_DKMS_DIR}/pbl/soc_resmng/soc_resmng.mk
         include ${HIAI_DKMS_DIR}/pbl/msg_chan/msg_chan.mk
     endif
@@ -57,7 +57,7 @@ else
         include ${DRIVER_SOURCE_DIR}/pbl/uda/uda.mk
         include ${DRIVER_SOURCE_DIR}/pbl/runenv_config/runenv_config.mk
         include ${DRIVER_SOURCE_DIR}/pbl/dev_urd/dev_urd.mk
-        include ${DRIVER_SOURCE_DIR}/pbl/kernel_adapt/kernel_adapt.mk
+        include ${DRIVER_SOURCE_DIR}/pbl/mem_ops/mem_ops.mk
         include ${DRIVER_SOURCE_DIR}/pbl/msg_chan/msg_chan.mk
     else
         include ${DRIVER_SOURCE_DIR}/pbl/drv_davinci_intf/drv_davinci_intf_host/drv_davinci_intf.mk
@@ -65,7 +65,7 @@ else
         include ${DRIVER_SOURCE_DIR}/pbl/uda/uda.mk
         include ${DRIVER_SOURCE_DIR}/pbl/runenv_config/runenv_config.mk
         include ${DRIVER_SOURCE_DIR}/pbl/dev_urd/dev_urd.mk
-        include ${DRIVER_SOURCE_DIR}/pbl/kernel_adapt/kernel_adapt.mk
+        include ${DRIVER_SOURCE_DIR}/pbl/mem_ops/mem_ops.mk
         include ${DRIVER_SOURCE_DIR}/pbl/soc_resmng/soc_resmng.mk
         include ${DRIVER_SOURCE_DIR}/pbl/msg_chan/msg_chan.mk
     endif

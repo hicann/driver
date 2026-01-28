@@ -55,14 +55,6 @@
 #define DEVDRV_IPC_LEN 34
 #define DEVDRV_IPC_BUF_LEN 32
 #define DEVDRV_LPM3_IPC_LEN 8
-#define SERVER_ID_MAX 47
-
-#define VNIC_IPADDR_FIRST_OCTET_DEFAULT     192U
-#define VNIC_IPADDR_SECOND_OCTET_DEFAULT    168U
-
-#define DMANAGE_VNIC_IPADDR_CALCULATE(server_id, local_id, dev_id) ((0xFF & 192u) | ((0xFF & (server_id)) << 8) | \
-                                                        ((0xFF & (2u + (local_id))) << 16) |      \
-                                                        ((0xFF & (199u - (dev_id))) << 24))
 
 STATIC pthread_mutex_t g_dmanage_gateway_mutex = PTHREAD_MUTEX_INITIALIZER;
 STATIC pthread_mutex_t g_dmanage_address_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -443,13 +435,6 @@ STATIC int dmanage_get_eth_name(unsigned int dev_id, struct dmanager_card_info c
             DEVDRV_DRV_ERR("Failed to invoke sprintf_s for BOND eth_name. (devid=%u; ret=%d)\n", dev_id, ret);
             return DRV_ERROR_INVALID_VALUE;
         }
-    } else if (card_info.card_type == DEVDRV_UNIC) {
-        /* UNIC port: port_id = card_info.card_id (from user) */
-        ret = sprintf_s(eth_name_buf, buf_size, "ubl%d", ethid);
-        if (ret < 0) {
-            DEVDRV_DRV_ERR("Failed to invoke sprintf_s for UNIC eth_name. (devid=%u; ret=%d)\n", dev_id, ret);
-            return DRV_ERROR_INVALID_VALUE;
-        }
     } else {
         DEVDRV_DRV_ERR("do not support card_type:%d\n", card_info.card_type);
         return DRV_ERROR_INVALID_VALUE;
@@ -471,12 +456,6 @@ STATIC int dmanage_nic_type_check(unsigned int dev_id, struct dmanager_card_info
 #endif
     } else if (card_info.card_type == DEVDRV_BOND) {
 #ifdef CFG_FEATURE_BOND_PORT_CONFIG
-        return DRV_ERROR_NONE;
-#else
-        return DRV_ERROR_NOT_SUPPORT;
-#endif
-    } else if (card_info.card_type == DEVDRV_UNIC) {
-#ifdef CFG_FEATURE_NETWORK_UNIC
         return DRV_ERROR_NONE;
 #else
         return DRV_ERROR_NOT_SUPPORT;
@@ -514,64 +493,6 @@ int dmanage_get_ip_address(unsigned int dev_id, struct dmanager_card_info card_i
             DEVDRV_DRV_ERR("get ip address failed, ethname(%s), ret(%d).\n", eth_name, ret);
         }
         return ret;
-    }
-    return DRV_ERROR_NONE;
-}
-
-int devdrv_get_vnic_ip(unsigned int dev_id, unsigned int *ip_addr)
-{
-    unsigned int device_dev_id;
-    int ret;
-    int64_t server_id = 0;
-
-    if (ip_addr == NULL) {
-        DEVDRV_DRV_ERR("invalid input para, ip_addr is NULL. (dev_id=%u)\n", dev_id);
-        return DRV_ERROR_INVALID_VALUE;
-    }
-
-    ret = drvGetDeviceDevIDByHostDevID(dev_id, &device_dev_id);
-    if (ret != DRV_ERROR_NONE) {
-        DEVDRV_DRV_ERR("Host devid transform to local devid failed. (devid=%u; ret=%d)", dev_id, ret);
-        return DRV_ERROR_NO_DEVICE;
-    }
-
-    ret = dms_get_spod_item(device_dev_id, INFO_TYPE_SERVER_ID, &server_id);
-    if ((ret != DRV_ERROR_NONE) || (server_id > SERVER_ID_MAX)) {
-        *ip_addr = DMANAGE_VNIC_IPADDR_CALCULATE(VNIC_IPADDR_SECOND_OCTET_DEFAULT, device_dev_id, dev_id);
-    } else {
-        *ip_addr = DMANAGE_VNIC_IPADDR_CALCULATE(server_id, device_dev_id, dev_id);
-    }
-
-    return DRV_ERROR_NONE;
-}
-
-int devdrv_get_vnic_ip_by_sdid(unsigned int sdid, unsigned int *ip_addr)
-{
-    int ret;
-    unsigned int device_dev_id;
-    struct halSDIDParseInfo sdid_parse = { 0 };
-
-    if (ip_addr == NULL) {
-        DEVDRV_DRV_ERR("invalid input para, ip_addr is NULL. (sdid=%u)\n", sdid);
-        return DRV_ERROR_INVALID_VALUE;
-    }
-
-    ret = dms_parse_sdid(sdid, &sdid_parse);
-    if (ret != 0) {
-        DEVDRV_DRV_ERR_EXTEND(ret, DRV_ERROR_NOT_SUPPORT, "parse sdid failed. (sdid=%u)\n", sdid);
-        return ret;
-    }
-
-    ret = drvGetDeviceDevIDByHostDevID(sdid_parse.udevid, &device_dev_id);
-    if (ret != DRV_ERROR_NONE) {
-        DEVDRV_DRV_ERR("Host devid transform to local devid failed. (devid=%u; ret=%d)", sdid_parse.udevid, ret);
-        return DRV_ERROR_NO_DEVICE;
-    }
-
-    if (sdid_parse.server_id > SERVER_ID_MAX) {
-        *ip_addr = DMANAGE_VNIC_IPADDR_CALCULATE(VNIC_IPADDR_SECOND_OCTET_DEFAULT, device_dev_id, sdid_parse.udevid);
-    } else {
-        *ip_addr = DMANAGE_VNIC_IPADDR_CALCULATE(sdid_parse.server_id, device_dev_id, sdid_parse.udevid);
     }
     return DRV_ERROR_NONE;
 }

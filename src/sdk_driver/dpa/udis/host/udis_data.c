@@ -14,6 +14,12 @@
 #include <linux/ktime.h>
 
 #include "securec.h"
+#include "ka_task_pub.h"
+#include "ka_common_pub.h"
+#include "ka_system_pub.h"
+#include "ka_kernel_def_pub.h"
+#include "ka_base_pub.h"
+#include "ka_list_pub.h"
 #include "pbl_mem_alloc_interface.h"
 #include "urd_acc_ctrl.h"
 #include "udis_log.h"
@@ -46,7 +52,7 @@ STATIC int udis_check_input_valid(unsigned int udevid, UDIS_MODULE_TYPE module_t
         return -EINVAL;
     }
 
-    name_len = strnlen(input_info->name, UDIS_MAX_NAME_LEN);
+    name_len = ka_base_strnlen(input_info->name, UDIS_MAX_NAME_LEN);
     if ((name_len == 0) || (name_len >= UDIS_MAX_NAME_LEN)) {
         udis_err("name length is invalid. (udevid=%u; module_type=%u; name_len=%u; min_len=%u; max_len=%u)\n",
                 udevid, module_type, name_len, 1, UDIS_MAX_NAME_LEN - 1);
@@ -96,7 +102,7 @@ STATIC struct udis_info_stu* udis_find_info_block(const struct udis_ctrl_block* 
             break;
         }
 
-        if (strcmp(info_block_tmp->name, name) == 0) {
+        if (ka_base_strcmp(info_block_tmp->name, name) == 0) {
             info_block = info_block_tmp;
             break;
         }
@@ -124,7 +130,7 @@ STATIC struct udis_info_stu* udis_find_empty_block(const struct udis_ctrl_block*
             break;
         }
 
-        if (memcmp(empty_block_tmp->name, zeros_arr, UDIS_MAX_NAME_LEN) == 0) {
+        if (ka_base_memcmp(empty_block_tmp->name, zeros_arr, UDIS_MAX_NAME_LEN) == 0) {
             empty_block = empty_block_tmp;
             break;
         }
@@ -151,7 +157,7 @@ STATIC int udis_check_info_block_valid(u32 udevid, const struct udis_info_stu* i
             }
             break;
         case UPDATE_PERIOD_LEVEL_1:
-            cur_time = ktime_get_raw_ns() / NSEC_PER_MSEC;
+            cur_time = ka_system_ktime_get_raw_ns() / KA_NSEC_PER_MSEC;
             if (cur_time > (udis_get_link_dma_timestamp(udevid) + UDIS_MAX_NO_UPDATE_MSEC)) {
                 ret = UDIS_DATA_NEEDS_UPDATE;
             }
@@ -177,7 +183,7 @@ STATIC int udis_store_info(const struct udis_dev_info *src_info, struct udis_inf
     }
     info_block_tmp.update_type = src_info->update_type;
 
-    if (strlen(src_info->name) > UDIS_MAX_NAME_LEN - 1) {
+    if (ka_base_strlen(src_info->name) > UDIS_MAX_NAME_LEN - 1) {
         udis_err("udis src_info name len is invalid. (name=%s; max_name_len=%d)\n", src_info->name, UDIS_MAX_NAME_LEN);
         return -EINVAL;
     }
@@ -196,7 +202,7 @@ STATIC int udis_store_info(const struct udis_dev_info *src_info, struct udis_inf
 
     info_block_tmp.acc_ctrl = src_info->acc_ctrl;
     info_block_tmp.data_len = src_info->data_len;
-    info_block_tmp.last_update_time = ktime_get_raw_ns() / NSEC_PER_MSEC;
+    info_block_tmp.last_update_time = ka_system_ktime_get_raw_ns() / KA_NSEC_PER_MSEC;
 
     ret = memcpy_s(dst_info_block, UDIS_NAME_OFFSET, &info_block_tmp, UDIS_NAME_OFFSET);
     if (ret != 0) {
@@ -239,7 +245,7 @@ STATIC int udis_update_load_info_block(struct udis_ctrl_block* ucb, u32 udevid, 
         return ret;
     }
 
-    down_read(&ucb->udis_info_lock);
+    ka_task_down_read(&ucb->udis_info_lock);
     info_block = udis_find_info_block(ucb, module_type, info_request->name, UDIS_INFO_ALL_SPACE);
     if (info_block == NULL) {
         ret = -ENODATA;
@@ -263,7 +269,7 @@ STATIC int udis_update_load_info_block(struct udis_ctrl_block* ucb, u32 udevid, 
         goto out;
     }
 out:
-    up_read(&(ucb->udis_info_lock));
+    ka_task_up_read(&(ucb->udis_info_lock));
     return ret;
 }
 
@@ -287,7 +293,7 @@ int hal_kernel_set_udis_info(unsigned int udevid, UDIS_MODULE_TYPE module_type,
         return ret;
     }
 
-    down_write(&ucb->udis_info_lock);
+    ka_task_down_write(&ucb->udis_info_lock);
     info_block = udis_find_info_block(ucb, module_type, udis_set_info->name, UDIS_INFO_DISCRE_SPACE);
     if (info_block == NULL) {
         info_block = udis_find_empty_block(ucb, module_type);
@@ -306,11 +312,11 @@ int hal_kernel_set_udis_info(unsigned int udevid, UDIS_MODULE_TYPE module_type,
     }
 
 udis_info_unlock:
-    up_write(&ucb->udis_info_lock);
+    ka_task_up_write(&ucb->udis_info_lock);
     udis_cb_read_unlock(udevid);
     return ret;
 }
-EXPORT_SYMBOL_GPL(hal_kernel_set_udis_info);
+KA_EXPORT_SYMBOL_GPL(hal_kernel_set_udis_info);
 
 int hal_kernel_get_udis_info(unsigned int udevid, UDIS_MODULE_TYPE module_type, struct udis_dev_info *info_request)
 {
@@ -330,7 +336,7 @@ int hal_kernel_get_udis_info(unsigned int udevid, UDIS_MODULE_TYPE module_type, 
         goto unlock_ucb;
     }
 
-    down_read(&(ucb->udis_info_lock));
+    ka_task_down_read(&(ucb->udis_info_lock));
     info_block = udis_find_info_block(ucb, module_type, info_request->name, UDIS_INFO_ALL_SPACE);
     if (info_block == NULL) {
         ret = -ENODATA;
@@ -353,7 +359,7 @@ int hal_kernel_get_udis_info(unsigned int udevid, UDIS_MODULE_TYPE module_type, 
             goto unlock_udis_info;
         case UDIS_DATA_NEEDS_UPDATE:
         case UDIS_DATA_UPDATE_IMMEDIATELY:
-            up_read(&(ucb->udis_info_lock));
+            ka_task_up_read(&(ucb->udis_info_lock));
             ret = udis_update_load_info_block(ucb, udevid, module_type, info_request);
             goto unlock_ucb;
         default:
@@ -361,18 +367,18 @@ int hal_kernel_get_udis_info(unsigned int udevid, UDIS_MODULE_TYPE module_type, 
     }
 
 unlock_udis_info:
-    up_read(&ucb->udis_info_lock);
+    ka_task_up_read(&ucb->udis_info_lock);
 unlock_ucb:
     udis_cb_read_unlock(udevid);
     return ret;
 }
-EXPORT_SYMBOL_GPL(hal_kernel_get_udis_info);
+KA_EXPORT_SYMBOL_GPL(hal_kernel_get_udis_info);
 
-STATIC int udis_get_host_unified_info(unsigned int udevid, UDIS_MODULE_TYPE module_type, dma_addr_t *host_dma_addr)
+STATIC int udis_get_host_unified_info(unsigned int udevid, UDIS_MODULE_TYPE module_type, ka_dma_addr_t *host_dma_addr)
 {
     struct udis_ctrl_block *udis_cb = NULL;
-    dma_addr_t dma_addr = UDIS_BAD_DMA_ADDR;
-    dma_addr_t dma_base_addr = UDIS_BAD_DMA_ADDR;
+    ka_dma_addr_t dma_addr = UDIS_BAD_DMA_ADDR;
+    ka_dma_addr_t dma_base_addr = UDIS_BAD_DMA_ADDR;
 
     udis_cb = udis_get_ctrl_block(udevid);
     if (udis_cb == NULL) {
@@ -409,12 +415,12 @@ STATIC int udis_fill_info_block(unsigned int udevid, const struct udis_dma_node 
     return 0;
 }
 
-STATIC dma_addr_t udis_dma_map_info_block(unsigned int udevid, const struct udis_ctrl_block *udis_cb,
+STATIC ka_dma_addr_t udis_dma_map_info_block(unsigned int udevid, const struct udis_ctrl_block *udis_cb,
     UDIS_MODULE_TYPE module_type, const struct udis_info_stu *info_block)
 {
     unsigned long offset = 0;
-    dma_addr_t info_dma_addr = UDIS_BAD_DMA_ADDR;
-    dma_addr_t udis_dma_base_addr = 0;
+    ka_dma_addr_t info_dma_addr = UDIS_BAD_DMA_ADDR;
+    ka_dma_addr_t udis_dma_base_addr = 0;
 
     offset = (unsigned long)(void *)info_block - (unsigned long)udis_cb->udis_info_buf;
     if (offset >= (unsigned long)(void *)info_block) {
@@ -425,7 +431,7 @@ STATIC dma_addr_t udis_dma_map_info_block(unsigned int udevid, const struct udis
 
     /* map host virtual address to host DMA address */
     udis_dma_base_addr = udis_cb->udis_info_buf_dma;
-    info_dma_addr = udis_dma_base_addr + offset + offsetof(struct udis_info_stu, data);
+    info_dma_addr = udis_dma_base_addr + offset + ka_offsetof(struct udis_info_stu, data);
     if (info_dma_addr <= udis_dma_base_addr) {
         udis_err("Info host dma addr overflow. (udevid=%u; module_type=%u; name=%s)\n", udevid,
             module_type, info_block->name);
@@ -435,7 +441,7 @@ STATIC dma_addr_t udis_dma_map_info_block(unsigned int udevid, const struct udis
 }
 
 STATIC struct udis_info_stu *udis_dma_remap_info_block(unsigned int udevid, const struct udis_ctrl_block *udis_cb,
-    dma_addr_t host_dma_addr)
+    ka_dma_addr_t host_dma_addr)
 {
     unsigned long offset = 0;
     unsigned long udis_dma_base_addr = 0;
@@ -445,7 +451,7 @@ STATIC struct udis_info_stu *udis_dma_remap_info_block(unsigned int udevid, cons
      * the offset of the data member in the struct udis_info_stu structure.
      */
     udis_dma_base_addr = udis_cb->udis_info_buf_dma;
-    offset = host_dma_addr - udis_dma_base_addr - offsetof(struct udis_info_stu, data);
+    offset = host_dma_addr - udis_dma_base_addr - ka_offsetof(struct udis_info_stu, data);
     if (offset >= host_dma_addr) {
         udis_err("Offset overflow. (udevid=%u; offset=%lu)\n", udevid, offset);
         return NULL;
@@ -465,10 +471,10 @@ STATIC struct udis_info_stu *udis_dma_remap_info_block(unsigned int udevid, cons
 }
 
 STATIC int udis_alloc_discrete_info_block(unsigned int udevid, const struct udis_dma_node *addr_node,
-    dma_addr_t *host_dma_addr)
+    ka_dma_addr_t *host_dma_addr)
 {
     int ret;
-    dma_addr_t info_dma_addr = UDIS_BAD_DMA_ADDR;
+    ka_dma_addr_t info_dma_addr = UDIS_BAD_DMA_ADDR;
     struct udis_ctrl_block *udis_cb = NULL;
     struct udis_info_stu *info_block = NULL;
 
@@ -478,10 +484,10 @@ STATIC int udis_alloc_discrete_info_block(unsigned int udevid, const struct udis
         return -ENODEV;
     }
 
-    down_write(&udis_cb->udis_info_lock);
+    ka_task_down_write(&udis_cb->udis_info_lock);
     info_block = udis_find_empty_block(udis_cb, addr_node->module_type);
     if (info_block == NULL) {
-        up_write(&udis_cb->udis_info_lock);
+        ka_task_up_write(&udis_cb->udis_info_lock);
         udis_err("Get unused info block failed. (udevid=%u; module_type=%u; name=%s)\n", udevid,
             addr_node->module_type, addr_node->name);
         return -ENOSPC;
@@ -489,7 +495,7 @@ STATIC int udis_alloc_discrete_info_block(unsigned int udevid, const struct udis
 
     info_dma_addr = udis_dma_map_info_block(udevid, udis_cb, addr_node->module_type, info_block);
     if (info_dma_addr == UDIS_BAD_DMA_ADDR) {
-        up_write(&udis_cb->udis_info_lock);
+        ka_task_up_write(&udis_cb->udis_info_lock);
         udis_err("Failed to map udis info block's va to dma addr. (udevid=%u; module_type=%u; name=%s)\n",
             udevid, addr_node->module_type, addr_node->name);
         return -EFAULT;
@@ -499,13 +505,13 @@ STATIC int udis_alloc_discrete_info_block(unsigned int udevid, const struct udis
 
     ret = udis_fill_info_block(udevid, addr_node, info_block);
     if (ret != 0) {
-        up_write(&udis_cb->udis_info_lock);
+        ka_task_up_write(&udis_cb->udis_info_lock);
         udis_err("Failed to fill info block's name. (udevid=%u; module_type=%u; name=%s, ret=%d)\n",
             udevid, addr_node->module_type, addr_node->name);
         return ret;
     }
 
-    up_write(&udis_cb->udis_info_lock);
+    ka_task_up_write(&udis_cb->udis_info_lock);
 
     return 0;
 }
@@ -539,7 +545,7 @@ STATIC void udis_clear_unified_info_data_len(unsigned int udevid, struct udis_ct
     return;
 }
 
-STATIC int udis_clear_info_block_name(unsigned int udevid, struct udis_ctrl_block *udis_cb, dma_addr_t host_dma_addr)
+STATIC int udis_clear_info_block_name(unsigned int udevid, struct udis_ctrl_block *udis_cb, ka_dma_addr_t host_dma_addr)
 {
     int ret;
     struct udis_info_stu *info_block = NULL;
@@ -558,7 +564,7 @@ STATIC int udis_clear_info_block_name(unsigned int udevid, struct udis_ctrl_bloc
     return 0;
 }
 
-STATIC int udis_clear_info_block_len(unsigned int udevid, struct udis_ctrl_block *udis_cb, dma_addr_t host_dma_addr)
+STATIC int udis_clear_info_block_len(unsigned int udevid, struct udis_ctrl_block *udis_cb, ka_dma_addr_t host_dma_addr)
 {
     struct udis_info_stu *info_block = NULL;
 
@@ -571,7 +577,7 @@ STATIC int udis_clear_info_block_len(unsigned int udevid, struct udis_ctrl_block
     return 0;
 }
 
-int udis_alloc_info_block(unsigned int udevid, const struct udis_dma_node *addr_node, dma_addr_t *host_dma_addr)
+int udis_alloc_info_block(unsigned int udevid, const struct udis_dma_node *addr_node, ka_dma_addr_t *host_dma_addr)
 {
     if (host_dma_addr == NULL) {
         udis_err("Invalid param. (udevid=%u; module_type=%u; name=%s)\n",
@@ -579,14 +585,14 @@ int udis_alloc_info_block(unsigned int udevid, const struct udis_dma_node *addr_
         return -EINVAL;
     }
 
-    if (strcmp(addr_node->name, UDIS_UNIFIED_MODULE_INFO) == 0) {
+    if (ka_base_strcmp(addr_node->name, UDIS_UNIFIED_MODULE_INFO) == 0) {
         return udis_get_host_unified_info(udevid, addr_node->module_type, host_dma_addr);
     }
     return udis_alloc_discrete_info_block(udevid, addr_node, host_dma_addr);
 }
 
 void udis_free_info_block(unsigned int udevid, UDIS_MODULE_TYPE module_type, const char *name,
-    dma_addr_t host_dma_addr)
+    ka_dma_addr_t host_dma_addr)
 {
     int ret;
     struct udis_ctrl_block *udis_cb = NULL;
@@ -604,8 +610,8 @@ void udis_free_info_block(unsigned int udevid, UDIS_MODULE_TYPE module_type, con
         return;
     }
 
-    down_write(&udis_cb->udis_info_lock);
-    if (strcmp(name, UDIS_UNIFIED_MODULE_INFO) == 0) {
+    ka_task_down_write(&udis_cb->udis_info_lock);
+    if (ka_base_strcmp(name, UDIS_UNIFIED_MODULE_INFO) == 0) {
         ret = udis_clear_unified_info(udevid, udis_cb, module_type);
         if (ret != 0) {
             udis_err("Clear host unified info failed. (udevid=%u; module_type=%u; name=%s; ret=%d)\n",
@@ -619,7 +625,7 @@ void udis_free_info_block(unsigned int udevid, UDIS_MODULE_TYPE module_type, con
         }
     }
 
-    up_write(&udis_cb->udis_info_lock);
+    ka_task_up_write(&udis_cb->udis_info_lock);
     return;
 }
 
@@ -632,7 +638,7 @@ STATIC void udis_dma_fail_process(unsigned int udevid, struct udis_ctrl_block *u
         return;
     }
 
-    if (strcmp(node->name, UDIS_UNIFIED_MODULE_INFO) == 0) {
+    if (ka_base_strcmp(node->name, UDIS_UNIFIED_MODULE_INFO) == 0) {
         udis_clear_unified_info_data_len(udevid, udis_cb, node->module_type);
     } else {
         ret = udis_clear_info_block_len(udevid, udis_cb, node->host_dma_addr);
@@ -665,18 +671,18 @@ int udis_dma_sync_copy(unsigned int udevid, struct udis_ctrl_block *udis_cb, con
         return -ENODEV;
     }
 
-    down_write(&udis_cb->udis_info_lock);
+    ka_task_down_write(&udis_cb->udis_info_lock);
 
     ret = hal_kernel_devdrv_dma_sync_copy(udevid, DEVDRV_DMA_DATA_COMMON, node->dev_dma_addr, node->host_dma_addr,
         node->data_len, DEVDRV_DMA_DEVICE_TO_HOST);
     if (ret != 0) {
         udis_dma_fail_process(udevid, udis_cb, node);
-        up_write(&udis_cb-> udis_info_lock);
+        ka_task_up_write(&udis_cb-> udis_info_lock);
         udis_err("Dma copy failed. (udevid=%u; module_type=%u; name=%s; ret=%d)\n",
             udevid, node->module_type, node->name, ret);
         return ret;
     }
-    up_write(&udis_cb->udis_info_lock);
+    ka_task_up_write(&udis_cb->udis_info_lock);
 
     return 0;
 }
@@ -692,9 +698,9 @@ STATIC struct udis_dma_node *udis_find_dma_node(struct udis_ctrl_block *udis_cb,
     }
 
     /*If no node matching {module_type, name} is found, it indicates information in the unified space.*/
-    list_for_each_entry(addr_node, &udis_cb->addr_list[UPDATE_PERIOD_LEVEL_1], list) {
+    ka_list_for_each_entry(addr_node, &udis_cb->addr_list[UPDATE_PERIOD_LEVEL_1], list) {
         if ((addr_node->module_type == module_type) &&
-            (strcmp(addr_node->name, UDIS_UNIFIED_MODULE_INFO) == 0)) {
+            (ka_base_strcmp(addr_node->name, UDIS_UNIFIED_MODULE_INFO) == 0)) {
             return addr_node;
         }
     }
@@ -722,7 +728,7 @@ int udis_update_info_by_dma(unsigned int udevid, UDIS_MODULE_TYPE module_type, c
         return -ENODEV;
     }
 
-    down_read(&udis_cb->addr_list_lock);
+    ka_task_down_read(&udis_cb->addr_list_lock);
     addr_node = udis_find_dma_node(udis_cb, module_type, name);
     if (addr_node == NULL) {
         udis_err("Can not find addr node. (udevid=%u; module_type=%u; name=%s)\n", udevid, module_type, name);
@@ -738,7 +744,7 @@ int udis_update_info_by_dma(unsigned int udevid, UDIS_MODULE_TYPE module_type, c
         goto out;
     }
 out:
-    up_read(&udis_cb->addr_list_lock);
+    ka_task_up_read(&udis_cb->addr_list_lock);
     return ret;
 }
 
@@ -750,29 +756,29 @@ STATIC int udis_link_dma_copy(unsigned int udevid, struct udis_ctrl_block *udis_
     struct devdrv_dma_node *dma_nodes = NULL;
     struct udis_link_dma_nodes *link_dma_nodes = NULL;
 
-    down_read(&udis_cb->addr_list_lock);
+    ka_task_down_read(&udis_cb->addr_list_lock);
     /* To avoid the device DMA address becoming unavailable due to responding unregister D2H message
      * during the copying process, it is necessary to hold the addr_list_lock throughout the copying process.
      * And the link_dma_nodes array may be modified in response to register and unregister messages.
      */
     link_dma_nodes = udis_get_link_dma_nodes(udevid);
     if ((link_dma_nodes == NULL) || (link_dma_nodes->dma_nodes == NULL)) {
-        up_read(&udis_cb->addr_list_lock);
+        ka_task_up_read(&udis_cb->addr_list_lock);
         return -EFAULT;
     }
 
     dma_nodes = link_dma_nodes->dma_nodes;
     node_num = link_dma_nodes->node_num;
     if (node_num == 0) {
-        up_read(&udis_cb->addr_list_lock);
+        ka_task_up_read(&udis_cb->addr_list_lock);
         /* link_dma_timestamp does not require lock protection.
          * Because the work item is guaranteed to be executed by at most one worker system-wide at any given time
          */
-        udis_set_link_dma_timestamp(udevid, ktime_get_raw_ns() / NSEC_PER_MSEC);
+        udis_set_link_dma_timestamp(udevid, ka_system_ktime_get_raw_ns() / KA_NSEC_PER_MSEC);
         return 0;
     }
 
-    down_write(&udis_cb->udis_info_lock);
+    ka_task_down_write(&udis_cb->udis_info_lock);
     ret = hal_kernel_devdrv_dma_sync_link_copy(udevid, DEVDRV_DMA_DATA_COMMON, DEVDRV_DMA_WAIT_INTR,
         dma_nodes, node_num);
     if (ret != 0) {
@@ -782,10 +788,10 @@ STATIC int udis_link_dma_copy(unsigned int udevid, struct udis_ctrl_block *udis_
         goto out;
     }
 
-    udis_set_link_dma_timestamp(udevid, ktime_get_raw_ns() / NSEC_PER_MSEC);
+    udis_set_link_dma_timestamp(udevid, ka_system_ktime_get_raw_ns() / KA_NSEC_PER_MSEC);
 out:
-    up_write(&udis_cb->udis_info_lock);
-    up_read(&udis_cb->addr_list_lock);
+    ka_task_up_write(&udis_cb->udis_info_lock);
+    ka_task_up_read(&udis_cb->addr_list_lock);
     return ret;
 }
 

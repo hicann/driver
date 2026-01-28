@@ -10,7 +10,6 @@
 #ifndef __HDC_CMN_H__
 #define __HDC_CMN_H__
 
-#include <stdbool.h>
 #ifndef HDC_UT_TEST
 #include "mmpa_api.h"
 #endif
@@ -19,21 +18,13 @@
 
 #include "securec.h"
 
-#ifndef EMU_ST
-#include "dmc_user_interface.h"
-#else
-#include "linux/fs.h"
-#include "ascend_inpackage_hal.h"
-#include "ut_log.h"
-#endif
-#include "ascend_hal.h"
-
 #ifdef CFG_FEATURE_SUPPORT_UB
 #include "bitmap.h"
 #endif
 
 #include "drv_user_common.h"
 #include "hdcdrv_cmd_ioctl.h"
+#include "hdc_adapter.h"
 /* ----------------------------------------------*
  * External variable description                                 *
  *---------------------------------------------- */
@@ -96,15 +87,6 @@
 #define HDC_IPADDR_TYPE_NUM 2
 #define HDC_LOCAL_IP_IDX 0
 #define HDC_REMORE_IP_IDX 1
-
-/* Maximum number of devices */
-#if defined(CFG_FEATURE_SRIOV) && defined(CFG_ENV_HOST)
-#define HDC_MAX_DEVICE_NUM 1124
-#define MAX_VF_DEVID_START 100
-#else
-#define HDC_MAX_DEVICE_NUM 64
-#define MAX_VF_DEVID_START 32
-#endif
 
 #define HDC_MAX_DEVICE_NUM_V3 2
 #define MAX_VF_DEVID_START_V3 32
@@ -175,17 +157,6 @@ struct ppc_msg_head {
     struct drv_ppc_msg msg;
 };
 
-#ifdef HDC_UT_TEST
-typedef int mmSockHandle;
-typedef signed int mmProcess;
-typedef unsigned int UINT32;
-typedef signed int INT32;
-typedef unsigned char UINT8;
-typedef unsigned long long UINT64;
-typedef signed long long INT64;
-typedef pthread_mutex_t mmMutex_t;
-#endif
-
 #if !defined (CFG_FEATURE_SHARE_LOG) || defined (CFG_FEATURE_SHARE_LOG_NOT)
 #define HDC_SHARE_LOG_CREATE()
 #define HDC_SHARE_LOG_DESTROY()
@@ -229,20 +200,6 @@ typedef pthread_mutex_t mmMutex_t;
         DRV_RUN_INFO(HAL_MODULE_TYPE_HDC, format, ##__VA_ARGS__); \
 } while (0);
 
-#if !defined(CFG_ENV_HOST) && !defined(HDC_UT_TEST)
-#define HDC_LOG_LIMIT_TIME 60000     /* 60s */
-#define HDC_LOG_LIMIT_BRANCH_RATE 1 /* print 1 counts per 60s */
-#define HDC_LOG_RUN_INFO_LIMIT(format, ...) do { \
-    static int __drv_err_cnt = 0;  \
-    if (!drv_log_rate_limit(&__drv_err_cnt, HDC_LOG_LIMIT_BRANCH_RATE, HDC_LOG_LIMIT_TIME)) \
-        DRV_RUN_INFO(HAL_MODULE_TYPE_HDC, format, ##__VA_ARGS__); \
-} while (0)
-#else
-#define HDC_LOG_RUN_INFO_LIMIT(format, ...) do { \
-    DRV_RUN_INFO(HAL_MODULE_TYPE_HDC, format, ##__VA_ARGS__); \
-} while (0)
-#endif
-
 #if defined(HDC_UT_TEST) || defined(EMU_ST)
 #define STATIC
 #define dsb(opt)
@@ -271,6 +228,7 @@ typedef pthread_mutex_t mmMutex_t;
 #define HDCDRV_GET_PEER_DEV_ID _IO(HDCDRV_CMD_MAGIC, HDCDRV_CMD_GET_PEER_DEV_ID)
 #define HDCDRV_HDCDRV_CONFIG _IO(HDCDRV_CMD_MAGIC, HDCDRV_CMD_CONFIG)
 #define HDCDRV_SET_SERVICE_LEVEL _IO(HDCDRV_CMD_MAGIC, HDCDRV_CMD_SET_SERVICE_LEVEL)
+#define HDCDRV_GET_SPEC_DEVID _IO(HDCDRV_CMD_MAGIC, HDCDRV_CMD_GET_SPEC_DEVID)
 #define HDCDRV_SERVER_CREATE _IO(HDCDRV_CMD_MAGIC, HDCDRV_CMD_SERVER_CREATE)
 #define HDCDRV_SERVER_DESTROY _IO(HDCDRV_CMD_MAGIC, HDCDRV_CMD_SERVER_DESTROY)
 #define HDCDRV_ACCEPT _IO(HDCDRV_CMD_MAGIC, HDCDRV_CMD_ACCEPT)
@@ -324,11 +282,6 @@ typedef pthread_mutex_t mmMutex_t;
 
 // When the value below changes, the value of the kernel_space macro with the same name also needs to be modified.
 #define HDCDRV_UB_SINGLE_DEV_MAX_SESSION 264
-#if defined(CFG_ENV_HOST)
-    #define HDC_MAX_UB_DEV_CNT 356
-#else
-    #define HDC_MAX_UB_DEV_CNT 64
-#endif
 struct hdc_ub_context;
 typedef struct hdc_ub_context hdc_ub_context_t;
 
@@ -505,6 +458,11 @@ struct hdc_epoll_head {
     };
     int size;
     struct epoll_event *epoll_events;
+#ifdef CFG_FEATURE_SUPPORT_UB
+    struct list_head session_list;
+    struct list_head server_list;
+    mmMutex_t epoll_lock;
+#endif
 };
 
 struct hdc_msg_head {

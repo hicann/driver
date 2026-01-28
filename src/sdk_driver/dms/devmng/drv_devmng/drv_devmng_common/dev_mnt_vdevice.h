@@ -16,6 +16,7 @@
 
 #include <linux/fs.h>
 #include "devdrv_user_common.h"
+#include "ka_task_pub.h"
 
 #define VDAVINCI_IDLE 0
 #define VDAVINCI_INIT 2
@@ -46,7 +47,7 @@ struct dev_mnt_vdev_action {
 
 struct dev_mnt_vdev_inform {
     struct list_head vdev_action_head;
-    spinlock_t spinlock;
+    ka_task_spinlock_t spinlock;
 };
 
 struct vdavinci_info {

@@ -13,7 +13,7 @@
 #include "dms_user_interface.h"
 #include "securec.h"
 
-#include "uda_inner.h"
+#include "pbl_uda_user.h"
 #include "esched_user_interface.h"
 
 #include "queue_user_manage.h"
@@ -1050,7 +1050,7 @@ static drvError_t queue_inter_dev_para_check(unsigned int dev_id, unsigned int q
 {
     int len;
 
-    if (que_unlikely(queue_inter_devid_invalid(dev_id)) || (actual_qid >= MAX_SURPORT_QUEUE_NUM)) {
+    if (actual_qid >= MAX_SURPORT_QUEUE_NUM) {
         QUEUE_LOG_ERR("para is error. (dev_id=%u, qid=%u, actual_qid=%u)\n", dev_id, qid, actual_qid);
         return DRV_ERROR_INVALID_VALUE;
     }
@@ -1067,25 +1067,13 @@ static drvError_t queue_inter_dev_para_check(unsigned int dev_id, unsigned int q
         return DRV_ERROR_INVALID_VALUE;
     }
 
-    if (que_get_unified_devid(dev_id) == que_info->peerDevId) {
-        QUEUE_LOG_ERR("peer devid input error. (dev_id=%u, peerDevId=%u, qid=%u, actual_qid=%u)\n",
-            que_get_unified_devid(dev_id), que_info->peerDevId, qid, actual_qid);
-        return DRV_ERROR_INVALID_VALUE;
-    }
-
     return DRV_ERROR_NONE;
 }
  
 drvError_t halQueueExport(unsigned int devId, unsigned int qid, struct shareQueInfo *queInfo)
 {
-    QUEUE_DEPLOYMENT_TYPE type = queue_get_deployment_type_by_qid(qid);
     unsigned int actual_qid = queue_get_actual_qid(qid);
     drvError_t ret;
-
-    if (type == CLIENT_QUEUE) {
-        QUEUE_LOG_INFO("queue_export not support client queue. (qid=%u)\n", qid);
-        return DRV_ERROR_NOT_SUPPORT;
-    }
 
     ret = queue_inter_dev_para_check(devId, qid, actual_qid, queInfo);
     if (ret != DRV_ERROR_NONE) {
@@ -1102,18 +1090,12 @@ drvError_t halQueueExport(unsigned int devId, unsigned int qid, struct shareQueI
 
 drvError_t halQueueUnexport(unsigned int devId, unsigned int qid, struct shareQueInfo *queInfo)
 {
-    QUEUE_DEPLOYMENT_TYPE type = queue_get_deployment_type_by_qid(qid);
     unsigned int actual_qid = queue_get_actual_qid(qid);
     drvError_t ret;
 
     ret = queue_inter_dev_para_check(devId, qid, actual_qid, queInfo);
     if (ret != DRV_ERROR_NONE) {
         return ret;
-    }
-
-    if (type == CLIENT_QUEUE) {
-        QUEUE_LOG_INFO("queue_unexport not support client queue. (qid=%u)\n", qid);
-        return DRV_ERROR_NOT_SUPPORT;
     }
 
     if (queue_comm_interface[INTER_DEV_QUEUE] != NULL && queue_comm_interface[INTER_DEV_QUEUE]->queue_unexport != NULL) {
@@ -1129,15 +1111,9 @@ drvError_t halQueueImport(unsigned int devId, struct shareQueInfo *queInfo, unsi
     drvError_t ret;
     int len;
 
-    if (que_unlikely(queue_inter_devid_invalid(devId)) || (queInfo == NULL) || (qid == NULL)) {
+    if ((queInfo == NULL) || (qid == NULL)) {
         QUEUE_LOG_ERR("Input para error. (devId=%u, que_info_is_null=%d, qid_is_null=%d)\n",
             devId, (int)(queInfo == NULL), (int)(qid == NULL));
-        return DRV_ERROR_INVALID_VALUE;
-    }
-
-    if (que_get_unified_devid(devId) == queInfo->peerDevId) {
-        QUEUE_LOG_ERR("peer devid input error. (devId=%u, peerDevId=%u)\n",
-            que_get_unified_devid(devId), queInfo->peerDevId);
         return DRV_ERROR_INVALID_VALUE;
     }
 
@@ -1145,11 +1121,6 @@ drvError_t halQueueImport(unsigned int devId, struct shareQueInfo *queInfo, unsi
     if ((len > SHARE_QUEUE_NAME_LEN) || (len == 0)) {
         QUEUE_LOG_ERR("key len err. (devId=%u, len=%d, max_len=%d)\n", devId, len, SHARE_QUEUE_NAME_LEN);
         return DRV_ERROR_INVALID_VALUE;
-    }
-
-    if (g_enable_local_queue != true) {
-        QUEUE_LOG_INFO("local queue is not support.\n");
-        return DRV_ERROR_NOT_SUPPORT;
     }
 
     ret = queue_real_init_iner(devId, LOCAL_QUEUE);
@@ -1180,11 +1151,6 @@ drvError_t halQueueUnimport(unsigned int devId, unsigned int qid, struct shareQu
     ret = queue_inter_dev_para_check(devId, qid, actual_qid, queInfo);
     if (ret != DRV_ERROR_NONE) {
         return ret;
-    }
-
-    if (g_enable_local_queue != true) {
-        QUEUE_LOG_INFO("local queue is not support.\n");
-        return DRV_ERROR_NOT_SUPPORT;
     }
 
     ret = queue_real_init_iner(devId, LOCAL_QUEUE);

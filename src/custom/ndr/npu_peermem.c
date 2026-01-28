@@ -96,7 +96,7 @@ static void npu_get_p2p_free_callback(void *data)
         (*mem_invalidate_callback)(reg_handle, npu_mem_context->core_context);
     }
 
-    // 解除DMA映射    
+    // 解除DMA映射
     ka_base_for_each_sg(saved_sg_head->sgl, sg, saved_sg_head->nents, i) {
         dma_addr_t dma_addr = ka_mm_sg_dma_address(sg);
         size_t len = ka_mm_sg_dma_len(sg);
@@ -119,8 +119,6 @@ static void npu_get_p2p_free_callback(void *data)
     npu_mem_context->callback_task = NULL;
     return;
 }
-
-
 
 /* acquire return code: 1 mine, 0 - not mine */
 static int npu_acquire(unsigned long addr, size_t size, void *peer_mem_private_data, char *peer_mem_name,
@@ -347,7 +345,7 @@ static int npu_dma_unmap(struct sg_table *sg_head, void *client_context, struct 
         npu_mem_context->callback_task = current;
     }
     ka_task_spin_unlock_irqrestore(&npu_mem_context->lock, flags);
- 
+
     if (!need_unmap) {
         ndr_event("npu_dma_unmap  SG already unmapped or mismatch\n");
         return 0;
@@ -398,7 +396,7 @@ static void npu_put_pages(struct sg_table *sg_head, void *client_context)
         ndr_err("npu_put_pages Skipping put_pages page table is already null\n");
         return;
     }
- 
+
     ret = hal_kernel_p2p_put_pages(local_page_table);
     if (ret) {
         ndr_err("npu_put_pages: hal_kernel_p2p_put_pages failed: %d\n", ret);
@@ -411,7 +409,7 @@ static void npu_put_pages(struct sg_table *sg_head, void *client_context)
 static unsigned long npu_get_page_size(void *client_context)
 {
     struct npu_mem_context *npu_mem_context = (struct npu_mem_context *)client_context;
- 
+
     if (!npu_mem_context_valid(npu_mem_context)) {
         ndr_err("npu_get_page_size: invalid context or magic\n");
         return 0;
@@ -470,7 +468,7 @@ static int __init npu_peer_mem_init(void)
     return -EINVAL;
 #endif
 }
- 
+
 static void __exit npu_peer_mem_exit(void)
 {
 #ifdef IB_PEER_MEM_SYMBOLS_PRESENT

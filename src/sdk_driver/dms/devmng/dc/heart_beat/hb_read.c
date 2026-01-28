@@ -21,6 +21,11 @@
 #include "pbl/pbl_davinci_api.h"
 #include "soft_fault_define.h"
 #include "heart_beat.h"
+#include "ka_kernel_def_pub.h"
+#include "ka_fs_pub.h"
+#include "ka_system_pub.h"
+#include "ka_base_pub.h"
+#include "ka_task_pub.h"
 #include "hb_read.h"
 
 #ifdef CFG_ENV_FPGA
@@ -45,7 +50,7 @@ static struct hb_read_block g_hb_read_block[DEVICE_NUM_MAX] = {{0}};
 static struct hb_read_timer g_hb_read_timer = {{{{0}}}, {{0}}};
 #endif
 static int g_heart_beat_switch = 1;
-module_param(g_heart_beat_switch, int, S_IRUGO);
+ka_module_param(g_heart_beat_switch, int, KA_S_IRUGO);
 
 struct hb_read_block *get_heart_beat_read_item(unsigned int dev_id)
 {
@@ -74,7 +79,7 @@ bool hb_is_need_judge(unsigned long cur_time, struct hb_read_block *hb_info)
 
     /* if the interval time between last judgment and this is less than 6s skip this judgment */
     if (cur_time >= hb_info->last_read_time) {
-        interval_time_ms = (cur_time - hb_info->last_read_time) / NSEC_PER_MSEC;
+        interval_time_ms = (cur_time - hb_info->last_read_time) / KA_NSEC_PER_MSEC;
     }
 
     /* If the interval since the last read work is less than 5000ms, skip this read work */
@@ -87,7 +92,7 @@ bool hb_is_need_judge(unsigned long cur_time, struct hb_read_block *hb_info)
 
 static void log_heart_beat_debug_info(struct hb_read_block *hb_info, unsigned long long cur_time, unsigned long long last_time)
 {
-    unsigned long long interval_time = (cur_time - last_time) / NSEC_PER_SEC;
+    unsigned long long interval_time = (cur_time - last_time) / KA_NSEC_PER_SEC;
 
     /* If the interval between two read work over 12s, record the dfx log */
     if (interval_time >= HB_FORGET_READ_JUDGE_TIME) {
@@ -114,13 +119,17 @@ static bool check_is_need_read(unsigned int dev_id, struct devdrv_manager_info *
     if (manager_info->msg_chan_rdy[dev_id] == 0) {
         return false;
     }
+#else
+    if ((manager_info->dev_info[dev_id] == NULL) || (manager_info->dev_info[dev_id]->dev_ready != DEVDRV_DEV_READY_WORK)) {
+        return false;
+    }
 #endif
 
     if (hb_read_item == NULL || hb_read_item->hb_stutas != HEART_BEAT_READY) {
         return false;
     }
 
-    cur_time = ktime_get_raw_ns();
+    cur_time = ka_system_ktime_get_raw_ns();
     if (!hb_is_need_judge(cur_time, hb_read_item)) {
         return false;
     }
@@ -151,7 +160,7 @@ void hb_read_one_device_count(unsigned int dev_id)
     unsigned long long cur_count = 0;
     unsigned long long cur_time;
     int ret;
-    unsigned int max_lost_count = UINT_MAX;
+    unsigned int max_lost_count = KA_UINT_MAX;
     struct devdrv_manager_info *manager_info = devdrv_get_manager_info();
 
     if (!check_is_need_read(dev_id, manager_info, hb_read_item)) {
@@ -159,7 +168,7 @@ void hb_read_one_device_count(unsigned int dev_id)
     }
 
     max_lost_count = heart_beat_get_max_lost_count(dev_id);
-    if (max_lost_count == UINT_MAX) {
+    if (max_lost_count == KA_UINT_MAX) {
         return;
     }
 
@@ -167,7 +176,7 @@ void hb_read_one_device_count(unsigned int dev_id)
     if (ret != 0) {
         return;
     }
-    cur_time = ktime_get_raw_ns();
+    cur_time = ka_system_ktime_get_raw_ns();
 
     /* only user in host */
     (void)check_and_update_link_abnormal_status(dev_id, cur_count);
@@ -182,7 +191,7 @@ void hb_read_one_device_count(unsigned int dev_id)
             hb_read_item->total_lost_count, hb_read_item->miss_read_count);
         manager_info->device_status[dev_id] = DRV_STATUS_COMMUNICATION_LOST;
         hb_read_item_work_stop(dev_id, hb_read_item);
-        queue_work(hb_read_item->hb_lost_wq, &hb_read_item->hb_lost_work);
+        ka_task_queue_work(hb_read_item->hb_lost_wq, &hb_read_item->hb_lost_work);
     } else {
         hb_read_item->old_count = cur_count;
     }
@@ -200,9 +209,9 @@ static void heart_beat_read_work(struct work_struct *hb_read_work)
 
 static enum hrtimer_restart hb_read_timer_irq_handler(struct hrtimer *htr)
 {
-    queue_work(g_hb_read_timer.hb_read_wq, &g_hb_read_timer.hb_read_work);
-    hrtimer_forward_now(htr, ktime_set(HEART_BEAT_READ_TIMER_EXPIRE_SEC, 0));
-    return HRTIMER_RESTART;
+    ka_task_queue_work(g_hb_read_timer.hb_read_wq, &g_hb_read_timer.hb_read_work);
+    ka_system_hrtimer_forward_now(htr, ka_system_ktime_set(HEART_BEAT_READ_TIMER_EXPIRE_SEC, 0));
+    return KA_HRTIMER_RESTART;
 }
 #endif
 
@@ -231,13 +240,13 @@ int heart_beat_read_item_init(unsigned int dev_id)
     }
 
     if (hb_read_item->hb_lost_wq == NULL) {
-        hb_read_item->hb_lost_wq = create_singlethread_workqueue("hb_lost_wq");
+        hb_read_item->hb_lost_wq = ka_task_create_singlethread_workqueue("hb_lost_wq");
         if (hb_read_item->hb_lost_wq == NULL) {
             soft_drv_err("create workqueue failed. (device id=%u)", dev_id);
             return -ENOMEM;
         }
     }
-    INIT_WORK(&hb_read_item->hb_lost_work, heart_beat_lost_work);
+    KA_TASK_INIT_WORK(&hb_read_item->hb_lost_work, heart_beat_lost_work);
     hb_read_item_work_start(dev_id, hb_read_item);
     return 0;
 }
@@ -254,8 +263,8 @@ void heart_beat_read_item_uninit(unsigned int dev_id)
     }
 
     if (hb_read_item->hb_lost_wq != NULL) {
-        flush_workqueue(hb_read_item->hb_lost_wq);
-        destroy_workqueue(hb_read_item->hb_lost_wq);
+        ka_task_flush_workqueue(hb_read_item->hb_lost_wq);
+        ka_task_destroy_workqueue(hb_read_item->hb_lost_wq);
         hb_read_item->hb_lost_wq = NULL;
     }
     soft_drv_info("heart beat read item uninit success. (dev_id=%u) \n", dev_id);
@@ -268,12 +277,12 @@ int heart_beat_read_timer_init(void)
         soft_drv_warn("Heat beat is not enabled.\n");
         return 0;
     }
-    hrtimer_init(&g_hb_read_timer.timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
+    ka_system_hrtimer_init(&g_hb_read_timer.timer, KA_CLOCK_MONOTONIC, KA_HRTIMER_MODE_REL);
     g_hb_read_timer.timer.function = hb_read_timer_irq_handler;
-    INIT_WORK(&g_hb_read_timer.hb_read_work, heart_beat_read_work);
-    g_hb_read_timer.hb_read_wq = alloc_workqueue("%s", WQ_HIGHPRI, 1, "hb_read_work");
+    KA_TASK_INIT_WORK(&g_hb_read_timer.hb_read_work, heart_beat_read_work);
+    g_hb_read_timer.hb_read_wq = ka_task_alloc_workqueue("%s", WQ_HIGHPRI, 1, "hb_read_work");
 
-    hrtimer_start(&g_hb_read_timer.timer, ktime_set(HEART_BEAT_READ_TIMER_EXPIRE_SEC, 0), HRTIMER_MODE_REL);
+    ka_system_hrtimer_start(&g_hb_read_timer.timer, ka_system_ktime_set(HEART_BEAT_READ_TIMER_EXPIRE_SEC, 0), KA_HRTIMER_MODE_REL);
     return 0;
 #else
     return 0;
@@ -285,14 +294,14 @@ void heart_beat_read_timer_exit(void)
 #if (defined CFG_FEATURE_HEARTBEAT_CNT_PCIE) || (defined CFG_HOST_ENV)
     int ret;
 
-    ret = hrtimer_cancel(&g_hb_read_timer.timer);
+    ret = ka_system_hrtimer_cancel(&g_hb_read_timer.timer);
     if (ret < 0) {
         soft_drv_warn("hrtimer cannot cancel. (ret=%d)\n", ret);
     }
 
     if (g_hb_read_timer.hb_read_wq != NULL) {
-        flush_workqueue(g_hb_read_timer.hb_read_wq);
-        destroy_workqueue(g_hb_read_timer.hb_read_wq);
+        ka_task_flush_workqueue(g_hb_read_timer.hb_read_wq);
+        ka_task_destroy_workqueue(g_hb_read_timer.hb_read_wq);
         g_hb_read_timer.hb_read_wq = NULL;
     }
 #endif

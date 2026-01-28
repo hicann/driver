@@ -21,25 +21,26 @@
 #else
 #include "ut_log.h"
 #endif
+#include "ka_system_pub.h"
 
 #define module_uda "uda"
 
 #define uda_err(fmt, ...) do { \
     drv_err(module_uda, "<%s:%d:%d:%d> " fmt, \
-        current->comm, current->tgid, current->pid, smp_processor_id(), ##__VA_ARGS__); \
+        current->comm, current->tgid, current->pid, ka_system_smp_processor_id(), ##__VA_ARGS__); \
     share_log_err(DEVMNG_SHARE_LOG_START, fmt, ##__VA_ARGS__); \
 } while (0)
 #define uda_warn(fmt, ...) do { \
     drv_warn(module_uda, "<%s:%d:%d:%d> " fmt, \
-        current->comm, current->tgid, current->pid, smp_processor_id(), ##__VA_ARGS__); \
+        current->comm, current->tgid, current->pid, ka_system_smp_processor_id(), ##__VA_ARGS__); \
 } while (0)
 #define uda_info(fmt, ...) do { \
     drv_info(module_uda, "<%s:%d:%d:%d> " fmt, \
-        current->comm, current->tgid, current->pid, smp_processor_id(), ##__VA_ARGS__); \
+        current->comm, current->tgid, current->pid, ka_system_smp_processor_id(), ##__VA_ARGS__); \
 } while (0)
 #define uda_debug(fmt, ...) do { \
     drv_pr_debug(module_uda, "<%s:%d:%d:%d> " fmt, \
-        current->comm, current->tgid, current->pid, smp_processor_id(), ##__VA_ARGS__); \
+        current->comm, current->tgid, current->pid, ka_system_smp_processor_id(), ##__VA_ARGS__); \
 } while (0)
 
 #ifndef __GFP_ACCOUNT

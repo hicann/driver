@@ -13,11 +13,9 @@
 #ifndef SVM_DEV_RES_MNG_H
 #define SVM_DEV_RES_MNG_H
 
-#include <linux/kref.h>
-#include <linux/hashtable.h>
-#include <linux/device.h>
-
 #include "devmm_common.h"
+#include "ka_hashtable_pub.h"
+#include "ka_base_pub.h"
 
 #ifndef DEVMM_UT
 #define DEVMM_MSG_INIT_SEND_WAITTIME 1000
@@ -34,7 +32,7 @@ struct devmm_dev_msg_client {
 };
 
 struct devmm_ipc_mem_node_info {
-    DECLARE_HASHTABLE(node_htable, DEVMM_HASH_LIST_NUM_SHIFT);
+    KA_DECLARE_HASHTABLE(node_htable, DEVMM_HASH_LIST_NUM_SHIFT);
     ka_rwlock_t rwlock;
     ka_mutex_t mutex;
 };

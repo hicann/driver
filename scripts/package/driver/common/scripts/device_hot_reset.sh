@@ -356,7 +356,7 @@ is_support_hot_reset() {
 hot_reset()
 {
     if is_splited;then
-        log "[INFO]hot reset skip by splited"
+        log "[INFO]hot reset skip by split"
         return
     fi
     if [ -e "$hotreset_status_file" ];then
@@ -390,7 +390,7 @@ hot_reset()
 
     local devnum=`get_devs_num "$allDevs"`
     if ! is_support_hot_reset; then
-        log "[INFO]total dev num: "$devnum" not surport hotreset"
+        log "[INFO]total dev num: "$devnum" not support hotreset"
         echo "abort" > "$hotreset_status_file"
         return
     fi
@@ -413,7 +413,7 @@ hot_reset()
 
     local busnum=`get_devs_num "$masterDevsBus"`
     if [ $busnum == 0 ]; then
-        log "[INFO]master bus num: "$busnum" not surport hotreset"
+        log "[INFO]master bus num: "$busnum" not support hotreset"
         echo "abort" > "$hotreset_status_file"
         return
     fi

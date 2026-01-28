@@ -39,6 +39,14 @@
 #endif
 #include "devdrv_common.h"
 #include "dms_event.h"
+#include "ka_dfx_pub.h"
+#include "ka_system_pub.h"
+#include "ka_list_pub.h"
+#include "ka_memory_pub.h"
+#include "ka_errno_pub.h"
+#include "ka_task_pub.h"
+#include "ka_base_pub.h"
+#include "ka_kernel_def_pub.h"
 
 #define DMS_EVENT_KFIFO_CELL (sizeof(struct dms_event_obj))
 #define DMS_EVENT_KFIFO_SIZE (DMS_EVENT_KFIFO_CELL * DMS_MAX_EVENT_NUM)
@@ -50,12 +58,12 @@
 
 struct {
     struct task_struct *poll_task;
-    atomic_t poll_flag;
+    ka_atomic_t poll_flag;
 
     struct kfifo kfifo;
     u32 event_num;
     struct mutex lock;
-    wait_queue_head_t wait;
+    ka_wait_queue_head_t wait;
 } g_event_task;
 
 int dms_event_get_fault_event(void *feature, char *in, u32 in_len,
@@ -124,7 +132,7 @@ static int dms_event_add_recv_to_dfx(struct dms_event_obj *event_obj)
     dfx_table = &dev_cb->dev_event_cb.dfx_table;
     assertion = event_obj->event.sensor_event.assertion;
     if (assertion < DMS_EVENT_TYPE_MAX) {
-        atomic_inc(&dfx_table->recv_from_sensor[assertion]);
+        ka_base_atomic_inc(&dfx_table->recv_from_sensor[assertion]);
         return DRV_ERROR_NONE;
     }
 
@@ -135,7 +143,7 @@ static int dms_event_add_recv_to_dfx(struct dms_event_obj *event_obj)
 int dms_event_report(struct dms_event_obj *event_obj)
 {
     struct dms_event_obj obj_buf;
-    u32 event_num = kfifo_len(&g_event_task.kfifo) / DMS_EVENT_KFIFO_CELL;
+    u32 event_num = ka_base_kfifo_len(&g_event_task.kfifo) / DMS_EVENT_KFIFO_CELL;
 
     if ((event_obj == NULL) || dms_event_add_recv_to_dfx(event_obj)) {
         dms_err("The pointer of event_obj is null or add to dfx failed. (event_obj='%s')\n",
@@ -152,10 +160,10 @@ int dms_event_report(struct dms_event_obj *event_obj)
         return DRV_ERROR_NONE;
     }
 
-    mutex_lock(&g_event_task.lock);
-    while (kfifo_avail(&g_event_task.kfifo) < DMS_EVENT_KFIFO_CELL) {
-        if (!kfifo_out(&g_event_task.kfifo, &obj_buf, DMS_EVENT_KFIFO_CELL)) {
-            dms_warn("kfifo_out warn.\n");
+    ka_task_mutex_lock(&g_event_task.lock);
+    while (ka_base_kfifo_avail(&g_event_task.kfifo) < DMS_EVENT_KFIFO_CELL) {
+        if (!ka_base_kfifo_out(&g_event_task.kfifo, &obj_buf, DMS_EVENT_KFIFO_CELL)) {
+            dms_warn("ka_base_kfifo_out warn.\n");
         }
         dms_event("Dms event is covered. (dev_id=%u; node_type=0x%X; node_id=0x%X; "
                   "sensor_type=0x%X; event_state=%u; assertion=%u; alarm_serial_num=%u)\n",
@@ -164,14 +172,14 @@ int dms_event_report(struct dms_event_obj *event_obj)
                   obj_buf.event.sensor_event.assertion, obj_buf.alarm_serial_num);
     }
 
-    kfifo_in(&g_event_task.kfifo, event_obj, DMS_EVENT_KFIFO_CELL);
-    g_event_task.event_num = kfifo_len(&g_event_task.kfifo) / DMS_EVENT_KFIFO_CELL;
-    mutex_unlock(&g_event_task.lock);
+    ka_base_kfifo_in(&g_event_task.kfifo, event_obj, DMS_EVENT_KFIFO_CELL);
+    g_event_task.event_num = ka_base_kfifo_len(&g_event_task.kfifo) / DMS_EVENT_KFIFO_CELL;
+    ka_task_mutex_unlock(&g_event_task.lock);
 
-    wake_up(&g_event_task.wait);
+    ka_task_wake_up(&g_event_task.wait);
     return DRV_ERROR_NONE;
 }
-EXPORT_SYMBOL(dms_event_report);
+KA_EXPORT_SYMBOL(dms_event_report);
 
 static inline unsigned char dms_event_convert_assertion(const struct dms_sensor_object_cb *p_sensor_obj_cb,
     unsigned char event_state)
@@ -239,7 +247,7 @@ STATIC int dms_event_get_events_by_node(const struct dms_node_sensor_cb *pnode_s
     struct dms_sensor_object_cb *psensor_obj_cb = NULL;
     int ret;
 
-    list_for_each_entry_safe(psensor_obj_cb, tmp_sensor_ctl, &(pnode_sensor_cb->sensor_object_table), list) {
+    ka_list_for_each_entry_safe(psensor_obj_cb, tmp_sensor_ctl, &(pnode_sensor_cb->sensor_object_table), list) {
         if ((psensor_obj_cb == NULL) || (psensor_obj_cb->p_event_list == NULL)) {
             continue;
         }
@@ -279,8 +287,8 @@ STATIC int dms_event_get_history_fault_events(int dev_id, struct dms_event_para 
     }
 
     dev_sensor_cb = &dev_cb->dev_sensor_cb;
-    mutex_lock(&dev_sensor_cb->dms_sensor_mutex);
-    list_for_each_entry_safe(pnode_sensor_cb, tmp_ctl, &(dev_sensor_cb->dms_node_sensor_cb_list), list) {
+    ka_task_mutex_lock(&dev_sensor_cb->dms_sensor_mutex);
+    ka_list_for_each_entry_safe(pnode_sensor_cb, tmp_ctl, &(dev_sensor_cb->dms_node_sensor_cb_list), list) {
         if (event_count >= max_event_num) {
             dms_info("has get(%d) fault event number. not need to get continue.\n", max_event_num);
             goto out;
@@ -304,7 +312,7 @@ STATIC int dms_event_get_history_fault_events(int dev_id, struct dms_event_para 
     dms_info("There is %d fault events.\n", event_count);
 
 out:
-    mutex_unlock(&dev_sensor_cb->dms_sensor_mutex);
+    ka_task_mutex_unlock(&dev_sensor_cb->dms_sensor_mutex);
     return ret;
 }
 
@@ -452,7 +460,7 @@ STATIC int dms_get_remote_fault_event(u32 phy_id, struct devdrv_event_obj_para *
     int ret;
 
     dms_event_remote = (struct dms_event_para *)dbl_vmalloc(sizeof(struct dms_event_para) * DMS_MAX_EVENT_ARRAY_LENGTH,
-                                                           GFP_KERNEL | __GFP_ZERO | __GFP_ACCOUNT, PAGE_KERNEL);
+                                                           KA_GFP_KERNEL | __KA_GFP_ZERO | __KA_GFP_ACCOUNT, KA_PAGE_KERNEL);
     if (dms_event_remote == NULL) {
         dms_err("Call ka_vmalloc failed. (phy_id=%u)\n", phy_id);
         return DRV_ERROR_OUT_OF_MEMORY;
@@ -491,9 +499,9 @@ STATIC int dms_get_event_para_from_local_sensor(int dev_id, struct dms_event_par
         return DRV_ERROR_NO_DEVICE;
     }
     event_buff = (struct dms_event_obj *)dbl_kzalloc(sizeof(struct dms_event_obj) *
-                                                 DMS_EVENT_ERROR_ARRAY_NUM, GFP_KERNEL | __GFP_ACCOUNT);
+                                                 DMS_EVENT_ERROR_ARRAY_NUM, KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
     if (event_buff == NULL) {
-        dms_err("Call kzalloc failed. (dev_id=%u)\n", dev_id);
+        dms_err("Call ka_mm_kzalloc failed. (dev_id=%u)\n", dev_id);
         return DRV_ERROR_OUT_OF_MEMORY;
     }
  
@@ -537,7 +545,7 @@ STATIC int dms_get_local_fault_event(u32 phy_id, struct devdrv_event_obj_para *e
     int ret;
 
     dms_event_local = (struct dms_event_para *)dbl_vmalloc(sizeof(struct dms_event_para) * DMS_MAX_EVENT_ARRAY_LENGTH,
-                                                          GFP_KERNEL | __GFP_ZERO | __GFP_ACCOUNT, PAGE_KERNEL);
+                                                          KA_GFP_KERNEL | __KA_GFP_ZERO | __KA_GFP_ACCOUNT, KA_PAGE_KERNEL);
     if (dms_event_local == NULL) {
         dms_err("Call ka_vmalloc failed. (phy_id=%u)\n", phy_id);
         return DRV_ERROR_OUT_OF_MEMORY;
@@ -657,7 +665,7 @@ int dms_event_clear_by_phyid(u32 phyid)
     dms_event("Clear event success. (phyid=%u)\n", phyid);
     return DRV_ERROR_NONE;
 }
-EXPORT_SYMBOL(dms_event_clear_by_phyid);
+KA_EXPORT_SYMBOL(dms_event_clear_by_phyid);
 
 static int dms_event_get_logic_id_and_covert_to_phy_id(char *in, u32 in_len, u32 *logic_id, u32 *phy_id, u32 *fid)
 {
@@ -758,7 +766,7 @@ int dms_event_mask_by_phyid(u32 phyid, u32 event_id, u8 mask)
               phyid, event_id, mask, ret);
     return DRV_ERROR_NONE;
 }
-EXPORT_SYMBOL(dms_event_mask_by_phyid);
+KA_EXPORT_SYMBOL(dms_event_mask_by_phyid);
 
 int dms_event_disable_fault_event(void *feature, char *in, u32 in_len,
     char *out, u32 out_len)
@@ -896,9 +904,9 @@ int dms_get_event_code_from_sensor(u32 devid, u32 *health_code, u32 health_len,
     }
 
     event_buff = (struct dms_event_obj *)dbl_kzalloc(sizeof(struct dms_event_obj) *
-                                                 DMS_EVENT_ERROR_ARRAY_NUM, GFP_KERNEL | __GFP_ACCOUNT);
+                                                 DMS_EVENT_ERROR_ARRAY_NUM, KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
     if (event_buff == NULL) {
-        dms_err("Call kzalloc failed. (dev_id=%u)\n", devid);
+        dms_err("Call ka_mm_kzalloc failed. (dev_id=%u)\n", devid);
         return DRV_ERROR_OUT_OF_MEMORY;
     }
 
@@ -920,7 +928,7 @@ free_buff:
     event_buff = NULL;
     return ret;
 }
-EXPORT_SYMBOL(dms_get_event_code_from_sensor);
+KA_EXPORT_SYMBOL(dms_get_event_code_from_sensor);
 
 static int dms_get_event_code_para_check(u32 devid, u32 fid, u32 *health_code,
     struct devdrv_error_code_para *code_para)
@@ -1032,17 +1040,17 @@ STATIC int dms_get_event_code(u32 devid, u32 fid, u32 *health_code,
     }
 
     sensor_event = (struct shm_event_code *)dbl_kzalloc(sizeof(struct shm_event_code) * \
-                                                    DEVMNG_SHM_INFO_EVENT_CODE_LEN, GFP_KERNEL | __GFP_ACCOUNT);
+                                                    DEVMNG_SHM_INFO_EVENT_CODE_LEN, KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
     if (sensor_event == NULL) {
-        dms_err("Call kzalloc sensor_event failed. (dev_id=%u)\n", devid);
+        dms_err("Call ka_mm_kzalloc sensor_event failed. (dev_id=%u)\n", devid);
         return DRV_ERROR_OUT_OF_MEMORY;
     }
 
     bar_event = (struct shm_event_code *)dbl_kzalloc(sizeof(struct shm_event_code) * \
-                                                 DEVMNG_SHM_INFO_EVENT_CODE_LEN, GFP_KERNEL | __GFP_ACCOUNT);
+                                                 DEVMNG_SHM_INFO_EVENT_CODE_LEN, KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
     if (bar_event == NULL) {
         dbl_kfree(sensor_event);
-        dms_err("Call kzalloc bar_event failed. (dev_id=%u)\n", devid);
+        dms_err("Call ka_mm_kzalloc bar_event failed. (dev_id=%u)\n", devid);
         return DRV_ERROR_OUT_OF_MEMORY;
     }
 
@@ -1237,7 +1245,7 @@ STATIC int dms_get_item_state(struct dms_node_state *state, struct state_item *i
         dms_err("state table get dev cb failed\n");
         return -EINVAL;
     }
-    mutex_lock(&dev_cb->node_lock);
+    ka_task_mutex_lock(&dev_cb->node_lock);
     for (i = 0; i < out_num; i++) {
         state[i].node_type = item[i].node_type;
         state[i].node_id = item[i].node_id;
@@ -1258,7 +1266,7 @@ STATIC int dms_get_item_state(struct dms_node_state *state, struct state_item *i
             state[i].init_state = (uint32_t)DMS_DEV_INIT_NOT_REGISTER;
         }
     }
-    mutex_unlock(&dev_cb->node_lock);
+    ka_task_mutex_unlock(&dev_cb->node_lock);
     return 0;
 }
 
@@ -1308,29 +1316,29 @@ static int dms_event_poll_event(struct dms_event_obj *event_obj, u32 wait_time, 
         return ETIMEDOUT;
     }
 
-    if (atomic_read(&g_event_task.poll_flag) != (int)EVENT_POLL_WORK) {
-        msleep(DMS_EVENT_TASK_WAIT_TIMEOUT_MS);
+    if (ka_base_atomic_read(&g_event_task.poll_flag) != (int)EVENT_POLL_WORK) {
+        ka_system_msleep(DMS_EVENT_TASK_WAIT_TIMEOUT_MS);
         return DRV_ERROR_UNINIT;
     }
 
-    mutex_lock(&g_event_task.lock);
-    if (kfifo_len(&g_event_task.kfifo) < DMS_EVENT_KFIFO_CELL) {
-        g_event_task.event_num = kfifo_len(&g_event_task.kfifo) / DMS_EVENT_KFIFO_CELL;
-        mutex_unlock(&g_event_task.lock);
+    ka_task_mutex_lock(&g_event_task.lock);
+    if (ka_base_kfifo_len(&g_event_task.kfifo) < DMS_EVENT_KFIFO_CELL) {
+        g_event_task.event_num = ka_base_kfifo_len(&g_event_task.kfifo) / DMS_EVENT_KFIFO_CELL;
+        ka_task_mutex_unlock(&g_event_task.lock);
         dms_warn("There is no event in event fifo.\n");
         return DRV_ERROR_INNER_ERR;
     }
 
-    if (!kfifo_out(&g_event_task.kfifo, event_obj, DMS_EVENT_KFIFO_CELL)) {
-        g_event_task.event_num = kfifo_len(&g_event_task.kfifo) / DMS_EVENT_KFIFO_CELL;
-        mutex_unlock(&g_event_task.lock);
-        dms_err("kfifo_out failed.\n");
+    if (!ka_base_kfifo_out(&g_event_task.kfifo, event_obj, DMS_EVENT_KFIFO_CELL)) {
+        g_event_task.event_num = ka_base_kfifo_len(&g_event_task.kfifo) / DMS_EVENT_KFIFO_CELL;
+        ka_task_mutex_unlock(&g_event_task.lock);
+        dms_err("ka_base_kfifo_out failed.\n");
         return DRV_ERROR_INNER_ERR;
     }
 
-    g_event_task.event_num = kfifo_len(&g_event_task.kfifo) / DMS_EVENT_KFIFO_CELL;
+    g_event_task.event_num = ka_base_kfifo_len(&g_event_task.kfifo) / DMS_EVENT_KFIFO_CELL;
     *event_num = g_event_task.event_num;
-    mutex_unlock(&g_event_task.lock);
+    ka_task_mutex_unlock(&g_event_task.lock);
 
     return DRV_ERROR_NONE;
 }
@@ -1419,9 +1427,9 @@ static void dms_record_fault_event_log(DMS_EVENT_NODE_STRU *exception_node)
 
 void dms_event_set_poll_task_flag(enum dms_event_poll_flag flag)
 {
-    atomic_set(&g_event_task.poll_flag, flag);
+    ka_base_atomic_set(&g_event_task.poll_flag, flag);
 }
-EXPORT_SYMBOL(dms_event_set_poll_task_flag);
+KA_EXPORT_SYMBOL(dms_event_set_poll_task_flag);
 
 static int dms_event_poll_task(void *arg)
 {
@@ -1431,10 +1439,10 @@ static int dms_event_poll_task(void *arg)
     u32 time_new = 0;
     u32 wait_time, event_num = 0;
 
-    wait_time = msecs_to_jiffies(DMS_EVENT_TASK_WAIT_TIMEOUT_MS);
+    wait_time = ka_system_msecs_to_jiffies(DMS_EVENT_TASK_WAIT_TIMEOUT_MS);
     dms_info("Dms event poll task start.\n");
-    while (!kthread_should_stop()) {
-        time_new = jiffies_to_msecs(jiffies);
+    while (!ka_task_kthread_should_stop()) {
+        time_new = ka_system_jiffies_to_msecs(ka_jiffies);
         /* When there is a 500ms interval or timing flip, refresh the bar space immediately */
         if ((time_new < time_old) || ((time_new - time_old) > DMS_EVENT_FRESH_TO_BAR)) {
             if (smf_distribute_all_devices_event_to_bar() != 0) {
@@ -1469,7 +1477,7 @@ static int dms_event_poll_task(void *arg)
         }
     }
 
-    atomic_set(&g_event_task.poll_flag, EVENT_POLL_EXIT);
+    ka_base_atomic_set(&g_event_task.poll_flag, EVENT_POLL_EXIT);
 
     dms_info("Dms event poll task exited.\n");
     return DRV_ERROR_NONE;
@@ -1477,30 +1485,30 @@ static int dms_event_poll_task(void *arg)
 
 static int dms_event_task_init(void)
 {
-    init_waitqueue_head(&g_event_task.wait);
-    mutex_init(&g_event_task.lock);
-    mutex_lock(&g_event_task.lock);
+    ka_task_init_waitqueue_head(&g_event_task.wait);
+    ka_task_mutex_init(&g_event_task.lock);
+    ka_task_mutex_lock(&g_event_task.lock);
     g_event_task.event_num = 0;
-    if (kfifo_alloc(&g_event_task.kfifo, DMS_EVENT_KFIFO_SIZE, GFP_KERNEL) != 0) {
-        mutex_unlock(&g_event_task.lock);
-        mutex_destroy(&g_event_task.lock);
-        dms_err("kfifo_alloc failed.\n");
+    if (ka_base_kfifo_alloc(&g_event_task.kfifo, DMS_EVENT_KFIFO_SIZE, KA_GFP_KERNEL) != 0) {
+        ka_task_mutex_unlock(&g_event_task.lock);
+        ka_task_mutex_destroy(&g_event_task.lock);
+        dms_err("ka_base_kfifo_alloc failed.\n");
         return DRV_ERROR_INNER_ERR;
     }
-    kfifo_reset(&g_event_task.kfifo);
-    mutex_unlock(&g_event_task.lock);
+    ka_base_kfifo_reset(&g_event_task.kfifo);
+    ka_task_mutex_unlock(&g_event_task.lock);
 #if defined(CFG_FEATURE_EP_MODE) && !defined (CFG_HOST_ENV)
-    atomic_set(&g_event_task.poll_flag, EVENT_POLL_EXIT);
+    ka_base_atomic_set(&g_event_task.poll_flag, EVENT_POLL_EXIT);
 #else
-    atomic_set(&g_event_task.poll_flag, EVENT_POLL_WORK);
+    ka_base_atomic_set(&g_event_task.poll_flag, EVENT_POLL_WORK);
 #endif
-    g_event_task.poll_task = kthread_create(dms_event_poll_task, (void *)NULL, "dms_poll_task");
-    if (IS_ERR(g_event_task.poll_task)) {
-        mutex_lock(&g_event_task.lock);
-        kfifo_free(&g_event_task.kfifo);
-        mutex_unlock(&g_event_task.lock);
-        mutex_destroy(&g_event_task.lock);
-        dms_err("kthread_create failed.\n");
+    g_event_task.poll_task = ka_task_kthread_create(dms_event_poll_task, (void *)NULL, "dms_poll_task");
+    if (KA_IS_ERR(g_event_task.poll_task)) {
+        ka_task_mutex_lock(&g_event_task.lock);
+        ka_base_kfifo_free(&g_event_task.kfifo);
+        ka_task_mutex_unlock(&g_event_task.lock);
+        ka_task_mutex_destroy(&g_event_task.lock);
+        dms_err("ka_task_kthread_create failed.\n");
         return DRV_ERROR_INNER_ERR;
     }
 
@@ -1508,7 +1516,7 @@ static int dms_event_task_init(void)
 #ifdef CFG_FEATURE_BIND_CORE
     kthread_bind_to_ctrl_cpu(g_event_task.poll_task);
 #endif
-    (void)wake_up_process(g_event_task.poll_task);
+    (void)ka_task_wake_up_process(g_event_task.poll_task);
     return DRV_ERROR_NONE;
 }
 
@@ -1516,16 +1524,16 @@ static void dms_event_task_exit(void)
 {
     int wait_time = 0;
 
-    atomic_set(&g_event_task.poll_flag, EVENT_POLL_STOP);
-    mutex_lock(&g_event_task.lock);
+    ka_base_atomic_set(&g_event_task.poll_flag, EVENT_POLL_STOP);
+    ka_task_mutex_lock(&g_event_task.lock);
     g_event_task.event_num = DMS_MAX_EVENT_NUM;
-    mutex_unlock(&g_event_task.lock);
-    if (!IS_ERR(g_event_task.poll_task)) {
-        (void)kthread_stop(g_event_task.poll_task);
+    ka_task_mutex_unlock(&g_event_task.lock);
+    if (!KA_IS_ERR(g_event_task.poll_task)) {
+        (void)ka_task_kthread_stop(g_event_task.poll_task);
     }
-    wake_up(&g_event_task.wait);
-    while (atomic_read(&g_event_task.poll_flag) != EVENT_POLL_EXIT) {
-        msleep(1);
+    ka_task_wake_up(&g_event_task.wait);
+    while (ka_base_atomic_read(&g_event_task.poll_flag) != EVENT_POLL_EXIT) {
+        ka_system_msleep(1);
         if (++wait_time >= DMS_EVENT_POLL_WAIT_TIME) {
             dms_err("Wait dms_event_poll_task exit timeout.\n");
             goto out;
@@ -1534,11 +1542,11 @@ static void dms_event_task_exit(void)
 
     dms_info("Dms_event_poll_task exit success.\n");
 out:
-    mutex_lock(&g_event_task.lock);
-    kfifo_free(&g_event_task.kfifo);
+    ka_task_mutex_lock(&g_event_task.lock);
+    ka_base_kfifo_free(&g_event_task.kfifo);
     g_event_task.event_num = 0;
-    mutex_unlock(&g_event_task.lock);
-    mutex_destroy(&g_event_task.lock);
+    ka_task_mutex_unlock(&g_event_task.lock);
+    ka_task_mutex_destroy(&g_event_task.lock);
     g_event_task.poll_task = NULL;
     return;
 }
@@ -1548,20 +1556,20 @@ void dms_event_ctrl_converge_list_free(struct dms_converge_event_list *event_lis
     DMS_EVENT_NODE_STRU *exception_node = NULL;
     struct list_head *pos = NULL, *n = NULL;
 
-    mutex_lock(&event_list->lock);
+    ka_task_mutex_lock(&event_list->lock);
     event_list->event_num = 0;
     event_list->health_code = 0;
-    if (!list_empty_careful(&event_list->head)) {
-        list_for_each_safe(pos, n, &event_list->head) {
-            exception_node = list_entry(pos, DMS_EVENT_NODE_STRU, node);
-            list_del(&exception_node->node);
+    if (!ka_list_empty_careful(&event_list->head)) {
+        ka_list_for_each_safe(pos, n, &event_list->head) {
+            exception_node = ka_list_entry(pos, DMS_EVENT_NODE_STRU, node);
+            ka_list_del(&exception_node->node);
             dbl_kfree(exception_node);
             exception_node = NULL;
         }
     }
 
-    INIT_LIST_HEAD(&event_list->head);
-    mutex_unlock(&event_list->lock);
+    KA_INIT_LIST_HEAD(&event_list->head);
+    ka_task_mutex_unlock(&event_list->lock);
 }
 
 void dms_event_sensor_reported_list_free(struct dms_sensor_reported_list *reported_list)
@@ -1569,19 +1577,19 @@ void dms_event_sensor_reported_list_free(struct dms_sensor_reported_list *report
     struct dms_event_sensor_reported *event_node = NULL;
     struct list_head *pos = NULL, *n = NULL;
 
-    mutex_lock(&reported_list->lock);
+    ka_task_mutex_lock(&reported_list->lock);
     reported_list->reported_num = 0;
-    if (!list_empty_careful(&reported_list->head)) {
-        list_for_each_safe(pos, n, &reported_list->head) {
-            event_node = list_entry(pos, struct dms_event_sensor_reported, node);
-            list_del(&event_node->node);
+    if (!ka_list_empty_careful(&reported_list->head)) {
+        ka_list_for_each_safe(pos, n, &reported_list->head) {
+            event_node = ka_list_entry(pos, struct dms_event_sensor_reported, node);
+            ka_list_del(&event_node->node);
             dbl_kfree(event_node);
             event_node = NULL;
         }
     }
 
-    INIT_LIST_HEAD(&reported_list->head);
-    mutex_unlock(&reported_list->lock);
+    KA_INIT_LIST_HEAD(&reported_list->head);
+    ka_task_mutex_unlock(&reported_list->lock);
 }
 
 static int dms_event_ctrl_init(void)
@@ -1595,14 +1603,14 @@ static int dms_event_ctrl_init(void)
             dms_err("Get dev_ctrl block failed. (dev_id=%u)\n", i);
             return DRV_ERROR_NO_DEVICE;
         }
-        mutex_lock(&dev_cb->node_lock);
-        mutex_init(&dev_cb->dev_event_cb.event_list.lock);
-        INIT_LIST_HEAD(&dev_cb->dev_event_cb.event_list.head);
-        mutex_init(&dev_cb->dev_event_cb.reported_list.lock);
-        INIT_LIST_HEAD(&dev_cb->dev_event_cb.reported_list.head);
-        mutex_init(&dev_cb->dev_event_cb.dfx_table.lock);
-        INIT_LIST_HEAD(&dev_cb->dev_event_cb.dfx_table.mask_list);
-        mutex_unlock(&dev_cb->node_lock);
+        ka_task_mutex_lock(&dev_cb->node_lock);
+        ka_task_mutex_init(&dev_cb->dev_event_cb.event_list.lock);
+        KA_INIT_LIST_HEAD(&dev_cb->dev_event_cb.event_list.head);
+        ka_task_mutex_init(&dev_cb->dev_event_cb.reported_list.lock);
+        KA_INIT_LIST_HEAD(&dev_cb->dev_event_cb.reported_list.head);
+        ka_task_mutex_init(&dev_cb->dev_event_cb.dfx_table.lock);
+        KA_INIT_LIST_HEAD(&dev_cb->dev_event_cb.dfx_table.mask_list);
+        ka_task_mutex_unlock(&dev_cb->node_lock);
     }
 
     return DRV_ERROR_NONE;
@@ -1619,14 +1627,14 @@ static void dms_event_ctrl_uninit(void)
             dms_err("Get dev_ctrl block failed. (dev_id=%u)\n", i);
             continue;
         }
-        mutex_lock(&dev_cb->node_lock);
+        ka_task_mutex_lock(&dev_cb->node_lock);
         dms_event_ctrl_converge_list_free(&dev_cb->dev_event_cb.event_list);
-        mutex_destroy(&dev_cb->dev_event_cb.event_list.lock);
+        ka_task_mutex_destroy(&dev_cb->dev_event_cb.event_list.lock);
         dms_event_sensor_reported_list_free(&dev_cb->dev_event_cb.reported_list);
-        mutex_destroy(&dev_cb->dev_event_cb.reported_list.lock);
+        ka_task_mutex_destroy(&dev_cb->dev_event_cb.reported_list.lock);
         dms_event_mask_list_clear(dev_cb);
-        mutex_destroy(&dev_cb->dev_event_cb.dfx_table.lock);
-        mutex_unlock(&dev_cb->node_lock);
+        ka_task_mutex_destroy(&dev_cb->dev_event_cb.dfx_table.lock);
+        ka_task_mutex_unlock(&dev_cb->node_lock);
     }
 }
 
@@ -1648,8 +1656,8 @@ static int dms_event_ctrl_up(u32 devid)
 
     /* dfx table init */
     for (i = 0; i < DMS_EVENT_TYPE_MAX; i++) {
-        atomic_set(&event_ctrl->dfx_table.recv_from_sensor[i], 0);
-        atomic_set(&event_ctrl->dfx_table.report_to_consumer[i], 0);
+        ka_base_atomic_set(&event_ctrl->dfx_table.recv_from_sensor[i], 0);
+        ka_base_atomic_set(&event_ctrl->dfx_table.report_to_consumer[i], 0);
     }
     dms_event_mask_list_clear(dev_cb);
 
@@ -1671,8 +1679,8 @@ STATIC void dms_event_ctrl_down(u32 devid)
     (void)dms_event_convergent_diagrams_clear(devid, true);
 
     for (i = 0; i < DMS_EVENT_TYPE_MAX; i++) {
-        atomic_set(&event_ctrl->dfx_table.recv_from_sensor[i], 0);
-        atomic_set(&event_ctrl->dfx_table.report_to_consumer[i], 0);
+        ka_base_atomic_set(&event_ctrl->dfx_table.recv_from_sensor[i], 0);
+        ka_base_atomic_set(&event_ctrl->dfx_table.report_to_consumer[i], 0);
     }
     dms_event_mask_list_clear(dev_cb);
 }
@@ -1736,23 +1744,23 @@ static int dms_event_notifier_handle(struct notifier_block *self,
         (event >= DMS_DEVICE_NOTIFIER_MAX)) {
         dms_err("Invalid parameter. (event=0x%lx; data=\"%s\")\n",
                 event, data == NULL ? "NULL" : "OK");
-        return NOTIFY_BAD;
+        return KA_NOTIFY_BAD;
     }
 
     if (dms_event_notifier_handle_func[event] == NULL) {
-        return NOTIFY_DONE;
+        return KA_NOTIFY_DONE;
     }
 
     ret = dms_event_notifier_handle_func[event](dev_info);
     if (ret != 0) {
         dms_err("Notifier handle failed. (event=0x%lx; dev_id=%u)\n",
                 event, dev_info->dev_id);
-        return NOTIFY_BAD;
+        return KA_NOTIFY_BAD;
     }
 
     dms_debug("Notifier handle success. (event=0x%lx; dev_id=%u)\n",
               event, dev_info->dev_id);
-    return NOTIFY_DONE;
+    return KA_NOTIFY_DONE;
 }
 
 static struct notifier_block dms_event_notifier = {

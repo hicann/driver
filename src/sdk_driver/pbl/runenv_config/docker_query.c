@@ -106,7 +106,7 @@ bool dbl_current_is_admin(void)
     if (!is_admin_task(current)) {
         return false;
     }
-    /* for compatiblity, only check ro as not admin, in other scenarios, admin is returned */
+    /* for compatibility, only check ro as not admin, in other scenarios, admin is returned */
     if (cgroup_mount_is_ro()) {
         return false;
     }

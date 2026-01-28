@@ -326,6 +326,7 @@ typedef struct ka_sysinfo {
 #define ka_mm_readl(addr)    readl(addr)
 #define ka_mm_readl_relaxed(addr)    readl_relaxed(addr)
 #define ka_mm_writeq(b, addr)    writeq(b, addr)
+#define ka_mm_readq(addr)    readq(addr)
 #define ka_mm_writel_relaxed(value, addr)    writel_relaxed(value, addr)
 #define ka_mm_writeq_relaxed(value, addr)    writeq_relaxed(value, addr)
 
@@ -396,7 +397,6 @@ typedef ka_vm_fault_t (*vmf_fault_func)(ka_vm_fault_struct_t *);
 typedef int (*vm_fault_func)(ka_vm_area_struct_t *, ka_vm_fault_struct_t *);
 void ka_mm_set_vm_fault_host(ka_vm_operations_struct_t *ops_managed, vmf_fault_func vmf_func, vm_fault_func vm_func);
 void ka_mm_set_vm_mremap(ka_vm_operations_struct_t *ops_managed, int (*mremap_func)(ka_vm_area_struct_t *));
-
+bool ka_mm_is_svm_addr(struct vm_area_struct *vma, u64 addr);
 #define ka_mm_get_ds() get_ds()
-
 #endif

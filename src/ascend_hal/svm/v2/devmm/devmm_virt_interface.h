@@ -175,8 +175,8 @@ struct devmm_virt_com_heap {
     uint64_t peak_alloc_cache_mem[DEVMM_MEMTYPE_MAX]; /* peak alloc can cache */
     time_t peak_alloc_cache_time[DEVMM_MEMTYPE_MAX]; /* the time peak alloc can cache */
     uint32_t need_cache_thres[DEVMM_MEMTYPE_MAX]; /* alloc size need to cache threshold */
-    bool is_limited;    /* true: this kind of heap is resource-limited, not allowd to be alloced another new heap.
-                           The heap's cache will be shrinked forcibly, when it's not enough for nocache's allocation */
+    bool is_limited;    /* true: this kind of heap is resource-limited, not allowed to be alloced another new heap.
+                           The heap's cache will be shrunken forcibly, when it's not enough for nocache's allocation */
     bool is_cache;      /* true: follow the cache rule, devmm_get_free_threshold_by_type, used by normal heap.
                            false: no cache, free the heap immediately, used by specified va alloc. For example,
                                   alloc 2M success, free 2M success, alloc 2G will fail because of cache heap. */
@@ -187,7 +187,7 @@ struct devmm_virt_com_heap {
     uint32_t side;          /* used for large heap (>=512M) */
     uint32_t devid;         /* used for large heap (>=512M) */
     uint64_t mapped_size;
-
+    uint64_t reserve_size;  /* used for snapshot restore of SUB_RESERVE_TYPE primary_heap */
     uint32_t chunk_size;
     uint32_t kernel_page_size;  /* get from kernel */
     uint32_t map_size;
@@ -212,6 +212,7 @@ struct devmm_virt_com_heap {
 
 struct devmm_heap_queue {
     struct devmm_virt_com_heap base_heap; /* use for manage 32T heap, heap range 1g */
+    struct devmm_virt_com_heap host_base_heap; /* use for manage 3T(5T~8T) heap, host pin memory */
     struct devmm_virt_com_heap *heaps[DEVMM_MAX_HEAP_NUM];
 };
 
@@ -230,6 +231,18 @@ struct devmm_virt_heap_mgmt {
     virt_addr_t start; /* svm page_size aligned */
     virt_addr_t end;   /* svm page_size aligned */
 
+    virt_addr_t host_pin_start; /* Host pin range 5T ~ 8T */
+    virt_addr_t host_pin_end;   /* Host pin range 5T ~ 8T */
+ 
+    virt_addr_t uvm_start;
+    virt_addr_t uvm_end;
+ 
+    virt_addr_t soma_start;
+    virt_addr_t soma_end;
+ 
+    virt_addr_t svm_start;
+    virt_addr_t svm_end;
+
     virt_addr_t dvpp_start;  /* dvpp vaddr start */
     virt_addr_t dvpp_end;    /* dvpp vaddr end */
     uint64_t dvpp_mem_size[DEVMM_MAX_PHY_DEVICE_NUM];
@@ -247,6 +260,7 @@ struct devmm_virt_heap_mgmt {
     bool support_agent_giant_page[DEVMM_MAX_PHY_DEVICE_NUM];
     bool support_shmem_map_exbus[DEVMM_MAX_PHY_DEVICE_NUM];
     bool support_remote_mmap[DEVMM_MAX_PHY_DEVICE_NUM];
+    bool support_mem_host_uva[DEVMM_MAX_PHY_DEVICE_NUM];
     bool support_host_giant_page;
     bool host_support_pin_user_pages_interface;
     bool support_host_rw_dev_ro;

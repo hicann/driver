@@ -82,7 +82,7 @@ int apm_query_slave_ssid(u32 udevid, int slave_tgid, int *ssid);
 /************************ task exit *****************************/
 /* apm task exit control sequence:
    1: set when task exit release need use apm
-   2: master or slave do exit, in this stage module can recycle self resouce
+   2: master or slave do exit, in this stage module can recycle self resource
    3: slave(cp) stop stream
    4: master stop stream
    5: slave(cp) recycle resource
@@ -167,25 +167,28 @@ static inline void apm_task_exit_unregister(struct notifier_block *master_nb, st
     apm_master_exit_unregister(master_nb);
 }
 
-/************************ resouce map *****************************/
+/************************ resource map *****************************/
 /*
     ep: master in host
-        host master res map: host curent master task check, device get res addr
+        host master res map: host current master task check, device get res addr
     ep/rc: master in device
-        device master res map: device curent master task check, device get res addr
-        device slave res map: device curent slave task check, device current get res addr
+        device master res map: device current master task check, device get res addr
+        device slave res map: device current slave task check, device current get res addr
 */
 struct apm_res_map_ops {
     struct module *owner;
     bool (*res_is_belong_to_proc)(int master_tgid, int slave_tgid, u32 udevid, struct res_map_info_in *res_info);
     int (*get_res_addr)(u32 udevid, struct res_map_info_in *res_info, u64 *pa, u32 *len);
-    /* res is mem, may have multy pages, every pa len is one page, len res total len, must page align */
+    /* res is mem, may have multi pages, every pa len is one page, len res total len, must page align */
     int (*get_res_addr_array)(u32 udevid, struct res_map_info_in *res_info, u64 pa[], u32 num, u32 *len);
     void (*put_res_addr_array)(u32 udevid, struct res_map_info_in *res_info, u64 pa[], u32 len);
 };
 
 int hal_kernel_apm_res_map_ops_register(enum res_addr_type res_type, struct apm_res_map_ops *ops);
 void hal_kernel_apm_res_map_ops_unregister(enum res_addr_type res_type);
+
+int apm_master_use(int master_tgid, u32 udevid);
+int apm_master_unuse(int master_tgid, u32 udevid);
 
 #endif
 

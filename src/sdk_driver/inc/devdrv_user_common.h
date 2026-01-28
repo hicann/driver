@@ -246,7 +246,7 @@ struct devdrv_vdev_create_info {
     u32 devid;
     u32 vdev_num;    /* number of vdavinci the devid spilt */
     struct devdrv_vdev_spec_info spec[VDAVINCI_MAX_VFID_NUM]; /* specification of vdavinci */
-    u32 vdevid[VDAVINCI_MAX_VFID_NUM];        /* id number of vdavinci, equel the 'N' in /dev/vdavincN */
+    u32 vdevid[VDAVINCI_MAX_VFID_NUM];        /* id number of vdavinci, equal the 'N' in /dev/vdavincN */
 };
 
 #define DSMI_VDEV_RES_NAME_LEN 16
@@ -352,9 +352,9 @@ struct devdrv_vdev_id_info {
 
 struct vdev_info_st {
     u32 status;       /* whether the vdavinci used by container */
-    u32 id;           /* id number of vdavinci, equel the 'N' in /dev/vdavincN */
+    u32 id;           /* id number of vdavinci, equal the 'N' in /dev/vdavincN */
     u32 vfid;
-    u64 cid;          /* container id, equel current->nsproxy->uts_ns->name.nodename */
+    u64 cid;          /* container id, equal current->nsproxy->uts_ns->name.nodename */
     struct devdrv_vdev_spec_info spec;
 };
 

@@ -15,6 +15,7 @@
 #include "dms_custom_common.h"
 #include "dms_template.h"
 #include "dms/dms_cmd_def.h"
+#include "ka_fs_pub.h"
 #include "dms_custom_common.h"
 
 
@@ -134,12 +135,8 @@ int dms_custom_read_file(const char *file_name, char *buf,  unsigned int size)
         dms_err("Unable to open file. (file_name=%s; errno=%ld)\n", file_name, PTR_ERR(filp));
         return (int)PTR_ERR(filp);
     }
- 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 13, 0)
-    result = kernel_read(filp, buf, size, &offset_tmp);
-#else
-    result = kernel_read(filp, offset_tmp, buf, (unsigned long)size);
-#endif
+
+    result = ka_fs_kernel_read(filp, buf, size, &offset_tmp);
     if (result != (ssize_t)size) {
         dms_err("Kernel read file error. (result=%ld; size=%u)\n", result, size);
         (void)filp_close(filp, NULL);
@@ -167,13 +164,8 @@ int dms_sign_write_file(char *file_path, char *buffer, int size)
         }   
         return ret;
     }
- 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 13, 0)
-    rw_len = kernel_write(filp, buffer, size, &offset_tmp);
-#else
-    rw_len = kernel_write(filp, buffer, size, offset_tmp);
-#endif
- 
+
+    rw_len = ka_fs_kernel_write(filp, buffer, size, &offset_tmp);
     (void)filp_close(filp, NULL);
     filp = NULL;
  

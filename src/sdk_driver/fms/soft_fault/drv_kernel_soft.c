@@ -21,6 +21,11 @@
 #include "pbl_mem_alloc_interface.h"
 #include "davinci_interface.h"
 #include "drv_kernel_soft.h"
+#include "ka_list_pub.h"
+#include "ka_memory_pub.h"
+#include "ka_task_pub.h"
+#include "ka_base_pub.h"
+#include "ka_kernel_def_pub.h"
 
 STATIC int drv_kernel_soft_fault_node_config(unsigned int user_id, struct soft_dev *s_dev)
 {
@@ -51,18 +56,18 @@ STATIC int drv_kernel_soft_fault_register(u32 devid)
     struct soft_dev *s_dev = NULL;
     int ret;
 
-    mutex_lock(&soft_ctrl->mutex[devid]);
+    ka_task_mutex_lock(&soft_ctrl->mutex[devid]);
 
     client = soft_ctrl->s_dev_t[devid][user_id];
     if (client->registered == 1) {
-        mutex_unlock(&soft_ctrl->mutex[devid]);
+        ka_task_mutex_unlock(&soft_ctrl->mutex[devid]);
         return 0;
     }
 
-    s_dev = dbl_kzalloc(sizeof(struct soft_dev), GFP_KERNEL | __GFP_ACCOUNT);
+    s_dev = dbl_kzalloc(sizeof(struct soft_dev), KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
     if (s_dev == NULL) {
-        soft_drv_err("kzalloc soft_dev failed.\n");
-        mutex_unlock(&soft_ctrl->mutex[devid]);
+        soft_drv_err("ka_mm_kzalloc soft_dev failed.\n");
+        ka_task_mutex_unlock(&soft_ctrl->mutex[devid]);
         return -ENOMEM;
     }
 
@@ -72,7 +77,7 @@ STATIC int drv_kernel_soft_fault_register(u32 devid)
 
     ret = drv_kernel_soft_fault_node_config(user_id, s_dev);
     if (ret != 0) {
-        soft_drv_err("soft_fault configurate one node failed. (dev_id=%u; ret=%d)\n", devid, ret);
+        soft_drv_err("soft_fault configure one node failed. (dev_id=%u; ret=%d)\n", devid, ret);
         goto ERROR;
     }
 
@@ -82,18 +87,18 @@ STATIC int drv_kernel_soft_fault_register(u32 devid)
         goto ERROR;
     }
 
-    list_add(&s_dev->list, &client->head);
+    ka_list_add(&s_dev->list, &client->head);
     client->user_id = user_id;
     client->registered = 1;
     client->node_num++;
     soft_ctrl->user_num[devid]++;
-    mutex_unlock(&soft_ctrl->mutex[devid]);
+    ka_task_mutex_unlock(&soft_ctrl->mutex[devid]);
 
     return 0;
 ERROR:
     dbl_kfree(s_dev);
     s_dev = NULL;
-    mutex_unlock(&soft_ctrl->mutex[devid]);
+    ka_task_mutex_unlock(&soft_ctrl->mutex[devid]);
     return ret;
 }
 
@@ -104,13 +109,13 @@ void drv_kernel_soft_fault_unregister(void)
     u32 i;
 
     for (i = 0; i < ASCEND_DEV_MAX_NUM; i++) {
-        mutex_lock(&soft_ctrl->mutex[i]);
+        ka_task_mutex_lock(&soft_ctrl->mutex[i]);
         client = soft_ctrl->s_dev_t[i][SF_SENSOR_DRV];
         if (client->registered == 1) {
             soft_free_one_node(client, HAL_DMS_DEV_TYPE_DRV_KERNEL);
             soft_ctrl->user_num[i]--;
         }
-        mutex_unlock(&soft_ctrl->mutex[i]);
+        ka_task_mutex_unlock(&soft_ctrl->mutex[i]);
     }
 
     return;
@@ -123,7 +128,7 @@ static void drv_kernel_soft_fault_report(u32 devid)
     struct soft_fault drv_soft;
     const char *info = "drv soft";
 
-    data_len = strlen(info) + 1;
+    data_len = ka_base_strlen(info) + 1;
     ret = strcpy_s(drv_soft.data, DMS_MAX_EVENT_DATA_LENGTH, info);
     if (ret != 0) {
         soft_drv_err("String copy failed! (dev_id=%u) \n", devid);
@@ -165,5 +170,5 @@ void hal_kernel_drv_soft_fault_report(u32 devid)
         }
     }
 }
-EXPORT_SYMBOL_GPL(hal_kernel_drv_soft_fault_report);
+KA_EXPORT_SYMBOL_GPL(hal_kernel_drv_soft_fault_report);
 

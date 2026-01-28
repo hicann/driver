@@ -27,6 +27,7 @@
 
 bool svm_support_get_user_malloc_attr(uint32_t dev_id);
 bool svm_support_vmm_normal_granularity(uint32_t dev_id);
+bool svm_support_mem_host_uva(uint32_t dev_id);
 
 drvError_t drvMemDeviceOpenInner(uint32_t devid, halDevOpenIn *in, halDevOpenOut *out);
 drvError_t drvMemDeviceCloseInner(uint32_t devid, halDevCloseIn *in);

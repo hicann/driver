@@ -111,6 +111,11 @@ int dcmi_board_chip_type_is_ascend_910_93(void)
     return (dcmi_get_board_chip_type() == DCMI_CHIP_TYPE_D910_93) ? TRUE : FALSE;
 }
 
+int dcmi_board_chip_type_is_ascend_910_95(void)
+{
+    return (dcmi_get_board_chip_type() == DCMI_CHIP_TYPE_D910_95) ? TRUE : FALSE;
+}
+
 int dcmi_board_chip_type_is_ascend_910b_300i_a2(void)
 {
     return ((dcmi_get_board_chip_type() == DCMI_CHIP_TYPE_D910B) &&
@@ -122,7 +127,7 @@ int dcmi_board_chip_type_is_ascend_910b_200t_box_a2(void)
 {
     return ((dcmi_get_board_chip_type() == DCMI_CHIP_TYPE_D910B) &&
         (dcmi_get_board_id_inner() >= DCMI_A200T_BOX_A1_BIN3_BOARD_ID) &&
-        (dcmi_get_board_id_inner() <= DCMI_A200T_BOX_A1_BIN1_BOARD_ID)) ? TRUE : FALSE;
+        (dcmi_get_board_id_inner() <= DCMI_A200I_BOX_A1_BIN2X_1_BOARD_ID)) ? TRUE : FALSE;
 }
 
 int dcmi_board_chip_type_is_ascend_310p_300v(void)
@@ -395,6 +400,26 @@ int dcmi_mainboard_is_arm_910_93(unsigned int main_board_id)
         (main_board_id == DCMI_A_K_910_93_MAIN_BOARD_ID);
 }
 
+int dcmi_mainboard_is_a900_a5_pcie(unsigned int main_board_id)
+{
+    return (main_board_id == DCMI_A5_POD_2D_MAIN_BOARD_ID_TMP) ||
+        (main_board_id == DCMI_A5_POD_EVB_MAIN_BOARD_ID_TMP) ||
+        (main_board_id == DCMI_A_X_910_95_MAIN_BOARD_ID) ||
+        (main_board_id == DCMI_A_X_910_95_UBOE_MAIN_BOARD_ID);
+}
+
+int dcmi_mainboard_is_a900_a5_ub(unsigned int main_board_id)
+{
+    return (main_board_id == DCMI_A_K_910_95_MAIN_BOARD_ID) ||
+        (main_board_id == DCMI_A_K_910_95_UBOE_MAIN_BOARD_ID) ||
+        (main_board_id == DCMI_A_K_910_95_2_6_MAIN_BOARD_ID) ||
+        (main_board_id == DCMI_A_K_910_95_2_6_UBOE_MAIN_BOARD_ID) ||
+        (main_board_id == DCMI_A5_POD_2D_BACKUP_MAIN_BOARD_ID) ||
+        (main_board_id == DCMI_A5_POD_2D_MAIN_BOARD_ID) ||
+        (main_board_id == DCMI_A5_POD_1D_MAIN_BOARD_ID) ||
+        (main_board_id == DCMI_A5_POD_EVB_MAIN_BOARD_ID_UB_TMP);
+}
+
 int dcmi_a900_a3_superpod_fp_card_id_convert(int card_id, int device_id)
 {
     if (card_id < A900_A3_SUPERPOD_MAX_FRONT_CARD_NUM) {
@@ -416,7 +441,7 @@ int dcmi_910_93_phy_id_convert(int phy_id)
     if ((phy_id / MAX_FRONT_NPU_NUM) != 0) {
         group_flag = 1;         // 1 indicates the rear 8P
     }
-    
+
     if ((parity_flag == 1) && (group_flag == 0)) {
         tmp_phy_id = phy_id + MAX_FRONT_NPU_NUM;
     } else if ((parity_flag == 0) && (group_flag == 1)) {
@@ -432,7 +457,7 @@ int dcmi_910_93_logic_id_convert(int phy_id)
     int ret;
     unsigned int logic_id = 0;
     int convert_phy_id;
-    
+
     convert_phy_id = dcmi_910_93_phy_id_convert(phy_id);
     ret = dsmi_get_logicid_from_phyid(convert_phy_id, &logic_id);
     if (ret) {
@@ -475,6 +500,10 @@ int dcmi_is_has_pcieinfo(void)
     switch (board_type) {
         case DCMI_BOARD_TYPE_CARD:
         case DCMI_BOARD_TYPE_SERVER:
+            if (dcmi_get_board_chip_type() == DCMI_CHIP_TYPE_D910_95 &&
+                dcmi_mainboard_is_a900_a5_ub(g_mainboard_info.mainboard_id)) {
+                return FALSE;
+            }
             return TRUE;
         case DCMI_BOARD_TYPE_MODEL:
             if ((dcmi_board_type_is_station()) || (dcmi_board_type_is_hilens())) {

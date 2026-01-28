@@ -7,7 +7,7 @@
 # INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
 # See LICENSE in the root of the software repository for the full text of the License.
 # ------------------------------------------------------------------------------------------------------------
-set(drv_queue_host_depends drv_pcie_host drv_pcie_hdc_host asdrv_svm asdrv_pbl drv_seclib_host asdrv_esched)
+set(drv_queue_host_depends drv_pcie_host drv_pcie_hdc_host asdrv_svm asdrv_pbl asdrv_dms drv_seclib_host asdrv_esched ascend_kernel_open_adapt)
 
 add_host_ko(LOCAL_MODULE asdrv_queue
             KO_SRC_FOLDER ${CMAKE_CURRENT_SOURCE_DIR}

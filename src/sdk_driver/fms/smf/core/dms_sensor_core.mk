@@ -7,19 +7,12 @@
 # INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
 # See LICENSE in the root of the software repository for the full text of the License.
 # ------------------------------------------------------------------------------------------------------------
-ifeq ($(DAVINCI_HIAI_DKMS),y)
-	EXTRA_CFLAGS += -DCFG_HOST_ENV
-	asdrv_fms-y += smf/core/dms_sensor_init.o
-	asdrv_fms-y += smf/core/dms_notifier.o
-	EXTRA_CFLAGS += -I$(DRIVER_SOURCE_DIR)/dms/devmng/drv_devmng/drv_devmng_host/ascend910
-	EXTRA_CFLAGS += -I$(DRIVER_SOURCE_DIR)/dms/dc/drv_platform/ts_platform_host/ascend910
-	EXTRA_CFLAGS += -I$(DRIVER_SOURCE_DIR)/dms/command/ioctl
-else #for CMake & ctrl cpu open
-	EXTRA_CFLAGS += -DCFG_HOST_ENV
-	asdrv_fms-y += smf/core/dms_sensor_init.o
-	asdrv_fms-y += smf/core/dms_notifier.o
-	EXTRA_CFLAGS += -I$(DRIVER_SOURCE_DIR)/dms/devmng/drv_devmng/drv_devmng_host/ascend910
-	EXTRA_CFLAGS += -I$(DRIVER_SOURCE_DIR)/dms/dc/drv_platform/ts_platform_host/ascend910
-	EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/src/vmng
-	EXTRA_CFLAGS += -I$(DRIVER_SOURCE_DIR)/dms/command/ioctl
-endif
+
+EXTRA_CFLAGS += -DCFG_HOST_ENV
+asdrv_fms-y += smf/core/dms_sensor_init.o
+asdrv_fms-y += smf/core/dms_notifier.o
+EXTRA_CFLAGS += -I$(DRIVER_SOURCE_DIR)/dms/devmng/drv_devmng/drv_devmng_host/ascend910
+EXTRA_CFLAGS += -I$(DRIVER_SOURCE_DIR)/dms/dc/drv_platform/ts_platform_host/ascend910
+EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/src/vmng
+EXTRA_CFLAGS += -I$(DRIVER_SOURCE_DIR)/dms/command/ioctl
+EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/src/kernel_adapt/include

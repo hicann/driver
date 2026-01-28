@@ -12,6 +12,7 @@
  */
 
 #include "msg_chan_main.h"
+#include "ka_kernel_def_pub.h"
 
 int devdrv_rao_read(u32 dev_id, enum devdrv_rao_client_type type, u64 offset, u64 len)
 {
@@ -28,7 +29,7 @@ int devdrv_rao_read(u32 dev_id, enum devdrv_rao_client_type type, u64 offset, u6
     devdrv_sub_ops_ref(dev_ops);
     return ret;
 }
-EXPORT_SYMBOL(devdrv_rao_read);
+KA_EXPORT_SYMBOL(devdrv_rao_read);
 
 int devdrv_rao_write(u32 dev_id, enum devdrv_rao_client_type type, u64 offset, u64 len)
 {
@@ -45,4 +46,4 @@ int devdrv_rao_write(u32 dev_id, enum devdrv_rao_client_type type, u64 offset, u
     devdrv_sub_ops_ref(dev_ops);
     return ret;
 }
-EXPORT_SYMBOL(devdrv_rao_write);
+KA_EXPORT_SYMBOL(devdrv_rao_write);

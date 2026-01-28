@@ -26,6 +26,7 @@
 #include "svm_master_mem_map.h"
 #include "svm_master_mem_create.h"
 #include "svm_master_mem_share.h"
+#include "ka_compiler_pub.h"
 
 static bool devmm_is_d2h_access(u32 owner_udevid, u32 access_udevid)
 {
@@ -102,7 +103,7 @@ static bool devmm_h2d_access_mmap_check_pa_is_cont(u64 *palist, struct devmm_mem
 static int devmm_access_remap_addrs(struct devmm_svm_process *svm_proc, struct devmm_devid *devids,
     u64 start_va, u64 *remap_palist, u64 remap_num, u64 per_remap_size)
 {
-    pgprot_t page_prot = devmm_make_remote_pgprot(0);
+    ka_pgprot_t page_prot = devmm_make_remote_pgprot(0);
     ka_vm_area_struct_t *vma = NULL;
     u32 stamp = (u32)ka_jiffies;
     u64 i, j, tmp_va, tmp_pa;
@@ -122,7 +123,7 @@ static int devmm_access_remap_addrs(struct devmm_svm_process *svm_proc, struct d
             goto clear_pfn_range;
         }
 
-        ret = remap_pfn_range(vma, tmp_va, KA_MM_PFN_DOWN(tmp_pa), per_remap_size, page_prot);
+        ret = ka_mm_remap_pfn_range(vma, tmp_va, KA_MM_PFN_DOWN(tmp_pa), per_remap_size, page_prot);
         if (ret != 0) {
             devmm_drv_err("Remap_pfn_range fail. (i=%llu; va=0x%llx; per_remap_size=%u; ret=%d)\n",
                 i, tmp_va, per_remap_size, ret);
@@ -370,14 +371,14 @@ static int devmm_mem_map_pg_bitmap_state_set(struct devmm_svm_heap *heap,
 
     if (!is_da_addr) {
         first_page_bitmap = devmm_get_alloced_va_fst_page_bitmap_with_heap(heap, para->va);
-        if (unlikely(first_page_bitmap == NULL)) {
+        if (ka_unlikely(first_page_bitmap == NULL)) {
             devmm_drv_err("Unexpected, get first pg_bitmap failed. (va=0x%llx)\n", para->va);
             return -EINVAL;
         }
     }
 
     page_bitmap = devmm_get_page_bitmap_with_heap(heap, para->va);
-    if (unlikely(page_bitmap == NULL)) {
+    if (ka_unlikely(page_bitmap == NULL)) {
         devmm_drv_err("Unexpected, get pg_bitmap failed. (va=0x%llx)\n", para->va);
         return -EINVAL;
     }
@@ -393,7 +394,7 @@ static int devmm_mem_map_pg_bitmap_state_set(struct devmm_svm_heap *heap,
     for (i = 0; i < pg_cnt; i++) {
         ret = devmm_page_bitmap_check_and_set_flag(page_bitmap + i, flag | DEVMM_PAGE_ADVISE_POPULATE_MASK);
         if (ret != 0) {
-            devmm_drv_err("Already maped. (already_maped=%llu; va=0x%llx; page_cnt=%llu)\n",
+            devmm_drv_err("Already mapped. (already_maped=%llu; va=0x%llx; page_cnt=%llu)\n",
                 i, para->va, pg_cnt);
             ret = -EADDRINUSE;
             goto clear_bitmap;
@@ -429,14 +430,14 @@ static int devmm_mem_map_pg_bitmap_state_clear(struct devmm_svm_heap *heap,
 
     if (!is_da_addr) {
         first_page_bitmap = devmm_get_alloced_va_fst_page_bitmap_with_heap(heap, va);
-        if (unlikely(first_page_bitmap == NULL)) {
+        if (ka_unlikely(first_page_bitmap == NULL)) {
             devmm_drv_err("Unexpected, get first pg_bitmap failed. (va=0x%llx)\n", va);
             return -EINVAL;
         }
     }
 
     page_bitmap = devmm_get_page_bitmap_with_heap(heap, va);
-    if (unlikely(page_bitmap == NULL)) {
+    if (ka_unlikely(page_bitmap == NULL)) {
         devmm_drv_err("Unexpected, get pg_bitmap failed. (va=0x%llx)\n", va);
         return -EINVAL;
     }
@@ -472,7 +473,7 @@ int devmm_msg_to_agent_mem_unmap(struct devmm_svm_process *svm_proc, struct devm
             return ret;
         }
         /* Every agent map msg will create vmma, so map per page num should equal with unmap */
-        tmp_num = min((info->pg_num - freed_num), DEVMM_MEM_MAP_MAX_PAGE_NUM_PER_MSG);
+        tmp_num = ka_base_min((info->pg_num - freed_num), DEVMM_MEM_MAP_MAX_PAGE_NUM_PER_MSG);
         devmm_free_pages_cache(svm_proc, info->logic_devid, (u32)tmp_num, info->pg_size, msg.va, true);
     }
 
@@ -497,7 +498,7 @@ static int devmm_mem_unmap_check_bitmap_state(struct devmm_svm_process *svm_proc
     bool is_translating;
 
     page_bitmap = devmm_get_page_bitmap_with_heap(heap, va);
-    if (unlikely(page_bitmap == NULL)) {
+    if (ka_unlikely(page_bitmap == NULL)) {
         devmm_drv_err("Unexpected, get pg_bitmap failed. (va=0x%llx)\n", va);
         return -EINVAL;
     }
@@ -522,7 +523,7 @@ int devmm_ioctl_mem_unmap(struct devmm_svm_process *svm_proc, struct devmm_ioctl
     }
 
     page_bitmap = devmm_get_page_bitmap_with_heap(heap, para->va);
-    if (unlikely(page_bitmap == NULL)) {
+    if (ka_unlikely(page_bitmap == NULL)) {
         devmm_drv_err("Unexpected, get pg_bitmap failed. (va=0x%llx)\n", para->va);
         return -EINVAL;
     }
@@ -693,7 +694,7 @@ static void devmm_ioctl_vmma_info_pack(struct devmm_svm_process *svm_proc, struc
         if (info->pg_type == MEM_HUGE_PAGE_TYPE) {
             info->pg_size = (para->side == MEM_HOST_SIDE) ? SVM_MASTER_HUGE_PAGE_SIZE : devmm_svm->device_hpage_size;
         } else {
-            info->pg_size = (para->side == MEM_HOST_SIDE) ? PAGE_SIZE : devmm_svm->device_page_size;
+            info->pg_size = (para->side == MEM_HOST_SIDE) ? KA_MM_PAGE_SIZE : devmm_svm->device_page_size;
         }
     }
 

@@ -10,12 +10,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#include <linux/dma-mapping.h>
-#include <linux/slab.h>
-#include <linux/vmalloc.h>
-#include <linux/types.h>
 
-#include "svm_ioctl.h"
 #include "devmm_common.h"
 #include "devmm_proc_info.h"
 #include "devmm_page_cache.h"
@@ -26,6 +21,7 @@
 #include "svm_proc_mng.h"
 #include "svm_dma.h"
 #include "devmm_proc_mem_copy.h"
+#include "svm_ioctl.h"
 #ifdef CFG_FEATURE_VFIO
 #include "devmm_pm_adapt.h"
 #include "devmm_pm_vpc.h"
@@ -46,7 +42,7 @@ int devmm_page_create_query_msg(struct devmm_svm_process *svm_pro, struct devmm_
 
     per_max_num = devmm_get_max_page_num_of_per_msg(&query_arg.bitmap);
     num_pre_msg = *num;
-    num_pre_msg = min(num_pre_msg, per_max_num);
+    num_pre_msg = ka_base_min(num_pre_msg, per_max_num);
     ack_msg_len = sizeof(struct devmm_chan_page_query_ack) +
                   sizeof(struct devmm_chan_query_phy_blk) * (unsigned long)num_pre_msg;
     page_query = (struct devmm_chan_page_query_ack *)devmm_kvzalloc(ack_msg_len);
@@ -76,7 +72,7 @@ int devmm_page_create_query_msg(struct devmm_svm_process *svm_pro, struct devmm_
         page_query->p2p_owner_va = (query_arg.p2p_owner_va != 0) ? query_arg.p2p_owner_va + total_size : 0;
         page_query->size = aligned_size - total_size;
         page_query->addr_type = query_arg.addr_type;
-        page_query->num = min((u32)num_pre_msg, (*num - total_num));
+        page_query->num = ka_base_min((u32)num_pre_msg, (*num - total_num));
         /*
          * for 4G+continuty mem, first msg is CREAT to alloc all continuty papges, other msgs while not receive all
          * pages, then send QUERY msgs to query mapped pages.
@@ -173,7 +169,7 @@ STATIC void devmm_fill_page_fault_msg(struct devmm_devid svm_id, unsigned long v
 /* h2d fault, inv device pagetable: (the max dma unit size is PAGESIZE ?)
  * 1. host host query host page (pin page and map dma)
  * 2. host send page-msg to device
- * 3. device recv and prs devic pagetable
+ * 3. device recv and prs device pagetable
  * 4. device query device page
  * 5. device copy to host
  * 6. device inv device page,return.
@@ -214,12 +210,12 @@ int devmm_page_fault_h2d_sync(struct devmm_devid svm_id, ka_page_t **pages, unsi
 
     for (idx = 0; idx < fault_msg->num; idx++) {
         blks[idx].pa = ka_mm_page_to_phys(pages[idx]);
-        blks[idx].sz = PAGE_SIZE;
+        blks[idx].sz = KA_MM_PAGE_SIZE;
     }
 
     stamp = (u32)ka_jiffies;
     for (idx = 0; idx < fault_msg->num; idx++) {
-        blks[idx].pa = hal_kernel_devdrv_dma_map_page(dev, devmm_pa_to_page(blks[idx].pa), 0, blks[idx].sz, DMA_BIDIRECTIONAL);
+        blks[idx].pa = hal_kernel_devdrv_dma_map_page(dev, devmm_pa_to_page(blks[idx].pa), 0, blks[idx].sz, KA_DMA_BIDIRECTIONAL);
         if (ka_mm_dma_mapping_error(dev, blks[idx].pa) != 0) {
             devmm_drv_err("Host page fault dma map page failed. (dev_id=%u; va=0x%lx; adjust_order=%u)\n",
                           svm_id.devid, va, adjust_order);
@@ -239,7 +235,7 @@ int devmm_page_fault_h2d_sync(struct devmm_devid svm_id, ka_page_t **pages, unsi
 host_page_fault_dma_free:
     stamp = (u32)ka_jiffies;
     for (j = 0; j < idx; j++) {
-        hal_kernel_devdrv_dma_unmap_page(dev, blks[j].pa, blks[j].sz, DMA_BIDIRECTIONAL);
+        hal_kernel_devdrv_dma_unmap_page(dev, blks[j].pa, blks[j].sz, KA_DMA_BIDIRECTIONAL);
         devmm_try_cond_resched(&stamp);
     }
     devmm_device_put_by_devid(svm_id.devid);
@@ -252,7 +248,7 @@ host_page_fault_dma_free:
 /* d2h fault, inv host pagetable:
  * 1. device query device page
  * 2. device send page-msg to host
- * 3. host recv and prs devic pages
+ * 3. host recv and prs device pages
  * 4. host query host page (pin page and map dma)
  * 5. host copy to device
  * 6. host inv host page (unpin page and unmap dma), return.
@@ -303,7 +299,7 @@ int devmm_chan_page_fault_d2h_process_dma_copy(struct devmm_chan_page_fault *fau
             dma_nodes[i].direction = DEVDRV_DMA_HOST_TO_DEVICE;
             off += dma_nodes[i].size;
             /* check if off exceed host page size in the case of host page size is 64k while device page size is 4k */
-            if (off > PAGE_SIZE) {
+            if (off > KA_MM_PAGE_SIZE) {
                 devmm_drv_err("Over host page size. (off=%u)\n", off);
                 devmm_kfree_ex(dma_nodes);
                 dma_nodes = NULL;

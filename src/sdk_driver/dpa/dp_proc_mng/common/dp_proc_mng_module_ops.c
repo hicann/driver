@@ -10,21 +10,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#include <linux/cdev.h>
-#include <linux/device.h>
-#include <linux/errno.h>
-#include <linux/init.h>
-#include <linux/fs.h>
-#include <linux/kernel.h>
-#include <linux/memory.h>
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <linux/vmalloc.h>
-#include <linux/list.h>
-#include <linux/hashtable.h>
-#include <linux/atomic.h>
-#include <linux/nsproxy.h>
-#include <linux/uaccess.h>
+#include "ka_base_pub.h"
+#include "ka_common_pub.h"
+#include "ka_compiler_pub.h"
+#include "ka_fs_pub.h"
+#include "ka_ioctl_pub.h"
+#include "ka_kernel_def_pub.h"
 
 #include "dp_proc_mng_interface.h"
 #include "dp_proc_mng_ioctl.h"
@@ -33,12 +24,12 @@
 #include "dp_proc_mng_proc_info.h"
 #include "dpa/dpa_dp_proc_mng_pid_maps.h"
 
-STATIC int dp_proc_mng_open(struct inode *inode, struct file *file)
+STATIC int dp_proc_mng_open(ka_inode_t *inode, ka_file_t *file)
 {
     return 0;
 }
 
-STATIC int dp_proc_mng_release(struct inode *inode, struct file *filp)
+STATIC int dp_proc_mng_release(ka_inode_t *inode, ka_file_t *filp)
 {
     return 0;
 }
@@ -69,10 +60,10 @@ int dp_proc_mng_convert_id_from_vir_to_phy(struct dp_proc_mng_ioctl_arg *buffer)
     return 0;
 }
 
-STATIC int dp_proc_mng_dispatch_ioctl(struct file *file, u32 cmd, struct dp_proc_mng_ioctl_arg *buffer)
+STATIC int dp_proc_mng_dispatch_ioctl(ka_file_t *file, u32 cmd, struct dp_proc_mng_ioctl_arg *buffer)
 {
     int ret;
-    u32 cmd_id = _IOC_NR(cmd);
+    u32 cmd_id = _KA_IOC_NR(cmd);
     if (dp_proc_mng_ioctl_handlers[cmd_id] == NULL) {
         dp_proc_mng_drv_err("Cmd not support. (cmd=0x%x; cmd_id=0x%x)\n", cmd, cmd_id);
         return -EOPNOTSUPP;
@@ -83,29 +74,29 @@ STATIC int dp_proc_mng_dispatch_ioctl(struct file *file, u32 cmd, struct dp_proc
         return ret;
     }
 
-    ret = dp_proc_mng_ioctl_handlers[_IOC_NR(cmd)](file, buffer);
+    ret = dp_proc_mng_ioctl_handlers[_KA_IOC_NR(cmd)](file, buffer);
 
     return ret;
 }
 
-STATIC long dp_proc_mng_ioctl(struct file *file, u32 cmd, unsigned long arg)
+STATIC long dp_proc_mng_ioctl(ka_file_t *file, u32 cmd, unsigned long arg)
 {
     struct dp_proc_mng_ioctl_arg buffer = {{0}};
-    u32 cmd_id = _IOC_NR(cmd);
+    u32 cmd_id = _KA_IOC_NR(cmd);
     int ret;
 
     if ((file == NULL) || (arg == 0)) {
-        dp_proc_mng_drv_err("File is NULL, check dp_proc_mng init. (cmd=0x%x; _IOC_NR(cmd)=0x%x)\n", cmd, _IOC_NR(cmd));
+        dp_proc_mng_drv_err("File is NULL, check dp_proc_mng init. (cmd=0x%x; _KA_IOC_NR(cmd)=0x%x)\n", cmd, _KA_IOC_NR(cmd));
         return -EINVAL;
     }
 
-    if ((_IOC_TYPE(cmd) != DP_PROC_MNG_MAGIC) || (cmd_id >= DP_PROC_MNG_CMD_MAX_CMD)) {
+    if ((_KA_IOC_TYPE(cmd) != DP_PROC_MNG_MAGIC) || (cmd_id >= DP_PROC_MNG_CMD_MAX_CMD)) {
         dp_proc_mng_drv_err("Cmd not support. (cmd=0x%x; cmd_id=0x%x)\n", cmd, cmd_id);
         return -EINVAL;
     }
 
-    if ((_IOC_DIR(cmd) & _IOC_WRITE) != 0) {
-        if (copy_from_user(&buffer, (void __user *)(uintptr_t)arg, sizeof(struct dp_proc_mng_ioctl_arg)) != 0) {
+    if ((_KA_IOC_DIR(cmd) & _KA_IOC_WRITE) != 0) {
+        if (ka_base_copy_from_user(&buffer, (void __ka_user *)(uintptr_t)arg, sizeof(struct dp_proc_mng_ioctl_arg)) != 0) {
             dp_proc_mng_drv_err("Copy_from_user fail. (cmd=0x%x; cmd_id=0x%x)\n", cmd, cmd_id);
             return -EINVAL;
         }
@@ -116,8 +107,8 @@ STATIC long dp_proc_mng_ioctl(struct file *file, u32 cmd, unsigned long arg)
         return ret;
     }
 
-    if ((_IOC_DIR(cmd) & _IOC_READ) != 0) {
-        if (copy_to_user((void __user *)(uintptr_t)arg, &buffer, sizeof(struct dp_proc_mng_ioctl_arg)) != 0) {
+    if ((_KA_IOC_DIR(cmd) & _KA_IOC_READ) != 0) {
+        if (ka_base_copy_to_user((void __ka_user *)(uintptr_t)arg, &buffer, sizeof(struct dp_proc_mng_ioctl_arg)) != 0) {
             dp_proc_mng_drv_err("Copy_to_user fail. (cmd=0x%x; cmd_id=0x%x)\n", cmd, cmd_id);
             return -EINVAL;
         }
@@ -126,8 +117,8 @@ STATIC long dp_proc_mng_ioctl(struct file *file, u32 cmd, unsigned long arg)
     return 0;
 }
 
-STATIC struct file_operations dp_proc_mng_fops = {
-    .owner = THIS_MODULE,
+STATIC ka_file_operations_t dp_proc_mng_fops = {
+    .owner = KA_THIS_MODULE,
     .open = dp_proc_mng_open,
     .release = dp_proc_mng_release,
     .unlocked_ioctl = dp_proc_mng_ioctl,

@@ -482,7 +482,7 @@ STATIC int show_bar_map(struct pci_dev *pdev)
     data = ka_mm_readl(tc_pci_dev->bar_mem_addr);
     printk(KA_KERN_INFO "[lqdcmi]data = 0x%x\n", data);
     printk(KA_KERN_INFO "[lqdcmi]bar buf =  \n");
-    for (i = 0; i < 64; i++) { // 64 表示，dfx调试时用于分析前 256位信息是否正确
+    for (i = 0; i < 64; i++) { // 64 表示，dfx故障检测时用于分析前 256位信息是否正确
         data = ka_mm_readl(tc_pci_dev->bar_mem_addr + sizeof(unsigned int) * i);
         printk(KA_KERN_INFO "[lqdcmi]0x%x\t", data);
     }
@@ -501,13 +501,14 @@ STATIC int show_bar_map(struct pci_dev *pdev)
 
 STATIC void pci_bar_free(struct pci_dev *pdev)
 {
+    int i;
     struct pci_dev_info *tc_pci_dev = ka_pci_get_drvdata(pdev);
 
     if (tc_pci_dev->bar_mem_addr != NULL) {
         ka_mm_iounmap(tc_pci_dev->bar_mem_addr);
         tc_pci_dev->bar_mem_addr = NULL;
         tc_pci_dev->bar_mem_len = 0;
-        printk(KA_KERN_ERR "[lqdcmi]bar mem free OK\n");
+        printk(KA_KERN_ERR "[lqdcmi]bar[%d] mem free OK\n", i);
     }
 }
 
@@ -709,7 +710,7 @@ STATIC int pci_init(void)
         printk(KA_KERN_ERR "[lqdcmi]pci init fail\n");
         return res;
     }
-    /* 这里不返回结果是由于调试过程中需要反复插入，存在已注册的情况，不影响后续功能的调试 */
+    /* 这里不返回结果是由于故障检测过程中需要反复插入，存在已注册的情况，不影响后续功能的故障检测 */
     res = ka_pci_register_driver(&g_pci_driver);
     if (res) {
         printk(KA_KERN_ERR "[lqdcmi]pci init register driver fail.\n");

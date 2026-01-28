@@ -10,7 +10,3 @@
 target_sources(devdrv_obj PRIVATE
     devmng_user_common.c
 )
-
-target_compile_definitions(devdrv_obj PRIVATE
-    CFG_FEATURE_SHARE_LOG
-)

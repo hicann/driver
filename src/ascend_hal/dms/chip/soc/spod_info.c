@@ -95,34 +95,6 @@ drvError_t dms_get_spod_ping_info(unsigned int dev_id, unsigned int main_cmd, un
 }
 #endif
 
-#define BITS_PER_INT       32
-static inline void parse_bit_shift(unsigned int *rcv, unsigned int *src, unsigned int bit_width)
-{
-    *rcv = (*src) & (~(0U) >> (BITS_PER_INT - bit_width));
-    (*src) >>= bit_width;
-}
-
-
-/* SDID total 32 bits, low to high: */
-#define UDEVID_BIT_LEN 16
-#define DIE_ID_BIT_LEN 2
-#define CHIP_ID_BIT_LEN 4
-#define SERVER_ID_BIT_LEN 10
-drvError_t dms_parse_sdid(uint32_t sdid, struct halSDIDParseInfo *sdid_parse)
-{
-    if (sdid_parse == NULL) {
-        DMS_ERR("sdid parse is NULL. (sdid=%u)\n", sdid);
-        return DRV_ERROR_PARA_ERROR;
-    }
-
-    parse_bit_shift(&sdid_parse->udevid, &sdid, UDEVID_BIT_LEN);
-    parse_bit_shift(&sdid_parse->die_id, &sdid, DIE_ID_BIT_LEN);
-    parse_bit_shift(&sdid_parse->chip_id, &sdid, CHIP_ID_BIT_LEN);
-    parse_bit_shift(&sdid_parse->server_id, &sdid, SERVER_ID_BIT_LEN);
-
-    return DRV_ERROR_NONE;
-}
-
 drvError_t dms_get_spod_node_status(unsigned int dev_id, unsigned int main_cmd, unsigned int sub_cmd,
     void *buf, unsigned int *size)
 {

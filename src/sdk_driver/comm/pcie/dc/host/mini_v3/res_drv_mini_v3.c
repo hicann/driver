@@ -10,8 +10,6 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#include <linux/version.h>
-#include <linux/dmi.h>
 
 #include "res_drv.h"
 #include "devdrv_util.h"
@@ -101,7 +99,7 @@
 #define DEVDRV_MSI_X_MAX_VECTORS 128
 #define DEVDRV_MSI_X_MIN_VECTORS 128
 
-/* device os load notify use irq vector 0, later 0 alse use to admin msg chan */
+/* device os load notify use irq vector 0, later 0 also used to admin msg chan */
 #define DEVDRV_LOAD_MSI_X_VECTOR_NUM 0
 
 /* irq used to msg trans, a msg chan need two vector. one for tx finish, the other for rx msg.
@@ -494,32 +492,32 @@ int devdrv_mini_v3_res_init(struct devdrv_pci_ctrl *pci_ctrl)
     pci_ctrl->mem_phy_base = 0;
     pci_ctrl->mem_phy_size = 0;
 
-    offset = pci_resource_start(pci_ctrl->pdev, PCI_BAR_RSV_MEM) + DEVDRV_RESERVE_MEM_MSG_OFFSET;
+    offset = ka_pci_resource_start(pci_ctrl->pdev, PCI_BAR_RSV_MEM) + DEVDRV_RESERVE_MEM_MSG_OFFSET;
     size = DEVDRV_RESERVE_MEM_MSG_SIZE;
 
-    pci_ctrl->mem_base = ioremap(offset, size);
+    pci_ctrl->mem_base = ka_mm_ioremap(offset, size);
     if (pci_ctrl->mem_base == NULL) {
         devdrv_err("Ioremap mem_base failed. (size=%lu)\n", size);
         devdrv_res_uninit(pci_ctrl);
         return -ENOMEM;
     }
 
-    pci_ctrl->rsv_mem_phy_base = (phys_addr_t)pci_resource_start(pci_ctrl->pdev, PCI_BAR_RSV_MEM);
-    pci_ctrl->rsv_mem_phy_size = (u64)pci_resource_len(pci_ctrl->pdev, PCI_BAR_RSV_MEM);
+    pci_ctrl->rsv_mem_phy_base = (phys_addr_t)ka_pci_resource_start(pci_ctrl->pdev, PCI_BAR_RSV_MEM);
+    pci_ctrl->rsv_mem_phy_size = (u64)ka_pci_resource_len(pci_ctrl->pdev, PCI_BAR_RSV_MEM);
 
-    offset = pci_resource_start(pci_ctrl->pdev, PCI_BAR_IO) + DEVDRV_IEP_SDI0_OFFSET + DEVDRV_IEP_SDI0_DB_OFFSET;
+    offset = ka_pci_resource_start(pci_ctrl->pdev, PCI_BAR_IO) + DEVDRV_IEP_SDI0_OFFSET + DEVDRV_IEP_SDI0_DB_OFFSET;
     size = DEVDRV_DB_IOMAP_SIZE;
-    pci_ctrl->msi_base = ioremap(offset, size);
+    pci_ctrl->msi_base = ka_mm_ioremap(offset, size);
     if (pci_ctrl->msi_base == NULL) {
         devdrv_err("Ioremap msi_base failed. (size=%lu)\n", size);
         devdrv_res_uninit(pci_ctrl);
         return -ENOMEM;
     }
 
-    pci_ctrl->io_phy_base = (phys_addr_t)pci_resource_start(pci_ctrl->pdev, PCI_BAR_IO);
-    pci_ctrl->io_phy_size = (u64)pci_resource_len(pci_ctrl->pdev, PCI_BAR_IO);
+    pci_ctrl->io_phy_base = (phys_addr_t)ka_pci_resource_start(pci_ctrl->pdev, PCI_BAR_IO);
+    pci_ctrl->io_phy_size = (u64)ka_pci_resource_len(pci_ctrl->pdev, PCI_BAR_IO);
 
-    pci_ctrl->io_base = ioremap(pci_ctrl->io_phy_base, pci_ctrl->io_phy_size);
+    pci_ctrl->io_base = ka_mm_ioremap(pci_ctrl->io_phy_base, pci_ctrl->io_phy_size);
     if (pci_ctrl->io_base == NULL) {
         devdrv_err("Ioremap io_base failed. (size=%llu)\n", pci_ctrl->io_phy_size);
         devdrv_res_uninit(pci_ctrl);

@@ -14,18 +14,6 @@
 #ifndef DEVDRV_MEM_ALLOC_H
 #define DEVDRV_MEM_ALLOC_H
 
-#include <linux/types.h>
-#include <linux/printk.h>
-#include <linux/slab.h>
-#include <linux/module.h>
-#include <linux/uaccess.h>
-#include <linux/mman.h>
-#include <linux/dma-mapping.h>
-#include <linux/slab.h>
-#include <linux/vmalloc.h>
-#include <linux/version.h>
-#include <linux/nodemask.h>
-
 #include "pbl/pbl_ka_memory.h"
 #include "ascend_hal_define.h"
 

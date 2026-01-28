@@ -46,8 +46,8 @@ struct timeval {
 #define DEVDRV_DIVERSITY_PCIE_VENDOR_ID 0xFFFF
 /*
  * p_type stores the platform type: 0-FPGA 1-EMU 2-ESL 3-ASIC
- * version stores the soc version: 0x300 matchs b300,
- * 0x201 matchs b201 , as so on.
+ * version stores the soc version: 0x300 matches b300,
+ * 0x201 matches b201 , as so on.
  */
 int devdrv_get_platform_type(unsigned int *p_type, unsigned int *version);
 
@@ -132,7 +132,7 @@ struct devdrv_dma_node {
 #define DEVDRV_RD_BARRIER_FLAG 0x10
 
 /*
- * asynchronous dma parameter structer
+ * asynchronous dma parameter structure
  * interrupt_and_attr_flag: bit0 remote interrupt flag
  *                          bit1 local interrupt flag
  *                          bit2 attr of sq BD flag
@@ -506,7 +506,7 @@ int devdrv_devmem_addr_d2h(u32 udevid, phys_addr_t device_phy_addr, phys_addr_t 
 
 /* devid1 devid2: host dev number
    return value: true support pcie, false not support
-   Description: cloud: ai server or evb: diffrent node support pcie, pcie card: all support
+   Description: cloud: ai server or evb: different node support pcie, pcie card: all support
                 mini: all support pcie */
 #ifdef DRV_CLOUD
 bool devdrv_p2p_surport_pcie(u32 devid1, u32 devid2);
@@ -535,8 +535,8 @@ enum devdrv_p2p_addr_type {
     DEVDRV_P2P_ADDR_TYPE_MAX
 };
 
-int devdrv_get_p2p_addr(u32 dev_id, u32 remote_dev_id, enum devdrv_p2p_addr_type type,
-    phys_addr_t *phy_addr, size_t *size);
+int devdrv_get_p2p_addr(u32 dev_id, u32 remote_dev_id, enum devdrv_p2p_addr_type type, phys_addr_t *phy_addr,
+    size_t *size);
 
 /* local_devid:device devid, devid: host devid */
 int agentdrv_get_p2p_addr(u32 local_devid, u32 devid, enum devdrv_p2p_addr_type type, phys_addr_t *phy_addr, u32 *size);
@@ -552,8 +552,8 @@ typedef int (*p2p_msg_recv)(u32 devid, void *data, u32 data_len, u32 in_len, u32
 int agentdrv_register_p2p_msg_proc_func(enum agentdrv_p2p_msg_type msg_type, p2p_msg_recv func);
 
 /* local_devid:device devid, devid: host devid */
-int agentdrv_p2p_msg_send(u32 local_devid, u32 devid, enum agentdrv_p2p_msg_type msg_type, void *data, u32 data_len,
-                          u32 in_len, u32 *out_len);
+int agentdrv_p2p_msg_send(u32 local_devid, u32 dst_host_udevid, enum agentdrv_p2p_msg_type msg_type, void *data,
+    u32 data_len, u32 in_len, u32 *out_len);
 
 /* target_addr is phy addr */
 int agentdrv_devmem_txatu_target_to_base(u32 local_devid, u32 devid, phys_addr_t target_addr, phys_addr_t *base_addr);
@@ -609,7 +609,7 @@ void devdrv_unregister_black_callback(const struct devdrv_black_callback *black_
  * there are unreleased sessions. If yes, the PCIe cannot enter into suspend mode */
 typedef int (*devdrv_suspend_pre_check)(int flag);
 /* When peer reboot/panic, local pcie can detect the peer fault and should notify HDC
-   to stop bussiness and so on */
+   to stop business and so on */
 typedef int (*devdrv_peer_fault_notify)(u32 status);
 
 #define DEVDRV_PEER_STATUS_NORMAL 0x1
@@ -923,9 +923,7 @@ int hisi_pcie_pmu_get_profiling_info(u32 dev_id, struct agentdrv_profiling_buf *
 int devdrv_get_heartbeat_count(u32 devid, u64* count);
 int devdrv_set_heartbeat_count(u32 devid, u64 count);
 
-int xcom_get_remote_dma_addr_by_offset(u32 devid, u32 offset, dma_addr_t *addr);
-int hal_kernel_systopo_get_udevid_by_sdid(u32 sdid, u32 *devid);
-int hal_kernel_systopo_get_sdid_by_udevid(u32 devid, u32 *sdid);
+int xcom_get_remote_dma_addr_by_offset(u32 sdid, u32 offset, dma_addr_t *addr);
 typedef int(*devdrv_p2p_status_notify)(u32 sdid, u32 status);
 int devdrv_register_p2p_status_notifier(enum devdrv_msg_client_type type, devdrv_p2p_status_notify func);
 int devdrv_unregister_p2p_status_notifier(enum devdrv_msg_client_type type);

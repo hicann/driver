@@ -10,9 +10,9 @@
 
 #ifndef __DCMI_HOT_RESET_INTF_H__
 #define __DCMI_HOT_RESET_INTF_H__
- 
+
 #include "dcmi_interface_api.h"
- 
+
 #ifdef __cplusplus
 #if __cplusplus
 extern "C" {
@@ -53,7 +53,28 @@ extern "C" {
 #define SECOND_DEVICE_RESET_FLAG    0xfffffffd
 #define THIRD_DEVICE_RESET_FLAG     0xfffffffc
 #define FORTH_DEVICE_RESET_FLAG     0xfffffffb
-#define ALL_DEVICE_RESET_CARD_ID 0xff
+#define ALL_DEVICE_RESET_CARD_ID    0xff
+#define WHITE_PROC_BUFFER_SIZE      256
+#define WHITE_PROC_NAME_MAX_SIZE    64
+#define WHITE_PROC_TARGET_MAX_SIZE  24
+#define NAME_MAX_SIZE               16
+#define WHITE_PROC_NAME_OFFSET      1
+#define WHITE_PROC_PID_OFFSET       2
+#define WHITE_PROC_MAX_OFFSET       3
+#define WHITE_PROC_KILL_WAIT_TIME   2
+#define PROC_MAX_PATH_LEN           256
+#define LINE_MAX_LEN                64
+#define CMP_NAME_MAX_SIZE           5
+#define WHITE_PROC_MAX_NUM          20
+#define NPU_MAX_CHIP_NUM_IN_CARD    16
+#define WHITE_PROC_CFG_FILE_NAME_LEN    64
+#define KILL_MAX_TRY_CNT            2
+#define BASE_TEN_NUMERAL_SYSTEM     10
+
+typedef struct proc_info {
+    int proc_num;
+    int pid[WHITE_PROC_MAX_NUM];
+}WHITE_PROC_INFO;
 
 #define DCMI_SMP_INVALID_ID (0xFFFFFFFF)
 #define DCMI_SMP_DEVICE_NUMBER (4)
@@ -65,7 +86,7 @@ extern "C" {
 #define DCMI_SMP_MASTER_NUM (3)
 
 int dcmi_check_device_reset_vnpu_mode(int card_id);
- 
+
 int dcmi_get_npu_outband_reset_state(int card_id, int device_id, unsigned char *reset_state);
 
 int dcmi_check_device_reset_permission(const enum dcmi_reset_channel channel_type);
@@ -88,11 +109,13 @@ int dcmi_get_npu_device_outband_id(int card_id, int device_id, int *outband_id);
 
 int dcmi_set_npu_device_reset_outband(int card_id, int device_id);
 
+int dcmi_clear_running_proc();
+
 int dcmi_reset_smp_card(int card_id, int device_id);
 #ifdef __cplusplus
 #if __cplusplus
 }
 #endif
 #endif /* __cplusplus */
- 
+
 #endif /* __DCMI_HOT_RESET_INTF_H__ */

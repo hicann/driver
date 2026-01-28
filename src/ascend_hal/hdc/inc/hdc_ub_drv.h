@@ -212,7 +212,7 @@ enum drv_hdc_ub_op {
     HDC_URMA_WAIT_FAIL = 0,                     // fail by urma_wait_jfc
     HDC_URMA_POLL_FAIL = 1,                     // fail by urma_poll_jfc
     HDC_URMA_POLL_FAIL_BY_REM_ACESS_ABORT = 2,  // fail by urma_poll_jfc, with URMA_CR_REM_ACCESS_ABORT_ERR
-    HDC_URMA_REARM_FAIL = 3,                    // faile by urma_rearm_jfc
+    HDC_URMA_REARM_FAIL = 3,                    // fail by urma_rearm_jfc
     HDC_URMA_OP_FAIL_MAX
 };
 
@@ -288,7 +288,7 @@ void hdc_ub_del_ctl_to_thread_epoll(struct hdc_ub_session *session);
 int hdc_poll_jfc(hdc_urma_jfc_t *hdc_jfc, urma_cr_t *cr, struct hdc_ub_session *session, int tx_rx_flag,
     int service_type);
 void hdc_ack_jfc(hdc_urma_jfc_t *hdc_jfc);
-uint8_t hdcUbGetJfsPriorityByType(int service_type);
+uint8_t hdc_ub_get_jfs_priority_by_type(int service_type);
 // used for EMU_ST
 #ifdef EMU_ST
 int hdc_mem_res_init_stub(int fd, unsigned long long *user_va, unsigned long size);

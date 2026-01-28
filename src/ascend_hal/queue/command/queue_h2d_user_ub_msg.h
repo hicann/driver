@@ -15,9 +15,17 @@
 #include "ascend_hal_external.h"
 #include "queue_ioctl.h"
 #include "uref.h"
+#include "rbtree.h"
 
 #define QUE_DATA_RW_JETTY_POOL_SEND_DEPTH   (2 * 1024)
 #define QUE_MAX_RW_WR_NUM       QUE_DATA_RW_JETTY_POOL_SEND_DEPTH
+
+typedef enum que_chan_type {
+    CHAN_CREATE,
+    CHAN_ATTACH,
+    CHAN_INTER_DEV_ATTACH,
+    QUEUE_CHAN_BUTT,
+} QUEUE_CHAN_TYPE;
 
 typedef enum que_agent_type {
     H2D_SYNC_ENQUE,
@@ -48,6 +56,16 @@ typedef enum que_mem_type {
     MEM_NOT_SVM,
     MEM_TYPE_BUTT,
 }QUE_MEM_TYPE;
+
+struct que_urma_token {
+    urma_token_id_t *token_id;
+    urma_token_t token;
+};
+
+struct que_mem_merge_ctx {
+    pthread_rwlock_t rwlock;
+    struct rbtree_root rb_root;
+};
 
 struct que_jfs_attr {
     unsigned int jfc_s_depth;
@@ -206,7 +224,8 @@ struct que_ini_proc {
 
     struct que_jfr *imm_recv_jetty;
     struct que_recv_para *recv_para;
-    urma_token_t token;
+    struct que_urma_token token_info;
+    struct que_mem_merge_ctx mem_ctx;
 
     ASYNC_QUE_INI_STATUS ini_status;
     unsigned int f2nf_back;
@@ -259,6 +278,10 @@ struct que_chan {
 
     /* Created */
     unsigned int qid;
+    unsigned long create_time;  
+
+    unsigned int chan_type;
+    struct que_urma_token token;
 
     struct que_ini_proc *ini_proc[QUEUE_ENQUE_BUTT];
     struct que_tgt_proc *tgt_proc;
@@ -319,6 +342,7 @@ struct que_create_in_msg {
 
 struct que_create_out_msg {
     unsigned int qid;
+    unsigned long create_time;
 };
 
 struct que_destoy_in_msg {
@@ -381,6 +405,10 @@ struct que_finish_cb_in_msg {
     unsigned int event_id;
 };
 
+struct que_attach_out_msg {
+    unsigned long create_time;
+};
+
 struct que_attach_in_msg {
     unsigned int qid;
     int timeout;
@@ -397,8 +425,9 @@ struct que_reset_in_msg {
     unsigned int peer_deploy_flag;
 };
 
-struct que_inter_dev_import_in_msg {
+struct que_inter_dev_export_import_in_msg {
     unsigned int dev_id;
+    unsigned int peer_dev_id;
     char share_queue_name[SHARE_QUEUE_NAME_MAX_LEN];
     unsigned int qid;
 };
@@ -411,4 +440,14 @@ struct que_inter_dev_import_out_msg {
     unsigned int flow_ctrl_drop_time;
 };
 
+#define QUE_MAX_QUE_LIST_NUM (50)
+struct que_queue_info {
+    unsigned int qid : 31;
+    unsigned int alive : 1;
+};
+
+struct que_query_alive_msg {
+    unsigned int num;
+    struct que_queue_info qid_list[QUE_MAX_QUE_LIST_NUM];
+};
 #endif

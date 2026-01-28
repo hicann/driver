@@ -21,7 +21,7 @@ drvError_t halShrIdSetPodPid(const char *name, uint32_t sdid, pid_t pid)
 
     /* pass in only one parameter at a time in the current scene */
     if (name == NULL) {
-        trs_err("invlaid parameter.\n");
+        trs_err("Invalid parameter.\n");
         return DRV_ERROR_INVALID_VALUE;
     }
 

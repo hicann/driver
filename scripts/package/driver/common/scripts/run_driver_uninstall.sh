@@ -517,7 +517,7 @@ do
         continue
         ;;
     *)
-        log "[ERROR]the arguement doesn't support"
+        log "[ERROR]the argument doesn't support"
         break
         ;;
     esac

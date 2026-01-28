@@ -12,6 +12,7 @@
  */
 #include "devdrv_dma.h"
 #include "devdrv_util.h"
+#include "ka_memory_pub.h"
 
 #define DMA_QUEUE_SQ_TAIL 0xc
 #define DMA_QUEUE_CQ_HEAD 0x1c
@@ -30,10 +31,10 @@ void devdrv_dma_chan_ptr_show(struct devdrv_dma_channel *dma_chan, int wait_stat
     u32 sq_tail, cq_tail, cq_head, sq_head;
     void __iomem *io_base = dma_chan->io_base;
 
-    sq_tail = readl(io_base + DMA_QUEUE_SQ_TAIL);
-    cq_head = readl(io_base + DMA_QUEUE_CQ_HEAD);
-    cq_tail = readl(io_base + DMA_QUEUE_CQ_TAIL) & DMA_QUEUE_CQ_TAIL_VALID_BIT;
-    sq_head = (readl(io_base + DMA_QUEUE_CQ_TAIL) & DMA_QUEUE_SQ_HEAD_VALID_BIT) >> DMA_QUEUE_SQ_HEAD_OFFSET;
+    sq_tail = ka_mm_readl(io_base + DMA_QUEUE_SQ_TAIL);
+    cq_head = ka_mm_readl(io_base + DMA_QUEUE_CQ_HEAD);
+    cq_tail = ka_mm_readl(io_base + DMA_QUEUE_CQ_TAIL) & DMA_QUEUE_CQ_TAIL_VALID_BIT;
+    sq_head = (ka_mm_readl(io_base + DMA_QUEUE_CQ_TAIL) & DMA_QUEUE_SQ_HEAD_VALID_BIT) >> DMA_QUEUE_SQ_HEAD_OFFSET;
 
     if (is_need_dma_copy_retry(dma_chan->dma_dev->dev_id, wait_status) == true) {
         devdrv_warn("dma_chan ptr show. (hardware_sq_tail=0x%x; cq_head=0x%x; cq_tail=0x%x; sq_head=0x%x; "
@@ -48,27 +49,27 @@ void devdrv_dma_chan_ptr_show(struct devdrv_dma_channel *dma_chan, int wait_stat
 
 void devdrv_set_dma_sq_tail(void __iomem *io_base, u32 val)
 {
-    writel(val, io_base + DMA_QUEUE_SQ_TAIL);
+    ka_mm_writel(val, io_base + DMA_QUEUE_SQ_TAIL);
 }
 
 void devdrv_set_dma_cq_head(void __iomem *io_base, u32 val)
 {
-    writel(val, io_base + DMA_QUEUE_CQ_HEAD);
+    ka_mm_writel(val, io_base + DMA_QUEUE_CQ_HEAD);
 }
 
 u32 devdrv_get_dma_cq_head(void __iomem *io_base)
 {
-    return (readl(io_base + DMA_QUEUE_CQ_HEAD) & DMA_QUEUE_CQ_HEAD_VALID_BIT);
+    return (ka_mm_readl(io_base + DMA_QUEUE_CQ_HEAD) & DMA_QUEUE_CQ_HEAD_VALID_BIT);
 }
 
 u32 devdrv_get_dma_cq_tail(void __iomem *io_base)
 {
-    return (readl(io_base + DMA_QUEUE_CQ_TAIL) & DMA_QUEUE_CQ_TAIL_VALID_BIT);
+    return (ka_mm_readl(io_base + DMA_QUEUE_CQ_TAIL) & DMA_QUEUE_CQ_TAIL_VALID_BIT);
 }
 
 u32 devdrv_get_sq_err_ptr(const void __iomem *io_base)
 {
-    return readl(io_base + DMA_QUEUE_SQ_READ_ERR_PTR);
+    return ka_mm_readl(io_base + DMA_QUEUE_SQ_READ_ERR_PTR);
 }
 
 void devdrv_dma_set_sq_addr_info(struct devdrv_dma_sq_node *sq_desc, u64 src_addr, u64 dst_addr, u32 length)
@@ -189,15 +190,15 @@ STATIC void devdrv_set_pf_dma_queue_chan_pause(struct devdrv_dma_dev *dma_dev,
     u32 regval;
 
     reg_addr = dma_dev->dma_chan_base + DEVDRV_DMA_CHAN_OFFSET * chan_id + DEVDRV_DMA_QUEUE_CTRL0;
-    regval = readl(reg_addr);
+    regval = ka_mm_readl(reg_addr);
     /* bit4 dma_queue_pause */
     if (pause_flag) {
-        regval |= (u32)BIT(4);
+        regval |= (u32)KA_BASE_BIT(4); // Bit mask with the 4th bit set to 1
     } else {
-        regval &= (u32)~BIT(4);
+        regval &= (u32)~KA_BASE_BIT(4); // Bit mask with the 4th bit set to 1
     }
 
-    writel(regval, reg_addr);
+    ka_mm_writel(regval, reg_addr);
 }
 
 void devdrv_set_pf_dma_queue_pause(struct devdrv_dma_dev *dma_dev, bool pause_flag)
@@ -209,11 +210,11 @@ void devdrv_set_pf_dma_queue_pause(struct devdrv_dma_dev *dma_dev, bool pause_fl
 // mask dma done and all err interrupts int suspend
 void devdrv_dma_set_interrupt_mask(struct devdrv_dma_channel *dma_chan)
 {
-    writel(0xFFFFFFFFU, dma_chan->io_base + DMA_QUEUE_INT_MASK);
+    ka_mm_writel(0xFFFFFFFFU, dma_chan->io_base + DMA_QUEUE_INT_MASK);
 }
 
 // unmask dma done and all err interrupts int suspend
 void devdrv_dma_set_interrupt_unmask(struct devdrv_dma_channel *dma_chan)
 {
-    writel(0x0, dma_chan->io_base + DMA_QUEUE_INT_MASK);
+    ka_mm_writel(0x0, dma_chan->io_base + DMA_QUEUE_INT_MASK);
 }

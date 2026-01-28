@@ -50,6 +50,7 @@
 #include "esched_sysfs.h"
 #include "esched_adapt.h"
 #include "esched.h"
+#include "ka_system_pub.h"
 
 /*
 * Due to engineering problems, there will be false alarm,
@@ -78,24 +79,11 @@ bool sched_node_is_valid[SCHED_MAX_CHIP_NUM];
 bool esched_log_limited(u32 type)
 {
 #ifndef EMU_ST
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 0, 0)
-    static struct timespec64 last_stamp[SCHED_LOG_LIMIT_MAX_NUM] = {{0}};
-    struct timespec64 cur_stamp;
-    ktime_get_real_ts64(&cur_stamp);
-#else
-    static struct timeval last_stamp[SCHED_LOG_LIMIT_MAX_NUM] = {{0}};
-    struct timeval cur_stamp;
-    esched_get_ktime(&cur_stamp);
-#endif
     if (type >= SCHED_LOG_LIMIT_MAX_NUM) {
         sched_err("Log type is invalid.\n");
         return true;
     }
-    if ((cur_stamp.tv_sec - last_stamp[type].tv_sec) > LOG_TIME_INTERVAL) {
-        last_stamp[type].tv_sec = cur_stamp.tv_sec;
-        return false;
-    }
-    return true;
+    return ka_system_log_limited(type);
 #endif
 }
 
@@ -1738,6 +1726,10 @@ STATIC int32_t sched_get_exact_sched_event(struct sched_numa_node *node,
         sched_err("The thread does not match. (chip_id=%u; cpu_id=%u; event_id=%u; pid=%d; gid=%u; tid=%u)\n",
             node->node_id, cpuid, event_id, thread_ctx->grp_ctx->pid, thread_ctx->grp_ctx->gid, thread_ctx->tid);
         return DRV_ERROR_PROCESS_NOT_MATCH;
+    }
+
+    if (node->ops.sched_cpu_get_event == NULL) {
+        return DRV_ERROR_NO_EVENT;
     }
 
     event = node->ops.sched_cpu_get_event(cpu_ctx, thread_ctx, event_id);
@@ -4463,6 +4455,7 @@ STATIC int32_t esched_create_dev_lock(u32 devid, struct sched_dev_ops *ops)
 {
     struct sched_numa_node *node = NULL;
     int32_t ret;
+    int sentry_mode;
 
     read_lock_bh(&sched_dev_rwlock);
     if ((sched_node_is_valid[devid]) || (sched_node[devid] != NULL)) {
@@ -4488,8 +4481,17 @@ STATIC int32_t esched_create_dev_lock(u32 devid, struct sched_dev_ops *ops)
     }
 
     sched_node[devid] = node;
-	
-    if (ops->node_res_init != NULL) {
+
+    ret = sched_get_sentry_mode(node, &sentry_mode);
+    if (ret != 0) {
+        esched_uninit_numa_node(node);
+        sched_vfree(node);
+        sched_node[devid] = NULL;
+        sched_err("get sentry mode failed. (ret=%d)\n", ret);
+        return ret;
+    }
+
+    if ((sentry_mode == 0) && (ops->node_res_init != NULL)) {
         ret = ops->node_res_init(node);
         if (ret != 0) {
 			esched_uninit_numa_node(node);
@@ -4524,7 +4526,10 @@ STATIC int32_t esched_create_dev_lock(u32 devid, struct sched_dev_ops *ops)
 STATIC void sched_free_dev(struct sched_numa_node *node)
 {
     u32 devid = node->node_id;
-    if (node->ops.node_res_uninit != NULL) {
+    int sentry_mode = 1;
+
+    (void)sched_get_sentry_mode(node, &sentry_mode);
+    if ((sentry_mode == 0) && (node->ops.node_res_uninit != NULL)) {
         node->ops.node_res_uninit(node);
     }
     esched_uninit_numa_node(node);

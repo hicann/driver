@@ -37,7 +37,7 @@
 #define DEVMM_COPY_1M_PAGE_NUM 256u     /* page num of 1M for 4k page size */
 #define DEVMM_COPY_2M_PAGE_NUM 512u     /* page num of 2M for 4k page size */
 
-static ka_atomic_t devmm_task_id = ATOMIC_INIT(0);
+static ka_atomic_t devmm_task_id = KA_BASE_ATOMIC_INIT(0);
 
 void devmm_find_memcpy_dir(enum devmm_copy_direction *dir, struct devmm_memory_attributes *src_attr,
     struct devmm_memory_attributes *dst_attr)
@@ -135,7 +135,7 @@ static bool devmm_va_is_multi_dev_map(struct devmm_svm_process *svm_proc, struct
                 return true;
             }
         }
-        add_size = min_t(u64, vmma_left_size, left_size);
+        add_size = ka_base_min_t(u64, vmma_left_size, left_size);
         total_size += add_size;
         tmp_va += add_size;
         left_size -= add_size;
@@ -161,7 +161,7 @@ STATIC int devmm_memcpy_para_check(struct devmm_svm_process *svm_proc, struct de
 
     if (devmm_is_host_agent(src_attr->devid)) {
         if (!src_attr->is_svm_remote_maped) {
-            devmm_drv_err("Src_attr_va host is agent address, but not maped by master. (src_attr_va=0x%llx)\n",
+            devmm_drv_err("Src_attr_va host is agent address, but not mapped by master. (src_attr_va=0x%llx)\n",
                           src_attr->va);
             return -EINVAL;
         }
@@ -169,7 +169,7 @@ STATIC int devmm_memcpy_para_check(struct devmm_svm_process *svm_proc, struct de
 
     if (devmm_is_host_agent(dst_attr->devid)) {
         if (!dst_attr->is_svm_remote_maped) {
-            devmm_drv_err("Dst_attr_va va host is agent address, but not maped by master. (dst_attr_va=0x%llx)\n",
+            devmm_drv_err("Dst_attr_va va host is agent address, but not mapped by master. (dst_attr_va=0x%llx)\n",
                           dst_attr->va);
             return -EINVAL;
         }
@@ -281,7 +281,7 @@ STATIC int devmm_ioctl_memcpy_process_frame(struct devmm_svm_process *svm_pro, s
     struct devmm_memory_attributes *src_attr, struct devmm_memory_attributes *dst_attr,
     struct devmm_mem_copy_convrt_para *para)
 {
-    u32 page_size = min((u32)PAGE_SIZE, devmm_svm->device_page_size);
+    u32 page_size = ka_base_min((u32)KA_MM_PAGE_SIZE, devmm_svm->device_page_size);
     size_t count = copy_para->ByteCount;
     u64 src = copy_para->src;
     u64 dst = copy_para->dst;
@@ -339,11 +339,12 @@ STATIC int devmm_ioctl_p2p_memcpy_process(struct devmm_svm_process *svm_proc, st
     int ret;
     struct devmm_memory_attributes src_owner_attr;
     struct devmm_memory_attributes dst_owner_attr;
-    struct devmm_svm_process *dst_proc = svm_proc;
     struct devmm_svm_process *src_proc = svm_proc;
+    struct devmm_svm_process *dst_proc = svm_proc;
+    struct devmm_svm_heap *heap = NULL;
 
     if (src_attr->is_ipc_open) {
-        ret = devmm_ipc_get_owner_proc_attr(svm_proc, src_attr, &src_proc, &src_owner_attr);
+        ret = devmm_ipc_get_owner_proc_attr(svm_proc, src_attr, &src_proc, &heap, &src_owner_attr);
         if (ret != 0) {
             devmm_drv_err("Src va get ipc owner attr failed. (src=0x%llx)\n", para->src);
             return ret;
@@ -356,12 +357,13 @@ STATIC int devmm_ioctl_p2p_memcpy_process(struct devmm_svm_process *svm_proc, st
     }
 
     if (dst_attr->is_ipc_open) {
-        ret = devmm_ipc_get_owner_proc_attr(svm_proc, dst_attr, &dst_proc, &dst_owner_attr);
+        ret = devmm_ipc_get_owner_proc_attr(svm_proc, dst_attr, &dst_proc, &heap, &dst_owner_attr);
         if (ret != 0) {
+#ifndef EMU_ST
             if (src_proc != svm_proc) {
-                devmm_ipc_put_owner_proc_attr(src_proc, &src_owner_attr);
+                devmm_ipc_put_owner_proc_attr(src_proc, heap);
             }
-
+#endif
             devmm_drv_err("Dst va get ipc owner attr failed. (dst=0x%llx)\n", para->dst);
             return ret;
         }
@@ -383,23 +385,25 @@ STATIC int devmm_ioctl_p2p_memcpy_process(struct devmm_svm_process *svm_proc, st
     if (devmm_is_same_dev(src_owner_attr.devid, dst_owner_attr.devid)) {
         /* later we use pcie dma local copy */
         ret = devmm_memcpy_d2d_process(src_proc, &src_owner_attr, dst_proc, &dst_owner_attr, para);
-
+#ifndef EMU_ST
         if (src_proc != svm_proc) {
-            devmm_ipc_put_owner_proc_attr(src_proc, &src_owner_attr);
+            devmm_ipc_put_owner_proc_attr(src_proc, heap);
         }
 
         if (dst_proc != svm_proc) {
-            devmm_ipc_put_owner_proc_attr(dst_proc, &dst_owner_attr);
+            devmm_ipc_put_owner_proc_attr(dst_proc, heap);
         }
+#endif
     } else {
+#ifndef EMU_ST
         if (src_proc != svm_proc) {
-            devmm_ipc_put_owner_proc_attr(src_proc, &src_owner_attr);
+            devmm_ipc_put_owner_proc_attr(src_proc, heap);
         }
 
         if (dst_proc != svm_proc) {
-            devmm_ipc_put_owner_proc_attr(dst_proc, &dst_owner_attr);
+            devmm_ipc_put_owner_proc_attr(dst_proc, heap);
         }
-
+#endif
         /* use h2d or d2h copy two diff device */
         ret = devmm_ioctl_memcpy_process_frame(svm_proc, para, src_attr, dst_attr, task_para);
     }
@@ -539,28 +543,28 @@ static int devmm_memcpy_batch_mem_attr_check(struct devmm_mem_copy_convrt_para *
 }
 
 /* Copy Scenarios and Policies:
-   1. pcie dma surport sva, use process va to copy. if src and dst both use va, we directly commit a dma copy descriptor
+   1. pcie dma support sva, use process va to copy. if src and dst both use va, we directly commit a dma copy descriptor
       a. device addr use va.
-      b. host locked addr, if maped by device, use va.
+      b. host locked addr, if mapped by device, use va.
       c. in same os, p2p copy, src and dst both use va.
-      d. in diffrent os, p2p copy, src and dst both use va, user can call prefetch create p2p page table to
+      d. in different os, p2p copy, src and dst both use va, user can call prefetch create p2p page table to
          Improve performance. Otherwise, a page fault occurs.
       e. ipc open addr, not to replace with it`s associated ipc create addr.
 
-   2. host agent addr, just surport p2p copy; and it must be mapped by master, so we use master proccess page to
+   2. host agent addr, just support p2p copy; and it must be mapped by master, so we use master process page to
       replace it, copy between host agent and device agent, converted to H2D or D2H.
 
    3. the host and device are interconnected through HCCS, The rules of host addr are as follows:
-      a. if device pcie dma surport sva and host locked addr is maped by device, directly use va.
+      a. if device pcie dma support sva and host locked addr is mapped by device, directly use va.
       b. otherwise, if run in host machine, use host pa.
       c. otherwise, if run in virtual machine, send host ipa to device to search pa.
 
    4. ipc open addr, host not storing it`s dma addr, use it`s associated ipc create addr to search dma addr.
 
-   5. pcie dma not surport sva, host and device are interconnected through pcie
+   5. pcie dma not support sva, host and device are interconnected through pcie
       a. same device p2p copy, send msg to device translate uva to kva, then copy.
-      b. diffrent device p2p copy(include same os or diffrent os), one device addr use dma addr, the other use host
-         bar dma addr(dma addr maped by first device).
+      b. different device p2p copy(include same os or different os), one device addr use dma addr, the other use host
+         bar dma addr(dma addr mapped by first device).
       c. h2d or d2h copy, both use it`s dma addr.
 */
 STATIC int devmm_memcpy_proc(struct devmm_svm_process *svm_proc, struct devmm_mem_copy_para *copy_para,
@@ -685,7 +689,7 @@ static int devmm_memcpy_batch_addr_info_init(struct devmm_mem_copy_batch_para *b
         devmm_drv_err("Kvzalloc for dst arg failed. (size=%llu)\n", arg_size);
         return -ENOMEM;
     }
-    if (ka_base_copy_from_user(*dst_arr, (void __user *)(uintptr_t)(batch_para->dst), arg_size) != 0) {
+    if (ka_base_copy_from_user(*dst_arr, (void __ka_user *)(uintptr_t)(batch_para->dst), arg_size) != 0) {
         devmm_drv_err("Copy_from_user dst args fail. (copy_size=%llu; dst=0x%llx)\n", arg_size, (u64)(uintptr_t)batch_para->dst);
         goto free_dst_args;
     }
@@ -695,7 +699,7 @@ static int devmm_memcpy_batch_addr_info_init(struct devmm_mem_copy_batch_para *b
         devmm_drv_err("Kvzalloc for dst arg failed. (size=%llu)\n", arg_size);
         goto free_dst_args;
     }
-    if (ka_base_copy_from_user(*src_arr, (void __user *)(uintptr_t)(batch_para->src), arg_size) != 0) {
+    if (ka_base_copy_from_user(*src_arr, (void __ka_user *)(uintptr_t)(batch_para->src), arg_size) != 0) {
         devmm_drv_err("Copy_from_user dst args fail. (copy_size=%llu; src=0x%llx)\n", arg_size, (u64)(uintptr_t)batch_para->src);
         goto free_src_args;
     }
@@ -706,7 +710,7 @@ static int devmm_memcpy_batch_addr_info_init(struct devmm_mem_copy_batch_para *b
         devmm_drv_err("Kvzalloc for size arg failed. (size=%llu)\n", arg_size);
         goto free_src_args;
     }
-    if (ka_base_copy_from_user(*size_arr, (void __user *)(uintptr_t)(batch_para->size), arg_size) != 0) {
+    if (ka_base_copy_from_user(*size_arr, (void __ka_user *)(uintptr_t)(batch_para->size), arg_size) != 0) {
         devmm_drv_err("Copy_from_user size args fail. (copy_size=%llu; size_addr=0x%llx)\n", arg_size, (u64)(uintptr_t)batch_para->size);
         goto free_size_args;
     }

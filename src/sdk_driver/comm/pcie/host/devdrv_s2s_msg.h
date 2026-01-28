@@ -14,12 +14,6 @@
 #ifndef __DEVDRV_S2S_MSG_H
 #define __DEVDRV_S2S_MSG_H
 
-#include <linux/interrupt.h>
-#include <linux/pci.h>
-#include <linux/mutex.h>
-#include <linux/jiffies.h>
-#include <linux/semaphore.h>
-
 #include "devdrv_dma.h"
 #include "devdrv_pci.h"
 #include "devdrv_common_msg.h"
@@ -89,9 +83,9 @@
 struct devdrv_msg_s2s_queue_info {
     struct devdrv_s2s_msg *desc;        // map from union address each host for 16 devices, used for cq
     struct devdrv_s2s_msg *data_buf;    // used for service data transfer
-    dma_addr_t data_buf_addr;
+    ka_dma_addr_t data_buf_addr;
     struct devdrv_s2s_msg *ack_buf;
-    dma_addr_t ack_addr;
+    ka_dma_addr_t ack_addr;
 };
 
 struct devdrv_s2s_msg_chan {
@@ -101,19 +95,19 @@ struct devdrv_s2s_msg_chan {
     u32 status;
     u32 version; /* must be here */
     struct devdrv_msg_dev *msg_dev;
-    struct device *dev;
+    ka_device_t *dev;
     struct devdrv_msg_s2s_queue_info sq;
     phys_addr_t sq_phy_addr;
     phys_addr_t remote_sq_msg_phy_addr;
     phys_addr_t remote_cq_msg_phy_addr;
-    struct semaphore sema;
+    ka_semaphore_t sema;
     u32 msg_mode;
     u64 tx_seq_num;
 };
 
 struct devdrv_s2s_non_trans_ctrl {
     u32 last_use;
-    struct mutex mutex;
+    ka_mutex_t mutex;
     void *chan[DEVDRV_S2S_NON_TRANS_MSG_CHAN_NUM];
 };
 

@@ -37,6 +37,8 @@ enum {
     REMOTE_MMAP,
     SHMEM_REPAIR,
     SHMEM_MAP_EXBUS,
+    MEM_HOST_UVA_FEATURE,
+    MEM_MAP_CAPABILITY_FEATURE,
     DEVMM_MAX_FEATURE_ID
 };
 
@@ -64,6 +66,8 @@ bool devmm_dev_capability_support_host_mem_pool(u32 devid);
 bool devmm_dev_capability_support_dma_prepare_pool(u32 devid);
 bool devmm_dev_capability_support_host_rw_dev_ro(u32 devid);
 bool devmm_dev_capability_support_shmem_map_exbus(u32 devid);
+
+int devmm_ioctl_mem_map_capability(struct devmm_svm_process *svm_proc, struct devmm_ioctl_arg *arg);
 
 static inline bool devmm_dev_capability_support_dev_mem_map_host(u32 did)
 {
@@ -143,6 +147,17 @@ static inline bool devmm_dev_capability_support_shmem_repair(u32 dev_id)
 {
     return devmm_svm->dev_capability[dev_id].feature_shmem_repair &&
         (g_dev_feature_capabilty_disable[dev_id][SHMEM_REPAIR] == false);
+}
+
+static inline bool devmm_dev_capability_support_mem_host_uva(u32 dev_id)
+{
+    return devmm_svm->dev_capability[dev_id].feature_mem_host_uva &&
+        (g_dev_feature_capabilty_disable[dev_id][MEM_HOST_UVA_FEATURE] == false);
+}
+static inline bool devmm_dev_capability_support_mem_map_capability(u32 dev_id)
+{
+    return devmm_svm->dev_capability[dev_id].feature_host_mem_map_cap &&
+        (g_dev_feature_capabilty_disable[dev_id][MEM_MAP_CAPABILITY_FEATURE] == false);
 }
 
 #endif /* SVM_MASTER_DEV_CAPABILITY_H__ */

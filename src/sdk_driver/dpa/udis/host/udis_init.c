@@ -15,6 +15,9 @@
 #include <linux/init.h>
 #include <linux/pci.h>
 
+#include "ka_task_pub.h"
+#include "ka_kernel_def_pub.h"
+#include "ka_list_pub.h"
 #include "securec.h"
 #include "pbl_uda.h"
 #include "pbl_mem_alloc_interface.h"
@@ -34,20 +37,24 @@
 #define PCI_VENDOR_ID_HUAWEI            0x19e5
 #define DEVDRV_DIVERSITY_PCIE_VENDOR_ID 0xFFFF
 static const struct pci_device_id g_udis_tbl[] = {
-    { PCI_VDEVICE(HUAWEI, 0xd100),           0 },
-    { PCI_VDEVICE(HUAWEI, 0xd105),           0 },
-    { PCI_VDEVICE(HUAWEI, PCI_DEVICE_CLOUD), 0 },
-    { PCI_VDEVICE(HUAWEI, 0xd801),           0 },
-    { PCI_VDEVICE(HUAWEI, 0xd500),           0 },
-    { PCI_VDEVICE(HUAWEI, 0xd501),           0 },
-    { PCI_VDEVICE(HUAWEI, 0xd802),           0 },
-    { PCI_VDEVICE(HUAWEI, 0xd803),           0 },
-    { PCI_VDEVICE(HUAWEI, 0xd804),           0 },
-    { PCI_VDEVICE(HUAWEI, 0xd805),           0 },
-    { DEVDRV_DIVERSITY_PCIE_VENDOR_ID, 0xd500, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 },
+    { KA_PCI_VDEVICE(HUAWEI, 0xd100),           0 },
+    { KA_PCI_VDEVICE(HUAWEI, 0xd105),           0 },
+    { KA_PCI_VDEVICE(HUAWEI, PCI_DEVICE_CLOUD), 0 },
+    { KA_PCI_VDEVICE(HUAWEI, 0xd801),           0 },
+    { KA_PCI_VDEVICE(HUAWEI, 0xd500),           0 },
+    { KA_PCI_VDEVICE(HUAWEI, 0xd501),           0 },
+    { KA_PCI_VDEVICE(HUAWEI, 0xd802),           0 },
+    { KA_PCI_VDEVICE(HUAWEI, 0xd803),           0 },
+    { KA_PCI_VDEVICE(HUAWEI, 0xd804),           0 },
+    { KA_PCI_VDEVICE(HUAWEI, 0xd805),           0 },
+    { DEVDRV_DIVERSITY_PCIE_VENDOR_ID, 0xd500, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0 },
+    { 0x20C6, 0xd500, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0 },
+    { 0x203F, 0xd500, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0 },
+    { 0x20C6, 0xd802, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0 },
+    { 0x203F, 0xd802, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0 },
     {}
 };
-MODULE_DEVICE_TABLE(pci, g_udis_tbl);
+KA_MODULE_DEVICE_TABLE(pci, g_udis_tbl);
 
 STATIC int udis_common_chan_register(unsigned int udevid)
 {
@@ -84,7 +91,7 @@ STATIC int udis_cb_constructor(unsigned int udevid, struct udis_ctrl_block *udis
     int ret, i;
 
     udis_cb->udis_info_buf = (struct udis_info_stu *)hal_kernel_devdrv_dma_alloc_coherent(uda_get_device(udevid),
-        UDIS_MODULE_OFFSET * UDIS_MODULE_MAX, &udis_cb->udis_info_buf_dma, GFP_KERNEL | __GFP_ACCOUNT);
+        UDIS_MODULE_OFFSET * UDIS_MODULE_MAX, &udis_cb->udis_info_buf_dma, KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
     if (udis_cb->udis_info_buf == NULL) {
         udis_err("Failed to call hal_kernel_devdrv_dma_alloc_coherent. (udevid=%u)\n", udevid);
         return -ENOMEM;
@@ -99,11 +106,11 @@ STATIC int udis_cb_constructor(unsigned int udevid, struct udis_ctrl_block *udis
     }
 
     for (i = UPDATE_ONLY_ONCE; i < UPDATE_TYPE_MAX; ++i) {
-        INIT_LIST_HEAD(&udis_cb->addr_list[i]);
+        KA_INIT_LIST_HEAD(&udis_cb->addr_list[i]);
     }
 
-    init_rwsem(&udis_cb->udis_info_lock);
-    init_rwsem(&udis_cb->addr_list_lock);
+    ka_task_init_rwsem(&udis_cb->udis_info_lock);
+    ka_task_init_rwsem(&udis_cb->addr_list_lock);
     return 0;
 
 free_dma_buf:
@@ -120,8 +127,8 @@ STATIC void udis_cb_destructor(unsigned int udevid, struct udis_ctrl_block *udis
     struct udis_dma_node *addr_node, *tmp;
 
     for (i = UPDATE_ONLY_ONCE; i < UPDATE_TYPE_MAX; ++i) {
-        list_for_each_entry_safe(addr_node, tmp, &udis_cb->addr_list[i], list) {
-            list_del(&addr_node->list);
+        ka_list_for_each_entry_safe(addr_node, tmp, &udis_cb->addr_list[i], list) {
+            ka_list_del(&addr_node->list);
             dbl_kfree(addr_node);
             addr_node = NULL;
         }
@@ -138,7 +145,7 @@ STATIC int udis_init_ucb(unsigned int udevid)
     int ret;
     struct udis_ctrl_block *ucb = NULL;
 
-    ucb = (struct udis_ctrl_block*)dbl_kzalloc(sizeof(struct udis_ctrl_block), GFP_KERNEL | __GFP_ACCOUNT);
+    ucb = (struct udis_ctrl_block*)dbl_kzalloc(sizeof(struct udis_ctrl_block), KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
     if (ucb == NULL) {
         udis_err("Failed to alloc for udis ctrl block. (udevid=%u)\n", udevid);
         return -ENOMEM;
@@ -466,6 +473,6 @@ void udis_exit(void)
     return;
 }
 
-MODULE_LICENSE("GPL");
-MODULE_AUTHOR("Huawei Tech. Co., Ltd.");
-MODULE_DESCRIPTION("DAVINCI driver");
+KA_MODULE_LICENSE("GPL");
+KA_MODULE_AUTHOR("Huawei Tech. Co., Ltd.");
+KA_MODULE_DESCRIPTION("DAVINCI driver");

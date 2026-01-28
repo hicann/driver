@@ -13,6 +13,8 @@
 
 #include "ascend_dev_num.h"
 #include "devdrv_common.h"
+#include "ka_base_pub.h"
+#include "ka_kernel_def_pub.h"
 #include "tsdrv_status.h"
 
 static struct tsdrv_mng g_tsdrv_mng[ASCEND_DEV_MAX_NUM][DEVDRV_MAX_TS_NUM];
@@ -25,9 +27,9 @@ void tsdrv_set_ts_status(u32 devid, u32 tsid, enum devdrv_ts_status status)
         return;
     }
 
-    atomic_set(&g_tsdrv_mng[devid][tsid].status, status);
+    ka_base_atomic_set(&g_tsdrv_mng[devid][tsid].status, status);
 }
-EXPORT_SYMBOL(tsdrv_set_ts_status);
+KA_EXPORT_SYMBOL(tsdrv_set_ts_status);
 
 void tsdrv_status_init(void)
 {
@@ -35,12 +37,12 @@ void tsdrv_status_init(void)
     for (i = 0; i < ASCEND_DEV_MAX_NUM; i++) {
         for (j = 0; j < DEVDRV_MAX_TS_NUM; j++) {
 #ifndef DEVDRV_MANAGER_HOST_UT_TEST
-            atomic_set(&g_tsdrv_mng[i][j].status, TS_WORK);
+            ka_base_atomic_set(&g_tsdrv_mng[i][j].status, TS_WORK);
 #endif
         }
     }
 }
-EXPORT_SYMBOL(tsdrv_status_init);
+KA_EXPORT_SYMBOL(tsdrv_status_init);
 
 bool tsdrv_is_ts_work(u32 devid, u32 tsid)
 {
@@ -51,11 +53,11 @@ bool tsdrv_is_ts_work(u32 devid, u32 tsid)
         return false;
     }
 
-    status = atomic_read(&g_tsdrv_mng[devid][tsid].status);
+    status = ka_base_atomic_read(&g_tsdrv_mng[devid][tsid].status);
 
     return (status == TS_WORK);
 }
-EXPORT_SYMBOL(tsdrv_is_ts_work);
+KA_EXPORT_SYMBOL(tsdrv_is_ts_work);
 
 bool tsdrv_is_ts_sleep(u32 devid, u32 tsid)
 {
@@ -66,11 +68,11 @@ bool tsdrv_is_ts_sleep(u32 devid, u32 tsid)
         return false;
     }
 
-    status = atomic_read(&g_tsdrv_mng[devid][tsid].status);
+    status = ka_base_atomic_read(&g_tsdrv_mng[devid][tsid].status);
 
     return (status == TS_SUSPEND);
 }
-EXPORT_SYMBOL(tsdrv_is_ts_sleep);
+KA_EXPORT_SYMBOL(tsdrv_is_ts_sleep);
 
 
 enum devdrv_ts_status tsdrv_get_ts_status(u32 devid, u32 tsid)
@@ -80,6 +82,6 @@ enum devdrv_ts_status tsdrv_get_ts_status(u32 devid, u32 tsid)
         return TS_MAX_STATUS;
     }
 
-    return atomic_read(&g_tsdrv_mng[devid][tsid].status);
+    return ka_base_atomic_read(&g_tsdrv_mng[devid][tsid].status);
 }
-EXPORT_SYMBOL(tsdrv_get_ts_status);
+KA_EXPORT_SYMBOL(tsdrv_get_ts_status);

@@ -30,22 +30,22 @@ void devdrv_res_uninit(struct devdrv_pci_ctrl *pci_ctrl)
     pci_ctrl->shr_para = NULL;
 
     if (pci_ctrl->io_base != NULL) {
-        iounmap(pci_ctrl->io_base);
+        ka_mm_iounmap(pci_ctrl->io_base);
         pci_ctrl->io_base = NULL;
     }
 
     if (pci_ctrl->msi_base != NULL) {
-        iounmap(pci_ctrl->msi_base);
+        ka_mm_iounmap(pci_ctrl->msi_base);
         pci_ctrl->msi_base = NULL;
     }
 
     if (pci_ctrl->mem_base != NULL) {
-        iounmap(pci_ctrl->mem_base);
+        ka_mm_iounmap(pci_ctrl->mem_base);
         pci_ctrl->mem_base = NULL;
     }
 
     if (pci_ctrl->local_reserve_mem_base != NULL) {
-        iounmap(pci_ctrl->local_reserve_mem_base);
+        ka_mm_iounmap(pci_ctrl->local_reserve_mem_base);
         pci_ctrl->local_reserve_mem_base = NULL;
     }
 }

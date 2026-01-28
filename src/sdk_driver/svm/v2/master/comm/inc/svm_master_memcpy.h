@@ -13,8 +13,8 @@
 #ifndef SVM_MASTER_MEMCPY_H
 #define SVM_MASTER_MEMCPY_H
 
-#include "svm_ioctl.h"
 #include "devmm_proc_info.h"
+#include "svm_ioctl.h"
 
 int devmm_ioctl_memcpy_proc(struct devmm_svm_process *svm_proc, struct devmm_ioctl_arg *arg);
 int devmm_ioctl_memcpy_batch(struct devmm_svm_process *svm_proc, struct devmm_ioctl_arg *arg);

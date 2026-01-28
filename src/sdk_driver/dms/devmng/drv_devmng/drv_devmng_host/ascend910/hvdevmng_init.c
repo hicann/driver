@@ -56,6 +56,10 @@
 #include "dms_hvdevmng_common.h"
 #include "hvdevmng_cmd_proc.h"
 #include "vmng_kernel_interface.h"
+#include "ka_memory_pub.h"
+#include "ka_kernel_def_pub.h"
+#include "ka_base_pub.h"
+#include "ka_ioctl_pub.h"
 #include "dev_mnt_vdevice.h"
 
 /* follow event_sched macro definition */
@@ -102,14 +106,14 @@ STATIC int hvdevmng_mem_alloc(void)
 {
     unsigned int dev_id;
 
-    g_hvdevmng_resource = dbl_kzalloc(sizeof(struct dev_resource *) * ASCEND_DEV_MAX_NUM, GFP_KERNEL | __GFP_ACCOUNT);
+    g_hvdevmng_resource = dbl_kzalloc(sizeof(struct dev_resource *) * ASCEND_DEV_MAX_NUM, KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
     if (g_hvdevmng_resource == NULL) {
         devdrv_drv_err("Memory alloc for g_hvdevmng_resource failed.\n");
         return -ENOMEM;
     }
     for (dev_id = 0; dev_id < ASCEND_DEV_MAX_NUM; dev_id++) {
         g_hvdevmng_resource[dev_id] = dbl_kzalloc(sizeof(struct dev_resource) * VMNG_VDEV_MAX_PER_PDEV,
-            GFP_KERNEL | __GFP_ACCOUNT);
+            KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
         if (g_hvdevmng_resource[dev_id] == NULL) {
             devdrv_drv_err("Memory alloc for g_hvdevmng_resource[dev_id] failed. (dev_id=%u)\n", dev_id);
             hvdevmng_mem_free();
@@ -141,7 +145,7 @@ int hvdevmng_get_aicore_num(u32 devid, u32 fid, u32 *aicore_num)
     *aicore_num = g_hvdevmng_resource[devid][fid].aicore_num;
     return 0;
 }
-EXPORT_SYMBOL(hvdevmng_get_aicore_num);
+KA_EXPORT_SYMBOL(hvdevmng_get_aicore_num);
 
 int hvdevmng_get_template_name(u32 devid, u32 fid, u8 *name, u32 name_len)
 {
@@ -230,7 +234,7 @@ int hvdevmng_get_aicpu_num(u32 devid, u32 fid, u32 *aicpu_num, u32 *aicpu_bitmap
         }
         *aicpu_bitmap = info.each.stars_refresh.device_aicpu;
         aicpu_bitmap_tmp = (u64)(*aicpu_bitmap);
-        *aicpu_num = bitmap_weight(&aicpu_bitmap_tmp, HVDEVMNG_AICPU_BITMAP_CALCULATE + 1);
+        *aicpu_num = ka_base_bitmap_weight(&aicpu_bitmap_tmp, HVDEVMNG_AICPU_BITMAP_CALCULATE + 1);
         g_hvdevmng_resource[devid][fid].vector_core_num = *aicpu_num;
     }
 
@@ -311,7 +315,7 @@ int hvdevmng_get_chip_type(u32 devid, u32 *chip_type)
     }
     return 0;
 }
-EXPORT_SYMBOL(hvdevmng_get_chip_type);
+KA_EXPORT_SYMBOL(hvdevmng_get_chip_type);
 
 STATIC int hvdevmng_get_dev_tsdrv_resource(u32 devid, u32 fid, u32 tsid, u32 info_type, u64 *result_data)
 {
@@ -421,93 +425,93 @@ void hvdevmng_set_dev_ts_resource(u32 devid, u32 fid, u32 tsid, void *data)
     dev_resource->ts_id_capa[tsid] = *ts_res_info;
     return;
 }
-EXPORT_SYMBOL(hvdevmng_set_dev_ts_resource);
+KA_EXPORT_SYMBOL(hvdevmng_set_dev_ts_resource);
 
 #if defined CFG_FEATURE_VFIO && !defined CFG_FEATURE_SRIOV
 
 STATIC int (*const hvdevmng_ioctl_handlers[DEVDRV_MANAGER_CMD_MAX_NR])(u32 dev_id,
     u32 fid, struct vdevmng_ioctl_msg *iomsg) = {
-        [_IOC_NR(DEVDRV_MANAGER_GET_PCIINFO)] = NULL,
-        [_IOC_NR(DEVDRV_MANAGER_GET_DEVNUM)] = NULL,
-        [_IOC_NR(DEVDRV_MANAGER_GET_PLATINFO)] = NULL,
-        [_IOC_NR(DEVDRV_MANAGER_DEVICE_STATUS)] = hvdevmng_get_device_status,
-        [_IOC_NR(DEVDRV_MANAGER_GET_CORE_SPEC)] = NULL,
-        [_IOC_NR(DEVDRV_MANAGER_GET_CORE_INUSE)] = NULL,
-        [_IOC_NR(DEVDRV_MANAGER_GET_DEVIDS)] = NULL,
-        [_IOC_NR(DEVDRV_MANAGER_GET_CONTAINER_DEVIDS)] = NULL,
-        [_IOC_NR(DEVDRV_MANAGER_GET_DEVINFO)] = NULL,
-        [_IOC_NR(DEVDRV_MANAGER_GET_DEVID_BY_LOCALDEVID)] = NULL,
-        [_IOC_NR(DEVDRV_MANAGER_GET_DEV_INFO_BY_PHYID)] = NULL,
-        [_IOC_NR(DEVDRV_MANAGER_GET_PCIE_ID_INFO)] = NULL,
-        [_IOC_NR(DEVDRV_MANAGER_GET_VOLTAGE)] = NULL,
-        [_IOC_NR(DEVDRV_MANAGER_GET_TEMPERATURE)] = NULL,
-        [_IOC_NR(DEVDRV_MANAGER_GET_TSENSOR)] = NULL,
-        [_IOC_NR(DEVDRV_MANAGER_GET_AI_USE_RATE)] = NULL,
-        [_IOC_NR(DEVDRV_MANAGER_GET_FREQUENCY)] = NULL,
-        [_IOC_NR(DEVDRV_MANAGER_GET_POWER)] = NULL,
-        [_IOC_NR(DEVDRV_MANAGER_GET_HEALTH_CODE)] = NULL,
-        [_IOC_NR(DEVDRV_MANAGER_GET_ERROR_CODE)] = hvdevmng_get_error_code,
-        [_IOC_NR(DEVDRV_MANAGER_GET_DDR_CAPACITY)] = NULL,
-        [_IOC_NR(DEVDRV_MANAGER_LPM3_SMOKE)] = NULL,
-        [_IOC_NR(DEVDRV_MANAGER_BLACK_BOX_GET_EXCEPTION)] = NULL,
-        [_IOC_NR(DEVDRV_MANAGER_DEVICE_MEMORY_DUMP)] = NULL,
-        [_IOC_NR(DEVDRV_MANAGER_DEVICE_RESET_INFORM)] = NULL,
-        [_IOC_NR(DEVDRV_MANAGER_GET_MODULE_STATUS)] = NULL,
-        [_IOC_NR(DEVDRV_MANAGER_GET_MINI_BOARD_ID)] = NULL,
-        [_IOC_NR(DEVDRV_MANAGER_PCIE_PRE_RESET)] = NULL,
-        [_IOC_NR(DEVDRV_MANAGER_PCIE_RESCAN)] = NULL,
-        [_IOC_NR(DEVDRV_MANAGER_PCIE_HOT_RESET)] = NULL,
-        [_IOC_NR(DEVDRV_MANAGER_P2P_ATTR)] = NULL,
-        [_IOC_NR(DEVDRV_MANAGER_ALLOC_HOST_DMA_ADDR)] = NULL,
-        [_IOC_NR(DEVDRV_MANAGER_PCIE_READ)] = NULL,
-        [_IOC_NR(DEVDRV_MANAGER_PCIE_SRAM_WRITE)] = NULL,
-        [_IOC_NR(DEVDRV_MANAGER_GET_EMMC_VOLTAGE)] = NULL,
-        [_IOC_NR(DEVDRV_MANAGER_GET_DEVICE_BOOT_STATUS)] = hvdevmng_get_device_boot_status,
-        [_IOC_NR(DEVDRV_MANAGER_ENABLE_EFUSE_LDO)] = NULL,
-        [_IOC_NR(DEVDRV_MANAGER_DISABLE_EFUSE_LDO)] = NULL,
-        [_IOC_NR(DEVDRV_MANAGER_CONTAINER_CMD)] = NULL,
-        [_IOC_NR(DEVDRV_MANAGER_GET_HOST_PHY_MACH_FLAG)] = NULL,
-        [_IOC_NR(DEVDRV_MANAGER_GET_LOCAL_DEVICEIDS)] = NULL,
-        [_IOC_NR(DEVDRV_MANAGER_IMU_SMOKE)] = NULL,
-        [_IOC_NR(DEVDRV_MANAGER_SET_NEW_TIME)] = NULL,
-        [_IOC_NR(DEVDRV_MANAGER_IPC_NOTIFY_CREATE)] = NULL,
-        [_IOC_NR(DEVDRV_MANAGER_IPC_NOTIFY_OPEN)] = NULL,
-        [_IOC_NR(DEVDRV_MANAGER_IPC_NOTIFY_CLOSE)] = NULL,
-        [_IOC_NR(DEVDRV_MANAGER_IPC_NOTIFY_DESTROY)] = NULL,
-        [_IOC_NR(DEVDRV_MANAGER_IPC_NOTIFY_SET_PID)] = NULL,
-        [_IOC_NR(DEVDRV_MANAGER_GET_CPU_INFO)] = NULL,
-        [_IOC_NR(DEVDRV_MANAGER_SEND_TO_IMU)] = NULL,
-        [_IOC_NR(DEVDRV_MANAGER_RECV_FROM_IMU)] = NULL,
-        [_IOC_NR(DEVDRV_MANAGER_GET_IMU_INFO)] = NULL,
-        [_IOC_NR(DEVDRV_MANAGER_CONFIG_ECC_ENABLE)] = NULL,
-        [_IOC_NR(DEVDRV_MANAGER_GET_PROBE_NUM)] = NULL,
-        [_IOC_NR(DEVDRV_MANAGER_GET_PROBE_LIST)] = NULL,
-        [_IOC_NR(DEVDRV_MANAGER_DEBUG_INFORM)] = NULL,
-        [_IOC_NR(DEVDRV_MANAGER_COMPUTE_POWER)] = NULL,
-        [_IOC_NR(DEVDRV_MANAGER_SYNC_MATRIX_DAEMON_READY)] = NULL,
-        [_IOC_NR(DEVDRV_MANAGER_GET_BBOX_ERRSTR)] = NULL,
-        [_IOC_NR(DEVDRV_MANAGER_PCIE_IMU_DDR_READ)] = NULL,
-        [_IOC_NR(DEVDRV_MANAGER_GET_SLOT_ID)] = NULL,
-        [_IOC_NR(DEVDRV_MANAGER_APPMON_BBOX_EXCEPTION_CMD)] = NULL,
-        [_IOC_NR(DEVDRV_MANAGER_GET_CONTAINER_FLAG)] = NULL,
-        [_IOC_NR(DEVDRV_MANAGER_GET_PROCESS_SIGN)] = NULL,
-        [_IOC_NR(DEVDRV_MANAGER_GET_MASTER_DEV_IN_THE_SAME_OS)] = NULL,
-        [_IOC_NR(DEVDRV_MANAGER_GET_LOCAL_DEV_ID_BY_HOST_DEV_ID)] = NULL,
-        [_IOC_NR(DEVDRV_MANAGER_GET_BOOT_DEV_ID)] = NULL,
-        [_IOC_NR(DEVDRV_MANAGER_GET_TSDRV_DEV_COM_INFO)] = NULL,
-        [_IOC_NR(DEVDRV_MANAGER_GET_CAPABILITY_GROUP_INFO)] = NULL,
-        [_IOC_NR(DEVDRV_MANAGER_PASSTHRU_MCU)] = NULL,
-        [_IOC_NR(DEVDRV_MANAGER_GET_P2P_CAPABILITY)] = NULL,
-        [_IOC_NR(DEVDRV_MANAGER_GET_ETH_ID)] = NULL,
-        [_IOC_NR(DEVDRV_MANAGER_BIND_PID_ID)] = NULL,
-        [_IOC_NR(DEVDRV_MANAGER_GET_H2D_DEVINFO)] = hvdevmng_get_h2d_devinfo,
-        [_IOC_NR(DEVDRV_MANAGER_GET_CONSOLE_LOG_LEVEL)] = NULL,
-        [_IOC_NR(DEVDRV_MANAGER_UPDATE_STARTUP_STATUS)] = NULL,
-        [_IOC_NR(DEVDRV_MANAGER_GET_STARTUP_STATUS)] = hvdevmng_get_device_startup_status,
-        [_IOC_NR(DEVDRV_MANAGER_GET_DEVICE_HEALTH_STATUS)] = hvdevmng_get_device_health_status,
-        [_IOC_NR(DEVDRV_MANAGER_GET_DEV_RESOURCE_INFO)] = hvdevmng_vpc_get_dev_resource_info,
-        [_IOC_NR(DEVDRV_MANAGER_GET_OSC_FREQ)] = hvdevmng_get_osc_freq,
-        [_IOC_NR(DEVDRV_MANAGER_GET_CURRENT_AIC_FREQ)] = hvdevmng_get_current_aic_freq,
+        [_KA_IOC_NR(DEVDRV_MANAGER_GET_PCIINFO)] = NULL,
+        [_KA_IOC_NR(DEVDRV_MANAGER_GET_DEVNUM)] = NULL,
+        [_KA_IOC_NR(DEVDRV_MANAGER_GET_PLATINFO)] = NULL,
+        [_KA_IOC_NR(DEVDRV_MANAGER_DEVICE_STATUS)] = hvdevmng_get_device_status,
+        [_KA_IOC_NR(DEVDRV_MANAGER_GET_CORE_SPEC)] = NULL,
+        [_KA_IOC_NR(DEVDRV_MANAGER_GET_CORE_INUSE)] = NULL,
+        [_KA_IOC_NR(DEVDRV_MANAGER_GET_DEVIDS)] = NULL,
+        [_KA_IOC_NR(DEVDRV_MANAGER_GET_CONTAINER_DEVIDS)] = NULL,
+        [_KA_IOC_NR(DEVDRV_MANAGER_GET_DEVINFO)] = NULL,
+        [_KA_IOC_NR(DEVDRV_MANAGER_GET_DEVID_BY_LOCALDEVID)] = NULL,
+        [_KA_IOC_NR(DEVDRV_MANAGER_GET_DEV_INFO_BY_PHYID)] = NULL,
+        [_KA_IOC_NR(DEVDRV_MANAGER_GET_PCIE_ID_INFO)] = NULL,
+        [_KA_IOC_NR(DEVDRV_MANAGER_GET_VOLTAGE)] = NULL,
+        [_KA_IOC_NR(DEVDRV_MANAGER_GET_TEMPERATURE)] = NULL,
+        [_KA_IOC_NR(DEVDRV_MANAGER_GET_TSENSOR)] = NULL,
+        [_KA_IOC_NR(DEVDRV_MANAGER_GET_AI_USE_RATE)] = NULL,
+        [_KA_IOC_NR(DEVDRV_MANAGER_GET_FREQUENCY)] = NULL,
+        [_KA_IOC_NR(DEVDRV_MANAGER_GET_POWER)] = NULL,
+        [_KA_IOC_NR(DEVDRV_MANAGER_GET_HEALTH_CODE)] = NULL,
+        [_KA_IOC_NR(DEVDRV_MANAGER_GET_ERROR_CODE)] = hvdevmng_get_error_code,
+        [_KA_IOC_NR(DEVDRV_MANAGER_GET_DDR_CAPACITY)] = NULL,
+        [_KA_IOC_NR(DEVDRV_MANAGER_LPM3_SMOKE)] = NULL,
+        [_KA_IOC_NR(DEVDRV_MANAGER_BLACK_BOX_GET_EXCEPTION)] = NULL,
+        [_KA_IOC_NR(DEVDRV_MANAGER_DEVICE_MEMORY_DUMP)] = NULL,
+        [_KA_IOC_NR(DEVDRV_MANAGER_DEVICE_RESET_INFORM)] = NULL,
+        [_KA_IOC_NR(DEVDRV_MANAGER_GET_MODULE_STATUS)] = NULL,
+        [_KA_IOC_NR(DEVDRV_MANAGER_GET_MINI_BOARD_ID)] = NULL,
+        [_KA_IOC_NR(DEVDRV_MANAGER_PCIE_PRE_RESET)] = NULL,
+        [_KA_IOC_NR(DEVDRV_MANAGER_PCIE_RESCAN)] = NULL,
+        [_KA_IOC_NR(DEVDRV_MANAGER_PCIE_HOT_RESET)] = NULL,
+        [_KA_IOC_NR(DEVDRV_MANAGER_P2P_ATTR)] = NULL,
+        [_KA_IOC_NR(DEVDRV_MANAGER_ALLOC_HOST_DMA_ADDR)] = NULL,
+        [_KA_IOC_NR(DEVDRV_MANAGER_PCIE_READ)] = NULL,
+        [_KA_IOC_NR(DEVDRV_MANAGER_PCIE_SRAM_WRITE)] = NULL,
+        [_KA_IOC_NR(DEVDRV_MANAGER_GET_EMMC_VOLTAGE)] = NULL,
+        [_KA_IOC_NR(DEVDRV_MANAGER_GET_DEVICE_BOOT_STATUS)] = hvdevmng_get_device_boot_status,
+        [_KA_IOC_NR(DEVDRV_MANAGER_ENABLE_EFUSE_LDO)] = NULL,
+        [_KA_IOC_NR(DEVDRV_MANAGER_DISABLE_EFUSE_LDO)] = NULL,
+        [_KA_IOC_NR(DEVDRV_MANAGER_CONTAINER_CMD)] = NULL,
+        [_KA_IOC_NR(DEVDRV_MANAGER_GET_HOST_PHY_MACH_FLAG)] = NULL,
+        [_KA_IOC_NR(DEVDRV_MANAGER_GET_LOCAL_DEVICEIDS)] = NULL,
+        [_KA_IOC_NR(DEVDRV_MANAGER_IMU_SMOKE)] = NULL,
+        [_KA_IOC_NR(DEVDRV_MANAGER_SET_NEW_TIME)] = NULL,
+        [_KA_IOC_NR(DEVDRV_MANAGER_IPC_NOTIFY_CREATE)] = NULL,
+        [_KA_IOC_NR(DEVDRV_MANAGER_IPC_NOTIFY_OPEN)] = NULL,
+        [_KA_IOC_NR(DEVDRV_MANAGER_IPC_NOTIFY_CLOSE)] = NULL,
+        [_KA_IOC_NR(DEVDRV_MANAGER_IPC_NOTIFY_DESTROY)] = NULL,
+        [_KA_IOC_NR(DEVDRV_MANAGER_IPC_NOTIFY_SET_PID)] = NULL,
+        [_KA_IOC_NR(DEVDRV_MANAGER_GET_CPU_INFO)] = NULL,
+        [_KA_IOC_NR(DEVDRV_MANAGER_SEND_TO_IMU)] = NULL,
+        [_KA_IOC_NR(DEVDRV_MANAGER_RECV_FROM_IMU)] = NULL,
+        [_KA_IOC_NR(DEVDRV_MANAGER_GET_IMU_INFO)] = NULL,
+        [_KA_IOC_NR(DEVDRV_MANAGER_CONFIG_ECC_ENABLE)] = NULL,
+        [_KA_IOC_NR(DEVDRV_MANAGER_GET_PROBE_NUM)] = NULL,
+        [_KA_IOC_NR(DEVDRV_MANAGER_GET_PROBE_LIST)] = NULL,
+        [_KA_IOC_NR(DEVDRV_MANAGER_DEBUG_INFORM)] = NULL,
+        [_KA_IOC_NR(DEVDRV_MANAGER_COMPUTE_POWER)] = NULL,
+        [_KA_IOC_NR(DEVDRV_MANAGER_SYNC_MATRIX_DAEMON_READY)] = NULL,
+        [_KA_IOC_NR(DEVDRV_MANAGER_GET_BBOX_ERRSTR)] = NULL,
+        [_KA_IOC_NR(DEVDRV_MANAGER_PCIE_IMU_DDR_READ)] = NULL,
+        [_KA_IOC_NR(DEVDRV_MANAGER_GET_SLOT_ID)] = NULL,
+        [_KA_IOC_NR(DEVDRV_MANAGER_APPMON_BBOX_EXCEPTION_CMD)] = NULL,
+        [_KA_IOC_NR(DEVDRV_MANAGER_GET_CONTAINER_FLAG)] = NULL,
+        [_KA_IOC_NR(DEVDRV_MANAGER_GET_PROCESS_SIGN)] = NULL,
+        [_KA_IOC_NR(DEVDRV_MANAGER_GET_MASTER_DEV_IN_THE_SAME_OS)] = NULL,
+        [_KA_IOC_NR(DEVDRV_MANAGER_GET_LOCAL_DEV_ID_BY_HOST_DEV_ID)] = NULL,
+        [_KA_IOC_NR(DEVDRV_MANAGER_GET_BOOT_DEV_ID)] = NULL,
+        [_KA_IOC_NR(DEVDRV_MANAGER_GET_TSDRV_DEV_COM_INFO)] = NULL,
+        [_KA_IOC_NR(DEVDRV_MANAGER_GET_CAPABILITY_GROUP_INFO)] = NULL,
+        [_KA_IOC_NR(DEVDRV_MANAGER_PASSTHRU_MCU)] = NULL,
+        [_KA_IOC_NR(DEVDRV_MANAGER_GET_P2P_CAPABILITY)] = NULL,
+        [_KA_IOC_NR(DEVDRV_MANAGER_GET_ETH_ID)] = NULL,
+        [_KA_IOC_NR(DEVDRV_MANAGER_BIND_PID_ID)] = NULL,
+        [_KA_IOC_NR(DEVDRV_MANAGER_GET_H2D_DEVINFO)] = hvdevmng_get_h2d_devinfo,
+        [_KA_IOC_NR(DEVDRV_MANAGER_GET_CONSOLE_LOG_LEVEL)] = NULL,
+        [_KA_IOC_NR(DEVDRV_MANAGER_UPDATE_STARTUP_STATUS)] = NULL,
+        [_KA_IOC_NR(DEVDRV_MANAGER_GET_STARTUP_STATUS)] = hvdevmng_get_device_startup_status,
+        [_KA_IOC_NR(DEVDRV_MANAGER_GET_DEVICE_HEALTH_STATUS)] = hvdevmng_get_device_health_status,
+        [_KA_IOC_NR(DEVDRV_MANAGER_GET_DEV_RESOURCE_INFO)] = hvdevmng_vpc_get_dev_resource_info,
+        [_KA_IOC_NR(DEVDRV_MANAGER_GET_OSC_FREQ)] = hvdevmng_get_osc_freq,
+        [_KA_IOC_NR(DEVDRV_MANAGER_GET_CURRENT_AIC_FREQ)] = hvdevmng_get_current_aic_freq,
 };
 
 STATIC int hvdevmng_rx_vpc_msg_para_check(u32 dev_id, u32 fid, struct vmng_rx_msg_proc_info *proc_info)
@@ -696,7 +700,7 @@ STATIC int hvdevmng_container_init_instance(u32 dev_id, u32 fid, u32 aicore_num)
 
 #ifndef DEVDRV_MANAGER_HOST_UT_TEST
     u64 num = (u64)aicore_num;
-    dtype = find_first_bit((const unsigned long *)&num, 32); /* 32 u32 bitnum */
+    dtype = ka_base_find_first_bit((const unsigned long *)&num, 32); /* 32 u32 bitnum */
 #endif
 
     ret = hvdevmng_set_core_num(dev_id, fid, dtype);
@@ -734,7 +738,7 @@ static int hvdevmng_get_mia_dev_aicore_num(u32 udevid, u32 *aicore_num)
 #endif
     }
 #ifndef DEVDRV_MANAGER_HOST_UT_TEST
-    *aicore_num = bitmap_weight((const unsigned long *)&bitmap, 64); /* 64 u64 bitnum */
+    *aicore_num = ka_base_bitmap_weight((const unsigned long *)&bitmap, 64); /* 64 u64 bitnum */
 #endif
     return 0;
 }

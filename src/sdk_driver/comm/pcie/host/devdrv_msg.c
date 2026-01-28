@@ -21,15 +21,6 @@
 #undef CONFIG_DEBUG_BUGVERBOSE
 #endif
 
-#include <linux/kernel.h>
-#include <linux/delay.h>
-#include <linux/interrupt.h>
-#include <linux/pci.h>
-#include <linux/sched.h>
-#include <linux/version.h>
-#include <linux/types.h>
-#include <linux/io.h>
-
 #include "devdrv_dma.h"
 #include "devdrv_ctrl.h"
 #include "devdrv_common_msg.h"
@@ -42,6 +33,9 @@
 #include "devdrv_mem_alloc.h"
 #include "devdrv_adapt.h"
 #include "pbl/pbl_uda.h"
+#include "ka_list_pub.h"
+#include "ka_kernel_def_pub.h"
+#include "ka_barrier_pub.h"
 
 static struct {
     char str[DEVDRV_STR_NAME_LEN];
@@ -93,14 +87,6 @@ STATIC const char *devdrv_msg_type_str(u32 client_type, u32 common_msg_type)
     }
 }
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 0, 0)
-static inline void *dma_zalloc_coherent(struct device *dev, size_t size, dma_addr_t *dma_handle, gfp_t flag)
-{
-    void *ret = devdrv_ka_dma_alloc_coherent(dev, size, dma_handle, flag | __GFP_ZERO);
-    return ret;
-}
-#endif
-
 void devdrv_set_device_status(struct devdrv_pci_ctrl *pci_ctrl, u32 status)
 {
     pci_ctrl->device_status = status;
@@ -119,7 +105,7 @@ STATIC struct devdrv_msg_chan *devdrv_get_msg_chan_by_id(u32 dev_id, u32 chan_id
     pci_ctrl = devdrv_pci_ctrl_get(dev_id);
     if (pci_ctrl == NULL) {
         if (devdrv_is_dev_hot_reset() == true) {
-            devdrv_warn_spinlock("Get pci_ctrl unsuccess. (dev_id=%u)\n", dev_id);
+            devdrv_warn_spinlock("Get pci_ctrl unsuccessful. (dev_id=%u)\n", dev_id);
         } else {
             devdrv_err_spinlock("Get pci_ctrl failed. (dev_id=%u)\n", dev_id);
         }
@@ -184,24 +170,24 @@ void *devdrv_generate_msg_handle(const struct devdrv_msg_chan *chan)
 
 STATIC u32 devdrv_msg_alloc_slave_mem(struct devdrv_msg_dev *msg_dev, u32 len)
 {
-    struct list_head *pos = NULL;
-    struct list_head *n = NULL;
+    ka_list_head_t *pos = NULL;
+    ka_list_head_t *n = NULL;
     struct devdrv_msg_slave_mem_node *node = NULL;
     u32 offset = 0;
 
-    len = roundup(len, DEVDRV_MSG_QUEUE_MEM_ALIGN);
+    len = ka_base_roundup(len, DEVDRV_MSG_QUEUE_MEM_ALIGN);
 
-    mutex_lock(&msg_dev->mutex);
+    ka_task_mutex_lock(&msg_dev->mutex);
 
     /* alloc memory from the allocated queue first */
-    if (list_empty_careful(&msg_dev->slave_mem_list) == 0) {
-        list_for_each_safe(pos, n, &msg_dev->slave_mem_list)
+    if (ka_list_empty_careful(&msg_dev->slave_mem_list) == 0) {
+        ka_list_for_each_safe(pos, n, &msg_dev->slave_mem_list)
         {
-            node = list_entry(pos, struct devdrv_msg_slave_mem_node, list);
+            node = ka_list_entry(pos, struct devdrv_msg_slave_mem_node, list);
             if (node->mem.len == len) {
                 devdrv_debug("Get reuse len. (dev_id=%d; len=0x%x)\n", msg_dev->pci_ctrl->dev_id, len);
                 offset = node->mem.offset;
-                list_del(&node->list);
+                ka_list_del(&node->list);
                 devdrv_kfree(node);
                 node = NULL;
                 break;
@@ -223,7 +209,7 @@ STATIC u32 devdrv_msg_alloc_slave_mem(struct devdrv_msg_dev *msg_dev, u32 len)
         }
     }
 
-    mutex_unlock(&msg_dev->mutex);
+    ka_task_mutex_unlock(&msg_dev->mutex);
 
     return offset;
 }
@@ -232,9 +218,9 @@ STATIC void devdrv_msg_free_slave_mem(struct devdrv_msg_dev *msg_dev, u32 offset
 {
     struct devdrv_msg_slave_mem_node *node = NULL;
 
-    len = roundup(len, DEVDRV_MSG_QUEUE_MEM_ALIGN);
+    len = ka_base_roundup(len, DEVDRV_MSG_QUEUE_MEM_ALIGN);
 
-    node = (struct devdrv_msg_slave_mem_node *)devdrv_kzalloc(sizeof(struct devdrv_msg_slave_mem_node), GFP_KERNEL);
+    node = (struct devdrv_msg_slave_mem_node *)devdrv_kzalloc(sizeof(struct devdrv_msg_slave_mem_node), KA_GFP_KERNEL);
     if (node == NULL) {
         devdrv_err("Alloc node failed, free slave mem offset. (dev_id=%u; offset=%u; len=%u)\n",
                    msg_dev->pci_ctrl->dev_id, offset, len);
@@ -246,32 +232,32 @@ STATIC void devdrv_msg_free_slave_mem(struct devdrv_msg_dev *msg_dev, u32 offset
 
     /* Repeat alloc the msg chan after release is a dfx function. It is simple to implement here.
         Join the linked list. Re-take directly from here next time. not support length changes in next time */
-    mutex_lock(&msg_dev->mutex);
-    list_add(&node->list, &msg_dev->slave_mem_list);
-    mutex_unlock(&msg_dev->mutex);
+    ka_task_mutex_lock(&msg_dev->mutex);
+    ka_list_add(&node->list, &msg_dev->slave_mem_list);
+    ka_task_mutex_unlock(&msg_dev->mutex);
 }
 
 STATIC int devdrv_admin_msg_chan_alloc_host_sq(struct devdrv_msg_chan *chan, u32 size)
 {
-    u32 align_size = round_up(size, PAGE_SIZE);
+    u32 align_size = ka_base_round_up(size, KA_MM_PAGE_SIZE);
 
     if (chan->msg_dev->pci_ctrl->connect_protocol == CONNECT_PROTOCOL_PCIE) {
-        chan->sq_info.desc_h = dma_zalloc_coherent(chan->msg_dev->dev, size, &chan->sq_info.dma_handle,
-                                                   GFP_KERNEL | __GFP_DMA);
+        chan->sq_info.desc_h = devdrv_ka_dma_alloc_coherent(chan->msg_dev->dev, size, &chan->sq_info.dma_handle,
+                                                   KA_GFP_KERNEL | __KA_GFP_DMA | __KA_GFP_ZERO);
         if (chan->sq_info.desc_h == NULL) {
             devdrv_err("msg_sq alloc  failed. (dev_id=%u)\n", chan->msg_dev->pci_ctrl->dev_id);
             return -ENOMEM;
         }
     } else {
         /* hccs peh, use phy addr, if host smmu enabled, need convert by agent-smmu */
-        chan->sq_info.desc_h = devdrv_kzalloc(align_size, GFP_KERNEL);
+        chan->sq_info.desc_h = devdrv_kzalloc(align_size, KA_GFP_KERNEL);
         if (chan->sq_info.desc_h == NULL) {
             devdrv_err("devdrv_kzalloc failed. (dev_id=%u)\n", chan->msg_dev->pci_ctrl->dev_id);
             return -ENOMEM;
         }
 
-        chan->sq_info.dma_handle = dma_map_single(chan->msg_dev->dev, chan->sq_info.desc_h, align_size, DMA_BIDIRECTIONAL);
-        if (dma_mapping_error(chan->msg_dev->dev, chan->sq_info.dma_handle) != 0) {
+        chan->sq_info.dma_handle = ka_mm_dma_map_single(chan->msg_dev->dev, chan->sq_info.desc_h, align_size, KA_DMA_BIDIRECTIONAL);
+        if (ka_mm_dma_mapping_error(chan->msg_dev->dev, chan->sq_info.dma_handle) != 0) {
             devdrv_kfree(chan->sq_info.desc_h);
             devdrv_err("Admin dma_mapping failed. (dev_id=%u)\n", chan->msg_dev->pci_ctrl->dev_id);
             return -ENOMEM;
@@ -283,7 +269,7 @@ STATIC int devdrv_admin_msg_chan_alloc_host_sq(struct devdrv_msg_chan *chan, u32
 
 STATIC void devdrv_admin_msg_chan_free_host_sq(struct devdrv_msg_chan *chan, u32 size)
 {
-    u32 align_size = round_up(size, PAGE_SIZE);
+    u32 align_size = ka_base_round_up(size, KA_MM_PAGE_SIZE);
 
     if (chan->sq_info.desc_h == NULL) {
         return;
@@ -292,11 +278,11 @@ STATIC void devdrv_admin_msg_chan_free_host_sq(struct devdrv_msg_chan *chan, u32
     if (chan->msg_dev->pci_ctrl->connect_protocol == CONNECT_PROTOCOL_PCIE) {
         devdrv_ka_dma_free_coherent(chan->msg_dev->dev, size, chan->sq_info.desc_h, chan->sq_info.dma_handle);
     } else {
-        dma_unmap_single(chan->msg_dev->dev, chan->sq_info.dma_handle, align_size, DMA_BIDIRECTIONAL);
+        ka_mm_dma_unmap_single(chan->msg_dev->dev, chan->sq_info.dma_handle, align_size, KA_DMA_BIDIRECTIONAL);
         devdrv_kfree(chan->sq_info.desc_h);
     }
     chan->sq_info.desc_h = NULL;
-    chan->sq_info.dma_handle = (~(dma_addr_t)0);
+    chan->sq_info.dma_handle = (~(ka_dma_addr_t)0);
 }
 
 STATIC int devdrv_msg_alloc_host_sq(struct devdrv_msg_chan *chan, u32 depth, u32 bd_size)
@@ -305,7 +291,7 @@ STATIC int devdrv_msg_alloc_host_sq(struct devdrv_msg_chan *chan, u32 depth, u32
 
     if (chan->chan_id != 0) {
         chan->sq_info.desc_h = hal_kernel_devdrv_dma_zalloc_coherent(chan->msg_dev->dev, size, &chan->sq_info.dma_handle,
-            GFP_KERNEL | __GFP_DMA);
+            KA_GFP_KERNEL | __KA_GFP_DMA);
         if (chan->sq_info.desc_h == NULL) {
             devdrv_err("msg_alloc_sq failed. (dev_id=%u)\n", chan->msg_dev->pci_ctrl->dev_id);
             return -ENOMEM;
@@ -348,7 +334,7 @@ STATIC int devdrv_msg_alloc_host_cq(struct devdrv_msg_chan *chan, int depth, int
     u32 alloc_size = (u32)(depth * bd_size);
 
     chan->cq_info.desc_h = hal_kernel_devdrv_dma_zalloc_coherent(chan->msg_dev->dev, alloc_size, &chan->cq_info.dma_handle,
-                                               GFP_KERNEL | __GFP_DMA);
+                                               KA_GFP_KERNEL | __KA_GFP_DMA);
 
     if (chan->cq_info.desc_h == NULL) {
         devdrv_err("msg_alloc_cq failed. (dev_id=%u)\n", chan->msg_dev->pci_ctrl->dev_id);
@@ -451,8 +437,8 @@ STATIC int devdrv_msg_alloc_host_rsv_sq(struct devdrv_msg_chan *chan, u32 depth,
     u32 rsv_offset = chan->sq_info.slave_mem_offset;
     struct devdrv_msg_dev *msg_dev = chan->msg_dev;
     phys_addr_t rsv_phys_addr;
-    struct page *page = NULL;
-    dma_addr_t dma_addr_rsv;
+    ka_page_t *page = NULL;
+    ka_dma_addr_t dma_addr_rsv;
     u32 queue_size;
     int ret;
 
@@ -466,8 +452,8 @@ STATIC int devdrv_msg_alloc_host_rsv_sq(struct devdrv_msg_chan *chan, u32 depth,
 
     rsv_phys_addr = msg_dev->pci_ctrl->res.rsv_phy_addr + rsv_offset;
     page = phys_to_page(rsv_phys_addr);
-    dma_addr_rsv = dma_map_page(msg_dev->dev, page, rsv_phys_addr % PAGE_SIZE, (size_t)queue_size, DMA_BIDIRECTIONAL);
-    if (dma_mapping_error(msg_dev->dev, dma_addr_rsv)) {
+    dma_addr_rsv = ka_mm_dma_map_page(msg_dev->dev, page, rsv_phys_addr % KA_MM_PAGE_SIZE, (size_t)queue_size, KA_DMA_BIDIRECTIONAL);
+    if (ka_mm_dma_mapping_error(msg_dev->dev, dma_addr_rsv)) {
         devdrv_err("DMA mapping error.\n");
         return -ENOMEM;
     }
@@ -482,8 +468,8 @@ STATIC int devdrv_msg_free_host_rsv_sq(struct devdrv_msg_chan *msg_chan)
     u32 queue_size = msg_chan->sq_info.depth * msg_chan->sq_info.desc_size;
 
     if (msg_chan->sq_info.dma_reserve_h != 0) {
-        dma_unmap_page(msg_chan->msg_dev->dev, msg_chan->sq_info.dma_reserve_h,
-                       (size_t)queue_size, DMA_BIDIRECTIONAL);
+        ka_mm_dma_unmap_page(msg_chan->msg_dev->dev, msg_chan->sq_info.dma_reserve_h,
+                       (size_t)queue_size, KA_DMA_BIDIRECTIONAL);
         msg_chan->sq_info.dma_reserve_h = 0;
     }
     msg_chan->sq_info.base_reserve_h = NULL;
@@ -497,8 +483,8 @@ STATIC int devdrv_msg_alloc_host_rsv_cq(struct devdrv_msg_chan *chan, u32 depth,
     u32 rsv_offset = chan->cq_info.slave_mem_offset;
     struct devdrv_msg_dev *msg_dev = chan->msg_dev;
     phys_addr_t rsv_phys_addr;
-    struct page *page = NULL;
-    dma_addr_t dma_addr_rsv;
+    ka_page_t *page = NULL;
+    ka_dma_addr_t dma_addr_rsv;
     u32 queue_size;
     int ret;
 
@@ -512,8 +498,8 @@ STATIC int devdrv_msg_alloc_host_rsv_cq(struct devdrv_msg_chan *chan, u32 depth,
 
     rsv_phys_addr = msg_dev->pci_ctrl->res.rsv_phy_addr + rsv_offset;
     page = phys_to_page(rsv_phys_addr);
-    dma_addr_rsv = dma_map_page(msg_dev->dev, page, rsv_phys_addr % PAGE_SIZE, (size_t)queue_size, DMA_BIDIRECTIONAL);
-    if (dma_mapping_error(msg_dev->dev, dma_addr_rsv)) {
+    dma_addr_rsv = ka_mm_dma_map_page(msg_dev->dev, page, rsv_phys_addr % KA_MM_PAGE_SIZE, (size_t)queue_size, KA_DMA_BIDIRECTIONAL);
+    if (ka_mm_dma_mapping_error(msg_dev->dev, dma_addr_rsv)) {
         devdrv_err("DMA mapping error.\n");
         return -ENOMEM;
     }
@@ -528,8 +514,8 @@ STATIC int devdrv_msg_free_host_rsv_cq(struct devdrv_msg_chan *msg_chan)
     u32 queue_size = msg_chan->cq_info.depth * msg_chan->cq_info.desc_size;
 
     if (msg_chan->cq_info.dma_reserve_h != 0) {
-        dma_unmap_page(msg_chan->msg_dev->dev, msg_chan->cq_info.dma_reserve_h,
-                       (size_t)queue_size, DMA_BIDIRECTIONAL);
+        ka_mm_dma_unmap_page(msg_chan->msg_dev->dev, msg_chan->cq_info.dma_reserve_h,
+                       (size_t)queue_size, KA_DMA_BIDIRECTIONAL);
         msg_chan->cq_info.dma_reserve_h = 0;
     }
     msg_chan->cq_info.base_reserve_h = NULL;
@@ -539,7 +525,7 @@ STATIC int devdrv_msg_free_host_rsv_cq(struct devdrv_msg_chan *msg_chan)
 
 #ifdef CFG_FEATURE_SEC_COMM_L3
 STATIC int devdrv_msg_save_slave_sqcq_dma(struct devdrv_msg_chan *msg_chan,
-                                    dma_addr_t slave_sq_dma, dma_addr_t slave_cq_dma)
+                                    ka_dma_addr_t slave_sq_dma, ka_dma_addr_t slave_cq_dma)
 {
     msg_chan->sq_info.dma_reserve_d = slave_sq_dma;
     msg_chan->cq_info.dma_reserve_d = slave_cq_dma;
@@ -637,7 +623,7 @@ void devdrv_msg_ring_doorbell(void *msg_chan)
     devdrv_msg_ring_doorbell_inner(chan);
     devdrv_put_msg_chan(chan);
 }
-EXPORT_SYMBOL(devdrv_msg_ring_doorbell);
+KA_EXPORT_SYMBOL(devdrv_msg_ring_doorbell);
 
 void devdrv_msg_ring_cq_doorbell(void *msg_chan)
 {
@@ -649,7 +635,7 @@ void devdrv_msg_ring_cq_doorbell(void *msg_chan)
     devdrv_set_cq_doorbell(chan->io_base, 0x1);
     devdrv_put_msg_chan(chan);
 }
-EXPORT_SYMBOL(devdrv_msg_ring_cq_doorbell);
+KA_EXPORT_SYMBOL(devdrv_msg_ring_cq_doorbell);
 
 /* devid */
 int devdrv_pci_get_msg_chan_devid(void *msg_chan)
@@ -728,7 +714,7 @@ void *devdrv_get_msg_chan_host_sq_head(void *msg_chan, u32 *head)
     devdrv_put_msg_chan(chan);
     return sq_head;
 }
-EXPORT_SYMBOL(devdrv_get_msg_chan_host_sq_head);
+KA_EXPORT_SYMBOL(devdrv_get_msg_chan_host_sq_head);
 
 void devdrv_move_msg_chan_host_sq_head(void *msg_chan)
 {
@@ -742,7 +728,7 @@ void devdrv_move_msg_chan_host_sq_head(void *msg_chan)
     }
     devdrv_put_msg_chan(chan);
 }
-EXPORT_SYMBOL(devdrv_move_msg_chan_host_sq_head);
+KA_EXPORT_SYMBOL(devdrv_move_msg_chan_host_sq_head);
 
 /* host cq */
 void *devdrv_get_msg_chan_host_cq_head(void *msg_chan)
@@ -761,7 +747,7 @@ void *devdrv_get_msg_chan_host_cq_head(void *msg_chan)
     devdrv_put_msg_chan(chan);
     return cq_head;
 }
-EXPORT_SYMBOL(devdrv_get_msg_chan_host_cq_head);
+KA_EXPORT_SYMBOL(devdrv_get_msg_chan_host_cq_head);
 
 void devdrv_move_msg_chan_host_cq_head(void *msg_chan)
 {
@@ -775,7 +761,7 @@ void devdrv_move_msg_chan_host_cq_head(void *msg_chan)
     }
     devdrv_put_msg_chan(chan);
 }
-EXPORT_SYMBOL(devdrv_move_msg_chan_host_cq_head);
+KA_EXPORT_SYMBOL(devdrv_move_msg_chan_host_cq_head);
 
 /* slave sq */
 void devdrv_set_msg_chan_slave_sq_head(void *msg_chan, u32 head)
@@ -788,7 +774,7 @@ void devdrv_set_msg_chan_slave_sq_head(void *msg_chan, u32 head)
     chan->sq_info.head_d = head;
     devdrv_put_msg_chan(chan);
 }
-EXPORT_SYMBOL(devdrv_set_msg_chan_slave_sq_head);
+KA_EXPORT_SYMBOL(devdrv_set_msg_chan_slave_sq_head);
 
 void *devdrv_get_msg_chan_slave_sq_tail(void *msg_chan, u32 *tail)
 {
@@ -814,7 +800,7 @@ void *devdrv_get_msg_chan_slave_sq_tail(void *msg_chan, u32 *tail)
     devdrv_put_msg_chan(chan);
     return sq_tail;
 }
-EXPORT_SYMBOL(devdrv_get_msg_chan_slave_sq_tail);
+KA_EXPORT_SYMBOL(devdrv_get_msg_chan_slave_sq_tail);
 
 #ifdef CFG_FEATURE_SEC_COMM_L3
 void *devdrv_get_msg_chan_host_rsv_sq_tail(void *msg_chan, u32 *tail)
@@ -841,7 +827,7 @@ void *devdrv_get_msg_chan_host_rsv_sq_tail(void *msg_chan, u32 *tail)
     devdrv_put_msg_chan(chan);
     return sq_tail;
 }
-EXPORT_SYMBOL(devdrv_get_msg_chan_host_rsv_sq_tail);
+KA_EXPORT_SYMBOL(devdrv_get_msg_chan_host_rsv_sq_tail);
 
 void *devdrv_get_msg_chan_host_rsv_cq_tail(void *msg_chan)
 {
@@ -859,13 +845,13 @@ void *devdrv_get_msg_chan_host_rsv_cq_tail(void *msg_chan)
     devdrv_put_msg_chan(chan);
     return cq_tail;
 }
-EXPORT_SYMBOL(devdrv_get_msg_chan_host_rsv_cq_tail);
+KA_EXPORT_SYMBOL(devdrv_get_msg_chan_host_rsv_cq_tail);
 
 int devdrv_dma_copy_sq_desc_to_slave(void *msg_chan, struct devdrv_asyn_dma_para_info *para,
                                      enum devdrv_dma_data_type data_type, int instance)
 {
     struct devdrv_msg_chan *chan = devdrv_get_msg_chan(msg_chan);
-    dma_addr_t src, dst;
+    ka_dma_addr_t src, dst;
     int ret;
     u32 len;
 
@@ -877,9 +863,9 @@ int devdrv_dma_copy_sq_desc_to_slave(void *msg_chan, struct devdrv_asyn_dma_para
     src = chan->sq_info.dma_reserve_h + chan->sq_info.tail_d * chan->sq_info.desc_size;
     dst = chan->sq_info.dma_reserve_d + chan->sq_info.tail_d * chan->sq_info.desc_size;
     len = chan->sq_info.desc_size;
-    dma_sync_single_for_device(chan->msg_dev->dev, src, len, DMA_TO_DEVICE);
-    ret = hal_kernel_devdrv_dma_async_copy_plus(chan->msg_dev->pci_ctrl->dev_id, data_type, instance, src, dst,
-                                     len, DEVDRV_DMA_HOST_TO_DEVICE, para);
+    ka_mm_dma_sync_single_for_device(chan->msg_dev->dev, src, len, KA_DMA_TO_DEVICE);
+    ret = devdrv_dma_async_copy_plus_inner(chan->msg_dev->pci_ctrl->dev_id, data_type, instance, src, dst, len,
+        DEVDRV_DMA_HOST_TO_DEVICE, para);
     if (ret != 0) {
         devdrv_err("dma copy fail. (ret=%d)\n", ret);
     }
@@ -887,13 +873,13 @@ int devdrv_dma_copy_sq_desc_to_slave(void *msg_chan, struct devdrv_asyn_dma_para
     devdrv_put_msg_chan(chan);
     return ret;
 }
-EXPORT_SYMBOL(devdrv_dma_copy_sq_desc_to_slave);
+KA_EXPORT_SYMBOL(devdrv_dma_copy_sq_desc_to_slave);
 
 int devdrv_dma_copy_cq_desc_to_slave(void *msg_chan, struct devdrv_asyn_dma_para_info *para,
                                      enum devdrv_dma_data_type data_type, int instance)
 {
     struct devdrv_msg_chan *chan = devdrv_get_msg_chan(msg_chan);
-    dma_addr_t src, dst;
+    ka_dma_addr_t src, dst;
     int ret;
     u32 len;
 
@@ -905,9 +891,9 @@ int devdrv_dma_copy_cq_desc_to_slave(void *msg_chan, struct devdrv_asyn_dma_para
     src = chan->cq_info.dma_reserve_h + chan->cq_info.tail_d * chan->cq_info.desc_size;
     dst = chan->cq_info.dma_reserve_d + chan->cq_info.tail_d * chan->cq_info.desc_size;
     len = chan->cq_info.desc_size;
-    dma_sync_single_for_device(chan->msg_dev->dev, src, len, DMA_TO_DEVICE);
-    ret = hal_kernel_devdrv_dma_async_copy_plus(chan->msg_dev->pci_ctrl->dev_id, data_type, instance, src, dst,
-                                     len, DEVDRV_DMA_HOST_TO_DEVICE, para);
+    ka_mm_dma_sync_single_for_device(chan->msg_dev->dev, src, len, KA_DMA_TO_DEVICE);
+    ret = devdrv_dma_async_copy_plus_inner(chan->msg_dev->pci_ctrl->dev_id, data_type, instance, src, dst, len,
+        DEVDRV_DMA_HOST_TO_DEVICE, para);
     if (ret != 0) {
         devdrv_err("dma copy fail. (ret=%d)\n", ret);
     }
@@ -915,7 +901,7 @@ int devdrv_dma_copy_cq_desc_to_slave(void *msg_chan, struct devdrv_asyn_dma_para
     devdrv_put_msg_chan(chan);
     return ret;
 }
-EXPORT_SYMBOL(devdrv_dma_copy_cq_desc_to_slave);
+KA_EXPORT_SYMBOL(devdrv_dma_copy_cq_desc_to_slave);
 #endif
 void devdrv_move_msg_chan_slave_sq_tail(void *msg_chan)
 {
@@ -929,7 +915,7 @@ void devdrv_move_msg_chan_slave_sq_tail(void *msg_chan)
     }
     devdrv_put_msg_chan(chan);
 }
-EXPORT_SYMBOL(devdrv_move_msg_chan_slave_sq_tail);
+KA_EXPORT_SYMBOL(devdrv_move_msg_chan_slave_sq_tail);
 
 bool devdrv_msg_chan_slave_sq_full_check(void *msg_chan)
 {
@@ -946,7 +932,7 @@ bool devdrv_msg_chan_slave_sq_full_check(void *msg_chan)
         return false;
     }
 }
-EXPORT_SYMBOL(devdrv_msg_chan_slave_sq_full_check);
+KA_EXPORT_SYMBOL(devdrv_msg_chan_slave_sq_full_check);
 
 /* slave cq */
 void *devdrv_get_msg_chan_slave_cq_tail(void *msg_chan)
@@ -965,7 +951,7 @@ void *devdrv_get_msg_chan_slave_cq_tail(void *msg_chan)
     devdrv_put_msg_chan(chan);
     return cq_tail;
 }
-EXPORT_SYMBOL(devdrv_get_msg_chan_slave_cq_tail);
+KA_EXPORT_SYMBOL(devdrv_get_msg_chan_slave_cq_tail);
 
 void devdrv_move_msg_chan_slave_cq_tail(void *msg_chan)
 {
@@ -979,7 +965,7 @@ void devdrv_move_msg_chan_slave_cq_tail(void *msg_chan)
     }
     devdrv_put_msg_chan(chan);
 }
-EXPORT_SYMBOL(devdrv_move_msg_chan_slave_cq_tail);
+KA_EXPORT_SYMBOL(devdrv_move_msg_chan_slave_cq_tail);
 
 STATIC bool devdrv_judge_chan_invalid_by_level(struct devdrv_msg_dev *msg_dev, u32 level, u32 chan_id)
 {
@@ -1005,7 +991,7 @@ STATIC struct devdrv_msg_chan *devdrv_alloc_msg_chan(struct devdrv_msg_dev *msg_
 
 retry:
 
-    mutex_lock(&msg_dev->mutex);
+    ka_task_mutex_lock(&msg_dev->mutex);
     for (i = 0; i < msg_dev->chan_cnt; i++) {
         if (level_check == DEVDRV_ENABLE) {
             if (devdrv_judge_chan_invalid_by_level(msg_dev, level, i) == true) {
@@ -1014,13 +1000,13 @@ retry:
         }
         if (msg_dev->msg_chan[i].status == DEVDRV_DISABLE) {
             msg_dev->msg_chan[i].status = DEVDRV_ENABLE;
-            atomic_set(&msg_dev->msg_chan[i].sched_status.state,
+            ka_base_atomic_set(&msg_dev->msg_chan[i].sched_status.state,
                 DEVDRV_MSG_HANDLE_STATE_INIT);
             msg_chan = &msg_dev->msg_chan[i];
             break;
         }
     }
-    mutex_unlock(&msg_dev->mutex);
+    ka_task_mutex_unlock(&msg_dev->mutex);
     if (msg_chan == NULL) {
         if (level_check == DEVDRV_ENABLE) {
             level_check = DEVDRV_DISABLE;
@@ -1078,19 +1064,19 @@ int devdrv_device_status_abnormal_check(const void *msg_chan)
     devdrv_put_msg_chan(chan);
     return ret;
 }
-EXPORT_SYMBOL(devdrv_device_status_abnormal_check);
+KA_EXPORT_SYMBOL(devdrv_device_status_abnormal_check);
 
 STATIC void devdrv_device_mutex_lock(struct devdrv_msg_chan *msg_chan)
 {
     if ((msg_chan != NULL) && (msg_chan->msg_dev != NULL)) {
-        mutex_lock(&msg_chan->mutex);
+        ka_task_mutex_lock(&msg_chan->mutex);
     }
 }
 
 STATIC void devdrv_device_mutex_unlock(struct devdrv_msg_chan *msg_chan)
 {
     if ((msg_chan != NULL) && (msg_chan->msg_dev != NULL)) {
-        mutex_unlock(&msg_chan->mutex);
+        ka_task_mutex_unlock(&msg_chan->mutex);
     }
 }
 
@@ -1098,7 +1084,7 @@ STATIC void devdrv_non_trans_rx_msg_task_resq_record(struct devdrv_msg_chan *msg
 {
     u32 cost_time;
 
-    cost_time = jiffies_to_msecs(jiffies - msg_chan->stamp);
+    cost_time = ka_system_jiffies_to_msecs(ka_jiffies - msg_chan->stamp);
     if (cost_time > msg_chan->chan_stat.rx_work_max_time) {
         msg_chan->chan_stat.rx_work_max_time = cost_time;
     }
@@ -1114,7 +1100,7 @@ STATIC int devdrv_non_trans_msg_dma_copy_cq(struct devdrv_msg_chan *msg_chan,
                                             struct devdrv_non_trans_msg_desc *bd_desc)
 {
     enum devdrv_dma_data_type data_type = DEVDRV_DMA_DATA_PCIE_MSG;
-    dma_addr_t src, dst;
+    ka_dma_addr_t src, dst;
     int ret;
 
     if ((bd_desc->status == DEVDRV_MSG_CMD_FINISH_SUCCESS) && (bd_desc->real_out_len > 0)) {
@@ -1127,7 +1113,7 @@ STATIC int devdrv_non_trans_msg_dma_copy_cq(struct devdrv_msg_chan *msg_chan,
             bd_desc->status = DEVDRV_MSG_CMD_FINISH_FAILED;
         }
     }
-    atomic_set(&msg_chan->sched_status.state, DEVDRV_MSG_HANDLE_STATE_INIT);
+    ka_base_atomic_set(&msg_chan->sched_status.state, DEVDRV_MSG_HANDLE_STATE_INIT);
 
     isb(); /* ensure dma submit order */
 
@@ -1170,18 +1156,18 @@ STATIC void devdrv_non_trans_rx_msg_handle(struct devdrv_msg_chan *msg_chan)
     if ((bd_desc->status == DEVDRV_MSG_CMD_BEGIN) && (msg_chan->rx_msg_process != NULL)) {
         msg_chan->chan_stat.rx_total_cnt++;
         handle = devdrv_generate_msg_handle(msg_chan);
-        call_start = jiffies;
+        call_start = ka_jiffies;
         ret = msg_chan->rx_msg_process(handle, bd_desc->data, bd_desc->in_data_len, bd_desc->out_data_len,
                                        &bd_desc->real_out_len);
-        resq_time = jiffies_to_msecs(jiffies - call_start);
+        resq_time = ka_system_jiffies_to_msecs(ka_jiffies - call_start);
         if (resq_time > DEVDRV_NON_TRANS_CB_TIME) {
             devdrv_info("Get resq_time. (dev_id=%u; msg_type=\"%s\"; resq_time=%llums; cpu=%d)\n",
-                dev_id, devdrv_msg_type_str(msg_type_tmp, bd_desc->msg_type), resq_time, smp_processor_id());
+                dev_id, devdrv_msg_type_str(msg_type_tmp, bd_desc->msg_type), resq_time, ka_system_smp_processor_id());
         }
 
         if (devdrv_device_status_abnormal_check_inner(msg_chan) != 0) {
             devdrv_info("Device is abnormal.(msg_type=\"%s\")\n", devdrv_msg_type_str(msg_type_tmp, bd_desc->msg_type));
-            atomic_set(&msg_chan->sched_status.state, DEVDRV_MSG_HANDLE_STATE_INIT);
+            ka_base_atomic_set(&msg_chan->sched_status.state, DEVDRV_MSG_HANDLE_STATE_INIT);
             return;
         }
 
@@ -1190,7 +1176,7 @@ STATIC void devdrv_non_trans_rx_msg_handle(struct devdrv_msg_chan *msg_chan)
             msg_chan->chan_stat.rx_success_cnt++;
         } else if (ret == -EINVAL) {
             msg_chan->chan_stat.rx_para_err++;
-            devdrv_warn("Unexpect rx msg process result.(dev_id=%d; msg_type=\"%s\"; ret=%d; out_buf=%d; out_len=%d)\n",
+            devdrv_warn("Unexpected rx msg process result.(dev_id=%d; msg_type=\"%s\"; ret=%d; out_buf=%d; out_len=%d)\n",
                         dev_id, devdrv_msg_type_str(msg_type_tmp, bd_desc->msg_type),
                         ret, bd_desc->out_data_len, bd_desc->real_out_len);
             bd_desc->status = DEVDRV_MSG_CMD_INVALID_PARA;
@@ -1207,15 +1193,15 @@ STATIC void devdrv_non_trans_rx_msg_handle(struct devdrv_msg_chan *msg_chan)
     } else {
         devdrv_err("No cmd to handle. (dev_id=%d; msg_type=\"%s\"; desc_status=%u)\n",
                    dev_id, devdrv_msg_type_str(msg_type_tmp, bd_desc->msg_type), bd_desc->status);
-        atomic_set(&msg_chan->sched_status.state, DEVDRV_MSG_HANDLE_STATE_INIT);
+        ka_base_atomic_set(&msg_chan->sched_status.state, DEVDRV_MSG_HANDLE_STATE_INIT);
         return;
     }
 #ifndef CFG_FEATURE_SEC_COMM_L3
     /* copy the execution result to shared reserved memory pointed to by cq desc_h */
     if ((bd_desc->status == DEVDRV_MSG_CMD_FINISH_SUCCESS) && (bd_desc->real_out_len > 0)) {
         /* copy data */
-        memcpy_toio((void __iomem *)bd_desc_d->data, (void *)bd_desc->data, bd_desc->real_out_len);
-        wmb();
+        ka_mm_memcpy_toio((void __iomem *)bd_desc_d->data, (void *)bd_desc->data, bd_desc->real_out_len);
+        ka_wmb();
     }
 
     /* copy msg head, the status field must be placed at the end of the
@@ -1225,9 +1211,9 @@ STATIC void devdrv_non_trans_rx_msg_handle(struct devdrv_msg_chan *msg_chan)
     bd_desc_d->real_out_len = bd_desc->real_out_len;
     bd_desc_d->seq_num = seq_num;
     bd_desc_d->msg_type = bd_desc->msg_type;
-    atomic_set(&msg_chan->sched_status.state, DEVDRV_MSG_HANDLE_STATE_INIT);
+    ka_base_atomic_set(&msg_chan->sched_status.state, DEVDRV_MSG_HANDLE_STATE_INIT);
 
-    wmb();
+    ka_wmb();
     bd_desc_d->status = bd_desc->status;
 #else
     (void)devdrv_non_trans_msg_dma_copy_cq(msg_chan, bd_desc);
@@ -1237,21 +1223,21 @@ STATIC void devdrv_non_trans_rx_msg_handle(struct devdrv_msg_chan *msg_chan)
 
 /* the large lock control of the sending function at the device side only
    has one command executed at the same time, no lock is needed here */
-STATIC void devdrv_non_trans_rx_msg_task(struct work_struct *p_work)
+STATIC void devdrv_non_trans_rx_msg_task(ka_work_struct_t *p_work)
 {
-    struct devdrv_msg_chan *msg_chan = container_of(p_work, struct devdrv_msg_chan, rx_work);
+    struct devdrv_msg_chan *msg_chan = ka_container_of(p_work, struct devdrv_msg_chan, rx_work);
     enum devdrv_msg_client_type msg_type_tmp = msg_chan->msg_type;
     int dev_id;
 
-    mutex_lock(&msg_chan->rx_mutex);
+    ka_task_mutex_lock(&msg_chan->rx_mutex);
 
     devdrv_non_trans_rx_msg_task_resq_record(msg_chan);
 
     if (devdrv_device_status_abnormal_check_inner(msg_chan) != 0) {
         devdrv_info("Device is abnormal. (msg_type=\"%s\")\n",
                     devdrv_msg_type_str(msg_type_tmp, DEVDRV_COMMON_MSG_TYPE_MAX));
-        mutex_unlock(&msg_chan->rx_mutex);
-        atomic_set(&msg_chan->sched_status.state, DEVDRV_MSG_HANDLE_STATE_INIT);
+        ka_task_mutex_unlock(&msg_chan->rx_mutex);
+        ka_base_atomic_set(&msg_chan->sched_status.state, DEVDRV_MSG_HANDLE_STATE_INIT);
         return;
     }
 
@@ -1260,18 +1246,18 @@ STATIC void devdrv_non_trans_rx_msg_task(struct work_struct *p_work)
     if (msg_chan->status == DEVDRV_DISABLE) {
         devdrv_err("msg_chan is disable. (dev_id=%d; msg_type=\"%s\"; msg_chan=%d)\n",
                    dev_id, devdrv_msg_type_str(msg_type_tmp, DEVDRV_COMMON_MSG_TYPE_MAX), msg_chan->chan_id);
-        mutex_unlock(&msg_chan->rx_mutex);
-        atomic_set(&msg_chan->sched_status.state, DEVDRV_MSG_HANDLE_STATE_INIT);
+        ka_task_mutex_unlock(&msg_chan->rx_mutex);
+        ka_base_atomic_set(&msg_chan->sched_status.state, DEVDRV_MSG_HANDLE_STATE_INIT);
         return;
     }
 
     devdrv_non_trans_rx_msg_handle(msg_chan);
-    mutex_unlock(&msg_chan->rx_mutex);
+    ka_task_mutex_unlock(&msg_chan->rx_mutex);
 
     return;
 }
 
-STATIC irqreturn_t devdrv_rx_msg_notify_handler(int irq, void *data)
+STATIC ka_irqreturn_t devdrv_rx_msg_notify_handler(int irq, void *data)
 {
     struct devdrv_msg_chan *msg_chan = (struct devdrv_msg_chan *)data;
     void *handle = NULL;
@@ -1280,7 +1266,7 @@ STATIC irqreturn_t devdrv_rx_msg_notify_handler(int irq, void *data)
         devdrv_err_spinlock("msg_chan is disable. (dev_id=%u; chan_id=%u; msg_type=\"%s\"; queue_type=%u)\n",
             msg_chan->msg_dev->pci_ctrl->dev_id, msg_chan->chan_id,
             devdrv_msg_type_str(msg_chan->msg_type, DEVDRV_COMMON_MSG_TYPE_MAX), (u32)msg_chan->queue_type);
-        return IRQ_HANDLED;
+        return KA_IRQ_HANDLED;
     }
 
     if ((devdrv_get_device_status(msg_chan) != DEVDRV_DEVICE_ALIVE) &&
@@ -1288,71 +1274,71 @@ STATIC irqreturn_t devdrv_rx_msg_notify_handler(int irq, void *data)
         devdrv_err_spinlock("Device is not alive. (dev_id=%u; chan_id=%u; msg_type=\"%s\"; queue_type=%u)\n",
             msg_chan->msg_dev->pci_ctrl->dev_id, msg_chan->chan_id,
             devdrv_msg_type_str(msg_chan->msg_type, DEVDRV_COMMON_MSG_TYPE_MAX), (u32)msg_chan->queue_type);
-        return IRQ_HANDLED;
+        return KA_IRQ_HANDLED;
     }
 
     handle = devdrv_generate_msg_handle(msg_chan);
 
-    rmb();
+    ka_rmb();
 
     if (msg_chan->rx_msg_notify != NULL) {
         msg_chan->rx_msg_notify(handle);
     }
 
-    return IRQ_HANDLED;
+    return KA_IRQ_HANDLED;
 }
 
-STATIC irqreturn_t devdrv_tx_fnsh_notify_handler(int irq, void *data)
+STATIC ka_irqreturn_t devdrv_tx_fnsh_notify_handler(int irq, void *data)
 {
     struct devdrv_msg_chan *msg_chan = (struct devdrv_msg_chan *)data;
     void *handle = NULL;
 
     if (msg_chan->status == DEVDRV_DISABLE) {
         devdrv_err_spinlock("msg_chan is disable. (chan_id=%d)\n", msg_chan->chan_id);
-        return IRQ_HANDLED;
+        return KA_IRQ_HANDLED;
     }
 
     if ((devdrv_get_device_status(msg_chan) != DEVDRV_DEVICE_ALIVE) &&
         (devdrv_get_device_status(msg_chan) != DEVDRV_DEVICE_SUSPEND)) {
         devdrv_err_spinlock("Device is not alive. (chan_id=%d)\n", msg_chan->chan_id);
-        return IRQ_HANDLED;
+        return KA_IRQ_HANDLED;
     }
 
     handle = devdrv_generate_msg_handle(msg_chan);
 
-    rmb();
+    ka_rmb();
 
     if (msg_chan->tx_finish_notify != NULL) {
         msg_chan->tx_finish_notify(handle);
     }
 
-    return IRQ_HANDLED;
+    return KA_IRQ_HANDLED;
 }
 
 STATIC void devdrv_msg_chan_do_queue_work(struct devdrv_msg_chan *msg_chan)
 {
-    if (DEVDRV_MSG_HANDLE_STATE_INIT == atomic_cmpxchg(&msg_chan->sched_status.state,
+    if (DEVDRV_MSG_HANDLE_STATE_INIT == ka_base_atomic_cmpxchg(&msg_chan->sched_status.state,
         DEVDRV_MSG_HANDLE_STATE_INIT, DEVDRV_MSG_HANDLE_STATE_SCHEDING)) {
-        msg_chan->stamp = (u32)jiffies;
-        queue_work(msg_chan->msg_dev->work_queue[msg_chan->chan_id], &msg_chan->rx_work);
+        msg_chan->stamp = (u32)ka_jiffies;
+        ka_task_queue_work(msg_chan->msg_dev->work_queue[msg_chan->chan_id], &msg_chan->rx_work);
     }
 }
 
-STATIC irqreturn_t devdrv_wakeup_rx_work(int irq, void *data)
+STATIC ka_irqreturn_t devdrv_wakeup_rx_work(int irq, void *data)
 {
     struct devdrv_msg_chan *msg_chan = (struct devdrv_msg_chan *)data;
     struct devdrv_non_trans_msg_desc *bd_desc = NULL;
 
     if (msg_chan->status == DEVDRV_DISABLE) {
-        return IRQ_HANDLED;
+        return KA_IRQ_HANDLED;
     }
 
     if ((devdrv_get_device_status(msg_chan) != DEVDRV_DEVICE_ALIVE) &&
         (devdrv_get_device_status(msg_chan) != DEVDRV_DEVICE_SUSPEND)) {
-        return IRQ_HANDLED;
+        return KA_IRQ_HANDLED;
     }
 
-    rmb();
+    ka_rmb();
     bd_desc = (struct devdrv_non_trans_msg_desc *)msg_chan->cq_info.desc_h;
     if (bd_desc->status == DEVDRV_MSG_CMD_BEGIN) {
         devdrv_msg_chan_do_queue_work(msg_chan);
@@ -1360,7 +1346,7 @@ STATIC irqreturn_t devdrv_wakeup_rx_work(int irq, void *data)
         devdrv_guard_work_sched_immediate(msg_chan->msg_dev->pci_ctrl);
     }
 
-    return IRQ_HANDLED;
+    return KA_IRQ_HANDLED;
 }
 
 STATIC bool devdrv_msg_chan_sched_check(struct devdrv_msg_chan *msg_chan)
@@ -1480,7 +1466,7 @@ msg_retry:
     bd_desc = (struct devdrv_non_trans_msg_desc *)msg_chan->sq_info.desc_h;
     bd_desc->status = DEVDRV_MSG_CMD_BEGIN;
 
-    wmb();
+    ka_wmb();
     /* inform device */
     devdrv_msg_ring_doorbell_inner((void *)msg_chan);
 
@@ -1504,8 +1490,8 @@ msg_retry:
             chan_stat->tx_success_cnt++;
             return 0;
         }
-        rmb();
-        usleep_range(DEVDRV_MSG_WAIT_MIN_TIME, DEVDRV_MSG_WAIT_MAX_TIME);
+        ka_rmb();
+        ka_system_usleep_range(DEVDRV_MSG_WAIT_MIN_TIME, DEVDRV_MSG_WAIT_MAX_TIME);
         timeout -= DEVDRV_MSG_WAIT_MIN_TIME;
     }
 
@@ -1539,11 +1525,11 @@ msg_retry:
         if ((status != DEVDRV_MSG_CMD_BEGIN) && (bd_desc->seq_num == seq_num)) {
             break;
         }
-        rmb();
-        usleep_range(DEVDRV_MSG_WAIT_MIN_TIME, DEVDRV_MSG_WAIT_MAX_TIME);
+        ka_rmb();
+        ka_system_usleep_range(DEVDRV_MSG_WAIT_MIN_TIME, DEVDRV_MSG_WAIT_MAX_TIME);
         timeout -= DEVDRV_MSG_WAIT_MIN_TIME;
     }
-    mb();
+    ka_mb();
     if ((status != DEVDRV_MSG_CMD_BEGIN) && (bd_desc->seq_num != seq_num)) {
         devdrv_warn("Parameter is invalid. (dev_id=%d; msg_type=\"%s\"; "
             "num=%lld; reply_num=%lld; status=%d; timeout=%d(us))\n",
@@ -1596,7 +1582,7 @@ STATIC int devdrv_sync_non_trans_msg_copy_bd(struct devdrv_msg_chan *msg_chan,
     bd_desc->seq_num = msg_chan->chan_stat.tx_total_cnt;
     bd_desc->status = DEVDRV_MSG_CMD_BEGIN;
 
-    memcpy_toio((void __iomem *)bd_desc->data, (void *)data, in_data_len);
+    ka_mm_memcpy_toio((void __iomem *)bd_desc->data, (void *)data, in_data_len);
 
     return 0;
 }
@@ -1778,8 +1764,8 @@ STATIC int devdrv_admin_wait_recv_resp(struct devdrv_msg_chan *msg_chan, int *ti
             break;
         }
 
-        rmb();
-        usleep_range(DEVDRV_ADMIN_MSG_WAIT_MIN_TIME, DEVDRV_ADMIN_MSG_WAIT_MAX_TIME);
+        ka_rmb();
+        ka_system_usleep_range(DEVDRV_ADMIN_MSG_WAIT_MIN_TIME, DEVDRV_ADMIN_MSG_WAIT_MAX_TIME);
 
         if (devdrv_device_status_abnormal_check_inner(msg_chan) != 0) {
             devdrv_info("Device is abnormal. (dev_id=%u; msg_type=%d)\n", dev_id, (int)msg_chan->msg_type);
@@ -1844,12 +1830,12 @@ STATIC int devdrv_admin_send_wait_resq(struct devdrv_msg_chan *msg_chan, int *ti
             break;
         }
 
-        rmb();
-        usleep_range(DEVDRV_ADMIN_MSG_WAIT_MIN_TIME, DEVDRV_ADMIN_MSG_WAIT_MAX_TIME);
+        ka_rmb();
+        ka_system_usleep_range(DEVDRV_ADMIN_MSG_WAIT_MIN_TIME, DEVDRV_ADMIN_MSG_WAIT_MAX_TIME);
         timeout -= DEVDRV_ADMIN_MSG_WAIT_MIN_TIME;
     }
 
-    mb();
+    ka_mb();
     devdrv_admin_record_wait_time(dev_id, msg_head->opcode,
         (u32)(total_time - timeout), DEVDRV_MSG_TIMEOUT_LOG);
 
@@ -1913,7 +1899,7 @@ int devdrv_admin_msg_chan_send(struct devdrv_msg_dev *msg_dev, enum devdrv_admin
         devdrv_err("memcpy failed. (dev_id=%u)\n", dev_id);
         return -EINVAL;
     }
-    wmb();
+    ka_wmb();
 
 #ifdef CFG_FEATURE_SEC_COMM_L3
     if (!devdrv_is_need_secure_comm(cmd, opcode)) {
@@ -1922,10 +1908,10 @@ int devdrv_admin_msg_chan_send(struct devdrv_msg_dev *msg_dev, enum devdrv_admin
 #else
     msg_dev->pci_ctrl->shr_para->admin_msg_status = DEVDRV_MSG_CMD_BEGIN;
 #endif
-    wmb();
+    ka_wmb();
 
 #if defined(CFG_PLATFORM_ESL) || defined(CFG_PLATFORM_FPGA)
-    msleep(500);
+    ka_system_msleep(500); // 500ms
 #endif
     devdrv_msg_ring_doorbell_inner((void *)msg_chan);
 
@@ -1935,7 +1921,7 @@ int devdrv_admin_msg_chan_send(struct devdrv_msg_dev *msg_dev, enum devdrv_admin
         return ret;
     }
 
-    mb();
+    ka_mb();
     ret = -1;
     if (reply == NULL) { /* not need response message */
         ret = 0;
@@ -1977,7 +1963,7 @@ void devdrv_free_msg_queue_res(struct devdrv_msg_chan *msg_chan)
     }
 
     if (msg_chan->rx_work_flag != 0) {
-        cancel_work_sync(&msg_chan->rx_work);
+        ka_task_cancel_work_sync(&msg_chan->rx_work);
         msg_chan->rx_work_flag = 0;
     }
 
@@ -2034,7 +2020,7 @@ STATIC void devdrv_alloc_msg_queue_register_irq(void *priv,
             cmd_data->irq_rx_msg_notify = msg_chan->irq_rx_msg_notify;
             cmd_data->irq_tx_finish_notify = -1;
         }
-        INIT_WORK(&msg_chan->rx_work, devdrv_non_trans_rx_msg_task);
+        KA_TASK_INIT_WORK(&msg_chan->rx_work, devdrv_non_trans_rx_msg_task);
         msg_chan->rx_work_flag = 1;
     }
 
@@ -2354,7 +2340,7 @@ int devdrv_get_support_msg_chan_cnt(u32 udevid, enum devdrv_msg_client_type modu
     (void)uda_udevid_to_add_id(udevid, &index_id);
     return devdrv_get_support_msg_chan_cnt_inner(index_id, module_type);
 }
-EXPORT_SYMBOL(devdrv_get_support_msg_chan_cnt);
+KA_EXPORT_SYMBOL(devdrv_get_support_msg_chan_cnt);
 
 STATIC void devdrv_set_admin_sq_base(struct devdrv_pci_ctrl *pci_ctrl, u64 sq_base)
 {
@@ -2412,8 +2398,8 @@ int devdrv_msg_chan_init(struct devdrv_msg_dev *msg_dev, int chan_start, int cha
                      msg_dev->pci_ctrl->dev_id, msg_chan->io_base, msg_chan->irq_rx_msg_notify,
                      msg_chan->irq_tx_finish_notity);
 
-        mutex_init(&msg_chan->mutex);
-        mutex_init(&msg_chan->rx_mutex);
+        ka_task_mutex_init(&msg_chan->mutex);
+        ka_task_mutex_init(&msg_chan->rx_mutex);
     }
     return 0;
 }
@@ -2458,7 +2444,7 @@ STATIC int devdrv_msg_work_queue_init(struct devdrv_pci_ctrl *pci_ctrl, struct d
 
     for (i = 0; i < max_msg_chan_cnt; i++) {
         if (pci_ctrl->work_queue[i] == NULL) {
-            msg_dev->work_queue[i] = create_workqueue("pcie_msg_workqueue");
+            msg_dev->work_queue[i] = ka_task_create_workqueue("pcie_msg_workqueue");
             if (msg_dev->work_queue[i] == NULL) {
                 devdrv_err("Create msg work_queue[%d] failed. (dev_id=%u)\n", i, pci_ctrl->dev_id);
                 devdrv_msg_work_queue_uninit(pci_ctrl, msg_dev);
@@ -2476,7 +2462,7 @@ STATIC int devdrv_msg_work_queue_init(struct devdrv_pci_ctrl *pci_ctrl, struct d
 int devdrv_msg_init(struct devdrv_pci_ctrl *pci_ctrl)
 {
     int ret, irq_num, irq2_num, chan_cnt;
-    struct device *dev = &pci_ctrl->pdev->dev;
+    ka_device_t *dev = ka_pci_get_dev(pci_ctrl->pdev);
     struct devdrv_msg_dev *msg_dev = NULL;
     int devdrv_pf_max_msg_chan_cnt;
     int devdrv_vf_max_msg_chan_cnt;
@@ -2499,13 +2485,13 @@ int devdrv_msg_init(struct devdrv_pci_ctrl *pci_ctrl)
     devdrv_info("Message init statr. (msix_irq_num=%d; irq_num=%d; irq2_num=%d; chan_cnt=%d)\r\n",
                 pci_ctrl->msix_irq_num, irq_num, irq2_num, chan_cnt);
 
-    msg_dev = devdrv_kzalloc(sizeof(struct devdrv_msg_dev), GFP_KERNEL);
+    msg_dev = devdrv_kzalloc(sizeof(struct devdrv_msg_dev), KA_GFP_KERNEL);
     if (msg_dev == NULL) {
         devdrv_err("msg_dev devdrv_kzalloc failed. (dev_id=%u)\n", pci_ctrl->dev_id);
         return -ENOMEM;
     }
 
-    msg_dev->msg_chan = devdrv_kzalloc(sizeof(struct devdrv_msg_chan) * chan_cnt, GFP_KERNEL);
+    msg_dev->msg_chan = devdrv_kzalloc(sizeof(struct devdrv_msg_chan) * chan_cnt, KA_GFP_KERNEL);
     if (msg_dev->msg_chan == NULL) {
         devdrv_err("msg_chan devdrv_kzalloc failed. (dev_id=%u; chan_cnt=%d)\n", pci_ctrl->dev_id,
             chan_cnt);
@@ -2523,10 +2509,10 @@ int devdrv_msg_init(struct devdrv_pci_ctrl *pci_ctrl)
 
     msg_dev->chan_cnt = (u32)chan_cnt;
     msg_dev->dev = dev;
-    mutex_init(&msg_dev->mutex);
+    ka_task_mutex_init(&msg_dev->mutex);
     msg_dev->func_id = pci_ctrl->func_id;
 
-    INIT_LIST_HEAD(&msg_dev->slave_mem_list);
+    KA_INIT_LIST_HEAD(&msg_dev->slave_mem_list);
     msg_dev->slave_mem.offset = DEVDRV_MSG_QUEUE_MEM_BASE;
     msg_dev->slave_mem.len = (u32)(pci_ctrl->res.msg_mem.size - msg_dev->slave_mem.offset);
 
@@ -2560,8 +2546,8 @@ void devdrv_msg_exit(struct devdrv_pci_ctrl *pci_ctrl)
     struct devdrv_msg_dev *msg_dev = pci_ctrl->msg_dev;
     u32 i;
     struct devdrv_msg_chan *msg_chan = NULL;
-    struct list_head *pos = NULL;
-    struct list_head *n = NULL;
+    ka_list_head_t *pos = NULL;
+    ka_list_head_t *n = NULL;
     struct devdrv_msg_slave_mem_node *node = NULL;
 
     if (msg_dev == NULL) {
@@ -2578,17 +2564,17 @@ void devdrv_msg_exit(struct devdrv_pci_ctrl *pci_ctrl)
 
     devdrv_msg_work_queue_uninit(pci_ctrl, msg_dev);
 
-    mutex_lock(&msg_dev->mutex);
-    if (list_empty_careful(&msg_dev->slave_mem_list) == 0) {
-        list_for_each_safe(pos, n, &msg_dev->slave_mem_list)
+    ka_task_mutex_lock(&msg_dev->mutex);
+    if (ka_list_empty_careful(&msg_dev->slave_mem_list) == 0) {
+        ka_list_for_each_safe(pos, n, &msg_dev->slave_mem_list)
         {
-            node = list_entry(pos, struct devdrv_msg_slave_mem_node, list);
-            list_del(&node->list);
+            node = ka_list_entry(pos, struct devdrv_msg_slave_mem_node, list);
+            ka_list_del(&node->list);
             devdrv_kfree(node);
             node = NULL;
         }
     }
-    mutex_unlock(&msg_dev->mutex);
+    ka_task_mutex_unlock(&msg_dev->mutex);
     devdrv_kfree(msg_dev->msg_chan);
     msg_dev->msg_chan = NULL;
     devdrv_kfree(msg_dev);

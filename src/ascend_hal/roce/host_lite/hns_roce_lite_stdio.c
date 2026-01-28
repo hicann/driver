@@ -152,7 +152,7 @@ void *hns_roce_lite_mmap_host_va(u64 device_va, u32 device_va_len, struct hns_ro
     ret = halHostRegister((void *)align_va, align_len, DEV_MEM_MAP_HOST | MEM_REGISTER_HCCP_PROC_TYPE, ctx->dev_id,
         &dst_addr);
     if (ret) {
-        roce_err("hns_roce_lite_mmap_host_va halHostRegister fail, "
+        roce_err("hns_roce_lite_mmap_host_va halHostRegister failed, "
             "device va: 0x%llx, len: 0x%x, align device len: 0x%llx", device_va, device_va_len, align_len);
         return NULL;
     }
@@ -173,7 +173,7 @@ int hns_roce_lite_unmmap_host_va(u64 device_va, struct hns_roce_lite_context *ct
 
     ret = halHostUnregisterEx((void *)align_va, ctx->dev_id, DEV_MEM_MAP_HOST | MEM_REGISTER_HCCP_PROC_TYPE);
     if (ret) {
-        roce_err("hns_roce_lite_unmmap_host_va halHostUnregisterEx fail, device va: 0x%llx, ret = %d", align_va, ret);
+        roce_err("hns_roce_lite_unmmap_host_va halHostUnregisterEx failed, device va: 0x%llx, ret = %d", align_va, ret);
         return ret;
     }
 
@@ -207,7 +207,7 @@ STATIC void *hns_roce_lite_mmap_db(u64 device_va, u32 dva_len, struct hns_roce_l
     host_va = hns_roce_lite_mmap_host_va(device_va, dva_len, ctx);
     if (host_va == NULL) {
         free(db_node);
-        roce_err("%s hns_roce_lite_mmap_host_va host_va fail", __func__);
+        roce_err("%s hns_roce_lite_mmap_host_va host_va failed", __func__);
         goto out;
     }
 

@@ -51,6 +51,7 @@ struct devdrv_notify_dev_online_cmd {
 struct devdrv_p2p_msg_chan_cfg_cmd {
     u32 op;
     u32 devid;
+    u32 udevid;
     u32 reserved[6];
 };
 

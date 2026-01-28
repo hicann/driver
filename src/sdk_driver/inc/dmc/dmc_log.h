@@ -73,7 +73,7 @@ int __attribute__((weak)) drv_vprintk_emit(int level, const char *fmt, ...)
         module, level, __func__, __LINE__, ##__VA_ARGS__)
 
 #define drv_err(module, fmt, ...) \
-    log_to_printk_and_ringbuf(KERN_NOTICE "[ascend] [%s] [ERROR] [%s %d] " fmt, \
+    log_to_printk_and_ringbuf(KERN_NOTICE "[ascend] [ERROR] [%s] [%s %d] " fmt, \
         module, __func__, __LINE__, ##__VA_ARGS__)
 #define drv_warn(module, fmt, ...) drv_log_print(KERN_WARNING, "WARN", module, fmt, ##__VA_ARGS__)
 #define drv_info(module, fmt, ...) drv_log_print(KERN_INFO, "INFO", module, fmt, ##__VA_ARGS__)

@@ -178,6 +178,7 @@ int dms_get_ts_info(unsigned int dev_id, unsigned int vfid, unsigned int sub_cmd
 #ifdef CFG_FEATURE_AIC_AIV_UTIL_FROM_TS
         case DSMI_TS_SUB_CMD_AICORE_UTILIZATION_RATE:
         case DSMI_TS_SUB_CMD_VECTORCORE_UTILIZATION_RATE:
+        case DSMI_TS_SUB_CMD_NPU_MULTI_UTILIZATION_RATE:
             ret = dms_get_single_util_from_ts(dev_id, vfid, sub_cmd, out_buf, size);
             if (ret != 0) {
                 DMS_EX_NOTSUPPORT_ERR(ret, "Get single util from ts failed. (dev_id=%u; vfid=%u; ret=%d)\n",

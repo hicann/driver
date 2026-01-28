@@ -14,8 +14,8 @@
 #ifndef DEVDRV_ADAPT_H
 #define DEVDRV_ADAPT_H
 
-#include <linux/pci.h>
 #include "comm_kernel_interface.h"
+#include "ka_common_pub.h"
 
 #define HOST_PRODUCT_DC 0
 
@@ -25,15 +25,15 @@
 
 /* devdrv_dma.h */
 #if defined(CFG_PLATFORM_ESL) || defined(CFG_PLATFORM_FPGA) /* for fpga */
-#define DEVDRV_DMA_COPY_TIMEOUT (HZ * 1000)
-#define DEVDRV_DMA_COPY_MAX_TIMEOUT (HZ * 1000)
+#define DEVDRV_DMA_COPY_TIMEOUT (KA_HZ * 1000)
+#define DEVDRV_DMA_COPY_MAX_TIMEOUT (KA_HZ * 1000)
 #define DEVDRV_DMA_WAIT_CHAN_AVAIL_TIMEOUT 20000
 #else
 /* Due to the impact of the previously unfinished dma task, the time-out period cannot
   be given based on the amount of data moved by the dma. Consider the influence of
   the PCIE bus bandwidth and the multi-channel of the DMA, giving a larger waiting time  */
-#define DEVDRV_DMA_COPY_TIMEOUT (HZ * 50) /* 50s */
-#define DEVDRV_DMA_COPY_MAX_TIMEOUT (HZ * 100) /* 100s */
+#define DEVDRV_DMA_COPY_TIMEOUT (KA_HZ * 50) /* 50s */
+#define DEVDRV_DMA_COPY_MAX_TIMEOUT (KA_HZ * 100) /* 100s */
 /* wait for dma chan SQ queue when full */
 #define DEVDRV_DMA_WAIT_CHAN_AVAIL_TIMEOUT 10000
 #endif
@@ -77,10 +77,10 @@ void devdrv_peer_ctrl_init(void);
 
 /* devdrv_pcie.c */
 int devdrv_get_product(void);
-extern const struct pci_device_id g_devdrv_tbl[];
+extern const ka_pci_device_id_t g_devdrv_tbl[];
 extern const struct pci_error_handlers g_devdrv_err_handler;
 int devdrv_get_device_id_tbl_num(void);
-void devdrv_shutdown(struct pci_dev *pdev);
+void devdrv_shutdown(ka_pci_dev_t *pdev);
 
 /* devdrv_dma.c */
 void devdrv_traffic_and_manage_dma_chan_config(struct devdrv_dma_dev *dma_dev);
@@ -88,7 +88,7 @@ void devdrv_traffic_and_manage_dma_chan_config(struct devdrv_dma_dev *dma_dev);
 /* devdrv_pm.c */
 bool devdrv_is_sentry_work_mode(void);
 void devdrv_load_half_resume(struct devdrv_pci_ctrl *pci_ctrl);
-int drv_pcie_suspend(struct device *dev);
-int drv_pcie_resume_notify(struct device *dev);
+int drv_pcie_suspend(ka_device_t *dev);
+int drv_pcie_resume_notify(ka_device_t *dev);
 
 #endif

@@ -13,9 +13,7 @@
 #ifndef SVM_GFP_H
 #define SVM_GFP_H
 
-#include <linux/types.h>
-#include <linux/mm.h>
-#include "ka_common_pub.h"
+#include "ka_memory_pub.h"
 
 struct devmm_phy_addr_attr {
     u32 side;

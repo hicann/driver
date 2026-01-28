@@ -48,7 +48,7 @@ static int devmm_agent_normal_mem_release(struct devmm_chan_mem_release *msg)
     int ret;
 
     for (freed_num = 0; freed_num < total_pg_num;) {
-        u64 tmp_num = min((u64)DEVMM_PAGE_NUM_PER_MSG, (total_pg_num - freed_num));
+        u64 tmp_num = ka_base_min((u64)DEVMM_PAGE_NUM_PER_MSG, (total_pg_num - freed_num));
 
         msg->to_free_pg_num = tmp_num;
         ret = devmm_chan_msg_send(msg, sizeof(struct devmm_chan_mem_release), sizeof(struct devmm_chan_mem_release));
@@ -183,7 +183,7 @@ int devmm_ioctl_mem_release(struct devmm_svm_process *svm_proc, struct devmm_ioc
 static int devmm_master_mem_create(struct devmm_svm_process *svm_proc,
     struct devmm_phy_addr_attr *attr, u64 size, u64 *pg_num, int *id)
 {
-    u32 page_size = (attr->pg_type == MEM_NORMAL_PAGE_TYPE) ? PAGE_SIZE : SVM_MASTER_HUGE_PAGE_SIZE;
+    u32 page_size = (attr->pg_type == MEM_NORMAL_PAGE_TYPE) ? KA_MM_PAGE_SIZE : SVM_MASTER_HUGE_PAGE_SIZE;
     u64 tmp_pg_num;
     int ret;
 
@@ -224,7 +224,7 @@ static int _devmm_agent_mem_create(struct devmm_svm_process *svm_proc,
 
     devmm_mem_create_msg_pack(svm_proc, attr, pg_num, &msg);
     for (created_num = 0; created_num < pg_num;) {
-        u64 tmp_num = min((u64)DEVMM_PAGE_NUM_PER_MSG, (pg_num - created_num));
+        u64 tmp_num = ka_base_min((u64)DEVMM_PAGE_NUM_PER_MSG, (pg_num - created_num));
 
         msg.to_create_pg_num = (u32)tmp_num;
         msg.is_create_to_new_blk = (created_num == 0) ? 1 : 0;
@@ -288,6 +288,20 @@ static void devmm_mem_create_phy_addr_attr_pack(struct devmm_ioctl_arg *arg, str
     }
 }
 
+static int devmm_host_numa_id_check(u32 side, u32 host_numa_id)
+{
+    if (side != MEM_HOST_NUMA_SIDE) {
+        return 0;
+    }
+
+    if ((host_numa_id != -1) && ((host_numa_id >= SVM_MASTER_NUMA_MAX) || (!node_online(host_numa_id)))) {
+        devmm_drv_err("Invalid numa id. (side=%u; numa=%u; numa_max=%u)\n",
+            side, host_numa_id, SVM_MASTER_NUMA_MAX);
+        return -EINVAL;
+    }
+    return 0;
+}
+
 static int devmm_ioctl_mem_create_para_check(struct devmm_mem_create_para *para, u32 devid)
 {
     if (para->size == 0) {
@@ -311,7 +325,7 @@ static int devmm_ioctl_mem_create_para_check(struct devmm_mem_create_para *para,
 
     /* reserved para, verify by zero for subsequent compatibility */
     if (para->flag != 0) {
-        devmm_drv_err("Flag shoule be zero.\n");
+        devmm_drv_err("Flag should be zero.\n");
         return -EINVAL;
     }
 
@@ -320,8 +334,7 @@ static int devmm_ioctl_mem_create_para_check(struct devmm_mem_create_para *para,
         return -EINVAL;
     }
 
-    if ((para->side == MEM_HOST_NUMA_SIDE) && (para->host_numa_id != -1 && para->host_numa_id >= MAX_NUMNODES)) {
-        devmm_drv_err("Invalid numa id. (side=%u; numa=%u)\n", para->side, para->host_numa_id);
+    if (devmm_host_numa_id_check(para->side, para->host_numa_id) != 0) {
         return -EINVAL;
     }
 

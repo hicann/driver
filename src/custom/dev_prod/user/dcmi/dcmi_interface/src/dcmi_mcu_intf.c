@@ -1117,7 +1117,8 @@ static bool is_910b_pod(int board_id)
 static bool is_910b_box(int board_id)
 {
     if (board_id == DCMI_A200T_BOX_A1_BIN3_BOARD_ID || board_id == DCMI_A200T_BOX_A1_BIN0_BOARD_ID ||
-        board_id == DCMI_A200T_BOX_A1_BIN2_BOARD_ID || board_id == DCMI_A200T_BOX_A1_BIN1_BOARD_ID) {
+        board_id == DCMI_A200T_BOX_A1_BIN2_BOARD_ID || board_id == DCMI_A200T_BOX_A1_BIN1_BOARD_ID ||
+        board_id == DCMI_A200I_BOX_A1_BIN2X_1_BOARD_ID) {
         return true;
     }
     return false;

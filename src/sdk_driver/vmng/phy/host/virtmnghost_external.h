@@ -15,6 +15,8 @@
 #define VIRTMNGHOST_EXTERNAL_H
 
 #include "virtmnghost_unit.h"
+#include "ka_memory_pub.h"
+#include "ka_kernel_def_pub.h"
 
 int vmngh_alloc_external_db_entries(struct vmngh_vd_dev *vd_dev);
 void vmngh_free_external_db_entries(struct vmngh_vd_dev *vd_dev);

@@ -20,6 +20,7 @@
 
 #include "pbl_uda.h"
 #include "uda_pub_def.h"
+#include "ka_base_pub.h"
 
 #define UDA_DEV_MAX_NUM UDA_MAX_PHY_DEV_NUM
 #define UDA_DEV_NAME_LEN 32
@@ -47,7 +48,7 @@ struct uda_ns_node {
     u32 dev_num;
     u32 destroy_try_count;
     u64 identify;
-    u32 devid_to_udevid[UDA_DEV_MAX_NUM]; /* Use arrays to speed up the conversion from logical id to udevid */
+    u32 devid_to_udevid[UDA_DEV_MAX_NUM]; /* Use arrays to speed ka_task_up the conversion from logical id to udevid */
 };
 
 struct uda_access_share_node {
@@ -60,7 +61,7 @@ struct uda_access {
     char name[UDA_DEV_NAME_LEN];
     struct device *dev;
     struct cdev *cdev;
-    dev_t devno;
+    ka_dev_t devno;
     u32 ns_id;
     struct mnt_namespace *ns;
     struct mutex mutex;

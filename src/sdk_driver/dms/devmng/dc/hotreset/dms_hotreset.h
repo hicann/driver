@@ -33,6 +33,8 @@ EXIT_MODULE_FUNC(DMS_MODULE_BASIC_POWER_INFO);
 #define DEVDRV_RESET_ALL_DEVICE_ID 0xffffffff
 #endif
 
+#define DEVDRV_HOTRESET_INFORM_DELAY 500
+
 struct hotreset_task_info {
     unsigned long task_flag;
     unsigned long task_ref_cnt;

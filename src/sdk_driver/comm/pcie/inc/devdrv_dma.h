@@ -14,14 +14,12 @@
 #ifndef _DMA_COMMON_H_
 #define _DMA_COMMON_H_
 
-#include <linux/interrupt.h>
-#include <linux/device.h>
-#include <linux/spinlock.h>
-#include <linux/semaphore.h>
-#include <linux/workqueue.h>
-
 #include "dma_adapt.h"
 #include "comm_kernel_interface.h"
+#include "ka_task_pub.h"
+#include "ka_base_pub.h"
+#include "ka_memory_pub.h"
+#include "ka_system_pub.h"
 
 #define DMA_DONE_BUDGET 64
 
@@ -109,10 +107,10 @@ struct devdrv_dma_soft_bd {
     int owner_bd; /* The number of the last bd sent by the chain  */
     int status;
     u32 trans_id;
-    struct semaphore sync_sem;
+    ka_semaphore_t sync_sem;
     void *priv;
     void (*callback_func)(void *, u32, u32);
-    atomic_t process_flag;
+    ka_atomic_t process_flag;
 };
 
 struct devdrv_dma_soft_bd_wait_status {
@@ -151,7 +149,7 @@ struct devdrv_sync_dma_stat {
 #define DEVDRV_IRQ_IS_INIT    1
 #define DEVDRV_IRQ_IS_UNINIT  0
 struct devdrv_dma_channel {
-    struct device *dev;
+    ka_device_t *dev;
     void __iomem *io_base; /* the base address of DMA channel */
     u32 func_id;
     u32 chan_id; /* the actual index of DMA channel in DMA controller */
@@ -159,11 +157,11 @@ struct devdrv_dma_channel {
                  bit1: DMA small packet is supported or not; */
     struct devdrv_dma_sq_node *sq_desc_base;
     struct devdrv_dma_cq_node *cq_desc_base;
-    dma_addr_t sq_desc_dma;
-    dma_addr_t cq_desc_dma;
+    ka_dma_addr_t sq_desc_dma;
+    ka_dma_addr_t cq_desc_dma;
 #ifdef CFG_FEATURE_AGENT_SMMU
-    struct page *sq_desc_page;
-    struct page *cq_desc_page;
+    ka_page_t *sq_desc_page;
+    ka_page_t *cq_desc_page;
 #endif
     u32 sq_depth;
     u32 cq_depth;
@@ -172,23 +170,23 @@ struct devdrv_dma_channel {
     u32 sq_head;
 
     struct devdrv_dma_soft_bd *dma_soft_bd;
-    struct tasklet_struct dma_done_task;
+    ka_tasklet_struct_t dma_done_task;
     u32 err_work_magic1;
-    struct work_struct err_work;
+    ka_work_struct_t err_work;
     u32 err_work_magic2;
 
-    struct workqueue_struct *dma_done_workqueue;
-    struct work_struct dma_done_work;
+    ka_workqueue_struct_t *dma_done_workqueue;
+    ka_work_struct_t dma_done_work;
 
     int done_irq;
     int done_irq_state;
     int err_irq;
     int err_irq_flag;
     int err_irq_state;
-    spinlock_t lock;
-    spinlock_t cq_lock;
-    struct mutex vm_sq_lock;
-    struct mutex vm_cq_lock;
+    ka_task_spinlock_t lock;
+    ka_task_spinlock_t cq_lock;
+    ka_mutex_t vm_sq_lock;
+    ka_mutex_t vm_cq_lock;
     u32 rounds;
     u32 remote_irq_cnt; /* the count of remote interrupt */
     struct devdrv_sync_dma_stat status;
@@ -225,7 +223,7 @@ struct devdrv_dma_sq_cq_info {
 #define DEVDRV_DMA_GUARD_WORK_MAGIC 0x4567abcd
 struct devdrv_dma_guard_work {
     u32 work_magic;
-    struct delayed_work dma_guard_work;
+    ka_delayed_work_t dma_guard_work;
     struct devdrv_dma_dev *dma_dev;
 };
 
@@ -243,7 +241,7 @@ struct devdrv_dma_dev {
     u32 dev_id;
     u32 func_id;
     struct devdrv_pci_ctrl *pci_ctrl;
-    struct device *dev;
+    ka_device_t *dev;
     void __iomem *io_base;
     void __iomem *dma_chan_base;
     void *drvdata;
@@ -269,7 +267,7 @@ struct devdrv_dma_dev {
     struct data_type_chan data_chan[DEVDRV_DMA_DATA_TYPE_MAX];
     /* dma guard work */
     struct devdrv_dma_guard_work guard_work;
-    struct tasklet_struct single_fault_task;
+    ka_tasklet_struct_t single_fault_task;
     struct devdrv_dma_suppression suppression;
     struct devdrv_dma_channel dma_chan[];  /* host:remote channel, device: local channel */
 };
@@ -295,7 +293,7 @@ struct devdrv_dma_func_para {
     u32 dma_pf_num;
     u32 dma_vf_en;
     u32 dma_vf_num;
-    struct device *dev;
+    ka_device_t *dev;
     void __iomem *io_base;
     void __iomem *dma_chan_base;
     void *drvdata;
@@ -336,14 +334,14 @@ void devdrv_dma_stop_business(unsigned long data);
 struct devdrv_dma_dev *devdrv_get_dma_dev(u32 dev_id);
 void devdrv_dfx_dma_report_to_bbox(struct devdrv_dma_channel *dma_chan, u32 queue_init_sts);
 void devdrv_dma_check_sram_init_status(const void __iomem *io_base, unsigned long timeout);
-int devdrv_register_irq_func(void *drvdata, int vector_index, irqreturn_t (*callback_func)(int, void *), void *para,
+int devdrv_register_irq_func(void *drvdata, int vector_index, ka_irqreturn_t (*callback_func)(int, void *), void *para,
                              const char *name);
 int devdrv_unregister_irq_func(void *drvdata, int vector_index, void *para);
 int devdrv_notify_dma_err_irq(void *drvdata, u32 dma_chan_id, int err_irq);
 int devdrv_check_dl_dlcmsm_state(void *drvdata);
 int devdrv_dma_copy(struct devdrv_dma_dev *dma_dev, struct devdrv_dma_node *dma_node, u32 node_cnt,
     struct devdrv_dma_copy_para *para);
-int devdrv_dma_copy_sml_pkt(struct devdrv_dma_dev *dma_dev, enum devdrv_dma_data_type type, dma_addr_t dst,
+int devdrv_dma_copy_sml_pkt(struct devdrv_dma_dev *dma_dev, enum devdrv_dma_data_type type, ka_dma_addr_t dst,
                             const void *data, u32 size);
 int devdrv_dma_chan_copy(u32 dev_id, struct devdrv_dma_channel *dma_chan, struct devdrv_dma_node *dma_node,
     u32 node_cnt, struct devdrv_dma_copy_para *para);
@@ -380,5 +378,5 @@ void devdrv_dma_sram_init(struct devdrv_dma_func_para *para_in, u32 sq_cq_side, 
 void devdrv_dma_stop_bussiness_task(unsigned long data);
 void devdrv_dma_stop_bussiness(struct devdrv_dma_dev *dma_dev);
 void devdrv_dma_chan_info_init(struct devdrv_dma_dev *dma_dev, u32 entry_id, u32 dma_chan_id);
-void devdrv_dma_err_task(struct work_struct *p_work);
+void devdrv_dma_err_task(ka_work_struct_t *p_work);
 #endif

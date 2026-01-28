@@ -14,7 +14,6 @@
 #ifndef SVM_MEM_QUERY_H
 #define SVM_MEM_QUERY_H
 
-#include <linux/dma-mapping.h>
 #include "svm_ioctl.h"
 
 #define DEVMM_SVM_ADDR 0

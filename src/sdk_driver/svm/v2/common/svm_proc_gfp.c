@@ -11,12 +11,11 @@
  * GNU General Public License for more details.
  */
 
-#include <linux/mm.h>
-#include <linux/cgroup.h>
-
-#include "svm_define.h"
 #include "svm_cgroup_mng.h"
 #include "svm_proc_gfp.h"
+#include "ka_common_pub.h"
+#include "ka_memory_pub.h"
+#include "svm_define.h"
 
 int devmm_proc_alloc_pages(struct devmm_svm_process *svm_proc,
     struct devmm_phy_addr_attr *attr, ka_page_t **pages, u64 pg_num)

@@ -300,13 +300,6 @@ static struct vdavinci_drv_ops g_vascend_drv_ops = {
 
 static inline bool hw_vdavinci_dma_pool_support(struct device *dev)
 {
-#ifdef __aarch64__
-    struct iommu_domain *domain = iommu_get_domain_for_dev(dev);
-
-    if (!domain || !domain->iova_cookie) {
-        return false;
-    }
-#endif
     return true;
 }
 
@@ -563,7 +556,7 @@ void hw_dvt_clean_vdavinci_types(struct hw_dvt *dvt)
 STATIC struct hw_vdavinci_type *hw_dvt_find_vdavinci_type(struct hw_dvt *dvt,
                                                           const char *name)
 {
-    int i;
+    unsigned int i;
     struct hw_vdavinci_type *t = NULL;
 
     if (!hw_vdavinci_is_enabled(dvt)) {
@@ -598,7 +591,7 @@ int hw_dvt_set_mmio_ops(struct hw_dvt *dvt, struct mmio_init_ops *ops)
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(6,1,0)
 STATIC int hw_dvt_init_vdavinci_type_groups(struct hw_dvt *dvt)
 {
-    int i;
+    unsigned int i;
     struct hw_vdavinci_type *type = NULL;
 
     dvt->mdev_types = kcalloc(dvt->vdavinci_type_num * dvt->dev_num,
@@ -619,7 +612,7 @@ STATIC int hw_dvt_init_vdavinci_type_groups(struct hw_dvt *dvt)
 #else
 STATIC int hw_dvt_init_vdavinci_type_groups(struct hw_dvt *dvt)
 {
-    int i, j;
+    unsigned int i, j;
     struct hw_vdavinci_type *type = NULL;
     struct attribute_group *group = NULL;
 
@@ -780,11 +773,6 @@ STATIC int hw_dvt_init_device_info(struct hw_dvt *dvt, struct vdavinci_priv *vda
     vdavinci_priv->dvt = dvt;
     dvt->vdavinci_priv = vdavinci_priv;
  
-    dvt->dma_pool_active = false;
-    if (hw_vdavinci_dma_pool_support(vdavinci_priv->dev)) {
-        dvt->dma_pool_active = true;
-    }
- 
     dvt->vendor = pdev->vendor;
     dvt->device = pdev->device;
     ret = hw_dvt_set_mmio_ops(dvt, vdavinci_mmio_pf_devices_ops);
@@ -843,23 +831,39 @@ STATIC void hw_dvt_unregister_mdev(struct hw_dvt *dvt, struct hw_kvmdt_ops *kvmd
     kvmdt_ops->unregister_mdev(vdavinci_priv->dev, dvt);
 }
 
+STATIC int hw_dvt_vdavinci_getdevinfo(struct hw_dvt *dvt, int dev_index, 
+                                      struct dvt_devinfo *resource_info)
+{
+    int ret;
+    struct vdavinci_priv *vdavinci_priv = dvt->vdavinci_priv;
+
+    if (vdavinci_priv->ops == NULL || vdavinci_priv->ops->davinci_getdevinfo == NULL) {
+        return -EINVAL;
+    }
+    ret = vdavinci_priv->ops->davinci_getdevinfo(vdavinci_priv->dev, dev_index,
+                                                 resource_info);
+    if (ret != 0) {
+        vascend_err(vdavinci_priv->dev,
+                    "Failed to get dev info, pf : %u, reason : %d\n", dev_index, ret);
+        return ret;
+    }
+
+    return 0;
+}
+
 int hw_dvt_init_dev_pf_info(struct hw_dvt *dvt)
 {
     int ret;
-    unsigned int i, j, dev_aicore_num;
+    unsigned int i, j;
     struct hw_pf_info *pf_info;
     struct dvt_devinfo dev_resource_info;
-    struct vdavinci_priv *vdavinci_priv = dvt->vdavinci_priv;
 
     for (i = 0; i < dvt->dev_num; i++) {
         pf_info = &dvt->pf[i];
-        ret = vdavinci_priv->ops->davinci_getdevinfo(vdavinci_priv->dev, i, &dev_resource_info);
-        if (ret) {
-            vascend_err(vdavinci_priv->dev,
-                "Failed to get dev info, pf : %u, reason : %d\n", i, ret);
+        ret = hw_dvt_vdavinci_getdevinfo(dvt, i, &dev_resource_info);
+        if (ret != 0) {
             goto clean_pf_info;
         }
-
         pf_info->dev_index = i;
         pf_info->reserved_aicore_num = dev_resource_info.aicore_num;
         pf_info->reserved_aicpu_num = dev_resource_info.aicpu_num;
@@ -867,14 +871,7 @@ int hw_dvt_init_dev_pf_info(struct hw_dvt *dvt)
         pf_info->reserved_mem_size = dev_resource_info.mem_size;
         pf_info->instance_num = 0;
 
-        dev_aicore_num = dev_resource_info.aicore_num;
-        if (dev_aicore_num > DEV_AICORE_MAX_NUM || dev_aicore_num == 0) {
-            ret = -EINVAL;
-            vascend_err(vdavinci_priv->dev,
-                "dev aicore num error: %u\n", dev_aicore_num);
-            goto clean_pf_info;
-        }
-        pf_info->aicore_num = dev_aicore_num;
+        pf_info->aicore_num = dev_resource_info.aicore_num;
         pf_info->mem_size = dev_resource_info.mem_size;
         pf_info->aicpu_num = dev_resource_info.aicpu_num;
         pf_info->vpc_num = dev_resource_info.vpc_num;
@@ -942,7 +939,7 @@ STATIC int hw_dvt_init_dev_pf_num(struct hw_dvt **dev_dvt,
     unsigned int dev_num;
     struct hw_dvt *dvt;
 
-    dev_num = vdavinci_priv->ops->davinci_getdevnum(vdavinci_priv->dev);
+    dev_num = (unsigned int)vdavinci_priv->ops->davinci_getdevnum(vdavinci_priv->dev);
     if (dev_num == 0 || dev_num > HW_DVT_MAX_DEV_NUM) {
         vascend_err(vdavinci_priv->dev, "pf num is invalid\n");
         return -EINVAL;

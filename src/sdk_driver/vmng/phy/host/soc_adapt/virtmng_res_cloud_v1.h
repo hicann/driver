@@ -15,6 +15,7 @@
 #define VIRTMNG_RES_CLOUD_V1_H
 
 #include "virtmnghost_ctrl.h"
+#include "ka_task_pub.h"
 
 int vmngh_res_init_cloud_v1(u32 devid, struct vmngh_ctrl_ops *ops);
 

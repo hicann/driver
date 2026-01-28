@@ -22,6 +22,7 @@
 #include <linux/kthread.h>
 #include <linux/time.h>
 #include <linux/atomic.h>
+#include "ka_base_pub.h"
 
 #define UDIS_TIMER_TASK_MAX_NUM 2048
 #define TASK_NAME_MAX_LEN 16
@@ -48,11 +49,11 @@ struct udis_period_task_node {
     unsigned long privilege_data;
     int (*period_task_func)(unsigned int udevid, unsigned long privilege_data);
     unsigned int original_expired_cnt;
-    atomic_t expired_cnt;
+    ka_atomic_t expired_cnt;
     unsigned int cur_cnt;
     unsigned int udevid;
     enum udis_timer_work_type work_type;
-    atomic_t queueflag;
+    ka_atomic_t queueflag;
     struct workqueue_struct *workqueue;
     struct work_struct work;
 };

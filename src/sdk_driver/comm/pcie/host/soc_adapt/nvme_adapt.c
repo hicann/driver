@@ -11,10 +11,11 @@
  * GNU General Public License for more details.
  */
 #include "nvme_adapt.h"
+#include "ka_memory_pub.h"
 
 static void devdrv_nvme_reg_wr(void __iomem *io_base, u32 offset, u32 val)
 {
-    writel(val, io_base + offset);
+    ka_mm_writel(val, io_base + offset);
 }
 
 void devdrv_set_sq_doorbell(void __iomem *io_base, u32 val)

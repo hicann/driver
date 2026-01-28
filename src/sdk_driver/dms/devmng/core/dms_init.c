@@ -37,11 +37,16 @@
 #include <linux/profile.h>
 #endif
 
+#include "ka_memory_pub.h"
+#include "ka_fs_pub.h"
+#include "ka_base_pub.h"
+#include "ka_errno_pub.h"
+#include "ka_kernel_def_pub.h"
+#include "ka_dfx_pub.h"
 #include "devdrv_user_common.h"
 #include "pbl_mem_alloc_interface.h"
 #include "securec.h"
 #include "dms_define.h"
-#include "dms_init.h"
 #include "urd_feature.h"
 #include "dms_common.h"
 #include "dms_probe.h"
@@ -59,6 +64,7 @@
 
 #include "pbl/pbl_feature_loader.h"
 #include "davinci_interface.h"
+#include "dms_init.h"
 #define MAX_EVENT_CONFIG_SIZE  (2*1024*1024)
 
 #ifndef CFG_FEATURE_UNSUPPORT_FAULT_MANAGE
@@ -125,7 +131,7 @@ STATIC int get_eventinfo_from_buf(char *config_buf, size_t lBufLens)
     int tpcnt = 0;
     char *line_buf = NULL;
 
-    line_buf = dbl_kzalloc(TMP_BUF_MAX, GFP_KERNEL | __GFP_ACCOUNT);
+    line_buf = dbl_kzalloc(TMP_BUF_MAX, KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
     if (line_buf == NULL) {
         dms_err("kzalloc line_buf failed, (size = %d)\n", TMP_BUF_MAX);
         return -ENOMEM;
@@ -193,19 +199,19 @@ STATIC int get_file_size(size_t *buf_size)
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 20, 0)
     struct path kernel_path;
 
-    ret = kern_path(EVENT_INFO_CONFIG_PATH, LOOKUP_FOLLOW, &kernel_path);
+    ret = ka_fs_kern_path(EVENT_INFO_CONFIG_PATH, KA_LOOKUP_FOLLOW, &kernel_path);
     if (ret != 0) {
         return ret;
     }
-    ret = vfs_getattr(&kernel_path, &src_stat, STATX_BASIC_STATS, AT_NO_AUTOMOUNT);
-    path_put(&kernel_path);
+    ret = ka_fs_vfs_getattr(&kernel_path, &src_stat, KA_STATX_BASIC_STATS, KA_AT_NO_AUTOMOUNT);
+    ka_fs_path_put(&kernel_path);
 #else
-    mm_segment_t old_fs;
+    ka_mm_segment_t old_fs;
 
-    old_fs = get_fs();
-    set_fs(KERNEL_DS);
+    old_fs = ka_fs_get_fs();
+    ka_fs_set_fs(KERNEL_DS);
     ret = vfs_stat(EVENT_INFO_CONFIG_PATH, &src_stat);
-    set_fs(old_fs);
+    ka_fs_set_fs(old_fs);
 #endif
     if (ret != 0) {
         dms_err("vfs_getattr failed. (file: %s, src_stat.size = %lld, ret = %d)\n",
@@ -226,17 +232,13 @@ STATIC int read_file_to_buf(size_t file_size, char *config_buf)
     struct file *src_filp = NULL;
     loff_t offset = 0;
 
-    src_filp = filp_open(EVENT_INFO_CONFIG_PATH, O_RDONLY, S_IRUSR);
-    if (IS_ERR(src_filp)) {
-        dms_err("unable to open (file: %s, errno = %ld)\n", EVENT_INFO_CONFIG_PATH, PTR_ERR(src_filp));
+    src_filp = ka_fs_filp_open(EVENT_INFO_CONFIG_PATH, KA_O_RDONLY, KA_S_IRUSR);
+    if (KA_IS_ERR(src_filp)) {
+        dms_err("unable to open (file: %s, errno = %ld)\n", EVENT_INFO_CONFIG_PATH, KA_PTR_ERR(src_filp));
         goto _end;
     }
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 14, 0)
-    read_size = kernel_read(src_filp, config_buf, file_size, &offset);
-#else
-    read_size = kernel_read(src_filp, offset, config_buf, file_size);
-#endif
+    read_size = ka_fs_kernel_read(src_filp, config_buf, file_size, &offset);
     if (read_size != file_size) {
         dms_err("read file not success. (read bytes=%lu, file_size=%lu)\n", read_size, file_size);
         goto _end;
@@ -244,8 +246,8 @@ STATIC int read_file_to_buf(size_t file_size, char *config_buf)
     ret = 0;
 
 _end:
-    if (!IS_ERR(src_filp)) {
-        (void)filp_close(src_filp, NULL);
+    if (!KA_IS_ERR(src_filp)) {
+        (void)ka_fs_filp_close(src_filp, NULL);
     }
 
     return ret;
@@ -274,7 +276,7 @@ int get_eventinfo_from_config(void)
         return -EFBIG;
     }
 
-    config_buf = dbl_kzalloc(file_size + 1UL, GFP_KERNEL | __GFP_ACCOUNT);
+    config_buf = dbl_kzalloc(file_size + 1UL, KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
     if (config_buf == NULL) {
         dms_err("kzalloc config_buf failed. (size = %lu)\n", file_size);
         return -ENOMEM;
@@ -294,7 +296,7 @@ int get_eventinfo_from_config(void)
 
     dbl_kfree(config_buf);
     config_buf = NULL;
-    sort(g_event_configs.event_configs, g_event_configs.config_cnt,
+    ka_base_sort(g_event_configs.event_configs, g_event_configs.config_cnt,
         sizeof(g_event_configs.event_configs[0]), cmp, NULL);
 
     return 0;
@@ -304,7 +306,7 @@ undo_acBuf_alloc:
     config_buf = NULL;
     return ret;
 }
-EXPORT_SYMBOL(get_eventinfo_from_config);
+KA_EXPORT_SYMBOL(get_eventinfo_from_config);
 #endif
 
 STATIC int dms_release_prepare(struct notifier_block *self, unsigned long val, void *data)
@@ -371,7 +373,7 @@ int dms_init(void)
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 17, 0)) && defined(CFG_HOST_ENV)
     (void)dms_exit_notifier;
 #else
-    ret = profile_event_register(PROFILE_TASK_EXIT, &dms_exit_notifier);
+    ret = ka_dfx_profile_event_register(KA_PROFILE_TASK_EXIT, &dms_exit_notifier);
     if (ret != 0) {
         dms_err("Register notify fail. (ret=%d)\n", ret);
         return ret;
@@ -412,7 +414,7 @@ register_notify_fail:
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 17, 0)) && defined(CFG_HOST_ENV)
     (void)dms_exit_notifier;
 #else
-    (void)profile_event_unregister(PROFILE_TASK_EXIT, &dms_exit_notifier);
+    (void)ka_dfx_profile_event_unregister(KA_PROFILE_TASK_EXIT, &dms_exit_notifier);
 #endif
     return ret;
 }
@@ -433,7 +435,7 @@ void dms_exit(void)
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 17, 0)) && defined(CFG_HOST_ENV)
     (void)dms_exit_notifier;
 #else
-    (void)profile_event_unregister(PROFILE_TASK_EXIT, &dms_exit_notifier);
+    (void)ka_dfx_profile_event_unregister(KA_PROFILE_TASK_EXIT, &dms_exit_notifier);
 #endif
     dms_info("Dms driver exit success.\n");
     return;

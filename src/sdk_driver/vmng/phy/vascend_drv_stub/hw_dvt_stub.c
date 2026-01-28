@@ -10,15 +10,15 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-
-#include <linux/pci.h>
-#include <linux/module.h>
-#include <linux/sched.h>
-#include <linux/version.h>
-#include <linux/fs.h>
-#include <linux/module.h>
-
+ 
 #include "hw_vdavinci.h"
+#include "ka_pci_pub.h"
+#include "ka_kernel_def_pub.h"
+#include "ka_errno_pub.h"
+#include "ka_fs_pub.h"
+#include "ka_dfx_pub.h"
+#include "ka_common_pub.h"
+#include "ka_task_pub.h"
 
 bool hw_dvt_check_host_is_uvp(void);
 
@@ -30,17 +30,17 @@ bool hw_dvt_check_host_is_uvp(void);
 #define DEVDRV_DIVERSITY_PCIE_VENDOR_ID 0xFFFF
 #define UVP_VERSION_INFO_SIZE 256
 
-static const struct pci_device_id g_vmngh_tbl[] = {{ PCI_VDEVICE(HUAWEI, HISI_EP_DEVICE_ID_MINIV2), 0 },
-                                                   { PCI_VDEVICE(HUAWEI, HISI_EP_DEVICE_ID_CLOUD), 0 },
-                                                   { PCI_VDEVICE(HUAWEI, HISI_EP_DEVICE_ID_CLOUD_V2), 0 },
-                                                   { PCI_VDEVICE(HUAWEI, 0xd805), 0 },
-                                                   { DEVDRV_DIVERSITY_PCIE_VENDOR_ID, 0xd500, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 },
-                                                   { 0x20C6, 0xd500, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 },
-                                                   { 0x203F, 0xd500, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 },
-                                                   { 0x20C6, 0xd802, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 },
-                                                   { 0x203F, 0xd802, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 },
+static const ka_pci_device_id_t g_vmngh_tbl[] = {{ KA_PCI_VDEVICE(HUAWEI, HISI_EP_DEVICE_ID_MINIV2), 0 },
+                                                   { KA_PCI_VDEVICE(HUAWEI, HISI_EP_DEVICE_ID_CLOUD), 0 },
+                                                   { KA_PCI_VDEVICE(HUAWEI, HISI_EP_DEVICE_ID_CLOUD_V2), 0 },
+                                                   { KA_PCI_VDEVICE(HUAWEI, 0xd805), 0 },
+                                                   { DEVDRV_DIVERSITY_PCIE_VENDOR_ID, 0xd500, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0 },
+                                                   { 0x20C6, 0xd500, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0 },
+                                                   { 0x203F, 0xd500, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0 },
+                                                   { 0x20C6, 0xd802, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0 },
+                                                   { 0x203F, 0xd802, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0 },
 						   {}};
-MODULE_DEVICE_TABLE(pci, g_vmngh_tbl);
+KA_MODULE_DEVICE_TABLE(pci, g_vmngh_tbl);
 
 struct vdavinci_mode_info g_vdev_mode = { 0 };
 struct vdavinci_drv_ops vascend_virtual_ops = { 0 };
@@ -48,7 +48,7 @@ struct vdavinci_drv_ops vascend_virtual_ops = { 0 };
 int register_vdavinci_virtual_ops(struct vdavinci_drv_ops *ops)
 {
     if (!ops) {
-        pr_err("Invalid para. ops is NULL\n");
+        ka_dfx_pr_err("Invalid para. ops is NULL\n");
         return -EINVAL;
     }
 
@@ -76,17 +76,17 @@ int register_vdavinci_virtual_ops(struct vdavinci_drv_ops *ops)
     vascend_virtual_ops.vdavinci_hypervisor_dma_map_page = ops->vdavinci_hypervisor_dma_map_page;
     vascend_virtual_ops.vdavinci_hypervisor_dma_unmap_page = ops->vdavinci_hypervisor_dma_unmap_page;
     vascend_virtual_ops.vdavinci_get_reserve_iova_for_check = ops->vdavinci_get_reserve_iova_for_check;
-    pr_info("register virtual ops success!\n");
+    ka_dfx_pr_info("register virtual ops success!\n");
     return 0;
 }
-EXPORT_SYMBOL_GPL(register_vdavinci_virtual_ops);
+KA_EXPORT_SYMBOL_GPL(register_vdavinci_virtual_ops);
 
 void unregister_vdavinci_virtual_ops(void)
 {
     struct vdavinci_drv_ops ops = {0};
     vascend_virtual_ops = ops;
 }
-EXPORT_SYMBOL_GPL(unregister_vdavinci_virtual_ops);
+KA_EXPORT_SYMBOL_GPL(unregister_vdavinci_virtual_ops);
 
 struct vdavinci_drv_ops *get_vdavinci_virtual_ops(void)
 {
@@ -97,30 +97,26 @@ struct vdavinci_drv_ops *get_vdavinci_virtual_ops(void)
 bool hw_dvt_check_host_is_uvp(void)
 {
     char uvp_version_buf[UVP_VERSION_INFO_SIZE] = {0};
-    struct file *fp = NULL;
+    ka_file_t *fp = NULL;
     loff_t pos = 0;
     ssize_t ret;
 
-    fp = filp_open("/etc/uvp_version", O_RDONLY, S_IRUSR);
-    if (IS_ERR(fp)) {
-        pr_err("open uvp file failed, err = %ld.\n", PTR_ERR(fp));
+    fp = ka_fs_filp_open("/etc/uvp_version", KA_O_RDONLY, KA_S_IRUSR);
+    if (KA_IS_ERR(fp)) {
+        ka_dfx_pr_err("open uvp file failed, err = %ld.\n", KA_PTR_ERR(fp));
         return false;
     }
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 14, 0)
-    ret = kernel_read(fp, uvp_version_buf, UVP_VERSION_INFO_SIZE, &pos);
-#else
-    ret = kernel_read(fp, pos, uvp_version_buf, UVP_VERSION_INFO_SIZE);
-#endif
-    filp_close(fp, NULL);
+    ret = ka_fs_kernel_read(fp, uvp_version_buf, UVP_VERSION_INFO_SIZE, &pos);
+    ka_fs_filp_close(fp, NULL);
     if ((ret <= 0) || (ret > UVP_VERSION_INFO_SIZE)) {
-        pr_err("get cpuset file context failed, ret = %ld.\n", ret);
+        ka_dfx_pr_err("get cpuset file context failed, ret = %ld.\n", ret);
         return false;
     }
 
     uvp_version_buf[UVP_VERSION_INFO_SIZE - 1] = '\0';
-    if (strstr(uvp_version_buf, "uvp_version") == NULL) {
-        pr_err("cannot find uvp_version in /etc/uvp_version.\n");
+    if (ka_base_strstr(uvp_version_buf, "uvp_version") == NULL) {
+        ka_dfx_pr_err("cannot find uvp_version in /etc/uvp_version.\n");
         return false;
     }
 
@@ -131,38 +127,38 @@ bool hw_dvt_check_host_is_uvp(void)
 int hw_dvt_set_mode(int mode)
 {
     if (mode < 0 || mode >= VDAVINCI_MODE_MAX) {
-        pr_err("Invalid para. mode is %d\n", mode);
+        ka_dfx_pr_err("Invalid para. mode is %d\n", mode);
         return -EINVAL;
     }
 
 #ifndef ENABLE_BUILD_PRODUCT
     if (mode == VDAVINCI_VM) {
         if (!hw_dvt_check_host_is_uvp()) {
-            pr_err("The system is not a UVP system, so VM mode is not supported.\n");
+            ka_dfx_pr_err("The system is not a UVP system, so VM mode is not supported.\n");
             return -EOPNOTSUPP;
         }
     }
 #endif
 
-    down_write(&g_vdev_mode.rw_sem);
+    ka_task_down_write(&g_vdev_mode.rw_sem);
     g_vdev_mode.mode = mode;
-    up_write(&g_vdev_mode.rw_sem);
-    pr_info("set mode success! mode=%d\n", mode);
+    ka_task_up_write(&g_vdev_mode.rw_sem);
+    ka_dfx_pr_info("set mode success! mode=%d\n", mode);
     return 0;
 }
-EXPORT_SYMBOL_GPL(hw_dvt_set_mode);
+KA_EXPORT_SYMBOL_GPL(hw_dvt_set_mode);
 
 int hw_dvt_get_mode(int *mode)
 {
     if (mode == NULL) {
-        pr_err("Invalid para. mode is NULL\n");
+        ka_dfx_pr_err("Invalid para. mode is NULL\n");
         return -EINVAL;
     }
 
     *mode = g_vdev_mode.mode;
     return 0;
 }
-EXPORT_SYMBOL_GPL(hw_dvt_get_mode);
+KA_EXPORT_SYMBOL_GPL(hw_dvt_get_mode);
 
 bool hw_dvt_check_is_vm_mode(void)
 {
@@ -171,7 +167,7 @@ bool hw_dvt_check_is_vm_mode(void)
 
     ret = hw_dvt_get_mode(&mode);
     if (ret != 0) {
-        pr_err("hw_dvt_get_mode fail, ret: %d\n", ret);
+        ka_dfx_pr_err("hw_dvt_get_mode fail, ret: %d\n", ret);
         return false;
     }
 
@@ -190,7 +186,7 @@ int hw_dvt_init(void *vdavinci_priv)
 
     return 0;
 }
-EXPORT_SYMBOL_GPL(hw_dvt_init);
+KA_EXPORT_SYMBOL_GPL(hw_dvt_init);
 
 int hw_dvt_uninit(void *vdavinci_priv)
 {
@@ -200,6 +196,6 @@ int hw_dvt_uninit(void *vdavinci_priv)
 
     return 0;
 }
-EXPORT_SYMBOL_GPL(hw_dvt_uninit);
+KA_EXPORT_SYMBOL_GPL(hw_dvt_uninit);
 
-MODULE_LICENSE("GPL");
+KA_MODULE_LICENSE("GPL");

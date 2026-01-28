@@ -17,6 +17,7 @@
 #include "virtmng_public_def.h"
 #include "virtmngagent_msg.h"
 #include "virtmng_msg_pub.h"
+#include "ka_kernel_def_pub.h"
 
 static int (*g_vmnga_msg_common_recv_pcie_proc[])(u32 dev_id, u32 fid, struct vmng_rx_msg_proc_info *proc_info) = {
     vmng_msg_recv_common_verfiy_info,
@@ -58,7 +59,7 @@ int vmnga_common_msg_send(u32 dev_id, enum vmng_msg_common_type cmn_type, struct
     }
     return 0;
 }
-EXPORT_SYMBOL(vmnga_common_msg_send);
+KA_EXPORT_SYMBOL(vmnga_common_msg_send);
 
 int vmnga_msg_cluster_recv_common(void *msg_chan_in,struct vmng_msg_chan_rx_proc_info *proc_info)
 {
@@ -138,7 +139,7 @@ int vmnga_register_common_msg_client(u32 dev_id, const struct vmng_common_msg_cl
 
     return 0;
 }
-EXPORT_SYMBOL(vmnga_register_common_msg_client);
+KA_EXPORT_SYMBOL(vmnga_register_common_msg_client);
 
 int vmnga_unregister_common_msg_client(u32 dev_id, const struct vmng_common_msg_client *msg_client)
 {
@@ -163,16 +164,16 @@ int vmnga_unregister_common_msg_client(u32 dev_id, const struct vmng_common_msg_
 
     return 0;
 }
-EXPORT_SYMBOL(vmnga_unregister_common_msg_client);
+KA_EXPORT_SYMBOL(vmnga_unregister_common_msg_client);
 
 void vmnga_register_extended_common_msg_client(struct vmng_msg_dev *msg_dev)
 {
     msg_dev->common_msg.common_fun[VMNG_MSG_COMMON_TYPE_EXTENSION] = vmnga_msg_common_recv_pcie;
 }
-EXPORT_SYMBOL(vmnga_register_extended_common_msg_client);
+KA_EXPORT_SYMBOL(vmnga_register_extended_common_msg_client);
 
 void vmnga_unregister_extended_common_msg_client(struct vmng_msg_dev *msg_dev)
 {
     msg_dev->common_msg.common_fun[VMNG_MSG_COMMON_TYPE_EXTENSION] = NULL;
 }
-EXPORT_SYMBOL(vmnga_unregister_extended_common_msg_client);
+KA_EXPORT_SYMBOL(vmnga_unregister_extended_common_msg_client);

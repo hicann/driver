@@ -51,15 +51,6 @@ int hw_vdavinci_get_iova(struct hw_vdavinci *vdavinci,
 int hw_vdavinci_get_iova_batch(struct hw_vdavinci *vdavinci,
                                unsigned long *gfn, unsigned long *dma_addr,
                                unsigned long count);
-int hw_vdavinci_get_iova_sg_x86(struct hw_vdavinci *vdavinci,
-                                struct vm_dom_info *vm_dom,
-                                unsigned long gfn, unsigned long size,
-                                struct sg_table **dma_sgt);
-int hw_vdavinci_get_iova_array_x86(struct hw_vdavinci *vdavinci,
-                                   struct vm_dom_info *vm_dom,
-                                   unsigned long *gfn,
-                                   unsigned long *dma_addr,
-                                   unsigned long count);
 int hw_vdavinci_get_iova_sg(struct hw_vdavinci *vdavinci,
                             struct vm_dom_info *vm_dom,
                             unsigned long gfn, unsigned long size,
@@ -69,6 +60,15 @@ int hw_vdavinci_get_iova_array(struct hw_vdavinci *vdavinci,
                                unsigned long *gfn,
                                unsigned long *dma_addr,
                                unsigned long count);
+int vf_get_iova_sg(struct hw_vdavinci *vdavinci,
+                   struct vm_dom_info *vm_dom,
+                   unsigned long gfn, unsigned long size,
+                   struct sg_table **dma_sgt);
+int vf_get_iova_array(struct hw_vdavinci *vdavinci,
+                      struct vm_dom_info *vm_dom,
+                      unsigned long *gfn,
+                      unsigned long *dma_addr,
+                      unsigned long count);
 void hw_vdavinci_iommu_detach_group(struct hw_vdavinci *vdavinci);
 int hw_vdavinci_iommu_attach_group(struct hw_vdavinci *vdavinci);
 bool hw_vdavinci_scheduled(struct hw_vdavinci *vdavinci,

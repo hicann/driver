@@ -43,6 +43,10 @@
 #include "devdrv_manager_container.h"
 #include "devdrv_user_common.h"
 
+#include "ka_system_pub.h"
+#include "ka_task_pub.h"
+#include "ka_errno_pub.h"
+#include "ka_kernel_def_pub.h"
 #include "dms_osc_freq.h"
 
 #ifndef CFG_DMS_TEST
@@ -51,10 +55,10 @@
 #define FREQ_TO_KHZ 1000ULL
 #define AVERAGE_2X 2
 #define HOST_FREQ_INVALID 0xFFFFFFFFFFFFFFFFULL
-static u64 g_host_osc_freq[DEVDRV_PF_DEV_MAX_NUM] = {0};
-static u64 g_device_osc_freq[DEVDRV_PF_DEV_MAX_NUM] = {0};
+static u64 g_host_osc_freq[ASCEND_PDEV_MAX_NUM] = {0};
+static u64 g_device_osc_freq[ASCEND_PDEV_MAX_NUM] = {0};
 
-static struct task_struct *calculate_osc_freq_task[DEVDRV_PF_DEV_MAX_NUM] = {NULL};
+static struct task_struct *calculate_osc_freq_task[ASCEND_PDEV_MAX_NUM] = {NULL};
 
 #if defined(__aarch64__)
 STATIC u64 get_local_system_freq(void)
@@ -184,12 +188,8 @@ STATIC int dms_osc_freq_calculate_task(void *arg)
 
     devid = *(u32 *)arg;
 
-    if (!try_module_get(THIS_MODULE)) {
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 17, 0)
-        kthread_complete_and_exit(NULL, 0);
-#else
-        do_exit(0);
-#endif
+    if (!ka_system_try_module_get(KA_THIS_MODULE)) {
+        ka_task_do_exit(0);
         return -EBUSY;
     }
 
@@ -210,7 +210,7 @@ STATIC int dms_osc_freq_calculate_task(void *arg)
     host_osc_cycles_2 = get_host_osc_cycles();
 
     /* sleep 10 seconds to expand the time spec to reduce the deviation */
-    ssleep(10);
+    ka_system_ssleep(10);
 
     host_osc_cycles_3 = get_host_osc_cycles();
     ret = dms_h2d_get_device_osc_cycles(devid, &device_osc_cycles_2);
@@ -240,14 +240,10 @@ STATIC int dms_osc_freq_calculate_task(void *arg)
         device_osc_cycles_1, device_osc_cycles_2);
 
     dms_check_and_update_freq(devid);
-    module_put(THIS_MODULE);
+    ka_system_module_put(KA_THIS_MODULE);
 #endif
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 17, 0)
-    kthread_complete_and_exit(NULL, 0);
-#else
-    do_exit(0);
-#endif
+    ka_task_do_exit(0);
     return 0;
 }
 
@@ -264,20 +260,20 @@ STATIC int osc_freq_notifier(struct notifier_block *nb, unsigned long mode, void
         dms_err("Device id is invalid. (dev_id=%u).\n", dev->dev_id);
         return -EINVAL;
     }
-    if (dev->dev_id >= DEVDRV_PF_DEV_MAX_NUM) {
+    if (dev->dev_id >= ASCEND_PDEV_MAX_NUM) {
         dms_debug("The VF does not need to be initialized. (dev_id=%u).\n", dev->dev_id);
         return 0;
     }
 
     switch (mode) {
         case DMS_DEVICE_UP0:
-            calculate_osc_freq_task[dev->dev_id] = kthread_create(dms_osc_freq_calculate_task, &(dev->dev_id),
+            calculate_osc_freq_task[dev->dev_id] = ka_task_kthread_create(dms_osc_freq_calculate_task, &(dev->dev_id),
             "dms_osc_freq_calc_task_%u", dev->dev_id);
-            if (IS_ERR_OR_NULL(calculate_osc_freq_task[dev->dev_id])) {
+            if (KA_IS_ERR_OR_NULL(calculate_osc_freq_task[dev->dev_id])) {
                 dms_err("Create thread for cpu freq calculate failed.\n");
                 return -EINVAL;
             }
-            (void)wake_up_process(calculate_osc_freq_task[dev->dev_id]);
+            (void)ka_task_wake_up_process(calculate_osc_freq_task[dev->dev_id]);
             break;
         case DMS_DEVICE_DOWN0:
             g_host_osc_freq[dev->dev_id] = 0;
@@ -332,7 +328,7 @@ STATIC int get_device_osc_freq(void *feature, char *in, u32 in_len, char *out, u
         phy_id = mia_dev.phy_devid;
     }
 
-    if (phy_id >= DEVDRV_PF_DEV_MAX_NUM) {
+    if (phy_id >= ASCEND_PDEV_MAX_NUM) {
         dms_err("Physic id is invalid. (phy_id=%u)\n", phy_id);
         return -EINVAL;
     }
@@ -353,7 +349,7 @@ STATIC int get_device_osc_freq(void *feature, char *in, u32 in_len, char *out, u
 
 int dms_get_device_osc_freq(u32 devid, u64 *freq)
 {
-    if (devid >= DEVDRV_PF_DEV_MAX_NUM) {
+    if (devid >= ASCEND_PDEV_MAX_NUM) {
         dms_err("Device id is invalid. (devid=%u)\n", devid);
         return -EINVAL;
     }
@@ -383,7 +379,7 @@ int dms_get_host_osc_freq(u64 *freq)
         return -EINVAL;
     }
 
-    for (i = 0; i < DEVDRV_PF_DEV_MAX_NUM; i++) {
+    for (i = 0; i < ASCEND_PDEV_MAX_NUM; i++) {
         if (g_host_osc_freq[i] == HOST_FREQ_INVALID) {
             host_deviation_time++;
             continue;

@@ -26,6 +26,7 @@
 #ifdef CFG_SOC_PLATFORM_CLOUD_V4
 #define SVM_SMM_MMAP_EVENT     (DRV_SUBEVENT_SVM_DEV_OPEN_MSG + 6)
 #define SVM_SMM_MUNMAP_EVENT   (DRV_SUBEVENT_SVM_DEV_OPEN_MSG + 7)
+#define SVM_VA_RESERVE_EVENT   (DRV_SUBEVENT_SVM_DEV_OPEN_MSG + 13)
 #endif
 
 THREAD__ int32_t sync_init_status[ESCHED_DEV_NUM] = {0, };
@@ -61,7 +62,8 @@ THREAD__ uint32_t aicpu_sync_res_grp[ESCHED_DEV_NUM];
 STATIC bool esched_is_svm_alloc_event(uint32_t event_id, uint32_t sub_event_id)
 {
 #ifdef CFG_SOC_PLATFORM_CLOUD_V4
-    return ((event_id == EVENT_DRV_MSG_EX) && ((sub_event_id == SVM_SMM_MMAP_EVENT) || (sub_event_id == SVM_SMM_MUNMAP_EVENT)));
+    return ((event_id == EVENT_DRV_MSG_EX) && ((sub_event_id == SVM_SMM_MMAP_EVENT) ||
+        (sub_event_id == SVM_SMM_MUNMAP_EVENT) || (sub_event_id == SVM_VA_RESERVE_EVENT)));
 #else
     (void)event_id;
     (void)sub_event_id;
@@ -538,7 +540,7 @@ void esched_fill_sync_msg_for_peer_que(uint32_t dev_id, uint32_t phy_dev_id, str
 }
 
 #if defined(CFG_ENV_HOST) && defined(CFG_SOC_PLATFORM_CLOUD_V4)
-#define SVM_SYNC_EVENT_SINGLE_WAIT_TIME (60 * 1000)  /* 60s */
+#define SVM_SYNC_EVENT_SINGLE_WAIT_TIME (10 * 1000)  /* 10s */
 #endif
 static int esched_wait_sync_event(uint32_t dev_id, struct sync_event_wait_info *wait_info, struct event_info *back_event_info)
 {

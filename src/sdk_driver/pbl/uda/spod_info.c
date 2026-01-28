@@ -13,6 +13,8 @@
 
 #include "uda_pub_def.h"
 #include "pbl_spod_info.h"
+#include "ka_barrier_pub.h"
+#include "ka_kernel_def_pub.h"
 
 struct spod_info g_spod_info[UDA_MAX_PHY_DEV_NUM];
 bool g_spod_info_been_set[UDA_MAX_PHY_DEV_NUM];
@@ -28,7 +30,7 @@ int dbl_get_spod_info(unsigned int udevid, struct spod_info *s)
     *s = g_spod_info[udevid];
     return 0;
 }
-EXPORT_SYMBOL(dbl_get_spod_info);
+KA_EXPORT_SYMBOL(dbl_get_spod_info);
 
 int dbl_set_spod_info(unsigned int udevid, struct spod_info *s)
 {
@@ -36,11 +38,11 @@ int dbl_set_spod_info(unsigned int udevid, struct spod_info *s)
         return -EINVAL;
     }
     g_spod_info[udevid] = *s;
-    mb();
+    ka_mb();
     g_spod_info_been_set[udevid] = true;
     return 0;
 }
-EXPORT_SYMBOL(dbl_set_spod_info);
+KA_EXPORT_SYMBOL(dbl_set_spod_info);
 
 /* SDID total 32 bits, low to high: */
 #define UDEVID_BIT_LEN 16
@@ -66,7 +68,7 @@ int dbl_parse_sdid (unsigned int sdid, struct sdid_parse_info *s)
     parse_bit_shift(&s->server_id, &sdid, SERVER_ID_BIT_LEN);
     return 0;
 }
-EXPORT_SYMBOL(dbl_parse_sdid);
+KA_EXPORT_SYMBOL(dbl_parse_sdid);
 
 int dbl_make_sdid (struct sdid_parse_info *s, unsigned int *sdid)
 {
@@ -90,5 +92,5 @@ int dbl_make_sdid (struct sdid_parse_info *s, unsigned int *sdid)
     *sdid = tmp_sdid;
     return 0;
 }
-EXPORT_SYMBOL(dbl_make_sdid);
+KA_EXPORT_SYMBOL(dbl_make_sdid);
 

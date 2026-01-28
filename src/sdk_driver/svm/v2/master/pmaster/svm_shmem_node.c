@@ -10,15 +10,13 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#include <linux/hashtable.h>
-#include <linux/kref.h>
-#include <linux/compiler.h>
 
 #include "securec.h"
 
+#include "ka_hashtable_pub.h"
+#include "ka_fs_pub.h"
 #include "svm_log.h"
 #include "svm_define.h"
-
 #include "svm_dev_res_mng.h"
 #include "svm_msg_client.h"
 #include "devmm_proc_info.h"
@@ -27,6 +25,7 @@
 #include "svm_shmem_procfs.h"
 #include "svm_master_advise.h"
 #include "svm_shmem_node.h"
+
 
 #define DEVMM_IPC_NODE_ADDR_SHIFT  21 /* 2M mask */
 
@@ -52,7 +51,7 @@ static inline int devmm_ipc_get_node_bucket(u64 vptr)
 static void _devmm_ipc_node_wlist_show(struct devmm_ipc_node *node)
 {
     struct ipc_node_wlist *wlist = NULL;
-    u32 stamp = (u32)jiffies;
+    u32 stamp = (u32)ka_jiffies;
     int i = 0;
 
     devmm_drv_info("Ipc mem node:(name=%s)\n", node->attr.name);
@@ -67,7 +66,7 @@ static void _devmm_ipc_node_wlist_show(struct devmm_ipc_node *node)
 static struct ipc_node_wlist *_devmm_ipc_node_find_wlist(struct devmm_ipc_node *node, ka_pid_t pid, u32 sdid)
 {
     struct ipc_node_wlist *wlist = NULL;
-    u32 stamp = (u32)jiffies;
+    u32 stamp = (u32)ka_jiffies;
 
     ka_list_for_each_entry(wlist, &node->wlist_head, list) {
         if ((wlist->pid == pid) && (wlist->sdid == sdid)) {
@@ -104,7 +103,7 @@ static inline void _devmm_ipc_node_wlist_destroy(struct ipc_node_wlist *wlist)
 static void devmm_ipc_node_wlist_destroy(struct devmm_ipc_node *node)
 {
     struct ipc_node_wlist *wlist = NULL, *n = NULL;
-    u32 stamp = (u32)jiffies;
+    u32 stamp = (u32)ka_jiffies;
 
     ka_list_for_each_entry_safe(wlist, n, &node->wlist_head, list) {
         _devmm_ipc_node_wlist_del(node, wlist);
@@ -154,7 +153,7 @@ static inline void _devmm_ipc_node_destroy(struct devmm_ipc_node *node)
 
 static inline void _devmm_ipc_node_add(struct devmm_dev_res_mng *res_mng, struct devmm_ipc_node *node)
 {
-    hash_add(res_mng->ipc_mem_node_info.node_htable, &node->link, node->key);
+    ka_hash_add(res_mng->ipc_mem_node_info.node_htable, &node->link, node->key);
 }
 
 static inline void _devmm_ipc_node_del(struct devmm_ipc_node *node)
@@ -187,7 +186,7 @@ static struct devmm_ipc_node *_devmm_ipc_node_find(struct devmm_dev_res_mng *res
     struct devmm_ipc_node *node = NULL;
 
     ka_hash_for_each_possible(res_mng->ipc_mem_node_info.node_htable, node, link, key) {
-        if (strcmp(node->attr.name, name) == 0) {
+        if (ka_base_strcmp(node->attr.name, name) == 0) {
             return node;
         }
     }
@@ -211,7 +210,7 @@ static int devmm_ipc_node_add(struct devmm_ipc_node *node)
     struct devmm_dev_res_mng *res_mng = NULL;
 
     res_mng = devmm_dev_res_mng_get(&node->attr.inst);
-    if (unlikely(res_mng == NULL)) {
+    if (ka_unlikely(res_mng == NULL)) {
         devmm_drv_err("Get res mng fail. (devid=%u; vfid=%u)\n", node->attr.inst.devid, node->attr.inst.vfid);
         return -EINVAL;
     }
@@ -251,13 +250,13 @@ static struct devmm_ipc_node *_devmm_ipc_node_get(const char *name)
     int ret;
 
     ret = devmm_ipc_node_get_inst_by_name(name, &inst);
-    if (unlikely(ret != 0)) {
+    if (ka_unlikely(ret != 0)) {
         devmm_drv_err("Get inst by name fail. (ret=%d; name=%s)\n", ret, name);
         return NULL;
     }
 
     res_mng = devmm_dev_res_mng_get(&inst);
-    if (unlikely(res_mng == NULL)) {
+    if (ka_unlikely(res_mng == NULL)) {
         devmm_drv_err("Get res mng fail. (devid=%u; vfid=%u)\n", inst.devid, inst.vfid);
         return NULL;
     }
@@ -294,7 +293,7 @@ static void devmm_ipc_node_free_pages(struct devmm_svm_process *svm_proc, u64 vp
         devmm_drv_err("Va isn't alloced. (va=0x%llx)\n", vptr);
         return;
     }
-    /* not clear bitmap when device fault know this memory alloc by ipc open is destoryed. */
+    /* not clear bitmap when device fault know this memory alloc by ipc open is destroyed. */
     cnt = page_num / DEVMM_FREE_SECTION_NUM;
     if ((page_num % DEVMM_FREE_SECTION_NUM) > 0) {
         cnt++;
@@ -383,7 +382,7 @@ static int _devmm_ipc_node_init(struct devmm_ipc_node *node)
 static bool devmm_is_local_pod(u32 devid, u32 sdid)
 {
 #ifndef EMU_ST
-    if ((g_ipc_node_ops.is_local_pod == NULL) || (sdid == UINT_MAX)) {
+    if ((g_ipc_node_ops.is_local_pod == NULL) || (sdid == KA_UINT_MAX)) {
         return true;
     }
     return g_ipc_node_ops.is_local_pod(devid, sdid);
@@ -394,7 +393,7 @@ static bool devmm_is_local_pod(u32 devid, u32 sdid)
 
 static bool devmm_is_in_kthread(void)
 {
-    return ((current->flags & PF_KTHREAD) != 0);
+    return ((ka_task_get_current_flags() & KA_TASK_PF_KTHREAD) != 0);
 }
 
 static int _devmm_ipc_node_uninit(struct devmm_ipc_node *node, ka_pid_t pid)
@@ -493,7 +492,7 @@ static struct devmm_ipc_node *_devmm_ipc_node_create(struct devmm_ipc_node_attr 
 
 static void devmm_fill_name_zero(char *name)
 {
-    u32 len = strlen(name);
+    u32 len = ka_base_strlen(name);
     u32 i;
 
     for (i = len; i < DEVMM_IPC_MEM_NAME_SIZE - 1; i++) {
@@ -516,7 +515,7 @@ int devmm_ipc_node_create(struct devmm_ipc_node_attr *attr)
     devmm_fill_name_zero(attr->name);
 
     node = _devmm_ipc_node_create(attr);
-    if (unlikely(node == NULL)) {
+    if (ka_unlikely(node == NULL)) {
         devmm_drv_err("Create ipc node fail. (name=%s)\n", attr->name);
         return -ENOMEM;
     }
@@ -568,7 +567,7 @@ int devmm_ipc_set_mem_map_attr(const char *name, u64 attr)
     }
 
 #ifndef EMU_ST
-    if (current->tgid != node->attr.pid) {
+    if (ka_task_get_current_tgid() != node->attr.pid) {
         _devmm_ipc_node_put(node);
         devmm_drv_err("Not creator not allow to set attr. (name=%s; attr=%llu)\n", name, attr);
         return -EPERM;
@@ -679,19 +678,19 @@ static int devmm_ipc_node_heap_check(struct devmm_svm_process *svm_proc,
     int ret;
 
     heap = devmm_svm_get_heap(svm_proc, va);
-    if (unlikely(heap == NULL)) {
+    if (ka_unlikely(heap == NULL)) {
         devmm_drv_err("Get heap fail. (va=0x%llx)\n", va);
         return -ENOMEM;
     }
 
     heap_is_huge = (heap->heap_type == DEVMM_HEAP_HUGE_PAGE);
-    if (unlikely(heap_is_huge != is_huge)) {
+    if (ka_unlikely(heap_is_huge != is_huge)) {
         devmm_drv_err("Check heap type fail. (heap_is_huge=%d; is_huge=%d)\n", heap_is_huge, is_huge);
         return -EINVAL;
     }
 
     ret = devmm_check_va_add_size_by_heap(heap, va, size);
-    if (unlikely(ret != 0)) {
+    if (ka_unlikely(ret != 0)) {
         devmm_drv_err("Check va addr fail. (va=0x%llx; size=%llu)\n", va, size);
         return ret;
     }
@@ -706,12 +705,12 @@ static void devmm_ipc_node_clear_ipc_open_lock_flag(struct devmm_svm_process *sv
     int ret;
     u64 i;
 
-    if (unlikely(bitmap == NULL)) {
+    if (ka_unlikely(bitmap == NULL)) {
         return;
     }
 
     ret = devmm_ipc_node_heap_check(svm_proc, va, page_num, size, is_huge);
-    if (unlikely(ret != 0)) {
+    if (ka_unlikely(ret != 0)) {
         devmm_drv_err("Heap check fail. (va=0x%llx; page_num=%llu; size=%llu; is_huge=%d)\n",
             va, page_num, size, is_huge);
         return;
@@ -730,12 +729,12 @@ static void devmm_ipc_node_set_ipc_open_lock_flag(struct devmm_svm_process *svm_
     int ret;
     u64 i;
 
-    if (unlikely(bitmap == NULL)) {
+    if (ka_unlikely(bitmap == NULL)) {
         return;
     }
 
     ret = devmm_ipc_node_heap_check(svm_proc, va, page_num, size, is_huge);
-    if (unlikely(ret != 0)) {
+    if (ka_unlikely(ret != 0)) {
         devmm_drv_err("Heap check fail. (va=0x%llx; page_num=%llu; size=%llu; is_huge=%d)\n",
             va, page_num, size, is_huge);
         return;
@@ -752,30 +751,30 @@ static int _devmm_ipc_open_check(struct devmm_ipc_node *node, struct devmm_svm_p
     struct devmm_memory_attributes attr;
     int ret;
 
-    if (unlikely((node->valid != true) || (node->is_open_page_freed == true))) {
+    if (ka_unlikely((node->valid != true) || (node->is_open_page_freed == true))) {
         devmm_drv_err("Ipc node open is not allowed. (name=%s; valid=%d; is_open_page_freed=%d)\n",
             node->attr.name, node->valid, node->is_open_page_freed);
         return -EINVAL;
     }
 
     ret = devmm_get_memory_attributes(svm_proc, vptr, &attr);
-    if (unlikely(ret != 0)) {
+    if (ka_unlikely(ret != 0)) {
         devmm_drv_err("Get_memory_attributes failed. (ret=%d; vptr=0x%llx)\n", ret, vptr);
         return ret;
     }
 
-    if (unlikely(attr.is_ipc_open)) {
+    if (ka_unlikely(attr.is_ipc_open)) {
         devmm_drv_err("Vptr is ipc memory. (vptr=0x%llx; devid=%d)\n", vptr, attr.devid);
         return -EADDRINUSE;
     }
 
-    if (unlikely(devmm_is_host_agent(attr.devid))) {
-        devmm_drv_err("Vptr is host agent, not surport ipc. (vptr=0x%llx; devid=%d)\n", vptr, attr.devid);
+    if (ka_unlikely(devmm_is_host_agent(attr.devid))) {
+        devmm_drv_err("Vptr is host agent, not support ipc. (vptr=0x%llx; devid=%d)\n", vptr, attr.devid);
         return -EFAULT;
     }
 
     ret = devmm_check_status_va_info(svm_proc, vptr, (u64)node->attr.len);
-    if (unlikely(ret != 0)) {
+    if (ka_unlikely(ret != 0)) {
         devmm_drv_err("Destination address vaddress check error. (ret=%d; vptr=0x%llx; len=%lu)\n",
             ret, vptr, node->attr.len);
         return ret;
@@ -788,18 +787,18 @@ static struct ipc_node_wlist *_devmm_ipc_node_get_wlist(struct devmm_ipc_node *n
     struct ipc_node_wlist *wlist = NULL;
     unsigned long start_time = 0;
 
-    wlist = _devmm_ipc_node_find_wlist(node, pid, UINT_MAX);
-    if (unlikely(wlist == NULL)) {
+    wlist = _devmm_ipc_node_find_wlist(node, pid, KA_UINT_MAX);
+    if (ka_unlikely(wlist == NULL)) {
         if (node->attr.need_set_wlist) {
             devmm_drv_err("Find wlist fail. (name=%s; pid=%d; creator_pid=%d)\n", node->attr.name, pid, node->attr.pid);
             _devmm_ipc_node_wlist_show(node);
             return NULL;
         } else {
-            if (unlikely((node->wlist_num + 1) > IPC_WLIST_NUM)) {
+            if (ka_unlikely((node->wlist_num + 1) > IPC_WLIST_NUM)) {
                 devmm_drv_err("Too many wlist. (name=%s; wlist_num=%u)\n", node->attr.name, node->wlist_num);
                 return NULL;
             }
-            wlist = _devmm_ipc_node_wlist_create_and_add(node, UINT_MAX, pid);
+            wlist = _devmm_ipc_node_wlist_create_and_add(node, KA_UINT_MAX, pid);
             if (wlist == NULL) {
                 devmm_drv_err("Prepare wlist fail. (name=%s; pid=%d; creator_pid=%d)\n", node->attr.name, pid, node->attr.pid);
                 return NULL;
@@ -816,7 +815,7 @@ static struct ipc_node_wlist *_devmm_ipc_node_get_wlist(struct devmm_ipc_node *n
     }
 #endif
 
-    if (unlikely(wlist->vptr != 0)) {
+    if (ka_unlikely(wlist->vptr != 0)) {
         devmm_drv_err("Wlist vptr already set. (name=%s; wlist_vptr=0x%llx)\n", node->attr.name, wlist->vptr);
         return NULL;
     }
@@ -832,14 +831,14 @@ static int _devmm_ipc_node_open(struct devmm_ipc_node *node, struct devmm_svm_pr
     int ret;
 
     ret = _devmm_ipc_open_check(node, svm_proc, vptr);
-    if (unlikely(ret != 0)) {
+    if (ka_unlikely(ret != 0)) {
         devmm_drv_err("Ipc open check fail. (ret=%d; name=%s; vptr=0x%llx)\n",
             ret, node->attr.name, vptr);
         return ret;
     }
 
     wlist = _devmm_ipc_node_get_wlist(node, svm_proc->process_id.hostpid);
-    if (unlikely(wlist == NULL)) {
+    if (ka_unlikely(wlist == NULL)) {
         devmm_drv_err("Wlist verify fail. (pid=%d)\n", svm_proc->process_id.hostpid);
         return -EINVAL;
     }
@@ -859,7 +858,7 @@ int devmm_ipc_node_open(const char *name, struct devmm_svm_process *svm_proc, u6
     int ret;
 
     node = _devmm_ipc_node_get(name);
-    if (unlikely(node == NULL)) {
+    if (ka_unlikely(node == NULL)) {
         devmm_drv_err("Ipc node get fail. (name=%s; vptr=0x%llx)\n", name, vptr);
         return -EINVAL;
     }
@@ -867,7 +866,7 @@ int devmm_ipc_node_open(const char *name, struct devmm_svm_process *svm_proc, u6
     ka_task_mutex_lock(&node->mutex);
     ret = _devmm_ipc_node_open(node, svm_proc, vptr);
     ka_task_mutex_unlock(&node->mutex);
-    if (unlikely(ret != 0)) {
+    if (ka_unlikely(ret != 0)) {
         _devmm_ipc_node_put(node);
         return ret;
     }
@@ -881,14 +880,14 @@ static int _devmm_ipc_node_close(struct devmm_ipc_node *node, struct devmm_svm_p
     struct ipc_node_wlist *wlist = NULL;
     u32 page_size;
 
-    wlist = _devmm_ipc_node_find_wlist(node, svm_proc->process_id.hostpid, UINT_MAX);
-    if (unlikely(wlist == NULL)) {
+    wlist = _devmm_ipc_node_find_wlist(node, svm_proc->process_id.hostpid, KA_UINT_MAX);
+    if (ka_unlikely(wlist == NULL)) {
         devmm_drv_err("Wlist check fail. (name=%s; vptr=0x%llx)\n", node->attr.name, vptr);
         _devmm_ipc_node_wlist_show(node);
         return -EPERM;
     }
 
-    if (unlikely(wlist->vptr != vptr)) {
+    if (ka_unlikely(wlist->vptr != vptr)) {
         devmm_drv_err("Invalid vptr. (wlist_vptr=0x%llx; vptr=0x%llx\n)\n", wlist->vptr, vptr);
         return -EFAULT;
     }
@@ -907,19 +906,19 @@ int devmm_ipc_node_close(const char *name, struct devmm_svm_process *svm_proc, u
     int ret;
 
     node = _devmm_ipc_node_get(name);
-    if (unlikely(node == NULL)) {
+    if (ka_unlikely(node == NULL)) {
         devmm_drv_err("Ipc node get fail. (name=%s; vptr=0x%llx)\n", name, vptr);
         return -EINVAL;
     }
     ka_task_mutex_lock(&node->mutex);
     ret = _devmm_ipc_node_close(node, svm_proc, vptr);
     ka_task_mutex_unlock(&node->mutex);
-    if (unlikely(ret == 0)) {
+    if (ka_unlikely(ret == 0)) {
         _devmm_ipc_node_put(node);
     }
     _devmm_ipc_node_put(node);
 
-    if (likely(ret == 0)) {
+    if (ka_likely(ret == 0)) {
         devmm_drv_debug("Ipc node close succeed. (name=%s; vptr=0x%llx)\n", name, vptr);
     }
 
@@ -932,7 +931,7 @@ int devmm_ipc_query_node_attr(const char *name, struct devmm_ipc_node_attr *attr
     int ret;
 
     node = _devmm_ipc_node_get(name);
-    if (unlikely(node == NULL)) {
+    if (ka_unlikely(node == NULL)) {
         return -EINVAL;
     }
     ka_task_mutex_lock(&node->mutex);
@@ -941,7 +940,7 @@ int devmm_ipc_query_node_attr(const char *name, struct devmm_ipc_node_attr *attr
     _devmm_ipc_node_put(node);
     ret = (ret != EOK) ? -ENOMEM : 0;
 
-    if (likely(ret == 0)) {
+    if (ka_likely(ret == 0)) {
         devmm_drv_debug("Ipc node query attr succeed. (name=%s)\n", name);
     }
 
@@ -993,12 +992,12 @@ static int _devmm_ipc_node_set_pid(struct devmm_ipc_node *node, u32 sdid, ka_pid
 static int devmm_ipc_node_set_pids_check(struct devmm_ipc_node *node, u32 devid, u32 sdid,
     int creator_pid, u32 pid_num)
 {
-    if (unlikely(node->valid != true)) {
+    if (ka_unlikely(node->valid != true)) {
         devmm_drv_err("Ipc node is destroyed. (name=%s)\n", node->attr.name);
         return -EFAULT;
     }
 
-    if (unlikely(node->attr.pid != creator_pid)) {
+    if (ka_unlikely(node->attr.pid != creator_pid)) {
         /* Only creator have permission to set wlist */
         devmm_drv_err("Node pid check fail. (name=%s; attr.pid=%d; creator_pid=%d)\n",
             node->attr.name, node->attr.pid, creator_pid);
@@ -1013,13 +1012,13 @@ static int devmm_ipc_node_set_pids_check(struct devmm_ipc_node *node, u32 devid,
 #endif
     }
 
-    if (unlikely((pid_num == 0) || (pid_num > IPC_WLIST_SET_NUM))) {
+    if (ka_unlikely((pid_num == 0) || (pid_num > IPC_WLIST_SET_NUM))) {
         devmm_drv_err("Invalid pid_num. (name=%s; attr.pid=%d; creator_pid=%d; pid_num=%u)\n",
             node->attr.name, node->attr.pid, creator_pid, pid_num);
         return -EINVAL;
     }
 
-    if (unlikely((node->wlist_num + pid_num) > IPC_WLIST_NUM)) {
+    if (ka_unlikely((node->wlist_num + pid_num) > IPC_WLIST_NUM)) {
         devmm_drv_err("Too many wlist. (name=%s; wlist_num=%u; pid_num=%u)\n",
             node->attr.name, node->wlist_num, pid_num);
         return -EINVAL;
@@ -1037,7 +1036,7 @@ static int _devmm_ipc_node_set_pids(struct devmm_ipc_node *node, u32 devid, u32 
     int i;
 
     is_local_pod = devmm_is_local_pod(devid, sdid);
-    sdid_to_set = devmm_is_in_kthread() ? UINT_MAX : sdid;
+    sdid_to_set = devmm_is_in_kthread() ? KA_UINT_MAX : sdid;
     for (i = 0; i < pid_num; i++) {
         int ret;
 
@@ -1054,7 +1053,7 @@ static int _devmm_ipc_node_set_pids(struct devmm_ipc_node *node, u32 devid, u32 
         devmm_try_cond_resched(&stamp);
     }
 
-    if (unlikely(set_pid_num == 0)) {
+    if (ka_unlikely(set_pid_num == 0)) {
         return -EINVAL;
     }
 
@@ -1067,12 +1066,12 @@ int devmm_ipc_node_set_pids(struct devmm_ipc_setpid_attr *attr)
     int ret;
 
     /* IpcCreate takes one, DEVMM_SVM_MAX_PROCESS_NUM - 1 left */
-    if (unlikely(attr->pid_num > IPC_WLIST_SET_NUM)) {
+    if (ka_unlikely(attr->pid_num > IPC_WLIST_SET_NUM)) {
         devmm_drv_err("Invalid pid num. (pid_num=%u; max_wlist_num=%u)\n", attr->pid_num, IPC_WLIST_SET_NUM);
         return -EINVAL;
     }
     node = _devmm_ipc_node_get(attr->name);
-    if (unlikely(node == NULL)) {
+    if (ka_unlikely(node == NULL)) {
         devmm_drv_err("Ipc node get fail. (name=%s)\n", attr->name);
         return -EINVAL;
     }
@@ -1094,7 +1093,7 @@ int devmm_ipc_node_set_pids(struct devmm_ipc_setpid_attr *attr)
     }
     _devmm_ipc_node_put(node);
 
-    if (likely(ret == 0)) {
+    if (ka_likely(ret == 0)) {
         devmm_drv_debug("Ipc node set pid succeed. (name=%s; sdid=%u; creator_pid=%d)\n",
             attr->name, attr->sdid, attr->creator_pid);
     }
@@ -1127,14 +1126,14 @@ int devmm_ipc_node_set_pids_ex(struct devmm_ipc_node_attr *attr, u32 sdid,
     int ret = -ENODEV;
 
     res_mng = devmm_dev_res_mng_get(&attr->inst);
-    if (unlikely(res_mng == NULL)) {
+    if (ka_unlikely(res_mng == NULL)) {
         devmm_drv_err("Get res mng fail. (devid=%u; vfid=%u)\n", attr->inst.devid, attr->inst.vfid);
         return -EINVAL;
     }
 
     ka_task_mutex_lock(&res_mng->ipc_mem_node_info.mutex);
     node = devmm_ipc_node_get(res_mng, attr);
-    if (unlikely(node != NULL)) {
+    if (ka_unlikely(node != NULL)) {
         ka_task_mutex_lock(&node->mutex);
         ret = devmm_ipc_node_set_pids_check(node, attr->inst.devid, node->attr.sdid, creator_pid, pid_num);
         if (ret == 0) {
@@ -1146,7 +1145,7 @@ int devmm_ipc_node_set_pids_ex(struct devmm_ipc_node_attr *attr, u32 sdid,
     ka_task_mutex_unlock(&res_mng->ipc_mem_node_info.mutex);
     devmm_dev_res_mng_put(res_mng);
 
-    if (likely(ret == 0)) {
+    if (ka_likely(ret == 0)) {
         devmm_drv_debug("Ipc node set pid succeed. (ret=%d; name=%s; devid=%u; sdid=%u; pid=%d)\n",
             ret, attr->name, attr->inst.devid, sdid, attr->pid);
     }
@@ -1184,7 +1183,7 @@ static struct devmm_ipc_proc_node *_devmm_ipc_proc_node_create(struct devmm_svm_
     const char *name, u64 vptr, size_t len, u32 devid)
 {
     struct devmm_ipc_proc_node *proc_node = devmm_kvmalloc_ex(sizeof(struct devmm_ipc_proc_node), KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
-    if (likely(proc_node != NULL)) {
+    if (ka_likely(proc_node != NULL)) {
         int i;
         for (i = 0; i < DEVMM_IPC_MEM_NAME_SIZE; i++) {
             proc_node->name[i] = name[i];
@@ -1224,13 +1223,13 @@ int devmm_ipc_proc_node_add(struct devmm_svm_process *svm_proc, struct devmm_ipc
     struct devmm_ipc_proc_node *proc_node = NULL;
 
     ka_task_mutex_lock(&svm_proc->ipc_node.node_mutex);
-    if (unlikely(svm_proc->ipc_node.node_cnt >= IPC_MEM_MAX_NUM)) {
+    if (ka_unlikely(svm_proc->ipc_node.node_cnt >= IPC_MEM_MAX_NUM)) {
         ka_task_mutex_unlock(&svm_proc->ipc_node.node_mutex);
         devmm_drv_err("Ipc node cnt invalid. (node_cnt=%u)\n", svm_proc->ipc_node.node_cnt);
         return -EFAULT;
     }
     proc_node = _devmm_ipc_proc_node_create(svm_proc, attr->name, attr->vptr, attr->len, attr->inst.devid);
-    if (unlikely(proc_node == NULL)) {
+    if (ka_unlikely(proc_node == NULL)) {
         ka_task_mutex_unlock(&svm_proc->ipc_node.node_mutex);
         devmm_drv_err("Ipc node create fail. (name=%s)\n", attr->name);
         return -ENOMEM;
@@ -1346,7 +1345,7 @@ int devmm_ipc_proc_query_attr_by_va(struct devmm_svm_process *svm_proc, u64 vptr
 
     ka_task_mutex_lock(&svm_proc->ipc_node.node_mutex);
     proc_node = _devmm_ipc_proc_node_find(svm_proc, vptr, op);
-    if (unlikely(proc_node == NULL)) {
+    if (ka_unlikely(proc_node == NULL)) {
         ka_task_mutex_unlock(&svm_proc->ipc_node.node_mutex);
         devmm_drv_err("Proc node find fail. (vptr=0x%llx; op=%d)\n", vptr, op);
         return -ENODEV;
@@ -1364,7 +1363,7 @@ int devmm_ipc_proc_query_name_by_va(struct devmm_svm_process *svm_proc, u64 vptr
 
     ka_task_mutex_lock(&svm_proc->ipc_node.node_mutex);
     proc_node = _devmm_ipc_proc_node_find(svm_proc, vptr, op);
-    if (unlikely(proc_node == NULL)) {
+    if (ka_unlikely(proc_node == NULL)) {
         ka_task_mutex_unlock(&svm_proc->ipc_node.node_mutex);
         devmm_drv_err("Proc node find fail. (vptr=0x%llx)\n", vptr);
 #ifndef EMU_ST
@@ -1393,7 +1392,7 @@ static void devmm_ipc_nodes_put(ka_list_head_t *head)
     ka_list_head_t *n = NULL;
     u32 stamp = (u32)ka_jiffies;
 
-    if ((head != NULL) && (!list_empty_careful(head))) {
+    if ((head != NULL) && (!ka_list_empty_careful(head))) {
         ka_list_for_each_safe(pos, n, head) {
             struct devmm_range_match_ipc_node *match_ipc_node = ka_list_entry(pos, struct devmm_range_match_ipc_node, list);
             ka_list_del(&match_ipc_node->list);
@@ -1468,7 +1467,7 @@ static int devmm_ipc_node_create_open_page_per_wlist(struct ipc_node_wlist *wlis
         if (ka_task_down_read_trylock(&svm_proc->bitmap_sem) != 0) {
             break;
         }
-        usleep_range(100, 200); /* 100~200us */
+        ka_system_usleep_range(100, 200); /* 100~200us */
     }
     if (i == try_max_cnt) {
         return -EBUSY;
@@ -1639,7 +1638,7 @@ static void _devmm_ipc_node_clean_all_by_dev_res_mng(struct devmm_dev_res_mng *r
     u32 stamp = (u32)ka_jiffies;
     u32 bkt;
 
-    hash_for_each_safe(res_mng->ipc_mem_node_info.node_htable, bkt, tmp, node, link) {
+    ka_hash_for_each_safe(res_mng->ipc_mem_node_info.node_htable, bkt, tmp, node, link) {
         devmm_ipc_procfs_del_node(node);
         devmm_ipc_node_del_by_dev_res_mng(node, res_mng);
         _devmm_ipc_node_destroy(node);

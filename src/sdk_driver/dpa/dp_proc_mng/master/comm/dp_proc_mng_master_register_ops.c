@@ -10,9 +10,6 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#include <linux/fs.h>
-#include <linux/slab.h>
-
 #include "dp_proc_mng_register_ops.h"
 
 int dp_proc_mng_register_ops_init(void)

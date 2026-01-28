@@ -88,6 +88,48 @@ STATIC bbox_status bbox_dma_dump_data(u32 phy_id, u32 offset, u32 size, u8 *buff
     return BBOX_SUCCESS;
 }
 
+STATIC bbox_status bbox_read_sram_data(u32 phy_id, u32 offset, u32 size, u8 *buffer, const bbox_drv_ub_sram_read read_func)
+{
+    BBOX_CHK_NULL_PTR(buffer, return BBOX_FAILURE);
+    BBOX_CHK_NULL_PTR(read_func, return BBOX_FAILURE);
+    BBOX_CHK_INVALID_PARAM(size == 0, return BBOX_FAILURE, "%u", size);
+
+    u32 packet_len, i;
+    u32 surplus = size % UB_DUMP_MAXLEN;
+    u32 packet_num = (surplus == 0) ? 0 : 1;
+    packet_num += size / UB_DUMP_MAXLEN;
+
+    for (i = 0; i < packet_num; i++) {
+        u32 packet_offset = i * UB_DUMP_MAXLEN;
+        if (i < (packet_num - 1)) {
+            packet_len = UB_DUMP_MAXLEN;
+        } else {
+            packet_len = ((surplus == 0) ? UB_DUMP_MAXLEN : surplus);
+        }
+        bbox_status ret = read_func(phy_id, offset + packet_offset, &buffer[packet_offset], packet_len);
+        if (ret != DRV_ERROR_NONE) {
+            if (ret == DRV_ERROR_NOT_SUPPORT) {
+                return ret;
+            }
+            BBOX_ERR("Get sram data failed with %d. device[%u], offset[0x%x], " \
+                     "size[0x%x]", (int)ret, phy_id, offset, size);
+            return BBOX_FAILURE;
+        }
+    }
+
+    return BBOX_SUCCESS;
+}
+
+STATIC bbox_status bbox_drv_read_sram_data(u32 phy_id, u32 offset, u8 *buf, u32 size)
+{
+    return bbox_drv_read_data(phy_id, MEM_TYPE_PCIE_SRAM, offset, buf, size);
+}
+
+bbox_status bbox_dump_sram_data(u32 phy_id, u32 offset, u32 size, u8 *buf)
+{
+    return bbox_read_sram_data(phy_id, offset, size, buf, bbox_drv_read_sram_data);
+}
+
 /**
  * @brief       read sram data through pcie
  * @param [in]  phy_id:       device phy id

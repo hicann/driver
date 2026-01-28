@@ -19,14 +19,14 @@
 #include <linux/mm.h>
 #include <linux/seq_file.h>
 #include <linux/version.h>
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 11, 0))
-#include <linux/sched/mm.h>
-#endif
 #include <linux/proc_fs.h>
 #include <linux/wait.h>
 #include <linux/gfp.h>
 #include "xsmem_drv_alloc_interface.h"
 #include "buff_ioctl.h"
+#include "ka_task_pub.h"
+#include "ka_system_pub.h"
+#include "ka_memory_pub.h"
 
 #define XSMEM_DEVICE_NAME "xsmem_dev"
 
@@ -49,12 +49,6 @@
 #else
 #define STATIC static
 #define THREAD
-#endif
-
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 1, 0)
-typedef u64 TASK_TIME_TYPE;
-#else
-typedef struct timespec TASK_TIME_TYPE;
 #endif
 
 struct xsm_adding_task {

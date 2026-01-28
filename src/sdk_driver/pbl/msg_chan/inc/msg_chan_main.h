@@ -12,53 +12,54 @@
  */
 #ifndef MSG_CHAN_MAIN_H
 #define MSG_CHAN_MAIN_H
-#include <linux/mutex.h>
-#include <linux/rwlock_types.h>
+
 #include "comm_kernel_interface.h"
 #include "msg_chan_adapt.h"
+#include "ka_system_pub.h"
+#include "ka_base_pub.h"
+#include "ka_task_pub.h"
+#include "ka_dfx_pub.h"
 
 #ifndef EMU_ST
 #include "dmc_kernel_interface.h"
-#else
-#include <linux/printk.h>
 #endif
 
 #define module_devdrv "devdrv"
 #ifndef EMU_ST
 #define devdrv_err(fmt, ...) do { \
     drv_err(module_devdrv, "<%s:%d:%d:%d> " fmt, \
-        current->comm, current->tgid, current->pid, smp_processor_id(), ##__VA_ARGS__); \
+        ka_task_get_current_comm(), ka_task_get_current_tgid(), ka_task_get_current_pid(), ka_system_smp_processor_id(), ##__VA_ARGS__); \
 } while (0)
 #define devdrv_warn(fmt, ...) do { \
     drv_warn(module_devdrv, "<%s:%d:%d:%d> " fmt, \
-        current->comm, current->tgid, current->pid, smp_processor_id(), ##__VA_ARGS__); \
+        ka_task_get_current_comm(), ka_task_get_current_tgid(), ka_task_get_current_pid(), ka_system_smp_processor_id(), ##__VA_ARGS__); \
 } while (0)
 #define devdrv_info(fmt, ...) do { \
     drv_info(module_devdrv, "<%s:%d:%d:%d> " fmt, \
-        current->comm, current->tgid, current->pid, smp_processor_id(), ##__VA_ARGS__); \
+        ka_task_get_current_comm(), ka_task_get_current_tgid(), ka_task_get_current_pid(), ka_system_smp_processor_id(), ##__VA_ARGS__); \
 } while (0)
 #define devdrv_debug(fmt, ...) do { \
     drv_pr_debug(module_devdrv, "<%s:%d:%d:%d> " fmt, \
-        current->comm, current->tgid, current->pid, smp_processor_id(), ##__VA_ARGS__); \
+        ka_task_get_current_comm(), ka_task_get_current_tgid(), ka_task_get_current_pid(), ka_system_smp_processor_id(), ##__VA_ARGS__); \
 } while (0)
 #else  // EMU_ST
 #define devdrv_info(fmt, ...) do {                                      \
-    printk(KERN_INFO "[ascend] [%s] [%s %d]" fmt,       \
+    ka_dfx_printk(KA_KERN_INFO "[ascend] [%s] [%s %d]" fmt,       \
     module_devdrv, __func__, __LINE__,                                \
     ##__VA_ARGS__);     \
 } while (0)
 #define devdrv_warn(fmt, ...) do {                                      \
-    printk(KERN_WARNING "[ascend] [%s] [%s %d]" fmt,    \
+    ka_dfx_printk(KA_KERN_WARNING "[ascend] [%s] [%s %d]" fmt,    \
     module_devdrv, __func__, __LINE__,                                \
     ##__VA_ARGS__);     \
 } while (0)
 #define devdrv_err(fmt, ...) do {                                       \
-    printk(KERN_ERR "[ascend] [%s] [%s %d]" fmt,        \
+    ka_dfx_printk(KA_KERN_ERR "[ascend] [%s] [%s %d]" fmt,        \
     module_devdrv, __func__, __LINE__,                                \
     ##__VA_ARGS__);     \
 } while (0)
 #define devdrv_debug(fmt, ...) do {                                     \
-    printk(KERN_DEBUG "[ascend] [%s] [%s %d]" fmt,      \
+    ka_dfx_printk(KA_KERN_DEBUG "[ascend] [%s] [%s %d]" fmt,      \
     module_devdrv, __func__, __LINE__,                                \
     ##__VA_ARGS__);     \
 } while (0)
@@ -75,8 +76,8 @@
 struct devdrv_comm_dev_ops {
     enum devdrv_ops_status status;
     struct devdrv_comm_ops ops;
-    rwlock_t rwlock;
-    atomic_t dev_cnt;
+    ka_rwlock_t rwlock;
+    ka_atomic_t dev_cnt;
 };
 
 struct devdrv_comm_dev_ops *devdrv_add_ops_ref(void);
@@ -90,8 +91,6 @@ int devdrv_hotreset_atomic_rescan(u32 dev_id);
 int devdrv_hotreset_atomic_reset(u32 dev_id);
 int devdrv_hotreset_atomic_unbind(u32 dev_id);
 int devdrv_hotreset_atomic_remove(u32 dev_id);
-
-int devdrv_get_global_connect_protocol(void);
 
 int devdrv_get_device_probe_list_urd(void *feature, char *in, u32 in_len, char *out, u32 out_len);
 int devdrv_get_token_val_urd(void *feature, char *in, u32 in_len, char *out, u32 out_len);

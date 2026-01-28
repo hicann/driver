@@ -241,6 +241,35 @@ drvError_t DmsGetSocDieId(dms_soc_die_id_t *soc_die_id)
     return DRV_ERROR_NONE;
 }
 
+drvError_t DmsGetSocDieIdV2(dms_soc_die_id_v2_t *soc_die_id)
+{
+    int ret;
+    struct dms_ioctl_arg ioarg = {0};
+
+    if (soc_die_id == NULL) {
+        DMS_ERR("Soc die id is NULL.\n");
+        return DRV_ERROR_PARA_ERROR;
+    }
+
+    ioarg.main_cmd = DMS_GET_GET_DIE_ID_V2_CMD;
+    ioarg.sub_cmd = ZERO_CMD;
+    ioarg.filter_len = 0;
+    ioarg.input = (void *)soc_die_id;
+    ioarg.input_len = sizeof(dms_soc_die_id_v2_t);
+    ioarg.output = (void *)soc_die_id;
+    ioarg.output_len = sizeof(dms_soc_die_id_v2_t);
+
+    ret = errno_to_user_errno(DmsIoctl(DMS_IOCTL_CMD, &ioarg));
+    if (ret != 0) {
+        DMS_EX_NOTSUPPORT_ERR(ret, "Dms get soc die id failed. (dev_id=%u; ret=%d)\n",
+            soc_die_id->dev_id, ret);
+        return ret;
+    }
+
+    DMS_DEBUG("Get soc die id success.\n");
+    return DRV_ERROR_NONE;
+}
+
 drvError_t DmsGetChipVersion(u32 devid, u8 *chip_version)
 {
     int ret;

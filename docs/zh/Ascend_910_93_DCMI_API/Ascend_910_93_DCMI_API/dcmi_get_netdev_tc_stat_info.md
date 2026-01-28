@@ -2,7 +2,7 @@
 
 **函数原型<a name="section520615312440"></a>**
 
-**int dcmi\_get\_netdev\_tc\_stat\_info\(int card\_id, int device\_id, struct dcmi\_network\_tc\_stat\_info \*network\_tc\_stat\_info\)**
+**dcmi\_get\_netdev\_tc\_stat\_info\(int card\_id, int device\_id, struct dcmi\_network\_tc\_stat\_info \*network\_tc\_stat\_info\)**
 
 **功能说明<a name="section1720715394411"></a>**
 

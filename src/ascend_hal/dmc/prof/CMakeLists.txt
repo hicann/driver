@@ -8,6 +8,18 @@
 # See LICENSE in the root of the software repository for the full text of the License.
 # ------------------------------------------------------------------------------------------------------------
 get_filename_component(BASE_DIR "${CMAKE_CURRENT_LIST_DIR}" ABSOLUTE)
+if(${PRODUCT} STREQUAL ascend910_95)
+    add_subdirectory(mem_prof)
+endif ()
+
+if (${PRODUCT} STREQUAL ascend910_95)
+    if(${CMAKE_HOST_SYSTEM_PROCESSOR} STREQUAL aarch64)
+        if ((${ENABLE_UBE}))
+            set(product_support_urma ascend910_95$<SEMICOLON>)
+        endif ()
+    endif ()
+endif ()
+
 add_library(prof_obj OBJECT)
 
 target_sources(prof_obj PRIVATE
@@ -22,13 +34,13 @@ target_sources(prof_obj PRIVATE
     ./comm/prof_communication.c
     $<$<NOT:$<IN_LIST:${PRODUCT},${product_not_support_event}>>:${CMAKE_CURRENT_SOURCE_DIR}/comm/event/prof_event_master.c>
     $<$<NOT:$<IN_LIST:${PRODUCT},${product_not_support_event}>>:${CMAKE_CURRENT_SOURCE_DIR}/comm/event/prof_event_comm.c>
-    $<$<STREQUAL:${PRODUCT_SIDE},host>:${CMAKE_CURRENT_SOURCE_DIR}/adapt/kernel/prof_adapt_h2d.c>
-    $<$<STREQUAL:${PRODUCT_SIDE},host>:${CMAKE_CURRENT_SOURCE_DIR}/adapt/kernel/prof_adapt_hdc.c>
-    $<$<AND:$<STREQUAL:${PRODUCT_SIDE},host>,$<IN_LIST:${PRODUCT},${product_support_urma}>>:${CMAKE_CURRENT_SOURCE_DIR}/adapt/kernel/prof_adapt_urma.c>
-    $<$<STREQUAL:${PRODUCT_SIDE},host>:${CMAKE_CURRENT_SOURCE_DIR}/comm/hdc/prof_hdc_comm.c>
-    $<$<STREQUAL:${PRODUCT_SIDE},host>:${CMAKE_CURRENT_SOURCE_DIR}/comm/hdc/prof_hdc.c>
-    $<$<AND:$<STREQUAL:${PRODUCT_SIDE},host>,$<IN_LIST:${PRODUCT},${product_support_urma}>>:${CMAKE_CURRENT_SOURCE_DIR}/comm/urma/prof_urma_comm.c>
-    $<$<AND:$<STREQUAL:${PRODUCT_SIDE},host>,$<IN_LIST:${PRODUCT},${product_support_urma}>>:${CMAKE_CURRENT_SOURCE_DIR}/comm/urma/prof_urma.c>
+    ${CMAKE_CURRENT_SOURCE_DIR}/adapt/kernel/prof_adapt_h2d.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/adapt/kernel/prof_adapt_hdc.c
+    $<$<IN_LIST:${PRODUCT},${product_support_urma}>:${CMAKE_CURRENT_SOURCE_DIR}/adapt/kernel/prof_adapt_urma.c>
+    ${CMAKE_CURRENT_SOURCE_DIR}/comm/hdc/prof_hdc_comm.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/comm/hdc/prof_hdc.c
+    $<$<IN_LIST:${PRODUCT},${product_support_urma}>:${CMAKE_CURRENT_SOURCE_DIR}/comm/urma/prof_urma_comm.c>
+    $<$<IN_LIST:${PRODUCT},${product_support_urma}>:${CMAKE_CURRENT_SOURCE_DIR}/comm/urma/prof_urma.c>
     $<$<STREQUAL:${PRODUCT_SIDE},device>:${CMAKE_CURRENT_SOURCE_DIR}/adapt/user/prof_adapt_user_ioctl.c>
     $<$<STREQUAL:${PRODUCT_SIDE},device>:${CMAKE_CURRENT_SOURCE_DIR}/adapt/kernel/prof_adapt_ioctl.c>
     $<$<STREQUAL:${PRODUCT_SIDE},device>:${CMAKE_CURRENT_SOURCE_DIR}/comm/ioctl/prof_ioctl.c>
@@ -44,32 +56,23 @@ target_include_directories(prof_obj PRIVATE
     ${BASE_DIR}/comm/
     ${BASE_DIR}/comm/event/
     ${BASE_DIR}/command/
-    $<$<STREQUAL:${PRODUCT_SIDE},host>:${BASE_DIR}/comm/hdc/>
-    $<$<AND:$<STREQUAL:${PRODUCT_SIDE},host>,$<IN_LIST:${PRODUCT},${product_support_urma}>>:${BASE_DIR}/comm/urma/>
+    ${BASE_DIR}/comm/hdc/
+    $<$<IN_LIST:${PRODUCT},${product_support_urma}>:${BASE_DIR}/comm/urma/>
     $<$<STREQUAL:${PRODUCT_SIDE},device>:${BASE_DIR}/comm/ioctl/>
-    ${TOP_DIR}/inc
     ${DRIVER_HAL_INC_DIR}
     ${C_SEC_INCLUDE}
     ${DRIVER_USER_DIR}/inc
     ${DRIVER_KERNEL_DIR}/dmc/prof/command/ioctl
     ${DRIVER_KERNEL_DIR}/dmc/prof/command/msg
     $<$<STREQUAL:${IN_BRANCH},trunk_ai>:${DRIVER_USER_DIR}/dms/drv_devmng/ascend910/>
-    $<$<IN_LIST:${PRODUCT},${product_support_urma}>:${TOP_DIR}/ubengine/ssapi/kernelspace/urma/code/include>
-    $<$<IN_LIST:${PRODUCT},${product_support_urma}>:${TOP_DIR}/ubengine/ssapi/kernelspace/urma/code/lib/urma/include>
     ${DRIVER_USER_DIR}/inc/dms
     ${DRIVER_USER_DIR}/msnpureport/inc/slog
 )
 
 target_compile_definitions(prof_obj PRIVATE
-    $<$<STREQUAL:${PRODUCT_SIDE},host>:DRV_HOST>
+    DRV_HOST
     $<$<STREQUAL:${PRODUCT},ascend910_95>:CFG_SOC_PLATFORM_CLOUD_V4>
-    $<$<STREQUAL:${PRODUCT},ascend910_95esl>:CFG_SOC_PLATFORM_CLOUD_V4>
-    $<$<STREQUAL:${PRODUCT},ascend910_96>:CFG_SOC_PLATFORM_CLOUD_V4>
-    $<$<STREQUAL:${PRODUCT},ascend910_96esl>:CFG_SOC_PLATFORM_CLOUD_V4>
-    $<$<STREQUAL:${PRODUCT},ascend910_55esl >:CFG_SOC_PLATFORM_CLOUD_V4>
-    $<$<STREQUAL:${PRODUCT},ascend910_55>:CFG_SOC_PLATFORM_CLOUD_V4>
-    $<$<IN_LIST:${PRODUCT},${ascend910_96}>:SSAPI_USE_MAMI>
-    $<$<IN_LIST:${PRODUCT},${ascend910_96esl}>:SSAPI_USE_MAMI>
+    $<$<AND:$<STREQUAL:${PRODUCT},ascend910_95>,$<STREQUAL:${CMAKE_HOST_SYSTEM_PROCESSOR},aarch64>>:SSAPI_USE_MAMI>
 )
 
 target_link_libraries(prof_obj PRIVATE

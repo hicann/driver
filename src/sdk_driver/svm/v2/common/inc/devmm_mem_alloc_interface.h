@@ -14,20 +14,9 @@
 #ifndef DEVMM_MEM_ALLOC_INTERFACE_H
 #define DEVMM_MEM_ALLOC_INTERFACE_H
 
-#include <linux/types.h>
-#include <linux/printk.h>
-#include <linux/slab.h>
-#include <linux/module.h>
-#include <linux/uaccess.h>
-#include <linux/mman.h>
-#include <linux/dma-mapping.h>
-#include <linux/slab.h>
-#include <linux/vmalloc.h>
-#include <linux/version.h>
-#include <linux/nodemask.h>
-
 #include "pbl_ka_memory.h"
 #include "ka_memory_pub.h"
+#include "ka_base_pub.h"
 #include "ascend_hal_define.h"
 /*
  * KA_SUB_MODULE_TYPE_0 : ctrl memory
@@ -46,7 +35,7 @@
 #define __devmm_vmalloc_ex(size, gfp_mask, prot) \
     __ka_vmalloc(size, gfp_mask, prot, ka_get_module_id(HAL_MODULE_TYPE_DEVMM, KA_SUB_MODULE_TYPE_0))
 #else
-    void *__devmm_vmalloc_ex(size_t size, gfp_t gfp_mask, pgprot_t prot);
+    void *__devmm_vmalloc_ex(size_t size, ka_gfp_t gfp_mask, ka_pgprot_t prot);
 #endif
 #define devmm_vfree_ex(addr) ka_vfree(addr, ka_get_module_id(HAL_MODULE_TYPE_DEVMM, KA_SUB_MODULE_TYPE_0))
 

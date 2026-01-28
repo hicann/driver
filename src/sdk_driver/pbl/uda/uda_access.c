@@ -46,6 +46,18 @@
 #ifdef CFG_FEATURE_ASCEND910_95_STUB
 #include "uda_fops.h"
 #endif
+#include "ka_dfx_pub.h"
+#include "ka_memory_pub.h"
+#include "ka_kernel_def_pub.h"
+#include "ka_common_pub.h"
+#include "ka_fs_pub.h"
+#include "ka_errno_pub.h"
+#include "ka_driver_pub.h"
+#include "ka_task_pub.h"
+#include "ka_list_pub.h"
+#include "ka_base_pub.h"
+
+#include "uda_access_adapt.h"
 
 #define UDA_HOST_ROOT_TGID 1
 
@@ -60,7 +72,7 @@ struct uda_dev_shared_check {
 
 /* CFG_FEATURE_ASCEND910_95_STUB: set dev_num for waiting too long in david pooling device */
 static u32 uda_detected_dev_num = 1;
-static dev_t uda_dev;
+static ka_dev_t uda_dev;
 static struct class *uda_class;
 
 static struct work_struct host_ns_init_work;
@@ -71,8 +83,8 @@ struct list_head access_ns_head;
 
 static u32 uda_ns_id[UDA_NS_NUM];
 
-static kuid_t g_phy_dev_uid = GLOBAL_ROOT_UID;
-static kgid_t g_phy_dev_gid = GLOBAL_ROOT_GID;
+static ka_kuid_t g_phy_dev_uid = GLOBAL_ROOT_UID;
+static ka_kgid_t g_phy_dev_gid = GLOBAL_ROOT_GID;
 static umode_t g_phy_dev_mode = DEV_MODE_PERMISSION;
 
 static u8 g_dev_shared[UDA_MAX_PHY_DEV_NUM];
@@ -129,27 +141,27 @@ static void uda_host_ns_init_work(struct work_struct *work)
 static bool uda_is_admin_task(struct task_struct *task)
 {
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 3, 0)
-    kernel_cap_t privileged = (kernel_cap_t) {((uint64_t)(CAP_TO_MASK(CAP_AUDIT_READ + 1) -1) << 32) | (((uint64_t)~0) >> 32)};
+    ka_kernel_cap_t privileged = (ka_kernel_cap_t) {((uint64_t)(KA_SYSTEM_CAP_TO_MASK(CAP_AUDIT_READ + 1) -1) << 32) | (((uint64_t)~0) >> 32)};
 #elif LINUX_VERSION_CODE >= KERNEL_VERSION(3, 16, 0)
     unsigned int i;
-    kernel_cap_t privileged = (kernel_cap_t){{ ~0, (CAP_TO_MASK(CAP_AUDIT_READ + 1) - 1)}};
+    ka_kernel_cap_t privileged = (ka_kernel_cap_t){{ ~0, (KA_SYSTEM_CAP_TO_MASK(CAP_AUDIT_READ + 1) - 1)}};
 #else
     unsigned int i;
-    kernel_cap_t privileged = CAP_FULL_SET;
+    ka_kernel_cap_t privileged = CAP_FULL_SET;
 #endif
     const struct cred *cred = NULL;
     u32 user_id, cap, idx;
 
-    rcu_read_lock();
+    ka_task_rcu_read_lock();
     cred = __task_cred(task); //lint !e1058 !e64 !e666
     user_id = cred->uid.val;
-    rcu_read_unlock();
+    ka_task_rcu_read_unlock();
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 3, 0)
     for (idx = 0; idx < CAP_LAST_CAP; idx++) {
         if (((privileged.val >> idx) & 0x1) == 0x1) {
             cap = idx;
-            if (capable(cap) == false) {
+            if (ka_system_capable(cap) == false) {
                 return false;
             }
         }
@@ -159,7 +171,7 @@ static bool uda_is_admin_task(struct task_struct *task)
         for (idx = 0; idx < PER_BIT_U32; idx++) {
             if (((privileged.cap[i] >> idx) & 0x1) == 0x1) {
                 cap = i * PER_BIT_U32 + idx;
-                if (capable(cap) == false) {
+                if (ka_system_capable(cap) == false) {
                     return false;
                 }
             }
@@ -180,17 +192,17 @@ static bool cgroup_mount_is_ro(void)
     int ret;
     bool is_ro = false;
 
-    ret = kern_path("/sys/fs/cgroup/memory", 0, &kernel_path);
+    ret = ka_fs_kern_path("/sys/fs/cgroup/memory", 0, &kernel_path);
     if (ret != 0) {
         return false;
     }
     if (kernel_path.mnt == NULL) {
-        path_put(&kernel_path);
+        ka_fs_path_put(&kernel_path);
         uda_err("Cgroup memory path mount is NULL.\n");
         return false;
     }
-    is_ro = __mnt_is_readonly(kernel_path.mnt);
-    path_put(&kernel_path);
+    is_ro = __ka_fs_mnt_is_readonly(kernel_path.mnt);
+    ka_fs_path_put(&kernel_path);
     return is_ro;
 }
 
@@ -221,14 +233,14 @@ static bool uda_devcgroup_permission_allow(struct uda_dev_inst *dev_inst)
     }
 #endif
     /* devcgroup_check_permission is implemented in the kernel of 5.5, so use kernel open replace it,
-       filp_open also check file user, device multi-user configuration can not use */
+       ka_fs_filp_open also check file user, device multi-user configuration can not use */
 #if (defined DRV_HOST) && (defined CFG_FEATURE_PROCESS_GROUP)
-    filp = filp_open(dev_inst->access.name, O_WRONLY, 0);
+    filp = ka_fs_filp_open(dev_inst->access.name, O_WRONLY, 0);
     /* Requires character device to exist */
-    if (IS_ERR_OR_NULL(filp)) {
+    if (KA_IS_ERR_OR_NULL(filp)) {
         return false;
     }
-    filp_close(filp, NULL);
+    ka_fs_filp_close(filp, NULL);
 #else
     (void)filp;
     (void)dev_inst;
@@ -305,18 +317,18 @@ void uda_for_each_ns_node_safe(void *priv, void (*func)(struct uda_ns_node *ns_n
 {
     struct uda_ns_node *ns_node = NULL, *tmp_node = NULL;
 
-    mutex_lock(&access_ns_mutex);
-    list_for_each_entry_safe(ns_node, tmp_node, &access_ns_head, node) {
+    ka_task_mutex_lock(&access_ns_mutex);
+    ka_list_for_each_entry_safe(ns_node, tmp_node, &access_ns_head, node) {
         func(ns_node, priv);
     }
-    mutex_unlock(&access_ns_mutex);
+    ka_task_mutex_unlock(&access_ns_mutex);
 }
 
 static struct uda_ns_node *uda_find_ns_node(struct mnt_namespace *ns, u32 root_tgid)
 {
     struct uda_ns_node *ns_node = NULL, *first_ns_node = NULL;
 
-    list_for_each_entry(ns_node, &access_ns_head, node) {
+    ka_list_for_each_entry(ns_node, &access_ns_head, node) {
         if (ns_node->ns == ns) {
             /* Processes added to the dev cgroup create independent ns nodes. Therefore, exact matching is preferred */
             if (ns_node->root_tgid == root_tgid) {
@@ -381,7 +393,7 @@ int uda_set_dev_ns_identify(u32 udevid, u64 identify)
 
     return ret;
 }
-EXPORT_SYMBOL(uda_set_dev_ns_identify);
+KA_EXPORT_SYMBOL(uda_set_dev_ns_identify);
 
 int uda_get_dev_ns_identify(u32 udevid, u64 *identify)
 {
@@ -401,20 +413,20 @@ int uda_get_dev_ns_identify(u32 udevid, u64 *identify)
 
     if (dev_inst->access.ns != NULL) {
         struct uda_ns_node *ns_node = NULL;
-        mutex_lock(&access_ns_mutex);
+        ka_task_mutex_lock(&access_ns_mutex);
         ns_node = uda_find_ns_node(dev_inst->access.ns, current->tgid);
         if (ns_node != NULL) {
             *identify = ns_node->identify;
             ret = 0;
         }
-        mutex_unlock(&access_ns_mutex);
+        ka_task_mutex_unlock(&access_ns_mutex);
     }
 
     uda_dev_inst_put(dev_inst);
 
     return ret;
 }
-EXPORT_SYMBOL(uda_get_dev_ns_identify);
+KA_EXPORT_SYMBOL(uda_get_dev_ns_identify);
 
 int uda_get_cur_ns_id(u32 *ns_id)
 {
@@ -426,17 +438,17 @@ int uda_get_cur_ns_id(u32 *ns_id)
         return -EINVAL;
     }
 
-    mutex_lock(&access_ns_mutex);
+    ka_task_mutex_lock(&access_ns_mutex);
     ns_node = uda_find_ns_node(uda_get_current_ns(), current->tgid);
     if (ns_node != NULL) {
         *ns_id = (ns_node->ns_id > UDA_NS_NUM)? UDA_NS_NUM : ns_node->ns_id;
         ret = 0;
     }
-    mutex_unlock(&access_ns_mutex);
+    ka_task_mutex_unlock(&access_ns_mutex);
 
     return ret;
 }
-EXPORT_SYMBOL(uda_get_cur_ns_id);
+KA_EXPORT_SYMBOL(uda_get_cur_ns_id);
 
 static bool uda_dev_is_occupied(struct uda_access *access)
 {
@@ -461,13 +473,13 @@ static bool uda_dev_is_occupied(struct uda_access *access)
         if (uda_get_ns_pid_count(ns_node->ns) == 0) {
             break;
         }
-        msleep(FREE_NS_NODE_INTERVAL_MS);
+        ka_system_msleep(FREE_NS_NODE_INTERVAL_MS);
     }
     uda_info("old ns_node not used, free and reoccupy.(ns_id=%u; tgid=%u; i=%u)\n",
         ns_node->ns_id, ns_node->root_tgid, i);
-    mutex_unlock(&access->mutex);
+    ka_task_mutex_unlock(&access->mutex);
     uda_uninit_ns_node_dev(ns_node);
-    mutex_lock(&access->mutex);
+    ka_task_mutex_lock(&access->mutex);
     uda_destroy_ns_node(ns_node, false);
     return false;
 }
@@ -494,22 +506,22 @@ void uda_release_idle_ns_by_vdev_id(unsigned int phy_id, unsigned int vdev_id)
             continue;
         }
         access = &dev_inst->access;
-        mutex_lock(&access_ns_mutex);
-        mutex_lock(&access->mutex);
+        ka_task_mutex_lock(&access_ns_mutex);
+        ka_task_mutex_lock(&access->mutex);
         /* also release idle ns_node */
         (void)uda_dev_is_occupied(access);
-        mutex_unlock(&access->mutex);
-        mutex_unlock(&access_ns_mutex);
+        ka_task_mutex_unlock(&access->mutex);
+        ka_task_mutex_unlock(&access_ns_mutex);
         uda_dev_inst_put(dev_inst);
     }
 #endif
 }
-EXPORT_SYMBOL_GPL(uda_release_idle_ns_by_vdev_id);
+KA_EXPORT_SYMBOL_GPL(uda_release_idle_ns_by_vdev_id);
 
 static struct uda_ns_node *uda_create_ns_node(struct mnt_namespace *ns)
 {
     static u32 ns_id = UDA_NS_NUM;
-    struct uda_ns_node *ns_node = dbl_kzalloc(sizeof(struct uda_ns_node), GFP_KERNEL | __GFP_ACCOUNT);
+    struct uda_ns_node *ns_node = dbl_kzalloc(sizeof(struct uda_ns_node), KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
     if (ns_node == NULL) {
         uda_err("Out of memory.\n");
         return NULL;
@@ -530,8 +542,8 @@ static struct uda_ns_node *uda_create_ns_node(struct mnt_namespace *ns)
             return NULL;
         }
     }
-    INIT_DELAYED_WORK(&ns_node->wait_destroy_work, uda_ns_node_destroy_work);
-    list_add_tail(&ns_node->node, &access_ns_head);
+    KA_TASK_INIT_DELAYED_WORK(&ns_node->wait_destroy_work, uda_ns_node_destroy_work);
+    ka_list_add_tail(&ns_node->node, &access_ns_head);
     return ns_node;
 }
 
@@ -541,9 +553,9 @@ static void uda_destroy_ns_node(struct uda_ns_node *ns_node, bool from_work)
         uda_free_ns_id(ns_node->ns_id);
     }
     if (!from_work) {
-        (void)cancel_delayed_work_sync(&ns_node->wait_destroy_work);
+        (void)ka_task_cancel_delayed_work_sync(&ns_node->wait_destroy_work);
     }
-    list_del(&ns_node->node);
+    ka_list_del(&ns_node->node);
     dbl_kfree(ns_node);
 }
 
@@ -551,23 +563,23 @@ int uda_ns_node_devid_to_udevid(u32 devid, u32 *udevid)
 {
     struct uda_ns_node *ns_node = NULL;
 
-    mutex_lock(&access_ns_mutex);
+    ka_task_mutex_lock(&access_ns_mutex);
     ns_node = uda_find_ns_node(uda_get_current_ns(), current->tgid);
     if (ns_node == NULL) {
-        mutex_unlock(&access_ns_mutex);
+        ka_task_mutex_unlock(&access_ns_mutex);
         return -EAGAIN;
     }
 
     if (devid >= ns_node->dev_num) {
-        mutex_unlock(&access_ns_mutex);
+        ka_task_mutex_unlock(&access_ns_mutex);
         return -ENODEV;
     }
 
     *udevid = ns_node->devid_to_udevid[devid];
-    mutex_unlock(&access_ns_mutex);
+    ka_task_mutex_unlock(&access_ns_mutex);
     return 0;
 }
-EXPORT_SYMBOL(uda_ns_node_devid_to_udevid);
+KA_EXPORT_SYMBOL(uda_ns_node_devid_to_udevid);
 
 static struct uda_dev_inst *uda_dev_inst_get_by_devid(u32 devid)
 {
@@ -615,7 +627,7 @@ int uda_devid_to_udevid(u32 devid, u32 *udevid)
     uda_dev_inst_put(dev_inst);
     return 0;
 }
-EXPORT_SYMBOL(uda_devid_to_udevid);
+KA_EXPORT_SYMBOL(uda_devid_to_udevid);
 
 int uda_devid_to_udevid_ex(u32 devid, u32 *udevid)
 {
@@ -631,7 +643,7 @@ int uda_devid_to_udevid_ex(u32 devid, u32 *udevid)
 
     return 0;
 }
-EXPORT_SYMBOL(uda_devid_to_udevid_ex);
+KA_EXPORT_SYMBOL(uda_devid_to_udevid_ex);
 
 /* for compatible, obp return phy_id, milan return udevid */
 int uda_devid_to_phy_devid(u32 devid, u32 *phy_devid, u32 *vfid)
@@ -669,7 +681,7 @@ int uda_devid_to_phy_devid(u32 devid, u32 *phy_devid, u32 *vfid)
 
     return 0;
 }
-EXPORT_SYMBOL(uda_devid_to_phy_devid);
+KA_EXPORT_SYMBOL(uda_devid_to_phy_devid);
 
 int uda_udevid_to_devid(u32 udevid, u32 *devid)
 {
@@ -701,12 +713,12 @@ static bool uda_is_admin_ns(struct task_struct *task)
         return uda_current_is_admin();
     }
 
-    mutex_lock(&access_ns_mutex);
+    ka_task_mutex_lock(&access_ns_mutex);
     ns_node = uda_find_ns_node(uda_get_task_ns(task), task->tgid);
     if ((ns_node != NULL) && (ns_node->ns_id >= UDA_NS_NUM)) {
         is_admin = true;
     }
-    mutex_unlock(&access_ns_mutex);
+    ka_task_mutex_unlock(&access_ns_mutex);
 
     return is_admin;
 }
@@ -718,16 +730,16 @@ static bool uda_task_access_judge_ok(struct task_struct *task, struct uda_access
     if (ns == uda_get_host_ns()) {
         return true;
     }
-    mutex_lock(&access->mutex);
+    ka_task_mutex_lock(&access->mutex);
     if (ns == access->ns) {
-        mutex_unlock(&access->mutex);
+        ka_task_mutex_unlock(&access->mutex);
         return true;
     }
     if (uda_is_ns_in_udev_shared_list(ns, access)) {
-        mutex_unlock(&access->mutex);
+        ka_task_mutex_unlock(&access->mutex);
         return true;
     }
-    mutex_unlock(&access->mutex);
+    ka_task_mutex_unlock(&access->mutex);
     if (uda_is_admin_ns(task)) {
         return true;
     }
@@ -752,32 +764,32 @@ bool uda_proc_can_access_udevid(int tgid, u32 udevid)
     struct pid *pid = NULL;
     bool ret;
 
-    pid = find_get_pid(tgid);
+    pid = ka_task_find_get_pid(tgid);
     if (pid == NULL) {
         uda_err("Find pid failed. (tgid=%d)\n", tgid);
         return false;
     }
 
-    task = get_pid_task(pid, PIDTYPE_PID);
+    task = ka_task_get_pid_task(pid, KA_PIDTYPE_PID);
     if (task == NULL) {
-        put_pid(pid);
+        ka_task_put_pid(pid);
         uda_err("Get task failed. (tgid=%d)\n", tgid);
         return false;
     }
 
     ret = uda_task_can_access_udevid(task, udevid);
-    put_task_struct(task);
-    put_pid(pid);
+    ka_task_put_task_struct(task);
+    ka_task_put_pid(pid);
 
     return ret;
 }
-EXPORT_SYMBOL(uda_proc_can_access_udevid);
+KA_EXPORT_SYMBOL(uda_proc_can_access_udevid);
 
 bool uda_can_access_udevid(u32 udevid)
 {
     return uda_task_can_access_udevid(current, udevid);
 }
-EXPORT_SYMBOL(uda_can_access_udevid);
+KA_EXPORT_SYMBOL(uda_can_access_udevid);
 
 /* if udevid belong to task namespace or it's split davinci belong to, both return true(can access) */
 bool uda_task_can_access_udevid_inherit(struct task_struct *task, u32 udevid)
@@ -791,7 +803,7 @@ bool uda_task_can_access_udevid_inherit(struct task_struct *task, u32 udevid)
     if (task == NULL) {
         return false;
     }
-    mutex_lock(&access_ns_mutex);
+    ka_task_mutex_lock(&access_ns_mutex);
     ns_node = uda_find_ns_node(uda_get_task_ns(task), task->tgid);
     if (ns_node != NULL) {
         for (devid = 0; devid < ns_node->dev_num; devid++) {
@@ -809,10 +821,10 @@ bool uda_task_can_access_udevid_inherit(struct task_struct *task, u32 udevid)
             }
         }
     }
-    mutex_unlock(&access_ns_mutex);
+    ka_task_mutex_unlock(&access_ns_mutex);
     return can_access;
 }
-EXPORT_SYMBOL(uda_task_can_access_udevid_inherit);
+KA_EXPORT_SYMBOL(uda_task_can_access_udevid_inherit);
 
 static u32 uda_get_ns_node_devid_from_udevid(struct uda_ns_node *ns_node, u32 udevid)
 {
@@ -830,7 +842,7 @@ static u32 uda_get_ns_node_devid_from_udevid(struct uda_ns_node *ns_node, u32 ud
 static void uda_dev_restore_ns(struct uda_ns_node *ns_node, void *priv)
 {
     struct uda_access *access = (struct uda_access *)priv;
-    u32 udevid = MINOR(access->devno);
+    u32 udevid = KA_DRIVER_MINOR(access->devno);
 
     /* only check normal container, if namespace have been restored, not try again */
     if ((ns_node->ns_id >= UDA_NS_NUM) || (access->ns != NULL)) {
@@ -838,9 +850,9 @@ static void uda_dev_restore_ns(struct uda_ns_node *ns_node, void *priv)
     }
 
     if (uda_get_ns_node_devid_from_udevid(ns_node, udevid) < UDA_DEV_MAX_NUM) {
-        mutex_lock(&access->mutex);
+        ka_task_mutex_lock(&access->mutex);
         (void)uda_occupy_dev_by_ns(udevid, access, ns_node->ns);
-        mutex_unlock(&access->mutex);
+        ka_task_mutex_unlock(&access->mutex);
         uda_init_udev_ns_id(udevid, access, ns_node->ns, ns_node->ns_id);
         uda_info("Restore namespace. (udevid=%u; ns_id=%u)\n", udevid, ns_node->ns_id);
     }
@@ -854,7 +866,7 @@ static void uda_try_to_restore_ns(struct uda_access *access)
 static void uda_add_udev_to_admin_ns_node(struct uda_ns_node *ns_node, void *priv)
 {
     struct uda_access *access = (struct uda_access *)priv;
-    u32 udevid = MINOR(access->devno);
+    u32 udevid = KA_DRIVER_MINOR(access->devno);
 
     /* only check admin ns node */
     if (!uda_is_admin_ns_node(ns_node)) {
@@ -879,7 +891,7 @@ static struct uda_access_share_node *uda_find_udev_shared_node(struct mnt_namesp
 {
     struct uda_access_share_node *share_node = NULL;
 
-    list_for_each_entry(share_node, &access->share_head, node) {
+    ka_list_for_each_entry(share_node, &access->share_head, node) {
         if (share_node->ns == ns) {
             return share_node;
         }
@@ -898,7 +910,7 @@ void uda_init_udev_ns_id(u32 udevid, struct uda_access *access, struct mnt_names
     if (ns_id >= UDA_NS_NUM) {
         return;
     }
-    mutex_lock(&access->mutex);
+    ka_task_mutex_lock(&access->mutex);
     if (uda_is_dev_shared(udevid)) {
         struct uda_access_share_node *share_node = uda_find_udev_shared_node(ns, access);
         if (share_node != NULL) {
@@ -907,7 +919,7 @@ void uda_init_udev_ns_id(u32 udevid, struct uda_access *access, struct mnt_names
     } else {
         access->ns_id = ns_id;
     }
-    mutex_unlock(&access->mutex);
+    ka_task_mutex_unlock(&access->mutex);
 }
 
 static int uda_flush_invalid_share_occupy(struct uda_access *access)
@@ -916,7 +928,7 @@ static int uda_flush_invalid_share_occupy(struct uda_access *access)
     struct list_head *pos;
     struct uda_access_share_node *share_node = NULL, *share_node_n = NULL;
 
-    list_for_each(pos, &access->share_head) {
+    ka_list_for_each(pos, &access->share_head) {
         node_num++;
     }
     if (node_num <= UDA_NS_NUM) {
@@ -924,10 +936,10 @@ static int uda_flush_invalid_share_occupy(struct uda_access *access)
     }
     uda_info("share node num exceed.(node_num=%u)\n", node_num);
 
-    list_for_each_entry_safe(share_node, share_node_n, &access->share_head, node) {
+    ka_list_for_each_entry_safe(share_node, share_node_n, &access->share_head, node) {
         if (share_node->ns_id == UDA_NS_NUM) {
             uda_info("find free first invalid share node.\n");
-            list_del(&share_node->node);
+            ka_list_del(&share_node->node);
             dbl_vfree(share_node);
             return 0;
         }
@@ -949,7 +961,7 @@ static int uda_occupy_shared_dev(u32 udevid, struct uda_access *access, struct m
         return ret;
     }
 
-    share_node = dbl_vmalloc(sizeof(struct uda_access_share_node), GFP_KERNEL|__GFP_HIGHMEM|__GFP_ACCOUNT, PAGE_KERNEL);
+    share_node = dbl_vmalloc(sizeof(struct uda_access_share_node), KA_GFP_KERNEL|__KA_GFP_HIGHMEM|__KA_GFP_ACCOUNT, KA_PAGE_KERNEL);
     if (share_node == NULL) {
         uda_err("Alloc share node failed. (udevid=%u)\n", udevid);
         return -ENOMEM;
@@ -957,7 +969,7 @@ static int uda_occupy_shared_dev(u32 udevid, struct uda_access *access, struct m
 
     share_node->ns = ns;
     share_node->ns_id = UDA_NS_NUM;
-    list_add_tail(&share_node->node, &access->share_head);
+    ka_list_add_tail(&share_node->node, &access->share_head);
     return 0;
 }
 
@@ -965,7 +977,7 @@ static void uda_unoccupy_shared_dev(struct uda_access *access, struct mnt_namesp
 {
     struct uda_access_share_node *share_node = uda_find_udev_shared_node(ns, access);
     if (share_node != NULL) {
-        list_del(&share_node->node);
+        ka_list_del(&share_node->node);
         dbl_vfree(share_node);
     }
 }
@@ -1000,14 +1012,14 @@ int uda_occupy_dev_by_ns(u32 udevid, struct uda_access *access, struct mnt_names
 
 void uda_unoccupy_dev_by_ns(u32 udevid, struct uda_access *access, struct mnt_namespace *ns)
 {
-    mutex_lock(&access->mutex);
+    ka_task_mutex_lock(&access->mutex);
     if (uda_is_dev_shared(udevid)) {
         uda_unoccupy_shared_dev(access, ns);
     } else {
         access->ns = NULL;
         access->ns_id = UDA_NS_NUM;
     }
-    mutex_unlock(&access->mutex);
+    ka_task_mutex_unlock(&access->mutex);
 }
 
 static int uda_occupy_dev(struct uda_dev_inst *dev_inst)
@@ -1031,7 +1043,7 @@ static void uda_refresh_dev_ownership(struct inode *inode)
 
 static int uda_access_open(struct inode *inode, struct file *file)
 {
-    u32 udevid = iminor(inode);
+    u32 udevid = ka_fs_iminor(inode);
     int ret = 0;
     struct uda_dev_inst *dev_inst = uda_dev_inst_get(udevid);
     if (dev_inst == NULL) {
@@ -1047,11 +1059,11 @@ static int uda_access_open(struct inode *inode, struct file *file)
 
     if (!uda_cur_is_admin()) {
         struct uda_access *access = &dev_inst->access;
-        mutex_lock(&access_ns_mutex);
-        mutex_lock(&access->mutex);
+        ka_task_mutex_lock(&access_ns_mutex);
+        ka_task_mutex_lock(&access->mutex);
         ret = uda_occupy_dev(dev_inst);
-        mutex_unlock(&access->mutex);
-        mutex_unlock(&access_ns_mutex);
+        ka_task_mutex_unlock(&access->mutex);
+        ka_task_mutex_unlock(&access_ns_mutex);
     }
 
     uda_dev_inst_put(dev_inst);
@@ -1062,20 +1074,20 @@ static int uda_access_open(struct inode *inode, struct file *file)
 /* when all process in namespace exit, clear udevid ns, then the udevid can be used by another namespace */
 static int uda_access_release(struct inode *inode, struct file *file)
 {
-    u32 udevid = iminor(inode);
+    u32 udevid = ka_fs_iminor(inode);
     uda_debug("Cdev release. (udevid=%u)\n", udevid);
     return 0;
 }
 
 static const struct file_operations uda_access_fops = {
-    .owner = THIS_MODULE,
+    .owner = KA_THIS_MODULE,
     .open = uda_access_open,
     .release = uda_access_release,
 };
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 3, 0)
-static char *uda_devnode(const struct device *dev, umode_t *mode, kuid_t *uid, kgid_t *gid)
+static char *uda_devnode(const struct device *dev, umode_t *mode, ka_kuid_t *uid, ka_kgid_t *gid)
 #else
-static char *uda_devnode(struct device *dev, umode_t *mode, kuid_t *uid, kgid_t *gid)
+static char *uda_devnode(struct device *dev, umode_t *mode, ka_kuid_t *uid, ka_kgid_t *gid)
 #endif
 {
     if (dev != NULL) {
@@ -1101,7 +1113,7 @@ const struct device_type uda_type = {
 
 static void uda_device_release(struct device *dev)
 {
-    uda_debug("Free dev mem. (udevid=%u)\n", MINOR(dev->devt));
+    uda_debug("Free dev mem. (udevid=%u)\n", KA_DRIVER_MINOR(dev->devt));
     dbl_kfree(dev);
 }
 
@@ -1117,19 +1129,19 @@ static int uda_cdev_device_add(struct cdev *cdev, struct device *dev)
 
     uda_cdev_set_parent(cdev, &dev->kobj);
 
-    ret = cdev_add(cdev, dev->devt, 1);
+    ret = ka_fs_cdev_add(cdev, dev->devt, 1);
     if (ret != 0) {
         uda_err("Cdev add failed. (ret=%d)\n", ret);
         return ret;
     }
 
-    return device_add(dev); /* cdev_add and cdev_alloc are Rollback by cdev_del */
+    return ka_fs_device_add(dev); /* ka_fs_cdev_add and ka_fs_cdev_alloc are Rollback by ka_fs_cdev_del */
 }
 
 static void uda_cdev_device_del(struct cdev *cdev, struct device *dev)
 {
-    device_del(dev);
-    cdev_del(cdev);
+    ka_fs_device_del(dev);
+    ka_fs_cdev_del(cdev);
 }
 
 static int uda_create_cdev(u32 udevid, struct uda_access *access)
@@ -1139,43 +1151,43 @@ static int uda_create_cdev(u32 udevid, struct uda_access *access)
     int ret;
 
     (void)sprintf_s(access->name, UDA_DEV_NAME_LEN, "/dev/%s%u", name, udevid);
-    access->devno = MKDEV(MAJOR(uda_dev), udevid);
+    access->devno = KA_DRIVER_MKDEV(KA_DRIVER_MAJOR(uda_dev), udevid);
     access->ns = NULL;
     access->ns_id = UDA_NS_NUM;
-    INIT_LIST_HEAD(&access->share_head);
-    mutex_init(&access->mutex);
+    KA_INIT_LIST_HEAD(&access->share_head);
+    ka_task_mutex_init(&access->mutex);
     if (!uda_is_phy_dev(udevid)) {
         uda_try_to_restore_ns(access); /* container hotreset device, should restore it`s namespace */
     }
 
     /* init cdev */
-    access->cdev = cdev_alloc();
+    access->cdev = ka_fs_cdev_alloc();
     if (access->cdev == NULL) {
         uda_err("Alloc cdev failed. (udevid=%u)\n", udevid);
         return -ENOMEM;
     }
-    access->cdev->owner = THIS_MODULE;
+    access->cdev->owner = KA_THIS_MODULE;
     access->cdev->ops = &uda_access_fops;
 
     /* init dev */
-    dev = dbl_kzalloc(sizeof(*dev), GFP_KERNEL);
+    dev = dbl_kzalloc(sizeof(*dev), KA_GFP_KERNEL);
     if (dev == NULL) {
-        cdev_del(access->cdev);
+        ka_fs_cdev_del(access->cdev);
         uda_err("Alloc dev failed. (udevid=%u)\n", udevid);
         return -ENOMEM;
     }
-    device_initialize(dev);
+    ka_base_device_initialize(dev);
     dev->devt = access->devno;
     dev->class = uda_class;
     dev->type = &uda_type;
     dev->release = uda_device_release;
-    (void)kobject_set_name(&dev->kobj, "%s%u", name, udevid);
+    (void)ka_fs_kobject_set_name(&dev->kobj, "%s%u", name, udevid);
     access->dev = dev;
 
     /* attach device to cdev */
     ret = uda_cdev_device_add(access->cdev, access->dev);
     if (ret != 0) {
-        cdev_del(access->cdev);
+        ka_fs_cdev_del(access->cdev);
         dbl_kfree(access->dev);
         uda_err("Cdev add device failed. (udevid=%u; ret=%d)\n", udevid, ret);
         return ret;
@@ -1197,8 +1209,8 @@ static void uda_remove_share_list(struct uda_access *access)
 {
     struct uda_access_share_node *share_node = NULL, *share_node_n = NULL;
 
-    list_for_each_entry_safe(share_node, share_node_n, &access->share_head, node) {
-        list_del(&share_node->node);
+    ka_list_for_each_entry_safe(share_node, share_node_n, &access->share_head, node) {
+        ka_list_del(&share_node->node);
         dbl_vfree(share_node);
     }
 }
@@ -1211,10 +1223,10 @@ int uda_access_add_dev(u32 udevid, struct uda_access *access)
 /* hotrest device is force remove mode */
 int uda_access_remove_dev(u32 udevid, struct uda_access *access)
 {
-    mutex_lock(&access->mutex);
+    ka_task_mutex_lock(&access->mutex);
     uda_remove_cdev(udevid, access);
     uda_remove_share_list(access);
-    mutex_unlock(&access->mutex);
+    ka_task_mutex_unlock(&access->mutex);
     return 0;
 }
 
@@ -1238,19 +1250,15 @@ static int uda_cdev_class_init(void)
 #ifdef CFG_FEATURE_DEVID_TRANS
     int ret;
 
-    ret = alloc_chrdev_region(&uda_dev, 0, UDA_UDEV_MAX_NUM, "devdrv-cdev");
+    ret = ka_fs_alloc_chrdev_region(&uda_dev, 0, UDA_UDEV_MAX_NUM, "devdrv-cdev");
     if (ret) {
         uda_err("Alloc chrdev region failed. (ret=%d)\n", ret);
         return ret;
     }
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 4, 0)
-    uda_class = class_create("devdrv-class");
-#else
-    uda_class = class_create(THIS_MODULE, "devdrv-class");
-#endif
-    if (IS_ERR(uda_class)) {
-        unregister_chrdev_region(uda_dev, UDA_UDEV_MAX_NUM);
+    uda_class = ka_driver_class_create(KA_THIS_MODULE, "devdrv-class");
+    if (KA_IS_ERR(uda_class)) {
+        ka_fs_unregister_chrdev_region(uda_dev, UDA_UDEV_MAX_NUM);
         uda_err("Create class failed.\n");
         return -EFAULT;
     }
@@ -1261,8 +1269,8 @@ static int uda_cdev_class_init(void)
 static void uda_cdev_class_uninit(void)
 {
 #ifdef CFG_FEATURE_DEVID_TRANS
-    class_destroy(uda_class);
-    unregister_chrdev_region(uda_dev, UDA_UDEV_MAX_NUM);
+    ka_driver_class_destroy(uda_class);
+    ka_fs_unregister_chrdev_region(uda_dev, UDA_UDEV_MAX_NUM);
 #endif
 }
 
@@ -1271,34 +1279,34 @@ u32 uda_get_cur_ns_dev_num(void)
     struct uda_ns_node *ns_node = NULL;
     u32 dev_num = 0;
 
-    mutex_lock(&access_ns_mutex);
+    ka_task_mutex_lock(&access_ns_mutex);
     ns_node = uda_find_ns_node(uda_get_current_ns(), current->tgid);
     if (ns_node != NULL) {
         dev_num = ns_node->dev_num;
     }
-    mutex_unlock(&access_ns_mutex);
+    ka_task_mutex_unlock(&access_ns_mutex);
 
     return dev_num;
 }
-EXPORT_SYMBOL(uda_get_cur_ns_dev_num);
+KA_EXPORT_SYMBOL(uda_get_cur_ns_dev_num);
 
 int uda_get_cur_ns_udevids(u32 udevids[], u32 num)
 {
     struct uda_ns_node *ns_node = NULL;
     u32 devid;
 
-    mutex_lock(&access_ns_mutex);
+    ka_task_mutex_lock(&access_ns_mutex);
     ns_node = uda_find_ns_node(uda_get_current_ns(), current->tgid);
     if (ns_node != NULL) {
         for (devid = 0; (devid < ns_node->dev_num) && (devid < num); devid++) {
             udevids[devid] = ns_node->devid_to_udevid[devid];
         }
     }
-    mutex_unlock(&access_ns_mutex);
+    ka_task_mutex_unlock(&access_ns_mutex);
 
     return 0;
 }
-EXPORT_SYMBOL(uda_get_cur_ns_udevids);
+KA_EXPORT_SYMBOL(uda_get_cur_ns_udevids);
 
 int uda_set_detected_phy_dev_num(u32 dev_num)
 {
@@ -1313,13 +1321,13 @@ int uda_set_detected_phy_dev_num(u32 dev_num)
 
     return 0;
 }
-EXPORT_SYMBOL(uda_set_detected_phy_dev_num);
+KA_EXPORT_SYMBOL(uda_set_detected_phy_dev_num);
 
 u32 uda_get_detected_phy_dev_num(void)
 {
     return uda_detected_dev_num;
 }
-EXPORT_SYMBOL(uda_get_detected_phy_dev_num);
+KA_EXPORT_SYMBOL(uda_get_detected_phy_dev_num);
 
 bool uda_is_dev_shared(u32 udevid)
 {
@@ -1374,7 +1382,7 @@ int uda_set_dev_share(u32 udevid, u8 share_flag)
     g_dev_shared[udevid] = share_flag;
     return 0;
 }
-EXPORT_SYMBOL(uda_set_dev_share);
+KA_EXPORT_SYMBOL(uda_set_dev_share);
 
 int uda_get_dev_share(u32 udevid, u8 *share_flag)
 {
@@ -1394,7 +1402,7 @@ int uda_get_dev_share(u32 udevid, u8 *share_flag)
     uda_dev_inst_put(dev_inst);
     return 0;
 }
-EXPORT_SYMBOL(uda_get_dev_share);
+KA_EXPORT_SYMBOL(uda_get_dev_share);
 
 #define UDA_WAIT_TIME   100
 #define UDA_WAIT_CNT    1500
@@ -1404,7 +1412,7 @@ static void uda_wait_all_phy_startup(void)
 #ifndef EMU_ST
     /* wait all dev to be added */
     while ((uda_detected_dev_num == 0) || (uda_get_dev_num() < uda_detected_dev_num)) {
-        msleep(UDA_WAIT_TIME);
+        ka_system_msleep(UDA_WAIT_TIME);
         wait_cnt++;
         if (wait_cnt > UDA_WAIT_CNT) { /* max wait 150 seconds */
             uda_err("Wait timeout. (dev_num=%u; uda_detected_dev_num=%u)\n", uda_get_dev_num(), uda_detected_dev_num);
@@ -1460,8 +1468,8 @@ static int uda_find_ns_root_pid(struct mnt_namespace *ns, u32 *tgid, TASK_TIME_T
     struct task_struct *task = NULL;
     int ret = -EFAULT;
 
-    rcu_read_lock();
-    for_each_process(task) {
+    ka_task_rcu_read_lock();
+    ka_for_each_process(task) {
         if (task == NULL) {
             continue;
         }
@@ -1476,7 +1484,7 @@ static int uda_find_ns_root_pid(struct mnt_namespace *ns, u32 *tgid, TASK_TIME_T
         }
         task_unlock(task);
     }
-    rcu_read_unlock();
+    ka_task_rcu_read_unlock();
 
     return ret;
 #else
@@ -1491,8 +1499,8 @@ u32 uda_get_ns_pid_count(struct mnt_namespace *ns)
     u32 count = 0;
 
 #ifndef EMU_ST
-    rcu_read_lock();
-    for_each_process(task) {
+    ka_task_rcu_read_lock();
+    ka_for_each_process(task) {
         if (task == NULL) {
             continue;
         }
@@ -1502,7 +1510,7 @@ u32 uda_get_ns_pid_count(struct mnt_namespace *ns)
         }
         task_unlock(task);
     }
-    rcu_read_unlock();
+    ka_task_rcu_read_unlock();
 #endif
 
     return count;
@@ -1545,7 +1553,7 @@ static void uda_recycle_idle_ns_node_single(struct uda_ns_node *ns_node, void *p
     }
 
     ns_node->destroy_try_count++;
-    schedule_delayed_work(&ns_node->wait_destroy_work, msecs_to_jiffies(FREE_NS_NODE_INTERVAL_MS));
+    ka_task_schedule_delayed_work(&ns_node->wait_destroy_work, ka_system_msecs_to_jiffies(FREE_NS_NODE_INTERVAL_MS));
 }
 
 static void uda_recycle_idle_ns_node(void)
@@ -1623,9 +1631,9 @@ int uda_setup_ns_node(u32 dev_num)
     }
     uda_recycle_idle_ns_node();
 
-    mutex_lock(&access_ns_mutex);
+    ka_task_mutex_lock(&access_ns_mutex);
     ret = _uda_setup_ns_node(ns, root_tgid, tgid_time, dev_num);
-    mutex_unlock(&access_ns_mutex);
+    ka_task_mutex_unlock(&access_ns_mutex);
 
     return ret;
 }
@@ -1636,30 +1644,30 @@ bool uda_tgid_exited(u32 tgid, TASK_TIME_TYPE start_time)
     struct pid *pid;
 
 #ifndef EMU_ST
-    rcu_read_lock();
-    pid = get_pid(find_pid_ns(tgid, &init_pid_ns));
-    rcu_read_unlock();
+    ka_task_rcu_read_lock();
+    pid = ka_task_get_pid(ka_task_find_pid_ns(tgid, &init_pid_ns));
+    ka_task_rcu_read_unlock();
     if (pid == NULL) {
         return true;
     }
-    tsk = get_pid_task(pid, PIDTYPE_PID);
-    put_pid(pid);
+    tsk = ka_task_get_pid_task(pid, KA_PIDTYPE_PID);
+    ka_task_put_pid(pid);
     if (tsk == NULL) {
         return true;
     }
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 1, 0)
     if (start_time == tsk->start_time) {
-        put_task_struct(tsk);
+        ka_task_put_task_struct(tsk);
         return false;
     }
 #else
     if (timespec_equal(&start_time, &tsk->start_time)) {
-        put_task_struct(tsk);
+        ka_task_put_task_struct(tsk);
         return false;
     }
 #endif
-    put_task_struct(tsk);
+    ka_task_put_task_struct(tsk);
     return true;
 #else
     return false;
@@ -1668,7 +1676,7 @@ bool uda_tgid_exited(u32 tgid, TASK_TIME_TYPE start_time)
 
 void uda_ns_node_destroy_work(struct work_struct *p_work)
 {
-    struct uda_ns_node *ns_node = container_of(p_work, struct uda_ns_node, wait_destroy_work.work);
+    struct uda_ns_node *ns_node = ka_container_of(p_work, struct uda_ns_node, wait_destroy_work.work);
     u32 pid_count;
 
     /* ns_pid_count may not be 0 by mnt_ns reuse in new container, so force destroy when timeout */
@@ -1677,7 +1685,7 @@ void uda_ns_node_destroy_work(struct work_struct *p_work)
         if (!uda_tgid_exited(ns_node->root_tgid, ns_node->tgid_time)) {
             uda_info("root_tgid exist.(ns_id=%u; tgid=%u)\n", ns_node->ns_id, ns_node->root_tgid);
 #ifndef EMU_ST
-            schedule_delayed_work(&ns_node->wait_destroy_work, msecs_to_jiffies(FREE_NS_NODE_INTERVAL_MS));
+            ka_task_schedule_delayed_work(&ns_node->wait_destroy_work, ka_system_msecs_to_jiffies(FREE_NS_NODE_INTERVAL_MS));
 #endif
             return;
         }
@@ -1685,16 +1693,16 @@ void uda_ns_node_destroy_work(struct work_struct *p_work)
         if (pid_count != 0) {
             uda_info("ns pid exist.(ns_id=%u; tgid=%u; pid_count=%u)\n", ns_node->ns_id, ns_node->root_tgid, pid_count);
 #ifndef EMU_ST
-            schedule_delayed_work(&ns_node->wait_destroy_work, msecs_to_jiffies(FREE_NS_NODE_INTERVAL_MS));
+            ka_task_schedule_delayed_work(&ns_node->wait_destroy_work, ka_system_msecs_to_jiffies(FREE_NS_NODE_INTERVAL_MS));
 #endif
             return;
         }
     }
     /* use try lock avoid deadlock, when occupy, destroy invalid ns_node would cancel this work sync */
-    if (!mutex_trylock(&access_ns_mutex)) {
+    if (!ka_task_mutex_trylock(&access_ns_mutex)) {
         uda_info("not get mutex lock, wait next time.(ns_id=%u)\n", ns_node->ns_id);
 #ifndef EMU_ST
-        schedule_delayed_work(&ns_node->wait_destroy_work, msecs_to_jiffies(FREE_NS_NODE_INTERVAL_MS));
+        ka_task_schedule_delayed_work(&ns_node->wait_destroy_work, ka_system_msecs_to_jiffies(FREE_NS_NODE_INTERVAL_MS));
 #endif
         return;
     }
@@ -1703,27 +1711,27 @@ void uda_ns_node_destroy_work(struct work_struct *p_work)
 #ifndef EMU_ST
     uda_destroy_ns_node(ns_node, true);
 #endif
-    mutex_unlock(&access_ns_mutex);
+    ka_task_mutex_unlock(&access_ns_mutex);
 }
 
 static void uda_cleanup_ns_node(struct mnt_namespace *ns, struct task_struct *task)
 {
     struct uda_ns_node *ns_node = NULL;
 
-    mutex_lock(&access_ns_mutex);
+    ka_task_mutex_lock(&access_ns_mutex);
     ns_node = uda_find_ns_node(ns, task->tgid);
     /* first proc exit in namespace */
     if ((ns_node != NULL) && (ns_node->root_tgid == task->tgid)) {
         uda_info("Wait for destroy ns. (ns_id=%u; root_tgid=%u; task_name=%s; task_tgid=%u; task_pid=%u)\n",
             ns_node->ns_id, ns_node->root_tgid, task->comm, task->tgid, task->pid);
 #ifndef EMU_ST
-        schedule_delayed_work(&ns_node->wait_destroy_work, msecs_to_jiffies(FREE_NS_NODE_INTERVAL_MS));
+        ka_task_schedule_delayed_work(&ns_node->wait_destroy_work, ka_system_msecs_to_jiffies(FREE_NS_NODE_INTERVAL_MS));
 #else
         uda_uninit_ns_node_dev(ns_node);
         uda_destroy_ns_node(ns_node, false);
 #endif
     }
-    mutex_unlock(&access_ns_mutex);
+    ka_task_mutex_unlock(&access_ns_mutex);
 }
 
 static void uda_recycle_ns_node_single(struct uda_ns_node *ns_node, void *priv)
@@ -1760,7 +1768,7 @@ static void uda_task_exit_reg(void)
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 17, 0)) && defined(DRV_HOST)
     (void)uda_task_exit_nb;
 #else
-    (void)profile_event_register(PROFILE_TASK_EXIT, &uda_task_exit_nb);
+    (void)ka_dfx_profile_event_register(KA_PROFILE_TASK_EXIT, &uda_task_exit_nb);
 #endif
 }
 
@@ -1769,24 +1777,16 @@ static void uda_task_exit_unreg(void)
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 17, 0)) && defined(DRV_HOST)
     (void)uda_task_exit_nb;
 #else
-    (void)profile_event_unregister(PROFILE_TASK_EXIT, &uda_task_exit_nb);
+    (void)ka_dfx_profile_event_unregister(KA_PROFILE_TASK_EXIT, &uda_task_exit_nb);
 #endif
 }
-
-#ifndef DRV_HOST
-static void uda_init_phy_dev_num(void)
-{
-    u32 node_num = (u32)cpu_to_node((int)num_online_cpus() - 1) + 1;
-    (void)uda_set_detected_phy_dev_num(node_num);
-}
-#endif
 
 int uda_access_init(void)
 {
     int ret;
 
-    mutex_init(&access_ns_mutex);
-    INIT_LIST_HEAD(&access_ns_head);
+    ka_task_mutex_init(&access_ns_mutex);
+    KA_INIT_LIST_HEAD(&access_ns_head);
 
     ret = uda_cdev_class_init();
     if (ret != 0) {
@@ -1794,19 +1794,17 @@ int uda_access_init(void)
     }
 
     uda_task_exit_reg();
-    INIT_WORK(&host_ns_init_work, uda_host_ns_init_work);
-    schedule_work(&host_ns_init_work);
+    KA_TASK_INIT_WORK(&host_ns_init_work, uda_host_ns_init_work);
+    ka_task_schedule_work(&host_ns_init_work);
 
-#ifndef DRV_HOST
     uda_init_phy_dev_num();
-#endif
 
     return 0;
 }
 
 void uda_access_uninit(void)
 {
-    (void)cancel_work_sync(&host_ns_init_work);
+    (void)ka_task_cancel_work_sync(&host_ns_init_work);
     uda_task_exit_unreg();
     uda_recycle_ns_node();
     uda_recycle_all_cdev();
@@ -1824,8 +1822,7 @@ int devdrv_get_devnum(u32 *dev_num)
     *dev_num = uda_get_detected_phy_dev_num();
     return 0;
 }
-EXPORT_SYMBOL(devdrv_get_devnum);
-
+KA_EXPORT_SYMBOL_GPL(devdrv_get_devnum);
 
 int devdrv_get_vdevnum(u32 *dev_num)
 {
@@ -1836,25 +1833,25 @@ int devdrv_get_vdevnum(u32 *dev_num)
     *dev_num = uda_get_mia_dev_num();
     return 0;
 }
-EXPORT_SYMBOL(devdrv_get_vdevnum);
+KA_EXPORT_SYMBOL_GPL(devdrv_get_vdevnum);
 
 u32 devdrv_manager_get_devnum(void)
 {
     return uda_get_cur_ns_dev_num();
 }
-EXPORT_SYMBOL(devdrv_manager_get_devnum);
+KA_EXPORT_SYMBOL_GPL(devdrv_manager_get_devnum);
 
 int devdrv_get_devids(u32 *devices, u32 device_num)
 {
     return uda_get_cur_ns_udevids(devices, device_num);
 }
-EXPORT_SYMBOL(devdrv_get_devids);
+KA_EXPORT_SYMBOL(devdrv_get_devids);
 
 int devdrv_manager_container_logical_id_to_physical_id(u32 logical_dev_id, u32 *physical_dev_id, u32 *vfid)
 {
     return uda_devid_to_phy_devid(logical_dev_id, physical_dev_id, vfid);
 }
-EXPORT_SYMBOL_GPL(devdrv_manager_container_logical_id_to_physical_id);
+KA_EXPORT_SYMBOL_GPL(devdrv_manager_container_logical_id_to_physical_id);
 
 #endif
 

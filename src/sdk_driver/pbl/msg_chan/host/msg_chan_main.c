@@ -39,5 +39,5 @@ void devdrv_register_save_client_info(struct devdrv_comm_dev_ops *dev_ops)
 {
     struct devdrv_msg_client *g_client_info = devdrv_get_msg_client();
     devdrv_register_save_client_info_proc(dev_ops);
-    mutex_unlock(&g_client_info->lock);
+    ka_task_mutex_unlock(&g_client_info->lock);
 }

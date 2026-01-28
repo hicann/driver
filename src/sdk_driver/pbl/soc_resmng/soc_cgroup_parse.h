@@ -19,9 +19,7 @@
 #define STATIC static
 #endif
 
-#include <linux/slab.h>
-#include <linux/proc_fs.h>
-#include <linux/cpumask.h>
+#include "ka_memory_pub.h"
 
 #ifndef __GFP_ACCOUNT
 

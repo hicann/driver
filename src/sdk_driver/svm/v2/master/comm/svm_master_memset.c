@@ -100,7 +100,7 @@ static int devmm_share_mem_memset(struct devmm_svm_process *svm_proc,
     for (add_count = 0; add_count < byte_count; add_count += per_cnt) {
         int ret;
         chan_memset.va_offset = va_offset + add_count;
-        chan_memset.count = (u32)min(byte_count - add_count, per_cnt);
+        chan_memset.count = (u32)ka_base_min(byte_count - add_count, per_cnt);
         ret = devmm_chan_msg_send(&chan_memset, sizeof(struct devmm_chan_share_mem_memset), sizeof(struct devmm_chan_msg_head));
         if (ret != 0) {
             devmm_drv_err("Device memset error. (ret=%d; va=0x%llx; value=0x%llx; count=%llu)\n", ret, va,
@@ -144,7 +144,7 @@ STATIC int devmm_send_memset_device_msg(struct devmm_svm_process *svm_process,
     for (add_count = 0; add_count < byte_count; add_count += per_cnt) {
         int ret;
         chan_memset.dst = va + add_count;
-        chan_memset.count = (u32)min(byte_count - add_count, per_cnt);
+        chan_memset.count = (u32)ka_base_min(byte_count - add_count, per_cnt);
         ret = devmm_chan_msg_send(&chan_memset, sizeof(struct devmm_chan_memset), sizeof(struct devmm_chan_msg_head));
         if (ret != 0) {
             devmm_drv_err("Device memset error. (ret=%d; va=0x%llx; value=0x%llx; count=%llu)\n", ret, va,

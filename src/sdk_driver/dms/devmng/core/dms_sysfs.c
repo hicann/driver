@@ -20,7 +20,6 @@
 #include <linux/vmalloc.h>
 #include <linux/uaccess.h>
 #include "pbl/pbl_davinci_api.h"
-#include "dms_sysfs.h"
 #include "pbl_mem_alloc_interface.h"
 #include "fms_kernel_interface.h"
 #include "urd_feature.h"
@@ -29,6 +28,8 @@
 #if defined(CFG_BUILD_DEBUG) && defined(CFG_FEATURE_IMU_CORE)
 #include "dms_imu_heartbeat.h"
 #endif
+#include "ka_fs_pub.h"
+#include "dms_sysfs.h"
 
 #define DMS_ATTR_RD (00400 | 00040)
 #define DMS_ATTR_WR (00200 | 00020)
@@ -192,7 +193,7 @@ void dms_sysfs_init(void)
         return;
     }
 
-    ret = sysfs_create_group(&dev->kobj, &g_dms_sysfs_group);
+    ret = ka_sysfs_create_group(&dev->kobj, &g_dms_sysfs_group);
     if (ret != 0) {
         dms_err("dms sysfs create group failed.\n");
         return;
@@ -213,5 +214,5 @@ void dms_sysfs_uninit(void)
     if (dev == NULL) {
         return;
     }
-    sysfs_remove_group(&dev->kobj, &g_dms_sysfs_group);
+    ka_sysfs_remove_group(&dev->kobj, &g_dms_sysfs_group);
 }

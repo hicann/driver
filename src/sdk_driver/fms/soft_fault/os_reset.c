@@ -18,6 +18,10 @@
 #include "soft_fault_define.h"
 #include "pbl_mem_alloc_interface.h"
 #include "davinci_interface.h"
+#include "ka_base_pub.h"
+#include "ka_list_pub.h"
+#include "ka_memory_pub.h"
+#include "ka_task_pub.h"
 
 void os_reset_report(u32 devid)
 {
@@ -26,7 +30,7 @@ void os_reset_report(u32 devid)
     struct soft_fault os_init;
     const char *info = "OS init";
 
-    data_len = strlen(info) + 1;
+    data_len = ka_base_strlen(info) + 1;
     ret = strcpy_s(os_init.data, DMS_MAX_EVENT_DATA_LENGTH, info);
     if (ret != 0) {
         soft_drv_err("String copy failed! (device=%u) \n", devid);
@@ -80,20 +84,20 @@ int os_dev_register(u32 devid)
     struct soft_dev *s_dev = NULL;
     struct drv_soft_ctrl *soft_ctrl = soft_get_ctrl();
 
-    mutex_lock(&soft_ctrl->mutex[devid]);
+    ka_task_mutex_lock(&soft_ctrl->mutex[devid]);
 
     client = soft_ctrl->s_dev_t[devid][user_id];
     if (client->registered == 1) {
         soft_drv_warn("Node OS-Linux already registered, return. (dev_id=%u; registered=%u)\n",
             devid, client->registered);
-        mutex_unlock(&soft_ctrl->mutex[devid]);
+        ka_task_mutex_unlock(&soft_ctrl->mutex[devid]);
         return 0;
     }
 
-    s_dev = dbl_kzalloc(sizeof(struct soft_dev), GFP_KERNEL | __GFP_ACCOUNT);
+    s_dev = dbl_kzalloc(sizeof(struct soft_dev), KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
     if (s_dev == NULL) {
-        soft_drv_err("kzalloc soft_dev failed.\n");
-        mutex_unlock(&soft_ctrl->mutex[devid]);
+        soft_drv_err("ka_mm_kzalloc soft_dev failed.\n");
+        ka_task_mutex_unlock(&soft_ctrl->mutex[devid]);
         return -ENOMEM;
     }
 
@@ -103,7 +107,7 @@ int os_dev_register(u32 devid)
 
     ret = os_dev_node_config(user_id, s_dev);
     if (ret != 0) {
-        soft_drv_err("soft_fault configurate one node failed. (dev_id=%u; ret=%d)\n", devid, ret);
+        soft_drv_err("soft_fault configure one node failed. (dev_id=%u; ret=%d)\n", devid, ret);
         goto ERROR;
     }
 
@@ -113,18 +117,18 @@ int os_dev_register(u32 devid)
         goto ERROR;
     }
 
-    list_add(&s_dev->list, &client->head);
+    ka_list_add(&s_dev->list, &client->head);
     client->user_id = user_id;
     client->registered = 1;
     client->node_num++;
     soft_ctrl->user_num[devid]++;
-    mutex_unlock(&soft_ctrl->mutex[devid]);
+    ka_task_mutex_unlock(&soft_ctrl->mutex[devid]);
 
     return 0;
 ERROR:
     dbl_kfree(s_dev);
     s_dev = NULL;
-    mutex_unlock(&soft_ctrl->mutex[devid]);
+    ka_task_mutex_unlock(&soft_ctrl->mutex[devid]);
     return ret;
 }
 

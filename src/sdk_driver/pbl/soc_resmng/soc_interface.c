@@ -10,9 +10,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#include <linux/export.h>
-#include <linux/errno.h>
-
+#include "ka_kernel_def_pub.h"
 #include "securec.h"
 #include "ascend_kernel_hal.h"
 #include "ascend_platform.h"
@@ -116,4 +114,4 @@ int hal_kernel_get_pg_info(unsigned int dev_id, HAL_PG_INFO_TYPE info_type,
     return -EOPNOTSUPP;
 #endif
 }
-EXPORT_SYMBOL_GPL(hal_kernel_get_pg_info);
+KA_EXPORT_SYMBOL_GPL(hal_kernel_get_pg_info);

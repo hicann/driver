@@ -15,7 +15,6 @@ struct rmo_map_msg {
     struct res_map_info res_info;
     unsigned int len;
     unsigned long va;
-    unsigned int rsv[4];   /* reserve */
 };
 
 #endif // __RMO_MSG_H__

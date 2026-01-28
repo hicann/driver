@@ -13,6 +13,9 @@
 
 #include "adapter_api.h"
 #include "adpater_def.h"
+#include "ka_kernel_def_pub.h"
+#include "ka_memory_pub.h"
+#include "ka_base_pub.h"
 
 void adap_dev_state_notifier_register(devdrv_dev_state_notify state_callback)
 {
@@ -22,7 +25,7 @@ void adap_dev_state_notifier_register(devdrv_dev_state_notify state_callback)
     }
     put_adapter(adap);
 }
-EXPORT_SYMBOL(adap_dev_state_notifier_register);
+KA_EXPORT_SYMBOL(adap_dev_state_notifier_register);
 
 void adap_dev_state_notifier_unregister(void)
 {
@@ -32,7 +35,7 @@ void adap_dev_state_notifier_unregister(void)
     }
     put_adapter(adap);
 }
-EXPORT_SYMBOL(adap_dev_state_notifier_unregister);
+KA_EXPORT_SYMBOL(adap_dev_state_notifier_unregister);
 
 /* p2p */
 int adap_enable_p2p(int pid, u32 dev_id, u32 peer_dev_id)
@@ -45,7 +48,7 @@ int adap_enable_p2p(int pid, u32 dev_id, u32 peer_dev_id)
     put_adapter(adap);
     return ret;
 }
-EXPORT_SYMBOL(adap_enable_p2p);
+KA_EXPORT_SYMBOL(adap_enable_p2p);
 
 int adap_disable_p2p(int pid, u32 dev_id, u32 peer_dev_id)
 {
@@ -57,7 +60,7 @@ int adap_disable_p2p(int pid, u32 dev_id, u32 peer_dev_id)
     put_adapter(adap);
     return ret;
 }
-EXPORT_SYMBOL(adap_disable_p2p);
+KA_EXPORT_SYMBOL(adap_disable_p2p);
 
 bool adap_is_p2p_enabled(u32 dev_id, u32 peer_dev_id)
 {
@@ -69,7 +72,7 @@ bool adap_is_p2p_enabled(u32 dev_id, u32 peer_dev_id)
     put_adapter(adap);
     return ret;
 }
-EXPORT_SYMBOL(adap_is_p2p_enabled);
+KA_EXPORT_SYMBOL(adap_is_p2p_enabled);
 
 void adap_flush_p2p(int pid)
 {
@@ -79,7 +82,7 @@ void adap_flush_p2p(int pid)
     }
     put_adapter(adap);
 }
-EXPORT_SYMBOL(adap_flush_p2p);
+KA_EXPORT_SYMBOL(adap_flush_p2p);
 
 int adap_get_p2p_capability(u32 dev_id, u64 *capability)
 {
@@ -91,7 +94,7 @@ int adap_get_p2p_capability(u32 dev_id, u64 *capability)
     put_adapter(adap);
     return ret;
 }
-EXPORT_SYMBOL(adap_get_p2p_capability);
+KA_EXPORT_SYMBOL(adap_get_p2p_capability);
 
 int adap_get_p2p_access_status(u32 devid, u32 peer_devid, int *status)
 {
@@ -103,10 +106,10 @@ int adap_get_p2p_access_status(u32 devid, u32 peer_devid, int *status)
     put_adapter(adap);
     return ret;
 }
-EXPORT_SYMBOL(adap_get_p2p_access_status);
+KA_EXPORT_SYMBOL(adap_get_p2p_access_status);
 
 /* dma */
-void *adap_dma_alloc_coherent(struct device *dev, size_t size, dma_addr_t *dma_addr, gfp_t gfp)
+void *adap_dma_alloc_coherent(struct device *dev, size_t size, ka_dma_addr_t *dma_addr, ka_gfp_t gfp)
 {
     void *addr = NULL;
     struct bus_adpater_stu *adap = get_adapter_by_dev_id(0); /* use device 0 get connect type */
@@ -116,9 +119,9 @@ void *adap_dma_alloc_coherent(struct device *dev, size_t size, dma_addr_t *dma_a
     put_adapter(adap);
     return addr;
 }
-EXPORT_SYMBOL(adap_dma_alloc_coherent);
+KA_EXPORT_SYMBOL(adap_dma_alloc_coherent);
 
-void adap_dma_free_coherent(struct device *dev, size_t size, void *addr, dma_addr_t dma_addr)
+void adap_dma_free_coherent(struct device *dev, size_t size, void *addr, ka_dma_addr_t dma_addr)
 {
     struct bus_adpater_stu *adap = get_adapter_by_dev_id(0); /* use device 0 get connect type */
     if (adap->dma.free_coherent != NULL) {
@@ -126,11 +129,11 @@ void adap_dma_free_coherent(struct device *dev, size_t size, void *addr, dma_add
     }
     put_adapter(adap);
 }
-EXPORT_SYMBOL(adap_dma_free_coherent);
+KA_EXPORT_SYMBOL(adap_dma_free_coherent);
 
-dma_addr_t adap_dma_map_single(struct device *dev, void *ptr, size_t size, enum dma_data_direction dir)
+ka_dma_addr_t adap_dma_map_single(struct device *dev, void *ptr, size_t size, enum dma_data_direction dir)
 {
-    dma_addr_t ret = 0;
+    ka_dma_addr_t ret = 0;
     struct bus_adpater_stu *adap = get_adapter_by_dev_id(0); /* use device 0 get connect type */
     if (adap->dma.map_single != NULL) {
         ret = adap->dma.map_single(dev, ptr, size, dir);
@@ -138,9 +141,9 @@ dma_addr_t adap_dma_map_single(struct device *dev, void *ptr, size_t size, enum 
     put_adapter(adap);
     return ret;
 }
-EXPORT_SYMBOL(adap_dma_map_single);
+KA_EXPORT_SYMBOL(adap_dma_map_single);
 
-void adap_dma_unmap_single(struct device *dev, dma_addr_t addr, size_t size, enum dma_data_direction dir)
+void adap_dma_unmap_single(struct device *dev, ka_dma_addr_t addr, size_t size, enum dma_data_direction dir)
 {
     struct bus_adpater_stu *adap = get_adapter_by_dev_id(0); /* use device 0 get connect type */
     if (adap->dma.unmap_single != NULL) {
@@ -148,7 +151,7 @@ void adap_dma_unmap_single(struct device *dev, dma_addr_t addr, size_t size, enu
     }
     put_adapter(adap);
 }
-EXPORT_SYMBOL(adap_dma_unmap_single);
+KA_EXPORT_SYMBOL(adap_dma_unmap_single);
 
 int adap_dma_link_free(struct devdrv_dma_prepare *dma_prepare)
 {
@@ -160,7 +163,7 @@ int adap_dma_link_free(struct devdrv_dma_prepare *dma_prepare)
     put_adapter(adap);
     return ret;
 }
-EXPORT_SYMBOL(adap_dma_link_free);
+KA_EXPORT_SYMBOL(adap_dma_link_free);
 
 struct devdrv_dma_prepare *adap_dma_link_prepare(u32 devid, enum devdrv_dma_data_type type,
     struct devdrv_dma_node *dma_node, u32 node_cnt, u32 fill_status)
@@ -173,7 +176,7 @@ struct devdrv_dma_prepare *adap_dma_link_prepare(u32 devid, enum devdrv_dma_data
     put_adapter(adap);
     return prepare;
 }
-EXPORT_SYMBOL(adap_dma_link_prepare);
+KA_EXPORT_SYMBOL(adap_dma_link_prepare);
 
 int adap_dma_sync_copy(u32 dev_id, enum devdrv_dma_data_type type, u64 src, u64 dst, u32 size,
     enum devdrv_dma_direction direction)
@@ -186,7 +189,7 @@ int adap_dma_sync_copy(u32 dev_id, enum devdrv_dma_data_type type, u64 src, u64 
     put_adapter(adap);
     return ret;
 }
-EXPORT_SYMBOL(adap_dma_sync_copy);
+KA_EXPORT_SYMBOL(adap_dma_sync_copy);
 
 /* pcie */
 int adap_get_pci_dev_info(u32 devid, struct devdrv_pci_dev_info *dev_info)
@@ -199,7 +202,7 @@ int adap_get_pci_dev_info(u32 devid, struct devdrv_pci_dev_info *dev_info)
     put_adapter(adap);
     return ret;
 }
-EXPORT_SYMBOL(adap_get_pci_dev_info);
+KA_EXPORT_SYMBOL(adap_get_pci_dev_info);
 
 int adap_get_pcie_id_info(u32 devid, struct devdrv_pcie_id_info  *pcie_id_info)
 {
@@ -211,7 +214,7 @@ int adap_get_pcie_id_info(u32 devid, struct devdrv_pcie_id_info  *pcie_id_info)
     put_adapter(adap);
     return ret;
 }
-EXPORT_SYMBOL(adap_get_pcie_id_info);
+KA_EXPORT_SYMBOL(adap_get_pcie_id_info);
 
 int adap_get_dev_topology(u32 devid, u32 peer_devid, int *topo_type)
 {
@@ -223,7 +226,7 @@ int adap_get_dev_topology(u32 devid, u32 peer_devid, int *topo_type)
     put_adapter(adap);
     return ret;
 }
-EXPORT_SYMBOL(adap_get_dev_topology);
+KA_EXPORT_SYMBOL(adap_get_dev_topology);
 
 int adap_hot_reset_device(u32 dev_id)
 {
@@ -235,7 +238,7 @@ int adap_hot_reset_device(u32 dev_id)
     put_adapter(adap);
     return ret;
 }
-EXPORT_SYMBOL(adap_hot_reset_device);
+KA_EXPORT_SYMBOL(adap_hot_reset_device);
 
 int adap_pcie_read_proc(u32 dev_id, enum devdrv_addr_type type, u32 offset, unsigned char *value, u32 len)
 {
@@ -247,7 +250,7 @@ int adap_pcie_read_proc(u32 dev_id, enum devdrv_addr_type type, u32 offset, unsi
     put_adapter(adap);
     return ret;
 }
-EXPORT_SYMBOL(adap_pcie_read_proc);
+KA_EXPORT_SYMBOL(adap_pcie_read_proc);
 
 int adap_pcie_prereset(u32 dev_id)
 {
@@ -259,7 +262,7 @@ int adap_pcie_prereset(u32 dev_id)
     put_adapter(adap);
     return ret;
 }
-EXPORT_SYMBOL(adap_pcie_prereset);
+KA_EXPORT_SYMBOL(adap_pcie_prereset);
 
 int adap_pcie_reinit(u32 dev_id)
 {
@@ -271,7 +274,7 @@ int adap_pcie_reinit(u32 dev_id)
     put_adapter(adap);
     return ret;
 }
-EXPORT_SYMBOL(adap_pcie_reinit);
+KA_EXPORT_SYMBOL(adap_pcie_reinit);
 
 int adap_get_addr_info(u32 devid, enum devdrv_addr_type type, u32 index, u64 *addr, size_t *size)
 {
@@ -283,7 +286,7 @@ int adap_get_addr_info(u32 devid, enum devdrv_addr_type type, u32 index, u64 *ad
     put_adapter(adap);
     return ret;
 }
-EXPORT_SYMBOL(adap_get_addr_info);
+KA_EXPORT_SYMBOL(adap_get_addr_info);
 
 int adap_get_bbox_reservd_mem(unsigned int devid, unsigned long long *dma_addr, struct page **dma_pages,
     unsigned int *len)
@@ -296,8 +299,8 @@ int adap_get_bbox_reservd_mem(unsigned int devid, unsigned long long *dma_addr, 
     put_adapter(adap);
     return ret;
 }
-EXPORT_SYMBOL(adap_get_bbox_reservd_mem);
-                                
+KA_EXPORT_SYMBOL(adap_get_bbox_reservd_mem);
+
 int adap_get_hccs_link_status_and_group_id(u32 devid, u32 *hccs_status, u32 hccs_group_id[], u32 group_id_num)
 {
     int ret = -EOPNOTSUPP;
@@ -309,7 +312,7 @@ int adap_get_hccs_link_status_and_group_id(u32 devid, u32 *hccs_status, u32 hccs
     put_adapter(adap);
     return ret;
 }
-EXPORT_SYMBOL(adap_get_hccs_link_status_and_group_id);
+KA_EXPORT_SYMBOL(adap_get_hccs_link_status_and_group_id);
 
 int adap_register_black_callback(struct devdrv_black_callback *black_callback)
 {
@@ -321,7 +324,7 @@ int adap_register_black_callback(struct devdrv_black_callback *black_callback)
     put_adapter(adap);
     return ret;
 }
-EXPORT_SYMBOL(adap_register_black_callback);
+KA_EXPORT_SYMBOL(adap_register_black_callback);
 
 void adap_unregister_black_callback(const struct devdrv_black_callback *black_callback)
 {
@@ -331,7 +334,7 @@ void adap_unregister_black_callback(const struct devdrv_black_callback *black_ca
     }
     put_adapter(adap);
 }
-EXPORT_SYMBOL(adap_unregister_black_callback);
+KA_EXPORT_SYMBOL(adap_unregister_black_callback);
 
 int adap_set_module_init_finish(int dev_id, int module)
 {
@@ -343,7 +346,7 @@ int adap_set_module_init_finish(int dev_id, int module)
     put_adapter(adap);
     return ret;
 }
-EXPORT_SYMBOL(adap_set_module_init_finish);
+KA_EXPORT_SYMBOL(adap_set_module_init_finish);
 
 void adap_dev_startup_register(devdrv_dev_startup_notify startup_callback)
 {
@@ -353,7 +356,7 @@ void adap_dev_startup_register(devdrv_dev_startup_notify startup_callback)
     }
     put_adapter(adap);
 }
-EXPORT_SYMBOL(adap_dev_startup_register);
+KA_EXPORT_SYMBOL(adap_dev_startup_register);
 
 unsigned int adap_get_host_type(void)
 {
@@ -365,7 +368,7 @@ unsigned int adap_get_host_type(void)
     put_adapter(adap);
     return ret;
 }
-EXPORT_SYMBOL(adap_get_host_type);
+KA_EXPORT_SYMBOL(adap_get_host_type);
 
 int adap_get_master_devid_in_the_same_os(u32 dev_id, u32 *master_dev_id)
 {
@@ -373,11 +376,18 @@ int adap_get_master_devid_in_the_same_os(u32 dev_id, u32 *master_dev_id)
     struct bus_adpater_stu *adap = get_adapter_by_dev_id(dev_id);
     if (adap->pcie.get_master_devid_in_the_same_os != NULL) {
         ret = adap->pcie.get_master_devid_in_the_same_os(dev_id, master_dev_id);
+    } else {
+        if (master_dev_id != NULL) {
+            *master_dev_id = dev_id;
+        } else {
+            ret = -EINVAL;
+        }
     }
+
     put_adapter(adap);
     return ret;
 }
-EXPORT_SYMBOL(adap_get_master_devid_in_the_same_os);
+KA_EXPORT_SYMBOL(adap_get_master_devid_in_the_same_os);
 
 int adap_get_pci_enabled_vf_num(u32 dev_id, int *vf_num)
 {
@@ -389,4 +399,4 @@ int adap_get_pci_enabled_vf_num(u32 dev_id, int *vf_num)
     put_adapter(adap);
     return ret;
 }
-EXPORT_SYMBOL(adap_get_pci_enabled_vf_num);
+KA_EXPORT_SYMBOL(adap_get_pci_enabled_vf_num);

@@ -450,7 +450,7 @@ int dms_custom_init_device_cert_flag(u32 dev_id)
         return -EINVAL;
     }
 
-    buf = (char *)dbl_kzalloc((size_t)file_size, GFP_KERNEL | __GFP_ACCOUNT);
+    buf = (char *)dbl_kzalloc((size_t)file_size + 1, GFP_KERNEL | __GFP_ACCOUNT);
     if (buf == NULL) {
         dms_err("Alloc memory for file failed. (dev_id=%u; file_size=0x%llx)\n", dev_id, file_size);
         return -ENOMEM;
@@ -548,7 +548,7 @@ int dms_custom_init_device_cert_file(u32 dev_id, CUSTOM_FILE_TYPE file_type)
 STATIC int dms_host_clear_cert_info(u32 udev_id)
 {
     int ret;
-    const char *default_flag_str = "verify_flag=1";
+    const char *default_flag_str = "verify_flag=5";
     char file_default_data = '0';
  
     ret = dms_save_sign_flag_to_file(udev_id, (char *)default_flag_str, strlen(default_flag_str));

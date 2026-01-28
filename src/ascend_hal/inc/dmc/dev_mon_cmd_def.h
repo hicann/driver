@@ -160,8 +160,9 @@
 #define DEV_MON_CMD_D_GET_DETECT_INFO         0x61
 #define DEV_MON_CMD_GET_NETWORK_HEALTH        0x62
 #define DEV_MON_CMD_GET_CUST_BOARD_INFO       0x63
-
 #define DEV_MON_CMD_ABL_MAMI_PATCH_OPERATION  0x64
+#define DEV_MON_CMD_D_GET_DIE_ID_V2  0x65
+#define DEV_MON_CMD_HOTRESET_INFORM_AO        0x66
 /*
  * Commands with values greater than or equal to 0x80 are maintained by the product.
  */

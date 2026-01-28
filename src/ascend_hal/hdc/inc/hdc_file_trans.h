@@ -57,7 +57,7 @@
         HDC_LOG_ERR("%s return value expect: %d, but actually return: %d", func_name, exp, ret); \
 } while (0)
 
-
+#define DIR_SEND_MAX_DEPTH 20
 enum FILE_HDR_FLAGS {
     FILE_FLAGS_DATA = 1,
     FILE_FLAGS_ACK = 2,
@@ -126,7 +126,6 @@ struct filesock {
     uint8_t user_mode;
 };
 
-signed int get_local_trusted_base_path(signed int user_mode, char *path, signed int dev_id);
 hdcError_t drvHdcGetTrustedBasePathEx(signed int user_mode, signed int peer_node, signed int peer_devid,
     char *base_path, unsigned int path_len);
 hdcError_t drvHdcSendFileEx(signed int user_mode, signed int peer_node, signed int peer_devid, const char *file,
@@ -145,5 +144,11 @@ void call_progress_notifier(struct filesock *fs, bool is_fin);
 uint16_t set_option_name(char *sndbuf, signed int bufsize, uint32_t offset, const char *file);
 bool validate_recv_segment(char *p_rcvbuf, signed int buf_len);
 struct fileopt *get_specific_option(char *rcvbuf, uint16_t option_type);
+bool is_dir(const char *name, size_t len);
+hdcError_t drvHdcSendDir(signed int peer_node, signed int peer_devid, const char *plocal_dir, const char *pdst_path,
+    void (*progress_notifier)(struct drvHdcProgInfo *));
+hdcError_t send_dir_in_session(HDC_SESSION session, const char *plocal_dir, const char *pdst_path, int count,
+    void (*progress_notifier)(struct drvHdcProgInfo *));
+hdcError_t get_new_dir_name(char *dst_path, int dst_len, const char *src_path, const char *d_name);
 
 #endif

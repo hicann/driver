@@ -29,6 +29,9 @@
 #include "ascend_platform.h"
 #include "hsm_norflash.h"
 #endif
+#include "ka_system_pub.h"
+#include "ka_memory_pub.h"
+#include "ka_base_pub.h"
 #include "dms_hccs_credit.h"
 
 #ifdef CFG_HOST_ENV
@@ -68,12 +71,12 @@ STATIC int dms_hccs_credit_num_update_check(u32 dev_id, u64 cur_cnt)
         return -EINVAL;
     }
 
-    cur_timestamp = ktime_get_raw_ns();
+    cur_timestamp = ka_system_ktime_get_raw_ns();
     if (cur_timestamp < g_hccs_credit_update_info[dev_id].old_update_timestamp) {
         g_hccs_credit_update_info[dev_id].old_update_timestamp = cur_timestamp;
         return 0;
     }
-    interval_time_s = (cur_timestamp - g_hccs_credit_update_info[dev_id].old_update_timestamp) / NSEC_PER_SEC;
+    interval_time_s = (cur_timestamp - g_hccs_credit_update_info[dev_id].old_update_timestamp) / KA_NSEC_PER_SEC;
 
     if (cur_cnt == g_hccs_credit_update_info[dev_id].old_cnt &&
         interval_time_s > expire_times) {
@@ -81,7 +84,7 @@ STATIC int dms_hccs_credit_num_update_check(u32 dev_id, u64 cur_cnt)
             dms_err("The number of credit has not been updated for more than %d seconds. "
                 "(dev_id=%u; old_cnt=%llu; old_timestamp=%llus; cur_timestamp=%llus)\n",
                 expire_times, dev_id, g_hccs_credit_update_info[dev_id].old_cnt,
-                g_hccs_credit_update_info[dev_id].old_update_timestamp / NSEC_PER_SEC, cur_timestamp / NSEC_PER_SEC);
+                g_hccs_credit_update_info[dev_id].old_update_timestamp / KA_NSEC_PER_SEC, cur_timestamp / KA_NSEC_PER_SEC);
             g_hccs_credit_update_info[dev_id].log_cnt = cur_cnt;
         }
         return -EBUSY;
@@ -108,7 +111,7 @@ STATIC int dms_read_hccs_credit_num_from_shm(u32 dev_id, hccs_credit_num *credit
         return ret;
     }
 
-    credit_info_addr = ioremap(shm_addr, PAGE_SIZE);
+    credit_info_addr = ka_mm_ioremap(shm_addr, KA_MM_PAGE_SIZE);
     if (credit_info_addr == NULL) {
         dms_err("Remap addr for credit info failed. (dev_id=%u)\n", dev_id);
         return -ENOMEM;
@@ -120,7 +123,7 @@ STATIC int dms_read_hccs_credit_num_from_shm(u32 dev_id, hccs_credit_num *credit
         ret = -ENOMEM;
     }
 
-    iounmap(credit_info_addr);
+    ka_mm_iounmap(credit_info_addr);
     credit_info_addr = NULL;
     return ret;
 }
@@ -166,9 +169,9 @@ STATIC int dms_get_hccs_credit_num(struct dms_get_device_info_in *in, unsigned i
         return -ENOMEM;
     }
 
-    ret = copy_to_user((void *)(uintptr_t)in->buff, &info, sizeof(hccs_credit_info_t));
+    ret = ka_base_copy_to_user((void *)(uintptr_t)in->buff, &info, sizeof(hccs_credit_info_t));
     if (ret != 0) {
-        dms_err("copy_to_user failed. (dev_id=%u; ret=%d)\n", dev_id, ret);
+        dms_err("ka_base_copy_to_user failed. (dev_id=%u; ret=%d)\n", dev_id, ret);
         return ret;
     }
 
@@ -311,12 +314,12 @@ STATIC int write_credit_num_to_shm(u32 dev_id, hccs_credit_num *info)
     }
 
     base_addr = hal_kernel_get_dev_phy_base_addr(dev_id, BASE_DEVMNG_INFO_MEM_ADDR);
-    if (base_addr == ULLONG_MAX) {
+    if (base_addr == KA_ULLONG_MAX) {
         dms_err("Failed to get sharemem base addr. (dev_id=%u)\n", dev_id);
         return -EINVAL;
     }
 
-    credit_num_addr = ioremap_cache(base_addr, sizeof(hccs_credit_num));
+    credit_num_addr = ka_mm_ioremap_cache(base_addr, sizeof(hccs_credit_num));
     if (credit_num_addr == NULL) {
         dms_err("Remap addr for credit info failed. (dev_id=%u)\n", dev_id);
         return -ENOMEM;
@@ -328,7 +331,7 @@ STATIC int write_credit_num_to_shm(u32 dev_id, hccs_credit_num *info)
         ret = -ENOMEM;
     }
 
-    iounmap(credit_num_addr);
+    ka_mm_iounmap(credit_num_addr);
     credit_num_addr = NULL;
     return ret;
 }
@@ -343,7 +346,7 @@ STATIC bool is_need_update_credit_num(void)
     static u64 last_update_time = 0;
     u64 new_time;
 
-    new_time = ktime_get_raw_ns();
+    new_time = ka_system_ktime_get_raw_ns();
     if ((new_time > last_update_time) && ((new_time - last_update_time) < CREDIT_NUM_QUERY_TIMER_EXPIRE_NS)) {
         return false;
     } else {

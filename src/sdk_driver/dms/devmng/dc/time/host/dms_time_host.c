@@ -23,6 +23,12 @@
 #include "pbl/pbl_davinci_api.h"
 #include "davinci_interface.h"
 #include "dms_kernel_version_adapt.h"
+#include "ka_memory_pub.h"
+#include "ka_task_pub.h"
+#include "ka_fs_pub.h"
+#include "ka_errno_pub.h"
+#include "ka_base_pub.h"
+#include "ka_barrier_pub.h"
 #include "kernel_version_adapt.h"
 
 #define TIME_SYNC_TIMER_EXPIRE_MS   6000
@@ -70,13 +76,13 @@ int dms_heartbeat_is_stop(u32 dev_id)
 
 int dms_time_sync_info_init(u32 dev_id)
 {
-    g_dms_time_sync_info[dev_id].pre_timezone = (char *)dbl_kzalloc(DMS_LOCALTIME_FILE_SIZE, GFP_KERNEL | __GFP_ACCOUNT);
+    g_dms_time_sync_info[dev_id].pre_timezone = (char *)dbl_kzalloc(DMS_LOCALTIME_FILE_SIZE, KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
     if (g_dms_time_sync_info[dev_id].pre_timezone == NULL) {
         dms_err("Kzalloc return NULL, failed to alloc mem for old localtime.\n");
         return -ENOMEM;
     }
 
-    g_dms_time_sync_info[dev_id].new_timezone = (char *)dbl_kzalloc(DMS_LOCALTIME_FILE_SIZE, GFP_KERNEL | __GFP_ACCOUNT);
+    g_dms_time_sync_info[dev_id].new_timezone = (char *)dbl_kzalloc(DMS_LOCALTIME_FILE_SIZE, KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
     if (g_dms_time_sync_info[dev_id].new_timezone == NULL) {
         dms_err("Kzalloc return NULL, failed to alloc mem for new localtime.\n");
         dbl_kfree(g_dms_time_sync_info[dev_id].pre_timezone);
@@ -86,7 +92,7 @@ int dms_time_sync_info_init(u32 dev_id)
 
     g_dms_time_sync_info[dev_id].system_state = DMS_SYSTEM_WORKING;
     g_dms_time_sync_info[dev_id].timezone_sync_state = DMS_TIMEZONE_SYNC_IDLE;
-    mutex_init(&g_dms_time_sync_info[dev_id].time_sync_lock);
+    ka_task_mutex_init(&g_dms_time_sync_info[dev_id].time_sync_lock);
     g_dms_time_sync_info[dev_id].timer_node_id = INVALID_TIMER_NODE_ID;
 
     return DRV_ERROR_NONE;
@@ -104,7 +110,7 @@ void dms_time_sync_info_free(u32 dev_id)
         dbl_kfree(g_dms_time_sync_info[dev_id].new_timezone);
         g_dms_time_sync_info[dev_id].new_timezone = NULL;
     }
-    mutex_destroy(&g_dms_time_sync_info[dev_id].time_sync_lock);
+    ka_task_mutex_destroy(&g_dms_time_sync_info[dev_id].time_sync_lock);
 }
 
 
@@ -219,20 +225,16 @@ STATIC int dms_time_read_timezone(u32 dev_id, char *buf, u16 *read_size)
     loff_t pos = 0;
     long read_bytes;
 
-    fp = filp_open(DMS_LOCALTIME_FILE_PATH, O_RDONLY, 0);
-    if (IS_ERR(fp)) {
+    fp = ka_fs_filp_open(DMS_LOCALTIME_FILE_PATH, KA_O_RDONLY, 0);
+    if (KA_IS_ERR(fp)) {
         if (g_log_has_been_printed == 0) {
             dms_err("Filp_open error. (dev_id=%u; path=%s)\n", dev_id, DMS_LOCALTIME_FILE_PATH);
         }
         return -EINVAL;
     }
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 14, 0)
-    read_bytes = kernel_read(fp, buf, *read_size, &pos);
-#else
-    read_bytes = kernel_read(fp, pos, buf, *read_size);
-#endif
-    filp_close(fp, NULL);
+    read_bytes = ka_fs_kernel_read(fp, buf, *read_size, &pos);
+    ka_fs_filp_close(fp, NULL);
     if ((read_bytes <= 0) || (read_bytes >= (long)*read_size)) {
         dms_err("Kernel_read error. (dev_id=%u; ret=%ld)\n", dev_id, read_bytes);
         return -EINVAL;
@@ -252,7 +254,7 @@ STATIC int dms_timezone_sync(u32 dev_id, struct dms_time_sync_info *time_info)
         return DRV_ERROR_NONE;
     }
     time_info->timezone_sync_state = DMS_TIMEZONE_SYNC_RUNNING;
-    mb();
+    ka_mb();
     if (time_info->system_state == DMS_REBOOT_PREPARE) {
         time_info->timezone_sync_state = DMS_TIMEZONE_SYNC_STOP;
         dms_info("System reboot now...(dev_id=%d) send localtime stop.\n", dev_id);
@@ -270,7 +272,7 @@ STATIC int dms_timezone_sync(u32 dev_id, struct dms_time_sync_info *time_info)
     }
 
     if (get_time_update_flag(dev_id) != DMS_TIME_NEED_UPDATE) {
-        ret = memcmp(time_info->pre_timezone, time_info->new_timezone, DMS_LOCALTIME_FILE_SIZE);
+        ret = ka_base_memcmp(time_info->pre_timezone, time_info->new_timezone, DMS_LOCALTIME_FILE_SIZE);
         if (ret) {
             set_time_need_update(dev_id);
         }
@@ -305,7 +307,7 @@ STATIC int dms_wall_time_sync(u32 dev_id)
     struct dms_h2d_msg time_msg;
     struct dms_walltime_info *send_time_info = NULL;
 
-    send_time_info = dbl_kzalloc(sizeof(struct dms_walltime_info), GFP_ATOMIC | __GFP_ACCOUNT);
+    send_time_info = dbl_kzalloc(sizeof(struct dms_walltime_info), KA_GFP_ATOMIC | __KA_GFP_ACCOUNT);
     if (send_time_info == NULL) {
         dms_err("Kmalloc in time event fail once, give up sync time to device. (dev_id=%u)\n", dev_id);
         return DRV_ERROR_NONE;

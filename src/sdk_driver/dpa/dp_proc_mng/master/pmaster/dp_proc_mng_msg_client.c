@@ -10,9 +10,6 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#include <linux/workqueue.h>
-#include <linux/rwsem.h>
-
 #include "comm_kernel_interface.h"
 #include "dp_proc_mng_msg.h"
 #include "dp_proc_mng_ioctl.h"

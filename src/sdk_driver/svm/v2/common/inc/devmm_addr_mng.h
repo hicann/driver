@@ -13,9 +13,6 @@
 #ifndef DEVMM_ADDR_MNG_H
 #define DEVMM_ADDR_MNG_H
 
-#include <linux/rbtree.h>
-#include <linux/mutex.h>
-
 #include "ka_base_pub.h"
 
 #include "comm_kernel_interface.h"

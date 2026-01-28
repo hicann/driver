@@ -109,13 +109,7 @@ STATIC void init_vf_iovad(struct hw_vdavinci *vdavinci)
     struct vm_dom_info *vm_dom = vdavinci->vdev.domain;
     struct hw_vf_info *vf = &vdavinci->vf;
 
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4,14,0))
-    init_iova_domain(&vf->iovad, PAGE_SIZE, 1);
-#else
-    init_iova_domain(&vf->iovad, PAGE_SIZE, 1,
-                     DMA_BIT_MASK(DOMAIN_DMA_BIT_MASK_32) >> PAGE_SHIFT);
-#endif
-
+    vdavinci_init_iova_domain(&vf->iovad);
     copy_reserved_iova(&vm_dom->iovad, &vf->iovad);
 }
 

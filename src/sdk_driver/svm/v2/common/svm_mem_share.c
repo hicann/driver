@@ -13,7 +13,6 @@
 
 #include <linux/types.h>
 #include "pbl_spod_info.h"
-#include "svm_ioctl.h"
 #include "devmm_common.h"
 #include "devmm_adapt.h"
 #include "svm_gfp.h"
@@ -23,6 +22,7 @@
 #include "devmm_mem_alloc_interface.h"
 #include "svm_kernel_msg.h"
 #include "svm_mem_share.h"
+#include "svm_ioctl.h"
 
 void devmm_share_phy_addr_blk_put(struct devmm_phy_addr_blk *share_blk)
 {
@@ -39,7 +39,7 @@ struct devmm_phy_addr_blk *devmm_share_phy_addr_blk_get(u32 devid, int share_id)
 static int _devmm_target_blk_query_pa_process(struct devmm_chan_target_blk_query_msg *msg,
     struct devmm_phy_addr_blk *share_blk, int side)
 {
-    u64 page_size = (share_blk->attr.pg_type == MEM_NORMAL_PAGE_TYPE) ? PAGE_SIZE : SVM_MASTER_HUGE_PAGE_SIZE;
+    u64 page_size = (share_blk->attr.pg_type == MEM_NORMAL_PAGE_TYPE) ? KA_MM_PAGE_SIZE : SVM_MASTER_HUGE_PAGE_SIZE;
     u32 stamp = (u32)ka_jiffies;
     u32 i;
 
@@ -107,7 +107,7 @@ static void devmm_pg_dma_info_init(struct devmm_phy_addr_blk *to_blk, struct dev
     (void)memcpy_s(&to_blk->pg_info.pages[offset], size, &from_blk->pg_info.pages[offset], size);
     to_blk->pg_info.saved_num += to_create_pg_num;
 
-    dma_copy_num = min(to_create_pg_num, (u32)(from_blk->dma_blk_info.saved_num - to_blk->dma_blk_info.saved_num));
+    dma_copy_num = ka_base_min(to_create_pg_num, (u32)(from_blk->dma_blk_info.saved_num - to_blk->dma_blk_info.saved_num));
     if (dma_copy_num == 0) {
         return;
     }

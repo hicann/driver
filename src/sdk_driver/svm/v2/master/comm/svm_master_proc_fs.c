@@ -10,8 +10,6 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#include <linux/types.h>
-#include <linux/proc_fs.h>
 
 #include "devmm_common.h"
 #include "svm_proc_mng.h"
@@ -20,30 +18,30 @@
 #include "svm_master_feature_proc_fs.h"
 
 #ifdef CONFIG_PROC_FS
-STATIC int devmm_dev_sum_open(struct inode *inode, ka_file_t *file)
+STATIC int devmm_dev_sum_open(ka_inode_t *inode, ka_file_t *file)
 {
     return ka_fs_single_open(file, devmm_dev_mem_stats_procfs_show, ka_base_pde_data(inode));
 }
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 6, 0)
-static const struct proc_ops devmm_dev_sum_ops = {
+static const ka_procfs_ops_t devmm_dev_sum_ops = {
     .proc_open    = devmm_dev_sum_open,
-    .proc_read    = seq_read,
-    .proc_lseek   = seq_lseek,
-    .proc_release = single_release,
+    .proc_read    = ka_fs_seq_read,
+    .proc_lseek   = ka_fs_seq_lseek,
+    .proc_release = ka_fs_single_release,
 };
 #else
-static const struct file_operations devmm_dev_sum_ops = {
-    .owner = THIS_MODULE,
+static const ka_file_operations_t devmm_dev_sum_ops = {
+    .owner = KA_THIS_MODULE,
     .open    = devmm_dev_sum_open,
-    .read    = seq_read,
-    .llseek  = seq_lseek,
-    .release = single_release,
+    .read    = ka_fs_seq_read,
+    .llseek  = ka_fs_seq_lseek,
+    .release = ka_fs_single_release,
 };
 #endif
 
 struct devmm_dev_procfs_entry {
-    struct proc_dir_entry *dev_entry;
+    ka_proc_dir_entry_t *dev_entry;
     ka_semaphore_t sem;
 };
 
@@ -101,7 +99,7 @@ void devmm_dev_proc_fs_uninit(void)
         ka_task_down(&devmm_dev_entry[logic_id].sem);
         if (devmm_dev_entry[logic_id].dev_entry != NULL) {
             devmm_dev_feature_proc_fs_destroy(logic_id);
-            proc_remove(devmm_dev_entry[logic_id].dev_entry);
+            ka_fs_proc_remove(devmm_dev_entry[logic_id].dev_entry);
             devmm_dev_entry[logic_id].dev_entry = NULL;
         }
         ka_task_up(&devmm_dev_entry[logic_id].sem);

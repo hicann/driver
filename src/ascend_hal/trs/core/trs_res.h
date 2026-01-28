@@ -48,5 +48,7 @@ drvError_t trs_remote_res_config(uint32_t dev_id, struct halResourceIdInputInfo 
 
 void trs_register_res_remote_ops(struct trs_res_remote_ops *ops);
 
+int trs_res_map_reg_init(uint32_t dev_id, uint32_t ts_id, uint32_t res_id, drvIdType_t type, struct res_id_usr_info *id_info);
+void trs_res_map_reg_un_init(uint32_t dev_id, uint32_t tsid, uint32_t res_id, drvIdType_t type, struct res_id_usr_info *id_info);
 #endif
 

@@ -11,13 +11,6 @@
  * GNU General Public License for more details.
  */
 
-#include <linux/delay.h>
-#include <asm/errno.h>
-#include <linux/kernel.h>
-#include <linux/string.h>
-#include <linux/types.h>
-#include <linux/pci.h>
-
 #include "devdrv_ctrl.h"
 #include "devdrv_dma.h"
 #include "devdrv_msg.h"
@@ -27,9 +20,9 @@
 
 int (*global_common_fun[DEVDRV_COMMON_MSG_TYPE_MAX])(u32 devid, void *data, u32 in_data_len, u32 out_data_len,
                                                      u32 *real_out_len);
-struct mutex g_common_mutex[DEVDRV_COMMON_MSG_TYPE_MAX];
+ka_mutex_t g_common_mutex[DEVDRV_COMMON_MSG_TYPE_MAX];
 
-struct mutex *devdrv_get_common_msg_mutex(void)
+ka_mutex_t *devdrv_get_common_msg_mutex(void)
 {
     return g_common_mutex;
 }
@@ -55,23 +48,23 @@ STATIC int rx_msg_common_msg_process(void *msg_chan, void *data, u32 in_data_len
         return -EINVAL;
     }
 
-    msg_desc = container_of(data, struct devdrv_non_trans_msg_desc, data);
+    msg_desc = ka_container_of(data, struct devdrv_non_trans_msg_desc, data);
     if (msg_desc->msg_type >= (u32)DEVDRV_COMMON_MSG_TYPE_MAX) {
         devdrv_err("Msg type is not support yet. (dev_id=%u;msg_type=%u)\n", chan->msg_dev->pci_ctrl->dev_id,
                     msg_desc->msg_type);
         return -EOPNOTSUPP;
     }
 
-    mutex_lock(&g_common_mutex[msg_desc->msg_type]);
+    ka_task_mutex_lock(&g_common_mutex[msg_desc->msg_type]);
     if ((chan->msg_dev->common_msg.common_fun[msg_desc->msg_type] == NULL) &&
         (global_common_fun[msg_desc->msg_type] == NULL)) {
-        mutex_unlock(&g_common_mutex[msg_desc->msg_type]);
+        ka_task_mutex_unlock(&g_common_mutex[msg_desc->msg_type]);
         devdrv_warn("Rx common callback func is null. (dev_id=%u; common_type=%d)\n", chan->msg_dev->pci_ctrl->dev_id,
                     msg_desc->msg_type);
         return -EUNATCH;
     }
 
-    cost_time = jiffies_to_msecs(jiffies - chan->stamp);
+    cost_time = ka_system_jiffies_to_msecs(ka_jiffies - chan->stamp);
     if (cost_time > chan->msg_dev->common_msg.com_msg_stat[msg_desc->msg_type].rx_work_max_time) {
         chan->msg_dev->common_msg.com_msg_stat[msg_desc->msg_type].rx_work_max_time = cost_time;
     }
@@ -89,7 +82,7 @@ STATIC int rx_msg_common_msg_process(void *msg_chan, void *data, u32 in_data_len
         ret = global_common_fun[msg_desc->msg_type](devdrv_get_devid_by_dev(chan->msg_dev), data, in_data_len,
                                                     out_data_len, real_out_len);
     }
-    mutex_unlock(&g_common_mutex[msg_desc->msg_type]);
+    ka_task_mutex_unlock(&g_common_mutex[msg_desc->msg_type]);
 
     if (ret == 0) {
         chan->msg_dev->common_msg.com_msg_stat[msg_desc->msg_type].rx_success_cnt++;
@@ -98,7 +91,7 @@ STATIC int rx_msg_common_msg_process(void *msg_chan, void *data, u32 in_data_len
     return ret;
 }
 
-int devdrv_pci_common_msg_send(u32 devid, void *data, u32 in_data_len, u32 out_data_len, u32 *real_out_len,
+int devdrv_pci_common_msg_send(u32 index_id, void *data, u32 in_data_len, u32 out_data_len, u32 *real_out_len,
                            enum devdrv_common_msg_type msg_type)
 {
     struct devdrv_msg_chan *msg_chan = NULL;
@@ -108,41 +101,41 @@ int devdrv_pci_common_msg_send(u32 devid, void *data, u32 in_data_len, u32 out_d
     int ret;
 
     msg_type_tmp = (int)msg_type;
-    if (devid >= MAX_DEV_CNT) {
-        devdrv_err("Invalid dev_id. (dev_id=%u)\n", devid);
+    if (index_id >= MAX_DEV_CNT) {
+        devdrv_err("Invalid index_id. (index_id=%u)\n", index_id);
         return -EINVAL;
     }
     if (data == NULL) {
-        devdrv_err("Input parameter is invalid. (dev_id=%u)\n", devid);
+        devdrv_err("Input parameter is invalid. (index_id=%u)\n", index_id);
         return -EINVAL;
     }
     if (real_out_len == NULL) {
-        devdrv_err("Input parameter is invalid. (dev_id=%u)\n", devid);
+        devdrv_err("Input parameter is invalid. (index_id=%u)\n", index_id);
         return -EINVAL;
     }
     if ((msg_type_tmp < DEVDRV_COMMON_MSG_PCIVNIC) || (msg_type_tmp >= DEVDRV_COMMON_MSG_TYPE_MAX)) {
-        devdrv_err("Msg type is not support yet. (dev_id=%u;msg_type=%d)\n", devid, msg_type_tmp);
+        devdrv_err("Msg type is not support yet. (index_id=%u;msg_type=%d)\n", index_id, msg_type_tmp);
         return -EOPNOTSUPP;
     }
 
-    pci_ctrl = devdrv_pci_ctrl_get(devid);
+    pci_ctrl = devdrv_pci_ctrl_get(index_id);
     if (pci_ctrl == NULL) {
         if (devdrv_is_dev_hot_reset() == true) {
-            devdrv_warn_limit("Get pci_ctrl unsuccess. (dev_id=%u)\n", devid);
+            devdrv_warn_limit("Get pci_ctrl unsuccessful. (index_id=%u)\n", index_id);
         } else {
-            devdrv_err_limit("Get pci_ctrl failed. (dev_id=%u)\n", devid);
+            devdrv_err_limit("Get pci_ctrl failed. (index_id=%u)\n", index_id);
         }
         return -EINVAL;
     }
     if (pci_ctrl->msg_dev == NULL) {
         devdrv_pci_ctrl_put(pci_ctrl);
-        devdrv_err("pcie msg dev is invalid. (dev_id=%u)\n", devid);
+        devdrv_err("pcie msg dev is invalid. (index_id=%u)\n", index_id);
         return -EINVAL;
     }
     msg_chan = pci_ctrl->msg_dev->common_msg.msg_chan;
     if ((msg_chan == NULL) || (msg_chan->status == DEVDRV_DISABLE)) {
         devdrv_pci_ctrl_put(pci_ctrl);
-        devdrv_err("msg chan is invalid. (dev_id=%u)\n", devid);
+        devdrv_err("msg chan is invalid. (index_id=%u)\n", index_id);
         return -EINVAL;
     }
 
@@ -184,9 +177,9 @@ int devdrv_pci_register_common_msg_client(const struct devdrv_common_msg_client 
         return -EOPNOTSUPP;
     }
 
-    mutex_lock(&g_common_mutex[msg_client->type]);
+    ka_task_mutex_lock(&g_common_mutex[msg_client->type]);
     global_common_fun[msg_client->type] = msg_client->common_msg_recv;
-    mutex_unlock(&g_common_mutex[msg_client->type]);
+    ka_task_mutex_unlock(&g_common_mutex[msg_client->type]);
 
     for (i = 0; i < MAX_DEV_CNT; i++) {
         ctrl = devdrv_get_devctrl_by_id(i);
@@ -204,9 +197,9 @@ int devdrv_pci_register_common_msg_client(const struct devdrv_common_msg_client 
             devdrv_info("msg_dev is NULL.\n");
             continue;
         }
-        mutex_lock(&g_common_mutex[msg_client->type]);
+        ka_task_mutex_lock(&g_common_mutex[msg_client->type]);
         pci_ctrl->msg_dev->common_msg.common_fun[msg_client->type] = msg_client->common_msg_recv;
-        mutex_unlock(&g_common_mutex[msg_client->type]);
+        ka_task_mutex_unlock(&g_common_mutex[msg_client->type]);
         if (msg_client->init_notify != NULL) {
             msg_client->init_notify(pci_ctrl->dev_id, 0);
         }
@@ -215,36 +208,38 @@ int devdrv_pci_register_common_msg_client(const struct devdrv_common_msg_client 
     return 0;
 }
 
-int devdrv_pci_unregister_common_msg_client(u32 devid, const struct devdrv_common_msg_client *msg_client)
+int devdrv_pci_unregister_common_msg_client(u32 index_id, const struct devdrv_common_msg_client *msg_client)
 {
     struct devdrv_pci_ctrl *pci_ctrl = NULL;
     struct devdrv_ctrl *ctrl = NULL;
 
-    if (devid >= MAX_DEV_CNT) {
-        devdrv_err("Input parameter is invalid. (dev_id=%u)\n", devid);
+    if (index_id >= MAX_DEV_CNT) {
+        devdrv_err("Input parameter is invalid. (index_id=%u)\n", index_id);
         return -EINVAL;
     }
     if (msg_client == NULL) {
-        devdrv_err("Input parameter is invalid. (dev_id=%u)\n", devid);
+        devdrv_err("Input parameter is invalid. (index_id=%u)\n", index_id);
         return -EINVAL;
     }
 
     if (msg_client->type >= DEVDRV_COMMON_MSG_TYPE_MAX) {
-        devdrv_err("Msg client type is not support yet. (dev_id=%u;msg_client_type=%d)\n", devid, (int)msg_client->type);
+        devdrv_err("Msg client type is not support yet. (index_id=%u;msg_client_type=%d)\n", index_id,
+            (int)msg_client->type);
         return -EOPNOTSUPP;
     }
 
-    ctrl = devdrv_get_bottom_half_devctrl_by_id(devid);
+    ctrl = devdrv_get_bottom_half_devctrl_by_id(index_id);
     if (ctrl == NULL) {
-        devdrv_info("Device is offline. (dev_id=%u; msg_client_type=%d)\n", devid, (int)msg_client->type);
+        devdrv_info("Device is offline. (index_id=%u; msg_client_type=%d)\n", index_id, (int)msg_client->type);
         return -EINVAL;
     }
     pci_ctrl = ctrl->priv;
-    mutex_lock(&g_common_mutex[msg_client->type]);
+    ka_task_mutex_lock(&g_common_mutex[msg_client->type]);
     pci_ctrl->msg_dev->common_msg.common_fun[msg_client->type] = NULL;
     global_common_fun[msg_client->type] = NULL;
-    mutex_unlock(&g_common_mutex[msg_client->type]);
-    devdrv_debug("Unregister common msg_client success. (dev_id=%u; msg_client_type=%d)\n", devid, msg_client->type);
+    ka_task_mutex_unlock(&g_common_mutex[msg_client->type]);
+    devdrv_debug("Unregister common msg_client success. (index_id=%u; msg_client_type=%d)\n", index_id,
+        msg_client->type);
 
     return 0;
 }

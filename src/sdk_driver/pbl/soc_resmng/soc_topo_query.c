@@ -10,6 +10,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
+#include "ka_kernel_def_pub.h"
+#include "ka_memory_pub.h"
 
 #include "pbl/pbl_uda.h"
 #include "soc_resmng_log.h"
@@ -304,14 +306,14 @@ STATIC int topo_check_ub_for_pcie_card(u32 dev_id1, u32 host_dev_id1, u32 host_d
         return ret;
     }
 #else
-    info_vaddr = ioremap(BASE_IMP_SRAM_INFO_MEM_ADDR, sizeof(struct udevid_reorder_para));
+    info_vaddr = ka_mm_ioremap(BASE_IMP_SRAM_INFO_MEM_ADDR, sizeof(struct udevid_reorder_para));
     if (info_vaddr == NULL) {
         soc_err("Remap imp sram info fail.\n");
         return -ENOMEM;
     }
 
     info = *(struct udevid_reorder_para __iomem *)info_vaddr;
-    iounmap(info_vaddr);
+    ka_mm_iounmap(info_vaddr);
     info_vaddr = NULL;
 #endif
 
@@ -431,4 +433,4 @@ int soc_get_dev_topology(unsigned int dev_id1, unsigned int dev_id2, int *topolo
         dev_id1, dev_id2, *topology_type);
     return 0;
 }
-EXPORT_SYMBOL_GPL(soc_get_dev_topology);
+KA_EXPORT_SYMBOL_GPL(soc_get_dev_topology);

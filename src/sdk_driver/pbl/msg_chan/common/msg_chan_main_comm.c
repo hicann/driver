@@ -11,10 +11,10 @@
  * GNU General Public License for more details.
  */
 
-#include <linux/delay.h>
-
 #include "pbl/pbl_feature_loader.h"
 #include "msg_chan_main.h"
+#include "ka_base_pub.h"
+#include "ka_kernel_def_pub.h"
 
 struct devdrv_comm_dev_ops g_comm_ops[DEVDRV_COMMNS_TYPE_MAX];
 struct devdrv_msg_client g_client_info;
@@ -102,15 +102,15 @@ int devdrv_register_communication_ops(struct devdrv_comm_ops *ops)
     }
     type = ops->comm_type;
 
-    write_lock_irqsave(&g_comm_ops[type].rwlock, flags);
+    ka_task_write_lock_irqsave(&g_comm_ops[type].rwlock, flags);
     (void)memcpy_s(&g_comm_ops[type].ops, sizeof(g_comm_ops[type].ops), ops, sizeof(*ops));
     g_comm_ops[type].status = DEVDRV_COMM_OPS_TYPE_INIT;
-    atomic_set(&g_comm_ops[type].ops.ref_cnt, 0);
-    write_unlock_irqrestore(&g_comm_ops[type].rwlock, flags);
+    ka_base_atomic_set(&g_comm_ops[type].ops.ref_cnt, 0);
+    ka_task_write_unlock_irqrestore(&g_comm_ops[type].rwlock, flags);
     devdrv_info("Ops register success. (type=%u)\n", type);
     return 0;
 }
-EXPORT_SYMBOL(devdrv_register_communication_ops);
+KA_EXPORT_SYMBOL(devdrv_register_communication_ops);
 
 void devdrv_unregister_communication_ops(struct devdrv_comm_ops *ops)
 {
@@ -130,29 +130,29 @@ void devdrv_unregister_communication_ops(struct devdrv_comm_ops *ops)
     type = ops->comm_type;
 
     for (i = 0; i < COMMU_WAIT_MAX_CNT; ++i) {
-        if (atomic_read(&ops->ref_cnt) == 0) {
+        if (ka_base_atomic_read(&ops->ref_cnt) == 0) {
             break;
         }
-        usleep_range(COMMU_WAIT_PER_TIME, COMMU_WAIT_PER_TIME);
+        ka_system_usleep_range(COMMU_WAIT_PER_TIME, COMMU_WAIT_PER_TIME);
     }
     if (i == COMMU_WAIT_MAX_CNT) {
         devdrv_info("Ops will force to unregister. (ref_cnt=%u; type=%u)\n",
-            atomic_read(&ops->ref_cnt), type);
+            ka_base_atomic_read(&ops->ref_cnt), type);
     }
-    write_lock_irqsave(&g_comm_ops[type].rwlock, flags);
+    ka_task_write_lock_irqsave(&g_comm_ops[type].rwlock, flags);
     g_comm_ops[type].status = DEVDRV_COMM_OPS_TYPE_UNINIT;
     (void)memset_s(&g_comm_ops[type].ops, len, 0, len);
-    write_unlock_irqrestore(&g_comm_ops[type].rwlock, flags);
+    ka_task_write_unlock_irqrestore(&g_comm_ops[type].rwlock, flags);
     devdrv_info("Ops unregister success. (type=%u)\n", type);
 }
-EXPORT_SYMBOL(devdrv_unregister_communication_ops);
+KA_EXPORT_SYMBOL(devdrv_unregister_communication_ops);
 
 void devdrv_register_save_client_info_proc(struct devdrv_comm_dev_ops *dev_ops)
 {
     int i;
     int ret;
 
-    mutex_lock(&g_client_info.lock);
+    ka_task_mutex_lock(&g_client_info.lock);
     for (i = 0; i < DEVDRV_COMMON_MSG_TYPE_MAX; i++) {
         if (g_client_info.comm[i] == NULL) {
             continue;
@@ -168,10 +168,10 @@ STATIC void devdrv_set_communication_set_ops_enable(u32 type, u32 dev_id)
 {
     unsigned long flags;
 
-    write_lock_irqsave(&g_comm_ops[type].rwlock, flags);
+    ka_task_write_lock_irqsave(&g_comm_ops[type].rwlock, flags);
     g_comm_ops[type].status = DEVDRV_COMM_OPS_TYPE_ENABLE;
-    write_unlock_irqrestore(&g_comm_ops[type].rwlock, flags);
-    if (atomic_add_return(1, &g_comm_ops[type].dev_cnt) == 1) {
+    ka_task_write_unlock_irqrestore(&g_comm_ops[type].rwlock, flags);
+    if (ka_base_atomic_add_return(1, &g_comm_ops[type].dev_cnt) == 1) {
         /* first enable ops, will register all save info */
         devdrv_register_save_client_info(&g_comm_ops[type]);
     }
@@ -184,12 +184,12 @@ STATIC void devdrv_set_communication_set_ops_disable(u32 type, u32 dev_id)
     int cnt;
     unsigned long flags;
 
-    write_lock_irqsave(&g_comm_ops[type].rwlock, flags);
+    ka_task_write_lock_irqsave(&g_comm_ops[type].rwlock, flags);
     cnt = atomic_sub_return(1, &g_comm_ops[type].dev_cnt);
     if (cnt == 0) {
         g_comm_ops[type].status = DEVDRV_COMM_OPS_TYPE_DISABLE;
     }
-    write_unlock_irqrestore(&g_comm_ops[type].rwlock, flags);
+    ka_task_write_unlock_irqrestore(&g_comm_ops[type].rwlock, flags);
 
     if (cnt > 0) {
         devdrv_info("There are other devices. (dev_id=%u;type=%u;dev_cnt=%d)\n", dev_id, type, cnt);
@@ -203,7 +203,7 @@ STATIC void devdrv_set_communication_set_ops_disable(u32 type, u32 dev_id)
 void devdrv_set_communication_ops_status_inner(u32 type, u32 status, u32 index_id)
 {
     if ((type >= DEVDRV_COMMNS_TYPE_MAX) || (status >= DEVDRV_COMM_OPS_TYPE_MAX)) {
-        devdrv_err("Invalid type or status. (dev_id=%u;type=%u;stauts=%u)\n", index_id, type, status);
+        devdrv_err("Invalid type or status. (dev_id=%u;type=%u;status=%u)\n", index_id, type, status);
     }
 
     if (status == DEVDRV_COMM_OPS_TYPE_ENABLE) {
@@ -215,7 +215,7 @@ void devdrv_set_communication_ops_status_inner(u32 type, u32 status, u32 index_i
     }
     return;
 }
-EXPORT_SYMBOL(devdrv_set_communication_ops_status_inner);
+KA_EXPORT_SYMBOL(devdrv_set_communication_ops_status_inner);
 
 void devdrv_set_communication_ops_status(u32 type, u32 status, u32 dev_id)
 {
@@ -223,7 +223,7 @@ void devdrv_set_communication_ops_status(u32 type, u32 status, u32 dev_id)
     index_id = devdrv_get_index_id_by_devid(dev_id);
     devdrv_set_communication_ops_status_inner(type, status, index_id);
 }
-EXPORT_SYMBOL(devdrv_set_communication_ops_status);
+KA_EXPORT_SYMBOL(devdrv_set_communication_ops_status);
 
 struct devdrv_comm_dev_ops *devdrv_add_ops_ref()
 {
@@ -232,13 +232,13 @@ struct devdrv_comm_dev_ops *devdrv_add_ops_ref()
 
     for (i = 0; i < DEVDRV_COMMNS_TYPE_MAX; i++) {
         dev_ops = &g_comm_ops[i];
-        read_lock(&dev_ops->rwlock);
+        ka_task_read_lock(&dev_ops->rwlock);
         if (dev_ops->status != DEVDRV_COMM_OPS_TYPE_ENABLE) {
-            read_unlock(&dev_ops->rwlock);
+            ka_task_read_unlock(&dev_ops->rwlock);
             continue;
         } else {
-            atomic_add(1, &dev_ops->ops.ref_cnt);
-            read_unlock(&dev_ops->rwlock);
+            ka_base_atomic_add(1, &dev_ops->ops.ref_cnt);
+            ka_task_read_unlock(&dev_ops->rwlock);
             return dev_ops;
         }
     }
@@ -253,14 +253,14 @@ struct devdrv_comm_dev_ops *devdrv_add_ops_ref_after_unbind()
 
     for (i = 0; i < DEVDRV_COMMNS_TYPE_MAX; i++) {
         dev_ops = &g_comm_ops[i];
-        read_lock(&dev_ops->rwlock);
+        ka_task_read_lock(&dev_ops->rwlock);
         if ((dev_ops->status != DEVDRV_COMM_OPS_TYPE_ENABLE)
             && (dev_ops->status != DEVDRV_COMM_OPS_TYPE_DISABLE)) {
-            read_unlock(&dev_ops->rwlock);
+            ka_task_read_unlock(&dev_ops->rwlock);
             continue;
         } else {
-            atomic_add(1, &dev_ops->ops.ref_cnt);
-            read_unlock(&dev_ops->rwlock);
+            ka_base_atomic_add(1, &dev_ops->ops.ref_cnt);
+            ka_task_read_unlock(&dev_ops->rwlock);
             return dev_ops;
         }
     }
@@ -278,14 +278,14 @@ struct devdrv_comm_dev_ops *devdrv_add_ops_ref_by_type(u32 type)
     }
 
     dev_ops = &g_comm_ops[type];
-    read_lock(&dev_ops->rwlock);
+    ka_task_read_lock(&dev_ops->rwlock);
     if ((dev_ops->status == DEVDRV_COMM_OPS_TYPE_ENABLE) || (dev_ops->status == DEVDRV_COMM_OPS_TYPE_INIT)) {
-        atomic_add(1, &dev_ops->ops.ref_cnt);
-        read_unlock(&dev_ops->rwlock);
+        ka_base_atomic_add(1, &dev_ops->ops.ref_cnt);
+        ka_task_read_unlock(&dev_ops->rwlock);
         return dev_ops;
     }
 
-    read_unlock(&dev_ops->rwlock);
+    ka_task_read_unlock(&dev_ops->rwlock);
 
     return NULL;
 }
@@ -298,26 +298,27 @@ int devdrv_get_global_connect_protocol(void)
 
     for (i = 0; i < DEVDRV_COMMNS_TYPE_MAX; i++) {
         dev_ops = &g_comm_ops[i];
-        read_lock(&dev_ops->rwlock);
+        ka_task_read_lock(&dev_ops->rwlock);
         if (dev_ops->status != DEVDRV_COMM_OPS_TYPE_ENABLE) {
-            read_unlock(&dev_ops->rwlock);
+            ka_task_read_unlock(&dev_ops->rwlock);
             continue;
         } else {
             conn_type = i;
-            read_unlock(&dev_ops->rwlock);
+            ka_task_read_unlock(&dev_ops->rwlock);
             break;
         }
     }
 
     return conn_type;
 }
+KA_EXPORT_SYMBOL(devdrv_get_global_connect_protocol);
 
 void devdrv_sub_ops_ref(struct devdrv_comm_dev_ops *dev_ops)
 {
-    atomic_sub(1, &dev_ops->ops.ref_cnt);
+    ka_base_atomic_sub(1, &dev_ops->ops.ref_cnt);
 }
 
 void devdrv_sub_ops_ref_by_type(struct devdrv_comm_dev_ops *dev_ops)
 {
-    atomic_sub(1, &dev_ops->ops.ref_cnt);
+    ka_base_atomic_sub(1, &dev_ops->ops.ref_cnt);
 }

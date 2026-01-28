@@ -23,7 +23,6 @@ target_include_directories(urd_obj PRIVATE
 target_link_libraries(urd_obj PRIVATE
     $<BUILD_INTERFACE:c_sec_headers>
     $<BUILD_INTERFACE:intf_pub>
-    # $<BUILD_INTERFACE:slog_headers>
     -ldl
     -Wl,--Bsymbolic
 )

@@ -13,14 +13,12 @@
 
 #ifndef VIRTMNG_MSG_DEF_H
 #define VIRTMNG_MSG_DEF_H
-#include <linux/types.h>
-#include <linux/mutex.h>
-#include <linux/wait.h>
-#include <linux/workqueue.h>
-#include <linux/semaphore.h>
+
 #include "virtmng_resource.h"
 #include "vmng_kernel_interface.h"
 #include "virtmng_msg_common.h"
+#include "ka_task_pub.h"
+#include "ka_list_pub.h"
 
 /* config */
 #define VMNG_MSG_CHAN_NUM_MAX VMNG_IRQ_NUM_FOR_MSG
@@ -109,9 +107,9 @@ struct vmng_msg_chan_tx {
     void *msg_dev;
     void *sq_tx;
     void (*send_irq_to_remote)(void *msg_dev, u32 vector);
-    wait_queue_head_t tx_block_wq;
+    ka_wait_queue_head_t tx_block_wq;
     u32 tx_block_status;
-    struct mutex mutex;
+    ka_mutex_t mutex;
     u32 tx_send_irq; /* from msg_dev->db_base or msix_base */
     u32 tx_finish_irq;
     u32 sq_size;
@@ -126,8 +124,8 @@ struct vmng_msg_chan_rx {
     void *msg_dev;
     void *sq_rx;
     void *sq_rx_safe_data;
-    struct workqueue_struct *rx_wq;
-    struct work_struct rx_work; /* rx */
+    ka_workqueue_struct_t *rx_wq;
+    ka_work_struct_t rx_work; /* rx */
     int (*rx_proc)(void *msg_chan, struct vmng_msg_chan_rx_proc_info *proc_info);
     void (*send_int)(void *msg_chan);
     u32 rx_recv_irq;
@@ -173,11 +171,11 @@ struct vmng_msg_cluster {
     u32 status;
     void *msg_dev;
     struct vmng_msg_proc msg_proc;
-    struct mutex mutex;             /* tx */
-    struct semaphore cluster_sema;
-    wait_queue_head_t tx_alloc_wq;  /* tx */
+    ka_mutex_t mutex;             /* tx */
+    ka_semaphore_t cluster_sema;
+    ka_wait_queue_head_t tx_alloc_wq;  /* tx */
     struct vmng_stack *alloc_stack; /* tx */
-    wait_queue_head_t tx_data_wq;   /* tx */
+    ka_wait_queue_head_t tx_data_wq;   /* tx */
     struct vmng_msg_chan_rx *msg_chan_rx_beg;
     struct vmng_msg_chan_tx *msg_chan_tx_beg;
     struct vmng_msg_chan_res res;
@@ -191,7 +189,7 @@ enum vmng_msg_dev_type {
 
 struct vmng_msg_dev {
     void *unit;
-    struct workqueue_struct *work_queue;
+    ka_workqueue_struct_t *work_queue;
     void __iomem *db_base; /* db base from zero, so db_base + db_irq_base *4 is the first doorbell for msg */
     void __iomem *mem_base;
     struct vmng_msg_ops ops;
@@ -210,7 +208,7 @@ struct vmng_msg_dev {
     u32 admin_db_id;
     enum vmng_msg_dev_type msg_dev_type;
     u32 status;
-    struct list_head list;
+    ka_list_head_t list;
 };
 
 bool vmng_is_vpc_chan(enum vmng_msg_chan_type chan_type);
@@ -228,7 +226,7 @@ enum vmng_msg_block_type vmng_msg_chan_type_to_block_type(enum vmng_msg_chan_typ
 int vmng_msg_chan_tx_info_para_check(const struct vmng_tx_msg_proc_info *tx_info);
 
 void vmng_msg_tx_finish_task(unsigned long data);
-void vmng_msg_rx_msg_task(struct work_struct *p_work);
+void vmng_msg_rx_msg_task(ka_work_struct_t *p_work);
 void vmng_msg_push_rx_queue_work(struct vmng_msg_chan_rx *msg_chan);
 
 int vmng_msg_fill_desc(const struct vmng_tx_msg_proc_info *tx_info, u32 opcode_d1, u32 opcode_d2,

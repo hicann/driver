@@ -11,16 +11,16 @@
  * GNU General Public License for more details.
  */
 
-#include <linux/io.h>
-#include <linux/gpio.h>
 #include "devdrv_util.h"
 #include "devdrv_pci.h"
 #include "devdrv_ctrl.h"
 #include "devdrv_pcie_link_info.h"
 #include "pbl/pbl_uda.h"
+#include "ka_kernel_def_pub.h"
+#include "ka_driver_pub.h"
 
 static u32 g_pcie_channel_status = DEVDRV_PCIE_COMMON_CHANNEL_INIT;
-static atomic_t g_peer_pcie_status;
+static ka_atomic_t g_peer_pcie_status;
 
 #define PCIE_DUMP_LTSSM_TRACER_FN_NAME "pcie_dump_ltssm_tracer"
 typedef void (*pcie_dump_ltssm_tracer_fn)(void);
@@ -30,7 +30,7 @@ void devdrv_get_pcie_dump_ltssm_tracer_symbol(void)
 {
 #ifdef CFG_FEATURE_PCIE_LINK_INFO
     g_pcie_dump_ltssm_tracer_fn = 
-        (pcie_dump_ltssm_tracer_fn)(uintptr_t)__symbol_get(PCIE_DUMP_LTSSM_TRACER_FN_NAME);
+        (pcie_dump_ltssm_tracer_fn)(uintptr_t)__ka_system_symbol_get(PCIE_DUMP_LTSSM_TRACER_FN_NAME);
     if (g_pcie_dump_ltssm_tracer_fn == NULL) {
         devdrv_warn("pcie_dump_ltssm_tracer symbol not find.\n");
     }
@@ -44,7 +44,7 @@ void devdrv_put_pcie_dump_ltssm_tracer_symbol(void)
         devdrv_warn("pcie_dump_ltssm_tracer symbol not find.\n");
         return;
     }
-    __symbol_put(PCIE_DUMP_LTSSM_TRACER_FN_NAME);
+    __ka_system_symbol_put(PCIE_DUMP_LTSSM_TRACER_FN_NAME);
 #endif
 }
 
@@ -68,7 +68,7 @@ void devdrv_set_pcie_channel_status(u32 status)
 #endif
     return;
 }
-EXPORT_SYMBOL(devdrv_set_pcie_channel_status);
+KA_EXPORT_SYMBOL(devdrv_set_pcie_channel_status);
 
 u32 devdrv_get_pcie_channel_status(void)
 {
@@ -77,23 +77,23 @@ u32 devdrv_get_pcie_channel_status(void)
 
 void devdrv_peer_pcie_status_init(void)
 {
-    atomic_set(&g_peer_pcie_status, DEVDRV_PEER_STATUS_NORMAL);
+    ka_base_atomic_set(&g_peer_pcie_status, DEVDRV_PEER_STATUS_NORMAL);
     return;
 }
 
 void devdrv_set_peer_pcie_status(u32 status)
 {
 #ifdef CFG_FEATURE_PCIE_LINK_INFO
-    atomic_set(&g_peer_pcie_status, status);
+    ka_base_atomic_set(&g_peer_pcie_status, status);
 #endif
     return;
 }
 
 u32 devdrv_get_peer_pcie_status(void)
 {
-    return atomic_read(&g_peer_pcie_status);
+    return ka_base_atomic_read(&g_peer_pcie_status);
 }
-EXPORT_SYMBOL(devdrv_get_peer_pcie_status);
+KA_EXPORT_SYMBOL(devdrv_get_peer_pcie_status);
 STATIC int devdrv_get_pcie_mac_link_info(struct devdrv_pcie_link_info_para *pcie_link_info)
 {
     u32 mac_reg_link_value;
@@ -104,13 +104,13 @@ STATIC int devdrv_get_pcie_mac_link_info(struct devdrv_pcie_link_info_para *pcie
         devdrv_err("pcie_link_info is NULL.\n");
         return -EINVAL;
     }
-    apb_base = ioremap(PCIE_BASE_ADDR, PCIE_REG_SIZE);
+    apb_base = ka_mm_ioremap(PCIE_BASE_ADDR, PCIE_REG_SIZE);
     if (apb_base == NULL) {
-        devdrv_err("ioremap fail, apb_base is NULL.\n");
+        devdrv_err("ka_mm_ioremap fail, apb_base is NULL.\n");
         return -ENOMEM;
     }
 
-    mac_reg_link_value = readl(apb_base + PCIE_MAC_REG_BASE + PCIE_MAC_REG_LINK_ADDR);
+    mac_reg_link_value = ka_mm_readl(apb_base + PCIE_MAC_REG_BASE + PCIE_MAC_REG_LINK_ADDR);
 
     // link_status
     pcie_link_info->link_status = DEVDRV_PCIE_LINK_STATUS_DOWN;
@@ -118,7 +118,7 @@ STATIC int devdrv_get_pcie_mac_link_info(struct devdrv_pcie_link_info_para *pcie
     if (ltssm_st == PCIE_MAC_REG_LINK_LTSSM_L0) {
         pcie_link_info->link_status = DEVDRV_PCIE_LINK_STATUS_OK;
     } else {
-        iounmap(apb_base);
+        ka_mm_iounmap(apb_base);
         apb_base = NULL;
         devdrv_limit_exclusive(warn, DEVDRV_LIMIT_LOG_0x00, "read mac reg link. (reg_value=0x%x)\n",
                                mac_reg_link_value);
@@ -130,7 +130,7 @@ STATIC int devdrv_get_pcie_mac_link_info(struct devdrv_pcie_link_info_para *pcie
     // lane_num
     pcie_link_info->lane_num = mac_reg_link_value & 0x3F;
 
-    iounmap(apb_base);
+    ka_mm_iounmap(apb_base);
     apb_base = NULL;
     return 0;
 }
@@ -161,7 +161,7 @@ int devdrv_get_pcie_link_info(u32 udevid, struct devdrv_pcie_link_info_para* pci
 
     return 0;
 }
-EXPORT_SYMBOL(devdrv_get_pcie_link_info);
+KA_EXPORT_SYMBOL(devdrv_get_pcie_link_info);
 
 int devdrv_set_err_out_gpio(void)
 {
@@ -189,20 +189,20 @@ STATIC int devdrv_set_pcie_linkdown(void)
     void __iomem *apb_base = NULL;
     u32 tmp;
 
-    apb_base = ioremap(PCIE_BASE_ADDR, PCIE_REG_SIZE);
+    apb_base = ka_mm_ioremap(PCIE_BASE_ADDR, PCIE_REG_SIZE);
     if (apb_base == NULL) {
-        devdrv_err("ioremap fail, apb_base is NULL.\n");
+        devdrv_err("ka_mm_ioremap fail, apb_base is NULL.\n");
         return -ENOMEM;
     }
 
     // mask linkdown interrupt
-    tmp = readl(apb_base + PCIE_MAC_REG_BASE + PCIE_MAC_REG_MAC_INT_MASK_OFFSET);
+    tmp = ka_mm_readl(apb_base + PCIE_MAC_REG_BASE + PCIE_MAC_REG_MAC_INT_MASK_OFFSET);
     tmp |= 0x2U;
-    writel(tmp, apb_base + PCIE_MAC_REG_BASE + PCIE_MAC_REG_MAC_INT_MASK_OFFSET);
+    ka_mm_writel(tmp, apb_base + PCIE_MAC_REG_BASE + PCIE_MAC_REG_MAC_INT_MASK_OFFSET);
     // disable port
-    writel(0U, apb_base + PCIE_CORE_GLOBAL_REG_BASE + PCIE_PORT_EN_OFFSET);
+    ka_mm_writel(0U, apb_base + PCIE_CORE_GLOBAL_REG_BASE + PCIE_PORT_EN_OFFSET);
 
-    iounmap(apb_base);
+    ka_mm_iounmap(apb_base);
     return 0;
 }
 
@@ -246,4 +246,4 @@ int devdrv_force_linkdown(u32 udevid)
     (void)uda_udevid_to_add_id(udevid, &index_id);
     return devdrv_force_linkdown_inner(index_id);
 }
-EXPORT_SYMBOL(devdrv_force_linkdown);
+KA_EXPORT_SYMBOL(devdrv_force_linkdown);

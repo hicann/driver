@@ -66,6 +66,9 @@
 #define DMS_SUBCMD_GET_PROCESS_LIST 52
 #define DMS_SUBCMD_GET_PROCESS_MEMORY 53
 #define DMS_SUBCMD_GET_TOKEN_VAL 54
+#define DMS_SUBCMD_GET_HCOM_CPU_NUM 55
+#define DMS_SUBCMD_GET_UDIS_DEVICE_INFO 56
+#define DMS_SUBCMD_SET_UDIS_DEVICE_INFO 57
 
 
 /* subcmd: The main cmd is DMS_MAIN_CMD_SOC */
@@ -183,6 +186,8 @@
 #define ASCEND_UB_SUBCMD_GET_URMA_NAME 0
 #define ASCEND_UB_SUBCMD_HOST_DEVICE_RELINK 1
 #define ASCEND_UB_SUBCMD_GET_EID_INDEX 2
+#define ASCEND_UB_SUBCMD_GET_D2D_EID 3
+#define ASCEND_UB_SUBCMD_GET_BUS_INST_EID 4
 
 /* subcmd: The main cmd is DMS_MAIN_CMD_DVPP */
 #define DMS_SUBCMD_GET_DVPP_STATUS  0
@@ -208,7 +213,7 @@
 #define DMS_SUBCMD_GET_FLASH_ERASE_COUNT_RESERVED3 3
 #define DMS_SUBCMD_FW_WRITE_PROTECTION 0x10
 
-/* filter:  dsmi_get_device_info mian cmd & subcmd, combain urd filter */
+/* filter:  dsmi_get_device_info main cmd & subcmd, combine urd filter */
 /* use urd main cmd: DMS_GET_SET_DEVICE_INFO_CMD, sub cmd: ZERO_CMD */
 
 #define DMS_MASK_USAGE   "data[0]=0x01,data[1]=0x02"
@@ -274,6 +279,8 @@
 #define DMS_BIST_CMD_SET_MBIST_MODE 4
 #define DMS_BIST_CMD_GET_MBIST_RESULT 5
 #define DMS_BIST_CMD_GET_CRACK_RESULT 6
+#define DMS_BIST_CMD_START_RBIST 7
+#define DMS_BIST_CMD_GET_RBIST_RESULT 8
 
 #define DMS_DTM_OPCODE_GET_INFO_LIST      0
 #define DMS_DTM_OPCODE_GET_STATE          1

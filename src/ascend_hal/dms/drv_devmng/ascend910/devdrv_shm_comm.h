@@ -15,7 +15,6 @@
 
 #include "tsdrv_user_common.h"
 #include "devmng_common.h"
-#include "tsdrv_conflict_check.h"
 
 #define OUT_OF_RANGE(value, min, max) ((((min) <= (value)) && ((value) <= (max))) ? (0) : (1))
 

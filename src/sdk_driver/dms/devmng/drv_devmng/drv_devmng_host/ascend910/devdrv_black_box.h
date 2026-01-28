@@ -18,10 +18,11 @@
 #include "devdrv_user_common.h"
 #include "dms_kernel_version_adapt.h"
 #include "kernel_version_adapt.h"
+#include "ka_task_pub.h"
 
 void devdrv_host_black_box_init(void);
 void devdrv_host_black_box_exit(void);
-void devdrv_host_black_box_close_check(pid_t pid);
+void devdrv_host_black_box_close_check(ka_pid_t pid);
 int devdrv_host_black_box_add_exception(u32 devid, u32 code, struct timespec stamp, const void *data);
 void devdrv_host_black_box_get_exception(struct devdrv_black_box_user *black_box_user, int index);
 extern int devdrv_register_black_callback(struct devdrv_black_callback *black_callback);

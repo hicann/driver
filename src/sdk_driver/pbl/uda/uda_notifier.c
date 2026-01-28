@@ -16,6 +16,11 @@
 #include "uda_dev.h"
 #include "pbl_mem_alloc_interface.h"
 #include "uda_notifier.h"
+#include "ka_kernel_def_pub.h"
+#include "ka_memory_pub.h"
+#include "ka_list_pub.h"
+#include "ka_task_pub.h"
+#include "ka_base_pub.h"
 
 #define UDA_PRI_DEC_ORDER 0 /* priority is high to low */
 #define UDA_PRI_INC_ORDER 1 /* priority is low to high */
@@ -62,7 +67,7 @@ static int uda_single_pri_notifier_call(struct list_head *nf_head, u32 udevid, e
 {
     struct uda_notifier_node *nf = NULL;
 
-    list_for_each_entry(nf, nf_head, node) {
+    ka_list_for_each_entry(nf, nf_head, node) {
         int ret = uda_single_notifier_call(nf, udevid, action);
         if (ret != 0) {
             uda_warn("Notifier call warn. (notifier=%s; action=%d; ret=%d)\n", nf->notifier, action, ret);
@@ -95,9 +100,9 @@ int uda_notifier_call(u32 udevid, struct uda_dev_type *type, enum uda_notified_a
     struct uda_notifiers *notifiers = uda_get_notifiers(type);
     int ret;
 
-    down_read(&notifiers->sem);
+    ka_task_down_read(&notifiers->sem);
     ret = _uda_notifier_call(notifiers, udevid, action);
-    up_read(&notifiers->sem);
+    ka_task_up_read(&notifiers->sem);
 
     return ret;
 }
@@ -110,8 +115,8 @@ static struct uda_notifier_node *uda_find_notifier_node(struct uda_notifiers *no
         struct list_head *nf_head = &notifiers->pri_head[i];
         struct uda_notifier_node *nf = NULL;
 
-        list_for_each_entry(nf, nf_head, node) {
-            if (strcmp(nf->notifier, notifier) == 0) {
+        ka_list_for_each_entry(nf, nf_head, node) {
+            if (ka_base_strcmp(nf->notifier, notifier) == 0) {
                 return nf;
             }
         }
@@ -122,7 +127,7 @@ static struct uda_notifier_node *uda_find_notifier_node(struct uda_notifiers *no
 
 static struct uda_notifier_node *uda_create_notifier(const char *notifier, uda_notify func)
 {
-    struct uda_notifier_node *nf = dbl_kzalloc(sizeof(struct uda_notifier_node), GFP_KERNEL);
+    struct uda_notifier_node *nf = dbl_kzalloc(sizeof(struct uda_notifier_node), KA_GFP_KERNEL);
     if (nf == NULL) {
         uda_err("Out of memory.\n");
         return NULL;
@@ -182,7 +187,7 @@ static int _uda_notifier_register(struct uda_notifiers *notifiers, struct uda_de
         return -ENOMEM;
     }
 
-    list_add_tail(&nf->node, &notifiers->pri_head[pri]);
+    ka_list_add_tail(&nf->node, &notifiers->pri_head[pri]);
 
     /* The priority cannot be guaranteed, just for testing(manually insmod) purposes */
     uda_notifier_change_action(nf, type, UDA_INIT);
@@ -196,7 +201,7 @@ int hal_kernel_uda_notifier_register(const char *notifier, struct uda_dev_type *
 {
     return uda_notifier_register(notifier,type,pri,func);
 }
-EXPORT_SYMBOL(hal_kernel_uda_notifier_register);
+KA_EXPORT_SYMBOL(hal_kernel_uda_notifier_register);
 
 int uda_notifier_register(const char *notifier, struct uda_dev_type *type, enum uda_priority pri, uda_notify func)
 {
@@ -221,13 +226,13 @@ int uda_notifier_register(const char *notifier, struct uda_dev_type *type, enum 
 
     notifiers = uda_get_notifiers(type);
 
-    down_write(&notifiers->sem);
+    ka_task_down_write(&notifiers->sem);
     ret = _uda_notifier_register(notifiers, type, notifier, pri, func);
-    up_write(&notifiers->sem);
+    ka_task_up_write(&notifiers->sem);
 
     return ret;
 }
-EXPORT_SYMBOL(uda_notifier_register);
+KA_EXPORT_SYMBOL(uda_notifier_register);
 
 static int _uda_notifier_unregister(struct uda_notifiers *notifiers, struct uda_dev_type *type, const char *notifier)
 {
@@ -241,7 +246,7 @@ static int _uda_notifier_unregister(struct uda_notifiers *notifiers, struct uda_
 
     uda_notifier_change_action(nf, type, UDA_UNINIT);
 
-    list_del(&nf->node);
+    ka_list_del(&nf->node);
     uda_destroy_notifier(nf);
 
     uda_info("Unregister notifier success. (notifier=%s)\n", notifier);
@@ -252,7 +257,7 @@ int hal_kernel_uda_notifier_unregister(const char *notifier, struct uda_dev_type
 {
     return uda_notifier_unregister(notifier,type);
 }
-EXPORT_SYMBOL(hal_kernel_uda_notifier_unregister);
+KA_EXPORT_SYMBOL(hal_kernel_uda_notifier_unregister);
 
 int uda_notifier_unregister(const char *notifier, struct uda_dev_type *type)
 {
@@ -272,13 +277,13 @@ int uda_notifier_unregister(const char *notifier, struct uda_dev_type *type)
 
     notifiers = uda_get_notifiers(type);
 
-    down_write(&notifiers->sem);
+    ka_task_down_write(&notifiers->sem);
     ret = _uda_notifier_unregister(notifiers, type, notifier);
-    up_write(&notifiers->sem);
+    ka_task_up_write(&notifiers->sem);
 
     return ret;
 }
-EXPORT_SYMBOL(uda_notifier_unregister);
+KA_EXPORT_SYMBOL(uda_notifier_unregister);
 
 void uda_for_each_notifiers(void *priv,
     void (*func)(struct uda_dev_type *type, struct uda_notifiers *notifiers, void *priv))
@@ -301,9 +306,9 @@ static void _uda_notifiers_init(struct uda_dev_type *type, struct uda_notifiers 
     int i;
 
     for (i = 0; i < UDA_PRI_MAX; i++) {
-        INIT_LIST_HEAD(&notifiers->pri_head[i]);
+        KA_INIT_LIST_HEAD(&notifiers->pri_head[i]);
     }
-    init_rwsem(&notifiers->sem);
+    ka_task_init_rwsem(&notifiers->sem);
 }
 
 int uda_notifier_init(void)
@@ -320,8 +325,8 @@ static void _uda_notifiers_uninit(struct uda_dev_type *type, struct uda_notifier
         struct list_head *nf_head = &notifiers->pri_head[i];
         struct uda_notifier_node *nf = NULL, *n = NULL;
 
-        list_for_each_entry_safe(nf, n, nf_head, node) {
-            list_del(&nf->node);
+        ka_list_for_each_entry_safe(nf, n, nf_head, node) {
+            ka_list_del(&nf->node);
             uda_destroy_notifier(nf);
         }
     }

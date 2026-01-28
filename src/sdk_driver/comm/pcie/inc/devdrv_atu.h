@@ -14,9 +14,8 @@
 #ifndef _DEVDRV_ATU_H_
 #define _DEVDRV_ATU_H_
 
-#include <linux/types.h>
-
 #include "devdrv_msg_def.h"
+#include "ka_memory_pub.h"
 
 #define ATU_INVALID 0
 #define ATU_VALID 1
@@ -97,7 +96,7 @@ int devdrv_get_dev_tx_atu(const void __iomem *apb_base, struct devdrv_iob_atu at
 int devdrv_del_dev_tx_atu(void __iomem *apb_base, struct devdrv_iob_atu atu[], u32 len,
     struct devdrv_cfg_tx_atu_para *tx_para, u64 target_addr);
 int devdrv_del_dev_h2d_tx_atu(void __iomem *apb_base, struct devdrv_iob_atu atu[], u32 len,
-    const struct devdrv_cfg_tx_atu_para *tx_para, dma_addr_t target_addr);
-u32 devdrv_get_h2d_atu_id(u32 devid, dma_addr_t addr);
+    const struct devdrv_cfg_tx_atu_para *tx_para, ka_dma_addr_t target_addr);
+u32 devdrv_get_h2d_atu_id(u32 devid, ka_dma_addr_t addr);
 void devdrv_tx_atu_print_cfg_info(void);
 #endif

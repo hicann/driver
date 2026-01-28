@@ -11,6 +11,7 @@
  * GNU General Public License for more details.
  */
 
+#include "ka_task_pub.h"
 #include "udis_log.h"
 #include "udis_management.h"
 
@@ -20,7 +21,7 @@ STATIC struct rw_semaphore g_udis_cb_lock[UDIS_DEVICE_UDEVID_MAX];
 struct udis_ctrl_block* udis_get_ctrl_block(unsigned int udevid)
 {
     if (udevid >= UDIS_DEVICE_UDEVID_MAX) {
-        udis_err("Invalide udevid. (udevid=%u)\n", udevid);
+        udis_err("Invalid udevid. (udevid=%u)\n", udevid);
         return NULL;
     }
     return g_udis_cb[udevid];
@@ -29,7 +30,7 @@ struct udis_ctrl_block* udis_get_ctrl_block(unsigned int udevid)
 int udis_set_ctrl_block(unsigned int udevid, struct udis_ctrl_block *ctrl_block)
 {
     if (udevid >= UDIS_DEVICE_UDEVID_MAX) {
-        udis_err("Invalide udevid. (udevid=%u)\n", udevid);
+        udis_err("Invalid udevid. (udevid=%u)\n", udevid);
         return -EINVAL;
     }
     g_udis_cb[udevid] = ctrl_block;
@@ -38,25 +39,25 @@ int udis_set_ctrl_block(unsigned int udevid, struct udis_ctrl_block *ctrl_block)
 
 void udis_cb_rwlock_init(unsigned int udevid)
 {
-    init_rwsem(&g_udis_cb_lock[udevid]);
+    ka_task_init_rwsem(&g_udis_cb_lock[udevid]);
 }
 
 void udis_cb_write_lock(unsigned int udevid)
 {
-    down_write(&g_udis_cb_lock[udevid]);
+    ka_task_down_write(&g_udis_cb_lock[udevid]);
 }
 
 void udis_cb_write_unlock(unsigned int udevid)
 {
-    up_write(&g_udis_cb_lock[udevid]);
+    ka_task_up_write(&g_udis_cb_lock[udevid]);
 }
 
 void udis_cb_read_lock(unsigned int udevid)
 {
-    down_read(&g_udis_cb_lock[udevid]);
+    ka_task_down_read(&g_udis_cb_lock[udevid]);
 }
 
 void udis_cb_read_unlock(unsigned int udevid)
 {
-    up_read(&g_udis_cb_lock[udevid]);
+    ka_task_up_read(&g_udis_cb_lock[udevid]);
 }

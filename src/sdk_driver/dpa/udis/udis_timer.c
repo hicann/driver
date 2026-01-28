@@ -12,6 +12,12 @@
  */
 
 #include <linux/kernel.h>
+
+#include "ka_task_pub.h"
+#include "ka_system_pub.h"
+#include "ka_base_pub.h"
+#include "ka_compiler_pub.h"
+#include "ka_list_pub.h"
 #include "securec.h"
 #include "pbl_mem_alloc_interface.h"
 #include "udis_log.h"
@@ -31,36 +37,36 @@ STATIC void udis_period_work_handle(struct work_struct *work_data)
 
     task_node = container_of(work_data, struct udis_period_task_node, work);
 
-    old_expried_cnt = atomic_read(&task_node->expired_cnt);
+    old_expried_cnt = ka_base_atomic_read(&task_node->expired_cnt);
     new_expried_cnt = old_expried_cnt * UDIS_TIMER_TASK_BACKOFF_FACTOR;
     if (new_expried_cnt < old_expried_cnt) {
         goto out;
     }
 
     ret = task_node->period_task_func(task_node->udevid, task_node->privilege_data);
-    if (unlikely(ret != 0)) {
+    if (ka_unlikely(ret != 0)) {
         /* If the periodic task execution fails, suppress the task execution, increase its period by tenfold.*/
-        atomic_set(&task_node->expired_cnt, new_expried_cnt);
+        ka_base_atomic_set(&task_node->expired_cnt, new_expried_cnt);
     } else if ((unsigned int)old_expried_cnt != task_node->original_expired_cnt) {
         /* If the periodic task execution is successful and the task period has been modified,
          * the task period is restored to the initial value.
          */
-        atomic_set(&task_node->expired_cnt, task_node->original_expired_cnt);
+        ka_base_atomic_set(&task_node->expired_cnt, task_node->original_expired_cnt);
     }
 out:
-    atomic_dec(&task_node->queueflag);
+    ka_base_atomic_dec(&task_node->queueflag);
 }
 
 STATIC void udis_timer_queue_work(struct workqueue_struct *wq, struct udis_period_task_node *task_node)
 {
     /* the work of period task node has been in wq*/
-    if (atomic_read(&task_node->queueflag) != 0) {
+    if (ka_base_atomic_read(&task_node->queueflag) != 0) {
         return;
     }
 
-    atomic_inc(&task_node->queueflag);
+    ka_base_atomic_inc(&task_node->queueflag);
 #ifdef DRV_HOST
-    queue_work(wq, &task_node->work);
+    ka_task_queue_work(wq, &task_node->work);
 #endif
 }
 
@@ -72,7 +78,7 @@ STATIC struct workqueue_struct *udis_timer_alloc_workqueue(const char *name, uns
     flags |= WQ_UNBOUND;
 #endif
 
-    wq = alloc_workqueue("%s", flags, max_active, name);
+    wq = ka_task_alloc_workqueue("%s", flags, max_active, name);
     if (wq == NULL) {
         udis_err("Failed to alloc workqueue. (name=%s; flags=0x%x; max_active=%d)\n", name, flags, max_active);
         return NULL;
@@ -86,20 +92,20 @@ STATIC enum hrtimer_restart udis_hrtimer_irq_handle(struct hrtimer *htimer)
     struct udis_period_task_node *task_node = NULL;
     struct workqueue_struct *wq = NULL;
 
-    rcu_read_lock();
-    list_for_each_entry_rcu(task_node, &g_udis_timer.period_task_list, node) {
+    ka_task_rcu_read_lock();
+    ka_list_for_each_entry_rcu(task_node, &g_udis_timer.period_task_list, node) {
         task_node->cur_cnt++;
-        if (task_node->cur_cnt < (unsigned int)atomic_read(&task_node->expired_cnt)) {
+        if (task_node->cur_cnt < (unsigned int)ka_base_atomic_read(&task_node->expired_cnt)) {
             continue;
         }
         task_node->cur_cnt = 0;
         wq = (task_node->work_type == COMMON_WORK ? g_udis_timer.common_wq : task_node->workqueue);
         udis_timer_queue_work(wq, task_node);
     }
-    rcu_read_unlock();
+    ka_task_rcu_read_unlock();
 
-    (void)hrtimer_forward_now(htimer, ms_to_ktime(UDIS_TIMER_STEP_MS));
-    return HRTIMER_RESTART;
+    (void)ka_system_hrtimer_forward_now(htimer, ka_system_ms_to_ktime(UDIS_TIMER_STEP_MS));
+    return KA_HRTIMER_RESTART;
 }
 
 STATIC int udis_period_task_node_init(unsigned int udevid, const struct udis_timer_task *timer_task,
@@ -124,9 +130,9 @@ STATIC int udis_period_task_node_init(unsigned int udevid, const struct udis_tim
         udis_err("Call strncpy_s failed. (udevid=%u; task_name=%s; ret=%d)\n", udevid, timer_task->task_name, ret);
         return -ENOMEM;
     }
-    INIT_WORK(&task_node->work, udis_period_work_handle);
-    atomic_set(&task_node->queueflag, 0);
-    atomic_set(&task_node->expired_cnt, task_node->original_expired_cnt);
+    KA_TASK_INIT_WORK(&task_node->work, udis_period_work_handle);
+    ka_base_atomic_set(&task_node->queueflag, 0);
+    ka_base_atomic_set(&task_node->expired_cnt, task_node->original_expired_cnt);
 
     if (task_node->work_type == COMMON_WORK) {
         return 0;
@@ -175,8 +181,8 @@ STATIC int udis_timer_check_task_para(const struct udis_timer_task *timer_task)
 STATIC struct udis_period_task_node *udis_timer_find_task_node(const char *task_name)
 {
     struct udis_period_task_node *task_node = NULL;
-    list_for_each_entry(task_node, &g_udis_timer.period_task_list, node) {
-        if (strcmp(task_node->task_name, task_name) != 0) {
+    ka_list_for_each_entry(task_node, &g_udis_timer.period_task_list, node) {
+        if (ka_base_strcmp(task_node->task_name, task_name) != 0) {
             continue;
         }
         return task_node;
@@ -194,31 +200,31 @@ int hal_kernel_register_period_task(unsigned int udevid, const struct udis_timer
         return -EINVAL;
     }
 
-    mutex_lock(&g_udis_timer.task_list_lock);
+    ka_task_mutex_lock(&g_udis_timer.task_list_lock);
 
     if (g_udis_timer.task_num >= UDIS_TIMER_TASK_MAX_NUM) {
-        mutex_unlock(&g_udis_timer.task_list_lock);
+        ka_task_mutex_unlock(&g_udis_timer.task_list_lock);
         udis_err("Udis timer task num is full. (udevid=%u; task_name=%s)\n", udevid, timer_task->task_name);
         return -EUSERS;
     }
 
     task_node = udis_timer_find_task_node(timer_task->task_name);
     if (task_node != NULL) {
-        mutex_unlock(&g_udis_timer.task_list_lock);
+        ka_task_mutex_unlock(&g_udis_timer.task_list_lock);
         udis_info("Udis timer task node is existed. (udevid=%u; task_name=%s)\n", udevid, timer_task->task_name);
         return -EEXIST;
     }
 
-    task_node = dbl_kzalloc(sizeof(struct udis_period_task_node), GFP_KERNEL | __GFP_ACCOUNT);
+    task_node = dbl_kzalloc(sizeof(struct udis_period_task_node), KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
     if (task_node == NULL) {
-        mutex_unlock(&g_udis_timer.task_list_lock);
+        ka_task_mutex_unlock(&g_udis_timer.task_list_lock);
         udis_err("Udis timer malloc task_node failed. (udevid=%u; task_name=%s)\n", udevid, timer_task->task_name);
         return -ENOMEM;
     }
 
     ret = udis_period_task_node_init(udevid, timer_task, task_node);
     if (ret != 0) {
-        mutex_unlock(&g_udis_timer.task_list_lock);
+        ka_task_mutex_unlock(&g_udis_timer.task_list_lock);
         dbl_kfree(task_node);
         task_node = NULL;
         udis_err("Udis timer init task_node failed. (udevid=%u; task_name=%s; ret=%d)\n",
@@ -226,10 +232,10 @@ int hal_kernel_register_period_task(unsigned int udevid, const struct udis_timer
         return ret;
     }
 
-    list_add_tail_rcu(&task_node->node, &g_udis_timer.period_task_list);
+    ka_list_add_tail_rcu(&task_node->node, &g_udis_timer.period_task_list);
     g_udis_timer.task_num++;
 
-    mutex_unlock(&g_udis_timer.task_list_lock);
+    ka_task_mutex_unlock(&g_udis_timer.task_list_lock);
     udis_info("udis timer task register success. (udevid=%u; task_name=%s)\n", udevid, timer_task->task_name);
     return 0;
 }
@@ -238,27 +244,27 @@ int hal_kernel_unregister_period_task(unsigned int udevid, const char *task_name
 {
     struct udis_period_task_node *task_node = NULL;
 
-    mutex_lock(&g_udis_timer.task_list_lock);
+    ka_task_mutex_lock(&g_udis_timer.task_list_lock);
 
     task_node = udis_timer_find_task_node(task_name);
     if (task_node == NULL) {
-        mutex_unlock(&g_udis_timer.task_list_lock);
+        ka_task_mutex_unlock(&g_udis_timer.task_list_lock);
         udis_info("Udis timer task node does not existed. (udevid=%d; task_name=%s)\n", udevid, task_name);
         return -ENODATA;
     }
 
     g_udis_timer.task_num--;
-    list_del_rcu(&task_node->node);
+    ka_list_del_rcu(&task_node->node);
     synchronize_rcu();
 
     if (task_node->workqueue != NULL) {
-        flush_workqueue(task_node->workqueue);
-        destroy_workqueue(task_node->workqueue);
+        ka_task_flush_workqueue(task_node->workqueue);
+        ka_task_destroy_workqueue(task_node->workqueue);
     } else {
-        flush_workqueue(g_udis_timer.common_wq);
+        ka_task_flush_workqueue(g_udis_timer.common_wq);
     }
 
-    mutex_unlock(&g_udis_timer.task_list_lock);
+    ka_task_mutex_unlock(&g_udis_timer.task_list_lock);
     dbl_kfree(task_node);
     task_node = NULL;
 
@@ -269,9 +275,9 @@ int hal_kernel_unregister_period_task(unsigned int udevid, const char *task_name
 int udis_timer_init(void)
 {
     char *common_wq_name = "udis_timer";
-    INIT_LIST_HEAD_RCU(&g_udis_timer.period_task_list);
-    mutex_init(&g_udis_timer.task_list_lock);
-    hrtimer_init(&g_udis_timer.timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
+    KA_INIT_LIST_HEAD_RCU(&g_udis_timer.period_task_list);
+    ka_task_mutex_init(&g_udis_timer.task_list_lock);
+    ka_system_hrtimer_init(&g_udis_timer.timer, KA_CLOCK_MONOTONIC, KA_HRTIMER_MODE_REL);
     g_udis_timer.timer.function = udis_hrtimer_irq_handle;
     g_udis_timer.task_num = 0;
     g_udis_timer.common_wq = udis_timer_alloc_workqueue(common_wq_name, WQ_MEM_RECLAIM, UDIS_DEFAULT_WQ_MAX_ACTIVES);
@@ -279,7 +285,7 @@ int udis_timer_init(void)
         return -ENOMEM;
     }
 
-    hrtimer_start(&g_udis_timer.timer, ms_to_ktime(UDIS_TIMER_STEP_MS), HRTIMER_MODE_REL);
+    ka_system_hrtimer_start(&g_udis_timer.timer, ka_system_ms_to_ktime(UDIS_TIMER_STEP_MS), KA_HRTIMER_MODE_REL);
     udis_info("udis timer init success, start timer.\n");
     return 0;
 }
@@ -288,21 +294,21 @@ void udis_timer_uninit(void)
 {
     struct udis_period_task_node *task_node = NULL;
     struct udis_period_task_node *next = NULL;
-    mutex_lock(&g_udis_timer.task_list_lock);
-    (void)hrtimer_cancel(&g_udis_timer.timer);
+    ka_task_mutex_lock(&g_udis_timer.task_list_lock);
+    (void)ka_system_hrtimer_cancel(&g_udis_timer.timer);
     synchronize_rcu();
-    flush_workqueue(g_udis_timer.common_wq);
-    destroy_workqueue(g_udis_timer.common_wq);
-    list_for_each_entry_safe(task_node, next, &g_udis_timer.period_task_list, node) {
+    ka_task_flush_workqueue(g_udis_timer.common_wq);
+    ka_task_destroy_workqueue(g_udis_timer.common_wq);
+    ka_list_for_each_entry_safe(task_node, next, &g_udis_timer.period_task_list, node) {
         if (task_node->workqueue != NULL) {
-            flush_workqueue(task_node->workqueue);
-            destroy_workqueue(task_node->workqueue);
+            ka_task_flush_workqueue(task_node->workqueue);
+            ka_task_destroy_workqueue(task_node->workqueue);
         }
-        list_del(&task_node->node);
+        ka_list_del(&task_node->node);
         dbl_kfree(task_node);
         task_node = NULL;
     }
-    mutex_unlock(&g_udis_timer.task_list_lock);
+    ka_task_mutex_unlock(&g_udis_timer.task_list_lock);
     udis_info("udis timer uninit success, cancel timer.\n");
     return;
 }

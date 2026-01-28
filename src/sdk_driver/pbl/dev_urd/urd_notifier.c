@@ -16,6 +16,8 @@
 #include <linux/notifier.h>
 #include <linux/export.h>
 #include "urd_notifier.h"
+#include "ka_dfx_pub.h"
+#include "ka_kernel_def_pub.h"
 /*
  * URD interface notification chain, which is used to
  * notify other modules of user process startup and exit events
@@ -24,18 +26,17 @@ static RAW_NOTIFIER_HEAD(g_urd_notifier_chain);
 
 int urd_notifier_call(u64 mode, void* data)
 {
-    return raw_notifier_call_chain(&g_urd_notifier_chain, mode, data);
+    return ka_dfx_raw_notifier_call_chain(&g_urd_notifier_chain, mode, data);
 }
 
 int urd_register_notifier(struct notifier_block* nb)
 {
-    return raw_notifier_chain_register(&g_urd_notifier_chain, nb);
+    return ka_dfx_raw_notifier_chain_register(&g_urd_notifier_chain, nb);
 }
-EXPORT_SYMBOL(urd_register_notifier);
+KA_EXPORT_SYMBOL_GPL(urd_register_notifier);
 
 int urd_unregister_notifier(struct notifier_block* nb)
 {
-    return raw_notifier_chain_unregister(&g_urd_notifier_chain, nb);
+    return ka_dfx_raw_notifier_chain_unregister(&g_urd_notifier_chain, nb);
 }
-EXPORT_SYMBOL(urd_unregister_notifier);
-
+KA_EXPORT_SYMBOL_GPL(urd_unregister_notifier);

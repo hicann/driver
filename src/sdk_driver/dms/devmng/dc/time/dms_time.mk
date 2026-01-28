@@ -7,14 +7,7 @@
 # INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
 # See LICENSE in the root of the software repository for the full text of the License.
 # ------------------------------------------------------------------------------------------------------------
-ifeq ($(DAVINCI_HIAI_DKMS),y)
-	asdrv_dms-y += devmng/dc/time/host/dms_time_host.o
-	EXTRA_CFLAGS += -I$(DRIVER_MODULE_DEVMNG_DIR)/dc/time/host
-	EXTRA_CFLAGS += -I$(DRIVER_MODULE_DEVMNG_DIR)/dc/time
-	EXTRA_CFLAGS += -DCFG_FEATURE_TIMESYNC
-else #for CMake & ctrl cpu open
-	asdrv_dms-y += devmng/dc/time/host/dms_time_host.o
-	EXTRA_CFLAGS += -I$(DRIVER_MODULE_DEVMNG_DIR)/dc/time/host
-	EXTRA_CFLAGS += -I$(DRIVER_MODULE_DEVMNG_DIR)/dc/time
-	EXTRA_CFLAGS += -DCFG_FEATURE_TIMESYNC
-endif
+
+asdrv_dms-y += devmng/dc/time/host/dms_time_host.o
+EXTRA_CFLAGS += -I$(DRIVER_MODULE_DEVMNG_DIR)/dc/time/host
+EXTRA_CFLAGS += -I$(DRIVER_MODULE_DEVMNG_DIR)/dc/time

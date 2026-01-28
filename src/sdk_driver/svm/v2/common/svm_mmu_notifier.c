@@ -10,14 +10,6 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#include <linux/version.h>
-#include <linux/delay.h>
-#include <linux/slab.h>
-#include <linux/vmalloc.h>
-#include <linux/sched.h>
-#include <linux/hashtable.h>
-#include <linux/version.h>
-#include <linux/mm.h>
 
 #include "devmm_common.h"
 #include "devmm_proc_info.h"
@@ -27,16 +19,19 @@
 #include "devmm_mem_alloc_interface.h"
 #include "svm_mmu_notifier.h"
 #include "svm_dynamic_addr.h"
+#include "ka_base_pub.h"
+#include "ka_memory_pub.h"
+#include "ka_hashtable_pub.h"
 
 void devmm_mmu_notifier_unregister_no_release(struct devmm_svm_process *svm_proc)
 {
 #ifndef ADAPT_KP_OS_FOR_EMU_TEST
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 4, 0))
     if (svm_proc->notifier != NULL) {
-        mmu_notifier_put(svm_proc->notifier);
+        ka_mm_mmu_notifier_put(svm_proc->notifier);
     }
 #else
-    mmu_notifier_unregister_no_release(&svm_proc->notifier, svm_proc->mm);
+    ka_mm_mmu_notifier_unregister_no_release(&svm_proc->notifier, svm_proc->mm);
 #endif
 #endif
 }
@@ -107,7 +102,7 @@ static bool devmm_mem_is_in_readonly_vma_range(u64 start, u64 end)
     return false;
 }
 
-static bool _devmm_mem_is_in_vma_range(u64 start, u64 end)
+static bool _devmm_mem_is_in_vma_range(ka_vm_area_struct_t *vma[], u32 vma_num, u64 start, u64 end)
 {
     u64 size = end - start;
 
@@ -133,17 +128,23 @@ static bool _devmm_mem_is_in_vma_range(u64 start, u64 end)
             (end == DEVMM_SVM_MEM_START + DEVMM_SVM_MEM_SIZE)) {
             return true;
         }
+    } else if (size == DEVMM_HOST_PIN_SIZE) {
+        if ((start == DEVMM_HOST_PIN_START) && (end == DEVMM_HOST_PIN_END)) {
+            ka_vm_area_struct_t *tmp_vma = NULL;
+            tmp_vma = _devmm_find_vma_proc(vma, vma_num, DEVMM_HOST_PIN_START);
+            return (tmp_vma != NULL);
+        }
     }
     return false;
 }
 #endif
 
-bool devmm_mem_is_in_vma_range(u64 start, u64 end)
+bool devmm_mem_is_in_vma_range(ka_vm_area_struct_t *vma[], u32 vma_num, u64 start, u64 end)
 {
 #ifndef EMU_ST
     bool is_in_range = false;
 
-    is_in_range = _devmm_mem_is_in_vma_range(start, end);
+    is_in_range = _devmm_mem_is_in_vma_range(vma, vma_num, start, end);
     if (is_in_range) {
         return true;
     }
@@ -152,7 +153,7 @@ bool devmm_mem_is_in_vma_range(u64 start, u64 end)
         u64 check_start = start - devmm_get_double_pgtable_offset();
         u64 check_end = end - devmm_get_double_pgtable_offset();
 
-        return _devmm_mem_is_in_vma_range(check_start, check_end);
+        return _devmm_mem_is_in_vma_range(vma, vma_num, check_start, check_end);
     }
 #endif
     return false;
@@ -198,7 +199,7 @@ STATIC int _devmm_notifier_start(ka_mmu_notifier_t *mn, ka_mm_struct_t *mm,
             (void)svm_da_del_addr(svm_proc, start, end - start);
         }
         svm_release_da(svm_proc);
-    } else if (devmm_mem_is_in_vma_range(start, end)) {
+    } else if (devmm_mem_is_in_vma_range(svm_proc->vma, svm_proc->vma_num, start, end)) {
         if (blockable == false) {
             return -EAGAIN;
         }
@@ -219,7 +220,7 @@ STATIC int _devmm_notifier_start(ka_mmu_notifier_t *mn, ka_mm_struct_t *mm,
 STATIC int devmm_notifier_start(ka_mmu_notifier_t *mn, const ka_mmu_notifier_range_t *range)
 {
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 2, 0))
-    bool blockable = mmu_notifier_range_blockable(range);
+    bool blockable = ka_mm_mmu_notifier_range_blockable(range);
 #else
     bool blockable = range->blockable;
 #endif
@@ -301,7 +302,7 @@ int devmm_mmu_notifier_register(struct devmm_svm_process *svm_proc)
     }
 #else
     svm_proc->notifier.ops = &devmm_process_mmu_notifier;
-    ret = mmu_notifier_register(&svm_proc->notifier, svm_proc->mm);
+    ret = ka_mm_mmu_notifier_register(&svm_proc->notifier, svm_proc->mm);
 #endif
     if (ret == 0) {
         /*

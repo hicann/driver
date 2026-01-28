@@ -7,8 +7,15 @@
 # INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
 # See LICENSE in the root of the software repository for the full text of the License.
 # ------------------------------------------------------------------------------------------------------------
-set(asdrv_dms_depends drv_pcie_host asdrv_pbl drv_seclib_host asdrv_vmng asdrv_vpc
-                      drv_vascend_stub asdrv_fms asdrv_dpa)
+if(${PRODUCT} STREQUAL ascend910B)
+    set(asdrv_dms_depends drv_pcie_host asdrv_pbl drv_seclib_host asdrv_vmng asdrv_vpc
+                        drv_vascend_stub asdrv_fms asdrv_dpa ascend_kernel_open_adapt)
+endif()
+
+if(${PRODUCT} STREQUAL ascend910_95)
+    set(asdrv_dms_depends drv_pcie_host drv_seclib_host asdrv_fms asdrv_pbl ascend_kernel_open_adapt
+                        asdrv_dpa ascend_adapter asdrv_vmng)
+endif()
 
 list(APPEND MAKE_ARGS
     KBUILD_MODPOST_WARN=1
@@ -18,3 +25,7 @@ add_host_ko(LOCAL_MODULE asdrv_dms
     KO_SRC_FOLDER ${CMAKE_CURRENT_SOURCE_DIR}
     MAKE_ARGS ${MAKE_ARGS}
     TARGETE_DPENDS "${asdrv_dms_depends}")
+
+if(${PRODUCT} STREQUAL ascend910_95)
+    add_subdirectory(devmng/adapter)
+endif()

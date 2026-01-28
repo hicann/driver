@@ -17,6 +17,7 @@
 #include "devmm_chan_handlers.h"
 #include "devmm_proc_info.h"
 #include "svm_host_msg_client.h"
+#include "ka_kernel_def_pub.h"
 
 svm_host_agent_msg_send_handle host_send_handle = NULL;
 
@@ -24,7 +25,7 @@ void devmm_register_host_agent_msg_send_handle(svm_host_agent_msg_send_handle fu
 {
     host_send_handle = func;
 }
-EXPORT_SYMBOL_GPL(devmm_register_host_agent_msg_send_handle);
+KA_EXPORT_SYMBOL_GPL(devmm_register_host_agent_msg_send_handle);
 
 bool devmm_host_agent_is_ready(u32 agent_id)
 {
@@ -48,7 +49,7 @@ int devmm_host_chan_msg_recv(void *msg, unsigned int len, unsigned int out_len)
 
     return devmm_chan_msg_dispatch(msg, len, out_len, &real_out_len, &devmm_channel_msg_processes[0]);
 }
-EXPORT_SYMBOL_GPL(devmm_host_chan_msg_recv);
+KA_EXPORT_SYMBOL_GPL(devmm_host_chan_msg_recv);
 
 int devmm_host_msg_chan_init(void)
 {

@@ -22,6 +22,8 @@
 #include "dms_kernel_version_adapt.h"
 #include "kernel_version_adapt.h"
 #include "dms_event_distribute_proc.h"
+#include "ka_base_pub.h"
+#include "ka_kernel_def_pub.h"
 
 static add_exception_handle g_add_exception_func = NULL;
 
@@ -162,7 +164,7 @@ int dms_event_set_add_exception_handle(add_exception_handle func)
     g_add_exception_func = func;
     return 0;
 }
-EXPORT_SYMBOL(dms_event_set_add_exception_handle);
+KA_EXPORT_SYMBOL(dms_event_set_add_exception_handle);
 
 static int dms_event_distribute_to_bbox(DMS_EVENT_NODE_STRU *exception_node)
 {
@@ -182,7 +184,7 @@ static int dms_event_distribute_to_bbox(DMS_EVENT_NODE_STRU *exception_node)
     bbox_map = dms_event_bbox_map(exception_node);
     if (bbox_map == NULL) {
 #ifdef CFG_HOST_ENV
-        dms_warn("Unsupport bbox event_code. (dev_id=%u; event_code=0x%x)\n",
+        dms_warn("Unsupported bbox event_code. (dev_id=%u; event_code=0x%x)\n",
             exception_node->event.deviceid, exception_node->event.event_code);
 #endif
         return ret;
@@ -212,7 +214,7 @@ STATIC int dms_event_add_report_to_dfx(DMS_EVENT_NODE_STRU *exception_node)
 
     dfx_table = &dev_cb->dev_event_cb.dfx_table;
     if (exception_node->event.assertion < DMS_EVENT_TYPE_MAX) {
-        atomic_inc(&dfx_table->report_to_consumer[exception_node->event.assertion]);
+        ka_base_atomic_inc(&dfx_table->report_to_consumer[exception_node->event.assertion]);
         return DRV_ERROR_NONE;
     }
 

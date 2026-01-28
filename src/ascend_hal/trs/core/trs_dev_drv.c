@@ -20,7 +20,7 @@
 #include "trs_stl.h"
 #include "ascend_hal.h"
 #include "davinci_interface.h"
-#include "uda_inner.h"
+#include "pbl_uda_user.h"
 #include "pbl_user_interface.h"
 #include "pbl_urd_main_cmd_def.h"
 #include "pbl_urd_sub_cmd_common.h"
@@ -54,15 +54,55 @@ static int trs_dev_fd[TRS_DEV_NUM] = {-1, };
 static int trs_dev_mmap_fd[TRS_DEV_NUM] = {-1, };
 static pthread_mutex_t trs_dev_mutex = PTHREAD_MUTEX_INITIALIZER;
 
-struct trs_dev_init_ops g_dev_init_ops = {NULL, };
-void trs_register_dev_init_ops(struct trs_dev_init_ops *ops)
+#define TRS_DEV_INT_HANDLE_NUM_MAX  4
+
+struct trs_dev_init_ops *g_dev_init_ops[TRS_DEV_INT_HANDLE_NUM_MAX] = {NULL, };
+int trs_register_dev_init_ops(struct trs_dev_init_ops *ops)
 {
-    g_dev_init_ops = *ops;
+    int i;
+
+    for (i = 0; i < TRS_DEV_INT_HANDLE_NUM_MAX; i++) {
+        if (g_dev_init_ops[i] == NULL) {
+            g_dev_init_ops[i] = ops;
+            return DRV_ERROR_NONE;
+        }
+    }
+
+    return DRV_ERROR_INNER_ERR;
 }
 
-static struct trs_dev_init_ops *trs_get_dev_init_ops(void)
+static void _trs_call_dev_uninit_ops(uint32_t dev_id, int max_id)
 {
-    return &g_dev_init_ops;
+    int i;
+
+    for (i = max_id; i >= 0; i--) {
+        if ((g_dev_init_ops[i] != NULL) && (g_dev_init_ops[i]->dev_uninit != NULL)) {
+            g_dev_init_ops[i]->dev_uninit(dev_id);
+        }
+    }
+}
+
+static int trs_call_dev_init_ops(uint32_t dev_id)
+{
+    int ret, i;
+
+    for (i = 0; i < TRS_DEV_INT_HANDLE_NUM_MAX; i++) {
+        if ((g_dev_init_ops[i] != NULL) && (g_dev_init_ops[i]->dev_init != NULL)) {
+            ret = g_dev_init_ops[i]->dev_init(dev_id);
+            if (ret != DRV_ERROR_NONE) {
+                trs_err("Init handle failed. (ret=%d; i=%u; dev_id=%u)\n", ret, i, dev_id);
+                _trs_call_dev_uninit_ops(dev_id, i - 1);
+                return ret;
+            }
+        }
+    }
+
+    return DRV_ERROR_NONE;
+}
+
+static void trs_call_dev_uninit_ops(uint32_t dev_id)
+{
+    _trs_call_dev_uninit_ops(dev_id, TRS_DEV_INT_HANDLE_NUM_MAX - 1);
 }
 
 signed int __attribute__((constructor)) trs_core_init_user(void)  //lint !e527
@@ -247,12 +287,10 @@ static int trs_dev_init(uint32_t dev_id)
         goto cb_event_init_fail;
     }
 
-    if (trs_get_dev_init_ops()->dev_init != NULL) {
-        ret = trs_get_dev_init_ops()->dev_init(dev_id);
-        if (ret != DRV_ERROR_NONE) {
-            trs_err("Dev init failed. (devid=%u; ret=%d)\n", dev_id, ret);
-            goto dev_ops_init_fail;
-        }
+    ret = trs_call_dev_init_ops(dev_id);
+    if (ret != DRV_ERROR_NONE) {
+        trs_err("Dev init ops failed. (devid=%u; ret=%d)\n", dev_id, ret);
+        goto dev_ops_init_fail;
     }
 
     return DRV_ERROR_NONE;
@@ -272,9 +310,7 @@ urma_ctx_init_fail:
 
 static void trs_dev_uninit(uint32_t dev_id, uint32_t close_type)
 {
-    if (trs_get_dev_init_ops()->dev_uninit != NULL) {
-        trs_get_dev_init_ops()->dev_uninit(dev_id);
-    }
+    trs_call_dev_uninit_ops(dev_id);
 
     trs_cb_event_uninit(dev_id);
     trs_dev_sq_cq_uninit(dev_id, close_type);

@@ -9,30 +9,22 @@
 # ------------------------------------------------------------------------------------------------------------
 MODULE_NAME = asdrv_dms
 
-ifeq ($(DAVINCI_HIAI_DKMS),y)
-	DRIVER_SOURCE_DIR := $(HIAI_DKMS_DIR)
-else
-	DRIVER_SOURCE_DIR := $(DRIVER_KERNEL_DIR)
-endif
+DRIVER_SOURCE_DIR := $(DRIVER_KERNEL_DIR)
 
 DRIVER_MODULE_DEVMNG_DIR := $(DRIVER_SOURCE_DIR)/dms/devmng
 
 include $(FEATURE_MK_PATH)
 EXTRA_CFLAGS += $(CONFIG_DEFINES)
 
-EXTRA_CFLAGS += -DCFG_FEATURE_MEMALLOC_MODULE_TYPE=3
-EXTRA_CFLAGS += -DCFG_FEATURE_MEMALLOC_SUBMODULE_TYPE=0
+# configuring module feature
+include $(DRIVER_SOURCE_DIR)/dms/feature/host/module.mk
+
+# configuring product feature
+include $(DRIVER_SOURCE_DIR)/dms/feature/host/$(PRODUCT).mk
 
 EXTRA_CFLAGS += -Wno-type-limits
 
-ifeq ($(DAVINCI_HIAI_DKMS),y)
-	obj-m += asdrv_dms.o
-	asdrv_dms-y += dms_module.o
+obj-m += asdrv_dms.o
+asdrv_dms-y += dms_module.o
 
-	include $(DRIVER_SOURCE_DIR)/dms/devmng/devmng.mk
-else
-	obj-m += asdrv_dms.o
-	asdrv_dms-y += dms_module.o
-
-	include $(DRIVER_SOURCE_DIR)/dms/devmng/devmng.mk
-endif
+include $(DRIVER_SOURCE_DIR)/dms/devmng/devmng.mk

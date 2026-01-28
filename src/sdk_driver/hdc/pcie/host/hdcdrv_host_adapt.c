@@ -11,8 +11,7 @@
  * GNU General Public License for more details.
  */
 
-#include <linux/workqueue.h>
-
+#include "ka_task_pub.h"
 #include "pbl/pbl_uda.h"
 #include "pbl/pbl_runenv_config.h"
 #include "hdcdrv_core.h"
@@ -25,6 +24,11 @@
 bool hdcdrv_is_phy_dev(u32 devid)
 {
     return uda_is_phy_dev(devid);
+}
+
+int hdcdrv_container_vir_to_phs_devid(u32 virtual_devid, u32 *physical_devid, u32 *vfid)
+{
+    return devdrv_manager_container_logical_id_to_physical_id(virtual_devid, physical_devid, vfid);
 }
 
 int hdcdrv_check_in_container(void)
@@ -53,6 +57,65 @@ u32 hdcdrv_get_container_id(void)
     }
 
     return docker_id;
+}
+
+void hdcdrv_init_dev(struct hdcdrv_dev *hdc_dev)
+{
+    struct hdcdrv_ctrl_msg msg;
+    u32 len = 0;
+    int ret;
+
+    /* wait for device init */
+    msg.type = HDCDRV_CTRL_MSG_TYPE_SYNC;
+    msg.sync_msg.segment = hdcdrv_get_packet_segment();
+    msg.sync_msg.peer_dev_id = (int)hdc_dev->dev_id;
+    msg.error_code = HDCDRV_OK;
+
+    hdcdrv_init_host_phy_mach_flag(hdc_dev);
+
+    ret = (int)hdcdrv_ctrl_msg_send(hdc_dev->dev_id, (void *)&msg, (u32)sizeof(msg), (u32)sizeof(msg), &len);
+    if ((ret != HDCDRV_OK) || (len != sizeof(msg)) || (msg.error_code != HDCDRV_OK)) {
+#ifndef DRV_UT
+        hdcdrv_info_limit("Wait for device startup. (dev_id=%d; ret=%d; code=%d; msg_len=%d; sizeof_msg=%ld)\n",
+            hdc_dev->dev_id, ret, msg.error_code, len, sizeof(msg));
+        ka_task_schedule_delayed_work(&hdc_dev->init, 1 * KA_HZ);
+        return;
+#endif
+    }
+    hdcdrv_set_peer_dev_id((int)hdc_dev->dev_id, msg.sync_msg.peer_dev_id);
+
+    /* init msg channel */
+    ret = hdcdrv_init_msg_chan(hdc_dev->dev_id);
+    if (ret != HDCDRV_OK) {
+        hdcdrv_err("Calling hdcdrv_init_msg_chan failed. (dev_id=%d)\n", hdc_dev->dev_id);
+#ifndef DRV_UT
+        return;
+#endif
+    }
+
+    ret = hdcdrv_register_common_msg();
+    if (ret != 0) {
+        hdcdrv_err("Calling devdrv_register_common_msg_client failed.\n");
+        hdcdrv_uninit_msg_chan(hdc_dev);
+#ifndef DRV_UT
+        return;
+#endif
+    }
+
+    if (hdc_dev->msg_chan_cnt > 0) {
+        hdcdrv_set_device_status((int)hdc_dev->dev_id, HDCDRV_VALID);
+    }
+
+    (void)devdrv_set_module_init_finish((int)hdc_dev->dev_id, DEVDRV_HOST_MODULE_HDC);
+
+    if (hdcdrv_get_running_status() == HDCDRV_RUNNING_RESUME) {
+        hdcdrv_set_running_status(HDCDRV_RUNNING_NORMAL);
+    }
+    ka_task_up(&hdc_dev->hdc_instance_sem);
+
+    hdcdrv_info("Device enable work. (dev_id=%u; peer_dev_id=%d; msg_chan_count=%d; normal_chan_cnt=%u)\n",
+        hdc_dev->dev_id, hdc_dev->peer_dev_id, hdc_dev->msg_chan_cnt, hdc_dev->normal_chan_num);
+    return;
 }
 
 #define HDCDRV_HOST_NOTIFIER "hdc_host"
@@ -84,7 +147,7 @@ STATIC int hdcdrv_host_notifier_func(u32 udevid, enum uda_notified_action action
     return ret;
 }
 
-int hdcdrv_host_init_module(void)
+int hdcdrv_pcie_init_module(void)
 {
     struct uda_dev_type type;
     int ret;
@@ -123,14 +186,14 @@ int hdcdrv_host_init_module(void)
 #endif
 
 #ifdef CFG_FEATURE_HDC_REG_MEM
-    if (!try_module_get(THIS_MODULE)) {
+    if (!ka_system_try_module_get(KA_THIS_MODULE)) {
         hdcdrv_warn("can not get module.\n");
     }
 #endif
     return HDCDRV_OK;
 }
 
-void hdcdrv_host_exit_module(void)
+void hdcdrv_pcie_exit_module(void)
 {
     struct uda_dev_type type;
 #ifdef CFG_FEATURE_PFSTAT
@@ -141,7 +204,7 @@ void hdcdrv_host_exit_module(void)
 #ifdef CFG_FEATURE_VFIO
     vhdch_uninit();
 #endif
-    (void)hdcdrv_unregister_own_common_msg();
+    (void)hdcdrv_unregister_common_msg_client(0);
     (void)uda_notifier_unregister(HDCDRV_HOST_NOTIFIER, &type);
     hdcdrv_uninit_hotreset_param();
     hdcdrv_uninit();

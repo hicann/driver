@@ -97,6 +97,9 @@ int dcmi_acc_ctrl_check(unsigned int acc_ctrl);
 
 int dcmi_cmd_product_support_check(unsigned int main_cmd, unsigned int sub_cmd);
 
+int dcmi_check_device_share_set_cmd_permission(unsigned int main_cmd, unsigned int sub_cmd);
+
+int dcmi_check_device_share_set_cmd_permission_and_product(void);
 #ifdef __cplusplus
 #if __cplusplus
 }

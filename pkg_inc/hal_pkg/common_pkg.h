@@ -69,6 +69,55 @@ enum {
     MAX_MODULE_ID = 77           /* Add new module_id before MAX_MODULE_ID */
 };
 
+#define SVM_DECLARE_MODULE_NAME(name)                   \
+        static const char *name[MAX_MODULE_ID] = {      \
+            [UNKNOWN_MODULE_ID] = "UNKNOWN",            \
+            [IDEDD_MODULE_ID] = "IDEDD",                \
+            [IDEDH_MODULE_ID] = "IDEDH",                \
+            [HCCL_HAL_MODULE_ID] = "HCCL",              \
+            [FMK_MODULE_ID] = "FMK",                    \
+            [HIAIENGINE_MODULE_ID] = "HIAIENGINE",      \
+            [DVPP_MODULE_ID] = "DVPP",                  \
+            [RUNTIME_MODULE_ID] = "RUNTIME",            \
+            [CCE_MODULE_ID] = "CCE",                    \
+            [HLT_MODULE_ID] = "HLT",                    \
+            [DEVMM_MODULE_ID] = "DEVMM",                \
+            [LIBMEDIA_MODULE_ID] = "LIBMEDIA",          \
+            [CCECPU_MODULE_ID] = "CCECPU",              \
+            [ASCENDDK_MODULE_ID] = "ASCENDDK",          \
+            [HCCP_HAL_MODULE_ID] = "HCCP",              \
+            [ROCE_MODULE_ID] = "ROCE",                  \
+            [TEFUSION_MODULE_ID] = "TEFUSION",          \
+            [PROFILING_MODULE_ID] = "PROFILING",        \
+            [DP_MODULE_ID] = "DP",                      \
+            [APP_MODULE_ID] = "APP",                    \
+            [TSDUMP_MODULE_ID] = "TSDUMP",              \
+            [AICPU_MODULE_ID] = "AICPU",                \
+            [TDT_MODULE_ID] = "TDT",                    \
+            [FE_MODULE_ID] = "FE",                      \
+            [MD_MODULE_ID] = "MD",                      \
+            [MB_MODULE_ID] = "MB",                      \
+            [ME_MODULE_ID] = "ME",                      \
+            [GE_MODULE_ID] = "GE",                      \
+            [ASCENDCL_MODULE_ID] = "ASCENDCL",          \
+            [AIVECTOR_MODULE_ID] = "AIVECTOR",          \
+            [TBE_MODULE_ID] = "TBE",                    \
+            [FV_MODULE_ID] = "FV",                      \
+            [TUNE_MODULE_ID] = "TUNE",                  \
+            [HSS_MODULE_ID] = "HSS",                    \
+            [FFTS_MODULE_ID] = "FFTS",                  \
+            [OP_MODULE_ID] = "OP",                      \
+            [UDF_MODULE_ID] = "UDF",                    \
+            [HICAID_MODULE_ID] = "HICAID",              \
+            [TSYNC_MODULE_ID] = "TSYNC",                \
+            [MBUFF_MODULE_ID] = "MBUFF",                \
+            [AICPU_SCHE_MODULE_ID] = "AICPU_SCHEDULE",  \
+            [CUSTOM_SCHE_MODULE_ID] = "CUSTOM_SCHEDULE",\
+            [HCCP_SCHE_MODULE_ID] = "HCCP_SCHEDULE",    \
+        }
+
+#define SVM_GET_MODULE_NAME(name, module_id) ((name[module_id] == NULL) ? "Reserved" : name[module_id])
+
 typedef enum tagProcStatus {
     STATUS_NOMEM = 0x1,                    /* Out of memory */
     STATUS_SVM_PAGE_FALUT_ERR_OCCUR = 0x2, /* page fault err occur in svm address range */

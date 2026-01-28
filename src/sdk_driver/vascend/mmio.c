@@ -145,7 +145,8 @@ int hw_vdavinci_emulate_mmio_write(struct hw_vdavinci *vdavinci, uint64_t pa,
 STATIC void hw_vdavinci_reset_sparse_mmio(struct hw_vdavinci *vdavinci,
                                           struct vdavinci_mapinfo *mmio_map_info)
 {
-    int i = 0, ret = 0;
+    int ret = 0;
+    u64 i = 0;
     struct vdavinci_bar_map *map;
 
     for (i = 0; i < mmio_map_info->num; i++) {
@@ -170,7 +171,7 @@ void hw_vdavinci_reset_mmio(struct hw_vdavinci *vdavinci)
 
 STATIC int hw_vdavinci_mmio_check_sparse(struct hw_vdavinci *vdavinci)
 {
-    int i = 0;
+    u64 i = 0;
     struct vdavinci_bar_map *map = NULL;
 
     if (vdavinci->mmio.mem_sparse.num == 0) {
@@ -223,22 +224,28 @@ STATIC int hw_vdavinci_mmio_check_sparse(struct hw_vdavinci *vdavinci)
 STATIC int hw_dvt_vdavinci_getmapinfo(struct hw_vdavinci *vdavinci)
 {
     int ret = -EINVAL;
+    struct vdavinci_type tp;
     struct hw_dvt *dvt = vdavinci->dvt;
 
-    if (dvt->vdavinci_priv->ops && dvt->vdavinci_priv->ops->vdavinci_getmapinfo) {
-        ret = dvt->vdavinci_priv->ops->vdavinci_getmapinfo(&vdavinci->dev,
-                                                           (struct vdavinci_type *)vdavinci->type,
-                                                           VFIO_PCI_BAR4_REGION_INDEX,
-                                                           &vdavinci->mmio.mem_sparse);
-        if (ret != 0) {
-            vascend_err(dvt->vdavinci_priv->dev,
-                        "get map info failed, vid:%u type bar4_size:%lx ret:%d\n",
-                        vdavinci->id, vdavinci->type->bar4_size, ret);
-            return ret;
-        }
+    if (dvt->vdavinci_priv->ops == NULL ||
+        dvt->vdavinci_priv->ops->vdavinci_getmapinfo == NULL) {
+        return -EINVAL;
+    }
+    ret = init_vdavinci_type(vdavinci->type, &tp);
+    if (ret != 0) {
+        return ret;
+    }
+    ret = dvt->vdavinci_priv->ops->vdavinci_getmapinfo(&vdavinci->dev, &tp,
+                                                       VFIO_PCI_BAR4_REGION_INDEX,
+                                                       &vdavinci->mmio.mem_sparse);
+    if (ret != 0) {
+        vascend_err(dvt->vdavinci_priv->dev,
+                    "get map info failed, vid:%u type bar4_size:%lx ret:%d\n",
+                    vdavinci->id, vdavinci->type->bar4_size, ret);
+        return ret;
     }
 
-    return ret;
+    return 0;
 }
 
 STATIC int hw_dvt_vdavinci_putmapinfo(struct hw_vdavinci *vdavinci)
@@ -254,7 +261,7 @@ STATIC int hw_dvt_vdavinci_putmapinfo(struct hw_vdavinci *vdavinci)
 
 STATIC void hw_vdavinci_sparse_mmio_uninit(struct vdavinci_mapinfo *mmio_map_info)
 {
-    int i = 0;
+    u64 i = 0;
     struct vdavinci_bar_map *map;
 
     for (i = 0; i < mmio_map_info->num; i++) {

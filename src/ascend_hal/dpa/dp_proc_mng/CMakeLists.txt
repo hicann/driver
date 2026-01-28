@@ -16,7 +16,7 @@ target_sources(dp_proc_mng_obj PRIVATE
 )
 
 target_include_directories(dp_proc_mng_obj PRIVATE
-    ${DRIVER_USER_DIR}/commlib
+    ${DRIVER_USER_DIR}/pbl/commlib
     ${DRIVER_USER_DIR}/dpa/dp_proc_mng
     ${DRIVER_USER_DIR}/inc
     ${DRIVER_KERNEL_DIR}/inc

@@ -11,15 +11,14 @@
  * GNU General Public License for more details.
  */
 
-#include <linux/device.h>
-#include <linux/iommu.h>
-
 #include "devdrv_ctrl.h"
 #include "devdrv_util.h"
 #include "devdrv_msg.h"
 #include "devdrv_mem_alloc.h"
 #include "devdrv_smmu.h"
 #include "pbl/pbl_uda.h"
+#include "ka_kernel_def_pub.h"
+#include "ka_compiler_pub.h"
 
 #ifdef CFG_FEATURE_AGENT_SMMU
 STATIC inline int devdrv_smmu_host_pa_range_check(phys_addr_t pa)
@@ -37,7 +36,7 @@ STATIC inline int devdrv_smmu_host_pa_range_check(phys_addr_t pa)
 }
 #endif
 
-int devdrv_smmu_iova_to_phys_proc(struct devdrv_pci_ctrl *pci_ctrl, dma_addr_t *va, u32 va_cnt, phys_addr_t *pa)
+int devdrv_smmu_iova_to_phys_proc(struct devdrv_pci_ctrl *pci_ctrl, ka_dma_addr_t *va, u32 va_cnt, phys_addr_t *pa)
 {
 #ifdef CFG_FEATURE_AGENT_SMMU
     struct devdrv_host_dma_addr_to_pa_cmd *cmd_data = NULL;
@@ -53,7 +52,7 @@ int devdrv_smmu_iova_to_phys_proc(struct devdrv_pci_ctrl *pci_ctrl, dma_addr_t *
     }
 
     data_len = sizeof(struct devdrv_host_dma_addr_to_pa_cmd) + sizeof(u64) * va_cnt;
-    cmd_data = (struct devdrv_host_dma_addr_to_pa_cmd *)devdrv_kzalloc(data_len, GFP_KERNEL | __GFP_ACCOUNT);
+    cmd_data = (struct devdrv_host_dma_addr_to_pa_cmd *)devdrv_kzalloc(data_len, KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
     if (cmd_data == NULL) {
         devdrv_err("Alloc cmd_data fail. (dev_id=%u)\n", pci_ctrl->dev_id);
         return -EINVAL;
@@ -76,7 +75,7 @@ int devdrv_smmu_iova_to_phys_proc(struct devdrv_pci_ctrl *pci_ctrl, dma_addr_t *
     }
     for (i = 0; i < va_cnt; i++) {
         pa[i] = cmd_data->dma_addr[i];
-        if (unlikely(devdrv_smmu_host_pa_range_check(pa[i]) != 0)) {
+        if (ka_unlikely(devdrv_smmu_host_pa_range_check(pa[i]) != 0)) {
             devdrv_warn("Agent smmu va to pa is abnormal. (dev_id=%u)\n", pci_ctrl->dev_id);
         }
     }
@@ -85,14 +84,13 @@ int devdrv_smmu_iova_to_phys_proc(struct devdrv_pci_ctrl *pci_ctrl, dma_addr_t *
     return 0;
 }
 
-int devdrv_smmu_iova_to_phys(u32 dev_id, dma_addr_t *va, u32 va_cnt, phys_addr_t *pa)
+int devdrv_smmu_iova_to_phys(u32 dev_id, ka_dma_addr_t *va, u32 va_cnt, phys_addr_t *pa)
 {
 #ifdef CFG_FEATURE_AGENT_SMMU
     struct devdrv_pci_ctrl *pci_ctrl = NULL;
     int ret;
     u32 index_id;
 
-    (void)uda_udevid_to_add_id(dev_id, &index_id);
     if ((va == NULL) || (pa == NULL)) {
         devdrv_err("va or pa is null. (dev_id=%d)\n", dev_id);
         return -EINVAL;
@@ -101,6 +99,7 @@ int devdrv_smmu_iova_to_phys(u32 dev_id, dma_addr_t *va, u32 va_cnt, phys_addr_t
         devdrv_err("va_cnt is invalid. (dev_id=%d, va_cnt=%u)\n", dev_id, va_cnt);
         return -EINVAL;
     }
+    (void)uda_udevid_to_add_id(dev_id, &index_id);
     pci_ctrl = devdrv_get_bottom_half_pci_ctrl_by_id(index_id);
     if (pci_ctrl == NULL) {
         devdrv_err("Get pci_ctrl failed. (dev_id=%d)\n", dev_id);
@@ -115,16 +114,13 @@ int devdrv_smmu_iova_to_phys(u32 dev_id, dma_addr_t *va, u32 va_cnt, phys_addr_t
 #endif
     return 0;
 }
-EXPORT_SYMBOL(devdrv_smmu_iova_to_phys);
+KA_EXPORT_SYMBOL(devdrv_smmu_iova_to_phys);
 
 void devdrv_pdev_sid_init(struct devdrv_pci_ctrl *pci_ctrl)
 {
 #ifdef CFG_FEATURE_AGENT_SMMU
     struct devdrv_pci_ctrl *pci_ctrl_pf = NULL;
-    int pf_dev_id;
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 1, 0)
-    struct iommu_domain *domain = NULL;
-#endif
+    int pf_dev_id, ret;
 
     if (pci_ctrl->connect_protocol != CONNECT_PROTOCOL_HCCS) {
         pci_ctrl->shr_para->sid = 0;
@@ -137,37 +133,38 @@ void devdrv_pdev_sid_init(struct devdrv_pci_ctrl *pci_ctrl)
         return;
     }
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 1, 0)
-    devdrv_warn("kernel version is low, can not get pdev sid (devid=%u)\n", pci_ctrl->dev_id);
-    return;
-#elif LINUX_VERSION_CODE < KERNEL_VERSION(5, 10, 0)
-    if (pci_ctrl->pdev->dev.iommu_fwspec != NULL) {
-        domain = iommu_get_domain_for_dev(&pci_ctrl->pdev->dev);
-        /* if domain->type == IOMMU_DOMAIN_IDENTITY, mean os enable iommu pass through */
-        if ((domain != NULL) && (domain->type != IOMMU_DOMAIN_IDENTITY)) {
-            pci_ctrl->shr_para->sid = pci_ctrl->pdev->dev.iommu_fwspec->ids[0];
-        } else {
-            pci_ctrl->shr_para->sid = 0;
-        }
-    } else {
+    ret = ka_pci_get_dev_iommu_fwspec(ka_pci_get_dev(pci_ctrl->pdev));
+    if (ret == -EOPNOTSUPP) {
+        devdrv_warn("kernel version is low, can not get pdev sid (devid=%u)\n", pci_ctrl->dev_id);
+        return;
+    } else if (ret == -EINVAL) {
         pci_ctrl->shr_para->sid = 0;
-    }
-#else
-    if ((pci_ctrl->pdev->dev.iommu != NULL) && (pci_ctrl->pdev->dev.iommu->fwspec != NULL)) {
-        domain = iommu_get_domain_for_dev(&pci_ctrl->pdev->dev);
-        /* if domain->type == IOMMU_DOMAIN_IDENTITY, mean os enable iommu pass through */
-        if ((domain != NULL) && (domain->type != IOMMU_DOMAIN_IDENTITY)) {
-            pci_ctrl->shr_para->sid = pci_ctrl->pdev->dev.iommu->fwspec->ids[0];
-        } else {
-            pci_ctrl->shr_para->sid = 0;
-        }
     } else {
-        pci_ctrl->shr_para->sid = 0;
+        ret = ka_pci_get_dev_iommu(ka_pci_get_dev(pci_ctrl->pdev));
+        if (ret == -EOPNOTSUPP) {
+            ka_iommu_domain_t *domain = ka_pci_iommu_get_domain_for_dev(ka_pci_get_dev(pci_ctrl->pdev));
+            /* if domain->type == KA_IOMMU_DOMAIN_IDENTITY, mean os enable iommu pass through */
+            if ((domain != NULL) && (domain->type != KA_IOMMU_DOMAIN_IDENTITY)) {
+                pci_ctrl->shr_para->sid = ka_pci_get_dev_iommu_fwspec_ids0(ka_pci_get_dev(pci_ctrl->pdev));
+            } else {
+                pci_ctrl->shr_para->sid = 0;
+            }
+        } else if (ret == -EINVAL) {
+            pci_ctrl->shr_para->sid = 0;
+        } else {
+            ka_iommu_domain_t *domain = ka_pci_iommu_get_domain_for_dev(ka_pci_get_dev(pci_ctrl->pdev));
+            /* if domain->type == KA_IOMMU_DOMAIN_IDENTITY, mean os enable iommu pass through */
+            if ((domain != NULL) && (domain->type != KA_IOMMU_DOMAIN_IDENTITY)) {
+                pci_ctrl->shr_para->sid = ka_pci_get_dev_iommu_fwspec_ids0(ka_pci_get_dev(pci_ctrl->pdev));
+            } else {
+                pci_ctrl->shr_para->sid = 0;
+            }
+        }
     }
-#endif
+
     /* hccs peh, virtual machine passthrough can not get sid */
     if ((pci_ctrl->virtfn_flag == DEVDRV_SRIOV_TYPE_PF) && (pci_ctrl->shr_para->sid == 0) &&
-        (pci_ctrl->pdev->is_physfn == 0)) {
+        (ka_pci_get_is_physfn(pci_ctrl->pdev) == 0)) {
         pci_ctrl->shr_para->sid = DEVDRV_NPU_SID_START -
             DEVDRV_NPU_CHIP_SID_OFFSET * (pci_ctrl->dev_id / DEVDRV_DIE_NUM_OF_ONE_CHIP) +
             DEVDRV_NPU_DIE_SID_OFFSET * (pci_ctrl->dev_id % DEVDRV_DIE_NUM_OF_ONE_CHIP);

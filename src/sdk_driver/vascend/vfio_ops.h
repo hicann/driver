@@ -45,5 +45,6 @@ int vdavinci_register_device(struct device *dev,
 void vdavinci_unregister_device(struct device *dev, struct hw_dvt *dvt);
 int vdavinci_register_driver(struct mdev_driver *drv);
 void vdavinci_unregister_driver(struct mdev_driver *drv);
-
+void vdavinci_init_iova_domain(struct iova_domain *iovad);
+bool is_dev_dma_coherent(struct device *dev);
 #endif

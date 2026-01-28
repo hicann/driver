@@ -10,11 +10,6 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#include <linux/types.h>
-#include <linux/spinlock.h>
-#include <linux/delay.h>
-#include <linux/semaphore.h>
-#include <linux/kthread.h>
 
 #include "ka_task_pub.h"
 
@@ -294,7 +289,7 @@ void *devmm_dma_prepare_get_from_pool(u32 devid, u32 dma_node_num, struct devdrv
         }
     }
 
-    if (unlikely(pool == NULL)) {
+    if (ka_unlikely(pool == NULL)) {
         devmm_drv_warn("Pool is NULL. (devid=%u; dma_node_num=%u)\n", devid, dma_node_num);
         return NULL;
     }
@@ -333,7 +328,7 @@ void devmm_dma_prepare_put_to_pool(u32 devid, void *fd)
         }
     }
 
-    if (unlikely(pool == NULL)) {
+    if (ka_unlikely(pool == NULL)) {
         devmm_drv_warn("List is NULL. (devid=%u)\n", devid);
         devmm_dma_prepare_node_release(node);
         return;

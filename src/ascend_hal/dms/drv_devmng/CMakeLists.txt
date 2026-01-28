@@ -14,3 +14,9 @@ add_library(devdrv_obj OBJECT)
 add_subdirectory(ascend910)
 add_subdirectory(dc)
 add_subdirectory(common)
+
+# configuring module feature
+include(${MODULE_SRC_DIR}/feature/host/module.cmake)
+
+# configuring product feature
+include(${MODULE_SRC_DIR}/feature/host/${PRODUCT}.cmake)

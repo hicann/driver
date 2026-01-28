@@ -13,7 +13,6 @@
 #ifndef DEVDRV_ATU_INTERFACE_H
 #define DEVDRV_ATU_INTERFACE_H
 
-#include <linux/types.h>
 #include "devdrv_atu.h"
 #include "devdrv_pci.h"
 

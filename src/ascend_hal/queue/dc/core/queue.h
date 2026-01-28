@@ -79,7 +79,7 @@
 #define NSEC_PER_USEC 1000
 #endif
 #if (defined CFG_PLATFORM_FPGA)
-#define QUEUE_SYNC_TIMEOUT (-1)   /* always wait */
+#define QUEUE_SYNC_TIMEOUT 5000000U   /* always wait */
 #else
 #define QUEUE_SYNC_TIMEOUT 5000U   /* 5s */
 #endif
@@ -107,4 +107,6 @@ drvError_t queue_query_info_local(unsigned int dev_id, unsigned int qid, QueueIn
 drvError_t queue_get_status_local(unsigned int dev_id, unsigned int qid, QUEUE_QUERY_ITEM query_item,
     unsigned int len, void *data);
 drvError_t queue_set_local(unsigned int dev_id, QueueSetCmdType cmd, QueueSetInputPara *input);
+drvError_t queue_query_alive(unsigned int devid, unsigned int qid);
+drvError_t queue_get_qid_create_time(unsigned int dev_id, unsigned int qid, unsigned long *create_time);
 #endif

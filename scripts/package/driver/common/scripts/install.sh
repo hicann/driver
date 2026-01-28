@@ -614,7 +614,7 @@ parent_dirs_permision_check(){
     else
         owner=$(stat -c %U "${parent_dir}"/"${short_install_dir}")
         if [ "${owner}" != "root" ]; then
-            log "[WARNING][${short_install_dir}] permision isn't right, it should belong to root."
+            log "[WARNING][${short_install_dir}] permission isn't right, it should belong to root."
             return 1
         fi
         log "[INFO][${short_install_dir}] belongs to root."
@@ -651,7 +651,7 @@ install_path_should_belong_to_root() {
 
         parent_dirs_permision_check "${Install_Path_Param}" && ret=$? || ret=$?
         if [ ${ret} -eq 1 ]; then
-            log "[ERROR][${short_install_dir}] permision not right, it should belong to root."
+            log "[ERROR][${short_install_dir}] permission not right, it should belong to root."
             drvColorEcho  "[ERROR]\033[31mThe given directory, including its parents, should belong to root, details in : $logFile \033[0m"
             return 1
         elif [ ${ret} -eq 2 ]; then
@@ -674,7 +674,7 @@ install_path_should_belong_to_root() {
             [ ${quiet} = y ] && [ ${ret} -ne 0 ] && return 0
 
             if [ ${ret} -ne 0 ]; then
-                drvEcho "[WARNING]You are going to put run-files on a unsecure install-path, do you want to continue? [y/n]"
+                drvEcho "[WARNING]You are going to put run-files on a insecure install-path, do you want to continue? [y/n]"
                 readYesOrNoFromTerminal
             fi
         # upgrade and give install-path

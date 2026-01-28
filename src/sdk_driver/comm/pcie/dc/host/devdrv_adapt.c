@@ -11,7 +11,6 @@
  * GNU General Public License for more details.
  */
 
-#include <linux/aer.h>
 #include "res_drv.h"
 #include "res_drv_mini_v2.h"
 #include "res_drv_cloud_v1.h"
@@ -22,30 +21,31 @@
 #include "devdrv_util.h"
 #include "devdrv_pci.h"
 #include "devdrv_adapt.h"
+#include "ka_kernel_def_pub.h"
 
-const struct pci_device_id g_devdrv_tbl[] = {
-    { PCI_VDEVICE(HUAWEI, CLOUD_V1_DEVICE), HISI_CLOUD_V1 },
-    { PCI_VDEVICE(HUAWEI, MINI_V2_DEVICE), HISI_MINI_V2 },
-    { PCI_VDEVICE(HUAWEI, MINI_V2_2P_DEVICE), HISI_MINI_V2 },
-    { PCI_VDEVICE(HUAWEI, CLOUD_V2_DEVICE), HISI_CLOUD_V2 },
-    { PCI_VDEVICE(HUAWEI, CLOUD_V2_2P_DEVICE), HISI_CLOUD_V2 },
-    { PCI_VDEVICE(HUAWEI, CLOUD_V2_HCCS_IEP_DEVICE), HISI_CLOUD_V2 },
-    { PCI_VDEVICE(HUAWEI, CLOUD_V2_VF_DEVICE), HISI_CLOUD_V2 },
-    { DEVDRV_DIVERSITY_PCIE_VENDOR_ID, MINI_V2_DEVICE, PCI_ANY_ID,
-      PCI_ANY_ID, 0, 0, HISI_MINI_V2 },
-    { PCI_VDEVICE(HUAWEI, MINI_V3_DEVICE), HISI_MINI_V3 },
-    { PCI_VDEVICE(HUAWEI, CLOUD_V4_DEVICE), HISI_CLOUD_V4 },
-    { PCI_VDEVICE(HUAWEI, CLOUD_V5_DEVICE), HISI_CLOUD_V5 },
-    { DEVDRV_PCI_SUBSYS_PRIVATE_VENDOR_HK, MINI_V2_DEVICE, PCI_ANY_ID, PCI_ANY_ID, 0, 0, HISI_MINI_V2 },
-    { DEVDRV_PCI_SUBSYS_PRIVATE_VENDOR_KL, MINI_V2_DEVICE, PCI_ANY_ID, PCI_ANY_ID, 0, 0, HISI_MINI_V2 },
-    { DEVDRV_PCI_SUBSYS_PRIVATE_VENDOR_HK, CLOUD_V2_DEVICE, PCI_ANY_ID, PCI_ANY_ID, 0, 0, HISI_CLOUD_V2 },
-    { DEVDRV_PCI_SUBSYS_PRIVATE_VENDOR_KL, CLOUD_V2_DEVICE, PCI_ANY_ID, PCI_ANY_ID, 0, 0, HISI_CLOUD_V2 },
+const ka_pci_device_id_t g_devdrv_tbl[] = {
+    { KA_PCI_VDEVICE(HUAWEI, CLOUD_V1_DEVICE), HISI_CLOUD_V1 },
+    { KA_PCI_VDEVICE(HUAWEI, MINI_V2_DEVICE), HISI_MINI_V2 },
+    { KA_PCI_VDEVICE(HUAWEI, MINI_V2_2P_DEVICE), HISI_MINI_V2 },
+    { KA_PCI_VDEVICE(HUAWEI, CLOUD_V2_DEVICE), HISI_CLOUD_V2 },
+    { KA_PCI_VDEVICE(HUAWEI, CLOUD_V2_2P_DEVICE), HISI_CLOUD_V2 },
+    { KA_PCI_VDEVICE(HUAWEI, CLOUD_V2_HCCS_IEP_DEVICE), HISI_CLOUD_V2 },
+    { KA_PCI_VDEVICE(HUAWEI, CLOUD_V2_VF_DEVICE), HISI_CLOUD_V2 },
+    { DEVDRV_DIVERSITY_PCIE_VENDOR_ID, MINI_V2_DEVICE, KA_PCI_ANY_ID,
+      KA_PCI_ANY_ID, 0, 0, HISI_MINI_V2 },
+    { KA_PCI_VDEVICE(HUAWEI, MINI_V3_DEVICE), HISI_MINI_V3 },
+    { KA_PCI_VDEVICE(HUAWEI, CLOUD_V4_DEVICE), HISI_CLOUD_V4 },
+    { KA_PCI_VDEVICE(HUAWEI, CLOUD_V5_DEVICE), HISI_CLOUD_V5 },
+    { DEVDRV_PCI_SUBSYS_PRIVATE_VENDOR_HK, MINI_V2_DEVICE, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, HISI_MINI_V2 },
+    { DEVDRV_PCI_SUBSYS_PRIVATE_VENDOR_KL, MINI_V2_DEVICE, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, HISI_MINI_V2 },
+    { DEVDRV_PCI_SUBSYS_PRIVATE_VENDOR_HK, CLOUD_V2_DEVICE, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, HISI_CLOUD_V2 },
+    { DEVDRV_PCI_SUBSYS_PRIVATE_VENDOR_KL, CLOUD_V2_DEVICE, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, HISI_CLOUD_V2 },
     {}};
-MODULE_DEVICE_TABLE(pci, g_devdrv_tbl);
+KA_MODULE_DEVICE_TABLE(pci, g_devdrv_tbl);
 
 int devdrv_get_device_id_tbl_num(void)
 {
-    return (int)(sizeof(g_devdrv_tbl) / sizeof(struct pci_device_id));
+    return (int)(sizeof(g_devdrv_tbl) / sizeof(ka_pci_device_id_t));
 }
 
 int (*devdrv_res_init_func[HISI_CHIP_NUM])(struct devdrv_pci_ctrl *pci_ctrl) = {
@@ -68,7 +68,7 @@ int devdrv_get_product(void)
     return HOST_PRODUCT_DC;
 }
 
-void devdrv_shutdown(struct pci_dev *pdev)
+void devdrv_shutdown(ka_pci_dev_t *pdev)
 {
     if (devdrv_get_host_type() == HOST_TYPE_NORMAL) {
         devdrv_info("Shutdown, pci remove driver.\n");
@@ -80,46 +80,46 @@ void devdrv_shutdown(struct pci_dev *pdev)
 static u64 g_aer_critical_cnt = 0;
 static u64 g_aer_noncritical_cnt = 0;
 
-STATIC pci_ers_result_t devdrv_error_detected(struct pci_dev *pdev, pci_channel_state_t state)
+STATIC ka_pci_ers_result_t devdrv_error_detected(ka_pci_dev_t *pdev, ka_pci_channel_state_t state)
 {
     struct devdrv_pci_ctrl *pci_ctrl = devdrv_get_pdev_main_davinci_dev(pdev);
-    pci_ers_result_t ret = PCI_ERS_RESULT_NEED_RESET;
+    ka_pci_ers_result_t ret = KA_PCI_ERS_RESULT_NEED_RESET;
     if (pci_ctrl == NULL) {
         devdrv_err("pci_ctrl is invalid.\n");
-        return PCI_ERS_RESULT_NEED_RESET;
+        return KA_PCI_ERS_RESULT_NEED_RESET;
     }
     devdrv_warn("Error detected. (dev_id=%u;  state=%d)\n", pci_ctrl->dev_id, (int)state);
     devdrv_notify_blackbox_err(pci_ctrl->dev_id, DEVDRV_PCIE_AER_ERROR);
     switch (state) {
         /* I/O channel is in normal state */
-        case pci_channel_io_normal:
+        case ka_pci_channel_io_normal:
             g_aer_noncritical_cnt++;
             devdrv_err("Channel is in normal state. (dev_id=%d; aer_noncritical_cnt=%llu)\n",
                        pci_ctrl->dev_id, g_aer_noncritical_cnt);
-            ret = PCI_ERS_RESULT_CAN_RECOVER;
+            ret = KA_PCI_ERS_RESULT_CAN_RECOVER;
             break;
 
         /* I/O to channel is blocked */
-        case pci_channel_io_frozen:
+        case ka_pci_channel_io_frozen:
             g_aer_critical_cnt++;
             devdrv_err("Channel is blocked. (dev_id=%u; aer_critical_cnt=%llu)\n",
                        pci_ctrl->dev_id, g_aer_critical_cnt);
 
-            if (pci_is_enabled(pdev) != 0) {
-                pci_disable_pcie_error_reporting(pdev);
-                pci_clear_master(pdev);
-                pci_release_regions(pdev);
-                pci_disable_device(pdev);
+            if (ka_pci_is_enabled(pdev) != 0) {
+                ka_pci_disable_pcie_error_reporting(pdev);
+                ka_pci_clear_master(pdev);
+                ka_pci_release_regions(pdev);
+                ka_pci_disable_device(pdev);
             }
-            ret = PCI_ERS_RESULT_NEED_RESET;
+            ret = KA_PCI_ERS_RESULT_NEED_RESET;
             break;
 
         /* PCI card is dead */
-        case pci_channel_io_perm_failure:
-            ret = PCI_ERS_RESULT_DISCONNECT;
+        case ka_pci_channel_io_perm_failure:
+            ret = KA_PCI_ERS_RESULT_DISCONNECT;
             break;
         default:
-            ret = PCI_ERS_RESULT_NEED_RESET;
+            ret = KA_PCI_ERS_RESULT_NEED_RESET;
             break;
     }
 
@@ -127,56 +127,52 @@ STATIC pci_ers_result_t devdrv_error_detected(struct pci_dev *pdev, pci_channel_
     return ret;
 }
 
-STATIC pci_ers_result_t devdrv_slot_reset(struct pci_dev *pdev)
+STATIC ka_pci_ers_result_t devdrv_slot_reset(ka_pci_dev_t *pdev)
 {
     u8 byte = 0;
     int ret;
 
     devdrv_info("Enter slot reset.\n");
 
-    if (pci_enable_device(pdev) != 0) {
-        devdrv_err("Call pci_enable_device failed.\n");
-        return PCI_ERS_RESULT_DISCONNECT;
+    if (ka_pci_enable_device(pdev) != 0) {
+        devdrv_err("Call ka_pci_enable_device failed.\n");
+        return KA_PCI_ERS_RESULT_DISCONNECT;
     }
 
-    pci_read_config_byte(pdev, 0x8, &byte);
+    ka_pci_read_config_byte(pdev, 0x8, &byte);
     if (byte == 0xff) {
         devdrv_err("Slot_reset failed. got another pci error.\n");
-        return PCI_ERS_RESULT_DISCONNECT;
+        return KA_PCI_ERS_RESULT_DISCONNECT;
     }
 
-    if (pci_request_regions(pdev, "devdrv") != 0) {
-        devdrv_err("Call pci_request_regions failed.\n");
-        return PCI_ERS_RESULT_DISCONNECT;
+    if (ka_pci_request_regions(pdev, "devdrv") != 0) {
+        devdrv_err("Call ka_pci_request_regions failed.\n");
+        return KA_PCI_ERS_RESULT_DISCONNECT;
     }
 
     /*lint -e598 -e648 */
-    if (dma_set_mask_and_coherent(&pdev->dev, DMA_BIT_MASK(DEVDRV_DMA_BIT_MASK_64)) != 0) {
+    if (ka_mm_dma_set_mask_and_coherent(ka_pci_get_dev(pdev), KA_DMA_BIT_MASK(DEVDRV_DMA_BIT_MASK_64)) != 0) {
         /*lint +e598 +e648 */
         devdrv_err("dma_set_mask 64 bit failed.\n");
-        ret = dma_set_mask_and_coherent(&pdev->dev, DMA_BIT_MASK(DEVDRV_DMA_BIT_MASK_32));
+        ret = ka_mm_dma_set_mask_and_coherent(ka_pci_get_dev(pdev), KA_DMA_BIT_MASK(DEVDRV_DMA_BIT_MASK_32));
         if (ret != 0) {
             devdrv_err("dma_set_mask failed. (ret=%d)\n", ret);
-            return PCI_ERS_RESULT_DISCONNECT;
+            return KA_PCI_ERS_RESULT_DISCONNECT;
         }
     }
 
-    pci_set_master(pdev);
+    ka_pci_set_master(pdev);
 
     devdrv_err("The resume of top business(vnic/hdc/devmm) still need to do.\n");
 
-    return PCI_ERS_RESULT_RECOVERED;
+    return KA_PCI_ERS_RESULT_RECOVERED;
 }
 
-STATIC void devdrv_error_resume(struct pci_dev *pdev)
+STATIC void devdrv_error_resume(ka_pci_dev_t *pdev)
 {
     devdrv_info("Enter pcie reporting resume.\n");
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 7, 0)
-    pci_aer_clear_nonfatal_status(pdev);
-#else
-    pci_cleanup_aer_uncorrect_error_status(pdev);
-#endif
-    pci_enable_pcie_error_reporting(pdev);
+    ka_pci_aer_clear_status(pdev);
+    ka_pci_enable_pcie_error_reporting(pdev);
 }
 
 const struct pci_error_handlers g_devdrv_err_handler = {
@@ -212,12 +208,12 @@ void devdrv_load_half_resume(struct devdrv_pci_ctrl *pci_ctrl)
     return;
 }
 
-__attribute__((unused)) int drv_pcie_suspend(struct device *dev)
+__attribute__((unused)) int drv_pcie_suspend(ka_device_t *dev)
 {
     return 0;
 }
 
-__attribute__((unused)) int drv_pcie_resume_notify(struct device *dev)
+__attribute__((unused)) int drv_pcie_resume_notify(ka_device_t *dev)
 {
     return 0;
 }

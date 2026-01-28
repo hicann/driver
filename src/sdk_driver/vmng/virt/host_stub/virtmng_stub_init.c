@@ -15,6 +15,7 @@
 #include "pbl/pbl_feature_loader.h"
 #include "virtmng_public_def.h"
 #include "virtmng_stub_init.h"
+#include "ka_kernel_def_pub.h"
 
 STATIC int vmng_stub_notifier_func(u32 udevid, enum uda_notified_action action)
 {
@@ -55,7 +56,7 @@ STATIC int __init vmng_stub_init_module(void)
     vmng_info("Init module finish.\n");
     return 0;
 }
-module_init(vmng_stub_init_module);
+ka_module_init(vmng_stub_init_module);
 
 STATIC void __exit vmng_stub_exit_module(void)
 {
@@ -71,8 +72,8 @@ STATIC void __exit vmng_stub_exit_module(void)
     }
     vmng_info("Exit module finish.\n");
 }
-module_exit(vmng_stub_exit_module);
+ka_module_exit(vmng_stub_exit_module);
 
-MODULE_AUTHOR("Huawei Tech. Co., Ltd.");
-MODULE_DESCRIPTION("virt mng host stub driver");
-MODULE_LICENSE("GPL");
+KA_MODULE_AUTHOR("Huawei Tech. Co., Ltd.");
+KA_MODULE_DESCRIPTION("virt mng host stub driver");
+KA_MODULE_LICENSE("GPL");

@@ -13,8 +13,6 @@
 #ifndef SVM_RBTREE_H
 #define SVM_RBTREE_H
 
-#include <linux/rbtree.h>
-
 #include "ka_base_pub.h"
 
 struct rb_range_handle {

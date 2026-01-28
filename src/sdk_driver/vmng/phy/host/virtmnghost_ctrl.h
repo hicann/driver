@@ -14,9 +14,15 @@
 #ifndef VIRTMNGHOST_CTRL_H
 #define VIRTMNGHOST_CTRL_H
 
-#include <linux/hrtimer.h>
 #include "ascend_dev_num.h"
 #include "vmng_kernel_interface.h"
+
+#include "ka_system_pub.h"
+#include "ka_task_pub.h"
+#include "ka_memory_pub.h"
+#include "ka_system_pub.h"
+#include "ka_base_pub.h"
+#include "ka_kernel_def_pub.h"
 
 #define VMNGH_VM_DEV_VALID 1
 #define VMNGH_VM_DEV_INVALID 0
@@ -39,10 +45,10 @@ struct vmngh_vm_ctrl {
 };
 
 struct vmngh_clear_timer {
-    struct hrtimer timer;
-    ktime_t kt;
+    ka_hrtimer_t timer;
+    ka_ktime_t kt;
     int vaild_dev;
-    spinlock_t bandwidth_update_lock;
+    ka_task_spinlock_t bandwidth_update_lock;
 };
 
 struct vmngh_ctrl_ops {
@@ -70,7 +76,7 @@ struct vmngh_vdev_ctrl {
     enum vmng_pf_sriov_status sriov_status;
     int sriov_mode;
     struct vmng_vdev_ctrl vdev_ctrl;
-    struct mutex reset_mutex;
+    ka_mutex_t reset_mutex;
     struct vmng_vf_memory_info memory;
     struct vmngh_client_instance client_instance[VMNG_CLIENT_TYPE_MAX];
 };
@@ -125,7 +131,7 @@ int vmngh_uninit_instance_all_client(u32 dev_id, u32 fid);
 struct vmngh_ctrl_ops *vmngh_get_ctrl_ops(u32 dev_id);
 struct vmngh_vdev_ctrl *vmngh_get_ctrl(u32 dev_id, u32 vfid);
 bool is_sriov_enable(u32 dev_id);
-struct mutex *vmngh_get_ctrl_mutex(void);
+ka_mutex_t *vmngh_get_ctrl_mutex(void);
 int vmngh_common_enable_sriov(u32 dev_id, u32 boot_mode);
 int vmngh_common_disable_sriov(u32 dev_id, u32 boot_mode);
 void vmng_set_device_split_mode(u32 dev_id, enum vmng_split_mode split_mode);

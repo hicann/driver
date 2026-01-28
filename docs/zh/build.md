@@ -68,7 +68,7 @@ bash build.sh --make_clean
 安装完成之后，用户编译生成的Driver软件包会替换已安装CANN开发套件包中的Driver相关软件。
 
 如需要安装固件包，从[昇腾官网](https://www.hiascend.com/hardware/firmware-drivers/commercial)获取配套硬件产品的固件包，并按照配套版本的[安装指南](https://hiascend.com/document/redirect/CannCommunityInstSoftware)安装（选择安装场景后，参见“安装NPU驱动和固件”章节）。
-<p style="line-height:1.5;"> 
+<p style="line-height:1.5;">
 3. 日志参考：
 
 如需要查询运行日志，请查看配套版本的[日志参考](https://www.hiascend.com/document/detail/zh/CANNCommunityEdition/850alpha002/maintenref/logreference/logreference_0001.html)。
@@ -76,10 +76,3 @@ bash build.sh --make_clean
 更多编译参数可以通过`bash build.sh -h`查看。
 ## 软件包卸载
 按照配套版本的[卸载指导](https://hiascend.com/document/redirect/CannCommunityInstSoftware)卸载（选择安装指南后，参见“卸载”章节）。
-
-## 本地验证（UT可选）
-安装完编译生成的Driver驱动包后，可以通过如下命令执行UT用例。
-```
-cd test
-bash run_test.sh -t
-```

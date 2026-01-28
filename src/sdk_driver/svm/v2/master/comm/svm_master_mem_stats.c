@@ -10,13 +10,13 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#include <linux/types.h>
-#include <linux/proc_fs.h>
 
 #include "ascend_hal_define.h"
 #include "svm_proc_mng.h"
 #include "svm_master_proc_mng.h"
 #include "svm_mem_stats.h"
+#include "ka_base_pub.h"
+#include "ka_memory_pub.h"
 
 #ifdef CONFIG_PROC_FS
 #define SVM_MASTER_MAX_SVM_PROC_NUM         1024
@@ -156,12 +156,12 @@ static void _devmm_mem_stats_va_map(struct devmm_svm_proc_master *master_data, u
     u64 page_num;
     int ret;
 
-    if (KA_DRIVER_IS_ALIGNED(va, PAGE_SIZE) == false) {
+    if (KA_DRIVER_IS_ALIGNED(va, KA_MM_PAGE_SIZE) == false) {
         devmm_drv_debug("Va is not aligned. (va=0x%llx)\n", va);
         return;
     }
 
-    page_num = ka_base_round_up(MEM_STATS_MNG_SIZE, PAGE_SIZE) / PAGE_SIZE;
+    page_num = ka_base_round_up(MEM_STATS_MNG_SIZE, KA_MM_PAGE_SIZE) / KA_MM_PAGE_SIZE;
     pages = (ka_page_t **)devmm_kvalloc(page_num * sizeof(ka_page_t *), 0);
     if (pages == NULL) {
         devmm_drv_debug("Alloc pages fail. (va=0x%llx; num=%llu)\n", va, page_num);
@@ -174,7 +174,7 @@ static void _devmm_mem_stats_va_map(struct devmm_svm_proc_master *master_data, u
         goto free_page;
     }
 
-    ptr = vmap(pages, page_num, 0, PAGE_KERNEL);
+    ptr = ka_mm_vmap(pages, page_num, 0, KA_PAGE_KERNEL);
     if (ptr == NULL) {
         devmm_drv_debug("vmap fail. (va=0x%llx; num=%llu)\n", va, page_num);
         goto unpin_page;
@@ -215,7 +215,7 @@ void devmm_mem_stats_va_unmap(struct devmm_svm_process *svm_proc)
     for (logic_id = 0; logic_id < SVM_MAX_AGENT_NUM; logic_id++) {
         ka_task_down(&master_data->mem_stats_va_mng[logic_id].sem);
         if (master_data->mem_stats_va_mng[logic_id].kva != NULL) {
-            u64 page_num = ka_base_round_up(MEM_STATS_MNG_SIZE, PAGE_SIZE) / PAGE_SIZE;
+            u64 page_num = ka_base_round_up(MEM_STATS_MNG_SIZE, KA_MM_PAGE_SIZE) / KA_MM_PAGE_SIZE;
 
             devmm_drv_debug("Va unmap. (logic_id=%u; num=%llu)\n", logic_id, page_num);
             vunmap(master_data->mem_stats_va_mng[logic_id].kva);

@@ -19,6 +19,7 @@
 #include "devdrv_user_common.h"
 #include "devdrv_manager.h"
 #include "kernel_version_adapt.h"
+#include "ka_task_pub.h"
 
 struct devdrv_manager_container_para {
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 1, 0)
@@ -44,7 +45,7 @@ int devdrv_manager_container_process(struct file *filep, unsigned long arg);
 #define devdrv_manager_container_is_in_normal_container() devdrv_manager_container_is_in_container()
 int devdrv_manager_container_is_in_container(void);
 int devdrv_manager_container_is_in_admin_container(void);
-int devdrv_manager_container_check_devid_in_container(u32 devid, pid_t hostpid);
+int devdrv_manager_container_check_devid_in_container(u32 devid, ka_pid_t hostpid);
 bool devdrv_manager_container_is_admin(void);
 int devdrv_devpid_container_convert(int *ipid);
 bool devdrv_manager_container_is_host_system(struct mnt_namespace *mnt_ns);

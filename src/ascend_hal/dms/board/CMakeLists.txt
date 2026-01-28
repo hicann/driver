@@ -8,9 +8,12 @@
 # See LICENSE in the root of the software repository for the full text of the License.
 # ------------------------------------------------------------------------------------------------------------
 target_sources(dms_obj PRIVATE
-    dms_gpio.c
     dms_device_info.c
     dms_topology.c
     dms_p2p_attr.c
     dms_cc.c
+)
+
+target_include_directories(dms_obj PRIVATE
+    $<$<STREQUAL:${PRODUCT},ascend910_95>:${DRIVER_USER_DIR}/inc/trs>
 )

@@ -14,11 +14,6 @@
 #ifndef SVM_HEAP_MNG_H
 #define SVM_HEAP_MNG_H
 
-#include <asm/processor.h>
-#include <linux/version.h>
-#include <linux/atomic.h>
-#include <linux/errno.h>
-#include <linux/sched.h>
 #include <linux/types.h>
 
 #include "svm_log.h"
@@ -26,7 +21,7 @@
 #include "devmm_common.h"
 
 /*
- * one va page has a byte to mantain va status
+ * one va page has a byte to maintain va status
  *    bit21~31 dev id
  *    bit20: mem mapped
  *    bit19: p2p ddr
@@ -41,13 +36,13 @@
  *    bit11: locked device
  *    bit10: locked host
  *    bit9: alloced
- *    bit8: is tranlate pa by rts
+ *    bit8: is translate pa by rts
  *    bit7: advise:populate (no fault memory)
  *    bit6: advise:1-ddr,0-hbm(default)
  *    bit5: is first page of a va?
  *    bit4: host mapped
  *    bit3: dev mapped
- *    bit2: remote maped, when va is locked host or device, remote side can map and access it
+ *    bit2: remote mapped, when va is locked host or device, remote side can map and access it
  *    bit2: multiplexing to device fault get sync_data flag(DEVMM_PAGE_NOSYNC_FLG)
  *    bit1: ipc create flag, set in first page
  *    bit0: ipc open flag, set in every page
@@ -173,7 +168,7 @@ static inline bool devmm_test_and_set_bit(u32 mask_bit, unsigned int *p)
     int old;
     int mask = (int)mask_bit;
 
-    if ((READ_ONCE(*p) & mask) != 0) {
+    if ((KA_READ_ONCE(*p) & mask) != 0) {
         return 1;
     }
     old = ka_base_atomic_fetch_or(mask, (ka_atomic_t *)p);
@@ -194,9 +189,9 @@ static inline void devmm_page_bitmap_lock(u32 *bitmap)
 static inline void devmm_page_bitmap_unlock(u32 *bitmap)
 {
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 3, 0)
-    ka_base_atomic_and((int)(~DEVMM_PAGE_BITMAP_LOCKED_MASK), (atomic_t *)bitmap);
+    ka_base_atomic_and((int)(~DEVMM_PAGE_BITMAP_LOCKED_MASK), (ka_atomic_t *)bitmap);
 #else
-    atomic_clear_mask(DEVMM_PAGE_BITMAP_LOCKED_MASK, (atomic_t *)bitmap);
+    atomic_clear_mask(DEVMM_PAGE_BITMAP_LOCKED_MASK, (ka_atomic_t *)bitmap);
 #endif
 }
 
@@ -409,9 +404,9 @@ static inline void devmm_page_ref_lock(struct devmm_heap_ref *ref)
 static inline void devmm_page_ref_unlock(struct devmm_heap_ref *ref)
 {
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 3, 0)
-    ka_base_atomic_and((int)(~DEVMM_HEAP_PAGE_LOCK_FLAG_MASK), (atomic_t *)ref);
+    ka_base_atomic_and((int)(~DEVMM_HEAP_PAGE_LOCK_FLAG_MASK), (ka_atomic_t *)ref);
 #else
-    atomic_clear_mask(DEVMM_HEAP_PAGE_LOCK_FLAG_MASK, (atomic_t *)ref);
+    atomic_clear_mask(DEVMM_HEAP_PAGE_LOCK_FLAG_MASK, (ka_atomic_t *)ref);
 #endif
 }
 
@@ -439,9 +434,9 @@ static inline void devmm_clear_page_ref_malloc(struct devmm_heap_ref *ref)
 static inline int devmm_set_page_ref_advise(struct devmm_heap_ref *ref)
 {
     devmm_page_ref_lock(ref);
-    /* donot act with other action */
+    /* do not act with other action */
     if (ref->count != 1 || ref->free == 1) {
-        devmm_drv_err("Adivse is acting. (ref_lock=%d; ref_free=%d; ref_count=%d)\n",
+        devmm_drv_err("Advise is acting. (ref_lock=%d; ref_free=%d; ref_count=%d)\n",
             ref->lock, ref->free, ref->count);
         devmm_page_ref_unlock(ref);
         return -EBUSY;

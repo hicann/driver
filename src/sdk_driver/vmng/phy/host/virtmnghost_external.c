@@ -21,8 +21,6 @@
 #include "vmng_kernel_interface.h"
 #include "vmng_mem_alloc_interface.h"
 
-#include <linux/slab.h>
-
 /* doorbell for external module */
 int vmngh_alloc_external_db_entries(struct vmngh_vd_dev *vd_dev)
 {
@@ -32,7 +30,7 @@ int vmngh_alloc_external_db_entries(struct vmngh_vd_dev *vd_dev)
 
     db_mng = &(vd_dev->db_mng);
     db_mng->db_num = VMNG_DB_NUM_EXTERNAL;
-    db_mng->db_entries = (struct vmngh_db_entry *)vmng_kzalloc(sizeof(struct vmngh_db_entry) * db_mng->db_num, GFP_KERNEL);
+    db_mng->db_entries = (struct vmngh_db_entry *)vmng_kzalloc(sizeof(struct vmngh_db_entry) * db_mng->db_num, KA_GFP_KERNEL);
     if (db_mng->db_entries == NULL) {
         vmng_err("Alloc db entries failed. (dev_id=%u; fid=%u)\n", vd_dev->dev_id, vd_dev->fid);
         return -ENOMEM;
@@ -81,7 +79,7 @@ int vmngh_get_local_db(u32 dev_id, u32 fid, enum vmng_get_irq_type type, u32 *db
     }
     return 0;
 }
-EXPORT_SYMBOL(vmngh_get_local_db);
+KA_EXPORT_SYMBOL(vmngh_get_local_db);
 
 int vmngh_register_local_db(u32 dev_id, u32 fid, u32 db_index, db_handler_t handler, void *data)
 {
@@ -114,10 +112,10 @@ int vmngh_register_local_db(u32 dev_id, u32 fid, u32 db_index, db_handler_t hand
 
     return 0;
 }
-EXPORT_SYMBOL(vmngh_register_local_db);
+KA_EXPORT_SYMBOL(vmngh_register_local_db);
 
 /* when other module exit, must unregister db irq.
- * otherwise vpc will invoke unknow func pointer, as vm still send db to pm.
+ * otherwise vpc will invoke unknown func pointer, as vm still send db to pm.
  */
 int vmngh_unregister_local_db(u32 dev_id, u32 fid, u32 db_index, const void *data)
 {
@@ -149,7 +147,7 @@ int vmngh_unregister_local_db(u32 dev_id, u32 fid, u32 db_index, const void *dat
 
     return 0;
 }
-EXPORT_SYMBOL(vmngh_unregister_local_db);
+KA_EXPORT_SYMBOL(vmngh_unregister_local_db);
 
 int vmngh_external_db_handler(struct vmngh_vd_dev *vd_dev, int db_index)
 {
@@ -194,7 +192,7 @@ int vmngh_get_remote_msix(u32 dev_id, u32 fid, enum vmng_get_irq_type type, u32 
     }
     return 0;
 }
-EXPORT_SYMBOL(vmngh_get_remote_msix);
+KA_EXPORT_SYMBOL(vmngh_get_remote_msix);
 
 int vmngh_trigger_remote_msix(u32 dev_id, u32 fid, u32 msix_index)
 {
@@ -221,4 +219,4 @@ int vmngh_trigger_remote_msix(u32 dev_id, u32 fid, u32 msix_index)
     }
     return 0;
 }
-EXPORT_SYMBOL(vmngh_trigger_remote_msix);
+KA_EXPORT_SYMBOL(vmngh_trigger_remote_msix);

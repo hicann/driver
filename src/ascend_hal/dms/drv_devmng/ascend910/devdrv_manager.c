@@ -11,7 +11,6 @@
 #include <fcntl.h>
 #include "securec.h"
 #include "mmpa_api.h"
-#include "dpa/dpa_apm.h"
 #include "devmng_common.h"
 #include "devdrv_ioctl.h"
 #include "dms/dms_devdrv_info_comm.h"
@@ -1565,22 +1564,52 @@ STATIC drvError_t drv_get_host_aicpu_info(uint32_t devId, int32_t info_type, int
 }
 #endif
 
+STATIC drvError_t drv_get_hcom_cpu_info(uint32_t dev_id, int32_t info_type, int64_t *value)
+{
+    int ret = DRV_ERROR_NOT_SUPPORT;
+
+    switch (info_type) {
+        case INFO_TYPE_CORE_NUM:
+            ret = dms_get_hcom_cpu_num(dev_id, (long long *)value);
+            if (ret != 0) {
+                DEVDRV_DRV_ERR("dms_get_hcom_cpu_num failed. (dev_id=%u; ret=%d)\n", dev_id, ret);
+                return ret;
+            }
+            break;
+        default:
+            return ret;
+    }
+
+    return DRV_ERROR_NONE;
+}
+
 STATIC drvError_t drv_get_qos_info(uint32_t devId, int32_t info_type, void *buf, unsigned int *size)
 {
 #ifdef CFG_FEATURE_QUERY_QOS_CFG_INFO
     int ret;
+    switch (info_type) {
+        case INFO_TYPE_CONFIG:
+            ret = drv_get_qos_config(devId, buf, size);
+            if (ret != 0) {
+                DEVDRV_DRV_EX_NOTSUPPORT_ERR(ret, "Failed to get qos config. (dev_id=%u; ret=%d)\n", devId, ret);
+                return ret;
+            }
+            break;
 
-    if (info_type == INFO_TYPE_CONFIG) {
-        ret = drv_get_qos_config(devId, buf, size);
-        if (ret != 0) {
-            DEVDRV_DRV_EX_NOTSUPPORT_ERR(ret, "Failed to get qos config. (dev_id=%u; ret=%d)\n", devId, ret);
-            return ret;
-        }
-    } else {
-        DEVDRV_DRV_INFO("This version does not support this type. (dev_id=%u, Type=%d)\n", devId, info_type);
-        return DRV_ERROR_INVALID_VALUE;
+#ifdef CFG_FEATURE_GET_QOS_MASTER_CFG
+        case INFO_TYPE_QOS_MASTER_CONFIG:
+            ret = DmsHalGetDeviceInfoEx(devId, MODULE_TYPE_QOS, info_type, buf, size);
+            if(ret != 0) {
+                DEVDRV_DRV_EX_NOTSUPPORT_ERR(ret, "Failed to get master qos config. (dev_id=%u; ret=%d)\n", devId, ret);
+                return ret;
+            }
+            break;
+#endif
+        default:
+            DEVDRV_DRV_INFO("This version does not support this type. (dev_id=%u, Type=%d)\n", devId, info_type);
+            return DRV_ERROR_INVALID_VALUE;
+
     }
-
     return DRV_ERROR_NONE;
 #else
     (void)devId;
@@ -2090,7 +2119,9 @@ drvError_t halGetDeviceInfo(uint32_t devId, int32_t module_type, int32_t info_ty
 #else
             return DRV_ERROR_NOT_SUPPORT;
 #endif
-
+        case MODULE_TYPE_HCOM_CPU:
+            ret = drv_get_hcom_cpu_info(devId, itype, value);
+            break;
         default:
             DEVDRV_DRV_INFO("This version does not support this moduleType. (moduleType=%d)\n", mtype);
             return DRV_ERROR_INVALID_VALUE;
@@ -2814,7 +2845,7 @@ drvError_t drvDeviceResetInform(uint32_t devid)
 #ifdef CFG_SOC_PLATFORM_CLOUD
 drvError_t drvGetDeviceModuleStatus(uint32_t devId, drvModuleStatus_t *module_status)
 {
-    struct devdrv_module_status status;
+    struct devdrv_module_status status = {0};
     int ret;
     mmIoctlBuf buf = {0};
 
@@ -2827,7 +2858,7 @@ drvError_t drvGetDeviceModuleStatus(uint32_t devId, drvModuleStatus_t *module_st
 #else
 drvError_t drvGetDeviceModuleStatus(drvModuleStatus_t *module_status)
 {
-    struct devdrv_module_status status;
+    struct devdrv_module_status status = {0};
     int ret;
     mmIoctlBuf buf = {0};
 
@@ -3716,7 +3747,7 @@ drvError_t drvSetDeviceInfoToDmsHal(unsigned int dev_id, unsigned int main_cmd, 
     int info_type = -1;
 
     if (buf == NULL || size == 0) {
-        DEVDRV_DRV_ERR("Invaild parameter. (dev_id=%u; buf_is_null=%d; size=%u)\n", dev_id, (buf == NULL), size);
+        DEVDRV_DRV_ERR("Invalid parameter. (dev_id=%u; buf_is_null=%d; size=%u)\n", dev_id, (buf == NULL), size);
         return DRV_ERROR_PARA_ERROR;
     }
 

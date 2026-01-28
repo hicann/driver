@@ -35,7 +35,7 @@ void svm_da_init(struct devmm_svm_process *svm_proc)
 {
     struct svm_da_info *da_info = &svm_proc->da_info;
 
-    da_info->rbtree = RB_ROOT;
+    da_info->rbtree = KA_RB_ROOT;
     ka_task_rwlock_init(&da_info->rbtree_rwlock);
     ka_task_init_rwsem(&da_info->rwsem);
 }
@@ -160,13 +160,13 @@ int svm_da_add_addr(struct devmm_svm_process *svm_proc, u64 va, u64 size, ka_vm_
     node->last_heap_idx = (u32)(node->first_heap_idx + size / DEVMM_HEAP_SIZE - 1);
     node->heap = NULL;
     node->vma = vma;
-    RB_CLEAR_NODE(&node->rbnode);
+    KA_BASE_RB_CLEAR_NODE(&node->rbnode);
 
     svm_da_info_rbtree_lock(da_info, true);
     ret = devmm_rb_insert_by_range(&da_info->rbtree, &node->rbnode, svm_da_rb_range_handle);
     svm_da_info_rbtree_unlock(da_info, true);
     if (ret != 0) {
-        devmm_drv_err("Instert failed. (va=0x%llx; size=0x%llx)\n", node->va, node->size);
+        devmm_drv_err("Insert failed. (va=0x%llx; size=0x%llx)\n", node->va, node->size);
         devmm_kvfree(node);
         return ret;
     }

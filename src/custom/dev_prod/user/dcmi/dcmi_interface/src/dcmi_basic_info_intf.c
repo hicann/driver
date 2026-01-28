@@ -15,7 +15,7 @@
 #include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
- 
+
 #include "securec.h"
 #include "dsmi_common_interface_custom.h"
 #include "dcmi_interface_api.h"
@@ -258,7 +258,7 @@ int dcmi_get_card_pcie_info(int card_id, char *pcie_info, int pcie_info_len)
     }
 
     if (!(dcmi_board_type_is_card()) || dcmi_board_chip_type_is_ascend_910b() ||
-        dcmi_board_chip_type_is_ascend_910_93()) {
+        dcmi_board_chip_type_is_ascend_910_93() || dcmi_board_chip_type_is_ascend_910_95()) {
         return DCMI_ERR_CODE_NOT_SUPPORT;
     }
 
@@ -646,6 +646,12 @@ int dcmi_get_device_pcie_info(int card_id, int device_id, struct dcmi_pcie_info 
         return err;
     }
 
+    if (dcmi_board_chip_type_is_ascend_910_95() &&
+        dcmi_mainboard_is_a900_a5_ub(g_mainboard_info.mainboard_id)) {
+        gplog(LOG_ERR, "This device does not support.");
+        return DCMI_ERR_CODE_NOT_SUPPORT;
+    }
+
     if (device_type == NPU_TYPE) {
         return dcmi_get_npu_pcie_info(card_id, device_id, pcie_info);
     } else {
@@ -668,6 +674,11 @@ int dcmi_get_device_pcie_info_v2(int card_id, int device_id, struct dcmi_pcie_in
     if (err != DCMI_OK) {
         gplog(LOG_ERR, "dcmi_get_device_type failed. err is %d.", err);
         return err;
+    }
+
+    if (dcmi_board_chip_type_is_ascend_910_95() &&
+        dcmi_mainboard_is_a900_a5_ub(g_mainboard_info.mainboard_id)) {
+        return DCMI_ERR_CODE_NOT_SUPPORT;
     }
 
     if (device_type == NPU_TYPE) {
@@ -761,7 +772,7 @@ int dcmi_get_device_die_v2(int card_id, int device_id, enum dcmi_die_type input_
         return DCMI_ERR_CODE_INVALID_PARAMETER;
     }
 
-    if (input_type > VDIE) {
+    if (input_type >= INVALID_DIE) {
         gplog(LOG_ERR, "input_type is invalid.");
         return DCMI_ERR_CODE_INVALID_PARAMETER;
     }
@@ -936,6 +947,12 @@ int dcmi_set_device_info(int card_id, int device_id, enum dcmi_main_cmd main_cmd
         return err;
     }
 
+    if (dcmi_board_chip_type_is_ascend_910_93() == TRUE && main_cmd == DCMI_MAIN_CMD_DEVICE_SHARE &&
+        sub_cmd == DCMI_DEVICE_SHARE_SUB_CMD_COMMON) {
+        return dcmi_set_device_share_for_910_93(card_id, device_type, DCMI_MAIN_CMD_DEVICE_SHARE,
+            DCMI_DEVICE_SHARE_SUB_CMD_COMMON, buf, buf_size);
+    }
+
     if (device_type == NPU_TYPE) {
         err = dcmi_set_npu_device_info(card_id, device_id, main_cmd, sub_cmd, buf, buf_size);
         if (err != DCMI_OK) {
@@ -959,9 +976,8 @@ int dcmi_set_custom_op_secverify_mode(int card_id, int device_id, enum dcmi_main
     int err;
     enum dcmi_unit_type device_type = NPU_TYPE;
 
-    // 仅支持物理机root + 虚机的root
-    if (!(dcmi_is_in_phy_machine_root() || dcmi_is_in_vm_root())) {
-        gplog(LOG_OP, "Operation not permitted, only root user on physical machine or vm can call this api.");
+    // 仅支持物理机root + 虚机的root + 特权容器root
+    if (!(dcmi_is_in_phy_machine_root() || dcmi_is_in_vm_root() || dcmi_is_in_privileged_docker_root())) {
         return DCMI_ERR_CODE_OPER_NOT_PERMITTED;
     }
 
@@ -973,7 +989,7 @@ int dcmi_set_custom_op_secverify_mode(int card_id, int device_id, enum dcmi_main
     if (!(dcmi_board_chip_type_is_ascend_910b() || dcmi_board_chip_type_is_ascend_910_93())) {
         return DCMI_ERR_CODE_NOT_SUPPORT;
     }
-    
+
     err = dcmi_get_device_type(card_id, device_id, &device_type);
     if (err != DCMI_OK) {
         gplog(LOG_ERR, "dcmi_get_device_type failed. err is %d.", err);
@@ -1006,6 +1022,11 @@ int dcmi_set_custom_op_secverify_enable(int card_id, int device_id, const char *
     if (!dcmi_is_in_phy_machine_root()) {
         gplog(LOG_OP, "Operation not permitted, only root user on physical machine can call this api.");
         return DCMI_ERR_CODE_OPER_NOT_PERMITTED;
+    }
+
+    if (buf == NULL) {
+        gplog(LOG_ERR, "buf is NULL.");
+        return DCMI_ERR_CODE_INVALID_PARAMETER;
     }
 
     if (!(dcmi_board_chip_type_is_ascend_910b() || dcmi_board_chip_type_is_ascend_910_93())) {
@@ -1282,7 +1303,7 @@ int dcmi_get_product_type(int card_id, int device_id, char *product_type_str, in
 
     if (device_type == NPU_TYPE) {
         if (dcmi_board_chip_type_is_ascend_910() || dcmi_board_chip_type_is_ascend_910b() ||
-            dcmi_board_chip_type_is_ascend_910_93()) {
+            dcmi_board_chip_type_is_ascend_910_93() || dcmi_board_chip_type_is_ascend_910_95()) {
             return DCMI_ERR_CODE_NOT_SUPPORT;
         }
         return dcmi_get_product_type_str(card_id, device_id, product_type_str, buf_size);
@@ -1524,7 +1545,8 @@ int dcmi_get_card_elabel(int card_id, struct dcmi_elabel_info_stru *elabel_info)
         return DCMI_ERR_CODE_INVALID_PARAMETER;
     }
 
-    if (dcmi_board_chip_type_is_ascend_910b() || dcmi_board_chip_type_is_ascend_910_93()) {
+    if (dcmi_board_chip_type_is_ascend_910b() || dcmi_board_chip_type_is_ascend_910_93() ||
+        dcmi_board_chip_type_is_ascend_910_95()) {
         gplog(LOG_ERR, "This device does not support.");
         return DCMI_ERR_CODE_NOT_SUPPORT;
     }
@@ -1696,7 +1718,7 @@ int dcmi_get_netdev_brother_device(int card_id, int device_id, int *brother_card
         gplog(LOG_ERR, "this device can't call this api on virtual machine or container or not in 910_93.");
         return DCMI_ERR_CODE_NOT_SUPPORT;
     }
- 
+
     main_board_id = dcmi_get_maindboard_id_inner();
     if ((int)main_board_id == 0) {
         gplog(LOG_ERR, "get main board id %u failed.", main_board_id);
@@ -1731,7 +1753,7 @@ STATIC int dcmi_get_npu_mainboard_id(int card_id, int device_id, unsigned int *m
     int ret;
     int device_logic_id = 0;
     unsigned int device_phy_id = 0;
- 
+
     ret = dcmi_get_device_logic_id(&device_logic_id, card_id, device_id);
     if (ret != DCMI_OK) {
         gplog(LOG_ERR, "Call dcmi_get_device_logic_id failed, err is %d.", ret);
@@ -1743,36 +1765,37 @@ STATIC int dcmi_get_npu_mainboard_id(int card_id, int device_id, unsigned int *m
         gplog(LOG_ERR, "dcmi_get_device_phyid_from_logicid failed. ret is %d", ret);
         return ret;
     }
- 
+
     ret = dsmi_get_mainboard_id(device_phy_id, mainboard_id);
     if ((ret != DSMI_OK) && (ret != DSMI_ERR_NOT_SUPPORT)) {
         gplog(LOG_ERR, "Call dsmi_get_mainboard_id failed, err is %d.", ret);
     }
- 
+
     return dcmi_convert_error_code(ret);
 }
- 
+
 int dcmi_get_mainboard_id(int card_id, int device_id, unsigned int *mainboard_id)
 {
     int ret;
     enum dcmi_unit_type device_type = INVALID_TYPE;
- 
+
     if (mainboard_id == NULL) {
         gplog(LOG_ERR, "The mainboard_id is NULL.");
         return DCMI_ERR_CODE_INVALID_PARAMETER;
     }
- 
-    if (!dcmi_board_chip_type_is_ascend_910b() && !dcmi_board_chip_type_is_ascend_910_93()) {
+
+    if (!dcmi_board_chip_type_is_ascend_910b() && !dcmi_board_chip_type_is_ascend_910_93() &&
+        !dcmi_board_chip_type_is_ascend_910_95()) {
         gplog(LOG_OP, "This device does not support get main board id.");
         return DCMI_ERR_CODE_NOT_SUPPORT;
     }
- 
+
     ret = dcmi_get_device_type(card_id, device_id, &device_type);
     if (ret != DCMI_OK) {
         gplog(LOG_ERR, "Call dcmi_get_device_type failed, err is %d.", ret);
         return ret;
     }
- 
+
     if (device_type == NPU_TYPE) {
         return dcmi_get_npu_mainboard_id(card_id, device_id, mainboard_id);
     } else {

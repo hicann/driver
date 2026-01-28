@@ -18,12 +18,18 @@
 #include "uda_notifier.h"
 #include "pbl_mem_alloc_interface.h"
 #include "uda_dev.h"
+#include "ka_memory_pub.h"
+#include "ka_kernel_def_pub.h"
+#include "ka_task_pub.h"
+#include "ka_common_pub.h"
+#include "ka_base_pub.h"
 
 static struct mutex uda_dev_mutex;
-static rwlock_t uda_dev_lock;
+static ka_rwlock_t uda_dev_lock;
 static struct uda_dev_inst *dev_insts[UDA_UDEV_MAX_NUM];
 struct uda_reorder_insts reorder_insts;
 struct udevid_reorder_para *reorder_para = NULL;
+void __iomem *g_reorder_para_addr[UDA_UDEV_MAX_NUM] = {NULL};
 static bool uda_udevid_reorder_flag = false;
 
 void uda_type_to_string(struct uda_dev_type *type, char buf[], u32 buf_len)
@@ -62,31 +68,37 @@ u32 uda_get_udev_max_num(void)
 {
     return UDA_UDEV_MAX_NUM;
 }
-EXPORT_SYMBOL(uda_get_udev_max_num);
+KA_EXPORT_SYMBOL(uda_get_udev_max_num);
 
 u32 uda_get_remote_udev_max_num(void)
 {
     return UDA_REMOTE_UDEV_MAX_NUM;
 }
-EXPORT_SYMBOL(uda_get_remote_udev_max_num);
+KA_EXPORT_SYMBOL(uda_get_remote_udev_max_num);
 
 bool hal_kernel_uda_is_phy_dev(u32 udevid)
 {
     return uda_is_phy_dev(udevid);
 }
-EXPORT_SYMBOL(hal_kernel_uda_is_phy_dev);
+KA_EXPORT_SYMBOL(hal_kernel_uda_is_phy_dev);
 
 bool uda_is_phy_dev(u32 udevid)
 {
     return (udevid < UDA_MAX_PHY_DEV_NUM);
 }
-EXPORT_SYMBOL(uda_is_phy_dev);
+KA_EXPORT_SYMBOL(uda_is_phy_dev);
 
 void uda_set_udevid_reorder_flag(bool flag)
 {
     uda_udevid_reorder_flag = flag;
 }
-EXPORT_SYMBOL(uda_set_udevid_reorder_flag);
+KA_EXPORT_SYMBOL(uda_set_udevid_reorder_flag);
+
+bool uda_udevid_is_reorder(void)
+{
+    return uda_udevid_reorder_flag;
+}
+KA_EXPORT_SYMBOL(uda_udevid_is_reorder);
 
 bool uda_is_pf_dev(u32 udevid)
 {
@@ -107,7 +119,7 @@ bool uda_is_pf_dev(u32 udevid)
     uda_dev_inst_put(dev_inst);
     return is_pf;
 }
-EXPORT_SYMBOL(uda_is_pf_dev);
+KA_EXPORT_SYMBOL(uda_is_pf_dev);
 
 static int uda_alloc_udevid(u32 start, u32 end, u32 *udevid) // [start, end)
 {
@@ -131,7 +143,7 @@ static u32 uda_make_udevid(struct uda_mia_dev_para *mia_para)
 static struct uda_dev_inst *uda_create_dev_inst(struct uda_dev_type *type, struct uda_dev_para *para)
 {
     static u32 inst_id = 0;
-    struct uda_dev_inst *dev_inst = dbl_kzalloc(sizeof(struct uda_dev_inst), GFP_KERNEL | __GFP_ACCOUNT);
+    struct uda_dev_inst *dev_inst = dbl_kzalloc(sizeof(struct uda_dev_inst), KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
     if (dev_inst == NULL) {
         uda_err("Out of memory.\n");
         return NULL;
@@ -141,7 +153,7 @@ static struct uda_dev_inst *uda_create_dev_inst(struct uda_dev_type *type, struc
     dev_inst->para = *para;
     dev_inst->agent_flag = 0;
     dev_inst->inst_id = inst_id++;
-    kref_init(&dev_inst->ref);
+    ka_base_kref_init(&dev_inst->ref);
 
     return dev_inst;
 }
@@ -159,12 +171,12 @@ struct uda_dev_inst *uda_dev_inst_get(u32 udevid)
         return NULL;
     }
 
-    read_lock_bh(&uda_dev_lock);
+    ka_task_read_lock_bh(&uda_dev_lock);
     dev_inst = dev_insts[udevid];
     if (dev_inst != NULL) {
-        kref_get(&dev_inst->ref);
+        ka_base_kref_get(&dev_inst->ref);
     }
-    read_unlock_bh(&uda_dev_lock);
+    ka_task_read_unlock_bh(&uda_dev_lock);
 
     return dev_inst;
 }
@@ -177,19 +189,19 @@ struct uda_dev_inst *uda_dev_inst_get_ex(u32 udevid)
         return NULL;
     }
 
-    read_lock_irq(&uda_dev_lock);
+    ka_task_read_lock_irq(&uda_dev_lock);
     dev_inst = dev_insts[udevid];
     if (dev_inst != NULL) {
-        kref_get(&dev_inst->ref);
+        ka_base_kref_get(&dev_inst->ref);
     }
-    read_unlock_irq(&uda_dev_lock);
+    ka_task_read_unlock_irq(&uda_dev_lock);
 
     return dev_inst;
 }
 
 static void uda_dev_inst_release(struct kref *kref)
 {
-    struct uda_dev_inst *dev_inst = container_of(kref, struct uda_dev_inst, ref);
+    struct uda_dev_inst *dev_inst = ka_container_of(kref, struct uda_dev_inst, ref);
 
     uda_info("Remove dev success. (udevid=%u; agent_flag=%u)\n", dev_inst->udevid, dev_inst->agent_flag);
     uda_destroy_dev_inst(dev_inst);
@@ -197,7 +209,7 @@ static void uda_dev_inst_release(struct kref *kref)
 
 void uda_dev_inst_put(struct uda_dev_inst *dev_inst)
 {
-    kref_put(&dev_inst->ref, uda_dev_inst_release);
+    ka_base_kref_put(&dev_inst->ref, uda_dev_inst_release);
 }
 
 static int _uda_add_dev_ex(struct uda_dev_type *type, struct uda_dev_para *para,
@@ -285,21 +297,25 @@ int uda_guid_compare(u32 *guid, u32 *other_guid)
     return 0;
 }
 
-void uda_guid_sort(unsigned int start, unsigned int end)
+void uda_module_id_sort(unsigned int start, unsigned int end)
 {
     struct uda_dev_para tmp_para;
-    unsigned int *guid1 = NULL;
-    unsigned int *guid2 = NULL;
+    unsigned int module_id1 = 0;
+    unsigned int module_id2 = 0;
     unsigned int i, j;
 
-    for (i = start; i < end; i++) {
-        guid1 = reorder_para[reorder_insts.dev_para[i].add_id].guid;
-        for (j = i + 1; j < end; j++) {
-            guid2 = reorder_para[reorder_insts.dev_para[j].add_id].guid;
-            if (uda_guid_compare(guid1, guid2) > 0) {
-                tmp_para = reorder_insts.dev_para[i];
-                reorder_insts.dev_para[i] = reorder_insts.dev_para[j];
-                reorder_insts.dev_para[j] = tmp_para;
+    if (end > reorder_insts.dev_add_num) {
+        return;
+    }
+
+    for (i = start; i < end - 1; i++) {
+        for (j = start; j < end - 1 - i + start; j++) {
+            module_id1 = reorder_para[reorder_insts.dev_para[j].add_id].module_id;
+            module_id2 = reorder_para[reorder_insts.dev_para[j + 1].add_id].module_id;
+            if (module_id1 > module_id2) {
+                tmp_para = reorder_insts.dev_para[j];
+                reorder_insts.dev_para[j] = reorder_insts.dev_para[j + 1];
+                reorder_insts.dev_para[j + 1] = tmp_para;
             }
         }
     }
@@ -315,12 +331,15 @@ static void _uda_udevid_reorder(void)
     unsigned int udevid = 0;
     unsigned int i, j;
 
-    for (i = 0; i < reorder_insts.dev_add_num; i += group_dev_num) {
+    for (i = 0; i < reorder_insts.dev_add_num;) {
         tmp_index = i + 1;
+        ub_link_count = 0;
         if ((reorder_para[reorder_insts.dev_para[i].add_id].group_dev_num <= UDA_REORDER_GROUP_DEV_MAX_NUM) &&
             (reorder_para[reorder_insts.dev_para[i].add_id].group_dev_num != 0)) {
             group_dev_num = reorder_para[reorder_insts.dev_para[i].add_id].group_dev_num;
         } else {
+            uda_warn("The set group device number is invalid. (set_group_dev_num=%u)\n",
+                reorder_para[reorder_insts.dev_para[i].add_id].group_dev_num);
             group_dev_num = 1; /* 1p */
         }
         /* 1:Establish links on all ports */
@@ -346,13 +365,15 @@ static void _uda_udevid_reorder(void)
                 break;
             }
         }
-        uda_guid_sort(i, i + group_dev_num);
+
         if (ub_link_count == group_dev_num) {
+            uda_module_id_sort(i, i + group_dev_num);
             for (j = i; j < group_dev_num; j++) {
                 reorder_insts.dev_para[j].udevid = udevid;
                 udevid++;
             }
         }
+        i = tmp_index;
     }
 
     for (i = 0; i < reorder_insts.dev_add_num; i++) {
@@ -375,7 +396,8 @@ static void uda_udevid_reorder_work(struct work_struct *work)
 {
     unsigned int link_all_count = 0;
     unsigned int udevid = 0;
-    unsigned int i;
+    unsigned int add_id;
+    unsigned int i, j;
     int wait_cnt = 0;
     int ret;
 
@@ -383,15 +405,17 @@ static void uda_udevid_reorder_work(struct work_struct *work)
         link_all_count = 0;
         /* 1:links on all ports; 3:No need to establish a link on the port. */
         for (i = 0; i < reorder_insts.dev_add_num; i++) {
-            if ((reorder_para[reorder_insts.dev_para[i].add_id].ub_link_status == UDA_UB_PORT_ALL_LINK) ||
-                (reorder_para[reorder_insts.dev_para[i].add_id].ub_link_status == UDA_UB_PORT_NOT_LINK)) {
+            add_id = reorder_insts.dev_para[i].add_id;
+            ka_mm_memcpy_fromio(&reorder_para[add_id], g_reorder_para_addr[add_id], sizeof(struct udevid_reorder_para));
+            if ((reorder_para[add_id].ub_link_status == UDA_UB_PORT_ALL_LINK) ||
+                (reorder_para[add_id].ub_link_status == UDA_UB_PORT_NOT_LINK)) {
                 link_all_count++;
             }
         }
         if ((link_all_count == uda_get_detected_phy_dev_num()) || (uda_get_detected_phy_dev_num() == 1)) {
             break;
         }
-        msleep(UDA_REORDER_WAIT_TIME);
+        ka_system_msleep(UDA_REORDER_WAIT_TIME);
         wait_cnt++;
     }
     uda_info("Reorder wait end. (dev_add_num=%u; detected_phy_dev_num=%u)\n",
@@ -399,9 +423,15 @@ static void uda_udevid_reorder_work(struct work_struct *work)
 
     _uda_udevid_reorder();
     for (i = 0; i < reorder_insts.dev_add_num; i++) {
-        mutex_lock(&uda_dev_mutex);
+        for (j = 0; j < reorder_insts.dev_add_num; j++) {
+            if (reorder_insts.dev_para[i].master_id == reorder_insts.dev_para[j].add_id) {
+                reorder_insts.dev_para[i].master_id = reorder_insts.dev_para[j].udevid;
+                break;
+            }
+        }
+        ka_task_mutex_lock(&uda_dev_mutex);
         ret = _uda_add_dev_ex(&reorder_insts.dev_type, &reorder_insts.dev_para[i], NULL, &udevid);
-        mutex_unlock(&uda_dev_mutex);
+        ka_task_mutex_unlock(&uda_dev_mutex);
         if (ret == 0) {
             (void)uda_notifier_call(udevid, &reorder_insts.dev_type, UDA_INIT);
         }
@@ -415,7 +445,7 @@ static int uda_udevid_reorder(struct uda_dev_type *type, struct uda_dev_para *pa
     unsigned int all_dev_num = uda_get_detected_phy_dev_num();
 
     if (reorder_insts.dev_para == NULL) {
-        reorder_insts.dev_para = dbl_kzalloc(sizeof(struct uda_dev_para) * all_dev_num, GFP_KERNEL | __GFP_ACCOUNT);
+        reorder_insts.dev_para = dbl_kzalloc(sizeof(struct uda_dev_para) * all_dev_num, KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
         if (reorder_insts.dev_para == NULL) {
             uda_err("Out of memory.\n");
             return -ENOMEM;
@@ -434,7 +464,7 @@ static int uda_udevid_reorder(struct uda_dev_type *type, struct uda_dev_para *pa
     reorder_insts.dev_add_num++;
     /* 1:Add the first device to start work */
     if (reorder_insts.dev_add_num == 1) {
-        schedule_work(&reorder_insts.udevid_reorder_work);
+        ka_task_schedule_work(&reorder_insts.udevid_reorder_work);
     }
     uda_info("Reorder add success. (dev_add_num=%u)\n", reorder_insts.dev_add_num);
 
@@ -477,9 +507,9 @@ static int uda_add_dev_ex(struct uda_dev_type *type, struct uda_dev_para *para,
         para->add_id = para->udevid;
     }
 
-    mutex_lock(&uda_dev_mutex);
+    ka_task_mutex_lock(&uda_dev_mutex);
     ret = _uda_add_dev_ex(type, para, mia_para, udevid);
-    mutex_unlock(&uda_dev_mutex);
+    ka_task_mutex_unlock(&uda_dev_mutex);
 
     if (ret == 0) {
         (void)uda_notifier_call(*udevid, type, UDA_INIT);
@@ -492,7 +522,7 @@ int uda_add_dev(struct uda_dev_type *type, struct uda_dev_para *para, u32 *udevi
 {
     return uda_add_dev_ex(type, para, NULL, udevid);
 }
-EXPORT_SYMBOL(uda_add_dev);
+KA_EXPORT_SYMBOL(uda_add_dev);
 
 static int uda_mia_dev_check(struct uda_mia_dev_para *mia_para)
 {
@@ -525,7 +555,7 @@ int uda_add_mia_dev(struct uda_dev_type *type, struct uda_dev_para *para,
     para->pf_flag = 0;
     return uda_add_dev_ex(type, para, mia_para, udevid);
 }
-EXPORT_SYMBOL(uda_add_mia_dev);
+KA_EXPORT_SYMBOL(uda_add_mia_dev);
 
 static int _uda_remove_dev(struct uda_dev_inst *dev_inst, struct uda_dev_type *type)
 {
@@ -536,19 +566,19 @@ static int _uda_remove_dev(struct uda_dev_inst *dev_inst, struct uda_dev_type *t
             return ret;
         }
 #endif
-        write_lock_bh(&uda_dev_lock);
+        ka_task_write_lock_bh(&uda_dev_lock);
         dev_insts[dev_inst->udevid] = NULL;  /* set inst invalid, so other thread will not get it */
-        write_unlock_bh(&uda_dev_lock);
+        ka_task_write_unlock_bh(&uda_dev_lock);
         if (dev_inst->agent_dev != NULL) {
             struct uda_dev_inst *agent_dev_inst = dev_inst->agent_dev;
             uda_warn("Not remove agent dev. (udevid=%d)\n", dev_inst->udevid);
-            kref_put(&agent_dev_inst->ref, uda_dev_inst_release);
+            ka_base_kref_put(&agent_dev_inst->ref, uda_dev_inst_release);
         }
-        kref_put(&dev_inst->ref, uda_dev_inst_release);
+        ka_base_kref_put(&dev_inst->ref, uda_dev_inst_release);
     } else {
         struct uda_dev_inst *agent_dev_inst = dev_inst->agent_dev;
         dev_inst->agent_dev = NULL;
-        kref_put(&agent_dev_inst->ref, uda_dev_inst_release);
+        ka_base_kref_put(&agent_dev_inst->ref, uda_dev_inst_release);
     }
 
     return 0;
@@ -594,9 +624,9 @@ int uda_remove_dev(struct uda_dev_type *type, u32 udevid)
 #else
     {
 #endif
-        mutex_lock(&uda_dev_mutex);
+        ka_task_mutex_lock(&uda_dev_mutex);
         ret = _uda_remove_dev(dev_inst, type);
-        mutex_unlock(&uda_dev_mutex);
+        ka_task_mutex_unlock(&uda_dev_mutex);
     }
     dev_inst->para.dev = NULL;
     uda_update_status_by_action(&dev_inst->status, UDA_REMOVE);
@@ -609,7 +639,7 @@ int uda_remove_dev(struct uda_dev_type *type, u32 udevid)
 
     return ret;
 }
-EXPORT_SYMBOL(uda_remove_dev);
+KA_EXPORT_SYMBOL(uda_remove_dev);
 
 int uda_get_action_para(u32 udevid, enum uda_notified_action action, u32 *val)
 {
@@ -635,7 +665,7 @@ int uda_get_action_para(u32 udevid, enum uda_notified_action action, u32 *val)
 
     return 0;
 }
-EXPORT_SYMBOL(uda_get_action_para);
+KA_EXPORT_SYMBOL(uda_get_action_para);
 
 static void uda_dev_ctrl_restore(struct uda_dev_inst *dev_inst, enum uda_dev_ctrl_cmd cmd, u32 val)
 {
@@ -739,13 +769,13 @@ int uda_dev_ctrl_ex(u32 udevid, enum uda_dev_ctrl_cmd cmd, u32 val)
 
     return ret;
 }
-EXPORT_SYMBOL(uda_dev_ctrl_ex);
+KA_EXPORT_SYMBOL(uda_dev_ctrl_ex);
 
 int uda_dev_ctrl(u32 udevid, enum uda_dev_ctrl_cmd cmd)
 {
     return uda_dev_ctrl_ex(udevid, cmd, 0);
 }
-EXPORT_SYMBOL(uda_dev_ctrl);
+KA_EXPORT_SYMBOL(uda_dev_ctrl);
 
 int uda_agent_dev_ctrl(u32 udevid, enum uda_dev_ctrl_cmd cmd)
 {
@@ -787,7 +817,7 @@ int uda_agent_dev_ctrl(u32 udevid, enum uda_dev_ctrl_cmd cmd)
 
     return ret;
 }
-EXPORT_SYMBOL(uda_agent_dev_ctrl);
+KA_EXPORT_SYMBOL(uda_agent_dev_ctrl);
 
 int uda_dev_set_remote_udevid(u32 udevid, u32 remote_udevid)
 {
@@ -802,13 +832,13 @@ int uda_dev_set_remote_udevid(u32 udevid, u32 remote_udevid)
 
     return 0;
 }
-EXPORT_SYMBOL(uda_dev_set_remote_udevid);
+KA_EXPORT_SYMBOL(uda_dev_set_remote_udevid);
 
 int uda_dev_get_remote_udevid(u32 udevid, u32 *remote_udevid)
 {
     return uda_udevid_to_remote_udevid(udevid, remote_udevid);
 }
-EXPORT_SYMBOL(uda_dev_get_remote_udevid);
+KA_EXPORT_SYMBOL(uda_dev_get_remote_udevid);
 
 bool uda_is_support_udev_mng(void)
 {
@@ -818,7 +848,7 @@ bool uda_is_support_udev_mng(void)
     return false;
 #endif
 }
-EXPORT_SYMBOL(uda_is_support_udev_mng);
+KA_EXPORT_SYMBOL(uda_is_support_udev_mng);
 
 static struct device *_uda_get_device(u32 udevid, bool is_agent)
 {
@@ -847,19 +877,19 @@ struct device *hal_kernel_uda_get_device(u32 udevid)
 {
     return uda_get_device(udevid);
 }
-EXPORT_SYMBOL(hal_kernel_uda_get_device);
+KA_EXPORT_SYMBOL(hal_kernel_uda_get_device);
 
 struct device *uda_get_device(u32 udevid)
 {
     return _uda_get_device(udevid, false);
 }
-EXPORT_SYMBOL(uda_get_device);
+KA_EXPORT_SYMBOL(uda_get_device);
 
 struct device *uda_get_agent_device(u32 udevid)
 {
     return _uda_get_device(udevid, true);
 }
-EXPORT_SYMBOL(uda_get_agent_device);
+KA_EXPORT_SYMBOL(uda_get_agent_device);
 
 u32 uda_get_chip_type(u32 udevid)
 {
@@ -875,7 +905,7 @@ u32 uda_get_chip_type(u32 udevid)
 
     return chip_type;
 }
-EXPORT_SYMBOL(uda_get_chip_type);
+KA_EXPORT_SYMBOL(uda_get_chip_type);
 
 u32 uda_get_master_id(u32 udevid)
 {
@@ -891,7 +921,7 @@ u32 uda_get_master_id(u32 udevid)
 
     return master_id;
 }
-EXPORT_SYMBOL(uda_get_master_id);
+KA_EXPORT_SYMBOL(uda_get_master_id);
 
 int uda_udevid_to_mia_devid(u32 udevid, struct uda_mia_dev_para *mia_para)
 {
@@ -918,7 +948,7 @@ int uda_udevid_to_mia_devid(u32 udevid, struct uda_mia_dev_para *mia_para)
     uda_dev_inst_put(dev_inst);
     return 0;
 }
-EXPORT_SYMBOL(uda_udevid_to_mia_devid);
+KA_EXPORT_SYMBOL(uda_udevid_to_mia_devid);
 
 int uda_mia_devid_to_udevid(struct uda_mia_dev_para *mia_para, u32 *udevid)
 {
@@ -944,7 +974,7 @@ int uda_mia_devid_to_udevid(struct uda_mia_dev_para *mia_para, u32 *udevid)
     uda_dev_inst_put(dev_inst);
     return 0;
 }
-EXPORT_SYMBOL(uda_mia_devid_to_udevid);
+KA_EXPORT_SYMBOL(uda_mia_devid_to_udevid);
 
 int uda_udevid_to_remote_udevid(u32 udevid, u32 *remote_udevid)
 {
@@ -987,7 +1017,7 @@ int uda_remote_udevid_to_udevid(u32 remote_udevid, u32 *udevid)
 
     return -EINVAL;
 }
-EXPORT_SYMBOL(uda_remote_udevid_to_udevid);
+KA_EXPORT_SYMBOL(uda_remote_udevid_to_udevid);
 
 u32 uda_get_dev_num(void)
 {
@@ -1001,7 +1031,7 @@ u32 uda_get_dev_num(void)
 
     return udev_num;
 }
-EXPORT_SYMBOL(uda_get_dev_num);
+KA_EXPORT_SYMBOL(uda_get_dev_num);
 
 u32 uda_get_mia_dev_num(void)
 {
@@ -1015,13 +1045,13 @@ u32 uda_get_mia_dev_num(void)
 
     return udev_num;
 }
-EXPORT_SYMBOL(uda_get_mia_dev_num);
+KA_EXPORT_SYMBOL(uda_get_mia_dev_num);
 
 u32 uda_get_host_id(void)
 {
     return UDA_HOST_ID;
 }
-EXPORT_SYMBOL(uda_get_host_id);
+KA_EXPORT_SYMBOL(uda_get_host_id);
 
 bool uda_is_udevid_exist(u32 udevid)
 {
@@ -1033,7 +1063,7 @@ bool uda_is_udevid_exist(u32 udevid)
 
     return true;
 }
-EXPORT_SYMBOL(uda_is_udevid_exist);
+KA_EXPORT_SYMBOL(uda_is_udevid_exist);
 
 int uda_set_udevid_reorder_para(u32 add_id, struct udevid_reorder_para *para)
 {
@@ -1043,16 +1073,17 @@ int uda_set_udevid_reorder_para(u32 add_id, struct udevid_reorder_para *para)
     }
 
     if (reorder_para == NULL) {
-        reorder_para = dbl_kzalloc(sizeof(struct udevid_reorder_para) * UDA_UDEV_MAX_NUM, GFP_KERNEL | __GFP_ACCOUNT);
+        reorder_para = dbl_kzalloc(sizeof(struct udevid_reorder_para) * UDA_UDEV_MAX_NUM, KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
         if (reorder_para == NULL) {
             uda_err("Out of memory.\n");
             return -ENOMEM;
         }
     }
-    memcpy_fromio(&reorder_para[add_id], para, sizeof(struct udevid_reorder_para));
+    ka_mm_memcpy_fromio(&reorder_para[add_id], para, sizeof(struct udevid_reorder_para));
+    g_reorder_para_addr[add_id] = (void *)para;
     return 0;
 }
-EXPORT_SYMBOL(uda_set_udevid_reorder_para);
+KA_EXPORT_SYMBOL(uda_set_udevid_reorder_para);
 
 int uda_get_udevid_reorder_para(u32 udevid, struct udevid_reorder_para *para)
 {
@@ -1078,7 +1109,7 @@ int uda_get_udevid_reorder_para(u32 udevid, struct udevid_reorder_para *para)
     uda_dev_inst_put(dev_inst);
     return 0;
 }
-EXPORT_SYMBOL(uda_get_udevid_reorder_para);
+KA_EXPORT_SYMBOL(uda_get_udevid_reorder_para);
 
 int uda_udevid_to_add_id(u32 udevid, u32 *add_id)
 {
@@ -1094,7 +1125,7 @@ int uda_udevid_to_add_id(u32 udevid, u32 *add_id)
     uda_dev_inst_put(dev_inst);
     return 0;
 }
-EXPORT_SYMBOL(uda_udevid_to_add_id);
+KA_EXPORT_SYMBOL(uda_udevid_to_add_id);
 
 int uda_add_id_to_udevid(u32 add_id, u32 *udevid)
 {
@@ -1122,14 +1153,14 @@ int uda_add_id_to_udevid(u32 add_id, u32 *udevid)
     uda_debug("Invalid add ID. (add_id=%u)\n", add_id);
     return -EINVAL;
 }
-EXPORT_SYMBOL(uda_add_id_to_udevid);
+KA_EXPORT_SYMBOL(uda_add_id_to_udevid);
 
 int uda_dev_init(void)
 {
     (void)memset_s(dev_insts, sizeof(dev_insts), 0, sizeof(dev_insts));
-    mutex_init(&uda_dev_mutex);
-    rwlock_init(&uda_dev_lock);
-    INIT_WORK(&reorder_insts.udevid_reorder_work, uda_udevid_reorder_work);
+    ka_task_mutex_init(&uda_dev_mutex);
+    ka_task_rwlock_init(&uda_dev_lock);
+    KA_TASK_INIT_WORK(&reorder_insts.udevid_reorder_work, uda_udevid_reorder_work);
 
     return 0;
 }
@@ -1138,7 +1169,7 @@ void uda_dev_uninit(void)
 {
     u32 udevid;
 
-    (void)cancel_work_sync(&reorder_insts.udevid_reorder_work);
+    (void)ka_task_cancel_work_sync(&reorder_insts.udevid_reorder_work);
     if (reorder_insts.dev_para != NULL) {
         dbl_kfree(reorder_insts.dev_para);
         reorder_insts.dev_para = NULL;
@@ -1158,4 +1189,3 @@ void uda_dev_uninit(void)
         }
     }
 }
-

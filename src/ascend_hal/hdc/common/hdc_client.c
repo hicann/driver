@@ -310,7 +310,7 @@ hdcError_t halHdcSessionConnectEx(int peer_node, int peer_devid, int peer_pid, H
 
     result = drv_hdc_client_alloc_session(pHead, &p_client_session);
     if ((!result) || (p_client_session == NULL)) {
-        HDC_LOG_ERR("No avaliable session.\n");
+        HDC_LOG_ERR("No available session.\n");
         return DRV_ERROR_OVER_LIMIT;
     }
 

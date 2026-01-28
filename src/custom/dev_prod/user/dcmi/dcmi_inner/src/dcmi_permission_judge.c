@@ -336,13 +336,28 @@ STATIC int dcmi_ckeck_chip_inf_sub_set_cmd_product(unsigned int main_cmd, unsign
     return DCMI_OK;
 }
 
+int dcmi_check_device_share_set_cmd_permission(unsigned int main_cmd, unsigned int sub_cmd)
+{
+    if (main_cmd == DCMI_MAIN_CMD_DEVICE_SHARE && sub_cmd == DCMI_DEVICE_SHARE_SUB_CMD_COMMON) {
+        if ((dcmi_board_chip_type_is_ascend_910_93() != TRUE) && (dcmi_board_chip_type_is_ascend_910b() != TRUE) &&
+            (dcmi_board_chip_type_is_ascend_310p() != TRUE) && dcmi_board_chip_type_is_ascend_310b() != TRUE) {
+            // 容器共享持久化功能暂时仅支持A3、A2、310P、310b
+            gplog(LOG_OP, "This device does not support setting device-share status.");
+            return DCMI_ERR_CODE_NOT_SUPPORT;
+        }
+    }
+    return DCMI_OK;
+}
+
 int dcmi_set_device_info_permission_check(unsigned int main_cmd, unsigned int sub_cmd)
 {
     size_t index, table_size;
 
     static struct dcmi_set_device_main_cmd_table cmd_permission_table[] = {
         {DCMI_MAIN_CMD_TS, DCMI_TS_SUB_CMD_SET_FAULT_MASK, DCMI_ENV_ALL},
+        {DCMI_MAIN_CMD_TS, DCMI_TS_SUB_CMD_COMMON_MSG, DCMI_ACC_ROOT | DCMI_ENV_NOT_NORMAL_DOCKER},
         {DCMI_MAIN_CMD_CHIP_INF, DCMI_CHIP_INF_SUB_CMD_SPOD_NODE_STATUS, DCMI_ACC_ROOT | DCMI_ENV_NOT_NORMAL_DOCKER},
+        {DCMI_MAIN_CMD_DEVICE_SHARE, DCMI_DEVICE_SHARE_SUB_CMD_COMMON, DCMI_ENV_PHY_ADMIN_DOCKER | DCMI_ACC_ROOT},
     };
 
     table_size = sizeof(cmd_permission_table) / sizeof(cmd_permission_table[0]);
@@ -371,6 +386,7 @@ int dcmi_cmd_product_support_check(unsigned int main_cmd, unsigned int sub_cmd)
         {DCMI_MAIN_CMD_SOC_INFO, dcmi_check_custom_op_cmd_permission},
         {DCMI_MAIN_CMD_LP, dcmi_check_lp_sub_cmd_permission},
         {DCMI_MAIN_CMD_CHIP_INF, dcmi_ckeck_chip_inf_sub_set_cmd_product},
+        {DCMI_MAIN_CMD_DEVICE_SHARE, dcmi_check_device_share_set_cmd_permission},
     };
 
     table_size = sizeof(cmd_product_table) / sizeof(cmd_product_table[0]);
@@ -379,6 +395,24 @@ int dcmi_cmd_product_support_check(unsigned int main_cmd, unsigned int sub_cmd)
             (cmd_product_table[index].cmd_produc_check_func != NULL)) {
             return cmd_product_table[index].cmd_produc_check_func(main_cmd, sub_cmd);
         }
+    }
+
+    return DCMI_OK;
+}
+
+int dcmi_check_device_share_set_cmd_permission_and_product(void)
+{
+    if (dcmi_board_chip_type_is_ascend_310b() || dcmi_board_chip_type_is_ascend_310p() ||
+        dcmi_board_chip_type_is_ascend_910b() || dcmi_board_chip_type_is_ascend_910_93()) {
+        if ((!dcmi_is_in_phy_privileged_docker_root()) && (!dcmi_is_in_phy_machine_root())) {
+            gplog(LOG_OP,
+                "Operation not permitted, only root user on physical machine or on physical privileged container"
+                " can call this api.");
+            return DCMI_ERR_CODE_OPER_NOT_PERMITTED;
+        }
+    } else {
+        gplog(LOG_OP, "This device does not support setting device-share status.");
+        return DCMI_ERR_CODE_NOT_SUPPORT;
     }
 
     return DCMI_OK;

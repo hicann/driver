@@ -12,6 +12,7 @@
  */
  
 #include "msg_chan_main.h"
+#include "ka_kernel_def_pub.h"
 
 int devdrv_register_rao_client(u32 dev_id, enum devdrv_rao_client_type type, u64 va, u64 len,
     enum devdrv_rao_permission_type perm)
@@ -28,7 +29,7 @@ int devdrv_register_rao_client(u32 dev_id, enum devdrv_rao_client_type type, u64
     devdrv_sub_ops_ref(dev_ops);
     return ret;
 }
-EXPORT_SYMBOL(devdrv_register_rao_client);
+KA_EXPORT_SYMBOL(devdrv_register_rao_client);
 
 int devdrv_unregister_rao_client(u32 dev_id, enum devdrv_rao_client_type type)
 {
@@ -45,4 +46,4 @@ int devdrv_unregister_rao_client(u32 dev_id, enum devdrv_rao_client_type type)
     devdrv_sub_ops_ref(dev_ops);
     return ret;
 }
-EXPORT_SYMBOL(devdrv_unregister_rao_client);
+KA_EXPORT_SYMBOL(devdrv_unregister_rao_client);

@@ -465,7 +465,7 @@ drvError_t halShrIdSetAttribute(const char *name, enum shrIdAttrType type, struc
     drvError_t err;
  
     if (name == NULL) {
-        DEVDRV_DRV_ERR("Invaild name when setting ipc notify attribute.\n");
+        DEVDRV_DRV_ERR("Invalid name when setting ipc notify attribute.\n");
         return DRV_ERROR_INVALID_VALUE;
     }
  
@@ -486,7 +486,7 @@ drvError_t halShrIdGetAttribute(const char *name, enum shrIdAttrType type, struc
     drvError_t err;
  
     if ((name == NULL) || (attr == NULL)) {
-        DEVDRV_DRV_ERR("Invaild arguments when getting ipc notify info.\n");
+        DEVDRV_DRV_ERR("Invalid arguments when getting ipc notify info.\n");
         return DRV_ERROR_INVALID_VALUE;
     }
  
@@ -508,7 +508,7 @@ drvError_t halShrIdInfoGet(const char *name, struct shrIdGetInfo *info)
     drvError_t err;
  
     if ((name == NULL) || (info == NULL)) {
-        DEVDRV_DRV_ERR("Invaild arguments when getting ipc notify info.\n");
+        DEVDRV_DRV_ERR("Invalid arguments when getting ipc notify info.\n");
         return DRV_ERROR_INVALID_VALUE;
     }
  

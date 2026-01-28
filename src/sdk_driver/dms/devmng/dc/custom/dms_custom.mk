@@ -11,6 +11,5 @@
 asdrv_dms-y += devmng/dc/custom/dms_custom_host.o
 asdrv_dms-y += devmng/dc/custom/dms_custom_common.o
 
-EXTRA_CFLAGS += -DCFG_FEATURE_CUST_OP_ENHANCE
 EXTRA_CFLAGS += -I$(DRIVER_MODULE_DEVMNG_DIR)/dc/custom
 EXTRA_CFLAGS += -I$(DRIVER_MODULE_DEVMNG_DIR)/dc/urd_forward

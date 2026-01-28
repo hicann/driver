@@ -20,10 +20,12 @@
 #include "devdrv_common.h"
 #include "comm_kernel_interface.h"
 #include "ascend_kernel_hal.h"
-#include "dms_dev_topology.h"
 #include "devdrv_manager_common.h"
 #include "adapter_api.h"
 #include "pbl/pbl_soc_res.h"
+#include "ka_task_pub.h"
+#include "ka_kernel_def_pub.h"
+#include "dms_dev_topology.h"
 
 /* NOTICE：
     When the mainboard ID is 0x11, the address is unified addressing(same as hccs switch type),
@@ -189,9 +191,9 @@ STATIC int dms_topology_check_hccs_by_hccs_link_status(unsigned int dev_id1, uns
         return -EINVAL;
     }
 
-    spin_lock_irqsave(&dev_manager_info->spinlock, flags);
+    ka_task_spin_lock_irqsave(&dev_manager_info->spinlock, flags);
     if (dev_manager_info->dev_info[dev_id1] == NULL) {
-        spin_unlock_irqrestore(&dev_manager_info->spinlock, flags);
+        ka_task_spin_unlock_irqrestore(&dev_manager_info->spinlock, flags);
         dms_err("Get dev_info failed. (dev_id=%u)\n", dev_id1);
         return -EINVAL;
     }
@@ -199,7 +201,7 @@ STATIC int dms_topology_check_hccs_by_hccs_link_status(unsigned int dev_id1, uns
     chip_id1 = dev_manager_info->dev_info[dev_id1]->chip_id;
     board_id = dev_manager_info->dev_info[dev_id1]->board_id;
     mainboard_id = dev_manager_info->dev_info[dev_id1]->mainboard_id;
-    spin_unlock_irqrestore(&dev_manager_info->spinlock, flags);
+    ka_task_spin_unlock_irqrestore(&dev_manager_info->spinlock, flags);
     if (host_devid1 == host_devid2) {
         *result = true;
         return 0;
@@ -329,7 +331,7 @@ int dms_get_dev_topology(unsigned int dev_id1, unsigned int dev_id2, int *topolo
         dev_id1, dev_id2, *topology_type);
     return 0;
 }
-EXPORT_SYMBOL(dms_get_dev_topology);
+KA_EXPORT_SYMBOL(dms_get_dev_topology);
 
 int dms_feature_get_dev_topology(void *feature, char *in, u32 in_len, char *out, u32 out_len)
 {
@@ -470,4 +472,4 @@ int hal_kernel_get_d2d_topology_type(u32 dev_id1, u32 dev_id2, HAL_KERNEL_TOPOLO
     return dms_get_dev_topology(dev_id1, dev_id2, (int *)topology_type);
 #endif
 }
-EXPORT_SYMBOL_GPL(hal_kernel_get_d2d_topology_type);
+KA_EXPORT_SYMBOL_GPL(hal_kernel_get_d2d_topology_type);

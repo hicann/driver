@@ -39,14 +39,11 @@
 #include "queue_channel.h"
 #include "kernel_version_adapt.h"
 #include "queue_dma.h"
+#include "ka_memory_pub.h"
 
 #define QUEUE_WAKEUP_TIMEINTERVAL 5000 /* 5s */
 
 #define QUEUE_GET_2M_PAGE_NUM   512
-
-#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 2, 0)
-#define QUEUE_PAGE_WRITE        1
-#endif
 
 #define QUEUE_DMA_RETRY_CNT     (1000 * 50)
 #define QUEUE_DMA_WAIT_MIN_TIME 100
@@ -231,11 +228,7 @@ STATIC int queue_get_user_pages_fast(u64 va, u64 page_num, struct page **pages)
         tmp_va = va + got_num * PAGE_SIZE;
         remained_num = page_num - got_num;
         expected_num = (int)((remained_num > QUEUE_GET_2M_PAGE_NUM) ? QUEUE_GET_2M_PAGE_NUM : remained_num);
-#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 2, 0)
-        tmp_num = get_user_pages_fast(tmp_va, expected_num, QUEUE_PAGE_WRITE, &pages[got_num]);
-#else
-        tmp_num = get_user_pages_fast(tmp_va, expected_num, FOLL_WRITE, &pages[got_num]);
-#endif
+        tmp_num = ka_mm_get_user_pages_fast(tmp_va, expected_num, KA_FOLL_WRITE, &pages[got_num]);
         got_num += (u64)((tmp_num > 0) ? (u32)tmp_num : 0);
         if (tmp_num != expected_num) {
             queue_err("Get_user_pages_fast fail. (bufPtr=0x%pK; already_got_num=%llu; get_va=0x%pK; "
@@ -255,16 +248,7 @@ err_exit:
 
 STATIC bool is_svm_addr(struct vm_area_struct *vma, u64 addr)
 {
-#if LINUX_VERSION_CODE > KERNEL_VERSION(5, 2, 0)
-#if !defined(EMU_ST)
-#ifndef DRV_HOST
-    if (mg_is_sharepool_addr(addr)) {
-        return false;
-    }
-#endif
-#endif
-#endif
-    return (((vma->vm_flags) & VM_PFNMAP) != 0);
+    return ka_mm_is_svm_addr(vma, addr);
 }
  
 STATIC int queue_get_user_pages(struct queue_dma_list *dma_list)

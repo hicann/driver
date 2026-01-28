@@ -18,12 +18,19 @@ EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/vnic/inc
 EXTRA_CFLAGS += -I${C_SEC_INCLUDE}
 EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/vnic/host
 EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/vnic/command
+EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/kernel_adapt/include
 EXTRA_CFLAGS += -isystem $(shell $(CC) -print-file-name=include)
+ifneq ($(filter $(PRODUCT), ascend910_95),)
+	EXTRA_CFLAGS += -Iinclude/linux
+endif
 
-EXTRA_CFLAGS += -DCFG_FEATURE_SRIOV
-EXTRA_CFLAGS += -DCFG_FEATURE_AGENT_SMMU
 EXTRA_CFLAGS += -DCFG_FEATURE_HOST_LOG
-EXTRA_CFLAGS += -DCFG_FEATURE_KA_ALLOC_INTERFACE
+
+ifneq ($(filter $(PRODUCT), ascend910B),)
+	EXTRA_CFLAGS += -DCFG_FEATURE_SRIOV
+	EXTRA_CFLAGS += -DCFG_FEATURE_AGENT_SMMU
+	EXTRA_CFLAGS += -DCFG_FEATURE_KA_ALLOC_INTERFACE
+endif
 
 ccflags-y += -fno-common -fstack-protector-all -funsigned-char -pipe -s -Wall -Wcast-align -Werror -Wfloat-equal
 ccflags-y += -Wformat=2 -Wstack-usage=2048 -Wstrict-prototypes -Wtrampolines -Wundef -Wunused -Wvla -Wno-format-nonliteral

@@ -208,4 +208,10 @@ typedef struct soc_chip_ver_reg {
 #define REG_STARS_SQ_MAP1_ADDR (REG_STARS_GLOBAL_BASE_ADDR + REG_STARS_PREFETCH_BUFFER_ADDR + 0x220)
 #define REG_STARS_SQ_MAP1_OFFSET (0x1000)
 
+/* hw base version info */
+#define HW_BASE_VERSION_COUNT           2 /* Driver & Firmware */
+#define HW_BASE_VERSION_MAGIC_NUMBER    0x55AAAA55
+#define HW_BASE_VERSION_ADDR_PRIMARY    0x1940000
+#define HW_BASE_VERSION_ADDR_SECONDARY  0x1980000
+
 #endif

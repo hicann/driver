@@ -11,9 +11,6 @@
  * GNU General Public License for more details.
  */
 
-#include <linux/slab.h>
-#include <linux/kref.h>
-
 #include "ascend_hal_define.h"
 
 #include "devmm_proc_info.h"
@@ -29,6 +26,7 @@
 #include "svm_master_addr_ref_ops.h"
 #include "devmm_mem_alloc_interface.h"
 #include "svm_master_convert.h"
+#include "ka_kernel_def_pub.h"
 
 #define DEVMM_DESTROY_BATCH_MAX_NUM  DEVMM_MAX_SHM_DATA_NUM
 
@@ -50,7 +48,7 @@ u32 devmm_get_convert_dma_depth(void)
 static u32 devmm_get_convert_max_size(u32 devid, u32 vfid)
 {
     if (devmm_is_mdev_vm(devid, vfid)) {
-        return DEVDRV_VPC_MAX_SQ_DMA_NODE_COUNT * PAGE_SIZE;
+        return DEVDRV_VPC_MAX_SQ_DMA_NODE_COUNT * KA_MM_PAGE_SIZE;
     } else {
         return devmm_get_convert_64m_size();
     }
@@ -145,7 +143,7 @@ int devmm_convert_node_create(struct devmm_svm_process *svm_proc, struct devmm_c
     ka_task_rwlock_init(&node->rwlock);
     node->info = *info;
     node->state = CONVERT_NODE_IDLE;
-    RB_CLEAR_NODE(&node->task_dev_res_node);
+    KA_BASE_RB_CLEAR_NODE(&node->task_dev_res_node);
 
     svm_id_inst_pack(&inst, info->id_inst.devid, info->id_inst.vfid);
     node->task_dev_res = devmm_task_dev_res_node_get_by_task(svm_proc, &inst);
@@ -532,7 +530,7 @@ STATIC int devmm_convert2d_fill_convrt_para(struct devmm_svm_process *svm_pro,
 
     src_begin_va = src;
     dst_begin_va = dst;
-    len_node_num = len / PAGE_SIZE;
+    len_node_num = len / KA_MM_PAGE_SIZE;
     convrt_para_id = (u64)ka_base_atomic64_inc_return(&svm_pro->convert_res.convert_id);
     for (i = 0; i < height; i++) {
         convrt_para[i].pSrc = src_begin_va;
@@ -906,7 +904,7 @@ static void devmm_convert_nodes_destroy_srcu_work(u64 *arg, u64 arg_size)
             destroy_num++;
         }
         /*
-         * If kernel schedule is preemptable,
+         * If kernel schedule is preemptaible,
          * exit_to_usermode may case schedule which will increase the time of syscall.
          * If sched_switch from syscall to this work, usleep_range will schedule,
          * which allows the system call to return quickly.
@@ -936,7 +934,7 @@ static int devmm_convert_nodes_get_by_batch_para(struct devmm_svm_process *svm_p
     u32 i, j;
 
     for (i = 0; i < batch_para->num; i++) {
-        if (ka_base_copy_from_user(&tmp, (void __user *)(uintptr_t)dma_addr[i], sizeof(struct DMA_ADDR)) != 0) {
+        if (ka_base_copy_from_user(&tmp, (void __ka_user *)(uintptr_t)dma_addr[i], sizeof(struct DMA_ADDR)) != 0) {
             devmm_drv_err("Copy_from_user fail.\n");
             return -EINVAL;
         }
@@ -944,7 +942,7 @@ static int devmm_convert_nodes_get_by_batch_para(struct devmm_svm_process *svm_p
         handle = (u64)(tmp.phyAddr.priv);
         node[i] = devmm_convert_node_get_by_task(svm_proc, handle);
         if (node[i] == NULL) {
-            devmm_drv_err("Invaild handle. (i=%u)\n", i);
+            devmm_drv_err("Invalid handle. (i=%u)\n", i);
             goto put_nodes;
         }
         devmm_try_cond_resched(&stamp);
@@ -1016,7 +1014,7 @@ int devmm_destroy_addr_batch_sync(struct devmm_svm_process *svm_proc, struct dev
     int ret, i;
 
     for (i = 0; i < batch_para->num; i++) {
-        if (ka_base_copy_from_user(&dma_addr, (void __user *)(uintptr_t)batch_para->dmaAddr[i], sizeof(struct DMA_ADDR)) != 0) {
+        if (ka_base_copy_from_user(&dma_addr, (void __ka_user *)(uintptr_t)batch_para->dmaAddr[i], sizeof(struct DMA_ADDR)) != 0) {
             devmm_drv_err("Copy_from_user fail. (i=%d)\n", i);
             return -EINVAL;
         }
@@ -1060,7 +1058,7 @@ static int devmm_destroy_batch_para_init(struct devmm_destroy_addr_batch_para *b
         return -ENOMEM;
     }
 
-    if (ka_base_copy_from_user(dma_addr, (void __user *)(uintptr_t)tmp_user_ptr, arg_size) != 0) {
+    if (ka_base_copy_from_user(dma_addr, (void __ka_user *)(uintptr_t)tmp_user_ptr, arg_size) != 0) {
         devmm_drv_err("Copy_from_user fail.\n");
         devmm_kvfree(dma_addr);
         return -EINVAL;

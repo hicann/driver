@@ -19,6 +19,7 @@
 #include "virtmnghost_vpc_unit.h"
 #include "virtmnghost_msg.h"
 #include "virtmnghost_msg_common.h"
+#include "ka_kernel_def_pub.h"
 
 STATIC int vmngh_common_msg_send_para_check(u32 dev_id, u32 fid, enum vmng_msg_common_type cmn_type,
     const struct vmng_tx_msg_proc_info *tx_info)
@@ -72,7 +73,7 @@ int vmngh_common_msg_send(u32 dev_id, u32 fid, enum vmng_msg_common_type cmn_typ
     }
     return 0;
 }
-EXPORT_SYMBOL(vmngh_common_msg_send);
+KA_EXPORT_SYMBOL(vmngh_common_msg_send);
 
 STATIC int vmngh_msg_cluster_recv_common(void *msg_chan_in, struct vmng_msg_chan_rx_proc_info *proc_info)
 {
@@ -198,7 +199,7 @@ int vmngh_register_common_msg_client(u32 dev_id, u32 fid, const struct vmng_comm
 
     return 0;
 }
-EXPORT_SYMBOL(vmngh_register_common_msg_client);
+KA_EXPORT_SYMBOL(vmngh_register_common_msg_client);
 
 int vmngh_unregister_common_msg_client(u32 dev_id, u32 fid, const struct vmng_common_msg_client *msg_client)
 {
@@ -223,16 +224,16 @@ int vmngh_unregister_common_msg_client(u32 dev_id, u32 fid, const struct vmng_co
 
     return 0;
 }
-EXPORT_SYMBOL(vmngh_unregister_common_msg_client);
+KA_EXPORT_SYMBOL(vmngh_unregister_common_msg_client);
 
 void vmngh_register_extended_common_msg_client(struct vmng_msg_dev *msg_dev)
 {
     msg_dev->common_msg.common_fun[VMNG_MSG_COMMON_TYPE_EXTENSION] = vmngh_msg_common_recv_extension;
 }
-EXPORT_SYMBOL(vmngh_register_extended_common_msg_client);
+KA_EXPORT_SYMBOL(vmngh_register_extended_common_msg_client);
 
 void vmngh_unregister_extended_common_msg_client(struct vmng_msg_dev *msg_dev)
 {
     msg_dev->common_msg.common_fun[VMNG_MSG_COMMON_TYPE_EXTENSION] = NULL;
 }
-EXPORT_SYMBOL(vmngh_unregister_extended_common_msg_client);
+KA_EXPORT_SYMBOL(vmngh_unregister_extended_common_msg_client);

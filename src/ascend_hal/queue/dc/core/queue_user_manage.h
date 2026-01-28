@@ -137,6 +137,7 @@ struct queue_manages {
     unsigned int dev_id;
     unsigned int id;                     /* queue id */
     char name[MAX_STR_LEN];           /* queue's name */
+    unsigned long create_time;
     int creator_pid;
     int valid;                  /* Whether the queue is valid, 1 is valid, 0 is invalid */
     union atomic_queue_head queue_head;

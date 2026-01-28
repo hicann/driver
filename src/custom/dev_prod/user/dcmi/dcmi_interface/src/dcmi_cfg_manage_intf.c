@@ -46,23 +46,23 @@ STATIC int dcmi_check_user_config_support(const char *config_name)
         gplog(LOG_ERR, "board_type is not 310p or 310b and does not support set %s.", config_name);
         return DCMI_ERR_CODE_NOT_SUPPORT;
     }
- 
+
     if (!dcmi_board_chip_type_is_ascend_310p() && strcmp(config_name, "p2p_mem_cfg") == 0) {
         gplog(LOG_ERR, "board_type is not 310p and does not support set %s.", config_name);
         return DCMI_ERR_CODE_NOT_SUPPORT;
     }
- 
+
     if (dcmi_board_chip_type_is_ascend_910b_300i_a2() == TRUE &&
         strcmp(config_name, "mac_info") == 0) {
         gplog(LOG_ERR, "board_type is 910b 300i a2 and does not support set %s.", config_name);
         return DCMI_ERR_CODE_NOT_SUPPORT;
     }
- 
+
     if (!dcmi_board_chip_type_is_ascend_310p_300v() && strcmp(config_name, "set_cpu_freq") == 0) {
         gplog(LOG_ERR, "board_type is not 310p 300v and does not support set %s.", config_name);
         return DCMI_ERR_CODE_NOT_SUPPORT;
     }
- 
+
     return DCMI_OK;
 }
 
@@ -138,7 +138,7 @@ int dcmi_get_user_config(int card_id, int device_id, const char *config_name, un
         gplog(LOG_ERR, "board_type is not 310p 300v and does not support get %s.", config_name);
         return DCMI_ERR_CODE_NOT_SUPPORT;
     }
-    
+
     err = dcmi_get_device_type(card_id, device_id, &device_type);
     if (err != DCMI_OK) {
         gplog(LOG_ERR, "dcmi_get_device_type failed. err is %d.", err);
@@ -313,11 +313,6 @@ int dcmi_set_device_share_enable(int card_id, int device_id, int enable_flag)
     int err;
     enum dcmi_unit_type device_type = NPU_TYPE;
 
-    if (!dcmi_is_in_phy_machine_root()) {
-        gplog(LOG_OP, "Operation not permitted, only root user on physical machine can call this api.");
-        return DCMI_ERR_CODE_OPER_NOT_PERMITTED;
-    }
-
     if (enable_flag != 0 && enable_flag != 1) {
         gplog(LOG_ERR, "enable_flag %d is invalid.", enable_flag);
         return DCMI_ERR_CODE_INVALID_PARAMETER;
@@ -327,6 +322,16 @@ int dcmi_set_device_share_enable(int card_id, int device_id, int enable_flag)
     if (err != DCMI_OK) {
         gplog(LOG_ERR, "dcmi_get_device_type failed. err is %d.", err);
         return err;
+    }
+
+    err = dcmi_check_device_share_set_cmd_permission_and_product();
+    if (err != DCMI_OK) {
+        return err;
+    }
+
+    if (dcmi_board_chip_type_is_ascend_910_93() == TRUE) {
+        return dcmi_set_device_share_for_910_93(card_id, device_type, DCMI_MAIN_CMD_DEVICE_SHARE,
+            DCMI_DEVICE_SHARE_SUB_CMD_COMMON, &enable_flag, sizeof(int));
     }
 
     if (device_type == NPU_TYPE) {
@@ -344,6 +349,56 @@ int dcmi_set_device_share_enable(int card_id, int device_id, int enable_flag)
         gplog(LOG_OP, "device_type %d is not support.", device_type);
         return DCMI_ERR_CODE_NOT_SUPPORT;
     }
+}
+
+int dcmi_check_device_share_config_recover_mode_is_permitted(const char *operate_mode)
+{
+    if (operate_mode == NULL) {
+        gplog(LOG_OP, "This operate_mode is NULL.");
+        return DCMI_ERR_CODE_INVALID_PARAMETER;
+    }
+
+    if (dcmi_board_chip_type_is_ascend_310p() || dcmi_board_chip_type_is_ascend_910b() ||
+        dcmi_board_chip_type_is_ascend_910_93()) {
+        // 配置、读取仅支持特权容器root和物理机root
+        if ((!dcmi_is_in_phy_privileged_docker_root()) && (!dcmi_is_in_phy_machine_root())) {
+            gplog(LOG_OP,
+                "Operation not permitted, only root user on physical machine or on physical privilege container "
+                "can call this api.");
+            return DCMI_ERR_CODE_OPER_NOT_PERMITTED;
+        }
+    } else {
+        gplog(LOG_OP, "This device does not support %s device-share config recover mode.", operate_mode);
+        return DCMI_ERR_CODE_NOT_SUPPORT;
+    }
+    return DCMI_OK;
+}
+
+int dcmi_set_device_share_config_recover_mode(unsigned int enable_flag)
+{
+    int ret;
+
+    ret = dcmi_check_device_share_config_recover_mode_is_permitted("set");
+    if (ret != DCMI_OK) {
+        return ret;
+    }
+
+    if ((enable_flag != DCMI_CFG_RECOVER_ENABLE) && (enable_flag != DCMI_CFG_RECOVER_DISABLE)) {
+        gplog(LOG_ERR, "enable_flag [%u] is invalid.", enable_flag);
+        gplog(LOG_OP,
+            "int dcmi_set_device_share_config_recover_mode() parameter enable_flag [%u] is invalid.", enable_flag);
+        return DCMI_ERR_CODE_INVALID_PARAMETER;
+    }
+
+    ret = dcmi_cfg_set_device_share_config_recover_mode(enable_flag);
+    if (ret != DCMI_OK) {
+        gplog(LOG_ERR, "set device-share config recover enable_flag %u failed. ret=%d", enable_flag, ret);
+        return DCMI_ERR_CODE_INNER_ERR;
+    }
+
+    gplog(LOG_OP, "dcmi set device-share config recover enable_flag %s success",
+        (enable_flag == DCMI_CFG_RECOVER_ENABLE) ? "enable" : "disable");
+    return DCMI_OK;
 }
 
 int dcmi_set_nve_level(int card_id, int device_id, int nve_level)
@@ -547,24 +602,23 @@ int dcmi_set_device_gateway(int card_id, int device_id, enum dcmi_port_type inpu
         return DCMI_ERR_CODE_NOT_SUPPORT;
     }
 
-    if ((dcmi_board_chip_type_is_ascend_910() || dcmi_board_chip_type_is_ascend_910b()) &&
-        input_type != DCMI_ROCE_PORT) {
+    if ((dcmi_board_chip_type_is_ascend_910() || dcmi_board_chip_type_is_ascend_910b() ||
+        dcmi_board_chip_type_is_ascend_910_95()) && input_type != DCMI_ROCE_PORT) {
         gplog(LOG_OP, "This device does not support this input_type. input_type=%d", input_type);
         return DCMI_ERR_CODE_NOT_SUPPORT;
     }
 
-    if (device_type == NPU_TYPE) {
-        err = dcmi_set_npu_device_gateway(card_id, device_id, input_type, port_id, gateway);
-        if (err != DCMI_OK) {
-            gplog(LOG_OP, "set device gateway failed. card_id=%d, device_id=%d, port_id=%d, err=%d", card_id, device_id,
-                port_id, err);
-            return err;
-        }
-        gplog(LOG_OP, "set device gateway success. card_id=%d, device_id=%d port_id=%d", card_id, device_id, port_id);
-    } else {
+    if (device_type != NPU_TYPE) {
         gplog(LOG_OP, "device_type %d is not support.", device_type);
         return DCMI_ERR_CODE_NOT_SUPPORT;
     }
+    err = dcmi_set_npu_device_gateway(card_id, device_id, input_type, port_id, gateway);
+    if (err != DCMI_OK) {
+        gplog(LOG_OP, "set device gateway failed. card_id=%d, device_id=%d, port_id=%d, err=%d", card_id, device_id,
+            port_id, err);
+        return err;
+    }
+    gplog(LOG_OP, "set device gateway success. card_id=%d, device_id=%d port_id=%d", card_id, device_id, port_id);
 
     return DCMI_OK;
 }

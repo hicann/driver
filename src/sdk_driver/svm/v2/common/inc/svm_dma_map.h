@@ -13,9 +13,7 @@
 #ifndef SVM_DMA_MAP_H
 #define SVM_DMA_MAP_H
 
-#include <linux/dma-mapping.h>
-#include <linux/mm.h>
-
+#include "ka_memory_pub.h"
 #include "svm_kernel_msg.h"
 
 /* Will try map continuous pages, the actual mapped blk_num will be returned. */

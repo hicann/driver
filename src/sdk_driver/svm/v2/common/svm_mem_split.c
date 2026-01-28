@@ -10,11 +10,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#include <linux/mm.h>
 
 #include "devmm_adapt.h"
 #include "devmm_proc_info.h"
 #include "svm_mem_split.h"
+#include "ka_memory_pub.h"
+#include "ka_base_pub.h"
 
 static u32 g_support_memory_split_feature = 0;
 
@@ -77,7 +78,7 @@ static int devmm_numa_normal_free_size_sub(u32 devid, u32 vfid, int nid, u64 pag
         return 0;
     }
 
-    return devmm_alloc_numa_free_size_sub(devid, vfid, nid, page_num, PAGE_SIZE);
+    return devmm_alloc_numa_free_size_sub(devid, vfid, nid, page_num, KA_MM_PAGE_SIZE);
 }
 
 static int devmm_numa_huge_free_size_sub(u32 devid, u32 vfid, int nid, u64 page_num, u32 hugetlb_alloc_flag)
@@ -89,7 +90,7 @@ static int devmm_numa_huge_free_size_sub(u32 devid, u32 vfid, int nid, u64 page_
     if (hugetlb_alloc_flag == HUGETLB_ALLOC_NORMAL) {
         return 0;
     }
-    return devmm_alloc_numa_free_size_sub(devid, vfid, nid, page_num, HPAGE_SIZE);
+    return devmm_alloc_numa_free_size_sub(devid, vfid, nid, page_num, KA_HPAGE_SIZE);
 }
 
 void devmm_set_memory_split_feature(u32 flag)
@@ -122,11 +123,11 @@ int devmm_normal_free_mem_size_sub(u32 devid, u32 vfid, int nid, u64 page_num)
         return 0;
     }
 
-    mem_size = page_num * PAGE_SIZE;
+    mem_size = page_num * KA_MM_PAGE_SIZE;
     if ((u64)ka_base_atomic64_read(&devmm_svm->device_info.free_mem_size[devid][nid][vfid]) < mem_size) {
         return -ENOMEM;
     }
-    atomic64_sub((long)mem_size, &devmm_svm->device_info.free_mem_size[devid][nid][vfid]);
+    ka_base_atomic64_sub((long)mem_size, &devmm_svm->device_info.free_mem_size[devid][nid][vfid]);
     return 0;
 }
 
@@ -138,8 +139,8 @@ void devmm_normal_free_mem_size_add(u32 devid, u32 vfid, int nid, u64 page_num)
         return;
     }
 
-    mem_size = page_num * PAGE_SIZE;
-    atomic64_add((long)mem_size, &devmm_svm->device_info.free_mem_size[devid][nid][vfid]);
+    mem_size = page_num * KA_MM_PAGE_SIZE;
+    ka_base_atomic64_add((long)mem_size, &devmm_svm->device_info.free_mem_size[devid][nid][vfid]);
 }
 
 int devmm_huge_free_mem_size_sub(u32 devid, u32 vfid, int nid, u64 page_num, u32 hugetlb_alloc_flag)
@@ -156,17 +157,17 @@ int devmm_huge_free_mem_size_sub(u32 devid, u32 vfid, int nid, u64 page_num, u32
         return 0;
     }
 
-    mem_size = page_num * HPAGE_SIZE;
+    mem_size = page_num * KA_HPAGE_SIZE;
     if (hugetlb_alloc_flag == HUGETLB_ALLOC_NORMAL) {
         if ((u64)ka_base_atomic64_read(&devmm_svm->device_info.free_mem_hugepage_size[devid][nid][vfid]) < mem_size) {
             return -ENOMEM;
         }
-        atomic64_sub((long)mem_size, &devmm_svm->device_info.free_mem_hugepage_size[devid][nid][vfid]);
+        ka_base_atomic64_sub((long)mem_size, &devmm_svm->device_info.free_mem_hugepage_size[devid][nid][vfid]);
     } else {
         if ((u64)ka_base_atomic64_read(&devmm_svm->device_info.free_mem_size[devid][nid][vfid]) < mem_size) {
             return -ENOMEM;
         }
-        atomic64_sub((long)mem_size, &devmm_svm->device_info.free_mem_size[devid][nid][vfid]);
+        ka_base_atomic64_sub((long)mem_size, &devmm_svm->device_info.free_mem_size[devid][nid][vfid]);
     }
 
     return 0;
@@ -180,10 +181,10 @@ void devmm_huge_free_mem_size_add(u32 devid, u32 vfid, int nid, u64 page_num, u3
         return;
     }
 
-    mem_size = page_num * HPAGE_SIZE;
+    mem_size = page_num * KA_HPAGE_SIZE;
     if (hugetlb_alloc_flag == HUGETLB_ALLOC_NORMAL) {
-        atomic64_add((long)mem_size, &devmm_svm->device_info.free_mem_hugepage_size[devid][nid][vfid]);
+        ka_base_atomic64_add((long)mem_size, &devmm_svm->device_info.free_mem_hugepage_size[devid][nid][vfid]);
     } else {
-        atomic64_add((long)mem_size, &devmm_svm->device_info.free_mem_size[devid][nid][vfid]);
+        ka_base_atomic64_add((long)mem_size, &devmm_svm->device_info.free_mem_size[devid][nid][vfid]);
     }
 }

@@ -11,11 +11,6 @@
  * GNU General Public License for more details.
  */
 
-#include <linux/vmalloc.h>
-#include <linux/slab.h>
-#include <linux/kallsyms.h>
-#include <linux/bitmap.h>
-
 #include "pbl/pbl_uda.h"
 #include "pbl/pbl_soc_res.h"
 
@@ -24,11 +19,17 @@
 #include "hdcdrv_core.h"
 #include "hdcdrv_mem_com.h"
 #include "hdcdrv_adapter.h"
+#include "ka_task_pub.h"
+#include "ka_base_pub.h"
+#include "ka_ioctl_pub.h"
+#include "ka_list_pub.h"
+#include "ka_memory_pub.h"
+#include "ka_compiler_pub.h"
 
 STATIC int vhdch_dev_id_check(u32 dev_id, u32 fid)
 {
     if ((dev_id >= VMNG_PDEV_MAX) || (fid >= VMNG_VDEV_MAX_PER_PDEV)) {
-        hdcdrv_err_spinlock("Input pararmeters error. (dev_id=%u; fid=%u)\n", dev_id, fid);
+        hdcdrv_err_spinlock("Input parameters error. (dev_id=%u; fid=%u)\n", dev_id, fid);
         return HDCDRV_PARA_ERR;
     }
 
@@ -46,56 +47,56 @@ STATIC u64 vhdch_rebuild_pid(u32 vm_id, u64 pid)
 
 STATIC void vhdch_rb_mem_erase(struct vhdch_vdev *vdev, struct vhdch_fast_node *fast_node)
 {
-    spin_lock_bh(&vdev->mem_lock);
-    rb_erase(&fast_node->mem_node, &vdev->rb_mem);
-    spin_unlock_bh(&vdev->mem_lock);
+    ka_task_spin_lock_bh(&vdev->mem_lock);
+    ka_base_rb_erase(&fast_node->mem_node, &vdev->rb_mem);
+    ka_task_spin_unlock_bh(&vdev->mem_lock);
 }
 
 STATIC int vhdch_rb_mem_insert(struct vhdch_vdev *vdev, struct vhdch_fast_node *fast_node)
 {
-    struct rb_node *parent = NULL;
-    struct rb_node **link = &(vdev->rb_mem.rb_node);
+    ka_rb_node_t *parent = NULL;
+    ka_rb_node_t **link = ka_base_get_rb_root_node_addr(&vdev->rb_mem);
 
-    spin_lock_bh(&vdev->mem_lock);
+    ka_task_spin_lock_bh(&vdev->mem_lock);
     while (*link != NULL) {
-        struct vhdch_fast_node *this = rb_entry(*link, struct vhdch_fast_node, mem_node);
+        struct vhdch_fast_node *this = ka_base_rb_entry(*link, struct vhdch_fast_node, mem_node);
         parent = *link;
         if (fast_node->hash_va < this->hash_va) {
             link = &((*link)->rb_left);
         } else if (fast_node->hash_va > this->hash_va) {
             link = &((*link)->rb_right);
         } else {
-            spin_unlock_bh(&vdev->mem_lock);
+            ka_task_spin_unlock_bh(&vdev->mem_lock);
             return HDCDRV_F_NODE_SEARCH_FAIL;
         }
     }
 
     /* Add new node and rebalance tree. */
-    rb_link_node(&fast_node->mem_node, parent, link);
-    rb_insert_color(&fast_node->mem_node, &vdev->rb_mem);
+    ka_base_rb_link_node(&fast_node->mem_node, parent, link);
+    ka_base_rb_insert_color(&fast_node->mem_node, &vdev->rb_mem);
 
-    spin_unlock_bh(&vdev->mem_lock);
+    ka_task_spin_unlock_bh(&vdev->mem_lock);
     return HDCDRV_OK;
 }
 
 STATIC struct vhdch_fast_node *vhdch_rb_mem_search(struct vhdch_vdev *vdev, u64 hash)
 {
-    struct rb_node *node = vdev->rb_mem.rb_node;
+    ka_rb_node_t *node = ka_base_get_rb_root_node(&vdev->rb_mem);
     struct vhdch_fast_node *fast_node = NULL;
 
-    spin_lock_bh(&vdev->mem_lock);
+    ka_task_spin_lock_bh(&vdev->mem_lock);
     while (node != NULL) {
-        fast_node = rb_entry(node, struct vhdch_fast_node, mem_node);
+        fast_node = ka_base_rb_entry(node, struct vhdch_fast_node, mem_node);
         if (hash < fast_node->hash_va) {
             node = node->rb_left;
         } else if (hash > fast_node->hash_va) {
             node = node->rb_right;
         } else {
-            spin_unlock_bh(&vdev->mem_lock);
+            ka_task_spin_unlock_bh(&vdev->mem_lock);
             return fast_node;
         }
     }
-    spin_unlock_bh(&vdev->mem_lock);
+    ka_task_spin_unlock_bh(&vdev->mem_lock);
 
     return NULL;
 }
@@ -107,13 +108,13 @@ STATIC int vhdch_update_mem_tree(u32 dev_id, u32 fid, int flag, struct hdcdrv_ct
     int ret = HDCDRV_OK;
 
     vdev = &hdc_ctrl->vdev[dev_id][fid];
-    mutex_lock(&vdev->mutex);
+    ka_task_mutex_lock(&vdev->mutex);
 
     if ((flag == HDCDRV_ADD_FLAG) && (vdev->fast_node_num_avaliable > 0) &&
         (vdev->fnode_phy_num_avaliable - mem_info->phy_addr_num >= 0)) {
         fast_node = hdcdrv_kvmalloc(sizeof(struct vhdch_fast_node), KA_SUB_MODULE_TYPE_2);
         if (fast_node == NULL) {
-            mutex_unlock(&vdev->mutex);
+            ka_task_mutex_unlock(&vdev->mutex);
             return HDCDRV_MEM_ALLOC_FAIL;
         }
 
@@ -122,7 +123,7 @@ STATIC int vhdch_update_mem_tree(u32 dev_id, u32 fid, int flag, struct hdcdrv_ct
         if (ret != HDCDRV_OK) {
             hdcdrv_kvfree(fast_node, KA_SUB_MODULE_TYPE_2);
             hdcdrv_warn("hash_va insert failed. (dev_id=%u; fid=%u; hash_va=%llu)\n", dev_id, fid, mem_info->hash_va);
-            mutex_unlock(&vdev->mutex);
+            ka_task_mutex_unlock(&vdev->mutex);
             return ret;
         }
 
@@ -145,7 +146,7 @@ STATIC int vhdch_update_mem_tree(u32 dev_id, u32 fid, int flag, struct hdcdrv_ct
             dev_id, fid, flag, vdev->fast_node_num_avaliable, vdev->fnode_phy_num_avaliable);
     }
 
-    mutex_unlock(&vdev->mutex);
+    ka_task_mutex_unlock(&vdev->mutex);
     return ret;
 }
 
@@ -202,7 +203,7 @@ int (*vhdch_vm_cmd_pre_handle[HDCDRV_CMD_MAX])(u32 dev_id, u32 fid, union hdcdrv
 STATIC int vhdch_vm_cmd_pre_proc(u32 dev_id, u32 fid, u32 cmd, union hdcdrv_cmd *cmd_data)
 {
     int ret = HDCDRV_OK;
-    u32 drv_cmd = _IOC_NR(cmd);
+    u32 drv_cmd = _KA_IOC_NR(cmd);
     struct vhdch_vdev *vdev = &hdc_ctrl->vdev[dev_id][fid];
 
     if (drv_cmd >= HDCDRV_CMD_MAX) {
@@ -348,25 +349,25 @@ int vhdch_alloc_mem_container(struct hdccom_alloc_mem_para *para, struct hdcdrv_
     vdev = &hdc_ctrl->vdev[para->dev_id][para->fid];
 
     pool_type = vhdch_get_mem_pool_type(para->pool_type, (u32)para->len);
-    spin_lock_bh(&vdev->mem_lock);
+    ka_task_spin_lock_bh(&vdev->mem_lock);
     if (vdev->mem_cnt[pool_type] == 0) {
         if (pool_type < HDCDRV_VDEV_RX_MEM_POOL_TYPE_MAX) {
             vdev->rx_wait_sche[pool_type] = 1;
         }
-        spin_unlock_bh(&vdev->mem_lock);
+        ka_task_spin_unlock_bh(&vdev->mem_lock);
         return HDCDRV_DMA_MEM_ALLOC_FAIL;
     }
 
     vdev->mem_cnt[pool_type]--;
-    spin_unlock_bh(&vdev->mem_lock);
+    ka_task_spin_unlock_bh(&vdev->mem_lock);
 
     ret = alloc_mem(find_mem_pool(para->pool_type, para->dev_id, para->len),
                     &desc->buf, &desc->addr, &desc->offset, para->wait_head);
     if (ret != HDCDRV_OK) {
         hdcdrv_err_limit("alloc mem failed. (pool_type=%d, dev_id=%d)\n", para->pool_type, para->dev_id);
-        spin_lock_bh(&vdev->mem_lock);
+        ka_task_spin_lock_bh(&vdev->mem_lock);
         vdev->mem_cnt[pool_type]++;
-        spin_unlock_bh(&vdev->mem_lock);
+        ka_task_spin_unlock_bh(&vdev->mem_lock);
     }
 
     return ret;
@@ -398,29 +399,29 @@ void vhdch_free_mem_container(u32 dev_id, u32 fid, u32 chan_id, void *buf)
 
     vdev = &hdc_ctrl->vdev[dev_id][fid];
 
-    spin_lock_bh(&vdev->mem_lock);
+    ka_task_spin_lock_bh(&vdev->mem_lock);
     vdev->mem_cnt[pool_type]++;
     if ((pool_type < HDCDRV_VDEV_RX_MEM_POOL_TYPE_MAX) && (vdev->rx_wait_sche[pool_type] == 1)) {
         vdev->rx_wait_sche[pool_type] = 0;
         rx_work_sche_flag = 1;
     }
-    spin_unlock_bh(&vdev->mem_lock);
+    ka_task_spin_unlock_bh(&vdev->mem_lock);
 
     msg_chan = hdc_ctrl->devices[dev_id].msg_chan[chan_id];
     if (rx_work_sche_flag) {
-        queue_work(msg_chan->rx_workqueue, &msg_chan->rx_notify_work);
+        ka_task_queue_work(msg_chan->rx_workqueue, &msg_chan->rx_notify_work);
     }
 }
 
 STATIC void vhdch_service_res_uninit(struct hdcdrv_service *service, int server_type)
 {
     struct hdcdrv_serv_list_node *node = NULL;
-    struct list_head *pos = NULL, *n = NULL;
+    ka_list_head_t *pos = NULL, *n = NULL;
 
-    if (!list_empty_careful(&service->serv_list)) {
-        list_for_each_safe(pos, n, &service->serv_list) {
-            node = list_entry(pos, struct hdcdrv_serv_list_node, list);
-            list_del(&node->list);
+    if (!ka_list_empty_careful(&service->serv_list)) {
+        ka_list_for_each_safe(pos, n, &service->serv_list) {
+            node = ka_list_entry(pos, struct hdcdrv_serv_list_node, list);
+            ka_list_del(&node->list);
             hdcdrv_kvfree(node, KA_SUB_MODULE_TYPE_0);
             node = NULL;
         }
@@ -433,16 +434,16 @@ STATIC int vhdch_service_res_init(struct hdcdrv_service *service, int server_typ
     struct hdcdrv_serv_list_node *node = NULL;
     int i = 0;
 
-    if (list_empty_careful(&service->serv_list) != 0) {
+    if (ka_list_empty_careful(&service->serv_list) != 0) {
         for (i = 0; i < HDCDRV_SERVER_PROCESS_MAX_NUM; i++) {
             node = (struct hdcdrv_serv_list_node *)hdcdrv_kvmalloc(sizeof(struct hdcdrv_serv_list_node), KA_SUB_MODULE_TYPE_0);
-            if (unlikely(node == NULL)) {
+            if (ka_unlikely(node == NULL)) {
                 hdcdrv_err("Calling alloc failed. (i=%d; server_type=%d)\n", i, server_type);
                 return HDCDRV_ERR;
             }
 
             hdcdrv_service_init(&node->service);
-            list_add(&node->list, &service->serv_list);
+            ka_list_add(&node->list, &service->serv_list);
         }
     }
     return HDCDRV_OK;
@@ -460,7 +461,7 @@ STATIC int vhdch_init_service(u32 dev_id, u32 fid)
         vdev->service_attr[i].service_scope = hdcdrv_service_scope_init(i);
     }
 
-    mutex_lock(&vdev->mutex);
+    ka_task_mutex_lock(&vdev->mutex);
     for (i = 0; i < HDCDRV_SUPPORT_MAX_SERVICE; i++) {
         if (vdev->service_attr[i].service_scope == HDCDRV_SERVICE_SCOPE_PROCESS) {
             if (vhdch_service_res_init(&vdev->service[i], i) != 0) {
@@ -469,7 +470,7 @@ STATIC int vhdch_init_service(u32 dev_id, u32 fid)
             }
         }
     }
-    mutex_unlock(&vdev->mutex);
+    ka_task_mutex_unlock(&vdev->mutex);
 
     return HDCDRV_OK;
 
@@ -479,7 +480,7 @@ out:
             vhdch_service_res_uninit(&vdev->service[i], i);
         }
     }
-    mutex_unlock(&vdev->mutex);
+    ka_task_mutex_unlock(&vdev->mutex);
     return HDCDRV_ERR;
 }
 
@@ -488,7 +489,7 @@ STATIC void vhdch_uninit_service(u32 dev_id, u32 fid)
     struct vhdch_vdev *vdev = &hdc_ctrl->vdev[dev_id][fid];
     int i;
 
-    mutex_lock(&vdev->mutex);
+    ka_task_mutex_lock(&vdev->mutex);
 
     for (i = 0; i < HDCDRV_SUPPORT_MAX_SERVICE; i++) {
         if (vdev->service_attr[i].service_scope == HDCDRV_SERVICE_SCOPE_PROCESS) {
@@ -496,13 +497,13 @@ STATIC void vhdch_uninit_service(u32 dev_id, u32 fid)
         }
     }
 
-    mutex_unlock(&vdev->mutex);
+    ka_task_mutex_unlock(&vdev->mutex);
 }
 
 struct hdcdrv_service *vhdch_search_service(u32 devid, u32 fid, int service_type, u64 host_pid)
 {
     struct hdcdrv_serv_list_node *node = NULL;
-    struct list_head *pos = NULL, *n = NULL;
+    ka_list_head_t *pos = NULL, *n = NULL;
     struct hdcdrv_service *service = NULL;
     struct vhdch_vdev *vdev = &hdc_ctrl->vdev[devid][fid];
 
@@ -512,17 +513,17 @@ struct hdcdrv_service *vhdch_search_service(u32 devid, u32 fid, int service_type
         return service;
     }
 
-    mutex_lock(&vdev->mutex);
-    if (!list_empty_careful(&service->serv_list)) {
-        list_for_each_safe(pos, n, &service->serv_list) {
-            node = list_entry(pos, struct hdcdrv_serv_list_node, list);
+    ka_task_mutex_lock(&vdev->mutex);
+    if (!ka_list_empty_careful(&service->serv_list)) {
+        ka_list_for_each_safe(pos, n, &service->serv_list) {
+            node = ka_list_entry(pos, struct hdcdrv_serv_list_node, list);
             if (node->service.listen_pid == host_pid) {
-                mutex_unlock(&vdev->mutex);
+                ka_task_mutex_unlock(&vdev->mutex);
                 return &node->service;
             }
         }
     }
-    mutex_unlock(&vdev->mutex);
+    ka_task_mutex_unlock(&vdev->mutex);
 
     return service;
 }
@@ -530,7 +531,7 @@ struct hdcdrv_service *vhdch_search_service(u32 devid, u32 fid, int service_type
 struct hdcdrv_service *vhdch_alloc_service(u32 devid, u32 fid, int service_type, u64 host_pid)
 {
     struct hdcdrv_serv_list_node *node = NULL;
-    struct list_head *pos = NULL, *n = NULL;
+    ka_list_head_t *pos = NULL, *n = NULL;
     struct hdcdrv_service *service = NULL;
     struct vhdch_vdev *vdev = &hdc_ctrl->vdev[devid][fid];
 
@@ -539,31 +540,31 @@ struct hdcdrv_service *vhdch_alloc_service(u32 devid, u32 fid, int service_type,
     if (vdev->service_attr[service_type].service_scope == HDCDRV_SERVICE_SCOPE_GLOBAL) {
         return service;
     }
-    mutex_lock(&vdev->mutex);
+    ka_task_mutex_lock(&vdev->mutex);
 
     /* Checking whether the process server with the Same hostpid exists */
-    if (!list_empty_careful(&service->serv_list)) {
-        list_for_each_safe(pos, n, &service->serv_list) {
-            node = list_entry(pos, struct hdcdrv_serv_list_node, list);
+    if (!ka_list_empty_careful(&service->serv_list)) {
+        ka_list_for_each_safe(pos, n, &service->serv_list) {
+            node = ka_list_entry(pos, struct hdcdrv_serv_list_node, list);
             if (node->service.listen_pid == host_pid) {
-                mutex_unlock(&vdev->mutex);
+                ka_task_mutex_unlock(&vdev->mutex);
                 return &node->service;
             }
         }
     }
 
     /* Searching for an idle server */
-    if (!list_empty_careful(&service->serv_list)) {
-        list_for_each_safe(pos, n, &service->serv_list) {
-            node = list_entry(pos, struct hdcdrv_serv_list_node, list);
+    if (!ka_list_empty_careful(&service->serv_list)) {
+        ka_list_for_each_safe(pos, n, &service->serv_list) {
+            node = ka_list_entry(pos, struct hdcdrv_serv_list_node, list);
             if (node->service.listen_pid == HDCDRV_INVALID) {
                 node->service.listen_pid = host_pid;
-                mutex_unlock(&vdev->mutex);
+                ka_task_mutex_unlock(&vdev->mutex);
                 return &node->service;
             }
         }
     }
-    mutex_unlock(&vdev->mutex);
+    ka_task_mutex_unlock(&vdev->mutex);
 
     return NULL;
 }
@@ -571,7 +572,7 @@ struct hdcdrv_service *vhdch_alloc_service(u32 devid, u32 fid, int service_type,
 STATIC void vhdch_reset_process_server(struct vhdch_vdev *vdev, int service_type)
 {
     struct hdcdrv_serv_list_node *node = NULL;
-    struct list_head *pos = NULL, *n = NULL;
+    ka_list_head_t *pos = NULL, *n = NULL;
     struct hdcdrv_service *service = NULL;
 
     service = &vdev->service[service_type];
@@ -580,16 +581,16 @@ STATIC void vhdch_reset_process_server(struct vhdch_vdev *vdev, int service_type
         return;
     }
 
-    mutex_lock(&vdev->mutex);
-    if (!list_empty_careful(&service->serv_list)) {
-        list_for_each_safe(pos, n, &service->serv_list) {
-            node = list_entry(pos, struct hdcdrv_serv_list_node, list);
+    ka_task_mutex_lock(&vdev->mutex);
+    if (!ka_list_empty_careful(&service->serv_list)) {
+        ka_list_for_each_safe(pos, n, &service->serv_list) {
+            node = ka_list_entry(pos, struct hdcdrv_serv_list_node, list);
             if (node->service.listen_status == HDCDRV_VALID) {
                 (void)hdcdrv_server_free(&node->service, (int)vdev->dev_id, service_type);
             }
         }
     }
-    mutex_unlock(&vdev->mutex);
+    ka_task_mutex_unlock(&vdev->mutex);
 
     return;
 }
@@ -621,14 +622,14 @@ STATIC void vhdch_uninit_msgchan_pool(u32 dev_id, u32 fid)
     struct hdcdrv_dev *dev = &hdc_ctrl->devices[dev_id];
     int i;
 
-    mutex_lock(&dev->mutex);
+    ka_task_mutex_lock(&dev->mutex);
     for (i = 0; i < vdev->msg_chan_cnt; i++) {
         dev->msg_chan[vdev->msgchan_map[i]]->is_allocated = HDCDRV_MSG_CHAN_FLAG_NOT_ALLOCED;
         vdev->msgchan_map[i] = HDCDRV_INVALID_CHAN_ID;
         dev->alloced_chan_cnt--;
     }
     vdev->msg_chan_cnt = 0;
-    mutex_unlock(&dev->mutex);
+    ka_task_mutex_unlock(&dev->mutex);
 }
 
 STATIC int vhdch_alloc_chan_from_dev(struct vhdch_vdev *vdev, struct hdcdrv_dev *dev, int vdev_fast_cnt)
@@ -690,15 +691,15 @@ STATIC int vhdch_init_msgchan_pool(u32 dev_id, u32 fid, u32 alloc_core_num, u32 
     }
     vdev_fast_cnt = dev_fast_cnt * (int)alloc_core_num / (int)total_core_num;
 
-    mutex_lock(&dev->mutex);
+    ka_task_mutex_lock(&dev->mutex);
     if (vhdch_alloc_chan_from_dev(vdev, dev, vdev_fast_cnt) != HDCDRV_OK) {
-        mutex_unlock(&dev->mutex);
+        ka_task_mutex_unlock(&dev->mutex);
         vhdch_uninit_msgchan_pool(dev_id, fid);
         hdcdrv_err("No enough message channel resource. (dev_id=%u; fid=%u)\n", dev_id, fid);
         return HDCDRV_ERR;
     }
 
-    mutex_unlock(&dev->mutex);
+    ka_task_mutex_unlock(&dev->mutex);
     return HDCDRV_OK;
 }
 
@@ -706,7 +707,7 @@ STATIC void vhdch_init_mem_pool(u32 dev_id, u32 fid, u32 alloc_core_num, u32 tot
 {
     struct vhdch_vdev *vdev = &hdc_ctrl->vdev[dev_id][fid];
 
-    spin_lock_bh(&vdev->mem_lock);
+    ka_task_spin_lock_bh(&vdev->mem_lock);
     vdev->mem_cnt[HDCDRV_VDEV_MEM_POOL_TYPE_RX_SMALL] =
         (int)(HDCDRV_SMALL_PACKET_NUM * alloc_core_num / total_core_num);
     vdev->mem_cnt[HDCDRV_VDEV_MEM_POOL_TYPE_RX_HUGE] = (int)(HDCDRV_HUGE_PACKET_NUM * alloc_core_num / total_core_num);
@@ -715,21 +716,21 @@ STATIC void vhdch_init_mem_pool(u32 dev_id, u32 fid, u32 alloc_core_num, u32 tot
     vdev->mem_cnt[HDCDRV_VDEV_MEM_POOL_TYPE_TX_HUGE] = (int)(HDCDRV_HUGE_PACKET_NUM * alloc_core_num / total_core_num);
     vdev->rx_wait_sche[HDCDRV_VDEV_MEM_POOL_TYPE_RX_SMALL] = 0;
     vdev->rx_wait_sche[HDCDRV_VDEV_MEM_POOL_TYPE_RX_HUGE] = 0;
-    spin_unlock_bh(&vdev->mem_lock);
+    ka_task_spin_unlock_bh(&vdev->mem_lock);
 }
 
 STATIC void vhdch_uninit_mem_pool(u32 dev_id, u32 fid)
 {
     struct vhdch_vdev *vdev = &hdc_ctrl->vdev[dev_id][fid];
 
-    spin_lock_bh(&vdev->mem_lock);
+    ka_task_spin_lock_bh(&vdev->mem_lock);
     vdev->mem_cnt[HDCDRV_VDEV_MEM_POOL_TYPE_RX_SMALL] = 0;
     vdev->mem_cnt[HDCDRV_VDEV_MEM_POOL_TYPE_RX_HUGE] = 0;
     vdev->mem_cnt[HDCDRV_VDEV_MEM_POOL_TYPE_TX_SMALL] = 0;
     vdev->mem_cnt[HDCDRV_VDEV_MEM_POOL_TYPE_TX_HUGE] = 0;
     vdev->rx_wait_sche[HDCDRV_VDEV_MEM_POOL_TYPE_RX_SMALL] = 0;
     vdev->rx_wait_sche[HDCDRV_VDEV_MEM_POOL_TYPE_RX_HUGE] = 0;
-    spin_unlock_bh(&vdev->mem_lock);
+    ka_task_spin_unlock_bh(&vdev->mem_lock);
 }
 
 int vhdch_session_pre_alloc(u32 dev_id, u32 fid, int service_type)
@@ -744,7 +745,7 @@ int vhdch_session_pre_alloc(u32 dev_id, u32 fid, int service_type)
     }
     vdev = &hdc_ctrl->vdev[dev_id][fid];
 
-    mutex_lock(&vdev->mutex);
+    ka_task_mutex_lock(&vdev->mutex);
 
     if ((connect_type == HDCDRV_SERVICE_LONG_CONN) &&
         (vdev->cur_alloc_long_session < HDCDRV_SUPPORT_MAX_LONG_SESSION_PER_VDEV)) {
@@ -758,7 +759,7 @@ int vhdch_session_pre_alloc(u32 dev_id, u32 fid, int service_type)
         ret = HDCDRV_NO_SESSION;
     }
 
-    mutex_unlock(&vdev->mutex);
+    ka_task_mutex_unlock(&vdev->mutex);
 
     return ret;
 }
@@ -776,7 +777,7 @@ void vhdch_session_free(u32 dev_id, u32 fid, int service_type)
 
     vdev = &hdc_ctrl->vdev[dev_id][fid];
 
-    mutex_lock(&vdev->mutex);
+    ka_task_mutex_lock(&vdev->mutex);
     if (connect_type == HDCDRV_SERVICE_LONG_CONN) {
         vdev->cur_alloc_long_session--;
     }
@@ -785,7 +786,7 @@ void vhdch_session_free(u32 dev_id, u32 fid, int service_type)
         vdev->cur_alloc_short_session--;
     }
 
-    mutex_unlock(&vdev->mutex);
+    ka_task_mutex_unlock(&vdev->mutex);
 }
 
 
@@ -824,11 +825,11 @@ u32 vdhch_alloc_fast_msg_chan(u32 dev_id, u32 fid, int service_type)
     vdev = &hdc_ctrl->vdev[dev_id][fid];
     dev = &hdc_ctrl->devices[dev_id];
 
-    mutex_lock(&vdev->mutex);
+    ka_task_mutex_lock(&vdev->mutex);
 
     /* Find the msg chan with the least number of sessions */
     if (vdev->msgchan_map[vdev_chan_id] >= (u32)dev->msg_chan_cnt) {
-        mutex_unlock(&vdev->mutex);
+        ka_task_mutex_unlock(&vdev->mutex);
         hdcdrv_err("Channel ID invalid. (devid=%u; fid=%u; service_type=%d; chan_id=%u)",
             dev_id, fid, service_type, vdev->msgchan_map[vdev_chan_id]);
         chan_id = HDCDRV_INVALID_CHAN_ID;
@@ -844,7 +845,7 @@ u32 vdhch_alloc_fast_msg_chan(u32 dev_id, u32 fid, int service_type)
     }
     chan_id = vdev->msgchan_map[vdev_chan_id];
 
-    mutex_unlock(&vdev->mutex);
+    ka_task_mutex_unlock(&vdev->mutex);
 
     return chan_id;
 }
@@ -852,13 +853,13 @@ u32 vdhch_alloc_fast_msg_chan(u32 dev_id, u32 fid, int service_type)
 int hdcdrv_dma_map_guest_page(u32 dev_id, u32 fid, unsigned long in_addr,
     unsigned long size, struct hdcdrv_buf_desc *desc)
 {
-    struct sg_table *dma_sgt = NULL;
+    ka_sg_table_t *dma_sgt = NULL;
     unsigned long align_addr;
     unsigned long align_size;
-    dma_addr_t dma_addr;
+    ka_dma_addr_t dma_addr;
 
     align_addr = HDCDRV_BLOCK_DMA_HEAD(in_addr);
-    align_size = PAGE_ALIGN(size + HDCDRV_MEM_BLOCK_HEAD_SIZE);
+    align_size = KA_MM_PAGE_ALIGN(size + HDCDRV_MEM_BLOCK_HEAD_SIZE);
 
     dma_addr = vmngh_dma_map_guest_page(dev_id, fid, align_addr, align_size, &dma_sgt);
     if (dma_sgt == NULL) {
@@ -879,12 +880,12 @@ int hdcdrv_dma_map_guest_page(u32 dev_id, u32 fid, unsigned long in_addr,
     return HDCDRV_OK;
 }
 
-void hdcdrv_dma_unmap_guest_page(u32 dev_id, u32 fid, struct sg_table *dma_sgt)
+void hdcdrv_dma_unmap_guest_page(u32 dev_id, u32 fid, ka_sg_table_t *dma_sgt)
 {
     if (dma_sgt == NULL) {
         hdcdrv_err_spinlock("Input parameter is error.\n");
 #ifdef CFG_BUILD_DEBUG
-        dump_stack();
+        ka_base_dump_stack();
 #endif
         return;
     }
@@ -909,58 +910,58 @@ STATIC int vhdch_get_hdc_version(u32 dev_id, u32 fid, struct vhdc_ctrl_msg_hdc_v
 
 STATIC void vhdch_rb_ctx_erase(struct vhdch_vdev *vdev, struct hdcdrv_ctx *ctx)
 {
-    spin_lock_bh(&vdev->lock);
-    rb_erase(&ctx->ctx_node, &vdev->rb_ctx);
+    ka_task_spin_lock_bh(&vdev->lock);
+    ka_base_rb_erase(&ctx->ctx_node, &vdev->rb_ctx);
     ctx->refcnt--;
-    spin_unlock_bh(&vdev->lock);
+    ka_task_spin_unlock_bh(&vdev->lock);
 }
 
 STATIC int vhdch_rb_ctx_insert(struct vhdch_vdev *vdev, struct hdcdrv_ctx *ctx)
 {
-    struct rb_node *parent = NULL;
-    struct rb_node **link = &(vdev->rb_ctx.rb_node);
+    ka_rb_node_t *parent = NULL;
+    ka_rb_node_t **link = ka_base_get_rb_root_node_addr(&vdev->rb_ctx);
 
-    spin_lock_bh(&vdev->lock);
+    ka_task_spin_lock_bh(&vdev->lock);
     while (*link != NULL) {
-        struct hdcdrv_ctx *this = rb_entry(*link, struct hdcdrv_ctx, ctx_node);
+        struct hdcdrv_ctx *this = ka_base_rb_entry(*link, struct hdcdrv_ctx, ctx_node);
         parent = *link;
         if (ctx->node_hash < this->node_hash) {
             link = &((*link)->rb_left);
         } else if (ctx->node_hash > this->node_hash) {
             link = &((*link)->rb_right);
         } else {
-            spin_unlock_bh(&vdev->lock);
+            ka_task_spin_unlock_bh(&vdev->lock);
             return HDCDRV_F_NODE_SEARCH_FAIL;
         }
     }
 
     /* Add new node and rebalance tree. */
     ctx->refcnt++;
-    rb_link_node(&ctx->ctx_node, parent, link);
-    rb_insert_color(&ctx->ctx_node, &vdev->rb_ctx);
+    ka_base_rb_link_node(&ctx->ctx_node, parent, link);
+    ka_base_rb_insert_color(&ctx->ctx_node, &vdev->rb_ctx);
 
-    spin_unlock_bh(&vdev->lock);
+    ka_task_spin_unlock_bh(&vdev->lock);
     return HDCDRV_OK;
 }
 
 STATIC struct hdcdrv_ctx *vhdch_rb_ctx_search(struct vhdch_vdev *vdev, u64 hash)
 {
-    struct rb_node *node = vdev->rb_ctx.rb_node;
+    ka_rb_node_t *node = ka_base_get_rb_root_node(&vdev->rb_ctx);
     struct hdcdrv_ctx *ctx = NULL;
 
-    spin_lock_bh(&vdev->lock);
+    ka_task_spin_lock_bh(&vdev->lock);
     while (node != NULL) {
-        ctx = rb_entry(node, struct hdcdrv_ctx, ctx_node);
+        ctx = ka_base_rb_entry(node, struct hdcdrv_ctx, ctx_node);
         if (hash < ctx->node_hash) {
             node = node->rb_left;
         } else if (hash > ctx->node_hash) {
             node = node->rb_right;
         } else {
-            spin_unlock_bh(&vdev->lock);
+            ka_task_spin_unlock_bh(&vdev->lock);
             return ctx;
         }
     }
-    spin_unlock_bh(&vdev->lock);
+    ka_task_spin_unlock_bh(&vdev->lock);
 
     return NULL;
 }
@@ -968,31 +969,31 @@ STATIC struct hdcdrv_ctx *vhdch_rb_ctx_search(struct vhdch_vdev *vdev, u64 hash)
 STATIC struct hdcdrv_ctx *vhdch_search_create_ctx(struct vhdch_vdev *vdev, u64 hash, u32 cmd)
 {
     struct hdcdrv_ctx *ctx = NULL;
-    u32 drv_cmd = _IOC_NR(cmd);
+    u32 drv_cmd = _KA_IOC_NR(cmd);
     if (!((drv_cmd == HDCDRV_CMD_SERVER_CREATE) || (drv_cmd == HDCDRV_CMD_SET_SESSION_OWNER) ||
         (drv_cmd == HDCDRV_CMD_EPOLL_ALLOC_FD) || (drv_cmd == HDCDRV_CMD_EPOLL_FREE_FD) ||
         (drv_cmd == HDCDRV_CMD_SERVER_DESTROY))) {
         return HDCDRV_KERNEL_WITHOUT_CTX;
     }
 
-    mutex_lock(&vdev->release_mutex);
+    ka_task_mutex_lock(&vdev->release_mutex);
     ctx = vhdch_rb_ctx_search(vdev, hash);
     if (ctx != NULL) {
-        mutex_unlock(&vdev->release_mutex);
+        ka_task_mutex_unlock(&vdev->release_mutex);
         return ctx;
     }
 
     if ((drv_cmd == HDCDRV_CMD_EPOLL_FREE_FD) || (drv_cmd == HDCDRV_CMD_SERVER_DESTROY) ||
         (vdev->ctx_num >= HDCDRV_VDEV_MAX_CTX_NUM)) {
-        mutex_unlock(&vdev->release_mutex);
+        ka_task_mutex_unlock(&vdev->release_mutex);
         hdcdrv_info("vhdch has created ctx. (ctx_num=%d)\n", vdev->ctx_num);
         return ctx;
     }
 
     ctx = hdcdrv_alloc_ctx();
     if (ctx == NULL) {
-        mutex_unlock(&vdev->release_mutex);
-        hdcdrv_err("Calling kzalloc failed.\n");
+        ka_task_mutex_unlock(&vdev->release_mutex);
+        hdcdrv_err("Calling ka_mm_kzalloc failed.\n");
         return NULL;
     }
 
@@ -1001,14 +1002,14 @@ STATIC struct hdcdrv_ctx *vhdch_search_create_ctx(struct vhdch_vdev *vdev, u64 h
     ctx->service_type = HDCDRV_INVALID_VALUE;
     ctx->refcnt = 0;
     if (vhdch_rb_ctx_insert(vdev, ctx) != HDCDRV_OK) {
-        mutex_unlock(&vdev->release_mutex);
+        ka_task_mutex_unlock(&vdev->release_mutex);
         hdcdrv_err("vhdch rbtree insert ctx failed.\n");
         hdcdrv_free_ctx(ctx);
         return NULL;
     }
 
     vdev->ctx_num++;
-    mutex_unlock(&vdev->release_mutex);
+    ka_task_mutex_unlock(&vdev->release_mutex);
     return ctx;
 }
 
@@ -1027,16 +1028,16 @@ STATIC struct hdcdrv_ctx *vhdch_ctx_get(struct vhdch_vdev *vdev, u64 hash)
 STATIC struct hdcdrv_ctx *vhdch_ctx_get_by_cmd(struct vhdch_vdev *vdev, u64 hash, u32 cmd)
 {
     struct hdcdrv_ctx *ctx = NULL;
-    u32 drv_cmd = _IOC_NR(cmd);
+    u32 drv_cmd = _KA_IOC_NR(cmd);
     if (!((drv_cmd == HDCDRV_CMD_SERVER_CREATE) || (drv_cmd == HDCDRV_CMD_SET_SESSION_OWNER) ||
         (drv_cmd == HDCDRV_CMD_EPOLL_ALLOC_FD) || (drv_cmd == HDCDRV_CMD_EPOLL_FREE_FD) ||
         (drv_cmd == HDCDRV_CMD_SERVER_DESTROY))) {
         return HDCDRV_KERNEL_WITHOUT_CTX;
     }
 
-    mutex_lock(&vdev->release_mutex);
+    ka_task_mutex_lock(&vdev->release_mutex);
     ctx = vhdch_ctx_get(vdev, hash);
-    mutex_unlock(&vdev->release_mutex);
+    ka_task_mutex_unlock(&vdev->release_mutex);
 
     return ctx;
 }
@@ -1056,22 +1057,22 @@ STATIC void vhdch_ctx_put(struct vhdch_vdev *vdev, struct hdcdrv_ctx *ctx)
 
 STATIC void vhdch_ctx_put_by_cmd(struct vhdch_vdev *vdev, struct hdcdrv_ctx *ctx, u32 cmd)
 {
-    u32 drv_cmd = _IOC_NR(cmd);
+    u32 drv_cmd = _KA_IOC_NR(cmd);
     if (!((drv_cmd == HDCDRV_CMD_SERVER_CREATE) || (drv_cmd == HDCDRV_CMD_SET_SESSION_OWNER) ||
         (drv_cmd == HDCDRV_CMD_EPOLL_ALLOC_FD) || (drv_cmd == HDCDRV_CMD_EPOLL_FREE_FD) ||
         (drv_cmd == HDCDRV_CMD_SERVER_DESTROY))) {
         return;
     }
 
-    mutex_lock(&vdev->release_mutex);
+    ka_task_mutex_lock(&vdev->release_mutex);
     vhdch_ctx_put(vdev, ctx);
-    mutex_unlock(&vdev->release_mutex);
+    ka_task_mutex_unlock(&vdev->release_mutex);
 }
 
 STATIC int vhdch_mem_pool_sg_check(u32 dev_id, u32 fid, struct vhdc_ctrl_msg_pool_check *pool_check)
 {
-    struct sg_table *dma_sgt = NULL;
-    dma_addr_t dma_addr;
+    ka_sg_table_t *dma_sgt = NULL;
+    ka_dma_addr_t dma_addr;
     u32 sg_cnt = 0;
     u32 i;
 
@@ -1106,10 +1107,10 @@ STATIC int vhdch_release_proxy(u32 dev_id, u32 fid, struct vhdc_ctrl_msg_release
     struct vhdch_vdev *vdev = &hdc_ctrl->vdev[dev_id][fid];
     struct hdcdrv_ctx *ctx = NULL;
 
-    mutex_lock(&vdev->release_mutex);
+    ka_task_mutex_lock(&vdev->release_mutex);
     ctx = vhdch_ctx_get(vdev, vhdc_release->hash);
     if (ctx == NULL) {
-        mutex_unlock(&vdev->release_mutex);
+        ka_task_mutex_unlock(&vdev->release_mutex);
         hdcdrv_warn("Failed to found vhdch ctx. (dev_id=%u; fid=%u)\n", dev_id, fid);
         return HDCDRV_PARA_ERR;
     }
@@ -1117,7 +1118,7 @@ STATIC int vhdch_release_proxy(u32 dev_id, u32 fid, struct vhdc_ctrl_msg_release
     vhdch_rb_ctx_erase(vdev, ctx);
     vdev->ctx_num--;
     vhdch_ctx_put(vdev, ctx);
-    mutex_unlock(&vdev->release_mutex);
+    ka_task_mutex_unlock(&vdev->release_mutex);
 
     return HDCDRV_OK;
 }
@@ -1232,7 +1233,7 @@ STATIC int vhdch_vpc_msg_recv(u32 dev_id, u32 fid, struct vmng_rx_msg_proc_info 
     if ((ret != HDCDRV_OK) && (ret != HDCDRV_CMD_CONTINUE) &&
         (ret != HDCDRV_NO_BLOCK) && (ret != HDCDRV_RX_TIMEOUT)) {
         hdcdrv_warn_limit("Calling hdcdrv_ioctl_com failed. (dev_id=%u; fid=%u; cmd=0x%x; ret=%d)\n",
-            dev_id, fid, _IOC_NR(msg->cmd), ret);
+            dev_id, fid, _KA_IOC_NR(msg->cmd), ret);
         /* full through */
     }
 
@@ -1267,7 +1268,7 @@ STATIC int vhdch_traffic_msg_para_check(u32 dev_id, u32 fid, const struct vmng_r
 
     mem_info = (struct hdcdrv_ctrl_msg_sync_mem_info *)proc_info->data;
     if ((u32)mem_info->phy_addr_num > HDCDRV_MEM_MAX_PHY_NUM) {
-        hdcdrv_err("phy_addr_num is biger than expected. (dev_id=%u; fid=%u; phy_addr_num=%d)\n",
+        hdcdrv_err("phy_addr_num is bigger than expected. (dev_id=%u; fid=%u; phy_addr_num=%d)\n",
             dev_id, fid, mem_info->phy_addr_num);
         return HDCDRV_PARA_ERR;
     }
@@ -1332,16 +1333,16 @@ STATIC void vhdch_vdev_wait_for_idle(struct vhdch_vdev *vdev)
 STATIC void vhdch_mem_tree_uninit(u32 devid, u32 fid)
 {
     struct vhdch_vdev *vdev = &hdc_ctrl->vdev[devid][fid];
-    struct rb_root *rbtree = &vdev->rb_mem;
-    struct rb_node *node = NULL;
+    ka_rb_root_t *rbtree = &vdev->rb_mem;
+    ka_rb_node_t *node = NULL;
     struct vhdch_fast_node *fast_node = NULL;
     struct hdcdrv_ctrl_msg_sync_mem_info msg = {0};
     int ret;
 
-    node = rb_first(rbtree);
+    node = ka_base_rb_first(rbtree);
     while (node != NULL) {
-        fast_node = rb_entry(node, struct vhdch_fast_node, mem_node);
-        node = rb_next(node);
+        fast_node = ka_base_rb_entry(node, struct vhdch_fast_node, mem_node);
+        node = ka_base_rb_next(node);
         msg.flag = HDCDRV_DEL_FLAG;
         msg.hash_va = fast_node->hash_va;
         ret = hdcdrv_set_mem_info((int)devid, fid, HDCDRV_RBTREE_SIDE_LOCAL, &msg);
@@ -1353,19 +1354,19 @@ STATIC void vhdch_mem_tree_uninit(u32 devid, u32 fid)
 STATIC void vhdch_stop_work(struct vhdch_vdev *vdev)
 {
     struct hdcdrv_ctx *ctx = NULL;
-    struct rb_node *node = NULL;
+    ka_rb_node_t *node = NULL;
 
     if (vdev->type == VMNGH_VM) {
-        mutex_lock(&vdev->release_mutex);
-        node = rb_first(&vdev->rb_ctx);
+        ka_task_mutex_lock(&vdev->release_mutex);
+        node = ka_base_rb_first(&vdev->rb_ctx);
         while (node != NULL) {
-            ctx = rb_entry(node, struct hdcdrv_ctx, ctx_node);
-            node = rb_next(node);
+            ctx = ka_base_rb_entry(node, struct hdcdrv_ctx, ctx_node);
+            node = ka_base_rb_next(node);
             hdcdrv_release_by_ctx(ctx);
             vhdch_rb_ctx_erase(vdev, ctx);
             hdcdrv_free_ctx(ctx);
         }
-        mutex_unlock(&vdev->release_mutex);
+        ka_task_mutex_unlock(&vdev->release_mutex);
     }
 
     vhdch_reset_service(vdev);
@@ -1400,14 +1401,14 @@ STATIC int vhdch_init_instance(u32 dev_id, u32 fid, u32 aicore_num, u32 total_ai
     vdev->ctx_num = 0;
     vdev->fast_node_num_avaliable = HDCDRV_VDEV_MAX_FAST_NODE_NUM;
     vdev->fnode_phy_num_avaliable = HDCDRV_VDEV_MAX_FNODE_PHY_NUM;
-    vdev->rb_ctx = RB_ROOT;
-    vdev->rb_mem = RB_ROOT;
+    vdev->rb_ctx = KA_RB_ROOT;
+    vdev->rb_mem = KA_RB_ROOT;
     vdev->vm_version = HDCDRV_INVALID_HDC_VERSION;
-    spin_lock_init(&vdev->lock);
-    spin_lock_init(&vdev->mem_lock);
-    mutex_init(&vdev->mutex);
-    mutex_init(&vdev->release_mutex);
-    atomic64_set(&vdev->busy, 0);
+    ka_task_spin_lock_init(&vdev->lock);
+    ka_task_spin_lock_init(&vdev->mem_lock);
+    ka_task_mutex_init(&vdev->mutex);
+    ka_task_mutex_init(&vdev->release_mutex);
+    ka_base_atomic64_set(&vdev->busy, 0);
     vdev->valid = HDCDRV_INVALID;
 
     hdcdrv_info("Init. (vm_id=%u; dev_id=%u; fid=%u; aicore_num=%u; total_aicore_num=%u)",
@@ -1484,7 +1485,7 @@ STATIC int vhdch_uninit_instance(u32 dev_id, u32 fid)
     vdev->msg_chan_cnt = 0;
     vdev->cur_alloc_long_session = 0;
     vdev->cur_alloc_short_session = 0;
-    atomic64_set(&vdev->busy, 0);
+    ka_base_atomic64_set(&vdev->busy, 0);
 
     return HDCDRV_OK;
 }
@@ -1507,9 +1508,9 @@ STATIC int vhdch_init_container_instance(u32 dev_id, u32 fid, u32 aicore_num, u3
     vdev->msg_chan_cnt = 0;
     vdev->cur_alloc_long_session = 0;
     vdev->cur_alloc_short_session = 0;
-    mutex_init(&vdev->mutex);
-    spin_lock_init(&vdev->mem_lock);
-    atomic64_set(&vdev->busy, 0);
+    ka_task_mutex_init(&vdev->mutex);
+    ka_task_spin_lock_init(&vdev->mem_lock);
+    ka_base_atomic64_set(&vdev->busy, 0);
     vdev->valid = HDCDRV_INVALID;
 
     hdcdrv_info("Init. (dev_id=%u; fid=%u; aicore_num=%u; total_aicore_num=%u)",
@@ -1557,7 +1558,7 @@ STATIC int vhdch_uninit_container_instance(u32 dev_id, u32 fid)
     vdev->msg_chan_cnt = 0;
     vdev->cur_alloc_long_session = 0;
     vdev->cur_alloc_short_session = 0;
-    atomic64_set(&vdev->busy, 0);
+    ka_base_atomic64_set(&vdev->busy, 0);
 
     return HDCDRV_OK;
 }
@@ -1575,7 +1576,7 @@ static int vhdcd_get_aicore_num(u32 udevid, u32 phy_devid, u32 *aicore_num, u32 
         return ret;
 #endif
     }
-    *aicore_num = (u32)bitmap_weight((const unsigned long *)&bitmap, 64); /* 64 u64 bitnum */
+    *aicore_num = (u32)ka_base_bitmap_weight((const unsigned long *)&bitmap, 64); /* 64 u64 bitnum */
 
     ret = soc_resmng_dev_get_mia_res(phy_devid, MIA_AC_AIC, &bitmap, &unit_per_bit);
     if (ret != 0) {
@@ -1584,7 +1585,7 @@ static int vhdcd_get_aicore_num(u32 udevid, u32 phy_devid, u32 *aicore_num, u32 
         return ret;
 #endif
     }
-    *total_aicore_num = (u32)bitmap_weight((const unsigned long *)&bitmap, 64); /* 64 u64 bitnum */
+    *total_aicore_num = (u32)ka_base_bitmap_weight((const unsigned long *)&bitmap, 64); /* 64 u64 bitnum */
 
     return 0;
 }

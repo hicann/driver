@@ -24,6 +24,7 @@
 #include "vmng_kernel_interface.h"
 #include "pbl/pbl_feature_loader.h"
 #include "pbl_mem_alloc_interface.h"
+#include "pbl/pbl_soc_res.h"
 #include "dms_kernel_version_adapt.h"
 #include "dms_time.h"
 #include "dms_define.h"
@@ -34,8 +35,13 @@
 #include "dms/dms_notifier.h"
 #include "kernel_version_adapt.h"
 #include "devdrv_pcie.h"
-#include "dms_hotreset.h"
 #include "adapter_api.h"
+#include "dms_urd_forward.h"
+#include "ka_task_pub.h"
+#include "ka_memory_pub.h"
+#include "ka_base_pub.h"
+#include "ka_dfx_pub.h"
+#include "dms_hotreset.h"
 
 #ifdef ENABLE_BUILD_PRODUCT
 #define DEVDRV_CLOUD_V2_BOARD_TYPE_MASK      0x7
@@ -47,7 +53,7 @@
 
 STATIC struct hotreset_task_info *g_device_task_info[ASCEND_DEV_MAX_NUM] = {0};
 STATIC bool g_hotreset_executing_flag[ASCEND_DEV_MAX_NUM] = {false};
-static spinlock_t g_hotreset_executing_spinlock;
+static ka_task_spinlock_t g_hotreset_executing_spinlock;
 
 BEGIN_DMS_MODULE_DECLARATION(DMS_MODULE_BASIC_POWER_INFO)
 BEGIN_FEATURE_COMMAND()
@@ -142,12 +148,12 @@ STATIC void dms_set_device_task_info(unsigned int dev_id, struct hotreset_task_i
 STATIC struct hotreset_task_info *dms_task_info_alloc(unsigned int dev_id)
 {
     struct hotreset_task_info *device_task_info = NULL;
-    device_task_info = dbl_kzalloc(sizeof(struct hotreset_task_info), GFP_KERNEL | __GFP_ACCOUNT);
+    device_task_info = dbl_kzalloc(sizeof(struct hotreset_task_info), KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
     if (device_task_info == NULL) {
         dms_err("Kzalloc failed. (dev_id=%u)\n", dev_id);
         return NULL;
     }
-    init_rwsem(&device_task_info->task_rw_sema);
+    ka_task_init_rwsem(&device_task_info->task_rw_sema);
 
     return device_task_info;
 }
@@ -159,17 +165,17 @@ STATIC unsigned long get_dms_task_info_cnt(unsigned int dev_id)
 
 STATIC void set_hotreset_task_flag(unsigned int dev_id)
 {
-    set_bit(HOTRESET_TASK_FLAG_BIT, &g_device_task_info[dev_id]->task_flag);
+    ka_base_set_bit(HOTRESET_TASK_FLAG_BIT, &g_device_task_info[dev_id]->task_flag);
 }
 
 STATIC void clear_hotreset_task_flag(unsigned int dev_id)
 {
-    clear_bit(HOTRESET_TASK_FLAG_BIT, &g_device_task_info[dev_id]->task_flag);
+    ka_base_clear_bit(HOTRESET_TASK_FLAG_BIT, &g_device_task_info[dev_id]->task_flag);
 }
 
 STATIC int get_hotreset_task_flag(unsigned int dev_id)
 {
-    return test_bit(HOTRESET_TASK_FLAG_BIT, &g_device_task_info[dev_id]->task_flag);
+    return ka_base_test_bit(HOTRESET_TASK_FLAG_BIT, &g_device_task_info[dev_id]->task_flag);
 }
 
 STATIC int dms_power_hotreset_notifier_handle(struct notifier_block *self, unsigned long event, void *data)
@@ -181,11 +187,11 @@ STATIC int dms_power_hotreset_notifier_handle(struct notifier_block *self, unsig
         (event >= DMS_DEVICE_NOTIFIER_MAX)) {
         dms_err("Invalid parameter. (event=0x%lx; data=\"%s\")\n",
             event, data == NULL ? "NULL" : "OK");
-        return NOTIFY_BAD;
+        return KA_NOTIFY_BAD;
     }
 
     dms_debug("Notifier hotreset handle success. (event=0x%lx; dev_id=%u)\n", event, dev_info->dev_id);
-    return NOTIFY_DONE;
+    return KA_NOTIFY_DONE;
 }
 
 static struct notifier_block dms_power_hotreset_notifier = {
@@ -319,14 +325,14 @@ int dms_power_check_phy_mach(unsigned int dev_id)
 STATIC bool devdrv_check_hotreset_flag(unsigned int dev_id)
 {
     int flag;
-    down_write(&g_device_task_info[dev_id]->task_rw_sema);
+    ka_task_down_write(&g_device_task_info[dev_id]->task_rw_sema);
     flag = get_hotreset_task_flag(dev_id);
     if (flag != 0) {
-        up_write(&g_device_task_info[dev_id]->task_rw_sema);
+        ka_task_up_write(&g_device_task_info[dev_id]->task_rw_sema);
         dms_info("Pre-hotreset has been triggered. (dev_id=%u)\n", dev_id);
         return false;
     }
-    up_write(&g_device_task_info[dev_id]->task_rw_sema);
+    ka_task_up_write(&g_device_task_info[dev_id]->task_rw_sema);
 
     return true;
 }
@@ -493,10 +499,10 @@ STATIC int dms_all_device_hotreset_excuting_check_set(void)
 {
     u32 i;
 
-    spin_lock(&g_hotreset_executing_spinlock);
+    ka_task_spin_lock(&g_hotreset_executing_spinlock);
     for (i = 0; i < ASCEND_DEV_MAX_NUM; i++) {
         if (g_hotreset_executing_flag[i]) {
-            spin_unlock(&g_hotreset_executing_spinlock);
+            ka_task_spin_unlock(&g_hotreset_executing_spinlock);
             dms_err("Hot reset is being performed on some devices. (dev_id=%u)\n", i);
             return -EBUSY;
         }
@@ -504,18 +510,18 @@ STATIC int dms_all_device_hotreset_excuting_check_set(void)
     for (i = 0; i < ASCEND_DEV_MAX_NUM; i++) {
         g_hotreset_executing_flag[i] = true;
     }
-    spin_unlock(&g_hotreset_executing_spinlock);
+    ka_task_spin_unlock(&g_hotreset_executing_spinlock);
     return 0;
 }
 
 STATIC void dms_set_all_device_hotreset_excuting_flag(bool flag)
 {
     u32 i;
-    spin_lock(&g_hotreset_executing_spinlock);
+    ka_task_spin_lock(&g_hotreset_executing_spinlock);
     for (i = 0; i < ASCEND_DEV_MAX_NUM; i++) {
         g_hotreset_executing_flag[i] = flag;
     }
-    spin_unlock(&g_hotreset_executing_spinlock);
+    ka_task_spin_unlock(&g_hotreset_executing_spinlock);
 }
 
 STATIC int dms_power_set_all_hot_reset(void)
@@ -570,9 +576,9 @@ ALL_DEV_HORESET_END:
 
 STATIC int dms_single_device_hotreset_excuting_check_set(unsigned int phy_id, unsigned int bro_phy_id)
 {
-    spin_lock(&g_hotreset_executing_spinlock);
+    ka_task_spin_lock(&g_hotreset_executing_spinlock);
     if (g_hotreset_executing_flag[phy_id] || g_hotreset_executing_flag[bro_phy_id]) {
-        spin_unlock(&g_hotreset_executing_spinlock);
+        ka_task_spin_unlock(&g_hotreset_executing_spinlock);
         dms_err("Hotreset is executing. (dev_phy_id=%u; bro_phy_id=%u)\n", phy_id, bro_phy_id);
         return -EBUSY;
     }
@@ -580,18 +586,18 @@ STATIC int dms_single_device_hotreset_excuting_check_set(unsigned int phy_id, un
     g_hotreset_executing_flag[phy_id] = true;
     g_hotreset_executing_flag[bro_phy_id] = true;
 
-    spin_unlock(&g_hotreset_executing_spinlock);
+    ka_task_spin_unlock(&g_hotreset_executing_spinlock);
     return 0;
 }
 
 STATIC void dms_set_single_device_hotreset_excuting_flag(unsigned int phy_id, unsigned int bro_phy_id, bool flag)
 {
-    spin_lock(&g_hotreset_executing_spinlock);
+    ka_task_spin_lock(&g_hotreset_executing_spinlock);
 
     g_hotreset_executing_flag[phy_id] = flag;
     g_hotreset_executing_flag[bro_phy_id] = flag;
 
-    spin_unlock(&g_hotreset_executing_spinlock);
+    ka_task_spin_unlock(&g_hotreset_executing_spinlock);
 }
 
 STATIC int dms_power_set_single_hot_reset(unsigned int virt_id)
@@ -706,6 +712,78 @@ int dms_power_pcie_pre_reset(void *feature, char *in, unsigned int in_len, char 
     return ret;
 }
 
+#ifdef CFG_FEATURE_SUPPORT_HOTRESET_AO_INFORM
+STATIC void dms_hotreset_one_dev_inform(void *feature, unsigned int dev_id)
+{
+    unsigned int in;
+    unsigned int out;
+    int ret;
+
+    in = dev_id;
+    ret = dms_send_msg_to_device_by_h2d(feature, (char *)&in, sizeof(unsigned int),
+            (char *)&out, sizeof(unsigned int));
+    if (ret != 0) {
+        dms_err("Hotreset inform device failed. (dev_id=%u; ret=%d)\n", dev_id, ret);
+        return;
+    }
+    dms_info("Hotreset inform device success. (dev_id=%u; ret=%d)\n", dev_id, ret);
+}
+
+static bool dms_pcie_card_check(unsigned int udevid)
+{
+    int ret;
+    unsigned long long product_type;
+    
+    ret = soc_resmng_dev_get_key_value(udevid, "PRODUCT_TYPE", &product_type);
+    if (ret != 0) {
+        dms_err("Get product type failed. (dev_id=%u; ret=%d)\n", udevid, ret);
+        return false;
+    }
+    if (product_type == 0x3ULL) { /*0x3: pcie card*/
+        return true;
+    } else {
+        return false;
+    }
+}
+
+STATIC void dms_hotreset_dev_inform(void *feature, unsigned int dev_id)
+{
+    unsigned int udevid;
+    unsigned int i;
+    unsigned int dev_num;
+    int ret;
+
+    if (dev_id != DEVDRV_RESET_ALL_DEVICE_ID) {
+        ret = uda_devid_to_udevid(dev_id, &udevid);
+        if (ret != 0) {
+            dms_err("Failed to change devid to udevid. (dev_id=%u; ret=%d)\n", dev_id, ret);
+            return;
+        }
+        if ((!uda_is_pf_dev(udevid)) || (dms_pcie_card_check(udevid))) {
+            return;
+        }
+
+        dms_hotreset_one_dev_inform(feature, dev_id);
+        msleep(DEVDRV_HOTRESET_INFORM_DELAY);
+        return;
+    }
+
+    dev_num = uda_get_dev_num();
+    for (i = 0; i < dev_num; i++) {
+        ret = uda_devid_to_udevid(i, &udevid);
+        if (ret != 0) {
+            dms_err("Failed to change devid to udevid. (dev_id=%u; ret=%d)\n", i, ret);
+            continue;
+        }
+        if ((!uda_is_pf_dev(udevid)) || (dms_pcie_card_check(udevid))) {
+            continue;
+        }
+        dms_hotreset_one_dev_inform(feature, i);
+    }
+    msleep(DEVDRV_HOTRESET_INFORM_DELAY);
+}
+#endif
+
 int dms_hotreset_assmemble(void *feature, char *in, unsigned int in_len, char *out, unsigned int out_len)
 {
     unsigned int virt_id;
@@ -716,6 +794,9 @@ int dms_hotreset_assmemble(void *feature, char *in, unsigned int in_len, char *o
         return -EINVAL;
     }
     virt_id = *(unsigned int *)(uintptr_t)in;
+#ifdef CFG_FEATURE_SUPPORT_HOTRESET_AO_INFORM
+    dms_hotreset_dev_inform(feature, virt_id);
+#endif
 
     /* hot reset all devices */
     if (virt_id == DEVDRV_RESET_ALL_DEVICE_ID) {
@@ -750,15 +831,15 @@ int dms_hotreset_task_cnt_increase(unsigned int dev_id)
         return -ENODEV;
     }
 
-    down_write(&g_device_task_info[dev_id]->task_rw_sema);
+    ka_task_down_write(&g_device_task_info[dev_id]->task_rw_sema);
     flag = get_hotreset_task_flag(dev_id);
     if (flag != 0) {
         dms_err("Hotreset is running. (dev_id=%u; flag=%d)\n", dev_id, flag);
-        up_write(&g_device_task_info[dev_id]->task_rw_sema);
+        ka_task_up_write(&g_device_task_info[dev_id]->task_rw_sema);
         return -EBUSY;
     }
     g_device_task_info[dev_id]->task_ref_cnt++;
-    up_write(&g_device_task_info[dev_id]->task_rw_sema);
+    ka_task_up_write(&g_device_task_info[dev_id]->task_rw_sema);
 
     return 0;
 }
@@ -770,9 +851,9 @@ void dms_hotreset_task_cnt_decrease(unsigned int dev_id)
         return;
     }
 
-    down_write(&g_device_task_info[dev_id]->task_rw_sema);
+    ka_task_down_write(&g_device_task_info[dev_id]->task_rw_sema);
     g_device_task_info[dev_id]->task_ref_cnt--;
-    up_write(&g_device_task_info[dev_id]->task_rw_sema);
+    ka_task_up_write(&g_device_task_info[dev_id]->task_rw_sema);
 }
 
 int dms_hotreset_atomic_setflag(void *feature, char *in, unsigned int in_len, char *out, unsigned int out_len)
@@ -844,10 +925,10 @@ int dms_notify_pre_device_hotreset(unsigned int dev_id)
         return -EINVAL;
     }
 
-    down_write(&g_device_task_info[dev_id]->task_rw_sema);
+    ka_task_down_write(&g_device_task_info[dev_id]->task_rw_sema);
     flag = get_hotreset_task_flag(dev_id);
     if (flag != 0) {
-        up_write(&g_device_task_info[dev_id]->task_rw_sema);
+        ka_task_up_write(&g_device_task_info[dev_id]->task_rw_sema);
         dms_info("Pre-hotreset has been triggered. (dev_id=%u)\n", dev_id);
         return 0;
     }
@@ -856,11 +937,11 @@ int dms_notify_pre_device_hotreset(unsigned int dev_id)
     task_cnt = get_dms_task_info_cnt(dev_id);
     if (task_cnt != 0) {
         clear_hotreset_task_flag(dev_id);
-        up_write(&g_device_task_info[dev_id]->task_rw_sema);
+        ka_task_up_write(&g_device_task_info[dev_id]->task_rw_sema);
         dms_err("Dms task_cnt not zero. (task_cnt=%lu; dev_id=%u)\n", task_cnt, dev_id);
         return -EINVAL;
     }
-    up_write(&g_device_task_info[dev_id]->task_rw_sema);
+    ka_task_up_write(&g_device_task_info[dev_id]->task_rw_sema);
 
     return 0;
 }
@@ -874,18 +955,18 @@ int dms_notify_device_hotreset(unsigned int dev_id)
         return -EINVAL;
     }
 
-    down_write(&g_device_task_info[dev_id]->task_rw_sema);
+    ka_task_down_write(&g_device_task_info[dev_id]->task_rw_sema);
 
     set_hotreset_task_flag(dev_id);
 
     task_cnt = get_dms_task_info_cnt(dev_id);
     if (task_cnt != 0) {
         clear_hotreset_task_flag(dev_id);
-        up_write(&g_device_task_info[dev_id]->task_rw_sema);
+        ka_task_up_write(&g_device_task_info[dev_id]->task_rw_sema);
         dms_err("Dms task_cnt not zero. (task_cnt=%lu; dev_id=%u)\n", task_cnt, dev_id);
         return -EINVAL;
     }
-    up_write(&g_device_task_info[dev_id]->task_rw_sema);
+    ka_task_up_write(&g_device_task_info[dev_id]->task_rw_sema);
 
     return 0;
 }
@@ -938,7 +1019,7 @@ int dms_power_hotreset_init(void)
         dms_err("Dms event register notifier failed. (ret=%d)\n", ret);
         return ret;
     }
-    spin_lock_init(&g_hotreset_executing_spinlock);
+    ka_task_spin_lock_init(&g_hotreset_executing_spinlock);
     CALL_INIT_MODULE(DMS_MODULE_BASIC_POWER_INFO);
     dms_debug("Dms power hotreset init success.\n");
     return 0;

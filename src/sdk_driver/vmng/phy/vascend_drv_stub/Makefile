@@ -7,9 +7,12 @@
 # INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
 # See LICENSE in the root of the software repository for the full text of the License.
 # ------------------------------------------------------------------------------------------------------------
+EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/kernel_adapt/include
 MODULE_NAME := drv_vascend_stub
 obj-m += ${MODULE_NAME}.o
 ${MODULE_NAME}-objs := interface_stub.o hw_dvt_stub.o
+
+EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/kernel_adapt/include
 
 ifeq ($(ENABLE_BUILD_PRODUCT),TRUE)
 	EXTRA_CFLAGS += -DENABLE_BUILD_PRODUCT

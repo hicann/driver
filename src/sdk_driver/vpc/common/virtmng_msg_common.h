@@ -13,20 +13,21 @@
 
 #ifndef VIRTMNG_MSG_COMMON_H
 #define VIRTMNG_MSG_COMMON_H
-#include <linux/workqueue.h>
+
 #include "vmng_kernel_interface.h"
+#include "ka_memory_pub.h"
 
 #define VMNG_MSG_CLUSTER_STATUS_DISABLE 0x0
 #define VMNG_MSG_CLUSTER_STATUS_INIT 0x1
 #define VMNG_MSG_CLUSTER_STATUS_ENABLE 0x2
 
-#ifndef __GFP_ACCOUNT
+#ifndef __KA_GFP_ACCOUNT
 #ifdef __GFP_KMEMCG
-#define __GFP_ACCOUNT __GFP_KMEMCG /* for linux version 3.10 */
+#define __KA_GFP_ACCOUNT __GFP_KMEMCG /* for linux version 3.10 */
 #endif
 
 #ifdef __GFP_NOACCOUNT
-#define __GFP_ACCOUNT 0 /* for linux version 4.1 */
+#define __KA_GFP_ACCOUNT 0 /* for linux version 4.1 */
 #endif
 #endif
 

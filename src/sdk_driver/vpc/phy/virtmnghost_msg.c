@@ -10,9 +10,6 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#include <linux/slab.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
 
 #include "hw_vdavinci.h"
 #include "vpc_soc_adapt.h"
@@ -23,10 +20,14 @@
 #include "virtmng_msg_admin.h"
 #include "vmng_mem_alloc_interface.h"
 #include "virtmnghost_msg.h"
+#include "ka_list_pub.h"
+#include "ka_task_pub.h"
+#include "ka_kernel_def_pub.h"
+#include "ka_memory_pub.h"
 
 struct vmng_msg_dev_head {
-    struct list_head msg_dev_head;
-    struct mutex mutex;
+    ka_list_head_t msg_dev_head;
+    ka_mutex_t mutex;
 };
 
 struct vmng_msg_dev_head g_msg_dev_head;
@@ -35,7 +36,7 @@ struct vmng_msg_dev *vmngh_get_msg_dev_by_id(u32 dev_id, u32 fid)
 {
     struct vmng_msg_dev *pos;
 
-    list_for_each_entry(pos, &g_msg_dev_head.msg_dev_head, list) {
+    ka_list_for_each_entry(pos, &g_msg_dev_head.msg_dev_head, list) {
         if (pos->dev_id == dev_id && pos->fid == fid) {
             return pos;
         }
@@ -48,8 +49,8 @@ STATIC void vmngh_msg_dev_list_free(void)
     struct vmng_msg_dev *pos;
     struct vmng_msg_dev *n;
 
-    list_for_each_entry_safe(pos, n, &g_msg_dev_head.msg_dev_head, list) {
-        list_del(&pos->list);
+    ka_list_for_each_entry_safe(pos, n, &g_msg_dev_head.msg_dev_head, list) {
+        ka_list_del(&pos->list);
         vmng_kfree(pos);
         pos = NULL;
     }
@@ -130,7 +131,7 @@ int vmngh_msg_db_hanlder(struct vmng_msg_dev *msg_dev, u32 db_vector)
     vmng_msg_push_rx_queue_work(msg_chan);
     return 0;
 }
-EXPORT_SYMBOL(vmngh_msg_db_hanlder);
+KA_EXPORT_SYMBOL(vmngh_msg_db_hanlder);
 
 STATIC struct vmng_msg_chan_tx *vmngh_get_tx_chan_by_tx_finsih_db(struct vmng_msg_dev *msg_dev, u32 tx_finish_irq)
 {
@@ -214,9 +215,9 @@ STATIC int vmngh_alloc_remote_msg_cluster(struct vmng_msg_dev *msg_dev, enum vmn
         sizeof(u32));
     send_len = sizeof(struct vmng_create_cluster_cmd) + irq_array_len;
     cmd_len = (send_len >= recv_len) ? send_len : recv_len;
-    cmd = vmng_kzalloc(cmd_len, GFP_KERNEL | __GFP_ACCOUNT);
+    cmd = vmng_kzalloc(cmd_len, KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
     if (cmd == NULL) {
-        vmng_err("Call kzalloc failed. (dev_id=%u; fid=%u; chan_type=%u)\n",
+        vmng_err("Call ka_mm_kzalloc failed. (dev_id=%u; fid=%u; chan_type=%u)\n",
                  msg_dev->dev_id, msg_dev->fid, chan_type);
         return -EINVAL;
     }
@@ -258,7 +259,7 @@ STATIC int vmngh_alloc_msg_cluster_irqs(struct vmng_msg_dev *msg_dev, enum vmng_
         return 0;
     }
     /* irq array: | tx_send_irq | tx_finish_irq | rx_recv_irq | rx_resp_irq | */
-    irq_array->tx_send_irq = (u32 *)vmng_kzalloc(irq_array_len, GFP_KERNEL | __GFP_ACCOUNT);
+    irq_array->tx_send_irq = (u32 *)vmng_kzalloc(irq_array_len, KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
     if (irq_array->tx_send_irq == NULL) {
         vmng_err("Alloc irq_array failed. (dev_id=%u; fid=%u)\n", msg_dev->dev_id, msg_dev->fid);
         return -ENOMEM;
@@ -414,9 +415,9 @@ STATIC struct vmng_msg_dev *vmngh_alloc_msg_dev(struct vmngh_vpc_unit *unit)
     struct vmng_msg_dev *msg_dev = NULL;
     int ret;
 
-    msg_dev = vmng_kzalloc(sizeof(struct vmng_msg_dev), GFP_KERNEL);
+    msg_dev = vmng_kzalloc(sizeof(struct vmng_msg_dev), KA_GFP_KERNEL);
     if (msg_dev == NULL) {
-        vmng_err("Call kzalloc fail. (dev_id=%u; fid=%u; size=%lu)\n",
+        vmng_err("Call ka_mm_kzalloc fail. (dev_id=%u; fid=%u; size=%lu)\n",
                  unit->dev_id, unit->fid, sizeof(struct vmng_msg_dev));
         return NULL;
     }
@@ -436,7 +437,7 @@ STATIC struct vmng_msg_dev *vmngh_alloc_msg_dev(struct vmngh_vpc_unit *unit)
     msg_dev->ops.rx_irq_init = vmngh_rx_irq_init;
     msg_dev->ops.rx_irq_uninit = vmngh_rx_irq_uninit;
 
-    msg_dev->work_queue = create_workqueue("vmngh_wq");
+    msg_dev->work_queue = ka_task_create_workqueue("vmngh_wq");
     if (msg_dev->work_queue == NULL) {
         vmng_err("Create msg work_queue failed. (dev_id=%u; fid=%u)\n", unit->dev_id, unit->fid);
         vmng_kfree(msg_dev);
@@ -447,14 +448,14 @@ STATIC struct vmng_msg_dev *vmngh_alloc_msg_dev(struct vmngh_vpc_unit *unit)
     ret = vmng_msg_chan_init(VMNG_HOST_SIDE, msg_dev);
     if (ret != 0) {
         vmng_err("Call vmng_msg_chan_init failed. (dev_id=%u; ret=%d)\n", unit->dev_id, ret);
-        destroy_workqueue(msg_dev->work_queue);
+        ka_task_destroy_workqueue(msg_dev->work_queue);
         vmng_kfree(msg_dev);
         msg_dev = NULL;
         return NULL;
     }
-    mutex_lock(&g_msg_dev_head.mutex);
-    list_add(&msg_dev->list, &g_msg_dev_head.msg_dev_head);
-    mutex_unlock(&g_msg_dev_head.mutex);
+    ka_task_mutex_lock(&g_msg_dev_head.mutex);
+    ka_list_add(&msg_dev->list, &g_msg_dev_head.msg_dev_head);
+    ka_task_mutex_unlock(&g_msg_dev_head.mutex);
 
     return msg_dev;
 }
@@ -484,7 +485,7 @@ int vmngh_init_vpc_msg(void *unit_in)
     vmng_info("Message device init success. (dev_id=%u; fid=%u)\n", unit->dev_id, unit->fid);
     return 0;
 }
-EXPORT_SYMBOL(vmngh_init_vpc_msg);
+KA_EXPORT_SYMBOL(vmngh_init_vpc_msg);
 
 void vmngh_uninit_vpc_msg(void *unit_in)
 {
@@ -493,24 +494,24 @@ void vmngh_uninit_vpc_msg(void *unit_in)
     vmng_free_msg_dev(unit->msg_dev);
     unit->msg_dev = NULL;
 }
-EXPORT_SYMBOL(vmngh_uninit_vpc_msg);
+KA_EXPORT_SYMBOL(vmngh_uninit_vpc_msg);
 
 STATIC int __init vmngh_vpc_init_module(void)
 {
     vmng_info("Init vmngh vpc module finish.\n");
-    INIT_LIST_HEAD(&g_msg_dev_head.msg_dev_head);
-    mutex_init(&g_msg_dev_head.mutex);
+    KA_INIT_LIST_HEAD(&g_msg_dev_head.msg_dev_head);
+    ka_task_mutex_init(&g_msg_dev_head.mutex);
     return 0;
 }
-module_init(vmngh_vpc_init_module);
+ka_module_init(vmngh_vpc_init_module);
 
 STATIC void __exit vmngh_vpc_exit_module(void)
 {
     vmngh_msg_dev_list_free();
     vmng_info("Exit vmngh vpc module finish.\n");
 }
-module_exit(vmngh_vpc_exit_module);
+ka_module_exit(vmngh_vpc_exit_module);
 
-MODULE_AUTHOR("Huawei Tech. Co., Ltd.");
-MODULE_DESCRIPTION("virt vpc host driver");
-MODULE_LICENSE("GPL");
+KA_MODULE_AUTHOR("Huawei Tech. Co., Ltd.");
+KA_MODULE_DESCRIPTION("virt vpc host driver");
+KA_MODULE_LICENSE("GPL");

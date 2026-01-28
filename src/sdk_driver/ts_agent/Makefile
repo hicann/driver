@@ -26,11 +26,9 @@ ifeq ($(ENABLE_OPEN_SRC), y)
     TMP_OPEN_INC_DIR = $(DRIVER_HAL_INC_DIR)
     TMP_OPEN_KA_INC_DIR = $(DRIVER_KERNEL_DIR)/kernel_adapt/include
 
-    EXTRA_CFLAGS += -DCFG_SOC_PLATFORM_CLOUD_V2
-    EXTRA_CFLAGS += -DCFG_SOC_PLATFORM_STARS
-
     EXTRA_CFLAGS += -I$(TMP_OPEN_INC_DIR)
     EXTRA_CFLAGS += -I$(TMP_DEV_INC_DIR)
+    EXTRA_CFLAGS += -I$(TMP_DEV_INC_DIR)/trs
 
 	EXTRA_CFLAGS += -I$(TMP_CURRENT_DIR)/inc \
 					-I$(TMP_TOP_DIR) \
@@ -42,13 +40,21 @@ ifeq ($(ENABLE_OPEN_SRC), y)
 
 	ccflags-y += -Wall -Werror
 	obj-m := ts_agent.o
-    EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/trs/inc
-    EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/trs/trs_core/command/ioctl/
+    EXTRA_CFLAGS += -DCFG_SOC_PLATFORM_STARS
+    EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/trsdrv/trs/inc
+    EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/trsdrv/trs/trs_core/command/ioctl/
     EXTRA_CFLAGS += -isystem $(shell $(CC) -print-file-name=include)
-
-    ts_agent-objs := src/ts_agent_module.o \
-                    src/ts_agent_update_sqe.o
-
+    ifneq ($(filter $(PRODUCT), ascend910B),)
+        EXTRA_CFLAGS += -DCFG_SOC_PLATFORM_CLOUD_V2
+        ts_agent-objs := src/ts_agent_module.o \
+                src/ts_agent_update_sqe.o
+    else ifneq ($(filter $(PRODUCT), ascend910_95 ascend910_95esl),)
+        EXTRA_CFLAGS += -Iinclude/linux
+        EXTRA_CFLAGS += -DCFG_SOC_PLATFORM_DAVID
+        EXTRA_CFLAGS += -DSTARS_CTRL_CPU
+        ts_agent-objs := src/ascend95_src/ts_agent_ccpu_module.o \
+                             src/ascend95_src/ts_agent_ccpu_update_sqe.o
+    endif
 
 else
     ifneq ($(TOP_DIR),)
@@ -93,7 +99,7 @@ else
         TMP_DEV_INC_DIR = $(TMP_TOP_DIR)/drivers/ai_sdk/arc/linux/kernel_space/inc
         TMP_OPEN_INC_DIR = $(TMP_DEV_INC_DIR)
         TMP_LIBC_SEC_BASE_DIR = $(TMP_TOP_DIR)/abl/libc_sec/include/
-        TMP_OPEN_KA_INC_DIR = $(TMP_TOP_DIR)/drivers/ai_sdk/arc/linux/kernel_open/src/kernel_adapt/include
+        TMP_OPEN_KA_INC_DIR = $(TMP_TOP_DIR)/drivers/ai_sdk/arc/linux/kernel_space/src/kernel_adapt/include
 	endif
 
 
@@ -152,7 +158,9 @@ else
     ccflags-y += -Wall -Werror
     obj-m := ts_agent.o
 
+	EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/inc/trs
     EXTRA_CFLAGS += -isystem $(shell $(CC) -print-file-name=include)
+
     ifeq ($(STARS_FLAG), y) 
         ifeq ($(DAVINCI_HIAI_DKMS), y)
             EXTRA_CFLAGS += -I$(TMP_TOP_DIR)/rms/trs_drv/inc/

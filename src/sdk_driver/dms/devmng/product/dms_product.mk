@@ -7,12 +7,6 @@
 # INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
 # See LICENSE in the root of the software repository for the full text of the License.
 # ------------------------------------------------------------------------------------------------------------
-ifeq ($(DAVINCI_HIAI_DKMS),y)
-	ifeq ($(DAVINCI_HIAI_DKMS),y) #for DKMS
-		asdrv_dms-y += devmng/product/dms_product.o
-		EXTRA_CFLAGS += -I$(DRIVER_MODULE_DEVMNG_DIR)/product
-	endif
-else #for CMake
-	asdrv_dms-y += devmng/product/dms_product.o
-	EXTRA_CFLAGS += -I$(DRIVER_MODULE_DEVMNG_DIR)/product
-endif
+
+asdrv_dms-y += devmng/product/dms_product.o
+EXTRA_CFLAGS += -I$(DRIVER_MODULE_DEVMNG_DIR)/product

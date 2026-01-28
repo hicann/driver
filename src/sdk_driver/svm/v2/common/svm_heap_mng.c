@@ -11,8 +11,6 @@
  * GNU General Public License for more details.
  */
 
-#include <linux/vmalloc.h>
-
 #include "kernel_version_adapt.h"
 
 #include "devmm_proc_info.h"
@@ -136,7 +134,7 @@ int devmm_svm_check_bitmap_available(u32 *page_bitmap, size_t size, size_t page_
     u32 page_num, i;
     u64 tmp_page_size;
 
-    tmp_page_size = (page_size != 0) ? page_size : PAGE_SIZE;
+    tmp_page_size = (page_size != 0) ? page_size : KA_MM_PAGE_SIZE;
     page_num = (u32)(size / tmp_page_size);
     if (size % tmp_page_size != 0) {
         page_num++;
@@ -156,7 +154,7 @@ void devmm_svm_set_bitmap_mapped(u32 *page_bitmap, size_t size, size_t page_size
     u32 mapped_flag, page_num, i;
     u64 tmp_page_size;
 
-    tmp_page_size = (page_size != 0) ? page_size : PAGE_SIZE;
+    tmp_page_size = (page_size != 0) ? page_size : KA_MM_PAGE_SIZE;
     page_num = (u32)(size / tmp_page_size);
     if (size % tmp_page_size != 0) {
         page_num++;
@@ -184,7 +182,7 @@ void devmm_svm_clear_bitmap_mapped(u32 *page_bitmap, size_t size, size_t page_si
     u32 mapped_flag, page_num, i;
     u64 tmp_page_size;
 
-    tmp_page_size = (page_size != 0) ? page_size : PAGE_SIZE;
+    tmp_page_size = (page_size != 0) ? page_size : KA_MM_PAGE_SIZE;
     page_num = (u32)(size / tmp_page_size);
     if (size % tmp_page_size != 0) {
         page_num++;

@@ -44,11 +44,13 @@
 #define KA_S_IWUSR      S_IWUSR
 #define KA_S_IWGRP      S_IWGRP
 #define KA_S_IROTH      S_IROTH
+#define KA_S_ISDIR      S_ISDIR
 
 #define KA_O_RDONLY     O_RDONLY
 #define KA_O_CREAT      O_CREAT
 #define KA_O_RDWR       O_RDWR
 #define KA_O_TRUNC      O_TRUNC
+#define KA_O_LARGEFILE  O_LARGEFILE
 
 #define KA_LOOKUP_FOLLOW    LOOKUP_FOLLOW
 
@@ -280,5 +282,5 @@ static inline void *ka_fs_get_inode_i_private(ka_inode_t *inode)
 
 #define __KA_FS_ATTR(_name, _mode, _show, _store) __ATTR(_name, _mode, _show, _store)
 #define __KA_FS_ATTR_RO(_name) __ATTR_RO(_name)
-
+ssize_t ka_fs_kernel_write_ret(struct file *file, const void *buf, size_t count, loff_t *pos);
 #endif

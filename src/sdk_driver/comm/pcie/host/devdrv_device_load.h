@@ -14,10 +14,11 @@
 #ifndef _DEVDRV_DEVICE_LOAD_H_
 #define _DEVDRV_DEVICE_LOAD_H_
 
-#include <linux/workqueue.h>
-#include <linux/irqreturn.h>
-
 #include "comm_kernel_interface.h"
+#include "ka_common_pub.h"
+#include "ka_task_pub.h"
+#include "ka_base_pub.h"
+#include "ka_memory_pub.h"
 
 extern struct devdrv_black_callback g_black_box;
 #define DEVDRV_HOST_FILE_PATH "/home/bios"
@@ -93,7 +94,7 @@ extern struct devdrv_black_callback g_black_box;
 #else
 #define DEVDRV_TIMER_SCHEDULE_TIMES 300 /* asic:300s */
 #endif
-#define DEVDRV_TIMER_EXPIRES (1 * HZ)
+#define DEVDRV_TIMER_EXPIRES (1 * KA_HZ)
 
 #define DEVDRV_OPEN_CFG_FILE_TIME_MS  100
 #define DEVDRV_OPEN_CFG_FILE_COUNT    50
@@ -117,7 +118,7 @@ enum devdrv_load_wait_mode {
 
 struct devdrv_load_addr_pair {
     void *addr;
-    dma_addr_t dma_addr;
+    ka_dma_addr_t dma_addr;
     u64 size;      /* block size */
     u64 data_size; /* data length is this block */
 };
@@ -131,21 +132,21 @@ struct devdrv_load_blocks {
 
 struct devdrv_load_work {
     struct devdrv_pci_ctrl *ctrl;
-    struct work_struct work;
+    ka_work_struct_t work;
 };
 
 struct devdrv_agent_load {
-    struct device *dev;
+    ka_device_t *dev;
     u32 dev_id;
     void __iomem *mem_sram_base;
     struct devdrv_load_blocks *blocks;
 
-    struct timer_list load_timer; /* device os load time out timer */
+    ka_timer_list_t load_timer; /* device os load time out timer */
     int timer_remain;             /* timer_remain <= 0 means time out */
     unsigned long timer_expires;
 
     struct devdrv_load_work load_work;
-    atomic_t load_flag;
+    ka_atomic_t load_flag;
 
     int load_wait_mode;
     int load_abort;
@@ -167,7 +168,7 @@ int devdrv_load_device(struct devdrv_pci_ctrl *pci_ctrl);
 void devdrv_load_exit(struct devdrv_pci_ctrl *pci_ctrl);
 void devdrv_notify_blackbox_err(u32 devid, u32 code);
 void devdrv_set_load_abort(struct devdrv_agent_load *agent_loader);
-irqreturn_t devdrv_load_irq(int irq, void *data);
+ka_irqreturn_t devdrv_load_irq(int irq, void *data);
 
 char *devdrv_get_config_file(void);
 u32 devdrv_get_env_value_from_file(char *file, const char *env_name, char *env_val, u32 env_val_len);

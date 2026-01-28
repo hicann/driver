@@ -7,18 +7,10 @@
 # INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
 # See LICENSE in the root of the software repository for the full text of the License.
 # ------------------------------------------------------------------------------------------------------------
-ifeq ($(DAVINCI_HIAI_DKMS),y)
-    asdrv_fms-y += smf/sensor/dms_sensor.o
-    asdrv_fms-y += smf/sensor/dms_sensor_notify.o
-    asdrv_fms-y += smf/sensor/dms_sensor_statis.o
-    asdrv_fms-y += smf/sensor/dms_sensor_discrete.o
-    asdrv_fms-y += smf/sensor/dms_sensor_general.o
-    asdrv_fms-y += smf/sensor/config/dms_sensor_type.o
-else #for CMake & ctrl cpu open
-    asdrv_fms-y += smf/sensor/dms_sensor.o
-    asdrv_fms-y += smf/sensor/dms_sensor_notify.o
-    asdrv_fms-y += smf/sensor/dms_sensor_statis.o
-    asdrv_fms-y += smf/sensor/dms_sensor_discrete.o
-    asdrv_fms-y += smf/sensor/dms_sensor_general.o
-    asdrv_fms-y += smf/sensor/config/dms_sensor_type.o
-endif
+
+asdrv_fms-y += smf/sensor/dms_sensor.o
+asdrv_fms-y += smf/sensor/dms_sensor_notify.o
+asdrv_fms-y += smf/sensor/dms_sensor_statis.o
+asdrv_fms-y += smf/sensor/dms_sensor_discrete.o
+asdrv_fms-y += smf/sensor/dms_sensor_general.o
+asdrv_fms-y += smf/sensor/config/dms_sensor_type.o

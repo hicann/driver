@@ -11,7 +11,7 @@
  * GNU General Public License for more details.
  */
 
-#include <linux/module.h>
+#include "ka_kernel_def_pub.h"
 
 #include "apm_interface.h"
 #include "dp_proc_mng_interface.h"
@@ -99,9 +99,9 @@ static void __exit exit_dpa(void)
     }
 }
 
-module_init(init_dpa);
-module_exit(exit_dpa);
+ka_module_init(init_dpa);
+ka_module_exit(exit_dpa);
 
-MODULE_LICENSE("GPL");
-MODULE_AUTHOR("Huawei Tech. Co., Ltd.");
-MODULE_DESCRIPTION("DEVICE PUBLIC ADAPT");
+KA_MODULE_LICENSE("GPL");
+KA_MODULE_AUTHOR("Huawei Tech. Co., Ltd.");
+KA_MODULE_DESCRIPTION("DEVICE PUBLIC ADAPT");

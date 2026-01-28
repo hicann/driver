@@ -22,8 +22,10 @@
 #include <linux/mod_devicetable.h>
 
 #include "securec.h"
+#include "ka_system_pub.h"
 #include "log_drv_agent.h"
 
+#define LOG_S_TO_US 1000000
 STATIC log_ring_buf_t g_log_ring_buf = { 0 };
 static DEFINE_RATELIMIT_STATE(drv_log_err_ratelimit, 1 * HZ, 5);
 
@@ -34,11 +36,7 @@ STATIC int log_get_date(char *date, u32 len)
     int ret;
 
     ktime_get_real_ts64(&sys_time);
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 6, 0)
-    tm = rtc_ktime_to_tm(timespec64_to_ktime(sys_time));
-#else
-    rtc_time_to_tm(sys_time.tv_sec, &tm);
-#endif
+    ka_system_rtc_time_convert(&tm, sys_time);
     ret = snprintf_s(date, len, len - 1, "%04ld-%02d-%02d-%02d:%02d:%02d.%06llu",
                      tm.tm_year + TWENTY_CENTURY, tm.tm_mon + JANUARY, tm.tm_mday, tm.tm_hour,
                      tm.tm_min, tm.tm_sec, sys_time.tv_nsec / KILO);
@@ -91,6 +89,8 @@ static int log_save_to_ringbuf(const char *fmt, va_list args)
     unsigned long flags;
     va_list args_backup;
     int ret;
+    ktime_t kt = ktime_get();
+    unsigned long long usec = ktime_to_us(kt);
 
     if (g_log_ring_buf.log_buf == NULL) {
         return -EINVAL;
@@ -102,7 +102,7 @@ static int log_save_to_ringbuf(const char *fmt, va_list args)
     }
 
     spin_lock_irqsave(&g_log_ring_buf.logbuf_lock, flags);
-    ret = snprintf_s(new_fmt, LOG_PRINT_LEN, LOG_PRINT_LEN - 1, "[%s] %s", date, fmt + LOG_LEVEL_OFFSET);
+    ret = snprintf_s(new_fmt, LOG_PRINT_LEN, LOG_PRINT_LEN - 1, "[%s] [%llu.%06u] %s", date, (usec / LOG_S_TO_US), (usec % LOG_S_TO_US), fmt + LOG_LEVEL_OFFSET);
     if (ret < 0) {
         spin_unlock_irqrestore(&g_log_ring_buf.logbuf_lock, flags);
         slog_drv_err("Log snprintf_s failed. (ret=%d)\n", ret);

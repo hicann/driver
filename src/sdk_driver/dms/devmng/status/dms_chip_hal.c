@@ -18,6 +18,7 @@
 #include "dms_define.h"
 #include "devdrv_user_common.h"
 #include "devdrv_common.h"
+#include "ka_kernel_def_pub.h"
 #include "ascend_kernel_hal.h"
 
 #ifdef CFG_HOST_ENV
@@ -43,7 +44,7 @@ int hal_kernel_get_device_chip_die_id(u32 dev_id, u32 *chip_id, u32 *die_id)
     *die_id = dev_info->die_id;
     return 0;
 }
-EXPORT_SYMBOL_GPL(hal_kernel_get_device_chip_die_id);
+KA_EXPORT_SYMBOL_GPL(hal_kernel_get_device_chip_die_id);
 
 int hal_kernel_get_soc_type(u32 dev_id, u32 *soc_type)
 {
@@ -89,7 +90,7 @@ int hal_kernel_get_soc_type(u32 dev_id, u32 *soc_type)
 
     return 0;
 }
-EXPORT_SYMBOL_GPL(hal_kernel_get_soc_type);
+KA_EXPORT_SYMBOL_GPL(hal_kernel_get_soc_type);
 #else
 int hal_kernel_get_device_chip_die_id(u32 dev_id, u32 *chip_id, u32 *die_id)
 {
@@ -103,7 +104,7 @@ int hal_kernel_get_device_chip_die_id(u32 dev_id, u32 *chip_id, u32 *die_id)
 
     return devdrv_get_chip_die_id(dev_id, chip_id, die_id);
 }
-EXPORT_SYMBOL_GPL(hal_kernel_get_device_chip_die_id);
+KA_EXPORT_SYMBOL_GPL(hal_kernel_get_device_chip_die_id);
 #endif
 
 int hal_kernel_get_device_addr_mode(u32 dev_id, HAL_KERNEL_ADDR_MODE *addr_mode)
@@ -126,7 +127,7 @@ int hal_kernel_get_device_addr_mode(u32 dev_id, HAL_KERNEL_ADDR_MODE *addr_mode)
     *addr_mode = (HAL_KERNEL_ADDR_MODE)dev_info->addr_mode;
     return 0;
 }
-EXPORT_SYMBOL_GPL(hal_kernel_get_device_addr_mode);
+KA_EXPORT_SYMBOL_GPL(hal_kernel_get_device_addr_mode);
 
 int __attribute__((weak)) hal_kernel_get_d2d_topology_type(u32 dev_id1, u32 dev_id2, HAL_KERNEL_TOPOLOGY_TYPE *topology_type)
 {
@@ -140,4 +141,4 @@ int __attribute__((weak)) hal_kernel_get_spod_node_status(u32 dev_id, u32 sdid, 
     (void) status;
     return -EOPNOTSUPP;
 }
-EXPORT_SYMBOL_GPL(hal_kernel_get_spod_node_status);
+KA_EXPORT_SYMBOL_GPL(hal_kernel_get_spod_node_status);

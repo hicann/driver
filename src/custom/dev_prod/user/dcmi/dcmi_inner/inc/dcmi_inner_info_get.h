@@ -61,6 +61,7 @@ extern "C"{
 #define DCMI_910B_BIN1 1
 #define DCMI_910B_BIN2 2
 #define DCMI_910B_BIN3 3
+#define DCMI_910B_BIN2_1  4
 
 #define DCMI_MEM_SIZE_16G 16
 #define DCMI_MEM_SIZE_24G 24
@@ -107,6 +108,12 @@ extern "C"{
 enum dcmi_tops_type {
     IS_310B_8TOPS_TYPE = 0,
     IS_310B_20TOPS_TYPE,
+};
+
+struct dcmi_hbm_info_910_95 {
+    unsigned int total_size;
+    unsigned int used_size;
+    char reserve[56];                      /* the size of dcmi_memory_info is 64 */
 };
 
 struct dcmi_device_info {

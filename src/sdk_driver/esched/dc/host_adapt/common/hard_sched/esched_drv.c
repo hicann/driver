@@ -674,7 +674,7 @@ STATIC int esched_drv_submit_normal_event(struct sched_numa_node *node, u32 even
     struct topic_sched_sqe sqe = {0};
     int ret;
 
-    ret = esched_drv_fill_sqe(node->node_id, event_src, &sqe, event_info);
+    ret = esched_drv_fill_sqe(node->node_id, event_src, &sqe, event_info, true);
     if (ret != 0) {
         sched_err("Failed to fill variable sqe. (chip_id=%u; ret=%d)\n", node->node_id, ret);
         return ret;
@@ -836,11 +836,6 @@ STATIC struct sched_event *esched_drv_fill_event(struct topic_data_chan *topic_c
     struct sched_grp_ctx *grp_ctx, u32 tid)
 {
     struct sched_event *event = NULL;
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 0, 0)
-    struct timespec64 submit_event_time;
-#else
-    struct timeval submit_event_time;
-#endif
     int ret;
     u32 dst_tid = tid;
 
@@ -898,16 +893,7 @@ STATIC struct sched_event *esched_drv_fill_event(struct topic_data_chan *topic_c
     /* Performance tuning, recourd publish time */
     event->timestamp.publish_user = sched_get_cur_timestamp();
     event->timestamp.publish_in_kernel = sched_get_cur_timestamp();
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 0, 0)
-    ktime_get_real_ts64(&submit_event_time);
-    event->timestamp.publish_user_of_day = (submit_event_time.tv_sec * NSEC_PER_SEC) + submit_event_time.tv_nsec;
-#else
-#ifndef EMU_ST
-    esched_get_ktime(&submit_event_time);
-#endif
-    event->timestamp.publish_user_of_day = (submit_event_time.tv_sec * USEC_PER_SEC) + submit_event_time.tv_usec;
-#endif
-
+    event->timestamp.publish_user_of_day = ka_system_sched_get_abs_or_rel_mstime();
     return event;
 }
 
@@ -1651,7 +1637,7 @@ static struct sched_event *esched_drv_get_event_curr_chan(struct sched_cpu_ctx *
 #endif
 
 int esched_drv_fill_sqe_qos(u32 chip_id, struct sched_published_event_info *event_info,
-    struct topic_sched_sqe *sqe)
+    struct topic_sched_sqe *sqe, bool wait_thread_check)
 {
     struct sched_proc_ctx *proc_ctx = NULL;
     struct sched_grp_ctx *grp_ctx = NULL;
@@ -1697,11 +1683,14 @@ int esched_drv_fill_sqe_qos(u32 chip_id, struct sched_published_event_info *even
         sched_err("Failed to get hard_res. (chip_id=%u)\n", chip_id);
         return DRV_ERROR_INNER_ERR;
     }
-    if (!sched_grp_can_handle_event(grp_ctx, &event) && (hard_res->cpu_work_mode != STARS_WORK_MODE_MSGQ)) {
-        esched_chip_proc_put(proc_ctx);
-        sched_err("There is no subscribe thread. (pid=%d; gid=%u; event_id=%u)\n",
-            grp_ctx->pid, grp_ctx->gid, event_info->event_id);
-        return DRV_ERROR_NO_SUBSCRIBE_THREAD;
+
+    if (wait_thread_check) {
+        if (!sched_grp_can_handle_event(grp_ctx, &event) && (hard_res->cpu_work_mode != STARS_WORK_MODE_MSGQ)) {
+            esched_chip_proc_put(proc_ctx);
+            sched_err("There is no subscribe thread. (pid=%d; gid=%u; event_id=%u)\n",
+                grp_ctx->pid, grp_ctx->gid, event_info->event_id);
+            return DRV_ERROR_NO_SUBSCRIBE_THREAD;
+        }
     }
 
 #ifdef CFG_FEATURE_MORE_PID_PRIORITY

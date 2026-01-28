@@ -14,6 +14,7 @@
 #ifndef KA_TYPE_H
 #define KA_TYPE_H
 
+#include <linux/types.h>
 #include <linux/version.h>
 #include <stdbool.h>
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 15, 0)

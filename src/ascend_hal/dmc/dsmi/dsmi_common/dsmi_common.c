@@ -1334,7 +1334,7 @@ int dsmi_udis_get_hbm_isolated_pages_info(int dev_id, unsigned char module_type,
 
     ret = sprintf_s(get_info.name, UDIS_MAX_NAME_LEN, "ecc_his_cnt");
     if (ret < 0) {
-        DEV_MON_WARNING("sprintf to udis get_info.name not succcess. (dev_id=%u;)\n", dev_id);
+        DEV_MON_WARNING("sprintf to udis get_info.name not success. (dev_id=%u;)\n", dev_id);
         return DRV_ERROR_INVALID_HANDLE;
     }
 

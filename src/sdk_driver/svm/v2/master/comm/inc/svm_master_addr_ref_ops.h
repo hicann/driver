@@ -13,8 +13,8 @@
 #ifndef SVM_MASTER_ADDR_REF_OPS_H
 #define SVM_MASTER_ADDR_REF_OPS_H
 
-#include "svm_ioctl.h"
 #include "devmm_proc_info.h"
+#include "svm_ioctl.h"
 
 /* For ioctl_arg without size, should call ref_ops(ref inc or dec) in dispatch func. */
 #define SVM_ADDR_REF_OPS_UNKNOWN_SIZE 0

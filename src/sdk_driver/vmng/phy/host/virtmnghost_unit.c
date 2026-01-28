@@ -11,9 +11,6 @@
  * GNU General Public License for more details.
  */
 
-#include <linux/slab.h>
-#include <linux/errno.h>
-
 #include "vmng_mem_alloc_interface.h"
 #include "virtmng_public_def.h"
 #include "virtmnghost_unit.h"
@@ -85,9 +82,9 @@ void *vmngh_get_vdavinci_by_id(u32 dev_id, u32 fid)
     }
     return vd_dev->vdavinci;
 }
-EXPORT_SYMBOL(vmngh_get_vdavinci_by_id);
+KA_EXPORT_SYMBOL(vmngh_get_vdavinci_by_id);
 
-struct mutex *vmngh_get_vdev_lock_from_unit(u32 dev_id, u32 fid)
+ka_mutex_t *vmngh_get_vdev_lock_from_unit(u32 dev_id, u32 fid)
 {
     return &g_vmngh_unit.vmngh_pcidev[dev_id].vddev_mutex[fid];
 }

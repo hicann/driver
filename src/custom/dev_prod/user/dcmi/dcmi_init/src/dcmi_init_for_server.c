@@ -10,6 +10,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <errno.h>
 
 #include "securec.h"
 #include "dsmi_common_interface_custom.h"
@@ -57,12 +58,21 @@ STATIC int dcmi_init_bdf_info(int *device_logic_phy_id_map, int card_count)
 {
     struct dcmi_card_info *card_info = NULL;
     int ret, i, j;
+    int chip_type = dcmi_get_board_chip_type();
     int *device_logic_id_list = NULL;
     device_logic_id_list = (int *)malloc(sizeof(int) * g_board_details.device_count_in_one_card);
     if (device_logic_id_list == NULL) {
         gplog(LOG_ERR, "malloc device_logic_id_list failed.");
         return DCMI_ERR_CODE_INNER_ERR;
     }
+
+    if ((chip_type == DCMI_CHIP_TYPE_D910_95) &&
+        dcmi_mainboard_is_a900_a5_ub(g_mainboard_info.mainboard_id)) {
+        free(device_logic_id_list);
+        device_logic_id_list = NULL;
+        return DCMI_OK;
+    }
+
     /* 此函数只在服务器场景使用，一个910对应一个card */
     for (i = 0; i < card_count; i++) {
         dcmi_init_server_get_device_in_card(i, device_logic_id_list, device_logic_phy_id_map);
@@ -129,7 +139,7 @@ STATIC void dcmi_init_server_per_device(int *device_logic_phy_id_map, int card_i
             *init_abnomal_flag = 1;
             continue;
         }
-        
+
         ret = dsmi_get_board_info(device_logic_id_list[i], board_info);  // 每个芯片均获得board_info
         if (ret != DSMI_OK) {
             (void)dcmi_init_board_info_exit_abnormally(card_id);

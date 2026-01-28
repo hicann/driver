@@ -15,6 +15,7 @@
 #include "devmm_page_cache.h"
 #include "svm_msg_client.h"
 #include "svm_master_mem_map.h"
+#include "ka_base_pub.h"
 
 static void devmm_msg_to_agent_mem_map_fail_proc(struct devmm_svm_process *svm_proc,
     struct devmm_vmma_info *info, u64 to_free_pg_num)
@@ -36,7 +37,7 @@ int devmm_msg_to_agent_mem_map(struct devmm_svm_process *svm_proc, struct devmm_
     u64 mapped_num, num, pg_num_per_msg, msg_len;
     int ret;
 
-    pg_num_per_msg = min(info->pg_num, DEVMM_MEM_MAP_MAX_PAGE_NUM_PER_MSG);
+    pg_num_per_msg = ka_base_min(info->pg_num, DEVMM_MEM_MAP_MAX_PAGE_NUM_PER_MSG);
     msg_len = sizeof(struct devmm_chan_mem_map) + sizeof(struct devmm_chan_query_phy_blk) * pg_num_per_msg;
 
     msg = devmm_kvzalloc_ex(msg_len, KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
@@ -58,7 +59,7 @@ int devmm_msg_to_agent_mem_map(struct devmm_svm_process *svm_proc, struct devmm_
     for (mapped_num = 0; mapped_num < info->pg_num; mapped_num += num) {
         /* Attention, msg->head.extend_num * page_size should be multiples of DEVMM_VMMA_GRANULARITY_SIZE */
         /* Every agent map msg will create vmma, so map per page num should equal with unmap */
-        num = min(info->pg_num - mapped_num, DEVMM_MEM_MAP_MAX_PAGE_NUM_PER_MSG);
+        num = ka_base_min(info->pg_num - mapped_num, DEVMM_MEM_MAP_MAX_PAGE_NUM_PER_MSG);
 
         msg->head.extend_num = (u16)num; // max DEVMM_MEM_MAP_MAX_PAGE_NUM_PER_MSG
         msg->va = info->va + mapped_num * info->pg_size;

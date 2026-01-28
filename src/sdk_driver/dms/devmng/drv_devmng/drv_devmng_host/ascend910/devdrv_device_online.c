@@ -15,12 +15,16 @@
 #include <linux/poll.h>
 #include <linux/kfifo.h>
 
-#include "devdrv_device_online.h"
 #include "devdrv_manager_container.h"
 #include "devdrv_pcie.h"
+#include "ka_task_pub.h"
+#include "ka_base_pub.h"
+#include "ka_fs_pub.h"
+#include "ka_memory_pub.h"
+#include "devdrv_device_online.h"
 
 DECLARE_WAIT_QUEUE_HEAD(devid_upgrade_waitq);
-DEFINE_SPINLOCK(devdrv_online_fifo_lock);
+KA_TASK_DEFINE_SPINLOCK(devdrv_online_fifo_lock);
 
 #define FIFO_CELL_SIZE sizeof(u32)
 #define DEVDRV_MAX_DEVID_BUFFER (DEVDRV_PF_DEV_MAX_NUM * FIFO_CELL_SIZE)
@@ -30,14 +34,14 @@ volatile u32 devid_upgrade_flag = 0;
 
 STATIC int devdrv_manager_online_save_devids(struct kfifo* pkfifo, u32 dev_id)
 {
-    spin_lock_bh(&devdrv_online_fifo_lock);
-    if (kfifo_avail(pkfifo) < FIFO_CELL_SIZE) {
-        spin_unlock_bh(&devdrv_online_fifo_lock);
-        devdrv_drv_err("dev_id(%u) kfifo_avail failed, maybe user thread exit.\n", dev_id);
+    ka_task_spin_lock_bh(&devdrv_online_fifo_lock);
+    if (ka_base_kfifo_avail(pkfifo) < FIFO_CELL_SIZE) {
+        ka_task_spin_unlock_bh(&devdrv_online_fifo_lock);
+        devdrv_drv_err("dev_id(%u) ka_base_kfifo_avail failed, maybe user thread exit.\n", dev_id);
         return -ENOMEM;
     }
-    kfifo_in(pkfifo, &dev_id, FIFO_CELL_SIZE);
-    spin_unlock_bh(&devdrv_online_fifo_lock);
+    ka_base_kfifo_in(pkfifo, &dev_id, FIFO_CELL_SIZE);
+    ka_task_spin_unlock_bh(&devdrv_online_fifo_lock);
 
     return 0;
 }
@@ -53,20 +57,20 @@ void devdrv_manager_online_del_devids(u32 dev_id)
         return;
     }
 
-    spin_lock_bh(&devdrv_online_fifo_lock);
-    while (kfifo_len(&devdrv_devid_kfifo) >= FIFO_CELL_SIZE) {
-        if (kfifo_out(&devdrv_devid_kfifo, &id_buf, FIFO_CELL_SIZE) && (i < DEVDRV_PF_DEV_MAX_NUM)) {
+    ka_task_spin_lock_bh(&devdrv_online_fifo_lock);
+    while (ka_base_kfifo_len(&devdrv_devid_kfifo) >= FIFO_CELL_SIZE) {
+        if (ka_base_kfifo_out(&devdrv_devid_kfifo, &id_buf, FIFO_CELL_SIZE) && (i < DEVDRV_PF_DEV_MAX_NUM)) {
             dev_ids[i++] = id_buf;
         }
     }
 
-    kfifo_reset(&devdrv_devid_kfifo);
+    ka_base_kfifo_reset(&devdrv_devid_kfifo);
     for (j = 0; j < i; j++) {
-        if ((kfifo_avail(&devdrv_devid_kfifo) >= FIFO_CELL_SIZE) && (dev_ids[j] != dev_id)) {
-            kfifo_in(&devdrv_devid_kfifo, &dev_ids[j], FIFO_CELL_SIZE);
+        if ((ka_base_kfifo_avail(&devdrv_devid_kfifo) >= FIFO_CELL_SIZE) && (dev_ids[j] != dev_id)) {
+            ka_base_kfifo_in(&devdrv_devid_kfifo, &dev_ids[j], FIFO_CELL_SIZE);
         }
     }
-    spin_unlock_bh(&devdrv_online_fifo_lock);
+    ka_task_spin_unlock_bh(&devdrv_online_fifo_lock);
 }
 
 /* devid update we need inform user */
@@ -83,7 +87,7 @@ void devdrv_manager_online_devid_update(u32 dev_id)
         devdrv_drv_err("devdrv_save_devid failed, ret = %d.\n", ret);
     }
     devid_upgrade_flag = 1;
-    wake_up_interruptible(&devid_upgrade_waitq);
+    ka_task_wake_up_interruptible(&devid_upgrade_waitq);
 }
 
 int devdrv_manager_online_get_devids(struct file *filep, unsigned int cmd, unsigned long arg)
@@ -104,13 +108,13 @@ int devdrv_manager_online_get_devids(struct file *filep, unsigned int cmd, unsig
     }
 
     i = 0;
-    spin_lock_bh(&devdrv_online_fifo_lock);
-    while (kfifo_len(&devdrv_devid_kfifo) >= FIFO_CELL_SIZE) {
-        if (kfifo_out(&devdrv_devid_kfifo, &dev_id, FIFO_CELL_SIZE)) {
+    ka_task_spin_lock_bh(&devdrv_online_fifo_lock);
+    while (ka_base_kfifo_len(&devdrv_devid_kfifo) >= FIFO_CELL_SIZE) {
+        if (ka_base_kfifo_out(&devdrv_devid_kfifo, &dev_id, FIFO_CELL_SIZE)) {
             dev_ids[i++] = dev_id;
         }
     }
-    spin_unlock_bh(&devdrv_online_fifo_lock);
+    ka_task_spin_unlock_bh(&devdrv_online_fifo_lock);
     if (copy_to_user_safe((void *)(uintptr_t)arg, dev_ids, FIFO_CELL_SIZE * DEVDRV_PF_DEV_MAX_NUM)) {
         devdrv_drv_err("copy_to_user_safe failed\n");
         /* copy to user failed, need to add devids to fifo */
@@ -135,22 +139,22 @@ u32 devdrv_manager_poll(struct file *filep, struct poll_table_struct *wait)
 
     if (devdrv_manager_container_is_in_container()) {
         devdrv_drv_err("device online poll interface is not support container\n");
-        return POLLERR;
+        return KA_POLLERR;
     }
 
-    poll_wait(filep, &devid_upgrade_waitq, wait);
+    ka_task_poll_wait(filep, &devid_upgrade_waitq, wait);
     if (devid_upgrade_flag) {
-        ret = POLLIN | POLLRDNORM;
+        ret = KA_POLLIN | KA_POLLRDNORM;
     }
     return ret;
 }
 
 int devdrv_manager_online_kfifo_alloc(void)
 {
-    return kfifo_alloc(&devdrv_devid_kfifo, DEVDRV_MAX_DEVID_BUFFER, GFP_KERNEL);
+    return ka_base_kfifo_alloc(&devdrv_devid_kfifo, DEVDRV_MAX_DEVID_BUFFER, KA_GFP_KERNEL);
 }
 
 void devdrv_manager_online_kfifo_free(void)
 {
-    kfifo_free(&devdrv_devid_kfifo);
+    ka_base_kfifo_free(&devdrv_devid_kfifo);
 }

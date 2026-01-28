@@ -399,7 +399,7 @@ update_single_upatch_status() {
     for try_i in {1..1};do
         print=$(timeout 15 syscare $action $upatch 2>&1);ret=$?
         [ $ret -eq 0 ] && { log "[INFO][LINENO=${LINENO}] $action upatch:$upatch success, print:$print, try_i:$try_i.";return 0;}
-        log "[WARNING][LINENO=${LINENO}] $action upatch:$upatch unsuccess, ret:$ret, print:$print, try_i:$try_i, upatch-manage:$(ps|grep upatch-manage)."
+        log "[WARNING][LINENO=${LINENO}] $action upatch:$upatch unsuccessful, ret:$ret, print:$print, try_i:$try_i, upatch-manage:$(ps|grep upatch-manage)."
         kill_upatch_manage
         sleep 0.5
     done
@@ -415,7 +415,7 @@ wait_all_upatch_load_once() {
     upatch_cnt=$((file_cnt - patch_info_cnt))
     log "cp begin, cmd: cp -a $g_upatch_extract_dir/* $g_upatch_active_dir, src:$(ls -l $g_upatch_extract_dir/*), dst:$(ls -l $g_upatch_active_dir/)"
     print=$(cp -a $g_upatch_extract_dir/* $g_upatch_active_dir 2>&1);ret=$?
-    [ $ret -eq 0 ] || { log "[WARNING][LINENO=${LINENO}] cp upatches file unsuccess: $ret, $print, src:$(ls -l $g_upatch_extract_dir/*), dst:$(ls -l $g_upatch_active_dir/*)";return 1;}
+    [ $ret -eq 0 ] || { log "[WARNING][LINENO=${LINENO}] cp upatches file unsuccessful: $ret, $print, src:$(ls -l $g_upatch_extract_dir/*), dst:$(ls -l $g_upatch_active_dir/*)";return 1;}
     log "cp success, cmd: cp -a $g_upatch_extract_dir/* $g_upatch_active_dir, src:$(ls -l $g_upatch_extract_dir/*), dst:$(ls -l $g_upatch_active_dir/*)"
     for try_i in {1..10}; do
         load_cnt=$(syscare list |sed 1d |wc -l)
@@ -423,7 +423,7 @@ wait_all_upatch_load_once() {
         log "[INFO][LINENO=${LINENO}] wait all upatch load, expect:$upatch_cnt, now:$load_cnt, try:$try_i."
         sleep 0.5
     done
-    log "[WARNING][LINENO=${LINENO}] wait all upatch load once unsuccess, expect:$upatch_cnt, now:$load_cnt, try:$try_i, src:$(ls -l $g_upatch_extract_dir/*), dst:$(ls -l $g_upatch_active_dir/*)."
+    log "[WARNING][LINENO=${LINENO}] wait all upatch load once unsuccessful, expect:$upatch_cnt, now:$load_cnt, try:$try_i, src:$(ls -l $g_upatch_extract_dir/*), dst:$(ls -l $g_upatch_active_dir/*)."
     return 1
 }
 ########################################################
@@ -447,7 +447,7 @@ wait_all_upatch_load() {
     
     for try_i in {1..5}; do
         wait_all_upatch_load_once && return 0
-        log "[INFO][LINENO=${LINENO}] wait all upatch load unsuccess, try:$try_i."
+        log "[INFO][LINENO=${LINENO}] wait all upatch load unsuccessful, try:$try_i."
         rm -rf $g_upatch_active_dir/*
         sleep 0.5
     done
@@ -460,7 +460,7 @@ wait_all_upatch_load() {
 # Description: to update all upatch livepatch status.
 # Parameter:
 #     input:
-#     $1 -- patch status value. 0: active, 1: deactive
+#     $1 -- patch status value. 0: active, 1: deactivate
 #
 #     output: N/A
 #
@@ -909,7 +909,7 @@ fi
 # to limit device log size
 device_log_truncate
 
-# to init user or kernel modules's value.
+# to init user or kernel modules' value.
 if ! init_patch_modules; then
     exit 2
 fi

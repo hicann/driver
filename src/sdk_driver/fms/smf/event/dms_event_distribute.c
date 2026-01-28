@@ -27,10 +27,16 @@
 #include "devdrv_user_common.h"
 #include "smf_event_adapt.h"
 #include "dms_event_distribute.h"
+#include "ka_system_pub.h"
+#include "ka_list_pub.h"
+#include "ka_memory_pub.h"
+#include "ka_task_pub.h"
+#include "ka_base_pub.h"
+#include "ka_kernel_def_pub.h"
 
 struct pid_info_t {
-    pid_t tgid;
-    pid_t pid;
+    ka_pid_t tgid;
+    ka_pid_t pid;
 };
 
 #define DMS_INVALID_PID (-1)
@@ -43,33 +49,33 @@ STATIC DMS_EVENT_STRU_T* g_dms_event_ns_stu[UDA_NS_NUM + 1];
 static DMS_EVENT_DISTRIBUTE_HANDLE_T g_dms_event_handle_list[DMS_EVENT_DISTRIBUTE_FUNC_MAX];
 static struct mutex g_dms_event_handle_mutex;
 static struct mutex g_dms_event_ns_node_mutex;
-static struct dms_device_event g_remote_fault_event[DEVDRV_PF_DEV_MAX_NUM];
+static struct dms_device_event g_remote_fault_event[ASCEND_PDEV_MAX_NUM];
 static struct mutex g_remote_fault_event_mutex;
 
 STATIC void release_one_event_proc(DMS_EVENT_STRU_T* event_ns_stu, u32 proc_idx);
 
 struct dms_device_event* dms_get_device_event(u32 dev_id)
 {
-    if (dev_id >= DEVDRV_PF_DEV_MAX_NUM) {
+    if (dev_id >= ASCEND_PDEV_MAX_NUM) {
         return NULL;
     }
 
     return &g_remote_fault_event[dev_id];
 }
-EXPORT_SYMBOL(dms_get_device_event);
+KA_EXPORT_SYMBOL(dms_get_device_event);
 
 void dms_device_fault_event_init(void)
 {
     int i;
 
-    mutex_init(&g_remote_fault_event_mutex);
-    mutex_lock(&g_remote_fault_event_mutex);
-    for (i = 0; i < DEVDRV_PF_DEV_MAX_NUM; i++) {
-        mutex_init(&g_remote_fault_event[i].lock);
-        INIT_LIST_HEAD(&g_remote_fault_event[i].head);
+    ka_task_mutex_init(&g_remote_fault_event_mutex);
+    ka_task_mutex_lock(&g_remote_fault_event_mutex);
+    for (i = 0; i < ASCEND_PDEV_MAX_NUM; i++) {
+        ka_task_mutex_init(&g_remote_fault_event[i].lock);
+        KA_INIT_LIST_HEAD(&g_remote_fault_event[i].head);
         g_remote_fault_event[i].event_num = 0;
     }
-    mutex_unlock(&g_remote_fault_event_mutex);
+    ka_task_mutex_unlock(&g_remote_fault_event_mutex);
 }
 
 void dms_release_one_device_remote_event(unsigned int dev_id)
@@ -83,50 +89,50 @@ void dms_release_one_device_remote_event(unsigned int dev_id)
         return;
     }
 
-    mutex_lock(&remote_fault_event->lock);
-    list_for_each_entry_safe(pos, n, &remote_fault_event->head, node) {
-        list_del(&pos->node);
+    ka_task_mutex_lock(&remote_fault_event->lock);
+    ka_list_for_each_entry_safe(pos, n, &remote_fault_event->head, node) {
+        ka_list_del(&pos->node);
         dbl_kfree(pos);
         pos = NULL;
     }
     remote_fault_event->event_num = 0;
-    mutex_unlock(&remote_fault_event->lock);
+    ka_task_mutex_unlock(&remote_fault_event->lock);
     remote_fault_event = NULL;
     return;
 }
-EXPORT_SYMBOL(dms_release_one_device_remote_event);
+KA_EXPORT_SYMBOL(dms_release_one_device_remote_event);
 
 void dms_device_fault_event_exit(void)
 {
     u32 i;
 
-    mutex_lock(&g_remote_fault_event_mutex);
-    for (i = 0; i < DEVDRV_PF_DEV_MAX_NUM; i++) {
+    ka_task_mutex_lock(&g_remote_fault_event_mutex);
+    for (i = 0; i < ASCEND_PDEV_MAX_NUM; i++) {
         dms_release_one_device_remote_event(i);
-        mutex_destroy(&g_remote_fault_event[i].lock);
+        ka_task_mutex_destroy(&g_remote_fault_event[i].lock);
     }
-    mutex_unlock(&g_remote_fault_event_mutex);
-    mutex_destroy(&g_remote_fault_event_mutex);
+    ka_task_mutex_unlock(&g_remote_fault_event_mutex);
+    ka_task_mutex_destroy(&g_remote_fault_event_mutex);
 }
 
 void dms_event_distribute_stru_init(void)
 {
     u32 i;
 
-    mutex_init(&g_dms_event_handle_mutex);
-    mutex_init(&g_dms_event_ns_node_mutex);
+    ka_task_mutex_init(&g_dms_event_handle_mutex);
+    ka_task_mutex_init(&g_dms_event_ns_node_mutex);
 
-    mutex_lock(&g_dms_event_ns_node_mutex);
+    ka_task_mutex_lock(&g_dms_event_ns_node_mutex);
     for (i = 0; i < (UDA_NS_NUM + 1); i++) {
         g_dms_event_ns_stu[i] = NULL;
     }
-    mutex_unlock(&g_dms_event_ns_node_mutex);
+    ka_task_mutex_unlock(&g_dms_event_ns_node_mutex);
 
-    mutex_lock(&g_dms_event_handle_mutex);
+    ka_task_mutex_lock(&g_dms_event_handle_mutex);
     for (i = 0; i < DMS_EVENT_DISTRIBUTE_FUNC_MAX; i++) {
         g_dms_event_handle_list[i] = NULL;
     }
-    mutex_unlock(&g_dms_event_handle_mutex);
+    ka_task_mutex_unlock(&g_dms_event_handle_mutex);
 }
 
 static void dms_event_ns_stu_free(u32 ns_id)
@@ -157,34 +163,34 @@ void dms_event_distribute_stru_exit(void)
 {
     u32 i;
 
-    mutex_lock(&g_dms_event_ns_node_mutex);
+    ka_task_mutex_lock(&g_dms_event_ns_node_mutex);
     for (i = 0; i < (UDA_NS_NUM + 1); i++) {
         dms_event_release_one_ns_node(i);
     }
-    mutex_unlock(&g_dms_event_ns_node_mutex);
+    ka_task_mutex_unlock(&g_dms_event_ns_node_mutex);
 
-    mutex_lock(&g_dms_event_handle_mutex);
+    ka_task_mutex_lock(&g_dms_event_handle_mutex);
     for (i = 0; i < DMS_EVENT_DISTRIBUTE_FUNC_MAX; i++) {
         g_dms_event_handle_list[i] = NULL;
     }
-    mutex_unlock(&g_dms_event_handle_mutex);
+    ka_task_mutex_unlock(&g_dms_event_handle_mutex);
 
-    mutex_destroy(&g_dms_event_handle_mutex);
-    mutex_destroy(&g_dms_event_ns_node_mutex);
+    ka_task_mutex_destroy(&g_dms_event_handle_mutex);
+    ka_task_mutex_destroy(&g_dms_event_ns_node_mutex);
 }
 
 STATIC int add_exception_to_event_proc(DMS_EVENT_PROCESS_STRU *event_proc, DMS_EVENT_NODE_STRU *exception_node)
 {
     DMS_EVENT_NODE_STRU exception_buf = {{0}, {0}};
 
-    mutex_lock(&event_proc->process_mutex);
+    ka_task_mutex_lock(&event_proc->process_mutex);
     if (event_proc->process_status != DMS_EVENT_PROCESS_STATUS_WORK) {
-        mutex_unlock(&event_proc->process_mutex);
+        ka_task_mutex_unlock(&event_proc->process_mutex);
         return DRV_ERROR_NONE;
     }
-    while (kfifo_avail(&event_proc->event_fifo) < DMS_EXCEPTION_KFIFO_CELL) {
-        if (!kfifo_out(&event_proc->event_fifo, &exception_buf, DMS_EXCEPTION_KFIFO_CELL)) {
-            dms_warn("kfifo_out warn.\n");
+    while (ka_base_kfifo_avail(&event_proc->event_fifo) < DMS_EXCEPTION_KFIFO_CELL) {
+        if (!ka_base_kfifo_out(&event_proc->event_fifo, &exception_buf, DMS_EXCEPTION_KFIFO_CELL)) {
+            dms_warn("ka_base_kfifo_out warn.\n");
         }
         dms_event("Dms event is covered. (dev_id=%u; event_id=0x%X; event_serial_num=%d; notify_serial_num=%d; "
                   "pid=%d; tid=%d)\n",
@@ -192,11 +198,11 @@ STATIC int add_exception_to_event_proc(DMS_EVENT_PROCESS_STRU *event_proc, DMS_E
                   exception_buf.event.notify_serial_num, event_proc->process_pid, event_proc->process_tid);
     }
 
-    kfifo_in(&event_proc->event_fifo, exception_node, DMS_EXCEPTION_KFIFO_CELL);
-    event_proc->exception_num = kfifo_len(&event_proc->event_fifo) / DMS_EXCEPTION_KFIFO_CELL;
-    mutex_unlock(&event_proc->process_mutex);
+    ka_base_kfifo_in(&event_proc->event_fifo, exception_node, DMS_EXCEPTION_KFIFO_CELL);
+    event_proc->exception_num = ka_base_kfifo_len(&event_proc->event_fifo) / DMS_EXCEPTION_KFIFO_CELL;
+    ka_task_mutex_unlock(&event_proc->process_mutex);
 
-    wake_up_interruptible(&event_proc->event_wait);
+    ka_task_wake_up_interruptible(&event_proc->event_wait);
     return DRV_ERROR_NONE;
 }
 
@@ -207,7 +213,7 @@ int dms_event_distribute_to_process(DMS_EVENT_NODE_STRU *exception_node)
     u32 ns_id;
     u32 idx;
 
-    mutex_lock(&g_dms_event_ns_node_mutex);
+    ka_task_mutex_lock(&g_dms_event_ns_node_mutex);
     for (ns_id = 0; ns_id <= UDA_NS_NUM; ns_id++) {
         if (g_dms_event_ns_stu[ns_id] == NULL) {
             continue;
@@ -223,7 +229,7 @@ int dms_event_distribute_to_process(DMS_EVENT_NODE_STRU *exception_node)
         }
     }
 
-    mutex_unlock(&g_dms_event_ns_node_mutex);
+    ka_task_mutex_unlock(&g_dms_event_ns_node_mutex);
     if (fail_num != 0) {
         dms_err("Distribute event code to process list failed. "
                 "(dev_id=%u; event_code=0x%x; fail_num=%d)\n",
@@ -258,30 +264,25 @@ static DMS_EVENT_PROCESS_STRU* alloc_new_event_proc(DMS_EVENT_STRU_T* event_ns_s
     u32 i;
 
     for (i = start_index; i < end_index; i++) {
-        mutex_lock(&event_ns_stu->event_process[i].process_mutex);
+        ka_task_mutex_lock(&event_ns_stu->event_process[i].process_mutex);
         if (event_ns_stu->event_process[i].process_status != DMS_EVENT_PROCESS_STATUS_IDLE) {
-            mutex_unlock(&event_ns_stu->event_process[i].process_mutex);
+            ka_task_mutex_unlock(&event_ns_stu->event_process[i].process_mutex);
             continue;
         }
-        if (kfifo_alloc(&event_ns_stu->event_process[i].event_fifo,
-                        DMS_EXCEPTION_KFIFO_SIZE, GFP_KERNEL | __GFP_ACCOUNT) != 0) {
-            mutex_unlock(&event_ns_stu->event_process[i].process_mutex);
-            dms_err("kfifo_alloc failed. (ns_id=%u; tgid=%d; pid=%d; index=%u)\n",
+        if (ka_base_kfifo_alloc(&event_ns_stu->event_process[i].event_fifo,
+                        DMS_EXCEPTION_KFIFO_SIZE, KA_GFP_KERNEL | __KA_GFP_ACCOUNT) != 0) {
+            ka_task_mutex_unlock(&event_ns_stu->event_process[i].process_mutex);
+            dms_err("ka_base_kfifo_alloc failed. (ns_id=%u; tgid=%d; pid=%d; index=%u)\n",
                     event_ns_stu->ns_id, pid_info.tgid, pid_info.pid, i);
             return NULL;
         }
-        kfifo_reset(&event_ns_stu->event_process[i].event_fifo);
+        ka_base_kfifo_reset(&event_ns_stu->event_process[i].event_fifo);
         event_ns_stu->event_process[i].exception_num = 0;
         event_ns_stu->event_process[i].process_pid = pid_info.tgid;
         event_ns_stu->event_process[i].process_tid = pid_info.pid;
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 1, 0)
-        event_ns_stu->event_process[i].start_time = current->start_time;
-#else
-        event_ns_stu->event_process[i].start_time = current->start_time.tv_sec * NSEC_PER_SEC +
-                                                    current->start_time.tv_nsec;
-#endif
+        event_ns_stu->event_process[i].start_time = ka_task_get_current_starttime();
         event_ns_stu->event_process[i].process_status = DMS_EVENT_PROCESS_STATUS_WORK;
-        mutex_unlock(&event_ns_stu->event_process[i].process_mutex);
+        ka_task_mutex_unlock(&event_ns_stu->event_process[i].process_mutex);
         dms_debug("Get a process success. (ns_id=%u; tgid=%d; pid=%d; index=%u)\n",
                   event_ns_stu->ns_id, pid_info.tgid, pid_info.pid, i);
         return &event_ns_stu->event_process[i];
@@ -296,22 +297,22 @@ STATIC bool get_pid_start_time(u32 pid, u64* start_time)
     struct pid *pid_struct;
     struct task_struct *task = NULL;
 
-    pid_struct = find_get_pid(pid);
+    pid_struct = ka_task_find_get_pid(pid);
     if (pid_struct == NULL) {
         return false;
     }
 
-    rcu_read_lock();
-    task = pid_task(pid_struct, PIDTYPE_PID);
+    ka_task_rcu_read_lock();
+    task = pid_task(pid_struct, KA_PIDTYPE_PID);
     if (task == NULL) {
-        rcu_read_unlock();
-        put_pid(pid_struct);
+        ka_task_rcu_read_unlock();
+        ka_task_put_pid(pid_struct);
         return false;
     }
 
     *start_time = task->start_time;
-    rcu_read_unlock();
-    put_pid(pid_struct);
+    ka_task_rcu_read_unlock();
+    ka_task_put_pid(pid_struct);
 
 #endif
     return true;
@@ -322,7 +323,7 @@ STATIC void check_and_release_event_procs(DMS_EVENT_STRU_T* event_ns_stu)
 {
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 17, 0))
     u32 i;
-    pid_t pid, tgid;
+    ka_pid_t pid, tgid;
     u64 record_start_time = 0, pid_start_time = 0, tgid_start_time = 0;
     u8 process_status;
 
@@ -403,24 +404,24 @@ static DMS_EVENT_STRU_T* dms_event_ns_stu_create(u32 ns_id)
 {
     int i;
 
-    g_dms_event_ns_stu[ns_id] = dbl_kzalloc(sizeof(DMS_EVENT_STRU_T), GFP_KERNEL | __GFP_ACCOUNT);
+    g_dms_event_ns_stu[ns_id] = dbl_kzalloc(sizeof(DMS_EVENT_STRU_T), KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
     if ( g_dms_event_ns_stu[ns_id] == NULL) {
-        dms_err("Call kzalloc failed. (ns_id=%u)\n", ns_id);
+        dms_err("Call ka_mm_kzalloc failed. (ns_id=%u)\n", ns_id);
         return NULL;
     }
 
     g_dms_event_ns_stu[ns_id]->process_num = 0;
     g_dms_event_ns_stu[ns_id]->ns_id = ns_id;
     for (i = 0; i < DMS_EVENT_EXCEPTION_PROCESS_MAX; i++) {
-        mutex_init(&g_dms_event_ns_stu[ns_id]->event_process[i].process_mutex);
-        mutex_lock(&g_dms_event_ns_stu[ns_id]->event_process[i].process_mutex);
-        init_waitqueue_head(&g_dms_event_ns_stu[ns_id]->event_process[i].event_wait);
+        ka_task_mutex_init(&g_dms_event_ns_stu[ns_id]->event_process[i].process_mutex);
+        ka_task_mutex_lock(&g_dms_event_ns_stu[ns_id]->event_process[i].process_mutex);
+        ka_task_init_waitqueue_head(&g_dms_event_ns_stu[ns_id]->event_process[i].event_wait);
         g_dms_event_ns_stu[ns_id]->event_process[i].exception_num = 0;
         g_dms_event_ns_stu[ns_id]->event_process[i].process_pid = DMS_INVALID_PID;
         g_dms_event_ns_stu[ns_id]->event_process[i].process_tid = DMS_INVALID_PID;
         g_dms_event_ns_stu[ns_id]->event_process[i].start_time = 0;
         g_dms_event_ns_stu[ns_id]->event_process[i].process_status = DMS_EVENT_PROCESS_STATUS_IDLE;
-        mutex_unlock(&g_dms_event_ns_stu[ns_id]->event_process[i].process_mutex);
+        ka_task_mutex_unlock(&g_dms_event_ns_stu[ns_id]->event_process[i].process_mutex);
     }
 
     return g_dms_event_ns_stu[ns_id];
@@ -465,23 +466,23 @@ static int get_current_ns_event_proc(struct pid_info_t pid_info, enum cmd_source
         return DRV_ERROR_PARA_ERROR;
     }
 
-    mutex_lock(&g_dms_event_ns_node_mutex);
+    ka_task_mutex_lock(&g_dms_event_ns_node_mutex);
     ret = get_or_create_event_ns_stu(&event_ns_stu);
     if (ret != 0) {
-        mutex_unlock(&g_dms_event_ns_node_mutex);
+        ka_task_mutex_unlock(&g_dms_event_ns_node_mutex);
         dms_err("Get current event ns stu failed. (ret=%d)\n", ret);
         return ret;
     }
 
     ret = get_old_event_proc(event_ns_stu, pid_info, start_index, end_index, event_proc);
     if (ret != 0) {
-        mutex_unlock(&g_dms_event_ns_node_mutex);
+        ka_task_mutex_unlock(&g_dms_event_ns_node_mutex);
         /* There was another thread had been registered in this process, return error */
         return ret;
     }
     /* this thread has already registered before, return the old event proc directly */
     if (*event_proc != NULL) {
-        mutex_unlock(&g_dms_event_ns_node_mutex);
+        ka_task_mutex_unlock(&g_dms_event_ns_node_mutex);
         return 0;
     }
 
@@ -489,10 +490,10 @@ static int get_current_ns_event_proc(struct pid_info_t pid_info, enum cmd_source
     *event_proc = alloc_new_event_proc(event_ns_stu, pid_info, start_index, end_index);
     if (*event_proc != NULL) {
         event_ns_stu->process_num++;
-         mutex_unlock(&g_dms_event_ns_node_mutex);
+         ka_task_mutex_unlock(&g_dms_event_ns_node_mutex);
         return 0;
     } else {
-        mutex_unlock(&g_dms_event_ns_node_mutex);
+        ka_task_mutex_unlock(&g_dms_event_ns_node_mutex);
         dms_err("Process list is full. (tgid=%d)\n", pid_info.tgid);
         return DRV_ERROR_RESOURCE_OCCUPIED;
     }
@@ -503,16 +504,16 @@ static int get_event_para_from_event_proc(DMS_EVENT_PROCESS_STRU *event_proc, st
     DMS_EVENT_NODE_STRU exception_node = {{0}, {0}};
     int ret = DRV_ERROR_NONE;
 
-    mutex_lock(&event_proc->process_mutex);
-    if (kfifo_len(&event_proc->event_fifo) < DMS_EXCEPTION_KFIFO_CELL) {
+    ka_task_mutex_lock(&event_proc->process_mutex);
+    if (ka_base_kfifo_len(&event_proc->event_fifo) < DMS_EXCEPTION_KFIFO_CELL) {
         dms_warn("The event proc does not have event. (tgid=%d; pid=%d)\n",
             event_proc->process_pid, event_proc->process_tid);
         ret = -ETIMEDOUT;
         goto out;
     }
 
-    if (!kfifo_out(&event_proc->event_fifo, &exception_node, DMS_EXCEPTION_KFIFO_CELL)) {
-        dms_err("kfifo_out failed. (tgid=%d; pid=%d)\n", event_proc->process_pid, event_proc->process_tid);
+    if (!ka_base_kfifo_out(&event_proc->event_fifo, &exception_node, DMS_EXCEPTION_KFIFO_CELL)) {
+        dms_err("ka_base_kfifo_out failed. (tgid=%d; pid=%d)\n", event_proc->process_pid, event_proc->process_tid);
         ret = DRV_ERROR_INNER_ERR;
         goto out;
     }
@@ -525,8 +526,8 @@ static int get_event_para_from_event_proc(DMS_EVENT_PROCESS_STRU *event_proc, st
     }
 
 out:
-    event_proc->exception_num = kfifo_len(&event_proc->event_fifo) / DMS_EXCEPTION_KFIFO_CELL;
-    mutex_unlock(&event_proc->process_mutex);
+    event_proc->exception_num = ka_base_kfifo_len(&event_proc->event_fifo) / DMS_EXCEPTION_KFIFO_CELL;
+    ka_task_mutex_unlock(&event_proc->process_mutex);
     return ret;
 }
 
@@ -535,45 +536,45 @@ STATIC int dms_event_clear_exception_by_devid(DMS_EVENT_PROCESS_STRU *event_proc
     DMS_EVENT_NODE_STRU exception_node = {{0}, {0}};
     struct kfifo fifo_buf;
 
-    mutex_lock(&event_proc->process_mutex);
+    ka_task_mutex_lock(&event_proc->process_mutex);
     if (event_proc->process_status != DMS_EVENT_PROCESS_STATUS_WORK) {
-        mutex_unlock(&event_proc->process_mutex);
+        ka_task_mutex_unlock(&event_proc->process_mutex);
         return DRV_ERROR_NONE;
     }
 
-    if (kfifo_is_empty(&event_proc->event_fifo) != 0) {
-        mutex_unlock(&event_proc->process_mutex);
+    if (ka_base_kfifo_is_empty(&event_proc->event_fifo) != 0) {
+        ka_task_mutex_unlock(&event_proc->process_mutex);
         return DRV_ERROR_NONE;
     }
 
-    if (kfifo_alloc(&fifo_buf, DMS_EXCEPTION_KFIFO_SIZE, GFP_KERNEL) != 0) {
-        mutex_unlock(&event_proc->process_mutex);
-        dms_err("kfifo_alloc failed.\n");
+    if (ka_base_kfifo_alloc(&fifo_buf, DMS_EXCEPTION_KFIFO_SIZE, KA_GFP_KERNEL) != 0) {
+        ka_task_mutex_unlock(&event_proc->process_mutex);
+        dms_err("ka_base_kfifo_alloc failed.\n");
         return DRV_ERROR_OUT_OF_MEMORY;
     }
-    kfifo_reset(&fifo_buf);
+    ka_base_kfifo_reset(&fifo_buf);
 
-    while (kfifo_len(&event_proc->event_fifo) >= DMS_EXCEPTION_KFIFO_CELL) {
-        if (!kfifo_out(&event_proc->event_fifo, &exception_node, DMS_EXCEPTION_KFIFO_CELL)) {
-            dms_warn("kfifo_out from event_proc warn.\n");
+    while (ka_base_kfifo_len(&event_proc->event_fifo) >= DMS_EXCEPTION_KFIFO_CELL) {
+        if (!ka_base_kfifo_out(&event_proc->event_fifo, &exception_node, DMS_EXCEPTION_KFIFO_CELL)) {
+            dms_warn("ka_base_kfifo_out from event_proc warn.\n");
             continue;
         }
         if (exception_node.event.deviceid != (unsigned short)devid) {
-            kfifo_in(&fifo_buf, &exception_node, DMS_EXCEPTION_KFIFO_CELL);
+            ka_base_kfifo_in(&fifo_buf, &exception_node, DMS_EXCEPTION_KFIFO_CELL);
         }
     }
-    kfifo_reset(&event_proc->event_fifo);
+    ka_base_kfifo_reset(&event_proc->event_fifo);
 
-    while (kfifo_len(&fifo_buf) >= DMS_EXCEPTION_KFIFO_CELL) {
-        if (!kfifo_out(&fifo_buf, &exception_node, DMS_EXCEPTION_KFIFO_CELL)) {
-            dms_warn("kfifo_out from fifo_buf warn.\n");
+    while (ka_base_kfifo_len(&fifo_buf) >= DMS_EXCEPTION_KFIFO_CELL) {
+        if (!ka_base_kfifo_out(&fifo_buf, &exception_node, DMS_EXCEPTION_KFIFO_CELL)) {
+            dms_warn("ka_base_kfifo_out from fifo_buf warn.\n");
             continue;
         }
-        kfifo_in(&event_proc->event_fifo, &exception_node, DMS_EXCEPTION_KFIFO_CELL);
+        ka_base_kfifo_in(&event_proc->event_fifo, &exception_node, DMS_EXCEPTION_KFIFO_CELL);
     }
-    event_proc->exception_num = kfifo_len(&event_proc->event_fifo) / DMS_EXCEPTION_KFIFO_CELL;
-    mutex_unlock(&event_proc->process_mutex);
-    kfifo_free(&fifo_buf);
+    event_proc->exception_num = ka_base_kfifo_len(&event_proc->event_fifo) / DMS_EXCEPTION_KFIFO_CELL;
+    ka_task_mutex_unlock(&event_proc->process_mutex);
+    ka_base_kfifo_free(&fifo_buf);
     return DRV_ERROR_NONE;
 }
 
@@ -586,12 +587,12 @@ static int dms_event_wait_interrupt(int timeout, DMS_EVENT_PROCESS_STRU *event_p
         do {
             ret = wait_event_interruptible_timeout(event_proc->event_wait,
                                                    (event_proc->exception_num > 0),
-                                                   msecs_to_jiffies(DMS_EVENT_WAIT_TIME));
+                                                   ka_system_msecs_to_jiffies(DMS_EVENT_WAIT_TIME));
         } while (ret == 0);
     } else if ((timeout >= 0) && (timeout <= DMS_EVENT_WAIT_TIME_MAX)) {
         ret = wait_event_interruptible_timeout(event_proc->event_wait,
                                                (event_proc->exception_num > 0),
-                                               msecs_to_jiffies((unsigned int)timeout));
+                                               ka_system_msecs_to_jiffies((unsigned int)timeout));
     } else {
         dms_err("Invalid parameter. (timeout=%dms)\n", timeout);
         return -EINVAL;
@@ -639,7 +640,7 @@ int dms_event_get_exception(struct dms_event_para *fault_event, int timeout, enu
 
     return DRV_ERROR_NONE;
 }
-EXPORT_SYMBOL(dms_event_get_exception);
+KA_EXPORT_SYMBOL(dms_event_get_exception);
 
 int dms_event_clear_exception(u32 devid)
 {
@@ -647,7 +648,7 @@ int dms_event_clear_exception(u32 devid)
     u32 idx;
     int ret;
 
-    mutex_lock(&g_dms_event_ns_node_mutex);
+    ka_task_mutex_lock(&g_dms_event_ns_node_mutex);
     for (ns_id = 0; ns_id <= UDA_NS_NUM; ns_id++) {
         if (g_dms_event_ns_stu[ns_id] == NULL) {
             continue;
@@ -656,31 +657,31 @@ int dms_event_clear_exception(u32 devid)
         for (idx = 0; idx < DMS_EVENT_EXCEPTION_PROCESS_MAX; idx++) {
             ret = dms_event_clear_exception_by_devid(&g_dms_event_ns_stu[ns_id]->event_process[idx], devid);
             if (ret != 0) {
-                mutex_unlock(&g_dms_event_ns_node_mutex);
+                ka_task_mutex_unlock(&g_dms_event_ns_node_mutex);
                 return ret;
             }
         }
     }
-    mutex_unlock(&g_dms_event_ns_node_mutex);
+    ka_task_mutex_unlock(&g_dms_event_ns_node_mutex);
 
     return DRV_ERROR_NONE;
 }
 
 STATIC void release_one_event_proc(DMS_EVENT_STRU_T* event_ns_stu, u32 proc_idx)
 {
-    mutex_lock(&event_ns_stu->event_process[proc_idx].process_mutex);
+    ka_task_mutex_lock(&event_ns_stu->event_process[proc_idx].process_mutex);
     if (event_ns_stu->event_process[proc_idx].process_status != DMS_EVENT_PROCESS_STATUS_WORK) {
-        mutex_unlock(&event_ns_stu->event_process[proc_idx].process_mutex);
+        ka_task_mutex_unlock(&event_ns_stu->event_process[proc_idx].process_mutex);
         return;
     }
 
-    kfifo_free(&event_ns_stu->event_process[proc_idx].event_fifo);
+    ka_base_kfifo_free(&event_ns_stu->event_process[proc_idx].event_fifo);
     event_ns_stu->event_process[proc_idx].exception_num = 0;
     event_ns_stu->event_process[proc_idx].process_pid = DMS_INVALID_PID;
     event_ns_stu->event_process[proc_idx].process_tid = DMS_INVALID_PID;
     event_ns_stu->event_process[proc_idx].start_time = 0;
     event_ns_stu->event_process[proc_idx].process_status = DMS_EVENT_PROCESS_STATUS_IDLE;
-    mutex_unlock(&event_ns_stu->event_process[proc_idx].process_mutex);
+    ka_task_mutex_unlock(&event_ns_stu->event_process[proc_idx].process_mutex);
 
     event_ns_stu->process_num--;
     return;
@@ -699,10 +700,10 @@ void dms_event_release_proc(int tgid, int pid)
         return;
     }
 
-    mutex_lock(&g_dms_event_ns_node_mutex);
+    ka_task_mutex_lock(&g_dms_event_ns_node_mutex);
     event_ns_stu = g_dms_event_ns_stu[ns_id];
     if (event_ns_stu == NULL) {
-        mutex_unlock(&g_dms_event_ns_node_mutex);
+        ka_task_mutex_unlock(&g_dms_event_ns_node_mutex);
         return;
     }
 
@@ -714,15 +715,15 @@ void dms_event_release_proc(int tgid, int pid)
                 dms_event_ns_stu_free(ns_id);
                 event_ns_stu = NULL;
             }
-            mutex_unlock(&g_dms_event_ns_node_mutex);
+            ka_task_mutex_unlock(&g_dms_event_ns_node_mutex);
             dms_debug("Release one process. (ns_id=%d; tgid=%d; pid=%d; index=%u)\n",
                       ns_id, current->tgid, current->pid, proc_idx);
             return;
         }
     }
-    mutex_unlock(&g_dms_event_ns_node_mutex);
+    ka_task_mutex_unlock(&g_dms_event_ns_node_mutex);
 }
-EXPORT_SYMBOL(dms_event_release_proc);
+KA_EXPORT_SYMBOL(dms_event_release_proc);
 
 int dms_event_subscribe_register(DMS_EVENT_DISTRIBUTE_HANDLE_T handle_func,
     DMS_DISTRIBUTE_PRIORITY priority)
@@ -736,45 +737,45 @@ int dms_event_subscribe_register(DMS_EVENT_DISTRIBUTE_HANDLE_T handle_func,
         return DRV_ERROR_PARA_ERROR;
     }
 
-    mutex_lock(&g_dms_event_handle_mutex);
+    ka_task_mutex_lock(&g_dms_event_handle_mutex);
     for (i = DISTRIBUTE_FUNC_HEAD_INDEX(priority); i < DISTRIBUTE_FUNC_TAIL_INDEX(priority); i++) {
         if (g_dms_event_handle_list[i] == NULL) {
             g_dms_event_handle_list[i] = handle_func;
-            mutex_unlock(&g_dms_event_handle_mutex);
+            ka_task_mutex_unlock(&g_dms_event_handle_mutex);
             return DRV_ERROR_NONE;
         }
     }
-    mutex_unlock(&g_dms_event_handle_mutex);
+    ka_task_mutex_unlock(&g_dms_event_handle_mutex);
 
     dms_err("The distribute handle list is full. (priority=%u).\n", priority);
     return DRV_ERROR_NO_RESOURCES;
 }
-EXPORT_SYMBOL(dms_event_subscribe_register);
+KA_EXPORT_SYMBOL(dms_event_subscribe_register);
 
 void dms_event_subscribe_unregister(DMS_EVENT_DISTRIBUTE_HANDLE_T handle_func)
 {
     u32 i;
 
-    mutex_lock(&g_dms_event_handle_mutex);
+    ka_task_mutex_lock(&g_dms_event_handle_mutex);
     for (i = 0; i < DMS_EVENT_DISTRIBUTE_FUNC_MAX; i++) {
         if (g_dms_event_handle_list[i] == handle_func) {
             g_dms_event_handle_list[i] = NULL;
             break;
         }
     }
-    mutex_unlock(&g_dms_event_handle_mutex);
+    ka_task_mutex_unlock(&g_dms_event_handle_mutex);
 }
-EXPORT_SYMBOL(dms_event_subscribe_unregister);
+KA_EXPORT_SYMBOL(dms_event_subscribe_unregister);
 
 void dms_event_subscribe_unregister_all(void)
 {
     u32 i;
 
-    mutex_lock(&g_dms_event_handle_mutex);
+    ka_task_mutex_lock(&g_dms_event_handle_mutex);
     for (i = 0; i < DMS_EVENT_DISTRIBUTE_FUNC_MAX; i++) {
         g_dms_event_handle_list[i] = NULL;
     }
-    mutex_unlock(&g_dms_event_handle_mutex);
+    ka_task_mutex_unlock(&g_dms_event_handle_mutex);
 }
 
 int dms_event_distribute_handle(DMS_EVENT_NODE_STRU *exception_node, DMS_DISTRIBUTE_PRIORITY priority)
@@ -789,22 +790,22 @@ int dms_event_distribute_handle(DMS_EVENT_NODE_STRU *exception_node, DMS_DISTRIB
         return DRV_ERROR_PARA_ERROR;
     }
 
-    mutex_lock(&g_dms_event_handle_mutex);
+    ka_task_mutex_lock(&g_dms_event_handle_mutex);
     for (i = DISTRIBUTE_FUNC_HEAD_INDEX(priority); i < DMS_EVENT_DISTRIBUTE_FUNC_MAX; i++) {
         if (g_dms_event_handle_list[i] != NULL) {
             ret = g_dms_event_handle_list[i](exception_node);
             if (ret != 0) {
                 dms_err("Distribute event failed. (handle_index=%u; ret=%d)\n", i, ret);
-                mutex_unlock(&g_dms_event_handle_mutex);
+                ka_task_mutex_unlock(&g_dms_event_handle_mutex);
                 return ret;
             }
         }
     }
-    mutex_unlock(&g_dms_event_handle_mutex);
+    ka_task_mutex_unlock(&g_dms_event_handle_mutex);
 
     return DRV_ERROR_NONE;
 }
-EXPORT_SYMBOL(dms_event_distribute_handle);
+KA_EXPORT_SYMBOL(dms_event_distribute_handle);
 
 ssize_t dms_event_print_subscribe_handle(char *str)
 {
@@ -817,7 +818,7 @@ ssize_t dms_event_print_subscribe_handle(char *str)
     str += len;
     avl_len -= len;
 
-    mutex_lock(&g_dms_event_handle_mutex);
+    ka_task_mutex_lock(&g_dms_event_handle_mutex);
 
     for (i = 0; i < DMS_EVENT_DISTRIBUTE_FUNC_MAX; i++) {
         if (g_dms_event_handle_list[i] != NULL) {
@@ -832,10 +833,10 @@ ssize_t dms_event_print_subscribe_handle(char *str)
     EVENT_DFX_CHECK_DO_SOMETHING(len < 0, goto out);
     str += len;
 
-    mutex_unlock(&g_dms_event_handle_mutex);
+    ka_task_mutex_unlock(&g_dms_event_handle_mutex);
     return str - refill_buf;
 out:
-    mutex_unlock(&g_dms_event_handle_mutex);
+    ka_task_mutex_unlock(&g_dms_event_handle_mutex);
     dms_warn("snprintf_s warn.\n");
     return 0;
 }
@@ -853,7 +854,7 @@ ssize_t dms_event_print_subscribe_process(char *str)
     str += len;
     avl_len -= len;
 
-    mutex_lock(&g_dms_event_ns_node_mutex);
+    ka_task_mutex_lock(&g_dms_event_ns_node_mutex);
 
     for (ns_id = 0; ns_id <= UDA_NS_NUM; ns_id++) {
         if (g_dms_event_ns_stu[ns_id] == NULL) {
@@ -861,14 +862,14 @@ ssize_t dms_event_print_subscribe_process(char *str)
         }
         for (idx = 0; idx < DMS_EVENT_EXCEPTION_PROCESS_MAX; idx++) {
             event_proc = &g_dms_event_ns_stu[ns_id]->event_process[idx];
-            mutex_lock(&event_proc->process_mutex);
+            ka_task_mutex_lock(&event_proc->process_mutex);
             if (event_proc->process_status != DMS_EVENT_PROCESS_STATUS_WORK) {
-                mutex_unlock(&event_proc->process_mutex);
+                ka_task_mutex_unlock(&event_proc->process_mutex);
                 continue;
             }
             len = snprintf_s(str, avl_len, avl_len - 1, "ns_id[%u]; proc_id[%u]: tgid=%d; pid=%d; event_num=%u\n",
                              ns_id, idx, event_proc->process_pid, event_proc->process_tid, event_proc->exception_num);
-            mutex_unlock(&event_proc->process_mutex);
+            ka_task_mutex_unlock(&event_proc->process_mutex);
             EVENT_DFX_CHECK_DO_SOMETHING(len < 0, goto out);
             str += len;
             avl_len -= len;
@@ -879,10 +880,10 @@ ssize_t dms_event_print_subscribe_process(char *str)
     EVENT_DFX_CHECK_DO_SOMETHING(len < 0, goto out);
     str += len;
 
-    mutex_unlock(&g_dms_event_ns_node_mutex);
+    ka_task_mutex_unlock(&g_dms_event_ns_node_mutex);
     return str - refill_buf;
 out:
-    mutex_unlock(&g_dms_event_ns_node_mutex);
+    ka_task_mutex_unlock(&g_dms_event_ns_node_mutex);
     dms_warn("snprintf_s warn.\n");
     return 0;
 }

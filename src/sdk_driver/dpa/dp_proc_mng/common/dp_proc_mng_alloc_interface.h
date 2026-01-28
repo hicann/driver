@@ -14,21 +14,6 @@
 #ifndef DEVMM_MEM_ALLOC_INTERFACE_H
 #define DEVMM_MEM_ALLOC_INTERFACE_H
 
-#include <linux/types.h>
-#include <linux/printk.h>
-#include <linux/slab.h>
-#include <linux/module.h>
-#include <linux/uaccess.h>
-#include <linux/mman.h>
-#include <linux/dma-mapping.h>
-#include <linux/slab.h>
-#include <linux/vmalloc.h>
-#include <linux/version.h>
-#include <linux/nodemask.h>
-#ifdef DAVINCI_DEVICE
-#include <linux/share_pool.h>
-#endif
-
 #include "pbl_ka_memory.h"
 #include "ascend_hal_define.h"
 

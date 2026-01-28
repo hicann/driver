@@ -7,8 +7,10 @@
 # INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
 # See LICENSE in the root of the software repository for the full text of the License.
 # ------------------------------------------------------------------------------------------------------------
-if(${PRODUCT} STREQUAL ascend910B)
-    add_subdirectory(ascd910b)
-else()
-    message(FATAL_ERROR "Unknown PRODUCT ${PRODUCT}.")
-endif()
+string(REPLACE "ascend" "ascd" PRODUCT_DIR "${PRODUCT}")
+string(TOLOWER "${PRODUCT_DIR}" PRODUCT_DIR)
+
+install(
+    FILES ${PRODUCT_DIR}/ascend_upgrade_crl.sh
+    DESTINATION ${CMAKE_INSTALL_PREFIX}/lib OPTIONAL
+)

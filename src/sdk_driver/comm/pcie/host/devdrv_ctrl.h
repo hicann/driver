@@ -17,16 +17,7 @@
 #include "comm_kernel_interface.h"
 #include "devdrv_msg.h"
 #include "devdrv_pci.h"
-
-#ifndef __GFP_ACCOUNT
-#ifdef __GFP_KMEMCG
-#define __GFP_ACCOUNT __GFP_KMEMCG /* for linux version 3.10 */
-#endif
-
-#ifdef __GFP_NOACCOUNT
-#define __GFP_ACCOUNT 0 /* for linux version 4.1 */
-#endif
-#endif
+#include "ka_memory_pub.h"
 
 #define DEVDRV_MAX_DELAY_COUNT 20
 #define DEVDRV_HOT_RESET_DELAY 3
@@ -133,7 +124,7 @@ struct devdrv_pci_state_ctrl {
 };
 
 struct devdrv_pci_ctrl_mng {
-    rwlock_t lock[MAX_DEV_CNT];
+    ka_rwlock_t lock[MAX_DEV_CNT];
     struct devdrv_pci_ctrl **mng_table;
 };
 
@@ -152,7 +143,7 @@ struct devdrv_h2d_attr_info {
     int ref;
     int proc_ref[DEVDRV_H2D_MAX_PROC_NUM];
     int pid[DEVDRV_H2D_MAX_PROC_NUM];
-    dma_addr_t addr;
+    ka_dma_addr_t addr;
     u64 size;
     u32 valid;
 };
@@ -173,17 +164,13 @@ struct devdrv_dma_iova_addr_range {
 };
 
 struct devdrv_dma_desc_rbtree_node {
-    struct rb_node node;
+    ka_rb_node_t node;
     u64 hash_va;
     struct devdrv_dma_prepare *dma_prepare;
 };
 void devdrv_dma_desc_node_uninit(struct devdrv_pci_ctrl *pci_ctrl);
-
-typedef int (*pci_bridge_secondary_bus_reset_func)(struct pci_dev *dev);
-typedef void (*pci_reset_bridge_secondary_bus_func)(struct pci_dev *dev);
-
+typedef int (*pci_bridge_secondary_bus_reset_func)(ka_pci_dev_t *dev);
 void devdrv_set_hccs_link_status(u32 dev_id, u32 val);
-
 int devdrv_p2p_para_check(int pid, u32 dev_id, u32 peer_dev_id);
 void devdrv_clear_p2p_resource(u32 devid);
 void devdrv_clear_h2d_txatu_resource(u32 devid);
@@ -220,13 +207,13 @@ void drvdrv_dev_startup_report(u32 dev_id);
 void drvdrv_dev_state_notifier(struct devdrv_pci_ctrl *pci_ctrl);
 void devdrv_set_devctrl_startup_flag(u32 dev_id, enum devdrv_dev_startup_flag_type flag);
 void devdrv_register_half_devctrl(struct devdrv_pci_ctrl *pci_ctrl);
-struct pci_dev *devdrv_get_device_pf(struct pci_dev *pdev, unsigned int pf_num);
+ka_pci_dev_t *devdrv_get_device_pf(ka_pci_dev_t *pdev, unsigned int pf_num);
 void devdrv_set_startup_status(struct devdrv_pci_ctrl *pci_ctrl, int status);
 void devdrv_probe_wait(int devid);
 int devdrv_alloc_attr_info(void);
 void devdrv_free_attr_info(void);
 void devdrv_clients_instance_uninit(void);
-int devdrv_get_connect_protocol_by_dev(struct device *dev);
+int devdrv_get_connect_protocol_by_dev(ka_device_t *dev);
 
 int devdrv_pci_ctrl_mng_init(void);
 void devdrv_pci_ctrl_mng_uninit(void);
@@ -240,50 +227,50 @@ void devdrv_pci_ctrl_put(struct devdrv_pci_ctrl *pci_ctrl);
 
 u32 devdrv_get_irq_res_gear(void);
 void devdrv_parse_res_gear(void);
-u64 devdrv_get_bandwidth_info(struct pci_dev *pdev);
+u64 devdrv_get_bandwidth_info(ka_pci_dev_t *pdev);
 
-void *devdrv_pcimsg_alloc_non_trans_queue_inner(u32 dev_id, struct devdrv_non_trans_msg_chan_info *chan_info);
+void *devdrv_pcimsg_alloc_non_trans_queue_inner(u32 index_id, struct devdrv_non_trans_msg_chan_info *chan_info);
 int devdrv_pcimsg_free_non_trans_queue_inner(void *msg_chan);
 
 int devdrv_get_sriov_and_mdev_mode(u32 dev_id, u32 *boot_mode);
-struct mutex *devdrv_get_ctrl_mutex(void);
+ka_mutex_t *devdrv_get_ctrl_mutex(void);
 int devdrv_hdc_suspend_precheck(int count);
 void devdrv_peer_fault_notifier(u32 status);
 int devdrv_get_pcie_id_info(u32 udevid, struct devdrv_base_device_info *dev_info);
 int devdrv_get_runtime_runningplat(u32 udevid, u64 *running_plat);
 int devdrv_set_runtime_runningplat(u32 udevid, u64 running_plat);
-int devdrv_pcie_hotreset_assemble(u32 dev_id);
-int devdrv_pcie_prereset(u32 dev_id);
+int devdrv_pcie_hotreset_assemble(u32 index_id);
+int devdrv_pcie_prereset(u32 index_id);
 int devdrv_pcie_unbind_atomic(u32 dev_id);
 int devdrv_pcie_reset_atomic(u32 dev_id);
 int devdrv_pcie_remove_atomic(u32 dev_id);
 int devdrv_hotreset_atomic_rescan(u32 dev_id);
 
 #ifdef CFG_FEATURE_SRIOV
-extern void *hw_dvt_hypervisor_dma_alloc_coherent(struct device *dev, size_t size, dma_addr_t *dma_addr, gfp_t gfp);
-extern void hw_dvt_hypervisor_dma_free_coherent(struct device *dev, size_t size, void *addr, dma_addr_t dma_addr);
-extern dma_addr_t hw_dvt_hypervisor_dma_map_single(struct device *dev, void *ptr, size_t size,
-    enum dma_data_direction dir);
-extern void hw_dvt_hypervisor_dma_unmap_single(struct device *dev, dma_addr_t addr, size_t size,
-    enum dma_data_direction dir);
-extern dma_addr_t hw_dvt_hypervisor_dma_map_page(struct device *dev, struct page *page, size_t offset, size_t size,
-    enum dma_data_direction dir);
-extern void hw_dvt_hypervisor_dma_unmap_page(struct device *dev, dma_addr_t addr, size_t size,
-    enum dma_data_direction dir);
+extern void *hw_dvt_hypervisor_dma_alloc_coherent(ka_device_t *dev, size_t size, ka_dma_addr_t *dma_addr, ka_gfp_t gfp);
+extern void hw_dvt_hypervisor_dma_free_coherent(ka_device_t *dev, size_t size, void *addr, ka_dma_addr_t dma_addr);
+extern ka_dma_addr_t hw_dvt_hypervisor_dma_map_single(ka_device_t *dev, void *ptr, size_t size,
+    ka_dma_data_direction_t dir);
+extern void hw_dvt_hypervisor_dma_unmap_single(ka_device_t *dev, ka_dma_addr_t addr, size_t size,
+    ka_dma_data_direction_t dir);
+extern ka_dma_addr_t hw_dvt_hypervisor_dma_map_page(ka_device_t *dev, ka_page_t *page, size_t offset, size_t size,
+    ka_dma_data_direction_t dir);
+extern void hw_dvt_hypervisor_dma_unmap_page(ka_device_t *dev, ka_dma_addr_t addr, size_t size,
+    ka_dma_data_direction_t dir);
 #endif
-void *devdrv_pci_msg_alloc_non_trans_queue(u32 dev_id, struct devdrv_non_trans_msg_chan_info *chan_info);
+void *devdrv_pci_msg_alloc_non_trans_queue(u32 index_id, struct devdrv_non_trans_msg_chan_info *chan_info);
 int devdrv_pci_msg_free_non_trans_queue(void *msg_chan);
 int devdrv_pci_get_device_boot_status(u32 index_id, u32 *boot_status);
-int devdrv_pci_get_connect_protocol(u32 dev_id);
-int devdrv_pci_get_host_phy_mach_flag(u32 devid, u32 *host_flag);
-int devdrv_pci_get_env_boot_type(u32 dev_id);
-int devdrv_pci_get_pfvf_type_by_devid(u32 dev_id);
+int devdrv_pci_get_connect_protocol(u32 index_id);
+int devdrv_pci_get_host_phy_mach_flag(u32 index_id, u32 *host_flag);
+int devdrv_pci_get_env_boot_type(u32 index_id);
+int devdrv_pci_get_pfvf_type_by_devid(u32 index_id);
 bool devdrv_pci_is_mdev_vm_boot_mode(u32 index_id);
-bool devdrv_pci_is_sriov_support(u32 dev_id);
-int devdrv_pcie_sriov_enable(u32 dev_id, u32 boot_mode);
+bool devdrv_pci_is_sriov_support(u32 index_id);
+int devdrv_pcie_sriov_enable(u32 index_id, u32 boot_mode);
 int devdrv_pcie_sriov_disable(u32 index_id, u32 boot_mode);
-struct device *hal_kernel_devdrv_get_pci_dev_by_devid(u32 udevid);
-int devdrv_pcie_get_dev_topology(u32 devid, u32 peer_devid, int *topo_type);
+ka_device_t *hal_kernel_devdrv_get_pci_dev_by_devid(u32 udevid);
+int devdrv_pcie_get_dev_topology(u32 index_id, u32 peer_index_id, int *topo_type);
 int devdrv_get_pcie_id_info_inner(u32 index_id, struct devdrv_base_device_info *dev_info);
 
 bool devdrv_is_p2p_enabled_inner(u32 index_id, u32 peer_index_id);
@@ -341,16 +328,16 @@ int devdrv_set_heartbeat_count_inner(u32 index_id, u64 count);
 int devdrv_get_device_index_inner(u32 host_dev_id);
 int devdrv_devmem_addr_h2d_inner(u32 index_id, phys_addr_t host_bar_addr, phys_addr_t *device_phy_addr);
 int devdrv_devmem_addr_d2h_inner(u32 index_id, phys_addr_t device_phy_addr, phys_addr_t *host_bar_addr);
-struct device *devdrv_get_pci_dev_by_devid_inner(u32 index_id);
-int devdrv_register_irq_by_vector_index_inner(u32 index_id, int vector_index, irqreturn_t (*callback_func)(int, void *),
+ka_device_t *devdrv_get_pci_dev_by_devid_inner(u32 index_id);
+int devdrv_register_irq_by_vector_index_inner(u32 index_id, int vector_index, ka_irqreturn_t (*callback_func)(int, void *),
                                         void *para, const char *name);
 int devdrv_get_addr_info_inner(u32 index_id, enum devdrv_addr_type type, u32 index, u64 *addr, size_t *size);
 int devdrv_pcie_reinit_inner(u32 index_id);
 int devdrv_unregister_irq_by_vector_index_inner(u32 index_id, int vector_index, void *para);
-int devdrv_get_bbox_reservd_mem_inner(unsigned int index_id, unsigned long long *dma_addr, struct page **dma_pages,
+int devdrv_get_bbox_reservd_mem_inner(unsigned int index_id, unsigned long long *dma_addr, ka_page_t **dma_pages,
                                 unsigned int *len);
 bool devdrv_is_mdev_pm_boot_mode_inner(u32 index_id);
-struct pci_dev *devdrv_get_pci_pdev_by_devid_inner(u32 index_id);
+ka_pci_dev_t *devdrv_get_pci_pdev_by_devid_inner(u32 index_id);
 int devdrv_get_devid_by_pfvf_id_inner(u32 pf_index_id, u32 vf_index_id, u32 *index_id);
 bool devdrv_check_half_probe_finish_inner(u32 index_id);
 #endif

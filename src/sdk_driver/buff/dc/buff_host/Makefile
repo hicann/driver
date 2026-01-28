@@ -17,11 +17,14 @@ EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/inc/
 EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/inc/pbl
 EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/buff/dc/buff_host
 EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/buff/dc/command/ioctl
+EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/kernel_adapt/include
 EXTRA_CFLAGS += -isystem $(shell $(CC) -print-file-name=include)
 
 EXTRA_CFLAGS += -DCFG_FEATURE_EXTERNAL_CDEV
 EXTRA_CFLAGS += -DCFG_FEATURE_SUPPORT_VMA
 EXTRA_CFLAGS += -DCFG_FEATURE_SHARE_LOG
-EXTRA_CFLAGS += -DCFG_FEATURE_KA_ALLOC_INTERFACE
+ifneq ($(filter $(PRODUCT), ascend910B),)
+	EXTRA_CFLAGS += -DCFG_FEATURE_KA_ALLOC_INTERFACE
+endif
 EXTRA_CFLAGS += -DCFG_FEATURE_HOST_LOG
 ccflags-y += -fno-common -fstack-protector-all -funsigned-char -pipe -s -Wall -Wcast-align -Wdate-time -Wfloat-equal -Wformat -Wstack-usage=2048 -Wstrict-prototypes -Wtrampolines -Wundef -Wunused -Wvla

@@ -369,7 +369,7 @@ int dcmi_get_npu_fault_event(int card_id, int device_id, int timeout, struct dcm
         (struct dsmi_event *)event);
     if (ret != DSMI_OK) {
         gplog(LOG_ERR, "call dsmi_read_fault_event failed. err is %d.", ret);
-        ret_clr = memset_s(event, sizeof(struct dsmi_event), 0, sizeof(struct dsmi_event));
+        ret_clr = memset_s(event, sizeof(struct dcmi_event), 0, sizeof(struct dcmi_event));
         if (ret_clr != 0) {
             gplog(LOG_ERR, "memset_s event failed. err is %d", ret_clr);
         }
@@ -774,8 +774,8 @@ int dcmi_get_custom_op_secverify_enable(int card_id, int device_id, unsigned cha
     int device_logic_id = 0;
     enum dcmi_unit_type device_type = NPU_TYPE;
 
-    // 仅支持物理机root + 虚机的root
-    if (!(dcmi_is_in_phy_machine_root() || dcmi_is_in_vm_root())) {
+    // 仅支持物理机root + 虚机的root + 特权容器root
+    if (!(dcmi_is_in_phy_machine_root() || dcmi_is_in_vm_root() || dcmi_is_in_privileged_docker_root())) {
         return DCMI_ERR_CODE_OPER_NOT_PERMITTED;
     }
 
@@ -798,7 +798,7 @@ int dcmi_get_custom_op_secverify_enable(int card_id, int device_id, unsigned cha
         gplog(LOG_ERR, "dcmi_get_device_type failed. err is %d", ret);
         return ret;
     }
-    
+
     // chip为mcu时不涉及查询enable
     if (device_type != NPU_TYPE) {
         *enable = 0;
@@ -826,11 +826,12 @@ int dcmi_get_custom_op_secverify_mode(int card_id, int device_id, unsigned int *
     int device_logic_id = 0;
     unsigned int mode_size = sizeof(unsigned int);
 
-    // 仅支持物理机root + 虚机的root
-    if (!(dcmi_is_in_phy_machine_root() || dcmi_is_in_vm_root())) {
+    // 不支持算力切分场景
+    if (dcmi_check_vnpu_in_docker_or_virtual(card_id)) {
+        gplog(LOG_OP, "This environment does not support get custom op secverify enable info.");
         return DCMI_ERR_CODE_OPER_NOT_PERMITTED;
     }
-    
+
     if (card_id < 0) {
         gplog(LOG_ERR, "input para is invalid. card_id=%d\n", card_id);
         return DCMI_ERR_CODE_INVALID_PARAMETER;
@@ -844,7 +845,7 @@ int dcmi_get_custom_op_secverify_mode(int card_id, int device_id, unsigned int *
     if (!(dcmi_board_chip_type_is_ascend_910b() || dcmi_board_chip_type_is_ascend_910_93())) {
         return DCMI_ERR_CODE_NOT_SUPPORT;
     }
-    
+
     ret = dcmi_get_device_logic_id(&device_logic_id, card_id, device_id);
     if (ret != DCMI_OK) {
         gplog(LOG_ERR, "call dcmi_get_device_logic_id failed. err is %d.", ret);

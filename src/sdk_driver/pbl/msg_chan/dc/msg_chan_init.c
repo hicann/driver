@@ -21,20 +21,21 @@ int devdrv_base_comm_init(void)
     struct devdrv_msg_client *client_info = devdrv_get_msg_client();
     struct devdrv_comm_dev_ops *comm_ops = devdrv_get_comm_ops();
 
-    (void)memset_s(comm_ops, sizeof(comm_ops), 0, sizeof(comm_ops));
+    (void)memset_s(comm_ops, sizeof(struct devdrv_comm_dev_ops) * DEVDRV_COMMNS_TYPE_MAX, 0,
+        sizeof(struct devdrv_comm_dev_ops) * DEVDRV_COMMNS_TYPE_MAX);
     (void)memset_s(client_info, sizeof(struct devdrv_msg_client), 0, sizeof(struct devdrv_msg_client));
-    mutex_init(&client_info->lock);
+    ka_task_mutex_init(&client_info->lock);
     for (i = 0; i < DEVDRV_COMMNS_TYPE_MAX; ++i) {
         comm_ops[i].status = DEVDRV_COMM_OPS_TYPE_UNINIT;
-        atomic_set(&comm_ops[i].ops.ref_cnt, 0);
-        atomic_set(&comm_ops[i].dev_cnt, 0);
-        rwlock_init(&comm_ops[i].rwlock);
+        ka_base_atomic_set(&comm_ops[i].ops.ref_cnt, 0);
+        ka_base_atomic_set(&comm_ops[i].dev_cnt, 0);
+        ka_task_rwlock_init(&comm_ops[i].rwlock);
     }
 
 #ifndef EMU_ST
     ret = module_feature_auto_init();
     if (ret != 0) {
-        mutex_destroy(&client_info->lock);
+        ka_task_mutex_destroy(&client_info->lock);
         devdrv_err("Module feature init failed.\n");
         return ret;
     }
@@ -54,11 +55,12 @@ void devdrv_base_comm_exit(void)
 
     for (i = 0; i < DEVDRV_COMMNS_TYPE_MAX; ++i) {
         comm_ops[i].status = DEVDRV_COMM_OPS_TYPE_DISABLE;
-        atomic_set(&comm_ops[i].ops.ref_cnt, 0);
-        atomic_set(&comm_ops[i].dev_cnt, 0);
+        ka_base_atomic_set(&comm_ops[i].ops.ref_cnt, 0);
+        ka_base_atomic_set(&comm_ops[i].dev_cnt, 0);
     }
     (void)memset_s(client_info, sizeof(struct devdrv_msg_client), 0, sizeof(struct devdrv_msg_client));
-    (void)memset_s(comm_ops, sizeof(comm_ops), 0, sizeof(comm_ops));
-    mutex_destroy(&client_info->lock);
+    (void)memset_s(comm_ops, sizeof(struct devdrv_comm_dev_ops) * DEVDRV_COMMNS_TYPE_MAX, 0,
+        sizeof(struct devdrv_comm_dev_ops) * DEVDRV_COMMNS_TYPE_MAX);
+    ka_task_mutex_destroy(&client_info->lock);
     return;
 }

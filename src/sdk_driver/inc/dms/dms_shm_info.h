@@ -30,7 +30,7 @@
 #define DEVDRV_SHM_GEGISTER_RAO_SIZE 0x4000    /* 16KB */
 
 /*
- * version of share memery:
+ * version of share memory:
  * bit 0~15: substantial version of head_info;
  * bit16~31: substantial version of soc_info;
  * bit32~47: substantial version of board_info;
@@ -70,8 +70,8 @@ typedef struct shm_info_board {
     u16 pcb_ver;
     u16 board_type;
     u16 slot_id;
-    u16 venderid;    /* vender id */
-    u16 subvenderid; /* vender sub id */
+    u16 venderid;    /* vendor id */
+    u16 subvenderid; /* vendor sub id */
     u16 deviceid;    /* device id */
     u16 subdeviceid; /* device sub id */
     u16 bus;         /* bus number */

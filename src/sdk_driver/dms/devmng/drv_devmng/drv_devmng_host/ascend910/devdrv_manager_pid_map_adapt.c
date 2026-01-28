@@ -13,6 +13,7 @@
 
 #include <linux/export.h>
 #include "devdrv_manager_pid_map.h"
+#include "ka_kernel_def_pub.h"
 #ifndef CFG_FEATURE_NO_DP_PROC
 #include "dpa_kernel_interface.h"
 
@@ -60,18 +61,18 @@ void devdrv_pid_map_uninit(void)
     return;
 }
 
-EXPORT_SYMBOL(hal_kernel_devdrv_query_process_by_host_pid_kernel);
-EXPORT_SYMBOL(devdrv_query_process_by_host_pid);
-EXPORT_SYMBOL(hal_kernel_devdrv_query_process_host_pid);
-EXPORT_SYMBOL(devdrv_query_master_location);
+KA_EXPORT_SYMBOL_GPL(hal_kernel_devdrv_query_process_by_host_pid_kernel);
+KA_EXPORT_SYMBOL_GPL(devdrv_query_process_by_host_pid);
+KA_EXPORT_SYMBOL(hal_kernel_devdrv_query_process_host_pid);
+KA_EXPORT_SYMBOL(devdrv_query_master_location);
 #ifdef CFG_HOST_ENV
-EXPORT_SYMBOL(devdrv_query_master_pid_by_device_slave);
+KA_EXPORT_SYMBOL(devdrv_query_master_pid_by_device_slave);
 #else
-EXPORT_SYMBOL(devdrv_query_master_pid_by_host_slave);
+KA_EXPORT_SYMBOL_GPL(devdrv_query_master_pid_by_host_slave);
 #endif
-EXPORT_SYMBOL(devdrv_query_process_host_pids_by_pid);
-EXPORT_SYMBOL(devdrv_check_hostpid);
-EXPORT_SYMBOL(devdrv_check_sign);
-EXPORT_SYMBOL(devdrv_get_dev_process);
-EXPORT_SYMBOL(devdrv_put_dev_process);
+KA_EXPORT_SYMBOL(devdrv_query_process_host_pids_by_pid);
+KA_EXPORT_SYMBOL(devdrv_check_hostpid);
+KA_EXPORT_SYMBOL(devdrv_check_sign);
+KA_EXPORT_SYMBOL(devdrv_get_dev_process);
+KA_EXPORT_SYMBOL(devdrv_put_dev_process);
 #endif

@@ -49,3 +49,39 @@ EXPORT_SYMBOL_GPL(ka_driver_class_set_devnode);
 #endif
 
 #endif
+
+int ka_driver_dmi_find_devid(ka_pci_dev_t *pdev, int DMI_DEV_TYPE_DEV_SLOT, int *dev_id)
+{
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 5, 0)
+#ifdef CONFIG_DMI
+    const struct dmi_device *dmi_dev = NULL;
+    const struct dmi_device *from = NULL;
+    const struct dmi_dev_onboard *dev_data = NULL;
+    do {
+        from = dmi_dev;
+        dmi_dev = dmi_find_device(DMI_DEV_TYPE_DEV_SLOT, NULL, from);
+        if (dmi_dev != NULL) {
+            dev_data = (struct dmi_dev_onboard *)dmi_dev->device_data;
+#ifdef CONFIG_PCI_DOMAINS_GENERIC
+            if ((dev_data != NULL) && (dev_data->bus == pdev->bus->number) &&
+                (PCI_SLOT(((unsigned int)(dev_data->devfn))) == PCI_SLOT(pdev->devfn)) &&
+                (dev_data->segment == pdev->bus->domain_nr)) {
+                *dev_id = dev_data->instance;
+                break;
+            }
+#else
+            if ((dev_data != NULL) && (dev_data->bus == pdev->bus->number) &&
+                (PCI_SLOT(((unsigned int)(dev_data->devfn))) == PCI_SLOT(pdev->devfn))) {
+                *dev_id = dev_data->instance;
+                break;
+            }
+#endif
+        }
+    } while (dmi_dev != NULL);
+    return 0;
+#endif
+#else
+    return -EOPNOTSUPP;
+#endif
+}
+EXPORT_SYMBOL_GPL(ka_driver_dmi_find_devid);

@@ -149,4 +149,16 @@ enum devdrv_token_val_type {
 };
 drvError_t dms_get_token_val(unsigned int dev_id, unsigned int type, unsigned int *val);
 
+#define D2D_EID_LENGTH 16
+struct dms_ub_d2d_eid {
+    unsigned char d2d_eid[D2D_EID_LENGTH];
+};
+drvError_t dms_get_ub_d2d_eid(unsigned int dev_id, struct dms_ub_d2d_eid *d2d_eid);
+
+#define BUS_INST_EID_LENGTH 16
+struct dms_ub_bus_inst_eid {
+    unsigned char bus_inst_eid[BUS_INST_EID_LENGTH];
+};
+drvError_t dms_get_ub_bus_inst_eid(unsigned int dev_id, struct dms_ub_bus_inst_eid *bus_inst_eid);
+
 #endif /* __DMS_MISC_INTERFACE_H */

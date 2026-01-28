@@ -220,10 +220,10 @@ def parse_install_info(infos: List,
         target_name = get_target_name(target_config)
         if target_config.get("optional") == 'true':
             path = os.path.join(TOP_DIR, DELIVERY_PATH, target_config.get('dst_path'))
-            vaule = os.path.join(TOP_DIR, DELIVERY_PATH, target_config.get('dst_path'), target_name)
+            value = os.path.join(TOP_DIR, DELIVERY_PATH, target_config.get('dst_path'), target_name)
             if not os.path.exists(path):
                 continue
-            if not os.path.exists(vaule):
+            if not os.path.exists(value):
                 continue
         if operate_type in ('copy', 'move'):
             relative_path_in_pkg = os.path.join(target_config.get('dst_path'), target_name)
@@ -535,7 +535,7 @@ def generate_config_inc(package_attr: Dict):
 
 
 def driver_compat(args_: argparse.Namespace):
-    args_.pkg_name = "driver"
+    args_.pkg_name = "driver_compat"
 
     delivery_dir = os.path.join(TOP_DIR, "build")
     if not os.path.exists(delivery_dir):
@@ -579,7 +579,7 @@ def driver_compat(args_: argparse.Namespace):
 def main(pkg_name='', xml_file='', main_args=None):
 
     if main_args.pkg_name == "driver_compat":
-        return driver_compat(main_args)
+        driver_compat(main_args)
 
     delivery_dir = os.path.join(TOP_DIR, DELIVERY_PATH)
     if not os.path.exists(delivery_dir):

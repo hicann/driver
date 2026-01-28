@@ -14,10 +14,11 @@
 #ifndef MSG_CHAN_ADAPT_H
 #define MSG_CHAN_ADAPT_H
 #include "comm_kernel_interface.h"
+#include "ka_task_pub.h"
 
 struct devdrv_msg_client {
     const struct devdrv_common_msg_client* comm[DEVDRV_COMMON_MSG_TYPE_MAX];
-    struct mutex lock;
+    ka_mutex_t lock;
 };
 
 struct devdrv_msg_client *devdrv_get_msg_client(void);

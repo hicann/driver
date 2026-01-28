@@ -17,14 +17,13 @@ target_include_directories(uda_obj PRIVATE
     ${DRIVER_USER_DIR}/msnpureport/inc/slog
     ${DRIVER_HAL_INC_DIR}/ascend_hal_base
     ${DRIVER_USER_DIR}/inc
-    ${DRIVER_USER_DIR}/ascend_base_hal
+    ${DRIVER_USER_DIR}/inc/pbl
     ${DRIVER_KERNEL_DIR}/pbl/uda/command/ioctl
 )
 
 target_link_libraries(uda_obj PRIVATE
     $<BUILD_INTERFACE:c_sec_headers>
     $<BUILD_INTERFACE:intf_pub>
-    # $<BUILD_INTERFACE:slog_headers>
     -ldl
     -Wl,--Bsymbolic
 )
@@ -32,6 +31,8 @@ target_link_libraries(uda_obj PRIVATE
 target_compile_definitions(uda_obj PRIVATE
     DRV_HOST
     CFG_FEATURE_UDA_CONSTRUCT_INIT
+    $<$<STREQUAL:${PRODUCT},ascend910_95>:CFG_FEATURE_ASCEND910_95_STUB>
+    $<$<STREQUAL:${PRODUCT},ascend910_95>:ASCEND_BACKUP_DEV_NUM=1>
 )
 
 target_compile_options(uda_obj PRIVATE
@@ -71,20 +72,20 @@ target_include_directories(uda_base_obj PRIVATE
     ${DRIVER_USER_DIR}/msnpureport/inc/slog
     ${DRIVER_HAL_INC_DIR}/ascend_hal_base
     ${DRIVER_USER_DIR}/inc
-    ${DRIVER_USER_DIR}/ascend_base_hal
+    ${DRIVER_USER_DIR}/inc/pbl
     ${DRIVER_KERNEL_DIR}/pbl/uda/command/ioctl
 )
 
 target_link_libraries(uda_base_obj PRIVATE
     $<BUILD_INTERFACE:c_sec_headers>
     $<BUILD_INTERFACE:intf_pub>
-    # $<BUILD_INTERFACE:slog_headers> 
     -ldl
     -Wl,--Bsymbolic
 )
 target_compile_definitions(uda_base_obj PRIVATE
     DRV_HOST
     CFG_FEATURE_UDA_CONSTRUCT_INIT
+    $<$<STREQUAL:${PRODUCT},ascend910_95>:CFG_FEATURE_ASCEND910_95_STUB>
 )
 
 target_compile_options(uda_base_obj PRIVATE

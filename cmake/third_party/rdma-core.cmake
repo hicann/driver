@@ -54,7 +54,7 @@ else()
 endif()
 
 set(SECURITY_COMPILE_OPT "-Wl,-z,relro,-z,now -fstack-protector-all -O2")
-set(EXT_COMPILE_OPT "-Wno-switch -Wno-enum-compare -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-nested-externs -Wno-maybe-uninitialized  -Wno-missing-prototypes")
+set(EXT_COMPILE_OPT "-Wno-switch -Wno-enum-compare -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-nested-externs -Wno-maybe-uninitialized -Wno-missing-prototypes")
 set(COMPILE_OPT "${SECURITY_COMPILE_OPT} ${EXT_COMPILE_OPT}")
 ExternalProject_Add(${RDMA_CORE_NAME}
     ${RDMA_CORE_DOWNLOAD_COMMAND}

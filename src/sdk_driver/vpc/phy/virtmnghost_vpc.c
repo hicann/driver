@@ -17,7 +17,7 @@
 #include "virtmnghost_vpc_unit.h"
 #include "virtmnghost_msg_common.h"
 #include "virtmnghost_vpc.h"
-
+#include "ka_kernel_def_pub.h"
 STATIC int vmngh_vpc_para_check(u32 dev_id, u32 fid, enum vmng_vpc_type vpc_type)
 {
     if (vmngh_dev_id_check(dev_id, fid) != 0) {
@@ -201,7 +201,7 @@ int vmngh_vpc_msg_send(u32 dev_id, u32 fid, enum vmng_vpc_type vpc_type, struct 
 
     return 0;
 }
-EXPORT_SYMBOL(vmngh_vpc_msg_send);
+KA_EXPORT_SYMBOL(vmngh_vpc_msg_send);
 
 STATIC int vmngh_alloc_vpc_msg_cluster(u32 dev_id, u32 fid, enum vmng_vpc_type vpc_type)
 {
@@ -395,7 +395,7 @@ free_common_msg_cluster:
 directly_out:
     return ret;
 }
-EXPORT_SYMBOL(vmngh_prepare_msg_chan);
+KA_EXPORT_SYMBOL(vmngh_prepare_msg_chan);
 
 void vmngh_unprepare_msg_chan(struct vmng_msg_dev *msg_dev)
 {
@@ -403,7 +403,7 @@ void vmngh_unprepare_msg_chan(struct vmng_msg_dev *msg_dev)
     vmngh_free_all_vpc_msg_cluster(msg_dev->dev_id, msg_dev->fid);
     vmngh_free_common_msg_cluster(msg_dev);
 }
-EXPORT_SYMBOL(vmngh_unprepare_msg_chan);
+KA_EXPORT_SYMBOL(vmngh_unprepare_msg_chan);
 
 static int vmngh_vpc_register_client_common(u32 dev_id, u32 fid, const struct vmng_vpc_client *vpc_client, u32 safe_mode)
 {
@@ -439,13 +439,13 @@ int vmngh_vpc_register_client(u32 dev_id, u32 fid, const struct vmng_vpc_client 
 {
     return vmngh_vpc_register_client_common(dev_id, fid, vpc_client, VMNG_VPC_NORMAL_MODE);
 }
-EXPORT_SYMBOL(vmngh_vpc_register_client);
+KA_EXPORT_SYMBOL(vmngh_vpc_register_client);
 
 int vmngh_vpc_register_client_safety(u32 dev_id, u32 fid, const struct vmng_vpc_client *vpc_client)
 {
     return vmngh_vpc_register_client_common(dev_id, fid, vpc_client, VMNG_VPC_SAFE_MODE);
 }
-EXPORT_SYMBOL(vmngh_vpc_register_client_safety);
+KA_EXPORT_SYMBOL(vmngh_vpc_register_client_safety);
 
 int vmngh_vpc_unregister_client(u32 dev_id, u32 fid, const struct vmng_vpc_client *vpc_client)
 {
@@ -476,4 +476,4 @@ int vmngh_vpc_unregister_client(u32 dev_id, u32 fid, const struct vmng_vpc_clien
 
     return 0;
 }
-EXPORT_SYMBOL(vmngh_vpc_unregister_client);
+KA_EXPORT_SYMBOL(vmngh_vpc_unregister_client);

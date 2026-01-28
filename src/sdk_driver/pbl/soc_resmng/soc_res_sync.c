@@ -10,6 +10,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
+#include "ka_base_pub.h"
+#include "ka_kernel_def_pub.h"
 
 #include "securec.h"
 
@@ -63,7 +65,7 @@ struct res_dev_misc_sync {
 
 static bool soc_is_pura_key(char *key)
 {
-    if (strstr(key, HOST_IRQ_NAME_PRIFIX) != NULL) {
+    if (ka_base_strstr(key, HOST_IRQ_NAME_PRIFIX) != NULL) {
         return false;
     }
 
@@ -72,17 +74,17 @@ static bool soc_is_pura_key(char *key)
 
 static bool soc_is_vf_addr(char *name)
 {
-    return (strstr(name, HOST_VF_ADDR_NAME_PRIFIX) != NULL);
+    return (ka_base_strstr(name, HOST_VF_ADDR_NAME_PRIFIX) != NULL);
 }
 
 static bool soc_is_host_addr(char *name)
 {
-    return (strstr(name, HOST_ADDR_NAME_PRIFIX) != NULL);
+    return (ka_base_strstr(name, HOST_ADDR_NAME_PRIFIX) != NULL);
 }
 
 static char *soc_remove_addr_name_prifix(char *name)
 {
-    return soc_is_host_addr(name) ? (name + strlen(HOST_ADDR_NAME_PRIFIX)) : name;
+    return soc_is_host_addr(name) ? (name + ka_base_strlen(HOST_ADDR_NAME_PRIFIX)) : name;
 }
 
 static void soc_pack_sync_info(struct res_sync_info *info, u32 udevid, char *buf, u32 len, soc_res_addr_encode func)
@@ -153,7 +155,7 @@ static struct res_addr_sync *soc_res_addr_find_sync(char *buf, u32 buf_len, char
 
     while (pos < buf_len) {
         struct res_addr_sync *sync = (struct res_addr_sync *)(buf + pos);
-        if (strcmp(sync->name, name) == 0) {
+        if (ka_base_strcmp(sync->name, name) == 0) {
             return sync;
         }
 
@@ -185,7 +187,7 @@ static int soc_res_addr_extract(char *name, u64 addr, u64 len, void *priv)
     }
 
     extract_name = (soc_is_vf_addr(name)) ?
-        (name + strlen(HOST_VF_ADDR_NAME_PRIFIX)) : soc_remove_addr_name_prifix(name);
+        (name + ka_base_strlen(HOST_VF_ADDR_NAME_PRIFIX)) : soc_remove_addr_name_prifix(name);
 
     /* The reserved memory addresses of the host and device may be different.
        For example:
@@ -225,7 +227,7 @@ static int soc_res_irq_extract(enum soc_res_sync_scope scope, char *key, u64 val
     struct res_sync_info *info = (struct res_sync_info *)priv;
     struct res_sync_irq *sync = (struct res_sync_irq *)(info->buf + info->out_len);
 
-    if (strstr(key, HOST_IRQ_NAME_PRIFIX) == NULL) {
+    if (ka_base_strstr(key, HOST_IRQ_NAME_PRIFIX) == NULL) {
         return 0;
     }
 
@@ -234,8 +236,8 @@ static int soc_res_irq_extract(enum soc_res_sync_scope scope, char *key, u64 val
         return -ENOMEM;
     }
 
-    sync->irq_type = (scope == SOC_DEV) ? soc_resmng_get_dev_irq_type_by_name(key + strlen(HOST_IRQ_NAME_PRIFIX)) :
-        soc_resmng_get_ts_irq_type_by_name(key + strlen(HOST_IRQ_NAME_PRIFIX));
+    sync->irq_type = (scope == SOC_DEV) ? soc_resmng_get_dev_irq_type_by_name(key + ka_base_strlen(HOST_IRQ_NAME_PRIFIX)) :
+        soc_resmng_get_ts_irq_type_by_name(key + ka_base_strlen(HOST_IRQ_NAME_PRIFIX));
     sync->num = (u32)value;
     info->out_len += sizeof(*sync);
 
@@ -809,7 +811,7 @@ int soc_res_extract(u32 udevid, struct res_sync_target *target, char *buf, u32 *
 
     return 0;
 }
-EXPORT_SYMBOL_GPL(soc_res_extract);
+KA_EXPORT_SYMBOL_GPL(soc_res_extract);
 
 int soc_res_inject(u32 udevid, struct res_sync_target *target, char *buf, u32 buf_len, soc_res_addr_decode func)
 {
@@ -834,7 +836,7 @@ int soc_res_inject(u32 udevid, struct res_sync_target *target, char *buf, u32 bu
 
     return ret;
 }
-EXPORT_SYMBOL_GPL(soc_res_inject);
+KA_EXPORT_SYMBOL_GPL(soc_res_inject);
 
 u32 soc_res_sync_get_sub_num(u32 udevid, enum soc_res_sync_scope scope)
 {
@@ -850,4 +852,4 @@ u32 soc_res_sync_get_sub_num(u32 udevid, enum soc_res_sync_scope scope)
         return 0;
     }
 }
-EXPORT_SYMBOL_GPL(soc_res_sync_get_sub_num);
+KA_EXPORT_SYMBOL_GPL(soc_res_sync_get_sub_num);

@@ -11,22 +11,9 @@
  * GNU General Public License for more details.
  */
 
-#include <linux/errno.h>
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/memory.h>
-#include <linux/slab.h>
-#include <linux/vmalloc.h>
-#include <linux/version.h>
-#include <linux/delay.h>
-#include <linux/list.h>
-#include <linux/pagemap.h>
-#include <linux/atomic.h>
-#include <linux/nsproxy.h>
+ #include "ka_memory_pub.h"
 
 #include "devmm_adapt.h"
-
-#include "svm_ioctl.h"
 #include "devmm_chan_handlers.h"
 #include "devmm_proc_info.h"
 #include "devmm_proc_mem_copy.h"
@@ -46,6 +33,7 @@
 #include "devmm_dev.h"
 #include "devmm_mem_alloc_interface.h"
 #include "svm_dynamic_addr.h"
+#include "svm_ioctl.h"
 
 #ifdef CFG_FEATURE_VFIO
 #include "devmm_pm_vpc.h"
@@ -83,7 +71,8 @@ STATIC void devmm_chan_update_msg_process_id(struct devmm_chan_msg_head *msg_hea
 
 bool devmm_is_static_reserve_addr(struct devmm_svm_process *svm_proc, u64 va)
 {
-    return ((va >= svm_proc->start_addr) && (va <= svm_proc->end_addr));
+    return ((va >= svm_proc->start_addr && va <= svm_proc->end_addr)
+        || (va >= svm_proc->host_pin_start_addr && va <= svm_proc->host_pin_end_addr));
 }
 
 bool devmm_va_is_not_svm_process_addr(const struct devmm_svm_process *svm_process, unsigned long va)
@@ -101,22 +90,22 @@ bool devmm_va_is_not_svm_process_addr(const struct devmm_svm_process *svm_proces
 
 #ifndef DRV_UT
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 5, 0)
-static pte_t *devmm_pte_offset_map(pmd_t *pmd, unsigned long addr, pmd_t *pmdvalp)
+static ka_pte_t *devmm_pte_offset_map(ka_pmd_t *pmd, unsigned long addr, ka_pmd_t *pmdvalp)
 {
-    pmd_t pmdval;
+    ka_pmd_t pmdval;
 
     /* rcu_read_lock() to be added later */
     pmdval = pmdp_get_lockless(pmd);
     if (pmdvalp) {
         *pmdvalp = pmdval;
     }
-    if (unlikely(pmd_none(pmdval) || is_pmd_migration_entry(pmdval))) {
+    if (ka_unlikely(pmd_none(pmdval) || is_pmd_migration_entry(pmdval))) {
         goto nomap;
     }
-    if (unlikely(pmd_trans_huge(pmdval) || pmd_devmap(pmdval))) {
+    if (ka_unlikely(pmd_trans_huge(pmdval) || pmd_devmap(pmdval))) {
         goto nomap;
     }
-    if (unlikely(pmd_bad(pmdval))) {
+    if (ka_unlikely(pmd_bad(pmdval))) {
         pmd_ERROR(*pmd);
         pmd_clear(pmd);
         goto nomap;
@@ -132,36 +121,36 @@ nomap:
 /**
  * @brief get the page table entry of the va
  * @attention
- * kpg_size=PAGE_SIZE(4K) -> pte
- * kpg_size=HPAGE_SIZE(2M) -> pmd
+ * kpg_size=KA_MM_PAGE_SIZE(4K) -> pte
+ * kpg_size=KA_HPAGE_SIZE(2M) -> pmd
  * kpg_size=PUD_SIZE(1G) -> pud
- * @param [in] vma: struct vm_area_struct
+ * @param [in] vma: ka_vm_area_struct_t
  * @param [in] va: va
  * @param [out] kpg_size: real page size from kernel
  * @return NULL for fail, others for success, means pte pointer
  */
-void *devmm_get_pte(const struct vm_area_struct *vma, u64 va, u64 *kpg_size)
+void *devmm_get_pte(const ka_vm_area_struct_t *vma, u64 va, u64 *kpg_size)
 {
-    pgd_t *pgd = NULL;
+    ka_pgd_t *pgd = NULL;
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 11, 0)
     p4d_t *p4d = NULL;
 #endif
     pud_t *pud = NULL;
-    pmd_t *pmd = NULL;
-    pte_t *pte = NULL;
+    ka_pmd_t *pmd = NULL;
+    ka_pte_t *pte = NULL;
 
     if ((vma == NULL) || (vma->vm_mm == NULL)) {
         devmm_drv_err("Vm_mm none. (va=0x%llx)\n", va);
         return NULL;
     }
     /* too much log, not print */
-    pgd = pgd_offset(vma->vm_mm, va);
+    pgd = ka_mm_pgd_offset(vma->vm_mm, va);
     if (PXD_JUDGE(pgd) != 0) {
         return NULL;
     }
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 11, 0)
-    p4d = p4d_offset(pgd, va);
+    p4d = ka_mm_p4d_offset(pgd, va);
     if (PXD_JUDGE(p4d) != 0) {
         return NULL;
     }
@@ -169,9 +158,9 @@ void *devmm_get_pte(const struct vm_area_struct *vma, u64 va, u64 *kpg_size)
     /* if kernel version is above 4.11.0,then 5 level pt arrived.
     pud_offset(pgd,va) changed to pud_offset(p4d,va) for x86
     but not changed in arm64 */
-    pud = pud_offset(p4d, va);
+    pud = ka_mm_pud_offset(p4d, va);
 #else
-    pud = pud_offset(pgd, va);
+    pud = ka_mm_pud_offset(pgd, va);
 #endif
     if (PUD_GIANT(pud) != 0) {
         *kpg_size = DEVMM_GIANT_PAGE_SIZE;
@@ -185,7 +174,7 @@ void *devmm_get_pte(const struct vm_area_struct *vma, u64 va, u64 *kpg_size)
     pmd = pmd_offset(pud, va);
     /* huge page pmd can not judge bad flag */
     if (PMD_HUGE(pmd) != 0) {
-        *kpg_size = HPAGE_SIZE;
+        *kpg_size = KA_HPAGE_SIZE;
         return pmd;
     } else {
         if (PMD_JUDGE(pmd) != 0) {
@@ -196,36 +185,36 @@ void *devmm_get_pte(const struct vm_area_struct *vma, u64 va, u64 *kpg_size)
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 5, 0)
     pte = devmm_pte_offset_map(pmd, va, NULL);
 #else
-    pte = pte_offset_map(pmd, va);
+    pte = ka_mm_pte_offset_map(pmd, va);
 #endif
-    if ((pte == NULL) || (pte_none(*pte) != 0) || (pte_present(*pte) == 0)) {
+    if ((pte == NULL) || (ka_mm_pte_none(*pte) != 0) || (ka_mm_pte_present(*pte) == 0)) {
         return NULL;
     }
-    *kpg_size = PAGE_SIZE;
+    *kpg_size = KA_MM_PAGE_SIZE;
     return pte;
 }
 
-pmd_t *devmm_get_va_to_pmd(const struct vm_area_struct *vma, unsigned long va) /* To be deleted */
+ka_pmd_t *devmm_get_va_to_pmd(const ka_vm_area_struct_t *vma, unsigned long va) /* To be deleted */
 {
-    pgd_t *pgd = NULL;
+    ka_pgd_t *pgd = NULL;
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 11, 0)
     p4d_t *p4d = NULL;
 #endif
     pud_t *pud = NULL;
-    pmd_t *pmd = NULL;
+    ka_pmd_t *pmd = NULL;
 
     if ((vma == NULL) || (vma->vm_mm == NULL)) {
         devmm_drv_err("Vm_mm none. (va=0x%lx)\n", va);
         return NULL;
     }
     /* too much log, not print */
-    pgd = pgd_offset(vma->vm_mm, va);
+    pgd = ka_mm_pgd_offset(vma->vm_mm, va);
     if (PXD_JUDGE(pgd)) {
         return NULL;
     }
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 11, 0)
-    p4d = p4d_offset(pgd, va);
+    p4d = ka_mm_p4d_offset(pgd, va);
     if (PXD_JUDGE(p4d) != 0) {
         return NULL;
     }
@@ -233,12 +222,12 @@ pmd_t *devmm_get_va_to_pmd(const struct vm_area_struct *vma, unsigned long va) /
     /* if kernel version is above 4.11.0,then 5 level pt arrived.
     pud_offset(pgd,va) changed to pud_offset(p4d,va) for x86
     but not changed in arm64 */
-    pud = pud_offset(p4d, va);
+    pud = ka_mm_pud_offset(p4d, va);
     if (PXD_JUDGE(pud) != 0) {
         return NULL;
     }
 #else
-    pud = pud_offset(pgd, va);
+    pud = ka_mm_pud_offset(pgd, va);
     if (PXD_JUDGE(pud) != 0) {
         return NULL;
     }
@@ -248,9 +237,9 @@ pmd_t *devmm_get_va_to_pmd(const struct vm_area_struct *vma, unsigned long va) /
     return pmd;
 }
 
-int devmm_va_to_pmd(const ka_vm_area_struct_t *vma, unsigned long va, int huge_flag, pmd_t **tem_pmd)
+int devmm_va_to_pmd(const ka_vm_area_struct_t *vma, unsigned long va, int huge_flag, ka_pmd_t **tem_pmd)
 {
-    pmd_t *pmd = NULL;
+    ka_pmd_t *pmd = NULL;
 
     pmd = devmm_get_va_to_pmd(vma, va);
     *tem_pmd = pmd;
@@ -269,20 +258,20 @@ int devmm_va_to_pmd(const ka_vm_area_struct_t *vma, unsigned long va, int huge_f
 
 int devmm_va_to_pfn(const ka_vm_area_struct_t *vma, u64 va, u64 *pfn, u64 *kpg_size)
 {
-    pte_t *pte = NULL;
+    ka_pte_t *pte = NULL;
 
-    pte = (pte_t *)devmm_get_pte(vma, va, kpg_size);
+    pte = (ka_pte_t *)devmm_get_pte(vma, va, kpg_size);
     if (pte == NULL) {
         return -ERANGE;
     }
 
-    *pfn = pte_pfn(*pte);
+    *pfn = ka_mm_pte_pfn(*pte);
     return 0;
 }
 
 int devmm_va_to_pa(const ka_vm_area_struct_t *vma, u64 va, u64 *pa)
 {
-    u64 aligned_va = ka_base_round_down(va, PAGE_SIZE);
+    u64 aligned_va = ka_base_round_down(va, KA_MM_PAGE_SIZE);
     u64 pfn, kpg_size;
     int ret;
 
@@ -292,30 +281,30 @@ int devmm_va_to_pa(const ka_vm_area_struct_t *vma, u64 va, u64 *pa)
         return ret;
     }
 
-    *pa = PFN_PHYS(pfn);
+    *pa = KA_MM_PFN_PHYS(pfn);
     *pa += (va - aligned_va);
 
     return 0;
 }
 
-STATIC int devmm_va_to_pa_pmd_range(pmd_t *pmd, u64 start, u64 end, u64 *pas, u64 *num)
+STATIC int devmm_va_to_pa_pmd_range(ka_pmd_t *pmd, u64 start, u64 end, u64 *pas, u64 *num)
 {
-    pte_t *pte = NULL;
+    ka_pte_t *pte = NULL;
     u64 got_num = 0;
     u64 va = start;
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 5, 0)
     pte = devmm_pte_offset_map(pmd, va, NULL);
 #else
-    pte = pte_offset_map(pmd, va);
+    pte = ka_mm_pte_offset_map(pmd, va);
 #endif
 
-    for (; va != end; pte++, va += PAGE_SIZE) {
-        if ((pte_none(*pte) != 0) || (pte_present(*pte) == 0)) {
+    for (; va != end; pte++, va += KA_MM_PAGE_SIZE) {
+        if ((ka_mm_pte_none(*pte) != 0) || (ka_mm_pte_present(*pte) == 0)) {
             return -ERANGE;
         }
 
-        pas[got_num] = PFN_PHYS(pte_pfn(*pte));
+        pas[got_num] = KA_MM_PFN_PHYS(ka_mm_pte_pfn(*pte));
         got_num++;
     }
 
@@ -325,7 +314,7 @@ STATIC int devmm_va_to_pa_pmd_range(pmd_t *pmd, u64 start, u64 end, u64 *pas, u6
 
 STATIC int devmm_va_to_pa_pud_range(pud_t *pud, u64 start, u64 end, u64 *pas, u64 *num)
 {
-    pmd_t *pmd = NULL;
+    ka_pmd_t *pmd = NULL;
     u64 got_num = 0;
     u64 va = start;
     u64 next;
@@ -359,7 +348,7 @@ STATIC int devmm_va_to_pa_p4d_range(p4d_t *p4d, u64 start, u64 end, u64 *pas, u6
     u64 va = start;
     u64 next;
 
-    pud = pud_offset(p4d, va);
+    pud = ka_mm_pud_offset(p4d, va);
     for (; va != end; pud++, va = next) {
         int ret;
         u64 n;
@@ -380,14 +369,14 @@ STATIC int devmm_va_to_pa_p4d_range(p4d_t *p4d, u64 start, u64 end, u64 *pas, u6
     return 0;
 }
 
-STATIC int devmm_va_to_pa_pgd_range(pgd_t *pgd, u64 start, u64 end, u64 *pas, u64 *num)
+STATIC int devmm_va_to_pa_pgd_range(ka_pgd_t *pgd, u64 start, u64 end, u64 *pas, u64 *num)
 {
     p4d_t *p4d = NULL;
     u64 got_num = 0;
     u64 va = start;
     u64 next;
 
-    p4d = p4d_offset(pgd, va);
+    p4d = ka_mm_p4d_offset(pgd, va);
     for (; va != end; p4d++, va = next) {
         int ret;
         u64 n;
@@ -408,14 +397,14 @@ STATIC int devmm_va_to_pa_pgd_range(pgd_t *pgd, u64 start, u64 end, u64 *pas, u6
     return 0;
 }
 #else
-STATIC int devmm_va_to_pa_pgd_range(pgd_t *pgd, u64 start, u64 end, u64 *pas, u64 *num)
+STATIC int devmm_va_to_pa_pgd_range(ka_pgd_t *pgd, u64 start, u64 end, u64 *pas, u64 *num)
 {
     pud_t *pud = NULL;
     u64 got_num = 0;
     u64 va = start;
     u64 next;
 
-    pud = pud_offset(pgd, va);
+    pud = ka_mm_pud_offset(pgd, va);
     for (; va != end; pud++, va = next) {
         int ret;
         u64 n;
@@ -440,17 +429,17 @@ STATIC int devmm_va_to_pa_pgd_range(pgd_t *pgd, u64 start, u64 end, u64 *pas, u6
 int devmm_va_to_pa_range(const ka_vm_area_struct_t *vma, u64 va, u64 num, u64 *pas)
 {
     u64 start, end, len, next;
-    pgd_t *pgd = NULL;
+    ka_pgd_t *pgd = NULL;
     u64 got_num = 0;
 
-    start = ka_base_round_down(va, PAGE_SIZE);
-    len = num << PAGE_SHIFT;
+    start = ka_base_round_down(va, KA_MM_PAGE_SIZE);
+    len = num << KA_MM_PAGE_SHIFT;
     end = start + len;
     if (end < start) {
         return -EINVAL;
     }
 
-    pgd = pgd_offset(vma->vm_mm, start);
+    pgd = ka_mm_pgd_offset(vma->vm_mm, start);
     for (; start != end; pgd++, start = next) {
         int ret;
         u64 n;
@@ -496,11 +485,11 @@ int devmm_get_pages_list(ka_mm_struct_t *mm, u64 va, u64 num, ka_page_t **pages)
 {
     struct devmm_svm_process *svm_proc = NULL;
     struct devmm_svm_heap *heap = NULL;
-    u64 size = num << PAGE_SHIFT;
+    u64 size = num << KA_MM_PAGE_SHIFT;
     int ret;
 
     if ((mm == NULL) || (pages == NULL)) {
-        devmm_drv_err("Invaild para.\n");
+        devmm_drv_err("Invalid para.\n");
         return -EINVAL;
     }
 
@@ -530,7 +519,7 @@ int devmm_get_pages_list(ka_mm_struct_t *mm, u64 va, u64 num, ka_page_t **pages)
 
     return ret;
 }
-EXPORT_SYMBOL_GPL(devmm_get_pages_list);
+KA_EXPORT_SYMBOL_GPL(devmm_get_pages_list);
 #endif
 
 /**
@@ -542,7 +531,7 @@ int devmm_va_to_palist(const ka_vm_area_struct_t *vma, u64 va, u64 sz, u64 *pa, 
     u32 pg_num = 0;
     int ret = 0;
 
-    for (vaddr = ka_base_round_down(va, PAGE_SIZE); vaddr < ka_base_round_up(va + sz, PAGE_SIZE); vaddr += PAGE_SIZE) {
+    for (vaddr = ka_base_round_down(va, KA_MM_PAGE_SIZE); vaddr < ka_base_round_up(va + sz, KA_MM_PAGE_SIZE); vaddr += KA_MM_PAGE_SIZE) {
         if (devmm_va_to_pa(vma, vaddr, &paddr) != 0) {
             /* too much log, not print */
             ret = -ENOENT;
@@ -568,13 +557,13 @@ void devmm_zap_vma_ptes(ka_vm_area_struct_t *vma, unsigned long vaddr, unsigned 
     }
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(4, 18, 0)
-    ret = zap_vma_ptes(vma, vaddr, size);
+    ret = ka_mm_zap_vma_ptes(vma, vaddr, size);
     if (ret != 0) {
         devmm_drv_err("Zap_vma_ptes fail. (va=0x%lx; ret=%d; flags=0x%lx; start=0x%lx; end=0x%lx)\n",
-                      vaddr, ret, vma->vm_flags, vma->vm_start, vma->vm_end);
+                      vaddr, ret, ka_mm_get_vm_flags(vma), ka_mm_get_vm_start(vma), ka_mm_get_vm_end(vma));
     }
 #else
-    zap_vma_ptes(vma, vaddr, size);
+    ka_mm_zap_vma_ptes(vma, vaddr, size);
 #endif
 }
 
@@ -585,7 +574,7 @@ static u64 devmm_get_mapped_page_num(ka_vm_area_struct_t *vma, u64 vaddr, u64 *p
     int ret;
 
     for (i = 0; i < page_num; ++i) {
-        ret = devmm_va_to_pa(vma, vaddr + i * PAGE_SIZE, &paddrs[i]);
+        ret = devmm_va_to_pa(vma, vaddr + i * KA_MM_PAGE_SIZE, &paddrs[i]);
         if (ret != 0) {
             break;
         }
@@ -632,7 +621,7 @@ static void devmm_cont_unmap_pages(struct devmm_svm_process *svm_proc, ka_vm_are
     for (i = 0; i < page_num;) {
         struct devmm_pa_info_para info = {0};
 
-        start_addr = vaddr + i * PAGE_SIZE;
+        start_addr = vaddr + i * KA_MM_PAGE_SIZE;
         mapped_num = devmm_get_mapped_page_num(vma, start_addr, &paddrs[i], page_num - i);
         if (mapped_num == 0) {
             i++;
@@ -642,13 +631,13 @@ static void devmm_cont_unmap_pages(struct devmm_svm_process *svm_proc, ka_vm_are
         info.vaddr = start_addr;
         info.paddrs = &paddrs[i];
         info.pa_num = mapped_num;
-        info.page_size = PAGE_SIZE;
+        info.page_size = KA_MM_PAGE_SIZE;
 #ifndef HOST_AGENT
         if (devmm_va_is_support_sdma_kernel_clear(svm_proc, start_addr) && is_owner) {
             devmm_sdma_kernel_mem_clear(&attr, svm_proc->ssid, &info);
         }
 #endif
-        devmm_zap_vma_ptes(vma, start_addr, mapped_num * PAGE_SIZE);
+        devmm_zap_vma_ptes(vma, start_addr, mapped_num * KA_MM_PAGE_SIZE);
         if (devmm_va_is_in_svm_range(start_addr)) {
             devmm_free_pages_range(svm_proc, &paddrs[i], mapped_num, &attr, is_owner);
         }
@@ -664,7 +653,7 @@ static bool devmm_try_cont_unmap_page(struct devmm_svm_process *svm_proc,
     u64 *pa_list = NULL;
     u64 i;
     /* The maximum continuous physical page size is 32M, with 4K per page, so the per max page num is 8192 */
-    u64 per_max_num = min_t(u64, page_num, 8192);
+    u64 per_max_num = ka_base_min_t(u64, page_num, 8192);
     u32 stamp = (u32)ka_jiffies;
 
     pa_list = (u64 *)devmm_kmalloc_ex(sizeof(u64) * per_max_num, KA_GFP_ATOMIC | __KA_GFP_NOWARN | __KA_GFP_ACCOUNT);
@@ -673,8 +662,8 @@ static bool devmm_try_cont_unmap_page(struct devmm_svm_process *svm_proc,
     }
 
     for (i = 0; i < page_num;) {
-        pa_info_para.vaddr = vaddr + i * PAGE_SIZE;
-        pa_info_para.pa_num = min_t(u64, (page_num - i), per_max_num);
+        pa_info_para.vaddr = vaddr + i * KA_MM_PAGE_SIZE;
+        pa_info_para.pa_num = ka_base_min_t(u64, (page_num - i), per_max_num);
         pa_info_para.paddrs = pa_list;
         devmm_cont_unmap_pages(svm_proc, vma, &pa_info_para, is_owner);
         i += pa_info_para.pa_num;
@@ -700,12 +689,12 @@ void devmm_unmap_page_from_vma_owner(struct devmm_svm_process *svm_proc,
 
     for (i = 0; i < num; i++) {
         int ret;
-        temp_addr = vaddr + (i << PAGE_SHIFT);
+        temp_addr = vaddr + (i << KA_MM_PAGE_SHIFT);
         ret = devmm_va_to_pa(vma, temp_addr, &paddr);
         if (ret != 0) {
             continue;
         }
-        devmm_zap_vma_ptes(vma, temp_addr, PAGE_SIZE);
+        devmm_zap_vma_ptes(vma, temp_addr, KA_MM_PAGE_SIZE);
         if (devmm_va_is_in_svm_range(temp_addr)) {
             if (devmm_pa_is_remote_addr(paddr)) {
                 continue;
@@ -731,12 +720,12 @@ void devmm_unmap_page_from_vma_custom(struct devmm_svm_process *svm_proc,
 
     for (i = 0; i < num; i++) {
         int ret;
-        temp_addr = vaddr + (i << PAGE_SHIFT);
+        temp_addr = vaddr + (i << KA_MM_PAGE_SHIFT);
         ret = devmm_va_to_pa(vma, temp_addr, &paddr);
         if (ret != 0) {
             continue;
         }
-        devmm_zap_vma_ptes(vma, temp_addr, PAGE_SIZE);
+        devmm_zap_vma_ptes(vma, temp_addr, KA_MM_PAGE_SIZE);
         if (devmm_pa_is_remote_addr(paddr)) {
             continue;
         }
@@ -817,7 +806,7 @@ static void _devmm_zap_owner_ptes_range(struct devmm_svm_process *svm_proc, u64 
         return;
     }
 
-    devmm_zap_vma_ptes(vma, va, PAGE_SIZE * page_num);
+    devmm_zap_vma_ptes(vma, va, KA_MM_PAGE_SIZE * page_num);
     return;
 }
 
@@ -846,7 +835,7 @@ static u64 devmm_get_cont_page_num(ka_page_t **inpages, u64 page_num)
 }
 
 int devmm_insert_pages_to_vma_owner(ka_vm_area_struct_t *vma, u64 va,
-    u64 page_num, ka_page_t **inpages, pgprot_t vm_page_prot)
+    u64 page_num, ka_page_t **inpages, ka_pgprot_t vm_page_prot)
 {
     u64 i, cont_num;
     u32 stamp = (u32)ka_jiffies;
@@ -854,11 +843,11 @@ int devmm_insert_pages_to_vma_owner(ka_vm_area_struct_t *vma, u64 va,
 
     for (i = 0; i < page_num;) {
         cont_num = devmm_get_cont_page_num(&inpages[i], page_num - i);
-        ret = remap_pfn_range(vma, va + PAGE_SIZE * i, ka_mm_page_to_pfn(inpages[i]), PAGE_SIZE * cont_num, vm_page_prot);
+        ret = ka_mm_remap_pfn_range(vma, va + KA_MM_PAGE_SIZE * i, ka_mm_page_to_pfn(inpages[i]), KA_MM_PAGE_SIZE * cont_num, vm_page_prot);
         if (ret != 0) {
             devmm_drv_err("Vm_insert_page failed. (ret=%d; va=0x%llx; i=%llu; cont_num=%llu; page_num=%llu)\n",
                 ret, va, i, cont_num, page_num);
-            devmm_zap_vma_ptes(vma, va, PAGE_SIZE * i);
+            devmm_zap_vma_ptes(vma, va, KA_MM_PAGE_SIZE * i);
             return -ENOMEM;
         }
         i += cont_num;
@@ -868,7 +857,7 @@ int devmm_insert_pages_to_vma_owner(ka_vm_area_struct_t *vma, u64 va,
 }
 
 static int _devmm_pages_remap_owner(struct devmm_svm_process *svm_proc, u64 va, u64 page_num,
-    ka_page_t **inpages, pgprot_t vm_page_prot)
+    ka_page_t **inpages, ka_pgprot_t vm_page_prot)
 {
     ka_vm_area_struct_t *vma = NULL;
     int ret;
@@ -916,7 +905,7 @@ static u64 devmm_get_no_mapped_page_num(ka_vm_area_struct_t *vma, u64 vaddr, u64
     int ret;
 
     for (i = 0; i < page_num; ++i) {
-        ret = follow_pfn(vma, vaddr + i * PAGE_SIZE, &tmp_pfn);
+        ret = ka_mm_follow_pfn(vma, vaddr + i * KA_MM_PAGE_SIZE, &tmp_pfn);
         if (ret == 0) {
             break;
         }
@@ -932,19 +921,19 @@ int devmm_insert_pages_to_vma_custom(ka_vm_area_struct_t *vma, u64 va,
     int ret;
 
     for (i = 0; i < page_num;) {
-        no_mapped_num = devmm_get_no_mapped_page_num(vma, va + i * PAGE_SIZE, page_num - i);
+        no_mapped_num = devmm_get_no_mapped_page_num(vma, va + i * KA_MM_PAGE_SIZE, page_num - i);
         if (no_mapped_num == 0) {
             i++;
             continue;
         }
 
         cont_num = devmm_get_cont_page_num(&inpages[i], no_mapped_num);
-        ret = remap_pfn_range(vma, va + i * PAGE_SIZE, ka_mm_page_to_pfn(inpages[i]), cont_num * PAGE_SIZE,
+        ret = ka_mm_remap_pfn_range(vma, va + i * KA_MM_PAGE_SIZE, ka_mm_page_to_pfn(inpages[i]), cont_num * KA_MM_PAGE_SIZE,
             devmm_make_pgprot(pgprot, false));
         if (ret != 0) {
             devmm_drv_err("Vm_insert_page failed. (ret=%d; va=0x%llx; i=%llu; cont_num=%llu; page_num=%llu)\n",
                 ret, va, i, cont_num, page_num);
-            devmm_zap_vma_ptes(vma, va, PAGE_SIZE * i);
+            devmm_zap_vma_ptes(vma, va, KA_MM_PAGE_SIZE * i);
             return -ENOMEM;
         }
         i += cont_num;
@@ -977,8 +966,8 @@ static int devmm_pages_remap_custom(struct devmm_svm_process *svm_proc, u64 va, 
             continue;
         }
         get_lock = ka_task_down_write_trylock(get_mmap_sem(custom_mm));
-        vma = find_vma(custom_mm, va);
-        if ((vma == NULL) || (vma->vm_start > va) || (devmm_is_svm_vma_magic(vma->vm_private_data) == false)) {
+        vma = ka_mm_find_vma(custom_mm, va);
+        if ((vma == NULL) || (ka_mm_get_vm_start(vma) > va) || (devmm_is_svm_vma_magic(ka_mm_get_vm_private_data(vma)) == false)) {
 #ifndef EMU_ST
             if (get_lock) {
                 ka_task_up_write(get_mmap_sem(custom_mm));
@@ -1087,6 +1076,10 @@ STATIC struct devmm_svm_heap *devmm_svm_get_heap_proc(struct devmm_svm_process *
     struct devmm_svm_heap *heap = NULL;
     u32 heap_idx;
 
+    if (devmm_is_in_host_pin_range(va)) {
+        return svm_proc->host_pin_heap;
+    }
+
     heap_idx = (u32)((va - svm_proc->start_addr) / DEVMM_HEAP_SIZE);
     heap = devmm_get_heap_by_idx(svm_proc, heap_idx);
     if (devmm_check_heap_is_entity(heap) == false) {
@@ -1098,6 +1091,10 @@ STATIC struct devmm_svm_heap *devmm_svm_get_heap_proc(struct devmm_svm_process *
 
 struct devmm_svm_heap *devmm_svm_get_heap(struct devmm_svm_process *svm_proc, unsigned long va)
 {
+    if (devmm_is_in_host_pin_range(va)) {
+        return svm_proc->host_pin_heap;
+    }
+
     if (devmm_va_is_not_svm_process_addr(svm_proc, va)) {
         return NULL;
     }
@@ -1143,7 +1140,7 @@ int devmm_svm_proc_and_heap_get(struct devmm_svm_process_id *process_id, u64 va,
     *heap = devmm_svm_heap_get(*svm_proc, va);
     if (*heap == NULL) {
         devmm_svm_proc_put(*svm_proc);
-        devmm_drv_err("Vaddress is errorr. (va=0x%llx; hostpid=%d; devid=%d; vfid=%d)\n",
+        devmm_drv_err("Vaddress is error. (va=0x%llx; hostpid=%d; devid=%d; vfid=%d)\n",
                       va, process_id->hostpid, process_id->devid, process_id->vfid);
         return -EADDRNOTAVAIL;
     }
@@ -1431,14 +1428,14 @@ int devmm_chan_msg_dispatch(void *msg, u32 in_data_len, u32 out_data_len, u32 *a
 
     ret = devmm_chan_get_svm_proc_and_lock(head_msg, msg_process, &svm_proc);
     if (ret != 0) {
-        /* set DEVMM_MSG_RETURN_OK_MASK when thread exit will return ower died ret, msg return ok */
+        /* set DEVMM_MSG_RETURN_OK_MASK when thread exit will return owner died ret, msg return ok */
         ret = (ret == -EOWNERDEAD) ? 0 : ret;
         goto save_msg_ret;
     }
-    svm_use_da(svm_proc);
+
     ret = devmm_chan_get_heap((struct devmm_chan_addr_head *)msg, msg_process, svm_proc, &heap);
     if (ret != 0) {
-        /* set DEVMM_MSG_RETURN_OK_MASK when heap destory will return Remote address changed, msg return ok */
+        /* set DEVMM_MSG_RETURN_OK_MASK when heap destroy will return Remote address changed, msg return ok */
         ret = (ret == -EREMCHG) ? 0 : ret;
         goto put_svm_proc_and_chan_lock;
     }
@@ -1455,13 +1452,12 @@ int devmm_chan_msg_dispatch(void *msg, u32 in_data_len, u32 out_data_len, u32 *a
     ret = msg_process[msg_id].chan_msg_processes(svm_proc, heap, msg, ack_len);
     devmm_chan_disable_cgroup(msg_process, msg_id, svm_proc, old_memcg, memcg);
 put_svm_proc_and_chan_lock:
-    svm_unuse_da(svm_proc);
     devmm_chan_put_svm_proc_and_unlock(head_msg, msg_process, svm_proc);
 save_msg_ret:
     /*
      * 1. if svm process is wrong, the error code is returned by head_msg->result
      * 2. for the performance, if svm process is right, return nothing
-     * 3. devmm_chan_msg_dispatch always return 0, beacuse another error code means pcie msg wrong
+     * 3. devmm_chan_msg_dispatch always return 0, because another error code means pcie msg wrong
      */
     if (ret != 0) {
         head_msg->result = (short)ret;

@@ -639,7 +639,7 @@ struct dms_system_ctrl_block {
     /* Scan task synchronization signal */
     wait_queue_head_t sensor_scan_wait;
     atomic_t sensor_scan_task_state;
-    /* This flag records whehter system suspend, if true, the sensor scan task will not run */
+    /* This flag records whether system suspend, if true, the sensor scan task will not run */
     int sensor_scan_suspend_flag;
 
     struct timer_list dms_sensor_check_timer;

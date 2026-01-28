@@ -15,15 +15,16 @@
 #define SVM_FAULT_REPORT_H
 
 #include <linux/types.h>
-#include <linux/kallsyms.h>
+
+#include "ka_system_pub.h"
 
 typedef int (*fault_report_handle)(u32 devid);
 static inline void svm_kernel_soft_fault_report(u32 devid)
 {
-    fault_report_handle handle = (fault_report_handle)(uintptr_t)__symbol_get("hal_kernel_drv_soft_fault_report");
+    fault_report_handle handle = (fault_report_handle)(uintptr_t)__ka_system_symbol_get("hal_kernel_drv_soft_fault_report");
     if (handle != NULL) {
         handle(devid);
-        __symbol_put("hal_kernel_drv_soft_fault_report");
+        __ka_system_symbol_put("hal_kernel_drv_soft_fault_report");
     }
 }
 #endif

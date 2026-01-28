@@ -11,17 +11,6 @@
  * GNU General Public License for more details.
  */
 
-#include <linux/slab.h>
-#include <linux/types.h>
-#include <linux/delay.h>
-#include <linux/version.h>
-#include <linux/kernel.h>
-#include <linux/pid.h>
-#include <linux/kref.h>
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 11, 0)
-#include <linux/sched/task.h>
-#endif
-
 #include "svm_msg_client.h"
 #include "svm_kernel_msg.h"
 #include "dms/dms_devdrv_manager_comm.h"
@@ -130,7 +119,7 @@ struct devmm_svm_process *devmm_ipc_query_owner_info(struct devmm_svm_process *s
 }
 
 int devmm_ipc_get_owner_proc_attr(struct devmm_svm_process *svm_proc, struct devmm_memory_attributes *attr,
-    struct devmm_svm_process **owner_proc, struct devmm_memory_attributes *owner_attr)
+    struct devmm_svm_process **owner_proc, struct devmm_svm_heap **heap, struct devmm_memory_attributes *owner_attr)
 {
     struct devmm_svm_process_id proc_id;
     u64 owner_va;
@@ -141,27 +130,40 @@ int devmm_ipc_get_owner_proc_attr(struct devmm_svm_process *svm_proc, struct dev
         return -EINVAL;
     }
 
-    ret = devmm_svm_other_proc_occupy_get_lock(*owner_proc);
+    ret = devmm_svm_other_proc_occupy_num_add(*owner_proc);
     if (ret != 0) {
         devmm_drv_debug("Process is exiting. (hostpid=%d)\n", (*owner_proc)->process_id.hostpid);
         return ret;
     }
 
+    if (!devmm_va_is_not_svm_process_addr(*owner_proc, owner_va)) {
+        *heap = devmm_svm_heap_get(*owner_proc, owner_va); 
+        if (*heap == NULL) {
+#ifndef EMU_ST
+            devmm_drv_err("Heap is NULL. (owner_host_pid=%d; va=%llx)\n", (*owner_proc)->process_id.hostpid, owner_va);
+            devmm_svm_other_proc_occupy_num_sub(*owner_proc);
+            return -EADDRNOTAVAIL;
+#endif
+        }
+    }
     ret = devmm_get_memory_attributes(*owner_proc, owner_va, owner_attr);
     if (ret != 0) {
-        devmm_svm_other_proc_occupy_put_lock(*owner_proc);
         devmm_drv_err("Query attributes failed. (owner_host_pid=%d; va=%llx)\n",
             (*owner_proc)->process_id.hostpid, owner_va);
+#ifndef EMU_ST
+        devmm_svm_heap_put(*heap);
+        devmm_svm_other_proc_occupy_num_sub(*owner_proc);
+#endif
         return ret;
     }
 
     return 0;
 }
 
-void devmm_ipc_put_owner_proc_attr(struct devmm_svm_process *owner_proc, struct devmm_memory_attributes *owner_attr)
+void devmm_ipc_put_owner_proc_attr(struct devmm_svm_process *owner_proc, struct devmm_svm_heap *heap)
 {
-    (void)owner_attr;
-    devmm_svm_other_proc_occupy_put_lock(owner_proc);
+    devmm_svm_heap_put(heap);
+    devmm_svm_other_proc_occupy_num_sub(owner_proc);
 }
 
 static int devmm_ipc_mem_create_para_check(struct devmm_svm_process *svm_proc,
@@ -203,7 +205,7 @@ static int devmm_ipc_mem_create_para_check(struct devmm_svm_process *svm_proc,
         }
 
         if (!devmm_page_bitmap_is_dev_mapped(bitmap + i)) {
-            devmm_drv_err("Virtual address is not device maped. "
+            devmm_drv_err("Virtual address is not device mapped. "
                           "(va=0x%llx; pageid=%lld; bitmap=0x%x)\n", vptr, i, *(bitmap + i));
             return -EINVAL;
         }
@@ -284,7 +286,7 @@ static void devmm_ipc_mem_node_uninit(struct devmm_ipc_node_attr *node_attr)
 
 static int _devmm_ipc_mem_name_create(struct svm_id_inst *inst, char *name, size_t len)
 {
-    static u64 g_ipc_name_ref = ATOMIC64_INIT(0);
+    static u64 g_ipc_name_ref = KA_BASE_ATOMIC64_INIT(0);
     int offset;
 
     offset = snprintf_s(name, IPC_NAME_SIZE, IPC_NAME_SIZE - 1, "%08x%016llx%02x%02x", ka_task_get_current_tgid(),
@@ -455,7 +457,7 @@ int devmm_ioctl_ipc_mem_set_pid(struct devmm_svm_process *svm_pro, struct devmm_
     int ret;
 
     karg->name[DEVMM_MAX_NAME_SIZE - 1] = '\0';
-    karg->sdid = UINT_MAX;
+    karg->sdid = KA_UINT_MAX;
     attr.name = karg->name;
     attr.sdid = karg->sdid;
     attr.creator_pid = ka_task_get_current_tgid();

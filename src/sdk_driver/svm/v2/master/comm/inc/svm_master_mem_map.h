@@ -13,9 +13,9 @@
 #ifndef SVM_MASTER_MEM_MAP_H
 #define SVM_MASTER_MEM_MAP_H
 
-#include "svm_ioctl.h"
 #include "devmm_proc_info.h"
 #include "svm_vmma_mng.h"
+#include "svm_ioctl.h"
 
 #ifdef CFG_SOC_PLATFORM_ESL_FPGA
 #define DEVMM_MEM_MAP_MAX_PAGE_NUM_PER_MSG 512ULL

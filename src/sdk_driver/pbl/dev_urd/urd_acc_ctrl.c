@@ -10,7 +10,6 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-
 #include <linux/string.h>
 #include <linux/slab.h>
 #include <linux/errno.h>
@@ -24,6 +23,10 @@
 #include "pbl/pbl_davinci_api.h"
 #include "urd_acc_ctrl.h"
 #include "urd_container.h"
+#include "ka_driver_pub.h"
+#include "ka_memory_pub.h"
+#include "ka_kernel_def_pub.h"
+#include "ka_base_pub.h"
 
 #ifndef CFG_HOST_ENV
 #  include "drv_whitelist.h"
@@ -82,7 +85,7 @@ static inline s32 user_group_identify(u32 user_acc, u32 profile)
 
 static inline bool dms_check_in_virtual_machine(void)
 {
-    if (dmi_match(DMI_SYS_VENDOR, DMI_VIRTUAL_SYSVENDOR))  {
+    if (ka_driver_dmi_match(DMI_SYS_VENDOR, DMI_VIRTUAL_SYSVENDOR))  {
         return true;
     }
     return false;
@@ -231,7 +234,7 @@ s32 dms_feature_access_identify(u32 feature_prof, u32 msg_source)
     }
     return 0;
 }
-EXPORT_SYMBOL_GPL(dms_feature_access_identify);
+KA_EXPORT_SYMBOL_GPL(dms_feature_access_identify);
 
 #ifndef CFG_HOST_ENV
 static int dms_parse_string(char **str, const char *delim, char **out,
@@ -281,9 +284,9 @@ STATIC int dms_feature_alloc_and_save_proc_name(char **process_name, int process
     int i;
     char **tmp_proc = NULL;
 
-    tmp_proc = (char **)kzalloc(process_num * sizeof(char *), GFP_KERNEL | __GFP_ACCOUNT);
+    tmp_proc = (char **)ka_mm_kzalloc(process_num * sizeof(char *), KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
     if (tmp_proc == NULL) {
-        dms_err("kzalloc failed. (len=%lu)\n", process_num * sizeof(char *));
+        dms_err("ka_mm_kzalloc failed. (len=%lu)\n", process_num * sizeof(char *));
         return -ENOMEM;
     }
     *proc_ctl = tmp_proc;
@@ -310,12 +313,12 @@ int dms_feature_parse_proc_ctrl(const char *proc_str, char **buf, char ***proc_c
     if ((buf == NULL) || (proc_ctl == NULL) || (proc_num == NULL)) {
         return -EINVAL;
     }
-    len = strnlen(proc_str, DMS_ACCESS_PROC_STRING_MAX);
+    len = ka_base_strnlen(proc_str, DMS_ACCESS_PROC_STRING_MAX);
     if (len >= DMS_ACCESS_PROC_STRING_MAX) {
         dms_err("Parse proc failed. (len=%lu)\n", len);
         return -EINVAL;
     }
-    *buf = (char *)kzalloc(len + 1, GFP_KERNEL | __GFP_ACCOUNT);
+    *buf = (char *)ka_mm_kzalloc(len + 1, KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
     if (*buf == NULL) {
         return -ENOMEM;
     }
@@ -343,7 +346,7 @@ int dms_feature_parse_proc_ctrl(const char *proc_str, char **buf, char ***proc_c
     return 0;
 
 ERR_OUT:
-    kfree(*buf);
+    ka_mm_kfree(*buf);
     *buf = NULL;
     return ret;
 #else

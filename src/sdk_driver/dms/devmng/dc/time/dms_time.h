@@ -41,7 +41,7 @@
 #define DMS_SYSTEM_WORKING 0
 #define DMS_REBOOT_PREPARE 1
 
-/* device local time synchronize sevice state */
+/* device local time synchronize service state */
 #define DMS_TIMEZONE_SYNC_RUNNING 2
 #define DMS_TIMEZONE_SYNC_IDLE 3
 #define DMS_TIMEZONE_SYNC_STOP 4

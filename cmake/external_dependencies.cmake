@@ -22,5 +22,7 @@ file(MAKE_DIRECTORY "${EXTERN_DEPEND_SOURCE_DIR}")
 file(MAKE_DIRECTORY "${EXTERN_DEPEND_DOWNLOAD_DIR}")
 
 include(${PROJECT_SOURCE_DIR}/cmake/third_party/secure_c.cmake)
-include(${PROJECT_SOURCE_DIR}/cmake/third_party/rdma-core.cmake)
 
+if("${PRODUCT}" STREQUAL "ascend910B")
+    include(${PROJECT_SOURCE_DIR}/cmake/third_party/rdma-core.cmake)
+endif()

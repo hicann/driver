@@ -16,7 +16,7 @@ target_sources(drv_log_obj PRIVATE
 )
 
 target_compile_definitions(drv_log_obj PRIVATE
-$<$<STREQUAL:${PRODUCT_SIDE},host>:DRV_HOST>
+    DRV_HOST
 )
 
 target_include_directories(drv_log_obj PRIVATE
@@ -24,7 +24,6 @@ target_include_directories(drv_log_obj PRIVATE
     ${C_SEC_INCLUDE}
     ${DRIVER_HAL_INC_DIR}
     ${DRIVER_USER_DIR}/inc
-    ${DRIVER_USER_DIR}/ascend_base_hal
     ${DRIVER_USER_DIR}/msnpureport/inc/slog
 )
 
@@ -37,7 +36,7 @@ target_sources(drv_log_base_obj PRIVATE
 )
 
 target_compile_definitions(drv_log_base_obj PRIVATE
-$<$<STREQUAL:${PRODUCT_SIDE},host>:DRV_HOST>
+    DRV_HOST
 )
 
 target_include_directories(drv_log_base_obj PRIVATE
@@ -45,6 +44,5 @@ target_include_directories(drv_log_base_obj PRIVATE
     ${C_SEC_INCLUDE}
     ${DRIVER_HAL_INC_DIR}
     ${DRIVER_USER_DIR}/inc
-    ${DRIVER_USER_DIR}/ascend_base_hal
     ${DRIVER_USER_DIR}/msnpureport/inc/slog
 )

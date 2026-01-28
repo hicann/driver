@@ -22,12 +22,13 @@
 #include "devmm_proc_info.h"
 #include "svm_shmem_node.h"
 #include "svm_shmem_node_pod.h"
+#include "ka_barrier_pub.h"
 
 #define FAULT_POD_HASH_LIST_NUM_SHIFT 6
 #define FAULT_POD_HASH_LIST_NUM (1 << FAULT_POD_HASH_LIST_NUM_SHIFT)  /* 64 */
 
-DECLARE_HASHTABLE(g_fault_pod_htable, FAULT_POD_HASH_LIST_NUM_SHIFT);
-static DEFINE_RWLOCK(g_fault_pod_rwlock);
+KA_DECLARE_HASHTABLE(g_fault_pod_htable, FAULT_POD_HASH_LIST_NUM_SHIFT);
+static KA_TASK_DEFINE_RWLOCK(g_fault_pod_rwlock);
 
 struct devmm_fault_pod_node {
     ka_hlist_node_t link;
@@ -169,8 +170,8 @@ static int devmm_ipc_pod_setpid_msg_send(const char *name, struct svm_id_inst *i
     struct devmm_ipc_node_attr attr;
     int ret, i;
 
-    /* When set pid. sdid is UINT_MAX means pid is on the currnet server */
-    if (sdid == UINT_MAX) {
+    /* When set pid. sdid is KA_UINT_MAX means pid is on the current server */
+    if (sdid == KA_UINT_MAX) {
         return 0;
     }
 
@@ -218,11 +219,11 @@ static int devmm_ipc_pod_get_devid_and_sdid(const char *name, struct svm_id_inst
     int ret;
 
     ret = devmm_ipc_node_get_inst_by_name(name, inst);
-    if (likely(ret == 0)) {
+    if (ka_likely(ret == 0)) {
         /* Update sdid */
         if (devmm_ipc_pod_is_local_pod(inst->devid, *sdid)) {
-            /* When set wlist, pids in current server, sdid will be set to UINT_MAX */
-            *sdid = UINT_MAX;
+            /* When set wlist, pids in current server, sdid will be set to KA_UINT_MAX */
+            *sdid = KA_UINT_MAX;
         }
     }
     return ret;
@@ -262,29 +263,29 @@ static int devmm_ipc_pod_msg_check(u32 devid, u32 sdid, struct data_input_info *
 {
     struct devmm_ipc_pod_msg_data *msg = NULL;
 
-    if (unlikely(devid >= DEVMM_MAX_DEVICE_NUM)) {
+    if (ka_unlikely(devid >= DEVMM_MAX_DEVICE_NUM)) {
         devmm_drv_err("Invalid devid. (devid=%u)\n", devid);
         return -EINVAL;
     }
 
-    if (unlikely((data == NULL) || (data->data == NULL))) {
+    if (ka_unlikely((data == NULL) || (data->data == NULL))) {
         devmm_drv_err("Invalid data. (devid=%u; sdid=%u)\n", devid, sdid);
         return -EINVAL;
     }
 
-    if (unlikely(data->in_len != sizeof(struct devmm_ipc_pod_msg_data))) {
+    if (ka_unlikely(data->in_len != sizeof(struct devmm_ipc_pod_msg_data))) {
         devmm_drv_err("Invalid data len. (in_len=%u; data_size=%ld; devid=%u; sdid=%u)\n",
             data->in_len, sizeof(struct devmm_ipc_pod_msg_data), devid, sdid);
         return -EINVAL;
     }
     msg = (struct devmm_ipc_pod_msg_data *)data->data;
-    if (unlikely(msg->header.valid != DEVMM_IPC_POD_MSG_SEND_MAGIC)) {
+    if (ka_unlikely(msg->header.valid != DEVMM_IPC_POD_MSG_SEND_MAGIC)) {
         devmm_drv_err("Invalid magic. (magic=0x%x; devid=%u; sdid=%u; cmdtype=%d)\n",
             msg->header.valid, devid, sdid, msg->header.cmdtype);
         return -EINVAL;
     }
 
-    if (unlikely(msg->header.cmdtype >= (u32)DEVMM_IPC_POD_MSG_MAX)) {
+    if (ka_unlikely(msg->header.cmdtype >= (u32)DEVMM_IPC_POD_MSG_MAX)) {
         devmm_drv_err("Invalid cmd. (cmd=%u; devid=%u; sdid=%u)\n", msg->header.cmdtype, devid, sdid);
         return -EINVAL;
     }
@@ -333,13 +334,13 @@ static int devmm_ipc_pod_shadow_set_pid(u32 devid, struct devmm_ipc_pod_msg_data
 
     devmm_ipc_pod_node_attr_pack(set_pid_msg, &attr);
     ret = devmm_ipc_pod_node_attr_check(&attr);
-    if (unlikely(ret != 0)) {
+    if (ka_unlikely(ret != 0)) {
         devmm_drv_err("Invalid ipc node attr. (ret=%d; devid=%u)\n", ret, devid);
         return ret;
     }
-    ret = devmm_ipc_node_set_pids_ex(&attr, UINT_MAX, set_pid_msg->creator_pid,
+    ret = devmm_ipc_node_set_pids_ex(&attr, KA_UINT_MAX, set_pid_msg->creator_pid,
         set_pid_msg->pid, set_pid_msg->pid_num);
-    if (unlikely(ret != 0)) {
+    if (ka_unlikely(ret != 0)) {
         devmm_drv_err("Set pid fail. (ret=%d; name=%s; devid=%u; sdid=%u; pid=%d)\n",
             ret, attr.name, attr.inst.devid, set_pid_msg->sdid, attr.pid);
         return ret;
@@ -592,7 +593,7 @@ static void devmm_ipc_pod_clear_fault_sdid(ka_pid_t pid, bool async_recycle)
     if (async_recycle == false) {
         return;
     }
-    write_lock(&g_fault_pod_rwlock);
+    ka_task_write_lock(&g_fault_pod_rwlock);
     ka_hash_for_each_possible_safe(g_fault_pod_htable, node, tmp, link, key) {
         if (node->creator_pid == pid) {
             ka_hash_del(&node->link);
@@ -600,17 +601,17 @@ static void devmm_ipc_pod_clear_fault_sdid(ka_pid_t pid, bool async_recycle)
         }
     }
 
-    write_unlock(&g_fault_pod_rwlock);
+    ka_task_write_unlock(&g_fault_pod_rwlock);
 }
 
 static struct ipc_node_sdid_list* devmm_create_ipc_node_sdid_list(struct devmm_ipc_node *node, u32 *sdid_num)
 {
     struct ipc_node_sdid_list *sdid_list = NULL;
     struct ipc_node_wlist *wlist = NULL;
-    u32 stamp = (u32)jiffies;
+    u32 stamp = (u32)ka_jiffies;
     u32 i;
 
-    if (list_empty_careful(&node->wlist_head)) {
+    if (ka_list_empty_careful(&node->wlist_head)) {
         return NULL;
     }
 
@@ -622,7 +623,7 @@ static struct ipc_node_sdid_list* devmm_create_ipc_node_sdid_list(struct devmm_i
 
     *sdid_num = 0;
     ka_list_for_each_entry(wlist, &node->wlist_head, list) {
-        if (wlist->sdid == UINT_MAX) {
+        if (wlist->sdid == KA_UINT_MAX) {
             /* wlist.sdid == UNIX_MAX means wlist.pid is in current server */
             continue;
         }
@@ -774,10 +775,10 @@ try_send:
     if (send_succ_cnt != 0) {
         return send_succ_cnt;
     }
-    mb();
-    current_time = ktime_get_ns();
+    ka_mb();
+    current_time = ka_system_ktime_get_ns();
     if ((send_busy_cnt != 0) && (current_time - start_time <= IPC_POD_DESTROY_MAX_TIME)) {
-        usleep_range(1000, 2000); /* 1000us to 2000us */
+        ka_system_usleep_range(1000, 2000); /* 1000us to 2000us */
         devmm_drv_debug("Try send. (name=%s; pid=%u; devid=%u; send_busy_cnt=%u)\n",
             node->attr.name, node->attr.pid, node->attr.inst.devid, send_busy_cnt);
         send_busy_cnt = 0;
@@ -830,8 +831,8 @@ try_recv:
     }
 
     if (recv_busy_cnt != 0) {
-        usleep_range(1000, 2000); /* 1000us to 2000us */
-        current_time = ktime_get_ns();
+        ka_system_usleep_range(1000, 2000); /* 1000us to 2000us */
+        current_time = ka_system_ktime_get_ns();
         last_recv = (current_time - start_time <= IPC_POD_DESTROY_MAX_TIME) ? false : true;
         devmm_drv_debug("Try recv. (name=%s; pid=%u; devid=%u; recv_busy_cnt=%u; last_recv=%u)\n",
             node->attr.name, node->attr.pid, node->attr.inst.devid, recv_busy_cnt, last_recv);
@@ -865,7 +866,7 @@ void devmm_ipc_pod_async_destory_node(struct devmm_ipc_node *node)
     if (sdid_list == NULL) {
         return;
     }
-    start_time = ktime_get_ns();
+    start_time = ka_system_ktime_get_ns();
 RETRY:
     send_succ_cnt = devmm_ipc_pod_destroy_msg_try_async_send(node, sdid_list, sdid_num, &stats, start_time);
     if (send_succ_cnt != 0) {
@@ -896,20 +897,20 @@ static int devmm_ipc_pod_update_node_attr(struct devmm_ipc_node_attr *attr)
     int ret, offset;
 
     ret = dbl_get_spod_info(attr->inst.devid, &spod);
-    if (unlikely(ret != 0)) {
+    if (ka_unlikely(ret != 0)) {
         devmm_drv_err("Get pod fail. (ret=%d; devid=%u)\n", ret, attr->inst.devid);
         return ret;
     }
 
     attr->sdid = spod.sdid;
     offset = snprintf_s(name, DEVMM_IPC_MEM_NAME_SIZE, DEVMM_IPC_MEM_NAME_SIZE - 1, "%08x", spod.sdid);
-    if (unlikely(offset < 0)) {
+    if (ka_unlikely(offset < 0)) {
         devmm_drv_err("Name create fail. (offset=%d; devid=%u; name=%s)\n", offset, attr->inst.devid, attr->name);
         return -ENOMEM;
     }
     name[offset] = '\0';
     ret = strcat_s(attr->name, DEVMM_IPC_MEM_NAME_SIZE, name);
-    if (unlikely(ret != EOK)) {
+    if (ka_unlikely(ret != EOK)) {
         devmm_drv_err("Update name fail. (ret=%d; attr->name=%s; name=%s)\n", ret, attr->name, name);
         return -ENOMEM;
     }

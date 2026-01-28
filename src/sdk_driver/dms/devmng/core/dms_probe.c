@@ -15,9 +15,10 @@
 #include "dms_init.h"
 #include "devdrv_common.h"
 #include "dms/dms_notifier.h"
-#include "dms_probe.h"
 #include "dms_sysfs.h"
 #include "dms/dms_interface.h"
+#include "ka_kernel_def_pub.h"
+#include "dms_probe.h"
 
 int dms_get_devid_from_data(void *data)
 {
@@ -29,7 +30,7 @@ int dms_get_devid_from_data(void *data)
     dev_id = ((struct devdrv_info *)data)->dev_id;
     return dev_id;
 }
-EXPORT_SYMBOL(dms_get_devid_from_data);
+KA_EXPORT_SYMBOL(dms_get_devid_from_data);
 
 static int dms_create_device(struct devdrv_info* dev_info)
 {
@@ -155,7 +156,7 @@ int dms_device_register(struct devdrv_info* dev)
     }
     return 0;
 }
-EXPORT_SYMBOL(dms_device_register);
+KA_EXPORT_SYMBOL(dms_device_register);
 
 void dms_device_unregister(struct devdrv_info* dev)
 {
@@ -185,4 +186,4 @@ void dms_device_unregister(struct devdrv_info* dev)
     }
     return;
 }
-EXPORT_SYMBOL(dms_device_unregister);
+KA_EXPORT_SYMBOL(dms_device_unregister);

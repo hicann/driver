@@ -10,18 +10,18 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#include <linux/cred.h>
+
 #include "comm_kernel_interface.h"
 #include "virtmnghost_unit.h"
 #include "virtmng_public_def.h"
 #include "virtmnghost_sysfs.h"
 
-STATIC struct vmngh_pci_dev *vmngh_sysfs_get_valid_pdev(struct device *dev)
+STATIC struct vmngh_pci_dev *vmngh_sysfs_get_valid_pdev(ka_device_t *dev)
 {
     struct vmngh_pci_dev *vmngh_pdev = NULL;
     u32 dev_id;
 
-    dev_id = (u32)devdrv_get_dev_id_by_pdev(to_pci_dev(dev));
+    dev_id = (u32)devdrv_get_dev_id_by_pdev(ka_pci_to_pci_dev(dev));
     if (dev_id >= ASCEND_PDEV_MAX_NUM) {
         vmng_err("Device id is invalid. (dev_id=%u)\n", dev_id);
         return NULL;
@@ -38,12 +38,12 @@ STATIC struct vmngh_pci_dev *vmngh_sysfs_get_valid_pdev(struct device *dev)
     return vmngh_pdev;
 }
 
-STATIC ssize_t vmngh_sysfs_mdev_info(struct device *dev, struct device_attribute *attr, char *buf)
+STATIC ssize_t vmngh_sysfs_mdev_info(ka_device_t *dev, ka_device_attribute_t *attr, char *buf)
 {
     struct vmngh_pci_dev *vmngh_pdev = NULL;
     struct vmngh_vd_dev *vd_dev = NULL;
     ssize_t offset = 0;
-    uuid_le uuid;
+    ka_uuid_le_t uuid;
     u32 dev_id;
     u32 fid;
     int ret;
@@ -55,7 +55,7 @@ STATIC ssize_t vmngh_sysfs_mdev_info(struct device *dev, struct device_attribute
         return offset;
     }
     dev_id = vmngh_pdev->dev_id;
-    ret = snprintf_s(buf, PAGE_SIZE, PAGE_SIZE - 1, "dev %u all mdev info.\n", dev_id);
+    ret = snprintf_s(buf, KA_MM_PAGE_SIZE, KA_MM_PAGE_SIZE - 1, "dev %u all mdev info.\n", dev_id);
     if (ret >= 0) {
         offset += ret;
     }
@@ -65,25 +65,26 @@ STATIC ssize_t vmngh_sysfs_mdev_info(struct device *dev, struct device_attribute
         if ((vd_dev != NULL) && (vd_dev->init_status != VMNG_STARTUP_UNPROBED)) {
             uuid = vd_dev->vascend_uuid;
 
-            ret = snprintf_s(buf + offset, PAGE_SIZE - offset, PAGE_SIZE - offset - 1,
+            ret = snprintf_s(buf + offset, KA_MM_PAGE_SIZE - offset, KA_MM_PAGE_SIZE - offset - 1,
                 "[chip] 19e5:0x%04x %02x:%02x.%u id %2u: "
                 "[vd] uuid %02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x fid %2u dtype "
                 "d%u: ",
-                vmngh_pdev->ep_devic_id, vmngh_pdev->pdev->bus->number, PCI_SLOT(vmngh_pdev->pdev->devfn),
-                PCI_FUNC(vmngh_pdev->pdev->devfn), dev_id, uuid.b[3], uuid.b[2], uuid.b[1], uuid.b[0], uuid.b[5],
-                uuid.b[4], uuid.b[7], uuid.b[6], uuid.b[8], uuid.b[9], uuid.b[10], uuid.b[11], uuid.b[12], uuid.b[13],
-                uuid.b[14], uuid.b[15], vd_dev->fid, vd_dev->dtype);
+                vmngh_pdev->ep_devic_id, ka_pci_get_bus_number(vmngh_pdev->pdev),
+                KA_PCI_SLOT(ka_pci_get_devfn(vmngh_pdev->pdev)), KA_PCI_FUNC(ka_pci_get_devfn(vmngh_pdev->pdev)),
+                dev_id, uuid.b[3], uuid.b[2], uuid.b[1], uuid.b[0], uuid.b[5], uuid.b[4], uuid.b[7], uuid.b[6],
+                uuid.b[8], uuid.b[9], uuid.b[10], uuid.b[11], uuid.b[12], uuid.b[13], uuid.b[14], uuid.b[15],
+                vd_dev->fid, vd_dev->dtype);
             if (ret != -1) {
                 offset += ret;
             }
 
             if (vd_dev->init_status == VMNG_STARTUP_BOTTOM_HALF_OK) {
-                ret = snprintf_s(buf + offset, PAGE_SIZE - offset, PAGE_SIZE - offset - 1,
+                ret = snprintf_s(buf + offset, KA_MM_PAGE_SIZE - offset, KA_MM_PAGE_SIZE - offset - 1,
                     "[vm] pid %6u vmid %2u [agent]: %04x %02x:%02x.%u id %2u.\n", vd_dev->vm_pid, vd_dev->vm_id,
                     vd_dev->agent_device, (vd_dev->agent_bdf >> VMNG_VDEV_AGENT_BDF_SHIFT_8),
-                    PCI_SLOT(vd_dev->agent_bdf & 0xff), PCI_FUNC(vd_dev->agent_bdf & 0xff), vd_dev->agent_dev_id);
+                    KA_PCI_SLOT(vd_dev->agent_bdf & 0xff), KA_PCI_FUNC(vd_dev->agent_bdf & 0xff), vd_dev->agent_dev_id);
             } else {
-                ret = snprintf_s(buf + offset, PAGE_SIZE - offset, PAGE_SIZE - offset - 1, "[agent] not build.\n");
+                ret = snprintf_s(buf + offset, KA_MM_PAGE_SIZE - offset, KA_MM_PAGE_SIZE - offset - 1, "[agent] not build.\n");
             }
             if (ret != -1) {
                 offset += ret;
@@ -93,10 +94,10 @@ STATIC ssize_t vmngh_sysfs_mdev_info(struct device *dev, struct device_attribute
     return offset;
 }
 
-static DEVICE_ATTR(mdev_info, S_IRUSR | S_IRGRP, vmngh_sysfs_mdev_info, NULL);
+static KA_DRIVER_DEVICE_ATTR(mdev_info, KA_S_IRUSR | KA_S_IRGRP, vmngh_sysfs_mdev_info, NULL);
 
 #ifdef CFG_SOC_PLATFORM_CLOUD_V2
-STATIC ssize_t vmngh_sysfs_vm_full_vf_enable_show(struct device *dev, struct device_attribute *attr, char *buf)
+STATIC ssize_t vmngh_sysfs_vm_full_vf_enable_show(ka_device_t *dev, ka_device_attribute_t *attr, char *buf)
 {
     struct vmngh_pci_dev *vmngh_pdev = NULL;
     ssize_t offset = 0;
@@ -110,7 +111,7 @@ STATIC ssize_t vmngh_sysfs_vm_full_vf_enable_show(struct device *dev, struct dev
     }
     dev_id = vmngh_pdev->dev_id;
 
-    ret = snprintf_s(buf, PAGE_SIZE, PAGE_SIZE - 1, "dev %u vm_full_spec_enable is %u.\n",
+    ret = snprintf_s(buf, KA_MM_PAGE_SIZE, KA_MM_PAGE_SIZE - 1, "dev %u vm_full_spec_enable is %u.\n",
         dev_id, vmngh_pdev->vm_full_spec_enable);
     if (ret >= 0) {
         offset += ret;
@@ -119,7 +120,7 @@ STATIC ssize_t vmngh_sysfs_vm_full_vf_enable_show(struct device *dev, struct dev
     return offset;
 }
 
-STATIC ssize_t vmngh_sysfs_vm_full_vf_enable_store(struct device *dev, struct device_attribute *attr,
+STATIC ssize_t vmngh_sysfs_vm_full_vf_enable_store(ka_device_t *dev, ka_device_attribute_t *attr,
     const char *buf, size_t count)
 {
     struct vmngh_pci_dev *vmngh_pdev = NULL;
@@ -128,58 +129,58 @@ STATIC ssize_t vmngh_sysfs_vm_full_vf_enable_store(struct device *dev, struct de
 #ifndef DRV_UT
     vmngh_pdev = vmngh_sysfs_get_valid_pdev(dev);
     if (vmngh_pdev == NULL) {
-        vmng_err("Get sysfs pdev error. (uid=%u)\n", __kuid_val(current_uid()));
+        vmng_err("Get sysfs pdev error. (uid=%u)\n", ka_task_get_current_cred_uid());
         return -1;
     }
-    ret = kstrtoint(buf, 0, &input);
+    ret = ka_base_kstrtoint(buf, 0, &input);
     if (ret != 0) {
-        vmng_err("kstrtoint failed. (devid=%u; ret=%d; uid=%u)\n",
-            vmngh_pdev->dev_id, ret, __kuid_val(current_uid()));
+        vmng_err("ka_base_kstrtoint failed. (devid=%u; ret=%d; uid=%u)\n",
+            vmngh_pdev->dev_id, ret, ka_task_get_current_cred_uid());
         return -1;
     }
 
-    mutex_lock(&vmngh_pdev->vpdev_mutex);
+    ka_task_mutex_lock(&vmngh_pdev->vpdev_mutex);
     if (input == 0) {
         vmngh_pdev->vm_full_spec_enable = 0;
         vmng_event("Disable full spec support, all the vf template can select. (devid=%u; uid=%u)\n",
-            vmngh_pdev->dev_id, __kuid_val(current_uid()));
+            vmngh_pdev->dev_id, ka_task_get_current_cred_uid());
     } else if (input == 1) {
         if (vmngh_pdev->vdev_ref == 0) {
             vmngh_pdev->vm_full_spec_enable = 1;
             vmng_event("Enable full spec support, only full spec vf can select. (devid=%u; uid=%u)\n",
-                vmngh_pdev->dev_id, __kuid_val(current_uid()));
+                vmngh_pdev->dev_id, ka_task_get_current_cred_uid());
         } else {
             vmng_err("Mdevs are may be alive, please remove all mdevs.(devid=%u; uid=%u)\n",
-                vmngh_pdev->dev_id, __kuid_val(current_uid()));
-            mutex_unlock(&vmngh_pdev->vpdev_mutex);
+                vmngh_pdev->dev_id, ka_task_get_current_cred_uid());
+            ka_task_mutex_unlock(&vmngh_pdev->vpdev_mutex);
             return -1;
         }
     } else {
-        vmng_err("Invalid input vf_vnic enbale. (devid=%u; input=%d; uid=%u)\n",
-            vmngh_pdev->dev_id, input, __kuid_val(current_uid()));
+        vmng_err("Invalid input vf_vnic enable. (devid=%u; input=%d; uid=%u)\n",
+            vmngh_pdev->dev_id, input, ka_task_get_current_cred_uid());
     }
-    mutex_unlock(&vmngh_pdev->vpdev_mutex);
+    ka_task_mutex_unlock(&vmngh_pdev->vpdev_mutex);
 #endif
 
     return count;
 }
-static DEVICE_ATTR(vm_full_vf_enable, (S_IWUSR | S_IRUSR | S_IWGRP | S_IRGRP),
+static KA_DRIVER_DEVICE_ATTR(vm_full_vf_enable, (KA_S_IWUSR | KA_S_IRUSR | KA_S_IWGRP | KA_S_IRGRP),
     vmngh_sysfs_vm_full_vf_enable_show, vmngh_sysfs_vm_full_vf_enable_store);
 #endif
 
-static struct attribute *g_vmngh_sysfs_attrs[] = {
-    &dev_attr_mdev_info.attr,
+static ka_attribute_t *g_vmngh_sysfs_attrs[] = {
+    ka_fs_get_dev_attr(dev_attr_mdev_info)
 #ifdef CFG_SOC_PLATFORM_CLOUD_V2
-    &dev_attr_vm_full_vf_enable.attr,
+    ka_fs_get_dev_attr(dev_attr_vm_full_vf_enable)
 #endif
     NULL,
 };
 
-static const struct attribute_group g_vmngh_sysfs_group = {
-    .attrs = g_vmngh_sysfs_attrs,
+static const ka_attribute_group_t g_vmngh_sysfs_group = {
+    ka_fs_init_ag_attrs(g_vmngh_sysfs_attrs)
 };
 
-STATIC bool vmng_get_sysfs_creat_group_capbility(struct pci_dev *pcidev, int dev_id)
+STATIC bool vmng_get_sysfs_creat_group_capbility(ka_pci_dev_t *pcidev, int dev_id)
 {
     int devnum_by_pdev;
 
@@ -196,7 +197,7 @@ STATIC bool vmng_get_sysfs_creat_group_capbility(struct pci_dev *pcidev, int dev
     return false;
 }
 
-int vmngh_sysfs_init(u32 dev_id, struct pci_dev *pcidev)
+int vmngh_sysfs_init(u32 dev_id, ka_pci_dev_t *pcidev)
 {
     int ret;
 
@@ -205,7 +206,7 @@ int vmngh_sysfs_init(u32 dev_id, struct pci_dev *pcidev)
     }
 
     if (vmng_get_sysfs_creat_group_capbility(pcidev, (int)dev_id)) {
-        ret = sysfs_create_group(&pcidev->dev.kobj, &g_vmngh_sysfs_group);
+        ret = ka_sysfs_create_group(&pcidev->dev.kobj, &g_vmngh_sysfs_group);
         if (ret != 0) {
             vmng_err("Create group failed. (dev_id=%u; ret=%d)\n", dev_id, ret);
             return ret;
@@ -214,13 +215,13 @@ int vmngh_sysfs_init(u32 dev_id, struct pci_dev *pcidev)
     return 0;
 }
 
-void vmngh_sysfs_exit(u32 dev_id, struct pci_dev *pcidev)
+void vmngh_sysfs_exit(u32 dev_id, ka_pci_dev_t *pcidev)
 {
     if (devdrv_get_connect_protocol(dev_id) != CONNECT_PROTOCOL_PCIE) {
         return;
     }
 
     if (vmng_get_sysfs_creat_group_capbility(pcidev, (int)dev_id)) {
-        sysfs_remove_group(&pcidev->dev.kobj, &g_vmngh_sysfs_group);
+        ka_sysfs_remove_group(&pcidev->dev.kobj, &g_vmngh_sysfs_group);
     }
 }

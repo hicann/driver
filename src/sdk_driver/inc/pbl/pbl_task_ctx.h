@@ -310,7 +310,7 @@ static inline int _task_ctx_init(struct task_ctx_domain *domain, struct task_ctx
     int tgid, void *priv, void (*release)(struct task_ctx *ctx))
 {
     (void)strncpy_s(ctx->name, TASK_COMM_LEN, current->comm, TASK_COMM_LEN);
-    (void)task_get_start_time_by_tgid(tgid, &ctx->start_time);  // caution: tgid may belong to a remote proccess
+    (void)task_get_start_time_by_tgid(tgid, &ctx->start_time);  // caution: tgid may belong to a remote process
     ctx->tgid = tgid;
     ctx->priv = priv;
     mutex_init(&ctx->mutex);

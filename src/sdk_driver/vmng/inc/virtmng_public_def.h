@@ -23,6 +23,8 @@
 #endif
 #include "vmng_kernel_interface.h"
 #include "pbl/pbl_soc_res.h"
+#include "ka_dfx_pub.h"
+#include "ka_task_pub.h"
 
 #ifdef CFG_ENV_HOST
 #define module_vmng "vmng_host"
@@ -30,19 +32,19 @@
 #define module_vmng "vmng_dev"
 #endif
 
-#define vmng_err(fmt, ...) drv_err(module_vmng, "<%s:%d> " fmt, current->comm, current->tgid, ##__VA_ARGS__)
-#define vmng_warn(fmt, ...) drv_warn(module_vmng, "<%s:%d> " fmt, current->comm, current->tgid, ##__VA_ARGS__)
-#define vmng_event(fmt, ...) drv_event(module_vmng, "<%s:%d> " fmt, current->comm, current->tgid, ##__VA_ARGS__)
-#define vmng_info(fmt, ...) drv_info(module_vmng, "<%s:%d> " fmt, current->comm, current->tgid, ##__VA_ARGS__)
+#define vmng_err(fmt, ...) drv_err(module_vmng, "<%s:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), ##__VA_ARGS__)
+#define vmng_warn(fmt, ...) drv_warn(module_vmng, "<%s:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), ##__VA_ARGS__)
+#define vmng_event(fmt, ...) drv_event(module_vmng, "<%s:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), ##__VA_ARGS__)
+#define vmng_info(fmt, ...) drv_info(module_vmng, "<%s:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), ##__VA_ARGS__)
 
 #define vmng_err_limit(fmt, ...) do { \
-    if (printk_ratelimit() != 0) { \
-       drv_err(module_vmng, "<%s:%d> " fmt, current->comm, current->tgid, ##__VA_ARGS__); \
+    if (ka_dfx_printk_ratelimit() != 0) { \
+       drv_err(module_vmng, "<%s:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), ##__VA_ARGS__); \
     } \
 } while (0)
 
 #ifdef DRV_VMNG_DEBUG
-#define vmng_debug(fmt, ...) drv_debug(module_vmng, "<%s:%d> " fmt, current->comm, current->tgid, ##__VA_ARGS__)
+#define vmng_debug(fmt, ...) drv_debug(module_vmng, "<%s:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), ##__VA_ARGS__)
 #else
 #define vmng_debug(fmt, ...)
 #endif /* End of DRV_VMNG_DEBUG */
@@ -149,8 +151,6 @@ enum vmng_ctrl_msg_type {
     VMNG_CTRL_MSG_TYPE_SRIOV_INFO,
     VMNG_CTRL_MSG_TYPE_IOVA_INFO,
     VMNG_CTRL_MSG_TYPE_SYNC_ID,
-    MIA_MNG_MSG_CREATE_GROUP,
-    MIA_MNG_MSG_DELETE_GROUP,
     VMNG_CTRL_MSG_TYPE_MAX
 };
 

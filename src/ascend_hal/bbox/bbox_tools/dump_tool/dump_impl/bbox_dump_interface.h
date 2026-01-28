@@ -16,6 +16,7 @@
 
 #define PCIE_BAR_DDR_MAXLEN 512
 #define DMA_MEMDUMP_MAXLEN  0x100000UL
+#define UB_DUMP_MAXLEN 256
 #define BIOS_MAGIC 0xEAEA2020U
 
 typedef enum bbox_dump_data_file {
@@ -48,6 +49,7 @@ typedef enum bbox_dump_data_file {
 typedef drvError_t (*bbox_drv_dma_read)(u32 phy_id, u32 offset, u32 size, u8 *buffer);
 typedef drvError_t (*bbox_drv_pcie_read)(u32 phy_id, u32 offset, u8 *buffer, u32 len);
 typedef drvError_t (*bbox_drv_pcie_write)(u32 phy_id, u32 offset, u8 *buffer, u32 len);
+typedef bbox_status (*bbox_drv_ub_sram_read)(u32 phy_id, u32 offset, u8 *buffer, u32 len);
 
 bbox_status bbox_pcie_dump_sram_data(u32 phy_id, u32 offset, u32 size, u8 *buf);
 bbox_status bbox_pcie_dump_hdr_data(u32 phy_id, u32 offset, u32 size, u8 *buf);
@@ -67,6 +69,7 @@ bbox_status bbox_dma_dump_run_event_log_data(u32 phy_id, u32 offset, u32 size, u
 bbox_status bbox_dma_dump_sec_log_data(u32 phy_id, u32 offset, u32 size, u8 *buf);
 bbox_status bbox_dma_dump_vmcore_data(u32 phy_id, u32 offset, u32 size, u8 *buf);
 bbox_status bbox_dma_dump_ts_log_data(u32 phy_id, u32 offset, u32 size, u8 *buf);
+bbox_status bbox_dump_sram_data(u32 phy_id, u32 offset, u32 size, u8 *buf);
 
 bbox_status bbox_pcie_set_kdump_flag(u32 phy_id, u32 offset, u32 size, u8 *buf);
 

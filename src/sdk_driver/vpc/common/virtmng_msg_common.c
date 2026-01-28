@@ -10,11 +10,11 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#include <linux/version.h>
-#include <linux/delay.h>
-#include <linux/random.h>
+
+#include "ka_base_pub.h"
 #include "virtmng_public_def.h"
 #include "virtmng_msg_common.h"
+#include "ka_system_pub.h"
 
 enum vmng_data_offset {
     DATA_SHIFT_OFFSET = 1,
@@ -28,15 +28,11 @@ static void vmng_msg_cmn_test_rand_sleep(u32 dly_us)
     u32 time;
     u32 rd;
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 12, 0)
-    rd = get_random_u32();
-#else
-    rd = get_random_int();
-#endif
+    rd = ka_base_get_random_u32();
     rd = rd >> DATA_OFFSET;
     time = (dly_us * rd) >> DATA_OFFSET;
     vmng_debug("Get time value. (rd=%u; time=%u)\n", rd, time);
-    usleep_range(time, time);
+    ka_system_usleep_range(time, time);
 }
 
 int vmng_msg_recv_common_verfiy_info(u32 dev_id, u32 fid, struct vmng_rx_msg_proc_info *proc_info)

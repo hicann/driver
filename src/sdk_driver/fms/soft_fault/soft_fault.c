@@ -50,26 +50,36 @@
 #endif
 #include "drv_kernel_soft.h"
 #include "pbl_feature_loader.h"
+#include "ka_dfx_pub.h"
+#include "ka_system_pub.h"
+#include "ka_list_pub.h"
+#include "ka_memory_pub.h"
+#include "ka_task_pub.h"
+#include "ka_kernel_def_pub.h"
 
 #define EVENT_EXIST 1
 #ifdef CFG_HOST_ENV
 STATIC const struct pci_device_id soft_fault_driver_tbl[] = {
-    { PCI_VDEVICE(HUAWEI, 0xd100), 0 },
-    { PCI_VDEVICE(HUAWEI, 0xd105), 0 },
-    { PCI_VDEVICE(HUAWEI, PCI_DEVICE_CLOUD), 0 },
-    { PCI_VDEVICE(HUAWEI, 0xd801), 0 },
-    { PCI_VDEVICE(HUAWEI, 0xd500), 0 },
-    { PCI_VDEVICE(HUAWEI, 0xd501), 0 },
-    { PCI_VDEVICE(HUAWEI, 0xd802), 0 },
-    { PCI_VDEVICE(HUAWEI, 0xd803), 0 },
-    { PCI_VDEVICE(HUAWEI, 0xd804), 0 },
-    { PCI_VDEVICE(HUAWEI, 0xd805), 0 },
-    { PCI_VDEVICE(HUAWEI, 0xd806), 0 },
-    { PCI_VDEVICE(HUAWEI, 0xd807), 0 },
-    { DEVDRV_DIVERSITY_PCIE_VENDOR_ID, 0xd500, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 },
+    { KA_PCI_VDEVICE(HUAWEI, 0xd100), 0 },
+    { KA_PCI_VDEVICE(HUAWEI, 0xd105), 0 },
+    { KA_PCI_VDEVICE(HUAWEI, PCI_DEVICE_CLOUD), 0 },
+    { KA_PCI_VDEVICE(HUAWEI, 0xd801), 0 },
+    { KA_PCI_VDEVICE(HUAWEI, 0xd500), 0 },
+    { KA_PCI_VDEVICE(HUAWEI, 0xd501), 0 },
+    { KA_PCI_VDEVICE(HUAWEI, 0xd802), 0 },
+    { KA_PCI_VDEVICE(HUAWEI, 0xd803), 0 },
+    { KA_PCI_VDEVICE(HUAWEI, 0xd804), 0 },
+    { KA_PCI_VDEVICE(HUAWEI, 0xd805), 0 },
+    { KA_PCI_VDEVICE(HUAWEI, 0xd806), 0 },
+    { KA_PCI_VDEVICE(HUAWEI, 0xd807), 0 },
+    { DEVDRV_DIVERSITY_PCIE_VENDOR_ID, 0xd500, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0 },
+    { 0x20C6, 0xd500, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0 },
+    { 0x203F, 0xd500, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0 },
+    { 0x20C6, 0xd802, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0 },
+    { 0x203F, 0xd802, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0 },
     {}
 };
-MODULE_DEVICE_TABLE(pci, soft_fault_driver_tbl);
+KA_MODULE_DEVICE_TABLE(pci, soft_fault_driver_tbl);
 #endif
 
 STATIC struct dms_node_operations g_soft_ops = {
@@ -100,13 +110,13 @@ struct dms_node_operations *soft_get_ops(void)
 {
     return &g_soft_ops;
 }
-EXPORT_SYMBOL(soft_get_ops);
+KA_EXPORT_SYMBOL(soft_get_ops);
 
 struct drv_soft_ctrl *soft_get_ctrl(void)
 {
     return &g_soft_ctrl;
 }
-EXPORT_SYMBOL(soft_get_ctrl);
+KA_EXPORT_SYMBOL(soft_get_ctrl);
 
 int soft_get_dev_capacity(struct dms_node *device, unsigned long long *capacity)
 {
@@ -164,7 +174,7 @@ u64 soft_combine_private_data(unsigned int dev_id, unsigned int user_id,
                     ((u64)(sensor_id & SF_MASK_8BIT)));
     return private_data;
 }
-EXPORT_SYMBOL(soft_combine_private_data);
+KA_EXPORT_SYMBOL(soft_combine_private_data);
 
 STATIC int soft_add_fault_event(struct soft_error_list *error_new, struct soft_event *event_queue)
 {
@@ -176,17 +186,17 @@ STATIC int soft_add_fault_event(struct soft_error_list *error_new, struct soft_e
         return -EINVAL;
     }
 
-    mutex_lock(&event_queue->mutex);
-    list_for_each_entry_safe(pos, n, &event_queue->error_list.list, list) {
+    ka_task_mutex_lock(&event_queue->mutex);
+    ka_list_for_each_entry_safe(pos, n, &event_queue->error_list.list, list) {
         if ((pos->error.sensor_type == error_new->error.sensor_type) &&
             (pos->error.err_type == error_new->error.err_type)) {
-            mutex_unlock(&event_queue->mutex);
+            ka_task_mutex_unlock(&event_queue->mutex);
             return EVENT_EXIST; /* It means found fault event already in event list, don't need add */
         }
     }
-    list_add(&error_new->list, &event_queue->error_list.list); /* add new event to queue */
+    ka_list_add(&error_new->list, &event_queue->error_list.list); /* add new event to queue */
     event_queue->error_num++;
-    mutex_unlock(&event_queue->mutex);
+    ka_task_mutex_unlock(&event_queue->mutex);
 
     return 0;
 }
@@ -198,19 +208,19 @@ STATIC bool is_soft_fault_recover(struct soft_event *event_queue, struct soft_fa
     struct soft_error_list *n = NULL;
     struct soft_fault *event = NULL;
 
-    msleep(SF_SENSOR_SCAN_TIME * 2); /* sleep 2 scan time to wait error report */
-    mutex_lock(&event_queue->mutex);
-    list_for_each_entry_safe(pos, n, &event_queue->error_list.list, list) {
+    ka_system_msleep(SF_SENSOR_SCAN_TIME * 2); /* sleep 2 scan time to wait error report */
+    ka_task_mutex_lock(&event_queue->mutex);
+    ka_list_for_each_entry_safe(pos, n, &event_queue->error_list.list, list) {
         event = &pos->error;
         if ((event->err_type == event_new->err_type) && (event->assertion == GENERAL_EVENT_TYPE_OCCUR)) {
-            list_del(&pos->list);
+            ka_list_del(&pos->list);
             dbl_kfree(pos);
             pos = NULL;
             event_queue->error_num--;
             recover_flag = true;
         }
     }
-    mutex_unlock(&event_queue->mutex);
+    ka_task_mutex_unlock(&event_queue->mutex);
 
     return recover_flag;
 }
@@ -222,7 +232,7 @@ STATIC struct soft_event *soft_event_queue_get(struct soft_dev_client *client, u
     struct soft_dev *n = NULL;
     struct soft_event *event_queue = NULL;
 
-    list_for_each_entry_safe(pos, n, &client->head, list) {
+    ka_list_for_each_entry_safe(pos, n, &client->head, list) {
         if (pos->dev_node.node_type == node_type && pos->node_id == node_id) {
             event_queue = &pos->sensor_event_queue[idx];
             break;
@@ -262,9 +272,9 @@ int soft_fault_event_scan(unsigned long long private_data, struct dms_sensor_eve
     }
 
     data->event_count = 0;
-    mutex_lock(&event_queue->mutex);
+    ka_task_mutex_lock(&event_queue->mutex);
     /* get every event of the sensor event queue */
-    list_for_each_entry_safe(pos, n, &event_queue->error_list.list, list) {
+    ka_list_for_each_entry_safe(pos, n, &event_queue->error_list.list, list) {
         event = &pos->error;
         data->sensor_data[data->event_count].current_value = event->err_type;
         data->sensor_data[data->event_count].data_size = event->data_len;
@@ -276,7 +286,7 @@ int soft_fault_event_scan(unsigned long long private_data, struct dms_sensor_eve
         }
 
         if (event->assertion == GENERAL_EVENT_TYPE_ONE_TIME) { /*  notification_event check. */
-            list_del(&pos->list);
+            ka_list_del(&pos->list);
             dbl_kfree(pos);
             pos = NULL;
             event_queue->error_num--;
@@ -286,11 +296,11 @@ int soft_fault_event_scan(unsigned long long private_data, struct dms_sensor_eve
             break;
         }
     }
-    mutex_unlock(&event_queue->mutex);
+    ka_task_mutex_unlock(&event_queue->mutex);
 
     return 0;
 }
-EXPORT_SYMBOL(soft_fault_event_scan);
+KA_EXPORT_SYMBOL(soft_fault_event_scan);
 
 int soft_fault_event_handler(struct soft_fault *event)
 {
@@ -331,9 +341,9 @@ int soft_fault_event_handler(struct soft_fault *event)
             event->dev_id, event->user_id, event->assertion, event->node_type, event->sensor_type, event->err_type);
         return -EINVAL;
     }
-    error_new = dbl_kzalloc(sizeof(struct soft_error_list), GFP_KERNEL | __GFP_ACCOUNT);
+    error_new = dbl_kzalloc(sizeof(struct soft_error_list), KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
     if (error_new == NULL) {
-        soft_drv_err("new_event kzalloc failed.\n");
+        soft_drv_err("new_event ka_mm_kzalloc failed.\n");
         return -ENOMEM;
     }
 
@@ -356,7 +366,7 @@ out:
         event->dev_id, event->user_id, event->err_type);
     return ret;
 }
-EXPORT_SYMBOL(soft_fault_event_handler);
+KA_EXPORT_SYMBOL(soft_fault_event_handler);
 
 void soft_fault_event_free(struct soft_event *event_queue)
 {
@@ -368,14 +378,14 @@ void soft_fault_event_free(struct soft_event *event_queue)
         return;
     }
 
-    mutex_lock(&event_queue->mutex);
-    list_for_each_entry_safe(pos, n, &event_queue->error_list.list, list) {
-        list_del(&pos->list);
+    ka_task_mutex_lock(&event_queue->mutex);
+    ka_list_for_each_entry_safe(pos, n, &event_queue->error_list.list, list) {
+        ka_list_del(&pos->list);
         dbl_kfree(pos);
         pos = NULL;
         event_queue->error_num--;
     }
-    mutex_unlock(&event_queue->mutex);
+    ka_task_mutex_unlock(&event_queue->mutex);
 }
 
 int soft_register_one_node(struct soft_dev *s_dev)
@@ -418,7 +428,7 @@ out:
 
     return ret;
 }
-EXPORT_SYMBOL(soft_register_one_node);
+KA_EXPORT_SYMBOL(soft_register_one_node);
 
 void soft_unregister_one_node(struct soft_dev *s_dev)
 {
@@ -458,8 +468,8 @@ void soft_free_one_node(struct soft_dev_client *client, unsigned int node_type)
         return;
     }
 
-    mutex_lock(&client->mutex);
-    list_for_each_entry_safe(pos, n, &client->head, list) {
+    ka_task_mutex_lock(&client->mutex);
+    ka_list_for_each_entry_safe(pos, n, &client->head, list) {
         if ((pos->dev_node.node_type == node_type) && (pos->registered == 1)) {
             soft_unregister_one_node(pos);
             for (i = 0; i < SF_SUB_ID_MAX; i++) {
@@ -468,7 +478,7 @@ void soft_free_one_node(struct soft_dev_client *client, unsigned int node_type)
                 }
             }
             soft_one_dev_exit(pos);
-            list_del(&pos->list);
+            ka_list_del(&pos->list);
             dbl_kfree(pos);
             pos = NULL;
             client->node_num--;
@@ -482,10 +492,10 @@ void soft_free_one_node(struct soft_dev_client *client, unsigned int node_type)
         client->registered = 0;
     }
 
-    mutex_unlock(&client->mutex);
+    ka_task_mutex_unlock(&client->mutex);
     return;
 }
-EXPORT_SYMBOL(soft_free_one_node);
+KA_EXPORT_SYMBOL(soft_free_one_node);
 
 STATIC int soft_h2d_event(void *data)
 {
@@ -526,7 +536,7 @@ STATIC struct notifier_block g_soft_notifier = {
     .notifier_call = soft_notifier,
 };
 
-STATIC void soft_fault_release_prepare(pid_t owner_pid)
+STATIC void soft_fault_release_prepare(ka_pid_t owner_pid)
 {
     soft_client_release(owner_pid);
     if (dms_event_is_converge()) {
@@ -540,7 +550,7 @@ STATIC int soft_exit_notifier(struct notifier_block *nb, unsigned long mode, voi
     struct task_struct *task = (struct task_struct *)data;
     (void)nb;
     (void)mode;
-    /* This code ensures that soft_fault resouce can be released when the process exit abnormally */
+    /* This code ensures that soft_fault resource can be released when the process exit abnormally */
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 17, 0)
     if ((task != NULL) && (task->tgid != 0) && (task->tgid == task->pid) &&
         ascend_intf_is_pid_init(task->tgid, DAVINCI_INTF_MODULE_DMS)) {
@@ -565,7 +575,7 @@ STATIC int soft_urd_notifier(struct notifier_block *nb, unsigned long mode, void
     (void)data;
     switch (mode) {
         case URD_NOTIFIER_RELEASE_PREPARE:
-            /* This code ensures that soft_fault resouce can be released when the process exit normally */
+            /* This code ensures that soft_fault resource can be released when the process exit normally */
             soft_fault_release_prepare(current->tgid);
             break;
         default:
@@ -589,16 +599,16 @@ void soft_one_dev_init(struct soft_dev *s_dev)
 
     s_dev->registered = 0;
     s_dev->sensor_obj_num = 0;
-    mutex_init(&s_dev->mutex);
+    ka_task_mutex_init(&s_dev->mutex);
 
     for (i = 0; i < SF_SUB_ID_MAX; i++) {
-        mutex_init(&s_dev->sensor_event_queue[i].mutex);
-        INIT_LIST_HEAD(&s_dev->sensor_event_queue[i].error_list.list);
+        ka_task_mutex_init(&s_dev->sensor_event_queue[i].mutex);
+        KA_INIT_LIST_HEAD(&s_dev->sensor_event_queue[i].error_list.list);
     }
 
     return;
 }
-EXPORT_SYMBOL(soft_one_dev_init);
+KA_EXPORT_SYMBOL(soft_one_dev_init);
 
 void soft_one_dev_exit(struct soft_dev *s_dev)
 {
@@ -609,10 +619,10 @@ void soft_one_dev_exit(struct soft_dev *s_dev)
     }
 
     for (i = 0; i < SF_SUB_ID_MAX; i++) {
-        mutex_destroy(&s_dev->sensor_event_queue[i].mutex);
+        ka_task_mutex_destroy(&s_dev->sensor_event_queue[i].mutex);
     }
 
-    mutex_destroy(&s_dev->mutex);
+    ka_task_mutex_destroy(&s_dev->mutex);
     s_dev->registered = 0;
     s_dev->sensor_obj_num = 0;
 
@@ -626,9 +636,9 @@ STATIC int soft_ctrl_init(void)
 
     for (i = 0; i < ASCEND_DEV_MAX_NUM; i++) {
         soft_ctrl->user_num[i] = 1;
-        mutex_init(&soft_ctrl->mutex[i]);
+        ka_task_mutex_init(&soft_ctrl->mutex[i]);
         for (j = 0; j < SF_USER_MAX; j++) {
-            soft_ctrl->s_dev_t[i][j] = dbl_kzalloc(sizeof(struct soft_dev_client), GFP_KERNEL);
+            soft_ctrl->s_dev_t[i][j] = dbl_kzalloc(sizeof(struct soft_dev_client), KA_GFP_KERNEL);
             if (soft_ctrl->s_dev_t[i][j] == NULL) {
                 soft_drv_err("Kzalloc s_dev_t failed. \n");
                 return -ENOMEM;
@@ -637,8 +647,8 @@ STATIC int soft_ctrl_init(void)
             soft_ctrl->s_dev_t[i][j]->pid = -1;
             soft_ctrl->s_dev_t[i][j]->registered = 0;
             soft_ctrl->s_dev_t[i][j]->node_num = 0;
-            mutex_init(&soft_ctrl->s_dev_t[i][j]->mutex);
-            INIT_LIST_HEAD(&soft_ctrl->s_dev_t[i][j]->head);
+            ka_task_mutex_init(&soft_ctrl->s_dev_t[i][j]->mutex);
+            KA_INIT_LIST_HEAD(&soft_ctrl->s_dev_t[i][j]->head);
         }
     }
 
@@ -653,7 +663,7 @@ STATIC void soft_ctrl_exit(void)
     for (i = 0; i < ASCEND_DEV_MAX_NUM; i++) {
         for (j = 0; j < SF_USER_MAX; j++) {
             if (soft_ctrl->s_dev_t[i][j] != NULL) {
-                mutex_destroy(&soft_ctrl->s_dev_t[i][j]->mutex);
+                ka_task_mutex_destroy(&soft_ctrl->s_dev_t[i][j]->mutex);
                 soft_ctrl->s_dev_t[i][j]->node_num = 0;
                 soft_ctrl->s_dev_t[i][j]->registered = 0;
                 soft_ctrl->s_dev_t[i][j]->pid = -1;
@@ -661,7 +671,7 @@ STATIC void soft_ctrl_exit(void)
                 soft_ctrl->s_dev_t[i][j] = NULL;
             }
         }
-        mutex_destroy(&soft_ctrl->mutex[i]);
+        ka_task_mutex_destroy(&soft_ctrl->mutex[i]);
         soft_ctrl->user_num[i] = 0;
     }
 
@@ -682,7 +692,7 @@ int soft_init(void)
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 17, 0)) && defined(CFG_HOST_ENV)
     (void)g_soft_exit_notifier;
 #else
-    ret = profile_event_register(PROFILE_TASK_EXIT, &g_soft_exit_notifier);
+    ret = ka_dfx_profile_event_register(KA_PROFILE_TASK_EXIT, &g_soft_exit_notifier);
     if (ret != 0) {
         soft_drv_err("register profile notifier failed. (ret=%d)\n", ret);
         goto SOFT_CTRL_FAIL;
@@ -713,7 +723,7 @@ URD_REGISTER_FAIL:
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 17, 0)
     (void)g_soft_exit_notifier;
 #else
-    (void)profile_event_unregister(PROFILE_TASK_EXIT, &g_soft_exit_notifier);
+    (void)ka_dfx_profile_event_unregister(KA_PROFILE_TASK_EXIT, &g_soft_exit_notifier);
 #endif
 SOFT_CTRL_FAIL:
     soft_ctrl_exit();
@@ -735,7 +745,7 @@ void soft_exit(void)
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 17, 0)
     (void)g_soft_exit_notifier;
 #else
-    (void)profile_event_unregister(PROFILE_TASK_EXIT, &g_soft_exit_notifier);
+    (void)ka_dfx_profile_event_unregister(KA_PROFILE_TASK_EXIT, &g_soft_exit_notifier);
 #endif
     soft_dev_exit();
     soft_ctrl_exit();

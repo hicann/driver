@@ -36,6 +36,7 @@ void *g_devmm_mem_start = ((void *)DEVMM_SVM_MEM_START);
 uint32_t g_mmap_seg_num = 0;
 struct devmm_mmap_addr_seg g_mmap_segs[DEVMM_MAX_VMA_NUM] = {{0}};
 static bool g_is_need_map_nptmv = false;
+static bool g_host_pin_memory_map_failed = false;
 
 THREAD int g_devmm_mem_dev = -1;
 pthread_mutex_t g_devmm_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -51,6 +52,11 @@ void devmm_set_host_mem_alloc_mode(int mode)
 int devmm_get_host_mem_alloc_mode(void)
 {
     return g_svm_host_mem_alloc_mode;
+}
+
+bool devmm_is_host_pin_memory_map_failed()
+{
+    return g_host_pin_memory_map_failed;
 }
 
 #ifndef EMU_ST
@@ -248,6 +254,18 @@ bool devmm_is_in_mmap_segs(uint64_t va, uint64_t size)
     return false;
 }
 
+static uint64_t g_devmm_host_uva_start = DEVMM_DEFAULT_HOST_UVA_START;
+uint64_t devmm_get_host_uva_start(void)
+{
+    return g_devmm_host_uva_start;
+}
+
+static bool devmm_is_in_host_uva_range(uint64_t va, uint64_t size)
+{
+    return (((va == DEVMM_DEFAULT_HOST_UVA_START) || (va == DEVMM_HCCS_HOST_UVA_START)) &&
+        (size == DEVMM_HOST_PIN_SIZE));
+}
+
 DVresult devmm_svm_map(int side)
 {
     void *mem_mapped_addr = NULL;
@@ -267,9 +285,16 @@ DVresult devmm_svm_map(int side)
     for (i = 0; i < seg_num; i++) {
         mem_mapped_addr = devmm_svm_map_by_size((void *)(uintptr_t)g_mmap_segs[i].va, g_mmap_segs[i].size);
         if (mem_mapped_addr == NULL) {
+            if (devmm_is_in_host_uva_range(g_mmap_segs[i].va, g_mmap_segs[i].size)) {
+                g_host_pin_memory_map_failed = true;
+                continue;
+            }
             devmm_svm_unmap_range(i);
             (void)pthread_mutex_unlock(&g_devmm_mmap_mutex);
             return devmm_get_svm_map_err_result(side);
+        }
+        if (devmm_is_in_host_uva_range(g_mmap_segs[i].va, g_mmap_segs[i].size)) {
+            g_devmm_host_uva_start = g_mmap_segs[i].va;
         }
     }
 
@@ -338,7 +363,7 @@ STATIC DVresult devmm_svm_init(const char *davinci_sub_name, int side)
 STATIC void devmm_svm_uninit(void)
 {
     devmm_svm_unmap();
-    /* davinci chardev will be released in the relese process, no need to close */
+    /* davinci chardev will be released in the release process, no need to close */
 }
 
 DVresult devmm_svm_master_init(void)

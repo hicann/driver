@@ -10,10 +10,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#include <linux/dma-mapping.h>
 #include <linux/types.h>
 
-#include "svm_ioctl.h"
 #include "devmm_proc_info.h"
 #include "svm_heap_mng.h"
 #include "devmm_common.h"
@@ -21,6 +19,7 @@
 #include "devmm_proc_mem_copy.h"
 #include "svm_kernel_msg.h"
 #include "devmm_register_dma.h"
+#include "svm_ioctl.h"
 
 static void devmm_register_dma_rb_range_handle(ka_rb_node_t *rbnode, struct rb_range_handle *range_handle)
 {
@@ -74,7 +73,7 @@ static void devmm_destory_register_dma_node(struct devmm_register_dma_node *node
 
     devmm_destory_registered_dma_node_res(node);
     devmm_kvfree(node);
-    devmm_drv_debug("Destory dma node. (va=0x%llx; size=%llu; dev_id=%d; kef=%u)\n", va, size, devid, ref);
+    devmm_drv_debug("Destroy dma node. (va=0x%llx; size=%llu; dev_id=%d; kef=%u)\n", va, size, devid, ref);
 }
 
 /* might call in tasklet of dma desc destroy, don't sleep */
@@ -210,7 +209,7 @@ static int devmm_register_dma_node_set_dma_phy_addr(struct devmm_svm_process *sv
     side.blks = node->blks;
     side.blks_num = node->blks_num;
     side.num = node->blks_num;
-    side.blk_page_size = PAGE_SIZE;
+    side.blk_page_size = KA_MM_PAGE_SIZE;
     ret = devmm_get_host_addr_pa_list(svm_proc, node->devid, node->align_va, node->align_size, &side);
     if (ret != 0) {
         devmm_drv_err("Get host addr pa list failed. (va=0x%llx; size=%llu)\n", node->align_va, node->align_size);
@@ -235,7 +234,7 @@ static int devmm_set_register_dma_node(struct devmm_svm_process *svm_proc, u64 v
     u64 blks_num;
     int ret;
 
-    blks_num = devmm_get_pagecount_by_size(vaddr, size, PAGE_SIZE);
+    blks_num = devmm_get_pagecount_by_size(vaddr, size, KA_MM_PAGE_SIZE);
     blks = (struct devmm_dma_block *)devmm_kvzalloc(sizeof(struct devmm_dma_block) * blks_num);
     if (blks == NULL) {
         devmm_drv_err("Kvzalloc node blks buf failed. (blks_num=%llu)\n", blks_num);
@@ -243,14 +242,14 @@ static int devmm_set_register_dma_node(struct devmm_svm_process *svm_proc, u64 v
     }
 
     node->src_va = vaddr;
-    node->align_va = ka_base_round_down(vaddr, PAGE_SIZE);
+    node->align_va = ka_base_round_down(vaddr, KA_MM_PAGE_SIZE);
     node->src_size = size;
-    node->align_size = ka_base_round_up(size + (vaddr - node->align_va), PAGE_SIZE);
+    node->align_size = ka_base_round_up(size + (vaddr - node->align_va), KA_MM_PAGE_SIZE);
     node->devid = devid;
     node->blks = blks;
     node->blks_num = blks_num;
     ka_base_kref_init(&node->ref);
-    RB_CLEAR_NODE(&node->rbnode);
+    KA_BASE_RB_CLEAR_NODE(&node->rbnode);
     ret = devmm_register_dma_node_set_dma_phy_addr(svm_proc, node, &node->num);
     if (ret != 0) {
         devmm_drv_err("Register dma node set dma phy addr failed. (va=0x%llx; size=%llu; devid=%u)\n",

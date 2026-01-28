@@ -10,8 +10,10 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#include <linux/slab.h>
-#include <linux/list.h>
+#include "ka_base_pub.h"
+#include "ka_list_pub.h"
+#include "ka_memory_pub.h"
+#include "ka_task_pub.h"
 
 #include "soc_resmng_log.h"
 #include "soc_subsys_ts.h"
@@ -20,26 +22,26 @@ int subsys_ts_set_rsv_mem(struct soc_resmng_ts *ts_resmng, const char *name, str
 {
     struct soc_rsv_mem *mem = NULL;
 
-    mutex_lock(&ts_resmng->mutex);
+    ka_task_mutex_lock(&ts_resmng->mutex);
     mem = rsv_mem_node_find(name, &ts_resmng->rsv_mems_head);
     if (mem != NULL) {
         soc_res_name_copy(mem->name, name);
         mem->info = *rsv_mem;
-        mutex_unlock(&ts_resmng->mutex);
+        ka_task_mutex_unlock(&ts_resmng->mutex);
         return 0;
     }
 
-    mem = kzalloc(sizeof(*mem), GFP_KERNEL);
+    mem = ka_mm_kzalloc(sizeof(*mem), KA_GFP_KERNEL);
     if (mem == NULL) {
-        mutex_unlock(&ts_resmng->mutex);
+        ka_task_mutex_unlock(&ts_resmng->mutex);
         return -ENOSPC;
     }
 
     soc_res_name_copy(mem->name, name);
     mem->info = *rsv_mem;
 
-    list_add(&mem->list_node, &ts_resmng->rsv_mems_head);
-    mutex_unlock(&ts_resmng->mutex);
+    ka_list_add(&mem->list_node, &ts_resmng->rsv_mems_head);
+    ka_task_mutex_unlock(&ts_resmng->mutex);
 
     return 0;
 }
@@ -48,15 +50,15 @@ int subsys_ts_get_rsv_mem(struct soc_resmng_ts *ts_resmng, const char *name, str
 {
     struct soc_rsv_mem *mem = NULL;
 
-    mutex_lock(&ts_resmng->mutex);
+    ka_task_mutex_lock(&ts_resmng->mutex);
     mem = rsv_mem_node_find(name, &ts_resmng->rsv_mems_head);
     if (mem == NULL) {
-        mutex_unlock(&ts_resmng->mutex);
+        ka_task_mutex_unlock(&ts_resmng->mutex);
         return -ENOENT;
     }
 
     *rsv_mem = mem->info;
-    mutex_unlock(&ts_resmng->mutex);
+    ka_task_mutex_unlock(&ts_resmng->mutex);
 
     return 0;
 }
@@ -66,26 +68,26 @@ int subsys_ts_set_reg_base(struct soc_resmng_ts *ts_resmng, const char *name,
 {
     struct soc_reg_base *reg = NULL;
 
-    mutex_lock(&ts_resmng->mutex);
+    ka_task_mutex_lock(&ts_resmng->mutex);
     reg = io_bases_node_find(name, &ts_resmng->io_bases_head);
     if (reg != NULL) {
         soc_res_name_copy(reg->name, name);
         reg->info = *io_base;
-        mutex_unlock(&ts_resmng->mutex);
+        ka_task_mutex_unlock(&ts_resmng->mutex);
         return 0;
     }
 
-    reg = kzalloc(sizeof(*reg), GFP_KERNEL);
+    reg = ka_mm_kzalloc(sizeof(*reg), KA_GFP_KERNEL);
     if (reg == NULL) {
-        mutex_unlock(&ts_resmng->mutex);
+        ka_task_mutex_unlock(&ts_resmng->mutex);
         return -ENOSPC;
     }
 
     soc_res_name_copy(reg->name, name);
     reg->info = *io_base;
 
-    list_add(&reg->list_node, &ts_resmng->io_bases_head);
-    mutex_unlock(&ts_resmng->mutex);
+    ka_list_add(&reg->list_node, &ts_resmng->io_bases_head);
+    ka_task_mutex_unlock(&ts_resmng->mutex);
 
     return 0;
 }
@@ -95,15 +97,15 @@ int subsys_ts_get_reg_base(struct soc_resmng_ts *ts_resmng, const char *name,
 {
     struct soc_reg_base *reg = NULL;
 
-    mutex_lock(&ts_resmng->mutex);
+    ka_task_mutex_lock(&ts_resmng->mutex);
     reg = io_bases_node_find(name, &ts_resmng->io_bases_head);
     if (reg == NULL) {
-        mutex_unlock(&ts_resmng->mutex);
+        ka_task_mutex_unlock(&ts_resmng->mutex);
         return -ENOENT;
     }
 
     *io_base = reg->info;
-    mutex_unlock(&ts_resmng->mutex);
+    ka_task_mutex_unlock(&ts_resmng->mutex);
 
     return 0;
 }
@@ -120,20 +122,20 @@ int subsys_ts_set_irq_num(struct soc_resmng_ts *ts_resmng, u32 irq_type, u32 irq
 
     info = &ts_resmng->irq_infos[irq_type];
 
-    mutex_lock(&ts_resmng->mutex);
+    ka_task_mutex_lock(&ts_resmng->mutex);
     if (info->irqs != NULL) {
         resmng_irqs_destroy(info);
     }
 
     ret = resmng_irqs_create(info, irq_num);
     if (ret != 0) {
-        mutex_unlock(&ts_resmng->mutex);
+        ka_task_mutex_unlock(&ts_resmng->mutex);
         soc_err("Irq_base create failed. (irq_num=%u)\n", irq_num);
         return ret;
     }
 
     info->irq_num = irq_num;
-    mutex_unlock(&ts_resmng->mutex);
+    ka_task_mutex_unlock(&ts_resmng->mutex);
 
     return 0;
 }
@@ -149,14 +151,14 @@ int subsys_ts_get_irq_num(struct soc_resmng_ts *ts_resmng, u32 irq_type, u32 *ir
 
     info = &ts_resmng->irq_infos[irq_type];
 
-    mutex_lock(&ts_resmng->mutex);
+    ka_task_mutex_lock(&ts_resmng->mutex);
     if (info->irqs == NULL) {
-        mutex_unlock(&ts_resmng->mutex);
+        ka_task_mutex_unlock(&ts_resmng->mutex);
         return -ENOENT;
     }
 
     *irq_num = info->irq_num;
-    mutex_unlock(&ts_resmng->mutex);
+    ka_task_mutex_unlock(&ts_resmng->mutex);
 
     return 0;
 }
@@ -172,15 +174,15 @@ int subsys_ts_set_irq_by_index(struct soc_resmng_ts *ts_resmng, u32 irq_type, u3
 
     info = &ts_resmng->irq_infos[irq_type];
 
-    mutex_lock(&ts_resmng->mutex);
+    ka_task_mutex_lock(&ts_resmng->mutex);
     if (index >= info->irq_num) {
-        mutex_unlock(&ts_resmng->mutex);
+        ka_task_mutex_unlock(&ts_resmng->mutex);
         soc_err("Index is illegal. (index=%u; irq_num=%u; irq_type=%u)\n", index, info->irq_num, irq_type);
         return -EINVAL;
     }
 
     info->irqs[index].irq = irq;
-    mutex_unlock(&ts_resmng->mutex);
+    ka_task_mutex_unlock(&ts_resmng->mutex);
 
     return 0;
 }
@@ -196,20 +198,20 @@ int subsys_ts_get_irq_by_index(struct soc_resmng_ts *ts_resmng, u32 irq_type, u3
 
     info = &ts_resmng->irq_infos[irq_type];
 
-    mutex_lock(&ts_resmng->mutex);
+    ka_task_mutex_lock(&ts_resmng->mutex);
     if (index >= info->irq_num) {
-        mutex_unlock(&ts_resmng->mutex);
+        ka_task_mutex_unlock(&ts_resmng->mutex);
         soc_err("Index is illegal. (index=%u; irq_num=%u; irq_type=%u)\n", index, info->irq_num, irq_type);
         return -EINVAL;
     }
 
     if (info->irqs[index].irq == SOC_IRQ_INVALID_VALUE) {
-        mutex_unlock(&ts_resmng->mutex);
+        ka_task_mutex_unlock(&ts_resmng->mutex);
         return -ENOENT;
     }
 
     *irq = info->irqs[index].irq;
-    mutex_unlock(&ts_resmng->mutex);
+    ka_task_mutex_unlock(&ts_resmng->mutex);
 
     return 0;
 }
@@ -224,10 +226,10 @@ int subsys_ts_set_irq(struct soc_resmng_ts *ts_resmng, u32 irq_type, u32 irq)
 
     info = &ts_resmng->irq_infos[irq_type];
 
-    mutex_lock(&ts_resmng->mutex);
+    ka_task_mutex_lock(&ts_resmng->mutex);
     info->irq = irq;
     info->valid = true;
-    mutex_unlock(&ts_resmng->mutex);
+    ka_task_mutex_unlock(&ts_resmng->mutex);
 
     return 0;
 }
@@ -243,14 +245,14 @@ int subsys_ts_get_irq(struct soc_resmng_ts *ts_resmng, u32 irq_type, u32 *irq)
 
     info = &ts_resmng->irq_infos[irq_type];
 
-    mutex_lock(&ts_resmng->mutex);
+    ka_task_mutex_lock(&ts_resmng->mutex);
     if (info->valid == false) {
-        mutex_unlock(&ts_resmng->mutex);
+        ka_task_mutex_unlock(&ts_resmng->mutex);
         return -ENOENT;
     }
 
     *irq = info->irq;
-    mutex_unlock(&ts_resmng->mutex);
+    ka_task_mutex_unlock(&ts_resmng->mutex);
 
     return 0;
 }
@@ -266,22 +268,22 @@ int subsys_ts_set_hwirq(struct soc_resmng_ts *ts_resmng, u32 irq_type, u32 irq, 
 
     info = &ts_resmng->irq_infos[irq_type];
 
-    mutex_lock(&ts_resmng->mutex);
+    ka_task_mutex_lock(&ts_resmng->mutex);
     index = find_irq_index(info, irq);
     if (index == info->irq_num) {
-        mutex_unlock(&ts_resmng->mutex);
+        ka_task_mutex_unlock(&ts_resmng->mutex);
         soc_err("No such irq. (type=%u; irq=%u)\n", irq_type, irq);
         return -EINVAL;
     }
 
     if (info->irqs[index].hwirq != SOC_IRQ_INVALID_VALUE) {
-        mutex_unlock(&ts_resmng->mutex);
+        ka_task_mutex_unlock(&ts_resmng->mutex);
         soc_err("Repeated set. (type=%u; irq=%u)\n", irq_type, irq);
         return -EEXIST;
     }
 
     info->irqs[index].hwirq = hwirq;
-    mutex_unlock(&ts_resmng->mutex);
+    ka_task_mutex_unlock(&ts_resmng->mutex);
 
     return 0;
 }
@@ -298,21 +300,21 @@ int subsys_ts_get_hwirq(struct soc_resmng_ts *ts_resmng, u32 irq_type, u32 irq, 
 
     info = &ts_resmng->irq_infos[irq_type];
 
-    mutex_lock(&ts_resmng->mutex);
+    ka_task_mutex_lock(&ts_resmng->mutex);
     index = find_irq_index(info, irq);
     if (index == info->irq_num) {
-        mutex_unlock(&ts_resmng->mutex);
+        ka_task_mutex_unlock(&ts_resmng->mutex);
         soc_warn("No such irq. (type=%u; irq=%u)\n", irq_type, irq);
         return -EINVAL;
     }
 
     if (info->irqs[index].hwirq == SOC_IRQ_INVALID_VALUE) {
-        mutex_unlock(&ts_resmng->mutex);
+        ka_task_mutex_unlock(&ts_resmng->mutex);
         return -ENOENT;
     }
 
     *hwirq = info->irqs[index].hwirq;
-    mutex_unlock(&ts_resmng->mutex);
+    ka_task_mutex_unlock(&ts_resmng->mutex);
 
     return 0;
 }
@@ -328,22 +330,22 @@ int subsys_ts_set_tscpu_to_taishan_irq(struct soc_resmng_ts *ts_resmng, u32 irq_
 
     info = &ts_resmng->irq_infos[irq_type];
 
-    mutex_lock(&ts_resmng->mutex);
+    ka_task_mutex_lock(&ts_resmng->mutex);
     index = find_irq_index(info, irq);
     if (index == info->irq_num) {
-        mutex_unlock(&ts_resmng->mutex);
+        ka_task_mutex_unlock(&ts_resmng->mutex);
         soc_err("No such irq. (type=%u; irq=%u)\n", irq_type, irq);
         return -EINVAL;
     }
 
     if (info->irqs[index].tscpu_to_taishan_irq != SOC_IRQ_INVALID_VALUE) {
-        mutex_unlock(&ts_resmng->mutex);
+        ka_task_mutex_unlock(&ts_resmng->mutex);
         soc_err("Repeated set. (type=%u; irq=%u)\n", irq_type, irq);
         return -EEXIST;
     }
 
     info->irqs[index].tscpu_to_taishan_irq = tscpu_to_taishan_irq;
-    mutex_unlock(&ts_resmng->mutex);
+    ka_task_mutex_unlock(&ts_resmng->mutex);
 
     return 0;
 }
@@ -361,21 +363,21 @@ int subsys_ts_get_tscpu_to_taishan_irq(struct soc_resmng_ts *ts_resmng, u32 irq_
 
     info = &ts_resmng->irq_infos[irq_type];
 
-    mutex_lock(&ts_resmng->mutex);
+    ka_task_mutex_lock(&ts_resmng->mutex);
     index = find_irq_index(info, irq);
     if (index == info->irq_num) {
-        mutex_unlock(&ts_resmng->mutex);
+        ka_task_mutex_unlock(&ts_resmng->mutex);
         soc_err("No such irq. (type=%u; irq=%u)\n", irq_type, irq);
         return -EINVAL;
     }
 
     if (info->irqs[index].tscpu_to_taishan_irq == SOC_IRQ_INVALID_VALUE) {
-        mutex_unlock(&ts_resmng->mutex);
+        ka_task_mutex_unlock(&ts_resmng->mutex);
         return -ENOENT;
     }
 
     *tscpu_to_taishan_irq = info->irqs[index].tscpu_to_taishan_irq;
-    mutex_unlock(&ts_resmng->mutex);
+    ka_task_mutex_unlock(&ts_resmng->mutex);
 
     return 0;
 }
@@ -384,9 +386,9 @@ int subsys_ts_set_key_value(struct soc_resmng_ts *ts_resmng, const char *name, u
 {
     int ret;
 
-    mutex_lock(&ts_resmng->mutex);
+    ka_task_mutex_lock(&ts_resmng->mutex);
     ret = dev_set_key_value(&ts_resmng->key_value_head, name, value);
-    mutex_unlock(&ts_resmng->mutex);
+    ka_task_mutex_unlock(&ts_resmng->mutex);
 
     return ret;
 }
@@ -395,21 +397,21 @@ int subsys_ts_get_key_value(struct soc_resmng_ts *ts_resmng, const char *name, u
 {
     int ret;
 
-    mutex_lock(&ts_resmng->mutex);
+    ka_task_mutex_lock(&ts_resmng->mutex);
     ret = dev_get_key_value(&ts_resmng->key_value_head, name, value);
-    mutex_unlock(&ts_resmng->mutex);
+    ka_task_mutex_unlock(&ts_resmng->mutex);
 
     return ret;
 }
 
 void subsys_ts_set_ts_status(struct soc_resmng_ts *ts_resmng, u32 status)
 {
-    atomic_set(&ts_resmng->ts_status, status);
+    ka_base_atomic_set(&ts_resmng->ts_status, status);
 }
 
 void subsys_ts_get_ts_status(struct soc_resmng_ts *ts_resmng, u32 *status)
 {
-    *status = (u32)atomic_read(&ts_resmng->ts_status);
+    *status = (u32)ka_base_atomic_read(&ts_resmng->ts_status);
 }
 
 int subsys_ts_set_mia_res_ex(struct soc_resmng_ts *ts_resmng, u32 type, struct soc_mia_res_info_ex *info)
@@ -419,12 +421,12 @@ int subsys_ts_set_mia_res_ex(struct soc_resmng_ts *ts_resmng, u32 type, struct s
         return -EINVAL;
     }
 
-    mutex_lock(&ts_resmng->mutex);
+    ka_task_mutex_lock(&ts_resmng->mutex);
     ts_resmng->res_info_ex[type].start = info->start;
     ts_resmng->res_info_ex[type].total_num = info->total_num;
     ts_resmng->res_info_ex[type].bitmap = info->bitmap;
     ts_resmng->res_info_ex[type].unit_per_bit = info->unit_per_bit;
-    mutex_unlock(&ts_resmng->mutex);
+    ka_task_mutex_unlock(&ts_resmng->mutex);
 
     return 0;
 }
@@ -435,12 +437,12 @@ int subsys_ts_get_mia_res_ex(struct soc_resmng_ts *ts_resmng, u32 type, struct s
         return -EINVAL;
     }
 
-    mutex_lock(&ts_resmng->mutex);
+    ka_task_mutex_lock(&ts_resmng->mutex);
     info->start = ts_resmng->res_info_ex[type].start;
     info->total_num = ts_resmng->res_info_ex[type].total_num;
     info->bitmap = ts_resmng->res_info_ex[type].bitmap;
     info->unit_per_bit = ts_resmng->res_info_ex[type].unit_per_bit;
-    mutex_unlock(&ts_resmng->mutex);
+    ka_task_mutex_unlock(&ts_resmng->mutex);
 
     return 0;
 }

@@ -18,12 +18,22 @@ EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/inc \
     -I$(DRIVER_KERNEL_DIR)/queue/command/msg/ \
     -I$(DRIVER_KERNEL_DIR)/esched/command/ioctl/ \
     -I$(DRIVER_KERNEL_DIR)/esched/command/msg/ \
+    -I$(DRIVER_KERNEL_DIR)/kernel_adapt/include \
     -I$(DRIVER_HAL_INC_DIR) \
     -I${C_SEC_INCLUDE}
 
 EXTRA_CFLAGS += -isystem $(shell $(CC) -print-file-name=include)
+ifeq ($(DAVINCI_HIAI_DKMS), y)
+	EXTRA_CFLAGS += -I$(HIAI_DKMS_DIR)/kernel_adapt/include
+else
+	EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/kernel_adapt/include
+endif
+
 EXTRA_CFLAGS += -DCFG_FEATURE_SHARE_LOG
-EXTRA_CFLAGS += -DCFG_FEATURE_KA_ALLOC_INTERFACE
+ifneq ($(filter $(PRODUCT), ascend910B),)
+    EXTRA_CFLAGS += -DCFG_FEATURE_KA_ALLOC_INTERFACE
+endif
+
 EXTRA_CFLAGS += -DCFG_FEATURE_HOST_LOG
 EXTRA_CFLAGS += -DDRV_HOST
 ccflags-y += -fno-common -fstack-protector-all -funsigned-char -pipe -s -Wall -Wcast-align -Wdate-time -Wfloat-equal -Wformat -Wstack-usage=2048 -Wstrict-prototypes -Wtrampolines -Wundef -Wunused -Wvla

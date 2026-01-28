@@ -22,6 +22,10 @@
 #include "pbl_mem_alloc_interface.h"
 #include "devdrv_user_common.h"
 #include "dms_basic_info.h"
+#include "ka_base_pub.h"
+#include "ka_fs_pub.h"
+#include "ka_errno_pub.h"
+#include "ka_memory_pub.h"
 #include "dms_host_aicpu_info.h"
 
 BEGIN_DMS_MODULE_DECLARATION(DMS_MODULE_HOST_AICPU)
@@ -62,10 +66,10 @@ int dms_set_host_aicpu_info(void *feature, char *in, u32 in_len, char *out, u32 
         return ret;
     }
 
-    ret = copy_from_user(&g_host_aicpu_info[phy_id], (void*)((uintptr_t)input->buff),
+    ret = ka_base_copy_from_user(&g_host_aicpu_info[phy_id], (void*)((uintptr_t)input->buff),
         sizeof(struct dms_host_aicpu_info));
     if (ret != 0) {
-        dms_err("copy_from_user failed. (dev_id=%u; ret=%d)\n", input->dev_id, ret);
+        dms_err("ka_base_copy_from_user failed. (dev_id=%u; ret=%d)\n", input->dev_id, ret);
         return ret;
     }
 
@@ -80,32 +84,28 @@ STATIC char* dms_read_cpuinfo_file(void)
     char *buf = NULL;
     loff_t pos = 0;
 
-    fp = filp_open("/proc/cpuinfo", O_RDONLY, 0);
-    if (IS_ERR_OR_NULL(fp)) {
-        dms_err("Unable to open file. (errno=%ld)\n", PTR_ERR(fp));
+    fp = ka_fs_filp_open("/proc/cpuinfo", KA_O_RDONLY, 0);
+    if (KA_IS_ERR_OR_NULL(fp)) {
+        dms_err("Unable to open file. (errno=%ld)\n", KA_PTR_ERR(fp));
         return NULL;
     }
 
-    buf = dbl_vmalloc(buf_len + 1, GFP_KERNEL|__GFP_HIGHMEM|__GFP_ACCOUNT, PAGE_KERNEL);
+    buf = dbl_vmalloc(buf_len + 1, KA_GFP_KERNEL|__KA_GFP_HIGHMEM|__KA_GFP_ACCOUNT, KA_PAGE_KERNEL);
     if (buf == NULL) {
         dms_err("malloc failed.\n");
-        (void)filp_close(fp, NULL);
+        (void)ka_fs_filp_close(fp, NULL);
         return NULL;
     }
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 14, 0)
-    read_len = kernel_read(fp, buf, buf_len, &pos);
-#else
-    read_len = kernel_read(fp, pos, buf, buf_len);
-#endif
+    read_len = ka_fs_kernel_read(fp, buf, buf_len, &pos);
     if (read_len <= 0) {
         dms_err("Kernel read fail. (read len=%ld)\n", read_len);
-        (void)filp_close(fp, NULL);
+        (void)ka_fs_filp_close(fp, NULL);
         dbl_vfree(buf);
         return NULL;
     }
 
-    (void)filp_close(fp, NULL);
+    (void)ka_fs_filp_close(fp, NULL);
     buf[read_len] = '\0';
     return buf;
 }
@@ -134,7 +134,7 @@ STATIC int dms_get_host_aicpu_frequency(void)
         return -EINVAL;
     }
 
-    while ((buf[pos] != '\0') && (strncmp(match_str, &buf[pos], strlen(match_str)) != 0)) {
+    while ((buf[pos] != '\0') && (ka_base_strncmp(match_str, &buf[pos], ka_base_strlen(match_str)) != 0)) {
         pos++;
     }
 
@@ -188,10 +188,10 @@ int dms_get_host_aicpu_info(void *feature, char *in, u32 in_len, char *out, u32 
 
     g_host_aicpu_info[phy_id].frequency = (g_host_aicpu_info[phy_id].num == 0) ? 0 : g_host_aicpu_freq;
 
-    ret = copy_to_user((void *)((uintptr_t)input->buff), &g_host_aicpu_info[phy_id],
+    ret = ka_base_copy_to_user((void *)((uintptr_t)input->buff), &g_host_aicpu_info[phy_id],
         sizeof(struct dms_host_aicpu_info));
     if (ret != 0) {
-        dms_err("copy_to_user failed. (dev_id=%u; ret=%d)\n", input->dev_id, ret);
+        dms_err("ka_base_copy_to_user failed. (dev_id=%u; ret=%d)\n", input->dev_id, ret);
         return ret;
     }
     output->out_size = input->buff_size;
@@ -209,7 +209,7 @@ int dms_host_aicpu_init(void)
         return ret;
     }
     g_host_aicpu_info = dbl_kzalloc(sizeof(struct dms_host_aicpu_info) * ASCEND_DEV_MAX_NUM,
-        GFP_KERNEL | __GFP_ACCOUNT);
+        KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
     if (g_host_aicpu_info == NULL) {
         dms_err("kzalloc failed.\n");
         return -EINVAL;

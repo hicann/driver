@@ -19,6 +19,7 @@ EXTRA_CFLAGS += -I$(C_SEC_INCLUDE)
 EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/pbl/dev_urd
 EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/vmng/virt/host_stub/mia_mng
 EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/vmng/virt/host_stub
+EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/kernel_adapt/include
 EXTRA_CFLAGS += -isystem $(shell $(CC) -print-file-name=include)
 EXTRA_CFLAGS += -Iinclude/linux
 

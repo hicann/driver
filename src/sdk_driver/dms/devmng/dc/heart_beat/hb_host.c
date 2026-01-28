@@ -27,6 +27,11 @@
 #include "pbl_mem_alloc_interface.h"
 #include "heart_beat.h"
 #include "pbl/pbl_davinci_api.h"
+#include "ka_base_pub.h"
+#include "ka_task_pub.h"
+#include "ka_list_pub.h"
+#include "ka_system_pub.h"
+#include "ka_memory_pub.h"
 #include "hb_read.h"
 
 #ifdef CFG_ENV_FPGA
@@ -41,16 +46,16 @@
 #ifndef DMS_UT
 unsigned int heart_beat_get_max_lost_count(unsigned int dev_id)
 {
-    static unsigned int max_lost_count = UINT_MAX;
+    static unsigned int max_lost_count = KA_UINT_MAX;
     int soc_type = -1;
     int ret;
 
-    if (max_lost_count != UINT_MAX) {
+    if (max_lost_count != KA_UINT_MAX) {
         return max_lost_count;
     }
     ret = hal_kernel_get_soc_type(dev_id, &soc_type);
     if (ret != 0) {
-        return UINT_MAX;
+        return KA_UINT_MAX;
     }
     if (soc_type == SOC_TYPE_CLOUD_V3) {
         max_lost_count = HEART_BEAT_HCCS_DEATH_COUNT;
@@ -111,7 +116,7 @@ int check_and_update_link_abnormal_status(u32 dev_id, u64 count)
     u32 status = 0;
     struct ascend_intf_get_status_para status_para = {0};
 
-    if (count == U64_MAX) {
+    if (count == KA_U64_MAX) {
         (void)ascend_intf_report_device_status(dev_id, DAVINCI_INTF_DEVICE_STATUS_LINK_ABNORMAL);
     } else {
         status_para.para.device_id = dev_id;
@@ -144,17 +149,17 @@ STATIC void host_manager_device_exception(u32 dev_id)
         return;
     }
 
-    mutex_lock(&d_info->pm_list_lock);
-    if (!list_empty_careful(&d_info->pm_list_header)) {
-        list_for_each_safe(pos, n, &d_info->pm_list_header)
+    ka_task_mutex_lock(&d_info->pm_list_lock);
+    if (!ka_list_empty_careful(&d_info->pm_list_header)) {
+        ka_list_for_each_safe(pos, n, &d_info->pm_list_header)
         {
-            pm = list_entry(pos, struct devdrv_pm, list);
+            pm = ka_list_entry(pos, struct devdrv_pm, list);
             if (pm->ts_status_notify != NULL) {
                 (void)pm->ts_status_notify(dev_id, TS_DOWN);
             }
         }
     }
-    mutex_unlock(&d_info->pm_list_lock);
+    ka_task_mutex_unlock(&d_info->pm_list_lock);
 }
 
 int hb_report_heart_beat_lost_event(unsigned int dev_id)
@@ -166,7 +171,7 @@ int hb_report_heart_beat_lost_event(unsigned int dev_id)
     struct soft_fault heartbeat_fault;
     char *fault_info = "device heartbeat lost";
 
-    data_len = strlen(fault_info) + 1;
+    data_len = ka_base_strlen(fault_info) + 1;
     ret = memcpy_s(heartbeat_fault.data, DMS_MAX_EVENT_DATA_LENGTH, fault_info, data_len);
     if (ret != 0) {
         soft_drv_err("Memcpy failed! (device=%u) \n", dev_id);
@@ -202,7 +207,7 @@ void heartbeat_resume(u32 dev_id)
     struct soft_fault heartbeat_fault;
     const char *fault_info = "device heartbeat resume";
 
-    data_len = strlen(fault_info) + 1;
+    data_len = ka_base_strlen(fault_info) + 1;
     ret = memcpy_s(heartbeat_fault.data, DMS_MAX_EVENT_DATA_LENGTH, fault_info, data_len);
     if (ret != 0) {
         soft_drv_err("Memcpy failed! (device=%u) \n", dev_id);
@@ -238,7 +243,7 @@ int hb_read_item_work_start(unsigned int dev_id, struct hb_read_block *hb_read_i
     hb_read_item->lost_count = 0;
     hb_read_item->total_lost_count = 0;
     hb_read_item->miss_read_count = 0;
-    hb_read_item->last_read_time = ktime_get_raw_ns();;
+    hb_read_item->last_read_time = ka_system_ktime_get_raw_ns();;
     (void)ascend_intf_report_device_status(dev_id,
         DAVINCI_INTF_DEVICE_CLEAR_STATUS | DAVINCI_INTF_DEVICE_STATUS_HEARTBIT_LOST |
             DAVINCI_INTF_DEVICE_STATUS_LINK_ABNORMAL);
@@ -282,18 +287,18 @@ int heartbeat_dev_register(u32 dev_id)
     struct soft_dev *s_dev = NULL;
     struct drv_soft_ctrl *soft_ctrl = soft_get_ctrl();
 
-    mutex_lock(&soft_ctrl->mutex[dev_id]);
+    ka_task_mutex_lock(&soft_ctrl->mutex[dev_id]);
     client = soft_ctrl->s_dev_t[dev_id][user_id];
     if (client->registered == 1) {
         soft_drv_warn("heartbeat is registered, return. (dev_id=%u; registered=%u)\n", dev_id, client->registered);
-        mutex_unlock(&soft_ctrl->mutex[dev_id]);
+        ka_task_mutex_unlock(&soft_ctrl->mutex[dev_id]);
         return 0;
     }
 
-    s_dev =  dbl_kzalloc(sizeof(struct soft_dev), GFP_KERNEL | __GFP_ACCOUNT);
+    s_dev =  dbl_kzalloc(sizeof(struct soft_dev), KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
     if (s_dev == NULL) {
         soft_drv_err("kzalloc soft_dev failed.\n");
-        mutex_unlock(&soft_ctrl->mutex[dev_id]);
+        ka_task_mutex_unlock(&soft_ctrl->mutex[dev_id]);
         return -ENOMEM;
     }
 
@@ -312,18 +317,18 @@ int heartbeat_dev_register(u32 dev_id)
         goto ERROR;
     }
 
-    list_add(&s_dev->list, &client->head);
+    ka_list_add(&s_dev->list, &client->head);
     client->user_id = user_id;
     client->registered = 1;
     client->node_num++;
     soft_ctrl->user_num[dev_id]++;
-    mutex_unlock(&soft_ctrl->mutex[dev_id]);
+    ka_task_mutex_unlock(&soft_ctrl->mutex[dev_id]);
 
     return 0;
 ERROR:
     dbl_kfree(s_dev);
     s_dev = NULL;
-    mutex_unlock(&soft_ctrl->mutex[dev_id]);
+    ka_task_mutex_unlock(&soft_ctrl->mutex[dev_id]);
     return ret;
 }
 
@@ -338,11 +343,11 @@ void heartbeat_dev_unregister(void)
     }
 
     for (i = 0; i < DEVICE_NUM_MAX; i++) {
-        mutex_lock(&soft_ctrl->mutex[i]);
+        ka_task_mutex_lock(&soft_ctrl->mutex[i]);
         client = soft_ctrl->s_dev_t[i][SF_SENSOR_DAVINCI];
         soft_free_one_node(client, DMS_DEV_TYPE_BASE_SERVCIE);
         soft_ctrl->user_num[i]--;
-        mutex_unlock(&soft_ctrl->mutex[i]);
+        ka_task_mutex_unlock(&soft_ctrl->mutex[i]);
     }
 
     return;
@@ -397,7 +402,7 @@ HEARTBEAT_LOST:
     dms_err("The device urgent heartbeat is lost! (device=%u) \n", dev_id);
     manager_info->device_status[dev_id] = DRV_STATUS_COMMUNICATION_LOST;
     hb_read_item_work_stop(dev_id, heartbeat_info);
-    queue_work(heartbeat_info->hb_lost_wq, &heartbeat_info->hb_lost_work);
+    ka_task_queue_work(heartbeat_info->hb_lost_wq, &heartbeat_info->hb_lost_work);
     return ret;
 }
 

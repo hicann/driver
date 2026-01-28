@@ -18,6 +18,10 @@
 #include <linux/uaccess.h>
 #include "securec.h"
 #include "dmc_kernel_interface.h"
+#include "ka_base_pub.h"
+#include "ka_kernel_def_pub.h"
+#include "ka_system_pub.h"
+#include "ka_task_pub.h"
 
 #ifndef DRVFAULT_UT
 #define MODULE_LOG             "drv_log_fault_mng" 
@@ -55,7 +59,7 @@ void log_set_fault_mng_info(struct log_drv_fault_mng *fault_mng)
 {
     g_drv_fault_mng = fault_mng;
 }
-EXPORT_SYMBOL_GPL(log_set_fault_mng_info);
+KA_EXPORT_SYMBOL_GPL(log_set_fault_mng_info);
 
 #if (!defined(CFG_FEATURE_HOST_LOG) && !defined(CFG_FEATURE_LOG_GROUPING))
 STATIC struct log_drv_fault_mng *log_get_drv_fault_mng_info(void)
@@ -74,8 +78,8 @@ void log_drv_get_date(char *date, unsigned int len)
     struct tm tm = { 0 };
     int ret;
 
-    ktime_get_real_ts64(&sys_time);
-    time64_to_tm(sys_time.tv_sec, 0, &tm);
+    ka_system_ktime_get_real_ts64(&sys_time);
+    ka_system_time64_to_tm(sys_time.tv_sec, 0, &tm);
     ret = snprintf_s(date, len, len - 1, "%04ld-%02d-%02d-%02d:%02d:%02d.%03lu.%03ld",
                      tm.tm_year + TWENTY_CENTURY, tm.tm_mon + JANUARY, tm.tm_mday, tm.tm_hour,
                      tm.tm_min, tm.tm_sec, (sys_time.tv_nsec / MEGA) % KILO, (sys_time.tv_nsec / KILO) % KILO);
@@ -85,7 +89,7 @@ void log_drv_get_date(char *date, unsigned int len)
 #endif
     return;
 }
-EXPORT_SYMBOL_GPL(log_drv_get_date);
+KA_EXPORT_SYMBOL_GPL(log_drv_get_date);
 
 STATIC u32 log_drv_get_ring_buffer_data_len(u32 buf_read, u32 buf_write, u32 buf_len)
 {
@@ -114,7 +118,7 @@ STATIC s32 log_write_ring_buffer(struct log_drv_fault_mng *fault_mng, bool *is_o
     data_len = log_drv_get_ring_buffer_data_len(fault_mng->buf_read, fault_mng->buf_write, fault_mng->buf_size);
     buf_len = fault_mng->buf_size;
     buf_left = buf_len - data_len;
-    src_len = strnlen(fault_mng->printk_buf, LOG_PRINT_LEN);
+    src_len = ka_base_strnlen(fault_mng->printk_buf, LOG_PRINT_LEN);
     if ((src_len == 0) || (src_len >= LOG_PRINT_LEN)) {
         return LOG_RET_ERROR;
     }
@@ -162,12 +166,12 @@ void log_user_write_fault_mng(const char *module, int pid, const char *comm, con
         return;
     }
     
-    spin_lock_irqsave(&fault_mng->spinlock, flags);
+    ka_task_spin_lock_irqsave(&fault_mng->spinlock, flags);
     ret = snprintf_s(new_fmt, LOG_PRINT_LEN, LOG_PRINT_LEN - 1, "[EVENT] DRV(%d,%s):%s [%s:%d][%s]%s", 
                      pid, comm, date, file, line, module, fmt);
     if (ret < 0) {
 #ifndef DRVFAULT_UT
-        spin_unlock_irqrestore(&fault_mng->spinlock, flags);
+        ka_task_spin_unlock_irqrestore(&fault_mng->spinlock, flags);
         slog_drv_err("Log snprintf_s failed. (ret=%d)\n", ret);
         return;
 #endif
@@ -177,7 +181,7 @@ void log_user_write_fault_mng(const char *module, int pid, const char *comm, con
     va_end(args);
     if (ret <= 0) {
 #ifndef DRVFAULT_UT
-        spin_unlock_irqrestore(&fault_mng->spinlock, flags);
+        ka_task_spin_unlock_irqrestore(&fault_mng->spinlock, flags);
         slog_drv_err("Log vsnprintf_s failed. (ret=%d)\n", ret);
         return;
 #endif
@@ -185,20 +189,20 @@ void log_user_write_fault_mng(const char *module, int pid, const char *comm, con
 
     ret = log_write_ring_buffer(fault_mng, &is_overwrite);
     if (ret != 0) {
-        spin_unlock_irqrestore(&fault_mng->spinlock, flags);
+        ka_task_spin_unlock_irqrestore(&fault_mng->spinlock, flags);
         slog_drv_err("Log write ringbuffer failed. (w_ptr=%u, r_ptr=%u, buf_size=%u)\n", fault_mng->buf_write, fault_mng->buf_read, fault_mng->buf_size);
         return;
     }
-    spin_unlock_irqrestore(&fault_mng->spinlock, flags);
-    atomic_set(&fault_mng->status, (s32)LOG_SESSION_STATUS_READABLE);
-    wake_up(&fault_mng->wq);
+    ka_task_spin_unlock_irqrestore(&fault_mng->spinlock, flags);
+    ka_base_atomic_set(&fault_mng->status, (s32)LOG_SESSION_STATUS_READABLE);
+    ka_task_wake_up(&fault_mng->wq);
 
     if (is_overwrite) {
-        slog_drv_warn("Ring buffer is full. Data lost. (src_len=%lu, w_ptr=%u, r_ptr=%u, buf_size=%u)\n", strnlen(fault_mng->printk_buf, LOG_PRINT_LEN),
+        slog_drv_warn("Ring buffer is full. Data lost. (src_len=%lu, w_ptr=%u, r_ptr=%u, buf_size=%u)\n", ka_base_strnlen(fault_mng->printk_buf, LOG_PRINT_LEN),
                       fault_mng->buf_write, fault_mng->buf_read, fault_mng->buf_size);
     }
 
     return;
 }
-EXPORT_SYMBOL_GPL(log_user_write_fault_mng);
+KA_EXPORT_SYMBOL_GPL(log_user_write_fault_mng);
 #endif

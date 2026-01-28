@@ -7,9 +7,9 @@
 # INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
 # See LICENSE in the root of the software repository for the full text of the License.
 # ------------------------------------------------------------------------------------------------------------
-set(drv_pcie_host_depends drv_seclib_host asdrv_pbl asdrv_vpc drv_vascend_stub)
+set(drv_pcie_host_depends drv_seclib_host asdrv_pbl asdrv_vpc drv_vascend_stub ascend_kernel_open_adapt)
 
 add_host_ko(LOCAL_MODULE drv_pcie_host
             KO_SRC_FOLDER ${CMAKE_CURRENT_SOURCE_DIR}
-            MAKE_ARGS ${MAKE_ARGS}
+            MAKE_ARGS ${MAKE_ARGS} ENABLE_EQUIP=${ENABLE_EQUIP}
             TARGETE_DPENDS "${drv_pcie_host_depends}")

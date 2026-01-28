@@ -30,7 +30,7 @@
 #include "devdrv_user_common.h"
 #include "dsmi_product_ext.h"
 #include "dsmi_product_user_config.h"
-#include "uda_inner.h"
+#include "pbl_uda_user.h"
 
 #ifdef CFG_SOC_PLATFORM_CLOUD
 #include "dms_user_interface.h"
@@ -1180,6 +1180,49 @@ int dsmi_product_get_mcu_board_id(unsigned int device_id, unsigned int *mcu_boar
     ret = dsmi_get_mcu_board_id(device_id, mcu_board_id);
     if (ret != 0) {
         DEV_MON_ERR("Get mcu board id fail. (devid=%u; ret=%d)\n", device_id, ret);
+        return ret;
+    }
+
+    return DRV_ERROR_NONE;
+#else
+    return DRV_ERROR_NOT_SUPPORT;
+#endif
+}
+
+#ifdef CFG_FEATURE_AICPU_CUSTOM_CERT
+int dsmi_cmd_get_custom_cert_show_info(unsigned int device_id, const char *buf, unsigned int buf_size,
+                                       void *show_info, unsigned int show_info_size)
+{
+    DM_COMMAND_BIGIN(DEV_MOV_CMD_GET_CUSTOM_OP_SECVERIFY_CERT, device_id,
+        (buf_size + sizeof(unsigned int) + sizeof(unsigned int)), show_info_size)
+    DM_COMMAND_ADD_REQ(&show_info_size, sizeof(unsigned int))
+    DM_COMMAND_ADD_REQ(&buf_size, sizeof(unsigned int))
+    DM_COMMAND_ADD_REQ(buf, buf_size)
+    DM_COMMAND_SEND()
+    DM_COMMAND_PUSH_OUT(&show_info, show_info_size)
+    DM_COMMAND_END()
+}
+#endif
+
+int dsmi_get_custom_op_secverify_cert_show_info(unsigned int device_id, const char *buf, unsigned int buf_size,
+                                                void *show_info, unsigned int show_info_size)
+{
+#ifdef CFG_FEATURE_AICPU_CUSTOM_CERT
+    int ret;
+    if (show_info == NULL || device_id >= DEVDRV_MAX_DAVINCI_NUM || buf == NULL) {
+        DEV_MON_ERR("The buf is null or the device_id is too large. (devid=%u;)\n", device_id);
+        return DRV_ERROR_PARA_ERROR;
+    }
+
+    if ((buf_size <= 0 || buf_size > DSMI_CUSTOM_OP_SECVERIFY_CERT_CHAIN_SIZE_MAX) ||
+        (show_info_size <= 0 || show_info_size > DSMI_CUSTOM_OP_SECVERIFY_CERT_SHOW_INFO_SIZE_MAX)) {
+        DEV_MON_ERR("Invaild buf_size or show_info_size. (buf_size=%u; show_info_size=%u)\n", buf_size, show_info_size);
+        return DRV_ERROR_PARA_ERROR;
+    }
+
+    ret = dsmi_cmd_get_custom_cert_show_info(device_id, buf, buf_size, show_info, show_info_size);
+    if (ret != 0) {
+        DEV_MON_ERR("Get custom cert show info fail. (devid=%u; ret=%d)\n", device_id, ret);
         return ret;
     }
 

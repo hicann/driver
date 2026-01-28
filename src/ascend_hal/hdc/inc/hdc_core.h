@@ -53,5 +53,6 @@ signed int hdc_get_access_count(void);
 signed int hdc_get_config_count(void);
 signed int hdc_get_max_device_num(void);
 unsigned int hdc_get_max_vf_dev_id_start(void);
-
+unsigned int hdc_get_alloc_len(unsigned int len, unsigned int flag);
+bool hdc_is_in_ub(void);
 #endif

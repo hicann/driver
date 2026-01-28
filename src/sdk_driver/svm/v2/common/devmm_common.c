@@ -10,15 +10,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#include <linux/slab.h>
-#include <linux/vmalloc.h>
-#include <linux/sched.h>
-#include <linux/version.h>
-#include <linux/delay.h>
-#include <linux/preempt.h>
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 11, 0)
-#include <linux/sched/task.h>
-#endif
+
 #include "kernel_version_adapt.h"
 #include "comm_kernel_interface.h"
 #include "davinci_interface.h"
@@ -45,7 +37,7 @@ void devmm_try_usleep_by_time(u32 *pre_stamp, u32 time)
 {
     u32 timeinterval;
 
-    timeinterval = ka_system_jiffies_to_msecs(jiffies - *pre_stamp);
+    timeinterval = ka_system_jiffies_to_msecs(ka_jiffies - *pre_stamp);
     if (timeinterval > time) {
         ka_system_usleep_range(1, 2); /* sleep 1~2us */
         *pre_stamp = (u32)ka_jiffies;
@@ -56,8 +48,8 @@ void devmm_try_cond_resched_by_time(u32 *pre_stamp, u32 time)
 {
     u32 timeinterval;
 
-    timeinterval = ka_system_jiffies_to_msecs(jiffies - *pre_stamp);
-    if ((timeinterval > time) && !in_atomic()) {
+    timeinterval = ka_system_jiffies_to_msecs(ka_jiffies - *pre_stamp);
+    if ((timeinterval > time) && !ka_base_in_atomic()) {
         ka_task_cond_resched();
         *pre_stamp = (u32)ka_jiffies;
     }
@@ -101,7 +93,7 @@ int devmm_pin_user_pages_fast(u64 va, u64 total_num, int write, ka_page_t **page
 
     stamp = (u32)ka_jiffies;
     for (got_num = 0; got_num < total_num;) {
-        tmp_va = va + got_num * PAGE_SIZE;
+        tmp_va = va + got_num * KA_MM_PAGE_SIZE;
         remained_num = total_num - got_num;
         expected_num = (remained_num > DEVMM_GET_2M_PAGE_NUM) ? DEVMM_GET_2M_PAGE_NUM : (int)remained_num;
         tmp_num = devmm_ka_mm_pin_user_pages_fast(tmp_va, expected_num, write, &pages[got_num]);
@@ -278,9 +270,9 @@ static int devmm_check_common_input_heap_id_and_size(struct devmm_svm_process *s
     }
 
     if (heap_idx < DEVMM_MAX_HEAP_NUM) {
-        if (heap_size > (DEVMM_MAX_ALLOC_PAGE_NUM * PAGE_SIZE)) {
+        if (heap_size > (DEVMM_MAX_ALLOC_PAGE_NUM * KA_MM_PAGE_SIZE)) {
             devmm_drv_err("Input para. (heap_idx=%u; heap_size=0x%llx; max_heap_size=0x%llx)\n",
-                heap_idx, heap_size, DEVMM_MAX_ALLOC_PAGE_NUM * PAGE_SIZE);
+                heap_idx, heap_size, DEVMM_MAX_ALLOC_PAGE_NUM * KA_MM_PAGE_SIZE);
             return -EINVAL;
         }
     } else {
@@ -388,11 +380,11 @@ static u32 devmm_get_chunk_page_size_by_heap_type(u32 heap_type, u32 heap_sub_ty
 
 #ifndef EMU_ST
 /* used with the devmm_free, function as alloc */
-void *devmm_kvalloc(u64 size, gfp_t flags)
+void *devmm_kvalloc(u64 size, ka_gfp_t flags)
 {
     void *ptr = devmm_kmalloc_ex(size, KA_GFP_KERNEL | __KA_GFP_NOWARN | __KA_GFP_ACCOUNT | flags);
     if (ptr == NULL) {
-        ptr = __devmm_vmalloc_ex(size, KA_GFP_KERNEL | __KA_GFP_ACCOUNT | flags, PAGE_KERNEL);
+        ptr = __devmm_vmalloc_ex(size, KA_GFP_KERNEL | __KA_GFP_ACCOUNT | flags, KA_PAGE_KERNEL);
     }
 
     return ptr;
@@ -400,14 +392,14 @@ void *devmm_kvalloc(u64 size, gfp_t flags)
 
 void *devmm_kvzalloc(u64 size)
 {
-    return devmm_kvalloc(size, __GFP_ZERO);
+    return devmm_kvalloc(size, __KA_GFP_ZERO);
 }
 #endif
 
 /* used with the devmm_zalloc, function as free */
 void devmm_kvfree(const void *ptr)
 {
-    if (is_vmalloc_addr(ptr)) {
+    if (ka_mm_is_vmalloc_addr(ptr)) {
         devmm_vfree_ex(ptr);
     } else {
         devmm_kfree_ex(ptr);
@@ -470,7 +462,7 @@ void devmm_set_heap_used_status(struct devmm_svm_heap *heap, u64 va, u64 size)
             break;
         }
         nr = (u32)((addr - heap->start) / HEAP_USED_PER_MASK_SIZE);
-        set_bit(nr, heap->used_mask);
+        ka_base_set_bit(nr, heap->used_mask);
     }
 }
 
@@ -524,7 +516,7 @@ bool devmm_wait_svm_heap_unoccupied(struct devmm_svm_process *svm_process, struc
             ka_task_up_write(&svm_process->heap_sem);
             return true;
         }
-        usleep_range(100, 200); /* 100-200 us */
+        ka_system_usleep_range(100, 200); /* 100-200 us */
     }
     ka_task_up_write(&svm_process->heap_sem);
     return false;
@@ -564,7 +556,7 @@ int devmm_update_heap_info(struct devmm_svm_process *svm_process, struct devmm_u
         }
 
         used_mask_size = sizeof(unsigned long) *
-            BITS_TO_LONGS((u64)(ka_base_round_up(cmd->heap_size, HEAP_USED_PER_MASK_SIZE) / HEAP_USED_PER_MASK_SIZE));
+            KA_BASE_BITS_TO_LONGS((u64)(ka_base_round_up(cmd->heap_size, HEAP_USED_PER_MASK_SIZE) / HEAP_USED_PER_MASK_SIZE));
 
         heap = devmm_kvzalloc(sizeof(struct devmm_svm_heap) + used_mask_size);
         if (heap == NULL) {
@@ -711,20 +703,17 @@ u64 devmm_get_tgid_start_time(void)
     pgrp = ka_task_find_get_pid(vnr);
     if (pgrp == NULL) {
         devmm_drv_err("Pgrp is NULL. (vnr=%d)\n", vnr);
-        return U64_MAX;
+        return KA_U64_MAX;
     }
 
     task = ka_task_get_pid_task(pgrp, KA_PIDTYPE_PID);
     if (task == NULL) {
         devmm_drv_err("Task is NULL.\n");
         ka_task_put_pid(pgrp);
-        return U64_MAX;
+        return KA_U64_MAX;
     }
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 17, 0)
-    start_time = task->start_time;
-#else
-    start_time = ((u64)(task->start_time.tv_sec * DEVMM_NSEC_PER_SEC) + task->start_time.tv_nsec);
-#endif
+
+    start_time = ka_task_get_starttime(task);
     ka_task_put_task_struct(task);
     ka_task_put_pid(pgrp);
 

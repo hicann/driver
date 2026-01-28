@@ -44,9 +44,9 @@ struct devdrv_common_msg {
 
 int devdrv_alloc_common_msg_queue(struct devdrv_pci_ctrl *pci_ctrl);
 void devdrv_free_common_msg_queue(struct devdrv_pci_ctrl *pci_ctrl);
-struct mutex *devdrv_get_common_msg_mutex(void);
+ka_mutex_t *devdrv_get_common_msg_mutex(void);
 int devdrv_pci_register_common_msg_client(const struct devdrv_common_msg_client *msg_client);
-int devdrv_pci_unregister_common_msg_client(u32 devid, const struct devdrv_common_msg_client *msg_client);
-int devdrv_pci_common_msg_send(u32 devid, void *data, u32 in_data_len, u32 out_data_len, u32 *real_out_len,
+int devdrv_pci_unregister_common_msg_client(u32 index_id, const struct devdrv_common_msg_client *msg_client);
+int devdrv_pci_common_msg_send(u32 index_id, void *data, u32 in_data_len, u32 out_data_len, u32 *real_out_len,
     enum devdrv_common_msg_type msg_type);
 #endif

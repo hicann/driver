@@ -16,7 +16,6 @@
 #include "ka_base_pub.h"
 #include "ka_base.h"
 
-
 unsigned short const *ka_base_get_crc16_table(void)
 {
     return crc16_table;
@@ -48,3 +47,41 @@ u32 ka_base_get_random_u32(void)
 #endif
 }
 EXPORT_SYMBOL_GPL(ka_base_get_random_u32);
+
+void ka_base_set_cdev_owner(ka_cdev_t *cdev, ka_module_t *owner)
+{
+    cdev->owner = owner;
+}
+EXPORT_SYMBOL_GPL(ka_base_set_cdev_owner);
+
+ka_module_t *ka_base_find_module(const char *name)
+{
+#if LINUX_VERSION_CODE > KERNEL_VERSION(4, 0, 0)
+    return NULL;
+#else
+    return find_module(name);
+#endif
+}
+EXPORT_SYMBOL_GPL(ka_base_find_module);
+
+func_by_string ka_base_register_func_by_string(bool (*func_high_v)(const char *name),
+    bool (*func_low_v)(const char *name))
+{
+#if LINUX_VERSION_CODE > KERNEL_VERSION(4, 0, 0)
+    return func_high_v;
+#else
+    return func_low_v;
+#endif
+}
+EXPORT_SYMBOL_GPL(ka_base_register_func_by_string);
+
+func_by_pdev ka_base_register_func_by_pdev(bool (*func_high_v)(ka_pci_dev_t *pdev),
+    bool (*func_low_v)(ka_pci_dev_t *pdev))
+{
+#if LINUX_VERSION_CODE > KERNEL_VERSION(4, 2, 8)
+    return func_high_v;
+#else
+    return func_low_v;
+#endif
+}
+EXPORT_SYMBOL_GPL(ka_base_register_func_by_pdev);

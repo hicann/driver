@@ -15,6 +15,7 @@
 #include "devdrv_util.h"
 #include "devdrv_ctrl.h"
 #include "pbl/pbl_uda.h"
+#include "ka_kernel_def_pub.h"
 
 int devdrv_get_atu_info(struct devdrv_pci_ctrl *pci_ctrl, int atu_type, struct devdrv_iob_atu **atu,
     u64 *host_phy_base)
@@ -103,7 +104,7 @@ int devdrv_devmem_addr_d2h(u32 udevid, phys_addr_t device_phy_addr, phys_addr_t 
     }
 
     /* Without PA transformation, can't access bar addr on the same chip, but Virtual pass-through must use bar */
-    if ((pci_ctrl->connect_protocol == CONNECT_PROTOCOL_HCCS) && (pci_ctrl->pdev->is_physfn != 0)) {
+    if ((pci_ctrl->connect_protocol == CONNECT_PROTOCOL_HCCS) && (ka_pci_get_is_physfn(pci_ctrl->pdev) != 0)) {
         *host_bar_addr = device_phy_addr;
         return 0;
     }
@@ -123,7 +124,7 @@ int devdrv_devmem_addr_d2h(u32 udevid, phys_addr_t device_phy_addr, phys_addr_t 
 
     return 0;
 }
-EXPORT_SYMBOL(devdrv_devmem_addr_d2h);
+KA_EXPORT_SYMBOL(devdrv_devmem_addr_d2h);
 
 int devdrv_devmem_addr_h2d(u32 udevid, phys_addr_t host_bar_addr, phys_addr_t *device_phy_addr)
 {
@@ -162,4 +163,4 @@ int devdrv_devmem_addr_h2d(u32 udevid, phys_addr_t host_bar_addr, phys_addr_t *d
 
     return 0;
 }
-EXPORT_SYMBOL(devdrv_devmem_addr_h2d);
+KA_EXPORT_SYMBOL(devdrv_devmem_addr_h2d);

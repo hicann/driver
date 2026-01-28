@@ -45,6 +45,7 @@ drvError_t dms_get_detect_ioctl(DSMI_DETECT_MAIN_CMD main_cmd, struct dms_filter
     struct dms_get_device_info_in in, unsigned int *size);
 drvError_t dms_get_basic_info_host(unsigned int dev_id, void *buff, unsigned int sub_cmd, unsigned int size);
 drvError_t DmsGetAiCoreDieNum(unsigned int dev_id, long long *value);
+drvError_t dms_get_hcom_cpu_num(unsigned int dev_id, long long *value);
 drvError_t DmsGetCpuWorkMode(unsigned int dev_id, long long *value);
 drvError_t DmsSetTrsMode(unsigned int dev_id, unsigned int main_cmd,
     unsigned int sub_cmd, const void *buf, unsigned int size);

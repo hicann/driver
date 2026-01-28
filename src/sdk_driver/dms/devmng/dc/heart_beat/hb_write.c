@@ -20,6 +20,8 @@
 #include <linux/panic_notifier.h>
 #endif
 
+#include "ka_system_pub.h"
+#include "ka_task_pub.h"
 #include "devdrv_common.h"
 #include "dms_define.h"
 #include "dms_timer.h"
@@ -110,16 +112,16 @@ static enum hrtimer_restart heart_beat_write_count(struct hrtimer *htr)
 #endif
 
     if (htr == NULL) {
-        hrtimer_forward_now(htr, ktime_set(HEART_BEAT_TIMER_EXPIRE_SEC, 0));
-        return HRTIMER_RESTART;
+        ka_system_hrtimer_forward_now(htr, ka_system_ktime_set(HEART_BEAT_TIMER_EXPIRE_SEC, 0));
+        return KA_HRTIMER_RESTART;
     }
 
     info = container_of(htr, struct hb_write_timer, timer);
     ret = hb_update_heartbeat_count();
     if (ret != 0) {
         if (ret == SHM_NOT_INIT) {
-            hrtimer_forward_now(htr, ktime_set(HEART_BEAT_TIMER_EXPIRE_SEC, 0));
-            return HRTIMER_RESTART;
+            ka_system_hrtimer_forward_now(htr, ka_system_ktime_set(HEART_BEAT_TIMER_EXPIRE_SEC, 0));
+            return KA_HRTIMER_RESTART;
         }
         info->write_ret = ret;
         abnormal = true;
@@ -130,9 +132,9 @@ static enum hrtimer_restart heart_beat_write_count(struct hrtimer *htr)
 
 #ifndef DRV_SOFT_UT
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 6, 0)
-    jiffies_to_timespec64(jiffies, &current_time);
+    ka_system_jiffies_to_timespec64(ka_jiffies, &current_time);
 #else
-    jiffies_to_timespec(jiffies, &tmp_current_time);
+    jiffies_to_timespec(ka_jiffies, &tmp_current_time);
 
     current_time.tv_nsec = tmp_current_time.tv_nsec;
     current_time.tv_sec = tmp_current_time.tv_sec;
@@ -141,12 +143,12 @@ static enum hrtimer_restart heart_beat_write_count(struct hrtimer *htr)
 
     info->last_write_time = current_time;
     if (abnormal || hb_write_work_abnormal_check(info, current_time)) {
-        schedule_work(&info->work);
+        ka_task_schedule_work(&info->work);
     } else {
         info->last_normal_time = current_time;
     }
-    hrtimer_forward_now(htr, ktime_set(HEART_BEAT_TIMER_EXPIRE_SEC, 0));
-    return HRTIMER_RESTART;
+    ka_system_hrtimer_forward_now(htr, ka_system_ktime_set(HEART_BEAT_TIMER_EXPIRE_SEC, 0));
+    return KA_HRTIMER_RESTART;
 }
 
 STATIC void heart_beart_write_dfx_handler(struct work_struct *work)
@@ -155,7 +157,7 @@ STATIC void heart_beart_write_dfx_handler(struct work_struct *work)
 
     timer_info = container_of(work, struct hb_write_timer, work);
     soft_drv_warn("Don't write heartbeat for a long time."
-        "(write heartbeat ret=%d; tatol forget count=%llu; last nomal write time =%llds; last write time=%llds)\n",
+        "(write heartbeat ret=%d; tatol forget count=%llu; last normal write time =%llds; last write time=%llds)\n",
         timer_info->write_ret, timer_info->forget_count, timer_info->last_normal_time.tv_sec, timer_info->last_write_time.tv_sec);
 }
 #endif
@@ -196,16 +198,16 @@ int heart_beat_write_timer_init(void)
         g_hb_write_block[i].device_status = HEART_BEAT_NOT_INIT;
     }
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 4, 1)
-    hrtimer_init(&g_hb_write_timer.timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL_HARD);
+    ka_system_hrtimer_init(&g_hb_write_timer.timer, KA_CLOCK_MONOTONIC, KA_HRTIMER_MODE_REL_HARD);
 #else
-    hrtimer_init(&g_hb_write_timer.timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
+    ka_system_hrtimer_init(&g_hb_write_timer.timer, KA_CLOCK_MONOTONIC, KA_HRTIMER_MODE_REL);
 #endif
     g_hb_write_timer.timer.function = heart_beat_write_count;
-    INIT_WORK(&g_hb_write_timer.work, heart_beart_write_dfx_handler);
+    KA_TASK_INIT_WORK(&g_hb_write_timer.work, heart_beart_write_dfx_handler);
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 4, 1)
-    hrtimer_start(&g_hb_write_timer.timer, ktime_set(HEART_BEAT_TIMER_EXPIRE_SEC, 0), HRTIMER_MODE_REL_HARD);
+    ka_system_hrtimer_start(&g_hb_write_timer.timer, ka_system_ktime_set(HEART_BEAT_TIMER_EXPIRE_SEC, 0), KA_HRTIMER_MODE_REL_HARD);
 #else
-    hrtimer_start(&g_hb_write_timer.timer, ktime_set(HEART_BEAT_TIMER_EXPIRE_SEC, 0), HRTIMER_MODE_REL);
+    ka_system_hrtimer_start(&g_hb_write_timer.timer, ka_system_ktime_set(HEART_BEAT_TIMER_EXPIRE_SEC, 0), KA_HRTIMER_MODE_REL);
 #endif
     return DRV_ERROR_NONE;
 #else
@@ -223,11 +225,11 @@ void heart_beat_write_timer_exit(void)
         heart_beat_write_status_uninit(i);
     }
 
-    ret = hrtimer_cancel(&g_hb_write_timer.timer);
+    ret = ka_system_hrtimer_cancel(&g_hb_write_timer.timer);
     if (ret < 0) {
         soft_drv_warn("hrtimer cannot cancel. (ret=%d)\n", ret);
     }
-    (void)cancel_work_sync(&g_hb_write_timer.work);
+    (void)ka_task_cancel_work_sync(&g_hb_write_timer.work);
     soft_drv_info("Device heartbeat exit success.\n");
 
     return;

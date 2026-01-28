@@ -149,7 +149,7 @@ typedef enum {
 typedef enum {
     DSMI_UPGRADE_MAIN_TYPE_VERSION = 0,
     DSMI_UPGRADE_MAIN_TYPE_PARTITION,
-    DSMI_UPGRADE_MAIN_TYPE_REG_PROG_PKG_INFO, // register program package infomation
+    DSMI_UPGRADE_MAIN_TYPE_REG_PROG_PKG_INFO, // register program package information
     DSMI_UPGRADE_SUB_TYPE_FW_VERIFY,
     DSMI_UPGRADE_MAIN_TYPE_CRL,
     /* Basic version information of the BOM, which is written in the fixed area of
@@ -202,6 +202,9 @@ typedef enum dsmi_component_type {
     DSMI_COMPONENT_TYPE_AO_BOOT,
     DSMI_COMPONENT_TYPE_AO_FW,
     DSMI_COMPONENT_TYPE_SIOE,
+    DSMI_COMPONENT_TYPE_HBMPHY,
+    DSMI_COMPONENT_TYPE_DDR2,
+    DSMI_COMPONENT_TYPE_UFSMPHY,
     DSMI_COMPONENT_TYPE_MAX,        /* for internal use only */
     UPGRADE_AND_RESET_ALL_COMPONENT = 0xFFFFFFF7U,
     UPGRADE_STATE_FLAG = 0xFFFFFFFCU,
@@ -319,7 +322,12 @@ typedef void (*fault_event_handler)(unsigned int faultcode,
 
 #define DSMI_SOC_DIE_LEN 5
 struct dsmi_soc_die_stru {
-    unsigned int soc_die[DSMI_SOC_DIE_LEN]; /**< 5 soc_die arrary sizet */
+    unsigned int soc_die[DSMI_SOC_DIE_LEN]; /**< 5 soc_die array sizet */
+};
+struct dsmi_device_info {
+    int device_id;
+    int part_id; // die id
+    int rsv[6];
 };
 struct dsmi_power_info_stru {
     unsigned short power;
@@ -495,9 +503,9 @@ typedef struct dsmi_lp_work_tops_stru {
 struct dsmi_lp_each_tops_details {
     unsigned int work_tops;     /* it is a index for aic_tops */
     unsigned int aic_tops;      /* just as 4T/8T/8Tx/16T */
-    unsigned int aic_freq;      /* AI core frequence */
+    unsigned int aic_freq;      /* AI core frequency */
     unsigned int aic_vol;       /* AI core voltage */
-    unsigned int cpu_freq;      /* CPU frequence */
+    unsigned int cpu_freq;      /* CPU frequency */
     unsigned int cpu_vol;       /* CPU voltage */
     unsigned char reserve[DSMI_LP_WORK_TOPS_RESERVE];
 };
@@ -583,9 +591,9 @@ enum {
 
 // lp stress set restore
 enum {
-    STRESS_RESERVE1,
+    STRESS_VOLT_SET,
     STRESS_VOLT_RESTORE,
-    STRESS_RESERVE2,
+    STRESS_FREQ_SET,
     STRESS_FREQ_RESTORE,
     STRESS_FUNC_OPEN,
     STRESS_FUNC_CLOSE,
@@ -1147,10 +1155,34 @@ typedef enum {
     DSMI_MAIN_CMD_MAX,
 } DSMI_MAIN_CMD;
 
+/* DSMI main command for detect interface */
 typedef enum {
     DSMI_DETECT_MAIN_CMD_MEMORY = 0,
+    DSMI_DETECT_MAIN_CMD_CPU = 1,
+    DSMI_DETECT_MAIN_CMD_L3D = 2,
+    DSMI_DETECT_MAIN_CMD_L2BUFF = 3,
+    DSMI_DETECT_MAIN_CMD_AIC = 4,
+    DSMI_DETECT_MAIN_CMD_SDMA = 5,
+    DSMI_DETECT_MAIN_CMD_STARS = 6,
+    DSMI_DETECT_MAIN_CMD_HVCV = 7,
     DSMI_DETECT_MAIN_CMD_MAX,
 } DSMI_DETECT_MAIN_CMD;
+
+/* DSMI sub command for detect interface */
+typedef enum {
+    DSMI_DETECT_SUB_CMD_GET_ISOLATE_INFO = 0x40,
+    DSMI_DETECT_SUB_CMD_SET_ISOLATE_INFO = 0x41,
+    DSMI_DETECT_SUB_CMD_CLEAR_ISOLATE_INFO = 0x42,
+    DSMI_DETECT_SUB_CMD_MAX,
+} DSMI_DETECT_SUB_CMD;
+
+#define DSMI_ISOLATE_FAULT_RESERVED_LEN 5
+struct dsmi_isolate_fault_info {
+    unsigned int version;   /* Reserved for expansion, current value is 0 */
+    unsigned int type;
+    unsigned int fault_info;
+    unsigned int reserved[DSMI_ISOLATE_FAULT_RESERVED_LEN];
+};
 
 /* DSMI sub command for HCCS module */
 typedef enum {
@@ -1243,6 +1275,7 @@ typedef enum {
 /* DSMI sub command for SERDES module */
 typedef enum {
     DSMI_SERDES_SUB_CMD_QUALITY_INFO,
+    DSMI_SERDES_SUB_CMD_FULL_EYE,
     DSMI_SERDES_SUB_CMD_MAX,
 } DSMI_SERDES_SUB_CMD;
 
@@ -1359,6 +1392,7 @@ typedef enum {
     DSMI_TS_SUB_CMD_START_PERIOD_AICORE_STL,
     DSMI_TS_SUB_CMD_STOP_PERIOD_AICORE_STL,
     DSMI_TS_SUB_CMD_COMMON_MSG,
+    DSMI_TS_SUB_CMD_NPU_MULTI_UTILIZATION_RATE,  // Obtains the same time usage of NUP/AIC/AIV/AICORE
     DSMI_TS_SUB_CMD_MAX,
 } DSMI_TS_SUB_CMD;
 
@@ -1377,7 +1411,7 @@ typedef struct ts_utilization_rate_info {
 } TS_UTILIZATION_RATE;
 
 typedef struct ts_utilization_block_info {
-    unsigned int array_len;         // Core utilization array length setted by user
+    unsigned int array_len;         // Core utilization array length set by user
     unsigned int valid_core_num;    // Numbers of valid cores
     TS_UTILIZATION_RATE core_util_array[CORE_UTIL_ARR_MAX_LEN];  // Structure array which store the core utilization
 } TS_UTILIZATION_BLOCK;
@@ -1465,7 +1499,7 @@ struct dsmi_ddr_single_fault_addr_info {
     unsigned int row;
     unsigned int col;
     unsigned int bank;
-    unsigned int reserve;
+    unsigned int channel;
 };
 
 #define DSMI_DDR_ADDR_INFO_MAX_LEN 32
@@ -1493,6 +1527,7 @@ typedef enum {
     DSMI_QOS_SUB_OTSD_CONFIG,
     DSMI_QOS_SUB_DMC_CONFIG,
     DSMI_QOS_SUB_UB_SL_CONFIG,
+    DSMI_QOS_SUB_LATENCY_DATA,
 } DSMI_QOS_SUB_INFO;
 
 /* DSMI sub command for qos module */
@@ -1589,7 +1624,7 @@ struct dsmi_ecc_pages_stru {
     unsigned int isolated_pages_double_bit_error;
 };
 
-#define DSMI_MAX_VDEV_NUM 16 /**< max number a device can spilts */
+#define DSMI_MAX_VDEV_NUM 16 /**< max number a device can splits */
 #define DSMI_MAX_SPEC_RESERVE 8
 
 #define DSMI_VDEV_RES_NAME_LEN 16
@@ -1900,7 +1935,7 @@ struct qos_mata_config {
     unsigned int bw_adapt_en;
     unsigned int bw_adapt_level;
     char name[QOS_MPAM_NAME_MAX_LEN];
-    unsigned int reserved[QOS_CFG_RESERVED_LEN - 7];
+    unsigned int die_type;
 };
 
 struct qos_master_config {
@@ -1909,7 +1944,7 @@ struct qos_master_config {
     int qos;
     int pmg;
     unsigned long long bitmap[4]; /* max support 64 * 4  */
-    unsigned int mode; /* 0 -- regs vaild, 1 -- smmu vaild, 2 -- sqe vaild */
+    unsigned int mode; /* 0 -- regs valid, 1 -- smmu valid, 2 -- sqe valid */
     int reserved[QOS_CFG_RESERVED_LEN - 1];
 };
 
@@ -1918,8 +1953,8 @@ struct qos_gbl_config {
     unsigned int autoqos_fuse_en;         /* 0--enable, 1--disable */
     unsigned int mpamqos_fuse_mode;       /* 0--average, 1--max, 2--replace */
     unsigned int mpam_subtype;            /* 0--all, 1--wr, 2--rd, 3--none */
-    unsigned int lqos_retry_start_thres;  /* 0 is invaild */
-    unsigned int lqos_retry_stop_thres;   /* 0 is invaild */
+    unsigned int lqos_retry_start_thres;  /* 0 is invalid */
+    unsigned int lqos_retry_stop_thres;   /* 0 is invalid */
     int reserved[QOS_CFG_RESERVED_LEN - 2];
 };
 
@@ -1962,6 +1997,16 @@ struct qos_ub_sl_config {
 	unsigned char sl_bw[QOS_UB_SL_NUM_MAX];     // sl bw weight(percent)
 	unsigned char sl_mode[QOS_UB_SL_NUM_MAX];   // sl sched mode(SP | DWRR)
 	unsigned int reserved[QOS_CFG_RESERVED_LEN];
+};
+
+#define QOS_LATENCY_RESERVED_LEN 6
+struct qos_latency_config {
+    unsigned int master;
+    unsigned char state;
+    unsigned int interval;
+    unsigned int run_time;
+    unsigned long long bitmap;
+    int reserved[QOS_LATENCY_RESERVED_LEN];
 };
 
 struct dsmi_reboot_reason {
@@ -2040,6 +2085,14 @@ typedef struct dsmi_node_crack_result {
     unsigned int result[NODE_CRACK_RESULT_LEN];
 } DSMI_CRACK_NODE_RESULT;
 
+#define NODE_RBIST_RESULT_RESERVED_LEN 13
+struct dsmi_rbist_result_stru {
+    unsigned int rbist_path_cnt;
+    unsigned int rbist_path_finish_cnt;
+    unsigned int rbist_path_failed_cnt;
+    unsigned int rsv[NODE_RBIST_RESULT_RESERVED_LEN];
+};
+
 typedef enum {
     DSMI_BIST_CMD_GET_RSLT = 0,
     DSMI_BIST_CMD_SET_MODE,
@@ -2048,6 +2101,8 @@ typedef enum {
     DSMI_BIST_CMD_SET_MBIST_MODE,
     DSMI_BIST_CMD_GET_MBIST_RESULT,
     DSMI_BIST_CMD_GET_CRACK_RESULT,
+    DSMI_BIST_CMD_RBIST_START,
+    DSMI_BIST_CMD_GET_RBIST_RESULT,
     DSMI_BIST_CMD_MAX
 } DSMI_BIST_CMD;
 
@@ -2113,6 +2168,22 @@ typedef struct dsmi_serdes_quality_info {
     struct dsmi_serdes_quality_base serdes_quality_info[SERDES_MAX_LANE_NUM];
     unsigned int reserved2[SERDES_RESERVED_LEN];
 } DSMI_SERDES_QUALITY_INFO;
+
+#define SERDES_FULL_EYE_INFO_NUM 256
+#define SERDES_FULL_EYE_RESERVED_LEN 8
+struct dsmi_serdes_full_eye_base {
+    int offset;
+    int eye_diagram_0;
+    int eye_diagram_1;
+};
+
+typedef struct dsmi_serdes_full_eye {
+    unsigned int macro_id;
+    unsigned int lane_id;
+    unsigned int reserved[SERDES_FULL_EYE_RESERVED_LEN];
+    unsigned int info_size;
+    struct dsmi_serdes_full_eye_base serdes_full_eye[SERDES_FULL_EYE_INFO_NUM];
+}DSMI_SERDES_FULL_EYE;
 
 typedef enum {
     DSMI_SUB_CMD_HOST_AICPU_INFO = 0,
@@ -2363,7 +2434,7 @@ DLLEXPORT int dsmi_upgrade_get_component_static_version(int device_id, DSMI_COMP
 * @attention The address of the second parameter version number is applied by the user,
              the module only performs non-null check on it, and the size is guaranteed by the user
 * @param [in] device_id  The device id
-* @param [in] version_len  length of paramer version_str
+* @param [in] version_len  length of parameter version_str
 * @param [out] version_str  User-applied space stores system version number
 * @param [out] ret_len  The space requested by the user is used to store the effective
                length of the returned system version number
@@ -2882,7 +2953,7 @@ DLLEXPORT int dsmi_get_mini2mcu_heartbeat_status(int device_id, unsigned char *s
 * @brief Queries the frequency, total capacity, used capacity, temperature, and usage of the hbm.
 * @attention NULL
 * @param [in] device_id  The device id
-* @param [out] pdevice_hbm_info return hbm infomation
+* @param [out] pdevice_hbm_info return hbm information
 * @return  0 for success, others for fail
 * @note Support:Ascend910,Ascend910B,Ascend910_93
 */
@@ -2990,11 +3061,22 @@ DLLEXPORT int dsmi_clear_user_config(int device_id, const char *config_name);
 * @brief Get the DIE ID of the specified device
 * @attention NULL
 * @param [in] device_id  The device id
-* @param [out] pdevice_die  return die id infomation
+* @param [out] pdevice_die  return die id information
 * @return  0 for success, others for fail
 * @note Support:Ascend310,Ascend310B,Ascend910,Ascend310P,Ascend910B,Ascend910_93,Ascend910_95,Ascend910_55
 */
 DLLEXPORT int dsmi_get_device_die(int device_id, struct dsmi_soc_die_stru *pdevice_die);
+
+/**
+* @ingroup driver
+* @brief Get the DIE ID of the specified device
+* @attention NULL
+* @param [in] device_info  The device_info include device id and die id
+* @param [out] pdevice_die  return die id information
+* @return  0 for success, others for fail
+* @note Support:
+*/
+DLLEXPORT int dsmi_get_device_die_v2(struct dsmi_device_info device_info, struct dsmi_soc_die_stru *pdevice_die);
 
 /**
  * @ingroup driver
@@ -3087,7 +3169,7 @@ DLLEXPORT int dsmi_get_gpio_status(int device_id, unsigned int gpio_num, unsigne
  * @ingroup driver
  * @brief: get hiss status info
  * @param [in] device_id device id, not userd  default 0
- * @param [out] hiss_status_data hiss status infomation
+ * @param [out] hiss_status_data hiss status information
  * @return  0 for success, others for fail
  * @note Support:Ascend910B,Ascend910_93,Ascend910_95,Ascend910_55
  */
@@ -3264,7 +3346,7 @@ DLLEXPORT int dsmi_destroy_vdevice(unsigned int devid, unsigned int vdevid);
 * @brief get resource info
 * @attention used on host side
 * @param [in] devid       device id
-* @param [in] para        intput para needed including type and id
+* @param [in] para        input para needed including type and id
 * @param [out] info       resource info including buffer and buffer len
 * @return  0 for success, others for fail
 * @note Support:Ascend310,Ascend310B,Ascend310P,Ascend910,Ascend910B,Ascend910_93,Ascend910_95,Ascend910_55
@@ -3519,7 +3601,7 @@ DLLEXPORT int dsmi_fault_inject(DSMI_FAULT_INJECT_INFO fault_inject_info);
 * @param [in] device_id
 * @param [in] max_info_cnt how many DSMI_FAULT_INJECT_INFO type structs did the info_buf contain;
 * @param [out] info_buf  the memory malloced by users to store DSMI_FAULT_INJECT_INFO structs;
-* @param [out] real_info_cnt DSMI_FAULT_INJECT_INFO supportd by device;
+* @param [out] real_info_cnt DSMI_FAULT_INJECT_INFO supported by device;
 * @return 0 for success, others for fail
 * @note Support:
 */
@@ -3536,10 +3618,10 @@ struct dsmi_sdid_parse_info {
 
 /**
 * @ingroup driver
-* @brief get the parsed SDID infomation
+* @brief get the parsed SDID information
 * @attention Not supported called in split mode, do not check validity for sdid;
 * @param [in]  sdid SDID
-* @param [out] sdid_parse  Parsed SDID infomation
+* @param [out] sdid_parse  Parsed SDID information
 * @return   0 for success, others for fail
 * @note Support:Ascend910B,Ascend910_93,Ascend910_95
 */

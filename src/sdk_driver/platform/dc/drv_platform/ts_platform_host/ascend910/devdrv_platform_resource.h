@@ -14,6 +14,7 @@
 #ifndef DEVDRV_PLATFORM_RESOURCE_H
 #define DEVDRV_PLATFORM_RESOURCE_H
 
+#include "ka_memory_pub.h"
 #include "devdrv_user_common.h"
 #include "tsdrv_kernel_common.h"
 
@@ -155,7 +156,7 @@ struct devdrv_ts_pdata {
     u8 ts_start_fail;
     int ts_load_fail;
 
-    dma_addr_t ts_dma_handle;
+    ka_dma_addr_t ts_dma_handle;
     void *ts_load_addr;
 
     u32 ts_cpu_core_num;

@@ -34,6 +34,10 @@ static const struct pci_device_id g_pbl_tbl[] = {
     { PCI_VDEVICE(HUAWEI, 0xd806),           0 },
     { PCI_VDEVICE(HUAWEI, 0xd807),           0 },
     { DEVDRV_DIVERSITY_PCIE_VENDOR_ID, 0xd500, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 },
+    { 0x20C6, 0xd500, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 },
+    { 0x203F, 0xd500, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 },
+    { 0x20C6, 0xd802, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 },
+    { 0x203F, 0xd802, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 },
     {}
 };
 MODULE_DEVICE_TABLE(pci, g_pbl_tbl);
@@ -90,7 +94,7 @@ static struct submodule_ops g_sub_table[] = {
     {resmng_init_module, resmng_exit_module},
     {recfg_init, recfg_exit},
     {urd_init, urd_exit},
-#ifndef CFG_FEATURE_KO_ALONE_COMPILE
+#if !defined(CFG_FEATURE_KO_ALONE_COMPILE) && !defined(CFG_SOC_PLATFORM_RC)
     {devdrv_base_comm_init, devdrv_base_comm_exit},
 #endif
 #endif
@@ -115,7 +119,9 @@ static struct submodule_ops g_sub_table[] = {
 #ifndef CFG_FEATURE_KO_ALONE_COMPILE
     {icmdrv_pbl_init_module, icmdrv_pbl_exit_module},
     {pkicms_dev_init, pkicms_dev_exit},
+#ifndef CFG_SOC_PLATFORM_RC
     {devdrv_base_comm_init, devdrv_base_comm_exit},
+#endif
 #endif
 #endif
 };

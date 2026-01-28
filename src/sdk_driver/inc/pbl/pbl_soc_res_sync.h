@@ -56,7 +56,7 @@ struct res_sync_irq {
 
 /* res type is addr, need encode and decode func
    pcie connect:
-        device: encode addr is devcie address, output encode_addr is 'bar << 32 + rxatu base addr'
+        device: encode addr is device address, output encode_addr is 'bar << 32 + rxatu base addr'
         host: decode output host address is 'bar addr + rxatu base addr'
    hccs connect:
         to be add

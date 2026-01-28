@@ -311,7 +311,7 @@ void esched_drv_unmap_host_dev_pid(struct sched_proc_ctx *proc_ctx, u32 identity
 }
 
 int esched_drv_fill_sqe(u32 chip_id, u32 event_src, struct topic_sched_sqe *sqe,
-    struct sched_published_event_info *event_info)
+    struct sched_published_event_info *event_info, bool wait_thread_check)
 {
     u32 host_pid, target_pid;
     int ret;
@@ -344,7 +344,7 @@ int esched_drv_fill_sqe(u32 chip_id, u32 event_src, struct topic_sched_sqe *sqe,
     sqe->devid_flag = 0;
     sqe->tid_flag = 0;
 
-    ret = esched_drv_fill_sqe_qos(chip_id, event_info, sqe);
+    ret = esched_drv_fill_sqe_qos(chip_id, event_info, sqe, wait_thread_check);
     if (ret != 0) {
         sched_err("Failed to fill qos. (pid=%d; gid=%u; eventid=%u; ret=%d)\n",
             event_info->pid, event_info->gid, event_info->event_id, ret);
@@ -398,7 +398,7 @@ int esched_drv_fill_sqe(u32 chip_id, u32 event_src, struct topic_sched_sqe *sqe,
 int esched_drv_fill_split_task(u32 chip_id, u32 event_src, struct sched_published_event_info *event_info,
     void *split_task)
 {
-    return esched_drv_fill_sqe(chip_id, event_src, (struct topic_sched_sqe *)split_task, event_info);
+    return esched_drv_fill_sqe(chip_id, event_src, (struct topic_sched_sqe *)split_task, event_info, true);
 }
 
 int esched_get_real_pid(struct topic_sched_mailbox *mb, u32 devid, u32 pid)

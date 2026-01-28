@@ -11,11 +11,6 @@
  * GNU General Public License for more details.
  */
 
-#include <linux/pci.h>
-#include <linux/types.h>
-#include <linux/workqueue.h>
-
-#include "svm_ioctl.h"
 #include "devmm_chan_handlers.h"
 #include "devmm_adapt.h"
 #include "devmm_proc_info.h"
@@ -27,6 +22,8 @@
 #include "svm_master_dev_capability.h"
 #include "svm_dev_res_mng.h"
 #include "svm_device_msg_client.h"
+#include "ka_memory_pub.h"
+#include "svm_ioctl.h"
 
 #define DEVMM_MSG_INIT_SEND_TRYTIMES 1000
 
@@ -110,14 +107,45 @@ STATIC int devmm_alloc_msg_chan(struct devmm_dev_msg_client *dev_msg_client, u32
     return 0;
 }
 
+static u64 g_devmm_host_uva_start = DEVMM_DEFAULT_HOST_UVA_START;
+KA_TASK_DEFINE_MUTEX(g_devmm_host_uva_lock);
+u64 devmm_get_host_uva_start(void)
+{
+    return g_devmm_host_uva_start;
+}
+
+static void devmm_set_host_uva_range(u32 devid)
+{
+    static u32 inited_flag = 0;
+
+    ka_task_mutex_lock(&g_devmm_host_uva_lock);
+    if (inited_flag != 0) {
+        ka_task_mutex_unlock(&g_devmm_host_uva_lock);
+        return;
+    }
+
+    if (devmm_is_hccs_connect(devid)) {
+        g_devmm_host_uva_start = DEVMM_HCCS_HOST_UVA_START;
+    } else {
+        g_devmm_host_uva_start = DEVMM_DEFAULT_HOST_UVA_START;
+    }
+    devmm_svm->mmap_para.segs[devmm_svm->mmap_para.seg_num].va = DEVMM_HOST_PIN_START;
+    devmm_svm->mmap_para.segs[devmm_svm->mmap_para.seg_num].size = DEVMM_HOST_PIN_SIZE;
+    devmm_svm->mmap_para.seg_num++;
+    inited_flag = 1;
+    ka_task_mutex_unlock(&g_devmm_host_uva_lock);
+}
+
 static int devmm_get_dev_info(u32 dev_id, struct devmm_chan_exchange_pginfo *info)
 {
     u32 msg_len = sizeof(struct devmm_chan_exchange_pginfo);
 
+    devmm_set_host_uva_range(dev_id);
     info->head.msg_id = DEVMM_CHAN_EX_PGINFO_H2D_ID;
-    info->host_page_shift = PAGE_SHIFT;
-    info->host_hpage_shift = HPAGE_SHIFT;
+    info->host_page_shift = KA_MM_PAGE_SHIFT;
+    info->host_hpage_shift = KA_MM_HPAGE_SHIFT;
     info->head.dev_id = (u16)dev_id;
+    info->host_uva_start = DEVMM_HOST_PIN_START;
 
     return devmm_common_msg_send(info, msg_len, msg_len);
 }
@@ -146,8 +174,8 @@ int devmm_host_dev_init(u32 dev_id, u32 vfid)
     u32 i = 0;
     int ret;
 
-    devmm_svm_set_host_pgsf(PAGE_SHIFT);
-    devmm_svm_set_host_hpgsf(HPAGE_SHIFT);
+    devmm_svm_set_host_pgsf(KA_MM_PAGE_SHIFT);
+    devmm_svm_set_host_hpgsf(KA_MM_HPAGE_SHIFT);
 
     ret = devdrv_get_master_devid_in_the_same_os(dev_id, &devmm_svm->device_info.cluster_id[dev_id]);
     if (ret != 0) {
@@ -235,14 +263,14 @@ STATIC int devmm_get_smmu_status(ka_device_t *dev, u32 *smmu_status)
     u64 dma_addr, pa;
     int ret = 0;
 
-    page = alloc_pages(flag, 0);
+    page = ka_mm_alloc_pages(flag, 0);
     if (page == NULL) {
         devmm_drv_err("OOM: Alloc page fail, page_num = 1.\n");
         return -ENOMEM;
     }
 
     pa = (u64)ka_mm_page_to_phys(page);
-    dma_addr = hal_kernel_devdrv_dma_map_page(dev, page, 0, PAGE_SIZE, DMA_BIDIRECTIONAL);
+    dma_addr = hal_kernel_devdrv_dma_map_page(dev, page, 0, KA_MM_PAGE_SIZE, KA_DMA_BIDIRECTIONAL);
     if (ka_mm_dma_mapping_error(dev, dma_addr) != 0) {
         devmm_drv_err("Dma map page failed.\n");
         __ka_mm_free_page(page);
@@ -255,7 +283,7 @@ STATIC int devmm_get_smmu_status(ka_device_t *dev, u32 *smmu_status)
         *smmu_status = DEVMM_SMMU_STATUS_CLOSEING;
     }
 
-    hal_kernel_devdrv_dma_unmap_page(dev, dma_addr, PAGE_SIZE, DMA_BIDIRECTIONAL);
+    hal_kernel_devdrv_dma_unmap_page(dev, dma_addr, KA_MM_PAGE_SIZE, KA_DMA_BIDIRECTIONAL);
     __ka_mm_free_page(page);
     page = NULL;
     return ret;

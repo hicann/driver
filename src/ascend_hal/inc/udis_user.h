@@ -36,8 +36,9 @@ struct udis_dev_info {
 };
 
 struct base_mem_info {
-    unsigned long total_size;
-    unsigned long free_size;
+    unsigned long long total_size;
+    unsigned long long free_size;
+    unsigned long long resv[6];
 };
 
 struct udis_mem_info {

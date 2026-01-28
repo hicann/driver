@@ -9,9 +9,5 @@
 # ------------------------------------------------------------------------------------------------------------
 target_sources(devdrv_obj PRIVATE
    drv_devmng_adapt.c
-)
-
-target_compile_definitions(devdrv_obj PRIVATE
-   CFG_FEATURE_DRV_DEVMNG_INIT
-   CFG_FEATURE_GET_PCIE_ID_INFO
+   devdrv_vnic_info.c
 )

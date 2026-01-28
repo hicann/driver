@@ -150,7 +150,7 @@ int udis_get_device_info(unsigned int dev_id, struct udis_dev_info *info)
     in.data = info->data;
     in.in_len = sizeof(info->data);
 
-    urd_usr_cmd_fill(&cmd, DMS_GET_UDIS_DEVICE_INFO_CMD, ZERO_CMD, NULL, 0);
+    urd_usr_cmd_fill(&cmd, DMS_MAIN_CMD_BASIC, DMS_SUBCMD_GET_UDIS_DEVICE_INFO, NULL, 0);
     urd_usr_cmd_para_fill(&cmd_para, (void*)&in, sizeof(struct udis_get_ioctl_in),
         &out, sizeof(struct udis_get_ioctl_out));
     ret = urd_dev_usr_cmd(dev_id, &cmd, &cmd_para);
@@ -201,7 +201,7 @@ int udis_set_device_info(unsigned int dev_id, const struct udis_dev_info *info)
     in.data_len = info->data_len;
     in.acc_ctrl = info->acc_ctrl;
 
-    urd_usr_cmd_fill(&cmd, DMS_SET_UDIS_DEVICE_INFO_CMD, ZERO_CMD, NULL, 0);
+    urd_usr_cmd_fill(&cmd, DMS_MAIN_CMD_BASIC, DMS_SUBCMD_SET_UDIS_DEVICE_INFO, NULL, 0);
     urd_usr_cmd_para_fill(&cmd_para, (void *)&in, sizeof(struct udis_set_ioctl_in), NULL, 0);
     ret = urd_dev_usr_cmd(dev_id, &cmd, &cmd_para);
     if (ret != 0) {

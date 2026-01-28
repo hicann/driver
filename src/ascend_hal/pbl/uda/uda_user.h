@@ -11,5 +11,26 @@
 #ifndef UDA_USER_H
 #define UDA_USER_H
 
-#endif
+#include <stdint.h>
 
+int uda_user_get_dev_num(uint32_t *devNum);
+int uda_user_get_dev_ids(uint32_t *devices, uint32_t len);
+int uda_user_get_dev_num_ex(uint32_t hw_type, uint32_t *devNum);
+int uda_user_get_dev_ids_ex(uint32_t hw_type, uint32_t *devices, uint32_t len);
+int uda_user_get_vdev_num(uint32_t *devNum);
+int uda_user_get_vdev_ids(uint32_t *devices, uint32_t len);
+int uda_user_get_phy_id_by_index(uint32_t devid, uint32_t *phyId);
+int uda_user_get_index_by_phy_id(uint32_t phyId, uint32_t *devid);
+int uda_user_get_device_local_ids(uint32_t *devices, uint32_t len);
+int uda_user_get_devid_by_local_devid(uint32_t local_devid, uint32_t *remote_udevid);
+int uda_user_get_local_devid_by_host_devid(uint32_t remote_udevid, uint32_t *local_devid);
+int uda_user_get_phy_devid_by_logic_devid(unsigned int dev_id, unsigned int *phy_dev_id);
+int uda_user_get_host_id(uint32_t *host_id);
+
+int uda_user_get_udevid_by_devid(uint32_t devid, uint32_t *udevid);
+int uda_user_get_devid_by_udevid(uint32_t udevid, uint32_t *devid);
+int uda_user_get_devid_by_mia_dev(uint32_t phy_devid, uint32_t sub_devid, uint32_t *devid);
+int uda_user_get_udevid_by_devid_ex(uint32_t devid, uint32_t *udevid);
+int uda_user_get_devid_by_udevid_ex(uint32_t udevid, uint32_t *devid);
+
+#endif

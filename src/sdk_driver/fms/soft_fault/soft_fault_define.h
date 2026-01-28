@@ -25,6 +25,7 @@
 #include "dms_sensor_type.h"
 #include "dms_define.h"
 #include "soft_fault_config.h"
+#include "ka_task_pub.h"
 
 #define MODULE_SOFT "drv_soft_fault"
 #define soft_drv_err(fmt, ...)                                                                                 \
@@ -151,7 +152,7 @@ struct soft_dev {
 };
 
 struct soft_dev_client {
-    pid_t pid; /* one process user */
+    ka_pid_t pid; /* one process user */
     unsigned int user_id;
     unsigned int registered;
     unsigned int node_num; /* max 8 node */

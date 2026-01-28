@@ -19,15 +19,15 @@ struct urd_cmd_para {
 
 /* acc */
 #define DMS_ACC_MASK 0X100FU
-/* allow runing as root */
+/* allow running as root */
 #define DMS_ACC_ROOT 0X0001U
-/* allow runing as HwHiAiUser's or HwBaseUser's group */
+/* allow running as HwHiAiUser's or HwBaseUser's group */
 #define DMS_ACC_OPERATE 0X0002U
-/* allow runing as guest */
+/* allow running as guest */
 #define DMS_ACC_USER 0X0004U
-/* allow runing as HwDmUser */
+/* allow running as HwDmUser */
 #define DMS_ACC_DM_USER 0X0008U
-/* allow runing as restrict access guset, such as CustAiCpuUser */
+/* allow running as restrict access guset, such as CustAiCpuUser */
 #define DMS_ACC_LIMIT_USER 0X1000U
 
 #define DMS_ACC_ALL (DMS_ACC_ROOT | DMS_ACC_DM_USER | DMS_ACC_OPERATE | DMS_ACC_USER | DMS_ACC_LIMIT_USER)

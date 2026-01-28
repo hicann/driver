@@ -30,9 +30,6 @@ struct hw_kvmdt_ops {
     int (*write_gpa)(uintptr_t handle, unsigned long gpa, void *buf,
                      unsigned long len);
     unsigned long (*gfn_to_mfn)(uintptr_t handle, unsigned long gfn);
-    int (*dma_map_guest_page)(uintptr_t handle, unsigned long gfn,
-                              unsigned long size, struct sg_table **dma_sgt);
-    void (*dma_unmap_guest_page)(uintptr_t handle, struct sg_table *dma_sgt);
     bool (*is_valid_gfn)(uintptr_t handle, unsigned long gfn);
     int  (*mmio_get)(void **dst, int *size, void *_vdavinci, int bar);
     int (*dma_pool_init)(struct hw_vdavinci *vdavinci);
@@ -69,10 +66,6 @@ struct dvt_dma {
     struct kref ref;
 };
 
-void dvt_unpin_guest_page_list(struct hw_vdavinci *vdavinci,
-                               struct page_info_list *dma_page_list);
-void dvt_cache_destroy(struct hw_vdavinci *vdavinci);
-void dvt_cache_init(struct hw_vdavinci *vdavinci);
 void kvmdt_dma_unmap_guest_page(uintptr_t handle, struct sg_table *dma_sgt);
 int kvmdt_dma_map_guest_page(uintptr_t handle, unsigned long gfn,
                              unsigned long size, struct sg_table **dma_sgt);

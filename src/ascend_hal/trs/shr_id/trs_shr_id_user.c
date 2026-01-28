@@ -10,7 +10,7 @@
 
 #include "securec.h"
 #include "ascend_hal.h"
-#include "uda_inner.h"
+#include "pbl_uda_user.h"
 
 #include "trs_shr_id_fd.h"
 #include "trs_shr_id_ioctl.h"
@@ -164,7 +164,7 @@ drvError_t halShrIdSetAttribute(const char *name, enum shrIdAttrType type, struc
     size_t len;
 
     if (name == NULL) {
-        trs_err("Invaild name when setting ipc notify attribute.\n");
+        trs_err("Invalid name when setting ipc notify attribute.\n");
         return DRV_ERROR_INVALID_VALUE;
     }
     if ((type < 0) || (type >= SHR_ID_ATTR_TYPE_MAX) || (attr.enableFlag != SHRID_NO_WLIST_ENABLE)) {
@@ -174,7 +174,7 @@ drvError_t halShrIdSetAttribute(const char *name, enum shrIdAttrType type, struc
 
     len = strnlen(name, SHR_ID_NSM_NAME_SIZE);
     if ((len == 0) || (len == SHR_ID_NSM_NAME_SIZE)) {
-        trs_err("Invaild name when setting ipc notify attribute.\n");
+        trs_err("Invalid name when setting ipc notify attribute.\n");
         return DRV_ERROR_INVALID_VALUE;
     }
 
@@ -193,7 +193,7 @@ drvError_t halShrIdGetAttribute(const char *name, enum shrIdAttrType type, struc
     drvError_t ret;
 
     if ((name == NULL) || (attr == NULL)) {
-        trs_err("Invaild arguments when getting ipc notify info.\n");
+        trs_err("Invalid arguments when getting ipc notify info.\n");
         return DRV_ERROR_INVALID_VALUE;
     }
 
@@ -216,7 +216,7 @@ drvError_t halShrIdInfoGet(const char *name, struct shrIdGetInfo *info)
     drvError_t ret;
 
     if ((name == NULL) || (info == NULL)) {
-        trs_err("Invaild arguments when getting ipc notify info.\n");
+        trs_err("Invalid arguments when getting ipc notify info.\n");
         return DRV_ERROR_INVALID_VALUE;
     }
 
@@ -303,7 +303,7 @@ drvError_t halShrIdSetPid(const char *name, pid_t pid[], uint32_t pid_num)
 
     /* pass in only one parameter at a time in the current scene */
     if ((name == NULL) || (pid == NULL) || (pid_num != 1)) {
-        trs_err("invlaid parameter. (name_is_null=%d, pid_is_null=%d, num=%d)\n",
+        trs_err("invalid parameter. (name_is_null=%d, pid_is_null=%d, num=%d)\n",
             (name == NULL), (pid == NULL), pid_num);
         return DRV_ERROR_INVALID_VALUE;
     }
@@ -335,7 +335,7 @@ drvError_t halShrIdRecord(const char *name)
     size_t len;
 
     if (name == NULL) {
-        trs_err("invlaid parameter. (name_is_null=%d)\n", (name == NULL));
+        trs_err("invalid parameter. (name_is_null=%d)\n", (name == NULL));
         return DRV_ERROR_INVALID_VALUE;
     }
 

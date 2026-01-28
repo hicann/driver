@@ -13,7 +13,8 @@
 
 #ifndef VIRTMNG_STACK_H
 #define VIRTMNG_STACK_H
-#include <linux/types.h>
+
+#include "ka_type.h"
 
 struct vmng_stack {
     int top;

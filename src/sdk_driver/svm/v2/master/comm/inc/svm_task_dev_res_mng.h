@@ -13,11 +13,6 @@
 #ifndef SVM_TASK_DEV_RES_MNG_H
 #define SVM_TASK_DEV_RES_MNG_H
 
-#include <linux/kref.h>
-#include <linux/list.h>
-#include <linux/rwsem.h>
-#include <linux/spinlock_types.h>
-
 #include "svm_rbtree.h"
 #include "devmm_proc_info.h"
 #include "svm_dev_res_mng.h"

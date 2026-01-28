@@ -11,22 +11,6 @@
  * GNU General Public License for more details.
  */
 
-#include <linux/cdev.h>
-#include <linux/device.h>
-#include <linux/errno.h>
-#include <linux/init.h>
-#include <linux/fs.h>
-#include <linux/kernel.h>
-#include <linux/memory.h>
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <linux/vmalloc.h>
-#include <linux/version.h>
-#include <linux/list.h>
-#include <linux/atomic.h>
-#include <linux/nsproxy.h>
-
-#include "svm_ioctl.h"
 #include "devmm_proc_info.h"
 #include "devmm_proc_mem_copy.h"
 #include "svm_kernel_msg.h"
@@ -41,6 +25,7 @@
 #include "pbl/pbl_feature_loader.h"
 #include "devmm_mem_alloc_interface.h"
 #include "svm_dynamic_addr.h"
+#include "svm_ioctl.h"
 
 #ifdef CFG_FEATURE_VFIO
 #include "devmm_pm_vpc.h"
@@ -50,7 +35,7 @@
 struct devmm_svm_dev *devmm_svm = NULL;
 static char *svm_vma_magic = "SVM";
 
-STATIC int devmm_svm_open(struct inode *inode, ka_file_t *file)
+STATIC int devmm_svm_open(ka_inode_t *inode, ka_file_t *file)
 {
     struct devmm_private_data *priv = NULL;
 
@@ -61,7 +46,7 @@ STATIC int devmm_svm_open(struct inode *inode, ka_file_t *file)
     }
 
     ka_base_atomic_set(&priv->next_seg_id, 0);
-    file->private_data = priv;
+    ka_fs_set_file_private_data(file, priv);
     return 0;
 }
 
@@ -71,7 +56,7 @@ STATIC int _devmm_svm_mmap_config_svm_proc(struct devmm_svm_process *svm_proc, k
         (svm_proc->inited != DEVMM_SVM_PRE_INITING_FLAG)) {
         devmm_drv_err("Svm map get_svm_process error. "
             "(vm_start=0x%lx; vm_end=0x%lx; vm_pgoff=0x%lx; vm_flags=0x%lx)\n",
-            vma->vm_start, vma->vm_end, vma->vm_pgoff, vma->vm_flags);
+            ka_mm_get_vm_start(vma), ka_mm_get_vm_end(vma), vma->vm_pgoff, ka_mm_get_vm_flags(vma));
         return -ESRCH;
     }
     devmm_remove_vma_wirte_flag(vma);
@@ -130,16 +115,16 @@ static int devmm_mmap_vma_check(u32 seg_id, ka_vm_area_struct_t *vma)
 
     if (seg_id >= devmm_svm->mmap_para.seg_num) {
         //devmm_drv_info("Dynamic map. (vm_start=0x%lx; vm_end=0x%lx; vm_pgoff=0x%lx; vm_flags=0x%lx)\n",
-        //    vma->vm_start, vma->vm_end, vma->vm_pgoff, vma->vm_flags);
+        //    ka_mm_get_vm_start(vma), vma->vm_end, vma->vm_pgoff, ka_mm_get_vm_flags(vma));
         return 0;
     }
 
     mmap_va = devmm_svm->mmap_para.segs[seg_id].va;
     mmap_size = devmm_svm->mmap_para.segs[seg_id].size;
 
-    if ((vma->vm_start != mmap_va) || (vma->vm_end != (mmap_va + mmap_size))) {
+    if ((ka_mm_get_vm_start(vma) != mmap_va) || (ka_mm_get_vm_end(vma) != (mmap_va + mmap_size))) {
         devmm_drv_info("Svm map va not fixed. (vm_start=0x%lx; vm_end=0x%lx; vm_pgoff=0x%lx; vm_flags=0x%lx)\n",
-            vma->vm_start, vma->vm_end, vma->vm_pgoff, vma->vm_flags);
+            ka_mm_get_vm_start(vma), ka_mm_get_vm_end(vma), vma->vm_pgoff, ka_mm_get_vm_flags(vma));
         return -EINVAL;
     }
 
@@ -155,25 +140,45 @@ static void devmm_unset_svm_static_vma(ka_vm_area_struct_t **svm_vma, u32 seg_nu
         svm_vma[i] = NULL;
     }
 }
+
+static int devmm_check_and_get_svm_static_reserve_vma(u32 seg_id, u64 va, ka_vm_area_struct_t **svm_vma)
+{
+    ka_vm_area_struct_t *vma = NULL;
+
+    vma = devmm_find_vma_from_mm(ka_task_get_current_mm(), va);
+    if ((vma == NULL) || (devmm_is_svm_vma_magic(ka_mm_get_vm_private_data(vma)) == false) ||
+        (devmm_mmap_vma_check(seg_id, vma) != 0)) {
+        if (vma == NULL) {
+            devmm_drv_info("Vma is NULL. (seg_id=%u; va=0x%llx)\n", seg_id, va);
+        } else {
+            devmm_drv_info("Vma is not svm vma. (is_svm_vma=%u; seg_id=%u; va=0x%llx)\n",
+                devmm_is_svm_vma_magic(ka_mm_get_vm_private_data(vma)), seg_id, va);
+        }
+        return -EINVAL;
+    }
+    *svm_vma = vma;
+    return 0;
+}
 #endif
 
 /* Protection mechanism based on exclusive use of 8T virtual addresses */
-int devmm_check_and_set_svm_static_reserve_vma(ka_vm_area_struct_t **svm_vma)
+int devmm_check_and_set_svm_static_reserve_vma(void *svm_proc, ka_vm_area_struct_t **svm_vma)
 {
 #ifndef EMU_ST
     ka_vm_area_struct_t *vma = NULL;
     u32 seg_id;
+    int ret;
 
     for (seg_id = 0; seg_id < devmm_svm->mmap_para.seg_num; seg_id++) {
-        vma = devmm_find_vma_from_mm(ka_task_get_current_mm(), devmm_svm->mmap_para.segs[seg_id].va);
-        if ((vma == NULL) || (devmm_is_svm_vma_magic(vma->vm_private_data) == false) ||
-            (devmm_mmap_vma_check(seg_id, vma) != 0)) {
-            if (vma == NULL) {
-                devmm_drv_info("Vma is NULL. (seg_id=%u; va=0x%llx)\n", seg_id, devmm_svm->mmap_para.segs[seg_id].va);
-            } else {
-                devmm_drv_info("Vma is not svm vma. (is_svm_vma=%u; seg_id=%u; va=0x%llx)\n",
-                    devmm_is_svm_vma_magic(vma->vm_private_data), seg_id, devmm_svm->mmap_para.segs[seg_id].va);
+        if (devmm_svm->mmap_para.segs[seg_id].va == DEVMM_HOST_PIN_START) {
+            ret = devmm_check_and_get_svm_static_reserve_vma(seg_id, devmm_svm->mmap_para.segs[seg_id].va, &vma);
+            if (ret != 0) {
+                devmm_destroy_svm_proc_host_pin_heap(svm_proc);
+                continue;
             }
+        }
+        ret = devmm_check_and_get_svm_static_reserve_vma(seg_id, devmm_svm->mmap_para.segs[seg_id].va, &vma);
+        if (ret != 0) {
             goto set_vma_fail;
         }
 
@@ -195,8 +200,8 @@ static int _devmm_check_and_set_svm_dynamic_vma(struct devmm_svm_process *svm_pr
     ka_vm_area_struct_t *vma = NULL;
 
     vma = devmm_find_vma_from_mm(ka_task_get_current_mm(), va);
-    if ((vma == NULL) || (devmm_is_svm_vma_magic(vma->vm_private_data) == false) ||
-        (vma->vm_start != va) || (vma->vm_end != (va + size))) {
+    if ((vma == NULL) || (devmm_is_svm_vma_magic(ka_mm_get_vm_private_data(vma)) == false) ||
+        (ka_mm_get_vm_start(vma) != va) || (ka_mm_get_vm_end(vma) != (va + size))) {
         return 0;
     }
     (void)svm_da_set_custom_vma_nolock(svm_proc, va, vma);
@@ -220,7 +225,7 @@ int devmm_check_and_set_custom_svm_vma(void *svm_proc, ka_vm_area_struct_t **svm
     struct devmm_svm_process *svm_process = (struct devmm_svm_process *)svm_proc;
     int ret;
 
-    ret = devmm_check_and_set_svm_static_reserve_vma(svm_vma);
+    ret = devmm_check_and_set_svm_static_reserve_vma(svm_proc, svm_vma);
     if (ret != 0) {
         return ret;
     }
@@ -272,7 +277,7 @@ STATIC struct devmm_svm_process *devmm_svm_mmap_get_svm_process(struct devmm_pri
 
 STATIC int devmm_svm_mmap(ka_file_t *file, ka_vm_area_struct_t *vma)
 {
-    struct devmm_private_data *priv = (struct devmm_private_data *)file->private_data;
+    struct devmm_private_data *priv = (struct devmm_private_data *)ka_fs_get_file_private_data(file);
     struct devmm_svm_process *svm_proc = NULL;
     int ret;
 
@@ -286,9 +291,9 @@ STATIC int devmm_svm_mmap(ka_file_t *file, ka_vm_area_struct_t *vma)
     if ((ka_base_atomic_read(&priv->next_seg_id) >= (int)devmm_svm->mmap_para.seg_num) && (svm_proc != NULL)) {
         svm_occupy_da(svm_proc);
         if (priv->custom_flag == 0) {
-            ret = svm_da_add_addr(svm_proc, vma->vm_start, vma->vm_end - vma->vm_start, vma);
+            ret = svm_da_add_addr(svm_proc, ka_mm_get_vm_start(vma), ka_mm_get_vm_end(vma) - ka_mm_get_vm_start(vma), vma);
         } else {
-            ret = svm_da_set_custom_vma(svm_proc, vma->vm_start, vma);
+            ret = svm_da_set_custom_vma(svm_proc, ka_mm_get_vm_start(vma), vma);
         }
         svm_release_da(svm_proc);
         if (ret != 0) {
@@ -296,13 +301,9 @@ STATIC int devmm_svm_mmap(ka_file_t *file, ka_vm_area_struct_t *vma)
         }
     }
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 3, 0)
-    vm_flags_set(vma, VM_DONTEXPAND | VM_DONTDUMP | VM_DONTCOPY | VM_PFNMAP | VM_LOCKED | VM_WRITE | VM_IO);
-#else
-    vma->vm_flags |= VM_DONTEXPAND | VM_DONTDUMP | VM_DONTCOPY | VM_PFNMAP | VM_LOCKED | VM_WRITE | VM_IO;
-#endif
+    ka_mm_set_vm_flags(vma, KA_VM_DONTEXPAND | KA_VM_DONTDUMP | KA_VM_DONTCOPY | KA_VM_PFNMAP | KA_VM_LOCKED | KA_VM_WRITE | KA_VM_IO);
 #ifndef EMU_ST
-    vma->vm_private_data = (void *)svm_vma_magic;
+    ka_mm_set_vm_private_data(vma, (void *)svm_vma_magic);
 #endif
     devmm_svm_setup_vma_ops(vma);
 
@@ -310,7 +311,7 @@ STATIC int devmm_svm_mmap(ka_file_t *file, ka_vm_area_struct_t *vma)
         ret = devmm_svm_mmap_config_svm_proc(svm_proc, vma);
         if (ret != 0) {
             devmm_drv_err("Svm map config_svm_proc error. (vm_start=0x%lx; vm_end=0x%lx)\n",
-                vma->vm_start, vma->vm_end);
+                ka_mm_get_vm_start(vma), ka_mm_get_vm_end(vma));
             return ret;
         }
     }
@@ -323,28 +324,28 @@ STATIC int devmm_svm_mmap(ka_file_t *file, ka_vm_area_struct_t *vma)
     return 0;
 }
 
-STATIC int devmm_svm_release(struct inode *inode, ka_file_t *filp)
+STATIC int devmm_svm_release(ka_inode_t *inode, ka_file_t *filp)
 {
     struct devmm_svm_process *svm_proc = NULL;
 
-    if (filp->private_data == NULL) {
+    if (ka_fs_get_file_private_data(filp) == NULL) {
         devmm_drv_run_info("Private_data is NULL.\n");
         return 0;
     }
-    if (((struct devmm_private_data *)filp->private_data)->custom_flag != 0) {
+    if (((struct devmm_private_data *)ka_fs_get_file_private_data(filp))->custom_flag != 0) {
         devmm_drv_run_info("Custom exit.\n");
         goto free;
     }
-    if (((struct devmm_private_data *)filp->private_data)->process == NULL) {
+    if (((struct devmm_private_data *)ka_fs_get_file_private_data(filp))->process == NULL) {
         devmm_drv_run_info("Process is NULL.\n");
         goto free;
     }
-    svm_proc = (struct devmm_svm_process *)(((struct devmm_private_data *)filp->private_data)->process);
+    svm_proc = (struct devmm_svm_process *)(((struct devmm_private_data *)ka_fs_get_file_private_data(filp))->process);
     devmm_svm_mem_disable(svm_proc);
     devmm_svm_release_proc(svm_proc);
 free:
-    devmm_kfree_ex(filp->private_data);
-    filp->private_data = NULL;
+    devmm_kfree_ex(ka_fs_get_file_private_data(filp));
+    ka_fs_set_file_private_data(filp, NULL);
 
     return 0;
 }
@@ -388,9 +389,7 @@ static int devmm_dispatch_ioctl_use_svm_proc(struct devmm_svm_process *svm_proc,
     }
 
     devmm_svm_ioctl_lock(svm_proc, cmd_flag);
-    svm_use_da(svm_proc);
     ret = devmm_ioctl_dispatch(svm_proc, cmd_id, cmd_flag, buffer);
-    svm_unuse_da(svm_proc);
     devmm_svm_ioctl_unlock(svm_proc, cmd_flag);
     return ret;
 }
@@ -437,7 +436,7 @@ STATIC long devmm_svm_ioctl(ka_file_t *file, u32 cmd, unsigned long arg)
     u32 cmd_id = _KA_IOC_NR(cmd);
     int ret;
 
-    if ((file == NULL) || (file->private_data == NULL) || (arg == 0)) {
+    if ((file == NULL) || (ka_fs_get_file_private_data(file) == NULL) || (arg == 0)) {
         devmm_drv_err("File is NULL, check svm init. (cmd=0x%x; _IOC_NR(cmd)=0x%x)\n", cmd, _KA_IOC_NR(cmd));
         return -EINVAL;
     }
@@ -448,7 +447,7 @@ STATIC long devmm_svm_ioctl(ka_file_t *file, u32 cmd, unsigned long arg)
     }
 
     if ((_KA_IOC_DIR(cmd) & _KA_IOC_WRITE) != 0) {
-        if (ka_base_copy_from_user(&buffer, (void __user *)(uintptr_t)arg, sizeof(struct devmm_ioctl_arg)) != 0) {
+        if (ka_base_copy_from_user(&buffer, (void __ka_user *)(uintptr_t)arg, sizeof(struct devmm_ioctl_arg)) != 0) {
             devmm_drv_err("Copy_from_user fail. (cmd=0x%x; cmd_id=0x%x)\n", cmd, cmd_id);
             return -EINVAL;
         }
@@ -460,7 +459,7 @@ STATIC long devmm_svm_ioctl(ka_file_t *file, u32 cmd, unsigned long arg)
     }
 
     if ((_KA_IOC_DIR(cmd) & _KA_IOC_READ) != 0) {
-        if (ka_base_copy_to_user((void __user *)(uintptr_t)arg, &buffer, sizeof(struct devmm_ioctl_arg)) != 0) {
+        if (ka_base_copy_to_user((void __ka_user *)(uintptr_t)arg, &buffer, sizeof(struct devmm_ioctl_arg)) != 0) {
             devmm_drv_err("Copy_to_user fail. (cmd=0x%x; cmd_id=0x%x)\n", cmd, cmd_id);
             return -EINVAL;
         }
@@ -470,7 +469,7 @@ STATIC long devmm_svm_ioctl(ka_file_t *file, u32 cmd, unsigned long arg)
 }
 
 STATIC ka_file_operations_t devmm_svm_fops = {
-    .owner = THIS_MODULE,
+    .owner = KA_THIS_MODULE,
     .open = devmm_svm_open,
     .release = devmm_svm_release,
     .mmap = devmm_svm_mmap,
@@ -478,14 +477,14 @@ STATIC ka_file_operations_t devmm_svm_fops = {
 };
 
 #ifndef EMU_ST
-static int devmm_svm_fake_open(struct inode *inode, struct file *file)
+static int devmm_svm_fake_open(ka_inode_t *inode, ka_file_t *file)
 {
     return -EACCES;
 }
 #endif
 
-static struct file_operations devmm_svm_fake_fops = {
-    .owner = THIS_MODULE,
+static ka_file_operations_t devmm_svm_fake_fops = {
+    .owner = KA_THIS_MODULE,
 #ifndef EMU_ST
     .open = devmm_svm_fake_open,
 #endif
@@ -504,9 +503,9 @@ STATIC int devmm_alloc_svm_struct(void)
     devmm_svm->dev_no = 0;
     devmm_svm->host_page_shift = 0;
     devmm_svm->device_page_shift = 0;
-    devmm_svm->svm_page_size = PAGE_SIZE;
+    devmm_svm->svm_page_size = KA_MM_PAGE_SIZE;
 #ifdef HOST_AGENT
-    devmm_svm->device_page_size = PAGE_SIZE;
+    devmm_svm->device_page_size = KA_MM_PAGE_SIZE;
 #endif
     devmm_svm->page_size_inited = 0;
     devmm_svm->smmu_status = DEVMM_SMMU_STATUS_UNINIT;
@@ -529,12 +528,9 @@ STATIC int devmm_alloc_svm_struct(void)
     for (i = 0; i < DEVMM_MAX_AGENTMM_DEVICE_NUM; i++) {
         ka_base_idr_init(&devmm_svm->share_phy_addr_blk_mng[i].idr);
         devmm_svm->share_phy_addr_blk_mng[i].id_start = 0;
-        devmm_svm->share_phy_addr_blk_mng[i].id_end = INT_MAX;
+        devmm_svm->share_phy_addr_blk_mng[i].id_end = KA_INT_MAX;
         ka_task_init_rwsem(&devmm_svm->share_phy_addr_blk_mng[i].rw_sem);
     }
-
-    devmm_svm->obmm_info.alloced_cnt = 0U;
-    ka_task_init_rwsem(&devmm_svm->obmm_info.rw_sem);
 
     ka_task_mutex_init(&devmm_svm->setup_lock);
     return 0;
@@ -570,11 +566,11 @@ STATIC void devmm_unint_devmm_struct(void)
 #ifdef HOST_AGENT
 STATIC void devmm_svm_set_host_agent_pgsf(void)
 {
-    devmm_svm_set_host_pgsf(PAGE_SHIFT);
-    devmm_svm_set_host_hpgsf(HPAGE_SHIFT);
+    devmm_svm_set_host_pgsf(KA_MM_PAGE_SHIFT);
+    devmm_svm_set_host_hpgsf(KA_MM_HPAGE_SHIFT);
 
-    devmm_svm_set_device_pgsf(PAGE_SHIFT);
-    devmm_svm_set_device_hpgsf(HPAGE_SHIFT);
+    devmm_svm_set_device_pgsf(KA_MM_PAGE_SHIFT);
+    devmm_svm_set_device_hpgsf(KA_MM_HPAGE_SHIFT);
     devmm_chan_set_host_device_page_size();
 }
 #endif
@@ -673,8 +669,8 @@ STATIC void devmm_svm_exit(void)
     devmm_unint_devmm_struct();
 }
 
-module_init(devmm_svm_init);
-module_exit(devmm_svm_exit);
-MODULE_AUTHOR("Huawei Tech. Co., Ltd.");
-MODULE_LICENSE("GPL");
-MODULE_DESCRIPTION("devmm shared memory manager driver");
+ka_module_init(devmm_svm_init);
+ka_module_exit(devmm_svm_exit);
+KA_MODULE_AUTHOR("Huawei Tech. Co., Ltd.");
+KA_MODULE_LICENSE("GPL");
+KA_MODULE_DESCRIPTION("devmm shared memory manager driver");

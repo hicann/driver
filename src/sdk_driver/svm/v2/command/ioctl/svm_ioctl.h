@@ -95,7 +95,7 @@ struct devmm_mem_convrt_addr_para {
     uint32_t destroy_flag;      /* used in virt machine, to destroy the res */
     uint64_t convert_id;  /* for vm safety check */
     bool need_write;
-    /* pa_list must be the last one, cann't be changed */
+    /* pa_list must be the last one, can't be changed */
     struct devmm_pa_batch *pa_batch;  /* used in virt machine, to destroy pa list */
 };
 
@@ -298,6 +298,7 @@ struct devmm_mem_remote_map_para {
     uint64_t size;
     uint32_t map_type;
     uint32_t proc_type;
+    uint32_t access;
 };
 
 struct devmm_mem_remote_unmap_para {
@@ -305,6 +306,11 @@ struct devmm_mem_remote_unmap_para {
     uint32_t map_type;
     uint32_t proc_type;
     uint64_t dst_va; /* DEV_MEM_MAP_HOST return */
+};
+
+struct devmm_mem_map_cap_para {
+    uint32_t acc_module_type;
+    uint32_t mem_map_capability;
 };
 
 struct devmm_register_dma_para {
@@ -352,6 +358,7 @@ struct devmm_setup_dev_para {
     uint32_t support_agent_giant_page;
     uint32_t support_remote_mmap;
     uint32_t support_shmem_map_exbus;
+    uint32_t support_mem_host_uva;
 };
 
 struct devmm_mem_create_para {
@@ -394,25 +401,25 @@ struct devmm_mem_unmap_para {
 
 /* va/size must be same with struct devmm_mem_map_para */
 struct devmm_mem_query_owner_para {
-    uint64_t va; /* intput */
-    uint64_t size; /* intput */
+    uint64_t va; /* input */
+    uint64_t size; /* input */
     uint32_t devid; /* output: phy devid, host is halGetHostID */
     uint32_t local_handle_flag; /* output */
 };
 
 /* va/size must be same with struct devmm_mem_map_para */
 struct devmm_mem_set_access_para {
-    uint64_t va; /* intput */
-    uint64_t size; /* intput */
-    uint32_t logic_devid; /* intput: host is halGetHostID */
-    drv_mem_access_type type; /* intput */
+    uint64_t va; /* input */
+    uint64_t size; /* input */
+    uint32_t logic_devid; /* input: host is halGetHostID */
+    drv_mem_access_type type; /* input */
 };
 
 /* va/size must be same with struct devmm_mem_map_para */
 struct devmm_mem_get_access_para {
-    uint64_t va; /* intput */
-    uint64_t size; /* intput/output */
-    uint32_t logic_devid; /* intput: host is halGetHostID */
+    uint64_t va; /* input */
+    uint64_t size; /* input/output */
+    uint32_t logic_devid; /* input: host is halGetHostID */
     drv_mem_access_type type; /* output */
 };
 
@@ -521,6 +528,7 @@ struct devmm_ioctl_arg {
         struct devmm_dbg_info dbg_info;
         struct devmm_mem_remote_map_para map_para;
         struct devmm_mem_remote_unmap_para unmap_para;
+        struct devmm_mem_map_cap_para mem_map_cap_para;
         struct devmm_register_dma_para register_dma_para;
         struct devmm_unregister_dma_para unregister_dma_para;
         struct devmm_check_mem_info check_meminfo_para;
@@ -614,7 +622,8 @@ struct devmm_ioctl_arg {
 #define DEVMM_SVM_DEV_SET_SIBLING           _IOW(DEVMM_SVM_MAGIC, 68, struct devmm_ioctl_arg)
 #define DEVMM_SVM_DEV_BIND_SIBLING          _IOW(DEVMM_SVM_MAGIC, 69, struct devmm_ioctl_arg)
 #define DEVMM_SVM_GET_MMAP_INFO             _IOWR(DEVMM_SVM_MAGIC, 70, struct devmm_ioctl_arg)
-#define DEVMM_SVM_CMD_MAX_CMD               71     /* max cmd id */
+#define DEVMM_SVM_MEM_MAP_CAP               _IOWR(DEVMM_SVM_MAGIC, 71, struct devmm_ioctl_arg)
+#define DEVMM_SVM_CMD_MAX_CMD               72     /* max cmd id */
 
 #define DEVMM_SVM_GET_DEVPID_BY_HOSTPID 0 /* define for dbg server compile */
 #define DEVMM_SVM_WAIT_DEVICE_PROCESS   0 /* define for dbg server compile */

@@ -21,7 +21,6 @@ $(MODULE_NAME)-objs += host/devdrv_vpc.o
 $(MODULE_NAME)-objs += host/devdrv_smmu.o
 $(MODULE_NAME)-objs += host/devdrv_pasid_rbtree.o
 $(MODULE_NAME)-objs += host/devdrv_pcie_link_info.o
-$(MODULE_NAME)-objs += host/devdrv_s2s_msg.o
 $(MODULE_NAME)-objs += host/soc_adapt/res_drv.o
 $(MODULE_NAME)-objs += host/soc_adapt/dma_adapt.o
 $(MODULE_NAME)-objs += host/soc_adapt/nvme_adapt.o
@@ -32,10 +31,14 @@ $(MODULE_NAME)-objs += dc/host/cloud_v2/res_drv_cloud_v2.o
 $(MODULE_NAME)-objs += dc/host/cloud_v4/res_drv_cloud_v4.o
 $(MODULE_NAME)-objs += dc/host/mini_v2/res_drv_mini_v2.o
 $(MODULE_NAME)-objs += dc/host/mini_v3/res_drv_mini_v3.o
+ifneq ($(filter $(PRODUCT), ascend910B),)
+	$(MODULE_NAME)-objs += host/devdrv_s2s_msg.o
+endif
 
 EXTRA_CFLAGS += -I$(DRIVER_HAL_INC_DIR)
 EXTRA_CFLAGS += -I${C_SEC_INCLUDE}/
 EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/inc/
+EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/kernel_adapt/include/
 EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/comm/pcie/command/
 EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/comm/pcie/dc/host/
 EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/comm/pcie/dc/host/cloud_v1/
@@ -46,15 +49,30 @@ EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/comm/pcie/dc/host/mini_v3/
 EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/comm/pcie/inc/
 EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/comm/pcie/host/
 EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/comm/pcie/host/soc_adapt/
+EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/kernel_adapt/include/
 EXTRA_CFLAGS += -isystem $(shell $(CC) -print-file-name=include)
+ifneq ($(filter $(PRODUCT), ascend910_95),)
+	EXTRA_CFLAGS += -Iinclude/linux
+endif
 
-EXTRA_CFLAGS += -DCFG_FEATURE_DMI
+EXTRA_CFLAGS += -DCFG_FEATURE_HOST_LOG
 EXTRA_CFLAGS += -DCFG_FEATURE_SRIOV
 EXTRA_CFLAGS += -DCFG_FEATURE_DMA_COPY_SVA
-EXTRA_CFLAGS += -DCFG_FEATURE_HOST_LOG
-EXTRA_CFLAGS += -DCFG_FEATURE_AGENT_SMMU
-EXTRA_CFLAGS += -DCFG_FEATURE_S2S
-EXTRA_CFLAGS += -DCFG_FEATURE_KA_ALLOC_INTERFACE
+ifneq ($(filter $(PRODUCT), ascend910B),)
+	EXTRA_CFLAGS += -DCFG_FEATURE_DMI
+	EXTRA_CFLAGS += -DCFG_FEATURE_AGENT_SMMU
+	EXTRA_CFLAGS += -DCFG_FEATURE_S2S
+	EXTRA_CFLAGS += -DCFG_FEATURE_KA_ALLOC_INTERFACE
+endif
+
+ifneq ($(filter $(PRODUCT), ascend910_95),)
+	EXTRA_CFLAGS += -DCFG_FEATURE_PCIE_PROTO_DIP
+	EXTRA_CFLAGS += -DCFG_FEATURE_LOAD_TEE_IMAGE
+	ifeq ($(ENABLE_EQUIP), true)
+		EXTRA_CFLAGS += -DCFG_FEATURE_DMI
+	endif
+endif
+
 EXTRA_CFLAGS += -DCFG_HOST
 EXTRA_CFLAGS += -DDRV_HOST
 EXTRA_CFLAGS += -DCFG_ENV_HOST

@@ -7,16 +7,3 @@
 # INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
 # See LICENSE in the root of the software repository for the full text of the License.
 # ------------------------------------------------------------------------------------------------------------
-target_sources(dms_obj PRIVATE
-
-)
-
-set(product_list "ascend910B")
-
-target_compile_definitions(dms_obj PRIVATE
-    $<$<IN_LIST:${PRODUCT},${product_list}>:CFG_FEATURE_DVPP_INFO>
-)
-
-target_include_directories(dms_obj PRIVATE
-
-)

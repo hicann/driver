@@ -124,12 +124,6 @@ int hw_dvt_hypervisor_dma_pool_init(void *__vdavinci)
         return -EINVAL;
     }
 
-    if (!vdavinci->dvt->dma_pool_active) {
-        vascend_info(vdavinci->dvt->vdavinci_priv->dev,
-                     "vascend dma pool is not support\n");
-        return 0;
-    }
-
     return g_hw_kvmdt_ops.dma_pool_init(vdavinci);
 }
 
@@ -141,13 +135,10 @@ void hw_dvt_hypervisor_dma_pool_uninit(void *__vdavinci)
 {
     struct hw_vdavinci *vdavinci = (struct hw_vdavinci *)__vdavinci;
 
-    if (vdavinci != NULL) {
-        if (!vdavinci->dvt->dma_pool_active) {
-            return;
-        }
-
-        g_hw_kvmdt_ops.dma_pool_uninit(vdavinci);
+    if (vdavinci == NULL) {
+        return;
     }
+    g_hw_kvmdt_ops.dma_pool_uninit(vdavinci);
 }
 
 /**
@@ -170,16 +161,7 @@ int hw_dvt_hypervisor_dma_map_guest_page(void *__vdavinci,
         return -EINVAL;
     }
 
-    if (vdavinci->dvt->dma_pool_active) {
-        return g_hw_kvmdt_ops.dma_get_iova(vdavinci, gfn, size, dma_sgt);
-    } else {
-        if (!hw_dvt_hypervisor_is_valid_gfn(vdavinci, gfn) ||
-            g_hw_kvmdt_ops.dma_map_guest_page == NULL) {
-            return -EINVAL;
-        }
-        return g_hw_kvmdt_ops.dma_map_guest_page(vdavinci->handle, gfn, size,
-            dma_sgt);
-    }
+    return g_hw_kvmdt_ops.dma_get_iova(vdavinci, gfn, size, dma_sgt);
 }
 
 /**
@@ -190,22 +172,12 @@ int hw_dvt_hypervisor_dma_map_guest_page(void *__vdavinci,
 void hw_dvt_hypervisor_dma_unmap_guest_page(void *__vdavinci,
                                             struct sg_table *dma_sgt)
 {
-    struct hw_vdavinci *vdavinci = (struct hw_vdavinci *)__vdavinci;
-
-    if (vdavinci == NULL) {
-        vascend_err(vdavinci_to_dev(vdavinci), "vdavinci is null\n");
+    if (__vdavinci == NULL || dma_sgt == NULL) {
+        pr_err("vdavinci or dma_sgt is null\n");
         return;
     }
 
-    if (vdavinci->dvt->dma_pool_active) {
-        return g_hw_kvmdt_ops.dma_put_iova(dma_sgt);
-    }
-
-    if (g_hw_kvmdt_ops.dma_unmap_guest_page == NULL) {
-        vascend_err(vdavinci_to_dev(vdavinci), "unmap guest page is not support\n");
-        return;
-    }
-    return g_hw_kvmdt_ops.dma_unmap_guest_page(vdavinci->handle, dma_sgt);
+    return g_hw_kvmdt_ops.dma_put_iova(dma_sgt);
 }
 
 /**
@@ -217,13 +189,11 @@ void hw_dvt_hypervisor_dma_unmap_guest_page(void *__vdavinci,
   */
 bool hw_dvt_hypervisor_dma_pool_active(void *__vdavinci)
 {
-    struct hw_vdavinci *vdavinci = (struct hw_vdavinci *)__vdavinci;
-
-    if (vdavinci == NULL) {
+    if (__vdavinci == NULL) {
         return false;
     }
 
-    return vdavinci->dvt->dma_pool_active;
+    return true;
 }
 
 /**

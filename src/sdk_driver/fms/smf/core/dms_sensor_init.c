@@ -33,6 +33,13 @@
 #include "devdrv_pm.h"
 #include "dms_event.h"
 #include "dms_sensor_init.h"
+#include "ka_system_pub.h"
+#include "ka_list_pub.h"
+#include "ka_memory_pub.h"
+#include "ka_errno_pub.h"
+#include "ka_task_pub.h"
+#include "ka_base_pub.h"
+#include "ka_kernel_def_pub.h"
 
 INIT_MODULE_FUNC(DMS_SENSOR_CMD_NAME);
 EXIT_MODULE_FUNC(DMS_SENSOR_CMD_NAME);
@@ -53,20 +60,20 @@ static int dms_sensor_scan_task(void *arg)
     int i;
     int ret = 0;
     unsigned long timeout, default_timeout;
-    ktime_t time_notify_start, time_notify_end;
+    ka_ktime_t time_notify_start, time_notify_end;
     struct dms_dev_ctrl_block *dev_ctrl = NULL;
     struct dms_system_ctrl_block *sys_cb = NULL;
     sys_cb = dms_get_sys_ctrl_cb();
-    default_timeout = msecs_to_jiffies(DMS_SENSOR_CHECK_TIMER_LEN);
+    default_timeout = ka_system_msecs_to_jiffies(DMS_SENSOR_CHECK_TIMER_LEN);
     timeout = default_timeout;
 
     dms_debug("dms sensor scan task start\n");
-    time_notify_start = ktime_get();
+    time_notify_start = ka_system_ktime_get();
 
-    while (!kthread_should_stop()) {
+    while (!ka_task_kthread_should_stop()) {
         /* Waiting for synchronization semaphore lock */
         ret = wait_event_interruptible_timeout(sys_cb->sensor_scan_wait,
-                                               atomic_read(&sys_cb->sensor_scan_task_state) > 0, timeout);
+                                               ka_base_atomic_read(&sys_cb->sensor_scan_task_state) > 0, timeout);
         if (ret == 0) {
             /* wait event timeout */
             ret = -ETIMEDOUT;
@@ -80,20 +87,20 @@ static int dms_sensor_scan_task(void *arg)
         }
         if (sys_cb->sensor_scan_suspend_flag == true) {
 #ifndef DMS_UT
-            if ((ret != -ETIMEDOUT) && (atomic_read(&sys_cb->sensor_scan_task_state) > 0)) {
-                atomic_dec(&sys_cb->sensor_scan_task_state);
+            if ((ret != -ETIMEDOUT) && (ka_base_atomic_read(&sys_cb->sensor_scan_task_state) > 0)) {
+                ka_base_atomic_dec(&sys_cb->sensor_scan_task_state);
             }
-            msleep(SLEEP_1MS); /* sleep 1 ms to avoid infinite loop which leads to soft lockup */
+            ka_system_msleep(SLEEP_1MS); /* sleep 1 ms to avoid infinite loop which leads to soft lockup */
 #endif
             continue;
         }
-        time_notify_end = ktime_get();
+        time_notify_end = ka_system_ktime_get();
         dms_sensor_notify_event_proc(DMS_SERSOR_SCAN_NOTIFY);
         /* if exceeded scan time, need to go on scan all */
-        if (msecs_to_jiffies(dms_get_time_change_ms(time_notify_start, time_notify_end)) < default_timeout) {
-            timeout = default_timeout - msecs_to_jiffies(dms_get_time_change_ms(time_notify_start, time_notify_end));
-            if ((ret != -ETIMEDOUT) && (atomic_read(&sys_cb->sensor_scan_task_state) > 0)) {
-                atomic_dec(&sys_cb->sensor_scan_task_state);
+        if (ka_system_msecs_to_jiffies(dms_get_time_change_ms(time_notify_start, time_notify_end)) < default_timeout) {
+            timeout = default_timeout - ka_system_msecs_to_jiffies(dms_get_time_change_ms(time_notify_start, time_notify_end));
+            if ((ret != -ETIMEDOUT) && (ka_base_atomic_read(&sys_cb->sensor_scan_task_state) > 0)) {
+                ka_base_atomic_dec(&sys_cb->sensor_scan_task_state);
             }
             continue;
         }
@@ -103,12 +110,12 @@ static int dms_sensor_scan_task(void *arg)
                 dms_sensor_scan_proc(&dev_ctrl->dev_sensor_cb);
             }
         }
-        if ((ret != -ETIMEDOUT) && (atomic_read(&sys_cb->sensor_scan_task_state) > 0)) {
-                atomic_dec(&sys_cb->sensor_scan_task_state);
+        if ((ret != -ETIMEDOUT) && (ka_base_atomic_read(&sys_cb->sensor_scan_task_state) > 0)) {
+                ka_base_atomic_dec(&sys_cb->sensor_scan_task_state);
             }
         timeout = default_timeout;
         dms_sensor_notify_count_clear();
-        time_notify_start = ktime_get();
+        time_notify_start = ka_system_ktime_get();
     }
 
     dms_debug("dms sensor scan task exit\n");
@@ -120,20 +127,20 @@ static unsigned int dms_sensor_task_init(void)
     struct dms_system_ctrl_block *sys_cb = NULL;
     sys_cb = dms_get_sys_ctrl_cb();
 
-    init_waitqueue_head(&sys_cb->sensor_scan_wait);
-    atomic_set(&sys_cb->sensor_scan_task_state, 0);
+    ka_task_init_waitqueue_head(&sys_cb->sensor_scan_wait);
+    ka_base_atomic_set(&sys_cb->sensor_scan_task_state, 0);
     sys_cb->sensor_scan_suspend_flag = false;
 
     /* Start the sensor scan task */
-    sys_cb->sensor_scan_task = kthread_create(dms_sensor_scan_task, NULL, "dms_sensor_scan_task");
-    if (IS_ERR(sys_cb->sensor_scan_task)) {
+    sys_cb->sensor_scan_task = ka_task_kthread_create(dms_sensor_scan_task, NULL, "dms_sensor_scan_task");
+    if (KA_IS_ERR(sys_cb->sensor_scan_task)) {
         dms_err("sensor scan start failed.\n");
         return DRV_ERROR_INNER_ERR;
     }
 #ifdef CFG_FEATURE_BIND_CORE
     kthread_bind_to_ctrl_cpu(sys_cb->sensor_scan_task);
 #endif
-    (void)wake_up_process(sys_cb->sensor_scan_task);
+    (void)ka_task_wake_up_process(sys_cb->sensor_scan_task);
     dms_info("create sensor scan task success\n");
     return DRV_ERROR_NONE;
 }
@@ -146,8 +153,8 @@ STATIC void dms_release_sensor_scan_task_sem(struct timer_list *t)
 {
     struct dms_system_ctrl_block *sys_cb = NULL;
     sys_cb = dms_get_sys_ctrl_cb();
-    atomic_inc(&sys_cb->sensor_scan_task_state);
-    wake_up(&sys_cb->sensor_scan_wait);
+    ka_base_atomic_inc(&sys_cb->sensor_scan_task_state);
+    ka_task_wake_up(&sys_cb->sensor_scan_wait);
     return;
 }
 static unsigned int dms_init_sensor_timer(void)
@@ -160,11 +167,11 @@ static unsigned int dms_init_sensor_timer(void)
 #else
     timer_setup(&sys_cb->dms_sensor_check_timer, dms_release_sensor_scan_task_sem, 0);
 #endif
-    sys_cb->dms_sensor_check_timer.expires = jiffies + msecs_to_jiffies(DMS_SENSOR_CHECK_TIMER_LEN);
+    sys_cb->dms_sensor_check_timer.expires = ka_jiffies + ka_system_msecs_to_jiffies(DMS_SENSOR_CHECK_TIMER_LEN);
 #ifndef CFG_HOST_ENV
     add_timer_affinity(&sys_cb->dms_sensor_check_timer);
 #else
-    add_timer(&sys_cb->dms_sensor_check_timer);
+    ka_system_add_timer(&sys_cb->dms_sensor_check_timer);
 #endif
     dms_info("create sensor scan task timer success\n");
     return 0;
@@ -179,7 +186,7 @@ static void dms_clean_sensor_timer(void)
 {
     struct dms_system_ctrl_block *sys_cb = NULL;
     sys_cb = dms_get_sys_ctrl_cb();
-    (void)del_timer_sync(&sys_cb->dms_sensor_check_timer);
+    (void)ka_system_del_timer_sync(&sys_cb->dms_sensor_check_timer);
 }
 
 static void dms_stop_sensor_scan(void)
@@ -187,8 +194,8 @@ static void dms_stop_sensor_scan(void)
     struct dms_system_ctrl_block *sys_cb = NULL;
     dms_info("stop sensor task scan \n");
     sys_cb = dms_get_sys_ctrl_cb();
-    atomic_inc(&sys_cb->sensor_scan_task_state);
-    wake_up(&sys_cb->sensor_scan_wait);
+    ka_base_atomic_inc(&sys_cb->sensor_scan_task_state);
+    ka_task_wake_up(&sys_cb->sensor_scan_wait);
     dms_clean_sensor_timer();
 }
 
@@ -197,8 +204,8 @@ static unsigned int dms_sensor_task_exit(void)
     struct dms_system_ctrl_block *sys_cb = NULL;
     dms_info("sensor task exit \n");
     sys_cb = dms_get_sys_ctrl_cb();
-    if (!IS_ERR(sys_cb->sensor_scan_task)) {
-        (void)kthread_stop(sys_cb->sensor_scan_task);
+    if (!KA_IS_ERR(sys_cb->sensor_scan_task)) {
+        (void)ka_task_kthread_stop(sys_cb->sensor_scan_task);
     }
     sys_cb->sensor_scan_task = NULL;
     return 0;
@@ -253,10 +260,10 @@ int dms_sensor_inject_fault(void *feature, char *in, u32 in_len, char *out, u32 
             info.device_id, info.node_type, info.node_id, info.fault_index);
         return -EINVAL;
     }
-    mutex_lock(&dev_cb->node_lock);
+    ka_task_mutex_lock(&dev_cb->node_lock);
     if ((node->ops == NULL) || (node->ops->fault_inject == NULL)) {
         dms_err("Invalid parameter. (option=%s; fault_inject=NULL)\n", (node->ops == NULL) ? "NULL" : "OK");
-        mutex_unlock(&dev_cb->node_lock);
+        ka_task_mutex_unlock(&dev_cb->node_lock);
         return -EINVAL;
     }
 
@@ -264,10 +271,10 @@ int dms_sensor_inject_fault(void *feature, char *in, u32 in_len, char *out, u32 
     if (ret != 0) {
         dms_err("Fault inject failed. (device=%u; node=%u,%u,%u,%u; fault_index=%u; ret=%d)\n",
             info.device_id, info.node_type, info.node_id, info.sub_node_type, info.sub_node_id, info.fault_index, ret);
-        mutex_unlock(&dev_cb->node_lock);
+        ka_task_mutex_unlock(&dev_cb->node_lock);
         return ret;
     }
-    mutex_unlock(&dev_cb->node_lock);
+    ka_task_mutex_unlock(&dev_cb->node_lock);
     dms_event("Fault inject ok. (device:%u; node=%u,%u,%u,%u; fault_index=%u)\n",
         info.device_id, info.node_type, info.node_id, info.sub_node_type, info.sub_node_id, info.fault_index);
     return 0;
@@ -305,18 +312,18 @@ STATIC int dms_sensor_get_info_of_node(struct dms_dev_ctrl_block *dev_cb, dms_fa
 
     /* 2 malloc a tmp buf for driver to put their info, rather than operate the out_arr directly */
     drv_buf = (dms_fault_inject_t *)dbl_kzalloc(sizeof(dms_fault_inject_t) * FAULT_INJECT_INFO_NUM_MAX,
-                                            GFP_KERNEL | __GFP_ACCOUNT);
+                                            KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
     if (drv_buf == NULL) {
         dms_err("Malloc memory fail.\n");
         return -EINVAL;
     }
 
     /* 3 search the all the nodes to get info */
-    mutex_lock(&dev_cb->node_lock);
-    if (list_empty_careful(&dev_cb->dev_node_list) != 0) {
+    ka_task_mutex_lock(&dev_cb->node_lock);
+    if (ka_list_empty_careful(&dev_cb->dev_node_list) != 0) {
         goto out;
     }
-    list_for_each_entry_safe(node, next, &dev_cb->dev_node_list, list)
+    ka_list_for_each_entry_safe(node, next, &dev_cb->dev_node_list, list)
     {
         if ((node->ops != NULL) && (node->ops->get_fault_inject_info != NULL)) {
             drv_info_num = 0;
@@ -341,7 +348,7 @@ STATIC int dms_sensor_get_info_of_node(struct dms_dev_ctrl_block *dev_cb, dms_fa
         }
     }
 out:
-    mutex_unlock(&dev_cb->node_lock);
+    ka_task_mutex_unlock(&dev_cb->node_lock);
     dbl_kfree(drv_buf);
     drv_buf = NULL;
     return 0;
@@ -392,7 +399,7 @@ int dms_smf_suspend(unsigned int devid)
     dms_info("dms_smf suspend finish.\n");
     return 0;
 }
-EXPORT_SYMBOL(dms_smf_suspend);
+KA_EXPORT_SYMBOL(dms_smf_suspend);
 
 int dms_smf_resume(unsigned int devid)
 {
@@ -403,4 +410,4 @@ int dms_smf_resume(unsigned int devid)
     dms_info("dms_smf resume finish.\n");
     return 0;
 }
-EXPORT_SYMBOL(dms_smf_resume);
+KA_EXPORT_SYMBOL(dms_smf_resume);

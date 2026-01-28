@@ -12,6 +12,7 @@
  */
 
 #include "msg_chan_main.h"
+#include "ka_kernel_def_pub.h"
 
 STATIC int devdrv_set_common_msg_client(const struct devdrv_common_msg_client *msg_client, bool register_flag)
 {
@@ -28,13 +29,13 @@ STATIC int devdrv_set_common_msg_client(const struct devdrv_common_msg_client *m
         return -EINVAL;
     }
 
-    mutex_lock(&client_info->lock);
+    ka_task_mutex_lock(&client_info->lock);
     if (register_flag == true) {
         client_info->comm[type] = msg_client;
     } else {
         client_info->comm[type] = NULL;
     }
-    mutex_unlock(&client_info->lock);
+    ka_task_mutex_unlock(&client_info->lock);
     return 0;
 }
 
@@ -51,7 +52,7 @@ int devdrv_register_common_msg_client(const struct devdrv_common_msg_client *msg
     }
     return ret;
 }
-EXPORT_SYMBOL(devdrv_register_common_msg_client);
+KA_EXPORT_SYMBOL(devdrv_register_common_msg_client);
 
 int devdrv_unregister_common_msg_client(u32 devid, const struct devdrv_common_msg_client *msg_client)
 {
@@ -68,7 +69,7 @@ int devdrv_unregister_common_msg_client(u32 devid, const struct devdrv_common_ms
     (void)devdrv_set_common_msg_client(msg_client, false);
     return ret;
 }
-EXPORT_SYMBOL(devdrv_unregister_common_msg_client);
+KA_EXPORT_SYMBOL(devdrv_unregister_common_msg_client);
 
 int devdrv_common_msg_send(u32 devid, void *data, u32 in_data_len, u32 out_data_len, u32 *real_out_len,
                            enum devdrv_common_msg_type msg_type)
@@ -86,4 +87,4 @@ int devdrv_common_msg_send(u32 devid, void *data, u32 in_data_len, u32 out_data_
     devdrv_sub_ops_ref(dev_ops);
     return ret;
 }
-EXPORT_SYMBOL(devdrv_common_msg_send);
+KA_EXPORT_SYMBOL(devdrv_common_msg_send);

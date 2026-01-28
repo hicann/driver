@@ -18,6 +18,16 @@
 #include "ascend_dev_num.h"
 #include "virtmng_public_def.h"
 
+#include "ka_system_pub.h"
+#include "ka_task_pub.h"
+#include "ka_base_pub.h"
+#include "ka_common_pub.h"
+#include "ka_memory_pub.h"
+#include "ka_barrier_pub.h"
+#include "ka_system_pub.h"
+#include "ka_kernel_def_pub.h"
+#include "ka_pci_pub.h"
+
 #ifndef TRUE
 #define TRUE 1
 #endif
@@ -28,9 +38,9 @@
 
 #define VMNG_FID_BEGIN 0x1
 #define VMNG_START_TIMER_OUT 100
-#define VMNG_START_TIMER_CYCLE (1 * HZ)
+#define VMNG_START_TIMER_CYCLE (1 * KA_HZ)
 #define VMNG_AICORE_NUM 32
-#define VMNGH_INIT_INSTANCE_TIMEOUT (4 * HZ)   /* 4s */
+#define VMNGH_INIT_INSTANCE_TIMEOUT (4 * KA_HZ)   /* 4s */
 
 #define VMNG_NON_TRANS_MSG_S_DESC_SIZE 0x10000 /* 64k, pcie support */
 #define VMNG_NON_TRANS_MSG_C_DESC_SIZE 0x10000 /* 64k, pcie support */

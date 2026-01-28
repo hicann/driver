@@ -14,8 +14,9 @@
 #define SOC_PLATFORM_H__
 
 #include <linux/types.h>
-#include <linux/sched.h>
-#include <linux/smp.h>
+
+#include "ka_task_pub.h"
+#include "ka_system_pub.h"
 
 #ifndef EMU_ST
 #include "dmc_kernel_interface.h"
@@ -27,19 +28,19 @@
 
 #define soc_err(fmt, ...) do { \
     drv_err(module_log_name, "<%s:%d:%d:%d> " fmt, \
-        current->comm, current->tgid, current->pid, smp_processor_id(), ##__VA_ARGS__); \
+        ka_task_get_current_comm(), ka_task_get_current_tgid(), ka_task_get_current_pid(), ka_system_smp_processor_id(), ##__VA_ARGS__); \
 } while (0)
 #define soc_warn(fmt, ...) do { \
     drv_warn(module_log_name, "<%s:%d:%d:%d> " fmt, \
-        current->comm, current->tgid, current->pid, smp_processor_id(), ##__VA_ARGS__); \
+        ka_task_get_current_comm(), ka_task_get_current_tgid(), ka_task_get_current_pid(), ka_system_smp_processor_id(), ##__VA_ARGS__); \
 } while (0)
 #define soc_info(fmt, ...) do { \
     drv_info(module_log_name, "<%s:%d:%d:%d> " fmt, \
-        current->comm, current->tgid, current->pid, smp_processor_id(), ##__VA_ARGS__); \
+        ka_task_get_current_comm(), ka_task_get_current_tgid(), ka_task_get_current_pid(), ka_system_smp_processor_id(), ##__VA_ARGS__); \
 } while (0)
 #define soc_debug(fmt, ...) do { \
     drv_pr_debug(module_log_name, "<%s:%d:%d:%d> " fmt, \
-        current->comm, current->tgid, current->pid, smp_processor_id(), ##__VA_ARGS__); \
+        ka_task_get_current_comm(), ka_task_get_current_tgid(), ka_task_get_current_pid(), ka_system_smp_processor_id(), ##__VA_ARGS__); \
 } while (0)
 
 #endif

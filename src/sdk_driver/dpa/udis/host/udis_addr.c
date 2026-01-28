@@ -12,6 +12,8 @@
  */
 
 #include "securec.h"
+#include "ka_base_pub.h"
+#include "ka_list_pub.h"
 #include "pbl_mem_alloc_interface.h"
 #include "udis_log.h"
 #include "udis_management.h"
@@ -23,8 +25,8 @@ struct udis_dma_node *udis_addr_list_find_node(const struct udis_ctrl_block *udi
     struct udis_dma_node *addr_node, *next = NULL;
 
     for (i = UPDATE_ONLY_ONCE; i < UPDATE_TYPE_MAX; ++i) {
-        list_for_each_entry_safe(addr_node, next, &udis_cb->addr_list[i], list) {
-            if ((addr_node->module_type == module_type) && (strcmp(addr_node->name, name) == 0)) {
+        ka_list_for_each_entry_safe(addr_node, next, &udis_cb->addr_list[i], list) {
+            if ((addr_node->module_type == module_type) && (ka_base_strcmp(addr_node->name, name) == 0)) {
                 return addr_node;
             }
         }
@@ -38,7 +40,7 @@ int udis_addr_list_add_node(unsigned int udevid, struct udis_ctrl_block *udis_cb
     int ret;
     struct udis_dma_node *new_node = NULL;
 
-    new_node = dbl_kzalloc(sizeof(struct udis_dma_node), GFP_KERNEL | __GFP_ACCOUNT);
+    new_node = dbl_kzalloc(sizeof(struct udis_dma_node), KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
     if (new_node == NULL) {
         udis_err("Failed to malloc for udis_dma_node. (udevid=%u; module_type=%u; name=%s)\n",
             udevid, addr_node->module_type, addr_node->name);
@@ -59,7 +61,7 @@ int udis_addr_list_add_node(unsigned int udevid, struct udis_ctrl_block *udis_cb
     new_node->host_dma_addr = addr_node->host_dma_addr;
     new_node->data_len = addr_node->data_len;
 
-    list_add(&new_node->list, &udis_cb->addr_list[addr_node->update_type]);
+    ka_list_add(&new_node->list, &udis_cb->addr_list[addr_node->update_type]);
 
     return 0;
 }
@@ -76,7 +78,7 @@ void udis_addr_list_remove_node(unsigned int udevid, struct udis_ctrl_block *udi
         return;
     }
 
-    list_del(&node->list);
+    ka_list_del(&node->list);
     dbl_kfree(node);
     node = NULL;
 

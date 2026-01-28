@@ -10,13 +10,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#include <linux/version.h>
-#include <linux/dmi.h>
 
 #include "res_drv.h"
 #include "devdrv_util.h"
 #include "devdrv_ctrl.h"
 #include "res_drv_cloud_v1.h"
+#include "ka_driver_pub.h"
 
 #define DEVDRV_CLOUD_V1_P2P_SUPPORT_MAX_DEVICE 16
 
@@ -76,7 +75,7 @@
 #define DEVDRV_MSI_X_MAX_VECTORS 256
 #define DEVDRV_MSI_X_MIN_VECTORS 128
 
-/* device os load notify use irq vector 0, later 0 alse use to admin msg chan */
+/* device os load notify use irq vector 0, later 0 also used to admin msg chan */
 #define DEVDRV_LOAD_MSI_X_VECTOR_NUM 0
 
 /* irq used to msg trans, a msg chan need two vector. one for tx finish, the other for rx msg.
@@ -362,33 +361,23 @@ STATIC int devdrv_get_cloud_server_devid(struct devdrv_shr_para __iomem *para)
 STATIC int devdrv_get_cloud_pcie_card_devid(struct devdrv_pci_ctrl *pci_ctrl)
 {
     int dev_id = -1;
-#if  LINUX_VERSION_CODE>= KERNEL_VERSION(4, 5, 0)
-
-#ifdef CFG_FEATURE_DMI
+#if defined(CFG_FEATURE_DMI) && defined(CONFIG_DMI)
+    int ret = 0;
     struct devdrv_shr_para __iomem *para = NULL;
-    const struct dmi_device *dmi_dev = NULL;
-    const struct dmi_device *from = NULL;
-    const struct dmi_dev_onboard *dev_data = NULL;
     struct devdrv_ctrl *p_ctrls = get_devdrv_ctrl();
 
-    if ((pci_ctrl == NULL) || (pci_ctrl->pdev == NULL) || (pci_ctrl->pdev->bus == NULL)) {
+    if ((pci_ctrl == NULL) || (pci_ctrl->pdev == NULL) || (ka_pci_get_bus(pci_ctrl->pdev) == NULL)) {
         devdrv_err("Input parameter is invalid.\n");
         return dev_id;
     }
 
-    do {
-        from = dmi_dev;
-        dmi_dev = dmi_find_device(DEVDRV_DMI_DEV_TYPE_DEV_SLOT, NULL, from);
-        if (dmi_dev != NULL) {
-            dev_data = (struct dmi_dev_onboard *)dmi_dev->device_data;
-            if ((dev_data != NULL) && (dev_data->bus == pci_ctrl->pdev->bus->number) &&
-                (PCI_SLOT(((unsigned int)(dev_data->devfn))) == PCI_SLOT(pci_ctrl->pdev->devfn))) {
-                dev_id = dev_data->instance;
-                break;
-            }
-        }
-    } while (dmi_dev != NULL);
+    ret = ka_driver_dmi_find_devid(pci_ctrl->pdev, DEVDRV_DMI_DEV_TYPE_DEV_SLOT, &dev_id);
+    if (ret != 0) {
+        /* In earlier versions, CFG_FEATURE_DMI and CONFIG_DMI are defined */
+        return devdrv_alloc_devid_inturn(0, 1);
+    }
 
+    /* In later versions, CFG_FEATURE_DMI and CONFIG_DMI are not defined */
     if ((dev_id >= MAX_DEV_CNT) || (dev_id < 0)) {
         devdrv_err("Invalid dev_id. (dev_id=%u)\n", dev_id);
         return dev_id;
@@ -407,10 +396,9 @@ STATIC int devdrv_get_cloud_pcie_card_devid(struct devdrv_pci_ctrl *pci_ctrl)
         p_ctrls[dev_id].startup_flg = DEVDRV_DEV_STARTUP_PROBED;
     }
 #else
-    dev_id = devdrv_alloc_devid_inturn(0, 1);
-#endif
-
-#else
+    /* In earlier versions, CFG_FEATURE_DMI or CONFIG_DMI are not defined
+     * In later versions, CFG_FEATURE_DMI or CONFIG_DMI are not defined
+     */
     dev_id = devdrv_alloc_devid_inturn(0, 1);
 #endif
     return dev_id;
@@ -545,34 +533,34 @@ int devdrv_cloud_v1_res_init(struct devdrv_pci_ctrl *pci_ctrl)
 
     pci_ctrl->mem_bar_id = PCI_BAR_MEM;
 
-    pci_ctrl->mem_phy_base = (phys_addr_t)pci_resource_start(pci_ctrl->pdev, PCI_BAR_MEM);
-    pci_ctrl->mem_phy_size = (u64)pci_resource_len(pci_ctrl->pdev, PCI_BAR_MEM);
+    pci_ctrl->mem_phy_base = (phys_addr_t)ka_pci_resource_start(pci_ctrl->pdev, PCI_BAR_MEM);
+    pci_ctrl->mem_phy_size = (u64)ka_pci_resource_len(pci_ctrl->pdev, PCI_BAR_MEM);
 
-    offset = pci_resource_start(pci_ctrl->pdev, PCI_BAR_RSV_MEM) + DEVDRV_RESERVE_MEM_MSG_OFFSET;
+    offset = ka_pci_resource_start(pci_ctrl->pdev, PCI_BAR_RSV_MEM) + DEVDRV_RESERVE_MEM_MSG_OFFSET;
     size = DEVDRV_RESERVE_MEM_MSG_SIZE;
-    pci_ctrl->mem_base = ioremap(offset, size);
+    pci_ctrl->mem_base = ka_mm_ioremap(offset, size);
     if (pci_ctrl->mem_base == NULL) {
         devdrv_err("Ioremap mem_base failed. (size=%lu)\n", size);
         devdrv_res_uninit(pci_ctrl);
         return -ENOMEM;
     }
 
-    pci_ctrl->rsv_mem_phy_base = (phys_addr_t)pci_resource_start(pci_ctrl->pdev, PCI_BAR_RSV_MEM);
-    pci_ctrl->rsv_mem_phy_size = (u64)pci_resource_len(pci_ctrl->pdev, PCI_BAR_RSV_MEM);
+    pci_ctrl->rsv_mem_phy_base = (phys_addr_t)ka_pci_resource_start(pci_ctrl->pdev, PCI_BAR_RSV_MEM);
+    pci_ctrl->rsv_mem_phy_size = (u64)ka_pci_resource_len(pci_ctrl->pdev, PCI_BAR_RSV_MEM);
 
-    offset = pci_resource_start(pci_ctrl->pdev, PCI_BAR_RSV_MEM) + DEVDRV_RESERVE_MEM_DB_BASE;
+    offset = ka_pci_resource_start(pci_ctrl->pdev, PCI_BAR_RSV_MEM) + DEVDRV_RESERVE_MEM_DB_BASE;
     size = DEVDRV_DB_IOMAP_SIZE;
-    pci_ctrl->msi_base = ioremap(offset, size);
+    pci_ctrl->msi_base = ka_mm_ioremap(offset, size);
     if (pci_ctrl->msi_base == NULL) {
         devdrv_err("Ioremap msi_base failed. (size=%lu)\n", size);
         devdrv_res_uninit(pci_ctrl);
         return -ENOMEM;
     }
 
-    pci_ctrl->io_phy_base = (phys_addr_t)pci_resource_start(pci_ctrl->pdev, PCI_BAR_IO);
-    pci_ctrl->io_phy_size = (u64)pci_resource_len(pci_ctrl->pdev, PCI_BAR_IO);
+    pci_ctrl->io_phy_base = (phys_addr_t)ka_pci_resource_start(pci_ctrl->pdev, PCI_BAR_IO);
+    pci_ctrl->io_phy_size = (u64)ka_pci_resource_len(pci_ctrl->pdev, PCI_BAR_IO);
 
-    pci_ctrl->io_base = ioremap(pci_ctrl->io_phy_base, pci_ctrl->io_phy_size);
+    pci_ctrl->io_base = ka_mm_ioremap(pci_ctrl->io_phy_base, pci_ctrl->io_phy_size);
     if (pci_ctrl->io_base == NULL) {
         devdrv_err("Ioremap io_base failed. (size=%lu)\n", size);
         devdrv_res_uninit(pci_ctrl);

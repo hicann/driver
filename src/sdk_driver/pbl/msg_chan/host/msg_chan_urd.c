@@ -96,7 +96,7 @@ STATIC int devdrv_get_p2p_attr_urd(void *feature, char *in, u32 in_len, char *ou
 
     base_attr.devid = phys_id;
     base_attr.peer_dev_id = p2p_attr->peer_dev_id;
-    base_attr.pid = current->tgid;
+    base_attr.pid = ka_task_get_current_tgid();
     base_attr.status =  &p2p_attr->status;
     base_attr.capability = &p2p_attr->capability;
     base_attr.op = p2p_attr->op;
@@ -118,7 +118,7 @@ STATIC int devdrv_get_p2p_attr_urd(void *feature, char *in, u32 in_len, char *ou
     }
 
     devdrv_debug("P2P attr. (op=%u; devid=%u; peerid=%u; pid=%d; status=%u; cap=%llx)\n",
-        p2p_attr->op, p2p_attr->dev_id, p2p_attr->peer_dev_id, current->tgid, p2p_attr->status, p2p_attr->capability);
+        p2p_attr->op, p2p_attr->dev_id, p2p_attr->peer_dev_id, ka_task_get_current_tgid(), p2p_attr->status, p2p_attr->capability);
 
     return ret;
 }

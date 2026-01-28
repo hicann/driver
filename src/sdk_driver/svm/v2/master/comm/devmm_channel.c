@@ -10,13 +10,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#include <linux/dma-mapping.h>
-#include <linux/types.h>
-#include <linux/slab.h>
-#include <linux/errno.h>
+
 #include <linux/hugetlb.h>
-#include <linux/delay.h>
-#include <linux/list.h>
 
 #include "svm_ioctl.h"
 #include "devmm_chan_handlers.h"
@@ -182,10 +177,10 @@ STATIC int devmm_chan_page_fault_process_copy(struct devmm_chan_page_fault *faul
 
     stamp = (u32)ka_jiffies;
     for (i = 0; i < num; i++) {
-        szs[i] = PAGE_SIZE;
+        szs[i] = KA_MM_PAGE_SIZE;
         pages[i] = devmm_pa_to_page(pas[i]);
         ka_mm_get_page(pages[i]);
-        pas[i] = hal_kernel_devdrv_dma_map_page(dev, pages[i], 0, szs[i], DMA_BIDIRECTIONAL);
+        pas[i] = hal_kernel_devdrv_dma_map_page(dev, pages[i], 0, szs[i], KA_DMA_BIDIRECTIONAL);
         ret = ka_mm_dma_mapping_error(dev, pas[i]);
         if (ret != 0) {
             devmm_drv_err("Dma map page failed. (hostpid=%d; devid=%u; vfid=%u; va=0x%llx; num=%d; ret=%d)\n",
@@ -205,7 +200,7 @@ page_fault_d2h_copy_dma_free:
     stamp = (u32)ka_jiffies;
     for (j = 0; j < i; j++) {
         ka_mm_put_page(pages[j]);
-        hal_kernel_devdrv_dma_unmap_page(dev, pas[j], szs[j], DMA_BIDIRECTIONAL);
+        hal_kernel_devdrv_dma_unmap_page(dev, pas[j], szs[j], KA_DMA_BIDIRECTIONAL);
         devmm_try_cond_resched(&stamp);
     }
     devmm_device_put_by_devid(fault_msg->head.dev_id);
@@ -259,7 +254,7 @@ STATIC int devmm_chan_page_fault_copy_data(struct devmm_svm_process *svm_process
             process_id->hostpid, process_id->devid, process_id->vfid, fault_msg->va, fault_msg->num, ret);
         return ret;
     }
-    devmm_unmap_pages(svm_process, fault_msg->va, heap->chunk_page_size / PAGE_SIZE);
+    devmm_unmap_pages(svm_process, fault_msg->va, heap->chunk_page_size / KA_MM_PAGE_SIZE);
 
     devmm_svm_clear_mapped_with_heap(svm_process, fault_msg->va, heap->chunk_page_size,
         DEVMM_INVALID_DEVICE_PHYID, heap);

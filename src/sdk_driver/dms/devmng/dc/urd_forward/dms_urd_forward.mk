@@ -7,27 +7,10 @@
 # INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
 # See LICENSE in the root of the software repository for the full text of the License.
 # ------------------------------------------------------------------------------------------------------------
-ifeq ($(DAVINCI_HIAI_DKMS),y)
-	asdrv_dms-y += devmng/dc/urd_forward/dms_urd_forward.o
-	EXTRA_CFLAGS += -I$(DRIVER_MODULE_DEVMNG_DIR)/dc/urd_forward
-	EXTRA_CFLAGS += -I$(DRIVER_MODULE_DEVMNG_DIR)/include
-	EXTRA_CFLAGS += -I$(HIAI_DKMS_DIR)/tsdrv/ts_drv/ts_drv_common
-	EXTRA_CFLAGS += -I$(DRIVER_MODULE_DEVMNG_DIR)/drv_devmng/drv_devmng_host/ascend910
-	EXTRA_CFLAGS += -I$(HIAI_DKMS_DIR)/dev_inc/inc/pbl
-	EXTRA_CFLAGS += -DCFG_FEATURE_SDK_EX_VERSION
-	EXTRA_CFLAGS += -DCFG_FEATURE_QUERY_FREQ_INFO
-	EXTRA_CFLAGS += -DCFG_FEATURE_QUERY_QOS_CFG_INFO
-	EXTRA_CFLAGS += -DCFG_FEATURE_QUERY_VA_INFO
 
-else #for CMake
-	asdrv_dms-y += devmng/dc/urd_forward/dms_urd_forward.o
-	EXTRA_CFLAGS += -I$(DRIVER_MODULE_DEVMNG_DIR)/dc/urd_forward
-	EXTRA_CFLAGS += -I$(DRIVER_MODULE_DEVMNG_DIR)/include
-	EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/src/tsdrv/ts_drv/ts_drv_common
-	EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/inc/pbl
-	EXTRA_CFLAGS += -I$(DRIVER_MODULE_DEVMNG_DIR)/drv_devmng/drv_devmng_host/ascend910
-	EXTRA_CFLAGS += -DCFG_FEATURE_SDK_EX_VERSION
-	EXTRA_CFLAGS += -DCFG_FEATURE_QUERY_FREQ_INFO
-	EXTRA_CFLAGS += -DCFG_FEATURE_QUERY_QOS_CFG_INFO
-	EXTRA_CFLAGS += -DCFG_FEATURE_QUERY_VA_INFO
-endif
+asdrv_dms-y += devmng/dc/urd_forward/dms_urd_forward.o
+EXTRA_CFLAGS += -I$(DRIVER_MODULE_DEVMNG_DIR)/dc/urd_forward
+EXTRA_CFLAGS += -I$(DRIVER_MODULE_DEVMNG_DIR)/include
+EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/src/tsdrv/ts_drv/ts_drv_common
+EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/inc/pbl
+EXTRA_CFLAGS += -I$(DRIVER_MODULE_DEVMNG_DIR)/drv_devmng/drv_devmng_host/ascend910

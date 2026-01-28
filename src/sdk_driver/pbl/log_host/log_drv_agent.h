@@ -37,10 +37,12 @@
 #define LOG_PRINT_LEN         0x400     // 1024 Bytes
 #define MODULE_HOST_LOG       "ascend_logdrv"
 
+#define slog_err_printk(level, module, fmt, ...) \
+    (void)printk(level "[ascend] [ERROR] [%s] [%s %d] " fmt, module, __func__, __LINE__, ##__VA_ARGS__)
 #define slog_printk(level, module, fmt, ...) \
     (void)printk(level "[ascend] [%s] [%s %d] " fmt, module, __func__, __LINE__, ##__VA_ARGS__)
 
-#define slog_err(module, fmt...) slog_printk(KERN_ERR, module, fmt)
+#define slog_err(module, fmt...) slog_err_printk(KERN_NOTICE, module, fmt)
 #define slog_info(module, fmt...) slog_printk(KERN_INFO, module, fmt)
 
 #ifndef LOG_UNIT_TEST

@@ -27,6 +27,11 @@
 #include "davinci_intf_common.h"
 #include "pbl_mem_alloc_interface.h"
 #include "davinci_intf_process.h"
+#include "ka_task_pub.h"
+#include "ka_system_pub.h"
+#include "ka_list_pub.h"
+#include "ka_memory_pub.h"
+#include "ka_base_pub.h"
 
 /*
  * *proc_start_time <  *start_time: return <0
@@ -55,15 +60,15 @@ struct davinci_intf_file_stru *create_file_proc_entry(
     static unsigned int seq = 0;
 
     file_node = (struct davinci_intf_file_stru *)dbl_kzalloc(sizeof(struct davinci_intf_file_stru),
-        GFP_KERNEL | __GFP_ACCOUNT);
+        KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
     if (file_node == NULL) {
-        log_intf_err("kzalloc failed. (size=%lu)\n", sizeof(struct davinci_intf_file_stru));
+        log_intf_err("ka_mm_kzalloc failed. (size=%lu)\n", sizeof(struct davinci_intf_file_stru));
         return NULL;
     }
     file_node->file_op = file;
     file_node->owner_pid = current->tgid;
     file_node->seq = seq++;
-    file_node->open_time = jiffies_to_msecs(jiffies);
+    file_node->open_time = ka_system_jiffies_to_msecs(ka_jiffies);
     ret = strcpy_s(file_node->module_name, DAVINIC_MODULE_NAME_MAX, DAVINIC_UNINIT_FILE);
     if (ret != 0) {
         log_intf_err("strcpy_s failed. (module_name=\"%s\"; ret=%d)\n",
@@ -71,7 +76,7 @@ struct davinci_intf_file_stru *create_file_proc_entry(
         dbl_kfree(file_node);
         return NULL;
     }
-    list_add_tail(&file_node->list, &proc->file_list);
+    ka_list_add_tail(&file_node->list, &proc->file_list);
     return file_node;
 }
 
@@ -84,7 +89,7 @@ struct davinci_intf_file_stru *get_file_proc_entry(
     struct davinci_intf_file_stru *next = NULL;
 
     file_list = &proc->file_list;
-    list_for_each_entry_safe(file_node, next, file_list, list)
+    ka_list_for_each_entry_safe(file_node, next, file_list, list)
     {
         if (file_node->file_op == file) {
             return file_node;
@@ -101,9 +106,9 @@ unsigned int get_file_module_cnt(struct davinci_intf_process_stru *proc, const c
     unsigned int cnt = 0;
 
     file_list = &proc->file_list;
-    list_for_each_entry_safe(file_node, next, file_list, list)
+    ka_list_for_each_entry_safe(file_node, next, file_list, list)
     {
-        if (strcmp(file_node->module_name, module_name) == 0) {
+        if (ka_base_strcmp(file_node->module_name, module_name) == 0) {
             cnt++;
         }
     }
@@ -120,9 +125,9 @@ int check_module_file_close_in_process(
 
     file_list = &proc->file_list;
 
-    list_for_each_entry_safe(file_node, next, file_list, list)
+    ka_list_for_each_entry_safe(file_node, next, file_list, list)
     {
-        if (strcmp(file_node->module_name, module_name) == 0) {
+        if (ka_base_strcmp(file_node->module_name, module_name) == 0) {
             return FALSE;
         }
     }
@@ -136,9 +141,9 @@ void destory_file_proc_list(struct davinci_intf_process_stru *proc)
     struct davinci_intf_file_stru *next = NULL;
     file_list = &proc->file_list;
 
-    list_for_each_entry_safe(file_node, next, file_list, list)
+    ka_list_for_each_entry_safe(file_node, next, file_list, list)
     {
-        list_del(&file_node->list);
+        ka_list_del(&file_node->list);
         dbl_kfree(file_node);
         file_node = NULL;
     }
@@ -154,17 +159,17 @@ STATIC int create_proc_free_list(struct davinci_intf_process_stru *proc)
     }
 
     proc_free_list = (struct davinci_intf_free_list_stru *)dbl_kzalloc(
-        sizeof(struct davinci_intf_free_list_stru), GFP_ATOMIC | __GFP_ACCOUNT);
+        sizeof(struct davinci_intf_free_list_stru), KA_GFP_ATOMIC | __KA_GFP_ACCOUNT);
     if (proc_free_list == NULL) {
-        log_intf_err("kzalloc free list failed. (size=%lu)\n", sizeof(struct davinci_intf_free_list_stru));
+        log_intf_err("ka_mm_kzalloc free list failed. (size=%lu)\n", sizeof(struct davinci_intf_free_list_stru));
         return -ENOMEM;
     }
-    INIT_LIST_HEAD(&proc_free_list->list);
+    KA_INIT_LIST_HEAD(&proc_free_list->list);
     proc_free_list->owner_pid = proc->owner_pid;
     proc_free_list->owner_proc = proc;
     proc_free_list->all_flag = DAVINIC_FREE_LIST_NOT_INIT;
     proc_free_list->current_free_index = 0;
-    atomic_set(&proc_free_list->current_count, 0);
+    ka_base_atomic_set(&proc_free_list->current_count, 0);
 
     proc->free_list = proc_free_list;
 
@@ -173,7 +178,7 @@ STATIC int create_proc_free_list(struct davinci_intf_process_stru *proc)
 
 struct davinci_intf_process_stru *create_process_entry(
     struct davinci_intf_stru *cb,
-    pid_t  proc_pid, TASK_TIME_TYPE start_time)
+    ka_pid_t  proc_pid, TASK_TIME_TYPE start_time)
 {
     struct davinci_intf_process_stru *proc_node = NULL;
     struct list_head *process_list = NULL;
@@ -181,25 +186,25 @@ struct davinci_intf_process_stru *create_process_entry(
 
     proc_node = (struct davinci_intf_process_stru *)dbl_kzalloc(
         sizeof(struct davinci_intf_process_stru),
-        GFP_KERNEL | __GFP_ACCOUNT);
+        KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
     if (proc_node == NULL) {
-        log_intf_err("kzalloc failed. (size=%lu)\n", sizeof(struct davinci_intf_process_stru));
+        log_intf_err("ka_mm_kzalloc failed. (size=%lu)\n", sizeof(struct davinci_intf_process_stru));
         return NULL;
     }
     proc_node->owner_pid = proc_pid;
     proc_node->start_time = start_time;
     proc_node->owner_cb = (void *)cb;
 
-    mutex_init(&proc_node->res_lock);
-    INIT_LIST_HEAD(&proc_node->file_list);
-    list_add_tail(&proc_node->list, &cb->process_list);
-    atomic_set(&proc_node->work_count, 0);
+    ka_task_mutex_init(&proc_node->res_lock);
+    KA_INIT_LIST_HEAD(&proc_node->file_list);
+    ka_list_add_tail(&proc_node->list, &cb->process_list);
+    ka_base_atomic_set(&proc_node->work_count, 0);
     return proc_node;
 }
 
 struct davinci_intf_process_stru *get_process_entry(
     struct davinci_intf_stru *cb,
-    pid_t proc_pid, TASK_TIME_TYPE start_time)
+    ka_pid_t proc_pid, TASK_TIME_TYPE start_time)
 {
     struct davinci_intf_process_stru *proc_node = NULL;
     struct list_head *process_list = NULL;
@@ -207,7 +212,7 @@ struct davinci_intf_process_stru *get_process_entry(
 
     process_list = &cb->process_list;
 
-    list_for_each_entry_safe(proc_node, next, process_list, list)
+    ka_list_for_each_entry_safe(proc_node, next, process_list, list)
     {
         if ((proc_node->owner_pid == proc_pid) && (proc_start_time_compare(&proc_node->start_time, &start_time) == 0)) {
             return proc_node;
@@ -218,7 +223,7 @@ struct davinci_intf_process_stru *get_process_entry(
 
 struct davinci_intf_process_stru *get_process_entry_latest(
     struct davinci_intf_stru *cb,
-    pid_t proc_pid)
+    ka_pid_t proc_pid)
 {
     struct davinci_intf_process_stru *proc_node = NULL;
     struct list_head *process_list = NULL;
@@ -228,7 +233,7 @@ struct davinci_intf_process_stru *get_process_entry_latest(
 
     process_list = &cb->process_list;
 
-    list_for_each_entry_safe(proc_node, next, process_list, list)
+    ka_list_for_each_entry_safe(proc_node, next, process_list, list)
     {
         if (proc_node->owner_pid != proc_pid) {
             continue;
@@ -251,7 +256,7 @@ void free_process_entry(struct davinci_intf_process_stru *proc)
     if (proc == NULL) {
         return;
     }
-    mutex_destroy(&proc->res_lock);
+    ka_task_mutex_destroy(&proc->res_lock);
     return;
 }
 
@@ -263,9 +268,9 @@ void destroy_process_list(struct davinci_intf_stru *cb)
 
     process_list = &cb->process_list;
 
-    list_for_each_entry_safe(proc_node, next, process_list, list)
+    ka_list_for_each_entry_safe(proc_node, next, process_list, list)
     {
-        list_del(&proc_node->list);
+        ka_list_del(&proc_node->list);
         destory_file_proc_list(proc_node);
         dbl_kfree(proc_node);
         proc_node = NULL;
@@ -283,7 +288,7 @@ int check_module_file_close(
 
     process_list = &cb->process_list;
 
-    list_for_each_entry_safe(proc_node, next, process_list, list)
+    ka_list_for_each_entry_safe(proc_node, next, process_list, list)
     {
         if (check_module_file_close_in_process(proc_node, module_name) == FALSE) {
             return FALSE;
@@ -301,31 +306,31 @@ STATIC int create_file_free_list_and_node(struct davinci_intf_process_stru *proc
 
     file_free_list = (struct davinci_intf_free_list_stru *)dbl_kzalloc(
         sizeof(struct davinci_intf_free_list_stru),
-        GFP_ATOMIC | __GFP_ACCOUNT);
+        KA_GFP_ATOMIC | __KA_GFP_ACCOUNT);
     if (file_free_list == NULL) {
-        log_intf_err("kzalloc file free list failed. (size=%lu)\n", sizeof(struct davinci_intf_free_list_stru));
+        log_intf_err("ka_mm_kzalloc file free list failed. (size=%lu)\n", sizeof(struct davinci_intf_free_list_stru));
         return -ENOMEM;
     }
-    INIT_LIST_HEAD(&file_free_list->list);
+    KA_INIT_LIST_HEAD(&file_free_list->list);
     file_free_list->owner_pid = proc->owner_pid;
     file_free_list->owner_proc = proc;
     file_free_list->all_flag = DAVINIC_FREE_LIST_NOT_INIT;
     file_free_list->current_free_index = 0;
-    atomic_set(&file_free_list->current_count, 0);
+    ka_base_atomic_set(&file_free_list->current_count, 0);
 
     private_data->free_list = file_free_list;
 
     node = (struct davinci_intf_free_file_stru *)dbl_kzalloc(
         sizeof(struct davinci_intf_free_file_stru),
-        GFP_ATOMIC | __GFP_ACCOUNT);
+        KA_GFP_ATOMIC | __KA_GFP_ACCOUNT);
     if (node == NULL) {
-        log_intf_err("kzalloc failed. (size=%lu)\n", sizeof(struct davinci_intf_free_file_stru));
+        log_intf_err("ka_mm_kzalloc failed. (size=%lu)\n", sizeof(struct davinci_intf_free_file_stru));
         dbl_kfree(file_free_list);
         file_free_list = NULL;
         private_data->free_list = NULL;
         return -ENOMEM;
     }
-    INIT_LIST_HEAD(&node->list);
+    KA_INIT_LIST_HEAD(&node->list);
     node->owner_pid = private_data->owner_pid;
     node->file_private = private_data;
     node->free_type = private_data->free_type;
@@ -344,7 +349,7 @@ STATIC int create_file_free_list_and_node(struct davinci_intf_process_stru *proc
         return -ENOMEM;
     }
 
-    list_add_tail(&node->list, &file_free_list->list);
+    ka_list_add_tail(&node->list, &file_free_list->list);
 
     return 0;
 }
@@ -355,7 +360,7 @@ int add_file_to_list(struct davinci_intf_stru *cb, struct file *file,
     int ret = 0;
     struct davinci_intf_process_stru *proc = NULL;
     struct davinci_intf_file_stru *file_op = NULL;
-    pid_t proc_pid = current->tgid;
+    ka_pid_t proc_pid = current->tgid;
     TASK_TIME_TYPE start_time = current->group_leader->start_time;
 
     proc = get_process_entry(cb, proc_pid, start_time);
@@ -402,7 +407,7 @@ int add_module_to_list(struct davinci_intf_stru *cb,
 {
     struct davinci_intf_process_stru *proc = NULL;
     struct davinci_intf_file_stru *file_op = NULL;
-    pid_t  proc_pid = file_private->owner_pid;
+    ka_pid_t  proc_pid = file_private->owner_pid;
     TASK_TIME_TYPE start_time = file_private->start_time;
     int ret;
 

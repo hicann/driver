@@ -42,7 +42,7 @@ static struct devmm_ref_server_occupier *devmm_ref_server_occupier_create(
 
     occupier->sdid = sdid;
     ka_base_atomic64_set(&occupier->occupy_num, 0);
-    RB_CLEAR_NODE(&occupier->node);
+    KA_BASE_RB_CLEAR_NODE(&occupier->node);
 
     ret = devmm_rb_insert(&mng->root, &occupier->node, rb_handle_of_ref_server_occupier);
     if (ret != 0) {

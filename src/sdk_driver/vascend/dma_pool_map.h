@@ -58,15 +58,15 @@ struct ram_range_info {
     struct list_head list;
 };
 
-int dev_dma_map_ram_range_x86(struct hw_vdavinci *vdavinci,
-                              struct ram_range_info *ram_info);
-
-void dev_dma_unmap_ram_range_x86(struct hw_vdavinci *vdavinci,
-                                 struct ram_range_info *ram_info);
-
 int dev_dma_map_ram_range(struct hw_vdavinci *vdavinci,
                           struct ram_range_info *ram_info);
 
 void dev_dma_unmap_ram_range(struct hw_vdavinci *vdavinci,
                              struct ram_range_info *ram_info);
+
+int vf_map_ram_range(struct hw_vdavinci *vdavinci,
+                     struct ram_range_info *ram_info);
+
+void vf_unmap_ram_range(struct hw_vdavinci *vdavinci,
+                        struct ram_range_info *ram_info);
 #endif

@@ -10,9 +10,9 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#include <linux/types.h>
-#include <linux/proc_fs.h>
-#include <linux/nsproxy.h>
+#include "ka_base_pub.h"
+#include "ka_task_pub.h"
+#include "ka_fs_pub.h"
 
 #include "devmm_common.h"
 #include "svm_proc_mng.h"
@@ -44,7 +44,7 @@ static void devmm_proc_fs_rm_task_dir(ka_pid_t pid, ka_proc_dir_entry_t *parent)
     char name[DEVMM_PROC_FS_NAME_LEN] = {0};
 
     devmm_proc_fs_format_task_dir_name(pid, name, DEVMM_PROC_FS_NAME_LEN);
-    remove_proc_subtree((const char *)name, parent);
+    ka_fs_remove_proc_subtree((const char *)name, parent);
 }
 
 static void devmm_task_pg_cnt_stats_show(ka_seq_file_t *seq)
@@ -117,25 +117,25 @@ static int devmm_task_info_show(ka_seq_file_t *seq, void *offset)
     return 0;
 }
 
-STATIC int devmm_task_sum_open(struct inode *inode, ka_file_t *file)
+STATIC int devmm_task_sum_open(ka_inode_t *inode, ka_file_t *file)
 {
     return ka_fs_single_open(file, devmm_task_info_show, ka_base_pde_data(inode));
 }
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 6, 0)
-static const struct proc_ops devmm_task_sum_ops = {
+static const ka_procfs_ops_t devmm_task_sum_ops = {
     .proc_open    = devmm_task_sum_open,
-    .proc_read    = seq_read,
-    .proc_lseek   = seq_lseek,
-    .proc_release = single_release,
+    .proc_read    = ka_fs_seq_read,
+    .proc_lseek   = ka_fs_seq_lseek,
+    .proc_release = ka_fs_single_release,
 };
 #else
-static const struct file_operations devmm_task_sum_ops = {
-    .owner = THIS_MODULE,
+static const ka_file_operations_t devmm_task_sum_ops = {
+    .owner = KA_THIS_MODULE,
     .open    = devmm_task_sum_open,
-    .read    = seq_read,
-    .llseek  = seq_lseek,
-    .release = single_release,
+    .read    = ka_fs_seq_read,
+    .llseek  = ka_fs_seq_lseek,
+    .release = ka_fs_single_release,
 };
 #endif
 
@@ -176,29 +176,29 @@ void devmm_proc_fs_del_task(struct devmm_svm_process *svm_proc)
     svm_proc->task_entry = NULL;
 }
 
-STATIC int devmm_sum_open(struct inode *inode, ka_file_t *file)
+STATIC int devmm_sum_open(ka_inode_t *inode, ka_file_t *file)
 {
     return ka_fs_single_open(file, devmm_info_show, ka_base_pde_data(inode));
 }
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 6, 0)
-static const struct proc_ops devmm_sum_ops = {
+static const ka_procfs_ops_t devmm_sum_ops = {
     .proc_open    = devmm_sum_open,
-    .proc_read    = seq_read,
-    .proc_lseek   = seq_lseek,
-    .proc_release = single_release,
+    .proc_read    = ka_fs_seq_read,
+    .proc_lseek   = ka_fs_seq_lseek,
+    .proc_release = ka_fs_single_release,
 };
 #else
-static const struct file_operations devmm_sum_ops = {
-    .owner = THIS_MODULE,
+static const ka_file_operations_t devmm_sum_ops = {
+    .owner = KA_THIS_MODULE,
     .open    = devmm_sum_open,
-    .read    = seq_read,
-    .llseek  = seq_lseek,
-    .release = single_release,
+    .read    = ka_fs_seq_read,
+    .llseek  = ka_fs_seq_lseek,
+    .release = ka_fs_single_release,
 };
 #endif
 
-static struct proc_dir_entry *devmm_top_entry = NULL;
+static ka_proc_dir_entry_t *devmm_top_entry = NULL;
 void devmm_proc_fs_init(struct devmm_svm_dev *svm_dev)
 {
     devmm_top_entry = ka_fs_proc_mkdir("svm", NULL);
@@ -213,11 +213,11 @@ void devmm_proc_fs_uninit(void)
 {
     if (devmm_top_entry != NULL) {
         devmm_dev_proc_fs_uninit();
-        remove_proc_subtree("svm", NULL);
+        ka_fs_remove_proc_subtree("svm", NULL);
     }
 }
 
-struct proc_dir_entry *devmm_get_top_entry(void)
+ka_proc_dir_entry_t *devmm_get_top_entry(void)
 {
     return devmm_top_entry;
 }

@@ -8,12 +8,21 @@
 # See LICENSE in the root of the software repository for the full text of the License.
 # ------------------------------------------------------------------------------------------------------------
 # DP_PROC_MNG_DEPEND
-set(drv_dp_proc_mng_host_depends drv_seclib_host drv_pcie_host asdrv_vmng asdrv_pbl)
+if(${PRODUCT} STREQUAL ascend910B)
+    set(drv_dp_proc_mng_host_depends drv_seclib_host drv_pcie_host asdrv_vmng asdrv_pbl ascend_kernel_open_adapt)
+else()
+    set(drv_dp_proc_mng_host_depends drv_seclib_host drv_pcie_host asdrv_pbl ascend_kernel_open_adapt)
+endif ()
+
+# APM_DEPEND
+if(${PRODUCT} STREQUAL ascend910_95)
+    set(ascend_apm_host_depends asdrv_pbl drv_seclib_host)
+endif ()
 
 # UDIS_DEPEND
-set(ascend_udis_depends drv_seclib_host asdrv_pbl drv_pcie_host)
+set(ascend_udis_depends drv_seclib_host asdrv_pbl drv_pcie_host ascend_kernel_open_adapt)
 
 add_host_ko(LOCAL_MODULE asdrv_dpa
     KO_SRC_FOLDER ${CMAKE_CURRENT_SOURCE_DIR}
     MAKE_ARGS ${MAKE_ARGS}
-    TARGETE_DPENDS "${drv_dp_proc_mng_host_depends}" "${ascend_udis_depends}")
+    TARGETE_DPENDS "${ascend_apm_host_depends}" "${drv_dp_proc_mng_host_depends}" "${ascend_udis_depends}")

@@ -13,9 +13,6 @@
 #ifndef RMO_FOPS_H
 #define RMO_FOPS_H
 
-#include <linux/types.h>
-#include <linux/ioctl.h>
-
 #include "rmo_ioctl.h"
 #include "rmo_kern_log.h"
 

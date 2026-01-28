@@ -107,6 +107,8 @@ struct devmm_device_capability {
     u32 feature_aic_reg_map;
     u32 feature_remote_mmap;
     u32 feature_shmem_repair;
+    u32 feature_host_mem_map_cap;
+    u32 feature_mem_host_uva;
 };
 
 struct devmm_chan_exchange_pginfo {
@@ -125,6 +127,7 @@ struct devmm_chan_exchange_pginfo {
     u64 dev_mem[DEVMM_EXCHANGE_MAX_MEM_TYPE];
     u64 dev_mem_p2p[DEVMM_EXCHANGE_MAX_MEM_TYPE];
     struct devmm_device_capability device_capability;
+    u64 host_uva_start;
 };
 
 struct devmm_chan_phy_block {
@@ -176,7 +179,7 @@ struct devmm_chan_page_fault {
 #define DEVMM_ADDR_TYPE_DMA 1
 
 /*
- * one msg has a byte to mantain msg status
+ * one msg has a byte to maintain msg status
  *    bit4~bit31: reserve
  *    bit3: msg write lock
  *    bit2: first data is va, like struct devmm_chan_addr_head
@@ -272,9 +275,9 @@ struct devmm_target_blk {
     struct devmm_dma_blk dma_blk;
 };
 
-/* same with DEVMM_P2P_PAGE_MAX_NUM_QUERY_MSG, small than (DEVMM_IPC_POD_MSG_DATA_LEN(832-16) -
+/* small than (DEVMM_IPC_POD_MSG_DATA_LEN(512-16) -
    struct devmm_chan_target_blk_query_msg) / sizeof(struct devmm_target_blk) */
-#define SVM_CS_HOST_BLK_MAX_NUM 32
+#define SVM_CS_HOST_BLK_MAX_NUM 16
 
 struct devmm_chan_target_blk_query_msg {
     int share_sdid;
@@ -374,6 +377,7 @@ struct devmm_chan_memcpy_d2d {
 struct devmm_chan_remote_map {
     struct devmm_chan_msg_head head;
     u64 src_va;
+    u32 access;
     u64 size;
     u64 dst_va;
     u32 page_size;
@@ -529,13 +533,13 @@ int devmm_host_chan_msg_recv(void *msg, unsigned int len, unsigned int out_len);
 struct devmm_ipc_pod_msg_head {
     u32 devid;
     u32 cmdtype;
-    u16 valid;  /* validity judgement, 0x5A5A is valide */
+    u16 valid;  /* validity judgement, 0x5A5A is valid */
     s16 result; /* process result from rp, zero for succ, non zero for fail */
     u32 rsv;
 };
 
-/* will define stack variable, witch must be small than 1024 configed in makefile */
-#define DEVMM_IPC_POD_MSG_TOTAL_LEN       832
+/* will define stack variable, witch must be small than 1024 configured in makefile */
+#define DEVMM_IPC_POD_MSG_TOTAL_LEN       512 /* cannot modify the len, may cause compatibility issue */
 #define DEVMM_IPC_POD_MSG_DATA_LEN        (DEVMM_IPC_POD_MSG_TOTAL_LEN - sizeof(struct devmm_ipc_pod_msg_head))
 
 #define DEVMM_IPC_POD_MSG_SEND_MAGIC      0x5A5A

@@ -15,8 +15,9 @@
 
 #include "pbl/pbl_feature_loader.h"
 
-#include "dms_module.h"
 #include "dms_init.h"
+#include "ka_kernel_def_pub.h"
+#include "dms_module.h"
 
 static struct sub_module_ops g_sub_table[] = {
     {dms_init, dms_exit},
@@ -52,9 +53,9 @@ STATIC void __exit dms_module_exit(void)
     }
 }
 
-module_init(dms_module_init);
-module_exit(dms_module_exit);
+ka_module_init(dms_module_init);
+ka_module_exit(dms_module_exit);
 
-MODULE_LICENSE("GPL");
-MODULE_AUTHOR("Huawei Tech. Co., Ltd.");
-MODULE_DESCRIPTION("DAVINCI driver");
+KA_MODULE_LICENSE("GPL");
+KA_MODULE_AUTHOR("Huawei Tech. Co., Ltd.");
+KA_MODULE_DESCRIPTION("DAVINCI driver");

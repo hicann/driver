@@ -18,12 +18,12 @@ target_sources(drvaibuff_base_obj PRIVATE
 
 target_include_directories(drvaibuff_base_obj PRIVATE
     ${DRIVER_USER_DIR}/buff/dc/ascend_hal_base
-    ${DRIVER_USER_DIR}/ascend_base_hal
     ${DRIVER_USER_DIR}/buff/dc/comm/common
     ${C_SEC_INCLUDE}
     ${DRIVER_HAL_INC_DIR}
     ${DRIVER_USER_DIR}/inc
-    ${DRIVER_USER_DIR}/commlib
+    ${DRIVER_USER_DIR}/inc/pbl
+    ${DRIVER_USER_DIR}/pbl/commlib
     ${DRIVER_KERNEL_DIR}/buff/dc/command/ioctl
     ${DRIVER_USER_DIR}/msnpureport/inc/slog
 )
@@ -32,7 +32,7 @@ target_compile_definitions(drvaibuff_base_obj PRIVATE
     CFG_FEATURE_SURPORT_HUGE_PAGE
     DRV_HOST
     CFG_FEATURE_EXTERNAL_CDEV
-    CFG_FEATURE_NO_SURPORT_DVPP_MZ
+    $<$<STREQUAL:${PRODUCT},ascend910B>:CFG_FEATURE_NO_SURPORT_DVPP_MZ>
 )
 
 target_link_libraries(drvaibuff_base_obj PRIVATE
@@ -75,7 +75,6 @@ set(BUFF_PRODUCT_SIDE_ADP_INC
 
 target_include_directories(drvaibuff_obj PRIVATE
     ${DRIVER_USER_DIR}/buff/dc/ascend_hal_base
-    ${DRIVER_USER_DIR}/ascend_base_hal
     ${DRIVER_USER_DIR}/buff/dc/comm
     ${DRIVER_USER_DIR}/buff/dc/comm/buff_recycle
     ${DRIVER_USER_DIR}/buff/dc/comm/common
@@ -83,7 +82,8 @@ target_include_directories(drvaibuff_obj PRIVATE
     ${C_SEC_INCLUDE}
     ${DRIVER_HAL_INC_DIR}
     ${DRIVER_USER_DIR}/inc
-    ${DRIVER_USER_DIR}/commlib
+    ${DRIVER_USER_DIR}/inc/pbl
+    ${DRIVER_USER_DIR}/pbl/commlib
     ${DRIVER_KERNEL_DIR}/buff/dc/command/ioctl
     ${BUFF_PRODUCT_SIDE_ADP_INC}
     ${DRIVER_USER_DIR}/msnpureport/inc/slog
@@ -94,7 +94,7 @@ target_compile_definitions(drvaibuff_obj PRIVATE
     CFG_FEATURE_SURPORT_HUGE_PAGE
     DRV_HOST
     CFG_FEATURE_EXTERNAL_CDEV
-    CFG_FEATURE_NO_SURPORT_DVPP_MZ
+    $<$<STREQUAL:${PRODUCT},ascend910B>:CFG_FEATURE_NO_SURPORT_DVPP_MZ>
 )
 
 target_link_libraries(drvaibuff_obj PRIVATE

@@ -43,19 +43,19 @@ STATIC int dcmi_get_npu_hccs_link_bandwidth_info(int card_id, int device_id,
     int ret;
     int device_logic_id = 0;
     unsigned int out_size = sizeof(struct dcmi_hccs_link_bandwidth_info);
- 
+
     ret = dcmi_get_device_logic_id(&device_logic_id, card_id, device_id);
     if (ret != DCMI_OK) {
         gplog(LOG_ERR, "Call dcmi_get_device_logic_id failed. err is %d.", ret);
         return ret;
     }
- 
+
     ret = dsmi_get_device_info(device_logic_id, DSMI_MAIN_CMD_HCCS_BANDWIDTH, DSMI_HCCS_CMD_GET_BANDWIDTH,
         (void *)hccs_link_bandwidth_info, &out_size);
     if ((ret != DSMI_OK) && (ret != DSMI_ERR_NOT_SUPPORT)) {
         gplog(LOG_ERR, "Call dsmi_get_device_info failed. err is %d.", ret);
     }
-    
+
     return dcmi_convert_error_code(ret);
 }
 
@@ -86,7 +86,7 @@ int dcmi_get_hccs_link_bandwidth_info(int card_id, int device_id,
         gplog(LOG_ERR, "Dcmi_get_device_type failed. err is %d.\n", ret);
         return ret;
     }
- 
+
     if (device_type == NPU_TYPE) {
         ret = dcmi_get_npu_hccs_link_bandwidth_info(card_id, device_id, &hccs_link_bandwidth_info);
         if (ret != DCMI_OK) {
@@ -198,7 +198,7 @@ STATIC int dcmi_get_npu_hccs_avail_credit_info(int card_id, int device_id,
     if ((ret != DSMI_OK) && (ret != DSMI_ERR_NOT_SUPPORT)) {
         gplog(LOG_ERR, "call dsmi_get_device_info failed. err is %d.", ret);
     }
-    
+
     return dcmi_convert_error_code(ret);
 }
 
@@ -445,7 +445,7 @@ int dcmi_get_topo_info_by_device_id(int card_id1, int device_id1,
         gplog(LOG_ERR, "dcmi_get_device_type for card2 failed. err is %d.", ret);
         return ret;
     }
-    
+
     if (device_type1 == NPU_TYPE && device_type2 == NPU_TYPE) {
         return dcmi_query_topo_type(card_id1, card_id2, device_id1, device_id2, topo_type);
     } else {
@@ -464,7 +464,7 @@ int dcmi_get_affinity_cpu_info_by_device_id(int card_id, int device_id, char *af
         gplog(LOG_ERR, "Affinity_cpu or length is NULL\n");
         return DCMI_ERR_CODE_INVALID_PARAMETER;
     }
-    
+
     main_board_id = dcmi_get_maindboard_id_inner();
     if (!(dcmi_board_chip_type_is_ascend_910b() || main_board_id == DCMI_A_X_910_93_MAIN_BOARD_ID)) {
         gplog(LOG_OP, "This device does not support get Cpu affinity.");
@@ -642,20 +642,20 @@ STATIC int dcmi_get_npu_serdes_quality_info(int card_id, int device_id, unsigned
     int ret;
     int device_logic_id = 0;
     unsigned int out_size = sizeof(struct dcmi_serdes_quality_info);
- 
+
     ret = dcmi_get_device_logic_id(&device_logic_id, card_id, device_id);
     if (ret != DCMI_OK) {
         gplog(LOG_ERR, "call dcmi_get_device_logic_id failed. err is %d.", ret);
         return ret;
     }
- 
+
     serdes_quality_info->macro_id = macro_id;
     ret = dsmi_get_device_info(device_logic_id, DSMI_MAIN_CMD_SERDES, DSMI_SERDES_SUB_CMD_QUALITY_INFO,
         (void *)serdes_quality_info, &out_size);
     if ((ret != DSMI_OK) && (ret != DSMI_ERR_NOT_SUPPORT)) {
         gplog(LOG_ERR, "call dsmi_get_device_info failed. err is %d.", ret);
     }
- 
+
     return dcmi_convert_error_code(ret);
 }
 
@@ -705,7 +705,7 @@ int dcmi_get_serdes_quality_info(int card_id, int device_id, unsigned int macro_
 {
     int ret;
     enum dcmi_unit_type device_type = INVALID_TYPE;
- 
+
     if (serdes_quality_info == NULL) {
         gplog(LOG_ERR, "serdes_quality_info is NULL");
         return DCMI_ERR_CODE_INVALID_PARAMETER;
@@ -721,7 +721,7 @@ int dcmi_get_serdes_quality_info(int card_id, int device_id, unsigned int macro_
         gplog(LOG_ERR, "dcmi_get_device_type failed. err is %d.", ret);
         return ret;
     }
- 
+
     if (device_type == NPU_TYPE) {
         return dcmi_get_npu_serdes_quality_info(card_id, device_id, macro_id, serdes_quality_info);
     } else {
@@ -729,3 +729,100 @@ int dcmi_get_serdes_quality_info(int card_id, int device_id, unsigned int macro_
         return DCMI_ERR_CODE_NOT_SUPPORT;
     }
 }
+
+int check_serdes_full_eye_environment_is_invalid(int card_id, int device_id, int macro_id)
+{
+    int ret;
+    int chip_type = DCMI_CHIP_TYPE_INVALID;
+    unsigned int main_board_id;
+
+    if (macro_id > MAX_A_X_MACRO_ID || macro_id <= RES_MACRO_ID) {
+        gplog(LOG_ERR, "macro_id is invalid. macro_id is %d", macro_id);
+        return DCMI_ERR_CODE_INVALID_PARAMETER;
+    }
+
+    // 只有物理机root和虚拟机root和特权容器用户才能调用该接口
+    if (!(dcmi_is_in_phy_machine_root() || dcmi_is_in_vm_root() || dcmi_is_in_privileged_docker_root())) {
+        gplog(LOG_OP, "Operation not permitted, only root user on physical or virtual machine"
+            " or privileged docker can call this api.");
+        return DCMI_ERR_CODE_OPER_NOT_PERMITTED;
+    }
+
+    if (dcmi_check_chip_is_in_split_mode(card_id, device_id) == DCMI_ERR_CODE_OPER_NOT_PERMITTED) {
+        gplog(LOG_OP, "In the vNPU scenario, this device does not support dcmi_get_serdes_full_eye.");
+        return DCMI_ERR_CODE_OPER_NOT_PERMITTED;
+    }
+
+    chip_type = dcmi_get_board_chip_type();
+    if (chip_type != DCMI_CHIP_TYPE_D910_93) {
+        gplog(LOG_OP, "This device does not support get full eye info.");
+        return DCMI_ERR_CODE_NOT_SUPPORT;
+    }
+
+    ret = dcmi_get_mainboard_id(card_id, device_id, &main_board_id);
+    if (ret != DCMI_OK) {
+        gplog(LOG_ERR, "Failed to query main board id of card. err is %d", ret);
+        return ret;
+    }
+    if (main_board_id != DCMI_A_X_910_93_MAIN_BOARD_ID) {
+        gplog(LOG_OP, "This device does not support get full eye info.");
+        return DCMI_ERR_CODE_NOT_SUPPORT;
+    }
+    return DCMI_OK;
+}
+
+STATIC int dcmi_get_npu_serdes_full_eye(int card_id, int device_id, struct dcmi_serdes_full_eye *serdes_full_eye_info)
+{
+    int ret;
+    int device_logic_id = 0;
+    unsigned int out_size = sizeof(struct dcmi_serdes_full_eye);
+
+    ret = dcmi_get_device_logic_id(&device_logic_id, card_id, device_id);
+    if (ret != DCMI_OK) {
+        gplog(LOG_ERR, "call dcmi_get_device_logic_id failed. err is %d.", ret);
+        return ret;
+    }
+
+    ret = dsmi_get_device_info(device_logic_id, DSMI_MAIN_CMD_SERDES, DSMI_SERDES_SUB_CMD_FULL_EYE,
+        (void *)serdes_full_eye_info, &out_size);
+    if ((ret != DSMI_OK) && (ret != DSMI_ERR_NOT_SUPPORT)) {
+        gplog(LOG_ERR, "call dsmi_get_full_eye_info failed. err is %d.", ret);
+    }
+
+    return dcmi_convert_error_code(ret);
+}
+
+int dcmi_get_serdes_full_eye(int card_id, int device_id, struct dcmi_serdes_full_eye *serdes_full_eye_info)
+{
+    int ret;
+
+    if (serdes_full_eye_info == NULL) {
+        gplog(LOG_ERR, "serdes_full_eye_info is NULL");
+        return DCMI_ERR_CODE_INVALID_PARAMETER;
+    }
+
+    ret = check_serdes_full_eye_environment_is_invalid(card_id, device_id, serdes_full_eye_info->macro_id);
+    if (ret != DCMI_OK) {
+        return ret;
+    }
+
+    /* check lane id is invalid, 0-3 */
+    if (serdes_full_eye_info->lane_id >= FULL_EYE_MAX_LANE_NUM || serdes_full_eye_info->lane_id < 0) {
+        gplog(LOG_ERR, "lane_id is invalid. lane_id is %d", serdes_full_eye_info->lane_id);
+        return DCMI_ERR_CODE_INVALID_PARAMETER;
+    }
+
+    /* check mode is invalid, 0-3, default: 1-HILINK_INNER_EYE_SCAN_VERTICAL */
+    if (serdes_full_eye_info->mode >= FULL_EYE_MAX_MODE_NUM || serdes_full_eye_info->mode < 0) {
+        gplog(LOG_ERR, "mode is invalid. mode is %d", serdes_full_eye_info->mode);
+        return DCMI_ERR_CODE_INVALID_PARAMETER;
+    }
+
+    /* check type is invalid, 0-2, default: 2-composite */
+    if (serdes_full_eye_info->type >= FULL_EYE_MAX_TYPE_NUM || serdes_full_eye_info->type < 0) {
+        gplog(LOG_ERR, "type is invalid. type is %d", serdes_full_eye_info->type);
+        return DCMI_ERR_CODE_INVALID_PARAMETER;
+    }
+
+    return dcmi_get_npu_serdes_full_eye(card_id, device_id, serdes_full_eye_info);
+ }

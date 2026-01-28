@@ -10,7 +10,3 @@
 target_sources(dms_obj PRIVATE
     dms_ts_info.c
 )
-
-target_compile_definitions(dms_obj PRIVATE
-    $<$<STREQUAL:${PRODUCT},ascend910B>:CFG_FEATURE_IPC_FORMAT_V2>
-)

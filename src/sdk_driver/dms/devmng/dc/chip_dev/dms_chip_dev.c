@@ -22,6 +22,7 @@
 #include "devdrv_manager.h"
 #include "devdrv_user_common.h"
 #include "dms_chip_dev_map.h"
+#include "ka_memory_pub.h"
 #include "dms_chip_dev.h"
 
 BEGIN_DMS_MODULE_DECLARATION(DMS_CHIP_DEV_CMD_NAME)
@@ -144,8 +145,8 @@ int dms_ioctl_get_device_from_chip(void *feature, char *in, u32 in_len, char *ou
         return -EINVAL;
     }
 
-    chip_dev_list = (struct devdrv_chip_dev_list *)kzalloc(sizeof(struct devdrv_chip_dev_list),
-        GFP_KERNEL | __GFP_ACCOUNT);
+    chip_dev_list = (struct devdrv_chip_dev_list *)ka_mm_kzalloc(sizeof(struct devdrv_chip_dev_list),
+        KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
     if (chip_dev_list == NULL) {
         dms_err("Allocate memory for chip device list failed.\n");
         return -ENOMEM;
@@ -186,7 +187,7 @@ int dms_ioctl_get_device_from_chip(void *feature, char *in, u32 in_len, char *ou
         dms_err("Call memcpys_s failed. (ret=%d)\n", ret);
     }
 FREE_CHIP_DEV_LIST:
-    kfree(chip_dev_list);
+    ka_mm_kfree(chip_dev_list);
     chip_dev_list = NULL;
     return ret;
 }

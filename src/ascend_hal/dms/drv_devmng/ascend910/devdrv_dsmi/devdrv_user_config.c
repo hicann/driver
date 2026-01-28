@@ -585,7 +585,7 @@ STATIC int devdrv_p2p_mem_cfg_para_check(unsigned char *buf, unsigned int buf_si
     }
 
     if (i >= P2P_MEM_LEVEL_MAX) {
-        DEVDRV_DRV_ERR("Unsupport p2p memory size. (p2p_mem_size=%uM)\n", *(unsigned int *)buf);
+        DEVDRV_DRV_ERR("Unsupported p2p memory size. (p2p_mem_size=%uM)\n", *(unsigned int *)buf);
         return DRV_ERROR_INVALID_VALUE;
     }
 

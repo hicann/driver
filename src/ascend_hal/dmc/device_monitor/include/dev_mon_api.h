@@ -254,6 +254,7 @@ void dev_mon_api_get_network_health(SYSTEM_CB_T *cb, DM_INTF_S *intf, DM_RECV_ST
 void dev_mon_api_get_errstr(SYSTEM_CB_T *cb, DM_INTF_S *intf, DM_RECV_ST *msg);
 void dev_mon_api_get_llc_perf_para(SYSTEM_CB_T *cb, DM_INTF_S *intf, DM_RECV_ST *msg);
 void dev_mon_api_get_soc_die_id(SYSTEM_CB_T *cb, DM_INTF_S *intf, DM_RECV_ST *msg);
+void dev_mon_api_get_soc_die_id_v2(SYSTEM_CB_T *cb, DM_INTF_S *intf, DM_RECV_ST *msg);
 void dev_mon_api_get_aicpu_info(SYSTEM_CB_T *cb, DM_INTF_S *intf, DM_RECV_ST *msg);
 void dev_mon_api_set_sec_revocation(SYSTEM_CB_T *cb, DM_INTF_S *intf, DM_RECV_ST *msg);
 void dev_mon_api_set_power_state(SYSTEM_CB_T *cb, DM_INTF_S *intf, DM_RECV_ST *msg);

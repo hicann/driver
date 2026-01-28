@@ -90,6 +90,30 @@ static inline void array_ctx_domain_destroy(struct array_ctx_domain *domain)
     vfree(domain);
 }
 
+static inline int array_ctx_get_idle_id_locked(struct array_ctx_domain *domain, u32 *id)
+{
+    u32 i;
+
+    for (i = 0; i < domain->array_size; i++) {
+        if (domain->ctx_table[i] == NULL) {
+            *id = i;
+            return 0;
+        }
+    }
+
+    return -EEXIST;
+}
+
+/* interface */
+static inline int array_ctx_get_idle_id(struct array_ctx_domain *domain, u32 *id)
+{
+    int ret;
+    write_lock_bh(&domain->ctx_lock);
+    ret = array_ctx_get_idle_id_locked(domain, id);
+    write_unlock_bh(&domain->ctx_lock);
+    return ret;
+}
+
 static inline int array_ctx_add_to_domain(struct array_ctx_domain *domain, struct array_ctx *ctx)
 {
     write_lock_bh(&domain->ctx_lock);

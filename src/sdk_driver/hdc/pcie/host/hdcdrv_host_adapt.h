@@ -16,6 +16,7 @@
 
 bool hdcdrv_is_phy_dev(u32 devid);
 int hdcdrv_check_in_container(void);
-int hdcdrv_host_init_module(void);
-void hdcdrv_host_exit_module(void);
+void hdcdrv_init_dev(struct hdcdrv_dev *hdc_dev);
+int hdcdrv_pcie_init_module(void);
+void hdcdrv_pcie_exit_module(void);
 #endif

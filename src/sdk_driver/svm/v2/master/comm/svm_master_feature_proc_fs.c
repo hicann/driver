@@ -12,13 +12,13 @@
  */
 
 #include <linux/types.h>
-#include <linux/seq_file.h>
-#include <linux/proc_fs.h>
 
 #include "devmm_proc_info.h"
 #include "svm_master_dev_capability.h"
 #include "svm_master_feature_proc_fs.h"
 #include "ka_fs_pub.h"
+#include "ka_compiler_pub.h"
+#include "ka_kernel_def_pub.h"
 
 #define DEVMM_DEV_FEATURE_PROC_FS_NAME_LEN  32U
 #define DEVMM_DEV_FEATURE_PROC_FS_MODE      0644
@@ -33,9 +33,9 @@ static int devmm_dev_feature_capability_show(ka_seq_file_t *seq, void *offset)
     u32 feature_id = (u32)(uintptr_t)seq->private;
 
     if (g_devmm_dev_feature[feature_id].feature_capability_get_handlers != NULL) {
-        seq_printf(seq, "%d\n", g_devmm_dev_feature[feature_id].feature_capability_get_handlers(devid));
+        ka_fs_seq_printf(seq, "%d\n", g_devmm_dev_feature[feature_id].feature_capability_get_handlers(devid));
     } else {
-        seq_printf(seq, "%llu\n", g_devmm_dev_feature[feature_id].feature_capability_value_get_handlers(devid));
+        ka_fs_seq_printf(seq, "%llu\n", g_devmm_dev_feature[feature_id].feature_capability_value_get_handlers(devid));
     }
     return 0;
 }
@@ -45,10 +45,10 @@ static int devmm_dev_feature_ops_open(ka_inode_t *inode, ka_file_t *file)
     return ka_fs_single_open(file, devmm_dev_feature_capability_show, ka_base_pde_data(inode));
 }
 
-static ssize_t devmm_dev_feature_ops_write(struct file *filp, const char __user *ubuf, size_t count, loff_t *ppos)
+static ssize_t devmm_dev_feature_ops_write(ka_file_t *filp, const char __ka_user *ubuf, size_t count, loff_t *ppos)
 {
-    u32 devid = (u32)((u64)(uintptr_t)(((ka_seq_file_t *)filp->private_data)->private) >> DEVMM_SEQ_PRIVATE_DATA_OFFSET);
-    u32 feature_id = (u32)(uintptr_t)(((ka_seq_file_t *)filp->private_data)->private);
+    u32 devid = (u32)((u64)(uintptr_t)(((ka_seq_file_t *)ka_fs_get_file_private_data(filp))->private) >> DEVMM_SEQ_PRIVATE_DATA_OFFSET);
+    u32 feature_id = (u32)(uintptr_t)(((ka_seq_file_t *)ka_fs_get_file_private_data(filp))->private);
     char ch[2] = {0}; /* 2 bytes long */
     bool user_input;
     int ret;
@@ -76,21 +76,21 @@ static ssize_t devmm_dev_feature_ops_write(struct file *filp, const char __user 
 }
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 6, 0)
-static const struct proc_ops devmm_dev_feature_ops = {
+static const ka_procfs_ops_t devmm_dev_feature_ops = {
     .proc_open    = devmm_dev_feature_ops_open,
-    .proc_read    = seq_read,
+    .proc_read    = ka_fs_seq_read,
     .proc_write   = devmm_dev_feature_ops_write,
-    .proc_lseek   = seq_lseek,
-    .proc_release = single_release,
+    .proc_lseek   = ka_fs_seq_lseek,
+    .proc_release = ka_fs_single_release,
 };
 #else
-static const struct file_operations devmm_dev_feature_ops = {
-    .owner = THIS_MODULE,
+static const ka_file_operations_t devmm_dev_feature_ops = {
+    .owner = KA_THIS_MODULE,
     .open    = devmm_dev_feature_ops_open,
-    .read    = seq_read,
+    .read    = ka_fs_seq_read,
     .write   = devmm_dev_feature_ops_write,
-    .llseek  = seq_lseek,
-    .release = single_release,
+    .llseek  = ka_fs_seq_lseek,
+    .release = ka_fs_single_release,
 };
 #endif
 #endif

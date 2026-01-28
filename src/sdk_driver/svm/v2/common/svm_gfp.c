@@ -11,11 +11,6 @@
  * GNU General Public License for more details.
  */
 
-#include <linux/memcontrol.h>
-#include <linux/gfp.h>
-#include <linux/page-flags.h>
-#include <linux/mm.h>
-
 #include "devmm_adapt.h"
 #include "devmm_common.h"
 #include "svm_define.h"
@@ -67,16 +62,16 @@ static void devmm_clear_single_page(ka_page_t *pg, u64 page_size)
 {
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 17, 0)
     if (ka_mm_PagePoisoned(pg) == 0) {
-        (void)memset_s(page_address(pg), page_size, 0, page_size);
+        (void)memset_s(ka_mm_page_address(pg), page_size, 0, page_size);
     }
 #else
-    (void)memset_s(page_address(pg), page_size, 0, page_size);
+    (void)memset_s(ka_mm_page_address(pg), page_size, 0, page_size);
 #endif
 }
 
 static void devmm_clear_normal_single_page(ka_page_t *pg)
 {
-    devmm_clear_single_page(pg, PAGE_SIZE);
+    devmm_clear_single_page(pg, KA_MM_PAGE_SIZE);
 }
 
 static void devmm_clear_compound_page(ka_page_t *pg)
@@ -95,13 +90,13 @@ static void devmm_page_ref_dec(ka_page_t *pg, void (*clear_func)(ka_page_t *pg),
 {
     int ref;
 
-    lock_page(pg);
+    ka_mm_lock_page(pg);
     ref = ka_mm_page_count(pg);
     if (ref > 1) {
         dec_func(pg);
-        unlock_page(pg);
+        ka_mm_unlock_page(pg);
     } else {
-        unlock_page(pg);
+        ka_mm_unlock_page(pg);
         /* Clear user data for security. */
         if (is_already_clear == false) {
             clear_func(pg);
@@ -115,6 +110,11 @@ static void devmm_free_single_page(ka_page_t *pg)
     __ka_mm_free_page(pg);
 }
 
+static void devmm_put_page(ka_page_t *pg)
+{
+    ka_mm_put_page(pg);
+}
+
 static void devmm_normal_single_page_ref_dec(ka_page_t *pg, bool is_already_clear)
 {
     devmm_page_ref_dec(pg, devmm_clear_normal_single_page, devmm_free_single_page, devmm_free_single_page,
@@ -124,12 +124,12 @@ static void devmm_normal_single_page_ref_dec(ka_page_t *pg, bool is_already_clea
 static void devmm_huge_page_ref_dec(ka_page_t *pg, bool is_already_clear)
 {
     /* Keep the status quo, call ka_mm_put_page. */
-    devmm_page_ref_dec(pg, devmm_clear_huge_page, put_page, devmm_hugetlb_free_hugepage_ex, is_already_clear);
+    devmm_page_ref_dec(pg, devmm_clear_huge_page, devmm_put_page, devmm_hugetlb_free_hugepage_ex, is_already_clear);
 }
 
 static void devmm_compound_page_ref_dec(ka_page_t *pg, bool is_already_clear)
 {
-    devmm_page_ref_dec(pg, devmm_clear_compound_page, put_page, put_page, is_already_clear);
+    devmm_page_ref_dec(pg, devmm_clear_compound_page, devmm_put_page, devmm_put_page, is_already_clear);
 }
 
 static void devmm_free_normal_page(struct devmm_phy_addr_attr *attr, ka_page_t *pg)
@@ -242,7 +242,7 @@ static int _devmm_alloc_pages_node(struct devmm_phy_addr_attr *attr,
     int nid, ka_page_t **pages, u64 pg_num)
 {
     ka_page_t *page = NULL;
-    u32 order = (u32)ka_mm_get_order(pg_num << PAGE_SHIFT);
+    u32 order = (u32)ka_mm_get_order(pg_num << KA_MM_PAGE_SHIFT);
     u32 flag = devmm_get_alloc_mask(attr->is_compound_page);
     int ret;
 
@@ -344,7 +344,7 @@ static u64 _devmm_try_alloc_continuous_pages(struct devmm_phy_addr_attr *attr,
          * to keep os->p2p->os->ts numa order
          */
         devmm_alloc_numa_enable_threshold(attr->devid, attr->vfid, nids[0]);
-        num = min(DEVMM_ALLOC_CONT_PAGES_MAX_NUM, (pg_num - i));
+        num = ka_base_min(DEVMM_ALLOC_CONT_PAGES_MAX_NUM, (pg_num - i));
         ret = devmm_alloc_continuous_pages(attr, nids, nid_num, &pages[i], num);
         if (ret != 0) {
             return i;
@@ -517,12 +517,12 @@ int devmm_alloc_pages(struct devmm_phy_addr_attr *attr, ka_page_t **pages, u64 p
 
 void devmm_put_normal_page(ka_page_t *pg)
 {
-    devmm_page_ref_dec(pg, devmm_clear_normal_single_page, put_page, put_page, false);
+    devmm_page_ref_dec(pg, devmm_clear_normal_single_page, devmm_put_page, devmm_put_page, false);
 }
 
 void devmm_put_huge_page(ka_page_t *hpage)
 {
     /* Keep the status quo, call put_page. */
-    devmm_page_ref_dec(hpage, devmm_clear_huge_page, put_page, put_page, false);
+    devmm_page_ref_dec(hpage, devmm_clear_huge_page, devmm_put_page, devmm_put_page, false);
 }
 

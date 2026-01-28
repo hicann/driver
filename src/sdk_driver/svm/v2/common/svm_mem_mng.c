@@ -12,9 +12,6 @@
  */
 
 #include <linux/types.h>
-#include <linux/mm.h>
-#include <linux/mm_types.h>
-#include <linux/pagemap.h>
 #include <linux/hugetlb.h>
 
 #include "kernel_version_adapt.h"
@@ -23,20 +20,31 @@
 #include "svm_log.h"
 #include "svm_mem_mng.h"
 
-pgprot_t devmm_make_remote_pgprot(u32 flg)
+ka_pgprot_t devmm_make_remote_pgprot(u32 flg)
 {
-    return pgprot_writecombine(devmm_make_pgprot(flg, false));
+    return ka_mm_pgprot_writecombine(devmm_make_pgprot(flg, false));
 }
 
-pgprot_t devmm_make_remote_pgprot_ex(u32 flg, struct devmm_pgprot_cfg_info cfg_info)
+ka_pgprot_t devmm_make_remote_pgprot_ex(u32 flg, struct devmm_pgprot_cfg_info cfg_info)
 {
     cfg_info.no_cache = false;
-    return pgprot_writecombine(devmm_make_pgprot_ex(flg, cfg_info));
+    return ka_mm_pgprot_writecombine(devmm_make_pgprot_ex(flg, cfg_info));
 }
 
-pgprot_t devmm_make_nocache_pgprot(u32 flg)
+ka_pgprot_t devmm_make_nocache_pgprot(u32 flg)
 {
-    return pgprot_device(devmm_make_pgprot(flg, false));
+    return ka_mm_pgprot_device(devmm_make_pgprot(flg, false));
+}
+
+ka_pgprot_t devmm_make_readonly_pgprot(ka_pgprot_t prot)
+{
+    u32 prot_val = pgprot_val(prot);
+#if defined(CONFIG_X86_64)
+    prot_val &= ~_PAGE_RW;
+#elif defined(CONFIG_ARM64)
+    prot_val &= ~PTE_WRITE;
+#endif
+    return __pgprot(prot_val);
 }
 
 bool devmm_is_readonly_mem(u32 page_prot)
@@ -47,16 +55,16 @@ bool devmm_is_readonly_mem(u32 page_prot)
 
 ka_page_t *devmm_pa_to_page(u64 paddr)
 {
-    return pfn_to_page(PFN_DOWN(paddr));
+    return ka_mm_pfn_to_page(KA_MM_PFN_DOWN(paddr));
 }
 
 #ifndef EMU_ST
 ka_vm_area_struct_t *devmm_find_vma_from_mm(ka_mm_struct_t *mm, u64 vaddr)
 {
-    struct vm_area_struct *vma = NULL;
+    ka_vm_area_struct_t *vma = NULL;
 
     vma = ka_mm_find_vma(mm, vaddr);
-    if ((vma != NULL) && (vma->vm_start <= vaddr)) {
+    if ((vma != NULL) && (ka_mm_get_vm_start(vma) <= vaddr)) {
         return vma;
     }
     return NULL;
@@ -72,26 +80,38 @@ static void devmm_print_svm_process_vma(ka_vm_area_struct_t *vma[], u32 vma_num)
             return;
         }
         devmm_drv_err("Svm vma. (idx=%u; vm_start=0x%lx; vm_end=0x%lx; vm_pgoff=0x%lx; vm_flags=0x%lx)\n",
-            i, vma[i]->vm_start, vma[i]->vm_end, vma[i]->vm_pgoff, vma[i]->vm_flags);
+            i, ka_mm_get_vm_start(vma[i]), ka_mm_get_vm_end(vma[i]), vma[i]->vm_pgoff, ka_mm_get_vm_flags(vma[i]));
     }
+}
+
+ka_vm_area_struct_t *_devmm_find_vma_proc(ka_vm_area_struct_t *vma[], u32 vma_num, u64 vaddr)
+{
+    u32 index;
+
+    for (index = 0; index < vma_num; index++) {
+        if ((vma[index] != NULL) &&
+            ((vaddr >= ka_mm_get_vm_start(vma[index])) && (vaddr < ka_mm_get_vm_end(vma[index])))) {
+            return vma[index];
+        }
+    }
+    return NULL;
 }
 
 ka_vm_area_struct_t *devmm_find_vma_proc(ka_mm_struct_t *mm, ka_vm_area_struct_t *vma[],
     u32 vma_num, u64 vaddr)
 {
     ka_vm_area_struct_t *tmp_vma = NULL;
-    u32 index;
 
-    index = devmm_get_svm_vma_index(vaddr, vma_num);
-    if ((vma[index] != NULL) && ((vaddr >= vma[index]->vm_start) && (vaddr < vma[index]->vm_end))) {
-        return vma[index];
+    tmp_vma = _devmm_find_vma_proc(vma, vma_num, vaddr);
+    if (tmp_vma != NULL) {
+        return tmp_vma;
     }
 
-    devmm_drv_err("Find vma info. (vaddr=0x%llx; vma_num=%u; index=%u)\n", vaddr, vma_num, index);
+    devmm_drv_err("Find vma info. (vaddr=0x%llx; vma_num=%u)\n", vaddr, vma_num);
     devmm_print_svm_process_vma(vma, vma_num);
 #ifdef EMU_ST
     tmp_vma = ka_mm_find_vma(mm, vaddr);
-    if ((tmp_vma == NULL) || (tmp_vma->vm_start > vaddr)) {
+    if ((tmp_vma == NULL) || (ka_mm_get_vm_start(tmp_vma) > vaddr)) {
         devmm_drv_err("Vma not exist. (vaddr=0x%llx)\n", vaddr);
         return NULL;
     }
@@ -143,7 +163,7 @@ u64 devmm_kpg_size(ka_page_t *pg)
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 4, 0)
     kpg_size = page_size(pg);
 #else
-    kpg_size = (PAGE_SIZE << compound_order(pg));
+    kpg_size = (KA_MM_PAGE_SIZE << ka_mm_compound_order(pg));
 #endif
 #else
     kpg_size = page_size(pg);

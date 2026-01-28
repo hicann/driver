@@ -248,7 +248,8 @@
 #define DEVDRV_MANAGER_IPC_NOTIFY_SET_ATTR                      _IO(DEVDRV_MANAGER_MAGIC, 205)
 #define DEVDRV_MANAGER_IPC_NOTIFY_GET_INFO                      _IO(DEVDRV_MANAGER_MAGIC, 206)
 #define DEVDRV_MANAGER_IPC_NOTIFY_GET_ATTR                      _IO(DEVDRV_MANAGER_MAGIC, 207)
-#define DEVDRV_MANAGER_CMD_MAX_NR                               208
+#define DEVDRV_MANAGER_CONFIG_DEVICE_SHARE                      _IO(DEVDRV_MANAGER_MAGIC, 208)
+#define DEVDRV_MANAGER_CMD_MAX_NR                               209
 
 #define DEVDRV_MANAGER_IPC_NOTIFY_CMD_NUM \
     (_IOC_NR(DEVDRV_MANAGER_IPC_NOTIFY_DESTROY) - _IOC_NR(DEVDRV_MANAGER_IPC_NOTIFY_CREATE))
@@ -290,7 +291,7 @@ struct devdrv_manager_info {
     u32 plat_info;                           /* 0:device side, 1: host side */
     u32 machine_mode;                        /* 0:RC_MODE,  1: EP_MODE */
     u32 amp_or_smp;                          /* 0:AMP_MODE, 1: SMP_MODE */
-    u32 dev_id_flag[ASCEND_DEV_MAX_NUM]; /* get devce id from host */
+    u32 dev_id_flag[ASCEND_DEV_MAX_NUM]; /* get device id from host */
     u32 dev_id[ASCEND_DEV_MAX_NUM];      /* device id assigned by host device driver */
 
     struct device *dev; /* device manager dev */
@@ -444,6 +445,7 @@ enum {
     DEVDRV_MANAGER_CHAN_H2D_SYNC_URD_FORWARD,
     DEVDRV_MANAGER_CHAN_H2D_GET_PROCESS_STATUS,
     DEVDRV_MANAGER_CHAN_H2D_HOST_NOTIFY_READY,
+    DEVDRV_MANAGER_CHAN_H2D_HOST_SET_REMOTE_UDEVID,
     DEVDRV_MANAGER_CHAN_MAX_ID,
 };
 

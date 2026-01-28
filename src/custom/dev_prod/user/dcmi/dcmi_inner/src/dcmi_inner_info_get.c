@@ -89,6 +89,12 @@ static struct dcmi_computing_template g_910B_bin2_show_template[DCMI_910B_BIN2_T
     {"vir05_1c_8g",        "1/4",    5,    0x2000,        1,       2,     0,      0,      6,       1,       0},
 };
 
+static struct dcmi_computing_template g_910B_bin2_1_show_template[DCMI_910B_BIN2_1_TEMPLATE_NUM] = {
+    // name             spec      aic   mem (MB)      aicpu    vpc    venc    vdec    jpegd    jpege    pngd
+    {"vir10_3c_32g",    "1/2",    10,   0x8000,        3,       4,     0,      1,      12,      2,       0},
+    {"vir05_1c_16g",    "1/4",    5,    0x4000,        1,       2,     0,      0,      6,       1,       0},
+};
+
 static struct dcmi_computing_template g_910B_bin1_show_template[DCMI_910B_BIN1_TEMPLATE_NUM] = {
     // name             spec      aic   mem (MB)      aicpu    vpc    venc    vdec    jpegd    jpege    pngd
     {"vir10_3c_32g",    "1/2",    10,   0x8000,        3,       4,     0,      1,      12,      2,       0},
@@ -109,6 +115,12 @@ static struct dcmi_computing_template g_910B_bin2_template[DCMI_910B_BIN2_TEMPLA
     {"vir05_1c_8g",        "1/4",    5,    0x1C00,        1,       2,     0,      0,      6,       1,       0},
 };
 
+static struct dcmi_computing_template g_910B_bin2_1_template[DCMI_910B_BIN2_1_TEMPLATE_NUM] = {
+    // name             spec      aic   mem (MB)      aicpu    vpc    venc    vdec    jpegd    jpege    pngd
+    {"vir10_3c_32g",    "1/2",    10,   0x7800,        3,       4,     0,      1,      12,      2,       0},
+    {"vir05_1c_16g",    "1/4",    5,    0x3C00,        1,       2,     0,      0,      6,       1,       0},
+};
+
 static struct dcmi_computing_template g_910B_bin1_template[DCMI_910B_BIN1_TEMPLATE_NUM] = {
     // name             spec      aic   mem (MB)      aicpu    vpc    venc    vdec    jpegd    jpege    pngd
     {"vir10_3c_32g",    "1/2",    10,   0x7800,        3,       4,     0,      1,      12,      2,       0},
@@ -125,6 +137,7 @@ static struct dcmi_product_computing_template g_dcmi_product_template[] = {
 static struct dcmi_product_computing_template_for_910B g_dcmi_product_template_for_910B[] = {
     {DCMI_910B_BIN0, DCMI_910B_BIN0_TEMPLATE_NUM, g_910B_bin0_template},
     {DCMI_910B_BIN2, DCMI_910B_BIN2_TEMPLATE_NUM, g_910B_bin2_template},
+    {DCMI_910B_BIN2_1, DCMI_910B_BIN2_1_TEMPLATE_NUM, g_910B_bin2_1_template},
     {DCMI_910B_BIN1, DCMI_910B_BIN1_TEMPLATE_NUM, g_910B_bin1_template},
     {DCMI_910B_BIN3, DCMI_910B_BIN0_TEMPLATE_NUM, g_910B_bin0_template}, // 复用bin0的模板
 };
@@ -132,6 +145,7 @@ static struct dcmi_product_computing_template_for_910B g_dcmi_product_template_f
 static struct dcmi_product_computing_template_for_910B g_dcmi_product_show_template_for_910B[] = {
     {DCMI_910B_BIN0, DCMI_910B_BIN0_TEMPLATE_NUM, g_910B_bin0_show_template},
     {DCMI_910B_BIN2, DCMI_910B_BIN2_TEMPLATE_NUM, g_910B_bin2_show_template},
+    {DCMI_910B_BIN2_1, DCMI_910B_BIN2_1_TEMPLATE_NUM, g_910B_bin2_1_show_template},
     {DCMI_910B_BIN1, DCMI_910B_BIN1_TEMPLATE_NUM, g_910B_bin1_show_template},
     {DCMI_910B_BIN3, DCMI_910B_BIN0_TEMPLATE_NUM, g_910B_bin0_show_template}, // 复用bin0的模板
 };
@@ -674,20 +688,20 @@ STATIC int dcmi_get_chip_memory_size(int card_id, unsigned int *mem_size)
     int cpu_id = 0;
     struct dcmi_get_memory_info_stru memory_info = { 0 };
     int ret = 0;
- 
+
     ret = dcmi_get_device_id_in_card(card_id, &device_count, &mcu_id, &cpu_id);
     if (ret != DCMI_OK) {
         gplog(LOG_ERR, "dcmi_get_device_id_in_card card %d failed. err is %d", card_id, ret);
         return ret;
     }
- 
+
     for (chip_index = 0; chip_index < device_count; chip_index++) {
         ret = dcmi_get_device_memory_info_v3(card_id, chip_index, &memory_info);
         if (ret == DCMI_OK) {
             break;
         }
     }
- 
+
     if (ret == DCMI_OK) {
         if (memory_info.memory_size <= DCMI_MEM_16G_MB_VALUE) {
             *mem_size = DCMI_MEM_SIZE_16G;
@@ -711,23 +725,23 @@ STATIC int dcmi_get_template_info_for_310P_910(int card_id, struct dcmi_computin
     unsigned int mem_size = 0;
     unsigned int i;
     int ret;
- 
+
     if (template_out == NULL || template_num == NULL) {
         gplog(LOG_ERR, "dcmi_get_template_info_for_310P_910 parameter is invalid.");
         return DCMI_ERR_CODE_INVALID_PARAMETER;
     }
- 
+
     chip_type = dcmi_get_board_chip_type();
     if ((chip_type != DCMI_CHIP_TYPE_D310P) && (chip_type != DCMI_CHIP_TYPE_D910)) {
         return DCMI_ERR_CODE_NOT_SUPPORT;
     }
- 
+
     ret = dcmi_get_chip_memory_size(card_id, &mem_size);
     if (ret != DCMI_OK) {
         gplog(LOG_ERR, "dcmi_get_chip_memory_size failed, err is %d.", ret);
         return DCMI_ERR_CODE_INNER_ERR;
     }
- 
+
     unsigned int array_size = sizeof(g_dcmi_product_template) / sizeof(struct dcmi_product_computing_template);
     for (i = 0; i < array_size; i++) {
         if ((chip_type == (int)(g_dcmi_product_template[i].chip_type)) &&
@@ -752,18 +766,18 @@ int dcmi_get_template_info_by_name(int card_id, const char *name, struct dcmi_co
     struct dcmi_computing_template template_out[10] = { { { 0 } } };
     unsigned int template_num = 0;
     unsigned int j;
- 
+
     if (name == NULL || computing_template == NULL) {
         gplog(LOG_ERR, "dcmi_get_template_info_by_name parameter is invalid.");
         return DCMI_ERR_CODE_INVALID_PARAMETER;
     }
- 
+
     ret = dcmi_get_template_info_all(card_id, template_out, sizeof(template_out), &template_num);
     if (ret != DCMI_OK) {
         gplog(LOG_ERR, "dcmi_get_template_info_all failed. ret is %d.", ret);
         return DCMI_ERR_CODE_INNER_ERR;
     }
- 
+
     for (j = 0; j < template_num; j++) {
         if (strcmp(name, template_out[j].name) == 0) {
             ret = memcpy_s(computing_template, sizeof(struct dcmi_computing_template), &template_out[j],
@@ -776,7 +790,7 @@ int dcmi_get_template_info_by_name(int card_id, const char *name, struct dcmi_co
             }
         }
     }
- 
+
     return DCMI_ERR_CODE_NOT_SUPPORT;
 }
 
@@ -794,8 +808,6 @@ STATIC int dcmi_get_910b_bin_type(unsigned int *bin_type)
         case DCMI_A900T_POD_A1_BIN2_P3_BOARD_ID:
         case DCMI_A900T_POD_A1_BIN2X_BOARD_ID:
         case DCMI_A900T_POD_A1_BIN2X_P3_BOARD_ID:
-        case DCMI_A900T_POD_A1_BIN2X_1_BOARD_ID:
-        case DCMI_A900T_POD_A1_BIN2X_1_P3_BOARD_ID:
         case DCMI_A200T_BOX_A1_BIN2_BOARD_ID:
         case DCMI_A300T_A1_BIN2_BOARD_ID:
         case DCMI_A300I_A2_BIN2_BOARD_ID:
@@ -803,7 +815,12 @@ STATIC int dcmi_get_910b_bin_type(unsigned int *bin_type)
         case DCMI_A800I_POD_A2_BIN2_BOARD_ID:
         case DCMI_A800I_POD_A2_BIN2_1_BOARD_ID:
         case DCMI_A800I_POD_A2_BIN4_1_PCIE_BOARD_ID:
+        case DCMI_A200I_BOX_A1_BIN2X_1_BOARD_ID:
             *bin_type = DCMI_910B_BIN2;
+            break;
+        case DCMI_A900T_POD_A1_BIN2X_1_BOARD_ID:
+        case DCMI_A900T_POD_A1_BIN2X_1_P3_BOARD_ID:
+            *bin_type = DCMI_910B_BIN2_1;
             break;
         case DCMI_A900T_POD_A1_BIN1_BOARD_ID:
         case DCMI_A900T_POD_A1_BIN1_P3_BOARD_ID:
@@ -831,23 +848,23 @@ STATIC int dcmi_get_template_info_for_910B(struct dcmi_computing_template *templ
     unsigned int i;
     int ret;
     unsigned int bin_type;
- 
+
     if (template_out == NULL || template_num == NULL) {
         gplog(LOG_ERR, "dcmi_get_template_info_for_910B parameter is invalid.");
         return DCMI_ERR_CODE_INVALID_PARAMETER;
     }
- 
+
     chip_type = dcmi_get_board_chip_type();
     if (chip_type != DCMI_CHIP_TYPE_D910B) {
         return DCMI_ERR_CODE_NOT_SUPPORT;
     }
- 
+
     ret = dcmi_get_910b_bin_type(&bin_type);
     if (ret != DCMI_OK) {
         gplog(LOG_ERR, "dcmi_get_910b_bin_type error.");
         return ret;
     }
- 
+
     unsigned int array_size =
         sizeof(g_dcmi_product_template_for_910B) / sizeof(struct dcmi_product_computing_template_for_910B);
     for (i = 0; i < array_size; i++) {
@@ -863,7 +880,7 @@ STATIC int dcmi_get_template_info_for_910B(struct dcmi_computing_template *templ
             }
         }
     }
- 
+
     return DCMI_ERR_CODE_NOT_SUPPORT;
 }
 
@@ -874,23 +891,23 @@ STATIC int dcmi_get_show_template_info_for_910B(struct dcmi_computing_template *
     unsigned int i;
     int ret;
     unsigned int bin_type;
- 
+
     if (template_out == NULL || template_num == NULL) {
         gplog(LOG_ERR, "dcmi_get_template_info_for_910B parameter is invalid.");
         return DCMI_ERR_CODE_INVALID_PARAMETER;
     }
- 
+
     chip_type = dcmi_get_board_chip_type();
     if (chip_type != DCMI_CHIP_TYPE_D910B) {
         return DCMI_ERR_CODE_NOT_SUPPORT;
     }
- 
+
     ret = dcmi_get_910b_bin_type(&bin_type);
     if (ret != DCMI_OK) {
         gplog(LOG_ERR, "dcmi_get_910b_bin_type error.");
         return ret;
     }
- 
+
     unsigned int array_size =
         sizeof(g_dcmi_product_show_template_for_910B) / sizeof(struct dcmi_product_computing_template_for_910B);
     for (i = 0; i < array_size; i++) {
@@ -906,10 +923,10 @@ STATIC int dcmi_get_show_template_info_for_910B(struct dcmi_computing_template *
             }
         }
     }
- 
+
     return DCMI_ERR_CODE_NOT_SUPPORT;
 }
- 
+
 int dcmi_get_template_info_all(int card_id, struct dcmi_computing_template *template_out, unsigned int template_size,
     unsigned int *template_num)
 {
@@ -927,7 +944,7 @@ int dcmi_get_template_info_all(int card_id, struct dcmi_computing_template *temp
     }
     return ret;
 }
- 
+
 int dcmi_get_show_template_info_all(int card_id, struct dcmi_computing_template *template_out,
     unsigned int template_size, unsigned int *template_num)
 {
@@ -1694,7 +1711,7 @@ int dcmi_get_npu_device_pcie_error(int card_id, int device_id, struct dcmi_chip_
 int dcmi_get_npu_device_die(int card_id, int device_id, enum dcmi_die_type input_type, struct dcmi_die_id *die_id)
 {
     int ret;
-    char *die_type[] = {"ndie", "die"};
+    char *die_type[] = {"ndie", "die", "ddie"};
     int device_logic_id = 0;
 
     ret = dcmi_get_device_logic_id(&device_logic_id, card_id, device_id);
@@ -1706,7 +1723,8 @@ int dcmi_get_npu_device_die(int card_id, int device_id, enum dcmi_die_type input
     switch (input_type) {
 #ifndef _WIN32
         case NDIE:
-            if (dcmi_board_chip_type_is_ascend_910b() || dcmi_board_chip_type_is_ascend_910_93()) {
+            if (dcmi_board_chip_type_is_ascend_910b() || dcmi_board_chip_type_is_ascend_910_93() ||
+                dcmi_board_chip_type_is_ascend_910_95()) {
                 gplog(LOG_ERR, "This device does not support.");
                 return DCMI_ERR_CODE_NOT_SUPPORT;
             }
@@ -1715,6 +1733,11 @@ int dcmi_get_npu_device_die(int card_id, int device_id, enum dcmi_die_type input
             break;
 #endif
         case VDIE:
+            if (dcmi_board_chip_type_is_ascend_910_95()) {
+                gplog(LOG_ERR, "This device does not support get vdie info.");
+                return DCMI_ERR_CODE_NOT_SUPPORT;
+            }
+        case DDIE:
             ret = dsmi_get_device_die(device_logic_id, (struct dsmi_soc_die_stru *)die_id);
             break;
         default:
@@ -1826,10 +1849,11 @@ int dcmi_get_npu_system_time(int card_id, int device_id, unsigned int *time)
     return dcmi_convert_error_code(ret);
 }
 
-int dcmi_get_npu_device_temperature(int card_id, int device_id, int *temprature)
+int dcmi_get_npu_device_temperature(int card_id, int device_id, int *temperature)
 {
     int ret;
     int device_logic_id = 0;
+    union tag_sensor_info sensor_info = {0};
 
     ret = dcmi_get_device_logic_id(&device_logic_id, card_id, device_id);
     if (ret != DCMI_OK) {
@@ -1837,9 +1861,17 @@ int dcmi_get_npu_device_temperature(int card_id, int device_id, int *temprature)
         return ret;
     }
 
-    ret = dsmi_get_device_temperature(device_logic_id, temprature);
-    if ((ret != DSMI_OK) && (ret != DSMI_ERR_NOT_SUPPORT)) {
-        gplog(LOG_ERR, "call dsmi_get_device_temperature failed. err is %d.", ret);
+    if (dcmi_board_chip_type_is_ascend_910_95()) {
+        ret = dsmi_get_soc_sensor_info(device_logic_id, DCMI_SOC_TEMP_ID, &sensor_info);
+        if ((ret != DSMI_OK) && (ret != DSMI_ERR_NOT_SUPPORT)) {
+            gplog(LOG_ERR, "call dsmi_get_soc_sensor_info failed. err is %d.", ret);
+        }
+        *temperature = (int)sensor_info.uchar;
+    } else {
+        ret = dsmi_get_device_temperature(device_logic_id, temperature);
+        if ((ret != DSMI_OK) && (ret != DSMI_ERR_NOT_SUPPORT)) {
+            gplog(LOG_ERR, "call dsmi_get_device_temperature failed. err is %d.", ret);
+        }
     }
 
     return dcmi_convert_error_code(ret);
@@ -1905,15 +1937,16 @@ int dcmi_get_npu_ecc_info(
     int ret;
     int device_logic_id = 0;
     bool support_chip_type = (dcmi_board_chip_type_is_ascend_910() || dcmi_board_chip_type_is_ascend_910b() ||
-                              dcmi_board_chip_type_is_ascend_310p() || dcmi_board_chip_type_is_ascend_910_93());
+                              dcmi_board_chip_type_is_ascend_310p() || dcmi_board_chip_type_is_ascend_910_93() ||
+                              dcmi_board_chip_type_is_ascend_910_95());
 
     ret = dcmi_get_device_logic_id(&device_logic_id, card_id, device_id);
     if (ret != DCMI_OK) {
         gplog(LOG_ERR, "call dcmi_get_device_logic_id failed. err is %d.", ret);
         return ret;
     }
-    bool type_not_support = ((dcmi_board_chip_type_is_ascend_910b() || dcmi_board_chip_type_is_ascend_910_93()) &&
-                             (input_type == DCMI_DEVICE_TYPE_DDR)) ||
+    bool type_not_support = ((dcmi_board_chip_type_is_ascend_910b() || dcmi_board_chip_type_is_ascend_910_93() ||
+                              dcmi_board_chip_type_is_ascend_910_95()) && (input_type == DCMI_DEVICE_TYPE_DDR)) ||
                 (dcmi_board_chip_type_is_ascend_310p() && (input_type == DCMI_DEVICE_TYPE_HBM)) ||
                 (support_chip_type && (input_type != DCMI_DEVICE_TYPE_DDR && input_type != DCMI_DEVICE_TYPE_HBM));
     if (type_not_support) {
@@ -1998,6 +2031,56 @@ void hbm_data_transform(unsigned long long* hbm_total, unsigned long long* hbm_u
     return;
 }
 
+static int dcmi_get_npu_hbm_info_for_910_95(int card_id, int device_id, int device_logic_id,
+                                            struct dcmi_hbm_info *hbm_info)
+{
+    int ret;
+    union dcmi_sensor_info sensor_info;
+    struct dcmi_hbm_info_910_95 device_hbm_info = {0};
+    unsigned int device_hbm_size = sizeof(struct dcmi_hbm_info_910_95);
+    unsigned int bandwith_util_rate = 0;
+
+    ret = memset_s(&sensor_info, sizeof(union dcmi_sensor_info), 0, sizeof(union dcmi_sensor_info));
+    if (ret != 0) {
+        gplog(LOG_ERR, "memset_s failed. err is %d.", ret);
+        return DCMI_ERR_CODE_INNER_ERR;
+    }
+
+    ret = dsmi_get_device_info(device_logic_id, DSMI_MAIN_CMD_MEMORY, DSMI_SUB_CMD_HBM_MEMORY,
+        (void*)&device_hbm_info, &device_hbm_size);
+    if (ret == DSMI_OK) {
+        hbm_info->memory_size = device_hbm_info.total_size;
+        hbm_info->memory_usage = device_hbm_info.used_size;
+    } else {
+        gplog(LOG_ERR, "call dsmi_get_device_info failed.err is %d.", ret);
+        return dcmi_convert_error_code(ret);
+    }
+
+    ret = dcmi_get_device_frequency(card_id, device_id, DCMI_FREQ_HBM, &hbm_info->freq);
+    if (ret != DCMI_OK) {
+        gplog(LOG_ERR, "dcmi_get_device_frequency failed. ret is %d.", ret);
+        return dcmi_convert_error_code(ret);
+    }
+
+    ret = dcmi_get_npu_device_utilization_rate(card_id, device_id, DCMI_UTILIZATION_RATE_HBM, &bandwith_util_rate);
+    if (ret == DCMI_OK) {
+        hbm_info->bandwith_util_rate = bandwith_util_rate;
+    } else {
+        gplog(LOG_ERR, "call dcmi_get_npu_device_utilization_rate failed.err is %d.", ret);
+        return ret;
+    }
+
+    ret = dcmi_get_device_sensor_info(card_id, device_id, DCMI_HBM_TEMP_ID, &sensor_info);
+    if (ret == DCMI_OK) {
+        hbm_info->temp = sensor_info.iint;
+    } else {
+        gplog(LOG_ERR, "call dcmi_get_device_sensor_info failed.err is %d.", ret);
+        return ret;
+    }
+
+    return ret;
+}
+
 int dcmi_get_npu_hbm_info(int card_id, int device_id, struct dcmi_hbm_info *hbm_info)
 {
     int ret;
@@ -2009,7 +2092,11 @@ int dcmi_get_npu_hbm_info(int card_id, int device_id, struct dcmi_hbm_info *hbm_
         return ret;
     }
 
-    ret = dsmi_get_hbm_info(device_logic_id, (struct dsmi_hbm_info_stru *)hbm_info);
+    if (dcmi_board_chip_type_is_ascend_910_95()) {
+        ret = dcmi_get_npu_hbm_info_for_910_95(card_id, device_id, device_logic_id, hbm_info);
+    } else {
+        ret = dsmi_get_hbm_info(device_logic_id, (struct dsmi_hbm_info_stru *)hbm_info);
+    }
     hbm_info->memory_size = hbm_info->memory_size / KB_TO_MB_TRANS_VALUE;
     hbm_info->memory_usage = hbm_info->memory_usage / KB_TO_MB_TRANS_VALUE;
     if (dcmi_board_chip_type_is_ascend_910b() || dcmi_board_chip_type_is_ascend_910_93()) {
@@ -2077,8 +2164,9 @@ int dcmi_get_npu_device_memory_info_v3(int card_id, int device_id, struct dcmi_g
         return ret;
     }
 
-    if (dcmi_board_chip_type_is_ascend_910b() == TRUE || dcmi_board_chip_type_is_ascend_910_93() == TRUE) {
-        gplog(LOG_ERR, "Device 910b 910_93 is not support.");
+    if (dcmi_board_chip_type_is_ascend_910b() == TRUE || dcmi_board_chip_type_is_ascend_910_93() == TRUE ||
+            dcmi_board_chip_type_is_ascend_910_95() == TRUE) {
+        gplog(LOG_ERR, "Device 910b 910_93 910_95 is not support.");
         return DCMI_ERR_CODE_NOT_SUPPORT;
     }
 

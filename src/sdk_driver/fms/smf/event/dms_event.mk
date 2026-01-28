@@ -11,26 +11,15 @@ EXTRA_CFLAGS += -I$(DRIVER_SOURCE_DIR)/fms/smf/event
 EXTRA_CFLAGS += -I$(DRIVER_SOURCE_DIR)/vmng
 EXTRA_CFLAGS += -I$(DRIVER_SOURCE_DIR)/dms/devmng/drv_devmng/drv_devmng_inc
 
-ifeq ($(DAVINCI_HIAI_DKMS),y)
-	asdrv_fms-y += smf/event/dms_event.o
-	asdrv_fms-y += smf/event/dms_event_converge.o
-	asdrv_fms-y += smf/event/dms_event_distribute.o
-	asdrv_fms-y += smf/event/dms_event_distribute_proc.o
-	asdrv_fms-y += smf/event/dms_event_dfx.o
-	asdrv_fms-y += smf/event/smf_event_adapt.o
+EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/src/dms/dc/drv_platform/ts_platform_host/ascend910
+EXTRA_CFLAGS += -I${DRIVER_KERNEL_DIR}/src/tsdrv/ts_drv/ts_drv_common
+EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/dms/command/ioctl
+EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/src/kernel_adapt/include
 
-	EXTRA_CFLAGS += -I${HIAI_DKMS_DIR}/ts_drv_common
-	EXTRA_CFLAGS += -I$(HIAI_DKMS_DIR)/ts_platform_host/ascend910
-	EXTRA_CFLAGS += -I$(HIAI_DKMS_DIR)/dms/command/ioctl
-else #for CMake & ctrl cpu open
-	EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/src/dms/dc/drv_platform/ts_platform_host/ascend910
-	EXTRA_CFLAGS += -I${DRIVER_KERNEL_DIR}/src/tsdrv/ts_drv/ts_drv_common
-	EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/dms/command/ioctl
+asdrv_fms-y += smf/event/dms_event.o
+asdrv_fms-y += smf/event/dms_event_converge.o
+asdrv_fms-y += smf/event/dms_event_distribute.o
+asdrv_fms-y += smf/event/dms_event_distribute_proc.o
+asdrv_fms-y += smf/event/dms_event_dfx.o
+asdrv_fms-y += smf/event/smf_event_adapt.o
 
-	asdrv_fms-y += smf/event/dms_event.o
-	asdrv_fms-y += smf/event/dms_event_converge.o
-	asdrv_fms-y += smf/event/dms_event_distribute.o
-	asdrv_fms-y += smf/event/dms_event_distribute_proc.o
-	asdrv_fms-y += smf/event/dms_event_dfx.o
-	asdrv_fms-y += smf/event/smf_event_adapt.o
-endif

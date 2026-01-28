@@ -13,10 +13,6 @@
 #ifndef SVM_MEM_MNG_H
 #define SVM_MEM_MNG_H
 
-#include <linux/types.h>
-#include <linux/mm.h>
-#include <linux/mm_types.h>
-
 #include "ka_common_pub.h"
 #include "ka_memory_pub.h"
 
@@ -65,19 +61,21 @@ void devmm_print_nodes_info(u32 devid, u32 vfid, u32 mem_type);
 /* This func is time-consuming operation, may cause performance problem. */
 bool devmm_pa_is_remote_addr(u64 pa);
 
-pgprot_t devmm_make_pgprot(unsigned int flg, bool is_nocache);
-pgprot_t devmm_make_pgprot_ex(unsigned int flg, struct devmm_pgprot_cfg_info cfg_info);
+ka_pgprot_t devmm_make_pgprot(unsigned int flg, bool is_nocache);
+ka_pgprot_t devmm_make_pgprot_ex(unsigned int flg, struct devmm_pgprot_cfg_info cfg_info);
 
-pgprot_t devmm_make_remote_pgprot(u32 flg);
-pgprot_t devmm_make_remote_pgprot_ex(u32 flg, struct devmm_pgprot_cfg_info cfg_info);
+ka_pgprot_t devmm_make_remote_pgprot(u32 flg);
+ka_pgprot_t devmm_make_remote_pgprot_ex(u32 flg, struct devmm_pgprot_cfg_info cfg_info);
 
-pgprot_t devmm_make_nocache_pgprot(u32 flg);
-pgprot_t devmm_make_reserved_pgprot(u32 addr_type);
+ka_pgprot_t devmm_make_nocache_pgprot(u32 flg);
+ka_pgprot_t devmm_make_readonly_pgprot(ka_pgprot_t prot);
+ka_pgprot_t devmm_make_reserved_pgprot(u32 addr_type);
 bool devmm_is_readonly_mem(u32 page_prot);
 int devmm_get_svm_pages_with_lock(void *svm_proc, u64 va, u64 num, ka_page_t **pages);
 ka_vm_area_struct_t *devmm_find_vma_from_mm(ka_mm_struct_t *mm, u64 vaddr);
 ka_vm_area_struct_t *devmm_find_vma_proc(ka_mm_struct_t *mm, ka_vm_area_struct_t *vma[],
     u32 vma_num, u64 vaddr);
+ka_vm_area_struct_t *_devmm_find_vma_proc(ka_vm_area_struct_t *vma[], u32 vma_num, u64 vaddr);
 u32 devmm_get_svm_vma_index(u64 vaddr, u32 vma_num);
 void devmm_set_proc_vma(ka_mm_struct_t *mm, ka_vm_area_struct_t *vma[], u32 vma_num);
 void devmm_init_dev_set_mmap_para(struct devmm_mmap_para *mmap_para);
@@ -85,7 +83,7 @@ void devmm_remove_vma_wirte_flag(ka_vm_area_struct_t *vma);
 u32 devmm_get_normal_vma_num(void);
 int devmm_get_user_pages_remote(ka_task_struct_t *tsk, ka_mm_struct_t *mm,
     u64 va, int write, u32 num, ka_page_t **pages);
-int devmm_check_and_set_svm_static_reserve_vma(ka_vm_area_struct_t **svm_vma);
+int devmm_check_and_set_svm_static_reserve_vma(void *svm_proc, ka_vm_area_struct_t **svm_vma);
 int devmm_check_and_set_custom_svm_vma(void *svm_proc, ka_vm_area_struct_t **svm_vma);
 u64 devmm_kpg_size(ka_page_t *pg);
 bool devmm_is_giant_page(ka_page_t **pages);

@@ -13,7 +13,7 @@
 
 #ifndef VIRTMNGHOST_VPC_H
 #define VIRTMNGHOST_VPC_H
-#include <linux/types.h>
+
 #include "virtmng_msg_pub.h"
 
 int vmngh_alloc_all_vpc_msg_cluster(u32 dev_id, u32 fid);

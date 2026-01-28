@@ -38,12 +38,12 @@ struct rmo_cmd_mem_sharing {
     unsigned int rsv[4];      /* reserve */
 };
 
-/* resouce map cmd */
+/* resource map cmd */
 #define RMO_RES_MAP        _IOWR('U', 0, struct rmo_cmd_res_map)
 #define RMO_RES_UNMAP      _IOWR('U', 1, struct rmo_cmd_res_map)
 #define RMO_GET_RES_LEN    _IOWR('U', 2, struct rmo_cmd_res_map)
 
-/* resouce read write cmd */
+/* resource read write cmd */
 #define RMO_RES_READ       _IOWR('U', 3, struct rmo_cmd_res_io)
 #define RMO_RES_WRITE      _IOW('U', 4, struct rmo_cmd_res_io)
 

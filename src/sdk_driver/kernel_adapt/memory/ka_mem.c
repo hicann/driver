@@ -16,6 +16,11 @@
 #include "securec.h"
 #include "ka_memory_pub.h"
 #include "ka_mem.h"
+#if !defined(EMU_ST)
+#ifndef DRV_HOST
+#include "linux/share_pool.h"
+#endif
+#endif
 
 #pragma message(PRINT_MACRO(LINUX_VERSION_CODE))
 
@@ -213,3 +218,17 @@ void ka_mm_set_vm_mremap(ka_vm_operations_struct_t *ops_managed, int (*mremap_fu
     return;
 }
 EXPORT_SYMBOL_GPL(ka_mm_set_vm_mremap);
+
+#ifndef EMU_ST
+bool ka_mm_is_svm_addr(struct vm_area_struct *vma, u64 addr) {
+#if LINUX_VERSION_CODE > KERNEL_VERSION(5, 2, 0)
+#ifndef DRV_HOST
+    if (mg_is_sharepool_addr(addr)) {
+        return false;
+    }
+#endif
+#endif
+    return (((vma->vm_flags) & VM_PFNMAP) != 0);
+}
+EXPORT_SYMBOL_GPL(ka_mm_is_svm_addr);
+#endif

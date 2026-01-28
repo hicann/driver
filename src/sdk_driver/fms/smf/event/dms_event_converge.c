@@ -22,6 +22,12 @@
 #include "dms_event.h"
 #include "dms_sensor.h"
 #include "fms_define.h"
+#include "ka_list_pub.h"
+#include "ka_memory_pub.h"
+#include "ka_task_pub.h"
+#include "ka_base_pub.h"
+#include "ka_hashtable_pub.h"
+#include "ka_kernel_def_pub.h"
 #ifndef DMS_DEVICE_ST
 #include "dms_converge_config.h"
 #else
@@ -44,16 +50,16 @@
 #define EVENT_CONVERGE_OPT_IS_VALID(opt) (((opt) == 'a') || ((opt) == 'm') || ((opt) == 's'))
 
 struct dms_converge_htable g_converge_htable;
-static atomic_t g_dms_notify_serial_num = ATOMIC_INIT(0);
+static ka_atomic_t g_dms_notify_serial_num = KA_BASE_ATOMIC_INIT(0);
 
 static int dms_event_converge_occur_add_to_cb(struct dms_dev_ctrl_block *dev_cb,
     DMS_EVENT_NODE_STRU *exception_node);
 
 int dms_event_get_notify_serial_num(void)
 {
-    return atomic_inc_return(&g_dms_notify_serial_num);
+    return ka_base_atomic_inc_return(&g_dms_notify_serial_num);
 }
-EXPORT_SYMBOL(dms_event_get_notify_serial_num);
+KA_EXPORT_SYMBOL(dms_event_get_notify_serial_num);
 
 inline unsigned int dms_event_get_owner_node_type(const struct dms_event_obj *event_obj)
 {
@@ -220,7 +226,7 @@ static int dms_sensor_reported_resume_event(struct dms_event_sensor_reported *ev
         }
         if (event_node->event_serial_cnt == 0) {
             exception_node->event.event_serial_num = event_node->main_event_serial;
-            list_del(&event_node->node);
+            ka_list_del(&event_node->node);
             dbl_kfree(event_node);
             return DRV_ERROR_NONE;
         }
@@ -236,21 +242,21 @@ static int dms_sensor_reported_resume(struct dms_sensor_reported_list *reported_
     struct list_head *pos = NULL;
     struct list_head *n = NULL;
 
-    mutex_lock(&reported_list->lock);
-    if (list_empty_careful(&reported_list->head) != DRV_ERROR_NONE) {
-        mutex_unlock(&reported_list->lock);
+    ka_task_mutex_lock(&reported_list->lock);
+    if (ka_list_empty_careful(&reported_list->head) != DRV_ERROR_NONE) {
+        ka_task_mutex_unlock(&reported_list->lock);
         return DRV_ERROR_EVENT_NOT_MATCH;
     }
 
-    list_for_each_safe(pos, n, &reported_list->head) {
-        event_node = list_entry(pos, struct dms_event_sensor_reported, node);
+    ka_list_for_each_safe(pos, n, &reported_list->head) {
+        event_node = ka_list_entry(pos, struct dms_event_sensor_reported, node);
         if (dms_sensor_reported_resume_event(event_node, exception_node) == DRV_ERROR_NONE) {
             reported_list->reported_num--;
-            mutex_unlock(&reported_list->lock);
+            ka_task_mutex_unlock(&reported_list->lock);
             return DRV_ERROR_NONE;
         }
     }
-    mutex_unlock(&reported_list->lock);
+    ka_task_mutex_unlock(&reported_list->lock);
 
     return DRV_ERROR_EVENT_NOT_MATCH;
 }
@@ -280,26 +286,26 @@ static int dms_sensor_reported_occur(struct dms_sensor_reported_list *reported_l
     struct list_head *pos = NULL;
     struct list_head *n = NULL;
 
-    mutex_lock(&reported_list->lock);
+    ka_task_mutex_lock(&reported_list->lock);
     if (reported_list->reported_num > DMS_MAX_EVENT_NUM) {
         dms_err("reported_num is too many. (reported_num=%u)\n", reported_list->reported_num);
-        mutex_unlock(&reported_list->lock);
+        ka_task_mutex_unlock(&reported_list->lock);
         return DRV_ERROR_EVENT_NOT_MATCH;
     }
-    if (!list_empty_careful(&reported_list->head)) {
-        list_for_each_safe(pos, n, &reported_list->head) {
-            event_node = list_entry(pos, struct dms_event_sensor_reported, node);
+    if (!ka_list_empty_careful(&reported_list->head)) {
+        ka_list_for_each_safe(pos, n, &reported_list->head) {
+            event_node = ka_list_entry(pos, struct dms_event_sensor_reported, node);
             if (dms_sensor_reported_occur_event(event_node, exception_node) == DRV_ERROR_EVENT_NOT_MATCH) {
-                mutex_unlock(&reported_list->lock);
+                ka_task_mutex_unlock(&reported_list->lock);
                 return DRV_ERROR_EVENT_NOT_MATCH;
             }
         }
     }
 
-    event_node = dbl_kzalloc(sizeof(struct dms_event_sensor_reported), GFP_KERNEL | __GFP_ACCOUNT);
+    event_node = dbl_kzalloc(sizeof(struct dms_event_sensor_reported), KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
     if (event_node == NULL) {
         dms_err("Alloc memory of event_node failed.\n");
-        mutex_unlock(&reported_list->lock);
+        ka_task_mutex_unlock(&reported_list->lock);
         return DRV_ERROR_OUT_OF_MEMORY;
     }
     event_node->pid = exception_node->event.pid;
@@ -307,9 +313,9 @@ static int dms_sensor_reported_occur(struct dms_sensor_reported_list *reported_l
     event_node->main_event_serial = exception_node->event.event_serial_num;
     event_node->sub_event_serial[0] = exception_node->event.event_serial_num;
     event_node->event_serial_cnt++;
-    list_add_tail(&event_node->node, &reported_list->head);
+    ka_list_add_tail(&event_node->node, &reported_list->head);
     reported_list->reported_num++;
-    mutex_unlock(&reported_list->lock);
+    ka_task_mutex_unlock(&reported_list->lock);
 
     return DRV_ERROR_NONE;
 }
@@ -350,7 +356,7 @@ STATIC EVENT_CONVERGE_NODE_T *dms_event_get_convergent_node(unsigned int event_i
 
     key = EVENT_ID_TO_HASH_KEY(event_id);
 
-    hash_for_each_possible(g_converge_htable.htable, convergent_node, hnode, key) {
+    ka_hash_for_each_possible(g_converge_htable.htable, convergent_node, hnode, key) {
         if (convergent_node->event_id == event_id) {
             return convergent_node;
         }
@@ -504,9 +510,9 @@ ssize_t dms_event_print_convergent_diagrams(u32 devid, char opt, char *str)
         return str - refill_buf;
     }
 
-    mutex_lock(&g_converge_htable.lock);
+    ka_task_mutex_lock(&g_converge_htable.lock);
 
-    hash_for_each_safe(g_converge_htable.htable, bkt, local_node, convergent_node, hnode) {
+    ka_hash_for_each_safe(g_converge_htable.htable, bkt, local_node, convergent_node, hnode) {
         if (convergent_node->parent != NULL) {
             /* this  convergent node isn't top node */
             continue;
@@ -523,10 +529,10 @@ ssize_t dms_event_print_convergent_diagrams(u32 devid, char opt, char *str)
     EVENT_DFX_CHECK_DO_SOMETHING(len < 0, goto out);
     str += len;
 
-    mutex_unlock(&g_converge_htable.lock);
+    ka_task_mutex_unlock(&g_converge_htable.lock);
     return str - refill_buf;
 out:
-    mutex_unlock(&g_converge_htable.lock);
+    ka_task_mutex_unlock(&g_converge_htable.lock);
     dms_warn("snprintf_s warn.\n");
     return 0;
 }
@@ -553,9 +559,9 @@ ssize_t dms_event_print_event_list(u32 devid, char *str)
     str += len;
     avl_len -= len;
 
-    mutex_lock(&dev_cb->dev_event_cb.event_list.lock);
-    if (list_empty_careful(&dev_cb->dev_event_cb.event_list.head) != 0) {
-        mutex_unlock(&dev_cb->dev_event_cb.event_list.lock);
+    ka_task_mutex_lock(&dev_cb->dev_event_cb.event_list.lock);
+    if (ka_list_empty_careful(&dev_cb->dev_event_cb.event_list.head) != 0) {
+        ka_task_mutex_unlock(&dev_cb->dev_event_cb.event_list.lock);
         len = snprintf_s(str, avl_len, avl_len - 1, "Event list is empty.\n");
         EVENT_DFX_CHECK_DO_SOMETHING(len < 0, return 0);
         str += len;
@@ -567,8 +573,8 @@ ssize_t dms_event_print_event_list(u32 devid, char *str)
     str += len;
     avl_len -= len;
 
-    list_for_each_safe(pos, n, &dev_cb->dev_event_cb.event_list.head) {
-        event_node = list_entry(pos, DMS_EVENT_NODE_STRU, node);
+    ka_list_for_each_safe(pos, n, &dev_cb->dev_event_cb.event_list.head) {
+        event_node = ka_list_entry(pos, DMS_EVENT_NODE_STRU, node);
         len = snprintf_s(str, avl_len, avl_len - 1, "  0x%X", event_node->event.event_id);
         EVENT_DFX_CHECK_DO_SOMETHING(len < 0, goto out);
         str += len;
@@ -579,10 +585,10 @@ ssize_t dms_event_print_event_list(u32 devid, char *str)
     EVENT_DFX_CHECK_DO_SOMETHING(len < 0, goto out);
     str += len;
 
-    mutex_unlock(&dev_cb->dev_event_cb.event_list.lock);
+    ka_task_mutex_unlock(&dev_cb->dev_event_cb.event_list.lock);
     return str - refill_buf;
 out:
-    mutex_unlock(&dev_cb->dev_event_cb.event_list.lock);
+    ka_task_mutex_unlock(&dev_cb->dev_event_cb.event_list.lock);
     dms_warn("snprintf_s warn. (dev_id=%u)\n", devid);
     return 0;
 }
@@ -635,17 +641,17 @@ static int dms_event_convergent_item_add(unsigned int item_converge_id[], unsign
     int ret = DRV_ERROR_NONE;
 
     child_node = (EVENT_CONVERGE_NODE_T **)dbl_kzalloc(sizeof(EVENT_CONVERGE_NODE_T *) * event_id_num,
-                                                   GFP_KERNEL | __GFP_ACCOUNT);
+                                                   KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
     if (child_node == NULL) {
         dms_err("Alloc memory of child_node failed.\n");
         return DRV_ERROR_OUT_OF_MEMORY;
     }
 
-    mutex_lock(&g_converge_htable.lock);
+    ka_task_mutex_lock(&g_converge_htable.lock);
     for (i = 0; i < event_id_num; i++) {
         event_node = dms_event_get_convergent_node(item_converge_id[i]);
         if (event_node == NULL) {
-            event_node = dbl_kzalloc(sizeof(EVENT_CONVERGE_NODE_T), GFP_KERNEL | __GFP_ACCOUNT);
+            event_node = dbl_kzalloc(sizeof(EVENT_CONVERGE_NODE_T), KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
             if (event_node == NULL) {
                 dms_err("Alloc memory of event_node failed.\n");
                 ret = DRV_ERROR_OUT_OF_MEMORY;
@@ -653,7 +659,7 @@ static int dms_event_convergent_item_add(unsigned int item_converge_id[], unsign
             }
             key = EVENT_ID_TO_HASH_KEY(item_converge_id[i]);
             event_node->event_id = item_converge_id[i];
-            hash_add(g_converge_htable.htable, &event_node->hnode, key);
+            ka_hash_add(g_converge_htable.htable, &event_node->hnode, key);
         }
         parent_node = (event_node->event_id == item_converge_id[0]) ? event_node : parent_node;
         child_node[i] = (event_node->event_id == item_converge_id[i]) ? event_node : child_node[i];
@@ -674,7 +680,7 @@ static int dms_event_convergent_item_add(unsigned int item_converge_id[], unsign
     parent_node->bro_next = parent_node;
 
 out:
-    mutex_unlock(&g_converge_htable.lock);
+    ka_task_mutex_unlock(&g_converge_htable.lock);
     dbl_kfree(child_node);
     return ret;
 }
@@ -693,7 +699,7 @@ static unsigned int dms_event_convergent_item_fix(unsigned int item_converge_id[
         }
     }
 
-    mutex_lock(&g_converge_htable.lock);
+    ka_task_mutex_lock(&g_converge_htable.lock);
     event_node = dms_event_get_convergent_node(item_converge_id[0]);
     if (event_node != NULL) {
         event_num_fix = EVENT_CONVERGE_CHILD_TAIL(event_id_num);
@@ -707,7 +713,7 @@ static unsigned int dms_event_convergent_item_fix(unsigned int item_converge_id[
             item_converge_id[i] = converge_id_buf;
         }
     }
-    mutex_unlock(&g_converge_htable.lock);
+    ka_task_mutex_unlock(&g_converge_htable.lock);
 
     return event_num_fix;
 }
@@ -735,8 +741,8 @@ STATIC bool dms_event_convergent_diagrams_layer_check(void)
     u32 protect_i = 0;
     u32 bkt, layer;
 
-    mutex_lock(&g_converge_htable.lock);
-    hash_for_each_safe(g_converge_htable.htable, bkt, local_node, convergent_node, hnode) {
+    ka_task_mutex_lock(&g_converge_htable.lock);
+    ka_hash_for_each_safe(g_converge_htable.htable, bkt, local_node, convergent_node, hnode) {
         if (convergent_node->child_head != NULL) {
             /* this convergent node isn't bottom node */
             continue;
@@ -749,12 +755,12 @@ STATIC bool dms_event_convergent_diagrams_layer_check(void)
             layer++;
         }
         if (layer > EVENT_CONVERGE_DIAGRAMS_LAYER_MAX) {
-            mutex_unlock(&g_converge_htable.lock);
+            ka_task_mutex_unlock(&g_converge_htable.lock);
             dms_warn("Convergent diagrams layer is invalid. (layer=%u)\n", layer);
             return false;
         }
     }
-    mutex_unlock(&g_converge_htable.lock);
+    ka_task_mutex_unlock(&g_converge_htable.lock);
     return true;
 }
 
@@ -766,7 +772,7 @@ int dms_event_convergent_diagrams_init(void)
     g_converge_htable.converge_switch = DMS_EVENT_CONVERGE_SWITCH;
     g_converge_htable.converge_validity = true;
     g_converge_htable.need_free = true;
-    mutex_init(&g_converge_htable.lock);
+    ka_task_mutex_init(&g_converge_htable.lock);
 
     ret = EVENT_CONVERGE_CFG_INIT();
     if (ret != 0) {
@@ -783,7 +789,7 @@ int dms_event_convergent_diagrams_init(void)
         return DRV_ERROR_PARA_ERROR;
     }
 
-    str_buf = (char *)dbl_kzalloc(EVENT_DFX_BUF_SIZE_MAX, GFP_KERNEL | __GFP_ACCOUNT);
+    str_buf = (char *)dbl_kzalloc(EVENT_DFX_BUF_SIZE_MAX, KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
     if (str_buf != NULL) {
         ret = dms_event_print_convergent_diagrams(0, 'a', str_buf);
         str_buf[EVENT_DFX_BUF_SIZE_MAX - 1] = '\0'; /* force to add \0 */
@@ -796,7 +802,7 @@ int dms_event_convergent_diagrams_init(void)
         }
         dbl_kfree(str_buf);
     } else {
-        dms_warn("kzalloc str_buf warn.\n");
+        dms_warn("ka_mm_kzalloc str_buf warn.\n");
     }
 
     dms_event("Convergent diagrams config: (switch=%s; validity=%s)\n",
@@ -816,20 +822,20 @@ void dms_event_convergent_diagrams_exit(void)
         return;
     }
 
-    mutex_lock(&g_converge_htable.lock);
-    hash_for_each_safe(g_converge_htable.htable, bkt, local_node, event_node, hnode) {
+    ka_task_mutex_lock(&g_converge_htable.lock);
+    ka_hash_for_each_safe(g_converge_htable.htable, bkt, local_node, event_node, hnode) {
         for (i = 0; i < ASCEND_DEV_MAX_NUM; i++) {
             if (event_node->exception_data[i] != NULL) {
                 dbl_kfree(event_node->exception_data[i]);
                 event_node->exception_data[i] = NULL;
             }
         }
-        hash_del(&event_node->hnode);
+        ka_hash_del(&event_node->hnode);
         dbl_kfree(event_node);
         event_node = NULL;
     }
-    mutex_unlock(&g_converge_htable.lock);
-    mutex_destroy(&g_converge_htable.lock);
+    ka_task_mutex_unlock(&g_converge_htable.lock);
+    ka_task_mutex_destroy(&g_converge_htable.lock);
 
     g_converge_htable.need_free = false;
 }
@@ -854,8 +860,8 @@ int dms_event_convergent_diagrams_clear(u32 devid, bool hotreset)
         return DRV_ERROR_NONE;
     }
 
-    mutex_lock(&g_converge_htable.lock);
-    hash_for_each_safe(g_converge_htable.htable, bkt, local_node, event_node, hnode) {
+    ka_task_mutex_lock(&g_converge_htable.lock);
+    ka_hash_for_each_safe(g_converge_htable.htable, bkt, local_node, event_node, hnode) {
         event_node->event_serial_num[devid] = 0;
         event_node->assertion[devid] = DMS_EVENT_TYPE_RESUME;
         event_node->mask[devid] = hotreset ? EVENT_CONVERGE_NODE_ENABLE : event_node->mask[devid];
@@ -864,7 +870,7 @@ int dms_event_convergent_diagrams_clear(u32 devid, bool hotreset)
             event_node->exception_data[devid] = NULL;
         }
     }
-    mutex_unlock(&g_converge_htable.lock);
+    ka_task_mutex_unlock(&g_converge_htable.lock);
 
     return DRV_ERROR_NONE;
 }
@@ -874,18 +880,18 @@ STATIC void dms_event_clear_reported_list(struct dms_sensor_reported_list *repor
     struct dms_event_sensor_reported *event_node = NULL;
     struct list_head *pos = NULL, *n = NULL;
 
-    mutex_lock(&reported_list->lock);
-    list_for_each_safe(pos, n, &reported_list->head) {
-        event_node = list_entry(pos, struct dms_event_sensor_reported, node);
+    ka_task_mutex_lock(&reported_list->lock);
+    ka_list_for_each_safe(pos, n, &reported_list->head) {
+        event_node = ka_list_entry(pos, struct dms_event_sensor_reported, node);
         if (event_node->pid == owner_pid) {
             dms_debug("clear reported_list success. (pid=%d; event_id=0x%x)\n", owner_pid, event_node->event_id);
-            list_del(&event_node->node);
+            ka_list_del(&event_node->node);
             dbl_kfree(event_node);
             event_node = NULL;
             reported_list->reported_num--;
         }
     }
-    mutex_unlock(&reported_list->lock);
+    ka_task_mutex_unlock(&reported_list->lock);
 
     return;
 }
@@ -907,14 +913,14 @@ void dms_event_cb_release(int owner_pid)
         }
         dms_event_clear_reported_list(&dev_cb->dev_event_cb.reported_list, owner_pid);
         converge_list = &dev_cb->dev_event_cb.event_list;
-        mutex_lock(&converge_list->lock);
+        ka_task_mutex_lock(&converge_list->lock);
         converge_list->health_code = 0;
 
-        list_for_each_safe(pos, n, &converge_list->head) {
-            event_node = list_entry(pos, DMS_EVENT_NODE_STRU, node);
+        ka_list_for_each_safe(pos, n, &converge_list->head) {
+            event_node = ka_list_entry(pos, DMS_EVENT_NODE_STRU, node);
             if (event_node->event.pid == owner_pid) {
                 dms_debug("release cb success. (pid=%d; event_id=0x%x)\n", owner_pid, event_node->event.event_id);
-                list_del(&event_node->node);
+                ka_list_del(&event_node->node);
                 dbl_kfree(event_node);
                 event_node = NULL;
                 converge_list->event_num--;
@@ -923,12 +929,12 @@ void dms_event_cb_release(int owner_pid)
             converge_list->health_code = event_node->event.severity > converge_list->health_code ? \
                                         event_node->event.severity : converge_list->health_code;
         }
-        mutex_unlock(&converge_list->lock);
+        ka_task_mutex_unlock(&converge_list->lock);
     }
 
     return;
 }
-EXPORT_SYMBOL(dms_event_cb_release);
+KA_EXPORT_SYMBOL(dms_event_cb_release);
 
 void dms_event_mask_del_to_event_cb(u32 phyid, struct dms_dev_ctrl_block *dev_cb, u32 event_id)
 {
@@ -939,18 +945,18 @@ void dms_event_mask_del_to_event_cb(u32 phyid, struct dms_dev_ctrl_block *dev_cb
 
     converge_list = &dev_cb->dev_event_cb.event_list;
 
-    mutex_lock(&converge_list->lock);
+    ka_task_mutex_lock(&converge_list->lock);
     converge_list->health_code = 0;
-    if (list_empty_careful(&converge_list->head) != 0) {
+    if (ka_list_empty_careful(&converge_list->head) != 0) {
         converge_list->event_num = 0;
-        mutex_unlock(&converge_list->lock);
+        ka_task_mutex_unlock(&converge_list->lock);
         return;
     }
 
-    list_for_each_safe(pos, n, &converge_list->head) {
-        event_node = list_entry(pos, DMS_EVENT_NODE_STRU, node);
+    ka_list_for_each_safe(pos, n, &converge_list->head) {
+        event_node = ka_list_entry(pos, DMS_EVENT_NODE_STRU, node);
         if (event_node->event.event_id == event_id) {
-            list_del(&event_node->node);
+            ka_list_del(&event_node->node);
             dbl_kfree(event_node);
             event_node = NULL;
             converge_list->event_num--;
@@ -959,7 +965,7 @@ void dms_event_mask_del_to_event_cb(u32 phyid, struct dms_dev_ctrl_block *dev_cb
         converge_list->health_code = event_node->event.severity > converge_list->health_code ? \
                                      event_node->event.severity : converge_list->health_code;
     }
-    mutex_unlock(&converge_list->lock);
+    ka_task_mutex_unlock(&converge_list->lock);
 }
 
 void dms_event_mask_add_to_event_cb(u32 phyid, struct dms_dev_ctrl_block *dev_cb, u32 event_id)
@@ -972,25 +978,25 @@ void dms_event_mask_add_to_event_cb(u32 phyid, struct dms_dev_ctrl_block *dev_cb
         return;
     }
 
-    mutex_lock(&g_converge_htable.lock);
+    ka_task_mutex_lock(&g_converge_htable.lock);
     convergent_node = dms_event_get_convergent_node(converge_event_id);
     /* top convergent node isn't occur */
     if ((convergent_node == NULL) || (convergent_node->exception_data[phyid] == NULL)) {
-        mutex_unlock(&g_converge_htable.lock);
+        ka_task_mutex_unlock(&g_converge_htable.lock);
         return;
     }
     /* top convergent node isn't disable before */
     if (convergent_node->mask[phyid] != EVENT_CONVERGE_NODE_DISENABLE) {
-        mutex_unlock(&g_converge_htable.lock);
+        ka_task_mutex_unlock(&g_converge_htable.lock);
         return;
     }
 
     if (memcpy_s(&exception_data, sizeof(DMS_EVENT_NODE_STRU),
                  convergent_node->exception_data[phyid], sizeof(DMS_EVENT_NODE_STRU)) != 0) {
-        mutex_unlock(&g_converge_htable.lock);
+        ka_task_mutex_unlock(&g_converge_htable.lock);
         return;
     }
-    mutex_unlock(&g_converge_htable.lock);
+    ka_task_mutex_unlock(&g_converge_htable.lock);
 
     (void)dms_event_converge_occur_add_to_cb(dev_cb, &exception_data);
     if (dms_event_distribute_handle(&exception_data, DMS_DISTRIBUTE_PRIORITY0)) {
@@ -1003,17 +1009,17 @@ void dms_event_add_to_mask_list(struct dms_dev_ctrl_block *dev_cb, u32 event_id)
 {
     struct dms_mask_event *mask_event = NULL;
 
-    mask_event = (struct dms_mask_event *)dbl_kzalloc(sizeof(struct dms_mask_event), GFP_KERNEL | __GFP_ACCOUNT);
+    mask_event = (struct dms_mask_event *)dbl_kzalloc(sizeof(struct dms_mask_event), KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
     if (mask_event == NULL) {
-        dms_err("kzalloc failed. (event_id=0x%X)\n", event_id);
+        dms_err("ka_mm_kzalloc failed. (event_id=0x%X)\n", event_id);
         return;
     }
 
     mask_event->event_id = event_id;
 
-    mutex_lock(&dev_cb->dev_event_cb.dfx_table.lock);
-    list_add_tail(&mask_event->node, &dev_cb->dev_event_cb.dfx_table.mask_list);
-    mutex_unlock(&dev_cb->dev_event_cb.dfx_table.lock);
+    ka_task_mutex_lock(&dev_cb->dev_event_cb.dfx_table.lock);
+    ka_list_add_tail(&mask_event->node, &dev_cb->dev_event_cb.dfx_table.mask_list);
+    ka_task_mutex_unlock(&dev_cb->dev_event_cb.dfx_table.lock);
 }
 
 void dms_event_del_to_mask_list(struct dms_dev_ctrl_block *dev_cb, u32 event_id)
@@ -1022,21 +1028,21 @@ void dms_event_del_to_mask_list(struct dms_dev_ctrl_block *dev_cb, u32 event_id)
     struct list_head *n = NULL;
     struct dms_mask_event *mask_event = NULL;
 
-    mutex_lock(&dev_cb->dev_event_cb.dfx_table.lock);
-    if (list_empty_careful(&dev_cb->dev_event_cb.dfx_table.mask_list) != 0) {
-        mutex_unlock(&dev_cb->dev_event_cb.dfx_table.lock);
+    ka_task_mutex_lock(&dev_cb->dev_event_cb.dfx_table.lock);
+    if (ka_list_empty_careful(&dev_cb->dev_event_cb.dfx_table.mask_list) != 0) {
+        ka_task_mutex_unlock(&dev_cb->dev_event_cb.dfx_table.lock);
         return;
     }
 
-    list_for_each_safe(pos, n, &dev_cb->dev_event_cb.dfx_table.mask_list) {
-        mask_event = list_entry(pos, struct dms_mask_event, node);
+    ka_list_for_each_safe(pos, n, &dev_cb->dev_event_cb.dfx_table.mask_list) {
+        mask_event = ka_list_entry(pos, struct dms_mask_event, node);
         if (mask_event->event_id == event_id) {
-            list_del(&mask_event->node);
+            ka_list_del(&mask_event->node);
             dbl_kfree(mask_event);
             mask_event = NULL;
         }
     }
-    mutex_unlock(&dev_cb->dev_event_cb.dfx_table.lock);
+    ka_task_mutex_unlock(&dev_cb->dev_event_cb.dfx_table.lock);
 }
 
 void dms_event_mask_list_clear(struct dms_dev_ctrl_block *dev_cb)
@@ -1045,16 +1051,16 @@ void dms_event_mask_list_clear(struct dms_dev_ctrl_block *dev_cb)
     struct list_head *n = NULL;
     struct dms_mask_event *mask_event = NULL;
 
-    mutex_lock(&dev_cb->dev_event_cb.dfx_table.lock);
-    if (!list_empty_careful(&dev_cb->dev_event_cb.dfx_table.mask_list)) {
-        list_for_each_safe(pos, n, &dev_cb->dev_event_cb.dfx_table.mask_list) {
-            mask_event = list_entry(pos, struct dms_mask_event, node);
-            list_del(&mask_event->node);
+    ka_task_mutex_lock(&dev_cb->dev_event_cb.dfx_table.lock);
+    if (!ka_list_empty_careful(&dev_cb->dev_event_cb.dfx_table.mask_list)) {
+        ka_list_for_each_safe(pos, n, &dev_cb->dev_event_cb.dfx_table.mask_list) {
+            mask_event = ka_list_entry(pos, struct dms_mask_event, node);
+            ka_list_del(&mask_event->node);
             dbl_kfree(mask_event);
             mask_event = NULL;
         }
     }
-    mutex_unlock(&dev_cb->dev_event_cb.dfx_table.lock);
+    ka_task_mutex_unlock(&dev_cb->dev_event_cb.dfx_table.lock);
 }
 
 ssize_t dms_event_print_mask_list(u32 devid, char *str)
@@ -1080,9 +1086,9 @@ ssize_t dms_event_print_mask_list(u32 devid, char *str)
     str += len;
     avl_len -= len;
 
-    mutex_lock(&dev_cb->dev_event_cb.dfx_table.lock);
-    if (list_empty_careful(&dev_cb->dev_event_cb.dfx_table.mask_list) != 0) {
-        mutex_unlock(&dev_cb->dev_event_cb.dfx_table.lock);
+    ka_task_mutex_lock(&dev_cb->dev_event_cb.dfx_table.lock);
+    if (ka_list_empty_careful(&dev_cb->dev_event_cb.dfx_table.mask_list) != 0) {
+        ka_task_mutex_unlock(&dev_cb->dev_event_cb.dfx_table.lock);
         len = snprintf_s(str, avl_len, avl_len - 1, "Mask list is empty.\n");
         EVENT_DFX_CHECK_DO_SOMETHING(len < 0, return 0);
         str += len;
@@ -1094,8 +1100,8 @@ ssize_t dms_event_print_mask_list(u32 devid, char *str)
     str += len;
     avl_len -= len;
 
-    list_for_each_safe(pos, n, &dev_cb->dev_event_cb.dfx_table.mask_list) {
-        mask_event = list_entry(pos, struct dms_mask_event, node);
+    ka_list_for_each_safe(pos, n, &dev_cb->dev_event_cb.dfx_table.mask_list) {
+        mask_event = ka_list_entry(pos, struct dms_mask_event, node);
         len = snprintf_s(str, avl_len, avl_len - 1, "  0x%X", mask_event->event_id);
         EVENT_DFX_CHECK_DO_SOMETHING(len < 0, goto out);
         str += len;
@@ -1106,10 +1112,10 @@ ssize_t dms_event_print_mask_list(u32 devid, char *str)
     EVENT_DFX_CHECK_DO_SOMETHING(len < 0, goto out);
     str += len;
 
-    mutex_unlock(&dev_cb->dev_event_cb.dfx_table.lock);
+    ka_task_mutex_unlock(&dev_cb->dev_event_cb.dfx_table.lock);
     return str - refill_buf;
 out:
-    mutex_unlock(&dev_cb->dev_event_cb.dfx_table.lock);
+    ka_task_mutex_unlock(&dev_cb->dev_event_cb.dfx_table.lock);
     dms_warn("snprintf_s warn. (dev_id=%u)\n", devid);
     return 0;
 }
@@ -1123,11 +1129,11 @@ void dms_event_convergent_diagrams_mask(u32 devid, u32 event_id, u8 mask)
         return;
     }
 
-    mutex_lock(&g_converge_htable.lock);
+    ka_task_mutex_lock(&g_converge_htable.lock);
     convergent_node = dms_event_get_convergent_node(converge_event_id);
     if (convergent_node != NULL) {
         convergent_node->mask[devid] = mask;
-        mutex_unlock(&g_converge_htable.lock);
+        ka_task_mutex_unlock(&g_converge_htable.lock);
         return;
     }
 
@@ -1135,7 +1141,7 @@ void dms_event_convergent_diagrams_mask(u32 devid, u32 event_id, u8 mask)
     if (convergent_node != NULL) {
         convergent_node->mask[devid] = mask;
     }
-    mutex_unlock(&g_converge_htable.lock);
+    ka_task_mutex_unlock(&g_converge_htable.lock);
 }
 
 STATIC int dms_event_obj_converge_one_time(DMS_EVENT_NODE_STRU *exception_node)
@@ -1144,24 +1150,24 @@ STATIC int dms_event_obj_converge_one_time(DMS_EVENT_NODE_STRU *exception_node)
     EVENT_CONVERGE_NODE_T *convergent_node = NULL;
     u32 protect_i = 0;
 
-    mutex_lock(&g_converge_htable.lock);
+    ka_task_mutex_lock(&g_converge_htable.lock);
     convergent_node = dms_event_get_convergent_node(exception_node->event.event_id);
     if (convergent_node == NULL) {
-        mutex_unlock(&g_converge_htable.lock);
+        ka_task_mutex_unlock(&g_converge_htable.lock);
         return DRV_ERROR_NONE;
     }
 
     do {
         /* don't report occur event when the event_id has been disabled */
         if (convergent_node->mask[deviceid] == EVENT_CONVERGE_NODE_DISENABLE) {
-            mutex_unlock(&g_converge_htable.lock);
+            ka_task_mutex_unlock(&g_converge_htable.lock);
             return DRV_ERROR_EVENT_NOT_MATCH;
         }
         exception_node->event.event_id = convergent_node->event_id;
         convergent_node = convergent_node->parent;
     } while ((protect_i++ <= EVENT_CONVERGE_ID_NUM_MAX) && (convergent_node != NULL));
 
-    mutex_unlock(&g_converge_htable.lock);
+    ka_task_mutex_unlock(&g_converge_htable.lock);
     return DRV_ERROR_NONE;
 }
 
@@ -1172,10 +1178,10 @@ STATIC int dms_event_obj_converge_occur(DMS_EVENT_NODE_STRU *exception_node)
     u32 protect_i = 0;
     u32 severity;
 
-    mutex_lock(&g_converge_htable.lock);
+    ka_task_mutex_lock(&g_converge_htable.lock);
     convergent_node = dms_event_get_convergent_node(exception_node->event.event_id);
     if (convergent_node == NULL) {
-        mutex_unlock(&g_converge_htable.lock);
+        ka_task_mutex_unlock(&g_converge_htable.lock);
         return DRV_ERROR_NONE;
     }
 
@@ -1183,10 +1189,10 @@ STATIC int dms_event_obj_converge_occur(DMS_EVENT_NODE_STRU *exception_node)
         /* store the information of top convergent node to report when event_id of top convergent node be enabled */
         if ((convergent_node->parent == NULL) && (convergent_node->exception_data[deviceid] == NULL)) {
             convergent_node->exception_data[deviceid] = dbl_kzalloc(sizeof(DMS_EVENT_NODE_STRU),
-                GFP_KERNEL | __GFP_ACCOUNT);
+                KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
             if (convergent_node->exception_data[deviceid] == NULL) {
-                mutex_unlock(&g_converge_htable.lock);
-                dms_err("kzalloc failed. (dev_id=%u)\n", exception_node->event.deviceid);
+                ka_task_mutex_unlock(&g_converge_htable.lock);
+                dms_err("ka_mm_kzalloc failed. (dev_id=%u)\n", exception_node->event.deviceid);
                 return DRV_ERROR_OUT_OF_MEMORY;
             }
             (void)memcpy_s(convergent_node->exception_data[deviceid], sizeof(DMS_EVENT_NODE_STRU),
@@ -1202,7 +1208,7 @@ STATIC int dms_event_obj_converge_occur(DMS_EVENT_NODE_STRU *exception_node)
          * don't report occur event when the event_id has been disabled */
         if ((convergent_node->assertion[deviceid] == DMS_EVENT_TYPE_OCCUR) ||
             (convergent_node->mask[deviceid] == EVENT_CONVERGE_NODE_DISENABLE)) {
-            mutex_unlock(&g_converge_htable.lock);
+            ka_task_mutex_unlock(&g_converge_htable.lock);
             return DRV_ERROR_EVENT_NOT_MATCH;
         }
         convergent_node->assertion[deviceid] = DMS_EVENT_TYPE_OCCUR;
@@ -1210,7 +1216,7 @@ STATIC int dms_event_obj_converge_occur(DMS_EVENT_NODE_STRU *exception_node)
         exception_node->event.event_id = convergent_node->event_id;
         convergent_node = convergent_node->parent;
     } while ((protect_i++ <= EVENT_CONVERGE_ID_NUM_MAX) && (convergent_node != NULL));
-    mutex_unlock(&g_converge_htable.lock);
+    ka_task_mutex_unlock(&g_converge_htable.lock);
 
     return DRV_ERROR_NONE;
 }
@@ -1224,10 +1230,10 @@ STATIC int dms_event_obj_converge_resume(DMS_EVENT_NODE_STRU *exception_node)
     u32 protect_j = 0;
     bool mask_flag;
 
-    mutex_lock(&g_converge_htable.lock);
+    ka_task_mutex_lock(&g_converge_htable.lock);
     convergent_node = dms_event_get_convergent_node(exception_node->event.event_id);
     if (convergent_node == NULL) {
-        mutex_unlock(&g_converge_htable.lock);
+        ka_task_mutex_unlock(&g_converge_htable.lock);
         return DRV_ERROR_NONE;
     }
 
@@ -1235,7 +1241,7 @@ STATIC int dms_event_obj_converge_resume(DMS_EVENT_NODE_STRU *exception_node)
     if (convergent_node->assertion[deviceid] != DMS_EVENT_TYPE_OCCUR) {
         dms_warn("This event hasn't been reported before. (dev_id=%u; event_id=0x%x)\n",
                  deviceid, exception_node->event.event_id);
-        mutex_unlock(&g_converge_htable.lock);
+        ka_task_mutex_unlock(&g_converge_htable.lock);
         return DRV_ERROR_EVENT_NOT_MATCH;
     }
     convergent_node->assertion[deviceid] = DMS_EVENT_TYPE_RESUME;
@@ -1250,7 +1256,7 @@ STATIC int dms_event_obj_converge_resume(DMS_EVENT_NODE_STRU *exception_node)
         while ((protect_j++ <= EVENT_CONVERGE_ID_NUM_MAX) && (bro_node != convergent_node)) {
             /* there is one node that haven't been recovered in current layer */
             if (bro_node->assertion[deviceid] == DMS_EVENT_TYPE_OCCUR) {
-                mutex_unlock(&g_converge_htable.lock);
+                ka_task_mutex_unlock(&g_converge_htable.lock);
                 return DRV_ERROR_EVENT_NOT_MATCH;
             }
             bro_node = bro_node->bro_next;
@@ -1269,7 +1275,7 @@ STATIC int dms_event_obj_converge_resume(DMS_EVENT_NODE_STRU *exception_node)
         dbl_kfree(convergent_node->exception_data[deviceid]);
         convergent_node->exception_data[deviceid] = NULL;
     }
-    mutex_unlock(&g_converge_htable.lock);
+    ka_task_mutex_unlock(&g_converge_htable.lock);
 
     return mask_flag ? DRV_ERROR_EVENT_NOT_MATCH : DRV_ERROR_NONE;
 }
@@ -1284,17 +1290,17 @@ static int dms_event_converge_resume_add_to_cb(struct dms_dev_ctrl_block *dev_cb
 
     converge_list = &dev_cb->dev_event_cb.event_list;
 
-    mutex_lock(&converge_list->lock);
-    if (list_empty_careful(&converge_list->head) != 0) {
+    ka_task_mutex_lock(&converge_list->lock);
+    if (ka_list_empty_careful(&converge_list->head) != 0) {
         converge_list->event_num = 0;
-        mutex_unlock(&converge_list->lock);
+        ka_task_mutex_unlock(&converge_list->lock);
         dms_warn("Event list is empty. (dev_id=%u)\n", exception_node->event.deviceid);
         return DRV_ERROR_EVENT_NOT_MATCH;
     }
 
     converge_list->health_code = 0;
-    list_for_each_safe(pos, n, &converge_list->head) {
-        event_node = list_entry(pos, DMS_EVENT_NODE_STRU, node);
+    ka_list_for_each_safe(pos, n, &converge_list->head) {
+        event_node = ka_list_entry(pos, DMS_EVENT_NODE_STRU, node);
         if (exception_node->event.event_serial_num == event_node->event.event_serial_num) {
             exception_node->event.node_type = event_node->event.node_type;
             exception_node->event.node_id = event_node->event.node_id;
@@ -1305,7 +1311,7 @@ static int dms_event_converge_resume_add_to_cb(struct dms_dev_ctrl_block *dev_cb
                            event_node->event.event_name, sizeof(event_node->event.event_name));
             (void)memcpy_s(exception_node->event.additional_info, sizeof(exception_node->event.additional_info),
                            event_node->event.additional_info, sizeof(event_node->event.additional_info));
-            list_del(&event_node->node);
+            ka_list_del(&event_node->node);
             dbl_kfree(event_node);
             event_node = NULL;
             converge_list->event_num--;
@@ -1314,7 +1320,7 @@ static int dms_event_converge_resume_add_to_cb(struct dms_dev_ctrl_block *dev_cb
         converge_list->health_code = event_node->event.severity > converge_list->health_code ? \
                                      event_node->event.severity : converge_list->health_code;
     }
-    mutex_unlock(&converge_list->lock);
+    ka_task_mutex_unlock(&converge_list->lock);
 
     return DRV_ERROR_NONE;
 }
@@ -1328,9 +1334,9 @@ static int dms_event_converge_occur_add_to_cb(struct dms_dev_ctrl_block *dev_cb,
     DMS_EVENT_NODE_STRU *event_node = NULL;
     DMS_EVENT_NODE_STRU *tmp_node = NULL;
 
-    event_node = dbl_kzalloc(sizeof(DMS_EVENT_NODE_STRU), GFP_KERNEL | __GFP_ACCOUNT);
+    event_node = dbl_kzalloc(sizeof(DMS_EVENT_NODE_STRU), KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
     if (event_node == NULL) {
-        dms_err("kzalloc failed. (dev_id=%u)\n", exception_node->event.deviceid);
+        dms_err("ka_mm_kzalloc failed. (dev_id=%u)\n", exception_node->event.deviceid);
         return DRV_ERROR_OUT_OF_MEMORY;
     }
 
@@ -1342,36 +1348,36 @@ static int dms_event_converge_occur_add_to_cb(struct dms_dev_ctrl_block *dev_cb,
     }
 
     converge_list = &dev_cb->dev_event_cb.event_list;
-    mutex_lock(&converge_list->lock);
-    list_for_each_safe(pos, n, &converge_list->head) {
-        tmp_node = list_entry(pos, DMS_EVENT_NODE_STRU, node);
+    ka_task_mutex_lock(&converge_list->lock);
+    ka_list_for_each_safe(pos, n, &converge_list->head) {
+        tmp_node = ka_list_entry(pos, DMS_EVENT_NODE_STRU, node);
         if (tmp_node->event.event_id == exception_node->event.event_id) {
-            mutex_unlock(&converge_list->lock);
+            ka_task_mutex_unlock(&converge_list->lock);
             dbl_kfree(event_node);
             return DRV_ERROR_EVENT_NOT_MATCH;
         }
     }
-    list_add_tail(&event_node->node, &converge_list->head);
+    ka_list_add_tail(&event_node->node, &converge_list->head);
     converge_list->event_num++;
     converge_list->health_code = event_node->event.severity > converge_list->health_code ? \
                                  event_node->event.severity : converge_list->health_code;
 
     if (converge_list->event_num > DMS_MAX_EVENT_NUM) {
-        tmp_node = list_first_entry(&converge_list->head, DMS_EVENT_NODE_STRU, node);
+        tmp_node = ka_list_first_entry(&converge_list->head, DMS_EVENT_NODE_STRU, node);
         dms_event("Dms event is covered. (dev_id=%u; event_id=0x%X; event_serial_num=%d; notify_serial_num=%d)\n",
                   tmp_node->event.deviceid, tmp_node->event.event_id, tmp_node->event.event_serial_num,
                   tmp_node->event.notify_serial_num);
-        list_del(&tmp_node->node);
+        ka_list_del(&tmp_node->node);
         dbl_kfree(tmp_node);
         converge_list->event_num--;
         converge_list->health_code = 0;
-        list_for_each_safe(pos, n, &converge_list->head) {
-            tmp_node = list_entry(pos, DMS_EVENT_NODE_STRU, node);
+        ka_list_for_each_safe(pos, n, &converge_list->head) {
+            tmp_node = ka_list_entry(pos, DMS_EVENT_NODE_STRU, node);
             converge_list->health_code = tmp_node->event.severity > converge_list->health_code ? \
                                          tmp_node->event.severity : converge_list->health_code;
         }
     }
-    mutex_unlock(&converge_list->lock);
+    ka_task_mutex_unlock(&converge_list->lock);
 
     return DRV_ERROR_NONE;
 }
@@ -1427,7 +1433,7 @@ int dms_event_converge_add_to_event_cb(DMS_EVENT_NODE_STRU *exception_node)
     }
 
     if (ret == DRV_ERROR_NONE) {
-        exception_node->event.notify_serial_num = atomic_inc_return(&g_dms_notify_serial_num);
+        exception_node->event.notify_serial_num = ka_base_atomic_inc_return(&g_dms_notify_serial_num);
     }
 
     return ret;
@@ -1453,14 +1459,14 @@ int dms_get_event_code_from_event_cb(u32 devid, u32 *health_code, u32 health_len
         return DRV_ERROR_NO_DEVICE;
     }
 
-    mutex_lock(&dev_cb->dev_event_cb.event_list.lock);
-    if (list_empty_careful(&dev_cb->dev_event_cb.event_list.head) != 0) {
-        mutex_unlock(&dev_cb->dev_event_cb.event_list.lock);
+    ka_task_mutex_lock(&dev_cb->dev_event_cb.event_list.lock);
+    if (ka_list_empty_careful(&dev_cb->dev_event_cb.event_list.head) != 0) {
+        ka_task_mutex_unlock(&dev_cb->dev_event_cb.event_list.lock);
         return DRV_ERROR_NONE;
     }
 
-    list_for_each_safe(pos, n, &dev_cb->dev_event_cb.event_list.head) {
-        event_node = list_entry(pos, DMS_EVENT_NODE_STRU, node);
+    ka_list_for_each_safe(pos, n, &dev_cb->dev_event_cb.event_list.head) {
+        event_node = ka_list_entry(pos, DMS_EVENT_NODE_STRU, node);
         health_code[0] = event_node->event.severity > health_code[0] ? \
                          event_node->event.severity : health_code[0];
         if (i < event_len) {
@@ -1469,20 +1475,20 @@ int dms_get_event_code_from_event_cb(u32 devid, u32 *health_code, u32 health_len
         }
         i++;
     }
-    mutex_unlock(&dev_cb->dev_event_cb.event_list.lock);
+    ka_task_mutex_unlock(&dev_cb->dev_event_cb.event_list.lock);
 
     if (i > event_len) {
         dms_warn("Event_list is larger than event_code array. (dev_id=%u; event_num=%u)\n", devid, i);
     }
     return DRV_ERROR_NONE;
 }
-EXPORT_SYMBOL(dms_get_event_code_from_event_cb);
+KA_EXPORT_SYMBOL(dms_get_event_code_from_event_cb);
 
 int dms_event_is_converge(void)
 {
     return g_converge_htable.converge_switch;
 }
-EXPORT_SYMBOL(dms_event_is_converge);
+KA_EXPORT_SYMBOL(dms_event_is_converge);
 
 int dms_event_obj_to_error_code(struct dms_event_obj event_obj, u32 *error_code)
 {

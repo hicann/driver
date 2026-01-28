@@ -61,6 +61,7 @@
 #define DEV_MOV_CMD_GET_MCU_BOARD_ID            0xB3
 #define DEV_MOV_CMD_GET_DECRYPTION              0xB4
 #define DEV_MON_CMD_OUT_BAND_GET_HCCS_INFO      0xB5
+#define DEV_MOV_CMD_GET_CUSTOM_OP_SECVERIFY_CERT      0xB6
 
 int dev_mon_cmd_register(hash_table *cmdhashtable);
 

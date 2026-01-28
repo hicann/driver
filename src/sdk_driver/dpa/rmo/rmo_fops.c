@@ -10,26 +10,24 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#include <linux/types.h>
-#include <linux/mm.h>
-#include <linux/fs.h>
-#include <linux/uaccess.h>
-#include <linux/slab.h>
-
+#include "ka_fs_pub.h"
+#include "ka_memory_pub.h"
+#include "ka_ioctl_pub.h"
+#include "ka_kernel_def_pub.h"
 #include "rmo_auto_init.h"
 #include "pbl/pbl_task_ctx.h"
 
 #include "pbl/pbl_davinci_api.h"
 #include "rmo_fops.h"
 
-static int rmo_open(struct inode *inode, struct file *file)
+static int rmo_open(ka_inode_t *inode, ka_file_t *file)
 {
     struct task_id_entity *task = NULL;
 
-    task = (struct task_id_entity *)kzalloc(sizeof(struct task_id_entity), GFP_KERNEL | __GFP_ACCOUNT);
+    task = (struct task_id_entity *)ka_mm_kzalloc(sizeof(struct task_id_entity), KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
     if (task == NULL) {
 #ifndef EMU_ST
-        rmo_err("Failed to kzalloc task_id_entity.\n");
+        rmo_err("Failed to ka_mm_kzalloc task_id_entity.\n");
         return -ENOMEM;
 #endif
     }
@@ -42,13 +40,13 @@ static int rmo_open(struct inode *inode, struct file *file)
     return 0;
 }
 
-static int rmo_release(struct inode *inode, struct file *file)
+static int rmo_release(ka_inode_t *inode, ka_file_t *file)
 {
     struct task_id_entity *task = (struct task_id_entity *)(file->private_data);
     if (task != NULL) {
         module_feature_auto_uninit_task(0, task->tgid, (void*)&(task->start_time));
         rmo_info("Release. (tgid=%d)\n", task->tgid);
-        kfree(task);
+        ka_mm_kfree(task);
         file->private_data = NULL;
     }
 
@@ -62,53 +60,53 @@ void rmo_register_ioctl_cmd_func(int nr, int (*fn)(u32 cmd, unsigned long arg))
     rmo_ioctl_handler[nr] = fn;
 }
 
-static long rmo_ioctl(struct file *file, u32 cmd, unsigned long arg)
+static long rmo_ioctl(ka_file_t *file, u32 cmd, unsigned long arg)
 {
     if (arg == 0) {
         return -EINVAL;
     }
-    if (_IOC_NR(cmd) >= RMO_MAX_CMD) {
-        rmo_err("The command is invalid, which is out of range. (cmd=%u)\n", _IOC_NR(cmd));
+    if (_KA_IOC_NR(cmd) >= RMO_MAX_CMD) {
+        rmo_err("The command is invalid, which is out of range. (cmd=%u)\n", _KA_IOC_NR(cmd));
         return -EINVAL;
     }
 
-    if (rmo_ioctl_handler[_IOC_NR(cmd)] == NULL) {
-        rmo_warn("The command is not surport. (cmd=%u)\n", _IOC_NR(cmd));
+    if (rmo_ioctl_handler[_KA_IOC_NR(cmd)] == NULL) {
+        rmo_warn("The command is not support. (cmd=%u)\n", _KA_IOC_NR(cmd));
         return -EOPNOTSUPP;
     }
 
-    return rmo_ioctl_handler[_IOC_NR(cmd)](cmd, arg);
+    return rmo_ioctl_handler[_KA_IOC_NR(cmd)](cmd, arg);
 }
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 3, 0)
-static int rmo_mremap(struct vm_area_struct * area)
+static int rmo_mremap(ka_vm_area_struct_t * area)
 {
     return -ENOTSUPP;
 }
 #endif
 
-static struct vm_operations_struct rmo_vm_ops = {
+static ka_vm_operations_struct_t rmo_vm_ops = {
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 3, 0)
     .mremap = rmo_mremap,
 #endif
 };
 
-static int rmo_mmap(struct file *file, struct vm_area_struct *vma)
+static int rmo_mmap(ka_file_t *file, ka_vm_area_struct_t *vma)
 {
     vma->vm_ops = &rmo_vm_ops;
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 3, 0)
-    vm_flags_set(vma, vma->vm_flags | VM_LOCKED | VM_DONTEXPAND | VM_DONTDUMP | VM_DONTCOPY | VM_IO);
-    if (!(vma->vm_flags & VM_WRITE)) {
+    vm_flags_set(vma, vma->vm_flags | KA_VM_LOCKED | KA_VM_DONTEXPAND | KA_VM_DONTDUMP | KA_VM_DONTCOPY | KA_VM_IO);
+    if (!(vma->vm_flags & KA_VM_WRITE)) {
         vm_flags_clear(vma, VM_MAYWRITE);
     }
 #else
-    vma->vm_flags |= VM_DONTEXPAND;
-    vma->vm_flags |= VM_LOCKED;
-    vma->vm_flags |= VM_PFNMAP;
-    vma->vm_flags |= VM_DONTDUMP;
-    vma->vm_flags |= VM_DONTCOPY;
-    vma->vm_flags |= VM_IO;
-    if (!(vma->vm_flags & VM_WRITE)) {
+    vma->vm_flags |= KA_VM_DONTEXPAND;
+    vma->vm_flags |= KA_VM_LOCKED;
+    vma->vm_flags |= KA_VM_PFNMAP;
+    vma->vm_flags |= KA_VM_DONTDUMP;
+    vma->vm_flags |= KA_VM_DONTCOPY;
+    vma->vm_flags |= KA_VM_IO;
+    if (!(vma->vm_flags & KA_VM_WRITE)) {
         vma->vm_flags &= ~VM_MAYWRITE;
     }
 #endif
@@ -117,8 +115,8 @@ static int rmo_mmap(struct file *file, struct vm_area_struct *vma)
     return 0;
 }
 
-static struct file_operations rmo_fops = {
-    .owner = THIS_MODULE,
+static ka_file_operations_t rmo_fops = {
+    .owner = KA_THIS_MODULE,
     .open = rmo_open,
     .release = rmo_release,
     .unlocked_ioctl = rmo_ioctl,

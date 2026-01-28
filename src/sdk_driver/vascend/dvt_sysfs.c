@@ -59,7 +59,7 @@ ssize_t description_ops(struct device *dev, const char *name, char *buf)
 
     return snprintf_s(buf, PAGE_SIZE, PAGE_SIZE - 1,
         "type name: %s\naicore num: %u\nmemory size: %luGB\naicpu num: %u\nvpc num: %u\n"\
-        "jpegd num: %u\njpege num: %u\nvenc num: %u\nvdec num: %u\nbar2 size: %dKB\nbar4 size: %dKB\n",
+        "jpegd num: %u\njpege num: %u\nvenc num: %u\nvdec num: %u\nbar2 size: %uKB\nbar4 size: %luKB\n",
         type->template_name, type->aicore_num, type->mem_size, type->aicpu_num, type->vpc_num,
         type->jpegd_num, type->jpege_num, type->venc_num, type->vdec_num,
         BYTES_TO_KB(type->bar2_size), BYTES_TO_KB(type->bar4_size));
@@ -332,7 +332,7 @@ vf_show(struct device *dev, struct device_attribute *attr, char *buf)
     if (dvt->is_sriov_enabled && dvt->sriov.vf_num > 0) {
         pdev = vdavinci->vf.pdev;
         ret = snprintf_s(buf, PAGE_SIZE, PAGE_SIZE - 1,
-            "%02x:%02x.%d\n", pdev->bus->number, PCI_SLOT(pdev->devfn),
+            "%02x:%02x.%u\n", pdev->bus->number, PCI_SLOT(pdev->devfn),
             PCI_FUNC(pdev->devfn));
         return ret == -1 ? 0 : ret;
     }

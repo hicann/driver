@@ -15,6 +15,8 @@
 #define URD_FEATURE_H
 #include <linux/ktime.h>
 #include "pbl/pbl_urd.h"
+#include "ka_system_pub.h"
+#include "ka_base_pub.h"
 
 typedef struct tag_dms_feature_arg {
     u32 devid;
@@ -39,7 +41,7 @@ typedef struct tag_dms_feature_node {
     struct tag_dms_feature *feature;
     char **proc_ctrl;
     char *proc_buf;
-    atomic_t count;
+    ka_atomic_t count;
     u32 proc_num;
     u32 state;
     FEATURE_STATISTIC_S s;
@@ -69,7 +71,7 @@ static inline unsigned long long dms_get_cur_cpu_tick(void)
     return cnt;
 #else
     u64 ts = 0;
-    ts = ktime_get_raw_ns();
+    ts = ka_system_ktime_get_raw_ns();
     return ts / NSEC_PER_USEC;
 #endif
 }

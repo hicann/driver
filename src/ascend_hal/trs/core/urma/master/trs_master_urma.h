@@ -21,5 +21,7 @@ drvError_t trs_sq_task_send_urma(uint32_t dev_id, struct halTaskSendInfo *info, 
     unsigned long long *trace_time_stamp, int time_arraylen);
 drvError_t trs_sq_task_srgs_async_copy(uint32_t dev_id, struct halSqTaskArgsInfo *info,
     struct sqcq_usr_info *sq_info);
-
+drvError_t trs_get_urma_tseg_info_by_va(uint32_t devid, uint64_t va, uint64_t size, uint32_t flag,
+    struct halTsegInfo *tsegInfo);
+drvError_t trs_put_urma_tseg_info(uint32_t devid, struct halTsegInfo *tsegInfo);
 #endif

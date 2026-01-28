@@ -23,9 +23,12 @@
 #include "pbl_mem_alloc_interface.h"
 #include "devdrv_manager.h"
 #include "comm_kernel_interface.h"
-#include "devdrv_black_box.h"
 #include "tsdrv_status.h"
 #include "adapter_api.h"
+#include "ka_task_pub.h"
+#include "ka_list_pub.h"
+#include "ka_memory_pub.h"
+#include "devdrv_black_box.h"
 #define DEVDRV_BLACK_BOX_MAX_EXCEPTION_NUM 1024
 
 STATIC int devdrv_host_pcie_add_exception(u32 pci_devid, u32 code, struct timespec stamp)
@@ -60,16 +63,16 @@ void devdrv_host_black_box_init(void)
         return;
     }
 
-    spin_lock_init(&manager_info->black_box.spinlock);
-    spin_lock_irqsave(&manager_info->black_box.spinlock, flags);
+    ka_task_spin_lock_init(&manager_info->black_box.spinlock);
+    ka_task_spin_lock_irqsave(&manager_info->black_box.spinlock, flags);
     for (i = 0; i < MAX_EXCEPTION_THREAD; i++) {
-        sema_init(&manager_info->black_box.black_box_sema[i], 0);
+        ka_task_sema_init(&manager_info->black_box.black_box_sema[i], 0);
         manager_info->black_box.exception_num[i] = 0;
         manager_info->black_box.black_box_pid[i] = 0;
-        INIT_LIST_HEAD(&manager_info->black_box.exception_list[i]);
+        KA_INIT_LIST_HEAD(&manager_info->black_box.exception_list[i]);
     }
     manager_info->black_box.thread_should_stop = 0;
-    spin_unlock_irqrestore(&manager_info->black_box.spinlock, flags);
+    ka_task_spin_unlock_irqrestore(&manager_info->black_box.spinlock, flags);
 
     black_callback.callback = devdrv_host_pcie_add_exception;
 #ifndef CFG_FEATURE_ASCEND910_95_STUB
@@ -98,13 +101,13 @@ void devdrv_host_black_box_exit(void)
     black_callback.callback = devdrv_host_pcie_add_exception;
     adap_unregister_black_callback(&black_callback);
 
-    spin_lock_irqsave(&manager_info->black_box.spinlock, flags);
+    ka_task_spin_lock_irqsave(&manager_info->black_box.spinlock, flags);
     manager_info->black_box.thread_should_stop = 1;
     for (i = 0; i < MAX_EXCEPTION_THREAD; i++) {
-        list_for_each_safe(pos, n, &manager_info->black_box.exception_list[i])
+        ka_list_for_each_safe(pos, n, &manager_info->black_box.exception_list[i])
         {
-            exception = list_entry(pos, struct devdrv_exception, list);
-            list_del(&exception->list);
+            exception = ka_list_entry(pos, struct devdrv_exception, list);
+            ka_list_del(&exception->list);
             if (exception->data != NULL) {
                 dbl_kfree(exception->data);
                 exception->data = NULL;
@@ -114,12 +117,12 @@ void devdrv_host_black_box_exit(void)
         }
         manager_info->black_box.exception_num[i] = 0;
         manager_info->black_box.black_box_pid[i] = 0;
-        up(&manager_info->black_box.black_box_sema[i]);
+        ka_task_up(&manager_info->black_box.black_box_sema[i]);
     }
-    spin_unlock_irqrestore(&manager_info->black_box.spinlock, flags);
+    ka_task_spin_unlock_irqrestore(&manager_info->black_box.spinlock, flags);
 }
 
-void devdrv_host_black_box_close_check(pid_t pid)
+void devdrv_host_black_box_close_check(ka_pid_t pid)
 {
     struct devdrv_manager_info *manager_info = devdrv_get_manager_info();
     struct devdrv_exception *exception = NULL;
@@ -132,14 +135,14 @@ void devdrv_host_black_box_close_check(pid_t pid)
         return;
     }
 
-    spin_lock_irqsave(&manager_info->black_box.spinlock, flags);
+    ka_task_spin_lock_irqsave(&manager_info->black_box.spinlock, flags);
     for (i = 0; i < MAX_EXCEPTION_THREAD; i++) {
         if (manager_info->black_box.black_box_pid[i] == pid) {
             manager_info->black_box.black_box_pid[i] = 0;
-            list_for_each_safe(pos, n, &manager_info->black_box.exception_list[i])
+            ka_list_for_each_safe(pos, n, &manager_info->black_box.exception_list[i])
             {
-                exception = list_entry(pos, struct devdrv_exception, list);
-                list_del(&exception->list);
+                exception = ka_list_entry(pos, struct devdrv_exception, list);
+                ka_list_del(&exception->list);
                 if (exception->data != NULL) {
                     dbl_kfree(exception->data);
                     exception->data = NULL;
@@ -148,10 +151,10 @@ void devdrv_host_black_box_close_check(pid_t pid)
                 exception = NULL;
             }
             manager_info->black_box.exception_num[i] = 0;
-            up(&manager_info->black_box.black_box_sema[i]);
+            ka_task_up(&manager_info->black_box.black_box_sema[i]);
         }
     }
-    spin_unlock_irqrestore(&manager_info->black_box.spinlock, flags);
+    ka_task_spin_unlock_irqrestore(&manager_info->black_box.spinlock, flags);
 }
 
 STATIC struct devdrv_exception *devdrv_host_black_box_alloc_exception_data(u32 devid, u32 code,
@@ -160,7 +163,7 @@ STATIC struct devdrv_exception *devdrv_host_black_box_alloc_exception_data(u32 d
     int ret = 0;
     struct devdrv_exception *exception = NULL;
 
-    exception = dbl_kzalloc(sizeof(struct devdrv_exception), GFP_ATOMIC | __GFP_ACCOUNT);
+    exception = dbl_kzalloc(sizeof(struct devdrv_exception), KA_GFP_ATOMIC | __KA_GFP_ACCOUNT);
     if (exception == NULL) {
         devdrv_drv_err_spinlock("alloc exception node failed. devid(%u)\n", devid);
         return NULL;
@@ -171,7 +174,7 @@ STATIC struct devdrv_exception *devdrv_host_black_box_alloc_exception_data(u32 d
     exception->stamp = stamp;
 
     if ((exception->code == DEVDRV_BB_DEVICE_ID_INFORM) && (data != NULL)) {
-        exception->data = dbl_kzalloc(sizeof(struct devdrv_black_box_devids), GFP_ATOMIC | __GFP_ACCOUNT);
+        exception->data = dbl_kzalloc(sizeof(struct devdrv_black_box_devids), KA_GFP_ATOMIC | __KA_GFP_ACCOUNT);
         if (exception->data == NULL) {
             dbl_kfree(exception);
             exception = NULL;
@@ -181,7 +184,7 @@ STATIC struct devdrv_exception *devdrv_host_black_box_alloc_exception_data(u32 d
         ret = memcpy_s(exception->data, sizeof(struct devdrv_black_box_devids),
                        data, sizeof(struct devdrv_black_box_devids));
     } else if ((exception->code == DEVDRV_BB_DEVICE_STATE_INFORM) && (data != NULL)) {
-        exception->data = dbl_kzalloc(sizeof(struct devdrv_black_box_state_info), GFP_ATOMIC | __GFP_ACCOUNT);
+        exception->data = dbl_kzalloc(sizeof(struct devdrv_black_box_state_info), KA_GFP_ATOMIC | __KA_GFP_ACCOUNT);
         if (exception->data == NULL) {
             dbl_kfree(exception);
             exception = NULL;
@@ -225,17 +228,17 @@ int devdrv_host_black_box_add_exception(u32 devid, u32 code,
     }
 
     for (i = 0; i < MAX_EXCEPTION_THREAD; i++) {
-        spin_lock_irqsave(&manager_info->black_box.spinlock, flags);
+        ka_task_spin_lock_irqsave(&manager_info->black_box.spinlock, flags);
         exception = devdrv_host_black_box_alloc_exception_data(devid, code, stamp, data);
         if (exception == NULL) {
-            spin_unlock_irqrestore(&manager_info->black_box.spinlock, flags);
+            ka_task_spin_unlock_irqrestore(&manager_info->black_box.spinlock, flags);
             devdrv_drv_err("devdrv_host_black_box_alloc_exception_data failed. (dev_id=%u)\n", devid);
             return -ENOMEM;
         }
 
         if (manager_info->black_box.exception_num[i] >= DEVDRV_BLACK_BOX_MAX_EXCEPTION_NUM) {
-            old = list_first_entry(&manager_info->black_box.exception_list[i], struct devdrv_exception, list);
-            list_del(&old->list);
+            old = ka_list_first_entry(&manager_info->black_box.exception_list[i], struct devdrv_exception, list);
+            ka_list_del(&old->list);
             if (old->data != NULL) {
                 dbl_kfree(old->data);
                 old->data = NULL;
@@ -245,11 +248,11 @@ int devdrv_host_black_box_add_exception(u32 devid, u32 code,
             more = 0;
             manager_info->black_box.exception_num[i]--;
         }
-        list_add_tail(&exception->list, &manager_info->black_box.exception_list[i]);
+        ka_list_add_tail(&exception->list, &manager_info->black_box.exception_list[i]);
         manager_info->black_box.exception_num[i]++;
-        spin_unlock_irqrestore(&manager_info->black_box.spinlock, flags);
+        ka_task_spin_unlock_irqrestore(&manager_info->black_box.spinlock, flags);
         if (more) {
-            up(&manager_info->black_box.black_box_sema[i]);
+            ka_task_up(&manager_info->black_box.black_box_sema[i]);
         }
     }
 
@@ -333,23 +336,23 @@ void devdrv_host_black_box_get_exception(struct devdrv_black_box_user *black_box
         return;
     }
 
-    spin_lock_irqsave(&manager_info->black_box.spinlock, flags);
+    ka_task_spin_lock_irqsave(&manager_info->black_box.spinlock, flags);
     if (manager_info->black_box.thread_should_stop) {
         black_box_user->thread_should_stop = 1;
-        spin_unlock_irqrestore(&manager_info->black_box.spinlock, flags);
+        ka_task_spin_unlock_irqrestore(&manager_info->black_box.spinlock, flags);
         devdrv_drv_err("Thread should stop.\n");
         return;
     }
 
     ret = memset_s(black_box_user, sizeof(struct devdrv_black_box_user), 0, sizeof(struct devdrv_black_box_user));
     if (ret != 0) {
-        spin_unlock_irqrestore(&manager_info->black_box.spinlock, flags);
+        ka_task_spin_unlock_irqrestore(&manager_info->black_box.spinlock, flags);
         devdrv_drv_err("Set black_box_user to 0 failed. (ret=%d)\n", ret);
         return;
     }
 
-    if (!list_empty_careful(&manager_info->black_box.exception_list[index])) {
-        exception = list_first_entry(&manager_info->black_box.exception_list[index], struct devdrv_exception, list);
+    if (!ka_list_empty_careful(&manager_info->black_box.exception_list[index])) {
+        exception = ka_list_first_entry(&manager_info->black_box.exception_list[index], struct devdrv_exception, list);
 
         black_box_user->thread_should_stop = 0;
         black_box_user->devid = exception->devid;
@@ -357,9 +360,9 @@ void devdrv_host_black_box_get_exception(struct devdrv_black_box_user *black_box
         black_box_user->tv_sec = exception->stamp.tv_sec;
         black_box_user->tv_nsec = exception->stamp.tv_nsec;
 
-        list_del(&exception->list);
+        ka_list_del(&exception->list);
         manager_info->black_box.exception_num[index]--;
-        spin_unlock_irqrestore(&manager_info->black_box.spinlock, flags);
+        ka_task_spin_unlock_irqrestore(&manager_info->black_box.spinlock, flags);
 
         devdrv_host_black_box_priv_data_process(black_box_user, exception);
         devdrv_drv_warn("Exception code: 0x%x.\n", exception->code);
@@ -373,5 +376,5 @@ void devdrv_host_black_box_get_exception(struct devdrv_black_box_user *black_box
         exception = NULL;
         return;
     }
-    spin_unlock_irqrestore(&manager_info->black_box.spinlock, flags);
+    ka_task_spin_unlock_irqrestore(&manager_info->black_box.spinlock, flags);
 }

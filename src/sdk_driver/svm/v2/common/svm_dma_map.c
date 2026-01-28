@@ -27,7 +27,7 @@ static void _devmm_dma_unmap_pages(ka_device_t *dev, struct devmm_dma_blk *dma_b
     u32 stamp = (u32)ka_jiffies;
 
     for (i = 0; i < blk_num; i++) {
-        hal_kernel_devdrv_dma_unmap_page(dev, dma_blks[i].dma_addr, dma_blks[i].size, DMA_BIDIRECTIONAL);
+        hal_kernel_devdrv_dma_unmap_page(dev, dma_blks[i].dma_addr, dma_blks[i].size, KA_DMA_BIDIRECTIONAL);
         devmm_try_cond_resched(&stamp);
     }
 }
@@ -82,11 +82,11 @@ static int _devmm_dma_map_pages(u32 devid, struct devmm_dma_map_page_info *pg_in
         return -ENODEV;
     }
 
-    pg_shift = (pg_info->pg_type == DEVMM_NORMAL_PAGE_TYPE) ? PAGE_SHIFT : HPAGE_SHIFT;
+    pg_shift = (pg_info->pg_type == DEVMM_NORMAL_PAGE_TYPE) ? KA_MM_PAGE_SHIFT : KA_MM_HPAGE_SHIFT;
     for (i = 0, j = 0; i < pg_info->pg_num; j++, i += cont_num) {
         cont_num = devmm_get_continuous_pg_num_from_begin(pg_info->pg_type, &pg_info->pages[i], pg_info->pg_num - i);
         dma_blks[j].size = cont_num << pg_shift;
-        dma_blks[j].dma_addr = hal_kernel_devdrv_dma_map_page(dev, pg_info->pages[i], 0, dma_blks[j].size, DMA_BIDIRECTIONAL);
+        dma_blks[j].dma_addr = hal_kernel_devdrv_dma_map_page(dev, pg_info->pages[i], 0, dma_blks[j].size, KA_DMA_BIDIRECTIONAL);
         ret = ka_mm_dma_mapping_error(dev, dma_blks[j].dma_addr);
         if (ret != 0) {
             devmm_drv_err("Dma map page failed. (ret=%d; i=%llu; size=%llu)\n", ret, i, dma_blks[j].size);

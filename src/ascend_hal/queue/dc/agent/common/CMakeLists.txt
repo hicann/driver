@@ -10,3 +10,21 @@
 target_sources(queue_obj PRIVATE
     queue_agent.c
 )
+
+if (${PRODUCT} IN_LIST support_ub)
+target_sources(queue_obj PRIVATE
+    que_uma.c
+    que_urma.c
+    que_jetty.c
+    que_comm_agent.c
+    que_comm_ctx.c
+    que_comm_event.c
+    que_comm_chan.c
+    que_comm_thread.c
+    que_ini_proc.c
+    que_tgt_proc.c
+    que_inter_dev_ini.c
+    que_inter_dev_tgt.c
+    que_mem_merge.c
+)
+endif ()

@@ -14,16 +14,15 @@
 #ifndef _DEVDRV_UTIL_H_
 #define _DEVDRV_UTIL_H_
 
-#include <linux/sched.h>
-#include <linux/types.h>
 #include "dmc_kernel_interface.h"
+#include "ka_dfx_pub.h"
 
 #define module_devdrv "drv_pcie"
 
 #ifndef DRV_UT
 #define devdrv_err(fmt, ...) do { \
     drv_err(module_devdrv, "<%s:%d:%d> " fmt, \
-    current->comm, current->tgid, current->pid, ##__VA_ARGS__); \
+    ka_task_get_current_comm(), ka_task_get_current_tgid(), ka_task_get_current_pid(), ##__VA_ARGS__); \
     share_log_err(COMMON_SHARE_LOG_START, fmt, ##__VA_ARGS__); \
 } while (0);
 #else
@@ -32,28 +31,28 @@
 
 #define devdrv_warn(fmt, ...) do { \
     drv_warn(module_devdrv, "<%s:%d:%d> " fmt, \
-    current->comm, current->tgid, current->pid, ##__VA_ARGS__); \
+    ka_task_get_current_comm(), ka_task_get_current_tgid(), ka_task_get_current_pid(), ##__VA_ARGS__); \
 } while (0);
 #define devdrv_info(fmt, ...) do { \
     drv_info(module_devdrv, "<%s:%d:%d> " fmt, \
-    current->comm, current->tgid, current->pid, ##__VA_ARGS__); \
+    ka_task_get_current_comm(), ka_task_get_current_tgid(), ka_task_get_current_pid(), ##__VA_ARGS__); \
 } while (0);
 #define devdrv_event(fmt, ...) do { \
     drv_event(module_devdrv, "<%s:%d:%d> " fmt, \
-    current->comm, current->tgid, current->pid, ##__VA_ARGS__); \
+    ka_task_get_current_comm(), ka_task_get_current_tgid(), ka_task_get_current_pid(), ##__VA_ARGS__); \
 } while (0);
 #define devdrv_debug(fmt, ...)
 
 #define devdrv_err_limit(fmt, ...) do { \
-    if (printk_ratelimit() != 0) \
+    if (ka_dfx_printk_ratelimit() != 0) \
         drv_err(module_devdrv, "<%s:%d:%d> " fmt, \
-        current->comm, current->tgid, current->pid, ##__VA_ARGS__); \
+        ka_task_get_current_comm(), ka_task_get_current_tgid(), ka_task_get_current_pid(), ##__VA_ARGS__); \
 } while (0);
 
 #define devdrv_warn_limit(fmt, ...) do { \
-    if (printk_ratelimit() != 0) { \
+    if (ka_dfx_printk_ratelimit() != 0) { \
         drv_warn(module_devdrv, "<%s:%d:%d> " fmt, \
-        current->comm, current->tgid, current->pid, ##__VA_ARGS__); \
+        ka_task_get_current_comm(), ka_task_get_current_tgid(), ka_task_get_current_pid(), ##__VA_ARGS__); \
     } \
 } while (0);
 
@@ -64,14 +63,14 @@
 #define devdrv_debug_spinlock(fmt, ...)
 
 // not more than 5 kernel messages every 30s
-#define EXCLUSIVE_RATELIMIT_INTERVAL   (30 * HZ)
+#define EXCLUSIVE_RATELIMIT_INTERVAL   (30 * KA_HZ)
 #define EXCLUSIVE_RATELIMIT_BURST      5
 #define devdrv_limit_exclusive(level, id, fmt, ...) do { \
-    static DEFINE_RATELIMIT_STATE(id,               \
+    static KA_BASE_DEFINE_RATELIMIT_STATE(id,               \
                       EXCLUSIVE_RATELIMIT_INTERVAL, \
                       EXCLUSIVE_RATELIMIT_BURST);   \
-    if (__ratelimit(&id) != 0) { \
-        drv_##level(module_devdrv, "<%s:%d:%d> " fmt, current->comm, current->tgid, current->pid, ##__VA_ARGS__); \
+    if (__ka_base_ratelimit(&id) != 0) { \
+        drv_##level(module_devdrv, "<%s:%d:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), ka_task_get_current_pid(), ##__VA_ARGS__); \
     } \
 } while (0)
 

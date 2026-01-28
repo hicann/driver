@@ -7,11 +7,8 @@
 # INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
 # See LICENSE in the root of the software repository for the full text of the License.
 # ------------------------------------------------------------------------------------------------------------
-ifeq ($(DAVINCI_HIAI_DKMS),y)
-	EXTRA_CFLAGS += -I$(DRIVER_MODULE_DEVMNG_DIR)/dc/hccs
-	asdrv_dms-y += devmng/dc/hccs/dms_hccs_init.o
-	asdrv_dms-y += devmng/dc/hccs/dms_hccs_credit.o
-else #for CMake
+
+ifneq ($(filter $(PRODUCT), ascend910B),)
 	EXTRA_CFLAGS += -I$(DRIVER_MODULE_DEVMNG_DIR)/dc/hccs
 	asdrv_dms-y += devmng/dc/hccs/dms_hccs_init.o
 	asdrv_dms-y += devmng/dc/hccs/dms_hccs_credit.o

@@ -13,14 +13,10 @@
 #ifndef SVM_SHMEM_NODE_H
 #define SVM_SHMEM_NODE_H
 
-#include <linux/types.h>
-#include <linux/list.h>
-#include <linux/proc_fs.h>
-
-#include "svm_ioctl.h"
 #include "devmm_common.h"
 #include "devmm_proc_info.h"
 #include "svm_dev_res_mng.h"
+#include "svm_ioctl.h"
 
 #define DEVMM_IPC_MEM_NAME_SIZE 65
 

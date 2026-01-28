@@ -15,6 +15,7 @@
 #include "devmm_rbtree/devmm_rbtree.h"
 
 #define DEVMM_4K_PAGE_SIZE 4096U /* 4k */
+#define DEVMM_2M_PAGE_SIZE 0x200000U /* 2M */
 #define DEVMM_DVPP_ATTR_PAGE_SIZE 0x200000U /* 2M */
 
 #define DEVMM_MAP_ALIGN_SIZE 0x200000U /* 2M */
@@ -91,6 +92,7 @@ typedef struct drv_mem_handle {
     uint32_t phy_mem_type;
     bool is_shared;
     uint64_t ref;
+    uint64_t map_ref; /* halMemMap, map_ref+1 */
 } drv_mem_handle_t;
 
 struct devmm_com_heap_ops {
@@ -118,6 +120,7 @@ DVresult devmm_virt_init_com_base_heap(struct devmm_virt_com_heap *heap,
 
 DVresult devmm_alloc_mem(uint64_t *pp, size_t bytesize, DVmem_advise advise, struct devmm_virt_com_heap *heap);
 DVresult devmm_free_mem(uint64_t va, struct devmm_virt_com_heap *heap, uint64_t *free_len);
+bool devmm_is_mem_allocated(uint64_t va, struct devmm_virt_com_heap *heap);
 
 DVresult devmm_rbtree_insert_idle_mapped_tree(struct devmm_rbtree_node *rbtree_node,
     struct devmm_heap_rbtree *rbtree_queue);

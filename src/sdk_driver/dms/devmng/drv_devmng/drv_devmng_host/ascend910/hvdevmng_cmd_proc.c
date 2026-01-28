@@ -50,6 +50,7 @@
 #include "urd_feature.h"
 #include "dms_urd_forward.h"
 #include "hvdevmng_cmd_proc.h"
+#include "ka_base_pub.h"
 #include "dms_urd_forward_uk_msg.h"
 
 int hvdevmng_get_h2d_devinfo(u32 dev_id, u32 fid, struct vdevmng_ioctl_msg *iomsg)
@@ -64,9 +65,9 @@ int hvdevmng_get_h2d_devinfo(u32 dev_id, u32 fid, struct vdevmng_ioctl_msg *ioms
         return -ENODEV;
     }
 
-    atomic_inc(&dev_info->occupy_ref);
+    ka_base_atomic_inc(&dev_info->occupy_ref);
     if (dev_info->status == DEVINFO_STATUS_REMOVED) {
-        atomic_dec(&dev_info->occupy_ref);
+        ka_base_atomic_dec(&dev_info->occupy_ref);
         devdrv_drv_warn("dev %d has been reset\n", dev_id);
         return -EINVAL;
     }
@@ -81,7 +82,7 @@ int hvdevmng_get_h2d_devinfo(u32 dev_id, u32 fid, struct vdevmng_ioctl_msg *ioms
             iomsg->cmd_data.H2D_devinfo.computing_power[i] = dev_info->computing_power[i];
         }
     }
-    atomic_dec(&dev_info->occupy_ref);
+    ka_base_atomic_dec(&dev_info->occupy_ref);
 
     return ret;
 }

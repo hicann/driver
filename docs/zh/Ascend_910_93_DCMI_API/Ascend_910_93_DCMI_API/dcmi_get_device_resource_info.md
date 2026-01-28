@@ -162,8 +162,8 @@
 **调用示例<a name="zh-cn_topic_0000001206307222_zh-cn_topic_0000001189111912_zh-cn_topic_0000001167913765_toc533412083"></a>**
 
 ```
-…  
-#define MAX_PROC_NUM_IN_DEVICE 32
+…
+#define MAX_PROC_NUM_IN_DEVICE 64
 int ret;
 int card_id = 0;
 int chip_id = 0;
@@ -175,7 +175,7 @@ ret = dcmi_get_device_resource_info(card_id, chip_id, proc_info, &proc_num);
 if (ret != DCMI_OK) {
     printf("dcmi_get_device_resource_info failed. err is %d\n", ret);
 }
-return ret; 
+return ret;
 …
 ```
 

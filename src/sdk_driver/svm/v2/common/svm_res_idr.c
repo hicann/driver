@@ -10,9 +10,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#include <linux/types.h>
-#include <linux/gfp.h>
-#include <linux/idr.h>
+#include "ka_base_pub.h"
 
 #include "svm_log.h"
 #include "devmm_common.h"

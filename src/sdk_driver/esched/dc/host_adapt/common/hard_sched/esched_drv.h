@@ -218,6 +218,7 @@ struct sched_hard_res {
     u32 die_id;
     u32 cpu_work_mode; /* 0: mailbox, 1: msgq */
     int msgq_res_map_pid;
+    int sentry_mode;
     u32 topic_chan_to_cpuid[TOPIC_SCHED_MAX_CHAN_NUM];
     struct sched_thread_spec thread_spec;
 };
@@ -283,7 +284,7 @@ int esched_publish_event_to_topic(u32 chip_id, u32 event_src,
     struct sched_published_event_func *event_func);
 
 int esched_drv_fill_sqe_qos(u32 chip_id, struct sched_published_event_info *event_info,
-    struct topic_sched_sqe *sqe);
+    struct topic_sched_sqe *sqe, bool wait_thread_check);
 int esched_drv_fill_task_msg(u32 chip_id, u32 event_src, void *task_msg_data,
     struct sched_published_event_info *event_info);
 

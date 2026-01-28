@@ -286,7 +286,8 @@ int dcmi_get_device_hbm_product_info(int card_id, int device_id, struct dcmi_hbm
         return ret;
     }
 
-    if (!dcmi_board_chip_type_is_ascend_910b() && !dcmi_board_chip_type_is_ascend_910_93()) {
+    if (!dcmi_board_chip_type_is_ascend_910b() && !dcmi_board_chip_type_is_ascend_910_93() &&
+        !dcmi_board_chip_type_is_ascend_910_95()) {
         gplog(LOG_ERR, "This device does not support get hbm product info.");
         return DCMI_ERR_CODE_NOT_SUPPORT;
     }

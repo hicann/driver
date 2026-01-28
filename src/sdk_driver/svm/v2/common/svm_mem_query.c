@@ -11,23 +11,13 @@
  * GNU General Public License for more details.
  */
 
-#include <linux/dma-mapping.h>
-#include <linux/slab.h>
-#include <linux/list.h>
-#include <linux/errno.h>
-#include <linux/export.h>
-#include <linux/scatterlist.h>
-#include <linux/vmalloc.h>
-#include <linux/types.h>
-#include <linux/semaphore.h>
-
 #include "pbl_kernel_interface.h"
-#include "svm_ioctl.h"
 #include "devmm_common.h"
 #include "svm_proc_mng.h"
 #include "svm_heap_mng.h"
 #include "svm_mem_query.h"
 #include "svm_dynamic_addr.h"
+#include "svm_ioctl.h"
 
 static int devmm_get_addr_type(struct devmm_svm_process_id *process_id, u64 addr, size_t size, unsigned int *addr_flag)
 {
@@ -84,7 +74,7 @@ bool devmm_check_addr_valid(struct devmm_svm_process_id *process_id, u64 addr, u
 
     return true;
 }
-EXPORT_SYMBOL_GPL(devmm_check_addr_valid);
+KA_EXPORT_SYMBOL_GPL(devmm_check_addr_valid);
 
 int devmm_get_mem_pa_list(struct devmm_svm_process_id *process_id, u64 addr, u64 size,
     u64 *pa_list, u32 pa_num)
@@ -110,7 +100,7 @@ int devmm_get_mem_pa_list(struct devmm_svm_process_id *process_id, u64 addr, u64
 
     return ret;
 }
-EXPORT_SYMBOL_GPL(devmm_get_mem_pa_list);
+KA_EXPORT_SYMBOL_GPL(devmm_get_mem_pa_list);
 
 void devmm_put_mem_pa_list(struct devmm_svm_process_id *process_id, u64 addr, u64 size,
     u64 *pa_list, u32 pa_num)
@@ -133,7 +123,7 @@ void devmm_put_mem_pa_list(struct devmm_svm_process_id *process_id, u64 addr, u6
         devmm_shm_put_pa_list(process_id, addr, pa_list, pa_num);
     }
 }
-EXPORT_SYMBOL_GPL(devmm_put_mem_pa_list);
+KA_EXPORT_SYMBOL_GPL(devmm_put_mem_pa_list);
 
 STATIC u32 devmm_svm_get_dev_mem_page_size(struct devmm_svm_process_id *process_id, u64 addr, u64 size)
 {
@@ -180,7 +170,7 @@ u32 devmm_get_mem_page_size(struct devmm_svm_process_id *process_id, u64 addr, u
         return devmm_shm_get_page_size(process_id, addr, size);
     }
 }
-EXPORT_SYMBOL_GPL(devmm_get_mem_page_size);
+KA_EXPORT_SYMBOL_GPL(devmm_get_mem_page_size);
 
 static int devmm_get_svm_mem_pa_list_proc(u32 devid, int tgid, u64 addr, u64 size, u32 pa_num, u64 *pa_list)
 {

@@ -378,6 +378,35 @@ STATIC int dms_soc_get_pcie_info(void *feature, char *in, u32 in_len,
 }
 #endif
 
+#ifdef CFG_FEATURE_COM_CPU_CONFIG
+STATIC int dms_soc_get_hcom_cpu_num(const struct urd_cmd *cmd,
+    struct urd_cmd_kernel_para *kernel_para, struct urd_cmd_para *para)
+{
+    struct soc_mia_res_info_ex info = {0};
+    int ret = 0;
+
+    if ((cmd == NULL) || (kernel_para == NULL) || (para == NULL)) {
+        dms_err("Input urd argument is null.\n");
+        return -EINVAL;
+    }
+
+    if ((para->output == NULL) || (para->output_len != sizeof(unsigned int))) {
+        dms_err("Output argument is null, or len is wrong. (output_len=%u)\n", para->output_len);
+        return -EINVAL;
+    }
+
+    ret = soc_resmng_dev_get_mia_res_ex(kernel_para->udevid, MIA_CPU_DEV_COMCPU, &info);
+    if (ret != 0) {
+        dms_err("Failed to obtain the number of hcom cpu num. (udevid=%u; ret=%d)\n", kernel_para->udevid, ret);
+        return ret;
+    }
+    *((unsigned int *)para->output) = (unsigned int)info.total_num;
+    dms_debug("Succeeded in obtaining the hcom cpu num. (udevid=%u; num=%u)\n", kernel_para->udevid, info.total_num);
+
+    return 0;
+}
+#endif
+
 BEGIN_DMS_MODULE_DECLARATION(DMS_MODULE_BASIC_INFO)
 BEGIN_FEATURE_COMMAND()
 #if (defined(CFG_HOST_ENV)) && (!defined(CFG_FEATURE_UNSUPPORT_BASIC_INFO))
@@ -525,6 +554,15 @@ ADD_FEATURE_COMMAND(DMS_MODULE_BASIC_INFO,
     NULL,
     DMS_SUPPORT_ALL,
     dms_soc_get_pcie_info)
+#endif
+#ifdef CFG_FEATURE_COM_CPU_CONFIG
+ADD_DEV_FEATURE_COMMAND(DMS_MODULE_BASIC_INFO,
+    DMS_MAIN_CMD_BASIC,
+    DMS_SUBCMD_GET_HCOM_CPU_NUM,
+    NULL,
+    NULL,
+    DMS_SUPPORT_ALL,
+    dms_soc_get_hcom_cpu_num)
 #endif
 END_FEATURE_COMMAND()
 END_MODULE_DECLARATION()

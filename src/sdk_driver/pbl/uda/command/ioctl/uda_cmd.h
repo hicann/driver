@@ -13,7 +13,7 @@ struct uda_user_info {
     unsigned int local_flag; /* 1: local device; 0: not local */
     unsigned int max_dev_num; /* max logic dev num, host is 100, device is 32 */
     unsigned int max_udev_num; /* admin right valid, max unique dev numhost is 1124, device is 64 */
-    unsigned int support_udev_mng; /* obp not surport, milan surport */
+    unsigned int support_udev_mng; /* obp not support, milan support */
 };
 
 struct uda_setup_table {

@@ -69,10 +69,10 @@ void hw_dvt_debugfs_add_vdavinci(struct hw_vdavinci *vdavinci)
     }
 
     if (vdavinci->dvt->dev_num > 1) {
-        ret = snprintf_s(name, MAX_NAME_LEN, MAX_NAME_LEN - 1, "vascend_p%u_%d",
+        ret = snprintf_s(name, MAX_NAME_LEN, MAX_NAME_LEN - 1, "vascend_p%u_%u",
                          vdavinci->dev.dev_index, vdavinci->id);
     } else {
-        ret = snprintf_s(name, MAX_NAME_LEN, MAX_NAME_LEN - 1, "vascend%d",
+        ret = snprintf_s(name, MAX_NAME_LEN, MAX_NAME_LEN - 1, "vascend%u",
                          vdavinci->id);
     }
     if (ret < 0) {
@@ -98,46 +98,6 @@ void hw_dvt_debugfs_remove_vdavinci(struct hw_vdavinci *vdavinci)
 {
     debugfs_remove_recursive(vdavinci->debugfs.debugfs);
     vdavinci->debugfs.debugfs = NULL;
-}
-
-STATIC int vdavinci_dma_cache_info_show(struct seq_file *s, void *unused)
-{
-    struct hw_vdavinci *vdavinci = s->private;
-    struct rb_root *root = &vdavinci->vdev.dma_cache;
-    struct rb_node *node = NULL;
-    struct dvt_dma *itr = NULL;
-
-    mutex_lock(&vdavinci->vdev.cache_lock);
-    seq_printf(s, "%-32s %-32s %-32s\n", "gfn", "dma_addr", "size");
-    for (node = rb_first(root); node; node = rb_next(node)) {
-        itr = rb_entry(node, struct dvt_dma, dma_node);
-        seq_printf(s, "0x%-32llx 0x%-32llx %-32lu\n", itr->gfn, itr->dma_addr, itr->size);
-    }
-    mutex_unlock(&vdavinci->vdev.cache_lock);
-
-    return 0;
-}
-
-static int seq_file_dma_cache_info_open(struct inode *inode, struct file *file)
-{
-    return single_open(file, &vdavinci_dma_cache_info_show, inode->i_private);
-}
-
-static const struct file_operations vdavinci_dma_cache_info_fops = {
-    .owner = THIS_MODULE,
-    .open = seq_file_dma_cache_info_open,
-    .read = seq_read,
-    .llseek = seq_lseek,
-    .release = single_release,
-};
-
-/**
- * hw_dvt_debugfs_add_dma_cache_info - register  debugfs dma_cache_info entries for a vdavinci
- */
-void hw_dvt_debugfs_add_cache_info(struct hw_vdavinci *vdavinci)
-{
-    vdavinci->debugfs.debugfs_cache_info = debugfs_create_file("dma_cache_info", 0400,
-        vdavinci->debugfs.debugfs, vdavinci, &vdavinci_dma_cache_info_fops);
 }
 
 STATIC void hw_dvt_debugfs_release(struct kref *ref)
@@ -173,7 +133,7 @@ void hw_dvt_debugfs_init(struct hw_dvt *dvt)
         goto debugfs_root;
     }
 
-    ret = snprintf_s(name, MAX_NAME_LEN, MAX_NAME_LEN - 1, "vascend_%02x_%02x_%d",
+    ret = snprintf_s(name, MAX_NAME_LEN, MAX_NAME_LEN - 1, "vascend_%02x_%02x_%u",
                      pdev->bus->number, PCI_SLOT(pdev->devfn), PCI_FUNC(pdev->devfn));
     if (ret < 0) {
         vascend_err(vdavinci_priv->dev, "debugfs init failed, "

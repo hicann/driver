@@ -279,24 +279,12 @@ STATIC int hw_vdavinci_iommu_notifier(struct notifier_block *nb,
     if (action == VFIO_IOMMU_NOTIFY_DMA_UNMAP) {
         unsigned long start_gfn;
         struct vfio_iommu_type1_dma_unmap *unmap = data;
-#if ((LINUX_VERSION_CODE <= KERNEL_VERSION(5,13,0)))
-        struct vm_dom_info *vm_dom;
-#endif
 
         if (unmap == NULL) {
             return NOTIFY_BAD;
         }
         start_gfn = unmap->iova >> PAGE_SHIFT;
-#if ((LINUX_VERSION_CODE <= KERNEL_VERSION(5,13,0)))
         mutex_lock(&vdavinci->vdev.cache_lock);
-        vm_dom = vdavinci->vdev.domain;
-        if (vm_dom == NULL && vdavinci->vdev.nr_cache_entries > 0) {
-            dvt_cache_remove_ram(vdavinci, start_gfn, unmap->size);
-            mutex_unlock(&vdavinci->vdev.cache_lock);
-            return NOTIFY_OK;
-        }
-#endif
-
         hw_vdavinci_unplug_ram(vdavinci, start_gfn, unmap->size);
         mutex_unlock(&vdavinci->vdev.cache_lock);
     }
@@ -646,7 +634,7 @@ STATIC struct vdavinci_bar_map *
 hw_vdavinci_find_bar_map(struct vdavinci_mapinfo *mmio_map_info,
                          unsigned long offset)
 {
-    int i = 0;
+    u64 i = 0;
     struct vdavinci_bar_map *map = NULL;
 
     for (i = 0; i < mmio_map_info->num; i++) {
@@ -861,7 +849,7 @@ STATIC int hw_vdavinci_set_msix_trigger(struct hw_vdavinci *vdavinci,
                 vdavinci->vdev.msix_triggers[i] = NULL;
             }
 
-            fd = fds ? fds[j] : -1;
+            fd = fds ? (int)fds[j] : -1;
             if (fd < 0) {
                 continue;
             }
@@ -1015,7 +1003,7 @@ STATIC struct vfio_region_info_cap_sparse_mmap *
 hw_vdavinci_device_get_sparse_info(struct vdavinci_mapinfo *mmio_map_info, unsigned int map_num)
 {
     struct vfio_region_info_cap_sparse_mmap *sparse = NULL;
-    int i = 0, j = 0;
+    u64 i = 0, j = 0;
     unsigned int nr_areas = map_num;
     struct vdavinci_bar_map *map;
 
@@ -1082,7 +1070,8 @@ STATIC long hw_vdavinci_device_get_bar_info(struct hw_vdavinci *vdavinci,
 STATIC int hw_vdavinci_get_vfio_region_info(uintptr_t arg, struct vfio_region_info *info,
                                             struct vdavinci_mapinfo *mmio_map_info)
 {
-    int i = 0, ret = 0, cap_type_id = 0;
+    u64 i = 0;
+    int ret = 0, cap_type_id = 0;
     unsigned int map_num = 0;
     struct vdavinci_bar_map *map = NULL;
     struct vfio_region_info_cap_sparse_mmap *sparse = NULL;
@@ -1179,7 +1168,7 @@ STATIC long _hw_vdavinci_device_get_irq_info(uintptr_t arg,
 
     info.flags = VFIO_IRQ_INFO_EVENTFD;
 
-    info.count = hw_vdavinci_get_irq_count(vdavinci, info.index);
+    info.count = (unsigned int)hw_vdavinci_get_irq_count(vdavinci, info.index);
 
     if (info.index == VFIO_PCI_INTX_IRQ_INDEX) {
         info.flags |= (VFIO_IRQ_INFO_MASKABLE | VFIO_IRQ_INFO_AUTOMASKED);
@@ -1528,21 +1517,7 @@ STATIC int kvmdt_guest_init(struct mdev_device *mdev)
     info->vdavinci = vdavinci;
     info->kvm = kvm;
     kvm_get_kvm(info->kvm);
-#if (LINUX_VERSION_CODE <= KERNEL_VERSION(5,13,0))
-    dvt_cache_init(vdavinci);
-#endif
 
-#if ((LINUX_VERSION_CODE < KERNEL_VERSION(4,19,0)) && (!defined(DRV_UT)))
-    info->debugfs_cache_entries = debugfs_create_u64(
-        "kvmdt_nr_cache_entries",
-        0400, vdavinci->debugfs.debugfs,
-        &vdavinci->vdev.nr_cache_entries);
-#elif (LINUX_VERSION_CODE <= KERNEL_VERSION(5,13,0))
-    info->debugfs_cache_entries = debugfs_create_ulong(
-        "kvmdt_nr_cache_entries",
-        0400, vdavinci->debugfs.debugfs,
-        &vdavinci->vdev.nr_cache_entries);
-#endif
     return 0;
 }
 
@@ -1575,9 +1550,6 @@ STATIC void kvmdt_guest_exit(struct kvmdt_guest_info *info)
 {
     debugfs_remove(info->debugfs_cache_entries);
     kvm_put_kvm(info->kvm);
-#if (LINUX_VERSION_CODE <= KERNEL_VERSION(5,13,0))
-    dvt_cache_destroy(info->vdavinci);
-#endif
     hw_vdavinci_dma_pool_uninit(info->vdavinci);
     hw_vdavinci_release_vm_domain(info->vdavinci);
     vfree(info);
@@ -1683,13 +1655,6 @@ struct hw_kvmdt_ops g_hw_kvmdt_ops = {
     .read_gpa = kvmdt_read_gpa,
     .write_gpa = kvmdt_write_gpa,
     .gfn_to_mfn = kvmdt_gfn_to_mfn,
-#if (LINUX_VERSION_CODE <= KERNEL_VERSION(5,13,0))
-    .dma_map_guest_page = kvmdt_dma_map_guest_page,
-    .dma_unmap_guest_page = kvmdt_dma_unmap_guest_page,
-#else
-    .dma_map_guest_page = NULL,
-    .dma_unmap_guest_page = NULL,
-#endif
     .is_valid_gfn = kvmdt_is_valid_gfn,
     .mmio_get = kvmdt_get_mmio_info,
     .dma_pool_init = hw_vdavinci_dma_pool_init,

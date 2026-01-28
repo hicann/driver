@@ -11,10 +11,6 @@
  * GNU General Public License for more details.
  */
 
-#include <linux/delay.h>
-#include <linux/timex.h>
-#include <linux/rtc.h>
-
 #include "vpc_kernel_interface.h"
 #include "comm_kernel_interface.h"
 #include "devdrv_util.h"
@@ -24,6 +20,7 @@
 #include "devdrv_mem_alloc.h"
 #include "devdrv_vpc.h"
 #include "pbl/pbl_uda.h"
+#include "ka_kernel_def_pub.h"
 
 STATIC struct devdrv_dma_dev *devdrv_get_dma_dev_by_devid(u32 dev_id)
 {
@@ -319,7 +316,7 @@ STATIC int devdrv_vpc_dma_prepare_alloc_sq_addr(u32 dev_id, struct devdrv_vpc_cm
     u32 node_cnt = dma_info->node_cnt;
     int ret;
 
-    dma_prepare = devdrv_kzalloc(sizeof(struct devdrv_dma_prepare), GFP_KERNEL | __GFP_ACCOUNT);
+    dma_prepare = devdrv_kzalloc(sizeof(struct devdrv_dma_prepare), KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
     if (dma_prepare == NULL) {
         devdrv_err("Alloc dma_prepare failed. (dev_id=%u)\n", dev_id);
         return -ENOMEM;
@@ -334,7 +331,7 @@ STATIC int devdrv_vpc_dma_prepare_alloc_sq_addr(u32 dev_id, struct devdrv_vpc_cm
 
     dma_info->dma_desc_info.sq_dma_addr = dma_prepare->sq_dma_addr;
     dma_info->dma_desc_info.sq_size = dma_prepare->sq_size;
-    dma_info->dma_desc_info.cq_dma_addr = (~(dma_addr_t)0);
+    dma_info->dma_desc_info.cq_dma_addr = (~(ka_dma_addr_t)0);
     dma_info->dma_desc_info.cq_size = 0;
 
     return 0;
@@ -395,7 +392,7 @@ int devdrv_vpc_msg_send(u32 dev_id, u32 cmd_type, struct devdrv_vpc_msg *vpc_msg
             break;
         }
 
-        usleep_range(100, 200);
+        ka_system_usleep_range(100, 200); // 100us ~ 200us
         retry_time--;
     } while (retry_time != 0);
 
@@ -533,7 +530,7 @@ int devdrv_vpc_client_init(u32 devid)
 #endif
     return 0;
 }
-EXPORT_SYMBOL(devdrv_vpc_client_init);
+KA_EXPORT_SYMBOL(devdrv_vpc_client_init);
 
 int devdrv_vpc_client_uninit(u32 devid)
 {
@@ -552,11 +549,11 @@ int devdrv_vpc_client_uninit(u32 devid)
 #endif
     return 0;
 }
-EXPORT_SYMBOL(devdrv_vpc_client_uninit);
+KA_EXPORT_SYMBOL(devdrv_vpc_client_uninit);
 
 STATIC int devdrv_mdev_dma_iova_addr_range_init(struct devdrv_pci_ctrl *pci_ctrl)
 {
-    pci_ctrl->iova_range = devdrv_kzalloc(sizeof(struct devdrv_dma_iova_addr_range), GFP_KERNEL);
+    pci_ctrl->iova_range = devdrv_kzalloc(sizeof(struct devdrv_dma_iova_addr_range), KA_GFP_KERNEL);
     if (pci_ctrl->iova_range == NULL) {
         devdrv_err("Alloc iova_range fail. (devid=%u)\n", pci_ctrl->dev_id);
         return -EINVAL;

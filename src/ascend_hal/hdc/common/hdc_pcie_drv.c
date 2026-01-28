@@ -272,10 +272,10 @@ signed int hdc_pcie_connect(mmProcess handle, signed int devId, signed int servi
         return DRV_ERROR_INVALID_HANDLE;
     }
 
-    hdcCmd.conncet.dev_id = devId;
-    hdcCmd.conncet.service_type = serviceType;
-    hdcCmd.conncet.peer_pid = peerpid;
-    hdcCmd.conncet.timeout = (flag & CONVERT_TO_TIMEOUT_MASK);
+    hdcCmd.connect.dev_id = devId;
+    hdcCmd.connect.service_type = serviceType;
+    hdcCmd.connect.peer_pid = peerpid;
+    hdcCmd.connect.timeout = (flag & CONVERT_TO_TIMEOUT_MASK);
 
     (void)clock_gettime(CLOCK_MONOTONIC, &now_time);
     start_time = (unsigned long)((now_time.tv_sec * CONVERT_MS_TO_S) + (now_time.tv_nsec / CONVERT_MS_TO_NS));
@@ -283,15 +283,15 @@ signed int hdc_pcie_connect(mmProcess handle, signed int devId, signed int servi
     while (1) {
         ret = hdc_ioctl(handle, HDCDRV_CONNECT, &hdcCmd);
         if (ret == 0) {
-            pSession->sockfd = hdcCmd.conncet.session;
+            pSession->sockfd = hdcCmd.connect.session;
             pSession->device_id = (unsigned int)devId;
-            pSession->session_cur_alloc_idx = hdcCmd.conncet.session_cur_alloc_idx;
+            pSession->session_cur_alloc_idx = hdcCmd.connect.session_cur_alloc_idx;
             return 0;
          } else if (ret == ERESTARTSYS) {
             (void)clock_gettime(CLOCK_MONOTONIC, &now_time);
             cost_time = (unsigned int)((unsigned long)((now_time.tv_sec * CONVERT_MS_TO_S) +
                     (now_time.tv_nsec / CONVERT_MS_TO_NS)) - start_time);
-            if (cost_time > (hdcCmd.conncet.timeout * CONVERT_MS_TO_S)) {
+            if (cost_time > (hdcCmd.connect.timeout * CONVERT_MS_TO_S)) {
                 return -HDCDRV_CONNECT_TIMEOUT;
             }
         } else {

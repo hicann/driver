@@ -29,7 +29,7 @@
 #endif
 
 /*
-   usage : surport feature global/device/task scope auto init and uninit
+   usage : support feature global/device/task scope auto init and uninit
            feature can define init or uninit function use this macros:
                global: DECLAER_FEATURE_AUTO_INIT / DECLAER_FEATURE_AUTO_UNINIT
                device: DECLAER_FEATURE_AUTO_INIT_DEV / DECLAER_FEATURE_AUTO_UNINIT_DEV
@@ -39,7 +39,7 @@
                   when device online or offline
            task scope init/uninit call module_feature_auto_init_task/module_feature_auto_uninit_task
                   when proc add or remove
-       When there are multiple auto-initialization features in the module and you want to contrl the sequence,
+       When there are multiple auto-initialization features in the module and you want to control the sequence,
        you can use stage param.
            stage : scope 0-9, stage 0 has the highest priority.
                   init: functions are invoked in the sequence of stages.
@@ -112,8 +112,8 @@ typedef int (*_fearture_init_selfdef_scope_func)(void *priv);
 typedef void (*_fearture_uninit_selfdef_scope_func)(void *priv);
 
 
-/* the function decleared will be auto call in module insert
-   init_fn : shoule like "int _fearture_init_func(void)" */
+/* the function declared will be auto call in module insert
+   init_fn : should like "int _fearture_init_func(void)" */
 #define __DECLAER_FEATURE_AUTO_INIT(module_name, init_fn, stage) \
     int module_name##_##stage##_init_##init_fn(void); \
     int module_name##_##stage##_init_##init_fn(void) \
@@ -126,8 +126,8 @@ typedef void (*_fearture_uninit_selfdef_scope_func)(void *priv);
 #define DECLAER_FEATURE_AUTO_INIT(init_fn, stage) \
     _DECLAER_FEATURE_AUTO_INIT(AUTO_INIT_MODULE_NAME, init_fn, stage)
 
-/* the function decleared will be auto call in module remove
-   init_fn : shoule like "void _fearture_uninit_func(void)" */
+/* the function declared will be auto call in module remove
+   init_fn : should like "void _fearture_uninit_func(void)" */
 #define __DECLAER_FEATURE_AUTO_UNINIT(module_name, uninit_fn, stage) \
     void module_name##_##stage##_uninit_##uninit_fn(void); \
     void module_name##_##stage##_uninit_##uninit_fn(void) \
@@ -140,8 +140,8 @@ typedef void (*_fearture_uninit_selfdef_scope_func)(void *priv);
 #define DECLAER_FEATURE_AUTO_UNINIT(uninit_fn, stage) \
     _DECLAER_FEATURE_AUTO_UNINIT(AUTO_INIT_MODULE_NAME, uninit_fn, stage)
 
-/* the function decleared will be auto call when dev online
-   init_fn : shoule like "int _fearture_init_dev_func(u32 udevid)" */
+/* the function declared will be auto call when dev online
+   init_fn : should like "int _fearture_init_dev_func(u32 udevid)" */
 #define __DECLAER_FEATURE_AUTO_INIT_DEV(module_name, init_fn, stage) \
     int module_name##_##stage##_dev_init_##init_fn(u32 udevid); \
     int module_name##_##stage##_dev_init_##init_fn(u32 udevid) \
@@ -154,8 +154,8 @@ typedef void (*_fearture_uninit_selfdef_scope_func)(void *priv);
 #define DECLAER_FEATURE_AUTO_INIT_DEV(init_fn, stage) \
     _DECLAER_FEATURE_AUTO_INIT_DEV(AUTO_INIT_MODULE_NAME, init_fn, stage)
 
-/* the function decleared will be auto call when dev offline
-   init_fn : shoule like "void _fearture_uninit_dev_func(u32 udevid)" */
+/* the function declared will be auto call when dev offline
+   init_fn : should like "void _fearture_uninit_dev_func(u32 udevid)" */
 #define __DECLAER_FEATURE_AUTO_UNINIT_DEV(module_name, uninit_fn, stage) \
     void module_name##_##stage##_dev_uninit_##uninit_fn(u32 udevid); \
     void module_name##_##stage##_dev_uninit_##uninit_fn(u32 udevid) \
@@ -168,8 +168,8 @@ typedef void (*_fearture_uninit_selfdef_scope_func)(void *priv);
 #define DECLAER_FEATURE_AUTO_UNINIT_DEV(uninit_fn, stage) \
     _DECLAER_FEATURE_AUTO_UNINIT_DEV(AUTO_INIT_MODULE_NAME, uninit_fn, stage)
 
-/* the function decleared will be auto call when task init
-   init_fn : shoule like "int _fearture_init_task_func(u32 udevid, int pid)" */
+/* the function declared will be auto call when task init
+   init_fn : should like "int _fearture_init_task_func(u32 udevid, int pid)" */
 #define __DECLAER_FEATURE_AUTO_INIT_TASK(module_name, init_fn, stage) \
     int module_name##_##stage##_task_init_##init_fn(u32 udevid, int pid, void *start_time); \
     int module_name##_##stage##_task_init_##init_fn(u32 udevid, int pid, void *start_time) \
@@ -182,8 +182,8 @@ typedef void (*_fearture_uninit_selfdef_scope_func)(void *priv);
 #define DECLAER_FEATURE_AUTO_INIT_TASK(init_fn, stage) \
     _DECLAER_FEATURE_AUTO_INIT_TASK(AUTO_INIT_MODULE_NAME, init_fn, stage)
 
-/* the function decleared will be auto call when task uninit
-   init_fn : shoule like "void _fearture_uninit_task_func(u32 udevid, int pid)" */
+/* the function declared will be auto call when task uninit
+   init_fn : should like "void _fearture_uninit_task_func(u32 udevid, int pid)" */
 #define __DECLAER_FEATURE_AUTO_UNINIT_TASK(module_name, uninit_fn, stage) \
     void module_name##_##stage##_task_uninit_##uninit_fn(u32 udevid, int pid, void *start_time); \
     void module_name##_##stage##_task_uninit_##uninit_fn(u32 udevid, int pid, void *start_time) \
@@ -196,8 +196,8 @@ typedef void (*_fearture_uninit_selfdef_scope_func)(void *priv);
 #define DECLAER_FEATURE_AUTO_UNINIT_TASK(uninit_fn, stage) \
     _DECLAER_FEATURE_AUTO_UNINIT_TASK(AUTO_INIT_MODULE_NAME, uninit_fn, stage)
 
-/* the function decleared will be auto call when module_feature_auto_init_selfdef called
-   init_fn : shoule like "int _fearture_init_selfdef_func(void *priv)" */
+/* the function declared will be auto call when module_feature_auto_init_selfdef called
+   init_fn : should like "int _fearture_init_selfdef_func(void *priv)" */
 #define __DECLAER_FEATURE_AUTO_INIT_BY_SCOPE(module_name, scope, init_fn, stage) \
     int module_name##_##stage##_##scope##_init_##init_fn(void *priv); \
     int module_name##_##stage##_##scope##_init_##init_fn(void *priv) \
@@ -210,8 +210,8 @@ typedef void (*_fearture_uninit_selfdef_scope_func)(void *priv);
 #define DECLAER_FEATURE_AUTO_INIT_BY_SCOPE(scope, init_fn, stage) \
     _DECLAER_FEATURE_AUTO_INIT_BY_SCOPE(AUTO_INIT_MODULE_NAME, scope, init_fn, stage)
 
-/* the function decleared will be auto call when module_feature_auto_uninit_selfdef called
-   init_fn : shoule like "void _fearture_uninit_selfdef_func(void *priv)" */
+/* the function declared will be auto call when module_feature_auto_uninit_selfdef called
+   init_fn : should like "void _fearture_uninit_selfdef_func(void *priv)" */
 #define __DECLAER_FEATURE_AUTO_UNINIT_BY_SCOPE(module, scope, uninit_fn, stage) \
     void module_name##_##stage##_##scope##_uninit_##uninit_fn(void *priv); \
     void module_name##_##stage##_##scope##_uninit_##uninit_fn(void *priv) \
@@ -462,7 +462,7 @@ static inline void module_feature_auto_uninit_by_scope(const char *scope, void *
 
 typedef void (*_fearture_show_task_func)(u32 udevid, int pid, int feature_id, struct seq_file *seq);
 
-/* the function decleared will be auto call when show task */
+/* the function declared will be auto call when show task */
 #define __DECLAER_FEATURE_AUTO_SHOW_TASK(module_name, show_task_fn, stage) \
     void module_name##_##stage##_task_show_##show_task_fn(u32 udevid, int pid, int feature_id, struct seq_file *seq); \
     void module_name##_##stage##_task_show_##show_task_fn(u32 udevid, int pid, int feature_id, struct seq_file *seq)  \
@@ -514,7 +514,7 @@ static inline void module_feature_auto_show_task(u32 udevid, int pid, int featur
 
 typedef void (*_fearture_show_dev_func)(u32 udevid, int feature_id, struct seq_file *seq);
 
-/* the function decleared will be auto call when show dev */
+/* the function declared will be auto call when show dev */
 #define __DECLAER_FEATURE_AUTO_SHOW_DEV(module_name, show_dev_fn, stage) \
     void module_name##_##stage##_dev_show_##show_dev_fn(u32 udevid, int feature_id, struct seq_file *seq); \
     void module_name##_##stage##_dev_show_##show_dev_fn(u32 udevid, int feature_id, struct seq_file *seq)  \
