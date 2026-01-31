@@ -44,8 +44,8 @@ STATIC int dmanage_common_ioctl(int cmd, void *arg)
     return (ret == -1) ? errno_to_user_errno(-errno) : errno_to_user_errno(ret);
 }
 
-int dmanage_set_device_share(unsigned int device_id, unsigned int main_cmd,
-    unsigned int sub_cmd, const void *buf, unsigned int *size)
+int dmanage_set_device_share(unsigned int device_id, unsigned int main_cmd __attribute__((unused)),
+    unsigned int sub_cmd __attribute__((unused)), const void *buf, unsigned int *size)
 {
     int ret;
     struct device_share_para para = {0};
@@ -64,7 +64,7 @@ int dmanage_set_device_share(unsigned int device_id, unsigned int main_cmd,
 
     para.dev_id = devid;
     para.opcode = DEVDRV_SET_DEVICE_SHARE;
-    para.dev_share_flag = *(int *)buf;
+    para.dev_share_flag = *(const int *)buf;
 
     ret = dmanage_common_ioctl(DEVDRV_MANAGER_CONFIG_DEVICE_SHARE, (void*)&para);
     if (ret != 0) {
@@ -74,8 +74,8 @@ int dmanage_set_device_share(unsigned int device_id, unsigned int main_cmd,
     return 0;
 }
 
-int dmanage_get_device_share(unsigned int device_id, unsigned int main_cmd,
-    unsigned int sub_cmd, void *buf, unsigned int *size)
+int dmanage_get_device_share(unsigned int device_id, unsigned int main_cmd __attribute__((unused)),
+    unsigned int sub_cmd __attribute__((unused)), void *buf, unsigned int *size)
 {
     int ret;
     struct device_share_para para = {0};

@@ -14,12 +14,14 @@ target_sources(drvdsmi_host PRIVATE
     dsmi_product_ext.c
     dsmi_device_info.c
     dsmi_device_pcie_domain.c
-    $<$<STREQUAL:${PRODUCT},ascend310>:devdrv_alarm.c>
-    $<$<STREQUAL:${PRODUCT},ascend310>:dsmi_device_share.c>
-    $<$<STREQUAL:${PRODUCT},ascend310p>:devdrv_alarm.c>
-    $<$<STREQUAL:${PRODUCT},ascend310p>:dsmi_device_share.c>
-    $<$<STREQUAL:${PRODUCT},ascend310B>:devdrv_alarm.c>
-    $<$<STREQUAL:${PRODUCT},ascend310B>:dsmi_device_share.c>
+    $<$<STREQUAL:${PRODUCT},ascend310>:${CMAKE_CURRENT_LIST_DIR}/devdrv_alarm.c>
+    $<$<STREQUAL:${PRODUCT},ascend310>:${CMAKE_CURRENT_LIST_DIR}/dsmi_device_share.c>
+    $<$<STREQUAL:${PRODUCT},ascend310p>:${CMAKE_CURRENT_LIST_DIR}/devdrv_alarm.c>
+    $<$<STREQUAL:${PRODUCT},ascend310p>:${CMAKE_CURRENT_LIST_DIR}/dsmi_device_share.c>
+    $<$<STREQUAL:${PRODUCT},ascend310B>:${CMAKE_CURRENT_LIST_DIR}/devdrv_alarm.c>
+    $<$<STREQUAL:${PRODUCT},ascend310B>:${CMAKE_CURRENT_LIST_DIR}/dsmi_device_share.c>
+    $<$<STREQUAL:${PRODUCT},ascend910B>:${CMAKE_CURRENT_LIST_DIR}/devdrv_alarm.c>
+    $<$<STREQUAL:${PRODUCT},ascend910B>:${CMAKE_CURRENT_LIST_DIR}/dsmi_device_share.c>
 )
 
 target_include_directories(drvdsmi_host PRIVATE
@@ -68,5 +70,6 @@ target_compile_definitions(drvdsmi_host PRIVATE
     $<$<STREQUAL:${PRODUCT},ascend910B>:CFG_FEATURE_SERDES_INFO>
     $<$<STREQUAL:${PRODUCT},ascend910B>:CFG_FEATURE_INIT_MCU_BOARD_ID>
     $<$<STREQUAL:${PRODUCT},ascend910B>:CFG_FEATURE_HCCS_BANDWIDTH>
+    $<$<STREQUAL:${PRODUCT},ascend910B>:CFG_FEATURE_DEVICE_SHARE>
     $<$<STREQUAL:${PRODUCT},ascend910B>:CFG_FEATURE_AICPU_CUSTOM_CERT>
 )

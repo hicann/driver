@@ -35,6 +35,7 @@
         <file value="vnpu_config_recover.sh" install_own="root:root" install_mod="500" install_type="run;devel" install_path="driver/script/" dst_path="driver/script"/>
         <file value="msn_config_recover.sh" install_own="root:root" install_mod="500" install_type="run;devel" install_path="driver/script/" dst_path="driver/script"/>
         <file value="custom_op_config_recover.sh" install_own="root:root" install_mod="500" install_type="run;devel" install_path="driver/script/" dst_path="driver/script"/>
+        <file value="device_share_config_recover.sh" install_own="root:root" install_mod="500" install_type="run;devel" install_path="driver/script/" dst_path="driver/script"/>
     </file_info>
     <file_info value="tools" copy_type="delivery" src_path="lib/host" dst_path="driver/tools"
     install_mod="555" install_own="root:root">
