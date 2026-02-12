@@ -930,7 +930,7 @@ struct hdcdrv_service *vhdch_search_service(u32 devid, u32 fid, int service_type
 
 void hdcdrv_iova_fmem_unmap(u32 dev_id, u32 fid, struct hdcdrv_fast_mem* f_mem, u32 num);
 int hdcdrv_iova_fmem_map(u32 dev_id, u32 fid, struct hdcdrv_fast_mem* f_mem);
-void hdcdrv_kvfree(const void *addr, int level);
+void hdcdrv_kvfree(void **addr, int level);
 struct hdcdrv_dev_fmem *hdcdrv_get_dev_fmem_sep(int devid);
 struct hdcdrv_service *hdcdrv_search_service(u32 dev_id, u32 fid, int service_type, u64 host_pid);
 int hdcdrv_service_level_init(int service_type);

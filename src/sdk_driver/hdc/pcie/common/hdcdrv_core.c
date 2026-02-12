@@ -536,7 +536,7 @@ STATIC void hdcdrv_print_status(int service_type)
                 server_count[HDCDRV_SESSION_STATUS_CLOSING * HDCDRV_SUPPORT_MAX_SERVICE + i]);
         }
     }
-    hdcdrv_kvfree(server_count, KA_SUB_MODULE_TYPE_1);
+    hdcdrv_kvfree((void **)&server_count, KA_SUB_MODULE_TYPE_1);
     print_limit_count[service_type]++;
 
     hdcdrv_err_limit("Get session info. (idx=%d; state_idle=%u; connected=%u; remote_close=%u; others=%u)\n",
@@ -2517,7 +2517,7 @@ STATIC int hdcdrv_add_mem_info(int devid, u32 fid, u32 rb_side, struct hdcdrv_ct
             hdcdrv_fast_node_erase(&dev_fmem->rb_lock, rbtree, f_node);
         }
         hdcdrv_node_status_init(f_node);
-        hdcdrv_kvfree(f_node->fast_mem.mem, KA_SUB_MODULE_TYPE_2);
+        hdcdrv_kvfree((void **)&f_node->fast_mem.mem, KA_SUB_MODULE_TYPE_2);
         hdcdrv_fast_node_free(f_node);
     }
 
@@ -2571,7 +2571,7 @@ add_remote_fail:
         hdcdrv_iova_fmem_unmap((u32)devid, fid, &(f_node->fast_mem), (u32)f_node->fast_mem.phy_addr_num);
     }
 iova_fail:
-    hdcdrv_kvfree(f_node->fast_mem.mem, KA_SUB_MODULE_TYPE_2);
+    hdcdrv_kvfree((void **)&f_node->fast_mem.mem, KA_SUB_MODULE_TYPE_2);
     hdcdrv_fast_node_free(f_node);
     return ret;
 }
@@ -2618,7 +2618,7 @@ STATIC int hdcdrv_del_mem_info(int devid, u32 fid, u32 rb_side, const struct hdc
         hdcdrv_fast_node_erase(&dev_fmem->rb_lock, rbtree, f_node);
     }
     hdcdrv_node_status_init(f_node);
-    hdcdrv_kvfree(f_node->fast_mem.mem, KA_SUB_MODULE_TYPE_2);
+    hdcdrv_kvfree((void **)&f_node->fast_mem.mem, KA_SUB_MODULE_TYPE_2);
     hdcdrv_fast_node_free(f_node);
 
     return HDCDRV_OK;
@@ -3627,7 +3627,7 @@ STATIC void hdcdrv_free_service_conn_req(struct hdcdrv_service *service)
                 connect_t->session_fd);
         }
 #endif
-        hdcdrv_kvfree(connect_t, KA_SUB_MODULE_TYPE_1);
+        hdcdrv_kvfree((void **)&connect_t, KA_SUB_MODULE_TYPE_1);
         connect_t = NULL;
     }
 
@@ -3661,7 +3661,7 @@ STATIC int hdcdrv_ctrl_msg_connect_handle(const struct hdcdrv_ctrl_msg *msg, str
 
     ret = hdcdrv_session_pre_alloc(devid, msg->connect_msg.fid, service_type);
     if (ret != HDCDRV_OK) {
-        hdcdrv_kvfree(connect_n, KA_SUB_MODULE_TYPE_1);
+        hdcdrv_kvfree((void **)&connect_n, KA_SUB_MODULE_TYPE_1);
         connect_n = NULL;
         hdcdrv_err("Calling hdcdrv_session_pre_alloc failed. (dev_id=%d; fid=%d; service_type=\"%s\"; ret=%d)\n",
             devid, msg->connect_msg.fid, hdcdrv_sevice_str(service_type), ret);
@@ -3672,7 +3672,7 @@ STATIC int hdcdrv_ctrl_msg_connect_handle(const struct hdcdrv_ctrl_msg *msg, str
     session_fd = hdcdrv_alloc_session(service_type, msg->connect_msg.run_env,
         msg->connect_msg.root_privilege, listen_pid);
     if (session_fd < 0) {
-        hdcdrv_kvfree(connect_n, KA_SUB_MODULE_TYPE_1);
+        hdcdrv_kvfree((void **)&connect_n, KA_SUB_MODULE_TYPE_1);
         connect_n = NULL;
         hdcdrv_err_limit("Calling hdcdrv_alloc_session failed. (dev_id=%u; service_type=\"%s\"; listen_pid=%llu)\n",
             devid, hdcdrv_sevice_str(service_type), listen_pid);
@@ -3706,7 +3706,7 @@ STATIC int hdcdrv_ctrl_msg_connect_handle(const struct hdcdrv_ctrl_msg *msg, str
 
     ret = hdcdrv_session_chan_update(session_fd, (int)devid);
     if (ret != HDCDRV_OK) {
-        hdcdrv_kvfree(connect_n, KA_SUB_MODULE_TYPE_1);
+        hdcdrv_kvfree((void **)&connect_n, KA_SUB_MODULE_TYPE_1);
         connect_n = NULL;
         hdcdrv_set_session_status(session, HDCDRV_SESSION_STATUS_IDLE);
         hdcdrv_session_post_free(devid, msg->connect_msg.fid, service_type);
@@ -4487,7 +4487,7 @@ STATIC long hdcdrv_accept_wait(const struct hdcdrv_dev *dev, struct hdcdrv_servi
     ka_task_mutex_unlock(&service->mutex);
 
     *session_fd = connect_t->session_fd;
-    hdcdrv_kvfree(connect_t, KA_SUB_MODULE_TYPE_1);
+    hdcdrv_kvfree((void **)&connect_t, KA_SUB_MODULE_TYPE_1);
     connect_t = NULL;
 
     return HDCDRV_OK;
@@ -6020,7 +6020,7 @@ STATIC long hdcdrv_get_session_dfx(struct hdcdrv_cmd_get_session_attr *cmd)
     (void)hdcdrv_ctrl_msg_send((u32)session->dev_id, &msg, msg_len, msg_len, &out_len);
 
 dfx_buf_exit:
-    hdcdrv_kvfree(buf, KA_SUB_MODULE_TYPE_1);
+    hdcdrv_kvfree((void **)&buf, KA_SUB_MODULE_TYPE_1);
     buf = NULL;
 
     return (long)ret;
@@ -6575,7 +6575,7 @@ struct hdcdrv_ctx *hdcdrv_alloc_ctx(void)
 
 void hdcdrv_free_ctx(const struct hdcdrv_ctx *ctx)
 {
-    hdcdrv_kvfree(ctx, KA_SUB_MODULE_TYPE_1);
+    hdcdrv_kvfree((void **)&ctx, KA_SUB_MODULE_TYPE_1);
     ctx = NULL;
 }
 
@@ -7147,7 +7147,7 @@ int hdcdrv_add_msg_chan_to_dev(u32 dev_id, void *chan)
         hdcdrv_set_time_stamp(&(hdcdrv_get_init_stamp_info()->chan_alloc_end));
         if (memset_s(msg_chan, sizeof(struct hdcdrv_msg_chan), 0, sizeof(struct hdcdrv_msg_chan)) != 0) {
             ka_task_mutex_unlock(&hdc_dev->mutex);
-            hdcdrv_kvfree(msg_chan, KA_SUB_MODULE_TYPE_0);
+            hdcdrv_kvfree((void **)&msg_chan, KA_SUB_MODULE_TYPE_0);
             msg_chan = NULL;
             hdcdrv_err("Calling memset_s failed.\n");
             return HDCDRV_SAFE_MEM_OP_FAIL;
@@ -7160,7 +7160,7 @@ int hdcdrv_add_msg_chan_to_dev(u32 dev_id, void *chan)
         #ifndef DRV_UT
         if (hdcdrv_init_mem_pool(hdc_dev->dev_id) != HDCDRV_OK) {
             ka_task_mutex_unlock(&hdc_dev->mutex);
-            hdcdrv_kvfree(msg_chan, KA_SUB_MODULE_TYPE_0);
+            hdcdrv_kvfree((void **)&msg_chan, KA_SUB_MODULE_TYPE_0);
             msg_chan = NULL;
             return HDCDRV_DMA_MEM_ALLOC_FAIL;
         }
@@ -7201,7 +7201,7 @@ int hdcdrv_add_msg_chan_to_dev(u32 dev_id, void *chan)
             ka_task_mutex_unlock(&hdc_dev->mutex);
             hdcdrv_err("Calling ka_task_create_singlethread_workqueue failed. (name=\"%s\")\n", HDCDRV_RX_MSG_NORIFY_WORK_NAME);
             hdcdrv_uninit_mem_pool(hdc_dev->dev_id);
-            hdcdrv_kvfree(msg_chan, KA_SUB_MODULE_TYPE_0);
+            hdcdrv_kvfree((void **)&msg_chan, KA_SUB_MODULE_TYPE_0);
             msg_chan = NULL;
             return HDCDRV_MEM_ALLOC_FAIL;
         }
@@ -7248,7 +7248,7 @@ void hdcdrv_service_res_uninit(struct hdcdrv_service *service, int server_type)
         ka_list_for_each_safe(pos, n, &service->serv_list) {
             node = ka_list_entry(pos, struct hdcdrv_serv_list_node, list);
             ka_list_del(&node->list);
-            hdcdrv_kvfree(node, KA_SUB_MODULE_TYPE_0);
+            hdcdrv_kvfree((void **)&node, KA_SUB_MODULE_TYPE_0);
             node = NULL;
         }
     }
@@ -7535,7 +7535,7 @@ void hdcdrv_free_dev_mem(u32 dev_id)
                 hdcdrv_ka_kvfree(hdc_dev->msg_chan[i]->node, KA_SUB_MODULE_TYPE_2);
                 hdc_dev->msg_chan[i]->node = NULL;
             }
-            hdcdrv_kvfree(hdc_dev->msg_chan[i], KA_SUB_MODULE_TYPE_0);
+            hdcdrv_kvfree((void **)&hdc_dev->msg_chan[i], KA_SUB_MODULE_TYPE_0);
             hdc_dev->msg_chan[i] = NULL;
         }
     }

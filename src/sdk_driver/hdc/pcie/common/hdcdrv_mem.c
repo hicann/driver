@@ -171,7 +171,7 @@ int hdcdrv_iova_fmem_map(u32 dev_id, u32 fid, struct hdcdrv_fast_mem* f_mem)
 
     hdcdrv_iova_new_mem(dev_id, fid, (u32)f_mem->phy_addr_num, f_mem->mem, new_mem);
 
-    hdcdrv_kvfree(f_mem->mem, KA_SUB_MODULE_TYPE_2);
+    hdcdrv_kvfree((void **)&f_mem->mem, KA_SUB_MODULE_TYPE_2);
     f_mem->mem = new_mem;
     f_mem->phy_addr_num = num_new;
     f_mem->dma_map = 1;

@@ -165,14 +165,17 @@ void *hdcdrv_kvmalloc(size_t size, int level)
     return addr;
 }
 
-void hdcdrv_kvfree(const void *addr, int level)
+void hdcdrv_kvfree(void **addr, int level)
 {
-    if (ka_mm_is_vmalloc_addr(addr)) {
-        hdcdrv_vfree(addr, level);
-    } else {
-        hdcdrv_kfree(addr, level);
+    if ((addr == NULL) || (*addr == NULL)) {
+        return;
     }
-    addr = NULL;
+    if (ka_mm_is_vmalloc_addr(*addr)) {
+        hdcdrv_vfree(*addr, level);
+    } else {
+        hdcdrv_kfree(*addr, level);
+    }
+    *addr = NULL;
 }
 
 static inline u32 hdcdrv_mem_block_head_crc32(const struct hdcdrv_mem_block_head *block_head)
@@ -280,7 +283,7 @@ void free_mem_pool_single(ka_device_t *dev, u32 segment, struct hdcdrv_mem_block
 #endif
     }
     buf->dma_buf = NULL;
-    hdcdrv_kvfree(buf, KA_SUB_MODULE_TYPE_0);
+    hdcdrv_kvfree((void **)&buf, KA_SUB_MODULE_TYPE_0);
 }
 
 static inline u32 hdccom_calc_ring_id(u64 ring_cnt, u32 mask, u32 size)
@@ -1049,7 +1052,7 @@ void hdcdrv_fast_node_erase(ka_task_spinlock_t *lock, ka_rb_root_t *root, struct
 
 void hdcdrv_fast_node_free(const struct hdcdrv_fast_node *fast_node)
 {
-    hdcdrv_kvfree(fast_node, KA_SUB_MODULE_TYPE_2);
+    hdcdrv_kvfree((void **)&fast_node, KA_SUB_MODULE_TYPE_2);
     fast_node = NULL;
 }
 #ifdef CFG_FEATURE_HDC_REG_MEM
@@ -1772,7 +1775,7 @@ STATIC void hdcdrv_huge_put_page(struct hdcdrv_fast_mem *f_mem)
 
 STATIC void hdcdrv_fast_free_mem_node(struct hdcdrv_fast_mem *f_mem)
 {
-    hdcdrv_kvfree(f_mem->mem, KA_SUB_MODULE_TYPE_2);
+    hdcdrv_kvfree((void **)&f_mem->mem, KA_SUB_MODULE_TYPE_2);
     f_mem->mem = NULL;
 }
 
@@ -1913,7 +1916,7 @@ void hdcdrv_recycle_mem_work(ka_work_struct_t *p_work)
 
 out:
     hdcdrv_fast_free_pages(mem, i);
-    hdcdrv_kvfree(mem, KA_SUB_MODULE_TYPE_2);
+    hdcdrv_kvfree((void **)&mem, KA_SUB_MODULE_TYPE_2);
     mem = NULL;
     cost_time = ka_system_jiffies_to_msecs(ka_jiffies - stamp);
     hdcdrv_info("Get memory work cost_time. (cost_time=%d; i=%d; mem_type=%d; work_cnt=%lld)\n",
@@ -2403,7 +2406,7 @@ STATIC int hdcdrv_fast_alloc_normal_page_mem(struct hdcdrv_fast_mem *f_mem, u64 
         f_mem->mem[i] = mem[i];
     }
 
-    hdcdrv_kvfree(mem, KA_SUB_MODULE_TYPE_2);
+    hdcdrv_kvfree((void **)&mem, KA_SUB_MODULE_TYPE_2);
     mem = NULL;
 
     hdcdrv_fast_normal_mem_alloc_dfx(f_mem->mem, f_mem->phy_addr_num, len, devid);
@@ -2411,7 +2414,7 @@ STATIC int hdcdrv_fast_alloc_normal_page_mem(struct hdcdrv_fast_mem *f_mem, u64 
 
 fail:
     hdcdrv_fast_free_pages(mem, f_mem->phy_addr_num);
-    hdcdrv_kvfree(mem, KA_SUB_MODULE_TYPE_2);
+    hdcdrv_kvfree((void **)&mem, KA_SUB_MODULE_TYPE_2);
     mem = NULL;
     hdcdrv_err("Memory alloc failed. (dev=%u; type=%d; total_len=0x%x)\n", devid, type, len);
     hdcdrv_mem_stat_info_show();

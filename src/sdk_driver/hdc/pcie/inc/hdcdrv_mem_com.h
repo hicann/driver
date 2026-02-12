@@ -460,7 +460,7 @@ int hdcdrv_fast_node_insert_new_tree(int devid, u64 pid, u32 fid, u32 rb_side,
     struct hdcdrv_fast_node *new_node);
 struct hdcdrv_fast_mem *hdcdrv_get_fast_mem_timeout(int dev_id, int type,
     int len, u64 hash_va, u64 user_va);
-void hdcdrv_kvfree(const void *addr, int level);
+void hdcdrv_kvfree(void **addr, int level);
 
 extern long hdcdrv_fast_dma_map(const struct hdcdrv_cmd_dma_map *cmd);
 extern long hdcdrv_fast_dma_unmap(const struct hdcdrv_cmd_dma_unmap *cmd);

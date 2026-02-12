@@ -190,10 +190,10 @@ STATIC struct hdcdrv_cmd_stat_dev_service* hdcdrv_alloc_stat_list(void)
     return stat;
 
 idle_alloc_fail:
-    hdcdrv_kvfree(stat->s_brief.remote_close_list, KA_SUB_MODULE_TYPE_4);
+    hdcdrv_kvfree((void **)&stat->s_brief.remote_close_list, KA_SUB_MODULE_TYPE_4);
     stat->s_brief.remote_close_list = NULL;
 remote_alloc_fail:
-    hdcdrv_kvfree(stat->s_brief.active_list, KA_SUB_MODULE_TYPE_4);
+    hdcdrv_kvfree((void **)&stat->s_brief.active_list, KA_SUB_MODULE_TYPE_4);
     stat->s_brief.active_list = NULL;
 active_alloc_fail:
     hdcdrv_kfree(stat, KA_SUB_MODULE_TYPE_4);
@@ -204,11 +204,11 @@ stat_alloc_fail:
 
 STATIC void hdcdrv_free_stat_list(struct hdcdrv_cmd_stat_dev_service *stat)
 {
-    hdcdrv_kvfree(stat->s_brief.idle_list, KA_SUB_MODULE_TYPE_4);
+    hdcdrv_kvfree((void **)&stat->s_brief.idle_list, KA_SUB_MODULE_TYPE_4);
     stat->s_brief.idle_list = NULL;
-    hdcdrv_kvfree(stat->s_brief.remote_close_list, KA_SUB_MODULE_TYPE_4);
+    hdcdrv_kvfree((void **)&stat->s_brief.remote_close_list, KA_SUB_MODULE_TYPE_4);
     stat->s_brief.remote_close_list = NULL;
-    hdcdrv_kvfree(stat->s_brief.active_list, KA_SUB_MODULE_TYPE_4);
+    hdcdrv_kvfree((void **)&stat->s_brief.active_list, KA_SUB_MODULE_TYPE_4);
     stat->s_brief.active_list = NULL;
     hdcdrv_kfree(stat, KA_SUB_MODULE_TYPE_4);
 }
@@ -924,7 +924,7 @@ STATIC ssize_t hdcdrv_sysfs_get_remote_chan_stat(char *buf, u32 buf_len, u32 dev
         }
     }
 
-    hdcdrv_kvfree(msg, KA_SUB_MODULE_TYPE_4);
+    hdcdrv_kvfree((void **)&msg, KA_SUB_MODULE_TYPE_4);
     msg = NULL;
 
     return offset;
@@ -1030,7 +1030,7 @@ STATIC ssize_t hdcdrv_sysfs_get_session_stat(ka_device_t *dev, ka_device_attribu
         }
     }
 
-    hdcdrv_kvfree(msg, KA_SUB_MODULE_TYPE_4);
+    hdcdrv_kvfree((void **)&msg, KA_SUB_MODULE_TYPE_4);
     msg = NULL;
     return offset;
 }
@@ -1278,7 +1278,7 @@ STATIC ssize_t hdcdrv_sysfs_get_remote_link_stat(char *buf, u32 buf_len, u32 dev
         }
     }
 
-    hdcdrv_kvfree(msg, KA_SUB_MODULE_TYPE_4);
+    hdcdrv_kvfree((void **)&msg, KA_SUB_MODULE_TYPE_4);
     msg = NULL;
 
     return offset;
@@ -1523,7 +1523,7 @@ STATIC ssize_t hdcdrv_sysfs_get_session_timetaken(ka_device_t *dev, ka_device_at
         offset += ret;
     }
 
-    hdcdrv_kvfree(msg, KA_SUB_MODULE_TYPE_4);
+    hdcdrv_kvfree((void **)&msg, KA_SUB_MODULE_TYPE_4);
     msg = NULL;
     return offset;
 }

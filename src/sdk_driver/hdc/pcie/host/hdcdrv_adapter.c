@@ -121,7 +121,7 @@ STATIC int vhdch_update_mem_tree(u32 dev_id, u32 fid, int flag, struct hdcdrv_ct
         fast_node->hash_va = mem_info->hash_va;
         ret = vhdch_rb_mem_insert(vdev, fast_node);
         if (ret != HDCDRV_OK) {
-            hdcdrv_kvfree(fast_node, KA_SUB_MODULE_TYPE_2);
+            hdcdrv_kvfree((void **)&fast_node, KA_SUB_MODULE_TYPE_2);
             hdcdrv_warn("hash_va insert failed. (dev_id=%u; fid=%u; hash_va=%llu)\n", dev_id, fid, mem_info->hash_va);
             ka_task_mutex_unlock(&vdev->mutex);
             return ret;
@@ -133,7 +133,7 @@ STATIC int vhdch_update_mem_tree(u32 dev_id, u32 fid, int flag, struct hdcdrv_ct
         fast_node = vhdch_rb_mem_search(vdev, mem_info->hash_va);
         if (fast_node != NULL) {
             vhdch_rb_mem_erase(vdev, fast_node);
-            hdcdrv_kvfree(fast_node, KA_SUB_MODULE_TYPE_2);
+            hdcdrv_kvfree((void **)&fast_node, KA_SUB_MODULE_TYPE_2);
             vdev->fast_node_num_avaliable++;
             vdev->fnode_phy_num_avaliable += mem_info->phy_addr_num;
         } else {
@@ -422,7 +422,7 @@ STATIC void vhdch_service_res_uninit(struct hdcdrv_service *service, int server_
         ka_list_for_each_safe(pos, n, &service->serv_list) {
             node = ka_list_entry(pos, struct hdcdrv_serv_list_node, list);
             ka_list_del(&node->list);
-            hdcdrv_kvfree(node, KA_SUB_MODULE_TYPE_0);
+            hdcdrv_kvfree((void **)&node, KA_SUB_MODULE_TYPE_0);
             node = NULL;
         }
     }
@@ -1347,7 +1347,7 @@ STATIC void vhdch_mem_tree_uninit(u32 devid, u32 fid)
         msg.hash_va = fast_node->hash_va;
         ret = hdcdrv_set_mem_info((int)devid, fid, HDCDRV_RBTREE_SIDE_LOCAL, &msg);
         vhdch_rb_mem_erase(vdev, fast_node);
-        hdcdrv_kvfree(fast_node, KA_SUB_MODULE_TYPE_2);
+        hdcdrv_kvfree((void **)&fast_node, KA_SUB_MODULE_TYPE_2);
     }
 }
 

@@ -165,7 +165,7 @@ STATIC long hdcdrv_epoll_alloc_fd(struct hdcdrv_ctx *ctx, struct hdcdrv_cmd_epol
     return HDCDRV_OK;
 
 free_event:
-    hdcdrv_kvfree(event, KA_SUB_MODULE_TYPE_3);
+    hdcdrv_kvfree((void **)&event, KA_SUB_MODULE_TYPE_3);
     event = NULL;
     hdcdrv_err_limit("VM no more epfd. (vm_id=%u)\n", vm_id);
     return HDCDRV_NO_EPOLL_FD;
@@ -183,7 +183,7 @@ STATIC void hdcdrv_epoll_clear_service(struct hdcdrv_epoll_fd *epfd)
             service = (struct hdcdrv_service *)node->instance;
             service->epfd = NULL;
             ka_list_del(&node->list);
-            hdcdrv_kvfree(node, KA_SUB_MODULE_TYPE_3);
+            hdcdrv_kvfree((void **)&node, KA_SUB_MODULE_TYPE_3);
             node = NULL;
         }
     }
@@ -202,7 +202,7 @@ STATIC void hdcdrv_epoll_clear_session(struct hdcdrv_epoll_fd *epfd)
             session = (struct hdcdrv_session *)node->instance;
             session->epfd = NULL;
             ka_list_del(&node->list);
-            hdcdrv_kvfree(node, KA_SUB_MODULE_TYPE_3);
+            hdcdrv_kvfree((void **)&node, KA_SUB_MODULE_TYPE_3);
             node = NULL;
         }
     }
@@ -219,7 +219,7 @@ STATIC void hdcdrv_epoll_free_fd_handle(struct hdcdrv_epoll_fd *epfd)
     if (epfd->valid == HDCDRV_VALID) {
         ka_task_mutex_lock(&epfd->mutex);
         epfd->valid = HDCDRV_INVALID;
-        hdcdrv_kvfree(epfd->events, KA_SUB_MODULE_TYPE_3);
+        hdcdrv_kvfree((void **)&epfd->events, KA_SUB_MODULE_TYPE_3);
         epfd->events = NULL;
         hdc_epoll->vm_alloc_cnt[epfd->vm_id]--;
         ka_wmb();
@@ -389,7 +389,7 @@ STATIC long hdcdrv_epoll_add_event(struct hdcdrv_epoll_fd *epfd,
 
 error:
     ka_task_mutex_unlock(&epfd->mutex);
-    hdcdrv_kvfree(node, KA_SUB_MODULE_TYPE_3);
+    hdcdrv_kvfree((void **)&node, KA_SUB_MODULE_TYPE_3);
     node = NULL;
     return ret;
 }
@@ -425,7 +425,7 @@ STATIC long hdcdrv_epoll_del_service(struct hdcdrv_epoll_fd *epfd, int dev_id, u
             if ((struct hdcdrv_service *)node->instance == service) {
                 service->epfd = NULL;
                 ka_list_del(&node->list);
-                hdcdrv_kvfree(node, KA_SUB_MODULE_TYPE_3);
+                hdcdrv_kvfree((void **)&node, KA_SUB_MODULE_TYPE_3);
                 node = NULL;
                 ret = HDCDRV_OK;
                 break;
@@ -456,7 +456,7 @@ STATIC long hdcdrv_epoll_del_session(struct hdcdrv_epoll_fd *epfd, int session_f
             if ((struct hdcdrv_session *)node->instance == session) {
                 session->epfd = NULL;
                 ka_list_del(&node->list);
-                hdcdrv_kvfree(node, KA_SUB_MODULE_TYPE_3);
+                hdcdrv_kvfree((void **)&node, KA_SUB_MODULE_TYPE_3);
                 node = NULL;
                 ret = HDCDRV_OK;
                 break;
