@@ -43,6 +43,8 @@
 #define TD_PRINT_INFO(fmt, ...) ka_dfx_printk(KERN_INFO "[ts_debug][INFO]<%s:%d> " \
     fmt, __FUNCTION__, __LINE__, ##__VA_ARGS__)
 
+#define DMA_MAP_FAIL (~(ka_dma_addr_t)0)
+
 static u64 get_page_num(u64 addr, u64 addr_len)
 {
     u64 align_addr_len, page_num;
@@ -175,6 +177,47 @@ static int debug_get_passid(u32 devid, u32 tsid, int pid, u32 *passid)
     #endif
 }
 
+static ka_page_t **dma_prepare_pages(struct dma_param *param, u64 *page_num)
+{
+    ka_page_t **pages;
+    u64 nr_page;
+    int ret;
+
+    // 获取page页数
+    nr_page = get_page_num(param->host_addr, param->size);
+    TD_PRINT_INFO("page_num=%llu\n", nr_page);
+    if (nr_page != 1) {
+        TD_PRINT_ERR("0 page or more than 1 page is not supported.\n");
+        return NULL;
+    }
+
+    // 分配pages空间
+    pages = (ka_page_t **)kvalloc(nr_page * sizeof(ka_page_t *), 0);
+    if (pages == NULL) {
+        TD_PRINT_ERR("pages kvalloc failed\n");
+        return NULL;
+    }
+
+    // 获取page指针
+    ret = debug_get_user_pages(param->host_addr, nr_page, pages);
+    if (ret != 0) {
+        // 释放pages
+        kvfree(pages);
+        TD_PRINT_ERR("debug_get_user_pages failed\n");
+        return NULL;
+    }
+    *page_num = nr_page;
+    return pages;
+}
+
+static void dma_release_pages(ka_page_t **pages, u64 page_num)
+{
+    // 释放page
+    debug_put_user_pages(pages, page_num, page_num);
+    // 释放pages
+    kvfree(pages);
+}
+
 int dma_copy_sync(u32 logical_devid, u32 devid, u32 tsid, int pid, struct dma_param *param)
 {
     u32 passid;
@@ -193,39 +236,25 @@ int dma_copy_sync(u32 logical_devid, u32 devid, u32 tsid, int pid, struct dma_pa
             TD_PRINT_ERR("get_ssid failed ret=%d devid=%u tsid=%u pid=%d\n", ret, devid, tsid, pid);
             return ERR_DMA_COPY_FAILED;
     }
-    // 获取page页数
-    page_num = get_page_num(param->host_addr, param->size);
-    TD_PRINT_INFO("page_num=%llu\n", page_num);
-    if (page_num != 1) {
-        TD_PRINT_ERR("0 page or more than 1 page is not supported.\n");
-        return ERR_DMA_COPY_FAILED;
-    }
 
-    // 分配pages空间
-    pages = (ka_page_t **)kvalloc(page_num * sizeof(ka_page_t *), 0);
+    pages = dma_prepare_pages(param, &page_num);
     if (pages == NULL) {
-        TD_PRINT_ERR("pages kvalloc failed\n");
         return ERR_DMA_COPY_FAILED;
     }
 
     // 获取设备
     dev = uda_get_device(devid);
-    // 获取page指针
-    ret = debug_get_user_pages(param->host_addr, page_num, pages);
-    if (ret != 0) {
-        // 释放pages
-        kvfree(pages);
-        TD_PRINT_ERR("debug_get_user_pages failed\n");
-        return ret;
-    }
 
     // 获取dma地址
     offset = (param->host_addr) % KA_MM_PAGE_SIZE;
     dma_addr = hal_kernel_devdrv_dma_map_page(dev, pages[0], offset, param->size, KA_DMA_BIDIRECTIONAL);
+    if (dma_addr == DMA_MAP_FAIL) {
+        TD_PRINT_ERR("dma map page failed\n");
+        dma_release_pages(pages, page_num);
+        return ERR_DMA_COPY_FAILED;
+    }
     TD_PRINT_INFO("devdrv_dma_map_page done dma_addr=0x%llx, offset=%llu\n", dma_addr, offset);
-
     debug_get_dma_addr_dev(param, pid, logical_devid, &dma_addr_dev, &passid);
-
     debug_make_single_dma_node(&dma_node, param, dma_addr, dma_addr_dev, passid);
 
     // 执行dma拷贝
@@ -234,18 +263,12 @@ int dma_copy_sync(u32 logical_devid, u32 devid, u32 tsid, int pid, struct dma_pa
     TD_PRINT_INFO("dma_node src_addr=0x%llx dst_addr=0x%llx size=%u loc_passid=%u direction=%d\n",
         dma_node.src_addr, dma_node.dst_addr, dma_node.size, dma_node.loc_passid, (int)dma_node.direction);
 
+    hal_kernel_devdrv_dma_unmap_page(dev, dma_addr, param->size, KA_DMA_BIDIRECTIONAL);
+    dma_release_pages(pages, page_num);
     if (ret != 0) {
         TD_PRINT_ERR("devdrv_dma_sync_link_copy fail. (devid=%u; node_cnt=%d; ret=%d)\n", devid, 1, ret);
-        kvfree(pages);
         return ret;
     }
-
-    // 释放page
-    debug_put_user_pages(pages, page_num, page_num);
-
-    // 释放pages
-    kvfree(pages);
-
     TD_PRINT_INFO("dma_copy_sync done\n");
     return 0;
 }
