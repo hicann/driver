@@ -299,7 +299,9 @@ STATIC int write_shared_memory(SramFaultEventData *sd)
     unsigned int i;
     unsigned int *node_data;
 
+    ka_task_mutex_lock(&shared_mem_mutex);
     if (list_empty(&shared_mem_list)) {
+        ka_task_mutex_unlock(&shared_mem_mutex);
         return -1;  // 列表为空
     }
     ka_list_for_each_entry(shm, &shared_mem_list, list) {
@@ -309,6 +311,7 @@ STATIC int write_shared_memory(SramFaultEventData *sd)
             // 检查队列是否满
             if ((tail + 1) % g_fault_event_head.nodeNum == head) {
                 printk(KA_KERN_ERR "[lqdcmi]Queue is full, cannot write to shared memory\n");
+                ka_task_mutex_unlock(&shared_mem_mutex);
                 return -1;  // 队列已满
             }
 
@@ -324,9 +327,11 @@ STATIC int write_shared_memory(SramFaultEventData *sd)
             ka_mm_writel(tail, shm->mem + sizeof(int)); // 更新尾指针
         } else {
             printk(KA_KERN_ERR "[lqdcmi]not have mem\n");
+            ka_task_mutex_unlock(&shared_mem_mutex);
             return -1;
         }
     }
+    ka_task_mutex_unlock(&shared_mem_mutex);
 
     return 0;
 }
