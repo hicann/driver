@@ -9,7 +9,7 @@ RoCE（RDMA over Converged Ethernet）基于[rdma-core](https://github.com/linux
 ## 📝功能框架
 
 <center>
-    <img src="../../../docs/figures/RoCE功能框架.png" alt="RoCE功能框架" />
+    <img src="../../../docs/zh/figures/RoCE_functional_framework.png" alt="RoCE功能框架" />
 </center>
 
 - 功能框架中高亮部分对应driver仓中代码，包含以下两部分内容:
@@ -21,7 +21,7 @@ RoCE（RDMA over Converged Ethernet）基于[rdma-core](https://github.com/linux
     如调用：`rdma_lite_post_send(lite_qp, lite_send_wr, &lite_send_bad_wr, attr, &resp);`下发WR，可以通过在Host侧下发WR，达到直接将WR写入Device侧队列的目的。
 
 <center>
-    <img src="../../../docs/figures/RoCE数据面下发WR.png" alt="RoCE数据面下发WR" />
+    <img src="../../../docs/zh/figures/RoCE_data_plane_delivers_WR.png" alt="RoCE数据面下发WR" />
 </center>
 
 - 应用场景举例

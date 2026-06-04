@@ -20,4 +20,4 @@ src/custom/nda/ibv_extend/
 
 ## 开发指南
 
-> 详细的安装、使用和API说明请参考 [NDA IBV_EXTEND 扩展库开发指南](../../../../docs/zh/nda/ibv_extend/NDA%20IBV_EXTEND%20扩展库开发指南.md)
+> 详细的安装、使用和API说明请参考 [NDA IBV_EXTEND 扩展库开发指南](../../../../docs/zh/nda/ibv_extend/NDA_IBV_EXTEND_Extension_Library_Development_Guide.md)

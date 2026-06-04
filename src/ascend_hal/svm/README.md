@@ -3,7 +3,7 @@
 SVM (Shared Virtual Memory) 是昇腾 AI 处理器平台中的内存管理模块，用于高效管理设备侧内存。其主要功能包括内存的初始化、申请、释放、拷贝、查询和共享等，并向上层模块（如 Runtime）提供 HAL 接口。
 
 <center>
-    <img src="../../../docs/figures/SVM模块依赖.png" alt="SVM模块依赖" width=70%/>
+    <img src="../../../docs/zh/figures/SVM_module_dependency.png" alt="SVM模块依赖" width=70%/>
 </center>
 
 
@@ -83,7 +83,7 @@ SVM 接口 ：```halHostRegister```/```halHostUnregister```
 3. 调用 ```halMemcpy``` 接口，将数据从 Host 内存同步拷贝至 Device 内存，完成数据搬运。
 
 <center>
-    <img src="../../../docs/figures/SVM模块申请拷贝流程.png" alt="SVM模块申请拷贝流程" width=70% />
+    <img src="../../../docs/zh/figures/SVM_application_copy_process.png" alt="SVM模块申请拷贝流程" width=70% />
 </center>
 
 #### 内存共享功能的业务使用流程
@@ -98,7 +98,7 @@ SVM 接口 ：```halHostRegister```/```halHostUnregister```
 2. host_app 进程 1 调用驱动接口 ```halShmemOpenHandleByDevId``` 打开该共享句柄，驱动返回指向共享内存的指针，从而完成对 dev0 内存的映射。
 
 <center>
-    <img src="../../../docs/figures/SVM模块内存共享流程.png" alt="SVM模块内存共享流程" width=70% />
+    <img src="../../../docs/zh/figures/SVM_memory_sharing_process.png" alt="SVM模块内存共享流程" width=70% />
 </center>
 
 #### VMM 功能的业务使用流程
@@ -114,5 +114,5 @@ SVM 接口 ：```halHostRegister```/```halHostUnregister```
 3. 调用```halMemMap```建立虚拟地址到物理地址的映射。
 
 <center>
-    <img src="../../../docs/figures/SVM模块VMM流程.png" alt="SVM模块VMM流程" width=70% />
+    <img src="../../../docs/zh/figures/SVM_VMM_process.png" alt="SVM模块VMM流程" width=70% />
 </center>

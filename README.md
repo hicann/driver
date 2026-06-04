@@ -9,7 +9,7 @@ Driver仓的代码是CANN（Compute Architecture for Neural Networks）的驱动
 Driver在CANN软件栈的位置参考[昇腾社区](https://www.hiascend.com/cann)的描述。
 
 <center>
-    <img src="./docs/figures/Driver架构分层图.png" alt="Driver架构分层图" />
+    <img src="./docs/zh/figures/Driver_architecture.png" alt="Driver架构分层图" />
 </center>
 
 ## 📖模块介绍
