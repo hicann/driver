@@ -4,21 +4,21 @@ This guide helps you quickly get started with the driver repository. The driver 
 
 ```mermaid
 graph LR
-subgraph Development Phase
-Environment Preparation
-Repository Code Download
-Driver Development
-Compile and Deploy
-Verification
-end
-subgraph Open Source Contribution Phase
-Submit PR
-CI Gate
-Committer Review
-Maintainer Review and Merge
-end
-
-User-->Environment Preparation-->Repository Code Download-->Driver Development-->Compile and Deploy-->Verification-->Submit PR-->CI Gate-->Committer Review-->Maintainer Review and Merge
+    subgraph Development Stage
+        A[Environment Preparation]
+        B[Repository Code Download]
+        C[Driver Development]
+        D[Compilation and Deployment]
+        E[Verification]
+    end
+    subgraph Open Source Contribution Stage
+        F[Submit PR]
+        G[CI Gate]
+        H[Committer Review]
+        I[Maintainer Review and Merge]
+    end
+    
+    User --> A --> B --> C --> D --> E --> F --> G --> H --> I
 ```
 
 # Table of Contents
