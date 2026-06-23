@@ -291,7 +291,7 @@ STATIC uint32_t MsnFileMgrGetTimeStr(char *timeStr, uint32_t len)
         SELF_LOG_ERROR("get local time failed, strerr: %s.", strerror(ToolGetErrorCode()));
         return EN_ERROR;
     }
- 
+
     int32_t ret = snprintf_s(timeStr, len, len - 1U, "%04d%02d%02d%02d%02d%02d%03ld",
                              timeInfo.tm_year, timeInfo.tm_mon, timeInfo.tm_mday, timeInfo.tm_hour,
                              timeInfo.tm_min, timeInfo.tm_sec, curTimeval.tv_nsec / (UNIT_US_TO_MS * UNIT_US_TO_MS));
@@ -299,7 +299,7 @@ STATIC uint32_t MsnFileMgrGetTimeStr(char *timeStr, uint32_t len)
         SELF_LOG_ERROR("snprintf_s time buffer failed, result: %d, strerr: %s.", ret, strerror(ToolGetErrorCode()));
         return EN_ERROR;
     }
- 
+
     return EN_OK;
 }
 
@@ -567,7 +567,7 @@ static int32_t MsnFileMgrGetFileType(char *filename, uint32_t len, int32_t *file
 
 static int32_t MsnFileMgrFilterDuplicates(const MsnFileList *fileList, const char *filename)
 {
-    if (strcmp(fileList->fileName[fileList->curFileIndex], filename) == 0) {    // BBOX multiple file 
+    if (strcmp(fileList->fileName[fileList->curFileIndex], filename) == 0) {    // BBOX multiple file
         return EN_OK;
     }
 
@@ -740,7 +740,7 @@ static void PrimeFileList(uint32_t cnt, MsnFileList *fileList, uint32_t deviceId
     }
     uint32_t matchSize = 0;
     for (uint32_t i = 0; i < cnt &&matchSize < cnt; ++i) {
-        if (g_validFile[i] || g_deleteFile[i])continue;
+        if (g_validFile[i] || g_deleteFile[i]) continue;
         int32_t ret = MsnFileMgrGetFileDevice(entries[i].fullPath, MMPA_MAX_PATH, deviceId, fileRegex);
         if (ret == EN_ERROR) {
             continue;
@@ -756,6 +756,7 @@ static void PrimeFileList(uint32_t cnt, MsnFileList *fileList, uint32_t deviceId
                 MsnFileMgrDeleteLogDaemonFile(fileList->fileName[index], filetype);
             } else {
                 char* lastSlash = strrchr(entries[i].fullPath, '/');
+                ONE_ACT_WARN_LOG(lastSlash == NULL, continue, "Invalid path without '/': %s", entries[i].fullPath);
                 size_t dir_len = lastSlash - entries[i].fullPath;
                 char path[MMPA_MAX_PATH] = { 0 };
                 ret = memcpy_s(path, MMPA_MAX_PATH, entries[i].fullPath, dir_len);
@@ -818,7 +819,7 @@ static int32_t MsnFileMgrScanDirectory(
     return EN_OK;
 }
 int32_t MsnFileMgrScanAndAge(const char *rootPath)
-{    
+{
     int32_t ret = memset_s(g_validFile, sizeof(g_validFile), 0, sizeof(g_validFile));
     ONE_ACT_INFO_LOG(ret != EN_OK, return EN_ERROR, "memset_s g_validFile failed.");
     uint32_t cnt = 0;
