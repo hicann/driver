@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2025. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -19,11 +19,12 @@
 #include "apm_kern_log.h"
 #include "apm_proc_fs.h"
 
-#define APM_PROC_TOP_NAME    "apm"
-#define APM_PROC_FS_MODE     0444
-#define APM_PROC_NAME_LEN   64
+#define APM_PROC_TOP_NAME "apm"
+#define APM_PROC_FS_MODE 0444
+#define APM_PROC_NAME_LEN 96
 
 static ka_proc_dir_entry_t *apm_top_entry;
+static ka_atomic64_t g_apm_proc_seq = KA_BASE_ATOMIC64_INIT(0);
 
 static int apm_proc_show(ka_seq_file_t *seq, void *offset)
 {
@@ -38,24 +39,23 @@ int apm_proc_open(ka_inode_t *inode, ka_file_t *file)
     return ka_fs_single_open(file, apm_proc_show, ka_base_pde_data(inode));
 }
 
-static const ka_procfs_ops_t apm_proc = {
-    ka_fs_init_pf_owner(KA_THIS_MODULE) \
-    ka_fs_init_pf_open(apm_proc_open) \
-    ka_fs_init_pf_read(ka_fs_seq_read) \
-    ka_fs_init_pf_lseek(ka_fs_seq_lseek) \
-    ka_fs_init_pf_release(ka_fs_single_release) \
-};
+static const ka_procfs_ops_t apm_proc = {ka_fs_init_pf_owner(KA_THIS_MODULE) ka_fs_init_pf_open(apm_proc_open)
+                                             ka_fs_init_pf_read(ka_fs_seq_read) ka_fs_init_pf_lseek(ka_fs_seq_lseek)
+                                                 ka_fs_init_pf_release(ka_fs_single_release)};
 
 ka_proc_dir_entry_t *apm_proc_fs_add_task(const char *domain, int tgid)
 {
     char name[APM_PROC_NAME_LEN];
+    u64 seq;
 
     if (apm_top_entry == NULL) {
         return NULL;
     }
 
-    (void)sprintf_s(name, APM_PROC_NAME_LEN, "%s-%d", domain, tgid);
-    return ka_fs_proc_create_data((const char *)name, APM_PROC_FS_MODE, apm_top_entry, &apm_proc, (void *)(uintptr_t)tgid);
+    seq = (u64)ka_base_atomic64_inc_return(&g_apm_proc_seq);
+    (void)sprintf_s(name, APM_PROC_NAME_LEN, "%s-%d-%llu", domain, tgid, seq);
+    return ka_fs_proc_create_data(
+        (const char *)name, APM_PROC_FS_MODE, apm_top_entry, &apm_proc, (void *)(uintptr_t)tgid);
 }
 
 void apm_proc_fs_del_task(ka_proc_dir_entry_t *task_entry)
@@ -86,4 +86,3 @@ void apm_proc_fs_uninit(void)
         apm_top_entry = NULL;
     }
 }
-

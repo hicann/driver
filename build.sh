@@ -20,10 +20,10 @@ export BUILD_OUT_PATH="${BASE_PATH}/build_out"
 usage()
 {
   echo "Usage:"
-  echo "    bash build.sh [-j[n]] [-h | -help] [-k] [-v]"
+  echo "    bash build.sh [-j[n]] [-h | --help] [-k] [-v]"
   echo ""
   echo "Options:"
-  echo "    -h | -help             Print usage"
+  echo "    -h | --help             Print usage"
   echo "    -j[n]                  Set the number of threads used for building npu_driver, default is 8"
   echo "                           Examples: bash build.sh -j16 --pkg --soc=ascend910b"
   echo "    -v                     Display build command"
@@ -31,6 +31,7 @@ usage()
   echo "    --soc=soc_version      Compile for specified Ascend SoC, soc_version is ascend910b or ascend910_93"
   echo "    --pkg                  Build run package"
   echo "    --demo                 Build demo package"
+  echo "    --ube                  Enable UB engine"
   echo "    --cann_3rd_lib_path=<PATH>"
   echo "                           Set ascend third_party package install path, default ./third_party"
   echo "    --make_clean           Clean build artifacts"
@@ -39,6 +40,7 @@ usage()
   echo "    bash build.sh --pkg --soc=ascend910b"
   echo "    bash build.sh --pkg --soc=ascend910_93"
   echo "    bash build.sh --pkg --soc=ascend950"
+  echo "    bash build.sh --pkg --soc=ascend950 --ube"
 }
 
 get_product()
@@ -102,6 +104,7 @@ checkopts()
   KERNEL_PATH=""
   ENABLE_PACKAGE=FALSE
   ENABLE_BUILD_PRODUCT=TRUE
+  ENABLE_UBE=FALSE
   BUILD_COMPONENT="DRIVER"
   CANN_3RD_LIB_PATH=""
   ASCEND910_93_EX=FALSE
@@ -125,11 +128,18 @@ checkopts()
         ;;
       -)
         case $OPTARG in
+          help)
+            usage
+            exit 0
+            ;;
           pkg)
             ENABLE_PACKAGE="TRUE"
             ;;
           demo)
             ENABLE_BUILD_PRODUCT="FALSE"
+            ;;
+          ube)
+            ENABLE_UBE="TRUE"
             ;;
           soc=*)
             COMPUTE_UNIT=${OPTARG#*=}
@@ -163,11 +173,6 @@ checkopts()
 }
 checkopts "$@"
 
-if [ "${PRODUCT}" = "ascend950" ]; then
-  # current only support --demo
-  ENABLE_BUILD_PRODUCT="FALSE"
-fi
-
 mk_dir() {
   local create_dir="$1"  # the target to make
 
@@ -191,30 +196,39 @@ prepare_src()
   mv ./src/sdk_driver/dms/devmng/product/dms_product.mk ./src/sdk_driver/dms/devmng/product/dms_product.mk.org
   mv ./scripts/package/driver/ascend910_93/scripts/specific_func.inc ./scripts/package/driver/ascend910_93/scripts/specific_func.inc.org
   mv ./scripts/package/driver/ascend910B/scripts/specific_func.inc ./scripts/package/driver/ascend910B/scripts/specific_func.inc.org
+  mv ./scripts/package/driver/ascend910B/scripts/sys_version/sys_version.conf scripts/package/driver/ascend910B/scripts/sys_version/sys_version.conf.org
+  mv ./scripts/package/driver/ascend950/scripts/sys_version/sys_version.conf scripts/package/driver/ascend950/scripts/sys_version/sys_version.conf.org
+  mv scripts/package/driver/common/conf/itf_ver.conf scripts/package/driver/common/conf/itf_ver.conf.org
 
   cp -rf ./src/custom/dev_prod/kernel/drv_devmng/* ./src/sdk_driver/dms/devmng/drv_devmng/drv_devmng_host/ascend910/
   cp -rf ./src/custom/dev_prod/kernel/dms/product/* ./src/sdk_driver/dms/devmng/product/
-  cp -rf ./src/custom/include/dms_product_ioctl.h ./src/sdk_driver/dms/devmng/product/
-  mv scripts/package/driver/common/conf/itf_ver.conf scripts/package/driver/common/conf/itf_ver.conf.org
-  cp scripts/package/custom/driver/common/conf/itf_ver.conf scripts/package/driver/common/conf/itf_ver.conf
+  cp -f ./src/custom/include/dms_product_ioctl.h ./src/sdk_driver/dms/devmng/product/
+  cp -f ./scripts/package/custom/driver/common/conf/itf_ver.conf scripts/package/driver/common/conf/itf_ver.conf
 
   cp scripts/package/driver/ascend910B/driver.xml scripts/package/driver/ascend910B/driver.xml.org
-  if [ "${ASCEND910_93_EX}" = "TRUE" ]; then
-    cp scripts/package/custom/driver/ascend910_93/scripts/specific_func.inc scripts/package/driver/ascend910_93/scripts/specific_func.inc
-    python3 ./scripts/package/custom/copy_xml.py scripts/package/driver/ascend910B/driver.xml scripts/package/custom/driver/ascend910_93/driver.xml
-    python3 ./scripts/package/custom/copy_xml.py scripts/package/driver/ascend910B/driver.xml scripts/package/custom/driver/ascend910B/driver_atlas.xml
-    COMPATIBLE_VERSION=$(grep -rn "ascend910_93" scripts/package/custom/driver/common/compatible_version.conf | cut -d":" -f3)
+  cp scripts/package/driver/ascend950/driver.xml scripts/package/driver/ascend950/driver.xml.org
+  if [ "${PRODUCT}" = "ascend950" ]; then
+    python3 ./scripts/package/custom/copy_xml.py scripts/package/driver/ascend950/driver.xml scripts/package/custom/driver/ascend950/driver.xml
+    python3 ./scripts/package/custom/copy_xml.py scripts/package/driver/ascend950/driver.xml scripts/package/custom/driver/ascend950/driver_atlas.xml
+    COMPATIBLE_VERSION=$(grep -rn "ascend950" scripts/package/custom/driver/common/compatible_version.conf | cut -d":" -f3)
+    cp scripts/package/custom/driver/ascend950/scripts/sys_version/sys_version.conf scripts/package/driver/ascend950/scripts/sys_version/sys_version.conf
+    PACKAGE_VERSION=$(cat scripts/package/driver/ascend950/scripts/sys_version/sys_version.conf)
   else
-    cp scripts/package/custom/driver/ascend910B/scripts/specific_func.inc scripts/package/driver/ascend910B/scripts/specific_func.inc
-    python3 ./scripts/package/custom/copy_xml.py scripts/package/driver/ascend910B/driver.xml scripts/package/custom/driver/ascend910B/driver.xml
-    python3 ./scripts/package/custom/copy_xml.py scripts/package/driver/ascend910B/driver.xml scripts/package/custom/driver/ascend910B/driver_atlas.xml
-    COMPATIBLE_VERSION=$(grep -rn "ascend910B" scripts/package/custom/driver/common/compatible_version.conf | cut -d":" -f3)
+    if [ "${ASCEND910_93_EX}" = "TRUE" ]; then
+      cp scripts/package/custom/driver/ascend910_93/scripts/specific_func.inc scripts/package/driver/ascend910_93/scripts/specific_func.inc
+      python3 ./scripts/package/custom/copy_xml.py scripts/package/driver/ascend910B/driver.xml scripts/package/custom/driver/ascend910_93/driver.xml
+      python3 ./scripts/package/custom/copy_xml.py scripts/package/driver/ascend910B/driver.xml scripts/package/custom/driver/ascend910B/driver_atlas.xml
+      COMPATIBLE_VERSION=$(grep -rn "ascend910_93" scripts/package/custom/driver/common/compatible_version.conf | cut -d":" -f3)
+    else
+      cp scripts/package/custom/driver/ascend910B/scripts/specific_func.inc scripts/package/driver/ascend910B/scripts/specific_func.inc
+      python3 ./scripts/package/custom/copy_xml.py scripts/package/driver/ascend910B/driver.xml scripts/package/custom/driver/ascend910B/driver.xml
+      python3 ./scripts/package/custom/copy_xml.py scripts/package/driver/ascend910B/driver.xml scripts/package/custom/driver/ascend910B/driver_atlas.xml
+      COMPATIBLE_VERSION=$(grep -rn "ascend910B" scripts/package/custom/driver/common/compatible_version.conf | cut -d":" -f3)
+    fi
+
+    cp scripts/package/custom/driver/ascend910B/scripts/sys_version/sys_version.conf scripts/package/driver/ascend910B/scripts/sys_version/sys_version.conf
+    PACKAGE_VERSION=$(cat scripts/package/driver/ascend910B/scripts/sys_version/sys_version.conf)
   fi
-
-  mv scripts/package/driver/ascend910B/scripts/sys_version/sys_version.conf scripts/package/driver/ascend910B/scripts/sys_version/sys_version.conf.org
-  cp scripts/package/custom/driver/ascend910B/scripts/sys_version/sys_version.conf scripts/package/driver/ascend910B/scripts/sys_version/sys_version.conf
-
-  PACKAGE_VERSION=$(cat scripts/package/driver/ascend910B/scripts/sys_version/sys_version.conf)
   echo "version=${PACKAGE_VERSION}" >./scripts/package/custom/version.info
   sed -i "s/compatible_version=/compatible_version=${COMPATIBLE_VERSION}/g" scripts/package/driver/common/conf/itf_ver.conf
   sed -i "s/package_version=/package_version=${PACKAGE_VERSION}/g" scripts/package/driver/common/conf/itf_ver.conf
@@ -240,7 +254,9 @@ clean_src()
   mv ./scripts/package/driver/ascend910_93/scripts/specific_func.inc.org ./scripts/package/driver/ascend910_93/scripts/specific_func.inc
   mv ./scripts/package/driver/ascend910B/scripts/specific_func.inc.org ./scripts/package/driver/ascend910B/scripts/specific_func.inc
   mv scripts/package/driver/ascend910B/driver.xml.org scripts/package/driver/ascend910B/driver.xml
+  mv scripts/package/driver/ascend950/driver.xml.org scripts/package/driver/ascend950/driver.xml
   mv scripts/package/driver/ascend910B/scripts/sys_version/sys_version.conf.org scripts/package/driver/ascend910B/scripts/sys_version/sys_version.conf
+  mv scripts/package/driver/ascend950/scripts/sys_version/sys_version.conf.org scripts/package/driver/ascend950/scripts/sys_version/sys_version.conf
   mv scripts/package/driver/common/conf/itf_ver.conf.org scripts/package/driver/common/conf/itf_ver.conf
   rm -f scripts/package/custom/version.info
   popd
@@ -254,11 +270,39 @@ cleanup() {
 # cleanup temporary source files after pressing Ctrl+C
 trap cleanup INT
 
+build_check_with_ube()
+{
+  local distributor_id=$(cat /etc/os-release | grep '^NAME' | awk -F '\"' '{print $2}')
+  local arch=$(uname -m)
+
+  if [ "${distributor_id}" != "openEuler" ]; then
+    echo "Not supported build in the ${distributor_id}, please use openEuler building with ube."
+    return 1
+  fi
+
+  if [ "${arch}" != "aarch64" ]; then
+    echo "Not supported build in the ${arch}, please use aarch64 building with ube."
+    return 1
+  fi
+
+  if [ "$(yum list installed umdk-urma-lib | grep 'Installed Packages')" != "Installed Packages" ]; then
+    echo "The \"umdk-urma-lib\" is not installed. Please Use \"yum install -y umdk-urma-lib\" before building with ube."
+    return 1
+  fi
+
+  if [ "$(yum list installed umdk-urma-devel | grep 'Installed Packages')" != "Installed Packages" ]; then
+    echo "The \"umdk-urma-devel\" is not installed. Please Use \"yum install -y umdk-urma-devel\" before building with ube."
+    return 1
+  fi
+
+  return 0
+}
+
 # create build path
 build_npu_driver()
 {
   echo "create build directory and build npu_driver"
-  export PROJECT_VERSION=$(cat scripts/package/driver/ascend910B/scripts/sys_version/sys_version.conf)
+  export PROJECT_VERSION=$(cat scripts/package/driver/${PRODUCT}/scripts/sys_version/sys_version.conf)
   mk_dir "${BUILD_PATH}"
   cd "${BUILD_PATH}"
 
@@ -295,6 +339,14 @@ build_npu_driver()
 
   if [ "$ENABLE_BUILD_PRODUCT" = "TRUE" ]; then
     CMAKE_ARGS="${CMAKE_ARGS} -DENABLE_BUILD_PRODUCT=TRUE"
+  fi
+
+  if [ "${PRODUCT}" = "ascend950" ] && [ "${ENABLE_UBE}" = "TRUE" ]; then
+    CMAKE_ARGS="${CMAKE_ARGS} -DENABLE_UBE=true"
+    build_check_with_ube
+    if [ $? -ne 0 ]; then
+      return 1
+    fi
   fi
 
   CMAKE_ARGS="${CMAKE_ARGS} -DPRODUCT=${PRODUCT} -DBUILD_COMPONENT=${BUILD_COMPONENT} ${VERBOSE} -DCANN_3RD_LIB_PATH=${CANN_3RD_LIB_PATH}"

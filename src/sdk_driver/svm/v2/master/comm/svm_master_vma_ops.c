@@ -35,8 +35,8 @@ STATIC void devmm_vm_open(ka_vm_area_struct_t *vma)
     return;
 }
 
-STATIC int devmm_svm_vm_fault_host_sync_device_data(struct devmm_svm_process *svm_proc,
-    struct devmm_svm_heap *heap, u64 start, ka_page_t **pages, u32 adjust_order)
+STATIC int devmm_svm_vm_fault_host_sync_device_data(
+    struct devmm_svm_process *svm_proc, struct devmm_svm_heap *heap, u64 start, ka_page_t **pages, u32 adjust_order)
 {
     struct devmm_devid svm_id = {0};
     u32 dev_id, phy_id, vfid;
@@ -72,8 +72,7 @@ STATIC int devmm_svm_vm_fault_host_sync_device_data(struct devmm_svm_process *sv
 
 STATIC int devmm_svm_vm_fault_host_check_bitmap(u32 *page_bitmap)
 {
-    if ((devmm_page_bitmap_is_page_available(page_bitmap) == 0) ||
-          devmm_page_bitmap_is_locked_device(page_bitmap)) {
+    if ((devmm_page_bitmap_is_page_available(page_bitmap) == 0) || devmm_page_bitmap_is_locked_device(page_bitmap)) {
         return -EINVAL;
     }
 
@@ -87,8 +86,7 @@ STATIC int devmm_svm_vm_fault_host_check_bitmap(u32 *page_bitmap)
 /*
  * vm do fault: host process and device process
  */
-STATIC int devmm_svm_vm_fault_host_proc(struct devmm_svm_process *svm_proc,
-    struct devmm_svm_heap *heap, u64 start)
+STATIC int devmm_svm_vm_fault_host_proc(struct devmm_svm_process *svm_proc, struct devmm_svm_heap *heap, u64 start)
 {
     struct devmm_phy_addr_attr attr = {0};
     ka_page_t **pages = NULL;
@@ -104,14 +102,13 @@ STATIC int devmm_svm_vm_fault_host_proc(struct devmm_svm_process *svm_proc,
     }
 
     if (devmm_svm_vm_fault_host_check_bitmap(page_bitmap) != 0) {
-        devmm_drv_err("Va is error, can not fault. (start=0x%llx, bitmap=0x%x)\n",
-            start, devmm_page_read_bitmap(page_bitmap));
+        devmm_drv_err(
+            "Va is error, can not fault. (start=0x%llx, bitmap=0x%x)\n", start, devmm_page_read_bitmap(page_bitmap));
         devmm_print_pre_alloced_va(svm_proc, start);
         return -EINVAL;
     }
 
-    adjust_order = (heap->heap_type == DEVMM_HEAP_CHUNK_PAGE) ?
-        0 : devmm_host_hugepage_fault_adjust_order();
+    adjust_order = (heap->heap_type == DEVMM_HEAP_CHUNK_PAGE) ? 0 : devmm_host_hugepage_fault_adjust_order();
     page_num = 1ull << adjust_order;
     pages = devmm_kvzalloc(sizeof(ka_page_t *) * page_num);
     if (pages == NULL) {
@@ -122,23 +119,20 @@ STATIC int devmm_svm_vm_fault_host_proc(struct devmm_svm_process *svm_proc,
     devmm_phy_addr_attr_pack(svm_proc, DEVMM_NORMAL_PAGE_TYPE, 0, false, &attr);
     ret = devmm_proc_alloc_pages(svm_proc, &attr, pages, page_num);
     if (ret != 0) {
-        devmm_drv_err("Devmm_alloc_pages error. (ret=%d; start=0x%llx; adjust_order=%u)\n",
-            ret, start, adjust_order);
+        devmm_drv_err("Devmm_alloc_pages error. (ret=%d; start=0x%llx; adjust_order=%u)\n", ret, start, adjust_order);
         goto devmm_svm_vm_fault_host_free_page;
     }
 
     ret = devmm_svm_vm_fault_host_sync_device_data(svm_proc, heap, start, pages, adjust_order);
     if (ret != 0) {
-        devmm_drv_err("Sync device data error. (ret=%d; start=0x%llx; page_num=%llu)\n",
-            ret, start, page_num);
+        devmm_drv_err("Sync device data error. (ret=%d; start=0x%llx; page_num=%llu)\n", ret, start, page_num);
         devmm_proc_free_pages(svm_proc, &attr, pages, page_num);
         goto devmm_svm_vm_fault_host_free_page;
     }
 
     ret = devmm_pages_remap(svm_proc, start, page_num, pages, 0);
     if (ret != 0) {
-        devmm_drv_err("Insert pages vma error. (ret=%d; start=0x%llx; adjust_order=%u)\n",
-                      ret, start, adjust_order);
+        devmm_drv_err("Insert pages vma error. (ret=%d; start=0x%llx; adjust_order=%u)\n", ret, start, adjust_order);
         devmm_proc_free_pages(svm_proc, &attr, pages, page_num);
         goto devmm_svm_vm_fault_host_free_page;
     }
@@ -151,8 +145,7 @@ devmm_svm_vm_fault_host_free_page:
     return ret;
 }
 
-static int _devmm_svm_vm_fault_host(struct devmm_svm_process *svm_proc,
-    ka_vm_area_struct_t *vma, u64 in_start)
+static int _devmm_svm_vm_fault_host(struct devmm_svm_process *svm_proc, ka_vm_area_struct_t *vma, u64 in_start)
 {
     struct devmm_svm_heap *heap = NULL;
     u64 start = in_start;
@@ -178,15 +171,14 @@ static int _devmm_svm_vm_fault_host(struct devmm_svm_process *svm_proc,
     ret = devmm_page_fault_get_va_ref(svm_proc, start);
     if (ret != 0) {
         ka_task_up_write(&svm_proc->host_fault_sem);
-        devmm_drv_err("Va is in operation. (start=0x%llx; heap_idx=%u)\n",
-                      start, heap->heap_idx);
+        devmm_drv_err("Va is in operation. (start=0x%llx; heap_idx=%u)\n", start, heap->heap_idx);
         return DEVMM_FAULT_ERROR;
     }
     ret = devmm_svm_vm_fault_host_proc(svm_proc, heap, start);
     devmm_page_fault_put_va_ref(svm_proc, start);
     ka_task_up_write(&svm_proc->host_fault_sem);
 
-     return (ret == 0) ? DEVMM_FAULT_OK : DEVMM_FAULT_ERROR;
+    return (ret == 0) ? DEVMM_FAULT_OK : DEVMM_FAULT_ERROR;
 }
 
 STATIC int devmm_svm_vm_fault_host(ka_vm_area_struct_t *vma, ka_vm_fault_struct_t *vmf)
@@ -217,10 +209,7 @@ STATIC int devmm_svm_vm_fault_host(ka_vm_area_struct_t *vma, ka_vm_fault_struct_
 KA_DEFINE_VM_OPS_FAULT_FUNC(devmm_svm_vm_fault_host)
 
 #ifndef EMU_ST
-static int devmm_mremap(ka_vm_area_struct_t *area)
-{
-    return -EACCES;
-}
+static int devmm_mremap(ka_vm_area_struct_t *area) { return -EACCES; }
 #endif
 
 #ifndef EMU_ST
@@ -235,7 +224,7 @@ static int devmm_mk_write(ka_vm_area_struct_t *vma, ka_vm_fault_struct_t *vmf)
         start = ka_mm_get_vm_start(vma) + (vmf->pgoff << KA_MM_PAGE_SHIFT);
     }
     devmm_drv_debug("Host mem enter devmm_mk_write. (start=0x%llx)\n", start);
-    
+
     return KA_VM_FAULT_SIGSEGV;
 }
 
@@ -246,12 +235,8 @@ static ka_vm_operations_struct_t svm_master_vma_ops = {
     .open = devmm_vm_open,
     ka_vm_ops_init_fault(devmm_svm_vm_fault_host)
 #ifndef EMU_ST
-    ka_vm_ops_init_pfn_mkwrite(devmm_mk_write)
-    ka_vm_ops_init_mremap(devmm_mremap)
+        ka_vm_ops_init_pfn_mkwrite(devmm_mk_write) ka_vm_ops_init_mremap(devmm_mremap)
 #endif
 };
 
-void devmm_svm_setup_vma_ops(ka_vm_area_struct_t *vma)
-{
-    ka_mm_set_vm_ops(vma, &svm_master_vma_ops);
-}
+void devmm_svm_setup_vma_ops(ka_vm_area_struct_t *vma) { ka_mm_set_vm_ops(vma, &svm_master_vma_ops); }

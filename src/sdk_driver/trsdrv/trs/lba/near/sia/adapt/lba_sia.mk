@@ -78,17 +78,16 @@ EXTRA_CFLAGS += -DCFG_FEATURE_TRS_SIA_ADAPT
 ifneq ($(filter $(PRODUCT), ascend910B),)
     EXTRA_CFLAGS += -DCFG_FEATURE_KA_ALLOC_INTERFACE
     EXTRA_CFLAGS += -DCFG_FEATURE_SUPPORT_RMO
-    EXTRA_CFLAGS += -DCFG_FEATURE_HOST_ACCELERATOR_UTIL
 endif
 ifneq ($(filter $(PRODUCT), ascend950),)
     EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/trsdrv/trs/lba/near/sia/adapt/trs_host_ub
     # urma include
-    EXTRA_CFLAGS += -I$(TOP_DIR)/ubengine/ssapi/kernelspace/urma/code/kmod/ubcore/include/
+    EXTRA_CFLAGS += -Iinclude/ub/urma
     EXTRA_CFLAGS += -DCFG_FEATURE_SUPPORT_APM
     EXTRA_CFLAGS += -DCFG_FEATURE_SUPPORT_RMO
     EXTRA_CFLAGS += -DCFG_FEATURE_SQ_SUPPORT_SVM_MEM
     EXTRA_CFLAGS += -DCFG_FEATURE_KA_ALLOC_INTERFACE
-    ifeq ($(ENABLE_UBE), true) 
+    ifeq ($(ENABLE_UBE), true)
         EXTRA_CFLAGS +=  -DCFG_FEATURE_SUPPORT_UB_CONNECTION
         $(MODULE_NAME)-objs += lba/near/sia/adapt/trs_host_ub/trs_ub_host_init.o lba/near/comm/trs_ub_init_common.o
     endif

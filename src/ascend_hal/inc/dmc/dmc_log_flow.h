@@ -16,7 +16,7 @@
 #include <sys/time.h>
 #include <time.h>
 
-static unsigned long g_log_last_jiffies = 0;  /* ms */
+static unsigned long g_log_last_jiffies = 0; /* ms */
 static unsigned long g_log_count = 0;
 
 #define LOG_MS_PER_SECOND 1000
@@ -31,7 +31,7 @@ static inline bool print_timed_ratelimit(unsigned long *caller_jiffies, unsigned
 
     (void)clock_gettime(CLOCK_MONOTONIC, &now);
     time_now = (unsigned long)(now.tv_sec * LOG_MS_PER_SECOND + now.tv_nsec / LOG_NSEC_PER_MSECOND);
-    timer =  time_now - *caller_jiffies;
+    timer = time_now - *caller_jiffies;
     if ((*caller_jiffies != 0) && (timer <= interval_msecs)) {
         return false;
     }
@@ -49,19 +49,19 @@ static inline bool drv_log_rate_limit(int *count, int branch_rate, unsigned long
     } else {
         (*count)++;
         g_log_count++;
-        return  ((*count >= branch_rate)  || (g_log_count  >=  LOG_LIMIT_RATE));
+        return ((*count >= branch_rate) || (g_log_count >= LOG_LIMIT_RATE));
     }
 }
 
 static inline bool drv_log_rate_limit_ex(int *count, unsigned long *log_last_jiffies, int branch_rate,
-    unsigned long limit_time)
+                                         unsigned long limit_time)
 {
     if (print_timed_ratelimit(log_last_jiffies, limit_time)) {
         *count = 0;
         return false;
     } else {
         (*count)++;
-        return  (*count >= branch_rate);
+        return (*count >= branch_rate);
     }
 }
 #endif

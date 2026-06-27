@@ -29,13 +29,19 @@
 #endif
 #include "trs_host_mode_config.h"
 
-#define TRS_URD_CMD_NAME        "TRS_URD_CMD_NAME"
-#define TRS_HOST_PHY_DEV_MAX    100U
+#define TRS_URD_CMD_NAME "TRS_URD_CMD_NAME"
+#define TRS_HOST_PHY_DEV_MAX 100U
 
-static DECLARE_RWSEM(trs_mode_lock);
-static int g_trs_sq_send_mode[TRS_HOST_PHY_DEV_MAX] = {TRS_MODE_TYPE_SQ_SEND_HIGH_SECURITY, };
-static bool g_trs_sq_send_mode_user_set_flag[TRS_HOST_PHY_DEV_MAX] = {false, };
-static bool g_trs_mode_is_sia_flag[TRS_HOST_PHY_DEV_MAX] = {true, };
+static KA_TASK_DECLARE_RWSEM(trs_mode_lock);
+static int g_trs_sq_send_mode[TRS_HOST_PHY_DEV_MAX] = {
+    TRS_MODE_TYPE_SQ_SEND_HIGH_SECURITY,
+};
+static bool g_trs_sq_send_mode_user_set_flag[TRS_HOST_PHY_DEV_MAX] = {
+    false,
+};
+static bool g_trs_mode_is_sia_flag[TRS_HOST_PHY_DEV_MAX] = {
+    true,
+};
 
 static void trs_sq_send_mode_to_xia(u32 chip_id, int mode)
 {
@@ -92,8 +98,9 @@ static int trs_sq_send_mode_config_by_urd(struct trsModeInfo *info)
     int ret = 0;
 
     if ((info->mode < 0) || (info->mode >= TRS_MODE_TYPE_SQ_SEND_MAX) || (info->devId >= TRS_HOST_PHY_DEV_MAX)) {
-        trs_err("The sq send mode or devid is invalid. (mode=%d; max=%d; devid=%u; max=%u)\n",
-            info->mode, TRS_MODE_TYPE_SQ_SEND_MAX, info->devId, TRS_HOST_PHY_DEV_MAX);
+        trs_err(
+            "The sq send mode or devid is invalid. (mode=%d; max=%d; devid=%u; max=%u)\n", info->mode,
+            TRS_MODE_TYPE_SQ_SEND_MAX, info->devId, TRS_HOST_PHY_DEV_MAX);
         return -EINVAL;
     }
 
@@ -103,7 +110,8 @@ static int trs_sq_send_mode_config_by_urd(struct trsModeInfo *info)
     }
 
     if ((devdrv_get_connect_protocol(info->devId) != CONNECT_PROTOCOL_PCIE) ||
-        (trs_soc_get_chip_type(info->devId) != TRS_CHIP_TYPE_CLOUD_V4)) {
+        ((trs_soc_get_chip_type(info->devId) != TRS_CHIP_TYPE_CLOUD_V4) &&
+         (trs_soc_get_chip_type(info->devId) != TRS_CHIP_TYPE_CLOUD_V5))) {
         return -EOPNOTSUPP;
     }
 
@@ -144,10 +152,10 @@ int trs_mode_config_by_urd(void *feature, char *in, u32 in_len, char *out, u32 o
 }
 
 /* default high perform mode, scene:
-    * a) phy dev is default high perform mode
-    * b) if user set by dsmi in phy, then docker or virtmachine(need extra set op) will inherit.
-    * c) if user dsmi not set, then set to high security mode when vnpu online.
-    */
+ * a) phy dev is default high perform mode
+ * b) if user set by dsmi in phy, then docker or virtmachine(need extra set op) will inherit.
+ * c) if user dsmi not set, then set to high security mode when vnpu online.
+ */
 int trs_get_sq_send_mode(u32 udevid)
 {
     struct uda_mia_dev_para mia_para = {0};
@@ -180,10 +188,11 @@ int trs_mode_query_by_urd(void *feature, char *in, u32 in_len, char *out, u32 ou
     struct trsModeInfo *in_info = NULL;
     int ret = 0;
 
-    if ((feature == NULL) || (in == NULL) || (in_len != sizeof(struct trsModeInfo)) ||
-        (out == NULL) || (out_len != sizeof(int))) {
-        trs_err("Param invalid. (feature=%d; in=%d; in_len=%u; out=%d; out_len=%u)\n", feature != NULL,
-            in != NULL, in_len, out != NULL, out_len);
+    if ((feature == NULL) || (in == NULL) || (in_len != sizeof(struct trsModeInfo)) || (out == NULL) ||
+        (out_len != sizeof(int))) {
+        trs_err(
+            "Param invalid. (feature=%d; in=%d; in_len=%u; out=%d; out_len=%u)\n", feature != NULL, in != NULL, in_len,
+            out != NULL, out_len);
         return -EINVAL;
     }
 
@@ -203,13 +212,12 @@ int trs_mode_query_by_urd(void *feature, char *in, u32 in_len, char *out, u32 ou
 BEGIN_DMS_MODULE_DECLARATION(TRS_URD_CMD_NAME)
 BEGIN_FEATURE_COMMAND()
 
-ADD_FEATURE_COMMAND(TRS_URD_CMD_NAME, URD_TRS_MODE_CONFIG_CMD, ZERO_CMD, NULL, NULL,
-                    DMS_ACC_ROOT | DMS_ENV_PHYSICAL | DMS_ENV_ADMIN_DOCKER | DMS_VDEV_NOTSUPPORT,
-                    trs_mode_config_by_urd)
+ADD_FEATURE_COMMAND(
+    TRS_URD_CMD_NAME, URD_TRS_MODE_CONFIG_CMD, ZERO_CMD, NULL, NULL,
+    DMS_ACC_ROOT | DMS_ENV_PHYSICAL | DMS_ENV_ADMIN_DOCKER | DMS_VDEV_NOTSUPPORT, trs_mode_config_by_urd)
 
-ADD_FEATURE_COMMAND(TRS_URD_CMD_NAME, URD_TRS_MODE_QUERY_CMD, ZERO_CMD, NULL, NULL,
-                    DMS_SUPPORT_ALL,
-                    trs_mode_query_by_urd)
+ADD_FEATURE_COMMAND(
+    TRS_URD_CMD_NAME, URD_TRS_MODE_QUERY_CMD, ZERO_CMD, NULL, NULL, DMS_SUPPORT_ALL, trs_mode_query_by_urd)
 
 END_FEATURE_COMMAND()
 END_MODULE_DECLARATION()
@@ -267,8 +275,5 @@ int trs_host_mode_config_init(void)
 }
 DECLAER_FEATURE_AUTO_INIT(trs_host_mode_config_init, FEATURE_LOADER_STAGE_2);
 
-void trs_host_mode_config_uninit(void)
-{
-    CALL_EXIT_MODULE(TRS_URD_CMD_NAME);
-}
+void trs_host_mode_config_uninit(void) { CALL_EXIT_MODULE(TRS_URD_CMD_NAME); }
 DECLAER_FEATURE_AUTO_UNINIT(trs_host_mode_config_uninit, FEATURE_LOADER_STAGE_2);

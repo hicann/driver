@@ -14,8 +14,8 @@
 #ifndef _HDCDRV_CMD_MSG_H_
 #define _HDCDRV_CMD_MSG_H_
 
-#define HDCDRV_CTRL_MEM_REGISTER_MAX_LEN (2 * 1024 * 1024)  /* ctrl mem register mem len check */
-#define HDCDRV_CTRL_MEM_SEND_MAX_LEN (252 * 1024)  /* ctrl mem send len check */
+#define HDCDRV_CTRL_MEM_REGISTER_MAX_LEN (2 * 1024 * 1024) /* ctrl mem register mem len check */
+#define HDCDRV_CTRL_MEM_SEND_MAX_LEN (252 * 1024)          /* ctrl mem send len check */
 #define HDCDRV_MEM_MIN_LEN (4 * 1024)
 #define HDCDRV_MEM_CACHE_LIMIT (64 * 1024)
 #define HDCDRV_MEM_MAX_NUM (HDCDRV_MEM_MAX_LEN / HDCDRV_MEM_MIN_LEN)
@@ -138,7 +138,7 @@ struct hdcdrv_sq_desc {
     unsigned long long dst_data_addr;
     unsigned long long src_ctrl_addr;
     unsigned long long dst_ctrl_addr;
-    unsigned int offset;         // src data addr seque offset, used for CFG_FEATURE_OVER_XCOM
+    unsigned int offset; // src data addr seque offset, used for CFG_FEATURE_OVER_XCOM
     int data_len;
     int ctrl_len;
     unsigned int src_pid;

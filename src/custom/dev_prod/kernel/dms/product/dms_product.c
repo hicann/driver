@@ -28,6 +28,14 @@
 #ifdef CFG_FEATURE_DMS_PRODUCT_HOST
 #include "dms_product_host.h"
 #endif
+#ifdef CFG_SOC_PLATFORM_CLOUDV4
+#include "ipc/dms_product_ipc.h"
+#include "pbl_uda.h"
+#include "udis.h"
+#include "securec.h"
+#include "ascend_platform.h"
+#include "comm_kernel_interface.h"
+#endif
 #include <linux/ktime.h>
 BEGIN_DMS_MODULE_DECLARATION(DMS_PRODUCT_CMD_NAME)
 BEGIN_FEATURE_COMMAND()
@@ -75,6 +83,15 @@ ADD_FEATURE_COMMAND(DMS_PRODUCT_CMD_NAME,
     DMS_SUPPORT_ALL,
     dms_feature_get_hbm_manufacturer_id)
 #endif
+#ifdef CFG_SOC_PLATFORM_CLOUD_V4
+ADD_FEATURE_COMMAND(DMS_PRODUCT_CMD_NAME,
+    DMS_MAIN_CMD_PRODUCT,
+    DMS_SUBCMD_GET_OUTBAND_PCIE_INFO,
+    NULL,
+    NULL,
+    DMS_SUPPORT_ALL,
+    dms_feature_get_pcie_info)
+#endif
 #ifdef CFG_FEATURE_HCCS_LINK_ERROR_INFO
 ADD_FEATURE_COMMAND(DMS_PRODUCT_CMD_NAME,
     DMS_MAIN_CMD_PRODUCT,
@@ -95,11 +112,90 @@ ADD_FEATURE_COMMAND(DMS_PRODUCT_CMD_NAME,
     dms_feature_get_pcie_link_error_info)
 #endif
 
+#ifdef CFG_SOC_PLATFORM_CLOUDV4
+ADD_FEATURE_COMMAND(DMS_PRODUCT_CMD_NAME,
+    DMS_MAIN_CMD_PRODUCT,
+    DMS_SUBCMD_SEND_TO_AO_SYNC,
+    NULL,
+    NULL,
+    DMS_SUPPORT_ALL,
+    dms_feature_send_to_ao_sync)
+#endif
+
 END_FEATURE_COMMAND()
 END_MODULE_DECLARATION()
 
+#ifdef CFG_SOC_PLATFORM_CLOUDV4
+STATIC int hbm_mfr_register(unsigned int udevid)
+{
+    int ret;
+    unsigned int hbm_mfr_id;
+    struct udis_dev_info set_info = {0};
+
+    ret = dms_feature_get_hbm_manufacturer_id(NULL,
+        (void *)&udevid, sizeof(unsigned int), (void *)&hbm_mfr_id, sizeof(unsigned int));
+    if (ret != 0) {
+        dms_err("Get hbm manufacturer_id failed. (udevid=%u; ret=%d)\n", udevid, ret);
+        return ret;
+    }
+    dms_info("Dms udis_hbm_mfr_info : 0x%x\n", hbm_mfr_id);
+    ret = sprintf_s(set_info.name, UDIS_MAX_NAME_LEN, "hbm_mfr_id");
+    if (ret < 0) {
+        dms_err("Sprintf_s failed. (ret=%d)\n", ret);
+        return DRV_ERROR_INNER_ERR;
+    }
+    ret = memcpy_s(set_info.data, UDIS_MAX_DATA_LEN, &hbm_mfr_id, sizeof(unsigned int));
+    if (ret != 0) {
+        dms_err("Memcpy_s failed. (ret=%d)\n", ret);
+        return DRV_ERROR_INNER_ERR;
+    }
+
+    set_info.acc_ctrl = DMS_SUPPORT_ALL;
+    set_info.data_len = sizeof(unsigned int);
+
+    ret = hal_kernel_set_udis_info(udevid, UDIS_MODULE_DEVMNG, &set_info);
+    if (ret != 0) {
+        dms_err("Set hbm mfr id udis info failed. (udevid=%u; module_type=%u; name=%s; ret=%d)\n",
+            udevid, UDIS_MODULE_DEVMNG, set_info.name, ret);
+        return ret;
+    }
+    dms_info("Dms udis_hbm_mfr_register success. (dev_id=%u)\n", udevid);
+    return 0;
+}
+
+
+STATIC int hbm_mfr_notifier_func(unsigned int udevid, enum uda_notified_action action)
+{
+    int ret = 0;
+ 
+    if (udevid >= ASCEND_DEV_MAX_NUM) {
+        dms_err("Invalid udevid. (udevid=%u)\n", udevid);
+        return -EINVAL;
+    }
+ 
+    if (action == UDA_INIT) {
+        ret = hbm_mfr_register(udevid);
+        if (ret != 0) {
+            dms_err("hbm_mfr_task_register failed. (udevid=%u; ret=%d)\n", udevid, ret);
+        }
+    }
+ 
+    return ret;
+}
+#endif
+
 int dms_product_init(void)
 {
+#ifdef CFG_SOC_PLATFORM_CLOUDV4
+    int ret = 0;
+    struct uda_dev_type type = {0};
+    uda_davinci_local_real_agent_type_pack(&type);
+    ret = uda_notifier_register(HBM_MFR_NOTIFIER, &type, UDA_PRI3, hbm_mfr_notifier_func);
+    if (ret != 0) {
+        dms_err("hbm_mfr_notifier_func for pf failed. (ret=%d)\n", ret);
+        return ret;
+    }
+#endif
     CALL_INIT_MODULE(DMS_PRODUCT_CMD_NAME);
     return 0;
 }
@@ -576,7 +672,10 @@ int dms_feature_get_hbm_manufacturer_id(void *feature, char *in, u32 in_len, cha
     u64 chip_base = CHIP_BASE_ADDR;
     u64 load_sram_base;
     void __iomem *manufacturer_sram_base = NULL;
-
+#ifndef CFG_SOC_PLATFORM_CLOUD_V4
+    int ret;
+    unsigned int dev_id;
+#endif
     if ((in == NULL) || (in_len != sizeof(unsigned int))) {
         dms_err("Input char is NULL or in_len is wrong.");
         return -EINVAL;
@@ -590,8 +689,6 @@ int dms_feature_get_hbm_manufacturer_id(void *feature, char *in, u32 in_len, cha
     manufacturer_id = (unsigned int *)out;
 
 #ifndef CFG_SOC_PLATFORM_CLOUD_V4
-    int ret;
-    unsigned int dev_id;
     dev_id = *(unsigned int *)in;
     ret = dms_get_local_sram_base_addr(dev_id, &chip_base);
     if (ret != 0) {
@@ -612,6 +709,46 @@ int dms_feature_get_hbm_manufacturer_id(void *feature, char *in, u32 in_len, cha
     iounmap(manufacturer_sram_base);
     manufacturer_sram_base = NULL;
     *manufacturer_id = tmp_manufacturer_id;
+    return 0;
+}
+#endif
+
+#if defined(CFG_SOC_PLATFORM_CLOUD_V4)
+int dms_feature_get_pcie_info(void *feature, char *in, u32 in_len, char *out, u32 out_len)
+{
+    unsigned int *pcie_info = NULL;
+    u32 val = PCIE_INFO_ERROR;
+
+    u64 chip_base = PCIE_CHIP_BASE_ADDR;
+    u64 pcie_base;
+    void __iomem *pcie_reg_base = NULL;
+
+    if ((in == NULL) || (in_len != sizeof(unsigned int))) {
+        dms_err("Input char is NULL or in_len is wrong.");
+        return -EINVAL;
+    }
+
+    if ((out == NULL) || (out_len != sizeof(unsigned int))) {
+        dms_err("Output argument is null, or out_len is wrong. (out_len=%u)\n", out_len);
+        return -EINVAL;
+    }
+
+    pcie_info = (unsigned int *)out;
+    pcie_base = chip_base + DEVDRV_PCIE_INFO_ADDR;
+
+    pcie_reg_base = ioremap(pcie_base, PCIE_ADDR_SIZE);
+    if (pcie_reg_base == NULL) {
+        dms_err("Pcie ioremap error.\n");
+        return -EINVAL;
+    }
+
+    val = readl((void __iomem *)(pcie_reg_base + PCIE_OFFSET));
+
+    iounmap(pcie_reg_base);
+    pcie_reg_base = NULL;
+
+    *pcie_info = val;
+
     return 0;
 }
 #endif

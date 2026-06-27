@@ -15,5 +15,7 @@
 
 drvError_t prof_event_start(uint32_t dev_id, uint32_t chan_id, struct prof_user_start_para *para); // can be see in adapt
 drvError_t prof_event_stop(uint32_t dev_id, uint32_t chan_id, struct prof_user_stop_para *para); // can be see in adapt
+drvError_t prof_user_host_sample_event_start(uint32_t dev_id, uint32_t chan_id, struct prof_user_start_para *para, struct prof_start_event_out_msg *outdata);
+drvError_t prof_user_host_sample_event_stop(uint32_t dev_id, uint32_t chan_id, struct prof_user_stop_para *para, uint32_t release_flag);
 
 #endif

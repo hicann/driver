@@ -42,7 +42,7 @@
 
 // =============================================================================
 // @struct ascend_ub_msg_status
-// @compatibility: link msg version 1.0, UB_MSG_CHECKE_VERSION_FAILED must fix 207
+// @compatibility: link msg version 1.0, UB_MSG_CHECK_VERSION_FAILED must fix 207
 //                 add/del must be made after this
 // @review_required: module owner and se
 // =============================================================================
@@ -51,11 +51,11 @@ enum ascend_ub_msg_status {
     UB_MSG_IDLE,
     UB_MSG_SENDING,
     UB_MSG_INVALID_VALUE,
-    UB_MSG_NULL_PROCSESS,
+    UB_MSG_NULL_PROCESS,
     UB_MSG_PROCESS_FAILED,
     UB_MSG_PROCESS_SUCCESS,
-    UB_MSG_CHECKE_VERSION_FAILED,
-    UB_MSG_RECV_FAILED,
+    UB_MSG_CHECK_VERSION_FAILED,
+    UB_MSG_REPLY_FAILED,
     UB_MSG_RECV_ABORT,
     UB_MSG_STATUS_MAX
 };

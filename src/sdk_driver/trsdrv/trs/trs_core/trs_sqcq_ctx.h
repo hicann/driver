@@ -81,8 +81,8 @@ static inline bool trs_cq_is_need_show(struct trs_cq_ctx *cq_ctx)
     return (cq_ctx->stat.rx_drop > 0 || cq_ctx->stat.rx_enque_fail > 0);
 }
 
-static inline void trs_sq_ctx_init(struct trs_id_inst *inst, struct trs_sq_ctx *sq_ctx, struct halSqCqInputInfo *para,
-    u32 stream_id, int chan_id)
+static inline void trs_sq_ctx_init(
+    struct trs_id_inst *inst, struct trs_sq_ctx *sq_ctx, struct halSqCqInputInfo *para, u32 stream_id, int chan_id)
 {
     sq_ctx->inst = *inst;
     sq_ctx->sqid = para->sqId;
@@ -119,10 +119,7 @@ static inline void trs_cq_ctx_init(struct trs_cq_ctx *cq_ctx, u32 logic_cqid, in
     (void)memset_s(&cq_ctx->stat, sizeof(struct trs_cq_stat), 0, sizeof(struct trs_cq_stat));
 }
 
-static inline void trs_cq_ctx_uninit(struct trs_cq_ctx *cq_ctx)
-{
-    cq_ctx->chan_id = -1;
-}
+static inline void trs_cq_ctx_uninit(struct trs_cq_ctx *cq_ctx) { cq_ctx->chan_id = -1; }
 
 static inline void trs_sq_ctxs_init(struct trs_sq_ctx *sq_ctx, u32 sq_num)
 {
@@ -143,4 +140,3 @@ static inline void trs_sq_ctxs_uninit(struct trs_sq_ctx *sq_ctx)
     }
 }
 #endif
-

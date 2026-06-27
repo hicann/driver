@@ -25,19 +25,19 @@
 #include "topic_sched_v2.h"
 
 /* HOST reg offset */
-#define SCHED_HOST_TOPIC_ADDR_OFFSET                                 (0x400000U)
-#define SCHED_HOST_MB_ADDR_OFFSET                                    (0x40000U)
+#define SCHED_HOST_TOPIC_ADDR_OFFSET (0x400000U)
+#define SCHED_HOST_MB_ADDR_OFFSET (0x40000U)
 
 /* wait/get status and report reg */
-#define STARS_TOPIC_VF_HOST_AICPU_WAIT_TOPIC_NS(cpu_id, vf_id)       (0x000C00 + (cpu_id) * 0x20 + (vf_id) * 0x10000)
-#define STARS_TOPIC_VF_HOST_AICPU_INT_EN_NS(cpu_id, vf_id)           (0x000C04 + (cpu_id) * 0x20 + (vf_id) * 0x10000)
-#define STARS_TOPIC_VF_HOST_AICPU_REPORT_NS(cpu_id, vf_id)           (0x000000 + (cpu_id) * 0x10 + (vf_id) * 0x10000)
+#define STARS_TOPIC_VF_HOST_AICPU_WAIT_TOPIC_NS(cpu_id, vf_id) (0x000C00 + (cpu_id) * 0x20 + (vf_id) * 0x10000)
+#define STARS_TOPIC_VF_HOST_AICPU_INT_EN_NS(cpu_id, vf_id) (0x000C04 + (cpu_id) * 0x20 + (vf_id) * 0x10000)
+#define STARS_TOPIC_VF_HOST_AICPU_REPORT_NS(cpu_id, vf_id) (0x000000 + (cpu_id) * 0x10 + (vf_id) * 0x10000)
 
-#define STARS_TOPIC_HOST_AICPU_INT_STS0_NS(index, vf_id)            (0x000A00 + (vf_id) * 0x10000 + (index) * 0x20)
-#define STARS_TOPIC_HOST_AICPU_INT_CLR0_NS(index, vf_id)            (0x000A08 + (vf_id) * 0x10000 + (index) * 0x20)
-#define STARS_TOPIC_HOST_AICPU_INT_MASK0_NS(index, vf_id)           (0x000A0C + (vf_id) * 0x10000 + (index) * 0x20)
-#define STARS_TOPIC_HOST_AICPU_INT_STS_NS(vf_id)                    (0x000A40 + (vf_id) * 0x10000)
-#define STARS_TOPIC_HOST_AICPU_INT_CLR_NS(vf_id)                    (0x000A48 + (vf_id) * 0x10000)
+#define STARS_TOPIC_HOST_AICPU_INT_STS0_NS(index, vf_id) (0x000A00 + (vf_id) * 0x10000 + (index) * 0x20)
+#define STARS_TOPIC_HOST_AICPU_INT_CLR0_NS(index, vf_id) (0x000A08 + (vf_id) * 0x10000 + (index) * 0x20)
+#define STARS_TOPIC_HOST_AICPU_INT_MASK0_NS(index, vf_id) (0x000A0C + (vf_id) * 0x10000 + (index) * 0x20)
+#define STARS_TOPIC_HOST_AICPU_INT_STS_NS(vf_id) (0x000A40 + (vf_id) * 0x10000)
+#define STARS_TOPIC_HOST_AICPU_INT_CLR_NS(vf_id) (0x000A48 + (vf_id) * 0x10000)
 
 void topic_sched_host_aicpu_intr_mask_set_v2(void __ka_mm_iomem *io_base, u32 mask_index, u32 vf_id, u32 val)
 {
@@ -98,7 +98,8 @@ void esched_drv_cpu_report_v2(struct topic_data_chan *topic_chan, u32 vf_id, u32
     cqe[1] = (u16)status;
 
     esched_drv_reg_mem_wr(topic_chan->hard_res->report_addr,
-        STARS_TOPIC_VF_HOST_AICPU_REPORT_NS(topic_chan->mb_id, vf_id_tmp), (void*)&cqe[0], sizeof(cqe));
+                          STARS_TOPIC_VF_HOST_AICPU_REPORT_NS(topic_chan->mb_id, vf_id_tmp), (void *)&cqe[0],
+                          sizeof(cqe));
 }
 
 int esched_drv_host_map_addr_v2(u32 dev_id, struct sched_hard_res *res)
@@ -186,6 +187,5 @@ void esched_host_iounmap_v2(struct sched_hard_res *res)
 }
 #else
 void esched_drv_host_topic_sched_v2(void)
-{
-}
+{}
 #endif

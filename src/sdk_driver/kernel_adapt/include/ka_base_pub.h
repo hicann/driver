@@ -93,7 +93,19 @@
 
 #define KA_INT_MAX          INT_MAX
 #define KA_UINT_MAX         UINT_MAX
+
+#ifdef U32_MAX
 #define KA_U32_MAX          U32_MAX
+#else
+#define KA_U32_MAX          0xFFFFFFFFU
+#endif
+
+#ifdef U16_MAX
+#define KA_U16_MAX          U16_MAX
+#else
+#define KA_U16_MAX          0xFFFFU
+#endif
+
 #define KA_S32_MAX          S32_MAX
 #define KA_U64_MAX          U64_MAX
 #define KA_LONG_MAX         LONG_MAX
@@ -120,6 +132,10 @@ typedef struct dql ka_dql_t;
 typedef struct fasync_struct ka_fasync_struct_t;
 typedef struct proc_dir_entry ka_proc_dir_entry_t;
 typedef struct seq_operations ka_seq_operations_t;
+#define ka_seq_init_start(pf_start) .start = pf_start,
+#define ka_seq_init_next(pf_next) .next = pf_next,
+#define ka_seq_init_stop(pf_stop) .stop = pf_stop,
+#define ka_seq_init_show(pf_show) .show = pf_show,
 typedef struct poll_table_struct ka_poll_table_struct_t;
 typedef struct kobj_attribute ka_base_kobj_attribute_t;
 
@@ -149,6 +165,7 @@ typedef va_list ka_va_list;
 
 #define ka_base_min(x, y)                   min(x, y)
 #define ka_base_min_t(type, x, y)           min_t(type, x, y)
+#define ka_base_max(x, y)                   max(x, y)
 #define ka_base_max_t(type, x, y)           max_t(type, x, y)
 
 #ifndef BITS_PER_LONG_LONG
@@ -300,6 +317,7 @@ static inline void ka_base_set_kobj_parent(ka_kobject_t *kobj, ka_kobject_t *par
 #define ka_base_bitmap_find_next_zero_area_off(map, size, start, nr, align_mask, align_offset) bitmap_find_next_zero_area_off(map, size, start, nr, align_mask, align_offset)
 #define ka_base_bitmap_parselist(buf, maskp, nmaskbits) bitmap_parselist(buf, maskp, nmaskbits)
 #define ka_base_bitmap_parselist_user(ubuf, ulen, dst, nbits) bitmap_parselist_user(ubuf, ulen, dst, nbits)
+#define ka_base_fls64(x) fls64(x)
 
 typedef struct gen_pool ka_gen_pool_t;
 
@@ -337,11 +355,8 @@ static unsigned long ka_##genpool_algo_func_name(unsigned long *map, \
 #define ka_base_gen_pool_size(pool) gen_pool_size(pool)
 #define ka_base_gen_pool_alloc(pool, size) gen_pool_alloc(pool, size)
 #define ka_base_gen_pool_free(pool, addr, size) gen_pool_free(pool, addr, size)
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 0, 0)
-#define ka_base_gen_pool_first_fit(map, size, start, nr, data, pool, start_addr) gen_pool_first_fit(map, size, start, nr, data, pool, start_addr)
-#else
-#define ka_base_gen_pool_first_fit(map, size, start, nr, data, pool, start_addr) gen_pool_first_fit(map, size, start, nr, data, pool)
-#endif
+#define ka_base_gen_pool_first_fit gen_pool_first_fit
+
 #define ka_base_gen_pool_set_algo(pool, algo, data) gen_pool_set_algo(pool, algo, data)
 
 #define ka_base_kasprintf kasprintf
@@ -516,6 +531,7 @@ void *ka_base_pde_data(const ka_inode_t *inode);
 #define ka_base_set_cpus_allowed_ptr(p, newmask) set_cpus_allowed_ptr(p, newmask)
 #define ka_base_cpumask_clear(dstp) cpumask_clear(dstp)
 #define ka_base_cpumask_copy(dstp, srcp) cpumask_copy(dstp, srcp)
+#define ka_base_cpumask_or(detp, src1p, src2p) cpumask_or(detp, src1p, src2p)
 #define ka_base_zalloc_cpumask_var(mask, flags) zalloc_cpumask_var(mask, flags)
 #define ka_base_free_cpumask_var(mask) free_cpumask_var(mask)
 #define ka_base_cpulist_parse(buf, dstp) cpulist_parse(buf, dstp)
@@ -609,5 +625,12 @@ static inline void ka_base_atomic_clear_mask(unsigned long mask, unsigned long *
 
 #define ka_get_unaligned_be64(p) get_unaligned_be64(p)
 #define ka_put_unaligned_be64(val, p) put_unaligned_be64(val, p)
+
+static inline char *ka_base_bin2hex(char *dst, const void *src, size_t count)
+{
+    return bin2hex(dst, src, count);
+}
+
+#define ka_roundup_pow_of_two roundup_pow_of_two
 
 #endif

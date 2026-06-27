@@ -20,7 +20,8 @@ typedef int (*fault_report_handle)(u32 devid);
 static inline void esched_kernel_soft_fault_report(u32 devid)
 {
 #ifndef EMU_ST
-    fault_report_handle handle = (fault_report_handle)(uintptr_t)__ka_system_symbol_get("hal_kernel_drv_soft_fault_report");
+    fault_report_handle handle = (fault_report_handle)(uintptr_t)__ka_system_symbol_get(
+        "hal_kernel_drv_soft_fault_report");
     if (handle != NULL) {
         handle(devid);
         __ka_system_symbol_put("hal_kernel_drv_soft_fault_report");
@@ -29,4 +30,3 @@ static inline void esched_kernel_soft_fault_report(u32 devid)
 #endif
 }
 #endif
-

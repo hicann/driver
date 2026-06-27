@@ -32,4 +32,3 @@ struct multi_rb_node *multi_rbtree_get_upper_bound(ka_rb_root_t *root, u64 key);
 struct multi_rb_node *multi_rbtree_get_node_from_rb_node(ka_rb_node_t *node);
 
 #endif
-

@@ -14,24 +14,26 @@
 #ifndef LOG_H_
 #define LOG_H_
 
+#include "ka_dfx_pub.h"
+
 #define module_devdrv "vascend"
 #ifdef DAVINCI_DEBUG
-#define vascend_err(dev, fmt, ...) dev_err(dev, "[%s] [CPU %d] [%s/%d/%d] [%s %d] " \
-    fmt, module_devdrv, smp_processor_id(), current->comm, current->tgid, current->pid, \
+#define vascend_err(dev, fmt, ...) ka_dev_err(dev, "[%s] [CPU %d] [%s/%d/%d] [%s %d] " \
+    fmt, module_devdrv, ka_system_smp_processor_id(), ka_task_get_current()->comm, ka_task_get_current()->tgid, ka_task_get_current()->pid, \
     __func__, __LINE__, ##__VA_ARGS__)
-#define vascend_warn(dev, fmt, ...) dev_warn(dev, "[%s] [CPU %d] [%s/%d/%d] [%s %d] " \
-    fmt, module_devdrv, smp_processor_id(), current->comm, current->tgid, current->pid, \
+#define vascend_warn(dev, fmt, ...) ka_dev_warn(dev, "[%s] [CPU %d] [%s/%d/%d] [%s %d] " \
+    fmt, module_devdrv, ka_system_smp_processor_id(), ka_task_get_current()->comm, ka_task_get_current()->tgid, ka_task_get_current()->pid, \
     __func__, __LINE__, ##__VA_ARGS__)
-#define vascend_info(dev, fmt, ...) dev_info(dev, "[%s] [CPU %d] [%s/%d/%d] [%s %d] " \
-    fmt, module_devdrv, smp_processor_id(), current->comm, current->tgid, current->pid, \
+#define vascend_info(dev, fmt, ...) ka_dev_info(dev, "[%s] [CPU %d] [%s/%d/%d] [%s %d] " \
+    fmt, module_devdrv, ka_system_smp_processor_id(), ka_task_get_current()->comm, ka_task_get_current()->tgid, ka_task_get_current()->pid, \
     __func__, __LINE__, ##__VA_ARGS__)
 #define vascend_debug(fmt, ...) pr_info("[%s]" fmt, __func__, ##__VA_ARGS__)
 #else
-#define vascend_err(dev, fmt, ...) dev_err(dev, "[%s] [%s %d] " \
+#define vascend_err(dev, fmt, ...) ka_dev_err(dev, "[%s] [%s %d] " \
     fmt, module_devdrv, __func__, __LINE__, ##__VA_ARGS__)
-#define vascend_warn(dev, fmt, ...) dev_warn(dev, "[%s] [%s %d] " \
+#define vascend_warn(dev, fmt, ...) ka_dev_warn(dev, "[%s] [%s %d] " \
     fmt, module_devdrv, __func__, __LINE__, ##__VA_ARGS__)
-#define vascend_info(dev, fmt, ...) dev_info(dev, "[%s] [%s %d] " \
+#define vascend_info(dev, fmt, ...) ka_dev_info(dev, "[%s] [%s %d] " \
     fmt, module_devdrv, __func__, __LINE__, ##__VA_ARGS__)
 #define vascend_debug(fmt, ...)
 #endif /* DAVINCI_DEBUG */

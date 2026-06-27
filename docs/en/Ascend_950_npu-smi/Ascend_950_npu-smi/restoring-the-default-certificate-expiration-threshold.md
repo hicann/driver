@@ -1,0 +1,111 @@
+# Restoring the Default Certificate Expiration Threshold<a name="EN-US_TOPIC_0000002484466796"></a>
+
+## Function<a name="en-us_topic_0000001897499164_section1835152119586"></a>
+
+This command is used to restore the default certificate expiration threshold.
+
+## Syntax<a name="en-us_topic_0000001897499164_section1436142185816"></a>
+
+`npu-smi clear -t tls-cert-period -i dev_id`
+
+## Parameters<a name="en-us_topic_0000001897499164_section83662111580"></a>
+
+<a name="en-us_topic_0000001897499164_en-us_topic_0000001220416486_en-us_topic_0000001168070435_table7208814"></a>
+<table><thead align="left"><tr id="en-us_topic_0000001897499164_en-us_topic_0000001220416486_en-us_topic_0000001168070435_row57216019"><th class="cellrowborder" valign="top" width="30%" id="mcps1.1.3.1.1"><p id="en-us_topic_0000001897499164_en-us_topic_0000001220416486_en-us_topic_0000001168070435_p3985976"><a name="en-us_topic_0000001897499164_en-us_topic_0000001220416486_en-us_topic_0000001168070435_p3985976"></a><a name="en-us_topic_0000001897499164_en-us_topic_0000001220416486_en-us_topic_0000001168070435_p3985976"></a>Parameter</p>
+</th>
+<th class="cellrowborder" valign="top" width="70%" id="mcps1.1.3.1.2"><p id="en-us_topic_0000001897499164_en-us_topic_0000001220416486_en-us_topic_0000001168070435_p54428625"><a name="en-us_topic_0000001897499164_en-us_topic_0000001220416486_en-us_topic_0000001168070435_p54428625"></a><a name="en-us_topic_0000001897499164_en-us_topic_0000001220416486_en-us_topic_0000001168070435_p54428625"></a>Description</p>
+</th>
+</tr>
+</thead>
+<tbody><tr id="en-us_topic_0000001897499164_en-us_topic_0000001220416486_en-us_topic_0000001168070435_row20095581"><td class="cellrowborder" valign="top" width="30%" headers="mcps1.1.3.1.1 "><p id="en-us_topic_0000001897499164_en-us_topic_0000001220416486_en-us_topic_0000001168070435_p57396781"><a name="en-us_topic_0000001897499164_en-us_topic_0000001220416486_en-us_topic_0000001168070435_p57396781"></a><a name="en-us_topic_0000001897499164_en-us_topic_0000001220416486_en-us_topic_0000001168070435_p57396781"></a><em id="i3445379295"><a name="i3445379295"></a><a name="i3445379295"></a><span id="ph1544123711298"><a name="ph1544123711298"></a><a name="ph1544123711298"></a><em id="en-us_topic_0000002552580505_i177511300519_2"><a name="en-us_topic_0000002552580505_i177511300519_2"></a><a name="en-us_topic_0000002552580505_i177511300519_2"></a>dev_id</em></span></em></p>
+</td>
+<td class="cellrowborder" valign="top" width="70%" headers="mcps1.1.3.1.2 "><p id="en-us_topic_0000002484466710_en-us_topic_0000001264656677_en-us_topic_0000001163797135_p45299595"><a name="en-us_topic_0000002484466710_en-us_topic_0000001264656677_en-us_topic_0000001163797135_p45299595"></a><a name="en-us_topic_0000002484466710_en-us_topic_0000001264656677_en-us_topic_0000001163797135_p45299595"></a><span id="en-us_topic_0000002484466710_ph861524220464"><a name="en-us_topic_0000002484466710_ph861524220464"></a><a name="en-us_topic_0000002484466710_ph861524220464"></a>Logical ID of the software</span>. The NPU ID obtained by running the <strong id="en-us_topic_0000002484466710_b208978812147"><a name="en-us_topic_0000002484466710_b208978812147"></a><a name="en-us_topic_0000002484466710_b208978812147"></a>npu-smi info -l</strong> command is the logical ID of the software.</p>
+</td>
+</tr>
+</tbody>
+</table>
+
+## Usage Instruction<a name="en-us_topic_0000001897499164_section174792115583"></a>
+
+**Table  1** Support in different deployment scenarios
+
+<a name="table7280184483416"></a>
+<table><thead align="left"><tr id="en-us_topic_0000002484466758_row964854311460"><th class="cellrowborder" rowspan="2" valign="top" id="mcps1.2.7.1.1"><p id="en-us_topic_0000002484466758_p13648143204610"><a name="en-us_topic_0000002484466758_p13648143204610"></a><a name="en-us_topic_0000002484466758_p13648143204610"></a>Hardware Model/Scenario</p>
+</th>
+<th class="cellrowborder" colspan="2" valign="top" id="mcps1.2.7.1.2"><p id="en-us_topic_0000002484466758_p1864874319464"><a name="en-us_topic_0000002484466758_p1864874319464"></a><a name="en-us_topic_0000002484466758_p1864874319464"></a>PM (Bare Metal)</p>
+</th>
+<th class="cellrowborder" valign="top" id="mcps1.2.7.1.3"><p id="en-us_topic_0000002484466758_p8648124314461"><a name="en-us_topic_0000002484466758_p8648124314461"></a><a name="en-us_topic_0000002484466758_p8648124314461"></a>PM + Privileged Container</p>
+</th>
+<th class="cellrowborder" valign="top" id="mcps1.2.7.1.4"><p id="en-us_topic_0000002484466758_p7648843164617"><a name="en-us_topic_0000002484466758_p7648843164617"></a><a name="en-us_topic_0000002484466758_p7648843164617"></a>PM + Unprivileged Container</p>
+</th>
+<th class="cellrowborder" valign="top" id="mcps1.2.7.1.5"><p id="en-us_topic_0000002484466758_p7648174364614"><a name="en-us_topic_0000002484466758_p7648174364614"></a><a name="en-us_topic_0000002484466758_p7648174364614"></a>VM Passthrough</p>
+</th>
+</tr>
+<tr id="en-us_topic_0000002484466758_row8648643184618"><th class="cellrowborder" valign="top" id="mcps1.2.7.2.1"><p id="en-us_topic_0000002484466758_p1164844314620"><a name="en-us_topic_0000002484466758_p1164844314620"></a><a name="en-us_topic_0000002484466758_p1164844314620"></a><strong id="en-us_topic_0000002484466758_b1894223994"><a name="en-us_topic_0000002484466758_b1894223994"></a><a name="en-us_topic_0000002484466758_b1894223994"></a>root</strong> User</p>
+</th>
+<th class="cellrowborder" valign="top" id="mcps1.2.7.2.2"><p id="en-us_topic_0000002484466758_p96483431466"><a name="en-us_topic_0000002484466758_p96483431466"></a><a name="en-us_topic_0000002484466758_p96483431466"></a>Running User Group (Non-<strong id="en-us_topic_0000002484466758_b1566399257"><a name="en-us_topic_0000002484466758_b1566399257"></a><a name="en-us_topic_0000002484466758_b1566399257"></a>root</strong> User)</p>
+</th>
+<th class="cellrowborder" valign="top" id="mcps1.2.7.2.3"><p id="en-us_topic_0000002484466758_p11648174310465"><a name="en-us_topic_0000002484466758_p11648174310465"></a><a name="en-us_topic_0000002484466758_p11648174310465"></a><strong id="en-us_topic_0000002484466758_b1896044746"><a name="en-us_topic_0000002484466758_b1896044746"></a><a name="en-us_topic_0000002484466758_b1896044746"></a>root</strong> User</p>
+</th>
+<th class="cellrowborder" valign="top" id="mcps1.2.7.2.4"><p id="en-us_topic_0000002484466758_p264864313463"><a name="en-us_topic_0000002484466758_p264864313463"></a><a name="en-us_topic_0000002484466758_p264864313463"></a><strong id="en-us_topic_0000002484466758_b1365462222"><a name="en-us_topic_0000002484466758_b1365462222"></a><a name="en-us_topic_0000002484466758_b1365462222"></a>root</strong> User</p>
+</th>
+<th class="cellrowborder" valign="top" id="mcps1.2.7.2.5"><p id="en-us_topic_0000002484466758_p19648943114611"><a name="en-us_topic_0000002484466758_p19648943114611"></a><a name="en-us_topic_0000002484466758_p19648943114611"></a><strong id="en-us_topic_0000002484466758_b1087084158"><a name="en-us_topic_0000002484466758_b1087084158"></a><a name="en-us_topic_0000002484466758_b1087084158"></a>root</strong> User</p>
+</th>
+</tr>
+</thead>
+<tbody><tr id="en-us_topic_0000002484466758_row12648144394611"><td class="cellrowborder" valign="top" width="16.666666666666664%" headers="mcps1.2.7.1.1 mcps1.2.7.2.1 "><p id="en-us_topic_0000002484466758_p1764844354613"><a name="en-us_topic_0000002484466758_p1764844354613"></a><a name="en-us_topic_0000002484466758_p1764844354613"></a><span id="en-us_topic_0000002484466758_ph46481643174611"><a name="en-us_topic_0000002484466758_ph46481643174611"></a><a name="en-us_topic_0000002484466758_ph46481643174611"></a>Atlas 350 accelerator card</span></p>
+</td>
+<td class="cellrowborder" valign="top" width="16.666666666666664%" headers="mcps1.2.7.1.2 mcps1.2.7.2.2 "><p id="en-us_topic_0000002484466758_p6648194364615"><a name="en-us_topic_0000002484466758_p6648194364615"></a><a name="en-us_topic_0000002484466758_p6648194364615"></a>Y</p>
+</td>
+<td class="cellrowborder" valign="top" width="16.666666666666664%" headers="mcps1.2.7.1.2 mcps1.2.7.2.3 "><p id="en-us_topic_0000002484466758_p136487437467"><a name="en-us_topic_0000002484466758_p136487437467"></a><a name="en-us_topic_0000002484466758_p136487437467"></a>N</p>
+</td>
+<td class="cellrowborder" valign="top" width="16.666666666666664%" headers="mcps1.2.7.1.3 mcps1.2.7.2.4 "><p id="en-us_topic_0000002484466758_p26077503460"><a name="en-us_topic_0000002484466758_p26077503460"></a><a name="en-us_topic_0000002484466758_p26077503460"></a>N</p>
+</td>
+<td class="cellrowborder" valign="top" width="16.666666666666664%" headers="mcps1.2.7.1.4 mcps1.2.7.2.5 "><p id="en-us_topic_0000002484466758_p18611175034612"><a name="en-us_topic_0000002484466758_p18611175034612"></a><a name="en-us_topic_0000002484466758_p18611175034612"></a>N</p>
+</td>
+<td class="cellrowborder" valign="top" width="16.666666666666664%" headers="mcps1.2.7.1.5 "><p id="en-us_topic_0000002484466758_p1161365020461"><a name="en-us_topic_0000002484466758_p1161365020461"></a><a name="en-us_topic_0000002484466758_p1161365020461"></a>N</p>
+</td>
+</tr>
+<tr id="en-us_topic_0000002484466758_row10649154311467"><td class="cellrowborder" colspan="6" valign="top" headers="mcps1.2.7.1.1 mcps1.2.7.1.2 mcps1.2.7.1.3 mcps1.2.7.1.4 mcps1.2.7.1.5 mcps1.2.7.2.1 mcps1.2.7.2.2 mcps1.2.7.2.3 mcps1.2.7.2.4 mcps1.2.7.2.5 "><p id="en-us_topic_0000002484466758_p12649164316467"><a name="en-us_topic_0000002484466758_p12649164316467"></a><a name="en-us_topic_0000002484466758_p12649164316467"></a>Note: <strong id="en-us_topic_0000002484466758_en-us_topic_0000002484466758_b109022033362"><a name="en-us_topic_0000002484466758_en-us_topic_0000002484466758_b109022033362"></a><a name="en-us_topic_0000002484466758_en-us_topic_0000002484466758_b109022033362"></a>Y</strong> indicates that the function is supported, <strong id="en-us_topic_0000002484466758_en-us_topic_0000002484466758_b1290216331663"><a name="en-us_topic_0000002484466758_en-us_topic_0000002484466758_b1290216331663"></a><a name="en-us_topic_0000002484466758_en-us_topic_0000002484466758_b1290216331663"></a>N</strong> indicates that the function is not supported, and <strong id="en-us_topic_0000002484466758_en-us_topic_0000002484466758_b290310333620"><a name="en-us_topic_0000002484466758_en-us_topic_0000002484466758_b290310333620"></a><a name="en-us_topic_0000002484466758_en-us_topic_0000002484466758_b290310333620"></a>NA</strong> indicates that the function is not involved and planned currently.</p>
+</td>
+</tr>
+</tbody>
+</table>
+
+## Example<a name="en-us_topic_0000001897499164_section411816216583"></a>
+
+Restore the default certificate expiration threshold for device 0.
+
+```bash
+npu-smi clear -t tls-cert-period -i 0
+```
+
+```text
+        Status                         : OK
+        Message                        : Clear tls-cert-period successfully.
+```
+
+## Output Description<a name="en-us_topic_0000001897499164_section812102120582"></a>
+
+**Table  2**  Description of the displayed information
+
+<a name="table8154172165811"></a>
+<table><thead align="left"><tr id="row3274721195819"><th class="cellrowborder" valign="top" width="49.49%" id="mcps1.2.3.1.1"><p id="p92741421165810"><a name="p92741421165810"></a><a name="p92741421165810"></a>Field</p>
+</th>
+<th class="cellrowborder" valign="top" width="50.51%" id="mcps1.2.3.1.2"><p id="p1927412110582"><a name="p1927412110582"></a><a name="p1927412110582"></a>Description</p>
+</th>
+</tr>
+</thead>
+<tbody><tr id="row192741121145815"><td class="cellrowborder" valign="top" width="49.49%" headers="mcps1.2.3.1.1 "><p id="p327432115813"><a name="p327432115813"></a><a name="p327432115813"></a>Status</p>
+</td>
+<td class="cellrowborder" valign="top" width="50.51%" headers="mcps1.2.3.1.2 "><p id="p10274112155819"><a name="p10274112155819"></a><a name="p10274112155819"></a>Command output.</p>
+<p id="p112741721125818"><a name="p112741721125818"></a><a name="p112741721125818"></a>The value can be <strong id="b122476105617"><a name="b122476105617"></a><a name="b122476105617"></a>OK</strong> or <strong id="b1924711014616"><a name="b1924711014616"></a><a name="b1924711014616"></a>Fail</strong>.</p>
+</td>
+</tr>
+<tr id="row72741421175815"><td class="cellrowborder" valign="top" width="49.49%" headers="mcps1.2.3.1.1 "><p id="p327402175810"><a name="p327402175810"></a><a name="p327402175810"></a>Message</p>
+</td>
+<td class="cellrowborder" valign="top" width="50.51%" headers="mcps1.2.3.1.2 "><p id="p14274192165810"><a name="p14274192165810"></a><a name="p14274192165810"></a>Message displayed after the command is executed.</p>
+</td>
+</tr>
+</tbody>
+</table>

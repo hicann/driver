@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2025. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -28,6 +28,7 @@ struct copy_va_info {
     int dst_host_tgid; /* input defaults to current master tgid; user-side resolve may rewrite it to the owner tgid */
 
     u64 size;
+    u32 flag;
 };
 
 struct copy_2d_va_info {
@@ -65,8 +66,8 @@ static inline enum svm_cpy_dir copy_dir_get_by_udevid(u32 src_udevid, u32 dst_ud
 
 static inline u32 copy_va_info_get_exec_udevid(const struct copy_va_info *info)
 {
-    return (copy_dir_get_by_udevid(info->src_udevid, info->dst_udevid) == SVM_H2D_CPY) ?
-        info->dst_udevid : info->src_udevid;
+    return (copy_dir_get_by_udevid(info->src_udevid, info->dst_udevid) == SVM_H2D_CPY) ? info->dst_udevid :
+                                                                                         info->src_udevid;
 }
 
 static inline int copy_va_info_check(u32 udevid, struct copy_va_info *info)
@@ -90,8 +91,8 @@ static inline int copy_va_info_check(u32 udevid, struct copy_va_info *info)
         svm_err("Invalid d2h addr. (src_va=0x%llx; size=%llu)\n", info->src_va, info->size);
         return -EINVAL;
     } else if ((dir == SVM_D2D_CPY) && (udevid != info->src_udevid) && (udevid != info->dst_udevid)) {
-        svm_err("Invalid d2d addr. (src_va=0x%llx; dst_va=0x%llx; size=%llu)\n",
-            info->src_va, info->dst_va, info->size);
+        svm_err(
+            "Invalid d2d addr. (src_va=0x%llx; dst_va=0x%llx; size=%llu)\n", info->src_va, info->dst_va, info->size);
         return -EINVAL;
     }
 
@@ -99,4 +100,3 @@ static inline int copy_va_info_check(u32 udevid, struct copy_va_info *info)
 }
 
 #endif
-

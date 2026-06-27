@@ -52,6 +52,12 @@ extern "C"{
 #define DCMI_ENV_NOT_NORMAL_DOCKER (DCMI_ENV_PHYSICAL | DCMI_ENV_VIRTUAL | DCMI_ENV_ADMIN_DOCKER)
 #define DCMI_ENV_PHY_ADMIN_DOCKER (DCMI_ENV_PHYSICAL | DCMI_ENV_ADMIN_DOCKER)
 
+#define UBOE_BOND_PREFIX "bond"
+#define UBOE_BOND_PREFIX_LEN (sizeof(UBOE_BOND_PREFIX) - 1)
+#define IP_ADDRESS_RADIX 10
+
+#define MAX_NETDEV_NAME_LEN 64
+
 struct dcmi_get_device_main_cmd_table {
     int main_cmd;
     int cmd_permission;
@@ -80,7 +86,7 @@ typedef enum {
     DCMI_LP_SUB_CMD_NOT_SUPPROT_MAX,
 } DCMI_LP_SUB_CMD_NOT_SUPPORT;
 
-int dcmi_get_device_info_maincmd_permission(int main_cmd, int *cmd_permission);
+int dcmi_get_device_info_cmd_permission(int main_cmd, unsigned int sub_cmd, int *cmd_permission);
 
 int dcmi_set_device_info_permission_check(unsigned int main_cmd, unsigned int sub_cmd);
 
@@ -97,9 +103,16 @@ int dcmi_acc_ctrl_check(unsigned int acc_ctrl);
 
 int dcmi_cmd_product_support_check(unsigned int main_cmd, unsigned int sub_cmd);
 
-int dcmi_check_device_share_set_cmd_permission(unsigned int main_cmd, unsigned int sub_cmd);
+int dcmi_check_hbm_manufacturer_id(unsigned int manufacturer_id);
 
-int dcmi_check_device_share_set_cmd_permission_and_product(void);
+int dcmi_check_permission_of_get_compatibility(int card_id, int device_id, enum dcmi_device_compat *compatibility);
+
+int dcmi_check_vnpu_in_docker(int card_id, int device_id);
+
+int dcmi_netdev_validity_check(int dev_id, const char *netdev_name, unsigned int netdev_name_len);
+
+int dcmi_netdev_permission_judge(int dev_id);
+
 #ifdef __cplusplus
 #if __cplusplus
 }

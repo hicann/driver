@@ -24,7 +24,7 @@
 #endif
 
 #define DEVMM_HASH_LIST_NUM_SHIFT 10
-#define DEVMM_HASH_LIST_NUM (1 << DEVMM_HASH_LIST_NUM_SHIFT)  /* 1024 */
+#define DEVMM_HASH_LIST_NUM (1 << DEVMM_HASH_LIST_NUM_SHIFT) /* 1024 */
 
 struct devmm_dev_msg_client {
     ka_device_t *dev;

@@ -29,9 +29,9 @@
 #include "queue_interface.h"
 #include "queue.h"
 
-#define MAX_STR_LEN                128
-#define LOG_TIME_INTERVAL 100    /* 100 s */
-#define MAX_ENQUE_TIME    (38 * 100000)      /* 100ms */
+#define MAX_STR_LEN 128
+#define LOG_TIME_INTERVAL 100        /* 100 s */
+#define MAX_ENQUE_TIME (38 * 100000) /* 100ms */
 #define QUEUE_DEPT_RES_SIZE 2
 #define MAX_DEQUEUE_TRY_TIMES 3
 #define ENQUE_EVENT_TIMEOUT (38 * 1000000) /* enque timeout 1s */
@@ -195,9 +195,9 @@ static drvError_t queue_create_para_check(unsigned int dev_id, const QueueAttr *
     unsigned long len;
     (void)dev_id;
     if ((que_attr->depth < MIN_VALID_QUEUE_DEPTH) || (que_attr->depth > MAX_QUEUE_DEPTH) ||
-        (que_attr->workMode > QUEUE_MODE_PULL)) {  // work_mod 0 means : default PUSH
+        (que_attr->workMode > QUEUE_MODE_PULL)) { // work_mod 0 means : default PUSH
         QUEUE_LOG_ERR("Input para error. (depth=%u, work_mode=%u, flowctrl_flag=%d, drop_time=%ums).\n",
-            que_attr->depth, que_attr->workMode, que_attr->flowCtrlFlag, que_attr->flowCtrlDropTime);
+                      que_attr->depth, que_attr->workMode, que_attr->flowCtrlFlag, que_attr->flowCtrlDropTime);
         return DRV_ERROR_INVALID_VALUE;
     }
 
@@ -210,8 +210,8 @@ static drvError_t queue_create_para_check(unsigned int dev_id, const QueueAttr *
     return DRV_ERROR_NONE;
 }
 
-static drvError_t queue_init_mng_info(struct queue_manages *que_mng, const QueueAttr *que_attr,
-    unsigned int qid, unsigned int dev_id)
+static drvError_t queue_init_mng_info(struct queue_manages *que_mng, const QueueAttr *que_attr, unsigned int qid,
+                                      unsigned int dev_id)
 {
     int ret;
     struct timeval create_time;
@@ -234,9 +234,11 @@ static drvError_t queue_init_mng_info(struct queue_manages *que_mng, const Queue
     que_mng->fctl_flag = que_attr->flowCtrlFlag;
     que_mng->drop_time = que_attr->flowCtrlDropTime;
     que_mng->over_write = que_attr->overWriteFlag;
-    que_mng->work_mode = (int)((que_attr->workMode != (unsigned int)QUEUE_MODE_PULL) ? QUEUE_MODE_PUSH : QUEUE_MODE_PULL);
+    que_mng->work_mode = (int)((que_attr->workMode != (unsigned int)QUEUE_MODE_PULL) ? QUEUE_MODE_PUSH :
+                                                                                       QUEUE_MODE_PULL);
     que_mng->merge_idx = INVALID_QUEUE_MERGE_IDX;
     que_mng->remote_devid = QUEUE_INVALID_VALUE;
+    que_mng->phy_remote_devid = QUEUE_INVALID_VALUE;
     que_mng->remote_qid = QUEUE_INVALID_VALUE;
     que_mng->remote_devpid = QUE_INTER_DEV_INVALID_VALUE;
     que_mng->remote_grpid = QUE_INTER_DEV_INVALID_VALUE;
@@ -265,15 +267,15 @@ static drvError_t queue_create_local(unsigned int dev_id, const QueueAttr *que_a
     ret = queue_init_mng_info(local_info.que_mng, que_attr, (*qid), dev_id);
     if (ret != DRV_ERROR_NONE) {
         queue_delete(*qid, (void *)local_info.entity);
-        QUEUE_LOG_ERR("init manage info failed. (device_id=%u; queue_id=%u; depth=%u; ret=%d)\n",
-            dev_id, *qid, que_attr->depth, ret);
+        QUEUE_LOG_ERR("init manage info failed. (device_id=%u; queue_id=%u; depth=%u; ret=%d)\n", dev_id, *qid,
+                      que_attr->depth, ret);
         return ret;
     }
 
     queue_set_local_info(*qid, &local_info);
 
-    QUEUE_RUN_LOG_INFO("create queue success. (device_id=%u; qid=%u; depth=%u; name=%s; mode=%u; freq=%llu)\n",
-                    dev_id, *qid, que_attr->depth, que_attr->name, que_attr->workMode, esched_get_sys_freq());
+    QUEUE_RUN_LOG_INFO("create queue success. (device_id=%u; qid=%u; depth=%u; name=%s; mode=%u; freq=%llu)\n", dev_id,
+                       *qid, que_attr->depth, que_attr->name, que_attr->workMode, esched_get_sys_freq());
     return DRV_ERROR_NONE;
 }
 
@@ -307,8 +309,8 @@ STATIC drvError_t queue_grant_local(unsigned int dev_id, unsigned int qid, int p
         QUEUE_LOG_ERR("queue is not created. (qid=%u)\n", qid);
         return DRV_ERROR_NOT_EXIST;
     }
-    QUEUE_RUN_LOG_INFO("queue grant res. (dev_id=%u; qid=%d; pid=%u; manage=%u; read=%u; write=%u; ret=%d)\n",
-        dev_id, qid, pid, attr.manage, attr.read, attr.write, ret);
+    QUEUE_RUN_LOG_INFO("queue grant res. (dev_id=%u; qid=%d; pid=%u; manage=%u; read=%u; write=%u; ret=%d)\n", dev_id,
+                       qid, pid, attr.manage, attr.read, attr.write, ret);
 
     return ret;
 }
@@ -380,41 +382,7 @@ static drvError_t de_queue_inner(struct queue_manages *manage, unsigned int qid)
 
 STATIC void queue_wake_up_wait_event(struct queue_manages *que_manage, int rsp_ret)
 {
-#ifndef DRV_HOST
-    struct event_summary back_event = {0};
-    struct event_proc_result rsp = {0};
-
-    back_event.dst_engine = CCPU_HOST;
-    rsp.ret = rsp_ret;
-    back_event.msg_len = (unsigned int)sizeof(struct event_proc_result);
-    back_event.msg = (char *)&rsp;
-    back_event.subevent_id = queue_get_virtual_qid(que_manage->id, LOCAL_QUEUE);
-    back_event.policy = ONLY;
-
-    if ((que_manage->consumer.pid != 0) && (que_manage->consumer.dst_engine == CCPU_HOST) 
-        && (que_manage->consumer.inner_sub_flag == QUEUE_INNER_SUB_FLAG)) {
-        back_event.pid = que_manage->consumer.pid;
-        back_event.grp_id = que_manage->consumer.groupid;
-        back_event.event_id = (EVENT_ID)que_manage->consumer.eventid;
-        drvError_t ret = halEschedSubmitEvent(que_manage->dev_id, &back_event);
-        if (ret != 0) {
-            QUEUE_LOG_ERR("halEschedSubmitEvent. (ret=%d)\n", ret);
-        }
-    }
-
-    if ((que_manage->producer.pid != 0) && (que_manage->producer.dst_engine == CCPU_HOST)
-        && (que_manage->producer.inner_sub_flag == QUEUE_INNER_SUB_FLAG)) {
-        back_event.pid = que_manage->producer.pid;
-        back_event.grp_id = que_manage->producer.groupid;
-        back_event.event_id = (EVENT_ID)que_manage->producer.eventid;
-        drvError_t ret = halEschedSubmitEvent(que_manage->dev_id, &back_event);
-        if (ret != 0) {
-            QUEUE_LOG_ERR("halEschedSubmitEvent. (ret=%d)\n", ret);
-        }
-    }
-#endif
-    (void)que_manage;
-    (void)rsp_ret;
+    queue_send_wake_up_rsp_platform(que_manage, rsp_ret);
 }
 
 void queue_detach_invalid_queue(void)
@@ -514,15 +482,14 @@ STATIC drvError_t queue_reset_res(struct queue_manages *que_manage, unsigned int
     if (is_queue_empty(que_manage) == false) {
         ret = de_queue_inner(que_manage, qid);
         if (ret != DRV_ERROR_NONE) {
-            QUEUE_LOG_ERR("queue free mbuf failed. (dev_id=%u; qid=%u; ret=%d)\n",
-                dev_id, que_manage->id, (int)ret);
+            QUEUE_LOG_ERR("queue free mbuf failed. (dev_id=%u; qid=%u; ret=%d)\n", dev_id, que_manage->id, (int)ret);
             return DRV_ERROR_INNER_ERR;
         }
     }
 
     return DRV_ERROR_NONE;
 }
- 
+
 drvError_t queue_reset_local(unsigned int dev_id, unsigned int qid)
 {
     struct queue_manages *que_manage = NULL;
@@ -546,11 +513,10 @@ drvError_t queue_reset_local(unsigned int dev_id, unsigned int qid)
     que_manage = (struct queue_manages *)queue_get_que_addr(qid);
     if (que_manage->valid != QUEUE_CREATED) {
         queue_put(qid);
-        QUEUE_LOG_ERR("queue is not created. (dev_id=%u; qid=%u; valid=%d)\n",
-            dev_id, qid, que_manage->valid);
+        QUEUE_LOG_ERR("queue is not created. (dev_id=%u; qid=%u; valid=%d)\n", dev_id, qid, que_manage->valid);
         return DRV_ERROR_NOT_EXIST;
     }
-    
+
 #ifndef EMU_ST
     if (CAS(&que_manage->enque_cas, 0, 1) == false) {
         queue_put(qid);
@@ -573,12 +539,12 @@ drvError_t queue_reset_local(unsigned int dev_id, unsigned int qid)
         QUEUE_RUN_LOG_INFO("queue buff reset success. (dev_id=%u; qid=%u)\n", dev_id, qid);
     }
     if (CAS(&que_manage->enque_cas, 1, 0) == false) {
-        QUEUE_LOG_ERR("enque write cas failed. (dev_id=%u; qid=%u; enque_cas=%d)\n",
-            dev_id, qid, que_manage->enque_cas);
+        QUEUE_LOG_ERR("enque write cas failed. (dev_id=%u; qid=%u; enque_cas=%d)\n", dev_id, qid,
+                      que_manage->enque_cas);
     }
     if (CAS(&que_manage->deque_cas, 1, 0) == false) {
-        QUEUE_LOG_ERR("enque write cas failed. (dev_id=%u; qid=%u; enque_cas=%d)\n",
-            dev_id, qid, que_manage->enque_cas);
+        QUEUE_LOG_ERR("enque write cas failed. (dev_id=%u; qid=%u; enque_cas=%d)\n", dev_id, qid,
+                      que_manage->enque_cas);
     }
     queue_put(qid);
     return ret;
@@ -602,7 +568,7 @@ drvError_t queue_query_alive(unsigned int devid, unsigned int qid)
         queue_put(qid);
         return DRV_ERROR_NOT_EXIST;
     }
-    queue_put(qid);  
+    queue_put(qid);
     return DRV_ERROR_NONE;
 }
 
@@ -628,13 +594,7 @@ static drvError_t submit_queue_event(unsigned int devid, unsigned int qid, struc
     event.msg = (char *)&msg;
     event.msg_len = sizeof(msg);
 
-#ifndef DRV_HOST
-    if ((event.dst_engine == CCPU_DEVICE) || (event.dst_engine == ACPU_DEVICE)) {
-        if (sub_event->dst_devid != QUEUE_INVALID_VALUE) {
-            submit_devid = sub_event->dst_devid; /* in the same os, if set dst devid, directly submit to dst */
-        }
-    }
-#endif
+    submit_devid = queue_get_submit_devid_platform(submit_devid, event.dst_engine, sub_event->dst_devid);
 
     if (sub_event->spec_thread == true) {
         event.tid = sub_event->tid;
@@ -665,8 +625,7 @@ STATIC bool is_queue_de_queue_time_out(struct group_merge *merge)
     return false;
 }
 
-static drvError_t queue_group_event_fail(struct queue_manages *manage, struct group_merge *merge,
-    drvError_t result)
+static drvError_t queue_group_event_fail(struct queue_manages *manage, struct group_merge *merge, drvError_t result)
 {
     if (result == DRV_ERROR_NO_PROCESS) {
         ATOMIC_INC(&manage->stat.enque_none_subscrib);
@@ -679,7 +638,8 @@ static drvError_t queue_group_event_fail(struct queue_manages *manage, struct gr
     ATOMIC_SET(&manage->stat.enque_event_ret, (unsigned int)result);
 
     QUEUE_LOG_ERR("send enqueue event failed. (device_id=%u; queue_id=%u; pid=%d; spec_thread=%d; tid=%u; ret=%d)\n",
-        manage->dev_id, manage->id, manage->consumer.pid, manage->consumer.spec_thread, manage->consumer.tid, result);
+                  manage->dev_id, manage->id, manage->consumer.pid, manage->consumer.spec_thread, manage->consumer.tid,
+                  result);
 
     return result;
 }
@@ -717,7 +677,7 @@ static drvError_t send_group_queue_event(unsigned int devid, struct queue_manage
 
     if (queue_is_merge_idx_valid(merge_idx) == false) {
         QUEUE_RUN_LOG_INFO("queue merge_idx is invalid. (queue_id=%u; bind_type=%d; merge_idx=%d)\n", manage->id,
-            manage->bind_type, merge_idx);
+                           manage->bind_type, merge_idx);
         return DRV_ERROR_INNER_ERR;
     }
 
@@ -756,16 +716,16 @@ static drvError_t queue_single_event_fail(struct queue_manages *manage, drvError
     ATOMIC_SET(&manage->stat.enque_event_ret, (unsigned int)result);
 
     QUEUE_LOG_ERR("send queue event failed. "
-        "(dev_id=%u; queue_id=%u; mode=%d; pid=%d; spec_thread=%d; tid=%u; ret=%d)\n",
-        manage->dev_id, manage->id, manage->work_mode, manage->consumer.pid,
-        manage->consumer.spec_thread, manage->consumer.tid, result);
+                  "(dev_id=%u; queue_id=%u; mode=%d; pid=%d; spec_thread=%d; tid=%u; ret=%d)\n",
+                  manage->dev_id, manage->id, manage->work_mode, manage->consumer.pid, manage->consumer.spec_thread,
+                  manage->consumer.tid, result);
 
     return result;
 }
 
 static drvError_t send_single_queue_event(unsigned int devid, struct queue_manages *manage)
 {
-    int mode = (manage->work_mode == 0) ? QUEUE_MODE_PUSH : manage->work_mode;   /* Not set, default is push. */
+    int mode = (manage->work_mode == 0) ? QUEUE_MODE_PUSH : manage->work_mode; /* Not set, default is push. */
     struct sub_info sub_event = {0};
     unsigned int qid = queue_get_virtual_qid(manage->id, LOCAL_QUEUE);
     drvError_t ret;
@@ -895,7 +855,7 @@ static inline drvError_t queue_buff_verify(void *buff)
     return DRV_ERROR_NONE;
 }
 
-static inline drvError_t queue_enqueue_para_check(unsigned int dev_id,  unsigned int qid, void *buff)
+static inline drvError_t queue_enqueue_para_check(unsigned int dev_id, unsigned int qid, void *buff)
 {
     if (queue_device_invalid(dev_id) || (qid >= MAX_SURPORT_QUEUE_NUM)) {
         QUEUE_LOG_ERR("para is error. (dev_id=%u, qid=%u)\n", dev_id, qid);
@@ -952,7 +912,7 @@ drvError_t queue_enqueue_local(unsigned int dev_id, unsigned int qid, void *mbuf
     if (CAS(&que_manage->enque_cas, 0, 1) == false) {
         queue_put(qid);
         QUEUE_LOG_WARN("queue is try to enque multiple times. (qid=%u)\n", qid);
-        return  DRV_ERROR_BUSY;
+        return DRV_ERROR_BUSY;
     }
 
     if ((que_manage->over_write != 0) &&
@@ -964,7 +924,8 @@ drvError_t queue_enqueue_local(unsigned int dev_id, unsigned int qid, void *mbuf
         }
         enque_timestamp.overwrite_end_timestamp = buff_get_cur_timestamp();
     } else if (is_queue_full(que_manage, qid)) {
-        // When the queue is full, attempt to send an enqueue event to solve the problem of being unable to enqueue or trigger enqueue events after the queue is full.
+        // When the queue is full, attempt to send an enqueue event to solve the problem of being unable to enqueue or
+        // trigger enqueue events after the queue is full.
         send_queue_event(dev_id, que_manage);
         ATOMIC_INC(&que_manage->stat.enque_full);
         ATOMIC_SET(&que_manage->full_flag, 1);
@@ -997,18 +958,18 @@ ERR:
     queue_put(qid);
     if (enque_timestamp.total_end_timestamp - enque_timestamp.total_start_timestamp > MAX_ENQUE_TIME) {
         QUEUE_LOG_INFO("enqueue start:(%llu), enque end:(%llu), over_write start:(%llu), over_write end:(%llu), "
-            "event start:(%llu), event end:(%llu), enter kernel:(%llu), kernel handle start:(%llu), "
-            "kernel handle end:(%llu),enqueue total:(%llu), over_write total:(%llu), "
-            "event total:(%llu),kernel total:(%llu).\n",
-            enque_timestamp.total_start_timestamp, enque_timestamp.total_end_timestamp,
-            enque_timestamp.overwrite_start_timstamp, enque_timestamp.overwrite_end_timestamp,
-            enque_timestamp.submit_start_timestamp, enque_timestamp.submit_end_timestamp,
-            enque_timestamp.kern_start_timestamp, enque_timestamp.kern_submit_timstamp,
-            enque_timestamp.kern_end_timestamp,
-            enque_timestamp.total_end_timestamp - enque_timestamp.total_start_timestamp,
-            enque_timestamp.overwrite_end_timestamp - enque_timestamp.overwrite_start_timstamp,
-            enque_timestamp.submit_end_timestamp - enque_timestamp.submit_start_timestamp,
-            enque_timestamp.kern_end_timestamp - enque_timestamp.kern_start_timestamp);
+                       "event start:(%llu), event end:(%llu), enter kernel:(%llu), kernel handle start:(%llu), "
+                       "kernel handle end:(%llu),enqueue total:(%llu), over_write total:(%llu), "
+                       "event total:(%llu),kernel total:(%llu).\n",
+                       enque_timestamp.total_start_timestamp, enque_timestamp.total_end_timestamp,
+                       enque_timestamp.overwrite_start_timstamp, enque_timestamp.overwrite_end_timestamp,
+                       enque_timestamp.submit_start_timestamp, enque_timestamp.submit_end_timestamp,
+                       enque_timestamp.kern_start_timestamp, enque_timestamp.kern_submit_timstamp,
+                       enque_timestamp.kern_end_timestamp,
+                       enque_timestamp.total_end_timestamp - enque_timestamp.total_start_timestamp,
+                       enque_timestamp.overwrite_end_timestamp - enque_timestamp.overwrite_start_timstamp,
+                       enque_timestamp.submit_end_timestamp - enque_timestamp.submit_start_timestamp,
+                       enque_timestamp.kern_end_timestamp - enque_timestamp.kern_start_timestamp);
     }
     return ret;
 }
@@ -1049,8 +1010,8 @@ static void sub_queue_send_event(unsigned int dev_id, struct queue_manages *mana
     }
 }
 
-static drvError_t dequeue_one_mbuf(struct queue_manages *que_manage, unsigned int qid,
-    void **buff_inner, uint32_t *blk_id)
+static drvError_t dequeue_one_mbuf(struct queue_manages *que_manage, unsigned int qid, void **buff_inner,
+                                   uint32_t *blk_id)
 {
     union atomic_queue_head cur_head, new_head;
     unsigned int depth, head, cas_ret;
@@ -1116,8 +1077,8 @@ static drvError_t dequeue_by_flow_ctrl(struct queue_manages *que_manage, unsigne
      */
     ret = create_priv_mbuf_for_queue(&mbuf_inner, buff_inner, blk_id);
     if (ret != DRV_ERROR_NONE) {
-        QUEUE_LOG_ERR("dequeue mbuf is illegal. (qid=%u; mbuf=0x%llx)\n",
-            qid, (unsigned long long)(uintptr_t)buff_inner);
+        QUEUE_LOG_ERR("dequeue mbuf is illegal. (qid=%u; mbuf=0x%llx)\n", qid,
+                      (unsigned long long)(uintptr_t)buff_inner);
         return ret;
     }
 
@@ -1140,9 +1101,9 @@ static drvError_t dequeue_by_flow_ctrl(struct queue_manages *que_manage, unsigne
                 return ret;
             }
             /*
-            * If the mbuf is illegal, the error code DRV_ERROR_NO_RESOURCES needs to be returned,
-            * and the upper layer will perform selective processing based on the error code.
-            */
+             * If the mbuf is illegal, the error code DRV_ERROR_NO_RESOURCES needs to be returned,
+             * and the upper layer will perform selective processing based on the error code.
+             */
             ret = create_priv_mbuf_for_queue(&mbuf_inner, buff_inner, blk_id);
             if (ret != DRV_ERROR_NONE) {
                 QUEUE_LOG_ERR("dequeue mbuf is illegal. (qid=%u; mbuf=%p)\n", que_manage->id, buff_inner);
@@ -1205,8 +1166,8 @@ drvError_t queue_dequeue_local(unsigned int dev_id, unsigned int qid, void **mbu
 
     if (que_manage->valid != QUEUE_CREATED) {
         queue_put(qid);
-        QUEUE_LOG_ERR("queue is not created. (qid=%u; valid=%d; QUEUE_CREATED=%d)\n",
-            qid, que_manage->valid, QUEUE_CREATED);
+        QUEUE_LOG_ERR("queue is not created. (qid=%u; valid=%d; QUEUE_CREATED=%d)\n", qid, que_manage->valid,
+                      QUEUE_CREATED);
         return DRV_ERROR_NOT_EXIST;
     }
 
@@ -1296,8 +1257,8 @@ drvError_t check_subscribe_para(unsigned int dev_id, unsigned int qid, int type)
     }
 
     if (manage->consumer.pid != 0) {
-        QUEUE_LOG_ERR("Queue has been subscribed. (qid=%u; pid=%d; spec_thread=%d; tid=%u)\n",
-            manage->id, manage->consumer.pid, manage->consumer.spec_thread, manage->consumer.tid);
+        QUEUE_LOG_ERR("Queue has been subscribed. (qid=%u; pid=%d; spec_thread=%d; tid=%u)\n", manage->id,
+                      manage->consumer.pid, manage->consumer.spec_thread, manage->consumer.tid);
         return DRV_ERROR_REPEATED_SUBSCRIBED;
     }
 
@@ -1309,23 +1270,14 @@ drvError_t check_subscribe_para(unsigned int dev_id, unsigned int qid, int type)
     return DRV_ERROR_NONE;
 }
 
-static drvError_t queue_get_event_src(unsigned int dev_id, unsigned int dst_engine,
-    unsigned int *src_location, unsigned int *src_udevid)
+static drvError_t queue_get_event_src(unsigned int dev_id, unsigned int dst_engine, unsigned int *src_location,
+                                      unsigned int *src_udevid)
 {
     drvError_t ret;
+    int location;
 
-#ifdef DRV_HOST
-    (void)dst_engine;
-    *src_location = EVENT_SRC_LOCATION_HOST;
-    ret = uda_get_udevid_by_devid_ex(dev_id, src_udevid);
-#else
-    *src_location = EVENT_SRC_LOCATION_DEVICE;
-    if (dst_engine == CCPU_HOST) {
-        ret = drvGetDevIDByLocalDevID(dev_id, src_udevid);
-    } else {
-        ret = uda_get_udevid_by_devid(dev_id, src_udevid);
-    }
-#endif
+    ret = queue_get_event_src_udevid_platform(dev_id, dst_engine, src_udevid, &location);
+    *src_location = (unsigned int)location;
 
     return ret;
 }
@@ -1364,7 +1316,8 @@ drvError_t subscribe_queue(unsigned int dev_id, unsigned int qid, struct sub_inf
         return ret;
     }
 
-    ret = queue_get_event_src(dev_id, sub_info.dst_engine, &manage->consumer.src_location, &manage->consumer.src_udevid);
+    ret = queue_get_event_src(dev_id, sub_info.dst_engine, &manage->consumer.src_location,
+                              &manage->consumer.src_udevid);
     if (ret != DRV_ERROR_NONE) {
         QUEUE_LOG_ERR("get event src failed. (devid=%u, qid=%u)\n", dev_id, qid);
         return ret;
@@ -1391,15 +1344,14 @@ drvError_t subscribe_queue(unsigned int dev_id, unsigned int qid, struct sub_inf
     }
 
     QUEUE_LOG_INFO("subscribe queue success. (queue=%u; pid=%d; spec_thread=%d; tid=%u;"
-        " group=%u; event_id=%u; type=%d; event_flag=%d;"
-        " enque_ok=0x%llx; deque_ok=0x%llx;"
-        " enque_event_ok=0x%llx; enque_event_fail=0x%llx; enque_none_subscrib=0x%lx;"
-        " head=%u; tail=%u)\n",
-        manage->id, manage->consumer.pid, manage->consumer.spec_thread, manage->consumer.tid,
-        manage->consumer.groupid, manage->consumer.eventid, type, manage->event_flag,
-        manage->stat.enque_ok, manage->stat.deque_ok,
-        manage->stat.enque_event_ok, manage->stat.enque_event_fail, manage->stat.enque_none_subscrib,
-        manage->queue_head.head_info.head, queue_get_orig_tail(manage));
+                   " group=%u; event_id=%u; type=%d; event_flag=%d;"
+                   " enque_ok=0x%llx; deque_ok=0x%llx;"
+                   " enque_event_ok=0x%llx; enque_event_fail=0x%llx; enque_none_subscrib=0x%lx;"
+                   " head=%u; tail=%u)\n",
+                   manage->id, manage->consumer.pid, manage->consumer.spec_thread, manage->consumer.tid,
+                   manage->consumer.groupid, manage->consumer.eventid, type, manage->event_flag, manage->stat.enque_ok,
+                   manage->stat.deque_ok, manage->stat.enque_event_ok, manage->stat.enque_event_fail,
+                   manage->stat.enque_none_subscrib, manage->queue_head.head_info.head, queue_get_orig_tail(manage));
 
     return DRV_ERROR_NONE;
 }
@@ -1457,7 +1409,8 @@ drvError_t sub_f_to_nf_event(unsigned int dev_id, unsigned int qid, struct sub_i
         return DRV_ERROR_REPEATED_SUBSCRIBED;
     }
 
-    ret = queue_get_event_src(dev_id, sub_event.dst_engine, &manage->producer.src_location, &manage->producer.src_udevid);
+    ret = queue_get_event_src(dev_id, sub_event.dst_engine, &manage->producer.src_location,
+                              &manage->producer.src_udevid);
     if (ret != DRV_ERROR_NONE) {
         QUEUE_LOG_ERR("get event src failed. (devid=%u, qid=%u)\n", dev_id, qid);
         return ret;
@@ -1486,8 +1439,9 @@ drvError_t sub_f_to_nf_event(unsigned int dev_id, unsigned int qid, struct sub_i
     if ((current_time.tv_sec - last_log_time.tv_sec) > LOG_TIME_INTERVAL) {
         last_log_time = current_time;
         QUEUE_RUN_LOG_INFO("sub_f_to_nf_event success. (dev_id=%d; queue=%u; pid=%d; spec_thread=%d; tid=%u; group=%u;"
-            "enqueue_full=%llu)\n", dev_id, qid, manage->producer.pid, manage->consumer.spec_thread,
-            manage->consumer.tid, manage->producer.groupid, manage->stat.enque_full);
+                           "enqueue_full=%llu)\n",
+                           dev_id, qid, manage->producer.pid, manage->consumer.spec_thread, manage->consumer.tid,
+                           manage->producer.groupid, manage->stat.enque_full);
     }
 
     return DRV_ERROR_NONE;
@@ -1523,8 +1477,8 @@ static drvError_t queue_sub_para_check(struct QueueSubPara *sub_para)
     drvError_t ret;
 
     if (sub_para->eventType >= QUEUE_EVENT_TYPE_MAX) {
-        QUEUE_LOG_ERR("event_type is invalid. (event_type=%d; event_typeMax=%d)\n",
-            sub_para->eventType, QUEUE_EVENT_TYPE_MAX);
+        QUEUE_LOG_ERR("event_type is invalid. (event_type=%d; event_typeMax=%d)\n", sub_para->eventType,
+                      QUEUE_EVENT_TYPE_MAX);
         return DRV_ERROR_PARA_ERROR;
     }
 
@@ -1544,30 +1498,13 @@ static drvError_t queue_sub_para_check(struct QueueSubPara *sub_para)
 
 unsigned int queue_get_dst_engine(unsigned int dev_id, unsigned int group_id)
 {
-    unsigned int dst_engine;
-
-#ifdef DRV_HOST
-    (void)dev_id;
-    (void)group_id;
-    dst_engine = CCPU_HOST;
-#else
-    GROUP_TYPE type = GRP_TYPE_BIND_DP_CPU;
-    drvError_t ret;
-
-    ret = esched_query_grp_type(dev_id, group_id, &type);
-    if (ret != DRV_ERROR_NONE) {
-        QUEUE_LOG_WARN("get group type failed. (ret=%d; dev_id=%u; group_id=%u)\n",
-            ret, dev_id, group_id);
-    }
-    dst_engine = (type == GRP_TYPE_BIND_CP_CPU) ? CCPU_DEVICE : ACPU_DEVICE;
-#endif
-
-    return dst_engine;
+    return queue_get_grp_dst_engine_platform(dev_id, group_id);
 }
 
 static void queue_set_sub_info(struct QueueSubPara *sub_para, unsigned int event_id, struct sub_info *sub_info)
 {
-    unsigned int dst_dev = ((sub_para->flag & QUEUE_SUB_FLAG_SPEC_DST_DEVID) != 0) ? sub_para->dstDevId : sub_para->devId;
+    unsigned int dst_dev = ((sub_para->flag & QUEUE_SUB_FLAG_SPEC_DST_DEVID) != 0) ? sub_para->dstDevId :
+                                                                                     sub_para->devId;
 
     sub_info->dst_engine = queue_get_dst_engine(dst_dev, sub_para->groupId);
     sub_info->eventid = event_id;
@@ -1575,8 +1512,8 @@ static void queue_set_sub_info(struct QueueSubPara *sub_para, unsigned int event
     sub_info->pid = GETPID();
     sub_info->spec_thread = ((sub_para->flag & QUEUE_SUB_FLAG_SPEC_THREAD) != 0) ? true : false;
     sub_info->tid = sub_para->threadId;
-    sub_info->dst_devid = ((sub_para->flag & QUEUE_SUB_FLAG_SPEC_DST_DEVID) != 0) ?
-        sub_para->dstDevId : QUEUE_INVALID_VALUE;
+    sub_info->dst_devid = ((sub_para->flag & QUEUE_SUB_FLAG_SPEC_DST_DEVID) != 0) ? sub_para->dstDevId :
+                                                                                    QUEUE_INVALID_VALUE;
     sub_info->sub_send = 1;
 }
 
@@ -1587,15 +1524,15 @@ static drvError_t queue_sub_enque_event(struct QueueSubPara *sub_para)
     int event_id;
 
     if (manage->consumer.pid != 0) {
-        QUEUE_LOG_ERR("Queue has been subscribed. (queue_id=%u; pid=%d; spec_thread=%d; tid=%u)\n",
-            sub_para->qid, manage->consumer.pid, manage->consumer.spec_thread, manage->consumer.tid);
+        QUEUE_LOG_ERR("Queue has been subscribed. (queue_id=%u; pid=%d; spec_thread=%d; tid=%u)\n", sub_para->qid,
+                      manage->consumer.pid, manage->consumer.spec_thread, manage->consumer.tid);
         return DRV_ERROR_REPEATED_SUBSCRIBED;
     }
 
     if ((sub_para->queType > QUEUE_TYPE_SINGLE) ||
         ((manage->work_mode == QUEUE_MODE_PULL) && (sub_para->queType == QUEUE_TYPE_GROUP))) {
-        QUEUE_LOG_ERR("para invalid. (qid=%u; work_mode=%d; type=%d)\n",
-            sub_para->qid, manage->work_mode, sub_para->queType);
+        QUEUE_LOG_ERR("para invalid. (qid=%u; work_mode=%d; type=%d)\n", sub_para->qid, manage->work_mode,
+                      sub_para->queType);
         return DRV_ERROR_PARA_ERROR;
     }
     event_id = (manage->work_mode == QUEUE_MODE_PULL) ? EVENT_QUEUE_EMPTY_TO_NOT_EMPTY : EVENT_QUEUE_ENQUEUE;
@@ -1715,8 +1652,8 @@ static drvError_t queue_unsub_f2nf_event(struct QueueUnsubPara *unsub_para)
     que_get_time(&current_time);
     if ((current_time.tv_sec - last_log_time.tv_sec) > LOG_TIME_INTERVAL) {
         last_log_time = current_time;
-        QUEUE_RUN_LOG_INFO("unsub F2NF event success. (dev_id=%u; queue_id=%u; enque_full=%llu)\n",
-            unsub_para->devId, unsub_para->qid, manage->stat.enque_full);
+        QUEUE_RUN_LOG_INFO("unsub F2NF event success. (dev_id=%u; queue_id=%u; enque_full=%llu)\n", unsub_para->devId,
+                           unsub_para->qid, manage->stat.enque_full);
     }
 
     return DRV_ERROR_NONE;
@@ -1791,12 +1728,13 @@ drvError_t queue_query_info_local(unsigned int dev_id, unsigned int qid, QueueIn
     }
 
     que_info->depth = (int)depth;
-    que_info->headDataPtr = (void *)(is_queue_empty(que_manage) ? NULL : que_entity[queue_get_head(que_manage, qid)].node);
+    que_info->headDataPtr = (void *)(is_queue_empty(que_manage) ? NULL :
+                                                                  que_entity[queue_get_head(que_manage, qid)].node);
 
     que_info->id = (int)qid;
     que_info->size = (int)get_que_size_by_mng(que_manage, qid);
     que_info->type = que_manage->bind_type;
-    que_info->workMode = (que_manage->work_mode ==  0) ? QUEUE_MODE_PUSH : que_manage->work_mode;
+    que_info->workMode = (que_manage->work_mode == 0) ? QUEUE_MODE_PUSH : que_manage->work_mode;
     que_info->subGroupId = (int)que_manage->consumer.groupid;
     que_info->subPid = que_manage->consumer.pid;
     que_info->subF2NFPid = que_manage->producer.pid;
@@ -1859,8 +1797,8 @@ static drvError_t queue_get_status_para_check(QUEUE_QUERY_ITEM query_item, unsig
     return DRV_ERROR_NONE;
 }
 
-drvError_t queue_get_status_local(unsigned int dev_id, unsigned int qid, QUEUE_QUERY_ITEM query_item,
-    unsigned int len, void *data)
+drvError_t queue_get_status_local(unsigned int dev_id, unsigned int qid, QUEUE_QUERY_ITEM query_item, unsigned int len,
+                                  void *data)
 {
     struct queue_manages *que_manage = NULL;
     drvError_t ret;
@@ -1889,8 +1827,7 @@ drvError_t queue_get_status_local(unsigned int dev_id, unsigned int qid, QUEUE_Q
             if (is_queue_full(que_manage, qid)) {
                 *((int *)data) = QUEUE_FULL;
             } else {
-                *((int *)data) = (int)(is_queue_empty(que_manage) ?
-                    QUEUE_EMPTY : QUEUE_NORMAL);
+                *((int *)data) = (int)(is_queue_empty(que_manage) ? QUEUE_EMPTY : QUEUE_NORMAL);
             }
             break;
         case QUERY_QUEUE_DEPTH:
@@ -1910,7 +1847,7 @@ STATIC drvError_t queue_get_qid_by_name_local(unsigned int dev_id, const char *n
     unsigned long len;
     unsigned int i;
 
-    if ((queue_device_invalid(dev_id))  || (name == NULL) || (qid == NULL)) {
+    if ((queue_device_invalid(dev_id)) || (name == NULL) || (qid == NULL)) {
         QUEUE_LOG_ERR("para invalid. (dev_id=%u)\n", dev_id);
         return DRV_ERROR_INVALID_VALUE;
     }
@@ -1939,8 +1876,8 @@ STATIC drvError_t queue_get_qid_by_name_local(unsigned int dev_id, const char *n
     return DRV_ERROR_NOT_EXIST;
 }
 
-STATIC drvError_t queue_get_qidsby_pid_local(unsigned int dev_id, unsigned int pid,
-    unsigned int max_que_size, QidsOfPid *info)
+STATIC drvError_t queue_get_qidsby_pid_local(unsigned int dev_id, unsigned int pid, unsigned int max_que_size,
+                                             QidsOfPid *info)
 {
     struct queue_manages *que_manage = NULL;
     unsigned int *qids = NULL;
@@ -1948,8 +1885,8 @@ STATIC drvError_t queue_get_qidsby_pid_local(unsigned int dev_id, unsigned int p
     unsigned int i;
 
     if (queue_device_invalid(dev_id) || (pid == 0) || (max_que_size == 0) || (info == NULL)) {
-        QUEUE_LOG_ERR("devid,pid or max_que_size is invalid. (dev_id=%u; pid=%u; max_que_size=%u)\n",
-            dev_id, pid, max_que_size);
+        QUEUE_LOG_ERR("devid,pid or max_que_size is invalid. (dev_id=%u; pid=%u; max_que_size=%u)\n", dev_id, pid,
+                      max_que_size);
         return DRV_ERROR_INVALID_VALUE;
     }
 
@@ -1981,17 +1918,19 @@ STATIC drvError_t queue_get_qidsby_pid_local(unsigned int dev_id, unsigned int p
     return DRV_ERROR_NONE;
 }
 
-static drvError_t query_the_que_perm_info(unsigned int dev_id, QueueQueryInputPara *in_put, QueueQueryOutputPara *out_put)
+static drvError_t query_the_que_perm_info(unsigned int dev_id, QueueQueryInputPara *in_put,
+                                          QueueQueryOutputPara *out_put)
 {
     QueueQueryOutput *out_buff = (QueueQueryOutput *)(out_put->outBuff);
     QueueQueryInput *in_buff = (QueueQueryInput *)(in_put->inBuff);
-    QueueShareAttr attr = { .manage = 1, .read = 1, .write = 1 };
+    QueueShareAttr attr = {.manage = 1, .read = 1, .write = 1};
     struct queue_manages *que_manage = NULL;
     unsigned int qid;
 
     if ((in_buff == NULL) || (in_put->inLen < sizeof(QueQueryQueueAttr)) ||
-       (out_put->outLen < sizeof(QueQueryQueueAttrInfo))) {
-        QUEUE_LOG_ERR("Input para error. (in_buff=%p; in_len=%u; out_len=%u)\n", in_buff, in_put->inLen, out_put->outLen);
+        (out_put->outLen < sizeof(QueQueryQueueAttrInfo))) {
+        QUEUE_LOG_ERR("Input para error. (in_buff=%p; in_len=%u; out_len=%u)\n", in_buff, in_put->inLen,
+                      out_put->outLen);
         return DRV_ERROR_INVALID_VALUE;
     }
 
@@ -2017,7 +1956,7 @@ static drvError_t query_ques_perm_info(unsigned int dev_id, QueueQueryInputPara 
     (void)in_put;
     QueueQueryOutput *out_buff = (QueueQueryOutput *)(out_put->outBuff);
     unsigned int max_num = out_put->outLen / (unsigned int)sizeof(QueQueryQuesOfProcInfo);
-    QueueShareAttr attr = { .manage = 1, .read = 1, .write = 1 };
+    QueueShareAttr attr = {.manage = 1, .read = 1, .write = 1};
     struct queue_manages *que_manage = NULL;
     unsigned int cnt = 0;
     unsigned int qid;
@@ -2029,8 +1968,7 @@ static drvError_t query_ques_perm_info(unsigned int dev_id, QueueQueryInputPara 
         }
 
         if (cnt >= max_num) {
-            QUEUE_LOG_ERR("output buff not enough. (cnt=%u; max_num=%u; len=%u)\n",
-                cnt, max_num, out_put->outLen);
+            QUEUE_LOG_ERR("output buff not enough. (cnt=%u; max_num=%u; len=%u)\n", cnt, max_num, out_put->outLen);
             return DRV_ERROR_INVALID_VALUE;
         }
 
@@ -2053,8 +1991,9 @@ static drvError_t query_queue_mbuf_info(unsigned int dev_id, QueueQueryInputPara
     drvError_t ret;
 
     if ((in_buff == NULL) || (in_put->inLen < sizeof(QueQueryQueueMbuf)) ||
-       (out_put->outLen < sizeof(QueQueryQueueMbufInfo))) {
-        QUEUE_LOG_ERR("Input para error. (in_buff=%p; in_len=%u; out_len=%u)\n", in_buff, in_put->inLen, out_put->outLen);
+        (out_put->outLen < sizeof(QueQueryQueueMbufInfo))) {
+        QUEUE_LOG_ERR("Input para error. (in_buff=%p; in_len=%u; out_len=%u)\n", in_buff, in_put->inLen,
+                      out_put->outLen);
         return DRV_ERROR_INVALID_VALUE;
     }
 
@@ -2077,7 +2016,8 @@ static drvError_t query_queue_mbuf_info(unsigned int dev_id, QueueQueryInputPara
     return ret;
 }
 
-static drvError_t query_queue_max_iovec_num(unsigned int dev_id, QueueQueryInputPara *in_put, QueueQueryOutputPara *out_put)
+static drvError_t query_queue_max_iovec_num(unsigned int dev_id, QueueQueryInputPara *in_put,
+                                            QueueQueryOutputPara *out_put)
 {
     (void)dev_id;
     (void)in_put;
@@ -2093,16 +2033,16 @@ static drvError_t query_queue_max_iovec_num(unsigned int dev_id, QueueQueryInput
     return DRV_ERROR_NONE;
 }
 
-static drvError_t (*g_queue_query[QUEUE_QUERY_CMD_MAX])
-    (unsigned int dev_id, QueueQueryInputPara *in_put, QueueQueryOutputPara *out_put) = {
-        [QUEUE_QUERY_QUE_ATTR_OF_CUR_PROC] = query_the_que_perm_info,
-        [QUEUE_QUERY_QUES_OF_CUR_PROC] = query_ques_perm_info,
-        [QUEUE_QUERY_QUEUE_MBUF_INFO] = query_queue_mbuf_info,
-        [QUEUE_QUERY_MAX_IOVEC_NUM] = query_queue_max_iovec_num,
+static drvError_t (*g_queue_query[QUEUE_QUERY_CMD_MAX])(unsigned int dev_id, QueueQueryInputPara *in_put,
+                                                        QueueQueryOutputPara *out_put) = {
+    [QUEUE_QUERY_QUE_ATTR_OF_CUR_PROC] = query_the_que_perm_info,
+    [QUEUE_QUERY_QUES_OF_CUR_PROC] = query_ques_perm_info,
+    [QUEUE_QUERY_QUEUE_MBUF_INFO] = query_queue_mbuf_info,
+    [QUEUE_QUERY_MAX_IOVEC_NUM] = query_queue_max_iovec_num,
 };
 
-STATIC drvError_t queue_query_local(unsigned int dev_id, QueueQueryCmdType cmd,
-    QueueQueryInputPara *in_put, QueueQueryOutputPara *out_put)
+STATIC drvError_t queue_query_local(unsigned int dev_id, QueueQueryCmdType cmd, QueueQueryInputPara *in_put,
+                                    QueueQueryOutputPara *out_put)
 {
     if (g_queue_query[cmd] == NULL) {
         return DRV_ERROR_NOT_SUPPORT;
@@ -2131,13 +2071,13 @@ static drvError_t queue_peek_data_copy_ref(unsigned int dev_id, unsigned int qid
     return ret;
 }
 
-static drvError_t (*g_peek_data[QUEUE_PEEK_DATA_TYPE_MAX])
-    (unsigned int dev_id, unsigned int qid, unsigned int flag, Mbuf **mbuf) = {
-        [QUEUE_PEEK_DATA_COPY_REF] = queue_peek_data_copy_ref,
+static drvError_t (*g_peek_data[QUEUE_PEEK_DATA_TYPE_MAX])(unsigned int dev_id, unsigned int qid, unsigned int flag,
+                                                           Mbuf **mbuf) = {
+    [QUEUE_PEEK_DATA_COPY_REF] = queue_peek_data_copy_ref,
 };
 
 drvError_t queue_peek_data_local(unsigned int dev_id, unsigned int qid, unsigned int flag, QueuePeekDataType type,
-    void **mbuf)
+                                 void **mbuf)
 {
     if (g_peek_data[type] == NULL) {
         QUEUE_LOG_INFO("no support this type. (dev_id=%u; qid=%u; flag=%u; type=%u)\n", dev_id, qid, flag, type);
@@ -2183,13 +2123,14 @@ static drvError_t queue_set_work_mode(unsigned int dev_id, QueueSetInput *input)
     }
 
     if (manage->valid != QUEUE_CREATED) {
-        QUEUE_LOG_ERR("queue is not created. (qid=%u; valid=%d; QUEUE_CREATED=%d)\n",
-            set_work_mode.qid, manage->valid, QUEUE_CREATED);
+        QUEUE_LOG_ERR("queue is not created. (qid=%u; valid=%d; QUEUE_CREATED=%d)\n", set_work_mode.qid, manage->valid,
+                      QUEUE_CREATED);
         return DRV_ERROR_NOT_EXIST;
     }
     if (set_work_mode.workMode == QUEUE_MODE_PULL && manage->bind_type == QUEUE_TYPE_GROUP) {
         QUEUE_LOG_ERR("queue workMode can not be set to QUEUE_MODE_PULL. (qid=%u; workMode=%u; "
-            "bind_type=%d)\n", set_work_mode.qid, set_work_mode.workMode, manage->bind_type);
+                      "bind_type=%d)\n",
+                      set_work_mode.qid, set_work_mode.workMode, manage->bind_type);
         return DRV_ERROR_INVALID_VALUE;
     }
     manage->work_mode = (int)(set_work_mode.workMode);
@@ -2197,14 +2138,13 @@ static drvError_t queue_set_work_mode(unsigned int dev_id, QueueSetInput *input)
     return DRV_ERROR_NONE;
 }
 
-static drvError_t (*g_queue_set[QUEUE_SET_CMD_MAX]) (unsigned int dev_id, QueueSetInput *input) = {
+static drvError_t (*g_queue_set[QUEUE_SET_CMD_MAX])(unsigned int dev_id, QueueSetInput *input) = {
     [QUEUE_SET_WORK_MODE] = queue_set_work_mode,
 };
 
 drvError_t queue_set_local(unsigned int dev_id, QueueSetCmdType cmd, QueueSetInputPara *input)
 {
-    if ((dev_id >= MAX_DEVICE) || (input == NULL) || (cmd >= QUEUE_SET_CMD_MAX) ||
-        (g_queue_set[cmd] == NULL)) {
+    if ((dev_id >= MAX_DEVICE) || (input == NULL) || (cmd >= QUEUE_SET_CMD_MAX) || (g_queue_set[cmd] == NULL)) {
         QUEUE_LOG_ERR("Input para error. (dev_id=%u; cmd=%u; input=%p)\n", dev_id, cmd, input);
         return DRV_ERROR_INVALID_VALUE;
     }
@@ -2312,30 +2252,30 @@ void queue_update_time(unsigned int dev_id, unsigned int qid, unsigned int host_
 {
     struct queue_manages *que_manage = NULL;
     drvError_t ret;
- 
+
     ret = queue_front_para_check(dev_id, qid);
     if (ret != DRV_ERROR_NONE) {
         return;
     }
- 
+
     if (!queue_get(qid)) {
         QUEUE_LOG_ERR("queue get failed. (qid=%u)\n", qid);
         return;
     }
- 
+
     que_manage = queue_get_local_mng(qid);
     if (que_manage == NULL) {
         queue_put(qid);
         QUEUE_LOG_ERR("Queue local manage is null. (qid=%u)\n", qid);
         return;
     }
- 
+
     if (que_manage->valid != QUEUE_CREATED) {
         queue_put(qid);
         QUEUE_LOG_ERR("queue is not created. (qid=%u)\n", qid);
         return;
     }
- 
+
     if (msg_type == DRV_SUBEVENT_DEQUEUE_MSG) {
         ATOMIC_SET(&que_manage->stat.last_deque_time.tv_usec, host_time);
     } else {
@@ -2437,4 +2377,3 @@ STATIC int __attribute__((constructor)) queue_core_init(void)
     queue_set_comm_interface(LOCAL_QUEUE, &g_core_interface);
     return 0;
 }
-

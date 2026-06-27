@@ -17,4 +17,3 @@ u32 bbox_get_feature(void)
     return FEATURE_ID_CONVERT;
 #endif
 }
-

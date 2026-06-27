@@ -17,6 +17,8 @@
 #include "ka_task_pub.h"
 #include "ka_base_pub.h"
 #include "ka_kernel_def_pub.h"
+#include "ka_feature_pub.h"
+#include "ka_errno_pub.h"
 
 #include "pbl/pbl_runenv_config.h"
 #include "pbl/pbl_uda.h"
@@ -39,6 +41,14 @@ struct pid_info_t {
 
 #define DMS_EXCEPTION_KFIFO_CELL (sizeof(DMS_EVENT_NODE_STRU))
 #define DMS_EXCEPTION_KFIFO_SIZE (DMS_EXCEPTION_KFIFO_CELL * DMS_MAX_EVENT_NUM)
+#define DMS_CHECK_AND_RELEASE_WAIT_CNT 300
+#define DMS_CHECK_AND_RELEASE_INTERVAL_TIME 10
+#define DMS_CHECK_AND_RELEASE_SUCCESS 1
+#define DMS_FAULT_DEVICE_ALL (-1)
+#define DMS_EVENT_FILTER_FLAG_EVENT_ID (1UL << 0)
+#define DMS_EVENT_FILTER_FLAG_SERVERITY (1UL << 1)
+#define DMS_EVENT_FILTER_FLAG_NODE_TYPE (1UL << 2)
+#define DMS_EVENT_FILTER_FLAG_HOST_PID (1UL << 3)
 
 /* ns_id 0-127 for normal container, 128 for host or admin container */
 STATIC DMS_EVENT_STRU_T* g_dms_event_ns_stu[UDA_NS_NUM + 1];
@@ -176,6 +186,87 @@ void dms_event_distribute_stru_exit(void)
     ka_task_mutex_destroy(&g_dms_event_ns_node_mutex);
 }
 
+STATIC bool is_in_subscribe_dev_list(u32 *subscribe_udevids, u32 subscribe_udevids_num, u32 dev_id)
+{
+    unsigned int i;
+
+    if (subscribe_udevids == NULL) {
+        dms_err("Subscribe_udevids is NULL, subscribe_udevids_num=%u.\n", subscribe_udevids_num);
+        return false;
+    }
+    for (i = 0; i < subscribe_udevids_num; i++) {
+        if (subscribe_udevids[i] == dev_id) {
+            return true;
+        }
+    }
+    return false;
+}
+
+STATIC bool dms_filter_event_node_type(DMS_EVENT_PROCESS_STRU *event_proc, struct dms_event_para *event)
+{
+    unsigned short node_type, sub_node_type;
+
+    if (event_proc->cmd_src == FROM_DSMI) {
+        node_type = event->node_type & 0xFF; /* DSMI filter node type is unsigned char*/
+        sub_node_type = event->sub_node_type & 0xFF;
+    } else {
+        node_type = event->node_type;
+        sub_node_type = event->sub_node_type;
+    }
+
+    if (((event_proc->filter.filter_flag & DMS_EVENT_FILTER_FLAG_NODE_TYPE) != 0) &&
+        ((node_type != event_proc->filter.node_type) && (sub_node_type != event_proc->filter.node_type))) {
+        dms_debug("Node_type of event do not match subscribe node_type. "
+            "(subscribe_node_type=%u; node_type=%u; sub_node_type=%u; proc_tgid=%d; proc_pid=%d)\n",
+            event_proc->filter.node_type, node_type, sub_node_type, event_proc->process_pid, event_proc->process_tid);
+        return true;
+    }
+
+    return false;
+}
+
+STATIC bool dms_filter_event_from_device(DMS_EVENT_PROCESS_STRU *event_proc, struct dms_event_para *event)
+{
+    if (event_proc->cmd_src == FROM_KERNEL) {   //cmd_src is FROM_KERNEL, get all events without filter
+        return false;
+    }
+
+    if (!is_in_subscribe_dev_list(event_proc->subscribe_udevids, event_proc->subscribe_udevids_num, (u32)event->deviceid)) {
+        dms_debug("Dev_id of event is not in subscribe_udevids. (dev_id=%u; proc_tgid=%d; proc_pid=%d)\n",
+            event->deviceid, event_proc->process_pid, event_proc->process_tid);
+        return true;
+    }
+
+    if (event_proc->filter.filter_flag == 0) {
+        return false;
+    }
+
+    if (((event_proc->filter.filter_flag & DMS_EVENT_FILTER_FLAG_EVENT_ID) != 0) && (event->event_id != event_proc->filter.event_id)) {
+        dms_debug("Event_id of event do not match subscribe event_id. (subscribe_event_id=%x; event_id=%x; proc_tgid=%d; proc_pid=%d)\n",
+            event_proc->filter.event_id, event->event_id, event_proc->process_pid, event_proc->process_tid);
+        return true;
+    }
+
+    if ((((event_proc->filter.filter_flag & DMS_EVENT_FILTER_FLAG_SERVERITY) != 0) && (event->severity < event_proc->filter.severity))) {
+        dms_debug("Severity of event do not match subscribe severity. (subscribe_severity=%u; severity=%u; proc_tgid=%d; proc_pid=%d)\n",
+            event_proc->filter.severity, event->severity, event_proc->process_pid, event_proc->process_tid);
+        return true;
+    }
+
+    if (dms_filter_event_node_type(event_proc, event)) {
+        return true;
+    }
+
+    if ((event_proc->filter.filter_flag & DMS_EVENT_FILTER_FLAG_HOST_PID) != 0) {
+        if (*(int *)event->event_info != event_proc->process_pid) {
+            dms_debug("Process_pid of event do not match subscribe process_pid. (proc_tgid=%d; proc_pid=%d; process_pid=%d)\n",
+                event_proc->process_pid, event_proc->process_tid, *(int *)event->event_info);
+            return true;
+        }
+    }
+    return false;
+}
+
 STATIC int add_exception_to_event_proc(DMS_EVENT_PROCESS_STRU *event_proc, DMS_EVENT_NODE_STRU *exception_node)
 {
     DMS_EVENT_NODE_STRU exception_buf = {{0}, {0}};
@@ -185,6 +276,12 @@ STATIC int add_exception_to_event_proc(DMS_EVENT_PROCESS_STRU *event_proc, DMS_E
         ka_task_mutex_unlock(&event_proc->process_mutex);
         return DRV_ERROR_NONE;
     }
+
+    if (dms_filter_event_from_device(event_proc, &exception_node->event)) {
+        ka_task_mutex_unlock(&event_proc->process_mutex);
+        return DRV_ERROR_NONE;
+    }
+
     while (ka_base_kfifo_avail(&event_proc->event_fifo) < DMS_EXCEPTION_KFIFO_CELL) {
         if (!ka_base_kfifo_out(&event_proc->event_fifo, &exception_buf, DMS_EXCEPTION_KFIFO_CELL)) {
             dms_warn("ka_base_kfifo_out warn.\n");
@@ -215,7 +312,21 @@ int dms_event_distribute_to_process(DMS_EVENT_NODE_STRU *exception_node)
         if (g_dms_event_ns_stu[ns_id] == NULL) {
             continue;
         }
+
+        if (g_dms_event_ns_stu[ns_id]->process_max_idx_hal < g_dms_event_ns_stu[ns_id]->process_num) {
+            fail_num++;
+            dms_err("Check process_max_idx_hal fail. "
+                "(ns_id=%u; process_num=%u; process_max_idx_dsmi:%u; process_max_idx_hal:%u)\n",
+                ns_id, g_dms_event_ns_stu[ns_id]->process_num, g_dms_event_ns_stu[ns_id]->process_max_idx_dsmi,
+                g_dms_event_ns_stu[ns_id]->process_max_idx_hal);
+        }
         for (idx = 0; idx < DMS_EVENT_EXCEPTION_PROCESS_MAX; idx++) {
+            if (idx < DMS_EVENT_EXCEPTION_PROCESS_DSMI_END && idx > g_dms_event_ns_stu[ns_id]->process_max_idx_dsmi) {
+                continue;
+            } else if (idx > g_dms_event_ns_stu[ns_id]->process_max_idx_hal) {
+                break;
+            }
+
             ret = add_exception_to_event_proc(&g_dms_event_ns_stu[ns_id]->event_process[idx], exception_node);
             if (ret != 0) {
                 fail_num++;
@@ -255,6 +366,17 @@ static int get_process_index_range(enum cmd_source cmd_src, u32 *start_index, u3
     }
 }
 
+STATIC void increase_process_max_idx(DMS_EVENT_STRU_T *event_ns_stu, u32 idx)
+{
+    if (idx >= DMS_EVENT_EXCEPTION_PROCESS_DSMI_START && idx < DMS_EVENT_EXCEPTION_PROCESS_DSMI_END) {
+        event_ns_stu->process_max_idx_dsmi = idx > event_ns_stu->process_max_idx_dsmi ? idx :
+            event_ns_stu->process_max_idx_dsmi;
+    } else if (idx >= DMS_EVENT_EXCEPTION_PROCESS_HAL_START && idx < DMS_EVENT_EXCEPTION_PROCESS_HAL_END) {
+        event_ns_stu->process_max_idx_hal = idx > event_ns_stu->process_max_idx_hal ? idx :
+            event_ns_stu->process_max_idx_hal;
+    }
+}
+
 static DMS_EVENT_PROCESS_STRU* alloc_new_event_proc(DMS_EVENT_STRU_T* event_ns_stu, struct pid_info_t pid_info,
     u32 start_index, u32 end_index)
 {
@@ -280,6 +402,9 @@ static DMS_EVENT_PROCESS_STRU* alloc_new_event_proc(DMS_EVENT_STRU_T* event_ns_s
         event_ns_stu->event_process[i].start_time = ka_task_get_current_starttime();
         event_ns_stu->event_process[i].process_status = DMS_EVENT_PROCESS_STATUS_WORK;
         ka_task_mutex_unlock(&event_ns_stu->event_process[i].process_mutex);
+        event_ns_stu->process_num++;
+        increase_process_max_idx(event_ns_stu, i);
+
         dms_debug("Get a process success. (ns_id=%u; tgid=%d; pid=%d; index=%u)\n",
                   event_ns_stu->ns_id, pid_info.tgid, pid_info.pid, i);
         return &event_ns_stu->event_process[i];
@@ -287,7 +412,6 @@ static DMS_EVENT_PROCESS_STRU* alloc_new_event_proc(DMS_EVENT_STRU_T* event_ns_s
     return NULL;
 }
 
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 17, 0))
 STATIC bool get_pid_start_time(u32 pid, u64* start_time)
 {
 #if !defined(UT_VCAST) && !defined(DMS_UT)
@@ -314,11 +438,9 @@ STATIC bool get_pid_start_time(u32 pid, u64* start_time)
 #endif
     return true;
 }
-#endif
 
 STATIC void check_and_release_event_procs(DMS_EVENT_STRU_T* event_ns_stu)
 {
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 17, 0))
     u32 i;
     ka_pid_t pid, tgid;
     u64 record_start_time = 0, pid_start_time = 0, tgid_start_time = 0;
@@ -329,38 +451,50 @@ STATIC void check_and_release_event_procs(DMS_EVENT_STRU_T* event_ns_stu)
     }
 
     for (i = 0; i < DMS_EVENT_EXCEPTION_PROCESS_MAX; i++) {
-        if ((dbl_host_pid_to_container_pid(event_ns_stu->event_process[i].process_pid, &tgid) != 0) ||
-            (dbl_host_pid_to_container_pid(event_ns_stu->event_process[i].process_tid, &pid) != 0)) {
-            dms_err("Get container pid failed. (pid=%d; tgid=%d)\n",
-                event_ns_stu->event_process[i].process_pid, event_ns_stu->event_process[i].process_tid);
-            return;
+        if (i < DMS_EVENT_EXCEPTION_PROCESS_DSMI_END && i > event_ns_stu->process_max_idx_dsmi) {
+            continue;
+        } else if (i > event_ns_stu->process_max_idx_hal) {
+            break;
         }
-        record_start_time = event_ns_stu->event_process[i].start_time;
-        process_status = event_ns_stu->event_process[i].process_status;
 
+        tgid = -1;
+        pid = -1;
+        process_status = event_ns_stu->event_process[i].process_status;
         if (process_status == DMS_EVENT_PROCESS_STATUS_IDLE) {
             continue;
         }
+
+        if ((dbl_host_pid_to_container_pid(event_ns_stu->event_process[i].process_pid, &tgid) != 0) ||
+            (dbl_host_pid_to_container_pid(event_ns_stu->event_process[i].process_tid, &pid) != 0)) {
+            dms_debug("Get container pid failed. (tgid=%d; pid=%d)\n",
+                event_ns_stu->event_process[i].process_pid, event_ns_stu->event_process[i].process_tid);
+        }
+        record_start_time = event_ns_stu->event_process[i].start_time;
 
         if (get_pid_start_time(tgid, &tgid_start_time) && get_pid_start_time(pid, &pid_start_time) &&
             pid_start_time == record_start_time) {
             continue;
         } else {
+            dms_debug("Release one process. (ns_id=%d; process_pid=%d; tgid=%d; process_tid=%d; pid=%d; record_start_time=%llu; current_time=%llu; index=%u)\n",
+                      event_ns_stu->ns_id, event_ns_stu->event_process[i].process_pid, tgid, event_ns_stu->event_process[i].process_tid, pid, record_start_time, pid_start_time, i);
             release_one_event_proc(event_ns_stu, i);
-            dms_debug("Release one process. (ns_id=%d; tgid=%d; pid=%d; record_start_time=%llu; current_time=%llu; index=%u)\n",
-                      event_ns_stu->ns_id, tgid, pid, record_start_time, pid_start_time, i);
         }
     }
-#endif
     return;
 }
 
-static int get_old_event_proc(DMS_EVENT_STRU_T* event_ns_stu, struct pid_info_t pid_info,
+static void get_old_event_proc(DMS_EVENT_STRU_T* event_ns_stu, struct pid_info_t pid_info,
                               u32 start_index, u32 end_index, DMS_EVENT_PROCESS_STRU** event_proc)
 {
     u32 i;
 
     for (i = start_index; i < end_index; i++) {
+        if (i < DMS_EVENT_EXCEPTION_PROCESS_DSMI_END && i > event_ns_stu->process_max_idx_dsmi) {
+            continue;
+        } else if (i > event_ns_stu->process_max_idx_hal) {
+            break;
+        }
+
         if (event_ns_stu->event_process[i].process_pid != pid_info.tgid ||
             event_ns_stu->event_process[i].process_tid != pid_info.pid) {
             continue;
@@ -368,10 +502,9 @@ static int get_old_event_proc(DMS_EVENT_STRU_T* event_ns_stu, struct pid_info_t 
 
         event_ns_stu->event_process[i].process_status = DMS_EVENT_PROCESS_STATUS_WORK;
         *event_proc = &event_ns_stu->event_process[i];
-        return 0;
+        return;
     }
     *event_proc = NULL;
-    return 0;
 }
 
 static int dms_get_cur_ns_id(u32* ns_id)
@@ -404,6 +537,7 @@ static int dms_get_cur_ns_id(u32* ns_id)
 static DMS_EVENT_STRU_T* dms_event_ns_stu_create(u32 ns_id)
 {
     int i;
+    size_t udevids_size;
 
     g_dms_event_ns_stu[ns_id] = dbl_vzalloc(sizeof(DMS_EVENT_STRU_T));
     if ( g_dms_event_ns_stu[ns_id] == NULL) {
@@ -412,6 +546,8 @@ static DMS_EVENT_STRU_T* dms_event_ns_stu_create(u32 ns_id)
     }
 
     g_dms_event_ns_stu[ns_id]->process_num = 0;
+    g_dms_event_ns_stu[ns_id]->process_max_idx_dsmi = DMS_EVENT_EXCEPTION_PROCESS_DSMI_START;
+    g_dms_event_ns_stu[ns_id]->process_max_idx_hal = DMS_EVENT_EXCEPTION_PROCESS_HAL_START;
     g_dms_event_ns_stu[ns_id]->ns_id = ns_id;
     for (i = 0; i < DMS_EVENT_EXCEPTION_PROCESS_MAX; i++) {
         ka_task_mutex_init(&g_dms_event_ns_stu[ns_id]->event_process[i].process_mutex);
@@ -422,10 +558,68 @@ static DMS_EVENT_STRU_T* dms_event_ns_stu_create(u32 ns_id)
         g_dms_event_ns_stu[ns_id]->event_process[i].process_tid = DMS_INVALID_PID;
         g_dms_event_ns_stu[ns_id]->event_process[i].start_time = 0;
         g_dms_event_ns_stu[ns_id]->event_process[i].process_status = DMS_EVENT_PROCESS_STATUS_IDLE;
+        g_dms_event_ns_stu[ns_id]->event_process[i].subscribe_udevids_num = 0;
+        udevids_size = sizeof(u32) * ASCEND_PDEV_MAX_NUM;
+        (void)memset_s(&(g_dms_event_ns_stu[ns_id]->event_process[i].subscribe_udevids), udevids_size, 0, udevids_size);
+        (void)memset_s(&(g_dms_event_ns_stu[ns_id]->event_process[i].filter), sizeof(struct dms_event_filter), 0, sizeof(struct dms_event_filter));
+        g_dms_event_ns_stu[ns_id]->event_process[i].cmd_src = INVALID_SOURCE;
         ka_task_mutex_unlock(&g_dms_event_ns_stu[ns_id]->event_process[i].process_mutex);
     }
 
     return g_dms_event_ns_stu[ns_id];
+}
+
+struct dms_check_and_release_proc_task_stru {
+    ka_atomic_t flag;
+    DMS_EVENT_STRU_T* event_ns_stu;
+};
+
+STATIC int dms_check_and_release_proc_task(void *data)
+{
+    struct dms_check_and_release_proc_task_stru *task_stru = (struct dms_check_and_release_proc_task_stru *)data;
+
+    if (task_stru == NULL) {
+        dms_err("Input task_stru is NULL.\n");
+        return 0;
+    }
+
+    check_and_release_event_procs(task_stru->event_ns_stu);
+    ka_base_atomic_set(&task_stru->flag, DMS_CHECK_AND_RELEASE_SUCCESS);
+
+    while (!ka_task_kthread_should_stop()) {
+        ka_system_msleep(DMS_CHECK_AND_RELEASE_INTERVAL_TIME);
+    }
+    return 0;
+}
+
+STATIC void dms_check_and_release_in_admin_docker(DMS_EVENT_STRU_T* event_ns_stu)
+{
+    struct dms_check_and_release_proc_task_stru task_stru = {0};
+    struct task_struct *task = NULL;
+    int cnt = 0;
+    int ret = 0;
+
+    task_stru.event_ns_stu = event_ns_stu;
+    task = ka_task_kthread_run(dms_check_and_release_proc_task, (void *)&task_stru, "check_and_release_task");
+    if (KA_IS_ERR(task) || (task == NULL)) {
+        dms_err("dms_check_and_release_proc_task create failed. (error=%ld)\n", KA_PTR_ERR(task));
+        return;
+    }
+
+    ret = -ETIMEDOUT;
+    while (cnt <= DMS_CHECK_AND_RELEASE_WAIT_CNT) {
+        if (ka_base_atomic_read(&task_stru.flag) == DMS_CHECK_AND_RELEASE_SUCCESS) {
+            ret = 0;
+            break;
+        } else {
+            ka_system_msleep(DMS_CHECK_AND_RELEASE_INTERVAL_TIME);
+            cnt++;
+        }
+    }
+    (void)ka_task_kthread_stop(task);
+    if (ret != 0) {
+        dms_err("Failed to check and release event procs. (ret=%d)\n", ret);
+    }
 }
 
 static int get_or_create_event_ns_stu(DMS_EVENT_STRU_T** event_ns_stu)
@@ -445,19 +639,69 @@ static int get_or_create_event_ns_stu(DMS_EVENT_STRU_T** event_ns_stu)
             return DRV_ERROR_OUT_OF_MEMORY;
         }
     } else {
-        check_and_release_event_procs(g_dms_event_ns_stu[ns_id]);
+        if (ka_feature_is_enable() && !run_in_admin_docker()) {
+            check_and_release_event_procs(g_dms_event_ns_stu[ns_id]);
+        } else if (ka_feature_is_enable() && run_in_admin_docker()) {
+            dms_check_and_release_in_admin_docker(g_dms_event_ns_stu[ns_id]);
+        }
         *event_ns_stu = g_dms_event_ns_stu[ns_id];
     }
 
     return 0;
 }
 
-static int get_current_ns_event_proc(struct pid_info_t pid_info, enum cmd_source cmd_src, DMS_EVENT_PROCESS_STRU** event_proc)
+STATIC int create_udevid_list(int dev_id, u32 *subscribe_udevids, u32 *subscribe_udevids_num)
+{
+    u32 udevid;
+    int ret;
+
+    if (dev_id == DMS_FAULT_DEVICE_ALL) {
+        *subscribe_udevids_num = (uda_get_cur_ns_dev_num() > ASCEND_PDEV_MAX_NUM) ? ASCEND_PDEV_MAX_NUM : uda_get_cur_ns_dev_num();
+        if (*subscribe_udevids_num == 0) {
+            dms_err("Current namespace udevice list is null.\n");
+            return DRV_ERROR_INNER_ERR;
+        }
+        ret = uda_get_cur_ns_udevids(subscribe_udevids, *subscribe_udevids_num);
+        if (ret != 0) {
+            dms_err("Get get cur ns udevids failed. (ret=%d)\n", ret);
+            return ret;
+        }
+    } else {
+        ret = uda_devid_to_udevid((u32)dev_id, &udevid);
+        if (ret != 0) {
+            dms_err("Get udevid failed. (dev_id=%u; ret=%d)\n", dev_id, ret);
+            return ret;
+        }
+        *subscribe_udevids_num = 1;
+        subscribe_udevids[0] = udevid;
+    }
+    return 0;
+}
+
+static int set_event_proc_filter(DMS_EVENT_PROCESS_STRU *event_proc, u32 *udevids, u32 dev_num, struct dms_event_filter *filter, enum cmd_source cmd_src)
 {
     int ret;
-    u32 start_index = 0;
-    u32 end_index = 0;
+
+    ka_task_mutex_lock(&event_proc->process_mutex);
+    ret = memcpy_s(event_proc->subscribe_udevids, sizeof(u32) * ASCEND_PDEV_MAX_NUM, udevids, sizeof(u32) * dev_num);
+    if (ret != 0) {
+        ka_task_mutex_unlock(&event_proc->process_mutex);
+        dms_err("memcpy_s udevid list failed. (ret=%d)\n", ret);
+        return DRV_ERROR_INNER_ERR;
+    }
+    event_proc->subscribe_udevids_num = dev_num;
+    event_proc->filter = *filter;
+    event_proc->cmd_src = cmd_src;
+    ka_task_mutex_unlock(&event_proc->process_mutex);
+    return 0;
+}
+
+static int get_current_ns_event_proc(int dev_id, struct dms_event_filter *filter, struct pid_info_t pid_info, enum cmd_source cmd_src, DMS_EVENT_PROCESS_STRU** event_proc)
+{
+    int ret;
+    u32 start_index = 0, end_index = 0, dev_num = 0;
     DMS_EVENT_STRU_T* event_ns_stu = NULL;
+    u32 udevids[ASCEND_PDEV_MAX_NUM] = {0};
 
     *event_proc = NULL;
     ret = get_process_index_range(cmd_src, &start_index, &end_index);
@@ -465,6 +709,14 @@ static int get_current_ns_event_proc(struct pid_info_t pid_info, enum cmd_source
         dms_err("Invalid para. (pid=%d; cmd_src=%d; start_index=%u; end_index=%u; max_index=%d; ret=%d)\n",
             pid_info.tgid, cmd_src, start_index, end_index, DMS_EVENT_EXCEPTION_PROCESS_MAX, ret);
         return DRV_ERROR_PARA_ERROR;
+    }
+
+    if (cmd_src != FROM_KERNEL) {
+        ret = create_udevid_list(dev_id, udevids, &dev_num);
+        if (ret != 0) {
+            dms_err("Create udevid list failed. (ret=%d)\n", ret);
+            return ret;
+        }
     }
 
     ka_task_mutex_lock(&g_dms_event_ns_node_mutex);
@@ -475,24 +727,27 @@ static int get_current_ns_event_proc(struct pid_info_t pid_info, enum cmd_source
         return ret;
     }
 
-    ret = get_old_event_proc(event_ns_stu, pid_info, start_index, end_index, event_proc);
-    if (ret != 0) {
-        ka_task_mutex_unlock(&g_dms_event_ns_node_mutex);
-        /* There was another thread had been registered in this process, return error */
-        return ret;
-    }
+    get_old_event_proc(event_ns_stu, pid_info, start_index, end_index, event_proc);
+
     /* this thread has already registered before, return the old event proc directly */
     if (*event_proc != NULL) {
+        ret = set_event_proc_filter(*event_proc, udevids, dev_num, filter, cmd_src);
         ka_task_mutex_unlock(&g_dms_event_ns_node_mutex);
-        return 0;
+        if (ret != 0) {
+            dms_err("Set event proc filter failed. (ret=%d)\n", ret);
+        }
+        return ret;
     }
 
     /* this is a new thread, try to alloc a new event_proc */
     *event_proc = alloc_new_event_proc(event_ns_stu, pid_info, start_index, end_index);
     if (*event_proc != NULL) {
-        event_ns_stu->process_num++;
-         ka_task_mutex_unlock(&g_dms_event_ns_node_mutex);
-        return 0;
+        ret = set_event_proc_filter(*event_proc, udevids, dev_num, filter, cmd_src);
+        ka_task_mutex_unlock(&g_dms_event_ns_node_mutex);
+        if (ret != 0) {
+            dms_err("Set event proc filter failed. (ret=%d)\n", ret);
+        }
+        return ret;
     } else {
         ka_task_mutex_unlock(&g_dms_event_ns_node_mutex);
         dms_err("Process list is full. (tgid=%d)\n", pid_info.tgid);
@@ -602,7 +857,7 @@ static int dms_event_wait_interrupt(int timeout, DMS_EVENT_PROCESS_STRU *event_p
     return ret;
 }
 
-int dms_event_get_exception(struct dms_event_para *fault_event, int timeout, enum cmd_source cmd_src)
+int dms_event_get_exception(int dev_id, struct dms_event_filter *filter, struct dms_event_para *fault_event, int timeout, enum cmd_source cmd_src)
 {
     DMS_EVENT_PROCESS_STRU *event_proc = NULL;
     struct pid_info_t pid_info;
@@ -615,7 +870,7 @@ int dms_event_get_exception(struct dms_event_para *fault_event, int timeout, enu
 
     pid_info.tgid = ka_task_get_current_tgid();
     pid_info.pid = ka_task_get_current_pid();
-    ret = get_current_ns_event_proc(pid_info, cmd_src, &event_proc);
+    ret = get_current_ns_event_proc(dev_id, filter, pid_info, cmd_src, &event_proc);
     if (ret != 0 || event_proc == NULL) {
         dms_err("Alloc an event_proc failed. (tgid=%d; pid=%d; cmd_src=%d)\n", ka_task_get_current_tgid(), ka_task_get_current_pid(), cmd_src);
         return ret;
@@ -668,8 +923,31 @@ int dms_event_clear_exception(u32 devid)
     return DRV_ERROR_NONE;
 }
 
+STATIC void decrease_process_max_idx(DMS_EVENT_STRU_T *event_ns_stu, u32 idx) 
+{
+    u32 i = 0;
+
+    if (idx >= DMS_EVENT_EXCEPTION_PROCESS_DSMI_START && idx < DMS_EVENT_EXCEPTION_PROCESS_DSMI_END) {
+        if (idx == event_ns_stu->process_max_idx_dsmi) {
+            for (i = idx; i > DMS_EVENT_EXCEPTION_PROCESS_DSMI_START &&
+                event_ns_stu->event_process[i].process_status == DMS_EVENT_PROCESS_STATUS_IDLE; i--) {
+                event_ns_stu->process_max_idx_dsmi--;
+            }
+        }
+    } else if (idx >= DMS_EVENT_EXCEPTION_PROCESS_HAL_START && idx < DMS_EVENT_EXCEPTION_PROCESS_HAL_END) {
+        if (idx == event_ns_stu->process_max_idx_hal) {
+            for (i = idx; i > DMS_EVENT_EXCEPTION_PROCESS_HAL_START &&
+                event_ns_stu->event_process[i].process_status == DMS_EVENT_PROCESS_STATUS_IDLE; i--) {
+                event_ns_stu->process_max_idx_hal--;
+            }
+        }
+    }
+}
+
 STATIC void release_one_event_proc(DMS_EVENT_STRU_T* event_ns_stu, u32 proc_idx)
 {
+    size_t udevids_size;
+
     ka_task_mutex_lock(&event_ns_stu->event_process[proc_idx].process_mutex);
     if (event_ns_stu->event_process[proc_idx].process_status != DMS_EVENT_PROCESS_STATUS_WORK) {
         ka_task_mutex_unlock(&event_ns_stu->event_process[proc_idx].process_mutex);
@@ -682,9 +960,16 @@ STATIC void release_one_event_proc(DMS_EVENT_STRU_T* event_ns_stu, u32 proc_idx)
     event_ns_stu->event_process[proc_idx].process_tid = DMS_INVALID_PID;
     event_ns_stu->event_process[proc_idx].start_time = 0;
     event_ns_stu->event_process[proc_idx].process_status = DMS_EVENT_PROCESS_STATUS_IDLE;
+    event_ns_stu->event_process[proc_idx].subscribe_udevids_num = 0;
+    udevids_size = sizeof(u32) * ASCEND_PDEV_MAX_NUM;
+    (void)memset_s(&(event_ns_stu->event_process[proc_idx].subscribe_udevids), udevids_size, 0, udevids_size);
+    (void)memset_s(&(event_ns_stu->event_process[proc_idx].filter), sizeof(struct dms_event_filter), 0, sizeof(struct dms_event_filter));
+    event_ns_stu->event_process[proc_idx].cmd_src = INVALID_SOURCE;
     ka_task_mutex_unlock(&event_ns_stu->event_process[proc_idx].process_mutex);
 
     event_ns_stu->process_num--;
+    decrease_process_max_idx(event_ns_stu, proc_idx);
+
     return;
 }
 

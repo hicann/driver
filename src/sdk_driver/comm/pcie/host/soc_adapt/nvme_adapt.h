@@ -14,7 +14,7 @@
 #ifndef _NVME_ADAPT_H_
 #define _NVME_ADAPT_H_
 
-#include <asm/io.h>
+#include "ka_memory_pub.h"
 
 #define DEVDRV_MSG_CHAN_DB_OFFSET 0x4     /* doorbell offset */
 #define DEVDRV_DB_QUEUE_TYPE 2

@@ -12,16 +12,18 @@
 
 #include "ascend_hal_define.h"
 
-#define TRS_ASYNC_HOST_TO_DEVICE   0
-#define TRS_ASYNC_DEVICE_TO_HOST   1
-#define TRS_ASYNC_DEVICE_TO_DEVICE 6
-#define TRS_ASYNC_MAX_DIR          7
+struct trs_async_addr_pack {
+    uint64_t src;
+    uint64_t dst;
+    uint64_t len;
+};
 
 enum trs_async_dma_type {
     TRS_ASYNC_DMA_TYPE_NORMAL = 0,
     TRS_ASYNC_DMA_TYPE_SQE_UPDATE,
     TRS_ASYNC_DMA_TYPE_2D,
     TRS_ASYNC_DMA_TYPE_BATCH,
+    TRS_ASYNC_DMA_TYPE_NOP,
     TRS_ASYNC_DMA_TYPE_MAX
 };
 
@@ -32,9 +34,10 @@ struct trs_async_dma_input_para {
     uint32_t sqId;
     uint32_t dir;
     union {
-        struct halAsyncDmaInputPara *async_normal_in;
-        struct halAsyncDmaInput2DPara *async_2d_in;
-        struct halAsyncDmaInputBatchPara *async_batch_in;
+        struct drvNormalWqeInputPara async_normal_in;
+        struct drv2dWqeInputPara async_2d_in;
+        struct drvBatchWqeInputPara async_batch_in;
+        struct drvNopWqeInputPara async_nop_in;
     };
 };
 
@@ -50,20 +53,43 @@ struct trs_async_dma_destroy_para {
     };
 };
 
-static inline struct trs_async_dma_input_para trs_pack_async_dma_input_para(void *in,
-    enum trs_async_dma_type async_dma_type, drvSqCqType_t type, uint32_t tsId, uint32_t sqId)
+static inline struct trs_async_dma_input_para trs_pack_async_dma_input_para(
+    void *input_para, enum trs_async_dma_type async_dma_type, drvSqCqType_t type, uint32_t tsId, uint32_t sqId)
 {
     struct trs_async_dma_input_para async_input = {0};
     async_input.async_dma_type = async_dma_type;
-    async_input.async_normal_in = in;
     async_input.type = type;
     async_input.tsId = tsId;
     async_input.sqId = sqId;
+
+    if ((async_dma_type == TRS_ASYNC_DMA_TYPE_NORMAL) || (async_dma_type == TRS_ASYNC_DMA_TYPE_SQE_UPDATE)) {
+        struct halAsyncDmaInputPara *in = (struct halAsyncDmaInputPara *)input_para;
+        async_input.async_normal_in.asyncDmaType = in->async_dma_type;
+        async_input.async_normal_in.len = in->len;
+        async_input.async_normal_in.src = in->src;
+        async_input.async_normal_in.dst = in->dst;
+    } else if (async_dma_type == TRS_ASYNC_DMA_TYPE_2D) {
+        struct halAsyncDmaInput2DPara *in = (struct halAsyncDmaInput2DPara *)input_para;
+        async_input.async_2d_in.dst = in->dst;
+        async_input.async_2d_in.dpitch = in->dpitch;
+        async_input.async_2d_in.src = in->src;
+        async_input.async_2d_in.spitch = in->spitch;
+        async_input.async_2d_in.width = in->width;
+        async_input.async_2d_in.height = in->height;
+        async_input.async_2d_in.fixedSize = in->fixedSize;
+    } else if (async_dma_type == TRS_ASYNC_DMA_TYPE_BATCH) {
+        struct halAsyncDmaInputBatchPara *in = (struct halAsyncDmaInputBatchPara *)input_para;
+        async_input.async_batch_in.dst = in->dst;
+        async_input.async_batch_in.src = in->src;
+        async_input.async_batch_in.len = in->len;
+        async_input.async_batch_in.count = in->count;
+    }
+
     return async_input;
 }
 
-static inline struct trs_async_dma_destroy_para trs_pack_async_dma_destroy_para(void *in,
-    enum trs_async_dma_type async_dma_type, drvSqCqType_t type, uint32_t tsId, uint32_t sqId)
+static inline struct trs_async_dma_destroy_para trs_pack_async_dma_destroy_para(
+    void *in, enum trs_async_dma_type async_dma_type, drvSqCqType_t type, uint32_t tsId, uint32_t sqId)
 {
     struct trs_async_dma_destroy_para destroy_para = {0};
     destroy_para.async_dma_type = async_dma_type;
@@ -73,5 +99,8 @@ static inline struct trs_async_dma_destroy_para trs_pack_async_dma_destroy_para(
     destroy_para.sqId = sqId;
     return destroy_para;
 }
+
+int trs_async_urma_init(uint32_t dev_id);
+void trs_async_urma_uninit(uint32_t dev_id);
 
 #endif /* TRS_URMA_ASYNC_H */

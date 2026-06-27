@@ -18,10 +18,6 @@
 
 #include "securec.h"
 
-#ifdef CFG_FEATURE_SUPPORT_UB
-#include "bitmap.h"
-#endif
-
 #include "drv_user_common.h"
 #include "hdcdrv_cmd_ioctl.h"
 #include "hdc_file.h"
@@ -68,7 +64,7 @@
 #define HDC_CONFIG_INIT_FINISHED 1
 
 #define HDC_ACCESS_COUNT 10
-#define HDC_CONFIG_COUNT 100
+#define HDC_CONFIG_COUNT 200
 
 #define HDC_ACCESS_COUNT_V3 1
 #define HDC_CONFIG_COUNT_V3 1
@@ -121,24 +117,25 @@
     })
 #endif
 
-#define HDC_SESSION_FD_INVALID ((mmProcess)-1)
+#define HDC_SESSION_FD_INVALID ((mmProcess) - 1)
 
 #if defined(CFG_PLATFORM_ESL) || defined(CFG_PLATFORM_FPGA)
-    #define HDC_PERF_STANDER 100000000  // HDC recv/send performance 100 s
-    #define HDC_ACCEPT_PERF_STANDER 100000000000     // HDC accept performance 100000 s
-    #define HDC_CLOSE_PERF_STANDER 10000000000000ULL    // HDC close performance 10000000 s
+#define HDC_PERF_STANDER 100000000               // HDC recv/send performance 100 s
+#define HDC_ACCEPT_PERF_STANDER 100000000000     // HDC accept performance 100000 s
+#define HDC_CLOSE_PERF_STANDER 10000000000000ULL // HDC close performance 10000000 s
 #else
-    #define HDC_PERF_STANDER 10     // HDC recv/send performance 10 us
-    #define HDC_ACCEPT_PERF_STANDER 10000     // HDC accept performance 10 ms
-    #define HDC_CLOSE_PERF_STANDER 1000000   // HDC close performance 1 s
+#define HDC_PERF_STANDER 10            // HDC recv/send performance 10 us
+#define HDC_ACCEPT_PERF_STANDER 10000  // HDC accept performance 10 ms
+#define HDC_CLOSE_PERF_STANDER 1000000 // HDC close performance 1 s
 #endif
+
+#define HDC_CLOSE_PERF_STANDER_ENV "ASCEND_HDC_CLOSE_PERF_STANDER" // HDC close performance environment name
 
 extern const char *g_errno_str[];
 unsigned int get_err_str_count(void);
 
 #define STRERROR(errno) \
-    (((unsigned int)(errno) < get_err_str_count()) ? \
-    g_errno_str[(unsigned int)(errno)] : g_errno_str[1])
+    (((unsigned int)(errno) < get_err_str_count()) ? g_errno_str[(unsigned int)(errno)] : g_errno_str[1])
 
 typedef void *PPC_CLIENT;
 typedef void *PPC_SESSION;
@@ -151,7 +148,7 @@ struct drv_ppc_msg_buf {
 
 struct drv_ppc_msg {
     int count;
-    struct drv_ppc_msg_buf bufList[1];  /**< 1 just erase pclint warning. here should be 0 */
+    struct drv_ppc_msg_buf bufList[1]; /**< 1 just erase pclint warning. here should be 0 */
 };
 
 struct ppc_msg_head {
@@ -159,62 +156,75 @@ struct ppc_msg_head {
     struct drv_ppc_msg msg;
 };
 
-#if !defined (CFG_FEATURE_SHARE_LOG) || defined (CFG_FEATURE_SHARE_LOG_NOT)
+#if !defined(CFG_FEATURE_SHARE_LOG) || defined(CFG_FEATURE_SHARE_LOG_NOT)
 #define HDC_SHARE_LOG_CREATE()
 #define HDC_SHARE_LOG_DESTROY()
 #define HDC_SHARE_LOG_READ_ERR()
 #define HDC_SHARE_LOG_READ_INFO()
 #else
-#define HDC_SHARE_LOG_CREATE() do { \
-    share_log_create(HAL_MODULE_TYPE_HDC, SHARE_LOG_MAX_SIZE); \
-} while (0)
-#define HDC_SHARE_LOG_DESTROY() do { \
-    share_log_read_err(HAL_MODULE_TYPE_HDC); \
-    share_log_read_run_info(HAL_MODULE_TYPE_HDC); \
-    share_log_destroy(HAL_MODULE_TYPE_HDC); \
-} while (0)
-#define HDC_SHARE_LOG_READ_ERR() do { \
-    share_log_read_err(HAL_MODULE_TYPE_HDC); \
-} while (0)
-#define HDC_SHARE_LOG_READ_INFO() do { \
-    share_log_read_run_info(HAL_MODULE_TYPE_HDC); \
-} while (0)
+#define HDC_SHARE_LOG_CREATE()                                     \
+    do {                                                           \
+        share_log_create(HAL_MODULE_TYPE_HDC, SHARE_LOG_MAX_SIZE); \
+    } while (0)
+#define HDC_SHARE_LOG_DESTROY()                       \
+    do {                                              \
+        share_log_read_err(HAL_MODULE_TYPE_HDC);      \
+        share_log_read_run_info(HAL_MODULE_TYPE_HDC); \
+        share_log_destroy(HAL_MODULE_TYPE_HDC);       \
+    } while (0)
+#define HDC_SHARE_LOG_READ_ERR()                 \
+    do {                                         \
+        share_log_read_err(HAL_MODULE_TYPE_HDC); \
+    } while (0)
+#define HDC_SHARE_LOG_READ_INFO()                     \
+    do {                                              \
+        share_log_read_run_info(HAL_MODULE_TYPE_HDC); \
+    } while (0)
 #endif
 
-#define HDC_LOG_ERR(format, ...) do { \
-    DRV_ERR(HAL_MODULE_TYPE_HDC, format, ##__VA_ARGS__); \
-} while (0);
-#define HDC_LOG_WARN(format, ...) do { \
-    DRV_WARN(HAL_MODULE_TYPE_HDC, format, ##__VA_ARGS__); \
-} while (0);
-#define HDC_LOG_INFO(format, ...) do { \
-    DRV_INFO(HAL_MODULE_TYPE_HDC, format, ##__VA_ARGS__); \
-} while (0);
-#define HDC_LOG_DEBUG(format, ...) do { \
-    DRV_DEBUG(HAL_MODULE_TYPE_HDC, format, ##__VA_ARGS__); \
-} while (0);
+#define HDC_LOG_ERR(format, ...)                             \
+    do {                                                     \
+        DRV_ERR(HAL_MODULE_TYPE_HDC, format, ##__VA_ARGS__); \
+    } while (0);
+#define HDC_LOG_WARN(format, ...)                             \
+    do {                                                      \
+        DRV_WARN(HAL_MODULE_TYPE_HDC, format, ##__VA_ARGS__); \
+    } while (0);
+#define HDC_LOG_INFO(format, ...)                             \
+    do {                                                      \
+        DRV_INFO(HAL_MODULE_TYPE_HDC, format, ##__VA_ARGS__); \
+    } while (0);
+#define HDC_LOG_DEBUG(format, ...)                             \
+    do {                                                       \
+        DRV_DEBUG(HAL_MODULE_TYPE_HDC, format, ##__VA_ARGS__); \
+    } while (0);
 /* alarm event log, non-alarm events use debug or run log */
-#define HDC_LOG_EVENT(format, ...) do { \
-    DRV_NOTICE(HAL_MODULE_TYPE_HDC, format, ##__VA_ARGS__); \
-} while (0);
+#define HDC_LOG_EVENT(format, ...)                              \
+    do {                                                        \
+        DRV_NOTICE(HAL_MODULE_TYPE_HDC, format, ##__VA_ARGS__); \
+    } while (0);
 /* run log, the default log level is LOG_INFO. */
-#define HDC_RUN_LOG_INFO(format, ...) do { \
+#define HDC_RUN_LOG_INFO(format, ...)                             \
+    do {                                                          \
         DRV_RUN_INFO(HAL_MODULE_TYPE_HDC, format, ##__VA_ARGS__); \
-} while (0);
+    } while (0);
 
 #if defined(HDC_UT_TEST) || defined(EMU_ST)
 #define STATIC
 #define dsb(opt)
 #else
 #if defined(__arm__) || defined(__aarch64__)
-#define dsb(opt)    { asm volatile("dsb " #opt : : : "memory"); }
+#define dsb(opt)                                  \
+    {                                             \
+        asm volatile("dsb " #opt : : : "memory"); \
+    }
 #else
 #define dsb(opt)
 #endif
 #define STATIC static
 #endif
-#define rmb()       dsb(ld) /* read fence */
-#define wmb()       dsb(st) /* write fence */
+#define rmb() dsb(ld) /* read fence */
+#define wmb() dsb(st) /* write fence */
 #define HDC_WAIT_ALWAYS 0
 #define HDC_NOWAIT 1
 #define HDC_WAIT_TIMEOUT 2
@@ -242,9 +252,9 @@ struct ppc_msg_head {
 #define HDCDRV_SET_SESSION_OWNER _IO(HDCDRV_CMD_MAGIC, HDCDRV_CMD_SET_SESSION_OWNER)
 #define HDCDRV_GET_SESSION_ATTR _IO(HDCDRV_CMD_MAGIC, HDCDRV_CMD_GET_SESSION_ATTR)
 #define HDCDRV_SET_SESSION_TIMEOUT _IO(HDCDRV_CMD_MAGIC, HDCDRV_CMD_SET_SESSION_TIMEOUT)
-#define HDCDRV_GET_SESSION_UID     _IO(HDCDRV_CMD_MAGIC, HDCDRV_CMD_GET_SESSION_UID)
-#define HDCDRV_GET_PAGE_SIZE       _IO(HDCDRV_CMD_MAGIC, HDCDRV_CMD_GET_PAGE_SIZE)
-#define HDCDRV_GET_SESSION_FID     _IO(HDCDRV_CMD_MAGIC, HDCDRV_CMD_GET_SESSION_INFO)
+#define HDCDRV_GET_SESSION_UID _IO(HDCDRV_CMD_MAGIC, HDCDRV_CMD_GET_SESSION_UID)
+#define HDCDRV_GET_PAGE_SIZE _IO(HDCDRV_CMD_MAGIC, HDCDRV_CMD_GET_PAGE_SIZE)
+#define HDCDRV_GET_SESSION_FID _IO(HDCDRV_CMD_MAGIC, HDCDRV_CMD_GET_SESSION_INFO)
 
 #define HDCDRV_ALLOC_MEM _IO(HDCDRV_CMD_MAGIC, HDCDRV_CMD_ALLOC_MEM)
 #define HDCDRV_FREE_MEM _IO(HDCDRV_CMD_MAGIC, HDCDRV_CMD_FREE_MEM)
@@ -256,6 +266,7 @@ struct ppc_msg_head {
 #define HDCDRV_REGISTER_MEM _IO(HDCDRV_CMD_MAGIC, HDCDRV_CMD_REGISTER_MEM)
 #define HDCDRV_UNREGISTER_MEM _IO(HDCDRV_CMD_MAGIC, HDCDRV_CMD_UNREGISTER_MEM)
 #define HDCDRV_WAIT_MEM_RELEASE _IO(HDCDRV_CMD_MAGIC, HDCDRV_CMD_WAIT_MEM)
+#define HDCDRV_GET_P2P_COM_STATUS _IO(HDCDRV_CMD_MAGIC, HDCDRV_CMD_GET_P2P_COM_STATUS)
 
 #define HDCDRV_EPOLL_ALLOC_FD _IO(HDCDRV_CMD_MAGIC, HDCDRV_CMD_EPOLL_ALLOC_FD)
 #define HDCDRV_EPOLL_FREE_FD _IO(HDCDRV_CMD_MAGIC, HDCDRV_CMD_EPOLL_FREE_FD)
@@ -263,6 +274,11 @@ struct ppc_msg_head {
 #define HDCDRV_EPOLL_WAIT _IO(HDCDRV_CMD_MAGIC, HDCDRV_CMD_EPOLL_WAIT)
 
 #define HDCDRV_CLIENT_DESTROY _IO(HDCDRV_CMD_MAGIC, HDCDRV_CMD_CLIENT_DESTROY)
+
+#define HDCDRV_WAIT_CTRL_MSG _IO(HDCDRV_CMD_MAGIC, HDCDRV_CMD_WAIT_CTRL_MSG)
+#define HDCDRV_SEND_CTRL_MSG _IO(HDCDRV_CMD_MAGIC, HDCDRV_CMD_SEND_CTRL_MSG)
+#define HDCDRV_INIT_CTRL_NODE _IO(HDCDRV_CMD_MAGIC, HDCDRV_CMD_INIT_CTRL_NODE)
+#define HDCDRV_UNINIT_CTRL_NODE _IO(HDCDRV_CMD_MAGIC, HDCDRV_CMD_UNINIT_CTRL_NODE)
 /* ----------------------------------------------*
  * Internal function prototype description                             *
  *---------------------------------------------- */
@@ -277,10 +293,6 @@ struct ppc_msg_head {
  *---------------------------------------------- */
 #define HDC_TRANS_USE_UB 2
 #ifdef CFG_FEATURE_SUPPORT_UB
-
-#define HDC_URMA_PRIORITY_HIGH 10
-#define HDC_URMA_PRIORITY_MIDDLE 3
-#define HDC_URMA_PRIORITY_LOW 13
 
 // When the value below changes, the value of the kernel_space macro with the same name also needs to be modified.
 #define HDCDRV_UB_SINGLE_DEV_MAX_SESSION 264
@@ -316,14 +328,10 @@ struct hdc_ub_session {
     int status; // only use 0 or 1
     unsigned long long create_pid;
     unsigned long long peer_create_pid;
-    unsigned int local_gid;
-    unsigned int remote_gid;
-    struct hdc_client_head* client_head;
-    struct hdc_server_head* server_head;
+    struct hdc_client_head *client_head;
+    struct hdc_server_head *server_head;
     int local_close_state;
     int remote_close_state;
-    int local_tid;
-    unsigned int remote_tid;
     unsigned int unique_val;
     hdc_ub_context_t *ctx;
     struct list_head node;
@@ -332,7 +340,6 @@ struct hdc_ub_session {
     void *psession_ptr;
     int bind_fd;
     uint64_t user_va;
-    bool data_notify_wait;
     hdc_ub_send_recv_info_t send_recv_info;
     hdc_ub_res_info_t ub_res_info;
     hdc_ub_epoll_node_t *epoll_event_node;
@@ -393,7 +400,6 @@ struct hdc_time_record_for_urma_func {
     struct timespec create_jfr;
     struct timespec post_jfr_wr;
     struct timespec res_init_end;
-    struct timespec lock_init;
     struct timespec get_tp_list;
     struct timespec import_jfr;
 };
@@ -412,15 +418,14 @@ struct hdc_time_record_for_urma_init {
 };
 
 struct hdc_time_record_for_accept {
-    struct timespec query_gid_start;
-    struct timespec query_gid_end;
+    struct timespec accept_start;
     struct timespec conn_wait;
     struct timespec res_init;
     struct timespec alloc_session;
     struct timespec pre_init;
     struct timespec create_ub_ctx;
     struct timespec add_ctrl;
-    struct timespec submit_event;
+    struct timespec send_ctrl_msg;
     struct timespec accept_end;
     struct hdc_time_record_for_urma_init urma_func_cost;
     int fail_times;
@@ -429,16 +434,12 @@ struct hdc_time_record_for_accept {
 struct hdc_time_record_for_connect {
     struct timespec connect_start;
     struct timespec link_pre_init;
-    struct timespec gid_query;
     struct timespec mem_res_init;
     struct timespec alloc_session;
     struct timespec pre_init;
-    struct timespec alloc_tid;
     struct timespec create_ub_ctx;
     struct timespec get_res_info_and_add_ctrl;
-    struct timespec fill_event_msg;
-    struct timespec submit_event;
-    struct timespec wait_reply;
+    struct timespec send_ctrl_msg;
     struct timespec check_reply;
     struct timespec free_tid_and_fill_jetty_info;
     struct timespec connect_end;
@@ -484,9 +485,9 @@ struct hdc_time_record_for_close {
     struct timespec wake_recv;
     struct timespec close_notify;
     struct hdc_time_record_for_urma_uninit urma_uninit;
-    struct timespec write_file;     //remote_close
-    struct timespec session_free;   //user_close
-    struct timespec del_close_epoll;//user_close
+    struct timespec write_file;      // remote_close
+    struct timespec session_free;    // user_close
+    struct timespec del_close_epoll; // user_close
     int fail_times;
 };
 
@@ -545,7 +546,7 @@ struct hdc_server_head {
     mmProcess bind_fd;
     mmMutex_t mutex;
     int accept_wait;
-	struct hdc_server_session session[0];
+    struct hdc_server_session session[0];
 #ifdef CFG_FEATURE_SUPPORT_UB
     int conn_wait;
     int conn_notify;
@@ -556,8 +557,8 @@ struct hdc_epoll_head {
     unsigned int magic;
     mmSockHandle epfd;
     union {
-        mmProcess bind_fd;      /* for hdc device fd over pcie */
-        HDC_SERVER hdc_server;  /* HDC Server handle, use in UB scenario */
+        mmProcess bind_fd;     /* for hdc device fd over pcie */
+        HDC_SERVER hdc_server; /* HDC Server handle, use in UB scenario */
     };
     int size;
     struct epoll_event *epoll_events;
@@ -584,11 +585,10 @@ struct hdcConfig {
     bool config_set_flag;
     signed int h2d_type;
 #ifdef CFG_FEATURE_SUPPORT_UB
-    bitmap_t tid_pool[16];
     hdc_urma_info_t *urma_attr[HDC_MAX_UB_DEV_CNT];
     mmMutex_t urma_attr_lock[HDC_MAX_UB_DEV_CNT];
     HDC_SERVER server_list[HDC_MAX_UB_DEV_CNT][HDCDRV_SUPPORT_MAX_SERVICE];
-    mmMutex_t session_lock[HDC_MAX_UB_DEV_CNT * HDCDRV_UB_SINGLE_DEV_MAX_SESSION];   // used when close session
+    mmMutex_t session_lock[HDC_MAX_UB_DEV_CNT * HDCDRV_UB_SINGLE_DEV_MAX_SESSION]; // used when close session
     struct hdc_session_base_info info_list[HDC_MAX_UB_DEV_CNT * HDCDRV_UB_SINGLE_DEV_MAX_SESSION]; // session base info
     int f_pid;
     struct hdc_session_notify_mng notify_list[HDC_SERVICE_TYPE_MAX];

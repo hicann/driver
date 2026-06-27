@@ -16,8 +16,8 @@
 
 #include "drv_type.h"
 
-#define SVM_DEV_NAME                "/dev/svm0"
-#define SVM_IOCTL_PROCESS_BIND      0xffff
+#define SVM_DEV_NAME "/dev/svm0"
+#define SVM_IOCTL_PROCESS_BIND 0xffff
 
 struct trs_svm_process_info {
     pid_t vpid;
@@ -39,5 +39,7 @@ int trs_dev_munmap(void *addr, size_t length);
 drvError_t trs_urma_proc_ctx_init_by_devid(uint32_t dev_id);
 void _trs_urma_proc_ctx_uninit_by_devid(uint32_t dev_id);
 int trs_dev_io_ctrl(uint32_t dev_id, uint32_t cmd, void *para);
-#endif
 
+void trs_dev_mutex_lock(void);
+void trs_dev_mutex_unlock(void);
+#endif

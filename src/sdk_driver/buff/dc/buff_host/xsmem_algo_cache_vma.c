@@ -66,8 +66,8 @@ static int cache_vma_algo_cache_create(struct xsm_pool *xp, struct xsm_cache_cre
     return 0;
 }
 
-static int cache_vma_algo_cache_query(struct xsm_pool *xp, unsigned int dev_id,
-    GrpQueryGroupAddrInfo *cache_buff, unsigned int *cache_cnt)
+static int cache_vma_algo_cache_query(struct xsm_pool *xp, unsigned int dev_id, GrpQueryGroupAddrInfo *cache_buff,
+                                      unsigned int *cache_cnt)
 {
     struct cache_vma_ctrl *cache_ctrl = (struct cache_vma_ctrl *)xp->private;
 

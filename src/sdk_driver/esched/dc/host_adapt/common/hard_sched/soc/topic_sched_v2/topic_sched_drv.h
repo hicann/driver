@@ -19,7 +19,7 @@
 /* For details about the maximum specifications, see tsdrv_kernel_common.h
  * (DEVDER_MAX_SQ_DEPTH or DEVDER_MAX_CQ_DEPTH) */
 #define TOPIC_SCHED_TASK_SUBMIT_SQ_DEPTH (2 * 1024 - 7) // stars restrictions (depth - 1) % 2^3 = 0
-#define TOPIC_SCHED_TASK_SUBMIT_CQ_DEPTH (1024 - 7) // stars restrictions (depth - 1) % 2^3 = 0
+#define TOPIC_SCHED_TASK_SUBMIT_CQ_DEPTH (1024 - 7)     // stars restrictions (depth - 1) % 2^3 = 0
 
 #define TOPIC_SCHED_MAX_CHAN_NUM 64
 #define TOPIC_SCHED_HOST_AICPU_CHAN_NUM 64

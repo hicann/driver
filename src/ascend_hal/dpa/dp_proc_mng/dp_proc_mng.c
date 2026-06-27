@@ -155,4 +155,3 @@ drvError_t __attribute__((weak)) halBindCgroup(BIND_CGROUP_TYPE bindType)
 
     return ret_val;
 }
-

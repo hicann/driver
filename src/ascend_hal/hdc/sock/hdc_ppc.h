@@ -10,11 +10,10 @@
 #ifndef _HDC_PPC_H_
 #define _HDC_PPC_H_
 
-
 #define QLEN 10
 #define SOCK_NAME_LEN 30
 #ifndef PKT_SIZE_1G
-#define PKT_SIZE_1G (1024 * 1024 * 1024U)  // 1G Byte
+#define PKT_SIZE_1G (1024 * 1024 * 1024U) // 1G Byte
 #endif
 #define PPC_DIR_DEFAULT "/home/HwHiAiUser/hdc_ppc/"
 #define PPC_USER_ROOT "root"
@@ -29,6 +28,5 @@ enum sock_type {
     SOCK_CLIENT = 0,
     SOCK_SERVER
 };
-
 
 #endif

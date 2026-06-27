@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2025. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -24,15 +24,15 @@
 #include "dma_desc_node.h"
 
 #ifndef EMU_ST /* Simulation ST is required and cannot be deleted. */
-#define SVM_DMA_DESC_ALLOC_SQ_CQ_ADDR_RETRY_CNT 3U
+#define SVM_DMA_DESC_ALLOC_SQ_CQ_ADDR_RETRY_CNT 8U
 #else
 #define SVM_DMA_DESC_ALLOC_SQ_CQ_ADDR_RETRY_CNT 1U
 #endif
 
 static char *dma_desc_maigc = "SVM";
 
-static int dma_desc_alloc_sq_cq_addr(struct svm_copy_task *copy_task,
-    struct devdrv_dma_prepare *dma_prepare, u64 *fixed_dma_node_num)
+static int dma_desc_alloc_sq_cq_addr(
+    struct svm_copy_task *copy_task, struct devdrv_dma_prepare *dma_prepare, u64 *fixed_dma_node_num)
 {
     u32 node_cnt = svm_copy_task_get_dma_node_num(copy_task);
     u32 i, num;
@@ -56,8 +56,7 @@ static int dma_desc_alloc_sq_cq_addr(struct svm_copy_task *copy_task,
     return -ENOMEM;
 }
 
-static void dma_desc_free_sq_cq_addr(struct svm_copy_task *copy_task,
-    struct devdrv_dma_prepare *dma_prepare)
+static void dma_desc_free_sq_cq_addr(struct svm_copy_task *copy_task, struct devdrv_dma_prepare *dma_prepare)
 {
     devdrv_dma_prepare_free_sq_addr(copy_task->udevid, dma_prepare);
 }
@@ -73,8 +72,8 @@ static u64 get_dma_nodes_addr_size(struct devdrv_dma_node *dma_nodes, u64 dma_no
     return size;
 }
 
-static int fill_dma_desc_of_sq(struct svm_copy_task *copy_task,
-    struct devdrv_dma_prepare *dma_prepare, u64 fixed_dma_node_num, u64 *fixed_size)
+static int fill_dma_desc_of_sq(
+    struct svm_copy_task *copy_task, struct devdrv_dma_prepare *dma_prepare, u64 fixed_dma_node_num, u64 *fixed_size)
 {
     struct svm_copy_subtask *subtask = NULL;
     struct svm_copy_subtask *n = NULL;
@@ -89,11 +88,12 @@ static int fill_dma_desc_of_sq(struct svm_copy_task *copy_task,
         return ret;
     }
 
-    ka_list_for_each_entry_safe(subtask, n, &copy_task->subtasks_list.head, node) {
+    ka_list_for_each_entry_safe(subtask, n, &copy_task->subtasks_list.head, node)
+    {
         sq_base = dma_prepare->sq_base + filled_num * sq_desc_size;
         cur_num = ka_base_min(fixed_dma_node_num - filled_num, subtask->dma_node_num);
-        fill_status = ((filled_num + cur_num) == fixed_dma_node_num) ?
-            DEVDRV_DMA_DESC_FILL_FINISH : DEVDRV_DMA_DESC_FILL_CONTINUE;
+        fill_status = ((filled_num + cur_num) == fixed_dma_node_num) ? DEVDRV_DMA_DESC_FILL_FINISH :
+                                                                       DEVDRV_DMA_DESC_FILL_CONTINUE;
         ret = devdrv_dma_fill_desc_of_sq_ext(copy_task->udevid, sq_base, subtask->dma_nodes, cur_num, fill_status);
         if (ret != 0) {
             svm_err("devdrv_dma_fill_desc_of_sq_ext failed. (ret=%d; udevid=%u)\n", ret, copy_task->udevid);
@@ -111,8 +111,8 @@ static int fill_dma_desc_of_sq(struct svm_copy_task *copy_task,
     return 0;
 }
 
-static int dma_prepare_init(struct svm_copy_task *copy_task, struct devdrv_dma_prepare *dma_prepare,
-    u64 *fixed_dma_node_num, u64 *fixed_size)
+static int dma_prepare_init(
+    struct svm_copy_task *copy_task, struct devdrv_dma_prepare *dma_prepare, u64 *fixed_dma_node_num, u64 *fixed_size)
 {
     int ret;
 
@@ -149,8 +149,7 @@ static void fill_convert_dma_addr(struct dma_desc_node *node, struct DMA_ADDR *d
     dma_desc->phyAddr.priv = (void *)(uintptr_t)node->handle;
 }
 
-int dma_desc_node_create(struct dma_desc_ctx *ctx,
-    struct svm_copy_task *copy_task, struct DMA_ADDR *dma_desc)
+int dma_desc_node_create(struct dma_desc_ctx *ctx, struct svm_copy_task *copy_task, struct DMA_ADDR *dma_desc)
 {
     struct dma_desc_node *node = NULL;
     int ret;
@@ -214,10 +213,7 @@ void dma_desc_node_destroy(struct dma_desc_ctx *ctx, struct dma_desc_node *node)
     _dma_desc_node_destroy(node);
 }
 
-static void _dma_desc_node_get(struct dma_desc_node *node)
-{
-    ka_base_kref_get(&node->ref);
-}
+static void _dma_desc_node_get(struct dma_desc_node *node) { ka_base_kref_get(&node->ref); }
 
 struct dma_desc_node *dma_desc_node_get(struct dma_desc_ctx *ctx, u64 handle)
 {
@@ -234,10 +230,7 @@ struct dma_desc_node *dma_desc_node_get(struct dma_desc_ctx *ctx, u64 handle)
     return dma_desc_node;
 }
 
-void dma_desc_node_put(struct dma_desc_node *node)
-{
-    ka_base_kref_put(&node->ref, dma_desc_node_release);
-}
+void dma_desc_node_put(struct dma_desc_node *node) { ka_base_kref_put(&node->ref, dma_desc_node_release); }
 
 int dma_desc_node_state_trans(struct dma_desc_node *node, int src_state, int dst_state)
 {

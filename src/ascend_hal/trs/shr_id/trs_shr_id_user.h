@@ -20,4 +20,3 @@ struct trs_shrid_remote_ops {
 void trs_register_shrid_remote_ops(struct trs_shrid_remote_ops *ops);
 
 #endif
-

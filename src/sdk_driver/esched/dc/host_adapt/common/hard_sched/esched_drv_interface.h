@@ -18,12 +18,12 @@
 #define TOPIC_SCHED_SQE_KERNEL_CREDIT 100
 
 /* custom process kernel type config */
-#define TOPIC_SCHED_CUSTOM_KERNEL_TYPE     4
+#define TOPIC_SCHED_CUSTOM_KERNEL_TYPE 4
 #define TOPIC_SCHED_CUSTOM_KFC_KERNEL_TYPE 6
-#define TOPIC_SCHED_DEFAULT_KERNEL_TYPE    127
+#define TOPIC_SCHED_DEFAULT_KERNEL_TYPE 127
 
 /* The RTSQ priority ranges from 0 to 7, 0 is the highest priority. */
-#define TOPIC_SCHED_RTSQ_PRI          4
+#define TOPIC_SCHED_RTSQ_PRI 4
 
 #define TOPIC_SCHED_ACPU_POOL_ID 0
 
@@ -42,8 +42,8 @@ enum esched_topic_type {
 };
 
 struct topic_trs_chan_ext_info {
-    u8  mb_spec;
-    u8  mb_specid;
+    u8 mb_spec;
+    u8 mb_specid;
 };
 
 struct sched_trs_chan_ext_msg {

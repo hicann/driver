@@ -15,10 +15,11 @@
 #include "devmm_page_cache.h"
 #include "svm_msg_client.h"
 #include "svm_master_mem_map.h"
+#include "svm_mem_map.h"
 #include "ka_base_pub.h"
 
-static void devmm_msg_to_agent_mem_map_fail_proc(struct devmm_svm_process *svm_proc,
-    struct devmm_vmma_info *info, u64 to_free_pg_num)
+static void devmm_msg_to_agent_mem_map_fail_proc(
+    struct devmm_svm_process *svm_proc, struct devmm_vmma_info *info, u64 to_free_pg_num)
 {
     u64 num = info->pg_num;
     u64 size = info->size;
@@ -69,8 +70,8 @@ int devmm_msg_to_agent_mem_map(struct devmm_svm_process *svm_proc, struct devmm_
         ret = devmm_chan_msg_send(msg, (u32)sizeof(struct devmm_chan_mem_map), (u32)msg_len);
         if (ret != 0) {
 #ifndef EMU_ST
-            devmm_drv_no_err_if((ret == -ENOMEM), "Mem map msg send failed. (ret=%d; va=0x%llx; size=%llu)\n",
-                ret, msg->va, msg->size);
+            devmm_drv_no_err_if(
+                (ret == -ENOMEM), "Mem map msg send failed. (ret=%d; va=0x%llx; size=%llu)\n", ret, msg->va, msg->size);
 #endif
             devmm_msg_to_agent_mem_map_fail_proc(svm_proc, info, mapped_num);
             devmm_kvfree_ex(msg);
@@ -86,4 +87,10 @@ int devmm_msg_to_agent_mem_map(struct devmm_svm_process *svm_proc, struct devmm_
 
     devmm_kvfree_ex(msg);
     return 0;
+}
+
+int devmm_remap_route_for_exbus(
+    struct devmm_svm_process *svm_proc, u32 devid, struct devmm_vmma_info *info, ka_page_t **pages)
+{
+    return -EINVAL;
 }

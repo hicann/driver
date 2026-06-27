@@ -69,48 +69,49 @@ signed int hdc_pcie_set_service_level(mmProcess handle, signed int serviceType);
 signed int hdc_pcie_server_create(mmProcess handle, signed int devId, signed int serviceType);
 signed int hdc_pcie_server_destroy(mmProcess handle, signed int devId, signed int serviceType);
 signed int hdc_pcie_accept(mmProcess handle, signed int devId, signed int serviceType, struct hdc_session *pSession);
-signed int hdc_pcie_connect(mmProcess handle, signed int devId, signed int serviceType,
-    unsigned int flag, signed int peerpid, struct hdc_session *pSession);
+signed int hdc_pcie_connect(mmProcess handle, signed int devId, signed int serviceType, unsigned int flag,
+                            signed int peerpid, struct hdc_session *pSession);
 signed int hdc_pcie_close(mmProcess handle, unsigned int devId, const struct hdc_session *pSession);
 signed int hdc_pcie_send(mmProcess handle, const struct hdc_session *pSession, struct drvHdcMsg *pMsg, signed int wait,
-    unsigned int timeout);
+                         unsigned int timeout);
 signed int hdc_pcie_recv_peek(mmProcess handle, const struct hdc_session *pSession, signed int *len,
-    struct hdc_recv_config *recvConfig);
-signed int hdc_pcie_recv(mmProcess handle, const struct hdc_session *pSession,
-    char *buf, signed int len, signed int *outLen, struct hdc_recv_config *recvConfig);
+                              struct hdc_recv_config *recvConfig);
+signed int hdc_pcie_recv(mmProcess handle, const struct hdc_session *pSession, char *buf, signed int len,
+                         signed int *outLen, struct hdc_recv_config *recvConfig);
 signed int hdc_pcie_set_session_owner(mmProcess handle, const struct hdc_session *pSession);
 signed int hdc_pcie_get_session_uid(mmProcess handle, const struct hdc_session *pSession, int *root_privilege);
-signed int hdc_pcie_alloc_mem(mmProcess handle, signed int type, const struct hdc_alloc_mem *mem_info,
-    UINT64 va, unsigned int page_type);
+signed int hdc_pcie_alloc_mem(mmProcess handle, signed int type, const struct hdc_alloc_mem *mem_info, UINT64 va,
+                              unsigned int page_type);
 signed int hdc_pcie_free_mem(mmProcess handle, signed int type, UINT64 va, unsigned int *len, unsigned int *page_type);
 signed int hdc_pcie_fast_send(mmProcess handle, const struct hdc_session *pSession, signed int wait_flag,
-    const struct drvHdcFastSendMsg *msg, unsigned int timeout);
+                              const struct drvHdcFastSendMsg *msg, unsigned int timeout);
 signed int hdc_pcie_fast_recv(mmProcess handle, const struct hdc_session *pSession, signed int wait_flag,
-    struct drvHdcFastRecvMsg *msg, unsigned int timeout);
+                              struct drvHdcFastRecvMsg *msg, unsigned int timeout);
 signed int hdc_pcie_dma_map(mmProcess handle, signed int type, UINT64 va, signed int devid);
 signed int hdc_pcie_dma_unmap(mmProcess handle, signed int type, UINT64 va);
 signed int hdc_pcie_dma_remap(mmProcess handle, signed int type, UINT64 va, signed int devid);
 
 signed int hdc_pcie_register_mem(mmProcess handle, unsigned int type, signed int devid, UINT64 va,
-                              unsigned int alloc_len);
-signed int hdc_pcie_unregister_mem(mmProcess handle, signed int type, UINT64 va,
-                                unsigned int *len, unsigned int *page_type);
-signed int hdc_pcie_fast_wait(mmProcess handle, const struct hdc_session *pSession,
-    struct drvHdcFastSendFinishMsg *msg, int timeout, int result_type);
+                                 unsigned int alloc_len);
+signed int hdc_pcie_unregister_mem(mmProcess handle, signed int type, UINT64 va, unsigned int *len,
+                                   unsigned int *page_type);
+signed int hdc_pcie_fast_wait(mmProcess handle, const struct hdc_session *pSession, struct drvHdcFastSendFinishMsg *msg,
+                              int timeout, int result_type);
 
 void hdc_sid_copy(char *dst_session_id, int dst_len, char *src_session_id, int src_len);
 
 signed int hdc_pcie_epoll_alloc_fd(mmProcess handle, signed int size, signed int *epfd);
 signed int hdc_pcie_epoll_free_fd(mmProcess handle, signed int epfd);
 signed int hdc_pcie_epoll_ctl(mmProcess handle, const struct hdcdrv_cmd_epoll_ctl *epollctl,
-    const struct drvHdcEvent *event);
+                              const struct drvHdcEvent *event);
 signed int hdc_pcie_epoll_wait(mmProcess handle, struct hdcdrv_cmd_epoll_wait *epollwait);
 signed int hdc_pcie_get_session_attr(mmProcess handle, const struct hdc_session *pSession, int attr, int *value);
 signed int hdc_pcie_set_session_time_out(mmProcess handle, struct hdc_session *pSession,
-    struct hdcdrv_timeout *timeout);
-signed int hdc_pcie_get_page_size(mmProcess handle, unsigned int *page_size,
-    unsigned int *huge_page_size, unsigned int *page_size_bit);
-signed int hdc_pcie_get_session_info(mmProcess handle, const struct hdc_session *pSession, struct drvHdcSessionInfo *info);
+                                         struct hdcdrv_timeout *timeout);
+signed int hdc_pcie_get_page_size(mmProcess handle, unsigned int *page_size, unsigned int *huge_page_size,
+                                  unsigned int *page_size_bit);
+signed int hdc_pcie_get_session_info(mmProcess handle, const struct hdc_session *pSession,
+                                     struct drvHdcSessionInfo *info);
 signed int hdc_pcie_client_wakeup_conn_wait(mmProcess handle, signed int devId, signed int serviceType);
 signed int hdc_pcie_server_wakeup_conn_wait(mmProcess handle, signed int devId, signed int serviceType);
 signed int drv_hdc_get_max_session_num_by_type(signed int serviceType);

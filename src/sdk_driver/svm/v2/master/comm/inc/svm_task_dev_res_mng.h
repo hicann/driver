@@ -39,8 +39,8 @@ struct devmm_task_dev_res_node {
     struct devmm_convert_node_rb_info convert_rb_info;
 };
 
-struct devmm_task_dev_res_node *devmm_task_dev_res_node_create(struct devmm_svm_process *svm_proc,
-    struct svm_id_inst *id_inst);
+struct devmm_task_dev_res_node *devmm_task_dev_res_node_create(
+    struct devmm_svm_process *svm_proc, struct svm_id_inst *id_inst);
 void devmm_task_dev_res_node_destroy(struct devmm_task_dev_res_node *node);
 
 int devmm_task_dev_res_node_get(struct devmm_task_dev_res_node *node);

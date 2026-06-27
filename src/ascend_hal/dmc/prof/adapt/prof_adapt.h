@@ -26,9 +26,9 @@ struct prof_chan_ops {
     drvError_t (*query)(uint32_t dev_id, uint32_t chan_id, uint32_t *avail_len, char *priv);
     drvError_t (*report)(uint32_t dev_id, uint32_t chan_id, void *data, uint32_t data_len, char *priv);
 };
-drvError_t prof_adapt_get_chan_ops(uint32_t dev_id, uint32_t chan_mode, struct prof_chan_ops **ops);
+drvError_t prof_adapt_get_chan_ops(uint32_t dev_id, uint32_t chan_mode, struct prof_chan_ops **ops, bool support_host_sample);
 
-drvError_t prof_adapt_register_channel(uint32_t dev_id, uint32_t chan_id, struct prof_sample_register_para *para);
+drvError_t prof_adapt_register_channel(uint32_t dev_id, uint32_t chan_id, struct prof_sample_register_para *para, bool support_host_sample);
 drvError_t prof_adapt_get_channels(uint32_t dev_id, struct prof_channel_list *channels);
 
 struct prof_adapt_core_notifier {

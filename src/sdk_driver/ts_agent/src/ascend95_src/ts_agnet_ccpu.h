@@ -15,7 +15,7 @@
 #define TS_AGENT_CCPU_H
 
 #ifdef CFG_SOC_PLATFORM_DAVID
-#include <linux/types.h>
+#include "ka_type.h"
 #include "tsch/task_struct.h"
 #include "trs_adapt.h"
 

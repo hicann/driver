@@ -10,7 +10,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#include <linux/types.h>
+#include "ka_type.h"
 
 #include "svm_log.h"
 #include "svm_define.h"
@@ -131,9 +131,10 @@ void devmm_page_cnt_stats_show(struct devmm_page_cnt_stats *stats)
 
     if ((cgroup_page_cnt != 0) || (cgroup_hpage_cnt != 0) || (cgroup_giant_cnt != 0) || (cdm_page_cnt != 0) ||
         (cdm_hpage_cnt != 0) || (cdm_giant_cnt != 0)) {
-        devmm_drv_info("Page cnt. (cgroup: normal=%llu huge=%llu giant=%llu; "
+        devmm_drv_info(
+            "Page cnt. (cgroup: normal=%llu huge=%llu giant=%llu; "
             "cdm: normal=%llu huge=%llu giant=%llu; peak: normal=%llu huge=%llu giant=%llu)\n",
-            cgroup_page_cnt, cgroup_hpage_cnt, cgroup_giant_cnt, cdm_page_cnt, cdm_hpage_cnt,
-            cdm_giant_cnt, peak_page_cnt, peak_hpage_cnt, peak_giant_cnt);
+            cgroup_page_cnt, cgroup_hpage_cnt, cgroup_giant_cnt, cdm_page_cnt, cdm_hpage_cnt, cdm_giant_cnt,
+            peak_page_cnt, peak_hpage_cnt, peak_giant_cnt);
     }
 }

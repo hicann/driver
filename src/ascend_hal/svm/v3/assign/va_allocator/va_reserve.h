@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * Copyright (c) 2026 Huawei Technologies Co., Ltd.
  * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -14,11 +14,11 @@
 
 #include "svm_pub.h"
 
-#define SVM_VA_RESERVE_FLAG_WITH_MASTER     (1U << 0U)
-#define SVM_VA_RESERVE_FLAG_WITH_CUSTOM_CP  (1U << 1U)
-#define SVM_VA_RESERVE_FLAG_WITH_HCCP       (1U << 2U)
-#define SVM_VA_RESERVE_FLAG_MASTER_ONLY     (1U << 4U)
-#define SVM_VA_RESERVE_FLAG_PRIVATE         (1U << 8U)
+#define SVM_VA_RESERVE_FLAG_WITH_MASTER (1U << 0U)
+#define SVM_VA_RESERVE_FLAG_WITH_CUSTOM_CP (1U << 1U)
+#define SVM_VA_RESERVE_FLAG_WITH_HCCP (1U << 2U)
+#define SVM_VA_RESERVE_FLAG_MASTER_ONLY (1U << 4U)
+#define SVM_VA_RESERVE_FLAG_PRIVATE (1U << 8U)
 
 #define SVM_VA_RESERVE_MAX_SIZE (136ULL * SVM_BYTES_PER_TB)
 

@@ -28,7 +28,7 @@
 #define rmo_event(fmt, ...) DRV_NOTICE(HAL_MODULE_TYPE_DP_PROC_MNG, fmt, ##__VA_ARGS__)
 
 #ifdef EMU_ST
-#define THREAD__  __thread
+#define THREAD__ __thread
 #else
 #define THREAD__
 #endif

@@ -23,10 +23,17 @@ include(cmake/feature_config.cmake)
 include(cmake/create_ko_target.cmake)
 include(cmake/external_dependencies.cmake)
 
+# 提前拉取 driver-device，供编译阶段链接
+if(BUILD_COMPONENT STREQUAL "DRIVER")
+    include(cmake/third_party/driver_device_fetch.cmake)
+    get_driver_device()
+endif()
+
 # path for so
 set(DRIVER_HAL_INC_DIR ${CMAKE_CURRENT_LIST_DIR}/pkg_inc)
 set(DRIVER_USER_DIR ${CMAKE_CURRENT_LIST_DIR}/src/ascend_hal)
 set(DRIVER_KERNEL_DIR ${CMAKE_CURRENT_LIST_DIR}/src/sdk_driver)
+set(DRIVER_NETWORK_DIR ${CMAKE_CURRENT_LIST_DIR}/src/network)
 set(DRIVER_CUST_INC_DIR ${CMAKE_CURRENT_LIST_DIR}/src/custom/include)
 set(DRIVER_CUST_DIR ${CMAKE_CURRENT_LIST_DIR}/src/custom)
 

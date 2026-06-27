@@ -12,7 +12,7 @@
  */
 #ifndef STARS_EVENT_TBL_NS_H
 #define STARS_EVENT_TBL_NS_H
-#include <linux/types.h>
+#include "ka_type.h"
 
 #include "trs_pub_def.h"
 int trs_init_event_tbl_ns_base_addr(struct trs_id_inst *inst);

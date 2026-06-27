@@ -45,10 +45,10 @@ int subsys_ts_get_irq_by_index(struct soc_resmng_ts *ts_resmng, u32 irq_type, u3
 int subsys_ts_set_irq(struct soc_resmng_ts *ts_resmng, u32 irq_type, u32 irq);
 int subsys_ts_get_irq(struct soc_resmng_ts *ts_resmng, u32 irq_type, u32 *irq);
 
-int subsys_ts_set_tscpu_to_taishan_irq(struct soc_resmng_ts *ts_resmng, u32 irq_type, u32 irq,
-    u32 tscpu_to_taishan_irq);
-int subsys_ts_get_tscpu_to_taishan_irq(struct soc_resmng_ts *ts_resmng, u32 irq_type, u32 irq,
-    u32 *tscpu_to_taishan_irq);
+int subsys_ts_set_tscpu_to_taishan_irq(
+    struct soc_resmng_ts *ts_resmng, u32 irq_type, u32 irq, u32 tscpu_to_taishan_irq);
+int subsys_ts_get_tscpu_to_taishan_irq(
+    struct soc_resmng_ts *ts_resmng, u32 irq_type, u32 irq, u32 *tscpu_to_taishan_irq);
 
 int subsys_ts_set_hwirq(struct soc_resmng_ts *ts_resmng, u32 irq_type, u32 irq, u32 hwirq);
 int subsys_ts_get_hwirq(struct soc_resmng_ts *ts_resmng, u32 irq_type, u32 irq, u32 *hwirq);

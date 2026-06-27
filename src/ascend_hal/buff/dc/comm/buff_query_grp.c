@@ -20,7 +20,7 @@
 #include "buff_manage_base.h"
 #include "buff_mng.h"
 #include "grp_mng.h"
-
+#include "buff_user_interface.h"
 #include "buff_query_grp.h"
 
 static drvError_t buff_query_grp(void *in_buff, unsigned int in_len, void *out_buff, unsigned int *out_len)
@@ -58,7 +58,7 @@ static drvError_t buff_query_grp(void *in_buff, unsigned int in_len, void *out_b
         return DRV_ERROR_INVALID_VALUE;
     }
 
-    for(i = 0; i < pid_num; i++) {
+    for (i = 0; i < pid_num; i++) {
         query_grp_out[i].pid = pid[i];
         ret = buff_pool_task_attr_query(grp_id, pid[i], &query_grp_out[i].attr);
         if (ret != DRV_ERROR_NONE) {
@@ -108,6 +108,10 @@ static drvError_t buff_query_grp_proc(void *in_buff, unsigned int in_len, void *
         ret = buff_pool_name_query(grp_id[i], query_out[j].groupName, BUFF_GRP_NAME_LEN);
         if (ret != DRV_ERROR_NONE) {
             buff_warn("Query group name not success. (grp_id=%d, pid=%d, ret=%d)\n", grp_id[i], pid, ret);
+            continue;
+        }
+
+        if (grp_id[i] == buff_get_svm_private_pool_id()) {
             continue;
         }
 
@@ -183,11 +187,11 @@ static drvError_t buff_query_group_addr_info(void *in_buff, unsigned int in_len,
         return DRV_ERROR_INVALID_VALUE;
     }
 
-    if (buff_is_enable_cache() == true) {
+    if ((grp_id == buff_get_default_pool_id()) && (buff_is_enable_cache() == true)) {
         ret = buff_cache_info_query(grp_id, query_grp->devId, query_grp_out, BUFF_GROUP_ADDR_MAX_NUM, &cache_cnt);
         if (ret != DRV_ERROR_NONE) {
-            buff_err("Cache addr query fail. (ret=%d; name=%s; dev_id=%u)\n",
-                ret, query_grp->grpName, query_grp->devId);
+            buff_err("Cache addr query fail. (ret=%d; name=%s; dev_id=%u)\n", ret, query_grp->grpName,
+                     query_grp->devId);
             return ret;
         }
         buff_cache_query_result_process(query_grp_out, cache_cnt);
@@ -210,8 +214,7 @@ static buff_grp_query_func g_buff_grp_query[GRP_QUERY_CMD_MAX] = {
     [GRP_QUERY_GROUP_ADDR_INFO] = buff_query_group_addr_info,
 };
 
-int halGrpQuery(GroupQueryCmdType cmd,
-    void *inBuff, unsigned int inLen, void *outBuff, unsigned int *outLen)
+int halGrpQuery(GroupQueryCmdType cmd, void *inBuff, unsigned int inLen, void *outBuff, unsigned int *outLen)
 {
     drvError_t ret;
 

@@ -17,27 +17,36 @@
 #include "dvpp_trs_ops.h"
 #include "dvpp_share_mem_ctrl.h"
 #include "dvpp_cmdlist_ioctl.h"
+#include "ka_compiler_pub.h"
 
 #define PCI_VENDOR_ID_HUAWEI 0x19e5
 static const ka_pci_device_id_t g_pci_dvpp_tbl[] = {
-    {PCI_VDEVICE(HUAWEI, 0xd802), 0},
-    {PCI_VDEVICE(HUAWEI, 0xd803), 0},
+    {KA_PCI_VDEVICE(HUAWEI, 0xd802), 0},
+    {KA_PCI_VDEVICE(HUAWEI, 0xd803), 0},
+    {0x20C6, 0xd802, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0},
+    {0x203F, 0xd802, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0},
+    {0x20e9, 0xd802, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0},
     {}};
 KA_MODULE_DEVICE_TABLE(pci, g_pci_dvpp_tbl);
 
-static int32_t __init dvpp_vdrv_init(void)
+static int32_t __ka_init dvpp_vdrv_init(void)
 {
+    uint32_t devid;
     dvpp_get_version_init();
     dvpp_trs_sqe_update_init();
     if (dvpp_cmdlist_dev_init() != 0) {
         dvpp_trs_sqe_update_uninit();
         return -1;
     }
-    ka_task_spin_lock_init(&g_share_mem_pool_lock);
+
+    for (devid = 0;devid < DVPP_VMNG_DEVICE_NUM_MAX;devid++) {
+        ka_task_spin_lock_init(&g_share_mem_pool_lock[devid]);
+    }
+
     return 0;
 }
 
-static void __exit dvpp_vdrv_exit(void)
+static void __ka_exit dvpp_vdrv_exit(void)
 {
     dvpp_cmdlist_dev_exit();
     dvpp_trs_sqe_update_uninit();

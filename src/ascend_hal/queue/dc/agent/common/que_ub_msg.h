@@ -30,9 +30,9 @@ static inline unsigned long long _que_get_pkt_size(unsigned long long iovec_num)
     return sizeof(struct que_pkt) + iovec_num * sizeof(struct que_node);
 }
 
-#define QUE_ACK_PKT_SIZE  4096
-#define QUE_SEND_PKT_DEPTH  64
-#define QUE_ACK_PKT_DEPTH  64
+#define QUE_ACK_PKT_SIZE 4096
+#define QUE_SEND_PKT_DEPTH 64
+#define QUE_ACK_PKT_DEPTH 64
 #define QUE_PKT_SEND_JETTY_POOL_DEPTH 16
 
 struct que_peek_out_msg {
@@ -40,15 +40,23 @@ struct que_peek_out_msg {
 };
 
 struct que_tgt_proc_ack_msg { /* max 8 byte */
-    int qid       : 16;
-    int result    : 16;
-    int sn        : 8;
-    int tgt_time  : 24; 
+    unsigned int qid : 16;
+    unsigned int result : 16; /* low 16 bits of drv return (two's complement) */
+    unsigned int sn : 8;
+    unsigned int tgt_time : 24;
 };
+
+/* Pack into narrow unsigned bitfields: RHS must be a masked expression (not a function return) for -Wconversion. */
+#define QUE_ACK_PACK_Q16(qid) ((unsigned int)(qid) & 0xFFFFu)
+#define QUE_ACK_PACK_SN(sn) ((unsigned int)(sn) & 0xFFu)
+#define QUE_ACK_PACK_TGT_TIME_NS(delta_ns)                                                                           \
+    ((unsigned int)(((unsigned long long)(delta_ns) > 0xFFFFFFull) ? 0xFFFFFFull : (unsigned long long)(delta_ns)) & \
+     0xFFFFFFu)
+#define QUE_ACK_RESULT_PACK_16(result) ((unsigned int)(unsigned short)(int)(result) & 0xFFFFu)
 
 typedef union {
     unsigned long long imm_data;
-    struct  que_tgt_proc_ack_msg ack_msg;
+    struct que_tgt_proc_ack_msg ack_msg;
 } que_ack_data;
 
 #endif

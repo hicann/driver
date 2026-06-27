@@ -33,8 +33,7 @@ int vpc_unregister_client(u32 dev_id, u32 fid, const struct vmng_vpc_client *vpc
 }
 KA_EXPORT_SYMBOL(vpc_unregister_client);
 
-int vpc_msg_send(u32 dev_id, u32 fid, enum vmng_vpc_type vpc_type,
-    struct vmng_tx_msg_proc_info *tx_info, u32 timeout)
+int vpc_msg_send(u32 dev_id, u32 fid, enum vmng_vpc_type vpc_type, struct vmng_tx_msg_proc_info *tx_info, u32 timeout)
 {
     return vmngh_vpc_msg_send(dev_id, fid, vpc_type, tx_info, timeout);
 }
@@ -52,8 +51,7 @@ int vpc_unregister_common_msg_client(u32 dev_id, u32 fid, const struct vmng_comm
 }
 KA_EXPORT_SYMBOL(vpc_unregister_common_msg_client);
 
-int vpc_common_msg_send(u32 dev_id, u32 fid, enum vmng_msg_common_type cmn_type,
-                        struct vmng_tx_msg_proc_info *tx_info)
+int vpc_common_msg_send(u32 dev_id, u32 fid, enum vmng_msg_common_type cmn_type, struct vmng_tx_msg_proc_info *tx_info)
 {
     return vmngh_common_msg_send(dev_id, fid, cmn_type, tx_info);
 }

@@ -17,7 +17,6 @@
 #include "dms_event_distribute.h"
 #include "dms_event_converge.h"
 #include "dms_event_bbox_map.h"
-#include "dms_kernel_version_adapt.h"
 #include "kernel_version_adapt.h"
 #include "dms_event_distribute_proc.h"
 #include "ka_base_pub.h"

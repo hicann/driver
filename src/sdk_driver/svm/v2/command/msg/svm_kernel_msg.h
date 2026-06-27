@@ -62,14 +62,45 @@ enum {
     DEVMM_CHAN_SOMA_CREATE_POOL_H2D_ID = 38,
     DEVMM_CHAN_SOMA_DESTROY_POOL_H2D_ID = 39,
     DEVMM_CHAN_SOMA_TRIM_POOL_H2D_ID = 40,
+    DEVMM_CHAN_SOMA_FREE_SYNC_H2D_ID = 41,
+
+// UVM message id
+#ifndef UVM_OPEN
+    DEVMM_CHAN_UVM_FREE_PAGE_H2D_ID,
+    DEVMM_CHAN_UVM_PAGE_FAULT_D2H_ID,
+    DEVMM_CHAN_UVM_PAGE_FAULT_D2D_ID,
+    DEVMM_CHAN_UVM_PAGE_FAULT_H2D_ID,
+    DEVMM_CHAN_UVM_PREALLOC_PAGE_DEVICE_ID,
+    DEVMM_CHAN_UVM_SET_PAGE_H2D_ID,
+    DEVMM_CHAN_UVM_PREFETCH_H2D_ID,
+    DEVMM_CHAN_UVM_PREFETCH_D2H_ID,
+    DEVMM_CHAN_UVM_PREFETCH_D2D_ID,
+    DEVMM_CHAN_UVM_PREFETCH_H2D_READMOSTLY_ID,
+    DEVMM_CHAN_UVM_PREFETCH_ACK_ID,
+    DEVMM_CHAN_UVM_FREE_D2H_ID,
+    DEVMM_CHAN_UVM_CHAN_MEMSET_H2D_ID,
+    DEVMM_CHAN_UVM_PREFETCH_ASYNC_ID,
+    DEVMM_CHAN_UVM_WAIT_PREFETCH_ID,
+    DEVMM_CHAN_UVM_PREFETCH_FINISH_ID,
+    DEVMM_CHAN_UVM_MEMCPY_H2D_ID,
+    DEVMM_CHAN_UVM_MEMCPY_D2H_ID,
+    DEVMM_CHAN_UVM_MEMCPY_D2D_ID,
+    DEVMM_CHAN_UVM_SWAP_ID,
+    DEVMM_CHAN_UVM_RELEASE_ID,
+#endif
+    DEVMM_CHAN_SET_MEM_MAP_ROUTE_H2D_ID,
+    DEVMM_CHAN_GET_MEM_MAP_ROUTE_H2D_ID,
     DEVMM_CHAN_MAX_ID
 };
 
+enum { DEVMM_DMA, DEVMM_NON_DMA };
+#ifndef UVM_OPEN
 enum {
-    DEVMM_DMA,
-    DEVMM_NON_DMA
+    PAGE_PTE_SET_NONE = 0,
+    PAGE_PTE_SET_READONLY = 1,
+    PAGE_PTE_SET_READWRITE = 2,
 };
-
+#endif
 struct devmm_chan_msg_head {
     struct devmm_svm_process_id process_id;
     u16 msg_id;
@@ -84,17 +115,18 @@ struct devmm_chan_msg_head {
     u16 extend_num;
     u32 res; /* used as dst hostpid in p2p copy */
 };
-
+#ifndef UVM_OPEN
+struct devmm_chan_uvm_free_page {
+    struct devmm_chan_msg_head head;
+    uint64_t va;
+};
+#endif
 struct devmm_chan_addr_head {
     struct devmm_chan_msg_head head;
     u64 va;
 };
 
-enum {
-    DEVMM_EXCHANGE_DDR_SIZE,
-    DEVMM_EXCHANGE_HBM_SIZE,
-    DEVMM_EXCHANGE_MAX_MEM_TYPE
-};
+enum { DEVMM_EXCHANGE_DDR_SIZE, DEVMM_EXCHANGE_HBM_SIZE, DEVMM_EXCHANGE_MAX_MEM_TYPE };
 
 struct devmm_device_capability {
     u64 dvpp_memsize;
@@ -153,17 +185,19 @@ struct devmm_chan_page_fault {
 #define DEVMM_SIZE_TO_PAGE_MAX_NUM(size, page_size) (((size) / (page_size)) + DEVMM_BLKNUM_ADD_NUM)
 #define DEVMM_SIZE_TO_HUGEPAGE_MAX_NUM(size) (((size) >> DEVMM_HUGE_PAGE_SHIFT) + DEVMM_BLKNUM_ADD_NUM)
 #define DEVMM_BLKNUM_TO_DMANODE_MAX_NUM(blk_num) ((blk_num) * 2 + DEVMM_BLKNUM_ADD_NUM)
-#define DEVMM_VA_SIZE_TO_PAGE_NUM(va, sz, pgsz) ((ka_base_round_up((va) + (sz), pgsz) - ka_base_round_down(va, pgsz)) / (pgsz))
+#define DEVMM_VA_SIZE_TO_PAGE_NUM(va, sz, pgsz) \
+    ((ka_base_round_up((va) + (sz), pgsz) - ka_base_round_down(va, pgsz)) / (pgsz))
 #ifdef CFG_SOC_PLATFORM_ESL_FPGA
 #define DEVMM_PAGE_NUM_PER_MSG 32ULL /* for fpga scene; normal page 512K per msg, huge page 256M per msg */
 #else
-#define DEVMM_PAGE_NUM_PER_MSG 3072ULL /* the size must be align to 64; normal page 12M per msg, huge page 6G per msg */
+#define DEVMM_PAGE_NUM_PER_MSG 3072ULL /* the size must be align to 64; normal page 12M per msg, huge page 6G per msg \
+                                        */
 #endif
-#define DEVMM_MEMSET_SIZE_PER_MSG (1ULL << 24)    // 16M
+#define DEVMM_MEMSET_SIZE_PER_MSG (1ULL << 24) // 16M
 #ifdef CFG_SOC_PLATFORM_ESL_FPGA
-#define DEVMM_MEMSET8D_SIZE_PER_MSG (1ULL << 24)  // 16M
+#define DEVMM_MEMSET8D_SIZE_PER_MSG (1ULL << 24) // 16M
 #else
-#define DEVMM_MEMSET8D_SIZE_PER_MSG (1ULL << 29)  // 512M
+#define DEVMM_MEMSET8D_SIZE_PER_MSG (1ULL << 29) // 512M
 #endif
 
 #ifdef CFG_SOC_PLATFORM_ESL_FPGA
@@ -302,7 +336,7 @@ struct devmm_chan_target_blk_query {
 struct devmm_chan_free_pages {
     struct devmm_chan_msg_head head;
     u64 va;
-    u64 real_size;  /* page aligned */
+    u64 real_size; /* page aligned */
 };
 
 struct devmm_chan_memset {
@@ -326,8 +360,8 @@ struct devmm_chan_heap_info {
 struct devmm_chan_setup_device {
     struct devmm_chan_msg_head head;
     u32 cmd;
-    pid_t devpid;         /* agent return */
-    int ssid;           /* agent return */
+    pid_t devpid; /* agent return */
+    int ssid;     /* agent return */
     u32 logic_devid;
     u32 heap_cnt;
     struct devmm_chan_heap_info heap_info[];
@@ -411,7 +445,7 @@ struct devmm_chan_agent_proc_exiting_d2h {
 
 struct devmm_chan_map_dev_reserve {
     struct devmm_chan_msg_head head;
-    u32 addr_type;  /* l2buff or c2c_ctrl */
+    u32 addr_type; /* l2buff or c2c_ctrl */
     u64 va;
     u64 len;
 };
@@ -456,12 +490,12 @@ struct devmm_chan_mem_map {
     u32 pg_type;
     u64 offset_pg_num;
 
-    u64 dma_blk_id;             /* Agent will return, to get dma addr quickly */
-    u64 dma_blk_pg_id;          /* Agent will return, to get dma addr quickly */
+    u64 dma_blk_id;    /* Agent will return, to get dma addr quickly */
+    u64 dma_blk_pg_id; /* Agent will return, to get dma addr quickly */
     u32 get_next_dma_blk_pg_id;
 
-    u32 module_id;              /* No actual use, just for handle verify */
-    u64 phy_addr_blk_pg_num;    /* No actual use, just for handle verify */
+    u32 module_id;           /* No actual use, just for handle verify */
+    u64 phy_addr_blk_pg_num; /* No actual use, just for handle verify */
     struct devmm_chan_query_phy_blk blks[];
 };
 
@@ -512,9 +546,21 @@ struct devmm_chan_mem_repair {
     u64 addr;
     u64 len;
     u8 need_cache_update; /* dev -> host */
-    u8 is_giant_page; /* dev -> host, update 512 cache phy blk */
+    u8 is_giant_page;     /* dev -> host, update 512 cache phy blk */
     u32 bitmap;
     struct devmm_chan_query_phy_blk blk;
+};
+
+struct devmm_chan_set_mem_map_route {
+    struct devmm_chan_msg_head head;
+    int id;
+    u32 mem_map_route;
+};
+
+struct devmm_chan_get_mem_map_route {
+    struct devmm_chan_msg_head head;
+    int id;
+    u32 mem_map_route;
 };
 
 #define DEVMM_P2P_PAGE_MAX_NUM_QUERY_MSG 32
@@ -525,8 +571,7 @@ void devmm_chan_set_host_device_page_size(void);
 void devmm_merg_pa_by_num(u64 *pas, u32 num, u32 pgsz, u32 *merg_szlist, u32 *merg_num);
 
 void devmm_merg_phy_blk(struct devmm_chan_phy_block *blks, u32 blks_idx, u32 *merg_idx);
-int devmm_chan_page_fault_d2h_process_dma_copy(struct devmm_chan_page_fault *fault_msg, u64 *pas,
-    u32 *szs, u32 num);
+int devmm_chan_page_fault_d2h_process_dma_copy(struct devmm_chan_page_fault *fault_msg, u64 *pas, u32 *szs, u32 num);
 int devmm_init_convert_addr_mng(u32 dev_id, struct devmm_chan_exchange_pginfo *info);
 void devmm_uninit_convert_addr_mng(u32 dev_id);
 typedef int (*svm_host_agent_msg_send_handle)(int agent_id, void *msg, unsigned int len, unsigned int out_len);
@@ -543,11 +588,11 @@ struct devmm_ipc_pod_msg_head {
 };
 
 /* will define stack variable, witch must be small than 1024 configured in makefile */
-#define DEVMM_IPC_POD_MSG_TOTAL_LEN       512 /* cannot modify the len, may cause compatibility issue */
-#define DEVMM_IPC_POD_MSG_DATA_LEN        (DEVMM_IPC_POD_MSG_TOTAL_LEN - sizeof(struct devmm_ipc_pod_msg_head))
+#define DEVMM_IPC_POD_MSG_TOTAL_LEN 512 /* cannot modify the len, may cause compatibility issue */
+#define DEVMM_IPC_POD_MSG_DATA_LEN (DEVMM_IPC_POD_MSG_TOTAL_LEN - sizeof(struct devmm_ipc_pod_msg_head))
 
-#define DEVMM_IPC_POD_MSG_SEND_MAGIC      0x5A5A
-#define DEVMM_IPC_POD_MSG_RCV_MAGIC       0xA5A5
+#define DEVMM_IPC_POD_MSG_SEND_MAGIC 0x5A5A
+#define DEVMM_IPC_POD_MSG_RCV_MAGIC 0xA5A5
 
 struct devmm_ipc_pod_msg_data {
     struct devmm_ipc_pod_msg_head header;
@@ -563,4 +608,125 @@ enum devmm_ipc_pod_msg_cmd {
     DEVMM_GET_BLK_INFO,
     DEVMM_IPC_POD_MSG_MAX
 };
+struct devmm_chan_soma_pool_create {
+    struct devmm_chan_msg_head head;
+    u64 pool_id;
+    u64 va;
+    u64 size;
+};
+
+struct devmm_chan_soma_pool_destroy {
+    struct devmm_chan_msg_head head;
+    u64 pool_id;
+};
+
+struct devmm_chan_soma_pool_trim {
+    struct devmm_chan_msg_head head;
+    u64 pool_id;
+    u64 reserved_size;
+    u64 used_size;
+    u64 free_size;
+};
+
+struct devmm_chan_soma_free_sync {
+    struct devmm_chan_msg_head head;
+    u64 va;
+};
+
+#ifndef UVM_OPEN
+struct devmm_chan_uvm_page_fault {
+    struct devmm_chan_msg_head head;
+    uint16_t fault_flag;
+    uint16_t set_flag;
+    uint64_t va;
+    uint64_t pa;
+    uint64_t src_addr;
+    uint64_t dst_addr;
+};
+
+struct devmm_uvm_chan_device_data {
+    struct devmm_chan_msg_head head;
+    uint64_t va;
+    uint64_t src_pa;
+    uint64_t dst_pa;
+    uint16_t dst_dev_id;
+};
+
+struct devmm_chan_alloc_map_req {
+    struct devmm_chan_msg_head head;
+    u64 va;
+    u64 dev_pa;
+};
+
+struct devmm_chan_set_page {
+    struct devmm_chan_msg_head head;
+    uint32_t set_flag;
+    uint64_t va;
+    uint64_t pa;
+};
+
+#define UVM_MEMCPY_MSG_MAX_PAGE_NUM 20
+
+struct devmm_chan_uvm_memcpy {
+    struct devmm_chan_msg_head head;
+    uint64_t src_addr[UVM_MEMCPY_MSG_MAX_PAGE_NUM];
+    uint64_t dst_addr[UVM_MEMCPY_MSG_MAX_PAGE_NUM];
+    uint32_t copy_size[UVM_MEMCPY_MSG_MAX_PAGE_NUM];
+    uint32_t page_num;
+};
+
+struct devmm_chan_uvm_dma {
+    struct devmm_chan_msg_head head;
+    uint64_t va;
+    uint32_t len;
+    dma_addr_t dma_addr;
+    struct page *page;
+};
+
+#define UVM_DMA_WAIT_MIN_TIME 100
+#define UVM_DMA_WAIT_MAX_TIME 200
+#define UVM_DMA_RETRY_CNT 1000
+
+#define UVM_ALREADY_SATISFIED_VAL 100
+
+enum {
+    UVM_CHAN_MSG_DEVICE_FAULT_FLAG_WRITE = 1,
+    UVM_CHAN_MSG_DEVICE_FAULT_FLAG_READ = 2,
+    UVM_CHAN_MSG_DEVICE_FAULT_MAPPED = 4
+};
+
+struct devmm_chan_uvm_prefetch {
+    struct devmm_chan_msg_head head;
+    uint64_t va;
+    uint64_t cnt;
+    bool is_read_mostly;
+    uint64_t id;
+    uint64_t msg_cnt;
+    uint64_t src_addr[MAX_CONT_NUM];
+    uint64_t dst_addr[MAX_CONT_NUM];
+};
+
+struct devmm_chan_uvm_ack {
+    struct devmm_chan_msg_head head;
+    uint64_t id;
+};
+
+struct devmm_chan_uvm_swap {
+    struct devmm_chan_msg_head head;
+    uint64_t va;
+    dma_addr_t src_dma_addr;
+};
+
+struct devmm_chan_uvm_release {
+    struct devmm_chan_msg_head head;
+    uint64_t va;
+};
+
+struct uvm_addr_info {
+    uint16_t dev_id;
+    uint32_t len;
+    dma_addr_t addr;
+    struct page *page;
+};
+#endif
 #endif /* __DEVMM_CHANNEL_H__ */

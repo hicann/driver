@@ -14,9 +14,16 @@
 #ifndef DVPP_SQE_PARA_CHECK_COMM_H
 #define DVPP_SQE_PARA_CHECK_COMM_H
 
-#include <linux/types.h>
+#include "ka_type.h"
 #include "dvpp_cmdlist.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 int32_t check_dvpp_sqe_args(dvpp_sqe_args *sqe_args);
 
+#ifdef __cplusplus
+}
+#endif
 #endif // #ifndef DVPP_SQE_PARA_CHECK_COMM_H

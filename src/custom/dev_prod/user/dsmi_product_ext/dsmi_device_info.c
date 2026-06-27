@@ -14,14 +14,14 @@
 #include <sys/types.h>
 
 #include "dsmi_dmp_command.h"
-#include "dsmi_product.h"
+// #include "dsmi_product.h"
 #include "dsmi_common_interface_custom.h"
 #include "dev_mon_ops_manager.h"
 #include "dev_mon_log.h"
-#include "dms_devdrv_info_comm.h"
+#include "dms_user_interface.h"
 #include "dsmi_inner_interface.h"
 #include "dsmi_device_share.h"
-#include "dms/dms_cmd_def.h"
+#include "dms_cmd_def.h"
 #include "dms_user_common.h"
 #include "dsmi_device_info.h"
 
@@ -37,7 +37,7 @@ STATIC int dsmi_cmd_set_device_info_conv(unsigned int device_id, unsigned int ma
     return dsmi_cmd_set_device_info(device_id, main_cmd, sub_cmd, (const void *)buf, *size);
 }
 
-#if (defined(CFG_SOC_PLATFORM_CLOUD) || defined(CFG_SOC_PLATFORM_CLOUD_V2))
+#if (defined(CFG_SOC_PLATFORM_CLOUD) || defined(CFG_SOC_PLATFORM_CLOUD_V2)) || defined(CFG_SOC_PLATFORM_CLOUD_V4)
 STATIC int dmanage_get_device_computing_info(unsigned int device_id, unsigned int main_cmd,
     unsigned int sub_cmd, void *buf, unsigned int *size)
 {
@@ -80,7 +80,7 @@ STATIC int dsmi_cmd_get_vrd_info(unsigned int device_id, unsigned int main_cmd, 
 }
 #endif
 STATIC const struct dev_mon_device_info_command g_dev_info_cmd_list[] = {
-#if (defined(CFG_SOC_PLATFORM_CLOUD) || defined(CFG_SOC_PLATFORM_CLOUD_V2))
+#if (defined(CFG_SOC_PLATFORM_CLOUD) || defined(CFG_SOC_PLATFORM_CLOUD_V2) || defined(CFG_SOC_PLATFORM_CLOUD_V4))
     {DSMI_MAIN_CMD_EX_COMPUTING, DSMI_EX_COMPUTING_SUB_CMD_TOKEN, USER_PROP, GUEST_PROP,
         DEV_MON_REQUEST_COMMAND, {0}, dmanage_get_device_computing_info},
 #endif
@@ -100,7 +100,7 @@ STATIC const struct dev_mon_device_info_command g_dev_info_cmd_list[] = {
     {DSMI_MAIN_CMD_GPIO, DSMI_GPIO_SUB_CMD_DIRECT_OUTPUT, ROOT_PROP, GUEST_PROP,
         DEV_MON_SETTING_COMMAND, {0}, dsmi_cmd_set_device_info_conv},
 #endif
-#if (defined(CFG_SOC_PLATFORM_MINIV2) || defined(CFG_SOC_PLATFORM_CLOUD_V2))
+#if (defined(CFG_SOC_PLATFORM_MINIV2) || defined(CFG_SOC_PLATFORM_CLOUD_V2) || defined(CFG_SOC_PLATFORM_CLOUD_V4))
     {DSMI_MAIN_CMD_EX_CERT, DSMI_CERT_SUB_CMD_INIT_TLS_PUB_KEY, ROOT_PROP, ADMIN_PROP, DEV_MON_REQUEST_COMMAND,
         {0}, dsmi_cmd_get_device_info},
     {DSMI_MAIN_CMD_EX_CERT, DSMI_CERT_SUB_CMD_TLS_CERT_INFO, USER_PROP, GUEST_PROP, DEV_MON_REQUEST_COMMAND,
@@ -123,6 +123,12 @@ STATIC const struct dev_mon_device_info_command g_dev_info_cmd_list[] = {
 #endif
 #ifdef CFG_FEATURE_HCCS_BANDWIDTH
     {DSMI_MAIN_CMD_HCCS_BANDWIDTH, DSMI_HCCS_CMD_GET_BANDWIDTH, USER_PROP, GUEST_PROP,
+        DEV_MON_REQUEST_COMMAND, {0}, dsmi_cmd_get_device_info},
+#endif
+#ifdef CFG_FEATURE_URMA_INFO
+    {DSMI_MAIN_CMD_URMA_INFO, DSMI_URMA_CMD_GET_EID_LIST, USER_PROP, GUEST_PROP,
+        DEV_MON_REQUEST_COMMAND, {0}, dsmi_cmd_get_device_info},
+    {DSMI_MAIN_CMD_URMA_INFO, DSMI_URMA_CMD_GET_URMA_DEVICE_COUNT, USER_PROP, GUEST_PROP,
         DEV_MON_REQUEST_COMMAND, {0}, dsmi_cmd_get_device_info},
 #endif
     {DSMI_MAIN_CMD_MAX, 0, 0, 0, 0, {0}, NULL},
@@ -298,9 +304,31 @@ int dsmi_product_get_device_info(unsigned int device_id, DSMI_MAIN_CMD main_cmd,
     return dsmi_product_config_device_info(device_id, main_cmd, sub_cmd, buf, size, DEV_MON_REQUEST_COMMAND);
 }
 
-int dsmi_get_work_mode(unsigned int *work_mode)
+DLLEXPORT int dsmi_get_work_mode(unsigned int *work_mode)
 {
     return dms_get_work_mode(work_mode);
+}
+
+DLLEXPORT int dsmi_get_multi_die_policy(unsigned int *out)
+{
+#ifdef CFG_SOC_PLATFORM_CLOUD_V3
+    return dms_get_multi_die_policy(out);
+#else
+    (void)out;
+    DEV_MON_ERR("Dsmi not support.");
+    return DRV_ERROR_NOT_SUPPORT;
+#endif
+}
+
+DLLEXPORT int dsmi_set_multi_die_policy(unsigned int policy)
+{
+#ifdef CFG_SOC_PLATFORM_CLOUD_V3
+    return dms_set_multi_die_policy(policy);
+#else
+    (void)policy;
+    DEV_MON_ERR("Dsmi not support.");
+    return DRV_ERROR_NOT_SUPPORT;
+#endif
 }
 
 int dms_get_mainboard_id(unsigned int device_id, unsigned int *mainboard_id)
@@ -318,7 +346,7 @@ int dms_get_mainboard_id(unsigned int device_id, unsigned int *mainboard_id)
     *mainboard_id = (unsigned int)mainboard_id_tmp;
 #else
     struct dms_ioctl_arg ioarg = {0};
- 
+
     ioarg.main_cmd = DMS_MAIN_CMD_PRODUCT;
     ioarg.sub_cmd = DMS_SUBCMD_GET_MAINBOARD_ID;
     ioarg.filter_len = 0;
@@ -326,7 +354,7 @@ int dms_get_mainboard_id(unsigned int device_id, unsigned int *mainboard_id)
     ioarg.input_len = sizeof(unsigned int);
     ioarg.output = (void *)mainboard_id;
     ioarg.output_len = sizeof(unsigned int);
- 
+
     ret = DmsIoctl(DMS_IOCTL_CMD, &ioarg);
     if (ret != 0) {
         DEV_MON_ERR("Dms get main board id failed. (ret=%d)\n", ret);
@@ -336,29 +364,7 @@ int dms_get_mainboard_id(unsigned int device_id, unsigned int *mainboard_id)
     return ret;
 }
 
-int dsmi_get_multi_die_policy(unsigned int *out)
-{
-#ifdef CFG_SOC_PLATFORM_CLOUD_V3
-    return dms_get_multi_die_policy(out);
-#else
-    (void)out;
-    DEV_MON_ERR("Dsmi not support.");
-    return DRV_ERROR_NOT_SUPPORT;
-#endif
-}
-
-int dsmi_set_multi_die_policy(unsigned int policy)
-{
-#ifdef CFG_SOC_PLATFORM_CLOUD_V3
-    return dms_set_multi_die_policy(policy);
-#else
-    (void)policy;
-    DEV_MON_ERR("Dsmi not support.");
-    return DRV_ERROR_NOT_SUPPORT;
-#endif
-}
-
-int dsmi_get_mainboard_id(unsigned int device_id, unsigned int *mainboard_id)
+DLLEXPORT int dsmi_get_mainboard_id(unsigned int device_id, unsigned int *mainboard_id)
 {
     if (mainboard_id == NULL) {
         DEV_MON_ERR("The mainboard_id is null.\n");

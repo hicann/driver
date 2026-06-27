@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * Copyright (c) 2026 Huawei Technologies Co., Ltd.
  * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -9,35 +9,35 @@
  */
 #include "ascend_hal.h"
 
+#include "pbl_user_interface.h"
+#include "pbl_urd_main_cmd_def.h"
+#include "pbl_urd_sub_cmd_common.h"
+
 #include "svm_pub.h"
 #include "svm_log.h"
-#include "svm_sub_event_type.h"
-#include "svm_umc_client.h"
-#include "svm_user_adapt.h"
-#include "svm_apbi.h"
 
 int svm_get_mem_size_info(u32 devid, u32 type, struct MemPhyInfo *phy_info)
 {
-    struct svm_umc_msg_head head;
-    struct svm_umc_msg msg = {
-        .msg_in = (char *)&type,
-        .msg_in_len = sizeof(u32),
-        .msg_out = (char *)phy_info,
-        .msg_out_len = sizeof(struct MemPhyInfo)
-    };
-    struct svm_apbi apbi;
+    struct urd_dev_mem_type mem_type = {
+        .dev_id = devid,
+        .type = type};
+    struct urd_cmd_para cmd_para = {
+        .input = (void *)&mem_type,
+        .input_len = sizeof(mem_type),
+        .output = (void *)phy_info,
+        .output_len = sizeof(*phy_info)};
+    struct urd_cmd cmd = {
+        .main_cmd = DMS_MAIN_CMD_MEMORY,
+        .sub_cmd = DMS_SUBCMD_DEV_MEM_INFO,
+        .filter = NULL,
+        .filter_len = 0};
     int ret;
 
-    ret = svm_apbi_query(devid, DEVDRV_PROCESS_CP1, &apbi);
+    ret = urd_dev_usr_cmd(devid, &cmd, &cmd_para);
     if (ret != DRV_ERROR_NONE) {
+        svm_err("Get mem size info failed. (devid=%u; type=%u; ret=%d)\n", devid, type, ret);
         return ret;
     }
 
-    svm_umc_msg_head_pack(devid, apbi.tgid, apbi.grp_id, SVM_GET_MEMINFO_EVENT, &head);
-    ret = svm_umc_h2d_send(&head, &msg);
-    if (ret == DRV_ERROR_NO_PROCESS) {
-        (void)svm_apbi_clear(devid, DEVDRV_PROCESS_CP1);
-    }
-
-    return ret;
+    return DRV_ERROR_NONE;
 }

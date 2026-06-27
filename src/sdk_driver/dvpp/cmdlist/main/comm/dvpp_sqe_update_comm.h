@@ -14,9 +14,13 @@
 #ifndef DVPP_SQE_UPDATE_COMM_H
 #define DVPP_SQE_UPDATE_COMM_H
 
-#include <linux/types.h>
+#include "ka_type.h"
 #include "ka_task_pub.h"
 #include "dvpp_cmdlist.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 typedef struct {
     ka_pid_t pid;
@@ -42,4 +46,7 @@ uint64_t alloc_args_mem(uint32_t pool_id, uint64_t size, dvpp_sqe_args *sqe_args
 int32_t copy_args_from_user(dvpp_save_para *save_para, dvpp_sqe_args *sqe_args);
 uint64_t get_alloc_size(dvpp_sqe_args *sqe_args, uint64_t dma_info_size);
 
+#ifdef __cplusplus
+}
+#endif
 #endif // #ifndef DVPP_SQE_UPDATE_COMM_H

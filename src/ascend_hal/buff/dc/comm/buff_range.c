@@ -22,20 +22,20 @@
 
 #define RANGE_IDLE_CNT_MAX 5
 
-#define BUFF_RANGE_MAX_BLOCKS_NUM    XSMEM_BLOCK_MAX_NUM   /* 512 * 512 */
-#define BUFF_RANGE_MAX_ROWS_NUM      512
-#define BUFF_RANGE_MAX_COLUMNS_NUM   512
+#define BUFF_RANGE_MAX_BLOCKS_NUM XSMEM_BLOCK_MAX_NUM /* 512 * 512 */
+#define BUFF_RANGE_MAX_ROWS_NUM 512
+#define BUFF_RANGE_MAX_COLUMNS_NUM 512
 
-#define BUFF_RANGE_COLUMN_MASK       (0x1FF)
-#define BUFF_RANGE_ROW_BIT_SHIFT     (9)
+#define BUFF_RANGE_COLUMN_MASK (0x1FF)
+#define BUFF_RANGE_ROW_BIT_SHIFT (9)
 
 #define ATOMIC_SET(x, y) __sync_lock_test_and_set((x), (y))
 #define CAS(ptr, oldval, newval) __sync_bool_compare_and_swap(ptr, oldval, newval)
 
 struct section_base {
-    unsigned int owner     : 1;
-    unsigned int idlecnt   : 7;         /* RANGE_IDLE_CNT_MAX */
-    unsigned int pool_id    : 24;        /* MAX_XSM_POOL_NUM */
+    unsigned int owner : 1;
+    unsigned int idlecnt : 7;  /* RANGE_IDLE_CNT_MAX */
+    unsigned int pool_id : 24; /* MAX_XSM_POOL_NUM */
 };
 
 typedef union range_section_base {
@@ -49,7 +49,7 @@ struct range_section {
     range_section_base base;
     void *start;
     unsigned long size;
-    unsigned long long mem_mng;  /* pointer to struct common_handle_t */
+    unsigned long long mem_mng; /* pointer to struct common_handle_t */
 };
 
 struct range_section_array {
@@ -59,7 +59,7 @@ struct range_section_array {
 static THREAD struct range_section_array g_range_section[BUFF_RANGE_MAX_ROWS_NUM] = {};
 
 static drvError_t add_others_buff_to_range(unsigned int block_id, int pool_id, void *start, unsigned long size,
-    unsigned long long mem_mng);
+                                           unsigned long long mem_mng);
 
 static inline drvError_t range_get_index(unsigned int block_id, unsigned int *row, unsigned int *column)
 {
@@ -116,7 +116,8 @@ static inline bool is_self_section(const struct range_section *section)
     return (section->base.info.owner == RANGE_OWNER_SELF);
 }
 
-static inline bool buff_range_check(const void *blk_start, unsigned long blk_size, const void *start, unsigned long size)
+static inline bool buff_range_check(const void *blk_start, unsigned long blk_size, const void *start,
+                                    unsigned long size)
 {
     if (size > (ULONG_MAX - (unsigned long)(uintptr_t)start)) {
         return false;
@@ -135,7 +136,7 @@ static inline bool range_section_check(const struct range_section *section, cons
 }
 
 static inline void range_section_info_fill(struct range_section *section, range_section_base *base, void *start,
-    unsigned long size, unsigned long long mem_mng)
+                                           unsigned long size, unsigned long long mem_mng)
 {
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-value"
@@ -143,8 +144,8 @@ static inline void range_section_info_fill(struct range_section *section, range_
     (void)ATOMIC_SET(&(section->start), start);
     (void)ATOMIC_SET(&(section->size), size);
     (void)ATOMIC_SET(&(section->mem_mng), mem_mng);
-    (void)ATOMIC_SET(&(section->devid), (mem_mng != 0) ?
-        ((struct common_handle_t *)(uintptr_t)mem_mng)->devid : BUFF_INVALID_DEV);
+    (void)ATOMIC_SET(&(section->devid),
+                     (mem_mng != 0) ? ((struct common_handle_t *)(uintptr_t)mem_mng)->devid : BUFF_INVALID_DEV);
 #pragma GCC diagnostic pop
 }
 
@@ -164,11 +165,11 @@ static bool range_section_add(struct range_section *section)
 }
 
 static drvError_t add_buff_to_range(uint32_t block_id, range_section_base *base, void *start, unsigned long size,
-    unsigned long long mem_mng)
+                                    unsigned long long mem_mng)
 {
     struct range_section_array *array = NULL;
     struct range_section *section = NULL;
-    unsigned int row, column;
+    unsigned int row = 0, column = 0;
 
     if (range_get_index(block_id, &row, &column) != DRV_ERROR_NONE) {
         return DRV_ERROR_PARA_ERROR;
@@ -191,7 +192,7 @@ static drvError_t add_buff_to_range(uint32_t block_id, range_section_base *base,
 }
 
 drvError_t add_self_buff_to_range(uint32_t blk_id, int pool_id, void *start, unsigned long size,
-    unsigned long long mem_mng)
+                                  unsigned long long mem_mng)
 {
     range_section_base base;
 
@@ -203,7 +204,7 @@ drvError_t add_self_buff_to_range(uint32_t blk_id, int pool_id, void *start, uns
 }
 
 static drvError_t add_others_buff_to_range(unsigned int block_id, int pool_id, void *start, unsigned long size,
-    unsigned long long mem_mng)
+                                           unsigned long long mem_mng)
 {
     range_section_base base;
 
@@ -225,11 +226,11 @@ static inline void range_section_unref(struct range_section *section)
 }
 
 STATIC struct range_section *range_section_get(unsigned int block_id, const void *start, unsigned long size,
-    struct range_section_array **out_array)
+                                               struct range_section_array **out_array)
 {
     struct range_section_array *array = NULL;
     struct range_section *section = NULL;
-    unsigned int row, column;
+    unsigned int row = 0, column = 0;
 
     if (range_get_index(block_id, &row, &column) != DRV_ERROR_NONE) {
         return NULL;
@@ -248,7 +249,8 @@ STATIC struct range_section *range_section_get(unsigned int block_id, const void
     if (!range_section_check(section, start, size)) {
         range_section_unref(section);
         buff_warn("Section range check failed. (block_id=%u, start=%p; size=%lu; section->start=%p, "
-            "section->size=%lu)\n", block_id, start, size, section->start, section->size);
+                  "section->size=%lu)\n",
+                  block_id, start, size, section->start, section->size);
         return NULL;
     }
 
@@ -347,8 +349,7 @@ drvError_t buff_range_get(uint32_t blk_id, void *start, unsigned long size)
         return DRV_ERROR_NO_RESOURCES;
     }
     if (!buff_range_check(alloc_addr, alloc_size, start, size)) {
-        buff_warn("Invalid buff. (block_id=%u, alloc_size=%lu, size=%lu)\n",
-            blk_id, alloc_size, size);
+        buff_warn("Invalid buff. (block_id=%u, alloc_size=%lu, size=%lu)\n", blk_id, alloc_size, size);
         buff_blk_put(pool_id, alloc_addr);
         return DRV_ERROR_NO_RESOURCES;
     }
@@ -374,8 +375,7 @@ void buff_range_put(uint32_t blk_id, void *start)
 
     section = range_section_get(blk_id, start, 1UL, &array);
     if (section == NULL) {
-        buff_warn("Put invalid blk_id, buff may have been released. (blk_id=%u; start=%p)\n",
-            blk_id, start);
+        buff_warn("Put invalid blk_id, buff may have been released. (blk_id=%u; start=%p)\n", blk_id, start);
         return;
     }
     if (is_others_section(section)) {
@@ -451,13 +451,14 @@ static drvError_t _idle_buff_range_free(struct range_section *section, bool is_f
     section->mem_mng = 0;
     buff_blk_put(pool_id, start);
     if (mem_mng != NULL) {
-        /* section->mem_mng can't set 0. Because the section may be reused after range_section_try_del in other thread. */
+        /* section->mem_mng can't set 0. Because the section may be reused after range_section_try_del in other thread.
+         */
         free(mem_mng);
     }
     return DRV_ERROR_NONE;
 }
 
-drvError_t idle_buff_range_free(uint32_t devid, uint32_t using_buff_max_show_cnt)
+drvError_t idle_buff_range_free(uint32_t devid, uint32_t using_buff_max_show_cnt, bool only_free_cache_pool)
 {
     unsigned int using_buff_show_cnt = 0;
     struct range_section *section = NULL;
@@ -479,10 +480,16 @@ drvError_t idle_buff_range_free(uint32_t devid, uint32_t using_buff_max_show_cnt
                 continue;
             }
 
+            if (only_free_cache_pool == true) {
+                if ((int)section->base.info.pool_id == buff_get_svm_private_pool_id()) {
+                    continue;
+                }
+            }
+
             tmp_ret = _idle_buff_range_free(section, true);
             if ((using_buff_show_cnt < using_buff_max_show_cnt) && (tmp_ret != DRV_ERROR_NONE)) {
-                buff_debug("Buff is in use. (start=0x%llx; size=%lu; ret=%u)\n",
-                    (uint64_t)(uintptr_t)section->start, section->size, tmp_ret);
+                buff_debug("Buff is in use. (start=0x%lx; size=%lu; ret=%u)\n", (uint64_t)(uintptr_t)section->start,
+                           section->size, tmp_ret);
                 using_buff_show_cnt++;
                 ret = DRV_ERROR_BUSY;
             }
@@ -499,7 +506,7 @@ void idle_buff_range_free_ahead(uint32_t blk_id)
 {
     struct range_section_array *array = NULL;
     struct range_section *section = NULL;
-    unsigned int row, column;
+    unsigned int row = 0, column = 0;
 
     if (range_get_index(blk_id, &row, &column) != DRV_ERROR_NONE) {
         return;
@@ -571,8 +578,8 @@ void buff_range_show(void)
             if (!range_section_is_valid(section)) {
                 continue;
             }
-            buff_show("Buff range show. (id=%d, owner=%u, refcnt=%u, size=%lx)\n",
-                num, section->base.info.owner, section->status.info.value, section->size);
+            buff_show("Buff range show. (id=%d, owner=%u, refcnt=%u, size=%lx)\n", num, section->base.info.owner,
+                      section->status.info.value, section->size);
             num++;
         }
     }
@@ -657,13 +664,13 @@ void halBuffPut(Mbuf *mbuf, void *buf)
 }
 
 #ifndef EMU_ST
-int halBuffPoolGet(void* poolStart)
+int halBuffPoolGet(void *poolStart)
 {
     (void)poolStart;
     return (int)DRV_ERROR_NOT_SUPPORT;
 }
 
-int halBuffPoolPut(void* poolStart)
+int halBuffPoolPut(void *poolStart)
 {
     (void)poolStart;
     return (int)DRV_ERROR_NOT_SUPPORT;

@@ -18,7 +18,8 @@
 STATIC bool prof_is_support_register(uint32_t chan_id)
 {
 #ifdef CFG_SOC_PLATFORM_CLOUD_V4
-    uint32_t support_chan_list[] = {CHANNEL_NPU_APP_MEM, CHANNEL_NPU_MODULE_MEM, CHANNEL_AICPU, CHANNEL_CUS_AICPU, CHANNEL_ADPROF};
+    uint32_t support_chan_list[] = {CHANNEL_NPU_APP_MEM, CHANNEL_NPU_MODULE_MEM, CHANNEL_AICPU, CHANNEL_CUS_AICPU,
+                                    CHANNEL_ADPROF};
 #else
     uint32_t support_chan_list[] = {CHANNEL_NPU_MODULE_MEM, CHANNEL_AICPU, CHANNEL_CUS_AICPU, CHANNEL_ADPROF};
 #endif
@@ -33,10 +34,48 @@ STATIC bool prof_is_support_register(uint32_t chan_id)
     return false;
 }
 
-int halProfSampleRegister(unsigned int dev_id, unsigned int chan_id, struct prof_sample_register_para *para)
+STATIC bool prof_is_support_host_sample_register(uint32_t chan_id)
+{
+#ifdef CFG_SOC_PLATFORM_CLOUD_V4
+#ifdef DRV_HOST
+    uint32_t support_chan_list[] = {CHANNEL_STARS_SOC_LOG_BUFFER, CHANNEL_FFTS_PROFILE_BUFFER_TASK, CHANNEL_AICPU,
+                                    CHANNEL_CUS_AICPU, CHANNEL_ADPROF};
+#else
+    uint32_t support_chan_list[] = {CHANNEL_AICPU, CHANNEL_CUS_AICPU, CHANNEL_ADPROF};
+#endif
+
+    uint64_t i;
+
+    for (i = 0; i < sizeof(support_chan_list) / sizeof(uint32_t); i++) {
+        if (support_chan_list[i] == chan_id) {
+            return true;
+        }
+    }
+    return false;
+#else
+    (void)chan_id;
+    return false;
+#endif
+}
+
+STATIC int prof_sample_register_inner(unsigned int dev_id, unsigned int chan_id, struct prof_sample_register_para *para,
+                                      bool support_host_sample)
 {
     drvError_t ret;
 
+    ret = prof_core_register_channel(dev_id, chan_id, para, support_host_sample);
+    if (ret != DRV_ERROR_NONE) {
+        PROF_ERR("Failed to register channel. (dev_id=%u, chan_id=%u, ret=%d, support_host_sample=%d)\n", dev_id,
+                 chan_id, (int)ret, (int)support_host_sample);
+        return (int)ret;
+    }
+    PROF_INFO("Register channel successfully. (dev_id=%u, chan_id=%u, support_host_sample=%d)\n", dev_id, chan_id,
+              (int)support_host_sample);
+    return 0;
+}
+
+int halProfSampleRegister(unsigned int dev_id, unsigned int chan_id, struct prof_sample_register_para *para)
+{
     if ((dev_id >= DEV_NUM) || (chan_id >= PROF_CHANNEL_NUM_MAX) || (para == NULL)) {
         PROF_ERR("Invalid para. (dev_id=%u, chan_id=%u)\n", dev_id, chan_id);
         return (int)DRV_ERROR_INVALID_VALUE;
@@ -46,14 +85,33 @@ int halProfSampleRegister(unsigned int dev_id, unsigned int chan_id, struct prof
         return (int)DRV_ERROR_NOT_SUPPORT;
     }
 
-    ret = prof_core_register_channel(dev_id, chan_id, para);
-    if (ret != DRV_ERROR_NONE) {
-        PROF_ERR("Failed to register channel. (dev_id=%u, chan_id=%u, ret=%d)\n", dev_id, chan_id, (int)ret);
-        return (int)ret;
+    return prof_sample_register_inner(dev_id, chan_id, para, false);
+}
+
+int halProfSampleRegisterEx(unsigned int dev_id, unsigned int chan_id, struct prof_sample_register_para *para)
+{
+    if ((dev_id >= DEV_NUM) || (chan_id >= PROF_CHANNEL_NUM_MAX) || (para == NULL)) {
+        PROF_ERR("Invalid para. (dev_id=%u, chan_id=%u)\n", dev_id, chan_id);
+        return (int)DRV_ERROR_INVALID_VALUE;
     }
 
-    PROF_INFO("Register channel successfully. (dev_id=%u, chan_id=%u)\n", dev_id, chan_id);
-    return (int)DRV_ERROR_NONE;
+    if (prof_is_support_host_sample_register(chan_id) == false) {
+        return (int)DRV_ERROR_NOT_SUPPORT;
+    }
+
+    if ((para->ops.start_func == NULL) || (para->ops.stop_func == NULL)) {
+        PROF_ERR("Invalid ops. (dev_id=%u, chan_id=%u)\n", dev_id, chan_id);
+        return DRV_ERROR_INVALID_VALUE;
+    }
+
+#ifdef DRV_HOST
+    if (para->ops.sample_func == NULL) {
+        PROF_ERR("Invalid ops. (dev_id=%u, chan_id=%u)\n", dev_id, chan_id);
+        return DRV_ERROR_INVALID_VALUE;
+    }
+#endif
+
+    return prof_sample_register_inner(dev_id, chan_id, para, true);
 }
 
 int prof_drv_get_channels(unsigned int device_id, channel_list_t *channels)
@@ -97,7 +155,8 @@ int prof_drv_start(unsigned int device_id, unsigned int channel_id, struct prof_
     }
 
     if ((start_para->user_data == NULL) && (start_para->user_data_size != 0)) {
-        PROF_ERR("Invalid para. (dev_id=%u, chan_id=%u, data_size=%u)\n", device_id, channel_id, start_para->user_data_size);
+        PROF_ERR("Invalid para. (dev_id=%u, chan_id=%u, data_size=%u)\n", device_id, channel_id,
+                 start_para->user_data_size);
         return (int)DRV_ERROR_INVALID_VALUE;
     }
 
@@ -181,7 +240,7 @@ int halProfQueryAvailBufLen(unsigned int dev_id, unsigned int chan_id, unsigned 
 }
 
 int halProfSampleDataReport(unsigned int dev_id, unsigned int chan_id, unsigned int sub_chan_id,
-    struct prof_data_report_para *para)
+                            struct prof_data_report_para *para)
 {
     (void)sub_chan_id;
     drvError_t ret;

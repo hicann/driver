@@ -9,6 +9,7 @@
  */
 
 #include "bbox_drv_adapter.h"
+#include "bbox_feature.h"
 #include "bbox_print.h"
 #include "pbl_user_interface.h"
 #include "pbl_urd_main_cmd_def.h"
@@ -24,11 +25,10 @@
  */
 drvError_t bbox_drv_memory_dump(u32 phy_id, u32 offset, u32 size, u8 *buffer)
 {
-#ifndef CFG_SOC_PLATFORM_CLOUD_V4
-    return drvMemRead(phy_id, MEM_TYPE_BBOX_DDR, offset, buffer, size);
-#else
+    if (!bbox_has_feature(phy_id, BBOX_FEATURE_SOC_PLATFORM_CLOUD_V4)) {
+        return drvMemRead(phy_id, MEM_TYPE_BBOX_DDR, offset, buffer, size);
+    }
     return bbox_drv_read_data(phy_id, MEM_TYPE_BBOX_DDR, offset, buffer, size);
-#endif
 }
 
 /**
@@ -41,11 +41,10 @@ drvError_t bbox_drv_memory_dump(u32 phy_id, u32 offset, u32 size, u8 *buffer)
  */
 drvError_t bbox_drv_memory_pcie_dump(u32 phy_id, u32 offset, u8 *value, u32 len)
 {
-#ifndef CFG_SOC_PLATFORM_CLOUD_V4
-    return drvMemRead(phy_id, MEM_TYPE_BBOX_PCIE_BAR, offset, value, len);
-#else
+    if (!bbox_has_feature(phy_id, BBOX_FEATURE_SOC_PLATFORM_CLOUD_V4)) {
+        return drvMemRead(phy_id, MEM_TYPE_BBOX_PCIE_BAR, offset, value, len);
+    }
     return bbox_drv_read_data(phy_id, MEM_TYPE_BBOX_PCIE_BAR, offset, value, len);
-#endif
 }
 
 /**
@@ -58,11 +57,10 @@ drvError_t bbox_drv_memory_pcie_dump(u32 phy_id, u32 offset, u8 *value, u32 len)
  */
 drvError_t bbox_drv_memory_dump_cdr(u32 phy_id, u32 offset, u32 size, u8 *buffer)
 {
-#ifndef CFG_SOC_PLATFORM_CLOUD_V4
-    return drvMemRead(phy_id, MEM_TYPE_REG_DDR, offset, buffer, size);
-#else
+    if (!bbox_has_feature(phy_id, BBOX_FEATURE_SOC_PLATFORM_CLOUD_V4)) {
+        return drvMemRead(phy_id, MEM_TYPE_REG_DDR, offset, buffer, size);
+    }
     return bbox_drv_read_data(phy_id, MEM_TYPE_REG_DDR, offset, buffer, size);
-#endif
 }
 
 /**
@@ -75,11 +73,10 @@ drvError_t bbox_drv_memory_dump_cdr(u32 phy_id, u32 offset, u32 size, u8 *buffer
  */
 drvError_t bbox_drv_memory_pcie_dump_cdr(u32 phy_id, u32 offset, u8 *value, u32 len)
 {
-#ifndef CFG_SOC_PLATFORM_CLOUD_V4
-    return drvMemRead(phy_id, MEM_TYPE_CHIP_LOG_PCIE_BAR, offset, value, len);
-#else
+    if (!bbox_has_feature(phy_id, BBOX_FEATURE_SOC_PLATFORM_CLOUD_V4)) {
+        return drvMemRead(phy_id, MEM_TYPE_CHIP_LOG_PCIE_BAR, offset, value, len);
+    }
     return bbox_drv_read_data(phy_id, MEM_TYPE_CHIP_LOG_PCIE_BAR, offset, value, len);
-#endif
 }
 
 /**
@@ -105,11 +102,10 @@ drvError_t bbox_drv_pcie_sram_read(u32 phy_id, u32 offset, u8 *value, u32 len)
  */
 drvError_t bbox_drv_pcie_klog_ddr_read(u32 phy_id, u32 offset, u8 *value, u32 len)
 {
-#ifndef CFG_SOC_PLATFORM_CLOUD_V4
-    return drvMemRead(phy_id, MEM_TYPE_PCIE_DDR, offset, value, len);
-#else
+    if (!bbox_has_feature(phy_id, BBOX_FEATURE_SOC_PLATFORM_CLOUD_V4)) {
+        return drvMemRead(phy_id, MEM_TYPE_PCIE_DDR, offset, value, len);
+    }
     return bbox_drv_read_data(phy_id, MEM_TYPE_PCIE_DDR, offset, value, len);
-#endif
 }
 
 /**
@@ -255,11 +251,10 @@ drvError_t bbox_drv_pcie_hboot_read(u32 phy_id, u32 offset, u8 *value, u32 len)
  */
 drvError_t bbox_drv_pcie_vmcore_read(u32 phy_id, u32 offset, u32 size, u8 *buffer)
 {
-#ifndef CFG_SOC_PLATFORM_CLOUD_V4
-    return drvMemRead(phy_id, MEM_TYPE_VMCORE_FILE, offset, buffer, size);
-#else
+    if (!bbox_has_feature(phy_id, BBOX_FEATURE_SOC_PLATFORM_CLOUD_V4)) {
+        return drvMemRead(phy_id, MEM_TYPE_VMCORE_FILE, offset, buffer, size);
+    }
     return bbox_drv_read_data(phy_id, MEM_TYPE_VMCORE_FILE, offset, buffer, size);
-#endif
 }
 
 /**
@@ -273,11 +268,10 @@ drvError_t bbox_drv_pcie_vmcore_read(u32 phy_id, u32 offset, u32 size, u8 *buffe
  */
 drvError_t bbox_drv_pcie_vmcore_stat_read(u32 phy_id, u32 offset, u8 *value, u32 len)
 {
-#ifndef CFG_SOC_PLATFORM_CLOUD_V4
-    return drvMemRead(phy_id, MEM_TYPE_VMCORE_STAT, offset, value, len);
-#else
+    if (!bbox_has_feature(phy_id, BBOX_FEATURE_SOC_PLATFORM_CLOUD_V4)) {
+        return drvMemRead(phy_id, MEM_TYPE_VMCORE_STAT, offset, value, len);
+    }
     return bbox_drv_read_data(phy_id, MEM_TYPE_VMCORE_STAT, offset, value, len);
-#endif
 }
 
 /**
@@ -291,11 +285,10 @@ drvError_t bbox_drv_pcie_vmcore_stat_read(u32 phy_id, u32 offset, u8 *value, u32
  */
 drvError_t bbox_drv_pcie_kdump_write(u32 phy_id, u32 offset, u8 *value, u32 len)
 {
-#ifndef CFG_SOC_PLATFORM_CLOUD_V4
-    return drvMemWrite(phy_id, MEM_TYPE_KDUMP_MAGIC, offset, value, len);
-#else
+    if (!bbox_has_feature(phy_id, BBOX_FEATURE_SOC_PLATFORM_CLOUD_V4)) {
+        return drvMemWrite(phy_id, MEM_TYPE_KDUMP_MAGIC, offset, value, len);
+    }
     return bbox_drv_write_data(phy_id, MEM_TYPE_KDUMP_MAGIC, offset, value, len);
-#endif
 }
 
 /**
@@ -306,10 +299,6 @@ drvError_t bbox_drv_pcie_kdump_write(u32 phy_id, u32 offset, u8 *value, u32 len)
  */
 drvError_t bbox_drv_get_master_dev_id(u32 phy_id, u32 *master_id)
 {
-#if (defined BBOX_SOC_PLATFORM_MINI)
-    *master_id = phy_id;
-    return DRV_ERROR_NONE;
-#else
     int64_t value = 0;
     drvError_t ret = halGetDeviceInfo(phy_id, MODULE_TYPE_SYSTEM, INFO_TYPE_MASTERID, &value);
     if (ret == DRV_ERROR_NONE) {
@@ -317,7 +306,6 @@ drvError_t bbox_drv_get_master_dev_id(u32 phy_id, u32 *master_id)
     }
 
     return ret;
-#endif
 }
 
 drvError_t bbox_drv_read_data(u32 phy_id, MEM_CTRL_TYPE mem_type, u32 offset, u8 *buf, u32 size)
@@ -337,7 +325,7 @@ drvError_t bbox_drv_read_data(u32 phy_id, MEM_CTRL_TYPE mem_type, u32 offset, u8
     ret = (drvError_t)urd_dev_usr_cmd(phy_id, &cmd, &cmd_para);
     if (ret != DRV_ERROR_NONE) {
         if ((ret != DRV_ERROR_NOT_SUPPORT) && (ret != EOPNOTSUPP)) {
-            BBOX_ERR("Read bbox data failed. (devid=%u; ret=%d; offset=0x%x, size=0x%x)", phy_id, (int)ret, offset, size);
+            BBOX_ERR("Read bbox data failed. (ret=%d; offset=0x%x, size=0x%x)", (int)ret, offset, size);
         }
     }
     return ret;
@@ -360,7 +348,7 @@ drvError_t bbox_drv_write_data(u32 phy_id, MEM_CTRL_TYPE mem_type, u32 offset, u
     ret = (drvError_t)urd_dev_usr_cmd(phy_id, &cmd, &cmd_para);
     if (ret != DRV_ERROR_NONE) {
         if ((ret != DRV_ERROR_NOT_SUPPORT) && (ret != EOPNOTSUPP)) {
-            BBOX_ERR("Write bbox data failed. (devid=%u; ret=%d; offset=0x%x, size=0x%x)", phy_id, (int)ret, offset, size);
+            BBOX_ERR("Write bbox data failed. (ret=%d; offset=0x%x, size=0x%x)", (int)ret, offset, size);
         }
     }
     return ret; 

@@ -26,6 +26,8 @@
 #define LITE_API_VERSION ((LITE_API_VER_MAJOR << 16U) | (LITE_API_VER_MINOR << 8U) | (LITE_API_VER_PATCH))
 #define LITE_WC_EXT_VERSION 1
 
+#define LITE_ATTRI_VISI_DEF __attribute__ ((visibility ("default")))
+
 typedef unsigned long long u64;
 typedef unsigned int       u32;
 typedef unsigned short int u16;
@@ -276,35 +278,38 @@ struct rdma_lite_recv_wr {
     int                        num_sge;
 };
 
-struct rdma_lite_context *rdma_lite_alloc_context(u8 phy_id, struct dev_cap_info *cap);
-void rdma_lite_free_context(struct rdma_lite_context *lite_ctx);
+LITE_ATTRI_VISI_DEF struct rdma_lite_context *rdma_lite_alloc_context(u8 phy_id, struct dev_cap_info *cap);
+LITE_ATTRI_VISI_DEF void rdma_lite_free_context(struct rdma_lite_context *lite_ctx);
 
-int rdma_lite_init_mem_pool(struct rdma_lite_context *lite_ctx, struct rdma_lite_mem_attr *lite_mem_attr);
-int rdma_lite_deinit_mem_pool(struct rdma_lite_context *lite_ctx, u32 mem_idx);
+LITE_ATTRI_VISI_DEF int rdma_lite_init_mem_pool(struct rdma_lite_context *lite_ctx,
+    struct rdma_lite_mem_attr *lite_mem_attr);
+LITE_ATTRI_VISI_DEF int rdma_lite_deinit_mem_pool(struct rdma_lite_context *lite_ctx, u32 mem_idx);
 
-struct rdma_lite_cq *rdma_lite_create_cq(struct rdma_lite_context *lite_ctx,
+LITE_ATTRI_VISI_DEF struct rdma_lite_cq *rdma_lite_create_cq(struct rdma_lite_context *lite_ctx,
     struct rdma_lite_cq_attr *lite_cq_attr);
-int rdma_lite_destroy_cq(struct rdma_lite_cq *lite_cq);
+LITE_ATTRI_VISI_DEF int rdma_lite_destroy_cq(struct rdma_lite_cq *lite_cq);
 
-struct rdma_lite_qp *rdma_lite_create_qp(struct rdma_lite_context *lite_ctx,
+LITE_ATTRI_VISI_DEF struct rdma_lite_qp *rdma_lite_create_qp(struct rdma_lite_context *lite_ctx,
     struct rdma_lite_qp_attr *lite_qp_attr);
-int rdma_lite_destroy_qp(struct rdma_lite_qp *lite_qp);
+LITE_ATTRI_VISI_DEF int rdma_lite_destroy_qp(struct rdma_lite_qp *lite_qp);
 
-int rdma_lite_poll_cq(struct rdma_lite_cq *lite_cq, int num_entries, struct rdma_lite_wc *lite_wc);
-int rdma_lite_poll_cq_v2(struct rdma_lite_cq *lite_cq, int num_entries, struct rdma_lite_wc_v2 *lite_wc);
+LITE_ATTRI_VISI_DEF int rdma_lite_poll_cq(struct rdma_lite_cq *lite_cq, int num_entries, struct rdma_lite_wc *lite_wc);
+LITE_ATTRI_VISI_DEF int rdma_lite_poll_cq_v2(struct rdma_lite_cq *lite_cq, int num_entries,
+    struct rdma_lite_wc_v2 *lite_wc);
 
-int rdma_lite_post_send(struct rdma_lite_qp *lite_qp, struct rdma_lite_send_wr *wr,
+LITE_ATTRI_VISI_DEF int rdma_lite_post_send(struct rdma_lite_qp *lite_qp, struct rdma_lite_send_wr *wr,
     struct rdma_lite_send_wr **bad_wr, struct rdma_lite_post_send_attr *attr, struct rdma_lite_post_send_resp *resp);
 
-int rdma_lite_post_recv(struct rdma_lite_qp *lite_qp, struct rdma_lite_recv_wr *wr, struct rdma_lite_recv_wr **bad_wr);
+LITE_ATTRI_VISI_DEF int rdma_lite_post_recv(struct rdma_lite_qp *lite_qp, struct rdma_lite_recv_wr *wr,
+    struct rdma_lite_recv_wr **bad_wr);
 
-int rdma_lite_set_qp_sl(struct rdma_lite_qp *lite_qp, int sl);
+LITE_ATTRI_VISI_DEF int rdma_lite_set_qp_sl(struct rdma_lite_qp *lite_qp, int sl);
 
-int rdma_lite_clean_qp(struct rdma_lite_qp *lite_qp);
+LITE_ATTRI_VISI_DEF int rdma_lite_clean_qp(struct rdma_lite_qp *lite_qp);
 
-int rdma_lite_restore_snapshot(struct rdma_lite_context *lite_ctx);
+LITE_ATTRI_VISI_DEF int rdma_lite_restore_snapshot(struct rdma_lite_context *lite_ctx);
 
-unsigned int rdma_lite_get_api_version(void);
+LITE_ATTRI_VISI_DEF unsigned int rdma_lite_get_api_version(void);
 
 struct rdma_lite_ops {
     struct rdma_lite_context *(*rdma_lite_alloc_context)(u8 phy_id, struct dev_cap_info *cap);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2025. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -15,7 +15,7 @@
 #include "svm_um_handle.h"
 #include "svm_kern_log.h"
 #include "framework_vma.h"
-#include "smm_msg.h"
+#include "smm_uk_msg.h"
 #include "smm_flag.h"
 #include "svm_smp.h"
 #include "va_mng.h"
@@ -39,8 +39,9 @@ static int um_smm_mmap_pre_handle(u32 udevid, int master_tgid, int slave_tgid, v
     int va_type, ret;
 
     if ((msg_len != sizeof(*map_msg)) || (udevid == uda_get_host_id())) {
-        svm_err("Invalid para. (udevid=%u; master_tgid=%d; slave_tgid=%d; msg_len=%u)\n",
-            udevid, master_tgid, slave_tgid, msg_len);
+        svm_err(
+            "Invalid para. (udevid=%u; master_tgid=%d; slave_tgid=%d; msg_len=%u)\n", udevid, master_tgid, slave_tgid,
+            msg_len);
         return -EINVAL;
     }
 
@@ -48,7 +49,8 @@ static int um_smm_mmap_pre_handle(u32 udevid, int master_tgid, int slave_tgid, v
         /* cross app map */
         ret = svm_casm_get_src_info(udevid, map_msg->dst_va, map_msg->dst_size, src_info);
         if (ret != 0) {
-            svm_err("Casm get src info failed in um pre handle. (udevid=%u; slave_tgid=%d; dst_va=0x%llx; dst_size=%llu)\n",
+            svm_err(
+                "Casm get src info failed in um pre handle. (udevid=%u; slave_tgid=%d; dst_va=0x%llx; dst_size=%llu)\n",
                 udevid, slave_tgid, map_msg->dst_va, map_msg->dst_size);
             return ret;
         }
@@ -57,36 +59,34 @@ static int um_smm_mmap_pre_handle(u32 udevid, int master_tgid, int slave_tgid, v
         if (svm_is_master_addr(src_info, master_tgid)) {
             ret = svm_get_current_task_va_type(src_info->va, src_info->size, &va_type);
             if (ret != 0) {
-                svm_err("Invalid addr. (udevid=%u; master_tgid=%d; va=0x%llx; size=%llu)\n",
-                    udevid, master_tgid, src_info->va, src_info->size);
+                svm_err(
+                    "Invalid addr. (udevid=%u; master_tgid=%d; va=0x%llx; size=%llu)\n", udevid, master_tgid,
+                    src_info->va, src_info->size);
                 return ret;
             }
 
             if (va_type == VA_TYPE_NON_SVM) {
                 map_msg->flag |= SVM_SMM_FLAG_SRC_NON_SVM_VA;
-                return 0;
             }
         }
 
-        if (map_msg->dst_task_type == PROCESS_CP1) {
-            ret = svm_smp_pin_mem(src_info->udevid, master_tgid, src_info->va, src_info->size);
-            if (ret != 0) {
-                svm_err("Smm map um pre handle failed. (udevid=%u; master_tgid=%d; va=0x%llx; size=%llu)\n",
-                    udevid, master_tgid, src_info->va, src_info->size);
-                return ret;
-            }
-        } else { /* task grp map */
-            if (udevid != src_info->udevid) {
-                svm_err("Task group map dst_devid should be consistent with src_devid. "
-                    "(dst_udevid=%u; src_udevid=%u)\n", udevid, src_info->udevid);
-                return -EINVAL;
-            }
-
-            ret = svm_smp_check_mem_exists(src_info->udevid, master_tgid, src_info->va, src_info->size);
-            if (ret != 0) {
-                svm_err("Smp not exists, not allow to munmap. (udevid=%u; master_tgid=%d; va=0x%llx; size=%llu)\n",
-                    udevid, master_tgid, src_info->va, src_info->size);
-                return ret;
+        if ((map_msg->flag & SVM_SMM_FLAG_SRC_NON_SVM_VA) == 0) {
+            if (map_msg->dst_task_type == PROCESS_CP1) {
+                ret = svm_smp_pin_mem(src_info->udevid, master_tgid, src_info->va, src_info->size, false);
+                if (ret != 0) {
+                    svm_err(
+                        "Smm map um pre handle failed. (udevid=%u; master_tgid=%d; va=0x%llx; size=%llu)\n", udevid,
+                        master_tgid, src_info->va, src_info->size);
+                    return ret;
+                }
+            } else { /* task grp map & smm */
+                ret = svm_smp_check_mem_exists(src_info->udevid, master_tgid, src_info->va, src_info->size);
+                if (ret != 0) {
+                    svm_err(
+                        "Smp not exists, not allow to munmap. (udevid=%u; master_tgid=%d; va=0x%llx; size=%llu)\n",
+                        udevid, master_tgid, src_info->va, src_info->size);
+                    return ret;
+                }
             }
         }
 
@@ -94,11 +94,12 @@ static int um_smm_mmap_pre_handle(u32 udevid, int master_tgid, int slave_tgid, v
             u64 maped_va;
             ret = ubmem_map_client(src_info->udevid, src_info, &maped_va);
             if (ret != 0) {
-                if (map_msg->dst_task_type == PROCESS_CP1) {
-                    (void)svm_smp_unpin_mem(src_info->udevid, master_tgid, src_info->va, src_info->size);
+                if ((map_msg->dst_task_type == PROCESS_CP1) && ((map_msg->flag & SVM_SMM_FLAG_SRC_NON_SVM_VA) == 0)) {
+                    (void)svm_smp_unpin_mem(src_info->udevid, master_tgid, src_info->va, src_info->size, false);
                 }
-                svm_err("Ubmem map failed. (udevid=%u; tgid=%d; src_udevid=%u; va=0x%llx; size=%llu)\n",
-                    udevid, master_tgid, src_info->udevid, src_info->va, src_info->size);
+                svm_err(
+                    "Ubmem map failed. (udevid=%u; tgid=%d; src_udevid=%u; va=0x%llx; size=%llu)\n", udevid,
+                    master_tgid, src_info->udevid, src_info->va, src_info->size);
                 return ret;
             }
 
@@ -117,17 +118,19 @@ static void um_smm_mmap_pre_cancel_handle(u32 udevid, int master_tgid, int slave
     struct svm_global_va *src_info = &map_msg->src_info;
 
     if ((msg_len != sizeof(*map_msg)) || (udevid == uda_get_host_id())) {
-        svm_err("Invalid para. (udevid=%u; master_tgid=%d; slave_tgid=%d; msg_len=%u)\n",
-            udevid, master_tgid, slave_tgid, msg_len);
+        svm_err(
+            "Invalid para. (udevid=%u; master_tgid=%d; slave_tgid=%d; msg_len=%u)\n", udevid, master_tgid, slave_tgid,
+            msg_len);
         return;
     }
 
-    if ((svm_smm_get_src_valid_flag(map_msg->flag) != 0) && (svm_smm_get_src_svm_va_flag(map_msg->flag) == 1)) {
+    if (svm_smm_get_src_valid_flag(map_msg->flag) != 0) {
         if (svm_dev_is_ub_connect(udevid, src_info->server_id, src_info->udevid)) {
             (void)ubmem_unmap_client(src_info->udevid, src_info);
         }
-        if (map_msg->dst_task_type == PROCESS_CP1) {
-            (void)svm_smp_unpin_mem(src_info->udevid, master_tgid, src_info->va, src_info->size);
+
+        if ((map_msg->dst_task_type == PROCESS_CP1) && (svm_smm_get_src_svm_va_flag(map_msg->flag) == 1)) {
+            (void)svm_smp_unpin_mem(src_info->udevid, master_tgid, src_info->va, src_info->size, false);
         }
     }
 }
@@ -139,15 +142,17 @@ static int um_smm_mmap_post_handle(u32 udevid, int master_tgid, int slave_tgid, 
     int ret;
 
     if ((msg_len != sizeof(*map_msg)) || (udevid == uda_get_host_id())) {
-        svm_err("Invalid para. (udevid=%u; master_tgid=%d; slave_tgid=%d; msg_len=%u)\n",
-            udevid, master_tgid, slave_tgid, msg_len);
+        svm_err(
+            "Invalid para. (udevid=%u; master_tgid=%d; slave_tgid=%d; msg_len=%u)\n", udevid, master_tgid, slave_tgid,
+            msg_len);
         return -EINVAL;
     }
 
     if ((svm_smm_get_src_svm_va_flag(map_msg->flag) == 1) && (map_msg->dst_task_type == PROCESS_CP1)) {
         ret = ksvmm_add_seg(udevid, master_tgid, map_msg->dst_va, src_info);
         if (ret != 0) {
-            svm_err("Ksvmm add seg failed in smm um post handle. (udevid=%u; master_tgid=%d; va=0x%llx; size=%llu)\n",
+            svm_err(
+                "Ksvmm add seg failed in smm um post handle. (udevid=%u; master_tgid=%d; va=0x%llx; size=%llu)\n",
                 udevid, master_tgid, map_msg->dst_va, map_msg->dst_size);
             return ret;
         }
@@ -163,8 +168,9 @@ static int um_smm_munmap_pre_handle(u32 udevid, int master_tgid, int slave_tgid,
     int ret;
 
     if ((msg_len != sizeof(*unmap_msg)) || (udevid == uda_get_host_id())) {
-        svm_err("Invalid para. (udevid=%u; master_tgid=%d; slave_tgid=%d; msg_len=%u)\n",
-            udevid, master_tgid, slave_tgid, msg_len);
+        svm_err(
+            "Invalid para. (udevid=%u; master_tgid=%d; slave_tgid=%d; msg_len=%u)\n", udevid, master_tgid, slave_tgid,
+            msg_len);
         return -EINVAL;
     }
 
@@ -172,7 +178,8 @@ static int um_smm_munmap_pre_handle(u32 udevid, int master_tgid, int slave_tgid,
         /* cross app map */
         ret = svm_casm_get_src_info(udevid, unmap_msg->dst_va, unmap_msg->dst_size, src_info);
         if (ret != 0) {
-            svm_err("Casm get src info failed in um pre handle. (udevid=%u; slave_tgid=%d; dst_va=0x%llx; dst_size=%llu)\n",
+            svm_err(
+                "Casm get src info failed in um pre handle. (udevid=%u; slave_tgid=%d; dst_va=0x%llx; dst_size=%llu)\n",
                 udevid, slave_tgid, unmap_msg->dst_va, unmap_msg->dst_size);
             return ret;
         }
@@ -181,8 +188,9 @@ static int um_smm_munmap_pre_handle(u32 udevid, int master_tgid, int slave_tgid,
             int va_type;
             ret = svm_get_current_task_va_type(src_info->va, src_info->size, &va_type);
             if (ret != 0) {
-                svm_err("Invalid addr. (udevid=%u; master_tgid=%d; va=0x%llx; size=%llu)\n",
-                    udevid, master_tgid, src_info->va, src_info->size);
+                svm_err(
+                    "Invalid addr. (udevid=%u; master_tgid=%d; va=0x%llx; size=%llu)\n", udevid, master_tgid,
+                    src_info->va, src_info->size);
                 return ret;
             }
 
@@ -195,8 +203,9 @@ static int um_smm_munmap_pre_handle(u32 udevid, int master_tgid, int slave_tgid,
         /* master or agent svm address */
         ret = svm_smp_check_mem_exists(src_info->udevid, master_tgid, src_info->va, src_info->size);
         if ((ret != 0) && (ret != -EOWNERDEAD)) {
-            svm_err("Smp not exists, not allow to munmap. (udevid=%u; master_tgid=%d; va=0x%llx; size=%llu)\n",
-                udevid, master_tgid, src_info->va, src_info->size);
+            svm_err(
+                "Smp not exists, not allow to munmap. (udevid=%u; master_tgid=%d; va=0x%llx; size=%llu)\n", udevid,
+                master_tgid, src_info->va, src_info->size);
             return ret;
         }
     }
@@ -204,8 +213,9 @@ static int um_smm_munmap_pre_handle(u32 udevid, int master_tgid, int slave_tgid,
     if (unmap_msg->dst_task_type == PROCESS_CP1) {
         ret = ksvmm_del_seg(udevid, master_tgid, unmap_msg->dst_va);
         if (ret != 0) {
-            svm_err("Ksvmm del seg failed in smm mummap um pre handle. (udevid=%u; master_tgid=%d; va=0x%llx)\n",
-                udevid, master_tgid, unmap_msg->dst_va);
+            svm_err(
+                "Ksvmm del seg failed in smm mummap um pre handle. (udevid=%u; master_tgid=%d; va=0x%llx)\n", udevid,
+                master_tgid, unmap_msg->dst_va);
             return ret;
         }
 
@@ -224,25 +234,29 @@ static int um_smm_munmap_post_handle(u32 udevid, int master_tgid, int slave_tgid
     struct svm_global_va *src_info = &unmap_msg->src_info;
 
     if ((msg_len != sizeof(*unmap_msg)) || (udevid == uda_get_host_id())) {
-        svm_err("Invalid para. (udevid=%u; master_tgid=%d; slave_tgid=%d; msg_len=%u)\n",
-            udevid, master_tgid, slave_tgid, msg_len);
+        svm_err(
+            "Invalid para. (udevid=%u; master_tgid=%d; slave_tgid=%d; msg_len=%u)\n", udevid, master_tgid, slave_tgid,
+            msg_len);
         return -EINVAL;
     }
 
-    if ((svm_smm_get_src_valid_flag(unmap_msg->flag) != 0) && (svm_smm_get_src_svm_va_flag(unmap_msg->flag) == 1)) {
+    if (svm_smm_get_src_valid_flag(unmap_msg->flag) != 0) {
         int ret;
         if (svm_dev_is_ub_connect(udevid, src_info->server_id, src_info->udevid)) {
             ret = ubmem_unmap_client(src_info->udevid, src_info);
             if (ret != 0) {
-                svm_warn("Ubmem unmap failed. (udevid=%u; va=0x%llx; size=%llu)\n",
-                    src_info->udevid, src_info->va, src_info->size);
+                svm_warn(
+                    "Ubmem unmap failed. (udevid=%u; va=0x%llx; size=%llu)\n", src_info->udevid, src_info->va,
+                    src_info->size);
             }
         }
-        if (unmap_msg->dst_task_type == PROCESS_CP1) {
-            ret = svm_smp_unpin_mem(src_info->udevid, master_tgid, src_info->va, src_info->size);
+
+        if ((unmap_msg->dst_task_type == PROCESS_CP1) && (svm_smm_get_src_svm_va_flag(unmap_msg->flag) == 1)) {
+            ret = svm_smp_unpin_mem(src_info->udevid, master_tgid, src_info->va, src_info->size, false);
             if (ret != 0) {
-                svm_warn("Unpin failed. (udevid=%u; va=0x%llx; size=%llu)\n",
-                    src_info->udevid, src_info->va, src_info->size);
+                svm_warn(
+                    "Unpin failed. (udevid=%u; va=0x%llx; size=%llu)\n", src_info->udevid, src_info->va,
+                    src_info->size);
             }
         }
     }
@@ -251,7 +265,7 @@ static int um_smm_munmap_post_handle(u32 udevid, int master_tgid, int slave_tgid
 
 void share_um_handle_init(void)
 {
-    svm_um_register_handle(SVM_SMM_MMAP_EVENT, um_smm_mmap_pre_handle, um_smm_mmap_pre_cancel_handle, um_smm_mmap_post_handle);
+    svm_um_register_handle(
+        SVM_SMM_MMAP_EVENT, um_smm_mmap_pre_handle, um_smm_mmap_pre_cancel_handle, um_smm_mmap_post_handle);
     svm_um_register_handle(SVM_SMM_MUNMAP_EVENT, um_smm_munmap_pre_handle, NULL, um_smm_munmap_post_handle);
 }
-

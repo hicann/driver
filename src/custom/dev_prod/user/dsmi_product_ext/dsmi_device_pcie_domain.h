@@ -13,8 +13,9 @@
 #include "dsmi_inner_interface.h"
 #include "ascend_hal_error.h"
 
-#undef DEVDRV_MAX_DAVINCI_NUM
-#define DEVDRV_MAX_DAVINCI_NUM  64
+#ifndef DEVDRV_MAX_DAVINCI_NUM
+#define DEVDRV_MAX_DAVINCI_NUM      (1124)
+#endif
 #define DMS_SUBCMD_GET_PCIE_ID_INFO_ALL 0
 
 #ifdef CONFIG_LLT

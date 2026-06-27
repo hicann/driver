@@ -11,7 +11,6 @@
 #include <sys/ioctl.h>
 
 #include "dms_user_common.h"
-#include "devdrv_user_common.h"
 #include "dms/dms_soc_interface.h"
 #include "devmng_user_common.h"
 #include "devdrv_ioctl.h"
@@ -410,7 +409,7 @@ drvError_t halGetDeviceSplitMode(unsigned int dev_id, unsigned int *mode)
     ioarg.output = (void *)mode;
     ioarg.output_len = sizeof(unsigned int);
 
-    ret = errno_to_user_errno(DmsIoctl(DMS_IOCTL_CMD, &ioarg));
+    ret = errno_to_user_errno(DmsIoctl(DMS_GET_DEV_SPLIT_MODE, &ioarg));
     if (ret != 0) {
         DMS_EX_NOTSUPPORT_ERR(ret, "IOCTL failed. (ret=%d)\n", ret);
         return ret;

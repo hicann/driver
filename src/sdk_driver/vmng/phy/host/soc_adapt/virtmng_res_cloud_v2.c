@@ -72,7 +72,7 @@ STATIC int vmngh_sriov_reset_vdev_cloud_v2(u32 dev_id)
     if (devdrv_hot_reset_device(dev_id) < 0) {
         vmng_err("devdrv_hot_reset_device error.(dev_id=%u)\n", dev_id);
         ret = VMNG_ERR;
-        ka_system_ssleep(VMNG_WAIT_RESET_S);  // wait for device RM process finish
+        ka_system_ssleep(VMNG_WAIT_RESET_S); // wait for device RM process finish
         goto vf_recover;
     }
 

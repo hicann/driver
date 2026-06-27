@@ -44,7 +44,7 @@ int devdrv_register_common_msg_client(const struct devdrv_common_msg_client *msg
     int ret;
     struct devdrv_comm_dev_ops *dev_ops;
 
-    ret = devdrv_set_common_msg_client(msg_client, true);  // first save all client info, enable will register
+    ret = devdrv_set_common_msg_client(msg_client, true); // first save all client info, enable will register
     dev_ops = devdrv_add_ops_ref();
     if (dev_ops != NULL) {
         ret = dev_ops->ops.register_common_msg_client(msg_client);

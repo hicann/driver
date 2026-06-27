@@ -27,4 +27,3 @@ enum trs_id_type {
 
 #define TRS_CORE_MAX_ID_TYPE TRS_MAX_ID_TYPE
 #endif
-

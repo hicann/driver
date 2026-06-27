@@ -11,7 +11,7 @@
  * GNU General Public License for more details.
  */
 
-#include <linux/types.h>
+#include "ka_type.h"
 
 #include "devmm_proc_info.h"
 #include "svm_master_dev_capability.h"
@@ -20,9 +20,9 @@
 #include "ka_compiler_pub.h"
 #include "ka_kernel_def_pub.h"
 
-#define DEVMM_DEV_FEATURE_PROC_FS_NAME_LEN  32U
-#define DEVMM_DEV_FEATURE_PROC_FS_MODE      0644
-#define DEVMM_SEQ_PRIVATE_DATA_OFFSET       32U
+#define DEVMM_DEV_FEATURE_PROC_FS_NAME_LEN 32U
+#define DEVMM_DEV_FEATURE_PROC_FS_MODE 0644
+#define DEVMM_SEQ_PRIVATE_DATA_OFFSET 32U
 
 static ka_proc_dir_entry_t *g_devmm_dev_feature_entry[SVM_MAX_AGENT_NUM] = {NULL};
 
@@ -46,7 +46,8 @@ static int devmm_dev_feature_ops_open(ka_inode_t *inode, ka_file_t *file)
 
 static ssize_t devmm_dev_feature_ops_write(ka_file_t *filp, const char __ka_user *ubuf, size_t count, loff_t *ppos)
 {
-    u32 devid = (u32)((u64)(uintptr_t)(((ka_seq_file_t *)ka_fs_get_file_private_data(filp))->private) >> DEVMM_SEQ_PRIVATE_DATA_OFFSET);
+    u32 devid = (u32)((u64)(uintptr_t)(((ka_seq_file_t *)ka_fs_get_file_private_data(filp))->private) >>
+                      DEVMM_SEQ_PRIVATE_DATA_OFFSET);
     u32 feature_id = (u32)(uintptr_t)(((ka_seq_file_t *)ka_fs_get_file_private_data(filp))->private);
     char ch[2] = {0}; /* 2 bytes long */
     bool user_input;
@@ -75,16 +76,12 @@ static ssize_t devmm_dev_feature_ops_write(ka_file_t *filp, const char __ka_user
 }
 
 static const ka_procfs_ops_t devmm_dev_feature_ops = {
-    ka_fs_init_pf_owner(KA_THIS_MODULE) \
-    ka_fs_init_pf_open(devmm_dev_feature_ops_open) \
-    ka_fs_init_pf_read(ka_fs_seq_read) \
-    ka_fs_init_pf_write(devmm_dev_feature_ops_write) \
-    ka_fs_init_pf_lseek(ka_fs_seq_lseek) \
-    ka_fs_init_pf_release(ka_fs_single_release) \
-};
+    ka_fs_init_pf_owner(KA_THIS_MODULE) ka_fs_init_pf_open(devmm_dev_feature_ops_open)
+        ka_fs_init_pf_read(ka_fs_seq_read) ka_fs_init_pf_write(devmm_dev_feature_ops_write)
+            ka_fs_init_pf_lseek(ka_fs_seq_lseek) ka_fs_init_pf_release(ka_fs_single_release)};
 #endif
 
-void devmm_dev_feature_proc_fs_create(ka_proc_dir_entry_t  *dev_entry, u32 logic_id)
+void devmm_dev_feature_proc_fs_create(ka_proc_dir_entry_t *dev_entry, u32 logic_id)
 {
 #ifndef EMU_ST
     char name[DEVMM_DEV_FEATURE_PROC_FS_NAME_LEN] = {0};
@@ -108,7 +105,8 @@ void devmm_dev_feature_proc_fs_create(ka_proc_dir_entry_t  *dev_entry, u32 logic
         if (feature_entry != NULL) {
             for (i = 0; i < DEVMM_MAX_FEATURE_ID; ++i) {
                 u64 data = ((u64)devid << DEVMM_SEQ_PRIVATE_DATA_OFFSET) | (u64)i;
-                ka_fs_proc_create_data(g_devmm_dev_feature[i].feature_name, DEVMM_DEV_FEATURE_PROC_FS_MODE, feature_entry,
+                ka_fs_proc_create_data(
+                    g_devmm_dev_feature[i].feature_name, DEVMM_DEV_FEATURE_PROC_FS_MODE, feature_entry,
                     &devmm_dev_feature_ops, (void *)(uintptr_t)data);
             }
             g_devmm_dev_feature_entry[devid] = feature_entry;

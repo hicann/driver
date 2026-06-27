@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2025. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -13,7 +13,7 @@
 #ifndef SVM_SLAB_H
 #define SVM_SLAB_H
 
-#include <linux/types.h>
+#include "ka_type.h"
 
 #include "pbl_ka_memory.h"
 #include "ascend_hal_define.h"
@@ -52,8 +52,9 @@
 #define svm_kvfree(addr) ka_kvfree(addr, ka_get_module_id(HAL_MODULE_TYPE_DEVMM, KA_SUB_MODULE_TYPE_0))
 
 /* KA_SUB_MODULE_TYPE_1 : ai memory normal page */
-#define svm_kvmalloc_node(size, flags, node) ka_kvmalloc_node(size, flags, node, ka_get_module_id(HAL_MODULE_TYPE_DEVMM, KA_SUB_MODULE_TYPE_1))
-#define svm_kvfree_node(addr)  ka_kvfree(addr, ka_get_module_id(HAL_MODULE_TYPE_DEVMM, KA_SUB_MODULE_TYPE_1))
+#define svm_kvmalloc_node(size, flags, node) \
+    ka_kvmalloc_node(size, flags, node, ka_get_module_id(HAL_MODULE_TYPE_DEVMM, KA_SUB_MODULE_TYPE_1))
+#define svm_kvfree_node(addr) ka_kvfree(addr, ka_get_module_id(HAL_MODULE_TYPE_DEVMM, KA_SUB_MODULE_TYPE_1))
 
 #define svm_kvmalloc_node(size, flags, node) \
     ka_kvmalloc_node(size, flags, node, ka_get_module_id(HAL_MODULE_TYPE_DEVMM, KA_SUB_MODULE_TYPE_1))

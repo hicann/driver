@@ -14,7 +14,7 @@
 #ifndef TRS_CHAN_SQCQ_H
 #define TRS_CHAN_SQCQ_H
 
-#include <linux/types.h>
+#include "ka_type.h"
 #include "trs_pub_def.h"
 
 int trs_chan_ops_get_valid_cq_list(struct trs_id_inst *inst, u32 group, u32 cqid[], u32 cq_id_num, u32 *valid_cq_num);
@@ -25,4 +25,3 @@ int trs_stars_chan_ops_ctrl_sqcq(struct trs_id_inst *inst, u32 id, u32 cmd, u32 
 int trs_stars_chan_ops_query_sqcq(struct trs_id_inst *inst, u32 id, u32 cmd, u64 *value);
 void trs_chan_ops_get_sq_head_in_cqe(struct trs_id_inst *inst, void *cqe, u32 *sq_head);
 #endif
-

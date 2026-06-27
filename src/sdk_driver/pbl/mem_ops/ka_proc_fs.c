@@ -10,11 +10,10 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-
-#include <linux/seq_file.h>
-#include <linux/proc_fs.h>
-#include <linux/version.h>
-#include <linux/uaccess.h>
+#include "ka_base_pub.h"
+#include "ka_fs_pub.h"
+#include "ka_compiler_pub.h"
+#include "ka_kernel_def_pub.h"
 
 #include "ka_memory_mng.h"
 #include "ka_module_init.h"
@@ -24,21 +23,21 @@
 #define KA_PROC_FS_NAME_LEN 32
 #define KA_PROC_FS_MODE 0444
 
-static struct proc_dir_entry *ka_task_entry = NULL;
+static ka_proc_dir_entry_t *ka_task_entry = NULL;
 
-STATIC int ka_enable_mem_record_show(struct seq_file *seq, void *offset)
+STATIC int ka_enable_mem_record_show(ka_seq_file_t *seq, void *offset)
 {
-    seq_printf(seq, "%d\n", (ka_is_enable_mem_record() == true));
+    ka_fs_seq_printf(seq, "%d\n", (ka_is_enable_mem_record() == true));
     return 0;
 }
 
-STATIC int ka_enable_mem_record_ops_open(struct inode *inode, struct file *file)
+STATIC int ka_enable_mem_record_ops_open(ka_inode_t *inode, ka_file_t *file)
 {
-    return single_open(file, ka_enable_mem_record_show, ka_base_pde_data(inode));
+    return ka_fs_single_open(file, ka_enable_mem_record_show, ka_base_pde_data(inode));
 }
 
 #define MEM_RECORD_DISABLE 0
-STATIC ssize_t ka_enable_record_ops_write(struct file *filp, const char __user *ubuf, size_t count, loff_t *ppos)
+STATIC ssize_t ka_enable_record_ops_write(ka_file_t *filp, const char __ka_user *ubuf, size_t count, loff_t *ppos)
 {
     char ch[2] = {0}; /* 2 bytes long */
     long val;
@@ -46,11 +45,11 @@ STATIC ssize_t ka_enable_record_ops_write(struct file *filp, const char __user *
     if ((ppos == NULL) || (*ppos != 0) || (count != sizeof(ch)) || (ubuf == NULL)) {
         return -EINVAL;
     }
-    if (copy_from_user(ch, ubuf, count)) {
+    if (ka_base_copy_from_user(ch, ubuf, count)) {
         return -ENOMEM;
     }
     ch[count - 1] = '\0';
-    if (kstrtol(ch, 10, &val)) {
+    if (ka_base_kstrtol(ch, 10, &val)) {
         return -EFAULT;
     }
     ka_mem_record_status_reset(val != MEM_RECORD_DISABLE);
@@ -59,57 +58,41 @@ STATIC ssize_t ka_enable_record_ops_write(struct file *filp, const char __user *
     return (ssize_t)count;
 }
 
-STATIC int ka_get_alloc_mem_desc_open(struct inode *inode, struct file *file)
+STATIC int ka_get_alloc_mem_desc_open(ka_inode_t *inode, ka_file_t *file)
 {
-    return single_open(file, ka_mem_stats_show, ka_base_pde_data(inode));
+    return ka_fs_single_open(file, ka_mem_stats_show, ka_base_pde_data(inode));
 }
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 5, 0)
-static const struct file_operations ka_enable_mem_desc_ops = {
-    .owner = THIS_MODULE,
-    .open = ka_enable_mem_record_ops_open,
-    .read = seq_read,
-    .write = ka_enable_record_ops_write,
-    .llseek  = seq_lseek,
-    .release = single_release,
+static const ka_procfs_ops_t ka_enable_mem_desc_ops = {
+    ka_fs_init_pf_owner(KA_THIS_MODULE) \
+    ka_fs_init_pf_open(ka_enable_mem_record_ops_open) \
+    ka_fs_init_pf_read(ka_fs_seq_read) \
+    ka_fs_init_pf_write(ka_enable_record_ops_write) \
+    ka_fs_init_pf_lseek(ka_fs_seq_lseek) \
+    ka_fs_init_pf_release(ka_fs_single_release) \
 };
-static const struct file_operations ka_mem_ops = {
-    .owner = THIS_MODULE,
-    .open = ka_get_alloc_mem_desc_open,
-    .read = seq_read,
-    .llseek  = seq_lseek,
-    .release = single_release,
+
+static const ka_procfs_ops_t ka_mem_ops = {
+    ka_fs_init_pf_owner(KA_THIS_MODULE) \
+    ka_fs_init_pf_open(ka_get_alloc_mem_desc_open) \
+    ka_fs_init_pf_read(ka_fs_seq_read) \
+    ka_fs_init_pf_lseek(ka_fs_seq_lseek) \
+    ka_fs_init_pf_release(ka_fs_single_release) \
 };
-#else
-static const struct proc_ops ka_enable_mem_desc_ops = {
-    .proc_open    = ka_enable_mem_record_ops_open,
-    .proc_read    = seq_read,
-    .proc_write   = ka_enable_record_ops_write,
-    .proc_lseek   = seq_lseek,
-    .proc_release = single_release,
-};
-static const struct proc_ops ka_mem_ops = {
-    .proc_open    = ka_get_alloc_mem_desc_open,
-    .proc_read    = seq_read,
-    .proc_lseek   = seq_lseek,
-    .proc_release = single_release,
-};
-#endif
 
 void ka_proc_fs_init(void)
 {
-    ka_task_entry = proc_mkdir("ka", NULL);
+    ka_task_entry = ka_fs_proc_mkdir("ka", NULL);
     if (ka_task_entry != NULL) {
-        proc_create_data("ka_enable_mem_record", KA_PROC_FS_MODE, ka_task_entry, &ka_enable_mem_desc_ops,
+        ka_fs_proc_create_data("ka_enable_mem_record", KA_PROC_FS_MODE, ka_task_entry, &ka_enable_mem_desc_ops,
             (void *)(uintptr_t)ka_is_enable_mem_record());
-        proc_create_data("ka_mem_stats", KA_PROC_FS_MODE, ka_task_entry, &ka_mem_ops, (void *)(uintptr_t)ka_is_enable_mem_record());
+        ka_fs_proc_create_data("ka_mem_stats", KA_PROC_FS_MODE, ka_task_entry, &ka_mem_ops, (void *)(uintptr_t)ka_is_enable_mem_record());
     }
 }
 
 void ka_proc_fs_uninit(void)
 {
     if (ka_task_entry != NULL) {
-        remove_proc_subtree("ka", NULL);
+        ka_fs_remove_proc_subtree("ka", NULL);
     }
 }
-

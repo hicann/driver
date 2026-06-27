@@ -24,6 +24,7 @@ struct prof_chan_attr {
 struct prof_chan_list_mng {
     pthread_mutex_t mutex;
     struct prof_chan_attr chan_attr[PROF_CHANNEL_NUM_MAX];
+    struct prof_chan_attr chan_attr_ex[PROF_CHANNEL_NUM_MAX];
 };
 
 static struct prof_chan_list_mng *g_prof_chan_list[DEV_NUM] = {NULL};
@@ -42,6 +43,7 @@ STATIC drvError_t prof_chan_list_mng_init(uint32_t dev_id)
     (void)pthread_mutex_init(&list_mng->mutex, NULL);
     for (i = 0; i < PROF_CHANNEL_NUM_MAX; i++) {
         list_mng->chan_attr[i].online = false;
+        list_mng->chan_attr_ex[i].online = false;
     }
 
     g_prof_chan_list[dev_id] = list_mng;
@@ -97,9 +99,10 @@ STATIC drvError_t prof_chan_list_get(struct prof_chan_attr *chan_attr, uint32_t 
     }
 }
 
-drvError_t prof_add_local_channel(uint32_t dev_id, uint32_t chan_id)
+drvError_t prof_add_local_channel(uint32_t dev_id, uint32_t chan_id, bool support_host_sample)
 {
     struct prof_chan_list_mng *list_mng = prof_chan_list_get_mng(dev_id);
+    struct prof_chan_attr *chan_attr;
 
     if (list_mng == NULL) {
         PROF_ERR("Failed to get chan_list_mng. (dev_id=%u, chan_id=%u)\n", dev_id, chan_id);
@@ -107,26 +110,37 @@ drvError_t prof_add_local_channel(uint32_t dev_id, uint32_t chan_id)
     }
 
     (void)pthread_mutex_lock(&list_mng->mutex);
-    if (list_mng->chan_attr[chan_id].online) {
+    if (support_host_sample) {
+        chan_attr = &list_mng->chan_attr_ex[chan_id];
+    } else {
+        chan_attr = &list_mng->chan_attr[chan_id];
+    }
+    if (chan_attr->online) {
         (void)pthread_mutex_unlock(&list_mng->mutex);
         PROF_ERR("Repeatedly add local channel. (dev_id=%u, chan_id=%u)\n", dev_id, chan_id);
         return DRV_ERROR_REPEATED_INIT;
     }
 
-    prof_chan_list_add(&list_mng->chan_attr[chan_id], (uint32_t)PROF_CHAN_MODE_USER, 0);
+    prof_chan_list_add(chan_attr, (uint32_t)PROF_CHAN_MODE_USER, 0);
     (void)pthread_mutex_unlock(&list_mng->mutex);
 
     return DRV_ERROR_NONE;
 }
 
-void prof_del_local_channel(uint32_t dev_id, uint32_t chan_id)
+void prof_del_local_channel(uint32_t dev_id, uint32_t chan_id, bool support_host_sample)
 {
     struct prof_chan_list_mng *list_mng = prof_chan_list_get_mng(dev_id);
+    struct prof_chan_attr *chan_attr;
 
     /* Should be called after prof_add_local_channel, so there is no need to check if list_mng is NULL */
 
     (void)pthread_mutex_lock(&list_mng->mutex);
-    prof_chan_list_del(&list_mng->chan_attr[chan_id]);
+    if (support_host_sample) {
+        chan_attr = &list_mng->chan_attr_ex[chan_id];
+    } else {
+        chan_attr = &list_mng->chan_attr[chan_id];
+    }
+    prof_chan_list_del(chan_attr);
     (void)pthread_mutex_unlock(&list_mng->mutex);
 }
 
@@ -231,6 +245,21 @@ drvError_t prof_get_chan_attr(uint32_t dev_id, uint32_t chan_id, uint32_t *mode,
     (void)pthread_mutex_unlock(&list_mng->mutex);
 
     return ret;
+}
+
+bool prof_support_host_sample(uint32_t dev_id, uint32_t chan_id)
+{
+    struct prof_chan_list_mng *list_mng = prof_chan_list_get_mng(dev_id);
+
+    if (list_mng == NULL) {
+        PROF_ERR("Failed to get chan_list_mng. (dev_id=%u, chan_id=%u)\n", dev_id, chan_id);
+        return false;
+    }
+
+    if (list_mng->chan_attr_ex[chan_id].online) {
+        return true;
+    }
+    return false;
 }
 
 #else

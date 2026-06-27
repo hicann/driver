@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * Copyright (c) 2026 Huawei Technologies Co., Ltd.
  * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -17,8 +17,8 @@
 #include "svm_user_adapt.h"
 #include "svm_sys_cmd.h"
 #include "svm_ioctl_ex.h"
-#include "svm_sub_event_type.h"
-#include "mem_show_msg.h"
+#include "svm_sub_event_type_uk_msg.h"
+#include "mem_show_uk_msg.h"
 #include "malloc_mng.h"
 #include "cache_malloc.h"
 #include "svm_prefetch.h"
@@ -33,7 +33,7 @@ struct svm_mem_show_feature {
 
 static void svm_show_mem_info(u32 devid, char *buf, u32 buf_len)
 {
-    struct MemInfo info;
+    struct MemInfo info = {0};
     DVresult ret;
 
     if (devid == SVM_INVALID_DEVID) {
@@ -43,22 +43,19 @@ static void svm_show_mem_info(u32 devid, char *buf, u32 buf_len)
     ret = halMemGetInfo(devid, MEM_INFO_TYPE_DDR_SIZE, &info);
     if (ret != 0) {
         (void)snprintf_s(buf, buf_len, buf_len - 1, "get info failed devid %d\n", devid);
+        return;
     }
 
-    (void)snprintf_s(buf, buf_len, buf_len - 1, "ddr info: total %lu free %lu huge_total %lu huge_free %lu\n",
-        info.phy_info.total, info.phy_info.free, info.phy_info.huge_total, info.phy_info.huge_free);
+    (void)snprintf_s(
+        buf, buf_len, buf_len - 1, "ddr info: total %lu free %lu huge_total %lu huge_free %lu\n", info.phy_info.total,
+        info.phy_info.free, info.phy_info.huge_total, info.phy_info.huge_free);
 }
 
-void svm_show_register(u32 devid, char *buf, u32 buf_len)
-{
-    (void)svm_show_register_pcie_th(devid, buf, buf_len);
-}
+void svm_show_register(u32 devid, char *buf, u32 buf_len) { (void)svm_show_register_pcie_th(devid, buf, buf_len); }
 
 static struct svm_mem_show_feature show_features[] = {
-    {USER_FEATURE_MALLOC_MNG, svm_show_dev_mem},
-    {USER_FEATURE_CACHE_MALLOC, svm_show_cache},
-    {USER_FEATURE_PREFETCH, svm_show_prefetch},
-    {USER_FEATURE_REGISTER, svm_show_register},
+    {USER_FEATURE_MALLOC_MNG, svm_show_dev_mem}, {USER_FEATURE_CACHE_MALLOC, svm_show_cache},
+    {USER_FEATURE_PREFETCH, svm_show_prefetch},  {USER_FEATURE_REGISTER, svm_show_register},
     {USER_FEATURE_MEM_STAT, svm_show_mem_info},
 };
 
@@ -92,8 +89,8 @@ static struct svm_mem_show_feature *svm_show_get_feature(char *feature_name)
     return NULL;
 }
 
-static drvError_t svm_mem_show_event_proc_func(unsigned int devid, const void *msg, int msg_len,
-    struct drv_event_proc_rsp *rsp)
+static drvError_t svm_mem_show_event_proc_func(
+    unsigned int devid, const void *msg, int msg_len, struct drv_event_proc_rsp *rsp)
 {
     const struct svm_mem_show_msg *show_msg = (const struct svm_mem_show_msg *)msg;
     struct svm_mem_show_feature *feature = NULL;
@@ -118,14 +115,10 @@ static drvError_t svm_mem_show_event_proc_func(unsigned int devid, const void *m
 }
 
 static struct drv_event_proc svm_mem_show_event_proc = {
-    svm_mem_show_event_proc_func,
-    sizeof(struct svm_mem_show_msg),
-    "svm_mem_show_event"
-};
+    svm_mem_show_event_proc_func, sizeof(struct svm_mem_show_msg), "svm_mem_show_event"};
 
-static int __attribute__ ((constructor)) svm_mem_show_init(void)
+static int __attribute__((constructor)) svm_mem_show_init(void)
 {
     drv_registert_event_proc(SVM_MEM_SHOW_EVENT, &svm_mem_show_event_proc);
     return 0;
 }
-

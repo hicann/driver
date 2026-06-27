@@ -152,7 +152,7 @@ int dmanage_get_device_health(unsigned int dev_id, unsigned int *phealth)
 int dmanage_get_device_errorcode(unsigned int dev_id, int *p_error_code_count, unsigned int *p_error_code,
     int p_error_code_len)
 {
-    struct devdrv_error_code_para error_code_para = { 0, {0}, 0 };
+    struct devdrv_error_code_para error_code_para = { 0, {0}, 0, {0} };
     int ret;
     int i;
 

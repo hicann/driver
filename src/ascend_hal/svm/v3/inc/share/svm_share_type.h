@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * Copyright (c) 2026 Huawei Technologies Co., Ltd.
  * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -12,11 +12,12 @@
 #define SVM_SHARE_TYPE_H
 
 enum svm_share_type {
-    SVM_SHARE_TYPE_VMM, /* vmm rsv va */
+    SVM_SHARE_TYPE_VMM,        /* vmm rsv va */
     SVM_SHARE_TYPE_VMM_ACCESS, /* vmm mapped va */
     SVM_SHARE_TYPE_IPC_OPENED, /* ipc opened va */
     SVM_SHARE_TYPE_PREFETCH,
     SVM_SHARE_TYPE_REGISTER,
+    SVM_SHARE_TYPE_SOMA,
     SVM_SHARE_TYPE_MAX
 };
 
@@ -25,4 +26,3 @@ struct svm_share_priv_head {
 };
 
 #endif
-

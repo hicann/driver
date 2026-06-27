@@ -16,7 +16,7 @@ $(MODULE_NAME)-objs += pcie/common/hdcdrv_epoll.o pcie/common/hdcdrv_sysfs.o pci
 
 ifneq ($(filter $(PRODUCT), ascend950),)
 	$(MODULE_NAME)-objs += ub/common/hdcdrv_core_ub.o ub/common/hdcdrv_proc_fs_ub.o ub/common/hdcdrv_mem_pool_ub.o
-	$(MODULE_NAME)-objs += ub/common/hdcdrv_mem_com_ub.o ub/host/hdcdrv_adapt_ub.o
+	$(MODULE_NAME)-objs += ub/common/hdcdrv_mem_com_ub.o ub/host/hdcdrv_adapt_ub.o ub/common/hdcdrv_ctrl_msg.o
 endif
 
 EXTRA_CFLAGS += -I$(DRIVER_HAL_INC_DIR)

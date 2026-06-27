@@ -9,20 +9,9 @@
  */
 #include <sys/mman.h>
 #include "ascend_hal.h"
-#include "esched_user_interface.h"
 #include "hdc_cmn.h"
 #include "hdc_ub_drv.h"
 #include "hdc_core.h"
-
-void hdc_fill_event_summary_dst_engine(struct event_summary *event_submit)
-{
-    event_submit->dst_engine = CCPU_DEVICE;
-}
-
-void hdc_fill_event_msg_dst_engine(struct hdcdrv_sync_event_msg *msg)
-{
-    msg->head.dst_engine = CCPU_DEVICE;
-}
 
 int hdc_mem_res_init(struct hdc_mem_res_info *mem_info, int service_type)
 {
@@ -47,8 +36,7 @@ int hdc_mem_res_init(struct hdc_mem_res_info *mem_info, int service_type)
         ret = hdc_mem_res_init_stub(mem_info->bind_fd, &mem_info->user_va, HDCDRV_UB_MEM_POOL_LEN);
         if (ret != 0) {
             goto va_mmap_failed;
-        }
-        else {
+        } else {
             return 0;
         }
 #endif
@@ -118,7 +106,7 @@ int hdc_register_own_urma_seg(hdc_ub_context_t *ctx, unsigned long long len, uns
     seg_cfg.flag.bs.reserved = 0;
     seg_cfg.flag.bs.token_id_valid = 1;
     if (hdc_use_kernel_pool(service_type)) {
-        seg_cfg.flag.bs.non_pin = 1;    /* alloc_pages memory need non pin, malloc need pin */
+        seg_cfg.flag.bs.non_pin = 1; /* alloc_pages memory need non pin, malloc need pin */
     } else {
         seg_cfg.flag.bs.non_pin = 0;
     }

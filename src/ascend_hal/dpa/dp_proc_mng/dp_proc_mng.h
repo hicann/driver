@@ -35,26 +35,31 @@
 #define DP_PROC_MNG_DEBUG(fmt, ...)
 #define DP_PROC_MNG_EVENT(fmt, ...) syslog(LOG_NOTICE, "[%s %d] " fmt, __func__, __LINE__, ##__VA_ARGS__)
 #else
-#define DP_PROC_MNG_ERR(format, ...) do { \
-    DRV_ERR(HAL_MODULE_TYPE_DP_PROC_MNG, format, ##__VA_ARGS__); \
-} while (0)
+#define DP_PROC_MNG_ERR(format, ...)                                 \
+    do {                                                             \
+        DRV_ERR(HAL_MODULE_TYPE_DP_PROC_MNG, format, ##__VA_ARGS__); \
+    } while (0)
 
-#define DP_PROC_MNG_WARN(format, ...) do { \
-    DRV_WARN(HAL_MODULE_TYPE_DP_PROC_MNG, format, ##__VA_ARGS__); \
-} while (0)
+#define DP_PROC_MNG_WARN(format, ...)                                 \
+    do {                                                              \
+        DRV_WARN(HAL_MODULE_TYPE_DP_PROC_MNG, format, ##__VA_ARGS__); \
+    } while (0)
 
-#define DP_PROC_MNG_INFO(format, ...) do { \
-    DRV_INFO(HAL_MODULE_TYPE_DP_PROC_MNG, format, ##__VA_ARGS__); \
-} while (0)
+#define DP_PROC_MNG_INFO(format, ...)                                 \
+    do {                                                              \
+        DRV_INFO(HAL_MODULE_TYPE_DP_PROC_MNG, format, ##__VA_ARGS__); \
+    } while (0)
 
-#define DP_PROC_MNG_DEBUG(format, ...) do { \
-    DRV_DEBUG(HAL_MODULE_TYPE_DP_PROC_MNG, format, ##__VA_ARGS__); \
-} while (0)
+#define DP_PROC_MNG_DEBUG(format, ...)                                 \
+    do {                                                               \
+        DRV_DEBUG(HAL_MODULE_TYPE_DP_PROC_MNG, format, ##__VA_ARGS__); \
+    } while (0)
 
 /* infrequent log level */
-#define DP_PROC_MNG_EVENT(format, ...) do { \
-    DRV_NOTICE(HAL_MODULE_TYPE_DP_PROC_MNG, format, ##__VA_ARGS__); \
-} while (0)
+#define DP_PROC_MNG_EVENT(format, ...)                                  \
+    do {                                                                \
+        DRV_NOTICE(HAL_MODULE_TYPE_DP_PROC_MNG, format, ##__VA_ARGS__); \
+    } while (0)
 #endif
 #else
 #define DP_PROC_MNG_ERR(fmt, ...)
@@ -83,4 +88,3 @@ drvError_t dp_proc_mng_ioctl(unsigned int cmd, void *para);
 int dp_proc_mng_get_fd_inner(void);
 
 #endif
-

@@ -25,7 +25,7 @@ struct rt_stars_sqe_Header_t {
     uint8_t rtt_mode : 1;
     uint8_t res0 : 2;
 
-    uint16_t block_dim;  // block_dim or res
+    uint16_t block_dim; // block_dim or res
 
     uint16_t rt_stream_id;
     uint16_t task_id;
@@ -40,4 +40,3 @@ void trs_stars_v2_trace_sqe_fill(struct trs_id_inst *inst, struct trs_chan_sq_tr
     sq_trace->stream_id = sqe_->rt_stream_id;
 #endif
 }
-

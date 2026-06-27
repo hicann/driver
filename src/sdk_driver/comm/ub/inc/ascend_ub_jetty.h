@@ -32,7 +32,8 @@
 #define ASCEND_UB_ADMIN_SEND_SEG_SIZE 4096  // 4k
 #define ASCEND_UB_ADMIN_RECV_SEG_COUNT 16
 #define ASCEND_UB_POLL_JFC_ONE 1
-#define ASCEND_TATIMEOUT_RETRY_CNT 1
+#define ASCEND_MSG_NORMAL_RETRY_CNT 1
+#define ASCEND_MSG_MAX_RETRY_CNT 35
 
 #define ASCEND_UB_ADMIN_JETTY_JFC_DEPTH 128
 
@@ -46,7 +47,7 @@
 #define UB_URMA_JFC_CEQN 0
 
 /* jfr cfg */
-#define UB_URMA_QUEUE_LCOK 0
+#define UB_URMA_QUEUE_LOCK 0
 #define UB_SHARE_JFR 1
 #define UB_NON_TRANS_DEFAULT_DEPTH 16
 #define UB_JFR_RNR_TIME 10
@@ -117,6 +118,7 @@ struct ubdrv_sync_jfce_work {
     ka_work_struct_t work;
 };
 
+#define UBDRV_DFX_INFO_LEN 128
 u32 ubdrv_record_resq_time(u64 pre_jiffies, const char *str, u32 timeout);
 
 u64 ubdrv_get_seg_offset(struct ubcore_target_seg *tseg, u32 seg_id, u32 seg_size);
@@ -152,9 +154,11 @@ int ubdrv_post_jfr_wr(struct ubcore_jfr *jfr, struct ubcore_target_seg *seg,
     struct ascend_ub_msg_desc *va, u32 len, u32 seg_id);
 struct ascend_ub_msg_desc* ubdrv_wait_sync_msg_rqe(u32 dev_id, struct ascend_ub_jetty_ctrl *jetty_ctrl,
     u32 msg_num, u32 cnt, struct ubdrv_msg_chan_stat *stat);
-int ubdrv_interval_poll_send_jfs_jfc(struct ubcore_jfc *jfc, u64 user_ctx, u32 cnt,
+int ubdrv_interval_poll_send_jfs_jfc(struct ascend_ub_jetty_ctrl *jetty_ctrl, u64 user_ctx, u32 cnt,
 struct ubcore_cr *cr, struct ubdrv_msg_chan_stat *stat, bool check_dev_status);
-int ubdrv_interval_poll_recv_jfs_jfc(struct ubcore_jfc *jfc, u64 user_ctx, u32 cnt,
+int ubdrv_interval_poll_recv_jfs_jfc(struct ascend_ub_jetty_ctrl *jetty_ctrl, u64 user_ctx, u32 cnt,
     struct ubcore_cr *cr, struct ubdrv_msg_chan_stat *stat);
 int ubdrv_rebuild_jfs_jfc(u32 dev_id, struct ascend_ub_jetty_ctrl *jetty_ctrl);
+void ubdrv_print_ctx_info(u32 dev_id, u32 chan_id, struct ubcore_jfs *jfs, struct ubcore_jfr *jfr,
+    struct ubcore_jfc *jfc);
 #endif

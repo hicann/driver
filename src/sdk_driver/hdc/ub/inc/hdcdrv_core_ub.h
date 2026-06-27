@@ -24,32 +24,33 @@
 #include "hdcdrv_cmd_ioctl.h"
 #include "hdcdrv_cmd_msg.h"
 #include "hdcdrv_adapt_ub.h"
+#include "hdcdrv_ctrl_msg.h"
 
 #define HDC_MODULE_NAME "HISI_HDC"
-#define HDCDRV_STR_NAME_LEN     32
+#define HDCDRV_STR_NAME_LEN 32
 #define HDCDRV_SESSION_FD_INVALID (-1)
 #define HDCDRV_SERVICE_TYPE_INVALID (-1)
 #define HDCDRV_INVALID_REMOTE_SESSION_ID (-2)
 
 #define HDCDRV_SERVER_PROCESS_MAX_NUM 64
-// When the value below changes, the value of the user_space macro with the same name also needs to be modified.
-#define HDCDRV_UB_SINGLE_DEV_MAX_SESSION       264 /* 64 * 4(log + tsd + dvpp + reserved) + 8 */
 
-#define HDCDRV_SERVICE_SCOPE_GLOBAL    0
-#define HDCDRV_SERVICE_SCOPE_PROCESS   1
+#define HDCDRV_SERVICE_SCOPE_GLOBAL 0
+#define HDCDRV_SERVICE_SCOPE_PROCESS 1
 
-#define HDCDRV_SERVICE_LOG_LIMIT    1
+#define HDCDRV_SERVICE_LOG_LIMIT 1
 #define HDCDRV_SERVICE_NO_LOG_LIMIT 0
 
 #define HDCDRV_SERVICE_HIGH_LEVEL 0
-#define HDCDRV_SERVICE_LOW_LEVEL  1
+#define HDCDRV_SERVICE_LOW_LEVEL 1
 
-#define HDCDRV_SERVICE_SHORT_CONN	0
-#define HDCDRV_SERVICE_LONG_CONN	1
+#define HDCDRV_SERVICE_SHORT_CONN 0
+#define HDCDRV_SERVICE_LONG_CONN 1
 
 #define HDCDRV_SESSION_STATUS_IDLE 0
 #define HDCDRV_SESSION_STATUS_CONN 1
 #define HDCDRV_SESSION_STATUS_CLOSING 2
+
+#define HDCDRV_DELAY_REMOTE_CLOSE_BIT 0
 
 #define HDCDRV_SESSION_UNIQUE_VALUE_MASK 0x3FFFFFFFU
 #define HDCDRV_SESSION_UNIQUE_VALUE_HOST_FLAG 0x80000000U
@@ -66,11 +67,28 @@
 
 #define HDCDRV_INVALID_OWNER_PID 0xffffffffffffffffU
 
+#if defined(CFG_PLATFORM_ESL) || defined(CFG_PLATFORM_FPGA)
+#define HDCDRV_CONN_TIMEOUT (100 * KA_HZ)                 /* 100s for fpga */
+#define HDCDRV_SESSION_REMOTE_CLOSED_TIMEOUT (10 * KA_HZ) /* 10s for fpga */
+#define HDCDRV_SESSION_REMOTE_CLOSED_TIMEOUT_MS 10000     /* 10s for fpga */
+#else
+#define HDCDRV_CONN_TIMEOUT (30 * KA_HZ)                 /* 30s */
+#define HDCDRV_SESSION_REMOTE_CLOSED_TIMEOUT (3 * KA_HZ) /* 3s */
+#define HDCDRV_SESSION_REMOTE_CLOSED_TIMEOUT_MS 3000     /* 3s */
+#endif
+
+#define HDCDRV_WAKE_UP_WAIT_TIMEOUT 1000 /* 1s */
+
+#define HDCDRV_SESSION_RECLAIM_TIMEOUT (60 * KA_HZ) /* 60s */
+
+#define HDCDRV_NON_TRANS_RETRY_TIME 5
+
 struct hdcdrv_ctx;
 
 struct hdcdrv_conn_info_list {
     struct hdcdrv_conn_info_list *next;
     struct hdcdrv_event_connect conn_info;
+    u64 add_list_jiffies;
 };
 
 struct hdcdrv_service {
@@ -82,13 +100,18 @@ struct hdcdrv_service {
     ka_list_head_t serv_list;
     struct hdcdrv_ctx *ctx;
     ka_mutex_t mutex;
-    u32 gid;
     struct hdcdrv_conn_info_list *conn_list; // Used to store conn_info from client
 };
 
 struct hdcdrv_serv_list_node {
     struct hdcdrv_service service;
     ka_list_head_t list;
+};
+
+struct hdcdrv_event_record {
+    struct hdcdrv_event_msg msg;
+    int wait_flag;
+    int valid_flag;
 };
 
 struct hdcdrv_session {
@@ -98,7 +121,7 @@ struct hdcdrv_session {
     int remote_session_fd;
     int dev_id;
     int service_type;
-    u32 delay_work_flag;    // keep for future use
+    u32 delay_work_flag;
     int run_env;
     u64 create_pid;
     u64 peer_create_pid;
@@ -116,6 +139,11 @@ struct hdcdrv_session {
     ka_task_spinlock_t lock;
     bool remote_close_flag; // true means session has not closed, false means session has been close by remote or close
     int mem_pool_idx;
+    ka_delayed_work_t remote_close;
+    ka_wait_queue_head_t wq_conn;
+    ka_wait_queue_head_t wq_dfx;
+    struct hdcdrv_event_record conn_reply;
+    struct hdcdrv_event_record dfx_reply;
 };
 
 struct hdcdrv_ctx_mem_pool_info {
@@ -133,19 +161,22 @@ struct hdcdrv_ctx {
     int refcnt;
     struct hdcdrv_ctx_mem_pool_info pool_info;
     ka_mutex_t ctx_lock;
+    struct hdcdrv_ctrl_msg_node *ctrl_node;
 };
 
 struct hdcdrv_dev {
     u32 valid;
     u32 dev_id;
-    u32 dev_type;   // Device type, which may require distinguishing between pf and vf
+    u32 dev_type; // Device type, which may require distinguishing between pf and vf
     struct hdcdrv_service service[HDCDRV_SUPPORT_MAX_SERVICE];
     struct hdcdrv_session *sessions;
-    int cur_alloc_session;          // The currently assigned long session location
-    int cur_alloc_short_session;    // The currently assigned short session location
-    struct hdcdrv_mem_pool_list_node mem_pool_list[HDCDRV_MEM_POOL_NUM];    // idx of mem_pool for each dev
+    int cur_alloc_session;       // The currently assigned long session location
+    int cur_alloc_short_session; // The currently assigned short session location
+    struct hdcdrv_mem_pool_list_node mem_pool_list[HDCDRV_MEM_POOL_NUM]; // idx of mem_pool for each dev
     ka_atomic_t ref;
     u32 host_pm_or_vm_flag;
+    struct hdcdrv_event_msg_pool event_msg_pool;
+    void *ctrl_msg_chan;
 };
 
 struct hdcdrv_service_attr {
@@ -191,4 +222,5 @@ int hdcdrv_ub_init_module(void);
 void hdcdrv_ub_exit_module(void);
 void hdcdrv_uninit_esched(void);
 void hdcdrv_uninit_ub(void);
+int hdcdrv_ub_ctrl_msg_recv(u32 dev_id, void *data, u32 in_data_len, u32 out_data_len, u32 *real_out_len);
 #endif // _HDCDRV_CORE_H_

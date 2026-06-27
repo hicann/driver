@@ -67,13 +67,13 @@ void ts_agent_update_sqe_register(struct ts_agent_update_sqe_ops *ops)
     }
     ts_agent_info("No ops was registed in ts_agent.");
 }
-EXPORT_SYMBOL_GPL(ts_agent_update_sqe_register);
+KA_EXPORT_SYMBOL_GPL(ts_agent_update_sqe_register);
 
 void ts_agent_update_sqe_unregister(void)
 {
     g_kp_update_sqe_ops.rdma_query_db_pa = NULL;
 }
-EXPORT_SYMBOL_GPL(ts_agent_update_sqe_unregister);
+KA_EXPORT_SYMBOL_GPL(ts_agent_update_sqe_unregister);
 
 static int kp_check_and_update_sdma(ts_stars_sdma_sqe_t *sdma_sqe, int src_pid, int dst_pid, u16 sid, bool isRead)
 {

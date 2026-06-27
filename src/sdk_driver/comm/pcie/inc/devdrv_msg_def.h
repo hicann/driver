@@ -83,7 +83,7 @@ enum msg_queue_type {
  * base       length        use
  * 0          1k            reserved
  * 1k         1k            share_param
- * 2k         64k           resved space for 310P, MUST only used by CPU
+ * 2k         64k           reserved space for 310P, MUST only used by CPU
  * 2k         16k           p2p msg
  * 18k-120k                 not used
  * 120k       4k            for tsdrv use
@@ -99,25 +99,6 @@ enum msg_queue_type {
 #endif
 #define DEVDRV_SHR_MEM_CACHE 1
 #define DEVDRV_SHR_MEM_NORMAL 0
-
-/*
- * in VM scene, PHY_MACH_FLAG in share_param is masked 4KB aligned by QEMU,
- * and will make 4KB un-access by DMA for smmu fault. P2P msg use DMA, must skip this 4KB
- */
-#ifdef CFG_FEATURE_PHY_MACH_FLAG_SKIP_PAGE
-#define DEVDRV_PHY_MACH_FLAG_64K_RESVED  0x10000
-#else
-#define DEVDRV_PHY_MACH_FLAG_64K_RESVED 0
-#endif
-#define DEVDRV_P2P_MSG_SIZE 0x400 /* msg 1KB */
-#define DEVDRV_P2P_SEND_MSG_ADDR_OFFSET 0
-#define DEVDRV_P2P_SEND_MSG_ADDR_SIZE (DEVDRV_P2P_MSG_SIZE * DEVDRV_P2P_SUPPORT_MAX_DEVNUM)
-#define DEVDRV_P2P_RECV_MSG_ADDR_OFFSET (DEVDRV_P2P_SEND_MSG_ADDR_OFFSET + DEVDRV_P2P_SEND_MSG_ADDR_SIZE)
-#define DEVDRV_P2P_RECV_MSG_ADDR_SIZE (DEVDRV_P2P_MSG_SIZE * DEVDRV_P2P_SUPPORT_MAX_DEVNUM)
-#define DEVDRV_P2P_MSG_ADDR_OFFSET (DEVDRV_SHR_PARA_ADDR_OFFSET + DEVDRV_SHR_PARA_ADDR_SIZE + \
-    DEVDRV_PHY_MACH_FLAG_64K_RESVED)
-#define DEVDRV_P2P_MSG_ADDR_TOTAL_SIZE (DEVDRV_P2P_SEND_MSG_ADDR_SIZE + DEVDRV_P2P_RECV_MSG_ADDR_SIZE)
-
 #define DEVDRV_PCIE_RESV_SPACE_NOT_USED_BASE 0x3B000ULL
 #define DEVDRV_RESERVE_TSDRV_RESV_OFFSET DEVDRV_PCIE_RESV_SPACE_NOT_USED_BASE
 #define DEVDRV_RESERVE_TSDRV_RESV_SIZE 0x1000ULL
@@ -144,9 +125,7 @@ enum devdrv_admin_msg_opcode {
     DEVDRV_SRIOV_EVENT_NOTIFY,
     DEVDRV_GET_EP_SUSPEND_STATUS,
     DEVDRV_HCCS_LINK_CHECK,
-#ifdef CFG_FEATURE_PCIE_PROTO_DIP
     DEVDRV_SYNC_SOC_RES,
-#endif
     DEVDRV_ADMIN_MSG_MAX
 };
 

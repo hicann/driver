@@ -30,6 +30,9 @@
 #include "grp_mng.h"
 
 #include "buff_manage_base.h"
+#include "buff_feature.h"
+#include "buff_platform.h"
+#include "buff_ioctl.h"
 #include "buff_mng.h"
 #include "buff_user_interface.h"
 #include "buff_recycle.h"
@@ -42,65 +45,117 @@ static unsigned int g_mz_cfg_num = 0;
 static memZoneCfg g_mz_cfg[BUFF_MAX_MZ_NODE_NUM] = {};
 
 static memZoneCfg g_mz_cfg_default[] = {
-    { 0, 2 * 1024 * 1024, 256, 8 * 1024, BUFF_SP_NORMAL, 0, 0, 0, 0, 0, {0}},
-    { 1, 32 * 1024 * 1024, 8 * 1024, 8 * 1024 * 1024, BUFF_SP_NORMAL, 0, 0, 0, 0, 0, {0}},
-#ifdef CFG_FEATURE_SURPORT_HUGE_PAGE
-    { 2, 2 * 1024 * 1024, 256, 8 * 1024, BUFF_SP_HUGEPAGE_ONLY, 0, 0, 0, 0, 0, {0}},
-    { 3, MZ_DEFAULT_CFG_MAX_SIZE, 8 * 1024, 64 * 1024 * 1024, BUFF_SP_HUGEPAGE_ONLY, 0, 0, 0, 0, 0, {0}}
-#endif
-};
-
+    {0, 2 * 1024 * 1024, 256, 8 * 1024, BUFF_SP_NORMAL, 0, 0, 0, 0, 0, {0}},
+    {1, 32 * 1024 * 1024, 8 * 1024, 8 * 1024 * 1024, BUFF_SP_NORMAL, 0, 0, 0, 0, 0, {0}},
+    {2, 2 * 1024 * 1024, 256, 8 * 1024, BUFF_SP_HUGEPAGE_ONLY, 0, 0, 0, 0, 0, {0}},
+    {3, MZ_DEFAULT_CFG_MAX_SIZE, 8 * 1024, 64 * 1024 * 1024, BUFF_SP_HUGEPAGE_ONLY, 0, 0, 0, 0, 0, {0}}};
 
 /* dvpp mem will be configed when user doesn't config dvpp mem. */
-// dvpp mem cfg same to non-dvpp cfg
-#ifdef CFG_FEATURE_NO_SURPORT_DVPP_MZ
+// Used when BUFF_FEATURE_NO_SUPPORT_DVPP_MZ is true (dev does NOT support dvpp mz).
+// dvpp mem cfg same to non-dvpp cfg (g_mz_cfg_default entries with BUFF_SP_DVPP flag added).
 static memZoneCfg g_mz_cfg_dvpp_default[] = {
-    { 0, 2 * 1024 * 1024, 256, 8 * 1024, BUFF_SP_NORMAL | BUFF_SP_DVPP, 0, 0, 0, 0, 0, {0}},
-    { 1, 32 * 1024 * 1024, 8 * 1024, 8 * 1024 * 1024, BUFF_SP_NORMAL | BUFF_SP_DVPP, 0, 0, 0, 0, 0, {0}},
-#ifdef CFG_FEATURE_SURPORT_HUGE_PAGE
-    { 2, 2 * 1024 * 1024, 256, 8 * 1024, BUFF_SP_HUGEPAGE_ONLY | BUFF_SP_DVPP, 0, 0, 0, 0, 0, {0}},
-    { 3, MZ_DEFAULT_CFG_MAX_SIZE, 8 * 1024, 64 * 1024 * 1024, BUFF_SP_HUGEPAGE_ONLY | BUFF_SP_DVPP, 0, 0, 0, 0, 0, {0}}
-#endif
+    {0, 2 * 1024 * 1024, 256, 8 * 1024, BUFF_SP_NORMAL | BUFF_SP_DVPP, 0, 0, 0, 0, 0, {0}},
+    {1, 32 * 1024 * 1024, 8 * 1024, 8 * 1024 * 1024, BUFF_SP_NORMAL | BUFF_SP_DVPP, 0, 0, 0, 0, 0, {0}},
+    {2, 2 * 1024 * 1024, 256, 8 * 1024, BUFF_SP_HUGEPAGE_ONLY | BUFF_SP_DVPP, 0, 0, 0, 0, 0, {0}},
+    {3, MZ_DEFAULT_CFG_MAX_SIZE, 8 * 1024, 64 * 1024 * 1024, BUFF_SP_HUGEPAGE_ONLY | BUFF_SP_DVPP, 0, 0, 0, 0, 0, {0}},
 };
-#else
-static memZoneCfg g_mz_cfg_dvpp_default[] = {
-    { 0, 2 * 1024 * 1024, 4 * 1024, 384 * 1024, BUFF_SP_NORMAL | BUFF_SP_DVPP, 0, 0, 0, 0, 0, {0}},
-#ifdef CFG_FEATURE_SURPORT_HUGE_PAGE
-    { 1, 2 * 1024 * 1024, 4 * 1024, 384 * 1024, BUFF_SP_HUGEPAGE_ONLY | BUFF_SP_DVPP, 0, 0, 0, 0, 0, {0}},
-#endif
-};
-#endif
-// dvpp mem cfg same to non-dvpp cfg
-#ifdef CFG_FEATURE_NO_SURPORT_DVPP_MZ
-static memZoneCfg g_mz_cfg_cache_default[] = {
-    { 0, 2 * 1024 * 1024, 256, 8 * 1024, BUFF_SP_NORMAL, 1, 0, 0, 0, 6, {0}},
-    { 1, 32 * 1024 * 1024, 8 * 1024, 8 * 1024 * 1024, BUFF_SP_NORMAL, 1, 0, 0, 0, 6, {0}},
-#ifdef CFG_FEATURE_SURPORT_HUGE_PAGE
-    { 2, 2 * 1024 * 1024, 256, 8 * 1024, BUFF_SP_HUGEPAGE_ONLY, 1, 0, 0, 0, 6, {0}},
-    { 3, MZ_DEFAULT_CFG_MAX_SIZE, 8 * 1024, 64 * 1024 * 1024, BUFF_SP_HUGEPAGE_ONLY, 1, 0, 0, 0, 6, {0}},
-#endif
-    { 4, 2 * 1024 * 1024, 256, 8 * 1024, BUFF_SP_NORMAL | BUFF_SP_DVPP, 1, 0, 0, 0, 6, {0}},
-    { 5, 32 * 1024 * 1024, 8 * 1024, 8 * 1024 * 1024, BUFF_SP_NORMAL | BUFF_SP_DVPP, 1, 0, 0, 0, 6, {0}},
-#ifdef CFG_FEATURE_SURPORT_HUGE_PAGE
-    { 6, 2 * 1024 * 1024, 256, 8 * 1024, BUFF_SP_HUGEPAGE_ONLY | BUFF_SP_DVPP, 1, 0, 0, 0, 6, {0}},
-    { 7, MZ_DEFAULT_CFG_MAX_SIZE, 8 * 1024, 64 * 1024 * 1024, BUFF_SP_HUGEPAGE_ONLY | BUFF_SP_DVPP, 1, 0, 0, 0, 6, {0}},
-#endif
-};
-#else
-static memZoneCfg g_mz_cfg_cache_default[] = {
-    { 0, 2 * 1024 * 1024, 256, 8 * 1024, BUFF_SP_NORMAL, 1, 0, 0, 0, 6, {0}},
-    { 1, 32 * 1024 * 1024, 8 * 1024, 8 * 1024 * 1024, BUFF_SP_NORMAL, 1, 0, 0, 0, 6, {0}},
-#ifdef CFG_FEATURE_SURPORT_HUGE_PAGE
-    { 2, 2 * 1024 * 1024, 256, 8 * 1024, BUFF_SP_HUGEPAGE_ONLY, 1, 0, 0, 0, 6, {0}},
-    { 3, MZ_DEFAULT_CFG_MAX_SIZE, 8 * 1024, 64 * 1024 * 1024, BUFF_SP_HUGEPAGE_ONLY, 1, 0, 0, 0, 6, {0}},
-#endif
-    { 4, 2 * 1024 * 1024, 4 * 1024, 384 * 1024, BUFF_SP_NORMAL | BUFF_SP_DVPP, 1, 0, 0, 0, 6, {0}},
-#ifdef CFG_FEATURE_SURPORT_HUGE_PAGE
-    { 5, 2 * 1024 * 1024, 4 * 1024, 384 * 1024, BUFF_SP_HUGEPAGE_ONLY | BUFF_SP_DVPP, 1, 0, 0, 0, 6, {0}},
-#endif
-};
-#endif
 
+// Used when BUFF_FEATURE_NO_SUPPORT_DVPP_MZ is false (dev supports dvpp mz, smaller dvpp config).
+static memZoneCfg g_mz_cfg_dvpp_default_normal[] = {
+    {0, 2 * 1024 * 1024, 4 * 1024, 384 * 1024, BUFF_SP_NORMAL | BUFF_SP_DVPP, 0, 0, 0, 0, 0, {0}},
+    {1, 2 * 1024 * 1024, 4 * 1024, 384 * 1024, BUFF_SP_HUGEPAGE_ONLY | BUFF_SP_DVPP, 0, 0, 0, 0, 0, {0}},
+};
+// dvpp mem cfg same to non-dvpp cfg (g_mz_cfg_cache_default entries with BUFF_SP_DVPP flag added).
+static memZoneCfg g_mz_cfg_cache_default[] = {
+    {0, 2 * 1024 * 1024, 256, 8 * 1024, BUFF_SP_NORMAL, 1, 0, 0, 0, 6, {0}},
+    {1, 32 * 1024 * 1024, 8 * 1024, 8 * 1024 * 1024, BUFF_SP_NORMAL, 1, 0, 0, 0, 6, {0}},
+    {2, 2 * 1024 * 1024, 256, 8 * 1024, BUFF_SP_HUGEPAGE_ONLY, 1, 0, 0, 0, 6, {0}},
+    {3, MZ_DEFAULT_CFG_MAX_SIZE, 8 * 1024, 64 * 1024 * 1024, BUFF_SP_HUGEPAGE_ONLY, 1, 0, 0, 0, 6, {0}},
+    {4, 2 * 1024 * 1024, 256, 8 * 1024, BUFF_SP_NORMAL | BUFF_SP_DVPP, 1, 0, 0, 0, 6, {0}},
+    {5, 32 * 1024 * 1024, 8 * 1024, 8 * 1024 * 1024, BUFF_SP_NORMAL | BUFF_SP_DVPP, 1, 0, 0, 0, 6, {0}},
+    {6, 2 * 1024 * 1024, 256, 8 * 1024, BUFF_SP_HUGEPAGE_ONLY | BUFF_SP_DVPP, 1, 0, 0, 0, 6, {0}},
+    {7, MZ_DEFAULT_CFG_MAX_SIZE, 8 * 1024, 64 * 1024 * 1024, BUFF_SP_HUGEPAGE_ONLY | BUFF_SP_DVPP, 1, 0, 0, 0, 6, {0}},
+};
+
+// Used when BUFF_FEATURE_NO_SUPPORT_DVPP_MZ is false (dev supports dvpp mz, smaller dvpp config with cache).
+static memZoneCfg g_mz_cfg_cache_default_normal[] = {
+    {0, 2 * 1024 * 1024, 256, 8 * 1024, BUFF_SP_NORMAL, 1, 0, 0, 0, 6, {0}},
+    {1, 32 * 1024 * 1024, 8 * 1024, 8 * 1024 * 1024, BUFF_SP_NORMAL, 1, 0, 0, 0, 6, {0}},
+    {2, 2 * 1024 * 1024, 256, 8 * 1024, BUFF_SP_HUGEPAGE_ONLY, 1, 0, 0, 0, 6, {0}},
+    {3, MZ_DEFAULT_CFG_MAX_SIZE, 8 * 1024, 64 * 1024 * 1024, BUFF_SP_HUGEPAGE_ONLY, 1, 0, 0, 0, 6, {0}},
+    {4, 2 * 1024 * 1024, 4 * 1024, 384 * 1024, BUFF_SP_NORMAL | BUFF_SP_DVPP, 1, 0, 0, 0, 6, {0}},
+    {5, 2 * 1024 * 1024, 4 * 1024, 384 * 1024, BUFF_SP_HUGEPAGE_ONLY | BUFF_SP_DVPP, 1, 0, 0, 0, 6, {0}},
+};
+
+// no_huge variants: exclude BUFF_SP_HUGEPAGE_ONLY entries for devices that do not support hugepage.
+// Used when buff_has_dev_feature(dev_id, BUFF_FEATURE_SUPPORT_HUGE_PAGE) returns false.
+// Compared to g_mz_cfg_default, only keeps normal entries (index 0,1).
+static memZoneCfg g_mz_cfg_default_no_huge[] = {
+    {0, 2 * 1024 * 1024, 256, 8 * 1024, BUFF_SP_NORMAL, 0, 0, 0, 0, 0, {0}},
+    {1, 32 * 1024 * 1024, 8 * 1024, 8 * 1024 * 1024, BUFF_SP_NORMAL, 0, 0, 0, 0, 0, {0}},
+};
+
+// Compared to g_mz_cfg_dvpp_default, only keeps normal+dvpp entries (index 0,1).
+static memZoneCfg g_mz_cfg_dvpp_default_no_huge[] = {
+    {0, 2 * 1024 * 1024, 256, 8 * 1024, BUFF_SP_NORMAL | BUFF_SP_DVPP, 0, 0, 0, 0, 0, {0}},
+    {1, 32 * 1024 * 1024, 8 * 1024, 8 * 1024 * 1024, BUFF_SP_NORMAL | BUFF_SP_DVPP, 0, 0, 0, 0, 0, {0}},
+};
+
+// Compared to g_mz_cfg_dvpp_default_normal, only keeps the normal+dvpp entry (index 0).
+static memZoneCfg g_mz_cfg_dvpp_default_normal_no_huge[] = {
+    {0, 2 * 1024 * 1024, 4 * 1024, 384 * 1024, BUFF_SP_NORMAL | BUFF_SP_DVPP, 0, 0, 0, 0, 0, {0}},
+};
+
+// Compared to g_mz_cfg_cache_default, only keeps normal entries (index 0,1,4,5).
+static memZoneCfg g_mz_cfg_cache_default_no_huge[] = {
+    {0, 2 * 1024 * 1024, 256, 8 * 1024, BUFF_SP_NORMAL, 1, 0, 0, 0, 6, {0}},
+    {1, 32 * 1024 * 1024, 8 * 1024, 8 * 1024 * 1024, BUFF_SP_NORMAL, 1, 0, 0, 0, 6, {0}},
+    {4, 2 * 1024 * 1024, 256, 8 * 1024, BUFF_SP_NORMAL | BUFF_SP_DVPP, 1, 0, 0, 0, 6, {0}},
+    {5, 32 * 1024 * 1024, 8 * 1024, 8 * 1024 * 1024, BUFF_SP_NORMAL | BUFF_SP_DVPP, 1, 0, 0, 0, 6, {0}},
+};
+
+// Compared to g_mz_cfg_cache_default_normal, only keeps normal entries (index 0,1,4).
+static memZoneCfg g_mz_cfg_cache_default_normal_no_huge[] = {
+    {0, 2 * 1024 * 1024, 256, 8 * 1024, BUFF_SP_NORMAL, 1, 0, 0, 0, 6, {0}},
+    {1, 32 * 1024 * 1024, 8 * 1024, 8 * 1024 * 1024, BUFF_SP_NORMAL, 1, 0, 0, 0, 6, {0}},
+    {4, 2 * 1024 * 1024, 4 * 1024, 384 * 1024, BUFF_SP_NORMAL | BUFF_SP_DVPP, 1, 0, 0, 0, 6, {0}},
+};
+
+/* Config lookup tables for feature-based memzone selection */
+typedef struct {
+    memZoneCfg *cfg;
+    uint32_t num;
+} mz_cfg_entry_t;
+
+// DVPP config table: [has_huge][no_dvpp_mz]
+static const mz_cfg_entry_t g_dvpp_cfg_table[2][2] = {
+    {
+        {g_mz_cfg_dvpp_default_normal_no_huge, sizeof(g_mz_cfg_dvpp_default_normal_no_huge) / sizeof(memZoneCfg)},
+        {g_mz_cfg_dvpp_default_no_huge, sizeof(g_mz_cfg_dvpp_default_no_huge) / sizeof(memZoneCfg)},
+    },
+    {
+        {g_mz_cfg_dvpp_default_normal, sizeof(g_mz_cfg_dvpp_default_normal) / sizeof(memZoneCfg)},
+        {g_mz_cfg_dvpp_default, sizeof(g_mz_cfg_dvpp_default) / sizeof(memZoneCfg)},
+    },
+};
+
+// Cache config table: [has_huge][no_dvpp_mz]
+static const mz_cfg_entry_t g_cache_cfg_table[2][2] = {
+    {
+        {g_mz_cfg_cache_default_normal_no_huge, sizeof(g_mz_cfg_cache_default_normal_no_huge) / sizeof(memZoneCfg)},
+        {g_mz_cfg_cache_default_no_huge, sizeof(g_mz_cfg_cache_default_no_huge) / sizeof(memZoneCfg)},
+    },
+    {
+        {g_mz_cfg_cache_default_normal, sizeof(g_mz_cfg_cache_default_normal) / sizeof(memZoneCfg)},
+        {g_mz_cfg_cache_default, sizeof(g_mz_cfg_cache_default) / sizeof(memZoneCfg)},
+    },
+};
+
+// Non-cache config table: [has_huge]
+static const mz_cfg_entry_t g_noncache_cfg_table[2] = {
+    {g_mz_cfg_default_no_huge, sizeof(g_mz_cfg_default_no_huge) / sizeof(memZoneCfg)},
+    {g_mz_cfg_default, sizeof(g_mz_cfg_default) / sizeof(memZoneCfg)},
+};
 
 /* memtype definition */
 #define MEMTYPE_NORMAL 0
@@ -111,9 +166,14 @@ STATIC THREAD bool buff_already_init = false;
 static THREAD int g_self_pid = -1;
 static THREAD pthread_mutex_t g_buff_grp_init_mutex = PTHREAD_MUTEX_INITIALIZER;
 
-int halBuffInit(BuffCfg *cfg)
+int drv_buff_init_inner(BuffCfg *cfg, int flag)
 {
     drvError_t ret;
+
+    ret = buff_platform_feature_init();
+    if (ret != DRV_ERROR_NONE) {
+        return ret;
+    }
 
     ret = buff_is_support();
     if (ret != DRV_ERROR_NONE) {
@@ -123,6 +183,10 @@ int halBuffInit(BuffCfg *cfg)
     if (cfg == NULL) {
         buff_err("Cfg is NULL.\n");
         return (int)DRV_ERROR_INVALID_VALUE;
+    }
+
+    if (flag == false) {
+        return DRV_ERROR_NONE;
     }
 
     (void)pthread_mutex_lock(&g_buff_grp_init_mutex);
@@ -144,10 +208,16 @@ int halBuffInit(BuffCfg *cfg)
     buff_already_init = true;
     g_self_pid = getpid();
     (void)pthread_mutex_unlock(&g_buff_grp_init_mutex);
+
     return (int)DRV_ERROR_NONE;
 }
 
-void memzone_elastic_cfg_init(struct buff_memzone_list_node* mz_list_node)
+int halBuffInit(BuffCfg *cfg)
+{
+    return drv_buff_init_inner(cfg, true);
+}
+
+void memzone_elastic_cfg_init(struct buff_memzone_list_node *mz_list_node)
 {
     uint32_t i;
 
@@ -159,7 +229,7 @@ void memzone_elastic_cfg_init(struct buff_memzone_list_node* mz_list_node)
 
 THREAD struct memzone_cfg_max_buf_info g_mz_max_buf[MEMTYPE_MAX_NUM] = {{0}};
 
-uint64_t* memzone_get_buff_head_by_index(struct memzone_user_mng_t *memzone, unsigned int idx)
+uint64_t *memzone_get_buff_head_by_index(struct memzone_user_mng_t *memzone, unsigned int idx)
 {
     uint64_t *head = NULL;
 
@@ -184,8 +254,8 @@ void memzone_delete(struct memzone_user_mng_t *mz)
     return;
 }
 
-static drvError_t memzone_create(memZoneCfg *cfg_info, int grp_id,
-    struct buff_memzone_list_node *mz_list_node, struct memzone_user_mng_t **memzone)
+static drvError_t memzone_create(memZoneCfg *cfg_info, int grp_id, struct buff_memzone_list_node *mz_list_node,
+                                 struct memzone_user_mng_t **memzone)
 {
     struct buff_req_mz_create arg;
     drvError_t ret;
@@ -270,8 +340,8 @@ STATIC memZoneCfg *memzone_get_cmpat_cfg_info(uint64_t size, uint32 flags)
     }
 
     if (i >= g_mz_cfg_num) {
-        buff_err("Can't find compatible mz cfg info. (size=%llu; flags=%u; type=%u; i=%u; g_mz_cfg_num=%u)\n",
-            size, flags, page_type, i, g_mz_cfg_num);
+        buff_err("Can't find compatible mz cfg info. (size=%lu; flags=%u; type=%u; i=%u; g_mz_cfg_num=%u)\n", size,
+                 flags, page_type, i, g_mz_cfg_num);
         return NULL;
     }
 
@@ -303,13 +373,13 @@ static bool memzone_page_type_is_valid(memZoneCfg *cfg_info, unsigned int idx)
     if (memzone_is_small_page_type(cfg_info->page_type) == true) {
         if (cfg_info->total_size == 0 || cfg_info->total_size % MZ_PAGE_SIZE_NORMAL != 0) {
             buff_err("Small page total_size is error. (total_size=0x%llx; page_type=%u; idx=%u)\n",
-                cfg_info->total_size, cfg_info->page_type, idx);
+                     cfg_info->total_size, cfg_info->page_type, idx);
             return false;
         }
     } else if (memzone_is_huge_page_type(cfg_info->page_type) == true) {
         if (cfg_info->total_size == 0 || cfg_info->total_size % MZ_PAGE_SIZE_HUGE != 0) {
-            buff_err("Huge page total_size is error. (total_size=0x%llx; page_type=%u; idx=%u)\n",
-                cfg_info->total_size, cfg_info->page_type, idx);
+            buff_err("Huge page total_size is error. (total_size=0x%llx; page_type=%u; idx=%u)\n", cfg_info->total_size,
+                     cfg_info->page_type, idx);
             return false;
         }
     } else {
@@ -341,28 +411,28 @@ static drvError_t memzone_cfg_is_valid(memZoneCfg *cfg_info, unsigned int idx)
 
     /* judge max_buf_size */
     if (cfg_info->max_buf_size >= cfg_info->total_size) {
-        buff_err("max_buf_size is error, max_buf_size:0x%llx, mz_total_size:0x%llx, idx:%u\n",
-            cfg_info->max_buf_size, cfg_info->total_size, idx);
+        buff_err("max_buf_size is error, max_buf_size:0x%llx, mz_total_size:0x%llx, idx:%u\n", cfg_info->max_buf_size,
+                 cfg_info->total_size, idx);
         return DRV_ERROR_INVALID_VALUE;
     }
 
     /* judge elastic parameter */
     if ((cfg_info->elasticEnable != 0) && (cfg_info->elasticLowLevel < 0)) {
         buff_err("Elastic Low Level is invalid. (Elastic_low_level=%d; elastic_enable=%d; idx=%u)\n",
-            cfg_info->elasticLowLevel, cfg_info->elasticEnable, idx);
+                 cfg_info->elasticLowLevel, cfg_info->elasticEnable, idx);
         return DRV_ERROR_INVALID_VALUE;
     }
 
     /* judge mz_total_size and blk_size */
     if (cfg_info->total_size % cfg_info->blk_size != 0) {
         buff_err("mz_total_size and blk_size is error, mz_total_size:0x%llx, blk_size:0x%x, idx:%u\n",
-            cfg_info->total_size, cfg_info->blk_size, idx);
+                 cfg_info->total_size, cfg_info->blk_size, idx);
         return DRV_ERROR_INVALID_VALUE;
     }
 
     if (cfg_info->max_buf_size < cfg_info->blk_size) {
         buff_err("max_buf_size is error, cfg_info->max_buf_size: 0x%llx, blk_size:0x%x, idx:%u\n",
-            cfg_info->max_buf_size, cfg_info->blk_size, idx);
+                 cfg_info->max_buf_size, cfg_info->blk_size, idx);
         return DRV_ERROR_INVALID_VALUE;
     }
 
@@ -389,8 +459,8 @@ static drvError_t memzone_cfg_para_check(memZoneCfg *cfg, uint32_t *cfg_num_out)
         }
 
         if (cfg[i].max_buf_size <= cur_max_buf[cfg[i].page_type]) {
-            buff_err("Max_buf_size must increase. (i=%u; max_buf_size=0x%llx; previous_max_buf=0x%llx)\n",
-                i, cfg[i].max_buf_size, cur_max_buf[cfg[i].page_type]);
+            buff_err("Max_buf_size must increase. (i=%u; max_buf_size=0x%llx; previous_max_buf=0x%lx)\n", i,
+                     cfg[i].max_buf_size, cur_max_buf[cfg[i].page_type]);
             return DRV_ERROR_INVALID_VALUE;
         }
         cur_max_buf[cfg[i].page_type] = cfg[i].max_buf_size;
@@ -423,7 +493,8 @@ static void memzone_set_max_buff(void)
 
     for (memtype = 0; memtype < MEMTYPE_MAX_NUM; memtype++) {
         g_mz_max_buf[memtype].huge_prior = (tmp_info[memtype].huge_only > tmp_info[memtype].normal) ?
-            tmp_info[memtype].huge_only : tmp_info[memtype].normal;
+                                               tmp_info[memtype].huge_only :
+                                               tmp_info[memtype].normal;
         g_mz_max_buf[memtype].huge_only = tmp_info[memtype].huge_only;
         g_mz_max_buf[memtype].normal = tmp_info[memtype].normal;
     }
@@ -444,12 +515,16 @@ static bool is_mz_cfg_dvpp_default(uint32_t cfg_num, memZoneCfg *mz_config)
 static uint32_t memzone_add_default_special_mem(uint32_t cfg_num, memZoneCfg *mz_config)
 {
     uint32_t total_cfg_num = cfg_num;
+    bool has_huge = buff_mz_has_hugepage();
+    bool no_dvpp_mz = buff_mz_has_no_dvpp();
+    const mz_cfg_entry_t *entry = NULL;
     uint32_t i;
 
     if (is_mz_cfg_dvpp_default(cfg_num, mz_config) == true) {
-        total_cfg_num += (uint32_t)(sizeof(g_mz_cfg_dvpp_default) / sizeof(memZoneCfg));
+        entry = &g_dvpp_cfg_table[has_huge][no_dvpp_mz];
+        total_cfg_num += entry->num;
         for (i = cfg_num; i < total_cfg_num; i++) {
-            g_mz_cfg[i] = g_mz_cfg_dvpp_default[i - cfg_num];
+            g_mz_cfg[i] = entry->cfg[i - cfg_num];
             g_mz_cfg[i].cfg_id = i;
         }
     }
@@ -461,6 +536,9 @@ drvError_t memzone_cfg(memZoneCfg *mz_cfg)
 {
     memZoneCfg *mz_config = mz_cfg;
     uint32_t cfg_num = 0;
+    bool has_huge = buff_mz_has_hugepage();
+    bool no_dvpp_mz = buff_mz_has_no_dvpp();
+    const mz_cfg_entry_t *entry = NULL;
     int ret;
 
     ret = (int)memzone_cfg_para_check(mz_config, &cfg_num);
@@ -472,12 +550,12 @@ drvError_t memzone_cfg(memZoneCfg *mz_cfg)
     // use default cfg
     if (cfg_num == 0) {
         if (buff_is_enable_cache()) {
-            mz_config = g_mz_cfg_cache_default;
-            cfg_num = sizeof(g_mz_cfg_cache_default) / sizeof(memZoneCfg);
+            entry = &g_cache_cfg_table[has_huge][no_dvpp_mz];
         } else {
-            mz_config = g_mz_cfg_default;
-            cfg_num = sizeof(g_mz_cfg_default) / sizeof(memZoneCfg);
+            entry = &g_noncache_cfg_table[has_huge];
         }
+        mz_config = entry->cfg;
+        cfg_num = entry->num;
         buff_event("Check no mz cfg, use default. (num=%u)\n", cfg_num);
     }
 
@@ -494,11 +572,11 @@ drvError_t memzone_cfg(memZoneCfg *mz_cfg)
     // find max max_buf_size, save to g_mz_max_buf
     memzone_set_max_buff();
 
-    buff_event("Buff_cfg success. (cfg num=%u; huge_prior=%llu; normal=%llu; huge_only=%llu; "
-        "dvpp_huge_prior=%llu; dvpp_normal=%llu; dvpp_huge_only=%llu)\n", g_mz_cfg_num,
-        g_mz_max_buf[MEMTYPE_NORMAL].huge_prior, g_mz_max_buf[MEMTYPE_NORMAL].normal,
-        g_mz_max_buf[MEMTYPE_NORMAL].huge_only, g_mz_max_buf[MEMTYPE_DVPP].huge_prior,
-        g_mz_max_buf[MEMTYPE_DVPP].normal, g_mz_max_buf[MEMTYPE_DVPP].huge_only);
+    buff_event("Buff_cfg success. (cfg num=%u; huge_prior=%lu; normal=%lu; huge_only=%lu; "
+               "dvpp_huge_prior=%lu; dvpp_normal=%lu; dvpp_huge_only=%lu)\n",
+               g_mz_cfg_num, g_mz_max_buf[MEMTYPE_NORMAL].huge_prior, g_mz_max_buf[MEMTYPE_NORMAL].normal,
+               g_mz_max_buf[MEMTYPE_NORMAL].huge_only, g_mz_max_buf[MEMTYPE_DVPP].huge_prior,
+               g_mz_max_buf[MEMTYPE_DVPP].normal, g_mz_max_buf[MEMTYPE_DVPP].huge_only);
 
     return DRV_ERROR_NONE;
 }
@@ -552,7 +630,7 @@ STATIC drvError_t memzone_alloc(struct memzone_user_mng_t *mz, uint64_t size, vo
     mz->blk_num_available -= (uint32)blk_num;
 
     start = (uintptr_t)(mz->area.mz_mem_uva) + ((uintptr_t)idx * mz->blk_size);
-    end   = start + blk_num * mz->blk_size;
+    end = start + blk_num * mz->blk_size;
 
     head = buff_head_init(start, end, UNI_ALIGN_MIN, 1, 0);
     head->buff_type = BUFF_NORMAL;
@@ -590,7 +668,7 @@ static drvError_t memzone_free(void *memzone, void *buff, struct uni_buff_head_t
     uint32 idx;
 
     start = (void *)((char *)head - (head->resv_head * UNI_RSV_HEAD_LEN));
-    end   = (void *)((char *)head + head->size);
+    end = (void *)((char *)head + head->size);
     if (!memzone_buff_is_valid(&mz->area, start, end)) {
         buff_err("invalid addr:%lx to free.\n", (uintptr_t)buff);
         return DRV_ERROR_BAD_ADDRESS;
@@ -636,7 +714,7 @@ static inline uint32_t memzone_atomic_read(struct memzone_user_mng_t *mz)
 }
 
 static struct memzone_user_mng_t *memzone_mng_get(struct buff_memzone_list_node *mz_list_node,
-    struct memzone_user_mng_t *mz, unsigned int cnt)
+                                                  struct memzone_user_mng_t *mz, unsigned int cnt)
 {
     struct list_head *head = &mz_list_node->list;
     struct list_head *tmp = NULL;
@@ -688,8 +766,7 @@ bool memzone_need_shrink(struct buff_memzone_list_node *mz_list_node)
     }
 
     /* for performance: no need lock */
-    mz_free_cnt = buff_api_atomic_read(&mz_list_node->mz_cnt) -
-        buff_api_atomic_read(&mz_list_node->mz_using_cnt);
+    mz_free_cnt = buff_api_atomic_read(&mz_list_node->mz_cnt) - buff_api_atomic_read(&mz_list_node->mz_using_cnt);
     if (mz_free_cnt <= mz_list_node->elastic_low_level) {
         return false;
     }
@@ -701,8 +778,7 @@ static inline bool memzone_is_parent_inited(struct memzone_user_mng_t *mz)
     return mz->head.parent != NULL;
 }
 
-static bool memzone_is_match_destroy_condition(struct memzone_user_mng_t *mz,
-    struct memzone_user_mng_t *specific_mz)
+static bool memzone_is_match_destroy_condition(struct memzone_user_mng_t *mz, struct memzone_user_mng_t *specific_mz)
 {
     /* Indicates whether to match the release of the specified pool */
     if ((specific_mz != NULL) && (specific_mz != mz)) {
@@ -722,8 +798,7 @@ static bool memzone_is_match_destroy_condition(struct memzone_user_mng_t *mz,
     return true;
 }
 
-void memzone_scan_free_idle_pool(struct buff_memzone_list_node *mz_list_node,
-    struct memzone_user_mng_t *specific_mz)
+void memzone_scan_free_idle_pool(struct buff_memzone_list_node *mz_list_node, struct memzone_user_mng_t *specific_mz)
 {
     struct list_head *head = &mz_list_node->list;
     struct memzone_user_mng_t *mz = NULL;
@@ -731,7 +806,8 @@ void memzone_scan_free_idle_pool(struct buff_memzone_list_node *mz_list_node,
     struct list_head *n = NULL;
 
     (void)pthread_rwlock_wrlock(&mz_list_node->mz_list_mutex);
-    list_for_each_safe(pos, n, head) {
+    list_for_each_safe(pos, n, head)
+    {
         mz = list_entry(pos, struct memzone_user_mng_t, user_list);
         if (memzone_is_match_destroy_condition(mz, specific_mz)) {
             if (mz_list_node->latest_mz == mz) {
@@ -808,7 +884,7 @@ int memzone_scan_free(struct memzone_user_mng_t *mz)
         }
 
         start = (void *)((char *)head - (head->resv_head * UNI_RSV_HEAD_LEN));
-        end   = (void *)((char *)head + head->size);
+        end = (void *)((char *)head + head->size);
         size = (unsigned long)end - (unsigned long)start;
         if ((size < mz->blk_size) || (size > mz->area.mz_mem_total_size)) {
             break;
@@ -821,8 +897,8 @@ int memzone_scan_free(struct memzone_user_mng_t *mz)
 }
 
 /*lint -e629 */
-static drvError_t memzone_list_alloc(struct buff_memzone_list_node *mz_list_node,
-    uint64_t size, void **buff, uint32_t *blk_id)
+static drvError_t memzone_list_alloc(struct buff_memzone_list_node *mz_list_node, uint64_t size, void **buff,
+                                     uint32_t *blk_id)
 {
     struct memzone_user_mng_t *mz = NULL;
     struct memzone_user_mng_t *next_mz = NULL;
@@ -852,7 +928,7 @@ static drvError_t memzone_list_alloc(struct buff_memzone_list_node *mz_list_node
 static drvError_t memzone_alloc_normal(uint64_t size, void **buff, uint32_t *blk_id, struct mem_info_t *mem_info)
 {
     int devid = buff_get_devid_from_flags(mem_info->flag);
-    struct buff_memzone_list_node* mz_list_node = NULL;
+    struct buff_memzone_list_node *mz_list_node = NULL;
     struct memzone_user_mng_t *mz = NULL;
     memZoneCfg *cfg_info = NULL;
     drvError_t ret, ret_tmp;
@@ -877,10 +953,10 @@ static drvError_t memzone_alloc_normal(uint64_t size, void **buff, uint32_t *blk
                 buff_event("Can not create memzone. (ret=%x)\n", ret_tmp);
                 return ret_tmp;
             }
-            buff_debug("Memzone create success. (pid=%d, size=%llu, flag=%#llx, grp_id=%d, "
-                "cfg_id=%u, blk_size=%u, max_size=%llu)\n",
-                buff_api_getpid(), size, mem_info->flag, mem_info->grp_id,
-                cfg_info->cfg_id, cfg_info->blk_size, cfg_info->max_buf_size);
+            buff_debug("Memzone create success. (pid=%d, size=%lu, flag=%#lx, grp_id=%d, "
+                       "cfg_id=%u, blk_size=%u, max_size=%llu)\n",
+                       buff_api_getpid(), size, mem_info->flag, mem_info->grp_id, cfg_info->cfg_id, cfg_info->blk_size,
+                       cfg_info->max_buf_size);
         }
     } while (ret != DRV_ERROR_NONE);
 
@@ -901,8 +977,8 @@ static drvError_t memzone_alloc_large(uint64_t size, void **buff, uint32_t *blk_
 
     ret = buff_usr_alloc_large_buf(&arg);
     if (ret != DRV_ERROR_NONE) {
-        buff_event("Can not alloc mz huge. (ret=%d; devid=%d; grp_id=%d; pid=%d; size=%llu; page_type=%#llx)\n",
-            ret, arg.devid, arg.grp_id, buff_get_current_pid(), arg.size, arg.sp_flag);
+        buff_event("Can not alloc mz huge. (ret=%d; devid=%d; grp_id=%d; pid=%d; size=%lu; page_type=%#llx)\n", ret,
+                   arg.devid, arg.grp_id, buff_get_current_pid(), arg.size, arg.sp_flag);
         return ret;
     }
     *blk_id = arg.blk_id;
@@ -954,8 +1030,8 @@ static drvError_t buff_align_adapt(void **buff, struct mem_info_t *info)
     if (offset == 0) {
         return DRV_ERROR_NONE;
     } else if (offset > (info->align - UNI_ALIGN_MIN) || offset < head_len) {
-        buff_err("adapt buff failed, buff:0x%llx, adapt_buff:0x%llx, offset:0x%llx, align:0x%x\n",
-                 org_addr, adapt_addr, offset, info->align);
+        buff_err("adapt buff failed, buff:0x%llx, adapt_buff:0x%llx, offset:0x%llx, align:0x%x\n", org_addr, adapt_addr,
+                 offset, info->align);
         return DRV_ERROR_INNER_ERR;
     }
 
@@ -985,13 +1061,13 @@ static drvError_t memzone_alloc_para_check(struct mem_info_t *info, void **buff)
 
     /* resv 2M space for buf_mng */
     if (info->size == 0) {
-        buff_err("size is invalid, size:0x%llx, size_len:%d, max_size:0x%x\n",
-            info->size, sizeof(info->size), BUFF_32_BIT_MASK - MZ_PAGE_SIZE_HUGE);
+        buff_err("size is invalid, size:0x%lx, size_len:%ld, max_size:0x%x\n", info->size, sizeof(info->size),
+                 BUFF_32_BIT_MASK - MZ_PAGE_SIZE_HUGE);
         return DRV_ERROR_INVALID_VALUE;
     }
 
     if (buff_get_devid_from_flags(info->flag) >= BUFF_MAX_DEV) {
-        buff_err("invalid flag, flag:%#llx\n", info->flag);
+        buff_err("invalid flag, flag:%#lx\n", info->flag);
         return DRV_ERROR_INVALID_VALUE;
     }
 
@@ -1002,8 +1078,8 @@ static drvError_t memzone_alloc_para_check(struct mem_info_t *info, void **buff)
 
     total = buff_calc_size(info->size, info->align, 0);
     if (buff_size_is_invalid(info->size, total) != 0) {
-        buff_err("buff_alloc_align size invalid(0~4G), size:0x%llx, total size:0x%llx, align:%u\n", info->size, total,
-            info->align);
+        buff_err("buff_alloc_align size invalid(0~4G), size:0x%lx, total size:0x%lx, align:%u\n", info->size, total,
+                 info->align);
         return DRV_ERROR_INVALID_VALUE;
     }
 
@@ -1026,8 +1102,8 @@ static drvError_t _memzone_alloc_buff(struct mem_info_t *info, void **buff, uint
         if ((ret != DRV_ERROR_NONE) && ((sp_flag & BUFF_SP_HUGEPAGE_PRIOR) == BUFF_SP_HUGEPAGE_PRIOR)) {
             info->flag = sp_flag & (uint64)(~(BUFF_SP_HUGEPAGE_PRIOR | BUFF_SP_HUGEPAGE_ONLY));
             ret = memzone_alloc_normal(info->size, buff, blk_id, info);
-            buff_event("Can not alloc huge prior, alloc normal page. (ret=0x%x; flag=%#llx; new_flag=%#llx)\n",
-                ret, sp_flag, info->flag);
+            buff_event("Can not alloc huge prior, alloc normal page. (ret=0x%x; flag=%#llx; new_flag=%#lx)\n", ret,
+                       sp_flag, info->flag);
         }
     } else {
         ret = memzone_alloc_large(info->size, buff, blk_id, info);
@@ -1052,17 +1128,17 @@ drvError_t memzone_alloc_buff(struct mem_info_t *info, void **buff, uint32_t *bl
 
     ret = _memzone_alloc_buff(info, buff, blk_id, sp_flag);
     if (ret != DRV_ERROR_NONE) {
-        if (buff_is_enable_cache()) {
+        if ((info->grp_id == buff_get_default_pool_id()) && (buff_is_enable_cache())) {
             /* wait 200ms to free memory in recycle thread */
             (void)usleep(RECYCLE_THREAD_PERIOD_US);
-            buff_event("wait 200ms to free mem. (size=0x%llx; align=0x%x; flag=%#llx; grp_id=%d; pid=%d; ret=0x%x)\n",
-                info->size, info->align, info->flag, info->grp_id, buff_get_current_pid(), ret);
+            buff_event("wait 200ms to free mem. (size=0x%lx; align=0x%x; flag=%#lx; grp_id=%d; pid=%d; ret=0x%x)\n",
+                       info->size, info->align, info->flag, info->grp_id, buff_get_current_pid(), ret);
             (void)buff_proc_cache_free(BUFF_INVALID_DEV);
             ret = _memzone_alloc_buff(info, buff, blk_id, sp_flag);
         }
         if (ret != DRV_ERROR_NONE) {
-            buff_err("Memzone alloc buff failed. (size=0x%llx; align=0x%x; flag=%#llx; grp_id=%d; pid=%d; ret=0x%x)\n",
-                info->size, info->align, info->flag, info->grp_id, buff_get_current_pid(), ret);
+            buff_err("Memzone alloc buff failed. (size=0x%lx; align=0x%x; flag=%#lx; grp_id=%d; pid=%d; ret=0x%x)\n",
+                     info->size, info->align, info->flag, info->grp_id, buff_get_current_pid(), ret);
             return ret;
         }
     }
@@ -1070,14 +1146,14 @@ drvError_t memzone_alloc_buff(struct mem_info_t *info, void **buff, uint32_t *bl
     return buff_align_adapt(buff, info);
 }
 
-static void memzone_init_alloc_info(uint64_t size, unsigned int align,
-    unsigned long flag, int grp_id, struct mem_info_t *info)
+static void memzone_init_alloc_info(uint64_t size, unsigned int align, unsigned long flag, int grp_id,
+                                    struct mem_info_t *info)
 {
     info->size = size;
     info->align = align;
     info->offset = 0;
     info->flag = flag & (~XSMEM_BLK_ALLOC_FROM_OS);
- 
+
     if ((flag & BUFF_SP_SVM) == BUFF_SP_SVM) {
         info->grp_id = grp_id;
         info->alloc_type = MZ_ALLOC_TYPE_DIRECTLY;
@@ -1100,7 +1176,8 @@ int halBuffAllocAlignEx(uint64_t size, unsigned int align, unsigned long flag, i
     memzone_init_alloc_info(size, align, flag, grp_id, &info);
     ret = memzone_alloc_buff(&info, buff, &blk_id);
     if (ret != DRV_ERROR_NONE) {
-        buff_err("Hal_buff_alloc_align_ex failed. (size=0x%llx; size_len=%d; align=0x%x; flag=0x%lx; grpid=%d; ret=%d)\n",
+        buff_err(
+            "Hal_buff_alloc_align_ex failed. (size=0x%lx; size_len=%ld; align=0x%x; flag=0x%lx; grpid=%d; ret=%d)\n",
             size, sizeof(size), align, flag, info.grp_id, ret);
         return ret;
     }
@@ -1118,12 +1195,6 @@ int halBuffAlloc(uint64_t size, void **buff)
     unsigned long flag = 0;
 
     flag = buff_make_devid_to_flags(buff_get_current_devid(), flag);
-#ifdef CFG_FEATURE_SURPORT_HUGE_PAGE
-    flag |= BUFF_SP_HUGEPAGE_PRIOR;
+    flag |= buff_get_mbuf_hugepage_policy();
     return halBuffAllocAlignEx(size, UNI_ALIGN_MIN, flag, buff_get_default_pool_id(), buff);
-#else
-    flag |= BUFF_SP_NORMAL;
-    return halBuffAllocAlignEx(size, UNI_ALIGN_MIN, flag, buff_get_default_pool_id(), buff);
-#endif
 }
-

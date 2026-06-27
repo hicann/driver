@@ -93,7 +93,6 @@ static int trs_chan_ops_sq_disable_to_enable(struct trs_id_inst *inst, u32 id, u
     return ret;
 }
 
-
 static int trs_chan_ops_get_sq_head(struct trs_id_inst *inst, u32 sqid, u32 *head)
 {
     return trs_stars_get_sq_head(inst, sqid, head);
@@ -186,4 +185,3 @@ int trs_stars_chan_ops_query_sqcq(struct trs_id_inst *inst, u32 id, u32 cmd, u64
 
     return ret;
 }
-

@@ -89,7 +89,8 @@ void buff_del_grp_list_node(struct buff_grp_list_node *node)
             continue;
         }
         (void)pthread_rwlock_wrlock(&mz_list_node->mz_list_mutex);
-        list_for_each_safe(pos, n, &(mz_list_node->list)) {
+        list_for_each_safe(pos, n, &(mz_list_node->list))
+        {
             mz = list_entry(pos, struct memzone_user_mng_t, user_list);
             if (mz != NULL) {
                 if (mz_list_node->latest_mz == mz) {
@@ -115,7 +116,8 @@ void buff_grp_list_clear(void)
 
     (void)pthread_mutex_lock(&g_grp_mng_list_muetx);
 
-    list_for_each_safe(pos, n, head) {
+    list_for_each_safe(pos, n, head)
+    {
         grp_node = list_entry(pos, struct buff_grp_list_node, list);
         if (grp_node != NULL) {
             buff_del_grp_list_node(grp_node);
@@ -124,7 +126,7 @@ void buff_grp_list_clear(void)
     (void)pthread_mutex_unlock(&g_grp_mng_list_muetx);
 }
 
-struct buff_memzone_list_node* buff_get_buff_mng_list(int devid, int grp, uint32_t list_idx)
+struct buff_memzone_list_node *buff_get_buff_mng_list(int devid, int grp, uint32_t list_idx)
 {
     struct buff_grp_list_node *grp_node = NULL;
     struct list_head *pos = NULL;
@@ -154,8 +156,7 @@ exit:
 int buff_get_devid_by_mz_list(struct buff_memzone_list_node *mz_list_node)
 {
     struct buff_grp_list_node *grp_node = container_of(mz_list_node, struct buff_grp_list_node,
-        mz_list_node[mz_list_node->cfg_id]);
+                                                       mz_list_node[mz_list_node->cfg_id]);
 
     return grp_node->dev_id;
 }
-

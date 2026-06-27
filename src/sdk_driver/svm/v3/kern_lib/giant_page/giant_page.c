@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2025. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -19,15 +19,9 @@
 
 #include "svm_gfp.h"
 
-static void svm_clear_giant_page(ka_page_t *pg)
-{
-    svm_clear_single_page(pg, SVM_GPAGE_SIZE);
-}
+static void svm_clear_giant_page(ka_page_t *pg) { svm_clear_single_page(pg, SVM_GPAGE_SIZE); }
 
-static inline void svm_put_page(ka_page_t *pg)
-{
-    ka_mm_put_page(pg);
-}
+static inline void svm_put_page(ka_page_t *pg) { ka_mm_put_page(pg); }
 
 static void svm_free_giant_page(ka_page_t *pg, u32 flag)
 {
@@ -113,4 +107,3 @@ int svm_giant_page_init(void)
     return 0;
 }
 DECLAER_FEATURE_AUTO_INIT(svm_giant_page_init, FEATURE_LOADER_STAGE_0);
-

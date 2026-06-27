@@ -209,6 +209,15 @@ typedef enum dms_pg_info_type {
     PG_INFO_TYPE_CPU,
     PG_INFO_TYPE_HBM,
     PG_INFO_TYPE_MATA,
+    PG_INFO_TYPE_AIV,
+ 	PG_INFO_TYPE_DVPP,
+ 	PG_INFO_TYPE_GPU,
+ 	PG_INFO_TYPE_CHIP_TYPE,
+ 	PG_INFO_TYPE_L3D,
+ 	PG_INFO_TYPE_L2,
+ 	PG_INFO_TYPE_SDMA,
+ 	PG_INFO_TYPE_STARS,
+ 	PG_INFO_TYPE_HVCV,
     PG_INFO_TYPE_MAX,
 } HAL_DMS_PG_INFO_TYPE, HAL_PG_INFO_TYPE;
 
@@ -803,6 +812,20 @@ int hal_kernel_svm_get_user_pages(int pid, u64 va, u32 nr_pages, void **pages, b
  * @return   0 Success, others for fail
  */
 void hal_kernel_svm_put_user_pages(void **pages, u32 nr_pages, bool is_remap_addr);
+
+#define SVM_ADDR_WHITELIST_ADD 0ULL
+#define SVM_ADDR_WHITELIST_DEL 1ULL
+/**
+ * @ingroup driver
+ * @brief   Configure the address whitelist.
+ * @param [in]  udevid: unique device id
+ * @param [in]  devpid: device process id
+ * @param [in]  va: virtual address
+ * @param [in]  size: address size
+ * @param [in]  flag: whitelist operation flag, SVM_ADDR_WHITELIST_ADD/SVM_ADDR_WHITELIST_DEL
+ * @return   0 Success, others for fail
+ */
+int hal_kernel_svm_access_whitelist_cfg(u32 udevid, int devpid, u64 va, u64 size, u64 flag);
 /********************************* svm kernel_api end ***********************************************/
 
 /**
@@ -904,6 +927,8 @@ typedef enum {
     SOC_TYPE_CLOUD_V4,          /* Ascend950 */
     SOC_TYPE_CLOUD_V5,          /* Ascend910_96 */
     SOC_TYPE_RSVD_6,            /* Reserved */
+    SOC_TYPE_RSVD_7,            /* Reserved */
+    SOC_TYPE_MINI_V4,           /* Ascend350 */
     SOC_TYPE_MAX
 } HAL_KERNEL_SOC_TYPE;
 int hal_kernel_get_soc_type(unsigned int dev_id, unsigned int *soc_type);
@@ -915,6 +940,11 @@ struct prof_kernel_sample_start_para {
     int target_pid;
     void *user_data;                /* sample 配置信息 */
     unsigned int user_data_len;     /* sample 配置信息数据长度 */
+    bool is_support_host_move;
+    void *out_data;
+    unsigned int out_data_len;
+    unsigned int out_data_max_len;
+    unsigned int sample_period;
 };
 
 enum prof_kernel_sample_data_mode {
@@ -942,6 +972,7 @@ struct prof_kernel_sample_stop_para {
     unsigned int dev_id;
     unsigned int chan_id;
     unsigned int sub_chan_id;
+    unsigned int release_flag;
 };
 
 struct prof_kernel_sample_ops {
@@ -972,12 +1003,33 @@ int hal_kernel_prof_sample_register(unsigned int dev_id, unsigned int chan_id,
 
 /**
  * @ingroup driver
+ * @brief register prof channel smaple handle, host sample mode use
+ * @attention null
+ * @param [in] dev_id chan_id para
+ * @return   DRV_ERROR_NONE   success
+ * @return   other  fail
+ */
+int hal_kernel_prof_sample_register_ex(unsigned int dev_id, unsigned int chan_id,
+    struct prof_kernel_sample_register_para *para);
+
+
+/**
+ * @ingroup driver
  * @brief unregister prof channel smaple handle
  * @attention null
  * @param [in] dev_id chan_id
  * @return: no ret_val
  */
 void hal_kernel_prof_sample_unregister(unsigned int dev_id, unsigned int chan_id);
+
+/**
+ * @ingroup driver
+ * @brief unregister prof channel smaple handle, host sample mode use
+ * @attention null
+ * @param [in] dev_id chan_id
+ * @return: no ret_val
+ */
+void hal_kernel_prof_sample_unregister_ex(unsigned int dev_id, unsigned int chan_id);
 
 struct prof_kernel_data_report_para {
     void *data;
@@ -1245,10 +1297,13 @@ int hal_kernel_get_pg_info(
 
 struct dqs_kernel_que_info {
     QUEUE_ENTITY_TYPE queType;
+    unsigned int workMode;
+    unsigned int qsPostTraceId;
     unsigned long long gqmBaeVaddr;
     unsigned long long gqmBaePaddr;
+    unsigned int uniQid;
 };
- 
+
 /**
 * @ingroup driver
 * @brief   This interface is used to get dqs que info
@@ -1418,7 +1473,8 @@ enum uda_priority { /* high Priority to be notified first */
     UDA_PRI1 = 1,
     UDA_PRI2 = 2,
     UDA_PRI3 = 3,
-    UDA_PRI4 = 4, /* low */
+    UDA_PRI4 = 4,
+    UDA_PRI5 = 5, /* low */
     UDA_PRI_MAX
 };
 enum uda_notified_action {
@@ -1452,4 +1508,26 @@ int hal_kernel_uda_notifier_unregister(const char *notifier, struct uda_dev_type
 int hal_kernel_uda_notifier_register(const char *notifier, struct uda_dev_type *type, enum uda_priority pri, uda_notify func);
 bool hal_kernel_uda_is_phy_dev(u32 udevid);
 struct device *hal_kernel_uda_get_device(u32 udevid);
+
+#define HAL_KERNEL_MAX_CPU_TOPO_NUM 64
+struct single_cpu_topology_info {
+    unsigned long long cpu_mask;
+    unsigned char cpu_id;
+    unsigned char is_share;
+    unsigned char phy_cpu_id;
+    unsigned char hyperthread_id;
+};
+struct cpu_topology_info {
+    unsigned int total_nums;
+    struct single_cpu_topology_info single_cpu_topo[HAL_KERNEL_MAX_CPU_TOPO_NUM];
+};
+
+/**
+* @brief get cpu topology
+* @param [in]  uint32_t dev_id: device id
+* @param [out] struct cpu_topology_info *res: cpu topology
+* @return 0: success, else: fail
+*/
+int32_t hal_kernel_get_cpu_topo(uint32_t dev_id, struct cpu_topology_info *res);
+
 #endif

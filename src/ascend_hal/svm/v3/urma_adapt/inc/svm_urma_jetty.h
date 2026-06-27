@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * Copyright (c) 2026 Huawei Technologies Co., Ltd.
  * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -51,6 +51,7 @@ struct svm_urma_jetty_pool {
     pthread_rwlock_t rwlock;
 
     sem_t sem;
+    u32 devid;
     u32 jetty_num;
     struct svm_urma_jetty **jettys;
 
@@ -58,6 +59,7 @@ struct svm_urma_jetty_pool {
 };
 
 struct svm_urma_jetty_pool_cfg {
+    u32 devid;
     urma_context_t *urma_ctx;
     urma_token_t token_val;
     u32 jetty_num;
@@ -75,9 +77,11 @@ struct svm_urma_jetty_post_para {
     urma_target_jetty_t *tjfr;
 };
 
-static inline void svm_urma_jetty_pool_cfg_pack(urma_context_t *urma_ctx, urma_token_t token_val,
-    u32 jetty_num, u32 depth_per_jetty, struct svm_urma_jetty_pool_cfg *cfg)
+static inline void svm_urma_jetty_pool_cfg_pack(
+    u32 devid, urma_context_t *urma_ctx, urma_token_t token_val, u32 jetty_num, u32 depth_per_jetty,
+    struct svm_urma_jetty_pool_cfg *cfg)
 {
+    cfg->devid = devid;
     cfg->urma_ctx = urma_ctx;
     cfg->token_val = token_val;
     cfg->jetty_num = jetty_num;
@@ -94,4 +98,3 @@ int svm_urma_jetty_post(struct svm_urma_jetty *jetty, struct svm_urma_jetty_post
 int svm_urma_jetty_wait(struct svm_urma_jetty *jetty, int wr_num, int timeout_ms);
 
 #endif
-

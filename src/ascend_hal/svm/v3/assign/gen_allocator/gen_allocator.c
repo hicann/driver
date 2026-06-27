@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * Copyright (c) 2026 Huawei Technologies Co., Ltd.
  * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ struct ga_range {
 
     u64 idle_area_size;
 
-    struct rbtree_root addr_area_tree;      // rb tree, val is area, key is addr
+    struct rbtree_root addr_area_tree; // rb tree, val is area, key is addr
 };
 
 struct ga_area {
@@ -51,24 +51,15 @@ struct ga_inst {
 
     pthread_rwlock_t rwlock;
     struct ga_stats stats;
-    struct rbtree_root addr_range_tree;     // rb tree, val is range, key is addr
-    struct rbtree_root size_area_tree;      // multi rb tree, val is area, key is size
+    struct rbtree_root addr_range_tree; // rb tree, val is range, key is addr
+    struct rbtree_root size_area_tree;  // multi rb tree, val is area, key is size
 };
 
-static bool ga_flag_is_fixed_addr(u32 flag)
-{
-    return ((flag & SVM_GA_FLAG_FIXED_ADDR) != 0);
-}
+static bool ga_flag_is_fixed_addr(u32 flag) { return ((flag & SVM_GA_FLAG_FIXED_ADDR) != 0); }
 
-static bool ga_flag_is_in_fixed_addr_range(u32 flag)
-{
-    return ((flag & SVM_GA_FLAG_IN_FIXED_ADDR_RANGE) != 0);
-}
+static bool ga_flag_is_in_fixed_addr_range(u32 flag) { return ((flag & SVM_GA_FLAG_IN_FIXED_ADDR_RANGE) != 0); }
 
-static bool ga_addr_is_aligned(struct ga_inst *inst, u64 addr)
-{
-    return SVM_IS_ALIGNED(addr, inst->attr.gran_size);
-}
+static bool ga_addr_is_aligned(struct ga_inst *inst, u64 addr) { return SVM_IS_ALIGNED(addr, inst->attr.gran_size); }
 
 static void rb_range_handle_of_ga_area(struct rbtree_node *node, struct rb_range_handle *range_handle)
 {
@@ -103,10 +94,7 @@ static struct ga_area *ga_alloc_area(u64 start, u64 size)
     return area;
 }
 
-static void ga_free_area(struct ga_area *area)
-{
-    svm_ua_free(area);
-}
+static void ga_free_area(struct ga_area *area) { svm_ua_free(area); }
 
 static int ga_insert_area(struct ga_inst *inst, struct ga_range *range, struct ga_area *area)
 {
@@ -285,8 +273,7 @@ static int ga_try_merge_area(struct ga_area *area)
         area->size = new_size;
         ret = ga_insert_area(inst, range, area);
         if (ret != DRV_ERROR_NONE) {
-            svm_err("Unlikely fail. (ret=%d; start=0x%llx; size=%llu)\n",
-                ret, area->start, area->size);
+            svm_err("Unlikely fail. (ret=%d; start=0x%llx; size=%llu)\n", ret, area->start, area->size);
             ga_free_area(area);
             return ret;
         }
@@ -312,10 +299,7 @@ static struct ga_range *ga_alloc_range(u64 start, u64 size)
     return range;
 }
 
-static void ga_free_range(struct ga_range *range)
-{
-    svm_ua_free(range);
-}
+static void ga_free_range(struct ga_range *range) { svm_ua_free(range); }
 
 static int ga_insert_range(struct ga_inst *inst, struct ga_range *range)
 {
@@ -370,7 +354,8 @@ static void ga_destroy_range_all_area(struct ga_range *range)
     struct rbtree_node *cur = NULL;
     struct rbtree_node *n = NULL;
 
-    rbtree_node_for_each_prev_safe(cur, n, &range->addr_area_tree) {
+    rbtree_node_for_each_prev_safe(cur, n, &range->addr_area_tree)
+    {
         area = rb_entry(cur, struct ga_area, addr_tree_node);
         ga_destroy_area(area);
     }
@@ -385,10 +370,7 @@ static void ga_destroy_range(struct ga_range *range)
     ga_free_range(range);
 }
 
-static bool ga_is_idle_range(struct ga_range *range)
-{
-    return (range->idle_area_size == range->size);
-}
+static bool ga_is_idle_range(struct ga_range *range) { return (range->idle_area_size == range->size); }
 
 bool svm_ga_owner_range_is_idle(void *ga_inst, u64 addr)
 {
@@ -411,7 +393,8 @@ static struct ga_range *ga_get_one_idle_range(struct ga_inst *inst)
     struct rbtree_node *cur = NULL;
     struct rbtree_node *n = NULL;
 
-    rbtree_node_for_each_prev_safe(cur, n, &inst->addr_range_tree) {
+    rbtree_node_for_each_prev_safe(cur, n, &inst->addr_range_tree)
+    {
         range = rb_entry(cur, struct ga_range, node);
         if (ga_is_idle_range(range)) {
             return range;
@@ -427,7 +410,8 @@ static void ga_destroy_inst_all_range(struct ga_inst *inst)
     struct rbtree_node *cur = NULL;
     struct rbtree_node *n = NULL;
 
-    rbtree_node_for_each_prev_safe(cur, n, &inst->addr_range_tree) {
+    rbtree_node_for_each_prev_safe(cur, n, &inst->addr_range_tree)
+    {
         range = rb_entry(cur, struct ga_range, node);
         ga_destroy_range(range);
     }
@@ -467,8 +451,9 @@ int svm_ga_add_range(void *ga_inst, u64 start, u64 size)
     int ret;
 
     if ((ga_addr_is_aligned(inst, start) == false) || (ga_addr_is_aligned(inst, size) == false)) {
-        svm_err("Addr isn't aligned by order. (gran_size=%llu; start=0x%llx; size=%llu)\n",
-            inst->attr.gran_size, start, size);
+        svm_err(
+            "Addr isn't aligned by order. (gran_size=%llu; start=0x%llx; size=%llu)\n", inst->attr.gran_size, start,
+            size);
         return DRV_ERROR_INVALID_VALUE;
     }
 
@@ -537,7 +522,8 @@ int svm_ga_for_each_range(void *ga_inst, int (*func)(u64 start, u64 size, void *
     int ret = 0;
 
     (void)pthread_rwlock_rdlock(&inst->rwlock);
-    rbtree_node_for_each_prev_safe(cur, n, &inst->addr_range_tree) {
+    rbtree_node_for_each_prev_safe(cur, n, &inst->addr_range_tree)
+    {
         range = rb_entry(cur, struct ga_range, node);
         ret = func(range->start, range->size, priv);
         if (ret != DRV_ERROR_NONE) {
@@ -659,7 +645,7 @@ int svm_ga_free(void *ga_inst, u64 addr, u64 size)
         return DRV_ERROR_INVALID_VALUE;
     }
 
-    ret = ga_try_merge_area(area);   // unlikely fail, if merge return fail, it will free area */
+    ret = ga_try_merge_area(area); // unlikely fail, if merge return fail, it will free area */
     (void)pthread_rwlock_unlock(&inst->rwlock);
 
     return ret;

@@ -44,8 +44,7 @@ STATIC bbox_status bbox_pcie_dump_data(u32 phy_id, u32 offset, u32 size, u8 *buf
                 /* to handle the hboot log */
                 return ret;
             }
-            BBOX_ERR("Get pcie bar data failed with %d. device[%u], offset[0x%x], " \
-                     "size[0x%x]", (int)ret, phy_id, offset, size);
+            BBOX_ERR("Get pcie bar data failed with %d. offset[0x%x], size[0x%x]", (int)ret, offset, size);
             return BBOX_FAILURE;
         }
     }
@@ -111,8 +110,7 @@ STATIC bbox_status bbox_read_sram_data(u32 phy_id, u32 offset, u32 size, u8 *buf
             if (ret == DRV_ERROR_NOT_SUPPORT) {
                 return ret;
             }
-            BBOX_ERR("Get sram data failed with %d. device[%u], offset[0x%x], " \
-                     "size[0x%x]", (int)ret, phy_id, offset, size);
+            BBOX_ERR("Get sram data failed with %d. offset[0x%x], size[0x%x]", (int)ret, offset, size);
             return BBOX_FAILURE;
         }
     }
@@ -158,12 +156,12 @@ bbox_status bbox_pcie_dump_hdr_data(u32 phy_id, u32 offset, u32 size, u8 *buf)
 
     ret = bbox_pcie_dump_data(phy_id, offset, sizeof(magic), (u8 *)&magic, bbox_drv_pcie_hdr_ddr_read);
     if (ret != BBOX_SUCCESS) {
-        BBOX_ERR("bbox_pcie_dump_data Failed. (dev_id=%u, ret=%d)", phy_id, ret);
+        BBOX_ERR("bbox_pcie_dump_data failed. (ret=%d)", ret);
         return BBOX_FAILURE;
     }
 
     if (magic != BIOS_MAGIC) {
-        BBOX_INF("[device-%u] magic has not been initialized. (magic=0x%x)", phy_id, magic);
+        BBOX_INF("magic has not been initialized. (magic=0x%x)", magic);
         return DRV_ERROR_NOT_SUPPORT;
     }
 
@@ -410,7 +408,7 @@ STATIC bbox_status bbox_pcie_set_data(u32 phy_id, u32 offset, u32 size, u8 *buff
             if (ret == DRV_ERROR_NOT_SUPPORT) {
                 return ret;
             }
-            BBOX_ERR("Get pcie bar data failed with %d. device[%u], offset[0x%x], size[0x%x]", (int)ret, phy_id, offset, size);
+            BBOX_ERR("Get pcie bar data failed with %d. offset[0x%x], size[0x%x]", (int)ret, offset, size);
             return BBOX_FAILURE;
         }
     }

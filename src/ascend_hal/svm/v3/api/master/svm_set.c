@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * Copyright (c) 2026 Huawei Technologies Co., Ltd.
  * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -110,14 +110,16 @@ static u64 svm_get_host_zero_mem(u32 host_devid)
         (void)pthread_rwlock_wrlock(&memset_fast_rwlock);
         if (host_zero_mem == 0) {
 #ifndef EMU_ST /* Simulation ST is required and cannot be deleted. */
-            ret = halMemAlloc((void **)&host_zero_mem, SVM_MEMSET_FAST_LIMIT_SIZE,
+            ret = halMemAlloc(
+                (void **)&host_zero_mem, SVM_MEMSET_FAST_LIMIT_SIZE,
                 (MEM_HOST | ((u64)DEVMM_MODULE_ID << MEM_MODULE_ID_BIT)));
-	        if (ret != 0) {
+            if (ret != 0) {
                 (void)pthread_rwlock_unlock(&memset_fast_rwlock);
                 return 0;
             }
 #endif
-            (void)svm_memset_client(host_devid, host_zero_mem, SVM_MEMSET_FAST_LIMIT_SIZE, 0, SVM_MEMSET_FAST_LIMIT_SIZE);
+            (void)svm_memset_client(
+                host_devid, host_zero_mem, SVM_MEMSET_FAST_LIMIT_SIZE, 0, SVM_MEMSET_FAST_LIMIT_SIZE);
         }
         (void)pthread_rwlock_unlock(&memset_fast_rwlock);
     }
@@ -176,4 +178,3 @@ drvError_t drvMemsetD8(DVdeviceptr dst, size_t destMax, UINT8 value, size_t num)
 {
     return drvMemsetD8Inner(dst, destMax, value, num);
 }
-

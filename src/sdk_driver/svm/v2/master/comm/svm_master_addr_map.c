@@ -17,8 +17,8 @@
 #include "svm_msg_client.h"
 #include "svm_master_dev_capability.h"
 
-STATIC int devmm_send_map_addr_msg(struct devmm_svm_process *svm_process,
-    struct devmm_map_dev_reserve_para *addr_para, u32 devid, u32 vfid)
+STATIC int devmm_send_map_addr_msg(
+    struct devmm_svm_process *svm_process, struct devmm_map_dev_reserve_para *addr_para, u32 devid, u32 vfid)
 {
     struct devmm_chan_map_dev_reserve chan_map_addr = {{{0}}};
     u32 addr_type = addr_para->addr_type;
@@ -31,11 +31,12 @@ STATIC int devmm_send_map_addr_msg(struct devmm_svm_process *svm_process,
     chan_map_addr.head.process_id.vfid = (u16)vfid;
     chan_map_addr.head.dev_id = (u16)devid;
     chan_map_addr.head.msg_id = DEVMM_CHAN_MAP_DEV_RESERVE_H2D_ID;
-    ret = devmm_chan_msg_send(&chan_map_addr, sizeof(struct devmm_chan_map_dev_reserve),
-        sizeof(struct devmm_chan_map_dev_reserve));
+    ret = devmm_chan_msg_send(
+        &chan_map_addr, sizeof(struct devmm_chan_map_dev_reserve), sizeof(struct devmm_chan_map_dev_reserve));
     if (ret != 0) {
-        devmm_drv_err("Map address failed. (ret=%d; addr_type=%u; devid=%u; vfid=%u; addr=0x%llx)\n",
-            ret, addr_type, devid, vfid, addr);
+        devmm_drv_err(
+            "Map address failed. (ret=%d; addr_type=%u; devid=%u; vfid=%u; addr=0x%llx)\n", ret, addr_type, devid, vfid,
+            addr);
         return ret;
     }
 
@@ -46,8 +47,8 @@ STATIC int devmm_send_map_addr_msg(struct devmm_svm_process *svm_process,
     return 0;
 }
 
-STATIC int devmm_map_dev_reserve(struct devmm_svm_process *svm_process, struct devmm_map_dev_reserve_para *addr_para,
-    u32 devid, u32 vfid)
+STATIC int devmm_map_dev_reserve(
+    struct devmm_svm_process *svm_process, struct devmm_map_dev_reserve_para *addr_para, u32 devid, u32 vfid)
 {
     u32 addr_type = addr_para->addr_type;
     int ret;
@@ -59,7 +60,8 @@ STATIC int devmm_map_dev_reserve(struct devmm_svm_process *svm_process, struct d
 
     if (((addr_type == ADDR_MAP_TYPE_REG_AIC_CTRL) || (addr_type == ADDR_MAP_TYPE_REG_AIC_PMU_CTRL)) &&
         (devmm_dev_capability_support_aic_reg_map(devid) == false)) {
-        devmm_drv_run_info("Aic reg map capability might had been closed. (addr_type=%u; devid=%u)\n", addr_type, devid);
+        devmm_drv_run_info(
+            "Aic reg map capability might had been closed. (addr_type=%u; devid=%u)\n", addr_type, devid);
         return -EOPNOTSUPP;
     }
 
@@ -89,4 +91,3 @@ int devmm_ioctl_map_dev_reserve(struct devmm_svm_process *svm_process, struct de
 
     return 0;
 }
-

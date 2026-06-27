@@ -26,3 +26,7 @@ include(${PROJECT_SOURCE_DIR}/cmake/third_party/secure_c.cmake)
 if("${PRODUCT}" STREQUAL "ascend910B")
     include(${PROJECT_SOURCE_DIR}/cmake/third_party/rdma-core.cmake)
 endif()
+
+if("${PRODUCT}" STREQUAL "ascend950" AND "${BUILD_COMPONENT}" STREQUAL "DRIVER")
+    include(${PROJECT_SOURCE_DIR}/cmake/third_party/ubdevshm.cmake)
+endif()

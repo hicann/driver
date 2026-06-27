@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2025. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -25,6 +25,12 @@ int async_copy_task_submit(struct async_copy_ctx *ctx, struct copy_va_info *info
     copy_task = async_copy_task_create(ctx, info);
     if (copy_task == NULL) {
         return -EINVAL;
+    }
+
+    if (ASYNC_COPY_FLAG_IS_SYNC(info->flag)) {
+        svm_copy_task_destroy(copy_task);
+        *id = SVM_ASYNC_TASK_MAX_ID;
+        return 0;
     }
 
     ret = async_copy_task_save(ctx, copy_task, id);

@@ -23,6 +23,8 @@
 
 #define ASCEND_UB_REAL_NOTIFIER "asdrv_ub"
 #define ASCEND_UB_MIA_NOTIFIER "asdrv_mia_ub"
+#define ASCEND_UB_DAVINCI_NOTIFIER "asdrv_davinci"
+
 #define UBDEV_UBUS_DMA_BIT 64
 
 #define UBDRV_UB_SEL 0  // 0-UB 1-PCIE
@@ -101,7 +103,7 @@ struct ubdrv_p2p_attr_info {
     int pid[UBDRV_P2P_MAX_PROC_NUM];
 };
 
-/* EVB PCIE resved 4 sub machine form */
+/* EVB PCIE reserved 4 sub machine form */
 enum ubdrv_evb_sub_machine_form {
     UBDRV_EVB_SUB_MACHINE_FORM_PCIE_NORMAL = 0,
     UBDRV_EVB_SUB_MACHINE_FORM_PCIE_RESV1 = 1,
@@ -166,6 +168,9 @@ int ubdrv_wait_add_davinci_dev(void);
 void ubdrv_remove_davinci_dev(u32 dev_id, u32 dev_type);
 enum ubdrv_dev_startup_flag_type ubdrv_get_startup_flag(u32 dev_id);
 void ubdrv_set_startup_flag(u32 dev_id, enum ubdrv_dev_startup_flag_type startup_flag);
+void ubdrv_set_msg_retry_cnt(u32 dev_id, u32 cnt);
+u32 ubdrv_get_msg_retry_cnt(u32 dev_id);
+void ubdrv_mutex_lock_polling(u32 dev_id, ka_mutex_t *mutex);
 struct ascend_ub_link_res *ubdrv_get_link_res_by_devid(u32 dev_id);
 enum ubdrv_eid_cmp_ret ubdrv_cmp_eid(union ubcore_eid *src_eid, union ubcore_eid *dst_eid);
 struct devdrv_comm_ops* get_global_ubdrv_ops(void);
@@ -173,8 +178,8 @@ void ubdrv_remove_davinci_dev_proc(u32 dev_id);
 int ub_check_pack_master_id_to_uda(struct ascend_ub_msg_dev *msg_dev, struct uda_dev_para *uda_para, u32 dev_id);
 void ubdrv_exit_release_msg_chan_proc(u32 dev_id);
 void uda_dev_type_pack_proc(struct uda_dev_type *uda_type, u32 dev_type);
-void ubdrv_unregister_uda_notifier_proc(struct uda_dev_type *type);
 int ubdrv_register_uda_notifier(void);
+void ubdrv_unregister_uda_notifier(void);
 int ubdrv_module_init_for_pcie(void);
 void devdrv_set_communication_ops_status_proc(u32 type, u32 status, u32 dev_id);
 void ubdrv_module_uninit_for_pcie(void);
@@ -195,7 +200,6 @@ int ubdrv_fe_init_instance(u32 udevid);
 int ubdrv_fe_uninit_instance(u32 udevid);
 void ubdrv_admin_msg_chan_uninit(u32 dev_id, struct ascend_ub_msg_dev *msg_dev);
 int ubdrv_init_ub_ctrl(void);
-void ubdrv_unregister_uda_notifier(void);
 void ubdrv_uninit_ub_ctrl(void);
 int ubdrv_alloc_attr_info(void);
 void ubdrv_free_attr_info(void);

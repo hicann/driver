@@ -11,7 +11,7 @@
  * GNU General Public License for more details.
  */
 
-#include <linux/types.h>
+#include "ka_type.h"
 #include "ka_memory_pub.h"
 
 #include "kernel_version_adapt.h"
@@ -20,10 +20,7 @@
 #include "svm_log.h"
 #include "svm_mem_mng.h"
 
-ka_pgprot_t devmm_make_remote_pgprot(u32 flg)
-{
-    return ka_mm_pgprot_writecombine(devmm_make_pgprot(flg, false));
-}
+ka_pgprot_t devmm_make_remote_pgprot(u32 flg) { return ka_mm_pgprot_writecombine(devmm_make_pgprot(flg, false)); }
 
 ka_pgprot_t devmm_make_remote_pgprot_ex(u32 flg, struct devmm_pgprot_cfg_info cfg_info)
 {
@@ -31,10 +28,7 @@ ka_pgprot_t devmm_make_remote_pgprot_ex(u32 flg, struct devmm_pgprot_cfg_info cf
     return ka_mm_pgprot_writecombine(devmm_make_pgprot_ex(flg, cfg_info));
 }
 
-ka_pgprot_t devmm_make_nocache_pgprot(u32 flg)
-{
-    return ka_mm_pgprot_device(devmm_make_pgprot(flg, false));
-}
+ka_pgprot_t devmm_make_nocache_pgprot(u32 flg) { return ka_mm_pgprot_device(devmm_make_pgprot(flg, false)); }
 
 ka_pgprot_t devmm_make_readonly_pgprot(ka_pgprot_t prot)
 {
@@ -53,10 +47,7 @@ bool devmm_is_readonly_mem(u32 page_prot)
     return is_readonly;
 }
 
-ka_page_t *devmm_pa_to_page(u64 paddr)
-{
-    return ka_mm_pfn_to_page(KA_MM_PFN_DOWN(paddr));
-}
+ka_page_t *devmm_pa_to_page(u64 paddr) { return ka_mm_pfn_to_page(KA_MM_PFN_DOWN(paddr)); }
 
 #ifndef EMU_ST
 ka_vm_area_struct_t *devmm_find_vma_from_mm(ka_mm_struct_t *mm, u64 vaddr)
@@ -79,8 +70,9 @@ static void devmm_print_svm_process_vma(ka_vm_area_struct_t *vma[], u32 vma_num)
         if (vma[i] == NULL) {
             return;
         }
-        devmm_drv_err("Svm vma. (idx=%u; vm_start=0x%lx; vm_end=0x%lx; vm_pgoff=0x%lx; vm_flags=0x%lx)\n",
-            i, ka_mm_get_vm_start(vma[i]), ka_mm_get_vm_end(vma[i]), vma[i]->vm_pgoff, ka_mm_get_vm_flags(vma[i]));
+        devmm_drv_err(
+            "Svm vma. (idx=%u; vm_start=0x%lx; vm_end=0x%lx; vm_pgoff=0x%lx; vm_flags=0x%lx)\n", i,
+            ka_mm_get_vm_start(vma[i]), ka_mm_get_vm_end(vma[i]), vma[i]->vm_pgoff, ka_mm_get_vm_flags(vma[i]));
     }
 }
 
@@ -97,8 +89,7 @@ ka_vm_area_struct_t *_devmm_find_vma_proc(ka_vm_area_struct_t *vma[], u32 vma_nu
     return NULL;
 }
 
-ka_vm_area_struct_t *devmm_find_vma_proc(ka_mm_struct_t *mm, ka_vm_area_struct_t *vma[],
-    u32 vma_num, u64 vaddr)
+ka_vm_area_struct_t *devmm_find_vma_proc(ka_mm_struct_t *mm, ka_vm_area_struct_t *vma[], u32 vma_num, u64 vaddr)
 {
     ka_vm_area_struct_t *tmp_vma = NULL;
 
@@ -121,8 +112,8 @@ ka_vm_area_struct_t *devmm_find_vma_proc(ka_mm_struct_t *mm, ka_vm_area_struct_t
     return tmp_vma;
 }
 
-static long _devmm_get_user_pages_remote(ka_task_struct_t *tsk, ka_mm_struct_t *mm,
-    u64 va, int write, u32 num, ka_page_t **pages)
+static long _devmm_get_user_pages_remote(
+    ka_task_struct_t *tsk, ka_mm_struct_t *mm, u64 va, int write, u32 num, ka_page_t **pages)
 {
     long got_num;
     int locked;
@@ -135,8 +126,8 @@ static long _devmm_get_user_pages_remote(ka_task_struct_t *tsk, ka_mm_struct_t *
     return got_num;
 }
 
-int devmm_get_user_pages_remote(ka_task_struct_t *tsk, ka_mm_struct_t *mm,
-    u64 va, int write, u32 num, ka_page_t **pages)
+int devmm_get_user_pages_remote(
+    ka_task_struct_t *tsk, ka_mm_struct_t *mm, u64 va, int write, u32 num, ka_page_t **pages)
 {
     u32 i, try_times = 5; /* try 5 times, maybe success */
     long got_num;
@@ -173,7 +164,7 @@ bool devmm_is_giant_page(ka_page_t **pages, u64 pg_num)
 
     for (i = 0; i < pg_num; i++) {
         if (pages[i] != NULL) {
-            return (devmm_kernel_pg_size(pages[i]) == DEVMM_GIANT_PAGE_SIZE); 
+            return (devmm_kernel_pg_size(pages[i]) == DEVMM_GIANT_PAGE_SIZE);
         }
     }
     return false;

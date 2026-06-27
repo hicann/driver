@@ -21,7 +21,6 @@
 #include "ka_fs_pub.h"
 #include "ka_kernel_def_pub.h"
 #include "ka_common_pub.h"
-#include "dms_kernel_version_adapt.h"
 #include "pbl_mem_alloc_interface.h"
 #include "fms_define.h"
 #include "fms_kernel_interface.h"
@@ -671,12 +670,12 @@ static unsigned int dms_sensor_report_event(struct dms_sensor_object_cb *psensor
     if (result != 0) {
         dms_err("Get event code failed. (result=%d)\n", result);
     }
-    dms_event("Event Process Success. (Event id=0x%x; Node Type=%#x; Sensor num=%#x; name=\"%.*s\"; "
-        "Sensor Type=%#x; Sensor Object=%#x; assertion=%u; severity=%u; event_state=0x%x; private_data=0x%llx)\n",
+    dms_event("Event Process Success. (Event id=0x%x; Node Type=%#x; Sensor num=%#x; name=\"%.*s\"; Sensor Type=%#x)\n",
         event_code, psensor_obj_cb->owner_node_type, psensor_obj_cb->sensor_num,
         DMS_SENSOR_DESCRIPT_LENGTH, psensor_obj_cb->sensor_object_cfg.sensor_name,
-        psensor_obj_cb->sensor_object_cfg.sensor_type, psensor_obj_cb->object_index,
-        assertion, sensor_event.severity, sensor_event.event.sensor_event.event_state,
+        psensor_obj_cb->sensor_object_cfg.sensor_type);
+    dms_event("Event Info. (Sensor Object=%#x; assertion=%u; severity=%u; event_state=0x%x; private_data=0x%llx)\n",
+        psensor_obj_cb->object_index, assertion, sensor_event.severity, sensor_event.event.sensor_event.event_state,
         psensor_obj_cb->sensor_object_cfg.private_data);
 
     return DRV_ERROR_NONE;
@@ -752,12 +751,15 @@ static int dms_sensor_get_timestamp(unsigned long long *timestamp)
     *timestamp = (sys_time.tv_sec * KA_MSEC_PER_SEC) + (sys_time.tv_usec / KA_USEC_PER_MSEC);
 
 #else
-    ka_ktime_t sys_time = 0;
+    ka_timespec64_t ts;
+    ka_timeval_t sys_time = {0};
     if (timestamp == NULL) {
         return DRV_ERROR_PARA_ERROR;
     }
-    sys_time = ka_system_ktime_get();
-    *timestamp = (unsigned long long)ka_system_ktime_to_ns(sys_time) / KA_NSEC_PER_MSEC;
+    ka_system_ktime_get_real_ts64(&ts);
+    sys_time.tv_sec = ts.tv_sec;
+    sys_time.tv_usec = ts.tv_nsec / KA_NSEC_PER_USEC;
+    *timestamp = ((unsigned long long)sys_time.tv_sec * KA_MSEC_PER_SEC) + (sys_time.tv_usec / KA_USEC_PER_MSEC);
 #endif
 
     return DRV_ERROR_NONE;

@@ -252,7 +252,8 @@ STATIC_PROCFS_FILE_FUNC_OPS(vmngh_each_resource_ops, each_resource_info_proc_ope
 
 STATIC int vmngh_dev_id_proc_fs(void)
 {
-    g_procfs_entry.dev_id = ka_fs_proc_create_data("dev_id", KA_S_IRUSR | KA_S_IWUSR, vmng_host_entry, &vmngh_dev_id_ops, NULL);
+    g_procfs_entry.dev_id = ka_fs_proc_create_data("dev_id", KA_S_IRUSR | KA_S_IWUSR, vmng_host_entry,
+                                                   &vmngh_dev_id_ops, NULL);
 
     if (g_procfs_entry.dev_id == NULL) {
         vmng_err("Create dev_id_entry dir failed.\n");
@@ -264,7 +265,8 @@ STATIC int vmngh_dev_id_proc_fs(void)
 
 STATIC int vmngh_vf_id_proc_fs(void)
 {
-    g_procfs_entry.vf_id = ka_fs_proc_create_data("vf_id", KA_S_IRUSR | KA_S_IWUSR, vmng_host_entry, &vmngh_vfid_ops, NULL);
+    g_procfs_entry.vf_id = ka_fs_proc_create_data("vf_id", KA_S_IRUSR | KA_S_IWUSR, vmng_host_entry, &vmngh_vfid_ops,
+                                                  NULL);
 
     if (g_procfs_entry.vf_id == NULL) {
         vmng_err("Create vf_id_entry dir failed.\n");
@@ -276,8 +278,8 @@ STATIC int vmngh_vf_id_proc_fs(void)
 
 STATIC int vmngh_each_resource_info_proc_fs(void)
 {
-    g_procfs_entry.each_resource_info = ka_fs_proc_create_data("each_resource_info", KA_S_IRUSR,
-        vmng_host_entry, &vmngh_each_resource_ops, NULL);
+    g_procfs_entry.each_resource_info = ka_fs_proc_create_data("each_resource_info", KA_S_IRUSR, vmng_host_entry,
+                                                               &vmngh_each_resource_ops, NULL);
 
     if (g_procfs_entry.each_resource_info == NULL) {
         vmng_err("Create each_resource_info_entry dir failed.\n");
@@ -295,9 +297,7 @@ int vmngh_proc_fs_init(void)
         return VMNG_ERR;
     }
 
-    if ((vmngh_dev_id_proc_fs() != 0) ||
-        (vmngh_vf_id_proc_fs() != 0) ||
-        (vmngh_each_resource_info_proc_fs() != 0)) {
+    if ((vmngh_dev_id_proc_fs() != 0) || (vmngh_vf_id_proc_fs() != 0) || (vmngh_each_resource_info_proc_fs() != 0)) {
         (void)ka_fs_remove_proc_subtree("vmng_host", NULL);
         vmng_err("Vmng_host proc fs init failed.\n");
         return VMNG_ERR;

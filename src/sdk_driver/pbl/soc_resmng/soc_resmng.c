@@ -44,8 +44,8 @@ void soc_res_show(u32 udevid, ka_seq_file_t *seq);
 #define STATIC static
 #endif
 
-#define SOC_MAX_TS_NUM  2
-#define SOC_MAX_DIE_NUM       4
+#define SOC_MAX_TS_NUM 2
+#define SOC_MAX_DIE_NUM 4
 
 static const u32 g_soc_dev_ver = SOC_DRIVER_DEV_VERSION;
 static const u32 g_soc_host_ver = SOC_DRIVER_HOST_VERSION;
@@ -57,8 +57,8 @@ struct soc_mia_spec_info {
 
 struct soc_dev_resmng {
     u32 devid;
-    u32 vfgid;  /* ref the mia device belong to which vfg */
-    u32 vfid;   /* valid rang:0 ~ 15 */
+    u32 vfgid; /* ref the mia device belong to which vfg */
+    u32 vfid;  /* valid rang:0 ~ 15 */
     struct soc_mia_grp_info grp_info[SOC_MAX_MIA_GROUP_NUM];
 
     ka_mutex_t mutex;
@@ -70,33 +70,33 @@ struct soc_dev_resmng {
     struct soc_irq_info irq_infos[DEV_IRQ_TYPE_MAX];
     struct soc_pcie_info pcie_info;
 
-    struct soc_mia_spec_info spec_info;  /* set in pf */
+    struct soc_mia_spec_info spec_info; /* set in pf */
     struct soc_mia_res_info res_info[MIA_MAX_RES_TYPE];
     struct soc_mia_res_info_ex res_info_ex[MIA_MAX_RES_TYPE];
     struct soc_mia_res_info_ex *res_die_info[SOC_MAX_DIE_NUM];
     /* The subsys is directly placed here for unified management.
-    *  The content of the c file is not exposed to other modules and does not generate coupling.
-    */
+     *  The content of the c file is not exposed to other modules and does not generate coupling.
+     */
     struct soc_resmng_ts ts_resmng[SOC_MAX_TS_NUM];
 
     u32 subsys_num[MAX_SOC_SUBSYS_TYPE];
     u32 ts_enable_ids[SOC_MAX_TS_NUM];
+    struct soc_vnic_info vnic_info;
 };
 
-#define SOC_MAX_DAVINCI_NUM   2048
+#define SOC_MAX_DAVINCI_NUM 2048
 struct soc_dev_resmng *soc_resmng[SOC_MAX_DAVINCI_NUM];
 ka_mutex_t soc_resmng_mutex;
 
-static int subtype_maxid_trans[MAX_SOC_SUBSYS_TYPE] = {
-    [TS_SUBSYS] = SOC_MAX_TS_NUM
-};
+static int subtype_maxid_trans[MAX_SOC_SUBSYS_TYPE] = {[TS_SUBSYS] = SOC_MAX_TS_NUM};
 
 struct soc_rsv_mem *rsv_mem_node_find(const char *name, ka_list_head_t *rsv_mems_head)
 {
     struct soc_rsv_mem *mem = NULL;
     struct soc_rsv_mem *n = NULL;
 
-    ka_list_for_each_entry_safe(mem, n, rsv_mems_head, list_node) {
+    ka_list_for_each_entry_safe(mem, n, rsv_mems_head, list_node)
+    {
         if (ka_base_strcmp(mem->name, name) == 0) {
             return mem;
         }
@@ -110,7 +110,8 @@ struct soc_reg_base *io_bases_node_find(const char *name, ka_list_head_t *io_bas
     struct soc_reg_base *reg = NULL;
     struct soc_reg_base *n = NULL;
 
-    ka_list_for_each_entry_safe(reg, n, io_bases_head, list_node) {
+    ka_list_for_each_entry_safe(reg, n, io_bases_head, list_node)
+    {
         if (ka_base_strcmp(reg->name, name) == 0) {
             return reg;
         }
@@ -123,7 +124,8 @@ static struct soc_key_data *key_data_node_find(const char *name, ka_list_head_t 
 {
     struct soc_key_data *info = NULL;
 
-    ka_list_for_each_entry(info, key_value_head, list_node) {
+    ka_list_for_each_entry(info, key_value_head, list_node)
+    {
         if (ka_base_strcmp(info->name, name) == 0) {
             return info;
         }
@@ -135,7 +137,8 @@ static struct soc_attr_data *attr_node_find(const char *name, ka_list_head_t *at
 {
     struct soc_attr_data *info = NULL;
 
-    ka_list_for_each_entry(info, attr_head, list_node) {
+    ka_list_for_each_entry(info, attr_head, list_node)
+    {
         if (ka_base_strcmp(info->name, name) == 0) {
             return info;
         }
@@ -199,7 +202,8 @@ static void rsv_mem_node_free(ka_list_head_t *rsv_mems_head)
     struct soc_rsv_mem *mem = NULL;
     struct soc_rsv_mem *n = NULL;
 
-    ka_list_for_each_entry_safe(mem, n, rsv_mems_head, list_node) {
+    ka_list_for_each_entry_safe(mem, n, rsv_mems_head, list_node)
+    {
         ka_list_del(&mem->list_node);
         ka_mm_kfree(mem);
     }
@@ -210,7 +214,8 @@ static void io_base_node_free(ka_list_head_t *io_bases_head)
     struct soc_reg_base *reg = NULL;
     struct soc_reg_base *n = NULL;
 
-    ka_list_for_each_entry_safe(reg, n, io_bases_head, list_node) {
+    ka_list_for_each_entry_safe(reg, n, io_bases_head, list_node)
+    {
         ka_list_del(&reg->list_node);
         ka_mm_kfree(reg);
     }
@@ -221,7 +226,8 @@ static void key_value_node_free(ka_list_head_t *key_value_head)
     struct soc_key_data *data = NULL;
     struct soc_key_data *n = NULL;
 
-    ka_list_for_each_entry_safe(data, n, key_value_head, list_node) {
+    ka_list_for_each_entry_safe(data, n, key_value_head, list_node)
+    {
         ka_list_del(&data->list_node);
         ka_mm_kfree(data);
     }
@@ -232,7 +238,8 @@ static void attr_node_free(ka_list_head_t *attr_head)
     struct soc_attr_data *data = NULL;
     struct soc_attr_data *n = NULL;
 
-    ka_list_for_each_entry_safe(data, n, attr_head, list_node) {
+    ka_list_for_each_entry_safe(data, n, attr_head, list_node)
+    {
         ka_list_del(&data->list_node);
         if (data->attr != NULL) {
             ka_mm_kfree(data->attr);
@@ -322,15 +329,17 @@ static int inst_param_check(struct res_inst_info *inst)
         return -EINVAL;
     }
     if (inst->subid >= (u32)subtype_maxid_trans[inst->sub_type]) {
-        soc_err("Param is illegal. (devid=%u; subtype=%d; subid=%u; max=%d)\n",
-            inst->devid, (int)inst->sub_type, inst->subid, subtype_maxid_trans[inst->sub_type]);
+        soc_err(
+            "Param is illegal. (devid=%u; subtype=%d; subid=%u; max=%d)\n", inst->devid, (int)inst->sub_type,
+            inst->subid, subtype_maxid_trans[inst->sub_type]);
         return -EINVAL;
     }
 
     return 0;
 }
 
-static int soc_for_each_res_addr(ka_list_head_t *reg_head, ka_list_head_t *rsv_mem_head, u32 type,
+static int soc_for_each_res_addr(
+    ka_list_head_t *reg_head, ka_list_head_t *rsv_mem_head, u32 type,
     int (*func)(char *name, u64 addr, u64 len, void *priv), void *priv)
 {
     int ret = 0;
@@ -338,7 +347,8 @@ static int soc_for_each_res_addr(ka_list_head_t *reg_head, ka_list_head_t *rsv_m
     if (type == 0) {
         struct soc_reg_base *reg = NULL;
 
-        ka_list_for_each_entry(reg, reg_head, list_node) {
+        ka_list_for_each_entry(reg, reg_head, list_node)
+        {
             ret = func(reg->name, (u64)reg->info.io_base, (u64)reg->info.io_base_size, priv);
             if (ret != 0) {
                 break;
@@ -347,7 +357,8 @@ static int soc_for_each_res_addr(ka_list_head_t *reg_head, ka_list_head_t *rsv_m
     } else {
         struct soc_rsv_mem *mem = NULL;
 
-        ka_list_for_each_entry(mem, rsv_mem_head, list_node) {
+        ka_list_for_each_entry(mem, rsv_mem_head, list_node)
+        {
             ret = func(mem->name, (u64)mem->info.rsv_mem, (u64)mem->info.rsv_mem_size, priv);
             if (ret != 0) {
                 break;
@@ -358,8 +369,8 @@ static int soc_for_each_res_addr(ka_list_head_t *reg_head, ka_list_head_t *rsv_m
     return ret;
 }
 
-static int subsys_ts_for_each_res_addr(struct soc_resmng_ts *ts_resmng, u32 type,
-    int (*func)(char *name, u64 addr, u64 len, void *priv), void *priv)
+static int subsys_ts_for_each_res_addr(
+    struct soc_resmng_ts *ts_resmng, u32 type, int (*func)(char *name, u64 addr, u64 len, void *priv), void *priv)
 {
     int ret = 0;
 
@@ -370,8 +381,8 @@ static int subsys_ts_for_each_res_addr(struct soc_resmng_ts *ts_resmng, u32 type
     return ret;
 }
 
-int soc_resmng_for_each_res_addr(struct res_inst_info *inst, u32 type,
-    int (*func)(char *name, u64 addr, u64 len, void *priv), void *priv)
+int soc_resmng_for_each_res_addr(
+    struct res_inst_info *inst, u32 type, int (*func)(char *name, u64 addr, u64 len, void *priv), void *priv)
 {
     struct soc_dev_resmng *resmng = NULL;
     int ret;
@@ -394,8 +405,8 @@ int soc_resmng_for_each_res_addr(struct res_inst_info *inst, u32 type,
     return ret;
 }
 
-int soc_resmng_dev_for_each_res_addr(u32 devid, u32 type,
-    int (*func)(char *name, u64 addr, u64 len, void *priv), void *priv)
+int soc_resmng_dev_for_each_res_addr(
+    u32 devid, u32 type, int (*func)(char *name, u64 addr, u64 len, void *priv), void *priv)
 {
     struct soc_dev_resmng *resmng = NULL;
     int ret;
@@ -422,7 +433,8 @@ static int soc_for_each_key_value(ka_list_head_t *head, int (*func)(char *key, u
     struct soc_key_data *info = NULL;
     int ret = 0;
 
-    ka_list_for_each_entry(info, head, list_node) {
+    ka_list_for_each_entry(info, head, list_node)
+    {
         ret = func(info->name, info->value, priv);
         if (ret != 0) {
             break;
@@ -432,12 +444,14 @@ static int soc_for_each_key_value(ka_list_head_t *head, int (*func)(char *key, u
     return ret;
 }
 
-static int soc_for_each_attr_value(ka_list_head_t *head, int (*func)(const char *name, void *attr, u32 size, void *priv), void *priv)
+static int soc_for_each_attr_value(
+    ka_list_head_t *head, int (*func)(const char *name, void *attr, u32 size, void *priv), void *priv)
 {
     struct soc_attr_data *attr_node = NULL;
     int ret = 0;
 
-    ka_list_for_each_entry(attr_node, head, list_node) {
+    ka_list_for_each_entry(attr_node, head, list_node)
+    {
         ret = func(attr_node->name, attr_node->attr, attr_node->size, priv);
         if (ret != 0) {
             break;
@@ -588,8 +602,7 @@ int soc_resmng_get_rsv_mem(struct res_inst_info *inst, const char *name, struct 
 }
 KA_EXPORT_SYMBOL_GPL(soc_resmng_get_rsv_mem);
 
-int soc_resmng_set_reg_base(struct res_inst_info *inst, const char *name,
-    struct soc_reg_base_info *io_base)
+int soc_resmng_set_reg_base(struct res_inst_info *inst, const char *name, struct soc_reg_base_info *io_base)
 {
     struct soc_dev_resmng *resmng = NULL;
     int ret;
@@ -625,8 +638,7 @@ int soc_resmng_set_reg_base(struct res_inst_info *inst, const char *name,
 }
 KA_EXPORT_SYMBOL_GPL(soc_resmng_set_reg_base);
 
-int soc_resmng_get_reg_base(struct res_inst_info *inst, const char *name,
-    struct soc_reg_base_info *io_base)
+int soc_resmng_get_reg_base(struct res_inst_info *inst, const char *name, struct soc_reg_base_info *io_base)
 {
     struct soc_dev_resmng *resmng = NULL;
     int ret;
@@ -662,7 +674,7 @@ int soc_resmng_get_reg_base(struct res_inst_info *inst, const char *name,
 }
 KA_EXPORT_SYMBOL_GPL(soc_resmng_get_reg_base);
 
-#define SOC_IRQ_NUM_MAX  64
+#define SOC_IRQ_NUM_MAX 64
 int soc_resmng_set_irq_num(struct res_inst_info *inst, u32 irq_type, u32 irq_num)
 {
     struct soc_dev_resmng *resmng = NULL;
@@ -686,8 +698,9 @@ int soc_resmng_set_irq_num(struct res_inst_info *inst, u32 irq_type, u32 irq_num
     if (inst->sub_type == TS_SUBSYS) {
         ret = subsys_ts_set_irq_num(&resmng->ts_resmng[inst->subid], irq_type, irq_num);
         if (ret != 0) {
-            soc_err("Fail check. (devid=%u; tsid=%u; type=%u; num=%u; ret=%d)\n",
-                inst->devid, inst->subid, irq_type, irq_num, ret);
+            soc_err(
+                "Fail check. (devid=%u; tsid=%u; type=%u; num=%u; ret=%d)\n", inst->devid, inst->subid, irq_type,
+                irq_num, ret);
             return ret;
         }
     }
@@ -746,8 +759,9 @@ int soc_resmng_set_irq_by_index(struct res_inst_info *inst, u32 irq_type, u32 in
     if (inst->sub_type == TS_SUBSYS) {
         ret = subsys_ts_set_irq_by_index(&resmng->ts_resmng[inst->subid], irq_type, index, irq);
         if (ret != 0) {
-            soc_err("Fail check. (devid=%u; tsid=%u; type=%u; index=%u; ret=%d)\n",
-                resmng->devid, inst->subid, irq_type, index, ret);
+            soc_err(
+                "Fail check. (devid=%u; tsid=%u; type=%u; index=%u; ret=%d)\n", resmng->devid, inst->subid, irq_type,
+                index, ret);
         }
     }
 
@@ -778,8 +792,9 @@ int soc_resmng_get_irq_by_index(struct res_inst_info *inst, u32 irq_type, u32 in
     if (inst->sub_type == TS_SUBSYS) {
         ret = subsys_ts_get_irq_by_index(&resmng->ts_resmng[inst->subid], irq_type, index, irq);
         if ((ret != 0) && (ret != -ENOENT)) {
-            soc_err("Fail check. (devid=%u; tsid=%u; type=%u; index=%u; ret=%d)\n",
-                resmng->devid, inst->subid, irq_type, index, ret);
+            soc_err(
+                "Fail check. (devid=%u; tsid=%u; type=%u; index=%u; ret=%d)\n", resmng->devid, inst->subid, irq_type,
+                index, ret);
         }
     }
 
@@ -805,8 +820,8 @@ int soc_resmng_set_irq(struct res_inst_info *inst, u32 irq_type, u32 irq)
     if (inst->sub_type == TS_SUBSYS) {
         ret = subsys_ts_set_irq(&resmng->ts_resmng[inst->subid], irq_type, irq);
         if (ret != 0) {
-            soc_err("Need set first. (devid=%u; tsid=%u; type=%u; ret=%d)\n",
-                resmng->devid, inst->subid, irq_type, ret);
+            soc_err(
+                "Need set first. (devid=%u; tsid=%u; type=%u; ret=%d)\n", resmng->devid, inst->subid, irq_type, ret);
         }
     }
 
@@ -1273,8 +1288,9 @@ static int dev_repeat_set_attr(struct soc_attr_data *attr_node, const void *attr
     int ret;
 
     if (attr_node->size != size) {
-        soc_err("Not support repeat set differ size attr. (name=%s; old_attr_size=0x%x, new_attr_size=0x%x)\n",
-                attr_node->name, attr_node->size, size);
+        soc_err(
+            "Not support repeat set differ size attr. (name=%s; old_attr_size=0x%x, new_attr_size=0x%x)\n",
+            attr_node->name, attr_node->size, size);
         return -EEXIST;
     }
 
@@ -1497,6 +1513,67 @@ int soc_resmng_dev_set_reg_base(u32 devid, const char *name, struct soc_reg_base
 }
 KA_EXPORT_SYMBOL_GPL(soc_resmng_dev_set_reg_base);
 
+#ifdef CFG_FEATURE_SUPPORT_TRY_GET_REG_BASE_FROM_DTS
+STATIC int dev_get_reg_by_name_from_dts(const char *reg_name, struct soc_reg_base_info *io_base_info)
+{
+    struct device_node *root_node = NULL;
+    struct device_node *np = NULL;
+    const __be32 *addrp;
+    u64 size;
+    u64 addr;
+    int index;
+
+    if ((reg_name == NULL) || (io_base_info == NULL)) {
+        soc_err("Invalid input parameters\n");
+        return -EINVAL;
+    }
+
+    root_node = of_find_compatible_node(NULL, NULL, "hisi,resource_manage");
+    if (root_node == NULL) {
+        soc_err("Failed to find resource_manage node\n");
+        return -ENODEV;
+    }
+
+    np = of_get_child_by_name(root_node, "reg-node");
+    if (np == NULL) {
+        soc_err("Failed to find reg-node\n");
+        of_node_put(root_node);
+        return -ENODEV;
+    }
+
+    index = of_property_match_string(np, "reg-names", reg_name);
+    if (index < 0) {
+        soc_err("Failed to find reg_name: %s\n", reg_name);
+        of_node_put(np);
+        of_node_put(root_node);
+        return -ENODEV;
+    }
+
+    addrp = of_get_address(np, index, &size, NULL);
+    if (addrp == NULL) {
+        soc_err("Failed to get address for %s\n", reg_name);
+        of_node_put(np);
+        of_node_put(root_node);
+        return -ENODEV;
+    }
+
+    addr = of_translate_address(np, addrp);
+    if (addr == OF_BAD_ADDR) {
+        soc_err("Failed to translate address for %s\n", reg_name);
+        of_node_put(np);
+        of_node_put(root_node);
+        return -ENODEV;
+    }
+
+    io_base_info->io_base = addr;
+    io_base_info->io_base_size = size;
+    of_node_put(np);
+    of_node_put(root_node);
+
+    return 0;
+}
+#endif
+
 static int dev_get_reg_base(struct soc_dev_resmng *resmng, const char *name, struct soc_reg_base_info *io_base)
 {
     struct soc_reg_base *reg = NULL;
@@ -1504,6 +1581,12 @@ static int dev_get_reg_base(struct soc_dev_resmng *resmng, const char *name, str
     ka_task_mutex_lock(&resmng->mutex);
     reg = io_bases_node_find(name, &resmng->io_bases_head);
     if (reg == NULL) {
+#ifdef CFG_FEATURE_SUPPORT_TRY_GET_REG_BASE_FROM_DTS
+        if (dev_get_reg_by_name_from_dts(name, io_base) == 0) {
+            ka_task_mutex_unlock(&resmng->mutex);
+            return 0;
+        }
+#endif
         ka_task_mutex_unlock(&resmng->mutex);
         return -ENOENT;
     }
@@ -1861,8 +1944,7 @@ int soc_resmng_dev_get_mia_base_info(u32 devid, u32 *vfgid, u32 *vfid)
 }
 KA_EXPORT_SYMBOL_GPL(soc_resmng_dev_get_mia_base_info);
 
-int soc_resmng_set_mia_res(struct res_inst_info *inst, enum soc_mia_res_type type,
-    u64 bitmap, u32 unit_per_bit)
+int soc_resmng_set_mia_res(struct res_inst_info *inst, enum soc_mia_res_type type, u64 bitmap, u32 unit_per_bit)
 {
     struct soc_dev_resmng *resmng = NULL;
     struct soc_mia_res_info_ex info = {0};
@@ -1893,8 +1975,7 @@ int soc_resmng_set_mia_res(struct res_inst_info *inst, enum soc_mia_res_type typ
 }
 KA_EXPORT_SYMBOL_GPL(soc_resmng_set_mia_res);
 
-int soc_resmng_get_mia_res(struct res_inst_info *inst, enum soc_mia_res_type type,
-    u64 *bitmap, u32 *unit_per_bit)
+int soc_resmng_get_mia_res(struct res_inst_info *inst, enum soc_mia_res_type type, u64 *bitmap, u32 *unit_per_bit)
 {
     struct soc_dev_resmng *resmng = NULL;
     struct soc_mia_res_info_ex info = {0};
@@ -2041,8 +2122,8 @@ KA_EXPORT_SYMBOL_GPL(soc_resmng_get_ts_status);
 static int dev_die_res_info_alloc(struct soc_dev_resmng *resmng, u32 die_id)
 {
     if (resmng->res_die_info[die_id] == NULL) {
-        resmng->res_die_info[die_id] = (struct soc_mia_res_info_ex *)ka_mm_kzalloc(sizeof(struct soc_mia_res_info_ex) *
-                                                                              MIA_MAX_RES_TYPE, KA_GFP_KERNEL);
+        resmng->res_die_info[die_id] = (struct soc_mia_res_info_ex *)ka_mm_kzalloc(
+            sizeof(struct soc_mia_res_info_ex) * MIA_MAX_RES_TYPE, KA_GFP_KERNEL);
         if (resmng->res_die_info[die_id] == NULL) {
             soc_err("Kzalloc failed.\n");
             return -ENOMEM;
@@ -2238,7 +2319,7 @@ int soc_resmng_get_dev_topology(u32 devid, u32 peer_devid, int *topo_type)
         return -EINVAL;
     }
 
-    if (uda_is_pf_dev(devid) || uda_is_pf_dev(peer_devid)) {
+    if ((!uda_is_pf_dev(devid)) || (!uda_is_pf_dev(peer_devid))) {
         *topo_type = SOC_TOPOLOGY_SYS;
         return 0;
     }
@@ -2319,8 +2400,9 @@ int soc_resmng_dev_die_set_res(u32 devid, u32 die_id, enum soc_mia_res_type type
     resmng->res_die_info[die_id][type] = *info;
     ka_task_mutex_unlock(&resmng->mutex);
 
-    soc_info("set res ok. (devid=%u; die_id=%u, type=%u; bitmap=0x%llx; unit=%u; start=%u; total_num=%u)\n",
-              devid, die_id, type, info->bitmap, info->unit_per_bit, info->start, info->total_num);
+    soc_info(
+        "set res ok. (devid=%u; die_id=%u, type=%u; bitmap=0x%llx; unit=%u; start=%u; total_num=%u)\n", devid, die_id,
+        type, info->bitmap, info->unit_per_bit, info->start, info->total_num);
 
     return 0;
 }
@@ -2363,6 +2445,45 @@ int soc_resmng_dev_die_get_res(u32 devid, u32 die_id, enum soc_mia_res_type type
     return 0;
 }
 KA_EXPORT_SYMBOL_GPL(soc_resmng_dev_die_get_res);
+
+int soc_resmng_dev_set_vnic_ip(u32 devid, u32 vnic_ip)
+{
+    struct soc_dev_resmng *resmng = NULL;
+
+    resmng = get_resmng(devid);
+    if (resmng == NULL) {
+        return -ENOSPC;
+    }
+
+    resmng->vnic_info.valid = true;
+    resmng->vnic_info.vnic_ip = vnic_ip;
+
+    return 0;
+}
+KA_EXPORT_SYMBOL_GPL(soc_resmng_dev_set_vnic_ip);
+
+int soc_resmng_dev_get_vnic_ip(u32 devid, u32 *vnic_ip)
+{
+    struct soc_dev_resmng *resmng = NULL;
+
+    if (vnic_ip == NULL) {
+        return -EINVAL;
+    }
+
+    resmng = get_resmng(devid);
+    if (resmng == NULL) {
+        return -ENOSPC;
+    }
+
+    if (resmng->vnic_info.valid != true) {
+        return -ENOENT;
+    }
+
+    *vnic_ip = resmng->vnic_info.vnic_ip;
+
+    return 0;
+}
+KA_EXPORT_SYMBOL_GPL(soc_resmng_dev_get_vnic_ip);
 
 #if defined(CFG_BUILD_DEBUG)
 static int soc_res_addr_show(char *name, u64 addr, u64 len, void *priv)
@@ -2407,13 +2528,14 @@ static void soc_res_mia_show(ka_seq_file_t *seq, struct soc_mia_res_info_ex *mia
 {
     u32 i;
 
-    ka_fs_seq_printf(seq, "        type       bitmap  unit_per_bit  start   total_num\n");
+    ka_fs_seq_printf(seq, "        type       bitmap    unit_per_bit    start   total_num       min_num     freq\n");
 
     for (i = 0; i < num; i++) {
         struct soc_mia_res_info_ex *mia = mias + i;
-        if (mia->bitmap != 0) {
-            ka_fs_seq_printf(seq, "        %s       %llx      %u      %u      %u\n",
-                mia_res_name[i], mia->bitmap, mia->unit_per_bit, mia->start, mia->total_num);
+        if (mia->unit_per_bit != 0) {
+            ka_fs_seq_printf(
+                seq, "        %s       %llx      %u      %u      %u        %u      %u\n", mia_res_name[i], mia->bitmap,
+                mia->unit_per_bit, mia->start, mia->total_num, mia->min_num, mia->freq);
         }
     }
 }
@@ -2482,9 +2604,9 @@ void soc_res_show(u32 udevid, ka_seq_file_t *seq)
 }
 #endif
 
-int soc_resnmg_get_version(enum soc_ver_type type) 
+int soc_resnmg_get_version(enum soc_ver_type type)
 {
-    switch(type) {
+    switch (type) {
         case VER_TYPE_DEV:
             return g_soc_dev_ver;
         case VER_TYPE_HOST:
@@ -2508,17 +2630,17 @@ static long soc_resnmg_get_version_ioctl(ka_file_t *filp, unsigned int cmd, unsi
         return -EINVAL;
     }
 
-    switch(cmd) {
+    switch (cmd) {
         case SOC_RESMNG_GET_DEV_VER:
             ver = soc_resnmg_get_version(VER_TYPE_DEV);
             if (ka_base_copy_to_user((u32 __ka_user *)arg, &ver, sizeof(ver))) {
-                    return -EFAULT;
+                return -EFAULT;
             }
             break;
         case SOC_RESMNG_GET_HOST_VER:
             ver = soc_resnmg_get_version(VER_TYPE_HOST);
             if (ka_base_copy_to_user((u32 __ka_user *)arg, &ver, sizeof(ver))) {
-                    return -EFAULT;
+                return -EFAULT;
             }
             break;
         default:
@@ -2528,15 +2650,9 @@ static long soc_resnmg_get_version_ioctl(ka_file_t *filp, unsigned int cmd, unsi
     return 0;
 }
 
-static int get_version_ioctl_open(ka_inode_t *inode, ka_file_t *file)
-{
-    return 0;
-}
+static int get_version_ioctl_open(ka_inode_t *inode, ka_file_t *file) { return 0; }
 
-static int get_version_ioctl_release(ka_inode_t *inode, ka_file_t *file)
-{
-    return 0;
-}
+static int get_version_ioctl_release(ka_inode_t *inode, ka_file_t *file) { return 0; }
 
 STATIC ka_file_operations_t soc_resmng_fops = {
     .owner = KA_THIS_MODULE,

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * Copyright (c) 2026 Huawei Technologies Co., Ltd.
  * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -29,11 +29,11 @@ struct svm_umc_msg_head {
     u32 subevent_id;
 };
 
-#define UMC_TO_LOCAL             (0x1U << 0U)
-#define UMC_DEVICE_SUBMIT        (0x1U << 1U)
+#define UMC_TO_LOCAL (0x1U << 0U)
+#define UMC_DEVICE_SUBMIT (0x1U << 1U)
+#define UMC_USE_ASYNC (0x1U << 2U)
 
-static inline void svm_umc_msg_head_pack(u32 devid, int pid, u32 grp_id, u32 subevent_id,
-    struct svm_umc_msg_head *head)
+static inline void svm_umc_msg_head_pack(u32 devid, int pid, u32 grp_id, u32 subevent_id, struct svm_umc_msg_head *head)
 {
     head->devid = devid;
     head->pid = pid;
@@ -41,8 +41,14 @@ static inline void svm_umc_msg_head_pack(u32 devid, int pid, u32 grp_id, u32 sub
     head->subevent_id = subevent_id;
 }
 
+static inline bool umc_submit_sync_event(u32 flag)
+{
+    return (flag & UMC_USE_ASYNC) == 0 ? true : false;
+}
+
 int svm_umc_send(struct svm_umc_msg_head *head, u32 flag, struct svm_umc_msg *msg);
 int svm_umc_h2d_send(struct svm_umc_msg_head *head, struct svm_umc_msg *msg);
+int svm_umc_h2d_send_async(struct svm_umc_msg_head *head, struct svm_umc_msg *msg);
 
 static inline int svm_umc_local_send(struct svm_umc_msg_head *head, struct svm_umc_msg *msg)
 {

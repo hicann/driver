@@ -27,6 +27,7 @@
 #include "ascend_hal.h"
 #include "drv_type.h"
 #include "dsmi_common.h"
+#include "dms_cmd_def.h"
 #include "dms_fault.h"
 #include "dsmi_common_interface.h"
 #include "dsmi_dmp_command.h"
@@ -71,39 +72,6 @@ int dsmi_register_fault_event_handler(int device_id, fault_event_handler handler
 #define DSMI_READ_FAULT_DEVICE_ALL (-1)
 #define DSMI_READ_FAULT_NO_TIMEOUT_FLAG (-1)
 #define DSMI_EVENT_WAIT_TIME_ZERO 0 /* return immediately no block */
-
-STATIC int dsmi_filter_event(int device_id, struct dsmi_event_filter filter,
-    struct dms_fault_event *dms_event)
-{
-    int ret;
-
-    if ((device_id != DSMI_READ_FAULT_DEVICE_ALL) && (device_id != (int)dms_event->deviceid)) {
-        return DRV_ERROR_NO_EVENT;
-    }
-
-    ret = !(filter.filter_flag & DSMI_EVENT_FILTER_FLAG_EVENT_ID) || \
-          (dms_event->event_id == filter.event_id) ? \
-          DRV_ERROR_NONE : DRV_ERROR_NO_EVENT;
-    if (ret != 0) {
-        return DRV_ERROR_NO_EVENT;
-    }
-
-    ret = !(filter.filter_flag & DSMI_EVENT_FILTER_FLAG_SERVERITY) || \
-          (dms_event->severity >= filter.severity) ? \
-          DRV_ERROR_NONE : DRV_ERROR_NO_EVENT;
-    if (ret != 0) {
-        return DRV_ERROR_NO_EVENT;
-    }
-
-    ret = !(filter.filter_flag & DSMI_EVENT_FILTER_FLAG_NODE_TYPE) || \
-          (dms_event->node_type == filter.node_type) ? \
-          DRV_ERROR_NONE : DRV_ERROR_NO_EVENT;
-    if (ret != 0) {
-        return DRV_ERROR_NO_EVENT;
-    }
-
-    return DRV_ERROR_NONE;
-}
 
 #if (!defined DRV_HOST) && (!defined CFG_FEATURE_DEFAULT_STACK_SIZE)
 #define DSMI_FAULT_EVT_THREAD_STACK_SIZE (128 * 1024)
@@ -454,6 +422,10 @@ static int get_remain_time(int timeout, struct timespec* time_last)
     long times_gap;
     struct timespec time_current = { 0, 0 };
 
+    if (timeout == DSMI_READ_FAULT_NO_TIMEOUT_FLAG) {
+        return DSMI_READ_FAULT_NO_TIMEOUT_FLAG;
+    }
+
     (void)clock_gettime(CLOCK_MONOTONIC, &time_current);
     /* 1000 ms per second */
     times_gap = (long)((time_current.tv_sec - time_last->tv_sec) * 1000) +
@@ -474,7 +446,7 @@ int dsmi_read_fault_event(int device_id, int timeout, struct dsmi_event_filter f
 {
     struct dms_fault_event event_buf = {0};
     struct timespec time_last = { 0, 0 };
-    int filter_ret = 0;
+    struct dms_event_filter dms_filter = {0};
     int remain_time = timeout;
     int ret;
 
@@ -493,25 +465,27 @@ int dsmi_read_fault_event(int device_id, int timeout, struct dsmi_event_filter f
         }
     }
 
+    dms_filter.filter_flag = filter.filter_flag;
+    dms_filter.event_id = filter.event_id;
+    dms_filter.severity = filter.severity;
+    dms_filter.node_type = (unsigned short)filter.node_type;
+
     (void)clock_gettime(CLOCK_MONOTONIC, &time_last);
     if (memset_s(&event_buf, sizeof(event_buf), 0, sizeof(event_buf)) != EOK) {
         DEV_MON_WARNING("memset event buff warn\n");
     }
 
     do {
-        ret = DmsGetFaultEvent(remain_time, &event_buf);
+        ret = DmsGetFaultEvent(device_id, &dms_filter, remain_time, &event_buf);
         remain_time = get_remain_time(remain_time, &time_last);
         if (ret == 0) {
-            filter_ret = dsmi_filter_event(device_id, filter, &event_buf);
-            if ((filter_ret != 0)) {
-                continue;
-            }
+            break;
         } else if (ret == DRV_ERROR_NO_EVENT) {
             continue;
         } else {
             return ret;
         }
-    } while ((ret == 0) && (filter_ret != 0));
+    } while ((remain_time > 0) || (remain_time == DSMI_READ_FAULT_NO_TIMEOUT_FLAG));
 
     if (ret == 0) {
         if (memcpy_s(&event->event_t.dms_event, sizeof(struct dms_fault_event),

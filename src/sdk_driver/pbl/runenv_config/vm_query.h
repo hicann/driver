@@ -13,8 +13,6 @@
 #ifndef _VM_QUERY_H
 #define _VM_QUERY_H
 
-#include <linux/types.h>
-
 bool run_in_virtual_mach(void);
 
 #endif

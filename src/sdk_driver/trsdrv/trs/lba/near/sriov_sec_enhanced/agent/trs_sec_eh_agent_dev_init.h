@@ -20,4 +20,3 @@ int trs_sec_eh_ts_init(struct trs_id_inst *inst);
 void trs_sec_eh_ts_uninit(struct trs_id_inst *inst);
 
 #endif
-

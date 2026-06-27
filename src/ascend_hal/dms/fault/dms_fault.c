@@ -33,6 +33,7 @@
 #define INVALID_NODE_TYPE (0xFFFFFFFFU)
 #define SENSOR_NODE_CFG_MAX_NAME_LEN 20
 #define DMS_FAULT_DEVICE_ALL (-1)
+#define DMS_READ_FAULT_NO_TIMEOUT_FLAG (-1)
 /* dms sensor ioctl args */
 struct dms_sensor_user {
     unsigned int dev_id;
@@ -111,15 +112,23 @@ static void dms_adjust_alarm_raised_time(struct dms_event_para *dms_event)
 #endif
 }
 
-static drvError_t DmsGetEventPara(int timeout, enum cmd_source cmd_src, struct dms_event_para *event_para)
+STATIC drvError_t DmsGetEventPara(int dev_id, struct dms_event_filter *filter, int timeout, enum cmd_source cmd_src, struct dms_event_para *event_para)
 {
     struct dms_ioctl_arg ioarg = {0};
     struct dms_read_event_ioctl input = {0};
+    struct dms_event_filter event_filter = {0};
     int ret;
 
+    if (filter != NULL) {
+        event_filter = *filter;
+    } else {
+        return DRV_ERROR_PARA_ERROR;
+    }
     (void)memset_s(event_para, sizeof(struct dms_event_para), 0, sizeof(struct dms_event_para));
     input.timeout = timeout;
     input.cmd_src = cmd_src;
+    input.dev_id = dev_id;
+ 	input.filter = event_filter;
     ioarg.main_cmd = DMS_MAIN_CMD_BASIC;
     ioarg.sub_cmd = DMS_SUBCMD_GET_FAULT_EVENT;
     ioarg.filter_len = 0;
@@ -188,7 +197,7 @@ static drvError_t dms_event_para_to_dms_event(struct dms_event_para *event_para,
     return DRV_ERROR_NONE;
 }
 
-drvError_t DmsGetFaultEvent(int timeout, struct dms_fault_event *event)
+drvError_t DmsGetFaultEvent(int dev_id, struct dms_event_filter *filter, int timeout, struct dms_fault_event *event)
 {
     struct dms_event_para event_para = {0};
     int ret;
@@ -199,14 +208,16 @@ drvError_t DmsGetFaultEvent(int timeout, struct dms_fault_event *event)
         return DRV_ERROR_PARA_ERROR;
     }
 
-    ret = DmsGetEventPara(timeout, FROM_DSMI, &event_para);
-    if ((ret == ETIMEDOUT) || (ret == ERESTARTSYS)) {
+    ret = DmsGetEventPara(dev_id, filter, timeout, FROM_DSMI, &event_para);
+    if (ret == ETIMEDOUT) {
         return DRV_ERROR_WAIT_TIMEOUT;
     } else if (ret == DRV_ERROR_RESOURCE_OCCUPIED) {
         DMS_ERR("Has not pid resource. (ret=%d)\n", ret);
         return ret;
     } else if (ret == DRV_ERROR_NOT_SUPPORT) {
         return ret;
+    } else if (ret == ERESTARTSYS) {
+        return DRV_ERROR_NO_EVENT;
     } else if (ret != 0) {
         DMS_ERR("Dms get event parameter failed. (ret=%d)\n", ret);
         return ret;
@@ -910,9 +921,8 @@ static int dms_wait_fault_event(int32_t dev_id, int timeout,
     struct dms_event_para event_para = {0};
     struct halFaultEventInfo event_tmp = {0};
     int ret;
-    bool dev_exist = false;
 
-    ret = DmsGetEventPara(timeout, FROM_HAL, &event_para);
+    ret = DmsGetEventPara(dev_id, (struct dms_event_filter *)filter, timeout, FROM_HAL, &event_para);
     if ((ret == ETIMEDOUT) || (ret == ERESTARTSYS)) {
         return DRV_ERROR_NO_EVENT;
     } else if (ret == DRV_ERROR_RESOURCE_OCCUPIED) {
@@ -923,24 +933,10 @@ static int dms_wait_fault_event(int32_t dev_id, int timeout,
         return ret;
     }
 
-    ret = uda_dev_is_exist(event_para.deviceid, &dev_exist);
-    if (ret != 0) {
-        return ret;
-    }
-
-    if (!dev_exist) {
-        return DRV_ERROR_NO_EVENT;
-    }
-
     ret = dms_event_para_to_event_info(&event_para, &event_tmp);
     if (ret != 0) {
         DMS_ERR("Struct EventPara to DmsEvent failed. (dev_id=%u; event_id=0x%x; assertion=%u)\n",
                 event_para.deviceid, event_para.event_id, event_para.assertion);
-        return ret;
-    }
-
-    ret = dms_filter_one_event(dev_id, filter, &event_tmp);
-    if (ret != 0) {
         return ret;
     }
 
@@ -981,7 +977,7 @@ drvError_t halReadFaultEvent(int32_t devId, int timeout,
             time_last = time_current;
             time_out = (int)(time_out > times_gap ? (time_out - times_gap) : 0);
         }
-    } while (time_out > 0);
+    } while ((time_out > 0) || (time_out == DMS_READ_FAULT_NO_TIMEOUT_FLAG));
 
     if (ret == 0) {
         if (memcpy_s(event_info, sizeof(struct halFaultEventInfo), &event_tmp, sizeof(struct halFaultEventInfo)) != 0) {

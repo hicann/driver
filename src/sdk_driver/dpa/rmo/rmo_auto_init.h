@@ -14,7 +14,7 @@
 #ifndef RMO_AUTO_INIT_H
 #define RMO_AUTO_INIT_H
 
-#define AUTO_INIT_MODULE_NAME      RMO
+#define AUTO_INIT_MODULE_NAME RMO
 #define AUTO_INIT_MODULE_NAME_STR "RMO"
 
 #include "pbl/pbl_feature_loader.h"

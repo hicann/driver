@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2025. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -15,9 +15,9 @@
 
 #include "ka_base_pub.h"
 #include "ka_common_pub.h"
-#include "ka_list_pub.h"
 
 #include "pbl/pbl_task_ctx.h"
+#include "pbl/pbl_rbtree.h"
 
 #include "ascend_hal_define.h"
 #include "apm_proc_fs.h"
@@ -25,13 +25,13 @@
 #include "apm_kernel_msg.h"
 
 struct apm_res_map_node {
-    ka_list_head_t node;
+    ka_rb_node_t rb_node;
     struct apm_res_map_info ctx;
 };
 
 struct apm_res_map_ctx {
     ka_proc_dir_entry_t *entry;
-    ka_list_head_t head;
+    ka_rb_root_t rb_root;
 };
 
 int apm_res_map_ctx_create(struct task_ctx_domain *domain, int tgid);

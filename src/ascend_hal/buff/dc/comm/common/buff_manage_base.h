@@ -16,33 +16,34 @@
 extern "C" {
 #endif
 
-drvError_t buff_pool_algo_vma_register(const char *name, unsigned long pool_size,
-    unsigned int priv_mbuf_flag, int *pool_id);
-drvError_t buff_pool_algo_sp_register(const char *name, unsigned long pool_size,
-    unsigned int priv_mbuf_flag, int *pool_id);
-drvError_t buff_pool_algo_cache_vma_register(const char *name, unsigned long pool_size,
-    unsigned int priv_mbuf_flag, int *pool_id);
-drvError_t buff_pool_algo_cache_sp_register(const char *name, unsigned long pool_size,
-    unsigned int priv_mbuf_flag, int *pool_id);
+drvError_t buff_pool_algo_vma_register(const char *name, unsigned long pool_size, unsigned int priv_mbuf_flag,
+                                       int *pool_id);
+drvError_t buff_pool_algo_sp_register(const char *name, unsigned long pool_size, unsigned int priv_mbuf_flag,
+                                      int *pool_id);
+drvError_t buff_pool_algo_cache_vma_register(const char *name, unsigned long pool_size, unsigned int priv_mbuf_flag,
+                                             int *pool_id);
+drvError_t buff_pool_algo_cache_sp_register(const char *name, unsigned long pool_size, unsigned int priv_mbuf_flag,
+                                            int *pool_id);
 drvError_t buff_pool_unregister(int pool_id);
-drvError_t buff_pool_cache_create(int pool_id, unsigned int dev_id, unsigned int mem_flag,
-    unsigned long long mem_size, unsigned long long alloc_max_size);
+drvError_t buff_pool_cache_create(int pool_id, unsigned int dev_id, unsigned int mem_flag, unsigned long long mem_size,
+                                  unsigned long long alloc_max_size);
 drvError_t buff_pool_cache_destroy(int pool_id, unsigned int dev_id);
 drvError_t buff_pool_add_proc(int pool_id, int pid, GroupShareAttr attr);
 drvError_t buff_pool_del_proc(int pool_id, int pid);
 drvError_t buff_pool_attach(int pool_id, int timeout);
 drvError_t buff_pool_attach_ex(int pool_id, int timeout, unsigned long long *proc_uid, unsigned int *cache_type);
 drvError_t buff_pool_detach(int pool_id);
-drvError_t buff_pool_blk_alloc(int pool_id, unsigned long size, unsigned long flag, unsigned long *ptr, uint32_t *blk_id);
+drvError_t buff_pool_blk_alloc(int pool_id, unsigned long size, unsigned long flag, unsigned long *ptr,
+                               uint32_t *blk_id);
 drvError_t buff_pool_blk_free(int pool_id, unsigned long ptr);
-drvError_t buff_pool_blk_get(unsigned long ptr, int *pool_id, unsigned long *alloc_ptr,
-    unsigned long *alloc_size, uint32_t *blk_id);
+drvError_t buff_pool_blk_get(unsigned long ptr, int *pool_id, unsigned long *alloc_ptr, unsigned long *alloc_size,
+                             uint32_t *blk_id);
 drvError_t buff_pool_blk_put(int pool_id, unsigned long ptr);
 
 drvError_t buff_pool_id_query(const char *name, int *pool_id);
 drvError_t buff_pool_name_query(int pool_id, char *name, int name_len);
 drvError_t buff_cache_info_query(int pool_id, unsigned int dev_id, GrpQueryGroupAddrInfo *cache_buff,
-    unsigned int cache_cnt, unsigned int *query_cnt);
+                                 unsigned int cache_cnt, unsigned int *query_cnt);
 drvError_t buff_pool_priv_flag_query(int pool_id, unsigned int *flag);
 drvError_t buff_pool_va_check(int pool_id, unsigned long va, int *result);
 drvError_t buff_pool_task_query(int pool_id, int *pid, int pid_num, int *query_num);

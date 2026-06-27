@@ -45,6 +45,10 @@ target_sources(prof_obj PRIVATE
     $<$<STREQUAL:${PRODUCT_SIDE},device>:${CMAKE_CURRENT_SOURCE_DIR}/adapt/kernel/prof_adapt_ioctl.c>
     $<$<STREQUAL:${PRODUCT_SIDE},device>:${CMAKE_CURRENT_SOURCE_DIR}/comm/ioctl/prof_ioctl.c>
     $<$<AND:$<STREQUAL:${PRODUCT_SIDE},device>,$<NOT:$<IN_LIST:${PRODUCT},${product_not_support_event}>>>:${CMAKE_CURRENT_SOURCE_DIR}/comm/event/prof_event_agent.c>
+    $<$<STREQUAL:${PRODUCT},ascend950>:${CMAKE_CURRENT_SOURCE_DIR}/adapt/host_sample/prof_adapt_host.c>
+    $<$<STREQUAL:${PRODUCT},ascend950>:${CMAKE_CURRENT_SOURCE_DIR}/../prof_sample/prof_sample.c>
+    $<$<STREQUAL:${PRODUCT},ascend950>:${CMAKE_CURRENT_SOURCE_DIR}/../prof_sample/prof_sample_ts_channel.c>
+    $<$<STREQUAL:${PRODUCT},ascend950>:${CMAKE_CURRENT_SOURCE_DIR}/../prof_sample/prof_sample_aicpu_channel.c>
 )
 
 target_include_directories(prof_obj PRIVATE
@@ -58,12 +62,14 @@ target_include_directories(prof_obj PRIVATE
     ${BASE_DIR}/command/
     ${BASE_DIR}/comm/hdc/
     $<$<IN_LIST:${PRODUCT},${product_support_urma}>:${BASE_DIR}/comm/urma/>
+    $<$<IN_LIST:${PRODUCT},${product_support_urma}>:/usr/include/ub/umdk/urma>
     $<$<STREQUAL:${PRODUCT_SIDE},device>:${BASE_DIR}/comm/ioctl/>
     ${DRIVER_HAL_INC_DIR}
     ${C_SEC_INCLUDE}
     ${DRIVER_USER_DIR}/inc
     ${DRIVER_KERNEL_DIR}/dmc/prof/command/ioctl
     ${DRIVER_KERNEL_DIR}/dmc/prof/command/msg
+    ${DRIVER_KERNEL_DIR}/dms/command/ioctl
     $<$<STREQUAL:${IN_BRANCH},trunk_ai>:${DRIVER_USER_DIR}/dms/drv_devmng/ascend910/>
     ${DRIVER_USER_DIR}/inc/dms
     ${DRIVER_USER_DIR}/msnpureport/inc/slog

@@ -9,12 +9,12 @@
 # ------------------------------------------------------------------------------------------------------------
 
 if (${PRODUCT_SIDE} STREQUAL host)
-    set(ts_debug_depends drv_seclib_host asdrv_svm asdrv_fms asdrv_trs asdrv_pbl asdrv_trsbase ascend_kernel_open_adapt drv_pcie_host)
+    set(ts_debug_depends drv_seclib_host asdrv_dpa asdrv_svm asdrv_fms asdrv_trs asdrv_pbl asdrv_trsbase ascend_kernel_open_adapt drv_pcie_host)
     add_host_ko(LOCAL_MODULE ts_debug
         KO_SRC_FOLDER ${CMAKE_CURRENT_SOURCE_DIR}
         MAKE_ARGS ${MAKE_ARGS}
         TARGETE_DPENDS "${ts_debug_depends}")
-    set(debug_switch_depends drv_seclib_host asdrv_svm asdrv_fms asdrv_trs asdrv_pbl asdrv_trsbase ascend_kernel_open_adapt drv_pcie_host)
+    set(debug_switch_depends drv_seclib_host asdrv_dpa asdrv_svm asdrv_fms asdrv_trs asdrv_pbl asdrv_trsbase ascend_kernel_open_adapt drv_pcie_host)
     add_host_ko(LOCAL_MODULE debug_switch
         KO_SRC_FOLDER ${CMAKE_CURRENT_SOURCE_DIR}
         MAKE_ARGS ${MAKE_ARGS}

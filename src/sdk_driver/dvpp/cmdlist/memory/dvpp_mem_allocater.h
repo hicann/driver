@@ -14,9 +14,16 @@
 #ifndef DVPP_MEM_ALLOCATER_H
 #define DVPP_MEM_ALLOCATER_H
 
-#include <linux/types.h>
+#include "ka_type.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 int32_t dvpp_init_mem_allocater(void);
 void dvpp_deinit_mem_allocater(void);
 
+#ifdef __cplusplus
+}
+#endif
 #endif // #ifndef DVPP_MEM_ALLOCATER_H

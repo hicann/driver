@@ -44,8 +44,8 @@ int32_t sched_fop_query_sync_msg_trace(u32 devid, unsigned long arg)
         return ret;
     }
 
-    if (copy_to_user_safe((void *)((uintptr_t)arg + sizeof(struct sched_trace_input)),
-        &para_info.trace, sizeof(struct sched_sync_event_trace)) != 0) {
+    if (copy_to_user_safe((void *)((uintptr_t)arg + sizeof(struct sched_trace_input)), &para_info.trace,
+                          sizeof(struct sched_sync_event_trace)) != 0) {
         return DRV_ERROR_COPY_USER_FAIL;
     }
 #endif
@@ -67,10 +67,9 @@ int sched_check_cp2_dest_pid(struct sched_published_event_info *event_info)
         return 0;
     }
     (void)dbl_get_cust_op_enhance_mode(dev_id, &cust_mode);
-    if ((cp_type == DEVDRV_PROCESS_CP2)
-        && (event_info->pid != pid)
-        && (cust_mode == DBL_CUST_OP_ENHANCE_DISABLE)) {
-        sched_warn("Custom process is not allowed. (pid=%u; cp2_pid=%d; custom_mode=%u)\n", event_info->pid, pid, cust_mode);
+    if ((cp_type == DEVDRV_PROCESS_CP2) && (event_info->pid != pid) && (cust_mode == DBL_CUST_OP_ENHANCE_DISABLE)) {
+        sched_warn("Custom process is not allowed. (pid=%u; cp2_pid=%d; custom_mode=%u)\n", event_info->pid, pid,
+                   cust_mode);
         return DRV_ERROR_INNER_ERR;
     }
 #endif
@@ -78,8 +77,7 @@ int sched_check_cp2_dest_pid(struct sched_published_event_info *event_info)
     return 0;
 }
 
-STATIC int32_t esched_get_trace_index(struct sched_event *event,
-    u32 *gid, u32 *event_id, u32 *subevent_id)
+STATIC int32_t esched_get_trace_index(struct sched_event *event, u32 *gid, u32 *event_id, u32 *subevent_id)
 {
     struct event_sync_msg *sync_msg = NULL;
 
@@ -105,7 +103,7 @@ void esched_wait_trace_update(struct sched_proc_ctx *proc_ctx, struct sched_even
     int dfx_gid, dfx_tid;
     u32 gid, event_id, subevent_id;
 
-    if ((proc_ctx== NULL) || (event == NULL)) {
+    if ((proc_ctx == NULL) || (event == NULL)) {
         sched_warn("wait event abnormal.\n");
         return;
     }
@@ -116,21 +114,24 @@ void esched_wait_trace_update(struct sched_proc_ctx *proc_ctx, struct sched_even
 
     dfx_gid = gid - SCHED_MAX_DEFAULT_GRP_NUM;
     dfx_tid = event_id - SCHED_SYNC_START_EVENT_ID;
-    if ((dfx_gid < 0) || (dfx_gid >= SCHED_MAX_EX_GRP_NUM) ||
-        (dfx_tid < 0) || (dfx_tid >= SCHED_MAX_SYNC_THREAD_NUM_PER_GRP)) {
+    if ((dfx_gid < 0) || (dfx_gid >= SCHED_MAX_EX_GRP_NUM) || (dfx_tid < 0) ||
+        (dfx_tid >= SCHED_MAX_SYNC_THREAD_NUM_PER_GRP)) {
         return;
     }
 
 #ifdef CFG_ENV_HOST
-    proc_ctx->sched_dfx[dfx_gid][dfx_tid].src_wait_start_timestamp = tick_to_millisecond(event->timestamp.subscribe_in_kernel);
-    proc_ctx->sched_dfx[dfx_gid][dfx_tid].src_wait_end_timestamp = tick_to_millisecond(event->timestamp.subscribe_out_kernel);
+    proc_ctx->sched_dfx[dfx_gid][dfx_tid].src_wait_start_timestamp = tick_to_millisecond(
+        event->timestamp.subscribe_in_kernel);
+    proc_ctx->sched_dfx[dfx_gid][dfx_tid].src_wait_end_timestamp = tick_to_millisecond(
+        event->timestamp.subscribe_out_kernel);
 #else
-    proc_ctx->sched_dfx[dfx_gid][dfx_tid].dst_wait_start_timestamp = tick_to_millisecond(event->timestamp.subscribe_in_kernel);
-    proc_ctx->sched_dfx[dfx_gid][dfx_tid].dst_wait_end_timestamp = tick_to_millisecond(event->timestamp.subscribe_out_kernel);
+    proc_ctx->sched_dfx[dfx_gid][dfx_tid].dst_wait_start_timestamp = tick_to_millisecond(
+        event->timestamp.subscribe_in_kernel);
+    proc_ctx->sched_dfx[dfx_gid][dfx_tid].dst_wait_end_timestamp = tick_to_millisecond(
+        event->timestamp.subscribe_out_kernel);
 #endif
     return;
 }
-
 
 void esched_publish_trace_update(struct sched_proc_ctx *proc_ctx, struct sched_event *event)
 {
@@ -138,7 +139,7 @@ void esched_publish_trace_update(struct sched_proc_ctx *proc_ctx, struct sched_e
     int dfx_gid, dfx_tid;
     u32 gid, event_id, subevent_id;
     u64 curr_time = sched_get_cur_timestamp();
-    if ((proc_ctx== NULL) || (event == NULL)) {
+    if ((proc_ctx == NULL) || (event == NULL)) {
         sched_warn("publish event abnormal.\n");
         return;
     }
@@ -149,15 +150,15 @@ void esched_publish_trace_update(struct sched_proc_ctx *proc_ctx, struct sched_e
 
     dfx_gid = gid - SCHED_MAX_DEFAULT_GRP_NUM;
     dfx_tid = event_id - SCHED_SYNC_START_EVENT_ID;
-    if ((dfx_gid < 0) || (dfx_gid >= SCHED_MAX_EX_GRP_NUM) ||
-        (dfx_tid < 0) || (dfx_tid >= SCHED_MAX_SYNC_THREAD_NUM_PER_GRP)) {
+    if ((dfx_gid < 0) || (dfx_gid >= SCHED_MAX_EX_GRP_NUM) || (dfx_tid < 0) ||
+        (dfx_tid >= SCHED_MAX_SYNC_THREAD_NUM_PER_GRP)) {
         return;
     }
 #ifdef CFG_ENV_HOST
     proc_ctx->sched_dfx[dfx_gid][dfx_tid].src_publish_timestamp = tick_to_millisecond(curr_time);
 #else
-    (void)memset_s(&proc_ctx->sched_dfx[dfx_gid][dfx_tid],
-        sizeof(struct sched_sync_event_trace), 0, sizeof(struct sched_sync_event_trace));
+    (void)memset_s(&proc_ctx->sched_dfx[dfx_gid][dfx_tid], sizeof(struct sched_sync_event_trace), 0,
+                   sizeof(struct sched_sync_event_trace));
     proc_ctx->sched_dfx[dfx_gid][dfx_tid].dst_publish_timestamp = tick_to_millisecond(curr_time);
     proc_ctx->sched_dfx[dfx_gid][dfx_tid].gid = gid;
     proc_ctx->sched_dfx[dfx_gid][dfx_tid].event_id = event_id;
@@ -192,8 +193,8 @@ void esched_submit_trace_update(u32 chip_id, u32 event_src, struct sched_publish
 
     dfx_gid = gid - SCHED_MAX_DEFAULT_GRP_NUM;
     dfx_tid = event_id - SCHED_SYNC_START_EVENT_ID;
-    if ((dfx_gid < 0) || (dfx_gid >= SCHED_MAX_EX_GRP_NUM) ||
-        (dfx_tid < 0) || (dfx_tid >= SCHED_MAX_SYNC_THREAD_NUM_PER_GRP)) {
+    if ((dfx_gid < 0) || (dfx_gid >= SCHED_MAX_EX_GRP_NUM) || (dfx_tid < 0) ||
+        (dfx_tid >= SCHED_MAX_SYNC_THREAD_NUM_PER_GRP)) {
         return;
     }
 
@@ -209,15 +210,17 @@ void esched_submit_trace_update(u32 chip_id, u32 event_src, struct sched_publish
     }
 
 #ifdef CFG_ENV_HOST
-    (void)memset_s(&proc_ctx->sched_dfx[dfx_gid][dfx_tid],
-        sizeof(struct sched_sync_event_trace), 0, sizeof(struct sched_sync_event_trace));
+    (void)memset_s(&proc_ctx->sched_dfx[dfx_gid][dfx_tid], sizeof(struct sched_sync_event_trace), 0,
+                   sizeof(struct sched_sync_event_trace));
     proc_ctx->sched_dfx[dfx_gid][dfx_tid].gid = gid;
     proc_ctx->sched_dfx[dfx_gid][dfx_tid].event_id = event_id;
     proc_ctx->sched_dfx[dfx_gid][dfx_tid].subevent_id = subevent_id;
-    proc_ctx->sched_dfx[dfx_gid][dfx_tid].src_submit_user_timestamp = tick_to_millisecond(event_info->publish_timestamp);
+    proc_ctx->sched_dfx[dfx_gid][dfx_tid].src_submit_user_timestamp = tick_to_millisecond(
+        event_info->publish_timestamp);
     proc_ctx->sched_dfx[dfx_gid][dfx_tid].src_submit_kernel_timestamp = tick_to_millisecond(curr_time);
 #else
-    proc_ctx->sched_dfx[dfx_gid][dfx_tid].dst_submit_user_timestamp = tick_to_millisecond(event_info->publish_timestamp);
+    proc_ctx->sched_dfx[dfx_gid][dfx_tid].dst_submit_user_timestamp = tick_to_millisecond(
+        event_info->publish_timestamp);
     proc_ctx->sched_dfx[dfx_gid][dfx_tid].dst_submit_kernel_timestamp = tick_to_millisecond(curr_time);
 #endif
     esched_proc_put(proc_ctx);
@@ -245,7 +248,7 @@ void sched_put_thread_map(struct sched_event_thread_map *thread_map)
 int sched_event_add_thread(struct sched_event *event, u32 tid)
 {
     event->event_thread_map = sched_kzalloc(sizeof(struct sched_event_thread_map) + sizeof(u32),
-        KA_GFP_ATOMIC | __KA_GFP_ACCOUNT);
+                                            KA_GFP_ATOMIC | __KA_GFP_ACCOUNT);
     if (event->event_thread_map == NULL) {
         sched_err("Failed to kzalloc memory for event_thread_map and thread. (size=0x%lx)\n",
                   sizeof(struct sched_event_thread_map) + sizeof(u32));
@@ -316,7 +319,8 @@ void esched_drv_uninit_cpu_port_adapt(u32 chip_id, u32 start_id, u32 chan_num)
     return esched_drv_uninit_all_cpu_port(chip_id, start_id, chan_num);
 }
 
-int esched_drv_init_msgq_config_adapt(struct sched_numa_node *node, u32 start_id, u32 aicpu_chan_num, u32 comcpu_chan_num)
+int esched_drv_init_msgq_config_adapt(struct sched_numa_node *node, u32 start_id, u32 aicpu_chan_num,
+                                      u32 comcpu_chan_num)
 {
     return esched_drv_init_msgq_config(node, start_id, aicpu_chan_num, comcpu_chan_num);
 }
@@ -326,4 +330,20 @@ int sched_get_sentry_mode(struct sched_numa_node *node, int *mode)
 {
     *mode = 0;
     return 0;
+}
+
+int sched_get_cpu_num(u32 *cpu_num)
+{
+    *cpu_num = ka_system_num_online_cpus();
+    return 0;
+}
+
+int sched_sentry_init(void)
+{
+    return 0;
+}
+
+void sched_sentry_uninit(void)
+{
+    return;
 }

@@ -19,7 +19,7 @@ int vmngh_tx_finish_db_hander(struct vmng_msg_dev *msg_dev, u32 db_vector);
 int vmngh_msg_db_hanlder(struct vmng_msg_dev *msg_dev, u32 db_vector);
 
 int vmngh_alloc_msg_cluster(struct vmng_msg_dev *msg_dev, enum vmng_msg_chan_type chan_type,
-    struct vmng_msg_proc *msg_proc);
+                            struct vmng_msg_proc *msg_proc);
 
 int vmngh_rx_irq_init(struct vmng_msg_chan_rx *msg_chan);
 int vmngh_rx_irq_uninit(struct vmng_msg_chan_rx *msg_chan);

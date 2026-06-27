@@ -56,7 +56,8 @@ STATIC int ubdrv_pod_hot_reset_single_device(u32 dev_id)
     user_desc.reply = NULL;
     ret = ubdrv_device_set_hot_reset_flag(dev_id, UBDRV_DEVICE_ONLINE, UBDRV_DEVICE_BEGIN_OFFLINE);
     if (ret != 0) {
-        ubdrv_err("Failed to set hot reset flag. (dev_id=%u;ret=%d;uid=%u)\n", dev_id, ret, ka_task_get_current_cred_uid());
+        ubdrv_err("Failed to set hot reset flag. (dev_id=%u;ret=%d;uid=%u)\n", dev_id, ret,
+            ka_task_get_current_cred_uid());
         return ret;
     }
     devdrv_ub_set_device_boot_status(dev_id, DSMI_BOOT_STATUS_UNINIT);
@@ -65,7 +66,8 @@ STATIC int ubdrv_pod_hot_reset_single_device(u32 dev_id)
     /* 2. send admin msg to dev for hot reset */
     ret = ubdrv_admin_send_msg(dev_id, &user_desc);
     if (ret != 0) {
-        ubdrv_err("Send msg to reset device fail. (dev_id=%u;ret=%u;uid=%u)\n", ret, dev_id, ka_task_get_current_cred_uid());
+        ubdrv_err("Send msg to reset device fail. (dev_id=%u;ret=%d;uid=%u)\n", dev_id, ret,
+            ka_task_get_current_cred_uid());
     }
     ubdrv_set_device_status(dev_id, UBDRV_DEVICE_DEAD);
     ubdrv_del_msg_device(dev_id, UBDRV_DEVICE_UNINIT);

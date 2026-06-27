@@ -15,5 +15,6 @@
 #define __DMS_EVENT_HOST_H__
 
 int dms_event_mask_by_phyid(u32 phyid, u32 event_code, u8 mask);
+#define DMS_FAULT_DEVICE_ALL (-1)
 
 #endif

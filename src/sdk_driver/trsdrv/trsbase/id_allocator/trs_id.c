@@ -24,7 +24,7 @@
 #include "trs_msg.h"
 #include "trs_id.h"
 
-#define MAX_TRS_ID_BATCH_NUM  64U
+#define MAX_TRS_ID_BATCH_NUM 64U
 static ka_mutex_t g_trs_id_mutex;
 
 #ifdef CFG_FEATURE_ID_NODE_KMEM_CACHE
@@ -56,10 +56,10 @@ struct trs_id_pool {
     int type;
 
     struct trs_id_attr attr;
-    u32 allocatable_num;    // Id numbers listed to free list (Allocatable id number)
-    u32 alloc_num;          // Id numbers that already allocated
-    u32 rsv_num;            // Id numbers that free with rsv flag
-    ka_list_head_t idle_head;       // the node is same as idle_htable to get one node fast
+    u32 allocatable_num;      // Id numbers listed to free list (Allocatable id number)
+    u32 alloc_num;            // Id numbers that already allocated
+    u32 rsv_num;              // Id numbers that free with rsv flag
+    ka_list_head_t idle_head; // the node is same as idle_htable to get one node fast
     KA_DECLARE_HASHTABLE(idle_htable, TRS_ID_HASH_TABLE_BIT);
     KA_DECLARE_HASHTABLE(allocated_htable, TRS_ID_HASH_TABLE_BIT);
     ka_list_head_t rsv_head; // rsv free id list head
@@ -76,20 +76,11 @@ size_t trs_id_get_pool_size(void);
 int init_trs_id(void);
 void exit_trs_id(void);
 
-static u32 trs_id_make_hash_key(u32 isolate_num, u32 id)
-{
-    return (id / isolate_num * isolate_num);
-}
+static u32 trs_id_make_hash_key(u32 isolate_num, u32 id) { return (id / isolate_num * isolate_num); }
 
-size_t trs_id_get_node_size(void)
-{
-    return sizeof(struct trs_id_node);
-}
+size_t trs_id_get_node_size(void) { return sizeof(struct trs_id_node); }
 
-size_t trs_id_get_pool_size(void)
-{
-    return sizeof(struct trs_id_pool);
-}
+size_t trs_id_get_pool_size(void) { return sizeof(struct trs_id_pool); }
 
 static struct trs_id_node *trs_id_node_create(void)
 {
@@ -148,7 +139,8 @@ static struct trs_id_node *trs_id_pool_get_idle_node_by_id(struct trs_id_pool *i
     struct trs_id_node *node = NULL;
     u32 key = trs_id_make_hash_key(id_pool->attr.isolate_num, id);
 
-    ka_hash_for_each_possible(id_pool->idle_htable, node, link, key) {
+    ka_hash_for_each_possible(id_pool->idle_htable, node, link, key)
+    {
         if ((id >= node->id_start) && (id < (node->id_start + node->id_total_num))) {
             return node;
         }
@@ -161,7 +153,8 @@ static struct trs_id_node *trs_id_pool_get_allocated_node_by_id(struct trs_id_po
     struct trs_id_node *node = NULL;
     u32 key = trs_id_make_hash_key(id_pool->attr.isolate_num, id);
 
-    ka_hash_for_each_possible(id_pool->allocated_htable, node, link, key) {
+    ka_hash_for_each_possible(id_pool->allocated_htable, node, link, key)
+    {
         if ((id >= node->id_start) && (id < (node->id_start + node->id_total_num))) {
             return node;
         }
@@ -173,8 +166,9 @@ static int trs_id_pool_add_rsv_node(struct trs_id_pool *id_pool, u32 id)
 {
     struct trs_id_rsv_node *node = trs_id_rsv_node_create();
     if (node == NULL) {
-        trs_err("Alloc id node fail. (devid=%u; tsid=%u; type=%s; id=%u)\n",
-            id_pool->inst.devid, id_pool->inst.tsid, trs_id_type_to_name(id_pool->type), id);
+        trs_err(
+            "Alloc id node fail. (devid=%u; tsid=%u; type=%s; id=%u)\n", id_pool->inst.devid, id_pool->inst.tsid,
+            trs_id_type_to_name(id_pool->type), id);
         return -ENOMEM;
     }
 
@@ -183,8 +177,9 @@ static int trs_id_pool_add_rsv_node(struct trs_id_pool *id_pool, u32 id)
     id_pool->rsv_num++;
     ka_list_add(&node->list, &id_pool->rsv_head);
     id_pool->allocatable_num++;
-    trs_debug("Add rsv node. (devid=%u; type=%s; allocatable_num=%u; id=%u; pid=%d)\n",
-        id_pool->inst.devid, trs_id_type_to_name(id_pool->type), id_pool->allocatable_num, id, node->pid);
+    trs_debug(
+        "Add rsv node. (devid=%u; type=%s; allocatable_num=%u; id=%u; pid=%d)\n", id_pool->inst.devid,
+        trs_id_type_to_name(id_pool->type), id_pool->allocatable_num, id, node->pid);
     return 0;
 }
 
@@ -192,8 +187,9 @@ static int trs_id_pool_add_new_node(struct trs_id_pool *id_pool, u32 flag, u32 i
 {
     struct trs_id_node *node = trs_id_node_create();
     if (node == NULL) {
-        trs_err("Alloc id node fail. (devid=%u; tsid=%u; type=%s; id=%u)\n",
-            id_pool->inst.devid, id_pool->inst.tsid, trs_id_type_to_name(id_pool->type), id);
+        trs_err(
+            "Alloc id node fail. (devid=%u; tsid=%u; type=%s; id=%u)\n", id_pool->inst.devid, id_pool->inst.tsid,
+            trs_id_type_to_name(id_pool->type), id);
         return -ENOMEM;
     }
 
@@ -212,7 +208,8 @@ static int trs_id_pool_add_new_node(struct trs_id_pool *id_pool, u32 flag, u32 i
         ka_list_add_tail(&node->list, &id_pool->idle_head);
     }
 
-    trs_debug("Add node. (devid=%u; type=%s; node_start=%u; node_total_num=%u; allocatable_num=%u; id=%u)\n",
+    trs_debug(
+        "Add node. (devid=%u; type=%s; node_start=%u; node_total_num=%u; allocatable_num=%u; id=%u)\n",
         id_pool->inst.devid, trs_id_type_to_name(id_pool->type), node->id_start, node->id_total_num,
         id_pool->allocatable_num, id);
     return 0;
@@ -247,14 +244,16 @@ static void trs_id_pool_move_node(struct trs_id_pool *id_pool, struct trs_id_nod
         }
         node->pid = 0;
         node->is_in_idle = 1;
-        trs_debug("Add to idle list. (devid=%u; type=%s; id_start=%u; id_total_num=%u)\n",
-            id_pool->inst.devid, trs_id_type_to_name(id_pool->type), node->id_start, node->id_total_num);
+        trs_debug(
+            "Add to idle list. (devid=%u; type=%s; id_start=%u; id_total_num=%u)\n", id_pool->inst.devid,
+            trs_id_type_to_name(id_pool->type), node->id_start, node->id_total_num);
     } else {
         ka_list_del(&node->list);
         ka_hash_add(id_pool->allocated_htable, &node->link, node->id_start);
         node->is_in_idle = 0;
-        trs_debug("Add to allocated list. (devid=%u; type=%s; id_start=%u; id_total_num=%u)\n",
-            id_pool->inst.devid, trs_id_type_to_name(id_pool->type), node->id_start, node->id_total_num);
+        trs_debug(
+            "Add to allocated list. (devid=%u; type=%s; id_start=%u; id_total_num=%u)\n", id_pool->inst.devid,
+            trs_id_type_to_name(id_pool->type), node->id_start, node->id_total_num);
     }
 }
 
@@ -274,14 +273,11 @@ static void trs_id_pool_del_node_all(struct trs_id_pool *id_pool)
     ka_hlist_node_t *tmp = NULL;
     u32 bkt = 0;
 
-    ka_hash_for_each_safe(id_pool->allocated_htable, bkt, tmp, node, link) {
-        trs_id_pool_del_node(node);
-    }
-    ka_list_for_each_entry_safe(node, n, &id_pool->idle_head, list) {
-        trs_id_pool_del_node(node);
-    }
-    trs_debug("Id pool del node all. (devid=%u; type=%s; alloc_num=%u; allocatable_num=%u)\n",
-        id_pool->inst.devid, trs_id_type_to_name(id_pool->type), id_pool->alloc_num, id_pool->allocatable_num);
+    ka_hash_for_each_safe(id_pool->allocated_htable, bkt, tmp, node, link) { trs_id_pool_del_node(node); }
+    ka_list_for_each_entry_safe(node, n, &id_pool->idle_head, list) { trs_id_pool_del_node(node); }
+    trs_debug(
+        "Id pool del node all. (devid=%u; type=%s; alloc_num=%u; allocatable_num=%u)\n", id_pool->inst.devid,
+        trs_id_type_to_name(id_pool->type), id_pool->alloc_num, id_pool->allocatable_num);
 }
 
 static int trs_id_node_all(struct trs_id_pool *id_pool)
@@ -299,8 +295,8 @@ static int trs_id_node_all(struct trs_id_pool *id_pool)
     return 0;
 }
 
-static struct trs_id_pool *trs_id_pool_create(struct trs_id_inst *inst,
-    int type, struct trs_id_attr *attr, struct trs_id_ops *ops)
+static struct trs_id_pool *trs_id_pool_create(
+    struct trs_id_inst *inst, int type, struct trs_id_attr *attr, struct trs_id_ops *ops)
 {
     struct trs_id_pool *id_pool = trs_kzalloc(trs_id_get_pool_size(), KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
 
@@ -349,7 +345,8 @@ static struct trs_id_node *trs_id_pool_get_available_node(struct trs_id_pool *id
 
     if (id_pool->attr.isolate_num > 1) {
         /* isolate_num > 1 means that there will be multiple ids in one node of allocated list */
-        ka_hash_for_each_safe(id_pool->allocated_htable, bkt, tmp, node, link) {
+        ka_hash_for_each_safe(id_pool->allocated_htable, bkt, tmp, node, link)
+        {
             if ((node->id_avail_num > 0) && (node->pid == ka_task_get_current_tgid())) {
                 return node;
             }
@@ -393,8 +390,9 @@ static int trs_id_pool_alloc_one_id_in_node(struct trs_id_pool *id_pool, struct 
         }
     }
     if (alloc_id == -1) {
-        trs_err("Node has no resource. (alloc_id=%d; start=%u; total_num=%u; avail_num=%u)\n",
-            alloc_id, node->id_start, node->id_total_num, node->id_avail_num);
+        trs_err(
+            "Node has no resource. (alloc_id=%d; start=%u; total_num=%u; avail_num=%u)\n", alloc_id, node->id_start,
+            node->id_total_num, node->id_avail_num);
         return alloc_id;
     }
     if (node->pid == 0) {
@@ -404,9 +402,11 @@ static int trs_id_pool_alloc_one_id_in_node(struct trs_id_pool *id_pool, struct 
     node->id_avail_num--;
     id_pool->allocatable_num--;
     *id = (u32)alloc_id;
-    trs_debug("Alloc success. (type=%s; id=%d; start=%u; avail_num=%u; total_num=%u; isolate_num=%u; "
-        "allocatable_num=%u)\n", trs_id_type_to_name(id_pool->type), alloc_id, node->id_start,
-        node->id_avail_num, node->id_total_num, id_pool->attr.isolate_num, id_pool->allocatable_num);
+    trs_debug(
+        "Alloc success. (type=%s; id=%d; start=%u; avail_num=%u; total_num=%u; isolate_num=%u; "
+        "allocatable_num=%u)\n",
+        trs_id_type_to_name(id_pool->type), alloc_id, node->id_start, node->id_avail_num, node->id_total_num,
+        id_pool->attr.isolate_num, id_pool->allocatable_num);
     return 0;
 }
 
@@ -434,7 +434,8 @@ static int trs_id_pool_alloc_id_in_idle_node(struct trs_id_pool *id_pool, u32 ba
         }
     }
     if (node->id_avail_num == 0) {
-        trs_debug("Del node. (type=%s; start=%u; total_num=%u; avail_num=%u; allocatable_num=%u; alloc=%u)\n",
+        trs_debug(
+            "Del node. (type=%s; start=%u; total_num=%u; avail_num=%u; allocatable_num=%u; alloc=%u)\n",
             trs_id_type_to_name(id_pool->type), node->id_start, node->id_total_num, node->id_avail_num,
             id_pool->allocatable_num, id_pool->alloc_num);
         trs_id_pool_del_node(node);
@@ -449,8 +450,9 @@ static int trs_id_pool_try_free_batch(struct trs_id_pool *id_pool)
         return 0;
     }
 
-    trs_debug("Free info. (type=%s; batch_num=%u; allocatable_num=%u; rsv_num=%u)\n",
-        trs_id_type_to_name(id_pool->type), id_pool->attr.batch_num, id_pool->allocatable_num, id_pool->rsv_num);
+    trs_debug(
+        "Free info. (type=%s; batch_num=%u; allocatable_num=%u; rsv_num=%u)\n", trs_id_type_to_name(id_pool->type),
+        id_pool->attr.batch_num, id_pool->allocatable_num, id_pool->rsv_num);
 
     while (id_pool->allocatable_num > 0) {
         /* allocatable_num - rsv_num = not rsv num*/
@@ -468,14 +470,16 @@ static int trs_id_pool_try_free_batch(struct trs_id_pool *id_pool)
         }
 
         if (batch_num == 0) {
-            trs_warn("Free batch warn. (type=%s; batch_num=%u; allocatable_num=%u; ret=%d)\n",
+            trs_warn(
+                "Free batch warn. (type=%s; batch_num=%u; allocatable_num=%u; ret=%d)\n",
                 trs_id_type_to_name(id_pool->type), batch_num, id_pool->allocatable_num, ret);
             break;
         }
 
         ret = id_pool->ops.free_batch(&id_pool->inst, id_pool->type, id, batch_num);
         if (ret != 0) {
-            trs_warn("Free batch warn. (type=%s; batch_num=%u; allocatable_num=%u; ret=%d)\n",
+            trs_warn(
+                "Free batch warn. (type=%s; batch_num=%u; allocatable_num=%u; ret=%d)\n",
                 trs_id_type_to_name(id_pool->type), batch_num, id_pool->allocatable_num, ret);
             for (idx = 0; idx < batch_num; idx++) {
                 (void)trs_id_pool_add_node(id_pool, 0, id[idx]);
@@ -515,8 +519,9 @@ static int trs_id_pool_add(int type, struct trs_id_pool *id_pool)
     ka_task_mutex_lock(&g_trs_id_mutex);
     if (g_trs_id_pool[ts_inst][type] != NULL) {
         ka_task_mutex_unlock(&g_trs_id_mutex);
-        trs_err("[%s] id pool exists. (devid=%u; tsid=%u)\n",
-            trs_id_type_to_name(type), id_pool->inst.devid, id_pool->inst.tsid);
+        trs_err(
+            "[%s] id pool exists. (devid=%u; tsid=%u)\n", trs_id_type_to_name(type), id_pool->inst.devid,
+            id_pool->inst.tsid);
         return -ENODEV;
     }
     g_trs_id_pool[ts_inst][type] = id_pool;
@@ -524,7 +529,7 @@ static int trs_id_pool_add(int type, struct trs_id_pool *id_pool)
     return 0;
 }
 
-static void trs_id_pool_release(struct kref_safe * kref)
+static void trs_id_pool_release(struct kref_safe *kref)
 {
     struct trs_id_pool *id_pool = ka_container_of(kref, struct trs_id_pool, ref);
 
@@ -607,8 +612,9 @@ static void trs_id_pool_put(struct trs_id_pool *id_pool)
 static int trs_id_pool_range_check(struct trs_id_pool *id_pool, u32 id)
 {
     if ((id < id_pool->attr.id_start) || (id >= (id_pool->attr.id_end))) {
-        trs_err("Trs id range check fail. (id_start=%u; id_end=%u; type=%d; id=%u)\n",
-            id_pool->attr.id_start, id_pool->attr.id_end, id_pool->type, id);
+        trs_err(
+            "Trs id range check fail. (id_start=%u; id_end=%u; type=%d; id=%u)\n", id_pool->attr.id_start,
+            id_pool->attr.id_end, id_pool->type, id);
         return -EBADR;
     }
     return 0;
@@ -647,7 +653,8 @@ static void trs_id_pool_alloc_batch(struct trs_id_pool *id_pool, u32 flag, u32 s
     if ((ret != 0) || (id_num > id_pool->attr.batch_num)) {
         if (id_pool->dfx_times < ID_POOL_DFX_MAX_TIMES) {
             id_pool->dfx_times++;
-            trs_warn("Alloc batch fail. (devid=%u; tsid=%u; ret=%d; flag=0x%x; real_id_num=%u; batch_num=%u; type=%s)\n",
+            trs_warn(
+                "Alloc batch fail. (devid=%u; tsid=%u; ret=%d; flag=0x%x; real_id_num=%u; batch_num=%u; type=%s)\n",
                 id_pool->inst.devid, id_pool->inst.tsid, ret, flag, id_num, id_pool->attr.batch_num,
                 trs_id_type_to_name(id_pool->type));
         }
@@ -675,7 +682,8 @@ static int trs_id_alloc_non_cache(struct trs_id_pool *id_pool, u32 flag, u32 *id
 
     ret = id_pool->ops.alloc_batch(&id_pool->inst, id_pool->type, flag, id, &id_num);
     if ((ret != 0) || (id_num > id_pool->attr.batch_num) || (id_num == 0)) {
-        trs_debug("Alloc batch fail. (devid=%u; tsid=%u; real_id_num=%u; batch_num=%u; type=%s; ret=%d)\n",
+        trs_debug(
+            "Alloc batch fail. (devid=%u; tsid=%u; real_id_num=%u; batch_num=%u; type=%s; ret=%d)\n",
             id_pool->inst.devid, id_pool->inst.tsid, id_num, id_pool->attr.batch_num,
             trs_id_type_to_name(id_pool->type), ret);
         return -ENOSPC;
@@ -685,14 +693,14 @@ static int trs_id_alloc_non_cache(struct trs_id_pool *id_pool, u32 flag, u32 *id
     return ret;
 }
 
-static int trs_id_pool_alloc_specified_id_in_node(struct trs_id_pool *id_pool, struct trs_id_node *node,
-    u32 start, u32 end, u32 *id)
+static int trs_id_pool_alloc_specified_id_in_node(
+    struct trs_id_pool *id_pool, struct trs_id_node *node, u32 start, u32 end, u32 *id)
 {
     int tmp_id = -1;
     u32 offset, offset_start, offset_end;
 
-    offset_start = (start >= (int)node->id_start) ? start -  node->id_start : 0;
-    offset_end = (end <= (int)(node->id_start + node->id_total_num)) ? end -  node->id_start : node->id_total_num;
+    offset_start = (start >= (int)node->id_start) ? start - node->id_start : 0;
+    offset_end = (end <= (int)(node->id_start + node->id_total_num)) ? end - node->id_start : node->id_total_num;
 
     for (offset = offset_start; offset < offset_end; offset++) {
         if (node->offset[offset] == 0) {
@@ -702,20 +710,22 @@ static int trs_id_pool_alloc_specified_id_in_node(struct trs_id_pool *id_pool, s
         }
     }
     if (tmp_id == -1) {
-        trs_err("Node has no resource. (alloc_id=%d; start=%u; total_num=%u; avail_num=%u)\n",
-            tmp_id, node->id_start, node->id_total_num, node->id_avail_num);
+        trs_err(
+            "Node has no resource. (alloc_id=%d; start=%u; total_num=%u; avail_num=%u)\n", tmp_id, node->id_start,
+            node->id_total_num, node->id_avail_num);
         return tmp_id;
     }
 
     if (node->pid == 0) {
         trs_id_pool_move_node(id_pool, node, TRS_NODE_IDLE_TO_ALLOCATED);
+        node->pid = ka_task_get_current_tgid();
     }
     node->id_avail_num--;
     id_pool->allocatable_num--;
     *id = (u32)tmp_id;
-    trs_debug("Alloc specified id. (devid=%u; type=%s; id=%u; id_start=%d; id_end=%d; node_pid=%d)\n",
-        id_pool->inst.devid, trs_id_type_to_name(id_pool->type), *id, node->id_start + offset_start,
-        offset_start + offset_end, node->pid);
+    trs_debug(
+        "Alloc specified id. (devid=%u; type=%s; id=%u; id_start=%d; id_end=%d; node_pid=%d)\n", id_pool->inst.devid,
+        trs_id_type_to_name(id_pool->type), *id, offset_start, offset_end, node->pid);
     return 0;
 }
 
@@ -730,7 +740,8 @@ static bool trs_id_pool_find_specified_id(struct trs_id_pool *id_pool, u32 start
     int ret;
 
     trs_debug("Find specified_id. (id=%u; start=%u; end=%u; pid=%d)\n", *id, start, end, ka_task_get_current_tgid());
-    ka_list_for_each_entry_safe(rsv_node, rsv_n, &id_pool->rsv_head, list) {
+    ka_list_for_each_entry_safe(rsv_node, rsv_n, &id_pool->rsv_head, list)
+    {
         if ((rsv_node->id == *id) && (rsv_node->pid == ka_task_get_current_tgid())) {
             id_pool->rsv_num--;
             trs_id_pool_del_rsv_node(rsv_node);
@@ -739,18 +750,22 @@ static bool trs_id_pool_find_specified_id(struct trs_id_pool *id_pool, u32 start
         }
     }
 
-    ka_hash_for_each_safe(id_pool->allocated_htable, bkt, tmp, node, link) {
-        if ((node->pid != ka_task_get_current_tgid()) ||
-            (node->id_start >= end) || (node->id_start + node->id_total_num <= start)) {
-            continue;
-        }
-        ret = trs_id_pool_alloc_specified_id_in_node(id_pool, node, start, end, id);
-        if (ret == 0) {
-            return true;
+    if (id_pool->attr.isolate_num > 1) {
+        ka_hash_for_each_safe(id_pool->allocated_htable, bkt, tmp, node, link)
+        {
+            if ((node->pid != ka_task_get_current_tgid()) || (node->id_start >= end) ||
+                (node->id_start + node->id_total_num <= start)) {
+                continue;
+            }
+            ret = trs_id_pool_alloc_specified_id_in_node(id_pool, node, start, end, id);
+            if (ret == 0) {
+                return true;
+            }
         }
     }
 
-    ka_list_for_each_entry_safe(node, n, &id_pool->idle_head, list) {
+    ka_list_for_each_entry_safe(node, n, &id_pool->idle_head, list)
+    {
         if ((node->id_start >= end) || (node->id_start + node->id_total_num <= start)) {
             continue;
         }
@@ -774,7 +789,8 @@ static bool trs_id_pool_has_res_for_alloc(struct trs_id_pool *id_pool)
     }
 
     if (id_pool->attr.isolate_num > 1) {
-        ka_hash_for_each_safe(id_pool->allocated_htable, bkt, tmp, node, link) {
+        ka_hash_for_each_safe(id_pool->allocated_htable, bkt, tmp, node, link)
+        {
             if ((node->id_avail_num > 0) && (node->pid == ka_task_get_current_tgid())) {
                 return true;
             }
@@ -794,11 +810,12 @@ static void trs_id_print_isolated_res_detail(struct trs_id_pool *id_pool)
         ka_hlist_node_t *tmp = NULL;
         u32 bkt = 0;
 
-        trs_err("No res. (devid=%u; tsid=%u; type=%s; allocatable_num=%u; alloc_num=%u)\n",
-            id_pool->inst.devid, id_pool->inst.tsid, trs_id_type_to_name(id_pool->type),
-            id_pool->allocatable_num, id_pool->alloc_num);
+        trs_err(
+            "No res. (devid=%u; tsid=%u; type=%s; allocatable_num=%u; alloc_num=%u)\n", id_pool->inst.devid,
+            id_pool->inst.tsid, trs_id_type_to_name(id_pool->type), id_pool->allocatable_num, id_pool->alloc_num);
 
-        ka_hash_for_each_safe(id_pool->allocated_htable, bkt, tmp, node, link) {
+        ka_hash_for_each_safe(id_pool->allocated_htable, bkt, tmp, node, link)
+        {
             if (node->id_avail_num > 0) {
                 trs_err("Other process node. (pid=%d; id_avail_num=%u)\n", node->pid, node->id_avail_num);
             }
@@ -828,7 +845,8 @@ static int trs_id_alloc_cache(struct trs_id_pool *id_pool, u32 flag, u32 *id, u3
 
     if (trs_id_is_specified(flag)) {
         if (!trs_id_pool_find_specified_id(id_pool, *id, (*id) + num, id)) {
-            trs_err("Fail to alloc id in range. (devid=%u; type=%s; start=%u; end=%u)\n", id_pool->inst.devid,
+            trs_err(
+                "Fail to alloc id in range. (devid=%u; type=%s; start=%u; end=%u)\n", id_pool->inst.devid,
                 trs_id_type_to_name(id_pool->type), *id, (*id) + num);
             return -ENOSPC;
         }
@@ -836,15 +854,17 @@ static int trs_id_alloc_cache(struct trs_id_pool *id_pool, u32 flag, u32 *id, u3
         int ret;
         ret = trs_id_pool_alloc_one_available_id(id_pool, id);
         if (ret != 0) {
-            trs_err("Alloc id failed. (ret=%d; devid=%u; type=%s; allocatable_num=%u; alloc_num=%u)\n", ret,
+            trs_err(
+                "Alloc id failed. (ret=%d; devid=%u; type=%s; allocatable_num=%u; alloc_num=%u)\n", ret,
                 id_pool->inst.devid, trs_id_type_to_name(id_pool->type), id_pool->allocatable_num, id_pool->alloc_num);
             return ret;
         }
     }
 
     id_pool->alloc_num++;
-    trs_debug("Alloc id. (devid=%u; type=%s; id=%u; allocatable_num=%u; alloc_num=%u)\n",
-        id_pool->inst.devid, trs_id_type_to_name(id_pool->type), *id, id_pool->allocatable_num, id_pool->alloc_num);
+    trs_debug(
+        "Alloc id. (devid=%u; type=%s; id=%u; allocatable_num=%u; alloc_num=%u)\n", id_pool->inst.devid,
+        trs_id_type_to_name(id_pool->type), *id, id_pool->allocatable_num, id_pool->alloc_num);
 
     return 0;
 }
@@ -868,8 +888,9 @@ static int trs_id_free_non_cache(struct trs_id_pool *id_pool, u32 flag, u32 id)
 
     ret = id_pool->ops.free_batch(&id_pool->inst, id_pool->type, &id, 1);
     if (ret != 0) {
-        trs_warn("Free batch warn. (type=%s; batch_num=%u; allocatable_num=%u; ret=%d)\n",
-                trs_id_type_to_name(id_pool->type), id_pool->attr.batch_num, id_pool->allocatable_num, ret);
+        trs_warn(
+            "Free batch warn. (type=%s; batch_num=%u; allocatable_num=%u; ret=%d)\n",
+            trs_id_type_to_name(id_pool->type), id_pool->attr.batch_num, id_pool->allocatable_num, ret);
         return ret;
     }
 
@@ -884,7 +905,8 @@ static int trs_id_free_cache(struct trs_id_pool *id_pool, u32 flag, u32 id)
 
     node = trs_id_pool_get_allocated_node_by_id(id_pool, id);
     if (node == NULL) {
-        trs_err("Invalid id. (devid=%u; tsid=%u; type=%s; id=%u)\n", id_pool->inst.devid, id_pool->inst.tsid,
+        trs_err(
+            "Invalid id. (devid=%u; tsid=%u; type=%s; id=%u)\n", id_pool->inst.devid, id_pool->inst.tsid,
             trs_id_type_to_name(id_pool->type), id);
         return -EINVAL;
     }
@@ -900,9 +922,11 @@ static int trs_id_free_cache(struct trs_id_pool *id_pool, u32 flag, u32 id)
     }
 
     id_pool->alloc_num--;
-    trs_debug("Free id. (ret=%d; devid=%u; type=%s; id=%u; node_start=%u; avail_num=%u; total=%u; allocatable_num=%u; "
-        "alloc_num=%u)\n", ret, id_pool->inst.devid, trs_id_type_to_name(id_pool->type), id, node->id_start,
-        node->id_avail_num, node->id_total_num, id_pool->allocatable_num, id_pool->alloc_num);
+    trs_debug(
+        "Free id. (ret=%d; devid=%u; type=%s; id=%u; node_start=%u; avail_num=%u; total=%u; allocatable_num=%u; "
+        "alloc_num=%u)\n",
+        ret, id_pool->inst.devid, trs_id_type_to_name(id_pool->type), id, node->id_start, node->id_avail_num,
+        node->id_total_num, id_pool->allocatable_num, id_pool->alloc_num);
     return ret;
 }
 
@@ -964,9 +988,10 @@ int trs_id_register(struct trs_id_inst *inst, int type, struct trs_id_attr *attr
         trs_id_pool_destroy(id_pool);
         return ret;
     }
-    trs_debug("Trs id init. (devid=%u; tsid=%u; type=%s; start=%u; end=%u; num=%u; split=%u; isolate_num=%u)\n",
-        inst->devid, inst->tsid, trs_id_type_to_name(type), attr->id_start, attr->id_end, attr->id_num,
-        attr->split, attr->isolate_num);
+    trs_debug(
+        "Trs id init. (devid=%u; tsid=%u; type=%s; start=%u; end=%u; num=%u; split=%u; isolate_num=%u)\n", inst->devid,
+        inst->tsid, trs_id_type_to_name(type), attr->id_start, attr->id_end, attr->id_num, attr->split,
+        attr->isolate_num);
     return 0;
 }
 KA_EXPORT_SYMBOL_GPL(trs_id_register);
@@ -990,7 +1015,7 @@ int trs_id_get_total_num(struct trs_id_inst *inst, int type, u32 *total_num)
     if (id_pool != NULL) {
         ka_task_mutex_lock(&id_pool->mutex);
         if (total_num != NULL) {
-            *total_num  = id_pool->attr.id_num;
+            *total_num = id_pool->attr.id_num;
             ret = 0;
         }
         ka_task_mutex_unlock(&id_pool->mutex);
@@ -1028,7 +1053,7 @@ int trs_id_get_max_id(struct trs_id_inst *inst, int type, u32 *max_id)
     if (id_pool != NULL) {
         ka_task_mutex_lock(&id_pool->mutex);
         if (max_id != NULL) {
-            *max_id  = id_pool->attr.id_end;
+            *max_id = id_pool->attr.id_end;
             ret = 0;
         }
         ka_task_mutex_unlock(&id_pool->mutex);
@@ -1144,8 +1169,9 @@ int trs_id_alloc_ex(struct trs_id_inst *inst, int type, u32 flag, u32 *id, u32 p
     }
 
     if ((ret == 0) && (id != NULL)) {
-        trs_debug("Alloc success. (devid=%u; type=%s; flag=0x%x; para=%u; id=%u)\n",
-            inst->devid, trs_id_type_to_name(type), flag, para, *id);
+        trs_debug(
+            "Alloc success. (devid=%u; type=%s; flag=0x%x; para=%u; id=%u)\n", inst->devid, trs_id_type_to_name(type),
+            flag, para, *id);
     }
 
     return ret;
@@ -1193,8 +1219,9 @@ int trs_id_flush_to_pool(struct trs_id_inst *inst)
     for (type = TRS_STREAM_ID; type < TRS_ID_TYPE_MAX; type++) {
         if (trs_id_free_batch_by_type(inst, type) != 0) {
             ret = -ENODEV;
-            trs_err("Id fush to pool fail. (devid=%u; tsid=%u; type=%s)\n",
-                inst->devid, inst->tsid, trs_id_type_to_name(type));
+            trs_err(
+                "Id fush to pool fail. (devid=%u; tsid=%u; type=%s)\n", inst->devid, inst->tsid,
+                trs_id_type_to_name(type));
         }
     }
 
@@ -1207,8 +1234,10 @@ static struct trs_id_node *trs_id_pool_get_current_node_by_id(struct trs_id_pool
     struct trs_id_node *node = NULL;
     u32 key = trs_id_make_hash_key(id_pool->attr.isolate_num, id);
 
-    ka_hash_for_each_possible(id_pool->allocated_htable, node, link, key) {
-        if ((id >= node->id_start) && (id < (node->id_start + node->id_total_num)) && (node->pid == ka_task_get_current_tgid())) {
+    ka_hash_for_each_possible(id_pool->allocated_htable, node, link, key)
+    {
+        if ((id >= node->id_start) && (id < (node->id_start + node->id_total_num)) &&
+            (node->pid == ka_task_get_current_tgid())) {
             return node;
         }
     }
@@ -1222,7 +1251,8 @@ static void _trs_id_clear_reserved_flag(struct trs_id_pool *id_pool, ka_pid_t pi
     struct trs_id_node *hash_node = NULL;
     u32 id;
 
-    ka_list_for_each_entry_safe(node, n, &id_pool->rsv_head, list) {
+    ka_list_for_each_entry_safe(node, n, &id_pool->rsv_head, list)
+    {
         if (node->pid == pid) {
             id = node->id;
             trs_id_pool_del_rsv_node(node);
@@ -1230,8 +1260,9 @@ static void _trs_id_clear_reserved_flag(struct trs_id_pool *id_pool, ka_pid_t pi
 
             hash_node = trs_id_pool_get_current_node_by_id(id_pool, id);
             if (hash_node == NULL) {
-                trs_warn("Invalid id. (devid=%u; type=%s; id=%u)\n", id_pool->inst.devid,
-                    trs_id_type_to_name(id_pool->type), id);
+                trs_warn(
+                    "Invalid id. (devid=%u; type=%s; id=%u)\n", id_pool->inst.devid, trs_id_type_to_name(id_pool->type),
+                    id);
                 continue;
             }
 

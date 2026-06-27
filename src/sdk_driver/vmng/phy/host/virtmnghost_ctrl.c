@@ -260,7 +260,7 @@ STATIC int vmngh_bw_get_vfio_barspace(u32 dev_id, u32 vfid, struct vf_bandwidth_
 }
 
 STATIC int vmngh_bw_get_local_data(u32 dev_id, u32 vfid, u64 *flow_limit, u64 *pack_limit,
-    struct vf_bandwidth_ctrl_local **data_ptr)
+                                   struct vf_bandwidth_ctrl_local **data_ptr)
 {
     struct vmngh_pci_dev *vmngh_pdev = vmngh_get_pdev_from_unit(dev_id);
 
@@ -284,8 +284,8 @@ STATIC int vmngh_bw_get_local_data(u32 dev_id, u32 vfid, u64 *flow_limit, u64 *p
 STATIC void vmngh_bw_clear_remote_hostcpu_data(u32 dev_id, u32 vfid)
 {
     size_t local_size = sizeof(struct vf_bandwidth_ctrl_local);
-    struct vf_bandwidth_ctrl_remote* vf_ptr = NULL;
-    struct vf_bandwidth_ctrl_local* local = NULL;
+    struct vf_bandwidth_ctrl_remote *vf_ptr = NULL;
+    struct vf_bandwidth_ctrl_local *local = NULL;
     struct vmngh_pci_dev *vmngh_pdev = NULL;
     unsigned long flags;
 
@@ -406,8 +406,8 @@ void vmngh_bw_ctrl_info_init(u32 dev_id)
         return;
     }
 
-    vmngh_pdev->bw_ctrl.io_base_bwctrl =
-        (struct vf_bandwidth_ctrl_remote*)ka_base_devm_ioremap(vmngh_pdev->dev, addr, size);
+    vmngh_pdev->bw_ctrl.io_base_bwctrl = (struct vf_bandwidth_ctrl_remote *)ka_base_devm_ioremap(vmngh_pdev->dev, addr,
+                                                                                                 size);
     if (vmngh_pdev->bw_ctrl.io_base_bwctrl == NULL) {
         vmng_err("Bandwidth ctrl ka_mm_ioremap failed. (dev_id=%u)\n", dev_id);
         return;
@@ -436,8 +436,8 @@ void vmngh_bw_ctrl_info_uninit(u32 dev_id)
 #endif
 }
 
-STATIC int vmngh_get_map_info_handle(struct vmngh_client_instance *instance,
-    const struct vmngh_vascend_client *client, struct vmngh_map_info *map_info)
+STATIC int vmngh_get_map_info_handle(struct vmngh_client_instance *instance, const struct vmngh_vascend_client *client,
+                                     struct vmngh_map_info *map_info)
 {
     int ret;
     u32 dev_id = instance->dev_ctrl->dev_id;
@@ -460,8 +460,7 @@ STATIC int vmngh_get_map_info_handle(struct vmngh_client_instance *instance,
     return 0;
 }
 
-STATIC int vmngh_put_map_info_handle(struct vmngh_client_instance *instance,
-    const struct vmngh_vascend_client *client)
+STATIC int vmngh_put_map_info_handle(struct vmngh_client_instance *instance, const struct vmngh_vascend_client *client)
 {
     int ret;
     u32 dev_id = instance->dev_ctrl->dev_id;
@@ -485,7 +484,7 @@ STATIC int vmngh_put_map_info_handle(struct vmngh_client_instance *instance,
 }
 
 STATIC int vmngh_init_instance_proc(u32 dev_id, u32 fid, struct vmngh_client_instance *instance,
-    const struct vmngh_client *client)
+                                    const struct vmngh_client *client)
 {
     int ret;
     u32 vdev_type = instance->vdev_type;
@@ -514,7 +513,7 @@ STATIC int vmngh_init_instance_proc(u32 dev_id, u32 fid, struct vmngh_client_ins
         instance->flag = VMNG_INSTANCE_FLAG_INIT;
         ka_task_mutex_unlock(&instance->flag_mutex);
         vmng_info("Init instance begin. (dev_id=%u;fid=%u;client_type=%u;vdev_type=%u;vdev_id=%u)\n", dev_id, fid,
-            client->type, vdev_type, instance->dev_ctrl->dev_id);
+                  client->type, vdev_type, instance->dev_ctrl->dev_id);
         if (vdev_type == VMNGH_VM) {
             ret = client->init_instance(instance);
         } else {
@@ -524,12 +523,12 @@ STATIC int vmngh_init_instance_proc(u32 dev_id, u32 fid, struct vmngh_client_ins
             ka_task_mutex_lock(&instance->flag_mutex);
             instance->flag = VMNG_INSTANCE_FLAG_UNINIT;
             ka_task_mutex_unlock(&instance->flag_mutex);
-            vmng_err("Init failed. (dev_id=%u;fid=%u;client_type=%u;ret=%d;vdev_id=%u)\n", dev_id, fid,
-                client->type, ret, instance->dev_ctrl->dev_id);
+            vmng_err("Init failed. (dev_id=%u;fid=%u;client_type=%u;ret=%d;vdev_id=%u)\n", dev_id, fid, client->type,
+                     ret, instance->dev_ctrl->dev_id);
             return ret;
         }
         vmng_info("Client init success. (dev_id=%u;fid=%u;client_type=%u;vdev_id=%u)\n", dev_id, fid, client->type,
-            instance->dev_ctrl->dev_id);
+                  instance->dev_ctrl->dev_id);
     } else {
         ka_task_mutex_unlock(&instance->flag_mutex);
     }
@@ -538,7 +537,7 @@ STATIC int vmngh_init_instance_proc(u32 dev_id, u32 fid, struct vmngh_client_ins
 }
 
 STATIC int vmngh_uninit_instance_proc(u32 dev_id, u32 fid, struct vmngh_client_instance *instance,
-    const struct vmngh_client *client)
+                                      const struct vmngh_client *client)
 {
     int ret = 0;
     u32 vdev_type = instance->vdev_type;
@@ -555,21 +554,21 @@ STATIC int vmngh_uninit_instance_proc(u32 dev_id, u32 fid, struct vmngh_client_i
 
     if (instance->dev_ctrl != NULL) {
         if ((client->uninit_instance == NULL) && (vdev_type == VMNGH_VM)) {
-            vmng_info("Client is no need to uninit instance. (dev_id=%u; fid=%u; client_type=%u)\n",
-                      dev_id, fid, client->type);
+            vmng_info("Client is no need to uninit instance. (dev_id=%u; fid=%u; client_type=%u)\n", dev_id, fid,
+                      client->type);
             return 0;
         }
 
         if ((client->uninit_container_instance == NULL) && (vdev_type == VMNGH_CONTAINER)) {
-            vmng_info("Client is no need to uninit container instance. (dev_id=%u; fid=%u; client_type=%u)\n",
-                      dev_id, fid, client->type);
+            vmng_info("Client is no need to uninit container instance. (dev_id=%u; fid=%u; client_type=%u)\n", dev_id,
+                      fid, client->type);
             return 0;
         }
         ka_task_mutex_lock(&instance->flag_mutex);
         instance->flag = VMNG_INSTANCE_FLAG_UNINIT;
         ka_task_mutex_unlock(&instance->flag_mutex);
         vmng_info("Uninit begin. (dev_id=%u; fid=%u; client_type=%u; vdev_type=%u)\n", dev_id, fid, client->type,
-            instance->vdev_type);
+                  instance->vdev_type);
         if (vdev_type == VMNGH_VM) {
             ret = client->uninit_instance(instance);
         } else {
@@ -587,7 +586,7 @@ STATIC int vmngh_uninit_instance_proc(u32 dev_id, u32 fid, struct vmngh_client_i
 }
 
 STATIC int vmngh_suspend_instance_proc(u32 dev_id, u32 fid, u32 type, struct vmngh_client_instance *instance,
-    const struct vmngh_client *client)
+                                       const struct vmngh_client *client)
 {
     int ret;
 
@@ -597,15 +596,15 @@ STATIC int vmngh_suspend_instance_proc(u32 dev_id, u32 fid, u32 type, struct vmn
     }
     if (instance->dev_ctrl != NULL) {
         if (client->suspend == NULL) {
-            vmng_debug("Client is no need to suspend. (dev_id=%u; fid=%u; client_type=%u)\n",
-                       dev_id, fid, client->type);
+            vmng_debug("Client is no need to suspend. (dev_id=%u; fid=%u; client_type=%u)\n", dev_id, fid,
+                       client->type);
             return 0;
         }
         vmng_info("Client suspend begin. (dev_id=%u; fid=%u; client_type=%u)\n", dev_id, fid, client->type);
         ret = client->suspend(instance);
         if (ret != 0) {
-            vmng_err("Client suspend failed. (dev_id=%u; fid=%u; client_type=%u; ret=%d)\n",
-                     dev_id, fid, client->type, ret);
+            vmng_err("Client suspend failed. (dev_id=%u; fid=%u; client_type=%u; ret=%d)\n", dev_id, fid, client->type,
+                     ret);
             return ret;
         }
         vmng_info("Client suspend success. (dev_id=%u; fid=%u; client_type=%u)\n", dev_id, fid, client->type);
@@ -615,60 +614,56 @@ STATIC int vmngh_suspend_instance_proc(u32 dev_id, u32 fid, u32 type, struct vmn
 }
 
 /* call before init instance. */
-int vmngh_get_map_info_client(struct vmngh_client_instance *instance_para,
-    enum vmng_client_type client_type, struct vmngh_map_info *client_map_info)
+int vmngh_get_map_info_client(struct vmngh_client_instance *instance_para, enum vmng_client_type client_type,
+                              struct vmngh_map_info *client_map_info)
 {
     u32 dev_id, fid;
     int ret;
 
     if ((instance_para == NULL) || (instance_para->dev_ctrl == NULL) || (client_map_info == NULL)) {
-        vmng_err("Parameter check failed. (instance_para=%s; proc_data=%s)\n",
-                 instance_para == NULL ? "NULL" : "OK", client_map_info == NULL ? "NULL" : "OK");
+        vmng_err("Parameter check failed. (instance_para=%s; proc_data=%s)\n", instance_para == NULL ? "NULL" : "OK",
+                 client_map_info == NULL ? "NULL" : "OK");
         return -EINVAL;
     }
 
     dev_id = instance_para->dev_ctrl->dev_id;
     fid = instance_para->dev_ctrl->vfid;
-    if ((vmngh_dev_id_check(dev_id, fid) != 0) || (client_type < 0) ||
-        (client_type >= VMNG_CLIENT_TYPE_MAX)) {
+    if ((vmngh_dev_id_check(dev_id, fid) != 0) || (client_type < 0) || (client_type >= VMNG_CLIENT_TYPE_MAX)) {
         vmng_err("Parameter check failed. (dev_id=%u; fid=%u; client_type=%u)\n", dev_id, fid, client_type);
         return -EINVAL;
     }
 
     ret = vmngh_get_map_info_handle(instance_para, g_vmngh_vascend_clients[client_type], client_map_info);
     if (ret != 0) {
-        vmng_err("Client get map info failed. (dev_id=%u; fid=%u; client_type=%u; ret=%d)\n",
-                 dev_id, fid, client_type, ret);
+        vmng_err("Client get map info failed. (dev_id=%u; fid=%u; client_type=%u; ret=%d)\n", dev_id, fid, client_type,
+                 ret);
         return VMNG_ERR;
     }
 
     return VMNG_OK;
 }
 
-int vmngh_put_map_info_client(struct vmngh_client_instance *instance_para,
-    enum vmng_client_type client_type)
+int vmngh_put_map_info_client(struct vmngh_client_instance *instance_para, enum vmng_client_type client_type)
 {
     u32 dev_id, fid;
     int ret;
 
     if ((instance_para == NULL) || (instance_para->dev_ctrl == NULL)) {
-        vmng_err("Parameter check failed. (instance_para=%s)\n",
-                 instance_para == NULL ? "NULL" : "OK");
+        vmng_err("Parameter check failed. (instance_para=%s)\n", instance_para == NULL ? "NULL" : "OK");
         return -EINVAL;
     }
 
     dev_id = instance_para->dev_ctrl->dev_id;
     fid = instance_para->dev_ctrl->vfid;
-    if ((vmngh_dev_id_check(dev_id, fid) != 0) || (client_type < 0) ||
-        (client_type >= VMNG_CLIENT_TYPE_MAX)) {
+    if ((vmngh_dev_id_check(dev_id, fid) != 0) || (client_type < 0) || (client_type >= VMNG_CLIENT_TYPE_MAX)) {
         vmng_err("Parameter check failed. (dev_id=%u; fid=%u; client_type=%u)\n", dev_id, fid, client_type);
         return -EINVAL;
     }
 
     ret = vmngh_put_map_info_handle(instance_para, g_vmngh_vascend_clients[client_type]);
     if (ret != 0) {
-        vmng_err("Client put map info failed. (dev_id=%u; fid=%u; client_type=%u; ret=%d)\n",
-                 dev_id, fid, client_type, ret);
+        vmng_err("Client put map info failed. (dev_id=%u; fid=%u; client_type=%u; ret=%d)\n", dev_id, fid, client_type,
+                 ret);
         return VMNG_ERR;
     }
 
@@ -693,8 +688,8 @@ int vmngh_init_instance_all_client(u32 dev_id, u32 fid, u32 vdev_type)
         instance->vdev_type = vdev_type;
         ret = vmngh_init_instance_proc(dev_id, fid, instance, g_vmngh_clients[type]);
         if (ret != 0) {
-            vmng_err("Init instance failed. (dev_id=%u; fid=%u; client_type=%u; vdev_type=%u; ret=%d)\n",
-                     dev_id, fid, type, vdev_type, ret);
+            vmng_err("Init instance failed. (dev_id=%u; fid=%u; client_type=%u; vdev_type=%u; ret=%d)\n", dev_id, fid,
+                     type, vdev_type, ret);
             goto out;
         }
     }
@@ -707,8 +702,8 @@ out:
     for (i = 0; i < type; i++) {
         instance = vmngh_get_client_instance(dev_id, fid, i);
         if (vmngh_uninit_instance_proc(dev_id, fid, instance, g_vmngh_clients[i]) != 0) {
-            vmng_err("Uninit instance failed. (dev_id=%u; fid=%u; client=%u; vdev_type=%u;)\n",
-                dev_id, fid, i, instance->vdev_type);
+            vmng_err("Uninit instance failed. (dev_id=%u; fid=%u; client=%u; vdev_type=%u;)\n", dev_id, fid, i,
+                     instance->vdev_type);
             continue;
         }
     }
@@ -728,7 +723,7 @@ int vmngh_uninit_instance_all_client(u32 dev_id, u32 fid)
         ret = vmngh_uninit_instance_proc(dev_id, fid, instance, g_vmngh_clients[type]);
         if (ret != 0) {
             vmng_err("Uninit instance failed. (dev_id=%u; fid=%u; client=%u; vdev_type=%u; ret=%d)\n", dev_id, fid,
-                type, instance->vdev_type, ret);
+                     type, instance->vdev_type, ret);
             continue;
         }
     }
@@ -1096,8 +1091,8 @@ int vmngh_init_ctrl(void)
 
     if ((memset_s(g_vmngh_clients, sizeof(g_vmngh_clients), 0, sizeof(g_vmngh_clients)) != EOK) ||
         (memset_s(&g_clear_timer, sizeof(g_clear_timer), 0, sizeof(g_clear_timer)) != EOK) ||
-        (memset_s(g_vmngh_vascend_clients, sizeof(g_vmngh_vascend_clients), 0,
-            sizeof(g_vmngh_vascend_clients)) != EOK)) {
+        (memset_s(g_vmngh_vascend_clients, sizeof(g_vmngh_vascend_clients), 0, sizeof(g_vmngh_vascend_clients)) !=
+         EOK)) {
         vmng_err("Call memset_s failed.\n");
         return -EINVAL;
     }
@@ -1173,7 +1168,6 @@ int vmngh_uninit_ctrl_ops(u32 dev_id)
     return VMNG_OK;
 }
 
-
 int vmngh_get_virtual_addr_info(u32 dev_id, u32 fid, enum vmng_get_addr_type type, u64 *addr, u64 *size)
 {
     struct vmngh_vd_dev *vd_dev = NULL;
@@ -1209,7 +1203,7 @@ int vmngh_get_virtual_addr_info(u32 dev_id, u32 fid, enum vmng_get_addr_type typ
 KA_EXPORT_SYMBOL(vmngh_get_virtual_addr_info);
 
 ka_dma_addr_t vmngh_dma_map_guest_page(u32 dev_id, u32 fid, unsigned long addr, unsigned long size,
-    ka_sg_table_t **dma_sgt)
+                                       ka_sg_table_t **dma_sgt)
 {
     struct vmngh_vd_dev *vd_dev = NULL;
     const u32 PA_TO_GFN_BITS = KA_MM_PAGE_SHIFT;
@@ -1269,8 +1263,8 @@ bool vmngh_dma_pool_active(u32 dev_id, u32 fid)
 }
 KA_EXPORT_SYMBOL(vmngh_dma_pool_active);
 
-int vmngh_dma_map_guest_page_batch(u32 dev_id, u32 fid, unsigned long *gfn,
-    unsigned long *dma_addr, unsigned long count)
+int vmngh_dma_map_guest_page_batch(u32 dev_id, u32 fid, unsigned long *gfn, unsigned long *dma_addr,
+                                   unsigned long count)
 {
     struct vmngh_vd_dev *vd_dev = NULL;
 
@@ -1284,8 +1278,8 @@ int vmngh_dma_map_guest_page_batch(u32 dev_id, u32 fid, unsigned long *gfn,
 }
 KA_EXPORT_SYMBOL(vmngh_dma_map_guest_page_batch);
 
-void vmngh_dma_unmap_guest_page_batch(u32 dev_id, u32 fid,
-    unsigned long *gfn, unsigned long *dma_addr, unsigned long count)
+void vmngh_dma_unmap_guest_page_batch(u32 dev_id, u32 fid, unsigned long *gfn, unsigned long *dma_addr,
+                                      unsigned long count)
 {
     struct vmngh_vd_dev *vd_dev = NULL;
 
@@ -1317,13 +1311,13 @@ int vmngh_alloc_vm_id(u32 dev_id, u32 fid, u32 vm_pid, u32 vm_devid)
             if (g_vmngh_vm_ctrl[vm_id].pdev_cnt < VMNG_VM_MAX) {
                 g_vmngh_vm_ctrl[vm_id].pdev_cnt++;
             } else {
-                vmng_err("vm_devid is exceed MAX. (dev_id=%u; fid=%u; vm_pid=%u; vm_devid=%u)",
-                         dev_id, fid, vm_pid, vm_devid);
+                vmng_err("vm_devid is exceed MAX. (dev_id=%u; fid=%u; vm_pid=%u; vm_devid=%u)", dev_id, fid, vm_pid,
+                         vm_devid);
                 ka_task_mutex_unlock(&g_vmngh_vm_ctrl_mutex);
                 return -EINVAL;
             }
-            vmng_info("Find pid match. (dev_id=%u; fid=%u; vm_pid=%u; vm_id=%u; vm_devid=%u; pdev_num=%u)\n",
-                dev_id, fid, vm_pid, vm_id, vm_devid, g_vmngh_vm_ctrl[vm_id].pdev_cnt);
+            vmng_info("Find pid match. (dev_id=%u; fid=%u; vm_pid=%u; vm_id=%u; vm_devid=%u; pdev_num=%u)\n", dev_id,
+                      fid, vm_pid, vm_id, vm_devid, g_vmngh_vm_ctrl[vm_id].pdev_cnt);
             break;
         }
     }
@@ -1335,8 +1329,8 @@ int vmngh_alloc_vm_id(u32 dev_id, u32 fid, u32 vm_pid, u32 vm_devid)
                 vm_id = i;
                 g_vmngh_vm_ctrl[vm_id].pdev_cnt++;
                 g_vmngh_vm_ctrl[vm_id].vm_pid = vm_pid;
-                vmng_info("Alloc new vm_pid. (dev_id=%u; fid=%u; vm_pid=%u; vm_devid=%u; vm_id=%u)\n",
-                    dev_id, fid, vm_pid, vm_id, vm_devid);
+                vmng_info("Alloc new vm_pid. (dev_id=%u; fid=%u; vm_pid=%u; vm_devid=%u; vm_id=%u)\n", dev_id, fid,
+                          vm_pid, vm_id, vm_devid);
                 break;
             }
         }
@@ -1385,13 +1379,13 @@ void vmngh_ctrl_rm_vm_id(u32 dev_id, u32 fid, u32 vm_devid)
         g_vmngh_vm_ctrl[rm_vm_id].vm_info[vm_devid].devid = 0;
         g_vmngh_vm_ctrl[rm_vm_id].vm_info[vm_devid].fid = 0;
         if (g_vmngh_vm_ctrl[rm_vm_id].pdev_cnt == 0) {
-            vmng_info("vm_id is removed. (dev_id=%u; fid=%u; pid=%u; vm_id=%u)\n",
-                      dev_id, fid, g_vmngh_vm_ctrl[rm_vm_id].vm_pid, rm_vm_id);
+            vmng_info("vm_id is removed. (dev_id=%u; fid=%u; pid=%u; vm_id=%u)\n", dev_id, fid,
+                      g_vmngh_vm_ctrl[rm_vm_id].vm_pid, rm_vm_id);
             g_vmngh_vm_ctrl[rm_vm_id].vm_pid = 0;
         }
     } else {
         vmng_err("vm_id cnt is zero, but call removed. (dev_id=%u; fid=%u; pid=%u; vm_id=%u)\n", dev_id, fid,
-            g_vmngh_vm_ctrl[rm_vm_id].vm_pid, rm_vm_id);
+                 g_vmngh_vm_ctrl[rm_vm_id].vm_pid, rm_vm_id);
     }
 
     vmngh_get_ctrl(dev_id, fid)->vdev_ctrl.vm_id = (u32)VMNGH_VM_ID_DEFAULT;
@@ -1648,7 +1642,7 @@ STATIC int _vmngh_create_container_vdev(u32 dev_id, u32 dtype, u32 *vfid, struct
     vmngh_ctrl_set_startup_flag(dev_id, *vfid, VMNG_STARTUP_BOTTOM_HALF_OK);
     vmngh_bw_data_clear_timer_init(dev_id, *vfid);
     vmng_info("Get alloc vfid. (dev_id=%d; vfid=%d; dtype=%d, vdev_id=%d)\n", dev_id, *vfid, dtype,
-        vmngh_get_ctrl(dev_id, *vfid)->vdev_ctrl.dev_id);
+              vmngh_get_ctrl(dev_id, *vfid)->vdev_ctrl.dev_id);
     return VMNG_OK;
 
 exit:
@@ -1699,7 +1693,7 @@ int vmngh_create_container_vdev(u32 dev_id, u32 dtype, u32 *vfid, struct vmng_vf
 }
 KA_EXPORT_SYMBOL(vmngh_create_container_vdev);
 
-STATIC int vmngh_destory_single_container_vdev(u32 dev_id, u32 vfid)
+STATIC int vmngh_destroy_single_container_vdev(u32 dev_id, u32 vfid)
 {
     struct vmngh_pci_dev *pdev = NULL;
     struct vmngh_ctrl_ops *ops = NULL;
@@ -1747,7 +1741,7 @@ STATIC int vmngh_destory_single_container_vdev(u32 dev_id, u32 vfid)
     return VMNG_OK;
 }
 
-STATIC int vmngh_destory_all_container_vdev(u32 dev_id)
+STATIC int vmngh_destroy_all_container_vdev(u32 dev_id)
 {
     struct vmng_vdev_ctrl *msg = NULL;
     int ret;
@@ -1759,7 +1753,7 @@ STATIC int vmngh_destory_all_container_vdev(u32 dev_id)
             continue;
         }
 
-        ret = vmngh_destory_single_container_vdev(dev_id, msg->vfid);
+        ret = vmngh_destroy_single_container_vdev(dev_id, msg->vfid);
         if (ret != VMNG_OK) {
             vmng_err("Destroy vfid failed. (dev_id=%u; vfid=%u; ret=%d)\n", dev_id, msg->vfid, ret);
         }
@@ -1781,10 +1775,10 @@ int vmngh_destory_container_vdev(u32 dev_id, u32 vfid)
         return VMNG_ERR;
     }
 
-    if (vfid == VMNGH_DESTORY_ALL_VDEV) {
-        return vmngh_destory_all_container_vdev(dev_id);
+    if (vfid == VMNGH_DESTROY_ALL_VDEV) {
+        return vmngh_destroy_all_container_vdev(dev_id);
     } else {
-        return vmngh_destory_single_container_vdev(dev_id, vfid);
+        return vmngh_destroy_single_container_vdev(dev_id, vfid);
     }
 }
 KA_EXPORT_SYMBOL(vmngh_destory_container_vdev);
@@ -1809,8 +1803,8 @@ STATIC int vmngh_notify_sriov_info(u32 dev_id, enum vmng_pf_sriov_status sriov_s
         vmng_info("Sriov instance begin. (dev_id=%u;type=%d;status=%d)\n", dev_id, type, sriov_status);
         ret = client->sriov_instance(&sriov_info);
         if (ret != 0) {
-            vmng_err("Client sriov instance failed. (dev_id=%u;client_type=%d;ret=%d;status=%d)\n",
-                     dev_id, type, ret, (int)sriov_info.sriov_status);
+            vmng_err("Client sriov instance failed. (dev_id=%u;client_type=%d;ret=%d;status=%d)\n", dev_id, type, ret,
+                     (int)sriov_info.sriov_status);
             goto failed;
         }
         vmng_info("Sriov instance end. (dev_id=%u;type=%d;status=%d)\n", dev_id, type, sriov_status);
@@ -1821,8 +1815,7 @@ STATIC int vmngh_notify_sriov_info(u32 dev_id, enum vmng_pf_sriov_status sriov_s
     return VMNG_OK;
 
 failed:
-    sriov_info.sriov_status = (sriov_status == VMNGH_PF_SRIOV_DISABLE) ?
-        VMNGH_PF_SRIOV_ENABLE : VMNGH_PF_SRIOV_DISABLE;
+    sriov_info.sriov_status = (sriov_status == VMNGH_PF_SRIOV_DISABLE) ? VMNGH_PF_SRIOV_ENABLE : VMNGH_PF_SRIOV_DISABLE;
     for (type--; type >= 0; --type) {
         client = g_vmngh_clients[type];
         if ((client != NULL) && (client->sriov_instance != NULL)) {
@@ -2070,7 +2063,7 @@ STATIC int vmngh_get_dev_numa_info(unsigned int dev_id, struct vmng_vf_memory_in
         return -EINVAL;
     }
     ctrl = vmngh_get_ctrl(mia_para.phy_devid, mia_para.sub_devid + 1);
-    if(ctrl == NULL) {
+    if (ctrl == NULL) {
         vmng_err("Get ctrl failed. (dev_id=%u,pf_id=%u,vf_id=%u)\n", dev_id, mia_para.phy_devid, mia_para.sub_devid);
         return -EINVAL;
     }
@@ -2127,7 +2120,7 @@ STATIC int vmngh_bw_calcu_token_limit(u32 dev_id, u32 vfid, u64 *flow_limit, u64
 
 STATIC int vmngh_bw_set_remote_token_limit(u32 dev_id, u32 vfid, u64 flow_limit, u64 pack_limit)
 {
-    struct vf_bandwidth_ctrl_remote* vf_ptr = NULL;
+    struct vf_bandwidth_ctrl_remote *vf_ptr = NULL;
     int ret;
 
     ret = vmngh_bw_get_vfio_barspace(dev_id, vfid, &vf_ptr);
@@ -2144,8 +2137,8 @@ STATIC int vmngh_bw_set_remote_token_limit(u32 dev_id, u32 vfid, u64 flow_limit,
 
 STATIC int vmngh_bw_set_remote_hostcpu_data(u32 dev_id, u32 vfid, u32 dir, u64 data_len, u32 node_cnt)
 {
-    struct vf_bandwidth_ctrl_remote* vf_ptr = NULL;
-    struct vf_bandwidth_ctrl_local* ptr_local = NULL;
+    struct vf_bandwidth_ctrl_remote *vf_ptr = NULL;
+    struct vf_bandwidth_ctrl_local *ptr_local = NULL;
     u64 flow_limit, pack_limit;
     unsigned long flags;
     int ret;
@@ -2220,7 +2213,7 @@ int vmngh_bw_set_token_limit(u32 dev_id, u32 vfid)
 
 STATIC int vmngh_bw_local_data_update(u32 dev_id, u32 vfid, struct vf_bandwidth_ctrl_local *ptr_local)
 {
-    struct vf_bandwidth_ctrl_remote* vf_ptr = NULL;
+    struct vf_bandwidth_ctrl_remote *vf_ptr = NULL;
     int ret;
 
     ret = vmngh_bw_get_vfio_barspace(dev_id, vfid, &vf_ptr);
@@ -2244,9 +2237,9 @@ STATIC int vmngh_bw_local_data_update(u32 dev_id, u32 vfid, struct vf_bandwidth_
     return 0;
 }
 
-STATIC int vmngh_bw_excess_bandwidth_judge(u32 dev_id, u32 vfid, u32 dir, bool* bandwidth_full)
+STATIC int vmngh_bw_excess_bandwidth_judge(u32 dev_id, u32 vfid, u32 dir, bool *bandwidth_full)
 {
-    struct vf_bandwidth_ctrl_local* ptr_local = NULL;
+    struct vf_bandwidth_ctrl_local *ptr_local = NULL;
     u64 flow_limit, pack_limit, single_flow, total_flow, single_pack;
     int ret;
 
@@ -2264,24 +2257,18 @@ STATIC int vmngh_bw_excess_bandwidth_judge(u32 dev_id, u32 vfid, u32 dir, bool* 
 
     if (dir == VMNG_PCIE_FLOW_H2D) {
         single_flow = ptr_local->hostcpu_flow_cnt[VMNG_PCIE_FLOW_H2D] +
-                      ptr_local->ctrlcpu_flow_cnt[VMNG_PCIE_FLOW_H2D] +
-                      ptr_local->tscpu_flow_cnt[VMNG_PCIE_FLOW_H2D];
-        total_flow = ptr_local->hostcpu_flow_cnt[VMNG_PCIE_FLOW_D2H] +
-                     ptr_local->ctrlcpu_flow_cnt[VMNG_PCIE_FLOW_D2H] +
+                      ptr_local->ctrlcpu_flow_cnt[VMNG_PCIE_FLOW_H2D] + ptr_local->tscpu_flow_cnt[VMNG_PCIE_FLOW_H2D];
+        total_flow = ptr_local->hostcpu_flow_cnt[VMNG_PCIE_FLOW_D2H] + ptr_local->ctrlcpu_flow_cnt[VMNG_PCIE_FLOW_D2H] +
                      ptr_local->tscpu_flow_cnt[VMNG_PCIE_FLOW_D2H] + single_flow;
         single_pack = ptr_local->hostcpu_pack_cnt[VMNG_PCIE_FLOW_H2D] +
-                      ptr_local->ctrlcpu_pack_cnt[VMNG_PCIE_FLOW_H2D] +
-                      ptr_local->tscpu_pack_cnt[VMNG_PCIE_FLOW_H2D];
+                      ptr_local->ctrlcpu_pack_cnt[VMNG_PCIE_FLOW_H2D] + ptr_local->tscpu_pack_cnt[VMNG_PCIE_FLOW_H2D];
     } else {
         single_flow = ptr_local->hostcpu_flow_cnt[VMNG_PCIE_FLOW_D2H] +
-                      ptr_local->ctrlcpu_flow_cnt[VMNG_PCIE_FLOW_D2H] +
-                      ptr_local->tscpu_flow_cnt[VMNG_PCIE_FLOW_D2H];
-        total_flow = ptr_local->hostcpu_flow_cnt[VMNG_PCIE_FLOW_H2D] +
-                     ptr_local->ctrlcpu_flow_cnt[VMNG_PCIE_FLOW_H2D] +
+                      ptr_local->ctrlcpu_flow_cnt[VMNG_PCIE_FLOW_D2H] + ptr_local->tscpu_flow_cnt[VMNG_PCIE_FLOW_D2H];
+        total_flow = ptr_local->hostcpu_flow_cnt[VMNG_PCIE_FLOW_H2D] + ptr_local->ctrlcpu_flow_cnt[VMNG_PCIE_FLOW_H2D] +
                      ptr_local->tscpu_flow_cnt[VMNG_PCIE_FLOW_H2D] + single_flow;
         single_pack = ptr_local->hostcpu_pack_cnt[VMNG_PCIE_FLOW_D2H] +
-                      ptr_local->ctrlcpu_pack_cnt[VMNG_PCIE_FLOW_D2H] +
-                      ptr_local->tscpu_pack_cnt[VMNG_PCIE_FLOW_D2H];
+                      ptr_local->ctrlcpu_pack_cnt[VMNG_PCIE_FLOW_D2H] + ptr_local->tscpu_pack_cnt[VMNG_PCIE_FLOW_D2H];
     }
 
     if ((single_flow >= flow_limit) || (single_pack >= pack_limit) ||
@@ -2324,8 +2311,7 @@ retry_check:
     }
 
     if (bandwidth_full) {
-        if ((retry_cnt > VMNG_BW_BANDWIDTH_CHECK_MAX_CNT) ||
-            (info->handle_mode == VMNG_BW_BANDWIDTH_CHECK_NON_SLEEP)) {
+        if ((retry_cnt > VMNG_BW_BANDWIDTH_CHECK_MAX_CNT) || (info->handle_mode == VMNG_BW_BANDWIDTH_CHECK_NON_SLEEP)) {
             return -EBUSY;
         }
         ka_system_msleep(VMNG_BW_BANDWIDTH_CHECK_WAIT_TIME);

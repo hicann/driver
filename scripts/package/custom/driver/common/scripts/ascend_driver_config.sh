@@ -401,7 +401,7 @@ do_upgrade_check() {
     [[ -x "${0%/*}"/run_driver_upgrade_check.sh ]] && {
         # Prevent upgrade check messages from being redirected
         exec 3>&1 1>>/proc/${PPID}/fd/1
-        "${0%/*}"/run_driver_upgrade_check.sh -c run
+        "${0%/*}"/run_driver_upgrade_check.sh -c run "${0%/*}"
         err=$?
         exec 1>&3 3>&-
     }

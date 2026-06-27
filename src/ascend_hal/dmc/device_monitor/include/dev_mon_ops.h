@@ -25,7 +25,7 @@ int dev_mon_set_device_info(unsigned int device_id, DSMI_MAIN_CMD main_cmd, unsi
 int dev_mon_set_detect_info(unsigned int device_id, DSMI_DETECT_MAIN_CMD main_cmd, unsigned int sub_cmd,
     void *buf, unsigned int size);
 
-int dev_mon_get_detect_info(DM_RECV_ST *msg, DSMI_DETECT_MAIN_CMD main_cmd, unsigned int sub_cmd,
+int dev_mon_get_detect_info(unsigned int device_id, DSMI_DETECT_MAIN_CMD main_cmd, unsigned int sub_cmd,
     void *buf, unsigned int *size);
 
 #endif

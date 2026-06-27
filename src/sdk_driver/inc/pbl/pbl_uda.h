@@ -70,8 +70,9 @@ struct uda_mia_dev_para {
 };
 
 #define GUID_NUM 4
+#define DEV_NUM_IN_GROUP 4
 #define UB_PORT_NUM 36
-#define UDEVID_REORDER_RESV_NUM 4
+#define UDEVID_REORDER_RESV_NUM 3
 struct udevid_reorder_para {
     u32 guid[GUID_NUM];   /* GUID of the current device */
     u32 guid1[GUID_NUM]; /* GUID of other devices1 in the same group */
@@ -81,6 +82,7 @@ struct udevid_reorder_para {
     u8 ub_port_status[UB_PORT_NUM]; /* port num 36 */
     u32 group_dev_num; /* 1p,2p,4p */
     u32 module_id;
+    int slot_id;
     u32 resv[UDEVID_REORDER_RESV_NUM]; /* resv */
 };
 
@@ -236,6 +238,7 @@ u32 uda_make_udevid(struct uda_mia_dev_para *mia_para);
 
 int uda_devid_to_udevid(u32 devid, u32 *udevid);
 int uda_devid_to_phy_devid(u32 devid, u32 *phy_devid, u32 *vfid);
+int uda_udevid_to_phy_devid(u32 udevid, u32 *phy_devid, u32 *vfid);
 /* Host ID conversion is supported. */
 int uda_devid_to_udevid_ex(u32 devid, u32 *udevid);
 
@@ -282,6 +285,7 @@ u32 uda_get_host_id(void);
 
 void uda_set_udevid_reorder_flag(bool flag);
 bool uda_udevid_is_reorder(void);
+void uda_set_add_id(unsigned int add_id);
 int uda_set_udevid_reorder_para(u32 add_id, struct udevid_reorder_para *para);
 int uda_get_udevid_reorder_para(u32 udevid, struct udevid_reorder_para *para);
 int uda_udevid_to_add_id(u32 udevid, u32 *add_id);

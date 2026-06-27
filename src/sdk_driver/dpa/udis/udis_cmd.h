@@ -15,12 +15,4 @@
 #define _UDIS_CMD_H_
 #include "udis.h"
 
-#define UDIS_FUNC_MAX_NUM 10
-
-struct udis_func_info {
-    UDIS_MODULE_TYPE module_type;
-    char name[UDIS_MAX_NAME_LEN];
-    udis_trigger func;
-};
-
 #endif

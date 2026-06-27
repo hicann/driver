@@ -38,4 +38,3 @@
 #define TOPIC_SCHED_QOS_COMPRESS_RATE 1
 
 #endif
-

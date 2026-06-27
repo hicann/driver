@@ -36,27 +36,28 @@ struct sched_char_dev char_dev;
 #ifdef CFG_ENV_HOST
 #define PCI_VENDOR_ID_HUAWEI 0x19e5
 #define DEVDRV_DIVERSITY_PCIE_VENDOR_ID 0xFFFF
-const ka_pci_device_id_t g_esched_driver_tbl[] = {{ KA_PCI_VDEVICE(HUAWEI, 0xd100), 0 },
-                                                    { KA_PCI_VDEVICE(HUAWEI, 0xd105), 0 },
-                                                    { KA_PCI_VDEVICE(HUAWEI, 0xa126), 0 },
-                                                    { KA_PCI_VDEVICE(HUAWEI, 0xd801), 0 },
-                                                    { KA_PCI_VDEVICE(HUAWEI, 0xd500), 0 },
-                                                    { KA_PCI_VDEVICE(HUAWEI, 0xd501), 0 },
-                                                    { KA_PCI_VDEVICE(HUAWEI, 0xd802), 0 },
-                                                    { KA_PCI_VDEVICE(HUAWEI, 0xd803), 0 },
-                                                    { KA_PCI_VDEVICE(HUAWEI, 0xd804), 0 },
-                                                    { KA_PCI_VDEVICE(HUAWEI, 0xd805), 0 },
-                                                    { KA_PCI_VDEVICE(HUAWEI, 0xd806), 0 },
-                                                    { KA_PCI_VDEVICE(HUAWEI, 0xd807), 0 },
-                                                    { DEVDRV_DIVERSITY_PCIE_VENDOR_ID, 0xd500,
-                                                      KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0 },
-                                                    { 0x20C6, 0xd500, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0 },
-                                                    { 0x203F, 0xd500, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0 },
-                                                    { 0x20C6, 0xd802, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0 },
-                                                    { 0x203F, 0xd802, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0 },
-                                                    { 0x20E9, 0xd802, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0 },
-                                                    { 0x20E9, 0xd500, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0 },
-                                                    {}};
+const ka_pci_device_id_t g_esched_driver_tbl[] = {
+    {KA_PCI_VDEVICE(HUAWEI, 0xd100), 0},
+    {KA_PCI_VDEVICE(HUAWEI, 0xd105), 0},
+    {KA_PCI_VDEVICE(HUAWEI, 0xa126), 0},
+    {KA_PCI_VDEVICE(HUAWEI, 0xd801), 0},
+    {KA_PCI_VDEVICE(HUAWEI, 0xd500), 0},
+    {KA_PCI_VDEVICE(HUAWEI, 0xd501), 0},
+    {KA_PCI_VDEVICE(HUAWEI, 0xd802), 0},
+    {KA_PCI_VDEVICE(HUAWEI, 0xd803), 0},
+    {KA_PCI_VDEVICE(HUAWEI, 0xd804), 0},
+    {KA_PCI_VDEVICE(HUAWEI, 0xd805), 0},
+    {KA_PCI_VDEVICE(HUAWEI, 0xd806), 0},
+    {KA_PCI_VDEVICE(HUAWEI, 0xd807), 0},
+    {KA_PCI_VDEVICE(HUAWEI, 0xd808), 0},
+    {DEVDRV_DIVERSITY_PCIE_VENDOR_ID, 0xd500, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0},
+    {0x20C6, 0xd500, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0},
+    {0x203F, 0xd500, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0},
+    {0x20C6, 0xd802, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0},
+    {0x203F, 0xd802, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0},
+    {0x20E9, 0xd802, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0},
+    {0x20E9, 0xd500, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0},
+    {}};
 KA_MODULE_DEVICE_TABLE(pci, g_esched_driver_tbl);
 #endif
 
@@ -128,8 +129,8 @@ STATIC int32_t sched_fop_proc_add_grp(u32 devid, unsigned long arg)
         return DRV_ERROR_COPY_USER_FAIL;
     }
 
-    return sched_proc_add_grp(sched_ioctl_devid(devid, para.dev_id), para.gid, para.grp_name,
-        para.sched_mode, para.thread_num);
+    return sched_proc_add_grp(sched_ioctl_devid(devid, para.dev_id), para.gid, para.grp_name, para.sched_mode,
+                              para.thread_num);
 }
 
 STATIC int32_t sched_get_tgid_by_vpid(int32_t vpid, int32_t *tgid)
@@ -153,7 +154,7 @@ STATIC int32_t sched_get_tgid_by_vpid(int32_t vpid, int32_t *tgid)
 }
 
 static int sched_query_task_gid(u32 devid, u32 dst_devid, ESCHED_QUERY_TYPE type, struct esched_input_info *input,
-    struct esched_output_info *output)
+                                struct esched_output_info *output)
 {
     struct esched_query_gid_output output_info = {0};
     struct esched_query_gid_input input_info;
@@ -205,15 +206,15 @@ STATIC int32_t sched_fop_query_info(u32 devid, unsigned long arg)
 
     if ((para.input.inBuff == NULL) || (para.output.outBuff == NULL)) {
         sched_err("Invalid para. (inBuff=%u; outBuff=%u)\n", para.input.inBuff == NULL ? 1 : 0,
-            para.output.outBuff == NULL ? 1 : 0);
+                  para.output.outBuff == NULL ? 1 : 0);
         return DRV_ERROR_PARA_ERROR;
     }
 
     switch (para.type) {
         case QUERY_TYPE_LOCAL_GRP_ID:
         case QUERY_TYPE_REMOTE_GRP_ID:
-            ret = sched_query_task_gid(sched_ioctl_devid(devid, para.dev_id), para.dst_devid,
-                para.type, &para.input, &para.output);
+            ret = sched_query_task_gid(sched_ioctl_devid(devid, para.dev_id), para.dst_devid, para.type, &para.input,
+                                       &para.output);
             break;
         default:
 #ifndef EMU_ST
@@ -233,7 +234,8 @@ STATIC int32_t sched_fop_set_event_priority(u32 devid, unsigned long arg)
         return DRV_ERROR_COPY_USER_FAIL;
     }
 
-    return sched_set_event_priority(sched_ioctl_devid(devid, para.dev_id), ka_task_get_current()->tgid, para.event_id, para.pri);
+    return sched_set_event_priority(sched_ioctl_devid(devid, para.dev_id), ka_task_get_current()->tgid, para.event_id,
+                                    para.pri);
 }
 
 STATIC int32_t sched_fop_set_process_priority(u32 devid, unsigned long arg)
@@ -256,7 +258,7 @@ STATIC int32_t sched_fop_thread_subscribe_event(u32 devid, unsigned long arg)
     }
 
     return sched_thread_subscribe_event(sched_ioctl_devid(devid, para.dev_id), ka_task_get_current()->tgid, para.gid,
-        para.tid, para.event_bitmap);
+                                        para.tid, para.event_bitmap);
 }
 
 static int32_t sched_fop_grp_set_max_event_num(u32 devid, unsigned long arg)
@@ -270,7 +272,7 @@ static int32_t sched_fop_grp_set_max_event_num(u32 devid, unsigned long arg)
     }
 
     return sched_grp_set_max_event_num(sched_ioctl_devid(devid, para.dev_id), ka_task_get_current()->tgid, para.gid,
-        para.event_id, para.max_num);
+                                       para.event_id, para.max_num);
 }
 
 STATIC int32_t sched_fop_get_exact_event(u32 devid, unsigned long arg)
@@ -292,13 +294,13 @@ STATIC int32_t sched_fop_get_exact_event(u32 devid, unsigned long arg)
     para_info.event.msg_len = para->msg_len;
 
     ret = sched_get_exact_event(sched_ioctl_devid(devid, para->dev_id), ka_task_get_current()->tgid, para->grp_id,
-        para->thread_id, para->event_id, &para_info.event);
+                                para->thread_id, para->event_id, &para_info.event);
     if (ka_unlikely(ret != 0)) {
         return ret;
     }
 
-    if (copy_to_user_safe((void *)((uintptr_t)arg + sizeof(struct sched_get_event_input)),
-        &para_info.event, sizeof(struct sched_subscribed_event)) != 0) {
+    if (copy_to_user_safe((void *)((uintptr_t)arg + sizeof(struct sched_get_event_input)), &para_info.event,
+                          sizeof(struct sched_subscribed_event)) != 0) {
         return DRV_ERROR_COPY_USER_FAIL;
     }
 
@@ -317,15 +319,15 @@ STATIC int32_t sched_fop_ack_event(u32 devid, unsigned long arg)
 
     if (((para_info.msg == NULL) && (para_info.msg_len != 0)) ||
         ((para_info.msg != NULL) && ((para_info.msg_len == 0) || (para_info.msg_len > SCHED_MAX_EVENT_MSG_LEN)))) {
-        sched_err("The member msg_len in para_info is out of range. (msg_len=%u; max=%d)\n",
-                  para_info.msg_len, SCHED_MAX_EVENT_MSG_LEN);
+        sched_err("The member msg_len in para_info is out of range. (msg_len=%u; max=%d)\n", para_info.msg_len,
+                  SCHED_MAX_EVENT_MSG_LEN);
         return DRV_ERROR_PARA_ERROR;
     }
 
     if ((para_info.msg != NULL) &&
         (copy_from_user_safe(msg, (void *)(uintptr_t)para_info.msg, para_info.msg_len) != 0)) {
-        sched_err("Failed to invoke the copy_from_user_safe. (dev_id=%u; event_id=%u; msg_len=%u)\n",
-            para_info.dev_id, para_info.event_id, para_info.msg_len);
+        sched_err("Failed to invoke the copy_from_user_safe. (dev_id=%u; event_id=%u; msg_len=%u)\n", para_info.dev_id,
+                  para_info.event_id, para_info.msg_len);
         return DRV_ERROR_COPY_USER_FAIL;
     }
 
@@ -347,8 +349,8 @@ STATIC int32_t sched_fop_wait_event(u32 devid, unsigned long arg)
     }
 
     if (((para->msg == NULL) || (para->msg_len == 0)) && (para->timeout != SCHED_THREAD_SWAPOUT)) {
-        sched_err("The msg is NULL or msg_len is invalid. (dev_id=%u; msg_len=%u; timeout=%dms)\n",
-            para->dev_id, para->msg_len, para->timeout);
+        sched_err("The msg is NULL or msg_len is invalid. (dev_id=%u; msg_len=%u; timeout=%dms)\n", para->dev_id,
+                  para->msg_len, para->timeout);
         return DRV_ERROR_PARA_ERROR;
     }
 
@@ -356,13 +358,13 @@ STATIC int32_t sched_fop_wait_event(u32 devid, unsigned long arg)
     para_info.event.msg_len = para->msg_len;
 
     ret = sched_wait_event(sched_ioctl_devid(devid, para->dev_id), ka_task_get_current()->tgid, para->grp_id,
-        para->thread_id, para->timeout, &para_info.event);
+                           para->thread_id, para->timeout, &para_info.event);
     if (ka_unlikely(ret != 0)) {
         return ret;
     }
 
-    if (copy_to_user_safe((void *)((uintptr_t)arg + sizeof(struct sched_wait_input)),
-        &para_info.event, sizeof(struct sched_subscribed_event)) != 0) {
+    if (copy_to_user_safe((void *)((uintptr_t)arg + sizeof(struct sched_wait_input)), &para_info.event,
+                          sizeof(struct sched_subscribed_event)) != 0) {
         return DRV_ERROR_COPY_USER_FAIL;
     }
 
@@ -401,7 +403,7 @@ STATIC int32_t sched_fop_trigger_sched_trace_record(u32 devid, unsigned long arg
     struct sched_ioctl_para_trigger_sched_trace_record para;
 
     if (copy_from_user_safe(&para, (void *)(uintptr_t)arg,
-        sizeof(struct sched_ioctl_para_trigger_sched_trace_record)) != 0) {
+                            sizeof(struct sched_ioctl_para_trigger_sched_trace_record)) != 0) {
         return DRV_ERROR_COPY_USER_FAIL;
     }
 
@@ -416,28 +418,29 @@ int32_t sched_publish_event_para_check(struct sched_published_event_info *event_
 {
     if (event_info->gid >= SCHED_MAX_GRP_NUM) {
         sched_err("The variable gid is out of range. "
-                  "(gid=%u; max=%d)\n", event_info->gid, SCHED_MAX_GRP_NUM);
+                  "(gid=%u; max=%d)\n",
+                  event_info->gid, SCHED_MAX_GRP_NUM);
         return DRV_ERROR_PARA_ERROR;
     }
 
     if (event_info->event_id >= SCHED_MAX_EVENT_TYPE_NUM) {
-        sched_err("The variable event_id is out of range. (event_id=%u; max=%d)\n",
-                  event_info->event_id, SCHED_MAX_EVENT_TYPE_NUM);
+        sched_err("The variable event_id is out of range. (event_id=%u; max=%d)\n", event_info->event_id,
+                  SCHED_MAX_EVENT_TYPE_NUM);
         return DRV_ERROR_PARA_ERROR;
     }
 
     if (((event_info->msg == NULL) && (event_info->msg_len != 0)) ||
-        ((event_info->msg != NULL) && ((event_info->msg_len == 0) ||
-        (event_info->msg_len > (u32)SCHED_MAX_EVENT_MSG_LEN_EX)))) {
-        sched_err("The variable msg_len is out of range. (msg_len=%u; max=%d)\n",
-                  event_info->msg_len, SCHED_MAX_EVENT_MSG_LEN_EX);
+        ((event_info->msg != NULL) &&
+         ((event_info->msg_len == 0) || (event_info->msg_len > (u32)SCHED_MAX_EVENT_MSG_LEN_EX)))) {
+        sched_err("The variable msg_len is out of range. (msg_len=%u; max=%d)\n", event_info->msg_len,
+                  SCHED_MAX_EVENT_MSG_LEN_EX);
         return DRV_ERROR_PARA_ERROR;
     }
 
     return 0;
 }
 
-#if defined (CFG_ENV_HOST) && !defined (EVENT_SCHED_UT) && !defined (EMU_ST)
+#if defined(CFG_ENV_HOST) && !defined(EVENT_SCHED_UT) && !defined(EMU_ST)
 STATIC int32_t sched_proc_mnt_ns_check(u32 chip_id, int pid)
 {
     ka_mnt_namespace_t *mnt_ns = NULL;
@@ -453,16 +456,23 @@ STATIC int32_t sched_proc_mnt_ns_check(u32 chip_id, int pid)
 #endif
 
 #define PROC_HANDLE_NUM_MAX 3
-STATIC sched_event_pre_proc sched_event_pre_proc_handle
-    [SCHED_MAX_EVENT_TYPE_NUM][SCHED_PRE_PROC_POS_MAX][PROC_HANDLE_NUM_MAX] = {{{NULL, }, }, };
+STATIC sched_event_pre_proc
+    sched_event_pre_proc_handle[SCHED_MAX_EVENT_TYPE_NUM][SCHED_PRE_PROC_POS_MAX][PROC_HANDLE_NUM_MAX] = {
+        {
+            {
+                NULL,
+            },
+        },
+};
 
-int hal_kernel_sched_register_event_pre_proc_handle(unsigned int event_id, SCHED_PROC_POS pos, sched_event_pre_proc handle)
+int hal_kernel_sched_register_event_pre_proc_handle(unsigned int event_id, SCHED_PROC_POS pos,
+                                                    sched_event_pre_proc handle)
 {
     int i;
 
     if ((event_id >= SCHED_MAX_EVENT_TYPE_NUM) || (pos >= SCHED_PRE_PROC_POS_MAX)) {
-        sched_err("Invalid event_id or pre_proc_pos. (event_id=%u; max=%u; pos=%d; max=%d)\n",
-            event_id, SCHED_MAX_EVENT_TYPE_NUM, pos, SCHED_PRE_PROC_POS_MAX);
+        sched_err("Invalid event_id or pre_proc_pos. (event_id=%u; max=%u; pos=%d; max=%d)\n", event_id,
+                  SCHED_MAX_EVENT_TYPE_NUM, pos, SCHED_PRE_PROC_POS_MAX);
         return DRV_ERROR_PARA_ERROR;
     }
 
@@ -479,13 +489,14 @@ int hal_kernel_sched_register_event_pre_proc_handle(unsigned int event_id, SCHED
 }
 KA_EXPORT_SYMBOL_GPL(hal_kernel_sched_register_event_pre_proc_handle);
 
-void hal_kernel_sched_unregister_event_pre_proc_handle(unsigned int event_id, SCHED_PROC_POS pos, sched_event_pre_proc handle)
+void hal_kernel_sched_unregister_event_pre_proc_handle(unsigned int event_id, SCHED_PROC_POS pos,
+                                                       sched_event_pre_proc handle)
 {
     int i;
 
     if ((event_id >= SCHED_MAX_EVENT_TYPE_NUM) || (pos >= SCHED_PRE_PROC_POS_MAX)) {
-        sched_err("Invalid event_id or pre_proc_pos. (event_id=%u; max=%u; pos=%d; max=%d)\n",
-            event_id, SCHED_MAX_EVENT_TYPE_NUM, pos, SCHED_PRE_PROC_POS_MAX);
+        sched_err("Invalid event_id or pre_proc_pos. (event_id=%u; max=%u; pos=%d; max=%d)\n", event_id,
+                  SCHED_MAX_EVENT_TYPE_NUM, pos, SCHED_PRE_PROC_POS_MAX);
         return;
     }
 
@@ -497,8 +508,8 @@ void hal_kernel_sched_unregister_event_pre_proc_handle(unsigned int event_id, SC
 }
 KA_EXPORT_SYMBOL_GPL(hal_kernel_sched_unregister_event_pre_proc_handle);
 
-int sched_submit_event_pre_proc(unsigned int dev_id, SCHED_PROC_POS pos,
-    struct sched_published_event_info *event_info, struct sched_published_event_func *event_func)
+int sched_submit_event_pre_proc(unsigned int dev_id, SCHED_PROC_POS pos, struct sched_published_event_info *event_info,
+                                struct sched_published_event_func *event_func)
 {
     int i, ret = 0;
 
@@ -506,8 +517,8 @@ int sched_submit_event_pre_proc(unsigned int dev_id, SCHED_PROC_POS pos,
         if (sched_event_pre_proc_handle[event_info->event_id][pos][i] != NULL) {
             ret = sched_event_pre_proc_handle[event_info->event_id][pos][i](dev_id, event_info, event_func);
             if ((ret != SCHED_EVENT_PRE_PROC_SUCCESS) && (ret != SCHED_EVENT_PRE_PROC_SUCCESS_RETURN)) {
-                sched_err("Pre proc failed. (ret=%d; dev_id=%u; event_id=%u; subevent_id=%u; i=%d)\n",
-                    ret, dev_id, event_info->event_id, event_info->subevent_id, i);
+                sched_err("Pre proc failed. (ret=%d; dev_id=%u; event_id=%u; subevent_id=%u; i=%d)\n", ret, dev_id,
+                          event_info->event_id, event_info->subevent_id, i);
             }
 
             if (ret != SCHED_EVENT_PRE_PROC_SUCCESS) {
@@ -523,13 +534,15 @@ int sched_submit_event_pre_proc(unsigned int dev_id, SCHED_PROC_POS pos,
 }
 
 STATIC int32_t sched_submit_single_event(struct sched_numa_node *node, u32 event_src,
-    struct sched_published_event_info *event_info, struct sched_published_event_func *event_func)
+                                         struct sched_published_event_info *event_info,
+                                         struct sched_published_event_func *event_func)
 {
     return node->ops.sumbit_event(node->node_id, event_src, event_info, event_func);
 }
 
 STATIC int32_t sched_submit_multi_events(struct sched_numa_node *node, u32 event_src,
-    struct sched_published_event_info *event_info, struct sched_published_event_func *event_func, unsigned long arg)
+                                         struct sched_published_event_info *event_info,
+                                         struct sched_published_event_func *event_func, unsigned long arg)
 {
     struct sched_ioctl_para_submit *usr_arg = (struct sched_ioctl_para_submit __ka_user *)(uintptr_t)arg;
     u32 stamp = (u32)ka_jiffies;
@@ -537,8 +550,8 @@ STATIC int32_t sched_submit_multi_events(struct sched_numa_node *node, u32 event
     int ret;
 
     if (event_info->event_num > (unsigned int)SCHED_MAX_BATCH_EVENT_NUM) {
-        sched_err("event_num exceed limit %u. (node_id=%u; event_num=%u)\n",
-            (unsigned int)SCHED_MAX_BATCH_EVENT_NUM, node->node_id, event_info->event_num);
+        sched_err("event_num exceed limit %u. (node_id=%u; event_num=%u)\n", (unsigned int)SCHED_MAX_BATCH_EVENT_NUM,
+                  node->node_id, event_info->event_num);
         return DRV_ERROR_PARA_ERROR;
     }
 
@@ -571,8 +584,8 @@ STATIC int32_t sched_submit_check_master_pid(u32 chip_id, u32 dest_pid)
 
     ret = devdrv_query_master_pid_by_device_slave(chip_id, dest_pid, &device_master_pid);
     if (ret != 0) {
-        sched_err("Query master pid by device slave failed. (chip_id=%u; dest_pid=%u; ret=%d)\n",
-            chip_id, dest_pid, ret);
+        sched_err("Query master pid by device slave failed. (chip_id=%u; dest_pid=%u; ret=%d)\n", chip_id, dest_pid,
+                  ret);
         return ret;
     }
 
@@ -580,16 +593,18 @@ STATIC int32_t sched_submit_check_master_pid(u32 chip_id, u32 dest_pid)
         return 0;
     }
 
-    ret = hal_kernel_devdrv_query_process_host_pid(ka_task_get_current()->tgid, &dev_id, &vfid, &host_master_pid, &type);;
+    ret = hal_kernel_devdrv_query_process_host_pid(ka_task_get_current()->tgid, &dev_id, &vfid, &host_master_pid,
+                                                   &type);
+    ;
     if (ret != 0) {
         sched_err("Query master tgid by host slave failed. (chip_id=%u; dest_pid=%u; device_master_pid=%u; ret=%d)\n",
-            chip_id, dest_pid, device_master_pid, ret);
+                  chip_id, dest_pid, device_master_pid, ret);
         return ret;
     }
 
     if (device_master_pid != host_master_pid) {
-        sched_err("Pid not match. (chip_id=%u; dest_pid=%u; device_master_pid=%u; host_master_pid=%u)\n",
-            chip_id, dest_pid, device_master_pid, host_master_pid);
+        sched_err("Pid not match. (chip_id=%u; dest_pid=%u; device_master_pid=%u; host_master_pid=%u)\n", chip_id,
+                  dest_pid, device_master_pid, host_master_pid);
         return DRV_ERROR_INNER_ERR;
     }
 
@@ -635,8 +650,8 @@ STATIC int32_t sched_fop_submit_event(u32 devid, unsigned long arg)
     }
     if (event_info->msg_len > 0) {
         if (copy_from_user_safe((void *)&msg, (void *)(uintptr_t)event_info->msg, event_info->msg_len) != 0) {
-            sched_err("Copy from user fail. (devid=%u; subevent_id=%u; msg_len=%u)\n",
-                devid, event_info->subevent_id, event_info->msg_len);
+            sched_err("Copy from user fail. (devid=%u; subevent_id=%u; msg_len=%u)\n", devid, event_info->subevent_id,
+                      event_info->msg_len);
             return DRV_ERROR_COPY_USER_FAIL;
         }
         event_info->msg = (char *)&msg;
@@ -648,7 +663,7 @@ STATIC int32_t sched_fop_submit_event(u32 devid, unsigned long arg)
         }
     }
 
-#if defined CFG_ENV_HOST && !defined (EVENT_SCHED_UT) && !defined (EMU_ST)
+#if defined CFG_ENV_HOST && !defined(EVENT_SCHED_UT) && !defined(EMU_ST)
     if ((event_info->dst_engine == CCPU_HOST) || (event_info->dst_engine == ACPU_HOST)) {
         ret = sched_proc_mnt_ns_check(chip_id, event_info->pid);
         if (ret != 0) {
@@ -686,7 +701,7 @@ STATIC int32_t sched_fop_submit_event(u32 devid, unsigned long arg)
     }
 }
 
-int32_t hal_kernel_sched_submit_event(uint32_t chip_id, struct sched_published_event *event)
+int32_t hal_kernel_sched_submit_event_to_thread(uint32_t chip_id, struct sched_published_event *event)
 {
     struct sched_published_event_info *event_info = NULL;
     struct sched_numa_node *node = NULL;
@@ -700,14 +715,6 @@ int32_t hal_kernel_sched_submit_event(uint32_t chip_id, struct sched_published_e
     event->event_info.publish_timestamp = sched_get_cur_timestamp();
     event->event_info.publish_timestamp_of_day = ka_system_sched_get_abs_or_rel_mstime();
     event_info = &event->event_info;
-#if defined(CFG_SOC_PLATFORM_CLOUD_V4) || defined(CFG_FEATURE_STARS_V2)
-    /* call_back event publish to the specific thread */
-    if (event_info->event_id != EVENT_TS_CALLBACK_MSG) {
-        event_info->tid = SCHED_INVALID_TID;
-    }
-#else
-    event_info->tid = SCHED_INVALID_TID;
-#endif
     event_info->dst_devid = SCHED_INVALID_DEVID;
     ret = sched_publish_event_para_check(event_info);
     if (ret != 0) {
@@ -723,6 +730,25 @@ int32_t hal_kernel_sched_submit_event(uint32_t chip_id, struct sched_published_e
     ret = node->ops.sumbit_event(chip_id, SCHED_PUBLISH_FORM_KERNEL, event_info, &event->event_func);
     esched_dev_put(node);
     return ret;
+}
+KA_EXPORT_SYMBOL_GPL(hal_kernel_sched_submit_event_to_thread);
+
+int32_t hal_kernel_sched_submit_event(uint32_t chip_id, struct sched_published_event *event)
+{
+    if (event == NULL) {
+        sched_err("The event is NULL. (chip_id=%u)\n", chip_id);
+        return DRV_ERROR_PARA_ERROR;
+    }
+
+#if defined(CFG_SOC_PLATFORM_CLOUD_V4) || defined(CFG_FEATURE_STARS_V2)
+    /* call_back event publish to the specific thread */
+    if (event->event_info.event_id != EVENT_TS_CALLBACK_MSG) {
+        event->event_info.tid = SCHED_INVALID_TID;
+    }
+#else
+    event->event_info.tid = SCHED_INVALID_TID;
+#endif
+    return hal_kernel_sched_submit_event_to_thread(chip_id, event);
 }
 KA_EXPORT_SYMBOL_GPL(hal_kernel_sched_submit_event);
 
@@ -765,13 +791,25 @@ KA_EXPORT_SYMBOL_GPL(sched_submit_event_to_thread);
 
 STATIC int32_t sched_fop_attach_proc_to_chip(u32 devid, unsigned long arg)
 {
+    int ret;
     struct sched_ioctl_para_attach para;
 
     if (copy_from_user_safe(&para, (void *)(uintptr_t)arg, sizeof(struct sched_ioctl_para_attach)) != 0) {
         return DRV_ERROR_COPY_USER_FAIL;
     }
 
-    return sched_add_process(sched_ioctl_devid(devid, para.dev_id), ka_task_get_current()->tgid);
+    ret = sched_add_process(sched_ioctl_devid(devid, para.dev_id), ka_task_get_current()->tgid);
+    if (ret != 0) {
+        return ret;
+    }
+
+    para.kernel_time = sched_get_cur_timestamp();
+    if (copy_to_user_safe((void *)(uintptr_t)arg, &para, sizeof(para)) != 0) {
+        (void)sched_del_process(sched_ioctl_devid(devid, para.dev_id), ka_task_get_current()->tgid);
+        return DRV_ERROR_COPY_USER_FAIL;
+    }
+
+    return ret;
 }
 
 STATIC int32_t sched_fop_dettach_proc_from_chip(u32 devid, unsigned long arg)
@@ -794,7 +832,7 @@ STATIC int32_t sched_fop_query_sched_mode(u32 devid, unsigned long arg)
         return DRV_ERROR_COPY_USER_FAIL;
     }
 
-    ret= sched_query_sched_mode(sched_ioctl_devid(devid, para.dev_id), ka_task_get_current()->tgid, &para.sched_mode);
+    ret = sched_query_sched_mode(sched_ioctl_devid(devid, para.dev_id), ka_task_get_current()->tgid, &para.sched_mode);
     if (ret != 0) {
         return ret;
     }
@@ -806,7 +844,7 @@ STATIC int32_t sched_fop_query_sched_mode(u32 devid, unsigned long arg)
     return ret;
 }
 
-STATIC int32_t (* sched_ioctl_handler[SCHED_CMD_MAX_NR])(u32 devid, unsigned long arg) = {
+STATIC int32_t (*sched_ioctl_handler[SCHED_CMD_MAX_NR])(u32 devid, unsigned long arg) = {
     [_KA_IOC_NR(SCHED_SET_SCHED_CPU_ID)] = sched_fop_set_sched_cpu,
     [_KA_IOC_NR(SCHED_PROC_ADD_GRP_ID)] = sched_fop_proc_add_grp,
     [_KA_IOC_NR(SCHED_SET_EVENT_PRIORITY_ID)] = sched_fop_set_event_priority,
@@ -838,10 +876,10 @@ STATIC struct sched_task *esched_task_hash_find(int pid, unsigned int devid)
     struct sched_task *task = NULL;
     int key = pid & ESCHED_HASH_TABLE_MASK;
 
-    ka_hash_for_each_possible(esched_task_table, task, hnode, key)
-        if ((task->pid == pid) && (task->devid == devid)) {
-            return task;
-        }
+    ka_hash_for_each_possible(esched_task_table, task, hnode, key) if ((task->pid == pid) && (task->devid == devid))
+    {
+        return task;
+    }
 
     return NULL;
 }
@@ -856,12 +894,13 @@ STATIC void esched_task_hash_add(struct sched_task *task)
 STATIC void esched_task_hash_del(int pid, unsigned int devid)
 {
     struct sched_task *task_tmp = NULL;
-    int key = (pid) & ESCHED_HASH_TABLE_MASK;
-    
-    ka_hash_for_each_possible(esched_task_table, task_tmp, hnode, key)
-        if ((task_tmp->pid == pid) && (task_tmp->devid == devid)) {
-            ka_hash_del(&task_tmp->hnode);
-        }
+    int key = (pid)&ESCHED_HASH_TABLE_MASK;
+
+    ka_hash_for_each_possible(esched_task_table, task_tmp, hnode,
+                              key) if ((task_tmp->pid == pid) && (task_tmp->devid == devid))
+    {
+        ka_hash_del(&task_tmp->hnode);
+    }
 }
 STATIC int32_t esched_wait_task_release_finish(unsigned int devid)
 {
@@ -874,8 +913,8 @@ STATIC int32_t esched_wait_task_release_finish(unsigned int devid)
         task = esched_task_hash_find((int)ka_task_get_current()->tgid, devid);
         ka_task_mutex_unlock(&esched_task_mutex);
         if (task == NULL) {
-            sched_info("Wait pre release finish success. (devid=%u; pid=%u; remain_cnt=%u)\n",
-                devid, (unsigned int)ka_task_get_current()->tgid, (ESCHED_MAX_TIMEOUT_CNT - timeout_cnt));
+            sched_info("Wait pre release finish success. (devid=%u; pid=%u; remain_cnt=%u)\n", devid,
+                       (unsigned int)ka_task_get_current()->tgid, (ESCHED_MAX_TIMEOUT_CNT - timeout_cnt));
             return DRV_ERROR_NONE;
         }
         timeout_cnt--;
@@ -993,7 +1032,7 @@ STATIC int32_t sched_fop_release(ka_inode_t *inode, ka_file_t *filep)
     ka_task_mutex_lock(&esched_task_mutex);
     esched_task_hash_del(pid, devid);
     ka_task_mutex_unlock(&esched_task_mutex);
- 
+
     ka_mm_kfree(task);
     module_feature_auto_uninit_task(0, pid, NULL);
 #endif
@@ -1108,12 +1147,12 @@ static const struct notifier_operations event_notifier_ops = {
 };
 #endif
 
-#if (!defined CFG_FEATURE_EXTERNAL_CDEV) 
+#if (!defined CFG_FEATURE_EXTERNAL_CDEV)
 STATIC char *sched_devnode(ka_device_t *dev, umode_t *mode)
 {
     return NULL;
 }
-typedef char* (*const_sched_devnode)(const ka_device_t *dev, umode_t *mode); // define function pointer
+typedef char *(*const_sched_devnode)(const ka_device_t *dev, umode_t *mode); // define function pointer
 
 STATIC int32_t sched_register_driver(void)
 {
@@ -1235,7 +1274,7 @@ STATIC void sched_debugfs_uninit(void)
 #endif
 }
 
-STATIC int32_t __init sched_init_module(void)
+STATIC int32_t __ka_init sched_init_module(void)
 {
     int32_t ret;
 
@@ -1275,7 +1314,7 @@ STATIC int32_t __init sched_init_module(void)
     return 0;
 }
 
-STATIC void __exit sched_exit_module(void)
+STATIC void __ka_exit sched_exit_module(void)
 {
     sched_debugfs_uninit();
     esched_ts_platform_uninit();

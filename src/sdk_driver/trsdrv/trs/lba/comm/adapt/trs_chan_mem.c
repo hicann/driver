@@ -44,7 +44,8 @@ void *trs_chan_mem_alloc_ddr(struct trs_id_inst *inst, int nid, size_t size, phy
     if (nid == KA_NUMA_NO_NODE) {
         p = ka_mm_alloc_pages(__KA_GFP_ZERO | __KA_GFP_ACCOUNT | KA_GFP_HIGHUSER_MOVABLE | __KA_GFP_NOWARN, order);
     } else {
-        p = ka_mm_alloc_pages_node(nid, __KA_GFP_THISNODE | __KA_GFP_ZERO | __KA_GFP_ACCOUNT | KA_GFP_HIGHUSER_MOVABLE | __KA_GFP_NOWARN,
+        p = ka_mm_alloc_pages_node(
+            nid, __KA_GFP_THISNODE | __KA_GFP_ZERO | __KA_GFP_ACCOUNT | KA_GFP_HIGHUSER_MOVABLE | __KA_GFP_NOWARN,
             order);
     }
     if (p == NULL) {
@@ -83,8 +84,9 @@ void *trs_chan_mem_alloc_rsv(struct trs_id_inst *inst, int type, size_t size, ph
     if (ret != 0) {
         trs_rsv_mem_free(inst, type, vaddr, size);
 #ifndef EMU_ST
-        trs_err("Rcv mem v2p fail. (devid=%u; tsid=%u; type=%d; size=%lu; ret=%d)\n",
-                inst->devid, inst->tsid, type, size, ret);
+        trs_err(
+            "Rcv mem v2p fail. (devid=%u; tsid=%u; type=%d; size=%lu; ret=%d)\n", inst->devid, inst->tsid, type, size,
+            ret);
 #endif
         return NULL;
     }

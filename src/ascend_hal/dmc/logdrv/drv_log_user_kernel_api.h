@@ -26,7 +26,6 @@ extern "C" {
 #endif
 const char *drv_log_get_module_str_inner(enum devdrv_module_type module);
 
-
 int32_t errno_to_user_errno_inner(int32_t kern_err_no);
 int32_t drv_log_out_handle_register_inner(struct log_out_handle *handle, size_t input_size, uint32_t flag);
 int32_t drv_log_out_handle_unregister_inner(void);
@@ -38,7 +37,9 @@ void drv_log_rsyslog_console_level_set(uint32_t level);
 
 uint32_t get_con_log_level_inner(void);
 const char *get_log_get_level_string_inner(uint32_t level);
+const char *drv_log_get_level_str_default(uint32_t level);
 const char *get_log_get_print_time_inner(void);
+const char *drv_get_tm_default(void);
 uint32_t get_log_level_shift_inner(uint32_t level);
 void (*get_log_print_inner(void))(int32_t, int32_t, const char *, ...);
 

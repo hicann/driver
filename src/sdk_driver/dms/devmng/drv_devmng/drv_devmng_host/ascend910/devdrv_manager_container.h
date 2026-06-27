@@ -23,13 +23,8 @@
 #include "ka_task_pub.h"
 
 struct devdrv_manager_container_para {
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 1, 0)
-    u64 start_time;
-    u64 real_start_time;
-#else
-    ka_timespec_t start_time;
-    ka_timespec_t real_start_time;
-#endif
+    ka_system_timespec start_time;
+    ka_system_timespec real_start_time;
     u32 dev_num;
     u32 dev_id[ASCEND_DEV_MAX_NUM]; /* device list read from dev directory */
     ka_mnt_namespace_t *mnt_ns;

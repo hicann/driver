@@ -113,7 +113,6 @@ static inline int trs_proc_has_agent_res(struct trs_proc_ctx *proc_ctx, u32 tsid
     return false;
 }
 
-
 static inline int trs_get_proc_id_dfx_times(struct trs_proc_ctx *proc_ctx, u32 tsid, int res_type)
 {
     return ka_base_atomic_inc_return(&proc_ctx->ts_ctx[tsid].id_type_dfx_times[res_type]);
@@ -122,8 +121,8 @@ static inline int trs_get_proc_id_dfx_times(struct trs_proc_ctx *proc_ctx, u32 t
 bool trs_proc_has_res(struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst, int res_type, u32 res_id);
 bool trs_proc_has_res_with_pid(struct trs_core_ts_inst *ts_inst, int pid, int res_type, u32 res_id);
 int trs_proc_add_res(struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst, int res_type, u32 res_id);
-int trs_proc_add_res_ex(struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst, int res_type, u32 res_id,
-    bool is_agent_res);
+int trs_proc_add_res_ex(
+    struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst, int res_type, u32 res_id, bool is_agent_res);
 int trs_proc_del_res(struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst, int res_type, u32 res_id);
 int trs_res_get(struct trs_core_ts_inst *ts_inst, int pid, int res_type, u32 res_id);
 int trs_res_put(struct trs_core_ts_inst *ts_inst, int res_type, u32 res_id);
@@ -140,15 +139,16 @@ void trs_proc_release_ras_report(struct trs_proc_ctx *proc_ctx, struct trs_core_
 
 void trs_proc_release(struct trs_core_ts_inst *ts_inst, struct trs_proc_ctx *proc_ctx);
 int trs_proc_recycle(struct trs_core_ts_inst *ts_inst, struct trs_proc_ctx *proc_ctx);
+int trs_proc_recycle_post(struct trs_core_ts_inst *ts_inst, struct trs_proc_ctx *proc_ctx);
 void trs_clear_exit_proc_list(struct trs_core_ts_inst *ts_inst);
 void trs_proc_ctx_put(struct trs_proc_ctx *proc_ctx);
 struct trs_proc_ctx *trs_get_share_ctx(struct trs_core_ts_inst *ts_inst, u32 share_pid);
 
-#define TRS_MAP_TYPE_MEM 0 /* normal memory, kernel and user share */
-#define TRS_MAP_TYPE_DEV_MEM 1 /* device prop memory, hardware and user share */
+#define TRS_MAP_TYPE_MEM 0        /* normal memory, kernel and user share */
+#define TRS_MAP_TYPE_DEV_MEM 1    /* device prop memory, hardware and user share */
 #define TRS_MAP_TYPE_RO_DEV_MEM 2 /* device prop memory, hardware and user share, user is readonly */
-#define TRS_MAP_TYPE_REG 3 /* device register, hardware and user share */
-#define TRS_MAP_TYPE_RO_REG 4 /* device register, hardware and user share, user is readonly */
+#define TRS_MAP_TYPE_REG 3        /* device register, hardware and user share */
+#define TRS_MAP_TYPE_RO_REG 4     /* device register, hardware and user share, user is readonly */
 
 struct trs_mem_map_para {
     int type;
@@ -163,8 +163,8 @@ struct trs_mem_unmap_para {
     unsigned long len;
 };
 
-static inline void trs_remap_fill_para(struct trs_mem_map_para *para,
-    int type, unsigned long va, unsigned long pa, unsigned long len)
+static inline void trs_remap_fill_para(
+    struct trs_mem_map_para *para, int type, unsigned long va, unsigned long pa, unsigned long len)
 {
     para->type = type;
     para->va = va;
@@ -179,13 +179,10 @@ static inline void trs_unmap_fill_para(struct trs_mem_unmap_para *para, int type
     para->len = len;
 }
 
-int trs_remap_sq_mem(struct trs_proc_ctx *proc_ctx, ka_vm_area_struct_t *vma,
-    struct trs_mem_map_para *para);
-int trs_unmap_sq_mem(struct trs_proc_ctx *proc_ctx, ka_vm_area_struct_t *vma,
-    struct trs_mem_unmap_para *para);
+int trs_remap_sq_mem(struct trs_proc_ctx *proc_ctx, ka_vm_area_struct_t *vma, struct trs_mem_map_para *para);
+int trs_unmap_sq_mem(struct trs_proc_ctx *proc_ctx, ka_vm_area_struct_t *vma, struct trs_mem_unmap_para *para);
 
 int trs_remap_sq(struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst, struct trs_mem_map_para *para);
 int trs_unmap_sq(struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst, struct trs_mem_unmap_para *para);
 
 #endif
-

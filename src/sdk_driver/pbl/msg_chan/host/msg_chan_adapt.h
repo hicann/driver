@@ -10,13 +10,13 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
- 
+
 #ifndef MSG_CHAN_ADAPT_H
 #define MSG_CHAN_ADAPT_H
 #include "comm_kernel_interface.h"
 
 struct devdrv_msg_client {
-    const struct devdrv_common_msg_client* comm[DEVDRV_COMMON_MSG_TYPE_MAX];
+    const struct devdrv_common_msg_client *comm[DEVDRV_COMMON_MSG_TYPE_MAX];
     ka_mutex_t lock;
 };
 

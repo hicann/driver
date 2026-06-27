@@ -9,6 +9,7 @@
  */
 #ifndef UT_TEST
 #include "dms_user_interface.h"
+#include "comm_user_interface.h"
 #include "prof_communication.h"
 #include "prof_urma_comm.h"
 #include "urma_api.h"
@@ -31,6 +32,8 @@ STATIC urma_jfc_t *prof_create_jfc(struct prof_urma_info *urma_info, struct prof
     urma_jfc_t *jfc = NULL;
     urma_jfc_cfg_t jfc_cfg = {0};
     urma_status_t urma_ret;
+
+    (void)urma_chan_info;
 
     jfc_cfg.jfce = urma_info->jfce;
     jfc_cfg.depth = TRS_JFC_MAX_DEPTH;
@@ -69,7 +72,7 @@ int prof_create_jfs(struct prof_urma_info *urma_info, struct prof_urma_chan_info
 
     urma_chan_info->jfs_cfg.depth = TRS_JFS_MAX_DEPTH;
     urma_chan_info->jfs_cfg.trans_mode = URMA_TM_RM;
-    urma_chan_info->jfs_cfg.priority = PROF_URMA_PRIORITY_LOW; /* Lowest priority */
+    urma_chan_info->jfs_cfg.priority = ASCEND_URMA_PRIORITY_LOW; /* Lowest priority */
     urma_chan_info->jfs_cfg.rnr_retry = URMA_TYPICAL_RNR_RETRY;
     urma_chan_info->jfs_cfg.err_timeout = URMA_TYPICAL_ERR_TIMEOUT;
     urma_chan_info->jfs_cfg.max_sge = 1;
@@ -227,6 +230,24 @@ STATIC drvError_t prof_urma_write_with_imm_post_proc(uint64_t user_ctx, uint32_t
     return DRV_ERROR_NONE;
 }
 
+static void prof_show_jfc_ctx(urma_jfc_t *jfc)
+{
+    char buf[PROF_URMA_JFC_CTX_LEN] = {0};
+    int ret = 0;
+
+    if (jfc == NULL) {
+        return;
+    }
+
+    ret = urma_get_jfc_opt(jfc, URMA_JFC_FULL_CTX, buf, PROF_URMA_JFC_CTX_LEN);
+    if (ret != 0) {
+        PROF_ERR("Failed to get jfc ctx. (jfc_id=%u; ret=%d)\n", jfc->jfc_id.id, ret);
+        return;
+    }
+
+    PROF_ERR_HEX_DUMP(buf, PROF_URMA_JFC_CTX_LEN, "Prof jfc context. (jfc_id=%u)", jfc->jfc_id.id);
+}
+
 STATIC void prof_urma_recv_data(struct prof_urma_info *urma_info)
 {
     int timeout_ms = 500;   /* 500 ms */
@@ -237,7 +258,7 @@ STATIC void prof_urma_recv_data(struct prof_urma_info *urma_info)
     urma_cr_t cr;
     int cnt;
 
-    cnt = urma_wait_jfc(urma_info->jfce, 1, timeout_ms, &jfc);
+    cnt = ascend_urma_wait_jfc(urma_info->jfce, 1, timeout_ms, &jfc);
     if (cnt != 1) {
         return;
     }
@@ -246,9 +267,13 @@ STATIC void prof_urma_recv_data(struct prof_urma_info *urma_info)
     if (cr.status == URMA_CR_WR_FLUSH_ERR_DONE) {
         goto rearm_jfc;
     }
-
-    if (cnt <= 0 || cr.status != URMA_CR_SUCCESS) {
+    if (cnt == 0) {
+        PROF_WARN("The result of poll jfc is 0.\n");
+        goto rearm_jfc;
+    }
+    if (cnt < 0 || cr.status != URMA_CR_SUCCESS) {
         PROF_ERR("Failed to poll jfc. (cnt=%d, cr_status=%d)\n", cnt, cr.status);
+        prof_show_jfc_ctx(jfc);
         goto rearm_jfc;
     }
 
@@ -433,6 +458,8 @@ drvError_t prof_urma_remote_info_import(struct prof_urma_info *urma_info, struct
 
 void prof_urma_remote_info_unimport(struct prof_urma_info *urma_info, struct prof_urma_chan_info *urma_chan_info)
 {
+    (void)urma_info;
+
     urma_unimport_seg(urma_chan_info->r_ptr_tseg);
     urma_unimport_jetty(urma_chan_info->tjetty);
 }

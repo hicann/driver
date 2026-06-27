@@ -73,6 +73,7 @@ struct user_config_item {
  * user config配置项
  */
 #define CPU_NUM_CONFIG_NAME         "cpu_num_cfg"
+#define UBMEM_RETRY_FLAG_NAME       "ubmem_retry_flag"
 
 #define AUTH_CONFIG_ENABLE_NAME     "sign_auth_enable"
 #define AUTH_CONFIG_ENABLE           1

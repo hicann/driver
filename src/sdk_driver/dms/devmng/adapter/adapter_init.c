@@ -33,21 +33,6 @@ struct bus_adpater_stu g_pcie_adpat = {0};
 struct bus_adpater_stu g_ubbus_adpat = {0};
 
 struct symbol_list pcie_ops[] = {
-/* dma ops */
-{"hal_kernel_devdrv_dma_alloc_coherent", (ka_offsetof(struct bus_adpater_stu, dma)\
-    + ka_offsetof(struct dma_ops_stu, alloc_coherent))},
-{"hal_kernel_devdrv_dma_free_coherent", (ka_offsetof(struct bus_adpater_stu, dma)\
-    + ka_offsetof(struct dma_ops_stu, free_coherent))},
-{"devdrv_dma_link_free", (ka_offsetof(struct bus_adpater_stu, dma)\
-    + ka_offsetof(struct dma_ops_stu, link_free))},
-{"devdrv_dma_link_prepare", (ka_offsetof(struct bus_adpater_stu, dma)\
-    + ka_offsetof(struct dma_ops_stu, link_prepare))},
-{"hal_kernel_devdrv_dma_map_single", (ka_offsetof(struct bus_adpater_stu, dma)\
-    + ka_offsetof(struct dma_ops_stu, map_single))},
-{"hal_kernel_devdrv_dma_sync_copy", (ka_offsetof(struct bus_adpater_stu, dma)\
-    + ka_offsetof(struct dma_ops_stu, sync_copy))},
-{"hal_kernel_devdrv_dma_unmap_single", (ka_offsetof(struct bus_adpater_stu, dma)\
-    + ka_offsetof(struct dma_ops_stu, unmap_single))},
 /* p2p ops */
 {"devdrv_enable_p2p", (ka_offsetof(struct bus_adpater_stu, p2p)\
     + ka_offsetof(struct p2p_ops_stu, enable))},
@@ -71,12 +56,6 @@ struct symbol_list pcie_ops[] = {
     + ka_offsetof(struct pcie_ops_stu, get_pci_dev_info))},
 {"devdrv_get_pcie_id_info", (ka_offsetof(struct bus_adpater_stu, pcie)\
     + ka_offsetof(struct pcie_ops_stu, get_pcie_id_info))},
-{"devdrv_get_dev_topology", (ka_offsetof(struct bus_adpater_stu, pcie)\
-    + ka_offsetof(struct pcie_ops_stu, get_dev_topology))},
-{"devdrv_hot_reset_device", (ka_offsetof(struct bus_adpater_stu, pcie)\
-    + ka_offsetof(struct pcie_ops_stu, hot_reset_device))},
-{"devdrv_hot_pre_reset", (ka_offsetof(struct bus_adpater_stu, pcie)\
-    + ka_offsetof(struct pcie_ops_stu, prereset))},
 {"devdrv_pcie_read_proc", (ka_offsetof(struct bus_adpater_stu, pcie)\
     + ka_offsetof(struct pcie_ops_stu, read_proc))},
 {"devdrv_get_addr_info", (ka_offsetof(struct bus_adpater_stu, pcie)\
@@ -120,6 +99,7 @@ struct module_adapter_cb adap_cb[] = {
 static const ka_pci_device_id_t devdrv_driver_tbl[] = {
     { KA_PCI_VDEVICE(HUAWEI, 0xd806), 0 },
     { KA_PCI_VDEVICE(HUAWEI, 0xd807), 0 },
+    { KA_PCI_VDEVICE(HUAWEI, 0xd808), 0 },
     { DEVDRV_DIVERSITY_PCIE_VENDOR_ID, 0xd500, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0 },
     {}};
 KA_MODULE_DEVICE_TABLE(pci, devdrv_driver_tbl);
@@ -165,6 +145,7 @@ void put_adapter(struct bus_adpater_stu *adap)
 
 static void init_module_function(ka_module_t *mod)
 {
+#ifdef CFG_HOST_ENV
     int i;
     for (i=0; i < (sizeof(adap_cb)/sizeof(struct module_adapter_cb)); i++) {
         if (ka_base_strcmp(mod->name, adap_cb[i].mod_name) != 0) {
@@ -172,10 +153,14 @@ static void init_module_function(ka_module_t *mod)
         }
         init_module_func(mod, adap_cb[i].sym_list, adap_cb[i].sym_count, adap_cb[i].adap);
     }
+#else
+    (void)mod;
+#endif
 }
 
 static void uninit_module_function(ka_module_t *mod)
 {
+#ifdef CFG_HOST_ENV
     int i;
     for (i=0; i < (sizeof(adap_cb)/sizeof(struct module_adapter_cb)); i++) {
         if (ka_base_strcmp(mod->name, adap_cb[i].mod_name) != 0) {
@@ -183,6 +168,9 @@ static void uninit_module_function(ka_module_t *mod)
         }
         uninit_module_func(adap_cb[i].sym_list, adap_cb[i].sym_count, adap_cb[i].adap);
     }
+#else
+    (void)mod;
+#endif
 }
 
 static int adapter_module_callback(ka_notifier_block_t *nb,

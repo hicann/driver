@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2025. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -25,7 +25,8 @@ struct mwl_ctx {
     int tgid;
     void *task_ctx;
     ka_rw_semaphore_t rwsem;
-    struct range_rbtree range_tree;
+    struct range_rbtree id_range_tree;
+    struct range_rbtree va_range_tree;
 };
 
 struct task_node {
@@ -36,8 +37,10 @@ struct task_node {
 };
 
 struct mwl_mem_node {
-    struct range_rbtree_node range_node;
+    struct range_rbtree_node id_range_node;
+    struct range_rbtree_node va_range_node;
     ka_list_head_t task_list;
+    bool use_id_key;
     u64 start;
     u64 size;
     u32 node_num;
@@ -53,4 +56,3 @@ int svm_mwl_init(void);
 void svm_mwl_uninit(void);
 
 #endif
-

@@ -267,8 +267,8 @@ retry_recv_jfs_send:
         return ret;
     }
 
-    ret = ubdrv_interval_poll_recv_jfs_jfc(jetty_ctrl->jfs_jfc, (u64)wr_cfg->user_ctx, MSG_MAX_WAIT_CNT, &cr, stat);
-    if ((ret == 0) && (retry_cnt < ASCEND_TATIMEOUT_RETRY_CNT) && (cr.status == UBCORE_CR_ACK_TIMEOUT_ERR)) {
+    ret = ubdrv_interval_poll_recv_jfs_jfc(jetty_ctrl, (u64)wr_cfg->user_ctx, MSG_MAX_WAIT_CNT, &cr, stat);
+    if ((ret == 0) && (retry_cnt < ubdrv_get_msg_retry_cnt(dev_id)) && (cr.status == UBCORE_CR_ACK_TIMEOUT_ERR)) {
         retry_cnt++;
         stat->rx_tx_rebuild_jfs++;
         ubdrv_rebuild_chan_recv_jetty(dev_id, chan_id, stat, jetty_ctrl, wr_cfg);
@@ -288,11 +288,11 @@ int ubdrv_msg_result_process(int ret, int peer_status, u32 msg_type)
         ubdrv_warn("Msg send finish, process unsuccessful, Please check peer log. (process_ret=%d;msg_type=%u)\n",
             peer_status, msg_type);
         return peer_status;
-    } else if (peer_status == UB_MSG_NULL_PROCSESS) {
+    } else if (peer_status == UB_MSG_NULL_PROCESS) {
         ubdrv_warn("Msg send finish, no process cb. (process_ret=%d;msg_type=%u)\n",
             peer_status, msg_type);
         return -EUNATCH;
-    } else if (peer_status == UB_MSG_CHECKE_VERSION_FAILED) {
+    } else if (peer_status == UB_MSG_CHECK_VERSION_FAILED) {
         ubdrv_warn("Msg send finish, perr check version not match. (process_ret=%d;msg_type=%u)\n",
             peer_status, msg_type);
         return peer_status;

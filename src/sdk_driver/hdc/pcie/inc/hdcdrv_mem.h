@@ -43,7 +43,7 @@ extern void hdcdrv_uninit_mem_pool(u32 dev_id);
 extern int hdcdrv_mem_block_capacity(void);
 extern void hdcdrv_recycle_mem_work(ka_work_struct_t *p_work);
 
-ka_device_t* hdcdrv_get_pdev_dev(int dev_id);
+ka_device_t *hdcdrv_get_pdev_dev(int dev_id);
 void *hdcdrv_kvmalloc(size_t size, int level);
 int hdcdrv_map_reserve_mem(struct hdccom_mem_init *init_mem, int pool_type, u32 segment, u32 num);
 void hdcdrv_unmap_reserve_mem(struct hdcdrv_mem_pool *pool, ka_device_t *dev);

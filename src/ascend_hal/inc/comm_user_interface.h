@@ -21,6 +21,12 @@
 int ascend_urma_get_token_val(uint32_t devid, uint32_t *token_val);
 urma_target_jetty_t *ascend_urma_import_jfr(urma_context_t *urma_ctx,
     urma_rjfr_t *rjfr, urma_token_t *token_value);
+int ascend_urma_wait_jfc(urma_jfce_t *jfce, uint32_t jfc_cnt, int time_out, urma_jfc_t *jfc[]);
+
+/* ================================ Ascend Urma Qos ==============================*/
+#define ASCEND_URMA_PRIORITY_HIGH 10
+#define ASCEND_URMA_PRIORITY_MIDDLE 11
+#define ASCEND_URMA_PRIORITY_LOW 12
 
 /* ================================ Ascend Urma Dev ==============================*/
 bool ascend_urma_dev_is_exist(uint32_t devid);
@@ -59,5 +65,5 @@ int ascend_urma_register_seg(void *seg_mng, uint64_t start, uint64_t size, uint3
 int ascend_urma_unregister_seg(void *seg_mng, uint64_t start, uint64_t size);
 
 int ascend_urma_get_seg_info(void *seg_mng, uint64_t va, struct ascend_urma_seg_info *info);
-
+int ascend_urma_get_urma_dev_name(uint32_t devid, char *name, uint32_t *size);
 #endif

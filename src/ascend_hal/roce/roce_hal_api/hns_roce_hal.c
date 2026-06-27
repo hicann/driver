@@ -16,10 +16,11 @@
 #include "securec.h"
 #include "ascend_hal.h"
 #include "ascend_hal_define.h"
+#include "hns_roce_hal.h"
 
 static inline unsigned long long align(unsigned long long val, unsigned int align)
 {
-    return (val + align - 1) & ~(align - 1);
+    return (val + align - 1) & ~((unsigned long long)align - 1);
 }
 
 int hns_roce_hal_alloc_buf(void **buf, unsigned int *length, unsigned int size, unsigned int page_size,
@@ -82,8 +83,8 @@ int hns_roce_hal_alloc_buf(void **buf, unsigned int *length, unsigned int size, 
     }
     *buf = mmap(NULL, *length, PROT_READ | PROT_WRITE, flags, -1, 0);
     if (*buf == MAP_FAILED) {
-        roce_err("hns_roce_hal_alloc_buf mmap failed. start addr 0x%llx length 0x%x",
-                 (unsigned long long)*buf, *length);
+        roce_err("hns_roce_hal_alloc_buf mmap failed. start addr 0x%llx length 0x%x, err_code %d",
+                 (unsigned long long)*buf, *length, errno);
         return -ENOMEM;
     }
 
@@ -201,4 +202,79 @@ int hns_roce_hal_alloc_ai_buf(void **buf, unsigned int *length, unsigned int siz
 int hns_roce_hal_free_ai_buf(void *buf)
 {
     return halBuffFree(buf);
+}
+
+int hns_roce_hal_alloc_resv_mem(int cmd_fd, unsigned int size, unsigned int page_size, unsigned int pool_id, 
+    void **buf, unsigned int *length)
+{
+    struct resv_mem_populate_cmd_data cmd_data = {0};
+    unsigned long long va, mmap_va;
+    unsigned int mmap_length;
+    int flags = MAP_PRIVATE;
+    int ret;
+
+    if (buf == NULL || length == NULL) {
+        roce_err("buf is NULL or length is NULL");
+        return -EINVAL;
+    }
+
+    if (size == 0 || page_size == 0) {
+        roce_err("size %u or page_size %u is zero", size, page_size);
+        return -EINVAL;
+    }
+
+    *length = (unsigned int)align(size, page_size);
+    mmap_length = align(size + ((page_size == PAGE_SIZE_4KB) ? 0 : page_size), page_size);
+    *buf = mmap(NULL, mmap_length, PROT_READ | PROT_WRITE, flags, cmd_fd, RESV_MEM_MMAP_PGOFF);
+    if (*buf == MAP_FAILED) {
+        roce_err("mmap failed, length:0x%x, err_code:%d, flags:0x%x", *length, errno, flags);
+        return -ENOMEM;
+    }
+
+    mmap_va = (unsigned long long)(uintptr_t)*buf;
+    va = align(mmap_va, (unsigned long long)page_size);
+    *buf = (void *)va;
+
+    cmd_data.addr = va;
+    cmd_data.len = *length;
+    cmd_data.pool_id = pool_id;
+    cmd_data.mmap_va = mmap_va;
+    cmd_data.mmap_len = mmap_length;
+
+    ret = ioctl(cmd_fd, HNS_ROCE_AI_RESV_MEM_POPULATE, &cmd_data);
+    if (ret < 0) {
+        roce_err("ioctl cmd:0x%x failed, cmd_fd:%d, ret:%d, err_code:%d", 
+            _IOC_NR(HNS_ROCE_AI_RESV_MEM_POPULATE), cmd_fd, ret, errno);
+        goto err_ioctl;
+    }
+
+    (void)memset_s(*buf, *length, 0, *length);
+    return 0;
+
+err_ioctl:
+    munmap((void *)mmap_va, mmap_length);
+    *buf = NULL;
+    return ret;
+}
+
+int hns_roce_hal_free_resv_mem(int cmd_fd, void *buf, unsigned int pool_id)
+{
+    struct resv_mem_depopulate_cmd_data cmd_data = {0};
+    int ret;
+
+    cmd_data.pool_id = pool_id;
+    cmd_data.addr = (unsigned long long)(uintptr_t)buf;
+
+    ret = ioctl(cmd_fd, HNS_ROCE_AI_RESV_MEM_DEPOPULATE, &cmd_data);
+    if (ret != 0) {
+        roce_err("ioctl cmd:0x%x failed, cmd_fd:%d, ret:%d, err_code:%d",
+            _IOC_NR(HNS_ROCE_AI_RESV_MEM_DEPOPULATE), cmd_fd, ret, errno);
+        return ret;
+    }
+
+    // munmap original mmap va and length
+    munmap((void *)cmd_data.mmap_va, cmd_data.mmap_len);
+    buf = NULL;
+
+    return ret;
 }

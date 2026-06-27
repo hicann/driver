@@ -24,12 +24,12 @@ struct trs_pod_msg_head {
     u32 rsv;
 };
 
-#define TRS_POD_MSG_TOTAL_LEN       192
-#define TRS_POD_MSG_DATA_LEN        (TRS_POD_MSG_TOTAL_LEN - sizeof(struct trs_pod_msg_head))
+#define TRS_POD_MSG_TOTAL_LEN 192
+#define TRS_POD_MSG_DATA_LEN (TRS_POD_MSG_TOTAL_LEN - sizeof(struct trs_pod_msg_head))
 
-#define TRS_POD_MSG_SEND_MAGIC      0x5A5A
-#define TRS_POD_MSG_RCV_MAGIC       0xA5A5
-#define TRS_POD_MSG_INVALID_RESULT  0x1A
+#define TRS_POD_MSG_SEND_MAGIC 0x5A5A
+#define TRS_POD_MSG_RCV_MAGIC 0xA5A5
+#define TRS_POD_MSG_INVALID_RESULT 0x1A
 
 struct trs_pod_msg_data {
     struct trs_pod_msg_head header;

@@ -13,7 +13,7 @@
 
 #ifndef TRS_STARS_V1_FUNC_COM_H
 #define TRS_STARS_V1_FUNC_COM_H
-#include <linux/types.h>
+#include "ka_type.h"
 
 #include "trs_pub_def.h"
 int trs_stars_func_event_id_reset(struct trs_id_inst *inst, u32 id);

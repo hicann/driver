@@ -41,7 +41,7 @@ struct uda_ns_node {
     TASK_TIME_TYPE tgid_time;
     u32 ns_id;
     u32 dev_num;
-    u32 destroy_try_count;
+    ka_atomic_t destroy_try_count;
     u64 identify;
     u32 devid_to_udevid[UDA_DEV_MAX_NUM]; /* Use arrays to speed ka_task_up the conversion from logical id to udevid */
 };
@@ -61,6 +61,7 @@ struct uda_access {
     ka_mnt_namespace_t *ns;
     ka_mutex_t mutex;
     ka_list_head_t share_head;
+    u32 dev_logic_id;
 };
 
 bool uda_cur_is_admin(void);

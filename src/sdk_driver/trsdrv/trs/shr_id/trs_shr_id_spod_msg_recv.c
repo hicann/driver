@@ -10,7 +10,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#include <linux/types.h>
+#include "ka_type.h"
 
 #include "ascend_hal_define.h"
 
@@ -31,9 +31,9 @@ static int shr_id_create_shadow_node(u32 devid, struct trs_pod_msg_data *pod_msg
     create_msg->attr.res_put = NULL;
     create_msg->attr.pid = create_msg->pid;
     create_msg->attr.flag |= TSDRV_FLAG_SHR_ID_SHADOW;
-    trs_debug("Create info. (name=%s; sdid=0x%x; type=%d; pid=%d; flag=0x%x)\n",
-        create_msg->attr.name, create_msg->attr.inst.devid, create_msg->attr.type,
-        create_msg->pid, create_msg->attr.flag);
+    trs_debug(
+        "Create info. (name=%s; sdid=0x%x; type=%d; pid=%d; flag=0x%x)\n", create_msg->attr.name,
+        create_msg->attr.inst.devid, create_msg->attr.type, create_msg->pid, create_msg->attr.flag);
 
     return shr_id_node_create(&create_msg->attr);
 }
@@ -50,8 +50,9 @@ static int shr_id_set_pid_shadow_node(u32 devid, struct trs_pod_msg_data *pod_ms
     }
 
     ret = shr_id_node_set_pids(attr.name, attr.type, attr.pid, &msg->pid, 1);
-    trs_debug("Set pod pid. (devid=%u; name=%s; type=%d; id=%u; pid=%d; ret=%d)\n",
-        attr.inst.devid, attr.name, attr.type, attr.id, msg->pid, ret);
+    trs_debug(
+        "Set pod pid. (devid=%u; name=%s; type=%d; id=%u; pid=%d; ret=%d)\n", attr.inst.devid, attr.name, attr.type,
+        attr.id, msg->pid, ret);
 
     return ret;
 }
@@ -113,8 +114,9 @@ static int trs_s2s_msg_recv_check(u32 devid, struct data_input_info *data)
     }
 
     if ((data == NULL) || (data->data == NULL) || (data->in_len != (u32)sizeof(struct trs_pod_msg_data))) {
-        trs_err("Invalid. (devid=%u; para=%d; len=%ld)\n", devid,
-            (data == NULL) ? 1 : data->in_len, sizeof(struct trs_pod_msg_data));
+        trs_err(
+            "Invalid. (devid=%u; para=%d; len=%ld)\n", devid, (data == NULL) ? 1 : data->in_len,
+            sizeof(struct trs_pod_msg_data));
         return -EINVAL;
     }
 

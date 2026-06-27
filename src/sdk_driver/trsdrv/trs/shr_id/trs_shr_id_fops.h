@@ -24,7 +24,7 @@
 
 #include "trs_shr_id_ioctl.h"
 
-#define SHR_ID_HASH_TABLE_BIT           4
+#define SHR_ID_HASH_TABLE_BIT 4
 
 struct shr_id_node_htable {
     KA_DECLARE_HASHTABLE(htable, SHR_ID_HASH_TABLE_BIT);
@@ -56,4 +56,3 @@ void shr_id_register_ioctl_cmd_func(int nr, int (*fn)(struct shr_id_proc_ctx *pr
 int shr_id_init_module(void);
 void shr_id_exit_module(void);
 #endif
-

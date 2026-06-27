@@ -117,8 +117,8 @@ ka_rb_node_t *devmm_rb_search(ka_rb_root_t *root, u64 handle, rb_handle_func get
     return NULL;
 }
 
-ka_rb_node_t *devmm_rb_search_by_range(ka_rb_root_t *root, struct rb_range_handle *range,
-    rb_range_handle_func get_range)
+ka_rb_node_t *devmm_rb_search_by_range(
+    ka_rb_root_t *root, struct rb_range_handle *range, rb_range_handle_func get_range)
 {
     ka_rb_node_t *node = ka_base_get_rb_root_node(root);
 

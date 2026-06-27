@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * Copyright (c) 2026 Huawei Technologies Co., Ltd.
  * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -13,23 +13,24 @@
 #include "svm_log.h"
 #include "svm_user_adapt.h"
 #include "svm_umc_client.h"
-#include "svm_sub_event_type.h"
+#include "svm_sub_event_type_uk_msg.h"
 #include "svm_dbi.h"
 #include "svm_apbi.h"
 #include "svm_urma_seg_msg.h"
 #include "svm_urma_seg_local.h"
 #include "svm_urma_seg_register_client.h"
 
-static int svm_urma_remote_register_seg(struct svm_dst_va *dst_va, u32 seg_flag, urma_seg_t *seg, u32 *token_id, u32 *token_val)
+static int svm_urma_remote_register_seg(
+    struct svm_dst_va *dst_va, u32 seg_flag, urma_seg_t *seg, u32 *token_id, u32 *token_val)
 {
     struct svm_umc_msg_head head;
-    struct svm_urma_seg_register_msg reg_msg = {.head.va = dst_va->va, .head.size = dst_va->size, .head.flag = seg_flag};
+    struct svm_urma_seg_register_msg reg_msg = {
+        .head.va = dst_va->va, .head.size = dst_va->size, .head.flag = seg_flag};
     struct svm_umc_msg msg = {
         .msg_in = (char *)(uintptr_t)&reg_msg,
         .msg_in_len = sizeof(struct svm_urma_seg_register_msg),
         .msg_out = (char *)(uintptr_t)&reg_msg,
-        .msg_out_len = sizeof(struct svm_urma_seg_register_msg)
-    };
+        .msg_out_len = sizeof(struct svm_urma_seg_register_msg)};
     struct svm_apbi apbi;
     int ret;
 
@@ -63,8 +64,7 @@ static int svm_urma_remote_unregister_seg(u32 devid, u64 va, u64 size, u32 seg_f
         .msg_in = (char *)(uintptr_t)&unreg_msg,
         .msg_in_len = sizeof(struct svm_urma_seg_unregister_msg),
         .msg_out = NULL,
-        .msg_out_len = 0
-    };
+        .msg_out_len = 0};
     struct svm_apbi apbi;
     int ret;
 
@@ -84,8 +84,8 @@ static int svm_urma_remote_unregister_seg(u32 devid, u64 va, u64 size, u32 seg_f
 }
 
 #ifdef CFG_FEATURE_SUPPORT_UB
-static int svm_urma_register_seg_client_local(u32 user_devid, struct svm_dst_va *dst_va,
-    struct svm_urma_client_seg *client_seg, u32 seg_flag)
+static int svm_urma_register_seg_client_local(
+    u32 user_devid, struct svm_dst_va *dst_va, struct svm_urma_client_seg *client_seg, u32 seg_flag)
 {
     struct svm_urma_seg_info seg_info;
     u64 start = dst_va->va;
@@ -95,15 +95,13 @@ static int svm_urma_register_seg_client_local(u32 user_devid, struct svm_dst_va 
 
     ret = svm_urma_seg_local_register(devid, start, size, seg_flag);
     if (ret != DRV_ERROR_NONE) {
-        svm_debug("Register seg check. (devid=%u; start=0x%llx; size=%llu; flag=0x%x)\n",
-            devid, start, size, seg_flag);
+        svm_debug("Register seg check. (devid=%u; start=0x%llx; size=%llu; flag=0x%x)\n", devid, start, size, seg_flag);
         return ret;
     }
 
     ret = svm_urma_seg_local_get_info(devid, start, seg_flag, &seg_info);
     if (ret != DRV_ERROR_NONE) {
-        svm_err("Get seg info failed. (devid=%u; start=0x%llx; size=%llu; flag=0x%x)\n",
-            devid, start, size, seg_flag);
+        svm_err("Get seg info failed. (devid=%u; start=0x%llx; size=%llu; flag=0x%x)\n", devid, start, size, seg_flag);
         (void)svm_urma_seg_local_unregister(devid, start, size, seg_flag);
         return ret;
     }
@@ -149,13 +147,10 @@ static urma_target_seg_t *svm_urma_seg_import(u32 devid, u32 token_val, urma_seg
     return tseg;
 }
 
-static void svm_urma_seg_unimport(urma_target_seg_t *tseg)
-{
-    (void)urma_unimport_seg(tseg);
-}
+static void svm_urma_seg_unimport(urma_target_seg_t *tseg) { (void)urma_unimport_seg(tseg); }
 #else
-static int svm_urma_register_seg_client_local(u32 user_devid, struct svm_dst_va *dst_va,
-    struct svm_urma_client_seg *client_seg, u32 seg_flag)
+static int svm_urma_register_seg_client_local(
+    u32 user_devid, struct svm_dst_va *dst_va, struct svm_urma_client_seg *client_seg, u32 seg_flag)
 {
     SVM_UNUSED(user_devid);
     SVM_UNUSED(dst_va);
@@ -184,14 +179,11 @@ static urma_target_seg_t *svm_urma_seg_import(u32 devid, u32 token_val, urma_seg
     return (urma_target_seg_t *)seg;
 }
 
-static void svm_urma_seg_unimport(urma_target_seg_t *tseg)
-{
-    SVM_UNUSED(tseg);
-}
+static void svm_urma_seg_unimport(urma_target_seg_t *tseg) { SVM_UNUSED(tseg); }
 #endif
 
-static int svm_urma_register_seg_client_remote(u32 user_devid, struct svm_dst_va *dst_va,
-    struct svm_urma_client_seg *client_seg, u32 seg_flag)
+static int svm_urma_register_seg_client_remote(
+    u32 user_devid, struct svm_dst_va *dst_va, struct svm_urma_client_seg *client_seg, u32 seg_flag)
 {
     urma_seg_t seg;
     u32 token_id, token_val;
@@ -201,8 +193,9 @@ static int svm_urma_register_seg_client_remote(u32 user_devid, struct svm_dst_va
     ret = svm_urma_remote_register_seg(dst_va, seg_flag, &seg, &token_id, &token_val);
     if (ret != DRV_ERROR_NONE) {
         if (ret != DRV_ERROR_NOT_SUPPORT) {
-            svm_err("Remote register urma seg failed. (ret=%d; devid=%u; va=0x%llx; size=%llu; seg_flag=0x%x)\n",
-                ret, dst_va->devid, dst_va->va, dst_va->size, seg_flag);
+            svm_debug(
+                "Remote register urma seg check. (ret=%d; devid=%u; va=0x%llx; size=%llu; seg_flag=0x%x)\n", ret,
+                dst_va->devid, dst_va->va, dst_va->size, seg_flag);
         }
         return ret;
     }
@@ -224,8 +217,8 @@ static int svm_urma_register_seg_client_remote(u32 user_devid, struct svm_dst_va
     return DRV_ERROR_NONE;
 }
 
-static int svm_urma_unregister_seg_client_remote(u32 user_devid, struct svm_dst_va *dst_va,
-    struct svm_urma_client_seg *client_seg, u32 seg_flag)
+static int svm_urma_unregister_seg_client_remote(
+    u32 user_devid, struct svm_dst_va *dst_va, struct svm_urma_client_seg *client_seg, u32 seg_flag)
 {
     SVM_UNUSED(user_devid);
 
@@ -236,8 +229,8 @@ static int svm_urma_unregister_seg_client_remote(u32 user_devid, struct svm_dst_
     return svm_urma_remote_unregister_seg(dst_va->devid, dst_va->va, dst_va->size, seg_flag);
 }
 
-int svm_urma_register_seg_client(u32 user_devid, struct svm_dst_va *dst_va,
-    struct svm_urma_client_seg *client_seg, u32 seg_flag)
+int svm_urma_register_seg_client(
+    u32 user_devid, struct svm_dst_va *dst_va, struct svm_urma_client_seg *client_seg, u32 seg_flag)
 {
     if (dst_va->devid != svm_get_host_devid()) {
         return svm_urma_register_seg_client_remote(user_devid, dst_va, client_seg, seg_flag);
@@ -246,8 +239,8 @@ int svm_urma_register_seg_client(u32 user_devid, struct svm_dst_va *dst_va,
     }
 }
 
-int svm_urma_unregister_seg_client(u32 user_devid, struct svm_dst_va *dst_va,
-    struct svm_urma_client_seg *client_seg, u32 seg_flag)
+int svm_urma_unregister_seg_client(
+    u32 user_devid, struct svm_dst_va *dst_va, struct svm_urma_client_seg *client_seg, u32 seg_flag)
 {
     if (dst_va->devid != svm_get_host_devid()) {
         return svm_urma_unregister_seg_client_remote(user_devid, dst_va, client_seg, seg_flag);

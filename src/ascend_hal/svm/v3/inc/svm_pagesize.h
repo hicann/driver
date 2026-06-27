@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * Copyright (c) 2026 Huawei Technologies Co., Ltd.
  * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -42,10 +42,7 @@ static inline bool svm_is_va_page_align(u32 devid, u64 svm_flag, u64 va)
     return svm_is_page_align(devid, svm_flag, va);
 }
 
-static inline bool svm_is_npage_align(u32 devid, u64 value)
-{
-    return svm_is_page_align(devid, 0, value);
-}
+static inline bool svm_is_npage_align(u32 devid, u64 value) { return svm_is_page_align(devid, 0, value); }
 
 static inline bool svm_is_hpage_align(u32 devid, u64 value)
 {
@@ -57,20 +54,11 @@ static inline bool svm_is_gpage_align(u32 devid, u64 value)
     return svm_is_page_align(devid, SVM_FLAG_ATTR_PA_GPAGE, value);
 }
 
-static inline bool svm_is_va_npage_align(u32 devid, u64 va)
-{
-    return svm_is_npage_align(devid, va);
-}
+static inline bool svm_is_va_npage_align(u32 devid, u64 va) { return svm_is_npage_align(devid, va); }
 
-static inline bool svm_is_va_hpage_align(u32 devid, u64 va)
-{
-    return svm_is_hpage_align(devid, va);
-}
+static inline bool svm_is_va_hpage_align(u32 devid, u64 va) { return svm_is_hpage_align(devid, va); }
 
-static inline bool svm_is_va_gpage_align(u32 devid, u64 va)
-{
-    return svm_is_gpage_align(devid, va);
-}
+static inline bool svm_is_va_gpage_align(u32 devid, u64 va) { return svm_is_gpage_align(devid, va); }
 
 static inline int svm_get_aligned_size(u32 devid, u64 svm_flag, u64 size, u64 *aligned_size)
 {

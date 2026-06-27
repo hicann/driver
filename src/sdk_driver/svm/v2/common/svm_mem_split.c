@@ -36,8 +36,9 @@ void devmm_alloc_numa_info_init(u32 devid, u32 vfid, int nids[], u32 *nid_num)
     info->free_size = devmm_get_nid_free_size(nids[0]);
     info->threshold = devmm_get_alloc_threshold(devid, vfid);
     info->enable_threshold = true;
-    devmm_drv_debug("Alloc_numa_info_init. (devid=%u; vfid=%u; nid=%d; threshold=%llu; free_size=%llu)\n",
-        udevid, vfid, nids[0], info->threshold, info->free_size);
+    devmm_drv_debug(
+        "Alloc_numa_info_init. (devid=%u; vfid=%u; nid=%d; threshold=%llu; free_size=%llu)\n", udevid, vfid, nids[0],
+        info->threshold, info->free_size);
 }
 
 void devmm_alloc_numa_enable_threshold(u32 devid, u32 vfid, int nid)
@@ -87,7 +88,7 @@ static int devmm_numa_huge_free_size_sub(u32 devid, u32 vfid, int nid, u64 page_
         return 0;
     }
 
-    if (hugetlb_alloc_flag == HUGETLB_ALLOC_NORMAL) {
+    if (hugetlb_alloc_flag == KA_HUGETLB_ALLOC_NORMAL) {
         return 0;
     }
     return devmm_alloc_numa_free_size_sub(devid, vfid, nid, page_num, KA_HPAGE_SIZE);
@@ -158,7 +159,7 @@ int devmm_huge_free_mem_size_sub(u32 devid, u32 vfid, int nid, u64 page_num, u32
     }
 
     mem_size = page_num * KA_HPAGE_SIZE;
-    if (hugetlb_alloc_flag == HUGETLB_ALLOC_NORMAL) {
+    if (hugetlb_alloc_flag == KA_HUGETLB_ALLOC_NORMAL) {
         if ((u64)ka_base_atomic64_read(&devmm_svm->device_info.free_mem_hugepage_size[devid][nid][vfid]) < mem_size) {
             return -ENOMEM;
         }
@@ -182,7 +183,7 @@ void devmm_huge_free_mem_size_add(u32 devid, u32 vfid, int nid, u64 page_num, u3
     }
 
     mem_size = page_num * KA_HPAGE_SIZE;
-    if (hugetlb_alloc_flag == HUGETLB_ALLOC_NORMAL) {
+    if (hugetlb_alloc_flag == KA_HUGETLB_ALLOC_NORMAL) {
         ka_base_atomic64_add((long)mem_size, &devmm_svm->device_info.free_mem_hugepage_size[devid][nid][vfid]);
     } else {
         ka_base_atomic64_add((long)mem_size, &devmm_svm->device_info.free_mem_size[devid][nid][vfid]);

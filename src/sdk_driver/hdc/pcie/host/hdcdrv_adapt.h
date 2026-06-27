@@ -21,9 +21,9 @@
 
 extern unsigned int hdcdrv_dev_num;
 
-#define HDCDRV_REAL_MAX_SESSION          ((int)(HDCDRV_SINGLE_DEV_MAX_SESSION * (int)hdcdrv_dev_num))
-#define HDCDRV_REAL_MAX_SHORT_SESSION    (HDCDRV_SINGLE_DEV_MAX_SHORT_SESSION * (int)hdcdrv_dev_num)
-#define HDCDRV_REAL_MAX_LONG_SESSION     (HDCDRV_REAL_MAX_SESSION - HDCDRV_REAL_MAX_SHORT_SESSION)
+#define HDCDRV_REAL_MAX_SESSION ((int)(HDCDRV_SINGLE_DEV_MAX_SESSION * (int)hdcdrv_dev_num))
+#define HDCDRV_REAL_MAX_SHORT_SESSION (HDCDRV_SINGLE_DEV_MAX_SHORT_SESSION * (int)hdcdrv_dev_num)
+#define HDCDRV_REAL_MAX_LONG_SESSION (HDCDRV_REAL_MAX_SESSION - HDCDRV_REAL_MAX_SHORT_SESSION)
 
 #if defined(CFG_FEATURE_VFIO)
 #define HDCDRV_VM_NUM (HDCDRV_DEV_MAX_VDEV_PER_DEVICE * hdcdrv_dev_num)
@@ -40,30 +40,35 @@ extern unsigned int hdcdrv_dev_num;
 #define HDCDRV_MAX_VM_NUM (HDCDRV_VM_NUM + 1U)
 
 #define HDCDRV_DOCKER_MAX_NUM (MAX_DOCKER_NUM + 1U) /* 1(host)+69(MAX_DOCKER_NUM) */
-#define HDCDRV_PHY_HOST_ID (MAX_DOCKER_NUM) /* host id */
+#define HDCDRV_PHY_HOST_ID (MAX_DOCKER_NUM)         /* host id */
 
 #define module_hdcdrv "hdcdrv"
 
 #ifdef DRV_UT
-#define drv_err_log(fmt, ...) do { \
-    drv_err(module_hdcdrv, "<%s:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), ##__VA_ARGS__); \
-} while (0)
-#define drv_info_log(fmt, ...) do { \
-    drv_info(module_hdcdrv, "<%s:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), ##__VA_ARGS__); \
-} while (0)
+#define drv_err_log(fmt, ...)                                                                                          \
+    do {                                                                                                               \
+        drv_err(module_hdcdrv, "<%s:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), ##__VA_ARGS__); \
+    } while (0)
+#define drv_info_log(fmt, ...)                                                                          \
+    do {                                                                                                \
+        drv_info(module_hdcdrv, "<%s:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), \
+                 ##__VA_ARGS__);                                                                        \
+    } while (0)
 #else
-#define drv_err_log(fmt, ...) do { \
-    drv_err(module_hdcdrv, "<%s:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), ##__VA_ARGS__); \
-    share_log_err(HDC_SHARE_LOG_START, fmt, ##__VA_ARGS__); \
-} while (0)
-#define drv_info_log(fmt, ...) do { \
-    share_log_run_info(HDC_SHARE_LOG_RUNINFO_START, fmt, ##__VA_ARGS__); \
-} while (0)
+#define drv_err_log(fmt, ...)                                                                                          \
+    do {                                                                                                               \
+        drv_err(module_hdcdrv, "<%s:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), ##__VA_ARGS__); \
+        share_log_err(HDC_SHARE_LOG_START, fmt, ##__VA_ARGS__);                                                        \
+    } while (0)
+#define drv_info_log(fmt, ...)                                               \
+    do {                                                                     \
+        share_log_run_info(HDC_SHARE_LOG_RUNINFO_START, fmt, ##__VA_ARGS__); \
+    } while (0)
 #endif
 
 static inline int hdcdrv_get_max_support_dev(void)
 {
-  return (int)HDCDRV_SUPPORT_MAX_DEV;
+    return (int)HDCDRV_SUPPORT_MAX_DEV;
 }
 
 int hdcdrv_get_msgchan_refcnt(u32 dev_id);

@@ -77,10 +77,7 @@ int trs_cb_event_init(uint32_t dev_id)
     return DRV_ERROR_NONE;
 }
 
-void trs_cb_event_uninit(uint32_t dev_id)
-{
-    (void)halEschedDettachDevice(dev_id);
-}
+void trs_cb_event_uninit(uint32_t dev_id) { (void)halEschedDettachDevice(dev_id); }
 
 static void trs_cb_event_to_cqe(struct trs_cb_stars_event *event, struct trs_cb_cqe *cqe)
 {
@@ -90,7 +87,7 @@ static void trs_cb_event_to_cqe(struct trs_cb_stars_event *event, struct trs_cb_
     cqe->task_id = event->task_id;
     cqe->is_block = (unsigned char)event->is_block;
     cqe->host_func_cb_ptr = (((uint64_t)event->host_func_low) | ((uint64_t)event->host_func_high << 32)); /* bit 32 */
-    cqe->fn_data_ptr = (((uint64_t)event->fn_data_low) | ((uint64_t)event->fn_data_high << 32)); /* bit 32 */
+    cqe->fn_data_ptr = (((uint64_t)event->fn_data_low) | ((uint64_t)event->fn_data_high << 32));          /* bit 32 */
 }
 
 int trs_cb_event_wait(uint32_t dev_id, uint32_t tid, int32_t timeout, uint8_t *buff)
@@ -153,4 +150,3 @@ int trs_cb_event_submit(uint32_t dev_id, char *sqe, uint32_t e_size)
 
     return DRV_ERROR_NONE;
 }
-

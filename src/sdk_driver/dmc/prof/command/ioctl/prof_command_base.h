@@ -3,5 +3,6 @@
 #define PROF_COMMAND_BASE_H
 
 #define PROF_USER_DATA_LEN 128U
+#define PROF_USER_ADDR_DATA_LEN 64U
 
 #endif

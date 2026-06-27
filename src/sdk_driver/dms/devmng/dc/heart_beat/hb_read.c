@@ -40,7 +40,7 @@ struct hb_read_timer {
     unsigned long long miss_count;
 };
 
-static struct hb_read_block g_hb_read_block[DEVICE_NUM_MAX] = {{0}};
+static struct hb_read_block g_hb_read_block[ASCEND_DEV_MAX_NUM] = {{0}};
 #if (defined CFG_FEATURE_HEARTBEAT_CNT_PCIE) || (defined CFG_HOST_ENV)
 static struct hb_read_timer g_hb_read_timer = {{{{0}}}, {{0}}};
 #endif
@@ -49,7 +49,7 @@ ka_module_param(g_heart_beat_switch, int, KA_S_IRUGO);
 
 struct hb_read_block *get_heart_beat_read_item(unsigned int dev_id)
 {
-    if (dev_id >= DEVICE_NUM_MAX) {
+    if (dev_id >= ASCEND_DEV_MAX_NUM) {
         return NULL;
     }
     return &g_hb_read_block[dev_id];
@@ -159,12 +159,19 @@ void hb_read_one_device_count(unsigned int dev_id)
     struct devdrv_manager_info *manager_info = devdrv_get_manager_info();
     static unsigned int hb_read_fail_count[ASCEND_DEV_MAX_NUM] = {0};
 
+    if (hb_read_item == NULL) {
+        return;
+    }
+
+    ka_task_mutex_lock(&hb_read_item->mutex);
     if (!check_is_need_read(dev_id, manager_info, hb_read_item)) {
+        ka_task_mutex_unlock(&hb_read_item->mutex);
         return;
     }
 
     max_lost_count = heart_beat_get_max_lost_count(dev_id);
     if (max_lost_count == KA_UINT_MAX) {
+        ka_task_mutex_unlock(&hb_read_item->mutex);
         return;
     }
 
@@ -173,6 +180,8 @@ void hb_read_one_device_count(unsigned int dev_id)
         if (hb_read_fail_count[dev_id] == max_lost_count) {	 
  	        goto HEARTBEAT_LOST;
  	    }
+
+        ka_task_mutex_unlock(&hb_read_item->mutex);
         return;
     }
     cur_time = ka_system_ktime_get_raw_ns();
@@ -187,6 +196,8 @@ void hb_read_one_device_count(unsigned int dev_id)
     } else {
         hb_read_item->old_count = cur_count;
     }
+
+    ka_task_mutex_unlock(&hb_read_item->mutex);
     return;
  HEARTBEAT_LOST:	 
  	soft_drv_err(
@@ -196,7 +207,13 @@ void hb_read_one_device_count(unsigned int dev_id)
  	    hb_read_item->total_lost_count, hb_read_item->miss_read_count, hb_read_fail_count[dev_id]);
  	manager_info->device_status[dev_id] = DRV_STATUS_COMMUNICATION_LOST;
  	hb_read_item_work_stop(dev_id, hb_read_item);
- 	ka_task_queue_work(hb_read_item->hb_lost_wq, &hb_read_item->hb_lost_work);
+    if (hb_read_item->hb_lost_wq != NULL) {
+        ka_task_queue_work(hb_read_item->hb_lost_wq, &hb_read_item->hb_lost_work);
+    } else {
+        soft_drv_err("Heart beat lost workqueue has been destroyed. (dev_id=%u)\n", dev_id);
+    }
+ 	
+    ka_task_mutex_unlock(&hb_read_item->mutex);
  	return;
 }
 
@@ -242,15 +259,18 @@ int heart_beat_read_item_init(unsigned int dev_id)
         return -EINVAL;
     }
 
+    ka_task_mutex_lock(&hb_read_item->mutex);
     if (hb_read_item->hb_lost_wq == NULL) {
         hb_read_item->hb_lost_wq = ka_task_create_singlethread_workqueue("hb_lost_wq");
         if (hb_read_item->hb_lost_wq == NULL) {
+            ka_task_mutex_unlock(&hb_read_item->mutex);
             soft_drv_err("create workqueue failed. (device id=%u)", dev_id);
             return -ENOMEM;
         }
     }
     KA_TASK_INIT_WORK(&hb_read_item->hb_lost_work, heart_beat_lost_work);
     hb_read_item_work_start(dev_id, hb_read_item);
+    ka_task_mutex_unlock(&hb_read_item->mutex);
     return 0;
 }
 
@@ -261,6 +281,7 @@ void heart_beat_read_item_uninit(unsigned int dev_id)
         return;
     }
 
+    ka_task_mutex_lock(&hb_read_item->mutex);
     if (hb_read_item->hb_stutas != HEART_BEAT_LOST) {
         hb_read_item->hb_stutas = HEART_BEAT_EXIT;
     }
@@ -270,16 +291,32 @@ void heart_beat_read_item_uninit(unsigned int dev_id)
         ka_task_destroy_workqueue(hb_read_item->hb_lost_wq);
         hb_read_item->hb_lost_wq = NULL;
     }
+
+    ka_task_mutex_unlock(&hb_read_item->mutex);
     soft_drv_info("heart beat read item uninit success. (dev_id=%u) \n", dev_id);
 }
 
 int heart_beat_read_timer_init(void)
 {
 #if (defined CFG_FEATURE_HEARTBEAT_CNT_PCIE) || (defined CFG_HOST_ENV)
+    struct hb_read_block *hb_read_item = NULL;
+    int i;
+
+    for (i = 0; i < ASCEND_DEV_MAX_NUM; i++) {
+        hb_read_item = get_heart_beat_read_item(i);
+        if (hb_read_item == NULL) {
+            soft_drv_err("Heart beat item is null. (dev_id=%u)\n", i);
+            return -EINVAL;
+        }
+
+        ka_task_mutex_init(&hb_read_item->mutex);
+    }
+
     if (g_heart_beat_switch != 1) {
         soft_drv_warn("Heat beat is not enabled.\n");
         return 0;
     }
+
     ka_system_hrtimer_init(&g_hb_read_timer.timer, KA_CLOCK_MONOTONIC, KA_HRTIMER_MODE_REL);
     g_hb_read_timer.timer.function = hb_read_timer_irq_handler;
     KA_TASK_INIT_WORK(&g_hb_read_timer.hb_read_work, heart_beat_read_work);
@@ -296,6 +333,8 @@ void heart_beat_read_timer_exit(void)
 {
 #if (defined CFG_FEATURE_HEARTBEAT_CNT_PCIE) || (defined CFG_HOST_ENV)
     int ret;
+    struct hb_read_block *hb_read_item = NULL;
+    int i;
 
     ret = ka_system_hrtimer_cancel(&g_hb_read_timer.timer);
     if (ret < 0) {
@@ -306,6 +345,16 @@ void heart_beat_read_timer_exit(void)
         ka_task_flush_workqueue(g_hb_read_timer.hb_read_wq);
         ka_task_destroy_workqueue(g_hb_read_timer.hb_read_wq);
         g_hb_read_timer.hb_read_wq = NULL;
+    }
+
+    for (i = 0; i < ASCEND_DEV_MAX_NUM; i++) {
+        hb_read_item = get_heart_beat_read_item(i);
+        if (hb_read_item == NULL) {
+            soft_drv_err("Heart beat item is null. (dev_id=%u)\n", i);
+            return;
+        }
+
+        ka_task_mutex_destroy(&hb_read_item->mutex);
     }
 #endif
 }

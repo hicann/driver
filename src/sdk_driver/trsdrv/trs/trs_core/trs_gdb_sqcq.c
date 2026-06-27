@@ -107,8 +107,8 @@ int trs_gdb_sqcq_recv(struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts
     return 0;
 }
 
-static int trs_gdb_alloc_chan(struct trs_proc_ctx *proc_ctx, struct trs_id_inst *inst,
-    struct halSqCqInputInfo *para, int *chan_id)
+static int trs_gdb_alloc_chan(
+    struct trs_proc_ctx *proc_ctx, struct trs_id_inst *inst, struct halSqCqInputInfo *para, int *chan_id)
 {
     struct trs_chan_para chan_para = {0};
     int ret;
@@ -117,8 +117,8 @@ static int trs_gdb_alloc_chan(struct trs_proc_ctx *proc_ctx, struct trs_id_inst 
     chan_para.types.sub_type = CHAN_SUB_TYPE_MAINT_DBG;
 
     chan_para.flag = (0x1 << CHAN_FLAG_ALLOC_SQ_BIT) | (0x1 << CHAN_FLAG_ALLOC_CQ_BIT) |
-        (0x1 << CHAN_FLAG_NOTICE_TS_BIT) | (0x1 << CHAN_FLAG_AUTO_UPDATE_SQ_HEAD_BIT) |
-        (0x1 << CHAN_FLAG_RECV_BLOCK_BIT);
+                     (0x1 << CHAN_FLAG_NOTICE_TS_BIT) | (0x1 << CHAN_FLAG_AUTO_UPDATE_SQ_HEAD_BIT) |
+                     (0x1 << CHAN_FLAG_RECV_BLOCK_BIT);
 
     chan_para.sq_para.sqe_size = para->sqeSize;
     chan_para.sq_para.sq_depth = para->sqeDepth;
@@ -180,8 +180,8 @@ int trs_gdb_sqcq_alloc(struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *t
 
     trs_set_sq_status(&ts_inst->maint_sq_ctx[sq_info.sqid], 1);
 
-    trs_debug("Alloc maint sqcq. (devid=%u; tsid=%u; sqId=%u; cqId=%u)\n",
-        inst->devid, inst->tsid, para->sqId, para->cqId);
+    trs_debug(
+        "Alloc maint sqcq. (devid=%u; tsid=%u; sqId=%u; cqId=%u)\n", inst->devid, inst->tsid, para->sqId, para->cqId);
 
     return 0;
 
@@ -195,8 +195,8 @@ destroy_chan:
     return ret;
 }
 
-static int trs_gdb_sqcq_free_check(struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst,
-    struct halSqCqFreeInfo *para)
+static int trs_gdb_sqcq_free_check(
+    struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst, struct halSqCqFreeInfo *para)
 {
     struct trs_id_inst *inst = &ts_inst->inst;
 
@@ -211,16 +211,15 @@ static int trs_gdb_sqcq_free_check(struct trs_proc_ctx *proc_ctx, struct trs_cor
     }
 
     if (ts_inst->maint_sq_ctx[para->sqId].chan_id != ts_inst->maint_cq_ctx[para->cqId].chan_id) {
-        trs_err("Not pair sqcq. (devid=%u; tsid=%u; sqId=%u; cqId=%u)\n",
-            inst->devid, inst->tsid, para->sqId, para->cqId);
+        trs_err(
+            "Not pair sqcq. (devid=%u; tsid=%u; sqId=%u; cqId=%u)\n", inst->devid, inst->tsid, para->sqId, para->cqId);
         return -EINVAL;
     }
 
     return 0;
 }
 
-static void _trs_gdb_sqcq_free(struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst,
-    u32 sqid, u32 cqid)
+static void _trs_gdb_sqcq_free(struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst, u32 sqid, u32 cqid)
 {
     struct trs_id_inst *inst = &ts_inst->inst;
     struct trs_sq_ctx *sq_ctx = &ts_inst->maint_sq_ctx[sqid];
@@ -235,8 +234,7 @@ static void _trs_gdb_sqcq_free(struct trs_proc_ctx *proc_ctx, struct trs_core_ts
     trs_gdb_destroy_chan(inst, chan_id);
 }
 
-int trs_gdb_sqcq_free(struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst,
-    struct halSqCqFreeInfo *para)
+int trs_gdb_sqcq_free(struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst, struct halSqCqFreeInfo *para)
 {
     int ret;
 
@@ -272,15 +270,17 @@ int trs_maint_sqcq_init(struct trs_core_ts_inst *ts_inst)
     u32 cq_id_num = trs_res_get_id_num(ts_inst, TRS_MAINT_CQ);
     u32 cq_max_id = trs_res_get_max_id(ts_inst, TRS_MAINT_CQ);
 
-    trs_debug("Init maint sqcq. (devid=%u; tsid=%u; sq_id_num=%u; sq_max_id=%u; cq_id_num=%u; cq_max_id=%u)\n",
-        inst->devid, inst->tsid, sq_id_num, sq_max_id, cq_id_num, cq_max_id);
+    trs_debug(
+        "Init maint sqcq. (devid=%u; tsid=%u; sq_id_num=%u; sq_max_id=%u; cq_id_num=%u; cq_max_id=%u)\n", inst->devid,
+        inst->tsid, sq_id_num, sq_max_id, cq_id_num, cq_max_id);
 
     if (sq_max_id > 0) {
         ts_inst->maint_sq_ctx = (struct trs_sq_ctx *)trs_vzalloc(sizeof(struct trs_sq_ctx) * sq_max_id);
         if (ts_inst->maint_sq_ctx == NULL) {
 #ifndef EMU_ST
-            trs_err("Mem alloc failed. (devid=%u; tsid=%u; size=0x%lx)\n",
-                inst->devid, inst->tsid, sizeof(struct trs_sq_ctx) * sq_max_id);
+            trs_err(
+                "Mem alloc failed. (devid=%u; tsid=%u; size=0x%lx)\n", inst->devid, inst->tsid,
+                sizeof(struct trs_sq_ctx) * sq_max_id);
             return -ENOMEM;
 #endif
         }
@@ -297,8 +297,9 @@ int trs_maint_sqcq_init(struct trs_core_ts_inst *ts_inst)
                 trs_vfree(ts_inst->maint_sq_ctx);
                 ts_inst->maint_sq_ctx = NULL;
             }
-            trs_err("Mem alloc failed. (devid=%u; tsid=%u; size=%lx)\n",
-                inst->devid, inst->tsid, sizeof(struct trs_cq_ctx) * cq_max_id);
+            trs_err(
+                "Mem alloc failed. (devid=%u; tsid=%u; size=%lx)\n", inst->devid, inst->tsid,
+                sizeof(struct trs_cq_ctx) * cq_max_id);
             return -ENOMEM;
 #endif
         }

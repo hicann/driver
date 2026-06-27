@@ -30,8 +30,8 @@
 
 static KA_TASK_DEFINE_RWLOCK(proc_lock);
 
-#define PROC_HASH_TABLE_BIT     4
-#define PROC_HASH_TABLE_MASK    ((1 << PROC_HASH_TABLE_BIT) - 1)
+#define PROC_HASH_TABLE_BIT 4
+#define PROC_HASH_TABLE_MASK ((1 << PROC_HASH_TABLE_BIT) - 1)
 static KA_DECLARE_HASHTABLE(proc_htable, PROC_HASH_TABLE_BIT);
 
 struct shr_id_proc_node {
@@ -71,9 +71,10 @@ static void _shr_id_proc_add(struct shr_id_proc_ctx *proc_ctx)
 static void shr_id_hash_table_clean(struct shr_id_proc_ctx *proc_ctx)
 {
     u32 bkt = 0;
-	struct shr_id_hash_node *cur = NULL;
-	ka_hlist_node_t *tmp = NULL;
-    ka_hash_for_each_safe(proc_ctx->abnormal_ht.htable, bkt, tmp, cur, link) {
+    struct shr_id_hash_node *cur = NULL;
+    ka_hlist_node_t *tmp = NULL;
+    ka_hash_for_each_safe(proc_ctx->abnormal_ht.htable, bkt, tmp, cur, link)
+    {
         ka_hash_del(&cur->link);
         ka_mm_kfree(cur);
     }
@@ -122,7 +123,8 @@ struct shr_id_proc_ctx *shr_id_find_proc(ka_pid_t pid)
     struct shr_id_proc_ctx *proc_ctx = NULL;
     int key = pid & PROC_HASH_TABLE_MASK;
 
-    ka_hash_for_each_possible(proc_htable, proc_ctx, link, key) {
+    ka_hash_for_each_possible(proc_htable, proc_ctx, link, key)
+    {
         if (proc_ctx->pid == pid) {
             return proc_ctx;
         }
@@ -167,7 +169,8 @@ static void shr_id_recycle_opened(struct shr_id_proc_ctx *proc_ctx)
 
     trs_debug("Opened start recycle. (pid=%d; open_num=%u)\n", proc_ctx->pid, proc_ctx->open_node_num);
 
-    ka_list_for_each_entry_safe(proc_node, n, &proc_ctx->open_list_head, list) {
+    ka_list_for_each_entry_safe(proc_node, n, &proc_ctx->open_list_head, list)
+    {
         for (i = 0; i < proc_node->ref; i++) {
             ret |= shr_id_node_close(proc_node->name, proc_node->type, proc_ctx->pid);
 
@@ -209,7 +212,8 @@ static void shr_id_recycle_created(struct shr_id_proc_ctx *proc_ctx)
     u32 stamp = (u32)ka_jiffies;
     trs_debug("Create start recycle. (pid=%d; create_num=%u)\n", proc_ctx->pid, proc_ctx->create_node_num);
 
-    ka_list_for_each_entry_safe(proc_node, n, &proc_ctx->create_list_head, list) {
+    ka_list_for_each_entry_safe(proc_node, n, &proc_ctx->create_list_head, list)
+    {
 #ifdef CFG_FEATURE_SUPPORT_XCOM
         int ret = shr_id_node_destroy(proc_node->name, proc_node->type, proc_ctx->pid, DEVDRV_S2S_SYNC_MODE);
 #else
@@ -277,15 +281,13 @@ struct shr_id_proc_ctx *shr_id_proc_ctx_find(ka_pid_t pid)
     return proc_ctx;
 }
 
-static void shr_id_proc_put(struct shr_id_proc_ctx *proc_ctx)
-{
-    kref_safe_put(&proc_ctx->ref, shr_id_proc_release);
-}
+static void shr_id_proc_put(struct shr_id_proc_ctx *proc_ctx) { kref_safe_put(&proc_ctx->ref, shr_id_proc_release); }
 
 static int shr_id_name_generate(struct trs_id_inst *inst, int pid, int id_type, u32 shr_id, char *name)
 {
-    int offset = snprintf_s(name, SHR_ID_NSM_NAME_SIZE, SHR_ID_NSM_NAME_SIZE - 1, "%08x%08x%08x%08x%08x",
-        pid, inst->devid, inst->tsid, id_type, shr_id);
+    int offset = snprintf_s(
+        name, SHR_ID_NSM_NAME_SIZE, SHR_ID_NSM_NAME_SIZE - 1, "%08x%08x%08x%08x%08x", pid, inst->devid, inst->tsid,
+        id_type, shr_id);
     if (offset < 0) {
         trs_err("Snprintf failed. (offset=%d)\n", offset);
         return -EINVAL;
@@ -307,7 +309,8 @@ static struct shr_id_proc_node *shr_id_find_proc_node(struct shr_id_proc_ctx *pr
 
     head = shr_id_get_list_head(proc_ctx, op);
     ka_task_read_lock(&proc_ctx->lock);
-    ka_list_for_each_entry_safe(proc_node, n, head, list) {
+    ka_list_for_each_entry_safe(proc_node, n, head, list)
+    {
         if (ka_base_strcmp(proc_node->name, name) == 0) {
             ka_task_read_unlock(&proc_ctx->lock);
             return proc_node;
@@ -318,8 +321,8 @@ static struct shr_id_proc_node *shr_id_find_proc_node(struct shr_id_proc_ctx *pr
     return NULL;
 }
 
-static int shr_id_add_to_proc(struct shr_id_proc_ctx *proc_ctx, struct shr_id_ioctl_info *ioctl_info,
-    struct shr_id_node_op_attr *attr, int op)
+static int shr_id_add_to_proc(
+    struct shr_id_proc_ctx *proc_ctx, struct shr_id_ioctl_info *ioctl_info, struct shr_id_node_op_attr *attr, int op)
 {
     struct shr_id_proc_node *proc_node = NULL;
 
@@ -355,8 +358,9 @@ static int shr_id_add_to_proc(struct shr_id_proc_ctx *proc_ctx, struct shr_id_io
         ioctl_info->flag |= TSDRV_FLAG_SHR_ID_SHADOW;
     }
 
-    trs_debug("Add info. (devid=%u; tsid=%u; type=%d; id=%u; flag=%u; node_flag=0x%x; op=%d)\n",
-        attr->inst.devid, attr->inst.tsid, attr->res_type, attr->id, ioctl_info->flag, proc_node->flag, op);
+    trs_debug(
+        "Add info. (devid=%u; tsid=%u; type=%d; id=%u; flag=%u; node_flag=0x%x; op=%d)\n", attr->inst.devid,
+        attr->inst.tsid, attr->res_type, attr->id, ioctl_info->flag, proc_node->flag, op);
 
     ka_task_write_lock(&proc_ctx->lock);
     ka_list_add_tail(&proc_node->list, shr_id_get_list_head(proc_ctx, op));
@@ -367,8 +371,7 @@ static int shr_id_add_to_proc(struct shr_id_proc_ctx *proc_ctx, struct shr_id_io
     return 0;
 }
 
-static void shr_id_del_from_proc(struct shr_id_proc_ctx *proc_ctx,
-    struct shr_id_ioctl_info *ioctl_info, int op)
+static void shr_id_del_from_proc(struct shr_id_proc_ctx *proc_ctx, struct shr_id_ioctl_info *ioctl_info, int op)
 {
     struct shr_id_proc_node *proc_node = NULL;
 
@@ -379,9 +382,9 @@ static void shr_id_del_from_proc(struct shr_id_proc_ctx *proc_ctx,
         return;
     }
 
-    trs_debug("Del info. (devid=%u; tsid=%u; type=%d; id=%u; flag=%u; node_flag=%u; op=%d)\n",
-        proc_node->inst.devid, proc_node->inst.devid, proc_node->type, proc_node->id,
-        ioctl_info->flag, proc_node->flag, op);
+    trs_debug(
+        "Del info. (devid=%u; tsid=%u; type=%d; id=%u; flag=%u; node_flag=%u; op=%d)\n", proc_node->inst.devid,
+        proc_node->inst.devid, proc_node->type, proc_node->id, ioctl_info->flag, proc_node->flag, op);
 
     shr_id_proc_num_dec(proc_ctx, op, 1);
     proc_node->ref--;
@@ -449,10 +452,7 @@ int shr_id_proc_add(struct shr_id_proc_ctx *proc_ctx)
     return 0;
 }
 
-void shr_id_proc_del(struct shr_id_proc_ctx *proc_ctx)
-{
-    shr_id_proc_put(proc_ctx);
-}
+void shr_id_proc_del(struct shr_id_proc_ctx *proc_ctx) { shr_id_proc_put(proc_ctx); }
 
 bool shr_id_is_belong_to_proc(struct trs_id_inst *inst, int pid, int res_type, u32 res_id)
 {
@@ -466,7 +466,8 @@ bool shr_id_is_belong_to_proc(struct trs_id_inst *inst, int pid, int res_type, u
     }
 
     ka_task_read_lock(&proc_ctx->lock);
-    ka_list_for_each_entry_safe(proc_node, n, &proc_ctx->open_list_head, list) {
+    ka_list_for_each_entry_safe(proc_node, n, &proc_ctx->open_list_head, list)
+    {
         if ((proc_node->inst.devid == inst->devid) && (proc_node->inst.tsid == inst->tsid) &&
             (proc_node->res_type == res_type) && (proc_node->id == res_id)) {
             is_belong = true;
@@ -477,7 +478,8 @@ bool shr_id_is_belong_to_proc(struct trs_id_inst *inst, int pid, int res_type, u
     /* for mc2 feature, shr id alloced by device cp, but host app need notify wait,
      * so host app need call halShridCreate.
      */
-    ka_list_for_each_entry_safe(proc_node, n, &proc_ctx->create_list_head, list) {
+    ka_list_for_each_entry_safe(proc_node, n, &proc_ctx->create_list_head, list)
+    {
         if ((proc_node->inst.devid == inst->devid) && (proc_node->inst.tsid == inst->tsid) &&
             (proc_node->res_type == res_type) && (proc_node->id == res_id)) {
             is_belong = true;
@@ -488,8 +490,9 @@ bool shr_id_is_belong_to_proc(struct trs_id_inst *inst, int pid, int res_type, u
     ka_task_read_unlock(&proc_ctx->lock);
     shr_id_proc_put(proc_ctx);
 
-    trs_debug("Id info. (devid=%u; tsid=%u; pid=%d; type=%d; shrid=%u; is=%u)\n",
-        inst->devid, inst->tsid, ka_task_get_current_tgid(), res_type, res_id, is_belong);
+    trs_debug(
+        "Id info. (devid=%u; tsid=%u; pid=%d; type=%d; shrid=%u; is=%u)\n", inst->devid, inst->tsid,
+        ka_task_get_current_tgid(), res_type, res_id, is_belong);
 
     return is_belong;
 }
@@ -522,8 +525,8 @@ static int shr_id_set_stars_die_id(u32 devid, u32 tsid, struct shr_id_node_op_at
     return 0;
 }
 
-static int shr_id_node_attr_pack(struct shr_id_node_op_attr *attr, ka_pid_t pid, u64 start_time,
-    struct shr_id_ioctl_info *ioctl_info)
+static int shr_id_node_attr_pack(
+    struct shr_id_node_op_attr *attr, ka_pid_t pid, u64 start_time, struct shr_id_ioctl_info *ioctl_info)
 {
     u32 type = ioctl_info->id_type;
     int ret, i;
@@ -567,7 +570,7 @@ static int shr_id_node_attr_pack(struct shr_id_node_op_attr *attr, ka_pid_t pid,
 int shr_id_create(struct shr_id_proc_ctx *proc_ctx, unsigned long arg)
 {
     struct shr_id_ioctl_info ioctl_info;
-    struct shr_id_node_op_attr attr = { { 0 } };
+    struct shr_id_node_op_attr attr = {{0}};
     int ret;
 
     if (ka_base_copy_from_user(&ioctl_info, (void *)(uintptr_t)arg, sizeof(struct shr_id_ioctl_info)) != 0) {
@@ -581,8 +584,8 @@ int shr_id_create(struct shr_id_proc_ctx *proc_ctx, unsigned long arg)
     }
 
     if (ioctl_info.id_type >= SHR_ID_TYPE_MAX) {
-        trs_err("Para invalid. (devid=%u; tsid=%u; idtype=%u)\n",
-            ioctl_info.devid, ioctl_info.tsid, ioctl_info.id_type);
+        trs_err(
+            "Para invalid. (devid=%u; tsid=%u; idtype=%u)\n", ioctl_info.devid, ioctl_info.tsid, ioctl_info.id_type);
         return -EINVAL;
     }
 
@@ -658,7 +661,7 @@ int shr_id_set_attr(struct shr_id_proc_ctx *proc_ctx, unsigned long arg)
 
 int shr_id_get_attr(struct shr_id_proc_ctx *proc_ctx, unsigned long arg)
 {
-    struct shr_id_ioctl_info ioctl_info = { 0 };
+    struct shr_id_ioctl_info ioctl_info = {0};
     int ret, type;
 
     ret = ka_base_copy_from_user(&ioctl_info, (void *)(uintptr_t)arg, sizeof(struct shr_id_ioctl_info));
@@ -688,7 +691,7 @@ int shr_id_get_attr(struct shr_id_proc_ctx *proc_ctx, unsigned long arg)
 
 int shr_id_get_info(struct shr_id_proc_ctx *proc_ctx, unsigned long arg)
 {
-    struct shr_id_ioctl_info ioctl_info = { 0 };
+    struct shr_id_ioctl_info ioctl_info = {0};
     int ret, type;
 
     ret = ka_base_copy_from_user(&ioctl_info, (void *)(uintptr_t)arg, sizeof(struct shr_id_ioctl_info));

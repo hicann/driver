@@ -16,7 +16,9 @@
 #endif
 
 #define DEVMM_SVM_MAGIC 'M'
-
+#ifndef UVM_OPEN
+#define DEVMM_UVM_MAGIC DEVMM_SVM_MAGIC
+#endif
 struct devmm_svm_process_id {
     int32_t hostpid;
     union {
@@ -90,17 +92,17 @@ struct devmm_mem_convrt_addr_para {
     enum devmm_copy_direction direction;
     struct DMA_ADDR dmaAddr;
     uint32_t dma_node_num;
-    uint32_t virt_id;           /* store logic id to destroy addr */
-    uint32_t dev_id;            /* used in virt machine, to get sqcq addr in pm */
-    uint32_t destroy_flag;      /* used in virt machine, to destroy the res */
-    uint64_t convert_id;  /* for vm safety check */
+    uint32_t virt_id;      /* store logic id to destroy addr */
+    uint32_t dev_id;       /* used in virt machine, to get sqcq addr in pm */
+    uint32_t destroy_flag; /* used in virt machine, to destroy the res */
+    uint64_t convert_id;   /* for vm safety check */
     bool need_write;
     /* pa_list must be the last one, can't be changed */
-    struct devmm_pa_batch *pa_batch;  /* used in virt machine, to destroy pa list */
+    struct devmm_pa_batch *pa_batch; /* used in virt machine, to destroy pa list */
 };
 
 struct devmm_mem_destroy_addr_para {
-    uint64_t pSrc;  /* pSrc pDst just use in virt machine */
+    uint64_t pSrc; /* pSrc pDst just use in virt machine */
     uint64_t pDst;
     uint64_t spitch;
     uint64_t dpitch;
@@ -134,7 +136,16 @@ struct devmm_mem_prefetch_para {
     uint64_t devPtr;
     size_t count;
 };
-
+#ifndef UVM_OPEN
+struct devmm_mem_range_attributes {
+    uint32_t *attributes;
+    size_t attribute_num;
+    uint64_t ptr;
+    size_t size;
+    void **data; /* data addr */
+    size_t *data_sizes;
+};
+#endif
 struct devmm_mem_memset_para {
     uint64_t dst;
     uint64_t value;
@@ -184,15 +195,15 @@ struct devmm_mem_ipc_close_para {
 };
 
 struct devmm_mem_ipc_set_attr_para {
-    uint32_t type;                    /* input */
-    uint64_t attr;                    /* input */
-    char name[DEVMM_MAX_NAME_SIZE];   /* input */
+    uint32_t type;                  /* input */
+    uint64_t attr;                  /* input */
+    char name[DEVMM_MAX_NAME_SIZE]; /* input */
 };
 
 struct devmm_mem_ipc_get_attr_para {
-    uint32_t type;                    /* input */
-    uint64_t attr;                    /* output */
-    char name[DEVMM_MAX_NAME_SIZE];   /* input */
+    uint32_t type;                  /* input */
+    uint64_t attr;                  /* output */
+    char name[DEVMM_MAX_NAME_SIZE]; /* input */
 };
 
 struct devmm_init_process_para {
@@ -200,6 +211,9 @@ struct devmm_init_process_para {
     uint32_t local_page_size;
     uint32_t huge_page_size;
     bool is_enable_host_giant_page;
+#ifndef UVM_OPEN
+    uint32_t uvm_page_size;
+#endif
 };
 
 struct devmm_update_heap_para {
@@ -224,7 +238,7 @@ struct devmm_mmap_addr_seg {
 struct devmm_get_mmap_para {
     uint32_t seg_num;
     bool is_need_map_nptmv;
-    int32_t hostpid; /* for custom dynamic */
+    int32_t hostpid;  /* for custom dynamic */
     int32_t aicpupid; /* for custom dynamic */
     struct devmm_mmap_addr_seg *segs;
 };
@@ -245,6 +259,7 @@ struct devmm_dev_bind_sibling_para {
     int32_t aicpupid;
     uint32_t vfid;
     uint32_t devid;
+    bool sync_da_pagetable;
 };
 
 struct devmm_status_va_info_para {
@@ -401,55 +416,55 @@ struct devmm_mem_map_para {
 };
 
 struct devmm_mem_unmap_para {
-    uint64_t va;         /* input */
-    uint64_t unmap_size; /* output */
-    uint32_t side;            /* output */
-    uint32_t logic_devid;     /* output */
+    uint64_t va;          /* input */
+    uint64_t unmap_size;  /* output */
+    uint32_t side;        /* output */
+    uint32_t logic_devid; /* output */
 };
 
 /* va/size must be same with struct devmm_mem_map_para */
 struct devmm_mem_query_owner_para {
-    uint64_t va; /* input */
-    uint64_t size; /* input */
-    uint32_t devid; /* output: phy devid, host is halGetHostID */
+    uint64_t va;                /* input */
+    uint64_t size;              /* input */
+    uint32_t devid;             /* output: phy devid, host is halGetHostID */
     uint32_t local_handle_flag; /* output */
 };
 
 /* va/size must be same with struct devmm_mem_map_para */
 struct devmm_mem_set_access_para {
-    uint64_t va; /* input */
-    uint64_t size; /* input */
-    uint32_t logic_devid; /* input: host is halGetHostID */
+    uint64_t va;              /* input */
+    uint64_t size;            /* input */
+    uint32_t logic_devid;     /* input: host is halGetHostID */
     drv_mem_access_type type; /* input */
 };
 
 /* va/size must be same with struct devmm_mem_map_para */
 struct devmm_mem_get_access_para {
-    uint64_t va; /* input */
-    uint64_t size; /* input/output */
-    uint32_t logic_devid; /* input: host is halGetHostID */
+    uint64_t va;              /* input */
+    uint64_t size;            /* input/output */
+    uint32_t logic_devid;     /* input: host is halGetHostID */
     drv_mem_access_type type; /* output */
 };
 
 struct devmm_mem_export_para {
-    int side;                                 /* input */
-    int id;                                 /* input */
-    int share_id;                           /* output */
+    int side;     /* input */
+    int id;       /* input */
+    int share_id; /* output */
 };
 
 struct devmm_mem_import_para {
-    int share_id;                           /* input */
-    uint32_t share_sdid;                    /* input */
-    uint32_t share_devid;                   /* input */
-    uint32_t share_phy_devid;               /* input */
-    drv_mem_handle_type handle_type;        /* input */
+    int share_id;                    /* input */
+    uint32_t share_sdid;             /* input */
+    uint32_t share_devid;            /* input */
+    uint32_t share_phy_devid;        /* input */
+    drv_mem_handle_type handle_type; /* input */
 
-    int id;                                 /* output */
-    uint32_t side;                          /* output */
-    uint32_t module_id;                     /* output */
-    uint32_t pg_type;                       /* output */
-    uint64_t pg_num;                        /* output */
-    uint32_t mem_type;                      /* output */
+    int id;             /* output */
+    uint32_t side;      /* output */
+    uint32_t module_id; /* output */
+    uint32_t pg_type;   /* output */
+    uint64_t pg_num;    /* output */
+    uint32_t mem_type;  /* output */
 };
 
 struct devmm_mem_set_pid_para {
@@ -472,9 +487,9 @@ struct devmm_mem_get_attr_para {
 };
 
 struct devmm_mem_get_info_para {
-    int share_id;                    /* input */
-    uint32_t share_devid;            /* input */
-    struct ShareHandleGetInfo info;  /* output */
+    int share_id;                   /* input */
+    uint32_t share_devid;           /* input */
+    struct ShareHandleGetInfo info; /* output */
 };
 
 struct devmm_mem_repair_para {
@@ -483,13 +498,77 @@ struct devmm_mem_repair_para {
 };
 
 struct devmm_resv_addr_info_query_para {
-    uint64_t va;            /* input */
-    uint64_t start;         /* output */
-    uint64_t end;           /* output */
-    uint32_t module_id;     /* output */
-    uint32_t devid;         /* output */
+    uint64_t va;        /* input */
+    uint64_t start;     /* output */
+    uint64_t end;       /* output */
+    uint32_t module_id; /* output */
+    uint32_t devid;     /* output */
 };
 
+struct devmm_mem_handle_set_attr_para {
+    int id;                 /* input */
+    uint32_t type;          /* input */
+    uint32_t side;          /* input */
+    struct HandleAttr attr; /* input */
+};
+
+struct devmm_mem_handle_get_attr_para {
+    int id;                 /* input */
+    uint32_t type;          /* input */
+    uint32_t side;          /* input */
+    struct HandleAttr attr; /* output */
+};
+
+struct devmm_soma_pool_create_para {
+    uint64_t dev_id;  /* input */
+    uint64_t pool_id; /* input */
+    uint64_t va;      /* input */
+    uint64_t size;    /* input */
+};
+
+struct devmm_soma_pool_destroy_para {
+    uint64_t pool_id; /* input */
+};
+
+struct devmm_soma_pool_malloc_para {
+    uint64_t pool_id;
+    uint64_t va;
+    uint64_t size;
+    int32_t policy;
+};
+
+struct devmm_soma_pool_free_para {
+    uint64_t pool_id;
+    uint64_t va;
+    uint64_t size;
+    int32_t policy;
+};
+
+struct devmm_soma_pool_trim_para {
+    uint64_t pool_id;
+    uint64_t reserved_size; /* input && output */
+    uint64_t used_size;
+    uint64_t free_size;
+};
+
+#ifndef UVM_OPEN
+struct devmm_uvm_prefetch_para {
+    uint64_t va;
+    uint64_t size;
+    struct drv_uvm_location location;
+    uint32_t flags;
+};
+
+struct devmm_uvm_prefetch_batch_para {
+    uint64_t *vas;
+    uint64_t *sizes;
+    uint64_t count;
+    struct drv_uvm_location *locations;
+    uint64_t *loc_ids;
+    uint64_t num_loc;
+    uint64_t flags;
+};
+#endif
 struct devmm_ioctl_arg {
     struct devmm_devid head;
     union {
@@ -507,6 +586,10 @@ struct devmm_ioctl_arg {
         struct devmm_mem_destroy_addr_para desty_para;
         struct devmm_destroy_addr_batch_para destroy_batch_para;
         struct devmm_mem_advise_para advise_para;
+#ifndef UVM_OPEN
+        struct devmm_mem_range_attributes mem_range_attribute_paras;
+        struct devmm_mem_managed_advise_para mem_managed_advise_para;
+#endif
         struct devmm_mem_advise_para prefetch_para;
         struct devmm_mem_memset_para memset_para;
         struct devmm_mem_translate_para translate_para;
@@ -561,88 +644,112 @@ struct devmm_ioctl_arg {
         struct devmm_mem_set_attr_para mem_set_attr_para;
         struct devmm_mem_get_attr_para mem_get_attr_para;
         struct devmm_mem_get_info_para mem_get_info_para;
+        struct devmm_mem_handle_set_attr_para mem_handle_set_attr_para;
+        struct devmm_mem_handle_get_attr_para mem_handle_get_attr_para;
 
         struct devmm_mem_repair_para mem_repair_para;
         struct devmm_resv_addr_info_query_para resv_addr_info_query_para;
+        struct devmm_soma_pool_create_para soma_pool_create_para;
+        struct devmm_soma_pool_destroy_para soma_pool_destroy_para;
+        struct devmm_soma_pool_malloc_para soma_pool_malloc_para;
+        struct devmm_soma_pool_free_para soma_pool_free_para;
+        struct devmm_soma_pool_trim_para soma_pool_trim_para;
+#ifndef UVM_OPEN
+        /* uvm ioctl arg */
+        struct devmm_mem_alloc_para alloc_uvm_para;
+        struct devmm_uvm_prefetch_para uvm_prefetch_para;
+        struct devmm_uvm_prefetch_batch_para uvm_prefetch_batch_para;
+#endif
     } data;
 };
 
-#define DEVMM_SVM_MEM_QUERY_OWNER           _IOWR(DEVMM_SVM_MAGIC, 0, struct devmm_ioctl_arg)
-#define DEVMM_SVM_MEM_SET_ACCESS            _IOW(DEVMM_SVM_MAGIC, 1, struct devmm_ioctl_arg)
-#define DEVMM_SVM_MEM_GET_ACCESS            _IOWR(DEVMM_SVM_MAGIC, 2, struct devmm_ioctl_arg)
+#define DEVMM_SVM_MEM_QUERY_OWNER _IOWR(DEVMM_SVM_MAGIC, 0, struct devmm_ioctl_arg)
+#define DEVMM_SVM_MEM_SET_ACCESS _IOW(DEVMM_SVM_MAGIC, 1, struct devmm_ioctl_arg)
+#define DEVMM_SVM_MEM_GET_ACCESS _IOWR(DEVMM_SVM_MAGIC, 2, struct devmm_ioctl_arg)
 
-#define DEVMM_SVM_ALLOC                     _IOW(DEVMM_SVM_MAGIC, 3, struct devmm_ioctl_arg)
-#define DEVMM_SVM_FREE_PAGES                _IOW(DEVMM_SVM_MAGIC, 4, struct devmm_ioctl_arg)
-#define DEVMM_SVM_MEMCPY                    _IOWR(DEVMM_SVM_MAGIC, 5, struct devmm_ioctl_arg)
-#define DEVMM_SVM_MEMCPY2D                  _IOWR(DEVMM_SVM_MAGIC, 6, struct devmm_ioctl_arg)
-#define DEVMM_SVM_ASYNC_MEMCPY              _IOWR(DEVMM_SVM_MAGIC, 7, struct devmm_ioctl_arg)
-#define DEVMM_SVM_MEMCPY_RESLUT_REFRESH     _IOWR(DEVMM_SVM_MAGIC, 8, struct devmm_ioctl_arg)
-#define DEVMM_SVM_SUMBIT_CONVERT_CPY        _IOW(DEVMM_SVM_MAGIC, 9, struct devmm_ioctl_arg)
-#define DEVMM_SVM_WAIT_CONVERT_CPY_RESLUT   _IOW(DEVMM_SVM_MAGIC, 10, struct devmm_ioctl_arg)
-#define DEVMM_SVM_CONVERT_ADDR              _IOWR(DEVMM_SVM_MAGIC, 11, struct devmm_ioctl_arg)
-#define DEVMM_SVM_DESTROY_ADDR              _IOW(DEVMM_SVM_MAGIC, 12, struct devmm_ioctl_arg)
-#define DEVMM_SVM_ADVISE                    _IOW(DEVMM_SVM_MAGIC, 13, struct devmm_ioctl_arg)
-#define DEVMM_SVM_PREFETCH                  _IOW(DEVMM_SVM_MAGIC, 14, struct devmm_ioctl_arg)
-#define DEVMM_SVM_MEMSET8                   _IOWR(DEVMM_SVM_MAGIC, 15, struct devmm_ioctl_arg)
-#define DEVMM_SVM_DESTROY_ADDR_BATCH        _IOW(DEVMM_SVM_MAGIC, 16, struct devmm_ioctl_arg)
-#define DEVMM_SVM_TRANSLATE                 _IOWR(DEVMM_SVM_MAGIC, 17, struct devmm_ioctl_arg)
-#define DEVMM_SVM_IPC_MEM_OPEN              _IOW(DEVMM_SVM_MAGIC, 21, struct devmm_ioctl_arg)
-#define DEVMM_SVM_IPC_MEM_CLOSE             _IOW(DEVMM_SVM_MAGIC, 22, struct devmm_ioctl_arg)
-#define DEVMM_SVM_SETUP_DEVICE              _IOWR(DEVMM_SVM_MAGIC, 26, struct devmm_ioctl_arg)
-#define DEVMM_SVM_IPC_MEM_CREATE            _IOWR(DEVMM_SVM_MAGIC, 27, struct devmm_ioctl_arg)
-#define DEVMM_SVM_IPC_MEM_DESTROY           _IOW(DEVMM_SVM_MAGIC, 28, struct devmm_ioctl_arg)
-#define DEVMM_SVM_IPC_MEM_QUERY             _IOWR(DEVMM_SVM_MAGIC, 29, struct devmm_ioctl_arg)
-#define DEVMM_SVM_IPC_MEM_SET_PID           _IOW(DEVMM_SVM_MAGIC, 32, struct devmm_ioctl_arg)
-#define DEVMM_SVM_IPC_MEM_SET_PID_POD       _IOW(DEVMM_SVM_MAGIC, 33, struct devmm_ioctl_arg)
-#define DEVMM_SVM_IPC_MEM_SET_ATTR          _IOW(DEVMM_SVM_MAGIC, 34, struct devmm_ioctl_arg)
-#define DEVMM_SVM_IPC_MEM_GET_ATTR          _IOWR(DEVMM_SVM_MAGIC, 35, struct devmm_ioctl_arg)
-#define DEVMM_SVM_INIT_PROCESS              _IOWR(DEVMM_SVM_MAGIC, 36, struct devmm_ioctl_arg)
-#define DEVMM_SVM_UPDATE_HEAP               _IOW(DEVMM_SVM_MAGIC, 37, struct devmm_ioctl_arg)
-#define DEVMM_SVM_GET_PROC_STATUS           _IOW(DEVMM_SVM_MAGIC, 38, struct devmm_ioctl_arg)
-#define DEVMM_SVM_PROCESS_STATUS_QUERY      _IOWR(DEVMM_SVM_MAGIC, 39, struct devmm_ioctl_arg)
-#define DEVMM_SVM_DBG_VA_STATUS             _IOWR(DEVMM_SVM_MAGIC, 41, struct devmm_ioctl_arg)
-#define DEVMM_SVM_CLOSE_DEVICE              _IOW(DEVMM_SVM_MAGIC, 42, struct devmm_ioctl_arg)
-#define DEVMM_SVM_MEM_REMOTE_MAP            _IOWR(DEVMM_SVM_MAGIC, 45, struct devmm_ioctl_arg)
-#define DEVMM_SVM_MEM_REMOTE_UNMAP          _IOWR(DEVMM_SVM_MAGIC, 46, struct devmm_ioctl_arg)
-#define DEVMM_SVM_QUERY_MEM_USEDINFO        _IOWR(DEVMM_SVM_MAGIC, 47, struct devmm_ioctl_arg)
-#define DEVMM_SVM_CHECK_MEMINFO             _IOW(DEVMM_SVM_MAGIC, 48, struct devmm_ioctl_arg)
-#define DEVMM_SVM_MAP_DEV_RESERVE           _IOWR(DEVMM_SVM_MAGIC, 49, struct devmm_ioctl_arg)
+#define DEVMM_SVM_ALLOC _IOW(DEVMM_SVM_MAGIC, 3, struct devmm_ioctl_arg)
+#define DEVMM_SVM_FREE_PAGES _IOW(DEVMM_SVM_MAGIC, 4, struct devmm_ioctl_arg)
+#define DEVMM_SVM_MEMCPY _IOWR(DEVMM_SVM_MAGIC, 5, struct devmm_ioctl_arg)
+#define DEVMM_SVM_MEMCPY2D _IOWR(DEVMM_SVM_MAGIC, 6, struct devmm_ioctl_arg)
+#define DEVMM_SVM_ASYNC_MEMCPY _IOWR(DEVMM_SVM_MAGIC, 7, struct devmm_ioctl_arg)
+#define DEVMM_SVM_MEMCPY_RESLUT_REFRESH _IOWR(DEVMM_SVM_MAGIC, 8, struct devmm_ioctl_arg)
+#define DEVMM_SVM_SUMBIT_CONVERT_CPY _IOW(DEVMM_SVM_MAGIC, 9, struct devmm_ioctl_arg)
+#define DEVMM_SVM_WAIT_CONVERT_CPY_RESLUT _IOW(DEVMM_SVM_MAGIC, 10, struct devmm_ioctl_arg)
+#define DEVMM_SVM_CONVERT_ADDR _IOWR(DEVMM_SVM_MAGIC, 11, struct devmm_ioctl_arg)
+#define DEVMM_SVM_DESTROY_ADDR _IOW(DEVMM_SVM_MAGIC, 12, struct devmm_ioctl_arg)
+#define DEVMM_SVM_ADVISE _IOW(DEVMM_SVM_MAGIC, 13, struct devmm_ioctl_arg)
+#define DEVMM_SVM_PREFETCH _IOW(DEVMM_SVM_MAGIC, 14, struct devmm_ioctl_arg)
+#define DEVMM_SVM_MEMSET8 _IOWR(DEVMM_SVM_MAGIC, 15, struct devmm_ioctl_arg)
+#define DEVMM_SVM_DESTROY_ADDR_BATCH _IOW(DEVMM_SVM_MAGIC, 16, struct devmm_ioctl_arg)
+#define DEVMM_SVM_TRANSLATE _IOWR(DEVMM_SVM_MAGIC, 17, struct devmm_ioctl_arg)
+#define DEVMM_SVM_IPC_MEM_OPEN _IOW(DEVMM_SVM_MAGIC, 21, struct devmm_ioctl_arg)
+#define DEVMM_SVM_IPC_MEM_CLOSE _IOW(DEVMM_SVM_MAGIC, 22, struct devmm_ioctl_arg)
+#define DEVMM_SVM_SETUP_DEVICE _IOWR(DEVMM_SVM_MAGIC, 26, struct devmm_ioctl_arg)
+#define DEVMM_SVM_IPC_MEM_CREATE _IOWR(DEVMM_SVM_MAGIC, 27, struct devmm_ioctl_arg)
+#define DEVMM_SVM_IPC_MEM_DESTROY _IOW(DEVMM_SVM_MAGIC, 28, struct devmm_ioctl_arg)
+#define DEVMM_SVM_IPC_MEM_QUERY _IOWR(DEVMM_SVM_MAGIC, 29, struct devmm_ioctl_arg)
+#define DEVMM_SVM_IPC_MEM_SET_PID _IOW(DEVMM_SVM_MAGIC, 32, struct devmm_ioctl_arg)
+#define DEVMM_SVM_IPC_MEM_SET_PID_POD _IOW(DEVMM_SVM_MAGIC, 33, struct devmm_ioctl_arg)
+#define DEVMM_SVM_IPC_MEM_SET_ATTR _IOW(DEVMM_SVM_MAGIC, 34, struct devmm_ioctl_arg)
+#define DEVMM_SVM_IPC_MEM_GET_ATTR _IOWR(DEVMM_SVM_MAGIC, 35, struct devmm_ioctl_arg)
+#define DEVMM_SVM_INIT_PROCESS _IOWR(DEVMM_SVM_MAGIC, 36, struct devmm_ioctl_arg)
+#define DEVMM_SVM_UPDATE_HEAP _IOW(DEVMM_SVM_MAGIC, 37, struct devmm_ioctl_arg)
+#define DEVMM_SVM_GET_PROC_STATUS _IOW(DEVMM_SVM_MAGIC, 38, struct devmm_ioctl_arg)
+#define DEVMM_SVM_PROCESS_STATUS_QUERY _IOWR(DEVMM_SVM_MAGIC, 39, struct devmm_ioctl_arg)
+#define DEVMM_SVM_DBG_VA_STATUS _IOWR(DEVMM_SVM_MAGIC, 41, struct devmm_ioctl_arg)
+#define DEVMM_SVM_CLOSE_DEVICE _IOW(DEVMM_SVM_MAGIC, 42, struct devmm_ioctl_arg)
+#define DEVMM_SVM_MEM_REMOTE_MAP _IOWR(DEVMM_SVM_MAGIC, 45, struct devmm_ioctl_arg)
+#define DEVMM_SVM_MEM_REMOTE_UNMAP _IOWR(DEVMM_SVM_MAGIC, 46, struct devmm_ioctl_arg)
+#define DEVMM_SVM_QUERY_MEM_USEDINFO _IOWR(DEVMM_SVM_MAGIC, 47, struct devmm_ioctl_arg)
+#define DEVMM_SVM_CHECK_MEMINFO _IOW(DEVMM_SVM_MAGIC, 48, struct devmm_ioctl_arg)
+#define DEVMM_SVM_MAP_DEV_RESERVE _IOWR(DEVMM_SVM_MAGIC, 49, struct devmm_ioctl_arg)
 
-#define DEVMM_SVM_MEM_CREATE                _IOWR(DEVMM_SVM_MAGIC, 50, struct devmm_ioctl_arg)
-#define DEVMM_SVM_MEM_RELEASE               _IOWR(DEVMM_SVM_MAGIC, 51, struct devmm_ioctl_arg)
-#define DEVMM_SVM_MEM_MAP                   _IOW(DEVMM_SVM_MAGIC, 52, struct devmm_ioctl_arg)
-#define DEVMM_SVM_MEM_UNMAP                 _IOWR(DEVMM_SVM_MAGIC, 53, struct devmm_ioctl_arg)
-#define DEVMM_SVM_MEM_EXPORT                _IOWR(DEVMM_SVM_MAGIC, 54, struct devmm_ioctl_arg)
-#define DEVMM_SVM_MEM_IMPORT                _IOWR(DEVMM_SVM_MAGIC, 55, struct devmm_ioctl_arg)
-#define DEVMM_SVM_MEM_SET_PID               _IOW(DEVMM_SVM_MAGIC, 56, struct devmm_ioctl_arg)
-#define DEVMM_SVM_MEM_SET_ATTR              _IOW(DEVMM_SVM_MAGIC, 57, struct devmm_ioctl_arg)
-#define DEVMM_SVM_MEM_GET_ATTR              _IOWR(DEVMM_SVM_MAGIC, 58, struct devmm_ioctl_arg)
-#define DEVMM_SVM_MEM_GET_INFO              _IOWR(DEVMM_SVM_MAGIC, 59, struct devmm_ioctl_arg)
+#define DEVMM_SVM_MEM_CREATE _IOWR(DEVMM_SVM_MAGIC, 50, struct devmm_ioctl_arg)
+#define DEVMM_SVM_MEM_RELEASE _IOWR(DEVMM_SVM_MAGIC, 51, struct devmm_ioctl_arg)
+#define DEVMM_SVM_MEM_MAP _IOW(DEVMM_SVM_MAGIC, 52, struct devmm_ioctl_arg)
+#define DEVMM_SVM_MEM_UNMAP _IOWR(DEVMM_SVM_MAGIC, 53, struct devmm_ioctl_arg)
+#define DEVMM_SVM_MEM_EXPORT _IOWR(DEVMM_SVM_MAGIC, 54, struct devmm_ioctl_arg)
+#define DEVMM_SVM_MEM_IMPORT _IOWR(DEVMM_SVM_MAGIC, 55, struct devmm_ioctl_arg)
+#define DEVMM_SVM_MEM_SET_PID _IOW(DEVMM_SVM_MAGIC, 56, struct devmm_ioctl_arg)
+#define DEVMM_SVM_MEM_SET_ATTR _IOW(DEVMM_SVM_MAGIC, 57, struct devmm_ioctl_arg)
+#define DEVMM_SVM_MEM_GET_ATTR _IOWR(DEVMM_SVM_MAGIC, 58, struct devmm_ioctl_arg)
+#define DEVMM_SVM_MEM_GET_INFO _IOWR(DEVMM_SVM_MAGIC, 59, struct devmm_ioctl_arg)
 
-#define DEVMM_SVM_REGISTER_DMA              _IOW(DEVMM_SVM_MAGIC, 60, struct devmm_ioctl_arg)
-#define DEVMM_SVM_UNREGISTER_DMA            _IOW(DEVMM_SVM_MAGIC, 61, struct devmm_ioctl_arg)
-#define DEVMM_SVM_MEM_REPLAIR               _IOW(DEVMM_SVM_MAGIC, 62, struct devmm_ioctl_arg)
-#define DEVMM_SVM_RESERVE_ADDR_INFO_QUERY   _IOWR(DEVMM_SVM_MAGIC, 63, struct devmm_ioctl_arg)
-#define DEVMM_SVM_PREPARE_CLOSE_DEVICE      _IOW(DEVMM_SVM_MAGIC, 64, struct devmm_ioctl_arg)
-#define DEVMM_SVM_MEMCPY_BATCH              _IOW(DEVMM_SVM_MAGIC, 65, struct devmm_ioctl_arg)
-#define DEVMM_SVM_SOMA_POOL_CREATE          _IOW(DEVMM_SVM_MAGIC, 66, struct devmm_ioctl_arg)
-#define DEVMM_SVM_SOMA_POOL_DESTROY         _IOW(DEVMM_SVM_MAGIC, 67, struct devmm_ioctl_arg)
-#define DEVMM_SVM_SOMA_POOL_MALLOC          _IOW(DEVMM_SVM_MAGIC, 71, struct devmm_ioctl_arg)
-#define DEVMM_SVM_SOMA_POOL_FREE            _IOW(DEVMM_SVM_MAGIC, 72, struct devmm_ioctl_arg)
-#define DEVMM_SVM_SOMA_POOL_TRIM            _IOWR(DEVMM_SVM_MAGIC, 73, struct devmm_ioctl_arg)
+#define DEVMM_SVM_REGISTER_DMA _IOW(DEVMM_SVM_MAGIC, 60, struct devmm_ioctl_arg)
+#define DEVMM_SVM_UNREGISTER_DMA _IOW(DEVMM_SVM_MAGIC, 61, struct devmm_ioctl_arg)
+#define DEVMM_SVM_MEM_REPLAIR _IOW(DEVMM_SVM_MAGIC, 62, struct devmm_ioctl_arg)
+#define DEVMM_SVM_RESERVE_ADDR_INFO_QUERY _IOWR(DEVMM_SVM_MAGIC, 63, struct devmm_ioctl_arg)
+#define DEVMM_SVM_PREPARE_CLOSE_DEVICE _IOW(DEVMM_SVM_MAGIC, 64, struct devmm_ioctl_arg)
+#define DEVMM_SVM_MEMCPY_BATCH _IOW(DEVMM_SVM_MAGIC, 65, struct devmm_ioctl_arg)
+#define DEVMM_SVM_SOMA_POOL_CREATE _IOW(DEVMM_SVM_MAGIC, 66, struct devmm_ioctl_arg)
+#define DEVMM_SVM_SOMA_POOL_DESTROY _IOW(DEVMM_SVM_MAGIC, 67, struct devmm_ioctl_arg)
+#ifndef UVM_OPEN
+#define DEVMM_UVM_ALLOC _IOW(DEVMM_SVM_MAGIC, 68, struct devmm_ioctl_arg)
+#define DEVMM_UVM_ADVISE _IOW(DEVMM_SVM_MAGIC, 69, struct devmm_ioctl_arg)
+#define DEVMM_UVM_MEM_RANGE_GET_ATTRIBUTES _IOW(DEVMM_SVM_MAGIC, 70, struct devmm_ioctl_arg)
+#endif
+#define DEVMM_SVM_SOMA_POOL_MALLOC _IOW(DEVMM_SVM_MAGIC, 71, struct devmm_ioctl_arg)
+#define DEVMM_SVM_SOMA_POOL_FREE _IOW(DEVMM_SVM_MAGIC, 72, struct devmm_ioctl_arg)
+#define DEVMM_SVM_SOMA_POOL_TRIM _IOWR(DEVMM_SVM_MAGIC, 73, struct devmm_ioctl_arg)
+#ifndef UVM_OPEN
+#define DEVMM_UVM_MEMCPY _IOWR(DEVMM_SVM_MAGIC, 74, struct devmm_ioctl_arg)
+#define DEVMM_UVM_PREFETCH _IOW(DEVMM_SVM_MAGIC, 75, struct devmm_ioctl_arg)
+#define DEVMM_UVM_PREFETCH_BATCH _IOW(DEVMM_SVM_MAGIC, 76, struct devmm_ioctl_arg)
+#endif
+#define DEVMM_SVM_MEM_MAP_CAP _IOWR(DEVMM_SVM_MAGIC, 77, struct devmm_ioctl_arg)
+#define DEVMM_SVM_MEM_HANDLE_SET_ATTR _IOW(DEVMM_SVM_MAGIC, 78, struct devmm_ioctl_arg)
+#define DEVMM_SVM_MEM_HANDLE_GET_ATTR _IOWR(DEVMM_SVM_MAGIC, 79, struct devmm_ioctl_arg)
 
-#define DEVMM_SVM_CMD_USE_PRIVATE_MAX_CMD   100 /* above this svm process must inited */
-  
-#define DEVMM_SVM_ALLOC_PROC_STRUCT         _IOW(DEVMM_SVM_MAGIC, 101, struct devmm_ioctl_arg)
-#define DEVMM_SVM_DEV_SET_SIBLING           _IOW(DEVMM_SVM_MAGIC, 102, struct devmm_ioctl_arg)
-#define DEVMM_SVM_DEV_BIND_SIBLING          _IOW(DEVMM_SVM_MAGIC, 103, struct devmm_ioctl_arg)
-#define DEVMM_SVM_GET_MMAP_INFO             _IOWR(DEVMM_SVM_MAGIC, 104, struct devmm_ioctl_arg)
-#define DEVMM_SVM_MEM_MAP_CAP               _IOWR(DEVMM_SVM_MAGIC, 105, struct devmm_ioctl_arg)
+#define DEVMM_SVM_CMD_USE_PRIVATE_MAX_CMD 100 /* above this svm process must inited */
 
+#define DEVMM_SVM_ALLOC_PROC_STRUCT _IOW(DEVMM_SVM_MAGIC, 101, struct devmm_ioctl_arg)
+#define DEVMM_SVM_DEV_SET_SIBLING _IOW(DEVMM_SVM_MAGIC, 102, struct devmm_ioctl_arg)
+#define DEVMM_SVM_DEV_BIND_SIBLING _IOW(DEVMM_SVM_MAGIC, 103, struct devmm_ioctl_arg)
+#define DEVMM_SVM_GET_MMAP_INFO _IOWR(DEVMM_SVM_MAGIC, 104, struct devmm_ioctl_arg)
 
-#define DEVMM_SVM_CMD_MAX_CMD               106     /* max cmd id */
+#define DEVMM_SVM_CMD_MAX_CMD 105 /* max cmd id */
 
 #define DEVMM_SVM_GET_DEVPID_BY_HOSTPID 0 /* define for dbg server compile */
-#define DEVMM_SVM_WAIT_DEVICE_PROCESS   0 /* define for dbg server compile */
+#define DEVMM_SVM_WAIT_DEVICE_PROCESS 0   /* define for dbg server compile */
 
 #endif

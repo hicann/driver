@@ -322,6 +322,7 @@ STATIC void comm_msg_handle(DM_INTF_S *intf, DM_RECV_ST *recv, const void *user_
        and release the command list and any existing responses */
     ob = (DM_REP_MSG *)recv->msg.data;
     DRV_CHECK_RET_DO_SOMETHING((ob != NULL), free_send_ctl_cb(p));
+    DRV_CHECK_RET_DO_SOMETHING((recv->msg.data_len >= DDMP_CMD_RESP_HEAD_LEN), free_send_ctl_cb(p));
 
     if (ob->err_code != 0) {
         if (p->rsp_hndl != NULL) {
@@ -376,13 +377,16 @@ int dmp_msg_recv_resp(DM_INTF_S *intf, DM_RECV_ST *recv, SEND_CTL_CB *ctl)
     DRV_CHECK_RETV((addr != NULL), FAILED);
 
     if ((addr->addr_type == DM_SMBUS_ADDR_TYPE) && (addr->channel == DM_SMBUS_CHANNEL)) {
-        ctl->rsp_hndl(intf, recv, ctl->user_data, ctl->data_len);
+        if (ctl->rsp_hndl != NULL) {
+            ctl->rsp_hndl(intf, recv, ctl->user_data, ctl->data_len);
+        }
         free_send_ctl_cb(ctl);
         return OK;
     }
 
     ob = (DM_REP_MSG *)recv->msg.data;
     DRV_CHECK_RETV((ob != NULL), FAILED);
+    DRV_CHECK_RETV((recv->msg.data_len >= DDMP_CMD_RESP_HEAD_LEN), FAILED);
     value = client_resp_hash_insert(g_client_rsp_hashtable, intf, ob->op_fun, ob->op_cmd, recv->msg.data_len,
                                     recv->msg.data);
     if (value == NULL) {

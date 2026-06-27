@@ -16,4 +16,3 @@
 u32 devmm_extract_memtype_from_bitmap(u32 bitmap);
 
 #endif /* SVM_MASTER_MEM_MNG_H */
-

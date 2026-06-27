@@ -28,3 +28,10 @@ MANIFEST.in
 
 # Visual Studio Code
 .vscode
+
+# Sensitive config file
+skills/gitcode-pr-review/config.json
+
+.claude
+.claude/
+.opencode/

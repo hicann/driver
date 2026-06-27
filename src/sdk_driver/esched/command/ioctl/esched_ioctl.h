@@ -33,8 +33,7 @@
 #define SCHED_SUBMIT_EVENT_ID _IOWR_BAD(SCHED_ID_MAGIC, 8, sizeof(struct sched_ioctl_para_submit))
 #define SCHED_ATTACH_PROCESS_TO_CHIP_ID _IOWR_BAD(SCHED_ID_MAGIC, 9, sizeof(struct sched_ioctl_para_attach))
 #define SCHED_DETTACH_PROCESS_FROM_CHIP_ID _IOWR_BAD(SCHED_ID_MAGIC, 10, sizeof(struct sched_ioctl_para_detach))
-#define SCHED_GRP_SET_EVENT_MAX_NUM \
-    _IOWR_BAD(SCHED_ID_MAGIC, 11, sizeof(struct sched_ioctl_para_set_event_max_num))
+#define SCHED_GRP_SET_EVENT_MAX_NUM _IOWR_BAD(SCHED_ID_MAGIC, 11, sizeof(struct sched_ioctl_para_set_event_max_num))
 #define SCHED_QUERY_INFO _IOWR_BAD(SCHED_ID_MAGIC, 12, sizeof(struct sched_ioctl_para_query_info))
 #define SCHED_QUERY_SYNC_MSG_TRACE _IOWR_BAD(SCHED_ID_MAGIC, 13, sizeof(struct sched_ioctl_para_trace))
 #define SCHED_QUERY_SCHED_MODE _IOWR_BAD(SCHED_ID_MAGIC, 14, sizeof(struct sched_ioctl_para_query_sched_mode))
@@ -119,9 +118,9 @@ struct sched_ioctl_para_detach {
     unsigned int dev_id;
 };
 
-
 struct sched_ioctl_para_attach {
     unsigned int dev_id;
+    unsigned long long kernel_time;
 };
 
 struct sched_ioctl_para_ack {

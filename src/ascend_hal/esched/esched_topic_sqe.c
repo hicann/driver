@@ -30,10 +30,11 @@ void esched_free_ext_msg(void *ext_msg)
     free(ext_msg);
 }
 
-void esched_fill_sqcq_alloc_info(unsigned int sqe_depth, unsigned int cqe_depth, struct halSqCqInputInfo *in, void *ext_msg_t)
+void esched_fill_sqcq_alloc_info(unsigned int sqe_depth, unsigned int cqe_depth, struct halSqCqInputInfo *in,
+                                 void *ext_msg_t)
 {
     in->type = DRV_NORMAL_TYPE;
-    in->tsId = 0; /* keep same as esched_drv_set_chan_create_para */ 
+    in->tsId = 0; /* keep same as esched_drv_set_chan_create_para */
 
     in->sqeSize = TOPIC_SCHED_TASK_SQE_SIZE;
     in->cqeSize = TOPIC_SCHED_TASK_CQE_SIZE;
@@ -45,10 +46,10 @@ void esched_fill_sqcq_alloc_info(unsigned int sqe_depth, unsigned int cqe_depth,
     in->cqId = 0; /* if flag bit 0 is 0, don't care about it */
     in->sqId = 0; /* if flag bit 1 is 0, don't care about it */
 
-    in->info[0] = 0xffff;   /* 0 : streamid */
-    in->info[1] = TOPIC_SCHED_RTSQ_PRI;   /* 1 : rtsq pri */
-    in->info[2] = 0;   /* 2 : ssid */
-    in->info[3] = TOPIC_SCHED_ACPU_POOL_ID;   /* 3 : pool_id */
+    in->info[0] = 0xffff;                   /* 0 : streamid */
+    in->info[1] = TOPIC_SCHED_RTSQ_PRI;     /* 1 : rtsq pri */
+    in->info[2] = 0;                        /* 2 : ssid */
+    in->info[3] = TOPIC_SCHED_ACPU_POOL_ID; /* 3 : pool_id */
 
     in->ext_info = ext_msg_t;
     in->ext_info_len = sizeof(struct sched_trs_chan_ext_msg);
@@ -74,6 +75,8 @@ int esched_fill_topic_sqe(unsigned int devid, struct event_summary *event, void 
     int ret;
     struct topic_sched_sqe *sqe = (struct topic_sched_sqe *)sqe_t;
 
+    (void)devid;
+
     sqe->type = TOPIC_SCHED_SQE_TYPE_DEVICE;
     sqe->ie = 0;
     sqe->pre_p = 0;
@@ -88,27 +91,27 @@ int esched_fill_topic_sqe(unsigned int devid, struct event_summary *event, void 
     sqe->task_id = 0;
 
     sqe->kernel_type = TOPIC_SCHED_DEFAULT_KERNEL_TYPE;
-    sqe->batch_mode = 0; /* no use. */
+    sqe->batch_mode = 0;                            /* no use. */
     sqe->topic_type = TOPIC_TYPE_AICPU_DEVICE_ONLY; /* no use. */
-    sqe->qos = 0; /* no use. */
+    sqe->qos = 0;                                   /* no use. */
 
     sqe->kernel_credit = TOPIC_SCHED_SQE_KERNEL_CREDIT;
     sqe->sqe_len = 0;
 
     ret = memcpy_s(&sqe->user_data[0], sizeof(typeof(sqe->user_data)), event->msg, event->msg_len);
     if (ret != EOK) {
-        sched_err("Sqe data copy fail. (ret=%d; msg_len=%ld)\n", ret, event->msg_len);
+        sched_err("Sqe data copy fail. (ret=%d; msg_len=%u)\n", ret, event->msg_len);
         return DRV_ERROR_MEMORY_OPT_FAIL;
     }
 
-    sqe->subtopic_id = event->subevent_id;
-    sqe->topic_id = event->event_id;
-    sqe->gid = event->grp_id;
-    sqe->user_data_len = event->msg_len;
+    sqe->subtopic_id = (event->subevent_id) & 0xFFF;
+    sqe->topic_id = (event->event_id) & 0x3F;
+    sqe->gid = (event->grp_id) & 0x3F;
+    sqe->user_data_len = (unsigned char)event->msg_len;
 
-    sqe->pid = event->pid;
+    sqe->pid = (unsigned int)event->pid;
 
-    sched_debug("Fill sqe event info. (pid=%d; gid=%u; eventid=%u; dst_engine=%d; policy=%u)\n",
-        event->pid, event->grp_id, event->event_id, event->dst_engine, event->policy);
+    sched_debug("Fill sqe event info. (pid=%d; gid=%u; eventid=%u; dst_engine=%d; policy=%u)\n", event->pid,
+                event->grp_id, event->event_id, event->dst_engine, event->policy);
     return DRV_ERROR_NONE;
 }

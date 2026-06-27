@@ -343,4 +343,8 @@ bool devdrv_is_mdev_pm_boot_mode_inner(u32 index_id);
 ka_pci_dev_t *devdrv_get_pci_pdev_by_devid_inner(u32 index_id);
 int devdrv_get_devid_by_pfvf_id_inner(u32 pf_index_id, u32 vf_index_id, u32 *index_id);
 bool devdrv_check_half_probe_finish_inner(u32 index_id);
+
+/* alloc trans msg chan */
+void *devdrv_pci_pcimsg_alloc_trans_queue(u32 udevid, struct devdrv_trans_msg_chan_info *chan_info);
+int devdrv_pci_pcimsg_realease_trans_queue(void *msg_chan);
 #endif

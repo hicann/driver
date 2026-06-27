@@ -19,6 +19,8 @@ target_sources(drvaibuff_base_obj PRIVATE
 target_include_directories(drvaibuff_base_obj PRIVATE
     ${DRIVER_USER_DIR}/buff/dc/ascend_hal_base
     ${DRIVER_USER_DIR}/buff/dc/comm/common
+    ${DRIVER_USER_DIR}/buff/dc/comm
+    ${DRIVER_USER_DIR}/buff/dc/comm/lib
     ${C_SEC_INCLUDE}
     ${DRIVER_HAL_INC_DIR}
     ${DRIVER_USER_DIR}/inc
@@ -31,7 +33,6 @@ target_include_directories(drvaibuff_base_obj PRIVATE
 target_compile_definitions(drvaibuff_base_obj PRIVATE
     CFG_FEATURE_SURPORT_HUGE_PAGE
     DRV_HOST
-    CFG_FEATURE_EXTERNAL_CDEV
     $<$<STREQUAL:${PRODUCT},ascend910B>:CFG_FEATURE_NO_SURPORT_DVPP_MZ>
 )
 
@@ -59,6 +60,7 @@ set(BUFF_COMM_TARGET_SOURCES
     comm/drv_usr_buff_mempool.c
     comm/common/drv_buff_common_mempool.c
     comm/common/drv_buff_unibuff.c
+    comm/common/buff_feature.c
     comm/buff_recycle/buff_recycle.c
     comm/buff_recycle/buff_recycle_ctx.c
 )
@@ -67,6 +69,7 @@ target_sources(drvaibuff_obj PRIVATE
     ${BUFF_COMM_TARGET_SOURCES}
     share_fd_adp/buff_mng.c
     share_fd_adp/grp_mng.c
+    comm/buff_host_adapt.c
 )
 
 set(BUFF_PRODUCT_SIDE_ADP_INC
@@ -93,7 +96,6 @@ target_include_directories(drvaibuff_obj PRIVATE
 target_compile_definitions(drvaibuff_obj PRIVATE
     CFG_FEATURE_SURPORT_HUGE_PAGE
     DRV_HOST
-    CFG_FEATURE_EXTERNAL_CDEV
     $<$<STREQUAL:${PRODUCT},ascend910B>:CFG_FEATURE_NO_SURPORT_DVPP_MZ>
 )
 

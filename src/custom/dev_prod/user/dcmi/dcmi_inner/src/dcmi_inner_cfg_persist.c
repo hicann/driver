@@ -172,7 +172,7 @@ STATIC int dcmi_cfg_get_cfg_path(char *path, unsigned int path_size, char *path_
 {
 #ifndef _WIN32
 
-    if (path_size < PATH_MAX  || path_bak_size < PATH_MAX) {
+    if (path_size > PATH_MAX + 1 || path_bak_size > PATH_MAX + 1) {
         return DCMI_ERR_CODE_INVALID_PARAMETER;
     }
     if (realpath(DCMI_VNPU_CONF, path) == NULL && errno != ENOENT) {
@@ -213,7 +213,7 @@ STATIC void dcmi_cfg_fix_0_size_file()
         gplog(LOG_ERR, "file uid invalid.uid %u st_pid %u.", uid, buf.st_uid);
         return;
     }
-
+    
     ret = rename(path_bak, path);
     if (ret != DCMI_OK) {
         gplog(LOG_ERR, "rename error. errno is %d", errno);
@@ -274,7 +274,7 @@ STATIC int dcmi_cfg_syslog_get_cfg_path(char *path, unsigned int path_size, char
 {
 #ifndef _WIN32
 
-    if (path_size < PATH_MAX  || path_bak_size < PATH_MAX) {
+    if (path_size > PATH_MAX + 1 || path_bak_size > PATH_MAX + 1) {
         return DCMI_ERR_CODE_INVALID_PARAMETER;
     }
     if (realpath(DCMI_SYSLOG_CONF, path) == NULL && errno != ENOENT) {
@@ -330,7 +330,7 @@ STATIC int dcmi_cfg_custom_op_get_cfg_path(char *path, unsigned int path_size, c
 {
 #ifndef _WIN32
 
-    if (path_size < PATH_MAX  || path_bak_size < PATH_MAX) {
+    if (path_size > PATH_MAX + 1 || path_bak_size > PATH_MAX + 1) {
         return DCMI_ERR_CODE_INVALID_PARAMETER;
     }
     if (realpath(DCMI_CUSTOM_OP_CONF, path) == NULL && errno != ENOENT) {
@@ -371,7 +371,7 @@ STATIC void dcmi_cfg_custom_op_fix_empty_file()
         gplog(LOG_ERR, "file uid invalid.uid %u st_pid %u.", uid, buf.st_uid);
         return;
     }
-
+    
     ret = rename(path_bak, path);
     if (ret != DCMI_OK) {
         gplog(LOG_ERR, "rename error. errno is %d", errno);
@@ -435,7 +435,7 @@ int dcmi_cfg_create_default_syslog_file()
 {
     int ret;
     int lock_fd;
-
+ 
     ret = dcmi_cfg_set_lock(&lock_fd, DCMI_CFG_GET_LOCK_TIMEOUT, DCMI_CFG_SYSLOG_LOCK_FILE_NAME);
     if (ret != DCMI_OK) {
         gplog(LOG_ERR, "dcmi_cfg_set_lock failed. ret is %d", ret);
@@ -633,6 +633,10 @@ static int dcmi_cfg_get_action(unsigned int start, unsigned int end, const char 
     if (start != DCMI_VNPU_FLAG_NOT_FIND) {
         if (end == DCMI_VNPU_FLAG_NOT_FIND) {
             ret = dcmi_cfg_check_is_cover(cmdline, buf_tmp);
+            if (ret == DCMI_CFG_HAS_SAME_LINE) {
+                gplog(LOG_OP, "The configuration has been configured and does not need to be configured again.");
+                return DCMI_ERR_CODE_DEVICE_SHARE_CONFIG_ILLEGAL;
+            }
             if (ret != DCMI_CFG_DIFF_LINE) {
                 return ret;
             }
@@ -675,7 +679,7 @@ int dcmi_cfg_malloc_buffer_and_init(char **buf_out, unsigned int buf_size)
     return DCMI_OK;
 }
 
-int dcmi_cfg_process_action(int action, struct cfg_buf_info *buf_info,  unsigned int *len,
+int dcmi_cfg_process_action(int action, struct cfg_buf_info *buf_info, unsigned int *len,
     const char *cmdline, const char *buf_tmp)
 {
     int ret, str_ret;
@@ -738,7 +742,7 @@ int dcmi_cfg_insert_cmdline_to_buffer(const char *cmdline, int phy_id, FILE *fp,
             break;
         }
         line++;
-
+        
         if (insert_flag != DCMI_CFG_INSERT_COMPLETE) {
             if (end_flag == DCMI_VNPU_FLAG_NOT_FIND) {
                 end_flag = (strcmp(buf_tmp, "[vnpu-config end]\n") == 0) ? (line - 1) : DCMI_VNPU_FLAG_NOT_FIND;
@@ -814,7 +818,7 @@ int dcmi_cfg_delete_cmdline_form_buffer(const char *cmdline, FILE *fp, char **bu
         if (str == NULL) {
             break;
         }
-
+    
         line++;
         str_len = strlen(buf_tmp);
         out_file_len += str_len;
@@ -850,11 +854,10 @@ int dcmi_cfg_insert_creat_vnpu_cmdline(unsigned int phy_id, struct dcmi_create_v
     // Add a configuration command and save it to another buffer.
     // Write configuration to file
     char *buf = NULL;
-    unsigned int buf_len = 0;
-    int ret;
+    int ret, lock_fd;
     char cmdline_buf[DCMI_VNPU_CONF_ONE_LINE_MAX_LEN] = {0};
+    unsigned int buf_len = 0, len = sizeof(cmdline_buf);
     FILE *fp = NULL;
-    int lock_fd;
 
     if (vnpu_conf_name == NULL) {
         gplog(LOG_ERR, "vnpu_conf_name is NULL");
@@ -862,12 +865,10 @@ int dcmi_cfg_insert_creat_vnpu_cmdline(unsigned int phy_id, struct dcmi_create_v
     }
 
     if (dcmi_board_chip_type_is_ascend_310p()) {
-        ret = snprintf_s(cmdline_buf, sizeof(cmdline_buf), sizeof(cmdline_buf) - 1,
-            "%u:%u:npu-smi set -t create-vnpu -i %d -c %d -f %s -v %u -g %u\n",
+        ret = snprintf_s(cmdline_buf, len, len - 1, "%u:%u:npu-smi set -t create-vnpu -i %d -c %d -f %s -v %u -g %u\n",
             phy_id, vdev->vdev_id, card_id, chip_id, vnpu_conf_name, vdev->vdev_id, vdev->vfg_id);
     } else {
-        ret = snprintf_s(cmdline_buf, sizeof(cmdline_buf), sizeof(cmdline_buf) - 1,
-            "%u:%u:npu-smi set -t create-vnpu -i %d -c %d -f %s -v %u\n",
+        ret = snprintf_s(cmdline_buf, len, len - 1, "%u:%u:npu-smi set -t create-vnpu -i %d -c %d -f %s -v %u\n",
             phy_id, vdev->vdev_id, card_id, chip_id, vnpu_conf_name, vdev->vdev_id);
     }
     if (ret <= 0) {
@@ -883,23 +884,25 @@ int dcmi_cfg_insert_creat_vnpu_cmdline(unsigned int phy_id, struct dcmi_create_v
     ret = dcmi_cfg_open_file(&fp);
     if (ret != DCMI_OK) {
         gplog(LOG_ERR, "dcmi_cfg_open_file failed. ret is %d", ret);
-        dcmi_cfg_set_unlock(lock_fd);
-        return DCMI_ERR_CODE_FILE_OPERATE_FAIL;
+        ret = DCMI_ERR_CODE_FILE_OPERATE_FAIL;
+        goto ins_cmd_fail;
     }
 
     ret = dcmi_cfg_insert_cmdline_to_buffer(cmdline_buf, phy_id, fp, &buf, &buf_len);
     if (ret != DCMI_OK) {
-        gplog(LOG_ERR, "dcmi_cfg_insert_cmdline_to_buffer cmdline_buf %s failed. ret is %d", cmdline_buf, ret);
+        gplog(LOG_ERR, "dcmi_cfg_insert_cmdline_to_buffer failed. ret is %d, cmdline_buf is %s\b", ret, cmdline_buf);
         fclose(fp);
-        dcmi_cfg_set_unlock(lock_fd);
-        return ret;
+        goto ins_cmd_fail;
     }
     (void)fclose(fp);
     ret = dcmi_cfg_write_to_file(buf, buf_len);
     if (ret != DCMI_OK) {
         gplog(LOG_ERR, "dcmi_cfg_write_to_file failed, ret is %d", ret);
+    } else {
+        gplog(LOG_OP, "write vnpu_config success. cmdline_buf %s\b", cmdline_buf);
     }
     free(buf);
+ins_cmd_fail:
     dcmi_cfg_set_unlock(lock_fd);
     return ret;
 }
@@ -1026,7 +1029,7 @@ int dcmi_cfg_insert_destroy_vnpu_cmdline(unsigned int phy_id, unsigned int vnpu_
 
     ret = dcmi_cfg_delete_cmdline_form_buffer(cmdline_buf, fp, &buf, &buf_len);
     if (ret != DCMI_OK) {
-        gplog(LOG_ERR, "dcmi_cfg_delete_cmdline_form_buffer cmdline_buf %s failed. ret is %d", cmdline_buf, ret);
+        gplog(LOG_ERR, "dcmi_cfg_delete_cmdline_form_buffer failed. ret is %d, cmdline_buf is %s\b", ret, cmdline_buf);
         fclose(fp);
         dcmi_cfg_set_unlock(lock_fd);
         return DCMI_ERR_CODE_INNER_ERR;
@@ -1066,7 +1069,7 @@ int dcmi_cfg_find_cmdline_from_file(const char *cmdline, FILE *fp, char *buf_out
         if (str == NULL) {
             break;
         }
-
+    
         line++;
         if (end_flag == DCMI_VNPU_FLAG_NOT_FIND) {
             end_flag = (strcmp(buf_tmp, "[vnpu-config end]\n") == 0) ? (line - 1) : DCMI_VNPU_FLAG_NOT_FIND;
@@ -1127,7 +1130,7 @@ int dcmi_cfg_get_create_vnpu_template(unsigned int phy_id, unsigned int vdev_id,
 
     ret = dcmi_cfg_find_cmdline_from_file(cmdline_buf, fp, buf, sizeof(buf));
     if (ret != DCMI_OK) {
-        gplog(LOG_ERR, "dcmi_cfg_find_cmdline_from_file cmdline_buf %s failed. ret is %d", cmdline_buf, ret);
+        gplog(LOG_ERR, "dcmi_cfg_find_cmdline_from_file failed. ret is %d, cmdline_buf is %s\b", ret, cmdline_buf);
         fclose(fp);
         dcmi_cfg_set_unlock(lock_fd);
         return ret;
@@ -1250,7 +1253,7 @@ int dcmi_cfg_set_config_recover_mode(unsigned int mode)
 
     ret = dcmi_cfg_set_recover_to_buffer(cmdline_buf, mode, fp, &buf, &buf_len);
     if (ret != DCMI_OK) {
-        gplog(LOG_ERR, "dcmi_cfg_set_recover_to_buffer cmdline_buf %s failed, ret is %d", cmdline_buf, ret);
+        gplog(LOG_ERR, "dcmi_cfg_set_recover_to_buffer failed, ret is %d, cmdline_buf is %s\b", ret, cmdline_buf);
         fclose(fp);
         dcmi_cfg_set_unlock(lock_fd);
         return DCMI_ERR_CODE_INNER_ERR;
@@ -1344,13 +1347,13 @@ int dcmi_cfg_insert_syslog_cmdline_to_buffer(char *cmdline, FILE *fp, char **buf
         free(*buf_out);
         return DCMI_ERR_CODE_FILE_OPERATE_FAIL;
     }
-
+ 
     ret = strncat_s(*buf_out, buf_info.buf_size, buf_tmp, strlen(buf_tmp));
     if (ret != 0) {
         goto SECURE_FUN_FAIL;
     }
     *len += strlen(buf_tmp);
-
+ 
     ret = strncat_s(*buf_out, buf_info.buf_size, cmdline, strlen(cmdline));
     *len += strlen(cmdline);
     if (ret != 0) {
@@ -1500,7 +1503,7 @@ int dcmi_write_config_file_to_buffer(const char *buf_tmp, int mode, char **buf_o
                                      unsigned int *len, unsigned int buf_size)
 {
     int ret;
-
+ 
     if (strncmp(buf_tmp, "syslog_persistence_config_mode:", strlen("syslog_persistence_config_mode:")) == 0) {
         if (mode == DCMI_CFG_PERSISTENCE_ENABLE) {
             ret = strncat_s(*buf_out, buf_size, DCMI_SYSLOG_CONF_ENABLE_COMMENT,
@@ -1525,7 +1528,7 @@ int dcmi_write_config_file_to_buffer(const char *buf_tmp, int mode, char **buf_o
         *len += strlen(buf_tmp);
     }
     return DCMI_OK;
-
+ 
 SECURE_FUN_FAIL:
     gplog(LOG_ERR, "strncat_s failed. ret is %d", ret);
     return DCMI_ERR_CODE_SECURE_FUN_FAIL;
@@ -1554,7 +1557,7 @@ int dcmi_cfg_set_syslog_mode(int mode, FILE *fp, char **buf_out, unsigned int *l
         if (str == NULL) {
             break;
         }
-
+        
         ret = dcmi_write_config_file_to_buffer(buf_tmp, mode, buf_out, len, buf_info.buf_size);
         if (ret != DCMI_OK) {
             free(*buf_out); /* 释放内存 */
@@ -1596,7 +1599,7 @@ int dcmi_set_syslog_cfg_recover_mode(int mode)
     if (ret != DCMI_OK) {
         gplog(LOG_ERR, "dcmi_cfg_write_to_file failed, ret is %d", ret);
     }
-
+ 
     free(buf);
 FILE_OPERATE_FAIL:
     ret = system("sync");
@@ -1635,7 +1638,7 @@ int dcmi_cfg_insert_syslog_persistence_cmdline(char *cmdline)
 
     ret = dcmi_cfg_insert_syslog_cmdline_to_buffer(cmdline, fp, &buf, &buf_len);
     if (ret != DCMI_OK) {
-        gplog(LOG_ERR, "dcmi_cfg_insert_syslog_cmdline_to_buffer cmdline %s failed. ret is %d", cmdline, ret);
+        gplog(LOG_ERR, "dcmi_cfg_insert_syslog_cmdline_to_buffer failed. ret is %d, cmdline is %s\b", ret, cmdline);
         (void)fclose(fp);
         goto FILE_OPERATE_FAIL;
     }
@@ -1644,7 +1647,7 @@ int dcmi_cfg_insert_syslog_persistence_cmdline(char *cmdline)
     if (ret != DCMI_OK) {
         gplog(LOG_ERR, "dcmi_cfg_write_to_file failed, ret is %d", ret);
     }
-
+ 
     free(buf);
 FILE_OPERATE_FAIL:
     ret = system("sync");
@@ -1683,24 +1686,24 @@ int dcmi_check_line_by_line_is_legal(int line, const char *buf_tmp, char *cmdlin
     }
     return DCMI_OK;
 }
-
+ 
 int dcmi_cfg_syslog_check_cmdline_legal(FILE *fp, char *cmdline, int cmd_len)
 {
     int ret, line = 0;
     char buf_line[DCMI_SYSLOG_CONF_ONE_LINE_MAX_LEN] = {0};
     char *str = NULL;
-
+    
     (void)memset_s(cmdline, cmd_len * sizeof(char), 0, cmd_len * sizeof(char));
     str = fgets(buf_line, sizeof(buf_line), fp);
     if (str == NULL) {
         return DCMI_ERR_CODE_SYSLOG_CONFIG_ILLEGAL;
     }
-
+    
     if ((strcmp(buf_line, DCMI_SYSLOG_CONF_DISABLE_COMMENT) != 0) &&
         (strcmp(buf_line, DCMI_SYSLOG_CONF_ENABLE_COMMENT) != 0)) {
         return DCMI_ERR_CODE_SYSLOG_CONFIG_ILLEGAL;
     }
-
+    
     while (!feof(fp)) {
         (void)memset_s(buf_line, sizeof(buf_line), 0, sizeof(buf_line));
         str = fgets(buf_line, sizeof(buf_line), fp);
@@ -1718,13 +1721,13 @@ int dcmi_cfg_syslog_check_cmdline_legal(FILE *fp, char *cmdline, int cmd_len)
     }
     return DCMI_OK;
 }
-
+ 
 int dcmi_cfg_check_syslog_cfg_legal(char *cmdline, int cmd_len)
 {
     int ret;
     FILE *fp = NULL;
     char path[PATH_MAX + 1] = {0x00};
-
+ 
     if (realpath(DCMI_SYSLOG_CONF, path) == NULL && errno != ENOENT) {
         gplog(LOG_ERR, "realpath error. errno is %d", errno);
         return DCMI_ERR_CODE_INVALID_PARAMETER;
@@ -1742,12 +1745,12 @@ int dcmi_cfg_check_syslog_cfg_legal(char *cmdline, int cmd_len)
     (void)fclose(fp);
     return ret;
 }
-
+ 
 int dcmi_check_syslog_cfg_legal(char *cfg, int cfg_len)
 {
     int ret;
     int lock_fd;
-
+ 
     ret = dcmi_cfg_set_lock(&lock_fd, DCMI_CFG_GET_LOCK_TIMEOUT, DCMI_CFG_SYSLOG_LOCK_FILE_NAME);
     if (ret != DCMI_OK) {
         gplog(LOG_ERR, "dcmi_cfg_set_lock failed. ret is %d", ret);
@@ -1766,7 +1769,7 @@ int dcmi_check_syslog_cfg_legal(char *cfg, int cfg_len)
 int dcmi_get_syslog_persistence_info(int *mode, char *cfg, int cfg_len)
 {
     int ret;
-
+ 
     if (access(DCMI_SYSLOG_CONF, F_OK) != DCMI_OK) { // 说明配置文件不存在
         gplog(LOG_ERR, "%s does not exist.", DCMI_SYSLOG_CONF);
         return DCMI_ERR_CODE_CONFIG_INFO_NOT_EXIST;
@@ -1993,6 +1996,10 @@ static int dcmi_cfg_custom_op_get_action(unsigned int start, unsigned int end, c
     if (start != DCMI_CUSTOM_OP_FLAG_NOT_FIND) {
         if (end == DCMI_CUSTOM_OP_FLAG_NOT_FIND) {
             ret = dcmi_cfg_custom_op_check_is_cover(cmdline, buf_tmp);
+            if (ret == DCMI_CFG_HAS_SAME_LINE) {
+                gplog(LOG_OP, "The configuration has been configured and does not need to be configured again.");
+                return DCMI_ERR_CODE_DEVICE_SHARE_CONFIG_ILLEGAL;
+            }
             if (ret != DCMI_CFG_DIFF_LINE) {
                 return ret;
             }
@@ -2127,7 +2134,7 @@ int dcmi_cfg_set_custom_op_config_recover_mode(unsigned int mode)
 
     ret = dcmi_cfg_set_custom_op_recover_to_buffer(cmdline_buf, mode, fp, &buf, &buf_len);
     if (ret != DCMI_OK) {
-        gplog(LOG_ERR, "dcmi_cfg_set_recover_to_buffer cmdline_buf %s failed, ret is %d", cmdline_buf, ret);
+        gplog(LOG_ERR, "dcmi_cfg_set_recover_to_buffer failed, ret is %d, cmdline_buf is %s\b", ret, cmdline_buf);
         fclose(fp);
         dcmi_cfg_set_unlock(lock_fd);
         return ret;
@@ -2137,6 +2144,8 @@ int dcmi_cfg_set_custom_op_config_recover_mode(unsigned int mode)
     ret = dcmi_cfg_custom_op_write_to_file(buf, buf_len);
     if (ret != DCMI_OK) {
         gplog(LOG_ERR, "dcmi_cfg_custom_op_write_to_file failed, ret is %d", ret);
+    } else {
+        gplog(LOG_OP, "write custom_op_cfg_recover_cmdline success. cmdline_buf %s\b", cmdline_buf);
     }
 
     free(buf);
@@ -2213,7 +2222,7 @@ int dcmi_cfg_insert_custom_op_cmdline_to_buffer(const char *cmdline, FILE *fp, c
             break;
         }
         line++;
-
+        
         if (insert_flag != DCMI_CFG_INSERT_COMPLETE) {
             if (end_flag == DCMI_CUSTOM_OP_FLAG_NOT_FIND) {
                 end_flag = (strcmp(buf_tmp, "[custom-op-config end]\n") == 0) ? (line - 1) : end_flag;
@@ -2277,8 +2286,8 @@ int dcmi_cfg_insert_set_custom_op_cmdline(int card_id, int chip_id, int enable_v
 
     ret = dcmi_cfg_insert_custom_op_cmdline_to_buffer(cmdline_buf, fp, &buf, &buf_len);
     if (ret != DCMI_OK) {
-        gplog(LOG_ERR, "dcmi_cfg_insert_custom_op_cmdline_to_buffer cmdline_buf %s failed. ret is %d",
-              cmdline_buf, ret);
+        gplog(LOG_ERR, "dcmi_cfg_insert_custom_op_cmdline_to_buffer failed. ret is %d, cmdline_buf is %s\b",
+              ret, cmdline_buf);
         if (ret == DCMI_ERR_CODE_CUSTOM_OP_CONFIG_ILLEGAL) {
             gplog(LOG_OP, "The configuraion file has been modified unexpectedly.");
         }
@@ -2291,6 +2300,8 @@ int dcmi_cfg_insert_set_custom_op_cmdline(int card_id, int chip_id, int enable_v
     ret = dcmi_cfg_custom_op_write_to_file(buf, buf_len);
     if (ret != DCMI_OK) {
         gplog(LOG_ERR, "dcmi_cfg_write_to_file failed, ret is %d", ret);
+    } else {
+        gplog(LOG_OP, "write custom_op_cfg_cmdline success. cmdline_buf %s\b", cmdline_buf);
     }
 
     free(buf);

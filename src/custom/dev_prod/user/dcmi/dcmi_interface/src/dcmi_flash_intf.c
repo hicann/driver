@@ -7,7 +7,7 @@
  * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
  */
-
+ 
 #include <stdio.h>
 #include <time.h>
 #include <limits.h>
@@ -17,7 +17,7 @@
 #include <string.h>
 
 #include "securec.h"
-#include "dsmi_common_interface_custom.h"
+#include "dsmi_common_interface.h"
 #include "dcmi_interface_api.h"
 #include "dcmi_common.h"
 #include "dcmi_init_basic.h"
@@ -26,6 +26,8 @@
 #include "dcmi_inner_info_get.h"
 #include "dcmi_product_judge.h"
 #include "dcmi_environment_judge.h"
+#include "dcmi_permission_judge.h"
+#include "dcmi_basic_info_intf.h"
 #include "dcmi_flash_intf.h"
 
 #if defined DCMI_VERSION_2
@@ -37,6 +39,11 @@ int dcmi_get_device_flash_count(int card_id, int device_id, unsigned int *flash_
     if (flash_count == NULL) {
         gplog(LOG_ERR, "flash_count is invalid.");
         return DCMI_ERR_CODE_INVALID_PARAMETER;
+    }
+
+    if (dcmi_board_chip_type_is_ascend_950()) {
+        gplog(LOG_OP, "This product does not support this api.");
+        return DCMI_ERR_CODE_NOT_SUPPORT;
     }
 
     err = dcmi_get_device_type(card_id, device_id, &device_type);
@@ -64,6 +71,11 @@ int dcmi_get_device_flash_info_v2(int card_id, int device_id, unsigned int flash
         return DCMI_ERR_CODE_INVALID_PARAMETER;
     }
 
+    if (dcmi_board_chip_type_is_ascend_950()) {
+        gplog(LOG_OP, "This product does not support this api.");
+        return DCMI_ERR_CODE_NOT_SUPPORT;
+    }
+
     err = dcmi_get_device_type(card_id, device_id, &device_type);
     if (err != DCMI_OK) {
         gplog(LOG_ERR, "dcmi_get_device_type failed. err is %d.", err);
@@ -83,9 +95,14 @@ int dcmi_get_npu_device_flash_count(int card_id, int device_id, unsigned int *fl
     int ret;
     int device_logic_id = 0;
 
-    ret = dcmi_get_device_logic_id(&device_logic_id, card_id, device_id);
+    if (dcmi_board_chip_type_is_ascend_950()) {
+        ret = dcmiv2_get_device_logic_id(&device_logic_id, card_id, device_id);
+    } else {
+        ret = dcmi_get_device_logic_id(&device_logic_id, card_id, device_id);
+    }
+
     if (ret != DCMI_OK) {
-        gplog(LOG_ERR, "call dcmi_get_device_logic_id failed.%d.\n", ret);
+        gplog(LOG_ERR, "get device logic id fail. (ret=%d)", ret);
         return ret;
     }
 
@@ -103,9 +120,14 @@ int dcmi_get_npu_device_flash_info(
     int ret;
     int device_logic_id = 0;
 
-    ret = dcmi_get_device_logic_id(&device_logic_id, card_id, device_id);
+    if (dcmi_board_chip_type_is_ascend_950()) {
+        ret = dcmiv2_get_device_logic_id(&device_logic_id, card_id, device_id);
+    } else {
+        ret = dcmi_get_device_logic_id(&device_logic_id, card_id, device_id);
+    }
+
     if (ret != DCMI_OK) {
-        gplog(LOG_ERR, "call dcmi_get_device_logic_id failed. err is %d.", ret);
+        gplog(LOG_ERR, "get device logic id fail. (ret=%d)", ret);
         return ret;
     }
 
@@ -126,30 +148,6 @@ int dcmi_get_device_flash_info(
 }
 #endif
 
-STATIC int dcmi_check_vnpu_in_docker(int card_id, int device_id)
-{
-    int ret;
-    unsigned int env_flag = ENV_PHYSICAL;
-    struct dcmi_chip_info_v2 chip_info = { { 0 } };
-
-    ret = dcmi_get_npu_chip_info(card_id, device_id, &chip_info);
-    if (ret != DCMI_OK) {
-        gplog(LOG_ERR, "call dcmi_get_npu_chip_info failed. ret is %d.", ret);
-        return ret;
-    }
-    ret = dcmi_get_environment_flag(&env_flag);
-    if (ret != DCMI_OK) {
-        gplog(LOG_ERR, "get environment flag failed. ret is %d", ret);
-        return ret;
-    }
-
-    if (strstr((char *)chip_info.chip_name, "vir") &&
-        (env_flag == ENV_PHYSICAL_PLAIN_CONTAINER || env_flag == ENV_VIRTUAL_PLAIN_CONTAINER)) {
-        return DCMI_ERR_CODE_NOT_SUPPORT_IN_CONTAINER;
-    }
-    return DCMI_OK;
-}
-
 int dcmi_get_multi_ecc_time_info_v2(int card_id, int device_id, struct dcmi_multi_ecc_time_data *multi_ecc_time_data)
 {
     int ret;
@@ -165,7 +163,8 @@ int dcmi_get_multi_ecc_time_info_v2(int card_id, int device_id, struct dcmi_mult
         return DCMI_ERR_CODE_OPER_NOT_PERMITTED;
     }
 
-    if (dcmi_board_chip_type_is_ascend_310() || dcmi_board_chip_type_is_ascend_310b()) {
+    if (dcmi_board_chip_type_is_ascend_310() || dcmi_board_chip_type_is_ascend_310b() ||
+        dcmi_board_chip_type_is_ascend_950()) {
         gplog(LOG_OP, "This device does not support get multi ecc time info.");
         return DCMI_ERR_CODE_NOT_SUPPORT;
     }
@@ -213,7 +212,8 @@ int dcmi_get_multi_ecc_record_info_v2(int card_id, int device_id, struct dcmi_ec
         gplog(LOG_OP, "card_id %d is in vnpu mode can not get multi ecc record info.\n", card_id);
         return DCMI_ERR_CODE_OPER_NOT_PERMITTED;
     }
-    if (dcmi_board_chip_type_is_ascend_310() || dcmi_board_chip_type_is_ascend_310b()) {
+    if (dcmi_board_chip_type_is_ascend_310() || dcmi_board_chip_type_is_ascend_310b() ||
+        dcmi_board_chip_type_is_ascend_950()) {
         gplog(LOG_OP, "This device does not support get multi ecc record info.");
         return DCMI_ERR_CODE_NOT_SUPPORT;
     }
@@ -250,24 +250,6 @@ int dcmi_get_multi_ecc_record_info(int card_id, unsigned int *ecc_count, unsigne
     return dcmi_get_multi_ecc_record_info_v2(card_id, 0, type, ecc_count, ecc_common_data_s);
 }
 
-STATIC int dcmi_check_hbm_manufacturer_id(unsigned int manufacturer_id)
-{
-    unsigned char check = 0;
-    unsigned int data = manufacturer_id;
-
-    check ^= (data >> CHECK_THREE_BYTE_BIT) & 0xFF;
-    check ^= (data >> CHECK_TWO_BYTE_BIT) & 0xFF;
-    check ^= (data >> CHECK_ONE_BYTE_BIT) & 0xFF;
-    check ^= data & 0xFF;
-
-    if (check == 0) {
-        return DCMI_OK;
-    } else {
-        gplog(LOG_ERR, "The manufacturer_id check error. (manufacturer_id=0x%x)\n", manufacturer_id);
-        return DCMI_ERR_CODE_INNER_ERR;
-    }
-}
-
 int dcmi_get_device_hbm_product_info(int card_id, int device_id, struct dcmi_hbm_product_info *hbm_product_info)
 {
     int ret;
@@ -286,8 +268,7 @@ int dcmi_get_device_hbm_product_info(int card_id, int device_id, struct dcmi_hbm
         return ret;
     }
 
-    if (!dcmi_board_chip_type_is_ascend_910b() && !dcmi_board_chip_type_is_ascend_910_93() &&
-        !dcmi_board_chip_type_is_ascend_910_95()) {
+    if (!dcmi_board_chip_type_is_ascend_910b() && !dcmi_board_chip_type_is_ascend_910_93()) {
         gplog(LOG_ERR, "This device does not support get hbm product info.");
         return DCMI_ERR_CODE_NOT_SUPPORT;
     }

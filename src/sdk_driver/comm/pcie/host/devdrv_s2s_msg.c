@@ -27,6 +27,7 @@
 #include "devdrv_s2s_msg.h"
 #include "devdrv_adapt.h"
 #include "pbl/pbl_uda.h"
+#include "devdrv_mem_alloc.h"
 
 #define SUPER_SERVER_BASE_ADDR 0x300000000000   // remote addr base
 
@@ -60,6 +61,11 @@ void devdrv_set_s2s_chan_pre_reset(u32 dev_id)
     pci_ctrl = devdrv_get_bottom_half_pci_ctrl_by_id(dev_id);
     if ((pci_ctrl == NULL) || (pci_ctrl->msg_dev == NULL)) {
         devdrv_warn("Device is not online. (dev_id=%u)\n", dev_id);
+        return;
+    }
+
+    if (pci_ctrl->msg_dev->s2s_chan == NULL) {
+        devdrv_warn("s2s is not init. (dev_id=%u)\n", dev_id);
         return;
     }
 
@@ -434,7 +440,7 @@ STATIC struct devdrv_s2s_msg_chan *devdrv_find_s2s_chan(u32 devid, u32 sdid, str
         return NULL;
     }
 
-    /* check sdid by prase info and check server id, chip id and die_id */
+    /* check sdid by parse info and check server id, chip id and die_id */
     if ((sdid_info.server_id >= DEVDRV_S2S_MAX_SERVER_NUM) || (sdid_info.chip_id >= DEVDRV_S2S_MAX_CHIP_NUM) ||
         (sdid_info.die_id >= DEVDRV_S2S_DIE_NUM) || (sdid_info.udevid >= DEVDRV_S2S_MAX_UDEVID_NUM) ||
         ((sdid_info.chip_id * DEVDRV_S2S_DIE_NUM + sdid_info.die_id) != sdid_info.udevid)) {
@@ -494,6 +500,13 @@ int devdrv_pci_s2s_msg_send(u32 devid, u32 sdid, enum devdrv_s2s_msg_type msg_ty
             devdrv_err_limit("Get pci_ctrl failed.(dev_id=%u)\n", devid);
         }
         return -EINVAL;
+    }
+
+    if (!devdrv_feature_is_support(pci_ctrl->features, DEVDRV_FEATURE_S2S)) {
+        ret = -EOPNOTSUPP;
+        devdrv_err("s2s feature is not support. (devid=%u; dst_sdid=%u; msg_type=%u; ret=%d)\n",
+            devid, sdid, (u32)msg_type, ret);
+        return ret;
     }
 
     ret = devdrv_s2s_set_and_check_para(devid, msg_type, direction, data_info, &data_para);
@@ -575,6 +588,13 @@ int devdrv_pci_s2s_async_msg_recv(u32 devid, u32 sdid, enum devdrv_s2s_msg_type 
             devdrv_err_limit("Get pci_ctrl failed.(dev_id=%u)\n", devid);
         }
         return -EINVAL;
+    }
+
+    if (!devdrv_feature_is_support(pci_ctrl->features, DEVDRV_FEATURE_S2S)) {
+        ret = -EOPNOTSUPP;
+        devdrv_err("s2s feature is not support. (devid=%u; dst_sdid=%u; msg_type=%u; ret=%d)\n",
+            devid, sdid, (u32)msg_type, ret);
+        return ret;
     }
 
     ret = devdrv_s2s_check_recv_para(devid, msg_type, data_info);
@@ -861,12 +881,12 @@ void *devdrv_get_s2s_non_trans_chan(struct devdrv_msg_dev *msg_dev)
 {
     u32 chan_id;
 
-    ka_task_mutex_lock(&msg_dev->s2s_non_trans.mutex);
-    msg_dev->s2s_non_trans.last_use = (msg_dev->s2s_non_trans.last_use + 1) % DEVDRV_S2S_NON_TRANS_MSG_CHAN_NUM;
-    chan_id = msg_dev->s2s_non_trans.last_use;
-    ka_task_mutex_unlock(&msg_dev->s2s_non_trans.mutex);
+    ka_task_mutex_lock(&msg_dev->s2s_non_trans->mutex);
+    msg_dev->s2s_non_trans->last_use = (msg_dev->s2s_non_trans->last_use + 1) % DEVDRV_S2S_NON_TRANS_MSG_CHAN_NUM;
+    chan_id = msg_dev->s2s_non_trans->last_use;
+    ka_task_mutex_unlock(&msg_dev->s2s_non_trans->mutex);
 
-    return msg_dev->s2s_non_trans.chan[chan_id];
+    return msg_dev->s2s_non_trans->chan[chan_id];
 }
 
 STATIC int devdrv_init_s2s_chan_sdma_addr(struct sdid_parse_info dst_sdid_info, struct sdid_parse_info src_sdid_info,
@@ -974,32 +994,54 @@ init_s2s_chan_init_fail:
     return ret;
 }
 
-int devdrv_s2s_msg_chan_init(struct devdrv_pci_ctrl *pci_ctrl)
+STATIC int devdrv_s2s_msg_mem_alloc(struct devdrv_pci_ctrl *pci_ctrl)
 {
-    int ret = 0, k, n, j, i;
-    struct devdrv_s2s_msg_chan *msg_chan = NULL;
-    struct sdid_parse_info src_sdid_info;
     struct devdrv_msg_dev *msg_dev = pci_ctrl->msg_dev;
-    u32 real_support_chan_num_host;
-    u32 server_id_max;
 
-    if ((pci_ctrl->addr_mode != DEVDRV_ADMODE_FULL_MATCH) || (pci_ctrl->virtfn_flag == DEVDRV_SRIOV_TYPE_VF)) {
-        devdrv_warn("Only full match pf support this func. (dev_id=%u, addr_mode=%d, virtfn_flag=%u)\n",
-            pci_ctrl->dev_id, pci_ctrl->addr_mode, pci_ctrl->virtfn_flag);
-        return 0;
+    msg_dev->s2s_chan = devdrv_kzalloc(sizeof(struct devdrv_s2s_msg_chan) * DEVDRV_S2S_SUPPORT_MAX_CHAN_NUM,
+        KA_GFP_KERNEL);
+    if (msg_dev->s2s_chan == NULL) {
+        devdrv_err("s2s_chan devdrv_kzalloc failed. (dev_id=%u)\n", pci_ctrl->dev_id);
+        return -ENOMEM;
     }
 
+    msg_dev->s2s_non_trans = devdrv_kzalloc(sizeof(struct devdrv_s2s_non_trans_ctrl), KA_GFP_KERNEL);
+    if (msg_dev->s2s_non_trans == NULL) {
+        devdrv_err("s2s_non_trans devdrv_kzalloc failed. (dev_id=%u)\n", pci_ctrl->dev_id);
+        devdrv_kfree(msg_dev->s2s_chan);
+        msg_dev->s2s_chan = NULL;
+        return -ENOMEM;
+    }
+
+    return 0;
+}
+
+STATIC void devdrv_s2s_msg_mem_free(struct devdrv_pci_ctrl *pci_ctrl)
+{
+    struct devdrv_msg_dev *msg_dev = pci_ctrl->msg_dev;
+
+    devdrv_kfree(msg_dev->s2s_non_trans);
+    msg_dev->s2s_non_trans = NULL;
+
+    devdrv_kfree(msg_dev->s2s_chan);
+    msg_dev->s2s_chan = NULL;
+}
+
+STATIC int devdrv_s2s_get_sdid_parse_info(struct devdrv_pci_ctrl *pci_ctrl, struct sdid_parse_info *src_sdid_info)
+{
+    u32 server_id_max;
+
     if ((pci_ctrl->ops.get_server_id != NULL) && (pci_ctrl->ops.get_max_server_num != NULL)) {
-        src_sdid_info.server_id = pci_ctrl->ops.get_server_id(pci_ctrl);
+        src_sdid_info->server_id = pci_ctrl->ops.get_server_id(pci_ctrl);
         server_id_max = pci_ctrl->ops.get_max_server_num(pci_ctrl);
         if (server_id_max > DEVDRV_S2S_MAX_SERVER_NUM) {
             devdrv_warn("Get max_server_num invalid.(support_max_server_num=%u, real_max_server_num=%u)\n",
                 (u32)DEVDRV_S2S_MAX_SERVER_NUM, pci_ctrl->ops.get_max_server_num(pci_ctrl));
             return -EINVAL;
         }
-        if (src_sdid_info.server_id >= server_id_max) {
+        if (src_sdid_info->server_id >= server_id_max) {
             devdrv_warn("Invalid server_id or scale_type. set scale_type and server_id is matched"
-                "(support_max_server_id=%u, real_server_id=%u)\n", server_id_max - 1, src_sdid_info.server_id);
+                "(support_max_server_id=%u, real_server_id=%u)\n", server_id_max - 1, src_sdid_info->server_id);
             return -EINVAL;
         }
     } else {
@@ -1007,22 +1049,49 @@ int devdrv_s2s_msg_chan_init(struct devdrv_pci_ctrl *pci_ctrl)
         return -EINVAL;
     }
 
-    src_sdid_info.chip_id = pci_ctrl->dev_id / DEVDRV_S2S_DIE_NUM;
-    src_sdid_info.die_id = pci_ctrl->dev_id % DEVDRV_S2S_DIE_NUM;
+    src_sdid_info->chip_id = pci_ctrl->dev_id / DEVDRV_S2S_DIE_NUM;
+    src_sdid_info->die_id = pci_ctrl->dev_id % DEVDRV_S2S_DIE_NUM;
 
-    if (src_sdid_info.server_id >= DEVDRV_S2S_MAX_SERVER_NUM) {
+    if (src_sdid_info->server_id >= DEVDRV_S2S_MAX_SERVER_NUM) {
         devdrv_warn("server_id is invalid, s2s init failed(server_id=%u; devid=%u)\n",
-            src_sdid_info.server_id, pci_ctrl->dev_id);
+            src_sdid_info->server_id, pci_ctrl->dev_id);
         return -EINVAL;
     }
 
-    ka_task_mutex_init(&msg_dev->s2s_non_trans.mutex);
-    msg_dev->s2s_non_trans.last_use = 0;
+    return 0;
+}
+
+int devdrv_s2s_msg_chan_init(struct devdrv_pci_ctrl *pci_ctrl)
+{
+    int ret = 0, k, n, j, i;
+    struct devdrv_s2s_msg_chan *msg_chan = NULL;
+    struct sdid_parse_info src_sdid_info;
+    struct devdrv_msg_dev *msg_dev = pci_ctrl->msg_dev;
+    u32 real_support_chan_num_host;
+
+    if ((pci_ctrl->addr_mode != DEVDRV_ADMODE_FULL_MATCH) || (pci_ctrl->virtfn_flag == DEVDRV_SRIOV_TYPE_VF)) {
+        devdrv_warn("Only full match pf support this func. (dev_id=%u, addr_mode=%d, virtfn_flag=%u)\n",
+            pci_ctrl->dev_id, pci_ctrl->addr_mode, pci_ctrl->virtfn_flag);
+        return 0;
+    }
+
+    ret = devdrv_s2s_get_sdid_parse_info(pci_ctrl, &src_sdid_info);
+    if (ret != 0) {
+        return ret;
+    }
+
+    ret = devdrv_s2s_msg_mem_alloc(pci_ctrl);
+    if (ret != 0) {
+        return ret;
+    }
+
+    ka_task_mutex_init(&msg_dev->s2s_non_trans->mutex);
+    msg_dev->s2s_non_trans->last_use = 0;
 
     for (k = 0; k < DEVDRV_S2S_NON_TRANS_MSG_CHAN_NUM; k++) {
-        msg_dev->s2s_non_trans.chan[k] = devdrv_pcimsg_alloc_non_trans_queue_inner_msg(pci_ctrl->dev_id,
+        msg_dev->s2s_non_trans->chan[k] = devdrv_pcimsg_alloc_non_trans_queue_inner_msg(pci_ctrl->dev_id,
             &devdrv_s2s_non_trans_msg_chan_info);
-        if (msg_dev->s2s_non_trans.chan[k] == NULL) {
+        if (msg_dev->s2s_non_trans->chan[k] == NULL) {
             devdrv_err("alloc trans queue for s2s failed.(dev_id=%u; chan_id=%d)\n", pci_ctrl->dev_id, k);
             goto s2s_non_trans_msg_fail;
         }
@@ -1059,9 +1128,11 @@ s2s_msg_chan_mem_init_fail:
 
 s2s_non_trans_msg_fail:
     for (n = k - 1; n >= 0; n--) {
-        devdrv_pcimsg_free_non_trans_queue(msg_dev->s2s_non_trans.chan[n]);
-        msg_dev->s2s_non_trans.chan[n] = NULL;
+        devdrv_pcimsg_free_non_trans_queue(msg_dev->s2s_non_trans->chan[n]);
+        msg_dev->s2s_non_trans->chan[n] = NULL;
     }
+
+    devdrv_s2s_msg_mem_free(pci_ctrl);
 
     return ret;
 }
@@ -1077,21 +1148,27 @@ void devdrv_s2s_msg_chan_uninit(struct devdrv_pci_ctrl *pci_ctrl)
         return;
     }
 
-    for (i = DEVDRV_S2S_SUPPORT_MAX_CHAN_NUM_HOST - 1; i >= 0; i--) {
-        msg_chan = &msg_dev->s2s_chan[i];
-        if (msg_chan->valid == DEVDRV_DISABLE) {
-            continue;
+    if (msg_dev->s2s_chan != NULL) {
+        for (i = DEVDRV_S2S_SUPPORT_MAX_CHAN_NUM_HOST - 1; i >= 0; i--) {
+            msg_chan = &msg_dev->s2s_chan[i];
+            if (msg_chan->valid == DEVDRV_DISABLE) {
+                continue;
+            }
+            msg_chan->valid = DEVDRV_DISABLE;
+            devdrv_s2s_msg_chan_mem_uninit(msg_dev, &msg_dev->s2s_chan[i]);
         }
-        msg_chan->valid = DEVDRV_DISABLE;
-        devdrv_s2s_msg_chan_mem_uninit(msg_dev, &msg_dev->s2s_chan[i]);
     }
 
-    for (k = 0; k < DEVDRV_S2S_NON_TRANS_MSG_CHAN_NUM; k++) {
-        if (msg_dev->s2s_non_trans.chan[k] != NULL) {
-            devdrv_pcimsg_free_non_trans_queue(msg_dev->s2s_non_trans.chan[k]);
-            msg_dev->s2s_non_trans.chan[k] = NULL;
+    if (msg_dev->s2s_non_trans != NULL) {
+        for (k = 0; k < DEVDRV_S2S_NON_TRANS_MSG_CHAN_NUM; k++) {
+            if (msg_dev->s2s_non_trans->chan[k] != NULL) {
+                devdrv_pcimsg_free_non_trans_queue(msg_dev->s2s_non_trans->chan[k]);
+                msg_dev->s2s_non_trans->chan[k] = NULL;
+            }
         }
     }
+
+    devdrv_s2s_msg_mem_free(pci_ctrl);
 
     return;
 }

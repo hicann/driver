@@ -31,8 +31,8 @@ void vmnga_set_doorbell(void __ka_mm_iomem *io_base, u32 db_id, u32 val)
     vmnga_bar_wr(io_base, db_id * VMNG_DOORBELL_ADDR_SIZE, val);
 }
 
-int vmnga_register_vpc_irq_func(void *drvdata, u32 vector_index, ka_irqreturn_t (*callback_func)(int, void *), void *para,
-    const char *name)
+int vmnga_register_vpc_irq_func(void *drvdata, u32 vector_index, ka_irqreturn_t (*callback_func)(int, void *),
+                                void *para, const char *name)
 {
     struct vmnga_vpc_unit *unit = (struct vmnga_vpc_unit *)drvdata;
     unsigned int vector;
@@ -49,8 +49,8 @@ int vmnga_register_vpc_irq_func(void *drvdata, u32 vector_index, ka_irqreturn_t 
     vector = ka_pci_get_msix_vector(&unit->msix_ctrl.entries[vector_index]);
     ret = ka_system_request_irq(vector, callback_func, 0, name, para);
     if (ret != 0) {
-        vmng_err("Call ka_system_request_irq failed. (dev_id=%u; irq_index=%u; irq=%u; ret=%d)\n",
-                 unit->dev_id, vector_index, vector, ret);
+        vmng_err("Call ka_system_request_irq failed. (dev_id=%u; irq_index=%u; irq=%u; ret=%d)\n", unit->dev_id,
+                 vector_index, vector, ret);
         return ret;
     }
     return 0;
@@ -72,7 +72,8 @@ int vmnga_unregister_vpc_irq_func(void *drvdata, u32 vector_index, void *para)
     }
     vector = ka_pci_get_msix_vector(&unit->msix_ctrl.entries[vector_index]);
     (void)ka_base_irq_set_affinity_hint(vector, NULL);
-    vmng_debug("Get vector value. (dev_id=%u; irq_index=%u; ka_system_free_irq=%u)\n", unit->dev_id, vector_index, vector);
+    vmng_debug("Get vector value. (dev_id=%u; irq_index=%u; ka_system_free_irq=%u)\n", unit->dev_id, vector_index,
+               vector);
     ka_system_free_irq(vector, para);
 
     return 0;

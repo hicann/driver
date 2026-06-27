@@ -17,4 +17,3 @@ drvError_t buff_usr_mz_create(struct buff_req_mz_create *info);
 drvError_t buff_usr_mz_delete(struct buff_req_mz_delete *info);
 
 #endif
-

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2025. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -47,15 +47,13 @@ struct mwl_ctx *mwl_ctx_get(u32 udevid, int tgid)
     return mwl_ctx;
 }
 
-void mwl_ctx_put(struct mwl_ctx *mwl_ctx)
-{
-    svm_task_ctx_put(mwl_ctx->task_ctx);
-}
+void mwl_ctx_put(struct mwl_ctx *mwl_ctx) { svm_task_ctx_put(mwl_ctx->task_ctx); }
 
 static void mwl_ctx_init(struct mwl_ctx *mwl_ctx)
 {
     ka_task_init_rwsem(&mwl_ctx->rwsem);
-    range_rbtree_init(&mwl_ctx->range_tree);
+    range_rbtree_init(&mwl_ctx->id_range_tree);
+    range_rbtree_init(&mwl_ctx->va_range_tree);
     return;
 }
 
@@ -88,8 +86,7 @@ int mwl_init_task(u32 udevid, int tgid, void *start_time)
         return -EINVAL;
     }
 
-    ret = svm_task_set_feature_priv(task_ctx, mwl_feature_id, "mwl",
-        (void *)mwl_ctx, mwl_ctx_release);
+    ret = svm_task_set_feature_priv(task_ctx, mwl_feature_id, "mwl", (void *)mwl_ctx, mwl_ctx_release);
     if (ret != 0) {
         svm_task_ctx_put(task_ctx);
         svm_vfree(mwl_ctx);
@@ -157,8 +154,5 @@ int svm_mwl_init(void)
 }
 DECLAER_FEATURE_AUTO_INIT(svm_mwl_init, FEATURE_LOADER_STAGE_4);
 
-void svm_mwl_uninit(void)
-{
-}
+void svm_mwl_uninit(void) {}
 DECLAER_FEATURE_AUTO_UNINIT(svm_mwl_uninit, FEATURE_LOADER_STAGE_4);
-

@@ -15,7 +15,7 @@ struct svm_dma_map_para {
 
 struct svm_dma_unmap_para {
     struct svm_dst_va dst_va; /* input */
-    u64 rsv; /* reserve */
+    u64 rsv;                  /* reserve */
 };
 
 #endif

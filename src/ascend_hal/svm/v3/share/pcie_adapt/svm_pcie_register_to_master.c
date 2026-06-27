@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * Copyright (c) 2026 Huawei Technologies Co., Ltd.
  * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -43,12 +43,9 @@ int svm_pcie_unregister_to_master(u32 user_devid, struct svm_dst_va *register_va
 }
 
 static struct svm_register_to_master_ops pcie_register_to_master_ops = {
-    .register_to_master = svm_pcie_register_to_master,
-    .unregister_to_master = svm_pcie_unregister_to_master
-};
+    .register_to_master = svm_pcie_register_to_master, .unregister_to_master = svm_pcie_unregister_to_master};
 
 void svm_pcie_register_to_master_ops_register(u32 user_devid, u32 devid)
 {
     svm_register_to_master_set_ops(user_devid, devid, &pcie_register_to_master_ops);
 }
-

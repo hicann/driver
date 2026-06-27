@@ -9,7 +9,7 @@
 # ------------------------------------------------------------------------------------------------------------
 obj-m   += asdrv_buff.o
 asdrv_buff-objs := xsmem_framework.o xsmem_ns_adapt.o xsmem_proc_fs.o xsmem_prop.o xsmem_res_idr.o xsmem_res_dispatch.o xsmem_algo_vma.o xsmem_algo_cache_vma.o multi_rbtree.o
-asdrv_buff-objs += xsmem_modprobe_adapt.o
+asdrv_buff-objs += xsmem_modprobe_adapt.o xsmem_feature_check.o xsmem_framework_host.o
 
 EXTRA_CFLAGS += -I$(DRIVER_HAL_INC_DIR)
 EXTRA_CFLAGS += -I${C_SEC_INCLUDE}
@@ -20,8 +20,6 @@ EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/buff/dc/command/ioctl
 EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/kernel_adapt/include
 EXTRA_CFLAGS += -isystem $(shell $(CC) -print-file-name=include)
 
-EXTRA_CFLAGS += -DCFG_FEATURE_EXTERNAL_CDEV
-EXTRA_CFLAGS += -DCFG_FEATURE_SUPPORT_VMA
 EXTRA_CFLAGS += -DCFG_FEATURE_SHARE_LOG
 EXTRA_CFLAGS += -DCFG_FEATURE_KA_ALLOC_INTERFACE
 EXTRA_CFLAGS += -DCFG_FEATURE_HOST_LOG

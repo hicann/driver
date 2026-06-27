@@ -114,12 +114,12 @@ enum vmng_vf_group_mode {
 };
 
 #pragma pack(push)
-#pragma pack (1)
+#pragma pack(1)
 
 typedef struct vf_id_info {
     u8 vf_id;
     u8 vfg_mode; /* 0:strict, 1:relax */
-    u8 vfg_id; /* pool_id and vfg_id are the same */
+    u8 vfg_id;   /* pool_id and vfg_id are the same */
     u8 vip;
     u32 reserved0;
     u64 token;
@@ -166,7 +166,7 @@ typedef struct vf_cpu_info {
 
 typedef struct vmng_vf_cfg {
     u32 capbility;
-    vf_id_info_t id;   /* identity */
+    vf_id_info_t id; /* identity */
     vf_ac_info_t accelerator;
     vf_cpu_info_t cpu;
     vf_dvpp_info_t dvpp;
@@ -177,11 +177,11 @@ typedef struct vmng_vf_cfg {
 #pragma pack(push)
 #pragma pack(1)
 typedef struct {
-    u8 flag; /* 0:No related configuration, 1:configuration exists, 2: bitMap updated */
+    u8 flag;     /* 0:No related configuration, 1:configuration exists, 2: bitMap updated */
     u8 totalNum; /* physical core total num, 0:Do not follow this resource */
-    u8 minNum; /* Minimum available quantity required */
+    u8 minNum;   /* Minimum available quantity required */
     u8 reserved;
-    u32 freq; /* core working frequency */
+    u32 freq;   /* core working frequency */
     u64 bitMap; /* 1:good, 0:bad */
 } vmng_common_pg_info;
 
@@ -259,7 +259,7 @@ struct vmng_bandwidth_check_info {
 struct vmngh_client_instance {
     void *priv;
     struct vmng_vdev_ctrl *dev_ctrl;
-    ka_mutex_t  flag_mutex;
+    ka_mutex_t flag_mutex;
     enum vmng_client_type type;
     u32 flag;
     u32 vdev_type;
@@ -273,14 +273,10 @@ struct vmngh_map_info {
     u64 num;
     struct vmngh_bar_map *map_info;
 };
-enum vmng_pf_sriov_status {
-    VMNGH_PF_SRIOV_DISABLE = 0,
-    VMNGH_PF_SRIOV_ENABLE,
-    VMNGH_PF_STATUS_MAX
-};
 struct vmng_sriov_info {
     unsigned int dev_id;
     enum vmng_pf_sriov_status sriov_status;
+    u32 vm_full_spec_enable;
 };
 struct vmngh_client {
     enum vmng_client_type type;
@@ -395,18 +391,18 @@ int vmnga_get_physicl_addr_info(u32 dev_id, enum vmng_get_addr_type type, phys_a
 #define DMA_MAP_ERROR (~(ka_dma_addr_t)0)
 /* vm dma_addr change to host pa */
 ka_dma_addr_t vmngh_dma_map_guest_page(u32 dev_id, u32 fid, unsigned long addr, unsigned long size,
-    ka_sg_table_t **dma_sgt);
+                                       ka_sg_table_t **dma_sgt);
 void vmngh_dma_unmap_guest_page(u32 dev_id, u32 fid, ka_sg_table_t *dma_sgt);
 bool vmngh_dma_pool_active(u32 dev_id, u32 fid);
 int vmngh_dma_map_guest_page_batch(u32 dev_id, u32 fid, unsigned long *gfn, unsigned long *dma_addr,
-    unsigned long count);
+                                   unsigned long count);
 void vmngh_dma_unmap_guest_page_batch(u32 dev_id, u32 fid, unsigned long *gfn, unsigned long *dma_addr,
-    unsigned long count);
+                                      unsigned long count);
 void *vmngh_get_vdavinci_by_id(u32 dev_id, u32 fid);
 void *vmngh_dma_alloc_coherent(ka_device_t *dev, size_t size, ka_dma_addr_t *dma_handle, ka_gfp_t gfp);
 void vmngh_dma_free_coherent(ka_device_t *dev, size_t size, void *cpu_addr, ka_dma_addr_t dma_handle);
 // inject msix irq to vm
-int vmngh_hypervisor_inject_msix(unsigned int dev_id, unsigned int irq_vector);
+int vmngh_hypervisor_inject_msix(unsigned int dev_id, unsigned int irq_vector, int irq);
 int vmngh_check_vdev_phy_address(unsigned int dev_id, u64 phy_address, u64 length);
 int vmng_check_vdev_iova_address(unsigned int dev_id, ka_dma_addr_t iova_addr, size_t size);
 /* @Function: vmngh_ctrl_get_vm_id
@@ -472,19 +468,17 @@ enum vmngd_client_type {
     VMNGD_CLIENT_TYPE_MAX
 };
 
-static const char *vmngd_client_name[VMNGD_CLIENT_TYPE_MAX] = {
-    [VMNGD_CLIENT_TYPE_DEVMNG] = "devmng",
-    [VMNGD_CLIENT_TYPE_TSDRV] = "tsdrv",
-    [VMNGD_CLIENT_TYPE_ESCHED] = "esched",
-    [VMNGD_CLIENT_TYPE_DEVMM] = "devmm",
-    [VMNGD_CLIENT_TYPE_DVPP] = "dvpp",
-    [VMNGD_CLIENT_TYPE_TSD] = "tsd",
-    [VMNGD_CLIENT_TYPE_QOS] = "qos",
-    [VMNGD_CLIENT_TYPE_PROFILING] = "profiling",
-    [VMNGD_CLIENT_TYPE_HDC] = "hdc",
-    [VMNGD_CLIENT_TYPE_QUEUE] = "queue",
-    [VMNGD_CLIENT_TYPE_VRESOURCE_MGR] = "resource_mgr"
-};
+static const char *vmngd_client_name[VMNGD_CLIENT_TYPE_MAX] = {[VMNGD_CLIENT_TYPE_DEVMNG] = "devmng",
+                                                               [VMNGD_CLIENT_TYPE_TSDRV] = "tsdrv",
+                                                               [VMNGD_CLIENT_TYPE_ESCHED] = "esched",
+                                                               [VMNGD_CLIENT_TYPE_DEVMM] = "devmm",
+                                                               [VMNGD_CLIENT_TYPE_DVPP] = "dvpp",
+                                                               [VMNGD_CLIENT_TYPE_TSD] = "tsd",
+                                                               [VMNGD_CLIENT_TYPE_QOS] = "qos",
+                                                               [VMNGD_CLIENT_TYPE_PROFILING] = "profiling",
+                                                               [VMNGD_CLIENT_TYPE_HDC] = "hdc",
+                                                               [VMNGD_CLIENT_TYPE_QUEUE] = "queue",
+                                                               [VMNGD_CLIENT_TYPE_VRESOURCE_MGR] = "resource_mgr"};
 
 static inline const char *get_client_name(enum vmngd_client_type type)
 {
@@ -527,8 +521,7 @@ int vmngd_enquire_soc_resource(u32 dev_id, u32 vfid, struct vmng_soc_resource_en
 int vmngd_enquire_vfg_resource(u32 dev_id, u32 vfid, struct vmng_soc_res_info *vfg_info);
 int vmngh_refresh_vdev_resource(u32 dev_id, u32 vfid, struct vmng_soc_resource_refresh *info);
 int vmngh_sriov_reset_vdev(u32 dev_id, u32 vfid);
-int vmngd_get_device_vf_core_info(u32 dev_id, u32 vf_id,
-    u32 *total_core, u32 *core_count, u64 *mem_size);
+int vmngd_get_device_vf_core_info(u32 dev_id, u32 vf_id, u32 *total_core, u32 *core_count, u64 *mem_size);
 #if (defined CFG_FEATURE_VFIO) && (defined CFG_FEATURE_RC_MODE)
 int vmng_create_container_vdev(u32 dev_id, u32 dtype, u32 *vfid, struct vmng_vf_res_info *vf_resource);
 int vmng_destory_container_vdev(u32 dev_id, u32 vfid);

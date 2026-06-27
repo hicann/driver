@@ -20,49 +20,25 @@
 #include "udis_interface.h"
 
 struct submodule_ops {
-    int (*init) (void);
+    int (*init)(void);
     void (*uninit)(void);
 };
 
-int __attribute__((weak)) apm_init_module(void)
-{
-    return 0;
-}
+int __attribute__((weak)) apm_init_module(void) { return 0; }
 
-int __attribute__((weak)) dp_proc_mng_init(void)
-{
-    return 0;
-}
+int __attribute__((weak)) dp_proc_mng_init(void) { return 0; }
 
-void __attribute__((weak)) apm_exit_module(void)
-{
-    return;
-}
+void __attribute__((weak)) apm_exit_module(void) { return; }
 
-void __attribute__((weak)) dp_proc_mng_exit(void)
-{
-    return;
-}
+void __attribute__((weak)) dp_proc_mng_exit(void) { return; }
 
-void __attribute__((weak)) rmo_exit_module(void)
-{
-    return;
-}
+void __attribute__((weak)) rmo_exit_module(void) { return; }
 
-int __attribute__((weak)) rmo_init_module(void)
-{
-    return 0;
-}
+int __attribute__((weak)) rmo_init_module(void) { return 0; }
 
-void __attribute__((weak)) udis_exit(void)
-{
-    return;
-}
+void __attribute__((weak)) udis_exit(void) { return; }
 
-int __attribute__((weak)) udis_init(void)
-{
-    return 0;
-}
+int __attribute__((weak)) udis_init(void) { return 0; }
 
 static struct submodule_ops g_sub_table[] = {
     {apm_init_module, apm_exit_module},
@@ -75,15 +51,15 @@ static int __ka_init init_dpa(void)
 {
     int index, ret;
     int table_size = sizeof(g_sub_table) / sizeof(struct submodule_ops);
- 
+
     for (index = 0; index < table_size; index++) {
         ret = g_sub_table[index].init();
-        if  (ret != 0) {
+        if (ret != 0) {
             goto out;
         }
     }
     return 0;
- out:
+out:
     for (; index > 0; index--) {
         g_sub_table[index - 1].uninit();
     }
@@ -94,7 +70,7 @@ static void __ka_exit exit_dpa(void)
 {
     int index;
     int table_size = sizeof(g_sub_table) / sizeof(struct submodule_ops);
- 
+
     for (index = table_size; index > 0; index--) {
         g_sub_table[index - 1].uninit();
     }

@@ -299,8 +299,8 @@ static int convert_mailbox_sqcq_info(void *mailbox_msg, u32 msg_len, struct hvts
     v_stream_id = create_sqcq->info[0];
     // info[3] is disable thread
     disable_thread = create_sqcq->info[3];
-    if (v_stream_id > U16_MAX) {
-        ts_agent_err("info[0]=%u must be <= U16_MAX.", v_stream_id);
+    if (v_stream_id > KA_U16_MAX) {
+        ts_agent_err("info[0]=%u must be <= KA_U16_MAX.", v_stream_id);
         return -EINVAL;
     }
 
@@ -324,8 +324,8 @@ static int convert_mailbox_sqcq_info(void *mailbox_msg, u32 msg_len, struct hvts
         // info[4] is share sq id
         u32 *v_share_sq_id = &(create_sqcq->info[4]);
         u16 share_sq_id = 0;
-        if (*v_share_sq_id > U16_MAX) {
-            ts_agent_err("info[4]=%u must be <= U16_MAX.", *v_share_sq_id);
+        if (*v_share_sq_id > KA_U16_MAX) {
+            ts_agent_err("info[4]=%u must be <= KA_U16_MAX.", *v_share_sq_id);
             return -EINVAL;
         }
         ret = convert_sq_id(&convert_base_info, *v_share_sq_id, &share_sq_id);
@@ -359,14 +359,14 @@ static int convert_mailbox_logic_cq_info(void *mailbox_msg, u32 msg_len, struct 
     // 0 is stream_id
     v_stream_id = create_logic_cq->info[0];
 
-    // U32_MAX means not shared cq, no need convert
-    if (v_stream_id == U32_MAX) {
-        ts_agent_debug("info[0]=%u is U32_MAX, no need convert.", v_stream_id);
+    // KA_U32_MAX means not shared cq, no need convert
+    if (v_stream_id == KA_U32_MAX) {
+        ts_agent_debug("info[0]=%u is KA_U32_MAX, no need convert.", v_stream_id);
         return 0;
     }
 
-    if (v_stream_id > U16_MAX) {
-        ts_agent_err("logic cq info[0]=%u must be <= U16_MAX.", v_stream_id);
+    if (v_stream_id > KA_U16_MAX) {
+        ts_agent_err("logic cq info[0]=%u must be <= KA_U16_MAX.", v_stream_id);
         return -EINVAL;
     }
 

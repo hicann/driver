@@ -63,6 +63,8 @@ drvError_t dms_get_spod_item(uint32_t devId, int32_t infoType, int64_t *value)
         *value = info.chassis_id;
     } else if (infoType == INFO_TYPE_SUPER_POD_TYPE) {
         *value = info.super_pod_type;
+    } else if (infoType == INFO_TYPE_SUPER_POD_INTERCON_TYPE) {
+        *value = info.super_pod_intercon_type;
     } else {
         return DRV_ERROR_NOT_SUPPORT;
     }

@@ -15,11 +15,12 @@
 #include "drv_user_common.h"
 #include "esched_user_interface.h"
 
-void *esched_alloc_ext_msg();
+void *esched_alloc_ext_msg(void);
 void esched_free_ext_msg(void *ext_msg);
-void esched_fill_sqcq_alloc_info(unsigned int sqe_depth, unsigned int cqe_depth, struct halSqCqInputInfo *in, void *ext_msg_t);
+void esched_fill_sqcq_alloc_info(unsigned int sqe_depth, unsigned int cqe_depth, struct halSqCqInputInfo *in,
+                                 void *ext_msg_t);
 
-void *esched_alloc_topic_sqe();
+void *esched_alloc_topic_sqe(void);
 void esched_free_topic_sqe(void *sqe);
 int esched_fill_topic_sqe(unsigned int devid, struct event_summary *event, void *sqe_t);
 #endif

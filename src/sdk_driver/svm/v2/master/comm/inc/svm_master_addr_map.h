@@ -20,4 +20,3 @@
 int devmm_ioctl_map_dev_reserve(struct devmm_svm_process *svm_process, struct devmm_ioctl_arg *arg);
 
 #endif /* SVM_MASTER_ADDR_MAP_H */
-

@@ -39,8 +39,7 @@ int trs_core_ops_get_stream_from_cqe(struct trs_id_inst *inst, void *hw_cqe, u32
     return trs_stars_cqe_get_streamid(inst, hw_cqe, stream_id);
 }
 
-int trs_core_ops_cqe_to_logic_cqe(struct trs_id_inst *inst, void *hw_cqe,
-    struct trs_logic_cqe *logic_cqe)
+int trs_core_ops_cqe_to_logic_cqe(struct trs_id_inst *inst, void *hw_cqe, struct trs_logic_cqe *logic_cqe)
 {
     trs_stars_cqe_to_logic_cqe(hw_cqe, logic_cqe);
     return 0;
@@ -153,10 +152,7 @@ static struct trs_core_adapt_ops trs_core_stars_v1_ops = {
     .res_num_query = trs_host_res_num_query,
 };
 
-struct trs_core_adapt_ops *trs_core_get_stars_v1_adapt_ops(void)
-{
-    return &trs_core_stars_v1_ops;
-}
+struct trs_core_adapt_ops *trs_core_get_stars_v1_adapt_ops(void) { return &trs_core_stars_v1_ops; }
 
 static int trs_sq_trigger_msg_send(struct trs_id_inst *inst, u32 db, u32 hwirq)
 {
@@ -185,8 +181,9 @@ int trs_sq_send_trigger_db_init(struct trs_id_inst *inst)
 
     ret = trs_soc_get_db_cfg(inst, TRS_DB_TRIGGER_SQ, &start, &end);
     if ((ret != 0) || (start >= end)) {
-        trs_err("Trs get db cfg fail. (devid=%u; tsid=%u; ret=%d; start=%u; end=%u)\n",
-            inst->devid, inst->tsid, ret, start, end);
+        trs_err(
+            "Trs get db cfg fail. (devid=%u; tsid=%u; ret=%d; start=%u; end=%u)\n", inst->devid, inst->tsid, ret, start,
+            end);
         return -ENODEV;
     }
 
@@ -214,8 +211,4 @@ int trs_sq_send_trigger_db_init(struct trs_id_inst *inst)
     return 0;
 }
 
-void trs_sq_send_trigger_db_uninit(struct trs_id_inst *inst)
-{
-    trs_ts_db_uninit(inst, TRS_DB_TRIGGER_SQ);
-}
-
+void trs_sq_send_trigger_db_uninit(struct trs_id_inst *inst) { trs_ts_db_uninit(inst, TRS_DB_TRIGGER_SQ); }

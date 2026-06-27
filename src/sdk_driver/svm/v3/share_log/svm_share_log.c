@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2025. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -18,18 +18,18 @@ void svm_share_log_err(const char *fmt, ...)
 {
 #ifdef CFG_FEATURE_SHARE_LOG
     va_list args;
- 
+
     va_start(args, fmt);
     share_log_err_ex(DEVMM_SHARE_LOG_START, fmt, args);
     va_end(args);
 #endif
 }
- 
+
 void svm_share_log_run_info(const char *fmt, ...)
 {
 #ifdef CFG_FEATURE_SHARE_LOG
     va_list args;
- 
+
     va_start(args, fmt);
     share_log_run_info_ex(DEVMM_SHARE_LOG_RUNINFO_START, fmt, args);
     va_end(args);

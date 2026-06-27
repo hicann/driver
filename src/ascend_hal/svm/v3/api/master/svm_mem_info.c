@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * Copyright (c) 2026 Huawei Technologies Co., Ltd.
  * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -36,8 +36,7 @@ static int get_mem_check_info_para_check(struct MemAddrInfo *info)
         return DRV_ERROR_INVALID_VALUE;
     }
 
-    if ((info->mem_type & MEM_SVM_TYPE) || (info->mem_type & MEM_HOST_TYPE) ||
-        (info->mem_type & MEM_HOST_AGENT_TYPE)) {
+    if ((info->mem_type & MEM_SVM_TYPE) || (info->mem_type & MEM_HOST_TYPE) || (info->mem_type & MEM_HOST_AGENT_TYPE)) {
         svm_info("Mem_type not support. (mem_type=%u)\n", info->mem_type);
         return DRV_ERROR_NOT_SUPPORT;
     }
@@ -74,13 +73,15 @@ int _get_mem_check_info(u32 devid, u32 type, struct MemAddrInfo *para)
         }
 
         if (prop.devid != devid) {
-            svm_err("Svm check addr prop failed. (va=0x%llx; prop_devid=%u)\n", (u64)(uintptr_t)para->addr[i], prop.devid);
+            svm_err(
+                "Svm check addr prop failed. (va=0x%llx; prop_devid=%u)\n", (u64)(uintptr_t)para->addr[i], prop.devid);
             para->flag = false;
             return DRV_ERROR_INVALID_VALUE;
         }
 
         if ((para->mem_type & svm_prop_to_mem_virt_mask(&prop)) == 0) {
-            svm_err("Mem type is not match. (va=0x%llx; cnt=%u; expext_mem_type=0x%x; real_mem_type=0x%x)\n",
+            svm_err(
+                "Mem type is not match. (va=0x%llx; cnt=%u; expext_mem_type=0x%x; real_mem_type=0x%x)\n",
                 (u64)(uintptr_t)para->addr[i], para->cnt, para->mem_type, svm_prop_to_mem_virt_mask(&prop));
             para->flag = false;
             return DRV_ERROR_INVALID_VALUE;
@@ -140,7 +141,9 @@ static int get_mem_token_info(u32 devid, u32 type, struct MemInfo *info)
 
         ret = svm_get_mem_token_info(devid, prop.start, prop.size, &token_id, &token_value);
         if (ret != 0) {
-            svm_err("svm_get_mem_token_info failed. (ret=%d; devid=%u; va=0x%llx; size=0x%llx)\n", ret, devid, prop.start, prop.size);
+            svm_err(
+                "svm_get_mem_token_info failed. (ret=%d; devid=%u; va=0x%llx; size=0x%llx)\n", ret, devid, prop.start,
+                prop.size);
             return ret;
         }
 
@@ -167,8 +170,7 @@ static int (*g_svm_get_mem_info[MEM_INFO_TYPE_MAX])(u32 devid, u32 type, struct 
     [MEM_INFO_TYPE_AI_NUMA_INFO] = NULL,
     [MEM_INFO_TYPE_BAR_NUMA_INFO] = NULL,
     [MEM_INFO_TYPE_SVM_GRP_INFO] = NULL,
-    [MEM_INFO_TYPE_UB_TOKEN_INFO] = get_mem_token_info
-};
+    [MEM_INFO_TYPE_UB_TOKEN_INFO] = get_mem_token_info};
 
 static int get_mem_info_para_check(u32 devid, u32 type, struct MemInfo *info)
 {
@@ -217,10 +219,8 @@ drvError_t halMemGetAddressRange(DVdeviceptr ptr, DVdeviceptr *pbase, size_t *ps
         return ret;
     }
 
-    if (!svm_flag_cap_is_support_normal_free(prop.flag) &&
-        !svm_flag_cap_is_support_vmm_unmap(prop.flag) &&
-        !svm_flag_cap_is_support_vmm_ipc_unmap(prop.flag) &&
-        !svm_flag_cap_is_support_ipc_close(prop.flag)) {
+    if (!svm_flag_cap_is_support_normal_free(prop.flag) && !svm_flag_cap_is_support_vmm_unmap(prop.flag) &&
+        !svm_flag_cap_is_support_vmm_ipc_unmap(prop.flag) && !svm_flag_cap_is_support_ipc_close(prop.flag)) {
         svm_err("Va not support. (va=0x%llx)\n", va);
         return DRV_ERROR_INVALID_VALUE;
     }
@@ -233,5 +233,8 @@ drvError_t halMemGetAddressRange(DVdeviceptr ptr, DVdeviceptr *pbase, size_t *ps
         *psize = prop.size;
     }
 
+    svm_debug(
+        "MemGetAddressRange. ( base=0x%llx; size=%llu)\n", (pbase != NULL) ? (u64)(*pbase) : 0ULL,
+        (psize != NULL) ? (u64)(*psize) : 0ULL);
     return DRV_ERROR_NONE;
 }

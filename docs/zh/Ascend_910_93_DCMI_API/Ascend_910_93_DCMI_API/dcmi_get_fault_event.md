@@ -69,9 +69,9 @@
 <p id="zh-cn_topic_0000001251427187_zh-cn_topic_0000001188446388_p207741891614"><a name="zh-cn_topic_0000001251427187_zh-cn_topic_0000001188446388_p207741891614"></a><a name="zh-cn_topic_0000001251427187_zh-cn_topic_0000001188446388_p207741891614"></a>DCMI_EVENT_FILTER_FLAG_EVENT_ID：只接收指定的事件</p>
 <p id="zh-cn_topic_0000001251427187_zh-cn_topic_0000001188446388_p127741392011"><a name="zh-cn_topic_0000001251427187_zh-cn_topic_0000001188446388_p127741392011"></a><a name="zh-cn_topic_0000001251427187_zh-cn_topic_0000001188446388_p127741392011"></a>DCMI_EVENT_FILTER_FLAG_SERVERITY：只接收指定级别及以上的事件</p>
 <p id="zh-cn_topic_0000001251427187_zh-cn_topic_0000001188446388_p6774169517"><a name="zh-cn_topic_0000001251427187_zh-cn_topic_0000001188446388_p6774169517"></a><a name="zh-cn_topic_0000001251427187_zh-cn_topic_0000001188446388_p6774169517"></a>DCMI_EVENT_FILTER_FLAG_NODE_TYPE：只接收指定节点类型的事件</p>
-<p id="zh-cn_topic_0000001251427187_zh-cn_topic_0000001188446388_p127741596114"><a name="zh-cn_topic_0000001251427187_zh-cn_topic_0000001188446388_p127741596114"></a><a name="zh-cn_topic_0000001251427187_zh-cn_topic_0000001188446388_p127741596114"></a>unsigned int event_id;  //接收指定的事件：参考《健康管理故障定义》</p>
+<p id="zh-cn_topic_0000001251427187_zh-cn_topic_0000001188446388_p127741596114"><a name="zh-cn_topic_0000001251427187_zh-cn_topic_0000001188446388_p127741596114"></a><a name="zh-cn_topic_0000001251427187_zh-cn_topic_0000001188446388_p127741596114"></a>unsigned int event_id;  //接收指定的事件</p>
 <p id="zh-cn_topic_0000001251427187_zh-cn_topic_0000001188446388_p077479911"><a name="zh-cn_topic_0000001251427187_zh-cn_topic_0000001188446388_p077479911"></a><a name="zh-cn_topic_0000001251427187_zh-cn_topic_0000001188446388_p077479911"></a>unsigned char severity; //接收指定级别及以上的事件：见struct dcmi_dms_fault_event结构体中severity定义</p>
-<p id="zh-cn_topic_0000001251427187_zh-cn_topic_0000001188446388_p13774591615"><a name="zh-cn_topic_0000001251427187_zh-cn_topic_0000001188446388_p13774591615"></a><a name="zh-cn_topic_0000001251427187_zh-cn_topic_0000001188446388_p13774591615"></a>unsigned char node_type; //接收指定节点类型的事件：参考《健康管理故障定义》</p>
+<p id="zh-cn_topic_0000001251427187_zh-cn_topic_0000001188446388_p13774591615"><a name="zh-cn_topic_0000001251427187_zh-cn_topic_0000001188446388_p13774591615"></a><a name="zh-cn_topic_0000001251427187_zh-cn_topic_0000001188446388_p13774591615"></a>unsigned char node_type; //接收指定节点类型的事件</p>
 <p id="zh-cn_topic_0000001251427187_zh-cn_topic_0000001188446388_p62763213114"><a name="zh-cn_topic_0000001251427187_zh-cn_topic_0000001188446388_p62763213114"></a><a name="zh-cn_topic_0000001251427187_zh-cn_topic_0000001188446388_p62763213114"></a>unsigned char resv[DCMI_MAX_EVENT_RESV_LENGTH];    //保留</p>
 <p id="zh-cn_topic_0000001251427187_zh-cn_topic_0000001188446388_p1276152117115"><a name="zh-cn_topic_0000001251427187_zh-cn_topic_0000001188446388_p1276152117115"></a><a name="zh-cn_topic_0000001251427187_zh-cn_topic_0000001188446388_p1276152117115"></a>};</p>
 </td>
@@ -145,8 +145,8 @@
 
 **约束说明<a name="zh-cn_topic_0000001251427187_zh-cn_topic_0000001188446388_zh-cn_topic_0000001167913765_toc533412082"></a>**
 
--   该接口可获取故障产生时正在上报故障或恢复事件，不能获取已经产生的历史事件。
--   该接口支持多进程不支持多线程，最大支持64个进程同时调用。
+- 该接口可获取故障产生时正在上报故障或恢复事件，不能获取已经产生的历史事件。
+- 该接口支持多进程不支持多线程，最大支持64个进程同时调用。
 
 **表 1** 不同部署场景下的支持情况
 
@@ -214,7 +214,7 @@
 
 **调用示例<a name="zh-cn_topic_0000001251427187_zh-cn_topic_0000001188446388_zh-cn_topic_0000001167913765_toc533412083"></a>**
 
-```
+```c
 …  
 int ret = 0; 
 int card_id = 0; 
@@ -232,4 +232,3 @@ if (ret != DCMI_OK) {
 // todo
 …
 ```
-

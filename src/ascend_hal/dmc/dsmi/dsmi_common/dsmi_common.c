@@ -62,7 +62,7 @@
 #define DSMI_MSG_WAIT_MAX 60000
 #define DSMI_MSG_WAIT_TIME_MSEC 1
 #define DSMI_MSG_SEM_PERMISSION_RW_GROUP 0660
-#define FILE_READ_RETRY_TIME 2
+#define FILE_READ_RETRY_TIMES 2
 
 STATIC unsigned int g_init_flag = DSMI_NOT_INIT_FLAG;
 STATIC DM_CB_S *g_dm_cb = NULL;
@@ -805,7 +805,7 @@ STATIC int read_copy_file(FILE *fp, long file_len, char *buffer)
 {
     int ret, rw_len;
     int err;
-    int retry_time;
+    int retry_times;
 
     ret = fseek(fp, 0L, SEEK_SET);
     if (ret != 0) {
@@ -813,13 +813,13 @@ STATIC int read_copy_file(FILE *fp, long file_len, char *buffer)
         return DRV_ERROR_FILE_OPS;
     }
 
-    for (retry_time = 1; retry_time <= FILE_READ_RETRY_TIME; retry_time++) {
+    for (retry_times = 1; retry_times <= FILE_READ_RETRY_TIMES; retry_times++) {
         rw_len = (int)fread(buffer, 1, (size_t)file_len, fp);
         err = ferror(fp);
         ret = feof(fp);
         if (file_len != rw_len || err != 0) {
             DEV_MON_ERR("Read file fail. (errno=%d; rw_len=%d, ret = %d, file_len = %d)\n", err, rw_len, ret, file_len);
-            if (retry_time == FILE_READ_RETRY_TIME) {
+            if (retry_times == FILE_READ_RETRY_TIMES) {
                 return DRV_ERROR_FILE_OPS;
             }
         } else {
@@ -1028,6 +1028,12 @@ DEV_INFO_MAIN_CMD_TYPE dsmi_get_dev_info_main_cmd_type(unsigned int main_cmd, un
         return MAIN_CMD_TYPE_HOST_DMP;
     }
 
+#ifdef CFG_FEATURE_PCIE_LINK_INFO
+    if ((main_cmd == DSMI_MAIN_CMD_PCIE) && (sub_cmd == DSMI_PCIE_SUB_CMD_PCIE_INFO)) {
+        return MAIN_CMD_TYPE_HOST_DEVMNG;
+    }
+#endif
+
     if ((main_cmd == DSMI_MAIN_CMD_CHIP_INF) || (main_cmd == DSMI_MAIN_CMD_SVM) ||
         (main_cmd == DSMI_MAIN_CMD_VDEV_MNG) || (main_cmd == DSMI_MAIN_CMD_HOST_AICPU) ||
         ((main_cmd == DSMI_MAIN_CMD_TS) && (sub_cmd == DSMI_TS_SUB_CMD_FFTS_TYPE)) ||
@@ -1035,7 +1041,10 @@ DEV_INFO_MAIN_CMD_TYPE dsmi_get_dev_info_main_cmd_type(unsigned int main_cmd, un
         ((main_cmd == DSMI_MAIN_CMD_HCCS) && (sub_cmd == DSMI_HCCS_CMD_GET_PING_INFO)) ||
         ((main_cmd == DSMI_MAIN_CMD_HCCS) && (sub_cmd == DSMI_HCCS_CMD_GET_CREDIT_INFO)) ||
         ((main_cmd == DSMI_MAIN_CMD_TRS) && (sub_cmd == DSMI_TRS_SUB_CMD_KERNEL_LAUNCH_MODE)) ||
-        ((main_cmd == DSMI_MAIN_CMD_UB) && (sub_cmd == DSMI_UB_INFO_SUB_CMD_PORT_STATUS))
+        ((main_cmd == DSMI_MAIN_CMD_UB) && (sub_cmd == DSMI_UB_INFO_SUB_CMD_PORT_STATUS)) ||
+        ((main_cmd == DSMI_MAIN_CMD_UB) && (sub_cmd == DSMI_UB_INFO_SUB_CMD_ID)) ||
+        ((main_cmd == DSMI_MAIN_CMD_UB) && (sub_cmd == DSMI_UB_INFO_SUB_CMD_URMA_DEV_NAME)) ||
+        ((main_cmd == DSMI_MAIN_CMD_UPGRADE) && (sub_cmd == DSMI_UPGRADE_SUB_TYPE_SWPLUGIN_POLICY))
         ) {
         return MAIN_CMD_TYPE_HOST_DEVMNG;
     }
@@ -1061,7 +1070,7 @@ int user_prop_check(void)
 }
 #endif
 
-STATIC void dm_command_time_out_hello(const DM_MSG_ST *req, DM_MSG_ST *resp)
+STATIC void dm_command_time_out_print(const DM_MSG_ST *req, DM_MSG_ST *resp)
 {
     (void)req;
     if ((resp != NULL) && (resp->data != NULL)) {
@@ -1110,7 +1119,7 @@ static int dsmi_init_channel(DM_ADDR_ST *my_addr)
     udp_addr->service_type = DM_CLIENT;
     udp_addr->sock_addr.sun_family = AF_LOCAL;
 
-    ret = dm_udp_init(&g_dsmi_intf, g_dm_cb, dm_command_time_out_hello,
+    ret = dm_udp_init(&g_dsmi_intf, g_dm_cb, dm_command_time_out_print,
         my_addr, socket_name, (int)strlen(socket_name));
     if (ret) {
         DEV_MON_ERR("call dm_udp_init fail ret = %d.\n", ret);
@@ -1128,7 +1137,7 @@ static int dsmi_init_channel(DM_ADDR_ST *my_addr)
     iam_addr->rpc_req_id = 0;
     iam_addr->iam_res_fd = INVALID_FD;
     iam_addr->iam_queue = (void *)NULL;
-    ret = dm_iam_init(&g_dsmi_intf, g_dm_cb, dm_command_time_out_hello, my_addr, NULL, 0);
+    ret = dm_iam_init(&g_dsmi_intf, g_dm_cb, dm_command_time_out_print, my_addr, NULL, 0);
     if (ret != 0) {
         DEV_MON_ERR("call dm_hdc_init fail ret = %d.\n", ret);
         return ret;
@@ -1143,7 +1152,7 @@ static int dsmi_init_channel(DM_ADDR_ST *my_addr)
     hdc_addr->peer_node = 0;
     hdc_addr->peer_devid = 0;
     hdc_addr->session = (unsigned long long)NULL;
-    ret = dm_hdc_init(&g_dsmi_intf, g_dm_cb, dm_command_time_out_hello, my_addr, NULL, 0);
+    ret = dm_hdc_init(&g_dsmi_intf, g_dm_cb, dm_command_time_out_print, my_addr, NULL, 0);
     if (ret) {
         DEV_MON_ERR("call dm_hdc_init fail ret = %d.\n", ret);
         return ret;
@@ -1254,78 +1263,6 @@ static __attribute__((destructor)) void dsmi_exit(void)
     return;
 }
 
-#ifdef CFG_FEATURE_SUPPORT_UDIS
-STATIC int dsmi_udis_cal_cpu_utilization(int dev_id, int module_type, const struct udis_dev_info *get_info,
-                                    unsigned int* utilization)
-{
-    int ret = 0, i;
-    int64_t cpu_num = 0;
-    unsigned int total_rate = 0;
-    unsigned int utilRate[TAISHAN_CORE_NUM] = {0};
-
-    ret = halGetDeviceInfo((unsigned int)dev_id, module_type, INFO_TYPE_CORE_NUM, &cpu_num);
-    if (ret != 0 ) {
-        DEV_MON_WARNING("Dms get cpu info not success.(dev_id=%u;ret=%d)\n", dev_id, ret);
-        return ret;
-    }
-    if ((cpu_num == 0) || (cpu_num > TAISHAN_CORE_NUM)) {
-        DEV_MON_WARNING("Invalid cpu num. (dev_id=%u; module_type=%u; cpu_num=%u)\n", dev_id, module_type, cpu_num);
-        return DRV_ERROR_INVALID_VALUE;
-    }
-
-    if ((unsigned int)cpu_num * sizeof(unsigned int) != get_info->data_len) {
-        DEV_MON_WARNING("Expected data_len not equal actual data_len for cpu-util. (dev_id=%u; module_type=%u;)\n",
-                                dev_id, module_type);
-        return DRV_ERROR_INNER_ERR;
-    }
-
-    ret = memcpy_s(utilRate, (unsigned int)((unsigned long)(cpu_num) * sizeof(unsigned int)), get_info->data, get_info->data_len);
-    if (ret != 0) {
-        DEV_MON_WARNING("Memcpy to utilRate not success. (dev_id=%u; module_type=%u; cpu_num=%u)\n",
-                        dev_id, module_type, cpu_num);
-        return DRV_ERROR_INVALID_HANDLE;
-    }
-
-    for (i = 0; i < cpu_num; i++) {
-        total_rate += utilRate[i];
-    }
-    *utilization = (unsigned int)(total_rate / (unsigned int)cpu_num);
-
-    return 0;
-}
-
-int dsmi_udis_get_cpu_rate(int dev_id, int device_type, unsigned int *result_data)
-{
-    struct udis_dev_info get_info = {0};
-    int module_type = 0;
-    int ret = 0;
-
-    if (device_type == REQ_D_INFO_DEV_TYPE_CTRL_CPU) {
-        module_type = MODULE_TYPE_CCPU;
-        ret = sprintf_s(get_info.name, UDIS_MAX_NAME_LEN, "ccpu_util");
-    } else if (device_type == REQ_D_INFO_DEV_TYPE_AI_CPU) {
-        module_type = MODULE_TYPE_AICPU;
-        ret = sprintf_s(get_info.name, UDIS_MAX_NAME_LEN, "aicpu_util");
-    } else {
-        return DRV_ERROR_NOT_SUPPORT;
-    }
-    if (ret < 0) {
-        DEV_MON_WARNING("sprintf to udis_get_info_user name not success. (dev_id=%u;)\n", dev_id);
-        return DRV_ERROR_INVALID_HANDLE;
-    }
-
-    get_info.module_type = UDIS_MODULE_DEVMNG;
-    ret = udis_get_device_info((unsigned int)dev_id, &get_info);
-    if (ret != 0){
-        DEV_MON_WARNING("call udis_get_device_info not success. (dev_id=%u; name=%s; ret=%d)\n",
-                        dev_id, get_info.name, ret);
-        return ret;
-    }
-
-    return dsmi_udis_cal_cpu_utilization(dev_id, module_type, &get_info, result_data);
-}
-#endif
-
 int dsmi_udis_get_hbm_isolated_pages_info(int dev_id, unsigned char module_type,
     struct dsmi_ecc_pages_stru *pdevice_ecc_pages_statistics)
 {
@@ -1357,5 +1294,159 @@ int dsmi_udis_get_hbm_isolated_pages_info(int dev_id, unsigned char module_type,
         return DRV_ERROR_INVALID_HANDLE;
     }
 
+    return 0;
+}
+
+int dsmi_udis_get_single_ecc_info(int dev_id, struct ecc_common_data *dsmi_ecc_common_data_s)
+{
+    int ret;
+    struct udis_dev_info get_info = {0};
+    struct ecc_single_data_info single_ecc_data[HBM_ECC_RECORD_MAX_NUMS] = { 0 };
+    int idx = 0;
+
+    for(idx = 0; idx < SINGLE_ECC_INFO_BLOCK_NUMS; idx++) {
+        ret = sprintf_s(get_info.name, UDIS_MAX_NAME_LEN, "%s%d", "single_ecc", idx);
+        if (ret < 0) {
+            DEV_MON_WARNING("sprintf to udis get_info.name not success. (dev_id=%u;)\n", dev_id);
+            return DRV_ERROR_INVALID_HANDLE;
+        }
+
+        get_info.module_type = UDIS_MODULE_MEMORY;
+        ret = udis_get_device_info((unsigned int)dev_id, &get_info);
+        if (ret != 0) {
+            DEV_MON_WARNING("udis get single ecc info fail:(ret:%d name:%s)\n", ret, get_info.name);
+            return ret;
+        }
+
+        if (get_info.data_len != sizeof(struct ecc_single_data_info) * SINGLE_ECC_INFO_BLOCK_NUMS ) {
+            DEV_MON_WARNING("Expected data_len != actual data_len for isolated_pages_info. (dev_id=%u)\n",
+                                dev_id);
+            return DRV_ERROR_INNER_ERR;
+        }
+
+        ret = memcpy_s(&single_ecc_data[idx * SINGLE_ECC_INFO_BLOCK_NUMS], sizeof(struct ecc_single_data_info) * SINGLE_ECC_INFO_BLOCK_SIZE,
+                    get_info.data, get_info.data_len);
+        if (ret != 0) {
+            DEV_MON_WARNING("Memcpy to ecc_common_data not success. (dev_id=%u;)\n", dev_id);
+            return DRV_ERROR_INVALID_HANDLE;
+        }
+    }
+
+    for(idx = 0; idx < HBM_ECC_RECORD_MAX_NUMS; idx++) {
+        dsmi_ecc_common_data_s[idx].physical_addr = 0;
+        dsmi_ecc_common_data_s[idx].stack_pc_id = single_ecc_data[idx].hbmc_id;
+        dsmi_ecc_common_data_s[idx].reg_addr_h = single_ecc_data[idx].single_bit_high_addr;
+        dsmi_ecc_common_data_s[idx].reg_addr_l = single_ecc_data[idx].single_bit_low_addr;
+        dsmi_ecc_common_data_s[idx].ecc_count = single_ecc_data[idx].single_bit_count;
+        dsmi_ecc_common_data_s[idx].timestamp = (int)single_ecc_data[idx].last_appear_time_stamp;
+    }
+    return 0;
+}
+
+int dsmi_udis_get_multi_ecc_info(int dev_id, struct ecc_common_data *dsmi_ecc_common_data_s)
+{
+    int ret;
+    struct udis_dev_info get_info = {0};
+    struct ecc_double_data_info double_ecc_data[HBM_ECC_RECORD_MAX_NUMS] = { 0 };
+    int idx = 0;
+
+    for(; idx < DOUBLE_ECC_INFO_BLOCK_NUMS; idx++) {
+        ret = sprintf_s(get_info.name, UDIS_MAX_NAME_LEN, "%s%d", "multi_ecc", idx);
+        if (ret < 0) {
+            DEV_MON_WARNING("sprintf to udis get_info.name not success. (dev_id=%u;)\n", dev_id);
+            return DRV_ERROR_INVALID_HANDLE;
+        }
+
+        get_info.module_type = UDIS_MODULE_MEMORY;
+        ret = udis_get_device_info((unsigned int)dev_id, &get_info);
+        if (ret != 0) {
+            DEV_MON_WARNING("udis get device info failed: (dev_id=%u)\n", dev_id);
+            return ret;
+        }
+
+        if (get_info.data_len != sizeof(struct ecc_double_data_info) * DOUBLE_ECC_INFO_BLOCK_SIZE) {
+            DEV_MON_WARNING("Expected data_len != actual data_len for isolated_pages_info. (dev_id=%u)\n",
+                                dev_id);
+            return DRV_ERROR_INNER_ERR;
+        }
+
+        ret = memcpy_s(&double_ecc_data[idx * DOUBLE_ECC_INFO_BLOCK_SIZE], get_info.data_len,
+                    get_info.data, get_info.data_len);
+        if (ret != 0) {
+            DEV_MON_WARNING("Memcpy to ecc_common_data not success. (dev_id=%u;)\n", dev_id);
+            return DRV_ERROR_INVALID_HANDLE;
+        }
+    }
+
+    for(idx = 0; idx < HBM_ECC_RECORD_MAX_NUMS; idx++) {
+        dsmi_ecc_common_data_s[idx].stack_pc_id = 0;
+        dsmi_ecc_common_data_s[idx].ecc_count = 0;
+        dsmi_ecc_common_data_s[idx].physical_addr = double_ecc_data[idx].physical_addr;
+        dsmi_ecc_common_data_s[idx].timestamp = double_ecc_data[idx].timer_stamp;
+        dsmi_ecc_common_data_s[idx].reg_addr_h = (uint32_t)(double_ecc_data[idx].row << HIGH_ADDR_COLUMN_BITS_COUNT) |
+            double_ecc_data[idx].column;
+        dsmi_ecc_common_data_s[idx].reg_addr_l = (uint32_t)(double_ecc_data[idx].rank << LOW_ADDR_RANK_BITS_OFFSET) |
+            double_ecc_data[idx].bank;
+    }
+
+    return 0;
+}
+
+int dsmi_udis_multi_ecc_time_info(int dev_id, struct udis_multi_ecc_time_data *multi_ecc_time_data)
+{
+    int ret;
+    struct udis_dev_info get_info = {0};
+    int idx = 0;
+
+    for(idx = 0; idx < DOUBLE_ECC_TIME_INFO_BLOCK_NUMS; idx++) {
+        ret = sprintf_s(get_info.name, UDIS_MAX_NAME_LEN, "%s%d", "multi_time", idx);
+        if (ret < 0) {
+            DEV_MON_WARNING("sprintf to udis get_info.name not success. (dev_id=%u;)\n", dev_id);
+            return DRV_ERROR_INVALID_HANDLE;
+        }
+
+        get_info.module_type = UDIS_MODULE_MEMORY;
+        ret = udis_get_device_info((unsigned int)dev_id, &get_info);
+        if (ret != 0) {
+            return ret;
+        }
+
+        if (get_info.data_len != sizeof(unsigned int) * DOUBLE_ECC_TIME_INFO_BLOCK_SIZE) {
+            DEV_MON_WARNING("Expected data_len != actual data_len for isolated_pages_info. (dev_id=%u)\n",
+                                dev_id);
+            return DRV_ERROR_INNER_ERR;
+        }
+
+        ret = memcpy_s(&multi_ecc_time_data->multi_ecc_times[idx * DOUBLE_ECC_TIME_INFO_BLOCK_SIZE], sizeof(unsigned int) * DOUBLE_ECC_TIME_INFO_BLOCK_SIZE,
+                    get_info.data, get_info.data_len);
+        if (ret != 0) {
+            DEV_MON_WARNING("Memcpy to ecc_common_data not success. (dev_id=%u;)\n", dev_id);
+            return DRV_ERROR_INVALID_HANDLE;
+        }
+    }
+    ret = sprintf_s(get_info.name, UDIS_MAX_NAME_LEN, "mul_ecc_cnt");
+    if (ret < 0) {
+        DEV_MON_WARNING("sprintf to udis get_info.name not success. (dev_id=%u;)\n", dev_id);
+        return DRV_ERROR_INVALID_HANDLE;
+    }
+
+    get_info.module_type = UDIS_MODULE_MEMORY;
+    ret = udis_get_device_info((unsigned int)dev_id, &get_info);
+    if (ret != 0) {
+        return ret;
+    }
+
+    if (get_info.data_len != sizeof(unsigned int)) {
+        DEV_MON_WARNING("Expected data_len != actual data_len for isolated_pages_info. (dev_id=%u)\n",
+                            dev_id);
+        return DRV_ERROR_INNER_ERR;
+    }
+
+    ret = memcpy_s(&multi_ecc_time_data->multi_record_count, sizeof(unsigned int),
+                get_info.data, get_info.data_len);
+    if (ret != 0) {
+        DEV_MON_WARNING("Memcpy to ecc_common_data not success. (dev_id=%u;)\n", dev_id);
+        return DRV_ERROR_INVALID_HANDLE;
+    }
     return 0;
 }

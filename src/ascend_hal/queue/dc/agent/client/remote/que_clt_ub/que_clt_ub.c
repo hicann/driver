@@ -174,13 +174,14 @@ static void que_clt_ub_res_uninit(unsigned int dev_id, bool uninit_flag)
 static drvError_t que_clt_mem_alloc(void **addr, unsigned long long size)
 {
     int ret;
-    void *addr_tmp = valloc(size);
+    unsigned long long align_size = que_align_up(size, (size_t)getpagesize());
+    void *addr_tmp = valloc(align_size);
     if (que_unlikely(addr_tmp == NULL)) {
-        QUEUE_LOG_ERR("que clt mem alloc fail. (size=%llu)\n", size);
+        QUEUE_LOG_ERR("que clt mem alloc fail. (size=%llu)\n", align_size);
         return DRV_ERROR_OUT_OF_MEMORY;
     }
 
-    ret = memset_s(addr_tmp, size, 0, size);
+    ret = memset_s(addr_tmp, align_size, 0, align_size);
     if (que_unlikely(ret != DRV_ERROR_NONE)) {
         QUEUE_LOG_ERR("memset fail. (ret=%d)\n", ret);
         free(addr_tmp);
@@ -202,9 +203,17 @@ static drvError_t que_clt_init(unsigned int dev_id)
 {
     struct que_init_in_msg in;
     struct que_init_out_msg out;
-    struct que_event_msg event_msg = {.in = (char *)&in, .in_len = sizeof(struct que_init_in_msg), .out = (char *)&out, .out_len = sizeof(struct que_init_out_msg)};
-    struct que_event_attr attr = {.devid = dev_id, .sub_event = DRV_SUBEVENT_QUEUE_INIT_MSG, .retry_flg = QUE_SEND_WITH_RETRY};
+    struct que_event_msg event_msg = {.in = (char *)&in,
+                                      .in_len = sizeof(struct que_init_in_msg),
+                                      .out = (char *)&out,
+                                      .out_len = sizeof(struct que_init_out_msg)};
+    struct que_event_attr attr = {
+        .devid = dev_id, .sub_event = DRV_SUBEVENT_QUEUE_INIT_MSG, .retry_flg = QUE_SEND_WITH_RETRY};
     int ret;
+
+    if (dev_id == halGetHostDevid()) {
+        return DRV_ERROR_NOT_SUPPORT;
+    }
 
     ret = que_clt_ub_res_init(dev_id);
     if (que_unlikely((ret != DRV_ERROR_NONE) && (ret != DRV_ERROR_REPEATED_INIT))) {
@@ -214,7 +223,7 @@ static drvError_t que_clt_init(unsigned int dev_id)
 
     (void)pthread_mutex_lock(&g_clt_queue_mutex);
     if (g_queue_clt_init_status[dev_id] == QUEUE_INITED) {
-       (void)pthread_mutex_unlock(&g_clt_queue_mutex);
+        (void)pthread_mutex_unlock(&g_clt_queue_mutex);
         return DRV_ERROR_REPEATED_INIT;
     }
 
@@ -257,7 +266,7 @@ static void que_clt_uninit(unsigned int dev_id, unsigned int scene)
     que_thread_cancle(dev_id);
     /* free all chan for client queue */
     for (qid_idx = 0; qid_idx < CLIENT_QID_OFFSET; qid_idx++) {
-        ret = que_ctx_chan_destroy(dev_id, qid_idx);
+        ret = que_ctx_chan_destroy(dev_id, (unsigned int)qid_idx);
         if (que_unlikely(ret != DRV_ERROR_NONE)) {
             QUEUE_RUN_LOG_INFO("que destroy chan. (ret=%d; devid=%u; qid=%u)\n", ret, dev_id, qid_idx);
         }
@@ -271,20 +280,23 @@ static void que_clt_uninit(unsigned int dev_id, unsigned int scene)
     que_urma_ctx_put_ex(dev_id);
 
     /* clear grp id for cp process */
-    que_init_grpid_by_dev(dev_id);
+    que_init_grpid_by_dev((int)dev_id);
     g_queue_clt_init_status[dev_id] = 0;
     g_queue_tgid = -1;
 }
 
-static int que_clt_create_send(unsigned int devid, const QueueAttr *que_attr, unsigned int *qid, unsigned long *create_time)
+static int que_clt_create_send(unsigned int devid, const QueueAttr *que_attr, unsigned int *qid,
+                               unsigned long *create_time)
 {
     struct que_create_in_msg in;
     struct que_create_out_msg out;
-    struct que_event_msg event_msg = {.in = (char *)&in, .in_len = sizeof(struct que_create_in_msg),
-        .out = (char *)&out, .out_len = sizeof(struct que_create_out_msg)};
+    struct que_event_msg event_msg = {.in = (char *)&in,
+                                      .in_len = sizeof(struct que_create_in_msg),
+                                      .out = (char *)&out,
+                                      .out_len = sizeof(struct que_create_out_msg)};
     int ret;
 
-    ret = memcpy_s((void *)&in.que_attr, sizeof(QueueAttr), (void *)que_attr, sizeof(QueueAttr));
+    ret = memcpy_s((void *)&in.que_attr, sizeof(QueueAttr), (const void *)que_attr, sizeof(QueueAttr));
     if (que_unlikely(ret != EOK)) {
         return DRV_ERROR_MEMORY_OPT_FAIL;
     }
@@ -303,8 +315,8 @@ static int que_clt_create_send(unsigned int devid, const QueueAttr *que_attr, un
 static int que_clt_destroy_send(unsigned int devid, unsigned int qid)
 {
     struct que_destoy_in_msg in = {.qid = qid};
-    struct que_event_msg event_msg = {.in = (char *)&in, .in_len = sizeof(struct que_destoy_in_msg),
-            .out = NULL, .out_len = 0};
+    struct que_event_msg event_msg = {
+        .in = (char *)&in, .in_len = sizeof(struct que_destoy_in_msg), .out = NULL, .out_len = 0};
     int ret;
 
     ret = que_event_send_ex(devid, QUE_SEND_NORMAL, DRV_SUBEVENT_DESTROY_MSG, &event_msg, QUE_EVENT_MAX_WAIT_10S);
@@ -316,10 +328,9 @@ static int que_clt_destroy_send(unsigned int devid, unsigned int qid)
     return DRV_ERROR_NONE;
 }
 
-
 static void queue_sub_init(unsigned int dev_id, unsigned int qid)
 {
-    struct que_ctx* ctx = NULL;
+    struct que_ctx *ctx = NULL;
     struct queue_sub_flag *subflag = NULL;
 
     ctx = que_ctx_get(dev_id);
@@ -372,14 +383,14 @@ static drvError_t que_clt_create(unsigned int dev_id, const QueueAttr *que_attr,
 static drvError_t que_clt_grant(unsigned int dev_id, unsigned int qid, int pid, QueueShareAttr attr)
 {
     QueueGrantPara in = {.devid = dev_id, .qid = qid, .pid = pid, .attr = attr};
-    struct que_event_msg event_msg = {.in = (char *)&in, .in_len = sizeof(QueueGrantPara),
-            .out = NULL, .out_len = 0};
+    char grant_out[EVENT_PROC_RSP_LEN];
+    struct que_event_msg event_msg = {
+        .in = (char *)&in, .in_len = sizeof(QueueGrantPara), .out = grant_out, .out_len = EVENT_PROC_RSP_LEN};
     int ret;
 
     ret = que_event_send_ex(dev_id, QUE_SEND_WITH_RETRY, DRV_SUBEVENT_GRANT_MSG, &event_msg, QUE_EVENT_MAX_WAIT_10S);
     if (que_unlikely(ret != DRV_ERROR_NONE)) {
-        QUEUE_LOG_ERR("grant event send fail. (ret=%d; devid=%u; qid=%u; pid=%d)\n",
-            ret, dev_id, qid, pid);
+        QUEUE_LOG_ERR("grant event send fail. (ret=%d; devid=%u; qid=%u; pid=%d)\n", ret, dev_id, qid, pid);
         return ret;
     }
 
@@ -389,9 +400,11 @@ static drvError_t que_clt_grant(unsigned int dev_id, unsigned int qid, int pid, 
 static drvError_t que_clt_attach(unsigned int dev_id, unsigned int qid, int time_out)
 {
     struct que_attach_in_msg in = {.qid = qid, .timeout = time_out};
-    struct que_attach_out_msg out;
-    struct que_event_msg event_msg = {.in = (char *)&in, .in_len = sizeof(struct que_attach_in_msg),
-            .out = (char *)&out, .out_len = sizeof(struct que_attach_out_msg)};
+    union que_attach_out_msg out;
+    struct que_event_msg event_msg = {.in = (char *)&in,
+                                      .in_len = sizeof(struct que_attach_in_msg),
+                                      .out = (char *)&out,
+                                      .out_len = EVENT_PROC_RSP_LEN};
     int ret;
 
     ret = que_event_send_ex(dev_id, QUE_SEND_NORMAL, DRV_SUBEVENT_ATTACH_MSG, &event_msg, QUE_EVENT_MAX_WAIT_10S);
@@ -434,11 +447,11 @@ static drvError_t que_clt_destroy(unsigned int dev_id, unsigned int qid)
     return DRV_ERROR_NONE;
 }
 
-static drvError_t que_clt_reset(unsigned int dev_id,  unsigned int qid)
+static drvError_t que_clt_reset(unsigned int dev_id, unsigned int qid)
 {
     struct que_reset_in_msg in = {.qid = qid};
-    struct que_event_msg event_msg = {.in = (char *)&in, .in_len = sizeof(struct que_reset_in_msg),
-            .out = NULL, .out_len = 0};
+    struct que_event_msg event_msg = {
+        .in = (char *)&in, .in_len = sizeof(struct que_reset_in_msg), .out = NULL, .out_len = 0};
     int ret;
 
     ret = que_event_send_ex(dev_id, QUE_SEND_NORMAL, DRV_SUBEVENT_QUEUE_RESET_MSG, &event_msg, QUE_EVENT_MAX_WAIT_10S);
@@ -450,41 +463,58 @@ static drvError_t que_clt_reset(unsigned int dev_id,  unsigned int qid)
     return DRV_ERROR_NONE;
 }
 
-static drvError_t que_clt_enque(unsigned int dev_id,  unsigned int qid, void *mbuf)
+static drvError_t que_clt_enque(unsigned int dev_id, unsigned int qid, void *mbuf)
 {
+    (void)dev_id;
+    (void)qid;
+    (void)mbuf;
     return DRV_ERROR_NOT_SUPPORT;
 }
 
 static drvError_t que_clt_deque(unsigned int dev_id, unsigned int qid, void **mbuf)
 {
+    (void)dev_id;
+    (void)qid;
+    (void)mbuf;
     return DRV_ERROR_NOT_SUPPORT;
 }
 
 static drvError_t que_clt_subscribe(unsigned int dev_id, unsigned int qid, unsigned int group_id, int type)
 {
+    (void)dev_id;
+    (void)qid;
+    (void)group_id;
+    (void)type;
     return DRV_ERROR_NOT_SUPPORT;
 }
 
 static drvError_t que_clt_unsubscribe(unsigned int dev_id, unsigned int qid)
 {
+    (void)dev_id;
+    (void)qid;
     return DRV_ERROR_NOT_SUPPORT;
 }
 
 static drvError_t que_clt_subf2nf_event(unsigned int dev_id, unsigned int qid, unsigned int group_id)
 {
+    (void)dev_id;
+    (void)qid;
+    (void)group_id;
     return DRV_ERROR_NOT_SUPPORT;
 }
 
 static drvError_t que_clt_unsubf2nf_event(unsigned int dev_id, unsigned int qid)
 {
+    (void)dev_id;
+    (void)qid;
     return DRV_ERROR_NOT_SUPPORT;
 }
 
 static drvError_t que_clt_sub_event(struct QueueSubPara *sub_para)
 {
     struct que_sub_event_in_msg in = {.qid = sub_para->qid, .grp_id = sub_para->groupId};
-    struct que_event_msg event_msg = {.in = (char *)&in, .in_len = sizeof(struct que_sub_event_in_msg),
-            .out = NULL, .out_len = 0};
+    struct que_event_msg event_msg = {
+        .in = (char *)&in, .in_len = sizeof(struct que_sub_event_in_msg), .out = NULL, .out_len = 0};
     struct que_event_attr attr = {.devid = sub_para->devId};
     unsigned int dst_phy_dev_id = QUEUE_INVALID_VALUE;
     pid_t hostpid, devpid;
@@ -498,8 +528,8 @@ static drvError_t que_clt_sub_event(struct QueueSubPara *sub_para)
     if ((sub_para->flag & QUEUE_SUB_FLAG_SPEC_DST_DEVID) != 0) {
         ret = uda_get_udevid_by_devid(sub_para->dstDevId, &dst_phy_dev_id);
         if (que_unlikely(ret != DRV_ERROR_NONE)) {
-            QUEUE_LOG_ERR("get udevid failed. (ret=%d; devid=%u, qid=%u; hostpid=%d; devpid=%d)\n",
-                ret, sub_para->devId, sub_para->qid, hostpid, devpid);
+            QUEUE_LOG_ERR("get udevid failed. (ret=%d; devid=%u, qid=%u; hostpid=%d; devpid=%d)\n", ret,
+                          sub_para->devId, sub_para->qid, hostpid, devpid);
             return ret;
         }
     }
@@ -515,28 +545,28 @@ static drvError_t que_clt_sub_event(struct QueueSubPara *sub_para)
     attr.retry_flg = QUE_SEND_NORMAL;
     ret = que_event_send(&attr, &event_msg, QUE_EVENT_MAX_WAIT_10S);
     if (que_unlikely(ret != DRV_ERROR_NONE)) {
-        QUEUE_LOG_ERR("sub event send fail. (ret=%d; devid=%u; qid=%u; hostpid=%d; devpid=%d)\n",
-            ret, sub_para->devId, in.qid, hostpid, devpid);
+        QUEUE_LOG_ERR("sub event send fail. (ret=%d; devid=%u; qid=%u; hostpid=%d; devpid=%d)\n", ret, sub_para->devId,
+                      in.qid, hostpid, devpid);
         return ret;
     }
 
     ret = que_sub_status_set(sub_para, sub_para->devId, sub_para->qid);
     if (que_unlikely(ret != DRV_ERROR_NONE)) {
-        QUEUE_LOG_ERR("que sub status set fail. (ret=%d; devid=%u; qid=%u)\n",
-            ret, sub_para->devId, in.qid);
+        QUEUE_LOG_ERR("que sub status set fail. (ret=%d; devid=%u; qid=%u)\n", ret, sub_para->devId, in.qid);
         return ret;
     }
 
     (void)queue_register_callback(sub_para->groupId);
-    QUEUE_LOG_INFO("sub event. (dev_id=%u; qid=%u; event_type=%d)\n", sub_para->devId, sub_para->qid, sub_para->eventType);
+    QUEUE_LOG_INFO("sub event. (dev_id=%u; qid=%u; event_type=%d)\n", sub_para->devId, sub_para->qid,
+                   sub_para->eventType);
     return DRV_ERROR_NONE;
 }
 
 static drvError_t que_clt_unsub_event(struct QueueUnsubPara *unsub_para)
 {
     struct que_unsub_event_in_msg in = {.qid = unsub_para->qid};
-    struct que_event_msg event_msg = {.in = (char *)&in, .in_len = sizeof(struct que_unsub_event_in_msg),
-            .out = NULL, .out_len = 0};
+    struct que_event_msg event_msg = {
+        .in = (char *)&in, .in_len = sizeof(struct que_unsub_event_in_msg), .out = NULL, .out_len = 0};
     unsigned int sub_event;
     pid_t hostpid, devpid;
     int ret;
@@ -554,25 +584,26 @@ static drvError_t que_clt_unsub_event(struct QueueUnsubPara *unsub_para)
     sub_event = (unsub_para->eventType == QUEUE_F2NF_EVENT) ? DRV_SUBEVENT_UNSUBF2NF_MSG : DRV_SUBEVENT_UNSUBE2NE_MSG;
     ret = que_event_send_ex(unsub_para->devId, QUE_SEND_NORMAL, sub_event, &event_msg, QUE_EVENT_MAX_WAIT_10S);
     if (que_unlikely(ret != DRV_ERROR_NONE)) {
-        QUEUE_LOG_ERR("unsub event send fail. (ret=%d; devid=%u; qid=%u; sub_event=%u)\n",
-            ret, unsub_para->devId, in.qid, sub_event);
+        QUEUE_LOG_ERR("unsub event send fail. (ret=%d; devid=%u; qid=%u; sub_event=%u)\n", ret, unsub_para->devId,
+                      in.qid, sub_event);
         return ret;
     }
 
     ret = que_unsub_status_set(unsub_para, unsub_para->devId, unsub_para->qid);
     if (que_unlikely(ret != DRV_ERROR_NONE)) {
-        QUEUE_LOG_ERR("que sub status set fail. (ret=%d; devid=%u; qid=%u)\n",
-            ret, unsub_para->devId, in.qid);
+        QUEUE_LOG_ERR("que sub status set fail. (ret=%d; devid=%u; qid=%u)\n", ret, unsub_para->devId, in.qid);
         return ret;
     }
 
-    QUEUE_LOG_INFO("unsub event. (dev_id=%u; qid=%u; event_type=%d)\n",
-        unsub_para->devId, unsub_para->qid, unsub_para->eventType);
+    QUEUE_LOG_INFO("unsub event. (dev_id=%u; qid=%u; event_type=%d)\n", unsub_para->devId, unsub_para->qid,
+                   unsub_para->eventType);
     return DRV_ERROR_NONE;
 }
 
 static drvError_t que_clt_ctrl_event(struct QueueSubscriber *subscriber, QUE_EVENT_CMD cmd_type)
 {
+    (void)subscriber;
+    (void)cmd_type;
     return DRV_ERROR_NOT_SUPPORT;
 }
 
@@ -580,8 +611,10 @@ static drvError_t que_clt_query_info(unsigned int dev_id, unsigned int qid, Queu
 {
     struct que_query_info_in_msg in = {.qid = qid};
     struct que_query_info_out_msg out;
-    struct que_event_msg event_msg = {.in = (char *)&in, .in_len = sizeof(struct que_query_info_in_msg),
-        .out = (char *)&out, .out_len = sizeof(struct que_query_info_out_msg)};
+    struct que_event_msg event_msg = {.in = (char *)&in,
+                                      .in_len = sizeof(struct que_query_info_in_msg),
+                                      .out = (char *)&out,
+                                      .out_len = sizeof(struct que_query_info_out_msg)};
     int ret;
 
     ret = que_event_send_ex(dev_id, QUE_SEND_WITH_RETRY, DRV_SUBEVENT_QUERY_MSG, &event_msg, QUE_EVENT_MAX_WAIT_10S);
@@ -596,15 +629,18 @@ static drvError_t que_clt_query_info(unsigned int dev_id, unsigned int qid, Queu
 }
 
 static drvError_t que_clt_get_status(unsigned int dev_id, unsigned int qid, QUEUE_QUERY_ITEM query_item,
-    unsigned int len, void *data)
+                                     unsigned int len, void *data)
 {
     struct que_get_status_in_msg in = {.qid = qid, .query_item = query_item, .out_len = len};
     struct que_get_status_out_msg out;
-    struct que_event_msg event_msg = {.in = (char *)&in, .in_len = sizeof(struct que_get_status_in_msg),
-        .out = (char *)&out, .out_len = sizeof(struct que_get_status_out_msg)};
+    struct que_event_msg event_msg = {.in = (char *)&in,
+                                      .in_len = sizeof(struct que_get_status_in_msg),
+                                      .out = (char *)&out,
+                                      .out_len = sizeof(struct que_get_status_out_msg)};
     int ret;
 
-    ret = que_event_send_ex(dev_id, QUE_SEND_NORMAL, DRV_SUBEVENT_GET_QUEUE_STATUS_MSG, &event_msg, QUE_EVENT_TIMEOUT_MS);
+    ret = que_event_send_ex(dev_id, QUE_SEND_NORMAL, DRV_SUBEVENT_GET_QUEUE_STATUS_MSG, &event_msg,
+                            QUE_EVENT_TIMEOUT_MS);
     if (que_unlikely(ret != DRV_ERROR_NONE)) {
         QUEUE_LOG_ERR("get que status event send fail. (ret=%d; devid=%u; qid=%u)\n", ret, dev_id, qid);
         return ret;
@@ -621,19 +657,29 @@ static drvError_t que_clt_get_status(unsigned int dev_id, unsigned int qid, QUEU
 
 static drvError_t que_clt_get_qid_by_name(unsigned int dev_id, const char *name, unsigned int *qid)
 {
+    (void)dev_id;
+    (void)name;
+    (void)qid;
     return DRV_ERROR_NOT_SUPPORT;
 }
 
-static drvError_t que_clt_get_qid_by_pid(unsigned int dev_id, unsigned int pid,
-    unsigned int max_que_size, QidsOfPid *info)
+static drvError_t que_clt_get_qid_by_pid(unsigned int dev_id, unsigned int pid, unsigned int max_que_size,
+                                         QidsOfPid *info)
 {
+    (void)dev_id;
+    (void)pid;
+    (void)max_que_size;
+    (void)info;
     return DRV_ERROR_NOT_SUPPORT;
 }
 
 static drvError_t que_clt_query_max_iovec_num(unsigned int dev_id, QueueQueryInputPara *in_put,
-    QueueQueryOutputPara *out_put)
+                                              QueueQueryOutputPara *out_put)
 {
     QueueQueryOutput *out_buff = (QueueQueryOutput *)(out_put->outBuff);
+
+    (void)dev_id;
+    (void)in_put;
 
     if (que_unlikely(out_put->outLen < sizeof(QueQueryMaxIovecNum))) {
         QUEUE_LOG_ERR("Input para error. (out_len=%u)\n", out_put->outLen);
@@ -645,13 +691,13 @@ static drvError_t que_clt_query_max_iovec_num(unsigned int dev_id, QueueQueryInp
     return DRV_ERROR_NONE;
 }
 
-static drvError_t (*g_queue_query[QUEUE_QUERY_CMD_MAX])
-    (unsigned int dev_id, QueueQueryInputPara *in_put, QueueQueryOutputPara *out_put) = {
-        [QUEUE_QUERY_MAX_IOVEC_NUM] = que_clt_query_max_iovec_num,
+static drvError_t (*g_queue_query[QUEUE_QUERY_CMD_MAX])(unsigned int dev_id, QueueQueryInputPara *in_put,
+                                                        QueueQueryOutputPara *out_put) = {
+    [QUEUE_QUERY_MAX_IOVEC_NUM] = que_clt_query_max_iovec_num,
 };
 
-static drvError_t que_clt_query(unsigned int dev_id, QueueQueryCmdType cmd,
-    QueueQueryInputPara *in_put, QueueQueryOutputPara *out_put)
+static drvError_t que_clt_query(unsigned int dev_id, QueueQueryCmdType cmd, QueueQueryInputPara *in_put,
+                                QueueQueryOutputPara *out_put)
 {
     if (g_queue_query[cmd] == NULL) {
         return DRV_ERROR_NOT_SUPPORT;
@@ -661,24 +707,33 @@ static drvError_t que_clt_query(unsigned int dev_id, QueueQueryCmdType cmd,
 }
 
 static drvError_t que_clt_peek_data(unsigned int dev_id, unsigned int qid, unsigned int flag, QueuePeekDataType type,
-    void **mbuf)
+                                    void **mbuf)
 {
+    (void)dev_id;
+    (void)qid;
+    (void)flag;
+    (void)type;
+    (void)mbuf;
     return DRV_ERROR_NOT_SUPPORT;
 }
 
 static drvError_t que_clt_set(unsigned int dev_id, QueueSetCmdType cmd, QueueSetInputPara *input)
 {
+    (void)dev_id;
+    (void)cmd;
+    (void)input;
     return DRV_ERROR_NOT_SUPPORT;
 }
 
 static void que_clt_finish_cb(unsigned int dev_id, unsigned int qid, unsigned int grp_id, unsigned int event_id)
 {
     struct que_finish_cb_in_msg in = {.qid = qid, .grp_id = grp_id, .event_id = event_id};
-    struct que_event_msg event_msg = {.in = (char *)&in, .in_len = sizeof(struct que_finish_cb_in_msg),
-        .out = NULL, .out_len = 0};
+    struct que_event_msg event_msg = {
+        .in = (char *)&in, .in_len = sizeof(struct que_finish_cb_in_msg), .out = NULL, .out_len = 0};
     int ret;
 
-    ret = que_event_send_ex(dev_id, QUE_SEND_NORMAL, DRV_SUBEVENT_FINISH_CALLBACK_MSG, &event_msg, QUE_EVENT_TIMEOUT_MS);
+    ret = que_event_send_ex(dev_id, QUE_SEND_NORMAL, DRV_SUBEVENT_FINISH_CALLBACK_MSG, &event_msg,
+                            QUE_EVENT_TIMEOUT_MS);
     if (que_unlikely(ret != DRV_ERROR_NONE)) {
         QUEUE_LOG_ERR("finish cb send fail. (ret=%d; devid=%u; qid=%u; grp_id=%u)\n", ret, dev_id, qid, grp_id);
     }
@@ -688,8 +743,10 @@ static drvError_t que_clt_api_peek(unsigned int dev_id, unsigned int qid, uint64
 {
     struct que_peek_in_msg in = {.qid = qid};
     struct que_peek_out_msg out;
-    struct que_event_msg event_msg = {.in = (char *)&in, .in_len = sizeof(struct que_peek_in_msg),
-            .out = (char *)&out, .out_len = sizeof(struct que_peek_out_msg)};
+    struct que_event_msg event_msg = {.in = (char *)&in,
+                                      .in_len = sizeof(struct que_peek_in_msg),
+                                      .out = (char *)&out,
+                                      .out_len = sizeof(struct que_peek_out_msg)};
     int ret;
 
     ret = que_clt_send_event_with_wait(dev_id, qid, DRV_SUBEVENT_PEEK_MSG, &event_msg, timeout);
@@ -726,13 +783,16 @@ static drvError_t que_clt_api_deque(unsigned int dev_id, unsigned int qid, struc
     return DRV_ERROR_NONE;
 }
 
-static drvError_t que_clt_api_subscribe(unsigned int dev_id, unsigned int qid,
-    unsigned int subevent_id, struct event_res *res)
+static drvError_t que_clt_api_subscribe(unsigned int dev_id, unsigned int qid, unsigned int subevent_id,
+                                        struct event_res *res)
 {
-    struct que_sub_event_in_msg in = {.qid = qid, .grp_id = res->gid, .tid = QUEUE_INVALID_VALUE,
-        .event_id = res->event_id, .dst_phy_devid = QUEUE_INVALID_VALUE};
-    struct que_event_msg event_msg = {.in = (char *)&in, .in_len = sizeof(struct que_sub_event_in_msg),
-            .out = NULL, .out_len = 0};
+    struct que_sub_event_in_msg in = {.qid = qid,
+                                      .grp_id = res->gid,
+                                      .tid = QUEUE_INVALID_VALUE,
+                                      .event_id = res->event_id,
+                                      .dst_phy_devid = QUEUE_INVALID_VALUE};
+    struct que_event_msg event_msg = {
+        .in = (char *)&in, .in_len = sizeof(struct que_sub_event_in_msg), .out = NULL, .out_len = 0};
     struct que_event_attr attr = {.devid = dev_id, .sub_event = subevent_id};
     pid_t hostpid, devpid;
     int ret;
@@ -752,8 +812,8 @@ static drvError_t que_clt_api_subscribe(unsigned int dev_id, unsigned int qid,
 
     ret = que_event_send(&attr, &event_msg, QUE_EVENT_MAX_WAIT_10S);
     if (que_unlikely(ret != DRV_ERROR_NONE)) {
-        QUEUE_LOG_ERR("que sub event send fail. (ret=%d; devid=%u; qid=%u; hostpid=%d; devpid=%d)\n",
-            ret, dev_id, in.qid, hostpid, devpid);
+        QUEUE_LOG_ERR("que sub event send fail. (ret=%d; devid=%u; qid=%u; hostpid=%d; devpid=%d)\n", ret, dev_id,
+                      in.qid, hostpid, devpid);
         return ret;
     }
 
@@ -763,8 +823,8 @@ static drvError_t que_clt_api_subscribe(unsigned int dev_id, unsigned int qid,
 static drvError_t que_clt_api_unsubscribe(unsigned int dev_id, unsigned int qid, unsigned int subevent_id)
 {
     struct que_unsub_event_in_msg in = {.qid = qid};
-    struct que_event_msg event_msg = {.in = (char *)&in, .in_len = sizeof(struct que_unsub_event_in_msg),
-            .out = NULL, .out_len = 0};
+    struct que_event_msg event_msg = {
+        .in = (char *)&in, .in_len = sizeof(struct que_unsub_event_in_msg), .out = NULL, .out_len = 0};
     int ret;
 
     ret = que_event_send_ex(dev_id, QUE_SEND_NORMAL, subevent_id, &event_msg, QUE_EVENT_MAX_WAIT_10S);
@@ -778,8 +838,10 @@ static drvError_t que_clt_api_unsubscribe(unsigned int dev_id, unsigned int qid,
 
 drvError_t que_clt_query_que_alive(unsigned int dev_id, struct que_query_alive_msg *qid_list)
 {
-    struct que_event_msg event_msg = {.in = (char *)qid_list, .in_len = sizeof(struct que_query_alive_msg),
-        .out = (char *)qid_list, .out_len =sizeof(struct que_query_alive_msg)};
+    struct que_event_msg event_msg = {.in = (char *)qid_list,
+                                      .in_len = sizeof(struct que_query_alive_msg),
+                                      .out = (char *)qid_list,
+                                      .out_len = sizeof(struct que_query_alive_msg)};
     int ret;
 
     ret = que_event_send_ex(dev_id, QUE_SEND_NORMAL, DRV_SUBEVENT_QUEUE_ALIVE_MSG, &event_msg, QUE_EVENT_TIMEOUT_MS);
@@ -821,13 +883,11 @@ static struct queue_comm_interface_list g_que_clt_ub_intf = {
     .queue_unimport = NULL,
 };
 
-static struct que_clt_api g_clt_ub_api = {
-    .api_peek = que_clt_api_peek,
-    .api_enque_buf = que_clt_api_enque,
-    .api_deque_buf = que_clt_api_deque,
-    .api_subscribe = que_clt_api_subscribe,
-    .api_unsubscribe = que_clt_api_unsubscribe
-};
+static struct que_clt_api g_clt_ub_api = {.api_peek = que_clt_api_peek,
+                                          .api_enque_buf = que_clt_api_enque,
+                                          .api_deque_buf = que_clt_api_deque,
+                                          .api_subscribe = que_clt_api_subscribe,
+                                          .api_unsubscribe = que_clt_api_unsubscribe};
 
 struct que_clt_api *que_clt_ub_get_api(void)
 {
@@ -864,7 +924,6 @@ static int __attribute__((constructor)) que_clt_res_init(void)
 #else /* EMU_ST */
 
 void que_clt_ub_emu_test(void)
-{
-}
+{}
 
 #endif /* EMU_ST */

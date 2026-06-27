@@ -190,7 +190,7 @@ retry:
         ka_fs_filp_close(fp, NULL);
         return -EIO;
     }
-    len_integer = kernel_read(fp, buf, (ssize_t)(filesize), &pos);
+    len_integer = ka_fs_kernel_read(fp, buf, (ssize_t)(filesize), &pos);
     if (len_integer != (ssize_t)(filesize)) {
         ubdrv_err("Read file fail. (file_size=%d)\n", filesize);
         ka_fs_filp_close(fp, NULL);

@@ -716,7 +716,7 @@ void devdrv_notify_blackbox_err(u32 devid, u32 code)
     stamp = ka_system_current_kernel_time();
 
     if (g_black_box.callback != NULL) {
-        devdrv_info("Get blaclbox code. (dev_id=%u; blaclbox_code=%u)\n", devid, code);
+        devdrv_info("Get blackbox code. (dev_id=%u; blaclbox_code=%u)\n", devid, code);
         g_black_box.callback(devid, code, stamp);
     }
 }

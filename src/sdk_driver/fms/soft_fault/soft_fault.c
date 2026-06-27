@@ -42,9 +42,7 @@
 #include "ka_pci_pub.h"
 #include "ka_common_pub.h"
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 17, 0)
 #include "pbl/pbl_kernel_adapt.h"
-#endif
 
 #define EVENT_EXIST 1
 #ifdef CFG_EDGE_HOST
@@ -61,6 +59,7 @@ STATIC const ka_pci_device_id_t soft_fault_driver_tbl[] = {
     { KA_PCI_VDEVICE(HUAWEI, 0xd805), 0 },
     { KA_PCI_VDEVICE(HUAWEI, 0xd806), 0 },
     { KA_PCI_VDEVICE(HUAWEI, 0xd807), 0 },
+    { KA_PCI_VDEVICE(HUAWEI, 0xd808), 0 },
     { DEVDRV_DIVERSITY_PCIE_VENDOR_ID, 0xd500, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0 },
     { 0x20C6, 0xd500, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0 },
     { 0x203F, 0xd500, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0 },
@@ -181,15 +180,42 @@ STATIC int soft_add_fault_event(struct soft_error_list *error_new, struct soft_e
     ka_list_for_each_entry_safe(pos, n, &event_queue->error_list.list, list) {
         if ((pos->error.sensor_type == error_new->error.sensor_type) &&
             (pos->error.err_type == error_new->error.err_type)) {
+            if (pos->report_status == EVENT_REPORT_RECOVERED) {
+                pos->report_status = EVENT_REPORT_INIT;
+            }
             ka_task_mutex_unlock(&event_queue->mutex);
             return EVENT_EXIST; /* It means found fault event already in event list, don't need add */
         }
     }
     ka_list_add(&error_new->list, &event_queue->error_list.list); /* add new event to queue */
     event_queue->error_num++;
+    error_new->report_status = EVENT_REPORT_INIT;
     ka_task_mutex_unlock(&event_queue->mutex);
 
     return 0;
+}
+
+/*
+ * true means the queued event should be removed when the corresponding processing stage arrives.
+ * For example, EVENT_REPORT_RECOVERED + EVENT_REPORT_SCANNED is true because recover arrives before
+ * the first scan, so the event should be reported once in scan and then removed from the queue.
+ */
+STATIC const bool err_report_status_table[EVENT_REPORT_STATUS_MAX][EVENT_REPORT_STATUS_MAX] = {
+/* row: report_status           col: process_status */
+/* ------------------------------------------------ */
+/*                              EVENT_REPORT_INIT   EVENT_REPORT_SCANNED EVENT_REPORT_RECOVERED */
+/* EVENT_REPORT_INIT */         {false,             false,               false},
+/* EVENT_REPORT_SCANNED */      {false,             false,               true},
+/* EVENT_REPORT_RECOVERED */    {false,             true,                false},
+};
+
+STATIC bool check_error_report_status(EVENT_REPORT_STATUS err_status, EVENT_REPORT_STATUS process_status)
+{
+    if (err_status >= EVENT_REPORT_STATUS_MAX || process_status >= EVENT_REPORT_STATUS_MAX) {
+        return false;
+    }
+
+    return err_report_status_table[err_status][process_status];
 }
 
 STATIC bool is_soft_fault_recover(struct soft_event *event_queue, struct soft_fault *event_new)
@@ -199,15 +225,18 @@ STATIC bool is_soft_fault_recover(struct soft_event *event_queue, struct soft_fa
     struct soft_error_list *n = NULL;
     struct soft_fault *event = NULL;
 
-    ka_system_msleep(SF_SENSOR_SCAN_TIME * 2); /* sleep 2 scan time to wait error report */
     ka_task_mutex_lock(&event_queue->mutex);
     ka_list_for_each_entry_safe(pos, n, &event_queue->error_list.list, list) {
         event = &pos->error;
         if ((event->err_type == event_new->err_type) && (event->assertion == GENERAL_EVENT_TYPE_OCCUR)) {
-            ka_list_del(&pos->list);
-            dbl_kfree(pos);
-            pos = NULL;
-            event_queue->error_num--;
+            if (check_error_report_status(pos->report_status, EVENT_REPORT_RECOVERED)) {
+                ka_list_del(&pos->list);
+                dbl_kfree(pos);
+                pos = NULL;
+                event_queue->error_num--;
+            } else {
+                pos->report_status = EVENT_REPORT_RECOVERED;
+            }
             recover_flag = true;
         }
     }
@@ -276,11 +305,14 @@ int soft_fault_event_scan(unsigned long long private_data, struct dms_sensor_eve
             continue;
         }
 
-        if (event->assertion == GENERAL_EVENT_TYPE_ONE_TIME) { /*  notification_event check. */
+        if ((event->assertion == GENERAL_EVENT_TYPE_ONE_TIME) ||
+            check_error_report_status(pos->report_status, EVENT_REPORT_SCANNED)) { /*  notification_event check. */
             ka_list_del(&pos->list);
             dbl_kfree(pos);
             pos = NULL;
             event_queue->error_num--;
+        } else {
+            pos->report_status = EVENT_REPORT_SCANNED;
         }
         data->event_count++;
         if (data->event_count == DMS_MAX_SENSOR_EVENT_COUNT) {
@@ -542,13 +574,8 @@ STATIC int soft_exit_notifier(ka_notifier_block_t *nb, unsigned long mode, void 
     (void)nb;
     (void)mode;
     /* This code ensures that soft_fault resource can be released when the process exit abnormally */
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 17, 0)
-    if ((task != NULL) && (task->tgid != 0) && (task->tgid == task->pid) &&
+    if ((task != NULL) && ka_task_judge_mm(task) && (task->tgid != 0) && (task->tgid == task->pid) &&
         ascend_intf_is_pid_init(task->tgid, DAVINCI_INTF_MODULE_DMS)) {
-#else
-    if ((task != NULL) && (task->mm != NULL) && (task->tgid != 0) && (task->tgid == task->pid) &&
-        ascend_intf_is_pid_init(task->tgid, DAVINCI_INTF_MODULE_DMS)) {
-#endif
         /* Only the process open davinci device is check. */
         soft_fault_release_prepare(task->tgid);
     }

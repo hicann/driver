@@ -53,6 +53,7 @@ export feature_no_device_kernel=n
 export feature_ver_compatible_check=n
 export feature_device_exist_check=n
 export feature_flash_version_check=n
+export feature_hd_connect_is_ub=n
 
 export native_pkcs_conf
 
@@ -134,6 +135,13 @@ get_feature_config() {
         feature_flash_version_check=y
         log "[INFO]set FEATURE_DEVICE_FLASH_VERSION_CHECK=y"
     fi
+
+    config=$(cat "$sourcedir"/script/feature.conf | grep FEATURE_HD_CONNECT_IS_UB)
+    log "[INFO]FEATURE_HD_CONNECT_IS_UB is : $config"
+    if [ "$config"x = "FEATURE_HD_CONNECT_IS_UB=y"x ];then
+        feature_hd_connect_is_ub=y
+        log "[INFO]set FEATURE_HD_CONNECT_IS_UB=y"
+    fi
     return 0
 }
 
@@ -193,7 +201,8 @@ installationCompletionMessage() {
     run_install_type="${run_install_type/e/}ed"
 
     if [ "$hotreset_status"x = "success"x ] || [ "$installType"x = "docker"x ] || [ "$installType"x = "devel"x ] ; then
-        drvColorEcho  "[INFO]\033[32mDriver package ${run_install_type} successfully! The new version takes effect immediately. \033[0m"
+        drvColorEcho "[INFO]\033[32mDriver package ${run_install_type} successfully! The new version takes effect immediately. \033[0m"
+        log "[INFO]Driver package ${run_install_type} successfully! The new version takes effect immediately."
         if [ "$installType"x = "docker"x ];then
             # lib-put-path is different from the others.
             if [ "${lib_put_path}"x = "specific"x ]; then
@@ -205,7 +214,8 @@ installationCompletionMessage() {
             fi
         fi
     else
-        drvColorEcho  "[INFO]\033[32mDriver package ${run_install_type} successfully! \033[0m\033[31mReboot needed for installation/upgrade to take effect! \033[0m"
+        drvColorEcho "[INFO]\033[32mDriver package ${run_install_type} successfully! \033[0m\033[31mReboot needed for installation/upgrade to take effect! \033[0m"
+        log "[INFO]Driver package ${run_install_type} successfully! Reboot needed for installation/upgrade to take effect!"
     fi
 }
 
@@ -218,9 +228,11 @@ uninstallationCompletionMessage() {
             hotreset_status="unknown"
         fi
         if [ "$hotreset_status"x = "scan_success"x ] || [ "$Driver_Install_Type"x = "docker"x ] || [ "$Driver_Install_Type"x = "devel"x ]; then
-            drvColorEcho  "[INFO]\033[32mDriver package uninstalled successfully! Uninstallation takes effect immediately. \033[0m"
+            drvColorEcho "[INFO]\033[32mDriver package uninstalled successfully! Uninstallation takes effect immediately. \033[0m"
+            log "[INFO]Driver package uninstalled successfully! Uninstallation takes effect immediately."
         else
-            drvColorEcho  "[INFO]\033[32mDriver package uninstalled successfully! \033[0m\033[31mReboot needed for uninstallation to take effect! \033[0m"
+            drvColorEcho "[INFO]\033[32mDriver package uninstalled successfully! \033[0m\033[31mReboot needed for uninstallation to take effect! \033[0m"
+            log "[INFO]Driver package uninstalled successfully! Reboot needed for uninstallation to take effect!"
         fi
 }
 # check whether hotreset fails
@@ -715,12 +727,13 @@ check_local_file_size() {
 
 installRun() {
     updateInstallInfo
-    ./driver/script/run_driver_install.sh "$Install_Path_Param" $installType 
+    ./driver/script/run_driver_install.sh "$Install_Path_Param" $installType
     driver_install_status=$?
     if [ $driver_install_status -eq 0 ];then
         installationCompletionMessage $1
     else
         drvColorEcho "[INFO]Failed to ${1,,} driver package, please retry after uninstall and reboot!"
+        log "[INFO]Failed to ${1,,} driver package, please retry after uninstall and reboot!"
     fi
 
 }
@@ -741,8 +754,10 @@ uninstallRun() {
         if [ ${ret} -ne 0 ];then
             if [ ${ret} -eq 2 ]; then
                 drvColorEcho "[ERROR]\033[31mThe software signature verification failed because the signature mode used by the software is inconsistent with the current configuration. Currently configured is [${native_pkcs_conf}], details in : $logFile \033[0m"
+                log "[ERROR]The software signature verification failed because the signature mode used by the software is inconsistent with the current configuration. Currently configured is [${native_pkcs_conf}], details in : $logFile"
             else
                 drvColorEcho "[ERROR]\033[31mDevice_images_crl_check failed, details in : $logFile \033[0m"
+                log "[ERROR]Device_images_crl_check failed, details in : $logFile"
             fi
             log "[ERROR]new device crl check failed, stop upgrade"
             rm -f $driverCrlStatusFile

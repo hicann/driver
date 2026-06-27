@@ -14,7 +14,7 @@
 #ifndef CMDLIST_DVPP_CMDLIST_H
 #define CMDLIST_DVPP_CMDLIST_H
 
-#include <linux/types.h>
+#include "ka_type.h"
 
 #include "dvpp_cmdlist_sqe.h"
 #include "dvpp_cmdlist_define.h"

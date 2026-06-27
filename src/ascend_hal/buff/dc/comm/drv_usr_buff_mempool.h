@@ -15,13 +15,13 @@
 #include "ascend_hal.h"
 #include "drv_buff_common_mempool.h"
 
-#define MP_S_NORMAL         0
-#define MP_S_DESTROYED      1
-#define MP_S_ABNORMAL       2
+#define MP_S_NORMAL 0
+#define MP_S_DESTROYED 1
+#define MP_S_ABNORMAL 2
 
-#define MP_F_PUBLIC         0
-#define MP_F_PRIVATE        1
-#define MP_BITMAP_INDEX_INVALID  (-1)
+#define MP_F_PUBLIC 0
+#define MP_F_PRIVATE 1
+#define MP_BITMAP_INDEX_INVALID (-1)
 #define MP_BLK_SIZE_MAX (0xffffffff - ((UNI_ALIGN_MAX) * 2))
 
 enum mp_alloc_fail_state {
@@ -37,4 +37,3 @@ void mp_destroy_mbuf_mp(struct mempool_t *mp);
 void mp_mng_put(struct mempool_t *mp);
 
 #endif /* _DRV_USR_BUFF_MEMPOOL_H_ */
-

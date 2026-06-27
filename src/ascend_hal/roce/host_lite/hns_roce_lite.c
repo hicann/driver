@@ -11,6 +11,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <pthread.h>
+#include <util/compiler.h>
 #include <linux/errno.h>
 #include "user_log.h"
 #include "hns_roce_u_sec.h"

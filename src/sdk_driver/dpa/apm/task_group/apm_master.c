@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2025. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -95,10 +95,10 @@ static int _apm_master_ctx_create(struct task_ctx_domain *domain, int master_tgi
     return 0;
 }
 
-int apm_master_ctx_create(struct task_ctx_domain *domain, int master_tgid, int master_pid)
+int apm_master_ctx_create(struct task_ctx_domain *domain, int master_tgid, int master_pid, struct task_start_time *start_time)
 {
     struct task_ctx *ctx = NULL;
-    int ret;
+    int ret = 0;
 
     ka_task_mutex_lock(&domain->mutex);
     ctx = task_ctx_get(domain, master_tgid);
@@ -109,11 +109,15 @@ int apm_master_ctx_create(struct task_ctx_domain *domain, int master_tgid, int m
             return ret;
         }
     } else {
+        if ((start_time != NULL) && (!ka_system_timespec_equal(start_time->time, ctx->start_time.time))) {
+            apm_debug("Master start time is different, please retry. (master_pid=%d)\n", master_pid);
+            ret = -EAGAIN;
+        }
         task_ctx_put(ctx);
     }
     ka_task_mutex_unlock(&domain->mutex);
 
-    return 0;
+    return ret;
 }
 
 void apm_master_ctx_destroy(struct task_ctx_domain *domain, int master_tgid)
@@ -150,11 +154,22 @@ static int apm_master_ctx_add_slave(struct task_ctx *ctx, void *priv)
         return -EINVAL;
     }
 
+    if (para->proc_type == PROCESS_USER) {
+        if (m_ctx->user_slave_num >= MAX_USER_SLAVE_NUM) {
+            apm_err(
+                "Process user slave count exceed limit. (count=%u; max=%u; master_pid=%d; slave_pid=%d)\n",
+                m_ctx->user_slave_num, MAX_USER_SLAVE_NUM, para->master_pid, para->slave_pid);
+            return -EINVAL;
+        }
+    }
+
     if (apm_is_surport_multi_slave(para->proc_type)) {
-        struct master_slave_node *slave_node = apm_kzalloc(sizeof(struct master_slave_node), KA_GFP_ATOMIC | __KA_GFP_ACCOUNT);
+        struct master_slave_node *slave_node =
+            apm_kzalloc(sizeof(struct master_slave_node), KA_GFP_ATOMIC | __KA_GFP_ACCOUNT);
         if (slave_node == NULL) {
-            apm_err("Alloc slave node failed. (proc_type=%d; master_pid=%d; slave_pid=%d)\n",
-                para->proc_type, para->master_pid, para->slave_pid);
+            apm_err(
+                "Alloc slave node failed. (proc_type=%d; master_pid=%d; slave_pid=%d)\n", para->proc_type,
+                para->master_pid, para->slave_pid);
             return -ENOMEM;
         }
 
@@ -166,27 +181,33 @@ static int apm_master_ctx_add_slave(struct task_ctx *ctx, void *priv)
         slave_node->info.ssid = -1;
         slave_node->info.try_unbind_flag = 0;
         ka_list_add_tail(&slave_node->node, &m_ctx->head);
+        if (para->proc_type == PROCESS_USER) {
+            m_ctx->user_slave_num++;
+        }
     } else {
         struct master_slave_info *slave_info = NULL;
         if (m_ctx->dev_ctx[para->devid].valid == 0) {
-            apm_err("Bind invalid udevid. (proc_type=%d; master_pid=%d; slave_pid=%d; devid=%u)\n",
-                para->proc_type, para->master_pid, para->slave_pid, para->devid);
+            apm_err(
+                "Bind invalid udevid. (proc_type=%d; master_pid=%d; slave_pid=%d; devid=%u)\n", para->proc_type,
+                para->master_pid, para->slave_pid, para->devid);
             return -EINVAL;
         }
 
         if (para->proc_type == PROCESS_CP2) {
             slave_info = &m_ctx->dev_ctx[para->devid].slave_info[PROCESS_CP1];
             if (slave_info->valid == 0) {
-                apm_err("Bind custom cp, cp not bind. (proc_type=%d; master_pid=%d; slave_pid=%d)\n",
-                    para->proc_type, para->master_pid, para->slave_pid);
+                apm_err(
+                    "Bind custom cp, cp not bind. (proc_type=%d; master_pid=%d; slave_pid=%d)\n", para->proc_type,
+                    para->master_pid, para->slave_pid);
                 return -EINVAL;
             }
         }
 
         slave_info = &m_ctx->dev_ctx[para->devid].slave_info[para->proc_type];
         if ((slave_info->valid == 1) && (slave_info->exit_stage == 0)) { /* allow new after old exit */
-            apm_err("Master already bind this proc_type. (proc_type=%d; master_pid=%d; slave_pid=%d)\n",
-                para->proc_type, para->master_pid, para->slave_pid);
+            apm_err(
+                "Master already bind this proc_type. (proc_type=%d; master_pid=%d; slave_pid=%d)\n", para->proc_type,
+                para->master_pid, para->slave_pid);
             return -EINVAL;
         }
 
@@ -205,8 +226,8 @@ static int apm_master_ctx_add_slave(struct task_ctx *ctx, void *priv)
     return 0;
 }
 
-int apm_master_add_slave(struct task_ctx_domain *domain,
-    int master_tgid, int slave_tgid, int local_flag, struct apm_cmd_bind *para)
+int apm_master_add_slave(
+    struct task_ctx_domain *domain, int master_tgid, int slave_tgid, int local_flag, struct apm_cmd_bind *para)
 {
     struct apm_task_group_cfg cfg;
 
@@ -221,12 +242,13 @@ static inline bool apm_is_find_slave_node_in_all_stage(enum apm_slave_op_type op
 }
 
 /* slave_tgid = 0, not match slave_tgid for query slave tgid */
-static struct master_slave_node *apm_find_slave_node(struct master_ctx *m_ctx, u32 udevid, int proc_type,
-    int slave_tgid, bool find_in_all_stage)
+static struct master_slave_node *apm_find_slave_node(
+    struct master_ctx *m_ctx, u32 udevid, int proc_type, int slave_tgid, bool find_in_all_stage)
 {
     struct master_slave_node *slave_node = NULL;
 
-    ka_list_for_each_entry(slave_node, &m_ctx->head, node) {
+    ka_list_for_each_entry(slave_node, &m_ctx->head, node)
+    {
         if ((!find_in_all_stage) && (slave_node->info.exit_stage != 0)) {
             continue;
         }
@@ -257,19 +279,24 @@ static int apm_master_ctx_del_slave(struct task_ctx *ctx, void *priv)
         struct master_slave_node *slave_node =
             apm_find_slave_node(m_ctx, para->devid, para->proc_type, cfg->slave_tgid, true);
         if (slave_node == NULL) {
-            apm_warn("Slave node not find. (udevid=%u; proc_type=%d; master_pid=%d; slave_tgid=%d)\n",
-                para->devid, para->proc_type, para->master_pid, cfg->slave_tgid);
+            apm_warn(
+                "Slave node not find. (udevid=%u; proc_type=%d; master_pid=%d; slave_tgid=%d)\n", para->devid,
+                para->proc_type, para->master_pid, cfg->slave_tgid);
             return -EINVAL;
         }
 
+        if ((slave_node->proc_type == PROCESS_USER) && (m_ctx->user_slave_num > 0)) {
+            m_ctx->user_slave_num--;
+        }
         ka_list_del(&slave_node->node);
         apm_kfree(slave_node);
     } else {
         struct master_slave_info *slave_info = &m_ctx->dev_ctx[para->devid].slave_info[para->proc_type];
 
         if ((m_ctx->dev_ctx[para->devid].valid == 0) || (slave_info->valid == 0)) {
-            apm_warn("Slave not add. (udevid=%u; proc_type=%d; master_pid=%d; slave_tgid=%d)\n",
-                para->devid, para->proc_type, para->master_pid, cfg->slave_tgid);
+            apm_warn(
+                "Slave not add. (udevid=%u; proc_type=%d; master_pid=%d; slave_tgid=%d)\n", para->devid,
+                para->proc_type, para->master_pid, cfg->slave_tgid);
         }
 
         m_ctx->dev_ctx[para->devid].num--;
@@ -306,10 +333,11 @@ static void apm_fill_slave_op_para(struct slave_op_para *para, int op_type, u32 
 static void apm_master_ctx_signle_slave_show(struct master_slave_info *slave_info, struct slave_op_para *para)
 {
     ka_seq_file_t *seq = (ka_seq_file_t *)para->priv;
-    ka_fs_seq_printf(seq, "    udevid %u type %d(%s) local %d slave pid %d tgid %d exit_stage %d oom_status %d oom_cnt %d\n",
-        para->udevid, para->proc_type, apm_proc_type_to_name(para->proc_type),
-        slave_info->local_flag, slave_info->slave_pid, slave_info->slave_tgid, slave_info->exit_stage,
-        slave_info->oom_status, slave_info->oom_cnt);
+    ka_fs_seq_printf(
+        seq, "    udevid %u type %d(%s) local %d slave pid %d tgid %d exit_stage %d oom_status %d oom_cnt %d\n",
+        para->udevid, para->proc_type, apm_proc_type_to_name(para->proc_type), slave_info->local_flag,
+        slave_info->slave_pid, slave_info->slave_tgid, slave_info->exit_stage, slave_info->oom_status,
+        slave_info->oom_cnt);
 }
 
 static int apm_master_ctx_signle_slave_op(struct master_slave_info *slave_info, struct slave_op_para *para)
@@ -390,7 +418,8 @@ static int apm_master_ctx_slave_op_all_node(struct task_ctx *ctx, void *priv)
         }
     }
 
-    ka_list_for_each_entry(slave_node, &m_ctx->head, node) {
+    ka_list_for_each_entry(slave_node, &m_ctx->head, node)
+    {
         para->udevid = slave_node->udevid;
         para->proc_type = slave_node->proc_type;
         (void)apm_master_ctx_signle_slave_op(&slave_node->info, para);
@@ -431,8 +460,8 @@ static int apm_master_ctx_slave_op_by_proc_type(struct task_ctx *ctx, void *priv
     int ret = -EINVAL;
 
     if (apm_is_surport_multi_slave(para->proc_type)) {
-        struct master_slave_node *slave_node = apm_find_slave_node(m_ctx, para->udevid, para->proc_type, 0,
-            apm_is_find_slave_node_in_all_stage(para->op_type));
+        struct master_slave_node *slave_node = apm_find_slave_node(
+            m_ctx, para->udevid, para->proc_type, 0, apm_is_find_slave_node_in_all_stage(para->op_type));
         ret = (slave_node != NULL) ? apm_master_ctx_signle_slave_op(&slave_node->info, para) : -ESRCH;
     } else {
         struct master_slave_info *slave_info = &m_ctx->dev_ctx[para->udevid].slave_info[para->proc_type];
@@ -467,11 +496,12 @@ int apm_master_query_slave_pid(struct task_ctx_domain *domain, int master_tgid, 
         return ret;
     }
 
-    apm_fill_slave_op_para(&op_para, (para->query_in_all_stage == 1) ? SLAVE_OP_GET_SLAVE_TGID_ALL_STAGE :
-        SLAVE_OP_GET_SLAVE_TGID, para->devid, 0, 0);
+    apm_fill_slave_op_para(
+        &op_para, (para->query_in_all_stage == 1) ? SLAVE_OP_GET_SLAVE_TGID_ALL_STAGE : SLAVE_OP_GET_SLAVE_TGID,
+        para->devid, 0, 0);
     op_para.proc_type = para->proc_type;
-    ret = task_ctx_lock_call_func_non_block(domain, master_tgid, apm_master_ctx_slave_op_by_proc_type,
-        (void *)&op_para);
+    ret =
+        task_ctx_lock_call_func_non_block(domain, master_tgid, apm_master_ctx_slave_op_by_proc_type, (void *)&op_para);
     if (ret == 0) {
         para->slave_tgid = op_para.slave_tgid;
         para->slave_pid = op_para.val;
@@ -492,8 +522,8 @@ int apm_master_get_slave_ssid(struct task_ctx_domain *domain, int master_tgid, s
 
     apm_fill_slave_op_para(&op_para, SLAVE_OP_GET_SLAVE_SSID, para->devid, 0, 0);
     op_para.proc_type = para->proc_type;
-    ret = task_ctx_lock_call_func_non_block(domain, master_tgid, apm_master_ctx_slave_op_by_proc_type,
-        (void *)&op_para);
+    ret =
+        task_ctx_lock_call_func_non_block(domain, master_tgid, apm_master_ctx_slave_op_by_proc_type, (void *)&op_para);
     if (ret == 0) {
         para->ssid = op_para.val;
     }
@@ -514,8 +544,8 @@ int apm_master_set_slave_ssid(struct task_ctx_domain *domain, int master_tgid, s
     apm_fill_slave_op_para(&op_para, SLAVE_OP_SET_SLAVE_SSID, para->devid, 0, 0);
     op_para.proc_type = para->proc_type;
     op_para.val = para->ssid;
-    return task_ctx_lock_call_func_non_block(domain, master_tgid, apm_master_ctx_slave_op_by_proc_type,
-        (void *)&op_para);
+    return task_ctx_lock_call_func_non_block(
+        domain, master_tgid, apm_master_ctx_slave_op_by_proc_type, (void *)&op_para);
 }
 
 static int apm_master_ctx_set_exit_stage(struct task_ctx *ctx, void *priv)
@@ -537,8 +567,8 @@ static int apm_master_ctx_set_exit_stage(struct task_ctx *ctx, void *priv)
 
 int apm_master_set_exit_stage(struct task_ctx_domain *domain, int master_tgid, struct task_start_time *time, int stage)
 {
-    return task_ctx_time_check_lock_call_func_non_block(domain, master_tgid, time,
-        apm_master_ctx_set_exit_stage, (void *)(uintptr_t)stage);
+    return task_ctx_time_check_lock_call_func_non_block(
+        domain, master_tgid, time, apm_master_ctx_set_exit_stage, (void *)(uintptr_t)stage);
 }
 
 static int apm_master_ctx_get_exit_stage(struct task_ctx *ctx, void *priv)
@@ -555,8 +585,8 @@ int apm_master_get_exit_stage(struct task_ctx_domain *domain, int master_tgid, i
     return task_ctx_lock_call_func_non_block(domain, master_tgid, apm_master_ctx_get_exit_stage, (void *)stage);
 }
 
-int apm_master_set_slave_exit_stage(struct task_ctx_domain *domain,
-    int master_tgid, u32 udevid, int slave_tgid, int stage)
+int apm_master_set_slave_exit_stage(
+    struct task_ctx_domain *domain, int master_tgid, u32 udevid, int slave_tgid, int stage)
 {
     struct slave_op_para para;
 
@@ -578,8 +608,8 @@ int apm_master_get_all_slave_exit_stage(struct task_ctx_domain *domain, int mast
     return ret;
 }
 
-int apm_master_set_slave_oom_status(struct task_ctx_domain *domain,
-    int master_tgid, u32 udevid, int slave_tgid, int oom_status)
+int apm_master_set_slave_oom_status(
+    struct task_ctx_domain *domain, int master_tgid, u32 udevid, int slave_tgid, int oom_status)
 {
     struct slave_op_para para;
 
@@ -587,8 +617,8 @@ int apm_master_set_slave_oom_status(struct task_ctx_domain *domain,
     return task_ctx_lock_call_func_non_block(domain, master_tgid, apm_master_ctx_slave_op_by_tgid, (void *)&para);
 }
 
-int apm_master_get_slave_oom_status(struct task_ctx_domain *domain,
-    int master_tgid, u32 udevid, int proc_type, int *oom_status)
+int apm_master_get_slave_oom_status(
+    struct task_ctx_domain *domain, int master_tgid, u32 udevid, int proc_type, int *oom_status)
 {
     struct slave_op_para para;
     int ret;
@@ -601,9 +631,18 @@ int apm_master_get_slave_oom_status(struct task_ctx_domain *domain,
     apm_fill_slave_op_para(&para, SLAVE_OP_GET_OOM_STATUS, udevid, 0, 0);
     para.proc_type = proc_type;
     ret = task_ctx_lock_call_func_non_block(domain, master_tgid, apm_master_ctx_slave_op_by_proc_type, (void *)&para);
-    if (ret == 0) {
-        *oom_status = para.val;
+    if (ret != 0) {
+        return ret;
     }
+
+    if (para.val != 0) {
+        para.val = 0;
+        ka_system_msleep(120); /* ensure process remained in the OOM state for 120 ms */
+        ret =
+            task_ctx_lock_call_func_non_block(domain, master_tgid, apm_master_ctx_slave_op_by_proc_type, (void *)&para);
+    }
+
+    *oom_status = (ret == 0) ? para.val : *oom_status;
 
     return ret;
 }
@@ -614,8 +653,9 @@ static int apm_master_ctx_show_details(struct task_ctx *ctx, void *priv)
     ka_seq_file_t *seq = (ka_seq_file_t *)priv;
     struct slave_op_para para;
 
-    ka_fs_seq_printf(seq, "domain: %s tgid %d(%s) master pid %d num %u master_exit_stage %d\n",
-        ctx->domain->name, ctx->tgid, ctx->name, m_ctx->master_pid, m_ctx->num, m_ctx->master_exit_stage);
+    ka_fs_seq_printf(
+        seq, "domain: %s tgid %d(%s) master pid %d num %u master_exit_stage %d\n", ctx->domain->name, ctx->tgid,
+        ctx->name, m_ctx->master_pid, m_ctx->num, m_ctx->master_exit_stage);
 
     apm_fill_slave_op_para(&para, SLAVE_OP_SHOW_DETAILS, UDA_INVALID_UDEVID, 0, 0);
     para.priv = priv;
@@ -650,8 +690,9 @@ static int apm_master_ctx_pre_unbind(struct task_ctx *ctx, void *priv)
     }
 
     m_ctx->dev_ctx[para->devid].slave_info[para->proc_type].try_unbind_flag = 1;
-    return ((para->proc_type == PROCESS_CP1) && (ka_base_atomic_read(&m_ctx->dev_ctx[para->devid].refcnt) != 0))
-           ? -EBUSY : 0;
+    return ((para->proc_type == PROCESS_CP1) && (ka_base_atomic_read(&m_ctx->dev_ctx[para->devid].refcnt) != 0)) ?
+               -EBUSY :
+               0;
 }
 
 int apm_master_pre_unbind(struct task_ctx_domain *domain, int master_tgid, struct apm_cmd_bind *para)
@@ -686,4 +727,3 @@ int apm_master_dec_ref(struct task_ctx_domain *domain, int master_tgid, u32 udev
 {
     return task_ctx_lock_call_func_non_block(domain, master_tgid, apm_master_ctx_dec_ref, (void *)(uintptr_t)udevid);
 }
-

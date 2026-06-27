@@ -11,27 +11,28 @@
  * GNU General Public License for more details.
  */
 
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/pci.h>
 #include "ts_agent_log.h"
 #include "ts_agnet_ccpu.h"
 #include "trs_adapt.h"
+#include "ka_kernel_def_pub.h"
+#include "ka_pci_pub.h"
+#include "ka_compiler_pub.h"
 
 #define PCI_VENDOR_ID_HUAWEI 0x19e5
 #define DEVDRV_DIVERSITY_PCIE_VENDOR_ID 0xFFFF
-static const struct pci_device_id ts_agent_adapt_tbl[] = {
-    { PCI_VDEVICE(HUAWEI, 0xd105),           0 },
-    { PCI_VDEVICE(HUAWEI, 0xd802),           0 },
-    { PCI_VDEVICE(HUAWEI, 0xd803),           0 },
-    { PCI_VDEVICE(HUAWEI, 0xd804),           0 },
-    { PCI_VDEVICE(HUAWEI, 0xd806),           0 },   // david pci vdevice id
-    { DEVDRV_DIVERSITY_PCIE_VENDOR_ID, 0xd500, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 },
+static const ka_pci_device_id_t ts_agent_adapt_tbl[] = {
+    { KA_PCI_VDEVICE(HUAWEI, 0xd105),           0 },
+    { KA_PCI_VDEVICE(HUAWEI, 0xd802),           0 },
+    { KA_PCI_VDEVICE(HUAWEI, 0xd803),           0 },
+    { KA_PCI_VDEVICE(HUAWEI, 0xd804),           0 },
+    { KA_PCI_VDEVICE(HUAWEI, 0xd806),           0 },   // david pci vdevice id
+    { KA_PCI_VDEVICE(HUAWEI, 0xd808),           0 },
+    { DEVDRV_DIVERSITY_PCIE_VENDOR_ID, 0xd500, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0 },
     {}
 };
-MODULE_DEVICE_TABLE(pci, ts_agent_adapt_tbl);
+KA_MODULE_DEVICE_TABLE(pci, ts_agent_adapt_tbl);
 
-STATIC int __init ts_agent_init(void)
+STATIC int __ka_init ts_agent_init(void)
 {
     struct trs_sqcq_agent_ops ops = {
         .device_init = NULL,
@@ -48,17 +49,17 @@ STATIC int __init ts_agent_init(void)
     return 0;
 }
 
-STATIC void __exit ts_agent_exit(void)
+STATIC void __ka_exit ts_agent_exit(void)
 {
     ts_agent_info("ts_agent_exit begin.");
     trs_sqcq_agent_ops_unregister();
     ts_agent_info("ts_agent_exit end.");
 }
 
-module_init(ts_agent_init);
-module_exit(ts_agent_exit);
+ka_module_init(ts_agent_init);
+ka_module_exit(ts_agent_exit);
 
-MODULE_LICENSE("GPL v2");
-MODULE_INFO(supported, "ts agent");
-MODULE_VERSION("v0.1");
-MODULE_AUTHOR("Huawei Tech. Co., Ltd.");
+KA_MODULE_LICENSE("GPL v2");
+KA_MODULE_INFO(supported, "ts agent");
+KA_MODULE_VERSION("v0.1");
+KA_MODULE_AUTHOR("Huawei Tech. Co., Ltd.");

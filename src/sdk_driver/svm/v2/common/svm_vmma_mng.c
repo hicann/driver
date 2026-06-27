@@ -28,10 +28,7 @@ int devmm_vmma_mng_init(struct devmm_vmma_mng *mng, u64 va, u64 size)
     return 0;
 }
 
-static void _devmm_vmma_get(struct devmm_vmma_struct *vmma)
-{
-    ka_base_kref_get(&vmma->ref);
-}
+static void _devmm_vmma_get(struct devmm_vmma_struct *vmma) { ka_base_kref_get(&vmma->ref); }
 
 static void devmm_vmma_release(ka_kref_t *kref)
 {
@@ -67,10 +64,7 @@ struct devmm_vmma_struct *devmm_vmma_get(struct devmm_vmma_mng *mng, u64 va)
     return vmma;
 }
 
-void devmm_vmma_put(struct devmm_vmma_struct *vmma)
-{
-    ka_base_kref_put(&vmma->ref, devmm_vmma_release);
-}
+void devmm_vmma_put(struct devmm_vmma_struct *vmma) { ka_base_kref_put(&vmma->ref, devmm_vmma_release); }
 
 static void devmm_vmma_erase(struct devmm_vmma_mng *mng, struct devmm_vmma_struct *vmma)
 {
@@ -85,8 +79,9 @@ static int devmm_vmma_insert(struct devmm_vmma_mng *mng, struct devmm_vmma_struc
 
     ka_task_down_write(&mng->rw_sem);
     if ((vmma->info.va < mng->va) || (vmma->info.size > (mng->va + mng->size - vmma->info.va))) {
-        devmm_drv_err("Out of vmma mng range. (mng->va=0x%llx; mng->size=%llu; va=0x%llx; size=%llu)\n",
-            mng->va, mng->size, vmma->info.va, vmma->info.size);
+        devmm_drv_err(
+            "Out of vmma mng range. (mng->va=0x%llx; mng->size=%llu; va=0x%llx; size=%llu)\n", mng->va, mng->size,
+            vmma->info.va, vmma->info.size);
         ka_task_up_write(&mng->rw_sem);
         return -EINVAL;
     }
@@ -154,32 +149,28 @@ void devmm_vmmas_destroy(struct devmm_svm_process *svm_proc, struct devmm_vmma_m
 int devmm_vmma_exclusive_set(struct devmm_vmma_struct *vmma)
 {
     if (ka_task_down_write_trylock(&vmma->rw_sem) == 0) {
-        devmm_drv_err("Addr is occupied, should release occupied before unmap. (va=0x%llx; size=%llu)\n",
-            vmma->info.va, vmma->info.size);
+        devmm_drv_err(
+            "Addr is occupied, should release occupied before unmap. (va=0x%llx; size=%llu)\n", vmma->info.va,
+            vmma->info.size);
         return -EBUSY;
     }
     return 0;
 }
 
-void devmm_vmma_exclusive_clear(struct devmm_vmma_struct *vmma)
-{
-    ka_task_up_write(&vmma->rw_sem);
-}
+void devmm_vmma_exclusive_clear(struct devmm_vmma_struct *vmma) { ka_task_up_write(&vmma->rw_sem); }
 
 static int devmm_vmma_occupy_inc(struct devmm_vmma_struct *vmma)
 {
     if (ka_task_down_read_trylock(&vmma->rw_sem) == 0) {
-        devmm_drv_err("Addr is unmapping, shouldn't be concurrent to occupy. (va=0x%llx; size=%llu)\n",
-            vmma->info.va, vmma->info.size);
+        devmm_drv_err(
+            "Addr is unmapping, shouldn't be concurrent to occupy. (va=0x%llx; size=%llu)\n", vmma->info.va,
+            vmma->info.size);
         return -EFAULT;
     }
     return 0;
 }
 
-static void devmm_vmma_occupy_dec(struct devmm_vmma_struct *vmma)
-{
-    ka_task_up_read(&vmma->rw_sem);
-}
+static void devmm_vmma_occupy_dec(struct devmm_vmma_struct *vmma) { ka_task_up_read(&vmma->rw_sem); }
 
 void devmm_vmmas_occupy_dec(struct devmm_vmma_mng *mng, u64 va, u64 size)
 {
@@ -208,8 +199,8 @@ int devmm_vmmas_occupy_inc(struct devmm_vmma_mng *mng, u64 va, u64 size)
         vmma = devmm_vmma_get(mng, va + tmp_size);
         if (vmma == NULL) {
             devmm_vmmas_occupy_dec(mng, va, tmp_size);
-            devmm_drv_err("Invalid addr range. (va=0x%llx; mng->va=0x%llx; mng->size=%llu)\n",
-                va + tmp_size, mng->va, mng->size);
+            devmm_drv_err(
+                "Invalid addr range. (va=0x%llx; mng->va=0x%llx; mng->size=%llu)\n", va + tmp_size, mng->va, mng->size);
             return -EINVAL;
         }
 

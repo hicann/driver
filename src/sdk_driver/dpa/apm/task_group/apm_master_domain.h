@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2025. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -32,7 +32,7 @@ struct apm_master_query_domain_ops {
 void apm_master_domain_ops_register(struct apm_master_domain_ops *ops);
 
 struct apm_master_domain_cmd_ops {
-    int (*query_meminfo)(u32 udevid, int slave_tgid, processMemType_t type, u64 *size);
+    int (*query_meminfo)(u32 udevid, int slave_tgid, processType_t process_type, processMemType_t type, u64 *size);
 };
 void apm_master_domain_cmd_ops_register(struct apm_master_domain_cmd_ops *ops);
 
@@ -42,8 +42,8 @@ int apm_master_domain_tgid_to_pid(int tgid, int *master_pid);
 bool apm_is_cur_task_trusted(void);
 void apm_master_set_query_domain_ops(struct apm_master_query_domain_ops ops);
 int apm_master_domain_set_slave_status(int master_tgid, u32 udevid, int slave_tgid, int type, int status);
-int apm_master_domain_get_tast_group_exit_stage(int master_tgid, int slave_tgid, u32 udevid, u32 proc_type_bitmap,
-    int *exit_stage);
+int apm_master_domain_get_tast_group_exit_stage(
+    int master_tgid, int slave_tgid, u32 udevid, u32 proc_type_bitmap, int *exit_stage);
 int apm_master_query_domain_get_slave_ssid(int master_tgid, struct apm_cmd_slave_ssid *para);
 int apm_master_query_domain_set_slave_ssid(int master_tgid, struct apm_cmd_slave_ssid *para);
 int apm_master_domain_get_slave_status(int master_tgid, u32 udevid, int proc_type, int type, int *status);

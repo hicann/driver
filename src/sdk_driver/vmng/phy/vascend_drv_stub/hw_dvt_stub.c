@@ -28,22 +28,23 @@ bool hw_dvt_check_host_is_uvp(void);
 #define DEVDRV_DIVERSITY_PCIE_VENDOR_ID 0xFFFF
 #define UVP_VERSION_INFO_SIZE 256
 
-static const ka_pci_device_id_t g_vmngh_tbl[] = {{ KA_PCI_VDEVICE(HUAWEI, HISI_EP_DEVICE_ID_MINIV2), 0 },
-                                                   { KA_PCI_VDEVICE(HUAWEI, HISI_EP_DEVICE_ID_CLOUD), 0 },
-                                                   { KA_PCI_VDEVICE(HUAWEI, HISI_EP_DEVICE_ID_CLOUD_V2), 0 },
-                                                   { KA_PCI_VDEVICE(HUAWEI, 0xd805), 0 },
-                                                   { DEVDRV_DIVERSITY_PCIE_VENDOR_ID, 0xd500, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0 },
-                                                   { 0x20C6, 0xd500, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0 },
-                                                   { 0x203F, 0xd500, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0 },
-                                                   { 0x20C6, 0xd802, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0 },
-                                                   { 0x203F, 0xd802, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0 },
-                                                   { 0x20E9, 0xd802, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0 },
-                                                   { 0x20E9, 0xd500, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0 },
-                                                   {}};
+static const ka_pci_device_id_t g_vmngh_tbl[] = {
+    {KA_PCI_VDEVICE(HUAWEI, HISI_EP_DEVICE_ID_MINIV2), 0},
+    {KA_PCI_VDEVICE(HUAWEI, HISI_EP_DEVICE_ID_CLOUD), 0},
+    {KA_PCI_VDEVICE(HUAWEI, HISI_EP_DEVICE_ID_CLOUD_V2), 0},
+    {KA_PCI_VDEVICE(HUAWEI, 0xd805), 0},
+    {DEVDRV_DIVERSITY_PCIE_VENDOR_ID, 0xd500, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0},
+    {0x20C6, 0xd500, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0},
+    {0x203F, 0xd500, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0},
+    {0x20C6, 0xd802, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0},
+    {0x203F, 0xd802, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0},
+    {0x20E9, 0xd802, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0},
+    {0x20E9, 0xd500, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0},
+    {}};
 KA_MODULE_DEVICE_TABLE(pci, g_vmngh_tbl);
 
-struct vdavinci_mode_info g_vdev_mode = { 0 };
-struct vdavinci_drv_ops vascend_virtual_ops = { 0 };
+struct vdavinci_mode_info g_vdev_mode = {0};
+struct vdavinci_drv_ops vasd_virt_ops = {0};
 
 int register_vdavinci_virtual_ops(struct vdavinci_drv_ops *ops)
 {
@@ -52,30 +53,29 @@ int register_vdavinci_virtual_ops(struct vdavinci_drv_ops *ops)
         return -EINVAL;
     }
 
-    vascend_virtual_ops.vdavinci_init = ops->vdavinci_init;
-    vascend_virtual_ops.vdavinci_uninit = ops->vdavinci_uninit;
-    vascend_virtual_ops.vdavinci_hypervisor_inject_msix = ops->vdavinci_hypervisor_inject_msix;
-    vascend_virtual_ops.vdavinci_hypervisor_read_gpa = ops->vdavinci_hypervisor_read_gpa;
-    vascend_virtual_ops.vdavinci_hypervisor_write_gpa = ops->vdavinci_hypervisor_write_gpa;
-    vascend_virtual_ops.vdavinci_hypervisor_gfn_to_mfn = ops->vdavinci_hypervisor_gfn_to_mfn;
-    vascend_virtual_ops.vdavinci_hypervisor_dma_pool_init = ops->vdavinci_hypervisor_dma_pool_init;
-    vascend_virtual_ops.vdavinci_hypervisor_dma_pool_uninit = ops->vdavinci_hypervisor_dma_pool_uninit;
-    vascend_virtual_ops.vdavinci_hypervisor_dma_map_guest_page = ops->vdavinci_hypervisor_dma_map_guest_page;
-    vascend_virtual_ops.vdavinci_hypervisor_dma_unmap_guest_page = ops->vdavinci_hypervisor_dma_unmap_guest_page;
-    vascend_virtual_ops.vdavinci_hypervisor_dma_pool_active = ops->vdavinci_hypervisor_dma_pool_active;
-    vascend_virtual_ops.vdavinci_hypervisor_dma_map_guest_page_batch =
-        ops->vdavinci_hypervisor_dma_map_guest_page_batch;
-    vascend_virtual_ops.vdavinci_hypervisor_dma_unmap_guest_page_batch =
-        ops->vdavinci_hypervisor_dma_unmap_guest_page_batch;
-    vascend_virtual_ops.vdavinci_hypervisor_is_valid_gfn = ops->vdavinci_hypervisor_is_valid_gfn;
-    vascend_virtual_ops.vdavinci_hypervisor_mmio_get = ops->vdavinci_hypervisor_mmio_get;
-    vascend_virtual_ops.vdavinci_hypervisor_dma_alloc_coherent = ops->vdavinci_hypervisor_dma_alloc_coherent;
-    vascend_virtual_ops.vdavinci_hypervisor_dma_free_coherent = ops->vdavinci_hypervisor_dma_free_coherent;
-    vascend_virtual_ops.vdavinci_hypervisor_dma_map_single = ops->vdavinci_hypervisor_dma_map_single;
-    vascend_virtual_ops.vdavinci_hypervisor_dma_unmap_single = ops->vdavinci_hypervisor_dma_unmap_single;
-    vascend_virtual_ops.vdavinci_hypervisor_dma_map_page = ops->vdavinci_hypervisor_dma_map_page;
-    vascend_virtual_ops.vdavinci_hypervisor_dma_unmap_page = ops->vdavinci_hypervisor_dma_unmap_page;
-    vascend_virtual_ops.vdavinci_get_reserve_iova_for_check = ops->vdavinci_get_reserve_iova_for_check;
+    vasd_virt_ops.vdavinci_init = ops->vdavinci_init;
+    vasd_virt_ops.vdavinci_uninit = ops->vdavinci_uninit;
+    vasd_virt_ops.vdavinci_hypervisor_inject_msix = ops->vdavinci_hypervisor_inject_msix;
+    vasd_virt_ops.vdavinci_hypervisor_read_gpa = ops->vdavinci_hypervisor_read_gpa;
+    vasd_virt_ops.vdavinci_hypervisor_write_gpa = ops->vdavinci_hypervisor_write_gpa;
+    vasd_virt_ops.vdavinci_hypervisor_gfn_to_mfn = ops->vdavinci_hypervisor_gfn_to_mfn;
+    vasd_virt_ops.vdavinci_hypervisor_dma_pool_init = ops->vdavinci_hypervisor_dma_pool_init;
+    vasd_virt_ops.vdavinci_hypervisor_dma_pool_uninit = ops->vdavinci_hypervisor_dma_pool_uninit;
+    vasd_virt_ops.vdavinci_hypervisor_dma_map_guest_page = ops->vdavinci_hypervisor_dma_map_guest_page;
+    vasd_virt_ops.vdavinci_hypervisor_dma_unmap_guest_page = ops->vdavinci_hypervisor_dma_unmap_guest_page;
+    vasd_virt_ops.vdavinci_hypervisor_dma_pool_active = ops->vdavinci_hypervisor_dma_pool_active;
+    vasd_virt_ops.vdavinci_hypervisor_dma_map_guest_page_batch = ops->vdavinci_hypervisor_dma_map_guest_page_batch;
+    vasd_virt_ops.vdavinci_hypervisor_dma_unmap_guest_page_batch = ops->vdavinci_hypervisor_dma_unmap_guest_page_batch;
+    vasd_virt_ops.vdavinci_hypervisor_is_valid_gfn = ops->vdavinci_hypervisor_is_valid_gfn;
+    vasd_virt_ops.vdavinci_hypervisor_mmio_get = ops->vdavinci_hypervisor_mmio_get;
+    vasd_virt_ops.vdavinci_hypervisor_dma_alloc_coherent = ops->vdavinci_hypervisor_dma_alloc_coherent;
+    vasd_virt_ops.vdavinci_hypervisor_dma_free_coherent = ops->vdavinci_hypervisor_dma_free_coherent;
+    vasd_virt_ops.vdavinci_hypervisor_dma_map_single = ops->vdavinci_hypervisor_dma_map_single;
+    vasd_virt_ops.vdavinci_hypervisor_dma_unmap_single = ops->vdavinci_hypervisor_dma_unmap_single;
+    vasd_virt_ops.vdavinci_hypervisor_dma_map_page = ops->vdavinci_hypervisor_dma_map_page;
+    vasd_virt_ops.vdavinci_hypervisor_dma_unmap_page = ops->vdavinci_hypervisor_dma_unmap_page;
+    vasd_virt_ops.vdavinci_get_reserve_iova_for_check = ops->vdavinci_get_reserve_iova_for_check;
+    vasd_virt_ops.vdavinci_is_vm_pfn_valid = ops->vdavinci_is_vm_pfn_valid;
     ka_dfx_pr_info("register virtual ops success!\n");
     return 0;
 }
@@ -84,13 +84,13 @@ KA_EXPORT_SYMBOL_GPL(register_vdavinci_virtual_ops);
 void unregister_vdavinci_virtual_ops(void)
 {
     struct vdavinci_drv_ops ops = {0};
-    vascend_virtual_ops = ops;
+    vasd_virt_ops = ops;
 }
 KA_EXPORT_SYMBOL_GPL(unregister_vdavinci_virtual_ops);
 
 struct vdavinci_drv_ops *get_vdavinci_virtual_ops(void)
 {
-    return &vascend_virtual_ops;
+    return &vasd_virt_ops;
 }
 
 #ifndef ENABLE_BUILD_PRODUCT

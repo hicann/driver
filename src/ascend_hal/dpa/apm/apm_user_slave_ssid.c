@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * Copyright (c) 2026 Huawei Technologies Co., Ltd.
  * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -13,8 +13,8 @@
 #include "ascend_hal.h"
 #include "apm_ioctl.h"
 
-#define SVM_DEV_NAME                "/dev/svm0"
-#define SVM_IOCTL_PROCESS_BIND      0xffff
+#define SVM_DEV_NAME "/dev/svm0"
+#define SVM_IOCTL_PROCESS_BIND 0xffff
 
 struct process_info {
     pid_t vpid;
@@ -78,4 +78,3 @@ drvError_t drvMemSmmuQuery(uint32_t device, uint32_t *SSID)
 
     return ret;
 }
-

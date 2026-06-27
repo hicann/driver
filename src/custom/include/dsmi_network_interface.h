@@ -18,9 +18,9 @@ extern "C" {
 #endif
  
 #ifdef __linux
-#define DLLEXPORT
+#define EXPORT_FUNCTION __attribute__ ((visibility ("default")))
 #else
-#define DLLEXPORT _declspec(dllexport)
+#define EXPORT_FUNCTION _declspec(dllexport)
 #endif
 // 带宽查询接口需要用到的数据结构
 struct bandwidth_t {
@@ -255,7 +255,7 @@ struct ping_mesh_stat {
 * @param [out] bandwidth_info The detailed bandwidth info
 * @return  0 for success, others for fail
 */
-DLLEXPORT int dsmi_get_bandwidth(int logic_id, int port, struct bandwidth_t *bandwidth_info);
+EXPORT_FUNCTION int dsmi_get_bandwidth(int logic_id, int port, struct bandwidth_t *bandwidth_info);
  
 /**
 * @ingroup network
@@ -266,7 +266,7 @@ DLLEXPORT int dsmi_get_bandwidth(int logic_id, int port, struct bandwidth_t *ban
 * @param [out] ds_port_stat_info The detailed pkt num info
 * @return  0 for success, others for fail
 */
-DLLEXPORT int dsmi_get_netdev_stat(int logic_id, int port, struct ds_port_stat_info *stat);
+EXPORT_FUNCTION int dsmi_get_netdev_stat(int logic_id, int port, struct ds_port_stat_info *stat);
 
 /**
 * @ingroup network
@@ -278,7 +278,7 @@ DLLEXPORT int dsmi_get_netdev_stat(int logic_id, int port, struct ds_port_stat_i
 * @param [out] reply_info The information returned by the ping operation
 * @return  0 for success, others for fail
 */
-DLLEXPORT int dsmi_hccs_ping(int logic_id, int port_id, hccs_ping_operate_info *ping_info,
+EXPORT_FUNCTION int dsmi_hccs_ping(int logic_id, int port_id, hccs_ping_operate_info *ping_info,
                              hccs_ping_reply_info *reply_info);
 
 /**
@@ -288,7 +288,7 @@ DLLEXPORT int dsmi_hccs_ping(int logic_id, int port_id, hccs_ping_operate_info *
 * @param [out] troute_status The running status
 * @return  0 for success, others for fail
 */
-DLLEXPORT int dsmi_get_traceroute_status(int logic_id, int *troute_status);
+EXPORT_FUNCTION int dsmi_get_traceroute_status(int logic_id, int *troute_status);
 
 /**
 * @ingroup network
@@ -299,7 +299,7 @@ DLLEXPORT int dsmi_get_traceroute_status(int logic_id, int *troute_status);
 * @param [out] troute_start_result The sesult of running the cmd
 * @return  0 for success, others for fail
 */
-DLLEXPORT int dsmi_start_traceroute(int logic_id, struct dsmi_traceroute_info *traceroute_info_send,
+EXPORT_FUNCTION int dsmi_start_traceroute(int logic_id, struct dsmi_traceroute_info *traceroute_info_send,
     int *troute_start_result);
 
 /**
@@ -310,7 +310,7 @@ DLLEXPORT int dsmi_start_traceroute(int logic_id, struct dsmi_traceroute_info *t
 * @param [out] troute_info_show The response info
 * @return  0 for success, others for fail
 */
-DLLEXPORT int dsmi_get_traceroute_info(int logic_id, char *troute_info_show, unsigned int info_size, int cmd_type);
+EXPORT_FUNCTION int dsmi_get_traceroute_info(int logic_id, char *troute_info_show, unsigned int info_size, int cmd_type);
 
 /**
 * @ingroup network
@@ -320,7 +320,7 @@ DLLEXPORT int dsmi_get_traceroute_info(int logic_id, char *troute_info_show, uns
 * @param [out] troute_reset The result of kill cmd
 * @return  0 for success, others for fail
 */
-DLLEXPORT int dsmi_reset_traceroute(int logic_id, int *troute_reset);
+EXPORT_FUNCTION int dsmi_reset_traceroute(int logic_id, int *troute_reset);
 
 /**
 * @ingroup network
@@ -330,7 +330,7 @@ DLLEXPORT int dsmi_reset_traceroute(int logic_id, int *troute_reset);
 * @param [in] prbs_flag prbs_flag
 * @return  0 for success, others for fail
 */
-DLLEXPORT int dsmi_set_prbs_flag(int logic_id, int prbs_flag);
+EXPORT_FUNCTION int dsmi_set_prbs_flag(int logic_id, int prbs_flag);
 
 /**
 * @ingroup network
@@ -342,7 +342,7 @@ DLLEXPORT int dsmi_set_prbs_flag(int logic_id, int prbs_flag);
 * @param [in] master_flag  The device is master or slave
 * @return  0 for success, others for fail
 */
-DLLEXPORT int dsmi_prbs_adapt_in_order(unsigned int mode, unsigned int logic_id, unsigned char master_flag);
+EXPORT_FUNCTION int dsmi_prbs_adapt_in_order(unsigned int mode, unsigned int logic_id, unsigned char master_flag);
 
 /**
 * @ingroup network
@@ -352,7 +352,7 @@ DLLEXPORT int dsmi_prbs_adapt_in_order(unsigned int mode, unsigned int logic_id,
 * @param [in] stat
 * @return  0 for success, others for fail
 */
-DLLEXPORT int dsmi_get_tc_stat(int logic_id, struct ds_tc_stat_data *stat);
+EXPORT_FUNCTION int dsmi_get_tc_stat(int logic_id, struct ds_tc_stat_data *stat);
 
 /**
 * @ingroup network
@@ -361,7 +361,7 @@ DLLEXPORT int dsmi_get_tc_stat(int logic_id, struct ds_tc_stat_data *stat);
 * @param [in] logic_id  The logic device id
 * @return  0 for success, others for fail
 */
-DLLEXPORT int dsmi_clear_tc_stat(int logic_id);
+EXPORT_FUNCTION int dsmi_clear_tc_stat(int logic_id);
 
 /**
 * @ingroup network
@@ -376,7 +376,7 @@ DLLEXPORT int dsmi_clear_tc_stat(int logic_id);
 * @return  0 for success, others for fail
 */
 
-int dsmi_set_cdr_mode_cmd(int logic_id, int port, struct ds_cdr_mode_info *info);
+EXPORT_FUNCTION int dsmi_set_cdr_mode_cmd(int logic_id, int port, struct ds_cdr_mode_info *info);
 
 /**
 * @ingroup network
@@ -387,7 +387,7 @@ int dsmi_set_cdr_mode_cmd(int logic_id, int port, struct ds_cdr_mode_info *info)
 * @return  0 for success, others for fail
 */
 
-int dsmi_get_pfc_duration_info(int logic_id, struct pfc_duration_info *info);
+EXPORT_FUNCTION int dsmi_get_pfc_duration_info(int logic_id, struct pfc_duration_info *info);
 
 /**
 * @ingroup network
@@ -397,7 +397,7 @@ int dsmi_get_pfc_duration_info(int logic_id, struct pfc_duration_info *info);
 * @param [in] mode 0: clear all\n"
 * @return  0 for success, others for fail
 */
-int dsmi_clear_pfc_duration(int logic_id, int mode);
+EXPORT_FUNCTION int dsmi_clear_pfc_duration(int logic_id, int mode);
 
 /**
 * @ingroup network
@@ -408,7 +408,7 @@ int dsmi_clear_pfc_duration(int logic_id, int mode);
 * @param [out] list The response qpn list
 * @return  0 for success, others for fail
 */
-int dsmi_get_qpn_list(int logic_id, int port_id, struct ds_qpn_list *list);
+EXPORT_FUNCTION int dsmi_get_qpn_list(int logic_id, int port_id, struct ds_qpn_list *list);
  
 /**
 * @ingroup network
@@ -420,7 +420,7 @@ int dsmi_get_qpn_list(int logic_id, int port_id, struct ds_qpn_list *list);
 * @param [out] qp_info The response qp info
 * @return  0 for success, others for fail
 */
-int dsmi_get_qp_info(int logic_id, int port_id, unsigned int qpn, struct ds_qp_info *qp_info);
+EXPORT_FUNCTION int dsmi_get_qp_info(int logic_id, int port_id, unsigned int qpn, struct ds_qp_info *qp_info);
 
 /**
 * @ingroup network
@@ -430,7 +430,7 @@ int dsmi_get_qp_info(int logic_id, int port_id, unsigned int qpn, struct ds_qp_i
 * @param [in] operate_info operation info
 * @return  0 for success, others for fail
 */
-int dsmi_start_hccs_ping_mesh(int logic_id, struct hccs_ping_mesh_operate *operate_info);
+EXPORT_FUNCTION int dsmi_start_hccs_ping_mesh(int logic_id, struct hccs_ping_mesh_operate *operate_info);
 
 /**
 * @ingroup network
@@ -441,7 +441,7 @@ int dsmi_start_hccs_ping_mesh(int logic_id, struct hccs_ping_mesh_operate *opera
 * @param [out] info ping mesh result info
 * @return  0 for success, others for fail
 */
-int dsmi_get_hccs_ping_mesh_info(int logic_id, int task_id, struct ping_mesh_stat *info);
+EXPORT_FUNCTION int dsmi_get_hccs_ping_mesh_info(int logic_id, int task_id, struct ping_mesh_stat *info);
 
 /**
 * @ingroup network
@@ -452,7 +452,7 @@ int dsmi_get_hccs_ping_mesh_info(int logic_id, int task_id, struct ping_mesh_sta
 * @param [out] state ping mesh task state: 0 stop; 1 running
 * @return  0 for success, others for fail
 */
-int dsmi_get_hccs_ping_mesh_state(int logic_id, int task_id, unsigned int *state);
+EXPORT_FUNCTION int dsmi_get_hccs_ping_mesh_state(int logic_id, int task_id, unsigned int *state);
 
 /**
 * @ingroup network
@@ -462,7 +462,7 @@ int dsmi_get_hccs_ping_mesh_state(int logic_id, int task_id, unsigned int *state
 * @param [in] task_id  The ping mesh task id: 0 or 1
 * @return  0 for success, others for fail
 */
-int dsmi_stop_hccs_ping_mesh(int logic_id, int task_id);
+EXPORT_FUNCTION int dsmi_stop_hccs_ping_mesh(int logic_id, int task_id);
 
 /**
 * @ingroup network
@@ -473,7 +473,8 @@ int dsmi_stop_hccs_ping_mesh(int logic_id, int task_id);
 * @param [out] info extra statistics info;
 * @return  0 for success, others for fail
 */
-int dsmi_get_extra_statistics_info(int logic_id, int port_id, struct ds_extra_statistics_info *info);
+EXPORT_FUNCTION int dsmi_get_extra_statistics_info(int logic_id, int port_id, struct ds_extra_statistics_info *info);
+
 #ifdef __cplusplus
 }
 #endif

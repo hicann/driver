@@ -13,7 +13,7 @@
 #ifndef TRS_SEC_EH_VPC_H
 #define TRS_SEC_EH_VPC_H
 
-#include <linux/types.h>
+#include "ka_type.h"
 
 #include "trs_pub_def.h"
 

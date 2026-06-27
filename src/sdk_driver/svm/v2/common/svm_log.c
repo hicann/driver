@@ -35,11 +35,7 @@ void devmm_share_log_run_info_inner(const char *fmt, ...)
 #endif
 }
 #else
-void devmm_share_log_err_inner(const char *fmt, ...)
-{
-}
+void devmm_share_log_err_inner(const char *fmt, ...) {}
 
-void devmm_share_log_run_info_inner(const char *fmt, ...)
-{
-}
+void devmm_share_log_run_info_inner(const char *fmt, ...) {}
 #endif

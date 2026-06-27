@@ -16,6 +16,7 @@
 #include "bbox_tool_log.h"
 #include "bbox_tool_fs.h"
 #include "bbox_system_api.h"
+#include "bbox_feature.h"
 #include "securec.h"
 
 struct thread_args {
@@ -56,6 +57,15 @@ bbox_status BboxStartDump(s32 dev_id, const char *path, s32 p_size, const struct
     BBOX_CHK_NULL_PTR(path, return BBOX_FAILURE);
     BBOX_CHK_NULL_PTR(opt, return BBOX_FAILURE);
     BBOX_CHK_INVALID_PARAM(p_size <= 0, return BBOX_FAILURE, "%d", p_size);
+
+    if (bbox_feature_init() != DRV_ERROR_NONE) {
+        return BBOX_FAILURE;
+    }
+
+    if (strstr(path, "..") != NULL) {
+        BBOX_ERR("Invalid path.");
+        return BBOX_FAILURE;
+    }
 
     s32 err = memcpy_s(&g_bbox_dump_opt, sizeof(struct BboxDumpOpt), opt, sizeof(struct BboxDumpOpt));
     BBOX_CHK_EXPR_CTRL(BBOX_ERR, err != EOK, return BBOX_FAILURE, "memcpy_s opt data failed.");

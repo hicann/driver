@@ -14,7 +14,7 @@
 #ifndef REG_VPC_MILAN_VPC_REG_H
 #define REG_VPC_MILAN_VPC_REG_H
 
-#include <linux/types.h>
+#include "ka_type.h"
 
 #include "vpc_pipe_milan_affine_reg_c_union_define.h"
 #include "vpc_pipe_milan_cache_reg_c_union_define.h"

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2025. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -14,9 +14,8 @@
 #ifndef SMP_EVENT_H
 #define SMP_EVENT_H
 
-#include <linux/types.h>
+#include "ka_type.h"
 
 void smp_trigger_event(u32 udevid, int tgid, u64 start, u64 size);
 
 #endif
-

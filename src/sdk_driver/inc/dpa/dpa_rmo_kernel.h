@@ -13,10 +13,10 @@
 
 #ifndef DPA_RMO_KERNEL_H
 #define DPA_RMO_KERNEL_H
-#include <linux/types.h>
+#include "ka_type.h"
 #include "ascend_hal_define.h"
 
-#define RMO_MEM_RAW_ADDR_MAX_LEN    80U
+#define RMO_MEM_RAW_ADDR_MAX_LEN 80U
 struct rmo_mem_raw_addr {
     char raw_addr[RMO_MEM_RAW_ADDR_MAX_LEN];
     u32 raw_addr_len;

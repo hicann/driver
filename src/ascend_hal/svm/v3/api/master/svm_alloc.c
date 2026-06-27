@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * Copyright (c) 2026 Huawei Technologies Co., Ltd.
  * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -12,8 +12,8 @@
 #include "esched_user_interface.h"
 
 #include "svm_log.h"
-#include "svm_sub_event_type.h"
-#include "smp_msg.h"
+#include "svm_sub_event_type_uk_msg.h"
+#include "smp_uk_msg.h"
 #include "svm_pagesize.h"
 #include "svm_dbi.h"
 #include "malloc_mng.h"
@@ -142,14 +142,13 @@ static int svm_parse_alloc_svm_flag(u64 flag, u64 *svm_flag)
         return DRV_ERROR_NOT_SUPPORT;
     }
 
-    if (((virt_mem_type == MEM_HOST_VAL) || (virt_mem_type == MEM_HOST_UVA_VAL))
-        && ((flag & MEM_PAGE_HUGE) || (flag & MEM_PAGE_GIANT))) {
+    if (((virt_mem_type == MEM_HOST_VAL) || (virt_mem_type == MEM_HOST_UVA_VAL)) &&
+        ((flag & MEM_PAGE_HUGE) || (flag & MEM_PAGE_GIANT))) {
         return DRV_ERROR_NOT_SUPPORT;
     }
 
-    if ((virt_mem_type == MEM_HOST_UVA_VAL)
-        && ((flag & MEM_CONTIGUOUS_PHY) || (flag & MEM_ADVISE_P2P)
-            || (flag & MEM_ADVISE_BAR) || (flag & MEM_DEV_CP_ONLY))) {
+    if ((virt_mem_type == MEM_HOST_UVA_VAL) && ((flag & MEM_CONTIGUOUS_PHY) || (flag & MEM_ADVISE_P2P) ||
+                                                (flag & MEM_ADVISE_BAR) || (flag & MEM_DEV_CP_ONLY))) {
         return DRV_ERROR_NOT_SUPPORT;
     }
 
@@ -209,7 +208,7 @@ static int svm_parse_alloc_svm_flag(u64 flag, u64 *svm_flag)
     return 0;
 }
 
-static int svm_mem_malloc(void **va, u64 size, u64 flag)
+int svm_mem_malloc(void **va, u64 size, u64 flag)
 {
     u32 devid, module_id;
     u64 start, svm_flag;
@@ -242,7 +241,7 @@ static int svm_mem_malloc(void **va, u64 size, u64 flag)
         }
         svm_flag |= SVM_FLAG_CAP_SYNC_COPY | SVM_FLAG_CAP_SYNC_COPY_BATCH;
         svm_flag |= SVM_FLAG_CAP_DMA_DESC_CONVERT | SVM_FLAG_CAP_DMA_DESC_DESTROY | SVM_FLAG_CAP_DMA_DESC_SUBMIT |
-            SVM_FLAG_CAP_DMA_DESC_WAIT;
+                    SVM_FLAG_CAP_DMA_DESC_WAIT;
         svm_flag |= SVM_FLAG_CAP_ASYNC_COPY_SUBMIT | SVM_FLAG_CAP_ASYNC_COPY_WAIT;
         svm_flag |= SVM_FLAG_CAP_SYNC_COPY_2D | SVM_FLAG_CAP_DMA_DESC_CONVERT_2D;
         svm_flag |= SVM_FLAG_CAP_SYNC_COPY_EX;
@@ -267,7 +266,7 @@ static int svm_mem_malloc(void **va, u64 size, u64 flag)
     return ret;
 }
 
-static int svm_mem_free(void *va)
+int svm_mem_free(void *va)
 {
     struct svm_prop prop;
     u64 start = (u64)(uintptr_t)va;
@@ -277,6 +276,7 @@ static int svm_mem_free(void *va)
     if (ret != 0) {
         /* The log cannot be modified, because in the failure mode library. */
         svm_err("Addr is not alloced or free repeatedly. (start=0x%llx)\n", start);
+        svm_report_addr_not_allocated("halMemFree", "pp", start);
         return ret;
     }
 
@@ -291,12 +291,16 @@ static int svm_mem_free(void *va)
 drvError_t halMemAllocInner(void **pp, unsigned long long size, unsigned long long flag);
 drvError_t halMemAllocInner(void **pp, unsigned long long size, unsigned long long flag)
 {
+    u32 devid = 0;
+    u32 module_id = UNKNOWN_MODULE_ID;
     int ret;
 
     if ((pp == NULL) || (size == 0)) {
         svm_err("Para is invalid. (ptr_is_null=0x%llx; size=%llu)\n", (pp == NULL), size);
         return DRV_ERROR_INVALID_VALUE;
     }
+
+    svm_debug("Alloc enter. (ptr=0x%llx; size=%llu; flag=0x%llx)\n", (u64)(uintptr_t)*pp, size, flag);
 
     ret = svm_master_init();
     if (ret != DRV_ERROR_NONE) {
@@ -307,18 +311,22 @@ drvError_t halMemAllocInner(void **pp, unsigned long long size, unsigned long lo
     svm_use_pipeline();
     ret = svm_mem_malloc(pp, size, flag);
     svm_unuse_pipeline();
+    if ((ret == DRV_ERROR_OUT_OF_MEMORY) && (svm_parse_alloc_devid(flag, &devid) == 0)) {
+        (void)svm_parse_alloc_module_id(flag, &module_id);
+        svm_report_oom(size, halGetMemModuleName(module_id), devid);
+    }
     if (ret == DRV_ERROR_NOT_SUPPORT) {
         svm_run_info("Not support. (ptr=0x%llx; size=%llu; flag=0x%llx)\n", (u64)(uintptr_t)*pp, size, flag);
     }
 
-    svm_debug("Alloc. (ptr=0x%llx; size=%llu; flag=0x%llx)\n", (u64)(uintptr_t)*pp, size, flag);
+    svm_debug("Alloc exit. (ret=%d; ptr=0x%llx; size=%llu; flag=0x%llx)\n", ret, (u64)(uintptr_t)*pp, size, flag);
 
     return (drvError_t)ret;
 }
 
 drvError_t halMemAlloc(void **pp, unsigned long long size, unsigned long long flag)
 {
-    return halMemAllocInner(pp, size,flag);
+    return halMemAllocInner(pp, size, flag);
 }
 
 drvError_t halMemFreeInner(void *pp);
@@ -337,13 +345,12 @@ drvError_t halMemFreeInner(void *pp)
     ret = svm_mem_free(pp);
     svm_unuse_pipeline();
 
+    svm_debug("Free exit. (ret=%d; ptr=0x%llx)\n", ret, (u64)(uintptr_t)pp);
+
     return (drvError_t)ret;
 }
 
-drvError_t halMemFree(void *pp)
-{
-    return halMemFreeInner(pp);
-}
+drvError_t halMemFree(void *pp) { return halMemFreeInner(pp); }
 
 static int svm_smp_del_mem_event_proc(u64 va)
 {
@@ -358,8 +365,8 @@ static int svm_smp_del_mem_event_proc(u64 va)
     return ret;
 }
 
-static drvError_t svm_smp_del_mem_event_proc_func(unsigned int devid, const void *msg, int msg_len,
-    struct drv_event_proc_rsp *rsp)
+static drvError_t svm_smp_del_mem_event_proc_func(
+    unsigned int devid, const void *msg, int msg_len, struct drv_event_proc_rsp *rsp)
 {
     int ret, retry_cnt;
     const struct svm_smp_del_msg *del_msg = (const struct svm_smp_del_msg *)msg;
@@ -373,8 +380,10 @@ static drvError_t svm_smp_del_mem_event_proc_func(unsigned int devid, const void
         if (ret != DRV_ERROR_NOT_EXIST) {
             /*
              * There may be the following scenarios:
-             * 1. Svm_free is being executed, va_handle is erased, smp_del returns busy, and va_handle has not yet been re-inserted;
-             * 2. Kern sends smp del mem event, and before the user receives the event, close_device is executed, and the handle is released.
+             * 1. Svm_free is being executed, va_handle is erased, smp_del returns busy, and va_handle has not yet been
+             * re-inserted;
+             * 2. Kern sends smp del mem event, and before the user receives the event, close_device is executed, and
+             * the handle is released.
              */
             break;
         }
@@ -382,8 +391,9 @@ static drvError_t svm_smp_del_mem_event_proc_func(unsigned int devid, const void
     } while (retry_cnt++ < 10); /* max retry 10 times */
 
     if (ret != 0) {
-        svm_warn("Free unsuccessful. (ret=%d; devid=%u; va=%llx; size=%llx; retry=%d)\n",
-            ret, devid, del_msg->va, del_msg->size, retry_cnt);
+        svm_warn(
+            "Free unsuccessful. (ret=%d; devid=%u; va=%llx; size=%llx; retry=%d)\n", ret, devid, del_msg->va,
+            del_msg->size, retry_cnt);
     }
 
     rsp->need_rsp = false;
@@ -392,14 +402,10 @@ static drvError_t svm_smp_del_mem_event_proc_func(unsigned int devid, const void
 }
 
 static struct drv_event_proc svm_smp_del_mem_event_proc_handle = {
-    svm_smp_del_mem_event_proc_func,
-    sizeof(struct svm_smp_del_msg),
-    "svm_smp_del_mem_event"
-};
+    svm_smp_del_mem_event_proc_func, sizeof(struct svm_smp_del_msg), "svm_smp_del_mem_event"};
 
-static int __attribute__ ((constructor)) svm_alloc_init(void)
+static int __attribute__((constructor)) svm_alloc_init(void)
 {
     drv_registert_event_proc(SVM_SMP_DEL_MEM_EVENT, &svm_smp_del_mem_event_proc_handle);
     return 0;
 }
-

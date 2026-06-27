@@ -109,6 +109,37 @@ drvError_t DmsGetLpmInfo(struct dms_lpm_info_in *in, void *result, unsigned int 
     return DRV_ERROR_NONE;
 }
 
+drvError_t dms_get_lpm_freq_v2(struct dms_lpm_info_in_v2 *in, unsigned int *frequency)
+{
+    int ret;
+    struct dms_ioctl_arg ioarg = {0};
+
+    if ((in == NULL) || (frequency == NULL)) {
+        DMS_ERR("in or freq is NULL.\n");
+        return DRV_ERROR_PARA_ERROR;
+    }
+
+    ioarg.main_cmd = DMS_MAIN_CMD_LPM;
+    ioarg.sub_cmd = DMS_SUBCMD_GET_FREQUENCY_V2;
+    ioarg.filter_len = 0;
+    ioarg.input = (void *)in;
+    ioarg.input_len = sizeof(struct dms_lpm_info_in_v2);
+    ioarg.output = (void *)frequency;
+    ioarg.output_len = sizeof(unsigned int);
+
+    ret = errno_to_user_errno(DmsIoctl(DMS_IOCTL_CMD, &ioarg));
+    if (ret != 0) {
+        DMS_EX_NOTSUPPORT_ERR(ret, "Dms get device lpm freq failed."
+            "(dev_id=%u; part_id=%u; core_id=%u; ret=%d;)\n",
+            in->dev_id, in->part_id, in->core_id, ret);
+        return ret;
+    }
+
+    DMS_DEBUG("Dms get device lpm freq success. (dev_id=%u; part_id=%u; core_id=%u;)\n",
+            in->dev_id, in->part_id, in->core_id);
+    return DRV_ERROR_NONE;
+}
+
 #define BUFSIZE_MIN                 8
 #define LP_ERRCODE_LENGTH           16
 

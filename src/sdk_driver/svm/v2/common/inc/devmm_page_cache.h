@@ -29,20 +29,20 @@ void devmm_init_dev_pages_cache(struct devmm_svm_process *svm_proc);
 void devmm_destroy_dev_pages_cache(struct devmm_svm_process *svm_proc, u32 devid);
 void devmm_destroy_pages_cache(struct devmm_svm_process *svm_proc);
 void devmm_pages_cache_set(struct devmm_svm_process *svm_proc, u32 logical_devid, struct devmm_pages_cache_info *info);
-void devmm_free_pages_cache(struct devmm_svm_process *svm_proc,
-    u32 devid, u32 page_num, u32 page_size, u64 va, bool reuse);
-void devmm_insert_pages_cache(struct devmm_svm_process *svm_process,
-    struct devmm_chan_page_query_ack *query_pages, u32 devid);
-bool devmm_find_pages_cache(struct devmm_svm_process *svm_process, struct devmm_page_query_arg query_arg,
-    struct devmm_dma_block *blks, u32 *num);
+void devmm_free_pages_cache(
+    struct devmm_svm_process *svm_proc, u32 devid, u32 page_num, u32 page_size, u64 va, bool reuse);
+void devmm_insert_pages_cache(
+    struct devmm_svm_process *svm_process, struct devmm_chan_page_query_ack *query_pages, u32 devid);
+bool devmm_find_pages_cache(
+    struct devmm_svm_process *svm_process, struct devmm_page_query_arg query_arg, struct devmm_dma_block *blks,
+    u32 *num);
 int devmm_find_pa_cache(struct devmm_svm_process *svm_process, u32 logic_id, u64 va, u32 page_size, u64 *pa);
 
 void devmm_init_dev_pages_cache_inner(struct devmm_svm_process *svm_pro);
 void devmm_destroy_dev_pages_cache_inner(struct devmm_svm_process *svm_pro, u32 devid);
 void devmm_destroy_pages_cache_inner(struct devmm_svm_process *svm_proc);
-void devmm_free_pages_cache_inner(struct devmm_svm_process *svm_process,
-    u32 devid, u32 page_num, u32 page_size, u64 va, bool reuse);
-u64 devmm_get_continuty_len_after_dev_va(struct devmm_svm_process *svm_proc,
-    u32 logic_id, u64 va, u32 page_size);
+void devmm_free_pages_cache_inner(
+    struct devmm_svm_process *svm_process, u32 devid, u32 page_num, u32 page_size, u64 va, bool reuse);
+u64 devmm_get_continuty_len_after_dev_va(struct devmm_svm_process *svm_proc, u32 logic_id, u64 va, u32 page_size);
 int hal_kernel_svm_dev_va_to_dma_addr(int hostpid, u32 logical_devid, u64 va, u64 *dma_addr);
 #endif /* __DEVMM_PAGE_CACHE_H__ */

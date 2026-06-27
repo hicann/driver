@@ -18,7 +18,7 @@
 #include <fcntl.h>
 
 #include "securec.h"
-#include "dsmi_common_interface_custom.h"
+#include "dsmi_common_interface.h"
 #include "dcmi_interface_api.h"
 #include "dcmi_init_basic.h"
 #include "dcmi_fault_manage_intf.h"
@@ -26,12 +26,14 @@
 #include "dcmi_smbus_operate.h"
 #include "dcmi_os_adapter.h"
 #include "dcmi_mcu_health_error_info.h"
+#include "dcmi_mcu_health_error_info_950.h"
 #include "dcmi_virtual_intf.h"
 #include "dcmi_i2c_operate.h"
 #include "dcmi_inner_info_get.h"
 #include "dcmi_product_judge.h"
 #include "dcmi_environment_judge.h"
 #include "dcmi_elabel_operate.h"
+#include "dcmi_basic_info_intf.h"
 #include "dcmi_mcu_intf.h"
 
 struct dcmi_mcu_log_info g_dcmi_mcu_log_info[MCU_LOG_MAX] = {
@@ -320,23 +322,43 @@ static int dcmi_mcu_get_info_by_i2c(int card_id, MCU_SMBUS_REQ_MSG *mcu_req, MCU
 #endif
 }
 
-static int dcmi_mcu_set_info_by_i2c(int card_id, MCU_SMBUS_REQ_MSG *mcu_req)
+int dcmi_mcu_310b_set_info_by_i2c(unsigned int i2c_num, int fd)
+{
+    struct dcmi_smbus_std_rsp rsp = {0};
+    /* 发送应答报文 */
+    int ret = dcmi_smbus_read_block(
+        i2c_num, MCU_SLAVE_ADDR, SEND_RESPONSE, DMP_MSG_HEAD_LENGTH + 1, (unsigned char *)&rsp);
+    if (ret != DCMI_OK) {
+        dcmi_mcu_set_unlock(fd);
+        gplog(LOG_INFO, "call i2c_smbus_read_block failed. ret is %d.", ret);
+        return DCMI_ERR_CODE_INNER_ERR;
+    }
+
+    if (rsp.error_code != DCMI_OK) {
+        dcmi_mcu_set_unlock(fd);
+        gplog(LOG_ERR, "error_code=%hu.", rsp.error_code);
+        return DCMI_ERR_CODE_INNER_ERR;
+    }
+    return DCMI_OK;
+}
+
+static int dcmi_mcu_set_info_by_i2c(int card_id, MCU_SMBUS_REQ_MSG *mcu_req, int index)
 {
 #ifndef _WIN32
     struct dcmi_smbus_std_req req = {0};
-    int ret;
     int fd = 0;
     int send_msg_data_max_len = dcmi_mcu_get_send_data_max_len();
     (void)card_id;
+    if (index != DCMI_REQ_INDEX_INVALID) {
+        req.arg = mcu_req->arg;
+    }
     unsigned int i2c_num = dcmi_board_chip_type_is_ascend_310b() ? I2C_NUM_6 : I2C_NUM_9;
-
-    /* 发送请求报文 */
     req.lun = mcu_req->lun;
     req.opcode = mcu_req->opcode;
     req.offset = mcu_req->offset;
     req.length = mcu_req->lenth;
 
-    ret = memcpy_s(&req.data[0], send_msg_data_max_len, mcu_req->req_data, mcu_req->lenth);
+    int ret = memcpy_s(&req.data[0], send_msg_data_max_len, mcu_req->req_data, mcu_req->lenth);
     if (ret != EOK) {
         gplog(LOG_ERR, "call memcpy_s failed. ret is %d.", ret);
         return DCMI_ERR_CODE_INNER_ERR;
@@ -347,7 +369,6 @@ static int dcmi_mcu_set_info_by_i2c(int card_id, MCU_SMBUS_REQ_MSG *mcu_req)
         gplog(LOG_ERR, "call mcu_get_lock failed. ret is %d.", ret);
         return DCMI_ERR_CODE_INNER_ERR;
     }
-
     ret = dcmi_smbus_write_block(
         i2c_num, MCU_SLAVE_ADDR, SEND_REQUEST, DMP_MSG_HEAD_LENGTH + mcu_req->lenth, (const unsigned char *)&req);
     if (ret != DCMI_OK) {
@@ -355,21 +376,9 @@ static int dcmi_mcu_set_info_by_i2c(int card_id, MCU_SMBUS_REQ_MSG *mcu_req)
         gplog(LOG_INFO, "call i2c_smbus_write_block failed. ret is %d.", ret);
         return DCMI_ERR_CODE_INNER_ERR;
     }
-
     if (dcmi_board_chip_type_is_ascend_310b()) {
-        struct dcmi_smbus_std_rsp rsp = {0};
-        /* 发送应答报文 */
-        ret = dcmi_smbus_read_block(
-            i2c_num, MCU_SLAVE_ADDR, SEND_RESPONSE, DMP_MSG_HEAD_LENGTH + 1, (unsigned char *)&rsp);
+        ret = dcmi_mcu_310b_set_info_by_i2c(i2c_num, fd);
         if (ret != DCMI_OK) {
-            dcmi_mcu_set_unlock(fd);
-            gplog(LOG_INFO, "call i2c_smbus_read_block failed. ret is %d.", ret);
-            return DCMI_ERR_CODE_INNER_ERR;
-        }
-
-        if (rsp.error_code != DCMI_OK) {
-            dcmi_mcu_set_unlock(fd);
-            gplog(LOG_ERR, "error_code=%hu.", rsp.error_code);
             return DCMI_ERR_CODE_INNER_ERR;
         }
     }
@@ -449,7 +458,6 @@ int dcmi_mcu_get_info_dynamic(int card_id, MCU_SMBUS_REQ_MSG *mcu_req, MCU_SMBUS
 
     mcu_req->offset = 0;
     mcu_req->lenth = (unsigned int)dcmi_mcu_get_recv_data_max_len();
-
     ret = dcmi_mcu_get_info(card_id, mcu_req, &mcu_rsp_tmp);
     if (ret != DCMI_OK) {
         gplog(LOG_ERR, "call dcmi_mcu_get_info fail.ret is %d.", ret);
@@ -544,6 +552,17 @@ int dcmi_mcu_set_info_simple(int card_id, unsigned short opcode, unsigned int le
     return dcmi_mcu_set_info(card_id, &mcu_req);
 }
 
+int dcmi_vrd_set_info_simple(int card_id, unsigned short opcode, int index)
+{
+    MCU_SMBUS_REQ_MSG mcu_req = {0};
+    mcu_req.lun = DCMI_MCU_MSG_LUN;
+    mcu_req.opcode = opcode;
+    mcu_req.offset = 0;
+    mcu_req.lenth = 0;
+    mcu_req.arg = (unsigned char)index;
+    return dcmi_vrd_set_info(card_id, &mcu_req, index);
+}
+
 STATIC int dcmi_passthru_mcu(int device_logic_id, struct passthru_message_stru *passthru_message, int opcode)
 {
     int i, err;
@@ -555,13 +574,6 @@ STATIC int dcmi_passthru_mcu(int device_logic_id, struct passthru_message_stru *
             return DCMI_ERR_CODE_OPER_NOT_PERMITTED;
         } else if (err == DSMI_OK) {
             ms_rsp = &(passthru_message->dest_message.data.rsp);
-            // 增加opcode 返回值校验
-            if (ms_rsp->opcode != opcode) {
-                gplog(LOG_INFO, "req_opcode = 0x%x, ms_rsp->opcode = 0x%x, rsp_errorcode=%d.",
-                    opcode, ms_rsp->opcode, ms_rsp->errorcode);
-                usleep((i > DCMI_MCU_MSG_REPEATE_NUM_1MS) ? DCMI_MCU_TASK_DELAY_500_MS : DCMI_MCU_TASK_DELAY_1_MS);
-                continue;
-            }
             // 电子标签数据为空时，为了让BMC感知，MCU会返回错误码5，此为正常情况，返回ok
             if ((ms_rsp->errorcode == 0) || (ms_rsp->errorcode == DCMI_MCU_DATA_EMPTY)) {
                 return DCMI_OK;
@@ -570,6 +582,14 @@ STATIC int dcmi_passthru_mcu(int device_logic_id, struct passthru_message_stru *
             // 旧版本MCU不支持查询mcu typeid，会返回错误码1，为正常情况，此处返回ok
             if ((ms_rsp->errorcode == DCMI_MCU_NO_SUPPORT) && (opcode == DCMI_MCU_MCU_TYPE_ID_OPCODE)) {
                 return DCMI_OK;
+            }
+
+            // 增加opcode 返回值校验
+            if (ms_rsp->opcode != opcode) {
+                gplog(LOG_INFO, "req_opcode = 0x%x, ms_rsp->opcode = 0x%x, rsp_errorcode=%d.",
+                    opcode, ms_rsp->opcode, ms_rsp->errorcode);
+                usleep((i > DCMI_MCU_MSG_REPEATE_NUM_1MS) ? DCMI_MCU_TASK_DELAY_500_MS : DCMI_MCU_TASK_DELAY_1_MS);
+                continue;
             }
         }
         usleep((i > DCMI_MCU_MSG_REPEATE_NUM_1MS) ? DCMI_MCU_TASK_DELAY_500_MS : DCMI_MCU_TASK_DELAY_1_MS);
@@ -593,6 +613,9 @@ int dcmi_mcu_get_send_data_max_len(void)
         return DCMI_MCU_SEND_MSG_DATA_LEN_FOR_310P_AND_910;
     }
 
+    if (dcmi_board_chip_type_is_ascend_950()) {
+        return DCMI_MCU_SEND_MSG_DATA_LEN_FOR_950;
+    }
     return DCMI_MCU_SEND_MSG_DATA_LEN_FOR_DEFAULT;
 }
 
@@ -603,6 +626,10 @@ int dcmi_mcu_get_recv_data_max_len(void)
         dcmi_board_chip_type_is_ascend_910_93());
     if (support_chip_type) {
         return DCMI_MCU_RECV_MSG_DATA_LEN_FOR_310P_AND_910;
+    }
+
+    if (dcmi_board_chip_type_is_ascend_950()) {
+        return DCMI_MCU_RECV_MSG_DATA_LEN_FOR_950;
     }
 
     return DCMI_MCU_RECV_MSG_DATA_LEN_FOR_DEFAULT;
@@ -703,21 +730,20 @@ int dcmi_get_mcu_connect_device_logic_id(int *device_logic_id, int *device_slot_
 
 STATIC int dcmi_mcu_get_info_by_npu(int card_id, MCU_SMBUS_REQ_MSG *mcu_req, MCU_SMBUS_RSP_MSG *mcu_rsp)
 {
-    int err;
-    int device_logic_id, device_slot_id;
+    int device_logic_id, device_slot_id, err;
     struct dmp_req_message_stru *ms_req = NULL;
     struct dmp_rsp_message_stru *ms_rsp = NULL;
     struct passthru_message_stru passthru_message = {0};
     int send_msg_data_max_len = dcmi_mcu_get_send_data_max_len();
     int recv_msg_data_max_len = dcmi_mcu_get_recv_data_max_len();
-    bool support_chip_type = (dcmi_board_chip_type_is_ascend_310p() || dcmi_board_chip_type_is_ascend_910() ||
-                              dcmi_board_chip_type_is_ascend_910b() || dcmi_board_chip_type_is_ascend_910_93());
-    if (support_chip_type) {
+    if (dcmi_board_chip_type_is_ascend_310p() || dcmi_board_chip_type_is_ascend_910() ||
+        dcmi_board_chip_type_is_ascend_910b() || dcmi_board_chip_type_is_ascend_910_93()) {
         err = dcmi_get_device_logic_id(&device_logic_id, card_id, 0);
+    } else if (dcmi_board_chip_type_is_ascend_950()) {
+        err = dcmiv2_get_device_logic_id(&device_logic_id, card_id, 0);
     } else {
         err = dcmi_get_mcu_connect_device_logic_id(&device_logic_id, &device_slot_id, card_id);
     }
-
     if (err != DCMI_OK) {
         gplog(LOG_ERR, "get mcu connect device  logic_id failed. err is %d.", err);
         return err;
@@ -765,10 +791,20 @@ STATIC int dcmi_mcu_get_info_by_npu(int card_id, MCU_SMBUS_REQ_MSG *mcu_req, MCU
     return DCMI_OK;
 }
 
-
-STATIC int dcmi_mcu_set_info_by_npu(int card_id, MCU_SMBUS_REQ_MSG *mcu_req)
+STATIC int get_device_logic_id(int card_id, int *device_logic_id, int *device_slot_id)
 {
-    int err;
+    if (dcmi_board_chip_type_is_ascend_310p() || dcmi_board_chip_type_is_ascend_910() ||
+        dcmi_board_chip_type_is_ascend_910b() || dcmi_board_chip_type_is_ascend_910_93()) {
+        return dcmi_get_device_logic_id(device_logic_id, card_id, 0);
+    } else if (dcmi_board_chip_type_is_ascend_950()) {
+        return dcmiv2_get_device_logic_id(device_logic_id, card_id, 0);
+    } else {
+        return dcmi_get_mcu_connect_device_logic_id(device_logic_id, device_slot_id, card_id);
+    }
+}
+
+STATIC int dcmi_mcu_set_info_by_npu(int card_id, MCU_SMBUS_REQ_MSG *mcu_req, int index)
+{
     int device_logic_id = 0;
     int device_slot_id = 0;
     struct dmp_req_message_stru *ms_req = NULL;
@@ -776,13 +812,10 @@ STATIC int dcmi_mcu_set_info_by_npu(int card_id, MCU_SMBUS_REQ_MSG *mcu_req)
     int send_msg_data_max_len = dcmi_mcu_get_send_data_max_len();
 
     bool support_chip_type = (dcmi_board_chip_type_is_ascend_310p() || dcmi_board_chip_type_is_ascend_910b() ||
-        dcmi_board_chip_type_is_ascend_910() || dcmi_board_chip_type_is_ascend_910_93());
-    if (support_chip_type) {
-        err = dcmi_get_device_logic_id(&device_logic_id, card_id, 0);
-    } else {
-        err = dcmi_get_mcu_connect_device_logic_id(&device_logic_id, &device_slot_id, card_id);
-    }
+        dcmi_board_chip_type_is_ascend_910() || dcmi_board_chip_type_is_ascend_910_93() ||
+        dcmi_board_chip_type_is_ascend_950());
 
+    int err = get_device_logic_id(card_id, &device_logic_id, &device_slot_id);
     if (err != DCMI_OK) {
         gplog(LOG_ERR, "get mcu connect device logic_id failed. err is %d.", err);
         return err;
@@ -794,15 +827,23 @@ STATIC int dcmi_mcu_set_info_by_npu(int card_id, MCU_SMBUS_REQ_MSG *mcu_req)
     ms_req->opcode = mcu_req->opcode;
     ms_req->offset = mcu_req->offset;
     ms_req->length = mcu_req->lenth;
-
-    err = memcpy_s(&ms_req->data[0], send_msg_data_max_len, mcu_req->req_data, mcu_req->lenth);
-    if (err != EOK) {
-        gplog(LOG_ERR, "call memcpy_s failed. err is %d.", err);
-        return err;
+    if (index != DCMI_REQ_INDEX_INVALID) {
+        ms_req->arg = mcu_req->arg;
     }
-
+    
+    if (mcu_req->lenth != 0) {
+        err = memcpy_s(&ms_req->data[0], send_msg_data_max_len, mcu_req->req_data, mcu_req->lenth);
+        if (err != EOK) {
+            gplog(LOG_ERR, "call memcpy_s failed.(ret=%d).", err);
+            return err;
+        }
+    }
     passthru_message.src_len = DMP_MSG_HEAD_LENGTH + mcu_req->lenth;
-    if (support_chip_type) {
+    
+    if (support_chip_type && mcu_req->opcode != DCMI_MCU_VRD_START_UPDATE_OPCODE &&
+        mcu_req->opcode != DCMI_MCU_VRD_FILE_LEN_OPCODE &&
+        mcu_req->opcode != DCMI_MCU_VRD_CLEAR_FILE_OPCODE &&
+        mcu_req->opcode != DCMI_MCU_VRD_UPGRADE_OPCODE) {
         passthru_message.rw_flag = 0;           /* 310p、910、910b标卡设置类消息有响应需要回读 */
     } else {
         passthru_message.rw_flag = 1;
@@ -839,6 +880,26 @@ STATIC int dcmi_mcu_get_info_inn(int card_id, MCU_SMBUS_REQ_MSG *mcu_req, MCU_SM
     return ret;
 }
 
+int dcmi_vrd_get_info(int card_id, MCU_SMBUS_REQ_MSG *mcu_req, MCU_SMBUS_RSP_MSG *mcu_rsp)
+{
+    if (dcmi_get_mcu_access_chan() == DCMI_MCU_ACCESS_BY_NPU) {
+        if (dcmi_check_vnpu_in_docker_or_virtual(card_id)) {
+            return DCMI_OK;
+        }
+        return dcmi_mcu_get_info_by_npu(card_id, mcu_req, mcu_rsp);
+    }
+
+    int ret;
+    for (int num_id = 0; num_id < DCMI_MCU_MSG_REPEATE_NUM; num_id++) {
+        ret = dcmi_mcu_get_info_by_i2c(card_id, mcu_req, mcu_rsp);
+        if (ret == DCMI_OK) {
+            break;
+        }
+        usleep(DCMI_MCU_TASK_DELAY_500_MS);
+    }
+    return ret;
+}
+
 int dcmi_mcu_get_info(int card_id, MCU_SMBUS_REQ_MSG *mcu_req, MCU_SMBUS_RSP_MSG *mcu_rsp)
 {
     int ret;
@@ -850,17 +911,17 @@ int dcmi_mcu_get_info(int card_id, MCU_SMBUS_REQ_MSG *mcu_req, MCU_SMBUS_RSP_MSG
     return ret;
 }
 
-STATIC int dcmi_mcu_set_info_inn(int card_id, MCU_SMBUS_REQ_MSG *mcu_req)
+STATIC int dcmi_mcu_set_info_inn(int card_id, MCU_SMBUS_REQ_MSG *mcu_req, int index)
 {
     int ret;
     int num_id;
 
     if (dcmi_get_mcu_access_chan() == DCMI_MCU_ACCESS_BY_NPU) {
-        return dcmi_mcu_set_info_by_npu(card_id, mcu_req);
+        return dcmi_mcu_set_info_by_npu(card_id, mcu_req, index);
     }
 
     for (num_id = 0; num_id < DCMI_MCU_MSG_REPEATE_NUM; num_id++) {
-        ret =  dcmi_mcu_set_info_by_i2c(card_id, mcu_req);
+        ret =  dcmi_mcu_set_info_by_i2c(card_id, mcu_req, index);
         if (ret == DCMI_OK) {
             break;
         }
@@ -876,7 +937,21 @@ int dcmi_mcu_set_info(int card_id, MCU_SMBUS_REQ_MSG *mcu_req)
     int num_id;
 
     for (num_id = 0; num_id < DCMI_MCU_MSG_REPEATE_NUM; num_id++) {
-        ret = dcmi_mcu_set_info_inn(card_id, mcu_req);
+        ret = dcmi_mcu_set_info_inn(card_id, mcu_req, DCMI_REQ_INDEX_INVALID);
+        if (ret == DCMI_OK) {
+            break;
+        }
+        usleep(DCMI_MCU_TASK_DELAY_500_MS);
+    }
+
+    return ret;
+}
+
+int dcmi_vrd_set_info(int card_id, MCU_SMBUS_REQ_MSG *mcu_req, int index)
+{
+    int ret;
+    for (int num_id = 0; num_id < DCMI_MCU_MSG_REPEATE_NUM; num_id++) {
+        ret = dcmi_mcu_set_info_inn(card_id, mcu_req, index);
         if (ret == DCMI_OK) {
             break;
         }
@@ -1039,50 +1114,14 @@ int dcmi_mcu_get_health(int card_id, unsigned int *health)
     return dcmi_mcu_get_fix_word(card_id, 0, DCMI_MCU_HEALTH_OPCODE, DCMI_MCU_HEALTH_LEN, (int *)(void *)health);
 }
 
-int dcmi_mcu_get_device_errorcode(
-    int card_id, int *error_count, unsigned int *error_code_list, unsigned int list_len)
-{
-    int ret, i;
-    int req_data = 0;
-    unsigned short mcu_err_code_list[DCMI_MCU_ERR_CODE_MAX] = {0};
-    MCU_SMBUS_REQ_MSG mcu_req = {0};
-    MCU_SMBUS_RSP_MSG mcu_rsp = {0};
-    mcu_req.arg = 0;
-    mcu_req.opcode = DCMI_MCU_ERRCODE_OPCODE;
-    mcu_req.req_data = (char *)&req_data;
-    mcu_req.req_data_len = 0;
-    mcu_rsp.data_info = (char *)&mcu_err_code_list[0];
-    mcu_rsp.total_len = (int)sizeof(mcu_err_code_list);
-    mcu_rsp.len = 0;
-
-    ret = dcmi_mcu_get_info_dynamic(card_id, &mcu_req, &mcu_rsp);
-    if (ret != DCMI_OK) {
-        gplog(LOG_ERR, "call dcmi_mcu_get_info_dynamic fail %d.", ret);
-        return ret;
-    }
-
-    /* PCIE带外管理规范，若无故障，则填0x0000，小字节序 */
-    if ((mcu_rsp.len == (int)sizeof(unsigned short)) && (mcu_err_code_list[0] == 0)) {
-        *error_count = 0;
-    } else {
-        *error_count = mcu_rsp.len / (int)sizeof(unsigned short);  // MCU返回的错误码为unsigned short类型，位宽为2
-        if (*error_count > list_len) {
-            gplog(LOG_ERR, "*error_count %d is bigger than list_len %u", *error_count, list_len);
-            return DCMI_ERR_CODE_INVALID_PARAMETER;
-        }
-        for (i = 0; i < *error_count; i++) {
-            error_code_list[i] = mcu_err_code_list[i];
-        }
-    }
-    return DCMI_OK;
-}
-
 static int dcmi_mcu_get_error_string_inner(unsigned char *error_info, int buff_size, const char *src_info, int size)
 {
     int ret;
-    ret = memcpy_s(error_info, buff_size, src_info, DCMI_MCU_ERROR_STRING_LENTH);
+    size_t copy_length = ((size_t)size < (size_t)(buff_size - 1)) ?
+    (size_t)size : (size_t)(buff_size - 1);
+    ret = strncpy_s((char *)error_info, buff_size, src_info, copy_length);
     if (ret != EOK) {
-        gplog(LOG_ERR, "memcpy_s failed, err is %d", ret);
+        gplog(LOG_ERR, "strncpy_s failed, err is %d", ret);
         return DCMI_ERR_CODE_SECURE_FUN_FAIL;
     }
     return DCMI_OK;
@@ -1131,11 +1170,24 @@ static bool is_910b_box(int board_id)
     return false;
 }
 
+static int find_error_string(struct dcmi_health_info *health_error_info, size_t table_size, int error_code,
+    unsigned char *error_info, int buff_size)
+{
+    for (size_t i = 0; i < table_size; i++) {
+        if (error_code == health_error_info[i].error_code) {
+            return dcmi_mcu_get_error_string_inner(error_info, buff_size,
+                health_error_info[i].error_info, DCMI_MCU_ERROR_STRING_LENGTH);
+        }
+    }
+    return DCMI_ERR_CODE_INNER_ERR;
+}
+
 int dcmi_mcu_get_device_errorcode_string(int card_id, int error_code, unsigned char *error_info, int buff_size)
 {
-    size_t i, table_size;
+    size_t table_size;
     int chip_type, board_id;
     struct dcmi_health_info *health_error_info = NULL;
+    bool is_310p_1p;
 
     if (error_info == NULL || buff_size <= 0) {
         gplog(LOG_ERR, "error_info is NULL or buff_size %d.", buff_size);
@@ -1144,17 +1196,15 @@ int dcmi_mcu_get_device_errorcode_string(int card_id, int error_code, unsigned c
 
     chip_type = dcmi_get_board_chip_type();
     board_id = dcmi_get_board_id_inner();
+    is_310p_1p = is_310p_1p_card(board_id);
     switch (chip_type) {
         case DCMI_CHIP_TYPE_D310:
             return DCMI_ERR_CODE_NOT_SUPPORT;
         case DCMI_CHIP_TYPE_D310P:
-            if (is_310p_1p_card(board_id)) {
-                table_size = (sizeof(g_310p_1p_card_health_error_info) / sizeof(g_310p_1p_card_health_error_info[0]));
-                health_error_info = g_310p_1p_card_health_error_info;
-            } else {
-                table_size = (sizeof(g_310p_2p_card_health_error_info) / sizeof(g_310p_2p_card_health_error_info[0]));
-                health_error_info = g_310p_2p_card_health_error_info;
-            }
+            health_error_info = is_310p_1p ? g_310p_1p_card_health_error_info : g_310p_2p_card_health_error_info;
+            table_size = is_310p_1p ? \
+            sizeof(g_310p_1p_card_health_error_info) / sizeof(g_310p_1p_card_health_error_info[0]) :
+            sizeof(g_310p_2p_card_health_error_info) / sizeof(g_310p_2p_card_health_error_info[0]);
             break;
         case DCMI_CHIP_TYPE_D910:
             table_size = (sizeof(g_910_card_health_error_info) / sizeof(g_910_card_health_error_info[0]));
@@ -1172,18 +1222,15 @@ int dcmi_mcu_get_device_errorcode_string(int card_id, int error_code, unsigned c
                 health_error_info = g_910b_card_health_error_info;
             }
             break;
+        case DCMI_CHIP_TYPE_D950:
+            table_size = (sizeof(g_950_health_error_info) / sizeof(g_950_health_error_info[0]));
+            health_error_info = g_950_health_error_info;
+            break;
         default:
             return DCMI_ERR_CODE_NOT_SUPPORT;
     }
 
-    for (i = 0; i < table_size; i++) {
-        if (error_code == health_error_info[i].error_code) {
-            return dcmi_mcu_get_error_string_inner(error_info, buff_size,
-                &health_error_info[i].error_info[0], DCMI_MCU_ERROR_STRING_LENTH);
-        }
-    }
-
-    return DCMI_ERR_CODE_INNER_ERR;
+    return find_error_string(health_error_info, table_size, error_code, error_info, buff_size);
 }
 
 int dcmi_mcu_get_board_info(int card_id, struct dcmi_board_info *board_info)
@@ -1199,6 +1246,11 @@ int dcmi_mcu_get_board_info(int card_id, struct dcmi_board_info *board_info)
     if (ret != DCMI_OK) {
         gplog(LOG_ERR, "check card id %d failed %d.", card_id, ret);
         return DCMI_ERR_CODE_INVALID_PARAMETER;
+    }
+
+    if (dcmi_board_chip_type_is_ascend_950()) {
+        gplog(LOG_OP, "This product does not support this api.");
+        return DCMI_ERR_CODE_NOT_SUPPORT;
     }
 
     if (dcmi_is_has_mcu()) {
@@ -1496,6 +1548,11 @@ int dcmi_mcu_collect_log(int card_id, int log_type)
     if ((log_type < MCU_LOG_ERR) || (log_type >= MCU_LOG_MAX)) {
         gplog(LOG_ERR, "log_type is invalid. logtype=%d", log_type);
         return DCMI_ERR_CODE_INVALID_PARAMETER;
+    }
+
+    if (dcmi_board_chip_type_is_ascend_950()) {
+        gplog(LOG_OP, "This product does not support this api.");
+        return DCMI_ERR_CODE_NOT_SUPPORT;
     }
 
     if (!dcmi_is_has_mcu()) {
@@ -1815,6 +1872,11 @@ int dcmi_mcu_get_chip_temperature(int card_id, char *data_info, int buf_size, in
         return DCMI_ERR_CODE_INVALID_PARAMETER;
     }
 
+    if (dcmi_board_chip_type_is_ascend_950()) {
+        gplog(LOG_OP, "This product does not support this api.");
+        return DCMI_ERR_CODE_NOT_SUPPORT;
+    }
+
     ret = dcmi_check_card_id(card_id);
     if (ret != DCMI_OK) {
         gplog(LOG_ERR, "check card id %d failed %d.", card_id, ret);
@@ -1896,6 +1958,11 @@ int dcmi_mcu_get_power_info(int card_id, int *power)
         return DCMI_ERR_CODE_INVALID_PARAMETER;
     }
 
+    if (dcmi_board_chip_type_is_ascend_950()) {
+        gplog(LOG_OP, "This product does not support this api.");
+        return DCMI_ERR_CODE_NOT_SUPPORT;
+    }
+
     if (!dcmi_is_has_mcu() || dcmi_board_chip_type_is_ascend_910b() || dcmi_board_chip_type_is_ascend_910_93()) {
         gplog(LOG_ERR, "Mcu does not exist or this device does not support");
         return DCMI_ERR_CODE_NOT_SUPPORT;
@@ -1957,6 +2024,27 @@ int dcmi_mcu_get_customized_info(int card_id, char *data_info, int data_info_siz
     return ret;
 }
 
+// 仅升级vrd固件时获取升级状态
+int dcmi_get_single_vrd_upgrade_status(int card_id, int *status, int index)
+{
+    MCU_SMBUS_REQ_MSG mcu_req = {0};
+    MCU_SMBUS_RSP_MSG mcu_rsp = {0};
+    mcu_req.lun = DCMI_MCU_MSG_LUN;
+    mcu_req.arg = (unsigned char)index;
+    mcu_req.opcode = DCMI_MCU_GET_VRD_UPDATE_STATUS_OPCODE;
+    mcu_req.offset = 0;
+    mcu_req.lenth = 0;
+    unsigned char data_info[DCMI_MCU_UPGRADE_COMMAND_LEN] = {0};
+    mcu_rsp.data_info = (char *)data_info;
+    int ret = dcmi_vrd_get_info(card_id, &mcu_req, &mcu_rsp);
+    if (ret != DCMI_OK) {
+        return ret;
+    }
+
+    *status = data_info[0];
+    return DCMI_OK;
+}
+
 int dcmi_get_vrd_upgrade_status(int card_id, int *status, int *progress)
 {
     int ret;
@@ -2002,9 +2090,74 @@ int dcmi_get_vrd_upgrade_status(int card_id, int *status, int *progress)
     return DCMI_OK;
 }
 
+static int dcmi_ao_set_gpio_level(int device_logic_id, unsigned char data)
+{
+    int ret = DCMI_OK;
+    struct dmp_req_message_stru *ms_req = NULL;
+    struct passthru_message_stru passthru_message = {0};
+    int send_msg_data_max_len = dcmi_mcu_get_send_data_max_len();
+
+    ms_req = &passthru_message.src_message.data.req;
+    ms_req->opcode = DCMI_AO_SET_GPIO_LEVEL_OPCODE;
+    ms_req->offset = 0;
+    ms_req->length = DCMI_AO_GPIO_DATA_LEN;
+    ms_req->lun = DCMI_MCU_MSG_LUN;
+    
+    ret = memcpy_s(&ms_req->data[0], send_msg_data_max_len, &data, DCMI_AO_GPIO_DATA_LEN);
+    if (ret != EOK) {
+        gplog(LOG_ERR, "call memcpy_s failed. err is %d.", ret);
+        return ret;
+    }
+
+    passthru_message.src_len = DMP_MSG_HEAD_LENGTH + DCMI_AO_GPIO_DATA_LEN;
+    passthru_message.rw_flag = 1;
+
+    ret = dcmi_passthru_mcu(device_logic_id, &passthru_message, ms_req->opcode);
+    if (ret != DCMI_OK) {
+        gplog(LOG_ERR, "Call dcmi_passthru_mcu failed, ret = %d", ret);
+        return ret;
+    }
+
+    return ret;
+}
+
+static void dcmi_convert_data(char *level_data, int data_size, unsigned char *gpio_level)
+{
+    int i;
+    int gpio_index[DCMI_AO_GPIO_NUM] = {DCMI_AO_GPIO_15_OFFSET, DCMI_AO_GPIO_24_OFFSET,
+                                        DCMI_AO_GPIO_19_OFFSET, DCMI_AO_GPIO_20_OFFSET};
+    
+    for (i = 0; i < data_size; i++) {
+        if (level_data[i] == '0') {
+            continue;
+        }
+        *gpio_level += 1 << gpio_index[i];
+    }
+
+    gplog(LOG_INFO, "gpio_level = %d\n", *gpio_level);
+}
+int dcmi_set_gpio_level(int device_logic_id, char *level_data, int data_size)
+{
+    int ret = DCMI_OK;
+    unsigned char gpio_level = 0;
+
+    dcmi_convert_data(level_data, data_size, &gpio_level);
+    ret = dcmi_ao_set_gpio_level(device_logic_id, gpio_level);
+    if (ret != DCMI_OK) {
+        gplog(LOG_ERR, "Call dcmi_ao_set_gpio_level failed! ret = %d", ret);
+        return ret;
+    }
+
+    level_data[data_size - 1] = '\0';
+    gplog(LOG_OP, "Call dcmi_set_gpio_level successfully. (device_logic_id=[%d];data=[%s])",
+          device_logic_id, level_data);
+    return DCMI_OK;
+}
+
 int dcmi_get_vrd_info(int card_id, char *version, int len)
 {
-    int ret;
+    int ret, dev_id;
+    int tmp_card_id = card_id;
     int req_data = 0;
     MCU_SMBUS_REQ_MSG mcu_req = {0};
     MCU_SMBUS_RSP_MSG mcu_rsp = {0};
@@ -2021,23 +2174,43 @@ int dcmi_get_vrd_info(int card_id, char *version, int len)
         return DCMI_ERR_CODE_INVALID_PARAMETER;
     }
 
-    ret = dcmi_check_card_id(card_id);
+    if (dcmi_board_chip_type_is_ascend_950()) {
+        ret = dcmiv2_inner_get_card_id_device_id_from_logicid(&tmp_card_id, &dev_id, card_id);
+        if (ret != DCMI_OK) {
+            return ret;
+        }
+    }
+
+    ret = dcmi_check_card_id(tmp_card_id);
     if (ret != DCMI_OK) {
-        gplog(LOG_ERR, "check card id %d failed %d.", card_id, ret);
+        gplog(LOG_ERR, "check card id %d failed %d.", tmp_card_id, ret);
         return DCMI_ERR_CODE_INVALID_PARAMETER;
     }
 
-    if (!(dcmi_board_chip_type_is_ascend_310p() || dcmi_board_chip_type_is_ascend_910b() || \
-        dcmi_board_chip_type_is_ascend_910_93()) || !dcmi_is_has_mcu()) {
+    if (!dcmi_board_chip_type_is_ascend_950() &&
+        (!(dcmi_board_chip_type_is_ascend_310p() || dcmi_board_chip_type_is_ascend_910b() || \
+        dcmi_board_chip_type_is_ascend_910_93()) || !dcmi_is_has_mcu())) {
         return DCMI_ERR_CODE_NOT_SUPPORT;
     }
 
-    ret = dcmi_mcu_get_info_dynamic(card_id, &mcu_req, &mcu_rsp);
+    ret = dcmi_mcu_get_info_dynamic(tmp_card_id, &mcu_req, &mcu_rsp);
     if (ret != DCMI_OK) {
         gplog(LOG_ERR, "call dcmi_mcu_get_info_dynamic failed. ret is %d.", ret);
         return DCMI_ERR_CODE_INNER_ERR;
     }
 
+    return DCMI_OK;
+}
+
+// 仅下发vrd固件升级使用
+int dcmi_set_single_vrd_upgrade_stage(int card_id, int index)
+{
+    int ret = dcmi_vrd_set_info_simple(card_id, DCMI_MCU_VRD_START_UPDATE_OPCODE, index);
+    if (ret != DCMI_OK) {
+        gplog(LOG_ERR, "Set vrd upgrade stage failed.(card_id=%d, err=%d).", card_id, ret);
+        return ret;
+    }
+    gplog(LOG_OP, "Set vrd upgrade stage success.(card_id=%d).", card_id);
     return DCMI_OK;
 }
 

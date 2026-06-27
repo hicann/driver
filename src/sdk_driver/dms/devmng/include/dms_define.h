@@ -16,6 +16,7 @@
 
 #include "ka_memory_pub.h"
 #include "ka_dfx_pub.h"
+#include "ka_task_pub.h"
 #include "ascend_hal_error.h"
 #include "dms_sensor.h"
 #include "dms_event.h"
@@ -112,20 +113,20 @@ struct dms_dev_data_view {
 #define dms_err_ratelimited(fmt, ...) drv_err_ratelimited(MODULE_DMS, fmt, ##__VA_ARGS__)
 #else
 #define dms_err(fmt, ...) do { \
-    drv_err(MODULE_DMS, "<%s:%d:%d> " fmt, current->comm, current->tgid, current->pid, ##__VA_ARGS__); \
+    drv_err(MODULE_DMS, "<%s:%d:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), ka_task_get_current_pid(), ##__VA_ARGS__); \
     share_log_err(DEVMNG_SHARE_LOG_START, fmt, ##__VA_ARGS__); \
 } while (0)
 #define dms_warn(fmt, ...) drv_warn(MODULE_DMS, \
-    "<%s:%d:%d> " fmt, current->comm, current->tgid, current->pid, ##__VA_ARGS__)
+    "<%s:%d:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), ka_task_get_current_pid(), ##__VA_ARGS__)
 #define dms_info(fmt, ...) drv_info(MODULE_DMS, \
-    "<%s:%d:%d> " fmt, current->comm, current->tgid, current->pid, ##__VA_ARGS__)
+    "<%s:%d:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), ka_task_get_current_pid(), ##__VA_ARGS__)
 #define dms_event(fmt, ...) drv_event(MODULE_DMS, \
-    "<%s:%d:%d> " fmt, current->comm, current->tgid, current->pid, ##__VA_ARGS__)
+    "<%s:%d:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), ka_task_get_current_pid(), ##__VA_ARGS__)
 #define dms_debug(fmt, ...) drv_pr_debug(MODULE_DMS, \
-    "<%s:%d:%d> " fmt, current->comm, current->tgid, current->pid, ##__VA_ARGS__)
+    "<%s:%d:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), ka_task_get_current_pid(), ##__VA_ARGS__)
 #define dms_err_ratelimited(fmt, ...) do { \
     drv_err_ratelimited(MODULE_DMS, "<%s:%d:%d> " fmt, \
-        current->comm, current->tgid, current->pid, ##__VA_ARGS__); \
+        ka_task_get_current_comm(), ka_task_get_current_tgid(), ka_task_get_current_pid(), ##__VA_ARGS__); \
 } while (0)
 #endif
 #ifdef CFG_FEATURE_HOST_LOG

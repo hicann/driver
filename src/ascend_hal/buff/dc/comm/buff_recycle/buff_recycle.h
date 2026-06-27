@@ -20,7 +20,7 @@
 
 enum buff_recycle_type {
     PASSIVE_RECYCLE = 0, /* recycle by recycle thread */
-    ACTIVE_RECYCLE, /* recycle by user who will call halBuffProcCacheFree */
+    ACTIVE_RECYCLE,      /* recycle by user who will call halBuffProcCacheFree */
     RECYCLE_MAX_TYPE,
 };
 
@@ -40,4 +40,3 @@ drvError_t buff_proc_cache_free(uint32_t devid);
 drvError_t proc_block_ctx_init(int pool_id, int type, void *mng, struct block_mem_ctx *block);
 
 #endif
-

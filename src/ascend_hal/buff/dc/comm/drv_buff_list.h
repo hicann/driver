@@ -54,7 +54,7 @@ struct buff_grp_list_node *buff_create_grp_list_node(int devid, int grp_id);
 struct buff_grp_list_node *buff_get_grp_list_node(int grp);
 void buff_del_grp_list_node(struct buff_grp_list_node *node);
 void buff_grp_list_clear(void);
-struct buff_memzone_list_node* buff_get_buff_mng_list(int devid, int grp, uint32_t list_idx);
+struct buff_memzone_list_node *buff_get_buff_mng_list(int devid, int grp, uint32_t list_idx);
 int buff_add_buff_mng_list_node(int grp, uint32_t list_idx, struct list_head *new_node);
 int buff_del_buff_mng_list_node(struct list_head *node, uint32 mutex_flag);
 int buff_get_devid_by_mz_list(struct buff_memzone_list_node *mz_list_node);

@@ -43,6 +43,10 @@ ifeq ($(ENABLE_BUILD_PRODUCT),TRUE)
 	asdrv_dms-y += $(BUILD_PREFIX_DIR)/devdrv_manager_dev_share.o
 endif
 
+ifeq ($(ENABLE_UBE), true)
+	EXTRA_CFLAGS += -DCFG_FEATURE_UB
+endif
+
 asdrv_dms-y += $(BUILD_PREFIX_DIR)/hvdevmng_init.o
 asdrv_dms-y += $(BUILD_PREFIX_DIR)/hvdevmng_cmd_proc.o
 asdrv_dms-y += $(BUILD_PREFIX_DIR)/devdrv_manager_pid_map.o

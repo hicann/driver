@@ -39,7 +39,7 @@ int ubdrv_set_hot_reset(void)
     hotreset_base = NULL;
     ubdrv_info("Map device reset base success.\n");
     /* os->psci->bios->hot reset */
-    kernel_restart(NULL);
+    ka_fs_emergency_restart();
     return 0;
 }
 

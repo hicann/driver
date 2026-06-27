@@ -14,7 +14,7 @@
 #ifndef SVM_MASTER_DEV_CAPABILITY_H
 #define SVM_MASTER_DEV_CAPABILITY_H
 
-#include <linux/types.h>
+#include "ka_type.h"
 #include "devmm_proc_info.h"
 #include "svm_kernel_msg.h"
 
@@ -25,14 +25,14 @@ enum {
     READ_ONLY_FEATURE,
     HOST_RW_DEV_RO_FEATURE,
     DVPP_MEM_SIZE,
-    OFFSET_SECURITY,                /* Addr translate securely */
-    CONVERT_OFFSET,                 /* Convert dma_addr to device ts share mem */
+    OFFSET_SECURITY, /* Addr translate securely */
+    CONVERT_OFFSET,  /* Convert dma_addr to device ts share mem */
     DEV_MEM_MAP_HOST_FEATURE,
     PCIE_DMA_SVA_FEATURE,
     DOUBLE_PGTABLE_OFFSET,
-    HOST_PIN_PRE_REGISTER_FEATURE,  /* User_space synchronous copy performance improvement.*/
+    HOST_PIN_PRE_REGISTER_FEATURE, /* User_space synchronous copy performance improvement.*/
     HOST_MEM_POOL_FEATURE,
-    DMA_PREPARE_POOL_FEATURE,       /* Kernel_space asynchronous copy performance improvement.*/
+    DMA_PREPARE_POOL_FEATURE, /* Kernel_space asynchronous copy performance improvement.*/
     AIC_REG_MAP,
     REMOTE_MMAP,
     SHMEM_REPAIR,
@@ -72,25 +72,25 @@ int devmm_ioctl_mem_map_capability(struct devmm_svm_process *svm_proc, struct de
 static inline bool devmm_dev_capability_support_dev_mem_map_host(u32 did)
 {
     return devmm_svm->dev_capability[did].feature_dev_mem_map_host &&
-        (g_dev_feature_capabilty_disable[did][DEV_MEM_MAP_HOST_FEATURE] == false);
+           (g_dev_feature_capabilty_disable[did][DEV_MEM_MAP_HOST_FEATURE] == false);
 }
 
 static inline bool devmm_dev_capability_support_pcie_th(u32 did)
 {
     return devmm_svm->dev_capability[did].feature_pcie_th &&
-        (g_dev_feature_capabilty_disable[did][PCIE_TH_FEATURE] == false);
+           (g_dev_feature_capabilty_disable[did][PCIE_TH_FEATURE] == false);
 }
 
 static inline bool devmm_dev_capability_support_bar_mem(u32 did)
 {
     return devmm_svm->dev_capability[did].feature_bar_mem &&
-        (g_dev_feature_capabilty_disable[did][PCIE_BAR_FEATURE] == false);
+           (g_dev_feature_capabilty_disable[did][PCIE_BAR_FEATURE] == false);
 }
 
 static inline bool devmm_dev_capability_support_bar_huge_mem(u32 did)
 {
     return devmm_svm->dev_capability[did].feature_bar_huge_mem &&
-        (g_dev_feature_capabilty_disable[did][PCIE_BAR_HUGE_FEATURE] == false);
+           (g_dev_feature_capabilty_disable[did][PCIE_BAR_HUGE_FEATURE] == false);
 }
 
 static inline bool devmm_dev_capability_support_giant_page(u32 did)
@@ -106,7 +106,7 @@ static inline bool devmm_dev_capability_support_remote_mmap(u32 did)
 static inline bool devmm_dev_capability_support_read_only(u32 did)
 {
     return devmm_svm->dev_capability[did].feature_dev_read_only &&
-        (g_dev_feature_capabilty_disable[did][READ_ONLY_FEATURE] == false);
+           (g_dev_feature_capabilty_disable[did][READ_ONLY_FEATURE] == false);
 }
 
 static inline u64 devmm_dev_capability_dvpp_mem_size(u32 did)
@@ -117,47 +117,51 @@ static inline u64 devmm_dev_capability_dvpp_mem_size(u32 did)
 static inline bool devmm_dev_capability_support_offset_security(u32 did)
 {
     return ((devmm_svm->dev_capability[did].feature_phycial_address & DEVMM_SUPPORT_OFFSET_SECURITY_MASK) ==
-        DEVMM_SUPPORT_OFFSET_SECURITY_MASK) && (g_dev_feature_capabilty_disable[did][OFFSET_SECURITY] == false);
+            DEVMM_SUPPORT_OFFSET_SECURITY_MASK) &&
+           (g_dev_feature_capabilty_disable[did][OFFSET_SECURITY] == false);
 }
 
 static inline bool devmm_dev_capability_convert_support_offset(u32 did)
 {
     return ((devmm_svm->dev_capability[did].feature_phycial_address & DEVMM_CONVERT_SUPPORT_OFFSET_MASK) ==
-        DEVMM_CONVERT_SUPPORT_OFFSET_MASK) && (g_dev_feature_capabilty_disable[did][CONVERT_OFFSET] == false);
+            DEVMM_CONVERT_SUPPORT_OFFSET_MASK) &&
+           (g_dev_feature_capabilty_disable[did][CONVERT_OFFSET] == false);
 }
 
 static inline u64 devmm_dev_capability_double_pgtable_offset(u32 did)
 {
-    return g_dev_feature_capabilty_disable[did][DOUBLE_PGTABLE_OFFSET] ? 0 : devmm_svm->dev_capability[did].double_pgtable_offset;
+    return g_dev_feature_capabilty_disable[did][DOUBLE_PGTABLE_OFFSET] ?
+               0 :
+               devmm_svm->dev_capability[did].double_pgtable_offset;
 }
 
 static inline bool devmm_dev_capability_support_pcie_dma_sva(u32 dev_id)
 {
     return devmm_svm->dev_capability[dev_id].feature_pcie_dma_support_sva &&
-        (g_dev_feature_capabilty_disable[dev_id][PCIE_DMA_SVA_FEATURE] == false);
+           (g_dev_feature_capabilty_disable[dev_id][PCIE_DMA_SVA_FEATURE] == false);
 }
 
 static inline bool devmm_dev_capability_support_aic_reg_map(u32 dev_id)
 {
     return devmm_svm->dev_capability[dev_id].feature_aic_reg_map &&
-        (g_dev_feature_capabilty_disable[dev_id][AIC_REG_MAP] == false);
+           (g_dev_feature_capabilty_disable[dev_id][AIC_REG_MAP] == false);
 }
 
 static inline bool devmm_dev_capability_support_shmem_repair(u32 dev_id)
 {
     return devmm_svm->dev_capability[dev_id].feature_shmem_repair &&
-        (g_dev_feature_capabilty_disable[dev_id][SHMEM_REPAIR] == false);
+           (g_dev_feature_capabilty_disable[dev_id][SHMEM_REPAIR] == false);
 }
 
 static inline bool devmm_dev_capability_support_mem_host_uva(u32 dev_id)
 {
     return devmm_svm->dev_capability[dev_id].feature_mem_host_uva &&
-        (g_dev_feature_capabilty_disable[dev_id][MEM_HOST_UVA_FEATURE] == false);
+           (g_dev_feature_capabilty_disable[dev_id][MEM_HOST_UVA_FEATURE] == false);
 }
 static inline bool devmm_dev_capability_support_mem_map_capability(u32 dev_id)
 {
     return devmm_svm->dev_capability[dev_id].feature_host_mem_map_cap &&
-        (g_dev_feature_capabilty_disable[dev_id][MEM_MAP_CAPABILITY_FEATURE] == false);
+           (g_dev_feature_capabilty_disable[dev_id][MEM_MAP_CAPABILITY_FEATURE] == false);
 }
 
 #endif /* SVM_MASTER_DEV_CAPABILITY_H__ */

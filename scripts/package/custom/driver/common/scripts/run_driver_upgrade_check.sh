@@ -271,9 +271,19 @@ __commented_code__
 #   hexdump <- util-linux
 #   od      <- coreutils
 parse_image_version() {
+    local tag
     local magic version
+    local offset=0x2084
+
+    # Judge file head is version2 or not, offset for version2: 0x2590, offset for version1.5: 0x2084
+    read tag < <(od -c -j 0x4 -N 12 "$1" | head -n 1 | awk '{$1=""; gsub(" ", ""); print}')
+    
+    if [[ "$tag" == "headver2tag0" ]]; then
+        offset=0x2590
+    fi
+
     read magic version < <(
-        od -d -j 0x2084 -N 8 "$1" \
+        od -d -j $offset -N 8 "$1" \
             | head -n 1 \
             | awk '{print $2, $3}' 2>/dev/null
     )
@@ -293,7 +303,7 @@ get_min_image_version() {
 
     for img in "${DRIVER_DIR_INSTALLING}"/device/*; do
         # Skip itrustee.img, ts_agent.ko & ascend_cloud_v2.crl
-        [[ ${img} =~ (itrustee\.img|\.ko|\.crl)$ ]] && {
+        [[ ${img} =~ (ub_port_cfg\.bin|itrustee\.img|\.ko|\.crl)$ ]] && {
             logger_debug "Skip reading capability version of file ${img}"
             continue
         }
@@ -401,12 +411,17 @@ is_910b_or_910_93() {
     lspci -nn | grep -q '19e5:d80[23]'
 }
 
+is_950_pci() { lspci -nn | grep -q '19e5:d806'; }
+
+is_950_ub() {
+    lsub 2>/dev/null | grep -q "UB bus controller"
+}
 
 # Returns:
 #  - 0 means no interception is performed.
 #  - otherwise it means the installation should be stopped.
 check_rollback_interception_by_flash() {
-    is_910b_or_910_93 || return 0
+    is_910b_or_910_93 || is_950_pci || is_950_ub || return 0
 
     local lost_card=no
     local max_flash_version min_image_version
@@ -561,9 +576,10 @@ remove_white_proc_cfg() {
     if [[ -f "${config_file}" ]]; then
         logger_warning "Remove ${config_file} fail"
     fi
-        
 }
+
 execute_upgrade_checks() {
+    source $2/../bin/setenv.bash
     logger_debug 'Start executing upgrade check'
 
     PACKAGE_TYPE=$1
@@ -579,10 +595,8 @@ execute_upgrade_checks() {
     logger_debug 'Upgrade check successful'
 }
 
-source /usr/local/Ascend/driver/bin/setenv.bash
-
 case $1 in
-    -c ) execute_upgrade_checks $2 ;;
+    -c ) execute_upgrade_checks $2 $3;;
     -s ) cache_hardware_version_info ;;
     * )
         echo "Bad usage, valid options are -c/-s"

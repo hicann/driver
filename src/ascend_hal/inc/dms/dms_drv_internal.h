@@ -56,7 +56,7 @@ struct devdrv_device_info {
     unsigned int ctrl_cpu_ip;
     unsigned int ctrl_cpu_id;
     unsigned int ctrl_cpu_core_num;
-    unsigned int ctrl_cpu_occupy_bitmap;
+    unsigned long long ctrl_cpu_occupy_bitmap;
     unsigned int ctrl_cpu_endian_little;
     unsigned int ts_cpu_core_num;
     unsigned int ai_cpu_core_num;
@@ -64,7 +64,7 @@ struct devdrv_device_info {
     unsigned int ai_core_freq;
     unsigned int ai_cpu_core_id;
     unsigned int ai_core_id;
-    unsigned int aicpu_occupy_bitmap;
+    unsigned long long aicpu_occupy_bitmap;
     unsigned int hardware_version;
     unsigned int ts_num;
     uint64_t cpu_system_count;
@@ -80,8 +80,9 @@ struct devdrv_device_info {
     unsigned int host_device_connect_type;
     char soc_version[SOC_VERSION_LEN];
     unsigned long long aicore_bitmap[2]; /* support max 128 aicore */
+    unsigned long long vector_core_bitmap[2]; /* support max 128 vector core */
     unsigned char product_type;
-    unsigned int resv[78];
+    unsigned int resv[74];
 };
 
 typedef enum tagDrvWorkStatus {
@@ -229,5 +230,15 @@ DLLEXPORT drvError_t drvSetDeviceInfo(unsigned int dev_id, unsigned int main_cmd
 
 DLLEXPORT drvError_t drvSetDeviceInfoToDmsHal(unsigned int dev_id, unsigned int main_cmd, unsigned int sub_cmd,
     const void *buf, unsigned int size);
+
+DLLEXPORT int dms_get_ts_info_from_udis(unsigned int dev_id, const char *name, void *buf, unsigned int *size);
+
+DLLEXPORT int dms_get_util_from_udis(unsigned int dev_id, const char *name, unsigned int *result_data);
+
+DLLEXPORT int dms_get_npu_multi_util_from_udis(unsigned int dev_id, const char *name, void *buf, unsigned int *size);
+
+DLLEXPORT int dms_get_cpu_rate_from_udis(unsigned int dev_id, const char *name, unsigned int *result_data);
+
+DLLEXPORT drvError_t drv_get_cpu_topo(unsigned int dev_id, void *buf, unsigned int *size);
 
 #endif

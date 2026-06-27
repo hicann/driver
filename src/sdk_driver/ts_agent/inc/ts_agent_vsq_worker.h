@@ -14,7 +14,7 @@
 #ifndef TS_AGENT_VSQ_WORKER_H
 #define TS_AGENT_VSQ_WORKER_H
 
-#include <linux/types.h>
+#include "ka_type.h"
 #include "hvtsdrv_tsagent.h"
 
 int init_all_vf_work_ctx(void);

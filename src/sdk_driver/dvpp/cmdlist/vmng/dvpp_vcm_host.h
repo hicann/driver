@@ -14,10 +14,17 @@
 #define DVPP_VMNG_VCM_HOST_H
 #include "dvpp_vcm_define.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef int32_t (*DVPP_VCM_RECV_F)(uint32_t dev_id, uint32_t fid, void *msg_data, uint32_t msg_data_len);
 
 int32_t dvpp_vcm_vpc_register_client(uint32_t dev_id, uint32_t fid);
 int32_t dvpp_vcm_vpc_unregister_client(uint32_t dev_id, uint32_t fid);
 int32_t dvpp_vcm_register_msg_recv_cb(enum dvpp_vcm_cmd cmd, DVPP_VCM_RECV_F func);
 
+#ifdef __cplusplus
+}
+#endif
 #endif

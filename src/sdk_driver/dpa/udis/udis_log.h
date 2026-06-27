@@ -14,7 +14,6 @@
 #ifndef _UDIS_LOG_H_
 #define _UDIS_LOG_H_
 
-
 #include "dmc_kernel_interface.h"
 #include "ascend_hal_error.h"
 
@@ -26,10 +25,11 @@
 #define udis_event(fmt, ...) drv_event(MODULE_UDIS, fmt, ##__VA_ARGS__)
 #define udis_debug(fmt, ...) drv_pr_debug(MODULE_UDIS, fmt, ##__VA_ARGS__)
 
-#define udis_ex_notsupport_err(ret, fmt, ...) do {                      \
-    if (((ret) != (int)DRV_ERROR_NOT_SUPPORT) && ((ret) != -EOPNOTSUPP)) {  \
-        udis_err(fmt, ##__VA_ARGS__);                                   \
-    }                                                                  \
-} while (0)
+#define udis_ex_notsupport_err(ret, fmt, ...)                                  \
+    do {                                                                       \
+        if (((ret) != (int)DRV_ERROR_NOT_SUPPORT) && ((ret) != -EOPNOTSUPP)) { \
+            udis_err(fmt, ##__VA_ARGS__);                                      \
+        }                                                                      \
+    } while (0)
 
 #endif

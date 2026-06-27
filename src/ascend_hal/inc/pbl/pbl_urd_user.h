@@ -19,6 +19,7 @@
 #ifndef UNUSED
 #define UNUSED(x)   do {(void)(x);} while (0)
 #endif
+int urd_dev_usr_cmd_ex(uint32_t devid, unsigned long ioctl_cmd, struct urd_cmd *cmd, struct urd_cmd_para *cmd_para);
 int urd_dev_usr_cmd(uint32_t devid, struct urd_cmd *cmd, struct urd_cmd_para *cmd_para);
 int urd_usr_cmd(struct urd_cmd *cmd, struct urd_cmd_para *cmd_para);
 static inline void urd_usr_cmd_fill(struct urd_cmd *cmd,

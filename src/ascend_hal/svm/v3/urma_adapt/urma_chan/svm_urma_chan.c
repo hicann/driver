@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * Copyright (c) 2026 Huawei Technologies Co., Ltd.
  * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -13,7 +13,8 @@
 #include "svm_log.h"
 #include "svm_sys_cmd.h"
 #include "svm_user_adapt.h"
-#include "svm_sub_event_type.h"
+#include "svm_sub_event_type_uk_msg.h"
+#include "svm_criu.h"
 #include "svm_urma_jetty.h"
 #include "svm_urma_chan_msg.h"
 #include "svm_umc_client.h"
@@ -23,10 +24,10 @@
 struct svm_urma_jetty_pool g_chan_inst[SVM_MAX_AGENT_NUM];
 static urma_target_jetty_t *g_tjfr[SVM_MAX_AGENT_NUM];
 
-#define SVM_JETTY_NUM_PER_POOL           32U
+#define SVM_JETTY_NUM_PER_POOL 32U
 /* todo set depth smaller to test faster */
-#define SVM_JETTY_DEPTH                  512U
-#define SVM_URMA_CHAN_WAIT_TIMEOUT_MS    60000ULL
+#define SVM_JETTY_DEPTH 512U
+#define SVM_URMA_CHAN_WAIT_TIMEOUT_MS 60000ULL
 
 static int svm_local_chan_init(void *ctx, u32 devid)
 {
@@ -40,15 +41,11 @@ static int svm_local_chan_init(void *ctx, u32 devid)
         return ret;
     }
 
-    svm_urma_jetty_pool_cfg_pack(ascend_to_urma_ctx(ctx),
-        token, SVM_JETTY_NUM_PER_POOL, SVM_JETTY_DEPTH, &cfg);
+    svm_urma_jetty_pool_cfg_pack(devid, ascend_to_urma_ctx(ctx), token, SVM_JETTY_NUM_PER_POOL, SVM_JETTY_DEPTH, &cfg);
     return svm_urma_jetty_pool_init(&g_chan_inst[devid], &cfg);
 }
 
-static void svm_local_chan_uninit(u32 devid)
-{
-    svm_urma_jetty_pool_uninit(&g_chan_inst[devid]);
-}
+static void svm_local_chan_uninit(u32 devid) { svm_urma_jetty_pool_uninit(&g_chan_inst[devid]); }
 
 static int _svm_remote_chan_init(u32 devid, urma_jfr_id_t *rjfr_id, u32 *token_val)
 {
@@ -58,8 +55,7 @@ static int _svm_remote_chan_init(u32 devid, urma_jfr_id_t *rjfr_id, u32 *token_v
         .msg_in = NULL,
         .msg_in_len = 0,
         .msg_out = (char *)(uintptr_t)&chan_info,
-        .msg_out_len = sizeof(struct svm_urma_chan_info_msg)
-    };
+        .msg_out_len = sizeof(struct svm_urma_chan_info_msg)};
     struct svm_apbi apbi;
     int ret;
 
@@ -83,12 +79,7 @@ static int _svm_remote_chan_init(u32 devid, urma_jfr_id_t *rjfr_id, u32 *token_v
 static int _svm_remote_chan_uninit(u32 devid)
 {
     struct svm_umc_msg_head head;
-    struct svm_umc_msg msg = {
-        .msg_in = NULL,
-        .msg_in_len = 0,
-        .msg_out = NULL,
-        .msg_out_len = 0
-    };
+    struct svm_umc_msg msg = {.msg_in = NULL, .msg_in_len = 0, .msg_out = NULL, .msg_out_len = 0};
     struct svm_apbi apbi;
     int ret;
 
@@ -135,7 +126,10 @@ static int svm_remote_chan_init(void *ctx, u32 devid)
 static void svm_remote_chan_uninit(u32 devid)
 {
     (void)_svm_remote_chan_uninit(devid);
-    (void)urma_unimport_jfr(g_tjfr[devid]);
+    if (!svm_criu_is_resetting(devid) && (g_tjfr[devid] != NULL)) {
+        (void)urma_unimport_jfr(g_tjfr[devid]);
+    }
+    g_tjfr[devid] = NULL;
 }
 
 int svm_urma_chan_init(u32 devid)
@@ -206,11 +200,13 @@ int svm_urma_chan_submit(u32 devid, u32 chan_id, struct svm_urma_chan_submit_par
     struct svm_urma_jetty_post_para post_para = {0};
     drvError_t ret;
 
-    svm_debug("(id=%u; jfs=%u; jfc=%u; remote_jfr_id=%u)\n",
-        jetty->id, jetty->jfs->jfs_id.id, jetty->jfc->jfc_id.id, g_tjfr[devid]->id.id);
+    svm_debug(
+        "(id=%u; jfs=%u; jfc=%u; remote_jfr_id=%u)\n", jetty->id, jetty->jfs->jfs_id.id, jetty->jfc->jfc_id.id,
+        g_tjfr[devid]->id.id);
 
-    svm_debug("src=0x%llx; dst=0x%llx; size=%llu; src_tseg=%p; dst_tseg=%p\n",
-        para->src, para->dst, para->size, para->src_tseg, para->dst_tseg);
+    svm_debug(
+        "src=0x%llx; dst=0x%llx; size=%llu; src_tseg=%p; dst_tseg=%p\n", para->src, para->dst, para->size,
+        para->src_tseg, para->dst_tseg);
 
     post_para.src = para->src;
     post_para.dst = para->dst;

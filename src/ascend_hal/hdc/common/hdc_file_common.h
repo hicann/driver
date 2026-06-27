@@ -52,10 +52,11 @@
 #define HDC_SEND_FILE_WAIT_TIME 300000
 #define SECONDS_TO_MICORSECONDS 1000000
 #define CONVERT_NS_TO_US 1000
-#define hdc_file_check(func_name, ret, exp) do { \
-    if ((ret) != (exp))                                                                              \
-        HDC_LOG_ERR("%s return value expect: %d, but actually return: %d", func_name, exp, ret); \
-} while (0)
+#define hdc_file_check(func_name, ret, exp)                                                          \
+    do {                                                                                             \
+        if ((ret) != (exp))                                                                          \
+            HDC_LOG_ERR("%s return value expect: %d, but actually return: %d", func_name, exp, ret); \
+    } while (0)
 
 #define DIR_SEND_MAX_DEPTH 20
 enum FILE_HDR_FLAGS {
@@ -127,9 +128,9 @@ struct filesock {
 };
 
 hdcError_t drvHdcGetTrustedBasePathEx(signed int user_mode, signed int peer_node, signed int peer_devid,
-    char *base_path, unsigned int path_len);
+                                      char *base_path, unsigned int path_len);
 hdcError_t drvHdcSendFileEx(signed int user_mode, signed int peer_node, signed int peer_devid, const char *file,
-    const char *dst_path, void (*progress_notifier)(struct drvHdcProgInfo *));
+                            const char *dst_path, void (*progress_notifier)(struct drvHdcProgInfo *));
 
 void set_flag(struct filehdr *hdr, enum FILE_HDR_FLAGS flag);
 uint16_t set_option_dstpth(char *sndbuf, signed int bufsize, uint32_t offset, const char *dstpth);
@@ -138,7 +139,7 @@ uint16_t set_option_mode(char *sndbuf, signed int bufsize, uint32_t offset, uint
 hdcError_t hdc_session_send(HDC_SESSION session, char *sndbuf, signed int bufsize);
 #endif
 hdcError_t send_file_in_session(signed int user_mode, HDC_SESSION session, const char *file, const char *dst_path,
-    void (*progress_notifier)(struct drvHdcProgInfo *));
+                                void (*progress_notifier)(struct drvHdcProgInfo *));
 hdcError_t get_hdc_capacity(struct drvHdcCapacity *capacity);
 hdcError_t recv_reply(HDC_SESSION session, uint16_t *res);
 hdcError_t send_end(HDC_SESSION session, char *sndbuf, signed int bufsize);
@@ -148,9 +149,9 @@ bool validate_recv_segment(char *p_rcvbuf, signed int buf_len);
 struct fileopt *get_specific_option(char *rcvbuf, uint16_t option_type);
 bool is_dir(const char *name, size_t len);
 hdcError_t drvHdcSendDir(signed int peer_node, signed int peer_devid, const char *plocal_dir, const char *pdst_path,
-    void (*progress_notifier)(struct drvHdcProgInfo *));
+                         void (*progress_notifier)(struct drvHdcProgInfo *));
 hdcError_t send_dir_in_session(HDC_SESSION session, const char *plocal_dir, const char *pdst_path, int count,
-    void (*progress_notifier)(struct drvHdcProgInfo *));
+                               void (*progress_notifier)(struct drvHdcProgInfo *));
 hdcError_t get_new_dir_name(char *dst_path, int dst_len, const char *src_path, const char *d_name);
 
 #endif

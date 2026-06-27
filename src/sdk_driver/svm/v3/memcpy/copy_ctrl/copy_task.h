@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2025. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -25,8 +25,8 @@
 #include "dma_map_kernel.h"
 
 /* subtask flag def */
-#define SVM_COPY_SUBTASK_SYNC           (1ULL << 0ULL)
-#define SVM_COPY_SUBTASK_AUTO_RECYCLE   (1ULL << 1ULL)  /* Will destroy subtask after copy finished. */
+#define SVM_COPY_SUBTASK_SYNC (1ULL << 0ULL)
+#define SVM_COPY_SUBTASK_AUTO_RECYCLE (1ULL << 1ULL) /* Will destroy subtask after copy finished. */
 
 struct svm_copy_res {
     int host_tgid;
@@ -72,7 +72,7 @@ struct svm_copy_task {
     ka_kref_t ref;
 
     ka_device_t *dev;
-    u32 udevid;     /* use which dev's dma engine to copy */
+    u32 udevid; /* use which dev's dma engine to copy */
     u64 dev_page_size;
     u32 instance;
 
@@ -80,8 +80,7 @@ struct svm_copy_task {
     struct svm_copy_async_subtask_ret async_subtasks_ret;
 };
 
-struct svm_copy_subtask *svm_copy_subtask_create(struct svm_copy_task *copy_task,
-    struct copy_va_info *info, u32 flag);
+struct svm_copy_subtask *svm_copy_subtask_create(struct svm_copy_task *copy_task, struct copy_va_info *info, u32 flag);
 void svm_copy_subtask_destroy(struct svm_copy_subtask *subtask);
 int svm_copy_subtask_submit(struct svm_copy_subtask *subtask);
 
@@ -92,16 +91,16 @@ int svm_copy_task_wait(struct svm_copy_task *copy_task);
 
 u32 svm_copy_task_get_dma_node_num(struct svm_copy_task *copy_task);
 
-#define SVM_COPY_SIZE_768KB                    (768ULL * SVM_BYTES_PER_KB)
-#define SVM_COPY_SIZE_1280KB                   (1280ULL * SVM_BYTES_PER_KB)
-#define SVM_COPY_SIZE_3MB                      (3ULL * SVM_BYTES_PER_MB)
+#define SVM_COPY_SIZE_768KB (768ULL * SVM_BYTES_PER_KB)
+#define SVM_COPY_SIZE_1280KB (1280ULL * SVM_BYTES_PER_KB)
+#define SVM_COPY_SIZE_3MB (3ULL * SVM_BYTES_PER_MB)
 
-#define SVM_COPY_SUBTASK_GRAIN_SIZE_256KB      (256ULL * SVM_BYTES_PER_KB)
-#define SVM_COPY_SUBTASK_GRAIN_SIZE_512KB      (512ULL * SVM_BYTES_PER_KB)
-#define SVM_COPY_SUBTASK_GRAIN_SIZE_1MB        (1ULL * SVM_BYTES_PER_MB)
-#define SVM_COPY_SUBTASK_GRAIN_SIZE_2MB        (2ULL * SVM_BYTES_PER_MB)
+#define SVM_COPY_SUBTASK_GRAIN_SIZE_256KB (256ULL * SVM_BYTES_PER_KB)
+#define SVM_COPY_SUBTASK_GRAIN_SIZE_512KB (512ULL * SVM_BYTES_PER_KB)
+#define SVM_COPY_SUBTASK_GRAIN_SIZE_1MB (1ULL * SVM_BYTES_PER_MB)
+#define SVM_COPY_SUBTASK_GRAIN_SIZE_2MB (2ULL * SVM_BYTES_PER_MB)
 
-#define SVM_COPY_LAST_SUBTASK_GRAIN_SIZE_4MB   (4ULL * SVM_BYTES_PER_MB)
+#define SVM_COPY_LAST_SUBTASK_GRAIN_SIZE_4MB (4ULL * SVM_BYTES_PER_MB)
 
 static inline u64 svm_get_subtask_grain_size(u64 size)
 {
@@ -128,4 +127,3 @@ static inline u64 svm_get_subtask_size(u64 size, u64 grain_size)
 }
 
 #endif
-

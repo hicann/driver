@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2025. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -14,7 +14,7 @@
 #ifndef UBMM_H
 #define UBMM_H
 
-#include <linux/types.h>
+#include "ka_type.h"
 
 /*
     ubmm: unify bus memory map
@@ -22,7 +22,8 @@
 */
 int ubmm_do_map(u32 udevid, int tgid, u64 va, u64 size, u64 *uba);
 int ubmm_do_unmap(u32 udevid, int tgid, u64 va, u64 size);
+int ubmm_do_remap(u32 udevid, int tgid, u64 va, u64 size); /* if not map ubmm, return -ENOENT  */
 int ubmm_query_uba_base(u32 udevid, u64 *uba_base);
+void ubmm_usage_counter_inc(u32 udevid, int tgid);
 
 #endif
-

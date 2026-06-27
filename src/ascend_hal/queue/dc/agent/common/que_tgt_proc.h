@@ -30,5 +30,6 @@ int que_mbuf_ctx_init(struct que_tgt_proc *tgt_proc, struct que_rx *rx, struct q
 void que_mbuf_ctx_uninit(struct que_rx *rx);
 int que_mbuf_ctx_read_post(struct que_tgt_proc *tgt_proc);
 int que_mbuf_ctx_wr_fill(struct que_tgt_proc *tgt_proc, struct que_pkt *pkt);
-int que_rx_send_ack_and_wait(struct que_tgt_proc *tgt_proc, unsigned long long imm_data, struct que_ack_jfs *ack_send_jfs, unsigned int d2d_flag);
+int que_rx_send_ack_and_wait(struct que_tgt_proc *tgt_proc, unsigned long long imm_data,
+                             struct que_ack_jfs *ack_send_jfs, unsigned int d2d_flag);
 #endif

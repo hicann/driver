@@ -77,7 +77,7 @@ load_ube_mgmt_func()
     chattr -i ${ube_mgmt_pack_path} >& /dev/null
     chattr -i ${ube_mgmt_pack_name_path} >& /dev/null
     #tar -zxf after file name is: "${ube_mgmt_pack_path}/UBEngine-mgmt-driver.tar.gz"
-    tar -zxf ${src_pack_name_path} --directory="${ube_mgmt_pack_path}/";ret=$?
+    tar -zxf "${src_pack_name_path}" --directory="${ube_mgmt_pack_path}/";ret=$?
     chattr +i ${ube_mgmt_pack_name_path} >& /dev/null
     chattr +i ${ube_mgmt_pack_path} >& /dev/null
     if [ ${ret} -ne 0 ]; then
@@ -147,13 +147,13 @@ main_process() {
     local ret=0
     log "[INFO]load ube cmd: ${cmd}."
 
-    if [ ${cmd} == "load" ]; then
+    if [ "${cmd}" == "load" ]; then
         log "[INFO]load ube mgmt pack"
         load_ube_mgmt_func;ret=$?
     elif [ "$cmd" == "unload" ]; then
         log "[INFO]unload ube mgmt pack"
         unload_ube_mgmt_func;ret=$?
-    elif [ ${cmd} == "upgrade" ]; then
+    elif [ "${cmd}" == "upgrade" ]; then
         log "[INFO]upgrade ube mgmt pack"
         upgrade_ubde_mgmt_func;ret=$?
     else

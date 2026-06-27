@@ -13,20 +13,20 @@
 #ifndef TRS_SHR_ID_EVENT_UPDATE_H
 #define TRS_SHR_ID_EVENT_UPDATE_H
 
-#include <linux/types.h>
+#include "ka_type.h"
 
 #include "ascend_hal_define.h"
 
 #include "trs_pub_def.h"
 #include "trs_res_id_def.h"
 
-#define SHRID_NOTIFY_SIZE   4
+#define SHRID_NOTIFY_SIZE 4
 #define SHRID_NOTIFY_SLICE_SIZE (64 * 1024)
-#define SHRID_NOTIFY_NUM_PER_SLICE  512
+#define SHRID_NOTIFY_NUM_PER_SLICE 512
 static inline u32 shr_id_get_notify_offset(u32 id)
 {
     return (id % SHRID_NOTIFY_NUM_PER_SLICE) * SHRID_NOTIFY_SIZE +
-        (id / SHRID_NOTIFY_NUM_PER_SLICE) * SHRID_NOTIFY_SLICE_SIZE;
+           (id / SHRID_NOTIFY_NUM_PER_SLICE) * SHRID_NOTIFY_SLICE_SIZE;
 }
 
 static int shr_id_type_trans[SHR_ID_TYPE_MAX] = {
@@ -42,6 +42,6 @@ static inline int shr_id_type_trans_res_type(u32 shr_id_type)
     return shr_id_type_trans[shr_id_type];
 }
 
-int shr_id_event_update(unsigned int devid, struct sched_published_event_info *event_info,
-                        struct sched_published_event_func *event_func);
+int shr_id_event_update(
+    unsigned int devid, struct sched_published_event_info *event_info, struct sched_published_event_func *event_func);
 #endif /* TRS_SHR_ID_EVENT_UPDATE_H */

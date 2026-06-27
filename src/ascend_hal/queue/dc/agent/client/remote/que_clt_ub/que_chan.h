@@ -15,9 +15,11 @@
 #include "ascend_hal_define.h"
 #include "ascend_hal_external.h"
 
-int que_chan_pkt_send(unsigned int devid, unsigned int qid, QUEUE_AGENT_TYPE que_type, struct buff_iovec *vector, uint64_t *stamp);
+int que_chan_pkt_send(unsigned int devid, unsigned int qid, QUEUE_AGENT_TYPE que_type, struct buff_iovec *vector,
+                      uint64_t *stamp);
 int que_chan_wait(unsigned int devid, unsigned int qid, QUEUE_AGENT_TYPE que_type, int timeout);
-int que_chan_ini_update(unsigned int devid, unsigned int qid, struct que_jfs_pool_info *jfs_info, struct que_jfr_pool_info *jfr_info,
-    urma_target_jetty_t *tjetty, urma_token_t token, QUEUE_AGENT_TYPE que_type, unsigned int d2d_flag);
+int que_chan_ini_update(unsigned int devid, unsigned int qid, struct que_jfs_pool_info *jfs_info,
+                        struct que_jfr_pool_info *jfr_info, urma_target_jetty_t *tjetty, urma_token_t token,
+                        QUEUE_AGENT_TYPE que_type, unsigned int d2d_flag);
 
 #endif

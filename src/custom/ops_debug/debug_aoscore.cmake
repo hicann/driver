@@ -22,14 +22,15 @@ target_include_directories(debug_drv_obj PRIVATE
     ${DRIVER_KERNEL_DIR}/src/prof/
     ${DRIVER_KERNEL_DIR}/src/prof/prof_inc
     ${DRIVER_KERNEL_DIR}/inc/
-    ${DRIVER_KERNEL_DIR}/src/drv_devmng/drv_devmng_inc/
+    ${DRIVER_KERNEL_DIR}/src/dms/devmng/asdrv_dms/asdrv_dms_inc/
     ${DRIVER_KERNEL_DIR}/src/tsdrv/ts_drv/ts_drv_common/tsdrv_dev
     ${DRIVER_KERNEL_DIR}/src/tsdrv/ts_drv/ts_drv_common
     ${DRIVER_KERNEL_DIR}/src/tsdrv/ts_drv/ts_drv_device
-    ${DRIVER_KERNEL_DIR}/src/tsdrv/ts_platform/ts_platform_device/ascend610
+    ${DRIVER_KERNEL_DIR}/src/platform/dc/drv_platform/ts_platform_device/ascend610
     ${DRIVER_KERNEL_DIR}/src/tsdrv/ts_drv/ts_drv_device/ascend610
     ${DRIVER_KERNEL_DIR}/src/prof/ascd610
 )
+target_compile_definitions(debug_drv_obj PRIVATE CFG_SOC_PLATFORM_MDC_V51)
 target_compile_definitions(debug_drv_obj PRIVATE AOS_LLVM_BUILD)
 target_compile_options(debug_drv_obj PRIVATE
     -Wall

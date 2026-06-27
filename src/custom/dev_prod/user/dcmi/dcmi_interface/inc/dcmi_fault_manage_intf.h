@@ -7,7 +7,7 @@
  * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
  */
-
+ 
 #ifndef __DCMI_FAULT_MANAGE_INTF_H__
 #define __DCMI_FAULT_MANAGE_INTF_H__
 #include "dcmi_interface_api.h"
@@ -44,7 +44,6 @@
 #define CPU_ALARM_EXIST_SECTION_NUM  6
 #define CPU_ALARM_COUNT_INDEX        1
 #define CPU_ALARM_ID_INDEX           0
-#define CPU_ALARM_EXIST_SECTION_NUM  6
 
 struct err_code_map_node {
     int dsmi_err_code;
@@ -55,13 +54,22 @@ int dcmi_convert_error_code(int dsmi_err_code);
 
 int dcmi_cpu_get_device_errorcode(int card_id, int* error_count, unsigned int *error_code_list, unsigned int list_len);
 
-int dcmi_get_npu_device_errorcode(
-    int card_id, int device_id, int *errorcount, unsigned int *errorcode_list, unsigned int list_len);
+int dcmi_get_device_errorcode_based_on_type(int card_id, int device_id, enum dcmi_unit_type device_type,
+    unsigned int *err_code_count, unsigned int *err_code_list);
+
+int dcmi_get_npu_device_errorcode(int card_id, int device_id, int *errorcount, unsigned int *errorcode_list,
+    unsigned int list_len);
 
 int dcmi_get_npu_device_errorcode_string(
     int card_id, int device_id, int error_code, unsigned char *error_info, int buff_size);
 
 int dcmi_subscribe_npu_fault_event(int card_id, int device_id, struct dcmi_event_filter filter,
     dcmi_fault_event_callback handler);
+
+int dcmiv2_subscribe_npu_fault_event(int device_id, struct dcmi_event_filter filter,
+    dcmi_fault_event_callback handler);
+
+int dcmi_get_device_errorcode_950(
+    int card_id, int device_id, int *error_count, unsigned int *error_code_list, unsigned int list_len);
 
 #endif /* __DCMI_FAULT_MANAGE_INTF_H__ */

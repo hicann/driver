@@ -204,9 +204,9 @@ rao_msg_tatimeout:
         ubdrv_err("Post send wr failed. (ret=%d;dev_id=%u;chan_type=%u)\n", ret, dev_id, type);
         return ret;
     }
-    ret = ubdrv_interval_poll_send_jfs_jfc(chan->msg_jetty.send_jetty.jfs_jfc,
+    ret = ubdrv_interval_poll_send_jfs_jfc(&chan->msg_jetty.send_jetty,
         (u64)wr_cfg.user_ctx, MSG_MAX_WAIT_CNT, &cr, stat, check_status);
-    if ((ret == 0) && (cr.status == UBCORE_CR_ACK_TIMEOUT_ERR) && (ta_timeout_cnt < ASCEND_TATIMEOUT_RETRY_CNT)) {
+    if ((ret == 0) && (cr.status == UBCORE_CR_ACK_TIMEOUT_ERR) && (ta_timeout_cnt < ubdrv_get_msg_retry_cnt(dev_id))) {
         ubdrv_rebuild_chan_send_jetty(dev_id, chan->chan_id, stat, &chan->msg_jetty.send_jetty, &wr_cfg);
         ta_timeout_cnt++;
         goto rao_msg_tatimeout;
@@ -250,7 +250,7 @@ STATIC int ubdrv_rao_chan_process(u32 dev_id, enum devdrv_rao_client_type type, 
     ubdrv_rao_operate_pack(&operate, type, opcode, offset, len);
     msg_dev = ubdrv_get_msg_dev_by_devid(dev_id);
     chan = &msg_dev->rao.rao_msg_chan[type];
-    ka_task_mutex_lock(&chan->tx_mutex);
+    ubdrv_mutex_lock_polling(dev_id, &chan->tx_mutex);
     if (chan->status != UBDRV_CHAN_ENABLE) {
         ubdrv_err("Chan is invalid. (status=%u; dev_id=%u; chan_type=%u)\n", chan->status, dev_id, type);
         ret = -EINVAL;

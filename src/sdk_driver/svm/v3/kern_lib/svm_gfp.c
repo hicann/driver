@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2025. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -43,8 +43,8 @@ void svm_page_ref_dec(ka_page_t *pg, void (*clear_func)(ka_page_t *pg), void (*d
     }
 }
 
-static int (* get_nids)(u32 udevid, u32 memtype, u32 sub_memtype, int nids[], int *out_num) = NULL;
-void svm_register_numa_id_handle(int (* handle)(u32 udevid, u32 memtype, u32 sub_memtype, int nids[], int *out_num))
+static int (*get_nids)(u32 udevid, u32 memtype, u32 sub_memtype, int nids[], int *out_num) = NULL;
+void svm_register_numa_id_handle(int (*handle)(u32 udevid, u32 memtype, u32 sub_memtype, int nids[], int *out_num))
 {
     get_nids = handle;
 }
@@ -82,11 +82,23 @@ static int svm_get_nids(u32 udevid, u32 flag, int nids[], int *out_num)
     }
 }
 
-static struct svm_page_ops *page_ops[SVM_PAGE_GRAN_MAX] = {NULL, };
+static struct svm_page_ops *page_ops[SVM_PAGE_GRAN_MAX] = {
+    NULL,
+};
+static svm_print_nodes_info_ops print_nodes_info_ops = NULL;
 
 void svm_register_page_ops(enum svm_page_granularity gran, const struct svm_page_ops *ops)
 {
     page_ops[gran] = (struct svm_page_ops *)ops;
+}
+
+void svm_register_print_nodes_info_ops(svm_print_nodes_info_ops print_ops) { print_nodes_info_ops = print_ops; }
+
+static void svm_print_nodes_info(void)
+{
+    if (print_nodes_info_ops != NULL) {
+        print_nodes_info_ops();
+    }
 }
 
 int svm_alloc_pages(u32 udevid, enum svm_page_granularity gran, ka_page_t **pages, u64 pg_num, u32 flag)
@@ -110,7 +122,12 @@ int svm_alloc_pages(u32 udevid, enum svm_page_granularity gran, ka_page_t **page
         return ret;
     }
 
-    return page_ops[gran]->alloc(nids, nid_num, pages, pg_num, flag);
+    ret = page_ops[gran]->alloc(nids, nid_num, pages, pg_num, flag);
+    if (ret != 0) {
+        svm_print_nodes_info();
+    }
+
+    return ret;
 }
 
 void svm_free_pages(enum svm_page_granularity gran, ka_page_t **pages, u64 pg_num, u32 flag)
@@ -172,10 +189,7 @@ u64 svm_get_pa_size(struct svm_pa_seg *pa_seg, u64 seg_num)
 }
 
 /* This func is time-consuming operation, may cause performance problem. */
-bool svm_pa_is_local_mem(u64 pa)
-{
-    return ka_mm_page_is_ram(KA_MM_PFN_DOWN(pa));
-}
+bool svm_pa_is_local_mem(u64 pa) { return ka_mm_mem_is_ram(pa); }
 
 u64 svm_get_page_size_by_pa_seg(u64 va, u64 size, struct svm_pa_seg *pa_seg, u64 seg_num)
 {
@@ -190,15 +204,15 @@ u64 svm_get_page_size_by_pa_seg(u64 va, u64 size, struct svm_pa_seg *pa_seg, u64
     u64 i;
 
     for (i = 0; i < seg_num; i++) {
-        if ((pa_seg[i].size % SVM_GPAGE_SIZE) != 0) {
+        if (((pa_seg[i].pa % SVM_GPAGE_SIZE) != 0) || ((pa_seg[i].size % SVM_GPAGE_SIZE) != 0)) {
             is_giant_page = false;
         }
 
-        if ((pa_seg[i].size % KA_HPAGE_SIZE) != 0) {
+        if (((pa_seg[i].pa % KA_HPAGE_SIZE) != 0) || ((pa_seg[i].size % KA_HPAGE_SIZE) != 0)) {
             is_huge_page = false;
         }
 
-        if ((pa_seg[i].size % KA_MM_PAGE_SIZE) != 0) {
+        if (((pa_seg[i].pa % KA_MM_PAGE_SIZE) != 0) || ((pa_seg[i].size % KA_MM_PAGE_SIZE) != 0)) {
             svm_err("Invalid pa seg. (size=%llx)\n", pa_seg[i].size);
             return 0;
         }
@@ -230,4 +244,31 @@ u64 svm_get_page_size_by_pa_seg(u64 va, u64 size, struct svm_pa_seg *pa_seg, u64
     }
 
     return page_size;
+}
+
+u64 svm_get_max_page_size_by_pa_seg(struct svm_pa_seg *pa_seg, u64 seg_num)
+{
+    bool is_local_mem = svm_pa_is_local_mem(pa_seg[0].pa);
+    bool is_huge_page = true;
+    bool is_giant_page = true;
+    /* The OS does not have an interface for creating giant page tables based on PA;
+    it only supports creating them based on pages. Therefore, it degrades to the huge page size. */
+    u64 giant_page_size = is_local_mem ? SVM_GPAGE_SIZE : KA_HPAGE_SIZE;
+    u64 i;
+
+    for (i = 0; i < seg_num; i++) {
+        if (((pa_seg[i].pa % SVM_GPAGE_SIZE) != 0) || ((pa_seg[i].size % SVM_GPAGE_SIZE) != 0)) {
+            is_giant_page = false;
+        }
+
+        if (((pa_seg[i].pa % KA_HPAGE_SIZE) != 0) || ((pa_seg[i].size % KA_HPAGE_SIZE) != 0)) {
+            is_huge_page = false;
+        }
+
+        if (((pa_seg[i].pa % KA_MM_PAGE_SIZE) != 0) || ((pa_seg[i].size % KA_MM_PAGE_SIZE) != 0)) {
+            return 0;
+        }
+    }
+
+    return is_giant_page ? giant_page_size : (is_huge_page ? KA_HPAGE_SIZE : KA_MM_PAGE_SIZE);
 }

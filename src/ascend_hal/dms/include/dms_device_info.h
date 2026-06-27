@@ -11,7 +11,6 @@
 #ifndef __ABL_DMS_DEVICE_INFO_H
 #define __ABL_DMS_DEVICE_INFO_H
 #include "dsmi_common_interface.h"
-#include "dms_cmd_def.h"
 
 drvError_t DmsSetDeviceInfo(unsigned int dev_id, DSMI_MAIN_CMD main_cmd, unsigned int sub_cmd,
     const void *buf, unsigned int size);
@@ -39,10 +38,10 @@ drvError_t DmsHalGetDeviceInfoEx(unsigned int dev_id, int module_type, int info_
     void *buf, unsigned int *size);
 drvError_t DmsHalSetDeviceInfoEx(unsigned int dev_id, int module_type, int info_type,
     const void *buf, unsigned int size);
-drvError_t dms_set_detect_ioctl(DSMI_DETECT_MAIN_CMD main_cmd, struct dms_filter_st filter,
-    struct dms_set_device_info_in in);
-drvError_t dms_get_detect_ioctl(DSMI_DETECT_MAIN_CMD main_cmd, struct dms_filter_st filter,
-    struct dms_get_device_info_in in, unsigned int *size);
+drvError_t dms_set_detect_info(unsigned int dev_id, DSMI_DETECT_MAIN_CMD main_cmd, unsigned int sub_cmd, void *buf,
+    unsigned int size);
+drvError_t dms_get_detect_info(unsigned int dev_id, DSMI_DETECT_MAIN_CMD main_cmd, unsigned int sub_cmd, void *buf,
+    unsigned int *size);
 drvError_t dms_get_basic_info_host(unsigned int dev_id, void *buff, unsigned int sub_cmd, unsigned int size);
 drvError_t DmsGetAiCoreDieNum(unsigned int dev_id, long long *value);
 drvError_t dms_get_hcom_cpu_num(unsigned int dev_id, long long *value);

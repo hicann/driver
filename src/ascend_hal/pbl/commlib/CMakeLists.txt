@@ -15,6 +15,7 @@ target_sources(commlib_obj PRIVATE
     atomic_lock.c
     atomic_ref.c
     drv_comm_intf.c
+    drv_repair_fault.c
 )
 
 target_include_directories(commlib_obj PRIVATE

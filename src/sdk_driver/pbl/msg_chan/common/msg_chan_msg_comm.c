@@ -55,7 +55,7 @@ int devdrv_set_msg_chan_priv_proc(void *msg_chan, void *priv)
 
 void *devdrv_get_msg_chan_priv_proc(void *msg_chan)
 {
-    void* ret;
+    void *ret;
     struct devdrv_comm_dev_ops *dev_ops = devdrv_add_ops_ref();
     if (dev_ops == NULL) {
         devdrv_err("Get msg chan priv fail.\n");

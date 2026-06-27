@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * Copyright (c) 2026 Huawei Technologies Co., Ltd.
  * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -40,8 +40,7 @@ static int mem_repair_para_check(struct MemRepairInPara *para)
 {
     u64 i;
 
-    if ((para->devid >= SVM_MAX_DEV_NUM) ||
-        (para->count == 0) || (para->count > MEM_REPAIR_MAX_CNT)) {
+    if ((para->devid >= SVM_MAX_DEV_NUM) || (para->count == 0) || (para->count > MEM_REPAIR_MAX_CNT)) {
         svm_err("InPara is invalid. (devid=%u; repair_cnt=%u)\n", para->devid, para->count);
         return DRV_ERROR_INVALID_VALUE;
     }
@@ -57,24 +56,32 @@ static int mem_repair_para_check(struct MemRepairInPara *para)
         }
 
         if (prop.devid != para->devid) {
-            svm_err("Devid is not match. (in_devid=%u; prop_devid=%u; va=0x%llx)\n", para->devid, prop.devid, para->repairAddrs[i].ptr);
+            svm_err(
+                "Devid is not match. (in_devid=%u; prop_devid=%u; va=0x%llx)\n", para->devid, prop.devid,
+                para->repairAddrs[i].ptr);
             return DRV_ERROR_INVALID_VALUE;
         }
 
         if (!svm_is_va_single_page_align(prop.devid, prop.flag, para->repairAddrs[i].ptr, para->repairAddrs[i].len)) {
-            svm_err("Not align. (devid=%u; flag=0x%x; va=0x%llx; size=0x%llx)\n",
-                prop.devid, prop.flag, para->repairAddrs[i].ptr, para->repairAddrs[i].len);
+            svm_err(
+                "Not align. (devid=%u; flag=0x%x; va=0x%llx; size=0x%llx)\n", prop.devid, prop.flag,
+                para->repairAddrs[i].ptr, para->repairAddrs[i].len);
             return DRV_ERROR_INVALID_VALUE;
         }
 
-        if ((svm_flag_cap_is_support_normal_free(prop.flag) == false) && (svm_flag_cap_is_support_vmm_pa_free(prop.flag) == false) &&
+        if ((svm_flag_cap_is_support_normal_free(prop.flag) == false) &&
+            (svm_flag_cap_is_support_vmm_pa_free(prop.flag) == false) &&
             (svm_flag_cap_is_support_vmm_unmap(prop.flag) == false)) {
-            svm_err("Repair addr type invalid. (devid=%u; va=0x%llx; flag=%llu)\n", para->devid, para->repairAddrs[i].ptr, prop.flag);
+            svm_err(
+                "Repair addr type invalid. (devid=%u; va=0x%llx; flag=%llu)\n", para->devid, para->repairAddrs[i].ptr,
+                prop.flag);
             return DRV_ERROR_INVALID_VALUE;
         }
 
         if (svm_flag_attr_is_contiguous(prop.flag)) {
-            svm_err("Repair addr is contiguous. (devid=%u; va=0x%llx; flag=%llu)\n", para->devid, para->repairAddrs[i].ptr, prop.flag);
+            svm_err(
+                "Repair addr is contiguous. (devid=%u; va=0x%llx; flag=%llu)\n", para->devid, para->repairAddrs[i].ptr,
+                prop.flag);
             return DRV_ERROR_INVALID_VALUE;
         }
     }
@@ -122,8 +129,9 @@ static int _mem_repair_try_map_vmm_va(void *seg_handle, u64 start, struct svm_gl
         if (g_ops != NULL) {
             ret = g_ops->vmm_map(seg_handle, devid, start, &real_src_info);
             if (ret != 0) {
-                svm_err("Smm task group map failed. (ret=%d; devid=%u; va=%llx; size=%llx)\n",
-                    ret, devid, start, real_src_info.size);
+                svm_err(
+                    "Smm task group map failed. (ret=%d; devid=%u; va=%llx; size=%llx)\n", ret, devid, start,
+                    real_src_info.size);
                 return ret;
             }
         }
@@ -307,10 +315,14 @@ int _svm_mem_repair(struct MemRepairInPara *para)
     for (i = 0; i < para->count; ++i) {
         ret = mem_repair_single_addr(para->devid, para->repairAddrs[i].ptr, para->repairAddrs[i].len);
         if (ret != 0) {
-            svm_err("Mem repair failed. (devid=%u; va=%llx; size=%llx; ret=%d)\n",
-                para->devid, para->repairAddrs[i].ptr, para->repairAddrs[i].len, ret);
+            svm_err(
+                "Mem repair failed. (devid=%u; va=0x%llx; size=0x%llx; ret=%d)\n", para->devid,
+                para->repairAddrs[i].ptr, para->repairAddrs[i].len, ret);
             return ret;
         }
+        svm_run_info(
+            "Mem repair success. (devid=%u; va=0x%llx; size=0x%llx; ret=%d)\n", para->devid, para->repairAddrs[i].ptr,
+            para->repairAddrs[i].len, ret);
     }
     return 0;
 }

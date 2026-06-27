@@ -22,20 +22,21 @@
 
 #define DEVDRV_DIVERSITY_PCIE_VENDOR_ID 0xFFFF
 static const ka_pci_device_id_t trs_stars_tbl[] = {
-    { KA_PCI_VDEVICE(HUAWEI, 0xd105),           0 },
-    { KA_PCI_VDEVICE(HUAWEI, 0xd802),           0 },
-    { KA_PCI_VDEVICE(HUAWEI, 0xd803),           0 },
-    { KA_PCI_VDEVICE(HUAWEI, 0xd804),           0 },
-    { KA_PCI_VDEVICE(HUAWEI, 0xd806),           0 },
-    { DEVDRV_DIVERSITY_PCIE_VENDOR_ID, 0xd500, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0 },
-    { 0x20C6, 0xd500, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0 },
-    { 0x203F, 0xd500, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0 },
-    { 0x20E9, 0xd500, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0 },
-    { 0x20C6, 0xd802, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0 },
-    { 0x203F, 0xd802, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0 },
-    { 0x20E9, 0xd802, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0 },
-    {}
-};
+    {KA_PCI_VDEVICE(HUAWEI, 0xd105), 0},
+    {KA_PCI_VDEVICE(HUAWEI, 0xd802), 0},
+    {KA_PCI_VDEVICE(HUAWEI, 0xd803), 0},
+    {KA_PCI_VDEVICE(HUAWEI, 0xd804), 0},
+    {KA_PCI_VDEVICE(HUAWEI, 0xd806), 0},
+    {KA_PCI_VDEVICE(HUAWEI, 0xd807), 0},
+    {KA_PCI_VDEVICE(HUAWEI, 0xd808), 0},
+    {DEVDRV_DIVERSITY_PCIE_VENDOR_ID, 0xd500, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0},
+    {0x20C6, 0xd500, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0},
+    {0x203F, 0xd500, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0},
+    {0x20E9, 0xd500, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0},
+    {0x20C6, 0xd802, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0},
+    {0x203F, 0xd802, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0},
+    {0x20E9, 0xd802, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0},
+    {}};
 KA_MODULE_DEVICE_TABLE(pci, trs_stars_tbl);
 
 struct trs_stars_ops *g_stars_ops;
@@ -59,8 +60,7 @@ int trs_stars_soc_get_id_status(struct trs_id_inst *inst, u32 type, u32 id, u32 
 
     ret = g_stars_ops->get_id_status(inst, type, id, status);
     if (ret != 0) {
-        trs_err("Failed to get id status. (devid=%u; tsid=%u; type=%u; id=%u)\n",
-            inst->devid, inst->tsid, type, id);
+        trs_err("Failed to get id status. (devid=%u; tsid=%u; type=%u; id=%u)\n", inst->devid, inst->tsid, type, id);
         return ret;
     }
     return 0;
@@ -204,7 +204,4 @@ int init_trs_stars(void)
     return 0;
 }
 
-void exit_trs_stars(void)
-{
-    trs_stars_notifier_unregister();
-}
+void exit_trs_stars(void) { trs_stars_notifier_unregister(); }

@@ -12,4 +12,5 @@ target_include_directories(drvdsmi_host PRIVATE
     ${DRIVER_USER_DIR}/dmc/dsmi/dsmi_product_ext/soc_adapt
     $<$<STREQUAL:${PRODUCT},ascend910>:${DRIVER_USER_DIR}/dmc/dsmi/dsmi_product_ext/soc_adapt/cloud>
     $<$<STREQUAL:${PRODUCT},ascend910B>:${DRIVER_USER_DIR}/dmc/dsmi/dsmi_product_ext/soc_adapt/cloud>
+    $<$<STREQUAL:${PRODUCT},ascend950>:${DRIVER_USER_DIR}/dmc/dsmi/dsmi_product_ext/soc_adapt/cloud_v4>
 )

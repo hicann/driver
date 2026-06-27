@@ -13,7 +13,7 @@
 #ifndef SOC_ADAPT_RES_CLOUD_V4_H__
 #define SOC_ADAPT_RES_CLOUD_V4_H__
 
-#include <linux/types.h>
+#include "ka_type.h"
 
 #include "trs_pm_adapt.h"
 #include "trs_pub_def.h"
@@ -32,51 +32,44 @@ int trs_soc_cloud_v4_sq_send_trigger_db_init(struct trs_id_inst *inst);
 void trs_soc_cloud_v4_sq_send_trigger_db_uninit(struct trs_id_inst *inst);
 
 /* Notify */
-#define TRS_CLOUD_V4_NOTIFY_SIZE          4
-#define TRS_CLOUD_V4_NOTIFY_INTERVAL      8
-#define TRS_CLOUD_V4_NOTIFY_SEPARATE_CNT  16
+#define TRS_CLOUD_V4_NOTIFY_SIZE 4
+#define TRS_CLOUD_V4_NOTIFY_INTERVAL 8
+#define TRS_CLOUD_V4_NOTIFY_SEPARATE_CNT 16
 #define TRS_CLOUD_V4_NOTIFY_SEPARATE_SIZE 0x1000
-#define TRS_CLOUD_V4_NOTIFY_SLICE_SIZE    0x200000
+#define TRS_CLOUD_V4_NOTIFY_SLICE_SIZE 0x200000
 #define TRS_CLOUD_V4_NOTIFY_NUM_PER_SLICE 4096 /* total slice num is 16 */
 
 static inline u32 trs_soc_get_cloud_v4_notify_offset(u32 id)
 {
     return (id % TRS_CLOUD_V4_NOTIFY_NUM_PER_SLICE) % TRS_CLOUD_V4_NOTIFY_SEPARATE_CNT * TRS_CLOUD_V4_NOTIFY_INTERVAL +
-        (id % TRS_CLOUD_V4_NOTIFY_NUM_PER_SLICE) / TRS_CLOUD_V4_NOTIFY_SEPARATE_CNT * TRS_CLOUD_V4_NOTIFY_SEPARATE_SIZE +
-        (id / TRS_CLOUD_V4_NOTIFY_NUM_PER_SLICE) * TRS_CLOUD_V4_NOTIFY_SLICE_SIZE;
+           (id % TRS_CLOUD_V4_NOTIFY_NUM_PER_SLICE) / TRS_CLOUD_V4_NOTIFY_SEPARATE_CNT *
+               TRS_CLOUD_V4_NOTIFY_SEPARATE_SIZE +
+           (id / TRS_CLOUD_V4_NOTIFY_NUM_PER_SLICE) * TRS_CLOUD_V4_NOTIFY_SLICE_SIZE;
 }
 
-static inline size_t trs_soc_get_cloud_v4_notify_size(void)
-{
-    return (size_t)TRS_CLOUD_V4_NOTIFY_SIZE;
-}
+static inline size_t trs_soc_get_cloud_v4_notify_size(void) { return (size_t)TRS_CLOUD_V4_NOTIFY_SIZE; }
 
 /* Cnt notify */
-#define TRS_CLOUD_V4_CNT_NOTIFY_SIZE          4
-#define TRS_CLOUD_V4_CNT_NOTIFY_INTERVAL      32
-#define TRS_CLOUD_V4_CNT_NOTIFY_SEPARATE_CNT  16
+#define TRS_CLOUD_V4_CNT_NOTIFY_SIZE 4
+#define TRS_CLOUD_V4_CNT_NOTIFY_INTERVAL 32
+#define TRS_CLOUD_V4_CNT_NOTIFY_SEPARATE_CNT 16
 #define TRS_CLOUD_V4_CNT_NOTIFY_SEPARATE_SIZE 0x1000
-#define TRS_CLOUD_V4_CNT_NOTIFY_SLICE_SIZE    0x10000
+#define TRS_CLOUD_V4_CNT_NOTIFY_SLICE_SIZE 0x10000
 #define TRS_CLOUD_V4_CNT_NOTIFY_NUM_PER_SLICE 128 /* total slice num is 16 */
 
 static inline u32 trs_soc_get_cloud_v4_cnt_notify_offset(u32 id)
 {
     return (id % TRS_CLOUD_V4_CNT_NOTIFY_NUM_PER_SLICE) % TRS_CLOUD_V4_CNT_NOTIFY_SEPARATE_CNT *
-        TRS_CLOUD_V4_CNT_NOTIFY_INTERVAL + (id % TRS_CLOUD_V4_CNT_NOTIFY_NUM_PER_SLICE) /
-        TRS_CLOUD_V4_CNT_NOTIFY_SEPARATE_CNT * TRS_CLOUD_V4_CNT_NOTIFY_SEPARATE_SIZE +
-        (id / TRS_CLOUD_V4_CNT_NOTIFY_NUM_PER_SLICE) * TRS_CLOUD_V4_CNT_NOTIFY_SLICE_SIZE;
+               TRS_CLOUD_V4_CNT_NOTIFY_INTERVAL +
+           (id % TRS_CLOUD_V4_CNT_NOTIFY_NUM_PER_SLICE) / TRS_CLOUD_V4_CNT_NOTIFY_SEPARATE_CNT *
+               TRS_CLOUD_V4_CNT_NOTIFY_SEPARATE_SIZE +
+           (id / TRS_CLOUD_V4_CNT_NOTIFY_NUM_PER_SLICE) * TRS_CLOUD_V4_CNT_NOTIFY_SLICE_SIZE;
 }
 
-static inline size_t trs_soc_get_cloud_v4_cnt_notify_size(void)
-{
-    return (size_t)TRS_CLOUD_V4_CNT_NOTIFY_SIZE;
-}
+static inline size_t trs_soc_get_cloud_v4_cnt_notify_size(void) { return (size_t)TRS_CLOUD_V4_CNT_NOTIFY_SIZE; }
 
 #define TRS_CLOUD_V4_STARS_SCHED_STRIDE (4 * 1024)
-static inline size_t trs_soc_get_cloud_v4_stars_sched_stride(void)
-{
-    return (u32)TRS_CLOUD_V4_STARS_SCHED_STRIDE;
-}
+static inline size_t trs_soc_get_cloud_v4_stars_sched_stride(void) { return (u32)TRS_CLOUD_V4_STARS_SCHED_STRIDE; }
 
 static inline u32 trs_soc_get_cloud_v4_sq_mem_side(u32 devid, struct trs_chan_type *types)
 {
@@ -100,38 +93,17 @@ static inline u32 trs_soc_get_cloud_v4_cq_mem_side(u32 devid)
     }
 }
 
-static inline int trs_soc_get_cloud_v4_sq_head_reg_offset(void)
-{
-    return TRS_STARS_V2_SCHED_SQ_HEAD_OFFSET;
-}
+static inline int trs_soc_get_cloud_v4_sq_head_reg_offset(void) { return TRS_STARS_V2_SCHED_SQ_HEAD_OFFSET; }
 
-static inline int trs_soc_get_cloud_v4_sq_tail_reg_offset(void)
-{
-    return TRS_STARS_V2_SCHED_SQ_TAIL_OFFSET;
-}
+static inline int trs_soc_get_cloud_v4_sq_tail_reg_offset(void) { return TRS_STARS_V2_SCHED_SQ_TAIL_OFFSET; }
 
-static inline int trs_soc_get_cloud_v4_sq_status_reg_offset(void)
-{
-    return TRS_STARS_V2_SCHED_SQ_STATUS_OFFSET;
-}
+static inline int trs_soc_get_cloud_v4_sq_status_reg_offset(void) { return TRS_STARS_V2_SCHED_SQ_STATUS_OFFSET; }
 
-static inline int trs_soc_get_cloud_v4_cq_head_reg_offset(void)
-{
-    return TRS_STARS_V2_SCHED_CQ_HEAD_OFFSET;
-}
+static inline int trs_soc_get_cloud_v4_cq_head_reg_offset(void) { return TRS_STARS_V2_SCHED_CQ_HEAD_OFFSET; }
 
-static inline int trs_soc_get_cloud_v4_cq_tail_reg_offset(void)
-{
-    return TRS_STARS_V2_SCHED_CQ_TAIL_OFFSET;
-}
+static inline int trs_soc_get_cloud_v4_cq_tail_reg_offset(void) { return TRS_STARS_V2_SCHED_CQ_TAIL_OFFSET; }
 
-static inline int trs_soc_get_cloud_v4_db_cfg(int db_type, u32 *start, u32 *end)
-{
-    return -EOPNOTSUPP;
-}
+static inline int trs_soc_get_cloud_v4_db_cfg(int db_type, u32 *start, u32 *end) { return -EOPNOTSUPP; }
 
-static inline bool trs_cloud_v4_is_support_soft_mbox(void)
-{
-    return true;
-}
+static inline bool trs_cloud_v4_is_support_soft_mbox(void) { return true; }
 #endif /* SOC_ADAPT_RES_CLOUD_V4_H__ */

@@ -32,12 +32,12 @@
 #include "buff_manage_base.h"
 #include "buff_recycle_ctx.h"
 #include "buff_recycle.h"
+#include "buff_platform.h"
 
 #define ATOMIC_SET(x, y) __sync_lock_test_and_set((x), (y))
 
 typedef void (*block_handle)(struct proc_mng_ctx *p_mng, struct block_mem_ctx *block);
-typedef void (*block_handle_with_rec_type)(struct block_mem_ctx *block,
-    enum buff_recycle_type recycle_type);
+typedef void (*block_handle_with_rec_type)(struct block_mem_ctx *block, enum buff_recycle_type recycle_type);
 
 #ifdef EMU_ST
 void buff_restore_proc_para(int pid, int task_id);
@@ -59,8 +59,8 @@ static void block_handle_idle_free(struct proc_mng_ctx *p_mng, struct block_mem_
     }
 }
 
-static void mbuf_recycle(struct proc_mng_ctx *p_mng, struct mempool_t *mp,
-    struct share_mbuf *s_mbuf, struct uni_buff_head_t *head)
+static void mbuf_recycle(struct proc_mng_ctx *p_mng, struct mempool_t *mp, struct share_mbuf *s_mbuf,
+                         struct uni_buff_head_t *head)
 {
     struct uni_buff_ext_info *ext = (struct uni_buff_ext_info *)((char *)head - sizeof(struct uni_buff_ext_info));
     unsigned long long proc_uid;
@@ -76,8 +76,8 @@ static void mbuf_recycle(struct proc_mng_ctx *p_mng, struct mempool_t *mp,
         return;
     }
 
-    buff_event("Mbuf recycle. (pid=%d, mbuf=%p, alloc_pid=%d, use_pid=%d, proc_uid=%llu)\n",
-        buff_get_current_pid(), s_mbuf, ext->alloc_pid, ext->use_pid, proc_uid);
+    buff_event("Mbuf recycle. (pid=%d, mbuf=%p, alloc_pid=%d, use_pid=%d, proc_uid=%llu)\n", buff_get_current_pid(),
+               s_mbuf, ext->alloc_pid, ext->use_pid, proc_uid);
 
     (void)s_mbuf_free((void *)mp, s_mbuf);
 }
@@ -110,7 +110,7 @@ static void block_handle_mbuf_mp_recycle(struct proc_mng_ctx *p_mng, struct bloc
     }
 }
 
-static void mp_scan_recycle_one_buff(struct proc_mng_ctx * p_mng, void *buff, uint32_t blk_id)
+static void mp_scan_recycle_one_buff(struct proc_mng_ctx *p_mng, void *buff, uint32_t blk_id)
 {
     struct uni_buff_head_t *head = NULL;
     struct uni_buff_trace_t *trace = NULL;
@@ -119,7 +119,7 @@ static void mp_scan_recycle_one_buff(struct proc_mng_ctx * p_mng, void *buff, ui
     head = buff_mempool_get_head(buff);
     trace = buff_mempool_get_trace(buff);
 
-    for (i = 0; i < BUFF_REF_MAX_MBUF_NUM ; i++) {
+    for (i = 0; i < BUFF_REF_MAX_MBUF_NUM; i++) {
         if (trace->mbuf[i] == NULL) {
             continue;
         }
@@ -160,8 +160,7 @@ static void block_handle_mp_recycle(struct proc_mng_ctx *p_mng, struct block_mem
     (void)pthread_mutex_unlock(&block->mutex);
 }
 
-static void block_handle_mp_scan_free(struct block_mem_ctx *block,
-    enum buff_recycle_type recycle_type)
+static void block_handle_mp_scan_free(struct block_mem_ctx *block, enum buff_recycle_type recycle_type)
 {
     struct mempool_t *mp = (struct mempool_t *)block->mng;
     bool recycle_flag = false;
@@ -179,8 +178,7 @@ static void block_handle_mp_scan_free(struct block_mem_ctx *block,
     }
 }
 
-static void block_handle_mz_scan_free(struct block_mem_ctx *block,
-    enum buff_recycle_type recycle_type)
+static void block_handle_mz_scan_free(struct block_mem_ctx *block, enum buff_recycle_type recycle_type)
 {
     struct buff_memzone_list_node *mz_list_node = NULL;
     struct memzone_user_mng_t *mz = NULL;
@@ -199,8 +197,7 @@ static void block_handle_mz_scan_free(struct block_mem_ctx *block,
     }
 }
 
-static void block_handle_huge_buf_scan_free(struct block_mem_ctx *block,
-    enum buff_recycle_type recycle_type)
+static void block_handle_huge_buf_scan_free(struct block_mem_ctx *block, enum buff_recycle_type recycle_type)
 {
     (void)recycle_type;
     struct memzone_huge_user_mng_t *huge_mz = (struct memzone_huge_user_mng_t *)block->mng;
@@ -224,19 +221,21 @@ static void block_list_for_each_handle(struct proc_mng_ctx *p_mng, struct list_h
     struct block_mem_ctx *block = NULL;
     struct list_head *pos = NULL, *n = NULL;
 
-    list_for_each_safe(pos, n, head) {
+    list_for_each_safe(pos, n, head)
+    {
         block = list_entry(pos, struct block_mem_ctx, node);
         handle(p_mng, block);
     }
 }
 
-static void block_list_for_each_handle_with_devid(struct list_head *head,
-    block_handle_with_rec_type handle, uint32 devid, enum buff_recycle_type recycle_type)
+static void block_list_for_each_handle_with_devid(struct list_head *head, block_handle_with_rec_type handle,
+                                                  uint32 devid, enum buff_recycle_type recycle_type)
 {
     struct block_mem_ctx *block = NULL;
     struct list_head *pos = NULL, *n = NULL;
 
-    list_for_each_safe(pos, n, head) {
+    list_for_each_safe(pos, n, head)
+    {
         block = list_entry(pos, struct block_mem_ctx, node);
         if ((devid != BUFF_INVALID_DEV) && (devid != block->devid)) {
             continue;
@@ -272,7 +271,8 @@ static void exit_task_recycle(struct proc_mng_ctx *p_mng)
     } while (true);
 }
 
-static void recycle_proc_default_pool_res(struct proc_mng_ctx *p_mng, uint32_t devid, enum buff_recycle_type recycle_type)
+static void recycle_proc_default_pool_res(struct proc_mng_ctx *p_mng, uint32_t devid,
+                                          enum buff_recycle_type recycle_type)
 {
 #ifdef EMU_ST
     buff_restore_proc_para(p_mng->pid, p_mng->task_id);
@@ -290,14 +290,14 @@ static void recycle_proc_default_pool_res(struct proc_mng_ctx *p_mng, uint32_t d
     exit_task_recycle(p_mng);
 
     /* 4. if the buf is set to unused, scan and free it here. */
-    block_list_for_each_handle_with_devid(&p_mng->alloc_list[MEMZONE_LIST], block_handle_mz_scan_free,
-        devid, recycle_type);
-    block_list_for_each_handle_with_devid(&p_mng->alloc_list[HUGE_BUF_LIST], block_handle_huge_buf_scan_free,
-        devid, recycle_type);
-    block_list_for_each_handle_with_devid(&p_mng->alloc_list[MEMPOOL_LIST], block_handle_mp_scan_free,
-        devid, recycle_type);
-    block_list_for_each_handle_with_devid(&p_mng->alloc_list[MEMPOOL_MBUF_LIST], block_handle_mp_scan_free,
-        devid, recycle_type);
+    block_list_for_each_handle_with_devid(&p_mng->alloc_list[MEMZONE_LIST], block_handle_mz_scan_free, devid,
+                                          recycle_type);
+    block_list_for_each_handle_with_devid(&p_mng->alloc_list[HUGE_BUF_LIST], block_handle_huge_buf_scan_free, devid,
+                                          recycle_type);
+    block_list_for_each_handle_with_devid(&p_mng->alloc_list[MEMPOOL_LIST], block_handle_mp_scan_free, devid,
+                                          recycle_type);
+    block_list_for_each_handle_with_devid(&p_mng->alloc_list[MEMPOOL_MBUF_LIST], block_handle_mp_scan_free, devid,
+                                          recycle_type);
     (void)pthread_mutex_unlock(&p_mng->alloc_list_mutex);
 }
 
@@ -309,7 +309,8 @@ drvError_t buff_proc_cache_free(uint32_t devid)
     struct list_head *pos = NULL, *n = NULL;
 
     (void)pthread_rwlock_rdlock(&ctx_mng->rwlock);
-    list_for_each_safe(pos, n, &ctx_mng->head) {
+    list_for_each_safe(pos, n, &ctx_mng->head)
+    {
         ctx = container_of(pos, struct buff_recycle_ctx, node);
         /* Proc without alloc permission has no memory to free. */
         if (ctx->p_mng.pool_id >= 0) {
@@ -318,20 +319,12 @@ drvError_t buff_proc_cache_free(uint32_t devid)
     }
     (void)pthread_rwlock_unlock(&ctx_mng->rwlock);
 
-    return idle_buff_range_free(devid, USING_BUFF_MAX_SHOW_CNT);
+    return idle_buff_range_free(devid, USING_BUFF_MAX_SHOW_CNT, true);
 }
 
 STATIC void thread_prop_set(void)
 {
-#ifndef DRV_HOST
-    cpu_set_t mask;
-    CPU_ZERO(&mask);
-    CPU_SET(0, &mask);
-
-    if (sched_setaffinity(0, sizeof(mask), &mask) == -1) {
-        buff_warn("sched_setaffinity not success\n");
-    }
-#endif
+    buff_recycle_set_thread_affinity();
     (void)prctl(PR_SET_NAME, "buff_recycle");
 }
 
@@ -372,7 +365,7 @@ void list_handle_of_recycle_ctx_destroy(struct list_head *node)
     struct buff_recycle_ctx *ctx = container_of(node, struct buff_recycle_ctx, node);
 
     buff_info("pid %d recycle thread stop thread status %d\n", buff_get_current_pid(), ctx->status);
- 
+
     if (ctx->p_mng.pool_id >= 0) {
         recycle_proc_default_pool_res(&ctx->p_mng, BUFF_INVALID_DEV, PASSIVE_RECYCLE);
         free_all_buff(&ctx->p_mng);
@@ -392,7 +385,7 @@ void recycle_thread_stop(void)
         drv_user_list_for_each(&ctx_mng->head, list_handle_of_recycle_ctx_destroy);
         (void)pthread_rwlock_unlock(&ctx_mng->rwlock);
     }
- 
+
     del_others_range();
 }
 #endif
@@ -421,7 +414,7 @@ static void *recycle_thread(void *arg)
         if (ctx->p_mng.pool_id >= 0) {
             recycle_proc_default_pool_res(&ctx->p_mng, BUFF_INVALID_DEV, PASSIVE_RECYCLE);
         }
-        (void)idle_buff_range_free(BUFF_INVALID_DEV, 0);
+        (void)idle_buff_range_free(BUFF_INVALID_DEV, 0, false);
         (void)usleep(ctx->period);
     }
     ctx->status = RECYCLE_THREAD_STATUS_STOP;
@@ -451,7 +444,7 @@ static void mem_config_show(unsigned int cfg_id)
     memZoneCfg *cfg_info = memzone_get_cfg_info_by_id(cfg_id);
 
     buff_show("Mz cfg. (cfg_id=%d; total_size=0x%llx; blk_size=0x%x; max_buf_size=0x%llx; page_type=%d)\n",
-        cfg_info->cfg_id, cfg_info->total_size, cfg_info->blk_size, cfg_info->max_buf_size, cfg_info->page_type);
+              cfg_info->cfg_id, cfg_info->total_size, cfg_info->blk_size, cfg_info->max_buf_size, cfg_info->page_type);
 }
 
 static void memzone_buff_show(struct memzone_user_mng_t *mz)
@@ -479,13 +472,13 @@ static void memzone_buff_show(struct memzone_user_mng_t *mz)
             if (ext_info != NULL) {
                 j++;
                 buff_show("Buff. (index=%ld; ext=%p; alloc_pid=%d; use_pid=%d)\n", j, ext_info, ext_info->alloc_pid,
-                    ext_info->use_pid);
+                          ext_info->use_pid);
                 buff_put_ext_info(ext_info, mz->area.blk_id);
             }
         }
 
         start = (void *)((char *)head - (head->resv_head * UNI_RSV_HEAD_LEN));
-        end   = (void *)((char *)head + head->size);
+        end = (void *)((char *)head + head->size);
         size = (unsigned long)end - (unsigned long)start;
         if ((size < mz->blk_size) || (size > mz->area.mz_mem_total_size)) {
             break;
@@ -499,9 +492,9 @@ static void memzone_show(void *buff)
 {
     struct memzone_user_mng_t *mz = (struct memzone_user_mng_t *)buff;
 
-    buff_show("memzone %p: blk addr %p pid %d blk(size %d total num %d free %d), mem(total 0x%llx free 0x%llx)\n",
-        mz, mz->area.mz_mem_uva, mz->pid, mz->blk_size, mz->blk_num_total, mz->blk_num_available,
-        mz->area.mz_mem_total_size, mz->mz_mem_free_size);
+    buff_show("memzone %p: blk addr %p pid %d blk(size %d total num %d free %d), mem(total 0x%llx free 0x%llx)\n", mz,
+              mz->area.mz_mem_uva, mz->pid, mz->blk_size, mz->blk_num_total, mz->blk_num_available,
+              mz->area.mz_mem_total_size, mz->mz_mem_free_size);
     mem_config_show(mz->cfg_id);
     memzone_buff_show(mz);
 }
@@ -527,7 +520,7 @@ static void mem_pool_buff_show(struct mempool_t *mp)
             if (ext_info != NULL) {
                 j++;
                 buff_show("Buff. (index=%ld; ext=%p; alloc_pid=%d; use_pid=%d)\n", j, ext_info, ext_info->alloc_pid,
-                    ext_info->use_pid);
+                          ext_info->use_pid);
                 buff_put_ext_info(ext_info, mp->blk_id);
             }
         }
@@ -538,8 +531,8 @@ static void mem_pool_show(void *buff)
 {
     struct mempool_t *mp = (struct mempool_t *)buff;
 
-    buff_show("mempool %p: blk addr %p name(%s) blk(size %d total num %d free %d), bit_num %d\n",
-        mp, mp->blk_start, mp->pool_name, mp->blk_size, mp->blk_num, mp->blk_available, mp->bit_num);
+    buff_show("mempool %p: blk addr %p name(%s) blk(size %d total num %d free %d), bit_num %d\n", mp, mp->blk_start,
+              mp->pool_name, mp->blk_size, mp->blk_num, mp->blk_available, mp->bit_num);
     mem_pool_buff_show(mp);
 }
 
@@ -551,12 +544,10 @@ static void large_buf_show(void *buff)
     buff_show("Large. (buf=%p; size=0x%lx)\n", buff, (unsigned long)head->size);
 }
 
-static void (* const mem_show_handler[MEM_LIST_NUM])(void *buff) = {
-    [MEMZONE_LIST] = memzone_show,
-    [HUGE_BUF_LIST] = large_buf_show,
-    [MEMPOOL_LIST] = mem_pool_show,
-    [MEMPOOL_MBUF_LIST] = mem_pool_show
-};
+static void (*const mem_show_handler[MEM_LIST_NUM])(void *buff) = {[MEMZONE_LIST] = memzone_show,
+                                                                   [HUGE_BUF_LIST] = large_buf_show,
+                                                                   [MEMPOOL_LIST] = mem_pool_show,
+                                                                   [MEMPOOL_MBUF_LIST] = mem_pool_show};
 
 static void block_handle_show(struct proc_mng_ctx *p_mng, struct block_mem_ctx *block)
 {
@@ -574,8 +565,8 @@ static void _pool_blk_show(struct proc_mng_ctx *p_mng)
     int i;
 
     buff_show("\n");
-    buff_show("pid %d, task uid %llu, pool_id %d block_num %u free_num %u. block info:\n",
-        p_mng->pid, p_mng->task_id, p_mng->pool_id, p_mng->block_num, p_mng->free_num);
+    buff_show("pid %d, task uid %llu, pool_id %d block_num %u free_num %u. block info:\n", p_mng->pid, p_mng->task_id,
+              p_mng->pool_id, p_mng->block_num, p_mng->free_num);
 
     buff_show("alloc tmp list:\n");
     (void)pthread_mutex_lock(&p_mng->alloc_tmp_list_mutex);
@@ -589,7 +580,7 @@ static void _pool_blk_show(struct proc_mng_ctx *p_mng)
     }
     (void)pthread_mutex_unlock(&p_mng->alloc_list_mutex);
 }
- 
+
 static void list_handle_of_pool_blk_show(struct list_head *node)
 {
     struct buff_recycle_ctx *ctx = container_of(node, struct buff_recycle_ctx, node);
@@ -708,11 +699,11 @@ void buf_recycle_init(int pool_id)
     recycle_thread_init(ctx);
     sigal_init();
 }
- 
+
 static void list_handle_of_recycle_exit(struct list_head *node)
 {
     struct buff_recycle_ctx *ctx = container_of(node, struct buff_recycle_ctx, node);
- 
+
     if (ctx->thread != 0) {
         ctx->status = RECYCLE_THREAD_STATUS_STOP;
         (void)pthread_cancel(ctx->thread);
@@ -720,7 +711,7 @@ static void list_handle_of_recycle_exit(struct list_head *node)
         ctx->thread = 0;
     }
 }
- 
+
 static void __attribute__((destructor)) buff_exit(void)
 {
     struct buff_recycle_ctx_mng *ctx_mng = buff_get_recycle_ctx_mng();

@@ -339,7 +339,7 @@ int add_file_to_list(struct davinci_intf_stru *cb, ka_file_t *file,
     struct davinci_intf_process_stru *proc = NULL;
     struct davinci_intf_file_stru *file_op = NULL;
     ka_pid_t proc_pid = ka_task_get_current_tgid();
-    TASK_TIME_TYPE start_time = current->group_leader->start_time;
+    TASK_TIME_TYPE start_time = ka_task_get_current_group_starttime();
 
     proc = get_process_entry(cb, proc_pid, start_time);
     if (proc == NULL) {

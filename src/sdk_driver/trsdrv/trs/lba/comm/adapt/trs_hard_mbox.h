@@ -13,20 +13,17 @@
 #ifndef TRS_HARD_MBOX_H
 #define TRS_HARD_MBOX_H
 
-#include <linux/types.h>
+#include "ka_type.h"
 
 #include "trs_pub_def.h"
 
 struct trs_mbox_ops {
-    void (* mbox_release)(void *priv);
-    int (* trigger_irq)(void *priv);
-    void (* free_irq)(void *priv);
+    void (*mbox_release)(void *priv);
+    int (*trigger_irq)(void *priv);
+    void (*free_irq)(void *priv);
 };
 
-enum trs_mbox_mem_type {
-    TRS_MBOX_MEM_TYPE_DEVICE,
-    TRS_MBOX_MEM_TYPE_NORMAL
-};
+enum trs_mbox_mem_type { TRS_MBOX_MEM_TYPE_DEVICE, TRS_MBOX_MEM_TYPE_NORMAL };
 
 struct trs_mbox_chan_attr {
     phys_addr_t base;
@@ -35,7 +32,7 @@ struct trs_mbox_chan_attr {
     void *priv;
     struct trs_mbox_ops ops;
     enum trs_mbox_mem_type mem_type;
-    int cont_tx_timeout_max;  /* ms */
+    int cont_tx_timeout_max; /* ms */
 };
 
 void *trs_mbox_chan_init(struct trs_id_inst *inst, struct trs_mbox_chan_attr *attr);

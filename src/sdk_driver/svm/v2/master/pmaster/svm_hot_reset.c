@@ -21,10 +21,7 @@
 STATIC struct svm_business_info *g_svm_business_info = NULL;
 STATIC bool g_svm_active_reboot = false;
 
-bool devmm_is_active_reboot_status(void)
-{
-    return g_svm_active_reboot;
-}
+bool devmm_is_active_reboot_status(void) { return g_svm_active_reboot; }
 
 int devmm_alloc_business_info(void)
 {
@@ -55,8 +52,7 @@ void devmm_free_business_info(void)
 
 static bool _devmm_get_stop_business_flag(u32 devid)
 {
-    return (uda_is_phy_dev(devid) == true) ?
-        ((g_svm_business_info->stop_business_flag & (1UL << devid)) != 0) : false;
+    return (uda_is_phy_dev(devid) == true) ? ((g_svm_business_info->stop_business_flag & (1UL << devid)) != 0) : false;
 }
 
 bool devmm_get_stop_business_flag(u32 devid)
@@ -103,7 +99,8 @@ STATIC int devmm_add_pid_into_business_inner(u32 devid, ka_pid_t pid)
     ka_task_down_write(&g_svm_business_info->business_ref_cnt_rw_sema[devid]);
     /* Traverse the list to check whether the PID exists. If the PID does not exist, add it. Otherwise, exit. */
     head = &g_svm_business_info->pid_info[devid].list;
-    ka_list_for_each_safe(pos, n, head) {
+    ka_list_for_each_safe(pos, n, head)
+    {
         business_pid_info_of_list = ka_list_entry(pos, struct svm_business_pid_info, list);
         if (business_pid_info_of_list->pid == pid) {
             goto existed_pid_info;
@@ -129,8 +126,7 @@ int devmm_add_pid_into_business(u32 devid, ka_pid_t pid)
     ka_task_down_read(&g_svm_business_info->stop_business_rw_sema);
     if (_devmm_get_stop_business_flag(devid)) {
         ka_task_up_read(&g_svm_business_info->stop_business_rw_sema);
-        devmm_drv_err("Hotreset stop flag has been set, the process will return. (devid=%u; pid=%d)\n",
-                      devid, pid);
+        devmm_drv_err("Hotreset stop flag has been set, the process will return. (devid=%u; pid=%d)\n", devid, pid);
         return -EBUSY;
     }
 
@@ -150,19 +146,21 @@ void devmm_remove_pid_from_business(u32 devid, ka_pid_t pid)
     ka_list_head_t *pos = NULL;
     ka_list_head_t *n = NULL;
 
-    if(devid >= DEVMM_MAX_DEVICE_NUM) {
+    if (devid >= DEVMM_MAX_DEVICE_NUM) {
         return;
     }
 
     ka_task_down_write(&g_svm_business_info->business_ref_cnt_rw_sema[devid]);
     head = &g_svm_business_info->pid_info[devid].list;
-    ka_list_for_each_safe(pos, n, head) {
+    ka_list_for_each_safe(pos, n, head)
+    {
         business_pid_info = ka_list_entry(pos, struct svm_business_pid_info, list);
         if (business_pid_info->pid == pid) {
             ka_list_del(pos);
             g_svm_business_info->business_ref_cnt[devid]--;
-            devmm_drv_debug("Remove pid info from svm_business_info. (devid=%u; pid=%d; business_refcount=%u)\n",
-                devid, pid, g_svm_business_info->business_ref_cnt[devid]);
+            devmm_drv_debug(
+                "Remove pid info from svm_business_info. (devid=%u; pid=%d; business_refcount=%u)\n", devid, pid,
+                g_svm_business_info->business_ref_cnt[devid]);
             ka_task_up_write(&g_svm_business_info->business_ref_cnt_rw_sema[devid]);
             devmm_kvfree(business_pid_info);
             return;
@@ -190,8 +188,7 @@ void devmm_svm_business_info_init(u32 devid)
     /* set bit is ready */
     ka_base_atomic_set(&g_svm_business_info->devmm_is_ready[devid], DEVMM_IS_READY);
 
-    devmm_drv_debug(
-        "Restore stop business flag when pcie probe callback svm init_instance. (devid=%u)\n", devid);
+    devmm_drv_debug("Restore stop business flag when pcie probe callback svm init_instance. (devid=%u)\n", devid);
     return;
 }
 
@@ -206,8 +203,8 @@ void devmm_svm_business_info_uninit(u32 devid)
     return;
 }
 
-#define WAIT_BUSINESS_FINISH_TRY_CNT          600
-#define WAIT_BUSINESS_FINISH_PER_TIME     1 /* 1s */
+#define WAIT_BUSINESS_FINISH_TRY_CNT 600
+#define WAIT_BUSINESS_FINISH_PER_TIME 1 /* 1s */
 
 bool devmm_wait_business_finish(u32 devid)
 {
@@ -272,7 +269,7 @@ int devmm_hotreset_cancel_handle(u32 dev_id)
 STATIC int devmm_reboot_notify_handle(ka_notifier_block_t *notifier, unsigned long event, void *data)
 {
 #ifndef EMU_ST
-    if (event != SYS_RESTART && event != SYS_HALT && event != SYS_POWER_OFF) {
+    if (event != KA_SYS_RESTART && event != KA_SYS_HALT && event != KA_SYS_POWER_OFF) {
         return KA_NOTIFY_DONE;
     }
 
@@ -287,13 +284,6 @@ STATIC ka_notifier_block_t devmm_reboot_notifier = {
     .priority = 1,
 };
 
-int devmm_register_reboot_notifier(void)
-{
-    return ka_dfx_register_reboot_notifier(&devmm_reboot_notifier);
-}
+int devmm_register_reboot_notifier(void) { return ka_dfx_register_reboot_notifier(&devmm_reboot_notifier); }
 
-void devmm_unregister_reboot_notifier(void)
-{
-    (void)ka_dfx_unregister_reboot_notifier(&devmm_reboot_notifier);
-}
-
+void devmm_unregister_reboot_notifier(void) { (void)ka_dfx_unregister_reboot_notifier(&devmm_reboot_notifier); }

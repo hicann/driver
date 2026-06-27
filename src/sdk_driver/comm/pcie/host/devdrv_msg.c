@@ -87,6 +87,92 @@ STATIC const char *devdrv_msg_type_str(u32 client_type, u32 common_msg_type)
     }
 }
 
+STATIC bool g_profiling_is_enabled = false;
+
+bool devdrv_profiling_is_enabled(void)
+{
+    return g_profiling_is_enabled;
+}
+
+void devdrv_set_profiling_enable(bool enabled)
+{
+    g_profiling_is_enabled = enabled;
+}
+
+STATIC void devdrv_record_common_profiling_time(u32 *phase_index, u64 *total_duration,
+    struct devdrv_profiling_timestamp *intervals, u32 phase_count)
+{
+    u64 cur_time = ka_system_ktime_get_raw_ns();
+    u32 i = *phase_index;
+
+    if (i == 0) {
+        intervals[i].start_t = cur_time;
+    } else {
+        intervals[i-1].duration = cur_time - intervals[i-1].start_t;
+        if (i < phase_count) {
+            intervals[i].start_t = cur_time;
+        } else {
+            *total_duration = cur_time - intervals[0].start_t;
+        }
+    }
+
+    *phase_index = (i == phase_count) ? 0 : (i + 1);
+}
+
+STATIC void devdrv_non_trans_tx_profiling_info(struct devdrv_msg_chan *msg_chan)
+{
+    struct devdrv_profiling_info *profiling_info = &msg_chan->profiling_info;
+
+    devdrv_info("non_trans tx time. (seq_num=%llu; dev_id=%u; total_duration=%lluns; write_bar_t=%lluns; "
+        "wait_irq_begin_t=%lluns; wait_peer_recv_t=%lluns; chan_id=%u; msg_type=%u; in_data_len=%u; out_data_len=%u)\n",
+        profiling_info->tx_seq_num, msg_chan->msg_dev->pci_ctrl->dev_id, profiling_info->tx_total_duration,
+        profiling_info->tx_intervals[DEVDRV_PROFILING_TX_WRITE_BAR].duration,
+        profiling_info->tx_intervals[DEVDRV_PROFILING_TX_WAIT_IRQ_BEGIN].duration,
+        profiling_info->tx_intervals[DEVDRV_PROFILING_TX_WAIT_PEER_RECV].duration,
+        msg_chan->chan_id, msg_chan->msg_type,
+        profiling_info->tx_in_data_len, profiling_info->tx_out_data_len);
+}
+
+STATIC void devdrv_non_trans_rx_profiling_info(struct devdrv_msg_chan *msg_chan)
+{
+    struct devdrv_profiling_info *profiling_info = &msg_chan->profiling_info;
+
+    devdrv_info("non_trans rx time. (seq_num=%llu; dev_id=%u; total_duration=%lluns; into_work_t=%lluns; "
+        "sche_cb_t=%lluns; write_bar_t=%lluns; chan_id=%u; msg_type=%u; in_data_len=%u; out_data_len=%u)\n",
+        profiling_info->rx_seq_num, msg_chan->msg_dev->pci_ctrl->dev_id, profiling_info->rx_total_duration,
+        profiling_info->rx_intervals[DEVDRV_PROFILING_RX_QUEUE_WORK].duration,
+        profiling_info->rx_intervals[DEVDRV_PROFILING_RX_SCHEDULE_CB].duration,
+        profiling_info->rx_intervals[DEVDRV_PROFILING_RX_WRITE_BAR].duration,
+        msg_chan->chan_id, msg_chan->msg_type,
+        profiling_info->rx_in_data_len, profiling_info->rx_out_data_len);
+}
+
+STATIC void devdrv_record_tx_profiling_time(struct devdrv_msg_chan *msg_chan)
+{
+    struct devdrv_profiling_info *profiling_info = &msg_chan->profiling_info;
+
+    if (profiling_info->is_enable) {
+        devdrv_record_common_profiling_time(&profiling_info->tx_phase_index, &profiling_info->tx_total_duration,
+            profiling_info->tx_intervals, DEVDRV_PROFILING_TX_MAX);
+        if (profiling_info->tx_phase_index == 0) {
+            devdrv_non_trans_tx_profiling_info(msg_chan);
+        }
+    }
+}
+
+STATIC void devdrv_record_rx_profiling_time(struct devdrv_msg_chan *msg_chan)
+{
+    struct devdrv_profiling_info *profiling_info = &msg_chan->profiling_info;
+
+    if (profiling_info->is_enable) {
+        devdrv_record_common_profiling_time(&profiling_info->rx_phase_index, &profiling_info->rx_total_duration,
+            profiling_info->rx_intervals, DEVDRV_PROFILING_RX_MAX);
+        if (profiling_info->rx_phase_index == 0) {
+            devdrv_non_trans_rx_profiling_info(msg_chan);
+        }
+    }
+}
+
 void devdrv_set_device_status(struct devdrv_pci_ctrl *pci_ctrl, u32 status)
 {
     pci_ctrl->device_status = status;
@@ -613,7 +699,7 @@ STATIC void devdrv_msg_ring_doorbell_inner(void *msg_chan)
     devdrv_set_sq_doorbell(chan->io_base, 0x1);
 }
 
-void devdrv_msg_ring_doorbell(void *msg_chan)
+void devdrv_pci_msg_ring_doorbell(void *msg_chan)
 {
     struct devdrv_msg_chan *chan = devdrv_get_msg_chan(msg_chan);
     if (chan == NULL) {
@@ -623,9 +709,8 @@ void devdrv_msg_ring_doorbell(void *msg_chan)
     devdrv_msg_ring_doorbell_inner(chan);
     devdrv_put_msg_chan(chan);
 }
-KA_EXPORT_SYMBOL(devdrv_msg_ring_doorbell);
 
-void devdrv_msg_ring_cq_doorbell(void *msg_chan)
+void devdrv_pci_msg_ring_cq_doorbell(void *msg_chan)
 {
     struct devdrv_msg_chan *chan = devdrv_get_msg_chan(msg_chan);
     if (chan == NULL) {
@@ -635,7 +720,6 @@ void devdrv_msg_ring_cq_doorbell(void *msg_chan)
     devdrv_set_cq_doorbell(chan->io_base, 0x1);
     devdrv_put_msg_chan(chan);
 }
-KA_EXPORT_SYMBOL(devdrv_msg_ring_cq_doorbell);
 
 /* devid */
 int devdrv_pci_get_msg_chan_devid(void *msg_chan)
@@ -690,7 +774,7 @@ void *devdrv_pci_get_msg_chan_priv(void *msg_chan)
 }
 
 /* host sq */
-void *devdrv_get_msg_chan_host_sq_head(void *msg_chan, u32 *head)
+void *devdrv_pci_get_msg_chan_host_sq_head(void *msg_chan, u32 *head)
 {
     struct devdrv_msg_chan *chan = devdrv_get_msg_chan(msg_chan);
     void *sq_head = NULL;
@@ -714,9 +798,8 @@ void *devdrv_get_msg_chan_host_sq_head(void *msg_chan, u32 *head)
     devdrv_put_msg_chan(chan);
     return sq_head;
 }
-KA_EXPORT_SYMBOL(devdrv_get_msg_chan_host_sq_head);
 
-void devdrv_move_msg_chan_host_sq_head(void *msg_chan)
+void devdrv_pci_move_msg_chan_host_sq_head(void *msg_chan)
 {
     struct devdrv_msg_chan *chan = devdrv_get_msg_chan(msg_chan);
     if (chan == NULL) {
@@ -728,10 +811,9 @@ void devdrv_move_msg_chan_host_sq_head(void *msg_chan)
     }
     devdrv_put_msg_chan(chan);
 }
-KA_EXPORT_SYMBOL(devdrv_move_msg_chan_host_sq_head);
 
 /* host cq */
-void *devdrv_get_msg_chan_host_cq_head(void *msg_chan)
+void *devdrv_pci_get_msg_chan_host_cq_head(void *msg_chan)
 {
     void *cq_head = NULL;
     struct devdrv_msg_chan *chan = devdrv_get_msg_chan(msg_chan);
@@ -747,9 +829,8 @@ void *devdrv_get_msg_chan_host_cq_head(void *msg_chan)
     devdrv_put_msg_chan(chan);
     return cq_head;
 }
-KA_EXPORT_SYMBOL(devdrv_get_msg_chan_host_cq_head);
 
-void devdrv_move_msg_chan_host_cq_head(void *msg_chan)
+void devdrv_pci_move_msg_chan_host_cq_head(void *msg_chan)
 {
     struct devdrv_msg_chan *chan = devdrv_get_msg_chan(msg_chan);
     if (chan == NULL) {
@@ -761,10 +842,9 @@ void devdrv_move_msg_chan_host_cq_head(void *msg_chan)
     }
     devdrv_put_msg_chan(chan);
 }
-KA_EXPORT_SYMBOL(devdrv_move_msg_chan_host_cq_head);
 
 /* slave sq */
-void devdrv_set_msg_chan_slave_sq_head(void *msg_chan, u32 head)
+void devdrv_pci_set_msg_chan_slave_sq_head(void *msg_chan, u32 head)
 {
     struct devdrv_msg_chan *chan = devdrv_get_msg_chan(msg_chan);
     if (chan == NULL) {
@@ -774,9 +854,8 @@ void devdrv_set_msg_chan_slave_sq_head(void *msg_chan, u32 head)
     chan->sq_info.head_d = head;
     devdrv_put_msg_chan(chan);
 }
-KA_EXPORT_SYMBOL(devdrv_set_msg_chan_slave_sq_head);
 
-void *devdrv_get_msg_chan_slave_sq_tail(void *msg_chan, u32 *tail)
+void *devdrv_pci_get_msg_chan_slave_sq_tail(void *msg_chan, u32 *tail)
 {
     struct devdrv_msg_chan *chan = devdrv_get_msg_chan(msg_chan);
     void *sq_tail = NULL;
@@ -800,7 +879,6 @@ void *devdrv_get_msg_chan_slave_sq_tail(void *msg_chan, u32 *tail)
     devdrv_put_msg_chan(chan);
     return sq_tail;
 }
-KA_EXPORT_SYMBOL(devdrv_get_msg_chan_slave_sq_tail);
 
 #ifdef CFG_FEATURE_SEC_COMM_L3
 void *devdrv_get_msg_chan_host_rsv_sq_tail(void *msg_chan, u32 *tail)
@@ -903,7 +981,7 @@ int devdrv_dma_copy_cq_desc_to_slave(void *msg_chan, struct devdrv_asyn_dma_para
 }
 KA_EXPORT_SYMBOL(devdrv_dma_copy_cq_desc_to_slave);
 #endif
-void devdrv_move_msg_chan_slave_sq_tail(void *msg_chan)
+void devdrv_pci_move_msg_chan_slave_sq_tail(void *msg_chan)
 {
     struct devdrv_msg_chan *chan = devdrv_get_msg_chan(msg_chan);
     if (chan == NULL) {
@@ -915,9 +993,8 @@ void devdrv_move_msg_chan_slave_sq_tail(void *msg_chan)
     }
     devdrv_put_msg_chan(chan);
 }
-KA_EXPORT_SYMBOL(devdrv_move_msg_chan_slave_sq_tail);
 
-bool devdrv_msg_chan_slave_sq_full_check(void *msg_chan)
+bool devdrv_pci_msg_chan_slave_sq_full_check(void *msg_chan)
 {
     struct devdrv_msg_chan *chan = devdrv_get_msg_chan(msg_chan);
     if (chan == NULL) {
@@ -932,10 +1009,9 @@ bool devdrv_msg_chan_slave_sq_full_check(void *msg_chan)
         return false;
     }
 }
-KA_EXPORT_SYMBOL(devdrv_msg_chan_slave_sq_full_check);
 
 /* slave cq */
-void *devdrv_get_msg_chan_slave_cq_tail(void *msg_chan)
+void *devdrv_pci_get_msg_chan_slave_cq_tail(void *msg_chan)
 {
     struct devdrv_msg_chan *chan = devdrv_get_msg_chan(msg_chan);
     void *cq_tail = NULL;
@@ -951,9 +1027,8 @@ void *devdrv_get_msg_chan_slave_cq_tail(void *msg_chan)
     devdrv_put_msg_chan(chan);
     return cq_tail;
 }
-KA_EXPORT_SYMBOL(devdrv_get_msg_chan_slave_cq_tail);
 
-void devdrv_move_msg_chan_slave_cq_tail(void *msg_chan)
+void devdrv_pci_move_msg_chan_slave_cq_tail(void *msg_chan)
 {
     struct devdrv_msg_chan *chan = devdrv_get_msg_chan(msg_chan);
     if (chan == NULL) {
@@ -965,7 +1040,6 @@ void devdrv_move_msg_chan_slave_cq_tail(void *msg_chan)
     }
     devdrv_put_msg_chan(chan);
 }
-KA_EXPORT_SYMBOL(devdrv_move_msg_chan_slave_cq_tail);
 
 STATIC bool devdrv_judge_chan_invalid_by_level(struct devdrv_msg_dev *msg_dev, u32 level, u32 chan_id)
 {
@@ -1159,6 +1233,7 @@ STATIC void devdrv_non_trans_rx_msg_handle(struct devdrv_msg_chan *msg_chan)
         call_start = ka_jiffies;
         ret = msg_chan->rx_msg_process(handle, bd_desc->data, bd_desc->in_data_len, bd_desc->out_data_len,
                                        &bd_desc->real_out_len);
+        devdrv_record_rx_profiling_time(msg_chan);
         resq_time = ka_system_jiffies_to_msecs(ka_jiffies - call_start);
         if (resq_time > DEVDRV_NON_TRANS_CB_TIME) {
             devdrv_info("Get resq_time. (dev_id=%u; msg_type=\"%s\"; resq_time=%llums; cpu=%d)\n",
@@ -1218,6 +1293,7 @@ STATIC void devdrv_non_trans_rx_msg_handle(struct devdrv_msg_chan *msg_chan)
 #else
     (void)devdrv_non_trans_msg_dma_copy_cq(msg_chan, bd_desc);
 #endif
+    devdrv_record_rx_profiling_time(msg_chan);
     return;
 }
 
@@ -1229,6 +1305,7 @@ STATIC void devdrv_non_trans_rx_msg_task(ka_work_struct_t *p_work)
     enum devdrv_msg_client_type msg_type_tmp = msg_chan->msg_type;
     int dev_id;
 
+    devdrv_record_rx_profiling_time(msg_chan);
     ka_task_mutex_lock(&msg_chan->rx_mutex);
 
     devdrv_non_trans_rx_msg_task_resq_record(msg_chan);
@@ -1341,6 +1418,11 @@ STATIC ka_irqreturn_t devdrv_wakeup_rx_work(int irq, void *data)
     ka_rmb();
     bd_desc = (struct devdrv_non_trans_msg_desc *)msg_chan->cq_info.desc_h;
     if (bd_desc->status == DEVDRV_MSG_CMD_BEGIN) {
+        msg_chan->profiling_info.is_enable = devdrv_profiling_is_enabled();
+        msg_chan->profiling_info.rx_out_data_len = bd_desc->out_data_len;
+        msg_chan->profiling_info.rx_in_data_len = bd_desc->in_data_len;
+        msg_chan->profiling_info.rx_seq_num = bd_desc->seq_num;
+        devdrv_record_rx_profiling_time(msg_chan);
         devdrv_msg_chan_do_queue_work(msg_chan);
     } else {
         devdrv_guard_work_sched_immediate(msg_chan->msg_dev->pci_ctrl);
@@ -1503,6 +1585,7 @@ msg_retry:
         timeout = 0;
     }
 
+    devdrv_record_tx_profiling_time(msg_chan);
     if (timeout <= 0) {
         chan_stat->tx_irq_timeout_err++;
         devdrv_err("Device irq not resp. (dev_id=%u; msg_type=\"%s\"; status=%d; retry_cnt=%d)\n",
@@ -1560,6 +1643,7 @@ msg_retry:
         }
         chan_stat->tx_success_cnt++;
     }
+    devdrv_record_tx_profiling_time(msg_chan);
     return ret;
 }
 
@@ -1672,6 +1756,11 @@ int devdrv_sync_non_trans_msg_send(struct devdrv_msg_chan *msg_chan, void *data,
     data_para.out_data_len = out_data_len;
     data_para.real_out_len = real_out_len;
 
+    msg_chan->profiling_info.is_enable = devdrv_profiling_is_enabled();
+    msg_chan->profiling_info.tx_seq_num = chan_stat->tx_total_cnt;
+    msg_chan->profiling_info.tx_out_data_len = out_data_len;
+    msg_chan->profiling_info.tx_in_data_len = in_data_len;
+    devdrv_record_tx_profiling_time(msg_chan);
 #ifdef CFG_FEATURE_SEC_COMM_L3
     /* dma copy messages to device shared reserved memory pointed to by sq dma_reserve_d */
     ret = devdrv_sync_non_trans_msg_dma_copy_sq(msg_chan, data, in_data_len, out_data_len, msg_type);
@@ -1679,6 +1768,7 @@ int devdrv_sync_non_trans_msg_send(struct devdrv_msg_chan *msg_chan, void *data,
     /* put messages to send to shared reserved memory pointed to by sq desc_d */
     ret = devdrv_sync_non_trans_msg_copy_bd(msg_chan, data, in_data_len, out_data_len, msg_type);
 #endif
+    devdrv_record_tx_profiling_time(msg_chan);
     if (ret != 0) {
         devdrv_device_mutex_unlock(msg_chan);
         devdrv_err("Msg sq copy failed. (dev_id=%u; msg_type=\"%s\")\n",
@@ -2464,8 +2554,7 @@ int devdrv_msg_init(struct devdrv_pci_ctrl *pci_ctrl)
     int ret, irq_num, irq2_num, chan_cnt;
     ka_device_t *dev = ka_pci_get_dev(pci_ctrl->pdev);
     struct devdrv_msg_dev *msg_dev = NULL;
-    int devdrv_pf_max_msg_chan_cnt;
-    int devdrv_vf_max_msg_chan_cnt;
+    int devdrv_pf_max_msg_chan_cnt, devdrv_vf_max_msg_chan_cnt;
 
     irq_num = pci_ctrl->res.intr.msg_irq_num;
     irq2_num = (pci_ctrl->msix_irq_num > pci_ctrl->res.intr.msg_irq_vector2_base) ?
@@ -2482,7 +2571,7 @@ int devdrv_msg_init(struct devdrv_pci_ctrl *pci_ctrl)
         chan_cnt = (chan_cnt > devdrv_pf_max_msg_chan_cnt) ? devdrv_pf_max_msg_chan_cnt : chan_cnt;
     }
 
-    devdrv_info("Message init statr. (msix_irq_num=%d; irq_num=%d; irq2_num=%d; chan_cnt=%d)\r\n",
+    devdrv_info("Message init start. (msix_irq_num=%d; irq_num=%d; irq2_num=%d; chan_cnt=%d)\r\n",
                 pci_ctrl->msix_irq_num, irq_num, irq2_num, chan_cnt);
 
     msg_dev = devdrv_kzalloc(sizeof(struct devdrv_msg_dev), KA_GFP_KERNEL);
@@ -2517,6 +2606,8 @@ int devdrv_msg_init(struct devdrv_pci_ctrl *pci_ctrl)
     msg_dev->slave_mem.len = (u32)(pci_ctrl->res.msg_mem.size - msg_dev->slave_mem.offset);
 
     if (devdrv_msg_work_queue_init(pci_ctrl, msg_dev) != 0) {
+        devdrv_kfree(msg_dev->msg_chan);
+        msg_dev->msg_chan = NULL;
         devdrv_kfree(msg_dev);
         pci_ctrl->msg_dev = NULL;
         return -ENOMEM;

@@ -401,7 +401,7 @@ Description  : get device gateway address command proc
  Return Value : 0 success
 
 *****************************************************************************/
-int dsmi_cmd_get_network_device_info(int device_id, const char *inbuf, unsigned int size_in, char *outbuf,
+__attribute__((visibility("default"))) int dsmi_cmd_get_network_device_info(int device_id, const char *inbuf, unsigned int size_in, char *outbuf,
                                      unsigned int *size_out)
 {
     unsigned int out_length = 0;
@@ -410,14 +410,6 @@ int dsmi_cmd_get_network_device_info(int device_id, const char *inbuf, unsigned 
         DEV_MON_ERR("devid %d para error.\n", device_id);
         return -EINVAL;
     }
-
-#if ((!defined CFG_SOC_PLATFORM_MINIV2) && (!defined CFG_SOC_PLATFORM_CLOUD))
-    int rets = drv_get_phy_mach_flag(device_id);
-    if (rets != 0) {
-        DEV_MON_ERR("devid %d get phy mach flag fail 0x%x\n", device_id, rets);
-        return rets;
-    }
-#endif
 
     DM_COMMAND_BIGIN(DEV_MON_CMD_D_GET_NET_DEV_INFO, device_id, (unsigned short)(sizeof(unsigned int) + size_in + sizeof(unsigned int)),
                      (unsigned short)(sizeof(unsigned int) + (*size_out)))

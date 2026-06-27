@@ -15,8 +15,7 @@
 #define VIRTMNGHOST_MSG_ADMIN_H
 #include "virtmng_msg_pub.h"
 
-typedef int (*vmngh_admin_func)(struct vmng_msg_dev *msg_dev,
-    struct vmng_msg_chan_rx_proc_info *proc_info);
+typedef int (*vmngh_admin_func)(struct vmng_msg_dev *msg_dev, struct vmng_msg_chan_rx_proc_info *proc_info);
 
 int vmngh_register_admin_rx_func(int opcode, vmngh_admin_func admin_func);
 void vmngh_unregister_admin_rx_func(int opcode);

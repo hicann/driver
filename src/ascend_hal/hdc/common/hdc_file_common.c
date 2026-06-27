@@ -72,8 +72,7 @@ bool validate_recv_segment(char *p_rcvbuf, signed int buf_len)
     while (offset < ntohs(fh->hdrlen)) {
         if ((offset + sizeof(struct fileopt)) > ntohs(fh->hdrlen)) {
             HDC_LOG_ERR("Input parameter is error. (offset=%d; fileopt_len=%d; header_len=%d)\n", offset,
-                        (signed int)sizeof(struct fileopt),
-                        (signed int)ntohs(fh->hdrlen));
+                        (signed int)sizeof(struct fileopt), (signed int)ntohs(fh->hdrlen));
             return false;
         }
 
@@ -257,8 +256,8 @@ STATIC hdcError_t send_data_handle(struct filesock *fs, struct drvHdcMsg *p_sndm
             HDC_LOG_ERR("Calling drvHdcAddMsgBuffer error. (hdcError_t=%d)\n", ret);
             goto other_error;
         }
-        if ((ret = halHdcSend(fs->session, p_sndmsg, HDC_FLAG_WAIT_TIMEOUT,
-            HDC_SEND_FILE_WAIT_TIME)) != DRV_ERROR_NONE) {
+        if ((ret = halHdcSend(fs->session, p_sndmsg, HDC_FLAG_WAIT_TIMEOUT, HDC_SEND_FILE_WAIT_TIME)) !=
+            DRV_ERROR_NONE) {
             if (ret == DRV_ERROR_WAIT_TIMEOUT) {
                 HDC_LOG_ERR("Calling halHdcSend timeout, peer oom or peer receive packet blocking.\n");
             } else {
@@ -331,7 +330,7 @@ STATIC uint64_t get_send_rate(const struct filesock *fs)
     ret = (hdcError_t)clock_gettime(CLOCK_MONOTONIC, &now);
     hdc_file_check("clock_gettime", (hdcError_t)ret, DRV_ERROR_NONE);
     time = (uint64_t)(now.tv_sec - fs->start_time.tv_sec) * SECONDS_TO_MICORSECONDS +
-        (uint64_t)(now.tv_nsec - fs->start_time.tv_nsec) / CONVERT_NS_TO_US;
+           (uint64_t)(now.tv_nsec - fs->start_time.tv_nsec) / CONVERT_NS_TO_US;
     if (time != 0) {
         rate = (uint64_t)(fs->prog_info.send_bytes) * SECONDS_TO_MICORSECONDS / time;
     } else {
@@ -355,13 +354,13 @@ void call_progress_notifier(struct filesock *fs, bool is_fin)
                 fs->prog_info.progress = HDC_SEND_FILE_PROGRESS;
             } else {
                 fs->prog_info.progress = (int)(((uint64_t)(fs->prog_info.send_bytes) * HDC_SEND_FILE_PROGRESS) /
-                    fs->file_size); //lint !e573
+                                               fs->file_size); // lint !e573
             }
 
             fs->prog_info.rate = (long long int)get_send_rate(fs);
             if (fs->prog_info.rate != 0) {
                 fs->prog_info.remain_time = (int)((fs->file_size - (uint64_t)(fs->prog_info.send_bytes)) /
-                                            (uint64_t)fs->prog_info.rate);
+                                                  (uint64_t)fs->prog_info.rate);
             } else {
                 fs->prog_info.remain_time = 0x7FFFFFFF;
             }
@@ -465,8 +464,8 @@ STATIC void *process_recv_thread(void *arg)
         }
 
         (void)drvHdcReuseMsg(p_rcvmsg);
-        ret = halHdcRecv(fs->session, p_rcvmsg, FILE_SEG_MAX_SIZE, HDC_FLAG_WAIT_TIMEOUT,
-            &rcvbuf_count, HDC_RECV_WAIT_TIME);
+        ret = halHdcRecv(fs->session, p_rcvmsg, FILE_SEG_MAX_SIZE, HDC_FLAG_WAIT_TIMEOUT, &rcvbuf_count,
+                         HDC_RECV_WAIT_TIME);
         if (ret == DRV_ERROR_WAIT_TIMEOUT) {
             if (fs->exit) {
                 HDC_LOG_WARN("Calling halHdcRecv time out. (recv_cnt=%d; fs->exit=%d)\n", timeout_recv_cnt, fs->exit);
@@ -501,8 +500,8 @@ STATIC void *process_recv_thread(void *arg)
 
         g_recv_bytes += (unsigned long long)buf_len;
         if (!validate_recv_segment(p_rcvbuf, buf_len)) {
-            HDC_LOG_WARN("Calling validate_recv_segment not success. (buffer=\"%s\"; buffer_len=%d)\n",
-                p_rcvbuf, buf_len);
+            HDC_LOG_WARN("Calling validate_recv_segment not success. (buffer=\"%s\"; buffer_len=%d)\n", p_rcvbuf,
+                         buf_len);
             continue;
         }
         fh = (struct filehdr *)p_rcvbuf;
@@ -747,7 +746,7 @@ STATIC hdcError_t send_request(struct filesock *fs, char *sndbuf, signed int buf
     hdrlen = (uint16_t)(hdrlen + offset);
     offset = set_option_size(sndbuf, bufsize, hdrlen, fs->file_size);
     if (offset == 0) {
-        HDC_LOG_ERR("Calling set_option_size error. (file_size=%llu)\n", fs->file_size);
+        HDC_LOG_ERR("Calling set_option_size error. (file_size=%lu)\n", fs->file_size);
         return DRV_ERROR_INVALID_VALUE;
     }
 
@@ -841,7 +840,7 @@ hdcError_t get_hdc_capacity(struct drvHdcCapacity *capacity)
 }
 
 hdcError_t send_file_in_session(signed int user_mode, HDC_SESSION session, const char *file, const char *dst_path,
-    void (*progress_notifier)(struct drvHdcProgInfo *))
+                                void (*progress_notifier)(struct drvHdcProgInfo *))
 {
     struct filesock *fs = NULL;
     hdcError_t ret;
@@ -943,7 +942,7 @@ error0:
 }
 
 hdcError_t drvHdcGetTrustedBasePathEx(signed int user_mode, signed int peer_node, signed int peer_devid,
-    char *base_path, unsigned int path_len)
+                                      char *base_path, unsigned int path_len)
 {
     hdcError_t ret;
     signed int s_ret;
@@ -978,7 +977,8 @@ hdcError_t drvHdcGetTrustedBasePathEx(signed int user_mode, signed int peer_node
     }
 
     if (path_len <= (unsigned int)strlen(path)) {
-        HDC_LOG_ERR("Parameter path_len is invalid. (id=%d; path_len=%d; len=%d)\n", id, path_len, strlen(path));
+        HDC_LOG_ERR("Parameter path_len is invalid. (id=%d; path_len=%d; len=%u)\n", id, path_len,
+                    (unsigned int)strlen(path));
         return DRV_ERROR_INVALID_VALUE;
     }
 
@@ -990,7 +990,7 @@ hdcError_t drvHdcGetTrustedBasePathEx(signed int user_mode, signed int peer_node
 }
 
 STATIC hdcError_t drv_hdc_send_file_para_check(signed int user_mode, signed int peer_node, signed int peer_devid,
-    const char *file, const char *dst_path)
+                                               const char *file, const char *dst_path)
 {
 #ifndef CFG_SOC_PLATFORM_RC
     hdcError_t ret;
@@ -1020,8 +1020,8 @@ STATIC hdcError_t drv_hdc_send_file_para_check(signed int user_mode, signed int 
 #endif
 
     if (strstr(dst_path, (const char *)base_path) != dst_path) {
-        HDC_LOG_ERR("Calling strstr failed. (dev_id=%d; file=\"%s\"; dst_path=\"%s\"; base_path=\"%s\")\n",
-            peer_devid, file, dst_path, base_path);
+        HDC_LOG_ERR("Calling strstr failed. (dev_id=%d; file=\"%s\"; dst_path=\"%s\"; base_path=\"%s\")\n", peer_devid,
+                    file, dst_path, base_path);
         return DRV_ERROR_DST_PATH_ILLEGAL;
     }
 
@@ -1029,7 +1029,7 @@ STATIC hdcError_t drv_hdc_send_file_para_check(signed int user_mode, signed int 
 }
 
 hdcError_t drvHdcSendFileEx(signed int user_mode, signed int peer_node, signed int peer_devid, const char *file,
-    const char *dst_path, void (*progress_notifier)(struct drvHdcProgInfo *))
+                            const char *dst_path, void (*progress_notifier)(struct drvHdcProgInfo *))
 {
     HDC_CLIENT client = NULL;
     HDC_SESSION session = NULL;
@@ -1165,7 +1165,7 @@ STATIC uint16_t set_option_mkdir(char *sndbuf, signed int bufsize, uint32_t offs
 }
 
 STATIC hdcError_t send_cmd(HDC_SESSION session, char *sndbuf, signed int bufsize, const char *local_dir,
-    const char *dst_path)
+                           const char *dst_path)
 {
     struct filehdr *fh = (struct filehdr *)sndbuf;
     uint32_t len;
@@ -1218,8 +1218,7 @@ STATIC hdcError_t send_cmd(HDC_SESSION session, char *sndbuf, signed int bufsize
 hdcError_t get_new_dir_name(char *dst_path, int dst_len, const char *src_path, const char *d_name)
 {
     if ((strcpy_s(dst_path, (size_t)dst_len, src_path) != EOK) ||
-        (*(dst_path + strlen(dst_path) - 1) != '/' &&
-        (strcat_s(dst_path, (size_t)dst_len, "/") != EOK)) ||
+        (*(dst_path + strlen(dst_path) - 1) != '/' && (strcat_s(dst_path, (size_t)dst_len, "/") != EOK)) ||
         (strcat_s(dst_path, (size_t)dst_len, d_name) != EOK)) {
         return DRV_ERROR_INVALID_VALUE;
     }
@@ -1228,8 +1227,8 @@ hdcError_t get_new_dir_name(char *dst_path, int dst_len, const char *src_path, c
 }
 
 STATIC hdcError_t __send_current_dir(HDC_SESSION session, const char *local_dir, size_t local_dir_len,
-    char *new_local_dir, size_t new_local_len, char *new_dst_path, size_t new_dst_len,
-    signed int count, void (*progress_notifier)(struct drvHdcProgInfo *))
+                                     char *new_local_dir, size_t new_local_len, char *new_dst_path, size_t new_dst_len,
+                                     signed int count, void (*progress_notifier)(struct drvHdcProgInfo *))
 {
     DIR *dir = NULL;
     struct dirent *ptr = NULL;
@@ -1257,15 +1256,15 @@ STATIC hdcError_t __send_current_dir(HDC_SESSION session, const char *local_dir,
         if (is_dir(new_local_dir, new_local_len)) {
             ret = send_dir_in_session(session, new_local_dir, new_dst_path, count, progress_notifier);
             if (ret != DRV_ERROR_NONE) {
-                HDC_LOG_ERR("Calling send_dir_in_session error. (local_dir=\"%s\"; dst_path=\"%s\")\n",
-                            new_local_dir, new_dst_path);
+                HDC_LOG_ERR("Calling send_dir_in_session error. (local_dir=\"%s\"; dst_path=\"%s\")\n", new_local_dir,
+                            new_dst_path);
                 break;
             }
         } else {
             ret = send_file_in_session(0, session, new_local_dir, new_dst_path, progress_notifier);
             if (ret != DRV_ERROR_NONE) {
-                HDC_LOG_ERR("Calling send_file_in_session error. (file_name=\"%s\"; dst_path=\"%s\")\n",
-                            new_local_dir, new_dst_path);
+                HDC_LOG_ERR("Calling send_file_in_session error. (file_name=\"%s\"; dst_path=\"%s\")\n", new_local_dir,
+                            new_dst_path);
                 break;
             }
         }
@@ -1277,9 +1276,8 @@ STATIC hdcError_t __send_current_dir(HDC_SESSION session, const char *local_dir,
     return ret;
 }
 
-STATIC hdcError_t send_current_dir(HDC_SESSION session, const char *local_dir, size_t local_len,
-    const char *dst_path, size_t dst_len, signed int count,
-    void (*progress_notifier)(struct drvHdcProgInfo *))
+STATIC hdcError_t send_current_dir(HDC_SESSION session, const char *local_dir, size_t local_len, const char *dst_path,
+                                   size_t dst_len, signed int count, void (*progress_notifier)(struct drvHdcProgInfo *))
 {
     char *new_dst_path = NULL;
     char *new_local_dir = NULL;
@@ -1333,7 +1331,7 @@ error2:
 }
 
 hdcError_t send_dir_in_session(HDC_SESSION session, const char *plocal_dir, const char *pdst_path, signed int count,
-    void (*progress_notifier)(struct drvHdcProgInfo *))
+                               void (*progress_notifier)(struct drvHdcProgInfo *))
 {
     hdcError_t ret;
     struct drvHdcCapacity capacity = {0};
@@ -1405,8 +1403,7 @@ hdcError_t send_dir_in_session(HDC_SESSION session, const char *plocal_dir, cons
         goto error2;
     }
 
-    ret = send_current_dir(session, local_dir, PATH_MAX, pdst_path, PATH_MAX, is_count,
-                           progress_notifier);
+    ret = send_current_dir(session, local_dir, PATH_MAX, pdst_path, PATH_MAX, is_count, progress_notifier);
     if (ret != DRV_ERROR_NONE) {
         HDC_LOG_ERR("Calling send_current_dir error. (local_dir=\"%s\"; dst_path=\"%s\")\n", local_dir, pdst_path);
     }
@@ -1423,7 +1420,7 @@ error0:
 }
 
 hdcError_t drvHdcSendDir(signed int peer_node, signed int peer_devid, const char *plocal_dir, const char *pdst_path,
-    void (*progress_notifier)(struct drvHdcProgInfo *))
+                         void (*progress_notifier)(struct drvHdcProgInfo *))
 {
     HDC_CLIENT client = NULL;
     HDC_SESSION session = NULL;

@@ -23,7 +23,6 @@
 #include "comm_kernel_interface.h"
 #include "dms_hccs_init.h"
 #include "dms/dms_devdrv_manager_comm.h"
-#include "dms_kernel_version_adapt.h"
 #include "dms/dms_cmd_def.h"
 #include "devdrv_common.h"
 #ifndef CFG_HOST_ENV

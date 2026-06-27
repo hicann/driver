@@ -78,8 +78,9 @@ static void trs_cb_cq_recv_proc(struct trs_core_ts_inst *ts_inst, u32 cqid, void
     struct sched_published_event event;
 
     if (cb_ctx->phy_sqcq.cqid != cqid) {
-        trs_err("Not cb phy cqid. (devid=%u; tsid=%u; cqid=%u; cb_cqid=%u)\n",
-            inst->devid, inst->tsid, cqid, cb_ctx->phy_sqcq.cqid);
+        trs_err(
+            "Not cb phy cqid. (devid=%u; tsid=%u; cqid=%u; cb_cqid=%u)\n", inst->devid, inst->tsid, cqid,
+            cb_ctx->phy_sqcq.cqid);
         return;
     }
 
@@ -141,8 +142,8 @@ static int trs_cb_alloc_phy_sqcq(struct trs_core_ts_inst *ts_inst)
     para.ops.get_sq_head_in_cqe = trs_cb_get_sq_head_in_cqe;
     para.ops.cq_recv = trs_cb_cq_recv;
 
-    para.flag = (0x1 << CHAN_FLAG_ALLOC_SQ_BIT) | (0x1 << CHAN_FLAG_ALLOC_CQ_BIT) |
-        (0x1 << CHAN_FLAG_NOTICE_TS_BIT) | (0x1 << CHAN_FLAG_AUTO_UPDATE_SQ_HEAD_BIT);
+    para.flag = (0x1 << CHAN_FLAG_ALLOC_SQ_BIT) | (0x1 << CHAN_FLAG_ALLOC_CQ_BIT) | (0x1 << CHAN_FLAG_NOTICE_TS_BIT) |
+                (0x1 << CHAN_FLAG_AUTO_UPDATE_SQ_HEAD_BIT);
 
     ret = hal_kernel_trs_chan_create(inst, &para, &phy_sqcq->chan_id);
     if (ret != 0) {
@@ -165,8 +166,8 @@ static void trs_cb_free_phy_sqcq(struct trs_core_ts_inst *ts_inst)
     hal_kernel_trs_chan_destroy(&ts_inst->inst, ts_inst->cb_ctx.phy_sqcq.chan_id);
 }
 
-static int _trs_cb_sqcq_init(struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst,
-    struct halSqCqInputInfo *para)
+static int _trs_cb_sqcq_init(
+    struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst, struct halSqCqInputInfo *para)
 {
     struct trs_cb_cq *cq = NULL;
     int ret;
@@ -229,8 +230,9 @@ static int trs_cb_sqcq_alloc_para_check(struct trs_core_ts_inst *ts_inst, struct
     if ((para->cqeDepth > TRS_CB_MAX_CQ_DEPTH) || (para->cqeDepth < TRS_CB_MIN_CQ_DEPTH) ||
         (para->cqeSize > TRS_CB_MAX_CQE_SIZE) || (para->cqeSize < TRS_CB_MIN_CQE_SIZE) ||
         (para->sqeSize != TRS_CB_PHY_SQE_SIZE) || (para->grpId >= TRS_CB_GROUP_NUM)) {
-        trs_err("Invalid para. (devid=%u; tsid=%u; cqeDepth=%u; cqeSize=%u; sqeSize=%u; grpId=%u)\n",
-            inst->devid, inst->tsid, para->cqeDepth, para->cqeSize, para->sqeSize, para->grpId);
+        trs_err(
+            "Invalid para. (devid=%u; tsid=%u; cqeDepth=%u; cqeSize=%u; sqeSize=%u; grpId=%u)\n", inst->devid,
+            inst->tsid, para->cqeDepth, para->cqeSize, para->sqeSize, para->grpId);
         return -EINVAL;
     }
 
@@ -303,8 +305,8 @@ int trs_cb_sqcq_alloc(struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts
         }
     }
 
-    trs_debug("Alloc success. (devid=%u; tsid=%u; sqId=%u; cqId=%u;)\n",
-        inst->devid, inst->tsid, para->sqId, para->cqId);
+    trs_debug(
+        "Alloc success. (devid=%u; tsid=%u; sqId=%u; cqId=%u;)\n", inst->devid, inst->tsid, para->sqId, para->cqId);
 
     return 0;
 }
@@ -392,8 +394,9 @@ int trs_cb_sqcq_init(struct trs_core_ts_inst *ts_inst)
     if (max_id > 0) {
         cb_ctx->cq = (struct trs_cb_cq *)trs_vzalloc(sizeof(struct trs_cb_cq) * max_id);
         if (cb_ctx->cq == NULL) {
-            trs_err("Mem alloc failed. (devid=%u; tsid=%u; size=%lx)\n",
-                inst->devid, inst->tsid, sizeof(struct trs_cb_cq) * max_id);
+            trs_err(
+                "Mem alloc failed. (devid=%u; tsid=%u; size=%lx)\n", inst->devid, inst->tsid,
+                sizeof(struct trs_cb_cq) * max_id);
             return -ENOMEM;
         }
     }
@@ -417,4 +420,3 @@ void trs_cb_sqcq_uninit(struct trs_core_ts_inst *ts_inst)
         cb_ctx->cq = NULL;
     }
 }
-

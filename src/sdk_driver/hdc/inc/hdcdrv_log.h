@@ -21,7 +21,7 @@
 #include "hdcdrv_adapt.h"
 
 static u64 g_log_count = 0;
-#define LOG_MS_PER_SECOND  1000
+#define LOG_MS_PER_SECOND 1000
 #define LOG_US_PER_MSECOND 1000
 #define LOG_NS_PER_MSECOND 1000000
 #define LOG_LIMIT_RATE 30
@@ -36,7 +36,7 @@ static inline bool hdc_print_timed_ratelimit(u64 *caller_jiffies, u64 interval_m
 {
     u64 time_now, timer;
 
-    timer =  hdc_get_time_interval(caller_jiffies, &time_now);
+    timer = hdc_get_time_interval(caller_jiffies, &time_now);
     if ((*caller_jiffies != 0) && (timer <= interval_msecs)) {
         return false;
     }
@@ -54,66 +54,86 @@ static inline bool hdc_log_rate_limit(u32 *count, u64 *last_jiffies, u32 branch_
     } else {
         (*count)++;
         g_log_count++;
-        return  ((*count >= branch_rate)  || (g_log_count  >=  LOG_LIMIT_RATE));
+        return ((*count >= branch_rate) || (g_log_count >= LOG_LIMIT_RATE));
     }
 }
 
-#define HDC_LOG_LIMIT_TIME 3000       /* 3s */
-#define HDC_LOG_LIMIT_BRANCH_RATE 1   /* print 1 counts per 3s */
-#define HDC_LOG_ERR_LIMIT(print_cnt, last_jiffies, fmt, ...) do { \
-    if (!hdc_log_rate_limit(print_cnt, last_jiffies, HDC_LOG_LIMIT_BRANCH_RATE, HDC_LOG_LIMIT_TIME)) \
-        drv_err_log(fmt, ##__VA_ARGS__); \
-} while (0)
+#define HDC_LOG_LIMIT_TIME 3000     /* 3s */
+#define HDC_LOG_LIMIT_BRANCH_RATE 1 /* print 1 counts per 3s */
+#define HDC_LOG_ERR_LIMIT(print_cnt, last_jiffies, fmt, ...)                                             \
+    do {                                                                                                 \
+        if (!hdc_log_rate_limit(print_cnt, last_jiffies, HDC_LOG_LIMIT_BRANCH_RATE, HDC_LOG_LIMIT_TIME)) \
+            drv_err_log(fmt, ##__VA_ARGS__);                                                             \
+    } while (0)
 
-#define HDC_WARN_LOG_LIMIT_TIME 60000       /* 60s */
-#define HDC_WARN_LOG_LIMIT_BRANCH_RATE 1    /* print 1 counts per 60s */
-#define HDC_LOG_WARN_LIMIT(print_cnt, last_jiffies, fmt, ...) do { \
-    if (!hdc_log_rate_limit(print_cnt, last_jiffies, HDC_WARN_LOG_LIMIT_BRANCH_RATE, HDC_WARN_LOG_LIMIT_TIME)) { \
-        drv_warn(module_hdcdrv, "<%s:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), ##__VA_ARGS__); \
-    } \
-} while (0)
+#define HDC_WARN_LOG_LIMIT_TIME 60000    /* 60s */
+#define HDC_WARN_LOG_LIMIT_BRANCH_RATE 1 /* print 1 counts per 60s */
+#define HDC_LOG_WARN_LIMIT(print_cnt, last_jiffies, fmt, ...)                                                        \
+    do {                                                                                                             \
+        if (!hdc_log_rate_limit(print_cnt, last_jiffies, HDC_WARN_LOG_LIMIT_BRANCH_RATE, HDC_WARN_LOG_LIMIT_TIME)) { \
+            drv_warn(module_hdcdrv, "<%s:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(),          \
+                     ##__VA_ARGS__);                                                                                 \
+        }                                                                                                            \
+    } while (0)
 
-#define hdcdrv_err_limit(fmt, ...) do { \
-    if (ka_dfx_printk_ratelimit() != 0) { \
+#define hdcdrv_err_limit(fmt, ...)            \
+    do {                                      \
+        if (ka_dfx_printk_ratelimit() != 0) { \
+            drv_err_log(fmt, ##__VA_ARGS__);  \
+        }                                     \
+    } while (0)
+#define hdcdrv_warn_limit(fmt, ...)                                                                            \
+    do {                                                                                                       \
+        if (ka_dfx_printk_ratelimit() != 0) {                                                                  \
+            drv_warn(module_hdcdrv, "<%s:%d:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), \
+                     ka_task_get_current_pid(), ##__VA_ARGS__);                                                \
+        }                                                                                                      \
+    } while (0)
+#define hdcdrv_info_limit(fmt, ...)                                                                            \
+    do {                                                                                                       \
+        if (ka_dfx_printk_ratelimit() != 0) {                                                                  \
+            drv_info(module_hdcdrv, "<%s:%d:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), \
+                     ka_task_get_current_pid(), ##__VA_ARGS__);                                                \
+        }                                                                                                      \
+    } while (0)
+#define hdcdrv_err(fmt, ...)             \
+    do {                                 \
         drv_err_log(fmt, ##__VA_ARGS__); \
-    } \
-} while (0)
-#define hdcdrv_warn_limit(fmt, ...) do { \
-    if (ka_dfx_printk_ratelimit() != 0) { \
-        drv_warn(module_hdcdrv, "<%s:%d:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), ka_task_get_current_pid(), ##__VA_ARGS__); \
-    } \
-} while (0)
-#define hdcdrv_info_limit(fmt, ...) do { \
-    if (ka_dfx_printk_ratelimit() != 0) { \
-        drv_info(module_hdcdrv, "<%s:%d:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), ka_task_get_current_pid(), ##__VA_ARGS__); \
-    } \
-} while (0)
-#define hdcdrv_err(fmt, ...) do { \
-    drv_err_log(fmt, ##__VA_ARGS__); \
-} while (0)
-#define hdcdrv_warn(fmt, ...) do { \
-    drv_warn(module_hdcdrv, "<%s:%d:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), ka_task_get_current_pid(), ##__VA_ARGS__); \
-} while (0)
-#define hdcdrv_event(fmt, ...) do { \
-    drv_event(module_hdcdrv, "<%s:%d:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), ka_task_get_current_pid(), ##__VA_ARGS__); \
-} while (0)
-#define hdcdrv_info(fmt, ...) do { \
-    drv_info(module_hdcdrv, "<%s:%d:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), ka_task_get_current_pid(), ##__VA_ARGS__); \
-} while (0)
-#define hdcdrv_info_limit_share(fmt, ...) do { \
-    if (ka_dfx_printk_ratelimit() != 0) \
+    } while (0)
+#define hdcdrv_warn(fmt, ...)                                                                              \
+    do {                                                                                                   \
+        drv_warn(module_hdcdrv, "<%s:%d:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), \
+                 ka_task_get_current_pid(), ##__VA_ARGS__);                                                \
+    } while (0)
+#define hdcdrv_event(fmt, ...)                                                                              \
+    do {                                                                                                    \
+        drv_event(module_hdcdrv, "<%s:%d:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), \
+                  ka_task_get_current_pid(), ##__VA_ARGS__);                                                \
+    } while (0)
+#define hdcdrv_info(fmt, ...)                                                                              \
+    do {                                                                                                   \
+        drv_info(module_hdcdrv, "<%s:%d:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), \
+                 ka_task_get_current_pid(), ##__VA_ARGS__);                                                \
+    } while (0)
+#define hdcdrv_info_limit_share(fmt, ...)     \
+    do {                                      \
+        if (ka_dfx_printk_ratelimit() != 0)   \
+            drv_info_log(fmt, ##__VA_ARGS__); \
+    } while (0)
+#define hdcdrv_info_share(fmt, ...)       \
+    do {                                  \
         drv_info_log(fmt, ##__VA_ARGS__); \
-} while (0)
-#define hdcdrv_info_share(fmt, ...) do { \
-    drv_info_log(fmt, ##__VA_ARGS__); \
-} while (0)
-#define hdcdrv_critical_info(fmt, ...) do { \
-    drv_err_log(fmt, ##__VA_ARGS__); \
-} while (0)
+    } while (0)
+#define hdcdrv_critical_info(fmt, ...)   \
+    do {                                 \
+        drv_err_log(fmt, ##__VA_ARGS__); \
+    } while (0)
 
-#define hdcdrv_dbg(fmt, ...) do { \
-    drv_debug(module_hdcdrv, "[DEBUG]<%s:%d:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), ka_task_get_current_pid(), ##__VA_ARGS__); \
-} while (0)
+#define hdcdrv_dbg(fmt, ...)                                                                                       \
+    do {                                                                                                           \
+        drv_debug(module_hdcdrv, "[DEBUG]<%s:%d:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), \
+                  ka_task_get_current_pid(), ##__VA_ARGS__);                                                       \
+    } while (0)
 
 // Used as a variable name, regardless of the value of the enumeration
 enum hdcdrv_limit_exclusive_log {
@@ -140,7 +160,7 @@ enum hdcdrv_limit_exclusive_log {
     HDCDRV_LIMIT_LOG_0x13,
     HDCDRV_LIMIT_LOG_0x14,
     HDCDRV_LIMIT_LOG_0x15,
-
+    HDCDRV_LIMIT_LOG_0x16,
     // only ADC use log
     HDCDRV_LIMIT_LOG_0x100,
     HDCDRV_LIMIT_LOG_0x101,
@@ -155,19 +175,20 @@ enum hdcdrv_limit_exclusive_log {
     HDCDRV_LIMIT_LOG_0x10A,
     HDCDRV_LIMIT_LOG_0x10B,
     HDCDRV_LIMIT_LOG_0x10C,
+    HDCDRV_LIMIT_LOG_0x10D,
 
     HDCDRV_LIMIT_LOG_MAX
 };
 // not more than 5 kernel messages every 30s
-#define EXCLUSIVE_RATELIMIT_INTERVAL	(30 * KA_HZ)
-#define EXCLUSIVE_RATELIMIT_BURST		5
-#define hdcdrv_limit_exclusive(level, id, fmt, ...) do { \
-    static KA_BASE_DEFINE_RATELIMIT_STATE(id,               \
-                      EXCLUSIVE_RATELIMIT_INTERVAL, \
-                      EXCLUSIVE_RATELIMIT_BURST);   \
-    if (__ka_base_ratelimit(&id) != 0) { \
-        drv_##level(module_hdcdrv, "<%s:%d:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), ka_task_get_current_pid(), ##__VA_ARGS__); \
-    } \
-} while (0)
+#define EXCLUSIVE_RATELIMIT_INTERVAL (30 * KA_HZ)
+#define EXCLUSIVE_RATELIMIT_BURST 5
+#define hdcdrv_limit_exclusive(level, id, fmt, ...)                                                               \
+    do {                                                                                                          \
+        static KA_BASE_DEFINE_RATELIMIT_STATE(id, EXCLUSIVE_RATELIMIT_INTERVAL, EXCLUSIVE_RATELIMIT_BURST);       \
+        if (__ka_base_ratelimit(&id) != 0) {                                                                      \
+            drv_##level(module_hdcdrv, "<%s:%d:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), \
+                        ka_task_get_current_pid(), ##__VA_ARGS__);                                                \
+        }                                                                                                         \
+    } while (0)
 
 #endif /* _HDCDRV_LOG_H_ */

@@ -227,7 +227,6 @@ static int (*const uda_ioctl_handles[UDA_MAX_CMD])(unsigned int cmd, unsigned lo
 #endif
 };
 
-#ifdef CFG_FEATURE_DEVID_TRANS
 static long uda_ioctl(ka_file_t *file, unsigned int cmd, unsigned long arg)
 {
     int cmd_nr = _KA_IOC_NR(cmd);
@@ -255,7 +254,6 @@ static ka_file_operations_t uda_fops = {
     ka_fs_init_f_release(uda_release)
     ka_fs_init_f_unlocked_ioctl(uda_ioctl)
 };
-#endif
 
 int uda_init_module(void)
 {
@@ -279,7 +277,6 @@ int uda_init_module(void)
         return ret;
     }
 
-#ifdef CFG_FEATURE_DEVID_TRANS
     ret = drv_davinci_register_sub_module(UDA_CHAR_DEV_NAME, &uda_fops);
     if (ret != 0) {
         uda_access_uninit();
@@ -288,7 +285,6 @@ int uda_init_module(void)
         uda_err("Register sub module fail. (ret=%d)\n", ret);
         return ret;
     }
-#endif
 
     uda_proc_fs_init();
 
@@ -304,9 +300,7 @@ int uda_init_module(void)
 void uda_exit_module(void)
 {
     uda_proc_fs_uninit();
-#ifdef CFG_FEATURE_DEVID_TRANS
     (void)drv_ascend_unregister_sub_module(UDA_CHAR_DEV_NAME);
-#endif
     uda_access_uninit();
     uda_notifier_uninit();
     uda_dev_uninit();

@@ -7,7 +7,7 @@
  * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
  */
-
+ 
 #include <stdio.h>
 #include <time.h>
 #include <limits.h>
@@ -16,9 +16,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-
+ 
 #include "securec.h"
-#include "dsmi_common_interface_custom.h"
+#include "dsmi_common_interface.h"
 #include "dcmi_interface_api.h"
 #include "dcmi_init_basic.h"
 #include "dcmi_fault_manage_intf.h"
@@ -40,6 +40,11 @@ int dcmi_get_device_power_info(int card_id, int device_id, int *power)
     if (power == NULL) {
         gplog(LOG_ERR, "power is invalid.");
         return DCMI_ERR_CODE_INVALID_PARAMETER;
+    }
+
+    if (dcmi_board_chip_type_is_ascend_950()) {
+        gplog(LOG_OP, "This product does not support this api.");
+        return DCMI_ERR_CODE_NOT_SUPPORT;
     }
 
     err = dcmi_get_device_type(card_id, device_id, &device_type);
@@ -72,6 +77,13 @@ int dcmi_get_device_health(int card_id, int device_id, unsigned int *health)
         return DCMI_ERR_CODE_INVALID_PARAMETER;
     }
 
+#ifndef ENABLE_EQUIPMENT
+    if (dcmi_board_chip_type_is_ascend_950()) {
+        gplog(LOG_OP, "This product does not support this api.");
+        return DCMI_ERR_CODE_NOT_SUPPORT;
+    }
+#endif
+
     err = dcmi_get_device_type(card_id, device_id, &device_type);
     if (err != DCMI_OK) {
         gplog(LOG_ERR, "dcmi_get_device_type failed. err is %d.", err);
@@ -102,6 +114,11 @@ int dcmi_get_driver_health(unsigned int *health)
         return DCMI_ERR_CODE_INVALID_PARAMETER;
     }
 
+    if (dcmi_board_chip_type_is_ascend_950()) {
+        gplog(LOG_OP, "This product does not support this api.");
+        return DCMI_ERR_CODE_NOT_SUPPORT;
+    }
+
     err = dsmi_get_driver_health(health);
     if (err != DSMI_OK) {
         gplog(LOG_ERR, "dsmi_get_driver_health failed. err is %d.", err);
@@ -120,6 +137,11 @@ int dcmi_get_device_aicore_info(int card_id, int device_id, struct dcmi_aicore_i
     if (aicore_info == NULL) {
         gplog(LOG_ERR, "aicore_info is invalid.");
         return DCMI_ERR_CODE_INVALID_PARAMETER;
+    }
+
+    if (dcmi_board_chip_type_is_ascend_950()) {
+        gplog(LOG_OP, "This product does not support this api.");
+        return DCMI_ERR_CODE_NOT_SUPPORT;
     }
 
     err = dcmi_get_device_type(card_id, device_id, &device_type);
@@ -146,6 +168,11 @@ int dcmi_get_device_aicpu_info(int card_id, int device_id, struct dcmi_aicpu_inf
         return DCMI_ERR_CODE_INVALID_PARAMETER;
     }
 
+    if (dcmi_board_chip_type_is_ascend_950()) {
+        gplog(LOG_OP, "This product does not support this api.");
+        return DCMI_ERR_CODE_NOT_SUPPORT;
+    }
+
     err = dcmi_get_device_type(card_id, device_id, &device_type);
     if (err != DCMI_OK) {
         gplog(LOG_ERR, "dcmi_get_device_type failed. err is %d.", err);
@@ -169,6 +196,12 @@ int dcmi_get_device_system_time(int card_id, int device_id, unsigned int *time)
         gplog(LOG_ERR, "time is invalid.");
         return DCMI_ERR_CODE_INVALID_PARAMETER;
     }
+
+    if (dcmi_board_chip_type_is_ascend_950()) {
+        gplog(LOG_OP, "This product does not support this api.");
+        return DCMI_ERR_CODE_NOT_SUPPORT;
+    }
+
     err = dcmi_get_device_type(card_id, device_id, &device_type);
     if (err != DCMI_OK) {
         gplog(LOG_ERR, "dcmi_get_device_type failed. err is %d.", err);
@@ -191,6 +224,11 @@ int dcmi_get_device_temperature(int card_id, int device_id, int *temperature)
     if (temperature == NULL) {
         gplog(LOG_ERR, "temperature is invalid.");
         return DCMI_ERR_CODE_INVALID_PARAMETER;
+    }
+
+    if (dcmi_board_chip_type_is_ascend_950()) {
+        gplog(LOG_OP, "This product does not support this api.");
+        return DCMI_ERR_CODE_NOT_SUPPORT;
     }
 
     err = dcmi_get_device_type(card_id, device_id, &device_type);
@@ -217,6 +255,11 @@ int dcmi_get_device_voltage(int card_id, int device_id, unsigned int *voltage)
     if (voltage == NULL) {
         gplog(LOG_ERR, "voltage is invalid.");
         return DCMI_ERR_CODE_INVALID_PARAMETER;
+    }
+
+    if (dcmi_board_chip_type_is_ascend_950()) {
+        gplog(LOG_OP, "This product does not support this api.");
+        return DCMI_ERR_CODE_NOT_SUPPORT;
     }
 
     err = dcmi_get_device_type(card_id, device_id, &device_type);
@@ -257,6 +300,11 @@ int dcmi_get_device_ecc_info(int card_id, int device_id, enum dcmi_device_type i
         return DCMI_ERR_CODE_INVALID_PARAMETER;
     }
 
+    if (dcmi_board_chip_type_is_ascend_950()) {
+        gplog(LOG_OP, "This product does not support this api.");
+        return DCMI_ERR_CODE_NOT_SUPPORT;
+    }
+
     err = dcmi_get_device_type(card_id, device_id, &device_type);
     if (err != DCMI_OK) {
         gplog(LOG_ERR, "dcmi_get_device_type failed. err is %d.", err);
@@ -284,6 +332,11 @@ int dcmi_get_device_frequency(int card_id, int device_id, enum dcmi_freq_type in
     if (input_type > DCMI_FREQ_VECTORCORE_CURRENT) {
         gplog(LOG_ERR, "input_type is invalid. input_type=%d", input_type);
         return DCMI_ERR_CODE_INVALID_PARAMETER;
+    }
+
+    if (dcmi_board_chip_type_is_ascend_950()) {
+        gplog(LOG_OP, "This product does not support this api.");
+        return DCMI_ERR_CODE_NOT_SUPPORT;
     }
 
     err = dcmi_get_device_type(card_id, device_id, &device_type);
@@ -319,6 +372,11 @@ int dcmi_get_device_hbm_info(int card_id, int device_id, struct dcmi_hbm_info *h
         return DCMI_ERR_CODE_INVALID_PARAMETER;
     }
 
+    if (dcmi_board_chip_type_is_ascend_950()) {
+        gplog(LOG_OP, "This product does not support this api.");
+        return DCMI_ERR_CODE_NOT_SUPPORT;
+    }
+
     err = dcmi_get_device_type(card_id, device_id, &device_type);
     if (err != DCMI_OK) {
         gplog(LOG_ERR, "dcmi_get_device_type failed. err is %d.\n", err);
@@ -341,6 +399,11 @@ int dcmi_get_device_memory_info_v2(int card_id, int device_id, struct dcmi_memor
     if (memory_info == NULL) {
         gplog(LOG_ERR, "memory_info is invalid.");
         return DCMI_ERR_CODE_INVALID_PARAMETER;
+    }
+
+    if (dcmi_board_chip_type_is_ascend_950()) {
+        gplog(LOG_OP, "This product does not support this api.");
+        return DCMI_ERR_CODE_NOT_SUPPORT;
     }
 
     err = dcmi_get_device_type(card_id, device_id, &device_type);
@@ -369,6 +432,11 @@ int dcmi_get_device_memory_info_v3(int card_id, int device_id, struct dcmi_get_m
     if (memory_info == NULL) {
         gplog(LOG_ERR, "memory_info is invalid.");
         return DCMI_ERR_CODE_INVALID_PARAMETER;
+    }
+
+    if (dcmi_board_chip_type_is_ascend_950()) {
+        gplog(LOG_OP, "This product does not support this api.");
+        return DCMI_ERR_CODE_NOT_SUPPORT;
     }
 
     err = dcmi_get_device_type(card_id, device_id, &device_type);
@@ -406,6 +474,11 @@ int dcmi_get_device_utilization_rate(int card_id, int device_id, int input_type,
         return DCMI_ERR_CODE_INVALID_PARAMETER;
     }
 
+    if (dcmi_board_chip_type_is_ascend_950()) {
+        gplog(LOG_OP, "This product does not support this api.");
+        return DCMI_ERR_CODE_NOT_SUPPORT;
+    }
+
     err = dcmi_get_device_type(card_id, device_id, &device_type);
     if (err != DCMI_OK) {
         gplog(LOG_ERR, "dcmi_get_device_type failed. err is %d.", err);
@@ -414,6 +487,35 @@ int dcmi_get_device_utilization_rate(int card_id, int device_id, int input_type,
 
     if (device_type == NPU_TYPE) {
         return dcmi_get_npu_device_utilization_rate(card_id, device_id, input_type, utilization_rate);
+    } else {
+        gplog(LOG_ERR, "device_type %d is not support.", device_type);
+        return DCMI_ERR_CODE_NOT_SUPPORT;
+    }
+}
+
+int dcmi_get_device_multi_utilization_rate(int card_id, int device_id, struct dcmi_multi_utilization_info *util_info)
+{
+    int err;
+    enum dcmi_unit_type device_type = NPU_TYPE;
+
+    if (util_info == NULL) {
+        gplog(LOG_ERR, "util_info is invalid.");
+        return DCMI_ERR_CODE_INVALID_PARAMETER;
+    }
+
+    if (!dcmi_board_chip_type_is_ascend_910b() && !dcmi_board_chip_type_is_ascend_910_93()) {
+        gplog(LOG_ERR, "This device does not support getting utilization rate.");
+        return DCMI_ERR_CODE_NOT_SUPPORT;
+    }
+
+    err = dcmi_get_device_type(card_id, device_id, &device_type);
+    if (err != DCMI_OK) {
+        gplog(LOG_ERR, "dcmi_get_device_type failed. err is %d.", err);
+        return err;
+    }
+
+    if (device_type == NPU_TYPE) {
+        return dcmi_get_npu_device_utilization_rate_v2(card_id, device_id, util_info);
     } else {
         gplog(LOG_ERR, "device_type %d is not support.", device_type);
         return DCMI_ERR_CODE_NOT_SUPPORT;
@@ -435,6 +537,11 @@ int dcmi_get_device_sensor_info(int card_id, int device_id, enum dcmi_manager_se
     if (sensor_id >= DCMI_SENSOR_INVALID_ID) {
         gplog(LOG_ERR, "sensor_id is invalid. sensor_id=%d", sensor_id);
         return DCMI_ERR_CODE_INVALID_PARAMETER;
+    }
+
+    if (dcmi_board_chip_type_is_ascend_950()) {
+        gplog(LOG_OP, "This product does not support this api.");
+        return DCMI_ERR_CODE_NOT_SUPPORT;
     }
 
     /* ATLAS_900_A3_SUPERPOD, 从die无法直接查询到光模块温度，需要转换card_id */
@@ -468,6 +575,11 @@ int dcmi_set_container_service_enable(void)
 {
     int err;
 
+    if (dcmi_board_chip_type_is_ascend_950()) {
+        gplog(LOG_OP, "This product does not support this api.");
+        return DCMI_ERR_CODE_NOT_SUPPORT;
+    }
+
     err = dsmi_enable_container_service();
     if (err != DSMI_OK) {
         gplog(LOG_OP, "dsmi_enable_container_service failed. err is %d.", err);
@@ -486,6 +598,11 @@ int dcmi_get_device_cgroup_info(int card_id, int device_id, struct dcmi_cgroup_i
     if (cg_info == NULL) {
         gplog(LOG_ERR, "cg_info is NULL");
         return DCMI_ERR_CODE_INVALID_PARAMETER;
+    }
+
+    if (dcmi_board_chip_type_is_ascend_950()) {
+        gplog(LOG_OP, "This product does not support this api.");
+        return DCMI_ERR_CODE_NOT_SUPPORT;
     }
 
     err = dcmi_get_device_type(card_id, device_id, &device_type);
@@ -510,6 +627,11 @@ int dcmi_get_device_llc_perf_para(int card_id, int device_id, struct dcmi_llc_pe
     if (perf_para == NULL) {
         gplog(LOG_ERR, "perf_para is NULL");
         return DCMI_ERR_CODE_INVALID_PARAMETER;
+    }
+
+    if (dcmi_board_chip_type_is_ascend_950()) {
+        gplog(LOG_OP, "This product does not support this api.");
+        return DCMI_ERR_CODE_NOT_SUPPORT;
     }
 
     err = dcmi_get_device_type(card_id, device_id, &device_type);
@@ -537,7 +659,8 @@ int dcmi_get_device_network_health(int card_id, int device_id, enum dcmi_rdfx_de
         gplog(LOG_ERR, "result is NULL");
         return DCMI_ERR_CODE_INVALID_PARAMETER;
     }
-    if (dcmi_board_chip_type_is_ascend_910b_300i_a2() || dcmi_board_chip_type_is_ascend_910_95_card()) {
+    if (dcmi_board_chip_type_is_ascend_910b_300i_a2() || dcmi_board_chip_type_is_ascend_950_card() ||
+        dcmi_board_chip_type_is_ascend_950()) {
         gplog(LOG_OP, "This device does not support get device network health.");
         return DCMI_ERR_CODE_NOT_SUPPORT;
     }
@@ -566,6 +689,11 @@ int dcmi_get_device_fan_count(int card_id, int device_id, int *count)
     if (count == NULL) {
         gplog(LOG_ERR, "count is NULL");
         return DCMI_ERR_CODE_INVALID_PARAMETER;
+    }
+
+    if (dcmi_board_chip_type_is_ascend_950()) {
+        gplog(LOG_OP, "This product does not support this api.");
+        return DCMI_ERR_CODE_NOT_SUPPORT;
     }
 
     err = dcmi_get_device_type(card_id, device_id, &device_type);
@@ -599,6 +727,11 @@ int dcmi_get_device_fan_speed(int card_id, int device_id, int fan_id, int *speed
         return DCMI_ERR_CODE_INVALID_PARAMETER;
     }
 
+    if (dcmi_board_chip_type_is_ascend_950()) {
+        gplog(LOG_OP, "This product does not support this api.");
+        return DCMI_ERR_CODE_NOT_SUPPORT;
+    }
+
     err = dcmi_get_device_type(card_id, device_id, &device_type);
     if (err != DCMI_OK) {
         gplog(LOG_ERR, "dcmi_get_device_type failed. err is %d.", err);
@@ -624,6 +757,11 @@ int dcmi_get_device_resource_info(int card_id, int device_id, struct dcmi_proc_m
     if (proc_info == NULL || proc_num == NULL) {
         gplog(LOG_ERR, "proc_info or proc_num is null.");
         return DCMI_ERR_CODE_INVALID_PARAMETER;
+    }
+
+    if (dcmi_board_chip_type_is_ascend_950()) {
+        gplog(LOG_OP, "This product does not support this api.");
+        return DCMI_ERR_CODE_NOT_SUPPORT;
     }
 
     err = dcmi_get_device_type(card_id, device_id, &device_type);
@@ -661,6 +799,11 @@ int dcmi_set_power_state(int card_id, int device_id, struct dcmi_power_state_inf
     if (!dcmi_is_in_phy_machine_root()) {
         gplog(LOG_OP, "Operation not permitted, only root user on physical machine can call this api.");
         return DCMI_ERR_CODE_OPER_NOT_PERMITTED;
+    }
+
+    if (dcmi_board_chip_type_is_ascend_950()) {
+        gplog(LOG_OP, "This product does not support this api.");
+        return DCMI_ERR_CODE_NOT_SUPPORT;
     }
 
     err = dcmi_get_device_type(card_id, device_id, &device_type);
@@ -790,6 +933,11 @@ int dcmi_get_ecc_info(int card_id, int device_id, int device_type, struct dsmi_e
         return DCMI_ERR_CODE_INVALID_PARAMETER;
     }
 
+    if (dcmi_board_chip_type_is_ascend_950()) {
+        gplog(LOG_OP, "This product does not support this api.");
+        return DCMI_ERR_CODE_NOT_SUPPORT;
+    }
+
     ret = dcmi_get_device_ecc_info(card_id, device_id, device_type, &ecc_info);
     if (ret == DCMI_OK) {
         device_ecc_info->enable_flag = ecc_info.enable_flag;
@@ -829,6 +977,11 @@ int dcmi_get_device_cpu_freq_info(int card_id, int device_id, int *enable_flag)
         return DCMI_ERR_CODE_INVALID_PARAMETER;
     }
 
+    if (dcmi_board_chip_type_is_ascend_950()) {
+        gplog(LOG_OP, "This product does not support this api.");
+        return DCMI_ERR_CODE_NOT_SUPPORT;
+    }
+
     ret = dcmi_get_device_type(card_id, device_id, &device_type);
     if (ret != DCMI_OK) {
         gplog(LOG_ERR, "dcmi_get_device_type failed. err is %d.", ret);
@@ -858,6 +1011,11 @@ int dcmi_get_device_boot_status(int card_id, int device_id, enum dcmi_boot_statu
         return DCMI_ERR_CODE_INVALID_PARAMETER;
     }
 
+    if (dcmi_board_chip_type_is_ascend_950()) {
+        gplog(LOG_OP, "This product does not support this api.");
+        return DCMI_ERR_CODE_NOT_SUPPORT;
+    }
+
     err = dcmi_get_device_type(card_id, device_id, &device_type);
     if (err != DCMI_OK) {
         gplog(LOG_ERR, "dcmi_get_device_type failed. err is %d.", err);
@@ -879,7 +1037,7 @@ int dcmi_get_npu_work_mode(int card_id, unsigned char *work_mode)
     unsigned int value = DCMI_NPU_WORK_MODE_INVALID;
 
     if ((dcmi_board_type_is_server() == FALSE) || dcmi_board_chip_type_is_ascend_910b() ||
-        dcmi_board_chip_type_is_ascend_910_93() || dcmi_board_chip_type_is_ascend_910_95()) {
+        dcmi_board_chip_type_is_ascend_910_93() || dcmi_board_chip_type_is_ascend_950()) {
         return DCMI_ERR_CODE_NOT_SUPPORT;
     }
 
@@ -907,6 +1065,76 @@ int dcmi_get_npu_work_mode(int card_id, unsigned char *work_mode)
 #endif
 }
 
+int dcmi_get_multi_die_policy(enum dcmi_multi_die_policy *policy)
+{
+#ifndef _WIN32
+    int ret;
+ 
+    if (!dcmi_board_chip_type_is_ascend_910_93()) {
+        gplog(LOG_OP, "This product does not support this api.");
+        return DCMI_ERR_CODE_NOT_SUPPORT;
+    }
+
+    if (policy == NULL) {
+        gplog(LOG_ERR, "parameter is NULL.");
+        return DCMI_ERR_CODE_INVALID_PARAMETER;
+    }
+ 
+    ret = dsmi_get_multi_die_policy((unsigned int *)policy);
+    if (ret != DSMI_OK) {
+        gplog(LOG_ERR, "call dsmi_get_multi_die_policy failed. err is %d", ret);
+        return dcmi_convert_error_code(ret);
+    }
+ 
+    return DCMI_OK;
+#else
+    return DCMI_OK;
+#endif
+}
+
+int dcmi_set_multi_die_policy(enum dcmi_multi_die_policy policy)
+{
+#ifndef _WIN32
+    int ret;
+    unsigned int state = 0;
+
+    if (!(dcmi_is_in_phy_privileged_docker_root() || dcmi_is_in_phy_machine_root())) {
+        gplog(LOG_ERR,
+            "Operation not permitted, only root user on physical machine or privilegd docker can call this api.");
+        return DCMI_ERR_CODE_OPER_NOT_PERMITTED;
+    }
+ 
+    if (!dcmi_board_chip_type_is_ascend_910_93()) {
+        gplog(LOG_OP, "This product does not support this api.");
+        return DCMI_ERR_CODE_NOT_SUPPORT;
+    }
+
+    ret = dsmi_set_multi_die_policy((unsigned int)policy);
+    if (ret != DSMI_OK) {
+        gplog(LOG_ERR, "call dsmi_set_multi_die_policy failed. err is %d", ret);
+        return dcmi_convert_error_code(ret);
+    }
+
+    ret = dcmi_get_multi_die_policy_config_recover_mode(&state);
+    if (ret != DCMI_OK) {
+        gplog(LOG_ERR, "dcmi_get_multi_die_policy_config_recover_mode failed. err is %d", ret);
+        return ret;
+    }
+
+    if (state == DCMI_CFG_RECOVER_ENABLE) {
+        ret = dcmi_save_multi_die_policy_cfg((int)policy);
+        if (ret != DCMI_OK) {
+            gplog(LOG_ERR, "dcmi_save_multi_die_policy_cfg failed. err is %d", ret);
+        }
+        return ret;
+    }
+
+    return DCMI_OK;
+#else
+    return DCMI_OK;
+#endif
+}
+
 int dcmi_get_device_p2p_enable(int card_id, int device_id, int *enable_flag)
 {
     int err;
@@ -915,6 +1143,11 @@ int dcmi_get_device_p2p_enable(int card_id, int device_id, int *enable_flag)
     if (enable_flag == NULL) {
         gplog(LOG_ERR, "enable_flag is invalid.");
         return DCMI_ERR_CODE_INVALID_PARAMETER;
+    }
+
+    if (dcmi_board_chip_type_is_ascend_950()) {
+        gplog(LOG_OP, "This product does not support this api.");
+        return DCMI_ERR_CODE_NOT_SUPPORT;
     }
 
     err = dcmi_get_device_type(card_id, device_id, &device_type);
@@ -953,13 +1186,18 @@ int dcmi_get_device_mac(int card_id, int device_id, int mac_id, char *mac_addr, 
         return DCMI_ERR_CODE_INVALID_PARAMETER;
     }
 
+    if (dcmi_board_chip_type_is_ascend_950()) {
+        gplog(LOG_OP, "This product does not support this api.");
+        return DCMI_ERR_CODE_NOT_SUPPORT;
+    }
+
     err = dcmi_get_device_type(card_id, device_id, &device_type);
     if (err != DCMI_OK) {
         gplog(LOG_ERR, "dcmi_get_device_type failed. err is %d.", err);
         return err;
     }
 
-    if (dcmi_board_chip_type_is_ascend_910b_300i_a2() || dcmi_board_chip_type_is_ascend_910_95_card()) {
+    if (dcmi_board_chip_type_is_ascend_910b_300i_a2() || dcmi_board_chip_type_is_ascend_950_card()) {
         gplog(LOG_OP, "This device does not support get device mac.");
         return DCMI_ERR_CODE_NOT_SUPPORT;
     }
@@ -1016,7 +1254,8 @@ int dcmi_get_device_gateway(int card_id, int device_id, enum dcmi_port_type inpu
         return DCMI_ERR_CODE_INVALID_PARAMETER;
     }
     if (dcmi_board_chip_type_is_ascend_310b() == TRUE ||
-        dcmi_board_chip_type_is_ascend_910b_300i_a2() == TRUE) {
+        dcmi_board_chip_type_is_ascend_910b_300i_a2() == TRUE ||
+        dcmi_board_chip_type_is_ascend_950()) {
         gplog(LOG_OP, "This device does not support get device gateway.");
         return DCMI_ERR_CODE_NOT_SUPPORT;
     }
@@ -1057,7 +1296,7 @@ int dcmi_get_device_ip(int card_id, int device_id, enum dcmi_port_type input_typ
     }
 
     if (dcmi_board_chip_type_is_ascend_310b() == TRUE ||
-        dcmi_board_chip_type_is_ascend_910b_300i_a2() == TRUE || dcmi_board_chip_type_is_ascend_910_95_card() == TRUE) {
+        dcmi_board_chip_type_is_ascend_910b_300i_a2() == TRUE || dcmi_board_chip_type_is_ascend_950() == TRUE) {
         gplog(LOG_OP, "This device does not support get device ip.");
         return DCMI_ERR_CODE_NOT_SUPPORT;
     }
@@ -1086,6 +1325,11 @@ int dcmi_get_device_share_enable(int card_id, int device_id, int *enable_flag)
         return DCMI_ERR_CODE_INVALID_PARAMETER;
     }
 
+    if (dcmi_board_chip_type_is_ascend_950()) {
+        gplog(LOG_OP, "This product does not support this api.");
+        return DCMI_ERR_CODE_NOT_SUPPORT;
+    }
+
     err = dcmi_get_device_type(card_id, device_id, &device_type);
     if (err != DCMI_OK) {
         gplog(LOG_ERR, "dcmi_get_device_type failed. err is %d.", err);
@@ -1109,7 +1353,7 @@ int dcmi_get_device_share_config_recover_mode(unsigned int *enable_flag)
     if (err != DCMI_OK) {
         return err;
     }
-
+    
     if (enable_flag == NULL) {
         gplog(LOG_ERR, "enable_flag is NULL");
         return DCMI_ERR_CODE_INVALID_PARAMETER;
@@ -1122,6 +1366,35 @@ int dcmi_get_device_share_config_recover_mode(unsigned int *enable_flag)
     }
 
     err = dcmi_cfg_get_device_share_config_recover_mode(enable_flag);
+    if (err != DCMI_OK) {
+        gplog(LOG_ERR, "get config recover enable_flag failed. err=%d", err);
+        return err;
+    }
+    return DCMI_OK;
+}
+
+// 查询当前是否开启了单die通入容器策略持久化
+int dcmi_get_multi_die_policy_config_recover_mode(unsigned int *enable_flag)
+{
+    int err;
+
+    err = dcmi_check_multi_die_policy_config_recover_mode_is_permitted("get");
+    if (err != DCMI_OK) {
+        return err;
+    }
+    
+    if (enable_flag == NULL) {
+        gplog(LOG_ERR, "enable_flag is NULL");
+        return DCMI_ERR_CODE_INVALID_PARAMETER;
+    }
+
+    if (access(DCMI_MULTI_DIE_POLICY_CONF, F_OK) != DCMI_OK) { // 配置文件不存在, 则返回默认值
+        gplog(LOG_OP, "Query multi_die_policy config info: Success.");
+        *enable_flag = DCMI_CFG_RECOVER_DISABLE;
+        return DCMI_OK;
+    }
+
+    err = dcmi_cfg_get_multi_die_policy_config_recover_mode(enable_flag);
     if (err != DCMI_OK) {
         gplog(LOG_ERR, "get config recover enable_flag failed. err=%d", err);
         return err;
@@ -1181,6 +1454,11 @@ int dcmi_get_capability_group_info(int card_id, int device_id, int ts_id, int gr
         return DCMI_ERR_CODE_INVALID_PARAMETER;
     }
 
+    if (dcmi_board_chip_type_is_ascend_950()) {
+        gplog(LOG_OP, "This product does not support this api.");
+        return DCMI_ERR_CODE_NOT_SUPPORT;
+    }
+
     err = dcmi_get_device_type(card_id, device_id, &device_type);
     if (err != DCMI_OK) {
         gplog(LOG_ERR, "dcmi_get_device_type failed. err is %d.", err);
@@ -1219,6 +1497,11 @@ int dcmi_get_capability_group_aicore_usage(int card_id, int device_id, int group
     if ((group_id < 0) || (group_id >= DCMI_CAPABILITY_GROUP_MAX_COUNT_NUM)) {
         gplog(LOG_ERR, "group_id [%d] invalid, the value should be 0~3!", group_id);
         return DCMI_ERR_CODE_INVALID_PARAMETER;
+    }
+
+    if (dcmi_board_chip_type_is_ascend_950()) {
+        gplog(LOG_OP, "This product does not support this api.");
+        return DCMI_ERR_CODE_NOT_SUPPORT;
     }
 
     err = dcmi_get_device_type(card_id, device_id, &device_type);
@@ -1295,43 +1578,6 @@ int dcmi_get_custom_op_config_recover_mode(unsigned int *mode)
 
 int dcmi_get_ub_port_link_status_info(int card_id, int device_id, struct dcmi_ub_port_link_status *ub_status)
 {
-    int ret;
-    unsigned int env_flag;
-    enum dcmi_unit_type device_type = NPU_TYPE;
-
-    ret = dcmi_get_environment_flag(&env_flag);
-    if (ret != DCMI_OK) {
-        gplog(LOG_ERR, "call dcmi_get_environment_flag failed. err is %d.", ret);
-        return ret;
-    }
-
-    // 查询仅支持物理机、特权容器、虚拟机
-    if (!(env_flag == ENV_PHYSICAL || env_flag == ENV_PHYSICAL_PRIVILEGED_CONTAINER || env_flag == ENV_VIRTUAL)) {
-        gplog(LOG_ERR, "This command cannot be executed on a plain container or a VM-based container.");
-        return DCMI_ERR_CODE_OPER_NOT_PERMITTED;
-    }
-
-    if (ub_status == NULL) {
-        gplog(LOG_ERR, "ub_status is NULL.");
-        return DCMI_ERR_CODE_INVALID_PARAMETER;
-    }
-
-    // 当前仅支持A5标卡
-    if (!dcmi_board_chip_type_is_ascend_910_95_card()) {
-        gplog(LOG_OP, "This device does not support get ub port status info.");
-        return DCMI_ERR_CODE_NOT_SUPPORT;
-    }
-
-    ret = dcmi_get_device_type(card_id, device_id, &device_type);
-    if (ret != DCMI_OK) {
-        gplog(LOG_ERR, "dcmi_get_device_type failed. err is %d.", ret);
-        return ret;
-    }
-
-    if (device_type == NPU_TYPE) {
-        return dcmi_get_npu_ub_port_link_status_info(card_id, device_id, ub_status);
-    } else {
-        gplog(LOG_ERR, "device_type %d is not support.", device_type);
-        return DCMI_ERR_CODE_NOT_SUPPORT;
-    }
+    gplog(LOG_OP, "This device does not support get ub port status info.");
+    return DCMI_ERR_CODE_NOT_SUPPORT;
 }

@@ -23,11 +23,10 @@
 #include "ascend_ub_msg_def.h"
 #include "ub_cmd_msg.h"
 
-#define ASCEND_UDMA_DEV_MAX_NUM 16U
+#define ASCEND_UDMA_DEV_MAX_NUM 154U
 #define ASCEND_PFE_IDX 0U
 #define ASCEND_UDMA_MAX_FE_NUM 9U        // 8 virtual fe + 1 physical fe
 #define USER_CTRL_DEFAULT_DEV_ID 0U
-#define USER_CTRL_DEFAULT_FE_IDX 0U
 #define UBDRV_DEVNUM_PER_SLOT  8u
 
 #define ASCEND_UB_DEV_MAX_NUM ASCEND_DEV_MAX_NUM
@@ -198,6 +197,7 @@ struct ascend_dev {
     u32 device_boot_status;
     bool phy_flag;
     enum ubdrv_local_device_status local_status;
+    u32 msg_retry_cnt;
     u32 id_info_valid;
     struct ubdrv_id_info id_info;
 };
@@ -226,13 +226,12 @@ struct ascend_ub_link_res {
 };
 
 struct ascend_ub_ctrl {
-    unsigned int idev_num;
-    struct ub_idev idev[ASCEND_UDMA_DEV_MAX_NUM][ASCEND_UDMA_MAX_FE_NUM];
+    struct ub_idev idev[ASCEND_UDMA_DEV_MAX_NUM];
     struct ascend_dev asd_dev[ASCEND_UB_DEV_MAX_NUM];
     struct ascend_ub_dev_status dev_status[ASCEND_UB_DEV_MAX_NUM];
     ka_mutex_t mutex_lock;
     struct ascend_ub_link_res link_res[ASCEND_UB_DEV_MAX_NUM];
 };
 
-struct ub_idev *ubdrv_get_idev(u32 idev_id, u32 ue_idx);  // ue_idx 0:pf 1-9:vf
+struct ub_idev *ubdrv_get_idev(u32 idev_id);
 #endif

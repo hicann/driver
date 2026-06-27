@@ -25,6 +25,7 @@ const char *uda_get_chip_name(unsigned int type)
         [HISI_MINI_V3] = "mini_v3",
         [HISI_CLOUD_V4] = "cloud_v4",
         [HISI_CLOUD_V5] = "cloud_v5",
+        [HISI_MINI_V4] = "mini_v4",
     };
 
     if (type < HISI_CHIP_NUM && chip_name[type] == NULL) {

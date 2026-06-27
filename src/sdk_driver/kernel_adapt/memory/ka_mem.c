@@ -16,10 +16,17 @@
 #include <linux/swapops.h>
 #include <linux/compiler.h>
 #include <linux/version.h>
+#include <linux/mmzone.h>
 
+#include "pbl_range_rbtree.h"
 #include "securec.h"
+
 #include "ka_memory_pub.h"
+#include "ka_task_pub.h"
+#include "ka_system_pub.h"
+#include "kernel_adapt_init.h"
 #include "ka_mem.h"
+
 #if !defined(EMU_ST)
 #ifndef DRV_HOST
 #include "linux/share_pool.h"
@@ -48,29 +55,37 @@ ka_rw_semaphore_t *ka_mm_get_mmap_sem(ka_mm_struct_t *mm)
 }
 EXPORT_SYMBOL(ka_mm_get_mmap_sem);
 
+long ka_mm_pin_user_pages_remote(ka_task_struct_t *tsk, ka_mm_struct_t *mm,
+                                 unsigned long start, unsigned long nr_pages,
+                                 unsigned long gup_flags, ka_page_t **pages,
+                                 int *locked)
+{
+    long got_num;
+
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 5, 0)
+    got_num = pin_user_pages_remote(mm, start, nr_pages, gup_flags, pages, locked);
+#elif LINUX_VERSION_CODE >= KERNEL_VERSION(5, 10, 0)
+    got_num = pin_user_pages_remote(mm, start, nr_pages, gup_flags, pages, NULL, locked);
+#elif LINUX_VERSION_CODE >= KERNEL_VERSION(5, 9, 0)
+    got_num = get_user_pages_remote(mm, start, nr_pages, gup_flags, pages, NULL, locked);
+#elif LINUX_VERSION_CODE >= KERNEL_VERSION(4, 10, 0)
+    got_num = get_user_pages_remote(tsk, mm, start, nr_pages, gup_flags, pages, NULL, locked);
+#elif LINUX_VERSION_CODE >= KERNEL_VERSION(4, 9, 0)
+    got_num = get_user_pages_remote(tsk, mm, start, nr_pages, gup_flags, pages, locked);
+#elif LINUX_VERSION_CODE >= KERNEL_VERSION(4, 6, 0)
+    got_num = get_user_pages_remote(tsk, mm, start, nr_pages, gup_flags, 0, pages, locked);
+#else
+    got_num = get_user_pages_locked(tsk, mm, start, nr_pages, gup_flags, 0, pages, locked);
+#endif
+    return got_num;
+}
+EXPORT_SYMBOL(ka_mm_pin_user_pages_remote);
+
 long ka_mm_get_user_pages_remote(ka_task_struct_t *tsk, ka_mm_struct_t *mm,
     unsigned long long va, int write, unsigned int num, ka_page_t **pages)
 {
-    long got_num;
-    int locked;
-
-    locked = 1;
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 5, 0)
-    got_num = pin_user_pages_remote(mm, va, num, (write != 0) ? FOLL_WRITE : 0, pages, NULL);
-#elif LINUX_VERSION_CODE >= KERNEL_VERSION(5, 10, 0)
-    got_num = pin_user_pages_remote(mm, va, num, (write != 0) ? FOLL_WRITE : 0, pages, NULL, NULL);
-#elif LINUX_VERSION_CODE >= KERNEL_VERSION(5, 9, 0)
-    got_num = get_user_pages_remote(mm, va, num, (write != 0) ? FOLL_WRITE : 0, pages, NULL, NULL);
-#elif LINUX_VERSION_CODE >= KERNEL_VERSION(4, 10, 0)
-    got_num = get_user_pages_remote(tsk, mm, va, num, (write != 0) ? FOLL_WRITE : 0, pages, NULL, NULL);
-#elif LINUX_VERSION_CODE >= KERNEL_VERSION(4, 9, 0)
-    got_num = get_user_pages_remote(tsk, mm, va, num, (write != 0) ? FOLL_WRITE : 0, pages, NULL);
-#elif LINUX_VERSION_CODE >= KERNEL_VERSION(4, 6, 0)
-    got_num = get_user_pages_remote(tsk, mm, va, num, (write != 0) ? FOLL_WRITE : 0, 0, pages, NULL);
-#else
-    got_num = get_user_pages_locked(tsk, mm, va, num, (write != 0) ? FOLL_WRITE : 0, 0, pages, &locked);
-#endif
-    return got_num;
+    return ka_mm_pin_user_pages_remote(tsk, mm, va, num, (write != 0) ? FOLL_WRITE : 0,
+                                       pages, NULL);
 }
 EXPORT_SYMBOL(ka_mm_get_user_pages_remote);
 
@@ -194,9 +209,9 @@ EXPORT_SYMBOL(ka_mm_mmget);
 int ka_mm_pin_user_pages_fast(unsigned long start, int nr_pages, unsigned int gup_flags, ka_page_t **pages)
 {
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 6, 0)
-    return pin_user_pages_fast(start, nr_pages, gup_flags | KA_FOLL_LONGTERM, pages);
+    return pin_user_pages_fast(start, nr_pages, gup_flags, pages);
 #elif LINUX_VERSION_CODE >= KERNEL_VERSION(5, 2, 0)
-    return get_user_pages_fast(start, nr_pages, gup_flags | KA_FOLL_LONGTERM, pages);
+    return get_user_pages_fast(start, nr_pages, gup_flags, pages);
 #else
     int write = (int)gup_flags;
     return get_user_pages_fast(start, nr_pages, write, pages);
@@ -539,6 +554,7 @@ int ka_mm_va_to_pa_pgd_range(ka_pgd_t *pgd, u64 start, u64 end, u64 *pas, u64 *n
 }
 #endif
 EXPORT_SYMBOL_GPL(ka_mm_va_to_pa_pgd_range);
+#endif
 
 int ka_mm_alloc_contig_range(unsigned long start, unsigned long end, unsigned migratetype, gfp_t gfp_mask)
 {
@@ -553,8 +569,82 @@ EXPORT_SYMBOL_GPL(ka_mm_alloc_contig_range);
 void ka_mm_free_contig_range(unsigned long pfn, unsigned long nr_pages)
 {
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 8, 0)
-	free_contig_range(pfn, nr_pages);
+    free_contig_range(pfn, nr_pages);
 #endif
 }
 EXPORT_SYMBOL_GPL(ka_mm_free_contig_range);
-#endif
+
+static struct range_rbtree g_ka_ram_record_tree;
+static KA_TASK_DEFINE_RWLOCK(g_ka_ram_record_lock);
+
+static int ka_ram_record_walk_cb(struct resource *res, void *arg)
+{
+    struct range_rbtree *tree = (struct range_rbtree *)arg;
+    struct range_rbtree_node *node = NULL;
+
+    node = ka_mm_kzalloc(sizeof(struct range_rbtree_node), KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
+    if (node == NULL) {
+        return -ENOMEM;
+    }
+
+    node->start = res->start;
+    node->size = res->end - res->start + 1;
+
+    /* call ka_ram_record_walk_cb when insmod ko, so not need lock */
+    if (range_rbtree_insert(tree, node) != 0) {
+        ka_mm_kfree(node);
+        node = NULL;
+    }
+
+    return 0;
+}
+
+int ka_mm_ram_record_init(void)
+{
+    int ret;
+
+    range_rbtree_init(&g_ka_ram_record_tree);
+
+    ret = walk_iomem_res_desc(IORES_DESC_NONE, IORESOURCE_SYSTEM_RAM | IORESOURCE_BUSY,
+        0, ULLONG_MAX, &g_ka_ram_record_tree, ka_ram_record_walk_cb);
+    if ((ret != 0) && (ret != -ENOMEM)) {
+        ka_mm_ram_record_uninit();
+        return ret;
+    }
+
+    ka_info("Ram walk finish, ret=%d, node_num=%u\n", ret, g_ka_ram_record_tree.node_num);
+    return 0;
+}
+
+void ka_mm_ram_record_uninit(void)
+{
+    struct range_rbtree_node *node = NULL;
+
+    do {
+        ka_task_write_lock(&g_ka_ram_record_lock);
+        node = range_rbtree_erase_one(&g_ka_ram_record_tree);
+        ka_task_write_unlock(&g_ka_ram_record_lock);
+
+        if (node == NULL) {
+            break;
+        }
+        ka_mm_kfree(node);
+    } while (node != NULL);
+}
+
+/* use read_lock, could not call in interrupt */
+bool ka_mm_mem_is_ram(u64 pa)
+{
+    bool is_ram;
+
+    ka_task_read_lock(&g_ka_ram_record_lock);
+    is_ram = range_rbtree_check_exist(&g_ka_ram_record_tree, pa, 1);
+    ka_task_read_unlock(&g_ka_ram_record_lock);
+
+    if (!is_ram) {
+        is_ram = page_is_ram(KA_MM_PFN_DOWN(pa));
+    }
+
+    return is_ram;
+}
+EXPORT_SYMBOL_GPL(ka_mm_mem_is_ram);

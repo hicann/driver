@@ -60,7 +60,7 @@ STATIC struct ubdrv_msg_chan_stat* ubdrv_get_chan_stat(struct ascend_ub_jetty_ct
         stat = &chan->chan_stat;
     } else if (cfg->chan_mode == UBDRV_MSG_CHAN_FOR_URMA) {
         urma_chan = cfg->msg_chan;
-        stat = &chan->chan_stat;
+        stat = &urma_chan->stat;
     }
     else {
         admin_chan = cfg->msg_chan;
@@ -310,7 +310,7 @@ STATIC struct ubcore_jfc* ubdrv_create_jfc(struct ascend_ub_jetty_ctrl *cfg,
     jfc_cfg.depth = ASCEND_UB_ADMIN_JETTY_JFC_DEPTH;
     jfc_cfg.jfc_context = (void*)cfg;
     jfc_cfg.ceqn = UB_URMA_JFC_CEQN;
-    jfc_cfg.flag.bs.lock_free = UB_URMA_QUEUE_LCOK;
+    jfc_cfg.flag.bs.lock_free = UB_URMA_QUEUE_LOCK;
     return ubcore_create_jfc(cfg->ubc_dev, &jfc_cfg, jfce_handler, ubdrv_jfae_handle, NULL);
 }
 
@@ -347,7 +347,7 @@ int ubdrv_create_sync_jfr(struct ascend_ub_jetty_ctrl *cfg, struct ubcore_jfc *j
     jfr_cfg.trans_mode = UBCORE_TP_RM;
     jfr_cfg.min_rnr_timer = UB_JFR_RNR_TIME;
     jfr_cfg.max_sge = UBDRV_JETTY_MAX_SEND_SEG;
-    jfr_cfg.flag.bs.lock_free = UB_URMA_QUEUE_LCOK;
+    jfr_cfg.flag.bs.lock_free = UB_URMA_QUEUE_LOCK;
     jfr_cfg.flag.bs.token_policy = UBCORE_TOKEN_PLAIN_TEXT;
     jfr_cfg.token_value.token = cfg->token_value;
     jfr_cfg.jfr_context = (void*)cfg;
@@ -769,8 +769,7 @@ int ubdrv_post_rw_wr_process(struct send_wr_cfg *wr_cfg, enum ubcore_opcode opco
     wr.next = NULL;
 
     if (ubdrv_post_rw_wr_check_para(jfs, &wr) != 0) {
-        ubdrv_err("Check rw_wr para failed. (local_seg_id=%u;dev_name=%s)\n",
-            wr_cfg->user_ctx, wr_cfg->jfs->ub_dev->dev_name);
+        ubdrv_err("Check rw_wr para failed. (local_seg_id=%u)\n", wr_cfg->user_ctx);
         return -EINVAL;
     }
 
@@ -974,15 +973,18 @@ STATIC struct ascend_ub_msg_desc* ubdrv_jfce_recv_cqe_process(struct ubcore_jfc 
 
 STATIC void ubdrv_jfce_recv_work_func(struct ubcore_jfc *jfc, struct ubdrv_msg_chan_stat *stat)
 {
-    struct ascend_ub_jetty_ctrl *cfg;
+    char dfx_info[UBDRV_DFX_INFO_LEN] = {0};
     struct ascend_ub_msg_desc *chan_desc;
     struct ascend_ub_msg_desc *rqe_desc;
+    struct ascend_ub_jetty_ctrl *cfg;
     u32 sche_work_time;
     u32 seg_id;
     int ret = 0;
 
     stat->rx_work++;
-    sche_work_time = ubdrv_record_resq_time(stat->rx_work_stamp, "jfce recv work sche", UBDRV_SCEH_RESP_TIME);
+    (void)sprintf_s(dfx_info, UBDRV_DFX_INFO_LEN, "device-%u chan_id-%u jfce recv work sche",
+        stat->dev_id, stat->chan_id);
+    sche_work_time = ubdrv_record_resq_time(stat->rx_work_stamp, dfx_info, UBDRV_SCEH_RESP_TIME);
     if (sche_work_time > stat->rx_work_max_time) {
         stat->rx_work_max_time = sche_work_time;
     }
@@ -1022,9 +1024,10 @@ void ubdrv_jfce_recv_work(ka_work_struct_t *p_work)
     ubdrv_jfce_recv_work_func(jfc, stat);
 }
 
-int ubdrv_interval_poll_send_jfs_jfc(struct ubcore_jfc *jfc, u64 user_ctx, u32 cnt,
+int ubdrv_interval_poll_send_jfs_jfc(struct ascend_ub_jetty_ctrl *jetty_ctrl, u64 user_ctx, u32 cnt,
     struct ubcore_cr *cr, struct ubdrv_msg_chan_stat *stat, bool check_dev_status)
 {
+    struct ubcore_jfc *jfc = jetty_ctrl->jfs_jfc;
     int ret = 0;
     u32 i;
 
@@ -1053,6 +1056,7 @@ int ubdrv_interval_poll_send_jfs_jfc(struct ubcore_jfc *jfc, u64 user_ctx, u32 c
         ubdrv_err("Poll send jfs cqe timeout. (cnt=%u;jfc_id=%u;jfs_id=%u;dev_id=%u;chan_id=%u;udma_name=%s)\n",
             cnt, jfc->id, stat->tx_jfs_id, stat->dev_id, stat->chan_id, jfc->ub_dev->dev_name);
         stat->tx_cqe_timeout++;
+        ubdrv_print_ctx_info(stat->dev_id, stat->chan_id, jetty_ctrl->jfs, NULL, jetty_ctrl->jfs_jfc);
         return -ETIMEDOUT;
     }
     stat->tx_cqe++;
@@ -1060,13 +1064,15 @@ int ubdrv_interval_poll_send_jfs_jfc(struct ubcore_jfc *jfc, u64 user_ctx, u32 c
         ubdrv_err("CR status is error. (cr_status=%d;jfc_id=%u;dev_id=%u;chan_id=%u;udma_name=%s)\n",
             cr->status, jfc->id, stat->dev_id, stat->chan_id, jfc->ub_dev->dev_name);
         stat->tx_cqe_status_err++;
+        ubdrv_print_ctx_info(stat->dev_id, stat->chan_id, jetty_ctrl->jfs, NULL, jetty_ctrl->jfs_jfc);
     }
     return 0;
 }
 
-int ubdrv_interval_poll_recv_jfs_jfc(struct ubcore_jfc *jfc, u64 user_ctx, u32 cnt,
+int ubdrv_interval_poll_recv_jfs_jfc(struct ascend_ub_jetty_ctrl *jetty_ctrl, u64 user_ctx, u32 cnt,
     struct ubcore_cr *cr, struct ubdrv_msg_chan_stat *stat)
 {
+    struct ubcore_jfc *jfc = jetty_ctrl->jfs_jfc;
     u32 jfc_id = jfc->id;
     int ret = 0;
     u32 i;
@@ -1091,19 +1097,22 @@ int ubdrv_interval_poll_recv_jfs_jfc(struct ubcore_jfc *jfc, u64 user_ctx, u32 c
     if (i == cnt) {
         ubdrv_err("Poll recv jfs cqe timeout. (cnt=%u;jfs_id=%u;jfs_jfc_id=%u)\n", cnt, stat->rx_jfs_id, jfc_id);
         stat->rx_tx_cqe_timeout++;
+        ubdrv_print_ctx_info(stat->dev_id, stat->chan_id, jetty_ctrl->jfs, NULL, jetty_ctrl->jfs_jfc);
         return -ETIMEDOUT;
     }
     stat->rx_tx_cqe++;
     if (cr->status != UBCORE_CR_SUCCESS) {
         ubdrv_err("CR status is error. (cr_status=%d;jfs_jfc_id=%u)\n", cr->status, jfc_id);
         stat->rx_tx_cqe_status_err++;
+        ubdrv_print_ctx_info(stat->dev_id, stat->chan_id, jetty_ctrl->jfs, NULL, jetty_ctrl->jfs_jfc);
     }
     return 0;
 }
 
-STATIC int ubdrv_interval_poll_jfr_jfc(u32 dev_id, struct ubcore_jfc *jfc, u32 cnt,
+STATIC int ubdrv_interval_poll_jfr_jfc(u32 dev_id, struct ascend_ub_jetty_ctrl *jetty_ctrl, u32 cnt,
     struct ubcore_cr *cr, struct ubdrv_msg_chan_stat *stat)
 {
+    struct ubcore_jfc *jfc = jetty_ctrl->jfr_jfc;
     int ret = 0;
     u32 i;
 
@@ -1127,6 +1136,7 @@ STATIC int ubdrv_interval_poll_jfr_jfc(u32 dev_id, struct ubcore_jfc *jfc, u32 c
         ubdrv_err("Polled cqe timeout. (dev_id=%u;cnt=%u;jfc_id=%u;dev_name=%s)\n",
             dev_id, cnt, jfc->id, jfc->ub_dev->dev_name);
         stat->tx_recv_cqe_timeout++;
+        ubdrv_print_ctx_info(stat->dev_id, stat->chan_id, NULL, jetty_ctrl->jfr, jetty_ctrl->jfr_jfc);
         return -ETIMEDOUT;
     }
     stat->tx_recv_cqe++;
@@ -1134,6 +1144,7 @@ STATIC int ubdrv_interval_poll_jfr_jfc(u32 dev_id, struct ubcore_jfc *jfc, u32 c
         ubdrv_err("CR status is error. (dev_id=%u;cr_status=%d;jfc_id=%u;jfr_id=%u;dev_name=%s)\n",
             dev_id, cr->status, jfc->id, stat->tx_jfr_id, jfc->ub_dev->dev_name);
         stat->tx_recv_cqe_status_err++;
+        ubdrv_print_ctx_info(stat->dev_id, stat->chan_id, NULL, jetty_ctrl->jfr, jetty_ctrl->jfr_jfc);
     }
     return 0;
 }
@@ -1152,7 +1163,7 @@ retry_poll_rqe:
         return KA_ERR_PTR(-ENODEV);
     }
 
-    ret =  ubdrv_interval_poll_jfr_jfc(dev_id, jetty_ctrl->jfr_jfc, cnt, &cr, stat);
+    ret = ubdrv_interval_poll_jfr_jfc(dev_id, jetty_ctrl, cnt, &cr, stat);
     if ((ret != 0) || (cr.status != UBCORE_CR_SUCCESS)) {
         ret = ((ret != 0) ? ret : cr.status);
         return KA_ERR_PTR(ret);
@@ -1213,4 +1224,78 @@ u32 ubdrv_record_resq_time(u64 pre_jiffies, const char *str, u32 timeout)
         ubdrv_info("Get resq_time. (resq_time=%ums; cpu=%d; str=\"%s\")\n", resq_time, raw_smp_processor_id(), str);
     }
     return resq_time;
+}
+
+#define UB_JFS_CTX_SIZE 256
+#define UB_JFR_CTX_SIZE 64
+#define UB_JFC_CTX_SIZE 128
+STATIC void ubdrv_print_jfs_ctx(u32 dev_id, struct ubcore_jfs *jfs)
+{
+    char buf[UB_JFS_CTX_SIZE + 1] = {0};
+    u32 id = jfs->jfs_id.id;
+    int ret;
+
+    ret = ubcore_get_jfs_opt(jfs, UBCORE_JFS_FULL_CTX, buf, UB_JFS_CTX_SIZE, NULL);
+    if (ret != 0) {
+        ubdrv_err("Get jfs ctx fail. (dev_id=%u;ret=%d)\n", dev_id, ret);
+        return;
+    }
+    ubdrv_err_hex_dump(buf, UB_JFS_CTX_SIZE, "JFS(dev_id=%u;jfs_id=%u)CTX", dev_id, id);
+}
+
+STATIC void ubdrv_print_jfc_ctx(u32 dev_id, struct ubcore_jfc *jfc)
+{
+    char buf[UB_JFC_CTX_SIZE + 1] = {0};
+    u32 id = jfc->id;
+    int ret;
+
+    ret = ubcore_get_jfc_opt(jfc, UBCORE_JFC_FULL_CTX, buf, UB_JFC_CTX_SIZE, NULL);
+    if (ret != 0) {
+        ubdrv_err("Get jfc ctx fail. (dev_id=%u;ret=%d)\n", dev_id, ret);
+        return;
+    }
+    ubdrv_err_hex_dump(buf, UB_JFC_CTX_SIZE, "JFC(dev_id=%u;jfc_id=%u)CTX", dev_id, id);
+}
+
+STATIC void ubdrv_print_jfr_ctx(u32 dev_id, struct ubcore_jfr *jfr)
+{
+    char buf[UB_JFR_CTX_SIZE + 1] = {0};
+    u32 id = jfr->jfr_id.id;
+    int ret;
+
+    ret = ubcore_get_jfr_opt(jfr, UBCORE_JFR_FULL_CTX, buf, UB_JFR_CTX_SIZE, NULL);
+    if (ret != 0) {
+        ubdrv_err("Get jfr ctx fail. (dev_id=%u;ret=%d)\n", dev_id, ret);
+        return;
+    }
+    ubdrv_err_hex_dump(buf, UB_JFR_CTX_SIZE, "JFR(dev_id=%u;jfr_id=%u)CTX", dev_id, id);
+}
+
+void ubdrv_print_ctx_info(u32 dev_id, u32 chan_id, struct ubcore_jfs *jfs, struct ubcore_jfr *jfr,
+    struct ubcore_jfc *jfc)
+{
+    static unsigned long last_log_time[ASCEND_UB_DEV_MAX_NUM] = {0};
+    static unsigned long ctx_total_cnt[ASCEND_UB_DEV_MAX_NUM] = {0};
+    static unsigned long ctx_print_cnt[ASCEND_UB_DEV_MAX_NUM] = {0};
+
+    if (ka_system_time_after(ka_jiffies, (last_log_time[dev_id] + 10 * KA_HZ)) == false) {
+        ctx_total_cnt[dev_id]++;
+        return;
+    }
+    last_log_time[dev_id] = ka_jiffies;
+    ctx_print_cnt[dev_id]++;
+    if (ctx_total_cnt[dev_id] > ctx_print_cnt[dev_id]) {
+        ubdrv_info("Print ctx limit. (dev_id=%u;total_cnt=%lu;print_cnt=%lu)\n",
+            dev_id, ctx_total_cnt[dev_id], ctx_print_cnt[dev_id]);
+    }
+
+    if (jfs != NULL) {
+        ubdrv_print_jfs_ctx(dev_id, jfs);
+    }
+    if (jfr != NULL) {
+        ubdrv_print_jfr_ctx(dev_id, jfr);
+    }
+    if (jfc != NULL) {
+        ubdrv_print_jfc_ctx(dev_id, jfc);
+    }
 }

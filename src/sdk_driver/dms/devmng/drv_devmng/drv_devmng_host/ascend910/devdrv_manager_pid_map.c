@@ -649,6 +649,7 @@ STATIC bool devdrv_is_master_pid(ka_pid_t master_pid)
     return false;
 }
 #endif
+
 #define MAX_BIND_WAIT_TIMES  2800 /* max wait time 28s, equal to operator timeout interval  */
 #define MAX_BIND_WAIT_ONCE   10
 
@@ -677,6 +678,7 @@ STATIC int devdrv_wait_pid_init(ka_pid_t proc_pid, ka_pid_t proc_tgid, int mode)
         (void)ka_system_msleep(MAX_BIND_WAIT_ONCE);
     } while (times < MAX_BIND_WAIT_TIMES);
 
+    ka_print_dump_task(proc_tgid);
     return -ETIME;
 }
 
@@ -805,9 +807,9 @@ static int devdrv_get_master_deployment_location(unsigned int mode)
 }
 
 #define DEVDRV_PID_MAP_COST_TIME_MAX    1000    /* 1000 ms */
-static void bind_cost_print(struct bind_cost_statistics cost_stat)
+void bind_cost_print(struct bind_cost_statistics *cost_stat)
 {
-    if (ka_system_ktime_to_ms(ktime_sub(cost_stat.bind_end, cost_stat.bind_start)) < DEVDRV_PID_MAP_COST_TIME_MAX) {
+    if (ka_system_ktime_to_ms(ktime_sub(cost_stat->bind_end, cost_stat->bind_start)) < DEVDRV_PID_MAP_COST_TIME_MAX) {
         return;
     }
 
@@ -817,15 +819,15 @@ static void bind_cost_print(struct bind_cost_statistics cost_stat)
                     "sync_start=%lldus; sync_end=%lldus; "
                     "update_hash_start=%lldus; update_hash_end=%lldus)\n",
         DEVDRV_PID_MAP_COST_TIME_MAX,
-        ka_system_ktime_to_ms(ktime_sub(cost_stat.bind_end, cost_stat.bind_start)),
-        ka_system_ktime_to_us(cost_stat.bind_start), ka_system_ktime_to_us(cost_stat.bind_end),
-        ka_system_ktime_to_us(cost_stat.check_master_start), ka_system_ktime_to_us(cost_stat.check_master_end),
-        ka_system_ktime_to_us(cost_stat.check_slave_start), ka_system_ktime_to_us(cost_stat.check_slave_end),
-        ka_system_ktime_to_us(cost_stat.sync_start), ka_system_ktime_to_us(cost_stat.sync_end),
-        ka_system_ktime_to_us(cost_stat.update_hash_start), ka_system_ktime_to_us(cost_stat.update_hash_end));
+        ka_system_ktime_to_ms(ktime_sub(cost_stat->bind_end, cost_stat->bind_start)),
+        ka_system_ktime_to_us(cost_stat->bind_start), ka_system_ktime_to_us(cost_stat->bind_end),
+        ka_system_ktime_to_us(cost_stat->check_master_start), ka_system_ktime_to_us(cost_stat->check_master_end),
+        ka_system_ktime_to_us(cost_stat->check_slave_start), ka_system_ktime_to_us(cost_stat->check_slave_end),
+        ka_system_ktime_to_us(cost_stat->sync_start), ka_system_ktime_to_us(cost_stat->sync_end),
+        ka_system_ktime_to_us(cost_stat->update_hash_start), ka_system_ktime_to_us(cost_stat->update_hash_end));
 }
 
-int devdrv_bind_hostpid(struct devdrv_ioctl_para_bind_host_pid para_info, struct bind_cost_statistics cost_stat)
+int devdrv_bind_hostpid(struct devdrv_ioctl_para_bind_host_pid para_info, struct bind_cost_statistics *cost_stat)
 {
     struct devdrv_manager_info *d_info = devdrv_get_manager_info();
     struct devdrv_process_sign *d_sign = NULL;
@@ -885,13 +887,13 @@ int devdrv_bind_hostpid(struct devdrv_ioctl_para_bind_host_pid para_info, struct
     }
 #endif
 
-    cost_stat.check_slave_start = ka_system_ktime_get();
+    cost_stat->check_slave_start = ka_system_ktime_get();
     ret = devdrv_wait_pid_init(dev_pid, dev_tgid, para_info.mode);
     if (ret != 0) {
         devdrv_drv_err("wait process init failed. (ret=%d; dev_pid=%d; dev_tgid=%d)\n", ret, dev_pid, dev_tgid);
         return -EINVAL;
     }
-    cost_stat.check_slave_end = ka_system_ktime_get();
+    cost_stat->check_slave_end = ka_system_ktime_get();
 
     if ((para_info.cp_type == DEVDRV_PROCESS_USER) && (current_side == HOST_SIDE)
         && (para_info.chip_id == HAL_BIND_ALL_DEVICE)) {
@@ -913,21 +915,21 @@ int devdrv_bind_hostpid(struct devdrv_ioctl_para_bind_host_pid para_info, struct
         return -EINVAL;
     }
 
-    cost_stat.sync_start = ka_system_ktime_get();
+    cost_stat->sync_start = ka_system_ktime_get();
     ret_sync = devdrv_pid_map_sync_to_peer(&para_info, dev_tgid, ADD_PID);
     if (ret_sync != 0) {
         devdrv_drv_warn("Sync to peer unsuccessfully."
             "(host_pid=%d; dev_tgid=%d; cp_type=%d; dev_id=%u; vfid=%u; mode=%d)\n",
             para_info.host_pid, dev_tgid, para_info.cp_type, para_info.chip_id, para_info.vfid, para_info.mode);
     }
-    cost_stat.sync_end = ka_system_ktime_get();
+    cost_stat->sync_end = ka_system_ktime_get();
 
     bind_para.para_info = para_info;
     bind_para.devpid = dev_tgid;
     bind_para.con_devpid = dev_pid;
     bind_para.slave_side = current_side;
 
-    cost_stat.update_hash_start = ka_system_ktime_get();
+    cost_stat->update_hash_start = ka_system_ktime_get();
     ka_task_spin_lock_bh(&d_info->proc_hash_table_lock);
     d_sign = devdrv_find_process_sign(d_info, para_info.host_pid);
     if (d_sign != NULL) {
@@ -967,7 +969,7 @@ int devdrv_bind_hostpid(struct devdrv_ioctl_para_bind_host_pid para_info, struct
     }
     ka_hash_add(d_info->proc_hash_table, &d_sign_create->link, key); //lint !e666
     ka_task_spin_unlock_bh(&d_info->proc_hash_table_lock);
-    cost_stat.update_hash_end = ka_system_ktime_get();
+    cost_stat->update_hash_end = ka_system_ktime_get();
 
 bind_succ:
     if (ret_sync != 0) {
@@ -978,7 +980,7 @@ bind_succ:
                 para_info.host_pid, dev_tgid, para_info.cp_type, para_info.chip_id, para_info.vfid, para_info.mode);
         }
     }
-    cost_stat.bind_end = ka_system_ktime_get();
+    cost_stat->bind_end = ka_system_ktime_get();
     bind_cost_print(cost_stat);
 
     devdrv_drv_info("Bind pid success. "
@@ -1243,8 +1245,10 @@ int devdrv_pid_map_sync_proc(u32 devid, void *msg, u32 in_len, u32 *ack_len)
 
     if (sync->op == ADD_PID) {
         dev_manager_msg_info->header.result = devdrv_pid_map_sync_add(sync);
-    } else {
+    } else if (sync->op == DELETE_PID) {
         dev_manager_msg_info->header.result = devdrv_pid_map_sync_del(sync);
+    } else {
+        devdrv_drv_err("Invalid op value:%d\n", sync->op);
     }
     dev_manager_msg_info->header.valid = DEVDRV_MANAGER_MSG_VALID;
     *ack_len = sizeof(struct devdrv_pid_map_sync) + sizeof(struct devdrv_manager_msg_head);

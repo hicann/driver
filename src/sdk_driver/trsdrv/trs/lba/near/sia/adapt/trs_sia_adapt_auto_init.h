@@ -10,13 +10,13 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
- 
+
 #ifndef TRS_SIA_ADAPT_AUTO_INIT_H
 #define TRS_SIA_ADAPT_AUTO_INIT_H
- 
-#define AUTO_INIT_MODULE_NAME      TRS_SIA_ADAPT
+
+#define AUTO_INIT_MODULE_NAME TRS_SIA_ADAPT
 #define AUTO_INIT_MODULE_NAME_STR "TRS_SIA_ADAPT"
- 
+
 #include "pbl/pbl_feature_loader.h"
- 
+
 #endif

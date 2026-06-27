@@ -32,6 +32,7 @@ static const ka_pci_device_id_t devdrv_driver_tbl[] = {{ KA_PCI_VDEVICE(HUAWEI, 
                                                          { KA_PCI_VDEVICE(HUAWEI, 0xd805), 0 },
                                                          { KA_PCI_VDEVICE(HUAWEI, 0xd806), 0 },
                                                          { KA_PCI_VDEVICE(HUAWEI, 0xd807), 0 },
+                                                         { KA_PCI_VDEVICE(HUAWEI, 0xd808), 0 },
                                                          { DEVDRV_DIVERSITY_PCIE_VENDOR_ID, 0xd500,
                                                            KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0 },
                                                          { 0x20C6, 0xd500, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0 },
@@ -161,10 +162,13 @@ int devdrv_manager_get_dev_resource(struct devdrv_info *dev_info)
     struct devdrv_pci_dev_info dev_pci_info = {0};
     u32 dev_id = dev_info->pci_dev_id;
 
+#ifndef CFG_FEATURE_UB
     if (adap_get_pci_dev_info(dev_id, &dev_pci_info)) {
         devdrv_drv_err("devdrv_get_pci_dev_info failed. dev_id(%u)\n", dev_id);
         return -EBUSY;
     }
+#endif
+
 #ifdef CFG_FEATURE_REFACTOR
     dev_info->pci_info.bus_number = dev_pci_info.bus_no;
     dev_info->pci_info.dev_number = dev_pci_info.device_no;

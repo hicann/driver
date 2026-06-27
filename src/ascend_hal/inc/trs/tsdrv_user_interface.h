@@ -23,6 +23,7 @@ drvError_t tsDrvShrIdAllocIpcEventId(uint32_t devId, uint32_t tsId, uint32_t *id
 drvError_t drvDeviceOpenInner(uint32_t devId, halDevOpenIn *in, halDevOpenOut *out);
 drvError_t drvDeviceCloseInner(uint32_t devId, halDevCloseIn *in);
 drvError_t drvTrsDeviceCloseUserResInner(uint32_t dev_id, halDevCloseIn *in);
+drvError_t __attribute__((weak)) trsMemProcResBackup(halProcResBackupInfo *info);
 #ifdef __cplusplus
 }
 #endif

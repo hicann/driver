@@ -18,7 +18,7 @@
 #include "virtmng_public_def.h"
 
 int vmng_admin_msg_send(struct vmng_msg_chan_tx *msg_chan, struct vmng_tx_msg_proc_info *tx_info, u32 opcode_d1,
-    u32 opcode_d2)
+                        u32 opcode_d2)
 {
     const u32 WAIT_TIME_LEN = VMNG_WAIT_TIME_LEN;
     const u32 WAIT_CYCLE = VMNG_WAIT_CYCLE;
@@ -56,7 +56,7 @@ int vmng_admin_msg_send(struct vmng_msg_chan_tx *msg_chan, struct vmng_tx_msg_pr
     msg_chan->send_irq_to_remote(msg_chan->msg_dev, msg_chan->tx_send_irq);
 
     ret = vmng_sync_msg_wait_undesire(p_sq_status, VMNG_MSG_SQ_STATUS_PREPARE, VMNG_MSG_SQ_STATUS_ENTER_PROC,
-        WAIT_CYCLE, WAIT_TIME_LEN);
+                                      WAIT_CYCLE, WAIT_TIME_LEN);
     if (ret < 0) {
         ka_task_mutex_unlock(&msg_chan->mutex);
         vmng_err("Wait rx time out. (status=0x%x; dev_id=%d; fid=%d)\n", *p_sq_status, msg_dev->dev_id, msg_dev->fid);

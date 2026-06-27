@@ -22,8 +22,8 @@
 
 typedef int (*mb_update_func)(struct trs_sec_eh_ts_inst *sec_eh_cfg, void *mb_data);
 
-static int trs_sec_eh_update_rsv_mem_info(struct trs_id_inst *inst, u32 sq_mem_type,
-    struct trs_normal_cqsq_mailbox *mb_data)
+static int trs_sec_eh_update_rsv_mem_info(
+    struct trs_id_inst *inst, u32 sq_mem_type, struct trs_normal_cqsq_mailbox *mb_data)
 {
     mb_data->sq_cq_side &= 0xfe; // 0xfe: clear sq side bit
     mb_data->sq_cq_side |= ((trs_chan_mem_is_dev_mem(sq_mem_type) ? 0 : 1) << TRS_CHAN_SQ_MEM_OFFSET);
@@ -38,8 +38,7 @@ static int trs_sec_eh_update_rsv_mem_info(struct trs_id_inst *inst, u32 sq_mem_t
     return 0;
 }
 
-static void trs_sec_eh_sq_ctx_info_pack(struct trs_normal_cqsq_mailbox *mb_data,
-    struct trs_sec_eh_sq_ctx_info *sq_ctx)
+static void trs_sec_eh_sq_ctx_info_pack(struct trs_normal_cqsq_mailbox *mb_data, struct trs_sec_eh_sq_ctx_info *sq_ctx)
 {
     sq_ctx->sqid = mb_data->sq_index;
     sq_ctx->sqesize = mb_data->sqesize;
@@ -48,8 +47,7 @@ static void trs_sec_eh_sq_ctx_info_pack(struct trs_normal_cqsq_mailbox *mb_data,
     sq_ctx->pid = mb_data->pid;
 }
 
-static void trs_sec_eh_cq_ctx_info_pack(struct trs_normal_cqsq_mailbox *mb_data,
-    struct trs_sec_eh_cq_ctx_info *cq_ctx)
+static void trs_sec_eh_cq_ctx_info_pack(struct trs_normal_cqsq_mailbox *mb_data, struct trs_sec_eh_cq_ctx_info *cq_ctx)
 {
     cq_ctx->cqid = mb_data->cq0_index;
     cq_ctx->cqesize = mb_data->cqesize;
@@ -66,8 +64,7 @@ static int trs_sec_eh_create_sqcq_mb_update(struct trs_sec_eh_ts_inst *sec_eh_cf
 
     if ((!trs_sec_eh_id_is_belong_to_vf(&sec_eh_cfg->id_info[TRS_HW_SQ], mb_data->sq_index)) ||
         (!trs_sec_eh_id_is_belong_to_vf(&sec_eh_cfg->id_info[TRS_HW_CQ], mb_data->cq0_index))) {
-        trs_debug("Invalid. (devid=%u; sq=%u; cq=%u)\n",
-            sec_eh_cfg->inst.devid, mb_data->sq_index, mb_data->cq0_index);
+        trs_debug("Invalid. (devid=%u; sq=%u; cq=%u)\n", sec_eh_cfg->inst.devid, mb_data->sq_index, mb_data->cq0_index);
         return -EACCES;
     }
 
@@ -95,9 +92,10 @@ static int trs_sec_eh_create_sqcq_mb_update(struct trs_sec_eh_ts_inst *sec_eh_cf
         return ret;
 #endif
     }
-    trs_debug("Id info. (devid=%u; tsid=%u; sq=%u; cq=%u; pid=%d; sqcq_side=%u; sq_mem_type=0x%x)\n",
-        sec_eh_cfg->inst.devid, sec_eh_cfg->inst.tsid, mb_data->sq_index, mb_data->cq0_index, mb_data->pid,
-        mb_data->sq_cq_side, sq_ctx.mem_type);
+    trs_debug(
+        "Id info. (devid=%u; tsid=%u; sq=%u; cq=%u; pid=%d; sqcq_side=%u; sq_mem_type=0x%x)\n", sec_eh_cfg->inst.devid,
+        sec_eh_cfg->inst.tsid, mb_data->sq_index, mb_data->cq0_index, mb_data->pid, mb_data->sq_cq_side,
+        sq_ctx.mem_type);
 
     return ret;
 }
@@ -108,15 +106,15 @@ static int trs_sec_eh_free_sqcq_mb_update(struct trs_sec_eh_ts_inst *sec_eh_cfg,
 
     if ((!trs_sec_eh_id_is_belong_to_vf(&sec_eh_cfg->id_info[TRS_HW_SQ], mb_data->sq_index)) ||
         (!trs_sec_eh_id_is_belong_to_vf(&sec_eh_cfg->id_info[TRS_HW_CQ], mb_data->cq0_index))) {
-        trs_debug("Invalid. (devid=%u; sq=%u; cq=%u)\n",
-            sec_eh_cfg->inst.devid, mb_data->sq_index, mb_data->cq0_index);
+        trs_debug("Invalid. (devid=%u; sq=%u; cq=%u)\n", sec_eh_cfg->inst.devid, mb_data->sq_index, mb_data->cq0_index);
         return -EACCES;
     }
 
     trs_sec_eh_free_sq_mem(sec_eh_cfg, mb_data->sq_index);
     trs_sec_eh_sq_ctx_uninit(sec_eh_cfg, mb_data->sq_index);
-    trs_debug("Id info. (devid=%u; tsid=%u; sq=%u; cq=%u; pid=%d)\n",
-        sec_eh_cfg->inst.devid, sec_eh_cfg->inst.tsid, mb_data->sq_index, mb_data->cq0_index, mb_data->pid);
+    trs_debug(
+        "Id info. (devid=%u; tsid=%u; sq=%u; cq=%u; pid=%d)\n", sec_eh_cfg->inst.devid, sec_eh_cfg->inst.tsid,
+        mb_data->sq_index, mb_data->cq0_index, mb_data->pid);
 
     return 0;
 }
@@ -131,8 +129,9 @@ static int trs_sec_eh_free_all_sqcq_mb_update(struct trs_sec_eh_ts_inst *sec_eh_
         if (sq_ctx[sqid].pid == mb_data->proc_info.pid[0]) {
             trs_sec_eh_free_sq_mem(sec_eh_cfg, sqid);
             trs_sec_eh_sq_ctx_uninit(sec_eh_cfg, sqid);
-            trs_debug("Id info. (devid=%u; tsid=%u; pid=%d; sqid=%u)\n",
-                sec_eh_cfg->inst.devid, sec_eh_cfg->inst.tsid, mb_data->proc_info.pid[0], sqid);
+            trs_debug(
+                "Id info. (devid=%u; tsid=%u; pid=%d; sqid=%u)\n", sec_eh_cfg->inst.devid, sec_eh_cfg->inst.tsid,
+                mb_data->proc_info.pid[0], sqid);
         }
     }
 

@@ -38,13 +38,13 @@ static bool free_to_mem_pool[TRS_DEV_MAX_NUM];
 
 static bool trs_chan_mem_node_can_deleted(struct trs_chan_mem_node *node)
 {
-    return ((trs_get_us_timestamp() - node->timestamp) >= 300000);  /* 300000us = 300ms */
+    return ((trs_get_us_timestamp() - node->timestamp) >= 300000); /* 300000us = 300ms */
 }
 
 static void trs_chan_mem_node_ddr_magic_check(struct trs_chan_mem_node *node)
 {
     int i, loop = node->attr.size / sizeof(u64);
-    u64 *d_word = (u64*)(uintptr_t)node->attr.vaddr;
+    u64 *d_word = (u64 *)(uintptr_t)node->attr.vaddr;
     u64 res = 0;
 
     if (!magic_check_enable) {
@@ -88,7 +88,6 @@ static int trs_chan_mem_node_alloc(struct trs_chan_mem_node_attr *attr)
 static void trs_chan_mem_node_free(struct trs_chan_mem_node *node)
 {
     os_mem_total_size -= node->attr.size;
-    trs_chan_mem_node_ddr_magic_check(node);
     ka_list_del(&node->list);
     trs_vfree(node);
 }
@@ -103,10 +102,13 @@ static void trs_chan_mem_node_over_total_size_handle(size_t size)
         return;
     }
 
-    ka_list_for_each_entry_safe(node, next, &os_mem, list) {
+    ka_list_for_each_entry_safe(node, next, &os_mem, list)
+    {
         if (free_size >= size) {
             break;
         }
+
+        trs_chan_mem_node_ddr_magic_check(node);
         node->attr.ops.free_ddr(&node->attr.inst, node->attr.vaddr, node->attr.size, node->attr.phy_addr);
         free_size += node->attr.size;
         trs_chan_mem_node_free(node);
@@ -119,6 +121,7 @@ static void trs_chan_mem_node_unmatch_size_hanlde(struct trs_chan_mem_node *node
         return;
     }
 
+    trs_chan_mem_node_ddr_magic_check(node);
     node->attr.ops.free_ddr(&node->attr.inst, node->attr.vaddr, node->attr.size, node->attr.phy_addr);
     trs_chan_mem_node_free(node);
 }
@@ -131,7 +134,8 @@ void *trs_chan_mem_get_from_mem_list(struct trs_id_inst *inst, size_t size, phys
 
     ka_task_mutex_lock(&os_mem_mutex);
     free_to_mem_pool[inst->devid] = true;
-    ka_list_for_each_entry_safe(node, next, &os_mem, list) {
+    ka_list_for_each_entry_safe(node, next, &os_mem, list)
+    {
         if (node->attr.size != size) {
             trs_chan_mem_node_unmatch_size_hanlde(node);
             continue;
@@ -142,6 +146,7 @@ void *trs_chan_mem_get_from_mem_list(struct trs_id_inst *inst, size_t size, phys
         } else {
             *phy_addr = node->attr.phy_addr;
             vaddr = node->attr.vaddr;
+            trs_chan_mem_node_ddr_magic_check(node);
             trs_chan_mem_node_free(node);
             break;
         }
@@ -174,7 +179,9 @@ void trs_chan_mem_node_recycle(void)
     u32 devid;
 
     ka_task_mutex_lock(&os_mem_mutex);
-    ka_list_for_each_entry_safe(node, next, &os_mem, list) {
+    ka_list_for_each_entry_safe(node, next, &os_mem, list)
+    {
+        trs_chan_mem_node_ddr_magic_check(node);
         node->attr.ops.free_ddr(&node->attr.inst, node->attr.vaddr, node->attr.size, node->attr.phy_addr);
         trs_chan_mem_node_free(node);
     }
@@ -197,8 +204,10 @@ void trs_chan_mem_node_recycle_by_dev(u32 devid)
 
     ka_task_mutex_lock(&os_mem_mutex);
     free_to_mem_pool[devid] = false;
-    ka_list_for_each_entry_safe(node, next, &os_mem, list) {
+    ka_list_for_each_entry_safe(node, next, &os_mem, list)
+    {
         if (devid == node->attr.inst.devid) {
+            trs_chan_mem_node_ddr_magic_check(node);
             node->attr.ops.free_ddr(&node->attr.inst, node->attr.vaddr, node->attr.size, node->attr.phy_addr);
             trs_chan_mem_node_free(node);
         }
@@ -235,19 +244,15 @@ ssize_t chan_mem_node_ops_write(ka_file_t *filp, const char __ka_user *ubuf, siz
     if (ka_base_kstrtol(ch, 10, &val)) {
         return -EFAULT;
     }
-    magic_check_enable= (val == 0) ? false : true;
+    magic_check_enable = (val == 0) ? false : true;
 
     return (ssize_t)count;
 }
 
-static const ka_procfs_ops_t mem_node_ops = {               \
-    ka_fs_init_pf_owner(KA_THIS_MODULE)                        \
-    ka_fs_init_pf_open(chan_mem_node_ops_open)                \
-    ka_fs_init_pf_read(ka_fs_seq_read)                        \
-    ka_fs_init_pf_write(chan_mem_node_ops_write)              \
-    ka_fs_init_pf_lseek(ka_fs_seq_lseek)                      \
-    ka_fs_init_pf_release(ka_fs_single_release)               \
-};
+static const ka_procfs_ops_t mem_node_ops = {
+    ka_fs_init_pf_owner(KA_THIS_MODULE) ka_fs_init_pf_open(chan_mem_node_ops_open) ka_fs_init_pf_read(ka_fs_seq_read)
+        ka_fs_init_pf_write(chan_mem_node_ops_write) ka_fs_init_pf_lseek(ka_fs_seq_lseek)
+            ka_fs_init_pf_release(ka_fs_single_release)};
 
 void trs_chan_mem_node_proc_fs_init(void)
 {
@@ -260,7 +265,4 @@ void trs_chan_mem_node_proc_fs_init(void)
     (void)ka_fs_proc_create_data("magic_check_enable", PROC_FS_MODE, top_entry, &mem_node_ops, NULL);
 }
 
-void trs_chan_mem_node_proc_fs_uninit(void)
-{
-    (void)ka_fs_remove_proc_subtree("trs_chan_mem_node", NULL);
-}
+void trs_chan_mem_node_proc_fs_uninit(void) { (void)ka_fs_remove_proc_subtree("trs_chan_mem_node", NULL); }

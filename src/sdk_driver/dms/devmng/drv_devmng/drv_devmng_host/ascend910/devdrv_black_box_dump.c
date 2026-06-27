@@ -66,6 +66,9 @@ STATIC struct devdrv_ts_log *devdrv_get_tslog_info(u32 dev_id)
 #ifdef CFG_FEATURE_PCIE_BBOX_DUMP
 void devdrv_devlog_init(struct devdrv_info *dev_info, struct devdrv_device_info *drv_info)
 {
+    if (!devdrv_manager_is_pf_device(dev_info->dev_id) || dev_info->dev_id >= ASCEND_PDEV_MAX_NUM) {
+        return;
+    }
     g_devdrv_dev_log_array[LOG_SLOG_BBOX_DDR][dev_info->dev_id]->dma_addr = drv_info->dump_ddr_dma_addr;
     g_devdrv_dev_log_array[LOG_SLOG_BBOX_DDR][dev_info->dev_id]->mem_size = drv_info->dump_ddr_size;
     g_devdrv_dev_log_array[LOG_SLOG_REG_DDR][dev_info->dev_id]->dma_addr = drv_info->reg_ddr_dma_addr;
@@ -560,7 +563,7 @@ int devdrv_manager_device_memory_dump(ka_file_t *filep, unsigned int cmd, unsign
         goto free_black_box_exit;
     }
 
-    buffer = adap_dma_alloc_coherent(dev_info->dev, align_size, &host_addr_dma, KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
+    buffer = hal_kernel_devdrv_dma_alloc_coherent(dev_info->dev, align_size, &host_addr_dma, KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
     if (buffer == NULL) {
         ka_base_atomic_dec(&dev_info->occupy_ref);
         devdrv_drv_err("dma_alloc_coherent fail devid(%u), size(%d).\n", black_box_user->devid, black_box_user->size);
@@ -569,7 +572,7 @@ int devdrv_manager_device_memory_dump(ka_file_t *filep, unsigned int cmd, unsign
     }
     devdrv_drv_debug("devid: %u, len: %d.\n", black_box_user->devid, black_box_user->size);
 
-    ret = adap_dma_sync_copy(dev_info->pci_dev_id, DEVDRV_DMA_DATA_COMMON, (u64)black_box_user->addr_offset,
+    ret = hal_kernel_devdrv_dma_sync_copy(dev_info->pci_dev_id, DEVDRV_DMA_DATA_COMMON, (u64)black_box_user->addr_offset,
                                (u64)host_addr_dma, black_box_user->size, DEVDRV_DMA_DEVICE_TO_HOST);
     if (ret) {
         devdrv_drv_err("hal_kernel_devdrv_dma_sync_copy fail, ret(%d). dev_id(%u)\n", ret, black_box_user->devid);
@@ -586,7 +589,7 @@ int devdrv_manager_device_memory_dump(ka_file_t *filep, unsigned int cmd, unsign
 
 free_alloc:
     ka_base_atomic_dec(&dev_info->occupy_ref);
-    adap_dma_free_coherent(dev_info->dev, align_size, buffer, host_addr_dma);
+    hal_kernel_devdrv_dma_free_coherent(dev_info->dev, align_size, buffer, host_addr_dma);
     buffer = NULL;
 free_black_box_exit:
     dbl_kfree(black_box_user);
@@ -744,7 +747,7 @@ int devdrv_manager_tslog_dump_process(struct devdrv_black_box_user *black_box_us
         goto FLAG_DEC;
     }
 
-    *buffer = adap_dma_alloc_coherent(dev_info->dev, align_size,
+    *buffer = hal_kernel_devdrv_dma_alloc_coherent(dev_info->dev, align_size,
                                         &host_addr_dma, KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
     if (*buffer == NULL) {
         devdrv_drv_err("Dma alloc coherent failed. (device id=%u; size=%d)\n",
@@ -753,7 +756,7 @@ int devdrv_manager_tslog_dump_process(struct devdrv_black_box_user *black_box_us
         goto FLAG_DEC;
     }
 
-    ret = adap_dma_sync_copy(dev_info->pci_dev_id, DEVDRV_DMA_DATA_COMMON, (u64)black_box_user->addr_offset,
+    ret = hal_kernel_devdrv_dma_sync_copy(dev_info->pci_dev_id, DEVDRV_DMA_DATA_COMMON, (u64)black_box_user->addr_offset,
                                (u64)host_addr_dma, black_box_user->size, DEVDRV_DMA_DEVICE_TO_HOST);
     if (ret) {
         devdrv_drv_err("Dma sync copy failed. (ret=%d; device id=%u)\n", ret, black_box_user->devid);
@@ -766,7 +769,7 @@ int devdrv_manager_tslog_dump_process(struct devdrv_black_box_user *black_box_us
     }
 
 DMA_FREE:
-    adap_dma_free_coherent(dev_info->dev, align_size, *buffer, host_addr_dma);
+    hal_kernel_devdrv_dma_free_coherent(dev_info->dev, align_size, *buffer, host_addr_dma);
 FLAG_DEC:
     ka_base_atomic_dec(&dev_info->occupy_ref);
     return ret;
@@ -925,7 +928,7 @@ int devdrv_manager_reg_ddr_read(ka_file_t *filep, unsigned int cmd, unsigned lon
         goto free_black_box_exit;
     }
 
-    buffer = adap_dma_alloc_coherent(dev_info->dev, align_size, &host_addr_dma, KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
+    buffer = hal_kernel_devdrv_dma_alloc_coherent(dev_info->dev, align_size, &host_addr_dma, KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
     if (buffer == NULL) {
         ka_base_atomic_dec(&dev_info->occupy_ref);
         devdrv_drv_err("dma_alloc_coherent fail. (dev_id=%u; size=%d)\n", black_box_user->devid, black_box_user->size);
@@ -934,7 +937,7 @@ int devdrv_manager_reg_ddr_read(ka_file_t *filep, unsigned int cmd, unsigned lon
     }
     devdrv_drv_debug("devid: %u, len: %d.\n", black_box_user->devid, black_box_user->size);
 
-    ret = adap_dma_sync_copy(dev_info->pci_dev_id, DEVDRV_DMA_DATA_COMMON, (u64)black_box_user->addr_offset,
+    ret = hal_kernel_devdrv_dma_sync_copy(dev_info->pci_dev_id, DEVDRV_DMA_DATA_COMMON, (u64)black_box_user->addr_offset,
                                (u64)host_addr_dma, black_box_user->size, DEVDRV_DMA_DEVICE_TO_HOST);
     if (ret != 0) {
         devdrv_drv_err("hal_kernel_devdrv_dma_sync_copy fail. (ret=%d; dev_id=%u)\n", ret, black_box_user->devid);
@@ -951,7 +954,7 @@ int devdrv_manager_reg_ddr_read(ka_file_t *filep, unsigned int cmd, unsigned lon
 
 free_alloc:
     ka_base_atomic_dec(&dev_info->occupy_ref);
-    adap_dma_free_coherent(dev_info->dev, align_size, buffer, host_addr_dma);
+    hal_kernel_devdrv_dma_free_coherent(dev_info->dev, align_size, buffer, host_addr_dma);
     buffer = NULL;
 free_black_box_exit:
     dbl_kfree(black_box_user);

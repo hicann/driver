@@ -51,6 +51,7 @@ struct devmm_phy_addr_blk {
     u64 size;
     u64 pg_num;
     bool is_same_sys_share;
+    u32 src_devid;
     struct devmm_phy_addr_attr attr;
 
     ka_rw_semaphore_t rw_sem;
@@ -61,27 +62,34 @@ struct devmm_phy_addr_blk {
     struct devmm_target_addr_info addr_info;
 };
 
+struct devmm_blk_pg_range {
+    u64 page_off; /* page index in blk */
+    u64 dma_off;  /* page index in dma array */
+    u64 pg_num;   /* number of pages */
+};
 
 #define SVM_PYH_ADDR_BLK_NORMAL_TYPE SVM_MEM_HANDLE_NORMAL_TYPE
 #define SVM_PYH_ADDR_BLK_EXPORT_TYPE SVM_MEM_HANDLE_EXPORT_TYPE
 #define SVM_PYH_ADDR_BLK_IMPORT_TYPE SVM_MEM_HANDLE_IMPORT_TYPE
-#define SVM_PYH_ADDR_BLK_SHARE_TYPE  SVM_MEM_HANDLE_SHARE_TYPE
+#define SVM_PYH_ADDR_BLK_SHARE_TYPE SVM_MEM_HANDLE_SHARE_TYPE
 
-#define SVM_PYH_ADDR_BLK_NORMAL_FREE   0x0
-#define SVM_PYH_ADDR_BLK_FREE_NO_PAGE  0x1
+#define SVM_PYH_ADDR_BLK_NORMAL_FREE 0x0
+#define SVM_PYH_ADDR_BLK_FREE_NO_PAGE 0x1
 
+#define DEVMM_PG_OFF_TAIL U64_MAX
 
 void devmm_phy_addr_blk_mng_init(struct devmm_phy_addr_blk_mng *mng);
-struct devmm_phy_addr_blk *devmm_phy_addr_blk_create(struct devmm_phy_addr_blk_mng *mng,
-    struct devmm_phy_addr_attr *attr, u64 pg_num, int *id);
+struct devmm_phy_addr_blk *devmm_phy_addr_blk_create(
+    struct devmm_phy_addr_blk_mng *mng, struct devmm_phy_addr_attr *attr, u64 pg_num, int *id);
 void devmm_phy_addr_blk_destroy(struct devmm_phy_addr_blk_mng *mng, struct devmm_phy_addr_blk *blk);
 struct devmm_phy_addr_blk *devmm_phy_addr_blk_get(struct devmm_phy_addr_blk_mng *mng, int id);
 void devmm_phy_addr_blk_put(struct devmm_phy_addr_blk *blk);
 
-int devmm_phy_addr_blk_init(struct devmm_svm_process *svm_proc,	 
- 	      struct devmm_phy_addr_blk *blk, u64 pg_num);
-int devmm_phy_addr_blk_uninit(struct devmm_svm_process *svm_proc,	 
- 	      struct devmm_phy_addr_blk *blk, u64 to_free_pg_num, u32 free_type, bool *is_finish);
+int devmm_phy_addr_blk_init(
+    struct devmm_svm_process *svm_proc, struct devmm_phy_addr_blk *blk, struct devmm_blk_pg_range *range);
+int devmm_phy_addr_blk_uninit(
+    struct devmm_svm_process *svm_proc, struct devmm_phy_addr_blk *blk, struct devmm_blk_pg_range *range, u32 free_type,
+    bool *is_finish);
 void devmm_phy_addr_blks_destroy(struct devmm_svm_process *svm_proc);
 
 int devmm_phy_addr_blk_occupy_inc(struct devmm_phy_addr_blk *blk);
@@ -98,4 +106,3 @@ int devmm_master_alloc_giant_pages(struct devmm_phy_addr_attr *attr, ka_page_t *
 bool devmm_support_host_giant_page(void);
 
 #endif /* SVM_PHY_ADDR_BLK_MNG_H */
-

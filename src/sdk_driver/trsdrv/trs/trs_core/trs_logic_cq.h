@@ -98,8 +98,7 @@ int trs_logic_cq_get(struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_
 
 int trs_logic_cq_init(struct trs_core_ts_inst *ts_inst);
 void trs_logic_cq_uninit(struct trs_core_ts_inst *ts_inst);
-int trs_logic_cq_config(struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst,
-    struct halSqCqConfigInfo *para);
+int trs_logic_cq_config(
+    struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst, struct halSqCqConfigInfo *para);
 
 #endif
-

@@ -90,10 +90,10 @@ STATIC int vmnga_tx_irq_init(struct vmng_msg_chan_tx *msg_chan)
         return 0;
     }
     ret = vmnga_register_vpc_irq_func(msg_dev->unit, msg_chan->tx_finish_irq, vmnga_tx_finish_msix_hander,
-        (void *)msg_chan, "vmnga_tx_finish");
+                                      (void *)msg_chan, "vmnga_tx_finish");
     if (ret != 0) {
-        vmng_err("Call vmnga_register_vpc_irq_func failed. (dev_id=%u; tx_finish_irq=%u; ret=%d)\n",
-                 msg_dev->dev_id, msg_chan->tx_finish_irq, ret);
+        vmng_err("Call vmnga_register_vpc_irq_func failed. (dev_id=%u; tx_finish_irq=%u; ret=%d)\n", msg_dev->dev_id,
+                 msg_chan->tx_finish_irq, ret);
         return ret;
     }
 
@@ -110,8 +110,8 @@ STATIC int vmnga_tx_irq_uninit(struct vmng_msg_chan_tx *msg_chan)
     }
     ret = vmnga_unregister_vpc_irq_func(msg_dev->unit, msg_chan->tx_finish_irq, (void *)msg_chan);
     if (ret != 0) {
-        vmng_err("Call vmnga_unregister_vpc_irq_func failed. (dev_id=%u; tx_finish_irq=%u; ret=%d)\n",
-                 msg_dev->dev_id, msg_chan->tx_finish_irq, ret);
+        vmng_err("Call vmnga_unregister_vpc_irq_func failed. (dev_id=%u; tx_finish_irq=%u; ret=%d)\n", msg_dev->dev_id,
+                 msg_chan->tx_finish_irq, ret);
         return ret;
     }
     vmng_event("Tx irq unregister. (dev_id=%u; tx_irq=%u)\n", msg_dev->dev_id, msg_chan->tx_finish_irq);
@@ -137,7 +137,7 @@ int vmnga_rx_irq_init(struct vmng_msg_chan_rx *msg_chan)
     }
 
     ret = vmnga_register_vpc_irq_func(msg_dev->unit, msg_chan->rx_recv_irq, vmnga_msg_msix_hander, (void *)msg_chan,
-        "vmnga_rx_recv");
+                                      "vmnga_rx_recv");
     if (ret != 0) {
         vmng_err("Call vmnga_register_vpc_irq_func failed. (dev_id=%u)\n", msg_dev->dev_id);
         return ret;

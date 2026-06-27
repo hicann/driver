@@ -23,11 +23,11 @@ enum prof_hdc_msg_type {
 };
 
 struct prof_hdc_start_para {
-    uint32_t channel_type;          /* for ts and other device */
-    uint32_t buf_len;               /* buffer size */
+    uint32_t channel_type; /* for ts and other device */
+    uint32_t buf_len;      /* buffer size */
     uint32_t sample_period;
     char user_data[PROF_USER_DATA_LEN]; /* ts data */
-    uint32_t user_data_size;        /* user data's size */
+    uint32_t user_data_size;            /* user data's size */
 };
 
 struct prof_hdc_msg {

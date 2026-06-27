@@ -197,7 +197,7 @@ STATIC int ubdrv_proc_create_data(ka_proc_dir_entry_t *top_entry)
 {
     g_procfs_entry.pair_info = ka_fs_proc_create_data("pair_info", KA_S_IRUSR, top_entry, &pair_info, &g_user_data.dev_id);
     if (g_procfs_entry.pair_info == NULL) {
-        ubdrv_err("Creat proc pair_info data error.\n");
+        ubdrv_err("Create proc pair_info data error.\n");
         return -EBADR;
     }
 
@@ -211,12 +211,12 @@ int ubdrv_procfs_init(void)
 
     top_entry = ka_fs_proc_mkdir("asdrv_ub", NULL);
     if (top_entry == NULL) {
-        ubdrv_err("Creat proc dir error.\n");
+        ubdrv_err("Create proc dir error.\n");
         return -EINVAL;
     }
     ret = ubdrv_proc_create_data(top_entry);
     if (ret != 0) {
-        ubdrv_err("Creat proc dir error.\n");
+        ubdrv_err("Create proc dir error.\n");
         (void)ka_fs_remove_proc_subtree("asdrv_ub", NULL);
         return ret;
     }

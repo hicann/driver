@@ -14,7 +14,7 @@ extern "C" {
 #endif
 
 #ifdef __linux
-#define DLLEXPORT
+#define DLLEXPORT __attribute__((visibility("default")))
 #else
 #define DLLEXPORT _declspec(dllexport)
 #endif
@@ -155,6 +155,7 @@ typedef enum {
     /* Basic version information of the BOM, which is written in the fixed area of
        the flash memory during production. */
     DSMI_UPGRADE_MAIN_TYPE_BOM_INIT_VER,
+    DSMI_UPGRADE_SUB_TYPE_SWPLUGIN_POLICY,
     DSMI_UPGRADE_MAIN_TYPE_MAX,
 } DSMI_UPGRADE_MAIN_TYPE;
 
@@ -205,6 +206,7 @@ typedef enum dsmi_component_type {
     DSMI_COMPONENT_TYPE_HBMPHY,
     DSMI_COMPONENT_TYPE_DDR2,
     DSMI_COMPONENT_TYPE_UFSMPHY,
+    DSMI_COMPONENT_TYPE_SYS_BASE_CONFIG2,
     DSMI_COMPONENT_TYPE_MAX,        /* for internal use only */
     UPGRADE_AND_RESET_ALL_COMPONENT = 0xFFFFFFF7U,
     UPGRADE_STATE_FLAG = 0xFFFFFFFCU,
@@ -568,7 +570,7 @@ struct dsmi_lpm_feature_switch {
     FEATURE_TYPE feature_type;
     unsigned int feature_switch;
 	union{
-		unsigned int data[LOAD_AWA_PARA_MAX]; // 结构体对齐8 * unint32_t
+		unsigned int data[LOAD_AWA_PARA_MAX]; // struct memory align, 8 * unint32_t
 		struct load_awa_feature_para load_awa_feature_para;
         struct idle_ctrl_feature_para idle_ctrl_feature_para;
 	} switch_para;
@@ -583,7 +585,7 @@ struct dsmi_lp_idle_adjust_info {
 struct dsmi_lp_feature_info {
     FEATURE_TYPE feature_type;
 	union{
-		unsigned int data[LP_GET_FEATURE_INFO_MAX]; // 结构体对齐8 * unint32_t
+		unsigned int data[LP_GET_FEATURE_INFO_MAX]; // struct memory align, 8 * unint32_t
         struct dsmi_lp_idle_adjust_info idle_adjust_info;
 	} info;
 };
@@ -809,6 +811,8 @@ typedef enum {
     UFS_GEAR_1,
     UFS_GEAR_2,
     UFS_GEAR_3,
+    UFS_GEAR_4,
+    UFS_GEAR_5,
 } DSMI_UFS_GEAR;
 
 typedef enum {
@@ -1348,6 +1352,9 @@ typedef enum {
 typedef enum {
     P2P_COM_SUB_CMD_COM_STATUS = 0,
     P2P_COM_SUB_CMD_FORCE_LINKDOWN,
+    P2P_COM_SUB_CMD_PERMIT_SUSPEND,
+    P2P_COM_SUB_CMD_PERMIT_LOWPOWER,
+    P2P_COM_SUB_CMD_PERMIT_SAVEPOWER,
     P2P_COM_SUB_CMD_MAX,
 } P2P_COM_SUB_CMD;
 
@@ -1440,6 +1447,7 @@ typedef enum {
     DSMI_TS_SUB_CMD_STOP_PERIOD_AICORE_STL,
     DSMI_TS_SUB_CMD_COMMON_MSG,
     DSMI_TS_SUB_CMD_NPU_MULTI_UTILIZATION_RATE,  // Obtains the same time usage of NUP/AIC/AIV/AICORE
+    DSMI_TS_SUB_CMD_NPU_MULTI_UTILIZATION_RATE_V2, // Obtains mutil usage of aic/aiv/aicore/npu
     DSMI_TS_SUB_CMD_MAX,
 } DSMI_TS_SUB_CMD;
 
@@ -1518,6 +1526,7 @@ struct dsmi_ts_fault_mask_stru {
 #define DSMI_SUB_CMD_MEMORY_MANUFACTURES 5
 #define DSMI_SUB_CMD_MEMORY_SINGLE_ECC_HW_ADDR 9
 #define DSMI_SUB_CMD_MEMORY_MULTI_ECC_HW_ADDR 10
+#define DSMI_SUB_CMD_MEMORY_MULTI_GET_EYE_INFO 11
 #define DSMI_SUB_CMD_MEMORY_SET_MATA_READ_ONCE 30
 #define DSMI_SUB_CMD_MEMORY_GET_MATA_READ_ONCE 31
 #define DSMI_SUB_CMD_SERVICE_MEMORY 32
@@ -1538,7 +1547,8 @@ struct dsmi_ts_fault_mask_stru {
 #define DSMI_DDR_SUB_CMD_GET_EXMBIST_SWITCH 1
 #define DSMI_DDR_SUB_CMD_GET_CACHE_FAULT_INFO 2
 #define DSMI_DDR_SUB_CMD_GET_FLASH_FAULT_INFO 3
-
+#define DSMI_DDR_SUB_CMD_SET_KERNEL_MEMTEST_ALG 4
+#define DSMI_DDR_SUB_CMD_SET_EXMBIST_ALG 5
 struct dsmi_ddr_single_fault_addr_info {
     unsigned long long physical_addr;
     unsigned int size;
@@ -1555,6 +1565,27 @@ struct dsmi_ddr_fault_addr_info {
     struct dsmi_ddr_single_fault_addr_info addr_info[DSMI_DDR_ADDR_INFO_MAX_LEN];
 };
 
+typedef struct {
+    unsigned long long addr;
+    unsigned long long len;
+} dsmi_ddr_test_range;
+
+struct dsmi_memtest_cfg {
+    int flag;
+    int pattern_num;
+    int alg_id;
+    int max_test_time; //second
+    dsmi_ddr_test_range range[32]; // num:32
+    int fragment_size;
+    int fragment_index;
+};
+
+struct dsmi_exmbist_cfg {
+    int flag;
+    int alg_id;
+    int fragment_size;
+    int fragment_index;
+};
 
 #define DSMI_MEMORY_RESERVE_LEN 38
 struct dsmi_memory_info {
@@ -1598,6 +1629,7 @@ typedef enum {
 typedef enum {
     DSMI_SOC_INFO_SUB_CMD_DOMAIN_INFO = 0,
     DSMI_SOC_INFO_SUB_CMD_CUST_OP_ENHANCE = 1,
+    DSMI_SOC_INFO_SUB_CMD_CPU_TOPO,
     DSMI_SOC_INFO_SUB_CMD_MAX,
 } DSMI_SOC_INFO_SUB_CMD;
 
@@ -2176,7 +2208,8 @@ struct dsmi_spod_info {
     unsigned int server_id;
     unsigned int chassis_id;
     unsigned int super_pod_type;
-    unsigned int reserve[6];
+    unsigned int super_pod_intercon_type;
+    unsigned int reserve[5];
 };
 
 typedef enum {
@@ -2384,10 +2417,20 @@ typedef struct dsmi_trs_config_stru {
     unsigned char reserve[16];
 } DSMI_TRS_CONFIG_STRU;
 
+typedef struct dsmi_ubdev_id_info {
+    unsigned short device_id;
+    unsigned short vendor_id;
+    unsigned short module_vendor_id;
+    unsigned short module_id;
+    unsigned char reserved[32];
+} DSMI_UBDEV_ID_INFO;
+
 /* DSMI sub command for UB module */
 typedef enum {
     DSMI_UB_INFO_SUB_CMD_PORT_STATUS = 0,
     DSMI_UB_INFO_SUB_CMD_UB_DFX_INFO = 1,
+    DSMI_UB_INFO_SUB_CMD_ID,
+    DSMI_UB_INFO_SUB_CMD_URMA_DEV_NAME,
     DSMI_UB_INFO_SUB_CMD_MAX,
 } DSMI_UB_SUB_CMD;
 
@@ -2423,6 +2466,19 @@ typedef struct dsmi_numa_map_info {
     char name[MAX_NUMA_NAME_LEN];
     int id;
 } DSMI_NUMA_MAP_INFO;
+
+#define DSMI_MAX_CPU_TOPO_NUM 64
+struct dsmi_single_cpu_topology_info {
+    unsigned long long cpu_mask;
+    unsigned char cpu_id;
+    unsigned char is_share;
+    unsigned char phy_cpu_id;
+    unsigned char hyperthread_id;
+};
+struct dsmi_cpu_topology_info {
+    unsigned int total_nums;
+    struct dsmi_single_cpu_topology_info single_cpu_topo_info[DSMI_MAX_CPU_TOPO_NUM];
+};
 
 /**
 * @ingroup driver
@@ -2702,6 +2758,19 @@ DLLEXPORT int dsmi_get_device_utilization_rate(int device_id, int device_type, u
 */
 DLLEXPORT int dsmi_get_device_frequency(int device_id, int device_type, unsigned int *pfrequency);
 
+ /**
+* @ingroup driver
+* @brief Get the frequency of the HiSilicon SOC of the Ascension AI processor
+* @attention NULL
+* @param [in] device_info  The device_info include device id and part id
+* @param [in] device_type  device_type
+* @param [out] pfrequency  Frequency, unit MHZ
+* @return  0 for success, others for fail
+* @note
+*/
+DLLEXPORT int dsmi_get_device_frequency_v2(struct dsmi_device_info device_info, int device_type,
+    unsigned int *pfrequency);
+
 /**
 * @ingroup driver
 * @brief Get the number of Flash
@@ -2747,6 +2816,19 @@ DLLEXPORT int dsmi_get_memory_info(int device_id, struct dsmi_memory_info_stru *
 * @note Support:Ascend310,Ascend310B,Ascend910,Ascend310P,Ascend910B,Ascend910_93,Ascend950,Ascend910_55
 */
 DLLEXPORT int dsmi_get_ecc_info(int device_id, int device_type, struct dsmi_ecc_info_stru *pdevice_ecc_info);
+
+/**
+* @ingroup driver
+* @brief Get ECC information of the specified device
+* @attention NULL
+* @param [in] device_info  The device_info include device id and part id
+* @param [in] device_type  device type
+* @param [out] pdevice_ecc_info  return ECC information
+* @return  0 for success, others for fail
+* @note
+*/
+DLLEXPORT int dsmi_get_ecc_info_v2(struct dsmi_device_info device_info, int device_type,
+    struct dsmi_ecc_info_stru *pdevice_ecc_info);
 
 /**
 * @ingroup driver
@@ -3777,20 +3859,6 @@ DLLEXPORT int dsmi_set_detect_info(unsigned int device_id, DSMI_DETECT_MAIN_CMD 
  */
 DLLEXPORT int dsmi_get_detect_info(unsigned int device_id, DSMI_DETECT_MAIN_CMD main_cmd,
     unsigned int sub_cmd, void *buf, unsigned int *buf_size);
-
-/**
-* @ingroup driver
-* @brief Replace a faulty device with the backup device.
-* @attention NULL
-* @param [in] src_dev_attr  Attribute of the faulty device
-* @param [in] dst_dev_attr  Attribute of the backup device
-* @param [in] timeout  Setting of timeout duration, [1S, 120S]
-* @param [in] flag  Reserve para
-* @return  0 for success, others for fail
-* @note Support:,Ascend950,Ascend910_55
-*/
-DLLEXPORT int dsmi_device_replace(struct dsmi_device_attr *src_dev_attr, struct dsmi_device_attr *dst_dev_attr,
-    unsigned int timeout, unsigned long long flag);
 
 /**
 * @ingroup driver

@@ -146,23 +146,28 @@
 #define DEV_MON_CMD_D_SET_BIST_INFO           0x4B
 #define DEV_MON_CMD_D_GET_LAST_BOOTSTATE      0x4C
 
-#define DEV_MON_CMD_FAULT_INJECT              0x4F
-#define DEV_MON_CMD_D_GET_DEVICE_INFO_CRITICAL           0x52
-#define DEV_MON_CMD_D_CTRL_DEVICE_NODE        0x53
-#define DEV_MON_CMD_D_GET_ALL_DEVICE_NODE     0x54
-#define DEV_MON_CMD_D_GET_FLASH_CONTENT       0x55
-#define DEV_MON_CMD_D_SET_FLASH_CONTENT       0x56
-#define DEV_MON_CMD_D_SET_DEVICE_INFO_CRITICAL            0x57
-#define DEV_MON_CMD_D_GET_DEVICE_STATE        0x58
+#define DEV_MON_CMD_FAULT_INJECT                0x4F
+#define DEV_MON_CMD_D_GET_DEVICE_INFO_CRITICAL  0x52
+#define DEV_MON_CMD_D_CTRL_DEVICE_NODE          0x53
+#define DEV_MON_CMD_D_GET_ALL_DEVICE_NODE       0x54
+#define DEV_MON_CMD_D_GET_FLASH_CONTENT         0x55
+#define DEV_MON_CMD_D_SET_FLASH_CONTENT         0x56
+#define DEV_MON_CMD_D_SET_DEVICE_INFO_CRITICAL  0x57
+#define DEV_MON_CMD_D_GET_DEVICE_STATE          0x58
 #define DEV_MON_CMD_HOT_PATCH_OPERATION         0x59
 
-#define DEV_MON_CMD_D_SET_DETECT_INFO         0x60
-#define DEV_MON_CMD_D_GET_DETECT_INFO         0x61
-#define DEV_MON_CMD_GET_NETWORK_HEALTH        0x62
-#define DEV_MON_CMD_GET_CUST_BOARD_INFO       0x63
-#define DEV_MON_CMD_ABL_MAMI_PATCH_OPERATION  0x64
-#define DEV_MON_CMD_D_GET_DIE_ID_V2  0x65
-#define DEV_MON_CMD_HOTRESET_INFORM_AO        0x66
+#define DEV_MON_CMD_D_SET_DETECT_INFO           0x60
+#define DEV_MON_CMD_D_GET_DETECT_INFO           0x61
+#define DEV_MON_CMD_GET_NETWORK_HEALTH          0x62
+#define DEV_MON_CMD_GET_CUST_BOARD_INFO         0x63
+#define DEV_MON_CMD_ABL_MAMI_PATCH_OPERATION    0x64
+#define DEV_MON_CMD_D_GET_DIE_ID_V2             0x65
+#define DEV_MON_CMD_HOTRESET_INFORM_AO          0x66
+#define DEV_MON_CMD_D_GET_FREQUENCY_V2          0x67
+
+#define DEV_MON_CMD_QUERY_ECC_INFO_V2           0x69
+
+#define DEV_MON_CMD_LOOPBACK_TEST               0x79
 /*
  * Commands with values greater than or equal to 0x80 are maintained by the product.
  */

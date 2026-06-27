@@ -67,17 +67,15 @@ find_fail:
     return ptr;
 }
 
-bool devmm_idr_is_empty(struct svm_idr *idr)
-{
-    return ka_base_idr_is_empty(&idr->idr);
-}
+bool devmm_idr_is_empty(struct svm_idr *idr) { return ka_base_idr_is_empty(&idr->idr); }
 
 void devmm_idr_destroy(struct svm_idr *idr, void (*free_ptr)(const void *ptr))
 {
     char *entry = NULL;
     int id;
     ka_task_mutex_lock(&idr->lock);
-    ka_base_idr_for_each_entry(&idr->idr, entry, id) {
+    ka_base_idr_for_each_entry(&idr->idr, entry, id)
+    {
         if (free_ptr != NULL) {
             free_ptr(entry);
             entry = NULL;
@@ -87,4 +85,3 @@ void devmm_idr_destroy(struct svm_idr *idr, void (*free_ptr)(const void *ptr))
     ka_base_idr_destroy(&idr->idr);
     ka_task_mutex_unlock(&idr->lock);
 }
-

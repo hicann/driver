@@ -10,11 +10,12 @@
 
 set(DRIVER_DEVICE_NAME "driver-device")
 set(DRIVER_DEVICE_SERVER "https://ascend.devcloud.huaweicloud.com/artifactory/cann-run-mirror/dependency")
-set(DRIVER_DEVICE_VERSION "8.5.0-beta.1")
 if(${PRODUCT} STREQUAL ascend950)
-    set(DRIVER_DEVICE_DATE "20260325000325538")
+    set(DRIVER_DEVICE_VERSION "9.1.0")
+    set(DRIVER_DEVICE_DATE "20260624000326746")
 else()
-    set(DRIVER_DEVICE_DATE "20260325000325538")
+    set(DRIVER_DEVICE_VERSION "9.1.0")
+    set(DRIVER_DEVICE_DATE "20260624000326746")
 endif()
 
 if(POLICY CMP0135)
@@ -52,12 +53,7 @@ if(NOT DRIVER_DEVICE_ARCHIVE_FILE)
         set(DRIVER_DEVICE_RELEASE "demo")
     endif()
 
-    if(${PRODUCT} STREQUAL ascend950)
-        # current only support --demo but need product package
-        set(DRIVER_DEVICE_RELEASE "product")
-    endif()
-
-    set(DRIVER_DEVICE_FILE "cann-driver-device-${DRIVER_DEVICE_PRODUCT}-${DRIVER_DEVICE_RELEASE}_${DRIVER_DEVICE_VERSION}_linux-${CMAKE_HOST_SYSTEM_PROCESSOR}.tar.gz")
+    set(DRIVER_DEVICE_FILE "cann-driver-device-${DRIVER_DEVICE_PRODUCT}-${DRIVER_DEVICE_RELEASE}_${DRIVER_DEVICE_VERSION}_linux-${DRIVER_DEVICE_PLATFORM}.tar.gz")
     set(DRIVER_DEVICE_URL "${DRIVER_DEVICE_SERVER}/${DRIVER_DEVICE_VERSION}/${DRIVER_DEVICE_DATE}/${DRIVER_DEVICE_PLATFORM}/basic/${DRIVER_DEVICE_FILE}")
     message(STATUS "Not find driver-device package, downloading ${DRIVER_DEVICE_NAME} from ${DRIVER_DEVICE_URL}")
     include(FetchContent)
@@ -106,7 +102,6 @@ function(get_driver_device)
             COMMAND ${CMAKE_COMMAND} -E copy ${DRV_DEV_ARCHIVE_PREFIX}/tools/upgrade-tool ${CMAKE_BINARY_DIR}/lib/tools/
             COMMAND ${CMAKE_COMMAND} -E copy ${DRV_DEV_ARCHIVE_PREFIX}/tools/hccn_tool ${CMAKE_BINARY_DIR}/lib/tools/
             COMMAND ${CMAKE_COMMAND} -E copy ${DRV_DEV_ARCHIVE_PREFIX}/lib64/common/dcache_lock_mix.o ${CMAKE_BINARY_DIR}/lib/lib64/common/
-            COMMAND ${CMAKE_COMMAND} -E copy ${DRV_DEV_ARCHIVE_PREFIX}/lib64/common/libtls_adp.so ${CMAKE_BINARY_DIR}/lib/lib64/common/
             COMMAND ${CMAKE_COMMAND} -E copy ${DRV_DEV_ARCHIVE_PREFIX}/lib64/common/libascend_kms.so ${CMAKE_BINARY_DIR}/lib/lib64/common/
             COMMAND ${CMAKE_COMMAND} -E copy ${DRV_DEV_ARCHIVE_PREFIX}/script/hccn_weak_dict.conf ${CMAKE_BINARY_DIR}/lib/script/
             DEPENDS extract_driver_device_pre

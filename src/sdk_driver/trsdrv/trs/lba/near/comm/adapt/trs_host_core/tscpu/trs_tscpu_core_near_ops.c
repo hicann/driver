@@ -48,8 +48,4 @@ static struct trs_core_adapt_ops trs_tscpu_core_ops = {
     .get_connect_protocol = trs_host_get_connect_protocol,
 };
 
-struct trs_core_adapt_ops *trs_core_get_tscpu_adapt_ops(void)
-{
-    return &trs_tscpu_core_ops;
-}
-
+struct trs_core_adapt_ops *trs_core_get_tscpu_adapt_ops(void) { return &trs_tscpu_core_ops; }

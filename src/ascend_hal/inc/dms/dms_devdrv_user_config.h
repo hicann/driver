@@ -11,7 +11,7 @@
 #define __DEVDRV_USER_CONFIG_H__
 
 #define CTRL_CPU_NUM_MIN 1
-#define DATA_CPU_NUM_MIN 0
+#define DATA_CPU_NUM_MIN 2
 #define AI_CPU_NUM_MIN 1
 #define COM_CPU_NUM_MAX 2
 #define TOTAL_CPU_NUM_MAX 16

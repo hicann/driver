@@ -21,24 +21,27 @@
 
 #define TRS_UB_PRIORITY_HIGH 10
 
-#define TRS_UB_HOST_CQ_MAX              2048U
-#define TRS_UB_HOST_SQ_MAX              2048U
+#define TRS_UB_HOST_CQ_MAX 2048U
+#define TRS_UB_HOST_SQ_MAX 2048U
 
-#define TRS_UB_SHARE_JFR                1U
-#define TRS_UB_JFR_RNR_TIME             10U
-#define TRS_UB_JFR_MAX_SGE              1U
-#define TRS_UB_JETTY_RNR_RETRY          7U
-#define TRS_UB_JETTY_ERR_TIMEOUT        17U  // 0-7: 128ms, 8-15:1s, 16-23:8s, 24-31:64s
+#define TRS_UB_SHARE_JFR 1U
+#define TRS_UB_JFR_RNR_TIME 10U
+#define TRS_UB_JFR_MAX_SGE 1U
+#define TRS_UB_JETTY_RNR_RETRY 7U
+#define TRS_UB_JETTY_ERR_TIMEOUT 17U // 0-7: 128ms, 8-15:1s, 16-23:8s, 24-31:64s
 
-#define TRS_UB_CQ_JFC_CR_EXPERT_NUM     1024
-#define TRS_UB_DEFAULT_KEY_POLICY       0U
-#define TRS_UB_DEFAULT_NON_PIN          1U
+#define TRS_UB_CQ_JFC_CR_EXPERT_NUM 1024
+#define TRS_UB_DEFAULT_KEY_POLICY 0U
+#define TRS_UB_DEFAULT_NON_PIN 1U
 
-#define TRS_UB_SQ_HEAD_BUFFER_SIZE      2U
-#define TRS_UB_SQ_TAIL_BUFFER_SIZE      2U
-#define TRS_UB_SQ_BUFFER_SIZE           (TRS_UB_SQ_HEAD_BUFFER_SIZE + TRS_UB_SQ_TAIL_BUFFER_SIZE)
-#define TRS_UB_SQ_SEG_SIZE              (TRS_UB_SQ_BUFFER_SIZE * TRS_UB_HOST_SQ_MAX)
-#define TRS_UB_REG_SEG_SIZE             4096U
+#define TRS_UB_SQ_HEAD_BUFFER_SIZE 2U
+#define TRS_UB_SQ_TAIL_BUFFER_SIZE 2U
+#define TRS_UB_SQ_BUFFER_SIZE (TRS_UB_SQ_HEAD_BUFFER_SIZE + TRS_UB_SQ_TAIL_BUFFER_SIZE)
+#define TRS_UB_SQ_SEG_SIZE (TRS_UB_SQ_BUFFER_SIZE * TRS_UB_HOST_SQ_MAX)
+#define TRS_UB_REG_SEG_SIZE (5 * 4096U) /* one page for (cnt_)notify, four pages for sq head/tail */
+#define TRS_UB_REG_SEG_NOTIFY_OFFSET 0U
+#define TRS_UB_REG_SEG_CNT_NOTIFY_OFFSET 2048U
+#define TRS_UB_REG_SEG_SQ_OFFSET 4096U
 
 struct trs_ub_seg {
     size_t seg_size;
@@ -57,7 +60,7 @@ struct trs_ub_cq_ctx {
 };
 
 #define TRS_UB_UNINIT_FLAG 0U
-#define TRS_UB_INIT_FLAG   1U
+#define TRS_UB_INIT_FLAG 1U
 
 struct trs_jetty_info {
     u32 devid;
@@ -87,7 +90,7 @@ struct trs_ub_dev {
     u32 devid;
     u32 vfid;
     u32 sec_vfid; /* one vnpu supports two vf */
-    u32 die_id; /* u die id*/
+    u32 die_id;   /* u die id*/
     u32 func_id;
     u32 token_val;
     struct kref_safe ref;
@@ -96,6 +99,7 @@ struct trs_ub_dev {
     struct trs_jetty_info jetty_info[TRS_VF_MAX_NUM];
     struct ubcore_target_seg *notify_tseg;
     struct ubcore_target_seg *cnt_notify_tseg;
+    struct ubcore_target_seg *sq_reg_tseg;
 #ifdef TRS_HOST
     struct trs_ub_seg sq_seg;
     struct trs_ub_cq_ctx cq_ctx[TRS_UB_HOST_CQ_MAX];
@@ -110,6 +114,7 @@ struct trs_ub_dev {
     uintptr_t urpc_cqe_addr;
     void *notify_kva;
     void *cnt_notify_kva;
+    void *sq_reg_kva;
 #endif
 };
 
@@ -140,4 +145,3 @@ void trs_ub_destroy_jetty(struct trs_ub_dev *ub_dev, u32 vfid);
 int trs_ub_stars_soc_res_ctrl(struct trs_id_inst *inst, u32 type, u32 id, u32 cmd);
 
 #endif /* TRS_UB_INIT_COMMON_H */
-

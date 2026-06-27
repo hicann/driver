@@ -28,4 +28,3 @@ static inline void trs_kernel_soft_fault_report(u32 devid)
     }
 }
 #endif
-

@@ -23,4 +23,3 @@ struct context_private_data {
 };
 
 #endif
-

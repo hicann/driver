@@ -69,6 +69,22 @@
 #define BBOX_HBM_VMCORE_LEN            (0xFFFFFFFFUL)
 #define BBOX_HBM_VMCORE_OFFSET         0x0UL
 
+/* ts log */
+#define BBOX_DUMP_TS_LOG_OFFSET 0x0UL
+#define BBOX_DUMP_TS_LOG_LEN 0xC0000UL
+
+/* imp log */
+#define BBOX_DUMP_IMP_LOG_OFFSET 0x0UL
+#define BBOX_DUMP_IMP_LOG_LEN 0x200000UL
+
+/* imu log */
+#define BBOX_DUMP_IMU_LOG_OFFSET 0x0UL
+#define BBOX_DUMP_IMU_LOG_LEN 0x80000UL
+
+/* hsm log */
+#define BBOX_DUMP_HSM_LOG_OFFSET 0x0UL
+#define BBOX_DUMP_HSM_LOG_LEN 0x100000UL
+
 #define KDUMP_TIMEOUT_TIMES 600
 #define FLAG_ALL_DONE 5
 #endif

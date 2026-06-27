@@ -11,7 +11,7 @@
  * GNU General Public License for more details.
  */
 
-#include <linux/types.h>
+#include "ka_type.h"
 
 #include "devmm_adapt.h"
 #include "svm_kernel_msg.h"
@@ -55,15 +55,16 @@ struct devmm_page_bitmap_format {
     u32 devid_wid;
 };
 
-#define page_bitmap_bit_version_adapt(src_bitmap, src_bit, dst_bitmap, dst_bit) do { \
-    if (((src_bit) != DEVMM_PAGE_INVAILD_BIT) && ((dst_bit) != DEVMM_PAGE_INVAILD_BIT)) { \
-        u32 val = devmm_page_bitmap_get_value(src_bitmap, src_bit, 1); \
-        devmm_page_bitmap_set_value(dst_bitmap, dst_bit, 1, val); \
-    } \
-} while (0)
+#define page_bitmap_bit_version_adapt(src_bitmap, src_bit, dst_bitmap, dst_bit)               \
+    do {                                                                                      \
+        if (((src_bit) != DEVMM_PAGE_INVAILD_BIT) && ((dst_bit) != DEVMM_PAGE_INVAILD_BIT)) { \
+            u32 val = devmm_page_bitmap_get_value(src_bitmap, src_bit, 1);                    \
+            devmm_page_bitmap_set_value(dst_bitmap, dst_bit, 1, val);                         \
+        }                                                                                     \
+    } while (0)
 
-static inline void msg_field_ver_adapt(void *src_msg, int src_field_offset,
-    void *dst_msg, int dst_field_offset, u64 field_size)
+static inline void msg_field_ver_adapt(
+    void *src_msg, int src_field_offset, void *dst_msg, int dst_field_offset, u64 field_size)
 {
     if (((src_field_offset) != MSG_FORMAT_INVALID_OFFSET) && ((dst_field_offset) != MSG_FORMAT_INVALID_OFFSET)) {
         void *src = (void *)((u64)(uintptr_t)src_msg + src_field_offset);
@@ -97,8 +98,7 @@ static struct devmm_page_bitmap_format *devmm_get_svm_version_000_page_bitmap_fo
         .advise_4g_bit = 23,
         .advise_p2p_ddr_bit = 24,
         .devid_shift = 25,
-        .devid_wid = 7
-    };
+        .devid_wid = 7};
     return &svm_version_000_page_bitmap_format;
 }
 
@@ -127,8 +127,7 @@ static struct devmm_page_bitmap_format *devmm_get_svm_version_001_page_bitmap_fo
         .advise_4g_bit = DEVMM_PAGE_INVAILD_BIT,
         .advise_p2p_ddr_bit = DEVMM_PAGE_ADVISE_P2P_DDR_BIT,
         .devid_shift = DEVMM_PAGE_DEVID_SHIT,
-        .devid_wid = DEVMM_PAGE_DEVID_WID
-    };
+        .devid_wid = DEVMM_PAGE_DEVID_WID};
     return &svm_version_001_page_bitmap_format;
 }
 #ifndef EMU_ST
@@ -196,8 +195,8 @@ static struct devmm_setup_dev_msg_format *devmm_get_svm_version_002_setup_dev_ms
         .ssid_offset = sizeof(struct devmm_chan_msg_head) + sizeof(u32) + sizeof(int),
         .logic_devid_offset = sizeof(struct devmm_chan_msg_head) + sizeof(u32) + sizeof(int) + sizeof(int),
         .heap_cnt_offset = sizeof(struct devmm_chan_msg_head) + sizeof(u32) + sizeof(int) + sizeof(int) + sizeof(u32),
-        .heap_info_offset = sizeof(struct devmm_chan_msg_head) + sizeof(u32) + sizeof(int) + sizeof(int) + sizeof(u32) +
-                            sizeof(u32),
+        .heap_info_offset =
+            sizeof(struct devmm_chan_msg_head) + sizeof(u32) + sizeof(int) + sizeof(int) + sizeof(u32) + sizeof(u32),
     };
     return &svm_version_002_setup_dev_msg_format;
 }

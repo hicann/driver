@@ -28,8 +28,8 @@ static inline bool hdcdrv_use_kernel_mem_pool(int service_type)
 int hdcdrv_init_dev_mem_pool(struct hdcdrv_dev *hdc_dev);
 void hdcdrv_uninit_dev_mem_pool(struct hdcdrv_dev *hdc_dev);
 int hdcdrv_alloc_mem_pool_for_session(struct hdcdrv_session *session, struct hdcdrv_dev *hdc_dev,
-    struct hdcdrv_ctx *ctx, u64 user_va);
+                                      struct hdcdrv_ctx *ctx, u64 user_va);
 int hdcdrv_free_mem_pool_for_session(struct hdcdrv_session *session, struct hdcdrv_dev *hdc_dev,
-    struct hdcdrv_ctx *ctx);
+                                     struct hdcdrv_ctx *ctx);
 void hdcdrv_clear_mem_pool_by_ctx(struct hdcdrv_ctx *ctx);
 #endif // _HDCDRV_MEM_POOL_H_

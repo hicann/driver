@@ -51,9 +51,19 @@ const char *get_log_get_level_string(uint32_t level)
     return get_log_get_level_string_inner(level);
 }
 
+const char *get_log_get_level_string_default(uint32_t level)
+{
+    return drv_log_get_level_str_default(level);
+}
+
 const char *get_log_get_print_time(void)
 {
     return get_log_get_print_time_inner();
+}
+
+const char *get_log_get_print_time_default(void)
+{
+    return drv_get_tm_default();
 }
 
 uint32_t get_log_level_shift(uint32_t level)
@@ -76,9 +86,9 @@ int32_t drv_log_report_err_msg_handle_unregister(void)
     return drv_log_report_err_msg_handle_unregister_impl();
 }
 
-register_format_err_msg_func get_format_err_msg_register_func(void) 
-{ 
-    return get_format_err_msg_register_func_impl(); 
+register_format_err_msg_func get_format_err_msg_register_func(void)
+{
+    return get_format_err_msg_register_func_impl();
 }
 
 report_predefined_err_msg_func get_predefined_err_msg_report_func(void)
@@ -86,7 +96,63 @@ report_predefined_err_msg_func get_predefined_err_msg_report_func(void)
     return get_predefined_err_msg_report_func_impl();
 }
 
-report_inner_err_msg_func get_inner_err_msg_report_func(void) 
-{ 
-    return get_inner_err_msg_report_func_impl(); 
+report_inner_err_msg_func get_inner_err_msg_report_func(void)
+{
+    return get_inner_err_msg_report_func_impl();
+}
+
+void report_arg_out_of_range(const char *func_name, const char *para_name, unsigned int para_value, unsigned int left,
+                             unsigned int right)
+{
+    int ret = 0;
+    unsigned long arg_num = 4;
+    const char *keys[] = {"func_name", "para_value", "para_name", "reason"};
+    char para_value_str[MAX_PARA_VALUE_STR_SIZE] = {0};
+    char reason[MAX_REASON_STR_SIZE] = {0};
+    ret = snprintf_s(para_value_str, sizeof(para_value_str), sizeof(para_value_str), "%u", para_value);
+    if (ret < 0) {
+        return;
+    }
+    ret = snprintf_s(reason, sizeof(reason), sizeof(reason),
+                     "The parameter value is out of range. The valid range is [%u,%u]", left, (right - 1));
+    if (ret < 0) {
+        return;
+    }
+    const char *values[] = {func_name, para_value_str, para_name, reason};
+    REPORT_PREDEFINED_ERR_MSG("EL0016", keys, values, arg_num);
+}
+void report_arg_equal_to_zero(const char *func_name, const char *para_name)
+{
+    unsigned long arg_num = 4;
+    const char *keys[] = {"func_name", "para_value", "para_name", "reason"};
+    const char *values[] = {func_name, "0", para_name, "The input parameter must be greater than 0"};
+    REPORT_PREDEFINED_ERR_MSG("EL0016", keys, values, arg_num);
+}
+void report_arg_null_pointer(const char *func_name, const char *para_name)
+{
+    unsigned long arg_num = 2;
+    const char *keys[] = {"func_name", "para_name"};
+    const char *values[] = {func_name, para_name};
+    REPORT_PREDEFINED_ERR_MSG("EL0017", keys, values, arg_num);
+}
+static void report_insufficient_memory_inner(const char *error_code, unsigned long long size, const char *module_name)
+{
+    int ret = 0;
+    unsigned long arg_num = 2;
+    char size_str[MAX_MEM_SIZE_STR_SIZE] = {0};
+    ret = snprintf_s(size_str, sizeof(size_str), sizeof(size_str), "%llu bytes", size);
+    if (ret < 0) {
+        return;
+    }
+    const char *keys[] = {"size", "moduleName"};
+    const char *values[] = {size_str, module_name};
+    REPORT_PREDEFINED_ERR_MSG(error_code, keys, values, arg_num);
+}
+void report_insufficient_host_memory(unsigned long long size, const char *module_name)
+{
+    report_insufficient_memory_inner("EL0018", size, module_name);
+}
+void report_insufficient_device_memory(unsigned long long size, const char *module_name)
+{
+    report_insufficient_memory_inner("EL0019", size, module_name);
 }

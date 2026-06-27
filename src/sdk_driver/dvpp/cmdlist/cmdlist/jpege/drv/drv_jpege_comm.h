@@ -14,11 +14,15 @@
 #ifndef JPEGE_DRV_JPEGE_COMM_H
 #define JPEGE_DRV_JPEGE_COMM_H
 
-#include <linux/types.h>
+#include "ka_type.h"
 
 #include "dvpp_cmdlist_num_define.h"
 #include "dvpp_cmdlist.h"
 #include "dvpp_decoder.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #define CMDLIST_FIX_WRITE 0x1FFFFE
 
@@ -88,4 +92,7 @@ void config_jpege_cmdnode(struct CmdNode *node, jpege_config* jpege_cfg);
 void config_jpege_cmdnode_reverse_space(struct CmdNode *node);
 void config_jpege_dump_addr(struct CmdNode *node, jpege_config* jpege_cfg);
 
+#ifdef __cplusplus
+}
+#endif
 #endif // #ifndef JPEGE_DRV_JPEGE_COMM_H

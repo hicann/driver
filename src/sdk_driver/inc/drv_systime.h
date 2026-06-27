@@ -13,7 +13,7 @@
 #ifndef DRV_SYSTIME_H
 #define DRV_SYSTIME_H
 
-#include <linux/time.h>
+#include "ka_system_pub.h"
 #include "kernel_version_adapt.h"
 
 #ifdef DRV_SUPPORT_SYSCOUNT
@@ -29,7 +29,7 @@ static inline unsigned long long get_syscnt(void)
 #define NSECS_PER_USEC  (1000)
 static inline unsigned long long get_syscnt(void)
 {
-    struct timespec stamp = current_kernel_time();
+    ka_timespec_t stamp = current_kernel_time();
     return (unsigned long long)(stamp.tv_sec * USECS_PER_SEC + stamp.tv_nsec / NSECS_PER_USEC);
 }
 #endif

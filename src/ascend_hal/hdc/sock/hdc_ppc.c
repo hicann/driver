@@ -27,7 +27,7 @@
 #include "hdc_ppc.h"
 #include "hdc_adapt.h"
 
-#if defined (CFG_PLATFORM_EQUIP) && defined (CFG_SOC_PLATFORM_RC)
+#if defined(CFG_PLATFORM_EQUIP) && defined(CFG_SOC_PLATFORM_RC)
 #define DRV_HDC_RC_USER_NUM 4
 #define DRV_HDC_RC_USER_NAME_LEN 20
 static struct {
@@ -80,7 +80,7 @@ STATIC void drv_hdc_socket_create_dir(void)
 
     if (mmAccess(g_ppc_dirs) == -1) {
         hdc_create_dir_info_output();
-#if defined (CFG_PLATFORM_EQUIP) && defined (CFG_SOC_PLATFORM_RC)
+#if defined(CFG_PLATFORM_EQUIP) && defined(CFG_SOC_PLATFORM_RC)
         if (drv_hdc_ppc_check_user(user)) {
             ret = mkdir((const char *)g_ppc_dirs, (mode_t)(S_IRWXU | S_IRGRP | S_IXGRP)); // 0750
             if (ret != 0) {
@@ -99,26 +99,26 @@ STATIC void __attribute__((constructor)) drv_hdc_socket_init(void)
 }
 
 STATIC drvError_t drv_hdc_socket_sock_path(struct sockaddr_un *addr, enum sock_type type, int dev_id,
-    const signed int pid, signed int *path_len)
+                                           const signed int pid, signed int *path_len)
 {
     const char *type_str = NULL;
     signed int len = 0;
     if ((addr == NULL) || (path_len == NULL)) {
-        #ifndef TMP_UT
+#ifndef TMP_UT
         HDC_LOG_ERR("Input parameter addr or path_len is NULL.\n");
         return DRV_ERROR_INVALID_VALUE;
-        #endif
+#endif
     }
 
     type_str = type == SOCK_CLIENT ? "sock_client_" : "sock_server_";
 
     if ((len = sprintf_s(addr->sun_path, sizeof(addr->sun_path), "%s%s%d_%d", g_ppc_dirs, type_str, pid, dev_id)) ==
         -1) {
-        #ifndef TMP_UT
+#ifndef TMP_UT
         *path_len = 0;
         HDC_LOG_ERR("Call sprintf_s failed.\n");
         return DRV_ERROR_SOCKET_SET;
-        #endif
+#endif
     }
 
     *path_len = (signed int)offsetof(struct sockaddr_un, sun_path) + len;
@@ -134,18 +134,18 @@ drvError_t drv_hdc_socket_session_connect(int dev_id, signed int server_pid, PPC
     struct sockaddr_un srv_addr = {0};
 
     if (session == NULL) {
-        #ifndef TMP_UT
+#ifndef TMP_UT
         HDC_LOG_ERR("Input parameter session is NULL.\n");
         return DRV_ERROR_INVALID_VALUE;
-        #endif
+#endif
     }
 
     /* create a UNIX domain stream socket */
     if ((fd = socket(AF_UNIX, SOCK_STREAM, 0)) < 0) {
-        #ifndef TMP_UT
+#ifndef TMP_UT
         HDC_LOG_ERR("Create ppc socket error. (strerror=\"%s\"; errno=%d)\n", strerror(errno), errno);
         return DRV_ERROR_SOCKET_CREATE;
-        #endif
+#endif
     }
 
     /* fill socket address structure with server's address */
@@ -161,11 +161,11 @@ drvError_t drv_hdc_socket_session_connect(int dev_id, signed int server_pid, PPC
 
     if (ret < 0) {
         rval = DRV_ERROR_SOCKET_CONNECT;
-        HDC_LOG_WARN("Connect ppc socket not success. (strerror=\"%s\"; errno=%d; server_pid=%d)\n",
-                     strerror(errno), errno, server_pid);
+        HDC_LOG_WARN("Connect ppc socket not success. (strerror=\"%s\"; errno=%d; server_pid=%d)\n", strerror(errno),
+                     errno, server_pid);
         goto errout;
     }
-    #ifndef TMP_UT
+#ifndef TMP_UT
     /* malloc client session */
     pSession = (struct hdc_client_session *)drv_hdc_zalloc(sizeof(struct hdc_client_session));
     if (pSession == NULL) {
@@ -179,13 +179,12 @@ drvError_t drv_hdc_socket_session_connect(int dev_id, signed int server_pid, PPC
     pSession->session.sockfd = fd;
     *session = (PPC_SESSION)pSession;
     return DRV_ERROR_NONE;
-    #endif
+#endif
 
 errout:
     (void)close(fd);
     return rval;
 }
-
 
 drvError_t drv_hdc_socket_server_create(int dev_id, signed int server_pid, PPC_SERVER *server)
 {
@@ -196,37 +195,37 @@ drvError_t drv_hdc_socket_server_create(int dev_id, signed int server_pid, PPC_S
     struct sockaddr_un srv_addr = {0};
 
     if (server == NULL) {
-        #ifndef TMP_UT
+#ifndef TMP_UT
         HDC_LOG_ERR("Input parameter server is NULL.\n");
         return DRV_ERROR_INVALID_VALUE;
-        #endif
+#endif
     }
 
     if ((fd = socket(AF_UNIX, SOCK_STREAM, 0)) < 0) {
-        #ifndef TMP_UT
+#ifndef TMP_UT
         HDC_LOG_ERR("Create ppc socket error. (strerror=\"%s\"; errno=%d)\n", strerror(errno), errno);
         return DRV_ERROR_SOCKET_CREATE;
-        #endif
+#endif
     }
 
     /* fill in socket address structure */
     srv_addr.sun_family = AF_UNIX;
     if (drv_hdc_socket_sock_path(&srv_addr, SOCK_SERVER, dev_id, server_pid, &len) != DRV_ERROR_NONE) {
-        #ifndef TMP_UT
+#ifndef TMP_UT
         rval = DRV_ERROR_SOCKET_SET;
         goto errout;
-        #endif
+#endif
     }
     (void)unlink(srv_addr.sun_path);
 
     /* bind the name to the descriptor */
     if (bind(fd, (struct sockaddr *)&srv_addr, (unsigned int)len) < 0) {
-        #ifndef TMP_UT
+#ifndef TMP_UT
         rval = DRV_ERROR_SOCKET_BIND;
-        HDC_LOG_ERR("Bind ppc socket error. (strerror=\"%s\"; errno=%d; server_pid=%d)\n",
-                    strerror(errno), errno, server_pid);
+        HDC_LOG_ERR("Bind ppc socket error. (strerror=\"%s\"; errno=%d; server_pid=%d)\n", strerror(errno), errno,
+                    server_pid);
         goto errout;
-        #endif
+#endif
     }
 
     (void)chmod(srv_addr.sun_path, PPC_FILE_PERMISSION_WRITE);
@@ -237,7 +236,7 @@ drvError_t drv_hdc_socket_server_create(int dev_id, signed int server_pid, PPC_S
         goto errout;
     }
 
-    #ifndef TMP_UT
+#ifndef TMP_UT
     pHead = (struct hdc_server_head *)drv_hdc_zalloc(sizeof(struct hdc_server_head));
     if (pHead == NULL) {
         rval = DRV_ERROR_MALLOC_FAIL;
@@ -250,7 +249,7 @@ drvError_t drv_hdc_socket_server_create(int dev_id, signed int server_pid, PPC_S
     pHead->accept_wait = HDC_ACCEPT_NOT_WAITING;
     *server = (PPC_SERVER)pHead;
     return DRV_ERROR_NONE;
-    #endif
+#endif
 
 errout:
     (void)close(fd);
@@ -266,10 +265,10 @@ drvError_t drv_hdc_socket_session_accept(PPC_SERVER server, PPC_SESSION *session
     struct sockaddr_un un;
 
     if ((server == NULL) || (session == NULL)) {
-        #ifndef TMP_UT
+#ifndef TMP_UT
         HDC_LOG_WARN("Input parameter server or session is NULL.\n");
         return DRV_ERROR_INVALID_VALUE;
-        #endif
+#endif
     }
     pHead = (struct hdc_server_head *)server;
     len = (int)sizeof(un);
@@ -281,19 +280,19 @@ drvError_t drv_hdc_socket_session_accept(PPC_SERVER server, PPC_SESSION *session
 
     if (clifd < 0) {
         if (pHead->listenFd == -1) {
-            #ifndef TMP_UT
+#ifndef TMP_UT
             HDC_LOG_WARN("Server socket closed pHead\n");
             pHead->accept_wait = HDC_ACCEPT_NOT_WAITING;
             return DRV_ERROR_SOCKET_CLOSE;
-            #endif
+#endif
         }
-        HDC_LOG_ERR("Accept ppc socket error. (strerror=\"%s\"; errno=%d; listenFd=%d)\n",
-                    strerror(errno), errno, pHead->listenFd);
+        HDC_LOG_ERR("Accept ppc socket error. (strerror=\"%s\"; errno=%d; listenFd=%d)\n", strerror(errno), errno,
+                    pHead->listenFd);
         pHead->accept_wait = HDC_ACCEPT_NOT_WAITING;
         return DRV_ERROR_SOCKET_ACCEPT;
     }
 
-    #ifndef TMP_UT
+#ifndef TMP_UT
     HDC_LOG_INFO("Ppc Accept Session. (clifd=%d; Server_fd=%d; pid=%d)\n", clifd, pHead->listenFd, getpid());
     pHead->accept_wait = HDC_ACCEPT_NOT_WAITING;
 
@@ -318,5 +317,5 @@ drvError_t drv_hdc_socket_session_accept(PPC_SERVER server, PPC_SESSION *session
     *session = (PPC_SESSION)pSession;
 
     return DRV_ERROR_NONE;
-    #endif
+#endif
 }

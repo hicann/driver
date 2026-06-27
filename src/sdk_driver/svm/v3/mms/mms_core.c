@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2025. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -34,7 +34,7 @@ static int _mms_stats_mem_cfg(struct mms_ctx *mms_ctx, u64 va)
 {
     u64 uva = va;
     u32 udevid = mms_ctx->udevid;
-    u32 gup_flag =  SVM_GUP_FLAG_ACCESS_WRITE | SVM_GUP_FLAG_CHECK_PA_LOCAL;
+    u32 gup_flag = SVM_GUP_FLAG_ACCESS_WRITE | SVM_GUP_FLAG_CHECK_PA_LOCAL;
     int ret;
 
     mms_ctx->uva = uva;
@@ -49,8 +49,9 @@ static int _mms_stats_mem_cfg(struct mms_ctx *mms_ctx, u64 va)
 
     ret = svm_pin_uva_npages(uva, mms_ctx->npage_num, gup_flag, mms_ctx->pages, &mms_ctx->is_pfn_map);
     if (ret != 0) {
-        svm_err("mms pin user pages failed. (ret=%d; udevid=%u; va=0x%llx; num=%llu)\n",
-            ret, udevid, uva, mms_ctx->npage_num);
+        svm_err(
+            "mms pin user pages failed. (ret=%d; udevid=%u; va=0x%llx; num=%llu)\n", ret, udevid, uva,
+            mms_ctx->npage_num);
         svm_kvfree(mms_ctx->pages);
         mms_ctx->pages = NULL;
         return ret;
@@ -101,18 +102,20 @@ void mms_stats_mem_decfg(struct mms_ctx *mms_ctx)
     ka_task_up_write(&mms_ctx->rw_sem);
 }
 
-static void mms_print_mem_stats(ka_seq_file_t *seq, u32 udevid, u32 module_id, const char *type_name,
-    const char *module_name, struct mms_type_stats *type_stats)
+static void mms_print_mem_stats(
+    ka_seq_file_t *seq, u32 udevid, u32 module_id, const char *type_name, const char *module_name,
+    struct mms_type_stats *type_stats)
 {
     if (seq != NULL) {
-        ka_fs_seq_printf(seq,
-            "dev%-5d%-24s%-16s%-16u%-24llu%-24llu%-16llu%-16llu\n",
-            udevid, type_name, module_name, module_id, type_stats->alloced_size,
-            type_stats->alloced_peak_size, type_stats->alloc_cnt, type_stats->free_cnt);
+        ka_fs_seq_printf(
+            seq, "dev%-5d%-24s%-16s%-16u%-24llu%-24llu%-16llu%-16llu\n", udevid, type_name, module_name, module_id,
+            type_stats->alloced_size, type_stats->alloced_peak_size, type_stats->alloc_cnt, type_stats->free_cnt);
     } else {
-        svm_info("dev%u %s %s %u %llu %llu %llu\n",
-            udevid, type_name, module_name, module_id, type_stats->alloced_size,
-            type_stats->alloc_cnt, type_stats->free_cnt);
+        svm_info(
+            "udevid=dev%u; type_name=%s; module_name=%s; module_id=%u; alloced_size=%llu; alloc_cnt=%llu; "
+            "free_cnt=%llu;\n",
+            udevid, type_name, module_name, module_id, type_stats->alloced_size, type_stats->alloc_cnt,
+            type_stats->free_cnt);
     }
 }
 
@@ -123,7 +126,8 @@ static void _mms_mem_task_show(u32 udevid, struct mms_stats *mms_stats, ka_seq_f
     u32 mms_type;
 
     if (seq != NULL) {
-        ka_fs_seq_printf(seq,
+        ka_fs_seq_printf(
+            seq,
             "\nMem stats(Bytes):\nDevid   Mem_type           Module_name        Module_id       Current_alloced_size "
             "    Alloced_peak_size       Alloc_cnt       Free_cnt\n");
     } else {
@@ -140,8 +144,9 @@ static void _mms_mem_task_show(u32 udevid, struct mms_stats *mms_stats, ka_seq_f
             if (type_stats->alloc_cnt == 0) {
                 continue;
             }
-            mms_print_mem_stats(seq, udevid, module_id, get_mms_type_name(mms_type),
-                SVM_GET_MODULE_NAME(svm_module_name, module_id), type_stats);
+            mms_print_mem_stats(
+                seq, udevid, module_id, get_mms_type_name(mms_type), SVM_GET_MODULE_NAME(svm_module_name, module_id),
+                type_stats);
         }
     }
 }
@@ -156,7 +161,7 @@ void mms_mem_task_show(u32 udevid, struct mms_stats *mms_stats, ka_seq_file_t *s
 
 static void mms_get_stats(void *ctx, void *priv)
 {
-    struct mms_stats *stats= (struct mms_stats *)priv;
+    struct mms_stats *stats = (struct mms_stats *)priv;
     struct mms_ctx *mms_ctx = (struct mms_ctx *)svm_task_get_feature_priv(ctx, mms_get_feature_id());
     u32 module_id;
     u32 mms_type;

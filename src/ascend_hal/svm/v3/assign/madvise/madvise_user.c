@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * Copyright (c) 2026 Huawei Technologies Co., Ltd.
  * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -29,8 +29,9 @@ int svm_madvise(u32 devid, u64 va, u64 size, u32 flag)
 
     ret = svm_cmd_ioctl(devid, SVM_MEM_MADVISE, (void *)&para);
     if (ret != 0) {
-        svm_err("Svm ioctl mem advise failed. (ret=%d; devid=%u; va=0x%llx; size=%llu; flag=0x%x)\n",
-            ret, devid, va, size, flag);
+        svm_err(
+            "Svm ioctl mem advise failed. (ret=%d; devid=%u; va=0x%llx; size=%llu; flag=0x%x)\n", ret, devid, va, size,
+            flag);
     }
 
     return ret;

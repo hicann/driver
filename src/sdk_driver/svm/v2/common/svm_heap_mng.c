@@ -35,7 +35,7 @@ int devmm_get_virt_pfn_by_heap(const struct devmm_svm_heap *heap, u64 va, unsign
     }
 
     if ((va < heap->start) || (va >= (heap->start + heap->heap_size))) {
-        devmm_drv_err("Vaddress overflow. (va=0x%llx; start=0x%llx; size=%llu)\n", va, heap->start,  heap->heap_size);
+        devmm_drv_err("Vaddress overflow. (va=0x%llx; start=0x%llx; size=%llu)\n", va, heap->start, heap->heap_size);
         return -EINVAL;
     }
 
@@ -71,8 +71,8 @@ u64 devmm_get_page_num_by_pfn(struct devmm_svm_heap *heap, u64 pfn)
     }
 
     /* pfn is not first va's pfn */
-    tmp_ref = devmm_heap_ref_cnt_is_used_as_ref(ref) ? (struct devmm_heap_ref *)&heap->ref[pfn - 1]
-                                                     : (struct devmm_heap_ref *)&heap->ref[pfn - ref->count];
+    tmp_ref = devmm_heap_ref_cnt_is_used_as_ref(ref) ? (struct devmm_heap_ref *)&heap->ref[pfn - 1] :
+                                                       (struct devmm_heap_ref *)&heap->ref[pfn - ref->count];
     return tmp_ref->count;
 }
 
@@ -166,8 +166,8 @@ void devmm_svm_set_bitmap_mapped(u32 *page_bitmap, size_t size, size_t page_size
     }
     for (i = 0; i < page_num; i++) {
         if (!devmm_page_bitmap_is_page_available(page_bitmap + i)) {
-            devmm_drv_err("Bit map none alloc. (va_offset=0x%llx; size=%lu; devid=%u)\n",
-                (u64)i * tmp_page_size, size, devid);
+            devmm_drv_err(
+                "Bit map none alloc. (va_offset=0x%llx; size=%lu; devid=%u)\n", (u64)i * tmp_page_size, size, devid);
             return;
         }
         devmm_page_bitmap_set_flag(page_bitmap + i, mapped_flag);
@@ -194,8 +194,8 @@ void devmm_svm_clear_bitmap_mapped(u32 *page_bitmap, size_t size, size_t page_si
     }
     for (i = 0; i < page_num; i++) {
         if (!devmm_page_bitmap_is_page_available(page_bitmap + i)) {
-            devmm_drv_warn("Bit map none alloc. (va_offset=0x%llx; size=%lu; devid=%u)\n",
-                           i * tmp_page_size, size, devid);
+            devmm_drv_warn(
+                "Bit map none alloc. (va_offset=0x%llx; size=%lu; devid=%u)\n", i * tmp_page_size, size, devid);
             return;
         }
         devmm_page_bitmap_clear_flag(page_bitmap + i, mapped_flag);
@@ -221,16 +221,17 @@ int devmm_alloc_new_heap_pagebitmap(struct devmm_svm_heap *heap)
         return -ENOMEM;
     }
     page_cnt = heap->heap_size / heap->chunk_page_size;
-    heap->page_bitmap = (u32 *)__devmm_vmalloc_ex(page_cnt * sizeof(u32),
-        KA_GFP_KERNEL | __KA_GFP_ZERO | __KA_GFP_NOWARN | __KA_GFP_ACCOUNT, KA_PAGE_KERNEL);
-    devmm_drv_debug("Vmalloc page_bitmap heap. (start=%llx; heap_size=%llu; page_cnt=%lu)\n",
-        heap->start, heap->heap_size, page_cnt);
+    heap->page_bitmap = (u32 *)__devmm_vmalloc_ex(
+        page_cnt * sizeof(u32), KA_GFP_KERNEL | __KA_GFP_ZERO | __KA_GFP_NOWARN | __KA_GFP_ACCOUNT, KA_PAGE_KERNEL);
+    devmm_drv_debug(
+        "Vmalloc page_bitmap heap. (start=%llx; heap_size=%llu; page_cnt=%lu)\n", heap->start, heap->heap_size,
+        page_cnt);
     if (heap->page_bitmap == NULL) {
         devmm_drv_err("Vmalloc page_bitmap fail. (page_cnt=%lu)\n", page_cnt);
         return -ENOMEM;
     }
-    heap->ref = (u32 *)__devmm_vmalloc_ex(page_cnt * sizeof(u32), KA_GFP_KERNEL | __KA_GFP_ZERO | __KA_GFP_NOWARN | __KA_GFP_ACCOUNT,
-        KA_PAGE_KERNEL);
+    heap->ref = (u32 *)__devmm_vmalloc_ex(
+        page_cnt * sizeof(u32), KA_GFP_KERNEL | __KA_GFP_ZERO | __KA_GFP_NOWARN | __KA_GFP_ACCOUNT, KA_PAGE_KERNEL);
     if (heap->ref == NULL) {
         devmm_vfree_ex(heap->page_bitmap);
         heap->page_bitmap = NULL;
@@ -258,8 +259,7 @@ int devmm_set_page_ref_free(struct devmm_heap_ref *ref)
     devmm_page_ref_lock(ref);
     if ((ref->count != 1) || (ref->free != 0)) {
         /* The log cannot be modified, because in the failure mode library. */
-        devmm_drv_err("Set free error. (ref_lock=%d; ref_free=%d; ref_count=%d)\n",
-            ref->lock, ref->free, ref->count);
+        devmm_drv_err("Set free error. (ref_lock=%d; ref_free=%d; ref_count=%d)\n", ref->lock, ref->free, ref->count);
         devmm_page_ref_unlock(ref);
         return -EBUSY;
     }

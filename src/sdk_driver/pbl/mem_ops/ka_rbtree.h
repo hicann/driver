@@ -14,14 +14,13 @@
 #ifndef KA_RBTREE_H
 #define KA_RBTREE_H
 
-#include <linux/rbtree.h>
+#include "ka_base_pub.h"
 
-typedef unsigned long (*rb_handle_func)(struct rb_node *node);
+typedef unsigned long (*rb_handle_func)(ka_rb_node_t *node);
 
-int ka_rb_erase(struct rb_root *root, struct rb_node *node);
-int ka_rb_insert(struct rb_root *root, struct rb_node *node, rb_handle_func get_handle);
-struct rb_node *ka_rb_search(struct rb_root *root, unsigned long handle, rb_handle_func get_handle);
-struct rb_node *ka_rb_erase_one_node(struct rb_root *root);
+int ka_rb_erase(ka_rb_root_t *root, ka_rb_node_t *node);
+int ka_rb_insert(ka_rb_root_t *root, ka_rb_node_t *node, rb_handle_func get_handle);
+ka_rb_node_t *ka_rb_search(ka_rb_root_t *root, unsigned long handle, rb_handle_func get_handle);
+ka_rb_node_t *ka_rb_erase_one_node(ka_rb_root_t *root);
 
 #endif /* KA_RBTREE_H */
-

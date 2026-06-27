@@ -20,8 +20,10 @@
 #include "queue_user_interface.h"
 #include "svm_user_interface.h"
 #include "tsdrv_user_interface.h"
+#include "apm_user_interface.h"
 #include "pbl/pbl_urd_user.h"
 #include "dms_user_common.h"
+#include "soc_resmng_ioctl.h"
 
 #define DRV_COMM_ERR(fmt, ...) DRV_ERR(HAL_MODULE_TYPE_DEV_MANAGER, fmt, ##__VA_ARGS__)
 #define DRV_COMM_WARN(fmt, ...) DRV_WARN(HAL_MODULE_TYPE_DEV_MANAGER, fmt, ##__VA_ARGS__)
@@ -46,6 +48,7 @@ typedef enum {
     QUEUE_DEV_OPERATION,
     URD_DEV_OPERATION,
     DMS_DEV_OPERATION,
+    APM_DEV_OPERATION,
     MAX_DEV_OPERATION,
 } DRV_DEV_OPERATION;
 
@@ -73,12 +76,13 @@ static drvError_t(*drv_close_host_user_handlers[MAX_DEV_OPERATION])(uint32_t dev
         [QUEUE_DEV_OPERATION] = queue_device_close_user,
         [URD_DEV_OPERATION] = urdCloseRestoreHandler,
         [DMS_DEV_OPERATION] = dmsCloseRestoreHandler,
+        [APM_DEV_OPERATION] = apm_device_close_user,
 };
 
 static drvError_t(*drv_proc_res_backup_handlers[MAX_DEV_OPERATION])(halProcResBackupInfo *info) = {
         [ESCHED_DEV_OPERATION] = NULL,
         [MEM_DEV_OPERATION] = drvMemProcResBackup,
-        [TSDRV_DEV_OPERATION] = NULL,
+        [TSDRV_DEV_OPERATION] = trsMemProcResBackup,
         [BUFF_DEV_OPERATION] = NULL,
         [QUEUE_DEV_OPERATION] = NULL,
 };

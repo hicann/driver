@@ -18,7 +18,7 @@
 #include <fcntl.h>
 
 #include "securec.h"
-#include "dsmi_common_interface_custom.h"
+#include "dsmi_common_interface.h"
 #include "dcmi_interface_api.h"
 #include "dcmi_init_basic.h"
 #include "dcmi_fault_manage_intf.h"
@@ -32,6 +32,7 @@
 #include "dcmi_product_judge.h"
 #include "dcmi_environment_judge.h"
 #include "dcmi_mcu_intf.h"
+#include "dcmi_hpm_parse.h"
 
 #if defined DCMI_VERSION_1
 
@@ -50,7 +51,8 @@ int dcmi_mcu_get_upgrade_statues(int card_id, int *status, int *progress)
         return DCMI_ERR_CODE_INVALID_PARAMETER;
     }
 
-    if (dcmi_board_chip_type_is_ascend_910b() || dcmi_board_chip_type_is_ascend_910_93()) {
+    if (dcmi_board_chip_type_is_ascend_910b() || dcmi_board_chip_type_is_ascend_910_93() ||
+        dcmi_board_chip_type_is_ascend_950()) {
         gplog(LOG_ERR, "This device does not support dcmi_mcu_get_upgrade_statues.");
         return DCMI_ERR_CODE_NOT_SUPPORT;
     }
@@ -77,7 +79,8 @@ int dcmi_mcu_get_upgrade_status(int card_id, int *status, int *progress)
         return DCMI_ERR_CODE_INVALID_PARAMETER;
     }
 
-    if (dcmi_board_chip_type_is_ascend_910b() || dcmi_board_chip_type_is_ascend_910_93()) {
+    if (dcmi_board_chip_type_is_ascend_910b() || dcmi_board_chip_type_is_ascend_910_93() ||
+        dcmi_board_chip_type_is_ascend_950()) {
         gplog(LOG_ERR, "This device does not support dcmi_mcu_get_upgrade_status.");
         return DCMI_ERR_CODE_NOT_SUPPORT;
     }
@@ -98,6 +101,11 @@ int dcmi_mcu_upgrade_control(int card_id, int upgrade_type)
         return DCMI_ERR_CODE_OPER_NOT_PERMITTED;
     }
 
+    if (dcmi_board_chip_type_is_ascend_950()) {
+        gplog(LOG_OP, "This product does not support this api.");
+        return DCMI_ERR_CODE_NOT_SUPPORT;
+    }
+
     err = dcmi_set_mcu_upgrade_stage(card_id, upgrade_type);
     if (err != DCMI_OK) {
         gplog(LOG_OP, "mcu upgrade control failed. card_id=%d, upgrade_type=%d, err=%d", card_id, upgrade_type, err);
@@ -114,6 +122,11 @@ int dcmi_mcu_upgrade_transfile(int card_id, const char *file)
     if (!dcmi_is_in_phy_machine_root()) {
         gplog(LOG_OP, "Operation not permitted, only root user on physical machine can call this api.");
         return DCMI_ERR_CODE_OPER_NOT_PERMITTED;
+    }
+
+    if (dcmi_board_chip_type_is_ascend_950()) {
+        gplog(LOG_OP, "This product does not support this api.");
+        return DCMI_ERR_CODE_NOT_SUPPORT;
     }
 
     err = dcmi_set_mcu_upgrade_file(card_id, file);
@@ -134,7 +147,8 @@ int dcmi_mcu_get_version(int card_id, char *version_str, int max_version_len, in
         return DCMI_ERR_CODE_INVALID_PARAMETER;
     }
 
-    if (dcmi_board_chip_type_is_ascend_910b() || dcmi_board_chip_type_is_ascend_910_93()) {
+    if (dcmi_board_chip_type_is_ascend_910b() || dcmi_board_chip_type_is_ascend_910_93() ||
+        dcmi_board_chip_type_is_ascend_950()) {
         gplog(LOG_ERR, "This device does not support dcmi_mcu_get_version.");
         return DCMI_ERR_CODE_NOT_SUPPORT;
     }
@@ -171,6 +185,11 @@ int dcmi_set_mcu_upgrade_stage(int card_id, enum dcmi_upgrade_type input_type)
         return DCMI_ERR_CODE_INVALID_PARAMETER;
     }
 
+    if (dcmi_board_chip_type_is_ascend_950()) {
+        gplog(LOG_OP, "This product does not support this api.");
+        return DCMI_ERR_CODE_NOT_SUPPORT;
+    }
+
     if (!dcmi_is_has_mcu()) {
         gplog(LOG_OP, "mcu is not present, this function is not supported. card_id=%d", card_id);
         return DCMI_ERR_CODE_NOT_SUPPORT;
@@ -185,6 +204,31 @@ int dcmi_set_mcu_upgrade_stage(int card_id, enum dcmi_upgrade_type input_type)
 
     gplog(LOG_OP, "set mcu upgrade stage success. card_id=%d, upgrade_type=%d", card_id, input_type);
     return DCMI_OK;
+}
+
+int send_vrd_file_len(int card_id, unsigned int file_len, int index)
+{
+    MCU_SMBUS_REQ_MSG mcu_req = {0};
+    mcu_req.lun = DCMI_MCU_MSG_LUN;
+    mcu_req.offset = 0;
+    mcu_req.opcode = DCMI_MCU_VRD_FILE_LEN_OPCODE;
+    mcu_req.arg = (unsigned char)index;
+    mcu_req.req_data_len = 1;
+    mcu_req.lenth = sizeof(file_len);
+    char buff[DCMI_VRD_FILE_BUF_LEN] = {0} ;
+    mcu_req.req_data = buff;
+    int ret = memcpy_s(mcu_req.req_data, sizeof(buff), &file_len, sizeof(file_len));
+    if (ret != EOK) {
+        gplog(LOG_ERR, "Memcpy_s failed.(ret=%d).", ret);
+        return DCMI_ERR_CODE_INNER_ERR;
+    }
+
+    ret = dcmi_vrd_set_info(card_id, &mcu_req, index);
+    if (ret != DCMI_OK) {
+        gplog(LOG_ERR, "Call dcmi_vrd_set_info fail.(ret=%d).", ret);
+        return DCMI_ERR_CODE_INNER_ERR;
+    }
+    return ret;
 }
 
 #ifndef _WIN32
@@ -248,6 +292,115 @@ static int dcmi_mcu_upload_file_linux(int card_id, FILE *fp, unsigned int file_l
 
     printf("\rfile_len(%u)--offset(%u) [100].\n", file_len, mcu_req.offset);
     return DCMI_OK;
+}
+
+static void print_progress(unsigned int offset, unsigned int file_len, int pkg_idx, int bin_num)
+{
+    unsigned int chunk_percent = offset * 100 / file_len;
+    unsigned int overall_progress = (((unsigned int)pkg_idx - 1) * 100 + chunk_percent) / (unsigned int)bin_num;
+    printf("\rUpgrading: Package %3d/%-3d | Chunk %8u/%-8u | Overall %3u%%", pkg_idx, bin_num, offset,
+           file_len, overall_progress);
+    (void)fflush(stdout);
+}
+
+DCMI_VRD_PER_UPGRADE_INFO dcmi_set_vrd_per_upgrade_info(int card_id, int pkg_idx, int cur_bin_idx,
+                                                        int total_bin_num, bool trigger_by_npu)
+{
+    DCMI_VRD_PER_UPGRADE_INFO info = {
+        .card_id = card_id,
+        .pkg_idx = pkg_idx,
+        .cur_bin_idx = cur_bin_idx,
+        .total_bin_num = total_bin_num,
+        .trigger_by_npu = trigger_by_npu
+    };
+    return info;
+}
+
+static int dcmi_vrd_upload_file_linux(FILE *fp, unsigned int file_len, DCMI_VRD_PER_UPGRADE_INFO *per_vrd_info)
+{
+    int ret;
+    size_t count;
+    MCU_SMBUS_REQ_MSG mcu_req = {0};
+    char buff[BUFSIZE] = {0};
+    mcu_req.req_data = buff;
+    mcu_req.offset = 0;
+
+    if (per_vrd_info == NULL) {
+        gplog(LOG_ERR, "per_vrd_info is NULL.");
+        return DCMI_ERR_CODE_INNER_ERR;
+    }
+    int card_id = per_vrd_info->card_id;
+    int index = per_vrd_info->pkg_idx;
+    int cur_bin_idx = per_vrd_info->cur_bin_idx;
+    int total_bin_num = per_vrd_info->total_bin_num;
+    
+    if (index != DCMI_REQ_INDEX_INVALID) {
+        mcu_req.arg = (unsigned char)index;
+    }
+    mcu_req.opcode = DCMI_MCU_VRD_UPGRADE_OPCODE;
+    unsigned int send_msg_data_max_len = (unsigned int)dcmi_mcu_get_send_data_max_len();
+    unsigned int block_num = (file_len % send_msg_data_max_len != 0) ?
+        ((file_len / send_msg_data_max_len) + 1) : (file_len / send_msg_data_max_len);
+
+    (void)fflush(stdout);
+
+    for (unsigned int i = 0; i < block_num; i++) {
+        mcu_req.lenth = (mcu_req.offset + send_msg_data_max_len >= file_len)
+                         ? (file_len - mcu_req.offset) : send_msg_data_max_len;
+        mcu_req.lun = (mcu_req.offset + send_msg_data_max_len >= file_len) ?
+                       DCMI_MCU_MSG_LUN : 0x0;
+        count = fread(mcu_req.req_data, 1, mcu_req.lenth, fp);
+        if ((count == 0) || (count != mcu_req.lenth)) {
+            gplog(LOG_ERR, "Count is error.(count=%u, mcu_req.lenth=%u).", count, mcu_req.lenth);
+            return DCMI_ERR_CODE_FILE_OPERATE_FAIL;
+        }
+
+        ret = dcmi_vrd_set_info(card_id, &mcu_req, index);
+        if (ret != DCMI_OK) {
+            gplog(LOG_ERR, "Call dcmi_vrd_set_info fail.(ret=%d).", ret);
+            return ret;
+        }
+
+        mcu_req.offset += mcu_req.lenth;
+        if (per_vrd_info->trigger_by_npu) {
+            print_progress(mcu_req.offset, file_len, cur_bin_idx, total_bin_num);
+        }
+
+        if (i != 0 && (i % 50 == 0)) {     // task upload delay interval 50
+            usleep(DCMI_MCU_TASK_DELAY_500_MS);     // task delay 500ms
+        }
+    }
+    return DCMI_OK;
+}
+
+int get_vrd_upgrade_status(int card_id, int index)
+{
+    int upgrade_status = DCMI_UPGRADE_STATE_NONE;
+    int ret;
+    /* 获取升级状态，最多重试10次 */
+    for (int times = 0; times < DCMI_MCU_MSG_REPEATE_NUM; times++) {
+        ret = dcmi_get_single_vrd_upgrade_status(card_id, &upgrade_status, index);
+        if ((ret != DCMI_OK) || (upgrade_status == DCMI_UPGRADE_UPGRADE_FAIL)) {
+            sleep(1);
+            continue;
+        }
+        break;
+    }
+    if (ret != DCMI_OK) {
+        gplog(LOG_ERR, "Call dcmi vrd get upgrade status failed.(ret=%d).", ret);
+    }
+    return ret;
+}
+
+int vrd_send_file_prepare(int card_id, unsigned int file_len, int index)
+{
+    // 先下发bin文件总长度
+    int ret = send_vrd_file_len(card_id, file_len, index);
+    if (ret != DCMI_OK) {
+        gplog(LOG_ERR, "Call dcmi_vrd_send_file_len failed.(ret=%d).", ret);
+        return DCMI_ERR_CODE_INNER_ERR;
+    }
+    return get_vrd_upgrade_status(card_id, index);
 }
 
 static int dcmi_set_mcu_upgrade_file_linux(int card_id, const char *file)
@@ -379,7 +532,6 @@ static int dcmi_set_mcu_upgrade_file_win(int card_id, const char *file)
         gplog(LOG_ERR, "Error opening mcu upgrade file Error: %d", status);
         return DCMI_ERR_CODE_FILE_OPERATE_FAIL;
     }
-
     ret = dcmi_mcu_upload_file_win(card_id, hFile, file_len);
     CloseHandle(hFile);
     return ret;
@@ -403,6 +555,11 @@ int dcmi_set_mcu_upgrade_file(int card_id, const char *file)
         return DCMI_ERR_CODE_INVALID_PARAMETER;
     }
 
+    if (dcmi_board_chip_type_is_ascend_950()) {
+        gplog(LOG_OP, "This product does not support this api.");
+        return DCMI_ERR_CODE_NOT_SUPPORT;
+    }
+
     if (dcmi_is_has_mcu()) {
 #ifndef _WIN32
         err = dcmi_set_mcu_upgrade_file_linux(card_id, file);
@@ -420,6 +577,71 @@ int dcmi_set_mcu_upgrade_file(int card_id, const char *file)
 
     gplog(LOG_OP, "set mcu upgrade file is not support. card_id=%d", card_id);
     return DCMI_ERR_CODE_NOT_SUPPORT;
+}
+
+int dcmi_trans_vrd_file(const char *file, DCMI_VRD_PER_UPGRADE_INFO *per_vrd_info)
+{
+    int ret;
+    FILE *fp = NULL;
+    unsigned int file_len = 0;
+    char path[PATH_MAX + 1] = {0x00};
+
+    if (per_vrd_info == NULL) {
+        gplog(LOG_ERR, "per_vrd_info is NULL.");
+        return DCMI_ERR_CODE_INNER_ERR;
+    }
+    int card_id = per_vrd_info->card_id;
+    int index = per_vrd_info->pkg_idx;
+
+    ret = dcmi_file_realpath_disallow_nonexist(file, path, sizeof(path));
+    if (ret != DCMI_OK) {
+        return ret;
+    }
+    /* 计算升级包长度 */
+    ret = dcmi_get_file_length(path, &file_len);
+    if ((ret != DCMI_OK) || (file_len <= 0) || (file_len > DCMI_MCU_FILE_MAX_SIZE)) {
+        gplog(LOG_ERR, "Call get_file_length failed.(file_len=%u).", file_len);
+        return ret;
+    }
+    // 先进行传递文件长度再进行传包
+    ret = vrd_send_file_prepare(card_id, file_len, index);
+    if (ret != DCMI_OK) {
+        return ret;
+    }
+    /* 打开文件 */
+    if ((fp = fopen((const char *)path, "rb")) == NULL) {
+        gplog(LOG_ERR, "Open vrd upgrade file failed.(errno=%d).", errno);
+        return DCMI_ERR_CODE_FILE_OPERATE_FAIL;
+    }
+    ret = dcmi_vrd_upload_file_linux(fp, file_len, per_vrd_info);
+    if (ret != DCMI_OK) {
+        gplog(LOG_ERR, "Vrd upload file failed.(ret=%d).", ret);
+        (void)fclose(fp);
+        return ret;
+    }
+    (void)fclose(fp);
+    return DCMI_OK;
+}
+
+int dcmi_check_vrd_card_id(int card_id, int *card_count, int *card_ids)
+{
+    int ret;
+    if (card_id == -1) {
+        ret = dcmi_get_card_list(card_count, card_ids, MAX_CARD_NUM);
+        if (ret != DCMI_OK) {
+            gplog(LOG_ERR, "Get card list failed.(ret=%d).", ret);
+            return ret;
+        }
+    } else {
+        ret = dcmi_check_card_id(card_id);
+        if (ret != DCMI_OK) {
+            gplog(LOG_ERR, "Check card id failed.(card_id=%d, ret=%d).", card_id, ret);
+            return ret;
+        }
+        *card_count = 1;
+        card_ids[0] = card_id;
+    }
+    return DCMI_OK;
 }
 
 int dcmi_get_mcu_upgrade_status(int card_id, int *status, int *progress)
@@ -451,6 +673,11 @@ int dcmi_get_mcu_upgrade_status(int card_id, int *status, int *progress)
     if (ret != DCMI_OK) {
         gplog(LOG_ERR, "check card id %d failed %d.", card_id, ret);
         return DCMI_ERR_CODE_INVALID_PARAMETER;
+    }
+
+    if (dcmi_board_chip_type_is_ascend_950()) {
+        gplog(LOG_OP, "This product does not support this api.");
+        return DCMI_ERR_CODE_NOT_SUPPORT;
     }
 
     if (!dcmi_is_has_mcu()) {
@@ -495,6 +722,11 @@ int dcmi_get_mcu_version(int card_id, char *version, int len)
     if (ret != DCMI_OK) {
         gplog(LOG_ERR, "check card id %d failed %d.", card_id, ret);
         return DCMI_ERR_CODE_INVALID_PARAMETER;
+    }
+
+    if (dcmi_board_chip_type_is_ascend_950()) {
+        gplog(LOG_OP, "This product does not support this api.");
+        return DCMI_ERR_CODE_NOT_SUPPORT;
     }
 
     if (!dcmi_is_has_mcu()) {

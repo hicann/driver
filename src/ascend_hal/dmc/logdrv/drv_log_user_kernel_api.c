@@ -9,37 +9,33 @@
  */
 #include <pthread.h>
 #include <sys/mman.h>
+#include <string.h>
 #include "securec.h"
 #include "drv_log_user_kernel_api.h"
 #include "dmc/dmc_log_user.h"
+#include "hal_error_code/drv_error_code.h"
 
 #define BUFF_LENTH (64U)
 #define DRV_LOG_START_TIME (1900)
 #define ERROR_NUN_MAX (EHWPOISON + 1U)
 
 #ifdef STATIC_SKIP
-#  define STATIC
+#define STATIC
 #else
-#  define STATIC    static
+#define STATIC static
 #endif
 
 #define DRV_LOG_LEVEL_MAX (LOG_DEBUG + 1U)
 STATIC const char *drv_log_level_default_str[DRV_LOG_LEVEL_MAX] = {
-    [LOG_EMERG] = "[EMERG]",
-    [LOG_ALERT] = "[ALERT]",
-    [LOG_CRIT] = "[EVENT]",
-    [LOG_ERR] = "[ERROR]",
-    [LOG_WARNING]  = "[WARNING]",
-    [LOG_NOTICE] = "[NOTICE]",
-    [LOG_INFO] = "[INFO]",
-    [LOG_DEBUG] = "[DEBUG]",
+    [LOG_EMERG] = "[EMERG]",     [LOG_ALERT] = "[ALERT]",   [LOG_CRIT] = "[EVENT]", [LOG_ERR] = "[ERROR]",
+    [LOG_WARNING] = "[WARNING]", [LOG_NOTICE] = "[NOTICE]", [LOG_INFO] = "[INFO]",  [LOG_DEBUG] = "[DEBUG]",
 };
-#define EDEADLOCK_VALUE  (58U)
-#define EWOULDBLOCK_VALUE  (41U)
+#define EDEADLOCK_VALUE (58U)
+#define EWOULDBLOCK_VALUE (41U)
 #define DRV_KERNEL_ERROR_RESUME (150)
 #define DRV_KERNEL_ERROR_DUP_CONFIG (151)
 #define DRV_KERNEL_ERROR_POWER_OP_FAIL (152)
-#define DRV_NSEC_PER_USECOND  (1000)
+#define DRV_NSEC_PER_USECOND (1000)
 
 struct drv_log_print_info {
     uint32_t *con_log_level;
@@ -50,50 +46,50 @@ struct drv_log_print_info {
 };
 
 static int32_t user_err[ERROR_NUN_MAX] = {
-    [0]     = DRV_ERROR_NONE,
+    [0] = DRV_ERROR_NONE,
     [EPERM] = DRV_ERROR_OPER_NOT_PERMITTED,
-    [ENOENT]  = DRV_ERROR_FILE_OPS,
-    [ESRCH]   = DRV_ERROR_IOCRL_FAIL,
-    [EINTR]   = DRV_ERROR_IOCRL_FAIL,
-    [EIO]     = DRV_ERROR_IOCRL_FAIL,
-    [ENXIO]   = DRV_ERROR_NO_DEVICE,
-    [E2BIG]   = DRV_ERROR_OVER_LIMIT,
+    [ENOENT] = DRV_ERROR_FILE_OPS,
+    [ESRCH] = DRV_ERROR_IOCRL_FAIL,
+    [EINTR] = DRV_ERROR_IOCRL_FAIL,
+    [EIO] = DRV_ERROR_IOCRL_FAIL,
+    [ENXIO] = DRV_ERROR_NO_DEVICE,
+    [E2BIG] = DRV_ERROR_OVER_LIMIT,
     [ENOEXEC] = DRV_ERROR_IOCRL_FAIL,
-    [EBADF]   = DRV_ERROR_IOCRL_FAIL,
-    [ECHILD]  = DRV_ERROR_IOCRL_FAIL,
-    [EAGAIN]  = DRV_ERROR_TRY_AGAIN,
-    [ENOMEM]  = DRV_ERROR_OUT_OF_MEMORY,
-    [EACCES]  = DRV_ERROR_IOCRL_FAIL,
-    [EFAULT]  = DRV_ERROR_INVALID_HANDLE,
+    [EBADF] = DRV_ERROR_IOCRL_FAIL,
+    [ECHILD] = DRV_ERROR_IOCRL_FAIL,
+    [EAGAIN] = DRV_ERROR_TRY_AGAIN,
+    [ENOMEM] = DRV_ERROR_OUT_OF_MEMORY,
+    [EACCES] = DRV_ERROR_IOCRL_FAIL,
+    [EFAULT] = DRV_ERROR_INVALID_HANDLE,
     [ENOTBLK] = DRV_ERROR_IOCRL_FAIL,
     [EBUSY] = DRV_ERROR_BUSY,
-    [EEXIST]  = DRV_ERROR_FILE_OPS,
-    [EXDEV]   = DRV_ERROR_IOCRL_FAIL,
-    [ENODEV]  = DRV_ERROR_NO_DEVICE,
+    [EEXIST] = DRV_ERROR_FILE_OPS,
+    [EXDEV] = DRV_ERROR_IOCRL_FAIL,
+    [ENODEV] = DRV_ERROR_NO_DEVICE,
     [ENOTDIR] = DRV_ERROR_IOCRL_FAIL,
-    [EISDIR]  = DRV_ERROR_IOCRL_FAIL,
-    [EINVAL]  = DRV_ERROR_PARA_ERROR,
-    [ENFILE]  = DRV_ERROR_IOCRL_FAIL,
-    [EMFILE]  = DRV_ERROR_IOCRL_FAIL,
-    [ENOTTY]  = DRV_ERROR_IOCRL_FAIL,
+    [EISDIR] = DRV_ERROR_IOCRL_FAIL,
+    [EINVAL] = DRV_ERROR_PARA_ERROR,
+    [ENFILE] = DRV_ERROR_IOCRL_FAIL,
+    [EMFILE] = DRV_ERROR_IOCRL_FAIL,
+    [ENOTTY] = DRV_ERROR_IOCRL_FAIL,
     [ETXTBSY] = DRV_ERROR_IOCRL_FAIL,
-    [EFBIG]   = DRV_ERROR_IOCRL_FAIL,
-    [ENOSPC]  = DRV_ERROR_NO_RESOURCES,
-    [ESPIPE]  = DRV_ERROR_IOCRL_FAIL,
-    [EROFS]   = DRV_ERROR_IOCRL_FAIL,
-    [EMLINK]  = DRV_ERROR_IOCRL_FAIL,
-    [EPIPE]   = DRV_ERROR_IOCRL_FAIL,
-    [EDOM]    = DRV_ERROR_IOCRL_FAIL,
-    [ERANGE]  = DRV_ERROR_IOCRL_FAIL,
+    [EFBIG] = DRV_ERROR_IOCRL_FAIL,
+    [ENOSPC] = DRV_ERROR_NO_RESOURCES,
+    [ESPIPE] = DRV_ERROR_IOCRL_FAIL,
+    [EROFS] = DRV_ERROR_IOCRL_FAIL,
+    [EMLINK] = DRV_ERROR_IOCRL_FAIL,
+    [EPIPE] = DRV_ERROR_IOCRL_FAIL,
+    [EDOM] = DRV_ERROR_IOCRL_FAIL,
+    [ERANGE] = DRV_ERROR_IOCRL_FAIL,
 
     [EDEADLK] = DRV_ERROR_IOCRL_FAIL,
     [ENAMETOOLONG] = DRV_ERROR_IOCRL_FAIL,
-    [ENOLCK]  = DRV_ERROR_IOCRL_FAIL,
+    [ENOLCK] = DRV_ERROR_IOCRL_FAIL,
 
-    [ENOSYS]  = DRV_ERROR_IOCRL_FAIL,
+    [ENOSYS] = DRV_ERROR_IOCRL_FAIL,
 
     [ENOTEMPTY] = DRV_ERROR_IOCRL_FAIL,
-    [ELOOP]    = DRV_ERROR_IOCRL_FAIL,
+    [ELOOP] = DRV_ERROR_IOCRL_FAIL,
     [EWOULDBLOCK_VALUE] = DRV_ERROR_IOCRL_FAIL,
 
     [ENOMSG] = DRV_ERROR_IOCRL_FAIL,
@@ -231,7 +227,7 @@ const char *drv_log_get_module_str_inner(enum devdrv_module_type module)
         [HAL_MODULE_TYPE_HDC] = "hdc",
         [HAL_MODULE_TYPE_DEVMM] = "devmm",
         [HAL_MODULE_TYPE_DEV_MANAGER] = "devmng",
-        [HAL_MODULE_TYPE_DMP]  = "dmp",
+        [HAL_MODULE_TYPE_DMP] = "dmp",
         [HAL_MODULE_TYPE_FAULT] = "faultmng",
         [HAL_MODULE_TYPE_UPGRADE] = "upgrade",
         [HAL_MODULE_TYPE_PROCESS_MON] = "process-mon",
@@ -269,7 +265,7 @@ STATIC const char *drv_log_get_level_str(uint32_t level)
     (void)level;
     return drv_log_level_str;
 }
-STATIC const char *drv_log_get_level_str_default(uint32_t level)
+const char *drv_log_get_level_str_default(uint32_t level)
 {
     if (level >= (uint32_t)(DRV_LOG_LEVEL_MAX)) {
         return NULL;
@@ -283,7 +279,7 @@ STATIC const char *drv_get_tm(void)
     return drv_log_level_str;
 }
 
-STATIC const char *drv_get_tm_default(void)
+const char *drv_get_tm_default(void)
 {
     static char tmbuf[BUFF_LENTH] = {0};
     struct timespec ts;
@@ -304,8 +300,8 @@ STATIC const char *drv_get_tm_default(void)
     }
 
     ret = sprintf_s(tmbuf, BUFF_LENTH, "[%d-%02d-%02d-%02d:%02d:%02d:%06d]", tm_now->tm_year + DRV_LOG_START_TIME,
-                    tm_now->tm_mon + 1, tm_now->tm_mday, tm_now->tm_hour, tm_now->tm_min,
-                    tm_now->tm_sec, (int32_t)(ts.tv_nsec / DRV_NSEC_PER_USECOND));
+                    tm_now->tm_mon + 1, tm_now->tm_mday, tm_now->tm_hour, tm_now->tm_min, tm_now->tm_sec,
+                    (int32_t)(ts.tv_nsec / DRV_NSEC_PER_USECOND));
     if (ret < 0) {
         (void)pthread_mutex_unlock(&lock);
         return NULL;
@@ -317,23 +313,14 @@ STATIC const char *drv_get_tm_default(void)
 
 #define LOG_GLIBC_LEVEL_TYPE_MAX (LOG_DEBUG + 1U)
 static uint32_t drv_log_level_glibc_to_tool_table[LOG_GLIBC_LEVEL_TYPE_MAX] = {
-    [LOG_EMERG] = DLOG_ERROR,
-    [LOG_ALERT] = DLOG_ERROR,
-    [LOG_CRIT] = DLOG_EVENT,
-    [LOG_ERR] = DLOG_ERROR,
-    [LOG_WARNING] = DLOG_WARN,
-    [LOG_NOTICE] = DLOG_EVENT,
-    [LOG_INFO] = DLOG_INFO,
-    [LOG_DEBUG] = DLOG_DEBUG,
+    [LOG_EMERG] = DLOG_ERROR,  [LOG_ALERT] = DLOG_ERROR,  [LOG_CRIT] = DLOG_EVENT, [LOG_ERR] = DLOG_ERROR,
+    [LOG_WARNING] = DLOG_WARN, [LOG_NOTICE] = DLOG_EVENT, [LOG_INFO] = DLOG_INFO,  [LOG_DEBUG] = DLOG_DEBUG,
 };
 
 #define LOG_TOOL_LEVEL_TYPE_MAX (DLOG_NULL + 1U)
 static uint32_t drv_log_level_tool_to_glibc_table[LOG_TOOL_LEVEL_TYPE_MAX] = {
-    [DLOG_DEBUG] = LOG_DEBUG,
-    [DLOG_INFO] = LOG_INFO,
-    [DLOG_WARN] = LOG_WARNING,
-    [DLOG_ERROR] = LOG_ERR,
-    [DLOG_NULL] = LOG_CRIT,
+    [DLOG_DEBUG] = LOG_DEBUG, [DLOG_INFO] = LOG_INFO, [DLOG_WARN] = LOG_WARNING,
+    [DLOG_ERROR] = LOG_ERR,   [DLOG_NULL] = LOG_CRIT,
 };
 
 STATIC uint32_t drv_log_level_shift_default(uint32_t level)
@@ -351,7 +338,6 @@ STATIC uint32_t drv_log_level_tool_to_glibc(uint32_t level)
     return drv_log_level_tool_to_glibc_table[level];
 }
 
-
 STATIC void drv_syslog(int32_t module_id, int32_t priority, const char *format, ...)
 {
     (void)module_id;
@@ -365,7 +351,7 @@ STATIC void drv_syslog(int32_t module_id, int32_t priority, const char *format, 
 STATIC uint32_t drv_log_rsyslog_console_level = LOG_ERR;
 STATIC uint32_t drv_log_tool_console_level = LOG_ERR;
 struct drv_log_print_info g_log_print_info = {
-    .con_log_level = &drv_log_rsyslog_console_level,   /* default log level */
+    .con_log_level = &drv_log_rsyslog_console_level, /* default log level */
     .log_get_level_string = drv_log_get_level_str_default,
     .log_get_print_time = drv_get_tm_default,
     .log_level_shift = drv_log_level_shift_default,
@@ -377,8 +363,8 @@ STATIC uint32_t g_run_log_status;
 int32_t drv_log_out_handle_register_inner(struct log_out_handle *handle, size_t input_size, uint32_t flag)
 {
     if (input_size != sizeof(struct log_out_handle)) {
-        (void)printf("Log_out_handle_register failed. (input_size=%zu; size_log_out_handle=%zu)\n",
-            input_size, sizeof(struct log_out_handle)); //lint !e559
+        (void)printf("Log_out_handle_register failed. (input_size=%zu; size_log_out_handle=%zu)\n", input_size,
+                     sizeof(struct log_out_handle)); // lint !e559
         return DRV_ERROR_INVALID_VALUE;
     }
 
@@ -442,23 +428,24 @@ uint32_t get_con_log_level_inner(void)
 {
     return *(g_log_print_info.con_log_level);
 }
- 
+
 const char *get_log_get_level_string_inner(uint32_t level)
 {
     return g_log_print_info.log_get_level_string(level);
 }
- 
+
 const char *get_log_get_print_time_inner(void)
 {
     return g_log_print_info.log_get_print_time();
 }
- 
+
 uint32_t get_log_level_shift_inner(uint32_t level)
 {
     return g_log_print_info.log_level_shift(level);
 }
- 
-void (*get_log_print_inner(void))(int32_t, int32_t, const char *, ...) {
+
+void (*get_log_print_inner(void))(int32_t, int32_t, const char *, ...)
+{
     return g_log_print_info.log_print;
 }
 
@@ -480,6 +467,7 @@ int32_t drv_log_report_err_msg_handle_register_impl(struct err_msg_report_handle
     g_report_err_msg_info.predefined_report_func = handle->predefined_report_func;
     g_report_err_msg_info.inner_report_func = handle->inner_report_func;
     g_report_err_msg_info.is_registered = 1;
+    REGISTER_FORMAT_ERR_MSG(g_drv_error_code, (unsigned long)strlen(g_drv_error_code));
     return DRV_ERROR_NONE;
 }
 
@@ -502,7 +490,7 @@ report_predefined_err_msg_func get_predefined_err_msg_report_func_impl(void)
     return g_report_err_msg_info.predefined_report_func;
 }
 
-report_inner_err_msg_func get_inner_err_msg_report_func_impl(void) 
-{ 
-    return g_report_err_msg_info.inner_report_func; 
+report_inner_err_msg_func get_inner_err_msg_report_func_impl(void)
+{
+    return g_report_err_msg_info.inner_report_func;
 }

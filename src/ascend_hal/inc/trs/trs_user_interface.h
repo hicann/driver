@@ -15,14 +15,11 @@
 
 enum trs_sq_send_mode {
     TRS_MODE_TYPE_SQ_SEND_HIGH_SECURITY = 0x0, /* sq use uik mode */
-    TRS_MODE_TYPE_SQ_SEND_HIGH_PERFORMANCE, /* sq use uio mode */
+    TRS_MODE_TYPE_SQ_SEND_HIGH_PERFORMANCE,    /* sq use uio mode */
     TRS_MODE_TYPE_SQ_SEND_MAX
 };
 
-typedef enum tag_trs_mode_type {
-    TRS_MODE_TYPE_SQ_SEND = 0,
-    TRS_MODE_TYPE_MAX
-} trs_mode_type_t;
+typedef enum tag_trs_mode_type { TRS_MODE_TYPE_SQ_SEND = 0, TRS_MODE_TYPE_MAX } trs_mode_type_t;
 
 struct trs_mode_info {
     uint32_t dev_id;

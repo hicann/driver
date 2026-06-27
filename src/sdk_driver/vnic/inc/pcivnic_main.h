@@ -33,18 +33,21 @@
 #define PCIVNIC_RX_MSG_NORIFY_WORK_NAME "pcivnic-rx-msg-notify-work"
 
 #define module_devdrv "pcivnic"
-#define devdrv_err(fmt, ...) do { \
-    drv_err(module_devdrv, "<%s:%d:%d> " fmt, \
-    ka_task_get_current_comm(), ka_task_get_current_tgid(), ka_task_get_current_pid(), ##__VA_ARGS__); \
-} while (0)
-#define devdrv_warn(fmt, ...) do { \
-    drv_warn(module_devdrv, "<%s:%d:%d> " fmt, \
-    ka_task_get_current_comm(), ka_task_get_current_tgid(), ka_task_get_current_pid(), ##__VA_ARGS__); \
-} while (0)
-#define devdrv_info(fmt, ...) do { \
-    drv_info(module_devdrv, "<%s:%d:%d> " fmt, \
-    ka_task_get_current_comm(), ka_task_get_current_tgid(), ka_task_get_current_pid(), ##__VA_ARGS__); \
-} while (0)
+#define devdrv_err(fmt, ...)                                                                              \
+    do {                                                                                                  \
+        drv_err(module_devdrv, "<%s:%d:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), \
+                ka_task_get_current_pid(), ##__VA_ARGS__);                                                \
+    } while (0)
+#define devdrv_warn(fmt, ...)                                                                              \
+    do {                                                                                                   \
+        drv_warn(module_devdrv, "<%s:%d:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), \
+                 ka_task_get_current_pid(), ##__VA_ARGS__);                                                \
+    } while (0)
+#define devdrv_info(fmt, ...)                                                                              \
+    do {                                                                                                   \
+        drv_info(module_devdrv, "<%s:%d:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), \
+                 ka_task_get_current_pid(), ##__VA_ARGS__);                                                \
+    } while (0)
 #define devdrv_debug(fmt...) drv_debug(module_devdrv, fmt)
 
 #define devdrv_err_spinlock(fmt, ...)
@@ -80,9 +83,11 @@
 
 #define PCIVNIC_NAME_SIZE 64
 
+#define PCIVNIC_GUARD_WORK_DELAY_TIME 1000
+
 #define PCIVNIC_MAC_FILE "/etc/d-pcivnic.conf"
-#define PCIVNIC_CONF_FILE_SIZE  4096
-#define PCIVNIC_CONF_SSCANF_OK  7
+#define PCIVNIC_CONF_FILE_SIZE 4096
+#define PCIVNIC_CONF_SSCANF_OK 7
 
 #define BIT_STATUS_LINK KA_BASE_BIT(0)
 #define BIT_STATUS_TQ_FULL KA_BASE_BIT(1)
@@ -113,9 +118,10 @@
 #define PCIVNIC_DELAYWORK_TIME 2
 #define PCIVNIC_WATCHDOG_TIME 36
 
-#define VNIC_DBG(args...) do { \
-    ;                 \
-} while (0)
+#define VNIC_DBG(args...) \
+    do {                  \
+        ;                 \
+    } while (0)
 
 #ifdef CFG_FEATURE_S2S
 #define PCIVNIC_S2S_SERVER_NUM 48
@@ -158,7 +164,7 @@ struct pcivnic_skb_data_buff {
     ka_dma_addr_t dma_addr;
 };
 
-#define PCIVNIC_FLOW_CTRL_PERIOD 100 /* ms */
+#define PCIVNIC_FLOW_CTRL_PERIOD 100    /* ms */
 #define PCIVNIC_FLOW_CTRL_THRESHOLD 200 /* 2kpps */
 
 struct pcivnic_flow_ctrl {
@@ -247,39 +253,6 @@ struct pcivnic_netdev {
     ka_sk_buff_head_t skbq;
 };
 
-#define PCIVNIC_CTRL_MSG_TYPE_SET_MAC 0
-#define PCIVNIC_CTRL_MSG_TYPE_GET_STAT 1
-#define PCIVNIC_CTRL_MSG_TYPE_RIGISTER_NETDEV 2
-#define PCIVNIC_CTRL_MSG_TYPE_INSTANCE 3
-#define PCIVNIC_CTRL_MSG_TYPE_MAX 4
-
-#define PCIVNIC_CTRL_MSG_RESERVE_NUM 4
-struct pcivnic_ctrl_msg_head {
-    u32 msg_type;
-    u32 host_udevid;
-    u32 reserve[PCIVNIC_CTRL_MSG_RESERVE_NUM];
-};
-
-struct pcivnic_ctrl_msg_set_mac {
-    struct pcivnic_ctrl_msg_head head;
-    unsigned char mac[KA_ETH_ALEN];
-};
-
-struct pcivnic_ctrl_msg_register_netdev {
-    struct pcivnic_ctrl_msg_head head;
-};
-
-struct pcivnic_ctrl_msg_dev_instance {
-    struct pcivnic_ctrl_msg_head head;
-};
-
-#define VNIC_STAT_MSG_MAX_LEN (60 * 1024)
-struct pcivnic_ctrl_msg_get_stat {
-    struct pcivnic_ctrl_msg_head head;
-    u32 msg_len;
-    char msg[KA_MM_PAGE_SIZE];
-};
-
 #define PCIVNIC_DIE_NUM_ONE_CHIP 2
 #define VNIC_MAX_SERVER_NUM 48
 #define VNIC_DEFAULT_IP 168
@@ -316,8 +289,8 @@ extern int pcivnic_down_get_next_hop(const unsigned char *dmac);
 void pcivnic_skb_data_buff_uninit(struct pcivnic_pcidev *pcidev);
 int pcivnic_skb_data_buff_init(struct pcivnic_pcidev *pcidev);
 
-u64 pcivnic_dma_map_single(struct pcivnic_pcidev *pcidev, ka_sk_buff_t *skb, u32 buff_type, u32 index);
-void pcivnic_dma_unmap_single(struct pcivnic_pcidev *pcidev, ka_sk_buff_t *skb, u32 buff_type, u32 index);
+u64 pcivnic_dma_map_single(struct pcivnic_pcidev *pcidev, ka_sk_buff_t *skb, u32 buff_type, u32 index, u32 data_len);
+void pcivnic_dma_unmap_single(struct pcivnic_pcidev *pcidev, ka_sk_buff_t *skb, u32 buff_type, u32 index, u32 data_len);
 
 extern void pcivnic_get_mac(unsigned char last_byte, unsigned char *mac);
 extern void pcivnic_set_netdev_mac(struct pcivnic_netdev *vnic_dev, const unsigned char *mac);
@@ -337,4 +310,6 @@ extern void pcivnic_init_msgchan_cq_desc(void *msg_chan);
 extern int pcivnic_device_status_abnormal(const void *msg_chan);
 extern bool pcivnic_get_sysfs_creat_group_capbility(ka_device_t *dev, int dev_id);
 void pcivnic_net_timeout_new(ka_net_device_t *ndev, unsigned int txqueue);
-#endif  // _DEVDRV_MAIN_H_
+void pcivnic_guard_work_init(struct pcivnic_pcidev *pcidev);
+void pcivnic_guard_work_uninit(struct pcivnic_pcidev *pcidev);
+#endif // _DEVDRV_MAIN_H_

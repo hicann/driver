@@ -30,7 +30,7 @@ STATIC DMS_FEATURE_NODE_S* feature_get_key_node(const char* key)
     DMS_FEATURE_NODE_S* node = NULL;
     int ret;
     ret = dms_kv_get(key, (void*)&node, sizeof(DMS_FEATURE_NODE_S*));
-    if ((ret != 0) && (node == NULL)) {
+    if ((ret != 0) || (node == NULL)) {
         return NULL;
     }
     return node;
@@ -41,7 +41,7 @@ STATIC DMS_FEATURE_NODE_S* feature_get_key_node_ex(const char* key)
     DMS_FEATURE_NODE_S* node = NULL;
     int ret;
     ret = dms_kv_get_ex(key, (void*)&node, sizeof(DMS_FEATURE_NODE_S*));
-    if ((ret != 0) && (node == NULL)) {
+    if ((ret != 0) || (node == NULL)) {
         return NULL;
     }
     return node;
@@ -296,7 +296,7 @@ STATIC void dms_update_static(FEATURE_STATISTIC_S *s,
         s->time_max = s->time_last;
     }
     if (s->time_last < s->time_min) {
-        s->time_max = s->time_last;
+        s->time_min = s->time_last;
     }
 }
 

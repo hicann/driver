@@ -10,51 +10,31 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#include <linux/sched.h>
-#include <linux/version.h>
-#include <linux/capability.h>
-#include <linux/cred.h>
-#include <linux/nsproxy.h>
-#include <linux/types.h>
-#include <linux/vmalloc.h>
-#include <linux/fcntl.h>
-#include <linux/namei.h>
-#include <linux/mount.h>
-#include <linux/path.h>
-#include <linux/fs.h>
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 11, 0)
-#include <linux/sched/task.h>
-#endif
+#include "ka_common_pub.h"
+#include "ka_task_pub.h"
+#include "ka_system_pub.h"
+#include "ka_kernel_def_pub.h"
+#include "ka_fs_pub.h"
 
 #include "pbl/pbl_runenv_config.h"
 
 #include "runenv_config_module.h"
 #include "docker_query.h"
-#include "ka_common_pub.h"
-#include "ka_task_pub.h"
 
 extern struct task_struct init_task;
 
 static bool is_admin_task(struct task_struct *tsk)
 {
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 3, 0)
-    kernel_cap_t privileged = (kernel_cap_t) {((uint64_t)(CAP_TO_MASK(CAP_AUDIT_READ + 1) -1) << 32) | (((uint64_t)~0) >> 32)};
-#elif LINUX_VERSION_CODE >= KERNEL_VERSION(3, 16, 0)
-    unsigned int i;
-    kernel_cap_t privileged = (kernel_cap_t){{ ~0, (CAP_TO_MASK(CAP_AUDIT_READ + 1) -1)}};
-#else
-    unsigned int i;
-    kernel_cap_t privileged = CAP_FULL_SET;
-#endif
-    const struct cred *cred = NULL;
-    kernel_cap_t effective;
+    ka_kernel_cap_t privileged = ka_system_get_privileged_kernel_cap();
+    const ka_cred_t *cred = NULL;
+    ka_kernel_cap_t effective;
     unsigned int user_id;
 
-    rcu_read_lock();
-    cred = __task_cred(tsk); //lint !e1058 !e64 !e666
+    ka_task_rcu_read_lock();
+    cred = __ka_task_task_cred(tsk); //lint !e1058 !e64 !e666
     user_id = cred->uid.val;
     effective = cred->cap_effective;
-    rcu_read_unlock();
+    ka_task_rcu_read_unlock();
 
 #ifndef EMU_ST
     if (cred->user_ns != &init_user_ns) {
@@ -62,18 +42,10 @@ static bool is_admin_task(struct task_struct *tsk)
     }
 #endif
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 3, 0)
-    if ((effective.val & privileged.val) != privileged.val) {
+    if (ka_system_kernel_cap_compare(effective, privileged) == false) {
         return false;
     }
-#else
-    CAP_FOR_EACH_U32(i)
-    {
-        if ((effective.cap[i] & privileged.cap[i]) != privileged.cap[i]) {
-            return false;
-        }
-    }
-#endif
+
     if (user_id == 0) {
         return true;
     } else {
@@ -87,23 +59,23 @@ STATIC bool cgroup_mount_is_ro(void)
     int ret;
     bool is_ro = false;
 
-    ret = kern_path("/sys/fs/cgroup/memory", 0, &kernel_path);
+    ret = ka_fs_kern_path("/sys/fs/cgroup/memory", 0, &kernel_path);
     if (ret != 0) {
         return false;
     }
     if (kernel_path.mnt == NULL) {
         recfg_err("Cgroup memory path mount is NULL.\n");
-        path_put(&kernel_path);
+        ka_fs_path_put(&kernel_path);
         return false;
     }
     is_ro = __mnt_is_readonly(kernel_path.mnt);
-    path_put(&kernel_path);
+    ka_fs_path_put(&kernel_path);
     return is_ro;
 }
 
 bool dbl_current_is_admin(void)
 {
-    if (!is_admin_task(current)) {
+    if (!is_admin_task(ka_task_get_current())) {
         return false;
     }
     /* for compatibility, only check ro as not admin, in other scenarios, admin is returned */
@@ -112,7 +84,7 @@ bool dbl_current_is_admin(void)
     }
     return true;
 }
-EXPORT_SYMBOL(dbl_current_is_admin);
+KA_EXPORT_SYMBOL(dbl_current_is_admin);
 
 static int task_struct_check(struct task_struct *tsk)
 {
@@ -132,11 +104,11 @@ static int task_struct_check(struct task_struct *tsk)
     return 0;
 }
 
-static struct mnt_namespace *get_current_mnt_ns(void)
+static ka_mnt_namespace_t *get_current_mnt_ns(void)
 {
     int ret;
 
-    ret = task_struct_check(current);
+    ret = task_struct_check(ka_task_get_current());
     if (ret) {
         recfg_err("Current is invalid. (ret=%d)\n", ret);
         return NULL;
@@ -145,15 +117,15 @@ static struct mnt_namespace *get_current_mnt_ns(void)
     return ka_task_get_current_mnt_ns();
 }
 
-static struct mnt_namespace *get_host_mnt_ns(void)
+static ka_mnt_namespace_t *get_host_mnt_ns(void)
 {
     return init_task.nsproxy->mnt_ns;
 }
 
-static bool check_in_host_mach(void)
+bool check_in_host_mach(void)
 {
-    struct mnt_namespace *current_ns = NULL;
-    struct mnt_namespace *host_ns = NULL;
+    ka_mnt_namespace_t *current_ns = NULL;
+    ka_mnt_namespace_t *host_ns = NULL;
 
     current_ns = get_current_mnt_ns();
     if (current_ns == NULL) {
@@ -181,7 +153,7 @@ bool run_in_normal_docker(void)
 
     return false;
 }
-EXPORT_SYMBOL(run_in_normal_docker);
+KA_EXPORT_SYMBOL(run_in_normal_docker);
 
 bool run_in_admin_docker(void)
 {
@@ -192,6 +164,7 @@ bool run_in_admin_docker(void)
 
     return false;
 }
+KA_EXPORT_SYMBOL(run_in_admin_docker);
 
 bool run_in_docker(void)
 {
@@ -202,30 +175,41 @@ bool run_in_docker(void)
 
     return false;
 }
-EXPORT_SYMBOL(run_in_docker);
+KA_EXPORT_SYMBOL(run_in_docker);
 
 int dbl_host_pid_to_container_pid(pid_t host_pid, pid_t *container_pid)
 {
-#ifndef DMS_UT
+#if (!defined DMS_UT) && (!defined EMU_ST)
     ka_struct_pid_t *pgrp = NULL;
     ka_task_struct_t *tsk = NULL;
+    ka_task_struct_t *g = NULL;
 
     if (!run_in_docker()) {
         *container_pid = host_pid;
         return 0;
     }
-    ka_for_each_process(tsk) {
-        if ((tsk != NULL) && (tsk->pid == host_pid)) {
-            pgrp = task_pid(tsk);
-            if (pgrp == NULL) {
-                recfg_err("The process group parameter is NULL.\n");
-                return -EINVAL;
+
+    ka_for_each_process_thread(g, tsk) {
+        if (tsk != NULL) {
+            ka_task_task_lock(tsk);
+            if (tsk->pid == host_pid) {
+                pgrp = ka_task_task_pid(tsk);
+                if (pgrp == NULL) {
+                    recfg_err("The process group parameter is NULL.\n");
+                    ka_task_task_unlock(tsk);
+                    return -EINVAL;
+                }
+                *container_pid = pgrp->numbers[pgrp->level].nr;
+                ka_task_task_unlock(tsk);
+                return 0;
             }
-            *container_pid = pgrp->numbers[pgrp->level].nr;
-            break;
+            ka_task_task_unlock(tsk);
         }
     }
-#endif
+    return -EINVAL;
+#else
     return 0;
+#endif
+    
 }
-EXPORT_SYMBOL(dbl_host_pid_to_container_pid);
+KA_EXPORT_SYMBOL(dbl_host_pid_to_container_pid);

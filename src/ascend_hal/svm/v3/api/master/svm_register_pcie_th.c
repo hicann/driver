@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * Copyright (c) 2026 Huawei Technologies Co., Ltd.
  * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -23,6 +23,8 @@
 #include "svm_addr_desc.h"
 #include "svm_dbi.h"
 #include "svm_apbi.h"
+#include "svm_criu.h"
+
 #include "svm_sys_cmd.h"
 #include "svm_register_pcie_th.h"
 
@@ -38,6 +40,7 @@ struct svm_pcie_th_priv {
     u64 va;
     u64 size;
     u64 align;
+    u32 flag;
 };
 
 static void *pcie_th_svmm[SVM_MAX_DEV_AGENT_NUM] = {NULL};
@@ -87,7 +90,7 @@ void svm_register_pcie_th_recycle(u32 devid)
     (void)pthread_mutex_unlock(&pcie_th_mutex);
 }
 
-static int __attribute__ ((constructor)) svm_register_pcie_th_init(void)
+static int __attribute__((constructor)) svm_register_pcie_th_init(void)
 {
     int ret;
 
@@ -105,8 +108,9 @@ static int svm_register_pcie_th_show_node(void *seg_handle, u64 start, struct sv
     char *buf = para->buf;
     u32 buf_len = para->buf_len;
 
-    int len = snprintf_s(buf, buf_len, buf_len - 1, "0x%llx   0x%llx   %u   0x%llx\n",
-        src_info->va, src_info->size, svm_svmm_get_seg_devid(seg_handle), start);
+    int len = snprintf_s(
+        buf, buf_len, buf_len - 1, "0x%llx   0x%llx   %u   0x%llx\n", src_info->va, src_info->size,
+        svm_svmm_get_seg_devid(seg_handle), start);
     if (len >= 0) {
         para->buf += len;
         para->buf_len -= (u32)len;
@@ -155,7 +159,7 @@ static long svm_pcie_th_addr_ref_read(void *priv)
     return pcie_th_priv->ref;
 }
 
-static void svm_init_pcie_th_seg_priv(void *priv, u64 va, u64 size, u64 align)
+static void svm_init_pcie_th_seg_priv(void *priv, u64 va, u64 size, u64 align, u32 flag)
 {
     struct svm_pcie_th_priv *pcie_th_priv = (struct svm_pcie_th_priv *)priv;
 
@@ -163,6 +167,7 @@ static void svm_init_pcie_th_seg_priv(void *priv, u64 va, u64 size, u64 align)
     pcie_th_priv->va = va;
     pcie_th_priv->size = size;
     pcie_th_priv->align = align;
+    pcie_th_priv->flag = flag;
 }
 
 static int svm_alloc_pcie_th_seg_priv(void **priv)
@@ -178,10 +183,7 @@ static int svm_alloc_pcie_th_seg_priv(void **priv)
     return DRV_ERROR_NONE;
 }
 
-static void svm_free_pcie_th_seg_priv(void *priv)
-{
-    svm_ua_free(priv);
-}
+static void svm_free_pcie_th_seg_priv(void *priv) { svm_ua_free(priv); }
 
 static int svm_alloc_pcie_th_va(u64 size, u64 align, u64 *va)
 {
@@ -214,8 +216,8 @@ static void svm_free_pcie_th_va(u64 va, u64 size, u64 align)
     }
 }
 
-static int svm_query_register_dev_pcie_th_addr(u32 devid, u64 va, u64 size,
-    u64 *pcie_th_addr, void **priv, struct svm_global_va *src_info)
+static int svm_query_register_dev_pcie_th_addr(
+    u32 devid, u64 va, u64 size, u64 *pcie_th_addr, void **priv, struct svm_global_va *src_info)
 {
     void *svmm_inst = pcie_th_svmm[devid];
     u64 svm_flag, query_va;
@@ -275,7 +277,7 @@ static int svm_register_pcie_th_add_seg(u32 devid, struct svm_global_va *src_inf
 {
     void *svmm_inst = pcie_th_svmm[devid];
     void *seg_handle = NULL;
-    u64 svm_flag= 0ULL;
+    u64 svm_flag = 0;
     int ret;
 
     ret = svm_svmm_add_seg(svmm_inst, devid, dst_va, svm_flag, src_info);
@@ -335,8 +337,9 @@ static int svm_register_pcie_th_check_va(u64 va, u64 size, u32 devid)
     }
 
     if ((va + size) > (prop.start + prop.size)) {
-        svm_err("Size if out of bounds. (va=0x%llx; size=0x%llx; prop start=0x%llx; size=0x%llx)\n",
-            va, size, prop.start, prop.size);
+        svm_err(
+            "Size if out of bounds. (va=0x%llx; size=0x%llx; prop start=0x%llx; size=0x%llx)\n", va, size, prop.start,
+            prop.size);
         return DRV_ERROR_INVALID_VALUE;
     }
 
@@ -348,13 +351,14 @@ static u32 svm_get_register_to_master_flag_by_register_pcie_th_flag(u32 register
     u32 register_to_master_flag = 0;
 
     register_to_master_flag |= REGISTER_TO_MASTER_FLAG_ACCESS_WRITE;
-    register_to_master_flag |= ((register_pcie_th_flag & SVM_REGISTER_PCIE_TH_FLAG_VA_IO_MAP) != 0) ?
-        REGISTER_TO_MASTER_FLAG_VA_IO_MAP : 0;
+    register_to_master_flag |=
+        ((register_pcie_th_flag & SVM_REGISTER_PCIE_TH_FLAG_VA_IO_MAP) != 0) ? REGISTER_TO_MASTER_FLAG_VA_IO_MAP : 0;
 
     return register_to_master_flag;
 }
 
-static int _svm_register_pcie_th_locked(u64 va, u64 size, u32 flag, u32 devid, bool is_malloc_va, u64 dst_va, void *seg_priv)
+static int _svm_register_pcie_th_locked(
+    u64 va, u64 size, u32 flag, u32 devid, bool is_malloc_va, u64 dst_va, void *seg_priv)
 {
     u32 register_flag = svm_get_register_to_master_flag_by_register_pcie_th_flag(flag);
     struct svm_dst_va register_va, dst_info;
@@ -443,7 +447,7 @@ static int svm_register_pcie_th_locked(u64 va, u64 size, u32 flag, u32 devid, bo
                 svm_free_pcie_th_seg_priv(seg_priv);
                 return ret;
             }
-            svm_init_pcie_th_seg_priv(seg_priv, *dst_va, aligned_size, npage_size);
+            svm_init_pcie_th_seg_priv(seg_priv, *dst_va, aligned_size, npage_size, flag);
             alloc_va = true;
         }
     } else {
@@ -567,11 +571,13 @@ static int _svm_register_pcie_th(u64 va, u64 size, u32 flag, u32 devid, u64 *dst
     int ret;
 
     if (svm_va_is_in_range(va, size)) {
+#ifndef CFG_BUILD_DEBUG
+        /* support host svm addr for io va register test in debug version */
         if ((flag & SVM_REGISTER_PCIE_TH_FLAG_VA_IO_MAP) != 0) {
             svm_err("Svm addr not support va io map. (devid=%u; va=0x%llx; size=%llu)\n", devid, va, size);
             return DRV_ERROR_PARA_ERROR;
         }
-
+#endif
         va_handle = svm_handle_get(va);
         if (va_handle == NULL) {
             svm_err("Get va handle failed. (va=0x%llx)\n", va);
@@ -660,3 +666,118 @@ int svm_unregister_pcie_th(u64 va, u32 devid)
     return ret;
 }
 
+static u32 svm_get_register_pcie_th_flag_by_seg_handle(void *seg_handle)
+{
+    struct svm_pcie_th_priv *pcie_th_priv = svm_svmm_get_seg_priv(seg_handle);
+    return (pcie_th_priv == NULL) ? 0 : pcie_th_priv->flag;
+}
+
+static int svm_register_pcie_th_seg_criu_reset(void *seg_handle, u64 start, struct svm_global_va *src_info, void *priv)
+{
+    struct svm_dst_va register_va;
+    struct svm_dst_va dst_info;
+    u32 register_pcie_th_flag = svm_get_register_pcie_th_flag_by_seg_handle(seg_handle);
+    u32 register_to_master_flag = svm_get_register_to_master_flag_by_register_pcie_th_flag(register_pcie_th_flag);
+    u32 devid = *(u32 *)priv;
+
+    if ((register_pcie_th_flag & SVM_REGISTER_PCIE_TH_FLAG_VA_IO_MAP) == 0) {
+        return DRV_ERROR_NONE;
+    }
+
+    svm_svmm_del_seg_handle(pcie_th_svmm[devid], seg_handle);
+
+    svm_dst_va_pack(devid, PROCESS_CP1, start, src_info->size, &dst_info);
+    (void)svm_smm_client_unmap(&dst_info, src_info, 0);
+
+    svm_dst_va_pack(svm_get_host_devid(), 0, src_info->va, src_info->size, &register_va);
+    (void)svm_unregister_to_master(devid, &register_va, register_to_master_flag);
+
+    return DRV_ERROR_NONE;
+}
+
+static int svm_register_pcie_th_seg_criu_restore(
+    void *seg_handle, u64 start, struct svm_global_va *src_info, void *priv)
+{
+    struct svm_prop src_prop;
+    struct svm_dst_va register_va;
+    struct svm_dst_va dst_info;
+    u32 register_pcie_th_flag = svm_get_register_pcie_th_flag_by_seg_handle(seg_handle);
+    u32 register_to_master_flag = svm_get_register_to_master_flag_by_register_pcie_th_flag(register_pcie_th_flag);
+    u32 devid = *(u32 *)priv;
+    int ret;
+
+    if (svm_va_is_in_range(src_info->va, src_info->size)) {
+        ret = svm_get_prop(src_info->va, &src_prop);
+        if (ret != DRV_ERROR_NONE) {
+            svm_err("Get seg prop failed. (ret=%d; va=0x%llx)\n", ret, src_info->va);
+            return ret;
+        }
+        src_info->tgid = src_prop.tgid;
+    } else {
+        src_info->tgid = (int)drvDeviceGetBareTgid();
+    }
+    svm_svmm_mod_seg_src_tgid(seg_handle, src_info->tgid);
+
+    svm_dst_va_pack(svm_get_host_devid(), 0, src_info->va, src_info->size, &register_va);
+    ret = svm_register_to_master(devid, &register_va, register_to_master_flag);
+    if ((ret != DRV_ERROR_NONE) && (ret != DRV_ERROR_BUSY) && (ret != DRV_ERROR_REPEATED_USERD)) {
+        svm_err(
+            "Restore pcie-th register-to-master failed. (ret=%d; devid=%u; va=0x%llx; size=0x%llx)\n", ret, devid,
+            src_info->va, src_info->size);
+        return ret;
+    }
+
+    svm_dst_va_pack(devid, PROCESS_CP1, start, src_info->size, &dst_info);
+    ret = svm_smm_client_map(&dst_info, src_info, 0);
+    if (ret != DRV_ERROR_NONE) {
+        svm_err(
+            "Restore pcie-th map failed. (ret=%d; devid=%u; src_va=0x%llx; dst_va=0x%llx; size=0x%llx)\n", ret, devid,
+            src_info->va, start, src_info->size);
+    }
+
+    return ret;
+}
+
+static int svm_register_pcie_th_criu_reset(u32 devid, void *data)
+{
+    int ret = DRV_ERROR_NONE;
+
+    SVM_UNUSED(data);
+
+    (void)pthread_mutex_lock(&pcie_th_mutex);
+    if ((devid < SVM_MAX_DEV_AGENT_NUM) && (pcie_th_svmm[devid] != NULL)) {
+        ret = svm_svmm_for_each_seg_handle(pcie_th_svmm[devid], svm_register_pcie_th_seg_criu_reset, &devid);
+    }
+    (void)pthread_mutex_unlock(&pcie_th_mutex);
+
+    return ret;
+}
+
+static int svm_register_pcie_th_criu_restore(u32 devid, void *data)
+{
+    int ret = DRV_ERROR_NONE;
+
+    SVM_UNUSED(data);
+
+    (void)pthread_mutex_lock(&pcie_th_mutex);
+    if ((devid < SVM_MAX_DEV_AGENT_NUM) && (pcie_th_svmm[devid] != NULL)) {
+        ret = svm_svmm_for_each_seg_handle(pcie_th_svmm[devid], svm_register_pcie_th_seg_criu_restore, &devid);
+    }
+    (void)pthread_mutex_unlock(&pcie_th_mutex);
+
+    return ret;
+}
+
+static const struct svm_criu_ops register_pcie_th_criu_ops = {
+    .name = "register_pcie_th",
+    .reset = svm_register_pcie_th_criu_reset,
+    .restore = svm_register_pcie_th_criu_restore,
+};
+
+static void __attribute__((constructor)) svm_register_pcie_th_criu_init(void)
+{
+    int ret = svm_criu_register_ops(&register_pcie_th_criu_ops);
+    if (ret != DRV_ERROR_NONE) {
+        svm_err("Register CRIU ops failed.\n");
+    }
+}

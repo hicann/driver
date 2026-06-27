@@ -7,20 +7,19 @@
 #include "svm_addr_desc.h"
 
 struct svm_smm_map_para {
-    u64 dst_va; /* input */
-    u64 dst_size; /* input */
-    u64 flag; /* input */
+    u64 dst_va;                    /* input */
+    u64 dst_size;                  /* input */
+    u64 flag;                      /* input */
     struct svm_global_va src_info; /* input */
-    u64 rsv; /* reserve */
+    u64 rsv;                       /* reserve */
 };
 
 struct svm_smm_unmap_para {
-    u64 dst_va; /* input */
-    u64 dst_size; /* input */
-    u64 flag; /* input */
+    u64 dst_va;                    /* input */
+    u64 dst_size;                  /* input */
+    u64 flag;                      /* input */
     struct svm_global_va src_info; /* input */
-    u64 rsv; /* reserve */
+    u64 rsv;                       /* reserve */
 };
 
 #endif
-

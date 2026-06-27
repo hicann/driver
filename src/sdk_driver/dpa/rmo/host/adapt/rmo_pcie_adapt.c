@@ -30,11 +30,12 @@ int rmo_mem_addr_map(u32 devid, u64 paddr, u64 size, struct rmo_mem_map_addr *ma
         return -ENODEV;
     }
 
-    dma_addr = hal_kernel_devdrv_dma_map_page(dev, ka_mm_pfn_to_page(KA_MM_PFN_DOWN(paddr)), 0, size,
-                                              KA_DMA_BIDIRECTIONAL);
+    dma_addr =
+        hal_kernel_devdrv_dma_map_page(dev, ka_mm_pfn_to_page(KA_MM_PFN_DOWN(paddr)), 0, size, KA_DMA_BIDIRECTIONAL);
     if (ka_mm_dma_mapping_error(dev, dma_addr)) {
-        rmo_err("Dma_map_page failed. (devid=%u; error=%d; size=%llu)\n",
-            devid, ka_mm_dma_mapping_error(dev, dma_addr), size);
+        rmo_err(
+            "Dma_map_page failed. (devid=%u; error=%d; size=%llu)\n", devid, ka_mm_dma_mapping_error(dev, dma_addr),
+            size);
         return -ENOMEM;
     }
 

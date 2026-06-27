@@ -105,17 +105,12 @@ struct devdrv_manager_context {
     u32 docker_id;
     ka_mnt_namespace_t *mnt_ns;
     ka_pid_namespace_t *pid_ns;
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 1, 0)
-    u64 start_time;
-    u64 real_start_time;
-#else
 #ifdef DEVDRV_MANAGER_HOST_UT_TEST
     u64 start_time;
     u64 real_start_time;
 #else
-    ka_timespec_t start_time;
-    ka_timespec_t real_start_time;
-#endif
+    ka_system_timespec start_time;
+    ka_system_timespec real_start_time;
 #endif
     ka_task_struct_t *task;
     struct ipc_notify_info *ipc_notify_info;

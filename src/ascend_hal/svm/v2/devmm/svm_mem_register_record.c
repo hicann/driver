@@ -20,6 +20,7 @@
 #include "devmm_svm.h"
 #include "svm_define.h"
 #include "svm_mem_register_record.h"
+#include "devmm_virt_interface.h"
 
 struct register_record_node {
     DVdeviceptr src_ptr;
@@ -29,15 +30,9 @@ struct register_record_node {
     struct rb_node node;
 };
 
-enum register_record_tree_type {
-    NO_DMA_MAP_RECORD_TREE = 0,
-    DMA_MAP_RECORD_TREE,
-    RECORD_TREE_MAX_TYPE
-};
-
 #define container_of(ptr, type, member)                    \
     ({                                                     \
-        typeof(((type *)0)->member) *__mptr = (ptr); \
+        typeof(((type *)0)->member) *__mptr = (ptr);       \
         (type *)((char *)__mptr - offsetof(type, member)); \
     })
 
@@ -46,10 +41,7 @@ static struct rbtree_root g_reg_record_tree[MEM_REGISTER_MAX_SIDE][RECORD_TREE_M
 static pthread_rwlock_t g_reg_record_lock[MEM_REGISTER_MAX_SIDE][RECORD_TREE_MAX_TYPE][REG_RECORD_MAX_DEV_NUM];
 static THREAD bool g_record_enable = false;
 
-void svm_mem_register_record_enable(void)
-{
-    g_record_enable = true;
-}
+void svm_mem_register_record_enable(void) { g_record_enable = true; }
 
 static inline uint32_t svm_mem_register_get_mem_side(uint32_t map_type)
 {
@@ -70,8 +62,8 @@ static inline uint32_t svm_mem_register_get_tree_type(uint32_t map_type)
     }
 }
 
-static inline bool svm_mem_register_range_is_overlap(DVdeviceptr ptr, uint64_t size,
-    struct register_record_node *record_node)
+static inline bool svm_mem_register_range_is_overlap(
+    DVdeviceptr ptr, uint64_t size, struct register_record_node *record_node)
 {
     if ((ptr + size <= record_node->src_ptr) || (ptr >= record_node->src_ptr + record_node->count)) {
         return false;
@@ -85,23 +77,66 @@ static inline struct register_record_node *svm_mem_register_get_record_node(stru
     return container_of(tmp, struct register_record_node, node);
 }
 
-static bool _svm_mem_register_record_is_exist(DVdeviceptr ptr, uint64_t size, uint32_t side, uint32_t tree_type, uint32_t devid)
+static struct register_record_node *svm_mem_register_find_overlap_record_node(
+    DVdeviceptr ptr, uint64_t size, uint32_t side, uint32_t tree_type, uint32_t devid)
 {
+    struct rbtree_root *root = &g_reg_record_tree[side][tree_type][devid];
+    struct rbtree_node *tmp = root->rbtree_node;
+    struct register_record_node *candidate = NULL;
     struct register_record_node *record_node = NULL;
-    struct rbtree_node *cur = NULL;
-    struct rbtree_node *tmp = NULL;
 
-    rbtree_node_for_each_prev_safe(cur, tmp, &g_reg_record_tree[side][tree_type][devid]) {
-        record_node = svm_mem_register_get_record_node(cur);
-        if (svm_mem_register_range_is_overlap(ptr, size, record_node)) {
-            return true;
+    if (RB_EMPTY_ROOT(root)) {
+        return NULL;
+    }
+
+    while (tmp != NULL) {
+        record_node = svm_mem_register_get_record_node(tmp);
+        if (ptr < record_node->src_ptr) {
+            tmp = tmp->rbtree_left;
+        } else {
+            candidate = record_node;
+            tmp = tmp->rbtree_right;
         }
     }
-    return false;
+
+    if (candidate != NULL) {
+        if (svm_mem_register_range_is_overlap(ptr, size, candidate)) {
+            return candidate;
+        }
+        struct rbtree_node *next = rbtree_next(&candidate->node.rbtree_node);
+        if (next != NULL) {
+            record_node = svm_mem_register_get_record_node(next);
+            if (svm_mem_register_range_is_overlap(ptr, size, record_node)) {
+                return record_node;
+            }
+        }
+    } else {
+        struct rbtree_node *first = rbtree_first(root);
+        if (first != NULL) {
+            record_node = svm_mem_register_get_record_node(first);
+            if (svm_mem_register_range_is_overlap(ptr, size, record_node)) {
+                return record_node;
+            }
+        }
+    }
+
+    return NULL;
 }
 
-static DVresult _svm_mem_register_record_add(uint32_t devid, DVdeviceptr src_ptr, uint64_t size, uint32_t map_type,
-    DVdeviceptr dst_ptr)
+static inline struct register_record_node *svm_mem_register_find_record_node(
+    DVdeviceptr ptr, uint32_t side, uint32_t tree_type, uint32_t devid)
+{
+    return svm_mem_register_find_overlap_record_node(ptr, 1, side, tree_type, devid);
+}
+
+static bool _svm_mem_register_record_is_exist(
+    DVdeviceptr ptr, uint64_t size, uint32_t side, uint32_t tree_type, uint32_t devid)
+{
+    return svm_mem_register_find_overlap_record_node(ptr, size, side, tree_type, devid) != NULL;
+}
+
+static DVresult _svm_mem_register_record_add(
+    uint32_t devid, DVdeviceptr src_ptr, uint64_t size, uint32_t map_type, DVdeviceptr dst_ptr)
 {
     uint32_t side = svm_mem_register_get_mem_side(map_type);
     uint32_t tree_type = svm_mem_register_get_tree_type(map_type);
@@ -126,14 +161,15 @@ static DVresult _svm_mem_register_record_add(uint32_t devid, DVdeviceptr src_ptr
         return DRV_ERROR_REPEATED_USERD;
     }
 
-    DEVMM_DRV_DEBUG_ARG("Add mem register record. (map_type=%u; src_ptr=0x%llx; dst_ptr=0x%llx; count=%lu; side=%u; device=%u)\n",
+    DEVMM_DRV_DEBUG_ARG(
+        "Add mem register record. (map_type=%u; src_ptr=0x%llx; dst_ptr=0x%llx; count=%lu; side=%u; device=%u)\n",
         map_type, src_ptr, dst_ptr, size, side, devid);
 
     return DRV_ERROR_NONE;
 }
 
-DVresult svm_mem_register_record_add(uint32_t devid, DVdeviceptr src_ptr, uint64_t size, uint32_t map_type,
-    DVdeviceptr dst_ptr)
+DVresult svm_mem_register_record_add(
+    uint32_t devid, DVdeviceptr src_ptr, uint64_t size, uint32_t map_type, DVdeviceptr dst_ptr)
 {
     uint32_t side, tree_type;
     DVresult ret;
@@ -164,8 +200,9 @@ static void _svm_mem_register_record_del(DVdeviceptr src_ptr, uint32_t tree_type
     if (tmp != NULL) {
         record_node = container_of(tmp, struct register_record_node, node);
         rbtree_erase(&g_reg_record_tree[side][tree_type][devid], &record_node->node);
-        DEVMM_DRV_DEBUG_ARG("Del mem register record. (ptr=0x%llx; count=%lu; device=%u)\n",
-            record_node->src_ptr, record_node->count, devid);
+        DEVMM_DRV_DEBUG_ARG(
+            "Del mem register record. (ptr=0x%llx; count=%lu; device=%u)\n", record_node->src_ptr, record_node->count,
+            devid);
         free(record_node);
     }
 }
@@ -192,7 +229,8 @@ static void _svm_mem_register_records_del(uint32_t side, uint32_t tree_type, uin
     struct rbtree_node *cur = NULL;
     struct rbtree_node *tmp = NULL;
 
-    rbtree_node_for_each_prev_safe(cur, tmp, &g_reg_record_tree[side][tree_type][devid]) {
+    rbtree_node_for_each_prev_safe(cur, tmp, &g_reg_record_tree[side][tree_type][devid])
+    {
         record_node = svm_mem_register_get_record_node(cur);
         rbtree_erase(&g_reg_record_tree[side][tree_type][devid], &record_node->node);
         free(record_node);
@@ -218,27 +256,29 @@ void svm_mem_register_records_del(uint32_t devid)
     }
 }
 
-static DVresult _svm_mem_register_record_query(DVdeviceptr src_ptr, uint32_t side, uint32_t tree_type, uint32_t devid,
-    uint32_t *map_type, DVdeviceptr *dst_ptr)
+static DVresult _svm_mem_register_record_query(
+    DVdeviceptr src_ptr, uint32_t side, uint32_t tree_type, uint32_t devid, uint32_t *map_type, DVdeviceptr *dst_ptr)
 {
     struct register_record_node *record_node = NULL;
     struct rb_node *tmp = NULL;
 
     tmp = rbtree_get(src_ptr, &g_reg_record_tree[side][tree_type][devid]);
-    if (tmp != NULL) {
-        record_node = container_of(tmp, struct register_record_node, node);
-        if (map_type != NULL) {
-            *map_type = record_node->map_type;
-        }
-        if (dst_ptr != NULL) {
-            *dst_ptr = record_node->dst_ptr;
-        }
-        return DRV_ERROR_NONE;
+    if (tmp == NULL) {
+        return DRV_ERROR_NOT_EXIST;
     }
-    return DRV_ERROR_NOT_EXIST;
+
+    record_node = container_of(tmp, struct register_record_node, node);
+    if (map_type != NULL) {
+        *map_type = record_node->map_type;
+    }
+    if (dst_ptr != NULL) {
+        *dst_ptr = record_node->dst_ptr;
+    }
+    return DRV_ERROR_NONE;
 }
 
-DVresult svm_mem_register_record_query(DVdeviceptr src_ptr, uint32_t devid, uint32_t side, uint32_t *map_type, DVdeviceptr *dst_ptr)
+DVresult svm_mem_register_record_query(
+    DVdeviceptr src_ptr, uint32_t devid, uint32_t side, uint32_t *map_type, DVdeviceptr *dst_ptr)
 {
     uint32_t tree_type = NO_DMA_MAP_RECORD_TREE;
     DVresult ret;
@@ -260,6 +300,67 @@ DVresult svm_mem_register_record_query(DVdeviceptr src_ptr, uint32_t devid, uint
     return ret;
 }
 
+static DVresult _svm_mem_register_record_range_query(
+    DVdeviceptr src_ptr, uint32_t side, uint32_t tree_type, uint32_t devid, uint32_t *map_type, DVdeviceptr *dst_ptr)
+{
+    struct register_record_node *record_node = NULL;
+
+    record_node = svm_mem_register_find_record_node(src_ptr, side, tree_type, devid);
+    if (record_node == NULL) {
+        return DRV_ERROR_NOT_EXIST;
+    }
+
+    if (map_type != NULL) {
+        *map_type = record_node->map_type;
+    }
+    if (dst_ptr != NULL) {
+        uint64_t offset = src_ptr - record_node->src_ptr;
+        *dst_ptr = (record_node->dst_ptr == 0) ? 0 : (record_node->dst_ptr + offset);
+    }
+
+    return DRV_ERROR_NONE;
+}
+
+DVresult svm_mem_register_record_range_query(
+    DVdeviceptr src_ptr, uint32_t devid, uint32_t side, uint32_t *map_type, DVdeviceptr *dst_ptr)
+{
+    uint32_t tree_type = NO_DMA_MAP_RECORD_TREE;
+    DVresult ret;
+
+    if ((g_record_enable == false) || (devid >= REG_RECORD_MAX_DEV_NUM) || (side >= MEM_REGISTER_MAX_SIDE)) {
+        return DRV_ERROR_NOT_EXIST;
+    }
+
+    for (tree_type = NO_DMA_MAP_RECORD_TREE; tree_type < RECORD_TREE_MAX_TYPE; tree_type++) {
+        pthread_rwlock_rdlock(&g_reg_record_lock[side][tree_type][devid]);
+        ret = _svm_mem_register_record_range_query(src_ptr, side, tree_type, devid, map_type, dst_ptr);
+        pthread_rwlock_unlock(&g_reg_record_lock[side][tree_type][devid]);
+
+        if (ret == DRV_ERROR_NONE) {
+            return DRV_ERROR_NONE;
+        }
+    }
+
+    return ret;
+}
+
+DVresult svm_mem_register_record_range_query_single(
+    DVdeviceptr src_ptr, uint32_t devid, uint32_t side, uint32_t tree_type, uint32_t *map_type, DVdeviceptr *dst_ptr)
+{
+    DVresult ret;
+
+    if ((g_record_enable == false) || (devid >= REG_RECORD_MAX_DEV_NUM) || (side >= MEM_REGISTER_MAX_SIDE) ||
+        (tree_type >= RECORD_TREE_MAX_TYPE)) {
+        return DRV_ERROR_NOT_EXIST;
+    }
+
+    pthread_rwlock_rdlock(&g_reg_record_lock[side][tree_type][devid]);
+    ret = _svm_mem_register_record_range_query(src_ptr, side, tree_type, devid, map_type, dst_ptr);
+    pthread_rwlock_unlock(&g_reg_record_lock[side][tree_type][devid]);
+
+    return ret;
+}
+
 bool svm_mem_register_record_is_exist(DVdeviceptr ptr, uint32_t side)
 {
     uint32_t i, j;
@@ -270,6 +371,9 @@ bool svm_mem_register_record_is_exist(DVdeviceptr ptr, uint32_t side)
 
     for (i = NO_DMA_MAP_RECORD_TREE; i < RECORD_TREE_MAX_TYPE; i++) {
         for (j = 0; j < REG_RECORD_MAX_DEV_NUM; j++) {
+            if (!devmm_dev_is_inited(j)) {
+                continue;
+            }
             pthread_rwlock_rdlock(&g_reg_record_lock[side][i][j]);
             bool is_exist = _svm_mem_register_record_is_exist(ptr, 1, side, i, j);
             pthread_rwlock_unlock(&g_reg_record_lock[side][i][j]);
@@ -282,16 +386,16 @@ bool svm_mem_register_record_is_exist(DVdeviceptr ptr, uint32_t side)
     return false;
 }
 
-static void __attribute__((constructor))svm_mem_register_record_init(void)
+static void __attribute__((constructor)) svm_mem_register_record_init(void)
 {
     uint32_t i, j, k;
 
     for (i = HOST_MEM_REGISTER; i < MEM_REGISTER_MAX_SIDE; i++) {
-       for (j = NO_DMA_MAP_RECORD_TREE; j < RECORD_TREE_MAX_TYPE; j++) {
-           for (k = 0; k < REG_RECORD_MAX_DEV_NUM; k++) {
-               rbtree_init(&g_reg_record_tree[i][j][k]);
-               pthread_rwlock_init(&g_reg_record_lock[i][j][k], NULL);
-           }
-       }
+        for (j = NO_DMA_MAP_RECORD_TREE; j < RECORD_TREE_MAX_TYPE; j++) {
+            for (k = 0; k < REG_RECORD_MAX_DEV_NUM; k++) {
+                rbtree_init(&g_reg_record_tree[i][j][k]);
+                pthread_rwlock_init(&g_reg_record_lock[i][j][k], NULL);
+            }
+        }
     }
 }

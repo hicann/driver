@@ -153,8 +153,8 @@ STATIC struct devdrv_non_trans_msg_chan_info g_common_msg_chan_info = {
     .msg_type = devdrv_msg_client_common,
     .flag = 0,
     .level = DEVDRV_MSG_CHAN_LEVEL_LOW,
-    .s_desc_size = DEVDRV_NON_TRANS_MSG_DEFAULT_DESC_SIZE,
-    .c_desc_size = DEVDRV_NON_TRANS_MSG_DEFAULT_DESC_SIZE,
+    .s_desc_size = UBVDRV_NON_TRANS_MSG_DEFAULT_DESC_SIZE,
+    .c_desc_size = UBVDRV_NON_TRANS_MSG_DEFAULT_DESC_SIZE,
     .rx_msg_process = ubdrv_rx_msg_common_msg_process,
 };
 

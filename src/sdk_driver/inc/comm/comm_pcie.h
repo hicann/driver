@@ -35,26 +35,26 @@
  */
 int devdrv_get_platform_type(unsigned int *p_type, unsigned int *version);
 
-#define DEVDRV_P2P_TYPE_ALL    0
-#define DEVDRV_P2P_TYPE_MEM    1
+#define DEVDRV_P2P_TYPE_ALL 0
+#define DEVDRV_P2P_TYPE_MEM 1
 #define DEVDRV_P2P_TYPE_NOTIFY 2
-#define DEVDRV_P2P_TYPE_MAX    3
+#define DEVDRV_P2P_TYPE_MAX 3
 
-#define DEVDRV_HOST_PHY_MACH_FLAG_OFFSET    0x400         /* HOST_FLAG offset in BAR4 */
-#define DEVDRV_ERROR_CODE_OFFSET            0x404         /* ERROR_CODE offset in BAR4 */
+#define DEVDRV_HOST_PHY_MACH_FLAG_OFFSET 0x400 /* HOST_FLAG offset in BAR4 */
+#define DEVDRV_ERROR_CODE_OFFSET 0x404         /* ERROR_CODE offset in BAR4 */
 
-#define DEVDRV_COMMON_MSG_NOTIFY_TIMEOUT       30000 /* 300s total, each sleep 10ms */
+#define DEVDRV_COMMON_MSG_NOTIFY_TIMEOUT 30000 /* 300s total, each sleep 10ms */
 
 u32 devdrv_get_dev_chip_type(u32 udevid);
 u32 devdrv_get_dev_chip_type_by_addid(u32 index_id);
 
-#define DEVDRV_BOOT_CONTINUE  0xFF
-#define DEVDRV_PHY_BOOT          0
-#define DEVDRV_SRIOV_VF_BOOT     1
-#define DEVDRV_MDEV_FULL_SPEC_VF_PM_BOOT   2
-#define DEVDRV_MDEV_FULL_SPEC_VF_VM_BOOT   3
-#define DEVDRV_MDEV_VF_PM_BOOT   4
-#define DEVDRV_MDEV_VF_VM_BOOT   5
+#define DEVDRV_BOOT_CONTINUE 0xFF
+#define DEVDRV_PHY_BOOT 0
+#define DEVDRV_SRIOV_VF_BOOT 1
+#define DEVDRV_MDEV_FULL_SPEC_VF_PM_BOOT 2
+#define DEVDRV_MDEV_FULL_SPEC_VF_VM_BOOT 3
+#define DEVDRV_MDEV_VF_PM_BOOT 4
+#define DEVDRV_MDEV_VF_VM_BOOT 5
 #define DEVDRV_MAX_ENV_BOOT_TYPE 6
 
 bool devdrv_is_mdev_pm_boot_mode(u32 udevid);
@@ -62,12 +62,12 @@ bool devdrv_is_mdev_vm_full_spec(u32 udevid);
 
 int devdrv_mdev_set_pm_iova_addr_range(int devid, ka_dma_addr_t iova_base, u64 iova_size);
 
-#define DEVDRV_PHY_BOOT          0
-#define DEVDRV_SRIOV_VF_BOOT     1
-#define DEVDRV_MDEV_FULL_SPEC_VF_PM_BOOT   2
-#define DEVDRV_MDEV_FULL_SPEC_VF_VM_BOOT   3
-#define DEVDRV_MDEV_VF_PM_BOOT   4
-#define DEVDRV_MDEV_VF_VM_BOOT   5
+#define DEVDRV_PHY_BOOT 0
+#define DEVDRV_SRIOV_VF_BOOT 1
+#define DEVDRV_MDEV_FULL_SPEC_VF_PM_BOOT 2
+#define DEVDRV_MDEV_FULL_SPEC_VF_VM_BOOT 3
+#define DEVDRV_MDEV_VF_PM_BOOT 4
+#define DEVDRV_MDEV_VF_VM_BOOT 5
 #define DEVDRV_MAX_ENV_BOOT_TYPE 6
 
 #define DEVDRV_DMA_DATA_COMM_CHAN_NUM 1
@@ -75,42 +75,42 @@ int devdrv_mdev_set_pm_iova_addr_range(int devid, ka_dma_addr_t iova_base, u64 i
 
 /* sync DMA copy */
 int devdrv_pci_dma_sync_copy(u32 udevid, enum devdrv_dma_data_type type, u64 src, u64 dst, u32 size,
-                         enum devdrv_dma_direction direction);
+                             enum devdrv_dma_direction direction);
 /* async DMA copy */
 int devdrv_pci_dma_async_copy(u32 udevid, enum devdrv_dma_data_type type, u64 src, u64 dst, u32 size,
-                          enum devdrv_dma_direction direction, struct devdrv_asyn_dma_para_info *para_info);
+                              enum devdrv_dma_direction direction, struct devdrv_asyn_dma_para_info *para_info);
 /* sync DMA link copy */
 int devdrv_pci_dma_sync_link_copy(u32 udevid, enum devdrv_dma_data_type type, int wait_type,
-                              struct devdrv_dma_node *dma_node, u32 node_cnt);
+                                  struct devdrv_dma_node *dma_node, u32 node_cnt);
 /* async DMA link copy */
 int devdrv_pci_dma_async_link_copy(u32 udevid, enum devdrv_dma_data_type type, struct devdrv_dma_node *dma_node,
-                               u32 node_cnt, struct devdrv_asyn_dma_para_info *para_info);
+                                   u32 node_cnt, struct devdrv_asyn_dma_para_info *para_info);
 
 /* sync DMA copy assign dma chan */
 int devdrv_pci_dma_sync_copy_plus(u32 udevid, enum devdrv_dma_data_type type, int instance, u64 src, u64 dst, u32 size,
-                              enum devdrv_dma_direction direction);
+                                  enum devdrv_dma_direction direction);
 /* async DMA copy assign dma chan */
 int devdrv_pci_dma_async_copy_plus(u32 udevid, enum devdrv_dma_data_type type, int instance, u64 src, u64 dst, u32 size,
-                               enum devdrv_dma_direction direction, struct devdrv_asyn_dma_para_info *para_info);
+                                   enum devdrv_dma_direction direction, struct devdrv_asyn_dma_para_info *para_info);
 /* sync DMA link copy assign dma chan */
 int devdrv_pci_dma_sync_link_copy_plus(u32 udevid, enum devdrv_dma_data_type type, int wait_type, int instance,
-                                   struct devdrv_dma_node *dma_node, u32 node_cnt);
+                                       struct devdrv_dma_node *dma_node, u32 node_cnt);
 /* async DMA link copy assign dma chan */
 int devdrv_pci_dma_async_link_copy_plus(u32 udevid, enum devdrv_dma_data_type type, int instance,
-                                    struct devdrv_dma_node *dma_node, u32 node_cnt,
-                                    struct devdrv_asyn_dma_para_info *para_info);
+                                        struct devdrv_dma_node *dma_node, u32 node_cnt,
+                                        struct devdrv_asyn_dma_para_info *para_info);
 /* sync DMA link copy, pa copy */
 int devdrv_pci_dma_sync_link_copy_extend(u32 udevid, enum devdrv_dma_data_type type, int wait_type,
-                                                    struct devdrv_dma_node *dma_node, u32 node_cnt);
+                                         struct devdrv_dma_node *dma_node, u32 node_cnt);
 /* sync DMA link copy assign dma chan, pa copy */
 int devdrv_pci_dma_sync_link_copy_plus_extend(u32 udevid, enum devdrv_dma_data_type type, int wait_type, int instance,
-                                                         struct devdrv_dma_node *dma_node, u32 node_cnt);
+                                              struct devdrv_dma_node *dma_node, u32 node_cnt);
 int devdrv_pci_dma_done_schedule(u32 udevid, enum devdrv_dma_data_type type, int instance);
 int devdrv_pci_dma_get_sq_cq_desc_size(u32 devid, u32 *sq_desc_size, u32 *cq_desc_size);
 int devdrv_pci_dma_fill_desc_of_sq(u32 udevid, struct devdrv_dma_prepare *dma_prepare, struct devdrv_dma_node *dma_node,
                                    u32 node_cnt, u32 fill_status);
-int devdrv_pci_dma_fill_desc_of_sq_ext(u32 udevid, void *sq_base, struct devdrv_dma_node *dma_node,
-                                       u32 node_cnt, u32 fill_status);
+int devdrv_pci_dma_fill_desc_of_sq_ext(u32 udevid, void *sq_base, struct devdrv_dma_node *dma_node, u32 node_cnt,
+                                       u32 fill_status);
 int devdrv_dma_link_sq_node_num(const struct devdrv_dma_prepare *dma_prepare);
 /* async DAM link prepare */
 struct devdrv_dma_prepare *devdrv_pci_dma_link_prepare(u32 udevid, enum devdrv_dma_data_type type,
@@ -140,32 +140,9 @@ struct devdrv_trans_msg_chan_info {
     void (*rx_msg_notify)(void *msg_chan);
     void (*tx_finish_notify)(void *msg_chan);
 };
-/* alloc trans msg chan */
-void *devdrv_pcimsg_alloc_trans_queue(u32 udevid, struct devdrv_trans_msg_chan_info *chan_info);
-int devdrv_pcimsg_realease_trans_queue(void *msg_chan);
 
 #define DEVDRV_NON_TRANS_MSG_DEFAULT_DESC_SIZE 0x10000
 
-/* alloc non-trans msg chan */
-void *devdrv_pcimsg_alloc_non_trans_queue(u32 dev_id, struct devdrv_non_trans_msg_chan_info *chan_info);
-/* free non-trans msg chan */
-int devdrv_pcimsg_free_non_trans_queue(void *msg_chan);
-/* non-trans msg sync send */
-int devdrv_sync_msg_send(void *msg_chan, void *data, u32 in_data_len, u32 out_data_len, u32 *real_out_len);
-
-/* msg chan operate */
-void devdrv_msg_ring_doorbell(void *msg_chan);
-void devdrv_msg_ring_cq_doorbell(void *msg_chan);
-void *devdrv_get_msg_chan_host_sq_head(void *msg_chan, u32 *head);
-void devdrv_move_msg_chan_host_sq_head(void *msg_chan);
-void *devdrv_get_msg_chan_host_cq_head(void *msg_chan);
-void devdrv_move_msg_chan_host_cq_head(void *msg_chan);
-void devdrv_set_msg_chan_slave_sq_head(void *msg_chan, u32 head);
-void *devdrv_get_msg_chan_slave_sq_tail(void *msg_chan, u32 *tail);
-void devdrv_move_msg_chan_slave_sq_tail(void *msg_chan);
-bool devdrv_msg_chan_slave_sq_full_check(void *msg_chan);
-void *devdrv_get_msg_chan_slave_cq_tail(void *msg_chan);
-void devdrv_move_msg_chan_slave_cq_tail(void *msg_chan);
 #ifdef CFG_FEATURE_SEC_COMM_L3
 void *devdrv_get_msg_chan_host_rsv_sq_tail(void *msg_chan, u32 *tail);
 void *devdrv_get_msg_chan_host_rsv_cq_tail(void *msg_chan);
@@ -177,11 +154,11 @@ int devdrv_dma_copy_cq_desc_to_slave(void *msg_chan, struct devdrv_asyn_dma_para
 
 #define DEVDRV_S2S_TO_DEVICE 0x0
 #define DEVDRV_S2S_TO_HOST 0x1
-#define DEVDRV_S2S_IDLE_MODE     0
-#define DEVDRV_S2S_SYNC_MODE     1
-#define DEVDRV_S2S_ASYNC_MODE    2
-#define DEVDRV_S2S_KEEP_RECV  1
-#define DEVDRV_S2S_END_RECV   2
+#define DEVDRV_S2S_IDLE_MODE 0
+#define DEVDRV_S2S_SYNC_MODE 1
+#define DEVDRV_S2S_ASYNC_MODE 2
+#define DEVDRV_S2S_KEEP_RECV 1
+#define DEVDRV_S2S_END_RECV 2
 #define AGENTDRV_S2S_TO_DEVICE 0x0
 #define AGENTDRV_S2S_TO_HOST 0x1
 
@@ -206,7 +183,7 @@ int agentdrv_unregister_trans_msg_client(const struct agentdrv_trans_msg_client 
 
 #define AGENTDRV_NOTIFY_NORMAL 0
 #define AGENTDRV_NOTIFY_FINISH 7788
-#define AGENTDRV_NOTIFY_BUSY   8899
+#define AGENTDRV_NOTIFY_BUSY 8899
 
 int agentdrv_enable_non_trans_msg_client(const struct agentdrv_non_trans_msg_client *msg_client);
 
@@ -391,7 +368,7 @@ enum devdrv_p2p_addr_type {
 };
 
 int devdrv_get_p2p_addr(u32 dev_id, u32 remote_dev_id, enum devdrv_p2p_addr_type type, phys_addr_t *phy_addr,
-    size_t *size);
+                        size_t *size);
 
 /* local_devid:device devid, devid: host devid */
 int agentdrv_get_p2p_addr(u32 local_devid, u32 devid, enum devdrv_p2p_addr_type type, phys_addr_t *phy_addr, u32 *size);
@@ -475,7 +452,7 @@ enum devdrv_addr_type {
     DEVDRV_ADDR_HDR_BASE, /* bbox history data record area */
     DEVDRV_ADDR_BBOX_BASE,
     DEVDRV_ADDR_REG_SRAM_BASE,
-    DEVDRV_ADDR_TSDRV_RESV_BASE,
+    DEVDRV_ADDR_TSDRV_RESV_BASE, /* ts utilization data record area */
     DEVDRV_ADDR_DEVMNG_RESV_BASE,
     DEVDRV_ADDR_DEVMNG_INFO_MEM_BASE,
     DEVDRV_ADDR_HBM_ECC_MEM_BASE,
@@ -614,16 +591,16 @@ int devdrv_mdev_pm_uninit_msi_interrupt(u32 dev_id);
 
 #define HCCS_GROUP_SUPPORT_MAX_CHIPNUM 16
 int devdrv_get_hccs_link_status_and_group_id(u32 devid, u32 *hccs_status, u32 hccs_group_id[], u32 group_id_num);
-#define DEVDRV_ADMODE_FULL_MATCH     1
+#define DEVDRV_ADMODE_FULL_MATCH 1
 #define DEVDRV_ADMODE_NOT_FULL_MATCH 0
-#define AGENTDRV_ADMODE_FULL_MATCH     1
+#define AGENTDRV_ADMODE_FULL_MATCH 1
 #define AGENTDRV_ADMODE_NOT_FULL_MATCH 0
 
-#define DEVDRV_BOOT_DEFAULT_MODE   0
-#define DEVDRV_BOOT_ONLY_SRIOV     1
+#define DEVDRV_BOOT_DEFAULT_MODE 0
+#define DEVDRV_BOOT_ONLY_SRIOV 1
 #define DEVDRV_BOOT_MDEV_AND_SRIOV 2
 
-#define DEVDRV_VPC_MAX_SQ_DMA_NODE_COUNT  4096
+#define DEVDRV_VPC_MAX_SQ_DMA_NODE_COUNT 4096
 int devdrv_vpc_client_init(u32 devid);
 int devdrv_vpc_client_uninit(u32 devid);
 
@@ -648,7 +625,7 @@ int devdrv_sriov_uninit_instance(u32 dev_id);
 void devdrv_mdev_free_vf_dma_sqcq_on_pm(u32 devid);
 int devdrv_get_pci_enabled_vf_num(u32 dev_id, int *vf_num);
 int agentdrv_sriov_init_instance(u32 udevid, u32 vm_full_spec_enable, u32 computility, u32 total,
-    unsigned long *dma_bitmap);
+                                 unsigned long *dma_bitmap);
 int agentdrv_sriov_uninit_instance(u32 dev_id);
 int devdrv_mdev_set_pm_iova_addr_range(int devid, ka_dma_addr_t iova_base, u64 iova_size);
 
@@ -657,14 +634,18 @@ void *devdrv_pci_dma_zalloc_coherent(ka_device_t *dev, size_t size, ka_dma_addr_
 void devdrv_pci_dma_free_coherent(ka_device_t *dev, size_t size, void *addr, ka_dma_addr_t dma_addr);
 ka_dma_addr_t devdrv_pci_dma_map_single(ka_device_t *dev, void *ptr, size_t size, ka_dma_data_direction_t dir);
 void devdrv_pci_dma_unmap_single(ka_device_t *dev, ka_dma_addr_t addr, size_t size, ka_dma_data_direction_t dir);
-ka_dma_addr_t devdrv_pci_dma_map_page(ka_device_t *dev, ka_page_t *page,
-                                   size_t offset, size_t size, ka_dma_data_direction_t dir);
+ka_dma_addr_t devdrv_pci_dma_map_page(ka_device_t *dev, ka_page_t *page, size_t offset, size_t size,
+                                      ka_dma_data_direction_t dir);
 void devdrv_pci_dma_unmap_page(ka_device_t *dev, ka_dma_addr_t addr, size_t size, ka_dma_data_direction_t dir);
-ka_dma_addr_t devdrv_pci_dma_map_resource(ka_device_t *dev, phys_addr_t phys_addr,
-                                       size_t size, ka_dma_data_direction_t dir, unsigned long attrs);
-void devdrv_pci_dma_unmap_resource(ka_device_t *dev, ka_dma_addr_t addr, size_t size,
-                                   ka_dma_data_direction_t dir, unsigned long attrs);
-int devdrv_get_reserve_mem_info(u32 devid, phys_addr_t *pa, size_t *size);
+ka_dma_addr_t devdrv_pci_dma_map_page_attrs(ka_device_t *dev, ka_page_t *page, size_t offset, size_t size,
+                                            ka_dma_data_direction_t dir, u64 attrs);
+void devdrv_pci_dma_unmap_page_attrs(ka_device_t *dev, ka_dma_addr_t addr, size_t size, ka_dma_data_direction_t dir,
+                                     u64 attrs);
+ka_dma_addr_t devdrv_pci_dma_map_resource(ka_device_t *dev, phys_addr_t phys_addr, size_t size,
+                                          ka_dma_data_direction_t dir, unsigned long attrs);
+void devdrv_pci_dma_unmap_resource(ka_device_t *dev, ka_dma_addr_t addr, size_t size, ka_dma_data_direction_t dir,
+                                   unsigned long attrs);
+int devdrv_get_reserve_mem_info(u32 devid, enum devdrv_msg_client_type msg_type, phys_addr_t *pa, size_t *size);
 
 /* agent smmu only can transform 32 addr one time */
 #define DEVDRV_AGENT_SMMU_SUPPORT_MAX_NUM 120
@@ -689,8 +670,7 @@ int devdrv_get_bar_wc_flag(u32 udevid, u32 *value);
 int agentdrv_get_ts_dma_chan_info(u32 devid, struct agentdrv_ts_dma_chan_info *chan_info);
 int devdrv_dma_alloc_sq_desc_for_ts(u32 dev_id, u64 *dma_addr, u64 *phy_addr, u32 *len);
 int devdrv_dma_alloc_cq_desc_for_ts(u32 dev_id, u64 *dma_addr, u64 *phy_addr, u32 *len);
-int devdrv_dma_map_for_ts(u32 dev_id, bool is_sq,
-    u64 *phy_addr, u32 *len, u64 *dma_addr);
+int devdrv_dma_map_for_ts(u32 dev_id, bool is_sq, u64 *phy_addr, u32 *len, u64 *dma_addr);
 /* for dev manager to register when insmod,then pcie report probed info to dev manager
 probe_num:num of mini probed
 devids: devids to be reported
@@ -724,17 +704,17 @@ int devdrv_get_dev_id_by_pdev_with_dev_index(ka_pci_dev_t *pdev, int dev_index);
 void *devdrv_get_devdrv_priv(ka_pci_dev_t *pdev);
 int agentdrv_set_msg_dev_status(u32 dev_id, int status);
 bool agentdrv_get_dma_urca_err(u32 dev_id);
-int devdrv_get_pcie_link_info(u32 udevid, struct devdrv_pcie_link_info_para* pcie_link_info);
+int devdrv_get_pcie_link_info(u32 udevid, struct devdrv_pcie_link_info_para *pcie_link_info);
 int devdrv_force_linkdown(u32 udevid);
 int devdrv_get_theoretical_capability(u32 udevid, u64 *bandwidth, u64 *packspeed);
 int devdrv_get_real_capability_ratio(u32 udevid, u32 *bandwidth_ratio, u32 *packspeed_ratio);
 int agentdrv_set_heartbeat_count(u32 devid, u64 count);
 int agentdrv_get_heartbeat_count(u32 devid, u64 *count);
 
-#define AGENTDRV_PROF_ENABLE  0x5a5a
+#define AGENTDRV_PROF_ENABLE 0x5a5a
 #define AGENTDRV_PROF_DISABLE 0
-#define AGENTDRV_PROF_INVALID_PID (-1)  /* DCMI use invalid pid */
-#define AGENTDRV_PROF_PROFILING_PID 0   /* PROF use normal pid */
+#define AGENTDRV_PROF_INVALID_PID (-1) /* DCMI use invalid pid */
+#define AGENTDRV_PROF_PROFILING_PID 0  /* PROF use normal pid */
 
 #define AGENTDRV_PROF_DATA_NUM 3
 
@@ -756,20 +736,20 @@ int hisi_pcie_pmu_enable_profiling(u32 dev_id);
 int hisi_pcie_pmu_disable_profiling(u32 dev_id);
 int hisi_pcie_pmu_get_profiling_info(u32 dev_id, struct agentdrv_profiling_buf *info);
 
-int devdrv_get_heartbeat_count(u32 devid, u64* count);
+int devdrv_get_heartbeat_count(u32 devid, u64 *count);
 int devdrv_set_heartbeat_count(u32 devid, u64 count);
 
 int xcom_get_remote_dma_addr_by_offset(u32 sdid, u32 offset, ka_dma_addr_t *addr);
-typedef int(*devdrv_p2p_status_notify)(u32 sdid, u32 status);
+typedef int (*devdrv_p2p_status_notify)(u32 sdid, u32 status);
 int devdrv_register_p2p_status_notifier(enum devdrv_msg_client_type type, devdrv_p2p_status_notify func);
 int devdrv_unregister_p2p_status_notifier(enum devdrv_msg_client_type type);
 ka_device_t *xcom_get_device(u32 devid);
 enum p2p_com_status {
-    P2P_COM_UNINIT  = 0,
+    P2P_COM_UNINIT = 0,
     P2P_COM_LINK_UP = 1,
     P2P_COM_NEGOTIATED_DOWN = 2,
-    P2P_COM_FAULT_DOWN      = 3,
-    P2P_COM_RESUME          = 4,
+    P2P_COM_FAULT_DOWN = 3,
+    P2P_COM_RESUME = 4,
     P2P_COM_STATUS_MAX
 };
 

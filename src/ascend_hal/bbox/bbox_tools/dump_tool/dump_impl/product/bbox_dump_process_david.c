@@ -42,7 +42,7 @@ STATIC bbox_status bbox_check_bios_stage(u32 phy_id)
     u32 master_id = 0;
     drvError_t ret = bbox_drv_get_master_dev_id(phy_id, &master_id);
     if (ret != DRV_ERROR_NONE) {
-        BBOX_INF("[device %u] use device id as master id.", phy_id);
+        BBOX_INF("use device id as master id.");
         master_id = phy_id;
     }
 
@@ -50,11 +50,11 @@ STATIC bbox_status bbox_check_bios_stage(u32 phy_id)
     ret = bbox_get_sram_data(master_id, BBOX_BIOS_KEYPOINT_OFFSET, sizeof(u32), (u8 *)&key_point);
     if (ret != DRV_ERROR_NONE) {
         if (ret != DRV_ERROR_NOT_SUPPORT) {
-            BBOX_ERR("[device-%u] dump bootup bios stage failed with %d", master_id, (int)ret);
+            BBOX_ERR("dump bootup bios stage failed with %d", (int)ret);
         }
         return BBOX_FAILURE;
     }
-    BBOX_INF("[device-%u] bootup stage(%u)", phy_id, key_point);
+    BBOX_INF("bootup stage(%u)", key_point);
     if (key_point != BOOTUP_STAGE_BIOS_SUCC) {
         return BBOX_FAILURE;
     }
@@ -64,19 +64,20 @@ STATIC bbox_status bbox_check_bios_stage(u32 phy_id)
 
 STATIC bbox_status bbox_dump_bbox_ddr(u32 phy_id, u32 offset, u32 size, u8 *buf)
 {
+    char dev_buf[DEV_BUF_MAX_LEN];
     int64_t hd_connect_type;
     bbox_status ret;
     u32 logic_id;
 
     ret = drvDeviceGetIndexByPhyId(phy_id, &logic_id);
     if (ret != DRV_ERROR_NONE) {
-        BBOX_ERR("Transform phy_id to logic_id failed. (phy_id=%u)", phy_id);
+        BBOX_ERR("Transform phy_id to logic_id failed.");
         return ret;
     }
 
     ret = halGetDeviceInfo(logic_id, MODULE_TYPE_SYSTEM, INFO_TYPE_HD_CONNECT_TYPE, &hd_connect_type);
     if (ret != DRV_ERROR_NONE) {
-        BBOX_ERR("halGetDeviceInfo failed. (devid=%u; ret=%d)", logic_id, ret);
+        BBOX_ERR("[%s] get connect type failed. (ret=%d)", bbox_get_dev_str(phy_id, logic_id, dev_buf, sizeof(dev_buf)), ret);
         return ret;
     }
 
@@ -106,7 +107,7 @@ STATIC bbox_status bbox_get_bbox_ddr(u32 phy_id, u32 offset, u32 size, u8 *buf)
 
     drvError_t err = bbox_drv_get_master_dev_id(phy_id, &master_id);
     if (err != DRV_ERROR_NONE) {
-        BBOX_ERR_CTRL(BBOX_ERR, return BBOX_FAILURE, "device %u get master id failed(%d).", phy_id, (int)err);
+        BBOX_ERR_CTRL(BBOX_ERR, return BBOX_FAILURE, "get master id failed(%d).", (int)err);
     }
 
     if (phy_id == master_id) {
@@ -115,7 +116,7 @@ STATIC bbox_status bbox_get_bbox_ddr(u32 phy_id, u32 offset, u32 size, u8 *buf)
 #ifndef BBOX_ST_TEST
     ret = bbox_dump_bbox_ddr(master_id, offset, size, buf);
     if (ret != BBOX_SUCCESS) {
-        BBOX_WAR("master device %u memory dump not completely.", master_id);
+        BBOX_WAR("master device memory dump not completely.");
     }
 
     u8 *curr_buf = (u8 *)bbox_malloc(size);
@@ -126,12 +127,12 @@ STATIC bbox_status bbox_get_bbox_ddr(u32 phy_id, u32 offset, u32 size, u8 *buf)
 
     ret = bbox_dump_bbox_ddr(phy_id, offset, size, curr_buf);
     if (ret != BBOX_SUCCESS) {
-        BBOX_INF("current device %u memory dump not completely.", phy_id);
+        BBOX_INF("current device memory dump not completely.");
     }
 
     ret = bbox_ddr_dump_joint_dump(curr_buf, buf, size);
     if (ret != BBOX_SUCCESS) {
-        BBOX_ERR("joint dump error (master_id[%u] devid[%u])", master_id, phy_id);
+        BBOX_ERR("joint dump error.");
     }
 
     bbox_free(curr_buf);
@@ -147,15 +148,17 @@ STATIC bbox_status bbox_get_bbox_ddr(u32 phy_id, u32 offset, u32 size, u8 *buf)
  * @param [in]  : s32 len             string length
  * @return      : 0 on success otherwise -1
  */
-bbox_status bbox_check_dev_event(u32 phy_id, u16 *event, char *tms, s32 len)
+bbox_status bbox_check_dev_event(u32 phy_id, int logic_id, u16 *event, char *tms, s32 len)
 {
+    char dev_buf[DEV_BUF_MAX_LEN];
+
     BBOX_CHK_NULL_PTR(event, return BBOX_FAILURE);
     BBOX_CHK_NULL_PTR(tms, return BBOX_FAILURE);
 
     u32 master_id = 0;
     drvError_t ret = bbox_drv_get_master_dev_id(phy_id, &master_id);
     if (ret != DRV_ERROR_NONE) {
-        BBOX_ERR_CTRL(BBOX_ERR, return BBOX_FAILURE, "[device-%u] get master id failed(%d).", phy_id, (int)ret);
+        BBOX_ERR_CTRL(BBOX_ERR, return BBOX_FAILURE, "[%s] get master id failed(%d).", bbox_get_dev_str(phy_id, logic_id, dev_buf, sizeof(dev_buf)), (int)ret);
     }
 
     u8 *buffer = (u8 *)bbox_malloc(DMA_MEMDUMP_MAXLEN);
@@ -193,12 +196,12 @@ STATIC bbox_status bbox_get_hdr_data(u32 phy_id, u32 offset, u32 size, u8 *buf)
         if (ret == DRV_ERROR_NOT_SUPPORT) {
             return ret;
         }
-        BBOX_ERR("bbox_drv_read_data Failed. (dev_id=%u, ret=%d)", phy_id, (int)ret);
+        BBOX_ERR("bbox_drv_read_data Failed. (ret=%d)", (int)ret);
         return BBOX_FAILURE;
     }
 
     if (magic != BIOS_MAGIC) {
-        BBOX_INF("[device-%u] magic has not been initialized. (magic=0x%x)", phy_id, magic);
+        BBOX_INF("magic has not been initialized. (magic=0x%x)", magic);
         return DRV_ERROR_NOT_SUPPORT;
     }
 
@@ -221,7 +224,7 @@ STATIC bbox_status bbox_get_hboot_data(u32 phy_id, u32 offset, u32 size, u8 *buf
 
     drvError_t err = drvGetDeviceBootStatus((s32)phy_id, &boot_status);
     if (err != DRV_ERROR_NONE) {
-        BBOX_ERR_CTRL(BBOX_ERR, return BBOX_FAILURE, "[device-%u] get boot status failed with %d.", phy_id, (int)err);
+        BBOX_ERR_CTRL(BBOX_ERR, return BBOX_FAILURE, "get boot status failed with %d.", (int)err);
     }
 
     /* L2BUFF was used as the SRAM during the HBoot boot phase and is released after the boot is complete. */
@@ -234,12 +237,12 @@ STATIC bbox_status bbox_get_hboot_data(u32 phy_id, u32 offset, u32 size, u8 *buf
         if (ret == DRV_ERROR_NOT_SUPPORT) {
             return ret;
         }
-        BBOX_ERR("bbox_drv_read_data Failed. (dev_id=%u, ret=%d)", phy_id, (int)ret);
+        BBOX_ERR("bbox_drv_read_data failed. (ret=%d)", (int)ret);
         return BBOX_FAILURE;
     }
 
     if (magic != BIOS_MAGIC) {
-        BBOX_INF("[device-%u] magic has not been initialized. (magic=0x%x)", phy_id, magic);
+        BBOX_INF("magic has not been initialized. (magic=0x%x)", magic);
         return DRV_ERROR_NOT_SUPPORT;
     }
 
@@ -252,7 +255,7 @@ static drvError_t bbox_get_vmcore_stat_time_out(u32 phy_id, MEM_CTRL_TYPE mem_ty
     unsigned int read_times = 0;
 
     if (buf == NULL) {
-        BBOX_ERR("Value is NULL. (devid=%u)", phy_id);
+        BBOX_ERR("Value is NULL.");
         return DRV_ERROR_PARA_ERROR;
     }
 
@@ -289,7 +292,7 @@ STATIC bbox_status bbox_get_vmcore_stat(u32 phy_id, u32 offset, u32 size, u8 *bu
     u32 master_id = 0;
     drvError_t ret = bbox_drv_get_master_dev_id(phy_id, &master_id);
     if (ret != DRV_ERROR_NONE) {
-        BBOX_INF("[device %u] use device id as master id.", phy_id);
+        BBOX_INF("use device id as master id.");
         master_id = phy_id;
     }
     if (phy_id == master_id) {
@@ -311,7 +314,7 @@ STATIC bbox_status bbox_get_vmcore_data(u32 phy_id, u32 offset, u32 size, u8 *bu
     u32 master_id = 0;
     drvError_t ret = bbox_drv_get_master_dev_id(phy_id, &master_id);
     if (ret != DRV_ERROR_NONE) {
-        BBOX_INF("[device %u] use device id as master id.", phy_id);
+        BBOX_INF("use device id as master id.");
         master_id = phy_id;
     }
     if (phy_id == master_id) {
@@ -332,7 +335,7 @@ STATIC int bbox_check_bbox_ddr(u32 phy_id)
 
     drvError_t err = drvGetDeviceBootStatus((s32)phy_id, &boot_status);
     if (err != DRV_ERROR_NONE) {
-        BBOX_ERR_CTRL(BBOX_ERR, return BBOX_FAILURE, "[device-%u] get boot status failed with %d.", phy_id, (int)err);
+        BBOX_ERR_CTRL(BBOX_ERR, return BBOX_FAILURE, "get boot status failed with %d.", (int)err);
     }
 
     if (boot_status != DSMI_BOOT_STATUS_FINISH) {
@@ -341,7 +344,7 @@ STATIC int bbox_check_bbox_ddr(u32 phy_id)
 
     err = bbox_drv_get_master_dev_id(phy_id, &master_id);
     if (err != DRV_ERROR_NONE) {
-        BBOX_ERR_CTRL(BBOX_ERR, return BBOX_FAILURE, "[device-%u] get master id failed(%d).", phy_id, (int)err);
+        BBOX_ERR_CTRL(BBOX_ERR, return BBOX_FAILURE, "get master id failed(%d).", (int)err);
     }
 
     u8 *buffer = (u8 *)bbox_malloc(DMA_MEMDUMP_MAXLEN);
@@ -372,19 +375,20 @@ STATIC int bbox_check_bbox_ddr(u32 phy_id)
 
 STATIC int bbox_get_cdr_data(u32 phy_id, u32 offset, u32 size, u8 *buf)
 {
+    char dev_buf[DEV_BUF_MAX_LEN];
     int64_t hd_connect_type;
     u32 logic_id;
     int ret;
 
     ret = drvDeviceGetIndexByPhyId(phy_id, &logic_id);
     if (ret != 0) {
-        BBOX_ERR("Transform phy_id to logic_id failed. (phy_id=%u)", phy_id);
+        BBOX_ERR("Transform phy_id to logic_id failed.");
         return ret;
     }
 
     ret = halGetDeviceInfo(logic_id, MODULE_TYPE_SYSTEM, INFO_TYPE_HD_CONNECT_TYPE, &hd_connect_type);
     if (ret != DRV_ERROR_NONE) {
-        BBOX_ERR("halGetDeviceInfo failed. (devid=%u; ret=%d)", logic_id, ret);
+        BBOX_ERR("[%s] get connect type failed. (ret=%d)", bbox_get_dev_str(phy_id, logic_id, dev_buf, sizeof(dev_buf)), ret);
         return ret;
     }
 
@@ -413,7 +417,7 @@ STATIC bbox_status bbox_dma_get_debug_dev_os_log(u32 phy_id, u32 offset, u32 siz
     u32 master_id = 0;
     drvError_t ret = bbox_drv_get_master_dev_id(phy_id, &master_id);
     if (ret != DRV_ERROR_NONE) {
-        BBOX_INF("[device %u] use device id as master id.", phy_id);
+        BBOX_INF("use device id as master id.");
         master_id = phy_id;
     }
     if (phy_id == master_id) {
@@ -436,7 +440,7 @@ STATIC bbox_status bbox_dma_get_sec_log(u32 phy_id, u32 offset, u32 size, u8 *bu
     u32 master_id = 0;
     drvError_t ret = bbox_drv_get_master_dev_id(phy_id, &master_id);
     if (ret != DRV_ERROR_NONE) {
-        BBOX_INF("[device %u] use device id as master id.", phy_id);
+        BBOX_INF("use device id as master id.");
         master_id = phy_id;
     }
     if (phy_id == master_id) {
@@ -458,7 +462,7 @@ STATIC bbox_status bbox_dma_get_run_dev_os_log(u32 phy_id, u32 offset, u32 size,
     u32 master_id = 0;
     drvError_t ret = bbox_drv_get_master_dev_id(phy_id, &master_id);
     if (ret != DRV_ERROR_NONE) {
-        BBOX_INF("[device %u] use device id as master id.", phy_id);
+        BBOX_INF("use device id as master id.");
         master_id = phy_id;
     }
     if (phy_id == master_id) {
@@ -480,7 +484,7 @@ STATIC bbox_status bbox_dma_get_run_event_log(u32 phy_id, u32 offset, u32 size, 
     u32 master_id = 0;
     drvError_t ret = bbox_drv_get_master_dev_id(phy_id, &master_id);
     if (ret != DRV_ERROR_NONE) {
-        BBOX_INF("[device %u] use device id as master id.", phy_id);
+        BBOX_INF("use device id as master id.");
         master_id = phy_id;
     }
     if (phy_id == master_id) {
@@ -517,11 +521,31 @@ STATIC bbox_status bbox_get_kernel_log(u32 phy_id, u32 offset, u32 size, u8 *buf
 
     ret = bbox_drv_get_master_dev_id(phy_id, &master_id);
     if (ret != DRV_ERROR_NONE) {
-        BBOX_INF("Use device id as master id. (devid=%u)", phy_id);
+        BBOX_INF("Use device id as master id.");
         master_id = phy_id;
     }
 
     return bbox_pcie_dump_klog_data(master_id, offset, size, buf);
+}
+
+STATIC bbox_status bbox_get_ts_log(u32 phy_id, u32 offset, u32 size, u8 *buf)
+{
+    return bbox_drv_read_data(phy_id, MEM_TYPE_TS_LOG, offset, buf, size);
+}
+
+STATIC bbox_status bbox_get_imp_log(u32 phy_id, u32 offset, u32 size, u8 *buf)
+{
+    return bbox_drv_read_data(phy_id, MEM_TYPE_IMP_LOG, offset, buf, size);
+}
+
+STATIC bbox_status bbox_get_imu_log(u32 phy_id, u32 offset, u32 size, u8 *buf)
+{
+    return bbox_drv_read_data(phy_id, MEM_TYPE_IMU_LOG, offset, buf, size);
+}
+
+STATIC bbox_status bbox_get_hsm_log(u32 phy_id, u32 offset, u32 size, u8 *buf)
+{
+    return bbox_drv_read_data(phy_id, MEM_TYPE_HSM_LOG, offset, buf, size);
 }
 
 static dump_data_config_st g_boot_failed_config[] = {
@@ -567,6 +591,18 @@ static dump_data_config_st g_heatbeat_lost_config[] = {
     {"chip_dfx_full",           BBOX_DDR_CHIP_DFX_OFFSET,     BBOX_DDR_CHIP_DFX_LEN,
      BBOX_DUMP_FILE_CDR_DDR,    PLAINTEXT_TABLE_CDR,
      NULL,          bbox_get_cdr_data,            bbox_parse_cdr_full_data},
+    {"ts_log",                            BBOX_DUMP_TS_LOG_OFFSET,             BBOX_DUMP_TS_LOG_LEN,
+    BBOX_DUMP_FILE_TS_LOG,                PLAINTEXT_TABLE_TS_LOG,
+    NULL,                                 bbox_get_ts_log,                         bbox_parse_log_data},
+    {"imp_log",                           BBOX_DUMP_IMP_LOG_OFFSET,            BBOX_DUMP_IMP_LOG_LEN,
+    BBOX_DUMP_FILE_IMP_LOG,               PLAINTEXT_TABLE_IMP_LOG,
+    NULL,                                 bbox_get_imp_log,                        bbox_parse_log_data},
+    {"imu_log",                           BBOX_DUMP_IMU_LOG_OFFSET,            BBOX_DUMP_IMU_LOG_LEN,
+    BBOX_DUMP_FILE_IMU_LOG,               PLAINTEXT_TABLE_IMU_LOG,
+    NULL,                                 bbox_get_imu_log,                        bbox_parse_log_data},
+    {"hsm_log",                           BBOX_DUMP_HSM_LOG_OFFSET,            BBOX_DUMP_HSM_LOG_LEN,
+    BBOX_DUMP_FILE_HSM_LOG,               PLAINTEXT_TABLE_HSM_LOG,
+    NULL,                                 bbox_get_hsm_log,                        bbox_parse_log_data},
     {"debug_device_os_log",               BBOX_DDR_DEBUG_DEVICE_OS_LOG_OFFSET, BBOX_DDR_DEBUG_DEVICE_OS_LOG_LEN,
      BBOX_DUMP_FILE_DEBUG_DEVICE_OS_LOG,  PLAINTEXT_TABLE_DEBUG_DEVICE_OS_LOG,
      NULL,                                bbox_dma_get_debug_dev_os_log,             bbox_parse_slog_data},
@@ -642,6 +678,18 @@ static dump_data_config_st g_force_config[] = {
     {"chip_dfx_full",           BBOX_DDR_CHIP_DFX_OFFSET,     BBOX_DDR_CHIP_DFX_LEN,
      BBOX_DUMP_FILE_CDR_DDR,    PLAINTEXT_TABLE_CDR,
      NULL,          bbox_get_cdr_data,            bbox_parse_cdr_full_data},
+    {"ts_log",                            BBOX_DUMP_TS_LOG_OFFSET,             BBOX_DUMP_TS_LOG_LEN,
+    BBOX_DUMP_FILE_TS_LOG,                PLAINTEXT_TABLE_TS_LOG,
+    NULL,                                 bbox_get_ts_log,                         bbox_parse_log_data},
+    {"imp_log",                           BBOX_DUMP_IMP_LOG_OFFSET,            BBOX_DUMP_IMP_LOG_LEN,
+    BBOX_DUMP_FILE_IMP_LOG,               PLAINTEXT_TABLE_IMP_LOG,
+    NULL,                                 bbox_get_imp_log,                        bbox_parse_log_data},
+    {"imu_log",                           BBOX_DUMP_IMU_LOG_OFFSET,            BBOX_DUMP_IMU_LOG_LEN,
+    BBOX_DUMP_FILE_IMU_LOG,               PLAINTEXT_TABLE_IMU_LOG,
+    NULL,                                 bbox_get_imu_log,                        bbox_parse_log_data},
+    {"hsm_log",                           BBOX_DUMP_HSM_LOG_OFFSET,            BBOX_DUMP_HSM_LOG_LEN,
+    BBOX_DUMP_FILE_HSM_LOG,               PLAINTEXT_TABLE_HSM_LOG,
+    NULL,                                 bbox_get_hsm_log,                        bbox_parse_log_data},
     {"debug_device_os_log",               BBOX_DDR_DEBUG_DEVICE_OS_LOG_OFFSET, BBOX_DDR_DEBUG_DEVICE_OS_LOG_LEN,
      BBOX_DUMP_FILE_DEBUG_DEVICE_OS_LOG,  PLAINTEXT_TABLE_DEBUG_DEVICE_OS_LOG,
      NULL,                                bbox_dma_get_debug_dev_os_log,             bbox_parse_slog_data},

@@ -12,8 +12,8 @@
 #include "dsmi_dmp_command.h"
 #include "dev_mon_log.h"
 #include "dev_mon_cmd_manager.h"
-#include "devdrv_ioctl.h"
-#include "dsmi_common_interface_custom.h"
+#include "devmng_cmd_def.h"
+#include "dsmi_common_interface.h"
 
 #ifdef STATIC_SKIP
 #define STATIC
@@ -29,27 +29,30 @@ struct device_share_para {
     int dev_share_flag;
 };
 
-STATIC int dmanage_common_ioctl(int cmd, void *arg)
+STATIC int dmanage_common_ioctl(int ioctlCmd, void *ioctlArg)
 {
     int ret;
     int fd;
 
     fd = devdrv_open_device_manager();
     if (fd < 0) {
-        DEV_MON_ERR("Open device manager failed. (fd=%d)\n", fd);
+        DEV_MON_ERR("Open davinci manager failed. (fd=%d)\n", fd);
         return DRV_ERROR_INVALID_HANDLE;
     }
 
-    ret = ioctl(fd, (unsigned long)cmd, arg);
+    ret = ioctl(fd, (unsigned int)ioctlCmd, ioctlArg);
     return (ret == -1) ? errno_to_user_errno(-errno) : errno_to_user_errno(ret);
 }
 
-int dmanage_set_device_share(unsigned int device_id, unsigned int main_cmd __attribute__((unused)),
-    unsigned int sub_cmd __attribute__((unused)), const void *buf, unsigned int *size)
+int dmanage_set_device_share(unsigned int device_id, unsigned int main_cmd,
+    unsigned int sub_cmd, const void *buf, unsigned int *size)
 {
     int ret;
     struct device_share_para para = {0};
     unsigned int devid = 0;
+
+    (void)main_cmd;
+    (void)sub_cmd;
 
     if ((buf == NULL) || (size == NULL)) {
         DEV_MON_ERR("Param is NULL.\n");
@@ -74,12 +77,15 @@ int dmanage_set_device_share(unsigned int device_id, unsigned int main_cmd __att
     return 0;
 }
 
-int dmanage_get_device_share(unsigned int device_id, unsigned int main_cmd __attribute__((unused)),
-    unsigned int sub_cmd __attribute__((unused)), void *buf, unsigned int *size)
+int dmanage_get_device_share(unsigned int device_id, unsigned int main_cmd,
+    unsigned int sub_cmd, void *buf, unsigned int *size)
 {
     int ret;
     struct device_share_para para = {0};
     unsigned int devid = 0;
+
+    (void)main_cmd;
+    (void)sub_cmd;
 
     if ((buf == NULL) || (size == NULL)) {
         DEV_MON_ERR("Param is NULL.\n");

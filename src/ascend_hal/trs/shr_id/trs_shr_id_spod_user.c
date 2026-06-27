@@ -15,7 +15,7 @@
 
 drvError_t halShrIdSetPodPid(const char *name, uint32_t sdid, pid_t pid)
 {
-    struct shr_id_pod_pid_ioctl_info ioctl_info = { 0 };
+    struct shr_id_pod_pid_ioctl_info ioctl_info = {0};
     int ret;
     size_t len;
 

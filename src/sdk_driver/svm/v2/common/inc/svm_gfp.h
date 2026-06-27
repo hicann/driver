@@ -28,6 +28,7 @@ struct devmm_phy_addr_attr {
     bool is_compound_page;
     bool is_giant_page;
     bool is_already_clear;
+    u32 mem_map_route;
 };
 
 int devmm_alloc_pages(struct devmm_phy_addr_attr *attr, ka_page_t **pages, u64 pg_num);

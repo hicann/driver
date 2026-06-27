@@ -17,19 +17,19 @@
 #include "prof_communication.h"
 #include "prof_core.h"
 
-drvError_t prof_core_register_channel(uint32_t dev_id, uint32_t chan_id, struct prof_sample_register_para *para)
+drvError_t prof_core_register_channel(uint32_t dev_id, uint32_t chan_id, struct prof_sample_register_para *para, bool support_host_sample)
 {
     drvError_t ret;
 
     /* Handling concurrency and reentrancy */
-    ret = prof_add_local_channel(dev_id, chan_id);
+    ret = prof_add_local_channel(dev_id, chan_id, support_host_sample);
     if (ret != DRV_ERROR_NONE) {
         return ret;
     }
 
-    ret = prof_adapt_register_channel(dev_id, chan_id, para);
+    ret = prof_adapt_register_channel(dev_id, chan_id, para, support_host_sample);
     if (ret != DRV_ERROR_NONE) {
-        prof_del_local_channel(dev_id, chan_id);
+        prof_del_local_channel(dev_id, chan_id, support_host_sample);
         PROF_ERR("Failed to register channel to adapt. (dev_id=%u, chan_id=%u, ret=%d)\n", dev_id, chan_id, (int)ret);
         return ret;
     }
@@ -64,6 +64,7 @@ drvError_t prof_core_chan_start(uint32_t dev_id, uint32_t chan_id, struct prof_s
     para.user_data = start_para->user_data;
     para.user_data_size = start_para->user_data_size;
     para.sample_period = start_para->sample_period;
+    para.support_host_sample = false;
     ret = prof_chan_start(dev_id, chan_id, &para, false);
     if (ret != DRV_ERROR_NONE) {
         return ret;
@@ -79,6 +80,8 @@ drvError_t prof_core_chan_stop(uint32_t dev_id, uint32_t chan_id)
     struct prof_user_stop_para para = {0};
     drvError_t ret;
 
+    para.support_host_sample = false;
+    para.host_sample_release_flag = PROF_STOP_STAGE_DEFAULT;
     ret = prof_chan_stop(dev_id, chan_id, &para, false);
     if (ret != DRV_ERROR_NONE) {
         return ret;

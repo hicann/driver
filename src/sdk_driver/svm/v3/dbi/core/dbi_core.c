@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2025. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -17,9 +17,12 @@
 #include "ka_compiler_pub.h"
 #include "ka_kernel_def_pub.h"
 #include "ka_pci_pub.h"
+#include "ka_ioctl_pub.h"
 
 #include "pbl_feature_loader.h"
 #include "pbl_uda.h"
+#include "comm_msg_chan.h"
+#include "comm_pcie.h"
 
 #include "framework_dev.h"
 #include "framework_cmd.h"
@@ -34,17 +37,18 @@
 
 static u32 dbi_feature_id;
 
-#define DBI_OP_QUERY   0U
-#define DBI_OP_SET     1U
+#define DBI_OP_QUERY 0U
+#define DBI_OP_SET 1U
 
-#define SVM_HOST_HPAGE_SIZE (2 * SVM_BYTES_PER_MB)  /* host use 2M huge page size */
-#define SVM_HOST_GPAGE_SIZE (1 * SVM_BYTES_PER_GB)  /* host use 1G giant page size */
+#define SVM_HOST_HPAGE_SIZE (2 * SVM_BYTES_PER_MB) /* host use 2M huge page size */
+#define SVM_HOST_GPAGE_SIZE (1 * SVM_BYTES_PER_GB) /* host use 1G giant page size */
+
+#define DBI_HOST_IS_VIRT 0
+#define DBI_HOST_IS_PHYS 1
+#define DBI_HOST_IS_UNKNOWN 2
 
 static const ka_pci_device_id_t g_svm_pci_device_id[] = {
-  { KA_PCI_VDEVICE(HUAWEI, 0xd806), 0 },
-  { KA_PCI_VDEVICE(HUAWEI, 0xd807), 0 },
-  {}
-};
+    {KA_PCI_VDEVICE(HUAWEI, 0xd806), 0}, {KA_PCI_VDEVICE(HUAWEI, 0xd807), 0}, { KA_PCI_VDEVICE(HUAWEI, 0xd808), 0 }, {}};
 KA_MODULE_DEVICE_TABLE(pci, g_svm_pci_device_id);
 
 static int dbi_op(u32 udevid, u32 op, struct svm_device_basic_info *dbi)
@@ -67,21 +71,16 @@ static int dbi_op(u32 udevid, u32 op, struct svm_device_basic_info *dbi)
     return -EINVAL;
 }
 
-static int dbi_set(u32 udevid, struct svm_device_basic_info *dbi)
-{
-    return dbi_op(udevid, DBI_OP_SET, dbi);
-}
+static int dbi_set(u32 udevid, struct svm_device_basic_info *dbi) { return dbi_op(udevid, DBI_OP_SET, dbi); }
 
-static int dbi_query(u32 udevid, struct svm_device_basic_info *dbi)
-{
-    return dbi_op(udevid, DBI_OP_QUERY, dbi);
-}
+static int dbi_query(u32 udevid, struct svm_device_basic_info *dbi) { return dbi_op(udevid, DBI_OP_QUERY, dbi); }
 
 static int dbi_msg_check(struct svm_device_basic_info *dbi)
 {
     if ((dbi->npage_size == 0ULL) || (dbi->hpage_size == 0ULL) || (dbi->gpage_size == 0ULL)) {
-        svm_err("Invalid page_size. (page_size=0x%llx; hpage_size=0x%llx; gpage_size=0x%llx)\n",
-            dbi->npage_size, dbi->hpage_size, dbi->gpage_size);
+        svm_err(
+            "Invalid page_size. (page_size=0x%llx; hpage_size=0x%llx; gpage_size=0x%llx)\n", dbi->npage_size,
+            dbi->hpage_size, dbi->gpage_size);
         return -EINVAL;
     }
 
@@ -215,6 +214,66 @@ int svm_dbi_kern_query_bus_inst_eid(u32 udevid, dbi_bus_inst_eid_t *eid)
     return DRV_ERROR_NONE;
 }
 
+static int dbi_get_host_phy_mach_flag(u32 udevid, u32 *host_flag)
+{
+    static bool get_flag = false;
+    static u32 get_host_flag;
+    int ret;
+
+    if (get_flag == false) {
+        ret = devdrv_get_host_phy_mach_flag(udevid, &get_host_flag);
+        if (ret != 0) {
+            svm_err("Get host physics flag failed. (udevid=%u; ret=%d).\n", udevid, ret);
+            return ret;
+        }
+        get_flag = true;
+    }
+    *host_flag = get_host_flag;
+    return 0;
+}
+
+static int dbi_get_host_run_mode(u32 devid)
+{
+    u32 phy_flag;
+    int ret;
+
+    ret = dbi_get_host_phy_mach_flag(devid, &phy_flag);
+    if (ret != 0) {
+        return DBI_HOST_IS_UNKNOWN;
+    }
+
+    return (phy_flag == 0) ? DBI_HOST_IS_VIRT : DBI_HOST_IS_PHYS;
+}
+
+static bool dbi_is_support_wc(u32 udevid)
+{
+#define SVM_BAR4_BIT 4
+#define SVM_BAR4_MASK (1 << SVM_BAR4_BIT)
+    u32 value;
+    int ret;
+
+    if (dbi_get_host_run_mode(udevid) == DBI_HOST_IS_PHYS) {
+        return true;
+    }
+
+    ret = devdrv_get_bar_wc_flag(udevid, &value);
+    if (ret != 0) {
+        svm_err("Devdrv_get_bar_wc_flag failed. (udevid=%u; ret=%d)\n", udevid, ret);
+        return false;
+    }
+
+    return ((value & SVM_BAR4_MASK) == SVM_BAR4_MASK);
+}
+
+static void dbi_update_pci_bar_cap(u32 udevid, struct svm_device_basic_info *dbi)
+{
+    if ((dbi->cap_flag & SVM_DEV_CAP_PCI_BAR) != 0) {
+        if (!dbi_is_support_wc(udevid)) {
+            dbi->cap_flag &= ~SVM_DEV_CAP_PCI_BAR;
+        }
+    }
+}
+
 static int svm_ioctl_dbi_query(u32 udevid, u32 cmd, unsigned long arg)
 {
     struct svm_dbi_query_para para;
@@ -267,14 +326,12 @@ static int svm_update_dbi(u32 udevid, void *msg, u32 *reply_len)
         return ret;
     }
 
+    dbi_update_pci_bar_cap(udevid, &dbi_msg->dbi);
     return dbi_set(udevid, &dbi_msg->dbi);
 }
 
 static struct svm_kmc_d2h_recv_handle g_d2h_update_dbi = {
-    .func = svm_update_dbi,
-    .raw_msg_size = sizeof(struct svm_update_dbi_msg),
-    .extend_gran_size = 0
-};
+    .func = svm_update_dbi, .raw_msg_size = sizeof(struct svm_update_dbi_msg), .extend_gran_size = 0};
 
 void dbi_show_dev(u32 udevid, int feature_id, ka_seq_file_t *seq)
 {
@@ -294,10 +351,11 @@ void dbi_show_dev(u32 udevid, int feature_id, ka_seq_file_t *seq)
             ka_fs_seq_printf(seq, "    support_sva=%d\n", ((dbi->cap_flag & SVM_DEV_CAP_SVA) != 0));
             ka_fs_seq_printf(seq, "    support_ubmem=%d\n", ((dbi->cap_flag & SVM_DEV_CAP_UBMEM) != 0));
             ka_fs_seq_printf(seq, "    support_assign_gap=%d\n", ((dbi->cap_flag & SVM_DEV_CAP_ASSIGN_GAP) != 0));
+            ka_fs_seq_printf(seq, "    support_pci_bar=%d\n", ((dbi->cap_flag & SVM_DEV_CAP_PCI_BAR) != 0));
             ka_fs_seq_printf(seq, "    d2h_acc_mask=0x%llx\n", dbi->d2h_acc_mask);
             ka_fs_seq_printf(seq, "    bus_inst_eid_flag=%u\n", dbi->bus_inst_eid_flag);
             if (dbi->bus_inst_eid_flag == 1) {
-                ka_fs_seq_printf(seq, "    bus_inst_eid="DBI_EID_FMT"\n", DBI_EID_ARGS(dbi->bus_inst_eid));
+                ka_fs_seq_printf(seq, "    bus_inst_eid=" DBI_EID_FMT "\n", DBI_EID_ARGS(dbi->bus_inst_eid));
             }
         }
         svm_dev_ctx_put(dev_ctx);
@@ -322,6 +380,7 @@ int dbi_init_dev(u32 udevid)
         svm_vfree(dbi);
         return ret;
     }
+    dbi_update_pci_bar_cap(udevid, dbi);
 
     dev_ctx = svm_dev_ctx_get(udevid);
     if (dev_ctx == NULL) {
@@ -362,9 +421,8 @@ int dbi_feature_init(void)
 {
     svm_kmc_d2h_recv_handle_register(SVM_KMC_MSG_UPDATE_DBI, &g_d2h_update_dbi);
 
-    svm_register_ioctl_cmd_handle(_IOC_NR(SVM_DBI_QUERY), svm_ioctl_dbi_query);
+    svm_register_ioctl_cmd_handle(_KA_IOC_NR(SVM_DBI_QUERY), svm_ioctl_dbi_query);
     dbi_feature_id = svm_dev_obtain_feature_id();
     return 0;
 }
 DECLAER_FEATURE_AUTO_INIT(dbi_feature_init, FEATURE_LOADER_STAGE_1);
-

@@ -34,27 +34,28 @@
 #include "queue_proc_fs.h"
 
 #define PCI_VENDOR_ID_HUAWEI 0x19e5
-STATIC const ka_pci_device_id_t g_queue_driver_tbl[] = {{ KA_PCI_VDEVICE(HUAWEI, 0xd100), 0 },
-                                                          { KA_PCI_VDEVICE(HUAWEI, 0xd105), 0 },
-                                                          { KA_PCI_VDEVICE(HUAWEI, 0xa126), 0 },
-                                                          { KA_PCI_VDEVICE(HUAWEI, 0xd801), 0 },
-                                                          { KA_PCI_VDEVICE(HUAWEI, 0xd500), 0 },
-                                                          { KA_PCI_VDEVICE(HUAWEI, 0xd501), 0 },
-                                                          { KA_PCI_VDEVICE(HUAWEI, 0xd802), 0 },
-                                                          { KA_PCI_VDEVICE(HUAWEI, 0xd803), 0 },
-                                                          { KA_PCI_VDEVICE(HUAWEI, 0xd804), 0 },
-                                                          { KA_PCI_VDEVICE(HUAWEI, 0xd805), 0 },
-                                                          { KA_PCI_VDEVICE(HUAWEI, 0xd806), 0 },
-                                                          { KA_PCI_VDEVICE(HUAWEI, 0xd807), 0 },
-                                                          { DEVDRV_DIVERSITY_PCIE_VENDOR_ID, 0xd500,
-                                                            KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0 },
-                                                          { 0x20C6, 0xd500, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0 },
-                                                          { 0x203F, 0xd500, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0 },
-                                                          { 0x20C6, 0xd802, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0 },
-                                                          { 0x203F, 0xd802, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0 },
-                                                          { 0x20E9, 0xd802, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0 },
-                                                          { 0x20E9, 0xd500, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0 },
-                                                          {}};
+STATIC const ka_pci_device_id_t g_queue_driver_tbl[] = {
+    {KA_PCI_VDEVICE(HUAWEI, 0xd100), 0},
+    {KA_PCI_VDEVICE(HUAWEI, 0xd105), 0},
+    {KA_PCI_VDEVICE(HUAWEI, 0xa126), 0},
+    {KA_PCI_VDEVICE(HUAWEI, 0xd801), 0},
+    {KA_PCI_VDEVICE(HUAWEI, 0xd500), 0},
+    {KA_PCI_VDEVICE(HUAWEI, 0xd501), 0},
+    {KA_PCI_VDEVICE(HUAWEI, 0xd802), 0},
+    {KA_PCI_VDEVICE(HUAWEI, 0xd803), 0},
+    {KA_PCI_VDEVICE(HUAWEI, 0xd804), 0},
+    {KA_PCI_VDEVICE(HUAWEI, 0xd805), 0},
+    {KA_PCI_VDEVICE(HUAWEI, 0xd806), 0},
+    {KA_PCI_VDEVICE(HUAWEI, 0xd807), 0},
+    {KA_PCI_VDEVICE(HUAWEI, 0xd808), 0},
+    {DEVDRV_DIVERSITY_PCIE_VENDOR_ID, 0xd500, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0},
+    {0x20C6, 0xd500, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0},
+    {0x203F, 0xd500, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0},
+    {0x20C6, 0xd802, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0},
+    {0x203F, 0xd802, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0},
+    {0x20E9, 0xd802, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0},
+    {0x20E9, 0xd500, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0},
+    {}};
 KA_MODULE_DEVICE_TABLE(pci, g_queue_driver_tbl);
 
 STATIC ka_atomic64_t queue_serial_num = KA_BASE_ATOMIC64_INIT(0);
@@ -153,21 +154,20 @@ STATIC int queue_check_vector(struct buff_iovec *vector, unsigned int count)
 
     if ((vector->context_base == NULL && vector->context_len != 0) ||
         (vector->context_base != NULL && vector->context_len == 0)) {
-        queue_err("ctx_addr(0x%pK) not match ctx_addr_len(%llu).\n",
-            (void *)(uintptr_t)vector->context_base, vector->context_len);
+        queue_err("ctx_addr(0x%pK) not match ctx_addr_len(%llu).\n", (void *)(uintptr_t)vector->context_base,
+                  vector->context_len);
         return -EINVAL;
     }
 
     if (vector->count != count) {
-        queue_err("count is not equal vector_count(%u), count(%u).\n",
-            vector->count, count);
+        queue_err("count is not equal vector_count(%u), count(%u).\n", vector->count, count);
         return -EINVAL;
     }
 
     for (i = 0; i < vector->count; i++) {
         if ((vector->ptr[i].iovec_base == NULL) || (vector->ptr[i].len == 0)) {
             queue_err("addr(0x%pK) is NULL or len(%llu) is zero, index=%d, cnt=%u.\n",
-                (void *)(uintptr_t)vector->ptr[i].iovec_base, vector->ptr[i].len, i, vector->count);
+                      (void *)(uintptr_t)vector->ptr[i].iovec_base, vector->ptr[i].len, i, vector->count);
             return -EINVAL;
         }
         queue_try_cond_resched(&stamp);
@@ -217,7 +217,8 @@ int queue_wakeup_enqueue(struct queue_context *context, u64 que_chan_addr)
 
     ctx_private = (struct context_private_data *)context->private_data;
     ka_task_spin_lock_bh(&ctx_private->lock);
-    ka_list_for_each_entry(que_chan, &ctx_private->node_list_head, list) {
+    ka_list_for_each_entry(que_chan, &ctx_private->node_list_head, list)
+    {
         if ((u64)(uintptr_t)que_chan == que_chan_addr) {
             /* wake up queue enqueue ioctl */
             queue_chan_wake_up(que_chan);
@@ -245,7 +246,7 @@ static inline void queue_del_que_chan(struct context_private_data *ctx_private, 
 }
 
 STATIC void queue_init_host_qid_status(struct queue_context *context, struct queue_qid_status *qid_status,
-    struct queue_ioctl_enqueue *para, u64 serial_num, u64 mem_size)
+                                       struct queue_ioctl_enqueue *para, u64 serial_num, u64 mem_size)
 {
     queue_set_qid_status_serial_num(qid_status, serial_num);
     queue_proc_fs_add_qid(qid_status, context->entry);
@@ -254,8 +255,7 @@ STATIC void queue_init_host_qid_status(struct queue_context *context, struct que
 
 static int queue_para_check(struct queue_ioctl_enqueue *para)
 {
-    if (para->event_info.msg == NULL || para->event_info.msg_len == 0 ||
-        para->event_info.msg_len > EVENT_MAX_MSG_LEN) {
+    if (para->event_info.msg == NULL || para->event_info.msg_len == 0 || para->event_info.msg_len > EVENT_MAX_MSG_LEN) {
         queue_err("Event msg invalid. (msg_len=%u)\n", para->event_info.msg_len);
         return -EINVAL;
     }
@@ -328,7 +328,7 @@ STATIC bool queue_is_hccs_vm_through_scene(u32 dev_id)
 #endif
 
 static void queue_chan_attr_pack(struct queue_ioctl_enqueue *para, int hdc_session, u64 serial_num, ka_device_t *dev,
-    struct queue_chan_attr *attr)
+                                 struct queue_chan_attr *attr)
 {
     attr->msg_type = QUEUE_DATA_MSG;
     attr->memory_type = para->type;
@@ -347,7 +347,7 @@ static void queue_chan_attr_pack(struct queue_ioctl_enqueue *para, int hdc_sessi
 }
 
 static int queue_drv_vector_add(struct queue_chan *que_chan, struct queue_ioctl_enqueue *para,
-    struct buff_iovec *vector)
+                                struct buff_iovec *vector)
 {
     bool dma_flag = (para->type == QUEUE_BUFF) ? true : false;
     struct queue_chan_iovec iovec;
@@ -378,7 +378,7 @@ static int queue_drv_vector_add(struct queue_chan *que_chan, struct queue_ioctl_
 }
 
 static struct queue_chan *queue_drv_que_chan_create(struct context_private_data *ctx_private,
-    struct queue_ioctl_enqueue *para, u64 serial_num, ka_device_t *dev)
+                                                    struct queue_ioctl_enqueue *para, u64 serial_num, ka_device_t *dev)
 {
     struct queue_chan *que_chan = NULL;
     struct queue_chan_attr attr = {0};
@@ -417,7 +417,7 @@ STATIC long queue_drv_enqueue(ka_file_t *filep, struct queue_ioctl_enqueue *para
     hdc_session = ctx_private->hdc_session[para->devid];
     if (hdc_session < 0) {
         queue_err("The hdc_session is not initialized, enqueue or dequeue is not allowed. (session=%d, devid=%u)\n",
-            hdc_session, para->devid);
+                  hdc_session, para->devid);
         return -EINVAL;
     }
     ret = queue_para_check(para);
@@ -467,10 +467,10 @@ STATIC long queue_drv_enqueue(ka_file_t *filep, struct queue_ioctl_enqueue *para
 
     ret = queue_chan_wait(que_chan, QUEUE_HOST_WAIT_MAX_TIME);
     /*
-    * error code DRV_ERROR_WAIT_TIMEOUT will transmit to user when remote reply timeout,
-    * it may be that the event was not successfully published to the cp process on the device side.
-    * if you want to modify the return value, please pay attention to check.
-    */
+     * error code DRV_ERROR_WAIT_TIMEOUT will transmit to user when remote reply timeout,
+     * it may be that the event was not successfully published to the cp process on the device side.
+     * if you want to modify the return value, please pay attention to check.
+     */
     ret = (ret != 0) ? DRV_ERROR_WAIT_TIMEOUT : 0;
     queue_set_qid_status_timestamp(qid_status, HOST_END_WAIT_REPLY);
 err_que_chan_send:
@@ -485,10 +485,9 @@ err_que_chan_vec_add:
     return ret;
 }
 
-STATIC long (*g_queue_host_common_op[QUEUE_OP_MAX])
-    (ka_file_t *filep, struct queue_ioctl_host_common_op *para) = {
-        [QUEUE_INIT] = queue_drv_host_init,
-        [QUEUE_UNINIT] = queue_drv_host_uninit,
+STATIC long (*g_queue_host_common_op[QUEUE_OP_MAX])(ka_file_t *filep, struct queue_ioctl_host_common_op *para) = {
+    [QUEUE_INIT] = queue_drv_host_init,
+    [QUEUE_UNINIT] = queue_drv_host_uninit,
 };
 
 STATIC long queue_fop_host_common_op(ka_file_t *filep, unsigned int cmd, unsigned long arg)
@@ -546,7 +545,7 @@ STATIC long queue_fop_enqueue(ka_file_t *filep, unsigned int cmd, unsigned long 
         queue_err("convert devid(%u) failed, ret=%ld.\n", para.devid, ret);
         return -EINVAL;
     }
-    if ((phy_devid >= MAX_DEVICE)  || (vfid != 0) || (para.qid >= MAX_SURPORT_QUEUE_NUM)) {
+    if ((phy_devid >= MAX_DEVICE) || (vfid != 0) || (para.qid >= MAX_SURPORT_QUEUE_NUM)) {
         queue_err("Invalid devid, vfid or qid. (phy_devid=%u; vfid=%u; qid=%u)\n", phy_devid, vfid, para.qid);
         return -EINVAL;
     }
@@ -616,7 +615,7 @@ STATIC long queue_ctrl_msg_send_by_hdc(ka_file_t *filep, struct queue_ioctl_ctrl
     hdc_session = ctx_private->hdc_session[para->devid];
     if (hdc_session < 0) {
         queue_err("The hdc_session is not initialized, ctrl_msg_send is not allowed. (session=%d; devid=%u)\n",
-            hdc_session, para->devid);
+                  hdc_session, para->devid);
         return -EINVAL;
     }
 
@@ -663,59 +662,58 @@ STATIC long queue_ctrl_msg_send(ka_file_t *filep, unsigned int cmd, unsigned lon
 
     if ((para.event_info.msg == NULL) || (para.event_info.msg_len == 0) ||
         (para.event_info.msg_len > EVENT_MAX_MSG_LEN)) {
-        queue_err("Msg is NULL or len is invalid. (msg_is_null=%d; msg_len=%u)\n",
-            para.event_info.msg == NULL, para.event_info.msg_len);
+        queue_err("Msg is NULL or len is invalid. (msg_is_null=%d; msg_len=%u)\n", para.event_info.msg == NULL,
+                  para.event_info.msg_len);
         return -EINVAL;
     }
     if ((para.ctrl_data_addr == NULL) || (para.ctrl_data_len == 0) || (para.ctrl_data_len > QUEUE_CTRL_MSG_DATA_LEN)) {
-        queue_err("Ctrl_data addr or len is invalid. (ctrl_data_len=%u; max_len=%u)\n",
-            para.ctrl_data_len, QUEUE_CTRL_MSG_DATA_LEN);
+        queue_err("Ctrl_data addr or len is invalid. (ctrl_data_len=%u; max_len=%u)\n", para.ctrl_data_len,
+                  QUEUE_CTRL_MSG_DATA_LEN);
         return -EPERM;
     }
 
     return queue_ctrl_msg_send_by_hdc(filep, &para);
 }
 
-long (*const drv_queue_ioctl_handlers[QUEUE_CMD_MAX])
-    (ka_file_t *filep, unsigned int cmd, unsigned long arg) = {
-        [_KA_IOC_NR(QUEUE_HOST_COMMON_OP_CMD)] = queue_fop_host_common_op,
-        [_KA_IOC_NR(QUEUE_ENQUEUE_CMD)] = queue_fop_enqueue,
-        [_KA_IOC_NR(QUEUE_CTRL_MSG_SEND_CMD)] = queue_ctrl_msg_send,
+long (*const drv_queue_ioctl_handlers[QUEUE_CMD_MAX])(ka_file_t *filep, unsigned int cmd, unsigned long arg) = {
+    [_KA_IOC_NR(QUEUE_HOST_COMMON_OP_CMD)] = queue_fop_host_common_op,
+    [_KA_IOC_NR(QUEUE_ENQUEUE_CMD)] = queue_fop_enqueue,
+    [_KA_IOC_NR(QUEUE_CTRL_MSG_SEND_CMD)] = queue_ctrl_msg_send,
 };
 
 static int queue_event_try_mcast(unsigned int devid, struct sched_published_event_info *event_info,
-    struct sched_published_event_func *event_func)
+                                 struct sched_published_event_func *event_func)
 {
     char msg[MSG_MAX_LEN];
     struct queue_event_msg_head *msg_head = (struct queue_event_msg_head *)&msg;
     struct sched_published_event event;
     int ret;
- 
+
     if (devdrv_get_connect_protocol(devid) == CONNECT_PROTOCOL_UB) {
         return 0;
     }
- 
+
     if (!queue_is_mcast_event(event_info->subevent_id)) {
         return 0;
     }
- 
-    if ((event_info->msg == NULL) || (event_info->msg_len < sizeof(struct queue_event_msg_head))
-        || (event_info->msg_len > MSG_MAX_LEN)) {
-        queue_err("Msg is invalid. (devid=%u; subevent_id=%u; msg_len=%u)\n",
-            devid, event_info->subevent_id, event_info->msg_len);
+
+    if ((event_info->msg == NULL) || (event_info->msg_len < sizeof(struct queue_event_msg_head)) ||
+        (event_info->msg_len > MSG_MAX_LEN)) {
+        queue_err("Msg is invalid. (devid=%u; subevent_id=%u; msg_len=%u)\n", devid, event_info->subevent_id,
+                  event_info->msg_len);
         return -EINVAL;
     }
- 
+
     if (memcpy_s((void *)&msg, MSG_MAX_LEN, (void *)(uintptr_t)event_info->msg, event_info->msg_len) != 0) {
-        queue_err("Copy from user fail. (devid=%u; subevent_id=%u; msg_len=%u)\n",
-            devid, event_info->subevent_id, event_info->msg_len);
+        queue_err("Copy from user fail. (devid=%u; subevent_id=%u; msg_len=%u)\n", devid, event_info->subevent_id,
+                  event_info->msg_len);
         return -EFAULT;
     }
- 
+
     if (msg_head->comm.mcast_para.mcast_flag == 0) {
         return 0;
     }
- 
+
     event.event_info = *event_info;
     event.event_func = *event_func;
     event.event_info.msg = msg;
@@ -724,11 +722,11 @@ static int queue_event_try_mcast(unsigned int devid, struct sched_published_even
     ret = hal_kernel_sched_submit_event(devid, &event);
     if (ret != 0) {
         /* Multicast failure does not affect the original process. */
-        queue_warn("Mcast event failed. (ret=%d; devid=%u; subevent_id=%u; qid=%u; gid=%u; event_sn=%u)\n",
-            ret, devid, event_info->subevent_id, msg_head->comm.qid,
-            msg_head->comm.mcast_para.gid, msg_head->comm.mcast_para.event_sn);
+        queue_warn("Mcast event failed. (ret=%d; devid=%u; subevent_id=%u; qid=%u; gid=%u; event_sn=%u)\n", ret, devid,
+                   event_info->subevent_id, msg_head->comm.qid, msg_head->comm.mcast_para.gid,
+                   msg_head->comm.mcast_para.event_sn);
     }
- 
+
     return 0;
 }
 
@@ -750,7 +748,8 @@ int queue_drv_module_init(const ka_file_operations_t *ops)
         return ret;
     }
 
-    ret = hal_kernel_sched_register_event_pre_proc_handle(EVENT_DRV_MSG, SCHED_PRE_PROC_POS_LOCAL, queue_event_try_mcast);
+    ret = hal_kernel_sched_register_event_pre_proc_handle(EVENT_DRV_MSG, SCHED_PRE_PROC_POS_LOCAL,
+                                                          queue_event_try_mcast);
     if (ret != 0) {
         queue_drv_msg_chan_uninit();
         (void)drv_ascend_unregister_sub_module(DAVINCI_QUEUE_SUB_MODULE_NAME);
@@ -785,4 +784,3 @@ void queue_drv_module_exit(void)
     queue_info("host queue module exit success.\n");
     return;
 }
-

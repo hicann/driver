@@ -22,28 +22,16 @@
 #include "trs_sec_eh_chan.h"
 #include "trs_sec_eh_init.h"
 
-typedef int (* trs_config_list)(struct trs_id_inst *);
-typedef void (* trs_decofnig_list)(struct trs_id_inst *);
+typedef int (*trs_config_list)(struct trs_id_inst *);
+typedef void (*trs_decofnig_list)(struct trs_id_inst *);
 
-static const trs_config_list g_trs_hw_init[] = {
-    trs_ts_db_config
-};
+static const trs_config_list g_trs_hw_init[] = {trs_ts_db_config};
 
-static const trs_decofnig_list g_trs_hw_uninit[] = {
-    trs_ts_db_deconfig
-};
+static const trs_decofnig_list g_trs_hw_uninit[] = {trs_ts_db_deconfig};
 
-static const trs_config_list g_trs_func_init[] = {
-    trs_id_config,
-    trs_chan_config,
-    trs_core_config
-};
+static const trs_config_list g_trs_func_init[] = {trs_id_config, trs_chan_config, trs_core_config};
 
-static const trs_decofnig_list g_trs_func_uninit[] = {
-    trs_id_deconfig,
-    trs_chan_deconfig,
-    trs_core_deconfig
-};
+static const trs_decofnig_list g_trs_func_uninit[] = {trs_id_deconfig, trs_chan_deconfig, trs_core_deconfig};
 
 int trs_ts_hw_init(struct trs_id_inst *inst)
 {
@@ -173,4 +161,3 @@ void trs_sec_eh_unint(u32 devid)
         trs_ts_uninit(&inst);
     }
 }
-

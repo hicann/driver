@@ -103,7 +103,7 @@ int devmm_dma_sync_link_copy(u32 dev_id, u32 vfid, struct devdrv_dma_node *dma_n
         if (ka_likely(((ret == -ENOSPC) && (retry_cnt < DEVMM_DMA_RETRY_CNT)) == false)) {
             break;
         }
-         /* dma queue is full, delay resubmit */
+        /* dma queue is full, delay resubmit */
         ka_system_usleep_range(DEVMM_DMA_WAIT_MIN_TIME, DEVMM_DMA_WAIT_MAX_TIME);
         retry_cnt++;
     };
@@ -114,8 +114,8 @@ int devmm_dma_sync_link_copy(u32 dev_id, u32 vfid, struct devdrv_dma_node *dma_n
 
     if (ret != 0) {
         /* The log cannot be modified, because in the failure mode library. */
-        devmm_drv_err("Hal_kernel_devdrv_dma_sync_link_copy fail. (dev_id=%u; node_cnt=%u; ret=%d)\n",
-            dev_id, node_cnt, ret);
+        devmm_drv_err(
+            "Hal_kernel_devdrv_dma_sync_link_copy fail. (dev_id=%u; node_cnt=%u; ret=%d)\n", dev_id, node_cnt, ret);
     }
     return ret;
 }
@@ -127,8 +127,9 @@ STATIC int devmm_dma_sync_link_copy_plus(struct devmm_copy_res *res, int instanc
 
     while (g_devmm_true) {
         /* d2d use source device dma. h2d&d2h use device dma */
-        ret = hal_kernel_devdrv_dma_sync_link_copy_plus((u32)res->dev_id, DEVDRV_DMA_DATA_TRAFFIC, DEVDRV_DMA_WAIT_INTR,
-            instance, res->dma_node, res->dma_node_num);
+        ret = hal_kernel_devdrv_dma_sync_link_copy_plus(
+            (u32)res->dev_id, DEVDRV_DMA_DATA_TRAFFIC, DEVDRV_DMA_WAIT_INTR, instance, res->dma_node,
+            res->dma_node_num);
         if (ka_likely(((ret == -ENOSPC) && (retry_cnt < DEVMM_ASYNC_DMA_RETRY_CNT)) == false)) {
             break;
         }
@@ -137,8 +138,9 @@ STATIC int devmm_dma_sync_link_copy_plus(struct devmm_copy_res *res, int instanc
         retry_cnt++;
     };
     if (ret != 0) {
-        devmm_drv_err("Hal_kernel_devdrv_dma_sync_link_copy_plus fail. (dev_id=%d; node_cnt=%u; ret=%d)\n",
-            res->dev_id, res->dma_node_num, ret);
+        devmm_drv_err(
+            "Hal_kernel_devdrv_dma_sync_link_copy_plus fail. (dev_id=%d; node_cnt=%u; ret=%d)\n", res->dev_id,
+            res->dma_node_num, ret);
     }
 
     return ret;
@@ -155,8 +157,8 @@ int devmm_dma_sync_link_copy_limit(struct devmm_copy_res *res, int instance)
 #endif
     }
 
-    ret = devmm_bandwidth_limit_check((u32)res->dev_id, (u32)res->fid, (u32)res->dma_node->direction,
-        (u32)res->cpy_len, res->dma_node_num);
+    ret = devmm_bandwidth_limit_check(
+        (u32)res->dev_id, (u32)res->fid, (u32)res->dma_node->direction, (u32)res->cpy_len, res->dma_node_num);
     if (ret != 0) {
         devmm_drv_err("Check bw failed. (dev_id=%d; vfid=%d; ret=%d)\n", res->dev_id, res->fid, ret);
         return ret;
@@ -172,8 +174,9 @@ int devmm_dma_async_link_copy(struct devmm_copy_res *res, int instance, void *pr
     u32 dev_id = (u32)res->dev_id;
     int ret;
 
-    devmm_drv_debug("Dma async link copy. (dev_id=%u; node_cnt=%u; src=%llx; dst=%llx; size=%x)",
-        dev_id, res->dma_node_num, res->dma_node[0].src_addr, res->dma_node[0].dst_addr, res->dma_node[0].size);
+    devmm_drv_debug(
+        "Dma async link copy. (dev_id=%u; node_cnt=%u; src=%llx; dst=%llx; size=%x)", dev_id, res->dma_node_num,
+        res->dma_node[0].src_addr, res->dma_node[0].dst_addr, res->dma_node[0].size);
 
     if (devmm_get_stop_business_flag(dev_id)) {
         devmm_drv_err("Device is offline, can not dma copy. (devid=%u)\n", dev_id);
@@ -182,8 +185,8 @@ int devmm_dma_async_link_copy(struct devmm_copy_res *res, int instance, void *pr
 #endif
     }
 
-    ret = devmm_bandwidth_limit_check(dev_id, (u32)res->fid, (u32)res->dma_node->direction,
-        (u32)res->cpy_len, res->dma_node_num);
+    ret = devmm_bandwidth_limit_check(
+        dev_id, (u32)res->fid, (u32)res->dma_node->direction, (u32)res->cpy_len, res->dma_node_num);
     if (ret != 0) {
         devmm_drv_err("Bandwidth_limit check fail.(dev_id=%u; vfid=%d; ret=%d)", dev_id, res->fid, ret);
         return ret;
@@ -195,8 +198,8 @@ int devmm_dma_async_link_copy(struct devmm_copy_res *res, int instance, void *pr
         para_info.finish_notify = call_back;
         para_info.interrupt_and_attr_flag = DEVDRV_LOCAL_IRQ_FLAG; /* set DEVDRV_ATTR_FLAG will strict order */
         /* d2d use source device dma. h2d&d2h use device dma */
-        ret = hal_kernel_devdrv_dma_async_link_copy_plus(dev_id, DEVDRV_DMA_DATA_TRAFFIC, instance,
-            res->dma_node, res->dma_node_num, &para_info);
+        ret = hal_kernel_devdrv_dma_async_link_copy_plus(
+            dev_id, DEVDRV_DMA_DATA_TRAFFIC, instance, res->dma_node, res->dma_node_num, &para_info);
         /* dma queue is full, delay resubmit */
         if (ret == -ENOSPC) {
             sync_flag[dev_id] = 1;

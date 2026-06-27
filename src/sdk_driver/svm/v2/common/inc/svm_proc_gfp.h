@@ -17,9 +17,9 @@
 #include "svm_page_cnt_stats.h"
 #include "devmm_proc_info.h"
 
-int devmm_proc_alloc_pages(struct devmm_svm_process *svm_proc,
-    struct devmm_phy_addr_attr *attr, ka_page_t **pages, u64 pg_num);
-void devmm_proc_free_pages(struct devmm_svm_process *svm_proc,
-    struct devmm_phy_addr_attr *attr, ka_page_t **pages, u64 pg_num);
+int devmm_proc_alloc_pages(
+    struct devmm_svm_process *svm_proc, struct devmm_phy_addr_attr *attr, ka_page_t **pages, u64 pg_num);
+void devmm_proc_free_pages(
+    struct devmm_svm_process *svm_proc, struct devmm_phy_addr_attr *attr, ka_page_t **pages, u64 pg_num);
 
 #endif

@@ -18,15 +18,15 @@
  * @brief the struct define of task
  */
 typedef struct tag_ts_command_head {
-    uint16_t stream_id;      /* offset 0 */
-    uint16_t task_id;        /* offset 2 */
+    uint16_t stream_id;       /* offset 0 */
+    uint16_t task_id;         /* offset 2 */
     uint16_t next_task_idx;   /* offset 4 */
-    uint16_t type;          /* offset 6 */
+    uint16_t type;            /* offset 6 */
     uint16_t next_stream_idx; /* offset 8 */
-    uint16_t task_state;     /* 10 */
-    uint8_t task_prof_en : 7;     /* offset 12 */
+    uint16_t task_state;      /* 10 */
+    uint8_t task_prof_en : 7; /* offset 12 */
     uint8_t isctrl : 1;
-    uint8_t task_info_flag;   /* bit 0: is need send cq, bit 2: endgraph dump, bit 3: sink flag */
+    uint8_t task_info_flag; /* bit 0: is need send cq, bit 2: endgraph dump, bit 3: sink flag */
     uint8_t reserved[2];
 } rt_command_head_t;
 
@@ -44,4 +44,3 @@ int trs_tscpu_get_sq_tail(struct trs_id_inst *inst, u32 sqid, u32 *tail)
 {
     return trs_get_ts_db_val(inst, TRS_DB_TASK_SQ, sqid, tail);
 }
-

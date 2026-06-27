@@ -50,13 +50,14 @@ static int trs_chan_ops_stars_ops_get_valid_cq_list(struct trs_stars_cqint *cqin
         l2_status = _trs_chan_ops_stars_cqint_get_l2_status(cqint, mid_bit);
         _trs_chan_ops_stars_cqint_set_l2_ctrl(cqint, mid_bit, l2_status);
 
-        for (l2_bit = 0; l2_bit  < TRS_STARS_V2_CQINT_L2_STATUS_WIDTH; l2_bit++) {
+        for (l2_bit = 0; l2_bit < TRS_STARS_V2_CQINT_L2_STATUS_WIDTH; l2_bit++) {
             if (trs_stars_test_bit(l2_bit, l2_status) == 0) {
                 continue;
             }
-            cqid[cq_num] = cqint->group * per_grp_cq_num +  mid_bit * TRS_STARS_V2_CQINT_L2_STATUS_WIDTH + l2_bit;
-            trs_debug("Clear irq group %u mid_status %u l2_status %u cqid %u\n",
-                cqint->group, mid_status, l2_status, cqid[cq_num]);
+            cqid[cq_num] = cqint->group * per_grp_cq_num + mid_bit * TRS_STARS_V2_CQINT_L2_STATUS_WIDTH + l2_bit;
+            trs_debug(
+                "Clear irq group %u mid_status %u l2_status %u cqid %u\n", cqint->group, mid_status, l2_status,
+                cqid[cq_num]);
             cq_num++;
         }
     }
@@ -114,8 +115,9 @@ int trs_chan_stars_v2_get_cq_group(struct trs_id_inst *inst, u32 group_index, u3
     }
 
     if (group_index >= cq_group->group_num) {
-        trs_err("Para error. (devid=%u; tsid=%u; group_index=%u; group_num=%u)\n",
-            inst->devid, inst->tsid, group_index, cq_group->group_num);
+        trs_err(
+            "Para error. (devid=%u; tsid=%u; group_index=%u; group_num=%u)\n", inst->devid, inst->tsid, group_index,
+            cq_group->group_num);
 #ifndef EMU_ST
         return -EINVAL;
 #endif
@@ -152,8 +154,8 @@ int trs_chan_stars_v2_get_cq_group_index(struct trs_id_inst *inst, u32 group, u3
     return -EINVAL;
 }
 
-static int trs_stars_v2_chan_ops_stars_sched_attr_pack(struct trs_id_inst *inst,
-    struct trs_stars_attr *attr, phys_addr_t paddr, size_t size)
+static int trs_stars_v2_chan_ops_stars_sched_attr_pack(
+    struct trs_id_inst *inst, struct trs_stars_attr *attr, phys_addr_t paddr, size_t size)
 {
     size_t stride;
     int ret;
@@ -171,8 +173,8 @@ static int trs_stars_v2_chan_ops_stars_sched_attr_pack(struct trs_id_inst *inst,
     return 0;
 }
 
-static int trs_chan_ops_stars_v2_cqint_attr_pack(struct trs_id_inst *inst, struct trs_stars_attr *attr,
-    phys_addr_t paddr, size_t size)
+static int trs_chan_ops_stars_v2_cqint_attr_pack(
+    struct trs_id_inst *inst, struct trs_stars_attr *attr, phys_addr_t paddr, size_t size)
 {
     struct trs_msg_id_cap hw_id_cap, sw_id_cap;
     int ret;
@@ -222,8 +224,9 @@ int trs_chan_stars_v2_ops_stars_init(struct trs_id_inst *inst)
             return ret;
 #endif
         }
-        trs_debug("Cq int. (devid=%u; tsid=%u; cq_grp_num=%u; cq_num=%u)\n",
-            inst->devid, inst->tsid, stars_attr.cq_grp_num, stars_attr.cq_num);
+        trs_debug(
+            "Cq int. (devid=%u; tsid=%u; cq_grp_num=%u; cq_num=%u)\n", inst->devid, inst->tsid, stars_attr.cq_grp_num,
+            stars_attr.cq_num);
 
         ret = trs_stars_init(inst, TRS_STARS_CQINT, &stars_attr);
         if (ret != 0) {

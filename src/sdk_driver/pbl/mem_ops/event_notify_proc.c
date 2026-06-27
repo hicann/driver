@@ -16,6 +16,7 @@
 #include <linux/export.h>
 #include <linux/notifier.h>
 #include <linux/sched/stat.h>
+#include <trace/events/sched.h>
 #include "ka_module_init.h"
 #include "pbl_kernel_adapt.h"
 

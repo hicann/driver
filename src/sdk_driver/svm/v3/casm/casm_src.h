@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2025. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -25,6 +25,7 @@
 struct casm_src_ctx {
     ka_rwlock_t lock;
     ka_list_head_t head;
+    u64 node_num;
 };
 
 struct casm_src_node {
@@ -41,4 +42,3 @@ void casm_del_src_node(u32 udevid, int tgid, struct casm_src_node *node);
 void casm_src_ctx_show(struct casm_src_ctx *src_ctx, ka_seq_file_t *seq);
 
 #endif
-

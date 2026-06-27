@@ -10,6 +10,7 @@
 
 #include <fcntl.h>
 #include <sys/ioctl.h>
+#include <unistd.h>
 #include "ascend_dev_num.h"
 #include "soc_resmng_ioctl.h"
 #include "davinci_interface.h"
@@ -246,10 +247,7 @@ drvError_t halProcessResRestore(halProcResRestoreInfo *info)
 
 u32 soc_res_get_ver(u32 udevid, enum soc_ver_type type, u32 *ver)
 {
-    int fd = -1;
-    int ret;
-    int tmp_errno;
-    int tmp;
+    int fd = -1, ret, tmp_errno, tmp;
     struct davinci_intf_open_arg arg = {{0}};
 
     fd = open(davinci_intf_get_dev_path(), O_RDWR | O_SYNC | O_CLOEXEC);
@@ -261,14 +259,16 @@ u32 soc_res_get_ver(u32 udevid, enum soc_ver_type type, u32 *ver)
     ret = strcpy_s(arg.module_name, DAVINIC_MODULE_NAME_MAX, SOC_RESMNG_MODULE_NAME);
     if (ret != 0) {
         DRV_COMM_ERR("Strcpy_s failed. (ret=%d)\n", ret);
-        return DRV_ERROR_INNER_ERR;
+        ret = DRV_ERROR_INNER_ERR;
+        goto close_fd;
     }
 
     ret = ioctl(fd, (unsigned long)DAVINCI_INTF_IOCTL_OPEN, &arg);
     if (ret != 0) {
         tmp_errno = errno;
         DRV_COMM_ERR("DAVINCI_INTF_IOCTL_OPEN failed. (ret=%d)\n", ret);
-        return DRV_COMM_KERNEL_ERR(tmp_errno);
+        ret = DRV_COMM_KERNEL_ERR(tmp_errno);
+        goto davinci_close;
     }
 
     if(type == VER_TYPE_DEV) {
@@ -285,6 +285,7 @@ u32 soc_res_get_ver(u32 udevid, enum soc_ver_type type, u32 *ver)
         }
     } else {
         DRV_COMM_ERR("invalid version type, (udevid=%u)\n", udevid);
+        ret = DRV_ERROR_INNER_ERR;
         goto davinci_close;
     }
 
@@ -292,6 +293,11 @@ davinci_close:
     tmp = ioctl(fd, (unsigned long)DAVINCI_INTF_IOCTL_CLOSE, &arg);
     if (tmp != 0) {
         DRV_COMM_ERR("Davinci close fail. (ret=%d)\n", tmp);
+    }
+close_fd:
+    tmp = close(fd);
+    if (tmp != 0) {
+        DRV_COMM_ERR("Close device fail. (ret=%d; fd=%d)\n", tmp, fd);
     }
     return ret;
 }

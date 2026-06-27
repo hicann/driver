@@ -62,16 +62,16 @@ void devdrv_pid_map_uninit(void)
 
 KA_EXPORT_SYMBOL_GPL(hal_kernel_devdrv_query_process_by_host_pid_kernel);
 KA_EXPORT_SYMBOL_GPL(devdrv_query_process_by_host_pid);
-KA_EXPORT_SYMBOL(hal_kernel_devdrv_query_process_host_pid);
-KA_EXPORT_SYMBOL(devdrv_query_master_location);
+KA_EXPORT_SYMBOL_GPL(hal_kernel_devdrv_query_process_host_pid);
+KA_EXPORT_SYMBOL_GPL(devdrv_query_master_location);
 #ifdef CFG_HOST_ENV
-KA_EXPORT_SYMBOL(devdrv_query_master_pid_by_device_slave);
+KA_EXPORT_SYMBOL_GPL(devdrv_query_master_pid_by_device_slave);
 #else
 KA_EXPORT_SYMBOL_GPL(devdrv_query_master_pid_by_host_slave);
 #endif
-KA_EXPORT_SYMBOL(devdrv_query_process_host_pids_by_pid);
-KA_EXPORT_SYMBOL(devdrv_check_hostpid);
-KA_EXPORT_SYMBOL(devdrv_check_sign);
-KA_EXPORT_SYMBOL(devdrv_get_dev_process);
-KA_EXPORT_SYMBOL(devdrv_put_dev_process);
+KA_EXPORT_SYMBOL_GPL(devdrv_query_process_host_pids_by_pid);
+KA_EXPORT_SYMBOL_GPL(devdrv_check_hostpid);
+KA_EXPORT_SYMBOL_GPL(devdrv_check_sign);
+KA_EXPORT_SYMBOL_GPL(devdrv_get_dev_process);
+KA_EXPORT_SYMBOL_GPL(devdrv_put_dev_process);
 #endif

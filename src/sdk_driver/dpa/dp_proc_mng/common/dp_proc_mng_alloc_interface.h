@@ -23,32 +23,46 @@
  */
 
 /* KA_SUB_MODULE_TYPE_0 : ctrl memory */
-#define dp_proc_kmalloc(size, flags) ka_kmalloc(size, flags, ka_get_module_id(HAL_MODULE_TYPE_DEVMM, KA_SUB_MODULE_TYPE_0))
-#define dp_proc_kzalloc(size, flags) ka_kzalloc(size, flags, ka_get_module_id(HAL_MODULE_TYPE_DEVMM, KA_SUB_MODULE_TYPE_0))
-#define dp_proc_kcalloc(size, flags) ka_kcalloc(size, flags, ka_get_module_id(HAL_MODULE_TYPE_DEVMM, KA_SUB_MODULE_TYPE_0))
+#define dp_proc_kmalloc(size, flags) \
+    ka_kmalloc(size, flags, ka_get_module_id(HAL_MODULE_TYPE_DEVMM, KA_SUB_MODULE_TYPE_0))
+#define dp_proc_kzalloc(size, flags) \
+    ka_kzalloc(size, flags, ka_get_module_id(HAL_MODULE_TYPE_DEVMM, KA_SUB_MODULE_TYPE_0))
+#define dp_proc_kcalloc(size, flags) \
+    ka_kcalloc(size, flags, ka_get_module_id(HAL_MODULE_TYPE_DEVMM, KA_SUB_MODULE_TYPE_0))
 
 #define dp_proc_kfree(addr) ka_kfree(addr, ka_get_module_id(HAL_MODULE_TYPE_DEVMM, KA_SUB_MODULE_TYPE_0))
 
-#define dp_proc_vzalloc(size)  ka_vzalloc(size, ka_get_module_id(HAL_MODULE_TYPE_DEVMM, KA_SUB_MODULE_TYPE_0))
-#define __dp_proc_vmalloc(size, gfp_mask, prot) __ka_vmalloc(size, gfp_mask, prot, ka_get_module_id(HAL_MODULE_TYPE_DEVMM, KA_SUB_MODULE_TYPE_0))
+#define dp_proc_vzalloc(size) ka_vzalloc(size, ka_get_module_id(HAL_MODULE_TYPE_DEVMM, KA_SUB_MODULE_TYPE_0))
+#define __dp_proc_vmalloc(size, gfp_mask, prot) \
+    __ka_vmalloc(size, gfp_mask, prot, ka_get_module_id(HAL_MODULE_TYPE_DEVMM, KA_SUB_MODULE_TYPE_0))
 
 #define dp_proc_vfree(addr) ka_vfree(addr, ka_get_module_id(HAL_MODULE_TYPE_DEVMM, KA_SUB_MODULE_TYPE_0))
 
-#define dp_proc_get_free_pages(gfp_mask, order) ka_get_free_pages(gfp_mask, order, ka_get_module_id(HAL_MODULE_TYPE_DEVMM, KA_SUB_MODULE_TYPE_0))
-#define dp_proc_alloc_pages(gfp_mask, order) ka_alloc_pages(gfp_mask, order, ka_get_module_id(HAL_MODULE_TYPE_DEVMM, KA_SUB_MODULE_TYPE_0))
-#define dp_proc_free_pages(addr, order) ka_free_pages(addr, order, ka_get_module_id(HAL_MODULE_TYPE_DEVMM, KA_SUB_MODULE_TYPE_0))
+#define dp_proc_get_free_pages(gfp_mask, order) \
+    ka_get_free_pages(gfp_mask, order, ka_get_module_id(HAL_MODULE_TYPE_DEVMM, KA_SUB_MODULE_TYPE_0))
+#define dp_proc_alloc_pages(gfp_mask, order) \
+    ka_alloc_pages(gfp_mask, order, ka_get_module_id(HAL_MODULE_TYPE_DEVMM, KA_SUB_MODULE_TYPE_0))
+#define dp_proc_free_pages(addr, order) \
+    ka_free_pages(addr, order, ka_get_module_id(HAL_MODULE_TYPE_DEVMM, KA_SUB_MODULE_TYPE_0))
 
-#define dp_proc_alloc_pages_exact(size, gfp_mask) ka_alloc_pages_exact(size, gfp_mask, ka_get_module_id(HAL_MODULE_TYPE_DEVMM, KA_SUB_MODULE_TYPE_0))
-#define dp_proc_free_pages_exact(virt, size) ka_free_pages_exact(virt, size, ka_get_module_id(HAL_MODULE_TYPE_DEVMM, KA_SUB_MODULE_TYPE_0))
+#define dp_proc_alloc_pages_exact(size, gfp_mask) \
+    ka_alloc_pages_exact(size, gfp_mask, ka_get_module_id(HAL_MODULE_TYPE_DEVMM, KA_SUB_MODULE_TYPE_0))
+#define dp_proc_free_pages_exact(virt, size) \
+    ka_free_pages_exact(virt, size, ka_get_module_id(HAL_MODULE_TYPE_DEVMM, KA_SUB_MODULE_TYPE_0))
 
-#define dp_proc_kvzalloc(size, flags) ka_kvzalloc(size, flags, ka_get_module_id(HAL_MODULE_TYPE_DEVMM, KA_SUB_MODULE_TYPE_0))
-#define dp_proc_kvmalloc(size, flags) ka_kvmalloc(size, flags, ka_get_module_id(HAL_MODULE_TYPE_DEVMM, KA_SUB_MODULE_TYPE_0))
-#define dp_proc_kvfree(addr)  ka_kvfree(addr, ka_get_module_id(HAL_MODULE_TYPE_DEVMM, KA_SUB_MODULE_TYPE_0))
+#define dp_proc_kvzalloc(size, flags) \
+    ka_kvzalloc(size, flags, ka_get_module_id(HAL_MODULE_TYPE_DEVMM, KA_SUB_MODULE_TYPE_0))
+#define dp_proc_kvmalloc(size, flags) \
+    ka_kvmalloc(size, flags, ka_get_module_id(HAL_MODULE_TYPE_DEVMM, KA_SUB_MODULE_TYPE_0))
+#define dp_proc_kvfree(addr) ka_kvfree(addr, ka_get_module_id(HAL_MODULE_TYPE_DEVMM, KA_SUB_MODULE_TYPE_0))
 
 /* KA_SUB_MODULE_TYPE_1 : ai memory normal page */
-#define dp_proc_alloc_pages_node(nid, gfp_mask, order) ka_alloc_pages_node(nid, gfp_mask, order, ka_get_module_id(HAL_MODULE_TYPE_DEVMM, KA_SUB_MODULE_TYPE_1))
-#define __dp_proc_free_pages(page, order) __ka_free_pages(page, order, ka_get_module_id(HAL_MODULE_TYPE_DEVMM, KA_SUB_MODULE_TYPE_1))
-#define dp_proc_kvmalloc_node(size, flags, node) ka_kvmalloc_node(size, flags, node, ka_get_module_id(HAL_MODULE_TYPE_DEVMM, KA_SUB_MODULE_TYPE_1))
-#define dp_proc_kvfree_node(addr)  ka_kvfree(addr, ka_get_module_id(HAL_MODULE_TYPE_DEVMM, KA_SUB_MODULE_TYPE_1))
+#define dp_proc_alloc_pages_node(nid, gfp_mask, order) \
+    ka_alloc_pages_node(nid, gfp_mask, order, ka_get_module_id(HAL_MODULE_TYPE_DEVMM, KA_SUB_MODULE_TYPE_1))
+#define __dp_proc_free_pages(page, order) \
+    __ka_free_pages(page, order, ka_get_module_id(HAL_MODULE_TYPE_DEVMM, KA_SUB_MODULE_TYPE_1))
+#define dp_proc_kvmalloc_node(size, flags, node) \
+    ka_kvmalloc_node(size, flags, node, ka_get_module_id(HAL_MODULE_TYPE_DEVMM, KA_SUB_MODULE_TYPE_1))
+#define dp_proc_kvfree_node(addr) ka_kvfree(addr, ka_get_module_id(HAL_MODULE_TYPE_DEVMM, KA_SUB_MODULE_TYPE_1))
 
 #endif

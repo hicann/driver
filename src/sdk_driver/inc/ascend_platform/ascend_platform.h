@@ -38,5 +38,7 @@
 #ifdef CONFIG_PLATFORM_910_96
 #include "ascend_platform_910_96.h"
 #endif
-
+#ifdef CONFIG_PLATFORM_350
+#include "ascend_platform_350.h"
+#endif
 #endif

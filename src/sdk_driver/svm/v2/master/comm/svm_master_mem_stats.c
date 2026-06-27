@@ -19,13 +19,14 @@
 #include "ka_memory_pub.h"
 
 #ifdef CONFIG_PROC_FS
-#define SVM_MASTER_MAX_SVM_PROC_NUM         1024
-#define SVM_MEM_STATS_TITLE "\nMem stats(Bytes):\nDevid   Mem_type                Module_name     Module_id       "     \
+#define SVM_MASTER_MAX_SVM_PROC_NUM 1024
+#define SVM_MEM_STATS_TITLE                                                                 \
+    "\nMem stats(Bytes):\nDevid   Mem_type                Module_name     Module_id       " \
     "Current_alloced_size    Alloced_peak_size       Alloc_cnt       Free_cnt\n"
 SVM_DECLARE_MODULE_NAME(svm_module_name);
 
-static struct svm_mem_stats *devmm_get_mem_stats_mng(struct devmm_svm_process *svm_proc,
-    struct svm_mem_stats_type *type, u32 logic_id)
+static struct svm_mem_stats *devmm_get_mem_stats_mng(
+    struct devmm_svm_process *svm_proc, struct svm_mem_stats_type *type, u32 logic_id)
 {
     struct devmm_svm_proc_master *master_data = (struct devmm_svm_proc_master *)svm_proc->priv_data;
     struct svm_mem_stats *kva = (struct svm_mem_stats *)master_data->mem_stats_va_mng[logic_id].kva;
@@ -33,20 +34,24 @@ static struct svm_mem_stats *devmm_get_mem_stats_mng(struct devmm_svm_process *s
     if (kva == NULL) {
         return NULL;
     }
-    return (kva + (type->mem_val * MEM_STATS_MAX_PAGE_TYPE + type->page_type) *
-        MEM_STATS_MAX_PHY_MEMTYPE + type->phy_memtype);
+    return (
+        kva + (type->mem_val * MEM_STATS_MAX_PAGE_TYPE + type->page_type) * MEM_STATS_MAX_PHY_MEMTYPE +
+        type->phy_memtype);
 }
 
-#define DEVMM_MEM_STATS_SHOW(seq, mem_val, page_type, phy_memtype, devid, fmt, ...) do {                                \
-    if (mem_val != MEM_DEV_VAL) {                                                                                       \
-        ka_fs_seq_printf(seq, "NA      %-24s"fmt, svm_get_mem_type_str(mem_val, page_type, phy_memtype), ##__VA_ARGS__);      \
-    } else {                                                                                                            \
-        ka_fs_seq_printf(seq, "dev%-5d%-24s"fmt, devid, svm_get_mem_type_str(mem_val, page_type, phy_memtype), ##__VA_ARGS__);\
-    }                                                                                                                   \
-} while (0)
+#define DEVMM_MEM_STATS_SHOW(seq, mem_val, page_type, phy_memtype, devid, fmt, ...)                                    \
+    do {                                                                                                               \
+        if (mem_val != MEM_DEV_VAL) {                                                                                  \
+            ka_fs_seq_printf(                                                                                          \
+                seq, "NA      %-24s" fmt, svm_get_mem_type_str(mem_val, page_type, phy_memtype), ##__VA_ARGS__);       \
+        } else {                                                                                                       \
+            ka_fs_seq_printf(                                                                                          \
+                seq, "dev%-5d%-24s" fmt, devid, svm_get_mem_type_str(mem_val, page_type, phy_memtype), ##__VA_ARGS__); \
+        }                                                                                                              \
+    } while (0)
 
-static void devmm_mem_stats_show(ka_seq_file_t *seq, struct devmm_svm_process *svm_proc,
-    struct svm_mem_stats_type *type, u32 logic_id)
+static void devmm_mem_stats_show(
+    ka_seq_file_t *seq, struct devmm_svm_process *svm_proc, struct svm_mem_stats_type *type, u32 logic_id)
 {
     struct svm_mem_stats *mem_stats = NULL;
     u32 module_id;
@@ -61,16 +66,20 @@ static void devmm_mem_stats_show(ka_seq_file_t *seq, struct devmm_svm_process *s
             continue;
         }
         if (seq != NULL) {
-            DEVMM_MEM_STATS_SHOW(seq, type->mem_val, type->page_type, type->phy_memtype, logic_id,
-                "%-16s%-16u%-24llu%-24llu%-16llu%-16llu\n", SVM_GET_MODULE_NAME(svm_module_name, module_id),
-                module_id, mem_stats->current_alloced_size[module_id], mem_stats->alloced_peak_size[module_id],
+            DEVMM_MEM_STATS_SHOW(
+                seq, type->mem_val, type->page_type, type->phy_memtype, logic_id,
+                "%-16s%-16u%-24llu%-24llu%-16llu%-16llu\n", SVM_GET_MODULE_NAME(svm_module_name, module_id), module_id,
+                mem_stats->current_alloced_size[module_id], mem_stats->alloced_peak_size[module_id],
                 mem_stats->alloc_cnt[module_id], mem_stats->free_cnt[module_id]);
         } else {
-            devmm_drv_run_info("%d dev%u %s %s %u %llu %llu %llu %llu\n", svm_proc->process_id.hostpid, logic_id,
+            devmm_drv_run_info(
+                "hostpid=%d logic_id=dev%u mem_type=%s module_name=%s module_id=%u current_alloced_size=%llu "
+                "alloced_peak_size=%llu alloc_cnt=%llu free_cnt=%llu\n",
+                svm_proc->process_id.hostpid, logic_id,
                 svm_get_mem_type_str(type->mem_val, type->page_type, type->phy_memtype),
-                SVM_GET_MODULE_NAME(svm_module_name, module_id),
-                module_id, mem_stats->current_alloced_size[module_id], mem_stats->alloced_peak_size[module_id],
-                mem_stats->alloc_cnt[module_id], mem_stats->free_cnt[module_id]);
+                SVM_GET_MODULE_NAME(svm_module_name, module_id), module_id, mem_stats->current_alloced_size[module_id],
+                mem_stats->alloced_peak_size[module_id], mem_stats->alloc_cnt[module_id],
+                mem_stats->free_cnt[module_id]);
         }
     }
 }
@@ -145,7 +154,7 @@ int devmm_dev_mem_stats_procfs_show(ka_seq_file_t *seq, void *offset)
 void devmm_dev_mem_stats_log_show(u32 logic_id)
 {
     devmm_drv_run_info("Hostpid Devid Mem_type Module_name Module_id Current_alloced_size(Bytes) "
-        "Alloced_peak_size(Bytes) Alloc_cnt Free_cnt\n");
+                       "Alloced_peak_size(Bytes) Alloc_cnt Free_cnt\n");
     devmm_dev_mem_stats_show(NULL, logic_id);
 }
 
@@ -229,16 +238,10 @@ void devmm_mem_stats_va_unmap(struct devmm_svm_process *svm_proc)
 }
 
 #else
-void devmm_dev_mem_stats_log_show(u32 logic_id)
-{
-}
+void devmm_dev_mem_stats_log_show(u32 logic_id) {}
 
-void devmm_mem_stats_va_map(struct devmm_svm_process *svm_proc, u32 logic_id, u64 va)
-{
-}
+void devmm_mem_stats_va_map(struct devmm_svm_process *svm_proc, u32 logic_id, u64 va) {}
 
-void devmm_mem_stats_va_unmap(struct devmm_svm_process *svm_proc)
-{
-}
+void devmm_mem_stats_va_unmap(struct devmm_svm_process *svm_proc) {}
 
 #endif

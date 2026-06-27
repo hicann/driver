@@ -14,7 +14,7 @@
 #ifndef JPEGD_REG_UNION_DEFINE_H
 #define JPEGD_REG_UNION_DEFINE_H
 
-#include <linux/types.h>
+#include "ka_type.h"
 
 union FrameSize {
     // Define the struct bits

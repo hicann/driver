@@ -16,7 +16,7 @@
 #include "virtmng_public_def.h"
 
 int vmngh_common_msg_send(u32 dev_id, u32 fid, enum vmng_msg_common_type cmn_type,
-    struct vmng_tx_msg_proc_info *tx_info)
+                          struct vmng_tx_msg_proc_info *tx_info)
 {
     return 0;
 }

@@ -17,10 +17,10 @@
 #include "ka_list_pub.h"
 #include "ka_fs_pub.h"
 
-#define PER_STATUS_SIZE        sizeof(struct queue_qid_status)
-#define TIME_RECODE_SIZE       (sizeof(long long int) * TIME_RECORD_TYPE_MAX)
-#define MAX_EXCEPT_STATUS_CNT  1000
-#define MAX_PERF_STATUS_CNT    1000
+#define PER_STATUS_SIZE sizeof(struct queue_qid_status)
+#define TIME_RECODE_SIZE (sizeof(long long int) * TIME_RECORD_TYPE_MAX)
+#define MAX_EXCEPT_STATUS_CNT 1000
+#define MAX_PERF_STATUS_CNT 1000
 
 struct que_status_record_mng {
     ka_task_spinlock_t lock;
@@ -61,7 +61,7 @@ static void queue_reinit_qid_status(struct queue_qid_status *status)
         long long int *time_record = status->time_record;
 #ifndef EMU_ST
         if (((time_record[HOST_FINISH_QUEUE_MSG] - time_record[HOST_START_MAKE_DMA_LIST] > g_perf_time_threshold) ||
-            (time_record[DEV_FINISH_QUEUE_MSG] - time_record[DEV_START_SUBMIT_EVENT] > g_perf_time_threshold)) &&
+             (time_record[DEV_FINISH_QUEUE_MSG] - time_record[DEV_START_SUBMIT_EVENT] > g_perf_time_threshold)) &&
             (g_perf_time_threshold != 0)) {
             queue_collect_qid_status(status, RECORD_EXCEPT);
         }
@@ -76,7 +76,8 @@ static struct queue_qid_status *queue_create_qid_status(struct queue_context *ct
 {
     struct queue_qid_status *status = NULL;
 
-    status = (struct queue_qid_status *)queue_drv_kzalloc(sizeof(struct queue_qid_status), KA_GFP_ATOMIC | __KA_GFP_ACCOUNT);
+    status = (struct queue_qid_status *)queue_drv_kzalloc(sizeof(struct queue_qid_status),
+                                                          KA_GFP_ATOMIC | __KA_GFP_ACCOUNT);
     if (status == NULL) {
         return NULL;
     }
@@ -199,7 +200,8 @@ STATIC void queue_collect_qid_status(struct queue_qid_status *except_status, STA
         status_record_mng[type].cur_record_cnt--;
     }
 
-    new_status = (struct queue_qid_status *)queue_drv_kzalloc(sizeof(struct queue_qid_status), KA_GFP_ATOMIC | __KA_GFP_ACCOUNT);
+    new_status = (struct queue_qid_status *)queue_drv_kzalloc(sizeof(struct queue_qid_status),
+                                                              KA_GFP_ATOMIC | __KA_GFP_ACCOUNT);
     if (new_status == NULL) {
         ka_task_spin_unlock_bh(&status_record_mng[type].lock);
         return;
@@ -228,7 +230,9 @@ void queue_show_one_qid_status(ka_seq_file_t *seq, struct queue_qid_status *per_
 {
     long long int *time_record = per_status->time_record;
 #ifndef EMU_ST
-    ka_fs_seq_printf(seq, "serial_num:%llu, pid:%d, qid:%d, is_finish:%d, subevent_id:%u\n"
+    ka_fs_seq_printf(
+        seq,
+        "serial_num:%llu, pid:%d, qid:%d, is_finish:%d, subevent_id:%u\n"
         "mem_size:%llu, dma_node_num:%llu\n"
         "host_time_show:\n"
         "    make_dma_list: start-%lldus end-%lldus cost-%lldus \n"
@@ -244,21 +248,19 @@ void queue_show_one_qid_status(ka_seq_file_t *seq, struct queue_qid_status *per_
         "    hdc_reply    : end-%lldus cost-%lldus \n"
         "    total_cost   : %lldus \n",
         per_status->serial_num, per_status->pid, per_status->qid, per_status->is_finish, per_status->subevent_id,
-        per_status->mem_size, per_status->node_num,
-        time_record[HOST_START_MAKE_DMA_LIST], time_record[HOST_END_MAKE_DMA_LIST],
-        time_record[HOST_END_MAKE_DMA_LIST] - time_record[HOST_START_MAKE_DMA_LIST],
-        time_record[HOST_END_HDC_SNED], time_record[HOST_END_HDC_SNED] - time_record[HOST_END_MAKE_DMA_LIST],
-        time_record[HOST_END_WAIT_REPLY], time_record[HOST_END_WAIT_REPLY] - time_record[HOST_END_HDC_SNED],
-        time_record[HOST_HDC_RECV], time_record[HOST_WAKE_UP], time_record[HOST_WAKE_UP] - time_record[HOST_HDC_RECV],
+        per_status->mem_size, per_status->node_num, time_record[HOST_START_MAKE_DMA_LIST],
+        time_record[HOST_END_MAKE_DMA_LIST],
+        time_record[HOST_END_MAKE_DMA_LIST] - time_record[HOST_START_MAKE_DMA_LIST], time_record[HOST_END_HDC_SNED],
+        time_record[HOST_END_HDC_SNED] - time_record[HOST_END_MAKE_DMA_LIST], time_record[HOST_END_WAIT_REPLY],
+        time_record[HOST_END_WAIT_REPLY] - time_record[HOST_END_HDC_SNED], time_record[HOST_HDC_RECV],
+        time_record[HOST_WAKE_UP], time_record[HOST_WAKE_UP] - time_record[HOST_HDC_RECV],
         time_record[HOST_FINISH_QUEUE_MSG] - time_record[HOST_START_MAKE_DMA_LIST],
 
         time_record[DEV_START_SUBMIT_EVENT], time_record[DEV_END_SUBMIT_EVENT],
-        time_record[DEV_END_SUBMIT_EVENT] - time_record[DEV_START_SUBMIT_EVENT],
-        time_record[DEV_START_MAKE_DMA_LIST],
-        time_record[DEV_START_MAKE_DMA_LIST] - time_record[DEV_END_SUBMIT_EVENT],
-        time_record[DEV_END_MAKE_DMA_LIST],
-        time_record[DEV_END_MAKE_DMA_LIST] - time_record[DEV_START_MAKE_DMA_LIST],
-        time_record[DEV_END_DMA_COPY], time_record[DEV_END_DMA_COPY] - time_record[DEV_END_MAKE_DMA_LIST],
+        time_record[DEV_END_SUBMIT_EVENT] - time_record[DEV_START_SUBMIT_EVENT], time_record[DEV_START_MAKE_DMA_LIST],
+        time_record[DEV_START_MAKE_DMA_LIST] - time_record[DEV_END_SUBMIT_EVENT], time_record[DEV_END_MAKE_DMA_LIST],
+        time_record[DEV_END_MAKE_DMA_LIST] - time_record[DEV_START_MAKE_DMA_LIST], time_record[DEV_END_DMA_COPY],
+        time_record[DEV_END_DMA_COPY] - time_record[DEV_END_MAKE_DMA_LIST],
 #ifndef DRV_HOST
         time_record[DEV_END_REPLY], time_record[DEV_END_REPLY] - time_record[DEV_END_DMA_COPY],
         time_record[DEV_FINISH_QUEUE_MSG] - time_record[DEV_START_SUBMIT_EVENT]);
@@ -288,7 +290,8 @@ void queue_show_all_qid_status(ka_seq_file_t *seq, STATUS_RECORD_TYPE type)
     j = 0;
     ka_task_spin_lock_bh(&status_record_mng[type].lock);
     if (ka_list_empty_careful(&status_record_mng[type].list) == 0) {
-        ka_list_for_each_safe(pos, n, &status_record_mng[type].list) {
+        ka_list_for_each_safe(pos, n, &status_record_mng[type].list)
+        {
             per_status = ka_list_entry(pos, struct queue_qid_status, list);
             (void)memcpy_s(&all_status[j], PER_STATUS_SIZE, per_status, PER_STATUS_SIZE);
             j++;
@@ -314,7 +317,8 @@ void queue_free_one_type_qid_status(STATUS_RECORD_TYPE type)
 
     ka_task_spin_lock_bh(&status_record_mng[type].lock);
     if (ka_list_empty_careful(&status_record_mng[type].list) == 0) {
-        ka_list_for_each_safe(pos, n, &status_record_mng[type].list) {
+        ka_list_for_each_safe(pos, n, &status_record_mng[type].list)
+        {
             status = ka_list_entry(pos, struct queue_qid_status, list);
             ka_list_del(&status->list);
             queue_drv_kfree(status);
@@ -332,4 +336,3 @@ void queue_free_all_type_qid_status(void)
         queue_free_one_type_qid_status((STATUS_RECORD_TYPE)type);
     }
 }
-

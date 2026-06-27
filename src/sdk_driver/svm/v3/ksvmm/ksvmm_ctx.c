@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2025. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -48,10 +48,7 @@ struct ksvmm_ctx *ksvmm_ctx_get(u32 udevid, int tgid)
     return ksvmm_ctx;
 }
 
-void ksvmm_ctx_put(struct ksvmm_ctx *ksvmm_ctx)
-{
-    svm_task_ctx_put(ksvmm_ctx->task_ctx);
-}
+void ksvmm_ctx_put(struct ksvmm_ctx *ksvmm_ctx) { svm_task_ctx_put(ksvmm_ctx->task_ctx); }
 
 static void ksvmm_ctx_init(struct ksvmm_ctx *ksvmm_ctx)
 {
@@ -88,8 +85,7 @@ int ksvmm_init_task(u32 udevid, int tgid, void *start_time)
         return -EINVAL;
     }
 
-    ret = svm_task_set_feature_priv(task_ctx, ksvmm_feature_id, "ksvmm",
-        (void *)ksvmm_ctx, ksvmm_ctx_release);
+    ret = svm_task_set_feature_priv(task_ctx, ksvmm_feature_id, "ksvmm", (void *)ksvmm_ctx, ksvmm_ctx_release);
     if (ret != 0) {
         svm_task_ctx_put(task_ctx);
         svm_kvfree(ksvmm_ctx);
@@ -118,7 +114,7 @@ void ksvmm_uninit_task(u32 udevid, int tgid, void *start_time)
 
     ksvmm_ctx = ksvmm_ctx_get(udevid, tgid);
     if (ksvmm_ctx == NULL) {
-        return ;
+        return;
     }
 
     ksvmm_ctx_put(ksvmm_ctx);
@@ -157,7 +153,5 @@ int ksvmm_init(void)
 }
 DECLAER_FEATURE_AUTO_INIT(ksvmm_init, FEATURE_LOADER_STAGE_4);
 
-void ksvmm_uninit(void)
-{
-}
+void ksvmm_uninit(void) {}
 DECLAER_FEATURE_AUTO_UNINIT(ksvmm_uninit, FEATURE_LOADER_STAGE_4);

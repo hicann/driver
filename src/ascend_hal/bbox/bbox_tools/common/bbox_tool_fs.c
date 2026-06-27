@@ -440,3 +440,7 @@ s32 bbox_format_device_path(char *buf, u32 len, const char *parent, u32 dev)
     return sprintf_s(buf, len, "%s" OS_DIR_SLASH DEVDIR_FORMAT, parent, dev);
 }
 
+s32 bbox_format_device_offline_path(char *buf, u32 len, const char *parent, u32 dev)
+{
+    return sprintf_s(buf, len, "%s" OS_DIR_SLASH DEVDIR_STR "offline-%u", parent, dev);
+}

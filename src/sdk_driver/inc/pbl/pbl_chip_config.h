@@ -14,7 +14,7 @@
 #ifndef PBL_CHIP_CONFIGT_H
 #define PBL_CHIP_CONFIGT_H
 
-#include <linux/types.h>
+#include "drv_type.h"
 
 #define DBL_NUMA_ID_MAX_NUM    64
 

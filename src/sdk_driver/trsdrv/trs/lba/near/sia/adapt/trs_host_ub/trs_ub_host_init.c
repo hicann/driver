@@ -34,28 +34,36 @@
 
 #include "ubcore_uapi.h"
 
-#define TRS_UB_JETTY_BIND_WORK_PERIOD   10U /* unit ms */
+#define TRS_UB_JETTY_BIND_WORK_PERIOD 10U /* unit ms */
 
-#define TRS_UB_CQ_RECV_BUFFER_SIZE      32U
-#define TRS_UB_CQ_RECV_BUFFER_NUM       32768U
-#define TRS_UB_CQ_SEG_SIZE              (TRS_UB_CQ_RECV_BUFFER_SIZE * TRS_UB_CQ_RECV_BUFFER_NUM)
+#define TRS_UB_CQ_RECV_BUFFER_SIZE 32U
+#define TRS_UB_CQ_RECV_BUFFER_NUM 32768U
+#define TRS_UB_CQ_SEG_SIZE (TRS_UB_CQ_RECV_BUFFER_SIZE * TRS_UB_CQ_RECV_BUFFER_NUM)
 
-#define TRS_UB_CQ_JFC_DEPTH             TRS_UB_CQ_RECV_BUFFER_NUM
-#define TRS_UB_SQ_JFC_DEPTH             32768U
+#define TRS_UB_CQ_JFC_DEPTH TRS_UB_CQ_RECV_BUFFER_NUM
+#define TRS_UB_SQ_JFC_DEPTH 32768U
 
-#define TRS_UB_CQ_JFR_DEPTH             TRS_UB_CQ_RECV_BUFFER_NUM   // ub limited
-#define TRS_UB_SQ_JFR_DEPTH             32768U                      // ub limited
+#define TRS_UB_CQ_JFR_DEPTH TRS_UB_CQ_RECV_BUFFER_NUM // ub limited
+#define TRS_UB_SQ_JFR_DEPTH 32768U                    // ub limited
+#define TRS_UB_JFC_CTX_SIZE 128U
 
-#define TRS_UB_CHAN_INFO_UPDATE_ADD     1U
-#define TRS_UB_CHAN_INFO_UPDATE_DEL     0U
+#define TRS_UB_CHAN_INFO_UPDATE_ADD 1U
+#define TRS_UB_CHAN_INFO_UPDATE_DEL 0U
 
-#define TRS_UB_OP_CMD_GET_CQ_HEAD       0U
-#define TRS_UB_OP_CMD_SET_CQ_HEAD       1U
-#define TRS_UB_OP_CMD_GET_CQ_TAIL       2U
-#define TRS_UB_OP_CMD_FILL_CQ_CQE       3U
-#define TRS_UB_OP_CMD_CQ_RESET          4U
-#define TRS_UB_OP_CMD_CQ_PAUSE          5U
-#define TRS_UB_OP_CMD_CQ_RESUME         6U
+#define TRS_UB_OP_CMD_GET_CQ_HEAD 0U
+#define TRS_UB_OP_CMD_SET_CQ_HEAD 1U
+#define TRS_UB_OP_CMD_GET_CQ_TAIL 2U
+#define TRS_UB_OP_CMD_FILL_CQ_CQE 3U
+#define TRS_UB_OP_CMD_CQ_RESET 4U
+#define TRS_UB_OP_CMD_CQ_PAUSE 5U
+#define TRS_UB_OP_CMD_CQ_RESUME 6U
+
+struct trs_ub_reg_cfg_para {
+    void *src;
+    size_t size;
+    u64 src_offset;
+    u64 dst_offset;
+};
 
 struct ubcore_device *trs_ub_get_ubcore_dev(u32 dev_id)
 {
@@ -105,8 +113,8 @@ int trs_ub_get_sq_head_paddr(struct trs_id_inst *inst, u32 sq_id, u64 *paddr)
         return -ENODEV;
     }
 
-    *paddr = (u64)ka_mm_page_to_phys(ub_dev->sq_seg.seg_pages) +
-        sq_id * TRS_UB_SQ_BUFFER_SIZE + TRS_UB_SQ_TAIL_BUFFER_SIZE;
+    *paddr =
+        (u64)ka_mm_page_to_phys(ub_dev->sq_seg.seg_pages) + sq_id * TRS_UB_SQ_BUFFER_SIZE + TRS_UB_SQ_TAIL_BUFFER_SIZE;
     trs_put_ub_dev(ub_dev);
 
     return 0;
@@ -149,7 +157,7 @@ int trs_ub_get_sq_head(struct trs_id_inst *inst, u32 sq_id, u32 *head)
     return 0;
 }
 
-#define TRS_UB_CQE_PHASE_MASK   0xFEU
+#define TRS_UB_CQE_PHASE_MASK 0xFEU
 static int _trs_ub_cq_ctx_op_fill_cqe(struct trs_ub_cq_ctx *cq_ctx, void *cqe)
 {
     int ret = 0;
@@ -275,13 +283,13 @@ int trs_ub_sq_reset(struct trs_id_inst *inst, u32 sq_id)
 
     ret = trs_ub_get_sq_head_paddr(inst, sq_id, &head_paddr);
     if (ret != 0) {
-        trs_err( "Failed to reset sq head. (devid=%u; sqid=%u; ret=%d)\n", inst->devid, sq_id, ret);
+        trs_err("Failed to reset sq head. (devid=%u; sqid=%u; ret=%d)\n", inst->devid, sq_id, ret);
         return ret;
     }
     *((u16 *)(ka_mm_phys_to_virt(head_paddr))) = 0;
     ret = trs_ub_get_sq_tail_paddr(inst, sq_id, &tail_paddr);
     if (ret != 0) {
-        trs_err( "Failed to reset sq tail. (devid=%u; sqid=%u; ret=%d)\n", inst->devid, sq_id, ret);
+        trs_err("Failed to reset sq tail. (devid=%u; sqid=%u; ret=%d)\n", inst->devid, sq_id, ret);
         return ret;
     }
     *((u16 *)(ka_mm_phys_to_virt(tail_paddr))) = 0;
@@ -471,8 +479,8 @@ static void trs_ub_cq_dispatch_task(unsigned long data)
     }
 
     jetty_info->cq_num = 0;
-    (void)memset_s((void *)jetty_info->cq_id_bucket, sizeof(jetty_info->cq_id_bucket), 0,
-        sizeof(jetty_info->cq_id_bucket));
+    (void)memset_s(
+        (void *)jetty_info->cq_id_bucket, sizeof(jetty_info->cq_id_bucket), 0, sizeof(jetty_info->cq_id_bucket));
     for (i = 0; i < cr_num; i++) {
         u32 cq_id = (u32)(jetty_info->cr[i].imm_data);
         u32 buff_index = jetty_info->cr[i].user_ctx;
@@ -499,12 +507,13 @@ static void trs_ub_cq_dispatch_task(unsigned long data)
             jetty_info->cq_num++;
             jetty_info->cq_id_bucket[cq_id] = 1;
         }
-        trs_debug("Cq info. (devid=%u; cq_id=%u; cq_num=%u; buff_index=%u; jfc_id=%u)\n",
-            inst.devid, cq_id, jetty_info->cq_num, buff_index, jetty_info->cq_jfc->id);
+        trs_debug(
+            "Cq info. (devid=%u; cq_id=%u; cq_num=%u; buff_index=%u; jfc_id=%u)\n", inst.devid, cq_id,
+            jetty_info->cq_num, buff_index, jetty_info->cq_jfc->id);
 
-import_jfr_seg:
-        ret = trs_ub_import_jfr_segment(jetty_info->cq_jfr, jetty_info->cq_seg.target_seg, buff_index,
-            TRS_UB_CQ_RECV_BUFFER_SIZE);
+    import_jfr_seg:
+        ret = trs_ub_import_jfr_segment(
+            jetty_info->cq_jfr, jetty_info->cq_seg.target_seg, buff_index, TRS_UB_CQ_RECV_BUFFER_SIZE);
         if (ret != 0) {
             trs_err("Reimport jfr segment failed. (index=%d; len=%u)\n", buff_index, TRS_UB_CQ_RECV_BUFFER_SIZE);
         }
@@ -537,8 +546,8 @@ int trs_ub_request_cq_update_irq(struct trs_id_inst *inst, int irq_type, int irq
     ub_dev->cq_irq_para = attr->para;
 
     for (i = 0; i < TRS_VF_MAX_NUM; i++) {
-        ka_system_tasklet_init(&ub_dev->jetty_info[i].cq_dispatch_task, trs_ub_cq_dispatch_task,
-            (uintptr_t)(&ub_dev->jetty_info[i]));
+        ka_system_tasklet_init(
+            &ub_dev->jetty_info[i].cq_dispatch_task, trs_ub_cq_dispatch_task, (uintptr_t)(&ub_dev->jetty_info[i]));
     }
     trs_put_ub_dev(ub_dev);
     return 0;
@@ -584,7 +593,7 @@ static int trs_ub_init_segment(struct trs_ub_dev *ub_dev, size_t seg_size, struc
 
     flag.bs.token_policy = UBCORE_TOKEN_PLAIN_TEXT;
     flag.bs.access = (local_flag == 1) ? UBCORE_ACCESS_LOCAL_ONLY :
-        (UBCORE_ACCESS_READ | UBCORE_ACCESS_WRITE | UBCORE_ACCESS_ATOMIC);
+                                         (UBCORE_ACCESS_READ | UBCORE_ACCESS_WRITE | UBCORE_ACCESS_ATOMIC);
     flag.bs.non_pin = TRS_UB_DEFAULT_NON_PIN;
     seg_cfg.va = (u64)ka_mm_page_to_virt(seg->seg_pages);
     seg_cfg.len = seg_size;
@@ -656,8 +665,8 @@ int trs_ub_cq_jetty_init(struct trs_ub_dev *ub_dev, u32 vfid)
         goto destroy_jfc;
     }
 
-    ret = trs_ub_import_jfr_all_segment(jfr, ub_dev->jetty_info[vfid].cq_seg.target_seg, TRS_UB_CQ_RECV_BUFFER_NUM,
-        TRS_UB_CQ_RECV_BUFFER_SIZE);
+    ret = trs_ub_import_jfr_all_segment(
+        jfr, ub_dev->jetty_info[vfid].cq_seg.target_seg, TRS_UB_CQ_RECV_BUFFER_NUM, TRS_UB_CQ_RECV_BUFFER_SIZE);
     if (ret != 0) {
         trs_err("Import cq jfr segment failed. (devid=%u)\n", ub_dev->devid);
         goto destroy_jfr;
@@ -708,30 +717,38 @@ static int trs_ub_import_reg_segment(struct trs_ub_dev *ub_dev, struct trs_msg_j
         return -EFAULT;
     }
 
-    trs_info("Import segment success. (devid=%u; len=%llu)\n", ub_dev->devid, seg_cfg.seg.len);
+    seg_cfg.seg = jetty_info->sq_reg_seg;
+    ub_dev->sq_reg_tseg = ubcore_import_seg(ub_dev->ubc_dev, &seg_cfg, NULL);
+    if (KA_IS_ERR_OR_NULL(ub_dev->sq_reg_tseg)) {
+        (void)ubcore_unimport_seg(ub_dev->cnt_notify_tseg);
+        ub_dev->cnt_notify_tseg = NULL;
+        (void)ubcore_unimport_seg(ub_dev->notify_tseg);
+        ub_dev->notify_tseg = NULL;
+        trs_err("Failed to import cnt notify segment. (devid=%u)\n", ub_dev->devid);
+        return -EFAULT;
+    }
 
+    trs_info("Import segment success. (devid=%u; len=%llu)\n", ub_dev->devid, seg_cfg.seg.len);
     return 0;
 }
 
 static void trs_ub_unimport_reg_segment(struct trs_ub_dev *ub_dev)
 {
+    (void)ubcore_unimport_seg(ub_dev->sq_reg_tseg);
+    ub_dev->sq_reg_tseg = NULL;
     (void)ubcore_unimport_seg(ub_dev->notify_tseg);
     ub_dev->notify_tseg = NULL;
     (void)ubcore_unimport_seg(ub_dev->cnt_notify_tseg);
     ub_dev->cnt_notify_tseg = NULL;
 }
 
-int trs_ub_stars_soc_res_ctrl(struct trs_id_inst *inst, u32 type, u32 id, u32 cmd)
+static int trs_ub_stars_reg_op(struct trs_id_inst *inst, enum trs_id_type id_type,
+    struct trs_ub_reg_cfg_para *para, enum devdrv_urma_copy_dir dir)
 {
     struct trs_ub_dev *ub_dev = NULL;
     struct devdrv_urma_copy local, peer;
-    size_t size;
-    u32 offset;
-    int ret;
-
-    if ((cmd != TRS_RES_OP_RESET) && (cmd != TRS_RES_OP_CHECK_AND_RESET)) {
-        return -ENOTSUPP;
-    }
+    u8 *vaddr = NULL;
+    int ret = 0;
 
     ub_dev = trs_get_ub_dev(inst->devid);
     if (ub_dev == NULL) {
@@ -739,43 +756,170 @@ int trs_ub_stars_soc_res_ctrl(struct trs_id_inst *inst, u32 type, u32 id, u32 cm
         return -ENODEV;
     }
 
-    if (type == TRS_NOTIFY) {
-        ret = trs_soc_get_notify_size(inst, &size);
-        ret |= trs_soc_get_notify_offset(inst, id, &offset);
-        if (ret != 0) {
-            goto put_dev;
-        }
-        peer.seg = ub_dev->notify_tseg;
-    } else if (type == TRS_CNT_NOTIFY) {
-        ret = trs_soc_get_cnt_notify_size(inst, &size);
-        ret |= trs_soc_get_cnt_notify_offset(inst, id, &offset);
-        if (ret != 0) {
-            goto put_dev;
-        }
-        peer.seg = ub_dev->cnt_notify_tseg;
-    } else {
-        ret = -ENOTSUPP;
-        goto put_dev;
-    }
     local.seg = ub_dev->reg_seg.target_seg;
-    local.len = (u64)size;
-    local.offset = 0;
-    peer.len = (u64)size;
-    peer.offset = (u64)offset;
+    local.len = (u64)para->size;
+    local.offset = para->src_offset;
+    peer.len = (u64)para->size;
+    peer.offset = para->dst_offset;
 
-    ret = devdrv_urma_copy(inst->devid, URMA_CHAN_TSDRV, LOCAL_TO_PEER, &local, &peer);
-    if (ret != 0) {
-        trs_err("Failed to copy with urma. (ret=%d; devid=%u; type=%u; id=%u; len=%lu; offset=%u)\n",
-            ret, inst->devid, type, id, size, offset);
-        goto put_dev;
+    if (id_type == TRS_NOTIFY) {
+        peer.seg = ub_dev->notify_tseg;
+    } else if (id_type == TRS_CNT_NOTIFY) {
+        peer.seg = ub_dev->cnt_notify_tseg;
+    } else if (id_type == TRS_HW_SQ) {
+        peer.seg = ub_dev->sq_reg_tseg;
+    } else {
+        trs_put_ub_dev(ub_dev);
+        return -ENOTSUPP;
     }
 
-    trs_debug("Copy success. (devid=%u; type=%u; cmd=%u; id=%u; len=%lu; offset=%u)\n",
-        inst->devid, type, cmd, id, size, offset);
+    vaddr = (u8 *)ka_mm_page_to_virt(ub_dev->reg_seg.seg_pages);
+    vaddr += para->src_offset;
 
-put_dev:
+    if (dir == LOCAL_TO_PEER) {
+        (void)memcpy_s(vaddr, TRS_UB_REG_SEG_SIZE - para->src_offset, para->src, para->size);
+    }
+
+    ret = devdrv_urma_copy(inst->devid, URMA_CHAN_TSDRV, dir, &local, &peer);
+    if (ret != 0) {
+        trs_err(
+            "Failed to copy with urma. (ret=%d; devid=%u; dir=%d; type=%d; len=%lu; src_offset=0x%llx; dst_offset=0x%llx)\n",
+            ret, inst->devid, dir, id_type, para->size, para->src_offset, para->dst_offset);
+        trs_put_ub_dev(ub_dev);
+        return ret;
+    }
+
+    if (dir == PEER_TO_LOCAL) {
+        (void)memcpy_s(para->src, para->size, vaddr, para->size);
+    }
+
+    trs_debug(
+        "Reg op success. (devid=%u; dir=%d; id_type=%d; len=%lu; src_offset=0x%llx; dst_offset=0x%llx)\n",
+        inst->devid, dir, id_type, para->size, para->src_offset, para->dst_offset);
     trs_put_ub_dev(ub_dev);
-    return ret;
+    return 0;
+}
+
+int trs_ub_stars_soc_res_ctrl(struct trs_id_inst *inst, u32 type, u32 id, u32 cmd)
+{
+    struct trs_ub_reg_cfg_para para = {0};
+    u32 reg_offset, val = 0;
+    int ret;
+
+    if ((cmd != TRS_RES_OP_RESET) && (cmd != TRS_RES_OP_CHECK_AND_RESET)) {
+        return -ENOTSUPP;
+    }
+
+    if (type == TRS_NOTIFY) {
+        para.src_offset = TRS_UB_REG_SEG_NOTIFY_OFFSET;
+        ret = trs_soc_get_notify_size(inst, &para.size);
+        ret |= trs_soc_get_notify_offset(inst, id, &reg_offset);
+        if (ret != 0) {
+            return -EFAULT;
+        }
+    } else if (type == TRS_CNT_NOTIFY) {
+        para.src_offset = TRS_UB_REG_SEG_CNT_NOTIFY_OFFSET;
+        ret = trs_soc_get_cnt_notify_size(inst, &para.size);
+        ret |= trs_soc_get_cnt_notify_offset(inst, id, &reg_offset);
+        if (ret != 0) {
+            return -EFAULT;
+        }
+    } else {
+        return -ENOTSUPP;
+    }
+
+    para.src = &val;
+    para.dst_offset = reg_offset;
+    ret = trs_ub_stars_reg_op(inst, type, &para, LOCAL_TO_PEER);
+    if (ret != 0) {
+        trs_err(
+            "Failed to cfg reg by urma. (ret=%d; devid=%u; type=%u; id=%u; len=%lu; dst_offset=0x%llx)\n", ret,
+            inst->devid, type, id, para.size, para.dst_offset);
+        return ret;
+    }
+
+    trs_debug(
+        "Reg cfg success. (devid=%u; type=%u; cmd=%u; id=%u; len=%lu; dst_offset=0x%llx)\n", inst->devid, type, cmd, id,
+        para.size, para.dst_offset);
+    return 0;
+}
+
+#define TRS_UB_REG_SQ_HEAD_TAIL_SIZE 8U
+/* op: 0 for head, 1 for tail; dir: LOCAL_TO_PEER for set, PEER_TO_LOCAL for get */
+int trs_ub_sq_head_tail_op(struct trs_id_inst *inst, u32 sq_id, u32 *value, int op,
+    enum devdrv_urma_copy_dir dir)
+{
+    struct trs_ub_reg_cfg_para para = {0};
+    u64 sq_reg_src_offset = 0;
+    u32 reg_offset, cpy_value = 0;
+    size_t stride = 0;
+    int ret = 0;
+
+    ret = trs_soc_get_sq_head_tail_reg_size(inst, &para.size);
+    ret |= trs_soc_get_stars_sched_stride(inst, &stride);
+    if (op == 0) {
+        ret |= trs_soc_get_sq_head_reg_offset(inst, &reg_offset);
+    } else {
+        ret |= trs_soc_get_sq_tail_reg_offset(inst, &reg_offset);
+    }
+    if (ret != 0) {
+        return -EFAULT;
+    }
+
+    sq_reg_src_offset = sq_id * TRS_UB_REG_SQ_HEAD_TAIL_SIZE + ((op == 0) ? 0 : sizeof(u32));
+    if ((para.size != sizeof(u32)) ||
+        ((sq_reg_src_offset + sizeof(u32)) > (TRS_UB_REG_SEG_SIZE - TRS_UB_REG_SEG_SQ_OFFSET))) {
+        return -EFAULT;
+    }
+
+    if (dir == LOCAL_TO_PEER) {
+        cpy_value = *value;
+    }
+
+    para.src = &cpy_value;
+    para.src_offset = TRS_UB_REG_SEG_SQ_OFFSET + sq_reg_src_offset;
+    para.dst_offset = (sq_id * stride + reg_offset);
+    ret = trs_ub_stars_reg_op(inst, TRS_HW_SQ, &para, dir);
+    if (ret != 0) {
+        return ret;
+    }
+
+    if (dir == LOCAL_TO_PEER) {
+        u64 paddr;
+        if (op == 0) {
+            ret = trs_ub_get_sq_head_paddr(inst, sq_id, &paddr);
+        } else {
+            ret = trs_ub_get_sq_tail_paddr(inst, sq_id, &paddr);
+        }
+
+        if (ret == 0) {
+            *((u16 *)(ka_mm_phys_to_virt(paddr))) = *value;
+        }
+        return ret;
+    }
+
+    *value = cpy_value;
+    return 0;
+}
+
+int trs_ub_set_sq_head(struct trs_id_inst *inst, u32 sq_id, u32 head)
+{
+    return trs_ub_sq_head_tail_op(inst, sq_id, &head, 0, LOCAL_TO_PEER);
+}
+
+int trs_ub_set_sq_tail(struct trs_id_inst *inst, u32 sq_id, u32 tail)
+{
+    return trs_ub_sq_head_tail_op(inst, sq_id, &tail, 1, LOCAL_TO_PEER);
+}
+
+int trs_ub_get_stars_sq_head(struct trs_id_inst *inst, u32 sq_id, u32 *head)
+{
+    return trs_ub_sq_head_tail_op(inst, sq_id, head, 0, PEER_TO_LOCAL);
+}
+
+int trs_ub_get_stars_sq_tail(struct trs_id_inst *inst, u32 sq_id, u32 *tail)
+{
+    return trs_ub_sq_head_tail_op(inst, sq_id, tail, 1, PEER_TO_LOCAL);
 }
 
 int trs_ub_bind_jetty(struct trs_ub_dev *ub_dev, u32 vfid)
@@ -792,16 +936,17 @@ int trs_ub_bind_jetty(struct trs_ub_dev *ub_dev, u32 vfid)
     jetty_info->sq_jfr_id = ub_dev->jetty_info[vfid].sq_jfr->jfr_id.id;
     jetty_info->eid_info = ub_dev->eid_info;
     jetty_info->token_value = ub_dev->token_val;
-    (void)memcpy_s(&(jetty_info->sq_seg), sizeof(struct ubcore_seg),
-        &(ub_dev->sq_seg.target_seg->seg), sizeof(struct ubcore_seg));
-    (void)memcpy_s(&(jetty_info->cq_seg), sizeof(struct ubcore_seg),
-        &(ub_dev->jetty_info[vfid].cq_seg.target_seg->seg), sizeof(struct ubcore_seg));
+    (void)memcpy_s(
+        &(jetty_info->sq_seg), sizeof(struct ubcore_seg), &(ub_dev->sq_seg.target_seg->seg), sizeof(struct ubcore_seg));
+    (void)memcpy_s(
+        &(jetty_info->cq_seg), sizeof(struct ubcore_seg), &(ub_dev->jetty_info[vfid].cq_seg.target_seg->seg),
+        sizeof(struct ubcore_seg));
     jetty_info->vfid = vfid;
 
     ret = trs_host_msg_send(devid, &msg, sizeof(struct trs_msg_data));
     if (ret != 0) {
-        trs_err("Fail send jetty bind msg. (devid=%u; vfid=%u; ret=%d; result=%d)\n",
-            devid, vfid, ret, msg.header.result);
+        trs_err(
+            "Fail send jetty bind msg. (devid=%u; vfid=%u; ret=%d; result=%d)\n", devid, vfid, ret, msg.header.result);
         return ret;
     }
 
@@ -834,8 +979,7 @@ void trs_ub_unbind_jetty(struct trs_ub_dev *ub_dev, u32 vfid)
 
     ret = trs_host_msg_send(ub_dev->devid, &msg, sizeof(struct trs_msg_data));
     if (ret != 0) {
-        trs_warn("Msg send result. (devid=%u; ret=%d; result=%d)\n",
-            ub_dev->devid, ret, msg.header.result);
+        trs_warn("Msg send result. (devid=%u; ret=%d; result=%d)\n", ub_dev->devid, ret, msg.header.result);
         return;
     }
 }
@@ -863,14 +1007,14 @@ int trs_ub_jetty_init(struct trs_ub_dev *ub_dev, u32 vfid)
     ret = trs_ub_bind_jetty(ub_dev, vfid);
     if (ret != 0) {
         trs_ub_destroy_jetty(ub_dev, vfid);
-        trs_err("Failed to bind host-device jetty. (devid=%u; vfid=%u; ret=%d)\n",  ub_dev->devid, vfid, ret);
+        trs_err("Failed to bind host-device jetty. (devid=%u; vfid=%u; ret=%d)\n", ub_dev->devid, vfid, ret);
         return ret;
     }
 
     ub_dev->jetty_info[vfid].devid = ub_dev->devid;
     trs_ub_mng_info_set(ub_dev);
 
-    trs_info("Create jetty success. (devid=%u; vfid=%u)\n",  ub_dev->devid, vfid);
+    trs_info("Create jetty success. (devid=%u; vfid=%u)\n", ub_dev->devid, vfid);
     return 0;
 }
 
@@ -958,7 +1102,5 @@ void trs_ub_dev_uninit_with_group(u32 devid, u32 vfid)
     }
 }
 #else
-void trs_ub_host_stub(void)
-{
-}
+void trs_ub_host_stub(void) {}
 #endif

@@ -14,16 +14,21 @@
 #ifndef _KVMDT_H_
 #define _KVMDT_H_
 
+#include "ka_compiler_pub.h"
+#include "ka_memory_pub.h"
 #include "dvt.h"
+
+#define KVMDT_ERROR_PFN     (~0UL)
+
 /*
  * Specific MPT modules function collections.
  */
 struct hw_kvmdt_ops {
-    int (*register_mdev)(struct device *dev, struct hw_dvt *dvt);
-    void (*unregister_mdev)(struct device *dev, struct hw_dvt *dvt);
+    int (*register_mdev)(ka_device_t *dev, struct hw_dvt *dvt);
+    void (*unregister_mdev)(ka_device_t *dev, struct hw_dvt *dvt);
     int (*attach_vdavinci)(void *vdavinci, uintptr_t handle);
     void (*detach_vdavinci)(void *vdavinci);
-    int (*inject_msix)(uintptr_t handle, u32 vector);
+    int (*inject_msix)(uintptr_t handle, u32 vector, int irq);
     unsigned long (*from_virt_to_mfn)(void *addr);
     int (*read_gpa)(uintptr_t handle, unsigned long gpa, void *buf,
                     unsigned long len);
@@ -35,67 +40,42 @@ struct hw_kvmdt_ops {
     int (*dma_pool_init)(struct hw_vdavinci *vdavinci);
     void (*dma_pool_uninit)(struct hw_vdavinci *vdavinci);
     int (*dma_get_iova)(struct hw_vdavinci *vdavinci, unsigned long gfn,
-                        unsigned long size, struct sg_table **dma_sgt);
-    void (*dma_put_iova)(struct sg_table *dma_sgt);
+                        unsigned long size, ka_sg_table_t **dma_sgt);
+    void (*dma_put_iova)(ka_sg_table_t *dma_sgt);
     int (*dma_get_iova_batch)(struct hw_vdavinci *vdavinci, unsigned long *gfn,
                               unsigned long *dma_addr, unsigned long count);
+    bool (*is_pfn_valid)(ka_device_t *dev,
+                         unsigned long pfn, unsigned long size);
 };
 
 struct kvmdt_guest_info {
-    struct kvm *kvm;
+    ka_kvm_t *kvm;
     struct hw_vdavinci *vdavinci;
-    struct dentry *debugfs_cache_entries;
+    ka_dentry_t *debugfs_cache_entries;
 };
 
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(6,1,0))
-struct hw_vfio_vdavinci {
-    struct vfio_device vfio_dev;
-    struct hw_vdavinci *vdavinci;
-};
-#endif
-
-struct dvt_dma {
-    struct hw_vdavinci *vdavinci;
-    struct rb_node gfn_node;
-    struct rb_node dma_node;
-    gfn_t gfn;
-    dma_addr_t dma_addr;
-    unsigned long size;
-    struct sg_table *dma_sgt;
-    struct page_info_list *dma_page_list;
-    struct kref ref;
-};
-
-void kvmdt_dma_unmap_guest_page(uintptr_t handle, struct sg_table *dma_sgt);
-int kvmdt_dma_map_guest_page(uintptr_t handle, unsigned long gfn,
-                             unsigned long size, struct sg_table **dma_sgt);
-
-#if (LINUX_VERSION_CODE < KERNEL_VERSION(6,0,0))
-void dvt_cache_remove_ram(struct hw_vdavinci *vdavinci,
-                          unsigned long start_gfn, unsigned long size);
-#endif
-
-#if ((LINUX_VERSION_CODE == KERNEL_VERSION(4,4,0)) && (!defined(DRV_UT)))
-static inline bool mmget_not_zero(struct mm_struct *mm)
-{
-    return atomic_inc_not_zero(&mm->mm_users);
-}
-#endif
-
-bool get_node_cpu_by_page(struct hw_vdavinci *vdavinci,
-                          unsigned int current_cpu,
-                          struct page *page,
-                          struct cpumask *cpumask);
-struct hw_vdavinci *hw_vdavinci_create(struct kobject *kobj, struct mdev_device *mdev);
-int hw_vdavinci_remove(struct mdev_device *mdev);
-int hw_vdavinci_open(struct mdev_device *mdev);
-void hw_vdavinci_release(struct mdev_device *mdev);
-ssize_t hw_vdavinci_read(struct mdev_device *mdev, char __user *buf,
+ka_vdev *hw_vdavinci_create(struct kobject *kobj, ka_mdev_device_t *mdev);
+int hw_vdavinci_remove(ka_mdev_device_t *mdev);
+int hw_vdavinci_open(ka_mdev_device_t *mdev);
+void hw_vdavinci_release(ka_mdev_device_t *mdev);
+ssize_t hw_vdavinci_read(ka_mdev_device_t *mdev, char __ka_user *buf,
                          size_t count, loff_t *ppos);
-size_t hw_vdavinci_write(struct mdev_device *mdev,
-                         const char __user *buf,
+size_t hw_vdavinci_write(ka_mdev_device_t *mdev,
+                         const char __ka_user *buf,
                          size_t count, loff_t *ppos);
-int hw_vdavinci_mmap(struct mdev_device *mdev, struct vm_area_struct *vma);
-long hw_vdavinci_ioctl(struct mdev_device *mdev, unsigned int cmd,
+int hw_vdavinci_mmap(ka_mdev_device_t *mdev, ka_vm_area_struct_t *vma);
+long hw_vdavinci_ioctl(ka_mdev_device_t *mdev, unsigned int cmd,
                        unsigned long arg);
+void hw_vdavinci_release_vm(struct hw_vdavinci *vdavinci);
+static inline bool hw_vdavinci_is_support_normal_nc(void)
+{
+#ifdef VM_ALLOW_ANY_UNCACHED
+    if (VM_ALLOW_ANY_UNCACHED != VM_NONE) {
+        return true;
+    }
+#endif
+    return false;
+}
+
+unsigned long kvmdt_gfn_to_hva(uintptr_t handle, unsigned long gfn);
 #endif

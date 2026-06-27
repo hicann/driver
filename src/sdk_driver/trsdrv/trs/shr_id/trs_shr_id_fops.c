@@ -15,6 +15,7 @@
 #include "ka_base_pub.h"
 #include "ka_common_pub.h"
 #include "ka_fs_pub.h"
+#include "ka_ioctl_pub.h"
 
 #include "trs_pub_def.h"
 #include "pbl/pbl_davinci_api.h"
@@ -26,36 +27,31 @@
 
 #define DEVDRV_DIVERSITY_PCIE_VENDOR_ID 0xFFFF
 static const ka_pci_device_id_t trs_shrid_tbl[] = {
-    { KA_PCI_VDEVICE(HUAWEI, 0xd100),           0 },
-    { KA_PCI_VDEVICE(HUAWEI, 0xd105),           0 },
-    { KA_PCI_VDEVICE(HUAWEI, 0xa126), 0 },
-    { KA_PCI_VDEVICE(HUAWEI, 0xd801),           0 },
-    { KA_PCI_VDEVICE(HUAWEI, 0xd500),           0 },
-    { KA_PCI_VDEVICE(HUAWEI, 0xd501),           0 },
-    { KA_PCI_VDEVICE(HUAWEI, 0xd802),           0 },
-    { KA_PCI_VDEVICE(HUAWEI, 0xd803),           0 },
-    { KA_PCI_VDEVICE(HUAWEI, 0xd804),           0 },
-    { DEVDRV_DIVERSITY_PCIE_VENDOR_ID, 0xd500, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0 },
-    { 0x20C6, 0xd500, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0 },
-    { 0x203F, 0xd500, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0 },
-    { 0x20E9, 0xd500, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0 },
-    { 0x20C6, 0xd802, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0 },
-    { 0x203F, 0xd802, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0 },
-    { 0x20E9, 0xd802, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0 },
-    {}
-};
+    {KA_PCI_VDEVICE(HUAWEI, 0xd100), 0},
+    {KA_PCI_VDEVICE(HUAWEI, 0xd105), 0},
+    {KA_PCI_VDEVICE(HUAWEI, 0xa126), 0},
+    {KA_PCI_VDEVICE(HUAWEI, 0xd801), 0},
+    {KA_PCI_VDEVICE(HUAWEI, 0xd500), 0},
+    {KA_PCI_VDEVICE(HUAWEI, 0xd501), 0},
+    {KA_PCI_VDEVICE(HUAWEI, 0xd802), 0},
+    {KA_PCI_VDEVICE(HUAWEI, 0xd803), 0},
+    {KA_PCI_VDEVICE(HUAWEI, 0xd804), 0},
+    {DEVDRV_DIVERSITY_PCIE_VENDOR_ID, 0xd500, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0},
+    {0x20C6, 0xd500, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0},
+    {0x203F, 0xd500, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0},
+    {0x20E9, 0xd500, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0},
+    {0x20C6, 0xd802, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0},
+    {0x203F, 0xd802, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0},
+    {0x20E9, 0xd802, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0},
+    {}};
 KA_MODULE_DEVICE_TABLE(pci, trs_shrid_tbl);
 
-static int (* shr_id_ioctl_handles[SHR_ID_MAX_CMD])(struct shr_id_proc_ctx *proc_ctx, unsigned long arg) = {
-    [_IOC_NR(SHR_ID_CREATE)] =  shr_id_create,
-    [_IOC_NR(SHR_ID_OPEN)] =    shr_id_open,
-    [_IOC_NR(SHR_ID_CLOSE)] =   shr_id_close,
-    [_IOC_NR(SHR_ID_DESTROY)] = shr_id_destroy,
-    [_IOC_NR(SHR_ID_SET_PID)] = shr_id_set_pid,
-    [_IOC_NR(SHR_ID_RECORD)] = shr_id_record,
-    [_IOC_NR(SHR_ID_SET_ATTR)] = shr_id_set_attr,
-    [_IOC_NR(SHR_ID_GET_ATTR)] = shr_id_get_attr,
-    [_IOC_NR(SHR_ID_GET_INFO)] = shr_id_get_info,
+static int (*shr_id_ioctl_handles[SHR_ID_MAX_CMD])(struct shr_id_proc_ctx *proc_ctx, unsigned long arg) = {
+    [_KA_IOC_NR(SHR_ID_CREATE)] = shr_id_create,     [_KA_IOC_NR(SHR_ID_OPEN)] = shr_id_open,
+    [_KA_IOC_NR(SHR_ID_CLOSE)] = shr_id_close,       [_KA_IOC_NR(SHR_ID_DESTROY)] = shr_id_destroy,
+    [_KA_IOC_NR(SHR_ID_SET_PID)] = shr_id_set_pid,   [_KA_IOC_NR(SHR_ID_RECORD)] = shr_id_record,
+    [_KA_IOC_NR(SHR_ID_SET_ATTR)] = shr_id_set_attr, [_KA_IOC_NR(SHR_ID_GET_ATTR)] = shr_id_get_attr,
+    [_KA_IOC_NR(SHR_ID_GET_INFO)] = shr_id_get_info,
 };
 
 void shr_id_register_ioctl_cmd_func(int nr, int (*fn)(struct shr_id_proc_ctx *proc_ctx, unsigned long arg))
@@ -106,9 +102,8 @@ static int shr_id_file_release(ka_inode_t *inode, ka_file_t *file)
 static long shr_id_file_ioctl(ka_file_t *file, u32 cmd, unsigned long arg)
 {
     struct shr_id_proc_ctx *proc_ctx = ka_fs_get_file_private_data(file);
-    u32 cmd_nr = _IOC_NR(cmd);
-    if ((proc_ctx == NULL) || (arg == 0) || (cmd_nr >= SHR_ID_MAX_CMD) ||
-        (shr_id_ioctl_handles[cmd_nr] == NULL)) {
+    u32 cmd_nr = _KA_IOC_NR(cmd);
+    if ((proc_ctx == NULL) || (arg == 0) || (cmd_nr >= SHR_ID_MAX_CMD) || (shr_id_ioctl_handles[cmd_nr] == NULL)) {
         trs_err("Unsupported command. (cmd=%u; arg=0x%lx)\n", cmd_nr, arg);
         return -EOPNOTSUPP;
     }

@@ -26,12 +26,12 @@
 #ifdef STATIC_SKIP
 #define STATIC
 #else
-#define STATIC    static
+#define STATIC static
 #endif
 
-#define QUEUE_DEV_NAME        "hi-queue-manage"
+#define QUEUE_DEV_NAME "hi-queue-manage"
 
-#define MAX_SHARE_GRP  4  /* surport max sp-group in queue_manage, "zone" means same */
+#define MAX_SHARE_GRP 4 /* surport max sp-group in queue_manage, "zone" means same */
 
 #ifdef DRV_HOST
 #define MAX_DEVICE 1124
@@ -43,7 +43,7 @@
 #define MAX_STR_LEN 128
 #endif
 
-#define MIN_VALID_QUEUE_DEPTH    2         /* min depth of queue */
+#define MIN_VALID_QUEUE_DEPTH 2 /* min depth of queue */
 #define MAX_QUEUE_DEPTH 8192
 #define QUEUE_HDC_SERVICE_TYPE 16
 
@@ -56,25 +56,37 @@
 #define module_queue_manage "queue_manage"
 
 #ifndef EMU_ST
-#define queue_err(fmt, ...) do { \
-    drv_err(module_queue_manage, "<%s:%d> " fmt, ka_task_get_current()->comm, ka_task_get_current()->tgid, ##__VA_ARGS__); \
-    share_log_err(QUEUE_SHARE_LOG_START, fmt, ##__VA_ARGS__); \
-} while (0)
-#define queue_warn(fmt, ...) do { \
-    drv_warn(module_queue_manage, "<%s:%d> " fmt, ka_task_get_current()->comm, ka_task_get_current()->tgid, ##__VA_ARGS__); \
-} while (0)
-#define queue_info(fmt, ...) do { \
-    drv_info(module_queue_manage, "<%s:%d> " fmt, ka_task_get_current()->comm, ka_task_get_current()->tgid, ##__VA_ARGS__); \
-} while (0)
-#define queue_debug(fmt, ...) do { \
-    drv_pr_debug(module_queue_manage, "<%s:%d> " fmt, ka_task_get_current()->comm, ka_task_get_current()->tgid, ##__VA_ARGS__); \
-} while (0)
-#define queue_event(fmt, ...) do { \
-    drv_event(module_queue_manage, "<%s:%d> " fmt, ka_task_get_current()->comm, ka_task_get_current()->tgid, ##__VA_ARGS__); \
-} while (0)
-#define queue_run_info(fmt, ...) do { \
-    share_log_run_info(QUEUE_SHARE_LOG_RUNINFO_START, fmt, ka_task_get_current()->comm, ka_task_get_current()->tgid, ##__VA_ARGS__); \
-} while (0)
+#define queue_err(fmt, ...)                                                                                    \
+    do {                                                                                                       \
+        drv_err(module_queue_manage, "<%s:%d> " fmt, ka_task_get_current()->comm, ka_task_get_current()->tgid, \
+                ##__VA_ARGS__);                                                                                \
+        share_log_err(QUEUE_SHARE_LOG_START, fmt, ##__VA_ARGS__);                                              \
+    } while (0)
+#define queue_warn(fmt, ...)                                                                                    \
+    do {                                                                                                        \
+        drv_warn(module_queue_manage, "<%s:%d> " fmt, ka_task_get_current()->comm, ka_task_get_current()->tgid, \
+                 ##__VA_ARGS__);                                                                                \
+    } while (0)
+#define queue_info(fmt, ...)                                                                                    \
+    do {                                                                                                        \
+        drv_info(module_queue_manage, "<%s:%d> " fmt, ka_task_get_current()->comm, ka_task_get_current()->tgid, \
+                 ##__VA_ARGS__);                                                                                \
+    } while (0)
+#define queue_debug(fmt, ...)                                                                                       \
+    do {                                                                                                            \
+        drv_pr_debug(module_queue_manage, "<%s:%d> " fmt, ka_task_get_current()->comm, ka_task_get_current()->tgid, \
+                     ##__VA_ARGS__);                                                                                \
+    } while (0)
+#define queue_event(fmt, ...)                                                                                    \
+    do {                                                                                                         \
+        drv_event(module_queue_manage, "<%s:%d> " fmt, ka_task_get_current()->comm, ka_task_get_current()->tgid, \
+                  ##__VA_ARGS__);                                                                                \
+    } while (0)
+#define queue_run_info(fmt, ...)                                                            \
+    do {                                                                                    \
+        share_log_run_info(QUEUE_SHARE_LOG_RUNINFO_START, fmt, ka_task_get_current()->comm, \
+                           ka_task_get_current()->tgid, ##__VA_ARGS__);                     \
+    } while (0)
 
 #else
 #define queue_err(fmt, ...) printf
@@ -97,10 +109,10 @@ static inline long long int queue_get_ktime_us(void)
 
 static inline bool queue_is_mcast_event(u32 subevent_id)
 {
-    return ((subevent_id == DRV_SUBEVENT_ENQUEUE_MSG) || (subevent_id == DRV_SUBEVENT_DEQUEUE_MSG)
-        || (subevent_id == DRV_SUBEVENT_SUBF2NF_MSG) || (subevent_id == DRV_SUBEVENT_UNSUBF2NF_MSG)
-        || (subevent_id == DRV_SUBEVENT_SUBE2NE_MSG) || (subevent_id == DRV_SUBEVENT_UNSUBE2NE_MSG)
-        || (subevent_id == DRV_SUBEVENT_PEEK_MSG));
+    return ((subevent_id == DRV_SUBEVENT_ENQUEUE_MSG) || (subevent_id == DRV_SUBEVENT_DEQUEUE_MSG) ||
+            (subevent_id == DRV_SUBEVENT_SUBF2NF_MSG) || (subevent_id == DRV_SUBEVENT_UNSUBF2NF_MSG) ||
+            (subevent_id == DRV_SUBEVENT_SUBE2NE_MSG) || (subevent_id == DRV_SUBEVENT_UNSUBE2NE_MSG) ||
+            (subevent_id == DRV_SUBEVENT_PEEK_MSG));
 }
 
 #endif

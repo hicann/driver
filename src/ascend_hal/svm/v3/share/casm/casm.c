@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * Copyright (c) 2026 Huawei Technologies Co., Ltd.
  * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -37,8 +37,9 @@ int svm_casm_create_key(struct svm_dst_va *dst_va, u64 *key)
 
     ret = svm_cmd_ioctl(dst_va->devid, SVM_CASM_CREATE_KEY, (void *)&para);
     if (ret != DRV_ERROR_NONE) {
-        svm_err("Create failed. (devid=%u; task_type=%u; va=0x%llx; size=0x%llx; ret=%d)\n",
-            dst_va->devid, dst_va->task_type, dst_va->va, dst_va->size, ret);
+        svm_err(
+            "Create failed. (devid=%u; task_type=%u; va=0x%llx; size=0x%llx; ret=%d)\n", dst_va->devid,
+            dst_va->task_type, dst_va->va, dst_va->size, ret);
         return ret;
     }
 
@@ -126,7 +127,7 @@ int svm_casm_check_task(u64 key, u32 server_id, int tgid[], u32 num)
     return svm_casm_op_task(key, server_id, tgid, num, SVM_CASM_TASK_OP_CHECK);
 }
 
-int svm_casm_get_src_va_ex(u32 devid, u64 key, struct svm_global_va *src_va, u64 *ex_info)
+int svm_casm_get_src_va_ex(u32 devid, u64 key, struct svm_global_va *src_va, u64 *update_va, u64 *ex_info)
 {
     struct svm_casm_get_src_va_para para = {0};
     int ret;
@@ -145,6 +146,7 @@ int svm_casm_get_src_va_ex(u32 devid, u64 key, struct svm_global_va *src_va, u64
     }
 
     *src_va = para.src_va;
+    *update_va = para.updated_va;
     *ex_info = para.ex_info;
 
     return 0;

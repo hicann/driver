@@ -1080,7 +1080,7 @@ STATIC int drv_ascend_intf_open(ka_inode_t *inode, ka_file_t *file)
     file_private_data->device_cb = cb;
     file_private_data->device_id = DAVINIC_INTF_INVAILD_DEVICE_ID;
     file_private_data->owner_pid = ka_task_get_current_tgid();
-    file_private_data->start_time = current->group_leader->start_time;
+    file_private_data->start_time = ka_task_get_current_group_starttime();
     file_private_data->close_flag = DAVINIC_NOT_INIT_BY_OPENCMD;
     file_private_data->release_status = FALSE;
     ka_base_atomic_set(&file_private_data->work_count, 0);
@@ -1421,7 +1421,7 @@ STATIC long drv_ascend_intf_ioctl(ka_file_t *filep, unsigned int cmd, unsigned l
             return drv_ascend_intf_ioctl_local(filep, cmd, arg);
         default:
             if (file_private->fops.unlocked_ioctl == NULL) {
-                log_intf_err("File not init. (cmd=%u)\n", _KA_IOC_NR(cmd));
+                log_intf_warn("File not init. (cmd=%u)\n", _KA_IOC_NR(cmd));
                 return -ENODEV;
             }
             ret = drv_davinci_inc_work_count(file_private);

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * Copyright (c) 2026 Huawei Technologies Co., Ltd.
  * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -10,16 +10,18 @@
 #include <errno.h>
 #include <string.h>
 
+#include "comm_user_interface.h"
+
 #include "svm_pub.h"
 #include "svm_log.h"
 #include "svm_urma_def.h"
 #include "svm_user_adapt.h"
+#include "svm_criu.h"
 #include "svm_urma_jetty.h"
 
-#define SVM_URMA_PRIORITY_MIDDLE 3
+#define SVM_URMA_JFC_CTX_SIZE 128U
 
-static struct svm_urma_jetty *svm_urma_jetty_create(urma_context_t *urma_ctx, urma_token_t token_val,
-    u32 depth, u32 id)
+static struct svm_urma_jetty *svm_urma_jetty_create(urma_context_t *urma_ctx, urma_token_t token_val, u32 depth, u32 id)
 {
     struct svm_urma_jetty *jetty = NULL;
     urma_jfc_cfg_t jfc_cfg = {0};
@@ -82,7 +84,7 @@ static struct svm_urma_jetty *svm_urma_jetty_create(urma_context_t *urma_ctx, ur
     jfs_cfg.trans_mode = URMA_TM_RM;
     jfs_cfg.jfc = jetty->jfc;
     jfs_cfg.max_sge = 1;
-    jfs_cfg.priority = SVM_URMA_PRIORITY_MIDDLE;
+    jfs_cfg.priority = ASCEND_URMA_PRIORITY_MIDDLE;
     jfs_cfg.max_inline_data = 0;
     jfs_cfg.rnr_retry = URMA_TYPICAL_RNR_RETRY;
     jfs_cfg.err_timeout = URMA_TYPICAL_ERR_TIMEOUT;
@@ -131,13 +133,15 @@ free_jetty:
     return NULL;
 }
 
-static void svm_urma_jetty_destroy(struct svm_urma_jetty *jetty)
+static void svm_urma_jetty_destroy(u32 devid, struct svm_urma_jetty *jetty)
 {
     jetty->state = SVM_URMA_JETTY_UNINITED;
-    (void)urma_delete_jfr(jetty->jfr);
-    (void)urma_delete_jfs(jetty->jfs);
-    (void)urma_delete_jfc(jetty->jfc);
-    (void)urma_delete_jfce(jetty->jfce);
+    if (!svm_criu_is_resetting(devid)) {
+        (void)urma_delete_jfr(jetty->jfr);
+        (void)urma_delete_jfs(jetty->jfs);
+        (void)urma_delete_jfc(jetty->jfc);
+        (void)urma_delete_jfce(jetty->jfce);
+    }
 
     free(jetty->crs);
     free(jetty->jfs_wrs);
@@ -152,6 +156,7 @@ int svm_urma_jetty_pool_init(struct svm_urma_jetty_pool *pool, struct svm_urma_j
 
     (void)pthread_rwlock_init(&pool->rwlock, NULL);
     (void)sem_init(&pool->sem, 0, cfg->jetty_num);
+    pool->devid = cfg->devid;
     pool->jetty_num = cfg->jetty_num;
     pool->jettys = svm_ua_calloc(cfg->jetty_num, sizeof(struct svm_urma_jetty *));
     if (pool->jettys == NULL) {
@@ -169,7 +174,7 @@ int svm_urma_jetty_pool_init(struct svm_urma_jetty_pool *pool, struct svm_urma_j
     return DRV_ERROR_NONE;
 jettys_destroy:
     for (j = 0; j < i; j++) {
-        svm_urma_jetty_destroy(pool->jettys[j]);
+        svm_urma_jetty_destroy(pool->devid, pool->jettys[j]);
     }
     free(pool->jettys);
     return DRV_ERROR_INNER_ERR;
@@ -181,7 +186,7 @@ void svm_urma_jetty_pool_uninit(struct svm_urma_jetty_pool *pool)
 
     (void)pthread_rwlock_wrlock(&pool->rwlock);
     for (i = 0; i < pool->jetty_num; i++) {
-        svm_urma_jetty_destroy(pool->jettys[i]);
+        svm_urma_jetty_destroy(pool->devid, pool->jettys[i]);
     }
     if (pool->jettys != NULL) {
         free(pool->jettys);
@@ -224,7 +229,7 @@ int svm_urma_jetty_alloc(struct svm_urma_jetty_pool *pool, struct svm_urma_jetty
     } else {
         gettimeofday(&now, NULL);
         wait_time.tv_sec = now.tv_sec + time_out_s;
-        wait_time.tv_nsec = now.tv_usec * 1000;     /* 1000ns/us */
+        wait_time.tv_nsec = now.tv_usec * 1000; /* 1000ns/us */
         sem_ret = sem_timedwait(&pool->sem, &wait_time);
     }
     if (sem_ret != 0) {
@@ -260,16 +265,18 @@ static bool svm_urma_jetty_is_no_enough_idle_wrs(struct svm_urma_jetty *jetty, u
     return need_fill_num > (jetty->depth - svm_urma_jetty_get_jfs_wrs_post_num(jetty) - 1);
 }
 
-#define SVM_URMA_JETTY_WRITE_READ_MAX_SIZE   0x10000000ULL   /* 256MB */
-static int svm_urma_jetty_fill_jfs_wrs(struct svm_urma_jetty *jetty,
-    struct svm_urma_jetty_post_para *para, u32 *out_wr_num)
+#define SVM_URMA_JETTY_WRITE_READ_MAX_SIZE 0x10000000ULL /* 256MB */
+static int svm_urma_jetty_fill_jfs_wrs(
+    struct svm_urma_jetty *jetty, struct svm_urma_jetty_post_para *para, u32 *out_wr_num)
 {
-    u32 wr_num = svm_align_up(para->size, SVM_URMA_JETTY_WRITE_READ_MAX_SIZE) / SVM_URMA_JETTY_WRITE_READ_MAX_SIZE;
+    u32 wr_num =
+        (u32)(svm_align_up(para->size, SVM_URMA_JETTY_WRITE_READ_MAX_SIZE) / SVM_URMA_JETTY_WRITE_READ_MAX_SIZE);
     u32 start_wrs_id = jetty->post_wr_id;
     u32 i, j, next_wrs_id;
 
-    svm_debug("Svm_fill_jfs_info. (src=0x%llx; dst=0x%llx; post_id=%u; ack_id=%u; depth=%u)\n",
-        para->src, para->dst, jetty->post_wr_id, jetty->ack_wr_id, jetty->depth);
+    svm_debug(
+        "Svm_fill_jfs_info. (src=0x%llx; dst=0x%llx; post_id=%u; ack_id=%u; depth=%u)\n", para->src, para->dst,
+        jetty->post_wr_id, jetty->ack_wr_id, jetty->depth);
 
     if (wr_num > jetty->depth) {
         svm_err("Size out of jetty depth. (depth=%u; size=%llu; wr_num=%u)\n", jetty->depth, para->size, wr_num);
@@ -282,10 +289,12 @@ static int svm_urma_jetty_fill_jfs_wrs(struct svm_urma_jetty *jetty,
 
     for (i = 0, j = start_wrs_id; i < wr_num; i++) {
         jetty->src_sges[j].addr = para->src + i * SVM_URMA_JETTY_WRITE_READ_MAX_SIZE;
-        jetty->src_sges[j].len = svm_min(para->size - i * SVM_URMA_JETTY_WRITE_READ_MAX_SIZE, SVM_URMA_JETTY_WRITE_READ_MAX_SIZE);
+        jetty->src_sges[j].len =
+            (u32)svm_min(para->size - i * SVM_URMA_JETTY_WRITE_READ_MAX_SIZE, SVM_URMA_JETTY_WRITE_READ_MAX_SIZE);
         jetty->src_sges[j].tseg = para->src_tseg;
         jetty->dst_sges[j].addr = para->dst + i * SVM_URMA_JETTY_WRITE_READ_MAX_SIZE;
-        jetty->dst_sges[j].len = svm_min(para->size - i * SVM_URMA_JETTY_WRITE_READ_MAX_SIZE, SVM_URMA_JETTY_WRITE_READ_MAX_SIZE);
+        jetty->dst_sges[j].len =
+            (u32)svm_min(para->size - i * SVM_URMA_JETTY_WRITE_READ_MAX_SIZE, SVM_URMA_JETTY_WRITE_READ_MAX_SIZE);
         jetty->dst_sges[j].tseg = para->dst_tseg;
 
         jetty->jfs_wrs[j].tjetty = para->tjfr;
@@ -331,6 +340,19 @@ int svm_urma_jetty_post(struct svm_urma_jetty *jetty, struct svm_urma_jetty_post
     return DRV_ERROR_NONE;
 }
 
+static void svm_urma_get_jfc_opt(urma_jfc_t *jfc)
+{
+    char jetty_buf[SVM_URMA_JFC_CTX_SIZE] = {0};
+    int ret;
+
+    ret = urma_get_jfc_opt(jfc, URMA_JFC_FULL_CTX, jetty_buf, SVM_URMA_JFC_CTX_SIZE);
+    if (ret == 0) {
+        svm_err_hex_dump(jetty_buf, SVM_URMA_JFC_CTX_SIZE, "Jetty context dump for err CQE");
+    } else {
+        svm_err("Failed to get jetty context. (ret=%d; jfc_id=%u)\n", ret, jfc->jfc_id.id);
+    }
+}
+
 int svm_urma_jetty_wait(struct svm_urma_jetty *jetty, int wr_num, int timeout_ms)
 {
     u32 i, wait_num, ack_cnt = 1;
@@ -343,7 +365,7 @@ int svm_urma_jetty_wait(struct svm_urma_jetty *jetty, int wr_num, int timeout_ms
 
     for (i = 0; i < wait_num; i++) {
 #ifndef EMU_ST /* to be delete */
-        cnt = urma_wait_jfc(jetty->jfce, 1, timeout_ms, &jfc);
+        cnt = ascend_urma_wait_jfc(jetty->jfce, 1, timeout_ms, &jfc);
         if ((cnt != 1) || (jetty->jfc != jfc)) {
             svm_err("Urma wait jfc failed. (i=%u; jfs=%u; jfc=%u)\n", i, jetty->jfs->jfs_id.id, jetty->jfc->jfc_id.id);
             return DRV_ERROR_INNER_ERR;
@@ -351,8 +373,9 @@ int svm_urma_jetty_wait(struct svm_urma_jetty *jetty, int wr_num, int timeout_ms
 
         cnt = urma_poll_jfc(jetty->jfc, 1, jetty->crs);
         if ((cnt != (int)1) || (jetty->crs[0].status != URMA_CR_SUCCESS)) {
-            svm_err("Urma poll jfc failed. (i=%u; ret_cnt=%d; status=%d; jfs=%u; jfc=%u)\n", i, cnt,
-                jetty->crs[0].status, jetty->jfs->jfs_id.id, jetty->jfc->jfc_id.id);
+            svm_err(
+                "Urma poll jfc failed. (i=%u; ret_cnt=%d; status=%d; jfs=%u; jfc=%u)\n", i, cnt, jetty->crs[0].status,
+                jetty->jfs->jfs_id.id, jetty->jfc->jfc_id.id);
             poll_failed = true;
         }
 #endif
@@ -367,11 +390,11 @@ int svm_urma_jetty_wait(struct svm_urma_jetty *jetty, int wr_num, int timeout_ms
 
 #ifndef EMU_ST /* to be delete */
         if (poll_failed) {
-            return DRV_ERROR_INNER_ERR;
+            svm_urma_get_jfc_opt(jetty->jfc);
+            return DRV_ERROR_PARA_ERROR;
         }
 #endif
     }
 
     return DRV_ERROR_NONE;
 }
-

@@ -35,6 +35,22 @@ enum que_trans_type {
     TRANS_TYPE_MAX,
 };
 
+struct que_urma_ctx {
+    unsigned int urma_devid;
+    urma_device_t *urma_dev[TRANS_TYPE_MAX];
+    urma_context_t *context[TRANS_TYPE_MAX];
+    bool tp_list_fetched[TRANS_TYPE_MAX];
+    urma_eid_t tp_peer_eid[TRANS_TYPE_MAX];
+    urma_tp_info_t stored_tpid_info[TRANS_TYPE_MAX];
+    pthread_mutex_t tp_list_lock;
+    uint32_t eid_index[TRANS_TYPE_MAX];
+
+    struct que_urma_token token_info[TRANS_TYPE_MAX];
+    urma_target_seg_t *tseg[TRANS_TYPE_MAX];
+    size_t page_size;
+    struct uref ref;
+};
+
 struct que_urma_addr {
     unsigned long long va;
     urma_target_seg_t *tseg;
@@ -59,16 +75,18 @@ void que_urma_jfs_destroy(urma_jfs_t *jfs);
 urma_jfr_t *que_urma_jfr_create(unsigned int devid, urma_jfr_cfg_t *cfg, unsigned int d2d_flag);
 void que_urma_jfr_destroy(urma_jfr_t *jfr);
 
-urma_target_jetty_t *que_jfr_import(unsigned int devid, urma_jfr_id_t *jfr_id, urma_token_t *token, unsigned int d2d_flag);
+urma_target_jetty_t *que_jfr_import(unsigned int devid, urma_jfr_id_t *jfr_id, urma_token_t *token,
+                                    unsigned int d2d_flag);
 void que_jfr_unimport(urma_target_jetty_t *tjetty);
 
 urma_target_seg_t *que_pin_seg_create(unsigned int devid, unsigned long long va, unsigned long long size,
-    unsigned int access, struct que_urma_token *token, unsigned int d2d_flag);
+                                      unsigned int access, struct que_urma_token *token, unsigned int d2d_flag);
 urma_target_seg_t *que_nonpin_seg_create(unsigned int devid, unsigned long long va, unsigned long long size,
-    unsigned int access, struct que_urma_token *token, unsigned int d2d_flag);
+                                         unsigned int access, struct que_urma_token *token, unsigned int d2d_flag);
 void que_seg_destroy(urma_target_seg_t *tseg);
 
-urma_target_seg_t *que_seg_import(unsigned int devid, unsigned int d2d_flag, struct urma_seg *seg, unsigned int access, urma_token_t *token);
+urma_target_seg_t *que_seg_import(unsigned int devid, unsigned int d2d_flag, struct urma_seg *seg, unsigned int access,
+                                  urma_token_t *token);
 void que_seg_unimport(urma_target_seg_t *tseg);
 
 struct que_jfs_rw_wr *que_jfs_rw_wr_create(struct que_jfs_rw_wr_attr *attr);

@@ -84,7 +84,8 @@ STATIC ssize_t vmngh_sysfs_mdev_info(ka_device_t *dev, ka_device_attribute_t *at
                     vd_dev->agent_device, (vd_dev->agent_bdf >> VMNG_VDEV_AGENT_BDF_SHIFT_8),
                     KA_PCI_SLOT(vd_dev->agent_bdf & 0xff), KA_PCI_FUNC(vd_dev->agent_bdf & 0xff), vd_dev->agent_dev_id);
             } else {
-                ret = snprintf_s(buf + offset, KA_MM_PAGE_SIZE - offset, KA_MM_PAGE_SIZE - offset - 1, "[agent] not build.\n");
+                ret = snprintf_s(buf + offset, KA_MM_PAGE_SIZE - offset, KA_MM_PAGE_SIZE - offset - 1,
+                                 "[agent] not build.\n");
             }
             if (ret != -1) {
                 offset += ret;
@@ -111,8 +112,8 @@ STATIC ssize_t vmngh_sysfs_vm_full_vf_enable_show(ka_device_t *dev, ka_device_at
     }
     dev_id = vmngh_pdev->dev_id;
 
-    ret = snprintf_s(buf, KA_MM_PAGE_SIZE, KA_MM_PAGE_SIZE - 1, "dev %u vm_full_spec_enable is %u.\n",
-        dev_id, vmngh_pdev->vm_full_spec_enable);
+    ret = snprintf_s(buf, KA_MM_PAGE_SIZE, KA_MM_PAGE_SIZE - 1, "dev %u vm_full_spec_enable is %u.\n", dev_id,
+                     vmngh_pdev->vm_full_spec_enable);
     if (ret >= 0) {
         offset += ret;
     }
@@ -120,8 +121,8 @@ STATIC ssize_t vmngh_sysfs_vm_full_vf_enable_show(ka_device_t *dev, ka_device_at
     return offset;
 }
 
-STATIC ssize_t vmngh_sysfs_vm_full_vf_enable_store(ka_device_t *dev, ka_device_attribute_t *attr,
-    const char *buf, size_t count)
+STATIC ssize_t vmngh_sysfs_vm_full_vf_enable_store(ka_device_t *dev, ka_device_attribute_t *attr, const char *buf,
+                                                   size_t count)
 {
     struct vmngh_pci_dev *vmngh_pdev = NULL;
     int input;
@@ -134,8 +135,8 @@ STATIC ssize_t vmngh_sysfs_vm_full_vf_enable_store(ka_device_t *dev, ka_device_a
     }
     ret = ka_base_kstrtoint(buf, 0, &input);
     if (ret != 0) {
-        vmng_err("ka_base_kstrtoint failed. (devid=%u; ret=%d; uid=%u)\n",
-            vmngh_pdev->dev_id, ret, ka_task_get_current_cred_uid());
+        vmng_err("ka_base_kstrtoint failed. (devid=%u; ret=%d; uid=%u)\n", vmngh_pdev->dev_id, ret,
+                 ka_task_get_current_cred_uid());
         return -1;
     }
 
@@ -143,21 +144,21 @@ STATIC ssize_t vmngh_sysfs_vm_full_vf_enable_store(ka_device_t *dev, ka_device_a
     if (input == 0) {
         vmngh_pdev->vm_full_spec_enable = 0;
         vmng_event("Disable full spec support, all the vf template can select. (devid=%u; uid=%u)\n",
-            vmngh_pdev->dev_id, ka_task_get_current_cred_uid());
+                   vmngh_pdev->dev_id, ka_task_get_current_cred_uid());
     } else if (input == 1) {
         if (vmngh_pdev->vdev_ref == 0) {
             vmngh_pdev->vm_full_spec_enable = 1;
             vmng_event("Enable full spec support, only full spec vf can select. (devid=%u; uid=%u)\n",
-                vmngh_pdev->dev_id, ka_task_get_current_cred_uid());
+                       vmngh_pdev->dev_id, ka_task_get_current_cred_uid());
         } else {
-            vmng_err("Mdevs are may be alive, please remove all mdevs.(devid=%u; uid=%u)\n",
-                vmngh_pdev->dev_id, ka_task_get_current_cred_uid());
+            vmng_err("Mdevs are may be alive, please remove all mdevs.(devid=%u; uid=%u)\n", vmngh_pdev->dev_id,
+                     ka_task_get_current_cred_uid());
             ka_task_mutex_unlock(&vmngh_pdev->vpdev_mutex);
             return -1;
         }
     } else {
-        vmng_err("Invalid input vf_vnic enable. (devid=%u; input=%d; uid=%u)\n",
-            vmngh_pdev->dev_id, input, ka_task_get_current_cred_uid());
+        vmng_err("Invalid input vf_vnic enable. (devid=%u; input=%d; uid=%u)\n", vmngh_pdev->dev_id, input,
+                 ka_task_get_current_cred_uid());
     }
     ka_task_mutex_unlock(&vmngh_pdev->vpdev_mutex);
 #endif
@@ -165,7 +166,7 @@ STATIC ssize_t vmngh_sysfs_vm_full_vf_enable_store(ka_device_t *dev, ka_device_a
     return count;
 }
 static KA_DRIVER_DEVICE_ATTR(vm_full_vf_enable, (KA_S_IWUSR | KA_S_IRUSR | KA_S_IWGRP | KA_S_IRGRP),
-    vmngh_sysfs_vm_full_vf_enable_show, vmngh_sysfs_vm_full_vf_enable_store);
+                             vmngh_sysfs_vm_full_vf_enable_show, vmngh_sysfs_vm_full_vf_enable_store);
 #endif
 
 static ka_attribute_t *g_vmngh_sysfs_attrs[] = {
@@ -201,7 +202,7 @@ int vmngh_sysfs_init(u32 dev_id, ka_pci_dev_t *pcidev)
 {
     int ret;
 
-    if (devdrv_get_connect_protocol(dev_id) != CONNECT_PROTOCOL_PCIE) {
+    if (devdrv_get_connect_protocol(dev_id) == CONNECT_PROTOCOL_UB) {
         return 0;
     }
 
@@ -217,7 +218,7 @@ int vmngh_sysfs_init(u32 dev_id, ka_pci_dev_t *pcidev)
 
 void vmngh_sysfs_exit(u32 dev_id, ka_pci_dev_t *pcidev)
 {
-    if (devdrv_get_connect_protocol(dev_id) != CONNECT_PROTOCOL_PCIE) {
+    if (devdrv_get_connect_protocol(dev_id) == CONNECT_PROTOCOL_UB) {
         return;
     }
 

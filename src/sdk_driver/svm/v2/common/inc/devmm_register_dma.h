@@ -37,8 +37,7 @@ int devmm_ioctl_register_dma(struct devmm_svm_process *svm_proc, struct devmm_io
 int devmm_ioctl_unregister_dma(struct devmm_svm_process *svm_proc, struct devmm_ioctl_arg *arg);
 void devmm_destory_register_dma_mng(struct devmm_svm_process *svm_proc);
 void devmm_destory_register_dma_mng_by_devid(struct devmm_svm_process *svm_proc, u32 devid);
-struct devmm_register_dma_node *devmm_register_dma_node_get(struct devmm_register_dma_mng *mng,
-    u64 addr, u64 size);
+struct devmm_register_dma_node *devmm_register_dma_node_get(struct devmm_register_dma_mng *mng, u64 addr, u64 size);
 void devmm_register_dma_node_put(struct devmm_register_dma_node *node);
 
 #endif /* __DEVMM_REGISTER_DMA_H__ */

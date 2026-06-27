@@ -26,7 +26,8 @@ static void rmo_mem_sharing_ctx_try_recycle_node(struct rmo_mem_sharing_ctx *mem
     struct rmo_mem_sharing_node *node = NULL, *tmp = NULL;
     unsigned long stamp = ka_jiffies;
 
-    ka_list_for_each_entry_safe(node, tmp, &mem_ctx->head, node) {
+    ka_list_for_each_entry_safe(node, tmp, &mem_ctx->head, node)
+    {
         (void)rmo_mem_addr_unmap(node->ctx.mem_shr.devid, &node->ctx.convert_addr, node->ctx.mem_shr.size);
         ka_list_del(&node->node);
         rmo_vfree(node);
@@ -102,13 +103,14 @@ void rmo_mem_sharing_ctx_destroy(struct task_ctx_domain *domain, int tgid)
     ka_task_mutex_unlock(&domain->mutex);
 }
 
-static struct rmo_mem_sharing_node *rmo_mem_sharing_ctx_find_node(struct rmo_mem_sharing_ctx *mem_ctx,
-    struct rmo_mem_sharing_info *para)
+static struct rmo_mem_sharing_node *rmo_mem_sharing_ctx_find_node(
+    struct rmo_mem_sharing_ctx *mem_ctx, struct rmo_mem_sharing_info *para)
 {
     struct rmo_mem_sharing_node *node = NULL;
     unsigned long stamp = ka_jiffies;
 
-    ka_list_for_each_entry(node, &mem_ctx->head, node) {
+    ka_list_for_each_entry(node, &mem_ctx->head, node)
+    {
         if ((node->ctx.mem_shr.devid == para->mem_shr.devid) && (node->ctx.mem_shr.side == para->mem_shr.side) &&
             (node->ctx.mem_shr.ptr == para->mem_shr.ptr) && (node->ctx.mem_shr.size == para->mem_shr.size) &&
             (node->ctx.mem_shr.accessor == para->mem_shr.accessor) &&
@@ -126,22 +128,24 @@ static int rmo_mem_sharing_ctx_add_node(struct task_ctx *ctx, void *priv)
     struct rmo_mem_sharing_ctx *mem_ctx = ctx->priv;
     struct rmo_mem_sharing_node *node = rmo_mem_sharing_ctx_find_node(mem_ctx, para);
     if (node != NULL) {
-        rmo_err("Already added. (devid=%u; accessor=%d; tgid=%d)\n",
-            para->mem_shr.devid, para->mem_shr.accessor, ctx->tgid);
+        rmo_err(
+            "Already added. (devid=%u; accessor=%d; tgid=%d)\n", para->mem_shr.devid, para->mem_shr.accessor,
+            ctx->tgid);
         return -EAGAIN;
     }
 
     node = rmo_vzalloc(sizeof(struct rmo_mem_sharing_node));
     if (node == NULL) {
-        rmo_err("Failed to alloc node. (devid=%u; accessor=%d; tgid=%d)\n",
-            para->mem_shr.devid, para->mem_shr.accessor, ctx->tgid);
+        rmo_err(
+            "Failed to alloc node. (devid=%u; accessor=%d; tgid=%d)\n", para->mem_shr.devid, para->mem_shr.accessor,
+            ctx->tgid);
         return -ENOMEM;
     }
 
     node->ctx = *para;
     ka_list_add_tail(&node->node, &mem_ctx->head);
-    rmo_debug("Add node success. (devid=%u; accessor=%d; tgid=%d)\n",
-        para->mem_shr.devid, para->mem_shr.accessor, ctx->tgid);
+    rmo_debug(
+        "Add node success. (devid=%u; accessor=%d; tgid=%d)\n", para->mem_shr.devid, para->mem_shr.accessor, ctx->tgid);
     return 0;
 }
 
@@ -167,13 +171,12 @@ static int rmo_mem_sharing_ctx_del_node(struct task_ctx *ctx, void *priv)
     struct rmo_mem_sharing_ctx *mem_ctx = ctx->priv;
     struct rmo_mem_sharing_node *node = rmo_mem_sharing_ctx_find_node(mem_ctx, para);
     if (node == NULL) {
-        rmo_err("Not add. (devid=%u; accessor=%d; tgid=%d)\n",
-            para->mem_shr.devid, para->mem_shr.accessor, ctx->tgid);
+        rmo_err("Not add. (devid=%u; accessor=%d; tgid=%d)\n", para->mem_shr.devid, para->mem_shr.accessor, ctx->tgid);
         return -EFAULT;
     }
 
-    rmo_debug("Del node success. (devid=%u; accessor=%d; tgid=%d)\n",
-        para->mem_shr.devid, para->mem_shr.accessor, ctx->tgid);
+    rmo_debug(
+        "Del node success. (devid=%u; accessor=%d; tgid=%d)\n", para->mem_shr.devid, para->mem_shr.accessor, ctx->tgid);
     ka_list_del(&node->node);
     rmo_vfree(node);
     return 0;
@@ -190,8 +193,7 @@ static int rmo_mem_sharing_ctx_query_node(struct task_ctx *ctx, void *priv)
     struct rmo_mem_sharing_ctx *mem_ctx = ctx->priv;
     struct rmo_mem_sharing_node *node = rmo_mem_sharing_ctx_find_node(mem_ctx, para);
     if (node == NULL) {
-        rmo_err("Not add. (devid=%u; accessor=%d; tgid=%d)\n",
-            para->mem_shr.devid, para->mem_shr.accessor, ctx->tgid);
+        rmo_err("Not add. (devid=%u; accessor=%d; tgid=%d)\n", para->mem_shr.devid, para->mem_shr.accessor, ctx->tgid);
         return -EFAULT;
     }
 
@@ -204,4 +206,3 @@ int rmo_mem_sharing_query_node(struct task_ctx_domain *domain, int tgid, struct 
 {
     return task_ctx_lock_call_func(domain, tgid, rmo_mem_sharing_ctx_query_node, (void *)para);
 }
-

@@ -82,6 +82,9 @@ static const char *g_user_config_no_support_list[] = {
 #ifndef CFG_FEATURE_SUPPORT_AUTH_ENABLE_SIGN
     AUTH_CONFIG_ENABLE_NAME,
 #endif
+#ifndef CFG_FEATURE_SUPPORT_UBMEM_RETRY_FLAG
+    UBMEM_RETRY_FLAG_NAME,
+#endif
 };
 
 #define HIGH_16_BITS 16
@@ -107,7 +110,16 @@ struct udis_davinci_info_adapter {
     int device_type;
     int info_type;
     const char *name;
-    int (*callback)(int device_id, const char *name, unsigned int *result_data);
+    bool enable_dmp;
+    int (*callback)(unsigned int device_id, const char *name, unsigned int *result_data);
+};
+
+struct udis_device_info_adapter {
+    DSMI_MAIN_CMD main_cmd;
+    unsigned int sub_cmd;
+    const char *name;
+    bool enable_dmp;
+    int (*callback)(unsigned int device_id, const char *name, void *buf, unsigned int *size);
 };
 
 /* Max means not limit */
@@ -445,6 +457,7 @@ int dsmi_get_device_errorcode(int device_id, int *errorcount, unsigned int *perr
 int dsmi_query_errorstring(int device_id, unsigned int errorcode, unsigned char *perrorinfo, int buffsize)
 {
     int ret;
+    int tmp_size;
 
     if (perrorinfo == NULL) {
         DEV_MON_ERR("Invalid handle.\n");
@@ -456,8 +469,8 @@ int dsmi_query_errorstring(int device_id, unsigned int errorcode, unsigned char 
         return DRV_ERROR_INVALID_VALUE;
     }
 
-    buffsize = buffsize > DSMI_BB_EVENTSTR_LENGTH ? DSMI_BB_EVENTSTR_LENGTH : buffsize;
-    ret = dsmi_cmd_get_errorstring(device_id, errorcode, perrorinfo, buffsize);
+    tmp_size = buffsize > DSMI_BB_EVENTSTR_LENGTH ? DSMI_BB_EVENTSTR_LENGTH : buffsize;
+    ret = dsmi_cmd_get_errorstring(device_id, errorcode, perrorinfo, tmp_size);
     return ret;
 }
 
@@ -625,9 +638,9 @@ int dsmi_get_device_voltage(int device_id, unsigned int *pvoltage)
     return ret;
 }
 
-STATIC int udis_get_davinci_lp_info(int device_id, const char *name, unsigned int *result_data)
+STATIC int udis_get_davinci_lp_info(unsigned int device_id, const char *name, unsigned int *result_data)
 {
-    return udis_get_lp_info(device_id, name, result_data, sizeof(unsigned int));
+    return udis_get_lp_info((int)device_id, name, result_data, sizeof(unsigned int));
 }
 
 STATIC int dsmi_get_hbm_size_from_udis(int device_id, struct dsmi_hbm_info_stru *pdevice_hbm_info)
@@ -650,6 +663,11 @@ STATIC int dsmi_get_hbm_size_from_udis(int device_id, struct dsmi_hbm_info_stru 
     total_size = ((struct udis_mem_info *)(udis_hbm_info.data))->medium_mem_info.total_size;
     free_size = ((struct udis_mem_info *)(udis_hbm_info.data))->medium_mem_info.free_size;
 
+    if (total_size == 0) {
+        DEV_MON_WARNING("udis get hbm total size is zero. (device_id=%d; ret=%d)\n", device_id, ret);
+        return DRV_ERROR_INVALID_VALUE;
+    }
+
     pdevice_hbm_info->memory_size = total_size;
     pdevice_hbm_info->memory_usage = total_size - free_size;
 
@@ -657,20 +675,20 @@ STATIC int dsmi_get_hbm_size_from_udis(int device_id, struct dsmi_hbm_info_stru 
 }
 
 #define PERCENT_VALUE 100
-STATIC int udis_get_hbm_rate(int device_id, const char *name, unsigned int *result_data)
+STATIC int udis_get_hbm_rate(unsigned int device_id, const char *name, unsigned int *result_data)
 {
     int ret = 0;
     struct dsmi_hbm_info_stru hbm_info = {0};
     (void)name;
 
-    ret = dsmi_get_hbm_size_from_udis(device_id, &hbm_info);
+    ret = dsmi_get_hbm_size_from_udis((int)device_id, &hbm_info);
     if (ret != 0) {
         DEV_MON_DEBUG("failed udis get hbm info. (device_id=%d; ret=%d)\n", device_id, ret);
         return ret;
     }
 
     if (hbm_info.memory_size == 0) {
-        DEV_MON_ERR("failed udis get hbm info, mamory size is zero. (device_id=%d; ret=%d)\n", device_id, ret);
+        DEV_MON_WARNING("udis get hbm total size is zero. (device_id=%d; ret=%d)\n", device_id, ret);
         return DRV_ERROR_INVALID_VALUE;
     }
 
@@ -678,11 +696,12 @@ STATIC int udis_get_hbm_rate(int device_id, const char *name, unsigned int *resu
     return ret;
 }
 
-STATIC int dsmi_udis_get_hbm_size(unsigned int device_id, void *buf, unsigned int *size)
+STATIC int dsmi_udis_get_hbm_size(unsigned int device_id, const char *name, void *buf, unsigned int *size)
 {
     int ret = 0;
     struct dsmi_hbm_info_stru hbm_info = {0};
     struct dsmi_memory_info *memory_info_out;
+    (void)name;
 
     if (buf == NULL || *size < sizeof(struct dsmi_memory_info)) {
         DEV_MON_ERR("The input parameters are incorrect. (dev_id=%u; buf_is_null=%d; size=%u)\n",
@@ -704,10 +723,20 @@ STATIC int dsmi_udis_get_hbm_size(unsigned int device_id, void *buf, unsigned in
 }
 
 static struct udis_davinci_info_adapter g_udis_get_davinci_info_table[] = {
-    {REQ_D_INFO_DEV_TYPE_AICORE0, REQ_D_INFO_INFO_TYPE_FREQ, "aic0_freq", udis_get_davinci_lp_info},
-    {REQ_D_INFO_DEV_TYPE_AICORE1, REQ_D_INFO_INFO_TYPE_FREQ, "aic1_freq", udis_get_davinci_lp_info},
-    {REQ_D_INFO_DEV_TYPE_HBM, REQ_D_INFO_INFO_TYPE_FREQ, "hbm_freq", udis_get_davinci_lp_info},
-    {REQ_D_INFO_DEV_TYPE_HBM, REQ_D_INFO_INFO_TYPE_RATE, "hbm_rate", udis_get_hbm_rate},
+    {REQ_D_INFO_DEV_TYPE_AICORE0, REQ_D_INFO_INFO_TYPE_FREQ, "aic0_freq", true, udis_get_davinci_lp_info},
+    {REQ_D_INFO_DEV_TYPE_AICORE1, REQ_D_INFO_INFO_TYPE_FREQ, "aic1_freq", true, udis_get_davinci_lp_info},
+    {REQ_D_INFO_DEV_TYPE_HBM, REQ_D_INFO_INFO_TYPE_FREQ, "hbm_freq", true, udis_get_davinci_lp_info},
+    {REQ_D_INFO_DEV_TYPE_HBM, REQ_D_INFO_INFO_TYPE_RATE, "hbm_rate", true, udis_get_hbm_rate},
+#ifdef CFG_FEATURE_UDIS_UTIL_FROM_TS
+    {REQ_D_INFO_DEV_TYPE_CPU, REQ_D_INFO_INFO_TYPE_RATE, "aicore_util", false, dms_get_util_from_udis},
+    {REQ_D_INFO_DEV_TYPE_VECTOR, REQ_D_INFO_INFO_TYPE_RATE, "aiv_util", false, dms_get_util_from_udis},
+    {REQ_D_INFO_DEV_TYPE_ACC, REQ_D_INFO_INFO_TYPE_RATE, "stars_util", false, dms_get_util_from_udis},
+    {REQ_D_INFO_DEV_TYPE_AI_CUBE, REQ_D_INFO_INFO_TYPE_RATE, "aic_util", false, dms_get_util_from_udis},
+#endif
+#ifdef CFG_FEATURE_SUPPORT_UDIS
+    {REQ_D_INFO_DEV_TYPE_AI_CPU, REQ_D_INFO_INFO_TYPE_RATE, "aicpu_util", true, dms_get_cpu_rate_from_udis},
+    {REQ_D_INFO_DEV_TYPE_CTRL_CPU, REQ_D_INFO_INFO_TYPE_RATE, "ccpu_util", true, dms_get_cpu_rate_from_udis},
+#endif
 };
 
 int dsmi_get_davinchi_info(int device_id, int device_type, int info_type, unsigned int *result_data)
@@ -726,20 +755,21 @@ int dsmi_get_davinchi_info(int device_id, int device_type, int info_type, unsign
     for (i = 0; i < table_size; i++) {
         if ((g_udis_get_davinci_info_table[i].device_type == device_type) &&
             (g_udis_get_davinci_info_table[i].info_type == info_type)) {
-            ret = g_udis_get_davinci_info_table[i].callback(device_id, g_udis_get_davinci_info_table[i].name,
+            ret = g_udis_get_davinci_info_table[i].callback((unsigned int)device_id, g_udis_get_davinci_info_table[i].name,
                 result_data);
             if (ret == 0) {
+                return ret;
+            }
+            if (!g_udis_get_davinci_info_table[i].enable_dmp) {
+                DEV_MON_ERR("Failed to get davinchi info from udis. (dev_id=%d; device_type=%d; info_type=%d; ret=%d)\n",
+                    device_id, device_type, info_type, ret);
                 return ret;
             }
         }
     }
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wconversion"
-    davinchi_data.info.device_type = device_type;
-    davinchi_data.info.info_type = info_type;
-#pragma GCC diagnostic pop
-
+    davinchi_data.info.device_type = (unsigned char)device_type & 0xFu; /* bit field: 4 */
+    davinchi_data.info.info_type = (unsigned char)info_type & 0xFu; /* bit field: 4 */
 
     return dsmi_cmd_get_davinchi_info(device_id, davinchi_data.data, result_data);
 }
@@ -1020,6 +1050,7 @@ STATIC int udis_get_ecc_cont_info(int device_id, int device_type, DSMI_ECC_STATI
 {
     int ret;
     struct udis_dev_info info = {0};
+    struct dsmi_udis_ecc_count_info buf = {0};
 
     if (device_type != DSMI_DEVICE_TYPE_HBM) {
         return DRV_ERROR_NOT_SUPPORT;
@@ -1038,10 +1069,13 @@ STATIC int udis_get_ecc_cont_info(int device_id, int device_type, DSMI_ECC_STATI
         return DRV_ERROR_INNER_ERR;
     }
 
-    ret = udis_get_dev_info(device_id, &info, ecc_result, sizeof(DSMI_ECC_STATICS_RESULT));
+    ret = udis_get_dev_info(device_id, &info, &buf, sizeof(struct dsmi_udis_ecc_count_info));
     if (ret != 0) {
         return ret;
+    } else if (buf.is_vaild == 0) {
+        return DRV_ERROR_INNER_ERR;
     }
+    *ecc_result = buf.ecc_result;
 
     return 0;
 }
@@ -1056,11 +1090,8 @@ STATIC int dsmi_get_ecc_bit_cnt(int device_id, int device_type, DSMI_ECC_STATICS
         return 0;
     }
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wconversion"
-    ecc_static.info.device_type = (unsigned char)device_type;
+    ecc_static.info.device_type = (unsigned char)device_type & 0x3Fu; /* bit field: 6 */
     ecc_static.info.error_type = 0x0;
-#pragma GCC diagnostic pop
 
     ret = dsmi_cmd_get_ecc_info(device_id, ecc_static.udata, ecc_result);
     if (ret != 0) {
@@ -1242,12 +1273,9 @@ int dsmi_set_device_ip_address(int device_id, int port_type, int port_id, ip_add
         return DRV_ERROR_PARA_ERROR;
     }
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wconversion"
     port_para.card_type = (unsigned char)port_type;
-    port_para.card_info.fields.card_id = (unsigned char)port_id;
-    port_para.card_info.fields.ip_type = (unsigned char)ip_address.ip_type;
-#pragma GCC diagnostic pop
+    port_para.card_info.fields.card_id = (unsigned char)port_id & 0x3Fu; /* bit field: 6 */
+    port_para.card_info.fields.ip_type = (unsigned char)ip_address.ip_type & 0x3u; /* bit field: 2 */
 
     ret = memcpy_s(&ip_addr, sizeof(IPADDR_ST), &ip_address.u_addr, sizeof(IPADDR_ST));
     if (ret != 0) {
@@ -1331,12 +1359,9 @@ int dsmi_get_device_ip_address(int device_id, int port_type, int port_id, ip_add
         return DRV_ERROR_PARA_ERROR;
     }
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wconversion"
     port_para.card_type = (unsigned char)port_type;
-    port_para.card_info.fields.card_id = (unsigned char)port_id;
-    port_para.card_info.fields.ip_type = (unsigned char)ip_address->ip_type;
-#pragma GCC diagnostic pop
+    port_para.card_info.fields.card_id = (unsigned char)port_id & 0x3Fu; /* bit field: 6 */
+    port_para.card_info.fields.ip_type = (unsigned char)ip_address->ip_type & 0x3u; /* bit field: 2 */
 
     ret = dsmi_cmd_get_device_ip_address(device_id, port_para, &ip_addr, &mask_addr);
     if (ret != 0) {
@@ -1389,12 +1414,9 @@ int dsmi_set_gateway_addr(int device_id, int port_type, int port_id, ip_addr_t g
         return DRV_ERROR_PARA_ERROR;
     }
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wconversion"
     port_para.card_type = (unsigned char)port_type;
-    port_para.card_info.fields.card_id = (unsigned char)port_id;
-    port_para.card_info.fields.ip_type = (unsigned char)gtw_address.ip_type;
-#pragma GCC diagnostic pop
+    port_para.card_info.fields.card_id = (unsigned char)port_id & 0x3Fu; /* bit field: 6 */
+    port_para.card_info.fields.ip_type = (unsigned char)gtw_address.ip_type & 0x3u; /* bit field: 2 */
 
     ret = memcpy_s(&gtw_addr, sizeof(IPADDR_ST), &gtw_address.u_addr, sizeof(IPADDR_ST));
     if (ret != 0) {
@@ -1434,12 +1456,9 @@ int dsmi_get_gateway_addr(int device_id, int port_type, int port_id, ip_addr_t *
         return DRV_ERROR_PARA_ERROR;
     }
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wconversion"
     port_para.card_type = (unsigned char)port_type;
-    port_para.card_info.fields.card_id = (unsigned char)port_id;
-    port_para.card_info.fields.ip_type = (unsigned char)gtw_address->ip_type;
-#pragma GCC diagnostic pop
+    port_para.card_info.fields.card_id = (unsigned char)port_id & 0x3Fu; /* bit field: 6 */
+    port_para.card_info.fields.ip_type = (unsigned char)gtw_address->ip_type & 0x3u; /* bit field: 2 */
 
     ret = dsmi_cmd_get_device_gtw_address(device_id, port_para, &gtw_addr);
     if (ret != 0) {
@@ -2145,6 +2164,45 @@ STATIC bool dsmi_package_type_is_valid(int pack_type)
 }
 #endif
 
+#ifdef CFG_FEATURE_UPGRADE_MAMI_PATCH_CONFIG
+/* 1p: 01101000 */
+#define PCIE_CARD_MAIN_BOARD_ID_1P 0x68
+STATIC bool dsmi_is_need_upgrade_mami_package(unsigned int device_id)
+{
+    int ret;
+    int64_t value = 0;
+    unsigned int size = sizeof(struct dsmi_ub_status);
+    struct dsmi_ub_status buff = {0};
+
+    /* is pcie card */
+    ret = halGetDeviceInfo(device_id, MODULE_TYPE_SYSTEM, INFO_TYPE_PRODUCT_TYPE, &value);
+    if (ret != 0 || value != HAL_PRODUCT_TYPE_PCIE_CARD) {
+        DEV_MON_WARNING("Get product type faild, or is not pcie card, no need to upgrade ube mgmt. (ret=%d; dev_id=%u)\n",
+            ret, device_id);
+        return false;
+    }
+
+    /* is not pure pcie card */
+    ret = halGetDeviceInfo(device_id, MODULE_TYPE_SYSTEM, INFO_TYPE_MAINBOARD_ID, &value);
+    if (ret != 0 || value == PCIE_CARD_MAIN_BOARD_ID_1P) {
+        DEV_MON_WARNING("Get board id faild, or is pcie card 1P, no need to upgrade ube mgmt. (ret=%d; dev_id=%u)\n",
+            ret, device_id);
+        return false;
+    }
+
+    /* is need link */
+    ret = dsmi_get_device_info(device_id, DSMI_MAIN_CMD_UB, DSMI_UB_INFO_SUB_CMD_PORT_STATUS, (void *)&buff, &size);
+    if (ret != 0 || buff.ub_link_status == DSMI_UB_NO_NEED_LINK) {
+        DEV_MON_WARNING("Get port status faild, or is no need link, no need to upgrade ube mgmt. (ret=%d; dev_id=%u)\n",
+            ret, device_id);
+        return false;
+    }
+
+    DEV_MON_INFO("Need to upgrade ube mgmt. (device_id=%u)\n", device_id);
+    return true;
+}
+#endif
+
 int dsmi_load_package(int device_id, int pack_type, const char *file_name)
 {
 #if defined(CFG_FEATURE_UPGRADE_PATCH_CONFIG) || defined (CFG_FEATURE_UPGRADE_MAMI_PATCH_CONFIG)
@@ -2185,6 +2243,11 @@ int dsmi_load_package(int device_id, int pack_type, const char *file_name)
         goto device_id_resource_free;
     }
     for (i = 0; i < device_count; i++) {
+#ifdef CFG_FEATURE_UPGRADE_MAMI_PATCH_CONFIG
+        if (pack_type == PACKAGE_TYPE_ABL_UBE_MGMT_PATCH && dsmi_is_need_upgrade_mami_package((unsigned int)i) == false) {
+            continue;
+        }
+#endif
         ret = dsmi_load_one_device_patch(device_list[i], pack_type, file_name);
         if (ret != 0) {
             DEV_MON_EX_NOTSUPPORT_ERR(ret, "Load patch failed. (device_id=%d; ret=%d)", device_list[i], ret);
@@ -2763,8 +2826,13 @@ STATIC int dsmi_set_poweroff_reset(int devid, struct dsmi_power_state_info_stru 
     }
 
     ret = dsmi_cmd_set_power_state(devid, power_info);
-    if (ret != 0) {
-        DEV_MON_CRIT_EVENT("set power state not ok, (devid=%d; type=%u; ret=%d).\n", devid, type, ret);
+    if (ret == DRV_ERROR_NOT_SUPPORT) {
+        DEV_MON_CRIT_EVENT("dsmi set power state not support, (devid=%d; type=%u; mode=%u).\n",
+                devid, type, (u32)power_info->mode);
+        return DRV_ERROR_NOT_SUPPORT;
+    } else if (ret != 0) {
+        DEV_MON_CRIT_EVENT("set power state not ok, (devid=%d; type=%u; mode=%u, ret=%d).\n",
+                devid, type, (u32)power_info->mode, ret);
     }
 
     if (type == (unsigned int)POWER_STATE_POWEROFF) {
@@ -3224,6 +3292,7 @@ drv_set_dev_info_cmd_t g_set_dev_info_cmd[] = {
     { DSMI_MAIN_CMD_SEC, DSMI_SEC_SUB_CMD_CC, DSMI_SEC_SUB_CMD_CC, dsmi_cmd_set_device_info_ex, NULL },
     { DSMI_MAIN_CMD_SEC, DSMI_SEC_SUB_CMD_CUST_SIGN_FLAG, DSMI_SEC_SUB_CMD_CUST_SIGN_FLAG, dsmi_cmd_set_custom_sign_flag, NULL },
     { DSMI_MAIN_CMD_SEC, DSMI_SEC_SUB_CMD_CUST_SIGN_USER_CERT, DSMI_SEC_SUB_CMD_CUST_SIGN_USER_CERT, dsmi_cmd_set_custom_sign_cert, NULL },
+    { DSMI_MAIN_CMD_UPGRADE, DSMI_UPGRADE_SUB_TYPE_SWPLUGIN_POLICY, DSMI_UPGRADE_SUB_TYPE_SWPLUGIN_POLICY, drvSetDeviceInfo, NULL },
     { DSMI_MAIN_CMD_UPGRADE, 0, DSMI_DEV_INFO_SUB_CMD_MAX, dsmi_cmd_set_device_info_critical, NULL },
     { DSMI_MAIN_CMD_RECOVERY, 0, DSMI_DEV_INFO_SUB_CMD_MAX, dsmi_cmd_set_device_info_critical, NULL },
     { DSMI_MAIN_CMD_MEMORY, DSMI_SUB_CMD_MEMORY_CLEAR_HUGE_PAGE, DSMI_SUB_CMD_MEMORY_CLEAR_HUGE_PAGE,
@@ -3359,17 +3428,85 @@ int dsmi_cmd_get_flash_info(unsigned int device_id, DSMI_MAIN_CMD main_cmd, unsi
     return ret;
 }
 
+STATIC int dsmi_udis_get_cpu_topo(unsigned int device_id, const char *name, void *buf, unsigned int *size)
+{
+    int ret = 0;
+    (void)name;
+
+    ret = drv_get_cpu_topo(device_id, buf, size);
+    if (ret != 0) {
+        DEV_MON_EX_NOTSUPPORT_ERR(ret, "drv_get_cpu_topo failed. (dev_id=%u; ret=%d)\n", device_id, ret);
+        return ret;
+    }
+    return 0;
+}
+
+STATIC int dsmi_get_cust_board_info(unsigned int device_id, const char *name, void *buf, unsigned int *size)
+{
+    int ret = 0;
+    (void)name;
+
+    ret = DmsGetDeviceInfoEx(device_id, DSMI_MAIN_CMD_CHIP_INF, DSMI_CHIP_INF_SUB_CMD_CUST_BOARD_INF, buf, size);
+    if ((ret == 0) || (ret == DRV_ERROR_NOT_SUPPORT)) {
+        DEV_MON_DEBUG("Get device info for cust board. (dev_id=%u; ret=%d)\n", device_id, ret);
+        return ret;
+    }
+
+    ret = _dsmi_get_device_info(device_id, DSMI_MAIN_CMD_CHIP_INF, DSMI_CHIP_INF_SUB_CMD_CUST_BOARD_INF, buf, size);
+    if (ret != 0) {
+        DEV_MON_EX_NOTSUPPORT_ERR(ret, "Failed to get cust board info by dmp. (dev_id=%u; ret=%d)\n", device_id, ret);
+        return ret;
+    }
+
+    ret = DmsSetDeviceInfoEx(device_id, DSMI_MAIN_CMD_CHIP_INF, DSMI_CHIP_INF_SUB_CMD_CUST_BOARD_INF, buf, *size);
+    if (ret != 0) {
+        DEV_MON_EX_NOTSUPPORT_ERR(ret, "Failed to set cust board info. (dev_id=%u; ret=%d)\n", device_id, ret);
+    }
+
+    return ret;
+}
+
+static struct udis_device_info_adapter g_get_device_info_table[] = {
+    /* host ioctl */
+    {DSMI_MAIN_CMD_CHIP_INF, DSMI_CHIP_INF_SUB_CMD_CUST_BOARD_INF, "cust_board_info", false, dsmi_get_cust_board_info},
+    /* udis */
+    {DSMI_MAIN_CMD_MEMORY, DSMI_SUB_CMD_HBM_MEMORY, "hbm_mem_info", true, dsmi_udis_get_hbm_size},
+    {DSMI_MAIN_CMD_SOC_INFO, DSMI_SOC_INFO_SUB_CMD_CPU_TOPO, "cpu_topo_num", false, dsmi_udis_get_cpu_topo},
+#ifdef CFG_FEATURE_UDIS_UTIL_FROM_TS
+    {DSMI_MAIN_CMD_TS, DSMI_TS_SUB_CMD_AICORE_UTILIZATION_RATE, "aic_util", false, dms_get_ts_info_from_udis},
+    {DSMI_MAIN_CMD_TS, DSMI_TS_SUB_CMD_VECTORCORE_UTILIZATION_RATE, "aiv_util", false, dms_get_ts_info_from_udis},
+    {DSMI_MAIN_CMD_TS, DSMI_TS_SUB_CMD_NPU_MULTI_UTILIZATION_RATE, "npu_multi_util", true, dms_get_npu_multi_util_from_udis},
+    {DSMI_MAIN_CMD_TS, DSMI_TS_SUB_CMD_NPU_MULTI_UTILIZATION_RATE_V2, "npu_multi_util_v2", true, dms_get_npu_multi_util_from_udis},
+#endif
+};
+
 int dsmi_get_device_info(unsigned int device_id, DSMI_MAIN_CMD main_cmd, unsigned int sub_cmd,
     void *buf, unsigned int *size)
 {
     int ret = 0;
-    if ((main_cmd == DSMI_MAIN_CMD_MEMORY) && (sub_cmd == DSMI_SUB_CMD_HBM_MEMORY)) {
-        ret = dsmi_udis_get_hbm_size(device_id, buf, size);
-        if (ret == 0) {
-            return 0;
-        }
+    unsigned int i;
+    unsigned int table_size = sizeof(g_get_device_info_table) / sizeof(g_get_device_info_table[0]);
+
+    if ((buf == NULL) || (size == NULL)) {
+        DEV_MON_ERR("Invalid parameter. (dev_id=%u; main_cmd=%u; sub_cmd=%u; buf=%d; size=%d)\n", device_id, main_cmd, sub_cmd, (buf != NULL), (size != NULL));
+        return DRV_ERROR_PARA_ERROR;
     }
 
+    for (i = 0; i < table_size; i++) {
+        if ((g_get_device_info_table[i].main_cmd == main_cmd) &&
+            (g_get_device_info_table[i].sub_cmd == sub_cmd)) {
+            ret = g_get_device_info_table[i].callback(device_id, g_get_device_info_table[i].name,
+                buf, size);
+            if (ret == 0) {
+                return ret;
+            }
+            if (!g_get_device_info_table[i].enable_dmp) {
+                DEV_MON_EX_NOTSUPPORT_ERR(ret, "Failed to get device info. "
+                    "(dev_id=%d; main_cmd=%d; sub_cmd=%d; ret=%d)\n", device_id, main_cmd, sub_cmd, ret);
+                return ret;
+            }
+        }
+    }
     return _dsmi_get_device_info(device_id, main_cmd, sub_cmd, buf, size);
 }
 
@@ -3581,37 +3718,6 @@ int dsmi_get_detect_info(unsigned int device_id, DSMI_DETECT_MAIN_CMD main_cmd,
     }
 
     return ret;
-}
-
-int dsmi_device_replace(struct dsmi_device_attr *src_dev_attr, struct dsmi_device_attr *dst_dev_attr,
-    unsigned int timeout, unsigned long long flag)
-{
-#ifdef DRV_HOST
-    int ret;
-
-    if ((src_dev_attr == NULL) || (dst_dev_attr == NULL)) {
-        DEV_MON_ERR("Parameter is invalid. (src_dev_attr %s; dst_dev_attr %s)\n",
-            (src_dev_attr == NULL) ? "is NULL" : "OK", (dst_dev_attr == NULL) ? "is NULL" : "OK");
-        return DRV_ERROR_PARA_ERROR;
-    }
-
-    DEV_MON_EVENT("Dev replace. (src dev_id=%d; src eid_type=%u; src eid_num=%u; \
-        dst dev_id=%d; dst eid_type=%u; dst eid_num=%u, timeout=%u)\n",
-        src_dev_attr->phy_dev_id, src_dev_attr->type, src_dev_attr->eid_num,
-        dst_dev_attr->phy_dev_id, dst_dev_attr->type, dst_dev_attr->eid_num, timeout);
-    ret = DmsDevReplace(src_dev_attr, dst_dev_attr, timeout, flag);
-    if (ret != 0) {
-        DEV_MON_EX_NOTSUPPORT_ERR(ret, "Dev replace failed. (ret=%d)\n", ret);
-        return ret;
-    }
-    return 0;
-#else
-    (void)src_dev_attr;
-    (void)dst_dev_attr;
-    (void)timeout;
-    (void)flag;
-    return DRV_ERROR_NOT_SUPPORT;
-#endif
 }
 
 int dsmi_get_platform_info(DSMI_PLATFORM_INFO *info)

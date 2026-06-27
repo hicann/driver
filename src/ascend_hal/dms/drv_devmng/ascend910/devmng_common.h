@@ -32,6 +32,14 @@
 #define REQ_D_INFO_DEV_TYPE_HBM 6  //lint !e652
 #endif
 
+#ifndef REQ_D_INFO_DEV_TYPE_AI_CPU
+#define REQ_D_INFO_DEV_TYPE_AI_CPU 3
+#endif
+
+#ifndef REQ_D_INFO_DEV_TYPE_CTRL_CPU
+#define REQ_D_INFO_DEV_TYPE_CTRL_CPU 4
+#endif
+
 #define DDR_NODE_INDEX 0
 #define HBM_NODE_INDEX 1
 #define HBM_P2P_NODE_INDEX 2

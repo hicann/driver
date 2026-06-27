@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2025. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -17,10 +17,7 @@
 
 static u64 (*svm_mem_recycle_func)(ka_vm_area_struct_t *vma, int tgid) = NULL;
 
-void svm_mem_recycle_register(u64 (*func)(ka_vm_area_struct_t *vma, int tgid))
-{
-    svm_mem_recycle_func = func;
-}
+void svm_mem_recycle_register(u64 (*func)(ka_vm_area_struct_t *vma, int tgid)) { svm_mem_recycle_func = func; }
 
 u64 svm_mem_recycle(ka_vm_area_struct_t *vma, int tgid)
 {

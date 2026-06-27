@@ -15,7 +15,7 @@
 #define TS_AGENT_KP_UPDATE_SQE_H
 
 #if defined(CFG_SOC_PLATFORM_KPSTARS)
-#include <linux/types.h>
+#include "ka_type.h"
 #include "tsch/task_struct.h"
 
 #define STARS_DWORD_SIZE                   32

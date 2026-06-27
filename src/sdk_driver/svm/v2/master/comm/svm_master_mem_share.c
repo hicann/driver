@@ -124,7 +124,9 @@ static ka_rb_node_t *_devmm_pid_list_insert(struct devmm_pid_list_mng *mng, ka_p
 
     /* same pid insert, should update set time. */
     if (mng->pid_cnt >= DEVMM_SHARE_MEM_MAX_PID_CNT) {
-        devmm_drv_err("Pid_num is out of limit. (pid_num=%u; pid=%d; limit=%u)\n", mng->pid_cnt, pid, DEVMM_SHARE_MEM_MAX_PID_CNT);
+        devmm_drv_err(
+            "Pid_num is out of limit. (pid_num=%u; pid=%d; limit=%u)\n", mng->pid_cnt, pid,
+            DEVMM_SHARE_MEM_MAX_PID_CNT);
         devmm_kvfree_ex(new_node);
         return NULL;
     }
@@ -159,7 +161,8 @@ static int devmm_pid_list_insert(struct devmm_pid_list_mng *mng, ka_pid_t pid)
     return ret;
 }
 
-static int devmm_pid_set_share_status(struct devmm_share_phy_addr_agent_blk *blk, ka_pid_t pid, u32 devid, bool is_share)
+static int devmm_pid_set_share_status(
+    struct devmm_share_phy_addr_agent_blk *blk, ka_pid_t pid, u32 devid, bool is_share)
 {
     struct devmm_pid_list_mng *mng = &blk->pid_list_mng;
     u64 start_time = devmm_get_tgid_start_time();
@@ -258,8 +261,8 @@ static int devmm_share_agent_blk_occupied_cnt_add(struct devmm_share_phy_addr_ag
     return 0;
 }
 
-static void devmm_share_agent_blk_occupied_cnt_sub(struct devmm_share_phy_addr_agent_blk *blk,
-    u64 num, bool *is_blk_no_occupied)
+static void devmm_share_agent_blk_occupied_cnt_sub(
+    struct devmm_share_phy_addr_agent_blk *blk, u64 num, bool *is_blk_no_occupied)
 {
     ka_task_spin_lock(&blk->status_lock);
     blk->occupied_cnt -= num;
@@ -275,8 +278,8 @@ static int _devmm_share_agent_blk_occupied_cnt_inc(struct devmm_share_phy_addr_a
     return devmm_share_agent_blk_occupied_cnt_add(blk, 1ULL);
 }
 
-static void _devmm_share_agent_blk_occupied_cnt_dec(struct devmm_share_phy_addr_agent_blk *blk,
-    bool *is_blk_no_occupied)
+static void _devmm_share_agent_blk_occupied_cnt_dec(
+    struct devmm_share_phy_addr_agent_blk *blk, bool *is_blk_no_occupied)
 {
     devmm_share_agent_blk_occupied_cnt_sub(blk, 1ULL, is_blk_no_occupied);
 }
@@ -302,13 +305,13 @@ static int devmm_share_agent_blk_occupied_cnt_inc(struct devmm_share_phy_addr_ag
     return 0;
 }
 
-static void devmm_share_agent_blk_occupied_cnt_dec(struct devmm_share_phy_addr_agent_blk *blk, u32 dst_sdid,
-    bool *is_blk_no_occupied)
+static void devmm_share_agent_blk_occupied_cnt_dec(
+    struct devmm_share_phy_addr_agent_blk *blk, u32 dst_sdid, bool *is_blk_no_occupied)
 {
     if (dst_sdid != SVM_INVALID_SDID) {
         (void)devmm_ref_server_occupier_del(&blk->server_occupier_mng, dst_sdid);
     }
-   _devmm_share_agent_blk_occupied_cnt_dec(blk, is_blk_no_occupied);
+    _devmm_share_agent_blk_occupied_cnt_dec(blk, is_blk_no_occupied);
 }
 
 static u64 rb_handle_of_share_id_map_node(ka_rb_node_t *node)
@@ -317,8 +320,8 @@ static u64 rb_handle_of_share_id_map_node(ka_rb_node_t *node)
     return (u64)map_node->shid_map_node_info.id;
 }
 
-static struct devmm_share_id_map_node *devmm_erase_one_share_id_map_node(struct devmm_share_id_map_mng *mng,
-    rb_erase_condition condition)
+static struct devmm_share_id_map_node *devmm_erase_one_share_id_map_node(
+    struct devmm_share_id_map_mng *mng, rb_erase_condition condition)
 {
     ka_rb_node_t *node = NULL;
 
@@ -359,17 +362,19 @@ void devmm_share_id_map_node_destroy_by_devid(struct devmm_svm_process *svm_proc
 #endif
 
         if (is_local_blk) {
-            (void)devmm_share_agent_blk_put_with_share_id(map_node->shid_map_node_info.share_devid,
-                map_node->shid_map_node_info.share_id, map_node->hostpid, map_node->shid_map_node_info.devid,
-                need_pid_erase, SVM_INVALID_SDID);
+            (void)devmm_share_agent_blk_put_with_share_id(
+                map_node->shid_map_node_info.share_devid, map_node->shid_map_node_info.share_id, map_node->hostpid,
+                map_node->shid_map_node_info.devid, need_pid_erase, SVM_INVALID_SDID);
         } else {
 #ifdef CFG_SOC_PLATFORM_CLOUD_V2
-            int ret = devmm_put_remote_share_mem_info(devid, map_node->shid_map_node_info.share_id,
-                map_node->shid_map_node_info.share_sdid, map_node->shid_map_node_info.share_devid);
+            int ret = devmm_put_remote_share_mem_info(
+                devid, map_node->shid_map_node_info.share_id, map_node->shid_map_node_info.share_sdid,
+                map_node->shid_map_node_info.share_devid);
             if (ret != 0) {
-                devmm_drv_err("Put share id failed. (devid=%u; share_devid=%u; share_id=%u; share_sdid=%u)\n",
-                    devid, map_node->shid_map_node_info.share_id,
-                    map_node->shid_map_node_info.share_sdid, map_node->shid_map_node_info.share_devid);
+                devmm_drv_err(
+                    "Put share id failed. (devid=%u; share_devid=%u; share_id=%u; share_sdid=%u)\n", devid,
+                    map_node->shid_map_node_info.share_id, map_node->shid_map_node_info.share_sdid,
+                    map_node->shid_map_node_info.share_devid);
             }
 #endif
         }
@@ -377,7 +382,6 @@ void devmm_share_id_map_node_destroy_by_devid(struct devmm_svm_process *svm_proc
         devmm_try_cond_resched(&stamp);
     }
 }
-
 
 void devmm_share_id_map_node_destroy_all(struct devmm_svm_process *svm_proc)
 {
@@ -420,8 +424,8 @@ struct devmm_share_id_map_node *devmm_share_id_map_node_get(struct devmm_svm_pro
 }
 
 int devmm_share_agent_blk_set_pre_release(u32 devid, int share_id);
-void devmm_share_id_map_node_destroy(struct devmm_svm_process *svm_proc,
-    u32 devid, struct devmm_share_id_map_node *map_node)
+void devmm_share_id_map_node_destroy(
+    struct devmm_svm_process *svm_proc, u32 devid, struct devmm_share_id_map_node *map_node)
 {
     struct devmm_svm_proc_master *master_data = svm_proc->priv_data;
     struct devmm_share_id_map_mng *mng = devmm_get_share_id_map_mng(master_data, devid);
@@ -431,15 +435,15 @@ void devmm_share_id_map_node_destroy(struct devmm_svm_process *svm_proc,
     ka_task_up_write(&mng->sem);
 
     if (map_node->blk_type == SVM_PYH_ADDR_BLK_EXPORT_TYPE) {
-        devmm_share_agent_blk_set_pre_release(map_node->shid_map_node_info.devid,
-            map_node->shid_map_node_info.share_id);
+        devmm_share_agent_blk_set_pre_release(
+            map_node->shid_map_node_info.devid, map_node->shid_map_node_info.share_id);
     }
 
     ka_base_kref_put(&map_node->ref, devmm_share_id_map_node_release);
 }
 
-static struct devmm_share_id_map_node *devmm_share_id_map_node_create(struct devmm_svm_process *svm_proc,
-    struct devmm_shid_map_node_info *info, u32 blk_type)
+static struct devmm_share_id_map_node *devmm_share_id_map_node_create(
+    struct devmm_svm_process *svm_proc, struct devmm_shid_map_node_info *info, u32 blk_type)
 {
     struct devmm_svm_proc_master *master_data = svm_proc->priv_data;
     struct devmm_share_id_map_mng *mng = devmm_get_share_id_map_mng(master_data, info->devid);
@@ -460,8 +464,9 @@ static struct devmm_share_id_map_node *devmm_share_id_map_node_create(struct dev
     ret = devmm_rb_insert(&mng->rbtree, &map_node->proc_node, rb_handle_of_share_id_map_node);
     ka_task_up_write(&mng->sem);
     if (ret != 0) {
-        devmm_drv_err("Current proc export or import repeatedly. (devid=%u; id=%d; blk_type=%u)\n",
-            info->devid, info->id, blk_type);
+        devmm_drv_err(
+            "Current proc export or import repeatedly. (devid=%u; id=%d; blk_type=%u)\n", info->devid, info->id,
+            blk_type);
         devmm_kvfree_ex(map_node);
         map_node = NULL;
     }
@@ -470,8 +475,8 @@ static struct devmm_share_id_map_node *devmm_share_id_map_node_create(struct dev
 
 static u64 rb_handle_of_share_agent_blk_node(ka_rb_node_t *node)
 {
-    struct devmm_share_phy_addr_agent_blk *blk = ka_base_rb_entry(node, struct devmm_share_phy_addr_agent_blk,
-        dev_res_mng_node);
+    struct devmm_share_phy_addr_agent_blk *blk =
+        ka_base_rb_entry(node, struct devmm_share_phy_addr_agent_blk, dev_res_mng_node);
     return (u64)blk->share_id;
 }
 
@@ -489,8 +494,8 @@ static void _devmm_share_agent_blk_release(struct devmm_share_phy_addr_agent_blk
 
 static void devmm_share_agent_blk_release_func(ka_rb_node_t *node)
 {
-    struct devmm_share_phy_addr_agent_blk *blk = ka_base_rb_entry(node, struct devmm_share_phy_addr_agent_blk,
-        dev_res_mng_node);
+    struct devmm_share_phy_addr_agent_blk *blk =
+        ka_base_rb_entry(node, struct devmm_share_phy_addr_agent_blk, dev_res_mng_node);
     _devmm_share_agent_blk_release(blk);
 }
 
@@ -508,8 +513,8 @@ static void devmm_share_agent_blk_release(ka_kref_t *kref)
     _devmm_share_agent_blk_release(blk);
 }
 
-static void devmm_share_agent_blk_destroy(struct devmm_share_phy_addr_agent_blk_mng *blk_mng,
-    struct devmm_share_phy_addr_agent_blk *blk)
+static void devmm_share_agent_blk_destroy(
+    struct devmm_share_phy_addr_agent_blk_mng *blk_mng, struct devmm_share_phy_addr_agent_blk *blk)
 {
     int ret;
 
@@ -521,8 +526,8 @@ static void devmm_share_agent_blk_destroy(struct devmm_share_phy_addr_agent_blk_
     }
 }
 
-static void devmm_share_agent_blk_node_init(struct devmm_share_mem_info *info,
-    struct devmm_share_phy_addr_agent_blk *blk)
+static void devmm_share_agent_blk_node_init(
+    struct devmm_share_mem_info *info, struct devmm_share_phy_addr_agent_blk *blk)
 {
     blk->pre_release_flag = 0;
     ka_base_kref_init(&blk->ref);
@@ -573,13 +578,12 @@ static int devmm_share_agent_blk_create(struct devmm_share_mem_info *info)
     }
 
     ka_task_down_write(&dev_res_mng->share_agent_blk_mng.rw_sem);
-    ret = devmm_rb_insert(&dev_res_mng->share_agent_blk_mng.rbtree, &blk->dev_res_mng_node,
-        rb_handle_of_share_agent_blk_node);
+    ret = devmm_rb_insert(
+        &dev_res_mng->share_agent_blk_mng.rbtree, &blk->dev_res_mng_node, rb_handle_of_share_agent_blk_node);
     ka_task_up_write(&dev_res_mng->share_agent_blk_mng.rw_sem);
     devmm_dev_res_mng_put(dev_res_mng);
     if (ret != 0) {
-        devmm_drv_err("Share handle already exists. (devid=%u; share_id=%d)\n",
-            blk->devid, blk->share_id);
+        devmm_drv_err("Share handle already exists. (devid=%u; share_id=%d)\n", blk->devid, blk->share_id);
         devmm_share_agent_blk_node_uninit(blk);
         devmm_kvfree_ex(blk);
     }
@@ -635,8 +639,7 @@ static struct devmm_share_phy_addr_agent_blk *devmm_share_agent_blk_get(u32 devi
     }
 
     ka_task_down_read(&dev_res_mng->share_agent_blk_mng.rw_sem);
-    node = devmm_rb_search(&dev_res_mng->share_agent_blk_mng.rbtree, (u64)share_id,
-        rb_handle_of_share_agent_blk_node);
+    node = devmm_rb_search(&dev_res_mng->share_agent_blk_mng.rbtree, (u64)share_id, rb_handle_of_share_agent_blk_node);
     if (node == NULL) {
         goto get_from_dev_fail;
     }
@@ -655,8 +658,8 @@ static void devmm_share_agent_blk_put(struct devmm_share_phy_addr_agent_blk *blk
     ka_base_kref_put(&blk->ref, devmm_share_agent_blk_release);
 }
 
-int devmm_share_agent_blk_put_with_share_id(u32 share_devid, int share_id, int hostpid,
-    u32 devid, bool need_pid_erase, u32 dst_sdid)
+int devmm_share_agent_blk_put_with_share_id(
+    u32 share_devid, int share_id, int hostpid, u32 devid, bool need_pid_erase, u32 dst_sdid)
 {
     struct devmm_share_phy_addr_agent_blk *blk = NULL;
     struct devmm_dev_res_mng *dev_res_mng = NULL;
@@ -688,7 +691,8 @@ int devmm_share_agent_blk_put_with_share_id(u32 share_devid, int share_id, int h
 
     devmm_share_agent_blk_occupied_cnt_dec(blk, dst_sdid, &is_blk_no_occupied);
     if (is_blk_no_occupied) {
-        int ret = devmm_share_mem_release(blk->side, blk->devid, blk->share_id, (u32)blk->pg_num, SVM_PYH_ADDR_BLK_NORMAL_FREE);
+        int ret = devmm_share_mem_release(
+            blk->side, blk->devid, blk->share_id, (u32)blk->pg_num, SVM_PYH_ADDR_BLK_NORMAL_FREE);
         if (ret != 0) {
             devmm_drv_err("Share mem release fail. (devid=%u; share_id=%d)\n", blk->devid, blk->share_id);
         }
@@ -721,8 +725,7 @@ struct devmm_share_agent_blk_del_no_response_occupier_data {
     bool is_blk_no_occupied;
 };
 
-static int devmm_share_agent_blk_del_no_response_occupier(
-    struct devmm_ref_server_occupier *occupier, void *priv)
+static int devmm_share_agent_blk_del_no_response_occupier(struct devmm_ref_server_occupier *occupier, void *priv)
 {
 #ifdef CFG_SOC_PLATFORM_CLOUD_V2
     struct devmm_share_agent_blk_del_no_response_occupier_data *data =
@@ -744,12 +747,13 @@ static int devmm_share_agent_blk_del_no_response_occupier(
     return 0;
 }
 
-static void devmm_share_agent_blk_del_each_no_response_occupier(struct devmm_share_phy_addr_agent_blk *blk,
-    bool *is_blk_no_occupied)
+static void devmm_share_agent_blk_del_each_no_response_occupier(
+    struct devmm_share_phy_addr_agent_blk *blk, bool *is_blk_no_occupied)
 {
     struct devmm_share_agent_blk_del_no_response_occupier_data data = {.blk = blk, .is_blk_no_occupied = false};
 
-    devmm_for_each_ref_server_occupier(&blk->server_occupier_mng, devmm_share_agent_blk_del_no_response_occupier, (void *)&data);
+    devmm_for_each_ref_server_occupier(
+        &blk->server_occupier_mng, devmm_share_agent_blk_del_no_response_occupier, (void *)&data);
     *is_blk_no_occupied = data.is_blk_no_occupied;
 }
 
@@ -769,8 +773,9 @@ static int _devmm_share_agent_blk_recycle_by_dev(struct devmm_share_phy_addr_age
         if (cur_blk->pre_release_flag == 1U) { /* Check only the pa handles that have called halMemRelease. */
             devmm_share_agent_blk_del_each_no_response_occupier(cur_blk, &is_blk_no_occupied);
             if (is_blk_no_occupied) {
-                (void)devmm_share_mem_release(cur_blk->side, cur_blk->devid,
-                    cur_blk->share_id, (u32)cur_blk->pg_num, SVM_PYH_ADDR_BLK_NORMAL_FREE);
+                (void)devmm_share_mem_release(
+                    cur_blk->side, cur_blk->devid, cur_blk->share_id, (u32)cur_blk->pg_num,
+                    SVM_PYH_ADDR_BLK_NORMAL_FREE);
                 devmm_share_agent_blk_destroy(mng, cur_blk);
                 num++;
             }
@@ -841,8 +846,8 @@ static int devmm_get_share_devid(u32 share_logic_devid, u32 *share_devid)
     return devmm_container_vir_to_phs_devid(share_logic_devid, share_devid, &share_vfid);
 }
 
-static int devmm_agent_mem_import(struct devmm_svm_process *svm_proc, struct devmm_devid *devids,
-    struct devmm_share_mem_info *info, int *id)
+static int devmm_agent_mem_import(
+    struct devmm_svm_process *svm_proc, struct devmm_devid *devids, struct devmm_share_mem_info *info, int *id)
 {
     struct devmm_chan_mem_import msg = {{{0}}};
     u64 total_pg_num, created_num, tmp_num;
@@ -874,8 +879,9 @@ static int devmm_agent_mem_import(struct devmm_svm_process *svm_proc, struct dev
         msg.is_create_to_new_blk = (created_num == 0) ? 1 : 0;
         ret = devmm_chan_msg_send(&msg, sizeof(struct devmm_chan_mem_import), sizeof(struct devmm_chan_mem_import));
         if (ret != 0) {
-            devmm_drv_err("Import msg send failed. (ret=%d; hostpid=%d; devid=%u; id=%d; host_did=%u)\n",
-                ret, svm_proc->process_id.hostpid, devids->devid, info->share_id, info->devid);
+            devmm_drv_err(
+                "Import msg send failed. (ret=%d; hostpid=%d; devid=%u; id=%d; host_did=%u)\n", ret,
+                svm_proc->process_id.hostpid, devids->devid, info->share_id, info->devid);
             goto agent_mem_release;
         }
         *id = msg.id;
@@ -916,8 +922,8 @@ static int devmm_get_agent_target_blk_info(struct devmm_share_mem_info *info, st
     u64 num_pre_msg, saved_num, i, offset, msg_len;
     int ret;
 
-    msg_len = sizeof(struct devmm_chan_target_blk_query) +
-        DEVMM_P2P_PAGE_MAX_NUM_QUERY_MSG * sizeof(struct devmm_target_blk);
+    msg_len =
+        sizeof(struct devmm_chan_target_blk_query) + DEVMM_P2P_PAGE_MAX_NUM_QUERY_MSG * sizeof(struct devmm_target_blk);
     query_msg = devmm_kvzalloc_ex(msg_len, KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
     if (query_msg == NULL) {
         devmm_drv_err("Kzalloc query_msg is NULL.\n");
@@ -940,8 +946,9 @@ static int devmm_get_agent_target_blk_info(struct devmm_share_mem_info *info, st
 
         ret = devmm_chan_msg_send(query_msg, msg_len, msg_len);
         if (ret != 0) {
-            devmm_drv_err("Get_agent_target_blk failed. (ret=%d; devid=%u; saved_num=%u; pg_num=%u)\n",
-                ret, query_msg->head.dev_id, saved_num, info->pg_num);
+            devmm_drv_err(
+                "Get_agent_target_blk failed. (ret=%d; devid=%u; saved_num=%u; pg_num=%u)\n", ret,
+                query_msg->head.dev_id, saved_num, info->pg_num);
             devmm_kvfree_ex(query_msg);
             return ret;
         }
@@ -953,8 +960,8 @@ static int devmm_get_agent_target_blk_info(struct devmm_share_mem_info *info, st
 
         for (i = 0; i < num_pre_msg; i++) {
             blk->dma_blk_info.dma_blks[offset] = query_msg->msg.blk[i].dma_blk;
-            ret = devdrv_devmem_addr_d2h(blk->attr.devid, (phys_addr_t)query_msg->msg.blk[i].target_addr,
-                &blk->addr_info.target_addr[offset]);
+            ret = devdrv_devmem_addr_d2h(
+                blk->attr.devid, (phys_addr_t)query_msg->msg.blk[i].target_addr, &blk->addr_info.target_addr[offset]);
             if (ret != 0) {
                 devmm_kvfree_ex(query_msg);
                 devmm_drv_err("Addr trans fail. (devid=%u; sdid=%u)\n", blk->attr.devid, info->sdid);
@@ -995,8 +1002,9 @@ static int devmm_get_cs_host_target_blk_info(struct devmm_share_mem_info *info, 
 
         ret = devmm_s2s_msg_sync_send(blk->attr.devid, info->sdid, &msg, sizeof(struct devmm_ipc_pod_msg_data));
         if ((ret != 0) || (msg.header.result != 0) || (msg.header.valid != DEVMM_IPC_POD_MSG_RCV_MAGIC)) {
-            devmm_drv_err("Send fail. (ret=%d; result=%d; valid=0x%x; devid=%u; sdid=%u)\n",
-                ret, msg.header.result, msg.header.valid, blk->attr.devid, info->sdid);
+            devmm_drv_err(
+                "Send fail. (ret=%d; result=%d; valid=0x%x; devid=%u; sdid=%u)\n", ret, msg.header.result,
+                msg.header.valid, blk->attr.devid, info->sdid);
             return -EFAULT;
         }
 
@@ -1007,8 +1015,8 @@ static int devmm_get_cs_host_target_blk_info(struct devmm_share_mem_info *info, 
 
         for (i = 0; i < num_pre_msg; i++) {
             blk->dma_blk_info.dma_blks[offset] = query_msg->blk[i].dma_blk;
-            ret = devmm_s2s_host_addr_trans(info->sdid,
-                query_msg->blk[i].target_addr, &blk->addr_info.target_addr[offset]);
+            ret = devmm_s2s_host_addr_trans(
+                info->sdid, query_msg->blk[i].target_addr, &blk->addr_info.target_addr[offset]);
             if (ret != 0) {
                 devmm_drv_err("Addr trans fail. (devid=%u; sdid=%u)\n", blk->attr.devid, info->sdid);
                 return ret;
@@ -1058,8 +1066,8 @@ static int devmm_master_import_mem_init(struct devmm_share_mem_info *info, struc
     }
 }
 
-static int devmm_master_mem_import(struct devmm_svm_process *svm_proc, struct devmm_devid *devids,
-    struct devmm_share_mem_info *info, int *id)
+static int devmm_master_mem_import(
+    struct devmm_svm_process *svm_proc, struct devmm_devid *devids, struct devmm_share_mem_info *info, int *id)
 {
     struct devmm_phy_addr_blk *blk = NULL;
     struct devmm_phy_addr_attr attr = {0};
@@ -1074,8 +1082,8 @@ static int devmm_master_mem_import(struct devmm_svm_process *svm_proc, struct de
     attr.vfid = devids->vfid;
     attr.side = DEVMM_SIDE_MASTER;
     attr.module_id = info->module_id;
-    attr.pg_type = (info->pg_type == MEM_GIANT_PAGE_TYPE && info->side != DEVMM_SIDE_MASTER)
-        ? MEM_HUGE_PAGE_TYPE : info->pg_type;
+    attr.pg_type =
+        (info->pg_type == MEM_GIANT_PAGE_TYPE && info->side != DEVMM_SIDE_MASTER) ? MEM_HUGE_PAGE_TYPE : info->pg_type;
     attr.mem_type = info->mem_type;
     attr.is_giant_page = (info->pg_type == MEM_GIANT_PAGE_TYPE) ? true : false;
 
@@ -1094,15 +1102,15 @@ static int devmm_master_mem_import(struct devmm_svm_process *svm_proc, struct de
     return 0;
 }
 #else
-static int devmm_master_mem_import(struct devmm_svm_process *svm_proc, struct devmm_devid *devids,
-    struct devmm_share_mem_info *info, int *id)
+static int devmm_master_mem_import(
+    struct devmm_svm_process *svm_proc, struct devmm_devid *devids, struct devmm_share_mem_info *info, int *id)
 {
     return -EOPNOTSUPP;
 }
 #endif
 
-static int devmm_share_mem_import(struct devmm_svm_process *svm_proc, struct devmm_devid *devids,
-    struct devmm_share_mem_info *info, int *id)
+static int devmm_share_mem_import(
+    struct devmm_svm_process *svm_proc, struct devmm_devid *devids, struct devmm_share_mem_info *info, int *id)
 {
     if (devids->devid == uda_get_host_id()) {
         return devmm_master_mem_import(svm_proc, devids, info, id);
@@ -1111,8 +1119,7 @@ static int devmm_share_mem_import(struct devmm_svm_process *svm_proc, struct dev
     }
 }
 
-static int devmm_share_mem_de_import(struct devmm_svm_process *svm_proc, struct devmm_devid *devids,
-    u64 pg_num, int id)
+static int devmm_share_mem_de_import(struct devmm_svm_process *svm_proc, struct devmm_devid *devids, u64 pg_num, int id)
 {
     if (devids->devid == uda_get_host_id()) {
         return devmm_master_mem_release(svm_proc, pg_num, id, SVM_PYH_ADDR_BLK_FREE_NO_PAGE);
@@ -1121,8 +1128,8 @@ static int devmm_share_mem_de_import(struct devmm_svm_process *svm_proc, struct 
     }
 }
 
-static void devmm_shid_map_node_info_pack(struct devmm_shid_map_node_info *info, u32 devid, int id,
-    u32 share_sdid, u32 share_devid, int share_id)
+static void devmm_shid_map_node_info_pack(
+    struct devmm_shid_map_node_info *info, u32 devid, int id, u32 share_sdid, u32 share_devid, int share_id)
 {
     info->devid = devid;
     info->id = id;
@@ -1142,8 +1149,9 @@ static int devmm_ioctl_mem_import_local_server(struct devmm_svm_process *svm_pro
     u32 share_devid;
     int ret, id = -1;
 
-    devmm_drv_debug("Mem import enter. (devid=%u; share_sdid=%u; share_logic_devid=%u; share_id=%d)\n",
-        arg->head.devid, para->share_sdid, para->share_devid, para->share_id);
+    devmm_drv_debug(
+        "Mem import enter. (devid=%u; share_sdid=%u; share_logic_devid=%u; share_id=%d)\n", arg->head.devid,
+        para->share_sdid, para->share_devid, para->share_id);
 
     ret = devmm_get_share_devid(para->share_devid, &share_devid);
     if (ret != 0) {
@@ -1164,8 +1172,8 @@ static int devmm_ioctl_mem_import_local_server(struct devmm_svm_process *svm_pro
 
     ret = devmm_share_agent_blk_occupied_cnt_inc(blk, SVM_INVALID_SDID);
     if (ret != 0) {
-        devmm_drv_err("Share handle is released. (share_id=%u; share_logic_devid=%u)\n",
-            para->share_id, para->share_devid);
+        devmm_drv_err(
+            "Share handle is released. (share_id=%u; share_logic_devid=%u)\n", para->share_id, para->share_devid);
         goto share_agent_blk_put;
     }
 
@@ -1203,8 +1211,9 @@ static int devmm_ioctl_mem_import_local_server(struct devmm_svm_process *svm_pro
     para->side = (info.devid == uda_get_host_id()) ? MEM_HOST_SIDE : MEM_DEV_SIDE;
     para->mem_type = blk->mem_type;
     devmm_share_agent_blk_put(blk);
-    devmm_drv_debug("Mem import success. (devid=%u; share_devid=%u; share_id=%d; id=%d)\n",
-        arg->head.devid, share_devid, para->share_id, id);
+    devmm_drv_debug(
+        "Mem import success. (devid=%u; share_devid=%u; share_id=%d; id=%d)\n", arg->head.devid, share_devid,
+        para->share_id, id);
     return 0;
 
 set_share_status_fail:
@@ -1219,8 +1228,8 @@ share_agent_blk_put:
 }
 
 #ifdef CFG_SOC_PLATFORM_CLOUD_V2
-static int devmm_get_remote_share_mem_info(u32 devid, u32 share_id, u32 share_sdid, u32 share_devid,
-    struct devmm_share_mem_info *share_info)
+static int devmm_get_remote_share_mem_info(
+    u32 devid, u32 share_id, u32 share_sdid, u32 share_devid, struct devmm_share_mem_info *share_info)
 {
     struct devmm_share_mem_info *_share_info = NULL;
     struct devmm_ipc_pod_msg_data msg;
@@ -1248,8 +1257,9 @@ static int devmm_get_remote_share_mem_info(u32 devid, u32 share_id, u32 share_sd
 
     ret = devmm_s2s_msg_sync_send(devid, share_sdid, &msg, sizeof(struct devmm_ipc_pod_msg_data));
     if ((ret != 0) || (msg.header.result != 0) || (msg.header.valid != DEVMM_IPC_POD_MSG_RCV_MAGIC)) {
-        devmm_drv_err("Send fail. (ret=%d; result=%d; valid=0x%x; devid=%u; sdid=%u)\n",
-            ret, msg.header.result, msg.header.valid, devid, share_sdid);
+        devmm_drv_err(
+            "Send fail. (ret=%d; result=%d; valid=0x%x; devid=%u; sdid=%u)\n", ret, msg.header.result, msg.header.valid,
+            devid, share_sdid);
         return -EFAULT;
     }
 
@@ -1282,8 +1292,7 @@ int devmm_get_remote_share_mem_info_process(u32 devid, struct devmm_ipc_pod_msg_
 
     ret = devmm_share_agent_blk_occupied_cnt_inc(blk, dst_sdid);
     if (ret != 0) {
-        devmm_drv_err("Share handle is released. (devid=%u; share_id=%u)\n",
-            share_info->devid, share_info->share_id);
+        devmm_drv_err("Share handle is released. (devid=%u; share_id=%u)\n", share_info->devid, share_info->share_id);
         devmm_share_agent_blk_put(blk);
         return ret;
     }
@@ -1297,8 +1306,10 @@ int devmm_get_remote_share_mem_info_process(u32 devid, struct devmm_ipc_pod_msg_
     devmm_share_agent_blk_put(blk);
 
     ka_base_atomic64_inc(&g_remote_occupy_num);
-    devmm_drv_debug("Get remote share mem. (dst_sdid=%llu; devid=%u; share_id=%d)\n", dst_sdid, share_info->devid, share_info->share_id);
-    
+    devmm_drv_debug(
+        "Get remote share mem. (dst_sdid=%llu; devid=%u; share_id=%d)\n", dst_sdid, share_info->devid,
+        share_info->share_id);
+
     return 0;
 }
 
@@ -1330,8 +1341,9 @@ int devmm_put_remote_share_mem_info(u32 devid, u32 share_id, u32 share_sdid, u32
 
     ret = devmm_s2s_msg_sync_send(devid, share_sdid, &msg, sizeof(struct devmm_ipc_pod_msg_data));
     if ((ret != 0) || (msg.header.result != 0) || (msg.header.valid != DEVMM_IPC_POD_MSG_RCV_MAGIC)) {
-        devmm_drv_err("Send fail. (ret=%d; result=%d; valid=0x%x; devid=%u; sdid=%u)\n",
-            ret, msg.header.result, msg.header.valid, devid, share_sdid);
+        devmm_drv_err(
+            "Send fail. (ret=%d; result=%d; valid=0x%x; devid=%u; sdid=%u)\n", ret, msg.header.result, msg.header.valid,
+            devid, share_sdid);
         return -EFAULT;
     }
 
@@ -1352,15 +1364,18 @@ int devmm_put_remote_share_mem_info_process(u32 devid, struct devmm_ipc_pod_msg_
         return -EINVAL;
     }
 
-    ret = devmm_share_agent_blk_put_with_share_id(share_info->devid, share_info->share_id,
-        0, DEVMM_MAX_DEVICE_NUM, false, dst_sdid); /* hostpid and devid not care */
+    ret = devmm_share_agent_blk_put_with_share_id(
+        share_info->devid, share_info->share_id, 0, DEVMM_MAX_DEVICE_NUM, false,
+        dst_sdid); /* hostpid and devid not care */
     if (ret != 0) {
         devmm_drv_err("Put share id failed. (devid=%u; share_id=%u)\n", share_info->devid, share_info->share_id);
         return ret;
     }
 
     ka_base_atomic64_dec(&g_remote_occupy_num);
-    devmm_drv_debug("Put remote share mem. (dst_sdid=%llu; devid=%u; share_id=%d)\n", dst_sdid, share_info->devid, share_info->share_id);
+    devmm_drv_debug(
+        "Put remote share mem. (dst_sdid=%llu; devid=%u; share_id=%d)\n", dst_sdid, share_info->devid,
+        share_info->share_id);
 
     return 0;
 }
@@ -1373,21 +1388,24 @@ static int devmm_ioctl_mem_import_remote_server(struct devmm_svm_process *svm_pr
     struct devmm_shid_map_node_info info;
     int ret, id = -1;
 
-    devmm_drv_debug("Mem import enter. (devid=%u; share_sdid=%u; share_logic_devid=%u; share_id=%d)\n",
-        arg->head.devid, para->share_sdid, para->share_phy_devid, para->share_id);
+    devmm_drv_debug(
+        "Mem import enter. (devid=%u; share_sdid=%u; share_logic_devid=%u; share_id=%d)\n", arg->head.devid,
+        para->share_sdid, para->share_phy_devid, para->share_id);
 
-    ret = devmm_get_remote_share_mem_info(arg->head.devid,
-        para->share_id, para->share_sdid, para->share_phy_devid, &share_info);
+    ret = devmm_get_remote_share_mem_info(
+        arg->head.devid, para->share_id, para->share_sdid, para->share_phy_devid, &share_info);
     if (ret != 0) {
-        devmm_drv_err("Get remote share info failed. (devid=%u; share_sdid=%u; share_devid=%u; share_id=%d)\n",
-            arg->head.devid, para->share_sdid, para->share_phy_devid, para->share_id);
+        devmm_drv_err(
+            "Get remote share info failed. (devid=%u; share_sdid=%u; share_devid=%u; share_id=%d)\n", arg->head.devid,
+            para->share_sdid, para->share_phy_devid, para->share_id);
         return ret;
     }
 
     ret = devmm_share_mem_import(svm_proc, &arg->head, &share_info, &id);
     if (ret != 0) {
-        devmm_drv_err("Import failed. (devid=%u; share_sdid=%u; share_devid=%u; share_id=%d)\n",
-            arg->head.devid, para->share_sdid, para->share_phy_devid, para->share_id);
+        devmm_drv_err(
+            "Import failed. (devid=%u; share_sdid=%u; share_devid=%u; share_id=%d)\n", arg->head.devid,
+            para->share_sdid, para->share_phy_devid, para->share_id);
         return ret;
     }
 
@@ -1421,8 +1439,10 @@ static int devmm_import_para_check(struct devmm_ioctl_arg *arg)
 #ifdef CFG_SOC_PLATFORM_CLOUD_V2
     if (svm_is_sdid_in_local_server(arg->head.devid, para->share_sdid) == false) {
         if (arg->head.devid == uda_get_host_id()) {
-            devmm_drv_run_info("No support 1-import_host_mem_to_host, 2-import_device_mem_to_host. "
-                "(share_phy_devid=%u)\n", para->share_phy_devid);
+            devmm_drv_run_info(
+                "No support 1-import_host_mem_to_host, 2-import_device_mem_to_host. "
+                "(share_phy_devid=%u)\n",
+                para->share_phy_devid);
             return -EOPNOTSUPP;
         }
     }
@@ -1435,8 +1455,7 @@ static int _devmm_ioctl_mem_import(struct devmm_svm_process *svm_proc, struct de
 #ifdef CFG_SOC_PLATFORM_CLOUD_V2
     struct devmm_mem_import_para *para = &arg->data.mem_import_para;
 
-    if ((para->handle_type == MEM_HANDLE_TYPE_NONE) ||
-        svm_is_sdid_in_local_server(arg->head.devid, para->share_sdid)) {
+    if ((para->handle_type == MEM_HANDLE_TYPE_NONE) || svm_is_sdid_in_local_server(arg->head.devid, para->share_sdid)) {
         return devmm_ioctl_mem_import_local_server(svm_proc, arg);
     } else {
         return devmm_ioctl_mem_import_remote_server(svm_proc, arg);
@@ -1457,8 +1476,9 @@ int devmm_ioctl_mem_import(struct devmm_svm_process *svm_proc, struct devmm_ioct
     return _devmm_ioctl_mem_import(svm_proc, arg);
 }
 
-static int devmm_master_mem_export(struct devmm_svm_process *svm_proc, struct devmm_devid *devids,
-    struct devmm_mem_export_para *para, struct devmm_share_mem_info *info)
+static int devmm_master_mem_export(
+    struct devmm_svm_process *svm_proc, struct devmm_devid *devids, struct devmm_mem_export_para *para,
+    struct devmm_share_mem_info *info)
 {
     struct devmm_phy_addr_blk *blk = NULL;
     int ret, share_id;
@@ -1494,8 +1514,9 @@ static int devmm_master_mem_export(struct devmm_svm_process *svm_proc, struct de
     return ret;
 }
 
-static void devmm_share_mem_info_pack(struct devmm_share_mem_info *info,
-    struct devmm_devid *devids, struct devmm_mem_export_para *para, struct devmm_chan_mem_export *msg)
+static void devmm_share_mem_info_pack(
+    struct devmm_share_mem_info *info, struct devmm_devid *devids, struct devmm_mem_export_para *para,
+    struct devmm_chan_mem_export *msg)
 {
     info->hostpid = msg->head.process_id.hostpid;
     info->devid = devids->devid;
@@ -1508,8 +1529,9 @@ static void devmm_share_mem_info_pack(struct devmm_share_mem_info *info,
     info->mem_type = msg->mem_type;
 }
 
-static int devmm_agent_mem_export(struct devmm_svm_process *svm_proc, struct devmm_devid *devids,
-    struct devmm_mem_export_para *para, struct devmm_share_mem_info *info)
+static int devmm_agent_mem_export(
+    struct devmm_svm_process *svm_proc, struct devmm_devid *devids, struct devmm_mem_export_para *para,
+    struct devmm_share_mem_info *info)
 {
     struct devmm_chan_mem_export msg = {{{0}}};
     int ret;
@@ -1521,8 +1543,8 @@ static int devmm_agent_mem_export(struct devmm_svm_process *svm_proc, struct dev
     msg.id = para->id;
     ret = devmm_chan_msg_send(&msg, sizeof(struct devmm_chan_mem_export), sizeof(struct devmm_chan_mem_export));
     if (ret != 0) {
-        devmm_drv_err("Msg send failed. (ret=%d; hostpid=%d; devid=%u; id=%d)\n",
-            ret, info->hostpid, info->devid, info->id);
+        devmm_drv_err(
+            "Msg send failed. (ret=%d; hostpid=%d; devid=%u; id=%d)\n", ret, info->hostpid, info->devid, info->id);
         return ret;
     }
 
@@ -1530,8 +1552,9 @@ static int devmm_agent_mem_export(struct devmm_svm_process *svm_proc, struct dev
     return 0;
 }
 
-static int devmm_share_mem_export(struct devmm_svm_process *svm_proc, struct devmm_devid *devids,
-    struct devmm_mem_export_para *para, struct devmm_share_mem_info *info)
+static int devmm_share_mem_export(
+    struct devmm_svm_process *svm_proc, struct devmm_devid *devids, struct devmm_mem_export_para *para,
+    struct devmm_share_mem_info *info)
 {
     if (para->side == DEVMM_SIDE_MASTER) {
         return devmm_master_mem_export(svm_proc, devids, para, info);
@@ -1553,8 +1576,8 @@ int devmm_ioctl_mem_export(struct devmm_svm_process *svm_proc, struct devmm_ioct
         return -EINVAL;
     }
 
-    devmm_drv_debug("Mem export enter. (logic_devid=%u; devid=%u; id=%d)\n",
-        arg->head.logical_devid, arg->head.devid, para->id);
+    devmm_drv_debug(
+        "Mem export enter. (logic_devid=%u; devid=%u; id=%d)\n", arg->head.logical_devid, arg->head.devid, para->id);
     ret = devmm_share_mem_export(svm_proc, &arg->head, para, &info);
     if (ret != 0) {
         return ret;
@@ -1563,20 +1586,21 @@ int devmm_ioctl_mem_export(struct devmm_svm_process *svm_proc, struct devmm_ioct
     devmm_shid_map_node_info_pack(&node_info, info.devid, info.id, 0, info.devid, info.share_id);
     map_node = devmm_share_id_map_node_create(svm_proc, &node_info, SVM_PYH_ADDR_BLK_EXPORT_TYPE);
     if (map_node == NULL) {
-        (void)devmm_share_mem_release(para->side, info.devid, info.share_id, (u32)info.pg_num,
-            SVM_PYH_ADDR_BLK_FREE_NO_PAGE);
+        (void)devmm_share_mem_release(
+            para->side, info.devid, info.share_id, (u32)info.pg_num, SVM_PYH_ADDR_BLK_FREE_NO_PAGE);
         return -ENOMEM;
     }
 
     ret = devmm_share_agent_blk_create(&info);
     if (ret != 0) {
         devmm_share_id_map_node_destroy(svm_proc, info.devid, map_node);
-        (void)devmm_share_mem_release(para->side, info.devid, info.share_id, (u32)info.pg_num,
-            SVM_PYH_ADDR_BLK_FREE_NO_PAGE);
+        (void)devmm_share_mem_release(
+            para->side, info.devid, info.share_id, (u32)info.pg_num, SVM_PYH_ADDR_BLK_FREE_NO_PAGE);
         return ret;
     }
-    devmm_drv_debug("Mem export success. (hostpid=%d; devid=%u; id=%d; share_id=%d)\n",
-        info.hostpid, info.devid, info.id, info.share_id);
+    devmm_drv_debug(
+        "Mem export success. (hostpid=%d; devid=%u; id=%d; share_id=%d)\n", info.hostpid, info.devid, info.id,
+        info.share_id);
     para->share_id = info.share_id;
     return 0;
 }
@@ -1648,8 +1672,8 @@ static int devmm_set_pids(struct devmm_share_phy_addr_agent_blk *blk, int *pid_l
         if (ret != 0) {
             /* cannot erase pid, will delete pid which is set.
                devmm_pid_list_erase_all will recycle resource. */
-            devmm_drv_err("Set pid fail. (export_pid=%d; ret=%d; i=%u; pid=%d)\n",
-                blk->export_pid, ret, i, pid_list[i]);
+            devmm_drv_err(
+                "Set pid fail. (export_pid=%d; ret=%d; i=%u; pid=%d)\n", blk->export_pid, ret, i, pid_list[i]);
             return ret;
         }
         set_pid_num++;
@@ -1711,8 +1735,8 @@ free_pid_list:
     return ret;
 }
 
-static int devmm_share_mem_set_attr_no_wlist_in_server(struct devmm_share_phy_addr_agent_blk *blk,
-    struct devmm_mem_set_attr_para *para)
+static int devmm_share_mem_set_attr_no_wlist_in_server(
+    struct devmm_share_phy_addr_agent_blk *blk, struct devmm_mem_set_attr_para *para)
 {
     struct devmm_pid_list_mng *pid_mng = &blk->pid_list_mng;
 
@@ -1733,24 +1757,27 @@ static int devmm_share_mem_set_attr_no_wlist_in_server(struct devmm_share_phy_ad
 
     ka_task_down_write(&pid_mng->rw_sem);
     /* Not allow to set attr if had called halMemSetPidToShareableHandle */
-    if ((para->attr.enableFlag == SHR_HANDLE_NO_WLIST_ENABLE) && ((pid_mng->need_set_wlist) && (pid_mng->pid_cnt != 0))) {
-        devmm_drv_err("Had set pid not allow to set attr. (devid=%u; share_id=%d; wlist_num=%u)\n",
-            blk->devid, blk->share_id, pid_mng->pid_cnt);
+    if ((para->attr.enableFlag == SHR_HANDLE_NO_WLIST_ENABLE) &&
+        ((pid_mng->need_set_wlist) && (pid_mng->pid_cnt != 0))) {
+        devmm_drv_err(
+            "Had set pid not allow to set attr. (devid=%u; share_id=%d; wlist_num=%u)\n", blk->devid, blk->share_id,
+            pid_mng->pid_cnt);
         ka_task_up_write(&pid_mng->rw_sem);
         return -EPERM;
     }
 
     pid_mng->need_set_wlist = (para->attr.enableFlag == SHR_HANDLE_NO_WLIST_ENABLE) ? false : true;
-    devmm_drv_run_info("No wlist in server attr set succ. (devid=%u; share_id=%d; need_set_wlist=%u)\n",
-        blk->devid, blk->share_id, pid_mng->need_set_wlist);
+    devmm_drv_run_info(
+        "No wlist in server attr set succ. (devid=%u; share_id=%d; need_set_wlist=%u)\n", blk->devid, blk->share_id,
+        pid_mng->need_set_wlist);
 
     ka_task_up_write(&pid_mng->rw_sem);
     return 0;
 }
 
-static int(*devmm_share_mem_set_attr_handlers[SHR_HANDLE_ATTR_TYPE_MAX])
-    (struct devmm_share_phy_addr_agent_blk *blk, struct devmm_mem_set_attr_para *para) = {
-        [SHR_HANDLE_ATTR_NO_WLIST_IN_SERVER] = devmm_share_mem_set_attr_no_wlist_in_server,
+static int (*devmm_share_mem_set_attr_handlers[SHR_HANDLE_ATTR_TYPE_MAX])(
+    struct devmm_share_phy_addr_agent_blk *blk, struct devmm_mem_set_attr_para *para) = {
+    [SHR_HANDLE_ATTR_NO_WLIST_IN_SERVER] = devmm_share_mem_set_attr_no_wlist_in_server,
 };
 
 int devmm_ioctl_mem_set_attr(struct devmm_svm_process *svm_proc, struct devmm_ioctl_arg *arg)
@@ -1759,8 +1786,8 @@ int devmm_ioctl_mem_set_attr(struct devmm_svm_process *svm_proc, struct devmm_io
     struct devmm_share_phy_addr_agent_blk *blk = NULL;
     int ret;
 
-    devmm_drv_debug("Mem set attr start. (devid=%u; share_id=%d; type=%u)\n",
-        arg->head.devid, para->share_id, para->type);
+    devmm_drv_debug(
+        "Mem set attr start. (devid=%u; share_id=%d; type=%u)\n", arg->head.devid, para->share_id, para->type);
 
     if ((para->type >= SHR_HANDLE_ATTR_TYPE_MAX) || (devmm_share_mem_set_attr_handlers[para->type] == NULL)) {
         return -EOPNOTSUPP;
@@ -1779,8 +1806,8 @@ int devmm_ioctl_mem_set_attr(struct devmm_svm_process *svm_proc, struct devmm_io
     return ret;
 }
 
-static int devmm_share_mem_get_attr_no_wlist_in_server(struct devmm_share_phy_addr_agent_blk *blk,
-    struct devmm_mem_get_attr_para *para)
+static int devmm_share_mem_get_attr_no_wlist_in_server(
+    struct devmm_share_phy_addr_agent_blk *blk, struct devmm_mem_get_attr_para *para)
 {
     struct devmm_pid_list_mng *pid_mng = &blk->pid_list_mng;
 
@@ -1788,14 +1815,15 @@ static int devmm_share_mem_get_attr_no_wlist_in_server(struct devmm_share_phy_ad
     para->attr.enableFlag = pid_mng->need_set_wlist ? SHR_HANDLE_WLIST_ENABLE : SHR_HANDLE_NO_WLIST_ENABLE;
     ka_task_up_read(&pid_mng->rw_sem);
 
-    devmm_drv_debug("No wlist in server attr get succ. (share_devid=%u; share_id=%d; enableFlag=%u)\n",
-        blk->devid, para->share_id, para->attr.enableFlag);
+    devmm_drv_debug(
+        "No wlist in server attr get succ. (share_devid=%u; share_id=%d; enableFlag=%u)\n", blk->devid, para->share_id,
+        para->attr.enableFlag);
     return 0;
 }
 
-static int(*devmm_share_mem_get_attr_handlers[SHR_HANDLE_ATTR_TYPE_MAX])
-    (struct devmm_share_phy_addr_agent_blk *blk, struct devmm_mem_get_attr_para *para) = {
-        [SHR_HANDLE_ATTR_NO_WLIST_IN_SERVER] = devmm_share_mem_get_attr_no_wlist_in_server,
+static int (*devmm_share_mem_get_attr_handlers[SHR_HANDLE_ATTR_TYPE_MAX])(
+    struct devmm_share_phy_addr_agent_blk *blk, struct devmm_mem_get_attr_para *para) = {
+    [SHR_HANDLE_ATTR_NO_WLIST_IN_SERVER] = devmm_share_mem_get_attr_no_wlist_in_server,
 };
 
 int devmm_ioctl_mem_get_attr(struct devmm_svm_process *svm_proc, struct devmm_ioctl_arg *arg)
@@ -1805,8 +1833,8 @@ int devmm_ioctl_mem_get_attr(struct devmm_svm_process *svm_proc, struct devmm_io
     u32 share_devid;
     int ret;
 
-    devmm_drv_debug("Mem get attr start. (log_devid=%u; share_id=%d; type=%u)\n",
-        para->share_devid, para->share_id, para->type);
+    devmm_drv_debug(
+        "Mem get attr start. (log_devid=%u; share_id=%d; type=%u)\n", para->share_devid, para->share_id, para->type);
 
     if ((para->type >= SHR_HANDLE_ATTR_TYPE_MAX) || (devmm_share_mem_get_attr_handlers[para->type] == NULL)) {
         return -EOPNOTSUPP;
@@ -1859,15 +1887,133 @@ int devmm_ioctl_mem_get_info(struct devmm_svm_process *svm_proc, struct devmm_io
     return 0;
 }
 
-int devmm_chan_target_blk_query_pa_process(struct devmm_svm_process *svm_proc,
-    struct devmm_svm_heap *heap, void *msg, u32 *ack_len)
+int devmm_chan_target_blk_query_pa_process(
+    struct devmm_svm_process *svm_proc, struct devmm_svm_heap *heap, void *msg, u32 *ack_len)
 {
+    int ret;
     struct devmm_chan_target_blk_query *ack_msg = (struct devmm_chan_target_blk_query *)msg;
-    int ret = devmm_target_blk_query_pa_process(ack_msg->head.dev_id, &ack_msg->msg, MEM_HOST_SIDE);
-    if (ret == 0) {
-        *ack_len = (u32)(sizeof(struct devmm_chan_target_blk_query) +
-            sizeof(struct devmm_target_blk) * ack_msg->msg.num);
+    if (ack_msg->msg.num > (u32)ack_msg->head.extend_num) {
+#ifndef EMU_ST
+        devmm_drv_err(
+            "msg.num exceeds extend_num. (num=%u; extend_num=%u)\n", ack_msg->msg.num, ack_msg->head.extend_num);
+#endif
+        return -ERANGE;
     }
+
+    ret = devmm_target_blk_query_pa_process(ack_msg->head.dev_id, &ack_msg->msg, MEM_HOST_SIDE);
+    if (ret == 0) {
+        *ack_len =
+            (u32)(sizeof(struct devmm_chan_target_blk_query) + sizeof(struct devmm_target_blk) * ack_msg->msg.num);
+    }
+
+    return ret;
+}
+
+static int devmm_set_mem_map_route(
+    struct devmm_svm_process *svm_proc, struct devmm_devid *devids, struct devmm_mem_handle_set_attr_para *para)
+{
+    struct devmm_chan_set_mem_map_route msg = {{{0}}};
+    u32 mem_map_route = para->attr.mem_map_route;
+    int ret;
+
+    if ((mem_map_route != MEM_MAP_INBUS) && (mem_map_route != MEM_MAP_EXBUS)) {
+        devmm_drv_err("Invalid mem_map_route. (mem_map_route=%u)\n", mem_map_route);
+        return -EINVAL;
+    }
+
+    if (para->side != MEM_DEV_SIDE) {
+        devmm_drv_info("Not support side. (side=%u)\n", para->side);
+        return -EOPNOTSUPP;
+    }
+    msg.head.msg_id = DEVMM_CHAN_SET_MEM_MAP_ROUTE_H2D_ID;
+    msg.head.process_id.hostpid = svm_proc->process_id.hostpid;
+    msg.head.process_id.vfid = (u16)devids->vfid;
+    msg.head.dev_id = (u16)devids->devid;
+    msg.id = para->id;
+    msg.mem_map_route = mem_map_route;
+    ret = devmm_chan_msg_send(
+        &msg, sizeof(struct devmm_chan_set_mem_map_route), sizeof(struct devmm_chan_set_mem_map_route));
+    if (ret != 0) {
+        devmm_drv_err(
+            "Msg send failed. (ret=%d; devid=%u; id=%d; mem_map_route=%u)\n", ret, devids->devid, para->id,
+            mem_map_route);
+        return ret;
+    }
+
+    devmm_drv_debug(
+        "Set mem_map_route succ. (devid=%u; id=%d; mem_map_route=%u)\n", devids->devid, para->id, mem_map_route);
+
+    return 0;
+}
+
+static int (*devmm_mem_handle_set_attr_handlers[HANDLE_ATTR_TYPE_MAX])(
+    struct devmm_svm_process *svm_proc, struct devmm_devid *devids, struct devmm_mem_handle_set_attr_para *para) = {
+    [HANDLE_ATTR_MEM_MAP_ROUTE] = devmm_set_mem_map_route,
+};
+
+int devmm_ioctl_mem_handle_set_attr(struct devmm_svm_process *svm_proc, struct devmm_ioctl_arg *arg)
+{
+    struct devmm_mem_handle_set_attr_para *para = &arg->data.mem_handle_set_attr_para;
+    int ret;
+
+    if ((para->type >= HANDLE_ATTR_TYPE_MAX) || (devmm_mem_handle_set_attr_handlers[para->type] == NULL)) {
+        return -EOPNOTSUPP;
+    }
+
+    ret = devmm_mem_handle_set_attr_handlers[para->type](svm_proc, &arg->head, para);
+    devmm_drv_debug("Mem set handle attr end. (ret=%d; type=%u)\n", ret, para->type);
+
+    return ret;
+}
+
+static int devmm_get_mem_map_route(
+    struct devmm_svm_process *svm_proc, struct devmm_devid *devids, struct devmm_mem_handle_get_attr_para *para)
+{
+    struct devmm_chan_get_mem_map_route msg = {{{0}}};
+    int ret;
+
+    msg.head.msg_id = DEVMM_CHAN_GET_MEM_MAP_ROUTE_H2D_ID;
+    msg.head.process_id.hostpid = svm_proc->process_id.hostpid;
+    msg.head.process_id.vfid = (u16)devids->vfid;
+    msg.head.dev_id = (u16)devids->devid;
+    msg.id = para->id;
+    msg.mem_map_route = 0xFFFF; /* set default value */
+    ret = devmm_chan_msg_send(
+        &msg, sizeof(struct devmm_chan_get_mem_map_route), sizeof(struct devmm_chan_get_mem_map_route));
+    if (ret != 0) {
+        devmm_drv_err("Msg send failed. (ret=%d; devid=%u; id=%d)\n", ret, devids->devid, para->id);
+        return ret;
+    }
+
+    if ((msg.mem_map_route != MEM_MAP_INBUS) && (msg.mem_map_route != MEM_MAP_EXBUS)) {
+        devmm_drv_err("Invalid mem_map_route. (mem_map_route=%u)\n", msg.mem_map_route);
+        return -EINVAL;
+    }
+
+    para->attr.mem_map_route = msg.mem_map_route;
+    devmm_drv_debug(
+        "Get mem_map_route succ. (devid=%u; id=%d; mem_map_route=%u)\n", devids->devid, para->id,
+        para->attr.mem_map_route);
+
+    return 0;
+}
+
+static int (*devmm_mem_handle_get_attr_handlers[HANDLE_ATTR_TYPE_MAX])(
+    struct devmm_svm_process *svm_proc, struct devmm_devid *devids, struct devmm_mem_handle_get_attr_para *para) = {
+    [HANDLE_ATTR_MEM_MAP_ROUTE] = devmm_get_mem_map_route,
+};
+
+int devmm_ioctl_mem_handle_get_attr(struct devmm_svm_process *svm_proc, struct devmm_ioctl_arg *arg)
+{
+    struct devmm_mem_handle_get_attr_para *para = &arg->data.mem_handle_get_attr_para;
+    int ret;
+
+    if ((para->type >= HANDLE_ATTR_TYPE_MAX) || (devmm_mem_handle_get_attr_handlers[para->type] == NULL)) {
+        return -EOPNOTSUPP;
+    }
+
+    ret = devmm_mem_handle_get_attr_handlers[para->type](svm_proc, &arg->head, para);
+    devmm_drv_debug("Mem get handle attr end. (ret=%d; type=%u)\n", ret, para->type);
 
     return ret;
 }

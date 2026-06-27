@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2025. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -22,8 +22,8 @@
 
 #include "svm_mc.h"
 
-#define SVM_SDMA_STREAM_ID              0x1FU
-#define SVM_SDMA_MEMZERO_PER_MAX_SIZE   0x100000000ULL
+#define SVM_SDMA_STREAM_ID 0x1FU
+#define SVM_SDMA_MEMZERO_PER_MAX_SIZE 0x100000000ULL
 
 /* Do not cause page fault, my occur mm_lock deadlock. */
 static int sdma_clr_mem_by_uva(u32 udevid, int tgid, u64 va, u64 size)
@@ -45,8 +45,9 @@ static int sdma_clr_mem_by_uva(u32 udevid, int tgid, u64 va, u64 size)
         /* devid need set 0, because devid1 is slave SDMA device. */
         ret = sdma_kernel_memset(0, (unsigned long)(va + offset), real_size, ssid, SVM_SDMA_STREAM_ID, 0);
         if (ret != 0) {
-            svm_warn("Sdma_kernel_memset invalid, will go to memset_s. (ret=%d; ssid=%d; va=0x%llx; size=%llu)\n",
-                ret, ssid, va + offset, real_size);
+            svm_warn(
+                "Sdma_kernel_memset invalid, will go to memset_s. (ret=%d; ssid=%d; va=0x%llx; size=%llu)\n", ret, ssid,
+                va + offset, real_size);
             return ret;
         }
     }

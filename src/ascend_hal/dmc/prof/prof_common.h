@@ -40,6 +40,8 @@
 #define PROF_CRIT(fmt, ...) DRV_CRIT(HAL_MODULE_TYPE_PROF, fmt, ##__VA_ARGS__)
 #define PROF_EVENT(fmt, ...) DRV_EVENT(HAL_MODULE_TYPE_PROF, fmt, ##__VA_ARGS__)
 
+#define PROF_ERR_HEX_DUMP(buf, len, fmt, ...) DRV_ERR_HEX_DUMP(HAL_MODULE_TYPE_PROF, buf, len, fmt, ##__VA_ARGS__)
+
 #define ATOMIC_SET(x, y) (void)__sync_lock_test_and_set((x), (y))
 #define ATOMIC_INC(x) __sync_add_and_fetch((x), 1)
 #define ATOMIC_DEC(x) __sync_sub_and_fetch((x), 1)
@@ -48,7 +50,10 @@
 #define CAS(ptr, oldval, newval) __sync_bool_compare_and_swap((ptr), (oldval), (newval))
 
 #ifndef UNUSED
-#define UNUSED(x)   do {(void)(x);} while (0)
+#define UNUSED(x)  \
+    do {           \
+        (void)(x); \
+    } while (0)
 #endif
 
 typedef struct prof_user_start_para {
@@ -56,12 +61,18 @@ typedef struct prof_user_start_para {
     uint32_t sample_period;
     void *user_data;
     uint32_t user_data_size;
+    uint32_t support_host_sample;
+    char *start_out_data;
+    char *addrdata;
+    uint32_t addr_data_len;
 } prof_user_start_para_t;
 
 typedef struct prof_user_stop_para {
     uint32_t remote_pid;
     void *report;
     uint32_t report_len;
+    bool support_host_sample;
+    uint32_t host_sample_release_flag;
 } prof_user_stop_para_t;
 
 typedef struct prof_user_read_para {
@@ -73,7 +84,7 @@ typedef struct prof_user_read_para {
 STATIC_INLINE bool prof_comm_errcode_no_need_convert(int errcode)
 {
     int errcode_no_need_convert[] = {PROF_NOT_ENOUGH_SUB_CHANNEL_RESOURCE, PROF_VF_SUB_RESOURCE_FULL,
-        PROF_STOPPED_ALREADY, PROF_ERROR};
+                                     PROF_STOPPED_ALREADY, PROF_ERROR};
     uint64_t i;
 
     for (i = 0; i < sizeof(errcode_no_need_convert) / sizeof(int); i++) {

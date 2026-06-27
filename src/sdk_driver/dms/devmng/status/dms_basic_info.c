@@ -39,8 +39,52 @@
 #include "ascend_platform.h"
 #endif
 #include "pbl/pbl_soc_res.h"
+#include "pbl/pbl_uda.h"
 #include "dms_feature_pub.h"
 #include "dms_sdk_ex_version.h"
+
+#if defined(CFG_FEATURE_VFIO) && !defined(CFG_HOST_ENV) && !defined(CFG_FEATURE_VFIO_SOC)
+#define VMNG_NORMAL_SPLIT_MODE 3
+#define UDA_SUB_DEV_MAX_NUM 16
+
+STATIC int dms_get_split_mode_in_device(unsigned int dev_id)
+{
+    unsigned int udevid;
+    unsigned int i;
+    struct uda_mia_dev_para mia_para;
+    int ret;
+
+    ret = uda_devid_to_udevid(dev_id, &udevid);
+    if (ret != 0) {
+        dms_err("Can't transform devid to udevid. (dev_id=%u; ret=%d)\n", dev_id, ret);
+        return ret;
+    }
+    if (!uda_is_pf_dev(udevid)) {
+        return VMNG_NORMAL_SPLIT_MODE;
+    }
+    mia_para.phy_devid = udevid;
+    for (i = 0; i < UDA_SUB_DEV_MAX_NUM; i++) {
+        mia_para.sub_devid = i;
+        if (uda_is_udevid_exist(uda_make_udevid(&mia_para))) {
+            return VMNG_NORMAL_SPLIT_MODE;
+        }
+    }
+    return VMNG_NORMAL_NONE_SPLIT_MODE;
+}
+#endif
+
+STATIC int get_device_split_mode(u32 dev_id, u32 phy_id)
+{
+#ifndef CFG_FEATURE_VFIO
+    return VMNG_NORMAL_NONE_SPLIT_MODE;
+#else
+    #if !defined(CFG_HOST_ENV) && !defined(CFG_FEATURE_VFIO_SOC)
+    return dms_get_split_mode_in_device(dev_id);
+    #else
+    return vmng_get_device_split_mode(phy_id);
+    #endif
+#endif
+}
 
 STATIC int dms_get_device_split_mode(void *feature, char *in, u32 in_len, char *out, u32 out_len)
 {
@@ -64,15 +108,7 @@ STATIC int dms_get_device_split_mode(void *feature, char *in, u32 in_len, char *
         dms_err("can't transform virt id. (dev_id=%u; ret=%d)\n", dev_id, ret);
         return ret;
     }
-#if defined(CFG_HOST_ENV) && defined(CFG_FEATURE_VFIO)
-    *(unsigned int *)out = vmng_get_device_split_mode(phy_id);
-#else
-    #ifdef CFG_FEATURE_VFIO_SOC
-    *(unsigned int *)out = vmng_get_device_split_mode(phy_id);
-    #else
-    *(unsigned int *)out = VMNG_NORMAL_NONE_SPLIT_MODE;
-    #endif
-#endif
+    *(unsigned int *)out = get_device_split_mode(dev_id, phy_id);
     return 0;
 }
 
@@ -154,7 +190,7 @@ STATIC int dms_get_device_init_status(void *feature, char *in, u32 in_len, char 
 }
 #endif
 
-#if (defined(CFG_HOST_ENV)) && (!defined(CFG_FEATURE_UNSUPPORT_BASIC_INFO))
+#ifdef CFG_HOST_ENV
 STATIC int dms_get_basic_info(unsigned int dev_id, int sub_cmd, unsigned int *basic_buffer)
 {
     int ret;
@@ -226,9 +262,7 @@ STATIC int dms_get_basic_info_op(void *feature, char *in, unsigned int in_len, c
     }
     return 0;
 }
-#endif
 
-#ifdef CFG_HOST_ENV
 STATIC int dms_get_master_dev(void *feature, char *in, u32 in_len, char *out, u32 out_len)
 {
     unsigned int phy_id;
@@ -405,7 +439,7 @@ STATIC int dms_soc_get_hcom_cpu_num(const struct urd_cmd *cmd,
 
 BEGIN_DMS_MODULE_DECLARATION(DMS_MODULE_BASIC_INFO)
 BEGIN_FEATURE_COMMAND()
-#if (defined(CFG_HOST_ENV)) && (!defined(CFG_FEATURE_UNSUPPORT_BASIC_INFO))
+#ifdef CFG_HOST_ENV
 ADD_FEATURE_COMMAND(DMS_MODULE_BASIC_INFO,
     DMS_MAIN_CMD_BASIC,
     DMS_SUBCMD_GET_BOARD_ID_HOST,

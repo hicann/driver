@@ -14,16 +14,14 @@
 #ifndef DEVMM_PROC_INFO_H
 #define DEVMM_PROC_INFO_H
 
-#include <linux/types.h>
+#include "ka_type.h"
 
 #include "ka_base_pub.h"
 #include "ka_common_pub.h"
 #include "ka_memory_pub.h"
 #include "ka_task_pub.h"
 #include "ka_net_pub.h"
-#include "ka_common_pub.h"
 #include "ka_list_pub.h"
-#include "ka_base_pub.h"
 #include "ka_fs_pub.h"
 #include "ka_hashtable_pub.h"
 #include "ka_driver_pub.h"
@@ -41,6 +39,9 @@
 #include "svm_srcu_work.h"
 #include "svm_page_cnt_stats.h"
 #include "svm_gfp.h"
+#ifndef UVM_OPEN
+#include "uvm_heap_mng.h"
+#endif
 #include "svm_define.h"
 #ifdef HOST_AGENT
 #include <securec.h>
@@ -67,7 +68,7 @@
 #define DEVMM_DEV_CLOSE_WAITTIME_MAX 600000 /* us */
 #define DEVMM_DEV_CLOSE_TIMES 1000          /* 500s */
 
-#define HEAP_USED_PER_MASK_SIZE (1UL << 30)   /* 1G */
+#define HEAP_USED_PER_MASK_SIZE (1UL << 30) /* 1G */
 
 #define DEVMM_PREFETCH_COPY_NUM 1024ul /* Multiple of huge page size  */
 
@@ -101,10 +102,7 @@ struct devmm_ioctl_addr_info {
     struct devmm_heap_ref *ref[DEVMM_COMMON_PARA_VA_NUM];
 };
 
-enum devmm_trans_way_type {
-    SDMA = 0x0,
-    PCIE_DMA
-};
+enum devmm_trans_way_type { SDMA = 0x0, PCIE_DMA };
 
 struct devmm_page_query_arg {
     struct devmm_svm_process_id process_id;
@@ -193,11 +191,11 @@ struct devmm_proc_ipc_node_head {
     ka_mutex_t node_mutex;
     u32 node_cnt;
 };
-#define DEVMM_PAGE_CACHE_LIST_NUM   256
-#define DEVMM_HUGE_PAGE_CACHE_LIST_NUM   8
-#define DEVMM_PAGE_CACHE_BLK_NUM    512 /* chuck page 2M, huge page 1G */
-#define DEVMM_PAGE_CACHE_NODE_SHIFT 21  /* 2M SHIFT count by DEVMM_PAGE_CACHE_BLK_NUM */
-#define DEVMM_HUGE_PAGE_CACHE_NODE_SHIFT 30   /* 1G SHIFT count by DEVMM_PAGE_CACHE_BLK_NUM */
+#define DEVMM_PAGE_CACHE_LIST_NUM 256
+#define DEVMM_HUGE_PAGE_CACHE_LIST_NUM 8
+#define DEVMM_PAGE_CACHE_BLK_NUM 512        /* chuck page 2M, huge page 1G */
+#define DEVMM_PAGE_CACHE_NODE_SHIFT 21      /* 2M SHIFT count by DEVMM_PAGE_CACHE_BLK_NUM */
+#define DEVMM_HUGE_PAGE_CACHE_NODE_SHIFT 30 /* 1G SHIFT count by DEVMM_PAGE_CACHE_BLK_NUM */
 
 struct devmm_dev_pages_cache {
     int ref;
@@ -211,10 +209,10 @@ struct devmm_addr_block {
     u64 phy_addr; /* phy addr */
 };
 
-#define DEVMM_CONVERT_RES_HLIST_NUM   0x20
-#define DEVMM_CONVERT_RES_LIST_SHIFT 5  /* 32 1<<5 */
+#define DEVMM_CONVERT_RES_HLIST_NUM 0x20
+#define DEVMM_CONVERT_RES_LIST_SHIFT 5 /* 32 1<<5 */
 struct devmm_pm_convert_res {
-    ka_atomic64_t convert_id;      /* for vm safety check */
+    ka_atomic64_t convert_id; /* for vm safety check */
     ka_mutex_t hlist_mutex;
     ka_hlist_head_t hlist[DEVMM_CONVERT_RES_HLIST_NUM];
 };
@@ -250,12 +248,8 @@ struct devmm_vm_host_pa_list {
 #define DEVMM_SHM_HUGE_PAGE DEVMM_HEAP_HUGE_PAGE
 #define DEVMM_SHM_CHUNK_PAGE DEVMM_HEAP_CHUNK_PAGE
 #define DEVMM_SHM_MIXED_PAGE 0
-#define DEVMM_GET_2M_PAGE_NUM 512u      /* the normal page_num of 2M */
-enum {
-    DEVMM_SMMU_STATUS_UNINIT,
-    DEVMM_SMMU_STATUS_OPENING,
-    DEVMM_SMMU_STATUS_CLOSEING
-};
+#define DEVMM_GET_2M_PAGE_NUM 512u /* the normal page_num of 2M */
+enum { DEVMM_SMMU_STATUS_UNINIT, DEVMM_SMMU_STATUS_OPENING, DEVMM_SMMU_STATUS_CLOSEING };
 struct devmm_txatu_info {
     u64 addr;
     u64 txatu_flag;
@@ -312,8 +306,8 @@ struct devmm_shm_dev_frag_node {
 struct devmm_shm_dev_node {
     ka_list_head_t shm_entry;
     ka_list_head_t frag_list_head;
-    u64 free_va;                    /* the start dev_va which have't been released */
-    u64 released_size;              /* the size which have been released */
+    u64 free_va;       /* the start dev_va which have't been released */
+    u64 released_size; /* the size which have been released */
     u64 mmap_size;
     u64 mmap_va;
     u64 aligned_dst_va;
@@ -321,23 +315,25 @@ struct devmm_shm_dev_node {
     u32 map_type;
     u32 flag;
     u32 devid;
-    bool svsp_remap;                /* svsp means Shadow Virtual Space of Process,
-                                       true: when HOST_MEM_MAP_DEV_PCIE_TH */
+    bool svsp_remap; /* svsp means Shadow Virtual Space of Process,
+                        true: when HOST_MEM_MAP_DEV_PCIE_TH */
     ka_page_t **pages;
     u64 page_index;
 };
 
 /* proc_status */
-#define DEVMM_SVM_THREAD_EXITING   0x2   /* svm proc exiting, above pcie msg */
-#define DEVMM_SVM_THREAD_WAIT_EXIT 0x4   /* svm proc wait exit, wait pcie msg proc over */
+#define DEVMM_SVM_THREAD_EXITING 0x2   /* svm proc exiting, above pcie msg */
+#define DEVMM_SVM_THREAD_WAIT_EXIT 0x4 /* svm proc wait exit, wait pcie msg proc over */
 
 #define DEVMM_SVM_PROC_ABORT_STATE (DEVMM_SVM_THREAD_EXITING | DEVMM_SVM_THREAD_WAIT_EXIT)
 
-#define DEVMM_CUSTOM_PROCESS_NUM  1
-#define DEVMM_CUSTOM_IDLE         0
-#define DEVMM_CUSTOM_USED         1
-#define DEVMM_CUSTOM_CP_EXIT      2    /* CP proc exit, but CUSTOM proc not exit */
-
+#define DEVMM_CUSTOM_PROCESS_NUM 1
+#define DEVMM_CUSTOM_IDLE 0
+#define DEVMM_CUSTOM_USED 1
+#define DEVMM_CUSTOM_CP_EXIT 2 /* CP proc exit, but CUSTOM proc not exit */
+#ifndef UVM_OPEN
+#define UVM_TRANS_PAGE_HLIST_TABLE_BIT 13
+#endif
 struct devmm_svm_process;
 struct devmm_custom_process {
     ka_pid_t custom_pid;
@@ -379,16 +375,19 @@ struct devmm_svm_process {
     bool is_enable_host_giant_page;
     struct devmm_svm_process_id process_id;
     ka_list_head_t proc_id_head;
-
+#ifndef UVM_OPEN
+    KA_DECLARE_HASHTABLE(uvm_trans_page_hashtable, UVM_TRANS_PAGE_HLIST_TABLE_BIT);
+    ka_mutex_t uvm_ht_lock;
+#endif
     int ssid;
     u32 docker_id;
     ka_pid_t devpid;
-    volatile u32 proc_status;  /* process status */
-    volatile u32 msg_processing; /* Number of messages currently being processed */
+    volatile u32 proc_status;          /* process status */
+    volatile u32 msg_processing;       /* Number of messages currently being processed */
     volatile u32 other_proc_occupying; /* Number of processes who are using current processes. */
-    volatile u32 notifier_reg_flag; /* struct mmu_notifier register or not */
+    volatile u32 notifier_reg_flag;    /* struct mmu_notifier register or not */
     int dvpp_split_flag;
-    ka_atomic_t ref;    /* Optimized into kref later */
+    ka_atomic_t ref; /* Optimized into kref later */
 
     u32 release_work_cnt;
     u32 release_work_timeout;
@@ -408,6 +407,12 @@ struct devmm_svm_process {
     unsigned long end_addr;
     unsigned long host_pin_start_addr;
     unsigned long host_pin_end_addr;
+#ifndef UVM_OPEN
+    unsigned long uvm_start_addr;
+    unsigned long uvm_end_addr;
+#endif
+    unsigned long soma_start_addr;
+    unsigned long soma_end_addr;
     u64 alloced_heap_size;
 
     struct devmm_deviceinfo deviceinfo[SVM_MAX_AGENT_NUM];
@@ -437,6 +442,10 @@ struct devmm_svm_process {
     ka_rw_semaphore_t heap_sem; /* free use write lock, fault use read lock */
     struct devmm_svm_heap *heaps[DEVMM_MAX_HEAP_NUM];
     struct devmm_svm_heap *host_pin_heap;
+#ifndef UVM_OPEN
+    struct devmm_uvm_heap *uvm_heap;
+#endif
+    struct devmm_svm_heap *soma_heap;
     struct devmm_pm_convert_res convert_res;
     struct devmm_vm_host_pa_list host_pa_list;
     ka_mutex_t proc_lock;
@@ -458,15 +467,15 @@ struct devmm_svm_process {
     struct devmm_page_cnt_stats pg_cnt_stats;
 
     struct devmm_phy_addr_blk_mng phy_addr_blk_mng;
-
+    void (*soma_clean_resource_handler)(ka_pid_t pid);
     void *priv_data;
 };
 
 extern ka_mmu_notifier_ops_t devmm_process_mmu_notifier;
 
 struct devmm_dma_block {
-    unsigned long pa;       /* pa is aligned by page_size */
-    u64 sz;                 /* sz is aligned by page_size */
+    unsigned long pa; /* pa is aligned by page_size */
+    u64 sz;           /* sz is aligned by page_size */
     ka_page_t *page;
     ka_dma_addr_t dma;
     int ssid;
@@ -496,13 +505,13 @@ struct devmm_dma_copy_task {
  * async destroy submit: trans state from IDLE           to      PREPARE_FREE
  * async destroy:        trans state from PREPARE_FREE   to      FREEING
  */
-#define CONVERT_NODE_IDLE               1
-#define CONVERT_NODE_PREPARE_SUBMIT     2
-#define CONVERT_NODE_COPYING            3
-#define CONVERT_NODE_WAITING            4
-#define CONVERT_NODE_PREPARE_FREE       5
-#define CONVERT_NODE_SUBRES_RECYCLED    6
-#define CONVERT_NODE_FREEING            7
+#define CONVERT_NODE_IDLE 1
+#define CONVERT_NODE_PREPARE_SUBMIT 2
+#define CONVERT_NODE_COPYING 3
+#define CONVERT_NODE_WAITING 4
+#define CONVERT_NODE_PREPARE_FREE 5
+#define CONVERT_NODE_SUBRES_RECYCLED 6
+#define CONVERT_NODE_FREEING 7
 
 struct devmm_alloc_numa_info {
     u64 free_size;
@@ -623,7 +632,7 @@ struct devmm_svm_dev {
     /* svm page size,means svm mgmt's page size. 64k */
     u32 svm_page_size;
     u32 svm_page_shift;
-    u32 huge_page_size;  // device
+    u32 huge_page_size; // device
 
     /* device page size,means device page size, 64K. */
     u32 host_page_size;
@@ -645,7 +654,7 @@ struct devmm_svm_dev {
     u32 smmu_status;
     struct devmm_mmap_para mmap_para;
 
-    u64 total_convert_len[SVM_MAX_AGENT_NUM];          /* total_len pre dev can convert */
+    u64 total_convert_len[SVM_MAX_AGENT_NUM]; /* total_len pre dev can convert */
     ka_rw_semaphore_t convert_sem;
 
     struct devmm_device_info device_info;
@@ -656,8 +665,8 @@ struct devmm_svm_dev {
     struct devmm_shm_process_head shm_pro_head[HOST_REGISTER_MAX_TPYE];
     struct devmm_svm_statistics stat;
 
-    struct devmm_share_memory_head pa_info[SVM_MAX_AGENT_NUM];    /* for master */
-    struct devmm_pm_convert_ids convert_ids[SVM_MAX_AGENT_NUM];   /* in VM, limit the convert times */
+    struct devmm_share_memory_head pa_info[SVM_MAX_AGENT_NUM];  /* for master */
+    struct devmm_pm_convert_ids convert_ids[SVM_MAX_AGENT_NUM]; /* in VM, limit the convert times */
     struct devmm_device_capability dev_capability[SVM_MAX_AGENT_NUM];
 
     struct devmm_phy_addr_blk_mng share_phy_addr_blk_mng[DEVMM_MAX_AGENTMM_DEVICE_NUM];
@@ -668,8 +677,8 @@ struct devmm_svm_dev {
 struct devmm_copy_side {
     struct devmm_register_dma_node *register_dma_node;
     struct devmm_dma_block *blks;
-    unsigned int blks_num; /* alloc mem num */
-    unsigned int num; /* actual num after merge pa */
+    unsigned int blks_num;       /* alloc mem num */
+    unsigned int num;            /* actual num after merge pa */
     unsigned long blk_page_size; /* page size */
     int side_type;
 };
@@ -687,7 +696,7 @@ struct devmm_copy_res {
     u64 dst_va;
     u64 spitch;
     u64 dpitch;
-    u64 cpy_len;    /* width */
+    u64 cpy_len; /* width */
     u64 height;
     u64 fixed_size;
     u32 dma_node_alloc_num; /* 1: make dmanode list */
@@ -695,11 +704,11 @@ struct devmm_copy_res {
     u32 dma_node_num;
     int copy_direction;
     int pin_flg;
-    int dev_id;      /* which device's dma is used */
+    int dev_id; /* which device's dma is used */
     int dst_dev_id;
     bool vm_copy_flag;
     int cpy_mode;
-    u32 vm_id;      /* process vm_id */
+    u32 vm_id; /* process vm_id */
     int fid;
     u32 task_id;
     u64 byte_count;
@@ -725,6 +734,12 @@ struct devmm_memory_attributes {
     bool is_reserve_addr;
     bool is_mem_export;
     bool is_mem_import;
+#ifndef UVM_OPEN
+    bool is_uvm_host;
+    bool is_uvm_device;
+    bool is_uvm_non_page;
+    bool is_uvm_read_mostly;
+#endif
     u32 bitmap;
     u32 logical_devid;
     u32 devid;
@@ -794,16 +809,16 @@ extern struct devmm_svm_dev *devmm_svm;
 /* device id convert flag */
 #define DEVMM_CONVERT_ID 0x04 /* convert phy id, 0:not need convert, 1:need convert */
 /* va ref for multi thread */
-#define DEVMM_OPER_REF 0x08    /* 0 no va ref; 1 va ref */
+#define DEVMM_OPER_REF 0x08                   /* 0 no va ref; 1 va ref */
 #define DEVMM_ADD_REF (0x10 | DEVMM_OPER_REF) /* va ref ++ */
 #define DEVMM_SUB_REF (0x20 | DEVMM_OPER_REF) /* va ref -- */
 #define DEVMM_ADD_SUB_REF (DEVMM_ADD_REF | DEVMM_SUB_REF)
-#define DEVMM_HAS_MUTIL_ADDR 0x80   /* 0 has one va; 1 has mutil va */
-#define DEVMM_IS_FREE (0x100 | DEVMM_OPER_REF)  /* is free api */
-#define DEVMM_IS_MALLOC (0x200 | DEVMM_OPER_REF) /* is malloc api */
-#define DEVMM_IS_ADVISE (0x400 | DEVMM_OPER_REF)  /* is advise api */
+#define DEVMM_HAS_MUTIL_ADDR 0x80                          /* 0 has one va; 1 has mutil va */
+#define DEVMM_IS_FREE (0x100 | DEVMM_OPER_REF)             /* is free api */
+#define DEVMM_IS_MALLOC (0x200 | DEVMM_OPER_REF)           /* is malloc api */
+#define DEVMM_IS_ADVISE (0x400 | DEVMM_OPER_REF)           /* is advise api */
 #define DEVMM_OPS_SUCCESS_SUB_REF (0x800 | DEVMM_OPER_REF) /* va ref -- */
-#define DEVMM_HUGE_PAGE_SIZE    0x200000U  /* 2MB page */
+#define DEVMM_HUGE_PAGE_SIZE 0x200000U                     /* 2MB page */
 
 /* vdev not support flag */
 #define DEVMM_CMD_NOT_SURPORT_VDEV 0x1000
@@ -811,8 +826,7 @@ extern struct devmm_svm_dev *devmm_svm;
 #define DEVMM_CMD_NOT_SURPORT_HOST_AGENT 0x4000
 #define DEVMM_CMD_SURPORT_HOST_ID 0x8000
 
-extern int (*const devmm_ioctl_file_arg_handlers[DEVMM_SVM_CMD_MAX_CMD])
-    (ka_file_t *file, struct devmm_ioctl_arg *arg);
+extern int (*const devmm_ioctl_file_arg_handlers[DEVMM_SVM_CMD_MAX_CMD])(ka_file_t *file, struct devmm_ioctl_arg *arg);
 
 struct devmm_ioctl_handlers_st {
     int (*ioctl_handler)(struct devmm_svm_process *, struct devmm_ioctl_arg *);
@@ -841,8 +855,7 @@ extern struct devmm_ioctl_handlers_st devmm_ioctl_handlers[DEVMM_SVM_CMD_MAX_CMD
 #define devmm_svm_stat_fault_inc() (ka_base_atomic64_inc(&devmm_svm->stat.fault_cnt))
 #define devmm_svm_stat_p2p_fault_inc() (ka_base_atomic64_inc(&devmm_svm->stat.p2p_fault_cnt))
 
-#define devmm_svm_stat_copy_inc(dir, len)               \
-    (ka_base_atomic64_inc(&devmm_svm->stat.copy_dirs_cnt[dir]))
+#define devmm_svm_stat_copy_inc(dir, len) (ka_base_atomic64_inc(&devmm_svm->stat.copy_dirs_cnt[dir]))
 
 #define devmm_svm_stat_send_inc() (ka_base_atomic64_inc(&devmm_svm->stat.send_msg_cnt))
 #define devmm_svm_stat_recv_inc() (ka_base_atomic64_inc(&devmm_svm->stat.recv_msg_cnt))
@@ -888,7 +901,16 @@ enum devmm_page_convert_type {
     DEVMM_DEVICE_PAGES = 2,
     DEVMM_USER_PIN_PAGES = 3
 };
-
+#ifndef UVM_OPEN
+/* uvm struct */
+struct devmm_mem_range_attribute {
+    uint32_t attribute;
+    uint64_t ptr;
+    size_t size;
+    int32_t *data;
+    size_t data_size;
+};
+#endif
 extern int devdrv_manager_container_logical_id_to_physical_id(u32 logical_dev_id, u32 *physical_dev_id, u32 *vfid);
 u32 devmm_get_phyid_devid_from_svm_process(struct devmm_svm_process *svm_process, u32 logic_id);
 u32 devmm_get_vfid_from_svm_process(struct devmm_svm_process *svm_process, u32 logic_id);
@@ -919,18 +941,14 @@ int devmm_get_va_to_pa(const ka_vm_area_struct_t *vma, u32 page_type, u64 va, u6
 void devmm_unmap_pages(struct devmm_svm_process *svm_proc, u64 vaddr, u64 page_num);
 bool devmm_va_is_not_svm_process_addr(const struct devmm_svm_process *svm_process, unsigned long va);
 bool devmm_is_static_reserve_addr(struct devmm_svm_process *svm_proc, u64 va);
-int devmm_insert_pages_to_vma(ka_vm_area_struct_t *vma, u64 va,
-    u64 page_num, ka_page_t **inpages, u32 pgprot);
-int devmm_insert_pages_to_vma_custom(ka_vm_area_struct_t *vma, u64 va,
-    u64 page_num, ka_page_t **inpages, u32 pgprot);
-int devmm_insert_pages_to_vma_owner(ka_vm_area_struct_t *vma, u64 va,
-    u64 page_num, ka_page_t **inpages, ka_pgprot_t vm_page_prot);
-int devmm_pages_remap_owner(struct devmm_svm_process *svm_proc, u64 va, u64 page_num,
-    ka_page_t **inpages, u32 page_prot);
-int devmm_pages_remap(struct devmm_svm_process *svm_proc, u64 va, u64 page_num,
-    ka_page_t **inpages, u32 page_prot);
-int devmm_remap_pages(struct devmm_svm_process *svm_proc, u64 va,
-    ka_page_t **pages, u64 pg_num, u32 pg_type);
+int devmm_insert_pages_to_vma(ka_vm_area_struct_t *vma, u64 va, u64 page_num, ka_page_t **inpages, u32 pgprot);
+int devmm_insert_pages_to_vma_custom(ka_vm_area_struct_t *vma, u64 va, u64 page_num, ka_page_t **inpages, u32 pgprot);
+int devmm_insert_pages_to_vma_owner(
+    ka_vm_area_struct_t *vma, u64 va, u64 page_num, ka_page_t **inpages, ka_pgprot_t vm_page_prot);
+int devmm_pages_remap_owner(
+    struct devmm_svm_process *svm_proc, u64 va, u64 page_num, ka_page_t **inpages, u32 page_prot);
+int devmm_pages_remap(struct devmm_svm_process *svm_proc, u64 va, u64 page_num, ka_page_t **inpages, u32 page_prot);
+int devmm_remap_pages(struct devmm_svm_process *svm_proc, u64 va, ka_page_t **pages, u64 pg_num, u32 pg_type);
 void devmm_zap_pages(struct devmm_svm_process *svm_proc, u64 va, u64 pg_num, u32 pg_type);
 int devmm_va_to_palist(const ka_vm_area_struct_t *vma, u64 va, u64 sz, u64 *pa, u32 *num);
 int devmm_insert_normal_pages(struct page_map_info *page_map_info, struct devmm_svm_process *svm_proc);
@@ -942,19 +960,17 @@ int devmm_va_to_pmd(const ka_vm_area_struct_t *vma, unsigned long va, int huge_f
 void devmm_init_dev_private(struct devmm_svm_dev *dev, ka_file_operations_t *svm_fops);
 void devmm_uninit_dev_private(struct devmm_svm_dev *dev);
 void devmm_notifier_release_private(struct devmm_svm_process *svm_proc);
-int devmm_svm_proc_and_heap_get(struct devmm_svm_process_id *process_id, u64 va,
-    struct devmm_svm_process **svm_proc, struct devmm_svm_heap **heap);
+int devmm_svm_proc_and_heap_get(
+    struct devmm_svm_process_id *process_id, u64 va, struct devmm_svm_process **svm_proc, struct devmm_svm_heap **heap);
 void devmm_svm_proc_and_heap_put(struct devmm_svm_process *svm_proc, struct devmm_svm_heap *heap);
 
 void devmm_svm_ioctl_lock(struct devmm_svm_process *svm_proc, u32 lock_flag);
 void devmm_svm_ioctl_unlock(struct devmm_svm_process *svm_proc, u32 lock_flag);
-void devmm_get_svm_id(struct devmm_svm_process *svm_process, u32 *bitmap,
-    u32 *logic_id, u32 *phy_id, u32 *vfid);
+void devmm_get_svm_id(struct devmm_svm_process *svm_process, u32 *bitmap, u32 *logic_id, u32 *phy_id, u32 *vfid);
 int devmm_fill_svm_id(struct devmm_devid *svm_id, u32 logic_id, u32 phy_id, u32 vfid);
 u32 devmm_svm_va_to_devid(struct devmm_svm_process *svm_proc, unsigned long va);
 int devmm_container_vir_to_phs_devid(u32 virtual_devid, u32 *physical_devid, u32 *vfid);
-int devmm_convert_id_from_vir_to_phy(struct devmm_svm_process *process,
-    struct devmm_ioctl_arg *buffer, u32 cmd_flag);
+int devmm_convert_id_from_vir_to_phy(struct devmm_svm_process *process, struct devmm_ioctl_arg *buffer, u32 cmd_flag);
 int devmm_check_cmd_support(u32 cmd_flag);
 void devmm_dev_fault_flag_set(u32 *flag, u32 shift, u32 wide, u32 value);
 u32 devmm_dev_fault_flag_get(u32 flag, u32 shift, u32 wide);
@@ -968,15 +984,36 @@ void devmm_svm_release_private_proc(struct devmm_svm_process *svm_proc);
 void devmm_unmap_pages_owner(struct devmm_svm_process *svm_proc, u64 vaddr, u64 num);
 int devmm_remap_huge_pages(struct devmm_svm_process *svm_proc, u64 va, ka_page_t **hpages, u64 pg_num, u32 pg_prot);
 void devmm_zap_huge_pages(struct devmm_svm_process *svm_proc, u64 va, u64 page_num);
-int devmm_remap_giant_pages(struct devmm_svm_process *svm_proc,
-    u64 va, ka_page_t **hpages, u64 pg_num, u32 pg_prot, bool has_interval);
+int devmm_remap_giant_pages(
+    struct devmm_svm_process *svm_proc, u64 va, ka_page_t **hpages, u64 pg_num, u32 pg_prot, bool has_interval);
 void devmm_zap_giant_pages(struct devmm_svm_process *svm_proc, u64 va, u64 page_num);
 void devmm_zap_normal_pages(struct devmm_svm_process *svm_proc, u64 va, u64 page_num);
-int devmm_ioctl_dispatch(struct devmm_svm_process *svm_proc, u32 cmd_id, u32 cmd_flag,
-    struct devmm_ioctl_arg *buffer);
+int devmm_ioctl_dispatch(struct devmm_svm_process *svm_proc, u32 cmd_id, u32 cmd_flag, struct devmm_ioctl_arg *buffer);
 void devmm_proc_debug_info_print(struct devmm_svm_process *svm_proc);
+#ifndef UVM_OPEN
+/* uvm */
+struct devmm_uvm_heap *devmm_uvm_get_heap(struct devmm_svm_process *svm_proc, unsigned long va);
+bool devmm_is_static_uvm_reserve_addr(struct devmm_svm_process *svm_proc, u64 va);
+bool devmm_va_is_not_uvm_process_addr(const struct devmm_svm_process *svm_process, unsigned long va);
+page_bitmap_t *devmm_get_page_bitmap_with_uvm_heap(struct devmm_uvm_heap *heap, u64 va);
+int uvm_free_host_page(struct devmm_svm_process *svm_pro, struct uvm_page_info *page_info, uint64_t addr_idx);
+int uvm_free_one_page(
+    struct devmm_svm_process *svm_pro, struct uvm_page_info *page_info, uint64_t addr_idx, bool no_return);
+int uvm_free_device_page_by_id(struct devmm_svm_process *svm_pro, device_bitmap *dev_bitmap, uint32_t dev_id, u64 va);
+int uvm_free_device_page(
+    struct devmm_svm_process *svm_pro, struct uvm_page_info *page_info, uint64_t addr_idx, bool no_return);
+void devmm_destory_all_uvm_mem_by_proc(struct devmm_svm_process *svm_process);
+int devmm_free_page_process_uvm(struct devmm_svm_process *svm_pro, struct devmm_uvm_heap *heap, u64 va);
+int devmm_uvm_ioctl_alloc(struct devmm_svm_process *svm_process, struct devmm_ioctl_arg *arg);
+#endif
 int devmm_ioctl_free_pages(struct devmm_svm_process *svm_pro, struct devmm_ioctl_arg *arg);
-
+/* soma */
+struct devmm_svm_heap *devmm_soma_get_heap(struct devmm_svm_process *svm_proc, unsigned long va);
+bool devmm_is_static_soma_reserve_addr(struct devmm_svm_process *svm_proc, u64 va);
+bool devmm_va_is_not_soma_process_addr(const struct devmm_svm_process *svm_process, unsigned long va);
+void devmm_soma_setup_vma_ops(ka_vm_area_struct_t *vma);
+int devmm_get_soma_mem_attrs(struct devmm_svm_process *svm_proc, u64 addr, struct devmm_memory_attributes *attr);
+void devmm_soma_set_heap_bits(struct devmm_svm_heap *heap, u64 addr, u64 size, uint32_t devId);
 /* host */
 u32 *devmm_get_fst_alloc_bitmap_by_heap(struct devmm_svm_process *svm_process, struct devmm_svm_heap *heap, u64 va);
 u32 *devmm_get_alloced_va_fst_page_bitmap_with_heap(struct devmm_svm_heap *heap, u64 va);
@@ -985,41 +1022,43 @@ int devmm_get_alloced_va(struct devmm_svm_process *svm_proc, u64 va, u64 *alloce
 int devmm_get_alloced_size(struct devmm_svm_process *svm_proc, u64 va, u64 *alloced_size);
 u32 *devmm_get_page_bitmap(struct devmm_svm_process *svm_process, u64 va);
 u32 *devmm_get_page_bitmap_with_heap(struct devmm_svm_heap *heap, u64 va);
-void devmm_svm_set_mapped_with_heap(struct devmm_svm_process *svm_process, unsigned long va, size_t size,
-    u32 devid, struct devmm_svm_heap *heap);
-void devmm_svm_clear_mapped_with_heap(struct devmm_svm_process *svm_process, unsigned long va, size_t size,
-    u32 devid, struct devmm_svm_heap *heap);
-int devmm_query_page_by_msg(struct devmm_svm_process *svm_proc, struct devmm_page_query_arg query_arg,
-    struct devmm_dma_block *blks, u32 *num);
-int devmm_page_create_query_msg(struct devmm_svm_process *svm_pro, struct devmm_page_query_arg query_arg,
-    struct devmm_dma_block *blks, u32 *num);
-int devmm_p2p_page_create_msg(struct devmm_svm_process *svm_pro, struct devmm_page_query_arg query_arg,
-    struct devmm_dma_block *blks, u32 *num);
-int devmm_chan_query_meminfo_h2d(struct devmm_svm_process *svm_pro, struct devmm_svm_heap *heap,
-    void *msg, u32 *ack_len);
-int devmm_page_fault_h2d_sync(struct devmm_devid svm_id, ka_page_t **pages, unsigned long va, u32 adjust_order,
-                              const struct devmm_svm_heap *heap);
+void devmm_svm_set_mapped_with_heap(
+    struct devmm_svm_process *svm_process, unsigned long va, size_t size, u32 devid, struct devmm_svm_heap *heap);
+void devmm_svm_clear_mapped_with_heap(
+    struct devmm_svm_process *svm_process, unsigned long va, size_t size, u32 devid, struct devmm_svm_heap *heap);
+int devmm_query_page_by_msg(
+    struct devmm_svm_process *svm_proc, struct devmm_page_query_arg query_arg, struct devmm_dma_block *blks, u32 *num);
+int devmm_page_create_query_msg(
+    struct devmm_svm_process *svm_pro, struct devmm_page_query_arg query_arg, struct devmm_dma_block *blks, u32 *num);
+int devmm_p2p_page_create_msg(
+    struct devmm_svm_process *svm_pro, struct devmm_page_query_arg query_arg, struct devmm_dma_block *blks, u32 *num);
+int devmm_chan_query_meminfo_h2d(
+    struct devmm_svm_process *svm_pro, struct devmm_svm_heap *heap, void *msg, u32 *ack_len);
+int devmm_page_fault_h2d_sync(
+    struct devmm_devid svm_id, ka_page_t **pages, unsigned long va, u32 adjust_order,
+    const struct devmm_svm_heap *heap);
 void devmm_print_pre_alloced_va(struct devmm_svm_process *svm_process, u64 va);
 int devmm_check_alloced_va(struct devmm_svm_process *svm_process, u64 va, u64 *start_va, u64 *end_va, u32 direction);
 u32 devmm_get_adjust_order_by_heap(struct devmm_svm_heap *heap);
-int devmm_get_memory_attributes(struct devmm_svm_process *svm_proc, u64 addr,
-    struct devmm_memory_attributes *attr);
+int devmm_get_memory_attributes(struct devmm_svm_process *svm_proc, u64 addr, struct devmm_memory_attributes *attr);
 int devmm_get_svm_mem_attrs(struct devmm_svm_process *svm_proc, u64 addr, struct devmm_memory_attributes *attr);
-void devmm_get_local_host_mem_attrs(struct devmm_svm_process *svm_proc, u64 addr,
-    struct devmm_memory_attributes *attr);
-int devmm_get_local_dev_mem_attrs(struct devmm_svm_process *svm_proc, u64 addr, u64 size, u32 logical_devid,
-    struct devmm_memory_attributes *attr);
+#ifndef UVM_OPEN
+int devmm_get_uvm_mem_attrs(struct devmm_svm_process *svm_proc, u64 addr, struct devmm_memory_attributes *attr);
+#endif
+void devmm_get_local_host_mem_attrs(struct devmm_svm_process *svm_proc, u64 addr, struct devmm_memory_attributes *attr);
+int devmm_get_local_dev_mem_attrs(
+    struct devmm_svm_process *svm_proc, u64 addr, u64 size, u32 logical_devid, struct devmm_memory_attributes *attr);
 int devmm_check_status_va_info(struct devmm_svm_process *svm_process, u64 va, u64 count);
 void devmm_destroy_dev_pages_cache(struct devmm_svm_process *svm_proc, u32 devid);
 bool devmm_dev_is_same_system(u32 src_devid, u32 dst_devid);
-void devmm_notify_wait_device_close_process(struct devmm_svm_process *svm_proc,
-    u32 logical_devid, u32 phy_devid, u32 vfid);
-int devmm_insert_host_page_range(struct devmm_svm_process *svm_pro, u64 dst,
-    u64 byte_count, struct devmm_memory_attributes *fst_attr);
+void devmm_notify_wait_device_close_process(
+    struct devmm_svm_process *svm_proc, u32 logical_devid, u32 phy_devid, u32 vfid);
+int devmm_insert_host_page_range(
+    struct devmm_svm_process *svm_pro, u64 dst, u64 byte_count, struct devmm_memory_attributes *fst_attr);
 bool devmm_is_master(struct devmm_memory_attributes *attr);
 int devmm_alloc_host_range(struct devmm_svm_process *svm_proc, u64 va, u64 page_num, enum devmm_page_type page_type);
-bool devmm_acquire_aligned_addr_and_cnt(u64 address, u64 byte_count, int is_svm_huge,
-    u64 *aligned_down_addr, u64 *aligned_count);
+bool devmm_acquire_aligned_addr_and_cnt(
+    u64 address, u64 byte_count, int is_svm_huge, u64 *aligned_down_addr, u64 *aligned_count);
 u32 devmm_get_logic_id_by_phy_id(struct devmm_svm_process *svm_proc, u32 devid, u32 vfid);
 int devmm_get_alloced_va_with_heap(struct devmm_svm_heap *heap, u64 va, u64 *alloced_va);
 void devmm_destory_all_heap_by_proc(struct devmm_svm_process *svm_pro);
@@ -1030,33 +1069,32 @@ void devmm_page_fault_put_va_ref(struct devmm_svm_process *svm_proc, u64 va);
 int devmm_ioctl_query_process_status(struct devmm_svm_process *svm_proc, struct devmm_ioctl_arg *arg);
 int devmm_chan_report_process_status_d2h(
     struct devmm_svm_process *svm_process, struct devmm_svm_heap *heap, void *msg, u32 *ack_len);
-bool devmm_check_is_translate(struct devmm_svm_process *svm_pro, u64 va, u32 *page_bitmap,
-    u32 page_size, u64 page_num);
+bool devmm_check_is_translate(struct devmm_svm_process *svm_pro, u64 va, u32 *page_bitmap, u32 page_size, u64 page_num);
 
 /* host end
  * device
  */
-void devmm_unmap_page_from_vma_owner(struct devmm_svm_process *svm_proc,
-    ka_vm_area_struct_t *vma, u64 vaddr, u64 num);
+void devmm_unmap_page_from_vma_owner(struct devmm_svm_process *svm_proc, ka_vm_area_struct_t *vma, u64 vaddr, u64 num);
 
 void devmm_svm_setup_vma_ops(ka_vm_area_struct_t *vma);
+#ifndef UVM_OPEN
+void devmm_uvm_setup_vma_ops(ka_vm_area_struct_t *vma);
+#endif
 void devmm_free_ptes_in_range(struct devmm_svm_process *svm_proc, u64 start, u64 size);
 int devmm_va_to_pa_range(const ka_vm_area_struct_t *vma, u64 va, u64 num, u64 *pas);
 bool devmm_is_device_agent(struct devmm_memory_attributes *attr);
 int devmm_notify_deviceprocess(struct devmm_svm_process *svm_proc);
 bool devmm_current_is_vdev(void);
-void devmm_unmap_page_from_vma_custom(struct devmm_svm_process *svm_proc,
-    ka_vm_area_struct_t *vma, u64 vaddr, u64 num);
-int devmm_chan_query_process_status_h2d(struct devmm_svm_process *svm_proc, struct devmm_svm_heap *heap,
-    void *msg, u32 *ack_len);
-int _devmm_insert_virt_range(struct devmm_svm_process *svm_proc, u32 pg_type, u64 vaddr,
-    u64 *paddr, u32 pg_num);
+void devmm_unmap_page_from_vma_custom(struct devmm_svm_process *svm_proc, ka_vm_area_struct_t *vma, u64 vaddr, u64 num);
+int devmm_chan_query_process_status_h2d(
+    struct devmm_svm_process *svm_proc, struct devmm_svm_heap *heap, void *msg, u32 *ack_len);
+int _devmm_insert_virt_range(struct devmm_svm_process *svm_proc, u32 pg_type, u64 vaddr, u64 *paddr, u32 pg_num);
 
 int devmm_ioctl_handler_register(int cmd, struct devmm_ioctl_handlers_st handler);
-void devmm_clear_page_ref_after_ioctl(struct devmm_svm_process *svm_proc,
-    u32 cmd_flag, int ret, struct devmm_ioctl_addr_info *addr_info);
-int devmm_set_page_ref_before_ioctl(struct devmm_svm_process *svm_proc, u32 cmd_flag,
-    struct devmm_ioctl_addr_info *addr_info);
+void devmm_clear_page_ref_after_ioctl(
+    struct devmm_svm_process *svm_proc, u32 cmd_flag, int ret, struct devmm_ioctl_addr_info *addr_info);
+int devmm_set_page_ref_before_ioctl(
+    struct devmm_svm_process *svm_proc, u32 cmd_flag, struct devmm_ioctl_addr_info *addr_info);
 
 bool devmm_va_is_support_sdma_kernel_clear(struct devmm_svm_process *svm_proc, u64 va);
 void devmm_sdma_kernel_mem_clear(struct devmm_phy_addr_attr *attr, int ssid, struct devmm_pa_info_para *pa_info);

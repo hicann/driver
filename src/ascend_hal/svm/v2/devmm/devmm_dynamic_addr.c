@@ -33,10 +33,7 @@ struct svm_da_mng {
 
 static struct svm_da_mng g_da_mng;
 
-static struct svm_da_mng *svm_get_da_mng(void)
-{
-    return &g_da_mng;
-}
+static struct svm_da_mng *svm_get_da_mng(void) { return &g_da_mng; }
 
 static uint32_t svm_da_get_first_dev(struct svm_da_mng *da_mng)
 {
@@ -51,15 +48,9 @@ static uint32_t svm_da_get_first_dev(struct svm_da_mng *da_mng)
     return devid;
 }
 
-static bool svm_da_has_dev(struct svm_da_mng *da_mng)
-{
-    return (svm_da_get_first_dev(da_mng) < SVM_MAX_AGENT_NUM);
-}
+static bool svm_da_has_dev(struct svm_da_mng *da_mng) { return (svm_da_get_first_dev(da_mng) < SVM_MAX_AGENT_NUM); }
 
-static bool svm_da_has_master(uint32_t flag)
-{
-    return ((flag & SVM_DA_FLAG_WITH_MASTER) != 0);
-}
+static bool svm_da_has_master(uint32_t flag) { return ((flag & SVM_DA_FLAG_WITH_MASTER) != 0); }
 
 static int svm_da_add_node(struct svm_da_mng *da_mng, uint64_t va, uint64_t size, uint32_t flag)
 {
@@ -144,8 +135,8 @@ static void svm_da_munmap_agent(uint32_t devid, uint64_t va, uint64_t size)
     }
 }
 
-static void svm_da_munmap_agents(struct svm_da_mng *da_mng, uint64_t va, uint64_t size,
-    uint32_t min_devid, uint32_t max_devid)
+static void svm_da_munmap_agents(
+    struct svm_da_mng *da_mng, uint64_t va, uint64_t size, uint32_t min_devid, uint32_t max_devid)
 {
     uint32_t devid;
 
@@ -157,8 +148,8 @@ static void svm_da_munmap_agents(struct svm_da_mng *da_mng, uint64_t va, uint64_
     }
 }
 
-static int svm_da_mmap_agents(struct svm_da_mng *da_mng, uint64_t *va, uint64_t size,
-    uint32_t min_devid, uint32_t max_devid)
+static int svm_da_mmap_agents(
+    struct svm_da_mng *da_mng, uint64_t *va, uint64_t size, uint32_t min_devid, uint32_t max_devid)
 {
     uint32_t devid;
     int ret;
@@ -186,10 +177,7 @@ static int svm_da_mmap_master(uint64_t *va, uint64_t size)
     return (maped_addr != NULL) ? DRV_ERROR_NONE : DRV_ERROR_OUT_OF_MEMORY;
 }
 
-static void svm_da_munmap_master(uint64_t va, uint64_t size)
-{
-    devmm_svm_munmap((void *)(uintptr_t)va, size);
-}
+static void svm_da_munmap_master(uint64_t va, uint64_t size) { devmm_svm_munmap((void *)(uintptr_t)va, size); }
 
 static int svm_da_fixed_va_mmap(struct svm_da_mng *da_mng, uint64_t *va, uint64_t size, uint32_t flag)
 {
@@ -217,8 +205,8 @@ static int svm_da_fixed_va_mmap(struct svm_da_mng *da_mng, uint64_t *va, uint64_
 }
 
 /* success return negotiate_va, else return 0 */
-static uint64_t svm_da_negotiate_va(uint32_t negotiate_devid, uint64_t negotiate_va_min, uint64_t negotiate_va_max,
-    uint64_t size, uint32_t flag)
+static uint64_t svm_da_negotiate_va(
+    uint32_t negotiate_devid, uint64_t negotiate_va_min, uint64_t negotiate_va_max, uint64_t size, uint32_t flag)
 {
     uint64_t negotiate_va = negotiate_va_min;
 
@@ -334,6 +322,7 @@ int svm_da_alloc(uint64_t *va, uint64_t size, uint32_t flag)
     int ret;
 
     if (!IS_ALIGNED(size, DEVMM_HEAP_SIZE)) {
+        devmm_report_size_not_aligned("halMemAddressReserve", "size", (uint64_t)size, (size_t)DEVMM_HEAP_SIZE);
         DEVMM_DRV_ERR("Size is not heap align. (size=0x%llx)\n", size);
         return DRV_ERROR_INVALID_VALUE;
     }
@@ -449,7 +438,8 @@ int svm_da_add_dev(uint32_t devid)
         return DRV_ERROR_NONE;
     }
 
-    devmm_virt_list_for_each(pos, &da_mng->head) {
+    devmm_virt_list_for_each(pos, &da_mng->head)
+    {
         struct svm_da_node *node = devmm_virt_list_entry(pos, struct svm_da_node, node);
 
         va = node->va;
@@ -461,7 +451,8 @@ int svm_da_add_dev(uint32_t devid)
     }
 
     if (ret != DRV_ERROR_NONE) {
-        devmm_virt_list_for_each(pos, &da_mng->head) {
+        devmm_virt_list_for_each(pos, &da_mng->head)
+        {
             struct svm_da_node *node = devmm_virt_list_entry(pos, struct svm_da_node, node);
             if (va == node->va) {
                 break;
@@ -488,11 +479,10 @@ void svm_da_del_dev(uint32_t devid)
     (void)pthread_rwlock_unlock(&da_mng->lock);
 }
 
-static void __attribute__ ((constructor))svm_da_mng_init(void)
+static void __attribute__((constructor)) svm_da_mng_init(void)
 {
     struct svm_da_mng *da_mng = svm_get_da_mng();
     SVM_INIT_LIST_HEAD(&da_mng->head);
     (void)pthread_rwlock_init(&da_mng->lock, NULL);
     da_mng->try_negotiate_va = DEVMM_MAX_DYN_ALLOC_BASE;
 }
-

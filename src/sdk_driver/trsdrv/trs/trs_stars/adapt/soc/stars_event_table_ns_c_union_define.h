@@ -24,13 +24,13 @@ typedef union {
          * 1:event record has been occurred for this event ID
          * 0:event record has not been occurred for this event ID
          */
-        unsigned int eventTableFlag          : 1;       /* [0] */
+        unsigned int eventTableFlag : 1; /* [0] */
         /*
          * 1: event wait occurs before event record for this event ID
          * 0: event wait does not occur before event record for this event ID
          */
-        unsigned int eventTablePending       : 1;       /* [1] */
-        unsigned int reserved                : 30;      /* [31:2] */
+        unsigned int eventTablePending : 1; /* [1] */
+        unsigned int reserved : 30;         /* [31:2] */
     } bits;
 
     /* Define an unsigned member */
@@ -44,13 +44,13 @@ typedef union {
          * 1:event record has been occurred for this event ID
          * 0:event record has not been occurred for this event ID
          */
-        unsigned int crossSocEventTableFlag    : 1;       /* [0] */
+        unsigned int crossSocEventTableFlag : 1; /* [0] */
         /*
          * 1: event wait occurs before event record for this event ID
          * 0: event wait does not occur before event record for this event ID
          */
-        unsigned int crossSocEventTablePending : 1;       /* [1] */
-        unsigned int reserved                  : 30;      /* [31:2] */
+        unsigned int crossSocEventTablePending : 1; /* [1] */
+        unsigned int reserved : 30;                 /* [31:2] */
     } bits;
 
     /* Define an unsigned member */
@@ -61,7 +61,7 @@ typedef union {
     /* Define the struct bits */
     struct {
         /* The lower 32bit base address in HBM for storing event flag/pending. */
-        unsigned int starsEventTableBaseAddrLowNs : 32;      /* [31:0] */
+        unsigned int starsEventTableBaseAddrLowNs : 32; /* [31:0] */
     } bits;
 
     /* Define an unsigned member */
@@ -72,8 +72,8 @@ typedef union {
     /* Define the struct bits */
     struct {
         /* The higher 17bit base address in HBM for storing event flag/pending. */
-        unsigned int starsEventTableBaseAddrHighNs : 17;      /* [16:0] */
-        unsigned int reserved                : 15;      /* [31:17] */
+        unsigned int starsEventTableBaseAddrHighNs : 17; /* [16:0] */
+        unsigned int reserved : 15;                      /* [31:17] */
     } bits;
 
     /* Define an unsigned member */
@@ -87,8 +87,8 @@ typedef union {
          * 1:the address which event flag/pending store in the HBM is virtual address in the cache mode
          * 0: the address which event flag/pending store in the HBM is not virtual address in the cache mode
          */
-        unsigned int starsEventTableBaseAddrIsVirtualNs : 1;       /* [0] */
-        unsigned int reserved                : 31;      /* [31:1] */
+        unsigned int starsEventTableBaseAddrIsVirtualNs : 1; /* [0] */
+        unsigned int reserved : 31;                          /* [31:1] */
     } bits;
 
     /* Define an unsigned member */
@@ -103,12 +103,12 @@ typedef union {
          * it is the stream number output by the module,
          * which is the low part of the StreamID, 16 bits, that is 65536 streams;
          */
-        unsigned int starsEventTableSubstreamIdNs : 16;      /* [15:0] */
+        unsigned int starsEventTableSubstreamIdNs : 16; /* [15:0] */
         /*
          * SubStreamID is the substream number of StreamID. When in use,
          * the SMMU is queried together with StreamID. For PCIe devices, PASID is SubstreamID;
          */
-        unsigned int starsEventTableStreamIdNs : 16;      /* [31:16] */
+        unsigned int starsEventTableStreamIdNs : 16; /* [31:16] */
     } bits;
 
     /* Define an unsigned member */
@@ -128,7 +128,7 @@ typedef union {
          *    In this mode, all event id flag&pending is stored in the registers.
          *    Latency performance is better.
          */
-        unsigned int starsEventTableMode     : 1;       /* [0] */
+        unsigned int starsEventTableMode : 1; /* [0] */
         /*
          * event table isolation mode configuration(static configuration)
          * 0:normal mode
@@ -136,14 +136,14 @@ typedef union {
          * 1:isolation mode( only enabled in event table cache mode)
          * 65536 event id are divided into 16 equal parts, each part can only be allcated to a fixed cacheline.
          */
-        unsigned int starsEventTableIsoMode  : 1;       /* [1] */
+        unsigned int starsEventTableIsoMode : 1; /* [1] */
         /*
          * addr check enable between sft rd and reqs in sft wr buffer
          * 0:disable
          * 1:enable
          */
-        unsigned int starsEventTableSftConflictEn : 1;       /* [2] */
-        unsigned int reserved                : 29;      /* [31:3] */
+        unsigned int starsEventTableSftConflictEn : 1; /* [2] */
+        unsigned int reserved : 29;                    /* [31:3] */
     } bits;
 
     /* Define an unsigned member */
@@ -160,7 +160,7 @@ typedef union {
          * can be read by non-secure/secure operation;otherwise
          * they are unlocked and can be read/written by non-secure/secure operation
          */
-        unsigned int eventBaseAddrLocker     : 32;      /* [31:0] */
+        unsigned int eventBaseAddrLocker : 32; /* [31:0] */
     } bits;
 
     /* Define an unsigned member */
@@ -171,22 +171,22 @@ typedef union {
  * DEFINE EVENT TABLE INFO STRUCT
  */
 typedef struct {
-    StarsEventTable                      starsEventTable[4096];
-    unsigned int                         reserved0[4096];
-    StarsCrossSocEventTable              starsCrossSocEventTable[4096];
-    unsigned int                         reserved1[4096];
+    StarsEventTable starsEventTable[4096];
+    unsigned int reserved0[4096];
+    StarsCrossSocEventTable starsCrossSocEventTable[4096];
+    unsigned int reserved1[4096];
 } StarsEventGroupTableInfo;
 
 /*
  * DEFINE GLOBAL STRUCT
  */
 typedef struct {
-    StarsEventGroupTableInfo             StarsEventGroupTable[16];
-    StarsEventTableBaseAddrLowNs         starsEventTableBaseAddrLowNs;        /* 100000 */
-    StarsEventTableBaseAddrHighNs        starsEventTableBaseAddrHighNs;       /* 100004 */
-    StarsEventTableBaseAddrIsVirtualNs   starsEventTableBaseAddrIsVirtualNs;  /* 100008 */
-    StarsEventTableStreamIdNs            starsEventTableStreamIdNs;           /* 10000c */
-    StarsEventTableCtrl                  starsEventTableCtrl;                 /* 100010 */
-    StarsEventSecLock                    starsEventSecLock;                   /* 100014 */
+    StarsEventGroupTableInfo StarsEventGroupTable[16];
+    StarsEventTableBaseAddrLowNs starsEventTableBaseAddrLowNs;             /* 100000 */
+    StarsEventTableBaseAddrHighNs starsEventTableBaseAddrHighNs;           /* 100004 */
+    StarsEventTableBaseAddrIsVirtualNs starsEventTableBaseAddrIsVirtualNs; /* 100008 */
+    StarsEventTableStreamIdNs starsEventTableStreamIdNs;                   /* 10000c */
+    StarsEventTableCtrl starsEventTableCtrl;                               /* 100010 */
+    StarsEventSecLock starsEventSecLock;                                   /* 100014 */
 } StarsEventTableNsRegsType;
 #endif /* __STARS_EVENT_TABLE_NS_C_UNION_DEFINE_H__ */

@@ -14,7 +14,7 @@
 #ifndef TRS_SEC_EH_VPC_H
 #define TRS_SEC_EH_VPC_H
 
-#include <linux/types.h>
+#include "ka_type.h"
 
 #include "vmng_kernel_interface.h"
 

@@ -11,6 +11,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <fcntl.h>
+#include <unistd.h>
+#include <errno.h>
 #include "dms/dms_misc_interface.h"
 #include "dms_cmd_def.h"
 #include "ascend_kernel_hal.h"
@@ -19,6 +21,12 @@
 #include "devmng_user_common.h"
 #include "securec.h"
 #include "ascend_dev_num.h"
+
+#ifdef STATIC_SKIP
+#define STATIC
+#else
+#define STATIC static
+#endif
 
 #define DMS_LOG_BUF_SIZE     0x1400000
 #define DMS_DIR_MAXLEN       256U
@@ -33,6 +41,7 @@ static int drvKlogSaveFs(const void *buffer, u32 len, const char *logPath)
 {
 #ifndef DMS_UT
     char fullPath[DMS_DIR_MAXLEN] = { 0 };
+    char *resolvedPath = NULL;
     ssize_t cnt = 0;
     int fd = -1;
     int ret;
@@ -42,11 +51,22 @@ static int drvKlogSaveFs(const void *buffer, u32 len, const char *logPath)
         return DRV_ERROR_PARA_ERROR;
     }
 
-    ret = sprintf_s(fullPath, DMS_DIR_MAXLEN, "%s/%s", logPath, DMS_LOG_FILE_NAME);
-    if (ret == -1) {
-        DMS_ERR("Format full path failed. (dir=%s, fileName=%s)\n", logPath, DMS_LOG_FILE_NAME);
+    resolvedPath = realpath(logPath, NULL);
+    if (resolvedPath == NULL) {
+        DMS_ERR("Invalid directory for the log path. (dir=%s)\n", logPath);
         return DRV_ERROR_INVALID_VALUE;
     }
+
+    ret = sprintf_s(fullPath, DMS_DIR_MAXLEN, "%s/%s", resolvedPath, DMS_LOG_FILE_NAME);
+    if (ret < 0) {
+        DMS_ERR("Format full path failed. (dir=%s, fileName=%s)\n", resolvedPath, DMS_LOG_FILE_NAME);
+        free(resolvedPath);
+        resolvedPath = NULL;
+        return DRV_ERROR_INVALID_VALUE;
+    }
+
+    free(resolvedPath);
+    resolvedPath = NULL;
 
     fd = open(fullPath, (O_CREAT | O_RDWR | O_TRUNC), S_IRUSR | S_IWUSR);
     if (fd < 0) {
@@ -90,12 +110,9 @@ static bool drvIsVritEnv(void)
 #endif
 }
 
-int drvGetKlogBuf(uint32_t devId, const char *path, unsigned int *pSize)
+static int drvGetKlogBufParaCheck(uint32_t devId, const char *path, unsigned int *pSize)
 {
     unsigned int maxLen = DMS_DIR_MAXLEN - strlen(DMS_LOG_FILE_NAME);
-    struct dms_ioctl_arg ioarg = { 0 };
-    struct LogInfo log_info = { 0 };
-    int ret;
 
     if ((devId >= ASCEND_PDEV_MAX_NUM) || (path == NULL) || (pSize == NULL)) {
         DMS_ERR("Invalid parameters. (devId=%u, buf%s, p_size%s)\n",
@@ -109,6 +126,50 @@ int drvGetKlogBuf(uint32_t devId, const char *path, unsigned int *pSize)
         return DRV_ERROR_INVALID_VALUE;
     }
 
+    return DRV_ERROR_NONE;
+}
+
+static int drvGetKlogIoctl(uint32_t devId, struct LogInfo *log_info)
+{
+    struct dms_ioctl_arg ioarg = { 0 };
+    int ret;
+
+#ifndef DMS_UT
+    if (drvIsVritEnv()) {
+        ret = dmanage_common_ioctl(DEVDRV_MANAGER_GET_HOST_KERN_LOG, log_info);
+        if (ret != 0) {
+            DMS_EX_NOTSUPPORT_ERR(ret, "Ioctl failed. (dev_id=%u; ret=%d; errno=%d)\n", devId, ret, errno);
+            return ret;
+        }
+    } else {
+        ioarg.main_cmd = DMS_MAIN_CMD_LOG;
+        ioarg.sub_cmd = DMS_SUBCMD_GET_LOG_INFO;
+        ioarg.filter_len = 0;
+        ioarg.input = log_info;
+        ioarg.input_len = sizeof(struct LogInfo);
+        ioarg.output = &log_info->buf_len;
+        ioarg.output_len = sizeof(u32);
+        ret = errno_to_user_errno(DmsIoctl(DMS_IOCTL_CMD, &ioarg));
+        if (ret != 0) {
+            DMS_EX_NOTSUPPORT_ERR(ret, "drvGetKlogBuf failed. (devId=%u, ret=%d)", devId, ret);
+            return ret;
+        }
+    }
+#endif
+
+    return DRV_ERROR_NONE;
+}
+
+int drvGetKlogBuf(uint32_t devId, const char *path, unsigned int *pSize)
+{
+    struct LogInfo log_info = { 0 };
+    int ret;
+
+    ret = drvGetKlogBufParaCheck(devId, path, pSize);
+    if (ret != DRV_ERROR_NONE) {
+        return ret;
+    }
+
     log_info.buffer = (char *)malloc(DMS_LOG_BUF_SIZE);
     if (log_info.buffer == NULL) {
 #ifndef DMS_UT
@@ -118,30 +179,21 @@ int drvGetKlogBuf(uint32_t devId, const char *path, unsigned int *pSize)
     }
     log_info.length = DMS_LOG_BUF_SIZE;
 
+    ret = drvGetKlogIoctl(devId, &log_info);
+    if (ret != DRV_ERROR_NONE) {
 #ifndef DMS_UT
-    if (drvIsVritEnv()) {
-        ret = dmanage_common_ioctl(DEVDRV_MANAGER_GET_HOST_KERN_LOG, &log_info);
-        if (ret != 0) {
-            DMS_EX_NOTSUPPORT_ERR(ret, "Ioctl failed. (dev_id=%u; ret=%d; errno=%d)\n", devId, ret, errno);
-            free(log_info.buffer);
-            return ret;
-        }
-    } else {
-        ioarg.main_cmd = DMS_MAIN_CMD_LOG;
-        ioarg.sub_cmd = DMS_SUBCMD_GET_LOG_INFO;
-        ioarg.filter_len = 0;
-        ioarg.input = &log_info;
-        ioarg.input_len = sizeof(struct LogInfo);
-        ioarg.output = &log_info.buf_len;
-        ioarg.output_len = sizeof(u32);
-        ret = errno_to_user_errno(DmsIoctl(DMS_IOCTL_CMD, &ioarg));
-        if (ret != 0) {
-            DMS_EX_NOTSUPPORT_ERR(ret, "drvGetKlogBuf failed. (devId=%u, ret=%d)", devId, ret);
-            free(log_info.buffer);
-            return ret;
-        }
-    }
+        free(log_info.buffer);
+        return ret;
 #endif
+    }
+
+    if (log_info.buf_len > DMS_LOG_BUF_SIZE) {
+#ifndef DMS_UT
+        DMS_ERR("Buf len is invalid. (devId=%u, buf_len=%u)\n", devId, log_info.buf_len);
+        free(log_info.buffer);
+        return DRV_ERROR_INVALID_VALUE;
+#endif
+    }
 
     ret = drvKlogSaveFs((const char *)log_info.buffer, log_info.buf_len, path);
     if (ret != 0) {
@@ -156,3 +208,85 @@ int drvGetKlogBuf(uint32_t devId, const char *path, unsigned int *pSize)
     return DRV_ERROR_NONE;
 }
 
+STATIC int g_log_fd = -1;
+static pthread_mutex_t g_log_mtx = PTHREAD_MUTEX_INITIALIZER;
+#define DSMI_LOG_PROC       "/proc/dsmi_log"
+#define MAX_LOG_BUF         1024
+
+// The fd is automatically closed when the process exits.
+static void __attribute__((destructor)) dsmi_log_exit(void)
+{
+    pthread_mutex_lock(&g_log_mtx);
+    if (g_log_fd >= 0) {
+        close(g_log_fd);
+        g_log_fd = -1;
+    }
+    pthread_mutex_unlock(&g_log_mtx);
+}
+
+// only open once
+static int dsmi_log_get_fd(void)
+{
+    if (g_log_fd >= 0)
+        return g_log_fd;
+
+    int fd = open(DSMI_LOG_PROC, O_WRONLY | O_CLOEXEC);
+    if (fd < 0) {
+        return -errno;
+    }
+
+    g_log_fd = fd;
+    return g_log_fd;
+}
+
+int dsmi_printf(const char *fmt, ...)
+{
+    char buf[MAX_LOG_BUF];
+    va_list ap;
+    int fd;
+    ssize_t len, nwrite;
+    ssize_t off = 0;
+
+    if (fmt == NULL) {
+        return -EINVAL;
+    }
+
+    va_start(ap, fmt);
+    len = vsnprintf_s(buf, sizeof(buf), sizeof(buf) - 1, fmt, ap);
+    va_end(ap);
+    if (len < 0 || (size_t)len >= sizeof(buf)) {
+        return -EINVAL;
+    }
+
+    pthread_mutex_lock(&g_log_mtx);
+    fd = dsmi_log_get_fd();
+    if (fd < 0) {
+        pthread_mutex_unlock(&g_log_mtx);
+        return fd;
+    }
+    
+    while (off < len) {
+        nwrite = write(fd, buf + off, (size_t)(len - off));
+        if (nwrite > 0) {
+            off += nwrite;
+            continue;
+        }
+        if (nwrite < 0 && errno == EINTR) {
+            continue;
+        }
+        pthread_mutex_unlock(&g_log_mtx);
+        return (nwrite == 0) ? -EIO : -errno;
+    }
+
+    pthread_mutex_unlock(&g_log_mtx);
+    return (int)len;
+}
+
+const char *get_process_name(void)
+{
+    if (program_invocation_short_name == NULL || program_invocation_short_name[0] == '\0') {
+        return "unknown";
+    }
+
+    return program_invocation_short_name;
+}

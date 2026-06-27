@@ -32,19 +32,26 @@
 #define module_vmng "vmng_dev"
 #endif
 
-#define vmng_err(fmt, ...) drv_err(module_vmng, "<%s:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), ##__VA_ARGS__)
-#define vmng_warn(fmt, ...) drv_warn(module_vmng, "<%s:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), ##__VA_ARGS__)
-#define vmng_event(fmt, ...) drv_event(module_vmng, "<%s:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), ##__VA_ARGS__)
-#define vmng_info(fmt, ...) drv_info(module_vmng, "<%s:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), ##__VA_ARGS__)
+#define vmng_err(fmt, ...) \
+    drv_err(module_vmng, "<%s:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), ##__VA_ARGS__)
+#define vmng_warn(fmt, ...) \
+    drv_warn(module_vmng, "<%s:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), ##__VA_ARGS__)
+#define vmng_event(fmt, ...) \
+    drv_event(module_vmng, "<%s:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), ##__VA_ARGS__)
+#define vmng_info(fmt, ...) \
+    drv_info(module_vmng, "<%s:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), ##__VA_ARGS__)
 
-#define vmng_err_limit(fmt, ...) do { \
-    if (ka_dfx_printk_ratelimit() != 0) { \
-       drv_err(module_vmng, "<%s:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), ##__VA_ARGS__); \
-    } \
-} while (0)
+#define vmng_err_limit(fmt, ...)                                                                         \
+    do {                                                                                                 \
+        if (ka_dfx_printk_ratelimit() != 0) {                                                            \
+            drv_err(module_vmng, "<%s:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), \
+                    ##__VA_ARGS__);                                                                      \
+        }                                                                                                \
+    } while (0)
 
 #ifdef DRV_VMNG_DEBUG
-#define vmng_debug(fmt, ...) drv_debug(module_vmng, "<%s:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), ##__VA_ARGS__)
+#define vmng_debug(fmt, ...) \
+    drv_debug(module_vmng, "<%s:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), ##__VA_ARGS__)
 #else
 #define vmng_debug(fmt, ...)
 #endif /* End of DRV_VMNG_DEBUG */
@@ -173,6 +180,5 @@ struct vmng_shr_para {
     u32 chan_num;
     u32 msix_offset;
 };
-
 
 #endif

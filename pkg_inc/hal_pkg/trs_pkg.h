@@ -93,8 +93,9 @@ typedef enum tagDrvSqCqPropType {
 } drvSqCqPropType_t;
 
 #define SQCQ_CONFIG_INFO_LENGTH 8
-#define SQCQ_CONFIG_INFO_FLAG (SQCQ_CONFIG_INFO_LENGTH - 1) // 0: local; 1: remote
+#define SQCQ_CONFIG_INFO_FLAG (SQCQ_CONFIG_INFO_LENGTH - 1)
 #define SQCQ_QUERY_INFO_LENGTH 8
+#define SQCQ_QUERY_INFO_FLAG (SQCQ_QUERY_INFO_LENGTH - 1)
 
 struct halSqCqConfigInfo {
     drvSqCqType_t type;
@@ -128,6 +129,7 @@ enum res_addr_type {
     RES_ADDR_TYPE_HCCP_URMA_JFC,
     RES_ADDR_TYPE_HCCP_URMA_DB,
     RES_ADDR_TYPE_NDA_URMA_DB,
+    RES_ADD_TYPE_CCU,
     RES_ADDR_TYPE_MAX
 };
 

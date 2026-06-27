@@ -17,11 +17,6 @@
 #include "ka_task_pub.h"
 #include "ka_memory_pub.h"
 
-ka_mem_cgroup_t *devmm_enable_cgroup(ka_mem_cgroup_t **memcg, ka_pid_t pid)
-{
-    return NULL;
-}
+ka_mem_cgroup_t *devmm_enable_cgroup(ka_mem_cgroup_t **memcg, ka_pid_t pid) { return NULL; }
 
-void devmm_disable_cgroup(ka_mem_cgroup_t *memcg, ka_mem_cgroup_t *old_memcg)
-{
-}
+void devmm_disable_cgroup(ka_mem_cgroup_t *memcg, ka_mem_cgroup_t *old_memcg) {}

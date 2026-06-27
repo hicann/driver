@@ -13,7 +13,7 @@
 #ifndef TRS_STARS_FUNC_ADAPT_H
 #define TRS_STARS_FUNC_ADAPT_H
 
-#include <linux/types.h>
+#include "ka_type.h"
 #include "trs_pub_def.h"
 
 int trs_init_cnt_notify_tbl(struct trs_id_inst *inst);

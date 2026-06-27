@@ -17,8 +17,8 @@
 #include "uref.h"
 #include "rbtree.h"
 
-#define QUE_DATA_RW_JETTY_POOL_SEND_DEPTH   (2 * 1024)
-#define QUE_MAX_RW_WR_NUM       QUE_DATA_RW_JETTY_POOL_SEND_DEPTH
+#define QUE_DATA_RW_JETTY_POOL_SEND_DEPTH (2 * 1024)
+#define QUE_MAX_RW_WR_NUM QUE_DATA_RW_JETTY_POOL_SEND_DEPTH
 
 typedef enum que_chan_type {
     CHAN_CREATE,
@@ -55,7 +55,7 @@ typedef enum que_mem_type {
     MEM_OTHERS_SVM,
     MEM_NOT_SVM,
     MEM_TYPE_BUTT,
-}QUE_MEM_TYPE;
+} QUE_MEM_TYPE;
 
 struct que_urma_token {
     urma_token_id_t *token_id;
@@ -95,7 +95,7 @@ struct que_ack_jfs {
     urma_jfc_t *jfc_s;
     urma_target_jetty_t *tjetty;
 };
- 
+
 /* Alloced for event ub send and freed after send */
 struct que_tx {
     QUE_MEM_TYPE mem_type;
@@ -104,12 +104,12 @@ struct que_tx {
     bool default_wr_flag;
     unsigned int first_iovec_num;
     unsigned int remain_iovec_num;
-    int sn        : 8;
-    int rsv       : 24;
+    unsigned int sn : 8;
+    unsigned int rsv : 24;
 
     uint64_t pkt_timestamp;
-    unsigned long long pkt_size;    /* Total pakets size */
-    struct que_pkt *pkt;      /* Base address of all packet */
+    unsigned long long pkt_size; /* Total pakets size */
+    struct que_pkt *pkt;         /* Base address of all packet */
     urma_target_seg_t *pkt_tseg;
 
     unsigned int total_iovec_num;
@@ -146,7 +146,7 @@ typedef enum async_que_ini_status {
     INI_WAIT_F2NF,
     INI_ABNORMAL,
     INI_STATUS_BUTT,
-}ASYNC_QUE_INI_STATUS;
+} ASYNC_QUE_INI_STATUS;
 
 struct que_mbuf_list {
     unsigned int head;
@@ -164,7 +164,7 @@ struct que_jfs_pool_info {
 struct que_rx_mbuf {
     Mbuf *mbuf;
 
-    void *ctx_aligned_va;   /* For register and copy context */
+    void *ctx_aligned_va; /* For register and copy context */
     urma_target_seg_t *ctx_aligned_tseg;
 
     void *mbuf_ctx_va;
@@ -174,7 +174,6 @@ struct que_rx_mbuf {
     unsigned long long data_size;
     urma_target_seg_t *data_tseg;
 };
-
 
 struct que_rx {
     QUE_MEM_TYPE mem_type;
@@ -238,13 +237,13 @@ struct que_ini_proc {
     unsigned int peer_qid;
     unsigned int peer_devid;
     struct que_jfs_pool_info *jfs_info; /* Send jfs pool for peer device, for pkt send */
-    unsigned int jfs_idx; /* Send jetty idx for peer device, for pkt send */
-    urma_target_jetty_t *tjetty; /* Imported jetty from peer device, for pkt send */
-    struct que_jfr *qjfr; /* Recv jetty for peer device, for async queue ack recv */
+    unsigned int jfs_idx;               /* Send jetty idx for peer device, for pkt send */
+    urma_target_jetty_t *tjetty;        /* Imported jetty from peer device, for pkt send */
+    struct que_jfr *qjfr;               /* Recv jetty for peer device, for async queue ack recv */
     unsigned int total_iovec_num;
     uint64_t *timestamp;
-    int sn        : 8;
-    int tgt_time  : 24;
+    unsigned int sn : 8;
+    unsigned int tgt_time : 24;
     unsigned int cnt[INI_CNT_MAX];
     unsigned int d2d_flag;
 };
@@ -265,8 +264,8 @@ struct que_tgt_proc {
     struct que_ack_jfs ack_send_jetty;
     int tgt_proc_result;
     bool is_finished;
-    int pre_pkt_sn   : 9;
-    int rsv          : 23;
+    unsigned int pre_pkt_sn : 9;
+    unsigned int rsv : 23;
     unsigned long long usr_ctx_addr;
     unsigned int peer_qid;
     unsigned int total_iovec_num;
@@ -281,7 +280,7 @@ struct que_chan {
 
     /* Created */
     unsigned int qid;
-    unsigned long create_time;  
+    unsigned long create_time;
 
     unsigned int chan_type;
     struct que_urma_token token;
@@ -292,7 +291,6 @@ struct que_chan {
     unsigned int local_create_flag;
     struct uref ref;
 };
-
 
 struct que_node {
     unsigned long long va;
@@ -306,8 +304,8 @@ struct que_pkt_head {
     unsigned int first_iovec_num;
     unsigned int remain_iovec_num;
     unsigned int total_iovec_num;
-    int sn        : 8;
-    int rsv       : 24;
+    unsigned int sn : 8;
+    unsigned int rsv : 24;
     uint64_t pkt_timestamp;
     uint64_t ini_base_timestamp;
     unsigned long long total_iovec_size;
@@ -383,8 +381,8 @@ struct que_query_info_out_msg {
     int size;
     int status;
     int work_mode;
-    unsigned long long enque_cnt;       // statistics of the successful enqueues
-    unsigned long long deque_cnt;       // statistics of the successful dequeues
+    unsigned long long enque_cnt; // statistics of the successful enqueues
+    unsigned long long deque_cnt; // statistics of the successful dequeues
 };
 
 struct que_get_status_in_msg {
@@ -408,8 +406,9 @@ struct que_finish_cb_in_msg {
     unsigned int event_id;
 };
 
-struct que_attach_out_msg {
+union que_attach_out_msg {
     unsigned long create_time;
+    char rsv[EVENT_PROC_RSP_LEN];
 };
 
 struct que_attach_in_msg {
@@ -431,6 +430,7 @@ struct que_reset_in_msg {
 struct que_inter_dev_export_import_in_msg {
     unsigned int dev_id;
     unsigned int peer_dev_id;
+    unsigned int phy_peer_devid;
     char share_queue_name[SHARE_QUEUE_NAME_MAX_LEN];
     unsigned int qid;
     pid_t devpid;

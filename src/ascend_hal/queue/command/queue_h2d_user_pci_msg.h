@@ -37,8 +37,8 @@ struct queue_sub_para {
     int pid;
     unsigned int gid;
     unsigned int tid;
-    unsigned int event_id       :16;
-    unsigned int inner_sub_flag :16;
+    unsigned int event_id : 16;
+    unsigned int inner_sub_flag : 16;
     unsigned int dst_phy_devid;
 };
 

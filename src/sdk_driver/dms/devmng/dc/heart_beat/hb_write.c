@@ -98,9 +98,6 @@ static ka_hrtimer_restart_t heart_beat_write_count(ka_hrtimer_t *htr)
     bool abnormal = false;
     struct hb_write_timer *info = NULL;
     ka_timespec64_t current_time;
-#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 6, 0)
-    ka_timespec_t tmp_current_time;
-#endif
 
     if (htr == NULL) {
         ka_system_hrtimer_forward_now(htr, ka_system_ktime_set(HEART_BEAT_TIMER_EXPIRE_SEC, 0));
@@ -122,14 +119,7 @@ static ka_hrtimer_restart_t heart_beat_write_count(ka_hrtimer_t *htr)
     }
 
 #ifndef DRV_SOFT_UT
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 6, 0)
     ka_system_jiffies_to_timespec64(ka_jiffies, &current_time);
-#else
-    jiffies_to_timespec(ka_jiffies, &tmp_current_time);
-
-    current_time.tv_nsec = tmp_current_time.tv_nsec;
-    current_time.tv_sec = tmp_current_time.tv_sec;
-#endif
 #endif
 
     info->last_write_time = current_time;
@@ -188,18 +178,10 @@ int heart_beat_write_timer_init(void)
         g_hb_write_block[i].count = 0;
         g_hb_write_block[i].device_status = HEART_BEAT_NOT_INIT;
     }
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 4, 1)
-    ka_system_hrtimer_init(&g_hb_write_timer.timer, KA_CLOCK_MONOTONIC, KA_HRTIMER_MODE_REL_HARD);
-#else
-    ka_system_hrtimer_init(&g_hb_write_timer.timer, KA_CLOCK_MONOTONIC, KA_HRTIMER_MODE_REL);
-#endif
+    ka_system_hrtimer_init(&g_hb_write_timer.timer, KA_CLOCK_MONOTONIC, KA_HRTIMER_MODE_REL_TYPE);
     g_hb_write_timer.timer.function = heart_beat_write_count;
     KA_TASK_INIT_WORK(&g_hb_write_timer.work, heart_beart_write_dfx_handler);
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 4, 1)
-    ka_system_hrtimer_start(&g_hb_write_timer.timer, ka_system_ktime_set(HEART_BEAT_TIMER_EXPIRE_SEC, 0), KA_HRTIMER_MODE_REL_HARD);
-#else
-    ka_system_hrtimer_start(&g_hb_write_timer.timer, ka_system_ktime_set(HEART_BEAT_TIMER_EXPIRE_SEC, 0), KA_HRTIMER_MODE_REL);
-#endif
+    ka_system_hrtimer_start(&g_hb_write_timer.timer, ka_system_ktime_set(HEART_BEAT_TIMER_EXPIRE_SEC, 0), KA_HRTIMER_MODE_REL_TYPE);
     return DRV_ERROR_NONE;
 #else
     return 0;

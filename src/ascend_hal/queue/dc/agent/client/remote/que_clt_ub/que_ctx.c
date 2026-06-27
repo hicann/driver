@@ -53,8 +53,7 @@ static struct queue_sub_flag *que_subflag_init(unsigned int devid)
 
     subflag = (struct queue_sub_flag *)malloc(sizeof(struct queue_sub_flag) * MAX_SURPORT_QUEUE_NUM);
     if (que_unlikely(subflag == NULL)) {
-        QUEUE_LOG_ERR("que subflag alloc fail. (devid=%u; size=%ld)\n",
-            devid, sizeof(struct queue_sub_flag));
+        QUEUE_LOG_ERR("que subflag alloc fail. (devid=%u; size=%ld)\n", devid, sizeof(struct queue_sub_flag));
         return NULL;
     }
     for (i = 0; i < MAX_SURPORT_QUEUE_NUM; i++) {
@@ -70,8 +69,8 @@ static struct que_ctx *_que_ctx_create(unsigned int devid, pid_t hostpid, pid_t 
 
     ctx = (struct que_ctx *)calloc(1, sizeof(struct que_ctx));
     if (que_unlikely(ctx == NULL)) {
-        QUEUE_LOG_ERR("que ctx alloc fail. (devid=%u; size=%ld; hostpid=%d; devpid=%d)\n",
-            devid, sizeof(struct que_ctx), hostpid, devpid);
+        QUEUE_LOG_ERR("que ctx alloc fail. (devid=%u; size=%ld; hostpid=%d; devpid=%d)\n", devid,
+                      sizeof(struct que_ctx), hostpid, devpid);
         return NULL;
     }
 
@@ -168,19 +167,19 @@ drvError_t que_ctx_h2d_init(unsigned int devid, urma_jfr_id_t *tjfr_id, urma_tok
     urma_target_jetty_t *tjetty = NULL;
     struct queue_sub_flag *subflag = NULL;
     struct que_ctx *ctx = NULL;
- 
+
     ctx = que_ctx_get(devid);
     if (que_unlikely(ctx == NULL)) {
         return DRV_ERROR_QUEUE_NOT_INIT;
     }
- 
+
     subflag = que_subflag_init(devid);
     if (que_unlikely(subflag == NULL)) {
         QUEUE_LOG_ERR("que subflag init fail. (devid=%u)\n", devid);
         que_ctx_put(ctx);
         return DRV_ERROR_INNER_ERR;
     }
- 
+
     tjetty = que_jfr_import(devid, tjfr_id, token, TRANS_D2H_H2D);
     if (que_unlikely(tjetty == NULL)) {
         free(subflag);
@@ -318,7 +317,6 @@ bool que_is_need_sync_wait(unsigned int devid, unsigned int qid, unsigned int su
     return true;
 }
 
-
 int que_ctx_get_pids(unsigned int devid, pid_t *hostpid, pid_t *devpid)
 {
     struct que_ctx *ctx = NULL;
@@ -390,7 +388,8 @@ void que_clt_ub_uninit(void)
 {
     unsigned int devid;
 
-    /* Run the for loop twice to perform destroy and put operations to prevent the urma from deleting the context in use. */
+    /* Run the for loop twice to perform destroy and put operations to prevent the urma from deleting the context in
+     * use. */
     for (devid = 0; devid < MAX_DEVICE; devid++) {
         que_ctx_destroy(devid);
     }
@@ -399,8 +398,8 @@ void que_clt_ub_uninit(void)
     }
 }
 
-int que_ctx_update(unsigned int devid, unsigned int qid, struct que_ctx *ctx, QUEUE_AGENT_TYPE que_type,
-    int *jfs_idx, int *jfr_idx)
+int que_ctx_update(unsigned int devid, unsigned int qid, struct que_ctx *ctx, QUEUE_AGENT_TYPE que_type, int *jfs_idx,
+                   int *jfr_idx)
 {
     int ret;
     unsigned int d2d_flag = TRANS_D2H_H2D;
@@ -418,7 +417,8 @@ int que_ctx_update(unsigned int devid, unsigned int qid, struct que_ctx *ctx, QU
         return ret;
     }
 
-    ret = que_chan_ini_update(devid, qid, &(ctx->jfs_pool[d2d_flag][*jfs_idx]), &(ctx->jfr_pool[d2d_flag][*jfr_idx]), ctx->tjetty, ctx->token[d2d_flag], que_type, d2d_flag);
+    ret = que_chan_ini_update(devid, qid, &(ctx->jfs_pool[d2d_flag][*jfs_idx]), &(ctx->jfr_pool[d2d_flag][*jfr_idx]),
+                              ctx->tjetty, ctx->token[d2d_flag], que_type, d2d_flag);
     if (que_unlikely(ret != DRV_ERROR_NONE)) {
         que_qjfr_free(ctx->jfr_pool[d2d_flag], *jfr_idx);
         que_qjfs_free(ctx->jfs_pool[d2d_flag], *jfs_idx);
@@ -430,8 +430,7 @@ int que_ctx_update(unsigned int devid, unsigned int qid, struct que_ctx *ctx, QU
 
 int que_ctx_enque(unsigned int devid, unsigned int qid, struct buff_iovec *vector, int timeout)
 {
-    int timeout_ms_ = timeout;
-    int ret, wait_ret, jfs_idx, jfr_idx;
+    int ret, wait_ret, jfs_idx, jfr_idx, timeout_ms_ = timeout;
     uint64_t stamp[TRACE_UPDATE_BUFF] = {0};
 
     struct que_ctx *ctx = que_ctx_get(devid);
@@ -462,8 +461,7 @@ int que_ctx_enque(unsigned int devid, unsigned int qid, struct buff_iovec *vecto
         }
 
         if (ret != DRV_ERROR_QUEUE_FULL) {
-            QUEUE_LOG_ERR("que enque buff fail. (ret=%d; devid=%u; qid=%u; devpid=%d)\n",
-                ret, devid, qid, ctx->devpid);
+            QUEUE_LOG_ERR("que enque buff fail. (ret=%d; devid=%u; qid=%u; devpid=%d)\n", ret, devid, qid, ctx->devpid);
             break;
         }
 
@@ -481,7 +479,7 @@ int que_ctx_enque(unsigned int devid, unsigned int qid, struct buff_iovec *vecto
         queue_updata_timeout(start, end, &timeout_ms_);
         que_chan_done(devid, qid, H2D_SYNC_ENQUE);
     } while (true);
-
+    queue_report_insufficient_device_memory(vector, ret);
     que_chan_done(devid, qid, H2D_SYNC_ENQUE);
     que_qjfs_free(ctx->jfs_pool[TRANS_D2H_H2D], jfs_idx);
     que_qjfr_free(ctx->jfr_pool[TRANS_D2H_H2D], jfr_idx);
@@ -517,18 +515,30 @@ int que_deque_para_check(unsigned int devid, unsigned int qid, struct buff_iovec
     bool is_bar_buf = que_deque_is_bar_buf(vector);
     if (is_bar_buf == true) {
         if (que_unlikely(vector->count != 1)) {
-            QUEUE_LOG_ERR("input param is invalid. (devid=%u; qid=%u; count=%u)\n",
-                devid, qid, vector->count);
+            QUEUE_LOG_ERR("input param is invalid. (devid=%u; qid=%u; count=%u)\n", devid, qid, vector->count);
             return DRV_ERROR_INVALID_VALUE;
         }
     }
     return DRV_ERROR_NONE;
 }
 
+static bool queue_wait_and_update(unsigned int devid, unsigned int qid, int ret, int *timeout_ms_)
+{
+    int wait_ret;
+    struct timeval start, end;
+    que_get_time(&start);
+    wait_ret = queue_wait_event(devid, qid, ret, *timeout_ms_);
+    que_get_time(&end);
+    if (que_unlikely(wait_ret != DRV_ERROR_NONE)) {
+        return false;
+    }
+    queue_updata_timeout(start, end, timeout_ms_);
+    return true;
+}
+
 int que_ctx_deque(unsigned int devid, unsigned int qid, struct buff_iovec *vector, int timeout)
 {
-    int timeout_ms_ = timeout;
-    int ret, wait_ret, jfs_idx, jfr_idx;
+    int ret, jfs_idx, jfr_idx, timeout_ms_ = timeout;
     uint64_t stamp[TRACE_UPDATE + 1] = {0};
 
     struct que_ctx *ctx = que_ctx_get(devid);
@@ -539,20 +549,17 @@ int que_ctx_deque(unsigned int devid, unsigned int qid, struct buff_iovec *vecto
 
     ret = que_deque_para_check(devid, qid, vector);
     if (que_unlikely(ret != DRV_ERROR_NONE)) {
-        que_ctx_put(ctx);
-        return ret;
+        goto out_put;
     }
 
     ret = que_ctx_update(devid, qid, ctx, H2D_SYNC_DEQUE, &jfs_idx, &jfr_idx);
     if (que_unlikely(ret != DRV_ERROR_NONE)) {
         QUEUE_LOG_ERR("que ctx update fail. (ret=%d; devid=%u; qid=%u)\n", ret, devid, qid);
-        que_ctx_put(ctx);
-        return ret;
+        goto out_put;
     }
     stamp[TRACE_UPDATE] = que_get_cur_time_ns();
 
     do {
-        struct timeval start, end;
         ret = que_chan_pkt_send(devid, qid, H2D_SYNC_DEQUE, vector, stamp);
         if (que_unlikely(ret != DRV_ERROR_NONE)) {
             QUEUE_LOG_ERR("que deque send fail. (ret=%d; devid=%u; qid=%u; devpid=%d)\n", ret, devid, qid, ctx->devpid);
@@ -565,8 +572,7 @@ int que_ctx_deque(unsigned int devid, unsigned int qid, struct buff_iovec *vecto
         }
 
         if (ret != DRV_ERROR_QUEUE_EMPTY) {
-            QUEUE_LOG_ERR("que deque buff fail. (ret=%d; devid=%u; qid=%u; devpid=%d)\n",
-                ret, devid, qid, ctx->devpid);
+            QUEUE_LOG_ERR("que deque buff fail. (ret=%d; devid=%u; qid=%u; devpid=%d)\n", ret, devid, qid, ctx->devpid);
             break;
         }
 
@@ -574,20 +580,17 @@ int que_ctx_deque(unsigned int devid, unsigned int qid, struct buff_iovec *vecto
             break;
         }
 
-        que_get_time(&start);
-        wait_ret = queue_wait_event(devid, qid, ret, timeout_ms_);
-        que_get_time(&end);
-        if (que_unlikely(wait_ret != DRV_ERROR_NONE)) {
+        if (!queue_wait_and_update(devid, qid, ret, &timeout_ms_)) {
             break;
         }
 
-        queue_updata_timeout(start, end, &timeout_ms_);
         que_chan_done(devid, qid, H2D_SYNC_DEQUE);
     } while (true);
-
+    queue_report_insufficient_device_memory(vector, ret);
     que_chan_done(devid, qid, H2D_SYNC_DEQUE);
     que_qjfr_free(ctx->jfr_pool[TRANS_D2H_H2D], jfr_idx);
     que_qjfs_free(ctx->jfs_pool[TRANS_D2H_H2D], jfs_idx);
+out_put:
     que_ctx_put(ctx);
     return ret;
 }
@@ -598,7 +601,7 @@ int queue_clt_init_check(unsigned int devid)
     ctx = que_ctx_get(devid);
     if (que_unlikely(ctx != NULL)) {
         que_ctx_put(ctx);
-        return DRV_ERROR_REPEATED_INIT;   
+        return DRV_ERROR_REPEATED_INIT;
     }
 
     return DRV_ERROR_NONE;
@@ -616,8 +619,6 @@ static int __attribute__((constructor)) que_clt_ctx_init(void)
 #else /* EMU_ST */
 
 void que_clt_ctx_emu_test(void)
-{
-}
+{}
 
 #endif /* EMU_ST */
-

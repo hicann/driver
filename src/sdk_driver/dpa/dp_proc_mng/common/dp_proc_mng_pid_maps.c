@@ -60,8 +60,8 @@ void dp_pid_maps_ops_unregester(void)
 KA_EXPORT_SYMBOL_GPL(dp_pid_maps_ops_unregester);
 
 #ifndef DCFG_FEATURE_APM_SUPP_PID
-int hal_kernel_devdrv_query_process_by_host_pid_kernel(unsigned int host_pid,
-    unsigned int chip_id, enum devdrv_process_type cp_type, unsigned int vfid, int *pid)
+int hal_kernel_devdrv_query_process_by_host_pid_kernel(
+    unsigned int host_pid, unsigned int chip_id, enum devdrv_process_type cp_type, unsigned int vfid, int *pid)
 {
     int ret = -ENODATA;
     ka_task_down_read(&g_dp_pid_map_lock);
@@ -73,8 +73,8 @@ int hal_kernel_devdrv_query_process_by_host_pid_kernel(unsigned int host_pid,
 }
 KA_EXPORT_SYMBOL_GPL(hal_kernel_devdrv_query_process_by_host_pid_kernel);
 
-int devdrv_query_process_by_host_pid(unsigned int host_pid,
-    unsigned int chip_id, enum devdrv_process_type cp_type, unsigned int vfid, int *pid)
+int devdrv_query_process_by_host_pid(
+    unsigned int host_pid, unsigned int chip_id, enum devdrv_process_type cp_type, unsigned int vfid, int *pid)
 {
     int ret = -ENODATA;
     ka_task_down_read(&g_dp_pid_map_lock);
@@ -86,8 +86,8 @@ int devdrv_query_process_by_host_pid(unsigned int host_pid,
 }
 KA_EXPORT_SYMBOL_GPL(devdrv_query_process_by_host_pid);
 
-int hal_kernel_devdrv_query_process_host_pid(int pid, unsigned int *chip_id, unsigned int *vfid, unsigned int *host_pid,
-    enum devdrv_process_type *cp_type)
+int hal_kernel_devdrv_query_process_host_pid(
+    int pid, unsigned int *chip_id, unsigned int *vfid, unsigned int *host_pid, enum devdrv_process_type *cp_type)
 {
     int ret = -ENODATA;
     ka_task_down_read(&g_dp_pid_map_lock);
@@ -219,7 +219,4 @@ KA_EXPORT_SYMBOL_GPL(devdrv_put_dev_process);
 #endif
 #endif
 
-void dp_pid_maps_init(void)
-{
-    ka_task_init_rwsem(&g_dp_pid_map_lock);
-}
+void dp_pid_maps_init(void) { ka_task_init_rwsem(&g_dp_pid_map_lock); }

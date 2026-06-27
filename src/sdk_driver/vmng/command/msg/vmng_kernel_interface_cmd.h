@@ -17,7 +17,7 @@
 #include <linux/types.h>
 #include "drv_type.h"
 
-#define VMNG_NUMA_MAX_NUM   25
+#define VMNG_NUMA_MAX_NUM 25
 struct vmng_numa_address {
     u64 start;
     u64 end;
@@ -77,8 +77,8 @@ struct vmng_vf_group_refresh {
 };
 
 struct vmng_vf_sync_remote_id {
-    u32 udevid;         /* devid in host local */
-    u32 remote_udevid;  /* devid in remote device os */
+    u32 udevid;        /* devid in host local */
+    u32 remote_udevid; /* devid in remote device os */
 };
 
 struct vmng_vf_group_info {
@@ -117,11 +117,22 @@ struct vmng_soc_resource_refresh {
     struct vmng_stars_res_refresh stars_refresh;
 };
 
+enum vmng_pf_sriov_status {
+    VMNGH_PF_SRIOV_DISABLE = 0,
+    VMNGH_PF_SRIOV_ENABLE,
+    VMNGH_PF_STATUS_MAX
+};
+
+struct vmng_sriov_msg_info {
+    enum vmng_pf_sriov_status sriov_status;
+    u32 vm_full_spec_enable;
+};
+
 struct vmng_mdev_iova_info {
     unsigned int dev_id;
     unsigned int vfid;
-    unsigned int action;    // online or offline
-    dma_addr_t iova_base;   // vf iova of pm
+    unsigned int action;  // online or offline
+    dma_addr_t iova_base; // vf iova of pm
     size_t size;
 };
 #endif

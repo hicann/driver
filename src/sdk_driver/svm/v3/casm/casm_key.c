@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2025. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -16,6 +16,7 @@
 #include "ka_common_pub.h"
 #include "ka_fs_pub.h"
 #include "ka_compiler_pub.h"
+#include "ka_ioctl_pub.h"
 
 #include "pbl_feature_loader.h"
 #include "dpa_kernel_interface.h"
@@ -33,20 +34,20 @@
 #include "casm_src.h"
 #include "casm_key.h"
 
+#define KEY_SHOW_NODE_MAX 100000
+
 struct casm_key_ctx {
     u32 udevid;
     void *dev_ctx;
     ka_mutex_t mutex;
     ka_idr_t idr;
+    u32 id_num;
 };
 
 static u32 casm_dev_feature_id;
 static struct svm_casm_key_ops *casm_key_ops = NULL;
 
-void svm_casm_register_key_ops(const struct svm_casm_key_ops *ops)
-{
-    casm_key_ops = (struct svm_casm_key_ops *)ops;
-}
+void svm_casm_register_key_ops(const struct svm_casm_key_ops *ops) { casm_key_ops = (struct svm_casm_key_ops *)ops; }
 
 static int casm_key_update_handle(u64 *key)
 {
@@ -92,10 +93,7 @@ static int casm_key_to_udevid_and_id(u64 key, u32 *udevid, u32 *id)
     return ret;
 }
 
-bool casm_is_local_key(u64 key)
-{
-    return casm_key_is_local_handle(key);
-}
+bool casm_is_local_key(u64 key) { return casm_key_is_local_handle(key); }
 
 static struct casm_key_ctx *casm_key_ctx_get(u32 udevid)
 {
@@ -115,10 +113,7 @@ static struct casm_key_ctx *casm_key_ctx_get(u32 udevid)
     return key_ctx;
 }
 
-static void casm_key_ctx_put(struct casm_key_ctx *key_ctx)
-{
-    svm_dev_ctx_put(key_ctx->dev_ctx);
-}
+static void casm_key_ctx_put(struct casm_key_ctx *key_ctx) { svm_dev_ctx_put(key_ctx->dev_ctx); }
 
 static int casm_key_id_alloc(struct casm_key_ctx *key_ctx, struct casm_src_node *src_node, u32 *id)
 {
@@ -126,6 +121,9 @@ static int casm_key_id_alloc(struct casm_key_ctx *key_ctx, struct casm_src_node 
 
     ka_base_idr_lock(&key_ctx->idr);
     ret = ka_base_idr_alloc_cyclic(&key_ctx->idr, src_node, 0, -1, KA_GFP_ATOMIC); /* -1 use INT_MAX */
+    if (ret >= 0) {
+        key_ctx->id_num++;
+    }
     ka_base_idr_unlock(&key_ctx->idr);
 
     if (ret < 0) {
@@ -142,6 +140,9 @@ static struct casm_src_node *casm_key_id_free(struct casm_key_ctx *key_ctx, u32 
 
     ka_base_idr_lock(&key_ctx->idr);
     src_node = ka_base_idr_remove(&key_ctx->idr, (unsigned long)id);
+    if ((src_node != NULL) && (key_ctx->id_num > 0)) {
+        key_ctx->id_num--;
+    }
     ka_base_idr_unlock(&key_ctx->idr);
 
     return src_node;
@@ -162,6 +163,7 @@ static void casm_key_ctx_init(struct casm_key_ctx *key_ctx)
 {
     ka_task_mutex_init(&key_ctx->mutex);
     ka_base_idr_init(&key_ctx->idr);
+    key_ctx->id_num = 0;
 }
 
 static void casm_key_ctx_uninit(struct casm_key_ctx *key_ctx)
@@ -222,11 +224,38 @@ static int _casm_create_key(struct casm_key_ctx *key_ctx, struct svm_global_va *
     return 0;
 }
 
-static int _casm_destroy_key(struct casm_key_ctx *key_ctx, u32 id)
+static int casm_destroy_permission_check(struct casm_key_ctx *key_ctx, u32 id, bool force)
+{
+    struct casm_src_node *src_node = NULL;
+
+    if (force == false) {
+        src_node = casm_key_id_find(key_ctx, id);
+        if (src_node == NULL) {
+            svm_err("Invalid key. (udevid=%u; id=%u)\n", key_ctx->udevid, id);
+            return -EINVAL;
+        }
+
+        if (ka_unlikely(ka_task_get_current_tgid() != src_node->src_ex.owner_tgid)) {
+            svm_err(
+                "No creator have no permission to destroy key. (udevid=%u; id=%d; owner_tgid=%d)\n", key_ctx->udevid,
+                id, src_node->src_ex.owner_tgid);
+            return -EPERM;
+        }
+    }
+
+    return 0;
+}
+
+static int _casm_destroy_key(struct casm_key_ctx *key_ctx, u32 id, bool force)
 {
     struct casm_src_node *src_node = NULL;
     u32 udevid = key_ctx->udevid;
     int ret;
+
+    ret = casm_destroy_permission_check(key_ctx, id, force);
+    if (ret != 0) {
+        return ret;
+    }
 
     src_node = casm_key_id_free(key_ctx, id);
     if (src_node == NULL) {
@@ -234,7 +263,8 @@ static int _casm_destroy_key(struct casm_key_ctx *key_ctx, u32 id)
         return -EINVAL;
     }
 
-    ret = svm_mwl_del_mem(udevid, src_node->src_ex.owner_tgid, src_node->key);
+    /* id is legal, do not need va and va_size */
+    ret = svm_mwl_del_mem(udevid, src_node->src_ex.owner_tgid, src_node->key, 0, 0);
     if (ret != 0) {
         svm_warn("Del white list failed. (udevid=%u; id=%u)\n", udevid, id);
     }
@@ -265,7 +295,7 @@ static int casm_create_key(struct svm_global_va *src_va, u64 *key)
     return ret;
 }
 
-int casm_destroy_key(u64 key)
+int casm_destroy_key(u64 key, bool force)
 {
     struct casm_key_ctx *key_ctx = NULL;
     u32 udevid, id;
@@ -284,7 +314,7 @@ int casm_destroy_key(u64 key)
     }
 
     ka_task_mutex_lock(&key_ctx->mutex);
-    ret = _casm_destroy_key(key_ctx, id);
+    ret = _casm_destroy_key(key_ctx, id, force);
     ka_task_mutex_unlock(&key_ctx->mutex);
     casm_key_ctx_put(key_ctx);
 
@@ -298,12 +328,11 @@ static int casm_check_task(u32 udevid, int tgid, u64 id, u32 checked_server_id, 
 
 static int _casm_op_task(struct casm_key_ctx *key_ctx, u32 id, u32 server_id, int tgid, u32 op)
 {
-    static int (*casm_op_task_func[SVM_CASM_TASK_OP_MAX])
-        (u32 udevid, int tgid, u64 id, u32 op_server_id, int op_tgid) = {
+    static int (*casm_op_task_func[SVM_CASM_TASK_OP_MAX])(
+        u32 udevid, int tgid, u64 id, u32 op_server_id, int op_tgid) = {
         [SVM_CASM_TASK_OP_ADD] = svm_mwl_add_trusted_task,
         [SVM_CASM_TASK_OP_DEL] = svm_mwl_del_trusted_task,
-        [SVM_CASM_TASK_OP_CHECK] = casm_check_task
-    };
+        [SVM_CASM_TASK_OP_CHECK] = casm_check_task};
     struct casm_src_node *src_node = NULL;
     u32 udevid = key_ctx->udevid;
     int ret;
@@ -353,8 +382,8 @@ static int casm_op_task(u64 key, u32 server_id, int tgid, u32 op)
     return ret;
 }
 
-static int _casm_get_src_va(struct casm_key_ctx *key_ctx, u32 id, u64 key,
-    struct svm_global_va *src_va, struct casm_src_ex *src_ex)
+static int _casm_get_src_va(
+    struct casm_key_ctx *key_ctx, u32 id, u64 key, struct svm_global_va *src_va, struct casm_src_ex *src_ex)
 {
     struct casm_src_node *src_node = NULL;
     u32 udevid = key_ctx->udevid;
@@ -400,7 +429,10 @@ void casm_key_show_dev(u32 udevid, int feature_id, ka_seq_file_t *seq)
 {
     struct casm_key_ctx *key_ctx = NULL;
     struct casm_src_node *node = NULL;
-    int i = 0, j;
+    struct casm_src_node *dump_info = NULL;
+    u32 dump_num = 0;
+    u32 node_num, i;
+    int j;
 
     if (feature_id != (int)casm_dev_feature_id) {
         return;
@@ -412,19 +444,48 @@ void casm_key_show_dev(u32 udevid, int feature_id, ka_seq_file_t *seq)
         return;
     }
 
+    node_num = key_ctx->id_num;
+
+    if ((node_num == 0) || (node_num > KEY_SHOW_NODE_MAX)) {
+        svm_info("Skip show key ctx. (udevid=%u; node_num=%u)\n", udevid, node_num);
+        casm_key_ctx_put(key_ctx);
+        return;
+    }
+
+    dump_info = (struct casm_src_node *)svm_vzalloc(sizeof(*dump_info) * node_num);
+    if (dump_info == NULL) {
+        svm_warn("No mem for key show. (udevid=%u; num=%u)\n", udevid, node_num);
+        casm_key_ctx_put(key_ctx);
+        return;
+    }
+
     ka_base_idr_lock(&key_ctx->idr);
-    ka_base_idr_for_each_entry(&key_ctx->idr, node, j) {
-        struct svm_global_va *src_va = &node->src_va;
-        if (i == 0) {
-            ka_fs_seq_printf(seq, "casm udevid(%u) key info:"
-                "index    key    owner_tgid  udevid   tgid   va   size   updated_va\n", udevid);
+    ka_base_idr_for_each_entry(&key_ctx->idr, node, j)
+    {
+        if (dump_num >= node_num) {
+            break;
         }
-        ka_fs_seq_printf(seq, "    %d   0x%llx    %d   %u  %d      0x%llx      0x%llx       0x%llx\n",
-            i++, node->key, node->src_ex.owner_tgid, src_va->udevid, src_va->tgid, src_va->va, src_va->size,
-            node->src_ex.updated_va);
+        dump_info[dump_num] = *node;
+        dump_num++;
     }
     ka_base_idr_unlock(&key_ctx->idr);
+
     casm_key_ctx_put(key_ctx);
+
+    ka_fs_seq_printf(
+        seq,
+        "casm udevid(%u) key info:"
+        "index    key    owner_tgid  udevid   tgid   va   size   updated_va\n",
+        udevid);
+    for (i = 0; i < dump_num; i++) {
+        struct svm_global_va *src_va = &dump_info[i].src_va;
+        ka_fs_seq_printf(
+            seq, "    %u   0x%llx    %d   %u  %d      0x%llx      0x%llx       0x%llx\n", i, dump_info[i].key,
+            dump_info[i].src_ex.owner_tgid, src_va->udevid, src_va->tgid, src_va->va, src_va->size,
+            dump_info[i].src_ex.updated_va);
+    }
+
+    svm_vfree(dump_info);
 }
 DECLAER_FEATURE_AUTO_SHOW_DEV(casm_key_show_dev, FEATURE_LOADER_STAGE_5);
 
@@ -476,7 +537,7 @@ void casm_key_uninit_dev(u32 udevid)
     key_ctx = (struct casm_key_ctx *)svm_dev_get_feature_priv(dev_ctx, casm_dev_feature_id);
     if (key_ctx != NULL) {
         (void)svm_dev_set_feature_priv(dev_ctx, casm_dev_feature_id, NULL, NULL);
-        svm_dev_ctx_put(dev_ctx);    /* paired with init */
+        svm_dev_ctx_put(dev_ctx); /* paired with init */
         svm_dev_ctx_put(dev_ctx);
         casm_key_ctx_uninit(key_ctx);
         svm_vfree(key_ctx);
@@ -511,8 +572,9 @@ static int casm_ioctl_create_key(u32 udevid, u32 cmd, unsigned long arg)
     }
 
     if ((!SVM_IS_ALIGNED(para.va, npage_size)) || (!SVM_IS_ALIGNED(para.size, npage_size))) {
-        svm_err("Not align. (udevid=%u; va=0x%llx; size=0x%llx; npage_size=%llx)\n",
-            udevid, para.va, para.size, npage_size);
+        svm_err(
+            "Not align. (udevid=%u; va=0x%llx; size=0x%llx; npage_size=%llx)\n", udevid, para.va, para.size,
+            npage_size);
         return -EINVAL;
     }
 
@@ -526,7 +588,8 @@ static int casm_ioctl_create_key(u32 udevid, u32 cmd, unsigned long arg)
         svm_global_va_pack(udevid, ka_task_get_current_tgid(), para.va, para.size, &src_va);
     } else {
         int slave_tgid;
-        ret = hal_kernel_apm_query_slave_tgid_by_master(ka_task_get_current_tgid(), udevid, para.task_type, &slave_tgid);
+        ret =
+            hal_kernel_apm_query_slave_tgid_by_master(ka_task_get_current_tgid(), udevid, para.task_type, &slave_tgid);
         if (ret != 0) {
             svm_err("Query slave tgid failed. (udevid=%u; task_type=%u)\n", udevid, para.task_type);
             return -EINVAL;
@@ -538,7 +601,7 @@ static int casm_ioctl_create_key(u32 udevid, u32 cmd, unsigned long arg)
     if (ret == 0) {
         if (ka_base_copy_to_user((void __ka_user *)(uintptr_t)arg, &para, sizeof(para)) != 0) {
             svm_err("copy_to_user fail.\n");
-            (void)casm_destroy_key(para.key);
+            (void)casm_destroy_key(para.key, false);
             return -EFAULT;
         }
     }
@@ -557,7 +620,7 @@ static int casm_ioctl_destroy_key(u32 udevid, u32 cmd, unsigned long arg)
         return -EINVAL;
     }
 
-    return casm_destroy_key(para.key);
+    return casm_destroy_key(para.key, false);
 }
 
 static int casm_ioctl_op_task(u32 udevid, u32 cmd, unsigned long arg)
@@ -579,10 +642,9 @@ int casm_key_init(void)
 {
     casm_dev_feature_id = svm_dev_obtain_feature_id();
 
-    svm_register_ioctl_cmd_handle(_IOC_NR(SVM_CASM_CREATE_KEY), casm_ioctl_create_key);
-    svm_register_ioctl_cmd_handle(_IOC_NR(SVM_CASM_DESTROY_KEY), casm_ioctl_destroy_key);
-    svm_register_ioctl_cmd_handle(_IOC_NR(SVM_CASM_OP_TASK), casm_ioctl_op_task);
+    svm_register_ioctl_cmd_handle(_KA_IOC_NR(SVM_CASM_CREATE_KEY), casm_ioctl_create_key);
+    svm_register_ioctl_cmd_handle(_KA_IOC_NR(SVM_CASM_DESTROY_KEY), casm_ioctl_destroy_key);
+    svm_register_ioctl_cmd_handle(_KA_IOC_NR(SVM_CASM_OP_TASK), casm_ioctl_op_task);
     return 0;
 }
 DECLAER_FEATURE_AUTO_INIT(casm_key_init, FEATURE_LOADER_STAGE_5);
-

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2025. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -14,9 +14,9 @@
 
 #include "svm_um_handle.h"
 #include "svm_kern_log.h"
-#include "memset_msg.h"
-#include "memcpy_msg.h"
-#include "urma_seg_msg_head.h"
+#include "memset_uk_msg.h"
+#include "memcpy_uk_msg.h"
+#include "urma_seg_uk_msg_head.h"
 #include "svm_smp.h"
 #include "ksvmm.h"
 #include "op_um_handle.h"
@@ -27,8 +27,9 @@ static int um_memset_pre_handle(u32 udevid, int master_tgid, int slave_tgid, voi
     int ret;
 
     if ((msg_len != sizeof(*msg)) || (udevid == uda_get_host_id())) {
-        svm_err("Invalid para. (udevid=%u; master_tgid=%d; slave_tgid=%d; msg_len=%u)\n",
-            udevid, master_tgid, slave_tgid, msg_len);
+        svm_err(
+            "Invalid para. (udevid=%u; master_tgid=%d; slave_tgid=%d; msg_len=%u)\n", udevid, master_tgid, slave_tgid,
+            msg_len);
         return -EINVAL;
     }
 
@@ -50,8 +51,9 @@ static int um_memcpy_local_pre_handle(u32 udevid, int master_tgid, int slave_tgi
     int ret;
 
     if ((msg_len != sizeof(*msg)) || (udevid == uda_get_host_id())) {
-        svm_err("Invalid para. (udevid=%u; master_tgid=%d; slave_tgid=%d; msg_len=%u)\n",
-            udevid, master_tgid, slave_tgid, msg_len);
+        svm_err(
+            "Invalid para. (udevid=%u; master_tgid=%d; slave_tgid=%d; msg_len=%u)\n", udevid, master_tgid, slave_tgid,
+            msg_len);
         return -EINVAL;
     }
 
@@ -81,4 +83,3 @@ void op_um_handle_init(void)
     svm_um_register_handle(SVM_MEMSET_EVENT, um_memset_pre_handle, NULL, NULL);
     svm_um_register_handle(SVM_MEMCPY_LOCAL_EVENT, um_memcpy_local_pre_handle, NULL, NULL);
 }
-

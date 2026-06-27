@@ -14,7 +14,7 @@
 #ifndef DVPP_SQE_GEN_H
 #define DVPP_SQE_GEN_H
 
-#include <linux/types.h>
+#include "ka_type.h"
 #include "dvpp_cmdlist_define.h"
 #include "dvpp_vpc_pipe.h"
 

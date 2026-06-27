@@ -13,14 +13,14 @@
 #ifndef TRS_STARS_CQ_H
 #define TRS_STARS_CQ_H
 
-#include <linux/types.h>
+#include "ka_type.h"
 
 #include "trs_pub_def.h"
 #include "trs_core.h"
 #include "trs_chan.h"
 
-#define TRS_STARS_CQE_HOLDER    3
-#define TRS_STARS_CQE_RECORED   4
+#define TRS_STARS_CQE_HOLDER 3
+#define TRS_STARS_CQE_RECORED 4
 
 typedef struct {
     uint16_t task_id;
@@ -44,9 +44,9 @@ typedef struct tag_stars_cqe_error_info {
 } rt_stars_cqe_error_info_t;
 
 /**
-* @ingroup
-* @brief the struct define of cqe when task is completed
-*/
+ * @ingroup
+ * @brief the struct define of cqe when task is completed
+ */
 typedef struct tag_stars_cqe_sys_cnt {
     uint32_t syscnt_low;
     uint32_t syscnt_high;
@@ -59,8 +59,8 @@ typedef union tag_stars_cqetatus {
 
 typedef struct tag_stars_cqe {
     uint16_t phase : 1;
-    uint16_t warn : 1;          /* process warning */
-    uint16_t evt : 1;           /* event record flag */
+    uint16_t warn : 1; /* process warning */
+    uint16_t evt : 1;  /* event record flag */
     uint16_t place_hold : 1;
     uint16_t sq_id : 11;
     uint16_t error_bit : 1;

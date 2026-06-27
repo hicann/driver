@@ -16,20 +16,20 @@
 #ifdef CFG_FEATURE_SHARE_LOG
 #include "securec.h"
 #if ((!defined(LOG_UT)) && (!defined(EMU_ST)) && (!defined(EVENT_SCHED_UT)) && (!defined(TSDRV_UT)) && \
-    (!defined(DRV_UT)) && (!defined(DEVDRV_UT)))
+     (!defined(DRV_UT)) && (!defined(DEVDRV_UT)))
 #include "ka_task_pub.h"
 #endif
 #include "ka_memory_pub.h"
 #include "kernel_version_adapt.h"
 #include "ka_system_pub.h"
 
-#define SHARE_LOG_PAGE_WRITE      1
-#define SHARE_LOG_MAGIC_LENGTH    24
-#define SHARE_LOG_RECORD_OFFSET   100
-#define SHARE_LOG_MAX_SIZE        (4 * 1024) /* only support 1 page, don't change this value */
-#define SHARE_LOG_RECORD_SIZE     (SHARE_LOG_MAX_SIZE - SHARE_LOG_RECORD_OFFSET)
-#define SHARE_LOG_PAGE_NUM        (roundup(SHARE_LOG_MAX_SIZE, KA_MM_PAGE_SIZE) / KA_MM_PAGE_SIZE)
-#define SHARE_LOG_MAGIC           "drvshartlogab90cd78ef56"
+#define SHARE_LOG_PAGE_WRITE 1
+#define SHARE_LOG_MAGIC_LENGTH 24
+#define SHARE_LOG_RECORD_OFFSET 100
+#define SHARE_LOG_MAX_SIZE (4 * 1024) /* only support 1 page, don't change this value */
+#define SHARE_LOG_RECORD_SIZE (SHARE_LOG_MAX_SIZE - SHARE_LOG_RECORD_OFFSET)
+#define SHARE_LOG_PAGE_NUM (roundup(SHARE_LOG_MAX_SIZE, KA_MM_PAGE_SIZE) / KA_MM_PAGE_SIZE)
+#define SHARE_LOG_MAGIC "drvshartlogab90cd78ef56"
 
 struct share_log_info {
     char magic[SHARE_LOG_MAGIC_LENGTH];
@@ -41,20 +41,25 @@ struct share_log_info {
 };
 
 void __attribute__((weak)) share_log_formatting(struct share_log_info *info, u32 *tmp_write, u32 *remain_size);
-void __attribute__((weak)) share_log_update_write(struct share_log_info *info, u32 tmp_write, u32 size, const char* fmt, ka_va_list arg);
-void __attribute__((weak)) share_log_record_sub(struct share_log_info *info, const char* fmt, ka_va_list arg);
-ka_rw_semaphore_t* __attribute__((weak)) share_log_sem(ka_mm_struct_t *mm);
-void __attribute__((weak)) share_log_record(ka_page_t *page, unsigned long start, const char* fmt,ka_mm_struct_t *mm, ka_va_list arg);
-void __attribute__((weak)) _share_log_no_kthread_or_no_interrupt_record(unsigned long start, const char* fmt, ka_va_list arg);
-void __attribute__((weak)) share_log_no_kthread_or_no_interrupt_record(unsigned long start, const char* fmt, ...);
-long __attribute__((weak)) _log_get_user_pages_remote(ka_task_struct_t *tsk, ka_mm_struct_t *mm, u64 va, u32 num, ka_page_t **pages);
-int __attribute__((weak)) log_get_user_pages_remote(ka_task_struct_t *tsk, ka_mm_struct_t *mm,u64 va, u32 num, ka_page_t **pages);
-void __attribute__((weak)) _share_log_record_by_pid(unsigned long start, u32 pid, const char* fmt, ka_va_list arg);
-void __attribute__((weak)) share_log_record_by_pid(unsigned long start, u32 pid, const char* fmt, ...);
-void __attribute__((weak)) share_log_err_by_pid_ex(unsigned long start, u32 pid, const char* fmt, ka_va_list arg);
-void __attribute__((weak)) share_log_run_info_by_pid_ex(unsigned long start, u32 pid, const char* fmt, ka_va_list arg);
-void __attribute__((weak)) share_log_err_ex(unsigned long start, const char* fmt, ka_va_list arg);
-void __attribute__((weak)) share_log_run_info_ex(unsigned long start, const char* fmt, ka_va_list arg);
+void __attribute__((weak)) share_log_update_write(struct share_log_info *info, u32 tmp_write, u32 size, const char *fmt,
+                                                  ka_va_list arg);
+void __attribute__((weak)) share_log_record_sub(struct share_log_info *info, const char *fmt, ka_va_list arg);
+ka_rw_semaphore_t *__attribute__((weak)) share_log_sem(ka_mm_struct_t *mm);
+void __attribute__((weak)) share_log_record(ka_page_t *page, unsigned long start, const char *fmt, ka_mm_struct_t *mm,
+                                            ka_va_list arg);
+void __attribute__((weak)) _share_log_no_kthread_or_no_interrupt_record(unsigned long start, const char *fmt,
+                                                                        ka_va_list arg);
+void __attribute__((weak)) share_log_no_kthread_or_no_interrupt_record(unsigned long start, const char *fmt, ...);
+long __attribute__((weak)) _log_get_user_pages_remote(ka_task_struct_t *tsk, ka_mm_struct_t *mm, u64 va, u32 num,
+                                                      ka_page_t **pages);
+int __attribute__((weak)) log_get_user_pages_remote(ka_task_struct_t *tsk, ka_mm_struct_t *mm, u64 va, u32 num,
+                                                    ka_page_t **pages);
+void __attribute__((weak)) _share_log_record_by_pid(unsigned long start, u32 pid, const char *fmt, ka_va_list arg);
+void __attribute__((weak)) share_log_record_by_pid(unsigned long start, u32 pid, const char *fmt, ...);
+void __attribute__((weak)) share_log_err_by_pid_ex(unsigned long start, u32 pid, const char *fmt, ka_va_list arg);
+void __attribute__((weak)) share_log_run_info_by_pid_ex(unsigned long start, u32 pid, const char *fmt, ka_va_list arg);
+void __attribute__((weak)) share_log_err_ex(unsigned long start, const char *fmt, ka_va_list arg);
+void __attribute__((weak)) share_log_run_info_ex(unsigned long start, const char *fmt, ka_va_list arg);
 
 void __attribute__((weak)) share_log_formatting(struct share_log_info *info, u32 *tmp_write, u32 *remain_size)
 {
@@ -66,8 +71,8 @@ void __attribute__((weak)) share_log_formatting(struct share_log_info *info, u32
     }
 }
 
-void __attribute__((weak)) share_log_update_write(struct share_log_info *info, u32 tmp_write, u32 size,
-    const char* fmt, ka_va_list arg)
+void __attribute__((weak)) share_log_update_write(struct share_log_info *info, u32 tmp_write, u32 size, const char *fmt,
+                                                  ka_va_list arg)
 {
     int write_offset = vsnprintf_s((u8 *)info + SHARE_LOG_RECORD_OFFSET + tmp_write, size, size - 1, fmt, arg);
     if (write_offset > 0) {
@@ -78,26 +83,26 @@ void __attribute__((weak)) share_log_update_write(struct share_log_info *info, u
     }
 }
 
-void __attribute__((weak)) share_log_record_sub(struct share_log_info *info, const char* fmt, ka_va_list arg)
+void __attribute__((weak)) share_log_record_sub(struct share_log_info *info, const char *fmt, ka_va_list arg)
 {
     u32 tmp_write = (u32)info->write;
     u32 remain_size = (u32)info->record_size - tmp_write;
 
     if (ka_base_strcmp(info->magic, SHARE_LOG_MAGIC) == 0 && info->total_size == SHARE_LOG_MAX_SIZE &&
-        tmp_write <= SHARE_LOG_RECORD_SIZE && remain_size <= SHARE_LOG_RECORD_SIZE  &&
+        tmp_write <= SHARE_LOG_RECORD_SIZE && remain_size <= SHARE_LOG_RECORD_SIZE &&
         (tmp_write + remain_size) <= SHARE_LOG_RECORD_SIZE) {
         share_log_formatting(info, &tmp_write, &remain_size);
         share_log_update_write(info, tmp_write, remain_size, fmt, arg);
     }
 }
 
-ka_rw_semaphore_t* __attribute__((weak)) share_log_sem(ka_mm_struct_t *mm)
+ka_rw_semaphore_t *__attribute__((weak)) share_log_sem(ka_mm_struct_t *mm)
 {
     return get_mmap_sem(mm);
 }
 
-void __attribute__((weak)) share_log_record(ka_page_t *page, unsigned long start, const char* fmt,
-    ka_mm_struct_t *mm, ka_va_list arg)
+void __attribute__((weak)) share_log_record(ka_page_t *page, unsigned long start, const char *fmt, ka_mm_struct_t *mm,
+                                            ka_va_list arg)
 {
     ka_vm_area_struct_t *vma = NULL;
     /*
@@ -120,9 +125,11 @@ void __attribute__((weak)) share_log_record(ka_page_t *page, unsigned long start
  *   which will cause down_write or down_read to fail if the share_log_err call occurs;
  * 2.release : current->mm is null.
  */
-void __attribute__((weak)) _share_log_no_kthread_or_no_interrupt_record(unsigned long start, const char* fmt, ka_va_list arg)
+void __attribute__((weak)) _share_log_no_kthread_or_no_interrupt_record(unsigned long start, const char *fmt,
+                                                                        ka_va_list arg)
 {
-    if ((ka_task_get_current()->flags & KA_TASK_PF_KTHREAD) == 0 && ka_system_in_interrupt() == 0 && ka_task_get_current()->mm != NULL &&
+    if ((ka_task_get_current()->flags & KA_TASK_PF_KTHREAD) == 0 && ka_system_in_interrupt() == 0 &&
+        ka_task_get_current()->mm != NULL &&
         ka_task_down_write_trylock(share_log_sem(ka_task_get_current()->mm)) != 0) { /* Prevent read_lock nested */
         ka_page_t *sha_page = NULL;
         ka_task_up_write(share_log_sem(ka_task_get_current()->mm));
@@ -133,7 +140,7 @@ void __attribute__((weak)) _share_log_no_kthread_or_no_interrupt_record(unsigned
     }
 }
 
-void __attribute__((weak)) share_log_no_kthread_or_no_interrupt_record(unsigned long start, const char* fmt, ...)
+void __attribute__((weak)) share_log_no_kthread_or_no_interrupt_record(unsigned long start, const char *fmt, ...)
 {
     ka_va_list arg;
     va_start(arg, fmt);
@@ -141,28 +148,28 @@ void __attribute__((weak)) share_log_no_kthread_or_no_interrupt_record(unsigned 
     va_end(arg);
 }
 
-#define TSDRV_SHARE_LOG_START   (0xE0000000000ULL)
-#define DEVMM_SHARE_LOG_START   (0xE0000080000ULL)
-#define DEVMNG_SHARE_LOG_START  (0xE0000100000ULL)
-#define HDC_SHARE_LOG_START     (0xE0000180000ULL)
-#define ESCHED_SHARE_LOG_START  (0xE0000200000ULL)
-#define XSMEM_SHARE_LOG_START   (0xE0000280000ULL)
-#define QUEUE_SHARE_LOG_START   (0xE0000300000ULL)
-#define COMMON_SHARE_LOG_START  (0xE0000380000ULL)
-#define APM_SHARE_LOG_START     (0xE0000400000ULL)
+#define TSDRV_SHARE_LOG_START (0xE0000000000ULL)
+#define DEVMM_SHARE_LOG_START (0xE0000080000ULL)
+#define DEVMNG_SHARE_LOG_START (0xE0000100000ULL)
+#define HDC_SHARE_LOG_START (0xE0000180000ULL)
+#define ESCHED_SHARE_LOG_START (0xE0000200000ULL)
+#define XSMEM_SHARE_LOG_START (0xE0000280000ULL)
+#define QUEUE_SHARE_LOG_START (0xE0000300000ULL)
+#define COMMON_SHARE_LOG_START (0xE0000380000ULL)
+#define APM_SHARE_LOG_START (0xE0000400000ULL)
 
-#define TSDRV_SHARE_LOG_RUNINFO_START  (0xE0000040000ULL)
-#define DEVMM_SHARE_LOG_RUNINFO_START  (0xE00000C0000ULL)
+#define TSDRV_SHARE_LOG_RUNINFO_START (0xE0000040000ULL)
+#define DEVMM_SHARE_LOG_RUNINFO_START (0xE00000C0000ULL)
 #define DEVMNG_SHARE_LOG_RUNINFO_START (0xE0000140000ULL)
-#define HDC_SHARE_LOG_RUNINFO_START    (0xE00001C0000ULL)
+#define HDC_SHARE_LOG_RUNINFO_START (0xE00001C0000ULL)
 #define ESCHED_SHARE_LOG_RUNINFO_START (0xE0000240000ULL)
-#define XSMEM_SHARE_LOG_RUNINFO_START  (0xE00002C0000ULL)
-#define QUEUE_SHARE_LOG_RUNINFO_START  (0xE0000340000ULL)
+#define XSMEM_SHARE_LOG_RUNINFO_START (0xE00002C0000ULL)
+#define QUEUE_SHARE_LOG_RUNINFO_START (0xE0000340000ULL)
 #define COMMON_SHARE_LOG_RUNINFO_START (0xE00003C0000ULL)
-#define APM_SHARE_LOG_RUNINFO_START    (0xE0000440000ULL)
+#define APM_SHARE_LOG_RUNINFO_START (0xE0000440000ULL)
 
-long __attribute__((weak)) _log_get_user_pages_remote(ka_task_struct_t *tsk, ka_mm_struct_t *mm,
-    u64 va, u32 num, ka_page_t **pages)
+long __attribute__((weak)) _log_get_user_pages_remote(ka_task_struct_t *tsk, ka_mm_struct_t *mm, u64 va, u32 num,
+                                                      ka_page_t **pages)
 {
     long got_num = -1;
 
@@ -182,8 +189,8 @@ long __attribute__((weak)) _log_get_user_pages_remote(ka_task_struct_t *tsk, ka_
 /*
  * num is 1, when get page failed ,directly return
  */
-int __attribute__((weak)) log_get_user_pages_remote(ka_task_struct_t *tsk, ka_mm_struct_t *mm,
-    u64 va, u32 num, ka_page_t **pages)
+int __attribute__((weak)) log_get_user_pages_remote(ka_task_struct_t *tsk, ka_mm_struct_t *mm, u64 va, u32 num,
+                                                    ka_page_t **pages)
 {
     return (_log_get_user_pages_remote(tsk, mm, va, num, pages) == num) ? 0 : -ENOMEM;
 }
@@ -191,7 +198,7 @@ int __attribute__((weak)) log_get_user_pages_remote(ka_task_struct_t *tsk, ka_mm
 /*
  * in_interrupt is not allow
  */
-void __attribute__((weak)) _share_log_record_by_pid(unsigned long start, u32 pid, const char* fmt, ka_va_list arg)
+void __attribute__((weak)) _share_log_record_by_pid(unsigned long start, u32 pid, const char *fmt, ka_va_list arg)
 {
     ka_task_struct_t *task = NULL;
     ka_page_t *sha_page = NULL;
@@ -233,7 +240,7 @@ void __attribute__((weak)) _share_log_record_by_pid(unsigned long start, u32 pid
     ka_task_put_pid(pro_id);
 }
 
-void __attribute__((weak)) share_log_record_by_pid(unsigned long start, u32 pid, const char* fmt, ...)
+void __attribute__((weak)) share_log_record_by_pid(unsigned long start, u32 pid, const char *fmt, ...)
 {
     ka_va_list arg;
     va_start(arg, fmt);
@@ -241,37 +248,33 @@ void __attribute__((weak)) share_log_record_by_pid(unsigned long start, u32 pid,
     va_end(arg);
 }
 
-void __attribute__((weak)) share_log_err_by_pid_ex(unsigned long start, u32 pid, const char* fmt, ka_va_list arg)
+void __attribute__((weak)) share_log_err_by_pid_ex(unsigned long start, u32 pid, const char *fmt, ka_va_list arg)
 {
     _share_log_record_by_pid(start, pid, fmt, arg);
 }
 
-void __attribute__((weak)) share_log_run_info_by_pid_ex(unsigned long start, u32 pid, const char* fmt, ka_va_list arg)
+void __attribute__((weak)) share_log_run_info_by_pid_ex(unsigned long start, u32 pid, const char *fmt, ka_va_list arg)
 {
     _share_log_record_by_pid(start, pid, fmt, arg);
 }
 
-void __attribute__((weak)) share_log_err_ex(unsigned long start, const char* fmt, ka_va_list arg)
+void __attribute__((weak)) share_log_err_ex(unsigned long start, const char *fmt, ka_va_list arg)
 {
     _share_log_no_kthread_or_no_interrupt_record(start, fmt, arg);
 }
 
-void __attribute__((weak)) share_log_run_info_ex(unsigned long start, const char* fmt, ka_va_list arg)
+void __attribute__((weak)) share_log_run_info_ex(unsigned long start, const char *fmt, ka_va_list arg)
 {
     _share_log_no_kthread_or_no_interrupt_record(start, fmt, arg);
 }
 
-#define share_log_err_by_pid(start, pid, fmt, ...) \
-    share_log_record_by_pid(start, pid, fmt, ##__VA_ARGS__)
+#define share_log_err_by_pid(start, pid, fmt, ...) share_log_record_by_pid(start, pid, fmt, ##__VA_ARGS__)
 
-#define share_log_err(start, fmt, ...) \
-    share_log_no_kthread_or_no_interrupt_record(start, fmt, ##__VA_ARGS__)
+#define share_log_err(start, fmt, ...) share_log_no_kthread_or_no_interrupt_record(start, fmt, ##__VA_ARGS__)
 
-#define share_log_run_info_by_pid(start, pid, fmt, ...) \
-    share_log_record_by_pid(start, pid, fmt, ##__VA_ARGS__)
+#define share_log_run_info_by_pid(start, pid, fmt, ...) share_log_record_by_pid(start, pid, fmt, ##__VA_ARGS__)
 
-#define share_log_run_info(start, fmt, ...) \
-    share_log_no_kthread_or_no_interrupt_record(start, fmt, ##__VA_ARGS__)
+#define share_log_run_info(start, fmt, ...) share_log_no_kthread_or_no_interrupt_record(start, fmt, ##__VA_ARGS__)
 #else
 #define TSDRV_SHARE_LOG_START
 #define ESCHED_SHARE_LOG_START

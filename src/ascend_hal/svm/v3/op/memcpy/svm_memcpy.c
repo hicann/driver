@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * Copyright (c) 2026 Huawei Technologies Co., Ltd.
  * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -17,19 +17,19 @@
 #include "va_allocator.h"
 #include "svm_user_adapt.h"
 #include "malloc_mng.h"
-#include "memcpy_msg.h"
+#include "memcpy_uk_msg.h"
 #include "svm_memcpy_local.h"
 #include "svm_umc_client.h"
-#include "svm_sub_event_type.h"
+#include "svm_sub_event_type_uk_msg.h"
 #include "svm_memcpy_ops_register.h"
 #include "svm_memcpy_local_client.h"
 #include "svm_memcpy.h"
 
-#define SVM_ASYNC_COPY_HANDLE_DEVID_BIT         32ULL
-#define SVM_ASYNC_COPY_HANDLE_ID_BIT            0ULL
+#define SVM_ASYNC_COPY_HANDLE_DEVID_BIT 32ULL
+#define SVM_ASYNC_COPY_HANDLE_ID_BIT 0ULL
 
-#define SVM_ASYNC_COPY_HANDLE_DEVID_WIDTH       32ULL
-#define SVM_ASYNC_COPY_HANDLE_ID_WIDTH          32ULL
+#define SVM_ASYNC_COPY_HANDLE_DEVID_WIDTH 32ULL
+#define SVM_ASYNC_COPY_HANDLE_ID_WIDTH 32ULL
 
 static struct svm_copy_ops *g_copy_ops[SVM_MAX_DEV_NUM] = {NULL};
 
@@ -51,8 +51,7 @@ static void svm_async_copy_handle_parse(u64 handle, u32 *devid, int *id)
     *id = (int)((handle >> SVM_ASYNC_COPY_HANDLE_ID_BIT) & (u32)((1UL << SVM_ASYNC_COPY_HANDLE_ID_WIDTH) - 1));
 }
 
-int svm_async_copy_submit(struct svm_copy_va_info *src_info,
-    struct svm_copy_va_info *dst_info, u64 *handle)
+int svm_async_copy_submit(struct svm_copy_va_info *src_info, struct svm_copy_va_info *dst_info, u64 *handle)
 {
     enum svm_cpy_dir dir = copy_dir_get_by_devid(src_info->devid, dst_info->devid);
     u32 devid = (dir == SVM_H2D_CPY) ? dst_info->devid : src_info->devid;
@@ -131,7 +130,8 @@ int svm_sync_copy_batch(u64 dst[], u64 src[], u64 size[], u64 count, u64 src_dev
     return g_copy_ops[devid]->sync_copy_batch(src, dst, size, count, (u32)src_devid, (u32)dst_devid);
 }
 
-int svm_dma_desc_convert(struct svm_copy_va_info *src_info, struct svm_copy_va_info *dst_info, struct DMA_ADDR *dma_desc)
+int svm_dma_desc_convert(
+    struct svm_copy_va_info *src_info, struct svm_copy_va_info *dst_info, struct DMA_ADDR *dma_desc)
 {
     u32 devid = dma_desc->offsetAddr.devid;
 
@@ -175,8 +175,9 @@ int svm_dma_desc_wait(struct DMA_ADDR *dma_desc)
     return g_copy_ops[devid]->dma_desc_wait(devid, dma_desc);
 }
 
-int svm_dma_desc_convert_2d(struct svm_copy_va_2d_info *src_info, struct svm_copy_va_2d_info *dst_info,
-    u64 fixed_size, struct DMA_ADDR *dma_desc)
+int svm_dma_desc_convert_2d(
+    struct svm_copy_va_2d_info *src_info, struct svm_copy_va_2d_info *dst_info, u64 fixed_size,
+    struct DMA_ADDR *dma_desc)
 {
     enum svm_cpy_dir dir = copy_dir_get_by_devid(src_info->devid, dst_info->devid);
     u32 devid = (dir == SVM_H2D_CPY) ? dst_info->devid : src_info->devid;

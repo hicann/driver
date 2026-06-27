@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * Copyright (c) 2026 Huawei Technologies Co., Ltd.
  * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ struct cache_stats {
     u64 total;
     u64 idle;
     u64 cur_alloced;
-    u64 peak_alloced;   /* within CACHE_MALLOC_PEAK_ALLOCED_TIME_INTERVAL_S */
+    u64 peak_alloced; /* within CACHE_MALLOC_PEAK_ALLOCED_TIME_INTERVAL_S */
 };
 
 struct cache_allocator {

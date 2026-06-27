@@ -7,10 +7,10 @@
  * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
  */
-
+ 
 #include <stdio.h>
 #include "securec.h"
-#include "dsmi_common_interface_custom.h"
+#include "dsmi_common_interface.h"
 #include "dcmi_product_judge.h"
 #include "dcmi_fault_manage_intf.h"
 #include "dcmi_log.h"
@@ -22,6 +22,7 @@
 #include "dcmi_environment_judge.h"
 #include "dcmi_inner_cfg_persist.h"
 #include "dcmi_inner_info_get.h"
+#include "dcmi_basic_info_intf.h"
 #include "dcmi_init_basic.h"
 
 struct dcmi_board_details_info g_board_details = {0};
@@ -35,7 +36,7 @@ void dcmi_run_env_init(void)
     int is_in_docker = dcmi_is_in_docker();
     dcmi_set_env_value(is_not_root, is_in_vm, is_in_docker);
 }
-
+ 
 void dcmi_init_ok(void)
 {
     dcmi_set_init_flag(TRUE);
@@ -179,6 +180,21 @@ STATIC void dcmi_init_product_type_for_d310_ep(int board_id)
 STATIC void dcmi_init_product_type_for_d310_rc(void)
 {
     dcmi_set_product_type(DCMI_A200_MODEL_3000);
+}
+
+STATIC void dcmi_init_product_type_for_d950_rc(unsigned int board_id)
+{
+    switch (board_id) {
+        case DCMI_A900_A5_CARD_V100_BIN1_1_BOARD_ID:
+        case DCMI_A900_A5_CARD_V100_BIN1_2_BOARD_ID:
+        case DCMI_A900_A5_CARD_V100_BIN2_1_BOARD_ID:
+        case DCMI_A900_A5_CARD_V100_BIN2_2_BOARD_ID:
+            dcmi_set_product_type(DCMI_A350_A5_CARD);
+            break;
+        default:
+            dcmi_set_product_type(DCMI_PRODUCT_TYPE_INVALID);
+            break;
+    }
 }
 
 STATIC void dcmi_init_board_type_for_d310_ep(int board_id)
@@ -444,6 +460,23 @@ STATIC void dcmi_init_product_type_for_d910_93(int board_id)
     }
 }
 
+// A5标卡和A+X场景
+STATIC void dcmi_init_product_type_for_d950()
+{
+    if (((g_mainboard_info.mainboard_id >> DCMI_SHIFT_FIVE_BITS) & A5_MAINBOARD_ID_MASK) ==
+        MAINBOARD_ID_HIGH_3BIT_A_X) {
+        dcmi_set_product_type(DCMI_A800_A5_SERVER);
+        dcmi_set_board_type(DCMI_BOARD_TYPE_SERVER);
+    } else if ((((g_mainboard_info.mainboard_id >> DCMI_SHIFT_FIVE_BITS) & A5_MAINBOARD_ID_MASK) ==
+        MAINBOARD_ID_HIGH_3BIT_CARD)) {
+        dcmi_set_product_type(DCMI_A350_A5_CARD);
+        dcmi_set_board_type(DCMI_BOARD_TYPE_CARD);
+    } else {
+        dcmi_set_board_type(DCMI_BOARD_TYPE_INVALID);
+        dcmi_set_product_type(DCMI_PRODUCT_TYPE_INVALID);
+    }
+}
+
 STATIC void dcmi_init_board_type_for_d910_93(int board_id)
 {
     switch (board_id) {
@@ -461,6 +494,32 @@ STATIC void dcmi_init_board_type_for_d910_93(int board_id)
             dcmi_set_board_type(DCMI_BOARD_TYPE_INVALID);
             dcmi_set_sub_board_type(DCMI_BOARD_TYPE_INVALID);
             break;
+    }
+}
+
+// A5标卡和A+X场景
+STATIC void dcmi_init_board_type_for_d950()
+{
+    if (((g_mainboard_info.mainboard_id >> DCMI_SHIFT_FIVE_BITS) & A5_MAINBOARD_ID_MASK) ==
+            MAINBOARD_ID_HIGH_3BIT_A_X) {
+        dcmi_set_board_type(DCMI_BOARD_TYPE_SERVER);
+        dcmi_set_sub_board_type(DCMI_BOARD_TYPE_SERVER);
+        dcmi_set_device_count_in_one_card(DCMI_950_SERVER_DEVICE_COUNT);
+    } else if (((g_mainboard_info.mainboard_id >> DCMI_SHIFT_FIVE_BITS) & A5_MAINBOARD_ID_MASK) ==
+            MAINBOARD_ID_HIGH_3BIT_CARD) {
+        dcmi_set_product_type(DCMI_A350_A5_CARD);
+        dcmi_set_board_type(DCMI_BOARD_TYPE_CARD);
+        if (g_mainboard_info.mainboard_id == DCMI_950_1P_MAINBOARD_ID ||
+            g_mainboard_info.mainboard_id == DCMI_950_EQUIP_CARD_PCIE_MAIN_BOARD_ID) {
+            dcmi_set_device_count_in_one_card(DCMI_950_1P_CARD_DEVICE_COUNT);
+        } else if (g_mainboard_info.mainboard_id == DCMI_950_2P_MAINBOARD_ID) {
+            dcmi_set_device_count_in_one_card(DCMI_950_2P_CARD_DEVICE_COUNT);
+        } else {
+            dcmi_set_device_count_in_one_card(DCMI_950_4P_CARD_DEVICE_COUNT);
+        }
+    } else {
+        dcmi_set_board_type(DCMI_BOARD_TYPE_INVALID);
+        dcmi_set_sub_board_type(DCMI_BOARD_TYPE_INVALID);
     }
 }
 
@@ -495,9 +554,35 @@ static void dcmi_init_product_type_for_d310p_1u_rc(void)
     dcmi_set_product_type(DCMI_A200I_SOC_A1);
 }
 
-STATIC void dcmi_init_chip_board_product_for_rc(unsigned int board_id)
+bool dcmi_scene_is_950_uboe(int device_id)
 {
+    struct dsmi_chip_info_stru dsmi_chip_info = {0};
+    int ret;
+
+    ret = dsmi_get_chip_info(device_id, &dsmi_chip_info);
+    if (ret != DSMI_OK) {
+        gplog(LOG_ERR, "call dsmi_get_chip_info failed. ret is %d.", ret);
+        return dcmi_convert_error_code(ret);
+    }
+
+    return ((strncmp((const char *)dsmi_chip_info.chip_name, "950PR_95", strlen("950PR_95")) == 0) ||
+        (strncmp((const char *)dsmi_chip_info.chip_name, "950DT_95", strlen("950DT_95")) == 0));
+}
+
+STATIC void dcmi_init_chip_board_product_for_rc(int device_id, unsigned int board_id)
+{
+    // A5装备模组场景，通过芯片名区分
+    if (dcmi_scene_is_950_uboe(device_id)) {
+        dcmi_set_chip_type(DCMI_CHIP_TYPE_D950);
+        dcmi_set_board_type(DCMI_BOARD_TYPE_SOC);
+        dcmi_set_sub_board_type(DCMI_BOARD_TYPE_SOC_BASE);
+        dcmi_init_product_type_for_d950_rc(board_id);
+
+        return;
+    }
+
     dcmi_310B_trans_baseboard_id(&board_id);
+
     switch (board_id) {
         case DCMI_310P_1P_SOC_BOARD_ID:
         case DCMI_310P_2P_SOC_BOARD_ID:
@@ -528,12 +613,6 @@ STATIC void dcmi_init_chip_board_product_for_rc(unsigned int board_id)
             dcmi_set_sub_board_type(DCMI_BOARD_TYPE_SOC_BASE);
             dcmi_set_product_type(DCMI_A200_A2_MODEL);
             break;
-        case DCMI_A5_POD_2D_MAIN_BOARD_ID_TMP:
-            dcmi_set_chip_type(DCMI_CHIP_TYPE_D910_95);
-            dcmi_set_board_type(DCMI_BOARD_TYPE_SOC);
-            dcmi_set_sub_board_type(DCMI_BOARD_TYPE_SOC_BASE);
-            dcmi_set_product_type(DCMI_PRODUCT_TYPE_INVALID);
-            break;
         default:
             dcmi_set_chip_type(DCMI_CHIP_TYPE_D310);
             dcmi_init_board_type_for_d310_rc();
@@ -542,41 +621,43 @@ STATIC void dcmi_init_chip_board_product_for_rc(unsigned int board_id)
     }
 }
 
+STATIC const ChipInfo chip_info_table[] = {
+    {DCMI_D_CHIP_VENDER_ID, DCMI_D_310_DEVICE_ID, DCMI_CHIP_TYPE_D310,
+        dcmi_init_board_type_for_d310_ep, dcmi_init_product_type_for_d310_ep},
+    {DCMI_D_CHIP_VENDER_ID, DCMI_D_310P_DEVICE_ID, DCMI_CHIP_TYPE_D310P,
+        dcmi_init_board_type_for_d310P, dcmi_init_product_type_for_d310P},
+    {DCMI_D_CHIP_VENDER_ID, DCMI_D_910_DEVICE_ID, DCMI_CHIP_TYPE_D910,
+        dcmi_init_board_type_for_d910, dcmi_init_product_type_for_d910},
+    {DCMI_D_CHIP_VENDER_ID, DCMI_D_910B_DEVICE_ID, DCMI_CHIP_TYPE_D910B,
+        dcmi_init_board_type_for_d910B, dcmi_init_product_type_for_d910B},
+    {DCMI_D_CHIP_VENDER_ID, DCMI_D_910_93_DEVICE_ID, DCMI_CHIP_TYPE_D910_93,
+        dcmi_init_board_type_for_d910_93, dcmi_init_product_type_for_d910_93},
+    {DCMI_D_CHIP_VENDER_ID, DCMI_D_950_DEVICE_ID, DCMI_CHIP_TYPE_D950,
+        dcmi_init_board_type_for_d950, dcmi_init_product_type_for_d950},
+    {DCMI_D_CHIP_VENDER_ID, DCMI_D_310B_EP_DEVICE_ID, DCMI_CHIP_TYPE_D310B,
+        dcmi_init_board_type_for_d310B_ep, dcmi_init_product_type_for_d310B_ep},
+};
+
 int dcmi_init_chip_board_product_type(struct tag_pcie_idinfo_all *pcie_id_info)
 {
+    const ChipInfo *info = chip_info_table;
+    int tab_len = sizeof(chip_info_table);
+
     if (pcie_id_info == NULL) {
         gplog(LOG_ERR, "pcie_id_info is NULL.");
         return DCMI_ERR_CODE_INVALID_PARAMETER;
     }
 
-    if (pcie_id_info->venderid == DCMI_D_CHIP_VENDER_ID && pcie_id_info->deviceid == DCMI_D_310_DEVICE_ID) {
-        dcmi_set_chip_type(DCMI_CHIP_TYPE_D310);
-        dcmi_init_board_type_for_d310_ep(g_board_details.board_id);
-        dcmi_init_product_type_for_d310_ep(g_board_details.board_id);
-    } else if (pcie_id_info->venderid == DCMI_D_CHIP_VENDER_ID && pcie_id_info->deviceid == DCMI_D_310P_DEVICE_ID) {
-        dcmi_set_chip_type(DCMI_CHIP_TYPE_D310P);
-        dcmi_init_board_type_for_d310P(g_board_details.board_id);
-        dcmi_init_product_type_for_d310P(g_board_details.board_id);
-    } else if (pcie_id_info->venderid == DCMI_D_CHIP_VENDER_ID && pcie_id_info->deviceid == DCMI_D_910_DEVICE_ID) {
-        dcmi_set_chip_type(DCMI_CHIP_TYPE_D910);
-        dcmi_init_board_type_for_d910(g_board_details.board_id);
-        dcmi_init_product_type_for_d910(g_board_details.board_id);
-    } else if (pcie_id_info->venderid == DCMI_D_CHIP_VENDER_ID && pcie_id_info->deviceid == DCMI_D_910B_DEVICE_ID) {
-        dcmi_set_chip_type(DCMI_CHIP_TYPE_D910B);
-        dcmi_init_board_type_for_d910B(g_board_details.board_id);
-        dcmi_init_product_type_for_d910B(g_board_details.board_id);
-    } else if (pcie_id_info->venderid == DCMI_D_CHIP_VENDER_ID && pcie_id_info->deviceid == DCMI_D_910_93_DEVICE_ID) {
-        dcmi_set_chip_type(DCMI_CHIP_TYPE_D910_93);
-        dcmi_init_board_type_for_d910_93(g_board_details.board_id);
-        dcmi_init_product_type_for_d910_93(g_board_details.board_id);
-    } else if (pcie_id_info->venderid == DCMI_D_CHIP_VENDER_ID && pcie_id_info->deviceid == DCMI_D_310B_EP_DEVICE_ID) {
-        dcmi_set_chip_type(DCMI_CHIP_TYPE_D310B);
-        dcmi_init_board_type_for_d310B_ep(g_board_details.board_id);
-        dcmi_init_product_type_for_d310B_ep(g_board_details.board_id);
-    } else {
-        dcmi_set_board_type(DCMI_BOARD_TYPE_INVALID);
+    for (info = chip_info_table; info < chip_info_table + tab_len/sizeof(ChipInfo); info++) {
+        if (pcie_id_info->venderid == info->venderid && pcie_id_info->deviceid == info->deviceid) {
+            dcmi_set_chip_type(info->chip_type);
+            info->init_board_type(g_board_details.board_id);
+            info->init_product_type(g_board_details.board_id);
+            return DCMI_OK;
+        }
     }
 
+    dcmi_set_board_type(DCMI_BOARD_TYPE_INVALID);
     return DCMI_OK;
 }
 
@@ -606,29 +687,25 @@ int dcmi_get_board_info_handle(int device_logic_id, struct dsmi_board_info_stru 
     return DCMI_OK;
 }
 
-STATIC bool dcmi_scene_is_910_95_ub(const struct dsmi_chip_info_stru *dsmi_chip_info)
+STATIC bool dcmi_scene_is_950_ub(const struct dsmi_chip_info_stru *dsmi_chip_info)
 {
+    const int chip_950_mainboard_id_shift = 5;
     if (dsmi_chip_info == NULL) {
         return false;
     }
-    return ((strncmp((const char *)dsmi_chip_info->chip_name, "910_95", strlen("910_95")) == 0) &&
-        ((g_mainboard_info.mainboard_id == DCMI_A_K_910_95_MAIN_BOARD_ID) ||
-        (g_mainboard_info.mainboard_id == DCMI_A_K_910_95_UBOE_MAIN_BOARD_ID) ||
-        (g_mainboard_info.mainboard_id == DCMI_A_K_910_95_2_6_MAIN_BOARD_ID) ||
-        (g_mainboard_info.mainboard_id == DCMI_A_K_910_95_2_6_UBOE_MAIN_BOARD_ID) ||
-        (g_mainboard_info.mainboard_id == DCMI_A5_POD_2D_BACKUP_MAIN_BOARD_ID) ||
-        (g_mainboard_info.mainboard_id == DCMI_A5_POD_2D_MAIN_BOARD_ID) ||
-        (g_mainboard_info.mainboard_id == DCMI_A5_POD_1D_MAIN_BOARD_ID) ||
-        (g_mainboard_info.mainboard_id == DCMI_A5_POD_EVB_MAIN_BOARD_ID_UB_TMP)));
+    // 高三位是000(pod)或001(a+k)
+    return (((strncmp((const char *)dsmi_chip_info->chip_name, "950PR_95", strlen("950PR_95")) == 0) ||
+        (strncmp((const char *)dsmi_chip_info->chip_name, "950DT_95", strlen("950DT_95")) == 0)) &&
+        ((g_mainboard_info.mainboard_id >> chip_950_mainboard_id_shift) & A5_MAINBOARD_ID_MASK) <= 1);
 }
 
-void dcmi_init_chip_board_product_910_95(struct dsmi_board_info_stru *board_info)
+void dcmi_init_chip_board_product_950(struct dsmi_board_info_stru *board_info)
 {
     g_board_details.board_id = (int)board_info->board_id;
     g_board_details.board_type = DCMI_BOARD_TYPE_SERVER;
     g_board_details.sub_board_type = DCMI_BOARD_TYPE_SERVER;
-    g_board_details.chip_type = DCMI_CHIP_TYPE_D910_95;
-    g_board_details.device_count_in_one_card = 1;
+    g_board_details.chip_type = DCMI_CHIP_TYPE_D950;
+    g_board_details.device_count_in_one_card = DCMI_950_SERVER_DEVICE_COUNT;
     g_board_details.product_type = 0xff;
 }
 
@@ -644,8 +721,8 @@ STATIC int dcmi_init_chip_board_product_for_ep(int device_id, struct dsmi_board_
         return dcmi_convert_error_code(ret);
     }
 
-    if (dcmi_scene_is_910_95_ub(&dsmi_chip_info)) {
-        dcmi_init_chip_board_product_910_95(board_info);
+    if (dcmi_scene_is_950_ub(&dsmi_chip_info)) {
+        dcmi_init_chip_board_product_950(board_info);
     } else {
 #ifndef _WIN32
         ret = dsmi_get_pcie_info_v2(device_id, &pcie_id_info);
@@ -699,7 +776,7 @@ int dcmi_init_board_type(const int *device_logic_id, int device_count)
     }
 
     if (mode == DCMI_PCIE_RC_MODE) {
-        dcmi_init_chip_board_product_for_rc(board_info.board_id);
+        dcmi_init_chip_board_product_for_rc(device_logic_id[i], board_info.board_id);
         g_board_details.board_id = (int)board_info.board_id;
         return DCMI_OK;
     } else {
@@ -946,10 +1023,10 @@ STATIC int dcmi_init_pcie_slot_info_from_dmidecode_info(FILE *p_file)
             if (info_start_index == NULL) {
                 continue;
             }
-            slot_id = (int)strtol(info_start_index, &end_ptr, DCMI_NUMBER_BASE);
+            slot_id = strtol(info_start_index, &end_ptr, DCMI_NUMBER_BASE);
             has_find = 1;
         } else {
-            find_flag = strstr(&msginfo[0], "Bus Address: ");
+            find_flag = strstr(&msginfo[0], "Bus Addr: ");
             if (find_flag == NULL) {
                 continue;
             }
@@ -1036,6 +1113,40 @@ STATIC void dcmi_pcie_slotid_cardid_init_by_dsmi(void)
     return;
 }
 
+#ifndef ENABLE_EQUIPMENT
+STATIC void dcmiv2_inner_get_slotid_card_id(void)
+{
+    int card_index, ret = 0;
+    int device_logic_id = -1;
+    int i;
+    struct dcmi_card_info *card_info = NULL;
+
+    for (card_index = 0; card_index < g_board_details.card_count; card_index++) {
+        card_info = &g_board_details.card_info[card_index];
+        struct dcmi_board_info board_info = { 0 };
+        for (i = 0; i < card_info->device_count; i++) {
+            ret = dcmiv2_get_device_logic_id(&device_logic_id, card_info->card_id, i);
+            if (ret != DCMI_OK) {
+                gplog(LOG_ERR, "dcmiv2_get_device_logic_id failed."
+                "(card_id, device_index) = (%d, %d), ret = %d", card_info->card_id, i, ret);
+                continue;
+            }
+            ret = dcmiv2_get_device_board_info(device_logic_id, &board_info);
+        }
+        if (ret == DCMI_OK) {
+            card_info->slot_id = (int)board_info.slot_id;
+            card_info->card_id = (int)board_info.slot_id;
+            continue;
+        }
+
+        card_info->slot_id = -1;
+        card_info->card_id = -1;
+        gplog(LOG_ERR, "dcmiv2_get_device_board_info failed. (NPU ID = %d), ret = %d.", device_logic_id, ret);
+    }
+    return;
+}
+#endif
+
 STATIC void dcmi_pcie_slotid_cardid_other_init(void)
 {
     int card_index, pcie_index;
@@ -1099,6 +1210,13 @@ int dcmi_pcie_slot_map_init(void)
         dcmi_board_chip_type_is_ascend_910_93()) {
         dcmi_pcie_slotid_cardid_init_by_dsmi();
         return DCMI_OK;
+    } else if (dcmi_board_chip_type_is_ascend_950()) {
+#ifndef ENABLE_EQUIPMENT
+        dcmiv2_inner_get_slotid_card_id();
+#else
+        dcmi_pcie_slotid_cardid_init_by_dsmi();
+#endif
+        return DCMI_OK;
     }
 
     ret = dcmi_init_pcie_slot_info();
@@ -1135,13 +1253,11 @@ int dcmi_board_init(void)
     int err;
     int device_count = 0;
     int device_id_list[MAX_DEVICE_NUM] = {0};
-
     err = dcmi_get_npu_device_list((int *)&device_id_list[0], MAX_DEVICE_NUM, &device_count);
     if (err != DCMI_OK) {
         gplog(LOG_ERR, "dcmi_get_device_list failed. err is %d.", err);
         return err;
     }
-
     err = dcmi_init_board_type((const int *)&device_id_list[0], device_count);
     if (err != DCMI_OK) {
         gplog(LOG_ERR, "dcmi_init_board_type failed. err is %d.", err);
@@ -1161,7 +1277,7 @@ int dcmi_board_init(void)
         case DCMI_BOARD_TYPE_SOC:
             err = dcmi_init_for_soc((const int *)&device_id_list[0], device_count);
             break;
-
+ 
         default:
             err = DCMI_ERR_CODE_INNER_ERR;
             break;
@@ -1170,9 +1286,154 @@ int dcmi_board_init(void)
         gplog(LOG_ERR, "dcmi init failed. err is %d", err);
         return err;
     }
-
+ 
     gplog(LOG_INFO, "dcmi board init success. device_count=%d.", device_count);
     return DCMI_OK;
+}
+ 
+int dcmi_init_board_type_in_950(int device_id, unsigned int mode)
+{
+    struct tag_pcie_idinfo_all pcie_id_info = {0};
+    struct dsmi_chip_info_stru dsmi_chip_info = {0};
+    int ret;
+ 
+    if (mode == DCMI_PCIE_RC_MODE) {
+        if (dcmi_scene_is_950_uboe(device_id)) {
+            return DCMI_OK;
+        }
+        return DCMI_ERR_CODE_NOT_SUPPORT;
+    }
+ 
+    ret = dsmi_get_chip_info(device_id, &dsmi_chip_info);
+    if (ret != DSMI_OK) {
+        gplog(LOG_ERR, "call dsmi_get_chip_info failed. ret is %d.", ret);
+        return dcmi_convert_error_code(ret);
+    }
+ 
+    if (dcmi_scene_is_950_ub(&dsmi_chip_info)) {
+        return DCMI_OK;
+    }
+ 
+#ifndef _WIN32
+    ret = dsmi_get_pcie_info_v2(device_id, &pcie_id_info);
+#else
+    ret = dcmi_get_pcie_info_win(device_id, &pcie_id_info);
+#endif
+    if (ret != DSMI_OK) {
+        gplog(LOG_ERR, "dsmi get pcie info failed. ret is %d", ret);
+        return dcmi_convert_error_code(ret);
+    }
+ 
+    if (pcie_id_info.venderid == DCMI_D_CHIP_VENDER_ID && pcie_id_info.deviceid == DCMI_D_950_DEVICE_ID) {
+        return DCMI_OK;
+    }
+    return DCMI_ERR_CODE_NOT_SUPPORT;
+}
+ 
+int check_is_init_in_310()
+{
+    char info_line[DCMI_CFG_LINE_MAX_LEN] = {0};
+    char *tmp_str = NULL;
+    size_t read_count;
+    FILE *fp = NULL;
+ 
+    fp = fopen(BOARD_CONFIG_FILE, "r");
+    if (fp == NULL) {
+        return DCMI_ERR_CODE_FILE_OPERATE_FAIL;
+    }
+ 
+    if (fseek(fp, 0, SEEK_SET) != 0) {
+        gplog(LOG_ERR, "call fseek failed.");
+        (void)fclose(fp);
+        return DCMI_ERR_CODE_FILE_OPERATE_FAIL;
+    }
+ 
+    read_count = fread(info_line, 1, sizeof(info_line) - 1, fp);
+    if (read_count <= 0) {
+        gplog(LOG_ERR, "call fread failed.read_count=%zu", read_count);
+        (void)fclose(fp);
+        return DCMI_ERR_CODE_FILE_OPERATE_FAIL;
+    }
+ 
+    info_line[DCMI_CFG_LINE_MAX_LEN - 1] = '\0';
+    tmp_str = strstr(info_line, BOARD_TYPE_KEY);
+    if (tmp_str == NULL) {
+        (void)fclose(fp);
+        return DCMI_ERR_CODE_FILE_OPERATE_FAIL;
+    }
+ 
+    // key要全字匹配
+    if (info_line != tmp_str && *(tmp_str - 1) != '\n') {
+        (void)fclose(fp);
+        return DCMI_ERR_CODE_FILE_OPERATE_FAIL;
+    }
+ 
+    // 500 A2在rc流程设置单板信息
+    if (strncmp(tmp_str + strlen(BOARD_TYPE_KEY), "A500_A2", strlen("A500_A2")) == 0) {
+        (void)fclose(fp);
+        return DCMI_ERR_CODE_INNER_ERR;
+    }
+ 
+    (void)fclose(fp);
+    return DCMI_OK;
+}
+ 
+int dcmi_check_is_init_in_950(const int *device_logic_id, int device_count)
+{
+    struct dsmi_board_info_stru board_info = {0};
+    int ret, i;
+    unsigned int mode = 0;
+ 
+    dcmi_init_board_details_default();
+    ret = check_is_init_in_310();
+    if (ret == DCMI_OK) {
+        gplog(LOG_ERR, "check_is_init_in_310 failed. ret is %d", ret);
+        return DCMI_ERR_CODE_NOT_SUPPORT;
+    }
+ 
+    ret = dcmi_get_rc_ep_mode(&mode);
+    if (ret != DCMI_OK) {
+        gplog(LOG_ERR, "dcmi_get_rc_ep_mode failed. ret is %d", ret);
+        return ret;
+    }
+ 
+    for (i = 0; i < device_count; i++) {
+        if (dcmi_get_boot_status(mode, device_logic_id[i]) != DCMI_OK) {
+            continue;
+        }
+ 
+        ret = dcmi_get_board_info_handle(device_logic_id[i], &board_info);
+        if (ret == DCMI_OK) {
+            break;
+        }
+    }
+ 
+    if (ret != DCMI_OK) {
+        gplog(LOG_ERR, "dsmi_get_board_info failed. ret is %d", ret);
+        return ret; // 此处返回false为不处理 到正常后续流程中再返回相应报错，该接口仅为判断是否是A5
+    }
+
+    ret = dcmi_init_board_type_in_950(device_logic_id[i], mode);
+    if (ret == DCMI_OK) {
+        return ret;
+    }
+
+    (void)memset_s(&g_board_details, sizeof(g_board_details), 0, sizeof(g_board_details));
+    return ret;
+}
+ 
+int dcmi_check_chip_type_is_ascend_950(void)
+{
+    int err;
+    int device_count = 0;
+    int device_id_list[MAX_DEVICE_NUM] = {0};
+    err = dcmi_get_npu_device_list((int *)&device_id_list[0], MAX_DEVICE_NUM, &device_count);
+    if (err != DCMI_OK) {
+        gplog(LOG_ERR, "dcmi_get_device_list failed. err is %d.", err);
+        return err;
+    }
+ 
+    return dcmi_check_is_init_in_950((const int *)&device_id_list[0], device_count);
 }
 
 int dcmi_init(void)
@@ -1181,12 +1442,25 @@ int dcmi_init(void)
     bool check_result;
 
     dcmi_run_env_init();
+
+#ifndef ENABLE_EQUIPMENT
+    err = dcmi_check_chip_type_is_ascend_950();
+    if (err == DCMI_OK) {
+        dcmi_set_env_value(0, 0, 0);
+        gplog(LOG_ERR, "this product is not support ascend 950.");
+        return DCMI_ERR_CODE_NOT_SUPPORT;
+    }
+#endif
+
     (void)dcmi_cfg_create_lock_dir(DCMI_CFG_VNPU_LOCK_DIR);
     (void)dcmi_cfg_create_lock_dir(DCMI_CFG_SYSLOG_LOCK_DIR);
     (void)dcmi_cfg_create_lock_dir(DCMI_CFG_CUSTOM_OP_LOCK_DIR);
+
     (void)dcmi_cfg_create_lock_dir(DCMI_CFG_OP_TIMEOUT_LOCK_DIR);
     (void)dcmi_cfg_create_lock_dir(DCMI_CFG_DEVICE_SHARE_LOCK_DIR);
-
+    (void)dcmi_cfg_create_lock_dir(DCMI_CFG_QOS_MASTER_LOCK_DIR);
+    (void)dcmi_cfg_create_lock_dir(DCMI_CFG_MULTI_DIE_POLICY_LOCK_DIR);
+ 
     err = dcmi_board_init();
     if (err != DCMI_OK) {
         gplog(LOG_ERR, "dcmi_board_init failed. err is %d", err);
@@ -1209,6 +1483,55 @@ int dcmi_init(void)
         dcmi_card_info_sort();
     }
 
+    gplog(LOG_INFO, "dcmi init all success.");
+    return DCMI_OK;
+}
+
+int dcmiv2_init(void)
+{
+    int err;
+    bool check_result;
+ 
+    dcmi_run_env_init();
+ 
+    // dcmiv2_init仅支持A5场景
+    err = dcmi_check_chip_type_is_ascend_950();
+    if (err != DCMI_OK) {
+        dcmi_set_env_value(0, 0, 0);
+        gplog(LOG_ERR, "dcmi_check_chip_type_is_ascend_950 failed. err is %d", err);
+        return err;
+    }
+ 
+    (void)dcmi_cfg_create_lock_dir(DCMI_CFG_VNPU_LOCK_DIR);
+    (void)dcmi_cfg_create_lock_dir(DCMI_CFG_SYSLOG_LOCK_DIR);
+    (void)dcmi_cfg_create_lock_dir(DCMI_CFG_CUSTOM_OP_LOCK_DIR);
+ 
+    (void)dcmi_cfg_create_lock_dir(DCMI_CFG_OP_TIMEOUT_LOCK_DIR);
+    (void)dcmi_cfg_create_lock_dir(DCMI_CFG_DEVICE_SHARE_LOCK_DIR);
+    (void)dcmi_cfg_create_lock_dir(DCMI_CFG_QOS_MASTER_LOCK_DIR);
+ 
+    err = dcmi_board_init();
+    if (err != DCMI_OK) {
+        gplog(LOG_ERR, "dcmi_board_init failed. err is %d", err);
+        return err;
+    }
+ 
+    dcmi_init_ok();
+ 
+    check_result = (dcmi_board_type_is_station() || dcmi_board_type_is_hilens());
+    if (!check_result) {
+        err = dcmi_flush_device_id();
+        if (err != DCMI_OK) {
+            gplog(LOG_ERR, "dcmi_flush_device_id failed. err is %d.", err);
+        }
+ 
+        err = dcmi_pcie_slot_map_init();
+        if (err != DCMI_OK) {
+            gplog(LOG_ERR, "dcmi_pcie_slot_map_init failed. err is %d.", err);
+        }
+        dcmi_card_info_sort();
+    }
+ 
     gplog(LOG_INFO, "dcmi init all success.");
     return DCMI_OK;
 }

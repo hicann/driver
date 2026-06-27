@@ -14,7 +14,7 @@
 #ifndef TRS_MAILBOX_DEF_H
 #define TRS_MAILBOX_DEF_H
 
-#include <linux/types.h>
+#include "ka_type.h"
 #include "trs_pub_def.h"
 #include "trs_h2d_msg.h"
 
@@ -29,4 +29,3 @@ int trs_mbox_send(struct trs_id_inst *inst, u32 chan_id, void *data, size_t size
 int trs_mbox_send_ex(struct trs_id_inst *inst, u32 chan_id, void *data, size_t size, int timeout);
 
 #endif
-

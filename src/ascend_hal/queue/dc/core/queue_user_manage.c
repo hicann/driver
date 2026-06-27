@@ -36,9 +36,9 @@
 #define SUBSCRIBE_MAX_GRP_NUM 32U
 #define MAX_WAITE_TIME 0xffffffffffffffff
 
-#define QUEUE_BASE_ADDR_MAX_MASTER_TIME 3000   /* wait for 3s */
+#define QUEUE_BASE_ADDR_MAX_MASTER_TIME 3000 /* wait for 3s */
 
-#define QUE_THREAD_SLEEP_INTERVAL   (100000)   // 100ms
+#define QUE_THREAD_SLEEP_INTERVAL (100000) // 100ms
 
 enum queue_thread_status {
     QUE_THREAD_IDLE = 0,
@@ -116,9 +116,9 @@ static drvError_t queue_buf_get(void *mem_base, uint64_t mem_size)
 
     ret = buff_blk_get(mem_base, &pool_id, &alloc_ptr, &alloc_size, &blk_id);
     if ((ret != 0) || (alloc_ptr != mem_base) || (alloc_size < mem_size)) {
-        QUEUE_LOG_ERR("queue grp get error. (ret=%d; addr=0x%llx; baseaddr=0x%llx; size=%lu; base size=%lu)\n",
-            ret, (unsigned long long)(uintptr_t)alloc_ptr, (unsigned long long)(uintptr_t)mem_base,
-            (unsigned long)alloc_size, (unsigned long)mem_size);
+        QUEUE_LOG_ERR("queue grp get error. (ret=%d; addr=0x%llx; baseaddr=0x%llx; size=%lu; base size=%lu)\n", ret,
+                      (unsigned long long)(uintptr_t)alloc_ptr, (unsigned long long)(uintptr_t)mem_base,
+                      (unsigned long)alloc_size, (unsigned long)mem_size);
         return DRV_ERROR_INNER_ERR;
     }
     return DRV_ERROR_NONE;
@@ -159,7 +159,8 @@ void *queue_get_que_addr(unsigned int qid)
 void *queue_get_merge_addr(int qid)
 {
     /*lint -e502 -e647*/
-    return (void *)(uintptr_t)((uint64_t)(uintptr_t)que_mem_base + QUE_MEM_SIZE + SINGLE_MERGE_MEM_SIZE * (long unsigned int)qid);
+    return (void *)(uintptr_t)((uint64_t)(uintptr_t)que_mem_base + QUE_MEM_SIZE +
+                               SINGLE_MERGE_MEM_SIZE * (long unsigned int)qid);
     /*lint +e502 +e647*/
 }
 
@@ -290,7 +291,7 @@ STATIC drvError_t queue_init_base_addr(void)
 
             (void)memset_s(addr, size, 0, size);
 
-            value = (unsigned long)(uintptr_t)addr; //lint !e507
+            value = (unsigned long)(uintptr_t)addr; // lint !e507
             ret = queue_set_grp_prop(QUE_MEM_BASE_ADDR_PROP_NAME, value);
             if (ret != DRV_ERROR_NONE) {
                 queue_free_buf(addr);
@@ -333,42 +334,41 @@ STATIC void queue_show_stat(struct queue_manages *que_manage, unsigned int qid)
     }
 
     QUEUE_RUN_LOG_INFO("(qid=%u; creator_pid=%d;"
-        " producer_pid=%d; spec_thread=%d; tid=%u; inner_sub_flag=%u;"
-        " consumer_pid=%d; spec_thread=%d; tid=%u; inner_sub_flag=%u;"
-        " bind_type=%d; work_mode=%d; empty_flag=%d;"
-        " full_flag=%d; event_flag=%d;"
-        " head=%u; tail=%u; depth=%u;"
-        " over_write_flag=%d; fctl_flag=%d).\n",
-        que_manage->id, que_manage->creator_pid,
-        que_manage->producer.pid, que_manage->producer.spec_thread, que_manage->producer.tid,
-        que_manage->producer.inner_sub_flag,
-        que_manage->consumer.pid, que_manage->consumer.spec_thread, que_manage->consumer.tid,
-        que_manage->consumer.inner_sub_flag,
-        que_manage->bind_type, que_manage->work_mode, que_manage->empty_flag,
-        que_manage->full_flag, que_manage->event_flag,
-        que_manage->queue_head.head_info.head, queue_get_orig_tail(que_manage), queue_get_local_depth(qid),
-        que_manage->over_write, que_manage->fctl_flag);
+                       " producer_pid=%d; spec_thread=%d; tid=%u; inner_sub_flag=%u;"
+                       " consumer_pid=%d; spec_thread=%d; tid=%u; inner_sub_flag=%u;"
+                       " bind_type=%d; work_mode=%d; empty_flag=%d;"
+                       " full_flag=%d; event_flag=%d;"
+                       " head=%u; tail=%u; depth=%u;"
+                       " over_write_flag=%d; fctl_flag=%d).\n",
+                       que_manage->id, que_manage->creator_pid, que_manage->producer.pid,
+                       que_manage->producer.spec_thread, que_manage->producer.tid, que_manage->producer.inner_sub_flag,
+                       que_manage->consumer.pid, que_manage->consumer.spec_thread, que_manage->consumer.tid,
+                       que_manage->consumer.inner_sub_flag, que_manage->bind_type, que_manage->work_mode,
+                       que_manage->empty_flag, que_manage->full_flag, que_manage->event_flag,
+                       que_manage->queue_head.head_info.head, queue_get_orig_tail(que_manage),
+                       queue_get_local_depth(qid), que_manage->over_write, que_manage->fctl_flag);
 
     QUEUE_RUN_LOG_INFO("(enque_ok=%llu; enque_fail=%u; enque_drop=%lu;"
-        " deque_num=%llu; deque_ok=%llu; deque_fail=%u; deque_drop=%llu;"
-        " enque_full=%llu; deque_null=%u; deque_empty=%llu;"
-        " enque_event_ok=%llu; enque_event_fail=%llu; call_back=%llu;"
-        " enque_event_result=%d; enque_none_subscrib=%lu;"
-        " f2nf_event_ok=%llu; f2nf_event_fail=%llu)\n",
-        que_manage->stat.enque_ok, que_manage->stat.enque_fail, que_manage->stat.enque_drop,
-        que_manage->stat.deque_num, que_manage->stat.deque_ok, que_manage->stat.deque_fail, que_manage->stat.deque_drop,
-        que_manage->stat.enque_full, que_manage->stat.deque_null, que_manage->stat.deque_empty,
-        que_manage->stat.enque_event_ok, que_manage->stat.enque_event_fail, que_manage->stat.call_back,
-        que_manage->stat.enque_event_ret, que_manage->stat.enque_none_subscrib,
-        que_manage->stat.f2nf_event_ok, que_manage->stat.f2nf_event_fail);
+                       " deque_num=%llu; deque_ok=%llu; deque_fail=%u; deque_drop=%llu;"
+                       " enque_full=%llu; deque_null=%u; deque_empty=%llu;"
+                       " enque_event_ok=%llu; enque_event_fail=%llu; call_back=%llu;"
+                       " enque_event_result=%d; enque_none_subscrib=%lu;"
+                       " f2nf_event_ok=%llu; f2nf_event_fail=%llu)\n",
+                       que_manage->stat.enque_ok, que_manage->stat.enque_fail, que_manage->stat.enque_drop,
+                       que_manage->stat.deque_num, que_manage->stat.deque_ok, que_manage->stat.deque_fail,
+                       que_manage->stat.deque_drop, que_manage->stat.enque_full, que_manage->stat.deque_null,
+                       que_manage->stat.deque_empty, que_manage->stat.enque_event_ok, que_manage->stat.enque_event_fail,
+                       que_manage->stat.call_back, que_manage->stat.enque_event_ret,
+                       que_manage->stat.enque_none_subscrib, que_manage->stat.f2nf_event_ok,
+                       que_manage->stat.f2nf_event_fail);
 
     if (queue_is_merge_idx_valid(merge_idx)) {
         struct group_merge *merge = queue_get_merge_addr(merge_idx);
         QUEUE_RUN_LOG_INFO("merge info. (pid=%d, grp_id=%u, ref=%u, atomic=%d, pause=%d evt_succ=%llu, evt_fail=%llu, "
-            "call_back=%llu, enque_event_result=%d)\n",
-            merge->pid, merge->groupid, merge->ref_cnt, merge->atomic_flag, merge->pause_flag,
-            merge->event_stat.user_event_succ, merge->event_stat.user_event_fail, merge->event_stat.call_back,
-            merge->enque_event_ret);
+                           "call_back=%llu, enque_event_result=%d)\n",
+                           merge->pid, merge->groupid, merge->ref_cnt, merge->atomic_flag, merge->pause_flag,
+                           merge->event_stat.user_event_succ, merge->event_stat.user_event_fail,
+                           merge->event_stat.call_back, merge->enque_event_ret);
     }
 }
 
@@ -573,9 +573,9 @@ static drvError_t queue_entity_get(void *entity, unsigned int *depth)
 
     ret = buff_blk_get(entity, &pool_id, &alloc_ptr, &alloc_size, &blk_id);
     if ((ret != DRV_ERROR_NONE) || (alloc_ptr != entity)) {
-        QUEUE_LOG_ERR("queue grp get error. (ret=%d; addr=0x%llx; baseaddr=0x%llx; size=%lu; base size=%lu)\n",
-            ret, (unsigned long long)(uintptr_t)alloc_ptr, (unsigned long long)(uintptr_t)entity,
-            (unsigned long)alloc_size, sizeof(void *));
+        QUEUE_LOG_ERR("queue grp get error. (ret=%d; addr=0x%llx; baseaddr=0x%llx; size=%lu; base size=%lu)\n", ret,
+                      (unsigned long long)(uintptr_t)alloc_ptr, (unsigned long long)(uintptr_t)entity,
+                      (unsigned long)alloc_size, sizeof(void *));
         return DRV_ERROR_INNER_ERR;
     }
 
@@ -637,9 +637,10 @@ static struct queue_manages *get_merge_grp_not_empty_que(struct group_merge *mer
     unsigned int groupid = merge->groupid % SUBSCRIBE_MAX_GRP_NUM;
 
     get_atomic_lock(&grp_merge_list[groupid].lock, MAX_WAITE_TIME);
-    list_for_each_safe(pos, n, &grp_merge_list[groupid].head) {
+    list_for_each_safe(pos, n, &grp_merge_list[groupid].head)
+    {
         node = list_entry(pos, struct queue_merge_node, list);
-        que_manage = (struct queue_manages *)queue_get_local_mng(node->qid); //lint !e454 !e613
+        que_manage = (struct queue_manages *)queue_get_local_mng(node->qid); // lint !e454 !e613
         if ((que_manage != NULL) && ((queue_get_orig_tail(que_manage) != que_manage->queue_head.head_info.head))) {
             release_atomic_lock(&grp_merge_list[groupid].lock);
             return que_manage;
@@ -647,7 +648,7 @@ static struct queue_manages *get_merge_grp_not_empty_que(struct group_merge *mer
     }
     release_atomic_lock(&grp_merge_list[groupid].lock);
 
-    return NULL; //lint !e454
+    return NULL; // lint !e454
 }
 
 STATIC void queue_resume_grp_event(uint32 devid, struct group_merge *merge)
@@ -684,8 +685,7 @@ void queue_finish_callback_local(unsigned int dev_id, unsigned int qid, unsigned
     struct group_merge *merge = NULL;
 
     if ((event_id != EVENT_QUEUE_ENQUEUE) || (grp_id >= SUBSCRIBE_MAX_GRP_NUM)) {
-        QUEUE_LOG_ERR("event callback para invalid. (grp_id=%u, event_id=%u, qid=%u)\n",
-            grp_id, event_id, qid);
+        QUEUE_LOG_ERR("event callback para invalid. (grp_id=%u, event_id=%u, qid=%u)\n", grp_id, event_id, qid);
         return;
     }
 
@@ -716,8 +716,8 @@ void queue_finish_callback_local(unsigned int dev_id, unsigned int qid, unsigned
     } else if (merge != NULL) {
         queue_resume_grp_event(dev_id, merge);
     } else {
-        QUEUE_LOG_WARN("parameter error. (group_id=%u; qid=%u; bind_type=%d; valid=%d).\n",
-            grp_id, qid, que_manage->bind_type, que_manage->valid);
+        QUEUE_LOG_WARN("parameter error. (group_id=%u; qid=%u; bind_type=%d; valid=%d).\n", grp_id, qid,
+                       que_manage->bind_type, que_manage->valid);
     }
     queue_put(qid);
 }
@@ -842,8 +842,7 @@ STATIC void queue_init_merge_info(struct group_merge *merge, int idx, int pid, u
 STATIC void queue_merge_add_node(struct group_merge *merge, unsigned int groupid, unsigned int qid)
 {
     get_atomic_lock(&grp_merge_list[groupid].lock, MAX_WAITE_TIME);
-    if ((merge_que[qid].groupid >= 0) && (merge_que[qid].list.next != NULL) &&
-        (merge_que[qid].list.prev != NULL)) {
+    if ((merge_que[qid].groupid >= 0) && (merge_que[qid].list.next != NULL) && (merge_que[qid].list.prev != NULL)) {
         drv_user_list_del(&merge_que[qid].list);
     }
     merge_que[qid].qid = qid;
@@ -879,8 +878,8 @@ drvError_t queue_merge_init(struct queue_manages *que_manage, unsigned int qid, 
     (void)pthread_mutex_lock(&merge_mutex);
 
     if (merge_que[qid].groupid >= 0) {
-        QUEUE_RUN_LOG_INFO("queue is already subscribed. (qid=%u; sub_grp=%d; cur_grp=%u)\n",
-            qid, merge_que[qid].groupid, groupid);
+        QUEUE_RUN_LOG_INFO("queue is already subscribed. (qid=%u; sub_grp=%d; cur_grp=%u)\n", qid,
+                           merge_que[qid].groupid, groupid);
     }
 
     merge = queue_get_local_merge(pid, groupid, &merge_id);
@@ -1010,7 +1009,7 @@ static void que_mng_thread_init(void)
 
     (void)pthread_attr_init(&attr);
     (void)pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
-    ret = pthread_create(&thread, &attr, que_mng_thread, (void*)&que_mng_grp_id);
+    ret = pthread_create(&thread, &attr, que_mng_thread, (void *)&que_mng_grp_id);
     if (ret != 0) {
         QUEUE_LOG_ERR("queue mng thread create fail. (ret=%d)\n", ret);
     } else {

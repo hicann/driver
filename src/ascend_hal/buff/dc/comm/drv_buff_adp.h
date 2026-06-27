@@ -17,16 +17,19 @@
 
 #ifndef QUEUE_UT
 #if defined(__arm__) || defined(__aarch64__)
-#define dsb(opt)    { asm volatile("dsb " #opt : : : "memory"); }
+#define dsb(opt)                                  \
+    {                                             \
+        asm volatile("dsb " #opt : : : "memory"); \
+    }
 #else
 #define dsb(opt)
 #endif
 #else
 #define dsb(opt)
 #endif
-#define rmb()       dsb(ld) /* read fence */
-#define wmb()       dsb(st) /* write fence */
-#define mb()        dsb(sy) /* rw fence */
+#define rmb() dsb(ld) /* read fence */
+#define wmb() dsb(st) /* write fence */
+#define mb() dsb(sy)  /* rw fence */
 #define isb() asm volatile("isb" : : : "memory")
 
 struct buff_config_handle_arg {

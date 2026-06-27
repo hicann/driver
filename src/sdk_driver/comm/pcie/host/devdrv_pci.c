@@ -28,10 +28,9 @@
 #include "ka_driver_pub.h"
 #include "ka_base_pub.h"
 #include "pbl/pbl_uda.h"
-#ifdef CFG_FEATURE_PCIE_PROTO_DIP /* Dependency Inversion Principle */
 #include "pbl/pbl_soc_res_sync.h"
-#endif
 #include "pbl/pbl_soc_res.h"
+#include "pbl/pbl_feature_loader.h"
 #include "devdrv_dma.h"
 #include "devdrv_ctrl.h"
 #include "devdrv_msg.h"
@@ -42,13 +41,12 @@
 #include "devdrv_vpc.h"
 #include "devdrv_smmu.h"
 #include "devdrv_pasid_rbtree.h"
-#ifdef CFG_FEATURE_S2S
 #include "devdrv_s2s_msg.h"
-#endif
 #include "devdrv_pcie_link_info.h"
 #include "devdrv_pci.h"
 #include "devdrv_mem_alloc.h"
 #include "devdrv_adapt.h"
+#include "devdrv_feature.h"
 
 #ifdef CFG_FEATURE_PCIE_SENTRY
 #include "devdrv_sentry.h"
@@ -555,9 +553,7 @@ STATIC int devdrv_init_interrupt(struct devdrv_pci_ctrl *pci_ctrl)
     }
 
     if (ret == 0) {
-        if (pci_ctrl->ops.bind_irq != NULL) {
-            pci_ctrl->ops.bind_irq(pci_ctrl);
-        }
+        devdrv_bind_irq(pci_ctrl);
     }
 
     return ret;
@@ -595,17 +591,9 @@ STATIC bool devdrv_can_disable_msix(ka_pci_dev_t *pdev)
     return true;
 }
 
-int devdrv_uninit_interrupt(struct devdrv_pci_ctrl *pci_ctrl)
+void devdrv_uninit_interrupt_normal(struct devdrv_pci_ctrl *pci_ctrl)
 {
     bool (*devdrv_is_msix_can_disable)(ka_pci_dev_t *pdev);
-
-    if (pci_ctrl->ops.unbind_irq != NULL) {
-        pci_ctrl->ops.unbind_irq(pci_ctrl);
-    }
-
-    if (devdrv_is_pdev_main_davinci_dev(pci_ctrl) == false) {
-        return 0;
-    }
 
     /* for later version: devdrv_msix_can_disable
      * for earlier version: devdrv_can_disable_msix
@@ -616,7 +604,21 @@ int devdrv_uninit_interrupt(struct devdrv_pci_ctrl *pci_ctrl)
         ka_pci_disable_msix(pci_ctrl->pdev);
         ka_pci_intx(pci_ctrl->pdev, 0);
     }
+}
 
+int devdrv_uninit_interrupt(struct devdrv_pci_ctrl *pci_ctrl)
+{
+    if ((pci_ctrl->env_boot_mode == DEVDRV_MDEV_VF_PM_BOOT) ||
+        (pci_ctrl->env_boot_mode == DEVDRV_MDEV_FULL_SPEC_VF_PM_BOOT)) {
+        return 0;
+    }
+
+    devdrv_unbind_irq(pci_ctrl);
+    if (devdrv_is_pdev_main_davinci_dev(pci_ctrl) == false) {
+        return 0;
+    }
+
+    devdrv_uninit_interrupt_normal(pci_ctrl);
     return 0;
 }
 
@@ -668,8 +670,8 @@ int devdrv_dma_chan_err_proc(struct devdrv_dma_channel *dma_chan)
 
 STATIC struct devdrv_dma_dev *devdrv_host_dma_init(struct devdrv_pci_ctrl *pci_ctrl)
 {
-    struct devdrv_dma_func_para para_in = {0};
     struct devdrv_dma_res *dma_res = &pci_ctrl->res.dma_res;
+    struct devdrv_dma_func_para para_in = {0};
     u32 i;
 
     /* DMA dev init */
@@ -755,7 +757,6 @@ void devdrv_guard_work_uninit(struct devdrv_pci_ctrl *pci_ctrl)
     (void)ka_task_cancel_delayed_work_sync(&pci_ctrl->guard_work);
 }
 
-#ifdef CFG_FEATURE_PCIE_PROTO_DIP /* Dependency Inversion Principle */
 #define BAR_NUM 3
 STATIC int devdrv_get_res_host_bar_addr(struct devdrv_pci_ctrl *pci_ctrl, u32 bar, u64 addr_in_bar, u64 len,
     u64 *bar_addr)
@@ -918,7 +919,6 @@ static int devdrv_sync_soc_res(u32 udevid, struct res_sync_target *target, char 
     }
     return -EFAULT;
 }
-#endif
 
 static int devdrv_pack_master_id_to_uda(u32 index_id, struct uda_dev_para *uda_para)
 {
@@ -937,12 +937,12 @@ static int devdrv_pack_master_id_to_uda(u32 index_id, struct uda_dev_para *uda_p
     return 0;
 }
 
-#ifdef CFG_FEATURE_PCIE_PROTO_DIP
 #define DEVDRV_ADD_DAVINCI_NOTIFIER "devdrv_add_davinci"
 STATIC int devdrv_add_davinci_notifier_func(u32 udevid, enum uda_notified_action action)
 {
     int ret = 0;
     u32 index_id;
+    struct devdrv_pci_ctrl *pci_ctrl = NULL;
 
     if (udevid >= MAX_DEV_CNT) {
         devdrv_err("Invalid para. (udevid=%u)\n", udevid);
@@ -953,21 +953,41 @@ STATIC int devdrv_add_davinci_notifier_func(u32 udevid, enum uda_notified_action
         return 0;
     }
 
+    (void)uda_udevid_to_add_id(udevid, &index_id);
+    pci_ctrl = devdrv_get_top_half_pci_ctrl_by_id(index_id);
+    if (pci_ctrl == NULL) {
+        devdrv_err("Get pci_ctrl failed. (index_id=%u)\n", index_id);
+        return -EINVAL;
+    }
+
     if (action == UDA_INIT) {
-        ret = soc_res_sync_d2h(udevid, devdrv_sync_soc_res);
-        if (ret != 0) {
-            devdrv_err("Sync fail. (udevid=%u)\n", udevid);
-            return ret;
+        if (devdrv_feature_is_support(pci_ctrl->features, DEVDRV_FEATURE_PCIE_PROTO_DIP)) {
+            ret = soc_res_sync_d2h(udevid, devdrv_sync_soc_res);
+            if (ret != 0) {
+                devdrv_err("Sync fail. (udevid=%u)\n", udevid);
+                return ret;
+            }
         }
     }
 
-    (void)uda_udevid_to_add_id(udevid, &index_id);
     devdrv_info("add_davinci_notifier_func success. (udevid=%u; index_id=%u; action=%d; ret=%d)\n",
         udevid, index_id, (u32)action, ret);
-
     return 0;
 }
-#endif
+
+void devdrv_pre_cfg(struct devdrv_pci_ctrl *pci_ctrl)
+{
+    u32 i;
+    /* pci_ctrl->shr_para->pre_cfg is recv for pre cfg flag set */
+    /* 1. initialize pre cfg */
+    for (i = 0; i < DEVDRV_SHR_PARA_PRE_CFG_LEN; i++) {
+        pci_ctrl->shr_para->pre_cfg[i] = 0;
+    }
+
+    /* 2. get cfg value from configuration file */
+    /* 3. set cfg value to shr_para->pre_cfg */
+    return;
+}
 
 STATIC int devdrv_add_davinci_dev(struct devdrv_pci_ctrl *pci_ctrl)
 {
@@ -1064,11 +1084,31 @@ STATIC void devdrv_hccs_link_info_pre_init(struct devdrv_pci_ctrl *pci_ctrl)
     }
 }
 
+void devdrv_init_hccs_link_info(struct devdrv_pci_ctrl *pci_ctrl)
+{
+    int i;
+
+    pci_ctrl->hccs_status = pci_ctrl->shr_para->hccs_status;
+    for (i = 0; i < HCCS_GROUP_SUPPORT_MAX_CHIPNUM; i++) {
+#ifdef ENABLE_BUILD_PRODUCT
+        ka_rmb();
+#endif
+        pci_ctrl->hccs_group_id[i] = pci_ctrl->shr_para->hccs_group_id[i];
+    }
+    devdrv_info("Init hccs link status. (hccs_status=0x%x)\n", pci_ctrl->hccs_status);
+}
+
 STATIC void devdrv_hccs_link_info_post_init(struct devdrv_pci_ctrl *pci_ctrl)
 {
-    if (pci_ctrl->ops.get_hccs_link_info != NULL) {
-        pci_ctrl->ops.get_hccs_link_info(pci_ctrl);
+    if (devdrv_feature_is_support(pci_ctrl->features, DEVDRV_FEATURE_HCCS_LINK_INFO)) {
+        devdrv_init_hccs_link_info(pci_ctrl);
     }
+}
+
+void devdrv_shr_para_rebuild(struct devdrv_pci_ctrl *pci_ctrl)
+{
+    /* miniv2 should rebuild shr_para addr, because 2P card can't access the slave's l3 sram */
+    pci_ctrl->shr_para = pci_ctrl->mem_base + DEVDRV_SHR_PARA_ADDR_OFFSET;
 }
 
 STATIC int devdrv_mdev_pm_load_half_probe(struct devdrv_pci_ctrl *pci_ctrl)
@@ -1151,8 +1191,8 @@ STATIC bool devdrv_is_all_module_online(struct devdrv_pci_ctrl *pci_ctrl)
 {
     bool (*devdrv_is_module_insert)(const char *name);
     struct devdrv_depend_module *module_list = pci_ctrl->res.depend_info.module_list;
-    struct devdrv_depend_module *module_info = NULL;
     u32 module_num = pci_ctrl->res.depend_info.module_num;
+    struct devdrv_depend_module *module_info = NULL;
     u32 online_num = 0;
     u32 i;
 
@@ -1188,8 +1228,8 @@ STATIC bool devdrv_is_all_module_online(struct devdrv_pci_ctrl *pci_ctrl)
 STATIC void devdrv_show_unprobed_module(struct devdrv_pci_ctrl *pci_ctrl)
 {
     struct devdrv_depend_module *module_list = pci_ctrl->res.depend_info.module_list;
-    struct devdrv_depend_module *module_info = NULL;
     u32 module_num = pci_ctrl->res.depend_info.module_num;
+    struct devdrv_depend_module *module_info = NULL;
     u32 i;
 
     for (i = 0; i < module_num; i++) {
@@ -1329,13 +1369,13 @@ void devdrv_load_half_probe(struct devdrv_pci_ctrl *pci_ctrl)
         pci_ctrl->ops.init_virt_info(pci_ctrl);
     }
 
-#ifdef CFG_FEATURE_S2S
-    /* if s2s init failed, just s2s func can not be used, continue probe */
-    ret = devdrv_s2s_msg_chan_init(pci_ctrl);
-    if (ret != 0) {
-        devdrv_warn("Init s2s msg chan failed.(dev_id=%d;ret=%d)\n", pci_ctrl->dev_id, ret);
+    if (devdrv_feature_is_support(pci_ctrl->features, DEVDRV_FEATURE_S2S)) {
+        /* if s2s init failed, just s2s func can not be used, continue probe */
+        ret = devdrv_s2s_msg_chan_init(pci_ctrl);
+        if (ret != 0) {
+            devdrv_warn("Init s2s msg chan not success.(dev_id=%d;ret=%d)\n", pci_ctrl->dev_id, ret);
+        }
     }
-#endif
 
     ret = devdrv_dev_online(pci_ctrl);
     if (ret != 0) {
@@ -1639,17 +1679,20 @@ int devdrv_cfg_pdev(ka_pci_dev_t *pdev)
     /* pci_configure_device will config this after 4.11.0 */
     (void)ka_pci_configure_extended_capability(pdev);
 
-    if ((u32)KA_PCI_FUNC(ka_pci_get_devfn(pdev)) != 0) {
+    if ((ka_pci_get_is_physfn(pdev) == DEVDRV_SRIOV_TYPE_PF) &&
+        ((u32)KA_PCI_FUNC(ka_pci_get_devfn(pdev)) != 0)) {
         /* network pf0 */
         pdev_t = devdrv_get_device_pf(pdev, NETWORK_PF_0);
         if (pdev_t != NULL) {
             (void)ka_pci_configure_extended_capability(pdev_t);
+            ka_pci_dev_put(pdev_t);
         }
 
         /* network pf1 */
         pdev_t = devdrv_get_device_pf(pdev, NETWORK_PF_1);
         if (pdev_t != NULL) {
             (void)ka_pci_configure_extended_capability(pdev_t);
+            ka_pci_dev_put(pdev_t);
         }
     }
 
@@ -1927,14 +1970,28 @@ struct devdrv_comm_ops g_drv_pcie_ops = {
     .devdrv_dma_unmap_single = devdrv_pci_dma_unmap_single,
     .devdrv_dma_map_page = devdrv_pci_dma_map_page,
     .devdrv_dma_unmap_page = devdrv_pci_dma_unmap_page,
+    .devdrv_dma_map_page_attrs = devdrv_pci_dma_map_page_attrs,
+    .devdrv_dma_unmap_page_attrs = devdrv_pci_dma_unmap_page_attrs,
     .devdrv_dma_map_resource = devdrv_pci_dma_map_resource,
     .devdrv_dma_unmap_resource = devdrv_pci_dma_unmap_resource,
- #ifdef CFG_FEATURE_S2S
     .register_s2s_msg = devdrv_pci_register_s2s_msg_proc_func,
     .unregister_s2s_msg = devdrv_pci_unregister_s2s_msg_proc_func,
     .send_s2s_msg = devdrv_pci_s2s_msg_send,
     .recv_s2s_async_msg = devdrv_pci_s2s_async_msg_recv,
-#endif
+    .alloc_trans_queue = devdrv_pci_pcimsg_alloc_trans_queue,
+    .realease_trans_queue = devdrv_pci_pcimsg_realease_trans_queue,
+    .ring_doorbell = devdrv_pci_msg_ring_doorbell,
+    .ring_cq_doorbell = devdrv_pci_msg_ring_cq_doorbell,
+    .set_sq_head = devdrv_pci_set_msg_chan_slave_sq_head,
+    .get_sq_head = devdrv_pci_get_msg_chan_host_sq_head,
+    .move_sq_head = devdrv_pci_move_msg_chan_host_sq_head,
+    .get_sq_tail = devdrv_pci_get_msg_chan_slave_sq_tail,
+    .move_sq_tail = devdrv_pci_move_msg_chan_slave_sq_tail,
+    .sq_full_check = devdrv_pci_msg_chan_slave_sq_full_check,
+    .get_cq_head = devdrv_pci_get_msg_chan_host_cq_head,
+    .move_cq_head = devdrv_pci_move_msg_chan_host_cq_head,
+    .get_cq_tail = devdrv_pci_get_msg_chan_slave_cq_tail,
+    .move_cq_tail = devdrv_pci_move_msg_chan_slave_cq_tail,
 };
 
 STATIC int devdrv_probe(ka_pci_dev_t *pdev, const ka_pci_device_id_t *data, int dev_index)
@@ -1974,15 +2031,14 @@ STATIC int devdrv_probe(ka_pci_dev_t *pdev, const ka_pci_device_id_t *data, int 
         devdrv_err("Alloc devid failed. (ret=%d)\n", ret);
         goto res_uninit;
     }
+    uda_set_add_id(pci_ctrl->dev_id);
     devdrv_set_communication_ops_status_inner(DEVDRV_COMMNS_PCIE, DEVDRV_COMM_OPS_TYPE_ENABLE, pci_ctrl->dev_id);
     if (dev_index == 0) {
         pdev_ctrl = (struct devdrv_pdev_ctrl *)ka_pci_get_drvdata(pdev);
         pdev_ctrl->main_dev_id = pci_ctrl->dev_id;
     }
 
-    if (pci_ctrl->ops.probe_wait != NULL) {
-        pci_ctrl->ops.probe_wait((int)pci_ctrl->dev_id);
-    }
+    devdrv_probe_wait((int)pci_ctrl->dev_id);
     drvdrv_dev_startup_record(pci_ctrl->dev_id);
     drvdrv_dev_startup_report(pci_ctrl->dev_id);
     devdrv_set_probe_dev_bitmap(pci_ctrl->dev_id);
@@ -2014,8 +2070,8 @@ STATIC int devdrv_probe(ka_pci_dev_t *pdev, const ka_pci_device_id_t *data, int 
     devdrv_set_device_status(pci_ctrl, DEVDRV_DEVICE_ALIVE);
     pci_ctrl->module_exit_flag = DEVDRV_REMOVE_CALLED_BY_PRERESET;
 
-    if (pci_ctrl->ops.shr_para_rebuild != NULL) {
-        pci_ctrl->ops.shr_para_rebuild(pci_ctrl);
+    if (devdrv_feature_is_support(pci_ctrl->features, DEVDRV_FEATURE_SHR_PARA_REBUILD)) {
+        devdrv_shr_para_rebuild(pci_ctrl);
     }
 
 #ifdef CFG_FEATURE_PCIE_SENTRY
@@ -2157,9 +2213,9 @@ void devdrv_load_half_free(struct devdrv_pci_ctrl *pci_ctrl)
         devdrv_set_device_status(pci_ctrl, DEVDRV_DEVICE_UDA_RM);
     }
 
-#ifdef CFG_FEATURE_S2S
-    devdrv_s2s_msg_chan_uninit(pci_ctrl);
-#endif
+    if (devdrv_feature_is_support(pci_ctrl->features, DEVDRV_FEATURE_S2S)) {
+        devdrv_s2s_msg_chan_uninit(pci_ctrl);
+    }
     devdrv_pasid_non_trans_uninit(pci_ctrl);
     if (!devdrv_is_sentry_work_mode()) {
         devdrv_set_hccs_link_status(pci_ctrl->dev_id, 0x0);
@@ -2324,8 +2380,8 @@ ka_pci_driver_t g_devdrv_driver_ver = {
 void devdrv_init_dev_num(void)
 {
     ka_pci_dev_t *pdev = NULL;
-    int dev_num = 0;
     int dev_num_total = 0;
+    int dev_num = 0;
     int id_num = devdrv_get_device_id_tbl_num();
     int i;
 
@@ -2415,11 +2471,22 @@ default_gear:
 #define PCIE_HOST_NOTIFIER "pcie_host"
 STATIC int pcie_host_notifier_func(u32 udevid, enum uda_notified_action action)
 {
-#ifdef CFG_FEATURE_S2S
-    if (action == UDA_HOTRESET) {
-        devdrv_set_s2s_chan_pre_reset(udevid);
+    u32 index_id;
+    struct devdrv_pci_ctrl *pci_ctrl = NULL;
+
+    (void)uda_udevid_to_add_id(udevid, &index_id);
+    pci_ctrl = devdrv_get_top_half_pci_ctrl_by_id(index_id);
+    if (pci_ctrl == NULL) {
+        devdrv_warn("Can not get dev_ctrl. (index_id=%u)\n", index_id);
+        return 0;
     }
-#endif
+
+    if (devdrv_feature_is_support(pci_ctrl->features, DEVDRV_FEATURE_S2S)) {
+        if (action == UDA_HOTRESET) {
+            devdrv_set_s2s_chan_pre_reset(udevid);
+        }
+    }
+
     return 0;
 }
 
@@ -2429,6 +2496,12 @@ STATIC int __ka_init devdrv_init_module(void)
     int ret;
 
     devdrv_info("Insmod host driver. (driver_name=\"%s\")\n", g_devdrv_driver_name);
+    ret = devdrv_feature_mgr_init();
+    if (ret != 0) {
+        devdrv_err("devdrv feature manager init failed. (ret=%d)\n", ret);
+        return ret;
+    }
+
     ret = devdrv_register_communication_ops(&g_drv_pcie_ops);
     if (ret != 0) {
         devdrv_err("Register pcie communication ops failed. (ret=%d)\n", ret);
@@ -2437,11 +2510,7 @@ STATIC int __ka_init devdrv_init_module(void)
     ka_task_mutex_init(&g_depend_module_mutex);
 
     g_host_type = HOST_TYPE_NORMAL;
-
-#ifdef CFG_FEATURE_S2S
     devdrv_s2s_rwsem_init();
-#endif
-
     ret = devdrv_alloc_attr_info();
     if (ret != 0) {
         devdrv_err("Alloc attr info failed. (ret=%d)\n", ret);
@@ -2485,21 +2554,19 @@ STATIC int __ka_init devdrv_init_module(void)
     }
 
     devdrv_get_pcie_dump_ltssm_tracer_symbol();
-#ifdef CFG_FEATURE_PCIE_PROTO_DIP
     ret = uda_notifier_register(DEVDRV_ADD_DAVINCI_NOTIFIER, &uda_type, UDA_PRI0, devdrv_add_davinci_notifier_func);
     if (ret != 0) {
         devdrv_err("Calling uda_notifier_register failed. (ret=%d)\n", ret);
         goto unregister_pcie_host_notifier;
     }
+#ifndef DRV_UT
+    (void)module_feature_auto_init();
 #endif
-
     devdrv_info("Get dev_num. (dev_num=%d)\n", devdrv_get_dev_num());
     return 0;
 
-#ifdef CFG_FEATURE_PCIE_PROTO_DIP
 unregister_pcie_host_notifier:
     (void)uda_notifier_unregister(PCIE_HOST_NOTIFIER, &uda_type);
-#endif
 unregister_sentry_node:
 #ifdef CFG_FEATURE_PCIE_SENTRY
     devdrv_unregister_sentry_node();
@@ -2525,6 +2592,9 @@ STATIC void __ka_exit devdrv_exit_module(void)
     struct uda_dev_type uda_type;
     u32 i;
 
+#ifndef DRV_UT
+    module_feature_auto_uninit();
+#endif
     devdrv_put_pcie_dump_ltssm_tracer_symbol();
     for (i = 0; i < MAX_DEV_CNT; i++) {
         ctrl = devdrv_get_top_half_devctrl_by_id(i);
@@ -2536,9 +2606,7 @@ STATIC void __ka_exit devdrv_exit_module(void)
     }
 
     uda_davinci_near_real_entity_type_pack(&uda_type);
-#ifdef CFG_FEATURE_PCIE_PROTO_DIP
     (void)uda_notifier_unregister(DEVDRV_ADD_DAVINCI_NOTIFIER, &uda_type);
-#endif
     (void)uda_notifier_unregister(PCIE_HOST_NOTIFIER, &uda_type);
 
 #ifdef CFG_FEATURE_PCIE_SENTRY
@@ -2549,6 +2617,7 @@ STATIC void __ka_exit devdrv_exit_module(void)
     devdrv_pci_ctrl_mng_uninit();
     devdrv_free_attr_info();
     devdrv_unregister_communication_ops(&g_drv_pcie_ops);
+    devdrv_feature_mgr_uninit();
     return;
 }
 ka_module_exit(devdrv_exit_module);

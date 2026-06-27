@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2025. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -33,8 +33,8 @@ struct svm_pgtlb_attr {
     u64 page_size;
 };
 
-static inline void svm_pgtlb_attr_packet(struct svm_pgtlb_attr *attr, bool is_noncache, bool is_rdonly,
-    bool is_writecombine, u64 page_size)
+static inline void svm_pgtlb_attr_packet(
+    struct svm_pgtlb_attr *attr, bool is_noncache, bool is_rdonly, bool is_writecombine, u64 page_size)
 {
     attr->is_noncache = is_noncache;
     attr->is_rdonly = is_rdonly;
@@ -42,10 +42,10 @@ static inline void svm_pgtlb_attr_packet(struct svm_pgtlb_attr *attr, bool is_no
     attr->page_size = page_size;
 }
 
-int svm_remap_pages(ka_vm_area_struct_t *vma, u64 va, ka_page_t **pages, u64 page_num,
-    struct svm_pgtlb_attr *pgtlb_attr);
-int svm_remap_phys(ka_vm_area_struct_t *vma, u64 va, struct svm_pa_seg pa_seg[], u64 seg_num,
-    struct svm_pgtlb_attr *pgtlb_attr);
+int svm_remap_pages(
+    ka_vm_area_struct_t *vma, u64 va, ka_page_t **pages, u64 page_num, struct svm_pgtlb_attr *pgtlb_attr);
+int svm_remap_phys(
+    ka_vm_area_struct_t *vma, u64 va, struct svm_pa_seg pa_seg[], u64 seg_num, struct svm_pgtlb_attr *pgtlb_attr);
 /* remap pages and phys all are used svm_unmap_addr to unmap */
 int svm_unmap_addr(ka_vm_area_struct_t *vma, u64 va, u64 size, u64 page_size);
 /* return query size, query local page with same pagesize */
@@ -53,8 +53,7 @@ u64 svm_query_pages(ka_vm_area_struct_t *vma, u64 va, u64 size, ka_page_t **page
 /* return query size, query pa is all local mem or peer mem, not mixed */
 u64 svm_query_phys(ka_vm_area_struct_t *vma, u64 va, u64 size, struct svm_pa_seg pa_seg[], u64 *seg_num);
 
-static inline u64 svm_query_pages_by_task(ka_task_struct_t *task,
-    u64 va, u64 size, ka_page_t **pages, u64 *page_num)
+static inline u64 svm_query_pages_by_task(ka_task_struct_t *task, u64 va, u64 size, ka_page_t **pages, u64 *page_num)
 {
     ka_vm_area_struct_t *vma = ka_mm_find_vma(ka_task_get_mm(task), va);
     if ((vma == NULL) || (svm_check_vma(vma, va, size) != 0)) {
@@ -65,8 +64,8 @@ static inline u64 svm_query_pages_by_task(ka_task_struct_t *task,
     return svm_query_pages(vma, va, size, pages, page_num);
 }
 
-static inline u64 smm_query_phys_by_task(ka_task_struct_t *task,
-    u64 va, u64 size, struct svm_pa_seg pa_seg[], u64 *seg_num)
+static inline u64 smm_query_phys_by_task(
+    ka_task_struct_t *task, u64 va, u64 size, struct svm_pa_seg pa_seg[], u64 *seg_num)
 {
     ka_vm_area_struct_t *vma = ka_mm_find_vma(ka_task_get_mm(task), va);
     if (vma == NULL) {

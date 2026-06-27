@@ -21,6 +21,9 @@
 #include <linux/nsproxy.h>
 #include <linux/sched.h>
 #include <linux/sched/signal.h>
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 19, 0)
+#include <linux/sched/debug.h>
+#endif
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 11, 0))
 #include <linux/sched/mm.h>
 #include <linux/sched/task.h>
@@ -66,6 +69,7 @@ typedef struct timespec TASK_TIME_TYPE;
     #define KA_TASK_PID_ENTRY(PARAM_PIDTYPE_PID) pids[(PARAM_PIDTYPE_PID)].node
 #endif
 
+#define KA_TASK_PF_EXITING               PF_EXITING
 #define KA_TASK_PF_KTHREAD               PF_KTHREAD
 #define KA_TASK_WQ_FLAG_EXCLUSIVE        WQ_FLAG_EXCLUSIVE
 #define KA_TASK_MAX_SCHEDULE_TIMEOUT     MAX_SCHEDULE_TIMEOUT
@@ -175,6 +179,7 @@ typedef struct hlist_head  ka_hlist_head_t;
 #define ka_task_up_read_non_owner(sem)    up_read_non_owner(sem)
 #define KA_TASK_DEFINE_MUTEX(mutexname) DEFINE_MUTEX(mutexname)
 #define KA_TASK_DEFINE_RWLOCK(rw_lock)  DEFINE_RWLOCK(rw_lock)
+#define KA_TASK_DECLARE_RWSEM(name)  DECLARE_RWSEM(name)
 #define ka_task_mutex_init(mutex)    mutex_init(mutex)
 #define ka_task_mutex_destroy(mutex)    mutex_destroy(mutex)
 #define ka_task_mutex_lock(mutex)    mutex_lock(mutex)
@@ -217,6 +222,7 @@ ka_pid_namespace_t *ka_task_get_init_pid_ns_addr(void);
 #define ka_task_get_pid(pid)    get_pid(pid)
 #define ka_task_put_pid(pid)    put_pid(pid)
 #define ka_task_get_pid_task(pid, type)    get_pid_task(pid, type)
+#define ka_task_sched_show_task(t)    sched_show_task(t)
 #define ka_task_put_task_struct(t)    put_task_struct(t)
 #define ka_task_schedule_work_on(cpu, work)    schedule_work_on(cpu, work)
 #define ka_task_next_task(p)    next_task(p)
@@ -262,6 +268,16 @@ static inline ka_hlist_head_t *ka_task_get_pid_tasks(ka_struct_pid_t *pid, ka_pi
 static inline ka_mm_struct_t *ka_task_get_mm(ka_task_struct_t *task)
 {
     return task->mm;
+}
+
+static inline bool ka_task_judge_mm(ka_task_struct_t *task)
+{
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 17, 0))
+    (void)task;
+    return true;
+#else
+    return task->mm != NULL;
+#endif
 }
 
 void ka_task_do_exit(long code);
@@ -312,6 +328,11 @@ unsigned int ka_task_get_current_flags(void);
 u64 ka_task_get_starttime(ka_task_struct_t *task);
 unsigned int ka_task_get_cred_uid_val(const ka_cred_t *cred);
 int ka_task_sched_set_fifo_low(ka_task_struct_t *p);
+ssize_t ka_task_kernel_read(ka_file_t *file, void *buf, size_t count);
+void ka_use_mm(ka_mm_struct_t *mm);
+void ka_unuse_mm(ka_mm_struct_t *mm);
+const ka_cpumask_t *ka_get_cpumask(ka_task_struct_t *task);
+void ka_print_dump_task(ka_pid_t proc_tgid);
 
 #define ka_task_rwlock_init(lock)                       rwlock_init(lock)
 #define ka_task_read_lock(lock)                         read_lock(lock)
@@ -330,10 +351,14 @@ int ka_task_sched_set_fifo_low(ka_task_struct_t *p);
 #define ka_task_write_unlock_bh(lock)                   write_unlock_bh(lock)
 #define ka_task_write_unlock_irq(lock)                  write_unlock_irq(lock)
 #define ka_task_write_unlock_irqrestore(lock, flags)    write_unlock_irqrestore(lock, flags)
+#define ka_task_srcu_read_lock(ssp)                     srcu_read_lock(ssp)
+#define ka_task_srcu_read_unlock(ssp, idx)              srcu_read_unlock(ssp, idx)
+#define ka_task_mutex_is_locked(lock)                   mutex_is_locked(lock)
 
 #define ka_task_read_trylock(lock)                      read_trylock(lock)
 #define ka_task_write_trylock(lock)                     write_trylock(lock)
 #define ka_for_each_process(p)                          for_each_process(p)
+#define ka_for_each_process_thread(p, t)                for_each_process_thread(p, t)
 #define ka_current_cred()                               current_cred()
 #define ka_task_wait_event_interruptible_exclusive(wq, condition)   \
             wait_event_interruptible_exclusive(wq, condition)
@@ -351,5 +376,9 @@ int ka_task_sched_set_fifo_low(ka_task_struct_t *p);
 
 #define ka_task_wait_event_interruptible_lock_irq_timeout(wq_head, condition, lock, timeout)  \
                 wait_event_interruptible_lock_irq_timeout(wq_head, condition, lock, timeout)
+
+#define ka_task_task_cpu(p)                             task_cpu(p)
+#define ka_while_each_thread(g, t)                      while_each_thread(g, t)
+#define ka_cpumask_of(cpu)                              cpumask_of(cpu)
 
 #endif

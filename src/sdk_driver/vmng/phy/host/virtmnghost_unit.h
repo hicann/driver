@@ -64,14 +64,14 @@ struct vm_msix_struct {
 
 enum VMNGH_MDEV_STATE_FLAG {
     VMNGH_MDEV_RUNNING_STATE = 0,
-    VMNGH_MDEV_VM_RESET_STATE,          // vm reboot
-    VMNGH_MDEV_FLR_STATE                // vf flr in vm
+    VMNGH_MDEV_VM_RESET_STATE, // vm reboot
+    VMNGH_MDEV_FLR_STATE       // vf flr in vm
 };
 
 struct vmngh_vd_dev {
     void *vm_pdev;
     void *vdavinci;
-    ka_device_t *resource_dev;        // for sriov resource dev
+    ka_device_t *resource_dev; // for sriov resource dev
     ka_dma_addr_t iova_addr;
     size_t size;
     struct vmngh_db_mng db_mng;

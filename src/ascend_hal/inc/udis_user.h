@@ -18,6 +18,7 @@ typedef enum {
     UDIS_MODULE_SVM,
     UDIS_MODULE_NETWORK,
     UDIS_MODULE_TS,
+    UDIS_MODULE_APM,
     UDIS_MODULE_MAX
 } UDIS_MODULE_TYPE;
 
@@ -46,6 +47,11 @@ struct udis_mem_info {
     struct base_mem_info sys_mem_info;
     struct base_mem_info service_mem_info;
     struct base_mem_info medium_mem_info;
+};
+
+struct udis_core_util_info {
+    unsigned int core_num;
+    unsigned char core[128];
 };
 
 int udis_get_device_info(unsigned int dev_id, struct udis_dev_info *info);

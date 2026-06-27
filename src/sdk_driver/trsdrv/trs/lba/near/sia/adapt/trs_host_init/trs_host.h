@@ -15,6 +15,5 @@
 
 #include "trs_pub_def.h"
 
-int trs_host_msg_chan_recv(void *msg_chan, void *data, u32 in_data_len,
-                           u32 out_data_len, u32 *real_out_len);
+int trs_host_msg_chan_recv(void *msg_chan, void *data, u32 in_data_len, u32 out_data_len, u32 *real_out_len);
 #endif /* TRS_HOST_INIT_H */

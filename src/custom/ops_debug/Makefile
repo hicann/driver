@@ -8,13 +8,22 @@
 # See LICENSE in the root of the software repository for the full text of the License.
 # ------------------------------------------------------------------------------------------------------------
 ifeq ($(ENABLE_OPEN_SRC), y)
-	EXTRA_CFLAGS += -DCFG_SOC_PLATFORM_CLOUD
-	EXTRA_CFLAGS += -DCFG_SOC_PLATFORM_CLOUD_V2
-	EXTRA_CFLAGS += -DCFG_FEATURE_ROOTKEY_STATUS
+	ifneq ($(filter $(PRODUCT), ascend910B),)
+		EXTRA_CFLAGS += -DCFG_SOC_PLATFORM_CLOUD
+		EXTRA_CFLAGS += -DCFG_SOC_PLATFORM_CLOUD_V2
+		EXTRA_CFLAGS += -DCFG_FEATURE_ROOTKEY_STATUS
+	else ifneq ($(filter $(PRODUCT), ascend950),)
+		EXTRA_CFLAGS += -DCFG_SOC_PLATFORM_CLOUD
+		EXTRA_CFLAGS += -DCFG_SOC_PLATFORM_CLOUD_V4
+		ifeq ($(ENABLE_UBE), true)
+			EXTRA_CFLAGS += -DCFG_SOC_PLATFORM_CLOUD_UB
+		endif
+	endif
 
 	EXTRA_CFLAGS += -I$(DRIVER_HAL_INC_DIR)
 	EXTRA_CFLAGS += -I${C_SEC_INCLUDE}
 	EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/inc
+	EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/inc/dpa
 	EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/inc/trs
 	EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/inc/pbl
 	EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/kernel_adapt/include
@@ -34,7 +43,7 @@ ifeq ($(ENABLE_OPEN_SRC), y)
 
 	# ccflags-y += -Wall -Werror
 	ccflags-y += $(WDATE_TIME) -Wfloat-equal -Wvla -Wundef -funsigned-char  -Wformat=2 -Wstack-usage=2048 -Wcast-align
-	ccflags-y += -Wextra -Wno-unused-parameter -Wno-sign-compare -Wno-missing-field-initializers -Wno-format-nonliteral -Wno-empty-body
+	ccflags-y += -Wextra -Wno-unused-parameter -Wno-sign-compare -Wno-missing-field-initializers -Wno-format-nonliteral -Wno-empty-body -Wno-type-limits
 
 	#EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/src/debug/
 
@@ -67,6 +76,12 @@ else
 		EXTRA_CFLAGS += -DCFG_SOC_PLATFORM_CLOUD
 		EXTRA_CFLAGS += -DCFG_SOC_PLATFORM_CLOUD_V2
 		EXTRA_CFLAGS += -DCFG_FEATURE_ROOTKEY_STATUS
+	else ifneq ($(filter $(PRODUCT), ascend950),)
+		EXTRA_CFLAGS += -DCFG_SOC_PLATFORM_CLOUD
+		EXTRA_CFLAGS += -DCFG_SOC_PLATFORM_CLOUD_V4
+		ifeq ($(ENABLE_UBE), true)
+			EXTRA_CFLAGS += -DCFG_SOC_PLATFORM_CLOUD_UB
+		endif
 	else ifneq ($(filter $(PRODUCT), helper310p ascend310p),)
 		EXTRA_CFLAGS += -DCFG_SOC_PLATFORM_MINIV2
 		EXTRA_CFLAGS += -DCFG_FEATURE_ROOTKEY_STATUS
@@ -110,7 +125,7 @@ else
 
 	# ccflags-y += -Wall -Werror
 	ccflags-y += $(WDATE_TIME) -Wfloat-equal -Wvla -Wundef -funsigned-char  -Wformat=2 -Wstack-usage=2048 -Wcast-align
-	ccflags-y += -Wextra -Wno-unused-parameter -Wno-sign-compare -Wno-missing-field-initializers -Wno-format-nonliteral -Wno-empty-body
+	ccflags-y += -Wextra -Wno-unused-parameter -Wno-sign-compare -Wno-missing-field-initializers -Wno-format-nonliteral -Wno-empty-body -Wno-type-limits
 
 	EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/src/debug/
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2025. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -18,7 +18,6 @@
 #include "smp_ctx.h"
 
 void smp_mem_show(struct smp_ctx *smp_ctx, ka_seq_file_t *seq);
-void smp_mem_recycle(struct smp_ctx *smp_ctx);
+int smp_mem_recycle(struct smp_ctx *smp_ctx, bool force);
 
 #endif
-

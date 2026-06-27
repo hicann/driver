@@ -14,20 +14,21 @@
 #ifndef __DAVINCI_INTF_COMMON_H__
 #define __DAVINCI_INTF_COMMON_H__
 
+#include "ka_task_pub.h"
 #include "dmc_kernel_interface.h"
 
 
 #define module_davinci_intf "ascend_dev"
 #define log_intf_err(fmt, ...)    \
-    drv_err(module_davinci_intf, "<%s:%d,%d> " fmt, current->comm, current->tgid, current->pid, ##__VA_ARGS__)
+    drv_err(module_davinci_intf, "<%s:%d,%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), ka_task_get_current_pid(), ##__VA_ARGS__)
 #define log_intf_warn(fmt, ...)    \
-    drv_warn(module_davinci_intf, "<%s:%d,%d> " fmt, current->comm, current->tgid, current->pid, ##__VA_ARGS__)
+    drv_warn(module_davinci_intf, "<%s:%d,%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), ka_task_get_current_pid(), ##__VA_ARGS__)
 #define log_intf_info(fmt, ...)    \
-    drv_info(module_davinci_intf, "<%s:%d,%d> " fmt, current->comm, current->tgid, current->pid, ##__VA_ARGS__)
+    drv_info(module_davinci_intf, "<%s:%d,%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), ka_task_get_current_pid(), ##__VA_ARGS__)
 #define log_intf_event(fmt, ...)    \
-    drv_event(module_davinci_intf, "<%s:%d,%d> " fmt, current->comm, current->tgid, current->pid, ##__VA_ARGS__)
+    drv_event(module_davinci_intf, "<%s:%d,%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), ka_task_get_current_pid(), ##__VA_ARGS__)
 #define log_intf_debug(fmt, ...)    \
-    drv_pr_debug(module_davinci_intf, "<%s:%d,%d> " fmt, current->comm, current->tgid, current->pid, ##__VA_ARGS__)
+    drv_pr_debug(module_davinci_intf, "<%s:%d,%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), ka_task_get_current_pid(), ##__VA_ARGS__)
 
 #ifdef STATIC_SKIP
 #define STATIC

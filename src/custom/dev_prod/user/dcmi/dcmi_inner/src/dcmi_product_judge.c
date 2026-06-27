@@ -17,7 +17,7 @@
 #include <sys/mman.h>
 #endif
 #include "securec.h"
-#include "dsmi_common_interface_custom.h"
+#include "dsmi_common_interface.h"
 
 #ifndef _WIN32
 #include "ascend_hal.h"
@@ -28,7 +28,27 @@
 #include "dcmi_mcu_intf.h"
 #include "dcmi_init_basic.h"
 #include "dcmi_environment_judge.h"
+#include "dcmi_npu_link_intf.h"
+#include "dcmi_virtual_intf.h"
 #include "dcmi_product_judge.h"
+
+/*
+ * NPU SERDES 端口状态表 - 用board_id直接索引
+ * 定义在 .c 文件中，避免头文件中的 multiple definition 问题
+ */
+const unsigned char g_npu_serdes_status_table[256][NPU_SERDES_PORT_NUM] = {
+    [DCMI_A_X_950_UBX_MAIN_BOARD_ID] = { /* UBX */
+        /* U-die 0 */
+        NPU_SERDES_STATUS_VALID,   NPU_SERDES_STATUS_VALID,   NPU_SERDES_STATUS_INVALID,
+        NPU_SERDES_STATUS_INVALID, NPU_SERDES_STATUS_INVALID, NPU_SERDES_STATUS_INVALID,
+        NPU_SERDES_STATUS_INVALID, NPU_SERDES_STATUS_INVALID, NPU_SERDES_STATUS_VALID,
+        /* U-die 1 */
+        NPU_SERDES_STATUS_VALID,   NPU_SERDES_STATUS_VALID,   NPU_SERDES_STATUS_VALID,
+        NPU_SERDES_STATUS_INVALID, NPU_SERDES_STATUS_VALID,   NPU_SERDES_STATUS_VALID,
+        NPU_SERDES_STATUS_VALID, NPU_SERDES_STATUS_VALID,   NPU_SERDES_STATUS_INVALID
+    }
+    /* 可在此处添加更多型号的端口状态记录 */
+};
 
 int dcmi_board_type_is_card(void)
 {
@@ -111,15 +131,39 @@ int dcmi_board_chip_type_is_ascend_910_93(void)
     return (dcmi_get_board_chip_type() == DCMI_CHIP_TYPE_D910_93) ? TRUE : FALSE;
 }
 
-int dcmi_board_chip_type_is_ascend_910_95(void)
+int dcmi_board_chip_type_is_ascend_950(void)
 {
-    return (dcmi_get_board_chip_type() == DCMI_CHIP_TYPE_D910_95) ? TRUE : FALSE;
+    return (dcmi_get_board_chip_type() == DCMI_CHIP_TYPE_D950) ? TRUE : FALSE;
 }
 
-int dcmi_board_chip_type_is_ascend_910_95_card(void)
+int dcmi_board_chip_type_is_ascend_950_card(void)
 {
-    return ((dcmi_get_board_chip_type() == DCMI_CHIP_TYPE_D910_95) &&
+    return ((dcmi_get_board_chip_type() == DCMI_CHIP_TYPE_D950) &&
     (dcmi_get_board_type() == DCMI_BOARD_TYPE_CARD)) ? TRUE : FALSE;
+}
+
+int dcmi_board_chip_type_is_ascend_950_pod(void)
+{
+    return ((dcmi_get_board_chip_type() == DCMI_CHIP_TYPE_D950) &&
+     ((g_mainboard_info.mainboard_id >> DCMI_SHIFT_FIVE_BITS) & A5_MAINBOARD_ID_MASK) ==
+        MAINBOARD_ID_HIGH_3BIT_POD) ? TRUE : FALSE;
+}
+
+// A+K
+int dcmi_board_chip_type_is_ascend_950_server(void)
+{
+    unsigned int mainboard_id = dcmi_get_maindboard_id_inner();
+    return ((dcmi_get_board_chip_type() == DCMI_CHIP_TYPE_D950) &&
+     ((mainboard_id >> DCMI_SHIFT_FIVE_BITS) & A5_MAINBOARD_ID_MASK) ==
+        MAINBOARD_ID_HIGH_3BIT_A_K) ? TRUE : FALSE;
+}
+
+int dcmi_board_chip_type_is_ascend_950_a_x(void)
+{
+    unsigned int mainboard_id = dcmi_get_maindboard_id_inner();
+    return ((dcmi_get_board_chip_type() == DCMI_CHIP_TYPE_D950) &&
+     ((mainboard_id >> DCMI_SHIFT_FIVE_BITS) & A5_MAINBOARD_ID_MASK) ==
+        MAINBOARD_ID_HIGH_3BIT_A_X) ? TRUE : FALSE;
 }
 
 int dcmi_board_chip_type_is_ascend_910b_300i_a2(void)
@@ -360,20 +404,37 @@ void dcmi_init_product_type_inner(int card_id, int device_id)
     struct dcmi_pcie_info_all pcie_info = { 0 };
     struct tag_pcie_idinfo_all tag_pcie_info = { 0 };
     struct dcmi_board_info board_info = { 0 };
-
-    ret = dcmi_get_device_board_info(card_id, device_id, &board_info);
+    
+    if (dcmi_board_chip_type_is_ascend_950()) {
+        ret = dcmiv2_get_device_board_info(card_id, &board_info);
+    } else {
+        ret = dcmi_get_device_board_info(card_id, device_id, &board_info);
+    }
     if (ret != DCMI_OK) {
         gplog(LOG_ERR, "Failed to query board info of card %d.", card_id);
     }
     g_board_details.board_id = (int)board_info.board_id;
-
-    ret = memmove_s(&tag_pcie_info, sizeof(struct tag_pcie_idinfo_all), &pcie_info, sizeof(struct dcmi_pcie_info_all));
-    if (ret < 0) {
-        gplog(LOG_ERR, "call memmove_s failed. ret is %d", ret);
-    }
-    ret = dcmi_init_chip_board_product_type(&tag_pcie_info);
-    if (ret != DCMI_OK) {
-        gplog(LOG_ERR, "dcmi_init_chip_board_product_type failed. ret is %d", ret);
+    
+    if (dcmi_mainboard_is_a900_a5_ub(g_mainboard_info.mainboard_id)) {
+        dcmi_init_chip_board_product_950((struct dsmi_board_info_stru *)&board_info);
+    } else {
+        if (dcmi_board_chip_type_is_ascend_950()) {
+            ret = dcmiv2_get_device_pcie_info(card_id, &pcie_info);
+        } else {
+            ret = dcmi_get_device_pcie_info_v2(card_id, device_id, &pcie_info);
+        }
+        if (ret != DCMI_OK) {
+            gplog(LOG_ERR, "dcmi_get_device_pcie_info_v2 failed. ret is %d", ret);
+        }
+        ret = memmove_s(&tag_pcie_info, sizeof(struct tag_pcie_idinfo_all),
+            &pcie_info, sizeof(struct dcmi_pcie_info_all));
+        if (ret < 0) {
+            gplog(LOG_ERR, "call memmove_s failed. ret is %d", ret);
+        }
+        ret = dcmi_init_chip_board_product_type(&tag_pcie_info);
+        if (ret != DCMI_OK) {
+            gplog(LOG_ERR, "dcmi_init_chip_board_product_type failed. ret is %d", ret);
+        }
     }
     return;
 }
@@ -403,27 +464,36 @@ int dcmi_mainboard_is_arm_910_93(unsigned int main_board_id)
 
 int dcmi_mainboard_is_a900_a5_pcie(unsigned int main_board_id)
 {
-    return ((g_board_details.chip_type == DCMI_CHIP_TYPE_D910_95) && 
-        ((main_board_id == DCMI_A5_POD_2D_MAIN_BOARD_ID_TMP) ||
-        (main_board_id == DCMI_A5_POD_EVB_MAIN_BOARD_ID_TMP) ||
-        (main_board_id == DCMI_A_X_910_95_MAIN_BOARD_ID) ||
-        (main_board_id == DCMI_A_X_910_95_UBOE_MAIN_BOARD_ID) ||
-        (main_board_id == DCMI_910_95_1P_MAINBOARD_ID) ||
-        (main_board_id == DCMI_910_95_2P_MAINBOARD_ID) ||
-        (main_board_id == DCMI_910_95_4P_MAINBOARD_ID)));
+    // A+X、标卡、装备PCIE启动
+    return ((g_board_details.chip_type == DCMI_CHIP_TYPE_D950) &&
+        (((main_board_id >> DCMI_SHIFT_FIVE_BITS) & A5_MAINBOARD_ID_MASK) ==
+            MAINBOARD_ID_HIGH_3BIT_A_X ||
+        ((((main_board_id >> DCMI_SHIFT_FIVE_BITS) & A5_MAINBOARD_ID_MASK) ==
+            MAINBOARD_ID_HIGH_3BIT_CARD) &&
+        main_board_id != DCMI_950_EQUIP_CARD_UBOE_MAIN_BOARD_ID)));
 }
 
 int dcmi_mainboard_is_a900_a5_ub(unsigned int main_board_id)
 {
-    return ((g_board_details.chip_type == DCMI_CHIP_TYPE_D910_95) &&
-        ((main_board_id == DCMI_A_K_910_95_MAIN_BOARD_ID) ||
-        (main_board_id == DCMI_A_K_910_95_UBOE_MAIN_BOARD_ID) ||
-        (main_board_id == DCMI_A_K_910_95_2_6_MAIN_BOARD_ID) ||
-        (main_board_id == DCMI_A_K_910_95_2_6_UBOE_MAIN_BOARD_ID) ||
-        (main_board_id == DCMI_A5_POD_2D_BACKUP_MAIN_BOARD_ID) ||
-        (main_board_id == DCMI_A5_POD_2D_MAIN_BOARD_ID) ||
-        (main_board_id == DCMI_A5_POD_1D_MAIN_BOARD_ID) ||
-        (main_board_id == DCMI_A5_POD_EVB_MAIN_BOARD_ID_UB_TMP)));
+    unsigned int mode = 0;
+    // pod、A+K、装备UBOE启动
+    return ((g_board_details.chip_type == DCMI_CHIP_TYPE_D950) &&
+        (((main_board_id >> DCMI_SHIFT_FIVE_BITS) & A5_MAINBOARD_ID_MASK) ==
+            MAINBOARD_ID_HIGH_3BIT_POD ||
+        ((main_board_id >> DCMI_SHIFT_FIVE_BITS) & A5_MAINBOARD_ID_MASK) ==
+            MAINBOARD_ID_HIGH_3BIT_A_K ||
+        ((((main_board_id >> DCMI_SHIFT_FIVE_BITS) & A5_MAINBOARD_ID_MASK) ==
+            MAINBOARD_ID_HIGH_3BIT_EQU) &&
+        dcmi_get_rc_ep_mode(&mode) == DCMI_OK && mode == DCMI_PCIE_RC_MODE) ||
+        (main_board_id == DCMI_950_EQUIP_CARD_UBOE_MAIN_BOARD_ID)));
+}
+
+int dcmi_mainboard_is_a900_a5_uboe(unsigned int main_board_id)
+{
+    return ((g_board_details.chip_type == DCMI_CHIP_TYPE_D950) &&
+        ((main_board_id == DCMI_A_K_950_UBOE_MAIN_BOARD_ID) ||
+        (main_board_id == DCMI_A_K_950_0_8_UBOE_MAIN_BOARD_ID) ||
+        (main_board_id == DCMI_A_K_950_0_0_UBOE_MAIN_BOARD_ID)));
 }
 
 int dcmi_a900_a3_superpod_fp_card_id_convert(int card_id, int device_id)
@@ -447,7 +517,7 @@ int dcmi_910_93_phy_id_convert(int phy_id)
     if ((phy_id / MAX_FRONT_NPU_NUM) != 0) {
         group_flag = 1;         // 1 indicates the rear 8P
     }
-
+    
     if ((parity_flag == 1) && (group_flag == 0)) {
         tmp_phy_id = phy_id + MAX_FRONT_NPU_NUM;
     } else if ((parity_flag == 0) && (group_flag == 1)) {
@@ -463,7 +533,7 @@ int dcmi_910_93_logic_id_convert(int phy_id)
     int ret;
     unsigned int logic_id = 0;
     int convert_phy_id;
-
+    
     convert_phy_id = dcmi_910_93_phy_id_convert(phy_id);
     ret = dsmi_get_logicid_from_phyid(convert_phy_id, &logic_id);
     if (ret) {
@@ -523,3 +593,252 @@ int dcmi_is_has_pcieinfo(void)
             return FALSE;
     }
 }
+
+int check_macro_id_valid(int chip_type, int macro_id, int max_id)
+{
+    if (macro_id < MIN_MACRO_ID) {
+        gplog(LOG_ERR, "macro_id is invalid. macro_id is %d", macro_id);
+        return DCMI_ERR_CODE_INVALID_PARAMETER;
+    }
+
+    unsigned int mainboard_id = g_mainboard_info.mainboard_id;
+    if (mainboard_id == DCMI_A_X_950_UBX_MAIN_BOARD_ID) {
+        if (macro_id > MAX_A_X_950_UBX_MACRO_ID) {
+            gplog(LOG_ERR, "macro_id %d is out of range [0, %d].", macro_id, MAX_A_X_950_UBX_MACRO_ID);
+            return DCMI_ERR_CODE_INVALID_PARAMETER;
+        }
+
+        if (g_npu_serdes_status_table[mainboard_id][macro_id] == NPU_SERDES_STATUS_INVALID) {
+            gplog(LOG_ERR, "SERDES port %d is invalid for mainboard_id 0x%x.", macro_id, mainboard_id);
+            return DCMI_ERR_CODE_INVALID_PARAMETER;
+        }
+        return DCMI_OK;
+    }
+
+    if (macro_id > max_id || (macro_id == RES_MACRO_ID && chip_type != DCMI_CHIP_TYPE_D950)) {
+        gplog(LOG_ERR, "macro_id is invalid. macro_id is %d", macro_id);
+        return DCMI_ERR_CODE_INVALID_PARAMETER;
+    }
+
+    if (chip_type == DCMI_CHIP_TYPE_D950 && max_id == MAX_950_2P_MACRO_ID &&
+            macro_id == RES_950_2P_MACRO_ID) {
+        gplog(LOG_ERR, "macro_id is invalid. macro_id is %d", macro_id);
+        return DCMI_ERR_CODE_INVALID_PARAMETER;
+    }
+
+    return DCMI_OK;
+}
+
+int dcmi_get_950_max_macro_id(int card_id, int device_id, int *max_id)
+{
+    int ret;
+    unsigned int main_board_id;
+
+    ret = dcmi_get_mainboard_id(card_id, device_id, &main_board_id);
+    if (ret != DCMI_OK) {
+        gplog(LOG_ERR, "Failed to query 950 main board id of card. err is %d", ret);
+        return ret;
+    }
+
+    if (dcmi_mainboard_is_a900_a5_ub(main_board_id)) {
+        *max_id = MAX_950_POD_MACRO_ID;
+        return DCMI_OK;
+    }
+
+    switch (main_board_id) {
+        case DCMI_950_1P_MAINBOARD_ID:
+            *max_id = MAX_950_1P_MACRO_ID;
+            break;
+        case DCMI_950_2P_MAINBOARD_ID:
+            *max_id = MAX_950_2P_MACRO_ID;
+            break;
+        case DCMI_950_4P_MAINBOARD_ID:
+            *max_id = MAX_950_4P_MACRO_ID;
+            break;
+        default:
+            gplog(LOG_OP, "This device does not support get max macro id.");
+            return DCMI_ERR_CODE_NOT_SUPPORT;
+    }
+    return DCMI_OK;
+}
+
+int dcmi_get_max_macro_id(int card_id, int device_id, int chip_type, int *max_id)
+{
+    int ret;
+    unsigned int main_board_id;
+
+    switch (chip_type) {
+        case DCMI_CHIP_TYPE_D910B:
+            *max_id = MAX_MACRO_ID;
+            ret = DCMI_OK;
+            break;
+        case DCMI_CHIP_TYPE_D310P:
+            *max_id = MAX_310P_MACRO_ID;
+            ret = DCMI_OK;
+            break;
+        case DCMI_CHIP_TYPE_D910_93:
+            ret = dcmi_get_mainboard_id(card_id, device_id, &main_board_id);
+            if (ret != DCMI_OK) {
+                gplog(LOG_ERR, "Failed to query main board id of card. err is %d", ret);
+                return ret;
+            }
+            *max_id = (main_board_id == DCMI_A_X_910_93_MAIN_BOARD_ID) ? MAX_A_X_MACRO_ID : MAX_H60_ID;
+            break;
+        case DCMI_CHIP_TYPE_D950:
+            ret = dcmi_get_950_max_macro_id(card_id, device_id, max_id);
+            if (ret != DCMI_OK && ret != DCMI_ERR_CODE_NOT_SUPPORT) {
+                gplog(LOG_ERR, "dcmi_get_max_macro_id failed. card_id[%d], device_id[%d], err is %d",
+                    card_id, device_id, ret);
+                return ret;
+            }
+            break;
+        default:
+            gplog(LOG_OP, "This device does not support get eye info.");
+            return DCMI_ERR_CODE_NOT_SUPPORT;
+    }
+    return ret;
+}
+
+int check_serdes_environment_is_invalid(int card_id, int device_id, int macro_id)
+{
+    int ret;
+    int max_id;
+    int chip_type = DCMI_CHIP_TYPE_INVALID;
+
+    if (dcmi_check_chip_is_in_split_mode(card_id, device_id) == DCMI_ERR_CODE_OPER_NOT_PERMITTED) {
+        gplog(LOG_OP, "In the vNPU scenario, this device does not support dcmi_get_serdes_quality_info.");
+        return DCMI_ERR_CODE_OPER_NOT_PERMITTED;
+    }
+
+    chip_type = dcmi_get_board_chip_type();
+    ret = dcmi_get_max_macro_id(card_id, device_id, chip_type, &max_id);
+    if (ret != DCMI_OK) {
+        return ret;
+    }
+    return check_macro_id_valid(chip_type, macro_id, max_id);
+}
+
+int dcmiv2_get_950_max_macro_id(int dev_id, int *max_id)
+{
+    int ret;
+    unsigned int main_board_id;
+
+    ret = dcmiv2_get_mainboard_id(dev_id, &main_board_id);
+    if (ret != DCMI_OK) {
+        gplog(LOG_ERR, "Failed to query 950 main board id of card. err is %d", ret);
+        return ret;
+    }
+
+    if (dcmi_mainboard_is_a900_a5_ub(main_board_id)) {
+        *max_id = MAX_950_POD_MACRO_ID;
+        return DCMI_OK;
+    }
+
+    switch (main_board_id) {
+        case DCMI_950_1P_MAINBOARD_ID:
+            *max_id = MAX_950_1P_MACRO_ID;
+            break;
+        case DCMI_950_2P_MAINBOARD_ID:
+            *max_id = MAX_950_2P_MACRO_ID;
+            break;
+        case DCMI_950_4P_MAINBOARD_ID:
+            *max_id = MAX_950_4P_MACRO_ID;
+            break;
+        case DCMI_A_X_950_UBX_MAIN_BOARD_ID:
+            *max_id = MAX_A_X_950_UBX_MACRO_ID;
+            break;
+        default:
+            gplog(LOG_OP, "This device does not support get max macro id.");
+            return DCMI_ERR_CODE_NOT_SUPPORT;
+    }
+    return DCMI_OK;
+}
+
+int dcmiv2_get_max_macro_id(int dev_id, int chip_type, int *max_id)
+{
+    int ret;
+    unsigned int main_board_id;
+
+    switch (chip_type) {
+        case DCMI_CHIP_TYPE_D910B:
+            *max_id = MAX_MACRO_ID;
+            ret = DCMI_OK;
+            break;
+        case DCMI_CHIP_TYPE_D310P:
+            *max_id = MAX_310P_MACRO_ID;
+            ret = DCMI_OK;
+            break;
+        case DCMI_CHIP_TYPE_D910_93:
+            ret = dcmiv2_get_mainboard_id(dev_id, &main_board_id);
+            if (ret != DCMI_OK) {
+                gplog(LOG_ERR, "Failed to query main board id of card. (ret=%d)", ret);
+                return ret;
+            }
+            *max_id = (main_board_id == DCMI_A_X_910_93_MAIN_BOARD_ID) ? MAX_A_X_MACRO_ID : MAX_H60_ID;
+            break;
+        case DCMI_CHIP_TYPE_D950:
+            ret = dcmiv2_get_950_max_macro_id(dev_id, max_id);
+            if (ret != DCMI_OK && ret != DCMI_ERR_CODE_NOT_SUPPORT) {
+                gplog(LOG_ERR, "dcmi_get_max_macro_id failed. (dev_id=%d, ret=%d)", dev_id, ret);
+                return ret;
+            }
+            break;
+        default:
+            gplog(LOG_OP, "This device does not support get eye info.");
+            return DCMI_ERR_CODE_NOT_SUPPORT;
+    }
+    return ret;
+}
+
+int dcmi_check_950_0_0_server_macro_id(int dev_id, int macro_id)
+{
+    int ret;
+    unsigned int main_board_id;
+
+    ret = dcmiv2_get_mainboard_id(dev_id, &main_board_id);
+    if (ret != DCMI_OK) {
+        gplog(LOG_ERR, "Failed to query main board id of dev %d. err is %d", dev_id, ret);
+        return ret;
+    }
+    if (main_board_id != DCMI_A_K_950_0_0_MAIN_BOARD_ID && main_board_id != DCMI_A_K_950_0_0_UBOE_MAIN_BOARD_ID) {
+        return DCMI_OK;
+    }
+    if (macro_id <= MAX_INVALID_950_0_0_SERVER_MACRO_ID && macro_id >= MIN_INVALID_950_0_0_SERVER_MACRO_ID) {
+        return DCMI_ERR_CODE_NOT_SUPPORT;
+    }
+    return DCMI_OK;
+}
+
+int checkv2_serdes_environment_is_invalid(int dev_id, int macro_id)
+{
+    int ret;
+    int max_id;
+    int chip_type = DCMI_CHIP_TYPE_INVALID;
+
+    if (dcmiv2_check_chip_is_in_split_mode(dev_id) == DCMI_ERR_CODE_OPER_NOT_PERMITTED) {
+        gplog(LOG_OP, "In the vNPU scenario, this device does not support dcmi_get_serdes_quality_info.");
+        return DCMI_ERR_CODE_OPER_NOT_PERMITTED;
+    }
+
+    ret = dcmi_check_950_0_0_server_macro_id(dev_id, macro_id);
+    if (ret != DCMI_OK) {
+        gplog(LOG_OP, "This device does not support query serdes info of macro_id %d.", macro_id);
+        return ret;
+    }
+
+    chip_type = dcmi_get_board_chip_type();
+    ret = dcmiv2_get_max_macro_id(dev_id, chip_type, &max_id);
+    if (ret != DCMI_OK) {
+        return ret;
+    }
+    return check_macro_id_valid(chip_type, macro_id, max_id);
+}
+
+// A5代际Pod 2D没有亲和性
+int dcmi_check_product_of_get_affinity(unsigned int main_board_id)
+{
+    return ((g_board_details.chip_type == DCMI_CHIP_TYPE_D950) &&
+        ((main_board_id != DCMI_A5_POD_2D_BACKUP_MAIN_BOARD_ID) &&
+        (main_board_id != DCMI_A5_POD_2D_MAIN_BOARD_ID)));
+}
+

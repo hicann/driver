@@ -13,7 +13,7 @@
 #ifndef SOC_ADAPT_H__
 #define SOC_ADAPT_H__
 
-#include <linux/types.h>
+#include "ka_type.h"
 
 #include "trs_pub_def.h"
 #include "ascend_kernel_hal.h"
@@ -33,6 +33,7 @@ u32 trs_soc_get_cq_mem_side(struct trs_id_inst *inst);
 int trs_soc_get_stars_sched_stride(struct trs_id_inst *inst, size_t *stride);
 int trs_soc_get_hw_type(u32 phy_devid);
 int trs_soc_get_hwcq_rsv_mem_type(struct trs_id_inst *inst, int *rsv_mem_type);
+int trs_soc_get_sq_head_tail_reg_size(struct trs_id_inst *inst, size_t *reg_size);
 int trs_soc_get_sq_head_reg_offset(struct trs_id_inst *inst, u32 *offset);
 int trs_soc_get_sq_tail_reg_offset(struct trs_id_inst *inst, u32 *offset);
 int trs_soc_get_sq_status_reg_offset(struct trs_id_inst *inst, u32 *offset);

@@ -128,11 +128,21 @@ STATIC void ubdrv_urma_chan_wqe_prepare(struct send_wr_cfg *wr_cfg, struct ubdrv
     return;
 }
 
+STATIC void ubdrv_urma_copy_para_opcode(enum devdrv_urma_copy_dir dir, enum ubcore_opcode *opcode)
+{
+    if (dir == PEER_TO_LOCAL) {
+        *opcode = UBCORE_OPC_READ;
+    } else {
+        *opcode = UBCORE_OPC_WRITE;
+    }
+}
+
 int ubdrv_urma_copy(u32 dev_id, enum devdrv_urma_chan_type type, enum devdrv_urma_copy_dir dir,
     struct devdrv_urma_copy *local, struct devdrv_urma_copy *peer)
 {
-    struct ascend_ub_msg_dev *msg_dev;
-    struct ubdrv_urma_chan *urma_chan;
+    struct ascend_ub_msg_dev *msg_dev = NULL;
+    struct ubdrv_urma_chan *urma_chan = NULL;
+    struct ubdrv_msg_chan_stat *stat = NULL;
     struct send_wr_cfg wr_cfg = {0};
     enum ubcore_opcode opcode;
     struct ubcore_cr cr = {0};
@@ -149,30 +159,30 @@ int ubdrv_urma_copy(u32 dev_id, enum devdrv_urma_chan_type type, enum devdrv_urm
         return -EINVAL;
     }
     urma_chan = &msg_dev->urma_chan[type];
-    ka_task_mutex_lock(&urma_chan->tx_mutex);
+    ubdrv_mutex_lock_polling(dev_id, &urma_chan->tx_mutex);
     if (urma_chan->status != UBDRV_CHAN_ENABLE) {
         ubdrv_err("Urma chan is invalid. (status=%u;dev_id=%u;chan_type=%u)\n", urma_chan->status, dev_id, type);
         ret = -EINVAL;
         goto urma_chan_unlock;
     }
     ubdrv_urma_chan_wqe_prepare(&wr_cfg, urma_chan, dir, local, peer);
-    if (dir == PEER_TO_LOCAL) {
-        opcode = UBCORE_OPC_READ;
-    } else {
-        opcode = UBCORE_OPC_WRITE;
-    }
+    ubdrv_urma_copy_para_opcode(dir, &opcode);
+    stat = &urma_chan->stat;
     check_status = (type == URMA_CHAN_BBOX ? false : true);
     ret = ubdrv_post_rw_wr_process(&wr_cfg, opcode);
     if (ret != 0) {
-        ubdrv_err("Ub post jfs wr fail. (ret=%d;dev_id=%u;chan_type=%u;jfs_id=%u;jfc_id=%u)\n",
-            ret, dev_id, type, urma_chan->stat.tx_jfs_id, urma_chan->stat.tx_jfs_jfc_id);
+        ubdrv_err("Ub post jfs wr fail. (ret=%d;opcode=%u;dev_id=%u;chan_type=%u;jfs_id=%u;jfc_id=%u)\n",
+            ret, opcode, dev_id, type, stat->tx_jfs_id, stat->tx_jfs_jfc_id);
         goto urma_chan_unlock;
     }
-    ret = ubdrv_interval_poll_send_jfs_jfc(urma_chan->send_jetty.jfs_jfc,
-        (u64)wr_cfg.user_ctx, MSG_MAX_WAIT_CNT, &cr, &urma_chan->stat, check_status);
+    ret = ubdrv_interval_poll_send_jfs_jfc(&urma_chan->send_jetty,
+        (u64)wr_cfg.user_ctx, MSG_MAX_WAIT_CNT, &cr, stat, check_status);
     if ((ret != 0) || (cr.status != UBCORE_CR_SUCCESS)) {
-        ubdrv_warn("Ub poll jfs_jfc cqe unsuccess. (ret=%d;cr_status=%d;dev_id=%u;chan_type=%u;jfs_id=%u;jfc_id=%u)\n",
-            ret, cr.status, dev_id, type, urma_chan->stat.tx_jfs_id, urma_chan->stat.tx_jfs_jfc_id);
+        ubdrv_warn("Ub poll jfs_jfc cqe unsuccess. (ret=%d;opcode=%u;cr_status=%d;dev_id=%u;chan_type=%u;jfs_id=%u;\
+            jfc_id=%u)\n", ret, opcode, cr.status, dev_id, type, stat->tx_jfs_id, stat->tx_jfs_jfc_id);
+        if (cr.status == UBCORE_CR_ACK_TIMEOUT_ERR) {
+            ubdrv_rebuild_chan_send_jetty(dev_id, type, stat, &urma_chan->send_jetty, &wr_cfg);
+        }
         ret = ((cr.status != 0) ? cr.status : ret);
         goto urma_chan_unlock;
     }

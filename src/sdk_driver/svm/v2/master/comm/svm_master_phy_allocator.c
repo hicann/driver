@@ -24,10 +24,7 @@ struct devmm_host_obmm_info {
 struct devmm_host_obmm_info *g_obmm_info = NULL;
 
 /* This func is time-consuming operation, may cause performance problem. */
-static bool devmm_pa_is_local_mem(u64 pa)
-{
-    return ka_mm_page_is_ram(KA_MM_PFN_DOWN(pa));
-}
+static bool devmm_pa_is_local_mem(u64 pa) { return ka_mm_page_is_ram(KA_MM_PFN_DOWN(pa)); }
 
 int devmm_obmm_init(void)
 {
@@ -53,7 +50,7 @@ DECLAER_FEATURE_AUTO_INIT(devmm_obmm_init, FEATURE_LOADER_STAGE_5);
 void devmm_obmm_uninit(void)
 {
     if (!ka_mm_is_support_obmm()) {
-        return ;
+        return;
     }
     if (g_obmm_info != NULL) {
         devmm_vfree_ex(g_obmm_info);
@@ -82,10 +79,7 @@ static bool devmm_is_support_fabric_page(void)
     return (record_val > 0);
 }
 
-bool devmm_support_host_giant_page(void)
-{
-    return ((g_obmm_info != NULL) && devmm_is_support_fabric_page());
-}
+bool devmm_support_host_giant_page(void) { return ((g_obmm_info != NULL) && devmm_is_support_fabric_page()); }
 
 static ka_mutex_t *devmm_master_get_lock_by_numa(int numa_id)
 {
@@ -101,7 +95,7 @@ static int devmm_master_get_next_numa(int numa)
     int next_numa;
     next_numa = ka_mm_next_online_node(numa);
     if (next_numa >= SVM_MASTER_NUMA_MAX) {
-        next_numa = first_online_node;
+        next_numa = ka_mm_first_online_node;
     }
     return next_numa;
 }
@@ -126,7 +120,7 @@ static u64 devmm_master_alloc_interleaving_large_pages(ka_page_t **pages, u64 pg
 {
     u64 alloced;
     u64 pa;
-    u64 node_offset[DEVMM_S2S_HOST_NODE_NUM] = { 0 };
+    u64 node_offset[DEVMM_S2S_HOST_NODE_NUM] = {0};
     u32 stamp = (u32)ka_jiffies;
     u32 i;
     int ret;
@@ -152,7 +146,9 @@ static u64 devmm_master_alloc_interleaving_large_pages(ka_page_t **pages, u64 pg
 
                 nlock = devmm_master_get_lock_by_numa(ka_mm_pfn_to_nid(start_pfn));
                 if (ka_unlikely(nlock == NULL)) {
-                    devmm_drv_err("invalid numa id. (numa:%d; max:%d)\n", (int)ka_mm_pfn_to_nid(start_pfn), (int)SVM_MASTER_NUMA_MAX);
+                    devmm_drv_err(
+                        "invalid numa id. (numa:%d; max:%d)\n", (int)ka_mm_pfn_to_nid(start_pfn),
+                        (int)SVM_MASTER_NUMA_MAX);
                     return alloced;
                 }
 
@@ -162,7 +158,8 @@ static u64 devmm_master_alloc_interleaving_large_pages(ka_page_t **pages, u64 pg
                 if (ret == 0) {
                     pages[alloced] = ka_mm_pfn_to_page(start_pfn);
                     (void)memset_s(ka_mm_page_address(pages[alloced++]), pg_size, 0, pg_size);
-                    devmm_drv_debug("alloc interleaving pages. (cpu_id:%u; pg_size:0x%llx pa:%pk)\n", node_id, pg_size, (void *)pa);
+                    devmm_drv_debug(
+                        "alloc interleaving pages. (cpu_id:%u; pg_size:0x%llx pa:%pk)\n", node_id, pg_size, (void *)pa);
                     // set DEVMM_S2S_HOST_NODE_NUM + 1U, indicates that 'alloced' has changed
                     i = DEVMM_S2S_HOST_NODE_NUM + 1U;
                     break;
@@ -202,7 +199,7 @@ static u64 devmm_master_alloc_numa_large_pages(u32 numa_id, ka_page_t **pages, u
             devmm_drv_err("invalid numa id or not inited. (numa:%d; max:%d)\n", cur_numa, (int)SVM_MASTER_NUMA_MAX);
             return alloced;
         }
-        
+
         devmm_master_get_pfn_range_for_nid(cur_numa, &numa_start_pfn, &numa_end_pfn);
         for (node_id = 0; node_id < DEVMM_S2S_HOST_NODE_NUM; node_id++) {
             u64 numa_start = __ka_mm_pfn_to_phys(numa_start_pfn);
@@ -210,7 +207,7 @@ static u64 devmm_master_alloc_numa_large_pages(u32 numa_id, ka_page_t **pages, u
             u64 hccs_start = devmm_get_host_node_local_addr(node_id);
             u64 hccs_end = hccs_start + DEVMM_S2S_HOST_NODE_MEM_SIZE;
 
-            hccs_start = max(numa_start, hccs_start);
+            hccs_start = ka_base_max(numa_start, hccs_start);
             hccs_end = ka_base_min(numa_end, hccs_end);
             hccs_start = KA_DRIVER_ALIGN(hccs_start, pg_size);
             hccs_end = KA_DRIVER_ALIGN_DOWN(hccs_end, pg_size);
@@ -230,7 +227,8 @@ static u64 devmm_master_alloc_numa_large_pages(u32 numa_id, ka_page_t **pages, u
                 if (ka_mm_alloc_contig_range(start_pfn, end_pfn, KA_MIGRATE_MOVABLE, gfp_mask) == 0) {
                     pages[alloced] = ka_mm_pfn_to_page(start_pfn);
                     (void)memset_s(ka_mm_page_address(pages[alloced++]), pg_size, 0, pg_size);
-                    devmm_drv_debug("alloc normal pages. (numa:%u; pg_size:0x%llx pa:%pk)\n", cur_numa, pg_size, (void *)pa);
+                    devmm_drv_debug(
+                        "alloc normal pages. (numa:%u; pg_size:0x%llx pa:%pk)\n", cur_numa, pg_size, (void *)pa);
                 }
             }
             ka_task_mutex_unlock(nlock);
@@ -317,10 +315,7 @@ void devmm_master_free_huge_pages(struct devmm_phy_addr_attr *attr, ka_page_t **
     }
 }
 
-static bool devmm_is_specified_numa(u32 numa_id)
-{
-    return !((numa_id == -1) || (numa_id == 0));
-}
+static bool devmm_is_specified_numa(u32 numa_id) { return !((numa_id == -1) || (numa_id == 0)); }
 
 static u64 devmm_master_alloc_normal_large_pages(u32 numa, ka_page_t **pages, u64 pg_num, u64 pg_size, u32 gfp_mask)
 {
@@ -345,18 +340,17 @@ static u64 devmm_master_alloc_normal_large_pages(u32 numa, ka_page_t **pages, u6
 int devmm_master_alloc_huge_pages(struct devmm_phy_addr_attr *attr, ka_page_t **pages, u64 pg_num)
 {
     u64 alloced = 0;
-    u32 gfp_mask = devmm_get_alloc_mask(true);
+    u32 gfp_mask = devmm_get_alloc_mask(true, true);
     gfp_mask |= (devmm_is_specified_numa(attr->numa_id) ? __KA_GFP_THISNODE : 0);
 #if (defined CFG_SOC_PLATFORM_CLOUD_V2) && (defined __aarch64__)
     if (attr->mem_type == MEM_P2P_DDR_TYPE && devmm_is_support_fabric_page()) {
         alloced = devmm_master_alloc_huge_page_by_cma(attr->numa_id, pages, pg_num, gfp_mask);
     } else {
-        alloced = devmm_master_alloc_normal_large_pages(attr->numa_id, pages, pg_num,
-            SVM_MASTER_HUGE_PAGE_SIZE, gfp_mask);
+        alloced =
+            devmm_master_alloc_normal_large_pages(attr->numa_id, pages, pg_num, SVM_MASTER_HUGE_PAGE_SIZE, gfp_mask);
     }
 #else
-    alloced = devmm_master_alloc_normal_large_pages(attr->numa_id, pages, pg_num,
-        SVM_MASTER_HUGE_PAGE_SIZE, gfp_mask);
+    alloced = devmm_master_alloc_normal_large_pages(attr->numa_id, pages, pg_num, SVM_MASTER_HUGE_PAGE_SIZE, gfp_mask);
 #endif
     if (alloced != pg_num) {
         devmm_master_free_huge_pages(attr, pages, alloced);
@@ -374,7 +368,7 @@ static void devmm_master_free_one_giant_pages(struct devmm_phy_addr_attr *attr, 
     }
 #else
 #ifdef EMU_ST
-        __ka_mm_free_pages(page, ka_mm_get_order(SVM_MASTER_GIANT_PAGE_SIZE));
+    __ka_mm_free_pages(page, ka_mm_get_order(SVM_MASTER_GIANT_PAGE_SIZE));
 #endif
 #endif
 }
@@ -396,14 +390,14 @@ int devmm_master_alloc_giant_pages(struct devmm_phy_addr_attr *attr, ka_page_t *
     u64 alloced = 0;
 #if (defined CFG_SOC_PLATFORM_CLOUD_V2) && (defined __aarch64__)
     if (attr->mem_type == MEM_P2P_DDR_TYPE && devmm_is_support_fabric_page()) {
-        alloced = devmm_master_alloc_giant_page_by_cma(attr->numa_id, pages, pg_num, devmm_get_alloc_mask(true));
+        alloced = devmm_master_alloc_giant_page_by_cma(attr->numa_id, pages, pg_num, devmm_get_alloc_mask(true, true));
     } else {
         alloced = 0;
     }
 #else
 #ifdef EMU_ST
-    alloced = devmm_master_alloc_normal_large_pages(attr->numa_id, pages, pg_num, SVM_MASTER_GIANT_PAGE_SIZE,
-        devmm_get_alloc_mask(true));
+    alloced = devmm_master_alloc_normal_large_pages(
+        attr->numa_id, pages, pg_num, SVM_MASTER_GIANT_PAGE_SIZE, devmm_get_alloc_mask(true, true));
 #endif
 #endif
     if (alloced != pg_num) {

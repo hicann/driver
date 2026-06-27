@@ -10,7 +10,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#include <linux/types.h>
+#include "ka_type.h"
 
 #include "devmm_proc_info.h"
 #include "svm_heap_mng.h"
@@ -23,15 +23,13 @@
 
 static void devmm_register_dma_rb_range_handle(ka_rb_node_t *rbnode, struct rb_range_handle *range_handle)
 {
-    struct devmm_register_dma_node *node =
-        ka_base_rb_entry(rbnode, struct devmm_register_dma_node, rbnode);
+    struct devmm_register_dma_node *node = ka_base_rb_entry(rbnode, struct devmm_register_dma_node, rbnode);
 
     range_handle->start = node->src_va;
     range_handle->end = node->src_va + node->src_size - 1;
 }
 
-struct devmm_register_dma_node *devmm_register_dma_node_get(struct devmm_register_dma_mng *mng,
-    u64 addr, u64 size)
+struct devmm_register_dma_node *devmm_register_dma_node_get(struct devmm_register_dma_mng *mng, u64 addr, u64 size)
 {
     struct devmm_register_dma_node *node = NULL;
     ka_rb_node_t *rbnode = NULL;
@@ -41,8 +39,7 @@ struct devmm_register_dma_node *devmm_register_dma_node_get(struct devmm_registe
     handle.end = handle.start + size - 1;
 
     ka_task_read_lock_bh(&mng->rbtree_rwlock);
-    rbnode = devmm_rb_search_by_range(&mng->rbtree, &handle,
-        devmm_register_dma_rb_range_handle);
+    rbnode = devmm_rb_search_by_range(&mng->rbtree, &handle, devmm_register_dma_rb_range_handle);
     if (rbnode != NULL) {
         node = ka_base_rb_entry(rbnode, struct devmm_register_dma_node, rbnode);
         ka_base_kref_get(&node->ref);
@@ -89,8 +86,7 @@ void devmm_register_dma_node_put(struct devmm_register_dma_node *node)
     ka_base_kref_put(&node->ref, devmm_register_dma_node_release);
 }
 
-static int devmm_insert_register_dma_node(struct devmm_register_dma_mng *mng,
-    struct devmm_register_dma_node *node)
+static int devmm_insert_register_dma_node(struct devmm_register_dma_mng *mng, struct devmm_register_dma_node *node)
 {
     int ret;
 
@@ -98,15 +94,15 @@ static int devmm_insert_register_dma_node(struct devmm_register_dma_mng *mng,
     ret = devmm_rb_insert_by_range(&mng->rbtree, &node->rbnode, devmm_register_dma_rb_range_handle);
     ka_task_write_unlock_bh(&mng->rbtree_rwlock);
     if (ret != 0) {
-        devmm_drv_err("Insert register dma node fail. (va=0x%llx; size=%llu; devid=%u)\n",
-            node->src_va, node->src_size, node->devid);
+        devmm_drv_err(
+            "Insert register dma node fail. (va=0x%llx; size=%llu; devid=%u)\n", node->src_va, node->src_size,
+            node->devid);
         return ret;
     }
     return 0;
 }
 
-static int devmm_erase_register_dma_node(struct devmm_register_dma_mng *mng,
-    struct devmm_register_dma_node *node)
+static int devmm_erase_register_dma_node(struct devmm_register_dma_mng *mng, struct devmm_register_dma_node *node)
 {
     int ret;
 
@@ -114,8 +110,9 @@ static int devmm_erase_register_dma_node(struct devmm_register_dma_mng *mng,
     ret = devmm_rb_erase(&mng->rbtree, &node->rbnode);
     ka_task_write_unlock_bh(&mng->rbtree_rwlock);
     if (ret != 0) {
-        devmm_drv_err("Erase register dma node fail. (va=0x%llx; size=%llu; devid=%u)\n",
-            node->src_va, node->src_size, node->devid);
+        devmm_drv_err(
+            "Erase register dma node fail. (va=0x%llx; size=%llu; devid=%u)\n", node->src_va, node->src_size,
+            node->devid);
         return ret;
     }
     return 0;
@@ -160,8 +157,8 @@ void devmm_destory_register_dma_mng(struct devmm_svm_process *svm_proc)
     }
 }
 
-static int devmm_get_host_addr_pa_list(struct devmm_svm_process *svm_proc, u32 devid,
-    u64 va, u64 size,  struct devmm_copy_side *side)
+static int devmm_get_host_addr_pa_list(
+    struct devmm_svm_process *svm_proc, u32 devid, u64 va, u64 size, struct devmm_copy_side *side)
 {
     u32 i, merg_idx, host_flag;
     int write = 1;
@@ -199,8 +196,8 @@ static int devmm_get_host_addr_pa_list(struct devmm_svm_process *svm_proc, u32 d
     return 0;
 }
 
-static int devmm_register_dma_node_set_dma_phy_addr(struct devmm_svm_process *svm_proc,
-    struct devmm_register_dma_node *node, u64 *num)
+static int devmm_register_dma_node_set_dma_phy_addr(
+    struct devmm_svm_process *svm_proc, struct devmm_register_dma_node *node, u64 *num)
 {
     int pin_flg = devmm_va_is_in_svm_range(node->align_va) ? DEVMM_PIN_PAGES : DEVMM_USER_PIN_PAGES;
     struct devmm_copy_side side;
@@ -227,8 +224,8 @@ static int devmm_register_dma_node_set_dma_phy_addr(struct devmm_svm_process *sv
     return 0;
 }
 
-static int devmm_set_register_dma_node(struct devmm_svm_process *svm_proc, u64 vaddr, u64 size,
-    u32 devid, struct devmm_register_dma_node *node)
+static int devmm_set_register_dma_node(
+    struct devmm_svm_process *svm_proc, u64 vaddr, u64 size, u32 devid, struct devmm_register_dma_node *node)
 {
     struct devmm_dma_block *blks = NULL;
     u64 blks_num;
@@ -252,8 +249,9 @@ static int devmm_set_register_dma_node(struct devmm_svm_process *svm_proc, u64 v
     KA_BASE_RB_CLEAR_NODE(&node->rbnode);
     ret = devmm_register_dma_node_set_dma_phy_addr(svm_proc, node, &node->num);
     if (ret != 0) {
-        devmm_drv_err("Register dma node set dma phy addr failed. (va=0x%llx; size=%llu; devid=%u)\n",
-            node->align_va, node->align_size, node->devid);
+        devmm_drv_err(
+            "Register dma node set dma phy addr failed. (va=0x%llx; size=%llu; devid=%u)\n", node->align_va,
+            node->align_size, node->devid);
         devmm_kvfree(blks);
         return ret;
     }
@@ -261,8 +259,8 @@ static int devmm_set_register_dma_node(struct devmm_svm_process *svm_proc, u64 v
     return 0;
 }
 
-static int devmm_create_register_dma_node(struct devmm_svm_process *svm_proc,
-    u64 va, u64 size, u32 devid, struct devmm_register_dma_node **out_node)
+static int devmm_create_register_dma_node(
+    struct devmm_svm_process *svm_proc, u64 va, u64 size, u32 devid, struct devmm_register_dma_node **out_node)
 {
     struct devmm_register_dma_node *node = NULL;
     int ret;
@@ -294,7 +292,7 @@ static int devmm_register_dma_para_check(struct devmm_svm_process *svm_proc, u64
 
     if ((devmm_va_is_in_svm_range(va) == false) && devmm_va_is_in_svm_range(va + size)) {
         devmm_drv_err("Start_va and end_va have cross between svm and non svm. (src_va=0x%llx; size=%llu)\n", va, size);
-        return -EINVAL;   
+        return -EINVAL;
     }
 
     if (devmm_va_is_in_svm_range(va)) {
@@ -318,22 +316,26 @@ int devmm_ioctl_register_dma(struct devmm_svm_process *svm_proc, struct devmm_io
     int ret;
 
     if (!ka_mm_is_support_pin_user_memory() && devmm_va_is_in_svm_range(para->vaddr) == false) {
-        devmm_drv_run_info("Devmm register os malloc va to dma is not support in Linux versions below 5.19."
-            "(va=0x%llx; size=0x%llx; devid=%u)\n", para->vaddr, para->size, devid);
+        devmm_drv_run_info(
+            "Devmm register os malloc va to dma is not support in Linux versions below 5.19."
+            "(va=0x%llx; size=0x%llx; devid=%u)\n",
+            para->vaddr, para->size, devid);
         return -EOPNOTSUPP;
     }
 
     ret = devmm_register_dma_para_check(svm_proc, para->vaddr, para->size);
     if (ret != 0) {
-        devmm_drv_err("Devmm register dma para check failed. (va=0x%llx; size=0x%llx; devid=%u)\n",
-            para->vaddr, para->size, devid);
+        devmm_drv_err(
+            "Devmm register dma para check failed. (va=0x%llx; size=0x%llx; devid=%u)\n", para->vaddr, para->size,
+            devid);
         return ret;
     }
 
     ret = devmm_create_register_dma_node(svm_proc, para->vaddr, para->size, devid, &node);
     if (ret != 0) {
-        devmm_drv_err("Devmm create register dma node failed. (va=0x%llx; size=0x%llx; devid=%u)\n",
-            para->vaddr, para->size, devid);
+        devmm_drv_err(
+            "Devmm create register dma node failed. (va=0x%llx; size=0x%llx; devid=%u)\n", para->vaddr, para->size,
+            devid);
         return ret;
     }
 
@@ -343,8 +345,8 @@ int devmm_ioctl_register_dma(struct devmm_svm_process *svm_proc, struct devmm_io
         return ret;
     }
 
-    devmm_drv_debug("Insert register dma node success. (va=0x%llx; size=%llu; dev_id=%d)\n",
-        para->vaddr, para->size, devid);
+    devmm_drv_debug(
+        "Insert register dma node success. (va=0x%llx; size=%llu; dev_id=%d)\n", para->vaddr, para->size, devid);
     return 0;
 }
 
@@ -362,14 +364,14 @@ int devmm_ioctl_unregister_dma(struct devmm_svm_process *svm_proc, struct devmm_
     }
 
     if (para->vaddr != node->src_va) {
-        devmm_drv_err("Va is not the register src va. (va=0x%llx; node->srv_va=0x%llx)\n",
-            para->vaddr, node->src_va);
+        devmm_drv_err("Va is not the register src va. (va=0x%llx; node->srv_va=0x%llx)\n", para->vaddr, node->src_va);
         devmm_register_dma_node_put(node);
         return -EFAULT;
     }
 
-    devmm_drv_debug("Unregister dma node. (va=0x%llx; size=%llu; dev_id=%d; ref=%u)\n",
-        node->src_va, node->src_size, node->devid, ka_base_kref_read(&node->ref));
+    devmm_drv_debug(
+        "Unregister dma node. (va=0x%llx; size=%llu; dev_id=%d; ref=%u)\n", node->src_va, node->src_size, node->devid,
+        ka_base_kref_read(&node->ref));
     ret = devmm_erase_register_dma_node(&master_data->register_dma_mng[devid], node);
     if (ret != 0) {
         devmm_register_dma_node_put(node);
@@ -380,4 +382,3 @@ int devmm_ioctl_unregister_dma(struct devmm_svm_process *svm_proc, struct devmm_
 
     return 0;
 }
-

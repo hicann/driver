@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2025. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -28,10 +28,7 @@ int apm_proc_mem_query_handle_register(int (*proc_mem_query)(u32 udevid, int tgi
 }
 KA_EXPORT_SYMBOL_GPL(apm_proc_mem_query_handle_register);
 
-void apm_proc_mem_query_handle_unregister(void)
-{
-    g_proc_mem_query = NULL;
-}
+void apm_proc_mem_query_handle_unregister(void) { g_proc_mem_query = NULL; }
 KA_EXPORT_SYMBOL_GPL(apm_proc_mem_query_handle_unregister);
 
 static int _apm_proc_mem_query(int tgid, u64 *out_size)
@@ -58,4 +55,3 @@ int apm_proc_mem_query(int tgid, u64 *out_size)
     /* return 0 not affect apm; until svm support new version */
     return -EPERM;
 }
-

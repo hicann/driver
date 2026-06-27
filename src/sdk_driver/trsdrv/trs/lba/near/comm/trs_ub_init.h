@@ -27,6 +27,10 @@ int trs_ub_get_sq_tail(struct trs_id_inst *inst, u32 sq_id, u32 *tail);
 int trs_ub_get_cq_head(struct trs_id_inst *inst, u32 cq_id, u32 *head);
 int trs_ub_get_cq_tail(struct trs_id_inst *inst, u32 cq_id, u32 *tail);
 int trs_ub_set_cq_head(struct trs_id_inst *inst, u32 cq_id, u32 head);
+int trs_ub_set_sq_head(struct trs_id_inst *inst, u32 sq_id, u32 head);
+int trs_ub_set_sq_tail(struct trs_id_inst *inst, u32 sq_id, u32 tail);
+int trs_ub_get_stars_sq_head(struct trs_id_inst *inst, u32 sq_id, u32 *head);
+int trs_ub_get_stars_sq_tail(struct trs_id_inst *inst, u32 sq_id, u32 *tail);
 int trs_ub_cq_reset(struct trs_id_inst *inst, u32 cq_id);
 int trs_ub_sq_reset(struct trs_id_inst *inst, u32 sq_id);
 int trs_ub_cq_pause(struct trs_id_inst *inst, u32 cq_id);
@@ -40,4 +44,3 @@ int trs_agent_ub_jetty_uninit(u32 devid, struct trs_msg_data *msg);
 #endif
 
 #endif /* TRS_UB_INIT_H */
-

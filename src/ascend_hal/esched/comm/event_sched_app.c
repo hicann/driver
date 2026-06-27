@@ -597,16 +597,26 @@ drvError_t halEschedSubmitEventSync(uint32_t devId, struct event_summary *event,
     struct event_res res;
     struct event_info back_event_info;
     esched_event_buffer *event_buffer = (esched_event_buffer *)back_event_info.priv.msg;
-    unsigned long long timestamp = esched_get_cur_cpu_tick();
+    unsigned long long timestamp = esched_get_cur_cpu_timestamp();
     struct sync_event_wait_info wait_info = {0};
 
-    if (event == NULL || reply == NULL) {
-        sched_err("The variable event or reply is NULL.\n");
+    if (event == NULL) {
+        sched_err("The variable event is NULL.\n");
+        report_arg_null_pointer(__FUNCTION__, "event");
         return DRV_ERROR_PARA_ERROR;
     }
-
-    if (event->msg == NULL || event->msg_len < sizeof(struct event_sync_msg)) {
-        sched_err("The event->msg is NULL or event->msg_len is invalid. (msg_len=%u)\n", event->msg_len);
+    if (reply == NULL) {
+        sched_err("The variable reply is NULL.\n");
+        report_arg_null_pointer(__FUNCTION__, "reply");
+        return DRV_ERROR_PARA_ERROR;
+    }
+    if (event->msg == NULL) {
+        sched_err("The event->msg is NULL.\n");
+        report_arg_null_pointer(__FUNCTION__, "event->msg");
+        return DRV_ERROR_PARA_ERROR;
+    }
+    if (event->msg_len < sizeof(struct event_sync_msg)) {
+        sched_err("event->msg_len is invalid.(event->msg_len=%u)\n", event->msg_len);
         return DRV_ERROR_PARA_ERROR;
     }
 

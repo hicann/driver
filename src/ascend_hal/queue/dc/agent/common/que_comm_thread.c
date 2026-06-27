@@ -50,7 +50,7 @@ void *que_wait_f2nf_thread(void *data)
     return NULL;
 }
 
-#define QUEUE_THREAD_SLEEP_INTERVAL   (5000000)   // 5000ms
+#define QUEUE_THREAD_SLEEP_INTERVAL (5000000) // 5000ms
 #define QUEUE_RECYCLE_POLL_NAME "que_chan_recycle_thread"
 static void *que_recycle_thread(void *data)
 {
@@ -229,7 +229,6 @@ void que_thread_cancle(unsigned int devid)
 #else
 
 void que_comm_thread_emu_test(void)
-{
-}
+{}
 
 #endif

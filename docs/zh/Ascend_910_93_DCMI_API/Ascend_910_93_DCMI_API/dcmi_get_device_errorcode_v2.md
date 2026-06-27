@@ -60,7 +60,7 @@
 <td class="cellrowborder" valign="top" width="16.32%" headers="mcps1.1.5.1.3 "><p id="zh-cn_topic_0000001251307153_zh-cn_topic_0000001178054662_zh-cn_topic_0000001147730881_p18541846193117"><a name="zh-cn_topic_0000001251307153_zh-cn_topic_0000001178054662_zh-cn_topic_0000001147730881_p18541846193117"></a><a name="zh-cn_topic_0000001251307153_zh-cn_topic_0000001178054662_zh-cn_topic_0000001147730881_p18541846193117"></a>unsigned int *</p>
 </td>
 <td class="cellrowborder" valign="top" width="49.69%" headers="mcps1.1.5.1.4 "><p id="p19941116142619"><a name="p19941116142619"></a><a name="p19941116142619"></a>错误码列表。</p>
-<p id="zh-cn_topic_0000001251307153_zh-cn_topic_0000001178054662_zh-cn_topic_0000001147730881_p985494623117"><a name="zh-cn_topic_0000001251307153_zh-cn_topic_0000001178054662_zh-cn_topic_0000001147730881_p985494623117"></a><a name="zh-cn_topic_0000001251307153_zh-cn_topic_0000001178054662_zh-cn_topic_0000001147730881_p985494623117"></a>若打印信息中提示有错误码，请参考《黑匣子错误码信息列表》或《健康管理故障定义》进行查看。</p>
+<p id="zh-cn_topic_0000001251307153_zh-cn_topic_0000001178054662_zh-cn_topic_0000001147730881_p985494623117"><a name="zh-cn_topic_0000001251307153_zh-cn_topic_0000001178054662_zh-cn_topic_0000001147730881_p985494623117"></a><a name="zh-cn_topic_0000001251307153_zh-cn_topic_0000001178054662_zh-cn_topic_0000001147730881_p985494623117"></a></p>
 </td>
 </tr>
 <tr id="zh-cn_topic_0000001251307153_zh-cn_topic_0000001178054662_zh-cn_topic_0000001147730881_row15525645143119"><td class="cellrowborder" valign="top" width="17%" headers="mcps1.1.5.1.1 "><p id="zh-cn_topic_0000001251307153_zh-cn_topic_0000001178054662_zh-cn_topic_0000001147730881_p48541469314"><a name="zh-cn_topic_0000001251307153_zh-cn_topic_0000001178054662_zh-cn_topic_0000001147730881_p48541469314"></a><a name="zh-cn_topic_0000001251307153_zh-cn_topic_0000001178054662_zh-cn_topic_0000001147730881_p48541469314"></a>list_len</p>
@@ -165,7 +165,7 @@
 
 **调用示例<a name="zh-cn_topic_0000001251307153_zh-cn_topic_0000001178054662_zh-cn_topic_0000001147730881_toc533412083"></a>**
 
-```
+```c
 #define ERROR_CODE_MAX_NUM              (128)
 … 
 int ret = 0;
@@ -176,4 +176,3 @@ unsigned int error_code_list[ERROR_CODE_MAX_NUM] = {0};
 ret = dcmi_get_device_errorcode_v2(card_id, device_id, &errorcount, error_code_list, ERROR_CODE_MAX_NUM);
 …
 ```
-

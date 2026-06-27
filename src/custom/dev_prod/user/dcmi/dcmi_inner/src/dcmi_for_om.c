@@ -78,7 +78,11 @@ int hal_npu_func_hooker(HAL_NPU_FUNC_HOOKEE hal_hook_func)
         return DCMI_ERR_CODE_INVALID_PARAMETER;
     }
     
+#ifndef NPU_SMI_V2
     ret = dcmi_init();
+#else
+    ret = dcmiv2_init();
+#endif
     if (ret != DCMI_OK) {
         gplog(LOG_ERR, "dcmi_init failed. ret is %d", ret);
         return DCMI_ERR_CODE_INNER_ERR;

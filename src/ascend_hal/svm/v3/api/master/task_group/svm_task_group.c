@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * Copyright (c) 2026 Huawei Technologies Co., Ltd.
  * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -18,7 +18,8 @@
 #include "malloc_mng.h"
 #include "smm_client.h"
 #include "svm_pipeline.h"
-#include "svm_sub_event_type.h"
+#include "svm_sub_event_type_uk_msg.h"
+#include "svm_criu.h"
 #include "task_grp_msg.h"
 #include "svm_umc_client.h"
 #include "svm_umc_server.h"
@@ -28,6 +29,7 @@
 #include "svm_apbi.h"
 #include "cache_malloc.h"
 #include "va_allocator.h"
+#include "svm_register.h"
 
 struct svm_sync_task_info {
     u32 devid;
@@ -118,6 +120,10 @@ static int svm_task_grp_post_malloc(void *va_handle, u64 start, struct svm_prop 
         return 0;
     }
 
+    if (svm_flag_is_va_only_without_populate(prop->flag)) {
+        return 0;
+    }
+
     svm_global_va_pack(0, prop->tgid, prop->start, prop->aligned_size, &src_info);
     ret = uda_get_udevid_by_devid_ex(prop->devid, &src_info.udevid);
     if (ret != DRV_ERROR_NONE) {
@@ -154,6 +160,10 @@ static void svm_task_grp_pre_free(void *va_handle, u64 start, struct svm_prop *p
         return;
     }
 
+    if (svm_flag_is_va_only_without_populate(prop->flag)) {
+        return;
+    }
+
     svm_global_va_pack(0, prop->tgid, prop->start, prop->aligned_size, &src_info);
     ret = uda_get_udevid_by_devid_ex(prop->devid, &src_info.udevid);
     if (ret != DRV_ERROR_NONE) {
@@ -167,9 +177,7 @@ static void svm_task_grp_pre_free(void *va_handle, u64 start, struct svm_prop *p
 }
 
 static struct svm_mng_ops task_grp_mng_ops = {
-    .post_malloc = svm_task_grp_post_malloc,
-    .pre_free = svm_task_grp_pre_free
-};
+    .post_malloc = svm_task_grp_post_malloc, .pre_free = svm_task_grp_pre_free};
 
 static int svm_task_grp_post_expand(u32 devid, u64 start, u64 size)
 {
@@ -224,13 +232,71 @@ static void svm_task_grp_pre_shrink(u32 devid, u64 start, u64 size)
 }
 
 static struct svm_cache_ops task_grp_cache_ops = {
-    .post_expand = svm_task_grp_post_expand,
-    .pre_shrink = svm_task_grp_pre_shrink
-};
+    .post_expand = svm_task_grp_post_expand, .pre_shrink = svm_task_grp_pre_shrink};
 
-static int svm_task_grp_post_map(void *svmm_inst, u32 devid, u64 start, u64 svm_flag, struct svm_global_va *src_info)
+static int svm_task_grp_register_map(struct svm_global_va *src_info, u32 devid, u64 dst_va)
 {
-    void *seg_handle = NULL;
+    struct svm_dst_va dst_info;
+    u32 task_type = PROCESS_HCCP;
+    u32 smm_flag = 0;
+    int ret;
+
+    if (devid >= SVM_MAX_DEV_AGENT_NUM) {
+        return 0;
+    }
+
+    if ((svm_task_grp_bitmap[devid] & (0x1U << (u32)task_type)) == 0) {
+        return 0;
+    }
+
+    if ((svm_get_device_connect_type(devid) != HOST_DEVICE_CONNECT_TYPE_UB) ||
+        (src_info->udevid != svm_get_host_devid())) {
+        return 0;
+    }
+
+    svm_dst_va_pack(devid, task_type, dst_va, src_info->size, &dst_info);
+    ret = svm_smm_client_map(&dst_info, src_info, smm_flag);
+    if (ret == DRV_ERROR_NO_PROCESS) {
+        svm_task_grp_bitmap[devid] &= (~(0x1U << task_type));
+    } else if (ret != 0) {
+        svm_err("Smm map failed. (ret=%d; devid=%u; va=0x%llx; task_type=%u)\n", ret, devid, dst_va, task_type);
+        return ret;
+    }
+    return 0;
+}
+
+static void svm_task_grp_register_unmap(struct svm_global_va *src_info, u32 devid, u64 dst_va)
+{
+    struct svm_dst_va dst_info;
+    u32 task_type = PROCESS_HCCP;
+    u32 smm_flag = 0;
+    int ret;
+
+    if (devid >= SVM_MAX_DEV_AGENT_NUM) {
+        return;
+    }
+
+    if ((svm_task_grp_bitmap[devid] & (0x1U << (u32)task_type)) == 0) {
+        return;
+    }
+
+    if ((svm_get_device_connect_type(devid) != HOST_DEVICE_CONNECT_TYPE_UB) ||
+        (src_info->udevid != svm_get_host_devid())) {
+        return;
+    }
+
+    svm_dst_va_pack(devid, task_type, dst_va, src_info->size, &dst_info);
+    ret = svm_smm_client_unmap(&dst_info, src_info, smm_flag);
+    if ((ret != DRV_ERROR_NONE) && (ret != DRV_ERROR_NO_PROCESS)) {
+        svm_err("Smm unmap failed. (devid=%u; va=0x%llx; task_type=%u)\n", devid, dst_va, task_type);
+    }
+}
+
+static struct svm_register_ops task_grp_register_ops = {
+    .post_map = svm_task_grp_register_map, .pre_unmap = svm_task_grp_register_unmap};
+
+static int svm_task_grp_post_map(void *seg_handle, u32 devid, u64 start, u64 svm_flag, struct svm_global_va *src_info)
+{
     u32 task_bitmap;
     int ret;
 
@@ -242,16 +308,9 @@ static int svm_task_grp_post_map(void *svmm_inst, u32 devid, u64 start, u64 svm_
         return 0;
     }
 
-    seg_handle = svm_svmm_seg_handle_get(svmm_inst, start);
-    if (seg_handle == NULL) { /* maybe va has been unmap after get prop or not map */
-        svm_err("Get seg handle failed. (va=%llx)\n", start);
-        return DRV_ERROR_PARA_ERROR;
-    }
-
     task_bitmap = svm_svmm_get_seg_task_bitmap(seg_handle);
     ret = svm_task_grp_map(devid, start, src_info, &task_bitmap);
     svm_svmm_set_seg_task_bitmap(seg_handle, task_bitmap);
-    svm_svmm_seg_handle_put(seg_handle);
 
     return ret;
 }
@@ -270,10 +329,7 @@ static int svm_task_grp_pre_unmap(u32 task_bitmap, u32 devid, u64 start, u64 svm
     return 0;
 }
 
-static struct svm_vmm_ops task_grp_vmm_ops = {
-    .post_map = svm_task_grp_post_map,
-    .pre_unmap = svm_task_grp_pre_unmap
-};
+static struct svm_vmm_ops task_grp_vmm_ops = {.post_map = svm_task_grp_post_map, .pre_unmap = svm_task_grp_pre_unmap};
 
 int svm_task_grp_map_normal_pa(u64 va, struct svm_prop *prop)
 {
@@ -333,8 +389,7 @@ static struct svm_mem_repair_ops task_grp_repair_ops = {
     .normal_map = svm_task_grp_map_normal_pa,
     .normal_unmap = svm_task_grp_unmap_normal_pa,
     .vmm_map = svm_task_grp_map_vmm_pa,
-    .vmm_unmap = svm_task_grp_unmap_vmm_pa
-};
+    .vmm_unmap = svm_task_grp_unmap_vmm_pa};
 
 static int svm_sync_normal_addr_to_task(void *va_handle, u64 start, struct svm_prop *prop, u32 task_type)
 {
@@ -387,8 +442,8 @@ static int svm_sync_vmm_map_addr_to_task(void *seg_handle, u64 start, struct svm
     u32 task_bitmap, smm_flag;
     int ret;
 
-    if ((svm_flag_is_dev_cp_only(svm_svmm_get_seg_svm_flag(seg_handle)))
-        || (svm_is_in_dcache_va_range(start, src_info->size))) {
+    if ((svm_flag_is_dev_cp_only(svm_svmm_get_seg_svm_flag(seg_handle))) ||
+        (svm_is_in_dcache_va_range(start, src_info->size))) {
         return 0;
     }
 
@@ -438,13 +493,15 @@ static int svm_try_sync_single_addr_to_task(void *va_handle, u64 start, struct s
     }
 }
 
-static int svm_sync_cache_to_task(u32 devid, u64 start, u64 size, void *priv)
+static int svm_sync_cache_to_task(u32 devid, u64 start, u64 size, u32 flag, void *priv)
 {
     u32 task_type = ((struct svm_sync_task_info *)priv)->task_type;
     u32 smm_flag;
     struct svm_global_va src_info;
     struct svm_dst_va dst_info;
     int tgid, ret;
+
+    SVM_UNUSED(flag);
 
     if (devid == svm_get_host_devid()) {
         return 0;
@@ -473,6 +530,14 @@ static int svm_sync_cache_to_task(u32 devid, u64 start, u64 size, void *priv)
     return 0;
 }
 
+static int svm_sync_register_to_task(void *va_handle, u64 start, struct svm_global_va *src_info, void *priv)
+{
+    u32 devid = ((struct svm_sync_task_info *)priv)->devid;
+
+    SVM_UNUSED(va_handle);
+    return svm_task_grp_register_map(src_info, devid, start);
+}
+
 static int svm_sync_svm_addr_to_task(u32 devid, u32 task_type)
 {
     struct svm_sync_task_info task_info = {.devid = devid, .task_type = task_type};
@@ -483,7 +548,16 @@ static int svm_sync_svm_addr_to_task(u32 devid, u32 task_type)
         return ret;
     }
 
-    return svm_for_each_valid_handle(svm_try_sync_single_addr_to_task, (void *)&task_info);
+    ret = svm_for_each_valid_handle(svm_try_sync_single_addr_to_task, (void *)&task_info);
+    if (ret != 0) {
+        return ret;
+    }
+
+    if (task_type == PROCESS_HCCP) {
+        ret = svm_register_for_each_seg(devid, svm_sync_register_to_task, (void *)&task_info);
+    }
+
+    return ret;
 }
 
 static int svm_task_grp_add_task(u32 devid, u32 task_type)
@@ -508,12 +582,15 @@ static int svm_task_grp_add_task(u32 devid, u32 task_type)
         return ret;
     }
 
-    ret = svm_sync_svm_addr_to_task(devid, task_type);
-    if (ret == 0) {
-        svm_task_grp_bitmap[devid] |= (0x1U << (u32)task_type);
+    if (!svm_criu_is_device_reopen(devid)) { /* Task grp add task before criu restore. */
+        ret = svm_sync_svm_addr_to_task(devid, task_type);
+        if (ret != 0) {
+            return ret;
+        }
     }
 
-    return ret;
+    svm_task_grp_bitmap[devid] |= (0x1U << (u32)task_type);
+    return 0;
 }
 
 static int svm_master_add_task_event_proc_func(u32 devid, const void *msg_in, void *msg_out)
@@ -530,20 +607,27 @@ static int svm_master_add_task_event_proc_func(u32 devid, const void *msg_in, vo
 }
 
 SVM_EVENT_PROC_REGISTER(
-    SVM_ADD_GRP_EVENT,
-    svm_master_add_task_event_proc_func,
-    (u64)sizeof(struct svm_task_add_grp),
-    0
-);
+    SVM_ADD_GRP_EVENT, svm_master_add_task_event_proc_func, (u64)sizeof(struct svm_task_add_grp), 0);
 
 static int svm_task_group_dev_uninit(u32 devid)
 {
-    if (devid != svm_get_host_devid()) {
+    if (devid < SVM_MAX_DEV_AGENT_NUM) {
         svm_task_grp_bitmap[devid] = 0;
     }
 
     return 0;
 }
+
+static int svm_task_group_criu_reset(u32 devid, void *data)
+{
+    SVM_UNUSED(data);
+    return svm_task_group_dev_uninit(devid);
+}
+
+static const struct svm_criu_ops g_task_group_criu_ops = {
+    .name = "task_group",
+    .reset = svm_task_group_criu_reset,
+};
 
 void __attribute__((constructor)) svm_task_group_init(void)
 {
@@ -551,6 +635,9 @@ void __attribute__((constructor)) svm_task_group_init(void)
     svm_vmm_set_ops(&task_grp_vmm_ops);
     svm_mem_repair_set_ops(&task_grp_repair_ops);
     svm_cache_set_ops(&task_grp_cache_ops);
+    svm_register_set_ops(&task_grp_register_ops);
     (void)svm_register_ioctl_dev_uninit_pre_handle(svm_task_group_dev_uninit);
+    if (svm_criu_register_ops(&g_task_group_criu_ops) != DRV_ERROR_NONE) {
+        svm_err("Register CRIU ops failed.\n");
+    }
 }
-

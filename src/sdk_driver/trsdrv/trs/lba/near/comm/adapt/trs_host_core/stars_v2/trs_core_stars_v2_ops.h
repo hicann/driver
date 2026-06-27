@@ -13,7 +13,7 @@
 #ifndef TRS_CORE_STARS_V2_OPS_H
 #define TRS_CORE_STARS_V2_OPS_H
 
-#include <linux/types.h>
+#include "ka_type.h"
 
 #include "trs_pub_def.h"
 #include "trs_core.h"
@@ -26,4 +26,3 @@ int trs_core_stars_v2_ops_get_sq_id_head_from_hw_cqe(struct trs_id_inst *inst, v
 int trs_core_stars_v2_ops_get_stream_from_cqe(struct trs_id_inst *inst, void *hw_cqe, u32 *stream_id);
 int trs_core_stars_v2_ops_cqe_to_logic_cqe(struct trs_id_inst *inst, void *hw_cqe, struct trs_logic_cqe *logic_cqe);
 #endif /* TRS_CORE_STARS_V2_OPS_H */
-

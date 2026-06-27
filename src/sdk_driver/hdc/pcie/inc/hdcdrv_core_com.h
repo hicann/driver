@@ -42,7 +42,7 @@
 #define hdcdrv_kfree(addr, level) ka_kfree(addr, ka_get_module_id(HAL_MODULE_TYPE_HDC, level))
 
 // replace vzalloc
-#define hdcdrv_vzalloc(size, level)  ka_vzalloc(size, ka_get_module_id(HAL_MODULE_TYPE_HDC, level))
+#define hdcdrv_vzalloc(size, level) ka_vzalloc(size, ka_get_module_id(HAL_MODULE_TYPE_HDC, level))
 // replace vmalloc
 #define hdcdrv_vmalloc(size, gfp_mask, prot, level) \
     __ka_vmalloc(size, gfp_mask, prot, ka_get_module_id(HAL_MODULE_TYPE_HDC, level))
@@ -50,8 +50,7 @@
 
 #define hdcdrv_alloc_pages(gfp_mask, order, level) \
     ka_alloc_pages(gfp_mask, order, ka_get_module_id(HAL_MODULE_TYPE_HDC, level))
-#define hdcdrv_free_pages(addr, order, level) \
-    ka_free_pages(addr, order, ka_get_module_id(HAL_MODULE_TYPE_HDC, level))
+#define hdcdrv_free_pages(addr, order, level) ka_free_pages(addr, order, ka_get_module_id(HAL_MODULE_TYPE_HDC, level))
 
 #define hdcdrv_alloc_pages_node_ex(nid, gfp_mask, order, level) \
     ka_alloc_pages_node(nid, gfp_mask, order, ka_get_module_id(HAL_MODULE_TYPE_HDC, level))
@@ -95,8 +94,8 @@
 #define HDCDRV_HOTRESET_FLAG_SET 1
 #define HDCDRV_HOTRESET_FLAG_UNSET 0
 
-#define HDCDRV_CDEV_COUNT   1
-#define HDCDRV_LISTEN_STATUS_IDLE 2  // sense wake up accept wait
+#define HDCDRV_CDEV_COUNT 1
+#define HDCDRV_LISTEN_STATUS_IDLE 2 // sense wake up accept wait
 
 #ifdef CFG_FEATURE_RESERVE_MEM_POOL
 /* TX or RX or RESERVE MEM TX or RESERVE MEM RX*/
@@ -126,19 +125,19 @@
 
 #define HDCDRV_SMALL_PACKET_SEGMENT (4 * 1024)
 #define HDCDRV_HUGE_PACKET_SEGMENT (512 * 1024)
-#ifdef CFG_FEATURE_MIRROR
+#if defined(CFG_FEATURE_MIRROR) || defined(CFG_FEATURE_OVER_XCOM)
 #define HDCDRV_SMALL_PACKET_NUM 512 /* power of 2 */
 #else
 #define HDCDRV_SMALL_PACKET_NUM 1024U /* power of 2 */
 #endif
 
 #ifdef CFG_FEATURE_HDC_REG_MEM
-# define HDCDRV_HUGE_PACKET_NUM 2U    /* power of 2 */
+#define HDCDRV_HUGE_PACKET_NUM 2U /* power of 2 */
 #else
 #ifdef CFG_FEATURE_SMALL_HUGE_POOL
-# define HDCDRV_HUGE_PACKET_NUM 16    /* power of 2 */
+#define HDCDRV_HUGE_PACKET_NUM 16 /* power of 2 */
 #else
-# define HDCDRV_HUGE_PACKET_NUM 64    /* power of 2 */
+#define HDCDRV_HUGE_PACKET_NUM 64 /* power of 2 */
 #endif
 #endif
 
@@ -148,7 +147,7 @@
 #define HDCDRV_USLEEP_RANGE_2000 2000
 #define HDCDRV_USLEEP_RANGE_3000 3000
 
-#define HDCDRV_LIST_CACHE   32
+#define HDCDRV_LIST_CACHE 32
 
 /*
  * 5a5a is magic
@@ -157,9 +156,9 @@
  * #define HDC_VERSION HDC_VERSION_0002
  */
 #define HDC_VERSION_0000 0
-#define HDC_VERSION_0001 0x5a5a0001u    // HDC support multiply pkt recv
-#define HDC_VERSION_0002 0x5a5a0002u    // HDC support service query session dfx
-#define HDC_VERSION HDC_VERSION_0002    // HDC Current Version
+#define HDC_VERSION_0001 0x5a5a0001u // HDC support multiply pkt recv
+#define HDC_VERSION_0002 0x5a5a0002u // HDC support service query session dfx
+#define HDC_VERSION HDC_VERSION_0002 // HDC Current Version
 
 extern u32 hdcdrv_cmd_size_table[HDCDRV_CMD_MAX];
 
@@ -188,8 +187,7 @@ struct vhdc_ctrl_msg_get_segment {
     int segment;
 };
 
-struct vhdc_ctrl_msg_open {
-};
+struct vhdc_ctrl_msg_open {};
 
 struct vhdc_ctrl_msg_release {
     unsigned long long hash;
@@ -212,10 +210,8 @@ struct vhdc_ctrl_msg_free_mempool {
     void *buf;
 };
 
-struct vhdc_ctrl_msg_alloc_huge {
-};
-struct vhdc_ctrl_msg_free_huge {
-};
+struct vhdc_ctrl_msg_alloc_huge {};
+struct vhdc_ctrl_msg_free_huge {};
 
 struct vhdc_ctrl_msg_memcopy {
     void *dest;
@@ -340,44 +336,44 @@ struct hdcdrv_link_ctrl_msg_stats {
 #define HDCDRV_HDC_DISCONNECT 3
 
 #define HDCDRV_NODE_WAIT_FREE_MAX_TIMES (20U)
-#define HDCDRV_NODE_WAIT_FREE_MS (5U)  /* 5ms */
+#define HDCDRV_NODE_WAIT_FREE_MS (5U) /* 5ms */
 
 #if defined(CFG_PLATFORM_ESL) || defined(CFG_PLATFORM_FPGA)
-#define HDCDRV_NODE_BUSY_WARNING     2000 /* 2s for fpga */
-#define HDCDRV_NODE_BUSY_TIMEOUT    50000 /* 50s for fpga */
+#define HDCDRV_NODE_BUSY_WARNING 2000  /* 2s for fpga */
+#define HDCDRV_NODE_BUSY_TIMEOUT 50000 /* 50s for fpga */
 
-#define HDCDRV_NODE_WAIT_TIME_MIN   0
-#define HDCDRV_NODE_WAIT_TIME_MAX   30000 /* 30s for fpga */
+#define HDCDRV_NODE_WAIT_TIME_MIN 0
+#define HDCDRV_NODE_WAIT_TIME_MAX 30000 /* 30s for fpga */
 
-#define HDCDRV_NODE_FREE_WAIT_TIME  1500 /* ms */
+#define HDCDRV_NODE_FREE_WAIT_TIME 1500  /* ms */
 #define HDCDRV_NODE_FREE_SLEEP_TIME 1000 /* us */
-#define HDCDRV_NODE_FREE_SLEEP_RANGE 10 /* us */
+#define HDCDRV_NODE_FREE_SLEEP_RANGE 10  /* us */
 #define HDCDRV_NODE_RELEASE_TIME_MAX 100 /* ms */
 
-#define HDCDRV_SESSION_DEFAULT_TIMEOUT 120000 /* 120s for fpga */
+#define HDCDRV_SESSION_DEFAULT_TIMEOUT 120000             /* 120s for fpga */
 #define HDCDRV_SESSION_REMOTE_CLOSED_TIMEOUT (10 * KA_HZ) /* 10s for fpga */
-#define HDCDRV_SESSION_REMOTE_CLOSED_TIMEOUT_MS 10000 /* 10s for fpga */
-#define HDCDRV_CONN_TIMEOUT (100 * KA_HZ) /* 100s for fpga */
-#define HDCDRV_SESSION_RECLAIM_TIMEOUT (150 * KA_HZ) /* 150s for fpga */
+#define HDCDRV_SESSION_REMOTE_CLOSED_TIMEOUT_MS 10000     /* 10s for fpga */
+#define HDCDRV_CONN_TIMEOUT (100 * KA_HZ)                 /* 100s for fpga */
+#define HDCDRV_SESSION_RECLAIM_TIMEOUT (150 * KA_HZ)      /* 150s for fpga */
 
 #define HDCDRV_TASKLET_STATUS_CHECK_TIME 10 /* 10s for fpga */
 #else
-#define HDCDRV_NODE_BUSY_WARNING     100 /* ms */
-#define HDCDRV_NODE_BUSY_TIMEOUT    5000 /* ms */
+#define HDCDRV_NODE_BUSY_WARNING 100  /* ms */
+#define HDCDRV_NODE_BUSY_TIMEOUT 5000 /* ms */
 
-#define HDCDRV_NODE_WAIT_TIME_MIN   0
-#define HDCDRV_NODE_WAIT_TIME_MAX   3000 /* ms */
+#define HDCDRV_NODE_WAIT_TIME_MIN 0
+#define HDCDRV_NODE_WAIT_TIME_MAX 3000 /* ms */
 
-#define HDCDRV_NODE_FREE_WAIT_TIME  1500 /* ms */
+#define HDCDRV_NODE_FREE_WAIT_TIME 1500  /* ms */
 #define HDCDRV_NODE_FREE_SLEEP_TIME 1000 /* us */
-#define HDCDRV_NODE_FREE_SLEEP_RANGE 10 /* us */
+#define HDCDRV_NODE_FREE_SLEEP_RANGE 10  /* us */
 #define HDCDRV_NODE_RELEASE_TIME_MAX 100 /* ms */
 
-#define HDCDRV_SESSION_DEFAULT_TIMEOUT 3000 /* ms */
+#define HDCDRV_SESSION_DEFAULT_TIMEOUT 3000              /* ms */
 #define HDCDRV_SESSION_REMOTE_CLOSED_TIMEOUT (3 * KA_HZ) /* 3s */
-#define HDCDRV_SESSION_REMOTE_CLOSED_TIMEOUT_MS 3000 /* 3s */
-#define HDCDRV_CONN_TIMEOUT (30 * KA_HZ) /* 30s */
-#define HDCDRV_SESSION_RECLAIM_TIMEOUT (60 * KA_HZ) /* 60s */
+#define HDCDRV_SESSION_REMOTE_CLOSED_TIMEOUT_MS 3000     /* 3s */
+#define HDCDRV_CONN_TIMEOUT (30 * KA_HZ)                 /* 30s */
+#define HDCDRV_SESSION_RECLAIM_TIMEOUT (60 * KA_HZ)      /* 60s */
 
 #define HDCDRV_TASKLET_STATUS_CHECK_TIME 3
 #endif
@@ -409,7 +405,7 @@ u64 hdcdrv_get_ppid(void);
 int hdcdrv_rebuild_raw_pid(u64 pid);
 ka_mutex_t *hdcdrv_get_sync_mem_lock(int dev_id);
 extern bool hdcdrv_mem_is_notify(const struct hdcdrv_fast_mem *f_mem);
-void* hdcdrv_get_sync_mem_buf(int dev_id);
+void *hdcdrv_get_sync_mem_buf(int dev_id);
 void hdcdrv_release_free_mem(struct hdcdrv_ctx_fmem *ctx_fmem);
 void hdcdrv_release_unmap_failed_fast_mem(struct hdcdrv_ctx_fmem *ctx_fmem);
 extern void hdcdrv_fast_mem_free_abnormal(const struct hdcdrv_mem_node_info *f_info);

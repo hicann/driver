@@ -253,7 +253,8 @@ void queue_proc_fs_init(void)
         queue_process_entry = ka_fs_proc_mkdir("process", queue_top_entry);
         abnormal_entry = ka_fs_proc_mkdir("except_collect", queue_top_entry);
         if (abnormal_entry != NULL) {
-            (void)ka_fs_proc_create_data("except_queue_status", PROC_FS_R_MODE, abnormal_entry, &abnormal_status_ops, NULL);
+            (void)ka_fs_proc_create_data("except_queue_status", PROC_FS_R_MODE, abnormal_entry, &abnormal_status_ops,
+                                         NULL);
         }
         perf_entry = ka_fs_proc_mkdir("perf_collect", queue_top_entry);
         if (perf_entry != NULL) {
@@ -272,4 +273,3 @@ void queue_proc_fs_uninit(void)
     }
     queue_free_all_type_qid_status();
 }
-

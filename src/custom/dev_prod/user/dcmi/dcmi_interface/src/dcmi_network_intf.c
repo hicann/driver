@@ -7,7 +7,7 @@
  * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
  */
-
+ 
 #include <stdio.h>
 #include <stdint.h>
 #include <time.h>
@@ -29,38 +29,9 @@
 #include "dcmi_environment_judge.h"
 #include "dcmi_virtual_intf.h"
 #include "dcmi_npu_link_intf.h"
+#include "dcmi_inner_info_get.h"
+#include "dcmi_permission_judge.h"
 #include "dcmi_network_intf.h"
-
-STATIC int dcmi_check_port_id_valid(int port_id)
-{
-    return ((port_id >= NETWORK_PORT_COUNT_DEFAULT) || (port_id < 0)) ? DCMI_ERR_CODE_INVALID_PARAMETER : DCMI_OK;
-}
- 
-STATIC int dcmi_get_npu_rdma_bandwidth_info(int card_id, int device_id, int port_id, unsigned int prof_time,
-    struct dcmi_network_rdma_bandwidth_info *network_rdma_bandwidth_info)
-{
-    int ret;
-    int device_logic_id = 0;
-    struct bandwidth_t rdma_bandwidth_info = {0};
- 
-    rdma_bandwidth_info.time_interval = prof_time;
- 
-    ret = dcmi_get_device_logic_id(&device_logic_id, card_id, device_id);
-    if (ret != DCMI_OK) {
-        gplog(LOG_ERR, "call dcmi_get_device_logic_id failed. err is %d.", ret);
-        return ret;
-    }
- 
-    ret = dsmi_get_bandwidth(device_logic_id, port_id, &rdma_bandwidth_info);
-    if ((ret != DSMI_OK) && (ret != DSMI_ERR_NOT_SUPPORT)) {
-        gplog(LOG_ERR, "call dsmi_get_bandwidth failed. err is %d.", ret);
-    }
- 
-    network_rdma_bandwidth_info->tx_bandwidth = rdma_bandwidth_info.tx_bandwidth / NETWORK_RDMA_BYTE_TO_MBYTE;
-    network_rdma_bandwidth_info->rx_bandwidth = rdma_bandwidth_info.rx_bandwidth / NETWORK_RDMA_BYTE_TO_MBYTE;
- 
-    return dcmi_convert_error_code(ret);
-}
  
 int dcmi_get_rdma_bandwidth_info(int card_id, int device_id, int port_id, unsigned int prof_time,
     struct dcmi_network_rdma_bandwidth_info *network_rdma_bandwidth_info)
@@ -332,7 +303,7 @@ STATIC int dcmi_traceroute_environment_check(int card_id, int device_id, int *lo
     }
 }
 
-STATIC int dcmi_traceroute_reset(int logic_id)
+int dcmi_traceroute_reset(int logic_id)
 {
     int ret;
     int troute_reset = 0;
@@ -485,7 +456,7 @@ STATIC int dcmi_traceroute_waiting_finish(int logic_id)
     return DCMI_ERR_CODE_TIME_OUT;
 }
 
-STATIC int dcmi_set_traceroute_main(int logic_id, struct dcmi_traceroute_info param_in,
+int dcmi_set_traceroute_main(int logic_id, struct dcmi_traceroute_info param_in,
     struct dcmi_network_node_info *ret_info, unsigned int ret_info_size)
 {
     int ret, index;
@@ -745,7 +716,12 @@ int dcmi_get_ping_info(int card_id, int device_id, int port_id, struct dcmi_ping
         free(info);
         return DCMI_ERR_CODE_INVALID_PARAMETER;
     }
- 
+
+    if (dcmi_board_chip_type_is_ascend_950()) {
+        gplog(LOG_OP, "This product does not support this api.");
+        return DCMI_ERR_CODE_NOT_SUPPORT;
+    }
+
     ret = dcmi_get_ping_info_v2(card_id, device_id, port_id, dcmi_ping, info);
     if (ret != DCMI_OK) {
         gplog(LOG_ERR, "dcmi_get_ping_info_v2 failed. (ret=%d)", ret);
@@ -996,7 +972,7 @@ static int dcmi_get_hccsping_mesh_param(struct dcmi_hccsping_mesh_operate *hccsp
         gplog(LOG_ERR, "dcmi_get_hccsping_mesh_param_proc failed, ret is %d.", ret);
         return DCMI_ERR_CODE_INVALID_PARAMETER;
     }
- 
+
     // 赋值到operate中
     operate->ping_task_period = hccsping_mesh->task_interval;
     operate->ping_pkt_size = hccsping_mesh->pkt_size;
@@ -1006,7 +982,7 @@ static int dcmi_get_hccsping_mesh_param(struct dcmi_hccsping_mesh_operate *hccsp
     operate->phy_id = phy_id;
     return DCMI_OK;
 }
- 
+
 static int dcmi_start_hccs_ping_mesh_proc(int card_id, int device_id, int port_id,
                                           struct dcmi_hccsping_mesh_operate *hccsping_mesh)
 {
@@ -1237,6 +1213,11 @@ int dcmi_get_hccsping_mesh_info(int card_id, int device_id, int port_id, unsigne
     if (hccsping_mesh_reply == NULL) {
         gplog(LOG_ERR, "hccsping_mesh_reply is NULL.");
         return DCMI_ERR_CODE_INVALID_PARAMETER;
+    }
+
+    if (dcmi_board_chip_type_is_ascend_950()) {
+        gplog(LOG_OP, "This product does not support this api.");
+        return DCMI_ERR_CODE_NOT_SUPPORT;
     }
 
     ret = dcmi_get_hccsping_mesh_info_v2(card_id, device_id, port_id, task_id, &info);

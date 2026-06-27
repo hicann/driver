@@ -13,11 +13,10 @@
 #include "ascend_hal_define.h"
 #include "trs_user_pub_def.h"
 
-drvError_t trs_local_mem_event_sync(uint32_t dev_id, void *in, UINT64 size,
-    uint32_t subevent_id, struct event_reply *reply);
-drvError_t trs_svm_mem_event_sync(uint32_t dev_id, void *in, UINT64 size,
-    uint32_t subevent_id, struct event_reply *reply);
+drvError_t trs_local_mem_event_sync(
+    uint32_t dev_id, void *in, UINT64 size, uint32_t subevent_id, struct event_reply *reply);
+drvError_t trs_svm_mem_event_sync(
+    uint32_t dev_id, void *in, UINT64 size, uint32_t subevent_id, struct event_reply *reply);
 drvError_t trs_sq_cq_query_sync(uint32_t dev_id, struct halSqCqQueryInfo *info);
 drvError_t trs_sq_cq_config_sync(uint32_t dev_id, struct halSqCqConfigInfo *info);
 #endif
-

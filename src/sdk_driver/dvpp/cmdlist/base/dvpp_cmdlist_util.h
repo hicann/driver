@@ -14,7 +14,7 @@
 #define DVPP_CMDLIST_UTIL_H
 
 #ifdef __KERNEL__
-#include <linux/types.h>
+#include "ka_type.h"
 #else
 #include <stdint.h>
 #endif

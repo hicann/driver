@@ -103,7 +103,6 @@ STATIC int ubdrv_link_chan_cfg_init(struct ascend_ub_admin_chan *link_chan, stru
 
     KA_TASK_INIT_WORK(&link_chan->recv_work.work, ubdrv_jfce_recv_work);
     ka_base_atomic_set(&link_chan->user_cnt, 0);
-    ka_base_atomic_set(&link_chan->msg_num, 0);
     ka_task_mutex_lock(&link_chan->mutex_lock);
     link_chan->valid = UB_ADMIN_MSG_ENABLE;
     ka_task_mutex_unlock(&link_chan->mutex_lock);
@@ -120,7 +119,6 @@ STATIC void ubdrv_link_chan_cfg_uninit(struct ascend_ub_admin_chan *link_chan)
     link_chan->valid = UB_ADMIN_MSG_DISABLE;
     ka_task_mutex_unlock(&link_chan->mutex_lock);
     ubdrv_wait_chan_jfce_user_cnt(&link_chan->user_cnt, link_chan->dev_id, 0);
-    ka_base_atomic_set(&link_chan->msg_num, 0);
     ka_base_atomic_set(&link_chan->user_cnt, 0);
     ka_task_cancel_work_sync(&link_chan->recv_work.work);
     link_chan->recv_work.jfc = NULL;
@@ -193,15 +191,14 @@ unlock_rw:
 void ubdrv_create_link_chan(void)
 {
     struct ub_idev *idev = NULL;
-    u32 ue_idx = 0;
     u32 idev_id;
     int ret;
 
     for (idev_id = 0; idev_id < ASCEND_UDMA_DEV_MAX_NUM; idev_id++) {
-        idev = ubdrv_get_idev(idev_id, ue_idx);
+        idev = ubdrv_get_idev(idev_id);
         ret = ubdrv_create_single_link_chan(idev);
         if (ret != 0) {
-            ubdrv_err("Create link chan fail. (ret=%u;idev_id=%u;ue_idx=%u)\n", ret, idev_id, ue_idx);
+            ubdrv_err("Create link chan fail. (ret=%u;idev_id=%u;ue_idx=%u)\n", ret, idev_id, idev->ue_idx);
         }
     }
     return;
@@ -231,11 +228,10 @@ void ubdrv_free_single_link_chan(struct ub_idev *idev)
 void ubdrv_free_link_chan(void)
 {
     struct ub_idev *idev = NULL;
-    u32 ue_idx = 0;
     u32 idev_id;
 
     for (idev_id = 0; idev_id < ASCEND_UDMA_DEV_MAX_NUM; idev_id++) {
-        idev = ubdrv_get_idev(idev_id, ue_idx);
+        idev = ubdrv_get_idev(idev_id);
         if (idev->ubc_dev == NULL) {
             continue;
         }
@@ -331,7 +327,7 @@ int ubdrv_link_chan_send_msg(u32 dev_id, struct ub_idev *idev, struct ascend_ub_
         return -EAGAIN;
     }
     ret = ubdrv_basic_chan_send(dev_id, data, link_chan);
-    if ((ret != 0) && (ret != UB_MSG_CHECKE_VERSION_FAILED)) {
+    if ((ret != 0) && (ret != UB_MSG_CHECK_VERSION_FAILED)) {
         ret = -ETIMEDOUT;
     }
     ka_task_mutex_unlock(&link_chan->mutex_lock);
@@ -358,16 +354,36 @@ void ubdrv_link_uninit_work(void)
     (void)ka_task_cancel_delayed_work_sync(&g_link_work.link_work);
 }
 
+STATIC void ubdrv_link_chan_exchange_data_process_rollback(u32 dev_id)
+{
+    ubdrv_delete_admin_jetty(dev_id);
+    ubdrv_set_dev_id_info(dev_id, NULL, ASCEND_INVALID);
+    ubdrv_set_local_token(dev_id, 0, ASCEND_INVALID);
+    ubdrv_set_device_uninit_status(dev_id);
+    return;
+}
+
+STATIC void ubdrv_link_check_status_rollback(u32 dev_id)
+{
+    int dev_status = ubdrv_get_device_status(dev_id);
+    if (dev_status == UBDRV_DEVICE_BEGIN_INIT) {
+        ubdrv_link_chan_exchange_data_process_rollback(dev_id);
+        return;
+    }
+    ubdrv_warn("Rollback is not support, uda call is finish. (dev_id=%u;dev_status=%d)\n", dev_id, dev_status);
+}
+
 STATIC void ubdrv_link_chan_exchange_data_process(u32 dev_id, struct ub_idev *idev,
     struct ubdrv_link_exchange_data *recv_data, u32 *status)
 {
-    struct ascend_ub_link_res *link_res;
     char version[UBDRV_VERSION_LEN] = {0};
+    struct ascend_ub_link_res *link_res;
     int ret = 0;
 
     ubdrv_info("Enter link exchange data process. (dev_id=%u)\n", dev_id);
     *status = UB_MSG_PROCESS_FAILED;
     if (ubdrv_set_device_init_status(dev_id) != 0) {
+        ubdrv_link_check_status_rollback(dev_id);
         return;
     }
 
@@ -377,10 +393,8 @@ STATIC void ubdrv_link_chan_exchange_data_process(u32 dev_id, struct ub_idev *id
         goto set_dev_uninit;
     }
     if (ka_base_strcmp(recv_data->version, version) != 0) {
-        ubdrv_err("Drv version is not match. (dev_id=%u;local_version=\"%s\";remote_version=\"%s\")\n",
+        ubdrv_warn("Drv version is not match. (dev_id=%u;local_version=\"%s\";remote_version=\"%s\")\n",
             dev_id, version, recv_data->version);
-        *status = UB_MSG_CHECKE_VERSION_FAILED;
-        goto set_dev_uninit;
     }
     ubdrv_set_local_token(dev_id, recv_data->host_token, ASCEND_VALID);
     ubdrv_set_dev_id_info(dev_id, &recv_data->id_info, ASCEND_VALID);
@@ -411,15 +425,6 @@ set_dev_uninit:
     return;
 }
 
-STATIC void ubdrv_link_chan_exchange_data_process_rollback(u32 dev_id)
-{
-    ubdrv_delete_admin_jetty(dev_id);
-    ubdrv_set_dev_id_info(dev_id, NULL, ASCEND_INVALID);
-    ubdrv_set_local_token(dev_id, 0, ASCEND_INVALID);
-    ubdrv_set_device_uninit_status(dev_id);
-    return;
-}
-
 STATIC void ubdrv_link_chan_notify_online_process(u32 dev_id, struct ub_idev *idev,
     struct ubdrv_link_exchange_data *recv_data, u32 *status)
 {
@@ -438,7 +443,7 @@ STATIC void ubdrv_link_chan_notify_online_process(u32 dev_id, struct ub_idev *id
 STATIC void ubdrv_link_chan_recv_process(u32 dev_id, struct ub_idev *idev,
     struct ubdrv_link_exchange_data *recv_data, u32 *status)
 {
-    if (*status == UB_MSG_CHECKE_VERSION_FAILED) {
+    if (*status == UB_MSG_CHECK_VERSION_FAILED) {
         return;
     }
     if (recv_data->opcode == UBDRV_LINK_EXCHANGE_DATA) {
@@ -446,8 +451,8 @@ STATIC void ubdrv_link_chan_recv_process(u32 dev_id, struct ub_idev *idev,
     } else if (recv_data->opcode ==  UBDRV_LINK_NOTIFIY_ONLINE) {
         ubdrv_link_chan_notify_online_process(dev_id, idev, recv_data, status);
     } else {
-        ubdrv_err("Invailed opcode. (dev_id=%u;opcode=%u)\n", dev_id, recv_data->opcode);
-        *status = UB_MSG_NULL_PROCSESS;
+        ubdrv_err("Invalid opcode. (dev_id=%u;opcode=%u)\n", dev_id, recv_data->opcode);
+        *status = UB_MSG_NULL_PROCESS;
     }
 }
 
@@ -458,6 +463,7 @@ STATIC void ubdrv_link_bottom_half_process(u32 dev_id, struct ub_idev *idev,
     int ret = 0;
 
     if ((*status == UB_MSG_PROCESS_SUCCESS) && (recv_data->opcode == UBDRV_LINK_NOTIFIY_ONLINE)) {
+        ubdrv_info("Enter bottom half, not support retry. (dev_id=%u)\n", dev_id);
         ret = ubdrv_dev_online_process(dev_id, remote_devid, idev, &recv_data->recv_admin_info);
         if (ret != 0) {
             ubdrv_err("Host dev online fail in bottom half. (dev_id=%u;idev_id=%u;ret=%d)\n", dev_id, idev->idev_id, ret);
@@ -518,7 +524,7 @@ STATIC void ubdrv_link_chan_recv_process_rollback(u32 dev_id, enum ubdrv_link_re
     if ((opcode == UBDRV_LINK_EXCHANGE_DATA) || (opcode == UBDRV_LINK_NOTIFIY_ONLINE)) {
         ubdrv_link_chan_exchange_data_process_rollback(dev_id);
     } else {
-        ubdrv_err("Invailed opcode. (dev_id=%u;opcode=%u)\n", dev_id, opcode);
+        ubdrv_err("Invalid opcode. (dev_id=%u;opcode=%u)\n", dev_id, opcode);
     }
 }
 
@@ -570,7 +576,7 @@ void ubdrv_link_chan_recv_prepare_process(struct ascend_ub_jetty_ctrl *cfg,
     desc->real_data_len = msg_len;
     if (desc->in_data_len != msg_len) {
         ubdrv_err("Recv data len invalid. (len=%u;expect_len=%u)\n", desc->in_data_len, msg_len);
-        desc->status = UB_MSG_CHECKE_VERSION_FAILED;
+        desc->status = UB_MSG_CHECK_VERSION_FAILED;
     }
 
     recv_data = (struct ubdrv_link_exchange_data *)desc->user_data;
@@ -596,6 +602,7 @@ void ubdrv_link_chan_recv_prepare_process(struct ascend_ub_jetty_ctrl *cfg,
     if (ret != 0) {
         ubdrv_err("Send link reply msg fail. (dev_id=%u;opcode=%u;ret=%d)\n", dev_id, opcode, ret);
         ubdrv_link_chan_recv_process_rollback(dev_id, opcode);
+        desc->status = UB_MSG_REPLY_FAILED;
     }
     ubdrv_unimport_client(dev_id);
     ubdrv_link_bottom_half_process(dev_id, idev, recv_data, &desc->status);

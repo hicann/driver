@@ -14,8 +14,6 @@ target_sources(dms_obj PRIVATE
 
 target_include_directories(dms_obj PRIVATE
     ${TOP_DIR}/inc/driver
-    ${DRIVER_USER_DIR}/slog/inc
-    ${DRIVER_USER_DIR}/slog/inc/toolchain
     ${DRIVER_USER_DIR}/dms/chip/soc/
     ${DRIVER_USER_DIR}/inc/
     ${DRIVER_USER_DIR}/dms/common/

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2025. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -37,9 +37,9 @@ int pma_ub_seg_del(struct pma_ub_seg_mng *seg_mng, u64 start, u64 size);
 
 int pma_ub_seg_query(struct pma_ub_seg_mng *seg_mng, u64 va, u64 *start, u64 *size, u32 *token_id);
 
-int pma_ub_seg_acquire(struct pma_ub_seg_mng *seg_mng, u64 va, u64 size,
-    int (*invalidate)(u64 invalidate_tag), u64 invalidate_tag, u32 *token_id);
+int pma_ub_seg_acquire(
+    struct pma_ub_seg_mng *seg_mng, u64 va, u64 size, int (*invalidate)(u64 invalidate_tag), u64 invalidate_tag,
+    u32 *token_id);
 int pma_ub_seg_release(struct pma_ub_seg_mng *seg_mng, u64 va, u64 size);
 
 #endif
-

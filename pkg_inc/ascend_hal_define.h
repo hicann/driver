@@ -149,8 +149,8 @@ typedef enum drv_subevent_id {
     DRV_SUBEVENT_QUEUE_INIT_MSG,
     DRV_SUBEVENT_HDC_INIT_MSG,
     DRV_SUBEVENT_CREATE_MSG,
-    DRV_SUBEVENT_GRANT_MSG, /* aicpu sd will process this event */
-    DRV_SUBEVENT_ATTACH_MSG, /* aicpu sd will process this event */
+    DRV_SUBEVENT_GRANT_MSG, /* aicpu sd will process this event, considering the execution on aicpu, the total size of the reply buff len is required to be EVENT_PROC_RSP_LEN */
+    DRV_SUBEVENT_ATTACH_MSG, /* aicpu sd will process this event,considering the execution on aicpu, the total size of the reply buff len is required to be EVENT_PROC_RSP_LEN */
     DRV_SUBEVENT_DESTROY_MSG,
     DRV_SUBEVENT_SUBE2NE_MSG,
     DRV_SUBEVENT_UNSUBE2NE_MSG,
@@ -190,6 +190,8 @@ typedef enum drv_subevent_id {
     DRV_SUBEVENT_PROF_STOP_MSG,
     DRV_SUBEVENT_PROF_FLUSH_MSG,
     DRV_SUBEVENT_PROF_GET_CHAN_LIST_MSG,
+    DRV_SUBEVENT_PROF_HOST_SAMPLE_START_MSG = 110,
+    DRV_SUBEVENT_PROF_HOST_SAMPLE_STOP_MSG,
     DRV_SUBEVENT_SVM_DEV_OPEN_MSG = 128,
     DRV_SUBEVENT_SVM_DEV_CLOSE_MSG,
     DRV_SUBEVENT_SVM_ALLOC_JETTY_MSG,
@@ -306,6 +308,11 @@ typedef struct {
     unsigned long long prodqOwAddr;
     unsigned long long prodqStatAddr;
 }DqsQueueInfo;
+
+typedef enum queue_work_mode {
+    QUEUE_MODE_PUSH = 1,
+    QUEUE_MODE_PULL,
+}QUEUE_WORK_MODE;
 
 /*=========================== Buffer Manage ===========================*/
 
@@ -610,6 +617,62 @@ struct MemPoolUsedStatus {
     struct MemPoolUsedByPidStatus usedByPid[BUFF_MAX_USED_PID_RECORD];
 };
 
+enum mbuf_op_type {
+    MBUF_OP_RSV_TYPE,
+    C_CORE_ALLOC,
+    C_CORE_ENQUE_PRODQ,
+    C_CORE_DEQUE_CONSQ,
+    C_CORE_FREE,
+    DSFW_DEQUE_PRODQ,
+    DSFW_COPY_REF,
+    DSFW_QS_FINISH,
+    DSFW_ENQUE_CONSQ,
+    DSFW_NOTIFY_CONS,
+    DSFW_NOTIFY_INTERCHIP,
+    DSFW_FREE,
+    SOFT_ALLOC,
+    SOFT_ALLOC_ENQUE_PRODQ,
+    SOFT_ALLOC_FREE,
+    SOFT_COPY_REF,
+    SOFT_COPY_REF_ENQUE_PRODQ,
+    SOFT_OW_FREE,
+    SOFT_DEQUE_CONSQ,
+    SOFT_DEQUE_ENQUE_PRODQ,
+    SOFT_FREE,
+    MBUF_OP_TYPE_BUTT
+};
+
+struct mbuf_owner_info {
+    unsigned long long op_type : 8; //see also enum mbuf_op_type
+    unsigned long long owner_id : 40; //proc_uid or streamid or isp task id
+    unsigned long long op_qid : 16;
+};
+
+struct mbuf_owner_info_ext {
+    unsigned char op_type; //see also enum mbuf_op_type
+    unsigned char owner_id[5]; //proc_uid or streamid or isp task id
+    unsigned short op_qid;
+};
+
+typedef union dqs_mbuf_owner_info {
+    struct mbuf_owner_info bits;
+    struct mbuf_owner_info_ext ext_bits;
+    unsigned long long value;
+} dqs_mbuf_owner_info;
+
+struct dqs_mbuf_prod_trace {
+    dqs_mbuf_owner_info prod_owner_info;
+    unsigned long long alloc_req_time;
+    unsigned long long prodq_enque_time;
+    unsigned long long prod_free_time;
+};
+
+struct dqs_mbuf_cons_trace {
+    dqs_mbuf_owner_info cons_owner_info;
+    unsigned long long cons_deque_copy_ref_time;
+    unsigned long long cons_free_time;
+};
+
 typedef struct {
     unsigned int poolId;
     unsigned int poolDepth;
@@ -619,13 +682,20 @@ typedef struct {
     unsigned int dataPoolBlkSize;
     unsigned int dataPoolBlkObjSize;
     unsigned int dataPoolBlkOffset;
+    unsigned int dataPoolGroupId;
     unsigned long long  headPoolBaseAddr;
     unsigned int headPoolBlkSize;
     unsigned int headPoolBlkObjSize;
     unsigned int headPoolBlkOffset;
+    unsigned int headPoolGroupId;
     unsigned long long allocOpAddr;
     unsigned long long freeOpAddr;
     unsigned long long copyRefOpAddr;
+    unsigned long long mngPoolBaseAddr;
+    unsigned int mngPoolBlkSize;
+    unsigned int mngPoolBlkObjSize;
+    unsigned int mngPoolBlkOffset;
+    unsigned int mngPoolGroupId;
 } DqsPoolInfo;
 
 /*=========================== Memory Manage ===========================*/
@@ -655,6 +725,9 @@ typedef struct {
 #define MEM_HOST_AGENT_VAL     0X4
 #define MEM_RESERVE_VAL        0X5
 #define MEM_HOST_UVA_VAL       0X6
+#ifndef UVM_OPEN
+#define MEM_UVM_VAL            0x7
+#endif
 #define MEM_MAX_VAL            0X8
 #define MEM_SVM                (MEM_SVM_VAL << MEM_VIRT_BIT)
 #define MEM_DEV                (MEM_DEV_VAL << MEM_VIRT_BIT)
@@ -662,6 +735,9 @@ typedef struct {
 #define MEM_HOST_UVA           (MEM_HOST_UVA_VAL << MEM_VIRT_BIT)
 #define MEM_DVPP               (MEM_DVPP_VAL << MEM_VIRT_BIT)
 #define MEM_HOST_AGENT         (MEM_HOST_AGENT_VAL << MEM_VIRT_BIT)
+#ifndef UVM_OPEN
+#define MEM_UVM                (MEM_UVM_VAL << MEM_VIRT_BIT)
+#endif
 #define MEM_RESERVE            (MEM_RESERVE_VAL << MEM_VIRT_BIT)
 /* phy mem type */
 #define MEM_PHY_BIT            14
@@ -766,6 +842,22 @@ enum ADVISE_MEM_TYPE {
     ADVISE_TYPE_MAX
 };
 
+#ifndef UVM_OPEN
+#define MEM_RANGE_INVALID_DEVICE_ID     -2
+#define MEM_RANGE_CPU_DEVICE_ID         -1
+enum DEVMM_MEM_RANGE_ATTRIBUTE {
+    MEM_RANGE_ATTR_READ_MOSTLY = 1,
+    MEM_RANGE_ATTR_PREFERRED_LOC = 2,
+    MEM_RANGE_ATTR_ACCESS_BY = 3,
+    MEM_RANGE_ATTR_PREFERRED_LOC_TYPE = 4,
+    MEM_RANGE_ATTR_PREFERRED_LOC_ID = 5,
+    MEM_RANGE_ATTR_LAST_PREFETCH_LOC = 6,
+    MEM_RANGE_ATTR_LAST_PREFETCH_LOC_TYPE = 7,
+    MEM_RANGE_ATTR_LAST_PREFETCH_LOC_ID = 8,
+    MEM_RANGE_ATTR_MAX
+};
+#endif
+
 enum MEMCPY_SUMBIT_TYPE {
     MEMCPY_SUMBIT_SYNC = 0,
     MEMCPY_SUMBIT_ASYNC = 1,
@@ -809,6 +901,7 @@ enum drvRegisterTpye {
     HOST_SVM_MAP_DEV,           /* HOST_SVM_MEM map to device */
     DEV_SVM_MAP_HOST,           /* DEV_SVM_MEM map to host */
     HOST_MEM_MAP_DEV_PCIE_TH,   /* HOST_MEM map to device, accessed by pcie_through */
+    HOST_MEM_MAP_DEV_V2 = HOST_MEM_MAP_DEV_PCIE_TH,  /* Host mem map to device of new version. */
     DEV_MEM_MAP_HOST,           /* DEV_MEM map to host */
     HOST_MEM_MAP_DMA,           /* Host va preprocess into dma addr to improve memcpy performance */
     HOST_IO_MAP_DEV,            /* Host va io memory map to device */
@@ -828,7 +921,7 @@ enum drvAccModuleType {
     DRV_ACC_MODULE_TYPE_CCU,
     DRV_ACC_MODULE_TYPE_MAX
 };
- 
+
 enum drvMemMapCapability{
     HOST_MEM_MAP_NOT_SUPPORTED = 0,
     HOST_MEM_MAP_SUPPORTED
@@ -884,6 +977,7 @@ enum addrMapType {
     ADDR_MAP_TYPE_REG_C2C_CTRL = 1,     /* Used to map stars ffts c2c ctrl register */
     ADDR_MAP_TYPE_REG_AIC_CTRL = 2,     /* Used to map aicore synchronous register */
     ADDR_MAP_TYPE_REG_AIC_PMU_CTRL = 3, /* Used to map aicore pmu synchronous register */
+    ADDR_MAP_TYPE_REG_CNT_NOTIFY_CTRL = 4, /* Used to map stars cnt notify register */
     ADDR_MAP_TYPE_MAX
 };
 
@@ -937,9 +1031,12 @@ struct ProcessCpMunmap {
     unsigned long long size; // reserved, must be 0 currently
 };
 
-#define MEM_MAP_ATTR_BIT    0
-#define MEM_MAP_INBUS 		(0x0 << MEM_MAP_ATTR_BIT)
-#define MEM_MAP_EXBUS 		(0x1 << MEM_MAP_ATTR_BIT)
+#define MEM_MAP_ATTR_BIT            0
+#define MEM_MAP_DEFAULT_PATH        (0x0 << MEM_MAP_ATTR_BIT)
+#define MEM_MAP_INBUS 		        MEM_MAP_DEFAULT_PATH
+#define MEM_MAP_EXBUS 		        (0x1 << MEM_MAP_ATTR_BIT)
+#define MEM_MAP_UB_ONE_PORT_PATH    (0x2 << MEM_MAP_ATTR_BIT)
+#define MEM_MAP_UB_MULTI_PORT_PATH  (0x3 << MEM_MAP_ATTR_BIT)
 
 enum ShmemAttrType {
     SHMEM_ATTR_TYPE_MEM_MAP = 0,
@@ -962,10 +1059,44 @@ enum ShareHandleAttrType {
 #define SHR_HANDLE_WLIST_ENABLE     0x0
 #define SHR_HANDLE_NO_WLIST_ENABLE  0x1
 
+enum HandleAttrType {
+    HANDLE_ATTR_MEM_MAP_ROUTE = 0,
+    HANDLE_ATTR_TYPE_MAX
+};
+
 struct drv_mem_location {
     uint32_t id; /* side is device: devid */
     enum drv_mem_side side;
 };
+
+#ifndef UVM_OPEN
+typedef enum {
+    DRV_UVM_LOCATION_TYPE_INVALID = 0,
+    DRV_UVM_LOCATION_TYPE_DEVICE,
+    DRV_UVM_LOCATION_TYPE_HOST,
+    DRV_UVM_LOCATION_TYPE_HOST_NUMA,
+} drv_uvm_location_type;
+
+struct drv_uvm_location {
+    drv_uvm_location_type type;
+    int id;
+};
+
+typedef enum {
+    READ_MOSTLY,
+    UNSET_READ_MOSTLY,
+    PREFER_LOCATION,
+    UNSET_PREFER_LOCATION,
+    ACCESS_BY_LOCATION,
+    UNSET_ACCESS_BY_LOCATION,
+} uvmMemAdviseType;
+#endif
+
+typedef enum {
+    SVM_NORMAL_MEM = 0,
+    SVM_POOL_MEM,
+    SVM_UVM_MEM
+} memSource;
 
 struct drv_mem_access_desc {
     drv_mem_access_type type;
@@ -1008,12 +1139,14 @@ enum drv_mem_trans_type {
 /*============================= APM START ===============================*/
 
 #define RES_ADDR_MAP_INFO_IN_RSV_LEN 8
+
+#define RES_MAP_USE_UNIFIED_VA  (1U << 7)   /* use svm va to map res addr */
 struct res_map_info_in {
     unsigned int id;                 /* the meaning of 'id' depends on res_type, default is 0 */
     processType_t target_proc_type;
     enum res_addr_type res_type;
     unsigned int res_id;             /* corresponding resource id */
-    unsigned int flag;               /* default, set zero */
+    unsigned int flag;
     unsigned int priv_len;           /* user selfdef, register map module use */
     void *priv;                      /* user selfdef, register map module use */
     unsigned int rsv[RES_ADDR_MAP_INFO_IN_RSV_LEN];  /* default is 0 */
@@ -1061,6 +1194,7 @@ struct drvMemSharingPara {
 #define TSDRV_FLAG_TASK_SINK_SQ (0x1U << 14) /* only support async cpy task sink */
 #define TSDRV_FLAG_RTS_RSV_SQCQ_ID (0x1 << 15)
 #define TSDRV_FLAG_NO_SQ_MEM (0x1 << 16)
+#define TSDRV_FLAG_PRE_ASYNC_SQ (0x1U << 17) /* specified whether to pre init async chan for sq */
 
 #define TSDRV_FLAG_SPECIFIED_SQ_MEM (0x1U << 31) /* used for internal */
 
@@ -1183,11 +1317,14 @@ struct halSqTaskArgsInfo {
     uint32_t rsv[SQCQ_RESV_LENGTH - 4];
 };
 
-enum drv_async_dma_type {
+typedef enum drv_async_dma_type {
     DRV_ASYNC_DMA_TYPE_NORMAL = 0U,
     DRV_ASYNC_DMA_TYPE_SQE_UPDATE,
+    DRV_ASYNC_DMA_TYPE_2D,
+    DRV_ASYNC_DMA_TYPE_BATCH,
+    DRV_ASYNC_DMA_TYPE_NOP,
     DRV_ASYNC_DMA_TYPE_MAX
-};
+} drvAsyncDmaType_t;
 
 struct drv_sqe_update_info {
     uint32_t sq_id;
@@ -1216,10 +1353,13 @@ struct halAsyncDmaOutputPara {
             uint32_t dieId;
             uint32_t functionId;
             uint32_t jettyId;
-            uint32_t size;  /* wqe size */
+            uint32_t size;          /* wqe size */
             uint8_t *wqe;
-            uint32_t pi;           /* jetty pi, pi is absolute in single task scene, relative in task sinking scene*/
-            uint32_t fixedSize;    /* already posted 2d size or batch cnt, current always posted all */
+            uint32_t pi;            /* jetty pi, pi is absolute in single task scene, relative in task sinking scene*/
+            union {                 /* already posted 2d size or batch cnt, only support 2d/batch yet */
+                unsigned long long fixedSize;
+                unsigned long long fixedCnt;
+            };
         };
         struct DMA_ADDR dma_addr;
     };
@@ -1252,7 +1392,7 @@ struct halAsyncDmaInput2DPara {
     unsigned long long spitch;      /* pitch of source memory */
     unsigned long long width;       /* width of matrix transfer */
     unsigned long long height;      /* height of matrix transfer */
-    unsigned long long fixedSize;   /* Input: already converted size, current not support none zero */
+    unsigned long long fixedSize;   /* Input: already converted size */
     unsigned int rsv[TRS_ASYNC_CPY_2D_IN_RSV_LEN];
 };
 
@@ -1275,7 +1415,6 @@ struct halAsyncDmaInputBatchPara {
     unsigned long long *src;        /* source memory address array */
     unsigned long long *len;        /* cpy size array */
     unsigned long long count;       /* cpy array elements count */
-    unsigned long long fixedSize;   /* Input: already converted size, current not support none zero */
     unsigned int rsv[TRS_ASYNC_CPY_BATCH_IN_RSV_LEN];
 };
 
@@ -1286,6 +1425,146 @@ struct halAsyncDmaDestroyBatchPara {
     unsigned int sqId;
     unsigned int ci;                /* current jetty ci */
     unsigned int rsv[TRS_ASYNC_CPY_BATCH_DESTROY_RSV_LEN];
+};
+
+typedef enum tagDrvAsyncDmaJettyType {
+    DRV_ASYNC_DMA_JETTY_TYPE_CACHE_LOCK_DWQE = 0x0,
+    DRV_ASYNC_DMA_JETTY_TYPE_NORMAL,
+    DRV_ASYNC_DMA_JETTY_TYPE_MAX
+} drvAsyncDmaJettyType_t;
+
+typedef enum tagDrvAsyncDmaJettyPiMode {
+    DRV_ASYNC_DMA_JETTY_PI_MODE_ABSOLUTE = 0x0,
+    DRV_ASYNC_DMA_JETTY_PI_MODE_RELATIVELY,
+    DRV_ASYNC_DMA_JETTY_PI_MODE_MAX
+} drvAsyncDmaJettyPiMode_t;
+
+typedef enum tagDrvAsyncDmaDir {
+    TRS_ASYNC_HOST_TO_DEVICE = 0,
+    TRS_ASYNC_DEVICE_TO_HOST = 1,
+    TRS_ASYNC_DEVICE_TO_DEVICE = 6,
+    TRS_ASYNC_MAX_DIR = 7
+} drvAsyncDmaDir_t;
+
+typedef enum tagDrvAsyncJettyDmaDir {
+    TRS_ASYNC_JETTY_HOST_DEVICE = 0, /* h2d or d2h jetty use same urma eid or urma fe */
+    TRS_ASYNC_JETTY_DEVICE_TO_DEVICE = 1,
+    TRS_ASYNC_JETTY_MAX_DIR = 2
+} drvAsyncDmaJettyDir_t;
+
+#define TRS_ASYNC_DMA_JETTY_HANDLE_RSV_LEN 8
+#define TRS_ASYNC_DMA_JETTY_HANDLE_LEN 48
+struct halAsyncJettyHandle {
+    char handle[TRS_ASYNC_DMA_JETTY_HANDLE_LEN];
+    unsigned int rsv[TRS_ASYNC_DMA_JETTY_HANDLE_RSV_LEN];
+};
+
+#define TRS_ASYNC_DMA_JETTY_INPUT_RSV_LEN 16
+struct halAsyncDmaJettyCreateIn {
+    drvAsyncDmaJettyType_t jettyType;
+    drvAsyncDmaJettyPiMode_t piMode;
+    drvAsyncDmaJettyDir_t dir;
+    unsigned int depth;             /* wqe bb index */
+    unsigned int rsv[TRS_ASYNC_DMA_JETTY_INPUT_RSV_LEN];
+};
+
+#define TRS_ASYNC_DMA_JETTY_OUTPUT_RSV_LEN 16
+struct halAsyncDmaJettyCreateOut {
+    struct halAsyncJettyHandle *jettyHandle;
+    unsigned int rsv[TRS_ASYNC_DMA_JETTY_OUTPUT_RSV_LEN];
+};
+
+#define TRS_ASYNC_DMA_JETTY_DESTROY_RSV_LEN 16
+struct halAsyncJettyDestroyPara {
+    struct halAsyncJettyHandle *jettyHandle;
+    unsigned int rsv[TRS_ASYNC_DMA_JETTY_DESTROY_RSV_LEN];
+};
+
+#define TRS_ASYNC_DMA_JETTY_QUERY_IN_RSV_LEN 16
+struct halAsyncDmaJettyQueryIn {
+    struct halAsyncJettyHandle *jettyHandle;
+    unsigned int rsv[TRS_ASYNC_DMA_JETTY_QUERY_IN_RSV_LEN];
+};
+
+#define TRS_ASYNC_DMA_JETTY_QUERY_OUT_RSV_LEN 16
+struct halAsyncDmaJettyQueryOut {
+    unsigned int dieId;
+    unsigned int funcId;
+    unsigned int jettyId;
+    unsigned int rsv[TRS_ASYNC_DMA_JETTY_QUERY_OUT_RSV_LEN];
+};
+
+struct drvNormalWqeInputPara { /* normal */
+    drvAsyncDmaType_t asyncDmaType;
+    unsigned long long len;
+    uint8_t *src;
+    union {
+        uint8_t *dst;
+        struct drv_sqe_update_info info;
+    };
+};
+
+struct drvBatchWqeInputPara { /* batch */
+    unsigned long long *dst;
+    unsigned long long *src;
+    unsigned long long *len;
+    unsigned long long count;
+};
+
+struct drv2dWqeInputPara { /* 2d */
+    unsigned long long *dst;        /* destination memory address */
+    unsigned long long dpitch;      /* pitch of destination memory */
+    unsigned long long *src;        /* source memory address */
+    unsigned long long spitch;      /* pitch of source memory */
+    unsigned long long width;       /* width of matrix transfer */
+    unsigned long long height;      /* height of matrix transfer */
+    unsigned long long fixedSize;   /* Input: already converted size */
+};
+
+struct drvNopWqeInputPara {
+    unsigned long long nopCnt;
+};
+
+#define TRS_ASYNC_DMA_WQE_CONVERT_IN_RSV_LEN 16
+struct halAsyncDmaWqeInputPara {
+    drvAsyncDmaType_t wqeType;
+    unsigned char *wqeBuffer;
+    unsigned long long wqeBufferLen;
+    union {
+        struct drvNormalWqeInputPara normal;
+        struct drvBatchWqeInputPara batch;
+        struct drv2dWqeInputPara matrix2d;
+        struct drvNopWqeInputPara nop;
+    };
+
+    unsigned int rsv[TRS_ASYNC_DMA_WQE_CONVERT_IN_RSV_LEN];
+};
+
+#define TRS_ASYNC_DMA_WQE_CONVERT_OUT_RSV_LEN 16
+struct halAsyncDmaWqeOutputPara {
+    unsigned int wqeCnt;
+    /* 
+     * for fixedCnt in scene:
+     * drvAsyncDmaType_t batch/nop: already complete-converted array element;
+     * drvAsyncDmaType_t 2d/normal: 0 for partially-converted, 1 for complete-converted
+     */
+    unsigned long long fixedCnt;
+    /*
+     * for fixedSize in scene:
+     * drvAsyncDmaType_t batch/nop: the actual-converted size for the array[fixedCnt] element;
+     * drvAsyncDmaType_t 2d/normal: fixedSize return the actual-converted size if fixedCnt is 0, otherwhise return 0
+     */
+    unsigned long long fixedSize;
+    unsigned int rsv[TRS_ASYNC_DMA_WQE_CONVERT_OUT_RSV_LEN];
+};
+
+#define TRS_ASYNC_DMA_JETTY_WQE_FILL_RSV_LEN 16
+struct halAsyncDmaJettyFillInfo {
+    struct halAsyncJettyHandle *jettyHandle;
+    unsigned long long offset;
+    unsigned char *srcWqe;
+    unsigned long long size;
+    unsigned int rsv[TRS_ASYNC_DMA_JETTY_WQE_FILL_RSV_LEN];
 };
 
 struct tsdrv_ctrl_msg {

@@ -39,6 +39,8 @@
 #include "dms_device_info.h"
 #include "devdrv_pcie.h"
 #include "ascend_dev_num.h"
+#include "drv_devmng_adapt.h"
+#include "dms/dms_soc_interface.h"
 
 #define DRV_P2P_TYPE_ALL    0
 #define DRV_P2P_TYPE_MEM    1
@@ -62,6 +64,7 @@
 #define PCIE_HOTREST 1
 #define KDUMP_TIMEOUT_TIMES 600
 #define FLAG_ALL_DONE 5
+#define PCIE_NUM (3)
 
 #ifdef STATIC_SKIP
 #define STATIC
@@ -867,3 +870,106 @@ int drvGetDeviceDevIDByHostDevID(uint32_t host_dev_id, uint32_t *local_dev_id)
 
     return DRV_ERROR_NONE;
 }
+
+drvError_t drvDeviceGetPcieInfo(uint32_t devId, int32_t *bus, int32_t *dev, int32_t *func)
+{
+    struct devdrv_pci_info devdrv_pci_info;
+    mmIoctlBuf dev_info_buf = {0};
+    mmIoctlBuf para_buf = {0};
+    uint32_t para;
+    int ret;
+
+    if (devId >= ASCEND_DEV_MAX_NUM || bus == NULL || dev == NULL || func == NULL) {
+        DEVDRV_DRV_ERR("Parameter is invalid. (devid=%u; bus_is_null=%d; dev_is_null=%d; func_is_null=%d)\n",
+            devId, (bus == NULL), (dev == NULL), (func == NULL));
+        return DRV_ERROR_INVALID_VALUE;
+    }
+
+    drv_ioctl_param_init(&para_buf, (void *)&para, sizeof(uint32_t));
+    ret = drv_common_ioctl(&para_buf, DEVDRV_MANAGER_GET_PLATINFO);
+    if (ret != 0) {
+        DEVDRV_DRV_ERR("ioctl failed devId = %u, ret = %d.\n", devId, ret);
+        return ret;
+    }
+
+    if (para == DEVDRV_MANAGER_DEVICE_ENV) {
+        DEVDRV_DRV_ERR("offline env, no pcie info. devid = %u\n", devId);
+        return DRV_ERROR_INVALID_VALUE;
+    }
+
+    devdrv_pci_info.dev_id = devId;
+    drv_ioctl_param_init(&dev_info_buf, (void *)&devdrv_pci_info, sizeof(struct devdrv_pci_info));
+    ret = drv_common_ioctl(&dev_info_buf, DEVDRV_MANAGER_GET_PCIINFO);
+    if (ret != 0) {
+        DEVDRV_DRV_EX_NOTSUPPORT_ERR(ret, "ioctl failed devId = %u, ret = %d.\n", devId, ret);
+        return ret != DRV_ERROR_BUSY ? ret : DRV_ERROR_RESOURCE_OCCUPIED;
+    }
+
+    *bus = devdrv_pci_info.bus_number;
+    *dev = devdrv_pci_info.dev_number;
+    *func = devdrv_pci_info.function_number;
+
+    return DRV_ERROR_NONE;
+}
+
+drvError_t drvDeviceGetPcieIdInfo(uint32_t devId, struct tag_pcie_idinfo *pcie_idinfo)
+{
+#ifdef CFG_FEATURE_GET_PCIE_ID_INFO
+    dms_pcie_id_info_t id_info = {0};
+    int ret;
+
+    if ((devId >= ASCEND_DEV_MAX_NUM) || (pcie_idinfo == NULL)) {
+        DEVDRV_DRV_ERR("invalid devid(%u) or pcie_idinfo is NULL.\n", devId);
+        return DRV_ERROR_INVALID_VALUE;
+    }
+    ret = DmsGetPcieIdInfo(devId, &id_info);
+    if (ret != 0) {
+        DMS_EX_NOTSUPPORT_ERR(ret, "dms get pcie id info failed. (devId=%u; ret=%d)", devId, ret);
+        return ret;
+    }
+
+    pcie_idinfo->venderid = id_info.venderid;
+    pcie_idinfo->subvenderid = id_info.subvenderid;
+    pcie_idinfo->subdeviceid = id_info.subdeviceid;
+    pcie_idinfo->deviceid = id_info.deviceid;
+    pcie_idinfo->bdf_busid = id_info.bus;
+    pcie_idinfo->bdf_deviceid = id_info.device;
+    pcie_idinfo->bdf_funcid = id_info.fn;
+
+    return DRV_ERROR_NONE;
+#else
+    (void)devId;
+    (void)pcie_idinfo;
+    return DRV_ERROR_NOT_SUPPORT;
+#endif
+}
+
+drvError_t drv_get_pcieinfo(uint32_t devId, int32_t info_type, int64_t *value)
+{
+    int ret;
+    int32_t bus, dev, func;
+    int64_t val;
+
+    if (info_type == INFO_TYPE_ID) {
+        ret = drvDeviceGetPcieInfo(devId, &bus, &dev, &func);
+        if (ret != 0) {
+            DEVDRV_DRV_ERR("drv_device_get_pcie_info failed ret = %d.\n", ret);
+            return ret;
+        }
+        /* obtain the lower eight bits of bus */
+        *value = (((((uint32_t)dev) & 0x1f) << PCIE_NUM) | ((uint32_t)(func) & 0x07) | (((uint32_t)(bus) & 0xff) << 8u));
+    } else if (info_type == INFO_TYPE_P2P_CAPABILITY) {
+        ret = DmsGetP2PCapbility(devId, (unsigned long long *)&val);
+        if (ret != 0) {
+            DEVDRV_DRV_ERR("drvDeviceGetP2PCapbility failed ret = %d.\n", ret);
+            return ret;
+        }
+        *value = val;
+    } else {
+        DEVDRV_DRV_INFO("This version does not support this type. (Type=%d)\n", info_type);
+        return DRV_ERROR_INVALID_VALUE;
+    }
+
+    return DRV_ERROR_NONE;
+}
+

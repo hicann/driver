@@ -32,6 +32,7 @@ if(${PRODUCT} STREQUAL ascend910B)
         drv_log_obj
         drv_log_base_obj
         queryfeature_obj
+        ubmem_dev_obj
         dp_proc_mng_obj
         -ldl
         c_sec
@@ -53,6 +54,7 @@ elseif(${PRODUCT} STREQUAL ascend950)
         uda_base_obj
         trs_drv_obj
         rbtree_obj
+        drv_hash_obj
         devmm_obj
         drvaibuff_obj
         drvaibuff_base_obj
@@ -62,13 +64,18 @@ elseif(${PRODUCT} STREQUAL ascend950)
         drv_log_obj
         drv_log_base_obj
         queryfeature_obj
+        ubmem_dev_obj
         drv_event_obj
         -ldl
         c_sec
         rt
+        $<$<STREQUAL:${ENABLE_UBE},true>:ascend_urma_adapt_obj>
+        $<$<STREQUAL:${ENABLE_UBE},true>:urma>
+        $<$<STREQUAL:${ENABLE_UBE},true>:urma_common>
     )
 endif()
 
 install(TARGETS ascend_hal
     LIBRARY DESTINATION ${INSTALL_LIBRARY_DIR} OPTIONAL
 )
+

@@ -27,4 +27,3 @@ int _trs_chan_to_string(struct trs_chan *chan, char *buff, u32 buff_len);
 void trs_chan_cq_guard_work_proc(struct trs_chan_ts_inst *ts_inst);
 
 #endif
-

@@ -83,6 +83,16 @@ bool run_in_normal_docker(void);
 * @attention  : NULL
 * @param [in] : NULL
 * @param [out]: NULL
+* @return     : True(in admin docker, not include normal docker) or False(not in admin docker)
+*/
+bool run_in_admin_docker(void);
+
+/**
+* @driver base layer interface
+* @description: Get the run_env of the current process
+* @attention  : NULL
+* @param [in] : NULL
+* @param [out]: NULL
 * @return     : True(in docker, include normal docker and admin docker) or False(not in docker)
 */
 bool run_in_docker(void);

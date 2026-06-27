@@ -84,7 +84,7 @@ extern "C"{
 #define DCMI_910_BOARD_280T_B_BOARD_ID 0x28
 #define DCMI_910_BOARD_320T_A_BOARD_ID 0x24
 
-// A500 A2的MCU和310b获取的BOARD ID相同
+// A500 A2的MCU和Hi1911获取的BOARD ID相同
 #define DCMI_A200_A2_MODEL_BOARD_ID    0x42
 #define DCMI_A200_A2_DK_BOARD_ID       0x45
 #define DCMI_A500_A2_BOARD_ID          0x46
@@ -146,9 +146,9 @@ extern "C"{
 #define DCMI_A900_A3_SUPERPOD_MAIN_BOARD_ID1    0x18
 #define DCMI_A900_A3_SUPERPOD_MAIN_BOARD_ID2    0x19
 // A5 标卡 3种模式
-#define DCMI_910_95_1P_MAINBOARD_ID 0x68
-#define DCMI_910_95_2P_MAINBOARD_ID 0x6A
-#define DCMI_910_95_4P_MAINBOARD_ID 0x6C
+#define DCMI_950_1P_MAINBOARD_ID 0x68
+#define DCMI_950_2P_MAINBOARD_ID 0x6A
+#define DCMI_950_4P_MAINBOARD_ID 0x6C
 
 #define BOARD_ID_MASK       0xF0
 #define A_X_BOARD_ID        0x50
@@ -166,35 +166,54 @@ extern "C"{
 #define DCMI_A5_POD_2D_BACKUP_MAIN_BOARD_ID     0x03    // 天成 POD  2D场景 David NPU节点
 #define DCMI_A5_POD_2D_MAIN_BOARD_ID            0x05    // 天成 POD  2D场景 David BackUp节点
 #define DCMI_A5_POD_1D_MAIN_BOARD_ID            0x07    // 天成 POD  1D 2+6场景 David NPU节点
-#define DCMI_A5_POD_2D_MAIN_BOARD_ID_TMP        0x00    // esl临时
-#define DCMI_A5_POD_EVB_MAIN_BOARD_ID_TMP       0xE0    // evb回片
-#define DCMI_A5_POD_EVB_MAIN_BOARD_ID_UB_TMP    0xE9    // ub临时
 
-#define DCMI_A_X_910_95_MAIN_BOARD_ID           0x40    // A+X  2+2 SERVER DAVID NPU节点/port 8 UB(装备模组FT)
-#define DCMI_A_X_910_95_UBOE_MAIN_BOARD_ID      0x42    // A+X  2+2 SERVER DAVID NPU节点/port 8 2*UBoE X2(装备A+X整机ST)
+#define DCMI_A_X_950_MAIN_BOARD_ID           0x40    // A+X  2+4 SERVER DAVID NPU节点/port 8 UB
+#define DCMI_A_X_950_UBOE_MAIN_BOARD_ID      0x42    // A+X  2+4 SERVER DAVID NPU节点/port 8 2*UBoE X2
 
-#define DCMI_A_K_910_95_MAIN_BOARD_ID           0x21    // A+K  2+4 SERVER DAVID NPU节点/port 8 UB
-#define DCMI_A_K_910_95_UBOE_MAIN_BOARD_ID      0x23    // A+K  2+4 SERVER DAVID NPU节点/port 8 2*UBoE X2
-#define DCMI_A_K_910_95_2_6_MAIN_BOARD_ID       0x25    // A+K  2+6 SERVER DAVID NPU节点/port 8 UB
-#define DCMI_A_K_910_95_2_6_UBOE_MAIN_BOARD_ID  0x27    // A+K  2+6 SERVER DAVID NPU节点/port 8 2*UBoE X2
+#define DCMI_A_K_950_MAIN_BOARD_ID           0x21    // A+K  2+4 SERVER DAVID NPU节点/port 8 UB
+#define DCMI_A_K_950_UBOE_MAIN_BOARD_ID      0x23    // A+K  2+4 SERVER DAVID NPU节点/port 8 2*UBoE X2
+#define DCMI_A_K_950_0_8_MAIN_BOARD_ID       0x25    // A+K  0+8 SERVER DAVID NPU节点/port 8 UB
+#define DCMI_A_K_950_0_8_UBOE_MAIN_BOARD_ID  0x27    // A+K  0+8 SERVER DAVID NPU节点/port 8 2*UBoE X2
+#define DCMI_A_K_950_0_0_MAIN_BOARD_ID       0x29    // A+K  0口 SERVER DAVID NPU节点/port 8 UB
+#define DCMI_A_K_950_0_0_UBOE_MAIN_BOARD_ID  0x2B    // A+K  0口 SERVER DAVID NPU节点/port 8 2*UBoE X2
 
-#define DCMI_A900_A5_MODEL_V100_BIN0_BOARD_ID       0x08
-#define DCMI_A900_A5_MODEL_V100_BIN1_1_BOARD_ID     0x09
-#define DCMI_A900_A5_MODEL_V100_BIN1_2_BOARD_ID     0x0A
-#define DCMI_A900_A5_MODEL_V100_BIN2_1_BOARD_ID     0x0B
-#define DCMI_A900_A5_MODEL_V100_BIN2_2_BOARD_ID     0x0C
+#define DCMI_A_K_950_1825_EXP_MAIN_BOARD_ID                  0x2D    // A+K  1825EXP机型预埋
+#define DCMI_A_K_950_NON_1825_EXP_MAIN_BOARD_ID              0x2F    // A+K 非1825EXP机型预埋
+#define DCMI_A_X_950_UBX_MAIN_BOARD_ID                       0x44    // UBX 机型预埋
+#define DCMI_A_X_950_TX_MAIN_BOARD_ID                        0x46    // TX 机型预埋
+#define DCMI_A_X_950_DY_MAIN_BOARD_ID                        0x48    // 大禹 机型预埋
 
-#define DCMI_A900_A5_MODEL_V120_BIN0_BOARD_ID       0x28
-#define DCMI_A900_A5_MODEL_V120_BIN1_1_BOARD_ID     0x29
-#define DCMI_A900_A5_MODEL_V120_BIN1_2_BOARD_ID     0x2A
-#define DCMI_A900_A5_MODEL_V120_BIN2_1_BOARD_ID     0x2B
-#define DCMI_A900_A5_MODEL_V120_BIN2_2_BOARD_ID     0x2C
+#define DCMI_950_EQUIP_SCAN_MAIN_BOARD_ID                    0xC0    // 装备模组SCAN
+#define DCMI_950_EQUIP_BI_OR_TSS_MAIN_BOARD_ID               0xC2    // 装备模组BI/TSS
+#define DCMI_950_EQUIP_CARD_PCIE_MAIN_BOARD_ID               0x70    // 标卡装备场景 PCIE启动
+#define DCMI_950_EQUIP_CARD_UBOE_MAIN_BOARD_ID               0x72    // 标卡装备场景 UBOE启动
+#define DCMI_950_EQUIP_UBX_UBOE_MAIN_BOARD_ID                0xD4    // UBX装备场景 UBOE启动
 
-#define DCMI_A900_A5_CARD_V100_BIN1_1_BOARD_ID      0x18
-#define DCMI_A900_A5_CARD_V100_BIN1_2_BOARD_ID     0x19
-#define DCMI_A900_A5_CARD_V100_BIN2_1_BOARD_ID     0x1A
-#define DCMI_A900_A5_CARD_V100_BIN2_2_BOARD_ID     0x1B
-#define DCMI_A900_A5_CARD_V100_BIN11_3_BOARD_ID     0x1C
+#define DCMI_A900_A5_MODEL_V100_BIN0_BOARD_ID      0x08
+#define DCMI_A900_A5_MODEL_V100_BIN1_1_BOARD_ID    0x09
+#define DCMI_A900_A5_MODEL_V100_BIN1_2_BOARD_ID    0x0A
+#define DCMI_A900_A5_MODEL_V100_BIN2_1_BOARD_ID    0x0B
+#define DCMI_A900_A5_MODEL_V100_BIN2_2_BOARD_ID    0x0C
+
+#define DCMI_A900_A5_MODEL_V120_BIN0_BOARD_ID      0x28
+#define DCMI_A900_A5_MODEL_V120_BIN1_1_BOARD_ID    0x29
+#define DCMI_A900_A5_MODEL_V120_BIN1_2_BOARD_ID    0x2A
+#define DCMI_A900_A5_MODEL_V120_BIN2_1_BOARD_ID    0x2B
+#define DCMI_A900_A5_MODEL_V120_BIN2_2_BOARD_ID    0x2C
+
+#define DCMI_A900_A5_CARD_V100_BIN1_1_BOARD_ID    0x18
+#define DCMI_A900_A5_CARD_V100_BIN1_2_BOARD_ID    0x19
+#define DCMI_A900_A5_CARD_V100_BIN2_1_BOARD_ID    0x1A
+#define DCMI_A900_A5_CARD_V100_BIN2_2_BOARD_ID    0x1B
+#define DCMI_A900_A5_CARD_V100_BIN11_3_BOARD_ID   0x1C
+
+// NPU SERDES 端口状态表 - 声明在头文件，定义在 .c 文件
+// 0: invalid, 1: valid
+#define NPU_SERDES_STATUS_INVALID 0
+#define NPU_SERDES_STATUS_VALID   1
+#define NPU_SERDES_PORT_NUM 18
+
+extern const unsigned char g_npu_serdes_status_table[256][NPU_SERDES_PORT_NUM];
 
 struct dcmi_product_type_table {
     int product_type;
@@ -235,9 +254,9 @@ int dcmi_board_chip_type_is_ascend_910b(void);
 
 int dcmi_board_chip_type_is_ascend_910_93(void);
 
-int dcmi_board_chip_type_is_ascend_910_95(void);
+int dcmi_board_chip_type_is_ascend_950(void);
 
-int dcmi_board_chip_type_is_ascend_910_95_card(void);
+int dcmi_board_chip_type_is_ascend_950_card(void);
 
 int dcmi_board_chip_type_is_ascend_910b_300i_a2(void);
 
@@ -266,8 +285,16 @@ int dcmi_mainboard_is_a9000_a3_superpod(unsigned int main_board_id);
 int dcmi_mainboard_is_arm_910_93(unsigned int main_board_id);
 
 int dcmi_mainboard_is_a900_a5_pcie(unsigned int main_board_id);
-
+ 
 int dcmi_mainboard_is_a900_a5_ub(unsigned int main_board_id);
+
+int dcmi_mainboard_is_a900_a5_uboe(unsigned int main_board_id);
+
+int dcmi_board_chip_type_is_ascend_950_pod(void);
+
+int dcmi_board_chip_type_is_ascend_950_server(void);
+
+int dcmi_board_chip_type_is_ascend_950_a_x(void);
 
 int dcmi_a900_a3_superpod_fp_card_id_convert(int card_id, int device_id);
 
@@ -278,6 +305,26 @@ int dcmi_910_93_phy_id_convert(int phy_id);
 int dcmi_check_card_id(int card_id);
 
 int dcmi_is_has_pcieinfo(void);
+
+int dcmi_check_hbm_manufacturer_id(unsigned int manufacturer_id);
+
+int check_macro_id_valid(int chip_type, int macro_id, int max_id);
+
+int dcmi_get_max_macro_id(int card_id, int device_id, int chip_type, int *max_id);
+
+int dcmi_get_950_max_macro_id(int card_id, int device_id, int *max_id);
+
+int check_serdes_environment_is_invalid(int card_id, int device_id, int macro_id);
+
+int checkv2_serdes_environment_is_invalid(int dev_id, int macro_id);
+
+int dcmiv2_get_950_max_macro_id(int dev_id, int *max_id);
+
+int dcmiv2_get_max_macro_id(int dev_id, int chip_type, int *max_id);
+
+int dcmi_check_950_0_0_server_macro_id(int dev_id, int macro_id);
+
+int dcmi_check_product_of_get_affinity(unsigned int main_board_id);
 
 #ifdef __cplusplus
 #if __cplusplus

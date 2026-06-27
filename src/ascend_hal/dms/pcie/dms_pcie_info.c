@@ -172,13 +172,13 @@ STATIC drvError_t dms_pcie_rescan(unsigned int dev_id)
 #else
     ret = stop_device();
     if (ret != 0) {
-        DMS_ERR("Stop device failed. (dev_id=%u; ret%d)\n", dev_id ret);
+        DMS_ERR("Stop device failed. (dev_id=%u; ret=%d)\n", dev_id, ret);
         return DRV_ERROR_INVALID_VALUE;
     }
     mmSleep(100); /* 100ms */
     ret = start_device();
     if (ret != 0) {
-        DMS_ERR("Start device failed. (dev_id=%u; ret=%d)\n", dev_id ret);
+        DMS_ERR("Start device failed. (dev_id=%u; ret=%d)\n", dev_id, ret);
         return DRV_ERROR_INVALID_VALUE;
     }
 #endif

@@ -22,8 +22,46 @@
 #include "comm_kernel_interface.h"
 #include "pbl/pbl_soc_res.h"
 #ifdef CFG_FEATURE_UB
-#include "dms_bbox_vmcore_mng.h"
+#include "dms_bbox_type_mng.h"
 #endif
+
+STATIC enum bbox_data_type g_bbox_dump_type_pcie[] = {MEM_TYPE_TS_LOG, MEM_TYPE_IMP_LOG, MEM_TYPE_IMU_LOG,
+                                                      MEM_TYPE_HSM_LOG};
+STATIC enum bbox_data_type g_bbox_dump_type_ub[] = {MEM_TYPE_VMCORE_FILE, MEM_TYPE_TS_LOG, MEM_TYPE_IMP_LOG,
+                                                    MEM_TYPE_IMU_LOG, MEM_TYPE_HSM_LOG};
+
+STATIC struct bbox_dump_type_info g_bbox_dump_info[] = {
+    [MEM_TYPE_TS_LOG] = {BBOX_DUMP_TS_LOG_ADDRESS, BBOX_DUMP_TS_LOG_SIZE},
+    [MEM_TYPE_IMP_LOG] = {BBOX_DUMP_IMP_LOG_ADDRESS, BBOX_DUMP_IMP_LOG_SIZE},
+    [MEM_TYPE_IMU_LOG] = {BBOX_DUMP_IMU_LOG_ADDRESS, BBOX_DUMP_IMU_LOG_SIZE},
+    [MEM_TYPE_HSM_LOG] = {BBOX_DUMP_HSM_LOG_ADDRESS, BBOX_DUMP_HSM_LOG_SIZE},
+};
+
+enum bbox_data_type *get_bbox_dump_type(u32 dev_id)
+{
+    if (devdrv_get_connect_protocol(dev_id) == CONNECT_PROTOCOL_UB) {
+        return g_bbox_dump_type_ub;
+    }
+    return g_bbox_dump_type_pcie;
+}
+
+int get_bbox_dump_type_size(u32 dev_id)
+{
+    if (devdrv_get_connect_protocol(dev_id) == CONNECT_PROTOCOL_UB) {
+        return sizeof(g_bbox_dump_type_ub) / sizeof(enum bbox_data_type);
+    }
+    return sizeof(g_bbox_dump_type_pcie) / sizeof(enum bbox_data_type);
+}
+
+struct bbox_dump_type_info *get_bbox_dump_info(void)
+{
+    return g_bbox_dump_info;
+}
+
+int get_bbox_dump_info_size(void)
+{
+    return sizeof(g_bbox_dump_info) / sizeof(struct bbox_dump_type_info);
+}
 
 struct region_type_info {
     unsigned int base_addr;
@@ -56,15 +94,16 @@ STATIC const struct region_type_info g_region_info_tbl[] = {
         },
 };
 
-STATIC struct mem_mng dev_ctx[ASCEND_DEV_MAX_NUM] = { 0 };
+STATIC struct mem_mng dev_ctx[ASCEND_DEV_MAX_NUM] = {0};
 
 BEGIN_DMS_MODULE_DECLARATION(DMS_MODULE_BBOX_DUMP)
 BEGIN_FEATURE_COMMAND()
-ADD_FEATURE_COMMAND(DMS_MODULE_BBOX_DUMP, DMS_MAIN_CMD_BBOX, DMS_SUBCMD_GET_BBOX_DATA,
-                    NULL, NULL, DMS_ACC_NOT_LIMIT_USER | DMS_ENV_NOT_NORMAL_DOCKER | DMS_VDEV_NOTSUPPORT, dms_get_bbox_data)
+ADD_FEATURE_COMMAND(DMS_MODULE_BBOX_DUMP, DMS_MAIN_CMD_BBOX, DMS_SUBCMD_GET_BBOX_DATA, NULL, NULL,
+                    DMS_ACC_NOT_LIMIT_USER | DMS_ENV_NOT_NORMAL_DOCKER | DMS_VDEV_NOTSUPPORT, dms_get_bbox_data)
 
-ADD_FEATURE_COMMAND(DMS_MODULE_BBOX_DUMP, DMS_MAIN_CMD_BBOX, DMS_SUBCMD_SET_BBOX_DATA,
-                    NULL, NULL, DMS_ACC_NOT_LIMIT_USER | DMS_ENV_NOT_NORMAL_DOCKER | DMS_VDEV_NOTSUPPORT, dms_set_bbox_data)
+ADD_FEATURE_COMMAND(DMS_MODULE_BBOX_DUMP, DMS_MAIN_CMD_BBOX, DMS_SUBCMD_SET_BBOX_DATA, NULL, NULL,
+                    DMS_ACC_NOT_LIMIT_USER | DMS_ENV_NOT_NORMAL_DOCKER | DMS_VDEV_NOTSUPPORT, dms_set_bbox_data)
+
 END_FEATURE_COMMAND()
 END_MODULE_DECLARATION()
 
@@ -90,38 +129,14 @@ STATIC struct dev_mem_region *bbox_get_mem_region(struct mem_mng *ctx, enum devd
 int bbox_set_mem(u32 udevid, u32 log_type, void *kva, u32 size)
 {
     int ret = 0;
-#ifndef CFG_FEATURE_NOT_SUPPORT_ALLOC
-    struct mem_mng *ctx = NULL;
-    
-    if (udevid > ASCEND_DEV_MAX_NUM || kva == NULL) {
-        dms_err("Invalid para. (dev_id=%u)\n", udevid);
-        return -EINVAL;
-    }
-
-    ctx = bbox_mem_mng_get(udevid);
-    ka_task_down_write(&ctx->sem);
-    ret = bbox_set_mem_and_register(udevid, ctx, log_type, kva, size);
-    ka_task_up_write(&ctx->sem);
-#endif
+    ret = bbox_device_set_mem_platform(udevid, log_type, kva, size);
     return ret;
 }
 KA_EXPORT_SYMBOL_GPL(bbox_set_mem);
 
 void bbox_persistent_unregister(u32 udevid, u32 log_type)
 {
-#ifndef CFG_FEATURE_NOT_SUPPORT_ALLOC
-    struct mem_mng *ctx = NULL;
-
-    if (udevid > ASCEND_DEV_MAX_NUM) {
-        dms_err("Invalid para. (dev_id=%u, log_type=%u)\n", udevid, log_type);
-        return;
-    }
-
-    ctx = bbox_mem_mng_get(udevid);
-    ka_task_down_write(&ctx->sem);
-    bbox_persistent_unregister_by_type(udevid, ctx, log_type);
-    ka_task_up_write(&ctx->sem);
-#endif
+    bbox_device_persistent_unregister(udevid, log_type);
 }
 KA_EXPORT_SYMBOL_GPL(bbox_persistent_unregister);
 
@@ -129,7 +144,7 @@ STATIC void bbox_free_and_unregister(u32 udevid, enum devdrv_rao_client_type typ
 {
     struct dev_mem_region *mem_region = NULL;
     int ret;
- 
+
     mem_region = bbox_get_mem_region(ctx, type);
     if (mem_region == NULL) {
         dms_err("Failed to get mem region. (dev_id=%u; type=%d)\n", udevid, type);
@@ -153,20 +168,23 @@ STATIC int bbox_uninit_instance(u32 udevid)
 {
     struct mem_mng *ctx = bbox_mem_mng_get(udevid);
     enum devdrv_rao_client_type type;
-    int ret = 0;
+    int ret = 0, i, type_size;
+    enum bbox_data_type *data_type;
 
     if (devdrv_get_connect_protocol(udevid) != CONNECT_PROTOCOL_UB) {
+        bbox_dma_addrs_uninit(udevid);
         return 0;
     }
-
-    bbox_vmcore_uninit(udevid);
+    data_type = get_bbox_dump_type(udevid);
+    type_size = get_bbox_dump_type_size(udevid);
+    for (i = 0; i < type_size; i++) {
+        bbox_dump_ctx_uninit(udevid, (u32)data_type[i]);
+    }
     ka_task_down_write(&ctx->sem);
     for (type = DEVDRV_RAO_CLIENT_BBOX_DDR; type <= DEVDRV_RAO_CLIENT_BBOX_KLOG; type++) {
         bbox_free_and_unregister(udevid, type, ctx);
     }
-#ifndef CFG_FEATURE_NOT_SUPPORT_ALLOC
-    ret |= bbox_unregister_persistent_export(udevid, ctx);
-#endif
+    ret |= bbox_device_unregister_persistent_export(udevid, ctx);
     ka_task_up_write(&ctx->sem);
 
     dms_info("Bbox uninit instance successfully. (dev_id=%u)\n", udevid);
@@ -184,13 +202,13 @@ STATIC void bbox_alloc_and_register(u32 udevid, enum devdrv_rao_client_type type
         return;
     }
     info = &g_region_info_tbl[type];
-    
+
     mem_region = bbox_get_mem_region(ctx, type);
     if (mem_region == NULL) {
         dms_err("Failed to get mem region. (dev_id=%u; type=%d)\n", udevid, type);
         return;
     }
-    
+
     mem_region->base_addr = info->base_addr;
     mem_region->size = info->size;
     mem_region->alloc_func = info->alloc_func;
@@ -201,8 +219,8 @@ STATIC void bbox_alloc_and_register(u32 udevid, enum devdrv_rao_client_type type
         return;
     }
 
-    ret = devdrv_register_rao_client(udevid, type,
-        (u64)(uintptr_t)mem_region->va, mem_region->size, DEVDRV_RAO_PERM_RMT_READ);
+    ret = devdrv_register_rao_client(udevid, type, (u64)(uintptr_t)mem_region->va, mem_region->size,
+                                     DEVDRV_RAO_PERM_RMT_READ);
     if (ret != 0) {
         mem_region->free_func(mem_region);
         dms_err("Register rao failed. (dev_id=%d; type=%d; ret=%d)\n", udevid, type, ret);
@@ -217,27 +235,28 @@ STATIC int bbox_init_instance(u32 udevid)
 {
     struct mem_mng *ctx = bbox_mem_mng_get(udevid);
     enum devdrv_rao_client_type type;
-    int ret = 0;
+    int ret = 0, i, type_size;
+    enum bbox_data_type *data_type;
 
     if (devdrv_get_connect_protocol(udevid) != CONNECT_PROTOCOL_UB) {
-        return ret;
+        return bbox_dma_addrs_init(udevid);
     }
-
     ka_task_down_write(&ctx->sem);
     for (type = DEVDRV_RAO_CLIENT_BBOX_DDR; type <= DEVDRV_RAO_CLIENT_BBOX_KLOG; type++) {
         bbox_alloc_and_register(udevid, type, ctx);
     }
     ka_task_up_write(&ctx->sem);
-#ifndef CFG_FEATURE_NOT_SUPPORT_ALLOC
-    ret = bbox_register_persistent_export(udevid, ctx);
+    ret = bbox_device_register_persistent_export(udevid, ctx);
     if (ret != 0) {
         return ret;
     }
-#endif
-    ret = bbox_vmcore_init(udevid);
-    if (ret != 0) {
-        dms_err("Failed to init vmcore. (dev_id=%d; ret=%d)\n", udevid, ret);
-        return ret;
+    data_type = get_bbox_dump_type(udevid);
+    type_size = get_bbox_dump_type_size(udevid);
+    for (i = 0; i < type_size; i++) {
+        ret = bbox_dump_ctx_init(udevid, (u32)data_type[i]);
+        if (ret != 0) {
+            dms_err("Failed to init dump ctx. (dev_id=%u; type=%u; ret=%d)\n", udevid, (u32)data_type[i], ret);
+        }
     }
     dms_info("Bbox init instance successfully. (dev_id=%u)\n", udevid);
     return 0;
@@ -283,7 +302,7 @@ int dms_bbox_dump_init(void)
 
     dms_bbox_sem_init();
 #ifdef CFG_FEATURE_UB
-    bbox_vmcore_ctx_init();
+    bbox_ub_dump_ctx_init();
 #endif
     bbox_uda_davinci_type_pack(&type, true);
     ret = uda_notifier_register(DMS_MODULE_BBOX_DUMP, &type, UDA_PRI2, bbox_notifier_func);

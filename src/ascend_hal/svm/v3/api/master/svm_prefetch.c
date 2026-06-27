@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * Copyright (c) 2026 Huawei Technologies Co., Ltd.
  * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -27,6 +27,8 @@
 #include "svm_share_align.h"
 #include "svm_pipeline.h"
 #include "svm_addr_desc.h"
+#include "svm_init_pri.h"
+#include "svm_criu.h"
 
 struct svm_prefetch_node {
     struct svm_share_priv_head head;
@@ -65,7 +67,8 @@ void svm_show_prefetch(u32 devid, char *buf, u32 buf_len)
     }
 
     (void)pthread_mutex_lock(&prefetch_mutex);
-    list_for_each_safe(node, tmp, &prefetch_head) {
+    list_for_each_safe(node, tmp, &prefetch_head)
+    {
         struct svm_prefetch_node *prefetch_node = list_entry(node, struct svm_prefetch_node, node);
         len += svm_show_prefetch_node(prefetch_node, buf + len, buf_len - len);
     }
@@ -111,7 +114,8 @@ void svm_prefetch_recycle(u32 devid)
     }
 
     (void)pthread_mutex_lock(&prefetch_mutex);
-    list_for_each_safe(node, tmp, &prefetch_head) {
+    list_for_each_safe(node, tmp, &prefetch_head)
+    {
         struct svm_prefetch_node *prefetch_node = list_entry(node, struct svm_prefetch_node, node);
         void *va_handle = svm_handle_get(prefetch_node->va);
         if (va_handle != NULL) { /* get va handle to access its priv svmm_inst in node */
@@ -184,10 +188,17 @@ static u32 prefetch_show(void *priv, char *buf, u32 buf_len)
     return 0;
 }
 
+static bool svm_prefetch_should_criu_reset(void *priv)
+{
+    SVM_UNUSED(priv);
+    return false;
+}
+
 static struct svm_priv_ops prefetch_priv_ops = {
     .release = svm_prefetch_svmm_release,
     .get_prop = NULL,
     .show = prefetch_show,
+    .should_criu_reset = svm_prefetch_should_criu_reset,
 };
 
 static struct svm_svmm_seg_priv_ops prefetch_seg_priv_ops = {
@@ -225,7 +236,8 @@ static void *svm_normal_get_prefetch_svmm(void *va_handle)
 {
     struct svm_prefetch_node *prefetch_node = svm_get_priv(va_handle);
     return ((prefetch_node != NULL) && (prefetch_node->head.type == SVM_SHARE_TYPE_PREFETCH)) ?
-        prefetch_node->svmm_inst : NULL;
+               prefetch_node->svmm_inst :
+               NULL;
 }
 
 static void *svm_normal_create_prefetch_svmm(void *va_handle, u64 start, u64 size, u64 svm_flag)
@@ -255,7 +267,8 @@ static void *svm_vmm_get_prefetch_svmm(void *seg_handle)
 {
     struct svm_prefetch_node *prefetch_node = svm_svmm_get_seg_priv(seg_handle);
     return ((prefetch_node != NULL) && (prefetch_node->head.type == SVM_SHARE_TYPE_PREFETCH)) ?
-        prefetch_node->svmm_inst : NULL;
+               prefetch_node->svmm_inst :
+               NULL;
 }
 
 static void *svm_vmm_create_prefetch_svmm(void *seg_handle, u64 start, u64 size, u64 svm_flag)
@@ -307,8 +320,8 @@ static int svm_prefetch_seg(void *svmm_inst, u64 va, u64 size, u32 devid, struct
     return ret;
 }
 
-static int svm_seek_hole_segs_to_prefetch(void *svmm_inst, u64 start, u64 size, u32 devid,
-    struct svm_global_va *src_info)
+static int svm_seek_hole_segs_to_prefetch(
+    void *svmm_inst, u64 start, u64 size, u32 devid, struct svm_global_va *src_info)
 {
     struct svm_global_va sub_src_info;
     u64 hole_start, hole_size;
@@ -322,18 +335,19 @@ static int svm_seek_hole_segs_to_prefetch(void *svmm_inst, u64 start, u64 size, 
             /* No hole, just return success. */
             return DRV_ERROR_NONE;
         } else if (ret != DRV_ERROR_NONE) {
-            svm_err("Get first hole failed. (ret=%d; devid=%u; start=0x%llx; size=%llu)\n",
-                ret, devid, cur_va, end - cur_va);
+            svm_err(
+                "Get first hole failed. (ret=%d; devid=%u; start=0x%llx; size=%llu)\n", ret, devid, cur_va,
+                end - cur_va);
             return ret;
         }
 
-        svm_global_va_pack(src_info->udevid, src_info->tgid,
-            src_info->va + (hole_start - start), hole_size, &sub_src_info);
+        svm_global_va_pack(
+            src_info->udevid, src_info->tgid, src_info->va + (hole_start - start), hole_size, &sub_src_info);
         ret = svm_prefetch_seg(svmm_inst, hole_start, hole_size, devid, &sub_src_info);
         if (ret != DRV_ERROR_NONE) {
             /* No need undo. */
-            svm_err("Prefetch seg failed. (ret=%d; va=0x%llx; size=%llu; devid=%u)\n",
-                ret, hole_start, hole_size, devid);
+            svm_err(
+                "Prefetch seg failed. (ret=%d; va=0x%llx; size=%llu; devid=%u)\n", ret, hole_start, hole_size, devid);
             return ret;
         }
 
@@ -456,14 +470,15 @@ static int svm_prefetch_to_device(u64 va, u64 size, u32 devid)
 
     ret = svm_share_get_src_aligned_size(devid, prop.flag, va, size, &aligned_size);
     if (ret != 0) {
-        svm_err("Get aligned size failed. (devid=%u; flag=0x%llx; va=0x%llx; size=0x%llx)\n",
-            devid, prop.flag, va, size);
+        svm_err(
+            "Get aligned size failed. (devid=%u; flag=0x%llx; va=0x%llx; size=0x%llx)\n", devid, prop.flag, va, size);
         return DRV_ERROR_PARA_ERROR;
     }
 
     if ((svm_is_valid_range(va, size) == false) || (va + size) > (prop.start + prop.size)) {
-        svm_err("Size if out of bounds. (va=0x%llx; align_size=0x%llx; prop start=0x%llx; size=0x%llx)\n",
-            va, aligned_size, prop.start, prop.size);
+        svm_err(
+            "Size if out of bounds. (va=0x%llx; align_size=0x%llx; prop start=0x%llx; size=0x%llx)\n", va, aligned_size,
+            prop.start, prop.size);
         return DRV_ERROR_PARA_ERROR;
     }
 
@@ -503,3 +518,68 @@ DVresult drvMemPrefetchToDevice(DVdeviceptr dev_ptr, size_t len, DVdevice device
     return (DVresult)ret;
 }
 
+static int svm_prefetch_seg_criu_restore(void *seg_handle, u64 start, struct svm_global_va *src_info, void *priv)
+{
+    struct svm_dst_va dst_info;
+    struct svm_prop src_prop;
+    u32 target_devid = *(u32 *)priv;
+    u32 devid = svm_svmm_get_seg_devid(seg_handle);
+    u32 smm_flag = 0;
+    int ret;
+
+    if (target_devid != devid) {
+        return DRV_ERROR_NONE;
+    }
+
+    ret = svm_get_prop(src_info->va, &src_prop);
+    if (ret != DRV_ERROR_NONE) {
+        svm_err("Get seg prop failed. (ret=%d; va=0x%llx)\n", ret, src_info->va);
+        return ret;
+    }
+    svm_svmm_mod_seg_src_tgid(seg_handle, src_prop.tgid);
+    src_info->tgid = src_prop.tgid;
+
+    svm_dst_va_pack(devid, PROCESS_CP1, start, src_info->size, &dst_info);
+    ret = svm_smm_client_map(&dst_info, src_info, smm_flag);
+    if (ret != DRV_ERROR_NONE) {
+        svm_err(
+            "Restore prefetch map failed. (ret=%d; devid=%u; va=0x%llx; size=0x%llx)\n", ret, devid, start,
+            src_info->size);
+    }
+
+    return ret;
+}
+
+static int svm_prefetch_criu_restore(u32 devid, void *data)
+{
+    struct list_head *node = NULL;
+    struct list_head *tmp = NULL;
+    int ret = DRV_ERROR_NONE;
+
+    SVM_UNUSED(data);
+    (void)pthread_mutex_lock(&prefetch_mutex);
+    list_for_each_safe(node, tmp, &prefetch_head)
+    {
+        struct svm_prefetch_node *prefetch_node = list_entry(node, struct svm_prefetch_node, node);
+        ret = svm_svmm_for_each_seg_handle(prefetch_node->svmm_inst, svm_prefetch_seg_criu_restore, &devid);
+        if (ret != DRV_ERROR_NONE) {
+            break;
+        }
+    }
+    (void)pthread_mutex_unlock(&prefetch_mutex);
+
+    return ret;
+}
+
+static const struct svm_criu_ops prefetch_criu_ops = {
+    .name = "prefetch",
+    .restore = svm_prefetch_criu_restore,
+};
+
+void __attribute__((constructor)) svm_prefetch_init(void)
+{
+    int ret = svm_criu_register_ops(&prefetch_criu_ops);
+    if (ret != DRV_ERROR_NONE) {
+        svm_err("Register CRIU ops failed.\n");
+    }
+}

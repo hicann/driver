@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2025. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -17,8 +17,8 @@
 #include "svm_ub_mem.h"
 #include "svm_addr_desc.h"
 #include "svm_kern_log.h"
-#include "svm_sub_event_type.h"
-#include "va_reserve_msg.h"
+#include "svm_sub_event_type_uk_msg.h"
+#include "va_reserve_uk_msg.h"
 #include "linear_mem.h"
 
 #define AIC_ATU_CFG_NAME "AIC_ATU_CFG_BASE"
@@ -67,8 +67,9 @@ static int um_va_reserve_host_post_handle(u32 udevid, int master_tgid, int slave
     int ret = 0;
 
     if (msg_len != sizeof(*reserve_msg)) {
-        svm_err("Invalid para. (udevid=%u; master_tgid=%d; slave_tgid=%d; msg_len=%u)\n",
-            udevid, master_tgid, slave_tgid, msg_len);
+        svm_err(
+            "Invalid para. (udevid=%u; master_tgid=%d; slave_tgid=%d; msg_len=%u)\n", udevid, master_tgid, slave_tgid,
+            msg_len);
         return -EINVAL;
     }
 

@@ -10,9 +10,10 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
+#include "ka_kernel_def_pub.h"
+#include "ka_errno_pub.h"
+#include "ka_fs_pub.h"
 
-#include <linux/fs.h>
-#include <linux/version.h>
 #include "pbl/pbl_runenv_config.h"
 #include "runenv_config_module.h"
 
@@ -28,33 +29,29 @@ int dbl_runenv_get_drv_version(char *buf, u32 len)
         return -EINVAL;
     }
 
-    file = filp_open("/etc/sys_version.conf", O_RDONLY, 0);
-    if (IS_ERR_OR_NULL(file)) {
-        recfg_err("Open file:/etc/sys_version.conf failed. (file=%pK; errcode=%ld)\n", file, PTR_ERR(file));
+    file = ka_fs_filp_open("/etc/sys_version.conf", KA_O_RDONLY, 0);
+    if (KA_IS_ERR_OR_NULL(file)) {
+        recfg_err("Open file:/etc/sys_version.conf failed. (file=%pK; errcode=%ld)\n", file, KA_PTR_ERR(file));
         return -EINVAL;
     }
 
-    file_size = (ssize_t)i_size_read(file_inode(file));
+    file_size = (ssize_t)ka_fs_i_size_read(ka_fs_file_inode(file));
     if ((file_size == 0) || (file_size >= (ssize_t)len)) {
         recfg_err("File size is invalid. (file_size=%lu; buf_len=%u)\n", file_size, len);
         goto file_close;
     }
 
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 14, 0))
-    read_size = kernel_read(file, buf, (ssize_t)(len - 1), &pos);
-#else
-    read_size = kernel_read(file, pos, buf, (ssize_t)(len - 1));
-#endif
+    read_size = ka_fs_kernel_read(file, buf, (ssize_t)(len - 1), &pos);
     if (read_size != file_size) {
         recfg_err("Read file:/etc/sys_version.conf failed. (ret=%lu)\n", read_size);
         goto file_close;
     }
 
-    filp_close(file, NULL);
+    ka_fs_filp_close(file, NULL);
     return 0;
 
 file_close:
-    filp_close(file, NULL);
+    ka_fs_filp_close(file, NULL);
     return -EINVAL;
 }
-EXPORT_SYMBOL(dbl_runenv_get_drv_version);
+KA_EXPORT_SYMBOL(dbl_runenv_get_drv_version);

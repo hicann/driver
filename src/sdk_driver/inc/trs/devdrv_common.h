@@ -44,32 +44,47 @@
 #define devdrv_drv_err_extend(fmt, ...) drv_err(module_devdrv, fmt, ##__VA_ARGS__)
 #else
 #ifdef CFG_FEATURE_SHARE_LOG
-#define devdrv_drv_err(fmt, ...) do { \
-    drv_err(module_devdrv, "<%s:%d,%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), ka_task_get_current_pid(), ##__VA_ARGS__); \
-    share_log_err(DEVMNG_SHARE_LOG_START, fmt, ##__VA_ARGS__); \
-} while (0)
+#define devdrv_drv_err(fmt, ...)                                                                      \
+    do {                                                                                              \
+        drv_err(                                                                                      \
+            module_devdrv, "<%s:%d,%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), \
+            ka_task_get_current_pid(), ##__VA_ARGS__);                                                \
+        share_log_err(DEVMNG_SHARE_LOG_START, fmt, ##__VA_ARGS__);                                    \
+    } while (0)
 #else
-#define devdrv_drv_err(fmt, ...) do { \
-    drv_err(module_devdrv, "<%s:%d,%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), ka_task_get_current_pid(), ##__VA_ARGS__); \
-} while (0)
+#define devdrv_drv_err(fmt, ...)                                                                      \
+    do {                                                                                              \
+        drv_err(                                                                                      \
+            module_devdrv, "<%s:%d,%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), \
+            ka_task_get_current_pid(), ##__VA_ARGS__);                                                \
+    } while (0)
 #endif
 
-#define devdrv_drv_warn(fmt, ...)                                                                                  \
-    drv_warn(module_devdrv, "<%s:%d,%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), ka_task_get_current_pid(), ##__VA_ARGS__)
-#define devdrv_drv_info(fmt, ...)                                                                                  \
-    drv_info(module_devdrv, "<%s:%d,%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), ka_task_get_current_pid(), ##__VA_ARGS__)
-#define devdrv_drv_event(fmt, ...)                                                                                 \
-    drv_event(module_devdrv, "<%s:%d,%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), ka_task_get_current_pid(), ##__VA_ARGS__)
-#define devdrv_drv_debug(fmt, ...)                                                                                 \
-    drv_pr_debug(module_devdrv, "<%s:%d,%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), ka_task_get_current_pid(), ##__VA_ARGS__)
+#define devdrv_drv_warn(fmt, ...)                                                                 \
+    drv_warn(                                                                                     \
+        module_devdrv, "<%s:%d,%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), \
+        ka_task_get_current_pid(), ##__VA_ARGS__)
+#define devdrv_drv_info(fmt, ...)                                                                 \
+    drv_info(                                                                                     \
+        module_devdrv, "<%s:%d,%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), \
+        ka_task_get_current_pid(), ##__VA_ARGS__)
+#define devdrv_drv_event(fmt, ...)                                                                \
+    drv_event(                                                                                    \
+        module_devdrv, "<%s:%d,%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), \
+        ka_task_get_current_pid(), ##__VA_ARGS__)
+#define devdrv_drv_debug(fmt, ...)                                                                \
+    drv_pr_debug(                                                                                 \
+        module_devdrv, "<%s:%d,%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), \
+        ka_task_get_current_pid(), ##__VA_ARGS__)
 
-#define devdrv_drv_err_extend(ret, no_err_code, fmt, ...) do {  \
-    if ((ret) != (no_err_code)) {                               \
-        devdrv_drv_err(fmt, ##__VA_ARGS__);                     \
-    } else {                                                    \
-        devdrv_drv_warn(fmt, ##__VA_ARGS__);                    \
-    }                                                           \
-} while (0)
+#define devdrv_drv_err_extend(ret, no_err_code, fmt, ...) \
+    do {                                                  \
+        if ((ret) != (no_err_code)) {                     \
+            devdrv_drv_err(fmt, ##__VA_ARGS__);           \
+        } else {                                          \
+            devdrv_drv_warn(fmt, ##__VA_ARGS__);          \
+        }                                                 \
+    } while (0)
 #endif /* UT_VCAST */
 
 #define devdrv_drv_err_spinlock(fmt, ...)
@@ -78,20 +93,23 @@
 #define devdrv_drv_event_spinlock(fmt, ...)
 #define devdrv_drv_debug_spinlock(fmt, ...)
 
-#define devdrv_log_adust(times, fmt, ...) do { \
-                if (times >= IPC_RETRY_TIME) \
-                    drv_err(module_devdrv, "<%s:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), ##__VA_ARGS__);      \
-                else      \
-                    drv_warn(module_devdrv, "<%s:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), ##__VA_ARGS__);      \
-} while (0)
+#define devdrv_log_adust(times, fmt, ...)                                                                              \
+    do {                                                                                                               \
+        if (times >= IPC_RETRY_TIME)                                                                                   \
+            drv_err(                                                                                                   \
+                module_devdrv, "<%s:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), ##__VA_ARGS__); \
+        else                                                                                                           \
+            drv_warn(                                                                                                  \
+                module_devdrv, "<%s:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), ##__VA_ARGS__); \
+    } while (0)
 
-#define DEVDRV_SQ_VF_FLOOR_MIN  8 // less than or equal to 1/16 computing power 8 proc
-#define DEVDRV_SQ_VF_FLOOR  32  // greater or equal to 1/8 computing power up to 32 proc，
-#define DEVDRV_SQ_FLOOR     64 // 64 物理机最大64个进程
+#define DEVDRV_SQ_VF_FLOOR_MIN 8 // less than or equal to 1/16 computing power 8 proc
+#define DEVDRV_SQ_VF_FLOOR 32    // greater or equal to 1/8 computing power up to 32 proc，
+#define DEVDRV_SQ_FLOOR 64       // 64 物理机最大64个进程
 #define DEVDRV_CQSQ_INVALID_INDEX 0xFEFE
 
-#define DEVDRV_CORE_MULTIPLE_CAPACITY 1000  /* To calculate the multiplier that needs to be expanded */
-#define DEVDRV_CORE_VF_FLOOR_CAPACITY 125   /* (cap_num * multiple) / total_num */
+#define DEVDRV_CORE_MULTIPLE_CAPACITY 1000 /* To calculate the multiplier that needs to be expanded */
+#define DEVDRV_CORE_VF_FLOOR_CAPACITY 125  /* (cap_num * multiple) / total_num */
 
 #define CQ_HEAD_UPDATE_FLAG 0x1
 #define CQ_HEAD_WAIT_FLAG 0x0
@@ -120,14 +138,14 @@
 #define DEVDRV_MANAGER_DEVICE_ENV 0
 #define DEVDRV_MANAGER_HOST_ENV 1
 
-#define DEVDRV_STATUS_HDC_CLOSE_FLAG  0xEEEEDDDDU
+#define DEVDRV_STATUS_HDC_CLOSE_FLAG 0xEEEEDDDDU
 
 #define TS_MEM_RESTRICT_VALID 0x1 /* ts restricted to access ts_node memory */
 
 #if defined(CFG_SOC_PLATFORM_MINIV3)
 #define DEVDRV_RESERVE_MEM_BASE 0x24240000
 #define DEVDRV_RESERVE_MEM_SIZE (72 * 1024 * 1024)
-#define DEVDRV_RESERVE_CQ_MEM_OFFSET (64 * 1024 *1024)
+#define DEVDRV_RESERVE_CQ_MEM_OFFSET (64 * 1024 * 1024)
 /* reserved memory for sq slot */
 #elif defined(CFG_SOC_PLATFORM_MINIV2)
 #define DEVDRV_RESERVE_MEM_BASE 0xBB00000
@@ -185,14 +203,10 @@
 #endif
 #endif
 
-#define DEVDRV_CBCQ_MAX_GID     1024
+#define DEVDRV_CBCQ_MAX_GID 1024
 #define ARMv8_Cortex_A55 0x41d05
 
-enum devdrv_power_mode {
-    DEVDRV_LOW_POWER = 0x0,
-    DEVDRV_NORMAL_POWER,
-    DEVDRV_MAX_MODE
-};
+enum devdrv_power_mode { DEVDRV_LOW_POWER = 0x0, DEVDRV_NORMAL_POWER, DEVDRV_MAX_MODE };
 
 enum devdrv_device_status {
     DRV_STATUS_INITING = 0x0,
@@ -203,15 +217,12 @@ enum devdrv_device_status {
     DRV_STATUS_RESERVED
 };
 
-enum hccl_trans_way {
-    DRV_SDMA = 0x0,
-    DRV_PCIE_DMA
-};
+enum hccl_trans_way { DRV_SDMA = 0x0, DRV_PCIE_DMA };
 
 #if defined(CFG_SOC_PLATFORM_CLOUD_V2) || defined(CFG_SOC_PLATFORM_MINIV3)
 struct devdrv_report {
     u16 phase : 1;
-    u16 warn : 1; /* process warning */
+    u16 warn : 1;         /* process warning */
     u16 event_record : 1; /* event record flag */
     u16 place_hold : 1;
     u16 sq_id : 11;
@@ -320,7 +331,6 @@ enum {
     DEVDRV_MAX_MEM
 };
 
-
 enum {
     DEVINFO_STATUS_WORKING = 0x00,
     DEVINFO_STATUS_REMOVED = 0x01,
@@ -328,8 +338,8 @@ enum {
     DEVINFO_STATUS_SHUTDOWN = 0xF1
 };
 
-#define TS_FW_VERIFY_FAILED    100001
-#define TS_STARTUP_FAILED      100002
+#define TS_FW_VERIFY_FAILED 100001
+#define TS_STARTUP_FAILED 100002
 
 struct devdrv_mem_info {
     phys_addr_t phy_addr;
@@ -341,7 +351,7 @@ struct devdrv_mem_info {
 };
 
 struct devdrv_int_context {
-    u32 index;                        /* irq index, eg: when irq num is 16, the index is 0 ~ 15 */
+    u32 index; /* irq index, eg: when irq num is 16, the index is 0 ~ 15 */
     int first_cq_index;
     int last_cq_index;
     struct tsdrv_ts_resource *ts_resource;
@@ -349,7 +359,7 @@ struct devdrv_int_context {
 };
 
 struct tsdrv_id_info {
-    int id;          /* when fid:0,the id is phy_id,else is virt_id */
+    int id; /* when fid:0,the id is phy_id,else is virt_id */
     int virt_id;
     int phy_id;
     u32 devid;
@@ -373,8 +383,8 @@ struct devdrv_heart_beat {
     ka_work_struct_t work;
     const void *exception_info;
     volatile u32 stop;     /* use in host manager heart beat to device,
-                        * avoid access null ptr to heart beat node
-                        * when heart beat is stop */
+                            * avoid access null ptr to heart beat node
+                            * when heart beat is stop */
     volatile u32 too_much; /* flag if too much heart beat waiting in queue to be sent */
     volatile u32 broken;
     volatile u32 working;
@@ -459,21 +469,21 @@ struct devdrv_ts_mng {
 #define RESERVED_SPACE 8
 
 typedef struct {
-    u32 magic;  // fix value：“modu”aisc�?0x606F6475
-    u32 modLen; // module python tool fill, frame use, modHdr + modData
-    u32 modID; // module fill，frame use，module may use
-    u32 modVer; // module fill, frame not use
+    u32 magic;    // fix value：“modu”aisc�?0x606F6475
+    u32 modLen;   // module python tool fill, frame use, modHdr + modData
+    u32 modID;    // module fill，frame use，module may use
+    u32 modVer;   // module fill, frame not use
     u32 modHdrSz; // module tool auto fill，module use,
     u32 checkSum; // module python tool fill, frame not use,modHdr(except checksum) + modData
 } devdrv_fix_mod_hdr;
 
 #pragma pack(1)
 typedef struct {
-    u8 flag; /* 0:No related configuration, 1:configuration exists, 2: bitMap updated */
+    u8 flag;     /* 0:No related configuration, 1:configuration exists, 2: bitMap updated */
     u8 totalNum; /* physical core total num, 0:Do not follow this resource */
-    u8 minNum; /* Minimum available quantity required */
+    u8 minNum;   /* Minimum available quantity required */
     u8 reserved;
-    u32 freq; /* core working frequency */
+    u32 freq;   /* core working frequency */
     u64 bitMap; /* 1:good, 0:bad */
 } devdrv_common_pg_info;
 
@@ -521,9 +531,9 @@ struct devdrv_info {
     u32 env_type;
     u32 board_id;
     u32 slot_id;
-    u32 dev_id; /* device id assigned by local device driver */
+    u32 dev_id;  /* device id assigned by local device driver */
     u32 chip_id; /* chip id */
-    u32 die_id; /* die id */
+    u32 die_id;  /* die id */
     u32 ts_mem_restrict_valid;
 
     /*
@@ -548,14 +558,14 @@ struct devdrv_info {
     u32 ctrl_cpu_ip;
     u32 ctrl_cpu_id;
     u32 ctrl_cpu_core_num;
-    u32 ctrl_cpu_occupy_bitmap;
+    u64 ctrl_cpu_occupy_bitmap;
     u32 ctrl_cpu_endian_little;
 
     u32 ai_cpu_core_num;
     u32 ai_core_num;
     u32 ai_cpu_core_id;
     u32 ai_core_id;
-    u32 aicpu_occupy_bitmap;
+    u64 aicpu_occupy_bitmap;
     u32 ai_subsys_ip_broken_map;
     u32 hardware_version;
     u64 aicore_bitmap;
@@ -620,6 +630,7 @@ struct devdrv_info {
     u32 fw_len;
     u32 vector_core_num;
     u64 vector_core_bitmap;
+    u64 vector_core_bitmap_h;
     u64 vector_core_freq;
     u32 localtime_sync_state;
 
@@ -627,12 +638,12 @@ struct devdrv_info {
     u32 reg_ddr_size;
 
     u8 run_mode; /*
-                 * normal mode: online or offline without container
-                 * container mode
-                 */
+                  * normal mode: online or offline without container
+                  * container mode
+                  */
 
     /* share memory info */
-    void __ka_mm_iomem *shm_vaddr;    /* bar virtual address & register to ub virtual address */
+    void __ka_mm_iomem *shm_vaddr; /* bar virtual address & register to ub virtual address */
     u32 shm_size;
     u32 shm_size_register_rao;
     U_SHM_INFO_HEAD __ka_mm_iomem *shm_head;
@@ -645,7 +656,7 @@ struct devdrv_info {
     u32 dmp_started;
     u32 ffts_type;
 
-    u32 ts_irq_init;  /* for destroy ts irq. */
+    u32 ts_irq_init; /* for destroy ts irq. */
 
     u32 chip_name;
     u32 chip_version;
@@ -658,14 +669,15 @@ struct devdrv_info {
     u16 scale_type;
     u32 super_pod_id;
     u16 chassis_id;
-    u8  super_pod_type;
+    u8 super_pod_type;
+    u8 super_pod_intercon_type;
     u16 addr_mode;
     u8 product_type;
 
 #ifdef CFG_FEATURE_PG
     struct devdrv_pg_info pg_info;
 #endif
-    #define TEMPLATE_NAME_LEN 32
+#define TEMPLATE_NAME_LEN 32
     u8 template_name[TEMPLATE_NAME_LEN];
 
     u8 version;
@@ -727,7 +739,8 @@ struct tsdrv_drv_ops {
     int (*functional_send_sq)(u32 devid, u32 tsid, u32 sq_index, const u8 *buffer, u32 buf_len);
     void (*destroy_functional_sq)(u32 devid, u32 tsid, u32 sq_index);
 
-    int (*create_functional_cq)(u32 devid, u32 tsid, u32 slot_len, u32 cq_type,
+    int (*create_functional_cq)(
+        u32 devid, u32 tsid, u32 slot_len, u32 cq_type,
         void (*callback)(u32 device_id, u32 tsid, const u8 *cq_slot, u8 *sq_slot), u32 *cq_index, u64 *addr);
     int (*functional_set_cq_func)(u32 devid, u32 tsid, u32 cq_index, enum devdrv_cqsq_func function);
     void (*destroy_functional_cq)(u32 devid, u32 tsid, u32 cq_index);
@@ -748,7 +761,7 @@ struct tsdrv_drv_ops {
     int (*ipc_notify_record)(void *context, void *notify_ioctl_info);
     void (*ipc_notify_release_recycle)(void *ctx);
 
-    void (* wakeup_all_ctx)(u32 devid, u32 tsid);
+    void (*wakeup_all_ctx)(u32 devid, u32 tsid);
 
     /* ts2ccpu heart beat */
     void (*tsdrv_heart_beat_set_work_state)(u32 devid, u32 tsid, u8 state);
@@ -756,14 +769,14 @@ struct tsdrv_drv_ops {
     void (*tsdrv_ts_plugin_load)(u32 devid);
 
     /* ipc api */
-    int(*ipc_msg_recv_async)(struct devdrv_info *dev_info, unsigned long arg);
-    int(*ipc_msg_send_async)(struct devdrv_info *dev_info, unsigned long arg);
+    int (*ipc_msg_recv_async)(struct devdrv_info *dev_info, unsigned long arg);
+    int (*ipc_msg_send_async)(struct devdrv_info *dev_info, unsigned long arg);
 
     /* ascend310 host */
-    int(*alloc_mem)(struct devdrv_info *dev_info, phys_addr_t *dev_phy_addr, phys_addr_t *host_phy_addr, size_t size);
-    int(*free_mem)(struct devdrv_info *info, phys_addr_t phy_addr);
-    u32(*svm_va_to_devid)(unsigned long va);
-    int(*get_dev_info)(struct devdrv_info *dev_info);
+    int (*alloc_mem)(struct devdrv_info *dev_info, phys_addr_t *dev_phy_addr, phys_addr_t *host_phy_addr, size_t size);
+    int (*free_mem)(struct devdrv_info *info, phys_addr_t phy_addr);
+    u32 (*svm_va_to_devid)(unsigned long va);
+    int (*get_dev_info)(struct devdrv_info *dev_info);
     void (*hdc_register_symbol)(struct hdcdrv_register_symbol *module_symbol);
     void (*hdc_unregister_symbol)(void);
     int (*resid_query)(u32 devid, u32 tsid, struct tsdrv_res_query *info);
@@ -789,16 +802,10 @@ struct tsdrv_msg_info {
 };
 
 /* bit 0 sq side, bit 1 cq side */
-enum tsdrv_sqcq_addr_side_type {
-    TSDRV_SQCQ_SIDE_SQ_BIT = 0,
-    TSDRV_SQCQ_SIDE_CQ_BIT = 1
-};
+enum tsdrv_sqcq_addr_side_type { TSDRV_SQCQ_SIDE_SQ_BIT = 0, TSDRV_SQCQ_SIDE_CQ_BIT = 1 };
 
 /* device: 0 host: 1 */
-enum tsdrv_mem_type {
-    TSDRV_MEM_ON_DEVICE_SIDE = 0,
-    TSDRV_MEM_ON_HOST_SIDE = 1
-};
+enum tsdrv_mem_type { TSDRV_MEM_ON_DEVICE_SIDE = 0, TSDRV_MEM_ON_HOST_SIDE = 1 };
 
 struct devdrv_sq_sub_info {
     u32 index;
@@ -808,8 +815,8 @@ struct devdrv_sq_sub_info {
     size_t size;
     u32 depth;
 
-    phys_addr_t vaddr;         /* slot base vaddr */
-    u32 addr_side;             /* slot memory, device: 0 host: 1 */
+    phys_addr_t vaddr; /* slot base vaddr */
+    u32 addr_side;     /* slot memory, device: 0 host: 1 */
 
     unsigned long map_va;
     u32 queue_size;
@@ -819,16 +826,17 @@ struct devdrv_cq_sub_info {
     u32 index;
     ka_list_head_t list_sq;
     struct tsdrv_ctx *ctx; /* should mofity to void * */
-    ka_spinlock_t spinlock; /*
-                          * use for avoid the problem:
-                          * tasklet(devdrv_find_cq_index) may access cq's uio mem,
-                          * there is a delay time, between set cq's uio invalid and accessing cq's uio mem by tasklet.
-                          */
+    ka_spinlock_t
+        spinlock; /*
+                   * use for avoid the problem:
+                   * tasklet(devdrv_find_cq_index) may access cq's uio mem,
+                   * there is a delay time, between set cq's uio invalid and accessing cq's uio mem by tasklet.
+                   */
     phys_addr_t virt_addr;
     phys_addr_t phy_addr;
     phys_addr_t bar_addr;
-    u32 size; // queue size,
-    u32 addr_side;        /* slot memory, device: 0 host: 1 */
+    u32 size;      // queue size,
+    u32 addr_side; /* slot memory, device: 0 host: 1 */
 
     size_t slot_size; //
     u32 depth;
@@ -853,20 +861,20 @@ struct devdrv_client_info {
 #define DEVDRV_INFO_MAP 0
 #define DEVDRV_DOORBELL_MAP 1
 
-#define devdrv_calc_sq_info(addr, index)                                                                            \
-    ({                                                                                                              \
-        struct devdrv_ts_sq_info *sq;                                                                               \
-        sq = (struct devdrv_ts_sq_info *)((uintptr_t)((addr) +                                                        \
+#define devdrv_calc_sq_info(addr, index)                                                                           \
+    ({                                                                                                             \
+        struct devdrv_ts_sq_info *sq;                                                                              \
+        sq = (struct devdrv_ts_sq_info *)((uintptr_t)((addr) +                                                     \
                                                       (unsigned long)sizeof(struct devdrv_ts_sq_info) * (index))); \
-        sq;                                                                                                         \
+        sq;                                                                                                        \
     })
 
-#define devdrv_calc_cq_info(addr, index)                                                                            \
-    ({                                                                                                              \
-        struct devdrv_ts_cq_info *cq;                                                                               \
-        cq = (struct devdrv_ts_cq_info *)((uintptr_t)((addr) + DEVDRV_SQ_INFO_OCCUPY_SIZE +                           \
+#define devdrv_calc_cq_info(addr, index)                                                                           \
+    ({                                                                                                             \
+        struct devdrv_ts_cq_info *cq;                                                                              \
+        cq = (struct devdrv_ts_cq_info *)((uintptr_t)((addr) + DEVDRV_SQ_INFO_OCCUPY_SIZE +                        \
                                                       (unsigned long)sizeof(struct devdrv_ts_cq_info) * (index))); \
-        cq;                                                                                                         \
+        cq;                                                                                                        \
     })
 
 #if defined(CFG_SOC_PLATFORM_CLOUD_V2) || defined(CFG_SOC_PLATFORM_MINIV3)
@@ -890,8 +898,8 @@ struct devdrv_client_info {
 #define devdrv_report_get_sqcq_index(report) ((report)->c & DEVDRV_REPORT_SQCQ_ID)
 #define DEVDRV_REPORT_STREAM_ID 0XFFC0
 #define DEVDRV_REPORT_STREAM_ID_EX 0x40000000
-#define devdrv_report_get_stream_index(report) ((((report)->a & DEVDRV_REPORT_STREAM_ID) >> 6) | \
-    (((report)->c & DEVDRV_REPORT_STREAM_ID_EX) >> 20))
+#define devdrv_report_get_stream_index(report) \
+    ((((report)->a & DEVDRV_REPORT_STREAM_ID) >> 6) | (((report)->c & DEVDRV_REPORT_STREAM_ID_EX) >> 20))
 #define devdrv_report_get_type(report) (((report)->a & DEVDRV_REPORT_TYPE) >> 3)
 #define DEVDRV_REPORT_TASK_ID 0xFFFF0000
 #define devdrv_report_get_task_index(report) (((report)->a & DEVDRV_REPORT_TASK_ID) >> 16)
@@ -901,51 +909,55 @@ struct devdrv_client_info {
 int copy_from_user_safe(void *to, const void __ka_user *from, unsigned long n);
 int copy_to_user_safe(void __ka_user *to, const void *from, unsigned long n);
 
-#define DRV_PRINT_START(args...)    \
-        devdrv_drv_debug("enter %s: %.4d.\n", __func__, __LINE__)
+#define DRV_PRINT_START(args...) devdrv_drv_debug("enter %s: %.4d.\n", __func__, __LINE__)
 
-#define DRV_PRINT_END(args...)      \
-        devdrv_drv_debug("exit %s: %.4d.\n", __func__, __LINE__)
+#define DRV_PRINT_END(args...) devdrv_drv_debug("exit %s: %.4d.\n", __func__, __LINE__)
 
-#define DRV_CHECK_RET(expr, fmt, ...) do {      \
-    if (expr) {                                 \
-        devdrv_drv_err(fmt, ##__VA_ARGS__);     \
-    }                                           \
-} while (0)
+#define DRV_CHECK_RET(expr, fmt, ...)           \
+    do {                                        \
+        if (expr) {                             \
+            devdrv_drv_err(fmt, ##__VA_ARGS__); \
+        }                                       \
+    } while (0)
 
-#define DRV_CHECK_EXP_ACT(expr, action, fmt, ...) do {  \
-    if (expr) {                                         \
-        devdrv_drv_err(fmt, ##__VA_ARGS__);             \
-        action;                                         \
-    }                                                   \
-} while (0)
+#define DRV_CHECK_EXP_ACT(expr, action, fmt, ...) \
+    do {                                          \
+        if (expr) {                               \
+            devdrv_drv_err(fmt, ##__VA_ARGS__);   \
+            action;                               \
+        }                                         \
+    } while (0)
 
-#define DRV_CHECK_EXP_ACT_WARN(expr, action, fmt, ...) do {  \
-    if (expr) {                                              \
-        devdrv_drv_warn(fmt, ##__VA_ARGS__);                 \
-        action;                                              \
-    }                                                        \
-} while (0)
+#define DRV_CHECK_EXP_ACT_WARN(expr, action, fmt, ...) \
+    do {                                               \
+        if (expr) {                                    \
+            devdrv_drv_warn(fmt, ##__VA_ARGS__);       \
+            action;                                    \
+        }                                              \
+    } while (0)
 
-#define DRV_CHECK_EXP_ACT_DBG(expr, action, fmt, ...) do {  \
-    if (expr) {                                             \
-        devdrv_drv_debug(fmt, ##__VA_ARGS__);               \
-        action;                                             \
-    }                                                       \
-} while (0)
+#define DRV_CHECK_EXP_ACT_DBG(expr, action, fmt, ...) \
+    do {                                              \
+        if (expr) {                                   \
+            devdrv_drv_debug(fmt, ##__VA_ARGS__);     \
+            action;                                   \
+        }                                             \
+    } while (0)
 
-#define DRV_CHECK_PTR(p, action, fmt, ...) do { \
-    if ((p) == NULL) {                          \
-        devdrv_drv_err(fmt, ##__VA_ARGS__);     \
-        action;                                 \
-    }                                           \
-} while (0)
+#define DRV_CHECK_PTR(p, action, fmt, ...)      \
+    do {                                        \
+        if ((p) == NULL) {                      \
+            devdrv_drv_err(fmt, ##__VA_ARGS__); \
+            action;                             \
+        }                                       \
+    } while (0)
 
 #define ERROR_NOT_SUPPORT 65534
-#define devdrv_drv_ex_notsupport_err(ret, fmt, ...) do {           \
-    if (((ret) != ERROR_NOT_SUPPORT) && ((ret) != -EOPNOTSUPP)) {  \
-        devdrv_drv_err(fmt, ##__VA_ARGS__);                        \
-    }                                                              \
-} while (0)
+#define devdrv_drv_ex_notsupport_err(ret, fmt, ...)                   \
+    do {                                                              \
+        if (((ret) != ERROR_NOT_SUPPORT) && ((ret) != -EOPNOTSUPP)) { \
+            devdrv_drv_err(fmt, ##__VA_ARGS__);                       \
+        }                                                             \
+    } while (0)
 
 #endif /* __DEVDRV_ID_COMMON_H */

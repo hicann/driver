@@ -13,15 +13,15 @@
 #ifndef TRS_HOST_MSG_H
 #define TRS_HOST_MSG_H
 
-#include <linux/types.h>
+#include "ka_type.h"
 
 #include "trs_pub_def.h"
 #include "trs_msg.h"
 #include "comm_kernel_interface.h"
 
 struct devdrv_non_trans_msg_chan_info *trs_get_msg_chan_info(void);
-int trs_host_msg_chan_recv_check(u32 devid, struct trs_msg_data *data, u32 in_data_len,
-    u32 out_data_len, u32 *real_out_len);
+int trs_host_msg_chan_recv_check(
+    u32 devid, struct trs_msg_data *data, u32 in_data_len, u32 out_data_len, u32 *real_out_len);
 int trs_host_msg_send(u32 devid, void *msg, size_t size);
 int trs_host_msg_init(u32 ts_inst_id);
 void trs_host_msg_uninit(u32 ts_inst_id);

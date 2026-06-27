@@ -7,7 +7,7 @@
  * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
  */
-
+ 
 #ifndef __DCMI_FLASH_INTF_H__
 #define __DCMI_FLASH_INTF_H__
 #include "dcmi_interface_api.h"

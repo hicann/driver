@@ -13,7 +13,7 @@
 #ifndef TRS_SQE_UPDATE_H
 #define TRS_SQE_UPDATE_H
 
-int trs_sqe_update_desc_create(u32 devid, u32 tsid, struct trs_dma_desc_addr_info *addr_info,
-                               struct trs_dma_desc *dma_desc, bool is_src_secure);
+int trs_sqe_update_desc_create(
+    u32 devid, u32 tsid, struct trs_dma_desc_addr_info *addr_info, struct trs_dma_desc *dma_desc, bool is_src_secure);
 
 #endif

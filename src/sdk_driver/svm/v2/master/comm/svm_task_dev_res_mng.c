@@ -19,8 +19,8 @@
 #include "svm_task_dev_res_mng.h"
 #include "ka_base_pub.h"
 
-struct devmm_task_dev_res_node *devmm_task_dev_res_node_create(struct devmm_svm_process *svm_proc,
-    struct svm_id_inst *id_inst)
+struct devmm_task_dev_res_node *devmm_task_dev_res_node_create(
+    struct devmm_svm_process *svm_proc, struct svm_id_inst *id_inst)
 {
     struct devmm_svm_proc_master *master_data = (struct devmm_svm_proc_master *)svm_proc->priv_data;
     struct devmm_task_dev_res_info *info = &master_data->task_dev_res_info;
@@ -40,7 +40,7 @@ struct devmm_task_dev_res_node *devmm_task_dev_res_node_create(struct devmm_svm_
         return NULL;
     }
 
-    node->svm_proc = svm_proc;  /* node->svm_proc's access can ensure int task context, so not get ref */
+    node->svm_proc = svm_proc; /* node->svm_proc's access can ensure int task context, so not get ref */
     node->host_pid = svm_proc->process_id.hostpid;
     node->id_inst = *id_inst;
     node->vm_id = svm_proc->process_id.vm_id;
@@ -75,8 +75,8 @@ static void devmm_task_dev_res_node_subres_recycle(struct devmm_task_dev_res_nod
 
     devmm_convert_nodes_destroy_by_task_release(node, &convert_node_num);
 
-    devmm_drv_debug("Proc release destroy info. (host_pid=%d; convert_node_num=%u)\n",
-        node->host_pid, convert_node_num);
+    devmm_drv_debug(
+        "Proc release destroy info. (host_pid=%d; convert_node_num=%u)\n", node->host_pid, convert_node_num);
 }
 
 void devmm_task_dev_res_node_destroy(struct devmm_task_dev_res_node *node)
@@ -124,7 +124,8 @@ struct devmm_task_dev_res_node *devmm_task_dev_res_node_get_by_task(
     ka_list_head_t *pos = NULL;
 
     ka_task_down_read(&info->rw_sem);
-    ka_list_for_each_safe(pos, n, head) {
+    ka_list_for_each_safe(pos, n, head)
+    {
         tmp = ka_list_entry(pos, struct devmm_task_dev_res_node, task_node);
         if ((tmp->id_inst.devid == id_inst->devid) && (tmp->id_inst.vfid == id_inst->vfid)) {
             int ret = devmm_task_dev_res_node_get(tmp);
@@ -154,7 +155,7 @@ static struct devmm_task_dev_res_node *devmm_del_one_task_dev_res_node(struct de
 
     node = ka_list_last_entry(&info->head, struct devmm_task_dev_res_node, task_node);
     ka_list_del_init(&node->task_node);
-    ret = devmm_task_dev_res_node_get(node);  /* get node ref in lock, or the node will be release */
+    ret = devmm_task_dev_res_node_get(node); /* get node ref in lock, or the node will be release */
     ka_task_up_write(&info->rw_sem);
     if (ret != 0) {
 #ifndef EMU_ST

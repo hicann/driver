@@ -27,5 +27,5 @@ EXTRA_CFLAGS += -I$(DRIVER_SRC_DPA_BASE_DIR)/rmo/command/ioctl
 
 ifneq ($(filter $(PRODUCT), ascend950),)
     EXTRA_CFLAGS += -DCFG_FEATURE_KA_ALLOC_INTERFACE
-    EXTRA_CFLAGS += -I$(TOP_DIR)/ubengine/ssapi/kernelspace/urma/code/kmod/ubcore/include/
+    EXTRA_CFLAGS += -Iinclude/ub/urma
 endif

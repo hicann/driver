@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2025. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -14,7 +14,7 @@
 #ifndef DBI_KERN_H
 #define DBI_KERN_H
 
-#include <linux/types.h>
+#include "ka_type.h"
 
 #include "dbi_def.h"
 
@@ -38,4 +38,3 @@ int svm_enable_ubmem(u32 udevid);
 int svm_enable_assign_gap(u32 udevid);
 
 #endif
-

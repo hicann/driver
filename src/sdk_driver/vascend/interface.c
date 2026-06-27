@@ -11,6 +11,8 @@
  * GNU General Public License for more details.
  */
 
+#include "ka_compiler_pub.h"
+#include "ka_pci_pub.h"
 #include "dvt.h"
 #include "kvmdt.h"
 #include "vfio_ops.h"
@@ -21,32 +23,28 @@
  * Returns:
  * Zero on success, negative error code if failed.
  */
-int hw_dvt_hypervisor_inject_msix(void *__vdavinci, u32 vector)
+int hw_dvt_hypervisor_inject_msix(void *__vdavinci, u32 vector, int irq)
 {
     struct hw_vdavinci *vdavinci = (struct hw_vdavinci *)__vdavinci;
     u16 command, control;
-    int ret;
 
-    if (vdavinci == NULL) {
+    if (ka_unlikely(vdavinci == NULL)) {
         return -EINVAL;
     }
+    if (ka_unlikely(!vdavinci->msix_injection_allowed)) {
+        command = *(u16 *)(&vdavinci_cfg_space(vdavinci)[KA_PCI_COMMAND]);
+        control = *(u16 *)(&vdavinci_cfg_space(vdavinci)[DAVINCI_PCI_MSIX_FLAGS]);
 
-    command = *(u16 *)(&vdavinci_cfg_space(vdavinci)[PCI_COMMAND]);
-	control = *(u16 *)(&vdavinci_cfg_space(vdavinci)[DAVINCI_PCI_MSIX_FLAGS]);
-
-    if (!(command & PCI_COMMAND_INTX_DISABLE) ||
-        !(control & PCI_MSIX_FLAGS_ENABLE) ||
-        (control & PCI_MSIX_FLAGS_MASKALL)) {
-        vascend_info(vdavinci->dvt->vdavinci_priv->dev,
-                     "hw_dvt_hypervisor_inject_msix failed, msix cap flag did't support\n");
-        return -EPERM;
+        if (!(command & KA_PCI_COMMAND_INTX_DISABLE) ||
+            !(control & KA_PCI_MSIX_FLAGS_ENABLE) ||
+            (control & KA_PCI_MSIX_FLAGS_MASKALL)) {
+            vascend_info(vdavinci->dvt->vdavinci_priv->dev, "msix cap flag did't support\n");
+            return -EPERM;
+        }
+        vdavinci->msix_injection_allowed = true;
     }
 
-    ret = g_hw_kvmdt_ops.inject_msix(vdavinci->handle, vector);
-    if (ret)
-        return ret;
-
-    return 0;
+    return g_hw_kvmdt_ops.inject_msix(vdavinci->handle, vector, irq);
 }
 
 /**
@@ -153,7 +151,7 @@ void hw_dvt_hypervisor_dma_pool_uninit(void *__vdavinci)
  */
 int hw_dvt_hypervisor_dma_map_guest_page(void *__vdavinci,
                                          unsigned long gfn, unsigned long size,
-                                         struct sg_table **dma_sgt)
+                                         ka_sg_table_t **dma_sgt)
 {
     struct hw_vdavinci *vdavinci = (struct hw_vdavinci *)__vdavinci;
 
@@ -170,10 +168,10 @@ int hw_dvt_hypervisor_dma_map_guest_page(void *__vdavinci,
  * @dma_sgt: the dma addr list(sg_table)
  */
 void hw_dvt_hypervisor_dma_unmap_guest_page(void *__vdavinci,
-                                            struct sg_table *dma_sgt)
+                                            ka_sg_table_t *dma_sgt)
 {
     if (__vdavinci == NULL || dma_sgt == NULL) {
-        pr_err("vdavinci or dma_sgt is null\n");
+        ka_dfx_pr_err("vdavinci or dma_sgt is null\n");
         return;
     }
 
@@ -263,4 +261,14 @@ int hw_dvt_hypervisor_mmio_get(void **dst, int *size, void *__vdavinci, int bar)
     }
 
     return g_hw_kvmdt_ops.mmio_get(dst, size, __vdavinci, bar);
+}
+
+bool hw_dvt_hypervisor_is_vm_pfn_valid(ka_device_t *dev,
+                                       unsigned long pfn, unsigned long size)
+{
+    if (ka_unlikely(dev == NULL || size == 0)) {
+        return false;
+    }
+
+    return g_hw_kvmdt_ops.is_pfn_valid(dev, pfn, size);
 }

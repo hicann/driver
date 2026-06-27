@@ -39,7 +39,7 @@ struct trs_core_ts_inst {
     struct kref_safe ref;
     int hw_type;
     int status;
-    u32 featur_mode;  /* 0:all; 1:part */
+    u32 featur_mode;      /* 0:all; 1:part */
     u32 support_proc_num; /* 0: The resources used by processes are not limited. */
     struct trs_id_inst inst;
     struct trs_core_adapt_ops ops;
@@ -56,7 +56,7 @@ struct trs_core_ts_inst {
     ka_task_struct_t *sq_task;
     u32 sq_task_flag; /* Write the db_reg before reading it, so sq_task can`t work before receiving sq_trigger irq */
     ka_atomic_t ctx_num;
-    ka_list_head_t proc_list_head; /* tsid 0 use */
+    ka_list_head_t proc_list_head;      /* tsid 0 use */
     ka_list_head_t exit_proc_list_head; /* tsid 0 use */
     struct trs_res_mng res_mng[TRS_CORE_MAX_ID_TYPE];
     struct trs_stream_ctx *stream_ctx;
@@ -89,10 +89,7 @@ static inline struct trs_core_ts_inst *trs_core_inst_get(u32 devid, u32 tsid)
     return trs_core_ts_inst_get(&inst);
 }
 
-static inline void trs_core_inst_put(struct trs_core_ts_inst *ts_inst)
-{
-    trs_core_ts_inst_put(ts_inst);
-}
+static inline void trs_core_inst_put(struct trs_core_ts_inst *ts_inst) { trs_core_ts_inst_put(ts_inst); }
 
 #define TSFW_ERR_QUEUE_FULL 0x80
 static inline int trs_core_notice_ts(struct trs_core_ts_inst *ts_inst, u8 *msg, u32 len)
@@ -103,23 +100,22 @@ static inline int trs_core_notice_ts(struct trs_core_ts_inst *ts_inst, u8 *msg, 
         return ret;
     }
 
-    if (((ret != 0) || (header->result != 0)) &&
-        (header->cmd_type != TRS_MBOX_RECYCLE_CHECK) && (header->cmd_type != TRS_MBOX_RECYCLE_PID)) {
-        trs_err("Ts resp failed. (devid=%u; tsid=%u; cmd_type=%u; ret=%d; result=%u)\n",
-            ts_inst->inst.devid, ts_inst->inst.tsid, header->cmd_type, ret, header->result);
+    if (((ret != 0) || (header->result != 0)) && (header->cmd_type != TRS_MBOX_RECYCLE_CHECK) &&
+        (header->cmd_type != TRS_MBOX_RECYCLE_PID)) {
+        trs_err(
+            "Ts resp failed. (devid=%u; tsid=%u; cmd_type=%u; ret=%d; result=%u)\n", ts_inst->inst.devid,
+            ts_inst->inst.tsid, header->cmd_type, ret, header->result);
     }
 
-    if ((ret == 0) && (header->result == TSFW_ERR_QUEUE_FULL) && (header->cmd_type == TRS_MBOX_RECYCLE_PID)) {
+    if (((ret == 0) && (header->result == TSFW_ERR_QUEUE_FULL) && (header->cmd_type == TRS_MBOX_RECYCLE_PID)) ||
+        ((ret == -ENOSYS) && (header->cmd_type == TRS_MBOX_RECYCLE_PID))) {
         return -EBUSY;
     }
 
     return ((ret == 0) && (header->result == 0)) ? 0 : -EFAULT;
 }
 
-static inline bool trs_core_trace_is_enabled(struct trs_core_ts_inst *ts_inst)
-{
-    return ts_inst->trace_enable;
-}
+static inline bool trs_core_trace_is_enabled(struct trs_core_ts_inst *ts_inst) { return ts_inst->trace_enable; }
 
 bool trs_still_has_proc(struct trs_core_ts_inst *ts_inst, u32 check_level);
 
@@ -129,4 +125,3 @@ void trs_core_inst_uninit(void);
 int trs_core_get_host_pid(int cur_pid, int *host_pid);
 
 #endif
-

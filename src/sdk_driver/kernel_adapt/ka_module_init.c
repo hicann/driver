@@ -15,6 +15,7 @@
 
 #include <linux/module.h>
 #include <linux/version.h>
+#include "ka_mem.h"
 #include "kernel_adapt_init.h"
 
 #if LINUX_VERSION_CODE > KERNEL_VERSION(4, 19, 25)
@@ -23,6 +24,8 @@ STATIC int __init ka_module_init(void)
 STATIC int ka_module_init(void)
 #endif
 {
+    (void)ka_mm_ram_record_init();
+
     return 0;
 }
 
@@ -33,6 +36,7 @@ STATIC void __exit ka_module_exit(void)
 STATIC void ka_module_exit(void)
 #endif
 {
+    ka_mm_ram_record_uninit();
 }
 module_init(ka_module_init);
 module_exit(ka_module_exit);

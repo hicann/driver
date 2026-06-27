@@ -76,8 +76,7 @@ void multi_rbtree_erase(ka_rb_root_t *root, struct multi_rb_node *node)
 
 static inline struct multi_rb_node *multi_rbtree_get_with_list(struct multi_rb_node *node)
 {
-    return (ka_list_empty(&node->list) == 1) ? node :
-        ka_base_rb_entry(node->list.prev, struct multi_rb_node, list);
+    return (ka_list_empty(&node->list) == 1) ? node : ka_base_rb_entry(node->list.prev, struct multi_rb_node, list);
 }
 
 static ka_rb_node_t *rbtree_get(ka_rb_root_t *root, u64 key)

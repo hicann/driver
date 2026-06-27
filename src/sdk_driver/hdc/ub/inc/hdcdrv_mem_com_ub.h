@@ -20,8 +20,8 @@
 
 enum hdcdrv_mem_pool_state {
     HDCDRV_MEM_POOL_DISABLE = 0, //  pool can not be used
-    HDCDRV_MEM_POOL_IDLE = 1,   //  pool is not used
-    HDCDRV_MEM_POOL_BUSY = 2,   //  pool is in use
+    HDCDRV_MEM_POOL_IDLE = 1,    //  pool is not used
+    HDCDRV_MEM_POOL_BUSY = 2,    //  pool is in use
 };
 
 #define HDCDRV_MEM_POOL_BLOCK_NUM 16
@@ -33,7 +33,7 @@ enum hdcdrv_mem_pool_state {
 
 struct hdcdrv_mem_pool {
     ka_page_t *page;
-    unsigned long long va;      // user va, mmap from user
+    unsigned long long va; // user va, mmap from user
     unsigned long long pid;
     ka_pid_t vnr;
 };
@@ -52,8 +52,8 @@ int hdcdrv_unmap_mem_pool_va(const void *ctx, struct hdcdrv_mem_pool *mem_pool, 
 // used for emu_st
 #ifdef EMU_ST
 ka_vm_area_struct_t *hdc_find_vma_from_stub(ka_mm_struct_t *mm, unsigned long addr);
-int hdc_remap_pfn_range_stub(ka_vm_area_struct_t *vma, unsigned long from, unsigned long pfn,
-    unsigned long size, ka_pgprot_t prot);
+int hdc_remap_pfn_range_stub(ka_vm_area_struct_t *vma, unsigned long from, unsigned long pfn, unsigned long size,
+                             ka_pgprot_t prot);
 #endif
 
 #endif // _HDCDRV_MEM_COM_H_

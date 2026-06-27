@@ -3,6 +3,7 @@
 ## 🚀概述
 
 RoCE（RDMA over Converged Ethernet）基于[rdma-core](https://github.com/linux-rdma/rdma-core)开源框架实现的主要定制功能介绍：
+
 - 控制面封装对应类verbs的lite接口，将Device内存映射到Host内存，支持在Host侧重建对应的上下文。
 - 数据面封装对应类verbs的lite接口，可以基于重建的上下文直接在Host侧下发数据面操作，提升WR（Work Request）下发及轮询CQ（Complete Queue）的性能。
 

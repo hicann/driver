@@ -16,6 +16,7 @@
 #include "msg_chan_main.h"
 
 struct devdrv_comm_dev_ops g_comm_ops[DEVDRV_COMMNS_TYPE_MAX];
+struct devdrv_faultmgr_dev_ops g_faultmgr_ops;
 struct devdrv_msg_client g_client_info;
 
 struct devdrv_comm_dev_ops *devdrv_get_comm_ops_ctrl(enum devdrv_communication_type type)
@@ -53,8 +54,7 @@ int devdrv_check_dev_manager_api_proc(struct devdrv_comm_ops *ops)
         devdrv_err("Invalid ops, set msg chan priv is null. (type=%u)\n", ops->comm_type);
         return -EINVAL;
     }
-    if ((ops->get_pfvf_type_by_devid == NULL) || (ops->mdev_vm_boot_mode == NULL) ||
-        (ops->sriov_support == NULL)) {
+    if ((ops->get_pfvf_type_by_devid == NULL) || (ops->mdev_vm_boot_mode == NULL) || (ops->sriov_support == NULL)) {
         devdrv_err("Invalid ops, pfvf or sriov is null. (type=%u)\n", ops->comm_type);
         return -EINVAL;
     }
@@ -129,14 +129,14 @@ void devdrv_unregister_communication_ops(struct devdrv_comm_ops *ops)
     type = ops->comm_type;
 
     for (i = 0; i < COMMU_WAIT_MAX_CNT; ++i) {
-        if (ka_base_atomic_read(&ops->ref_cnt) == 0) {
+        if (ka_base_atomic_read(&g_comm_ops[type].ops.ref_cnt) == 0) {
             break;
         }
         ka_system_usleep_range(COMMU_WAIT_PER_TIME, COMMU_WAIT_PER_TIME);
     }
     if (i == COMMU_WAIT_MAX_CNT) {
         devdrv_info("Ops will force to unregister. (ref_cnt=%u; type=%u)\n",
-            ka_base_atomic_read(&ops->ref_cnt), type);
+                    ka_base_atomic_read(&g_comm_ops[type].ops.ref_cnt), type);
     }
     ka_task_write_lock_irqsave(&g_comm_ops[type].rwlock, flags);
     g_comm_ops[type].status = DEVDRV_COMM_OPS_TYPE_UNINIT;
@@ -157,7 +157,7 @@ void devdrv_register_save_client_info_proc(struct devdrv_comm_dev_ops *dev_ops)
             continue;
         }
         ret = dev_ops->ops.register_common_msg_client(g_client_info.comm[i]);
-        if (ret !=0) {
+        if (ret != 0) {
             devdrv_err("Ops register common client failed. (type=%u)\n", g_client_info.comm[i]->type);
         }
     }
@@ -242,7 +242,7 @@ struct devdrv_comm_dev_ops *devdrv_add_ops_ref()
         }
     }
     devdrv_info("Ops status list. (type=%u;status=%u;type=%u;status=%u)\n", DEVDRV_COMMNS_PCIE,
-        g_comm_ops[DEVDRV_COMMNS_PCIE].status, DEVDRV_COMMNS_UB, g_comm_ops[DEVDRV_COMMNS_UB].status);
+                g_comm_ops[DEVDRV_COMMNS_PCIE].status, DEVDRV_COMMNS_UB, g_comm_ops[DEVDRV_COMMNS_UB].status);
     return NULL;
 }
 struct devdrv_comm_dev_ops *devdrv_add_ops_ref_after_unbind()
@@ -253,8 +253,7 @@ struct devdrv_comm_dev_ops *devdrv_add_ops_ref_after_unbind()
     for (i = 0; i < DEVDRV_COMMNS_TYPE_MAX; i++) {
         dev_ops = &g_comm_ops[i];
         ka_task_read_lock(&dev_ops->rwlock);
-        if ((dev_ops->status != DEVDRV_COMM_OPS_TYPE_ENABLE)
-            && (dev_ops->status != DEVDRV_COMM_OPS_TYPE_DISABLE)) {
+        if ((dev_ops->status != DEVDRV_COMM_OPS_TYPE_ENABLE) && (dev_ops->status != DEVDRV_COMM_OPS_TYPE_DISABLE)) {
             ka_task_read_unlock(&dev_ops->rwlock);
             continue;
         } else {
@@ -264,7 +263,7 @@ struct devdrv_comm_dev_ops *devdrv_add_ops_ref_after_unbind()
         }
     }
     devdrv_info("Ops status list. (type=%u;status=%u;type=%u;status=%u)\n", DEVDRV_COMMNS_PCIE,
-        g_comm_ops[DEVDRV_COMMNS_PCIE].status, DEVDRV_COMMNS_UB, g_comm_ops[DEVDRV_COMMNS_UB].status);
+                g_comm_ops[DEVDRV_COMMNS_PCIE].status, DEVDRV_COMMNS_UB, g_comm_ops[DEVDRV_COMMNS_UB].status);
     return NULL;
 }
 struct devdrv_comm_dev_ops *devdrv_add_ops_ref_by_type(u32 type)
@@ -318,6 +317,71 @@ void devdrv_sub_ops_ref(struct devdrv_comm_dev_ops *dev_ops)
 }
 
 void devdrv_sub_ops_ref_by_type(struct devdrv_comm_dev_ops *dev_ops)
+{
+    ka_base_atomic_sub(1, &dev_ops->ops.ref_cnt);
+}
+
+int devdrv_register_faultmgr_ops(struct devdrv_faultmgr_ops *ops)
+{
+    if (ops == NULL) {
+        devdrv_err("Invalid ops, ops is null.\n");
+        return -EINVAL;
+    }
+
+    ka_task_write_lock(&g_faultmgr_ops.rwlock);
+    (void)memcpy_s(&g_faultmgr_ops.ops, sizeof(g_faultmgr_ops.ops), ops, sizeof(*ops));
+    g_faultmgr_ops.status = DEVDRV_COMM_OPS_TYPE_ENABLE;
+    ka_base_atomic_set(&g_faultmgr_ops.ops.ref_cnt, 0);
+    ka_task_write_unlock(&g_faultmgr_ops.rwlock);
+    devdrv_info("Faultmgr ops register success.\n");
+    return 0;
+}
+KA_EXPORT_SYMBOL(devdrv_register_faultmgr_ops);
+
+void devdrv_unregister_faultmgr_ops(void)
+{
+    size_t len = sizeof(struct devdrv_faultmgr_ops);
+    int i;
+
+    for (i = 0; i < COMMU_WAIT_MAX_CNT; ++i) {
+        if (ka_base_atomic_read(&g_faultmgr_ops.ops.ref_cnt) == 0) {
+            break;
+        }
+        ka_system_usleep_range(COMMU_WAIT_PER_TIME, COMMU_WAIT_PER_TIME);
+    }
+    if (i == COMMU_WAIT_MAX_CNT) {
+        devdrv_info("Faultmgr ops will force to unregister. (ref_cnt=%u)\n",
+                    ka_base_atomic_read(&g_faultmgr_ops.ops.ref_cnt));
+    }
+    ka_task_write_lock(&g_faultmgr_ops.rwlock);
+    g_faultmgr_ops.status = DEVDRV_COMM_OPS_TYPE_UNINIT;
+    (void)memset_s(&g_faultmgr_ops.ops, len, 0, len);
+    ka_task_write_unlock(&g_faultmgr_ops.rwlock);
+    devdrv_info("Faultmgr ops unregister success.\n");
+}
+KA_EXPORT_SYMBOL(devdrv_unregister_faultmgr_ops);
+
+struct devdrv_faultmgr_dev_ops *devdrv_get_faultmgr_ops(void)
+{
+    return &g_faultmgr_ops;
+}
+
+struct devdrv_faultmgr_dev_ops *devdrv_add_faultmgr_ops_ref(void)
+{
+    struct devdrv_faultmgr_dev_ops *dev_ops = &g_faultmgr_ops;
+
+    ka_task_read_lock(&dev_ops->rwlock);
+    if (dev_ops->status != DEVDRV_COMM_OPS_TYPE_ENABLE) {
+        ka_task_read_unlock(&dev_ops->rwlock);
+        devdrv_info("Ops status list. (status=%u)\n", dev_ops->status);
+        return NULL;
+    }
+    ka_base_atomic_add(1, &dev_ops->ops.ref_cnt);
+    ka_task_read_unlock(&dev_ops->rwlock);
+    return dev_ops;
+}
+
+void devdrv_sub_faultmgr_ops_ref(struct devdrv_faultmgr_dev_ops *dev_ops)
 {
     ka_base_atomic_sub(1, &dev_ops->ops.ref_cnt);
 }

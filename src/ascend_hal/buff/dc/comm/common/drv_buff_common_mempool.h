@@ -55,11 +55,11 @@ struct mempool_t {
     uint32 blk_num;
     uint32 blk_available;
     uint32 blk_size;
-    uint32 align_size;  /* buff + blk_size + align_size: uni_tail */
+    uint32 align_size; /* buff + blk_size + align_size: uni_tail */
     uint32 curr_index;
     uint32 free_index;
     uint32 bit_num;
-    pid_t  owner;
+    pid_t owner;
     uint32_t blk_id;
     void *blk_start;
     uint64 blk_total_len;

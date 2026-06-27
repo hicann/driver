@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * Copyright (c) 2026 Huawei Technologies Co., Ltd.
  * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -21,8 +21,6 @@
 
 #include "ascend_urma_log.h"
 #include "ascend_urma_dev.h"
-
-#define ASCEND_MAX_URMA_DEV_NAME_LEN       DMS_URMA_NAME_MAX_LEN
 
 static urma_device_t *ascend_urma_get_device_when_hd_ub_conn(u32 devid, u32 *eid_index)
 {
@@ -49,7 +47,7 @@ static urma_device_t *ascend_urma_get_device_when_hd_others_conn(u32 devid, u32 
 
     urma_dev_list = urma_get_device_list(&num_devices);
     if (urma_dev_list == NULL) {
-        ascend_urma_info("urma_get_device_list failed.\n");
+        ascend_urma_info("Get null urma_device_list notice.\n");
         return NULL;
     }
 
@@ -86,8 +84,55 @@ urma_device_t *ascend_urma_get_device(u32 devid, u32 *eid_index)
     }
 }
 
+int ascend_urma_get_urma_dev_name(uint32_t devid, char *name, uint32_t *size)
+{
+    urma_device_t *urma_dev = NULL;
+    u32 urma_dev_name_size = 0;
+    u32 eid_index = UINT32_MAX;
+    int ret;
+
+    urma_dev = ascend_urma_get_device(devid, &eid_index);
+    if (urma_dev == NULL) {
+        ascend_urma_err("ascend_urma_get_device get device failed, urma_dev is NULL. (devid=%u)\n", devid);
+        return DRV_ERROR_INVALID_VALUE;
+    }
+
+    urma_dev_name_size = (u32)strnlen(urma_dev->name, URMA_MAX_NAME);
+    if ((name == NULL) || (size == NULL) || (*size < urma_dev_name_size + 1)) {
+        ascend_urma_err("Input params is invalid. (devid=%u; name_is_null=%d; size_is_null=%d; size=%u; name_len=%u)\n",
+            devid, name == NULL, size == NULL, size == NULL ? 0 : *size, urma_dev_name_size);
+        return DRV_ERROR_INVALID_VALUE;
+    }
+
+    ret = strncpy_s(name, *size, urma_dev->name, urma_dev_name_size);
+    if(ret != 0) {
+        ascend_urma_err("strncpy_s failed. (devid=%u; ret=%d)\n", devid, ret);
+        return ret;
+    }
+
+    *size = urma_dev_name_size;
+
+    return DRV_ERROR_NONE;
+}
+
+static bool svm_is_dev_inited(u32 devid)
+{
+    drvStatus_t device_status = DRV_STATUS_INITING;
+    int ret;
+
+    ret = drvDeviceStatus(devid, &device_status);
+    if (ret != DRV_ERROR_NONE) {
+        return false;
+    }
+
+    return (device_status == DRV_STATUS_WORK);
+}
+
 bool ascend_urma_dev_is_exist(uint32_t devid)
 {
     u32 eid_index;
-    return (ascend_urma_get_device(devid, &eid_index) != NULL);
+    if (ascend_urma_get_device(devid, &eid_index) == NULL) {
+        return false;
+    }
+    return svm_is_dev_inited(devid);
 }

@@ -13,6 +13,7 @@
 
 #ifndef KA_MODULE_INIT_H
 #define KA_MODULE_INIT_H
+#include "ka_task_pub.h"
 #include "dmc_kernel_interface.h"
 
 #ifdef STATIC_SKIP
@@ -24,17 +25,17 @@
 #define module_ka "kernel_adapt"
 
 #define ka_err(fmt, ...) drv_err(module_ka, \
-    "<%s:%d:%d> " fmt, current->comm, current->tgid, current->pid, ##__VA_ARGS__)
+    "<%s:%d:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), ka_task_get_current_pid(), ##__VA_ARGS__)
 #define ka_warn(fmt, ...) drv_warn(module_ka, \
-    "<%s:%d:%d> " fmt, current->comm, current->tgid, current->pid, ##__VA_ARGS__)
+    "<%s:%d:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), ka_task_get_current_pid(), ##__VA_ARGS__)
 #define ka_info(fmt, ...) drv_info(module_ka, \
-    "<%s:%d:%d> " fmt, current->comm, current->tgid, current->pid, ##__VA_ARGS__)
+    "<%s:%d:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), ka_task_get_current_pid(), ##__VA_ARGS__)
 #define ka_event(fmt, ...) drv_event(module_ka, \
-    "<%s:%d:%d> " fmt, current->comm, current->tgid, current->pid, ##__VA_ARGS__)
+    "<%s:%d:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), ka_task_get_current_pid(), ##__VA_ARGS__)
 #define ka_debug(fmt, ...) drv_pr_debug(module_ka, \
-    "<%s:%d:%d> " fmt, current->comm, current->tgid, current->pid, ##__VA_ARGS__)
+    "<%s:%d:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), ka_task_get_current_pid(), ##__VA_ARGS__)
 
-int ka_module_init(void);
-void ka_module_exit(void);
+int ka_mem_ops_module_init(void);
+void ka_mem_ops_module_exit(void);
 
 #endif

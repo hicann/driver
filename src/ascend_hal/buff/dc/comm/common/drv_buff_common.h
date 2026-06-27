@@ -31,13 +31,9 @@
 #include "atomic_lock.h"
 #include "drv_buff_log.h"
 
-#ifdef CFG_FEATURE_SYSLOG
-#else
 #ifndef EMU_ST
 #else
 #include "ascend_inpackage_hal.h"
-#include "ut_log.h"
-#endif
 #endif
 
 #define PRINT printf
@@ -65,7 +61,7 @@ typedef unsigned long long uint64;
 #ifdef EMU_ST
 #define STATIC
 #else
-#define STATIC                     static
+#define STATIC static
 #endif
 
 #ifndef NULL
@@ -117,16 +113,16 @@ typedef unsigned long long uint64;
 #define BUFF_MIN_DEV 0
 #define BUFF_INVALID_DEV 0xFF
 
-#define BUFF_MAX_RECORD_NUM        (8 * 1024)
-#define BUFF_MIN_RECORD_NUM        (256)
-#define BUFF_TRY_LOCK_FAIL         (0)
+#define BUFF_MAX_RECORD_NUM (8 * 1024)
+#define BUFF_MIN_RECORD_NUM (256)
+#define BUFF_TRY_LOCK_FAIL (0)
 
 #define BUFF_VALID 1
 #define BUFF_INVALID 0
 
 #define BUFF_GRP_ID_DIRECT (-1)
 #define BUFF_GRP_ALLOC_DEFAULT 0
-#define BUFF_GRP_ID_MIN  1
+#define BUFF_GRP_ID_MIN 1
 
 #define ULONG_MAX 0xffffffffffffffff
 
@@ -159,21 +155,21 @@ struct buff_req_mp_destroy {
 };
 
 struct buff_req_mp_create {
-    uint64 mp_uva;              /* output mp handle */
+    uint64 mp_uva; /* output mp handle */
     uint64 total_size;
     void *start;
     int devid;
     int groupid;
     uint32 obj_size;
     uint32 obj_num;
-    uint32 align;          /* must be power of 2 */
+    uint32 align; /* must be power of 2 */
     uint32 type;
     uint64 sp_flag;
     char pool_name[BUFF_POOL_NAME_LEN];
 };
 
 struct buff_req_mz_create {
-    uint64_t mz_uva;  /* output */
+    uint64_t mz_uva; /* output */
     uint64_t total_size;
     void *start;
     int devid;
@@ -187,7 +183,7 @@ struct buff_req_mz_create {
 };
 
 struct buff_req_mz_alloc_huge_buf {
-    uint64_t buf_uva;            /* output uva */
+    uint64_t buf_uva; /* output uva */
     uint64_t size;
     uint32_t blk_id;
 
@@ -228,8 +224,8 @@ union buff_req_arg {
     struct buff_req_mz_create mz_create_arg;
     struct buff_req_mz_alloc_huge_buf mz_alloc_huge_buf_arg;
     struct buff_req_mz_free_huge_buf mz_free_huge_buf_arg;
-    struct buff_req_mz_delete    mz_delete_arg;
-    struct buff_req_mp_create  mp_create_arg;
+    struct buff_req_mz_delete mz_delete_arg;
+    struct buff_req_mp_create mp_create_arg;
     struct buff_req_mp_destroy mp_destroy_arg;
     struct buff_req_pid_add_group pid_add_group;
     struct buff_req_get_process_uni_id uni_id_arg;
@@ -292,23 +288,23 @@ MBUF_MUTEX_ASSERT((sizeof(char[MBUF_MUTEX_LEN]) > sizeof(struct atomic_lock)), "
 #define __user_addr
 #define __kernel_addr
 
-#define BUFF_BUG_ON(cond)  do { \
-    if (cond) PRINT("###BUG ON:%s, file:%s, line:%u\n", #cond, __FILE__, __LINE__); \
-} while (0)
+#define BUFF_BUG_ON(cond)                                                         \
+    do {                                                                          \
+        if (cond)                                                                 \
+            PRINT("###BUG ON:%s, file:%s, line:%u\n", #cond, __FILE__, __LINE__); \
+    } while (0)
 
 #ifndef ALIGN_DOWN
-#define ALIGN_DOWN(val, align) \
-    ((val) & (~((typeof(val))((align) - 1))))
+#define ALIGN_DOWN(val, align) ((val) & (~((typeof(val))((align) - 1))))
 #endif
 
 #ifndef ALIGN_UP
-#define ALIGN_UP(val, align) \
-    (((val) + ((typeof(val)) (align) - 1)) & (~((typeof(val))((align) - 1))))
+#define ALIGN_UP(val, align) (((val) + ((typeof(val))(align) - 1)) & (~((typeof(val))((align) - 1))))
 #endif
 
-#define BITS_PER_BYTE       8
-#define BITS_PER_LONG       (BITS_PER_BYTE * (int)sizeof(long))
-#define BITS_TO_LONGS(nr)   (ALIGN_UP(nr, BITS_PER_LONG) / BITS_PER_LONG)
+#define BITS_PER_BYTE 8
+#define BITS_PER_LONG (BITS_PER_BYTE * (int)sizeof(long))
+#define BITS_TO_LONGS(nr) (ALIGN_UP(nr, BITS_PER_LONG) / BITS_PER_LONG)
 
 static inline size_t bitmap_size(unsigned int bits)
 {
@@ -316,17 +312,17 @@ static inline size_t bitmap_size(unsigned int bits)
     return (size_t)(sizeof(bitmap_t) * (size_t)BITS_TO_LONGS(bits));
     /*lint +e502 +e502*/
 }
-#define BIT_WORD(nr)        ((nr) / BITS_PER_LONG)
+#define BIT_WORD(nr) ((nr) / BITS_PER_LONG)
 
 #ifdef DRV_BUFF_MODULE_UT
 #define BUFF_GET_CUR_SYSTEM_COUNTER(cnt) (cnt = 1000000)
 #define BUFF_GET_SYSTEM_FREQ(cnt) (cnt = 1000000)
 #else
 #define BUFF_GET_CUR_SYSTEM_COUNTER(cnt) asm volatile("mrs %0, CNTVCT_EL0" : "=r"(cnt) :)
-#define BUFF_GET_SYSTEM_FREQ(cnt) asm volatile("mrs %0, CNTFRQ_EL0"  : "=r" (cnt) :)
+#define BUFF_GET_SYSTEM_FREQ(cnt) asm volatile("mrs %0, CNTFRQ_EL0" : "=r"(cnt) :)
 #endif
-#define BUFF_FREQ_2_MILLISEC    1000
-#define BUFF_FREQ_2_MICROSEC    (1000 * 1000)
+#define BUFF_FREQ_2_MILLISEC 1000
+#define BUFF_FREQ_2_MICROSEC (1000 * 1000)
 #define USEC_PER_SEC 1000000
 #ifndef NSEC_PER_USEC
 #define NSEC_PER_USEC 1000

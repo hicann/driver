@@ -34,10 +34,8 @@ static bool esched_drv_is_used_host_pid(u32 event_id, u32 topic_type)
 
     /* For AICPU or DATACPU tasks, [Host CTRLCPU PID] is used.
        For tasks with other types of CPUs, fills the dest_pid directly. */
-    if ((topic_type == TOPIC_TYPE_AICPU_DEVICE_ONLY) ||
-        (topic_type == TOPIC_TYPE_AICPU_DEVICE_FIRST) ||
-        (topic_type == TOPIC_TYPE_AICPU_HOST_ONLY) ||
-        (topic_type == TOPIC_TYPE_AICPU_HOST_FIRST) ||
+    if ((topic_type == TOPIC_TYPE_AICPU_DEVICE_ONLY) || (topic_type == TOPIC_TYPE_AICPU_DEVICE_FIRST) ||
+        (topic_type == TOPIC_TYPE_AICPU_HOST_ONLY) || (topic_type == TOPIC_TYPE_AICPU_HOST_FIRST) ||
         (topic_type == TOPIC_TYPE_DCPU_DEVICE)) {
         return true;
     }
@@ -79,8 +77,8 @@ STATIC bool esched_is_proc_mapped(u32 chip_id, int pid, u32 dst_engine)
 }
 #endif
 
-static inline void esched_drv_check_fill_sqe_dst_pid(u32 chip_id, u32 *host_pid,
-    enum devdrv_process_type cp_type, struct sched_published_event_info *event_info)
+static inline void esched_drv_check_fill_sqe_dst_pid(u32 chip_id, u32 *host_pid, enum devdrv_process_type cp_type,
+                                                     struct sched_published_event_info *event_info)
 {
     bool is_pid_map = true;
 
@@ -133,15 +131,15 @@ STATIC int esched_set_sqe_pid(u32 chip_id, u32 target_pid, struct topic_sched_sq
 static int esched_sqe_user_data_append(struct topic_sched_sqe *sqe, u16 value)
 {
     if ((sqe->user_data_len + sizeof(value)) > sizeof(sqe->user_data)) {
-        sched_err("Out of len. (topic_id=%u; subtopic_id=%u; pid=%d; user_data_len=%d)\n",
-            sqe->topic_id, sqe->subtopic_id, sqe->pid, sqe->user_data_len);
+        sched_err("Out of len. (topic_id=%u; subtopic_id=%u; pid=%d; user_data_len=%d)\n", sqe->topic_id,
+                  sqe->subtopic_id, sqe->pid, sqe->user_data_len);
         return -EFAULT;
     }
 
     if ((sqe->user_data_len % sizeof(value)) != 0) {
 #ifndef EMU_ST
-        sched_err("User data len not align. (topic_id=%u; subtopic_id=%u; pid=%d; user_data_len=%d)\n",
-            sqe->topic_id, sqe->subtopic_id, sqe->pid, sqe->user_data_len);
+        sched_err("User data len not align. (topic_id=%u; subtopic_id=%u; pid=%d; user_data_len=%d)\n", sqe->topic_id,
+                  sqe->subtopic_id, sqe->pid, sqe->user_data_len);
         return -EFAULT;
 #endif
     }
@@ -188,8 +186,8 @@ static int esched_mb_user_data_subtract(struct topic_sched_mailbox *mb, u16 size
 
     if (mb->user_data_len < size) {
 #ifndef EMU_ST
-        sched_err("No more space. (topic_id=%u; subtopic_id=%u; pid=%d; user_data_len=%d; size=%u)\n",
-            mb->topic_id, mb->subtopic_id, mb->pid, mb->user_data_len, size);
+        sched_err("No more space. (topic_id=%u; subtopic_id=%u; pid=%d; user_data_len=%d; size=%u)\n", mb->topic_id,
+                  mb->subtopic_id, mb->pid, mb->user_data_len, size);
         return -EFAULT;
 #endif
     }
@@ -268,8 +266,8 @@ int esched_drv_map_host_dev_pid(struct sched_proc_ctx *proc_ctx, u32 identity)
     proc_ctx->host_pid = pids_info.host_pids[0];
     proc_ctx->cp_type = pids_info.cp_type[0];
 
-    sched_info("Show details. (pid=%d; dev_id=%u; vfid=%u; cp_type=%d; host_pid=%d)\n",
-               proc_ctx->pid, pids_info.chip_id[0], pids_info.vfid[0], (int)(proc_ctx->cp_type), proc_ctx->host_pid);
+    sched_info("Show details. (pid=%d; dev_id=%u; vfid=%u; cp_type=%d; host_pid=%d)\n", proc_ctx->pid,
+               pids_info.chip_id[0], pids_info.vfid[0], (int)(proc_ctx->cp_type), proc_ctx->host_pid);
 
 #ifndef CFG_FEATURE_MIA_MAP_TOPIC_TABLE
     if (identity != 0) {
@@ -308,7 +306,7 @@ void esched_drv_unmap_host_dev_pid(struct sched_proc_ctx *proc_ctx, u32 identity
 }
 
 int esched_drv_fill_sqe(u32 chip_id, u32 event_src, struct topic_sched_sqe *sqe,
-    struct sched_published_event_info *event_info, bool wait_thread_check)
+                        struct sched_published_event_info *event_info, bool wait_thread_check)
 {
     u32 host_pid, target_pid;
     int ret;
@@ -318,16 +316,16 @@ int esched_drv_fill_sqe(u32 chip_id, u32 event_src, struct topic_sched_sqe *sqe,
     sqe->blk_dim = 1;
 
     if (event_info->event_id == EVENT_SPLIT_KERNEL) {
-        sqe->block_id = 1;         /* split task only, no use. */
+        sqe->block_id = 1; /* split task only, no use. */
     }
     sqe->kernel_type = TOPIC_SCHED_DEFAULT_KERNEL_TYPE;
-    sqe->batch_mode = 0;           /* no use. */
+    sqe->batch_mode = 0; /* no use. */
 
     sqe->topic_type = esched_drv_get_topic_type(event_info->policy, event_info->dst_engine);
 #ifdef CFG_SOC_PLATFORM_MINIV3
     if ((sqe->topic_type == TOPIC_TYPE_AICPU_HOST_ONLY) || (sqe->topic_type == TOPIC_TYPE_AICPU_HOST_FIRST)) {
-        sched_err("topic type is invalid. (pid=%d; gid=%u; eventid=%u; policy=%u; topic_type=%u)\n",
-            event_info->pid, event_info->gid, event_info->event_id, event_info->policy, event_info->dst_engine);
+        sched_err("topic type is invalid. (pid=%d; gid=%u; eventid=%u; policy=%u; topic_type=%u)\n", event_info->pid,
+                  event_info->gid, event_info->event_id, event_info->policy, event_info->dst_engine);
         return DRV_ERROR_NOT_SUPPORT;
     }
 #endif
@@ -343,8 +341,8 @@ int esched_drv_fill_sqe(u32 chip_id, u32 event_src, struct topic_sched_sqe *sqe,
 
     ret = esched_drv_fill_sqe_qos(chip_id, event_info, sqe, wait_thread_check);
     if (ret != 0) {
-        sched_err("Failed to fill qos. (pid=%d; gid=%u; eventid=%u; ret=%d)\n",
-            event_info->pid, event_info->gid, event_info->event_id, ret);
+        sched_err("Failed to fill qos. (pid=%d; gid=%u; eventid=%u; ret=%d)\n", event_info->pid, event_info->gid,
+                  event_info->event_id, ret);
         return ret;
     }
 
@@ -355,8 +353,8 @@ int esched_drv_fill_sqe(u32 chip_id, u32 event_src, struct topic_sched_sqe *sqe,
         /* query host app pid by cp pid */
         ret = devdrv_query_master_pid_by_device_slave(chip_id, event_info->pid, &host_pid);
         if (ret == 0) {
-            sched_debug("Query master pid success. (pid=%d; host_pid=%u; current_pid=%d)\n",
-                event_info->pid, host_pid, ka_task_get_current()->tgid);
+            sched_debug("Query master pid success. (pid=%d; host_pid=%u; current_pid=%d)\n", event_info->pid, host_pid,
+                        ka_task_get_current()->tgid);
         }
 #else
         int cp_type;
@@ -393,7 +391,7 @@ int esched_drv_fill_sqe(u32 chip_id, u32 event_src, struct topic_sched_sqe *sqe,
 }
 
 int esched_drv_fill_split_task(u32 chip_id, u32 event_src, struct sched_published_event_info *event_info,
-    void *split_task)
+                               void *split_task)
 {
     return esched_drv_fill_sqe(chip_id, event_src, (struct topic_sched_sqe *)split_task, event_info, true);
 }
@@ -439,7 +437,8 @@ int esched_get_real_pid(struct topic_sched_mailbox *mb, u32 devid, u32 pid)
         return DRV_ERROR_NONE;
     }
 
-    if ((mb->kernel_type == TOPIC_SCHED_CUSTOM_KERNEL_TYPE) || (mb->kernel_type == TOPIC_SCHED_CUSTOM_KFC_KERNEL_TYPE)) {
+    if ((mb->kernel_type == TOPIC_SCHED_CUSTOM_KERNEL_TYPE) ||
+        (mb->kernel_type == TOPIC_SCHED_CUSTOM_KFC_KERNEL_TYPE)) {
         cp_type = DEVDRV_PROCESS_CP2;
     } else {
         cp_type = DEVDRV_PROCESS_CP1;
@@ -471,8 +470,8 @@ query_fail:
     if (query_failed_pid != dst_pid) {
         if (!esched_log_limited(SCHED_LOG_LIMIT_GET_REAL_PID)) {
             sched_err("Failed to query target pid by pid. (devid=%u; vfid=%u; topic_id=%u; topic_type=%u; "
-                "kernel_type=%u; pid=%u; ret=%d)\n",
-                devid, mb->vfid + 1U, mb->topic_id, mb->topic_type, mb->kernel_type, dst_pid, ret);
+                      "kernel_type=%u; pid=%u; ret=%d)\n",
+                      devid, mb->vfid + 1U, mb->topic_id, mb->topic_type, mb->kernel_type, dst_pid, ret);
         }
     }
     query_failed_pid = dst_pid;
@@ -497,6 +496,4 @@ int esched_drv_get_ccpu_flag(u32 dst_engine)
 }
 
 void esched_drv_flush_mb_mbid(u8 *mb_id_ptr, u8 mb_id)
-{
-}
-
+{}

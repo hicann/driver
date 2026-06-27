@@ -15,7 +15,6 @@
 #define __DMS_SENSOR_H__
 
 #include "ka_system_pub.h"
-#include "dms_kernel_version_adapt.h"
 #include "dms/dms_interface.h"
 #include "kernel_version_adapt.h"
 #include "ascend_hal_error.h"

@@ -35,23 +35,23 @@ struct vmnga_vpc_start_dev {
 };
 
 struct vmnga_vpc_unit {
-    ka_pci_dev_t *pdev;                       /* pci dev */
-    void __ka_mm_iomem *db_base;                      /* doorbell base address VA , bar0 */
-    void __ka_mm_iomem *msg_base;                     /* msg base address VA ; part of bar2 */
-    void __ka_mm_iomem *ts_msg_base;                  /* ts msg base address VA, bar4 */
-    struct vmng_shr_para __ka_mm_iomem *shr_para;     /* share para address VA, use for host and agent; part of bar2 */
-    struct vmnga_vpc_msxi_ctrl msix_ctrl;       /* misx interrupts ctrl struct */
-    struct vmnga_vpc_start_dev start_dev;       /* start dev info remote and wait remote reply */
-    struct vmng_msg_dev *msg_dev;               /* msg dev total, alloc and store point. */
-    u32 dev_id;                                 /* device id alloced for davinci chip */
+    ka_pci_dev_t *pdev;                           /* pci dev */
+    void __ka_mm_iomem *db_base;                  /* doorbell base address VA , bar0 */
+    void __ka_mm_iomem *msg_base;                 /* msg base address VA ; part of bar2 */
+    void __ka_mm_iomem *ts_msg_base;              /* ts msg base address VA, bar4 */
+    struct vmng_shr_para __ka_mm_iomem *shr_para; /* share para address VA, use for host and agent; part of bar2 */
+    struct vmnga_vpc_msxi_ctrl msix_ctrl;         /* misx interrupts ctrl struct */
+    struct vmnga_vpc_start_dev start_dev;         /* start dev info remote and wait remote reply */
+    struct vmng_msg_dev *msg_dev;                 /* msg dev total, alloc and store point. */
+    u32 dev_id;                                   /* device id alloced for davinci chip */
     u32 fid;
 };
 
 void vmnga_bar_wr(void __ka_mm_iomem *io_base, u32 offset, u32 val);
 void vmnga_bar_rd(const void __ka_mm_iomem *io_base, u32 offset, u32 *val);
 void vmnga_set_doorbell(void __ka_mm_iomem *io_base, u32 db_id, u32 val);
-int vmnga_register_vpc_irq_func(void *drvdata, u32 vector_index, ka_irqreturn_t (*callback_func)(int, void *), void *para,
-    const char *name);
+int vmnga_register_vpc_irq_func(void *drvdata, u32 vector_index, ka_irqreturn_t (*callback_func)(int, void *),
+                                void *para, const char *name);
 int vmnga_unregister_vpc_irq_func(void *drvdata, u32 vector_index, void *para);
 
 #endif

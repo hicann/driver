@@ -27,7 +27,7 @@ typedef enum async_que_ini_event {
     INI_ACK_ERROR,
     INI_RECV_F2NF,
     INI_EVENT_BUTT,
-}ASYNC_QUE_INI_EVENT;
+} ASYNC_QUE_INI_EVENT;
 
 typedef enum que_trace_ini_timestamp {
     TRACE_INI_START,
@@ -52,9 +52,9 @@ typedef enum que_trace_ini_timestamp {
     TRACE_INI_IOVEC_SEG_CREATE_END,
     TRACE_INI_LEVLE1_BUTT,
 } QUE_TRACE_INI_TIMESTAMP;
- 
+
 typedef enum que_trace_tgt_timestamp {
-    TRACE_TGT_START, 
+    TRACE_TGT_START,
     TRACE_IMPORT_JETTY,
     TRACE_IMPORT_JETTY_BUFF,
     TRACE_CHAN_UPDATE = TRACE_IMPORT_JETTY_BUFF,
@@ -83,7 +83,7 @@ typedef enum async_que_attr_type {
     PEER_JETTY_ID,
     PEER_QUE_FLAG,
     QUE_ATTR_TYPE_BUTT,
-}ASYNC_QUE_ATTR_TYPE;
+} ASYNC_QUE_ATTR_TYPE;
 
 struct que_peer_que_attr {
     int inter_dev_state;
@@ -95,12 +95,12 @@ struct que_peer_que_attr {
 };
 
 struct que_agent_interface_list {
-    struct que_ctx* (* que_ctx_get)(unsigned int);
+    struct que_ctx *(*que_ctx_get)(unsigned int);
     void (*que_ctx_put)(struct que_ctx *);
     int (*que_ctx_add)(struct que_ctx *);
     int (*que_ctx_del)(struct que_ctx *);
 
-    struct que_chan* (* que_chan_get)(unsigned int, unsigned int);
+    struct que_chan *(*que_chan_get)(unsigned int, unsigned int);
     void (*que_chan_put)(struct que_chan *);
     int (*que_chan_add)(struct que_chan *);
     int (*que_chan_del)(struct que_chan *);
@@ -128,12 +128,13 @@ void que_mem_free(void *addr);
 bool que_is_share_mem(unsigned long long addr);
 void queue_agent_update_time(struct timeval start, struct timeval end, int *timeout);
 int que_get_peer_que_info(unsigned int dev_id, unsigned int qid, unsigned int *remote_qid,
-    struct que_peer_que_attr *peer_que_attr);
+                          struct que_peer_que_attr *peer_que_attr);
 void que_get_single_export_que_import_stat(unsigned int dev_id, unsigned int qid, unsigned int *status);
 void que_get_all_export_que_import_stat(unsigned int dev_id, unsigned int *status);
 int que_get_peer_proc_info(unsigned int dev_id, unsigned int qid, pid_t *remote_pid, unsigned int *remote_devid,
-    unsigned int *remote_grpid);
-int que_set_tjfr_id_and_token(unsigned int dev_id, unsigned int qid, urma_jetty_id_t *tjfr_id, urma_token_t *token);
+                           unsigned int *remote_grpid);
+int que_set_tjfr_id_and_token(unsigned int dev_id, unsigned int qid, const urma_jfr_id_t *tjfr_id,
+                              const urma_token_t *token);
 drvError_t que_inter_dev_send_f2nf(unsigned int dev_id, unsigned int qid);
 unsigned int que_get_chan_devid(unsigned int devid);
 unsigned int que_get_urma_devid(unsigned int devid, unsigned int peer_devid);

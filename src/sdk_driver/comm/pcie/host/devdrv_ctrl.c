@@ -490,13 +490,9 @@ STATIC int devdrv_sriov_event_disable_notify(struct devdrv_pci_ctrl *pci_ctrl)
         return -EINVAL;
     }
 
-    if (pci_ctrl->ops.unbind_irq != NULL) {
-        pci_ctrl->ops.unbind_irq(pci_ctrl);
-    }
+    devdrv_unbind_irq(pci_ctrl);
     (void)devdrv_sriov_dma_init_chan(pci_ctrl->dma_dev);
-    if (pci_ctrl->ops.bind_irq != NULL) {
-        pci_ctrl->ops.bind_irq(pci_ctrl);
-    }
+    devdrv_bind_irq(pci_ctrl);
     devdrv_res_dma_traffic(pci_ctrl->dma_dev);
 
     return 0;
@@ -553,13 +549,9 @@ int devdrv_pcie_sriov_enable(u32 index_id, u32 boot_mode)
         devdrv_set_dma_chan_status(&pci_ctrl->dma_dev->dma_chan[i], DEVDRV_DMA_CHAN_DISABLED);
     }
 
-    if (pci_ctrl->ops.unbind_irq != NULL) {
-        pci_ctrl->ops.unbind_irq(pci_ctrl);
-    }
+    devdrv_unbind_irq(pci_ctrl);
     devdrv_dma_exit(pci_ctrl->dma_dev, DEVDRV_SRIOV_ENABLE);
-    if (pci_ctrl->ops.bind_irq != NULL) {
-        pci_ctrl->ops.bind_irq(pci_ctrl);
-    }
+    devdrv_bind_irq(pci_ctrl);
 
     ret = devdrv_set_sriov_and_mdev_mode(index_id, boot_mode);
     if (ret != 0) {
@@ -633,10 +625,10 @@ int devdrv_pcie_sriov_disable(u32 index_id, u32 boot_mode)
 
     devdrv_vf_dev_state_unrecord(index_id);
     /* set pf dma queue pause */
-    devdrv_set_pf_dma_queue_pause(pci_ctrl->dma_dev, true);
+    devdrv_set_pf_dma_queue_pause(pci_ctrl->dma_dev->dma_chan_base, true);
     ka_pci_disable_sriov(pci_ctrl->pdev);
     /* exit pf dma queue pause */
-    devdrv_set_pf_dma_queue_pause(pci_ctrl->dma_dev, false);
+    devdrv_set_pf_dma_queue_pause(pci_ctrl->dma_dev->dma_chan_base, false);
 
     ret = devdrv_sriov_event_disable_notify(pci_ctrl);
     if (ret != 0) {
@@ -701,15 +693,11 @@ int devdrv_get_sriov_and_mdev_mode(u32 dev_id, u32 *boot_mode)
 int devdrv_mdev_pm_init_msi_interrupt(u32 dev_id)
 {
     struct devdrv_pci_ctrl *pci_ctrl = NULL;
-    int ret;
-    u32 index_id;
-
-#ifdef CFG_FEATURE_AGENT_SMMU
+    int ret, pf_dev_id;
+    u32 index_id, data_len;
     struct devdrv_host_dma_addr_to_pa_cmd cmd_data = {0};
     struct devdrv_pci_ctrl *pci_ctrl_pf = NULL;
-    int pf_dev_id;
-    u32 data_len;
-#endif
+
     (void)uda_udevid_to_add_id(dev_id, &index_id);
     pci_ctrl = devdrv_get_top_half_pci_ctrl_by_id(index_id);
     if (pci_ctrl == NULL) {
@@ -723,15 +711,18 @@ int devdrv_mdev_pm_init_msi_interrupt(u32 dev_id)
         return ret;
     }
 
-#ifdef CFG_FEATURE_AGENT_SMMU
-    /* hccs peh's msi-x table need retranslation by agent-smmu agter request */
+    if (!devdrv_feature_is_support(pci_ctrl->features, DEVDRV_FEATURE_AGENT_SMMU)) {
+        return 0;
+    }
+
+    /* hccs peh's msi-x table need retranslation by agent-smmu after request */
     if ((pci_ctrl->connect_protocol == CONNECT_PROTOCOL_HCCS) &&
         (devdrv_is_mdev_pm_boot_mode_inner(index_id) == true)) {
-        /* vf has no smg chan in pm，so must use pf's admin chan */
+        /* vf has no msg chan in pm，so must use pf's admin chan */
         pf_dev_id = devdrv_sriov_get_pf_devid_by_vf_ctrl(pci_ctrl);
         pci_ctrl_pf = devdrv_get_bottom_half_pci_ctrl_by_id((u32)pf_dev_id);
         if ((pci_ctrl_pf == NULL) || (pci_ctrl_pf->msg_dev == NULL)) {
-            (void)devdrv_uninit_interrupt(pci_ctrl);
+            devdrv_uninit_interrupt_normal(pci_ctrl);
             return -EINVAL;
         }
 
@@ -741,12 +732,11 @@ int devdrv_mdev_pm_init_msi_interrupt(u32 dev_id)
         ret = devdrv_admin_msg_chan_send(pci_ctrl_pf->msg_dev, DEVDRV_HCCS_HOST_DMA_ADDR_MAP, &cmd_data, data_len,
             NULL, data_len);
         if (ret != 0) {
-            (void)devdrv_uninit_interrupt(pci_ctrl);
+            devdrv_uninit_interrupt_normal(pci_ctrl);
             devdrv_err("Msi irq table reset fail(devid=%u, ret=%d\n", pci_ctrl->dev_id, ret);
             return ret;
         }
     }
-#endif
 
     return 0;
 }
@@ -763,7 +753,7 @@ int devdrv_mdev_pm_uninit_msi_interrupt(u32 dev_id)
         devdrv_err("Get pci_ctrl failed. (dev_id=%u)\n", dev_id);
         return -EINVAL;
     }
-    (void)devdrv_uninit_interrupt(pci_ctrl);
+    devdrv_uninit_interrupt_normal(pci_ctrl);
 
     return 0;
 }
@@ -1089,7 +1079,7 @@ int devdrv_ctrl_init(void)
 {
     u32 i;
     int ret;
-    ka_mutex_t *common_msg_mutex = devdrv_get_common_msg_mutex();
+    ka_rw_semaphore_t *common_msg_rw_sem = devdrv_get_common_msg_rw_sem();
 
     if ((memset_s(g_ctrls, sizeof(g_ctrls), 0, sizeof(g_ctrls)) != 0) ||
         (memset_s(g_clients, sizeof(g_clients), 0, sizeof(g_clients)) != 0)) {
@@ -1107,7 +1097,7 @@ int devdrv_ctrl_init(void)
         ka_task_mutex_init(&g_clients_mutex[i]);
     }
     for (i = 0; i < DEVDRV_COMMON_MSG_TYPE_MAX; i++) {
-        ka_task_mutex_init(&common_msg_mutex[i]);
+        ka_task_init_rwsem(&common_msg_rw_sem[i]);
     }
     ka_task_mutex_init(&g_devdrv_ctrl_mutex);
     ka_task_mutex_init(&g_devdrv_p2p_mutex);
@@ -1121,7 +1111,6 @@ int devdrv_ctrl_init(void)
 void devdrv_ctrl_uninit(void)
 {
     devdrv_clients_instance_uninit();
-    return;
 }
 
 void devdrv_set_ctrl_priv(u32 dev_id, void *priv)
@@ -1233,13 +1222,13 @@ STATIC int devdrv_get_devid_by_funcid(u32 state, int func_id_check, int func_id_
 int devdrv_alloc_devid_stride_2(struct devdrv_ctrl *ctrl_this)
 {
     struct devdrv_pci_ctrl *pci_ctrl = (struct devdrv_pci_ctrl *)ctrl_this->priv;
-    int dev_id_check = -1;
-    int dev_id = -1;
     int func_id_this = (int)pci_ctrl->func_id;
     int func_id_check = -1;
-    int i;
+    int dev_id_check = -1;
+    int dev_id = -1;
     u32 state = 0;
     int ret;
+    int i;
 
     for (i = 0; i < MAX_DEV_CNT; i++) {
         if ((g_ctrls[i].bus != NULL) && (g_ctrls[i].bus == ctrl_this->bus) &&
@@ -1666,7 +1655,7 @@ int devdrv_pcie_reinit_inner(u32 index_id)
         return -EINVAL;
     }
     chip_type = devdrv_get_dev_chip_type_inner(index_id);
-    if ((chip_type == HISI_CLOUD_V4) || (chip_type == HISI_CLOUD_V5)) {
+    if ((chip_type == HISI_CLOUD_V4) || (chip_type == HISI_CLOUD_V5) || (chip_type == HISI_MINI_V4)) {
         return 0;
     }
 
@@ -1813,16 +1802,15 @@ void *devdrv_pcimsg_alloc_trans_queue_inner(u32 index_id, struct devdrv_trans_ms
     return devdrv_generate_msg_handle(chan);
 }
 
-void *devdrv_pcimsg_alloc_trans_queue(u32 udevid, struct devdrv_trans_msg_chan_info *chan_info)
+void *devdrv_pci_pcimsg_alloc_trans_queue(u32 udevid, struct devdrv_trans_msg_chan_info *chan_info)
 {
     u32 index_id;
 
     (void)uda_udevid_to_add_id(udevid, &index_id);
     return devdrv_pcimsg_alloc_trans_queue_inner(index_id, chan_info);
 }
-KA_EXPORT_SYMBOL(devdrv_pcimsg_alloc_trans_queue);
 
-int devdrv_pcimsg_realease_trans_queue(void *msg_chan)
+int devdrv_pci_pcimsg_realease_trans_queue(void *msg_chan)
 {
     struct devdrv_msg_chan *chan = NULL;
     if (msg_chan == NULL) {
@@ -1841,7 +1829,6 @@ int devdrv_pcimsg_realease_trans_queue(void *msg_chan)
 
     return devdrv_free_trans_queue(chan);
 }
-KA_EXPORT_SYMBOL(devdrv_pcimsg_realease_trans_queue);
 
 /* non-trans msg chan */
 void *devdrv_pcimsg_alloc_non_trans_queue_inner(u32 index_id, struct devdrv_non_trans_msg_chan_info *chan_info)
@@ -2000,8 +1987,8 @@ KA_EXPORT_SYMBOL(devdrv_register_client);
 
 int devdrv_unregister_client(const struct devdrv_client *client)
 {
-    struct devdrv_ctrl *dev_ctrl = NULL;
     struct devdrv_client_instance *instance = NULL;
+    struct devdrv_ctrl *dev_ctrl = NULL;
     int dev_id;
 
     if (client == NULL) {
@@ -2233,9 +2220,9 @@ STATIC int devdrv_get_mdev_addr_info(struct devdrv_pci_ctrl *pci_ctrl, enum devd
 
 int devdrv_get_addr_info_inner(u32 index_id, enum devdrv_addr_type type, u32 index, u64 *addr, size_t *size)
 {
+    int ret;
     struct devdrv_ctrl *ctrl = NULL;
     struct devdrv_pci_ctrl *pci_ctrl = NULL;
-    int ret;
 
     ret = devdrv_get_addr_info_para_check(index, addr, size);
     if (ret != 0) {
@@ -2277,9 +2264,9 @@ KA_EXPORT_SYMBOL(devdrv_get_addr_info);
 
 int devdrv_pcie_read_proc(u32 dev_id, enum devdrv_addr_type type, u32 offset, unsigned char *value, u32 len)
 {
-    u64 phy_addr;
-    size_t size;
     int ret;
+    size_t size;
+    u64 phy_addr;
     u32 i, index_id;
     void __ka_mm_iomem *mem_base = NULL;
 
@@ -2331,9 +2318,9 @@ KA_EXPORT_SYMBOL(devdrv_pcie_read_proc);
 
 int devdrv_pcie_write_proc(u32 dev_id, enum devdrv_addr_type type, u32 offset, unsigned char *value, u32 len)
 {
-    u64 phy_addr;
-    size_t size;
     int ret;
+    size_t size;
+    u64 phy_addr;
     u32 i, index_id;
     void __ka_mm_iomem *mem_base = NULL;
 
@@ -2515,10 +2502,8 @@ KA_EXPORT_SYMBOL(devdrv_get_irq_vector);
 int devdrv_register_irq_by_vector_index_inner(u32 index_id, int vector_index,
     ka_irqreturn_t (*callback_func)(int, void *), void *para, const char *name)
 {
-#ifdef CFG_FEATURE_AGENT_SMMU
     struct devdrv_host_dma_addr_to_pa_cmd cmd_data = {0};
     u32 data_len;
-#endif
     struct devdrv_pci_ctrl *pci_ctrl = NULL;
     int ret = 0;
 
@@ -2534,16 +2519,20 @@ int devdrv_register_irq_by_vector_index_inner(u32 index_id, int vector_index,
         return ret;
     }
 
-    /* hccs peh's Virtualization pass-through, msi-x table will be reset,
-       need retranslation by agent-smmu agter request */
-#ifdef CFG_FEATURE_AGENT_SMMU
+    if (!devdrv_feature_is_support(pci_ctrl->features, DEVDRV_FEATURE_AGENT_SMMU)) {
+        return 0;
+    }
+
+    /* hccs peh's Virtualization pass-through or smmu enabled, msi-x table will be va,
+       need retranslation to pa by agent-smmu after request */
     if ((pci_ctrl->env_boot_mode == DEVDRV_MDEV_VF_VM_BOOT) ||
         (pci_ctrl->env_boot_mode == DEVDRV_MDEV_FULL_SPEC_VF_VM_BOOT)) {
         return 0;
     }
 
     if ((pci_ctrl->connect_protocol == CONNECT_PROTOCOL_HCCS) &&
-        (ka_pci_get_is_physfn(pci_ctrl->pdev) == 0) && (ka_pci_get_is_virtfn(pci_ctrl->pdev) == 0)) {
+        (((ka_pci_get_is_physfn(pci_ctrl->pdev) == 0) && (ka_pci_get_is_virtfn(pci_ctrl->pdev) == 0)) ||
+        ((pci_ctrl->env_boot_mode == DEVDRV_SRIOV_VF_BOOT) && (pci_ctrl->shr_para->sid != 0)))) {
         data_len = sizeof(struct devdrv_host_dma_addr_to_pa_cmd);
         cmd_data.sub_cmd = DEVDRV_PEH_MSI_TABLE_REFRESH;
         cmd_data.host_devid = pci_ctrl->dev_id;
@@ -2555,9 +2544,8 @@ int devdrv_register_irq_by_vector_index_inner(u32 index_id, int vector_index,
             return ret;
         }
     }
-#endif
 
-    return ret;
+    return 0;
 }
 
 int devdrv_register_irq_by_vector_index(u32 udevid, int vector_index,
@@ -3596,16 +3584,23 @@ void devdrv_register_half_devctrl(struct devdrv_pci_ctrl *pci_ctrl)
 
 int devdrv_dev_online(struct devdrv_pci_ctrl *pci_ctrl)
 {
+    u32 devdrv_p2p_support_max_devnum = 0;
     struct devdrv_pci_ctrl *ctrl = NULL;
-    u32 devdrv_p2p_support_max_devnum;
     u32 i;
 
-    devdrv_info("Device online. (dev_id=%u; chip_type=%d)\n", pci_ctrl->dev_id, pci_ctrl->shr_para->chip_type);
+    devdrv_info("Device online. (dev_id=%u; chip_type=%d)\n", pci_ctrl->dev_id, pci_ctrl->chip_type);
     ka_task_mutex_lock(&g_devdrv_ctrl_mutex);
 
-    devdrv_p2p_support_max_devnum = pci_ctrl->ops.get_p2p_support_max_devnum();
+    if (pci_ctrl->ops.get_p2p_support_max_devnum != NULL) {
+        devdrv_p2p_support_max_devnum = pci_ctrl->ops.get_p2p_support_max_devnum();
+    }
+
     /* config tx atu & p2p msg base */
     for (i = 0; i < devdrv_p2p_support_max_devnum; i++) {
+        if (pci_ctrl->virtfn_flag == DEVDRV_SRIOV_TYPE_VF) {
+            /* vf not support p2p */
+            break;
+        }
         if (g_ctrls[i].startup_flg != DEVDRV_DEV_STARTUP_BOTTOM_HALF_OK) {
             continue;
         }
@@ -3665,7 +3660,8 @@ void *devdrv_pci_dma_alloc_coherent(ka_device_t *dev, size_t size,
     void *addr = NULL;
 
     if ((size == 0) || (dev == NULL) || (dma_addr == NULL)) {
-        devdrv_err("Input parameter is invalid. (size=%lu)\n", size);
+        devdrv_err("Input parameter is invalid. (size=%lu, dev is %s, dma_addr is %s)\n",
+            size, dev == NULL ? "null" : "not null", dma_addr == NULL ? "null" : "not null");
         return NULL;
     }
     pdev_ctrl = (struct devdrv_pdev_ctrl *)ka_driver_dev_get_drvdata(dev);
@@ -3724,7 +3720,8 @@ void devdrv_pci_dma_free_coherent(ka_device_t *dev, size_t size, void *addr, ka_
     struct devdrv_pci_ctrl *pci_ctrl = NULL;
 
     if ((dev == NULL) || (addr == NULL) || (size == 0)) {
-        devdrv_err("Input parameter is invalid. (size=%lu)\n", size);
+        devdrv_err("Input parameter is invalid. (size=%lu, dev is %s, addr is %s)\n",
+            size, dev == NULL ? "null" : "not null", addr == NULL ? "null" : "not null");
         return;
     }
     pdev_ctrl = (struct devdrv_pdev_ctrl *)ka_driver_dev_get_drvdata(dev);
@@ -3763,7 +3760,8 @@ ka_dma_addr_t devdrv_pci_dma_map_single(ka_device_t *dev, void *ptr, size_t size
     int ret;
 
     if ((dev == NULL) || (ptr == NULL) || (size == 0)) {
-        devdrv_err("Input parameter is invalid. (size=%lu)\n", size);
+        devdrv_err("Input parameter is invalid. (size=%lu, dev is %s, ptr is %s)\n",
+            size, dev == NULL ? "null" : "not null", ptr == NULL ? "null" : "not null");
         return (~(ka_dma_addr_t)0);
     }
     pdev_ctrl = (struct devdrv_pdev_ctrl *)ka_driver_dev_get_drvdata(dev);
@@ -3845,8 +3843,8 @@ void devdrv_pci_dma_unmap_single(ka_device_t *dev, ka_dma_addr_t addr, size_t si
     }
 }
 
-ka_dma_addr_t devdrv_pci_dma_map_page(ka_device_t *dev, ka_page_t *page,
-    size_t offset, size_t size, ka_dma_data_direction_t dir)
+ka_dma_addr_t devdrv_pci_dma_map_page_attrs(ka_device_t *dev, ka_page_t *page,
+    size_t offset, size_t size, ka_dma_data_direction_t dir, u64 attrs)
 {
     struct devdrv_pdev_ctrl *pdev_ctrl = NULL;
     struct devdrv_pci_ctrl *pci_ctrl = NULL;
@@ -3855,7 +3853,8 @@ ka_dma_addr_t devdrv_pci_dma_map_page(ka_device_t *dev, ka_page_t *page,
     int ret;
 
     if ((dev == NULL) || (page == NULL) || (size == 0) || (offset > KA_HPAGE_SIZE)) {
-        devdrv_err("Input parameter is invalid. (size=%lu)\n", size);
+        devdrv_err("Input parameter is invalid. (size=%lu, offset=%lu, dev is %s, page is %s)\n",
+            size, offset, dev == NULL ? "null" : "not null", page == NULL ? "null" : "not null");
         return (~(ka_dma_addr_t)0);
     }
     pdev_ctrl = (struct devdrv_pdev_ctrl *)ka_driver_dev_get_drvdata(dev);
@@ -3895,21 +3894,25 @@ ka_dma_addr_t devdrv_pci_dma_map_page(ka_device_t *dev, ka_page_t *page,
             dma_addr = hw_dvt_hypervisor_dma_map_page(dev, page, offset, size, dir);
 #endif
         } else {
+#ifdef DRV_UT
             dma_addr = ka_mm_dma_map_page(dev, page, offset, size, dir);
+#else
+            dma_addr = ka_mm_dma_map_page_attrs(dev, page, offset, size, dir, attrs);
+#endif
         }
     }
 
     return dma_addr;
 }
 
-void devdrv_pci_dma_unmap_page(ka_device_t *dev, ka_dma_addr_t addr, size_t size,
-    ka_dma_data_direction_t dir)
+void devdrv_pci_dma_unmap_page_attrs(ka_device_t *dev, ka_dma_addr_t addr, size_t size,
+    ka_dma_data_direction_t dir, u64 attrs)
 {
     struct devdrv_pdev_ctrl *pdev_ctrl = NULL;
     struct devdrv_pci_ctrl *pci_ctrl = NULL;
 
     if (dev == NULL || size == 0) {
-        devdrv_err("Input parameter is invalid.\n");
+        devdrv_err("Input parameter is invalid. (size=%lu).\n", size);
         return;
     }
     pdev_ctrl = (struct devdrv_pdev_ctrl *)ka_driver_dev_get_drvdata(dev);
@@ -3933,8 +3936,24 @@ void devdrv_pci_dma_unmap_page(ka_device_t *dev, ka_dma_addr_t addr, size_t size
         hw_dvt_hypervisor_dma_unmap_page(dev, addr, size, dir);
 #endif
     } else {
+#ifdef DRV_UT
         ka_mm_dma_unmap_page(dev, addr, size, dir);
+#else
+        ka_mm_dma_unmap_page_attrs(dev, addr, size, dir, attrs);
+#endif
     }
+}
+
+ka_dma_addr_t devdrv_pci_dma_map_page(ka_device_t *dev, ka_page_t *page,
+    size_t offset, size_t size, ka_dma_data_direction_t dir)
+{
+    return devdrv_pci_dma_map_page_attrs(dev, page, offset, size, dir, 0);
+}
+
+void devdrv_pci_dma_unmap_page(ka_device_t *dev, ka_dma_addr_t addr, size_t size,
+    ka_dma_data_direction_t dir)
+{
+    devdrv_pci_dma_unmap_page_attrs(dev, addr, size, dir, 0);
 }
 
 ka_dma_addr_t devdrv_pci_dma_map_resource(ka_device_t *dev, phys_addr_t phys_addr,
@@ -3959,12 +3978,13 @@ void devdrv_pci_dma_unmap_resource(ka_device_t *dev, ka_dma_addr_t addr, size_t 
     ka_mm_dma_unmap_resource(dev, addr, size, dir, attrs);
 }
 
-int devdrv_get_reserve_mem_info(u32 devid, phys_addr_t *pa, size_t *size)
+int devdrv_get_reserve_mem_info(u32 devid, enum devdrv_msg_client_type msg_type, phys_addr_t *pa, size_t *size)
 {
     if ((pa == NULL) || (size == NULL)) {
         devdrv_err("Input parameter is invalid.\n");
         return -EINVAL;
     }
+
     *pa = DEVDRV_RESERVE_MEM_PHY_ADDR;
     *size = DEVDRV_RESERVE_MEM_SIZE;
     return 0;
@@ -4190,13 +4210,15 @@ STATIC int devdrv_iommu_map_mem_addr(struct devdrv_pci_ctrl *pci_ctrl_src, struc
     u64 dma_addr;
     int ret;
 
-    ret = devdrv_iommu_map_addr(pci_ctrl_src, pci_ctrl_dst, (u64)pci_ctrl_dst->mem_phy_base, size, &dma_addr);
-    if (ret != 0) {
-        devdrv_err("Iommu map tx mem failed. (dev_id=%u)\n", pci_ctrl_src->dev_id);
-        return ret;
+    if ((pci_ctrl_src->target_bar[dst_devid].mem_phy_size == 0) && (pci_ctrl_src->target_bar[dst_devid].mem_dma_addr == 0)) {
+        ret = devdrv_iommu_map_addr(pci_ctrl_src, pci_ctrl_dst, (u64)pci_ctrl_dst->mem_phy_base, size, &dma_addr);
+        if (ret != 0) {
+            devdrv_err("Iommu map tx mem failed. (dev_id=%u)\n", pci_ctrl_src->dev_id);
+            return ret;
+        }
+        pci_ctrl_src->target_bar[dst_devid].mem_dma_addr = dma_addr;
+        pci_ctrl_src->target_bar[dst_devid].mem_phy_size = size;
     }
-    pci_ctrl_src->target_bar[dst_devid].mem_dma_addr = dma_addr;
-    pci_ctrl_src->target_bar[dst_devid].mem_phy_size = size;
 
     return 0;
 }
@@ -4206,9 +4228,11 @@ STATIC void devdrv_iommu_unmap_mem_addr(struct devdrv_pci_ctrl *pci_ctrl_src, u3
     u64 dma_addr = pci_ctrl_src->target_bar[dst_devid].mem_dma_addr;
     u64 size = pci_ctrl_src->target_bar[dst_devid].mem_phy_size;
 
-    pci_ctrl_src->target_bar[dst_devid].mem_dma_addr = 0;
-    pci_ctrl_src->target_bar[dst_devid].mem_phy_size = 0;
-    devdrv_iommu_unmap_addr(pci_ctrl_src, dma_addr, size);
+    if ((dma_addr != 0) && (size != 0)) {
+        pci_ctrl_src->target_bar[dst_devid].mem_dma_addr = 0;
+        pci_ctrl_src->target_bar[dst_devid].mem_phy_size = 0;
+        devdrv_iommu_unmap_addr(pci_ctrl_src, dma_addr, size);
+    }
 }
 
 STATIC void devdrv_iommu_unmap_io_addr(struct devdrv_pci_ctrl *pci_ctrl_src, u32 dst_devid)
@@ -4216,9 +4240,11 @@ STATIC void devdrv_iommu_unmap_io_addr(struct devdrv_pci_ctrl *pci_ctrl_src, u32
     u64 dma_addr = pci_ctrl_src->target_bar[dst_devid].io_dma_addr;
     u64 size = pci_ctrl_src->target_bar[dst_devid].io_phy_size;
 
-    pci_ctrl_src->target_bar[dst_devid].io_dma_addr = 0;
-    pci_ctrl_src->target_bar[dst_devid].io_phy_size = 0;
-    devdrv_iommu_unmap_addr(pci_ctrl_src, dma_addr, size);
+    if ((dma_addr != 0) && (size != 0)) {
+        pci_ctrl_src->target_bar[dst_devid].io_dma_addr = 0;
+        pci_ctrl_src->target_bar[dst_devid].io_phy_size = 0;
+        devdrv_iommu_unmap_addr(pci_ctrl_src, dma_addr, size);
+    }
 }
 
 STATIC int devdrv_iommu_map_io_addr(struct devdrv_pci_ctrl *pci_ctrl_src, struct devdrv_pci_ctrl *pci_ctrl_dst)
@@ -4228,13 +4254,15 @@ STATIC int devdrv_iommu_map_io_addr(struct devdrv_pci_ctrl *pci_ctrl_src, struct
     u64 dma_addr;
     int ret;
 
-    ret = devdrv_iommu_map_addr(pci_ctrl_src, pci_ctrl_dst, (u64)pci_ctrl_dst->io_phy_base, size, &dma_addr);
-    if (ret != 0) {
-        devdrv_err("Iommu map tx mem failed. (dev_id=%u)\n", pci_ctrl_src->dev_id);
-        return ret;
+    if ((pci_ctrl_src->target_bar[dst_devid].io_phy_size == 0) && (pci_ctrl_src->target_bar[dst_devid].io_dma_addr == 0)) {
+        ret = devdrv_iommu_map_addr(pci_ctrl_src, pci_ctrl_dst, (u64)pci_ctrl_dst->io_phy_base, size, &dma_addr);
+        if (ret != 0) {
+            devdrv_err("Iommu map tx mem failed. (dev_id=%u)\n", pci_ctrl_src->dev_id);
+            return ret;
+        }
+        pci_ctrl_src->target_bar[dst_devid].io_dma_addr = dma_addr;
+        pci_ctrl_src->target_bar[dst_devid].io_phy_size = size;
     }
-    pci_ctrl_src->target_bar[dst_devid].io_dma_addr = dma_addr;
-    pci_ctrl_src->target_bar[dst_devid].io_phy_size = size;
 
     return 0;
 }
@@ -4634,7 +4662,7 @@ int devdrv_enable_p2p(int pid, u32 udevid, u32 peer_udevid, u32 type)
         }
         return ret;
     } else {
-        devdrv_err("P2P type is invaild. (pid=%d; index_id=%u; peer_index_id=%u; type=%u)\n",
+        devdrv_err("P2P type is invalid. (pid=%d; index_id=%u; peer_index_id=%u; type=%u)\n",
                    pid, index_id, peer_index_id, type);
         return -EINVAL;
     }
@@ -4766,7 +4794,7 @@ int devdrv_disable_p2p(int pid, u32 udevid, u32 peer_udevid, u32 type)
         }
         return ret;
     } else {
-        devdrv_err("P2P type is invaild. (pid=%d; index_id=%u; peer_index_id=%u; type=%u)\n",
+        devdrv_err("P2P type is invalid. (pid=%d; index_id=%u; peer_index_id=%u; type=%u)\n",
                    pid, index_id, peer_index_id, type);
         return -EINVAL;
     }
@@ -5034,7 +5062,7 @@ int devdrv_get_p2p_access_status_inner(u32 index_id, u32 peer_index_id, int *sta
     if (host_flag == DEVDRV_HOST_PHY_MACH_FLAG) {
         ret = devdrv_get_p2p_access_status_physical(index_id, peer_index_id, status);
         if (ret != 0) {
-        devdrv_err("Phycial mach get p2p access failed. (index_id=%u; peer_index_id=%u; ret=%d)\n", index_id,
+        devdrv_err("Physical mach get p2p access failed. (index_id=%u; peer_index_id=%u; ret=%d)\n", index_id,
             peer_index_id, ret);
             return ret;
         }
@@ -5157,7 +5185,7 @@ int devdrv_pcie_prereset(u32 index_id)
     }
 
     chip_type = devdrv_get_dev_chip_type_inner(index_id);
-    if ((chip_type == HISI_CLOUD_V4) || (chip_type == HISI_CLOUD_V5)) {
+    if ((chip_type == HISI_CLOUD_V4) || (chip_type == HISI_CLOUD_V5) || (chip_type == HISI_MINI_V4)) {
         return 0;
     }
 
@@ -5769,6 +5797,7 @@ STATIC void devdrv_device_unbind_driver(ka_pci_dev_t *pdev_b, u32 virtfn_flag)
             devdrv_info("Pcie hotreset, unbind driver. (bdf=%02x:%02x.%d)\n", ka_pci_get_bus_number(pdev),
                 KA_PCI_SLOT(ka_pci_get_devfn(pdev)), KA_PCI_FUNC(ka_pci_get_devfn(pdev)));
             ka_base_device_release_driver(ka_pci_get_dev(pdev));
+            ka_pci_dev_put(pdev);
         }
 
         /* network pf1 */
@@ -5777,6 +5806,7 @@ STATIC void devdrv_device_unbind_driver(ka_pci_dev_t *pdev_b, u32 virtfn_flag)
             devdrv_info("Pcie hotreset, unbind driver. (bdf=%02x:%02x.%d)\n", ka_pci_get_bus_number(pdev),
                 KA_PCI_SLOT(ka_pci_get_devfn(pdev)), KA_PCI_FUNC(ka_pci_get_devfn(pdev)));
             ka_base_device_release_driver(ka_pci_get_dev(pdev));
+            ka_pci_dev_put(pdev);
         }
     }
 
@@ -5820,6 +5850,7 @@ STATIC void devdrv_device_bus_remove(ka_pci_dev_t *pdev_r, u32 virtfn_flag)
             devdrv_info("Pcie hotreset, bus remove. (bdf=%02x:%02x.%d)\n", ka_pci_get_bus_number(pdev),
                 KA_PCI_SLOT(ka_pci_get_devfn(pdev)), KA_PCI_FUNC(ka_pci_get_devfn(pdev)));
             devdrv_pci_stop_and_remove_bus_device_locked(pdev);
+            ka_pci_dev_put(pdev);
         }
 
         /* network pf1 */
@@ -5828,6 +5859,7 @@ STATIC void devdrv_device_bus_remove(ka_pci_dev_t *pdev_r, u32 virtfn_flag)
             devdrv_info("Pcie hotreset, bus remove. (bdf=%02x:%02x.%d)\n", ka_pci_get_bus_number(pdev),
                 KA_PCI_SLOT(ka_pci_get_devfn(pdev)), KA_PCI_FUNC(ka_pci_get_devfn(pdev)));
             devdrv_pci_stop_and_remove_bus_device_locked(pdev);
+            ka_pci_dev_put(pdev);
         }
     }
 
@@ -6019,6 +6051,27 @@ STATIC void devdrv_before_hot_reset(void)
     }
 }
 
+STATIC int devdrv_pci_try_reset_function(ka_pci_dev_t *pdev, u32 dev_id)
+{
+    u32 retry_cnt = 0;
+    int ret;
+
+    do {
+        ret = ka_pci_try_reset_function(pdev);
+        if ((ret == -EAGAIN) && (retry_cnt < 10)) { // retry 10 times
+            retry_cnt++;
+            ka_system_msleep(10); // 10 ms
+        } else {
+            break;
+        }
+    } while (1);
+
+    if (ret < 0) {
+        devdrv_warn("Reset function abnormal. (dev_id=%u; ret=%d)\n", dev_id, ret);
+    }
+    return ret;
+}
+
 STATIC void devdrv_pci_hot_reset(struct devdrv_ctrl *dev_ctrl)
 {
     u8 func_num;
@@ -6055,10 +6108,8 @@ STATIC void devdrv_pci_hot_reset(struct devdrv_ctrl *dev_ctrl)
                 devdrv_warn("Bus %s link disable fail.\n", ka_pci_name(dev_ctrl_slave->bus->self));
             }
 #endif
-
-            ret = ka_pci_try_reset_function(dev_ctrl->pdev);
+            ret = devdrv_pci_try_reset_function(dev_ctrl->pdev, dev_ctrl->dev_id);
             devdrv_info("Reset function. (dev_id=%d; ret=%d)\n", dev_ctrl->dev_id, ret);
-
 #if defined(ASCEND910_93_EX) && defined(ENABLE_BUILD_PRODUCT)
             ret = pci_set_bus_enable_lnkctl_a3(dev_ctrl_slave->bus->self);
             if (!ret) {
@@ -6067,7 +6118,7 @@ STATIC void devdrv_pci_hot_reset(struct devdrv_ctrl *dev_ctrl)
                 devdrv_warn("Bus %s link enable fail.\n", ka_pci_name(dev_ctrl_slave->bus->self));
             }
         } else {
-            ret = ka_pci_try_reset_function(dev_ctrl->pdev);
+            ret = devdrv_pci_try_reset_function(dev_ctrl->pdev, dev_ctrl->dev_id);
             devdrv_info("Reset function. (dev_id=%d; ret=%d)\n", dev_ctrl->dev_id, ret);
         }
 #endif
@@ -6703,13 +6754,13 @@ int devdrv_get_hccs_link_status_and_group_id(u32 devid, u32 *hccs_status, u32 hc
         return -EINVAL;
     }
 
-    if (pci_ctrl->ops.get_hccs_link_info == NULL) {
+    if (!devdrv_feature_is_support(pci_ctrl->features, DEVDRV_FEATURE_HCCS_LINK_INFO)) {
         devdrv_warn("Not support to get hccs link info. (dev_id=%u)\n", devid);
         return -EPERM;
     }
 
     if (pci_ctrl->hccs_status == -1) {
-        pci_ctrl->ops.get_hccs_link_info(pci_ctrl);
+        devdrv_init_hccs_link_info(pci_ctrl);
     }
 
     *hccs_status = pci_ctrl->hccs_status;
@@ -7088,7 +7139,7 @@ int devdrv_pcie_reset_atomic(u32 index_id)
     g_devdrv_ctrl_hot_reset_status |= (1ULL << index_id);
     ka_task_mutex_unlock(&g_devdrv_ctrl_mutex);
 
-    (void)ka_pci_try_reset_function(dev_ctrl->pdev);
+    (void)devdrv_pci_try_reset_function(dev_ctrl->pdev, dev_ctrl->dev_id);
     ka_system_ssleep(delay);
 
     ka_task_mutex_lock(&g_devdrv_ctrl_mutex);

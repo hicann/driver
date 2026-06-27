@@ -16,8 +16,8 @@
 #define TOPIC_SCHED_USER_DATA_LEN 10
 
 struct topic_sched_mailbox {
-    u8  mailbox_id; /* only used for: host is 1630,
-                                      and STARS works with EMS to schedule tasks Host CPU */
+    u8 mailbox_id; /* only used for: host is 1630,
+                                     and STARS works with EMS to schedule tasks Host CPU */
     u32 vfid : 6;
     u16 rsp_mode : 1;
     u16 sat_mode : 1;
@@ -81,9 +81,9 @@ struct topic_sched_sqe {
     /********12 bytes**********/
 
     u16 res3;
-    u8  kernel_credit;
-    u8  res4 : 5;
-    u8  sqe_len : 3; /* 0:64B; 1:128B; 2:192B. */
+    u8 kernel_credit;
+    u8 res4 : 5;
+    u8 sqe_len : 3; /* 0:64B; 1:128B; 2:192B. */
     /********16 bytes**********/
 
     u32 user_data[TOPIC_SCHED_USER_DATA_LEN];
@@ -92,7 +92,7 @@ struct topic_sched_sqe {
     u32 subtopic_id : 12;
     u32 topic_id : 6;
     u32 gid : 6;
-    u8  user_data_len;
+    u8 user_data_len;
     /********60 bytes**********/
 
     u32 pid;

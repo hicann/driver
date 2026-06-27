@@ -116,7 +116,7 @@ int32_t tsagent_sqe_update(uint32_t devid, uint32_t tsid, struct trs_sqe_update_
         return EOK;
     }
 
-    if (update_info->sqid == U32_MAX) {
+    if (update_info->sqid == KA_U32_MAX) {
         ts_agent_debug("tsagent_sqe_update: stream_id=%u, sqe_type=%u, devid=%u, task_id=%u, pid=%d.",
         sqe->stream_id, sqe->type, devid, sqe->task_id, update_info->pid);
     }

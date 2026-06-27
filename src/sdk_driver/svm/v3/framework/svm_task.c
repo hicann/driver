@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2025. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -127,13 +127,10 @@ int svm_get_task_tgid(void *task_ctx)
     return t_ctx->tgid;
 }
 
-u32 svm_task_obtain_feature_id(void)
-{
-    return task_feature_num++;
-}
+u32 svm_task_obtain_feature_id(void) { return task_feature_num++; }
 
-int svm_task_set_feature_priv(void *task_ctx, u32 feature_id, const char *feature_name,
-    void *priv, void (*release)(void *priv))
+int svm_task_set_feature_priv(
+    void *task_ctx, u32 feature_id, const char *feature_name, void *priv, void (*release)(void *priv))
 {
     struct svm_task_ctx *t_ctx = (struct svm_task_ctx *)task_ctx;
 
@@ -218,20 +215,11 @@ static struct svm_task_ctx *_svm_task_ctx_get(u32 udevid, int tgid)
     return NULL;
 }
 
-void *svm_task_ctx_get(u32 udevid, int tgid)
-{
-    return (void *)_svm_task_ctx_get(udevid, tgid);
-}
+void *svm_task_ctx_get(u32 udevid, int tgid) { return (void *)_svm_task_ctx_get(udevid, tgid); }
 
-static void _svm_task_ctx_put(struct svm_task_ctx *t_ctx)
-{
-    task_ctx_put(t_ctx->ctx);
-}
+static void _svm_task_ctx_put(struct svm_task_ctx *t_ctx) { task_ctx_put(t_ctx->ctx); }
 
-void svm_task_ctx_put(void *task_ctx)
-{
-    _svm_task_ctx_put((struct svm_task_ctx *)task_ctx);
-}
+void svm_task_ctx_put(void *task_ctx) { _svm_task_ctx_put((struct svm_task_ctx *)task_ctx); }
 
 int svm_get_task_start_time(u32 udevid, int tgid, struct task_start_time *start_time)
 {
@@ -249,8 +237,9 @@ int svm_get_task_start_time(u32 udevid, int tgid, struct task_start_time *start_
 
 static void svm_show_task_ctx(struct svm_task_ctx *t_ctx, ka_seq_file_t *seq)
 {
-    ka_fs_seq_printf(seq, "    tgid %d task_id %u valid %u state %d\n",
-        t_ctx->tgid, t_ctx->task_id, t_ctx->valid, ka_base_atomic_read(&t_ctx->state));
+    ka_fs_seq_printf(
+        seq, "    tgid %d task_id %u valid %u state %d\n", t_ctx->tgid, t_ctx->task_id, t_ctx->valid,
+        ka_base_atomic_read(&t_ctx->state));
 }
 
 static void _svm_show_task(u32 udevid, int tgid, ka_seq_file_t *seq)
@@ -296,10 +285,7 @@ static void svm_add_task_feature_fs(ka_proc_dir_entry_t *dev_entry, struct svm_t
     }
 }
 
-static void svm_del_task_feature_fs(struct svm_task_ctx *t_ctx)
-{
-    svm_proc_fs_del_task(t_ctx->entry);
-}
+static void svm_del_task_feature_fs(struct svm_task_ctx *t_ctx) { svm_proc_fs_del_task(t_ctx->entry); }
 
 static void svm_task_ctx_release(struct task_ctx *ctx)
 {
@@ -422,17 +408,15 @@ static bool svm_task_go_apm_recycle(struct svm_task_ctx *t_ctx)
         return true;
     }
 
-    if (ka_base_atomic_cmpxchg(&t_ctx->state, SVM_TASK_STATE_RUNNING, SVM_TASK_STATE_APM_RECYCLE) == SVM_TASK_STATE_RUNNING) {
+    if (ka_base_atomic_cmpxchg(&t_ctx->state, SVM_TASK_STATE_RUNNING, SVM_TASK_STATE_APM_RECYCLE) ==
+        SVM_TASK_STATE_RUNNING) {
         return true;
     }
 
     return false;
 }
 
-static void svm_task_set_exit_force(struct svm_task_ctx *t_ctx, bool exit_force)
-{
-    t_ctx->exit_force = exit_force;
-}
+static void svm_task_set_exit_force(struct svm_task_ctx *t_ctx, bool exit_force) { t_ctx->exit_force = exit_force; }
 
 bool svm_task_is_exit_force(void *task_ctx)
 {
@@ -450,10 +434,7 @@ static void svm_task_set_exit_abort_flag(struct svm_task_ctx *t_ctx, bool exit_a
     t_ctx->exit_abort = exit_abort;
 }
 
-void svm_task_set_exit_abort(void *task_ctx)
-{
-    svm_task_set_exit_abort_flag((struct svm_task_ctx *)task_ctx, true);
-}
+void svm_task_set_exit_abort(void *task_ctx) { svm_task_set_exit_abort_flag((struct svm_task_ctx *)task_ctx, true); }
 
 bool svm_task_is_exit_abort(void *task_ctx)
 {
@@ -482,15 +463,17 @@ static int _svm_del_task(u32 udevid, int tgid, struct task_start_time *start_tim
         return -EINVAL;
     }
 
-    if (!TASK_START_TIME_EQUAL(start_time->time, t_ctx->start_time.time)) {
+    if (!ka_system_timespec_equal(start_time->time, t_ctx->start_time.time)) {
         _svm_task_ctx_put(t_ctx);
         svm_err("Task start time not equal. (udevid=%u; tgid=%d)\n", udevid, tgid);
         return -EINVAL;
     }
 
-    if (ka_base_atomic_cmpxchg(&t_ctx->state, SVM_TASK_STATE_RUNNING, SVM_TASK_STATE_SELF_RECYCLE) != SVM_TASK_STATE_RUNNING) {
-        svm_warn("Task can't go self recycle. (udevid=%u; tgid=%d; state=%d)\n",
-            udevid, tgid, ka_base_atomic_read(&t_ctx->state));
+    if (ka_base_atomic_cmpxchg(&t_ctx->state, SVM_TASK_STATE_RUNNING, SVM_TASK_STATE_SELF_RECYCLE) !=
+        SVM_TASK_STATE_RUNNING) {
+        svm_warn(
+            "Task can't go self recycle. (udevid=%u; tgid=%d; state=%d)\n", udevid, tgid,
+            ka_base_atomic_read(&t_ctx->state));
         _svm_task_ctx_put(t_ctx);
         return 0;
     }
@@ -573,11 +556,9 @@ static int svm_task_exit_notifier(int role, int tgid, int stage, bool exit_force
 
     svm_debug("Exit notifier in. (role=%d; tgid=%d; stage=%d; exit_force=%d)\n", role, tgid, stage, exit_force);
 
-    if (stage == APM_STAGE_RECYCLE_RES) {
-        ret = ka_dfx_notifier_from_errno(svm_destroy_task_from_all_dev(tgid, exit_force));
-        if (ret == 0) {
-            svm_info("Exit notifier success. (role=%d; tgid=%d; exit_force=%d)\n", role, tgid, exit_force);
-        }
+    ret = ka_dfx_notifier_from_errno(svm_destroy_task_from_all_dev(tgid, exit_force));
+    if (ret == 0) {
+        svm_info("Exit notifier success. (role=%d; tgid=%d; exit_force=%d)\n", role, tgid, exit_force);
     }
 
     return ret;
@@ -585,12 +566,22 @@ static int svm_task_exit_notifier(int role, int tgid, int stage, bool exit_force
 
 static int svm_task_master_exit_notifier(ka_notifier_block_t *self, unsigned long val, void *data)
 {
-    return svm_task_exit_notifier(0, apm_get_exit_tgid(val), apm_get_exit_stage(val), apm_get_exit_force_flag(val));
+    int stage = apm_get_exit_stage(val);
+    if (stage == APM_STAGE_RECYCLE_RES) {
+        return svm_task_exit_notifier(0, apm_get_exit_tgid(val), stage, apm_get_exit_force_flag(val));
+    }
+
+    return KA_NOTIFY_OK;
 }
 
 static int svm_task_slave_exit_notifier(ka_notifier_block_t *self, unsigned long val, void *data)
 {
-    return svm_task_exit_notifier(1, apm_get_exit_tgid(val), apm_get_exit_stage(val), apm_get_exit_force_flag(val));
+    int stage = apm_get_exit_stage(val);
+    if (stage == APM_STAGE_POST_RECYCLE_RES) {
+        return svm_task_exit_notifier(1, apm_get_exit_tgid(val), stage, apm_get_exit_force_flag(val));
+    }
+
+    return KA_NOTIFY_OK;
 }
 
 static ka_notifier_block_t svm_master_task_exit_nb = {
@@ -603,15 +594,8 @@ static ka_notifier_block_t svm_agent_task_exit_nb = {
     .priority = APM_EXIT_NOTIFIY_PRI_SVM,
 };
 
-int svm_task_init(void)
-{
-    return apm_task_exit_register(&svm_master_task_exit_nb, &svm_agent_task_exit_nb);
-}
+int svm_task_init(void) { return apm_task_exit_register(&svm_master_task_exit_nb, &svm_agent_task_exit_nb); }
 DECLAER_FEATURE_AUTO_INIT(svm_task_init, FEATURE_LOADER_STAGE_9);
 
-void svm_task_uninit(void)
-{
-    apm_task_exit_unregister(&svm_master_task_exit_nb, &svm_agent_task_exit_nb);
-}
+void svm_task_uninit(void) { apm_task_exit_unregister(&svm_master_task_exit_nb, &svm_agent_task_exit_nb); }
 DECLAER_FEATURE_AUTO_UNINIT(svm_task_uninit, FEATURE_LOADER_STAGE_9);
-

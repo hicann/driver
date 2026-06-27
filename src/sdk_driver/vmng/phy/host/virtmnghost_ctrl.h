@@ -23,7 +23,7 @@
 #define VMNGH_VM_DEV_VALID 1
 #define VMNGH_VM_DEV_INVALID 0
 
-#define VMNGH_DESTORY_ALL_VDEV -1
+#define VMNGH_DESTROY_ALL_VDEV -1
 
 #define VMNGH_DTYPE_TO_AICORE_NUM(dtype) (0x01 << (dtype))
 
@@ -110,10 +110,9 @@ u32 vmngh_get_total_core_num(u32 dev_id);
 void vmngh_bw_ctrl_info_init(u32 dev_id);
 void vmngh_bw_ctrl_info_uninit(u32 dev_id);
 int vmngh_bw_set_token_limit(u32 dev_id, u32 vfid);
-int vmngh_get_map_info_client(struct vmngh_client_instance *instance_para,
-    enum vmng_client_type client_type, struct vmngh_map_info *client_map_info);
-int vmngh_put_map_info_client(struct vmngh_client_instance *instance_para,
-    enum vmng_client_type client_type);
+int vmngh_get_map_info_client(struct vmngh_client_instance *instance_para, enum vmng_client_type client_type,
+                              struct vmngh_map_info *client_map_info);
+int vmngh_put_map_info_client(struct vmngh_client_instance *instance_para, enum vmng_client_type client_type);
 int vmngh_init_instance_client_device(u32 dev_id, u32 vfid);
 int vmngh_uninit_instance_client_device(u32 dev_id, u32 vfid);
 void vmngh_bw_data_clear_timer_init(u32 dev_id, u32 vfid);

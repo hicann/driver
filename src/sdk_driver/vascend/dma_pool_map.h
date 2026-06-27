@@ -23,30 +23,30 @@
  */
 struct dev_dma_sgt {
     gfn_t gfn;
-    struct device *dev;
-    dma_addr_t dma_addr;
-    struct sg_table *dma_sgt;
-    struct list_head list;
+    ka_device_t *dev;
+    ka_dma_addr_t dma_addr;
+    ka_sg_table_t *dma_sgt;
+    ka_list_head_t list;
 };
 
 struct dev_dma_info {
-    struct device *dev;
-    dma_addr_t base_iova;               /* for arm */
+    ka_device_t *dev;
+    ka_dma_addr_t base_iova;               /* for arm */
     struct ram_range_info *ram_info;
     struct dev_dma_sgt **sgt_array;     /* for x86 */
-    struct list_head list;
+    ka_list_head_t list;
 };
 
 struct dma_info_2m {
     gfn_t gfn;
     unsigned long size;
-    struct list_head dev_dma_sgt_head;
+    ka_list_head_t dev_dma_sgt_head;
     struct page_info_list dma_page_list;
 };
 
 struct ram_range_info_list {
     unsigned int elem_num;
-    struct list_head head;
+    ka_list_head_t head;
 };
 
 struct ram_range_info {
@@ -55,7 +55,8 @@ struct ram_range_info {
     unsigned long userspace_addr;
     int dma_array_len;
     struct dma_info_2m** dma_array;
-    struct list_head list;
+    ka_list_head_t list;
+    ka_atomic_t map_count;
 };
 
 int dev_dma_map_ram_range(struct hw_vdavinci *vdavinci,

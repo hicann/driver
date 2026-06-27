@@ -158,6 +158,18 @@ void ka_system_timer_setup(ka_timer_list_t *timer, void (*fn)(ka_timer_list_t *)
 }
 EXPORT_SYMBOL_GPL(ka_system_timer_setup);
 
+void ka_system_timer_setup_extra(ka_timer_list_t *timer, void (*fn)(ka_system_timer_list), unsigned int flags)
+{
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 15, 0)
+    (void)flags;
+    init_timer(timer);
+    timer->function = fn;
+#else
+    ka_system_timer_setup(timer, fn, flags);
+#endif
+}
+EXPORT_SYMBOL_GPL(ka_system_timer_setup_extra);
+
 /**
  * @brief get privileged kernel capability
  * @return privileged kernel capability value
@@ -351,3 +363,19 @@ u64 ka_system_get_real_ustime()
     return micro_time;
 }
 EXPORT_SYMBOL_GPL(ka_system_get_real_ustime);
+
+void ka_system_jiffies_to_timespec64(const unsigned long jiffies , struct timespec64 *value)
+{
+#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 6, 0)
+    ka_timespec_t tmp_current_time;
+#endif
+
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 6, 0)
+    jiffies_to_timespec64(jiffies, value);
+#else
+    jiffies_to_timespec(jiffies, &tmp_current_time);
+    value->tv_nsec = tmp_current_time.tv_nsec;
+    value->tv_sec = tmp_current_time.tv_sec;
+#endif
+}
+EXPORT_SYMBOL_GPL(ka_system_jiffies_to_timespec64);

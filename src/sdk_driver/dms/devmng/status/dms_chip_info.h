@@ -30,8 +30,15 @@ typedef struct dms_chip_aicore_info {
     unsigned int freq_level;
 } dms_chip_aicore_info_t;
 
+struct dms_cust_board_info {
+    unsigned int size;
+    unsigned char *data;
+    ka_mutex_t lock;
+};
+
 #define MINIV2_PRO_CORE_NUM 10
 #define MINIV2_CORE_NUM 8
+#define DMS_CUST_BOARD_INFO_MAX_SIZE 4096
 
 int dms_get_chip_info(unsigned int virt_id, devdrv_query_chip_info_t *chip_info);
 #endif

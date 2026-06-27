@@ -29,11 +29,12 @@ int trs_host_flush_id(u32 devid, struct trs_msg_data *data);
 int trs_host_res_is_check_msg_proc(u32 devid, struct trs_msg_data *data);
 int trs_host_res_id_check(struct trs_id_inst *inst, int id_type, u32 res_id);
 int trs_host_res_num_query(struct trs_id_inst *inst, struct trs_res_query_para *para);
-int trs_host_request_irq(struct trs_id_inst *inst, struct trs_adapt_irq_attr *attr,
-    void *para, const char *name, ka_irqreturn_t (*handler)(int irq, void *para));
-void trs_host_free_irq(struct trs_id_inst *inst,struct trs_adapt_irq_attr *attr, void *para);
-int trs_adapt_ops_request_irq(struct trs_id_inst *inst, u32 irq_type,  u32 irq,
-                                void *para, ka_irqreturn_t (*handler)(int irq, void *para));
+int trs_host_request_irq(
+    struct trs_id_inst *inst, struct trs_adapt_irq_attr *attr, void *para, const char *name,
+    ka_irqreturn_t (*handler)(int irq, void *para));
+void trs_host_free_irq(struct trs_id_inst *inst, struct trs_adapt_irq_attr *attr, void *para);
+int trs_adapt_ops_request_irq(
+    struct trs_id_inst *inst, u32 irq_type, u32 irq, void *para, ka_irqreturn_t (*handler)(int irq, void *para));
 void trs_adapt_ops_free_irq(struct trs_id_inst *inst, u32 irq_type, u32 irq, void *para);
 int trs_host_ts_cq_process(u32 devid, struct trs_msg_data *data);
 int trs_host_get_connect_protocol(struct trs_id_inst *inst);

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * Copyright (c) 2026 Huawei Technologies Co., Ltd.
  * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -26,4 +26,3 @@ int svm_smm_client_map(struct svm_dst_va *dst_info, struct svm_global_va *src_in
 int svm_smm_client_unmap(struct svm_dst_va *dst_info, struct svm_global_va *src_info, u32 flag);
 
 #endif
-

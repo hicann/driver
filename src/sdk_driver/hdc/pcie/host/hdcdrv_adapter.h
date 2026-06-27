@@ -21,7 +21,7 @@ typedef unsigned int u32;
 #endif
 
 #ifndef u64
-    typedef unsigned long long u64;
+typedef unsigned long long u64;
 #endif
 
 #define HDCDRV_SUPPORT_MAX_SESSION_PER_VDEV 136 /* 32 * 4(log + tsd + dvpp + reserved) + 8 */
@@ -37,7 +37,6 @@ typedef unsigned int u32;
 #define HDCDRV_VDEV_MAX_CTX_NUM 200
 #define HDCDRV_VDEV_MAX_FAST_NODE_NUM 0x80000
 #define HDCDRV_VDEV_MAX_FNODE_PHY_NUM (HDCDRV_MEM_MAX_PHY_NUM * 128) /* 32GB / 256MB */
-
 
 struct vhdch_fast_node {
     ka_rb_node_t mem_node;

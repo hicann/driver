@@ -24,9 +24,9 @@
 #define VMNG_MSG_CHAN_NUM_MAX VMNG_IRQ_NUM_FOR_MSG
 
 /* msg device status */
-#define VMNG_MSG_DEV_ALIVE      0   /* msg dev is normal */
-#define VMNG_MSG_DEV_REMOVE     1   /* remote vpc is removed */
-#define VMNG_MSG_DEV_DEAD       2   /* heartbeat lost or npu offline */
+#define VMNG_MSG_DEV_ALIVE 0  /* msg dev is normal */
+#define VMNG_MSG_DEV_REMOVE 1 /* remote vpc is removed */
+#define VMNG_MSG_DEV_DEAD 2   /* heartbeat lost or npu offline */
 
 /* message status */
 #define VMNG_MSG_CHAN_STATUS_DISABLE 0x0
@@ -171,11 +171,11 @@ struct vmng_msg_cluster {
     u32 status;
     void *msg_dev;
     struct vmng_msg_proc msg_proc;
-    ka_mutex_t mutex;             /* tx */
+    ka_mutex_t mutex; /* tx */
     ka_semaphore_t cluster_sema;
-    ka_wait_queue_head_t tx_alloc_wq;  /* tx */
-    struct vmng_stack *alloc_stack; /* tx */
-    ka_wait_queue_head_t tx_data_wq;   /* tx */
+    ka_wait_queue_head_t tx_alloc_wq; /* tx */
+    struct vmng_stack *alloc_stack;   /* tx */
+    ka_wait_queue_head_t tx_data_wq;  /* tx */
     struct vmng_msg_chan_rx *msg_chan_rx_beg;
     struct vmng_msg_chan_tx *msg_chan_tx_beg;
     struct vmng_msg_chan_res res;
@@ -230,14 +230,15 @@ void vmng_msg_rx_msg_task(ka_work_struct_t *p_work);
 void vmng_msg_push_rx_queue_work(struct vmng_msg_chan_rx *msg_chan);
 
 int vmng_msg_fill_desc(const struct vmng_tx_msg_proc_info *tx_info, u32 opcode_d1, u32 opcode_d2,
-    struct vmng_msg_chan_tx *msg_chan, u32 **p_sq_status);
+                       struct vmng_msg_chan_tx *msg_chan, u32 **p_sq_status);
 int vmng_sync_msg_send(struct vmng_msg_cluster *msg_cluster, struct vmng_tx_msg_proc_info *tx_info, u32 opcode_d1,
-    u32 opcode_d2, u32 timeout);
+                       u32 opcode_d2, u32 timeout);
 int vmng_sync_msg_wait_undesire(const u32 *status, int status_init, int status_enter_proc, u32 cycle, u32 len);
 int vmng_msg_reply_data(struct vmng_msg_chan_tx *msg_chan, void *data, u32 out_data_len, u32 *real_out_data_len);
 
 int vmng_alloc_local_msg_cluster(struct vmng_msg_dev *msg_dev, enum vmng_msg_chan_type chan_type,
-    const struct vmng_msg_chan_res *res, struct vmng_msg_chan_irqs *int_irq_ary, struct vmng_msg_proc *msg_proc);
+                                 const struct vmng_msg_chan_res *res, struct vmng_msg_chan_irqs *int_irq_ary,
+                                 struct vmng_msg_proc *msg_proc);
 void vmng_free_msg_cluster(struct vmng_msg_dev *msg_dev, enum vmng_msg_chan_type chan_type);
 
 int vmng_msg_chan_init(u32 side, struct vmng_msg_dev *msg_dev);

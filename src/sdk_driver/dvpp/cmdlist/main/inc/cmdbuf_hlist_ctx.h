@@ -14,7 +14,7 @@
 #ifndef CMDBUF_HLIST_CTX_H
 #define CMDBUF_HLIST_CTX_H
 
-#include <linux/types.h>
+#include "ka_type.h"
 #include "ka_task_pub.h"
 #include "dvpp_cmdlist_ioctl.h"
 

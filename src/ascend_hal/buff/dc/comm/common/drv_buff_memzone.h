@@ -15,7 +15,7 @@
 #include "drv_buff_list.h"
 #include "buff_recycle.h"
 
-#define MZ_INIT_FLAG    0xAABBCCDD
+#define MZ_INIT_FLAG 0xAABBCCDD
 
 #define MZ_ALLOC_FROM_SHARE_POOL 0
 #define MZ_ALLOC_FROM_NORMAL_MEM 1
@@ -166,14 +166,13 @@ void memzone_delete(struct memzone_user_mng_t *mz);
 drvError_t memzone_alloc_buff(struct mem_info_t *info, void **buff, uint32_t *blk_id);
 drvError_t memzone_free_huge(void *huge_mng, void *buff);
 drvError_t memzone_free_normal(void *mz_mng, void *buff, struct uni_buff_head_t *head);
-uint64_t* memzone_get_buff_head_by_index(struct memzone_user_mng_t *memzone, unsigned int idx);
+uint64_t *memzone_get_buff_head_by_index(struct memzone_user_mng_t *memzone, unsigned int idx);
 int memzone_scan_free(struct memzone_user_mng_t *mz);
 void huge_buff_scan_free(void *huge_mng, void *buff);
 memZoneCfg *memzone_get_cfg_info_by_id(unsigned int cfg_id);
-void memzone_elastic_cfg_init(struct buff_memzone_list_node* mz_list_node);
+void memzone_elastic_cfg_init(struct buff_memzone_list_node *mz_list_node);
 void memzone_mng_list_add(struct memzone_user_mng_t *mz);
-void memzone_scan_free_idle_pool(struct buff_memzone_list_node *mz_list_node,
-    struct memzone_user_mng_t *specific_mz);
+void memzone_scan_free_idle_pool(struct buff_memzone_list_node *mz_list_node, struct memzone_user_mng_t *specific_mz);
 
 static inline bool memzone_buff_is_valid(struct memzone_area *mz_area, const void *start, const void *end)
 {
@@ -182,8 +181,8 @@ static inline bool memzone_buff_is_valid(struct memzone_area *mz_area, const voi
     if (((uintptr_t)start < (uintptr_t)mz_area->mz_mem_uva || (uintptr_t)start >= (uintptr_t)mz_end) ||
         ((uintptr_t)end < (uintptr_t)mz_area->mz_mem_uva || (uintptr_t)end > (uintptr_t)mz_end) ||
         ((uintptr_t)start >= (uintptr_t)end)) {
-        buff_err("invalid buff start or end, buff start:%lx, memzone start:%lx, end:%lx\n",
-            (uintptr_t)start, (uintptr_t)mz_area->mz_mem_uva, (uintptr_t)mz_end);
+        buff_err("invalid buff start or end, buff start:%lx, memzone start:%lx, end:%lx\n", (uintptr_t)start,
+                 (uintptr_t)mz_area->mz_mem_uva, (uintptr_t)mz_end);
         return 0;
     }
 

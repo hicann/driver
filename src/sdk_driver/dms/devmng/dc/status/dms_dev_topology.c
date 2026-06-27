@@ -319,7 +319,7 @@ int dms_get_dev_topology(unsigned int dev_id1, unsigned int dev_id2, int *topolo
     }
 
 #ifdef CFG_HOST_ENV
-    ret = adap_get_dev_topology(dev_id1, dev_id2, topology_type);
+    ret = devdrv_get_dev_topology(dev_id1, dev_id2, topology_type);
     if (ret != 0) {
         dms_err("Get devices topology from pcie failed. (ret=%d; dev_id1=%u; dev_id2=%u)\n", ret, dev_id1, dev_id2);
         return ret;

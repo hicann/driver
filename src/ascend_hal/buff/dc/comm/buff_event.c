@@ -19,6 +19,7 @@
 #include "buff_manage_base.h"
 #include "drv_user_common.h"
 #include "buff_event.h"
+#include "buff_platform.h"
 
 #define EVENT_MAX_SUBSCRIBER 12
 #define MAX_SUBSCRIBER_NAME_LEN 128
@@ -46,7 +47,8 @@ struct buff_scale_node {
 LIST_HEAD(scale_buff_list);
 static pthread_mutex_t scale_mutex = PTHREAD_MUTEX_INITIALIZER;
 
-static void buff_scale_submit_event(int pool_id, int type, void *addr, unsigned long long size, unsigned long subscriber)
+static void buff_scale_submit_event(int pool_id, int type, void *addr, unsigned long long size,
+                                    unsigned long subscriber)
 {
     struct event_summary event;
     struct buf_scale_event scale_event;
@@ -57,11 +59,7 @@ static void buff_scale_submit_event(int pool_id, int type, void *addr, unsigned 
     event.grp_id = (unsigned int)((subscriber >> PROP_GRP_OFFSET) & PROP_GRP_MASK);
     event.event_id = (int)((subscriber >> PROP_EVENT_OFFSET) & PROP_EVENT_MASK);
     event.subevent_id = 0;
-#ifdef DRV_HOST
-    event.dst_engine = CCPU_HOST;
-#else
-    event.dst_engine = CCPU_DEVICE;
-#endif
+    event.dst_engine = buff_event_get_dst_engine();
     event.policy = ONLY;
     event.msg = (char *)&scale_event;
     event.msg_len = (unsigned int)sizeof(scale_event);
@@ -74,8 +72,8 @@ static void buff_scale_submit_event(int pool_id, int type, void *addr, unsigned 
     devid = (unsigned int)((subscriber >> PROP_DEVID_OFFSET) & PROP_DEVID_MASK);
     ret = halEschedSubmitEvent(devid, &event);
     if (ret != DRV_ERROR_NONE) {
-        buff_warn("Notify failed. (devid=%u; pool_id=%d; pid=%d; grp_id=%d; addr=%p; size=%llx)\n",
-            devid, pool_id, event.pid, event.grp_id, addr, size);
+        buff_warn("Notify failed. (devid=%u; pool_id=%d; pid=%d; grp_id=%d; addr=%p; size=%llx)\n", devid, pool_id,
+                  event.pid, event.grp_id, addr, size);
     }
 }
 
@@ -103,7 +101,8 @@ static void buff_scale_del_from_list(void *addr, unsigned long long size)
     struct list_head *pos = NULL, *n = NULL;
 
     (void)pthread_mutex_lock(&scale_mutex);
-    list_for_each_safe(pos, n, &scale_buff_list) {
+    list_for_each_safe(pos, n, &scale_buff_list)
+    {
         scale_node = list_entry(pos, struct buff_scale_node, node);
         if (scale_node != NULL) {
             if ((scale_node->addr == addr) && (scale_node->size == size)) {
@@ -122,7 +121,8 @@ static void buff_scale_list_event_submit(int pool_id, unsigned long subscriber)
     struct list_head *pos = NULL, *n = NULL;
 
     (void)pthread_mutex_lock(&scale_mutex);
-    list_for_each_safe(pos, n, &scale_buff_list) {
+    list_for_each_safe(pos, n, &scale_buff_list)
+    {
         scale_node = list_entry(pos, struct buff_scale_node, node);
         if (scale_node != NULL) {
             buff_scale_submit_event(pool_id, EVENT_TYPE_ADD, scale_node->addr, scale_node->size, subscriber);
@@ -202,8 +202,8 @@ drvError_t halBufEventReport(const char *grpName)
 
     ret = buff_pool_id_query(grpName, &pool_id);
     if ((ret != DRV_ERROR_NONE) || (pool_id != buff_get_default_pool_id())) {
-        buff_err("Buff_pool_id_query failed. (grp_name=%s; pool_id=%d; ret=%d; get_default_pool_id=%d)\n",
-            grpName, pool_id, ret, buff_get_default_pool_id());
+        buff_err("Buff_pool_id_query failed. (grp_name=%s; pool_id=%d; ret=%d; get_default_pool_id=%d)\n", grpName,
+                 pool_id, ret, buff_get_default_pool_id());
         return ret;
     }
 
@@ -224,7 +224,8 @@ static drvError_t event_subscribe_para_check(const char *grp_name, unsigned int 
     unsigned long len;
 
     if ((grp_name == NULL) || (thread_grp_id >= EVENT_GRP_MAX_NUM) || (event_id >= EVENT_MAX_NUM)) {
-        buff_err("Parameter invalid. (thread_grp_id=%d; event_id=%d; grp_name=%p)\n", thread_grp_id, event_id, grp_name);
+        buff_err("Parameter invalid. (thread_grp_id=%d; event_id=%d; grp_name=%p)\n", thread_grp_id, event_id,
+                 grp_name);
         return DRV_ERROR_INVALID_VALUE;
     }
 
@@ -237,8 +238,8 @@ static drvError_t event_subscribe_para_check(const char *grp_name, unsigned int 
     return DRV_ERROR_NONE;
 }
 
-drvError_t halBufEventSubscribe(const char *grpName, unsigned int threadGrpId,
-    unsigned int event_id, unsigned int devid)
+drvError_t halBufEventSubscribe(const char *grpName, unsigned int threadGrpId, unsigned int event_id,
+                                unsigned int devid)
 {
     unsigned long subscriber;
     drvError_t ret;

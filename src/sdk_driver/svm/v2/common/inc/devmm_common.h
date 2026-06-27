@@ -31,7 +31,9 @@
 #include "devmm_proc_info.h"
 #include "svm_proc_gfp.h"
 #include "devmm_mem_alloc_interface.h"
-
+#ifndef UVM_OPEN
+#include "uvm_heap_mng.h"
+#endif
 #ifndef __KA_GFP_ACCOUNT
 
 #ifdef __KA_GFP_KMEMCG
@@ -54,37 +56,38 @@
 
 #define SVM_DEV_INST_MAX_NUM (SVM_MAX_AGENT_NUM * DEVMM_MAX_VF_NUM)
 
-#define SVM_MASTER_HUGE_PAGE_SIZE 0x200000ULL  /* 0x200000 master use 2M huge page size */
-#define SVM_MASTER_GIANT_PAGE_SIZE 0x40000000ULL    /* 0x40000000 master use 1G giant page size */
+#define SVM_MASTER_HUGE_PAGE_SIZE 0x200000ULL    /* 0x200000 master use 2M huge page size */
+#define SVM_MASTER_GIANT_PAGE_SIZE 0x40000000ULL /* 0x40000000 master use 1G giant page size */
 
 #if KA_MAX_NUMNODES > 256
-#define SVM_MASTER_NUMA_MAX     256
+#define SVM_MASTER_NUMA_MAX 256
 #else
-#define SVM_MASTER_NUMA_MAX     KA_MAX_NUMNODES
+#define SVM_MASTER_NUMA_MAX KA_MAX_NUMNODES
 #endif
 
-#define DEVMM_S2S_HOST_GLOBAL_BASE_OFFSET           0x800000000000   /* 128TB */
-#define DEVMM_S2S_HOST_NODE_NUM                     4
+#define DEVMM_S2S_HOST_GLOBAL_BASE_OFFSET 0x800000000000 /* 128TB */
+#define DEVMM_S2S_HOST_NODE_NUM 4
 #ifdef EMU_ST
-#define DEVMM_S2S_HOST_NODE_MEM_SIZE                0x40000000 /* 1G */
+#define DEVMM_S2S_HOST_NODE_MEM_SIZE 0x40000000 /* 1G */
 #else
-#define DEVMM_S2S_HOST_NODE_MEM_SIZE                0xaa80000000 /* 682G */
+#define DEVMM_S2S_HOST_NODE_MEM_SIZE 0xaa80000000 /* 682G */
 #endif
-#define DEVMM_S2S_HOST_SERVER_MEM_SIZE              (DEVMM_S2S_HOST_NODE_MEM_SIZE * DEVMM_S2S_HOST_NODE_NUM)
+#define DEVMM_S2S_HOST_SERVER_MEM_SIZE (DEVMM_S2S_HOST_NODE_MEM_SIZE * DEVMM_S2S_HOST_NODE_NUM)
 
 static inline u64 devmm_get_s2s_host_node_start_addr(u32 server_id, u32 node_id)
 {
-    return (DEVMM_S2S_HOST_GLOBAL_BASE_OFFSET +
-        DEVMM_S2S_HOST_SERVER_MEM_SIZE * server_id + DEVMM_S2S_HOST_NODE_MEM_SIZE * node_id);
+    return (
+        DEVMM_S2S_HOST_GLOBAL_BASE_OFFSET + DEVMM_S2S_HOST_SERVER_MEM_SIZE * server_id +
+        DEVMM_S2S_HOST_NODE_MEM_SIZE * node_id);
 }
 
 static inline u64 devmm_get_host_node_local_addr(u32 node_id)
 {
     u64 mem_node_start[DEVMM_S2S_HOST_NODE_NUM] = {
-        0x29580000000, /* node 0 map addr 0x29580000000 */
-        0xa9580000000, /* node 1 map addr 0xa9580000000 */
+        0x29580000000,  /* node 0 map addr 0x29580000000 */
+        0xa9580000000,  /* node 1 map addr 0xa9580000000 */
         0x129580000000, /* node 2 map addr 0x129580000000 */
-        0x1a9580000000 /* node 3 map addr 0x1a9580000000 */
+        0x1a9580000000  /* node 3 map addr 0x1a9580000000 */
     };
 
     return mem_node_start[node_id];
@@ -115,8 +118,8 @@ static inline int devmm_get_s2s_host_global_addr(u32 server_id, u64 addr, u64 *g
     }
 #endif
 
-    *global_addr = devmm_get_s2s_host_node_start_addr(server_id, node_id) +
-        (addr - devmm_get_host_node_local_addr(node_id));
+    *global_addr =
+        devmm_get_s2s_host_node_start_addr(server_id, node_id) + (addr - devmm_get_host_node_local_addr(node_id));
 
     return 0;
 }
@@ -147,10 +150,7 @@ static inline bool devmm_pages_is_continue(ka_page_t *pre_page, ka_page_t *post_
     return (ka_mm_page_to_pfn(pre_page) + 1) == ka_mm_page_to_pfn(post_page);
 }
 #else
-static inline bool devmm_pages_is_continue(ka_page_t *pre_page, ka_page_t *post_page)
-{
-    return false;
-}
+static inline bool devmm_pages_is_continue(ka_page_t *pre_page, ka_page_t *post_page) { return false; }
 #endif
 static inline void devmm_isb(void)
 {
@@ -173,8 +173,10 @@ void devmm_put_user_pages(ka_page_t **pages, u64 page_num, u64 unpin_num);
 void devmm_pin_user_pages(ka_page_t **pages, u64 page_num);
 u64 devmm_get_pagecount_by_size(u64 vptr, u64 sizes, u32 page_size);
 int devmm_check_va_add_size_by_heap(struct devmm_svm_heap *heap, u64 va, u64 size);
-bool devmm_check_input_heap_info(struct devmm_svm_process *svm_pro,
-    struct devmm_update_heap_para *cmd, u32 devid);
+#ifndef UVM_OPEN
+int devmm_check_va_add_size_by_uvm_heap(struct devmm_uvm_heap *uvm_heap, u64 va, u64 size);
+#endif
+bool devmm_check_input_heap_info(struct devmm_svm_process *svm_pro, struct devmm_update_heap_para *cmd, u32 devid);
 ssize_t devmm_read_file(ka_file_t *fp, char *dst_addr, size_t fsize, loff_t *pos);
 char *devmm_read_line(ka_file_t *fp, loff_t *offset, char *buf, u32 buf_len);
 void *devmm_kvalloc(u64 size, ka_gfp_t flags);
@@ -185,8 +187,8 @@ ka_vm_area_struct_t *devmm_find_vma(struct devmm_svm_process *svm_proc, u64 vadd
 ka_vm_area_struct_t *devmm_find_vma_custom(struct devmm_svm_process *svm_proc, u32 idx, u64 vaddr);
 ka_mm_struct_t *devmm_custom_mm_get(ka_pid_t custom_pid);
 void devmm_custom_mm_put(ka_mm_struct_t *custom_mm);
-int devmm_update_heap_info(struct devmm_svm_process *svm_process, struct devmm_update_heap_para *cmd,
-    struct devmm_svm_heap *free_heap);
+int devmm_update_heap_info(
+    struct devmm_svm_process *svm_process, struct devmm_update_heap_para *cmd, struct devmm_svm_heap *free_heap);
 void devmm_free_heap_struct(struct devmm_svm_process *svm_process, u32 heap_idx, u32 heap_num);
 void devmm_clear_svm_heap_struct(struct devmm_svm_process *svm_process, u32 heap_idx, u32 heap_num);
 bool devmm_wait_svm_heap_unoccupied(struct devmm_svm_process *svm_process, struct devmm_svm_heap *heap);
@@ -209,7 +211,8 @@ void devmm_svm_mem_enable(struct devmm_svm_process *svm_proc);
 void devmm_svm_mem_disable(struct devmm_svm_process *svm_proc);
 bool devmm_svm_mem_is_enable(struct devmm_svm_process *svm_proc);
 
-void devmm_phy_addr_attr_pack(struct devmm_svm_process *svm_proc, u32 pg_type, u32 mem_type, bool is_continuous,
+void devmm_phy_addr_attr_pack(
+    struct devmm_svm_process *svm_proc, u32 pg_type, u32 mem_type, bool is_continuous,
     struct devmm_phy_addr_attr *attr);
 u64 devmm_get_tgid_start_time(void);
 #ifdef EMU_ST
@@ -220,5 +223,5 @@ bool devmm_palist_is_continuous(u64 *pa, u32 num, u32 page_size);
 bool devmm_palist_is_specify_continuous(u64 *pa, u32 page_size, u32 total_num, u32 min_con_num);
 
 void devmm_update_devids(struct devmm_devid *devids, u32 logical_devid, u32 devid, u32 vfid);
-
+int devmm_sdma_page_kernel_memzero(ka_page_t *pg, u64 page_size);
 #endif /* __DEVMM_COMMON_H__ */

@@ -343,3 +343,9 @@ int ka_pci_configure_extended_capability(ka_pci_dev_t *dev)
 return 0;
 }
 EXPORT_SYMBOL_GPL(ka_pci_configure_extended_capability);
+
+int ka_pci_capability_read_word(ka_pci_dev_t *dev, int pos, u16 *val)
+{
+    return pcie_capability_read_word(dev, pos, val);
+}
+EXPORT_SYMBOL_GPL(ka_pci_capability_read_word);

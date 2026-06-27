@@ -70,16 +70,16 @@ struct devdrv_mailbox_message {
     u8 message_payload[DEVDRV_MAILBOX_PAYLOAD_LENGTH];
     int message_length;
     ka_semaphore_t wait; /* for synchronizing */
-    int feedback;          /* need feedback or no need */
-    int feedback_num;      /* number of expect ackdata */
-    u8 *feedback_buffer;   /* buffer to save feedback data, must alloc memory when message inited */
-    int feedback_count;    /* counter of received feedback */
-    int process_result;    /* result of processing mailbox by TS */
-    u32 hwts_sqid;         /* in mc2 feature, ts will come back hwts sqid to tsdrv for calc sq head/tail reg addr */
-    int sync_type;         /* sync or nonsync */
-    int cmd_type;          /* related to task */
-    int message_index;     /* message index when there is several message within one task */
-    int message_pid;       /* who am i(process who send this message) */
+    int feedback;        /* need feedback or no need */
+    int feedback_num;    /* number of expect ackdata */
+    u8 *feedback_buffer; /* buffer to save feedback data, must alloc memory when message inited */
+    int feedback_count;  /* counter of received feedback */
+    int process_result;  /* result of processing mailbox by TS */
+    u32 hwts_sqid;       /* in mc2 feature, ts will come back hwts sqid to tsdrv for calc sq head/tail reg addr */
+    int sync_type;       /* sync or nonsync */
+    int cmd_type;        /* related to task */
+    int message_index;   /* message index when there is several message within one task */
+    int message_pid;     /* who am i(process who send this message) */
     ka_work_struct_t send_work;
     ka_work_struct_t wait_work;
     ka_list_head_t send_list_node;
@@ -101,8 +101,8 @@ struct devdrv_mailbox_message {
     u8 is_sent;
 };
 
-#define TSDRV_CONT_TIMEOUT_CNT      3
-#define TSDRV_DFX_MAX_TIMES      3
+#define TSDRV_CONT_TIMEOUT_CNT 3
+#define TSDRV_DFX_MAX_TIMES 3
 
 struct devdrv_mailbox {
     u8 __ka_mm_iomem *send_sram;
@@ -114,8 +114,8 @@ struct devdrv_mailbox {
     int data_ack_irq;
     volatile int working;
 
-    ka_atomic_t status;  /* mailbox busy or free */
-    volatile int mailbox_type;    /* mailbox communication method: SPI+SRAM or IPC */
+    ka_atomic_t status;        /* mailbox busy or free */
+    volatile int mailbox_type; /* mailbox communication method: SPI+SRAM or IPC */
     ka_atomic_t timeout;
     u32 dfx_times;
 
@@ -123,9 +123,9 @@ struct devdrv_mailbox {
 #ifndef TSDRV_KERNEL_UT
 #ifndef TSDRV_UT
     // mailbox dfx status
-    u64 send;      /* record mailbox send time */
-    u64 down_timeout;   /* record mailbox down_timeout time */
-    u64 irq_time;  /* record mailbox irq receive time */
+    u64 send;         /* record mailbox send time */
+    u64 down_timeout; /* record mailbox down_timeout time */
+    u64 irq_time;     /* record mailbox irq receive time */
 #endif
 #endif
 };
@@ -173,6 +173,5 @@ int devdrv_send_hwts_addr_to_ts(u32 dev_id, u32 tsid, u32 local_devid, u32 host_
 int tsdrv_mbox_init(u32 devid, u32 tsnum);
 void tsdrv_mbox_exit(u32 devid, u32 tsnum);
 int hal_kernel_tsdrv_mailbox_send_sync(u32 devid, u32 tsid, struct tsdrv_mbox_data *data);
-
 
 #endif /* DEVDRV_MAILBOX_H */

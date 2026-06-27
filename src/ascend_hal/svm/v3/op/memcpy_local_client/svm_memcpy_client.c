@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * Copyright (c) 2026 Huawei Technologies Co., Ltd.
  * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -18,10 +18,10 @@
 #include "svm_sys_cmd.h"
 #include "svm_user_adapt.h"
 #include "malloc_mng.h"
-#include "memcpy_msg.h"
+#include "memcpy_uk_msg.h"
 #include "svm_memcpy_local.h"
 #include "svm_umc_client.h"
-#include "svm_sub_event_type.h"
+#include "svm_sub_event_type_uk_msg.h"
 #include "svm_dbi.h"
 #include "svm_apbi.h"
 #include "svm_memcpy.h"
@@ -35,8 +35,7 @@ static int svm_memcpy_local_event(u32 devid, u64 dst, u64 dst_max, u64 src, u64 
         .msg_in = (char *)(uintptr_t)&memcpy_local_msg,
         .msg_in_len = sizeof(struct svm_memcpy_local_msg),
         .msg_out = NULL,
-        .msg_out_len = 0
-    };
+        .msg_out_len = 0};
     struct svm_apbi apbi;
     int ret;
     SVM_UNUSED(dst_max);

@@ -7,9 +7,6 @@
 # INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
 # See LICENSE in the root of the software repository for the full text of the License.
 # ------------------------------------------------------------------------------------------------------------
-# ################################################################################################################
-# AR20241204266067 ts_agent不能直接包含除<linux/types.h>外的内核头文件
-# ################################################################################################################
 ifneq ($(TARGET_SYSTEM_NAME), KpStars)
 TMP_TOP_DIR :=
 TMP_CURRENT_DIR :=
@@ -37,7 +34,7 @@ ifeq ($(ENABLE_OPEN_SRC), y)
 					-I$(TMP_TOP_DIR)/ace/csruntime/inc \
 					-I$(TMP_OPEN_KA_INC_DIR) \
                     -I$(C_SEC_INCLUDE)
-
+    EXTRA_CFLAGS += -DCFG_HOST_ENV
 	ccflags-y += -Wall -Werror
 	obj-m := ts_agent.o
     EXTRA_CFLAGS += -DCFG_SOC_PLATFORM_STARS

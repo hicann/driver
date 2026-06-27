@@ -35,7 +35,7 @@ long dma_cnt[TSAGENT_MAX_DEV_ID] = {0};
 long dma_cnt_max[TSAGENT_MAX_DEV_ID] = {0};
 long dma_cnt_max_last[TSAGENT_MAX_DEV_ID] = {0};
 #if defined(CFG_SOC_PLATFORM_CLOUD_V2)
-void __iomem *g_warning_bit_addr[TSAGENT_MAX_DEV_ID] = {NULL};
+void __ka_mm_iomem *g_warning_bit_addr[TSAGENT_MAX_DEV_ID] = {NULL};
 #endif
 
 const uint16_t TS_MASK_BIT0_BIT1 = 0x3U;
@@ -66,24 +66,24 @@ struct tsagent_sq_base_info g_sq_base_info[TSAGENT_MAX_DEV_ID][TS_AGENT_MAX_SQ_N
 
 #if (defined CFG_SOC_PLATFORM_CLOUD_V2) && (!defined CFG_HOST_VIRTUAL_MACHINES) && (defined CFG_HOST_ENV)
 
-struct tsagent_dev_base_info g_dev_base_info[TSAGENT_MAX_DEV_ID] = {{U32_MAX, U32_MAX, U32_MAX, U32_MAX}};
+struct tsagent_dev_base_info g_dev_base_info[TSAGENT_MAX_DEV_ID] = {{KA_U32_MAX, KA_U32_MAX, KA_U32_MAX, KA_U32_MAX}};
 
 void tsagent_dev_base_info_init(void)
 {
     int i;
 
     for (i = 0; i < TSAGENT_MAX_DEV_ID; i++) {
-        g_dev_base_info[i].chip_id = U32_MAX;
-        g_dev_base_info[i].die_id = U32_MAX;
-        g_dev_base_info[i].addr_mode = U32_MAX;
-        g_dev_base_info[i].soc_type = U32_MAX;
+        g_dev_base_info[i].chip_id = KA_U32_MAX;
+        g_dev_base_info[i].die_id = KA_U32_MAX;
+        g_dev_base_info[i].addr_mode = KA_U32_MAX;
+        g_dev_base_info[i].soc_type = KA_U32_MAX;
     }
 }
 
 struct tsagent_dev_base_info* tsagent_get_device_base_info(u32 dev_id)
 {
-    u32 chip_id = U32_MAX;
-    u32 die_id = U32_MAX;
+    u32 chip_id = KA_U32_MAX;
+    u32 die_id = KA_U32_MAX;
     HAL_KERNEL_ADDR_MODE addr_mode = ADDR_MODE_MAX;
     unsigned int soc_type = SOC_TYPE_MAX;
     int ret;
@@ -94,10 +94,10 @@ struct tsagent_dev_base_info* tsagent_get_device_base_info(u32 dev_id)
         return NULL;
     }
 
-    if ((g_dev_base_info[dev_id].chip_id != U32_MAX) &&
-        (g_dev_base_info[dev_id].die_id != U32_MAX) &&
-        (g_dev_base_info[dev_id].addr_mode != U32_MAX) &&
-        (g_dev_base_info[dev_id].soc_type != U32_MAX)) {
+    if ((g_dev_base_info[dev_id].chip_id != KA_U32_MAX) &&
+        (g_dev_base_info[dev_id].die_id != KA_U32_MAX) &&
+        (g_dev_base_info[dev_id].addr_mode != KA_U32_MAX) &&
+        (g_dev_base_info[dev_id].soc_type != KA_U32_MAX)) {
         return &g_dev_base_info[dev_id];     
     }
 
@@ -241,7 +241,7 @@ int tsagent_stream_id_to_sq_id_init(void)
         g_stream_id_to_sq_id_map[index_i] = (uint16_t *)ka_mm_kzalloc(size, KA_GFP_KERNEL);
         if (g_stream_id_to_sq_id_map[index_i] != NULL) {
             for (index_j = 0; index_j < TS_AGENT_MAX_STREAM_NUM; index_j++) {
-                g_stream_id_to_sq_id_map[index_i][index_j] = U16_MAX;
+                g_stream_id_to_sq_id_map[index_i][index_j] = KA_U16_MAX;
             }
         } else {
             for (free_idx = 0; free_idx < index_i; free_idx++) {
@@ -270,7 +270,7 @@ void tsagent_stream_id_to_sq_id_uninit(void)
 
 void tsagent_stream_id_to_sq_id_add(u32 devid, u32 stream_id, u16 sqid)
 {
-    if (stream_id == U32_MAX) return;
+    if (stream_id == KA_U32_MAX) return;
 
     if ((devid >= TSAGENT_MAX_DEV_ID) || (stream_id >= TS_AGENT_MAX_STREAM_NUM)) {
         ts_agent_err("devid=%u, stream_id=%u is invalid, sqid=%u.", devid, stream_id, sqid);
@@ -282,14 +282,14 @@ void tsagent_stream_id_to_sq_id_add(u32 devid, u32 stream_id, u16 sqid)
 
 void tsagent_stream_id_to_sq_id_del(u32 devid, u32 stream_id, u16 sqid)
 {
-    if (stream_id == U32_MAX) return;
+    if (stream_id == KA_U32_MAX) return;
 
     if ((devid >= TSAGENT_MAX_DEV_ID) || (stream_id >= TS_AGENT_MAX_STREAM_NUM)) {
         ts_agent_err("devid=%u, stream_id=%u is invalid, sqid=%u.", devid, stream_id, sqid);
         return;
     }
 
-    g_stream_id_to_sq_id_map[devid][stream_id] = U16_MAX;
+    g_stream_id_to_sq_id_map[devid][stream_id] = KA_U16_MAX;
 }
 
 bool tsagent_sq_is_belong_to_stream(u32 devid, u16 stream_id, u32 sqid)
@@ -299,7 +299,7 @@ bool tsagent_sq_is_belong_to_stream(u32 devid, u16 stream_id, u32 sqid)
         return false;
     }
 
-    if (sqid == U32_MAX) {
+    if (sqid == KA_U32_MAX) {
         return true;
     }
 
@@ -314,7 +314,7 @@ void tsagent_dvpp_register(ts_agent_dvpp_ops_t *ops)
     }
 }
 #ifndef TS_AGENT_UT
-EXPORT_SYMBOL(tsagent_dvpp_register);
+KA_EXPORT_SYMBOL(tsagent_dvpp_register);
 #endif
 
 void tsagent_dvpp_unregister(void)
@@ -323,7 +323,7 @@ void tsagent_dvpp_unregister(void)
     ts_agent_info("dvpp unreg successful.");
 }
 #ifndef TS_AGENT_UT
-EXPORT_SYMBOL(tsagent_dvpp_unregister);
+KA_EXPORT_SYMBOL(tsagent_dvpp_unregister);
 #endif
 
 static void sqe_error_dump(u32 devid, const ts_stars_sqe_t *sqe)
@@ -584,7 +584,7 @@ static int sqe_proc_pm_pciedma_for_update_sqe(u32 devid, u32 tsid, int pid, u32 
         return sqe_proc_convert_pciedma_to_sdma(devid, tsid, pid, sdma_dst_addr, pcie_sqe);
     }
 
-    pcie_sqe->sq_addr_low = (uintptr_t)dma.pciedma_desc.sq_addr & U32_MAX;
+    pcie_sqe->sq_addr_low = (uintptr_t)dma.pciedma_desc.sq_addr & KA_U32_MAX;
     pcie_sqe->sq_addr_high = (u32)((uintptr_t)dma.pciedma_desc.sq_addr >> 32U);
     pcie_sqe->sq_tail_ptr = (u16)dma.pciedma_desc.sq_tail;
     ts_agent_info("pciedma addr create success, devid=%u, sq_id=%u, pos=%u, pid=%d, src=%#llx, cnt=%llu, "
@@ -661,7 +661,7 @@ static void ts_agent_pciedma_dfx(u32 devid)
 
 static void ts_agent_pciedma_update_sqe(ts_stars_pciedma_sqe_t *pcie_sqe, struct svm_dma_desc *dma)
 {
-    pcie_sqe->sq_addr_low = (uintptr_t)dma->sq_addr & U32_MAX;
+    pcie_sqe->sq_addr_low = (uintptr_t)dma->sq_addr & KA_U32_MAX;
     pcie_sqe->sq_addr_high = (u32)((uintptr_t)dma->sq_addr >> 32U);
     pcie_sqe->sq_tail_ptr = (u16)dma->sq_tail;
     pcie_sqe->is_converted = 1UL;
@@ -686,7 +686,7 @@ static int sqe_proc_pciedma(u32 devid, u32 tsid, int pid, u32 sqid, ts_stars_sqe
 
 #if (defined CFG_SOC_PLATFORM_CLOUD_V2) && (!defined TS_AGENT_UT)
     if ((pcie_sqe->is_dsa_update == 1U) || (pcie_sqe->is_sqe_update == 1U)) {
-        if (sqid == U32_MAX) {
+        if (sqid == KA_U32_MAX) {
             ts_agent_err("not support sqe_proc_pciedma for decoupled stream_id and sq_id scenario: sqid=%u, stream_id=%u", 
                 sqid, sqe->stream_id);
             return EOK;
@@ -1000,7 +1000,7 @@ static int sqe_proc_write_value(u32 devid, u32 tsid, int pid, u32 sqid, ts_stars
         goto ERR_PROC;
     }
 
-    if (!IS_ALIGNED((wv_sqe->write_addr_low), (1U << wv_sqe->awsize))) {
+    if (!KA_MM_IS_ALIGNED((wv_sqe->write_addr_low), (1U << wv_sqe->awsize))) {
         ts_agent_err("addr aligned check failed, awsize=%u, write_addr_low=%#x",
             wv_sqe->awsize, wv_sqe->write_addr_low);
         goto ERR_PROC;
@@ -1142,7 +1142,7 @@ static int sqe_proc_ffts(u32 devid, u32 tsid, int pid, u32 sqid, ts_stars_sqe_t 
         return -EINVAL;
     }
 
-    if (!IS_ALIGNED((ffts_sqe->context_address_base_l), 128U)) { // 128 aligned
+    if (!KA_MM_IS_ALIGNED((ffts_sqe->context_address_base_l), 128U)) { // 128 aligned
         ts_agent_err("addr aligned check failed, devid=%u, stream_id=%u, task_id=%u, pid=%d, address_base_l=%#x",
             devid, sqe->stream_id, sqe->task_id, pid, ffts_sqe->context_address_base_l);
         return -EINVAL;
@@ -1304,7 +1304,7 @@ int tsagent_sqe_update(u32 devid, u32 tsid, struct trs_sqe_update_info *update_i
     ts_stars_sqe_t *sqe = (ts_stars_sqe_t *)update_info->sqe;
     sqe_hook_proc_t proc_fn = NULL;
 
-    if (update_info->sqid == U32_MAX) {
+    if (update_info->sqid == KA_U32_MAX) {
         ts_agent_debug("tsagent_sqe_update: stream_id=%u, sqe_type=%u, devid=%u, stream_id=%u, task_id=%u, pid=%d.",
             sqe->stream_id, sqe->type, devid, sqe->stream_id, sqe->task_id, update_info->pid);
     }
@@ -1596,14 +1596,14 @@ int tsagent_cqe_update(u32 devid, u32 tsid, int pid, u32 cqid, void *cqe)
     return EOK;
 }
 
-#if ((!defined TS_AGENT_UT) && (!defined CFG_HOST_VIRTUAL_MACHINES) && (!defined CFG_DEVICE_ENV))
+#if ((!defined TS_AGENT_UT) && (!defined CFG_DEVICE_ENV))
 static void dma_des_destroy_by_stream_id(u32 devid, int pid, u32 stream_id)
 {
-    if (stream_id != U32_MAX) {
+    if (stream_id != KA_U32_MAX) {
         struct svm_dma_desc_handle handle = {
             .pid = pid,
             .key = (devid << 16U) | stream_id,
-            .subkey = U32_MAX,
+            .subkey = KA_U32_MAX,
         };
         hal_kernel_svm_dma_desc_destroy(&handle);
         if (dma_cnt_max_last[devid] < dma_cnt_max[devid])
@@ -1628,7 +1628,7 @@ int tsagent_mailbox_update(u32 devid, u32 tsid, int pid, void *data, u32 size)
         tsagent_sq_info_reset(devid, stream_id, sqid);
 #endif
 
-#if ((!defined TS_AGENT_UT) && (!defined CFG_HOST_VIRTUAL_MACHINES) && (!defined CFG_DEVICE_ENV))
+#if ((!defined TS_AGENT_UT) && (!defined CFG_DEVICE_ENV))
         dma_des_destroy_by_stream_id(devid, pid, stream_id);
 #endif
 #if ((!defined TS_AGENT_UT) && (defined CFG_SOC_PLATFORM_CLOUD_V2) && (!defined CFG_HOST_VIRTUAL_MACHINES)  \
@@ -1639,7 +1639,7 @@ int tsagent_mailbox_update(u32 devid, u32 tsid, int pid, void *data, u32 size)
             devid, pid, stream_id, mb->u.cmd_sqcq_info.sq_idx);
     }
 
-#if ((!defined TS_AGENT_UT) && (defined CFG_SOC_PLATFORM_CLOUD_V2) && (!defined CFG_HOST_VIRTUAL_MACHINES) && (!defined CFG_DEVICE_ENV))
+#if ((!defined TS_AGENT_UT) && (defined CFG_SOC_PLATFORM_CLOUD_V2) && (!defined CFG_DEVICE_ENV))
     if ((mb->valid == TS_DRV_MAILBOX_VALID_VALUE) && (mb->cmd_type == FREE_RUNTIME_STREAM_ID)) {
         u32 stream_id = mb->u.free_runtime_stream_id.stream_id;
         dma_des_destroy_by_stream_id(devid, pid, stream_id);

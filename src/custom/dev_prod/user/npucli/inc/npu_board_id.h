@@ -1,0 +1,117 @@
+﻿/**
+ * Copyright (c) 2026 Huawei Technologies Co., Ltd.
+ * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+ * CANN Open Software License Agreement Version 2.0 (the "License").
+ * Please refer to the License for details. You may not use this file except in compliance with the License.
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+ * See LICENSE in the root of the software repository for the full text of the License.
+ */
+
+#ifndef _NPU_BOARD_ID_H_
+#define _NPU_BOARD_ID_H_
+
+#define NPU_310_DEVELOP_A_BOARD_ID          0xCF
+#define NPU_310_DEVELOP_C_BOARD_ID          0xCE
+#define NPU_310_SOC_BOARD_ID                0x3EC
+#define NPU_310_SANTACHI_SOC_BOARD_ID       0xBBC    // 金三立SOC BOARDID
+#define NPU_310_MODEL_BOARD_ID              0x04
+#define NPU_310_CARD_B_BOARD_ID             0x01
+#define NPU_310_CARD_C_BOARD_ID             0x03
+#define NPU_310_CARD_D_BOARD_ID             0x05
+#define NPU_310_CARD_DMPA_BOARD_ID          0xFC
+#define NPU_310_CARD_DMPB_BOARD_ID          0xC8
+#define NPU_310_CARD_DMPC_BOARD_ID          0xAC
+
+#define NPU_310P_CARD_BOARD_ID         0x64
+/* 310p vrd 连续性改版board type */
+
+#define NPU_310P_CARD_BOARD_ID_V2      0x68
+/* 310p 高功耗芯片board type */
+
+#define NPU_310P_CARD_BOARD_ID_V3      0x6E
+#define NPU_310P_CARD_BOARD_ID_XP      0xC8
+#define NPU_310P_CARD_2P_BOARD_ID      0x97
+#define NPU_310P_CARD_2P_HP_BOARD_ID   0x99
+#define NPU_310P_1P_SOC_BOARD_ID       0x1c2
+#define NPU_310P_1P_SOC_AG_BOARD_ID    0x1c7
+#define NPU_310P_2P_SOC_BOARD_ID       0x1db
+#define NPU_310P_CDLS_BOARD_ID         0x191
+
+#define NPU_910_CARD_256T_A_BOARD_ID  0x1
+#define NPU_910_CARD_256T_B_BOARD_ID  0x3
+#define NPU_910_CARD_280T_B_BOARD_ID  0x6
+#define NPU_910_BOARD_256T_A_BOARD_ID 0x2
+#define NPU_910_BOARD_256T_B_BOARD_ID 0x21
+#define NPU_910_BOARD_280T_A_BOARD_ID 0x27
+#define NPU_910_BOARD_280T_B_BOARD_ID 0x28
+#define NPU_910_BOARD_320T_A_BOARD_ID 0x24
+
+#define NPU_A200_A2_MODEL_BOARD_ID    0x42
+#define NPU_A200_A2_DK_BOARD_ID       0x45
+#define NPU_A500_A2_BOARD_ID          0x46
+
+#define NPU_A900T_POD_A1_BIN3_BOARD_ID  0x30
+#define NPU_A900T_POD_A1_BIN0_BOARD_ID  0x31
+#define NPU_A900T_POD_A1_BIN1_BOARD_ID  0x32
+#define NPU_A900T_POD_A1_BIN2_BOARD_ID  0x33
+#define NPU_A900T_POD_A1_BIN2X_BOARD_ID 0x34
+#define NPU_A900T_POD_A1_BIN2X_1_BOARD_ID 0x38
+// P3表示3个PMU
+#define NPU_A900T_POD_A1_BIN3_P3_BOARD_ID  0x39
+#define NPU_A900T_POD_A1_BIN0_P3_BOARD_ID  0x3a
+#define NPU_A900T_POD_A1_BIN1_P3_BOARD_ID  0x3b
+#define NPU_A900T_POD_A1_BIN2_P3_BOARD_ID  0x3c
+#define NPU_A900T_POD_A1_BIN2X_P3_BOARD_ID 0x3d
+#define NPU_A900T_POD_A1_BIN2X_1_P3_BOARD_ID 0x3e
+
+#define NPU_A200T_BOX_A1_BIN3_BOARD_ID  0x50
+#define NPU_A200T_BOX_A1_BIN0_BOARD_ID  0x51
+#define NPU_A200T_BOX_A1_BIN2_BOARD_ID  0x52
+#define NPU_A200T_BOX_A1_BIN1_BOARD_ID  0x53
+#define NPU_A200I_BOX_A1_BIN2X_1_BOARD_ID 0x54
+// A300T_A1 有2个bin1，功率不同
+#define NPU_A300T_A1_BIN1_350W_BOARD_ID 0x10
+#define NPU_A300T_A1_BIN2_BOARD_ID      0x11
+#define NPU_A300T_A1_BIN1_300W_BOARD_ID 0x12
+#define NPU_A300T_A1_BIN0_BOARD_ID      0x13
+
+#define NPU_A900_A3_SuperPoD_BIN1_BOARD_ID  0xB0
+#define NPU_A900_A3_SuperPoD_BIN2_BOARD_ID  0xB1
+#define NPU_A900_A3_SuperPoD_BIN3_BOARD_ID  0xB2
+// 适配A3_9362（560T算力NPU训练模组）
+#define NPU_A3_560T_BIN1_BOARD_ID           0xB3
+// ZQ器件替代
+#define NPU_A3_ZQ_752T_BOARD_ID                  0xD1
+#define NPU_A3_ZQ_560T_BOARD_ID                  0xD3
+// A300I Duo A2
+#define NPU_A300I_A2_BIN2_BOARD_ID  0x28
+// A300I Duo A2 64G version
+#define NPU_A300I_A2_BIN2_64G_BOARD_ID  0x29
+
+#define NPU_A800I_POD_A2_BIN2_BOARD_ID  0x40
+#define NPU_A800I_POD_A2_BIN2_1_BOARD_ID  0x41
+#define NPU_A800I_POD_A2_BIN4_1_PCIE_BOARD_ID  0x37
+#define NPU_A800T_POD_A2_BIN1_BOARD_ID  0x42
+#define NPU_A800T_POD_A2_BIN0_BOARD_ID  0x43
+
+#define NPU_A900_A5_POD_EQUIP_SOC_BOARD_ID   0x0
+#define NPU_A900_A5_EVB_V120_BOARD_ID        0x20
+#define NPU_A900_A5_MODEL_V100_BIN0_BOARD_ID      0x08
+#define NPU_A900_A5_MODEL_V100_BIN1_1_BOARD_ID    0x09
+#define NPU_A900_A5_MODEL_V100_BIN1_2_BOARD_ID    0x0A
+#define NPU_A900_A5_MODEL_V100_BIN2_1_BOARD_ID    0x0B
+#define NPU_A900_A5_MODEL_V100_BIN2_2_BOARD_ID    0x0C
+
+#define NPU_A900_A5_MODEL_V120_BIN0_BOARD_ID      0x28
+#define NPU_A900_A5_MODEL_V120_BIN1_1_BOARD_ID    0x29
+#define NPU_A900_A5_MODEL_V120_BIN1_2_BOARD_ID    0x2A
+#define NPU_A900_A5_MODEL_V120_BIN2_1_BOARD_ID    0x2B
+#define NPU_A900_A5_MODEL_V120_BIN2_2_BOARD_ID    0x2C
+#define NPU_A900_A5_CARD_V100_BIN1_1_BOARD_ID    0x18
+#define NPU_A900_A5_CARD_V100_BIN1_2_BOARD_ID    0x19
+#define NPU_A900_A5_CARD_V100_BIN2_1_BOARD_ID    0x1A
+#define NPU_A900_A5_CARD_V100_BIN2_2_BOARD_ID    0x1B
+#define NPU_A900_A5_CARD_V100_BIN11_3_BOARD_ID    0x1C
+
+#endif /* _NPU_BOARD_ID_H_ */

@@ -24,40 +24,16 @@
 
 #include "svm_ioctl.h"
 
-#ifndef HUGETLB_ALLOC_NONE
-#define HUGETLB_ALLOC_NONE             0x00
-#endif
-#ifndef HUGETLB_ALLOC_NORMAL
-#define HUGETLB_ALLOC_NORMAL           0x01
-#endif
-#ifndef HUGETLB_ALLOC_BUDDY
-#define HUGETLB_ALLOC_BUDDY            0x02
-#endif
-#ifndef HUGETLB_ALLOC_NORECLAIM
-#define HUGETLB_ALLOC_NORECLAIM        0x04
-#endif
-#ifndef HUGETLB_ALLOC_GIANT
-#define HUGETLB_ALLOC_GIANT            0x08
-#endif
+static inline bool devmm_is_normal_node(int nid) { return true; }
 
-#ifndef __KA_GFP_ACCOUNT
-#ifdef __KA_GFP_KMEMCG
-#define __KA_GFP_ACCOUNT __KA_GFP_KMEMCG /* for linux version 3.10 */
-#endif
-#ifdef __KA_GFP_NOACCOUNT
-#define __KA_GFP_ACCOUNT 0            /* for linux version 4.1 */
-#endif
-#endif
-
-static inline bool devmm_is_normal_node(int nid)
-{
-    return true;
-}
-
-static inline u32 devmm_get_alloc_mask(bool is_compound_page)
+static inline u32 devmm_get_alloc_mask(bool is_compound_page, bool no_retry)
 {
     /* arm host can not use __GFP_THISNODE flag */
-    u32 alloc_mask = KA_GFP_KERNEL | __KA_GFP_NORETRY | __KA_GFP_NOWARN | __KA_GFP_ACCOUNT;
+    u32 alloc_mask = KA_GFP_KERNEL | __KA_GFP_NOWARN | __KA_GFP_ACCOUNT;
+
+    if (no_retry) {
+        alloc_mask |= __KA_GFP_NORETRY;
+    }
 
     if (is_compound_page) {
         alloc_mask |= __KA_GFP_COMP;
@@ -73,48 +49,21 @@ static inline int devmm_get_nids(u32 devid, u32 vfid, u32 mem_type, int nids[], 
     return 0;
 }
 
-static inline u32 devmm_get_hugetlb_alloc_flag(ka_page_t *hpage)
-{
-    return 0;
-}
+static inline u32 devmm_get_hugetlb_alloc_flag(ka_page_t *hpage) { return 0; }
 
-static inline ka_page_t *_devmm_alloc_hpage(int nid, u32 flag)
-{
-    return NULL;
-}
+static inline ka_page_t *_devmm_alloc_hpage(int nid, u32 flag) { return NULL; }
 
-static inline u64 devmm_get_alloc_threshold(u32 devid, u32 vfid)
-{
-    return 0;
-}
+static inline u64 devmm_get_alloc_threshold(u32 devid, u32 vfid) { return 0; }
 
-static inline u64 devmm_get_nid_free_size(int nid)
-{
-    return 0;
-}
+static inline u64 devmm_get_nid_free_size(int nid) { return 0; }
 
-static inline u32 devmm_is_support_update_numa_order(void)
-{
-    return 0;
-}
+static inline u32 devmm_is_support_update_numa_order(void) { return 0; }
 
-static inline u64 devmm_get_double_pgtable_offset(void)
-{
-    return 0;
-}
+static inline u64 devmm_get_double_pgtable_offset(void) { return 0; }
 
-static inline bool devmm_is_support_double_pgtable(void)
-{
-    return false;
-}
+static inline bool devmm_is_support_double_pgtable(void) { return false; }
 
-static inline u64 devmm_double_pgtable_get_offset_addr(u64 normal_va)
-{
-    return 0;
-}
+static inline u64 devmm_double_pgtable_get_offset_addr(u64 normal_va) { return 0; }
 
-static inline bool devmm_is_support_giant_page_feature(void)
-{
-    return false;
-}
+static inline bool devmm_is_support_giant_page_feature(void) { return false; }
 #endif /* SVM_HOST_ADAPT_H */

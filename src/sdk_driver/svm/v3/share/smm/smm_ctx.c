@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2025. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -55,16 +55,14 @@ struct smm_ctx *smm_ctx_get(u32 udevid)
     return ctx;
 }
 
-void smm_ctx_put(struct smm_ctx *ctx)
-{
-    svm_dev_ctx_put(ctx->dev_ctx);
-}
+void smm_ctx_put(struct smm_ctx *ctx) { svm_dev_ctx_put(ctx->dev_ctx); }
 
 static int smm_ops_para_check(struct svm_global_va *src_info, struct svm_pa_seg pa_seg[], u64 *seg_num)
 {
     u32 src_max_udev_num = smm_get_src_max_udev_num();
     if ((src_info->udevid >= src_max_udev_num) || (pa_seg == NULL) || (seg_num == NULL) || (*seg_num == 0)) {
-        svm_err("Smm pa handle input check failed. (src_udev=%u; pa_seg_is_null=%u; seg_num_is_null=%u)\n",
+        svm_err(
+            "Smm pa handle input check failed. (src_udev=%u; pa_seg_is_null=%u; seg_num_is_null=%u)\n",
             src_info->udevid, (pa_seg == NULL), (seg_num == NULL));
         return -EINVAL;
     }
@@ -72,8 +70,8 @@ static int smm_ops_para_check(struct svm_global_va *src_info, struct svm_pa_seg 
     return 0;
 }
 
-static int smm_cross_server_pa_get(struct smm_ctx *ctx,
-    struct svm_global_va *src_info, struct svm_pa_seg pa_seg[], u64 *seg_num)
+static int smm_cross_server_pa_get(
+    struct smm_ctx *ctx, struct svm_global_va *src_info, struct svm_pa_seg pa_seg[], u64 *seg_num, u64 flag)
 {
     struct smm_ops *ops = NULL;
     u32 udevid = ctx->udevid;
@@ -86,7 +84,7 @@ static int smm_cross_server_pa_get(struct smm_ctx *ctx,
     }
 
     if (ops->pa_get != NULL) {
-        ret = ops->pa_get(udevid, src_info, pa_seg, seg_num);
+        ret = ops->pa_get(udevid, src_info, pa_seg, seg_num, flag);
         if (ret != 0) {
             svm_err("Smm cs pa get failed. (ret=%d; udev=%u; src_udev=%u)\n", ret, udevid, src_info->udevid);
         }
@@ -98,8 +96,8 @@ static int smm_cross_server_pa_get(struct smm_ctx *ctx,
     return ret;
 }
 
-static int smm_cross_server_pa_put(struct smm_ctx *ctx,
-    struct svm_global_va *src_info, struct svm_pa_seg pa_seg[], u64 seg_num)
+static int smm_cross_server_pa_put(
+    struct smm_ctx *ctx, struct svm_global_va *src_info, struct svm_pa_seg pa_seg[], u64 seg_num)
 {
     struct smm_ops *ops = NULL;
     u32 udevid = ctx->udevid;
@@ -124,8 +122,8 @@ static int smm_cross_server_pa_put(struct smm_ctx *ctx,
     return ret;
 }
 
-static int smm_in_server_pa_get(struct smm_ctx *ctx,
-    struct svm_global_va *src_info, struct svm_pa_seg pa_seg[], u64 *seg_num)
+static int smm_in_server_pa_get(
+    struct smm_ctx *ctx, struct svm_global_va *src_info, struct svm_pa_seg pa_seg[], u64 *seg_num, u64 flag)
 {
     struct smm_ops *ops = NULL;
     u32 udevid = ctx->udevid;
@@ -138,7 +136,7 @@ static int smm_in_server_pa_get(struct smm_ctx *ctx,
     }
 
     if (ops->pa_get != NULL) {
-        ret = ops->pa_get(udevid, src_info, pa_seg, seg_num);
+        ret = ops->pa_get(udevid, src_info, pa_seg, seg_num, flag);
         if (ret != 0) {
             svm_err("Smm pa get failed. (ret=%d; udev=%u; src_udev=%u)\n", ret, udevid, src_info->udevid);
         }
@@ -150,8 +148,8 @@ static int smm_in_server_pa_get(struct smm_ctx *ctx,
     return ret;
 }
 
-static int smm_in_server_pa_put(struct smm_ctx *ctx,
-    struct svm_global_va *src_info, struct svm_pa_seg pa_seg[], u64 seg_num)
+static int smm_in_server_pa_put(
+    struct smm_ctx *ctx, struct svm_global_va *src_info, struct svm_pa_seg pa_seg[], u64 seg_num)
 {
     struct smm_ops *ops = NULL;
     u32 udevid = ctx->udevid;
@@ -176,7 +174,8 @@ static int smm_in_server_pa_put(struct smm_ctx *ctx,
     return ret;
 }
 
-int smm_pa_get(struct smm_ctx *ctx, struct svm_global_va *src_info, struct svm_pa_seg pa_seg[], u64 *seg_num)
+int smm_pa_get(struct smm_ctx *ctx, struct svm_global_va *src_info, struct svm_pa_seg pa_seg[], u64 *seg_num,
+    u64 flag)
 {
     int ret = smm_ops_para_check(src_info, pa_seg, seg_num);
     if (ret != 0) {
@@ -185,9 +184,9 @@ int smm_pa_get(struct smm_ctx *ctx, struct svm_global_va *src_info, struct svm_p
     }
 
     if (svm_is_cross_server(ctx->udevid, src_info->server_id)) {
-        return smm_cross_server_pa_get(ctx, src_info, pa_seg, seg_num);
+        return smm_cross_server_pa_get(ctx, src_info, pa_seg, seg_num, flag);
     } else {
-        return smm_in_server_pa_get(ctx, src_info, pa_seg, seg_num);
+        return smm_in_server_pa_get(ctx, src_info, pa_seg, seg_num, flag);
     }
 }
 
@@ -319,7 +318,7 @@ void smm_ops_uninit_dev(u32 udevid)
     if (ctx != NULL) {
         (void)svm_dev_set_feature_priv(ctx->dev_ctx, smm_ops_feature_id, NULL, NULL);
         smm_ctx_put(ctx);
-        svm_dev_ctx_put(ctx->dev_ctx);    /* paired with init */
+        svm_dev_ctx_put(ctx->dev_ctx); /* paired with init */
         svm_kvfree(ctx);
     }
 }
@@ -332,8 +331,5 @@ int smm_ops_feature_init(void)
 }
 DECLAER_FEATURE_AUTO_INIT(smm_ops_feature_init, FEATURE_LOADER_STAGE_2);
 
-void smm_ops_feature_uninit(void)
-{
-}
+void smm_ops_feature_uninit(void) {}
 DECLAER_FEATURE_AUTO_UNINIT(smm_ops_feature_uninit, FEATURE_LOADER_STAGE_2);
-

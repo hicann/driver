@@ -17,7 +17,7 @@
 #include "bbox_utils.h"
 #include "bbox_rdr_pub.h"
 #include "bbox_drv_adapter.h"
-#include "adx_api.h"
+#include "bbox_feature.h"
 #include "securec.h"
 
 #define FLAG_ALL_DONE        5
@@ -95,6 +95,30 @@ STATIC bbox_status bbox_dump_vmcore_bin(const dump_data_config_st *config, u8 *d
     return BBOX_SUCCESS;
 }
 
+const char *bbox_get_dev_str(u32 phy_id, int logic_id, char *buf, u32 buf_size)
+{
+    int ret;
+
+    if ((buf == NULL) || (buf_size == 0)) {
+        return "device";
+    }
+
+    if (!bbox_has_feature(phy_id, BBOX_FEATURE_SOC_PLATFORM_CLOUD_V4)) {
+        ret = snprintf_s(buf, buf_size, buf_size - 1, "device-%u", phy_id);
+    } else {
+        if (logic_id == BBOX_INVALID_DEVICE_ID) {
+            ret = snprintf_s(buf, buf_size, buf_size - 1, "phy-device-%u", phy_id);
+        } else {
+            ret = snprintf_s(buf, buf_size, buf_size - 1, "device-%d", logic_id);
+        }
+    }
+    if (ret < 0) {
+        return "device";
+    }
+
+    return buf;
+}
+
 /**
  * @brief       get status of data which is wait for dump
  * @param [in]  phy_id:       device phy id
@@ -102,10 +126,11 @@ STATIC bbox_status bbox_dump_vmcore_bin(const dump_data_config_st *config, u8 *d
  * @param [in]  config_size:  data array size
  * @return      == 0 failed, > 0 success
  */
-STATIC u32 bbox_get_dump_data_status(u32 phy_id, const dump_data_config_st *data_config, u32 config_size)
+STATIC u32 bbox_get_dump_data_status(u32 phy_id, int logic_id, const dump_data_config_st *data_config, u32 config_size)
 {
     u32 i;
     u32 data_status = 0;
+    char dev_buf[DEV_BUF_MAX_LEN];
 
     BBOX_CHK_NULL_PTR(data_config, return 0);
     BBOX_CHK_INVALID_PARAM(config_size == 0, return 0, "%u", config_size);
@@ -114,7 +139,7 @@ STATIC u32 bbox_get_dump_data_status(u32 phy_id, const dump_data_config_st *data
         if (data_config[i].bbox_data_check_ptr != NULL) {
             bbox_status ret = data_config[i].bbox_data_check_ptr(phy_id);
             if (ret != BBOX_SUCCESS) {
-                BBOX_INF("[device-%u] will stop dump on [%s].", phy_id, data_config[i].name);
+                BBOX_INF("[%s] will stop dump on [%s].", bbox_get_dev_str(phy_id, logic_id, dev_buf, sizeof(dev_buf)), data_config[i].name);
                 break;
             }
         }
@@ -171,8 +196,10 @@ STATIC bbox_status bbox_parse_data(const dump_data_config_st *config, u8 *data, 
  * @param [in]  path:        path to dump data
  * @return      == -1 failed, == 0 success
  */
-STATIC bbox_status bbox_proc_data(u32 phy_id, const dump_data_config_st *config, const char *path)
+STATIC bbox_status bbox_proc_data(u32 phy_id, int logic_id, const dump_data_config_st *config, const char *path)
 {
+    char dev_buf[DEV_BUF_MAX_LEN];
+
     BBOX_CHK_NULL_PTR(config, return BBOX_FAILURE);
     BBOX_CHK_NULL_PTR(path, return BBOX_FAILURE);
     BBOX_CHK_INVALID_PARAM(config->data_size == 0, return BBOX_FAILURE, "%u", config->data_size);
@@ -204,7 +231,7 @@ STATIC bbox_status bbox_proc_data(u32 phy_id, const dump_data_config_st *config,
             g_vmcore_file_size = *((u32 *)(buffer + sizeof(unsigned int)));
         } else {
             g_vmcore_file_size = 0;
-            BBOX_ERR("[device-%u] status is %u.", phy_id, *((u32 *)buffer));
+            BBOX_ERR("[%s] status is %u.", bbox_get_dev_str(phy_id, logic_id, dev_buf, sizeof(dev_buf)), *((u32 *)buffer));
         }
     }
     if (strcmp(config->name, "vmcore") == 0) {
@@ -301,9 +328,11 @@ STATIC void bbox_save_hist_log(const char *path, const char *tms_str, const char
  * @param [out]  tms_path:      timestamp path
  * @return       == -1 failed, == 0 success
  */
-STATIC bbox_status bbox_create_excep_dir(u32 phy_id, enum EXCEPTION_EVENT_TYPE event,
+STATIC bbox_status bbox_create_excep_dir(u32 phy_id, int logic_id, enum EXCEPTION_EVENT_TYPE event,
                                      const char *path, const char *tms, char *tms_path)
 {
+    s32 err;
+    bbox_status ret;
     struct timeval tv = {0};
     char tms_dir[DATE_MAXLEN] = {0};
     char host_tms[HOST_DATE_MAXLEN] = {0};
@@ -314,11 +343,12 @@ STATIC bbox_status bbox_create_excep_dir(u32 phy_id, enum EXCEPTION_EVENT_TYPE e
     BBOX_CHK_NULL_PTR(tms_path, return BBOX_FAILURE);
 
     // create device-x dir
-    s32 err = bbox_format_device_path(dev_path, DIR_MAXLEN, path, phy_id);
-    BBOX_CHK_EXPR_CTRL(BBOX_ERR, err == -1, return BBOX_FAILURE,
-                      "format path[%s" OS_DIR_SLASH DEVDIR_FORMAT"] failed.", path, phy_id);
+    ret = bbox_create_excep_dir_adapt(phy_id, logic_id, event, path, dev_path);
+    if (ret != BBOX_SUCCESS) {
+        return BBOX_FAILURE;
+    }
 
-    bbox_status ret = bbox_get_time_of_day(&tv);
+    ret = bbox_get_time_of_day(&tv);
     if (ret != BBOX_SUCCESS) {
         BBOX_PERROR("gettimeofday", "");
         return BBOX_FAILURE;
@@ -353,22 +383,23 @@ STATIC bbox_status bbox_create_excep_dir(u32 phy_id, enum EXCEPTION_EVENT_TYPE e
  * @param [in]  tms:        timestamp of device log
  * @return      == -1 failed, == 0 success
  */
-bbox_status bbox_dump_excep_event(u32 phy_id, const char *path, enum EXCEPTION_EVENT_TYPE event, const char *tms)
+bbox_status bbox_dump_excep_event(u32 phy_id, const char *path, enum EXCEPTION_EVENT_TYPE event, const char *tms, int logic_id)
 {
     bool dump_done = true;
+    char dev_buf[DEV_BUF_MAX_LEN];
     char tms_path[DIR_MAXLEN] = {0};
 
     BBOX_CHK_NULL_PTR(path, return BBOX_FAILURE);
     BBOX_CHK_INVALID_PARAM(phy_id >= MAX_PHY_DEV_NUM, return BBOX_FAILURE, "%u", phy_id);
-    BBOX_INF("[device-%u] bbox exception event(%s), dump start.", phy_id, bbox_get_event_name(event));
+    BBOX_INF("[%s] bbox exception event(%s), dump start.", bbox_get_dev_str(phy_id, logic_id, dev_buf, sizeof(dev_buf)), bbox_get_event_name(event));
 
     const struct dump_data_config *data_config = bbox_get_data_config(event);
     u32 config_size = bbox_get_data_config_size(event);
 	BBOX_CHK_EXPR_CTRL(BBOX_ERR, (data_config == NULL || config_size == 0), return BBOX_FAILURE,
-        "[device-%u] event[%d] config is invalid.", phy_id, (int)event);
+        "[%s] event[%d] config is invalid.", bbox_get_dev_str(phy_id, logic_id, dev_buf, sizeof(dev_buf)), (int)event);
 
-    u32 data_status = bbox_get_dump_data_status(phy_id, data_config, config_size);
-    bbox_status ret = bbox_create_excep_dir(phy_id, event, path, tms, tms_path);
+    u32 data_status = bbox_get_dump_data_status(phy_id, logic_id, data_config, config_size);
+    bbox_status ret = bbox_create_excep_dir(phy_id, logic_id, event, path, tms, tms_path);
     BBOX_CHK_EXPR_CTRL(BBOX_ERR, ret != BBOX_SUCCESS, return BBOX_FAILURE, "create dir[%s] failed.", tms_path);
 
     bbox_write_done_file(tms_path, STORE_STARTING);
@@ -379,18 +410,18 @@ bbox_status bbox_dump_excep_event(u32 phy_id, const char *path, enum EXCEPTION_E
         if (BBOX_TYPE_BIT_NOT_SET(data_status, type)) {
             continue;
         }
-        ret = bbox_proc_data(phy_id, &data_config[idx], tms_path);
+        ret = bbox_proc_data(phy_id, logic_id, &data_config[idx], tms_path);
         if (ret != BBOX_SUCCESS) {
             if (ret != DRV_ERROR_NOT_SUPPORT) {
-                BBOX_ERR("[device-%u] dump type[%s] failed.", phy_id, name);
+                BBOX_ERR("[%s] dump type[%s] failed.", bbox_get_dev_str(phy_id, logic_id, dev_buf, sizeof(dev_buf)), name);
                 dump_done = false;
             }
             continue;
         }
-        BBOX_INF("[device-%u] dump type[%s] succeed.", phy_id, name);
+        BBOX_INF("[%s] dump type[%s] succeed.", bbox_get_dev_str(phy_id, logic_id, dev_buf, sizeof(dev_buf)), name);
     }
     bbox_write_done_file(tms_path, dump_done ? STORE_DONE : STORE_FAILED);
-    BBOX_INF("[device-%u] bbox exception event(%s), dump end.", phy_id, bbox_get_event_name(event));
+    BBOX_INF("[%s] bbox exception event(%s), dump end.", bbox_get_dev_str(phy_id, logic_id, dev_buf, sizeof(dev_buf)), bbox_get_event_name(event));
     return dump_done ? BBOX_SUCCESS : BBOX_FAILURE;
 }
 
@@ -419,45 +450,36 @@ bbox_status bbox_get_device_log_tms(const struct rdr_log_info *info, char *tms, 
     return BBOX_SUCCESS;
 }
 
-STATIC bbox_status bbox_dump_dev_event(u32 phy_id, const char *path)
+STATIC bbox_status bbox_dump_dev_event(u32 phy_id, const char *path, int logic_id)
 {
     u16 event = 0;
     char tms[DATE_MAXLEN] = {0};
-    bbox_status ret = bbox_check_dev_event(phy_id, &event, tms, DATE_MAXLEN);
+    char dev_buf[DEV_BUF_MAX_LEN];
+
+    bbox_status ret = bbox_check_dev_event(phy_id, logic_id, &event, tms, DATE_MAXLEN);
     if (ret != BBOX_SUCCESS || event >= DEVICE_EVENT_MAX) {
-        BBOX_ERR("[device-%u] check event failed with %d", phy_id, ret);
+        BBOX_ERR("[%s] check event failed with %d", bbox_get_dev_str(phy_id, logic_id, dev_buf, sizeof(dev_buf)), ret);
         return BBOX_FAILURE;
     }
 
     if ((event & DEVICE_EVENT_OOM_TRIGGER) != 0) {
         const char *except_tms = (strlen(tms) == 0) ? NULL : tms;
-        ret = bbox_dump_excep_event(phy_id, path, EVENT_OOM, except_tms);
+        ret = bbox_dump_excep_event(phy_id, path, EVENT_OOM, except_tms, logic_id);
         BBOX_CHK_EXPR_CTRL(BBOX_ERR, ret != BBOX_SUCCESS, return BBOX_FAILURE,
-                           "[device-%u] dump oom event data failed.", phy_id);
+                           "[%s] dump oom event data failed.", bbox_get_dev_str(phy_id, logic_id, dev_buf, sizeof(dev_buf)));
     }
     return BBOX_SUCCESS;
 }
 
-STATIC bbox_status bbox_dump_dev_files(u32 phy_id, const char *path)
+bbox_status bbox_dump_runtime(u32 phy_id, const char *path, enum BBOX_DUMP_MODE mode, int logic_id)
 {
-    BBOX_INF("[device-%u] bbox runtime data, dump start.", phy_id);
-    s32 ret = AdxGetDeviceFile((unsigned short)phy_id, path, "bbox");
-    if (ret != 0) {
-        BBOX_ERR("[device-%u] get bbox runtime data failed by hdc channel.", phy_id);
-        return BBOX_FAILURE;
-    }
-    BBOX_INF("[device-%u] bbox runtime data, dump end.", phy_id);
-    return BBOX_SUCCESS;
-}
-
-bbox_status bbox_dump_runtime(u32 phy_id, const char *path, enum BBOX_DUMP_MODE mode)
-{
+    char dev_buf[DEV_BUF_MAX_LEN];
     u32 master_id = 0;
     bool err = false;
 
     drvError_t drv_ret = bbox_drv_get_master_dev_id(phy_id, &master_id);
     if (drv_ret != DRV_ERROR_NONE) {
-        BBOX_ERR("[device-%u] get masterid failed with %d", phy_id, (int)drv_ret);
+        BBOX_ERR("[%s] get masterid failed with %d", bbox_get_dev_str(phy_id, logic_id, dev_buf, sizeof(dev_buf)), (int)drv_ret);
         return BBOX_FAILURE;
     }
 
@@ -466,16 +488,16 @@ bbox_status bbox_dump_runtime(u32 phy_id, const char *path, enum BBOX_DUMP_MODE 
     }
 
     // dump device files
-    bbox_status ret = bbox_dump_dev_files(phy_id, path);
+    bbox_status ret = bbox_dump_dev_files(phy_id, logic_id, path);
     if (ret != BBOX_SUCCESS) {
         // dump HDC exception
-        ret = bbox_dump_excep_event(phy_id, path, EVENT_HDC_EXCEPTION, NULL);
+        ret = bbox_dump_excep_event(phy_id, path, EVENT_HDC_EXCEPTION, NULL, logic_id);
         err = ((ret == BBOX_SUCCESS) ? err : true);
     }
 
     // dump device event, like oom
     if (mode == BBOX_DUMP_MODE_ALL || mode == BBOX_DUMP_MODE_FORCE) {
-        ret = bbox_dump_dev_event(phy_id, path);
+        ret = bbox_dump_dev_event(phy_id, path, logic_id);
         err = ((ret == BBOX_SUCCESS) ? err : true);
     }
 

@@ -63,7 +63,7 @@ mmProcess hdc_pcie_mem_bind_fd(void)
     (void)mmMutexLock(&fd_mng->mutex);
 
     if (fd_mng->mem_fd > 0) {
-        #ifndef TMP_UT
+#ifndef TMP_UT
         if (fd_mng->mem_pid == pid) {
             fd_mng->count++;
             (void)mmMutexUnLock(&fd_mng->mutex);
@@ -73,7 +73,7 @@ mmProcess hdc_pcie_mem_bind_fd(void)
             fd_mng->mem_fd = 0;
             hdc_mem_stat_init(fd_mng);
         }
-        #endif
+#endif
     }
 
     fd = mmOpen2(PCIE_DEV_NAME, M_RDWR, M_IRUSR);
@@ -264,10 +264,10 @@ retry:
     return ret;
 }
 
-signed int hdc_pcie_connect(mmProcess handle, signed int devId, signed int serviceType,
-    unsigned int flag, signed int peerpid, struct hdc_session *pSession)
+signed int hdc_pcie_connect(mmProcess handle, signed int devId, signed int serviceType, unsigned int flag,
+                            signed int peerpid, struct hdc_session *pSession)
 {
-    struct timespec now_time = { 0, 0 };
+    struct timespec now_time = {0, 0};
     unsigned long start_time = 0;
     unsigned int cost_time = 0;
     union hdcdrv_cmd hdcCmd;
@@ -293,10 +293,11 @@ signed int hdc_pcie_connect(mmProcess handle, signed int devId, signed int servi
             pSession->device_id = (unsigned int)devId;
             pSession->session_cur_alloc_idx = hdcCmd.connect.session_cur_alloc_idx;
             return 0;
-         } else if (ret == ERESTARTSYS) {
+        } else if (ret == ERESTARTSYS) {
             (void)clock_gettime(CLOCK_MONOTONIC, &now_time);
             cost_time = (unsigned int)((unsigned long)((now_time.tv_sec * CONVERT_MS_TO_S) +
-                    (now_time.tv_nsec / CONVERT_MS_TO_NS)) - start_time);
+                                                       (now_time.tv_nsec / CONVERT_MS_TO_NS)) -
+                                                       start_time);
             if (cost_time > (hdcCmd.connect.timeout * CONVERT_MS_TO_S)) {
                 return -HDCDRV_CONNECT_TIMEOUT;
             }
@@ -327,11 +328,11 @@ signed int hdc_pcie_close(mmProcess handle, unsigned int devId, const struct hdc
 }
 
 signed int hdc_pcie_send(mmProcess handle, const struct hdc_session *pSession, struct drvHdcMsg *pMsg, signed int wait,
-    unsigned int timeout)
+                         unsigned int timeout)
 {
     signed int ret;
     union hdcdrv_cmd hdcCmd;
-    struct timespec now_time = { 0, 0 };
+    struct timespec now_time = {0, 0};
     unsigned long start_time;
     unsigned int cost_time = 0;
 
@@ -359,7 +360,8 @@ retry:
         if (wait == HDC_WAIT_TIMEOUT) {
             (void)clock_gettime(CLOCK_MONOTONIC, &now_time);
             cost_time = (unsigned int)((unsigned long)((now_time.tv_sec * CONVERT_MS_TO_S) +
-                    (now_time.tv_nsec / CONVERT_MS_TO_NS)) - start_time);
+                                                       (now_time.tv_nsec / CONVERT_MS_TO_NS)) -
+                                                       start_time);
             if (cost_time < timeout) {
                 hdcCmd.send.timeout = timeout - cost_time;
                 goto retry;
@@ -375,11 +377,11 @@ retry:
 }
 
 signed int hdc_pcie_recv_peek(mmProcess handle, const struct hdc_session *pSession, signed int *len,
-    struct hdc_recv_config *recvConfig)
+                              struct hdc_recv_config *recvConfig)
 {
     signed int ret;
     union hdcdrv_cmd hdcCmd;
-    struct timespec now_time = { 0, 0 };
+    struct timespec now_time = {0, 0};
     unsigned long start_time;
     unsigned long cost_time = 0;
 
@@ -412,7 +414,7 @@ retry:
         if (recvConfig->wait == HDC_WAIT_TIMEOUT) {
             (void)clock_gettime(CLOCK_MONOTONIC, &now_time);
             cost_time = ((unsigned long)((now_time.tv_sec * CONVERT_MS_TO_S) + (now_time.tv_nsec / CONVERT_MS_TO_NS)) -
-                start_time);
+                         start_time);
             if (cost_time < recvConfig->timeout) {
                 hdcCmd.recv_peek.timeout = recvConfig->timeout - (unsigned int)cost_time;
                 goto retry;
@@ -427,8 +429,8 @@ retry:
     return ret;
 }
 
-signed int hdc_pcie_recv(mmProcess handle, const struct hdc_session *pSession,
-    char *buf, signed int len, signed int *outLen, struct hdc_recv_config *recvConfig)
+signed int hdc_pcie_recv(mmProcess handle, const struct hdc_session *pSession, char *buf, signed int len,
+                         signed int *outLen, struct hdc_recv_config *recvConfig)
 {
     signed int ret;
     union hdcdrv_cmd hdcCmd;
@@ -494,11 +496,10 @@ signed int hdc_pcie_get_session_uid(mmProcess handle, const struct hdc_session *
     return ret;
 }
 
-
-signed int hdc_pcie_alloc_mem(mmProcess handle, signed int type, const struct hdc_alloc_mem *mem_info,
-    UINT64 va, unsigned int page_type)
+signed int hdc_pcie_alloc_mem(mmProcess handle, signed int type, const struct hdc_alloc_mem *mem_info, UINT64 va,
+                              unsigned int page_type)
 {
-    #ifndef TMP_UT
+#ifndef TMP_UT
     signed int ret;
     union hdcdrv_cmd hdcCmd;
 
@@ -516,11 +517,10 @@ signed int hdc_pcie_alloc_mem(mmProcess handle, signed int type, const struct hd
 
     ret = hdc_ioctl(handle, HDCDRV_ALLOC_MEM, &hdcCmd);
     return ret;
-    #else
+#else
     return 0;
-    #endif
+#endif
 }
-
 
 signed int hdc_pcie_free_mem(mmProcess handle, signed int type, UINT64 va, unsigned int *len, unsigned int *page_type)
 {
@@ -546,7 +546,7 @@ signed int hdc_pcie_free_mem(mmProcess handle, signed int type, UINT64 va, unsig
 }
 
 signed int hdc_pcie_fast_send(mmProcess handle, const struct hdc_session *pSession, signed int wait_flag,
-    const struct drvHdcFastSendMsg *msg, unsigned int timeout)
+                              const struct drvHdcFastSendMsg *msg, unsigned int timeout)
 {
     signed int ret;
     union hdcdrv_cmd hdcCmd;
@@ -572,7 +572,7 @@ signed int hdc_pcie_fast_send(mmProcess handle, const struct hdc_session *pSessi
 }
 
 signed int hdc_pcie_fast_recv(mmProcess handle, const struct hdc_session *pSession, signed int wait_flag,
-    struct drvHdcFastRecvMsg *msg, unsigned int timeout)
+                              struct drvHdcFastRecvMsg *msg, unsigned int timeout)
 {
     signed int ret;
     union hdcdrv_cmd hdcCmd;
@@ -656,8 +656,8 @@ signed int hdc_pcie_dma_remap(mmProcess handle, signed int type, UINT64 va, sign
 }
 
 #ifndef TMP_UT
-signed int hdc_pcie_register_mem(mmProcess handle, unsigned int type, signed int devid,
-                              UINT64 va, unsigned int alloc_len)
+signed int hdc_pcie_register_mem(mmProcess handle, unsigned int type, signed int devid, UINT64 va,
+                                 unsigned int alloc_len)
 {
     signed int ret;
     union hdcdrv_cmd hdcCmd;
@@ -678,8 +678,8 @@ signed int hdc_pcie_register_mem(mmProcess handle, unsigned int type, signed int
     return ret;
 }
 
-signed int hdc_pcie_unregister_mem(mmProcess handle, signed int type, UINT64 va,
-                                unsigned int *len, unsigned int *page_type)
+signed int hdc_pcie_unregister_mem(mmProcess handle, signed int type, UINT64 va, unsigned int *len,
+                                   unsigned int *page_type)
 {
     signed int ret;
     union hdcdrv_cmd hdcCmd;
@@ -702,8 +702,8 @@ signed int hdc_pcie_unregister_mem(mmProcess handle, signed int type, UINT64 va,
     return ret;
 }
 
-signed int hdc_pcie_fast_wait(mmProcess handle, const struct hdc_session *pSession,
-                           struct drvHdcFastSendFinishMsg *msg, int timeout, int result_type)
+signed int hdc_pcie_fast_wait(mmProcess handle, const struct hdc_session *pSession, struct drvHdcFastSendFinishMsg *msg,
+                              int timeout, int result_type)
 {
     signed int ret;
     union hdcdrv_cmd hdcCmd;
@@ -749,7 +749,6 @@ signed int hdc_pcie_epoll_alloc_fd(mmProcess handle, signed int size, signed int
     return ret;
 }
 
-
 signed int hdc_pcie_epoll_free_fd(mmProcess handle, signed int epfd)
 {
     signed int ret;
@@ -764,7 +763,7 @@ signed int hdc_pcie_epoll_free_fd(mmProcess handle, signed int epfd)
 }
 
 signed int hdc_pcie_epoll_ctl(mmProcess handle, const struct hdcdrv_cmd_epoll_ctl *epollctl,
-    const struct drvHdcEvent *event)
+                              const struct drvHdcEvent *event)
 {
     signed int ret;
     union hdcdrv_cmd hdcCmd;
@@ -819,8 +818,8 @@ signed int hdc_pcie_get_session_attr(mmProcess handle, const struct hdc_session 
     return ret;
 }
 
-signed int hdc_pcie_get_page_size(mmProcess handle, unsigned int *page_size,
-    unsigned int *huge_page_size, unsigned int *page_size_bit)
+signed int hdc_pcie_get_page_size(mmProcess handle, unsigned int *page_size, unsigned int *huge_page_size,
+                                  unsigned int *page_size_bit)
 {
     signed int ret;
     union hdcdrv_cmd hdcCmd;
@@ -841,7 +840,8 @@ signed int hdc_pcie_get_page_size(mmProcess handle, unsigned int *page_size,
     return ret;
 }
 
-signed int hdc_pcie_get_session_info(mmProcess handle, const struct hdc_session *pSession, struct drvHdcSessionInfo *info)
+signed int hdc_pcie_get_session_info(mmProcess handle, const struct hdc_session *pSession,
+                                     struct drvHdcSessionInfo *info)
 {
     signed int ret;
     union hdcdrv_cmd hdcCmd;

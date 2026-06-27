@@ -17,7 +17,7 @@
 #endif
 
 #include "securec.h"
-#include "dsmi_common_interface_custom.h"
+#include "dsmi_common_interface.h"
 #include "dcmi_os_adapter.h"
 #include "dcmi_fault_manage_intf.h"
 #include "dcmi_log.h"

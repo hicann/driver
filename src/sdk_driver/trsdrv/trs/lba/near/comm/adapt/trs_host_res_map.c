@@ -32,6 +32,10 @@ static int trs_host_update_res_info(u32 udevid, struct res_map_info_in *res_info
         u32 local_add_id, remote_add_id;
         int ret;
 
+        if (res_info->priv_len < sizeof(struct trs_res_map_priv)) {
+            return -EINVAL;
+        }
+
         if ((priv->flag & TSDRV_FLAG_REMOTE_ID) != 0) {
             ret = uda_udevid_to_add_id(udevid, &local_add_id);
             if (ret != 0) {
@@ -44,8 +48,9 @@ static int trs_host_update_res_info(u32 udevid, struct res_map_info_in *res_info
                 trs_err("Fail to get remote add id. (ret=%d; remote_udevid=%u)\n", ret, priv->remote_devid);
                 return ret;
             }
-            trs_debug("Update priv. (udevid=%u; local_add_id=%u; remote_udevid=%u; remote_add_id=%u)\n",
-                udevid, local_add_id, priv->remote_devid, remote_add_id);
+            trs_debug(
+                "Update priv. (udevid=%u; local_add_id=%u; remote_udevid=%u; remote_add_id=%u)\n", udevid, local_add_id,
+                priv->remote_devid, remote_add_id);
             priv->local_devid = local_add_id;
             priv->remote_devid = remote_add_id;
             res_info->res_id = (remote_add_id << 20) | res_info->res_id; /* first 20 bits for res id */
@@ -64,15 +69,13 @@ int trs_res_map_ops_init(void)
 {
     int ret;
 
-    ret = hal_kernel_apm_res_map_ops_register(RES_ADDR_TYPE_STARS_NOTIFY_RECORD,
-        &g_res_map_ops);
+    ret = hal_kernel_apm_res_map_ops_register(RES_ADDR_TYPE_STARS_NOTIFY_RECORD, &g_res_map_ops);
     if (ret != 0) {
         trs_err("Failed to register notify res map ops.\n");
         return ret;
     }
 
-    ret = hal_kernel_apm_res_map_ops_register(RES_ADDR_TYPE_STARS_CNT_NOTIFY_RECORD,
-        &g_res_map_ops);
+    ret = hal_kernel_apm_res_map_ops_register(RES_ADDR_TYPE_STARS_CNT_NOTIFY_RECORD, &g_res_map_ops);
     if (ret != 0) {
         hal_kernel_apm_res_map_ops_unregister(RES_ADDR_TYPE_STARS_NOTIFY_RECORD);
         trs_err("Failed to register cnt notify res map ops.\n");

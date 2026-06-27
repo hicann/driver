@@ -21,7 +21,7 @@ SHELL_DIR=$(cd "$(dirname "$0")" || exit; pwd)
 PACKAGE_TYPE="run"
 if [ "${PACKAGE_TYPE}" = "run" ];then
     sourcedir="$PWD"/driver
-else
+else 
     sourcedir="$SHELL_DIR"/..
 fi
 LOG_LEVEL_MAJOR="MAJOR"
@@ -29,7 +29,9 @@ OPERATION_LOGPATH="${ASCEND_SECLOG}/operation.log"
 LOG_OPERATION_UNINSTALL="Uninstall"
 LOG_RESULT_SUCCESS="success"
 LOG_RESULT_FAILED="failed"
-source "${SHELL_DIR}/specific_func.inc"
+if [ -f "${SHELL_DIR}/specific_func.inc" ];then
+    source "${SHELL_DIR}/specific_func.inc"
+fi
 COMMON_SHELL="${SHELL_DIR}/common.sh"
 source "${COMMON_SHELL}"
 
@@ -173,20 +175,20 @@ remove_white_proc_cfg_uninstall() {
     local config_file="/etc/custom_process.cfg"
     local is_a2_driver
     local is_a3_driver
-
-    if [[ "${uninstall}" = "n" ]]; then
+    
+    if [[ "${uninstall}" = "n" ]];then
         log "[INFO]Only uninstall need remove white_proc_config"
         return
     fi
-
+ 
     is_a2_driver=$(echo $device_bdf | grep d802)
     is_a3_driver=$(echo $device_bdf | grep d803)
-
+ 
     if [[ -z "$is_a2_driver" && -z "$is_a3_driver" ]]; then
         log "[INFO]This type driver need not remove white process config"
         return
     fi
-
+ 
     if [[ -f "$config_file" ]]; then
         rm -f "$config_file"
         log "[INFO]Remove $config_file"
@@ -194,7 +196,7 @@ remove_white_proc_cfg_uninstall() {
         log "[INFO]This config($config_file) does not exist!"
         return
     fi
-
+ 
     if [[ -f "$config_file" ]]; then
         log "[WARNING]Remove $config_file fail"
     fi

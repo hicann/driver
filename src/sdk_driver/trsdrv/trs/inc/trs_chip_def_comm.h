@@ -13,7 +13,7 @@
 #ifndef TRS_CHIP_DEF_COMM_H
 #define TRS_CHIP_DEF_COMM_H
 
-#include <linux/types.h>
+#include "ka_type.h"
 
 #include "trs_res_id_def.h"
 
@@ -53,14 +53,9 @@ enum {
 };
 
 static const char *trs_chip_type_name[TRS_CHIP_TYPE_MAX] = {
-    [TRS_CHIP_TYPE_UNKNOWN] = "Unknown",
-    [TRS_CHIP_TYPE_MINI_V1] = "Mini_V1",
-    [TRS_CHIP_TYPE_CLOUD_V1] = "Cloud_V1",
-    [TRS_CHIP_TYPE_MINI_V2] = "Mini_V2",
-    [TRS_CHIP_TYPE_CLOUD_V2] = "Cloud_V2",
-    [TRS_CHIP_TYPE_MINI_V3] = "Mini_V3",
-    [TRS_CHIP_TYPE_CLOUD_V4] = "Cloud_V4"
-};
+    [TRS_CHIP_TYPE_UNKNOWN] = "Unknown",  [TRS_CHIP_TYPE_MINI_V1] = "Mini_V1",   [TRS_CHIP_TYPE_CLOUD_V1] = "Cloud_V1",
+    [TRS_CHIP_TYPE_MINI_V2] = "Mini_V2",  [TRS_CHIP_TYPE_CLOUD_V2] = "Cloud_V2", [TRS_CHIP_TYPE_MINI_V3] = "Mini_V3",
+    [TRS_CHIP_TYPE_CLOUD_V4] = "Cloud_V4"};
 
 static inline const char *trs_chip_type_to_name(int chip_type)
 {
@@ -72,9 +67,8 @@ static inline const char *trs_chip_type_to_name(int chip_type)
 
 static inline int trs_get_hw_type_by_chip_type(int chip_type)
 {
-    if ((chip_type == TRS_CHIP_TYPE_MINI_V3) ||
-        (chip_type == TRS_CHIP_TYPE_CLOUD_V2) || (chip_type == TRS_CHIP_TYPE_CLOUD_V4) ||
-        (chip_type == TRS_CHIP_TYPE_CLOUD_V5)) {
+    if ((chip_type == TRS_CHIP_TYPE_MINI_V3) || (chip_type == TRS_CHIP_TYPE_CLOUD_V2) ||
+        (chip_type == TRS_CHIP_TYPE_CLOUD_V4) || (chip_type == TRS_CHIP_TYPE_CLOUD_V5)) {
         return TRS_HW_TYPE_STARS;
     } else {
         return TRS_HW_TYPE_TSCPU;

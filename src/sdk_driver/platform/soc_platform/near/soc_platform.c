@@ -35,14 +35,13 @@ static const ka_pci_device_id_t soc_driver_tbl[] = {
     {KA_PCI_VDEVICE(HUAWEI, 0xd804), 0},
     {KA_PCI_VDEVICE(HUAWEI, 0xd805), 0},
     {DEVDRV_DIVERSITY_PCIE_VENDOR_ID, 0xd500, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0},
-    { 0x20C6, 0xd500, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0 },
-    { 0x203F, 0xd500, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0 },
-    { 0x20E9, 0xd500, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0 },
-    { 0x20C6, 0xd802, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0 },
-    { 0x203F, 0xd802, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0 },
-    { 0x20E9, 0xd802, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0 },
-    {}
-};
+    {0x20C6, 0xd500, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0},
+    {0x203F, 0xd500, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0},
+    {0x20E9, 0xd500, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0},
+    {0x20C6, 0xd802, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0},
+    {0x203F, 0xd802, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0},
+    {0x20E9, 0xd802, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0},
+    {}};
 KA_MODULE_DEVICE_TABLE(pci, soc_driver_tbl);
 
 static int soc_platform_set_mb_irq(u32 devid, u32 tsid)
@@ -134,15 +133,15 @@ static void soc_platform_get_cq_update_irq_num(u32 devid, u32 *irq_num)
     if (devid < VDEV_START_ID) {
         if ((devdrv_get_connect_protocol(devid) == CONNECT_PROTOCOL_HCCS) &&
             (devdrv_is_mdev_vm_boot_mode(devid) == true)) {
-            *irq_num = CQ_UPDATE_IRQ_NUM / 8;   /* num is two, 8 is a divisor */
+            *irq_num = CQ_UPDATE_IRQ_NUM / 8; /* num is two, 8 is a divisor */
         } else {
             *irq_num = CQ_UPDATE_IRQ_NUM;
         }
     } else {
         if (devdrv_get_connect_protocol(devid) == CONNECT_PROTOCOL_HCCS) {
-            *irq_num = CQ_UPDATE_IRQ_NUM / 8;   /* num is two, 8 is a divisor */
+            *irq_num = CQ_UPDATE_IRQ_NUM / 8; /* num is two, 8 is a divisor */
         } else {
-            *irq_num = CQ_UPDATE_IRQ_NUM / 2;   /* num is eight, 2 is a divisor */
+            *irq_num = CQ_UPDATE_IRQ_NUM / 2; /* num is eight, 2 is a divisor */
         }
     }
 }
@@ -322,8 +321,8 @@ static int soc_platform_set_reg_base(u32 devid, u32 tsid)
         return ret;
     }
 
-    ret = devdrv_get_addr_info(devid, DEVDRV_ADDR_STARS_SQCQ_INTR_BASE, 0,
-        (u64 *)&io_base.io_base, &io_base.io_base_size);
+    ret = devdrv_get_addr_info(
+        devid, DEVDRV_ADDR_STARS_SQCQ_INTR_BASE, 0, (u64 *)&io_base.io_base, &io_base.io_base_size);
     if (ret != 0) {
         soc_err("Get stars sqcq int addr failed. (devid=%u; tsid=%u)\n", devid, tsid);
         return ret;
@@ -358,8 +357,8 @@ static int soc_platform_set_reg_base(u32 devid, u32 tsid)
         }
     }
 
-    ret = devdrv_get_addr_info(devid, DEVDRV_ADDR_TS_NOTIFY_TBL_BASE, 0, (u64 *)&io_base.io_base,
-        &io_base.io_base_size);
+    ret =
+        devdrv_get_addr_info(devid, DEVDRV_ADDR_TS_NOTIFY_TBL_BASE, 0, (u64 *)&io_base.io_base, &io_base.io_base_size);
     if (ret != 0) {
         soc_warn("Without notify table addr. (devid=%u; ret=%d)\n", devid, ret);
     } else {
@@ -370,8 +369,8 @@ static int soc_platform_set_reg_base(u32 devid, u32 tsid)
         }
     }
 
-    ret = devdrv_get_addr_info(devid, DEVDRV_ADDR_TS_EVENT_TBL_NS_BASE, 0, (u64 *)&io_base.io_base,
-        &io_base.io_base_size);
+    ret = devdrv_get_addr_info(
+        devid, DEVDRV_ADDR_TS_EVENT_TBL_NS_BASE, 0, (u64 *)&io_base.io_base, &io_base.io_base_size);
     if (ret != 0) {
         soc_warn("Without event table addr. (devid=%u; ret=%d)\n", devid, ret);
     } else {
@@ -483,7 +482,5 @@ KA_MODULE_LICENSE("GPL");
 KA_MODULE_AUTHOR("Huawei Tech. Co., Ltd.");
 KA_MODULE_DESCRIPTION("soc platform driver");
 #else
-void soc_platform_stub_test(void)
-{
-}
+void soc_platform_stub_test(void) {}
 #endif

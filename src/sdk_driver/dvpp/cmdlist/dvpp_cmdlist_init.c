@@ -28,6 +28,7 @@
 #include "dvpp_cmdlist_ioctl.h"
 #include "dvpp_vmng.h"
 #include "dvpp_mem_allocater_comm.h"
+#include "ka_compiler_pub.h"
 
 #ifdef SUPPORT_VIR_MACH
 #include "dvpp_share_mem_ctrl.h"
@@ -35,9 +36,11 @@
 
 #include "dvpp_vpc_pipe.h"
 
-static int32_t __init dvpp_cmdlist_init(void)
+static int32_t __ka_init dvpp_cmdlist_init(void)
 {
     int32_t ret = 0;
+
+
     // 注册三个模块的cmdlist引擎
     jpege_cmdlist_engine_register();
     jpegd_cmdlist_engine_register();
@@ -56,7 +59,6 @@ static int32_t __init dvpp_cmdlist_init(void)
     dvpp_del_chn_hlist_init();
     dvpp_sqe_update_init();
     dvpp_cmdlist_context_init();
-    dvpp_cmdlist_init_proc();
 
 #ifdef SUPPORT_VIR_MACH
     // 注册虚拟机上线通知，rc形态 不支持虚拟机
@@ -64,7 +66,11 @@ static int32_t __init dvpp_cmdlist_init(void)
     if (ret != 0) {
         goto FAIL0;
     }
-    ka_task_spin_lock_init(&g_share_mem_pool_lock);
+
+    uint32_t devid;
+    for (devid = 0; devid < DVPP_VMNG_DEVICE_NUM_MAX;devid++) {
+        ka_task_spin_lock_init(&g_share_mem_pool_lock[devid]);
+    }
 #endif
 
     ret = dvpp_cmdlist_dev_init();
@@ -78,7 +84,6 @@ FAIL1:
     (void)dvpp_vmng_uninit();
 #endif
 FAIL0:
-    dvpp_cmdlist_remove_proc();
     dvpp_cmdlist_context_deinit();
     dvpp_sqe_update_uninit();
 #ifdef SUPPORT_VPC_PIPE
@@ -94,13 +99,12 @@ FAIL0:
     return -1;
 }
 
-static void __exit dvpp_cmdlist_exit(void)
+static void __ka_exit dvpp_cmdlist_exit(void)
 {
     dvpp_cmdlist_dev_exit();
 #ifdef SUPPORT_VIR_MACH
     (void)dvpp_vmng_uninit();
 #endif
-    dvpp_cmdlist_remove_proc();
     dvpp_cmdlist_context_deinit();
     dvpp_sqe_update_uninit();
 #ifdef SUPPORT_VPC_PIPE

@@ -20,7 +20,7 @@
 #include "devmm_mem_alloc_interface.h"
 #include "svm_proc_gfp.h"
 
-#define DEVMM_ALLOC_CONT_PAGES_MAX_NUM      512ULL
+#define DEVMM_ALLOC_CONT_PAGES_MAX_NUM 512ULL
 
 static void devmm_update_alloc_nid_info(u32 devid, u32 vfid, int nids[], u32 *nid_num)
 {
@@ -61,29 +61,28 @@ static void devmm_update_alloc_nid_info(u32 devid, u32 vfid, int nids[], u32 *ni
 
 static void devmm_clear_single_page(ka_page_t *pg, u64 page_size)
 {
+    int ret = devmm_sdma_page_kernel_memzero(pg, page_size);
+    if (ret == 0) {
+        return;
+    }
     if (ka_mm_PagePoisoned(pg) == 0) {
         (void)memset_s(ka_mm_page_address(pg), page_size, 0, page_size);
     }
 }
 
-static void devmm_clear_normal_single_page(ka_page_t *pg)
-{
-    devmm_clear_single_page(pg, KA_MM_PAGE_SIZE);
-}
+static void devmm_clear_normal_single_page(ka_page_t *pg) { devmm_clear_single_page(pg, KA_MM_PAGE_SIZE); }
 
 static void devmm_clear_compound_page(ka_page_t *pg)
 {
     ka_page_t *head_page = ka_mm_compound_head(pg);
     devmm_clear_single_page(head_page, devmm_kernel_pg_size(head_page));
 }
- 
-static void devmm_clear_huge_page(ka_page_t *pg)
-{
-    devmm_clear_compound_page(pg);
-}
 
-static void devmm_page_ref_dec(ka_page_t *pg, void (*clear_func)(ka_page_t *pg),
-    void (*dec_func)(ka_page_t *pg), void (*free_func)(ka_page_t *pg), bool is_already_clear)
+static void devmm_clear_huge_page(ka_page_t *pg) { devmm_clear_compound_page(pg); }
+
+static void devmm_page_ref_dec(
+    ka_page_t *pg, void (*clear_func)(ka_page_t *pg), void (*dec_func)(ka_page_t *pg), void (*free_func)(ka_page_t *pg),
+    bool is_already_clear)
 {
     int ref;
 
@@ -102,20 +101,14 @@ static void devmm_page_ref_dec(ka_page_t *pg, void (*clear_func)(ka_page_t *pg),
     }
 }
 
-static void devmm_free_single_page(ka_page_t *pg)
-{
-    __ka_mm_free_page(pg);
-}
+static void devmm_free_single_page(ka_page_t *pg) { __ka_mm_free_page(pg); }
 
-static void devmm_put_page(ka_page_t *pg)
-{
-    ka_mm_put_page(pg);
-}
+static void devmm_put_page(ka_page_t *pg) { ka_mm_put_page(pg); }
 
 static void devmm_normal_single_page_ref_dec(ka_page_t *pg, bool is_already_clear)
 {
-    devmm_page_ref_dec(pg, devmm_clear_normal_single_page, devmm_free_single_page, devmm_free_single_page,
-        is_already_clear);
+    devmm_page_ref_dec(
+        pg, devmm_clear_normal_single_page, devmm_free_single_page, devmm_free_single_page, is_already_clear);
 }
 
 static void devmm_huge_page_ref_dec(ka_page_t *pg, bool is_already_clear)
@@ -192,8 +185,7 @@ void devmm_free_pages(struct devmm_phy_addr_attr *attr, ka_page_t **pages, u64 p
     }
 }
 
-static void devmm_get_sub_pages_from_normal_high_level_page(ka_page_t *page,
-    u32 order, ka_page_t **pages, u64 pg_num)
+static void devmm_get_sub_pages_from_normal_high_level_page(ka_page_t *page, u32 order, ka_page_t **pages, u64 pg_num)
 {
     ka_page_t *pg = NULL;
     u64 alloced_page_num = 1ull << order;
@@ -210,8 +202,7 @@ static void devmm_get_sub_pages_from_normal_high_level_page(ka_page_t *page,
     }
 }
 
-static void devmm_get_sub_pages_from_compound_page(ka_page_t *compound_page,
-    u32 order, ka_page_t **pages, u64 pg_num)
+static void devmm_get_sub_pages_from_compound_page(ka_page_t *compound_page, u32 order, ka_page_t **pages, u64 pg_num)
 {
     ka_page_t *pg = NULL;
     u64 i;
@@ -225,8 +216,8 @@ static void devmm_get_sub_pages_from_compound_page(ka_page_t *compound_page,
     }
 }
 
-static void devmm_get_sub_pages(struct devmm_phy_addr_attr *attr,
-    ka_page_t *page, u32 order, ka_page_t **out_pages, u64 pg_num)
+static void devmm_get_sub_pages(
+    struct devmm_phy_addr_attr *attr, ka_page_t *page, u32 order, ka_page_t **out_pages, u64 pg_num)
 {
     if (ka_mm_PageCompound(page) != 0) {
         devmm_get_sub_pages_from_compound_page(page, order, out_pages, pg_num);
@@ -235,18 +226,19 @@ static void devmm_get_sub_pages(struct devmm_phy_addr_attr *attr,
     }
 }
 
-static int _devmm_alloc_pages_node(struct devmm_phy_addr_attr *attr,
-    int nid, ka_page_t **pages, u64 pg_num)
+static int _devmm_alloc_pages_node(struct devmm_phy_addr_attr *attr, int nid, ka_page_t **pages, u64 pg_num)
 {
     ka_page_t *page = NULL;
     u32 order = (u32)ka_mm_get_order(pg_num << KA_MM_PAGE_SHIFT);
-    u32 flag = devmm_get_alloc_mask(attr->is_compound_page);
+    bool no_retry = !attr->is_continuous;
+    u32 flag = devmm_get_alloc_mask(attr->is_compound_page, no_retry);
     int ret;
 
     ret = devmm_normal_free_mem_size_sub(attr->devid, attr->vfid, nid, pg_num);
     if (ret != 0) {
-        devmm_drv_debug("Not enough normal free mem. (devid=%u; vfid=%u; nid=%d; pg_num=%llu)\n",
-            attr->devid, attr->vfid, nid, pg_num);
+        devmm_drv_debug(
+            "Not enough normal free mem. (devid=%u; vfid=%u; nid=%d; pg_num=%llu)\n", attr->devid, attr->vfid, nid,
+            pg_num);
         return ret;
     }
 
@@ -261,8 +253,7 @@ static int _devmm_alloc_pages_node(struct devmm_phy_addr_attr *attr,
     return 0;
 }
 
-static ka_page_t *devmm_alloc_pages_node(struct devmm_phy_addr_attr *attr,
-    int *latest_nid, int nids[], u32 nid_num)
+static ka_page_t *devmm_alloc_pages_node(struct devmm_phy_addr_attr *attr, int *latest_nid, int nids[], u32 nid_num)
 {
     ka_page_t *pg = NULL;
     bool try_alloc = false;
@@ -289,8 +280,8 @@ static ka_page_t *devmm_alloc_pages_node(struct devmm_phy_addr_attr *attr,
     return NULL;
 }
 
-static int _devmm_alloc_normal_pages(struct devmm_phy_addr_attr *attr,
-    int nids[], u32 nid_num, ka_page_t **pages, u64 pg_num)
+static int _devmm_alloc_normal_pages(
+    struct devmm_phy_addr_attr *attr, int nids[], u32 nid_num, ka_page_t **pages, u64 pg_num)
 {
     int latest_nid = nids[0];
     u32 stamp = (u32)ka_jiffies;
@@ -308,8 +299,8 @@ static int _devmm_alloc_normal_pages(struct devmm_phy_addr_attr *attr,
     return 0;
 }
 
-static int devmm_alloc_continuous_pages(struct devmm_phy_addr_attr *attr,
-    int nids[], u32 nid_num, ka_page_t **pages, u64 pg_num)
+static int devmm_alloc_continuous_pages(
+    struct devmm_phy_addr_attr *attr, int nids[], u32 nid_num, ka_page_t **pages, u64 pg_num)
 {
     int ret, i;
 
@@ -329,8 +320,8 @@ static int devmm_alloc_continuous_pages(struct devmm_phy_addr_attr *attr,
 }
 
 /* Alloc continuous pages every DEVMM_ALLOC_CONT_PAGES_MAX_NUM, and return got_num. */
-static u64 _devmm_try_alloc_continuous_pages(struct devmm_phy_addr_attr *attr,
-    int nids[], u32 nid_num, ka_page_t **pages, u64 pg_num)
+static u64 _devmm_try_alloc_continuous_pages(
+    struct devmm_phy_addr_attr *attr, int nids[], u32 nid_num, ka_page_t **pages, u64 pg_num)
 {
     u32 stamp = (u32)ka_jiffies;
     u64 num, i = 0;
@@ -353,8 +344,8 @@ static u64 _devmm_try_alloc_continuous_pages(struct devmm_phy_addr_attr *attr,
 }
 
 /* The returned pages is not necessarily continuous, but is as continuous as possible. */
-static int devmm_try_alloc_continuous_pages(struct devmm_phy_addr_attr *attr,
-    int nids[], u32 nid_num, ka_page_t **pages, u64 pg_num)
+static int devmm_try_alloc_continuous_pages(
+    struct devmm_phy_addr_attr *attr, int nids[], u32 nid_num, ka_page_t **pages, u64 pg_num)
 {
     u64 got_num = 0;
     int ret;
@@ -372,8 +363,8 @@ static int devmm_try_alloc_continuous_pages(struct devmm_phy_addr_attr *attr,
     return ret;
 }
 
-static int devmm_alloc_normal_pages(struct devmm_phy_addr_attr *attr,
-    int nids[], u32 nid_num, ka_page_t **pages, u64 pg_num)
+static int devmm_alloc_normal_pages(
+    struct devmm_phy_addr_attr *attr, int nids[], u32 nid_num, ka_page_t **pages, u64 pg_num)
 {
     if (attr->is_continuous) {
         return devmm_alloc_continuous_pages(attr, nids, nid_num, pages, pg_num);
@@ -387,37 +378,26 @@ static ka_page_t *devmm_alloc_hpage(struct devmm_phy_addr_attr *attr, int nid, u
     ka_page_t *hpage = NULL;
     u64 pg_num;
     int ret;
-#if !(defined(__arm__) || defined(__aarch64__))
-    u32 order;
-#endif
 
     pg_num = attr->is_giant_page ? DEVMM_GIANT_TO_HUGE_PAGE_NUM : 1;
     ret = devmm_huge_free_mem_size_sub(attr->devid, attr->vfid, nid, pg_num, flag);
     if (ret != 0) {
-        devmm_drv_debug("Not enough huge free mem. (devid=%u; vfid=%u; nid=%d; flag=%u; pg_num=%llu)\n",
-            attr->devid, attr->vfid, nid, flag, pg_num);
+        devmm_drv_debug(
+            "Not enough huge free mem. (devid=%u; vfid=%u; nid=%d; flag=%u; pg_num=%llu)\n", attr->devid, attr->vfid,
+            nid, flag, pg_num);
         return NULL;
     }
 
-#if defined(__arm__) || defined(__aarch64__)
     hpage = _devmm_alloc_hpage(nid, flag);
     if (hpage == NULL) {
         devmm_huge_free_mem_size_add(attr->devid, attr->vfid, nid, pg_num, flag);
     }
-#else
-    flag = devmm_get_alloc_mask(true);
-    order = (u32)ka_mm_get_order(pg_num << KA_MM_HPAGE_SHIFT);
-    /* cannot use ka_alloc_pages_node, because ka mem stats not include normal page */
-    hpage = __ka_alloc_pages_node(nid, flag, order);
-    if (hpage == NULL) {
-        devmm_huge_free_mem_size_add(attr->devid, attr->vfid, nid, pg_num, flag);
-    }
-#endif
+
     return hpage;
 }
 
-static ka_page_t *_devmm_alloc_huge_page(struct devmm_phy_addr_attr *attr,
-    int *latest_nid, int nids[], u32 nid_num, u32 flag)
+static ka_page_t *_devmm_alloc_huge_page(
+    struct devmm_phy_addr_attr *attr, int *latest_nid, int nids[], u32 nid_num, u32 flag)
 {
     ka_page_t *hpage = NULL;
     bool try_alloc = false;
@@ -451,33 +431,34 @@ static ka_page_t *devmm_alloc_huge_page(struct devmm_phy_addr_attr *attr, int *l
     ka_page_t *hpage = NULL;
 
     if (devmm_is_support_giant_page_feature() && attr->is_giant_page) {
-        return _devmm_alloc_huge_page(attr, latest_nid, nids, nid_num, HUGETLB_ALLOC_GIANT);
+        return _devmm_alloc_huge_page(attr, latest_nid, nids, nid_num, KA_HUGETLB_ALLOC_GIANT);
     }
 
-    hpage = _devmm_alloc_huge_page(attr, latest_nid, nids, nid_num, HUGETLB_ALLOC_NORMAL);
+    hpage = _devmm_alloc_huge_page(attr, latest_nid, nids, nid_num, KA_HUGETLB_ALLOC_NORMAL);
     if (hpage != NULL) {
         return hpage;
     }
 
-    hpage = _devmm_alloc_huge_page(attr, latest_nid, nids, nid_num, HUGETLB_ALLOC_BUDDY | HUGETLB_ALLOC_NORECLAIM);
+    hpage =
+        _devmm_alloc_huge_page(attr, latest_nid, nids, nid_num, KA_HUGETLB_ALLOC_BUDDY | KA_HUGETLB_ALLOC_NORECLAIM);
     if (hpage != NULL) {
         return hpage;
     }
 
     /* If alloc failed, allocing by buddy will reclaim mem which will takes a lot of time. */
-    return _devmm_alloc_huge_page(attr, latest_nid, nids, nid_num, HUGETLB_ALLOC_BUDDY);
+    return _devmm_alloc_huge_page(attr, latest_nid, nids, nid_num, KA_HUGETLB_ALLOC_BUDDY);
 #else
     if (devmm_is_support_giant_page_feature() && attr->is_giant_page) {
-        return _devmm_alloc_huge_page(attr, latest_nid, nids, nid_num, HUGETLB_ALLOC_GIANT);
+        return _devmm_alloc_huge_page(attr, latest_nid, nids, nid_num, KA_HUGETLB_ALLOC_GIANT);
     }
-    return _devmm_alloc_huge_page(attr, latest_nid, nids, nid_num, HUGETLB_ALLOC_NORMAL);
+    return _devmm_alloc_huge_page(attr, latest_nid, nids, nid_num, KA_HUGETLB_ALLOC_NORMAL);
 #endif
 }
 
-static int devmm_alloc_huge_pages(struct devmm_phy_addr_attr *attr,
-    int nids[], u32 nid_num, ka_page_t **hpages, u64 pg_num)
+static int devmm_alloc_huge_pages(
+    struct devmm_phy_addr_attr *attr, int nids[], u32 nid_num, ka_page_t **hpages, u64 pg_num)
 {
-    int latest_nid = nids[0];    /* alloc from latest nid to approve performance */
+    int latest_nid = nids[0]; /* alloc from latest nid to approve performance */
     u32 stamp = (u32)ka_jiffies;
     u64 i;
 
@@ -506,8 +487,9 @@ int devmm_alloc_pages(struct devmm_phy_addr_attr *attr, ka_page_t **pages, u64 p
 
     ret = devmm_get_nids(attr->devid, attr->vfid, attr->mem_type, nids, &nid_num);
     if (ret != 0) {
-        devmm_drv_err("Get nids failed. (ret=%d; devid=%u; vfid=%u; mem_type=%u)\n",
-            ret, attr->devid, attr->vfid, attr->mem_type);
+        devmm_drv_err(
+            "Get nids failed. (ret=%d; devid=%u; vfid=%u; mem_type=%u)\n", ret, attr->devid, attr->vfid,
+            attr->mem_type);
         return ret;
     }
 
@@ -534,4 +516,3 @@ void devmm_put_huge_page(ka_page_t *hpage)
     /* Keep the status quo, call put_page. */
     devmm_page_ref_dec(hpage, devmm_clear_huge_page, devmm_put_page, devmm_put_page, false);
 }
-

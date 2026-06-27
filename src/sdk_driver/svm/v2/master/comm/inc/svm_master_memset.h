@@ -20,4 +20,3 @@
 int devmm_ioctl_memset8(struct devmm_svm_process *svm_pro, struct devmm_ioctl_arg *arg);
 
 #endif /* SVM_MASTER_MEMSET_H */
-

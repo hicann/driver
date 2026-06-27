@@ -16,7 +16,14 @@
 
 #include "dvpp_cmdlist.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void jpege_cmdlist_engine_register(void);
 void jpege_cmdlist_engine_unregister(void);
 
+#ifdef __cplusplus
+}
+#endif
 #endif // #ifndef DVPP_JPEGE_CMDLIST_H

@@ -1008,3 +1008,96 @@ int dsmi_get_extra_statistics_info(int logic_id, int port_id, struct ds_extra_st
     }
     return trans_data.result;
 }
+
+// int dsmi_get_ub_bandwidth(int, int, int, unsigned int, struct ub_bandwidth_t)
+// {
+//     return DRV_ERROR_NOT_SUPPORT;
+// }
+
+// int dsmi_get_port_pkt_stats_info(int, int, int, struct ds_port_pkt_stats_info *)
+// {
+//     return DRV_ERROR_NOT_SUPPORT;
+// }
+
+// int dsmi_get_port_avail_credit_info(int, int, int, struct dsmi_credit_info *)
+// {
+//     return DRV_ERROR_NOT_SUPPORT;
+// }
+
+// int dsmi_get_device_netdev_list_info(int, struct dsmi_netdev_list_info *)
+// {
+//     return DRV_ERROR_NOT_SUPPORT;
+// }
+
+// int dsmi_get_device_bond_ip_address(int, const char *, unsigned int, struct dsmi_ip_addr *, struct dsmi_ip_addr *)
+// {
+//     return DRV_ERROR_NOT_SUPPORT;
+// }
+
+// int dsmi_set_device_bond_ip_address(int, const char *, unsigned int, struct dsmi_ip_addr *, struct dsmi_ip_addr *)
+// {
+//     return DRV_ERROR_NOT_SUPPORT;
+// }
+
+// int dsmi_exec_bond_traceroute(int, const char *, unsigned int, struct dsmi_traceroute_param *,
+//                               struct traceroute_result *, unsigned int)
+// {
+//     return DRV_ERROR_NOT_SUPPORT;
+// }
+
+// #ifndef CFG_FEATURE_UB_INFO
+// int dsmi_get_device_ub_ping_info(int, struct dcmi_ub_ping_operate *, struct ub_ping_result *)
+// {
+//     return DRV_ERROR_NOT_SUPPORT;
+// }
+// #endif
+
+// int dsmi_get_netdev_gateway(int, const char *, unsigned int, struct dsmi_ip_addr *)
+// {
+//     return DRV_ERROR_NOT_SUPPORT;
+// }
+
+// int dsmi_set_netdev_gateway(int, const char *, unsigned int, struct dsmi_ip_addr *)
+// {
+//     return DRV_ERROR_NOT_SUPPORT;
+// }
+
+// int dsmi_get_device_mac_addr(int, const char *, unsigned int, char *, unsigned int)
+// {
+//     return DRV_ERROR_NOT_SUPPORT;
+// }
+
+// int dsmi_set_device_mac_addr(int, const char *, unsigned int, const char *, unsigned int)
+// {
+//     return DRV_ERROR_NOT_SUPPORT;
+// }
+
+// int dsmi_get_netdev_pfc_duration_info(int, const char *, unsigned int, struct dcmi_bond_pfc_duration_info *)
+// {
+//     return DRV_ERROR_NOT_SUPPORT;
+// }
+
+// int dsmi_clear_netdev_pfc_duration_info(int, const char *, unsigned int)
+// {
+//     return DRV_ERROR_NOT_SUPPORT;
+// }
+
+// int dsmi_start_ubping_mesh_proc(int, struct ubping_mesh_operate *)
+// {
+//     return DRV_ERROR_NOT_SUPPORT;
+// }
+
+// int dsmi_get_ubping_mesh_state_proc(int, unsigned int *)
+// {
+//     return DRV_ERROR_NOT_SUPPORT;
+// }
+
+// int dsmi_stop_ubping_mesh_proc(int)
+// {
+//     return DRV_ERROR_NOT_SUPPORT;
+// }
+
+// int dsmi_get_ubping_mesh_info_proc(int, struct ubping_mesh_info *)
+// {
+//     return DRV_ERROR_NOT_SUPPORT;
+// }

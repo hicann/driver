@@ -32,8 +32,7 @@ signed int drv_hdc_alloc_len_check(enum drvHdcMemType mem_type, unsigned int len
     unsigned int alloc_len;
     alloc_len = hdc_get_alloc_len(len, flag);
     if (((mem_type == HDC_MEM_TYPE_TX_CTRL) || (mem_type == HDC_MEM_TYPE_RX_CTRL)) &&
-        (alloc_len > HDCDRV_CTRL_MEM_MAX_LEN))
-    {
+        (alloc_len > HDCDRV_CTRL_MEM_MAX_LEN)) {
         HDC_LOG_ERR("alloc_len is not support for ctrl. (alloc_len=%d)\n", alloc_len);
         return DRV_ERROR_INVALID_VALUE;
     }
@@ -48,8 +47,7 @@ void drv_hdc_set_malloc_flag(unsigned int *flag)
 bool drv_hdc_is_support_session_close(void)
 {
     bool res = hdc_is_in_ub();
-    if (!res)
-    {
+    if (!res) {
         HDC_LOG_WARN("local close only support in UB.\n");
     }
     return res;
@@ -121,8 +119,7 @@ STATIC int hdc_total_file_size(const char *fpath, const struct stat *sb, int typ
 
 STATIC hdcError_t validate_free_space(void)
 {
-    if (hdc_total_file_size(NULL, NULL, 0) != 0)
-    {
+    if (hdc_total_file_size(NULL, NULL, 0) != 0) {
         return DRV_ERROR_INVALID_VALUE;
     }
     return DRV_ERROR_NONE;
@@ -137,8 +134,7 @@ STATIC int calc_file_count(const char *path, int depth)
 
 STATIC hdcError_t validate_free_inode(void)
 {
-    if (calc_file_count(NULL, 0) == 0)
-    {
+    if (calc_file_count(NULL, 0) == 0) {
         return DRV_ERROR_NONE;
     }
     return validate_free_space();

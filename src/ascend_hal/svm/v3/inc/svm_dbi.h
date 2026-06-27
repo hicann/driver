@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * Copyright (c) 2026 Huawei Technologies Co., Ltd.
  * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -34,5 +34,6 @@ int svm_dbi_query_d2h_acc_mask(u32 devid, u64 *acc_mask);
 
 bool svm_dbi_is_support_sva(u32 devid);
 bool svm_dbi_is_support_assign_gap(u32 devid);
+bool svm_dbi_is_support_pci_bar(u32 devid);
 
 #endif

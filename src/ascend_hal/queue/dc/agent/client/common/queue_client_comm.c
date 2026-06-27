@@ -15,6 +15,7 @@
 #include "queue.h"
 
 #include "queue_client_comm.h"
+#include "que_platform.h"
 
 void queue_updata_timeout(struct timeval start, struct timeval end, int *timeout)
 {
@@ -38,8 +39,7 @@ STATIC void queue_unsubscribe_with_try(unsigned int devid, unsigned int qid, uns
             return;
         }
     }
-    QUEUE_LOG_ERR("queue_unsubscribe fail. (ret=%d; devid=%u; qid=%u; try_cnt=%d)\n",
-        ret_val, devid, qid, try_cnt);
+    QUEUE_LOG_ERR("queue_unsubscribe fail. (ret=%d; devid=%u; qid=%u; try_cnt=%d)\n", ret_val, devid, qid, try_cnt);
     return;
 }
 
@@ -65,7 +65,7 @@ STATIC drvError_t queue_update_error_code(struct event_info *back_event, drvErro
 
 drvError_t queue_wait_event(unsigned int devid, unsigned int qid, int result, int timeout)
 {
-    unsigned long timestamp = esched_get_cur_cpu_tick();
+    unsigned long timestamp = esched_get_cur_cpu_timestamp();
     struct event_info back_event_info = {{0}, {0}};
     unsigned int sub_id, unsub_id;
     drvError_t ret;
@@ -85,8 +85,7 @@ drvError_t queue_wait_event(unsigned int devid, unsigned int qid, int result, in
     ret = (drvError_t)esched_alloc_event_res(devid, event_type, &res);
     if (ret != 0) {
 #ifndef EMU_ST
-        QUEUE_LOG_WARN("event resource can not alloc. (ret=%d; devid=%u; event_type=%d)\n",
-            ret, devid, event_type);
+        QUEUE_LOG_WARN("event resource can not alloc. (ret=%d; devid=%u; event_type=%d)\n", ret, devid, event_type);
         return ret;
 #endif
     }
@@ -101,7 +100,7 @@ drvError_t queue_wait_event(unsigned int devid, unsigned int qid, int result, in
         ret = halEschedWaitEvent(devid, res.gid, res.tid, timeout, &back_event_info);
         if (ret != 0) {
             QUEUE_LOG_WARN("halEschedWaitEvent invalid. (ret=%d; event_id=%u; gid=%u; tid=%u; timeout=%dms)\n", ret,
-                res.event_id, res.gid, res.tid, timeout);
+                           res.event_id, res.gid, res.tid, timeout);
             queue_unsubscribe_with_try(devid, qid, unsub_id);
             goto OUT;
         } else {
@@ -121,32 +120,59 @@ OUT:
     return ret;
 }
 
-drvError_t queue_param_check(unsigned int dev_id, unsigned int qid, const struct buff_iovec *vector)
+drvError_t queue_param_check(unsigned int dev_id, unsigned int qid, const struct buff_iovec *vector,
+                             const char *func_name)
 {
     unsigned int i;
 
-    if (dev_id >= MAX_DEVICE || qid >= MAX_SURPORT_QUEUE_NUM || vector == NULL || vector->count == 0 ||
-        vector->count > QUEUE_MAX_IOVEC_NUM) {
-        QUEUE_LOG_ERR("input param is invalid. (devid=%u; buf_is_NULL=%d; qid=%u)\n",
-            dev_id, (vector == NULL), qid);
+    if (dev_id >= MAX_DEVICE) {
+        QUEUE_LOG_ERR("devId is invalid.(devid=%u)\n", dev_id);
+        report_arg_out_of_range(func_name, "device ID", dev_id, 0, MAX_DEVICE);
+        return DRV_ERROR_INVALID_VALUE;
+    }
+    if (qid >= MAX_SURPORT_QUEUE_NUM) {
+        QUEUE_LOG_ERR("qid is invalid.(qid=%u)\n", qid);
+        report_arg_out_of_range(func_name, "queue ID", qid, 0, MAX_SURPORT_QUEUE_NUM);
+        return DRV_ERROR_INVALID_VALUE;
+    }
+    if (vector == NULL) {
+        QUEUE_LOG_ERR("vector is null.\n");
+        report_arg_null_pointer(func_name, "vector");
+        return DRV_ERROR_INVALID_VALUE;
+    }
+    if (vector->count == 0 || vector->count > QUEUE_MAX_IOVEC_NUM) {
+        QUEUE_LOG_ERR("vector->count can not be zero.\n");
+        report_arg_equal_to_zero(func_name, "vector->count");
         return DRV_ERROR_INVALID_VALUE;
     }
 
     if ((vector->context_base == NULL && vector->context_len != 0) ||
-        (vector->context_base != NULL && (vector->context_len == 0 ||
-        vector->context_len > USER_DATA_LEN))) {
+        (vector->context_base != NULL && (vector->context_len == 0 || vector->context_len > USER_DATA_LEN))) {
         QUEUE_LOG_ERR("input param is invalid. (context_base_is_NULL=%d; context_len=%llu)\n",
-            (vector->context_base == NULL), vector->context_len);
+                      (vector->context_base == NULL), vector->context_len);
         return DRV_ERROR_INVALID_VALUE;
     }
 
     for (i = 0; i < vector->count; i++) {
         if (vector->ptr[i].iovec_base == NULL || vector->ptr[i].len == 0) {
-            QUEUE_LOG_ERR("input param is invalid. (i=%d; iovec_base_is_NULL=%d; len=0x%llx)\n",
-                i, (vector->ptr[i].iovec_base == NULL), vector->ptr[i].len);
+            QUEUE_LOG_ERR("input param is invalid. (i=%d; iovec_base_is_NULL=%d; len=0x%llx)\n", i,
+                          (vector->ptr[i].iovec_base == NULL), vector->ptr[i].len);
             return DRV_ERROR_INVALID_VALUE;
         }
     }
 
     return DRV_ERROR_NONE;
+}
+
+void queue_report_insufficient_device_memory(struct buff_iovec *vector, int ret)
+{
+    unsigned int i;
+    unsigned long long buf_len = 0;
+    if (ret != (int)DRV_ERROR_OUT_OF_MEMORY) {
+        return;
+    }
+    for (i = 0; i < vector->count; i++) {
+        buf_len += vector->ptr[i].len;
+    }
+    report_insufficient_device_memory(buf_len, drv_log_get_module_str(HAL_MODULE_TYPE_QUEUE_MANAGER));
 }

@@ -16,7 +16,6 @@
 
 #include "comm_kernel_interface.h"
 #include "devdrv_user_common.h"
-#include "dms_kernel_version_adapt.h"
 #include "kernel_version_adapt.h"
 #include "ka_task_pub.h"
 #include "ka_system_pub.h"

@@ -40,7 +40,8 @@ STATIC struct queue_context *queue_context_find(ka_pid_t pid)
     struct queue_context *context = NULL;
     u32 key = (u32)pid & CONTEXT_HASH_TABLE_MASK;
 
-    ka_hash_for_each_possible(context_table, context, link, key) {
+    ka_hash_for_each_possible(context_table, context, link, key)
+    {
         if (context->pid == pid) {
             return context;
         }

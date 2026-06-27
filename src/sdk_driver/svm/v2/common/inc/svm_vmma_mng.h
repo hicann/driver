@@ -78,4 +78,3 @@ void devmm_vmma_exclusive_clear(struct devmm_vmma_struct *vmma);
 
 bool devmm_addr_range_is_in_vmma(struct devmm_vmma_mng *mng, u64 va, u64 size);
 #endif
-

@@ -612,8 +612,17 @@ is_pci_link_success()
 }
 
 is_ub_link_success() {
-    # This feature will be developed according to the subsequent communication
-    # module maintenance and testing requirements.
+    local online_davinci_num=$(timeout 10s "${Driver_Install_Path_Param}"/driver/tools/upgrade-tool --mini_devices 2>/dev/null | grep "mini_devices" | head -1 | awk -F [,] '{print NF}')
+    if [ ! -f /proc/uda/detected_device ];then
+        log "[WARNING]/proc/uda/detected_device not exist."
+        return 1
+    fi
+    local detected_dev_num=$(cat /proc/uda/detected_device | grep -oP 'detected_dev_num: \K\d+')
+    if [ "${online_davinci_num}" != "${detected_dev_num}" ];then
+        log "[WARNING]online_davinci_num=${online_davinci_num}, detected_dev_num=${detected_dev_num}."
+        return 1
+    fi
+
     return 0
 }
 
@@ -636,7 +645,7 @@ modprobe_host_kos() {
         module_full_name=${ko##*/}
         # module_name's value, which is just like searching with command 'lsmod', is ko's brief name, eg: drv_seclib_host
         module_name=${module_full_name%%.*}
-        if [ "${module_name}" = "host_notify" ] || [ "${module_name}" = "drv_vascend" ];then
+        if [ "${module_name}" = "drv_vascend" ];then
             modprobe ${module_name} >& /dev/null
             if [ $? -ne 0 ]; then
                 log "[INFO]${module_name} modprobe skipped"
@@ -783,7 +792,7 @@ add_modules_load_conf() {
 }
 
 get_connect_type() {
-    if [ -d "/sys/bus/ub" ]; then
+    if [ $feature_hd_connect_is_ub = y ]; then
         connect_type="ub"
     else
         connect_type="pcie"
@@ -849,6 +858,35 @@ if [ -f ${installPathParam}/driver/tools/device_boot_init.sh ];then
         chattr +i /usr/bin/device_boot_init.sh >& /dev/null
     fi
 fi
+
+ube_mgmt_path=""
+lock_upgrade_ub_mgmt=""
+if [ -f ${installPathParam}/driver/tools/load_ube_mgmt_pack.sh ];then
+    #cp load_ube_mgmt_pack.sh to /usr/bin/load_ube_mgmt_pack.sh
+    chattr -i /usr/bin/load_ube_mgmt_pack.sh >& /dev/null
+    cp -f ${installPathParam}/driver/tools/load_ube_mgmt_pack.sh /usr/bin/
+    setFileChmod -f 550 /usr/bin/load_ube_mgmt_pack.sh
+    chattr +i /usr/bin/load_ube_mgmt_pack.sh >& /dev/null
+    log "[INFO]copy load_ube_mgmt_pack.sh to usr bin ok"
+
+    #mkdir ub_mgmt dir & touch lock_upgrade_ub_mgmt
+    ube_mgmt_path="${installPathParam}/driver/ube_mgmt"
+    lock_upgrade_ub_mgmt="${installPathParam}/driver/ube_mgmt/upgrade_ube_mgmt_lock"
+    if [ ! -d "${ube_mgmt_path}" ]; then
+        mkdir "${ube_mgmt_path}";ret=$?
+        if [ ${ret} -eq 0 ]; then
+            log "[INFO]mkdir ube mgmt dir ok"
+            chmod 700 "${ube_mgmt_path}" >& /dev/null
+            if [ ! -e ${lock_upgrade_ub_mgmt} ]; then
+                touch "${lock_upgrade_ub_mgmt}" && chmod 600 "${lock_upgrade_ub_mgmt}" >& /dev/null
+            else
+                chmod 600 "${lock_upgrade_ub_mgmt}" >& /dev/null
+            fi
+        fi
+    fi
+    chmod 700 "${ube_mgmt_path}" >& /dev/null
+fi
+
 #check CRL of images
 if [ $feature_crl_check = y ]; then
     if [ $no_kernel_flag = n ]; then

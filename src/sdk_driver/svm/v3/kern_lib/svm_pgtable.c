@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2025. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -35,9 +35,11 @@ struct svm_pa_info {
 };
 
 #define GPAGE_SHIFT 30ULL
-#define GPAGE_SIZE  (1ULL << GPAGE_SHIFT)
+#define GPAGE_SIZE (1ULL << GPAGE_SHIFT)
 
-static struct svm_page_table_ops *pgtbl_ops[SVM_PAGE_GRAN_MAX] = {NULL, };
+static struct svm_page_table_ops *pgtbl_ops[SVM_PAGE_GRAN_MAX] = {
+    NULL,
+};
 static struct svm_page_table_externed_ops *pgtbl_externed_ops = NULL;
 
 void svm_register_page_table_ops(enum svm_page_granularity gran, const struct svm_page_table_ops *ops)
@@ -45,10 +47,7 @@ void svm_register_page_table_ops(enum svm_page_granularity gran, const struct sv
     pgtbl_ops[gran] = (struct svm_page_table_ops *)ops;
 }
 
-void svm_get_page_table_ops(enum svm_page_granularity gran, struct svm_page_table_ops **ops)
-{
-    *ops = pgtbl_ops[gran];
-}
+void svm_get_page_table_ops(enum svm_page_granularity gran, struct svm_page_table_ops **ops) { *ops = pgtbl_ops[gran]; }
 
 void svm_register_page_table_externed_ops(const struct svm_page_table_externed_ops *ops)
 {
@@ -104,8 +103,8 @@ static int svm_pte_hole_of_va_to_pfn(u64 addr, u64 next, enum ka_pte_level level
     return -EFAULT;
 }
 
-static int svm_pte_entry_of_va_to_pfn(ka_pte_t *pte, u64 addr, u64 next,
-    enum ka_pte_level level, struct ka_pgwalk *walk)
+static int svm_pte_entry_of_va_to_pfn(
+    ka_pte_t *pte, u64 addr, u64 next, enum ka_pte_level level, struct ka_pgwalk *walk)
 {
     struct svm_pgwalk_data_of_va_to_pfn *data = (struct svm_pgwalk_data_of_va_to_pfn *)walk->priv;
     u64 page_size;
@@ -203,21 +202,18 @@ u64 svm_task_va_to_page_size(ka_task_struct_t *task, u64 va)
 u64 svm_page_size_to_page_shift(u64 page_size)
 {
     switch (page_size) {
-        case KA_MM_PAGE_SIZE :
+        case KA_MM_PAGE_SIZE:
             return KA_MM_PAGE_SHIFT;
-        case KA_HPAGE_SIZE :
+        case KA_HPAGE_SIZE:
             return KA_MM_HPAGE_SHIFT;
-        case SVM_GPAGE_SIZE :
+        case SVM_GPAGE_SIZE:
             return SVM_GPAGE_SHIFT;
         default:
             return 0;
     }
 }
 
-ka_page_t *svm_pa_to_page(u64 pa)
-{
-    return ka_mm_pfn_to_page((unsigned long)KA_MM_PFN_DOWN(pa));
-}
+ka_page_t *svm_pa_to_page(u64 pa) { return ka_mm_pfn_to_page((unsigned long)KA_MM_PFN_DOWN(pa)); }
 
 static inline u64 svm_make_pgprot_val(bool is_noncache, bool is_rdonly)
 {
@@ -258,8 +254,8 @@ struct svm_pgwalk_data_of_query_pages {
     ka_page_t **pages;
 };
 
-static int svm_pte_entry_of_query_pages(ka_pte_t *pte, u64 addr, u64 next,
-    enum ka_pte_level level, struct ka_pgwalk *walk)
+static int svm_pte_entry_of_query_pages(
+    ka_pte_t *pte, u64 addr, u64 next, enum ka_pte_level level, struct ka_pgwalk *walk)
 {
     struct svm_pgwalk_data_of_query_pages *data = (struct svm_pgwalk_data_of_query_pages *)walk->priv;
     ka_page_t *page = NULL;
@@ -338,8 +334,8 @@ struct svm_pgwalk_data_of_query_phys {
     struct svm_pa_seg *pa_seg;
 };
 
-static int svm_pte_entry_of_query_phys(ka_pte_t *pte, u64 addr, u64 next,
-    enum ka_pte_level level, struct ka_pgwalk *walk)
+static int svm_pte_entry_of_query_phys(
+    ka_pte_t *pte, u64 addr, u64 next, enum ka_pte_level level, struct ka_pgwalk *walk)
 {
     struct svm_pgwalk_data_of_query_phys *data = (struct svm_pgwalk_data_of_query_phys *)walk->priv;
     u64 page_size, pa, pfn;
@@ -389,14 +385,15 @@ u64 svm_query_phys(ka_vm_area_struct_t *vma, u64 va, u64 size, struct svm_pa_seg
     ops.pte_hole = svm_pte_hole_of_query_pfn;
     ops.pte_entry = svm_pte_entry_of_query_phys;
 
+    /* cannot return fail, because pmm_mem_recycle_single_seg may get part of size */
     (void)ka_walk_page_range(vma, va, va + size, &ops, (void *)&data);
 
     *seg_num = data.queried_seg_num;
     return data.queried_seg_size;
 }
 
-static int svm_pte_entry_of_check_va_not_map(ka_pte_t *pte, u64 addr, u64 next,
-    enum ka_pte_level level, struct ka_pgwalk *walk)
+static int svm_pte_entry_of_check_va_not_map(
+    ka_pte_t *pte, u64 addr, u64 next, enum ka_pte_level level, struct ka_pgwalk *walk)
 {
     u64 pfn;
 
@@ -439,8 +436,8 @@ static u64 svm_get_continuous_page_num(ka_page_t **pages, u64 page_num)
     return continuous_num;
 }
 
-int svm_remap_pages(ka_vm_area_struct_t *vma, u64 va, ka_page_t **pages, u64 page_num,
-    struct svm_pgtlb_attr *pgtlb_attr)
+int svm_remap_pages(
+    ka_vm_area_struct_t *vma, u64 va, ka_page_t **pages, u64 page_num, struct svm_pgtlb_attr *pgtlb_attr)
 {
     enum svm_page_granularity gran = svm_page_size_to_page_gran(pgtlb_attr->page_size);
     u64 page_size = pgtlb_attr->page_size;
@@ -503,8 +500,8 @@ static u64 svm_get_continuous_phys_size(struct svm_pa_seg pa_seg[], u64 seg_num,
     return continuous_num;
 }
 
-int svm_remap_phys(ka_vm_area_struct_t *vma, u64 va, struct svm_pa_seg pa_seg[], u64 seg_num,
-    struct svm_pgtlb_attr *pgtlb_attr)
+int svm_remap_phys(
+    ka_vm_area_struct_t *vma, u64 va, struct svm_pa_seg pa_seg[], u64 seg_num, struct svm_pgtlb_attr *pgtlb_attr)
 {
     enum svm_page_granularity gran = svm_page_size_to_page_gran(pgtlb_attr->page_size);
     u64 page_size = pgtlb_attr->page_size;
@@ -532,7 +529,8 @@ int svm_remap_phys(ka_vm_area_struct_t *vma, u64 va, struct svm_pa_seg pa_seg[],
     for (i = 0; i < seg_num;) {
         u64 continuous_size = pa_seg[i].size;
         u64 continuous_num = (page_size == KA_MM_PAGE_SIZE) ?
-            svm_get_continuous_phys_size(&pa_seg[i], seg_num - i, &continuous_size) : 1;
+                                 svm_get_continuous_phys_size(&pa_seg[i], seg_num - i, &continuous_size) :
+                                 1;
         int ret = pgtbl_ops[gran]->remap(vma, start, pa_seg[i].pa, continuous_size / page_size, prot);
         if (ret != 0) {
             if (i > 0) {
@@ -564,4 +562,3 @@ int svm_unmap_addr(ka_vm_area_struct_t *vma, u64 va, u64 size, u64 page_size)
     svm_post_unmap(vma, va, size);
     return 0;
 }
-

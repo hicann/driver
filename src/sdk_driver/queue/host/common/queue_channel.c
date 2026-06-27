@@ -19,8 +19,8 @@
 #define QUEUE_CHAN_MIN_VA_NUM 2
 
 /* Supported remote page size */
-#define QUEUE_CHAN_PAGE_SIZE_4K     (4 * 1024)
-#define QUEUE_CHAN_PAGE_SIZE_64K    (64 * 1024)
+#define QUEUE_CHAN_PAGE_SIZE_4K (4 * 1024)
+#define QUEUE_CHAN_PAGE_SIZE_64K (64 * 1024)
 
 struct queue_chan_dma_node_attr {
     enum devdrv_dma_direction dir;
@@ -61,7 +61,7 @@ void *queue_chan_alloc_node(struct queue_chan *que_chan, size_t size)
     void *addr = NULL;
 
     if (que_chan->attr.nids.nid_num == 0) {
-       return queue_drv_kvmalloc(size, flags);
+        return queue_drv_kvmalloc(size, flags);
     }
     /*
      * For the first round, scan numa nodes to allocate memroy with GFP_NOWAIT flag
@@ -79,7 +79,7 @@ void *queue_chan_alloc_node(struct queue_chan *que_chan, size_t size)
 }
 
 static int _queue_chan_enque_init(struct queue_chan *que_chan, struct queue_chan_enque *enque,
-    struct queue_chan_attr *attr, u64 size, u64 que_chan_addr)
+                                  struct queue_chan_attr *attr, u64 size, u64 que_chan_addr)
 {
     int ret;
 
@@ -100,7 +100,7 @@ static int _queue_chan_enque_init(struct queue_chan *que_chan, struct queue_chan
     enque->qid = attr->qid;
     enque->page_size = KA_MM_PAGE_SIZE;
 
-    enque->copyed_va_node_num  = 0;
+    enque->copyed_va_node_num = 0;
     enque->total_va_num = que_chan->local_va_num;
     enque->total_va_len = que_chan->local_va_len;
     enque->total_dma_blk_num = que_chan->local_dma_blk_num;
@@ -108,7 +108,7 @@ static int _queue_chan_enque_init(struct queue_chan *que_chan, struct queue_chan
     enque->dma_node_num = 0;
 
     enque->max_mem_node_num = (u32)((enque->size - sizeof(struct queue_chan_enque)) /
-        sizeof(struct queue_chan_mem_node));
+                                    sizeof(struct queue_chan_mem_node));
 
     return 0;
 }
@@ -156,14 +156,13 @@ static struct queue_chan_mem_node *_queue_get_mem_node(struct queue_chan *que_ch
     u64 mem_node_index = que_chan->remote_dma_blk_num + que_chan->remote_va_num;
     struct queue_chan_mem_node *mem_node = que_chan->remote_mem_node;
     if (ka_likely((mem_node != NULL) &&
-        (mem_node_index < (que_chan->remote_total_va_num + que_chan->remote_total_dma_blk_num)))) {
+                  (mem_node_index < (que_chan->remote_total_va_num + que_chan->remote_total_dma_blk_num)))) {
         return &mem_node[mem_node_index];
     }
     return NULL;
 }
 
-static inline void _queue_chan_dma_iovec_add(struct queue_chan_dma *chan_dma,
-    u64 va, u64 len, bool dma_flag)
+static inline void _queue_chan_dma_iovec_add(struct queue_chan_dma *chan_dma, u64 va, u64 len, bool dma_flag)
 {
     chan_dma->dma_list.va = va;
     chan_dma->dma_list.len = len;
@@ -175,9 +174,10 @@ static inline int _queue_chan_dma_map(ka_device_t *dev, bool hccs_vm_flag, u32 d
     return queue_make_dma_list(dev, hccs_vm_flag, dev_id, dma_list);
 }
 
-static inline void _queue_chan_dma_unmap(ka_device_t *dev, bool hccs_vm_flag, struct queue_dma_list *dma_list)
+static inline void _queue_chan_dma_unmap(ka_device_t *dev, bool hccs_vm_flag, struct queue_dma_list *dma_list,
+                                         u32 dev_id)
 {
-    queue_clear_dma_list(dev, hccs_vm_flag, dma_list);
+    queue_clear_dma_list(dev, hccs_vm_flag, dma_list, dev_id);
 }
 
 static inline u32 _queue_chan_get_va_num(struct queue_chan *que_chan, enum queue_dma_side side)
@@ -195,7 +195,7 @@ static int _queue_chan_dma_add(struct queue_chan *que_chan, struct queue_chan_dm
     }
     local_dma_blk_num = que_chan->local_dma_blk_num + chan_dma->dma_list.blks_num;
     if (ka_unlikely((local_dma_blk_num < que_chan->local_dma_blk_num) ||
-        (local_dma_blk_num < chan_dma->dma_list.blks_num))) {
+                    (local_dma_blk_num < chan_dma->dma_list.blks_num))) {
         return -EOVERFLOW;
     }
     mem_node_num = que_chan->local_va_num + 1 + local_dma_blk_num;
@@ -214,7 +214,8 @@ static void _queue_chan_destroy_all_dma(struct queue_chan *que_chan)
         u64 i;
         for (i = 0; i < que_chan->local_va_num; i++) {
             struct queue_chan_dma *chan_dma = &que_chan->local_chan_dma[i];
-            _queue_chan_dma_unmap(que_chan->attr.dev, que_chan->attr.hccs_vm_flag, &chan_dma->dma_list);
+            _queue_chan_dma_unmap(que_chan->attr.dev, que_chan->attr.hccs_vm_flag, &chan_dma->dma_list,
+                                  que_chan->attr.devid);
         }
         que_chan->local_va_num = 0;
         queue_drv_kvfree(que_chan->local_chan_dma);
@@ -232,8 +233,8 @@ static int _queue_chan_send(struct queue_chan *que_chan, int time_out)
     u64 mem_node_num = enque->va_node_num + enque->dma_node_num;
 
     if (ka_unlikely((enque->copyed_va_node_num + enque->va_node_num) > que_chan->local_va_num)) {
-        queue_err("Invalid va node num. (copyed_va_num=%u; va_num=%u; total_va_num=%u)\n",
-            enque->copyed_va_node_num, enque->va_node_num, que_chan->local_va_num);
+        queue_err("Invalid va node num. (copyed_va_num=%u; va_num=%u; total_va_num=%u)\n", enque->copyed_va_node_num,
+                  enque->va_node_num, que_chan->local_va_num);
         return -EINVAL;
     }
 
@@ -241,8 +242,8 @@ static int _queue_chan_send(struct queue_chan *que_chan, int time_out)
         u64 size = ka_base_min_t(u64, queue_chan_get_enque_size(mem_node_num), queue_chan_max_msg_size());
         int ret = que_chan->attr.send(enque, (size_t)size, que_chan->attr.priv, time_out);
         if (ka_unlikely(ret != 0)) {
-            queue_err("Que chan send fail. (ret=%d; mem_node_num=%llu; size=%llu; copyed_va_num=%u; va_num=%u)\n",
-                ret, mem_node_num, size, enque->copyed_va_node_num, enque->va_node_num);
+            queue_err("Que chan send fail. (ret=%d; mem_node_num=%llu; size=%llu; copyed_va_num=%u; va_num=%u)\n", ret,
+                      mem_node_num, size, enque->copyed_va_node_num, enque->va_node_num);
             /* Return to user space. do not modify it */
             return DRV_ERROR_SEND_MESG;
         }
@@ -263,15 +264,17 @@ int queue_chan_iovec_add(struct queue_chan *que_chan, struct queue_chan_iovec *i
         return -ENODEV;
     }
     _queue_chan_dma_iovec_add(chan_dma, iovec->va, iovec->len, iovec->dma_flag);
-    ret = _queue_chan_dma_map(que_chan->attr.dev, que_chan->attr.hccs_vm_flag, que_chan->attr.devid, &chan_dma->dma_list);
+    ret = _queue_chan_dma_map(que_chan->attr.dev, que_chan->attr.hccs_vm_flag, que_chan->attr.devid,
+                              &chan_dma->dma_list);
     if (ka_unlikely(ret != 0)) {
-        queue_err("Dma map fail. (ret=%d; va=0x%pK; len=%llu; dma_flag=%d)\n",
-            ret, (void *)(uintptr_t)iovec->va, iovec->len, iovec->dma_flag);
+        queue_err("Dma map fail. (ret=%d; va=0x%pK; len=%llu; dma_flag=%d)\n", ret, (void *)(uintptr_t)iovec->va,
+                  iovec->len, iovec->dma_flag);
         return ret;
     }
     ret = _queue_chan_dma_add(que_chan, chan_dma);
     if (ret != 0) {
-        _queue_chan_dma_unmap(que_chan->attr.dev, que_chan->attr.hccs_vm_flag, &chan_dma->dma_list);
+        _queue_chan_dma_unmap(que_chan->attr.dev, que_chan->attr.hccs_vm_flag, &chan_dma->dma_list,
+                              que_chan->attr.devid);
         queue_err("Chan dma add fail. (ret=%d)\n", ret);
     }
     return ret;
@@ -302,8 +305,7 @@ static inline u64 _queue_chan_get_total_va_size(struct queue_chan *que_chan, enu
     return (side == QUEUE_DMA_LOCAL) ? que_chan->local_va_len : que_chan->remote_total_va_len;
 }
 
-static void _queue_chan_dma_update_index(u64 src_dma_size, u64 dst_dma_size,
-    u64 *src_dma_index, u64 *dst_dma_index)
+static void _queue_chan_dma_update_index(u64 src_dma_size, u64 dst_dma_size, u64 *src_dma_index, u64 *dst_dma_index)
 {
     if (src_dma_size < dst_dma_size) {
         (*src_dma_index)++;
@@ -315,8 +317,7 @@ static void _queue_chan_dma_update_index(u64 src_dma_size, u64 dst_dma_size,
     }
 }
 
-static void _queue_chan_dma_update_offset(u64 src_dma_size, u64 dst_dma_size,
-    u64 *src_offset, u64 *dst_offset)
+static void _queue_chan_dma_update_offset(u64 src_dma_size, u64 dst_dma_size, u64 *src_offset, u64 *dst_offset)
 {
     if (src_dma_size < dst_dma_size) {
         *src_offset = 0;
@@ -331,7 +332,7 @@ static void _queue_chan_dma_update_offset(u64 src_dma_size, u64 dst_dma_size,
 }
 
 static inline void queue_chan_dma_node_attr_pack(struct queue_chan *que_chan,
-    struct queue_chan_dma_node_attr *dma_node_attr)
+                                                 struct queue_chan_dma_node_attr *dma_node_attr)
 {
     if (dma_node_attr->dir == DEVDRV_DMA_HOST_TO_DEVICE) {
         dma_node_attr->src_page_size = que_chan->attr.remote_page_size;
@@ -353,8 +354,8 @@ struct queue_chan *queue_chan_create(struct queue_chan_attr *attr)
 {
     struct queue_chan *que_chan = queue_drv_kvmalloc(sizeof(struct queue_chan), KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
     if (que_chan == NULL) {
-        queue_err("Que chan create fail. (devid=%u; hostpid=%d; qid=%u; size=%ld)\n",
-            attr->devid, attr->host_pid, attr->qid, sizeof(struct queue_chan));
+        queue_err("Que chan create fail. (devid=%u; hostpid=%d; qid=%u; size=%ld)\n", attr->devid, attr->host_pid,
+                  attr->qid, sizeof(struct queue_chan));
         return NULL;
     }
     que_chan->attr = *attr;
@@ -398,8 +399,8 @@ int queue_chan_dma_create(struct queue_chan *que_chan, u32 local_total_va_num)
 
     chan_dma = queue_chan_alloc_node(que_chan, size);
     if (ka_unlikely(chan_dma == NULL)) {
-        queue_err("Local chan dma alloc fail. (total_va_node_num=%u; size=%ld)\n",
-            local_total_va_num, sizeof(struct queue_chan_dma));
+        queue_err("Local chan dma alloc fail. (total_va_node_num=%u; size=%ld)\n", local_total_va_num,
+                  sizeof(struct queue_chan_dma));
         return -ENOMEM;
     }
     que_chan->local_chan_dma = chan_dma;
@@ -461,8 +462,8 @@ static int queue_chan_enque_va_node_pack(struct queue_chan *que_chan, struct que
     return 0;
 }
 
-static int queue_chan_enque_dma_pack(struct queue_chan *que_chan, struct queue_chan_dma *chan_dma,
-    u64 dma_blk_index, int time_out)
+static int queue_chan_enque_dma_pack(struct queue_chan *que_chan, struct queue_chan_dma *chan_dma, u64 dma_blk_index,
+                                     int time_out)
 {
     struct queue_chan_enque *enque = que_chan->enque;
     u64 index;
@@ -535,8 +536,8 @@ int queue_chan_mem_node_create(struct queue_chan *que_chan, u32 total_va_num, u6
     que_chan->remote_mem_node = queue_chan_alloc_node(que_chan, size);
     if (ka_unlikely(que_chan->remote_mem_node == NULL)) {
         queue_err("Remote mem node alloc fail. (devid=%u; hostpid=%d; qid=%u; mem_node_num=%llu; size=%ld)\n",
-            que_chan->attr.devid, que_chan->attr.host_pid, que_chan->attr.qid, mem_node_num,
-            sizeof(struct queue_chan_mem_node));
+                  que_chan->attr.devid, que_chan->attr.host_pid, que_chan->attr.qid, mem_node_num,
+                  sizeof(struct queue_chan_mem_node));
         return -ENOMEM;
     }
     que_chan->remote_total_va_num = total_va_num;
@@ -550,22 +551,23 @@ static int queue_chan_enque_add_check(struct queue_chan *que_chan, struct queue_
     u64 mem_node_num;
 
     if (ka_unlikely(((enque->dma_node_num + que_chan->remote_dma_blk_num) > que_chan->remote_total_dma_blk_num) ||
-        ((enque->dma_node_num + que_chan->remote_dma_blk_num) < que_chan->remote_dma_blk_num))) {
-        queue_err("dma_node_num=%u; remote_dma_blk_num=%llu; remote_total_dma_blk_num=%llu\n",
-            enque->dma_node_num, que_chan->remote_dma_blk_num, que_chan->remote_total_dma_blk_num);
+                    ((enque->dma_node_num + que_chan->remote_dma_blk_num) < que_chan->remote_dma_blk_num))) {
+        queue_err("dma_node_num=%u; remote_dma_blk_num=%llu; remote_total_dma_blk_num=%llu\n", enque->dma_node_num,
+                  que_chan->remote_dma_blk_num, que_chan->remote_total_dma_blk_num);
         return -EINVAL;
     }
 
     if (ka_unlikely(((enque->va_node_num + que_chan->remote_va_num) > que_chan->remote_total_va_num) ||
-        ((enque->va_node_num + que_chan->remote_va_num) < que_chan->remote_va_num))) {
-        queue_err("va_node_num=%u; remote_va_num=%u; remote_total_dma_blk_num=%u\n",
-            enque->va_node_num, que_chan->remote_va_num, que_chan->remote_va_num);
+                    ((enque->va_node_num + que_chan->remote_va_num) < que_chan->remote_va_num))) {
+        queue_err("va_node_num=%u; remote_va_num=%u; remote_total_dma_blk_num=%u\n", enque->va_node_num,
+                  que_chan->remote_va_num, que_chan->remote_va_num);
         return -EINVAL;
     }
     mem_node_num = enque->va_node_num + enque->dma_node_num;
-    if (ka_unlikely((mem_node_num == 0) || (mem_node_num < enque->va_node_num) || (mem_node_num < enque->dma_node_num))) {
-        queue_err("mem_node_num=%llu; va_node_num=%u; dma_node_num=%u\n",
-            mem_node_num, enque->va_node_num, enque->dma_node_num);
+    if (ka_unlikely((mem_node_num == 0) || (mem_node_num < enque->va_node_num) ||
+                    (mem_node_num < enque->dma_node_num))) {
+        queue_err("mem_node_num=%llu; va_node_num=%u; dma_node_num=%u\n", mem_node_num, enque->va_node_num,
+                  enque->dma_node_num);
         return -EINVAL;
     }
 
@@ -590,8 +592,8 @@ int queue_chan_enque_add(struct queue_chan *que_chan, struct queue_chan_enque *e
     remain_va_num = que_chan->remote_total_va_num - que_chan->remote_va_num;
     mem_node_num = enque->va_node_num + enque->dma_node_num;
     remain_mem_node_num = remain_va_num + remain_dma_blk_num;
-    ret = memcpy_s(mem_node, remain_mem_node_num * sizeof(struct queue_chan_mem_node),
-        enque->mem_node, mem_node_num * sizeof(struct queue_chan_mem_node));
+    ret = memcpy_s(mem_node, remain_mem_node_num * sizeof(struct queue_chan_mem_node), enque->mem_node,
+                   mem_node_num * sizeof(struct queue_chan_mem_node));
     if (ka_unlikely(ret != EOK)) {
         queue_err("Memcpy fail. (remain_mem_node_num=%llu; mem_node_num=%llu)\n", remain_mem_node_num, mem_node_num);
         return ret;
@@ -604,7 +606,7 @@ int queue_chan_enque_add(struct queue_chan *que_chan, struct queue_chan_enque *e
 bool queue_chan_enque_add_finished(struct queue_chan *que_chan)
 {
     return (que_chan->remote_dma_blk_num == que_chan->remote_total_dma_blk_num) &&
-        (que_chan->remote_va_num == que_chan->remote_total_va_num);
+           (que_chan->remote_va_num == que_chan->remote_total_va_num);
 }
 
 static struct devdrv_dma_node *queue_chan_dma_node_create(struct queue_chan *que_chan)
@@ -614,7 +616,7 @@ static struct devdrv_dma_node *queue_chan_dma_node_create(struct queue_chan *que
     struct devdrv_dma_node *dma_node = NULL;
 
     if (ka_unlikely((total_blks_num < que_chan->remote_dma_blk_num) || (total_blks_num < que_chan->local_dma_blk_num) ||
-        (size < total_blks_num))) {
+                    (size < total_blks_num))) {
 #ifndef EMU_ST
         return NULL;
 #endif
@@ -622,7 +624,7 @@ static struct devdrv_dma_node *queue_chan_dma_node_create(struct queue_chan *que
     dma_node = queue_chan_alloc_node(que_chan, size);
     if (dma_node == NULL) {
         queue_err("Create dma node fail. (remote_blks_num=%llu; local_blks_num=%llu; size=%ld)\n",
-            que_chan->remote_dma_blk_num, que_chan->local_dma_blk_num, sizeof(struct devdrv_dma_node));
+                  que_chan->remote_dma_blk_num, que_chan->local_dma_blk_num, sizeof(struct devdrv_dma_node));
     }
     return dma_node;
 }
@@ -633,7 +635,7 @@ static void queue_chan_dma_node_destroy(struct devdrv_dma_node *dma_node)
 }
 
 static int queue_chan_dma_node_pack_remote_to_local(struct queue_chan_dma_node_attr *attr,
-    struct devdrv_dma_node *dma_node, u64 num, u64 *real_num)
+                                                    struct devdrv_dma_node *dma_node, u64 num, u64 *real_num)
 {
     struct queue_chan_mem_node *src_va_mem_node = attr->mem_node;
     struct queue_chan_dma *dst_chan_dma = attr->chan_dma;
@@ -649,7 +651,8 @@ static int queue_chan_dma_node_pack_remote_to_local(struct queue_chan_dma_node_a
     dst_offset = (dst_chan_dma->dma_list.va & (attr->dst_page_size - 1));
 
     for (index = 0; (index < num) && (src_dma_index < src_va_mem_node->va_node.blks_num) &&
-        (dst_dma_index < dst_chan_dma->dma_list.blks_num) && (left_size != 0); index++) {
+                    (dst_dma_index < dst_chan_dma->dma_list.blks_num) && (left_size != 0);
+         index++) {
         struct queue_dma_block *dst_dma_blk = &dst_chan_dma->dma_list.blks[dst_dma_index];
         struct queue_chan_mem_node *src_dma_mem_node = &src_va_mem_node[1 + src_dma_index];
         u64 src_dma_size, dst_dma_size;
@@ -668,16 +671,16 @@ static int queue_chan_dma_node_pack_remote_to_local(struct queue_chan_dma_node_a
     *real_num += index;
     if (left_size != 0) {
         queue_err("Pack dma node fail. (left_size=%llu; i=%llu; srv_va=0x%pK; src_index=%llu "
-            "dst_va=0x%pK; dst_index=%llu; passid=%d)\n",
-            left_size, index, (void *)(uintptr_t)src_va_mem_node->va_node.va, src_dma_index,
-            (void *)(uintptr_t)dst_chan_dma->dma_list.va, dst_dma_index, attr->loc_passid);
+                  "dst_va=0x%pK; dst_index=%llu; passid=%d)\n",
+                  left_size, index, (void *)(uintptr_t)src_va_mem_node->va_node.va, src_dma_index,
+                  (void *)(uintptr_t)dst_chan_dma->dma_list.va, dst_dma_index, attr->loc_passid);
         return -ENODEV;
     }
     return 0;
 }
 
 static int queue_chan_dma_node_pack_local_to_remote(struct queue_chan_dma_node_attr *attr,
-    struct devdrv_dma_node *dma_node, u64 num, u64 *real_num)
+                                                    struct devdrv_dma_node *dma_node, u64 num, u64 *real_num)
 {
     struct queue_chan_mem_node *dst_va_mem_node = attr->mem_node;
     struct queue_chan_dma *src_chan_dma = attr->chan_dma;
@@ -693,7 +696,8 @@ static int queue_chan_dma_node_pack_local_to_remote(struct queue_chan_dma_node_a
     dst_offset = (dst_va_mem_node->va_node.va & (attr->dst_page_size - 1));
 
     for (index = 0; (index < num) && (src_dma_index < src_chan_dma->dma_list.blks_num) &&
-        (dst_dma_index < dst_va_mem_node->va_node.blks_num) && (left_size != 0); index++) {
+                    (dst_dma_index < dst_va_mem_node->va_node.blks_num) && (left_size != 0);
+         index++) {
         struct queue_dma_block *src_dma_blk = &src_chan_dma->dma_list.blks[src_dma_index];
         struct queue_chan_mem_node *dst_dma_mem_node = &dst_va_mem_node[1 + dst_dma_index];
         u64 src_dma_size, dst_dma_size;
@@ -712,16 +716,16 @@ static int queue_chan_dma_node_pack_local_to_remote(struct queue_chan_dma_node_a
     *real_num += index;
     if (left_size != 0) {
         queue_err("Pack dma node fail. (left_size=%llu; i=%llu; srv_va=0x%pK; src_index=%llu "
-            "dst_va=0x%pK; dst_index=%llu; passid=%d)\n",
-            left_size, index, (void *)(uintptr_t)src_chan_dma->dma_list.va, src_dma_index,
-            (void *)(uintptr_t)dst_va_mem_node->va_node.va, dst_dma_index, attr->loc_passid);
+                  "dst_va=0x%pK; dst_index=%llu; passid=%d)\n",
+                  left_size, index, (void *)(uintptr_t)src_chan_dma->dma_list.va, src_dma_index,
+                  (void *)(uintptr_t)dst_va_mem_node->va_node.va, dst_dma_index, attr->loc_passid);
         return -ENODEV;
     }
     return 0;
 }
 
-typedef int (*queue_chan_dma_node_pack_t)(struct queue_chan_dma_node_attr *attr,
-    struct devdrv_dma_node *dma_node, u64 num, u64 *real_num);
+typedef int (*queue_chan_dma_node_pack_t)(struct queue_chan_dma_node_attr *attr, struct devdrv_dma_node *dma_node,
+                                          u64 num, u64 *real_num);
 
 static int _queue_chan_copy(struct queue_chan *que_chan, enum devdrv_dma_direction dir)
 {
@@ -741,9 +745,9 @@ static int _queue_chan_copy(struct queue_chan *que_chan, enum devdrv_dma_directi
 
     total_blks_num = que_chan->remote_dma_blk_num + que_chan->local_dma_blk_num;
     if (ka_unlikely((total_blks_num == 0) || (total_blks_num < que_chan->remote_dma_blk_num) ||
-        (total_blks_num < que_chan->local_dma_blk_num))) {
+                    (total_blks_num < que_chan->local_dma_blk_num))) {
         queue_err("Total dma blk num invalid. (remote_dma_blk_num=%llu; local_dma_blk_num=%llu)\n",
-            que_chan->remote_dma_blk_num, que_chan->local_dma_blk_num);
+                  que_chan->remote_dma_blk_num, que_chan->local_dma_blk_num);
         return -EOVERFLOW;
     }
 
@@ -754,25 +758,24 @@ static int _queue_chan_copy(struct queue_chan *que_chan, enum devdrv_dma_directi
     }
 
     func = (dir == DEVDRV_DMA_HOST_TO_DEVICE) ? queue_chan_dma_node_pack_remote_to_local :
-        queue_chan_dma_node_pack_local_to_remote;
+                                                queue_chan_dma_node_pack_local_to_remote;
 
     /* Validity has been checked before mem node create */
-    total_mem_node_num = que_chan->remote_total_va_num +  que_chan->remote_total_dma_blk_num;
+    total_mem_node_num = que_chan->remote_total_va_num + que_chan->remote_total_dma_blk_num;
 
     stamp = ka_jiffies;
     queue_chan_dma_node_attr_pack(que_chan, &dma_node_attr);
 
-    for (chan_dma_index = 0, mem_node_index = 0; (chan_dma_index < que_chan->local_va_num) &&
-        (mem_node_index < total_mem_node_num); chan_dma_index++) {
+    for (chan_dma_index = 0, mem_node_index = 0;
+         (chan_dma_index < que_chan->local_va_num) && (mem_node_index < total_mem_node_num); chan_dma_index++) {
         struct queue_chan_dma *chan_dma = &que_chan->local_chan_dma[chan_dma_index];
         struct queue_chan_mem_node *mem_node = &que_chan->remote_mem_node[mem_node_index];
         dma_node_attr.chan_dma = chan_dma;
         dma_node_attr.mem_node = mem_node;
-        ret = func(&dma_node_attr, &dma_node[real_blks_num], total_blks_num - real_blks_num,
-            &real_blks_num);
+        ret = func(&dma_node_attr, &dma_node[real_blks_num], total_blks_num - real_blks_num, &real_blks_num);
         if (ka_unlikely(ret != 0)) {
-            queue_err("Dma node pack fail. (ret=%d; dir=%d; chan_dma_index=%u; mem_node_index=%llu)\n",
-                ret, dir, chan_dma_index, mem_node_index);
+            queue_err("Dma node pack fail. (ret=%d; dir=%d; chan_dma_index=%u; mem_node_index=%llu)\n", ret, dir,
+                      chan_dma_index, mem_node_index);
             goto out;
         }
         mem_node_index += mem_node->va_node.blks_num + 1; /* jump to next QUEUE_CHAN_MEM_NODE_VA mem node */
@@ -842,13 +845,13 @@ static int _queue_chan_copy_addr_check(struct queue_chan *que_chan, u32 op, u64 
     int ret;
 
     if (ka_unlikely((que_chan->remote_va_num < QUEUE_CHAN_MIN_VA_NUM) ||
-        (que_chan->remote_va_num > QUEUE_MAX_VA_NUM))) {
+                    (que_chan->remote_va_num > QUEUE_MAX_VA_NUM))) {
         queue_err("Remote va num invalid. (remote_va_num=%u)\n", que_chan->remote_va_num);
         return -EINVAL;
     }
 
     if (ka_unlikely((que_chan->attr.remote_page_size != QUEUE_CHAN_PAGE_SIZE_4K) &&
-        (que_chan->attr.remote_page_size != QUEUE_CHAN_PAGE_SIZE_64K))) {
+                    (que_chan->attr.remote_page_size != QUEUE_CHAN_PAGE_SIZE_64K))) {
         queue_err("Remote page size invalid. (remote_page_size=%u)\n", que_chan->attr.remote_page_size);
         return -EINVAL;
     }
@@ -866,7 +869,7 @@ static int _queue_chan_copy_addr_check(struct queue_chan *que_chan, u32 op, u64 
         u64 remote_total_va_size = _queue_chan_get_total_va_size(que_chan, QUEUE_DMA_REMOTE);
         if (remote_total_va_size < remote_ctx_size) {
             queue_err("Total va size invalid. (remote_total_va_size=%llu; remote_ctx_size=%llu)\n",
-                remote_total_va_size, remote_ctx_size);
+                      remote_total_va_size, remote_ctx_size);
             return -EINVAL;
         }
         remote_total_va_size -= remote_ctx_size;
@@ -934,4 +937,3 @@ int queue_chan_get_iovec_num(struct queue_chan *que_chan, enum queue_dma_side si
     }
     return 0;
 }
-

@@ -850,7 +850,10 @@ STATIC void *__do_poll(void *arg)
         free(fds);
         fds = NULL;
     }
-    poller->state = POLLER_STATE_READY;
+
+    if (poller != NULL) {
+        poller->state = POLLER_STATE_READY;
+    }
 
     return NULL;
 }

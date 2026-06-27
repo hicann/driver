@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * Copyright (c) 2026 Huawei Technologies Co., Ltd.
  * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -33,24 +33,19 @@ static void module_mem_stats_show(u32 devid, u32 mms_type, const char *type_str)
         ret = svm_mms_get(devid, module_id, mms_type, &stats);
         if ((ret == 0) && (stats.alloced_peak_size != 0)) {
 #ifndef EMU_ST /* Too much, not print. */
-            svm_run_info("%s Mem stats (Bytes). (module_name=%s; module_id=%u; "
+            svm_run_info(
+                "%s Mem stats (Bytes). (module_name=%s; module_id=%u; "
                 "current_alloced_size=%llu; allocated_peak_size=%llu; alloc_cnt=%llu; free_cnt=%llu)\n",
-                type_str, SVM_GET_MODULE_NAME(svm_module_name, module_id), module_id,
-                stats.alloced_size, stats.alloced_peak_size, stats.alloc_cnt, stats.free_cnt);
+                type_str, SVM_GET_MODULE_NAME(svm_module_name, module_id), module_id, stats.alloced_size,
+                stats.alloced_peak_size, stats.alloc_cnt, stats.free_cnt);
 #endif
         }
     }
 }
 
-static inline bool mms_type_is_hpage(u32 type)
-{
-    return ((type == MMS_TYPE_HPAGE) || (type == MMS_TYPE_P2P_HPAGE));
-}
+static inline bool mms_type_is_hpage(u32 type) { return ((type == MMS_TYPE_HPAGE) || (type == MMS_TYPE_P2P_HPAGE)); }
 
-static inline bool mms_type_is_p2p(u32 type)
-{
-    return ((type == MMS_TYPE_P2P_NPAGE) || (type == MMS_TYPE_P2P_HPAGE));
-}
+static inline bool mms_type_is_p2p(u32 type) { return ((type == MMS_TYPE_P2P_NPAGE) || (type == MMS_TYPE_P2P_HPAGE)); }
 
 static inline u32 mms_type_to_cache_flag(u64 mms_type)
 {
@@ -73,7 +68,7 @@ static void cache_mem_stats_show(u32 devid, u32 mms_type, const char *type_str)
     }
 }
 
-#define TYPE_STR_MAX_LEN  50
+#define TYPE_STR_MAX_LEN 50
 static void mem_stats_show_host_svm_mem(u32 devid)
 {
     char type_str[TYPE_STR_MAX_LEN] = "MEM_HOST";
@@ -103,8 +98,7 @@ static void mem_stats_show_dev_svm_mem(u32 devid)
     }
 }
 
-static void _mem_stats_show_dev_proc_mem(u32 devid, processType_t processType,
-    processMemType_t memType, u32 module_id)
+static void _mem_stats_show_dev_proc_mem(u32 devid, processType_t processType, processMemType_t memType, u32 module_id)
 {
     u64 size = 0;
     int ret;
@@ -116,8 +110,9 @@ static void _mem_stats_show_dev_proc_mem(u32 devid, processType_t processType,
 
     if (size != 0) {
 #ifndef EMU_ST /* Too much, not print. */
-        svm_run_info("DEV_PROC_MEM dev%u Mem stats (Bytes). (module_name=%s; module_id=%u; total_size=%lu)\n",
-            devid, SVM_GET_MODULE_NAME(svm_module_name, module_id), module_id, size);
+        svm_run_info(
+            "DEV_PROC_MEM dev%u Mem stats (Bytes). (module_name=%s; module_id=%u; total_size=%lu)\n", devid,
+            SVM_GET_MODULE_NAME(svm_module_name, module_id), module_id, size);
 #endif
     }
 }
@@ -176,4 +171,3 @@ __attribute__((constructor)) void svm_mem_stats_show_init(void)
     svm_register_ioctl_dev_uninit_pre_handle(mem_stats_show_svm_mem);
     mem_prof_register_get_module_stats_func(svm_mem_stats_get_dev_svm_mem);
 }
-

@@ -14,6 +14,11 @@
 #define VPC_CMDLIST_PIPELINE_TOP_H
 
 #include "pipeline_module.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct PipleLineTop {
     enum VpcPictureFormat kernelFmt;
     enum ChannelOutType channelOut;
@@ -96,4 +101,7 @@ typedef struct {
 
 void reset_pipeline(struct Top *top, struct Channel *channel, struct PipeLine *pipeline);
 
+#ifdef __cplusplus
+}
+#endif
 #endif // #ifndef VPC_CMDLIST_PIPELINE_TOP_H

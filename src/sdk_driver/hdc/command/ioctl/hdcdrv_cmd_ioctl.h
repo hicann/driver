@@ -54,28 +54,28 @@
 #define HDCDRV_DEV_MAX_VDEV_PER_DEVICE 16
 
 #if defined(CFG_FEATURE_VFIO_DEVICE) || defined(CFG_FEATURE_VFIO)
-#define HDCDRV_SINGLE_DEV_MAX_SESSION       ((136 * HDCDRV_DEV_MAX_VDEV_PER_DEVICE) + 8)
+#define HDCDRV_SINGLE_DEV_MAX_SESSION ((136 * HDCDRV_DEV_MAX_VDEV_PER_DEVICE) + 8)
 #define HDCDRV_SINGLE_DEV_MAX_SHORT_SESSION ((8 * HDCDRV_DEV_MAX_VDEV_PER_DEVICE) + 8)
 #else
 #if defined(CFG_FEATURE_SRIOV) && !defined(CFG_ENV_DEV)
-#define HDCDRV_SINGLE_DEV_MAX_SESSION       ((136 * HDCDRV_DEV_MAX_VDEV_PER_DEVICE) + 8)
+#define HDCDRV_SINGLE_DEV_MAX_SESSION ((136 * HDCDRV_DEV_MAX_VDEV_PER_DEVICE) + 8)
 #define HDCDRV_SINGLE_DEV_MAX_SHORT_SESSION ((8 * HDCDRV_DEV_MAX_VDEV_PER_DEVICE) + 8)
 #else
 #define HDCDRV_SINGLE_DEV_MAX_SHORT_SESSION 8
 #if defined(CFG_FEATURE_SRIOV) && defined(CFG_ENV_DEV)
-#define HDCDRV_SINGLE_DEV_MAX_SESSION       136 /* 32 * 4(log + tsd + dvpp + reserved) + 8 */
+#define HDCDRV_SINGLE_DEV_MAX_SESSION 136 /* 32 * 4(log + tsd + dvpp + reserved) + 8 */
 #else
-#define HDCDRV_SINGLE_DEV_MAX_SESSION       264 /* 64 * 4(log + tsd + dvpp + reserved) + 8 */
+#define HDCDRV_SINGLE_DEV_MAX_SESSION 264 /* 64 * 4(log + tsd + dvpp + reserved) + 8 */
 #endif
 #endif
 #endif
 
-#define HDCDRV_SUPPORT_MAX_SESSION          (HDCDRV_SINGLE_DEV_MAX_SESSION * HDCDRV_SUPPORT_MAX_DEV)
-#define HDCDRV_SUPPORT_MAX_SHORT_SESSION    (HDCDRV_SINGLE_DEV_MAX_SHORT_SESSION * HDCDRV_SUPPORT_MAX_DEV)
-#define HDCDRV_SUPPORT_MAX_LONG_SESSION     (HDCDRV_SUPPORT_MAX_SESSION - HDCDRV_SUPPORT_MAX_SHORT_SESSION)
+#define HDCDRV_SUPPORT_MAX_SESSION (HDCDRV_SINGLE_DEV_MAX_SESSION * HDCDRV_SUPPORT_MAX_DEV)
+#define HDCDRV_SUPPORT_MAX_SHORT_SESSION (HDCDRV_SINGLE_DEV_MAX_SHORT_SESSION * HDCDRV_SUPPORT_MAX_DEV)
+#define HDCDRV_SUPPORT_MAX_LONG_SESSION (HDCDRV_SUPPORT_MAX_SESSION - HDCDRV_SUPPORT_MAX_SHORT_SESSION)
 #define HDCDRV_SUPPORT_MAX_SERVICE 128
-#define HDCDRV_SUPPORT_MAX_FID_PID  HDCDRV_SUPPORT_MAX_SERVICE
-#define HDCDRV_SINGLE_DEV_MAX_LONG_SESSION  (HDCDRV_SINGLE_DEV_MAX_SESSION - HDCDRV_SINGLE_DEV_MAX_SHORT_SESSION)
+#define HDCDRV_SUPPORT_MAX_FID_PID HDCDRV_SUPPORT_MAX_SERVICE
+#define HDCDRV_SINGLE_DEV_MAX_LONG_SESSION (HDCDRV_SINGLE_DEV_MAX_SESSION - HDCDRV_SINGLE_DEV_MAX_SHORT_SESSION)
 
 #define HDCDRV_OK 0
 #define HDCDRV_ERR (-1)
@@ -129,7 +129,6 @@
 #define HDCDRV_PEER_REBOOT (-49)
 #define HDCDRV_UB_INTERFACE_ERR (-50)
 
-
 #define HDCDRV_CLOSE_TYPE_NONE 0
 #define HDCDRV_CLOSE_TYPE_USER 1
 #define HDCDRV_CLOSE_TYPE_KERNEL 2
@@ -140,11 +139,11 @@
 
 #define HDCDRV_MEM_MAX_LEN (512 * 1024 * 1024)
 #define HDCDRV_CTRL_MEM_MAX_LEN (256 * 1024)
-#define HDCDRV_MEM_MAX_LEN_BIT 22      /* 4M */
-#define HDCDRV_MEM_1MB_LEN_BIT 20      /* 1M */
-#define HDCDRV_MEM_512KB_LEN_BIT 19    /* 512k */
-#define HDCDRV_MEM_MIN_LEN_BIT 18      /* 256k */
-#define HDCDRV_MEM_64KB_LEN_BIT 16      /* 64kb */
+#define HDCDRV_MEM_MAX_LEN_BIT 22   /* 4M */
+#define HDCDRV_MEM_1MB_LEN_BIT 20   /* 1M */
+#define HDCDRV_MEM_512KB_LEN_BIT 19 /* 512k */
+#define HDCDRV_MEM_MIN_LEN_BIT 18   /* 256k */
+#define HDCDRV_MEM_64KB_LEN_BIT 16  /* 64kb */
 
 #define HDCDRV_EPOLL_FD_EVENT_NUM 1024
 #define HDCDRV_INVALID_PEER_PID (-1)
@@ -170,6 +169,7 @@ enum hdcdrv_cmd_type {
     HDCDRV_CMD_CONFIG = 0x8,
     HDCDRV_CMD_SET_SERVICE_LEVEL = 0x9,
     HDCDRV_CMD_GET_SPEC_DEVID = 0xa,
+    HDCDRV_CMD_GET_P2P_COM_STATUS = 0xb,
     HDCDRV_CMD_SERVER_CREATE = 0x10,
     HDCDRV_CMD_SERVER_DESTROY = 0x11,
     HDCDRV_CMD_ACCEPT = 0x12,
@@ -199,6 +199,10 @@ enum hdcdrv_cmd_type {
     HDCDRV_CMD_EPOLL_FREE_FD = 0x41,
     HDCDRV_CMD_EPOLL_CTL = 0x42,
     HDCDRV_CMD_EPOLL_WAIT = 0x43,
+    HDCDRV_CMD_WAIT_CTRL_MSG = 0x50,
+    HDCDRV_CMD_SEND_CTRL_MSG = 0x51,
+    HDCDRV_CMD_INIT_CTRL_NODE = 0x52,
+    HDCDRV_CMD_UNINIT_CTRL_NODE = 0x53,
     HDCDRV_CMD_MAX
 };
 
@@ -213,7 +217,7 @@ struct hdcdrv_timeout {
 
 struct hdcdrv_event {
     unsigned int events;
-    int sub_data;       /* trans to user in epoll wait return */
+    int sub_data;            /* trans to user in epoll wait return */
     unsigned long long data; /* trans to user in epoll wait return */
 };
 
@@ -226,16 +230,16 @@ struct hdcdrv_cmd_common {
 
 struct hdcdrv_cmd_get_peer_dev_id {
     int ret;
-    int dev_id;         /* input */
+    int dev_id; /* input */
     unsigned long long pid;
     unsigned long long reserve_comm;
-    int peer_dev_id;    /* output */
+    int peer_dev_id; /* output */
 };
 
 struct hdcdrv_cmd_config {
     int ret;
     int dev_id;
-    unsigned long long pid;     /* input */
+    unsigned long long pid; /* input */
     unsigned long long reserve_comm;
     int segment; /* input,output */
     unsigned int reserved[4];
@@ -252,17 +256,16 @@ struct hdcdrv_cmd_set_service_level {
 
 struct hdcdrv_cmd_server_create {
     int ret;
-    int dev_id;       /* input */
-    unsigned long long pid;          /* input */
+    int dev_id;             /* input */
+    unsigned long long pid; /* input */
     unsigned long long reserve_comm;
     int service_type; /* input */
-    unsigned int gid;
-    unsigned int reserved[4];
+    unsigned int reserved[5];
 };
 
 struct hdcdrv_cmd_server_destroy {
     int ret;
-    int dev_id;       /* input */
+    int dev_id; /* input */
     unsigned long long pid;
     unsigned long long reserve_comm;
     int service_type; /* input */
@@ -271,7 +274,7 @@ struct hdcdrv_cmd_server_destroy {
 
 struct hdcdrv_cmd_client_destroy {
     int ret;
-    int dev_id;       /* input */
+    int dev_id; /* input */
     unsigned long long pid;
     unsigned long long reserve_comm;
     int service_type; /* input */
@@ -280,37 +283,35 @@ struct hdcdrv_cmd_client_destroy {
 
 struct hdcdrv_cmd_accept {
     int ret;
-    int dev_id;                      /* input */
+    int dev_id; /* input */
     unsigned long long pid;
     unsigned long long reserve_comm;
-    int service_type;                /* input */
-    int session;                     /* output */
+    int service_type;                   /* input */
+    int session;                        /* output */
     unsigned int session_cur_alloc_idx; /* output */
-    unsigned long long peer_pid;    /* only used in UB */
-    unsigned int remote_session;    /* only used in UB */
-    int run_env;                    /* only used in UB */
-    int euid;                       /* only used in UB */
-    int uid;                        /* only used in UB */
-    int root_privilege;             /* only used in UB */
-    unsigned int unique_val;        /* only used in UB */
-    unsigned long long user_va;     /* only used in UB */
-    unsigned int remote_gid;        /* only used in UB */
-    unsigned int remote_tid;        /* only used in UB */
-    unsigned int reserved[8];
+    unsigned long long peer_pid;        /* only used in UB */
+    unsigned int remote_session;        /* only used in UB */
+    int run_env;                        /* only used in UB */
+    int euid;                           /* only used in UB */
+    int uid;                            /* only used in UB */
+    int root_privilege;                 /* only used in UB */
+    unsigned int unique_val;            /* only used in UB */
+    unsigned long long user_va;         /* only used in UB */
+    unsigned int reserved[10];
 };
 
 struct hdcdrv_cmd_connect {
-    int peer_pid;                    /* input */
-    int dev_id;                      /* input */
+    int peer_pid; /* input */
+    int dev_id;   /* input */
     unsigned long long pid;
     unsigned long long reserve_comm;
-    int service_type;                /* input */
-    int session;                     /* output */
-    unsigned int timeout;            /* output */
+    int service_type;                   /* input */
+    int session;                        /* output */
+    unsigned int timeout;               /* output */
     unsigned int session_cur_alloc_idx; /* output */
-    int ret;                         /* only used in UB */
-    unsigned int unique_val;         /* only used in UB */
-    unsigned long long user_va;   /* only used in UB */
+    int ret;                            /* only used in UB */
+    unsigned int unique_val;            /* only used in UB */
+    unsigned long long user_va;         /* only used in UB */
     unsigned int reserved[8];
 };
 
@@ -319,12 +320,12 @@ struct hdcdrv_cmd_close {
     int dev_id;
     unsigned long long pid;
     unsigned long long reserve_comm;
-    int session;                     /* input */
+    int session; /* input */
     unsigned int unique_val;
     unsigned long long task_start_time;
-    unsigned int remote_session;     /* only used in UB */
-    int local_close_state;           /* only used in UB */
-    int remote_local_state;          /* only used in UB */
+    unsigned int remote_session;        /* only used in UB */
+    int local_close_state;              /* only used in UB */
+    int remote_local_state;             /* only used in UB */
     unsigned int session_cur_alloc_idx; /* output */
     unsigned int reserved[8];
 };
@@ -334,13 +335,13 @@ struct hdcdrv_cmd_send {
     int dev_id;
     unsigned long long pid;
     unsigned long long reserve_comm;
-    int session;                     /* input */
-    void *src_buf;                   /* input */
-    int len;                         /* input */
-    void *pool_buf;                  /* input */
-    unsigned long long pool_addr;    /* input */
-    int wait_flag;                   /* input */
-    unsigned int timeout;            /* input */
+    int session;                  /* input */
+    void *src_buf;                /* input */
+    int len;                      /* input */
+    void *pool_buf;               /* input */
+    unsigned long long pool_addr; /* input */
+    int wait_flag;                /* input */
+    unsigned int timeout;         /* input */
     unsigned int reserved[8];
 };
 
@@ -349,12 +350,12 @@ struct hdcdrv_cmd_recv_peek {
     int dev_id;
     unsigned long long pid;
     unsigned long long reserve_comm;
-    int session;                     /* input */
-    int len;                         /* output, if remote session close, this is 0 */
-    int wait_flag;                   /* input */
-    unsigned int timeout;            /* input */
-    int group_flag;                  /* input */
-    int count;                       /* output, if remote session close, this is 0 */
+    int session;          /* input */
+    int len;              /* output, if remote session close, this is 0 */
+    int wait_flag;        /* input */
+    unsigned int timeout; /* input */
+    int group_flag;       /* input */
+    int count;            /* output, if remote session close, this is 0 */
     unsigned int session_cur_alloc_idx;
     unsigned int reserved[8];
 };
@@ -366,25 +367,25 @@ struct hdcdrv_cmd_recv {
     int dev_id;
     unsigned long long pid;
     unsigned long long reserve_comm;
-    int session;                     /* input */
-    void *dst_buf;                   /* output */
-    int len;                         /* input */
-    void *pool_buf;                  /* output */
-    int out_len;                     /* output */
-    int buf_count;                   /* output, for vhdc used */
-    int group_flag;                  /* input */
-    void *buf_list[HDCDRV_SESSION_RX_LIST_MAX_PKT];         /* output, for vhdc used in VM */
-    unsigned int buf_len[HDCDRV_SESSION_RX_LIST_MAX_PKT];   /* output, for vhdc used in VM */
+    int session;                                          /* input */
+    void *dst_buf;                                        /* output */
+    int len;                                              /* input */
+    void *pool_buf;                                       /* output */
+    int out_len;                                          /* output */
+    int buf_count;                                        /* output, for vhdc used */
+    int group_flag;                                       /* input */
+    void *buf_list[HDCDRV_SESSION_RX_LIST_MAX_PKT];       /* output, for vhdc used in VM */
+    unsigned int buf_len[HDCDRV_SESSION_RX_LIST_MAX_PKT]; /* output, for vhdc used in VM */
     unsigned int reserved[8];
 };
 
 struct hdcdrv_cmd_set_session_owner {
     int ret;
     int dev_id;
-    unsigned long long pid;                         /* owner pid */
+    unsigned long long pid; /* owner pid */
     unsigned long long reserve_comm;
     unsigned long long ppid;
-    int session;                     /* input */
+    int session; /* input */
     unsigned int reserved[4];
 };
 
@@ -393,9 +394,9 @@ struct hdcdrv_cmd_get_session_attr {
     int dev_id;
     unsigned long long pid;
     unsigned long long reserve_comm;
-    int cmd_type;                    /* input */
-    int session;                     /* input */
-    int output;                      /* output */
+    int cmd_type; /* input */
+    int session;  /* input */
+    int output;   /* output */
     unsigned int session_cur_alloc_idx;
     unsigned int reserved[4];
 };
@@ -405,16 +406,16 @@ struct hdcdrv_cmd_set_session_timeout {
     int dev_id;
     unsigned long long pid;
     unsigned long long reserve_comm;
-    int session;                     /* input */
-    struct hdcdrv_timeout timeout;   /* input */
+    int session;                   /* input */
+    struct hdcdrv_timeout timeout; /* input */
 };
 
 struct hdcdrv_cmd_get_uid_stat {
     int ret;
-    int dev_id;             /* input, -1 not care */
+    int dev_id; /* input, -1 not care */
     unsigned long long pid;
     unsigned long long reserve_comm;
-    int session;            /* input, -1 not care */
+    int session; /* input, -1 not care */
     unsigned int euid;
     unsigned int uid;
     int root_privilege;
@@ -438,10 +439,10 @@ struct hdcdrv_cmd_free_mem {
     int dev_id;
     unsigned long long pid;
     unsigned long long reserve_comm;
-    unsigned int type;          /* input */
-    unsigned int len;           /* output */
-    unsigned int page_type;     /* output */
-    unsigned long long va;      /* input */
+    unsigned int type;      /* input */
+    unsigned int len;       /* output */
+    unsigned int page_type; /* output */
+    unsigned long long va;  /* input */
 };
 
 struct hdcdrv_cmd_fast_send {
@@ -465,13 +466,13 @@ struct hdcdrv_cmd_fast_recv {
     int dev_id;
     unsigned long long pid;
     unsigned long long reserve_comm;
-    int session;                     /* input */
-    int wait_flag;                   /* input */
-    unsigned int timeout;            /* input */
-    unsigned long long data_addr;    /* output */
-    unsigned long long ctrl_addr;    /* output */
-    int data_len;                    /* output */
-    int ctrl_len;                    /* output */
+    int session;                  /* input */
+    int wait_flag;                /* input */
+    unsigned int timeout;         /* input */
+    unsigned long long data_addr; /* output */
+    unsigned long long ctrl_addr; /* output */
+    int data_len;                 /* output */
+    int ctrl_len;                 /* output */
 };
 
 struct hdcdrv_cmd_dma_map {
@@ -506,10 +507,10 @@ struct hdcdrv_cmd_register_mem {
     int dev_id;
     unsigned long long pid;
     unsigned long long reserve_comm;
-    unsigned int type;      /* input */
-    unsigned int len;       /* input */
-    unsigned long long va;  /* input */
-    unsigned int flag; /* input */
+    unsigned int type;     /* input */
+    unsigned int len;      /* input */
+    unsigned long long va; /* input */
+    unsigned int flag;     /* input */
 };
 
 struct hdcdrv_cmd_unregister_mem {
@@ -517,10 +518,10 @@ struct hdcdrv_cmd_unregister_mem {
     int dev_id;
     unsigned long long pid;
     unsigned long long reserve_comm;
-    unsigned int type;          /* input */
-    unsigned int len;           /* output */
-    unsigned int page_type;     /* output */
-    unsigned long long va;      /* input */
+    unsigned int type;      /* input */
+    unsigned int len;       /* output */
+    unsigned int page_type; /* output */
+    unsigned long long va;  /* input */
 };
 
 struct hdcdrv_cmd_wait_mem {
@@ -528,14 +529,14 @@ struct hdcdrv_cmd_wait_mem {
     int dev_id;
     unsigned long long pid;
     unsigned long long reserve_comm;
-    int session;                     /* input */
-    int timeout;                     /* input */
-    unsigned int result_type;        /* input */
-    unsigned long long data_addr;    /* output */
-    unsigned long long ctrl_addr;    /* output */
-    int data_len;                    /* output */
-    int ctrl_len;                    /* output */
-    int result;                      /* output */
+    int session;                  /* input */
+    int timeout;                  /* input */
+    unsigned int result_type;     /* input */
+    unsigned long long data_addr; /* output */
+    unsigned long long ctrl_addr; /* output */
+    int data_len;                 /* output */
+    int ctrl_len;                 /* output */
+    int result;                   /* output */
 };
 
 struct hdcdrv_cmd_epoll_alloc_fd {
@@ -543,8 +544,8 @@ struct hdcdrv_cmd_epoll_alloc_fd {
     int dev_id;
     unsigned long long pid;
     unsigned long long reserve_comm;
-    int size;               /* input */
-    int epfd;               /* output */
+    int size; /* input */
+    int epfd; /* output */
     unsigned int reserved[4];
 };
 
@@ -553,7 +554,7 @@ struct hdcdrv_cmd_epoll_free_fd {
     int dev_id;
     unsigned long long pid;
     unsigned long long reserve_comm;
-    int epfd;               /* input */
+    int epfd; /* input */
     unsigned int reserved[4];
 };
 
@@ -562,11 +563,11 @@ struct hdcdrv_cmd_epoll_ctl {
     int dev_id;
     unsigned long long pid;
     unsigned long long reserve_comm;
-    int epfd;                   /* input */
-    int op;                     /* input */
-    int para1;                  /* input, service:dev_id, session:session_fd */
-    int para2;                  /* input, service:service_type */
-    struct hdcdrv_event event;  /* input */
+    int epfd;                  /* input */
+    int op;                    /* input */
+    int para1;                 /* input, service:dev_id, session:session_fd */
+    int para2;                 /* input, service:service_type */
+    struct hdcdrv_event event; /* input */
     unsigned int reserved[4];
 };
 
@@ -581,7 +582,7 @@ struct hdcdrv_cmd_epoll_wait {
     int timeout;                /* input */
     int maxevents;              /* input */
     int ready_event;            /* output */
-    struct hdcdrv_event *event;  /* output */
+    struct hdcdrv_event *event; /* output */
     struct hdcdrv_event vevent[HDCDRV_VEPOLL_EVENT_MAX];
     unsigned int reserved[4];
 };
@@ -609,7 +610,7 @@ struct hdcdrv_cmd_get_session_info {
 
 struct hdcdrv_cmd_client_wakeup_wait {
     int ret;
-    int dev_id;       /* input */
+    int dev_id; /* input */
     unsigned long long pid;
     unsigned long long reserve_comm;
     int service_type; /* input */
@@ -617,22 +618,47 @@ struct hdcdrv_cmd_client_wakeup_wait {
 
 struct hdcdrv_cmd_server_wakeup_wait {
     int ret;
-    int dev_id;       /* input */
+    int dev_id; /* input */
     unsigned long long pid;
     unsigned long long reserve_comm;
     int service_type; /* input */
 };
 
-#define HDCDRV_CHIP_OS_NAME_STRING_MAX_LEN  15
+#define HDCDRV_CHIP_OS_NAME_STRING_MAX_LEN 15
 #define HDCDRV_CHIP_OS_NAME_LEN_MAX (HDCDRV_CHIP_OS_NAME_STRING_MAX_LEN + 1)
 struct hdcdrv_cmd_get_spec_devid {
     int ret;
-    int dev_id;       /* input */
+    int dev_id; /* input */
     unsigned long long pid;
     unsigned long long reserve_comm;
     char chip_name[HDCDRV_CHIP_OS_NAME_LEN_MAX];
     char os_name[HDCDRV_CHIP_OS_NAME_LEN_MAX];
-    unsigned int spec_devid;    /* output */
+    unsigned int spec_devid; /* output */
+};
+
+struct hdcdrv_cmd_get_com_status {
+    int ret;
+    int dev_id; /* input */
+    unsigned long long pid;
+    unsigned long long reserve_comm;
+    unsigned int buff_len; /* input/output */
+    void *status_buff;     /* input/output */
+};
+
+struct hdcdrv_cmd_wait_ctrl_msg { // Only used in UB
+    int ret;
+    int dev_id; /* input */
+    unsigned long long pid;
+    unsigned int msg_len; /* output */
+    void *msg_buf;        /* output */
+};
+
+struct hdcdrv_cmd_send_ctrl_msg { // Only used in UB
+    int ret;
+    int dev_id; /* input */
+    unsigned long long pid;
+    unsigned int msg_len; /* output */
+    void *msg_buf;        /* output */
 };
 
 union hdcdrv_cmd {
@@ -672,15 +698,19 @@ union hdcdrv_cmd {
     struct hdcdrv_cmd_client_wakeup_wait client_wakeup_wait;
     struct hdcdrv_cmd_server_wakeup_wait server_wakeup_wait;
     struct hdcdrv_cmd_get_spec_devid get_spec_devid;
+    struct hdcdrv_cmd_wait_ctrl_msg wait_ctrl_msg;
+    struct hdcdrv_cmd_send_ctrl_msg send_ctrl_msg;
+    struct hdcdrv_cmd_common init_ctrl_node;
+    struct hdcdrv_cmd_common uninit_ctrl_node;
+    struct hdcdrv_cmd_get_com_status p2p_com_status;
 };
 
 typedef struct hdcdrv_jetty_info {
-    unsigned int session_jfc_recv_id;             // hdc remote session jfc_recv id
-    unsigned int session_jfc_send_id;             // hdc remote session jfc_send id
-    unsigned int session_jfs_id;                  // hdc remote session jfs id
-    unsigned int session_jfr_id;                  // hdc remote session jfr_4k id
+    unsigned int session_jfc_recv_id; // hdc remote session jfc_recv id
+    unsigned int session_jfc_send_id; // hdc remote session jfc_send id
+    unsigned int session_jfs_id;      // hdc remote session jfs id
+    unsigned int session_jfr_id;      // hdc remote session jfr_4k id
 } hdcdrv_jetty_info_t;
-
 
 enum hdcdrv_notify_type {
     HDCDRV_NOTIFY_MSG_CONNECT,
@@ -702,40 +732,43 @@ enum halHdcWaitMemMsgType {
 };
 
 typedef struct hdc_ub_dbg_stat {
-    unsigned long long tx;              // hdc num of tx pkt
-    unsigned long long tx_bytes;        // hdc total_len of tx
-    unsigned long long rx;              // hdc num of rx pkt
-    unsigned long long rx_bytes;        // hdc total_len of rx
-    unsigned long long tx_full;         // hdc tx_full pkt
-    unsigned long long tx_fail_hdc;     // hdc tx_fail by hdc pkt
-    unsigned long long tx_fail_ub;      // hdc tx_fail by ub pkt
-    unsigned long long rx_fail_hdc;     // hdc rx_fail by hdc pkt
-    unsigned long long rx_fail_ub;      // hdc rx_fail by ub pkt
-    unsigned long long remote_rx_full;  // hdc remote rx_full pkt
-    unsigned long long remote_rx_fail;  // hdc remote rx_fail pkt
+    unsigned long long tx;             // hdc num of tx pkt
+    unsigned long long tx_bytes;       // hdc total_len of tx
+    unsigned long long rx_epoll;       // hdc num of rx epoll
+    unsigned long long rx_full;        // hdc num of rx list full
+    unsigned long long rx_add_list;    // hdc num of add to rx list
+    unsigned long long rx;             // hdc num of rx pkt
+    unsigned long long rx_bytes;       // hdc total_len of rx
+    unsigned long long tx_full;        // hdc tx_full pkt
+    unsigned long long tx_fail_hdc;    // hdc tx_fail by hdc pkt
+    unsigned long long tx_fail_ub;     // hdc tx_fail by ub pkt
+    unsigned long long rx_fail_hdc;    // hdc rx_fail by hdc pkt
+    unsigned long long rx_fail_ub;     // hdc rx_fail by ub pkt
+    unsigned long long remote_rx_full; // hdc remote rx_full pkt
+    unsigned long long remote_rx_fail; // hdc remote rx_fail pkt
 } hdc_ub_dbg_stat_t;
 
 typedef struct hdc_ub_send_recv_info {
-    unsigned long long timecost1;               // cost of find_idle_block in send
-    unsigned long long timecost2;               // cost of memcpy in send
-    unsigned long long timecost3;               // cost of urma_post_jfs_wr + urma_wait_jfc in send
-    unsigned long long timecost4;               // cost of poll_jfc in send
-    unsigned long long timecost5;               // cost of ack + rearm in send
-    unsigned long long timecost_send;           // cost of total send
-    unsigned long long timecost6;               // cost of poll_jfc in recv
-    unsigned long long timecost7;               // cost of ack + rearm in recv
-    unsigned long long timecost8;               // cost of memcpy in recv
-    unsigned long long timecost9;               // cost of urma_post_jfr_wr in recv
-    unsigned long long timecost_recv_peek;      // cost of total recv_peek
-    unsigned long long timecost_recv;           // cost of total recv
+    unsigned long long timecost1;          // cost of find_idle_block in send
+    unsigned long long timecost2;          // cost of memcpy in send
+    unsigned long long timecost3;          // cost of urma_post_jfs_wr + urma_wait_jfc in send
+    unsigned long long timecost4;          // cost of poll_jfc in send
+    unsigned long long timecost5;          // cost of ack + rearm in send
+    unsigned long long timecost_send;      // cost of total send
+    unsigned long long timecost6;          // cost of poll_jfc in recv
+    unsigned long long timecost7;          // cost of ack + rearm in recv
+    unsigned long long timecost8;          // cost of memcpy in recv
+    unsigned long long timecost9;          // cost of urma_post_jfr_wr in recv
+    unsigned long long timecost_recv_peek; // cost of total recv_peek
+    unsigned long long timecost_recv;      // cost of total recv
     unsigned long long timecost_exceed_cnt_send;
     unsigned long long timecost_exceed_cnt_recv;
 } hdc_ub_send_recv_info_t;
 
 struct hdcdrv_session_para_info {
     unsigned int unique_val;
-    unsigned long long peer_pid;    // local side peer_pid, should be equal to remote side owner_pid
-    unsigned long long owner_pid;   // local side owner_pid, should be equal to remote side peer_pid
+    unsigned long long peer_pid;  // local side peer_pid, should be equal to remote side owner_pid
+    unsigned long long owner_pid; // local side owner_pid, should be equal to remote side peer_pid
 };
 
 #define HDCDRV_EVENT_JETTY_INFO_MAX_LEN 64
@@ -750,8 +783,6 @@ struct hdcdrv_event_connect {
     int euid;
     int uid;
     int root_privilege;
-    unsigned int connect_tid;    // Used for sending back messages tid from the opposite side
-    unsigned int connect_gid;
     // Jetty information, which needs to be converted into the
     // corresponding structure when used, currently struct hdc_jfr_id_info
     char jetty_info[HDCDRV_EVENT_JETTY_INFO_MAX_LEN];
@@ -763,24 +794,23 @@ struct hdcdrv_event_connect_reply {
     int run_env;
     unsigned int unique_val;
     unsigned long long server_pid;
-    unsigned int server_tid;
     unsigned long long peer_pid;
     int euid;
     int uid;
     int root_privilege;
-    unsigned int server_gid;
+    int server_error_code;
     // Jetty information, which needs to be converted into the
     // corresponding structure when used, currently struct hdc_jfr_id_info
     char jetty_info[HDCDRV_EVENT_JETTY_INFO_MAX_LEN];
 };
 
 struct hdcdrv_event_close {
-    unsigned int local_session;     // close side local id, should be equal to remote side remote id
-    unsigned int remote_session;    // close side remote id, should be equal to remote side local id
+    unsigned int local_session;  // close side local id, should be equal to remote side remote id
+    unsigned int remote_session; // close side remote id, should be equal to remote side local id
     int session_close_state;
-    unsigned int unique_val;        // both sides unique_val should be same
-    unsigned long long peer_pid;    // close side peer_pid, should be equal to remote side owner_pid
-    unsigned long long owner_pid;   // close side owner_pid, should be equal to remote side peer_pid
+    unsigned int unique_val;      // both sides unique_val should be same
+    unsigned long long peer_pid;  // close side peer_pid, should be equal to remote side owner_pid
+    unsigned long long owner_pid; // close side owner_pid, should be equal to remote side peer_pid
 };
 
 struct hdcdrv_event_close_reply {
@@ -794,8 +824,6 @@ struct hdcdrv_event_dfx {
     unsigned int l_session_id;
     unsigned int r_session_id;
     struct hdcdrv_session_para_info para_info;
-    unsigned int grp_id;
-    unsigned int tid;
 };
 
 struct hdcdrv_event_dfx_reply {

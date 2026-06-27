@@ -17,7 +17,7 @@
 #define RANGE_OWNER_OTHERS 1
 
 drvError_t add_self_buff_to_range(uint32_t blk_id, int pool_id, void *start, unsigned long size,
-    unsigned long long mem_mng);
+                                  unsigned long long mem_mng);
 void del_self_buff_from_range(uint32_t blk_id, void *start);
 
 drvError_t buff_range_owner_get(uint32_t blk_id, void *start, unsigned long size, int *owner);
@@ -27,10 +27,9 @@ drvError_t buff_range_get_ref(void *start, unsigned long size, uint32_t *refcnt,
 drvError_t buff_range_get(uint32_t blk_id, void *start, unsigned long size);
 void buff_range_put(uint32_t blk_id, void *start);
 
-drvError_t idle_buff_range_free(uint32_t devid, uint32_t using_buff_max_show_cnt);
+drvError_t idle_buff_range_free(uint32_t devid, uint32_t using_buff_max_show_cnt, bool only_free_cache_pool);
 void del_others_range(void);
 void buff_range_show(void);
 void idle_buff_range_free_ahead(uint32_t blk_id);
 
 #endif
-

@@ -39,7 +39,7 @@ struct vmng_ctrl_msg_info {
         struct vmng_vf_res_info vf_cfg;
         struct vmng_soc_resource_enquire enquire;
         struct vmng_soc_resource_refresh refresh;
-        int sriov_status;
+        struct vmng_sriov_msg_info sriov_msg_info;
         struct vmng_mdev_iova_info iova_info;
         struct vmng_vf_sync_remote_id id_info;
         struct soc_mia_ub_info ub_info;

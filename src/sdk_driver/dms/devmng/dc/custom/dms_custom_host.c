@@ -71,7 +71,7 @@ int dms_host_set_sign_flag(void *feature, char *in, u32 in_len, char *out, u32 o
     char file_path[CUSTOM_SIGN_CONF_FILE_PATH_MAX] = {0};
     int file_exist = 0;
 
-    if ((feature == NULL) || (in == NULL) || (in_len < DMS_HAL_DEV_INFO_HEAD_LEN + cfg_in->buff_size)) {
+    if ((feature == NULL) || (in == NULL) || (in_len < DMS_HAL_DEV_INFO_HEAD_LEN) || (in_len < DMS_HAL_DEV_INFO_HEAD_LEN + cfg_in->buff_size)) {
         dms_err("Invalid parameter. (feature=%s; in=%s; in_len=%u)\n",
             (feature == NULL) ? "NULL" : "OK",
             (in == NULL) ? "NULL" : "OK",
@@ -580,7 +580,7 @@ STATIC int dms_custom_dev_init(u32 udev_id)
             dms_warn("Clear host custom sign info. (udev_id=%u)\n", udev_id);
             dms_host_clear_cert_info(udev_id);
         }
-        return ret;
+        return 0;
     }
 
     ret = dms_custom_init_device_cert_file(udev_id, CUSTOM_FILE_TYPE_USR_CERT);

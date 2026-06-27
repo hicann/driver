@@ -18,20 +18,19 @@
 #include "ka_kernel_def_pub.h"
 
 #define LOG_S_TO_US 1000000
-STATIC log_ring_buf_t g_log_ring_buf = { 0 };
+STATIC log_ring_buf_t g_log_ring_buf = {0};
 static KA_BASE_DEFINE_RATELIMIT_STATE(drv_log_err_ratelimit, 1 * KA_HZ, 5);
 
 STATIC int log_get_date(char *date, u32 len)
 {
-    ka_timespec64_t sys_time = { 0 };
-    ka_rtc_time_t tm = { 0 };
+    ka_timespec64_t sys_time = {0};
+    ka_rtc_time_t tm = {0};
     int ret;
 
     ka_system_ktime_get_real_ts64(&sys_time);
     ka_system_rtc_time_convert(&tm, sys_time);
-    ret = snprintf_s(date, len, len - 1, "%04ld-%02d-%02d-%02d:%02d:%02d.%06llu",
-                     tm.tm_year + TWENTY_CENTURY, tm.tm_mon + JANUARY, tm.tm_mday, tm.tm_hour,
-                     tm.tm_min, tm.tm_sec, sys_time.tv_nsec / KILO);
+    ret = snprintf_s(date, len, len - 1, "%04ld-%02d-%02d-%02d:%02d:%02d.%06llu", tm.tm_year + TWENTY_CENTURY,
+                     tm.tm_mon + JANUARY, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec, sys_time.tv_nsec / KILO);
     if (ret < 0) {
         slog_drv_err("Log snprintf_s failed. (ret=%d)\n", ret);
         return ret;
@@ -55,8 +54,8 @@ STATIC int log_write_ringbuffer(void)
         if (ret != 0) {
             return ret;
         }
-        ret = memcpy_s(g_log_ring_buf.log_buf, LOG_RINGBUF_SIZE, (char*)g_log_ring_buf.printk_buf + buf_left,
-            str_len - buf_left);
+        ret = memcpy_s(g_log_ring_buf.log_buf, LOG_RINGBUF_SIZE, (char *)g_log_ring_buf.printk_buf + buf_left,
+                       str_len - buf_left);
         if (ret != 0) {
             return ret;
         }
@@ -67,19 +66,17 @@ STATIC int log_write_ringbuffer(void)
         }
     }
     g_log_ring_buf.point = (g_log_ring_buf.point + str_len) % LOG_RINGBUF_SIZE;
-    g_log_ring_buf.size = ((g_log_ring_buf.size + str_len) >= LOG_RINGBUF_SIZE) ?
-        LOG_RINGBUF_SIZE : (g_log_ring_buf.size + str_len);
+    g_log_ring_buf.size = ((g_log_ring_buf.size + str_len) >= LOG_RINGBUF_SIZE) ? LOG_RINGBUF_SIZE :
+                                                                                  (g_log_ring_buf.size + str_len);
 
     return 0;
 }
 
 static int log_save_to_ringbuf(const char *fmt, ka_va_list args)
 {
-    char date[DATATIME_MAXLEN] = { 0 };
+    char date[DATATIME_MAXLEN] = {0};
     static char new_fmt[LOG_PRINT_LEN];
-    char *module = NULL;
     unsigned long flags;
-    ka_va_list args_backup;
     int ret;
     ka_ktime_t kt = ktime_get();
     unsigned long long usec = ka_system_ktime_to_us(kt);
@@ -94,25 +91,26 @@ static int log_save_to_ringbuf(const char *fmt, ka_va_list args)
     }
 
     ka_task_spin_lock_irqsave(&g_log_ring_buf.logbuf_lock, flags);
-    ret = snprintf_s(new_fmt, LOG_PRINT_LEN, LOG_PRINT_LEN - 1, "[%s] [%llu.%06u] %s", date, (usec / LOG_S_TO_US), (usec % LOG_S_TO_US), fmt + LOG_LEVEL_OFFSET);
+    ret = snprintf_truncated_s(new_fmt, LOG_PRINT_LEN, "[%s] [%llu.%06u] %s", date, (usec / LOG_S_TO_US),
+                               (usec % LOG_S_TO_US), fmt + LOG_LEVEL_OFFSET);
     if (ret < 0) {
         ka_task_spin_unlock_irqrestore(&g_log_ring_buf.logbuf_lock, flags);
-        slog_drv_err("Log snprintf_s failed. (ret=%d)\n", ret);
+        slog_drv_err("Log snprintf_truncated_s failed. (ret=%d)\n", ret);
         return -EINVAL;
     }
 
-    ka_va_copy(args_backup, args);
-    ret = vsnprintf_s(g_log_ring_buf.printk_buf, LOG_PRINT_LEN, LOG_PRINT_LEN - 1, new_fmt, args);
+    ret = vsnprintf_truncated_s(g_log_ring_buf.printk_buf, LOG_PRINT_LEN, new_fmt, args);
     if (ret <= 0) {
         ka_task_spin_unlock_irqrestore(&g_log_ring_buf.logbuf_lock, flags);
-        module = ka_va_arg(args_backup, char*);
-        ka_va_end(args_backup);
-        if ((module != NULL) && (ka_base_strnlen(module, LOG_PRINT_LEN) < LOG_PRINT_LEN)) {
-            slog_drv_err("Log format is incorrect. (module=%s, ret=%d)\n", module, ret);
-        }
+        slog_drv_err("Log format is incorrect. (ret=%d)\n", ret);
         return -EINVAL;
     }
-    ka_va_end(args_backup);
+
+    if (ret >= LOG_PRINT_LEN - 1) {
+        g_log_ring_buf
+            .printk_buf[LOG_PRINT_LEN - 2] = '\n'; /* 2 : prevent missing newline when truncating, so add it */
+        g_log_ring_buf.printk_buf[LOG_PRINT_LEN - 1] = '\0';
+    }
 
     ret = log_write_ringbuffer();
     if (ret != 0) {
@@ -174,7 +172,7 @@ int log_get_ringbuffer(char *buff, u32 buf_len, u32 *out_len)
 
     if ((buff == NULL) || (buf_len != LOG_RINGBUF_SIZE) || (out_len == NULL)) {
         slog_drv_err("Invalid paras. (buff=%d, buf_len=%u, out_len=%d)\n", (int)(buff == NULL), buf_len,
-            (int)(out_len == NULL));
+                     (int)(out_len == NULL));
         return -EINVAL;
     }
 
@@ -202,7 +200,8 @@ int log_get_ringbuffer(char *buff, u32 buf_len, u32 *out_len)
             goto copy_fail;
         }
     } else {
-        ret = memcpy_s((void *)(uintptr_t)tmp_buf, LOG_RINGBUF_SIZE, g_log_ring_buf.log_buf + pos, LOG_RINGBUF_SIZE - pos);
+        ret = memcpy_s((void *)(uintptr_t)tmp_buf, LOG_RINGBUF_SIZE, g_log_ring_buf.log_buf + pos,
+                       LOG_RINGBUF_SIZE - pos);
         if (ret != 0) {
             ka_task_spin_unlock_irqrestore(&g_log_ring_buf.logbuf_lock, flags);
             goto copy_fail;

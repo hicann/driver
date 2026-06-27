@@ -37,12 +37,14 @@ BraceWrapping:
     SplitEmptyNamespace: true
 
 # Align
-AlignAfterOpenBracket: AlwaysBreak
+AlignAfterOpenBracket: Align
+PenaltyBreakAssignment: 1000
 AlignEscapedNewlines: Left
 AlignOperands: true
 AlignTrailingComments: true
 AllowAllArgumentsOnNextLine: true
 AllowAllParametersOfDeclarationOnNextLine: true
+AllowShortEnumsOnASingleLine: false
 AlwaysBreakBeforeMultilineStrings: false
 AlwaysBreakTemplateDeclarations: true
 
@@ -52,12 +54,12 @@ SpacesBeforeTrailingComments: 1
 
 # poniter aligment
 DerivePointerAlignment: false
-PointerAlignment: Left
+PointerAlignment: Right
 
 # single line layout
 AllowShortBlocksOnASingleLine: false
 AllowShortCaseLabelsOnASingleLine: false
-AllowShortFunctionsOnASingleLine: true
+AllowShortFunctionsOnASingleLine: false
 AllowShortIfStatementsOnASingleLine: false
 AllowShortLoopsOnASingleLine: false
 

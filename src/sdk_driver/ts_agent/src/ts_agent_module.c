@@ -24,8 +24,9 @@
 #endif
 #include "ka_kernel_def_pub.h"
 #include "ka_pci_pub.h"
+#include "ka_compiler_pub.h"
 
-STATIC int __init ts_agent_init(void)
+STATIC int __ka_init ts_agent_init(void)
 {
     int ret;
 #ifdef CFG_SOC_PLATFORM_STARS
@@ -69,7 +70,7 @@ STATIC int __init ts_agent_init(void)
     return 0;
 }
 
-STATIC void __exit ts_agent_exit(void)
+STATIC void __ka_exit ts_agent_exit(void)
 {
     ts_agent_info("ts_agent_exit begin.");
 #ifdef CFG_SOC_PLATFORM_STARS
@@ -92,12 +93,12 @@ static const ka_pci_device_id_t g_ts_agent_tbl[] = {
     {KA_PCI_VDEVICE(HUAWEI, 0xd105), 0},
     {KA_PCI_VDEVICE(HUAWEI, 0xd500), 0},
     {KA_PCI_VDEVICE(HUAWEI, 0xd803), 0},
-    { 0x20C6, 0xd500, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 },
-    { 0x203F, 0xd500, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 },
-    { 0x20C6, 0xd802, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 },
-    { 0x203F, 0xd802, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 },
-    { 0x20E9, 0xd500, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 },
-    { 0x20E9, 0xd802, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 },
+    { 0x20C6, 0xd500, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0 },
+    { 0x203F, 0xd500, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0 },
+    { 0x20C6, 0xd802, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0 },
+    { 0x203F, 0xd802, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0 },
+    { 0x20E9, 0xd500, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0 },
+    { 0x20E9, 0xd802, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0 },
     {}};
 KA_MODULE_DEVICE_TABLE(pci, g_ts_agent_tbl);
 

@@ -60,12 +60,14 @@ static pid_t trs_get_dev_pid(uint32_t dev_id)
         hostpidinfo.vfid = 0;
         ret = halQueryDevpid(hostpidinfo, &devpid);
         if (ret) {
-            trs_err("Query devpid failed. (dev_id=%u; vfid=%u; hostpid=%d; proc_type=%u; ret=%d).\n",
-                dev_id, 0, trs_get_hostpid(dev_id), hostpidinfo.proc_type, ret);
+            trs_err(
+                "Query devpid failed. (dev_id=%u; vfid=%u; hostpid=%d; proc_type=%u; ret=%d).\n", dev_id, 0,
+                trs_get_hostpid(dev_id), hostpidinfo.proc_type, ret);
         } else {
             g_trs_devpid[dev_id] = devpid;
-            trs_info("Query devpid succ. (dev_id=%u; vfid=%u; hostpid=%d; proc_type=%u; devpid=%d).\n",
-                dev_id, 0, trs_get_hostpid(dev_id), hostpidinfo.proc_type, devpid);
+            trs_info(
+                "Query devpid succ. (dev_id=%u; vfid=%u; hostpid=%d; proc_type=%u; devpid=%d).\n", dev_id, 0,
+                trs_get_hostpid(dev_id), hostpidinfo.proc_type, devpid);
         }
     }
 
@@ -108,8 +110,9 @@ static drvError_t trs_get_event_grp_id(uint32_t devid, uint32_t *grp_id, enum tr
 
 static inline enum trs_event_grp_type trs_get_group_type(uint32_t subevent_id)
 {
-    if ((subevent_id >= DRV_SUBEVENT_TRS_ALLOC_SQCQ_WITH_URMA_MSG) &&
-        (subevent_id <= DRV_SUBEVENT_TRS_FILL_WQE_MSG)) {
+    if (((subevent_id >= DRV_SUBEVENT_TRS_ALLOC_SQCQ_WITH_URMA_MSG) &&
+         (subevent_id <= DRV_SUBEVENT_TRS_FILL_WQE_MSG)) ||
+        (subevent_id == DRV_SUBEVENT_TRS_RES_ID_CONFIG_MSG)) {
         return TRS_SYNC_EVENT_GROUP_TYPE_DRV_MSG;
     }
     return TRS_SYNC_EVENT_GROUP_TYPE_PROXY_HOST_QUEUE;
@@ -117,15 +120,16 @@ static inline enum trs_event_grp_type trs_get_group_type(uint32_t subevent_id)
 
 static uint32_t trs_get_dst_engine(uint32_t subevent_id)
 {
-    if ((subevent_id >= DRV_SUBEVENT_TRS_ALLOC_SQCQ_WITH_URMA_MSG) &&
-        (subevent_id <= DRV_SUBEVENT_TRS_FILL_WQE_MSG)) {
+    if (((subevent_id >= DRV_SUBEVENT_TRS_ALLOC_SQCQ_WITH_URMA_MSG) &&
+         (subevent_id <= DRV_SUBEVENT_TRS_FILL_WQE_MSG)) ||
+        (subevent_id == DRV_SUBEVENT_TRS_RES_ID_CONFIG_MSG)) {
         return CCPU_DEVICE;
     }
     return ACPU_DEVICE;
 }
 
-static drvError_t trs_fill_event(struct event_summary *event_info, uint32_t devid,
-    uint32_t subevent_id, const char *msg, uint32_t msg_len)
+static drvError_t trs_fill_event(
+    struct event_summary *event_info, uint32_t devid, uint32_t subevent_id, const char *msg, uint32_t msg_len)
 {
     struct event_sync_msg *msg_head = NULL;
     drvError_t ret;
@@ -247,14 +251,11 @@ static int trs_sq_cq_event_init(uint32_t dev_id)
     return DRV_ERROR_NONE;
 }
 
-static void trs_sq_cq_event_un_init(uint32_t dev_id)
-{
-    (void)halEschedDettachDevice(dev_id);
-}
+static void trs_sq_cq_event_un_init(uint32_t dev_id) { (void)halEschedDettachDevice(dev_id); }
 
 #ifndef EMU_ST
-static drvError_t trs_submit_event_sync(uint32_t dev_id, struct event_summary *event, int32_t timeout,
-    struct event_reply *reply)
+static drvError_t trs_submit_event_sync(
+    uint32_t dev_id, struct event_summary *event, int32_t timeout, struct event_reply *reply)
 {
     struct event_info back_event_info = {0};
     esched_event_buffer *event_buffer = (esched_event_buffer *)back_event_info.priv.msg;
@@ -281,8 +282,9 @@ static drvError_t trs_submit_event_sync(uint32_t dev_id, struct event_summary *e
     ret = halEschedSubmitEvent(dev_id, event);
     if (ret != DRV_ERROR_NONE) {
         (void)pthread_mutex_unlock(&g_trs_event_sync_mutex[dev_id]);
-        trs_warn("Unable to invoke the halEschedSubmitEvent. (dev_id=%u, event_id=%u; ret=%d)\n",
-            dev_id, event->event_id, ret);
+        trs_warn(
+            "Unable to invoke the halEschedSubmitEvent. (dev_id=%u, event_id=%u; ret=%d)\n", dev_id, event->event_id,
+            ret);
         return ret;
     }
 
@@ -293,8 +295,9 @@ static drvError_t trs_submit_event_sync(uint32_t dev_id, struct event_summary *e
         ret = esched_wait_event_ex(dev_id, res.gid, res.tid, timeout, &back_event_info);
         if (ret != DRV_ERROR_NONE) {
             (void)pthread_mutex_unlock(&g_trs_event_sync_mutex[dev_id]);
-            trs_err("Failed. (ret=%d; event_id=%u; gid=%u; tid=%u; timeout=%dms; subevent_id=%u)\n",
-                ret, res.event_id, res.gid, res.tid, timeout, res.subevent_id);
+            trs_err(
+                "Failed. (ret=%d; event_id=%u; gid=%u; tid=%u; timeout=%dms; subevent_id=%u)\n", ret, res.event_id,
+                res.gid, res.tid, timeout, res.subevent_id);
             return ret;
         }
 
@@ -303,7 +306,8 @@ static drvError_t trs_submit_event_sync(uint32_t dev_id, struct event_summary *e
             break;
         }
 
-        trs_warn("Successfully waited for an event but the condition was not met. (devid=%u; gid=%u; "
+        trs_warn(
+            "Successfully waited for an event but the condition was not met. (devid=%u; gid=%u; "
             "tid=%u; cnt=%d; check_subevent=%u; back_subevent=%u)\n",
             dev_id, res.gid, res.tid, wait_succ_cnt, res.subevent_id, back_event_info.comm.subevent_id);
     } while (1);
@@ -318,10 +322,10 @@ static drvError_t trs_submit_event_sync(uint32_t dev_id, struct event_summary *e
 #if defined(CFG_SOC_PLATFORM_CLOUD_V4) && defined(CFG_SOC_PLATFORM_ESL_FPGA)
 #define TRS_SYNC_EVENT_WAIT_TIME_MS 1200000
 #else
-#define TRS_SYNC_EVENT_WAIT_TIME_MS 100000
+#define TRS_SYNC_EVENT_WAIT_TIME_MS 300000
 #endif
-drvError_t trs_svm_mem_event_sync(uint32_t dev_id, void *in, UINT64 size,
-    uint32_t subevent_id, struct event_reply *reply)
+drvError_t trs_svm_mem_event_sync(
+    uint32_t dev_id, void *in, UINT64 size, uint32_t subevent_id, struct event_reply *reply)
 {
     struct event_summary event_info = {0};
     void *msg = NULL;
@@ -374,7 +378,7 @@ drvError_t trs_svm_mem_event_sync(uint32_t dev_id, void *in, UINT64 size,
             trs_err("Sync event failed. (reply_len=%u; buf_len=%u)\n", reply->reply_len, reply->buf_len);
             ret = DRV_ERROR_INNER_ERR;
         } else {
-            trs_warn("Sync event proc warn. (result=%d)\n", DRV_EVENT_REPLY_BUFFER_RET(reply->buf));
+            trs_debug("Sync event proc debug. (result=%d)\n", DRV_EVENT_REPLY_BUFFER_RET(reply->buf));
         }
     }
 
@@ -384,8 +388,8 @@ drvError_t trs_svm_mem_event_sync(uint32_t dev_id, void *in, UINT64 size,
     return ret;
 }
 
-static drvError_t trs_res_id_alloc_sync(uint32_t dev_id,
-    struct halResourceIdInputInfo *in, struct halResourceIdOutputInfo *out)
+static drvError_t trs_res_id_alloc_sync(
+    uint32_t dev_id, struct halResourceIdInputInfo *in, struct halResourceIdOutputInfo *out)
 {
     struct event_proc_result result;
     struct event_reply reply;
@@ -393,8 +397,8 @@ static drvError_t trs_res_id_alloc_sync(uint32_t dev_id,
 
     reply.buf_len = sizeof(struct event_proc_result);
     reply.buf = (char *)&result;
-    ret = trs_svm_mem_event_sync(dev_id, in, sizeof(struct halResourceIdInputInfo),
-        DRV_SUBEVENT_TRS_ALLOC_RES_ID_MSG, &reply);
+    ret = trs_svm_mem_event_sync(
+        dev_id, in, sizeof(struct halResourceIdInputInfo), DRV_SUBEVENT_TRS_ALLOC_RES_ID_MSG, &reply);
     if (ret != DRV_ERROR_NONE) {
         return ret;
     }
@@ -418,8 +422,8 @@ static drvError_t trs_res_id_free_sync(uint32_t dev_id, struct halResourceIdInpu
 
     reply.buf_len = sizeof(struct event_proc_result);
     reply.buf = (char *)&result;
-    ret = trs_svm_mem_event_sync(dev_id, in, sizeof(struct halResourceIdInputInfo),
-        DRV_SUBEVENT_TRS_FREE_RES_ID_MSG, &reply);
+    ret = trs_svm_mem_event_sync(
+        dev_id, in, sizeof(struct halResourceIdInputInfo), DRV_SUBEVENT_TRS_FREE_RES_ID_MSG, &reply);
     if (ret != DRV_ERROR_NONE) {
         return ret;
     }
@@ -429,8 +433,8 @@ static drvError_t trs_res_id_free_sync(uint32_t dev_id, struct halResourceIdInpu
     return (drvError_t)result.ret;
 }
 
-static drvError_t trs_res_id_config_sync(uint32_t dev_id,
-    struct halResourceIdInputInfo *in, struct halResourceConfigInfo *para)
+static drvError_t trs_res_id_config_sync(
+    uint32_t dev_id, struct halResourceIdInputInfo *in, struct halResourceConfigInfo *para)
 {
     struct trs_resid_config_msg config_info;
     struct event_proc_result result;
@@ -442,8 +446,8 @@ static drvError_t trs_res_id_config_sync(uint32_t dev_id,
 
     reply.buf_len = sizeof(struct event_proc_result);
     reply.buf = (char *)&result;
-    ret = trs_svm_mem_event_sync(dev_id, &config_info, sizeof(struct trs_resid_config_msg),
-        DRV_SUBEVENT_TRS_RES_ID_CONFIG_MSG, &reply);
+    ret = trs_svm_mem_event_sync(
+        dev_id, &config_info, sizeof(struct trs_resid_config_msg), DRV_SUBEVENT_TRS_RES_ID_CONFIG_MSG, &reply);
     if (ret != DRV_ERROR_NONE) {
         return ret;
     }
@@ -458,13 +462,14 @@ drvError_t trs_sq_cq_query_sync(uint32_t dev_id, struct halSqCqQueryInfo *info)
     drvError_t ret;
     int result;
 
-    reply.buf_len = sizeof(uint32_t) + sizeof(int);
+    reply.buf_len = sizeof(uint32_t) * SQCQ_QUERY_INFO_LENGTH + sizeof(int);
     reply.buf = (char *)malloc(reply.buf_len);
     if (reply.buf == NULL) {
         trs_err("Malloc reply buffer failed.\n");
         return DRV_ERROR_OUT_OF_MEMORY;
     };
-    ret = trs_local_mem_event_sync(dev_id, info, sizeof(struct halSqCqQueryInfo), DRV_SUBEVENT_TRS_SQCQ_QUERY_MSG, &reply);
+    ret =
+        trs_svm_mem_event_sync(dev_id, info, sizeof(struct halSqCqQueryInfo), DRV_SUBEVENT_TRS_SQCQ_QUERY_MSG, &reply);
     result = DRV_EVENT_REPLY_BUFFER_RET(reply.buf);
     if ((ret != 0) || (result != 0)) {
         trs_err("Failed to sync sqcq query event. (ret=%d; result=%d)\n", ret, result);
@@ -472,7 +477,16 @@ drvError_t trs_sq_cq_query_sync(uint32_t dev_id, struct halSqCqQueryInfo *info)
         return (ret != 0) ? ret : (drvError_t)result;
     }
 
-    info->value[0] = *(uint32_t *)DRV_EVENT_REPLY_BUFFER_DATA_PTR(reply.buf);
+    ret = memcpy_s(
+        info->value, sizeof(uint32_t) * SQCQ_QUERY_INFO_LENGTH, DRV_EVENT_REPLY_BUFFER_DATA_PTR(reply.buf),
+        sizeof(uint32_t) * SQCQ_QUERY_INFO_LENGTH);
+    if (ret != DRV_ERROR_NONE) {
+        trs_err(
+            "Memcpy_s failed. (devid=%u; dst_size=%u; src_size=%u)\n", dev_id,
+            sizeof(uint32_t) * SQCQ_QUERY_INFO_LENGTH, sizeof(uint32_t) * SQCQ_QUERY_INFO_LENGTH);
+        free(reply.buf);
+        return ret;
+    }
     trs_debug("Query success. (dev_id=%u; sq_id=%u; prop=%d)\n", dev_id, info->sqId, info->prop);
 
     free(reply.buf);
@@ -487,8 +501,8 @@ drvError_t trs_sq_cq_config_sync(uint32_t dev_id, struct halSqCqConfigInfo *info
 
     reply.buf_len = sizeof(int);
     reply.buf = (char *)&result;
-    ret = trs_local_mem_event_sync(dev_id, info, sizeof(struct halSqCqQueryInfo),
-        DRV_SUBEVENT_TRS_SQCQ_CONFIG_MSG, &reply);
+    ret =
+        trs_svm_mem_event_sync(dev_id, info, sizeof(struct halSqCqQueryInfo), DRV_SUBEVENT_TRS_SQCQ_CONFIG_MSG, &reply);
     if ((ret != 0) || (result != 0)) {
         trs_err("Failed to sync sqcq config event. (ret=%d; result=%d)\n", ret, result);
         return (ret != 0) ? ret : (drvError_t)result;
@@ -522,8 +536,9 @@ static drvError_t trs_sq_cq_alloc_sync(uint32_t dev_id, struct halSqCqInputInfo 
             return DRV_ERROR_PARA_ERROR;
         }
         if ((in->ext_info != NULL) && (in->ext_info_len != 0)) {
-            memcpy_ret = memcpy_s((char *)sync_msg + sizeof(struct halSqCqInputInfo),
-                sync_msg_len - sizeof(struct halSqCqInputInfo), in->ext_info, in->ext_info_len);
+            memcpy_ret = memcpy_s(
+                (char *)sync_msg + sizeof(struct halSqCqInputInfo), sync_msg_len - sizeof(struct halSqCqInputInfo),
+                in->ext_info, in->ext_info_len);
             if (memcpy_ret != 0) {
                 trs_err("Failed to memcpy_s. (ret=%d)\n", memcpy_ret);
                 free(sync_msg);
@@ -543,7 +558,7 @@ static drvError_t trs_sq_cq_alloc_sync(uint32_t dev_id, struct halSqCqInputInfo 
     }
 
     memcpy_ret = memcpy_s(out, sizeof(struct halSqCqOutputInfo), result.data, EVENT_PROC_RSP_LEN);
-    if (ret != 0) {
+    if (memcpy_ret != 0) {
 #ifndef EMU_ST
         trs_err("Memcpy failed. (ret=%d)\n", memcpy_ret);
         if (sync_msg != in) {
@@ -553,8 +568,7 @@ static drvError_t trs_sq_cq_alloc_sync(uint32_t dev_id, struct halSqCqInputInfo 
 #endif
     }
 
-    trs_debug("Res info. (dev_id=%u; res_type=%d; sqid=%u; cqid=%u)\n", 
-        dev_id, in->type, out->sqId, out->cqId);
+    trs_debug("Res info. (dev_id=%u; res_type=%d; sqid=%u; cqid=%u)\n", dev_id, in->type, out->sqId, out->cqId);
     if (sync_msg != in) {
         free(sync_msg);
     }
@@ -579,8 +593,8 @@ static drvError_t trs_sq_cq_free_sync(uint32_t dev_id, struct halSqCqFreeInfo *i
     return (drvError_t)result.ret;
 }
 
-drvError_t trs_local_mem_event_sync(uint32_t dev_id, void *in, UINT64 size,
-    uint32_t subevent_id, struct event_reply *reply)
+drvError_t trs_local_mem_event_sync(
+    uint32_t dev_id, void *in, UINT64 size, uint32_t subevent_id, struct event_reply *reply)
 {
     struct event_summary event_info = {0};
     const char *msg = (char *)in;
@@ -630,13 +644,14 @@ static int trs_shr_id_config(uint32_t dev_id, struct drvShrIdInfo *info)
 
     reply.buf_len = sizeof(struct event_proc_result);
     reply.buf = (char *)&result;
-    ret = trs_local_mem_event_sync(dev_id, info, sizeof(struct drvShrIdInfo), DRV_SUBEVENT_TRS_SHR_ID_CONFIG_MSG, &reply);
+    ret =
+        trs_local_mem_event_sync(dev_id, info, sizeof(struct drvShrIdInfo), DRV_SUBEVENT_TRS_SHR_ID_CONFIG_MSG, &reply);
     if (ret != DRV_ERROR_NONE) {
         return ret;
     }
 
-    trs_debug("Res info. (dev_id=%u; rudevid=%u; id_type=%u; shrid=%u)\n",
-        dev_id, info->devid, info->id_type, info->shrid);
+    trs_debug(
+        "Res info. (dev_id=%u; rudevid=%u; id_type=%u; shrid=%u)\n", dev_id, info->devid, info->id_type, info->shrid);
 
     return (drvError_t)result.ret;
 }
@@ -649,13 +664,14 @@ static int trs_shr_id_deonfig(uint32_t dev_id, struct drvShrIdInfo *info)
 
     reply.buf_len = sizeof(struct event_proc_result);
     reply.buf = (char *)&result;
-    ret = trs_local_mem_event_sync(dev_id, info, sizeof(struct drvShrIdInfo), DRV_SUBEVENT_TRS_SHR_ID_DECONFIG_MSG, &reply);
+    ret = trs_local_mem_event_sync(
+        dev_id, info, sizeof(struct drvShrIdInfo), DRV_SUBEVENT_TRS_SHR_ID_DECONFIG_MSG, &reply);
     if (ret != DRV_ERROR_NONE) {
         return ret;
     }
 
-    trs_debug("Res info. (dev_id=%u; rudevid=%u; id_type=%u; shrid=%u)\n",
-        dev_id, info->devid, info->id_type, info->shrid);
+    trs_debug(
+        "Res info. (dev_id=%u; rudevid=%u; id_type=%u; shrid=%u)\n", dev_id, info->devid, info->id_type, info->shrid);
 
     return (drvError_t)result.ret;
 }
@@ -725,4 +741,3 @@ static int __attribute__((constructor)) trs_master_event_construct(void)
 
     return 0;
 }
-

@@ -16,6 +16,10 @@
 
 #include "dvpp_cmdlist.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define CMDLIST_FIX_WRITE 0x1FFFFE
 #define QUANT_TABLE_SIZE 64          // 64:quant table长度
 #define HDC_TABLE_SIZE 12            // 12:hufmman table长度
@@ -70,4 +74,7 @@ void config_jepgd_next_node(struct CmdBuf *cmd_buf, struct CmdNode *node);
 void config_jpegd_cmdnode(struct CmdNode *node, JpegdConfig* jpegdConfig);
 void config_jpegd_sqe(struct CmdBuf *cmd_buf, enum dvpp_sqe_ptr_mode mode, uint32_t blkdim, struct dvpp_sqe *sqe);
 void config_jpegd_sqelist(struct CmdBuf *cmd_buf, uint32_t sqe_idx, uint32_t blkdim);
+#ifdef __cplusplus
+}
+#endif
 #endif // #ifndef JPEGD_DRV_JPEGD_COMM_H

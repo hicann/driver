@@ -57,7 +57,7 @@ drvError_t DmsIoctlConvertErrno(unsigned long cmd, struct urd_ioctl_arg *ioarg);
 int DmsGetVirtFlag(void);
 int dms_set_virt_flag(int env_virt);
 int dms_run_proc(const char **arg);
-int drvGetKlogBuf(uint32_t devId, const char *path, unsigned int *p_size);
+int drvGetKlogBuf(uint32_t devId, const char *path, unsigned int *pSize);
 int dms_ioctl_open(int fd);
 drvError_t ioctl_errno_convert(int ret, int errno_param);
 
@@ -66,4 +66,7 @@ drvError_t dmsCloseRestoreHandler(uint32_t devid, halDevCloseIn *in);
 drvError_t dmsProcResRestoreHandler(halProcResRestoreInfo *info);
 drvError_t dms_res_enable_p2p(u32 dev_num);
 drvError_t dms_res_rollback_p2p(u32 target_dev_id, u32 target_peer_id, u32 tmp_cnt);
+void hal_report_not_support(const char *func_name, const char *reason);
+void hal_report_invalid_dev_id(const char *func_name, uint32_t devId, uint32_t max_devid);
+void hal_report_device_occupied(uint32_t devId);
 #endif

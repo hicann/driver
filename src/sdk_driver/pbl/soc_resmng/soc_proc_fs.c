@@ -39,13 +39,9 @@ int soc_udev_open(ka_inode_t *inode, ka_file_t *file)
     return ka_fs_single_open(file, soc_udev_show, ka_fs_get_inode_i_private(inode));
 }
 
-static const ka_procfs_ops_t udevice_ops = {
-    ka_fs_init_pf_owner(KA_THIS_MODULE) \
-    ka_fs_init_pf_open(soc_udev_open) \
-    ka_fs_init_pf_read(ka_fs_seq_read) \
-    ka_fs_init_pf_lseek(ka_fs_seq_lseek) \
-    ka_fs_init_pf_release(ka_fs_single_release) \
-};
+static const ka_procfs_ops_t udevice_ops = {ka_fs_init_pf_owner(KA_THIS_MODULE) ka_fs_init_pf_open(soc_udev_open)
+                                                ka_fs_init_pf_read(ka_fs_seq_read) ka_fs_init_pf_lseek(ka_fs_seq_lseek)
+                                                    ka_fs_init_pf_release(ka_fs_single_release)};
 
 void soc_proc_fs_init(void)
 {
@@ -55,7 +51,4 @@ void soc_proc_fs_init(void)
     }
 }
 
-void soc_proc_fs_uninit(void)
-{
-    (void)ka_fs_remove_proc_subtree("soc_res", NULL);
-}
+void soc_proc_fs_uninit(void) { (void)ka_fs_remove_proc_subtree("soc_res", NULL); }

@@ -22,58 +22,49 @@
 #include "soc_adapt_res_cloud_v2.h"
 
 /* Trs notify */
-#define TRS_CLOUD_V2_NOTIFY_SIZE             4
+#define TRS_CLOUD_V2_NOTIFY_SIZE 4
 #define TRS_CLOUD_V2_NOTIFY_SLICE_SIZE (64 * 1024)
-#define TRS_CLOUD_V2_NOTIFY_NUM_PER_SLICE 512   /* total silce num is 16 */
+#define TRS_CLOUD_V2_NOTIFY_NUM_PER_SLICE 512       /* total silce num is 16 */
 #define TRS_CLOUD_V2_NOTIFY_AVG_SIZE_PER_NOTIFY 128 /* total slice num * per slice size / total notify num */
 
 /* Event */
-#define TRS_CLOUD_V2_EVENT_SIZE          4
-#define TRS_CLOUD_V2_EVENT_SLICE_SIZE    (64 * 1024)
-#define TRS_CLOUD_V2_EVENT_NUM_PER_SLICE 4096   /* total silce num is 16 */
+#define TRS_CLOUD_V2_EVENT_SIZE 4
+#define TRS_CLOUD_V2_EVENT_SLICE_SIZE (64 * 1024)
+#define TRS_CLOUD_V2_EVENT_NUM_PER_SLICE 4096 /* total silce num is 16 */
 
 /* Doorbell */
-#define TRS_SOC_CLOUD_V2_DB_STRIDE   (4 * 1024)
+#define TRS_SOC_CLOUD_V2_DB_STRIDE (4 * 1024)
 #define TRS_CLOUD_V2_STARS_SCHED_STRIDE (4 * 1024)
 
-#define TRS_DB_CLOUD_V2_ONLINE_MBOX_START   0u
-#define TRS_DB_CLOUD_V2_ONLINE_MBOX_END     1u
+#define TRS_DB_CLOUD_V2_ONLINE_MBOX_START 0u
+#define TRS_DB_CLOUD_V2_ONLINE_MBOX_END 1u
 
-#define TRS_DB_CLOUD_V2_TRIGGER_SQ_START    1u
-#define TRS_DB_CLOUD_V2_TRIGGER_SQ_END      2u
+#define TRS_DB_CLOUD_V2_TRIGGER_SQ_START 1u
+#define TRS_DB_CLOUD_V2_TRIGGER_SQ_END 2u
 
-#define TRS_DB_CLOUD_V2_MAINT_SQ_START      992u
-#define TRS_DB_CLOUD_V2_MAINT_SQ_END        996u
+#define TRS_DB_CLOUD_V2_MAINT_SQ_START 992u
+#define TRS_DB_CLOUD_V2_MAINT_SQ_END 996u
 
-#define TRS_DB_CLOUD_V2_MAINT_CQ_START      996u
-#define TRS_DB_CLOUD_V2_MAINT_CQ_END        1006u
+#define TRS_DB_CLOUD_V2_MAINT_CQ_START 996u
+#define TRS_DB_CLOUD_V2_MAINT_CQ_END 1006u
 
 u32 trs_soc_get_cloud_v2_notify_offset(u32 id)
 {
     return (id % TRS_CLOUD_V2_NOTIFY_NUM_PER_SLICE) * TRS_CLOUD_V2_NOTIFY_SIZE +
-        (id / TRS_CLOUD_V2_NOTIFY_NUM_PER_SLICE) * TRS_CLOUD_V2_NOTIFY_SLICE_SIZE;
+           (id / TRS_CLOUD_V2_NOTIFY_NUM_PER_SLICE) * TRS_CLOUD_V2_NOTIFY_SLICE_SIZE;
 }
 
-size_t trs_soc_get_cloud_v2_notify_size(void)
-{
-    return (size_t)TRS_CLOUD_V2_NOTIFY_AVG_SIZE_PER_NOTIFY;
-}
+size_t trs_soc_get_cloud_v2_notify_size(void) { return (size_t)TRS_CLOUD_V2_NOTIFY_AVG_SIZE_PER_NOTIFY; }
 
 u32 trs_soc_get_cloud_v2_event_offset(u32 event_id)
 {
     return (event_id % TRS_CLOUD_V2_EVENT_NUM_PER_SLICE) * TRS_CLOUD_V2_EVENT_SIZE +
-        (event_id / TRS_CLOUD_V2_EVENT_NUM_PER_SLICE) * TRS_CLOUD_V2_EVENT_SLICE_SIZE;
+           (event_id / TRS_CLOUD_V2_EVENT_NUM_PER_SLICE) * TRS_CLOUD_V2_EVENT_SLICE_SIZE;
 }
 
-size_t trs_soc_get_cloud_v2_db_stride(void)
-{
-    return (size_t)TRS_SOC_CLOUD_V2_DB_STRIDE;
-}
+size_t trs_soc_get_cloud_v2_db_stride(void) { return (size_t)TRS_SOC_CLOUD_V2_DB_STRIDE; }
 
-size_t trs_soc_get_cloud_v2_stars_sched_stride(void)
-{
-    return (u32)TRS_CLOUD_V2_STARS_SCHED_STRIDE;
-}
+size_t trs_soc_get_cloud_v2_stars_sched_stride(void) { return (u32)TRS_CLOUD_V2_STARS_SCHED_STRIDE; }
 
 int trs_soc_get_cloud_v2_db_cfg(int db_type, u32 *start, u32 *end)
 {
@@ -119,7 +110,7 @@ static u32 trs_get_cloud_v2_sq_mem_side_by_topology(u32 devid)
 
 u32 trs_soc_get_cloud_v2_sq_mem_side(u32 devid, struct trs_chan_type *types)
 {
-    switch(types->type) {
+    switch (types->type) {
         case CHAN_TYPE_MAINT:
             return TRS_CHAN_HOST_MEM;
         default:
@@ -130,8 +121,7 @@ u32 trs_soc_get_cloud_v2_sq_mem_side(u32 devid, struct trs_chan_type *types)
 u32 trs_soc_get_cloud_v2_cq_mem_side(u32 devid)
 {
 #ifndef EMU_ST
-    if ((devdrv_get_connect_protocol(devid) == CONNECT_PROTOCOL_HCCS) &&
-        (devdrv_is_mdev_vm_boot_mode(devid) == true)) {
+    if ((devdrv_get_connect_protocol(devid) == CONNECT_PROTOCOL_HCCS) && (devdrv_is_mdev_vm_boot_mode(devid) == true)) {
         return TRS_CHAN_HOST_PHY_MEM;
     }
 #endif
@@ -161,33 +151,14 @@ void trs_soc_cloud_v2_chan_stars_uninit(struct trs_id_inst *inst)
     trs_chan_stars_v1_ops_uninit(inst);
 }
 
-int trs_soc_cloud_v2_chan_stars_ops_init(struct trs_id_inst *inst)
-{
-    return trs_chan_stars_v1_ops_init(inst);
-}
+int trs_soc_cloud_v2_chan_stars_ops_init(struct trs_id_inst *inst) { return trs_chan_stars_v1_ops_init(inst); }
 
-void trs_soc_cloud_v2_chan_stars_ops_uninit(struct trs_id_inst *inst)
-{
-    trs_chan_stars_v1_ops_uninit(inst);
-}
+void trs_soc_cloud_v2_chan_stars_ops_uninit(struct trs_id_inst *inst) { trs_chan_stars_v1_ops_uninit(inst); }
 
-struct trs_chan_adapt_ops *trs_chan_cloud_v2_get_stars_adapt_ops(void)
-{
-    return trs_chan_get_stars_v1_adapt_ops();
-}
+struct trs_chan_adapt_ops *trs_chan_cloud_v2_get_stars_adapt_ops(void) { return trs_chan_get_stars_v1_adapt_ops(); }
 
-struct trs_core_adapt_ops *trs_core_cloud_v2_get_stars_adapt_ops(void)
-{
-    return trs_core_get_stars_v1_adapt_ops();
-}
+struct trs_core_adapt_ops *trs_core_cloud_v2_get_stars_adapt_ops(void) { return trs_core_get_stars_v1_adapt_ops(); }
 
-int trs_soc_cloud_v2_sq_send_trigger_db_init(struct trs_id_inst *inst)
-{
-    return trs_sq_send_trigger_db_init(inst);
-}
+int trs_soc_cloud_v2_sq_send_trigger_db_init(struct trs_id_inst *inst) { return trs_sq_send_trigger_db_init(inst); }
 
-void trs_soc_cloud_v2_sq_send_trigger_db_uninit(struct trs_id_inst *inst)
-{
-    trs_sq_send_trigger_db_uninit(inst);
-}
-
+void trs_soc_cloud_v2_sq_send_trigger_db_uninit(struct trs_id_inst *inst) { trs_sq_send_trigger_db_uninit(inst); }

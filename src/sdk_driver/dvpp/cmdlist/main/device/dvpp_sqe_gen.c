@@ -11,7 +11,7 @@
  * GNU General Public License for more details.
  */
 
-#include <linux/types.h>
+#include "ka_type.h"
 #include "dvpp_sqe_gen.h"
 #include "dvpp_cmdlist_log.h"
 #include "dvpp_vpu_decoder.h"

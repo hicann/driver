@@ -14,9 +14,23 @@
 #ifndef __DMS_PRODUCT_H__
 #define __DMS_PRODUCT_H__
 
+#define DMS_PRODUCT_CMD_NAME "DMS_PRODUCT_CMD_NAME"
+#define DMS_SUBCMD_GET_PCIE_ID_INFO_ALL 0
+#define DMS_SUBCMD_GET_WORK_MODE 1
+// DMS_SUBCMD_GET_VRD_INFO 2 in turing
+#define DMS_SUBCMD_GET_PCIE_BANDWIDTH_INFO 3
+#define DMS_SUBCMD_GET_HBM_MANUFACTURER_ID 4
+#define DMS_SUBCMD_GET_MAINBOARD_ID 5
+#define DMS_SUBCMD_GET_HCCS_STATUS 6
+#define DMS_SUBCMD_GET_HCCS_BANDWIDTH_INFO 7
+#define DMS_SUBCMD_GET_HCCS_LINK_ERROR_INFO 8
+#define DMS_SUBCMD_GET_PCIE_LINK_ERROR_INFO 9
+#define DMS_SUBCMD_SEND_TO_AO_SYNC 10
+#define DMS_SUBCMD_GET_CARD_MULTI_DIE_POLICY 11
+#define DMS_SUBCMD_SET_CARD_MULTI_DIE_POLICY 12
+#define DMS_SUBCMD_GET_OUTBAND_PCIE_INFO     13
 #include "ascend_kernel_hal.h"
 #include "comm_kernel_interface.h"
-#include "dms_product_ioctl.h"
 #ifdef CONFIG_LLT
 static inline void printf_stub(char *format, ...) {
 }
@@ -84,9 +98,14 @@ extern unsigned int hccs_reg_read(unsigned long vir_addr);
 int dms_feature_get_hccs_bandwidth_info(void *feature, char *in, u32 in_len, char *out, u32 out_len);
 #endif
 
+#ifdef CFG_SOC_PLATFORM_CLOUDV4
+#define HBM_MFR_NOTIFIER    "hbm_mfr"
+int dms_feature_get_hbm_manufacturer_id(void *feature, char *in, u32 in_len, char *out, u32 out_len);
+#endif
+
 #ifdef CFG_FEATURE_PCIE_HCCS_BANDWIDTH
 #include "agentdrv_profiling.h"
-#include "drv_profile.h"
+#include "dmc_kernel_interface.h"
 #define PROFILING_BYTE_TRANS_TO_MBYTE   (1024 * 1024)  /* byte to Mbyte */
 #define PROFILING_US_TRANS_TO_MS        1000
 #define PROFILING_TIME_MAX              2000
@@ -114,7 +133,6 @@ int dms_feature_get_pcie_bandwidth_info(void *feature, char *in, u32 in_len, cha
 #if (defined(CFG_FEATURE_HBM_MANUFACTURER_ID) && !defined(DCFG_FEATURE_DMS_PRODUCT_HOST))
 #define CONNECT_PROTOCOL_PCIE       0
 #define CONNECT_PROTOCOL_HCCS       1
-#define CONNECT_PROTOCOL_UNKNOWN    2
 
 #define FULLMESH_CHIP_BASE_ADDR         0x0
 #define FULLMESH_CHIP_OFFSET            0x80000000000ULL
@@ -128,19 +146,25 @@ int dms_feature_get_pcie_bandwidth_info(void *feature, char *in, u32 in_len, cha
 #define CHIP_OFFSET                     0x200000000000
 #define DIE_OFFSET                      0x0
 #define DEVDRV_LOAD_SRAM_SIZE           0x4ULL
-
 #define MANUFACTURER_ID_ERROR           0xFFFFFFFFU
 
 #if defined(CFG_SOC_PLATFORM_CLOUD_V4)
 #define DEVDRV_LOAD_SRAM_ADDR           0xE8000000ULL
 #define DEVDRV_MANUFACTURER_ID_OFFSET   0x6BC8CULL
+
 #else
 #define DEVDRV_LOAD_SRAM_ADDR           0x402000000ULL
 #define DEVDRV_MANUFACTURER_ID_OFFSET   0x39980ULL
 #endif
-
 int dms_feature_get_hbm_manufacturer_id(void *feature, char *in, u32 in_len, char *out, u32 out_len);
 #endif
+
+#define PCIE_CHIP_BASE_ADDR             0x0
+#define PCIE_INFO_ERROR                 0xFFFFFFFFU
+#define PCIE_OFFSET                     0x50
+#define PCIE_ADDR_SIZE                  0x1000
+#define DEVDRV_PCIE_INFO_ADDR           0x024010040000
+int dms_feature_get_pcie_info(void *feature, char *in, u32 in_len, char *out, u32 out_len);
 
 #ifdef CFG_FEATURE_HCCS_LINK_ERROR_INFO
 #define HDLC0_BASE_ADDR        0x812B1000

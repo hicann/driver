@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2025. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -23,9 +23,9 @@
 #include "pma_ub_core.h"
 #include "pma_ub_ubdevshm_wrapper.h"
 
-static int _pma_ub_ubdevshm_acquire(int master_tgid, u64 va, u64 size,
-    int (*invalidate)(u64 invalidate_tag), u64 invalidate_tag,
-    u32 *token_id_out, dbi_bus_inst_eid_t *eid_out)
+static int _pma_ub_ubdevshm_acquire(
+    int master_tgid, u64 va, u64 size, int (*invalidate)(u64 invalidate_tag), u64 invalidate_tag, u32 *token_id_out,
+    dbi_bus_inst_eid_t *eid_out)
 {
     dbi_bus_inst_eid_t eid = {0};
     u32 udevid;
@@ -49,8 +49,9 @@ static int _pma_ub_ubdevshm_acquire(int master_tgid, u64 va, u64 size,
 
     ret = pma_ub_acquire_seg(udevid, master_tgid, va, size, invalidate, invalidate_tag, token_id_out);
     if (ret != 0) {
-        svm_err("Acquire seg token id failed. (ret=%d; udevid=%u; tgid=%d; va=0x%llx; size=%llu)\n",
-            ret, udevid, master_tgid, va, size);
+        svm_err(
+            "Acquire seg token id failed. (ret=%d; udevid=%u; tgid=%d; va=0x%llx; size=%llu)\n", ret, udevid,
+            master_tgid, va, size);
         return ret;
     }
 
@@ -76,8 +77,8 @@ static int _pma_ub_ubdevshm_release(int master_tgid, u64 va, u64 size)
     return pma_ub_release_seg(udevid, master_tgid, va, size);
 }
 
-static int pma_ub_ubdevshm_acquire_para_check(struct mem_uva *uva, union acquire_attr *attr,
-    invalidate func, struct mem_uba *uba)
+static int pma_ub_ubdevshm_acquire_para_check(
+    struct mem_uva *uva, union acquire_attr *attr, invalidate func, struct mem_uba *uba)
 {
     if (uva == NULL) {
         svm_err("Uva is NULL.\n");
@@ -100,8 +101,9 @@ static int pma_ub_ubdevshm_acquire_para_check(struct mem_uva *uva, union acquire
     }
 
     if ((attr->bs.require_pin != 0) || (attr->bs.require_invalidate != 1)) {
-        svm_info("Invalid acquire attr. (require_pin=%llu, require_invalidate=%llu)\n",
-            attr->bs.require_pin, attr->bs.require_invalidate);
+        svm_info(
+            "Invalid acquire attr. (require_pin=%llu, require_invalidate=%llu)\n", attr->bs.require_pin,
+            attr->bs.require_invalidate);
         return -EOPNOTSUPP;
     }
 
@@ -115,20 +117,19 @@ static void pma_ub_dbi_to_uba_eid(const dbi_bus_inst_eid_t *src, struct uba_eid 
     hi = ka_get_unaligned_be64(&src->raw[0]); /* read 64-bit BE from offset 0 */
     lo = ka_get_unaligned_be64(&src->raw[8]); /* read 64-bit BE from offset 8 */
 
-    dst->eid = lo & KA_GENMASK_ULL(19, 0); /* eid = bits [19:0] */
+    dst->eid = lo & KA_GENMASK_ULL(19, 0);               /* eid = bits [19:0] */
     dst->reserved0 = (lo >> 20) & KA_GENMASK_ULL(43, 0); /* reserved0 = bits [63:20] (shift 20; mask bits [43:0]) */
     dst->reserved1 = hi;
 }
 
-static void pma_ub_ubdevshm_uba_pack(u64 va, u64 size, u32 token_id, dbi_bus_inst_eid_t *eid,
-    struct mem_uba *uba)
+static void pma_ub_ubdevshm_uba_pack(u64 va, u64 size, u32 token_id, dbi_bus_inst_eid_t *eid, struct mem_uba *uba)
 {
     uba->uba = va; /* Device uba is va */
     uba->size = size;
     uba->token_id = token_id;
     uba->attr.bs.readable = 1;
     uba->attr.bs.writeable = 1;
-    uba->attr.bs.executeable = 1;
+    uba->attr.bs.executable = 1;
 
     pma_ub_dbi_to_uba_eid(eid, &uba->eid);
 }
@@ -170,11 +171,7 @@ static int pma_ub_ubdevshm_release(struct mem_uba *uba)
 }
 
 static struct ubdevshm_mem_ops g_pma_ub_ubdevshm_ops = {
-    .name = "svm_ubdevshm_ops",
-    .version = 0,
-    .acquire = pma_ub_ubdevshm_acquire,
-    .release = pma_ub_ubdevshm_release
-};
+    .name = "svm_ubdevshm_ops", .version = 0, .acquire = pma_ub_ubdevshm_acquire, .release = pma_ub_ubdevshm_release};
 
 static unsigned long g_ubdevshm_handle;
 
@@ -196,26 +193,19 @@ static void pma_ub_ubdevshm_unregister_ops(void)
     }
 }
 
-int pma_ub_ubdevshm_wrapper_init(void)
-{
-    return pma_ub_ubdevshm_register_ops();
-}
+int pma_ub_ubdevshm_wrapper_init(void) { return pma_ub_ubdevshm_register_ops(); }
 
-void pma_ub_ubdevshm_wrapper_uninit(void)
-{
-    pma_ub_ubdevshm_unregister_ops();
-}
+void pma_ub_ubdevshm_wrapper_uninit(void) { pma_ub_ubdevshm_unregister_ops(); }
 
-static void pma_ub_ubdevshm_uva_pack(int tgid, struct task_start_time *start_time, u64 va, u64 size,
-    struct mem_uva *uva)
+static void pma_ub_ubdevshm_uva_pack(
+    int tgid, struct task_start_time *start_time, u64 va, u64 size, struct mem_uva *uva)
 {
     uva->va = va;
     uva->size = size;
     uva->invalidate_tag = (((u64)tgid << 32ULL) | (u32)start_time->time); /* Ubdevshm use time's low 32bit. */
 }
 
-static int _pma_ub_ubdevshm_register_segment(int tgid, struct task_start_time *start_time,
-    u64 va, u64 size)
+static int _pma_ub_ubdevshm_register_segment(int tgid, struct task_start_time *start_time, u64 va, u64 size)
 {
     struct mem_uva uva;
     int ret;
@@ -223,14 +213,15 @@ static int _pma_ub_ubdevshm_register_segment(int tgid, struct task_start_time *s
     pma_ub_ubdevshm_uva_pack(tgid, start_time, va, size, &uva);
     ret = ubdevshm_register_segment(&g_ubdevshm_handle, &uva);
     if (ret != 0) {
-        svm_err("ubdevshm_register_segment failed. (ret=%d; va=0x%llx; size=%llu)\n", ret, va, size);
+        svm_err(
+            "ubdevshm_register_segment failed. (ret=%d; va=0x%llx; size=%llu; tgid=%d; start_time=%u)\n", ret, va, size,
+            tgid, (u32)start_time->time);
     }
 
-    return ret;    
+    return ret;
 }
 
-static int _pma_ub_ubdevshm_unregister_segment(int tgid, struct task_start_time *start_time,
-    u64 va, u64 size)
+static int _pma_ub_ubdevshm_unregister_segment(int tgid, struct task_start_time *start_time, u64 va, u64 size)
 {
     struct mem_uva uva;
     int ret;
@@ -238,10 +229,10 @@ static int _pma_ub_ubdevshm_unregister_segment(int tgid, struct task_start_time 
     pma_ub_ubdevshm_uva_pack(tgid, start_time, va, size, &uva);
     ret = ubdevshm_unregister_segment(&g_ubdevshm_handle, &uva);
     if (ret != 0) {
-        svm_err("ubdevshm_register_segment failed. (ret=%d)\n", ret);
+        svm_err("ubdevshm_unregister_segment failed. (ret=%d)\n", ret);
     }
 
-    return ret;  
+    return ret;
 }
 
 int pma_ub_ubdevshm_register_segment(u32 udevid, int tgid, u64 va, u64 size)
@@ -271,4 +262,3 @@ int pma_ub_ubdevshm_unregister_segment(u32 udevid, int tgid, u64 va, u64 size)
 
     return _pma_ub_ubdevshm_unregister_segment(tgid, &start_time, va, size);
 }
-

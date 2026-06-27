@@ -22,11 +22,7 @@
 #define UDIS_TIMER_TASK_MAX_NUM 2048
 #define TASK_NAME_MAX_LEN 16
 
-enum udis_timer_work_type {
-    COMMON_WORK = 0,
-    INDEPENDENCE_WORK,
-    UDIS_WORK_TYPE_MAX
-};
+enum udis_timer_work_type { COMMON_WORK = 0, INDEPENDENCE_WORK, UDIS_WORK_TYPE_MAX };
 
 struct udis_timer_task {
     unsigned int period_ms;

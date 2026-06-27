@@ -21,5 +21,4 @@
 #define TOPIC_SCHED_TASK_SQE_SIZE (64)
 #define TOPIC_SCHED_TASK_CQE_SIZE (32)
 
-
 #endif

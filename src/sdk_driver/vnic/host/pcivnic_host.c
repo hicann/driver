@@ -18,6 +18,7 @@
 #include "ka_system_pub.h"
 #include "ka_pci_pub.h"
 #include "pbl/pbl_uda.h"
+#include "pbl/pbl_soc_res.h"
 
 #include "pcivnic_host.h"
 #include "pcivnic_main.h"
@@ -85,7 +86,7 @@ int pcivnic_dma_copy(const struct pcivnic_pcidev *pcidev, u64 src, u64 dst, u32 
 {
     int ret;
     ret = hal_kernel_devdrv_dma_async_copy(pcidev->dev_id, DEVDRV_DMA_DATA_COMMON, src, dst, size,
-        DEVDRV_DMA_DEVICE_TO_HOST, para_info);
+                                           DEVDRV_DMA_DEVICE_TO_HOST, para_info);
     if (ret != 0) {
         devdrv_err("dev %d dma copy failed size %x\n", pcidev->dev_id, size);
     }
@@ -158,23 +159,35 @@ bool pcivnic_is_p2p_enabled(u32 dev_id, u32 peer_dev_id)
 
 int pcivnic_up_get_next_hop(const unsigned char *dmac)
 {
-    if ((*(u32 *)g_pcivnic_mac == *(u32 *)dmac) && (g_pcivnic_mac[PCIVNIC_MAC_4] == dmac[PCIVNIC_MAC_4])) {
-        if (dmac[PCIVNIC_MAC_5] == HOST_MAC_LAST_BYTE) {
-            return PCIVNIC_NEXT_HOP_LOCAL_NETDEV;
-        } else if (dmac[PCIVNIC_MAC_5] < NETDEV_PF_PCIDEV_NUM) {
-            return dmac[PCIVNIC_MAC_5];
-        }
+    if (*(u32 *)g_pcivnic_mac != *(u32 *)dmac) {
+        return PCIVNIC_NEXT_HOP_BROADCAST;
     }
 
-    return PCIVNIC_NEXT_HOP_BROADCAST;
+    if (dmac[PCIVNIC_MAC_5] == HOST_MAC_LAST_BYTE) {
+        return PCIVNIC_NEXT_HOP_LOCAL_NETDEV;
+    } else if (dmac[PCIVNIC_MAC_5] < NETDEV_PF_PCIDEV_NUM) {
+        if ((uda_get_chip_type(dmac[PCIVNIC_MAC_5]) != HISI_CLOUD_V2) &&
+            (g_pcivnic_mac[PCIVNIC_MAC_4] != dmac[PCIVNIC_MAC_4])) {
+            return PCIVNIC_NEXT_HOP_BROADCAST;
+        }
+        return dmac[PCIVNIC_MAC_5];
+    } else {
+        return PCIVNIC_NEXT_HOP_BROADCAST;
+    }
 }
 
 int pcivnic_down_get_next_hop(const unsigned char *dmac)
 {
-    if ((*(u32 *)g_pcivnic_mac == *(u32 *)dmac) && (g_pcivnic_mac[PCIVNIC_MAC_4] == dmac[PCIVNIC_MAC_4])) {
-        if (dmac[PCIVNIC_MAC_5] < NETDEV_PF_PCIDEV_NUM) {
-            return dmac[PCIVNIC_MAC_5];
+    if (*(u32 *)g_pcivnic_mac != *(u32 *)dmac) {
+        return PCIVNIC_NEXT_HOP_BROADCAST;
+    }
+
+    if (dmac[PCIVNIC_MAC_5] < NETDEV_PF_PCIDEV_NUM) {
+        if ((uda_get_chip_type(dmac[PCIVNIC_MAC_5]) != HISI_CLOUD_V2) &&
+            (g_pcivnic_mac[PCIVNIC_MAC_4] != dmac[PCIVNIC_MAC_4])) {
+            return PCIVNIC_NEXT_HOP_BROADCAST;
         }
+        return dmac[PCIVNIC_MAC_5];
     }
 
     return PCIVNIC_NEXT_HOP_BROADCAST;
@@ -207,17 +220,45 @@ ssize_t pcivnic_get_dev_stat(ka_device_t *dev, ka_device_attribute_t *attr, char
         msg_len = VNIC_STAT_MSG_MAX_LEN;
     }
 
-    ret = devdrv_common_msg_send(pcidev->dev_id, (void *)&pcivnic_stat, sizeof(pcivnic_stat.head),
-        msg_len, &out_len, DEVDRV_COMMON_MSG_PCIVNIC);
+    ret = devdrv_common_msg_send(pcidev->dev_id, (void *)&pcivnic_stat, sizeof(pcivnic_stat.head), msg_len, &out_len,
+                                 DEVDRV_COMMON_MSG_PCIVNIC);
     if ((ret == 0) && (pcivnic_stat.msg_len < KA_MM_PAGE_SIZE - offset)) {
         pcivnic_stat.msg[pcivnic_stat.msg_len] = '\0';
-        ret = snprintf_s(buf + offset, KA_MM_PAGE_SIZE - offset, KA_MM_PAGE_SIZE - offset - 1, "%s\n", pcivnic_stat.msg);
+        ret = snprintf_s(buf + offset, KA_MM_PAGE_SIZE - offset, KA_MM_PAGE_SIZE - offset - 1, "%s\n",
+                         pcivnic_stat.msg);
         if (ret >= 0) {
             offset += ret;
         }
     }
 
     return offset;
+}
+
+STATIC int pcivnic_exchange_net_info(u32 dev_id)
+{
+    struct pcivnic_ctrl_msg_net_info msg;
+    u32 out_len = 0;
+    int ret, i;
+
+    msg.head.msg_type = PCIVNIC_CTRL_MSG_TYPE_EXCHANGE_NET_INFO;
+    msg.head.host_udevid = dev_id;
+    for (i = 0; i < KA_ETH_ALEN; i++) {
+        msg.mac[i] = g_pcivnic_mac[i];
+    }
+    ret = devdrv_common_msg_send(dev_id, (void *)&msg, sizeof(msg.head) + sizeof(msg.mac), sizeof(msg), &out_len,
+                                 DEVDRV_COMMON_MSG_PCIVNIC);
+    if (ret != 0) {
+        devdrv_err("dev %d sync abnormal, wait for device startup.\n", dev_id);
+        return ret;
+    }
+
+    ret = soc_resmng_dev_set_vnic_ip(dev_id, msg.ip);
+    if (ret != 0) {
+        devdrv_err("dev %d set vnic ip to soc_resmng fail.\n", dev_id);
+        return ret;
+    }
+
+    return 0;
 }
 
 struct devdrv_trans_msg_chan_info g_msg_chan_info = {
@@ -233,36 +274,6 @@ struct devdrv_trans_msg_chan_info g_msg_chan_info = {
 int pcivnic_device_status_abnormal(const void *msg_chan)
 {
     return devdrv_device_status_abnormal_check(msg_chan);
-}
-
-STATIC void pcivnic_msg_chan_guard_work_sched(struct pcivnic_pcidev *pcidev)
-{
-    if (pcivnic_device_status_abnormal(pcidev->msg_chan) != 0) {
-        return;
-    }
-
-    pcivnic_rx_msg_notify(pcidev->msg_chan);
-}
-
-STATIC void pcivnic_guard_work_sched(ka_work_struct_t *p_work)
-{
-    struct pcivnic_pcidev *pcidev =
-        ka_container_of(p_work, struct pcivnic_pcidev, guard_work.work);
-
-    pcivnic_msg_chan_guard_work_sched(pcidev);
-    ka_task_schedule_delayed_work(&pcidev->guard_work, ka_system_msecs_to_jiffies(PCIVNIC_GUARD_WORK_DELAY_TIME));
-}
-
-STATIC void pcivnic_guard_work_init(struct pcivnic_pcidev *pcidev)
-{
-    /* msg guard work */
-    KA_TASK_INIT_DELAYED_WORK(&pcidev->guard_work, pcivnic_guard_work_sched);
-    ka_task_schedule_delayed_work(&pcidev->guard_work, 0);
-}
-
-STATIC void pcivnic_guard_work_uninit(struct pcivnic_pcidev *pcidev)
-{
-    ka_task_cancel_delayed_work_sync(&pcidev->guard_work);
 }
 
 STATIC int pcivnic_init_msg_chan(struct pcivnic_pcidev *pcidev)
@@ -297,19 +308,12 @@ STATIC int pcivnic_init_msg_instance(struct pcivnic_pcidev *pcidev)
 {
     struct pcivnic_netdev *vnic_dev = (struct pcivnic_netdev *)pcidev->netdev;
     struct pcivnic_ctrl_msg_register_netdev register_msg;
-    struct pcivnic_ctrl_msg_set_mac msg;
-    u32 i, len = 0;
+    u32 len = 0;
     int ret;
 
-    msg.head.msg_type = PCIVNIC_CTRL_MSG_TYPE_SET_MAC;
-    msg.head.host_udevid = pcidev->dev_id;
-    for (i = 0; i < KA_ETH_ALEN; i++) {
-        msg.mac[i] = g_pcivnic_mac[i];
-    }
-    ret = devdrv_common_msg_send(pcidev->dev_id, (void *)&msg, sizeof(msg), sizeof(msg), &len,
-        DEVDRV_COMMON_MSG_PCIVNIC);
+    ret = pcivnic_exchange_net_info(pcidev->dev_id);
     if (ret != 0) {
-        devdrv_err("dev %d sync abnormal, wait for device startup.\n", pcidev->dev_id);
+        devdrv_err("dev %d exchange net info failed.\n", pcidev->dev_id);
         return ret;
     }
 
@@ -325,7 +329,7 @@ STATIC int pcivnic_init_msg_instance(struct pcivnic_pcidev *pcidev)
 
     register_msg.head.msg_type = PCIVNIC_CTRL_MSG_TYPE_RIGISTER_NETDEV;
     ret = devdrv_common_msg_send(pcidev->dev_id, (void *)&register_msg, sizeof(register_msg), sizeof(register_msg),
-        &len, DEVDRV_COMMON_MSG_PCIVNIC);
+                                 &len, DEVDRV_COMMON_MSG_PCIVNIC);
     if (ret != 0) {
         pcivnic_uninit_msg_chan(pcidev);
         devdrv_err("dev %d register device netdev fail.\n", pcidev->dev_id);
@@ -337,8 +341,8 @@ STATIC int pcivnic_init_msg_instance(struct pcivnic_pcidev *pcidev)
     /* !!!!! CI will judge this log to determine the device startup status,
      * do not change it. !!!!!
      */
-    devdrv_info("dev id %d: %s, alloc new pcivnic device <%s> success (locked and finish).\n",
-        pcidev->dev_id, ka_driver_dev_driver_string(pcidev->dev), ka_net_netdev_get_name(vnic_dev->ndev));
+    devdrv_info("dev id %d: %s, alloc new pcivnic device <%s> success (locked and finish).\n", pcidev->dev_id,
+                ka_driver_dev_driver_string(pcidev->dev), ka_net_netdev_get_name(vnic_dev->ndev));
 
     return 0;
 }
@@ -355,14 +359,14 @@ struct devdrv_common_msg_client g_pcivnic_host_comm_msg_client = {
     .common_msg_recv = pcivnic_ctrl_msg_recv,
 };
 
-u64 pcivnic_dma_map_single(struct pcivnic_pcidev *pcidev, ka_sk_buff_t *skb, u32 buff_type, u32 index)
+u64 pcivnic_dma_map_single(struct pcivnic_pcidev *pcidev, ka_sk_buff_t *skb, u32 buff_type, u32 index, u32 data_len)
 {
     ka_dma_data_direction_t dma_dir;
     u64 dma_addr = (~(ka_dma_addr_t)0);
     size_t len;
 
     dma_dir = (buff_type == PCIVNIC_DESC_QUEUE_TX) ? KA_DMA_TO_DEVICE : KA_DMA_FROM_DEVICE;
-    len = (buff_type == PCIVNIC_DESC_QUEUE_TX) ? skb->len : PCIVNIC_MAX_PKT_SIZE;
+    len = (buff_type == PCIVNIC_DESC_QUEUE_TX) ? skb->len : data_len;
 
 #ifdef CFG_FEATURE_AGENT_SMMU
     if ((devdrv_get_connect_protocol(pcidev->dev_id) == CONNECT_PROTOCOL_HCCS) && (pcidev->host_phy_mach_flag == 0)) {
@@ -391,13 +395,13 @@ u64 pcivnic_dma_map_single(struct pcivnic_pcidev *pcidev, ka_sk_buff_t *skb, u32
     return dma_addr;
 }
 
-void pcivnic_dma_unmap_single(struct pcivnic_pcidev *pcidev, ka_sk_buff_t *skb, u32 buff_type, u32 index)
+void pcivnic_dma_unmap_single(struct pcivnic_pcidev *pcidev, ka_sk_buff_t *skb, u32 buff_type, u32 index, u32 data_len)
 {
 #ifdef CFG_FEATURE_AGENT_SMMU
     if ((devdrv_get_connect_protocol(pcidev->dev_id) == CONNECT_PROTOCOL_HCCS) && (pcidev->host_phy_mach_flag == 0)) {
         /* hccs peh's virtualization pass-through, need use mem pool to improve performance */
         if (buff_type == PCIVNIC_DESC_QUEUE_RX) {
-            if (memcpy_s(skb->data, PCIVNIC_MAX_PKT_SIZE, pcidev->rx_buff[index].addr, PCIVNIC_MAX_PKT_SIZE) != 0) {
+            if (memcpy_s(skb->data, data_len, pcidev->rx_buff[index].addr, data_len) != 0) {
                 devdrv_err_spinlock("device %d memcpy_s fail.\n", pcidev->dev_id);
             }
         }
@@ -410,7 +414,7 @@ void pcivnic_dma_unmap_single(struct pcivnic_pcidev *pcidev, ka_sk_buff_t *skb, 
         pcidev->tx[index].addr = (~(ka_dma_addr_t)0);
     }
     if (buff_type == PCIVNIC_DESC_QUEUE_RX) {
-        hal_kernel_devdrv_dma_unmap_single(pcidev->dev, pcidev->rx[index].addr, PCIVNIC_MAX_PKT_SIZE, KA_DMA_FROM_DEVICE);
+        hal_kernel_devdrv_dma_unmap_single(pcidev->dev, pcidev->rx[index].addr, data_len, KA_DMA_FROM_DEVICE);
         pcidev->rx[index].addr = (~(ka_dma_addr_t)0);
     }
 }
@@ -435,14 +439,14 @@ void pcivnic_skb_data_buff_uninit(struct pcivnic_pcidev *pcidev)
     for (i = 0; i < PCIVNIC_DESC_QUEUE_DEPTH; i++) {
         if (pcidev->tx_buff[i].addr != NULL) {
             hal_kernel_devdrv_dma_free_coherent(pcidev->dev, PCIVNIC_MAX_SKB_BUFF_SIZE, pcidev->tx_buff[i].addr,
-                pcidev->tx_buff[i].dma_addr);
+                                                pcidev->tx_buff[i].dma_addr);
             pcidev->tx_buff[i].addr = NULL;
         }
         pcidev->tx_buff[i].dma_addr = (~(ka_dma_addr_t)0);
 
         if (pcidev->rx_buff[i].addr != NULL) {
             hal_kernel_devdrv_dma_free_coherent(pcidev->dev, PCIVNIC_MAX_SKB_BUFF_SIZE, pcidev->rx_buff[i].addr,
-                pcidev->rx_buff[i].dma_addr);
+                                                pcidev->rx_buff[i].dma_addr);
             pcidev->rx_buff[i].addr = NULL;
         }
         pcidev->rx_buff[i].dma_addr = (~(ka_dma_addr_t)0);
@@ -471,7 +475,7 @@ int pcivnic_skb_data_buff_init(struct pcivnic_pcidev *pcidev)
 
     for (i = 0; i < PCIVNIC_DESC_QUEUE_DEPTH; i++) {
         pcidev->tx_buff[i].addr = hal_kernel_devdrv_dma_zalloc_coherent(pcidev->dev, PCIVNIC_MAX_SKB_BUFF_SIZE,
-            &pcidev->tx_buff[i].dma_addr, KA_GFP_KERNEL);
+                                                                        &pcidev->tx_buff[i].dma_addr, KA_GFP_KERNEL);
         if (pcidev->tx_buff[i].addr == NULL) {
             pcivnic_skb_data_buff_uninit(pcidev);
             devdrv_err("Call skb_data tx buff failed. (dev_id=%d)\n", pcidev->dev_id);
@@ -479,7 +483,7 @@ int pcivnic_skb_data_buff_init(struct pcivnic_pcidev *pcidev)
         }
 
         pcidev->rx_buff[i].addr = hal_kernel_devdrv_dma_zalloc_coherent(pcidev->dev, PCIVNIC_MAX_SKB_BUFF_SIZE,
-            &pcidev->rx_buff[i].dma_addr, KA_GFP_KERNEL);
+                                                                        &pcidev->rx_buff[i].dma_addr, KA_GFP_KERNEL);
         if (pcidev->rx_buff[i].addr == NULL) {
             pcivnic_skb_data_buff_uninit(pcidev);
             devdrv_err("Call skb_data rx buff failed. (dev_id=%d)\n", pcidev->dev_id);
@@ -513,8 +517,8 @@ STATIC int pcivnic_init_npu_instance(u32 dev_id)
 
     instance_msg.head.msg_type = PCIVNIC_CTRL_MSG_TYPE_INSTANCE;
     instance_msg.head.host_udevid = dev_id;
-    ret = devdrv_common_msg_send(dev_id, (void *)&instance_msg, sizeof(instance_msg), sizeof(instance_msg),
-        &len, DEVDRV_COMMON_MSG_PCIVNIC);
+    ret = devdrv_common_msg_send(dev_id, (void *)&instance_msg, sizeof(instance_msg), sizeof(instance_msg), &len,
+                                 DEVDRV_COMMON_MSG_PCIVNIC);
     if (ret != 0) {
         devdrv_err("dev %d instance device netdev fail.\n", dev_id);
 #ifdef DRV_UT
@@ -739,4 +743,3 @@ int pcivnic_unregister_client(void)
     uda_davinci_near_real_entity_type_pack(&type);
     return uda_notifier_unregister(PCIVNIC_HOST_NOTIFIER, &type);
 }
-

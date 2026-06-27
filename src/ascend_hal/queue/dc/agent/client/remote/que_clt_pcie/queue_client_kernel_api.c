@@ -151,9 +151,8 @@ drvError_t queue_host_common_queue_uninit(unsigned int dev_id)
 drvError_t queue_ctrl_msg_send(struct queue_ctrl_msg_send_stru *ctrl_msg_send)
 {
     struct queue_ioctl_ctrl_msg_send arg;
-    if (memcpy_s(&arg, sizeof(struct queue_ioctl_ctrl_msg_send),
-            ctrl_msg_send, sizeof(struct queue_ioctl_ctrl_msg_send)) != 0)
-    {
+    if (memcpy_s(&arg, sizeof(struct queue_ioctl_ctrl_msg_send), ctrl_msg_send,
+                 sizeof(struct queue_ioctl_ctrl_msg_send)) != 0) {
         QUEUE_LOG_ERR("set msg_send args err!");
     }
     return queue_ioctl(QUEUE_CTRL_MSG_SEND_CMD, &arg);
@@ -162,9 +161,7 @@ drvError_t queue_ctrl_msg_send(struct queue_ctrl_msg_send_stru *ctrl_msg_send)
 drvError_t queue_enqueue_cmd(struct queue_enqueue_stru *queue_enqueue)
 {
     struct queue_enqueue_stru arg;
-    if (memcpy_s(&arg, sizeof(struct queue_ioctl_enqueue),
-            queue_enqueue, sizeof(struct queue_ioctl_enqueue)) != 0)
-    {
+    if (memcpy_s(&arg, sizeof(struct queue_ioctl_enqueue), queue_enqueue, sizeof(struct queue_ioctl_enqueue)) != 0) {
         QUEUE_LOG_ERR("queue_enqueue args err!");
     }
     return queue_ioctl(QUEUE_ENQUEUE_CMD, &arg);

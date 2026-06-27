@@ -75,7 +75,7 @@ void add_time_cost_node_to_ctx(time_cost_node* node)
 {
     dvpp_cmdlist_context *ctx = &g_dvpp_cmdlist_ctx;
     uint32_t key = (uint32_t)(node->taskid << 16) + (uint32_t)(node->streamid);
-    struct hlist_head *hlhead = &(ctx->time_cost_stat.head[key % ctx->time_cost_stat.node_num]);
+    ka_hlist_head_t *hlhead = &(ctx->time_cost_stat.head[key % ctx->time_cost_stat.node_num]);
     ka_task_spin_lock(&ctx->time_cost_stat.splock);
 
     ka_hlist_add_head(&(node->hlist), hlhead);

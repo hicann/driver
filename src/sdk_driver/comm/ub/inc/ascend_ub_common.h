@@ -49,6 +49,10 @@ void ubdrv_flush_p2p(int pid); /* used in user process crush */
     drv_debug(ubdrv_name, "<%s:%d:%d> " fmt,                           \
     ka_task_get_current_comm(), ka_task_get_current_tgid(), ka_task_get_current_pid(), ##__VA_ARGS__);        \
 } while (0)
+#define ubdrv_err_hex_dump(buf, len, fmt, ...) do {                                     \
+    drv_err_hex_dump(ubdrv_name, buf, len, "<%s:%d:%d> " fmt,                           \
+    ka_task_get_current_comm(), ka_task_get_current_tgid(), ka_task_get_current_pid(), ##__VA_ARGS__);        \
+} while (0)
 
 #else // CFG_FEATURE_DRV_LOG
 
@@ -77,7 +81,11 @@ void ubdrv_flush_p2p(int pid); /* used in user process crush */
     ubdrv_name, __func__, __LINE__,                                    \
     ka_task_get_current_comm(), ka_task_get_current_tgid(), ka_task_get_current_pid(), ##__VA_ARGS__);        \
 } while (0)
-
+#define ubdrv_err_hex_dump(buf, len, fmt, ...) do {                                     \
+    ka_dfx_printk(KA_KERN_DEBUG "[ascend] [%s] [%s %d] <%s:%d:%d> " fmt,         \
+    ubdrv_name, __func__, __LINE__,                                    \
+    ka_task_get_current_comm(), ka_task_get_current_tgid(), ka_task_get_current_pid(), ##__VA_ARGS__);        \
+} while (0)
 #endif // CFG_FEATURE_DRV_LOG
 
 enum ubdrv_log_level {

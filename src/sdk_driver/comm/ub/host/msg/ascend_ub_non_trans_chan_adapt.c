@@ -268,8 +268,8 @@ int devdrv_ub_msg_free_non_trans_queue_process(struct ubdrv_non_trans_chan *chan
                 ret, dev_id, chan_id);
         }
     }
-    ubdrv_uninit_non_trans_chan(chan, dev_id);
     ubdrv_delete_non_trans_jetty(chan);
+    ubdrv_uninit_non_trans_chan(chan, dev_id);
     chan->rx_msg_process = NULL;
     chan->status = UBDRV_CHAN_IDLE;
     ka_task_mutex_unlock(&chan->tx_mutex);

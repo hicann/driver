@@ -28,6 +28,7 @@ target_include_directories(dms_obj PRIVATE
     ${DRIVER_USER_DIR}/inc/pbl
     ${DRIVER_USER_DIR}/dms/drv_devmng
     ${DRIVER_USER_DIR}/dms/drv_devmng/ascend910
+    $<$<STREQUAL:${ENABLE_UBE},true>:/usr/include/ub/umdk/urma>
 )
 
 target_link_libraries(dms_obj PRIVATE
@@ -36,7 +37,15 @@ target_link_libraries(dms_obj PRIVATE
 )
 
 target_compile_options(dms_obj PRIVATE
+    -fPIC
     -fno-common
+    -Wfloat-equal
+    -Wextra
+)
+
+target_compile_definitions(dms_obj PRIVATE
+    __USE_GNU
+    _GNU_SOURCE
 )
 
 add_subdirectory(bbox)

@@ -13,7 +13,14 @@
 #ifndef DVPP_SQE_UPDATER_H
 #define DVPP_SQE_UPDATER_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void dvpp_sqe_update_init(void);
 void dvpp_sqe_update_uninit(void);
 
+#ifdef __cplusplus
+}
+#endif
 #endif // #ifndef DVPP_SQE_UPDATER_H

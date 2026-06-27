@@ -67,6 +67,10 @@ static drvError_t prof_urma_send_stop_event(uint32_t dev_id, uint32_t chan_id, s
     struct prof_event_para event_para;
     drvError_t ret;
 
+    (void)para;
+    (void)urma_chan_info;
+    (void)urma_info;
+
     stop_event_msg.channel_id = chan_id;
 
     prof_event_event_para_comm_pack(&event_para, dev_id, EVENT_DRV_MSG_EX, DRV_SUBEVENT_PROF_STOP_MSG, 0);

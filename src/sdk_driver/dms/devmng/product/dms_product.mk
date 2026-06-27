@@ -10,3 +10,5 @@
 
 asdrv_dms-y += devmng/product/dms_product.o
 EXTRA_CFLAGS += -I$(DRIVER_MODULE_DEVMNG_DIR)/product
+EXTRA_CFLAGS += -I$(TOP_DIR)/driver/driver/src/sdk_driver/inc
+EXTRA_CFLAGS += -I$(DRIVER_MODULE_DEVMNG_DIR)/include

@@ -14,7 +14,7 @@
 #ifndef TS_AGENT_RESOURCE_H
 #define TS_AGENT_RESOURCE_H
 
-#include <linux/types.h>
+#include "ka_type.h"
 #include "ts_agent_common.h"
 
 int get_vf_info(u32 dev_id, u32 vf_id, struct vmng_soc_resource_enquire *vf_res);

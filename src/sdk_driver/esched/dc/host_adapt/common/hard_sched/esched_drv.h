@@ -43,11 +43,11 @@ enum esched_topic_sched_version {
 #define DEVICE_USER_PROC 3
 #define PID_TYPE_MAX 4
 
-#define TOPIC_FINISH_STATUS_NORMAL    0x1
-#define TOPIC_FINISH_STATUS_DEBUG     0x2
+#define TOPIC_FINISH_STATUS_NORMAL 0x1
+#define TOPIC_FINISH_STATUS_DEBUG 0x2
 #define TOPIC_FINISH_STATUS_EXCEPTION 0x4
-#define TOPIC_FINISH_STATUS_TRAP      0x8
-#define TOPIC_FINISH_STATUS_WARNING   0x10
+#define TOPIC_FINISH_STATUS_TRAP 0x8
+#define TOPIC_FINISH_STATUS_WARNING 0x10
 
 #define STATUS_REPORT_VAL(status, error_code) (((error_code) << 4) | (status))
 
@@ -55,20 +55,20 @@ enum esched_topic_sched_version {
 #define TOPIC_SCHED_USER_DATA_PAYLOAD_LEN 40
 
 #define TOPIC_SCHED_MAX_PRIORITY_NUM 8U
-#define TOPIC_SCHED_MAX_PRIORITY      (TOPIC_SCHED_MAX_PRIORITY_NUM / TOPIC_SCHED_QOS_COMPRESS_RATE)
+#define TOPIC_SCHED_MAX_PRIORITY (TOPIC_SCHED_MAX_PRIORITY_NUM / TOPIC_SCHED_QOS_COMPRESS_RATE)
 
-#define TOPIC_SCHED_SLIENT_FAULT    0x7U /* error code defined by aicpu */
+#define TOPIC_SCHED_SLIENT_FAULT 0x7U /* error code defined by aicpu */
 
 #ifndef CFG_ENV_HOST
 /* Reserve one for the softirq context. */
-#define TOPIC_SCHED_RTSQ_CLASS_NUM    (TOPIC_SCHED_MAX_PRIORITY + 1U)
+#define TOPIC_SCHED_RTSQ_CLASS_NUM (TOPIC_SCHED_MAX_PRIORITY + 1U)
 
-#define TOPIC_SCHED_RTSQ_NUM_FOR_IRQ  1
-#define TOPIC_SCHED_RTSQ_FOR_IRQ      (TOPIC_SCHED_RTSQ_CLASS_NUM - 1U)
+#define TOPIC_SCHED_RTSQ_NUM_FOR_IRQ 1
+#define TOPIC_SCHED_RTSQ_FOR_IRQ (TOPIC_SCHED_RTSQ_CLASS_NUM - 1U)
 #else
-#define TOPIC_SCHED_RTSQ_CLASS_NUM    TOPIC_SCHED_MAX_PRIORITY
+#define TOPIC_SCHED_RTSQ_CLASS_NUM TOPIC_SCHED_MAX_PRIORITY
 #endif
-#define TOPIC_SCHED_MAX_RTSQ_NUM_PER_CLASS   8U
+#define TOPIC_SCHED_MAX_RTSQ_NUM_PER_CLASS 8U
 
 #define TOPIC_SCHED_MB_STATUS_IDLE 0
 #define TOPIC_SCHED_MB_STATUS_BUSY 1
@@ -87,10 +87,10 @@ enum esched_topic_sched_version {
 #define STARS_WORK_MODE_MAILBOX 0
 #define STARS_WORK_MODE_MSGQ 1
 
-#define TOPIC_SCHED_STATUS_CHECK_TIME           2U
-#define TOPIC_SCHED_WAIT_CPU_IDLE_CNT_MAX       5000U
-#define TOPIC_SCHED_WAIT_CPU_IDLE_MIN_INTERVAL  20U
-#define TOPIC_SCHED_WAIT_CPU_IDLE_MAX_INTERVAL  40U
+#define TOPIC_SCHED_STATUS_CHECK_TIME 2U
+#define TOPIC_SCHED_WAIT_CPU_IDLE_CNT_MAX 5000U
+#define TOPIC_SCHED_WAIT_CPU_IDLE_MIN_INTERVAL 20U
+#define TOPIC_SCHED_WAIT_CPU_IDLE_MAX_INTERVAL 40U
 
 /* Used by a single thread of the split operator. The number of CPUs must be greater
    than or equal to twice the number of CPUs. */
@@ -202,12 +202,12 @@ struct sched_hard_res {
     u32 intr_config_flag;
     u32 report_fault_flag;
     u32 retry_times;
-    u32 sub_dev_num;  /* Number of subdevices created based on the device, like vf dev */
+    u32 sub_dev_num; /* Number of subdevices created based on the device, like vf dev */
     struct topic_data_chan *topic_chan[TOPIC_SCHED_MAX_CHAN_NUM];
-    void *priv;       /* for host */
-    u32 topic_sched_chan_num; /* The number of topic channels' resource be created for SCHED. */
+    void *priv;                    /* for host */
+    u32 topic_sched_chan_num;      /* The number of topic channels' resource be created for SCHED. */
     u32 topic_sched_chan_start_id; /* The start id of topic channels' resource be created for SCHED. */
-    u32 comcpu_chan_num; /* comcpu num. only hccl use these cpu */
+    u32 comcpu_chan_num;           /* comcpu num. only hccl use these cpu */
     u32 aicpu_chan_num;
     u32 aicpu_chan_start_id;
     u32 aicpu_start_cpuid;
@@ -223,9 +223,9 @@ struct sched_hard_res {
 
 struct topic_sched_rts_task_info {
     u64 task_so_name_ptr; /* kernelSo */
-    u64 para_ptr; /* paramBase */
-    u64 task_name_ptr; /* kernelName */
-    u64 l2_struct_ptr; /* l2Ctrl */
+    u64 para_ptr;         /* paramBase */
+    u64 task_name_ptr;    /* kernelName */
+    u64 l2_struct_ptr;    /* l2Ctrl */
     u64 extra_field_ptr;
 };
 
@@ -277,14 +277,13 @@ struct topic_data_chan *esched_drv_create_one_topic_chan(u32 devid, u32 chan_id)
 void esched_drv_destroy_one_topic_chan(u32 devid, u32 chan_id);
 void esched_drv_destroy_topic_chans(u32 devid, u32 start_chan_id, u32 chan_num);
 int esched_drv_create_topic_chans(u32 devid, u32 start_chan_id, u32 chan_num, u32 comcpu_chan_num);
-int esched_publish_event_to_topic(u32 chip_id, u32 event_src,
-    struct sched_published_event_info *event_info,
-    struct sched_published_event_func *event_func);
+int esched_publish_event_to_topic(u32 chip_id, u32 event_src, struct sched_published_event_info *event_info,
+                                  struct sched_published_event_func *event_func);
 
-int esched_drv_fill_sqe_qos(u32 chip_id, struct sched_published_event_info *event_info,
-    struct topic_sched_sqe *sqe, bool wait_thread_check);
+int esched_drv_fill_sqe_qos(u32 chip_id, struct sched_published_event_info *event_info, struct topic_sched_sqe *sqe,
+                            bool wait_thread_check);
 int esched_drv_fill_task_msg(u32 chip_id, u32 event_src, void *task_msg_data,
-    struct sched_published_event_info *event_info);
+                             struct sched_published_event_info *event_info);
 
 void esched_ccpu_sched_task(unsigned long data);
 void esched_aicpu_sched_task(unsigned long data);

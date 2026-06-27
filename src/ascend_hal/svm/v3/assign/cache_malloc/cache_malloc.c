@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * Copyright (c) 2026 Huawei Technologies Co., Ltd.
  * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -22,15 +22,12 @@
 #include "cache_recycle_seg.h"
 #include "cache_malloc.h"
 
-#define CACHE_MALLOC_PEAK_ALLOCED_TIME_INTERVAL_S     1ULL
-#define CACHE_SHRINK_DEFAULT_SIZE                     (128ULL * SVM_BYTES_PER_MB)
+#define CACHE_MALLOC_PEAK_ALLOCED_TIME_INTERVAL_S 1ULL
+#define CACHE_SHRINK_DEFAULT_SIZE (128ULL * SVM_BYTES_PER_MB)
 
 struct svm_cache_ops *cache_ops = NULL;
 
-void svm_cache_set_ops(struct svm_cache_ops *ops)
-{
-    cache_ops = ops;
-}
+void svm_cache_set_ops(struct svm_cache_ops *ops) { cache_ops = ops; }
 
 static int cache_ops_post_expand(u32 devid, u64 va, u64 size)
 {
@@ -61,8 +58,9 @@ static void cache_strategy_update(struct cache_allocator *ca)
     shrink_thres_default = ca->strategy.shrink_thres_default;
     cur_alloced = ca->stats.cur_alloced;
     peak_alloced = ca->stats.peak_alloced;
-    ca->strategy.shrink_thres_cur =
-        svm_max(svm_min(2ull * cur_alloced, (peak_alloced + cur_alloced) / 2ull), shrink_thres_default); /* multiple is 2, peak_alloced's weight is 1/2 */
+    ca->strategy.shrink_thres_cur = svm_max(
+        svm_min(2ull * cur_alloced, (peak_alloced + cur_alloced) / 2ull),
+        shrink_thres_default); /* multiple is 2, peak_alloced's weight is 1/2 */
     pthread_rwlock_unlock(&ca->rwlock);
 }
 
@@ -78,7 +76,8 @@ static void cache_malloc_stats_update(struct cache_allocator *ca, u64 size)
         ca->stats.peak_alloced_last_update_time = cur_time;
     }
     if ((u64)(cur_time - ca->stats.peak_alloced_last_update_time) >= CACHE_MALLOC_PEAK_ALLOCED_TIME_INTERVAL_S) {
-        u64 tmp_size = ca->stats.peak_alloced - ca->stats.peak_alloced / 8; /* peak bigger than cur 1/8 refresh cache thres */
+        u64 tmp_size =
+            ca->stats.peak_alloced - ca->stats.peak_alloced / 8; /* peak bigger than cur 1/8 refresh cache thres */
         if (tmp_size > ca->stats.cur_alloced) {
             ca->stats.peak_alloced = tmp_size;
             ca->stats.peak_alloced_last_update_time = cur_time;
@@ -118,8 +117,8 @@ static void cache_shrink_stats_update(struct cache_allocator *ca, u64 size)
 
 static bool cache_should_shrink(struct cache_allocator *ca)
 {
-    u64 shrink_thres = svm_min((ca->strategy.shrink_thres_cur * 2),
-        (ca->strategy.shrink_thres_cur + CACHE_SHRINK_DEFAULT_SIZE));
+    u64 shrink_thres =
+        svm_min((ca->strategy.shrink_thres_cur * 2), (ca->strategy.shrink_thres_cur + CACHE_SHRINK_DEFAULT_SIZE));
 
     return (ca->stats.idle > shrink_thres) ? true : false;
 }
@@ -152,26 +151,31 @@ static int _cache_free(struct cache_allocator *ca, u64 va, u64 size)
     return ret;
 }
 
-static int cache_expand(struct cache_allocator *ca, u64 size, u64 *start)
+static int cache_malloc_raw(u32 devid, u64 align, u64 *start, u64 size, u32 normal_flag)
 {
-    u32 normal_flag = cache_flag_to_normal_flag(ca->flag);
-    u64 align = ca->strategy.alloc_gran;
-    u64 va = 0;
+    u64 va = *start;
     int ret;
 
-    ret = svm_normal_malloc(ca->devid, normal_flag, align, &va, size);
+    ret = svm_normal_malloc(devid, normal_flag, align, &va, size);
     if (ret != DRV_ERROR_NONE) {
         return ret;
     }
 
-    ret = cache_ops_post_expand(ca->devid, va, size);
+    ret = cache_ops_post_expand(devid, va, size);
     if (ret != DRV_ERROR_NONE) {
-        (void)svm_normal_free(ca->devid, normal_flag, align, va, size);
+        (void)svm_normal_free(devid, normal_flag, align, va, size);
         return ret;
     }
 
     *start = va;
     return DRV_ERROR_NONE;
+}
+
+static int cache_expand(struct cache_allocator *ca, u64 size, u64 *start)
+{
+    u32 normal_flag = cache_flag_to_normal_flag(ca->flag);
+    u64 align = ca->strategy.alloc_gran;
+    return cache_malloc_raw(ca->devid, align, start, size, normal_flag);
 }
 
 static int cache_shrink(struct cache_allocator *ca, u64 start, u64 size)
@@ -185,7 +189,7 @@ static int cache_shrink(struct cache_allocator *ca, u64 start, u64 size)
 
 static int cache_expand_once(struct cache_allocator *ca, u64 size)
 {
-    u64 start;
+    u64 start = 0;
     int ret;
 
     ret = cache_expand(ca, size, &start);
@@ -274,8 +278,7 @@ bool svm_cache_is_support(u32 devid, u32 flag, u64 align, u32 size)
     struct cache_allocator *ca = NULL;
 
     ca = cache_get_allocator(devid, flag);
-    return (((ca != NULL) && (size <= ca->strategy.alloc_thres)
-        && (align == ca->strategy.alloc_gran)) ? true : false);
+    return (((ca != NULL) && (size <= ca->strategy.alloc_thres) && (align == ca->strategy.alloc_gran)) ? true : false);
 }
 
 int svm_cache_malloc(u32 devid, u32 flag, u64 align, u64 *va, u64 size)
@@ -289,8 +292,7 @@ int svm_cache_malloc(u32 devid, u32 flag, u64 align, u64 *va, u64 size)
     }
 
     if (align != ca->strategy.alloc_gran) {
-        svm_err("Cur cache flag not support such align. (devid=%u; flag=0x%x; align=%llu)\n",
-            devid, flag, align);
+        svm_err("Cur cache flag not support such align. (devid=%u; flag=0x%x; align=%llu)\n", devid, flag, align);
         return DRV_ERROR_INVALID_VALUE;
     }
 
@@ -308,8 +310,7 @@ int svm_cache_free(u32 devid, u32 flag, u64 align, u64 va, u64 size)
     }
 
     if (align != ca->strategy.alloc_gran) {
-        svm_err("Cur cache flag not support such align. (devid=%u; flag=0x%x; align=%llu)\n",
-            devid, flag, align);
+        svm_err("Cur cache flag not support such align. (devid=%u; flag=0x%x; align=%llu)\n", devid, flag, align);
         return DRV_ERROR_INVALID_VALUE;
     }
 
@@ -343,4 +344,10 @@ void svm_show_cache(u32 devid, char *buf, u32 buf_len)
 
     len += cache_allocator_show(tmp_devid, buf, buf_len);
     len += cache_recycle_seg_show(tmp_devid, buf + len, buf_len - len);
+}
+
+int cache_restore(u32 devid, u64 start, u64 size, u32 flag)
+{
+    u32 normal_flag = cache_flag_to_normal_flag(flag) | SVM_NORMAL_MALLOC_FLAG_POPULATE_ONLY;
+    return cache_malloc_raw(devid, 0, &start, size, normal_flag);
 }

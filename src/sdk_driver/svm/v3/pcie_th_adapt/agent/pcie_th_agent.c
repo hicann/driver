@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2025. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -30,16 +30,18 @@ static int pcie_th_agent_dma_addr_get(u32 udevid, void *msg, u32 *reply_len)
     int ret;
 
     if (msg_info->head.extend_num == 0) {
-        svm_err("Invalid extend num. (udevid=%u; tgid=%u; va=0x%llx; size=0x%llx)\n",
-            udevid, msg_info->tgid, msg_info->va, msg_info->size);
+        svm_err(
+            "Invalid extend num. (udevid=%u; tgid=%u; va=0x%llx; size=0x%llx)\n", udevid, msg_info->tgid, msg_info->va,
+            msg_info->size);
         return -EINVAL;
     }
 
     svm_global_va_pack(uda_get_host_id(), msg_info->tgid, msg_info->va, msg_info->size, &dst_va);
     ret = svm_dma_addr_get(udevid, msg_info->tgid, &dst_va, &dma_info);
     if (ret != 0) {
-        svm_err("Get dma addr failed. (udevid=%u; tgid=%u; va=0x%llx; size=0x%llx)\n",
-            udevid, msg_info->tgid, msg_info->va, msg_info->size);
+        svm_err(
+            "Get dma addr failed. (udevid=%u; tgid=%u; va=0x%llx; size=0x%llx)\n", udevid, msg_info->tgid, msg_info->va,
+            msg_info->size);
         return ret;
     }
 
@@ -51,7 +53,7 @@ static int pcie_th_agent_dma_addr_get(u32 udevid, void *msg, u32 *reply_len)
         msg_info->seg[i] = dma_info.seg[i];
     }
 
-    msg_info->seg[0].dma_addr =  dma_info.seg[0].dma_addr + dma_info.first_seg_offset;
+    msg_info->seg[0].dma_addr = dma_info.seg[0].dma_addr + dma_info.first_seg_offset;
     msg_info->seg[0].size = dma_info.seg[0].size - dma_info.first_seg_offset;
     msg_info->seg[msg_info->head.extend_num - 1].size = dma_info.last_seg_len;
 
@@ -79,14 +81,10 @@ static int pcie_th_agent_dma_addr_put(u32 udevid, void *msg, u32 *reply_len)
 static struct svm_kmc_d2h_recv_handle g_d2h_pcie_th_dma_addr_get_handle = {
     .func = pcie_th_agent_dma_addr_get,
     .raw_msg_size = sizeof(struct pcie_th_dma_addr_get_msg),
-    .extend_gran_size = sizeof(struct svm_dma_addr_seg)
-};
+    .extend_gran_size = sizeof(struct svm_dma_addr_seg)};
 
 static struct svm_kmc_d2h_recv_handle g_d2h_pcie_th_dma_addr_put_handle = {
-    .func = pcie_th_agent_dma_addr_put,
-    .raw_msg_size = sizeof(struct pcie_th_dma_addr_put_msg),
-    .extend_gran_size = 0
-};
+    .func = pcie_th_agent_dma_addr_put, .raw_msg_size = sizeof(struct pcie_th_dma_addr_put_msg), .extend_gran_size = 0};
 
 int svm_pcie_th_agent_init(void)
 {
@@ -95,4 +93,3 @@ int svm_pcie_th_agent_init(void)
     return 0;
 }
 DECLAER_FEATURE_AUTO_INIT(svm_pcie_th_agent_init, FEATURE_LOADER_STAGE_3);
-

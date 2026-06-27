@@ -114,10 +114,15 @@ checkDebugMode() {
 
 # check if there are multiple run processes in execution
 checkProcess(){
-    name=`ps -ef | awk '$2=='$$'{print $10}'|rev|cut -d "/" -f1|rev`
+    name="${runfilename%.run}"
     checkname=`echo "$name" | awk -F "-" '{print $1"-"$2}'`
+    if [[ -z "$name" || "${checkname}" = "${name}-" || "${checkname}" = "-" ]]; then
+        checkname=${name}
+    else
+        checkname="${checkname}--.*.run"
+    fi
     shellname=`echo $0 |rev |cut -d "/" -f1 |rev`
-    process=`ps -ef | grep -v "grep" | grep -w "$shellname" |grep -w "${checkname}-.*.run"`
+    process=`ps -ef | grep -v "grep" | grep -w "$shellname" |grep -w -- "${checkname}"`
     pid=`echo "$process" | awk -F ' ' '{print $2}'`
     ret=`echo "$process" | awk -F ' ' '{print $3}' | grep -v "$pid" | wc -l`
     if [ $ret -gt 1 ]; then
@@ -309,6 +314,7 @@ if [ -f $installInfo ]; then
 fi
 
 runfilename="${1##*/}"
+runfilename="${runfilename#--}"
 runPackagePath=""
 full_install=n
 uninstall=n

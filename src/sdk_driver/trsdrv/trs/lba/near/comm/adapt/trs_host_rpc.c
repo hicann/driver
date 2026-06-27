@@ -36,8 +36,7 @@ static int trs_urd_rpc_msg_ctrl(void *feature, char *in, u32 in_len, char *out, 
     int ret;
 
     if ((feature == NULL) || (in == NULL) || (in_len != sizeof(struct dms_get_device_info_in))) {
-        trs_err("Param invalid. (feature=%d; in=%d; in_len=%u)\n",
-            feature != NULL, in != NULL, in_len);
+        trs_err("Param invalid. (feature=%d; in=%d; in_len=%u)\n", feature != NULL, in != NULL, in_len);
         return -EINVAL;
     }
 
@@ -119,20 +118,12 @@ int trs_urd_rpc_msg_get(void *feature, char *in, u32 in_len, char *out, u32 out_
 #define DMS_MODULE_TRS_RPC_CTRL "trs_rpc_ctrl"
 BEGIN_DMS_MODULE_DECLARATION(DMS_MODULE_TRS_RPC_CTRL)
 BEGIN_FEATURE_COMMAND()
-ADD_FEATURE_COMMAND(DMS_MODULE_TRS_RPC_CTRL,
-    DMS_GET_SET_DEVICE_INFO_CMD,
-    ZERO_CMD,
-    "main_cmd=0xb,sub_cmd=0xb",
-    NULL,
-    DMS_ACC_ROOT_ONLY | DMS_ENV_NOT_NORMAL_DOCKER | DMS_VDEV_NOTSUPPORT,
-    trs_urd_rpc_msg_set)
-ADD_FEATURE_COMMAND(DMS_MODULE_TRS_RPC_CTRL,
-    DMS_GET_GET_DEVICE_INFO_CMD,
-    ZERO_CMD,
-    "main_cmd=0xb,sub_cmd=0xb",
-    NULL,
-    DMS_ACC_ALL | DMS_ENV_ALL | DMS_VDEV_NOTSUPPORT,
-    trs_urd_rpc_msg_get)
+ADD_FEATURE_COMMAND(
+    DMS_MODULE_TRS_RPC_CTRL, DMS_GET_SET_DEVICE_INFO_CMD, ZERO_CMD, "main_cmd=0xb,sub_cmd=0xb", NULL,
+    DMS_ACC_ROOT_ONLY | DMS_ENV_NOT_NORMAL_DOCKER | DMS_VDEV_NOTSUPPORT, trs_urd_rpc_msg_set)
+ADD_FEATURE_COMMAND(
+    DMS_MODULE_TRS_RPC_CTRL, DMS_GET_GET_DEVICE_INFO_CMD, ZERO_CMD, "main_cmd=0xb,sub_cmd=0xb", NULL,
+    DMS_ACC_ALL | DMS_ENV_ALL | DMS_VDEV_NOTSUPPORT, trs_urd_rpc_msg_get)
 END_FEATURE_COMMAND()
 END_MODULE_DECLARATION()
 

@@ -19,7 +19,6 @@
 #include "ka_task_pub.h"
 #include "ka_base_pub.h"
 #include "ka_kernel_def_pub.h"
-#include "dms_kernel_version_adapt.h"
 #include "urd_feature.h"
 #include "dms_template.h"
 #include "devdrv_user_common.h"
@@ -83,7 +82,7 @@ EXIT_MODULE_FUNC(DMS_EVENT_CMD_NAME);
 BEGIN_DMS_MODULE_DECLARATION(DMS_EVENT_CMD_NAME)
 BEGIN_FEATURE_COMMAND()
 ADD_FEATURE_COMMAND(DMS_EVENT_CMD_NAME, DMS_MAIN_CMD_BASIC, DMS_SUBCMD_GET_FAULT_EVENT, NULL, NULL,
-                    DMS_ACC_NOT_LIMIT_USER | DMS_ENV_ALL | DMS_VDEV_PHYSICAL, dms_event_get_fault_event)
+                    DMS_ACC_NOT_LIMIT_USER | DMS_ENV_ALL | DMS_VDEV_NOTSUPPORT, dms_event_get_fault_event)
 ADD_FEATURE_COMMAND(DMS_EVENT_CMD_NAME, DMS_MAIN_CMD_BASIC, DMS_SUBCMD_GET_HISTORY_FAULT_EVENT, NULL, NULL,
                     DMS_ACC_NOT_LIMIT_USER | DMS_ENV_NOT_DOCKER | DMS_VDEV_PHYSICAL, dms_event_get_history_fault_event)
 #ifdef CFG_FEATURE_GET_CURRENT_EVENTINFO
@@ -190,7 +189,7 @@ STATIC int dms_event_get_events_by_sensor(const struct dms_sensor_object_cb *pse
     struct dms_event_para *fault_event_buf, int max_event_num, int *curr_event_num)
 {
     DMS_EVENT_LIST_ITEM *event_item = psensor_obj_cb->p_event_list;
-    DMS_EVENT_NODE_STRU  exception_node;
+    DMS_EVENT_NODE_STRU  exception_node = {0};
     struct dms_event_obj sensor_event;
     unsigned char assertion = 0;
     int event_index = (*curr_event_num);
@@ -376,7 +375,7 @@ int dms_event_get_fault_event(void *feature, char *in, u32 in_len, char *out, u3
         return DRV_ERROR_PARA_ERROR;
     }
 
-    ret = dms_event_get_exception(&fault_event, input.timeout, input.cmd_src);
+    ret = dms_event_get_exception(input.dev_id, &input.filter, &fault_event, input.timeout, input.cmd_src);
     if (ret == -ETIMEDOUT) {
         return ret;
     } else if (ret == -ERESTARTSYS) {

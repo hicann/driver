@@ -13,8 +13,12 @@
 #ifndef KA_LIST_PUB_H
 #define KA_LIST_PUB_H
 
+#include <linux/version.h>
 #include <linux/types.h>
 #include <linux/list.h>
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 20, 0)
+#include <linux/xarray.h>
+#endif
 
 #include "ka_common_pub.h"
 
@@ -501,5 +505,30 @@ typedef struct rcu_head ka_rcu_head_t;
 #define ka_list_add_tail_rcu(entry, head) list_add_tail_rcu(entry, head)
 #define ka_list_del_rcu(entry) list_del_rcu(entry)
 #define ka_list_for_each_entry_rcu list_for_each_entry_rcu
+
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 20, 0)
+#define KA_IS_DAVINCI_XARRAY_SUPPORT                        1
+extern void *xa_load(struct xarray *xa, unsigned long index);
+extern int xa_err(void *entry);
+extern void *xa_erase(struct xarray *xa, unsigned long index);
+extern void *xa_store(struct xarray *xa, unsigned long index, void *entry, gfp_t gfp);
+extern bool xa_is_err(const void *entry);
+extern int xa_err(void *entry);
+extern void xa_destroy(struct xarray *xa);
+
+#define KA_DEFINE_XARRAY DEFINE_XARRAY
+#define ka_xa_load xa_load
+#define ka_xa_err xa_err
+#define ka_xa_erase xa_erase
+#define ka_xa_store xa_store
+#define ka_xa_is_err xa_is_err
+#define ka_xa_err xa_err
+#define ka_xa_destroy xa_destroy
+#else
+#define KA_IS_DAVINCI_XARRAY_SUPPORT                        0
+#endif
+
+#define KA_INTERVAL_TREE_DEFINE     INTERVAL_TREE_DEFINE
+#define KA_RB_ROOT_CACHED           RB_ROOT_CACHED
 
 #endif

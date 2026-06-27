@@ -14,7 +14,7 @@
 #ifndef TRS_SEC_EH_SQCQ_H
 #define TRS_SEC_EH_SQCQ_H
 
-#include <linux/types.h>
+#include "ka_type.h"
 
 #include "trs_pub_def.h"
 
@@ -46,8 +46,7 @@ void trs_sec_eh_sq_ctx_init(struct trs_sec_eh_ts_inst *sec_eh_cfg, struct trs_se
 void trs_sec_eh_sq_ctx_uninit(struct trs_sec_eh_ts_inst *sec_eh_cfg, u32 sqid);
 u64 trs_sec_eh_alloc_sq_mem(struct trs_sec_eh_ts_inst *sec_eh_cfg, struct trs_sec_eh_sq_ctx_info *ctx);
 void trs_sec_eh_free_sq_mem(struct trs_sec_eh_ts_inst *sec_eh_cfg, u32 sqid);
-int trs_sec_eh_check_and_update_cq_ctx_info(struct trs_sec_eh_ts_inst *sec_eh_cfg,
-    struct trs_sec_eh_cq_ctx_info *ctx);
+int trs_sec_eh_check_and_update_cq_ctx_info(struct trs_sec_eh_ts_inst *sec_eh_cfg, struct trs_sec_eh_cq_ctx_info *ctx);
 
 /* for vpc */
 void trs_sec_eh_free_sq_mem_all(struct trs_id_inst *inst);

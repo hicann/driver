@@ -25,5 +25,6 @@ struct vmng_msg_tx_data_dma_copy_sync_link {
 };
 
 void vmng_msg_cmn_verify_send_prepare(struct vmng_msg_common_pcie_txd_verify *x1,
-    struct vmng_msg_common_pcie_txd_verify *x2, struct vmng_tx_msg_proc_info *tx_info);
+                                      struct vmng_msg_common_pcie_txd_verify *x2,
+                                      struct vmng_tx_msg_proc_info *tx_info);
 #endif

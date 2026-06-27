@@ -18,10 +18,12 @@
 #include <unistd.h>
 #include <pthread.h>
 #include <sys/syscall.h>
+#include <stdio.h>
 
 #include "ascend_hal_define.h"
 #include "slog.h"
 #include "dmc_share_log.h"
+#include "securec.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -29,32 +31,43 @@ extern "C" {
 const char *drv_log_get_module_str(enum devdrv_module_type module);
 
 int32_t errno_to_user_errno(int32_t kern_err_no);
-drvError_t drvMngGetConsoleLogLevel(unsigned int *logLevel);// This function is defined in devdrv_manage.
+drvError_t drvMngGetConsoleLogLevel(unsigned int *logLevel); // This function is defined in devdrv_manage.
 int32_t drv_log_out_handle_register(struct log_out_handle *handle, size_t input_size, uint32_t flag);
 int32_t drv_log_out_handle_unregister(void);
 int32_t is_run_log(void);
 
 uint32_t get_con_log_level(void);
 const char *get_log_get_level_string(uint32_t level);
+const char *get_log_get_level_string_default(uint32_t level);
 const char *get_log_get_print_time(void);
+const char *get_log_get_print_time_default(void);
 uint32_t get_log_level_shift(uint32_t level);
 void (*get_log_Print(void))(int32_t, int32_t, const char *, ...);
+int dsmi_printf(const char *fmt, ...);
+const char *get_process_name(void);
 
 #ifdef DRV_HOST
-#define DRV_SYSLOG_BASE(LEVEL, module, mask, actual_print_level, fmt, ...) do { \
-        if ((uint32_t)LEVEL <= (uint32_t)actual_print_level) { \
-            (*get_log_Print())(mask, (int32_t)get_log_level_shift((uint32_t)LEVEL), \
-                "%s%s[%s:%d][ascend][curpid:%d,%d][drv][%s][%s]" fmt, \
-                get_log_get_level_string((uint32_t)LEVEL), get_log_get_print_time(), \
-                __FILE__, __LINE__, getpid(), syscall(__NR_gettid), \
-                drv_log_get_module_str(module), __func__, ##__VA_ARGS__); \
-        } \
+#define DRV_SYSLOG_BASE(LEVEL, module, mask, actual_print_level, fmt, ...)                                         \
+    do {                                                                                                           \
+        if ((uint32_t)LEVEL <= (uint32_t)actual_print_level) {                                                     \
+            (*get_log_Print())(mask, (int32_t)get_log_level_shift((uint32_t)LEVEL),                                \
+                               "%s%s[%s:%d][ascend][curpid:%d,%d][drv][%s][%s]" fmt,                               \
+                               get_log_get_level_string((uint32_t)LEVEL), get_log_get_print_time(), __FILE__,      \
+                               __LINE__, getpid(), syscall(__NR_gettid), drv_log_get_module_str(module), __func__, \
+                               ##__VA_ARGS__);                                                                     \
+            if (module == HAL_MODULE_TYPE_DMP || module == HAL_MODULE_TYPE_DEV_MANAGER) {                          \
+                dsmi_printf(                                                                                       \
+                    "%s DRV(%d, %s):%s[%s:%d][ascend][curpid:%d,%ld][drv][%s][%s]" fmt,                            \
+                    get_log_get_level_string_default((uint32_t)((mask & RUN_LOG_MASK) == 0 ? LEVEL : LOG_CRIT)),   \
+                    getpid(), get_process_name(), get_log_get_print_time_default(), __FILE__, __LINE__, getpid(),  \
+                    syscall(__NR_gettid), drv_log_get_module_str(module), __func__, ##__VA_ARGS__);                \
+            }                                                                                                      \
+        }                                                                                                          \
     } while (0)
 
-#define DRV_SYSLOG(LEVEL, module, fmt, ...) DRV_SYSLOG_BASE(LEVEL, module, DRV, \
-    get_con_log_level(), fmt, ##__VA_ARGS__)
-#define DRV_SYSLOG_RUN(LEVEL, module, fmt, ...) DRV_SYSLOG_BASE(LEVEL, module, (DRV | RUN_LOG_MASK), \
-    LOG_INFO, fmt, ##__VA_ARGS__)
+#define DRV_SYSLOG(LEVEL, module, fmt, ...) DRV_SYSLOG_BASE(LEVEL, module, DRV, get_con_log_level(), fmt, ##__VA_ARGS__)
+#define DRV_SYSLOG_RUN(LEVEL, module, fmt, ...) \
+    DRV_SYSLOG_BASE(LEVEL, module, (DRV | RUN_LOG_MASK), LOG_INFO, fmt, ##__VA_ARGS__)
 
 /* debug log, the default log level is LOG_ERR. */
 #define DRV_ERR(module, fmt, ...) DRV_SYSLOG(LOG_ERR, module, fmt, ##__VA_ARGS__)
@@ -71,13 +84,14 @@ void (*get_log_Print(void))(int32_t, int32_t, const char *, ...);
 #define DRV_ALERT(module, fmt, ...) DRV_SYSLOG(LOG_ALERT, module, fmt, ##__VA_ARGS__)
 #define DRV_NOTICE(module, fmt, ...) DRV_SYSLOG(LOG_NOTICE, module, fmt, ##__VA_ARGS__)
 
-#define DRV_LOG_CMPT(LEVEL, module, fmt, ...) do { \
-    if (is_run_log()) {                                       \
-        DRV_SYSLOG_RUN(LEVEL, module, fmt, ##__VA_ARGS__); \
-    } else {                                                  \
-        DRV_SYSLOG(LOG_CRIT, module, fmt, ##__VA_ARGS__);     \
-    }                                                         \
-} while (0)
+#define DRV_LOG_CMPT(LEVEL, module, fmt, ...)                  \
+    do {                                                       \
+        if (is_run_log()) {                                    \
+            DRV_SYSLOG_RUN(LEVEL, module, fmt, ##__VA_ARGS__); \
+        } else {                                               \
+            DRV_SYSLOG(LOG_CRIT, module, fmt, ##__VA_ARGS__);  \
+        }                                                      \
+    } while (0)
 
 /* run log, the default log level is LOG_INFO. */
 #define DRV_RUN_ERR(module, fmt, ...) DRV_LOG_CMPT(LOG_ERR, module, fmt, ##__VA_ARGS__)
@@ -109,45 +123,99 @@ void (*get_log_Print(void))(int32_t, int32_t, const char *, ...);
 
 /* run log, the default log level is LOG_INFO. */
 #define DRV_RUN_INFO(module, fmt, ...) \
-    dlog_info((DRV | RUN_LOG_MASK), "[%s] [%s] " fmt, \
-              drv_log_get_module_str(module), __func__, ##__VA_ARGS__)
+    dlog_info((DRV | RUN_LOG_MASK), "[%s] [%s] " fmt, drv_log_get_module_str(module), __func__, ##__VA_ARGS__)
 #endif
 
-int32_t __attribute__((weak)) drv_log_report_err_msg_handle_register(struct err_msg_report_handle *handle, size_t input_size);
+int32_t __attribute__((weak)) drv_log_report_err_msg_handle_register(struct err_msg_report_handle *handle,
+                                                                     size_t input_size);
 int32_t __attribute__((weak)) drv_log_report_err_msg_handle_unregister(void);
 register_format_err_msg_func get_format_err_msg_register_func(void);
 report_predefined_err_msg_func get_predefined_err_msg_report_func(void);
 report_inner_err_msg_func get_inner_err_msg_report_func(void);
+#define MAX_MEM_SIZE_STR_SIZE 32
+#define MAX_PARA_VALUE_STR_SIZE 30
+#define MAX_REASON_STR_SIZE 300
+void report_arg_out_of_range(const char *func_name, const char *para_name, unsigned int para_value, unsigned int left,
+                             unsigned int right);
+void report_arg_equal_to_zero(const char *func_name, const char *para_name);
+void report_arg_null_pointer(const char *func_name, const char *para_name);
+void report_insufficient_host_memory(unsigned long long size, const char *module_name);
+void report_insufficient_device_memory(unsigned long long size, const char *module_name);
+#define REGISTER_FORMAT_ERR_MSG(error_msg, error_msg_len)                                \
+    do {                                                                                 \
+        register_format_err_msg_func register_func = get_format_err_msg_register_func(); \
+        if (register_func == NULL) {                                                     \
+            break;                                                                       \
+        }                                                                                \
+        register_func((error_msg), (error_msg_len));                                     \
+    } while (0)
 
-#define REGISTER_FORMAT_ERR_MSG(error_msg, error_msg_len)                            \
-do                                                                                   \
-{                                                                                    \
-    register_format_err_msg_func register_func = get_format_err_msg_register_func(); \
-    if (register_func == NULL) {                                                     \
-        break;                                                                       \
-    }                                                                                \
-    register_func((error_msg), (error_msg_len));                                     \
-} while (0)
+#define REPORT_PREDEFINED_ERR_MSG(error_code, key, value, arg_num)                         \
+    do {                                                                                   \
+        report_predefined_err_msg_func report_func = get_predefined_err_msg_report_func(); \
+        if (report_func == NULL) {                                                         \
+            break;                                                                         \
+        }                                                                                  \
+        report_func((error_code), (key), (value), (arg_num));                              \
+    } while (0)
 
-#define REPORT_PREDEFINED_ERR_MSG(error_code, key, value, arg_num)                     \
-do                                                                                     \
-{                                                                                      \
-    report_predefined_err_msg_func report_func = get_predefined_err_msg_report_func(); \
-    if (report_func == NULL) {                                                         \
-        break;                                                                         \
-    }                                                                                  \
-    report_func((error_code), (key), (value), (arg_num));                              \
-} while (0)
+#define REPORT_INNER_ERR_MSG(error_code, format, ...)                                         \
+    do {                                                                                      \
+        report_inner_err_msg_func report_func = get_inner_err_msg_report_func();              \
+        if (report_func == NULL) {                                                            \
+            break;                                                                            \
+        }                                                                                     \
+        report_func(__FILE__, __FUNCTION__, __LINE__, (error_code), (format), ##__VA_ARGS__); \
+    } while (0)
 
-#define REPORT_INNER_ERR_MSG(error_code, format, ...)                                     \
-do                                                                                        \
-{                                                                                         \
-    report_inner_err_msg_func report_func = get_inner_err_msg_report_func();              \
-    if (report_func == NULL) {                                                            \
-        break;                                                                            \
-    }                                                                                     \
-    report_func(__FILE__, __FUNCTION__, __LINE__, (error_code), (format), ##__VA_ARGS__); \
-} while (0)
+static inline int drv_hex_format_line(char *buf, size_t bufsz, const unsigned char *data, size_t len)
+{
+    size_t pos = 0;
+    size_t i;
+    int sn_ret;
+
+    for (i = 0; i < len; i++) {
+        sn_ret = snprintf_s(buf + pos, bufsz - pos, (size_t)(bufsz - pos - 1), "%02x", data[i]);
+        if (sn_ret < 0) {
+            return -1;
+        }
+        pos += (size_t)sn_ret;
+    }
+
+    if (pos < bufsz) {
+        buf[pos] = '\0';
+    } else {
+        buf[bufsz - 1] = '\0';
+    }
+
+    return (int)pos;
+}
+
+/* NOTE: Do not include a newline ('\n') in @fmt. The macro adds
+ * a space and a newline automatically for each line.
+ */
+#define DRV_ERR_HEX_DUMP(module, buf, len, fmt, ...)                                                 \
+    do {                                                                                             \
+        const unsigned char *data_ptr = (const unsigned char *)(buf);                                \
+        size_t remain = (len);                                                                       \
+        size_t offset = 0;                                                                           \
+        char line_buf[129];                                                                          \
+                                                                                                     \
+        if ((data_ptr == NULL) || (remain == 0)) {                                                   \
+            break;                                                                                   \
+        }                                                                                            \
+                                                                                                     \
+        while (remain > 0) {                                                                         \
+            size_t chunk = (remain > 64) ? 64 : remain;                                              \
+            int hex_ret = drv_hex_format_line(line_buf, sizeof(line_buf), data_ptr + offset, chunk); \
+            if (hex_ret <= 0) {                                                                      \
+                break;                                                                               \
+            }                                                                                        \
+            DRV_ERR(module, fmt " %s\n", ##__VA_ARGS__, line_buf);                                   \
+            offset += chunk;                                                                         \
+            remain -= chunk;                                                                         \
+        }                                                                                            \
+    } while (0)
 
 #ifdef __cplusplus
 }

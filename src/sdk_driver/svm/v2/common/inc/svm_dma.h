@@ -18,8 +18,8 @@
 #include "comm_kernel_interface.h"
 #include "vmng_kernel_interface.h"
 
-#define DEVMM_DMA_SMALL_PACKET_SIZE       1024
-#define DEVMM_DMA_QUERY_WAIT_PACKET_SIZE  262144ul /* 256k */
+#define DEVMM_DMA_SMALL_PACKET_SIZE 1024
+#define DEVMM_DMA_QUERY_WAIT_PACKET_SIZE 262144ul /* 256k */
 
 #define DEVMM_DMA_WAIT_MIN_TIME 100
 #define DEVMM_DMA_WAIT_MAX_TIME 200

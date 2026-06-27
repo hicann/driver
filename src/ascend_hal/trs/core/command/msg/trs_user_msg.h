@@ -46,7 +46,10 @@ struct trs_remote_sync_info {
 };
 
 struct trs_d2d_sync_info {
-    urma_jetty_id_t jetty_id;
+    union {
+        urma_jetty_id_t jetty_id;
+        urma_jfr_id_t jfr_id;
+    };
     uint32_t tpn;
     uint32_t token_value;
     uint32_t die_id;

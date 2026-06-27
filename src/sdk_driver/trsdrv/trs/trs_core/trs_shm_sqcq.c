@@ -184,7 +184,8 @@ static int trs_shm_sqcq_alloc_para_check(struct trs_id_inst *inst, struct halSqC
     if ((para->sqeSize != TRS_SHM_SQE_SIZE) || (para->sqeDepth != TRS_SHM_SQ_DEPTH) ||
         (para->cqeSize != TRS_SHM_CQE_SIZE) || (para->cqeDepth != TRS_SHM_CQ_DEPTH) ||
         (alloc_para->uio_info->sq_que_addr == 0)) {
-        trs_err("Invalid para. (devid=%u; tsid=%u; sqeDepth=%u; sqeSize=%u; cqeDepth=%u; cqeSize=%u; sq_addr=0x%pK)\n",
+        trs_err(
+            "Invalid para. (devid=%u; tsid=%u; sqeDepth=%u; sqeSize=%u; cqeDepth=%u; cqeSize=%u; sq_addr=0x%pK)\n",
             inst->devid, inst->tsid, para->sqeDepth, para->sqeSize, para->cqeDepth, para->cqeSize,
             (void *)(uintptr_t)alloc_para->uio_info->sq_que_addr);
         return -EINVAL;
@@ -193,8 +194,8 @@ static int trs_shm_sqcq_alloc_para_check(struct trs_id_inst *inst, struct halSqC
     return 0;
 }
 
-static int trs_shm_sq_remap(struct trs_proc_ctx *proc_ctx,
-    struct trs_core_ts_inst *ts_inst, struct halSqCqInputInfo *para)
+static int trs_shm_sq_remap(
+    struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst, struct halSqCqInputInfo *para)
 {
     struct trs_id_inst *inst = &ts_inst->inst;
     struct trs_proc_ts_ctx *ts_ctx = &proc_ctx->ts_ctx[inst->tsid];
@@ -203,12 +204,14 @@ static int trs_shm_sq_remap(struct trs_proc_ctx *proc_ctx,
     struct trs_mem_map_para map_para;
     int ret;
 
-    trs_remap_fill_para(&map_para, TRS_MAP_TYPE_RO_DEV_MEM, alloc_para->uio_info->sq_que_addr, shm_ctx->sq_pa,
+    trs_remap_fill_para(
+        &map_para, TRS_MAP_TYPE_RO_DEV_MEM, alloc_para->uio_info->sq_que_addr, shm_ctx->sq_pa,
         KA_MM_PAGE_ALIGN(para->sqeDepth * para->sqeSize));
     ret = trs_remap_sq(proc_ctx, ts_inst, &map_para);
     if (ret != 0) {
-        trs_err("Remap sq failed. (devid=%u; tsid=%u; sqid=%u; va=%lx)\n",
-            inst->devid, inst->tsid, para->sqId, alloc_para->uio_info->sq_que_addr);
+        trs_err(
+            "Remap sq failed. (devid=%u; tsid=%u; sqid=%u; va=%lx)\n", inst->devid, inst->tsid, para->sqId,
+            alloc_para->uio_info->sq_que_addr);
         return ret;
     }
 
@@ -227,8 +230,8 @@ static void trs_shm_sq_unmap(struct trs_proc_ctx *proc_ctx, struct trs_core_ts_i
     (void)trs_unmap_sq(proc_ctx, ts_inst, &unmap_para);
 }
 
-static int trs_shm_sqcq_alloc_notice_ts(struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst,
-    struct halSqCqInputInfo *para)
+static int trs_shm_sqcq_alloc_notice_ts(
+    struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst, struct halSqCqInputInfo *para)
 {
     struct trs_shm_ctx *shm_ctx = &ts_inst->shm_ctx;
     struct trs_proc_shm_ctx *proc_shm_ctx = &proc_ctx->ts_ctx[ts_inst->inst.tsid].shm_ctx;
@@ -263,8 +266,8 @@ static int trs_shm_sqcq_alloc_notice_ts(struct trs_proc_ctx *proc_ctx, struct tr
     return trs_core_notice_ts(ts_inst, (u8 *)&msg, sizeof(msg));
 }
 
-static int trs_shm_sqcq_free_notice_ts(struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst,
-    struct halSqCqFreeInfo *para)
+static int trs_shm_sqcq_free_notice_ts(
+    struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst, struct halSqCqFreeInfo *para)
 {
     struct trs_shm_sqcq_mbox msg;
 
@@ -342,8 +345,9 @@ int trs_shm_sqcq_free(struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts
     int ret;
 
     if ((shm_ctx->chan_id < 0) || (shm_ctx->sqid != para->sqId) || (proc_shm_ctx->cqid != para->cqId)) {
-        trs_err("Invalid para. (devid=%u; tsid=%u; sqid=%u; cqid=%u; chan_id=%u; shm_sqid=%u; shm_cqid=%u)\n",
-            inst->devid, inst->tsid, para->sqId, para->cqId, shm_ctx->chan_id, shm_ctx->sqid, proc_shm_ctx->cqid);
+        trs_err(
+            "Invalid para. (devid=%u; tsid=%u; sqid=%u; cqid=%u; chan_id=%u; shm_sqid=%u; shm_cqid=%u)\n", inst->devid,
+            inst->tsid, para->sqId, para->cqId, shm_ctx->chan_id, shm_ctx->sqid, proc_shm_ctx->cqid);
         return -EINVAL;
     }
 
@@ -379,4 +383,3 @@ void trs_shm_sqcq_uninit(struct trs_core_ts_inst *ts_inst)
     struct trs_shm_ctx *shm_ctx = &ts_inst->shm_ctx;
     ka_task_mutex_destroy(&shm_ctx->mutex);
 }
-

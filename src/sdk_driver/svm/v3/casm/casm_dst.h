@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2025. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -34,4 +34,3 @@ int casm_mem_unpin(u32 udevid, int tgid, u64 va, u64 size);
 int casm_dst_init(void);
 
 #endif
-

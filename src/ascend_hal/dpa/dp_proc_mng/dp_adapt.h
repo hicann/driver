@@ -13,7 +13,7 @@
 
 #include "dpa/dpa_dp_proc_mng.h"
 
-#define MEM_STATS_DEVICE_CNT                        64
+#define MEM_STATS_DEVICE_CNT 64
 
 drvError_t dp_proc_mng_update_mbuff_and_process_mem_stats(struct module_mem_info *mem_info, uint32_t devid);
 drvError_t dp_proc_mng_get_dev_info(uint32_t *dev_num, uint32_t *ids);
@@ -23,4 +23,3 @@ bool dp_proc_support_bind_cgroup(void);
 uint64_t dp_proc_mng_get_module_used_size(uint32_t devid, uint32_t module_id);
 
 #endif
-

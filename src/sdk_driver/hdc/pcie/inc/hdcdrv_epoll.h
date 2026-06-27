@@ -59,11 +59,11 @@ struct hdcdrv_epoll {
 };
 
 long hdcdrv_kernel_epoll_alloc_fd(int size, int *epfd, const int *magic_num);
-long hdcdrv_kernel_epoll_ctl(int epfd, int magic_num, int op, 
-    unsigned int event, int para1, const char *para2, unsigned int para2_len);
-long hdcdrv_kernel_epoll_wait(int epfd, int magic_num, int timeout, int *event_num,
-    unsigned int event[], unsigned int event_len, int para1[],
-    unsigned int para1_len, int para2[], unsigned int para2_len);
+long hdcdrv_kernel_epoll_ctl(int epfd, int magic_num, int op, unsigned int event, int para1, const char *para2,
+                             unsigned int para2_len);
+long hdcdrv_kernel_epoll_wait(int epfd, int magic_num, int timeout, int *event_num, unsigned int event[],
+                              unsigned int event_len, int para1[], unsigned int para1_len, int para2[],
+                              unsigned int para2_len);
 long hdcdrv_kernel_epoll_free_fd(int epfd, int magic_num);
 extern void hdcdrv_epoll_recycle_fd(struct hdcdrv_ctx *ctx);
 extern void hdcdrv_epoll_wake_up(struct hdcdrv_epoll_fd *epfd);
@@ -72,4 +72,4 @@ extern void hdcdrv_epoll_uninit(struct hdcdrv_epoll *epolls);
 extern int *hdcdrv_epoll_get_dev_id_ptr(union hdcdrv_cmd *cmd_data);
 extern long hdcdrv_epoll_wait(struct hdcdrv_cmd_epoll_wait *cmd, int mode);
 
-#endif  // _HDCDRV_EPOLL_H_
+#endif // _HDCDRV_EPOLL_H_

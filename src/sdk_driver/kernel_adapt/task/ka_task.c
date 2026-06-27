@@ -12,15 +12,22 @@
  */
 
 #include <linux/version.h>
+#include <linux/cgroup.h>
+#include <linux/cpuset.h>
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 11, 0)
 #include <uapi/linux/sched/types.h>
 #else
 #include <linux/sched.h>
 #endif
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 19, 0)
+#include <linux/sched/debug.h>
+#endif
+
 #include "securec.h"
 #include "ka_system_pub.h"
 #include "ka_memory_pub.h"
+#include "ka_fs_pub.h"
 #include "ka_task_pub.h"
 
 void ka_task_do_exit(long code)
@@ -297,3 +304,98 @@ int ka_task_sched_set_fifo_low(ka_task_struct_t *p)
 #endif
 }
 EXPORT_SYMBOL_GPL(ka_task_sched_set_fifo_low);
+
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 14, 0)
+static int new_cpuset_read(char *buf, size_t count)
+{
+    ka_cgroup_subsys_state_t *css = NULL;
+    int retval;
+
+    css = ka_task_task_get_css(ka_task_get_current(), cpuset_cgrp_id);
+    if (css == NULL) {
+        return -EINVAL;
+    }
+
+    retval = ka_task_cgroup_path_ns(css->cgroup, buf,
+        count, ka_task_get_current_cgroup_ns());
+    ka_task_css_put(css);
+    if (retval <= 0) {
+        return -EINVAL;
+    }
+
+    return count;
+}
+#endif
+
+ssize_t ka_task_kernel_read(ka_file_t *file, void *buf, size_t count)
+{
+    ssize_t ret = 0;
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 14, 0)
+    loff_t pos = 0;
+#endif
+
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 14, 0)
+    (void)file;
+    ret = new_cpuset_read(buf, count);
+#else
+    ret = ka_fs_kernel_read(file, buf, count, pos);
+#endif
+    return ret;
+}
+EXPORT_SYMBOL_GPL(ka_task_kernel_read);
+
+void ka_use_mm(ka_mm_struct_t *mm)
+{
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5,8,0))
+    kthread_use_mm(mm);
+#else
+    use_mm(mm);
+#endif
+}
+EXPORT_SYMBOL_GPL(ka_use_mm);
+
+void ka_unuse_mm(ka_mm_struct_t *mm)
+{
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5,8,0))
+    kthread_unuse_mm(mm);
+#else
+    unuse_mm(mm);
+#endif
+}
+EXPORT_SYMBOL_GPL(ka_unuse_mm);
+
+const ka_cpumask_t *ka_get_cpumask(ka_task_struct_t *task)
+{
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5,3,0))
+    return &(task->cpus_mask);
+#else
+    return cpu_possible_mask;
+#endif
+}
+EXPORT_SYMBOL_GPL(ka_get_cpumask);
+
+void ka_print_dump_task(ka_pid_t proc_tgid)
+{
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 19, 0)
+    ka_struct_pid_t *pid_proc = NULL;
+    ka_task_struct_t *task = NULL;
+
+    pid_proc = ka_task_find_get_pid(proc_tgid);
+    if (pid_proc == NULL) {
+        return;
+    }
+
+    task = ka_task_get_pid_task(pid_proc, KA_PIDTYPE_PID);
+    if (task != NULL) {
+        ka_task_sched_show_task(task);
+        ka_task_put_task_struct(task);
+    }
+
+    ka_task_put_pid(pid_proc);
+    return;
+#else
+    (void)proc_tgid;
+    return;
+#endif
+}
+EXPORT_SYMBOL_GPL(ka_print_dump_task);

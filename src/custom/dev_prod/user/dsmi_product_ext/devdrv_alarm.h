@@ -11,6 +11,7 @@
 #ifndef _DEVDRV_ALARM_H_
 #define _DEVDRV_ALARM_H_
 
+#include "dsmi_common_interface.h"
 #include "dsmi_common_interface_custom.h"
 
 #define ALARM_INFO_MAX_NUM	128

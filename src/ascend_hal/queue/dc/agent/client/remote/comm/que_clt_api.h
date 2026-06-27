@@ -17,11 +17,11 @@
 #include "esched_user_interface.h"
 
 struct que_clt_api {
-    drvError_t (* api_enque_buf)(unsigned int, unsigned int, struct buff_iovec *, int);
-    drvError_t (* api_deque_buf)(unsigned int, unsigned int, struct buff_iovec *, int);
-    drvError_t (* api_subscribe)(unsigned int, unsigned int, unsigned int, struct event_res *);
-    drvError_t (* api_unsubscribe)(unsigned int, unsigned int, unsigned int);
-    drvError_t (* api_peek)(unsigned int, unsigned int, uint64_t *, int);
+    drvError_t (*api_enque_buf)(unsigned int, unsigned int, struct buff_iovec *, int);
+    drvError_t (*api_deque_buf)(unsigned int, unsigned int, struct buff_iovec *, int);
+    drvError_t (*api_subscribe)(unsigned int, unsigned int, unsigned int, struct event_res *);
+    drvError_t (*api_unsubscribe)(unsigned int, unsigned int, unsigned int);
+    drvError_t (*api_peek)(unsigned int, unsigned int, uint64_t *, int);
 };
 
 #endif

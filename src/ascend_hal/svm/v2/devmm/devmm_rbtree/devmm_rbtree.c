@@ -33,19 +33,23 @@ uint64_t devmm_rbtree_get_mapped_len(struct devmm_heap_rbtree *rbtree_queue, uin
     return rbtree_queue->idle_mapped_cache_tree[mapped_tree_type]->rbtree_len;
 }
 
-bool devmm_rbtree_is_empty(struct rbtree_root *root)
-{
-    return ((root == NULL) || (root->rbtree_len == 0));
-}
+bool devmm_rbtree_is_empty(struct rbtree_root *root) { return ((root == NULL) || (root->rbtree_len == 0)); }
 
 struct devmm_rbtree_node *devmm_rbtree_get_alloced_node(uint64_t va, struct devmm_heap_rbtree *rbtree_queue)
 {
-    struct multi_rb_node *rb_node = multi_rbtree_get(va, rbtree_queue->alloced_tree);
-    if (rb_node == NULL) {
+    struct multi_rb_node *node = NULL;
+
+    if (rbtree_queue->alloced_tree == NULL) {
+        DEVMM_DRV_ERR("alloced_tree is null.\n");
+        return NULL;
+    }
+
+    node = multi_rbtree_get(va, rbtree_queue->alloced_tree);
+    if (node == NULL) {
         DEVMM_DRV_ERR("Get node failed with key. (key=0x%llx)\n", va);
         return NULL;
     }
-    return rb_entry(rb_node, struct devmm_rbtree_node, va_node);
+    return rb_entry(node, struct devmm_rbtree_node, va_node);
 }
 
 static struct multi_rb_node *devmm_multi_rb_node_get_in_range(uint64_t key, struct rbtree_root *root)
@@ -84,14 +88,12 @@ static struct devmm_rbtree_node *devmm_rbtree_node_get_in_range(uint64_t va, str
     return NULL;
 }
 
-struct devmm_rbtree_node *devmm_rbtree_get_alloced_node_in_range(uint64_t va,
-    struct devmm_heap_rbtree *rbtree_queue)
+struct devmm_rbtree_node *devmm_rbtree_get_alloced_node_in_range(uint64_t va, struct devmm_heap_rbtree *rbtree_queue)
 {
     return devmm_rbtree_node_get_in_range(va, rbtree_queue->alloced_tree);
 }
 
-struct devmm_rbtree_node *devmm_rbtree_get_idle_va_node_in_range(uint64_t va,
-    struct devmm_heap_rbtree *rbtree_queue)
+struct devmm_rbtree_node *devmm_rbtree_get_idle_va_node_in_range(uint64_t va, struct devmm_heap_rbtree *rbtree_queue)
 {
     return devmm_rbtree_node_get_in_range(va, rbtree_queue->idle_va_tree);
 }
@@ -113,8 +115,8 @@ struct devmm_rbtree_node *devmm_rbtree_get_from_idle_size_tree(uint64_t size, st
     return rb_entry(rb_node, struct devmm_rbtree_node, size_node);
 }
 
-struct devmm_rbtree_node *devmm_rbtree_get_idle_mapped_node(uint64_t size, struct devmm_heap_rbtree *rbtree_queue,
-    uint32_t mapped_tree_type)
+struct devmm_rbtree_node *devmm_rbtree_get_idle_mapped_node(
+    uint64_t size, struct devmm_heap_rbtree *rbtree_queue, uint32_t mapped_tree_type)
 {
     struct multi_rb_node *rb_node = NULL;
 
@@ -139,7 +141,8 @@ STATIC struct devmm_rbtree_node *devmm_rblist_get_full_mapped_node(struct multi_
     struct list_node *head = NULL;
 
     if ((rb_node != NULL) && (list_empty(&rb_node->list) == 0)) {
-        list_for_each_node(head, &rb_node->list) {
+        list_for_each_node(head, &rb_node->list)
+        {
             rb_node_list = rb_entry(head, struct multi_rb_node, list);
             rbtree_node = rb_entry(rb_node_list, struct devmm_rbtree_node, cache_node);
             if (rbtree_node->data.total == rbtree_node->data.size) {
@@ -151,14 +154,15 @@ STATIC struct devmm_rbtree_node *devmm_rblist_get_full_mapped_node(struct multi_
     return NULL;
 }
 
-struct devmm_rbtree_node *devmm_rbtree_get_full_mapped_node(struct devmm_heap_rbtree *rbtree_queue,
-    uint32_t mapped_tree_type)
+struct devmm_rbtree_node *devmm_rbtree_get_full_mapped_node(
+    struct devmm_heap_rbtree *rbtree_queue, uint32_t mapped_tree_type)
 {
     struct devmm_rbtree_node *rbtree_node = NULL;
     struct multi_rb_node *rb_node = NULL;
     struct rbtree_node *cur = NULL;
 
-    rbtree_node_for_each(cur, rbtree_queue->idle_mapped_cache_tree[mapped_tree_type]) {
+    rbtree_node_for_each(cur, rbtree_queue->idle_mapped_cache_tree[mapped_tree_type])
+    {
         rb_node = multi_rbtree_get_node_from_rb_node(cur);
         rbtree_node = rb_entry(rb_node, struct devmm_rbtree_node, cache_node);
         if (rbtree_node->data.total == rbtree_node->data.size) {
@@ -183,8 +187,8 @@ DVresult devmm_rbtree_insert_idle_va_tree(struct devmm_rbtree_node *rbtree_node,
     return devmm_rbtree_insert(rbtree_node->data.va, &rbtree_node->va_node, rbtree_queue->idle_va_tree);
 }
 
-DVresult devmm_rbtree_insert_idle_size_tree(struct devmm_rbtree_node *rbtree_node,
-    struct devmm_heap_rbtree *rbtree_queue)
+DVresult devmm_rbtree_insert_idle_size_tree(
+    struct devmm_rbtree_node *rbtree_node, struct devmm_heap_rbtree *rbtree_queue)
 {
     return devmm_rbtree_insert(rbtree_node->data.size, &rbtree_node->size_node, rbtree_queue->idle_size_tree);
 }
@@ -194,18 +198,19 @@ DVresult devmm_rbtree_insert_alloced_tree(struct devmm_rbtree_node *rbtree_node,
     return devmm_rbtree_insert(rbtree_node->data.va, &rbtree_node->va_node, rbtree_queue->alloced_tree);
 }
 
-DVresult devmm_rbtree_insert_idle_readonly_mapped_tree(struct devmm_rbtree_node *rbtree_node,
-    struct devmm_heap_rbtree *rbtree_queue)
+DVresult devmm_rbtree_insert_idle_readonly_mapped_tree(
+    struct devmm_rbtree_node *rbtree_node, struct devmm_heap_rbtree *rbtree_queue)
 {
-    return devmm_rbtree_insert(rbtree_node->data.size, &rbtree_node->cache_node,
+    return devmm_rbtree_insert(
+        rbtree_node->data.size, &rbtree_node->cache_node,
         rbtree_queue->idle_mapped_cache_tree[DEVMM_MAPPED_RDONLY_TREE]);
 }
 
-DVresult devmm_rbtree_insert_idle_rw_mapped_tree(struct devmm_rbtree_node *rbtree_node,
-    struct devmm_heap_rbtree *rbtree_queue)
+DVresult devmm_rbtree_insert_idle_rw_mapped_tree(
+    struct devmm_rbtree_node *rbtree_node, struct devmm_heap_rbtree *rbtree_queue)
 {
-    return devmm_rbtree_insert(rbtree_node->data.size, &rbtree_node->cache_node,
-        rbtree_queue->idle_mapped_cache_tree[DEVMM_MAPPED_RW_TREE]);
+    return devmm_rbtree_insert(
+        rbtree_node->data.size, &rbtree_node->cache_node, rbtree_queue->idle_mapped_cache_tree[DEVMM_MAPPED_RW_TREE]);
 }
 
 static inline DVresult devmm_rbtree_erase(struct multi_rb_node *rb_node, struct rbtree_root *tree_root)
@@ -224,8 +229,8 @@ DVresult devmm_rbtree_erase_idle_va_tree(struct devmm_rbtree_node *rbtree_node, 
     return devmm_rbtree_erase(&rbtree_node->va_node, rbtree_queue->idle_va_tree);
 }
 
-DVresult devmm_rbtree_erase_idle_size_tree(struct devmm_rbtree_node *rbtree_node,
-    struct devmm_heap_rbtree *rbtree_queue)
+DVresult devmm_rbtree_erase_idle_size_tree(
+    struct devmm_rbtree_node *rbtree_node, struct devmm_heap_rbtree *rbtree_queue)
 {
     return devmm_rbtree_erase(&rbtree_node->size_node, rbtree_queue->idle_size_tree);
 }
@@ -235,21 +240,20 @@ DVresult devmm_rbtree_erase_alloced_tree(struct devmm_rbtree_node *rbtree_node, 
     return devmm_rbtree_erase(&rbtree_node->va_node, rbtree_queue->alloced_tree);
 }
 
-DVresult devmm_rbtree_erase_idle_readonly_mapped_tree(struct devmm_rbtree_node *rbtree_node,
-    struct devmm_heap_rbtree *rbtree_queue)
+DVresult devmm_rbtree_erase_idle_readonly_mapped_tree(
+    struct devmm_rbtree_node *rbtree_node, struct devmm_heap_rbtree *rbtree_queue)
 {
-    return devmm_rbtree_erase(&rbtree_node->cache_node,
-        rbtree_queue->idle_mapped_cache_tree[DEVMM_MAPPED_RDONLY_TREE]);
+    return devmm_rbtree_erase(&rbtree_node->cache_node, rbtree_queue->idle_mapped_cache_tree[DEVMM_MAPPED_RDONLY_TREE]);
 }
 
-DVresult devmm_rbtree_erase_idle_rw_mapped_tree(struct devmm_rbtree_node *rbtree_node,
-    struct devmm_heap_rbtree *rbtree_queue)
+DVresult devmm_rbtree_erase_idle_rw_mapped_tree(
+    struct devmm_rbtree_node *rbtree_node, struct devmm_heap_rbtree *rbtree_queue)
 {
-    return devmm_rbtree_erase(&rbtree_node->cache_node,
-        rbtree_queue->idle_mapped_cache_tree[DEVMM_MAPPED_RW_TREE]);
+    return devmm_rbtree_erase(&rbtree_node->cache_node, rbtree_queue->idle_mapped_cache_tree[DEVMM_MAPPED_RW_TREE]);
 }
 
-void devmm_assign_rbtree_node_data(uint64_t va, uint64_t size, uint64_t total, uint32_t flag, DVmem_advise advise,
+void devmm_assign_rbtree_node_data(
+    uint64_t va, uint64_t size, uint64_t total, uint32_t flag, DVmem_advise advise,
     struct devmm_rbtree_node *rbtree_node)
 {
     rbtree_node->data.va = va;
@@ -271,7 +275,7 @@ STATIC struct devmm_rbtree_node *devmm_get_rbtree_node_from_list(struct devmm_ca
             return NULL;
         }
         list_new->is_new = 1;
-        return &list_new->cache;  //lint !e429
+        return &list_new->cache; // lint !e429
     }
     last = rb_entry(head->list.prev, struct devmm_cache_list, list);
     list_del_node(&last->list);
@@ -325,11 +329,13 @@ STATIC void devmm_rbtree_free_nodes(struct rbtree_root *tree_root, struct list_n
         return;
     }
 
-    rbtree_node_for_each_prev_safe(cur, tmp, tree_root) {
+    rbtree_node_for_each_prev_safe(cur, tmp, tree_root)
+    {
         rb_node = multi_rbtree_get_node_from_rb_node(cur);
         __rbtree_erase(cur, tree_root);
         if (list_empty(&rb_node->list) == 0) {
-            list_for_each_node_safe(head, tmp_head, &rb_node->list) {
+            list_for_each_node_safe(head, tmp_head, &rb_node->list)
+            {
                 list_del_node(head);
                 rb_node_list = rb_entry(head, struct multi_rb_node, list);
                 rbtree_node = devmm_get_rbtree_node_by_type(rb_node_list, tree_type);
@@ -367,13 +373,12 @@ STATIC void devmm_rbtree_clear(struct rbtree_root *root)
         return;
     }
 
-    rbtree_node_for_each_prev_safe(cur, tmp, root) {
+    rbtree_node_for_each_prev_safe(cur, tmp, root)
+    {
         rb_node = multi_rbtree_get_node_from_rb_node(cur);
         __rbtree_erase(cur, root);
         if (list_empty(&rb_node->list) == 0) {
-            list_for_each_node_safe(head, tmp_head, &rb_node->list) {
-                list_del_node(head);
-            }
+            list_for_each_node_safe(head, tmp_head, &rb_node->list) { list_del_node(head); }
         }
     }
     root->rbtree_len = 0;
@@ -429,11 +434,12 @@ STATIC void devmm_rbtree_free_cache(struct devmm_cache_list **head)
     if (*head == NULL) {
         return;
     }
-    list_for_each_node_safe(cur, tmp_head, &(*head)->list) {
+    list_for_each_node_safe(cur, tmp_head, &(*head)->list)
+    {
         list_del_node(cur);
         list_node = rb_entry(cur, struct devmm_cache_list, list);
         if (list_node->is_new != 0) {
-            free(list_node); //lint !e424
+            free(list_node); // lint !e424
             list_node = NULL;
         }
     }
@@ -529,8 +535,8 @@ void devmm_rbtree_destory(struct devmm_heap_rbtree *rbtree_queue)
 
     devmm_rbtree_clear(rbtree_queue->idle_va_tree);
     for (i = 0; i < DEVMM_MAPPED_TREE_TYPE_MAX; i++) {
-        devmm_rbtree_free_nodes(rbtree_queue->idle_mapped_cache_tree[i], &rbtree_queue->head->list,
-            DEVMM_IDLE_MAPPED_TREE);
+        devmm_rbtree_free_nodes(
+            rbtree_queue->idle_mapped_cache_tree[i], &rbtree_queue->head->list, DEVMM_IDLE_MAPPED_TREE);
     }
     devmm_rbtree_free_nodes(rbtree_queue->idle_size_tree, &rbtree_queue->head->list, DEVMM_IDLE_SIZE_TREE);
     devmm_rbtree_free_nodes(rbtree_queue->alloced_tree, &rbtree_queue->head->list, DEVMM_ALLOCED_TREE);

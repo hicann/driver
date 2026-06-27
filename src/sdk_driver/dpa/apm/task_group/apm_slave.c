@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2025. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -51,7 +51,7 @@ static int _apm_slave_ctx_create(struct task_ctx_domain *domain, int slave_tgid,
     return 0;
 }
 
-int apm_slave_ctx_create(struct task_ctx_domain *domain, int slave_tgid, int slave_pid)
+int apm_slave_ctx_create(struct task_ctx_domain *domain, int slave_tgid, int slave_pid, struct task_start_time *start_time)
 {
     struct task_ctx *ctx = NULL;
     int ret = 0;
@@ -66,11 +66,34 @@ int apm_slave_ctx_create(struct task_ctx_domain *domain, int slave_tgid, int sla
             return ret;
         }
     } else {
+        if ((start_time != NULL) && (!ka_system_timespec_equal(start_time->time, ctx->start_time.time))) {
+            struct slave_ctx *s_ctx = (struct slave_ctx *)ctx->priv;
+            s_ctx->need_fast_exit = 1; /* accelerate the process exit */
+            ret = -EAGAIN;
+            apm_debug("Slave start time is different, please retry. (slave_tgid=%d)\n", slave_tgid);
+        }
         task_ctx_put(ctx);
     }
     ka_task_mutex_unlock(&domain->mutex);
 
     return ret;
+}
+
+int apm_slave_ctx_need_fast_exit(struct task_ctx_domain *domain, int slave_tgid)
+{
+    struct task_ctx *ctx = NULL;
+    int need_fast_exit = 0;
+
+    ka_task_mutex_lock(&domain->mutex);
+    ctx = task_ctx_get(domain, slave_tgid);
+    if (ctx != NULL) {
+        struct slave_ctx *s_ctx = (struct slave_ctx *)ctx->priv;
+        need_fast_exit = s_ctx->need_fast_exit;
+        task_ctx_put(ctx);
+    }
+    ka_task_mutex_unlock(&domain->mutex);
+
+    return need_fast_exit;
 }
 
 void apm_slave_ctx_destroy(struct task_ctx_domain *domain, int slave_tgid)
@@ -124,7 +147,8 @@ static int apm_slave_ctx_add_master(struct task_ctx *ctx, void *priv)
 
     if ((s_ctx->num > 0) &&
         ((s_ctx->master_pid != para->master_pid) || (s_ctx->udevid != para->devid) || (s_ctx->mode != para->mode))) {
-        apm_err("Should bind same master. (master_pid=%d; slave_pid=%d; binded_master_pid=%d; devid=%u; mode=%d)\n",
+        apm_err(
+            "Should bind same master. (master_pid=%d; slave_pid=%d; binded_master_pid=%d; devid=%u; mode=%d)\n",
             para->master_pid, para->slave_pid, s_ctx->master_pid, para->devid, para->mode);
         return -EINVAL;
     }
@@ -166,8 +190,9 @@ static int apm_slave_ctx_del_master(struct task_ctx *ctx, void *priv)
     struct apm_cmd_bind *para = (struct apm_cmd_bind *)priv;
 
     if (s_ctx->valid[para->proc_type] == 0) {
-        apm_warn("Not bind proc type. (master_pid=%d; slave_pid=%d; proc_type=%d)\n",
-            para->master_pid, para->slave_pid, para->proc_type);
+        apm_warn(
+            "Not bind proc type. (master_pid=%d; slave_pid=%d; proc_type=%d)\n", para->master_pid, para->slave_pid,
+            para->proc_type);
         return -ENXIO;
     }
 
@@ -242,11 +267,11 @@ int apm_slave_query_master(struct task_ctx_domain *domain, int slave_tgid, struc
     return task_ctx_lock_call_func_non_block(domain, slave_tgid, apm_slave_ctx_query_master, (void *)para);
 }
 
-int apm_slave_query_master_self_exit_check(struct task_ctx_domain *domain, int slave_tgid,
-    struct apm_cmd_query_master_info *para)
+int apm_slave_query_master_self_exit_check(
+    struct task_ctx_domain *domain, int slave_tgid, struct apm_cmd_query_master_info *para)
 {
-    return task_ctx_lock_call_func_non_block(domain, slave_tgid, apm_slave_ctx_query_master_self_exit_check,
-        (void *)para);
+    return task_ctx_lock_call_func_non_block(
+        domain, slave_tgid, apm_slave_ctx_query_master_self_exit_check, (void *)para);
 }
 
 int apm_slave_tgid_to_pid(struct task_ctx_domain *domain, int slave_tgid, int *slave_pid)
@@ -300,8 +325,9 @@ static void apm_slave_ctx_try_destroy(struct task_ctx *ctx, void *priv)
     int master_tgid = (int)(uintptr_t)priv;
 
     if (s_ctx->master_tgid == master_tgid) {
-        apm_info("Master exit destroy slave. (slave_pid=%d; master_tgid=%d; slave_tgid=%d)\n",
-            s_ctx->slave_pid, master_tgid, ctx->tgid);
+        apm_info(
+            "Master exit destroy slave. (slave_pid=%d; master_tgid=%d; slave_tgid=%d)\n", s_ctx->slave_pid, master_tgid,
+            ctx->tgid);
         apm_slave_ctx_destroy(ctx->domain, ctx->tgid);
     }
 }
@@ -317,9 +343,10 @@ static int apm_slave_ctx_show_details(struct task_ctx *ctx, void *priv)
     ka_seq_file_t *seq = (ka_seq_file_t *)priv;
     int proc_type;
 
-    ka_fs_seq_printf(seq, "domain: %s slave_tgid %d(%s) slave pid %d master pid %d tgid %d mode %d udevid %u num %u\n",
-        ctx->domain->name, ctx->tgid, ctx->name,
-        s_ctx->slave_pid, s_ctx->master_pid, s_ctx->master_tgid, s_ctx->mode, s_ctx->udevid, s_ctx->num);
+    ka_fs_seq_printf(
+        seq, "domain: %s slave_tgid %d(%s) slave pid %d master pid %d tgid %d mode %d udevid %u num %u\n",
+        ctx->domain->name, ctx->tgid, ctx->name, s_ctx->slave_pid, s_ctx->master_pid, s_ctx->master_tgid, s_ctx->mode,
+        s_ctx->udevid, s_ctx->num);
     for (proc_type = 0; proc_type < APM_PROC_TYPE_NUM; proc_type++) {
         if (s_ctx->valid[proc_type] == 1) {
             ka_fs_seq_printf(seq, "    %d(%s)", proc_type, apm_proc_type_to_name(proc_type));
@@ -353,10 +380,10 @@ static int apm_slave_ctx_check_set_exit_stage(struct task_ctx *ctx, void *priv)
     return -EINVAL;
 }
 
-int apm_slave_check_set_exit_status(struct task_ctx_domain *domain, int slave_tgid, struct task_start_time *time,
-    u32 check_src)
+int apm_slave_check_set_exit_status(
+    struct task_ctx_domain *domain, int slave_tgid, struct task_start_time *time, u32 check_src)
 {
     u32 src = check_src;
-    return task_ctx_time_check_lock_call_func_non_block(domain, slave_tgid, time, apm_slave_ctx_check_set_exit_stage,
-        &src);
+    return task_ctx_time_check_lock_call_func_non_block(
+        domain, slave_tgid, time, apm_slave_ctx_check_set_exit_stage, &src);
 }

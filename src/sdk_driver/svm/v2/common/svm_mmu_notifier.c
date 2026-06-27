@@ -42,18 +42,31 @@ void devmm_mmu_notifier_unregister_no_release(struct devmm_svm_process *svm_proc
 #endif
 }
 
+STATIC void devmm_svm_soma_unreg(struct devmm_svm_process *svm_proc)
+{
+    if (svm_proc->soma_clean_resource_handler != NULL) {
+        devmm_drv_info("Invoke soma handler. (devpid=%d)\n", svm_proc->devpid);
+        svm_proc->soma_clean_resource_handler(svm_proc->devpid);
+    } else {
+        devmm_drv_info("Soma handler is NULL. (devpid=%d)\n", svm_proc->devpid);
+    }
+    return;
+}
+
 void devmm_svm_mmu_notifier_unreg(struct devmm_svm_process *svm_proc)
 {
     bool notifier_release_flag = false;
 
-    devmm_drv_info("Devmm notifier unreg."
+    devmm_drv_info(
+        "Devmm notifier unreg."
         "(hostpid=%d; devpid=%d; devid=%d; vfid=%d; status=0x%x; proc_idx=0x%x; msg=%u; other_proc=%u)\n",
         svm_proc->process_id.hostpid, svm_proc->devpid, svm_proc->process_id.devid, svm_proc->process_id.vfid,
         svm_proc->proc_status, svm_proc->proc_idx, svm_proc->msg_processing, svm_proc->other_proc_occupying);
     /*
-    * with user unmap, trace: do_munmap->devmm_notifier_start->devmm_svm_mmu_notifier_unreg
-    * without user unmap, trace: exit->devmm_notifier_release->devmm_svm_mmu_notifier_unreg
-    */
+     * with user unmap, trace: do_munmap->devmm_notifier_start->devmm_svm_mmu_notifier_unreg
+     * without user unmap, trace: exit->devmm_notifier_release->devmm_svm_mmu_notifier_unreg
+     */
+    devmm_svm_soma_unreg(svm_proc);
     devmm_wait_exit_and_del_from_hashtable_lock(svm_proc);
 
     ka_task_mutex_lock(&svm_proc->proc_lock);
@@ -79,7 +92,7 @@ void devmm_svm_mmu_notifier_unreg(struct devmm_svm_process *svm_proc)
 static inline bool devmm_mem_is_in_dvpp_vma_range(u64 start, u64 end)
 {
     u64 devid, start_addr, end_addr;
-    for (devid = 0; devid < DEVMM_MAX_DEVICE_NUM; devid++) {
+    for (devid = 0; devid < DEVMM_MAX_PHY_DEVICE_NUM; devid++) {
         start_addr = DEVMM_SVM_MEM_START + devid * DEVMM_DVPP_HEAP_RESERVATION_SIZE;
         end_addr = start_addr + DEVMM_MAX_HEAP_MEM_FOR_DVPP_16G;
         if (start == start_addr && end == end_addr) {
@@ -106,6 +119,14 @@ static bool devmm_mem_is_in_readonly_vma_range(u64 start, u64 end)
     }
     return false;
 }
+static bool devmm_mem_is_soma_range(u64 start, u64 end)
+{
+    return (start == DEVMM_SOMA_MEM_START) && (end == DEVMM_SOMA_MEM_START + DEVMM_SOMA_MEM_SIZE);
+}
+static bool devmm_mem_is_host_pin_range(u64 start, u64 end)
+{
+    return (start == DEVMM_HOST_PIN_START) && (end == DEVMM_HOST_PIN_END);
+}
 
 static bool _devmm_mem_is_in_vma_range(ka_vm_area_struct_t *vma[], u32 vma_num, u64 start, u64 end)
 {
@@ -127,19 +148,26 @@ static bool _devmm_mem_is_in_vma_range(ka_vm_area_struct_t *vma[], u32 vma_num, 
         if (devmm_mem_is_in_readonly_vma_range(start, end)) {
             return true;
         }
-    } else if (size == DEVMM_SVM_MEM_SIZE - DEVMM_DVPP_HEAP_TOTAL_SIZE - DEVMM_READ_ONLY_HEAP_TOTAL_SIZE -
-        DEVMM_DEV_READ_ONLY_HEAP_TOTAL_SIZE) {
-        if ((start == DEVMM_NON_RESERVATION_HEAP_ADDR_START) &&
-            (end == DEVMM_SVM_MEM_START + DEVMM_SVM_MEM_SIZE)) {
+    } else if (
+        size == DEVMM_SVM_MEM_SIZE - DEVMM_DVPP_HEAP_TOTAL_SIZE - DEVMM_READ_ONLY_HEAP_TOTAL_SIZE -
+                    DEVMM_DEV_READ_ONLY_HEAP_TOTAL_SIZE) {
+        if ((start == DEVMM_NON_RESERVATION_HEAP_ADDR_START) && (end == DEVMM_SVM_MEM_START + DEVMM_SVM_MEM_SIZE)) {
             return true;
         }
     } else if (size == DEVMM_HOST_PIN_SIZE) {
-        if ((start == DEVMM_HOST_PIN_START) && (end == DEVMM_HOST_PIN_END)) {
+        if (devmm_mem_is_host_pin_range(start, end)) {
             ka_vm_area_struct_t *tmp_vma = NULL;
             tmp_vma = _devmm_find_vma_proc(vma, vma_num, DEVMM_HOST_PIN_START);
             return (tmp_vma != NULL);
         }
+    } else if (size == DEVMM_SOMA_MEM_SIZE) {
+        if (devmm_mem_is_soma_range(start, end)) {
+            ka_vm_area_struct_t *tmp_vma = NULL;
+            tmp_vma = _devmm_find_vma_proc(vma, vma_num, DEVMM_SOMA_MEM_START);
+            return (tmp_vma != NULL);
+        }
     }
+
     return false;
 }
 #endif
@@ -172,8 +200,8 @@ bool devmm_mem_is_in_vma_range(ka_vm_area_struct_t *vma[], u32 vma_num, u64 star
    call munmap partial in user illegal, os will call ops devmm_vm_open(vm_operations_struct.open) also,
        use this to check illegal call
 */
-STATIC int _devmm_notifier_start(ka_mmu_notifier_t *mn, ka_mm_struct_t *mm,
-    unsigned long start, unsigned long end, bool blockable)
+STATIC int _devmm_notifier_start(
+    ka_mmu_notifier_t *mn, ka_mm_struct_t *mm, unsigned long start, unsigned long end, bool blockable)
 {
 #ifndef EMU_ST
     struct devmm_svm_process *svm_proc = NULL;
@@ -202,7 +230,8 @@ STATIC int _devmm_notifier_start(ka_mmu_notifier_t *mn, ka_mm_struct_t *mm,
 
         /*
          * If the heap is null, it indicates a normal dynamic address release (munmap), and the da should be deleted.
-         * Otherwise, it indicates an abnormal munmap, and the da should be deleted after the heap and bitmap have been destroyed.
+         * Otherwise, it indicates an abnormal munmap, and the da should be deleted after the heap and bitmap have been
+         * destroyed.
          */
         svm_occupy_da(svm_proc); /* Mutually exclusive with ioctl heap destroy. */
         unexpected_munmap = (devmm_svm_get_heap(svm_proc, start) != NULL);
@@ -244,8 +273,8 @@ static ka_mmu_notifier_t *devmm_alloc_notifier(ka_mm_struct_t *mm)
 {
     ka_mmu_notifier_t *notifier = NULL;
 
-    notifier = (ka_mmu_notifier_t *)devmm_kmalloc_ex(sizeof(ka_mmu_notifier_t),
-        KA_GFP_ATOMIC | __KA_GFP_NOWARN | __KA_GFP_ACCOUNT | __KA_GFP_ZERO);
+    notifier = (ka_mmu_notifier_t *)devmm_kmalloc_ex(
+        sizeof(ka_mmu_notifier_t), KA_GFP_ATOMIC | __KA_GFP_NOWARN | __KA_GFP_ACCOUNT | __KA_GFP_ZERO);
     if (notifier == NULL) {
         devmm_drv_err("Kmalloc mmu_notifier fail.\n");
         return KA_ERR_PTR(-ENOMEM);
@@ -265,13 +294,12 @@ KA_DEFINE_MMU_NOTIFIER_INVALIDATE_RANGE_START_FN(_devmm_notifier_start)
 #endif
 
 ka_mmu_notifier_ops_t devmm_process_mmu_notifier = {
-#ifndef EMU_ST    
+#ifndef EMU_ST
     KA_MM_MMU_NOTIFIER_OPS_INIT_INVALIDATE_RANGE_START(_devmm_notifier_start)
-#endif    
-    .release = devmm_notifier_release,
+#endif
+        .release = devmm_notifier_release,
     KA_MM_MMU_NOTIFIER_OPS_INIT_ALLOC_NOTIFIER(devmm_alloc_notifier)
-    KA_MM_MMU_NOTIFIER_OPS_INIT_FREE_NOTIFIER(devmm_free_notifier)
-};
+        KA_MM_MMU_NOTIFIER_OPS_INIT_FREE_NOTIFIER(devmm_free_notifier)};
 #endif
 
 int devmm_mmu_notifier_register(struct devmm_svm_process *svm_proc)

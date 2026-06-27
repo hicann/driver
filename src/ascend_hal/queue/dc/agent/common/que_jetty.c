@@ -110,7 +110,6 @@ static int _que_jfs_jfce_init(struct que_jfs *qjfs, unsigned int d2d_flag)
     } else {
         jfce_s = que_urma_jfce_create(qjfs->devid, d2d_flag);
         if (que_unlikely(jfce_s == NULL)) {
-            que_urma_jfce_destroy(jfce_s);
             QUEUE_LOG_ERR("Jfce_s create fail. (devid=%u)\n", qjfs->devid);
             return DRV_ERROR_INNER_ERR;
         }
@@ -119,7 +118,7 @@ static int _que_jfs_jfce_init(struct que_jfs *qjfs, unsigned int d2d_flag)
 
     return DRV_ERROR_NONE;
 }
- 
+
 static void _que_jfs_jfce_uninit(struct que_jfs *qjfs)
 {
     if (que_likely((qjfs->jfce_s != NULL) && (!qjfs->attr.spec_jfce_s))) {
@@ -131,7 +130,7 @@ static void _que_jfs_jfce_uninit(struct que_jfs *qjfs)
 static int _que_jfr_jfce_init(struct que_jfr *qjfr, unsigned int d2d_flag)
 {
     urma_jfce_t *jfce_r = NULL;
- 
+
     jfce_r = que_urma_jfce_create(qjfr->devid, d2d_flag);
     if (que_unlikely(jfce_r == NULL)) {
         QUEUE_LOG_ERR("jfce_r create fail. (devid=%u)\n", qjfr->devid);
@@ -170,7 +169,7 @@ static int _que_jfs_jfc_init(struct que_jfs *qjfs, unsigned int d2d_flag)
     qjfs->jfc_s = jfc_s;
     return DRV_ERROR_NONE;
 }
- 
+
 static void _que_jfs_jfc_uninit(struct que_jfs *qjfs)
 {
     if (que_likely((qjfs->jfc_s != NULL) && (!qjfs->attr.spec_jfc_s))) {
@@ -195,7 +194,7 @@ static int _que_jfr_jfc_init(struct que_jfr *qjfr, unsigned int d2d_flag)
     qjfr->jfc_r = jfc_r;
     return DRV_ERROR_NONE;
 }
- 
+
 static void _que_jfr_jfc_uninit(struct que_jfr *qjfr)
 {
     if (que_likely(qjfr->jfc_r != NULL)) {
@@ -214,7 +213,7 @@ static inline void _que_jfs_cfg_fill(struct que_jfs *qjfs, urma_jfs_cfg_t *jfs_c
     jfs_cfg->err_timeout = URMA_TYPICAL_ERR_TIMEOUT;
     jfs_cfg->jfc = qjfs->jfc_s;
 }
- 
+
 static inline void _que_jfr_cfg_fill(struct que_jfr *qjfr, urma_jfr_cfg_t *jfr_cfg)
 {
     jfr_cfg->depth = qjfr->attr.jfr_depth;
@@ -243,7 +242,7 @@ static int _que_jfs_init(struct que_jfs *qjfs, unsigned int d2d_flag)
 
 static void _que_jfs_uninit(struct que_jfs *qjfs)
 {
-    if (que_likely(qjfs->jfs!= NULL)) {
+    if (que_likely(qjfs->jfs != NULL)) {
         que_urma_jfs_destroy(qjfs->jfs);
         qjfs->jfs = NULL;
     }
@@ -253,7 +252,7 @@ static int _que_jfr_init(struct que_jfr *qjfr, unsigned int d2d_flag)
 {
     urma_jfr_cfg_t jfr_cfg = {0};
     urma_jfr_t *jfr = NULL;
- 
+
     _que_jfr_cfg_fill(qjfr, &jfr_cfg);
     jfr = que_urma_jfr_create(qjfr->devid, &jfr_cfg, d2d_flag);
     if (que_unlikely(jfr == NULL)) {
@@ -266,7 +265,7 @@ static int _que_jfr_init(struct que_jfr *qjfr, unsigned int d2d_flag)
 
 static void _que_jfr_uninit(struct que_jfr *qjfr)
 {
-    if (que_likely(qjfr->jfr!= NULL)) {
+    if (que_likely(qjfr->jfr != NULL)) {
         que_urma_jfr_destroy(qjfr->jfr);
         qjfr->jfr = NULL;
     }
@@ -335,7 +334,7 @@ static int que_jfr_init(struct que_jfr *qjfr, unsigned int d2d_flag)
     return DRV_ERROR_NONE;
 err_jfr_init:
     _que_jfr_jfc_uninit(qjfr);
- 
+
 err_jfc_init:
     _que_jfr_jfce_uninit(qjfr);
     return ret;
@@ -351,7 +350,7 @@ static void que_jfr_uninit(struct que_jfr *qjfr)
 static struct que_jfs *_que_jfs_create(unsigned int devid, struct que_jfs_attr *attr)
 {
     struct que_jfs *qjfs = NULL;
- 
+
     qjfs = calloc(1, sizeof(struct que_jfs));
     if (que_unlikely(qjfs == NULL)) {
         QUEUE_LOG_ERR("qjetty alloc fail. (devid=%u; size=%ld)\n", devid, sizeof(struct que_jfs));
@@ -361,16 +360,16 @@ static struct que_jfs *_que_jfs_create(unsigned int devid, struct que_jfs_attr *
     qjfs->attr = *attr;
     return qjfs;
 }
- 
+
 static void _que_jfs_destroy(struct que_jfs *qjfs)
 {
     free(qjfs);
 }
- 
+
 static struct que_jfr *_que_jfr_create(unsigned int devid, struct que_jfr_attr *attr)
 {
     struct que_jfr *qjfr = NULL;
- 
+
     qjfr = calloc(1, sizeof(struct que_jfr));
     if (que_unlikely(qjfr == NULL)) {
         QUEUE_LOG_ERR("qjetty alloc fail. (devid=%u; size=%ld)\n", devid, sizeof(struct que_jfr));
@@ -380,17 +379,17 @@ static struct que_jfr *_que_jfr_create(unsigned int devid, struct que_jfr_attr *
     qjfr->attr = *attr;
     return qjfr;
 }
- 
+
 static void _que_jfr_destroy(struct que_jfr *qjfr)
 {
     free(qjfr);
 }
- 
+
 struct que_jfs *que_jfs_create(unsigned int devid, struct que_jfs_attr *attr, unsigned int d2d_flag)
 {
     struct que_jfs *qjfs = NULL;
     int ret;
- 
+
     qjfs = _que_jfs_create(devid, attr);
     if (que_unlikely(qjfs == NULL)) {
         QUEUE_LOG_ERR("Que jfs create fail. (devid=%u)\n", devid);
@@ -406,7 +405,7 @@ struct que_jfs *que_jfs_create(unsigned int devid, struct que_jfs_attr *attr, un
 
     return qjfs;
 }
- 
+
 void que_jfs_destroy(struct que_jfs *qjfs)
 {
     que_jfs_uninit(qjfs);
@@ -417,7 +416,7 @@ struct que_jfr *que_jfr_create(unsigned int devid, struct que_jfr_attr *attr, un
 {
     struct que_jfr *qjfr = NULL;
     int ret;
- 
+
     qjfr = _que_jfr_create(devid, attr);
     if (que_unlikely(qjfr == NULL)) {
         QUEUE_LOG_ERR("que jfr create fail. (devid=%u)\n", devid);
@@ -433,7 +432,7 @@ struct que_jfr *que_jfr_create(unsigned int devid, struct que_jfr_attr *attr, un
 
     return qjfr;
 }
- 
+
 void que_jfr_destroy(struct que_jfr *qjfr)
 {
     que_jfr_uninit(qjfr);
@@ -509,9 +508,8 @@ void que_jfs_pool_uninit(unsigned int devid, unsigned int d2d_flag)
 {
     int i;
     que_jetty_pool_wr_uninit(devid, d2d_flag);
-    for (i = QUE_DATA_RW_JETTY_POOL_DEPTH - 1; i >=0 ; i--) {
+    for (i = QUE_DATA_RW_JETTY_POOL_DEPTH - 1; i >= 0; i--) {
         que_jfs_destroy(g_jetty_pool[devid][d2d_flag].qjfs[i]);
         g_jetty_pool[devid][d2d_flag].qjfs[i] = NULL;
     }
 }
-

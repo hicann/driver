@@ -430,6 +430,20 @@ remove_modules_load_conf() {
     fi
 }
 
+unload_ub_mgmt() {
+    local drv_root_dir="$1"
+    local ube_mgmt_path="${drv_root_dir}/driver/ube_mgmt"
+ 
+    [ -f /usr/bin/load_ube_mgmt_pack.sh ] && chattr -i /usr/bin/load_ube_mgmt_pack.sh >& /dev/null && rm -f /usr/bin/load_ube_mgmt_pack.sh
+    [ -d "${ube_mgmt_path}" ] && rm -rf "${ube_mgmt_path}"
+}
+
+uninstallMami() {
+    if [ -f "${targetdir}"/driver/ube_mgmt/script/uninstall.sh ]; then
+        "${targetdir}"/driver/ube_mgmt/script/uninstall.sh uninstall
+    fi
+}
+
 # start!
 
 while true
@@ -456,6 +470,8 @@ do
             exit 1
         fi
         unchattrDriver
+        uninstallMami
+        unload_ub_mgmt "$uninstallPath"
         if [ "$Driver_Install_Type" = "devel" ]; then
             drv_ddr_remove
             if [ $? -ne 0 ];then

@@ -10,7 +10,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#include "ka_kernel_def_pub.h" 
+#include "ka_kernel_def_pub.h"
 #include "pbl/pbl_soc_res.h"
 #include "soc_adapt.h"
 #include "trs_ts_db.h"
@@ -50,10 +50,7 @@ int trs_ts_db_config(struct trs_id_inst *inst)
 }
 KA_EXPORT_SYMBOL_GPL(trs_ts_db_config);
 
-void trs_ts_db_deconfig(struct trs_id_inst *inst)
-{
-    trs_ts_db_decfg(inst);
-}
+void trs_ts_db_deconfig(struct trs_id_inst *inst) { trs_ts_db_decfg(inst); }
 KA_EXPORT_SYMBOL_GPL(trs_ts_db_deconfig);
 
 int trs_ts_doorbell_init(u32 ts_inst_id)

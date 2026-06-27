@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * Copyright (c) 2026 Huawei Technologies Co., Ltd.
  * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -18,17 +18,18 @@
 #include "va_reserve.h"
 #include "va_dev_default_allocator.h"
 
-#define VA_DEV_DEFAULT_HOST_VA_START        0x300000000000ULL
+#define VA_DEV_DEFAULT_HOST_VA_START 0x100000000000ULL
+#define VA_DEV_DEFAULT_HOST_VA_MAX 0x180000000000ULL
 
 #ifdef EMU_ST /* Simulation ST is required and cannot be deleted. */
-#define VA_DEV_DEFAULT_DEV_RESERVE_SIZE     (16ULL * SVM_BYTES_PER_GB)
-#define VA_DEV_DEFAULT_HOST_RESERVE_SIZE    (128ULL * SVM_BYTES_PER_GB)
+#define VA_DEV_DEFAULT_DEV_RESERVE_SIZE (16ULL * SVM_BYTES_PER_GB)
+#define VA_DEV_DEFAULT_HOST_RESERVE_SIZE (128ULL * SVM_BYTES_PER_GB)
 #else
-#define VA_DEV_DEFAULT_DEV_RESERVE_SIZE     (256ULL * SVM_BYTES_PER_GB)
-#define VA_DEV_DEFAULT_HOST_RESERVE_SIZE    (2ULL * SVM_BYTES_PER_TB)
+#define VA_DEV_DEFAULT_DEV_RESERVE_SIZE (256ULL * SVM_BYTES_PER_GB)
+#define VA_DEV_DEFAULT_HOST_RESERVE_SIZE (2ULL * SVM_BYTES_PER_TB)
 #endif
 
-#define VA_DEV_DEFAULT_EXPAND_FACTOR        2
+#define VA_DEV_DEFAULT_EXPAND_FACTOR 2
 
 static void *g_dev_default_mga_inst[SVM_MAX_DEV_NUM];
 
@@ -37,10 +38,7 @@ static u64 va_get_dev_default_reserve_size(u32 devid)
     return (devid < SVM_MAX_AGENT_NUM) ? VA_DEV_DEFAULT_DEV_RESERVE_SIZE : VA_DEV_DEFAULT_HOST_RESERVE_SIZE;
 }
 
-u64 va_get_dev_default_alloc_max_size(u32 devid)
-{
-    return va_get_dev_default_reserve_size(devid);
-}
+u64 va_get_dev_default_alloc_max_size(u32 devid) { return va_get_dev_default_reserve_size(devid); }
 
 static int _va_dev_default_va_expand(void *mga_inst, u64 fixed_va, u64 *size, u64 *va)
 {
@@ -53,8 +51,6 @@ static int _va_dev_default_va_expand(void *mga_inst, u64 fixed_va, u64 *size, u6
 
     ret = svm_reserve_va(fixed_va, *size, flag, va);
     if (ret != DRV_ERROR_NONE) {
-        svm_err("Reserve va failed. (ret=%d; fixed_va=0x%llx; size=%llu; flag=0x%x)\n",
-            ret, fixed_va, size, flag);
         return ret;
     }
 
@@ -66,22 +62,61 @@ static int _va_dev_default_va_expand(void *mga_inst, u64 fixed_va, u64 *size, u6
 
 static int va_dev_default_dev_va_expand(void *mga_inst, u64 *size, u64 *va)
 {
+    int ret;
+
     SVM_UNUSED(mga_inst);
 
-    return _va_dev_default_va_expand(mga_inst, 0, size, va);
+    ret = _va_dev_default_va_expand(mga_inst, 0, size, va);
+    if (ret != DRV_ERROR_NONE) {
+        svm_err("Reserve va failed. (ret=%d; size=%llu)\n", ret, *size);
+    }
+    return ret;
+}
+
+static int va_dev_default_host_va_expand_with_retry(void *mga_inst, u64 *size, u64 *va)
+{
+    u64 start_va = VA_DEV_DEFAULT_HOST_VA_START + mga_get_total_size(mga_inst); /* Factor is 2, va won't conflict. */
+    u64 fixed_va, step;
+    int ret;
+
+    step = SVM_BYTES_PER_TB;
+    for (fixed_va = start_va; fixed_va + *size <= VA_DEV_DEFAULT_HOST_VA_MAX; fixed_va += step) {
+        ret = _va_dev_default_va_expand(mga_inst, fixed_va, size, va);
+        if (ret == DRV_ERROR_NONE) {
+            svm_run_info("Reserve va success. (va=0x%llx; size=%llu)\n", *va, *size);
+            return DRV_ERROR_NONE;
+        }
+    }
+
+    step = SVM_BYTES_PER_GB;
+    for (fixed_va = start_va; fixed_va + *size <= VA_DEV_DEFAULT_HOST_VA_MAX; fixed_va += step) {
+        ret = _va_dev_default_va_expand(mga_inst, fixed_va, size, va);
+        if (ret == DRV_ERROR_NONE) {
+            svm_run_info("Reserve va success. (va=0x%llx; size=%llu)\n", *va, *size);
+            return DRV_ERROR_NONE;
+        }
+    }
+
+    svm_err(
+        "Reserve va failed after retries. (start_va=0x%llx; max_va=0x%llx; size=%llu)\n", start_va,
+        VA_DEV_DEFAULT_HOST_VA_MAX, *size);
+    return DRV_ERROR_OUT_OF_MEMORY;
 }
 
 static int va_dev_default_host_va_expand(void *mga_inst, u64 *size, u64 *va)
 {
-    u64 fixed_va = 0;
+    int ret;
 
     /* Not open device, only alloc host mem. */
     if (!va_reserve_has_dev()) {
-        /* Factor is 2, va won't conflict. */
-        fixed_va = VA_DEV_DEFAULT_HOST_VA_START + mga_get_total_size(mga_inst);
+        return va_dev_default_host_va_expand_with_retry(mga_inst, size, va);
     }
 
-    return _va_dev_default_va_expand(mga_inst, fixed_va, size, va);
+    ret = _va_dev_default_va_expand(mga_inst, 0, size, va);
+    if (ret != DRV_ERROR_NONE) {
+        svm_err("Reserve va failed. (ret=%d; size=%llu)\n", ret, *size);
+    }
+    return ret;
 }
 
 static int va_dev_default_va_shrink(void *mga_inst, u64 va, u64 size)
@@ -112,10 +147,7 @@ static void *va_dev_default_mga_inst_create(u32 devid)
     return mga_inst;
 }
 
-static void va_dev_default_mga_inst_destroy(void *mga_inst)
-{
-    mga_inst_destroy(mga_inst);
-}
+static void va_dev_default_mga_inst_destroy(void *mga_inst) { mga_inst_destroy(mga_inst); }
 
 int va_dev_default_allocator_dev_init(u32 devid)
 {

@@ -14,7 +14,7 @@
 #ifndef NVME_CHAN_H
 #define NVME_CHAN_H
 
-#include <linux/types.h>
+#include "ka_type.h"
 
 #include "ka_base_pub.h"
 #include "ka_task_pub.h"
@@ -52,7 +52,7 @@ struct trs_chan_maint_sq_ctx {
     int chan_id;
 };
 
-struct trs_chan_maint_cq_ctx{
+struct trs_chan_maint_cq_ctx {
     int chan_id;
 };
 
@@ -113,10 +113,6 @@ static inline int trs_chan_maint_cq_to_chan_id(struct trs_chan_ts_inst *ts_inst,
     return (cqid < ts_inst->maint_cq_max_id) ? ts_inst->maint_cq_ctx[cqid].chan_id : -1;
 }
 
-static inline bool trs_chan_trace_is_enabled(struct trs_chan_ts_inst *ts_inst)
-{
-    return ts_inst->trace_enable;
-}
+static inline bool trs_chan_trace_is_enabled(struct trs_chan_ts_inst *ts_inst) { return ts_inst->trace_enable; }
 
 #endif
-

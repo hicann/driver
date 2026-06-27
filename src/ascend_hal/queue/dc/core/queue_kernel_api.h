@@ -29,6 +29,7 @@ bool queue_proc_log_flow_ctrl_cnt_check(void);
 #define QUEUE_LOG_DEBUG(fmt, ...)
 #define QUEUE_LOG_EVENT(fmt, ...) syslog(LOG_NOTICE, "[%s %d] " fmt, __func__, __LINE__, ##__VA_ARGS__)
 #define QUEUE_RUN_LOG_INFO(fmt, ...) syslog(LOG_NOTICE, "[%s %d] " fmt, __func__, __LINE__, ##__VA_ARGS__)
+#define QUEUE_ERR_HEX_DUMP(buf, len, format, ...)
 #else
 #ifndef EMU_ST
 #include "dmc_user_interface.h"
@@ -36,36 +37,48 @@ bool queue_proc_log_flow_ctrl_cnt_check(void);
 #include "ut_log.h"
 #endif
 
-#define QUEUE_LOG_ERR(format, ...) do { \
-    DRV_ERR(HAL_MODULE_TYPE_QUEUE_MANAGER, format, ##__VA_ARGS__); \
-} while (0)
+#define QUEUE_LOG_ERR(format, ...)                                     \
+    do {                                                               \
+        DRV_ERR(HAL_MODULE_TYPE_QUEUE_MANAGER, format, ##__VA_ARGS__); \
+    } while (0)
 
-#define QUEUE_LOG_WARN(format, ...) do { \
-    DRV_WARN(HAL_MODULE_TYPE_QUEUE_MANAGER, format, ##__VA_ARGS__); \
-} while (0)
+#define QUEUE_LOG_WARN(format, ...)                                     \
+    do {                                                                \
+        DRV_WARN(HAL_MODULE_TYPE_QUEUE_MANAGER, format, ##__VA_ARGS__); \
+    } while (0)
 
-#define QUEUE_LOG_INFO(format, ...) do { \
-    DRV_INFO(HAL_MODULE_TYPE_QUEUE_MANAGER, format, ##__VA_ARGS__); \
-} while (0)
+#define QUEUE_LOG_INFO(format, ...)                                     \
+    do {                                                                \
+        DRV_INFO(HAL_MODULE_TYPE_QUEUE_MANAGER, format, ##__VA_ARGS__); \
+    } while (0)
 
-#define QUEUE_LOG_DEBUG(format, ...) do { \
-    DRV_DEBUG(HAL_MODULE_TYPE_QUEUE_MANAGER, format, ##__VA_ARGS__); \
-} while (0)
+#define QUEUE_LOG_DEBUG(format, ...)                                     \
+    do {                                                                 \
+        DRV_DEBUG(HAL_MODULE_TYPE_QUEUE_MANAGER, format, ##__VA_ARGS__); \
+    } while (0)
 
 /* alarm event log, non-alarm events use debug or run log */
-#define QUEUE_LOG_EVENT(format, ...) do { \
-    DRV_NOTICE(HAL_MODULE_TYPE_QUEUE_MANAGER, format, ##__VA_ARGS__); \
-} while (0)
+#define QUEUE_LOG_EVENT(format, ...)                                      \
+    do {                                                                  \
+        DRV_NOTICE(HAL_MODULE_TYPE_QUEUE_MANAGER, format, ##__VA_ARGS__); \
+    } while (0)
 /* run log, the default log level is LOG_INFO. */
-#define QUEUE_RUN_LOG_INFO(format, ...) do { \
-    DRV_RUN_INFO(HAL_MODULE_TYPE_QUEUE_MANAGER, format, ##__VA_ARGS__); \
-} while (0)
-
-#define QUEUE_RUN_LOG_INFO_FLOWCTRL(format, ...) do { \
-    if (queue_proc_log_flow_ctrl_cnt_check()) {                                 \
+#define QUEUE_RUN_LOG_INFO(format, ...)                                     \
+    do {                                                                    \
         DRV_RUN_INFO(HAL_MODULE_TYPE_QUEUE_MANAGER, format, ##__VA_ARGS__); \
-    }                                                                         \
-} while (0)
+    } while (0)
+
+#define QUEUE_RUN_LOG_INFO_FLOWCTRL(format, ...)                                \
+    do {                                                                        \
+        if (queue_proc_log_flow_ctrl_cnt_check()) {                             \
+            DRV_RUN_INFO(HAL_MODULE_TYPE_QUEUE_MANAGER, format, ##__VA_ARGS__); \
+        }                                                                       \
+    } while (0)
+
+#define QUEUE_ERR_HEX_DUMP(buf, len, format, ...)                                         \
+    do {                                                                                  \
+        DRV_ERR_HEX_DUMP(HAL_MODULE_TYPE_QUEUE_MANAGER, buf, len, format, ##__VA_ARGS__); \
+    } while (0)
 #endif
 
 #endif

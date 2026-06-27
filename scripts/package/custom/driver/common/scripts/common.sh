@@ -206,25 +206,25 @@ checkUserProcess() {
     local app
     local docker_dev
     local docker_list
+    for f_file in $davinci_files
+    do
+        apps=$(ls -l /proc/*/fd 2> /dev/null | grep -E "fd:|"$f_file"" | grep "$f_file" -B1 | grep "fd:" | sed 's#/fd:##;s#/proc/##' | head)
+        if [ -n "${apps}" ]; then
+            log "[WARNING]proc:"$f_file" has user process: ""$apps"
+            for app in $apps
+            do
+                ps -ef| grep -w "$app"| grep -v "grep" >> $logFile
+            done
+            return 1
+        fi
+    done
+
     if which fuser >& /dev/null; then
         for f_file in $davinci_files
         do
             apps=`fuser -uv "$f_file" 2> /dev/null`
             if [ -n "${apps}" ]; then
-                log "[WARNING]"$f_file" has user process: ""$apps"
-                for app in $apps
-                do
-                    ps -ef| grep -w "$app"| grep -v "grep" >> $logFile
-                done
-                return 1
-            fi
-        done
-    else
-        for f_file in $davinci_files
-        do
-            apps=$(ls -l /proc/*/fd 2> /dev/null | egrep "fd:|"$f_file"" | grep "$f_file" -B1 | grep "fd:" | sed 's#/fd:##;s#/proc/##' | head)
-            if [ -n "${apps}" ]; then
-                log "[WARNING]"$f_file" has user process: ""$apps"
+                log "[WARNING]fuser:"$f_file" has user process: ""$apps"
                 for app in $apps
                 do
                     ps -ef| grep -w "$app"| grep -v "grep" >> $logFile
@@ -277,21 +277,21 @@ killCurrentProcess(){
     pid=$1;
     name=$2;
 
+    for f_file in "${davinci_files[@]}"; do
+        apps=$(ls -l /proc/*/fd 2> /dev/null | grep -E "fd:|"$f_file"" | grep "$f_file" -B1 | grep "fd:" | sed 's#/fd:##;s#/proc/##' | head)
+        if [[ -n "${apps}" ]]; then
+            is_pid_occupy=$(echo "$apps" | grep -w "$pid")
+            if [[ -n "${is_pid_occupy}" ]]; then
+                log "[INFO] PID ${pid} is actively using file: ${f_file}"
+                found=1
+                break
+            fi
+        fi
+    done
+
     if which fuser >& /dev/null; then
         for f_file in "${davinci_files[@]}"; do
-            apps=$(fuser -uv "$f_file" 2>/dev/null)
-            if [[ -n "${apps}" ]]; then
-                is_pid_occupy=$(echo "$apps" | grep -w "$pid")
-                if [[ -n "${is_pid_occupy}" ]]; then
-                    log "[INFO] PID ${pid} is actively using file: ${f_file}"
-                    found=1
-                    break
-                fi
-            fi
-        done
-    else
-        for f_file in "${davinci_files[@]}"; do
-            apps=$(ls -l /proc/*/fd 2> /dev/null | egrep "fd:|"$f_file"" | grep "$f_file" -B1 | grep "fd:" | sed 's#/fd:##;s#/proc/##' | head)
+            apps=$(fuser -uv "$f_file" 2> /dev/null)
             if [[ -n "${apps}" ]]; then
                 is_pid_occupy=$(echo "$apps" | grep -w "$pid")
                 if [[ -n "${is_pid_occupy}" ]]; then
@@ -376,29 +376,31 @@ killWhiteProcess(){
         return 1
     fi
 
-    while IFS= read -r line || [[ -n "${line}" ]]; do
-        line="${line//[[:space:]]/}"
-        [[ -z "${line}" || "${line}" =~ ^# ]] && continue
-        if [[ "${line}" =~ ^AllowKilledWhenResetNPU:[^:]+:[0-9]+$ ]]; then
-            name=$(echo "${line}" | cut -d':' -f2)
-            pid=$(echo "${line}" | cut -d':' -f3)
-            if ! [[ "${pid}" =~ ^[0-9]+$ ]]; then
-                log "[INFO]: pid is invalid ${line}"
-                continue
+    head -n 10 "${cfg_file}" | (
+        while IFS= read -r line || [[ -n "${line}" ]]; do
+            line="${line//[[:space:]]/}"
+            [[ -z "${line}" || "${line}" =~ ^# ]] && continue
+            if [[ "${line}" =~ ^AllowKilledWhenResetNPU:[^:]+:[0-9]+$ ]]; then
+                name=$(echo "${line}" | cut -d':' -f2)
+                pid=$(echo "${line}" | cut -d':' -f3)
+                if ! [[ "${pid}" =~ ^[0-9]+$ ]]; then
+                    log "[INFO]: pid is invalid ${line}"
+                    continue
+                fi
+
+                checkPidNameMatch "${pid}" "${name}"
+                if [[ $? != 0 ]]; then
+                    continue
+                fi
+
+                killCurrentProcess "${pid}" "${name}" &
+            else
+                log "[INFO]invalid string: ${line}"
             fi
+        done
+        wait
+    )
 
-            checkPidNameMatch "${pid}" "${name}"
-            if [[ $? != 0 ]]; then
-                continue
-            fi
-
-            killCurrentProcess "${pid}" "${name}"
-        else
-            log "[INFO]invalid string: ${line}"
-        fi
-    done < <(head -n 10 "${cfg_file}")
-
-    wait
     return 0
 }
 

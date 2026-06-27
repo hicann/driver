@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2025-2025. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -25,8 +25,7 @@
 #include "dma_desc_node.h"
 #include "dma_desc_core.h"
 
-static int dma_desc_extract_va_info_from_convert_para(struct svm_dma_desc_convert_para *para,
-    struct copy_va_info *info)
+static int dma_desc_extract_va_info_from_convert_para(struct svm_dma_desc_convert_para *para, struct copy_va_info *info)
 {
     int ret;
 
@@ -193,17 +192,16 @@ static int dma_desc_ioctl_destroy(u32 udevid, u32 cmd, unsigned long __ka_user a
 int dma_desc_ioctl_init(void)
 {
 #ifdef CFG_FEATURE_DMA_DESC_SUBMIT
-    svm_register_ioctl_cmd_handle(_IOC_NR(SVM_DMA_DESC_SUBMIT), dma_desc_ioctl_submit);
-    svm_register_ioctl_cmd_handle(_IOC_NR(SVM_DMA_DESC_WAIT), dma_desc_ioctl_wait);
+    svm_register_ioctl_cmd_handle(_KA_IOC_NR(SVM_DMA_DESC_SUBMIT), dma_desc_ioctl_submit);
+    svm_register_ioctl_cmd_handle(_KA_IOC_NR(SVM_DMA_DESC_WAIT), dma_desc_ioctl_wait);
 #else
     SVM_UNUSED(dma_desc_ioctl_submit);
     SVM_UNUSED(dma_desc_ioctl_wait);
 #endif
 
-    svm_register_ioctl_cmd_handle(_IOC_NR(SVM_DMA_DESC_CONVERT), dma_desc_ioctl_convert);
-    svm_register_ioctl_cmd_handle(_IOC_NR(SVM_DMA_DESC_DESTROY), dma_desc_ioctl_destroy);
+    svm_register_ioctl_cmd_handle(_KA_IOC_NR(SVM_DMA_DESC_CONVERT), dma_desc_ioctl_convert);
+    svm_register_ioctl_cmd_handle(_KA_IOC_NR(SVM_DMA_DESC_DESTROY), dma_desc_ioctl_destroy);
 
     return 0;
 }
 DECLAER_FEATURE_AUTO_INIT(dma_desc_ioctl_init, FEATURE_LOADER_STAGE_6);
-

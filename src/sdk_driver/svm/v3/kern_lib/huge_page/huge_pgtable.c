@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2025. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -36,7 +36,7 @@ static int svm_pmd_entry_of_free_ptes(ka_pmd_t *pmd, u64 addr, u64 next, struct 
     ka_mm_pmd_clear(pmd);
     ka_mm_flush_tlb_range(vma, start, end);
 #ifndef CFG_FEATURE_ENABLE_ASAN
-    ka_mm_pte_free(vma->vm_mm, pte);   /* asan do not find ptlock_free api */
+    ka_mm_pte_free(vma->vm_mm, pte); /* asan do not find ptlock_free api */
     ka_mm_dec_nr_ptes(vma->vm_mm);
 #endif
     return 0;
@@ -49,8 +49,8 @@ static void svm_free_ptes(ka_vm_area_struct_t *vma, u64 start, u64 end)
     (void)ka_walk_page_range(vma, start, end, &ops, NULL);
 }
 
-static int svm_pte_entry_of_unmap_huge_pages(ka_pte_t *pte, u64 addr, u64 next,
-    enum ka_pte_level level, struct ka_pgwalk *walk)
+static int svm_pte_entry_of_unmap_huge_pages(
+    ka_pte_t *pte, u64 addr, u64 next, enum ka_pte_level level, struct ka_pgwalk *walk)
 {
     ka_pmd_t *pmd = NULL;
 
@@ -115,4 +115,3 @@ int svm_huge_pgtbl_init(void)
     return 0;
 }
 DECLAER_FEATURE_AUTO_INIT(svm_huge_pgtbl_init, FEATURE_LOADER_STAGE_0);
-

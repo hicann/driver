@@ -27,7 +27,6 @@
 #include "urd_container.h"
 #include "pbl/pbl_uda.h"
 
-#ifndef CFG_RUNENV_SUPPORT
 STATIC int urd_container_task_struct_check(ka_task_struct_t *tsk)
 {
     if (tsk == NULL) {
@@ -49,22 +48,22 @@ STATIC int urd_get_current_mnt_ns(u64 *current_mnt_ns)
 {
     int ret;
 
-    ret = urd_container_task_struct_check(current);
+    ret = urd_container_task_struct_check(ka_task_get_current());
     if (ret) {
         dms_err("current is invalid, ret=%d\n", ret);
         return -EINVAL;
     }
 
-    *current_mnt_ns = (u64)(uintptr_t)current->nsproxy->mnt_ns;
+    *current_mnt_ns = (u64)(uintptr_t)ka_task_get_current_mnt_ns();
     return 0;
 }
 
 STATIC int urd_container_check_current(void)
 {
     /* current->nsproxy is NULL when the release function is called */
-    if (current == NULL || current->nsproxy == NULL || current->nsproxy->mnt_ns == NULL) {
-        dms_err("(current == NULL) is %d, (current->nsproxy == NULL) is %d\n",
-            (current == NULL), ((current == NULL) ? (-EINVAL) : (current->nsproxy == NULL)));
+    if (ka_task_get_current() == NULL || ka_task_get_current_nsproxy() == NULL || ka_task_get_current_mnt_ns() == NULL) {
+        dms_err("(current == NULL) is %d, (current->nsproxy == NULL) is %d\n", (ka_task_get_current() == NULL),
+        ((ka_task_get_current() == NULL) ? (-EINVAL) : (ka_task_get_current_nsproxy() == NULL)));
         return -EINVAL;
     }
 
@@ -88,11 +87,9 @@ bool urd_is_pf_device(unsigned int dev_id)
         return false;
     }
 #elif (defined CFG_FEATURE_RC_MODE)
-#ifdef CFG_FEATURE_DEVICE_ENV
     if (VDAVINCI_IS_VDEV(dev_id)) {
         return false;
     }
-#endif
 #endif
 
     return true;
@@ -116,7 +113,7 @@ int urd_container_is_in_admin_container(void)
         return false;
     }
 
-    if (urd_container_is_host_system(current->nsproxy->mnt_ns)) {
+    if (urd_container_is_host_system(ka_task_get_current_mnt_ns())) {
         return false;
     }
 
@@ -154,7 +151,6 @@ int urd_container_is_in_container(void)
 
     return is_in;
 }
-#endif   /* CFG_RUNENV_SUPPORT */
 
 typedef int (*dms_container_logical_id_to_physical_id_t)(u32 logical_dev_id, u32 *physical_dev_id, u32 *vfid);
 

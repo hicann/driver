@@ -46,19 +46,19 @@
 #include "vmng_mem_alloc_interface.h"
 #include "virtmnghost_pci.h"
 
-static const ka_pci_device_id_t g_vmngh_tbl[] = {{ KA_PCI_VDEVICE(HUAWEI, HISI_EP_DEVICE_ID_MINIV2), 0 },
-                                                   { KA_PCI_VDEVICE(HUAWEI, HISI_EP_DEVICE_ID_CLOUD), 0 },
-                                                   { KA_PCI_VDEVICE(HUAWEI, HISI_EP_DEVICE_ID_CLOUD_V2), 0 },
-                                                   { DEVDRV_DIVERSITY_PCIE_VENDOR_ID, 0xd500,
-                                                     KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0 },
-                                                   { KA_PCI_VDEVICE(HUAWEI, HISI_EP_DEVICE_ID_CLOUD_V5), 0 },
-                                                   { 0x20C6, 0xd500, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0 },
-                                                   { 0x203F, 0xd500, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0 },
-                                                   { 0x20C6, 0xd802, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0 },
-                                                   { 0x203F, 0xd802, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0 },
-                                                   { 0x20E9, 0xd802, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0 },
-                                                   { 0x20E9, 0xd500, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0 },
-                                                   {}};
+static const ka_pci_device_id_t g_vmngh_tbl[] = {
+    {KA_PCI_VDEVICE(HUAWEI, HISI_EP_DEVICE_ID_MINIV2), 0},
+    {KA_PCI_VDEVICE(HUAWEI, HISI_EP_DEVICE_ID_CLOUD), 0},
+    {KA_PCI_VDEVICE(HUAWEI, HISI_EP_DEVICE_ID_CLOUD_V2), 0},
+    {DEVDRV_DIVERSITY_PCIE_VENDOR_ID, 0xd500, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0},
+    {KA_PCI_VDEVICE(HUAWEI, HISI_EP_DEVICE_ID_CLOUD_V5), 0},
+    {0x20C6, 0xd500, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0},
+    {0x203F, 0xd500, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0},
+    {0x20C6, 0xd802, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0},
+    {0x203F, 0xd802, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0},
+    {0x20E9, 0xd802, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0},
+    {0x20E9, 0xd500, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0},
+    {}};
 KA_MODULE_DEVICE_TABLE(pci, g_vmngh_tbl);
 
 ka_mutex_t g_vmngh_pci_mutex;
@@ -89,7 +89,7 @@ STATIC int vmngh_ctrl_msg_send(u32 devid, void *data, u32 in_data_len, u32 out_d
 
 int vmngh_vdev_msg_send(struct vmng_ctrl_msg_info *info, int msg_type)
 {
-    struct vmng_ctrl_msg msg = { 0 };
+    struct vmng_ctrl_msg msg = {0};
     int ret;
     u32 len = 0;
 
@@ -108,7 +108,7 @@ int vmngh_vdev_msg_send(struct vmng_ctrl_msg_info *info, int msg_type)
     ret = vmngh_ctrl_msg_send(info->dev_id, (void *)&msg, sizeof(msg), sizeof(msg), &len);
     if ((ret != VMNG_OK) || (len != sizeof(msg)) || (msg.error_code != VMNG_OK)) {
         vmng_err("Send message failed. (dev_id=%d; vfid=%d; ret=%d; len=%u; error_code=%d)\n", info->dev_id, info->vfid,
-            ret, len, msg.error_code);
+                 ret, len, msg.error_code);
         return ret != 0 ? ret : msg.error_code;
     }
 
@@ -153,8 +153,8 @@ int vmngh_add_mia_dev(u32 dev_id, u32 vfid, u32 agent_flag)
         ret = uda_add_dev(&type, &para, &udevid);
     }
     if (ret != 0) {
-        vmng_err("Add uda mia device failed.(dev_id=%u; vfid=%u; ret=%d; agent_flag=%u)\n",
-            dev_id, vfid, ret, agent_flag);
+        vmng_err("Add uda mia device failed.(dev_id=%u; vfid=%u; ret=%d; agent_flag=%u)\n", dev_id, vfid, ret,
+                 agent_flag);
         return ret;
     }
 
@@ -217,7 +217,6 @@ STATIC int vmngh_device_online(const struct vmngh_vd_dev *vd_dev)
     return VMNG_OK;
 }
 
-
 STATIC void vmngh_device_offline(const struct vmngh_vd_dev *vd_dev)
 {
     int ret;
@@ -262,10 +261,10 @@ STATIC void vmngh_admin_notify_rm_vdev(struct vmng_msg_dev *msg_dev, u32 flag)
     tx_info.real_out_len = 0;
 
     ret = (u32)vmng_admin_msg_send(msg_dev->admin_tx, &tx_info, (u32)VMNG_MSG_CHAN_TYPE_ADMIN,
-        (u32)VMNGH_ADMIN_OPCODE_RM_VDEV);
+                                   (u32)VMNGH_ADMIN_OPCODE_RM_VDEV);
     if ((ret != 0) || (tx_info.real_out_len != tx_info.out_data_len)) {
-        vmng_err("Message send failed. (dev_id=%u; fid=%u; out_len=%u; ret=%d)\n",
-                 dev_id, fid, ret, tx_info.real_out_len);
+        vmng_err("Message send failed. (dev_id=%u; fid=%u; out_len=%u; ret=%d)\n", dev_id, fid, ret,
+                 tx_info.real_out_len);
         return;
     }
     if (cmd.finish != VMNG_VM_SUSPEND_SUCCESS) {
@@ -273,10 +272,9 @@ STATIC void vmngh_admin_notify_rm_vdev(struct vmng_msg_dev *msg_dev, u32 flag)
     }
 }
 
-
 /* V2P */
 STATIC int vmngh_admin_para_check(const struct vmng_msg_dev *msg_dev,
-    const struct vmng_msg_chan_rx_proc_info *proc_info)
+                                  const struct vmng_msg_chan_rx_proc_info *proc_info)
 {
     if (msg_dev == NULL) {
         vmng_err("Input parameter is error.\n");
@@ -329,8 +327,8 @@ STATIC int vmngh_vdev_start_check(const struct vmngh_vd_dev *vd_dev)
     }
 
     if (vd_dev->shr_para->start_flag != VMNG_VM_START_WAIT) {
-        vmng_err("start_flag is error. (dev_id=%u; fid=%u; start_flag=0x%x)\n",
-                 dev_id, fid, vd_dev->shr_para->start_flag);
+        vmng_err("start_flag is error. (dev_id=%u; fid=%u; start_flag=0x%x)\n", dev_id, fid,
+                 vd_dev->shr_para->start_flag);
         return -EINVAL;
     }
 
@@ -401,7 +399,7 @@ STATIC int vmngh_notify_vdev_probe_bottom_half(struct vmngh_vd_dev *vd_dev)
     ka_wmb();
     msix_offset = vd_dev->shr_para->msix_offset;
     /* notice vm to start bottom half probe */
-    ret = hw_dvt_hypervisor_inject_msix(vd_dev->vdavinci, start_dev->msix_irq + msix_offset);
+    ret = hw_dvt_hypervisor_inject_msix(vd_dev->vdavinci, start_dev->msix_irq + msix_offset, -1);
     if (ret != 0) {
         vmng_err("Notify vm start half probe failed. (devid=%u; fid=%u; ret=%d)\n", vd_dev->dev_id, vd_dev->fid, ret);
         return -EIO;
@@ -447,9 +445,8 @@ STATIC int vmngh_add_sec_eh_dev(u32 dev_id, u32 vfid)
     }
 
     uda_dev_type_pack(&type, UDA_DAVINCI, UDA_ENTITY, UDA_NEAR, UDA_REAL_SEC_EH);
-    uda_dev_para_pack(&para, UDA_INVALID_UDEVID,
-        UDA_INVALID_UDEVID, uda_get_chip_type(dev_id),
-        devdrv_base_comm_get_device(dev_id, vfid, udevid));
+    uda_dev_para_pack(&para, UDA_INVALID_UDEVID, UDA_INVALID_UDEVID, uda_get_chip_type(dev_id),
+                      devdrv_base_comm_get_device(dev_id, vfid, udevid));
     uda_mia_dev_para_pack(&mia_para, dev_id, vfid - 1);
 
     return uda_add_mia_dev(&type, &para, &mia_para, &udevid);
@@ -570,7 +567,6 @@ STATIC void vmngh_service_offline(struct vmngh_vd_dev *vd_dev)
     return;
 }
 
-
 STATIC int vmngh_vdev_feature(struct vmngh_vd_dev *vd_dev)
 {
     u32 dev_id = vd_dev->dev_id;
@@ -663,7 +659,7 @@ STATIC ka_irqreturn_t msi_inject_interrupt(int irq, void *data)
         return KA_IRQ_NONE;
     }
 
-    ret = hw_dvt_hypervisor_inject_msix(vm_msix->vdavinci, (u32)vm_msix->irq_vector);
+    ret = hw_dvt_hypervisor_inject_msix(vm_msix->vdavinci, (u32)vm_msix->irq_vector, irq);
     if (ret != 0) {
         vmng_err("Inject msix irq fail.(irq=%d;vector=%d;ret=%d)\n", irq, vm_msix->irq_vector, ret);
         return KA_IRQ_NONE;
@@ -672,7 +668,7 @@ STATIC ka_irqreturn_t msi_inject_interrupt(int irq, void *data)
     return KA_IRQ_HANDLED;
 }
 
-int vmngh_hypervisor_inject_msix(unsigned int dev_id, unsigned int irq_vector)
+int vmngh_hypervisor_inject_msix(unsigned int dev_id, unsigned int irq_vector, int irq)
 {
     struct uda_mia_dev_para mia_para;
     void *vdavinci;
@@ -686,7 +682,7 @@ int vmngh_hypervisor_inject_msix(unsigned int dev_id, unsigned int irq_vector)
     if (vdavinci == NULL) {
         return -EINVAL;
     }
-    return hw_dvt_hypervisor_inject_msix(vdavinci, irq_vector);
+    return hw_dvt_hypervisor_inject_msix(vdavinci, irq_vector, irq);
 }
 KA_EXPORT_SYMBOL(vmngh_hypervisor_inject_msix);
 
@@ -857,8 +853,8 @@ STATIC void vmngh_vdev_create_bottom(ka_work_struct_t *p_work)
     u32 fid = vd_dev->fid;
 
     vd_dev->dfx.create_bottom_cnt++;
-    vmng_info("Get create_bottom_cnt. (dev_id=%u; fid=%u; dtype=%u; agent_dev_id=%u; create_bottom_cnt=%u)\n",
-              dev_id, fid, vd_dev->dtype.type, vd_dev->shr_para->agent_dev_id, vd_dev->dfx.create_bottom_cnt);
+    vmng_info("Get create_bottom_cnt. (dev_id=%u; fid=%u; dtype=%u; agent_dev_id=%u; create_bottom_cnt=%u)\n", dev_id,
+              fid, vd_dev->dtype.type, vd_dev->shr_para->agent_dev_id, vd_dev->dfx.create_bottom_cnt);
 
     if ((dev_id >= ASCEND_PDEV_MAX_NUM) || (fid >= VMNG_VDEV_MAX_PER_PDEV)) {
         vmng_err("dev_id is invalid. (dev_id=%d;fid=%u)\n", dev_id, fid);
@@ -966,7 +962,7 @@ static void vmngh_start_exit(struct vmngh_vd_dev *vd_dev)
 }
 
 static struct vmngh_vd_dev *vmngh_alloc_vdev(u32 fid, void *vdavinci, struct vmngh_pci_dev *vm_pdev,
-    struct vdavinci_type *vd_type, ka_uuid_le_t uuid)
+                                             struct vdavinci_type *vd_type, ka_uuid_le_t uuid)
 {
     struct vmngh_vd_dev *vd_dev = NULL;
     int ret;
@@ -986,8 +982,8 @@ static struct vmngh_vd_dev *vmngh_alloc_vdev(u32 fid, void *vdavinci, struct vmn
     vd_dev->vdavinci = vdavinci;
     vd_dev->dev_id = vm_pdev->dev_id;
     vd_dev->vascend_uuid = uuid;
-    ret = memcpy_s((void *)(&vd_dev->dtype), sizeof(struct vdavinci_type),
-        (void *)vd_type, sizeof(struct vdavinci_type));
+    ret = memcpy_s((void *)(&vd_dev->dtype), sizeof(struct vdavinci_type), (void *)vd_type,
+                   sizeof(struct vdavinci_type));
     if (ret != 0) {
         vmng_err("Call memcpy failed. (dev_id=%u; fid=%u)\n", vm_pdev->dev_id, fid);
         goto free_vd_dev;
@@ -1069,8 +1065,7 @@ STATIC int vmngh_info_vpc_init(struct vmngh_vd_dev *vd_dev)
     } else {
         ret = devdrv_get_devid_by_pfvf_id(vd_dev->dev_id, vd_dev->fid, &dev_id);
         if (ret != 0) {
-            vmng_err("get dev_id by pfvf id failed. (dev_id=%u;fid=%u;ret=%d)\n",
-                vd_dev->dev_id, vd_dev->fid, ret);
+            vmng_err("get dev_id by pfvf id failed. (dev_id=%u;fid=%u;ret=%d)\n", vd_dev->dev_id, vd_dev->fid, ret);
             return ret;
         }
     }
@@ -1155,7 +1150,7 @@ STATIC int vmngh_vdev_free_top(struct vmngh_vd_dev *vd_dev)
 }
 
 STATIC int vmngh_vdev_create_para_check(const struct vdavinci_dev *vdev, const void *vdavinci,
-    struct vdavinci_type *type)
+                                        struct vdavinci_type *type)
 {
     if (vdev == NULL) {
         vmng_err("vdev is error.\n");
@@ -1191,7 +1186,7 @@ void vmngh_free_vdev_host_stop(u32 dev_id, u32 fid)
 }
 #define SHARE_WITH_FOUR_DEVICES(share_num) ((share_num) == 4)
 #define SHARE_WITH_TWO_DEVICES(share_num) ((share_num) == 2)
-#define VMNG_SHARE_CORE_NUM 0xFFFF  // (u16)(-1) means share a computing core
+#define VMNG_SHARE_CORE_NUM 0xFFFF // (u16)(-1) means share a computing core
 
 STATIC int vmngh_adapt_vfresource_for_vm(struct vmng_vf_res_info *vf_resource, struct vdavinci_type *type)
 {
@@ -1284,8 +1279,8 @@ STATIC void vmngh_free_vf(u32 dev_id, u32 fid)
     }
 }
 
-STATIC int _vmngh_vdev_create(struct vdavinci_dev *vdev, void *vdavinci,
-    struct vdavinci_type *type, ka_uuid_le_t uuid, u32 fid)
+STATIC int _vmngh_vdev_create(struct vdavinci_dev *vdev, void *vdavinci, struct vdavinci_type *type, ka_uuid_le_t uuid,
+                              u32 fid)
 {
     struct vmngh_pci_dev *vm_pdev = NULL;
     struct vmngh_vd_dev *vd_dev = NULL;
@@ -1387,15 +1382,14 @@ STATIC bool vmngh_check_is_support_vdev(void)
         return false;
     }
 
-    if (is_amp == false) {  // smp is not support vdevice
+    if (is_amp == false) { // smp is not support vdevice
         return false;
     }
 
     return true;
 }
 
-STATIC int vmngh_vdev_create(struct vdavinci_dev *vdev, void *vdavinci,
-    struct vdavinci_type *type, ka_uuid_le_t uuid)
+STATIC int vmngh_vdev_create(struct vdavinci_dev *vdev, void *vdavinci, struct vdavinci_type *type, ka_uuid_le_t uuid)
 {
     struct vmngh_pci_dev *vm_pdev = NULL;
     u32 fid;
@@ -1540,7 +1534,7 @@ STATIC void vmngh_vdev_release(struct vdavinci_dev *vdev)
             vmng_info("init_status is not half ok. (init_status=%u)\n", vd_dev->init_status);
         }
         if (devdrv_is_sriov_support(dev_id)) {
-             devdrv_get_devid_by_pfvf_id(dev_id, fid, &vdev_id);
+            devdrv_get_devid_by_pfvf_id(dev_id, fid, &vdev_id);
             (void)devdrv_hot_reset_device(vdev_id);
         }
     }
@@ -1587,8 +1581,8 @@ STATIC int vmngh_vdev_reset(struct vdavinci_dev *vdev)
         vmngh_del_start_timer(vd_dev);
         vmngh_set_start_timer(vd_dev);
         vd_dev->dfx.reset_cnt++;
-        vmng_info("Reset finish. (dev_id=%d; fid=%u; reset_cnt=%u; vm_pid=%u)\n",
-            dev_id, fid, vd_dev->dfx.reset_cnt, vd_dev->vm_pid);
+        vmng_info("Reset finish. (dev_id=%d; fid=%u; reset_cnt=%u; vm_pid=%u)\n", dev_id, fid, vd_dev->dfx.reset_cnt,
+                  vd_dev->vm_pid);
     } else {
         vmng_err("vd_dev is NULL. (dev_id=%d; fid=%u)\n", dev_id, fid);
     }
@@ -1631,8 +1625,8 @@ STATIC int vmngh_vdev_flr(struct vdavinci_dev *vdev)
         vmngh_del_start_timer(vd_dev);
         vmngh_set_start_timer(vd_dev);
         vd_dev->dfx.reset_cnt++;
-        vmng_info("Reset finish. (dev_id=%d; fid=%u; reset_cnt=%u; vm_pid=%u)\n",
-                  dev_id, fid, vd_dev->dfx.reset_cnt, vd_dev->vm_pid);
+        vmng_info("Reset finish. (dev_id=%d; fid=%u; reset_cnt=%u; vm_pid=%u)\n", dev_id, fid, vd_dev->dfx.reset_cnt,
+                  vd_dev->vm_pid);
     } else {
         vmng_err("vd_dev is NULL. (dev_id=%d; fid=%u)\n", dev_id, fid);
     }
@@ -1700,8 +1694,8 @@ STATIC void vmngh_vdev_notify(struct vdavinci_dev *vdev, int db_index)
     }
 }
 
-STATIC int vmngh_vdev_get_map_info(struct vdavinci_dev *vdev, struct vdavinci_type *type,
-    u32 bar_id, struct vdavinci_mapinfo *map_info)
+STATIC int vmngh_vdev_get_map_info(struct vdavinci_dev *vdev, struct vdavinci_type *type, u32 bar_id,
+                                   struct vdavinci_mapinfo *map_info)
 {
     struct vmngh_map_info client_map_info = {0};
     struct vmngh_client_instance instance = {0};
@@ -1712,9 +1706,8 @@ STATIC int vmngh_vdev_get_map_info(struct vdavinci_dev *vdev, struct vdavinci_ty
     u64 i;
 
     if ((vdev == NULL) || (vdev->dev == NULL) || (type == NULL) || (map_info == NULL)) {
-        vmng_err("Input parameter is error. (vdev=%s; type=%s; map_info=%s)\n",
-                 vdev == NULL ? "NULL" : "OK", type == NULL ? "NULL" : "OK",
-                 map_info == NULL ? "NULL" : "OK");
+        vmng_err("Input parameter is error. (vdev=%s; type=%s; map_info=%s)\n", vdev == NULL ? "NULL" : "OK",
+                 type == NULL ? "NULL" : "OK", map_info == NULL ? "NULL" : "OK");
         return -EINVAL;
     }
 
@@ -1749,8 +1742,8 @@ STATIC int vmngh_vdev_get_map_info(struct vdavinci_dev *vdev, struct vdavinci_ty
         map_info->map_info[i].offset = client_map_info.map_info[i].offset;
         map_info->map_info[i].paddr = client_map_info.map_info[i].paddr;
         map_info->map_info[i].size = client_map_info.map_info[i].size;
-        vmng_info("Get map info (dev_id=%d; fid=%u; i=%llu; offset=0x%lx; size=0x%lx)\n",
-            dev_id, vfid, i, map_info->map_info[i].offset, map_info->map_info[i].size);
+        vmng_info("Get map info (dev_id=%d; fid=%u; i=%llu; offset=0x%lx; size=0x%lx)\n", dev_id, vfid, i,
+                  map_info->map_info[i].offset, map_info->map_info[i].size);
     }
     map_info->num = client_map_info.num;
 
@@ -2067,7 +2060,7 @@ STATIC int vmngh_sync_udevid_to_remote(u32 udevid)
     if (uda_is_phy_dev(udevid)) {
         phy_devid = udevid;
         vfid = 0;
-    } else  {
+    } else {
         ret = uda_udevid_to_mia_devid(udevid, &mia_para);
         if (ret != 0) {
             vmng_err("Trans udevid to phy devid failed. (udevid=%u;ret=%d)\n", udevid, ret);
@@ -2147,8 +2140,8 @@ STATIC void vmngh_init_msix_num(u32 dev_id)
         g_max_msix_num = MAX_PCIE_MSIX_NUM;
         g_max_pass_to_vm_msix_num = MAX_PASS_TO_VM_MSIX_NUM;
     }
-    vmng_info("Get connect protocol. (max_msix_num=%u; max_vm_msix_num=%u)\n",
-        g_max_msix_num, g_max_pass_to_vm_msix_num);
+    vmng_info("Get connect protocol. (max_msix_num=%u; max_vm_msix_num=%u)\n", g_max_msix_num,
+              g_max_pass_to_vm_msix_num);
 }
 
 /* pcie_host => vmngh_pdev => vdavinci */
@@ -2375,7 +2368,7 @@ static int vmngh_set_mia_dev_res(u32 udevid, u32 version)
         u64 aic_bitmap = 0;
         u32 i;
 
-         /* no aicore bitmap, just start from bit0, later only used for calc aicore num */
+        /* no aicore bitmap, just start from bit0, later only used for calc aicore num */
         for (i = 0; i < vdev_ctrl->core_num; i++) {
             aic_bitmap |= (0x1 << i);
         }
@@ -2387,8 +2380,8 @@ static int vmngh_set_mia_dev_res(u32 udevid, u32 version)
         soc_resmng_inst_pack(&inst, udevid, TS_SUBSYS, 0);
         /* mia mng query num from device later */
         ret = (u32)soc_resmng_dev_set_mia_res(udevid, MIA_AC_AIC, (u64)ac->aic_bitmap, 1);
-        ret |= (u32)soc_resmng_set_mia_res(&inst, MIA_STARS_RTSQ, (u64)ac->rtsq_slice_bitmap, 128); /* 128 num */
-        ret |= (u32)soc_resmng_set_mia_res(&inst, MIA_STARS_EVENT, (u64)ac->event_slice_bitmap, 4096); /* 4096 num */
+        ret |= (u32)soc_resmng_set_mia_res(&inst, MIA_STARS_RTSQ, (u64)ac->rtsq_slice_bitmap, 128);     /* 128 num */
+        ret |= (u32)soc_resmng_set_mia_res(&inst, MIA_STARS_EVENT, (u64)ac->event_slice_bitmap, 4096);  /* 4096 num */
         ret |= (u32)soc_resmng_set_mia_res(&inst, MIA_STARS_NOTIFY, (u64)ac->notify_slice_bitmap, 512); /* 512 num */
     }
 

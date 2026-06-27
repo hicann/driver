@@ -22,6 +22,11 @@
     asdrv_svm-objs += common/svm_proc_gfp.o common/svm_phy_addr_blk_mng.o common/svm_mem_create.o common/svm_mem_share.o common/svm_mem_map.o common/svm_vmma_mng.o common/devmm_addr_mng.o
     asdrv_svm-objs += master/pmaster/svm_master_query.o
     asdrv_svm-objs += master/pmaster/svm_master_register_ops.o master/pmaster/svm_hot_reset.o master/pmaster/svm_master_process_status_mng.o master/pmaster/svm_pmaster_mem_map.o master/pmaster/svm_shmem_node.o master/pmaster/svm_shmem_procfs.o
+    asdrv_svm-objs += master/comm/svm_master_soma_pool_mng.o master/comm/soma_master_vma_ops.o
+ifndef UVM_OPEN
+    asdrv_svm-objs += master/comm/uvm_master_vma_ops.o master/comm/uvm_channel.o master/comm/uvm_alloc_free.o master/comm/uvm_master_memset.o master/comm/uvm_advise.o master/comm/uvm_master_prefetch.o
+    asdrv_svm-objs += common/uvm_async_task.o common/uvm_kthread_pool.o common/uvm_heap_mng.o
+endif
     obj-m := asdrv_svm.o
 
     EXTRA_CFLAGS += -I$(DRIVER_HAL_INC_DIR)

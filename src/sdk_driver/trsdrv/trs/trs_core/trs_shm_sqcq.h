@@ -36,4 +36,3 @@ int trs_shm_sqcq_init(struct trs_core_ts_inst *ts_inst);
 void trs_shm_sqcq_uninit(struct trs_core_ts_inst *ts_inst);
 
 #endif
-

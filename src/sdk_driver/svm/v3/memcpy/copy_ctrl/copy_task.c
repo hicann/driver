@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2025. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -33,13 +33,14 @@
 #include "svm_pgtable.h"
 #include "svm_smp.h"
 #include "ksvmm.h"
+#include "mwl.h"
 #include "svm_slab.h"
 #include "dma_copy.h"
 #include "dbi_kern.h"
 #include "pmq_client.h"
 #include "copy_task.h"
 
-#define SVM_COPY_TIMEOUT_MSECS                 (240ULL * 1000ULL)
+#define SVM_COPY_TIMEOUT_MSECS (240ULL * 1000ULL)
 static ka_atomic_t svm_instance = KA_BASE_ATOMIC_INIT(0);
 
 static void svm_copy_task_release(ka_kref_t *kref)
@@ -49,25 +50,16 @@ static void svm_copy_task_release(ka_kref_t *kref)
     svm_kvfree(copy_task);
 }
 
-static void svm_copy_task_get(struct svm_copy_task *copy_task)
-{
-    ka_base_kref_get(&copy_task->ref);
-}
+static void svm_copy_task_get(struct svm_copy_task *copy_task) { ka_base_kref_get(&copy_task->ref); }
 
 static void svm_copy_task_put(struct svm_copy_task *copy_task)
 {
     ka_base_kref_put(&copy_task->ref, svm_copy_task_release);
 }
 
-static bool copy_subtask_flag_is_sync(u32 flag)
-{
-    return ((flag & SVM_COPY_SUBTASK_SYNC) != 0);
-}
+static bool copy_subtask_flag_is_sync(u32 flag) { return ((flag & SVM_COPY_SUBTASK_SYNC) != 0); }
 
-static bool copy_subtask_flag_is_auto_recycle(u32 flag)
-{
-    return ((flag & SVM_COPY_SUBTASK_AUTO_RECYCLE) != 0);
-}
+static bool copy_subtask_flag_is_auto_recycle(u32 flag) { return ((flag & SVM_COPY_SUBTASK_AUTO_RECYCLE) != 0); }
 
 static int svm_copy_res_dma_addr_init(u32 udevid, struct svm_copy_res *res)
 {
@@ -134,9 +126,11 @@ static int svm_copy_res_sva_addr_init(struct svm_copy_res *res)
     if (ret != 0) {
         ret = ksvmm_check_range(res->va_info.udevid, res->host_tgid, va, size);
         if (ret != 0) {
-            if (!va_is_in_sp_range(va, size)) {
-                svm_err("Invalid para. (udevid=%u; host_tgid=%d; va=0x%llx; size=0x%llx)\n",
-                    res->va_info.udevid, res->host_tgid, va, size);
+            if (!va_is_in_sp_range(va, size) &&
+                svm_mwl_check_mem(res->va_info.udevid, res->host_tgid, MWL_ID_NO_USE, va, size) != 0) {
+                svm_err(
+                    "Invalid para. (udevid=%u; host_tgid=%d; va=0x%llx; size=0x%llx)\n", res->va_info.udevid,
+                    res->host_tgid, va, size);
                 return -EINVAL;
             }
         }
@@ -170,7 +164,7 @@ static int svm_src_copy_res_init(struct svm_copy_subtask *subtask)
     struct copy_va_info *va_info = &subtask->va_info;
     u32 udevid = subtask->copy_task->udevid;
     /* D2D will trans to D2H. H2D src is host, D2H src is device */
-    u32 src_udevid = (subtask->dir == SVM_H2D_CPY) ? uda_get_host_id(): va_info->src_udevid;
+    u32 src_udevid = (subtask->dir == SVM_H2D_CPY) ? uda_get_host_id() : va_info->src_udevid;
     u32 ssid;
     int ret;
 
@@ -198,7 +192,7 @@ static void svm_src_copy_res_uninit(struct svm_copy_subtask *subtask)
 {
     struct svm_copy_res *res = &subtask->src_res;
     struct copy_va_info *va_info = &subtask->va_info;
-    u32 udevid = (subtask->dir == SVM_H2D_CPY) ? va_info->dst_udevid: va_info->src_udevid;
+    u32 udevid = (subtask->dir == SVM_H2D_CPY) ? va_info->dst_udevid : va_info->src_udevid;
 
     if (res->copy_use_va) {
         svm_copy_res_sva_addr_uninit(res);
@@ -213,7 +207,7 @@ static int svm_dst_copy_res_init(struct svm_copy_subtask *subtask)
     struct copy_va_info *va_info = &subtask->va_info;
     u32 udevid = subtask->copy_task->udevid;
     /* D2D will trans to D2H. H2D dst is device, D2H dst is host */
-    u32 dst_udevid = (subtask->dir == SVM_D2H_CPY) ? uda_get_host_id(): va_info->dst_udevid;
+    u32 dst_udevid = (subtask->dir == SVM_D2H_CPY) ? uda_get_host_id() : va_info->dst_udevid;
     u32 ssid;
     int ret;
 
@@ -241,7 +235,7 @@ static void svm_dst_copy_res_uninit(struct svm_copy_subtask *subtask)
 {
     struct svm_copy_res *res = &subtask->dst_res;
     struct copy_va_info *va_info = &subtask->va_info;
-    u32 udevid = (subtask->dir == SVM_H2D_CPY) ? va_info->dst_udevid: va_info->src_udevid;
+    u32 udevid = (subtask->dir == SVM_H2D_CPY) ? va_info->dst_udevid : va_info->src_udevid;
 
     if (res->copy_use_va) {
         svm_copy_res_sva_addr_uninit(res);
@@ -250,8 +244,9 @@ static void svm_dst_copy_res_uninit(struct svm_copy_subtask *subtask)
     }
 }
 
-static u64 svm_fill_dma_nodes(struct svm_copy_res *src_res, struct svm_copy_res *dst_res, enum svm_cpy_dir dir,
-    struct devdrv_dma_node *dma_nodes, u64 max_num)
+static u64 svm_fill_dma_nodes(
+    struct svm_copy_res *src_res, struct svm_copy_res *dst_res, enum svm_cpy_dir dir, struct devdrv_dma_node *dma_nodes,
+    u64 max_num)
 {
     struct svm_dma_addr_info *src_dma = &src_res->dma_info;
     struct svm_dma_addr_info *dst_dma = &dst_res->dma_info;
@@ -266,11 +261,13 @@ static u64 svm_fill_dma_nodes(struct svm_copy_res *src_res, struct svm_copy_res 
     dst_last_seg_offset = (dst_dma->dma_addr_seg_num == 1) ? dst_dma->first_seg_offset : 0;
 
     for (i = 0, src_index = 0, dst_index = 0;
-        ((i < max_num) && (src_index < src_dma->dma_addr_seg_num) && (dst_index < dst_dma->dma_addr_seg_num)); i++) {
+         ((i < max_num) && (src_index < src_dma->dma_addr_seg_num) && (dst_index < dst_dma->dma_addr_seg_num)); i++) {
         src_size = (src_index < src_dma->dma_addr_seg_num - 1) ?
-            src_dma->seg[src_index].size - src_offset : src_dma->last_seg_len + src_last_seg_offset - src_offset;
+                       src_dma->seg[src_index].size - src_offset :
+                       src_dma->last_seg_len + src_last_seg_offset - src_offset;
         dst_size = (dst_index < dst_dma->dma_addr_seg_num - 1) ?
-            dst_dma->seg[dst_index].size - dst_offset : dst_dma->last_seg_len + dst_last_seg_offset - dst_offset;
+                       dst_dma->seg[dst_index].size - dst_offset :
+                       dst_dma->last_seg_len + dst_last_seg_offset - dst_offset;
         curr_size = ka_base_min(src_size, dst_size);
 
         dma_nodes[i].src_addr = src_dma->seg[src_index].dma_addr + src_offset;
@@ -294,10 +291,14 @@ static u64 svm_fill_dma_nodes(struct svm_copy_res *src_res, struct svm_copy_res 
 
         /* If there is no 128 byte alignment, dma copy will be slow. */
         no_aligned_num += ((SVM_IS_ALIGNED(dma_nodes[i].src_addr, 128) == false) ||
-            (SVM_IS_ALIGNED(dma_nodes[i].dst_addr, 128) == false)) ? 1 : 0;
+                           (SVM_IS_ALIGNED(dma_nodes[i].dst_addr, 128) == false)) ?
+                              1 :
+                              0;
     }
 
-    svm_debug("Fill dma_nodes succ. (src_va=0x%llx; dst_va=0x%llx; dma_node_num=%llu; no_aligned_num=%llu)\n", src_res->va_info.va, dst_res->va_info.va, i, no_aligned_num);
+    svm_debug(
+        "Fill dma_nodes succ. (src_va=0x%llx; dst_va=0x%llx; dma_node_num=%llu; no_aligned_num=%llu)\n",
+        src_res->va_info.va, dst_res->va_info.va, i, no_aligned_num);
 
     return i;
 }
@@ -307,10 +308,11 @@ static u64 svm_get_dma_node_max_num(struct svm_copy_res *src_res, struct svm_cop
     u64 src_max_num = src_res->copy_use_va ? 1 : src_res->dma_info.dma_addr_seg_num;
     u64 dst_max_num = dst_res->copy_use_va ? 1 : dst_res->dma_info.dma_addr_seg_num;
 
-    return (ka_base_max_t(u64, src_max_num, dst_max_num) * 2);  /* 2 * (src)dst max_num */
+    return (ka_base_max_t(u64, src_max_num, dst_max_num) * 2); /* 2 * (src)dst max_num */
 }
 
-static int svm_dma_nodes_create(struct svm_copy_res *src_res, struct svm_copy_res *dst_res, enum svm_cpy_dir dir,
+static int svm_dma_nodes_create(
+    struct svm_copy_res *src_res, struct svm_copy_res *dst_res, enum svm_cpy_dir dir,
     struct devdrv_dma_node **dma_nodes_out, u64 *dma_node_num_out)
 {
     struct devdrv_dma_node *dma_nodes = NULL;
@@ -330,10 +332,7 @@ static int svm_dma_nodes_create(struct svm_copy_res *src_res, struct svm_copy_re
     return 0;
 }
 
-static void svm_dma_nodes_destroy(struct devdrv_dma_node *dma_nodes)
-{
-    svm_kvfree(dma_nodes);
-}
+static void svm_dma_nodes_destroy(struct devdrv_dma_node *dma_nodes) { svm_kvfree(dma_nodes); }
 
 static void svm_copy_subtask_insert(struct svm_copy_task *copy_task, struct svm_copy_subtask *subtask)
 {
@@ -353,8 +352,8 @@ static void svm_copy_subtask_erase(struct svm_copy_subtask *subtask)
     ka_task_spin_unlock_bh(&copy_task->subtasks_list.spinlock);
 }
 
-static struct svm_copy_subtask *_svm_copy_subtask_create(struct svm_copy_task *copy_task,
-    struct copy_va_info *info, u32 flag)
+static struct svm_copy_subtask *_svm_copy_subtask_create(
+    struct svm_copy_task *copy_task, struct copy_va_info *info, u32 flag)
 {
     struct svm_copy_subtask *subtask = NULL;
     int ret;
@@ -368,7 +367,8 @@ static struct svm_copy_subtask *_svm_copy_subtask_create(struct svm_copy_task *c
     subtask->copy_task = copy_task;
     subtask->va_info = *info;
     subtask->flag = flag;
-    subtask->dir = (info->src_udevid == copy_task->udevid) ? SVM_D2H_CPY : SVM_H2D_CPY; /* copy dir decide by dma engine devid. */
+    subtask->dir =
+        (info->src_udevid == copy_task->udevid) ? SVM_D2H_CPY : SVM_H2D_CPY; /* copy dir decide by dma engine devid. */
 
     ret = svm_src_copy_res_init(subtask);
     if (ret != 0) {
@@ -382,8 +382,8 @@ static struct svm_copy_subtask *_svm_copy_subtask_create(struct svm_copy_task *c
         goto uninit_src_res;
     }
 
-    ret = svm_dma_nodes_create(&subtask->src_res, &subtask->dst_res, subtask->dir,
-        &subtask->dma_nodes, &subtask->dma_node_num);
+    ret = svm_dma_nodes_create(
+        &subtask->src_res, &subtask->dst_res, subtask->dir, &subtask->dma_nodes, &subtask->dma_node_num);
     if (ret != 0) {
         svm_err("Create dma nodes failed. (ret=%d)\n", ret);
         goto uninit_dst_res;
@@ -408,8 +408,7 @@ static void _svm_copy_subtask_destroy(struct svm_copy_subtask *subtask)
     svm_kvfree(subtask);
 }
 
-struct svm_copy_subtask *svm_copy_subtask_create(struct svm_copy_task *copy_task,
-    struct copy_va_info *info, u32 flag)
+struct svm_copy_subtask *svm_copy_subtask_create(struct svm_copy_task *copy_task, struct copy_va_info *info, u32 flag)
 {
     struct svm_copy_subtask *subtask = NULL;
 
@@ -464,8 +463,9 @@ int svm_copy_subtask_submit(struct svm_copy_subtask *subtask)
         ret = svm_dma_sync_cpy(copy_task->udevid, subtask->dma_nodes, subtask->dma_node_num, copy_task->instance);
     } else {
         svm_copy_task_get(copy_task);
-        ret = svm_dma_async_cpy(copy_task->udevid, subtask->dma_nodes, subtask->dma_node_num,
-            svm_dma_async_callback, (void *)subtask, copy_task->instance);
+        ret = svm_dma_async_cpy(
+            copy_task->udevid, subtask->dma_nodes, subtask->dma_node_num, svm_dma_async_callback, (void *)subtask,
+            copy_task->instance);
         if (ret != 0) {
             svm_copy_task_put(copy_task);
             return ret;
@@ -515,7 +515,8 @@ int svm_copy_task_submit(struct svm_copy_task *copy_task)
     int ret;
 
     /* No need lock, SVM_DMA_DESC_TASK_MODE callback won't access list. */
-    ka_list_for_each_entry_safe(subtask, n, &copy_task->subtasks_list.head, node) {
+    ka_list_for_each_entry_safe(subtask, n, &copy_task->subtasks_list.head, node)
+    {
         ka_try_cond_resched(&stamp);
         ret = svm_copy_subtask_submit(subtask);
         if (ret != 0) {
@@ -574,7 +575,8 @@ void svm_copy_task_destroy(struct svm_copy_task *copy_task)
     struct svm_copy_subtask *subtask = NULL;
     struct svm_copy_subtask *n = NULL;
 
-    ka_list_for_each_entry_safe(subtask, n, &copy_task->subtasks_list.head, node) {
+    ka_list_for_each_entry_safe(subtask, n, &copy_task->subtasks_list.head, node)
+    {
         ka_try_cond_resched(&stamp);
         ka_list_del(&subtask->node);
         copy_task->subtasks_list.num--;
@@ -591,9 +593,7 @@ u32 svm_copy_task_get_dma_node_num(struct svm_copy_task *copy_task)
     struct svm_copy_subtask *n = NULL;
     u32 num = 0;
 
-    ka_list_for_each_entry_safe(subtask, n, &copy_task->subtasks_list.head, node) {
-        num += subtask->dma_node_num;
-    }
+    ka_list_for_each_entry_safe(subtask, n, &copy_task->subtasks_list.head, node) { num += subtask->dma_node_num; }
 
     return num;
 }

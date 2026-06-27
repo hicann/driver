@@ -26,7 +26,7 @@ EXTRA_CFLAGS += -I$(LOCAL_PATH)/main/host \
                 -I$(LOCAL_PATH)/vdrv \
                 -I$(LOCAL_PATH)/decoder \
                 -I$(LOCAL_PATH)/vmng \
-                -I$(LOCAL_PATH)/fops
+                -I$(LOCAL_PATH)/command/ioctl
 
 EXTRA_CFLAGS += -I$(HIAI_DKMS_DIR)/kernel_adapt/include
 EXTRA_CFLAGS += -I$(HIAI_DKMS_DIR)/inc/driver

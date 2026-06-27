@@ -14,9 +14,9 @@
 #ifndef PBL_FEATURE_LOADER_H
 #define PBL_FEATURE_LOADER_H
 
-#include <linux/module.h>
-#include <linux/version.h>
-#include <linux/seq_file.h>
+#include "ka_kernel_def_pub.h"
+#include "ka_dfx_pub.h"
+#include "ka_base_pub.h"
 
 #include "securec.h"
 
@@ -45,20 +45,6 @@
                   init: functions are invoked in the sequence of stages.
                   uninit: functions are invoked in the oppside sequence of stages.
 */
-
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 5, 0)
-struct kernel_symbol {
-#ifdef CONFIG_HAVE_ARCH_PREL32_RELOCATIONS
-    int value_offset;
-    int name_offset;
-    int namespace_offset;
-#else
-    unsigned long value;
-    const char *name;
-    const char *namespace;
-#endif
-};
-#endif
 
 #define PREFIX_MAX_LEN 128
 
@@ -224,28 +210,28 @@ typedef void (*_fearture_uninit_selfdef_scope_func)(void *priv);
 #define DECLAER_FEATURE_AUTO_UNINIT_BY_SCOPE(scope, uninit_fn, stage) \
     _DECLAER_FEATURE_AUTO_UNINIT_BY_SCOPE(AUTO_INIT_MODULE_NAME, scope, uninit_fn, stage)
 
-static inline void *get_symbol_fun(const struct kernel_symbol *sym)
+static inline void *get_symbol_fun(const ka_kernel_symbol_t *sym)
 {
 #ifdef CONFIG_HAVE_ARCH_PREL32_RELOCATIONS
-    return (void *)(uintptr_t)offset_to_ptr(&sym->value_offset);
+    return (void *)(uintptr_t)ka_dfx_offset_to_ptr(&sym->value_offset);
 #else
     return (void *)(uintptr_t)sym->value;
 #endif
 }
 
-static inline const char *get_symbol_name(const struct kernel_symbol *sym)
+static inline const char *get_symbol_name(const ka_kernel_symbol_t *sym)
 {
 #ifdef CONFIG_HAVE_ARCH_PREL32_RELOCATIONS
-    return offset_to_ptr(&sym->name_offset);
+    return ka_dfx_offset_to_ptr(&sym->name_offset);
 #else
     return sym->name;
 #endif
 }
 
-static inline void *get_symbol_prefix_func(const struct kernel_symbol *sym, char *prefix)
+static inline void *get_symbol_prefix_func(const ka_kernel_symbol_t *sym, char *prefix)
 {
     const char *sym_name = get_symbol_name(sym);
-    if (strstr(sym_name, prefix) != sym_name) {
+    if (ka_base_strstr(sym_name, prefix) != sym_name) {
         return NULL;
     }
 
@@ -269,7 +255,7 @@ static inline int module_feature_init_call(int feature_scope, void *fn, void *pa
 }
 
 static inline int module_feature_try_to_init(int feature_scope, void *param,
-    const struct kernel_symbol *sym, char *prefix)
+    const ka_kernel_symbol_t *sym, char *prefix)
 {
     void *fn = get_symbol_prefix_func(sym, prefix);
     return (fn != NULL) ? module_feature_init_call(feature_scope, fn, param) : 0;
@@ -291,7 +277,7 @@ static inline void module_feature_uninit_call(int feature_scope, void *fn, void 
 }
 
 static inline void module_feature_try_to_uninit(int feature_scope, void *param,
-    const struct kernel_symbol *sym, char *prefix)
+    const ka_kernel_symbol_t *sym, char *prefix)
 {
     void *fn = get_symbol_prefix_func(sym, prefix);
     if (fn != NULL) {
@@ -306,7 +292,7 @@ static inline void _module_feature_uninit_by_full_name(int feature_scope, void *
 
     for (i = 0; i < module->num_syms; i++) {
         const char *sym_name = get_symbol_name(&module->syms[i]);
-        if (strcmp(sym_name, full_name) == 0) {
+        if (ka_base_strcmp(sym_name, full_name) == 0) {
             void *fn = get_symbol_fun(&module->syms[i]);
             module_feature_uninit_call(feature_scope, fn, param);
             break;
@@ -317,7 +303,7 @@ static inline void _module_feature_uninit_by_full_name(int feature_scope, void *
 static inline void module_feature_rollback_format_uninit_func_name(const char *init_fn_name,
     const char *init_label, char *uninit_func_name, int len)
 {
-    char *init_label_start = strstr(init_fn_name, init_label);
+    char *init_label_start = ka_base_strstr(init_fn_name, init_label);
     if (strncpy_s(uninit_func_name, len, init_fn_name, init_label_start - init_fn_name) == 0) {
         if (strcat_s(uninit_func_name, len, "un") == 0) {
             if (strcat_s(uninit_func_name, len, init_label_start) == 0) {
@@ -328,32 +314,32 @@ static inline void module_feature_rollback_format_uninit_func_name(const char *i
     uninit_func_name[0] = '\0';
 }
 
-static inline void module_feature_rollback_format_uninit_full_func_name(const struct kernel_symbol *sym,
+static inline void module_feature_rollback_format_uninit_full_func_name(const ka_kernel_symbol_t *sym,
     char *init_prefix, char *uninit_prefix, char *uninit_full_func_name, int len)
 {
-    const char *init_fn_name = get_symbol_name(sym) + strlen(init_prefix);
+    const char *init_fn_name = get_symbol_name(sym) + ka_base_strlen(init_prefix);
     const char *init_label = "init";
 
     uninit_full_func_name[0] = '\0';
-    if (strlen(init_fn_name) > strlen(init_label)) {
+    if (ka_base_strlen(init_fn_name) > ka_base_strlen(init_label)) {
         /* rollback regular: xxx_init, xxx_uninit, xxx_init_dev, xxx_uninit_dev, xxx_init_task, xxx_uninit_task */
-        if (strstr(init_fn_name, init_label) != NULL) {
+        if (ka_base_strstr(init_fn_name, init_label) != NULL) {
             if (strcpy_s(uninit_full_func_name, len, uninit_prefix) == 0) {
                 module_feature_rollback_format_uninit_func_name(init_fn_name, init_label, 
-                    uninit_full_func_name + strlen(uninit_prefix), len -= strlen(uninit_prefix));
+                    uninit_full_func_name + ka_base_strlen(uninit_prefix), len -= ka_base_strlen(uninit_prefix));
             }
         }
     }
 }
 
 static inline void module_feature_init_prefix_rollback_one_fn(int feature_scope, void *param,
-    struct module *module, const struct kernel_symbol *sym, char *init_prefix, char *uninit_prefix)
+    struct module *module, const ka_kernel_symbol_t *sym, char *init_prefix, char *uninit_prefix)
 {
     char uninit_full_func_name[PREFIX_MAX_LEN];
 
     module_feature_rollback_format_uninit_full_func_name(sym, init_prefix, uninit_prefix, 
         uninit_full_func_name, PREFIX_MAX_LEN);
-    if (strlen(uninit_full_func_name) > 0) {
+    if (ka_base_strlen(uninit_full_func_name) > 0) {
         _module_feature_uninit_by_full_name(feature_scope, param, module, uninit_full_func_name);
     }
 }
@@ -361,7 +347,7 @@ static inline void module_feature_init_prefix_rollback_one_fn(int feature_scope,
 static inline void module_feature_init_prefix_rollback(int feature_scope, void *param,
     char *init_prefix, char *uninit_prefix, u32 rollback_num)
 {
-    struct module *module = THIS_MODULE;
+    struct module *module = KA_THIS_MODULE;
     u32 i;
 
     for (i = 0; i < rollback_num; i++) {
@@ -375,7 +361,7 @@ static inline void module_feature_init_prefix_rollback(int feature_scope, void *
 
 static inline int module_feature_init_prefix(int feature_scope, void *param, char *init_prefix, char *uninit_prefix)
 {
-    struct module *module = THIS_MODULE;
+    struct module *module = KA_THIS_MODULE;
     u32 i;
 
     for (i = 0; i < module->num_syms; i++) {
@@ -391,7 +377,7 @@ static inline int module_feature_init_prefix(int feature_scope, void *param, cha
 
 static inline void module_feature_uninit_prefix(int feature_scope, void *param, char *prefix)
 {
-    struct module *module = THIS_MODULE;
+    struct module *module = KA_THIS_MODULE;
     u32 i;
 
     for (i = 0; i < module->num_syms; i++) {
@@ -546,7 +532,7 @@ typedef void (*_fearture_show_task_func)(u32 udevid, int pid, int feature_id, st
 static inline void module_feature_show_task_prefix(char *prefix, u32 udevid, int pid, int feature_id,
     struct seq_file *seq)
 {
-    struct module *module = THIS_MODULE;
+    struct module *module = KA_THIS_MODULE;
     u32 i;
 
     for (i = 0; i < module->num_syms; i++) {
@@ -597,7 +583,7 @@ typedef void (*_fearture_show_dev_func)(u32 udevid, int feature_id, struct seq_f
 
 static inline void module_feature_show_dev_prefix(char *prefix, u32 udevid, int feature_id, struct seq_file *seq)
 {
-    struct module *module = THIS_MODULE;
+    struct module *module = KA_THIS_MODULE;
     u32 i;
 
     for (i = 0; i < module->num_syms; i++) {

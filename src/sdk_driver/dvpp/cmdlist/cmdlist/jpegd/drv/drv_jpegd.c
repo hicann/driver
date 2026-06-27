@@ -12,7 +12,6 @@
  */
 
 #include "drv_jpegd.h"
-#include "dvpp_cmdlist_num_define.h"
 #include "dvpp_tlv_types.h"
 #include "drv_jpegd_comm.h"
 

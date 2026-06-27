@@ -1,5 +1,5 @@
 # ------------------------------------------------------------------------------------------------------------
-# Copyright (c) 2025 Huawei Technologies Co., Ltd.
+# Copyright (c) 2026 Huawei Technologies Co., Ltd.
 # This program is free software, you can redistribute it and/or modify it under the terms and conditions of
 # CANN Open Software License Agreement Version 2.0 (the "License").
 # Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -14,31 +14,23 @@ set(ASCEND_URMA_ADAPT_SRC_FILES)
 set(ASCEND_URMA_ADAPT_SRC_INC_DIRS)
 set(ASCEND_URMA_ADAPT_COMPILE_DEFINITIONS)
 
-if(${PRODUCT} STREQUAL ascend910_55esl OR ${PRODUCT} STREQUAL ascend910_55fpga OR ${PRODUCT} STREQUAL ascend910_55
-    OR ${PRODUCT} STREQUAL ascend910_96esl OR ${PRODUCT} STREQUAL ascend910_96fpga OR ${PRODUCT} STREQUAL ascend910_96)
-    if(${CMAKE_HOST_SYSTEM_PROCESSOR} STREQUAL aarch64)
-        set(ENABLE_UBE TRUE)
-    endif ()
-endif ()
-
 # Collect srcs, dirs, compile_definitions
 if(${PRODUCT_SIDE} STREQUAL host)
-if(${ENABLE_UBE})
-    file(GLOB ASCEND_URMA_ADAPT_SRC_FILES
-        ${ASCEND_URMA_ADAPT_DIR}/*.c
-    )
+    if(${ENABLE_UBE})
+        file(GLOB ASCEND_URMA_ADAPT_SRC_FILES
+            ${ASCEND_URMA_ADAPT_DIR}/*.c
+        )
 
-    list(APPEND ASCEND_URMA_ADAPT_SRC_INC_DIRS
-        ${TOP_DIR}/ubengine/ssapi/kernelspace/urma/code/include
-        ${TOP_DIR}/ubengine/ssapi/kernelspace/urma/code/lib/urma/include
+        list(APPEND ASCEND_URMA_ADAPT_SRC_INC_DIRS
+            /usr/include/ub/umdk/urma/
 
-        ${DRIVER_USER_DIR}/inc/
+            ${DRIVER_USER_DIR}/inc/
 
-        ${ASCEND_URMA_ADAPT_DIR}/
-    )
-else ()
+            ${ASCEND_URMA_ADAPT_DIR}/
+        )
+    else ()
 
-endif ()
+    endif ()
 else ()
     file(GLOB ASCEND_URMA_ADAPT_SRC_FILES
         ${ASCEND_URMA_ADAPT_DIR}/*.c
@@ -62,18 +54,17 @@ target_sources(ascend_urma_adapt_obj PRIVATE
 )
 
 target_include_directories(ascend_urma_adapt_obj PRIVATE
-    ${TOP_DIR}/abl/libc_sec/include
-    ${TOP_DIR}/inc
-    ${TOP_DIR}/abl/slog/inc
-    ${TOP_DIR}/abl/slog/inc/toolchain
-    ${TOP_DIR}/inc/driver
+    ${C_SEC_INCLUDE}/
+    ${DRIVER_HAL_INC_DIR}
+    ${DRIVER_USER_DIR}/msnpureport/inc/slog
 
     ${DRIVER_USER_DIR}/inc
     ${DRIVER_USER_DIR}/inc/common
     ${DRIVER_USER_DIR}/inc/
-    ${DRIVER_USER_DIR}/src/dmc/device_monitor/lib/include
-    ${DRIVER_USER_DIR}/src/pbl/commlib
+    ${DRIVER_USER_DIR}/dmc/device_monitor/lib/include
+    ${DRIVER_USER_DIR}/pbl/commlib
     ${DRIVER_USER_DIR}/inc/dms
+    ${DRIVER_KERNEL_DIR}/dms/command/ioctl
 
     ${ASCEND_URMA_ADAPT_SRC_INC_DIRS}
 )
@@ -88,7 +79,6 @@ target_compile_definitions(ascend_urma_adapt_obj PRIVATE
 
 target_link_libraries(ascend_urma_adapt_obj PRIVATE
     $<BUILD_INTERFACE:intf_pub>
-    $<BUILD_INTERFACE:slog_headers>
 )
 
 target_compile_options(ascend_urma_adapt_obj PRIVATE

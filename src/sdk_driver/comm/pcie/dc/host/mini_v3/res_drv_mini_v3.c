@@ -15,6 +15,7 @@
 #include "devdrv_util.h"
 #include "devdrv_ctrl.h"
 #include "res_drv_mini_v3.h"
+#include "devdrv_feature.h"
 
 #if defined(CFG_PLATFORM_ESL) || defined(CFG_PLATFORM_FPGA)
 #define DEVDRV_MINI_V3_P2P_SUPPORT_MAX_DEVICE 4
@@ -239,7 +240,58 @@ STATIC unsigned int devdrv_msg_chan_cnt_mini_v3[devdrv_msg_client_max] = {
     DEVDRV_QUEUE_MSG_CHAN_CNT_MAX,          /* used for queue */
 };
 
-STATIC void devdrv_mini_v3_init_bar_addr_info(struct devdrv_pci_ctrl *pci_ctrl)
+int devdrv_mini_v3_init_bar_info(struct devdrv_pci_ctrl *pci_ctrl)
+{
+    resource_size_t offset;
+    unsigned long size;
+
+    pci_ctrl->mem_bar_id = PCI_BAR_MEM;
+    pci_ctrl->mem_phy_base = 0;
+    pci_ctrl->mem_phy_size = 0;
+
+    offset = ka_pci_resource_start(pci_ctrl->pdev, PCI_BAR_RSV_MEM) + DEVDRV_RESERVE_MEM_MSG_OFFSET;
+    size = DEVDRV_RESERVE_MEM_MSG_SIZE;
+
+    pci_ctrl->mem_base = ka_mm_ioremap(offset, size);
+    if (pci_ctrl->mem_base == NULL) {
+        devdrv_err("Ioremap mem_base failed. (size=%lu)\n", size);
+        devdrv_res_uninit(pci_ctrl);
+        return -ENOMEM;
+    }
+
+    pci_ctrl->rsv_mem_phy_base = (phys_addr_t)ka_pci_resource_start(pci_ctrl->pdev, PCI_BAR_RSV_MEM);
+    pci_ctrl->rsv_mem_phy_size = (u64)ka_pci_resource_len(pci_ctrl->pdev, PCI_BAR_RSV_MEM);
+
+    offset = ka_pci_resource_start(pci_ctrl->pdev, PCI_BAR_IO) + DEVDRV_IEP_SDI0_OFFSET + DEVDRV_IEP_SDI0_DB_OFFSET;
+    size = DEVDRV_DB_IOMAP_SIZE;
+    pci_ctrl->msi_base = ka_mm_ioremap(offset, size);
+    if (pci_ctrl->msi_base == NULL) {
+        devdrv_err("Ioremap msi_base failed. (size=%lu)\n", size);
+        devdrv_res_uninit(pci_ctrl);
+        return -ENOMEM;
+    }
+
+    pci_ctrl->io_phy_base = (phys_addr_t)ka_pci_resource_start(pci_ctrl->pdev, PCI_BAR_IO);
+    pci_ctrl->io_phy_size = (u64)ka_pci_resource_len(pci_ctrl->pdev, PCI_BAR_IO);
+
+    pci_ctrl->io_base = ka_mm_ioremap(pci_ctrl->io_phy_base, pci_ctrl->io_phy_size);
+    if (pci_ctrl->io_base == NULL) {
+        devdrv_err("Ioremap io_base failed. (size=%llu)\n", pci_ctrl->io_phy_size);
+        devdrv_res_uninit(pci_ctrl);
+        return -ENOMEM;
+    }
+
+    pci_ctrl->shr_para = pci_ctrl->io_base + DEVDRV_IO_LOAD_SRAM_OFFSET + DEVDRV_SHR_PARA_ADDR_OFFSET;
+
+    pci_ctrl->res.phy_match_flag_addr = (u8 *)pci_ctrl->shr_para + PHY_MATCH_FLAG_OFFSET_IN_SHR_MEM;
+    pci_ctrl->res.nvme_db_base = pci_ctrl->msi_base;
+    pci_ctrl->res.nvme_pf_ctrl_base = pci_ctrl->io_base + DEVDRV_IEP_SDI0_OFFSET;
+    pci_ctrl->res.load_sram_base = pci_ctrl->io_base + DEVDRV_IO_LOAD_SRAM_OFFSET;
+
+    return 0;
+}
+
+void devdrv_mini_v3_init_bar_addr_info(struct devdrv_pci_ctrl *pci_ctrl)
 {
     pci_ctrl->res.msg_mem.addr = pci_ctrl->rsv_mem_phy_base + DEVDRV_RESERVE_MEM_MSG_OFFSET;
 
@@ -323,7 +375,7 @@ STATIC void devdrv_mini_v3_init_bar_addr_info(struct devdrv_pci_ctrl *pci_ctrl)
     pci_ctrl->res.chip_dfx.size = 0;
 }
 
-STATIC void devdrv_mini_v3_init_intr_info(struct devdrv_pci_ctrl *pci_ctrl)
+void devdrv_mini_v3_init_intr_info(struct devdrv_pci_ctrl *pci_ctrl)
 {
     struct devdrv_intr_info *intr = &pci_ctrl->res.intr;
 
@@ -346,7 +398,7 @@ STATIC void devdrv_mini_v3_init_intr_info(struct devdrv_pci_ctrl *pci_ctrl)
     intr->tsdrv_irq_vector2_num = 0;
 }
 
-STATIC void devdrv_mini_v3_init_dma_info(struct devdrv_pci_ctrl *pci_ctrl)
+void devdrv_mini_v3_init_dma_info(struct devdrv_pci_ctrl *pci_ctrl)
 {
     u32 i;
 
@@ -367,13 +419,13 @@ STATIC void devdrv_mini_v3_init_dma_info(struct devdrv_pci_ctrl *pci_ctrl)
     pci_ctrl->res.dma_res.sq_rsv_num = DEVDRV_DMA_CH_SQ_DESC_RSV;
 }
 
-STATIC void devdrv_mini_v3_init_load_file_info(struct devdrv_pci_ctrl *pci_ctrl)
+void devdrv_mini_v3_init_load_file_info(struct devdrv_pci_ctrl *pci_ctrl)
 {
     pci_ctrl->res.load_file.load_file_num = MINI_V3_BLOCKS_NUM;
     pci_ctrl->res.load_file.load_file_cfg = mini_v3_file;
 }
 
-STATIC void devdrv_mini_v3_init_depend_module_info(struct devdrv_pci_ctrl *pci_ctrl)
+void devdrv_mini_v3_init_depend_module_info(struct devdrv_pci_ctrl *pci_ctrl)
 {
     pci_ctrl->res.depend_info.module_num = MINI_V3_MODULE_NUM;
     pci_ctrl->res.depend_info.module_list = mini_v3_module;
@@ -382,7 +434,7 @@ STATIC void devdrv_mini_v3_init_depend_module_info(struct devdrv_pci_ctrl *pci_c
 #define DEV_ID_START 0
 #define DEV_ID_STRIDE 1
 
-STATIC int devdrv_mini_v3_alloc_devid(struct devdrv_ctrl *ctrl_this)
+int devdrv_mini_v3_alloc_devid(struct devdrv_ctrl *ctrl_this)
 {
     u32 dev_id_start;
     int dev_id;
@@ -397,7 +449,7 @@ STATIC int devdrv_mini_v3_alloc_devid(struct devdrv_ctrl *ctrl_this)
     return devdrv_alloc_devid_inturn(dev_id_start, DEV_ID_STRIDE);
 }
 
-STATIC int devdrv_mini_v3_is_p2p_access_cap(struct devdrv_pci_ctrl *pci_ctrl,
+int devdrv_mini_v3_is_p2p_access_cap(struct devdrv_pci_ctrl *pci_ctrl,
                                             struct devdrv_pci_ctrl *peer_pci_ctrl)
 {
     devdrv_info("This chip_type not support p2p. (dev_id=%u; chip_type=%d)\n", pci_ctrl->dev_id,
@@ -405,77 +457,48 @@ STATIC int devdrv_mini_v3_is_p2p_access_cap(struct devdrv_pci_ctrl *pci_ctrl,
     return DEVDRV_P2P_ACCESS_DISABLE;
 }
 
-STATIC enum devdrv_load_wait_mode devdrv_mini_v3_get_load_wait_mode(struct devdrv_pci_ctrl *pci_ctrl)
+enum devdrv_load_wait_mode devdrv_mini_v3_get_load_wait_mode(struct devdrv_pci_ctrl *pci_ctrl)
 {
-    if (pci_ctrl->ops.pre_cfg != NULL) {
-        pci_ctrl->ops.pre_cfg(pci_ctrl);
+    if (devdrv_feature_is_support(pci_ctrl->features, DEVDRV_FEATURE_PRE_CFG)) {
+        devdrv_pre_cfg(pci_ctrl);
     }
 
     return DEVDRV_LOAD_WAIT_INTERVAL;
 }
 
-STATIC int devdrv_mini_v3_get_pf_msg_chan_cnt(void)
+int devdrv_mini_v3_get_pf_msg_chan_cnt(void)
 {
     return DEVDRV_MAX_MSG_PF_CHAN_CNT;
 }
 
-STATIC int devdrv_mini_v3_get_vf_msg_chan_cnt(void)
+int devdrv_mini_v3_get_vf_msg_chan_cnt(void)
 {
     return DEVDRV_MAX_MSG_VF_CHAN_CNT;
 }
 
-STATIC u32 devdrv_mini_v3_get_p2p_support_max_devnum(void)
+u32 devdrv_mini_v3_get_p2p_support_max_devnum(void)
 {
     return DEVDRV_MINI_V3_P2P_SUPPORT_MAX_DEVICE;
 }
 
-STATIC void devdrv_mini_v3_set_dev_shr_info(struct devdrv_pci_ctrl *pci_ctrl)
+void devdrv_mini_v3_set_dev_shr_info(struct devdrv_pci_ctrl *pci_ctrl)
 {
     pci_ctrl->shr_para->host_dev_id = (int)pci_ctrl->dev_id;
     pci_ctrl->shr_para->host_mem_bar_base = (u64)pci_ctrl->mem_phy_base;
     pci_ctrl->shr_para->host_io_bar_base = (u64)pci_ctrl->io_phy_base;
 }
 
-STATIC u32 devdrv_mini_v3_get_nvme_low_level_db_irq_num(void)
+u32 devdrv_mini_v3_get_nvme_low_level_db_irq_num(void)
 {
     return MINI_V3_NVME_LOW_LEVEL_DB_IRQ_NUM;
 }
 
-STATIC u32 devdrv_mini_v3_get_nvme_db_irq_strde(void)
+u32 devdrv_mini_v3_get_nvme_db_irq_strde(void)
 {
     return MINI_V3_NVME_DB_IRQ_STRDE;
 }
 
-STATIC void devdrv_mini_v3_ops_init(struct devdrv_pci_ctrl *pci_ctrl)
-{
-    pci_ctrl->ops.shr_para_rebuild = NULL;
-    pci_ctrl->ops.alloc_devid = devdrv_mini_v3_alloc_devid;
-    pci_ctrl->ops.is_p2p_access_cap = devdrv_mini_v3_is_p2p_access_cap;
-    pci_ctrl->ops.probe_wait = devdrv_probe_wait;
-    pci_ctrl->ops.bind_irq = devdrv_bind_irq;
-    pci_ctrl->ops.unbind_irq = devdrv_unbind_irq;
-    pci_ctrl->ops.get_load_wait_mode = devdrv_mini_v3_get_load_wait_mode;
-    pci_ctrl->ops.get_pf_max_msg_chan_cnt = devdrv_mini_v3_get_pf_msg_chan_cnt;
-    pci_ctrl->ops.get_vf_max_msg_chan_cnt = devdrv_mini_v3_get_vf_msg_chan_cnt;
-    pci_ctrl->ops.get_p2p_support_max_devnum = devdrv_mini_v3_get_p2p_support_max_devnum;
-    pci_ctrl->ops.get_hccs_link_info = NULL;
-    pci_ctrl->ops.is_mdev_vm_full_spec = NULL;
-    pci_ctrl->ops.devdrv_deal_suspend_handshake = NULL;
-    pci_ctrl->ops.is_all_dev_unified_addr = NULL;
-    pci_ctrl->ops.flush_cache = NULL;
-    pci_ctrl->ops.get_peh_link_info = NULL;
-    pci_ctrl->ops.set_dev_shr_info = devdrv_mini_v3_set_dev_shr_info;
-    pci_ctrl->ops.link_speed_slow_to_normal = NULL;
-    pci_ctrl->ops.get_p2p_addr = NULL;
-    pci_ctrl->ops.get_server_id = NULL;
-    pci_ctrl->ops.get_max_server_num = NULL;
-    pci_ctrl->ops.check_ep_suspend_status = NULL;
-    pci_ctrl->ops.get_nvme_low_level_db_irq_num = devdrv_mini_v3_get_nvme_low_level_db_irq_num;
-    pci_ctrl->ops.get_nvme_db_irq_strde = devdrv_mini_v3_get_nvme_db_irq_strde;
-    pci_ctrl->ops.pre_cfg = NULL;
-}
-
-STATIC void devdrv_mini_v3_init_msg_cnt(struct devdrv_pci_ctrl *pci_ctrl)
+void devdrv_mini_v3_init_msg_cnt(struct devdrv_pci_ctrl *pci_ctrl)
 {
     int i;
     for (i = 0; i < devdrv_msg_client_max; i++) {
@@ -483,66 +506,99 @@ STATIC void devdrv_mini_v3_init_msg_cnt(struct devdrv_pci_ctrl *pci_ctrl)
     }
 }
 
-int devdrv_mini_v3_res_init(struct devdrv_pci_ctrl *pci_ctrl)
+void devdrv_mini_v3_init_setup_runtime_info(struct devdrv_pci_ctrl *pci_ctrl)
 {
-    resource_size_t offset;
-    unsigned long size;
-
-    pci_ctrl->mem_bar_id = PCI_BAR_MEM;
-    pci_ctrl->mem_phy_base = 0;
-    pci_ctrl->mem_phy_size = 0;
-
-    offset = ka_pci_resource_start(pci_ctrl->pdev, PCI_BAR_RSV_MEM) + DEVDRV_RESERVE_MEM_MSG_OFFSET;
-    size = DEVDRV_RESERVE_MEM_MSG_SIZE;
-
-    pci_ctrl->mem_base = ka_mm_ioremap(offset, size);
-    if (pci_ctrl->mem_base == NULL) {
-        devdrv_err("Ioremap mem_base failed. (size=%lu)\n", size);
-        devdrv_res_uninit(pci_ctrl);
-        return -ENOMEM;
-    }
-
-    pci_ctrl->rsv_mem_phy_base = (phys_addr_t)ka_pci_resource_start(pci_ctrl->pdev, PCI_BAR_RSV_MEM);
-    pci_ctrl->rsv_mem_phy_size = (u64)ka_pci_resource_len(pci_ctrl->pdev, PCI_BAR_RSV_MEM);
-
-    offset = ka_pci_resource_start(pci_ctrl->pdev, PCI_BAR_IO) + DEVDRV_IEP_SDI0_OFFSET + DEVDRV_IEP_SDI0_DB_OFFSET;
-    size = DEVDRV_DB_IOMAP_SIZE;
-    pci_ctrl->msi_base = ka_mm_ioremap(offset, size);
-    if (pci_ctrl->msi_base == NULL) {
-        devdrv_err("Ioremap msi_base failed. (size=%lu)\n", size);
-        devdrv_res_uninit(pci_ctrl);
-        return -ENOMEM;
-    }
-
-    pci_ctrl->io_phy_base = (phys_addr_t)ka_pci_resource_start(pci_ctrl->pdev, PCI_BAR_IO);
-    pci_ctrl->io_phy_size = (u64)ka_pci_resource_len(pci_ctrl->pdev, PCI_BAR_IO);
-
-    pci_ctrl->io_base = ka_mm_ioremap(pci_ctrl->io_phy_base, pci_ctrl->io_phy_size);
-    if (pci_ctrl->io_base == NULL) {
-        devdrv_err("Ioremap io_base failed. (size=%llu)\n", pci_ctrl->io_phy_size);
-        devdrv_res_uninit(pci_ctrl);
-        return -ENOMEM;
-    }
-
-    pci_ctrl->shr_para = pci_ctrl->io_base + DEVDRV_IO_LOAD_SRAM_OFFSET + DEVDRV_SHR_PARA_ADDR_OFFSET;
-
-    pci_ctrl->res.phy_match_flag_addr = (u8 *)pci_ctrl->shr_para + PHY_MATCH_FLAG_OFFSET_IN_SHR_MEM;
-    pci_ctrl->res.nvme_db_base = pci_ctrl->msi_base;
-    pci_ctrl->res.nvme_pf_ctrl_base = pci_ctrl->io_base + DEVDRV_IEP_SDI0_OFFSET;
-    pci_ctrl->res.load_sram_base = pci_ctrl->io_base + DEVDRV_IO_LOAD_SRAM_OFFSET;
-
-    devdrv_parse_res_gear();
-    devdrv_mini_v3_init_bar_addr_info(pci_ctrl);
-    devdrv_mini_v3_init_intr_info(pci_ctrl);
-    devdrv_mini_v3_init_dma_info(pci_ctrl);
-    devdrv_mini_v3_init_load_file_info(pci_ctrl);
-    devdrv_mini_v3_init_depend_module_info(pci_ctrl);
-    devdrv_mini_v3_ops_init(pci_ctrl);
-    devdrv_mini_v3_init_msg_cnt(pci_ctrl);
-
     pci_ctrl->remote_dev_id = 0;
     pci_ctrl->os_load_flag = (u32)pci_ctrl->shr_para->load_flag;
 
     pci_ctrl->local_reserve_mem_base = NULL;
+}
+
+static const devdrv_feature_bitmap_t mini_v3_features = 0;
+
+#define DEVDRV_MINI_V3_OPS \
+    .init_load_file_info = devdrv_mini_v3_init_load_file_info, \
+    .init_depend_module_info = devdrv_mini_v3_init_depend_module_info, \
+    .alloc_devid = devdrv_mini_v3_alloc_devid, \
+    .is_p2p_access_cap = devdrv_mini_v3_is_p2p_access_cap, \
+    .get_load_wait_mode = devdrv_mini_v3_get_load_wait_mode, \
+    .get_pf_max_msg_chan_cnt = devdrv_mini_v3_get_pf_msg_chan_cnt, \
+    .get_vf_max_msg_chan_cnt = devdrv_mini_v3_get_vf_msg_chan_cnt, \
+    .get_p2p_support_max_devnum = devdrv_mini_v3_get_p2p_support_max_devnum, \
+    .set_dev_shr_info = devdrv_mini_v3_set_dev_shr_info, \
+    .get_nvme_low_level_db_irq_num = devdrv_mini_v3_get_nvme_low_level_db_irq_num, \
+    .get_nvme_db_irq_strde = devdrv_mini_v3_get_nvme_db_irq_strde, \
+    .get_vf_dma_info = NULL, \
+    .is_mdev_vm_full_spec = NULL, \
+    .get_p2p_addr = NULL, \
+    .get_server_id = NULL, \
+    .get_max_server_num = NULL, \
+    .init_virt_info = NULL, \
+    .init_link_info = NULL, \
+    .set_udevid_reorder_para = NULL, \
+    .devdrv_deal_suspend_handshake = NULL, \
+    .check_ep_suspend_status = NULL, \
+    .single_fault_init = NULL, \
+    .single_fault_uninit = NULL,
+
+#define DEVDRV_MINI_V3_PF_OPS \
+    .init_bar_info = devdrv_mini_v3_init_bar_info, \
+    .init_bar_addr_info = devdrv_mini_v3_init_bar_addr_info, \
+    .init_msg_cnt = devdrv_mini_v3_init_msg_cnt, \
+    .boot_mode_rebuild = NULL, \
+    .init_dma_info = devdrv_mini_v3_init_dma_info, \
+    .init_setup_runtime_info = devdrv_mini_v3_init_setup_runtime_info,
+
+#define DEVDRV_MINI_V3_PCIE_OPS \
+    .flush_cache = NULL, \
+    .get_peh_link_info = NULL, \
+    .link_speed_slow_to_normal = NULL,
+
+#define DEVDRV_MINI_V3_PF_INIT_INTR_OPS \
+    .init_intr_info = devdrv_mini_v3_init_intr_info,
+
+struct res_config mini_v3_res_cfg[] = {
+    {
+        .mode = (1U << (DEVDRV_SRIOV_TYPE_PF + DEVDRV_FEATURE_PFVF_BIT_OFFSET)) |
+                (1U << (CONNECT_PROTOCOL_PCIE + DEVDRV_FEATURE_CONNECT_PROTO_BIT_OFFSET)),
+        .ops = {
+            DEVDRV_MINI_V3_OPS
+            DEVDRV_MINI_V3_PF_OPS
+            DEVDRV_MINI_V3_PCIE_OPS
+            DEVDRV_MINI_V3_PF_INIT_INTR_OPS
+        },
+    },
+};
+
+int devdrv_mini_v3_res_init(struct devdrv_pci_ctrl *pci_ctrl)
+{
+    struct res_config *res_cfg = NULL;
+    size_t res_cfg_size;
+    int ret;
+
+    pci_ctrl->features = mini_v3_features;
+
+    res_cfg_size = KA_BASE_ARRAY_SIZE(mini_v3_res_cfg);
+    res_cfg = devdrv_feature_get_res_cfg(pci_ctrl, mini_v3_res_cfg, res_cfg_size);
+    if (res_cfg == NULL) {
+        return -EINVAL;
+    }
+
+    (void)memcpy_s(&pci_ctrl->ops, sizeof(struct devdrv_dev_ops), &res_cfg->ops, sizeof(struct devdrv_dev_ops));
+    devdrv_parse_res_gear();
+    ret = res_cfg->ops.init_bar_info(pci_ctrl);
+    if (ret != 0) {
+        devdrv_err("Init bar info failed.\n");
+        return ret;
+    }
+
+    res_cfg->ops.init_bar_addr_info(pci_ctrl);
+    res_cfg->ops.init_intr_info(pci_ctrl);
+    res_cfg->ops.init_dma_info(pci_ctrl);
+    res_cfg->ops.init_load_file_info(pci_ctrl);
+    res_cfg->ops.init_depend_module_info(pci_ctrl);
+    res_cfg->ops.init_msg_cnt(pci_ctrl);
+    res_cfg->ops.init_setup_runtime_info(pci_ctrl);
+
     return 0;
 }

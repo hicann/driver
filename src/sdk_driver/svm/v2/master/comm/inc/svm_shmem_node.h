@@ -20,8 +20,8 @@
 
 #define DEVMM_IPC_MEM_NAME_SIZE 65
 
-#define IPC_WLIST_NUM       32768U    /* Total wlist number 1024 * 32 */
-#define IPC_WLIST_SET_NUM   (DEVMM_SECONDARY_PROCESS_NUM - 1)   /* Max pid number at one time */
+#define IPC_WLIST_NUM 32768U                                /* Total wlist number 1024 * 32 */
+#define IPC_WLIST_SET_NUM (DEVMM_SECONDARY_PROCESS_NUM - 1) /* Max pid number at one time */
 
 #define IPC_RANDOM_LENGTH 18
 #define IPC_NAME_SIZE 65
@@ -31,8 +31,8 @@ struct devmm_ipc_node_attr;
 typedef int (*devmm_ipc_node_init_func_t)(struct devmm_ipc_node_attr *attr);
 typedef void (*devmm_ipc_node_uninit_func_t)(struct devmm_ipc_node_attr *attr);
 
-typedef int (*setpid_pod_msg_send_func_t)(const char *name, struct svm_id_inst *inst,
-    u32 sdid, ka_pid_t pid[], u32 pid_num);
+typedef int (*setpid_pod_msg_send_func_t)(
+    const char *name, struct svm_id_inst *inst, u32 sdid, ka_pid_t pid[], u32 pid_num);
 
 struct devmm_ipc_node_attr {
     char name[DEVMM_IPC_MEM_NAME_SIZE];
@@ -43,8 +43,8 @@ struct devmm_ipc_node_attr {
     devmm_ipc_node_uninit_func_t uninit_fn;
 
     struct devmm_svm_process *svm_proc; /* Creator svm proc */
-    ka_pid_t pid;  /* Creator pid */
-    u64 vptr;   /* Creator vptr */
+    ka_pid_t pid;                       /* Creator pid */
+    u64 vptr;                           /* Creator vptr */
     size_t len;
 
     size_t page_size;
@@ -115,8 +115,8 @@ int devmm_ipc_node_create(struct devmm_ipc_node_attr *attr);
 int devmm_ipc_node_destroy(const char *name, ka_pid_t pid, bool async_recycle);
 
 int devmm_ipc_node_set_pids(struct devmm_ipc_setpid_attr *attr);
-int devmm_ipc_node_set_pids_ex(struct devmm_ipc_node_attr *attr, u32 sdid,
-    ka_pid_t creator_pid, ka_pid_t pid[], u32 pid_num);
+int devmm_ipc_node_set_pids_ex(
+    struct devmm_ipc_node_attr *attr, u32 sdid, ka_pid_t creator_pid, ka_pid_t pid[], u32 pid_num);
 
 int devmm_ipc_node_open(const char *name, struct devmm_svm_process *svm_proc, u64 vptr);
 int devmm_ipc_node_close(const char *name, struct devmm_svm_process *svm_proc, u64 vptr);
@@ -136,8 +136,8 @@ int devmm_ipc_proc_find_create_node(struct devmm_svm_process *svm_proc, u64 vptr
 int devmm_ipc_node_get_inst_by_name(const char *name, struct svm_id_inst *inst);
 
 /* Query attr by creator va */
-int devmm_ipc_proc_query_attr_by_va(struct devmm_svm_process *svm_proc, u64 vptr, int op,
-    struct devmm_ipc_node_attr *attr);
+int devmm_ipc_proc_query_attr_by_va(
+    struct devmm_svm_process *svm_proc, u64 vptr, int op, struct devmm_ipc_node_attr *attr);
 
 int devmm_ipc_create_mem_repair_post_process(struct devmm_svm_process *svm_proc, u64 addr, u64 len);
 int devmm_ipc_node_mem_repair_by_name(const char *name, ka_pid_t pid);

@@ -396,11 +396,49 @@ uninstall_rpm_sph() {
     fi
 }
 
+uninstall_deb_mami() {
+    mami_name=$(dpkg -l | grep -E 'atlas.*ubengine-mgmt' | awk '{print $2}')
+    driver_install_path_param=$(getInstallParam "Driver_Install_Path_Param" "${installInfo}")
+    if [ -n "$mami_name" ]; then
+        rm -rf /var/lib/dpkg/info/$mami_name*
+        dpkg --remove --force-remove-reinstreq $mami_name > /dev/null 2>&1
+        chattr -iR "${driver_install_path_param}"/driver/ube_mgmt > /dev/null 2>&1
+        rm -rf "${driver_install_path_param}"/driver/ube_mgmt
+        if [[ -f /etc/ascend_install.info ]]; then
+            sed -i '/Driver_Mami_Install_Path_Param=/d' /etc/ascend_install.info
+        fi
+        if [[ -f "${driver_install_path_param}"/driver/version.info ]]; then
+            chattr -i "${driver_install_path_param}"/driver/version.info
+            sed -i '/mami_version=/d' "${driver_install_path_param}"/driver/version.info
+            chattr +i "${driver_install_path_param}"/driver/version.info
+        fi
+    fi
+}
+
+uninstall_rpm_mami() {
+    mami_name=$(rpm -qa | grep -E 'Atlas.*UBEngine-mgmt')
+    driver_install_path_param=$(getInstallParam "Driver_Install_Path_Param" "${installInfo}")
+    if [ -n "$mami_name" ]; then
+        rpm -e --noscripts $mami_name> /dev/null 2>&1
+        chattr -iR "${driver_install_path_param}"/driver/ube_mgmt > /dev/null 2>&1
+        rm -rf "${driver_install_path_param}"/driver/ube_mgmt
+        if [[ -f /etc/ascend_install.info ]]; then
+            sed -i '/Driver_Mami_Install_Path_Param=/d' /etc/ascend_install.info
+        fi
+        if [[ -f "${driver_install_path_param}"/driver/version.info ]]; then
+            chattr -i "${driver_install_path_param}"/driver/version.info
+            sed -i '/mami_version=/d' "${driver_install_path_param}"/driver/version.info
+            chattr +i "${driver_install_path_param}"/driver/version.info
+        fi
+    fi
+}
+
 # mixed package handling
 check_package_mix() {
     local package_name ret
     if command -v dpkg &> /dev/null; then
         uninstall_deb_sph
+        uninstall_deb_mami
         package_name=$(dpkg -l | grep -E 'atlas.*driver|ascend.*driver|alan.*driver' | grep -v 'sph'| awk '{print $2}')
         install_status=$(dpkg -l | grep -E 'atlas.*driver|ascend.*driver|alan.*driver' | grep -v 'sph' | awk '{print $1}')
         if [ -n "$package_name" ] && [ ${install_status} = "ii" ]; then
@@ -415,6 +453,7 @@ check_package_mix() {
     fi
     if command -v rpm &> /dev/null; then
         uninstall_rpm_sph
+        uninstall_rpm_mami
         package_name=$(rpm -qa | grep -E 'Atlas.*driver|Ascend.*driver|Alan.*driver' | grep -v 'sph')
         if [ -n "$package_name" ]; then
             drvEcho "[INFO]This environment has installed rpm package $package_name, and it will now be uninstalled."

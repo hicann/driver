@@ -31,7 +31,7 @@ extern "C"{
 #define ENV_VIRTUAL                          4
 #define ENV_VIRTUAL_PRIVILEGED_CONTAINER     5
 #define ENV_VIRTUAL_PLAIN_CONTAINER          6
-
+#define BUF_MAX_LEN_HDC 4000
 #define DCMI_ERROR_CODE_MAX_COUNT        128
 
 #define DCMI_D_CHIP_VENDER_ID     0x19e5
@@ -41,6 +41,7 @@ extern "C"{
 #define DCMI_D_910_DEVICE_ID      0xd801
 #define DCMI_D_910B_DEVICE_ID     0xd802
 #define DCMI_D_910_93_DEVICE_ID   0xd803
+#define DCMI_D_950_DEVICE_ID      0xd806
 
 #define DCMI_310_CARD_DEVICE_COUNT         4
 #define DCMI_310P_1P_CARD_DEVICE_COUNT     1
@@ -48,6 +49,10 @@ extern "C"{
 #define DCMI_310B_EP_CARD_DEVICE_COUNT     1
 #define DCMI_910_CARD_DEVICE_COUNT         1
 #define DCMI_910_93_CARD_DEVICE_COUNT      2
+#define DCMI_950_1P_CARD_DEVICE_COUNT   1
+#define DCMI_950_2P_CARD_DEVICE_COUNT   2
+#define DCMI_950_4P_CARD_DEVICE_COUNT   4
+#define DCMI_950_SERVER_DEVICE_COUNT    1
 
 #define DCMI_INVALID_BOARD_ID          0xFFFF
 #define DCMI_INVALID_BOM_ID            0xFFFF
@@ -190,10 +195,18 @@ extern "C"{
 #define TRACEROUTE_TOS_MAX                  63
 #define TRACEROUTE_TC_MAX                   255
 #define TRACEROUTE_DEFAULT_VALUE            (-1)
+#define DCMI_BUFF_MAX_LEN                   256
+
+#define CUSTOM_OP_SECVERIFY_CERT_TIME_NAME_MAX 26
+#define CUSTOM_OP_SECVERIFY_CERT_NUM_MAX 4
+#define CUSTOM_OP_SECVERIFY_CERT_CHAIN_SIZE_MAX 8192
+#define CUSTOM_OP_SECVERIFY_CERT_SIZE_MAX 4096
+#define CERT_SPLIT_NAME "-----BEGIN CERTIFICATE-----"
 
 #define TRUE     1
 #define FALSE    0
 
+#define MAX_EVENT_CNT          128
 struct sm_alg_param {
     unsigned int key_type;              // 算法类型
     unsigned int key_len;               // 密钥长度
@@ -241,6 +254,13 @@ struct dsmi_get_memory_info_stru {
 struct dcmi_pcie_pre_index {
     int pci_pre_index;
     int switch_pre_index;
+};
+
+struct cert_show_info {
+    char issuer[CERT_COMMON_NAME_LEN];
+    char subject[CERT_COMMON_NAME_LEN];
+    char start_time[CUSTOM_OP_SECVERIFY_CERT_TIME_NAME_MAX];
+    char end_time[CUSTOM_OP_SECVERIFY_CERT_TIME_NAME_MAX];
 };
 
 enum dcmi_op_timeout_exponent {
@@ -302,7 +322,7 @@ enum dcmi_chip_type {
     DCMI_CHIP_TYPE_D310B = 3,
     DCMI_CHIP_TYPE_D910B = 4,
     DCMI_CHIP_TYPE_D910_93 = 5,
-    DCMI_CHIP_TYPE_D910_95 = 6,
+    DCMI_CHIP_TYPE_D950 = 6,
     DCMI_CHIP_TYPE_INVALID = 0xFF
 };
 
@@ -331,6 +351,9 @@ enum dcmi_product_type {
     DCMI_A300I_A2,
     DCMI_A900_A3_SUPERPOD,
     DCMI_A200I_PRO,
+    DCMI_A900_A5_SUPERPOD,  /* A5 PoD */
+    DCMI_A800_A5_SERVER,          /* A5 Server */
+    DCMI_A350_A5_CARD,         /* A5 Card */
     DCMI_PRODUCT_TYPE_INVALID = 0xFF
 };
 
@@ -406,6 +429,21 @@ struct tag_pcie_idinfo_all {
     unsigned char reserve[32];
 };
 
+struct ATTEST_OPERATE_REQUEST {
+    unsigned int evidence_type;
+    unsigned int start_len;
+    unsigned int challenge_len;
+    unsigned int evidence_len;
+    unsigned char challenge[MAX_CHALLENGE_LEN];
+};
+
+struct ATTEST_OPERATE_RESPONSE {
+    unsigned int remain_len;
+    unsigned int data_len;
+    unsigned int copied_len;
+    unsigned char data[BUF_MAX_LEN_HDC];
+};
+
 unsigned short crc16(unsigned char *buffer, unsigned int length);
 
 int dcmi_gen_rand_num(void);
@@ -420,12 +458,39 @@ int dcmi_get_file_length(const char *file, unsigned int *file_len);
 
 int dcmi_check_file_path(const char *tmp_path);
 
+int str2ull(unsigned long long *ptmp_num, const char *str);
+
+// 判断文件类型
+int dcmi_determine_file_type(const char *file, const char *fileType, int typeLen);
+
+int dcmi_write_data_to_file(const char *file, const char *writeBuf, unsigned int bufLen, unsigned int writeLen);
+
+int dcmi_convert_file_path(const char *file, char *path, int len);
+
+int dcmi_extract_targz_package(const char *sourceFile, const char *targetPath);
+
+int dcmi_convert_str_to_int(const char* str, int *index);
+
+int dcmi_get_file_data(const char *file, unsigned char *fileBuf, unsigned int bufLen, unsigned int offset,
+    unsigned int readLen);
+
+int dcmi_remove_file(const char *filename);
+
+int dcmi_remove_dir(const char *dirname);
+
+int dcmi_get_file_directory(const char *file, char *fileDir, int dirLen);
+
+int dcmi_check_filename(const char *file, char *path, int len);
+
 #ifndef _WIN32
 /* 新增的内部dsmi接口（未对外暴露），临时定义使用 */
 int dsmi_get_memory_info_v2(int device_id, struct dsmi_get_memory_info_stru *pdevice_memory_info);
 int dsmi_get_pcie_info_v2(int device_id, struct tag_pcie_idinfo_all *pcie_id_info);
+int dsmi_hot_reset_soc(int device_id);
 int dsmi_hot_reset_atomic(int device_id, int dsmi_hotreset_subcmd);
 int dsmi_get_work_mode(unsigned int *work_mode);
+int dsmi_get_multi_die_policy(unsigned int *out);
+int dsmi_set_multi_die_policy(unsigned int policy);
 int dsmi_set_prbs_flag(int logic_id, int prbs_flag);
 int dsmi_prbs_adapt_in_order(unsigned int mode, unsigned int logic_id, unsigned char master_flag);
 int dsmi_set_serdes_info(unsigned int device_id, unsigned int main_cmd, unsigned int sub_cmd, void* buf,
@@ -434,13 +499,18 @@ int dsmi_get_rootkey_status(unsigned int device_id, unsigned int key_type, unsig
 int dsmi_get_mainboard_id(unsigned int device_id, unsigned int *mainboard_id);
 int dsmi_get_serdes_info(unsigned int device_id, unsigned int main_cmd, unsigned int sub_cmd,
     void *buf, unsigned int *size);
-int dsmi_get_hbm_manufacturer_id(unsigned int device_id, unsigned int *manufacturer_id);
+int dsmi_get_custom_op_secverify_cert_show_info(unsigned int device_id, const char *buf,
+    unsigned int buf_size, void *show_info, unsigned int show_info_size);
+int dsmi_set_device_offline_nic_down_flag(int logic_id, int enable_flag);
+int dsmi_attest_get_evidence(unsigned int device_id, struct ATTEST_OPERATE_REQUEST *req,
+    struct ATTEST_OPERATE_RESPONSE *rep);
+int dsmi_attest_get_akcert(unsigned int device_id, unsigned int *ak_cert_len, struct ATTEST_OPERATE_RESPONSE *rep);
 #ifdef SOC
 inline int dsmi_get_hbm_manufacturer_id(unsigned int device_id, unsigned int *manufacturer_id)
 {
     return NPU_ERR_CODE_NOT_SUPPORT;
 }
-else
+#else
 int dsmi_get_hbm_manufacturer_id(unsigned int device_id, unsigned int *manufacturer_id);
 #endif  /* SOC */
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2025. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -31,11 +31,12 @@ struct apm_task_res_map_ops {
 void apm_task_res_map_ops_register(struct apm_task_res_map_ops *ops);
 int apm_fops_res_info_check(struct res_map_info_in *res_info);
 int apm_res_addr_map(u32 udevid, struct res_map_info_in *res_info, u64 *va, u32 *len);
-int apm_res_addr_unmap(u32 udevid, struct res_map_info_in *res_info);
+int apm_res_addr_unmap(u32 udevid, struct res_map_info_in *res_info, unsigned long *user_va);
 int apm_res_addr_query(u32 udevid, struct res_map_info_in *res_info, u64 *va, u32 *len);
 void apm_res_map_domain_task_exit(u32 udevid, int tgid, struct task_start_time *start_time);
 void apm_res_map_domain_task_show(u32 udevid, int tgid, int feature_id, ka_seq_file_t *seq);
 int apm_res_map_init(void);
 void apm_res_map_uninit(void);
+bool apm_res_use_svm_va(unsigned int flag);
 
 #endif

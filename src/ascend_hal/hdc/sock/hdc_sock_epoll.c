@@ -36,8 +36,8 @@ STATIC drvError_t drv_hdc_sock_epoll_create(struct hdc_epoll_head *epoll_head, s
     return DRV_ERROR_NONE;
 }
 
-STATIC drvError_t drv_hdc_sock_epoll_ctl(struct hdc_epoll_head *epoll_head,
-    signed int op, void *target, const struct drvHdcEvent *event)
+STATIC drvError_t drv_hdc_sock_epoll_ctl(struct hdc_epoll_head *epoll_head, signed int op, void *target,
+                                         const struct drvHdcEvent *event)
 {
     struct epoll_event socket_event;
     signed int epfd;
@@ -66,7 +66,7 @@ STATIC drvError_t drv_hdc_sock_epoll_ctl(struct hdc_epoll_head *epoll_head,
 }
 
 STATIC drvError_t drv_hdc_sock_epoll_wait(const struct hdc_epoll_head *epoll_head, struct drvHdcEvent *events,
-    signed int maxevents, signed int timeout, signed int *eventnum)
+                                          signed int maxevents, signed int timeout, signed int *eventnum)
 {
     signed int i;
     signed int epfd = (signed int)epoll_head->epfd;

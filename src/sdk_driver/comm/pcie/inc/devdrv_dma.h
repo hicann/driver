@@ -18,8 +18,8 @@
 #include "ka_base_pub.h"
 #include "ka_memory_pub.h"
 #include "ka_system_pub.h"
-#include "dma_adapt.h"
 #include "comm_kernel_interface.h"
+#include "dma_adapt.h"
 
 #define DMA_DONE_BUDGET 64
 
@@ -159,10 +159,8 @@ struct devdrv_dma_channel {
     struct devdrv_dma_cq_node *cq_desc_base;
     ka_dma_addr_t sq_desc_dma;
     ka_dma_addr_t cq_desc_dma;
-#ifdef CFG_FEATURE_AGENT_SMMU
     ka_page_t *sq_desc_page;
     ka_page_t *cq_desc_page;
-#endif
     u32 sq_depth;
     u32 cq_depth;
     u32 sq_tail;

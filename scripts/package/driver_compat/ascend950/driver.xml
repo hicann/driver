@@ -7,7 +7,7 @@
         <suffix>run</suffix>
         <install_script>driver_compat/common/scripts/install.sh</install_script>
         <help>driver_compat/common/scripts/help.info</help>
-        <version>scripts/package/driver/ascend910B/scripts/sys_version/sys_version.conf</version>
+        <version>scripts/package/driver/ascend950/scripts/sys_version/sys_version.conf</version>
         <parallel>true</parallel>
         <check_features>true</check_features>
     </package_info>

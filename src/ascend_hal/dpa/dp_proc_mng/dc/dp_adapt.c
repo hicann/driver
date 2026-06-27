@@ -68,10 +68,7 @@ void dp_proc_mng_prof_stop(struct prof_sample_stop_para *para)
     return;
 }
 
-bool dp_proc_mng_get_prof_start_sample_flag(void)
-{
-    return true;
-}
+bool dp_proc_mng_get_prof_start_sample_flag(void) { return true; }
 
 #ifdef DRV_HOST
 drvError_t dp_proc_mng_update_mbuff_and_process_mem_stats(struct module_mem_info *mem_info, uint32_t devid)
@@ -99,8 +96,8 @@ drvError_t dp_proc_mng_update_mbuff_and_process_mem_stats(struct module_mem_info
 }
 #else
 #ifndef EMU_ST /* sscanf_s in ut is sscanf */
-static int dp_proc_mng_get_size_from_string(const char *p_str, const char *form_str,
-    int *pid, uint64_t *size, uint64_t *aicpu_size)
+static int dp_proc_mng_get_size_from_string(
+    const char *p_str, const char *form_str, int *pid, uint64_t *size, uint64_t *aicpu_size)
 {
     if (pid != NULL) {
         return sscanf_s(p_str, form_str, pid, size, aicpu_size);
@@ -110,11 +107,11 @@ static int dp_proc_mng_get_size_from_string(const char *p_str, const char *form_
 }
 #endif
 
-#define DP_PROC_MNG_SHAREPOOL_INFO_MEMBER_NUM       3
-#define BYTES_PER_KB                                1024
+#define DP_PROC_MNG_SHAREPOOL_INFO_MEMBER_NUM 3
+#define BYTES_PER_KB 1024
 
-static drvError_t dp_proc_mng_get_sp_and_aicpu_memsize_from_string(const char *file_string,
-    const char *mem_string, uint64_t *sp_size, uint64_t *aicpu_size)
+static drvError_t dp_proc_mng_get_sp_and_aicpu_memsize_from_string(
+    const char *file_string, const char *mem_string, uint64_t *sp_size, uint64_t *aicpu_size)
 {
     char *p_str = NULL, *ptr = NULL, *temp_ptr = NULL;
     uint64_t tmp_sp_size, tmp_aicpu_size;
@@ -129,8 +126,9 @@ static drvError_t dp_proc_mng_get_sp_and_aicpu_memsize_from_string(const char *f
     ptr = strtok_s(p_str, "\n", &temp_ptr);
     while (ptr != NULL) {
         ptr = strtok_s(NULL, "\n", &temp_ptr);
-        if ((ptr != NULL) && (dp_proc_mng_get_size_from_string(ptr, "%d %*s %llu %*llu %*llu %llu",
-            &pid, &tmp_sp_size, &tmp_aicpu_size) == DP_PROC_MNG_SHAREPOOL_INFO_MEMBER_NUM)) {
+        if ((ptr != NULL) && (dp_proc_mng_get_size_from_string(
+                                  ptr, "%d %*s %llu %*llu %*llu %llu", &pid, &tmp_sp_size, &tmp_aicpu_size) ==
+                              DP_PROC_MNG_SHAREPOOL_INFO_MEMBER_NUM)) {
             if (pid == getpid()) {
                 *sp_size = tmp_sp_size * BYTES_PER_KB;
                 *aicpu_size = tmp_aicpu_size * BYTES_PER_KB;
@@ -142,10 +140,10 @@ static drvError_t dp_proc_mng_get_sp_and_aicpu_memsize_from_string(const char *f
     return DRV_ERROR_NONE;
 }
 
-#define DP_PROC_MNG_PROC_INFO_MEMBER_NUM            1
+#define DP_PROC_MNG_PROC_INFO_MEMBER_NUM 1
 
-static drvError_t dp_proc_mng_get_proc_memsize_from_string(const char *file_string,
-    const char *mem_string, uint64_t *size)
+static drvError_t dp_proc_mng_get_proc_memsize_from_string(
+    const char *file_string, const char *mem_string, uint64_t *size)
 {
     char *p_str = NULL;
     uint64_t tmp_size;
@@ -202,10 +200,7 @@ static int dp_proc_mng_open_file(char *file_name, FILE **fp)
     return DRV_ERROR_NONE;
 }
 
-static void dp_proc_mng_close_file(FILE *fp)
-{
-    (void)fclose(fp);
-}
+static void dp_proc_mng_close_file(FILE *fp) { (void)fclose(fp); }
 
 static size_t dp_proc_mng_read_file(char *file_string, size_t fsize, size_t count, FILE *fp)
 {
@@ -213,10 +208,10 @@ static size_t dp_proc_mng_read_file(char *file_string, size_t fsize, size_t coun
 }
 #endif
 
-#define DP_PROC_MNG_PROC_INFO_MAX_LEN               4096
+#define DP_PROC_MNG_PROC_INFO_MAX_LEN 4096
 
-static drvError_t dp_proc_mng_get_mbuff_and_proc_mem_used_size(char *file_name, size_t count,
-    uint64_t *size, uint64_t *aicpu_size_flag)
+static drvError_t dp_proc_mng_get_mbuff_and_proc_mem_used_size(
+    char *file_name, size_t count, uint64_t *size, uint64_t *aicpu_size_flag)
 {
     FILE *fp = NULL;
     char *file_string = NULL;
@@ -260,7 +255,7 @@ err_get_malloc:
     return ret;
 }
 
-#define DP_PROC_MNG_PROC_INFO_PATH_MAX_LEN          128
+#define DP_PROC_MNG_PROC_INFO_PATH_MAX_LEN 128
 
 drvError_t dp_proc_mng_update_mbuff_and_process_mem_stats(struct module_mem_info *mem_info, uint32_t devid)
 {
@@ -284,8 +279,9 @@ drvError_t dp_proc_mng_update_mbuff_and_process_mem_stats(struct module_mem_info
         return ret;
     }
 
-    ret = dp_proc_mng_get_mbuff_and_proc_mem_used_size(file_name, DP_PROC_MNG_PROC_INFO_PATH_MAX_LEN,
-        &mem_info[MBUFF_MODULE_ID].total_size, &mem_info[AICPU_SCHE_MODULE_ID].total_size);
+    ret = dp_proc_mng_get_mbuff_and_proc_mem_used_size(
+        file_name, DP_PROC_MNG_PROC_INFO_PATH_MAX_LEN, &mem_info[MBUFF_MODULE_ID].total_size,
+        &mem_info[AICPU_SCHE_MODULE_ID].total_size);
     if (ret != DRV_ERROR_NONE) {
         DP_PROC_MNG_ERR("Get sharepool/aicpu mem stats failed. (ret=%d)\n", ret);
         return ret;
@@ -297,8 +293,8 @@ drvError_t dp_proc_mng_update_mbuff_and_process_mem_stats(struct module_mem_info
             DP_PROC_MNG_ERR("sprintf_s error. (ret=%d)\n", ret);
             return ret;
         }
-        ret = dp_proc_mng_get_mbuff_and_proc_mem_used_size(file_name, DP_PROC_MNG_PROC_INFO_PATH_MAX_LEN,
-            &mem_info[AICPU_SCHE_MODULE_ID].total_size, NULL);
+        ret = dp_proc_mng_get_mbuff_and_proc_mem_used_size(
+            file_name, DP_PROC_MNG_PROC_INFO_PATH_MAX_LEN, &mem_info[AICPU_SCHE_MODULE_ID].total_size, NULL);
         if (ret != DRV_ERROR_NONE) {
             DP_PROC_MNG_ERR("Get aicpu mem stats failed. (ret=%d)\n", ret);
             return ret;
@@ -310,14 +306,14 @@ drvError_t dp_proc_mng_update_mbuff_and_process_mem_stats(struct module_mem_info
     info.vfid = 0;
     info.proc_type = DEVDRV_PROCESS_CP2;
     ret = halQueryDevpid(info, &custom_pid);
-    if ((ret == DRV_ERROR_NONE)&& (custom_pid != aicpu_pid)) {
+    if ((ret == DRV_ERROR_NONE) && (custom_pid != aicpu_pid)) {
         if (sprintf_s(file_name, DP_PROC_MNG_PROC_INFO_PATH_MAX_LEN, "%s%d%s", "/proc/", custom_pid, "/status") < 0) {
             ret = DRV_ERROR_INVALID_VALUE;
             DP_PROC_MNG_ERR("sprintf_s error. (ret=%d)\n", ret);
             return ret;
         }
-        ret = dp_proc_mng_get_mbuff_and_proc_mem_used_size(file_name, DP_PROC_MNG_PROC_INFO_PATH_MAX_LEN,
-            &mem_info[CUSTOM_SCHE_MODULE_ID].total_size, NULL);
+        ret = dp_proc_mng_get_mbuff_and_proc_mem_used_size(
+            file_name, DP_PROC_MNG_PROC_INFO_PATH_MAX_LEN, &mem_info[CUSTOM_SCHE_MODULE_ID].total_size, NULL);
         if (ret != DRV_ERROR_NONE) {
             DP_PROC_MNG_ERR("Get custom mem stats failed. (ret=%d)\n", ret);
             return ret;
@@ -356,7 +352,4 @@ drvError_t dp_proc_mng_get_dev_info(uint32_t *dev_num, uint32_t *ids)
     return DRV_ERROR_NONE;
 }
 
-bool dp_proc_support_bind_cgroup(void)
-{
-    return true;
-}
+bool dp_proc_support_bind_cgroup(void) { return true; }

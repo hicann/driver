@@ -14,7 +14,7 @@
 #ifndef DVPP_DMA_CTRL_H
 #define DVPP_DMA_CTRL_H
 
-#include <linux/types.h>
+#include "ka_type.h"
 
 #include "ka_base_pub.h"
 #include "dvpp_svm_mem_ctrl.h"

@@ -161,6 +161,11 @@ struct ShareHandleGetInfo {
     unsigned int reserve[8];
 };
 
+struct HandleAttr {
+    unsigned int mem_map_route;
+    unsigned int rsv[8];
+};
+
 struct DMA_OFFSET_ADDR {
     unsigned long long offset;
     unsigned int devid;     /* Input param */

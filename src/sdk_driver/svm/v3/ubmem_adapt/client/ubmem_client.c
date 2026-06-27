@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2025. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -28,6 +28,7 @@
 static int ubmem_query_host_mem_id(u32 udevid, u32 *mem_id)
 {
     static u32 local_mem_id, flag = 0;
+    u32 udevid_ex = 0;
     u64 value;
     int ret;
 
@@ -36,7 +37,9 @@ static int ubmem_query_host_mem_id(u32 udevid, u32 *mem_id)
         return 0;
     }
 
-    ret = soc_resmng_dev_get_key_value(udevid, "UB_MEM_ID", &value);
+    (void)uda_get_cur_ns_udevids(&udevid_ex, 1);
+    udevid_ex = (udevid == uda_get_host_id()) ? udevid_ex : udevid; /* Not host_id real dev, change to first udevid. */
+    ret = soc_resmng_dev_get_key_value(udevid_ex, "UB_MEM_ID", &value);
     if (ret != 0) {
         svm_err("Get mem_id failed. (udevid=%u)\n", udevid);
         return ret;
@@ -56,8 +59,9 @@ static int ubmem_map_local_client(u32 udevid, struct svm_global_va *src_va, u64 
 
     ret = ubmm_do_map(udevid, src_va->tgid, src_va->va, src_va->size, &uba);
     if (ret != 0) {
-        svm_err("Ub mem map failed. (ret=%d; udevid=%u; tgid=%d; va=0x%llx; size=0x%llx)\n",
-            ret, udevid, src_va->tgid, src_va->va, src_va->size);
+        svm_err(
+            "Ub mem map failed. (ret=%d; udevid=%u; tgid=%d; va=0x%llx; size=0x%llx)\n", ret, udevid, src_va->tgid,
+            src_va->va, src_va->size);
         return ret;
     }
 
@@ -83,15 +87,9 @@ static int ubmem_unmap_local_client(u32 udevid, struct svm_global_va *src_va)
     return ubmm_do_unmap(udevid, src_va->tgid, src_va->va, src_va->size);
 }
 #else
-static int ubmem_map_local_client(u32 udevid, struct svm_global_va *src_va, u64 *maped_va)
-{
-    return -EINVAL;
-}
+static int ubmem_map_local_client(u32 udevid, struct svm_global_va *src_va, u64 *maped_va) { return -EINVAL; }
 
-static int ubmem_unmap_local_client(u32 udevid, struct svm_global_va *src_va)
-{
-    return -EINVAL;
-}
+static int ubmem_unmap_local_client(u32 udevid, struct svm_global_va *src_va) { return -EINVAL; }
 #endif
 
 static int ubmem_map_remote_client(u32 udevid, struct svm_global_va *src_va, u64 *maped_va)
@@ -160,4 +158,3 @@ int ubmem_unmap_client(u32 udevid, struct svm_global_va *src_va)
         return ubmem_unmap_remote_client(udevid, src_va);
     }
 }
-

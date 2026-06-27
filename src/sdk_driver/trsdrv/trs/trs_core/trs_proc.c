@@ -40,8 +40,9 @@ static bool trs_is_res_pid_match(struct trs_core_ts_inst *ts_inst, int pid, s64 
     bool ret = false;
 
     if (res_id >= res_mng->max_id) {
-        trs_err("Invalid id. (devid=%u; tsid=%u; res_type=%d; id=%u; max_num=%u)\n",
-            ts_inst->inst.devid, ts_inst->inst.tsid, res_type, res_id, res_mng->max_id);
+        trs_err(
+            "Invalid id. (devid=%u; tsid=%u; res_type=%d; id=%u; max_num=%u)\n", ts_inst->inst.devid,
+            ts_inst->inst.tsid, res_type, res_id, res_mng->max_id);
         return false;
     }
 
@@ -49,12 +50,13 @@ static bool trs_is_res_pid_match(struct trs_core_ts_inst *ts_inst, int pid, s64 
     if (!ret) {
         /*
          * Do not change log level.
-         * Shr id will check ipc notify is opend by this proc.
+         * Shr id will check ipc notify is opened by this proc.
          */
-        trs_debug("Match failed. (devid=%u; tsid=%u; res_type=%d; res_id=%u; id_pid=%d; pid=%u; "
-            "id_task_id=%lld; task_id=%lld; id_status=%u)\n", ts_inst->inst.devid, ts_inst->inst.tsid,
-            res_type, res_id, res_mng->ids[res_id].pid, pid, res_mng->ids[res_id].task_id, task_id,
-            res_mng->ids[res_id].status);
+        trs_debug(
+            "Match failed. (devid=%u; tsid=%u; res_type=%d; res_id=%u; id_pid=%d; pid=%u; "
+            "id_task_id=%lld; task_id=%lld; id_status=%u)\n",
+            ts_inst->inst.devid, ts_inst->inst.tsid, res_type, res_id, res_mng->ids[res_id].pid, pid,
+            res_mng->ids[res_id].task_id, task_id, res_mng->ids[res_id].status);
     }
     return ret;
 }
@@ -76,12 +78,12 @@ static int trs_get_proc_task_id(struct trs_core_ts_inst *ts_inst, int pid, s64 *
         }
     }
 
-    ka_task_down_read(&ts_inst->sem);
+    ka_task_down_read(&tmp_ts_inst->sem);
     proc_ctx = trs_proc_ctx_find(tmp_ts_inst, pid);
     if (proc_ctx != NULL) {
         *task_id = proc_ctx->task_id;
     }
-    ka_task_up_read(&ts_inst->sem);
+    ka_task_up_read(&tmp_ts_inst->sem);
 
     if (tmp_ts_inst != ts_inst) {
         trs_core_inst_put(tmp_ts_inst);
@@ -124,7 +126,7 @@ bool trs_proc_has_res_with_pid(struct trs_core_ts_inst *ts_inst, int pid, int re
     if (ret != 0) {
         /*
          * Do not change log level.
-         * Shr id will check ipc notify is opend by this proc.
+         * Shr id will check ipc notify is opened by this proc.
          */
         trs_debug("Invalid value. (pid=%d)\n", pid);
         return false;
@@ -168,8 +170,9 @@ int trs_res_put(struct trs_core_ts_inst *ts_inst, int res_type, u32 res_id)
 
     ka_task_mutex_lock(&res_mng->mutex);
     if (res_mng->ids[res_id].ref == 0) {
-        trs_err("Res not valid. (devid=%u; tsid=%u; res_type=%d; id=%u)\n",
-            ts_inst->inst.devid, ts_inst->inst.tsid, res_type, res_id);
+        trs_err(
+            "Res not valid. (devid=%u; tsid=%u; res_type=%d; id=%u)\n", ts_inst->inst.devid, ts_inst->inst.tsid,
+            res_type, res_id);
         ka_task_mutex_unlock(&res_mng->mutex);
         return -EINVAL;
     }
@@ -185,23 +188,25 @@ int trs_res_put(struct trs_core_ts_inst *ts_inst, int res_type, u32 res_id)
     return ref;
 }
 
-static int _trs_proc_add_res(struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst, int res_type, u32 res_id,
-    bool is_agent_res)
+static int _trs_proc_add_res(
+    struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst, int res_type, u32 res_id, bool is_agent_res)
 {
     struct trs_res_mng *res_mng = &ts_inst->res_mng[res_type];
     struct trs_id_inst *inst = &ts_inst->inst;
 
     if (res_id >= res_mng->max_id) {
-        trs_err("Invalid id. (devid=%u; tsid=%u; res_type=%d; id=%u; max_num=%u)\n",
-            inst->devid, inst->tsid, res_type, res_id, res_mng->max_id);
+        trs_err(
+            "Invalid id. (devid=%u; tsid=%u; res_type=%d; id=%u; max_num=%u)\n", inst->devid, inst->tsid, res_type,
+            res_id, res_mng->max_id);
         return -EINVAL;
     }
 
     ka_task_mutex_lock(&res_mng->mutex);
     if (res_mng->ids[res_id].pid != 0) {
 #ifndef EMU_ST /* Don't delete for UB UT */
-        trs_err("Repeat add res. (devid=%u; tsid=%u; res_type=%d; id=%u; owner_pid=%u)\n",
-            inst->devid, inst->tsid, res_type, res_id, res_mng->ids[res_id].pid);
+        trs_err(
+            "Repeat add res. (devid=%u; tsid=%u; res_type=%d; id=%u; owner_pid=%u)\n", inst->devid, inst->tsid,
+            res_type, res_id, res_mng->ids[res_id].pid);
         ka_task_mutex_unlock(&res_mng->mutex);
         return -EINVAL;
 #endif
@@ -215,8 +220,9 @@ static int _trs_proc_add_res(struct trs_proc_ctx *proc_ctx, struct trs_core_ts_i
     res_mng->use_num++;
     ka_task_mutex_unlock(&res_mng->mutex);
 
-    trs_debug("Add res. (devid=%u; tsid=%u; res_type=%d; id=%u; owner_pid=%u)\n",
-        inst->devid, inst->tsid, res_type, res_id, res_mng->ids[res_id].pid);
+    trs_debug(
+        "Add res. (devid=%u; tsid=%u; res_type=%d; id=%u; owner_pid=%u)\n", inst->devid, inst->tsid, res_type, res_id,
+        res_mng->ids[res_id].pid);
 
     ka_base_atomic_inc(&proc_ctx->ts_ctx[inst->tsid].current_id_num[res_type]);
     if (is_agent_res) {
@@ -231,8 +237,8 @@ int trs_proc_add_res(struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_
     return _trs_proc_add_res(proc_ctx, ts_inst, res_type, res_id, false);
 }
 
-int trs_proc_add_res_ex(struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst, int res_type, u32 res_id,
-    bool is_agent_res)
+int trs_proc_add_res_ex(
+    struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst, int res_type, u32 res_id, bool is_agent_res)
 {
     return _trs_proc_add_res(proc_ctx, ts_inst, res_type, res_id, is_agent_res);
 }
@@ -246,7 +252,8 @@ bool trs_is_proc_res_limited(struct trs_proc_ctx *proc_ctx, struct trs_core_ts_i
     ka_task_mutex_lock(&res_mng->mutex);
     if ((res_mng->id_num - res_mng->use_num) < ts_inst->support_proc_num) {
         if (trs_get_proc_res_num(proc_ctx, inst->tsid, res_type) > 0) {
-            trs_warn("Proc res limited. (devid=%u; tsid=%u; res_type=%d; id_num=%u; use_num=%u; support_proc_num=%u)\n",
+            trs_warn(
+                "Proc res limited. (devid=%u; tsid=%u; res_type=%d; id_num=%u; use_num=%u; support_proc_num=%u)\n",
                 inst->devid, inst->tsid, res_type, res_mng->id_num, res_mng->use_num, ts_inst->support_proc_num);
             flag = true;
         }
@@ -273,8 +280,9 @@ int trs_proc_del_res(struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_
     ret = trs_res_id_pre_del(proc_ctx, ts_inst, res_type, res_id);
     if (ret != 0) {
         ka_task_mutex_unlock(&res_mng->mutex);
-        trs_err("Failed to check. (ret=%d; devid=%u; tsid=%u; res_type=%d; id=%d)\n",
-            ret, inst->devid, inst->tsid, res_type, res_id);
+        trs_err(
+            "Failed to check. (ret=%d; devid=%u; tsid=%u; res_type=%d; id=%d)\n", ret, inst->devid, inst->tsid,
+            res_type, res_id);
         return ret;
     }
 
@@ -296,7 +304,8 @@ struct trs_proc_ctx *trs_proc_ctx_find(struct trs_core_ts_inst *ts_inst, int pid
 {
     struct trs_proc_ctx *proc_ctx = NULL;
 
-    ka_list_for_each_entry(proc_ctx, &ts_inst->proc_list_head, node) {
+    ka_list_for_each_entry(proc_ctx, &ts_inst->proc_list_head, node)
+    {
         if (proc_ctx->pid == pid) {
             return proc_ctx;
         }
@@ -333,7 +342,8 @@ static struct trs_proc_ctx *trs_proc_ctx_get(struct trs_core_ts_inst *ts_inst, i
     struct trs_proc_ctx *proc_ctx = NULL;
 
 #ifndef EMU_ST
-    ka_list_for_each_entry(proc_ctx, &ts_inst->proc_list_head, node) {
+    ka_list_for_each_entry(proc_ctx, &ts_inst->proc_list_head, node)
+    {
         ka_task_read_lock_bh(&proc_ctx->ctx_rwlock);
         if (proc_ctx->pid == pid && proc_ctx->status == TRS_PROC_STATUS_NORMAL) {
             kref_safe_get(&proc_ctx->ref);
@@ -348,10 +358,7 @@ static struct trs_proc_ctx *trs_proc_ctx_get(struct trs_core_ts_inst *ts_inst, i
 }
 
 void trs_proc_ctx_destroy(struct kref_safe *kref);
-void trs_proc_ctx_put(struct trs_proc_ctx *proc_ctx)
-{
-    kref_safe_put(&proc_ctx->ref, trs_proc_ctx_destroy);
-}
+void trs_proc_ctx_put(struct trs_proc_ctx *proc_ctx) { kref_safe_put(&proc_ctx->ref, trs_proc_ctx_destroy); }
 
 struct trs_proc_ctx *trs_get_share_ctx(struct trs_core_ts_inst *ts_inst, u32 share_pid)
 {
@@ -396,7 +403,9 @@ struct trs_proc_ctx *trs_proc_ctx_create(struct trs_core_ts_inst *all_ts_inst[],
     proc_ctx->task_id = ka_base_atomic64_inc_return(&ts_inst->cur_task_id);
     proc_ctx->pid = ka_task_get_current_tgid();
     proc_ctx->release_type = TRS_PROC_RELEASE_LOCAL_REMOTE;
-    if (strncpy_s(proc_ctx->name, TASK_COMM_LEN, ka_task_get_current_comm(), ka_base_strlen(ka_task_get_current_comm())) != 0) {
+    if (strncpy_s(
+            proc_ctx->name, TASK_COMM_LEN, ka_task_get_current_comm(), ka_base_strlen(ka_task_get_current_comm())) !=
+        0) {
 #ifndef EMU_ST
         trs_warn("Strcpy warn. (pid=%d)\n", proc_ctx->pid);
 #endif
@@ -451,8 +460,10 @@ static int trs_check_va_range(ka_vm_area_struct_t *vma, unsigned long addr, unsi
     if (((addr & (KA_MM_PAGE_SIZE - 1)) != 0) || (addr < ka_mm_get_vm_start(vma)) || (addr > ka_mm_get_vm_end(vma)) ||
         (end > ka_mm_get_vm_end(vma)) || (addr >= end)) {
 #ifndef EMU_ST
-        trs_err("Invalid para. (addr=%pK; size=0x%lx; end=%pK; vm_start=%pK; vm_end=%pK)\n", (void *)(uintptr_t)addr,
-            size, (void *)(uintptr_t)end, (void *)(uintptr_t)ka_mm_get_vm_start(vma), (void *)(uintptr_t)ka_mm_get_vm_end(vma));
+        trs_err(
+            "Invalid para. (addr=%pK; size=0x%lx; end=%pK; vm_start=%pK; vm_end=%pK)\n", (void *)(uintptr_t)addr, size,
+            (void *)(uintptr_t)end, (void *)(uintptr_t)ka_mm_get_vm_start(vma),
+            (void *)(uintptr_t)ka_mm_get_vm_end(vma));
 #endif
         return -EINVAL;
     }
@@ -467,8 +478,9 @@ static int trs_check_va_map(ka_vm_area_struct_t *vma, unsigned long addr, unsign
 
     for (va_check = addr; va_check < end; va_check += KA_MM_PAGE_SIZE) {
         if (ka_mm_follow_pfn(vma, va_check, &pfn) == 0) {
-            trs_err("Check va is map. (addr=0x%pK; size=0x%lx; va_check=0x%pK)\n",
-                (void *)(uintptr_t)addr, size, (void *)(uintptr_t)va_check);
+            trs_err(
+                "Check va is map. (addr=0x%pK; size=0x%lx; va_check=0x%pK)\n", (void *)(uintptr_t)addr, size,
+                (void *)(uintptr_t)va_check);
             return -EINVAL;
         }
     }
@@ -483,8 +495,9 @@ static int trs_check_va_unmap(ka_vm_area_struct_t *vma, unsigned long addr, unsi
 
     for (va_check = addr; va_check < end; va_check += KA_MM_PAGE_SIZE) {
         if (ka_mm_follow_pfn(vma, va_check, &pfn) != 0) {
-            trs_err("Check va is unmap. (addr=0x%pK; size=0x%lx; va_check=0x%pK)\n",
-                (void *)(uintptr_t)addr, size, (void *)(uintptr_t)va_check);
+            trs_err(
+                "Check va is unmap. (addr=0x%pK; size=0x%lx; va_check=0x%pK)\n", (void *)(uintptr_t)addr, size,
+                (void *)(uintptr_t)va_check);
             return -EINVAL;
         }
     }
@@ -514,14 +527,15 @@ static void trs_zap_vma_ptes(ka_vm_area_struct_t *vma, unsigned long addr, size_
     int ret = ka_mm_zap_vma_ptes(vma, addr, KA_MM_PAGE_ALIGN(len));
     if (ret != 0) {
 #ifndef EMU_ST
-        trs_err("Unmap va failed. (vma_start=%pK; end=%pK; addr=%pK; len=0x%lx)\n",
-            (void *)(uintptr_t)ka_mm_get_vm_start(vma), (void *)(uintptr_t)ka_mm_get_vm_end(vma), (void *)(uintptr_t)addr, len);
+        trs_err(
+            "Unmap va failed. (vma_start=%pK; end=%pK; addr=%pK; len=0x%lx)\n",
+            (void *)(uintptr_t)ka_mm_get_vm_start(vma), (void *)(uintptr_t)ka_mm_get_vm_end(vma),
+            (void *)(uintptr_t)addr, len);
 #endif
     }
 }
 
-static int trs_remap_pfn(struct trs_proc_ctx *proc_ctx, struct trs_mem_map_para *para,
-    ka_vm_area_struct_t *vma)
+static int trs_remap_pfn(struct trs_proc_ctx *proc_ctx, struct trs_mem_map_para *para, ka_vm_area_struct_t *vma)
 {
     ka_mm_pgprot_t prot;
     int ret;
@@ -534,16 +548,17 @@ static int trs_remap_pfn(struct trs_proc_ctx *proc_ctx, struct trs_mem_map_para 
     ret = ka_mm_remap_pfn_range(vma, para->va, __ka_mm_phys_to_pfn(para->pa), para->len, prot);
     if (ret != 0) {
 #ifndef EMU_ST
-        trs_err("Remap va failed. (vma_start=%pK; end=%pK; addr=%pK; len=0x%lx)\n",
-            (void *)(uintptr_t)ka_mm_get_vm_start(vma), (void *)(uintptr_t)ka_mm_get_vm_end(vma), (void *)(uintptr_t)para->va, para->len);
+        trs_err(
+            "Remap va failed. (vma_start=%pK; end=%pK; addr=%pK; len=0x%lx)\n",
+            (void *)(uintptr_t)ka_mm_get_vm_start(vma), (void *)(uintptr_t)ka_mm_get_vm_end(vma),
+            (void *)(uintptr_t)para->va, para->len);
 #endif
     }
 
     return ret;
 }
 
-int trs_remap_sq_mem(struct trs_proc_ctx *proc_ctx, ka_vm_area_struct_t *vma,
-    struct trs_mem_map_para *para)
+int trs_remap_sq_mem(struct trs_proc_ctx *proc_ctx, ka_vm_area_struct_t *vma, struct trs_mem_map_para *para)
 {
     int ret;
 
@@ -590,8 +605,7 @@ int trs_remap_sq(struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst
     return ret;
 }
 
-int trs_unmap_sq_mem(struct trs_proc_ctx *proc_ctx, ka_vm_area_struct_t *vma,
-    struct trs_mem_unmap_para *para)
+int trs_unmap_sq_mem(struct trs_proc_ctx *proc_ctx, ka_vm_area_struct_t *vma, struct trs_mem_unmap_para *para)
 {
     int ret;
 
@@ -648,9 +662,9 @@ static int trs_proc_release_msg_send(struct trs_core_ts_inst *ts_inst, int pid, 
 }
 
 #ifdef CFG_SOC_PLATFORM_FPGA
-#define TRS_TS_RETRY_TIMES          1800
+#define TRS_TS_RETRY_TIMES 1800
 #else
-#define TRS_TS_RETRY_TIMES          160
+#define TRS_TS_RETRY_TIMES 160
 #endif
 
 int trs_proc_release_check_ts(struct trs_proc_ctx *proc_ctx, u32 tsid)
@@ -663,8 +677,9 @@ int trs_proc_release_check_ts(struct trs_proc_ctx *proc_ctx, u32 tsid)
             return 0;
         }
 
-        trs_debug("Send check. (devid=%u; tsid=%u; name=%s; pid=%d; task_id=%lld)\n",
-            ts_inst->inst.devid, tsid, proc_ctx->name, proc_ctx->pid, proc_ctx->task_id);
+        trs_debug(
+            "Send check. (devid=%u; tsid=%u; name=%s; pid=%d; task_id=%lld)\n", ts_inst->inst.devid, tsid,
+            proc_ctx->name, proc_ctx->pid, proc_ctx->task_id);
         ret = trs_proc_release_msg_send(ts_inst, proc_ctx->pid, TRS_MBOX_RECYCLE_CHECK);
         if (ret == 0) {
             trs_core_inst_put(ts_inst);
@@ -676,8 +691,12 @@ int trs_proc_release_check_ts(struct trs_proc_ctx *proc_ctx, u32 tsid)
         if ((ret == -EIO) || (TRS_IS_REBOOT_ACTIVE == true)) {
             return ret;
         }
-
-        (i < 10) ? ka_system_msleep(100) : ka_system_msleep(1000); /* fisrt 10 times, sleep 100 ms, then sleep 1000 ms */
+#ifdef CFG_FEATURE_SUPPORT_FAST_EXIT
+        (i < 60) ? ka_system_msleep(5) : ka_system_msleep(200); /* first 60 times, sleep 5 ms, then sleep 200 ms */
+#else
+        (i < 10) ? ka_system_msleep(100) :
+                   ka_system_msleep(1000); /* first 10 times, sleep 100 ms, then sleep 1000 ms */
+#endif
     }
 
     return -ETIMEDOUT;
@@ -689,8 +708,9 @@ void trs_proc_release_ras_report(struct trs_proc_ctx *proc_ctx, struct trs_core_
         ts_inst->ops.ras_report(&ts_inst->inst);
         return;
     }
-    trs_debug("No need to send ras. (devid=%u; tsid=%u; pid=%d; task_id=%lld)\n",
-        ts_inst->inst.devid, ts_inst->inst.tsid, proc_ctx->pid, proc_ctx->task_id);
+    trs_debug(
+        "No need to send ras. (devid=%u; tsid=%u; pid=%d; task_id=%lld)\n", ts_inst->inst.devid, ts_inst->inst.tsid,
+        proc_ctx->pid, proc_ctx->task_id);
     return;
 }
 
@@ -717,9 +737,9 @@ bool trs_proc_is_res_leak(struct trs_proc_ctx *proc_ctx, u32 tsid)
     return false;
 }
 
-#define TSFW_QUEUE_FULL_RETRY_TIMES         200
-#define TSFW_QUEUE_FULL_WAIT_INTERVAL_MIN   400
-#define TSFW_QUEUE_FULL_WAIT_INTERVAL_MAX   500
+#define TSFW_QUEUE_FULL_RETRY_TIMES 200
+#define TSFW_QUEUE_FULL_WAIT_INTERVAL_MIN 400
+#define TSFW_QUEUE_FULL_WAIT_INTERVAL_MAX 500
 void trs_proc_release_notice_ts(struct trs_core_ts_inst *ts_inst, struct trs_proc_ctx *proc_ctx)
 {
     struct trs_id_inst *inst = &ts_inst->inst;
@@ -736,8 +756,9 @@ retry:
     queue_full_retry_cnt++;
     ret = trs_proc_release_msg_send(ts_inst, proc_ctx->pid, TRS_MBOX_RECYCLE_PID);
     if (ret != 0) {
-        trs_warn("Notice ts warn. (devid=%u; tsid=%u; retry_cnt=%d; ret=%d)\n",
-            inst->devid, inst->tsid, queue_full_retry_cnt, ret);
+        trs_warn(
+            "Notice ts warn. (devid=%u; tsid=%u; pid=%d; retry_cnt=%d; ret=%d)\n", inst->devid, inst->tsid,
+            proc_ctx->pid, queue_full_retry_cnt, ret);
     }
 
     if ((ret == -EBUSY) && (queue_full_retry_cnt < TSFW_QUEUE_FULL_RETRY_TIMES)) {
@@ -755,7 +776,8 @@ retry:
     }
 }
 
-static void trs_for_each_proc_res_id(struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst, int res_type,
+static void trs_for_each_proc_res_id(
+    struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst, int res_type,
     void (*recycle_func)(struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst, int res_type, u32 res_id))
 {
     struct trs_res_mng *res_mng = &ts_inst->res_mng[res_type];
@@ -777,8 +799,9 @@ static void trs_for_each_proc_res_id(struct trs_proc_ctx *proc_ctx, struct trs_c
         }
     }
 
-    trs_debug("Recycle res. (devid=%u; tsid=%u; res_type=%d; recycle_num=%u; proc_res_num=%u)\n",
-        inst->devid, inst->tsid, res_type, recycle_num, trs_get_proc_res_num(proc_ctx, inst->tsid, res_type));
+    trs_debug(
+        "Recycle res. (devid=%u; tsid=%u; res_type=%d; recycle_num=%u; proc_res_num=%u)\n", inst->devid, inst->tsid,
+        res_type, recycle_num, trs_get_proc_res_num(proc_ctx, inst->tsid, res_type));
 }
 
 void trs_proc_leak_res_show(struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst)
@@ -796,8 +819,9 @@ void trs_proc_leak_res_show(struct trs_proc_ctx *proc_ctx, struct trs_core_ts_in
             }
             if (trs_is_id_pid_match(&res_mng->ids[i], proc_ctx->pid, proc_ctx->task_id)) {
                 num++;
-                trs_warn("Leak res. (devid=%u; tsid=%u; res_type=%d; res_id=%d; proc_res_num=%d)\n",
-                    inst->devid, inst->tsid, i, j, trs_get_proc_res_num(proc_ctx, inst->tsid, i));
+                trs_warn(
+                    "Leak res. (devid=%u; tsid=%u; res_type=%d; res_id=%d; proc_res_num=%d)\n", inst->devid, inst->tsid,
+                    i, j, trs_get_proc_res_num(proc_ctx, inst->tsid, i));
             }
         }
     }
@@ -819,7 +843,8 @@ static int trs_proc_release_agent_master_check_ts(struct trs_proc_ctx *proc_ctx,
 
     ret = trs_proc_release_msg_send(ts_inst, master_pid, TRS_MBOX_RECYCLE_CHECK);
     if (ret != 0) {
-        trs_warn("App exit not finish. (devid=%u; tsid=%u; name=%s; pid=%d; task_id=%lld; master_pid=%d; ret=%d)\n",
+        trs_warn(
+            "App exit not finish. (devid=%u; tsid=%u; name=%s; pid=%d; task_id=%lld; master_pid=%d; ret=%d)\n",
             ts_inst->inst.devid, ts_inst->inst.tsid, proc_ctx->name, proc_ctx->pid, proc_ctx->task_id, master_pid, ret);
         goto exit;
     }
@@ -828,8 +853,10 @@ static int trs_proc_release_agent_master_check_ts(struct trs_proc_ctx *proc_ctx,
     if (ts_inst->ops.notice_proc_release != NULL) {
         ret = ts_inst->ops.notice_proc_release(&ts_inst->inst, master_pid);
         if (ret != 0) {
-            trs_warn("App exit warn. (devid=%u; tsid=%u; name=%s; pid=%d; task_id=%lld; master_pid=%d; ret=%d)\n",
-                ts_inst->inst.devid, ts_inst->inst.tsid, proc_ctx->name, proc_ctx->pid, proc_ctx->task_id, master_pid, ret);
+            trs_warn(
+                "App exit warn. (devid=%u; tsid=%u; name=%s; pid=%d; task_id=%lld; master_pid=%d; ret=%d)\n",
+                ts_inst->inst.devid, ts_inst->inst.tsid, proc_ctx->name, proc_ctx->pid, proc_ctx->task_id, master_pid,
+                ret);
             goto exit;
         }
     }
@@ -875,6 +902,10 @@ static int trs_proc_ts_res_recycle(struct trs_proc_ctx *proc_ctx, struct trs_cor
 
     if (!proc_ctx->force_recycle) {
         for (i = 0; i < TRS_HW_SQ; i++) {
+            if ((ts_inst->location != UDA_LOCAL) && (i == TRS_STREAM)) { /* stream id recycle after device agent sq */
+                continue;
+            }
+
             trs_for_each_proc_res_id(proc_ctx, ts_inst, i, trs_res_id_recycle);
         }
     }
@@ -884,13 +915,21 @@ static int trs_proc_ts_res_recycle(struct trs_proc_ctx *proc_ctx, struct trs_cor
     return 0;
 }
 
+static int trs_proc_ts_res_recycle_post(struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst)
+{
+    trs_for_each_proc_res_id(proc_ctx, ts_inst, TRS_STREAM, trs_res_id_recycle);
+    trs_debug("Post recycle success. (devid=%u; tsid=%u)\n", ts_inst->inst.devid, ts_inst->inst.tsid);
+    return 0;
+}
+
 void trs_clear_exit_proc_list(struct trs_core_ts_inst *ts_inst)
 {
     struct trs_proc_ctx *proc_ctx = NULL;
     struct trs_proc_ctx *n = NULL;
 
     ka_task_down_write(&ts_inst->sem);
-    ka_list_for_each_entry_safe(proc_ctx, n, &ts_inst->exit_proc_list_head, node) {
+    ka_list_for_each_entry_safe(proc_ctx, n, &ts_inst->exit_proc_list_head, node)
+    {
 #ifndef EMU_ST
         proc_ctx->force_recycle = true;
         (void)trs_proc_ts_res_recycle(proc_ctx, ts_inst);
@@ -920,7 +959,8 @@ int trs_notice_exit_proc_list_recycle(struct trs_id_inst *inst, int pid)
     }
 
     ka_task_down_write(&ts_inst->sem);
-    ka_list_for_each_entry(proc_ctx, &ts_inst->proc_list_head, node) {
+    ka_list_for_each_entry(proc_ctx, &ts_inst->proc_list_head, node)
+    {
         ret = trs_core_get_host_pid(proc_ctx->pid, &master_pid);
         if ((ret != 0) || (master_pid != pid)) {
             continue;
@@ -936,7 +976,8 @@ int trs_notice_exit_proc_list_recycle(struct trs_id_inst *inst, int pid)
 
 retry:
     ka_task_down_write(&ts_inst->sem);
-    ka_list_for_each_entry_safe(proc_ctx, n, &ts_inst->exit_proc_list_head, node) {
+    ka_list_for_each_entry_safe(proc_ctx, n, &ts_inst->exit_proc_list_head, node)
+    {
         if ((proc_ctx->agent_app_pid != pid) || ((proc_task_id != -1) && (proc_ctx->task_id != proc_task_id))) {
             continue;
         }
@@ -971,7 +1012,8 @@ int trs_notice_check_proc_recycle(struct trs_id_inst *inst, int pid)
     }
 
     ka_task_down_write(&ts_inst->sem);
-    ka_list_for_each_entry(proc_ctx, &ts_inst->proc_list_head, node) {
+    ka_list_for_each_entry(proc_ctx, &ts_inst->proc_list_head, node)
+    {
         if (proc_ctx->pid != pid) {
             continue;
         }
@@ -985,7 +1027,8 @@ int trs_notice_check_proc_recycle(struct trs_id_inst *inst, int pid)
         return -EEXIST;
     }
 
-    ka_list_for_each_entry(proc_ctx, &ts_inst->exit_proc_list_head, node) {
+    ka_list_for_each_entry(proc_ctx, &ts_inst->exit_proc_list_head, node)
+    {
         if (proc_ctx->pid == pid) {
             ka_task_up_write(&ts_inst->sem);
             trs_core_inst_put(ts_inst);
@@ -1025,3 +1068,15 @@ int trs_proc_recycle(struct trs_core_ts_inst *ts_inst, struct trs_proc_ctx *proc
     return ret;
 }
 
+int trs_proc_recycle_post(struct trs_core_ts_inst *ts_inst, struct trs_proc_ctx *proc_ctx)
+{
+    int ret = 0;
+
+    trs_debug("Begin post recycle. (pid=%d)\n", proc_ctx->pid);
+
+    if (trs_proc_is_res_leak(proc_ctx, ts_inst->inst.tsid)) {
+        ret = trs_proc_ts_res_recycle_post(proc_ctx, ts_inst);
+    }
+
+    return ret;
+}

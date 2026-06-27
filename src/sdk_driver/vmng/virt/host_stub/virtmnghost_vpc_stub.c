@@ -16,12 +16,11 @@
 #include "virtmng_public_def.h"
 
 int vmngh_vpc_msg_send(u32 dev_id, u32 fid, enum vmng_vpc_type vpc_type, struct vmng_tx_msg_proc_info *tx_info,
-    u32 timeout)
+                       u32 timeout)
 {
     return 0;
 }
 KA_EXPORT_SYMBOL(vmngh_vpc_msg_send);
-
 
 int vmngh_vpc_register_client(u32 dev_id, u32 fid, const struct vmng_vpc_client *vpc_client)
 {

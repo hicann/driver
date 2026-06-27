@@ -13,7 +13,7 @@
 #ifndef SVM_MEM_STATS_H
 #define SVM_MEM_STATS_H
 
-#include <linux/types.h>
+#include "ka_type.h"
 #include "ka_base_pub.h"
 
 #include "devmm_proc_info.h"

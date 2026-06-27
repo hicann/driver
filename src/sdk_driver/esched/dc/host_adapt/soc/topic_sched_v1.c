@@ -25,28 +25,28 @@
 #include "topic_sched_v1.h"
 
 /* HOST reg offset */
-#define SCHED_HOST_TOPIC_ADDR_OFFSET                                 (0x400000)
+#define SCHED_HOST_TOPIC_ADDR_OFFSET (0x400000)
 
 /* wait/get status and report reg */
-#define STARS_TOPIC_VF_HOST_AICPU_STATUS_REPORT_NS(cpu_id, vf_id)    (0x000000 + (cpu_id) * 0x20 + (vf_id) * 0x10000)
-#define STARS_TOPIC_VF_HOST_AICPU_WAIT_TOPIC_NS(cpu_id, vf_id)       (0x000004 + (cpu_id) * 0x20 + (vf_id) * 0x10000)
-#define STARS_TOPIC_VF_HOST_AICPU_INT_EN_NS(cpu_id, vf_id)           (0x000008 + (cpu_id) * 0x20 + (vf_id) * 0x10000)
-#define STARS_TOPIC_VF_HOST_AICPU_ERRCODE_REPORT_NS(cpu_id, vf_id)   (0x00000C + (cpu_id) * 0x20 + (vf_id) * 0x10000)
+#define STARS_TOPIC_VF_HOST_AICPU_STATUS_REPORT_NS(cpu_id, vf_id) (0x000000 + (cpu_id) * 0x20 + (vf_id) * 0x10000)
+#define STARS_TOPIC_VF_HOST_AICPU_WAIT_TOPIC_NS(cpu_id, vf_id) (0x000004 + (cpu_id) * 0x20 + (vf_id) * 0x10000)
+#define STARS_TOPIC_VF_HOST_AICPU_INT_EN_NS(cpu_id, vf_id) (0x000008 + (cpu_id) * 0x20 + (vf_id) * 0x10000)
+#define STARS_TOPIC_VF_HOST_AICPU_ERRCODE_REPORT_NS(cpu_id, vf_id) (0x00000C + (cpu_id) * 0x20 + (vf_id) * 0x10000)
 
-#define STARS_TOPIC_VF_HOST_CTRLCPU_STATUS_REPORT_NS(cpu_id, vf_id)  (0x000010 + (cpu_id) * 0x20 + (vf_id) * 0x10000)
+#define STARS_TOPIC_VF_HOST_CTRLCPU_STATUS_REPORT_NS(cpu_id, vf_id) (0x000010 + (cpu_id) * 0x20 + (vf_id) * 0x10000)
 #define STARS_TOPIC_VF_HOST_CTRLCPU_ERRCODE_REPORT_NS(cpu_id, vf_id) (0x00001C + (cpu_id) * 0x20 + (vf_id) * 0x10000)
-#define STARS_TOPIC_VF_HOST_CTRLCPU_WAIT_TOPIC_NS(cpu_id, vf_id)     (0x000014 + (cpu_id) * 0x20 + (vf_id) * 0x10000)
-#define STARS_TOPIC_VF_HOST_CTRLCPU_INT_EN_NS(cpu_id, vf_id)         (0x000018 + (cpu_id) * 0x20 + (vf_id) * 0x10000)
+#define STARS_TOPIC_VF_HOST_CTRLCPU_WAIT_TOPIC_NS(cpu_id, vf_id) (0x000014 + (cpu_id) * 0x20 + (vf_id) * 0x10000)
+#define STARS_TOPIC_VF_HOST_CTRLCPU_INT_EN_NS(cpu_id, vf_id) (0x000018 + (cpu_id) * 0x20 + (vf_id) * 0x10000)
 
-#define STARS_TOPIC_HOST_AICPU_INT_STS0_NS(index, vf_id)            (0x000A00 + (vf_id) * 0x10000 + (index) * 0x20)
-#define STARS_TOPIC_HOST_AICPU_INT_CLR0_NS(index, vf_id)            (0x000A08 + (vf_id) * 0x10000 + (index) * 0x20)
-#define STARS_TOPIC_HOST_AICPU_INT_MASK0_NS(index, vf_id)           (0x000A0C + (vf_id) * 0x10000 + (index) * 0x20)
-#define STARS_TOPIC_HOST_AICPU_INT_STS_NS(vf_id)                    (0x000A40 + (vf_id) * 0x10000)
-#define STARS_TOPIC_HOST_AICPU_INT_CLR_NS(vf_id)                    (0x000A48 + (vf_id) * 0x10000)
+#define STARS_TOPIC_HOST_AICPU_INT_STS0_NS(index, vf_id) (0x000A00 + (vf_id) * 0x10000 + (index) * 0x20)
+#define STARS_TOPIC_HOST_AICPU_INT_CLR0_NS(index, vf_id) (0x000A08 + (vf_id) * 0x10000 + (index) * 0x20)
+#define STARS_TOPIC_HOST_AICPU_INT_MASK0_NS(index, vf_id) (0x000A0C + (vf_id) * 0x10000 + (index) * 0x20)
+#define STARS_TOPIC_HOST_AICPU_INT_STS_NS(vf_id) (0x000A40 + (vf_id) * 0x10000)
+#define STARS_TOPIC_HOST_AICPU_INT_CLR_NS(vf_id) (0x000A48 + (vf_id) * 0x10000)
 
-#define STARS_TOPIC_HOST_CTRLCPU_INT_STS_NS(vf_id)                  (0x000A60 + (vf_id) * 0x10000)
-#define STARS_TOPIC_HOST_CTRLCPU_INT_CLR_NS(vf_id)                  (0x000A68 + (vf_id) * 0x10000)
-#define STARS_TOPIC_HOST_CTRLCPU_INT_MASK_NS(vf_id)                 (0x000A6C + (vf_id) * 0x10000)
+#define STARS_TOPIC_HOST_CTRLCPU_INT_STS_NS(vf_id) (0x000A60 + (vf_id) * 0x10000)
+#define STARS_TOPIC_HOST_CTRLCPU_INT_CLR_NS(vf_id) (0x000A68 + (vf_id) * 0x10000)
+#define STARS_TOPIC_HOST_CTRLCPU_INT_MASK_NS(vf_id) (0x000A6C + (vf_id) * 0x10000)
 
 /* vf_id: range from 0 to 15 */
 STATIC void topic_sched_host_ccpu_status_report(void __ka_mm_iomem *io_base, u32 mb_id, u32 vf_id, u32 status)
@@ -179,11 +179,9 @@ static void esched_drv_errcode_report(struct topic_data_chan *topic_chan, u32 vf
     }
 
     if (topic_chan->mb_type == ACPU_HOST) {
-        topic_sched_host_aicpu_errcode_report(topic_chan->hard_res->io_base,
-            topic_chan->mb_id, vf_id, error_code);
+        topic_sched_host_aicpu_errcode_report(topic_chan->hard_res->io_base, topic_chan->mb_id, vf_id, error_code);
     } else {
-        topic_sched_host_ccpu_errcode_report(topic_chan->hard_res->io_base,
-            topic_chan->mb_id, vf_id, error_code);
+        topic_sched_host_ccpu_errcode_report(topic_chan->hard_res->io_base, topic_chan->mb_id, vf_id, error_code);
     }
 }
 
@@ -210,7 +208,8 @@ int esched_drv_host_map_addr_v1(u32 dev_id, struct sched_hard_res *res)
     ret = devdrv_get_addr_info(dev_id, DEVDRV_ADDR_STARS_TOPIC_SCHED_BASE, 0, &reg_base, &size);
     if (ret != 0) {
         sched_err("Failed to invoke the devdrv_get_addr_info. "
-            "(dev_id=%u; type=%d)\n", dev_id, DEVDRV_ADDR_STARS_TOPIC_SCHED_BASE);
+                  "(dev_id=%u; type=%d)\n",
+                  dev_id, DEVDRV_ADDR_STARS_TOPIC_SCHED_BASE);
         return ret;
     }
 
@@ -229,8 +228,8 @@ int esched_drv_host_map_addr_v1(u32 dev_id, struct sched_hard_res *res)
 
     ret = devdrv_get_addr_info(dev_id, DEVDRV_ADDR_STARS_TOPIC_SCHED_RES_MEM_BASE, 0, &rsv_mem_pa, &size);
     if (ret != 0) {
-        sched_err("Failed to invoke the devdrv_get_addr_info. (dev_id=%u; type=%d; size=0x%x; ret=%d)\n",
-            dev_id, DEVDRV_ADDR_STARS_TOPIC_SCHED_RES_MEM_BASE, (u32)size, ret);
+        sched_err("Failed to invoke the devdrv_get_addr_info. (dev_id=%u; type=%d; size=0x%x; ret=%d)\n", dev_id,
+                  DEVDRV_ADDR_STARS_TOPIC_SCHED_RES_MEM_BASE, (u32)size, ret);
         goto iounmap_io_base;
     }
 
@@ -242,8 +241,8 @@ int esched_drv_host_map_addr_v1(u32 dev_id, struct sched_hard_res *res)
         goto iounmap_io_base;
     }
 
-    sched_info("Show details. (dev_id=%u; io_base=%pK; int_io_base=%pK; rsv_mem_pa=0x%pK; size=0x%x)\n",
-        dev_id, res->io_base, res->int_io_base, (void *)res->rsv_mem_pa, (u32)size);
+    sched_info("Show details. (dev_id=%u; io_base=%pK; int_io_base=%pK; rsv_mem_pa=0x%pK; size=0x%x)\n", dev_id,
+               res->io_base, res->int_io_base, (void *)res->rsv_mem_pa, (u32)size);
 
     return 0;
 
@@ -277,6 +276,5 @@ void esched_host_iounmap_v1(struct sched_hard_res *res)
 }
 #else
 void esched_drv_host_topic_sched_v1(void)
-{
-}
+{}
 #endif

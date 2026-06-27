@@ -37,11 +37,12 @@ void buff_show_info(void *buff, uint32_t blk_id)
         return;
     }
 
-    buff_err("Head. (head=%pK; image=0x%x; timestamp=%u; ref=%u; status=%lu; buff_type=%lu; "
-             "mbuf_data_flag=%lu; recycle_flag=%lu; ext_flag=%lu; resv_head=%lu; align_flag=%lu; resv=%lu; index=%u; "
-             "size:0x%lx)\n", head, head->image, head->timestamp, head->ref, head->status,
-             head->buff_type, head->mbuf_data_flag, head->recycle_flag, head->ext_flag,
-             head->resv_head, head->align_flag, head->resv, head->index, head->size);
+    buff_err("Head. (head=%pK; image=0x%x; timestamp=%u; ref=%u; status=%d; buff_type=%d; "
+             "mbuf_data_flag=%d; recycle_flag=%d; ext_flag=%d; resv_head=%d; align_flag=%d; resv=%d; index=%u; "
+             "size:0x%lx)\n",
+             head, head->image, head->timestamp, head->ref, head->status, head->buff_type, head->mbuf_data_flag,
+             head->recycle_flag, head->ext_flag, head->resv_head, head->align_flag, head->resv, head->index,
+             (unsigned long)head->size);
     buff_err("Tail. (tail=%pK; image=0x%x; size=0x%x)\n", tail, tail->image, tail->size);
     buff_put_tail(tail, blk_id);
 
@@ -136,11 +137,10 @@ void buff_trace_print(void *buff, struct mempool_t *mp)
 
     buff_trace = buff_mempool_get_trace(buff);
     buff_event("mp=%p, idx=%d, buff=%p, ref=%d\n", mp, head->index, buff, head->ref);
-    for (i = 0; i < BUFF_REF_MAX_MBUF_NUM ; i++) {
+    for (i = 0; i < BUFF_REF_MAX_MBUF_NUM; i++) {
         if (buff_trace->mbuf[i] != NULL) {
-            buff_event("buff=%p, mbuf=%p, pid=%u, opt_type=%u, qid=%d\n",
-                buff, buff_trace->mbuf[i], buff_trace->mbuf_info[i].pid,
-                buff_trace->mbuf_info[i].opt_type, buff_trace->mbuf_info[i].qid);
+            buff_event("buff=%p, mbuf=%p, pid=%u, opt_type=%u, qid=%d\n", buff, buff_trace->mbuf[i],
+                       buff_trace->mbuf_info[i].pid, buff_trace->mbuf_info[i].opt_type, buff_trace->mbuf_info[i].qid);
         }
     }
 #endif
@@ -255,31 +255,31 @@ drvError_t mbuf_verify_and_get_head(void *mbuf, struct uni_buff_head_t **uni_hea
     return DRV_ERROR_INVALID_VALUE;
 }
 
-struct uni_buff_head_t *buff_head_init(uintptr_t start, uintptr_t end, uint32 align,
-    uint32 ext_info_flag, uint32 trace_flag)
+struct uni_buff_head_t *buff_head_init(uintptr_t start, uintptr_t end, uint32 align, uint32 ext_info_flag,
+                                       uint32 trace_flag)
 {
-    struct uni_buff_head_t *head  = NULL;
-    struct uni_buff_tail_t *tail  = NULL;
+    struct uni_buff_head_t *head = NULL;
+    struct uni_buff_tail_t *tail = NULL;
 
     head = buff_get_head_by_start(start, end, align, ext_info_flag, trace_flag);
 
-    head->image     = UNI_HEAD_IMAGE;
-    head->status    = UNI_STATUS_ALLOC;
+    head->image = UNI_HEAD_IMAGE;
+    head->status = UNI_STATUS_ALLOC;
     head->timestamp = 0;
-    head->ref       = 0;
-    head->ext_flag  = (uint64)ext_info_flag & 0x1;
+    head->ref = 0;
+    head->ext_flag = (uint64)ext_info_flag & 0x1;
     head->recycle_flag = 0;
-    head->resv_head = (uint64)(((uintptr_t)head - start) / UNI_UNIT_SIZE) & 0x1FF ; //lint !e507
+    head->resv_head = (uint64)(((uintptr_t)head - start) / UNI_UNIT_SIZE) & 0x1FF; // lint !e507
     head->mbuf_data_flag = UNI_MBUF_DATA_DISABLE;
     head->buff_type = TYPE_NONE;
     head->align_flag = 0;
-    head->size      = (uint64)(end - (uintptr_t)head) & 0xFFFFFFFFFF; //lint !e507
-    head->resv     = 0;
-    head->index     = 0;
-    head->offset    = 0;
+    head->size = (uint64)(end - (uintptr_t)head) & 0xFFFFFFFFFF; // lint !e507
+    head->resv = 0;
+    head->index = 0;
+    head->offset = 0;
 
     tail = (struct uni_buff_tail_t *)(uintptr_t)(end - sizeof(struct uni_buff_tail_t));
-    tail->size  = (uint32)((char *)tail - (char *)head);
+    tail->size = (uint32)((char *)tail - (char *)head);
     tail->image = UNI_TAIL_IMAGE;
 
     return head;
@@ -306,7 +306,7 @@ static drvError_t buff_local_free(uint32_t blk_id, void *buff, struct uni_buff_h
     unsigned long long mem_mng;
     drvError_t ret;
 
-    ret = buff_range_mem_mng_get(blk_id, buff, 1UL, &mem_mng);  // minimum size is 1
+    ret = buff_range_mem_mng_get(blk_id, buff, 1UL, &mem_mng); // minimum size is 1
     if (ret != 0) {
         buff_err("Buff invalid. (buff=%p)\n", buff);
         return DRV_ERROR_INVALID_VALUE;
@@ -358,14 +358,14 @@ drvError_t buff_free(uint32_t blk_id, void *buff, struct uni_buff_head_t *head)
     drvError_t ret;
     int owner;
 
-    ret = buff_range_owner_get(blk_id, buff, 1UL, &owner);  // minimum size is 1
+    ret = buff_range_owner_get(blk_id, buff, 1UL, &owner); // minimum size is 1
     if (ret != 0) {
         buff_err("buff %p invalid\n", buff);
         return DRV_ERROR_INVALID_VALUE;
     }
 
     if (head->status != UNI_STATUS_ALLOC) {
-        buff_err("Invalid buffer status. (buff_status=%lu; buffer=%p)\n", head->status, buff);
+        buff_err("Invalid buffer status. (buff_status=%d; buffer=%p)\n", head->status, buff);
         return DRV_ERROR_INVALID_VALUE;
     }
 
@@ -404,13 +404,13 @@ int halBuffFree(void *buff)
     buff_blk_put(pool_id, alloc_addr);
 
     if (buff_verify_and_get_head(buff, &head, blk_id) != 0) {
-        buff_err("buff is invalid, 0x%lx\n", (uintptr_t)buff); //lint !e507
+        buff_err("buff is invalid, 0x%lx\n", (uintptr_t)buff); // lint !e507
         return (int)DRV_ERROR_BAD_ADDRESS;
     }
 
-    if ((head->buff_type == MBUF_NORMAL) || (head->buff_type == MBUF_BY_POOL) ||
-        (head->buff_type == MBUF_BARE_BUFF) || (head->buff_type == MBUF_BY_BUILD)) {
-        buff_err("Buff type invalid. (buff_type=%lu)\n", head->buff_type);
+    if ((head->buff_type == MBUF_NORMAL) || (head->buff_type == MBUF_BY_POOL) || (head->buff_type == MBUF_BARE_BUFF) ||
+        (head->buff_type == MBUF_BY_BUILD)) {
+        buff_err("Buff type invalid. (buff_type=%d)\n", head->buff_type);
         buff_put_head(head, blk_id);
         return (int)DRV_ERROR_INVALID_VALUE;
     }

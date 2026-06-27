@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * Copyright (c) 2026 Huawei Technologies Co., Ltd.
  * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -37,7 +37,9 @@ int svm_smm_mmap(u32 devid, u64 *va, u64 size, u32 flag, struct svm_global_va *s
     ret = svm_cmd_ioctl(devid, SVM_SMM_MAP, (void *)&para);
     if (ret != DRV_ERROR_NONE) {
         ret = (ret == DRV_ERROR_OPER_NOT_PERMITTED) ? DRV_ERROR_NO_PROCESS : ret;
-        svm_err_if((ret != DRV_ERROR_NO_PROCESS), "Svm smm mmap ioctl failed. (ret=%d; va=0x%llx; flag=%u; size=%llu)\n", ret, *va, flag, para.dst_size);
+        svm_err_if(
+            (ret != DRV_ERROR_NO_PROCESS), "Svm smm mmap ioctl failed. (ret=%d; va=0x%llx; flag=%u; size=%llu)\n", ret,
+            *va, flag, para.dst_size);
         return ret;
     }
 
@@ -63,9 +65,10 @@ int svm_smm_munmap(u32 devid, u64 va, u64 size, u32 flag, struct svm_global_va *
     ret = svm_cmd_ioctl(devid, SVM_SMM_UNMAP, (void *)&para);
     if (ret != DRV_ERROR_NONE) {
         ret = (ret == DRV_ERROR_OPER_NOT_PERMITTED) ? DRV_ERROR_NO_PROCESS : ret;
-        svm_err_if((ret != DRV_ERROR_NO_PROCESS), "Svm smm munmap ioctl failed. (ret=%d; va=0x%llx; size=%llu)\n", ret, va, para.dst_size);
+        svm_err_if(
+            (ret != DRV_ERROR_NO_PROCESS), "Svm smm munmap ioctl failed. (ret=%d; va=0x%llx; size=%llu)\n", ret, va,
+            para.dst_size);
     }
 
     return ret;
 }
-

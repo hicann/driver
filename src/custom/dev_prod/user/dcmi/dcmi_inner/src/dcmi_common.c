@@ -8,15 +8,17 @@
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
+#ifndef _WIN32
+#define _XOPEN_SOURCE 500
+#include <ftw.h>
+#include <sys/wait.h>
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <limits.h>
 #include <errno.h>
 #include <ctype.h>
 #include <fcntl.h>
-#ifndef _WIN32
-#include <sys/wait.h>
-#endif
 #include "securec.h"
 #include "dcmi_interface_api.h"
 #include "dcmi_os_adapter.h"
@@ -156,7 +158,6 @@ int dcmi_get_file_length(const char *file, unsigned int *file_len)
 
     ret = dcmi_file_realpath_disallow_nonexist(file, path, sizeof(path));
     if (ret != DCMI_OK) {
-        printf("\t%-30s : Upgrade file path is illegal.\n", "Message");
         gplog(LOG_ERR, "call dcmi_file_realpath_disallow_nonexist failed. ret is %d.", ret);
         return ret;
     }
@@ -248,5 +249,395 @@ int dcmi_check_file_path(const char *path)
             }
         }
     }
+    return DCMI_OK;
+}
+
+int str2ull(unsigned long long *ptmp_num, const char *str)
+{
+    unsigned long long num = 0;
+    char *end_ptr = NULL;
+ 
+    if (!ptmp_num || !str) {
+        return DCMI_ERR_CODE_INVALID_PARAMETER;
+    }
+ 
+    if (*str == '\0') {
+        return DCMI_ERR_CODE_INVALID_PARAMETER;
+    }
+ 
+    errno = 0;
+    num = strtoull(str, &end_ptr, 0);
+ 
+    if (end_ptr == str || *end_ptr != '\0' || errno == ERANGE) {
+        return DCMI_ERR_CODE_INVALID_PARAMETER;
+    }
+    *ptmp_num = num;
+    return DCMI_OK;
+}
+
+/*******************************************************************************
+  函 数 名		:  dcmi_convert_str_to_int
+  功能描述		:  将字符串str转换为int类型index
+  输入参数		:  str : 待转换的字符串
+  输出参数		:  index : 转换后的int类型值
+  返 回 值		:  转换成功，返回DCMI_OK，否则返回对应错误码
+*******************************************************************************/
+int dcmi_convert_str_to_int(const char* str, int *index)
+{
+    int ret = sscanf_s(str, "%d", index);
+    if (ret <= 0) {
+        gplog(LOG_ERR, "Call sscanf_s failed.(ret=%d).", ret);
+        return DCMI_ERR_CODE_SECURE_FUN_FAIL;
+    }
+    return DCMI_OK;
+}
+
+/*******************************************************************************
+  函 数 名		:  dcmi_determine_file_type
+  功能描述		:  确定给定文件的类型是否与指定的文件类型匹配
+  输入参数		:  file : 待检测的文件路径指针
+                  fileType : 指定的文件类型 字符串指针
+                  typeLen  : 文件类型的长度
+  输出参数		:  None
+  返 回 值		:  匹配成功，返回DCMI_OK，否则返回对应错误码
+*******************************************************************************/
+int dcmi_determine_file_type(const char *file, const char *fileType, int typeLen)
+{
+    int ret, i;
+
+    if ((file == NULL) || (fileType == NULL)) {
+        gplog(LOG_ERR, "file or fileType pointer is NULL.");
+        return DCMI_ERR_CODE_INVALID_PARAMETER;
+    }
+
+#ifndef _WIN32
+    char path[PATH_MAX + 1] = {0x00};
+#else
+    char path[MAX_PATH + 1] = {0x00};
+#endif
+    // 文件路径校验
+    ret = dcmi_check_filename(file, path, sizeof(path));
+    if (ret != DCMI_OK) {
+        gplog(LOG_ERR, "file path is illegal.");
+        return DCMI_ERR_CODE_INVALID_PARAMETER;
+    }
+    // 文件格式校验 从后往前遍历文件路径，找到第一个'.'，并比较其后的字符串是否与fileType一致
+    for (i = (int)strlen(path) - 1; i >= 0; i--) {
+        if (path[i] == '.') {
+            ret = strncmp((const char *)&path[i + 1], fileType, typeLen);
+            if (ret != 0) {
+                gplog(LOG_ERR, "file is not %s file.", fileType);
+                return DCMI_ERR_CODE_SECURE_FUN_FAIL;
+            }
+            return DCMI_OK;
+        }
+    }
+
+    gplog(LOG_ERR, "can not find the file.");
+    return DCMI_ERR_CODE_INNER_ERR;
+}
+
+/*******************************************************************************
+  函 数 名		:  dcmi_check_filename
+  功能描述		:  验证文件路径的有效性并转换为规范路径
+  输入参数		:  file : 输入文件路径字符串，可能包含相对路径或绝对路径，如：
+                         "/home/user/../user/dcmi/./file.txt"
+                  path : 存储规范后的文件路径
+                  len  : 输出缓冲区path的长度
+  输出参数		:  path : 存储规范后的文件路径，如：
+                          "/home/user/Documents/file.txt"
+  返 回 值		:  成功提取返回DCMI_OK，失败则返回相应错误码
+*******************************************************************************/
+int dcmi_check_filename(const char *file, char *path, int len)
+{
+#ifndef _WIN32
+    if (len < PATH_MAX) {
+        return DCMI_ERR_CODE_INVALID_PARAMETER;
+    }
+    if ((file == NULL) || (strlen(file) > PATH_MAX) || (realpath(file, path) == NULL)) {
+        return DCMI_ERR_CODE_INVALID_PARAMETER;
+    }
+#else
+    if (len < MAX_PATH) {
+        return DCMI_ERR_CODE_INVALID_PARAMETER;
+    }
+    if ((file == NULL) || (strlen(file) > MAX_PATH) || (PathCanonicalizeA(path, file) == FALSE)) {
+        return DCMI_ERR_CODE_INVALID_PARAMETER;
+    }
+#endif
+    return DCMI_OK;
+}
+
+/*******************************************************************************
+  函 数 名		:  dcmi_get_file_directory
+  功能描述		:  从完整文件路径中提取文件所在的目录路径
+  输入参数		:  file : 输入文件路径字符串，可能包含相对路径或绝对路径
+                  fileDir : 输出缓冲区，存放提取的目录路径
+                  dirLen  : 输出缓冲区fileDir的长度
+  输出参数		:  fileDir : 输出缓冲区，存放提取的目录路径
+  返 回 值		:  执行状态码，成功：0，失败：非0
+*******************************************************************************/
+int dcmi_get_file_directory(const char *file, char *fileDir, int dirLen)
+{
+    int ret, i;
+
+    if ((file == NULL) || (fileDir == NULL)) {
+        gplog(LOG_ERR, "file or fileDir pointer is NULL.");
+        return DCMI_ERR_CODE_INVALID_PARAMETER;
+    }
+
+#ifndef _WIN32
+    char path[PATH_MAX + 1] = {0x00};
+#else
+    char path[MAX_PATH + 1] = {0x00};
+#endif
+    if (dcmi_check_filename(file, path, sizeof(path)) != DCMI_OK) {
+        gplog(LOG_ERR, "file path is illegal.");
+        return DCMI_ERR_CODE_INVALID_PARAMETER;
+    }
+    for (i = (int)strlen(path) - 1; i >= 0; i--) {
+        if (path[i] == '/') {
+            ret = strncpy_s(fileDir, dirLen, (const char *)path, (i + 1));
+            if (ret != 0) {
+                gplog(LOG_ERR, "call strncpy_s failed.%d.", ret);
+                return DCMI_ERR_CODE_SECURE_FUN_FAIL;
+            }
+            return DCMI_OK;
+        }
+    }
+
+    gplog(LOG_ERR, "can not find '/' from file '%s'.", path);
+    return DCMI_ERR_CODE_INNER_ERR;
+}
+
+/*******************************************************************************
+  函 数 名		:  dcmi_get_file_data
+  功能描述		:  从指定路径的文件file中，从offset偏移位置开始，读取readLen长度的数据，
+                  存入fileBuf缓冲区中
+  输入参数		:  file : 输入文件路径字符串，可能包含相对路径或绝对路径
+                  bufLen : 缓冲区的大小
+                  offset : 从文件中读取数据的起始偏移位置
+                  readLen : 要读取的数据长度
+  输出参数		:  fileBuf : 存储读取数据的缓冲区
+  返 回 值		:  读取成功，返回DCMI_OK，否则返回相应错误码
+*******************************************************************************/
+int dcmi_get_file_data(const char *file, unsigned char *fileBuf, unsigned int bufLen, unsigned int offset,
+    unsigned int readLen)
+{
+    unsigned int fileLen;
+    FILE *fp = NULL;
+
+    if ((file == NULL) || (fileBuf == NULL)) {
+        gplog(LOG_ERR, "file or fileBuf pointer is NULL.");
+        return DCMI_ERR_CODE_INVALID_PARAMETER;
+    }
+
+#ifndef _WIN32
+    char path[PATH_MAX + 1] = {0x00};
+#else
+    char path[MAX_PATH + 1] = {0x00};
+#endif
+    if (dcmi_check_filename(file, path, sizeof(path)) != DCMI_OK) {
+        gplog(LOG_ERR, "file path is illegal.");
+        return DCMI_ERR_CODE_INVALID_PARAMETER;
+    }
+
+    if ((fp = fopen((const char *)path, "r")) == NULL) {
+        gplog(LOG_ERR, "open file failed errno is %d.", errno);
+        return DCMI_ERR_CODE_FILE_OPERATE_FAIL;
+    }
+
+    if (fseek(fp, 0, SEEK_END) != 0) {
+        gplog(LOG_ERR, "call fseek failed.\n");
+        (void)fclose(fp);
+        return DCMI_ERR_CODE_FILE_OPERATE_FAIL;
+    }
+
+    fileLen = (unsigned int)ftell(fp);
+    if ((readLen > bufLen) || (readLen > (fileLen - offset))) {
+        gplog(LOG_ERR, "readLen(%u) is bigger than bufLen(%u) or fileLen(%u).\n", readLen, bufLen, (fileLen - offset));
+        (void)fclose(fp);
+        return DCMI_ERR_CODE_FILE_OPERATE_FAIL;
+    }
+
+    if (fseek(fp, offset, SEEK_SET) != 0) {
+        gplog(LOG_ERR, "call fseek failed.\n");
+        (void)fclose(fp);
+        return DCMI_ERR_CODE_FILE_OPERATE_FAIL;
+    }
+
+    if (fread(fileBuf, 1, readLen, fp) <= 0) {
+        gplog(LOG_ERR, "call fread failed.\n");
+        (void)fclose(fp);
+        return DCMI_ERR_CODE_FILE_OPERATE_FAIL;
+    }
+
+    (void)fclose(fp);
+
+    return DCMI_OK;
+}
+
+/*******************************************************************************
+  函 数 名		:  dcmi_remove_file
+  功能描述		:  删除指定路径的文件
+  输入参数		:  filename : 待删除的文件路径
+  输出参数		:  None
+  返 回 值		:  删除成功或函数未执行(非Windows)，返回DCMI_OK；否则返回相应失败码
+*******************************************************************************/
+int dcmi_remove_file(const char *filename)
+{
+#ifndef _WIN32
+    if (remove(filename) != DCMI_OK) {
+        gplog(LOG_ERR, "call remove file %s failed.", filename);
+    }
+#endif
+    return DCMI_OK;
+}
+
+int dcmi_remove_file_nftw(const char *fpath, const struct stat *sb, int typeflag, struct FTW *ftwbuf)
+{
+    (void)sb;
+    (void)typeflag;
+    (void)ftwbuf;
+    return dcmi_remove_file(fpath);
+}
+
+/*******************************************************************************
+  函 数 名		:  dcmi_remove_dir
+  功能描述		:  递归删除指定目录及其所有子目录和文件(适用非Windows)，调用回调函数
+                  dcmi_remove_file_nftw删除每个文件，目录的最大层级深度为2
+  输入参数		:  dirname : 待删除的目录路径
+  输出参数		:  None
+  返 回 值		:  删除成功或函数未执行(Windows)，返回DCMI_OK；否则返回相应失败码
+*******************************************************************************/
+int dcmi_remove_dir(const char *dirname)
+{
+#ifndef _WIN32
+    return nftw(dirname, dcmi_remove_file_nftw, 2, FTW_DEPTH | FTW_PHYS);    // 最大目录层级深度为2
+#endif
+    return DCMI_OK;
+}
+
+/*******************************************************************************
+  函 数 名		:  dcmi_extract_targz_package
+  功能描述		:  解压指定的文件sourceFile到目标路径targetPath
+  输入参数		:  sourceFile : 源文件路径
+                  targetPath : 目标路径
+  输出参数		:  None
+  返 回 值		:  解压成功，返回DCMI_OK，否则返回相应错误码
+*******************************************************************************/
+int dcmi_extract_targz_package(const char *sourceFile, const char *targetPath)
+{
+    int ret;
+    char cmdBuf[DCMI_BUFF_MAX_LEN] = {0x00};
+
+#ifndef _WIN32
+    char path[PATH_MAX + 1] = {0x00};
+#else
+    char path[MAX_PATH + 1] = {0x00};
+#endif
+    if (dcmi_check_filename(sourceFile, path, sizeof(path)) != DCMI_OK) {
+        gplog(LOG_ERR, "file path is illegal.");
+        return DCMI_ERR_CODE_INVALID_PARAMETER;
+    }
+
+    ret = snprintf_s(cmdBuf, DCMI_BUFF_MAX_LEN, DCMI_BUFF_MAX_LEN - 1, "tar -mzxf %s -C %s", path, targetPath);
+    if (ret <= 0) {
+        gplog(LOG_ERR, "call snprintf_s failed.%d.\n", ret);
+        return DCMI_ERR_CODE_SECURE_FUN_FAIL;
+    }
+
+    /* 存放的是指向每一个参数的指针 */
+    char *exec_argv[6] = {"tar", "-mzxf", path, "-C", (char*)targetPath, NULL};
+    ret = safe_exec("/bin/tar", exec_argv);
+    if (ret != 0) {
+        gplog(LOG_ERR, "%s failed.%d.", cmdBuf, ret);
+        return DCMI_ERR_CODE_INNER_ERR;
+    }
+
+    return DCMI_OK;
+}
+
+/*******************************************************************************
+  函 数 名		:  dcmi_convert_file_path
+  功能描述		:  将输入的相对文件路径转换为规范化的绝对路径
+  输入参数		:  file : 原始文件路径（可以是相对路径或绝对路径）
+                  len : path缓冲区的最大长度
+  输出参数		:  path : 存储转换后规范路径的缓冲区
+  返 回 值		:  转换成功返回DCMI_OK，否则返回相应错误码
+*******************************************************************************/
+int dcmi_convert_file_path(const char *file, char *path, int len)
+{
+#ifndef _WIN32
+    if (len < PATH_MAX) {
+        return DCMI_ERR_CODE_INVALID_PARAMETER;
+    }
+    if ((file == NULL) || (strlen(file) > PATH_MAX)) {
+        return DCMI_ERR_CODE_INVALID_PARAMETER;
+    }
+    if ((realpath(file, path) == NULL) && (errno != ENOENT)) {
+        return DCMI_ERR_CODE_INVALID_PARAMETER;
+    }
+
+#else
+    if (len < MAX_PATH) {
+        return DCMI_ERR_CODE_INVALID_PARAMETER;
+    }
+    if ((file == NULL) || (strlen(file) > MAX_PATH)) {
+        return DCMI_ERR_CODE_INVALID_PARAMETER;
+    }
+    if ((PathCanonicalizeA(path, file) == FALSE) && (errno != ENOENT)) {
+        return DCMI_ERR_CODE_INVALID_PARAMETER;
+    }
+
+#endif
+    return DCMI_OK;
+}
+
+int dcmi_write_data_to_file(const char *file, const char *writeBuf, unsigned int bufLen, unsigned int writeLen)
+{
+    FILE *fp = NULL;
+
+    if ((file == NULL) || (writeBuf == NULL)) {
+        gplog(LOG_ERR, "file or writeBuf pointer is NULL.");
+        return DCMI_ERR_CODE_INVALID_PARAMETER;
+    }
+
+#ifndef _WIN32
+    char path[PATH_MAX + 1] = {0x00};
+#else
+    char path[MAX_PATH + 1] = {0x00};
+#endif
+    if (dcmi_convert_file_path(file, path, sizeof(path)) != DCMI_OK) {
+        gplog(LOG_ERR, "file path is illegal errno(%d).", errno);
+        return DCMI_ERR_CODE_INNER_ERR;
+    }
+
+    if (writeLen > bufLen) {
+        gplog(LOG_ERR, "writeLen(%u) is bigger than bufLen(%u).", writeLen, bufLen);
+        return -1;
+    }
+
+    if ((fp = fopen((const char *)path, "w+b")) == NULL) {
+        gplog(LOG_ERR, "open file failed, errno is %d.", errno);
+        return DCMI_ERR_CODE_FILE_OPERATE_FAIL;
+    }
+
+    (void)chmod((const char *)path, S_IRUSR | S_IWUSR);
+
+    if (fseek(fp, 0, SEEK_SET) != 0) {
+        gplog(LOG_ERR, "call fseek failed.");
+        (void)fclose(fp);
+        return DCMI_ERR_CODE_FILE_OPERATE_FAIL;
+    }
+
+    if (fwrite(writeBuf, 1, writeLen, fp) <= 0) {
+        gplog(LOG_ERR, "call fwrite failed.");
+        (void)fclose(fp);
+        return DCMI_ERR_CODE_FILE_OPERATE_FAIL;
+    }
+
+    (void)fclose(fp);
+
     return DCMI_OK;
 }

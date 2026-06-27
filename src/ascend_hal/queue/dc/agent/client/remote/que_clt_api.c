@@ -20,6 +20,7 @@
 #include "queue_interface.h"
 #include "queue_client_comm.h"
 #include "que_clt_api.h"
+#include "que_platform.h"
 static struct que_clt_api *g_que_clt_api;
 
 static inline bool que_is_client_type(unsigned int qid)
@@ -30,16 +31,25 @@ static inline bool que_is_client_type(unsigned int qid)
 drvError_t halQueuePeek(unsigned int devId, unsigned int qid, uint64_t *buf_len, int timeout)
 {
     int ret = DRV_ERROR_QUEUE_INNER_ERROR;
-    
-    /* It is not recommended to adjust the verification order; prioritize verifying whether it is supported, 
+
+    /* It is not recommended to adjust the verification order; prioritize verifying whether it is supported,
         and then verify the validity of the parameters. */
     if (que_unlikely(que_is_client_type(qid) == false)) {
         return DRV_ERROR_NOT_SUPPORT;
     }
-
-    if (que_unlikely((buf_len == NULL) || (devId >= MAX_DEVICE) || (qid >= MAX_SURPORT_QUEUE_NUM))) {
-        QUEUE_LOG_ERR("invalid para. (buflen_is_null=%d; devid=%u; qid=%u)\n",
-            (buf_len == NULL), devId, qid);
+    if (que_unlikely(buf_len == NULL)) {
+        QUEUE_LOG_ERR("buf_len is null.\n");
+        report_arg_null_pointer(__FUNCTION__, "buf_len");
+        return DRV_ERROR_INVALID_VALUE;
+    }
+    if (que_unlikely(devId >= MAX_DEVICE)) {
+        QUEUE_LOG_ERR("invalid para.(devid=%u)\n", devId);
+        report_arg_out_of_range(__FUNCTION__, "device ID", devId, 0, MAX_DEVICE);
+        return DRV_ERROR_INVALID_VALUE;
+    }
+    if (que_unlikely(qid >= MAX_SURPORT_QUEUE_NUM)) {
+        QUEUE_LOG_ERR("invalid para.(qid=%u)\n", qid);
+        report_arg_out_of_range(__FUNCTION__, "queue ID", qid, 0, MAX_SURPORT_QUEUE_NUM);
         return DRV_ERROR_INVALID_VALUE;
     }
 
@@ -54,11 +64,11 @@ drvError_t halQueueEnQueueBuff(unsigned int devId, unsigned int qid, struct buff
 {
     int ret;
 
-	if (que_unlikely(que_is_client_type(qid) == false)) {
+    if (que_unlikely(que_is_client_type(qid) == false)) {
         return DRV_ERROR_NOT_SUPPORT;
     }
 
-    ret = queue_param_check(devId, qid, vector);
+    ret = queue_param_check(devId, qid, vector, __FUNCTION__);
     if (que_unlikely(ret != DRV_ERROR_NONE)) {
         return ret;
     }
@@ -66,7 +76,7 @@ drvError_t halQueueEnQueueBuff(unsigned int devId, unsigned int qid, struct buff
     if (que_likely((g_que_clt_api != NULL) && (g_que_clt_api->api_enque_buf != NULL))) {
         ret = g_que_clt_api->api_enque_buf(devId, qid, vector, timeout);
     } else {
-    	ret = DRV_ERROR_QUEUE_INNER_ERROR;
+        ret = DRV_ERROR_QUEUE_INNER_ERROR;
     }
 
     return ret;
@@ -76,11 +86,11 @@ drvError_t halQueueDeQueueBuff(unsigned int devId, unsigned int qid, struct buff
 {
     int ret;
 
-	if (que_unlikely(que_is_client_type(qid) == false)) {
+    if (que_unlikely(que_is_client_type(qid) == false)) {
         return DRV_ERROR_NOT_SUPPORT;
     }
 
-    ret = queue_param_check(devId, qid, vector);
+    ret = queue_param_check(devId, qid, vector, __FUNCTION__);
     if (que_unlikely(ret != DRV_ERROR_NONE)) {
         return ret;
     }
@@ -140,11 +150,10 @@ static int que_clt_get_con_type(void)
             break;
     }
     return con_type;
-#else /* !CFG_FEATURE_QUE_SUPPORT_UB */
+#else  /* !CFG_FEATURE_QUE_SUPPORT_UB */
     return QUE_CON_PCIE;
 #endif /* CFG_FEATURE_QUE_SUPPORT_UB */
 }
-
 
 static void que_clt_api_init(void)
 {

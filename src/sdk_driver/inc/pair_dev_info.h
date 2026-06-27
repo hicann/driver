@@ -16,16 +16,14 @@
 
 #include <linux/types.h>
 
-#define DEVDRV_PAIR_DEV_EID_LENGTH 16
-struct devdrv_pair_info_eid {
-    unsigned char raw[DEVDRV_PAIR_DEV_EID_LENGTH];
-};
+#include "pair_dev_info_comm.h"
 
 struct devdrv_dev_id_info {
     u16 device_id;
     u16 vendor_id;
     u16 module_vendor_id;
     u16 module_id;
+    u8 reserved[32];
 };
 
 int devdrv_get_d2d_eid(u32 udevid, struct devdrv_pair_info_eid *eid);

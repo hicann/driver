@@ -55,7 +55,8 @@ static struct devmm_dma_prepare_node *devmm_dma_prepare_node_create(u32 devid, u
     struct devmm_dma_prepare_node *node = NULL;
     int ret;
 
-    node = (struct devmm_dma_prepare_node *)devmm_kvzalloc_ex(sizeof(struct devmm_dma_prepare_node),
+    node = (struct devmm_dma_prepare_node *)devmm_kvzalloc_ex(
+        sizeof(struct devmm_dma_prepare_node),
         KA_GFP_KERNEL | __KA_GFP_ACCOUNT); /* Dma_prepare need to be initialized as empty */
     if (node == NULL) {
         devmm_drv_err("Kzalloc node failed. (devid=%d)\n", devid);
@@ -137,7 +138,8 @@ static int devmm_dma_prepare_pool_dynamic_mng(u32 devid, struct devmm_dma_prepar
 
     if ((idle_node_cnt < pool->cfg.idle_down_thres) && (sum_node_cnt < pool->cfg.max_cnt)) {
         add_count = ((pool->cfg.default_cnt - idle_node_cnt) <= (pool->cfg.max_cnt - sum_node_cnt)) ?
-            (pool->cfg.default_cnt - idle_node_cnt) : (pool->cfg.max_cnt - sum_node_cnt);
+                        (pool->cfg.default_cnt - idle_node_cnt) :
+                        (pool->cfg.max_cnt - sum_node_cnt);
 
         for (i = 0; i < add_count; ++i) {
             ret = devmm_dma_prepare_node_add(devid, pool);
@@ -196,8 +198,7 @@ void devmm_dma_prepare_pool_init(u32 devid)
         {.dma_node_num = 128, .idle_down_thres = 200, .idle_up_thres = 400, .max_cnt = 600, .default_cnt = 300},
         {.dma_node_num = 512, .idle_down_thres = 100, .idle_up_thres = 200, .max_cnt = 300, .default_cnt = 150},
         /* Runtime ensure async_copy_size less than 64M of dma_desc_create, so the max dma_node_num set 64M/4K. */
-        {.dma_node_num = 16384, .idle_down_thres = 8, .idle_up_thres = 16, .max_cnt = 24, .default_cnt = 12}
-    };
+        {.dma_node_num = 16384, .idle_down_thres = 8, .idle_up_thres = 16, .max_cnt = 24, .default_cnt = 12}};
     ka_task_struct_t *task = NULL;
     u32 i;
 
@@ -213,7 +214,8 @@ void devmm_dma_prepare_pool_init(u32 devid)
     }
 
     ka_task_sema_init(&g_loop_sema[devid], 0);
-    task = ka_task_kthread_create(devmm_dma_prepare_pool_loop_task, (void *)(uintptr_t)devid, "devmm_pool_loop_task_%u", devid);
+    task = ka_task_kthread_create(
+        devmm_dma_prepare_pool_loop_task, (void *)(uintptr_t)devid, "devmm_pool_loop_task_%u", devid);
     if (KA_IS_ERR_OR_NULL(task)) {
         devmm_drv_err("ka_task_kthread_create failed. (devid=%u)\n", devid);
     } else {
@@ -261,7 +263,8 @@ void devmm_dma_prepare_pool_uninit(u32 devid)
     }
 
     if (mseconds >= DEVMM_DMA_PREPARE_POOL_UNINIT_WAIT_MSECONDS) {
-        devmm_drv_err("devmm_dma_prepare_pool_uninit failed. (devid=%u; is_thread_inited=%d)\n", devid, g_thread_inited[devid]);
+        devmm_drv_err(
+            "devmm_dma_prepare_pool_uninit failed. (devid=%u; is_thread_inited=%d)\n", devid, g_thread_inited[devid]);
     }
 
     for (i = 0; i < DEVMM_DMA_PREPARE_POOL_LIST_NUM; ++i) {
@@ -310,8 +313,9 @@ void *devmm_dma_prepare_get_from_pool(u32 devid, u32 dma_node_num, struct devdrv
     }
 
     *dma_prepare = &node->dma_prepare;
-    devmm_drv_debug("devmm_dma_prepare_pool_get. (devid=%u; dma_node_num=%u; real_dma_node_num=%u)\n",
-        devid, pool->cfg.dma_node_num, dma_node_num);
+    devmm_drv_debug(
+        "devmm_dma_prepare_pool_get. (devid=%u; dma_node_num=%u; real_dma_node_num=%u)\n", devid,
+        pool->cfg.dma_node_num, dma_node_num);
     return (void *)node;
 }
 

@@ -99,6 +99,8 @@
 #define DMS_SUBCMD_HBM_MEM_INFO           35
 #define DMS_SUBCMD_HBM_GET_VA             36
 #define DMS_SUBCMD_GET_FAULT_SYSCNT       37
+#define DMS_SUBCMD_DDR_FREQUENCY_V2       38
+#define DMS_SUBCMD_DEV_MEM_INFO           39
 
 /* subcmd: The main cmd is DMS_MAIN_CMD_LPM */
 #define DMS_SUBCMD_GET_TEMPERATURE 0
@@ -119,6 +121,7 @@
 #define DMS_SUBCMD_GET_SOC_THOLD 15
 #define DMS_SUBCMD_GET_SOC_MIN_THOLD 16
 #define DMS_SUBCMD_SET_TEMP_THOLD 17
+#define DMS_SUBCMD_GET_FREQUENCY_V2 18
 
 /* subcmd: The main cmd is DMS_MAIN_CMD_PRODUCT */
 #define DMS_SUBCMD_GET_VRD_INFO 2
@@ -157,6 +160,7 @@
 #define DMS_SUBCMD_GET_PCIE_LOG_DUMP_INFO 2
 #define DMS_SUBCMD_GET_BBOX_DATA          3
 #define DMS_SUBCMD_SET_BBOX_DATA          4
+#define DMS_SUBCMD_GET_BBOX_FEATURE       5
 
 /* subcmd: The main cmd is DMS_MAIN_CMD_EMMC  */
 #define DMS_SUBCMD_GET_EMMC_INFO 0
@@ -209,6 +213,9 @@
 /* subcmd: The main cmd is DMS_MAIN_CMD_P2P_COM */
 #define DMS_SUBCMD_P2P_COM_STATUS 0
 #define DMS_SUBCMD_P2P_COM_FORCE_LINKDOWN 1
+#define DMS_SUBCMD_P2P_PERMIT_SUSPEND 2
+#define DMS_SUBCMD_P2P_PERMIT_LOWPOWER 3
+#define DMS_SUBCMD_P2P_PERMIT_SAVEPOWER 4
 
 
 /* subcmd: The main cmd is DMS_MAIN_CMD_FLASH */
@@ -321,6 +328,30 @@ enum urd_devdrv_p2p_attr_op {
     DEVDRV_P2P_MAX
 };
 
+struct ubmem_dev_repair_msg_in {
+    unsigned int devid;
+    unsigned int udevid;
+    int cp1_tgid;
+};
+
+#define UBMEM_DEV_REPAIR_SUCCESS         0U
+#define UBMEM_DEV_REPAIR_NO_FAULT        1U
+#define UBMEM_DEV_REPAIR_TASK_NO_USED    2U
+struct ubmem_dev_repair_msg_out {
+    unsigned int result;
+};
+
+struct ubmem_map_route_check_msg_in {
+    unsigned int dst_devid;
+    unsigned int src_sdid;
+    unsigned int src_mem_id;
+    unsigned int map_route;
+};
+
+struct ubmem_map_route_check_msg_out {
+    int is_exist;
+};
+
 struct urd_probe_dev_info {
     unsigned int num_dev;
     unsigned int devids[URD_MAX_UDEV_NUM];
@@ -338,7 +369,7 @@ struct urd_p2p_attr {
 struct urd_imu_dmp_info {
     unsigned int dev_id;
     unsigned char len;
-    unsigned char data[32]; /* 32:dmp data length of the IMU */
+    unsigned char data[220]; /* 220:dmp data length of the IMU */
 };
 
 #define DMS_CMDLINE_SIZE 4096
@@ -396,6 +427,11 @@ struct udis_set_ioctl_in {
     unsigned long long last_update_time;
     unsigned int data_len;
     const void *data;
+};
+
+struct urd_dev_mem_type {
+    unsigned int dev_id;
+    unsigned int type;
 };
 
 #endif

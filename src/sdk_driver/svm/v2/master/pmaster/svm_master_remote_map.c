@@ -37,13 +37,13 @@
 #define DEVMM_SYS_RAM "SystemRAM"
 #define DEVMM_SYS_STR "System"
 #define DEVMM_SHM_FREE_SIZE_PRE_MSG (0x280000000) /* 10G */
-#define DEVMM_GET_2M_PAGE_NUM 512u      /* the normal page_num of 2M */
+#define DEVMM_GET_2M_PAGE_NUM 512u                /* the normal page_num of 2M */
 
 struct devmm_palist_info {
-    u64 *pa_blk;    /* inpara, outpara */
-    u32 blk_num;    /* inpara */
-    u32 got_num;    /* outpara */
-    u32 page_size;  /* outpara */
+    u64 *pa_blk;   /* inpara, outpara */
+    u32 blk_num;   /* inpara */
+    u32 got_num;   /* outpara */
+    u32 page_size; /* outpara */
 };
 
 struct devmm_sys_mem_info {
@@ -61,10 +61,7 @@ struct devmm_sys_mem_info {
 
 static struct devmm_sys_mem_info g_mem_info;
 
-static inline bool devmm_is_local_dev_mem_type(u32 map_type)
-{
-    return (map_type == DEV_MEM_MAP_HOST);
-}
+static inline bool devmm_is_local_dev_mem_type(u32 map_type) { return (map_type == DEV_MEM_MAP_HOST); }
 
 static bool devmm_is_mem_map_by_pcie_th(u32 map_type)
 {
@@ -105,14 +102,16 @@ void devmm_get_sys_mem(void)
     }
 
     while (devmm_read_line(fp, &offset, mem_buf, DEVMM_SYS_MEM_MAX_LEN) != NULL) {
-        ret = (u32)sscanf_s(mem_buf, "%llx-%llx : %s %s", &addr_start, &addr_end, mem_str, DEVMM_SYS_MEM_STR_LEN,
+        ret = (u32)sscanf_s(
+            mem_buf, "%llx-%llx : %s %s", &addr_start, &addr_end, mem_str, DEVMM_SYS_MEM_STR_LEN,
             (mem_str + ka_base_strlen(DEVMM_SYS_STR)), DEVMM_SYS_MEM_STR_LEN);
         if ((ret != DEVMM_SYS_MEM_MEMBER_NUM) || (ka_base_strcmp(DEVMM_SYS_RAM, mem_str) != 0)) {
             continue;
         }
 
         if (temp_addr_end == 0) {
-            mem_info->mem_addr[mem_info->config_index] = ka_base_round_down(addr_start, KA_HPAGE_SIZE);;
+            mem_info->mem_addr[mem_info->config_index] = ka_base_round_down(addr_start, KA_HPAGE_SIZE);
+            ;
             temp_addr_end = mem_info->mem_addr[mem_info->config_index] + CONFIG_TXATU_MAX_LEN;
         }
         while (addr_end > temp_addr_end) {
@@ -154,13 +153,15 @@ static void devmm_del_txatu_by_dev_id(struct devmm_txatu_info *txatu_info, u32 t
         }
         ret = devdrv_device_txatu_del((int)hostpid, devid, txatu_info[i].addr);
         if (ret != 0) {
-            devmm_drv_warn("Txatu delete failed. (devid=%u; addr=0x%llx; hostpid=%d; txatu_flag=0x%llx; ret=%d)\n",
-                devid, txatu_info[i].addr, hostpid, txatu_info[i].txatu_flag, ret);
+            devmm_drv_warn(
+                "Txatu delete failed. (devid=%u; addr=0x%llx; hostpid=%d; txatu_flag=0x%llx; ret=%d)\n", devid,
+                txatu_info[i].addr, hostpid, txatu_info[i].txatu_flag, ret);
             continue;
         }
         txatu_info[i].txatu_flag &= ~(1UL << devid);
-        devmm_drv_info("Delete txatu success. (devid=%u; addr=0x%llx; hostpid=%d; txatu_flag=0x%llx)\n",
-            devid, txatu_info[i].addr, hostpid, txatu_info[i].txatu_flag);
+        devmm_drv_info(
+            "Delete txatu success. (devid=%u; addr=0x%llx; hostpid=%d; txatu_flag=0x%llx)\n", devid, txatu_info[i].addr,
+            hostpid, txatu_info[i].txatu_flag);
     }
 }
 
@@ -189,8 +190,7 @@ void devmm_delete_shm_pro_node(struct devmm_shm_pro_node *shm_pro_node)
     return;
 }
 
-static struct devmm_shm_node *devmm_get_shm_node(struct devmm_shm_head *shm_head,
-    u64 src_va, u32 devid, u32 vfid)
+static struct devmm_shm_node *devmm_get_shm_node(struct devmm_shm_head *shm_head, u64 src_va, u32 devid, u32 vfid)
 {
     struct devmm_shm_node *node = NULL;
     ka_list_head_t *head = NULL;
@@ -199,11 +199,13 @@ static struct devmm_shm_node *devmm_get_shm_node(struct devmm_shm_head *shm_head
 
     head = &shm_head->list;
 
-    ka_list_for_each_safe(pos, n, head) {
+    ka_list_for_each_safe(pos, n, head)
+    {
         node = ka_list_entry(pos, struct devmm_shm_node, list);
         if ((node->dev_id == devid) && (node->vfid == vfid) && (node->src_va == src_va)) {
-            devmm_drv_debug("Get shm success. (node_src_va=0x%llx; dst_va=0x%llx; size=%llu)\n",
-                node->src_va, node->dst_va, node->size);
+            devmm_drv_debug(
+                "Get shm success. (node_src_va=0x%llx; dst_va=0x%llx; size=%llu)\n", node->src_va, node->dst_va,
+                node->size);
             return node;
         }
     }
@@ -211,8 +213,8 @@ static struct devmm_shm_node *devmm_get_shm_node(struct devmm_shm_head *shm_head
     return NULL;
 }
 
-struct devmm_shm_node *devmm_get_shm_node_by_dva(struct devmm_shm_head *shm_head,
-    u64 dst_va, u64 size, u32 devid, u32 vfid)
+struct devmm_shm_node *devmm_get_shm_node_by_dva(
+    struct devmm_shm_head *shm_head, u64 dst_va, u64 size, u32 devid, u32 vfid)
 {
     struct devmm_shm_node *node = NULL;
     ka_list_head_t *head = NULL;
@@ -221,12 +223,14 @@ struct devmm_shm_node *devmm_get_shm_node_by_dva(struct devmm_shm_head *shm_head
 
     head = &shm_head->list;
 
-    ka_list_for_each_safe(pos, n, head) {
+    ka_list_for_each_safe(pos, n, head)
+    {
         node = ka_list_entry(pos, struct devmm_shm_node, list);
-        if ((node->dev_id == devid) && (node->vfid == vfid)  && (dst_va >= node->dst_va) &&
-            (size <= node->size) && ((dst_va + size) <= (node->dst_va + node->size))) {
-            devmm_drv_debug("Get shm success. (node_src_va=0x%llx; device_va=0x%llx; size=%llu)\n",
-                node->src_va, node->dst_va, node->size);
+        if ((node->dev_id == devid) && (node->vfid == vfid) && (dst_va >= node->dst_va) && (size <= node->size) &&
+            ((dst_va + size) <= (node->dst_va + node->size))) {
+            devmm_drv_debug(
+                "Get shm success. (node_src_va=0x%llx; device_va=0x%llx; size=%llu)\n", node->src_va, node->dst_va,
+                node->size);
             return node;
         }
     }
@@ -261,14 +265,23 @@ static int devmm_shm_query_pagesize(struct devmm_svm_process *svm_proc, u64 va, 
     return 0;
 }
 
-static int devmm_shm_try_query_hpagesize(struct devmm_svm_process *svm_proc,
-    struct devmm_shm_node *node, u64 va, u64 dst_va, u32 *page_size)
+static int devmm_shm_try_query_hpagesize(
+    struct devmm_svm_process *svm_proc, struct devmm_shm_node *node, u64 va, u64 dst_va, u32 *page_size)
 {
     u64 queried_num = (va - node->src_va) / KA_MM_PAGE_SIZE;
     int cycle_num = devmm_svm->device_hpage_size / KA_MM_PAGE_SIZE;
     u64 total_num = node->page_num;
     u64 pre_pa = 0;
     u64 pa;
+    u32 host_flag;
+    int ret;
+
+    ret = devmm_get_host_phy_mach_flag(node->dev_id, &host_flag);
+    if (ret != 0) {
+#ifndef EMU_ST
+        return ret;
+#endif
+    }
 
     /* if host_va is not aligned by KA_HPAGE_SIZE, return KA_MM_PAGE_SIZE */
     if ((node->src_va & (KA_HPAGE_SIZE - 1)) != 0) {
@@ -288,14 +301,16 @@ static int devmm_shm_try_query_hpagesize(struct devmm_svm_process *svm_proc,
         ((dst_va == 0) || ((dst_va & (devmm_svm->device_hpage_size - 1)) == 0))) {
         int i;
         for (i = 0; (i < cycle_num) && (queried_num + i < total_num); i++) {
-            if (!node->src_pa_is_ram) {
+            if (devmm_is_hccs_vm_scene(node->dev_id, host_flag)) {
+                pa = (u64)node->dma_info[queried_num + i].dma_addr;
+            } else if (!node->src_pa_is_ram) {
                 pa = node->pa_list[queried_num + i];
             } else {
                 pa = (u64)ka_mm_page_to_phys(node->pages[queried_num + i]);
             }
             if ((i == 0) && ((pa & (devmm_svm->device_hpage_size - 1)) != 0)) {
                 break;
-            } 
+            }
             if ((i != 0) && (pre_pa + KA_MM_PAGE_SIZE != pa)) {
                 break;
             }
@@ -308,8 +323,9 @@ static int devmm_shm_try_query_hpagesize(struct devmm_svm_process *svm_proc,
     return 0;
 }
 
-static int devmm_fill_pa_in_shm_node(u64 perpared_id, u64 queried_id, u32 page_size,
-    struct devmm_shm_node *node, struct devmm_chan_remote_map *send_info)
+static int devmm_fill_pa_in_shm_node(
+    u64 perpared_id, u64 queried_id, u32 page_size, struct devmm_shm_node *node,
+    struct devmm_chan_remote_map *send_info)
 {
     if (devmm_is_mem_map_by_pcie_th(node->map_type)) {
         int ret;
@@ -319,11 +335,16 @@ static int devmm_fill_pa_in_shm_node(u64 perpared_id, u64 queried_id, u32 page_s
             return -ENODEV;
         }
         if (!node->src_pa_is_ram) {
-            send_info->src_pa[perpared_id] = devdrv_dma_map_resource(dev, 
-                node->pa_list[queried_id], page_size, KA_DMA_BIDIRECTIONAL, 0);
+#ifndef CFG_BUILD_DEBUG
+            send_info->src_pa[perpared_id] =
+                devdrv_dma_map_resource(dev, node->pa_list[queried_id], page_size, KA_DMA_BIDIRECTIONAL, 0);
+#else
+            send_info->src_pa[perpared_id] = hal_kernel_devdrv_dma_map_page(
+                dev, ka_mm_pfn_to_page(KA_MM_PHYS_PFN(node->pa_list[queried_id])), 0, page_size, KA_DMA_BIDIRECTIONAL);
+#endif
         } else {
-            send_info->src_pa[perpared_id] = hal_kernel_devdrv_dma_map_page(dev, node->pages[queried_id], 0,
-                page_size, KA_DMA_BIDIRECTIONAL);
+            send_info->src_pa[perpared_id] =
+                hal_kernel_devdrv_dma_map_page(dev, node->pages[queried_id], 0, page_size, KA_DMA_BIDIRECTIONAL);
         }
         ret = ka_mm_dma_mapping_error(dev, send_info->src_pa[perpared_id]);
         devmm_device_put_by_devid(node->dev_id);
@@ -334,8 +355,9 @@ static int devmm_fill_pa_in_shm_node(u64 perpared_id, u64 queried_id, u32 page_s
         /* Store dma_info and release dma when unregister  */
         node->dma_info[node->dma_cnt].dma_addr = send_info->src_pa[perpared_id];
         node->dma_info[node->dma_cnt].dma_size = page_size;
-        devmm_drv_debug("Dma addr. (dst_va=0x%llx, devid=%d; num=%u; page_size=%d)\n",
-            send_info->dst_va, node->dev_id, node->dma_cnt, page_size);
+        devmm_drv_debug(
+            "Dma addr. (dst_va=0x%llx, devid=%d; num=%u; page_size=%d)\n", send_info->dst_va, node->dev_id,
+            node->dma_cnt, page_size);
 
         node->dma_cnt++;
     } else {
@@ -345,8 +367,42 @@ static int devmm_fill_pa_in_shm_node(u64 perpared_id, u64 queried_id, u32 page_s
     return 0;
 }
 
-static int devmm_shm_send_info_to_dev(struct devmm_svm_process *svm_proc,
-    struct devmm_chan_remote_map *send_info, struct devmm_shm_node *node)
+#ifndef EMU_ST
+static int devmm_hccs_vm_fill_pa_in_shm_node(struct devmm_shm_node *node)
+{
+    ka_device_t *dev = NULL;
+    ka_dma_addr_t dma_addr;
+    int ret;
+    u64 i;
+
+    dev = devmm_device_get_by_devid(node->dev_id);
+    if (dev == NULL) {
+        devmm_drv_err("Device get by devid failed. (dev_id=%u)\n", node->dev_id);
+        return -ENODEV;
+    }
+
+    for (i = 0; i < node->size / KA_MM_PAGE_SIZE; ++i) {
+        dma_addr = node->src_pa_is_ram ?
+                       hal_kernel_devdrv_dma_map_page(dev, node->pages[i], 0, KA_MM_PAGE_SIZE, KA_DMA_BIDIRECTIONAL) :
+                       devdrv_dma_map_resource(dev, node->pa_list[i], KA_MM_PAGE_SIZE, KA_DMA_BIDIRECTIONAL, 0);
+
+        ret = ka_mm_dma_mapping_error(dev, dma_addr);
+        devmm_device_put_by_devid(node->dev_id);
+        if (ret != 0) {
+            devmm_drv_err("Dma_mapping_error. (ret=%d)\n", ret);
+            return ret;
+        }
+
+        node->dma_info[node->dma_cnt].dma_addr = dma_addr;
+        node->dma_info[node->dma_cnt].dma_size = KA_MM_PAGE_SIZE;
+        node->dma_cnt++;
+    }
+    return 0;
+}
+#endif
+
+static int devmm_shm_send_info_to_dev(
+    struct devmm_svm_process *svm_proc, struct devmm_chan_remote_map *send_info, struct devmm_shm_node *node)
 {
     /* pre_page_size means the page_size of send_info->host_pa[] */
     u64 host_va, send_max_len, perpared_num, queried_num, queried_size, sent_size;
@@ -364,15 +420,24 @@ static int devmm_shm_send_info_to_dev(struct devmm_svm_process *svm_proc,
         return ret;
     }
 
+#ifndef EMU_ST
+    if (devmm_is_hccs_vm_scene(node->dev_id, host_flag)) {
+        ret = devmm_hccs_vm_fill_pa_in_shm_node(node);
+        if (ret != 0) {
+            return ret;
+        }
+    }
+#endif
+
     /* The address may be mixed(normal_page and huge_page), the address sent each time cannot be mixed */
     for (perpared_num = 0, queried_num = 0, queried_size = 0, sent_size = 0; sent_size < total_size;) {
         host_va = start_va + queried_size;
-        if (devmm_is_hccs_vm_scene(node->dev_id, host_flag) == false) {
-            ret = devmm_shm_try_query_hpagesize(svm_proc, node, host_va, node->dst_va + sent_size, &page_size);
-            if (ret != 0) {
-                devmm_drv_err("Get page failed. (devid=%u; host_va=0x%llx)\n", node->dev_id, host_va);
-                return ret;
-            }
+        ret = devmm_shm_try_query_hpagesize(svm_proc, node, host_va, node->dst_va + sent_size, &page_size);
+        if (ret != 0) {
+#ifndef EMU_ST
+            devmm_drv_err("Get page failed. (devid=%u; host_va=0x%llx)\n", node->dev_id, host_va);
+            return ret;
+#endif
         }
 
         if ((remained_num < pagenum_pre_dev_hpage) || (pagenum_pre_dev_hpage == 0)) {
@@ -380,11 +445,18 @@ static int devmm_shm_send_info_to_dev(struct devmm_svm_process *svm_proc,
         }
 
         if (page_size == pre_page_size || pre_page_size == 0) {
-            ret = devmm_fill_pa_in_shm_node(perpared_num, queried_num, page_size, node, send_info);
-            if (ret != 0) {
-                devmm_drv_err("Get pa failed. (perpared_num=%llu; queried_num=%llu; page_size=%u)\n",
-                    perpared_num, queried_num, page_size);
-                return ret;
+            if (devmm_is_hccs_vm_scene(node->dev_id, host_flag)) {
+                send_info->src_pa[perpared_num] = (u64)node->dma_info[queried_num].dma_addr;
+            } else {
+                ret = devmm_fill_pa_in_shm_node(perpared_num, queried_num, page_size, node, send_info);
+                if (ret != 0) {
+#ifndef EMU_ST
+                    devmm_drv_err(
+                        "Get pa failed. (perpared_num=%llu; queried_num=%llu; page_size=%u)\n", perpared_num,
+                        queried_num, page_size);
+                    return ret;
+#endif
+                }
             }
             queried_num += page_size / KA_MM_PAGE_SIZE;
             remained_num -= page_size / KA_MM_PAGE_SIZE;
@@ -392,8 +464,9 @@ static int devmm_shm_send_info_to_dev(struct devmm_svm_process *svm_proc,
             pre_page_size = page_size;
             perpared_num++;
         }
-        ret = ((page_size != pre_page_size) ||
-               (perpared_num == DEVMM_ACCESS_H2D_PAGE_NUM) || (queried_size == total_size));
+        ret =
+            ((page_size != pre_page_size) || (perpared_num == DEVMM_ACCESS_H2D_PAGE_NUM) ||
+             (queried_size == total_size));
         if (ret != 0) {
             send_info->page_size = pre_page_size;
             send_info->head.dev_id = (u16)node->dev_id;
@@ -404,8 +477,8 @@ static int devmm_shm_send_info_to_dev(struct devmm_svm_process *svm_proc,
                            (u64)sizeof(unsigned long long) * (u64)(send_info->head.extend_num);
             ret = devmm_chan_msg_send(send_info, (u32)send_max_len, (u32)sizeof(struct devmm_chan_remote_map));
             if (ret != 0) {
-                devmm_drv_err("Send message failed. (devid=%d; send_va=0x%llx; ret=%d)\n",
-                    node->dev_id, send_info->dst_va, ret);
+                devmm_drv_err(
+                    "Send message failed. (devid=%d; send_va=0x%llx; ret=%d)\n", node->dev_id, send_info->dst_va, ret);
                 return ret;
             }
 
@@ -414,9 +487,11 @@ static int devmm_shm_send_info_to_dev(struct devmm_svm_process *svm_proc,
             sent_size += perpared_num * pre_page_size;
             pre_page_size = 0;
             perpared_num = 0;
-            devmm_drv_debug("Send_info success. (devid=%d; host_va=0x%llx; send_va=0x%llx; dst_va=0x%llx; payload=%u; "
-                "map_type=%u; page_size=%u; sent_size=%llu)\n", node->dev_id, host_va, send_info->dst_va, node->dst_va,
-                send_info->head.extend_num, node->map_type, send_info->page_size, sent_size);
+            devmm_drv_debug(
+                "Send_info success. (devid=%d; host_va=0x%llx; send_va=0x%llx; dst_va=0x%llx; payload=%u; "
+                "map_type=%u; page_size=%u; sent_size=%llu)\n",
+                node->dev_id, host_va, send_info->dst_va, node->dst_va, send_info->head.extend_num, node->map_type,
+                send_info->page_size, sent_size);
         }
     }
 
@@ -436,11 +511,12 @@ int devmm_shm_config_txatu(struct devmm_svm_process *svm_proc, u32 devid)
 
         for (i = 0; i <= g_mem_info.config_index; i++) {
             int ret;
-            ret = devdrv_device_txatu_config(svm_proc->process_id.hostpid, devid, g_mem_info.mem_addr[i],
-                                             g_mem_info.memsz[i]);
+            ret = devdrv_device_txatu_config(
+                svm_proc->process_id.hostpid, devid, g_mem_info.mem_addr[i], g_mem_info.memsz[i]);
             if (ret != 0) {
 #ifndef EMU_ST
-                devmm_drv_err_if((ret != -EOPNOTSUPP), "Config failed. (start_addr=0x%llx; memsize=%llu; devid=%d; ret=%d)\n",
+                devmm_drv_err_if(
+                    (ret != -EOPNOTSUPP), "Config failed. (start_addr=0x%llx; memsize=%llu; devid=%d; ret=%d)\n",
                     g_mem_info.mem_addr[i], g_mem_info.memsz[i], devid, ret);
 #endif
                 return ret;
@@ -448,17 +524,17 @@ int devmm_shm_config_txatu(struct devmm_svm_process *svm_proc, u32 devid)
             shm_pro_node->txatu_info[i].addr = g_mem_info.mem_addr[i];
             shm_pro_node->txatu_info[i].txatu_flag |= (1UL << devid);
 
-            devmm_drv_info("Config txatu success. (devid=%u; addr[%u]=0x%llx; memsz[%u]=%llu; txatu_flag=0x%llx)\n",
-                devid, i, g_mem_info.mem_addr[i], i,
-                g_mem_info.memsz[i], shm_pro_node->txatu_info[i].txatu_flag);
+            devmm_drv_info(
+                "Config txatu success. (devid=%u; addr[%u]=0x%llx; memsz[%u]=%llu; txatu_flag=0x%llx)\n", devid, i,
+                g_mem_info.mem_addr[i], i, g_mem_info.memsz[i], shm_pro_node->txatu_info[i].txatu_flag);
         }
     }
 
     return 0;
 }
 
-static bool devmm_judge_shm_node_overlap(struct devmm_shm_head *shm_head, struct devmm_mem_remote_map_para *map_para,
-    struct devmm_devid *devids)
+static bool devmm_judge_shm_node_overlap(
+    struct devmm_shm_head *shm_head, struct devmm_mem_remote_map_para *map_para, struct devmm_devid *devids)
 {
     struct devmm_shm_node *node = NULL;
     ka_list_head_t *head = NULL;
@@ -467,13 +543,14 @@ static bool devmm_judge_shm_node_overlap(struct devmm_shm_head *shm_head, struct
 
     head = &shm_head->list;
 
-    ka_list_for_each_safe(pos, n, head) {
+    ka_list_for_each_safe(pos, n, head)
+    {
         node = ka_list_entry(pos, struct devmm_shm_node, list);
         if ((node->dev_id == devids->devid) && (node->vfid == devids->vfid) &&
-            (map_para->src_va < node->src_va + node->size) &&
-            (node->src_va < map_para->src_va + map_para->size)) {
-            devmm_drv_debug("Get shm success. (node_src_va=0x%llx; device_va=0x%llx; size=%llu)\n",
-                node->src_va, node->dst_va, node->size);
+            (map_para->src_va < node->src_va + node->size) && (node->src_va < map_para->src_va + map_para->size)) {
+            devmm_drv_debug(
+                "Get shm success. (node_src_va=0x%llx; device_va=0x%llx; size=%llu)\n", node->src_va, node->dst_va,
+                node->size);
             return true;
         }
     }
@@ -491,10 +568,7 @@ struct devmm_shm_pro_node *devmm_get_shm_pro_node(struct devmm_svm_process *svm_
     return svm_proc->shm_pro_node[map_type];
 }
 
-struct devmm_shm_process_head *devmm_get_shm_pro_head(u32 map_type)
-{
-    return &devmm_svm->shm_pro_head[map_type];
-}
+struct devmm_shm_process_head *devmm_get_shm_pro_head(u32 map_type) { return &devmm_svm->shm_pro_head[map_type]; }
 
 static void devmm_remote_unmap_and_delete_node_list(struct devmm_svm_process *svm_proc, ka_list_head_t *head)
 {
@@ -504,7 +578,8 @@ static void devmm_remote_unmap_and_delete_node_list(struct devmm_svm_process *sv
     u32 stamp;
 
     stamp = (u32)ka_jiffies;
-    ka_list_for_each_safe(pos, n, head) {
+    ka_list_for_each_safe(pos, n, head)
+    {
         node = ka_list_entry(pos, struct devmm_shm_node, list);
         if (node->ref == 0) {
             devmm_remote_unmap_and_delete_node(svm_proc, node);
@@ -547,8 +622,7 @@ void devmm_destory_shm_pro_node(struct devmm_svm_process *svm_proc)
         if (ka_list_empty_careful(head) == 0) {
             devmm_shm_pro_node_add_to_head(shm_pro_node, i);
         } else {
-            devmm_del_txatu_by_proc(&shm_pro_node->txatu_info[0], DEVMM_MAX_TXATU,
-                (u32)svm_proc->process_id.hostpid);
+            devmm_del_txatu_by_proc(&shm_pro_node->txatu_info[0], DEVMM_MAX_TXATU, (u32)svm_proc->process_id.hostpid);
             devmm_kfree_ex(svm_proc->shm_pro_node[i]);
         }
         svm_proc->shm_pro_node[i] = NULL;
@@ -568,7 +642,8 @@ static void devmm_uninit_shm_node_by_devid(struct devmm_shm_pro_node *shm_pro_no
     u32 stamp = (u32)ka_jiffies;
 
     head = &shm_pro_node->shm_head.list;
-    ka_list_for_each_safe(pos, n, head) {
+    ka_list_for_each_safe(pos, n, head)
+    {
         node = ka_list_entry(pos, struct devmm_shm_node, list);
         if (node->dev_id == dev_id) {
             devmm_remote_unmap_and_delete_node(NULL, node);
@@ -594,7 +669,8 @@ static void devmm_uninit_dev_svm_shm(u32 dev_id, u32 map_type)
 
     ka_task_mutex_lock(&shm_process_head->node_lock);
     head = &shm_process_head->head;
-    ka_list_for_each_safe(pos, n, head) {
+    ka_list_for_each_safe(pos, n, head)
+    {
         shm_pro_node = ka_list_entry(pos, struct devmm_shm_pro_node, list);
         devmm_uninit_shm_node_by_devid(shm_pro_node, dev_id);
         devmm_delete_shm_pro_node(shm_pro_node);
@@ -631,8 +707,8 @@ static void devmm_clear_remote_map_status(u32 *bitmap, u64 page_bitmap_num, bool
     }
 }
 
-static void devmm_clear_svm_remote_map_status(struct devmm_svm_process *svm_proc,
-    u64 va, u64 page_bitmap_num, bool is_locked_host)
+static void devmm_clear_svm_remote_map_status(
+    struct devmm_svm_process *svm_proc, u64 va, u64 page_bitmap_num, bool is_locked_host)
 {
     struct devmm_svm_heap *heap = NULL;
     u32 *bitmap = NULL;
@@ -651,11 +727,8 @@ static void devmm_clear_svm_remote_map_status(struct devmm_svm_process *svm_proc
 }
 
 static int devmm_check_and_set_remote_map_state(
-    struct devmm_svm_process *svm_proc,
-    struct devmm_memory_attributes *attr,
-    struct devmm_mem_remote_map_para *map_para,
-    struct devmm_devid *devids,
-    u64 page_bitmap_num)
+    struct devmm_svm_process *svm_proc, struct devmm_memory_attributes *attr,
+    struct devmm_mem_remote_map_para *map_para, struct devmm_devid *devids, u64 page_bitmap_num)
 {
     struct devmm_svm_heap *heap = NULL;
     u32 stamp = (u32)ka_jiffies;
@@ -686,8 +759,9 @@ static int devmm_check_and_set_remote_map_state(
     }
 
     if ((va & (u64)(heap->chunk_page_size - 1)) != 0) {
-        devmm_drv_err("Va should be aligned by chunk_page_size. (src_va=0x%llx; chunk_page_size=%u)\n",
-            va, heap->chunk_page_size);
+        devmm_drv_err(
+            "Va should be aligned by chunk_page_size. (src_va=0x%llx; chunk_page_size=%u)\n", va,
+            heap->chunk_page_size);
         return -EINVAL;
     }
 
@@ -696,15 +770,20 @@ static int devmm_check_and_set_remote_map_state(
         devmm_drv_err("Get bitmap error. (va=0x%llx)\n", va);
         return -EINVAL;
     }
+
+    if (devmm_page_bitmap_check_and_set_flag(bitmap, DEVMM_PAGE_REMOTE_MAPPED_FIRST_MASK) != 0) {
+        devmm_drv_err("Va is already mapped by remote. (va=0x%llx)\n", va);
+        return -EINVAL;
+    }
+
     for (i = 0; i < page_bitmap_num; i++) {
         if (devmm_page_bitmap_is_advise_readonly(bitmap + i)) {
-            devmm_drv_err("Readonly mem, not allowed remote map. (va=0x%llx; bitmap=0x%x; page_idx=%llu)\n",
-                va, *bitmap, i);
+            devmm_drv_err(
+                "Readonly mem, not allowed remote map. (va=0x%llx; bitmap=0x%x; page_idx=%llu)\n", va, *bitmap, i);
             goto err_exit;
         }
         if (devmm_page_bitmap_check_and_set_flag(bitmap + i, DEVMM_PAGE_REMOTE_MAPPED_MASK) != 0) {
-            devmm_drv_err("Va is already mapped by remote. (va=0x%llx; bitmap=0x%x; page_idx=%llu)\n",
-                va, *bitmap, i);
+            devmm_drv_err("Va is already mapped by remote. (va=0x%llx; bitmap=0x%x; page_idx=%llu)\n", va, *bitmap, i);
             goto err_exit;
         }
         /* master svm shm map should set target logical_devid */
@@ -713,14 +792,11 @@ static int devmm_check_and_set_remote_map_state(
         }
         devmm_try_cond_resched(&stamp);
     }
-    devmm_page_bitmap_set_flag(bitmap, DEVMM_PAGE_REMOTE_MAPPED_FIRST_MASK);
 
     return 0;
 
 err_exit:
-    if (i > 0) {
-        devmm_clear_remote_map_status(bitmap, i, is_locked_host);
-    }
+    devmm_clear_remote_map_status(bitmap, i, is_locked_host);
     return -EINVAL;
 }
 
@@ -735,16 +811,17 @@ static struct devmm_shm_node *devmm_alloc_shm_node(u64 page_num, u32 map_type)
     }
 
     if (map_type == HOST_IO_MAP_DEV) {
-        node->pa_list = (u64 *)__devmm_vmalloc_ex(sizeof(u64) * page_num,
-            KA_GFP_KERNEL | __KA_GFP_ZERO | __KA_GFP_NOWARN | __KA_GFP_ACCOUNT, KA_PAGE_KERNEL);
+        node->pa_list = (u64 *)__devmm_vmalloc_ex(
+            sizeof(u64) * page_num, KA_GFP_KERNEL | __KA_GFP_ZERO | __KA_GFP_NOWARN | __KA_GFP_ACCOUNT, KA_PAGE_KERNEL);
         if (node->pa_list == NULL) {
             devmm_drv_err("Vzalloc pa_list failed, out of memory. (alloc_size=%llu)\n", sizeof(u64) * page_num);
             devmm_kfree_ex(node);
             return NULL;
         }
     } else if (map_type != DEV_MEM_MAP_HOST) {
-        node->pages = (ka_page_t **)__devmm_vmalloc_ex(sizeof(ka_page_t *) * page_num,
-            KA_GFP_KERNEL | __KA_GFP_ZERO | __KA_GFP_NOWARN | __KA_GFP_ACCOUNT, KA_PAGE_KERNEL);
+        node->pages = (ka_page_t **)__devmm_vmalloc_ex(
+            sizeof(ka_page_t *) * page_num, KA_GFP_KERNEL | __KA_GFP_ZERO | __KA_GFP_NOWARN | __KA_GFP_ACCOUNT,
+            KA_PAGE_KERNEL);
         if (node->pages == NULL) {
             devmm_drv_err("Vzalloc failed, out of memory. (alloc_size=%llu)\n", sizeof(ka_page_t *) * page_num);
             devmm_kfree_ex(node);
@@ -753,10 +830,12 @@ static struct devmm_shm_node *devmm_alloc_shm_node(u64 page_num, u32 map_type)
     }
 
     if (devmm_is_mem_map_by_pcie_th(map_type)) {
-        node->dma_info = (struct devmm_dma_info *)__devmm_vmalloc_ex(sizeof(struct devmm_dma_info) * page_num,
+        node->dma_info = (struct devmm_dma_info *)__devmm_vmalloc_ex(
+            sizeof(struct devmm_dma_info) * page_num,
             KA_GFP_KERNEL | __KA_GFP_ZERO | __KA_GFP_NOWARN | __KA_GFP_ACCOUNT, KA_PAGE_KERNEL);
         if (node->dma_info == NULL) {
-            devmm_drv_err("Vzalloc dma_info failed, out of memory. (alloc_size=%llu)\n",
+            devmm_drv_err(
+                "Vzalloc dma_info failed, out of memory. (alloc_size=%llu)\n",
                 sizeof(struct devmm_dma_info) * page_num);
             if (node->pages != NULL) {
                 devmm_vfree_ex(node->pages);
@@ -772,8 +851,9 @@ static struct devmm_shm_node *devmm_alloc_shm_node(u64 page_num, u32 map_type)
     return node;
 }
 
-static int devmm_init_shm_node(struct devmm_shm_head *shm_head, struct devmm_devid *devids,
-    struct devmm_mem_remote_map_para *map_para, struct devmm_shm_node *shm_node)
+static int devmm_init_shm_node(
+    struct devmm_shm_head *shm_head, struct devmm_devid *devids, struct devmm_mem_remote_map_para *map_para,
+    struct devmm_shm_node *shm_node)
 {
     shm_node->src_va = map_para->src_va;
     shm_node->size = map_para->size;
@@ -793,8 +873,8 @@ static int devmm_init_shm_node(struct devmm_shm_head *shm_head, struct devmm_dev
     return 0;
 }
 
-static struct devmm_shm_node *devmm_create_shm_node(struct devmm_shm_pro_node *shm_pro_node,
-    struct devmm_devid *devids, struct devmm_mem_remote_map_para *map_para)
+static struct devmm_shm_node *devmm_create_shm_node(
+    struct devmm_shm_pro_node *shm_pro_node, struct devmm_devid *devids, struct devmm_mem_remote_map_para *map_para)
 {
     struct devmm_shm_head *shm_head = &shm_pro_node->shm_head;
     struct devmm_shm_node *node = NULL;
@@ -837,7 +917,8 @@ int devmm_init_shm_pro_node(struct devmm_svm_process *svm_proc)
     u32 j, i;
 
     for (j = 0; j < HOST_REGISTER_MAX_TPYE; j++) {
-        svm_proc->shm_pro_node[j] = devmm_kzalloc_ex(sizeof(struct devmm_shm_pro_node), KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
+        svm_proc->shm_pro_node[j] =
+            devmm_kzalloc_ex(sizeof(struct devmm_shm_pro_node), KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
         if (svm_proc->shm_pro_node[j] == NULL) {
 #ifndef EMU_ST
             goto alloc_fail;
@@ -890,11 +971,15 @@ static void devmm_dma_unmap_pages_by_node(struct devmm_shm_node *node)
         for (i = 0; i < dma_num; i++) {
             if (ka_mm_dma_mapping_error(dev, dma_info[i].dma_addr) == 0) {
                 if (!node->src_pa_is_ram) {
-                    devdrv_dma_unmap_resource(dev, dma_info[i].dma_addr, dma_info[i].dma_size,
-                        KA_DMA_BIDIRECTIONAL, 0);
+#ifndef CFG_BUILD_DEBUG
+                    devdrv_dma_unmap_resource(dev, dma_info[i].dma_addr, dma_info[i].dma_size, KA_DMA_BIDIRECTIONAL, 0);
+#else
+                    hal_kernel_devdrv_dma_unmap_page(
+                        dev, dma_info[i].dma_addr, dma_info[i].dma_size, KA_DMA_BIDIRECTIONAL);
+#endif
                 } else {
-                    hal_kernel_devdrv_dma_unmap_page(dev, dma_info[i].dma_addr, dma_info[i].dma_size,
-                        KA_DMA_BIDIRECTIONAL);
+                    hal_kernel_devdrv_dma_unmap_page(
+                        dev, dma_info[i].dma_addr, dma_info[i].dma_size, KA_DMA_BIDIRECTIONAL);
                 }
             }
             devmm_try_cond_resched(&stamp);
@@ -920,24 +1005,26 @@ void devmm_remote_unmap_and_delete_node(struct devmm_svm_process *svm_proc, stru
     devmm_destory_shm_node(node);
 }
 
-static int devmm_agent_va_to_master_pa(struct devmm_svm_process *svm_proc,
-    struct devmm_devid *devids, u64 agent_va, u64 page_size, u64 *master_pa)
+static int devmm_agent_va_to_master_pa(
+    struct devmm_svm_process *svm_proc, struct devmm_devid *devids, u64 agent_va, u64 page_size, u64 *master_pa)
 {
     u64 agent_pa;
     int ret;
 
     ret = devmm_find_pa_cache(svm_proc, devids->logical_devid, agent_va, (u32)page_size, &agent_pa);
     if (ret != 0) {
-        devmm_drv_err("Find agent_pa fail. (agent_va=0x%llx; page_size=%llu; logical_devid=%u; ret=%d)\n",
-            agent_va, page_size, devids->logical_devid, ret);
+        devmm_drv_err(
+            "Find agent_pa fail. (agent_va=0x%llx; page_size=%llu; logical_devid=%u; ret=%d)\n", agent_va, page_size,
+            devids->logical_devid, ret);
         return -EINVAL;
     }
 
     if (!devmm_is_host_agent(devids->devid)) {
         ret = devdrv_devmem_addr_d2h(devids->devid, agent_pa, master_pa);
         if (ret != 0) {
-            devmm_drv_err("Agent_pa to pcie_pa fail. (agent_va=0x%llx; map_size=%llu; devid=%u; ret=%d)\n",
-                agent_va, page_size, devids->devid, ret);
+            devmm_drv_err(
+                "Agent_pa to pcie_pa fail. (agent_va=0x%llx; map_size=%llu; devid=%u; ret=%d)\n", agent_va, page_size,
+                devids->devid, ret);
             return -EINVAL;
         }
     } else {
@@ -947,13 +1034,11 @@ static int devmm_agent_va_to_master_pa(struct devmm_svm_process *svm_proc,
     return 0;
 }
 
-static inline bool devmm_is_read_only_mem(u32 flag)
-{
-    return (flag && MEM_REGISTER_READ_ONLY);
-}
+static inline bool devmm_is_read_only_mem(u32 flag) { return (flag & MEM_REGISTER_READ_ONLY); }
 
-static int devmm_map_agent_svm_mem_to_master(struct devmm_svm_process *svm_proc, struct devmm_devid *devids,
-    struct devmm_mem_remote_map_para *map_para, struct devmm_memory_attributes *attr)
+static int devmm_map_agent_svm_mem_to_master(
+    struct devmm_svm_process *svm_proc, struct devmm_devid *devids, struct devmm_mem_remote_map_para *map_para,
+    struct devmm_memory_attributes *attr)
 {
     ka_vm_area_struct_t *vma = NULL;
     u64 page_num, master_pa, tmp_va;
@@ -978,15 +1063,16 @@ static int devmm_map_agent_svm_mem_to_master(struct devmm_svm_process *svm_proc,
     for (i = 0, tmp_va = map_para->src_va; i < page_num; i++, tmp_va += attr->page_size) {
         ret = devmm_agent_va_to_master_pa(svm_proc, devids, tmp_va, attr->page_size, &master_pa);
         if (ret != 0) {
-            devmm_drv_err("Find agent_pa fail. (i=%llu; svm_ptr=0x%llx; map_size=%llu; logical_devid=%u)\n",
-                i, map_para->src_va, map_para->size, devids->logical_devid);
+            devmm_drv_err(
+                "Find agent_pa fail. (i=%llu; svm_ptr=0x%llx; map_size=%llu; logical_devid=%u)\n", i, map_para->src_va,
+                map_para->size, devids->logical_devid);
             goto clear_pfn_range;
         }
 
         ret = ka_mm_remap_pfn_range(vma, tmp_va, KA_MM_PFN_DOWN(master_pa), attr->page_size, page_prot);
         if (ret != 0) {
-            devmm_drv_err("Remap_pfn_range fail. (i=%llu; va=0x%llx; page_size=%u; ret=%d)\n",
-                i, tmp_va, attr->page_size, ret);
+            devmm_drv_err(
+                "Remap_pfn_range fail. (i=%llu; va=0x%llx; page_size=%u; ret=%d)\n", i, tmp_va, attr->page_size, ret);
             goto clear_pfn_range;
         }
         devmm_try_cond_resched(&stamp);
@@ -1025,11 +1111,44 @@ int devmm_unmap_mem(struct devmm_svm_process *svm_proc, u64 va, u64 size)
         devmm_try_cond_resched(&stamp);
     }
 
-    return  0;
+    return 0;
 }
 
-STATIC struct devmm_chan_remote_map *devmm_alloc_init_send_info(struct devmm_svm_process *svm_proc,
-    struct devmm_devid *devids, struct devmm_mem_remote_map_para *map_para, u32 page_size)
+static int devmm_check_and_unmap_mem(struct devmm_svm_process *svm_proc, u64 va, u64 size)
+{
+    ka_vm_area_struct_t *vma = NULL;
+    u64 tmp_va, tmp_pa, page_num, i;
+    u32 stamp = (u32)ka_jiffies;
+
+    vma = devmm_find_vma(svm_proc, va);
+    if (vma == NULL) {
+        devmm_drv_err("Can't find vma. (svm_addr=0x%llx)\n", va);
+        return -EINVAL;
+    }
+
+    page_num = size >> KA_MM_PAGE_SHIFT;
+    for (i = 0, tmp_va = va; i < page_num; i++, tmp_va += KA_MM_PAGE_SIZE) {
+        int ret = devmm_va_to_pa(vma, tmp_va, &tmp_pa);
+        if (ret != 0) {
+            return -EINVAL;
+        }
+
+        devmm_try_cond_resched(&stamp);
+    }
+
+#ifndef EMU_ST
+    devmm_zap_vma_ptes(vma, va, KA_MM_PAGE_SIZE * page_num);
+#else
+    for (i = 0, tmp_va = va; i < page_num; i++, tmp_va += KA_MM_PAGE_SIZE) {
+        devmm_zap_vma_ptes(vma, tmp_va, KA_MM_PAGE_SIZE);
+    }
+#endif
+    return 0;
+}
+
+STATIC struct devmm_chan_remote_map *devmm_alloc_init_send_info(
+    struct devmm_svm_process *svm_proc, struct devmm_devid *devids, struct devmm_mem_remote_map_para *map_para,
+    u32 page_size)
 {
     struct devmm_chan_remote_map *send_info = NULL;
     u64 send_max_len;
@@ -1055,13 +1174,10 @@ STATIC struct devmm_chan_remote_map *devmm_alloc_init_send_info(struct devmm_svm
     return send_info;
 }
 
-STATIC void devmm_free_send_info(struct devmm_chan_remote_map *send_info)
-{
-    devmm_kfree_ex(send_info);
-}
+STATIC void devmm_free_send_info(struct devmm_chan_remote_map *send_info) { devmm_kfree_ex(send_info); }
 
-STATIC int devmm_agent_va_to_master_palist(struct devmm_svm_process *svm_proc,
-    struct devmm_memory_attributes *attr, u64 size, u64 *pa, u64 *num)
+STATIC int devmm_agent_va_to_master_palist(
+    struct devmm_svm_process *svm_proc, struct devmm_memory_attributes *attr, u64 size, u64 *pa, u64 *num)
 {
     struct devmm_devid devids = {attr->logical_devid, attr->devid, attr->vfid};
     u32 page_size = attr->page_size;
@@ -1112,7 +1228,8 @@ STATIC int devmm_merge_palist_to_hpalist(u64 *pa, u32 pa_num, u32 *hpa_num, u32 
     return 0;
 }
 
-static int devmm_try_get_hpalist(const ka_vm_area_struct_t *vma, u64 va, u64 sz, u32 devid, struct devmm_palist_info *palist)
+static int devmm_try_get_hpalist(
+    const ka_vm_area_struct_t *vma, u64 va, u64 sz, u32 devid, struct devmm_palist_info *palist)
 {
     u64 dev_hpage_size = devmm_svm->device_hpage_size;
     u32 blk_num = palist->blk_num;
@@ -1147,8 +1264,8 @@ static int devmm_try_get_hpalist(const ka_vm_area_struct_t *vma, u64 va, u64 sz,
     }
 
 #ifndef EMU_ST
-    ret = devmm_merge_palist_to_hpalist(palist->pa_blk, blk_num, &palist->got_num,
-        dev_hpage_size / KA_MM_PAGE_SIZE, KA_MM_PAGE_SIZE);
+    ret = devmm_merge_palist_to_hpalist(
+        palist->pa_blk, blk_num, &palist->got_num, dev_hpage_size / KA_MM_PAGE_SIZE, KA_MM_PAGE_SIZE);
     if (ret == 0) {
         palist->page_size = dev_hpage_size;
     } else {
@@ -1158,9 +1275,9 @@ static int devmm_try_get_hpalist(const ka_vm_area_struct_t *vma, u64 va, u64 sz,
     return 0;
 }
 
-static int devmm_send_map_info_to_agent(struct devmm_svm_process *svm_proc, struct devmm_devid *devids,
-    struct devmm_chan_remote_map *send_info, struct devmm_mem_remote_map_para *map_para,
-    struct devmm_memory_attributes *attr)
+static int devmm_send_map_info_to_agent(
+    struct devmm_svm_process *svm_proc, struct devmm_devid *devids, struct devmm_chan_remote_map *send_info,
+    struct devmm_mem_remote_map_para *map_para, struct devmm_memory_attributes *attr)
 {
     struct devmm_palist_info palist = {.pa_blk = send_info->src_pa, .blk_num = DEVMM_ACCESS_H2D_PAGE_NUM};
     ka_vm_area_struct_t *vma = NULL;
@@ -1176,7 +1293,7 @@ static int devmm_send_map_info_to_agent(struct devmm_svm_process *svm_proc, stru
     map_para->dst_va = map_para->src_va;
     send_info->dst_va = map_para->dst_va;
     for (tmp_va = map_para->src_va, remaining_size = map_para->size; remaining_size > 0;
-        tmp_va += num * page_size, remaining_size -= num * page_size) {
+         tmp_va += num * page_size, remaining_size -= num * page_size) {
         int ret;
 
         num = DEVMM_ACCESS_H2D_PAGE_NUM;
@@ -1211,8 +1328,8 @@ static int devmm_send_map_info_to_agent(struct devmm_svm_process *svm_proc, stru
     return 0;
 }
 
-STATIC int devmm_send_unmap_info_to_agent(struct devmm_chan_remote_unmap *send_info,
-    struct devmm_devid *devids, u64 size, u64 dst_va)
+STATIC int devmm_send_unmap_info_to_agent(
+    struct devmm_chan_remote_unmap *send_info, struct devmm_devid *devids, u64 size, u64 dst_va)
 {
     u64 pre_free_size = DEVMM_SHM_FREE_SIZE_PRE_MSG;
     u64 current_va, left_size;
@@ -1229,8 +1346,8 @@ STATIC int devmm_send_unmap_info_to_agent(struct devmm_chan_remote_unmap *send_i
         send_info->head.process_id.vfid = (u16)devids->vfid;
         ret = devmm_chan_msg_send(send_info, sizeof(struct devmm_chan_remote_unmap), 0);
         if (ret != 0) {
-            devmm_drv_warn("Send message failed. (src_va=0x%llx; devid=%u; ret=%d)\n",
-                send_info->src_va, devids->devid, ret);
+            devmm_drv_warn(
+                "Send message failed. (src_va=0x%llx; devid=%u; ret=%d)\n", send_info->src_va, devids->devid, ret);
             return ret;
         }
     }
@@ -1238,8 +1355,8 @@ STATIC int devmm_send_unmap_info_to_agent(struct devmm_chan_remote_unmap *send_i
     return 0;
 }
 
-static int devmm_local_host_unmap(struct devmm_svm_process *svm_proc,
-    struct devmm_devid *devids, struct devmm_shm_node *node)
+static int devmm_local_host_unmap(
+    struct devmm_svm_process *svm_proc, struct devmm_devid *devids, struct devmm_shm_node *node)
 {
     struct devmm_chan_remote_unmap send_info = {{{0}}};
 
@@ -1252,8 +1369,8 @@ static int devmm_local_host_unmap(struct devmm_svm_process *svm_proc,
     return devmm_send_unmap_info_to_agent(&send_info, devids, node->size, node->dst_va);
 }
 
-int devmm_locked_host_unmap(struct devmm_svm_process *svm_proc,
-    struct devmm_devid *devids, u64 src_va, u64 size, u64 dst_va)
+int devmm_locked_host_unmap(
+    struct devmm_svm_process *svm_proc, struct devmm_devid *devids, u64 src_va, u64 size, u64 dst_va)
 {
     struct devmm_chan_remote_unmap send_info = {{{0}}};
 
@@ -1266,8 +1383,9 @@ int devmm_locked_host_unmap(struct devmm_svm_process *svm_proc,
     return devmm_send_unmap_info_to_agent(&send_info, devids, size, dst_va);
 }
 
-int devmm_map_svm_mem_to_agent(struct devmm_svm_process *svm_proc, struct devmm_devid *devids,
-    struct devmm_mem_remote_map_para *map_para, struct devmm_memory_attributes *attr)
+int devmm_map_svm_mem_to_agent(
+    struct devmm_svm_process *svm_proc, struct devmm_devid *devids, struct devmm_mem_remote_map_para *map_para,
+    struct devmm_memory_attributes *attr)
 {
     struct devmm_chan_remote_map *send_info = NULL;
     int ret;
@@ -1283,8 +1401,9 @@ int devmm_map_svm_mem_to_agent(struct devmm_svm_process *svm_proc, struct devmm_
     return ret;
 }
 
-STATIC int devmm_map_master_svm_mem_to_agent(struct devmm_svm_process *svm_proc, struct devmm_devid *devids,
-    struct devmm_mem_remote_map_para *map_para, struct devmm_memory_attributes *attr)
+STATIC int devmm_map_master_svm_mem_to_agent(
+    struct devmm_svm_process *svm_proc, struct devmm_devid *devids, struct devmm_mem_remote_map_para *map_para,
+    struct devmm_memory_attributes *attr)
 {
     return devmm_map_svm_mem_to_agent(svm_proc, devids, map_para, attr);
 }
@@ -1294,7 +1413,7 @@ STATIC int devmm_user_va_to_pa_list(struct devmm_svm_process *svm_proc, u64 va, 
     ka_vm_area_struct_t *vma = NULL;
     u64 vaddr, paddr, pg_num;
     u32 stamp = (u32)ka_jiffies;
- 
+
     ka_task_down_read(ka_mm_get_mmap_sem(svm_proc->mm));
     vma = ka_mm_find_vma(svm_proc->mm, va);
     if ((vma == NULL) || (ka_mm_get_vm_start(vma) > va)) {
@@ -1304,7 +1423,7 @@ STATIC int devmm_user_va_to_pa_list(struct devmm_svm_process *svm_proc, u64 va, 
         return -EINVAL;
 #endif
     }
- 
+
     for (vaddr = va, pg_num = 0; pg_num < total_num; vaddr += KA_MM_PAGE_SIZE, pg_num++) {
         if (devmm_va_to_pa(vma, vaddr, &paddr) != 0) {
             ka_task_up_read(ka_mm_get_mmap_sem(svm_proc->mm));
@@ -1314,7 +1433,7 @@ STATIC int devmm_user_va_to_pa_list(struct devmm_svm_process *svm_proc, u64 va, 
         devmm_try_cond_resched(&stamp);
     }
     ka_task_up_read(ka_mm_get_mmap_sem(svm_proc->mm));
- 
+
     return 0;
 }
 
@@ -1347,18 +1466,15 @@ STATIC int devmm_user_va_to_pages_list(struct devmm_svm_process *svm_proc, u64 v
     return 0;
 }
 
-static bool devmm_vma_is_pfn_map(ka_vm_area_struct_t *vma)
-{
-    return ((ka_mm_get_vm_flags(vma) & KA_VM_PFNMAP) != 0);
-}
+static bool devmm_vma_is_pfn_map(ka_vm_area_struct_t *vma) { return ((ka_mm_get_vm_flags(vma) & KA_VM_PFNMAP) != 0); }
 #endif
 
 static bool devmm_pfn_is_io_mem(struct devmm_svm_process *svm_proc, u64 va, u64 total_num, bool *is_ram_mem)
 {
     ka_vm_area_struct_t *vma = NULL;
-    u64 vaddr,aligned_va, pg_num, pfn, kpg_size;
+    u64 vaddr, aligned_va, pg_num, pfn, kpg_size;
     u32 stamp = (u32)ka_jiffies;
- 
+
     ka_task_down_read(ka_mm_get_mmap_sem(svm_proc->mm));
     vma = ka_mm_find_vma(svm_proc->mm, va);
     if ((vma == NULL) || (ka_mm_get_vm_start(vma) > va)) {
@@ -1368,25 +1484,27 @@ static bool devmm_pfn_is_io_mem(struct devmm_svm_process *svm_proc, u64 va, u64 
         return -EINVAL;
 #endif
     }
- 
+
     for (vaddr = va, pg_num = 0; pg_num < total_num; vaddr += KA_MM_PAGE_SIZE, pg_num++) {
         aligned_va = ka_base_round_down(va, KA_MM_PAGE_SIZE);
         if (devmm_va_to_pfn(vma, aligned_va, &pfn, &kpg_size) != 0) {
             ka_task_up_read(ka_mm_get_mmap_sem(svm_proc->mm));
             return -ENOENT;
         }
+#ifndef CFG_BUILD_DEBUG
         if (ka_mm_page_is_ram(pfn)) {
             ka_task_up_read(ka_mm_get_mmap_sem(svm_proc->mm));
-#ifndef EMU_ST  
+#ifndef EMU_ST
             return 0;
 #endif
         }
+#endif
         devmm_try_cond_resched(&stamp);
     }
- 
+
     ka_task_up_read(ka_mm_get_mmap_sem(svm_proc->mm));
     *is_ram_mem = false;
- 
+
     return 0;
 }
 
@@ -1394,7 +1512,7 @@ static int devmm_local_va_to_pages_list(struct devmm_svm_process *svm_proc, stru
 {
     ka_vm_area_struct_t *vma = NULL;
     bool is_pfn_map = false;
-    int write = 1;  /* write is 1 */
+    int write = 1; /* write is 1 */
     int ret;
 
     ka_task_down_read(get_mmap_sem(svm_proc->mm));
@@ -1434,8 +1552,7 @@ static int devmm_local_va_to_pages_list(struct devmm_svm_process *svm_proc, stru
         ret = devmm_pin_user_pages_fast(node->src_va, node->page_num, write, node->pages);
     }
     if (ret != 0) {
-        devmm_drv_err("Get pages fail. (va=0x%llx; expected_num=%llu; ret=%d)\n",
-            node->src_va, node->page_num, ret);
+        devmm_drv_err("Get pages fail. (va=0x%llx; expected_num=%llu; ret=%d)\n", node->src_va, node->page_num, ret);
         return -EFAULT;
     }
     return 0;
@@ -1446,7 +1563,7 @@ static int devmm_io_va_to_pages_list(struct devmm_svm_process *svm_proc, struct 
     ka_vm_area_struct_t *vma = NULL;
     bool is_ram_mem = true;
     int ret = 0;
- 
+
     ka_task_down_read(get_mmap_sem(svm_proc->mm));
     vma = ka_mm_find_vma(svm_proc->mm, node->src_va);
     if ((vma == NULL) || (ka_mm_get_vm_start(vma) > node->src_va)) {
@@ -1457,33 +1574,33 @@ static int devmm_io_va_to_pages_list(struct devmm_svm_process *svm_proc, struct 
 #endif
     }
     if (!devmm_vma_is_pfn_map(vma)) {
-        devmm_drv_err("IO memory is not pfn map.(va=[0x%llx];hostpid=[%d]).\n",
-            node->src_va, svm_proc->process_id.hostpid);
+        devmm_drv_err(
+            "IO memory is not pfn map.(va=[0x%llx];hostpid=[%d]).\n", node->src_va, svm_proc->process_id.hostpid);
         ka_task_up_read(get_mmap_sem(svm_proc->mm));
         return -EINVAL;
     }
     ka_task_up_read(get_mmap_sem(svm_proc->mm));
- 
+
     node->src_va_is_pfn_map = true;
     node->src_pa_is_ram = false;
     ret = devmm_user_va_to_pa_list(svm_proc, node->src_va, node->page_num, node->pa_list);
     if (ret != 0) {
-        devmm_drv_err("Get pages fail. (va=0x%llx; expected_num=%llu; ret=%d)\n",
-            node->src_va, node->page_num, ret);
+        devmm_drv_err("Get pages fail. (va=0x%llx; expected_num=%llu; ret=%d)\n", node->src_va, node->page_num, ret);
         return -EFAULT;
-    } 
+    }
     ret = devmm_pfn_is_io_mem(svm_proc, node->src_va, node->page_num, &is_ram_mem);
     if (ret || is_ram_mem) {
-        devmm_drv_err("IO memory is ram. (va=0x%llx; hostpid=%d; ret=%d)\n",
-            node->src_va, svm_proc->process_id.hostpid, ret);
+        devmm_drv_err(
+            "IO memory is ram. (va=0x%llx; hostpid=%d; ret=%d)\n", node->src_va, svm_proc->process_id.hostpid, ret);
         return -EINVAL;
     }
- 
+
     return 0;
 }
 
-static int devmm_map_host_mem_to_device(struct devmm_svm_process *svm_proc, struct devmm_devid *devids,
-    struct devmm_mem_remote_map_para *map_para, struct devmm_shm_node *node)
+static int devmm_map_host_mem_to_device(
+    struct devmm_svm_process *svm_proc, struct devmm_devid *devids, struct devmm_mem_remote_map_para *map_para,
+    struct devmm_shm_node *node)
 {
     struct devmm_chan_remote_map *send_info = NULL;
     int ret;
@@ -1501,15 +1618,17 @@ static int devmm_map_host_mem_to_device(struct devmm_svm_process *svm_proc, stru
     }
     if (ret != 0) {
 #ifndef EMU_ST
-        devmm_drv_err_if((ret != -EOPNOTSUPP), "Get pages fail. (va=0x%llx; expected_num=%llu; ret=%d)\n",
-            node->src_va, node->page_num, ret);
+        devmm_drv_err_if(
+            (ret != -EOPNOTSUPP), "Get pages fail. (va=0x%llx; expected_num=%llu; ret=%d)\n", node->src_va,
+            node->page_num, ret);
 #endif
         goto exit;
     }
     ret = devmm_shm_send_info_to_dev(svm_proc, send_info, node);
     if (ret != 0) {
-        devmm_drv_err("Send map_para to agent error. (src_va=0x%llx; map_size=%llu; devid=%u; ret=%d)\n",
-            map_para->src_va, map_para->size, devids->devid, ret);
+        devmm_drv_err(
+            "Send map_para to agent error. (src_va=0x%llx; map_size=%llu; devid=%u; ret=%d)\n", map_para->src_va,
+            map_para->size, devids->devid, ret);
         devmm_dma_unmap_pages_by_node(node);
         if (node->src_va_is_pfn_map) {
             /* just use pa, not use page */
@@ -1570,20 +1689,22 @@ static int devmm_get_remote_pa(u64 va, u64 remain_num, u32 *num, struct devmm_ch
     send_max_len = (u32)(sizeof(struct devmm_chan_remote_map) + sizeof(u64) * (u32)(send_info->head.extend_num));
     ret = devmm_chan_msg_send(send_info, send_max_len, send_max_len);
     if (ret != 0) {
-        devmm_drv_err("Send message failed. (va=0x%llx; num=%u; send_info_num=%u; ret=%d)\n",
-            va, tem_num, send_info->head.extend_num, ret);
+        devmm_drv_err(
+            "Send message failed. (va=0x%llx; num=%u; send_info_num=%u; ret=%d)\n", va, tem_num,
+            send_info->head.extend_num, ret);
         return ret;
     }
     if (send_info->head.extend_num != tem_num) {
-        devmm_drv_err("Page num is error. (va=0x%llx; expect_num=%u; real_num=%u)\n",
-            va, tem_num, send_info->head.extend_num);
+        devmm_drv_err(
+            "Page num is error. (va=0x%llx; expect_num=%u; real_num=%u)\n", va, tem_num, send_info->head.extend_num);
         return -ERANGE;
     }
 
     ret = devmm_merge_palist_to_hpalist(send_info->src_pa, tem_num, num, adap_num, send_info->page_size);
     if (ret != 0) {
-        devmm_drv_err("Page is not continuous. (va=0x%llx; expect_num=%u; real_num=%u; adap_num=%u)\n",
-            va, tem_num, send_info->head.extend_num, adap_num);
+        devmm_drv_err(
+            "Page is not continuous. (va=0x%llx; expect_num=%u; real_num=%u; adap_num=%u)\n", va, tem_num,
+            send_info->head.extend_num, adap_num);
         return ret;
     }
 
@@ -1604,8 +1725,8 @@ int devmm_remote_pa_to_bar_pa(u32 devid, u64 *remote_pa, u64 pa_num, u64 *bar_pa
     return 0;
 }
 
-static void devmm_put_remote_page(struct devmm_svm_process *svm_proc,
-    struct devmm_devid *devids, struct devmm_shm_node *node)
+static void devmm_put_remote_page(
+    struct devmm_svm_process *svm_proc, struct devmm_devid *devids, struct devmm_shm_node *node)
 {
     struct devmm_chan_remote_unmap send_info = {{{0}}};
     int ret;
@@ -1622,14 +1743,17 @@ static void devmm_put_remote_page(struct devmm_svm_process *svm_proc,
 
     ret = devmm_chan_msg_send(&send_info, sizeof(struct devmm_chan_remote_unmap), 0);
     if (ret != 0) {
-        devmm_drv_warn("Send message. (src_va=0x%llx; size=%llu; dst_va=0x%llx; map_type=%u; proc_type=%u "
-            "devid=%u; ret=%d)\n", send_info.src_va, node->size, send_info.dst_va, send_info.map_type,
-            send_info.proc_type, devids->devid, ret);
+        devmm_drv_warn(
+            "Send message. (src_va=0x%llx; size=%llu; dst_va=0x%llx; map_type=%u; proc_type=%u "
+            "devid=%u; ret=%d)\n",
+            send_info.src_va, node->size, send_info.dst_va, send_info.map_type, send_info.proc_type, devids->devid,
+            ret);
     }
 }
 
-static int devmm_fill_palist(struct devmm_svm_process *svm_proc, struct devmm_devid *devids,
-    struct devmm_mem_remote_map_para *map_para, struct devmm_shm_node *node, struct devmm_palist_info *palist_info)
+static int devmm_fill_palist(
+    struct devmm_svm_process *svm_proc, struct devmm_devid *devids, struct devmm_mem_remote_map_para *map_para,
+    struct devmm_shm_node *node, struct devmm_palist_info *palist_info)
 {
     struct devmm_chan_remote_map *send_info = NULL;
     u64 total_page_num = map_para->size >> KA_MM_PAGE_SHIFT;
@@ -1645,7 +1769,7 @@ static int devmm_fill_palist(struct devmm_svm_process *svm_proc, struct devmm_de
     }
 
     for (tmp_va = map_para->src_va, ramaining_num = total_page_num; ramaining_num > 0;
-        tmp_va += (u64)got_num * KA_MM_PAGE_SIZE, ramaining_num -= got_num, j += got_num) {
+         tmp_va += (u64)got_num * KA_MM_PAGE_SIZE, ramaining_num -= got_num, j += got_num) {
         ret = devmm_get_remote_pa(tmp_va, ramaining_num, &got_num, send_info);
         if (ret != 0) {
             goto send_msg_fail;
@@ -1653,8 +1777,9 @@ static int devmm_fill_palist(struct devmm_svm_process *svm_proc, struct devmm_de
         ret = devmm_remote_pa_to_bar_pa(devids->devid, send_info->src_pa, got_num, &palist_info->pa_blk[j]);
         if (ret != 0) {
             /* The log cannot be modified, because in the failure mode library. */
-            devmm_drv_err("Va not bar addr. (va=0x%llx; src_va=0x%llx; devid=%u; ret=%d)\n",
-                tmp_va, map_para->src_va, devids->devid, ret);
+            devmm_drv_err(
+                "Va not bar addr. (va=0x%llx; src_va=0x%llx; devid=%u; ret=%d)\n", tmp_va, map_para->src_va,
+                devids->devid, ret);
             goto send_msg_fail;
         }
     }
@@ -1667,8 +1792,9 @@ send_msg_fail:
     return ret;
 }
 
-static int devmm_remap_addrs_with_palist(struct devmm_svm_process *svm_proc, u64 va, u64 page_num,
-    bool is_read_only_mem, struct devmm_palist_info *palist_info)
+static int devmm_remap_addrs_with_palist(
+    struct devmm_svm_process *svm_proc, u64 va, u64 page_num, bool is_read_only_mem,
+    struct devmm_palist_info *palist_info)
 {
     ka_pgprot_t page_prot = devmm_make_nocache_pgprot(0);
     ka_vm_area_struct_t *vma = NULL;
@@ -1697,8 +1823,8 @@ static int devmm_remap_addrs_with_palist(struct devmm_svm_process *svm_proc, u64
         ret = ka_mm_remap_pfn_range(vma, tmp_va, KA_MM_PFN_DOWN(palist_info->pa_blk[i]), KA_MM_PAGE_SIZE, page_prot);
         if (ret != 0) {
             ka_task_up_write(&svm_proc->host_fault_sem);
-            devmm_drv_err("Remap_pfn_range fail. (i=%llu; va=0x%llx; page_num=%llu; ret=%d)\n",
-                i, tmp_va, page_num, ret);
+            devmm_drv_err(
+                "Remap_pfn_range fail. (i=%llu; va=0x%llx; page_num=%llu; ret=%d)\n", i, tmp_va, page_num, ret);
             goto remap_pfn_range_fail;
         }
         devmm_try_cond_resched(&stamp);
@@ -1713,8 +1839,9 @@ remap_pfn_range_fail:
     return ret;
 }
 
-static int devmm_map_local_dev_mem_to_host(struct devmm_svm_process *svm_proc, struct devmm_devid *devids,
-    struct devmm_mem_remote_map_para *map_para, struct devmm_shm_node *node)
+static int devmm_map_local_dev_mem_to_host(
+    struct devmm_svm_process *svm_proc, struct devmm_devid *devids, struct devmm_mem_remote_map_para *map_para,
+    struct devmm_shm_node *node)
 {
     struct devmm_palist_info *palist_info = NULL;
     int ret;
@@ -1735,8 +1862,8 @@ static int devmm_map_local_dev_mem_to_host(struct devmm_svm_process *svm_proc, s
         goto fill_palist_fail;
     }
 
-    ret = devmm_remap_addrs_with_palist(svm_proc, map_para->dst_va, node->page_num,
-        devmm_is_read_only_mem(map_para->access), palist_info);
+    ret = devmm_remap_addrs_with_palist(
+        svm_proc, map_para->dst_va, node->page_num, devmm_is_read_only_mem(map_para->access), palist_info);
     if (ret != 0) {
         goto remap_addrs_fail;
     }
@@ -1752,16 +1879,17 @@ alloc_palist_fail:
     return ret;
 }
 
-static int devmm_svm_mem_map_para_check(struct devmm_devid *devids,
-    struct devmm_mem_remote_map_para *map_para, struct devmm_memory_attributes *attr)
+static int devmm_svm_mem_map_para_check(
+    struct devmm_devid *devids, struct devmm_mem_remote_map_para *map_para, struct devmm_memory_attributes *attr)
 {
     u32 map_type = map_para->map_type;
     u32 proc_type = map_para->proc_type;
 
     if ((attr->is_locked_host && (map_type != HOST_SVM_MAP_DEV) && (devmm_is_mem_map_by_pcie_th(map_type) == false)) ||
-       (attr->is_locked_device && (map_type != DEV_SVM_MAP_HOST))) {
-        devmm_drv_err("Map_type not match with va_attr. (map_type=%u; is_locked_host=%d; is_locked_device=%d)\n",
-            map_type, attr->is_locked_host, attr->is_locked_device);
+        (attr->is_locked_device && (map_type != DEV_SVM_MAP_HOST))) {
+        devmm_drv_err(
+            "Map_type not match with va_attr. (map_type=%u; is_locked_host=%d; is_locked_device=%d)\n", map_type,
+            attr->is_locked_host, attr->is_locked_device);
         return -EINVAL;
     }
 
@@ -1771,14 +1899,15 @@ static int devmm_svm_mem_map_para_check(struct devmm_devid *devids,
     }
 
     if (devmm_is_host_agent(devids->devid) && (attr->is_locked_host || attr->is_svm_remote_maped)) {
-        devmm_drv_run_info("Not support host agent. (devid=%u; map_type=%u; locked_host=%u; remote_maped=%u)\n",
-            devids->devid, map_type, attr->is_locked_host, attr->is_svm_remote_maped);
+        devmm_drv_run_info(
+            "Not support host agent. (devid=%u; map_type=%u; locked_host=%u; remote_maped=%u)\n", devids->devid,
+            map_type, attr->is_locked_host, attr->is_svm_remote_maped);
         return -EOPNOTSUPP;
     }
 
     if (proc_type != DEVDRV_PROCESS_CP1) {
-        devmm_drv_run_info("Svm mem not support current proc_type. (devid=%u; proc_type=%u)\n",
-            devids->devid, proc_type);
+        devmm_drv_run_info(
+            "Svm mem not support current proc_type. (devid=%u; proc_type=%u)\n", devids->devid, proc_type);
         return -EOPNOTSUPP;
     }
 
@@ -1792,8 +1921,8 @@ static int devmm_svm_mem_map_para_check(struct devmm_devid *devids,
     return 0;
 }
 
-static int devmm_dev_svm_map_para_check(struct devmm_devid *devids,
-    struct devmm_mem_remote_map_para *map_para, struct devmm_memory_attributes *attr)
+static int devmm_dev_svm_map_para_check(
+    struct devmm_devid *devids, struct devmm_mem_remote_map_para *map_para, struct devmm_memory_attributes *attr)
 {
     int ret;
 
@@ -1805,14 +1934,15 @@ static int devmm_dev_svm_map_para_check(struct devmm_devid *devids,
     if ((devids->devid < DEVMM_MAX_DEVICE_NUM) && (devids->devid != SVM_HOST_AGENT_ID)) {
         if (attr->is_svm_huge) {
             if (devmm_dev_capability_support_bar_huge_mem(devids->devid) == false) {
-                devmm_drv_run_info("Not support pcie bar huge remote map. (svm_addr=0x%llx; devid=%d)\n",
-                    map_para->src_va, devids->devid);
+                devmm_drv_run_info(
+                    "Not support pcie bar huge remote map. (svm_addr=0x%llx; devid=%d)\n", map_para->src_va,
+                    devids->devid);
                 return -EOPNOTSUPP;
             }
         } else {
             if (devmm_dev_capability_support_bar_mem(devids->devid) == false) {
-                devmm_drv_run_info("Not support pcie bar remote map. (svm_addr=0x%llx; devid=%d)\n",
-                    map_para->src_va, devids->devid);
+                devmm_drv_run_info(
+                    "Not support pcie bar remote map. (svm_addr=0x%llx; devid=%d)\n", map_para->src_va, devids->devid);
                 return -EOPNOTSUPP;
             }
         }
@@ -1821,8 +1951,8 @@ static int devmm_dev_svm_map_para_check(struct devmm_devid *devids,
     return 0;
 }
 
-static int devmm_local_dev_map_para_check(struct devmm_devid *devids,
-    struct devmm_mem_remote_map_para *map_para, struct devmm_memory_attributes *attr)
+static int devmm_local_dev_map_para_check(
+    struct devmm_devid *devids, struct devmm_mem_remote_map_para *map_para, struct devmm_memory_attributes *attr)
 {
     u32 map_type = map_para->map_type;
     u32 proc_type = map_para->proc_type;
@@ -1831,8 +1961,7 @@ static int devmm_local_dev_map_para_check(struct devmm_devid *devids,
     u64 size = map_para->size;
 
     if (devmm_is_host_agent(devids->devid)) {
-        devmm_drv_err("Map type not support host agent. (devid=%u; map_type=%u)\n",
-            devids->devid, map_type);
+        devmm_drv_err("Map type not support host agent. (devid=%u; map_type=%u)\n", devids->devid, map_type);
         return -EOPNOTSUPP;
     }
 
@@ -1852,14 +1981,14 @@ static int devmm_local_dev_map_para_check(struct devmm_devid *devids,
     }
 
     if ((size == 0) || (KA_MM_PAGE_ALIGNED(size) == false)) {
-        devmm_drv_err("Size is zero or not page alignment. (size=0x%llx; page_size=%lu)\n",
-            size, KA_MM_PAGE_SIZE);
+        devmm_drv_err("Size is zero or not page alignment. (size=0x%llx; page_size=%lu)\n", size, KA_MM_PAGE_SIZE);
         return -EINVAL;
     }
 
     if (proc_type != DEVDRV_PROCESS_HCCP) {
-        devmm_drv_run_info("Local dev not support current proc_type. (current_proc_type=%u; expect_proc_type=%u)\n",
-            proc_type, DEVDRV_PROCESS_HCCP);
+        devmm_drv_run_info(
+            "Local dev not support current proc_type. (current_proc_type=%u; expect_proc_type=%u)\n", proc_type,
+            DEVDRV_PROCESS_HCCP);
         return -EOPNOTSUPP;
     }
 
@@ -1871,8 +2000,8 @@ static int devmm_local_dev_map_para_check(struct devmm_devid *devids,
     return 0;
 }
 
-static int devmm_local_host_map_para_check(struct devmm_devid *devids,
-    struct devmm_mem_remote_map_para *map_para, struct devmm_memory_attributes *attr)
+static int devmm_local_host_map_para_check(
+    struct devmm_devid *devids, struct devmm_mem_remote_map_para *map_para, struct devmm_memory_attributes *attr)
 {
     u32 map_type = map_para->map_type;
     u32 proc_type = map_para->proc_type;
@@ -1885,20 +2014,21 @@ static int devmm_local_host_map_para_check(struct devmm_devid *devids,
     }
 
     if (devmm_is_host_agent(devids->devid)) {
-        devmm_drv_run_info("Map type not support host agent. (devid=%u; map_type=%u)\n",
-            devids->devid, map_type);
+        devmm_drv_run_info("Map type not support host agent. (devid=%u; map_type=%u)\n", devids->devid, map_type);
         return -EOPNOTSUPP;
     }
 
     if ((src_va == 0) || (KA_MM_PAGE_ALIGNED(src_va) == false) || (size == 0)) {
-        devmm_drv_err("Src_va is zero or not page alignment, or map size is zero. (src_va=0x%llx; "
-            "page_size=%lu; size=%llu)\n", src_va, KA_MM_PAGE_SIZE, size);
+        devmm_drv_err(
+            "Src_va is zero or not page alignment, or map size is zero. (src_va=0x%llx; "
+            "page_size=%lu; size=%llu)\n",
+            src_va, KA_MM_PAGE_SIZE, size);
         return -EINVAL;
     }
 
     if (proc_type != DEVDRV_PROCESS_CP1) {
-        devmm_drv_run_info("Local host not support current proc_type. (devid=%u; proc_type=%u)\n",
-            devids->devid, proc_type);
+        devmm_drv_run_info(
+            "Local host not support current proc_type. (devid=%u; proc_type=%u)\n", devids->devid, proc_type);
         return -EOPNOTSUPP;
     }
 
@@ -1920,18 +2050,18 @@ static int devmm_local_host_map_para_check(struct devmm_devid *devids,
             return -EOPNOTSUPP;
         }
     } else {
-        devmm_drv_run_info("Local host Not support current map type. (dev_id=%u; map_type=%u)\n",
-            devids->devid, map_type);
+        devmm_drv_run_info(
+            "Local host Not support current map type. (dev_id=%u; map_type=%u)\n", devids->devid, map_type);
         return -EOPNOTSUPP;
     }
     return 0;
 }
 
-typedef int (*devmm_remote_map_para_check)(struct devmm_devid *devids,
-    struct devmm_mem_remote_map_para *map_para, struct devmm_memory_attributes *attr);
+typedef int (*devmm_remote_map_para_check)(
+    struct devmm_devid *devids, struct devmm_mem_remote_map_para *map_para, struct devmm_memory_attributes *attr);
 
-static int devmm_check_map_para(struct devmm_devid *devids, struct devmm_memory_attributes *attr,
-    struct devmm_mem_remote_map_para *map_para)
+static int devmm_check_map_para(
+    struct devmm_devid *devids, struct devmm_memory_attributes *attr, struct devmm_mem_remote_map_para *map_para)
 {
     static const devmm_remote_map_para_check map_para_check[DEVMM_MAX_MEM_TYPE] = {
         [DEVMM_LOCAL_HOST_MEM] = devmm_local_host_map_para_check,
@@ -1950,8 +2080,8 @@ static int devmm_check_map_para(struct devmm_devid *devids, struct devmm_memory_
     return map_para_check[mem_type](devids, map_para, attr);
 }
 
-static int devmm_mem_remote_map_of_local_mem(struct devmm_svm_process *svm_proc, struct devmm_devid *devids,
-    struct devmm_mem_remote_map_para *map_para)
+static int devmm_mem_remote_map_of_local_mem(
+    struct devmm_svm_process *svm_proc, struct devmm_devid *devids, struct devmm_mem_remote_map_para *map_para)
 {
     struct devmm_shm_pro_node *shm_pro_node = NULL;
     struct devmm_shm_node *node = NULL;
@@ -1967,16 +2097,16 @@ static int devmm_mem_remote_map_of_local_mem(struct devmm_svm_process *svm_proc,
     result = devmm_judge_shm_node_overlap(&shm_pro_node->shm_head, map_para, devids);
     if (result == true) {
         ka_task_up(shm_sem);
-        devmm_drv_err("Local memory has been mapped. (hostPtr=0x%llx; size=%llu; devid=%u; map_type=%u)\n",
-            map_para->src_va, map_para->size, devids->devid, map_type);
+        devmm_drv_err(
+            "Local memory has been mapped. (hostPtr=0x%llx; size=%llu; devid=%u; map_type=%u)\n", map_para->src_va,
+            map_para->size, devids->devid, map_type);
         return -EINVAL;
     }
 
     node = devmm_create_shm_node(shm_pro_node, devids, map_para);
     if (node == NULL) {
         ka_task_up(shm_sem);
-        devmm_drv_err("Create shm node error. (src_va=0x%llx; map_type=%u)\n",
-            map_para->src_va, map_type);
+        devmm_drv_err("Create shm node error. (src_va=0x%llx; map_type=%u)\n", map_para->src_va, map_type);
         return -ENOMEM;
     }
     (node->ref)++;
@@ -1988,13 +2118,15 @@ static int devmm_mem_remote_map_of_local_mem(struct devmm_svm_process *svm_proc,
         ret = devmm_map_local_dev_mem_to_host(svm_proc, devids, map_para, node);
     }
 
-    devmm_drv_debug("Remote_map local memory. (src_va=0x%llx; dst_va=0x%llx; size=%llu; devid=%u; map_type=%d)\n",
-        map_para->src_va, map_para->dst_va, map_para->size, devids->devid, map_type);
+    devmm_drv_debug(
+        "Remote_map local memory. (src_va=0x%llx; dst_va=0x%llx; size=%llu; devid=%u; map_type=%d)\n", map_para->src_va,
+        map_para->dst_va, map_para->size, devids->devid, map_type);
 
     ka_task_down(shm_sem);
     (node->ref)--;
     if (ret != 0) {
-        devmm_drv_err_if((ret != -EOPNOTSUPP), "Map shm fail. (src_va=0x%llx; size=%llu; devid=%u; map_type=%u; ret=%d)\n",
+        devmm_drv_err_if(
+            (ret != -EOPNOTSUPP), "Map shm fail. (src_va=0x%llx; size=%llu; devid=%u; map_type=%u; ret=%d)\n",
             map_para->src_va, map_para->size, devids->devid, map_type, ret);
         devmm_destory_shm_node(node);
     }
@@ -2003,8 +2135,9 @@ static int devmm_mem_remote_map_of_local_mem(struct devmm_svm_process *svm_proc,
     return ret;
 }
 
-STATIC int devmm_svm_mem_remote_map(struct devmm_svm_process *svm_proc, struct devmm_devid *devids,
-    struct devmm_mem_remote_map_para *map_para, struct devmm_memory_attributes *attr)
+STATIC int devmm_svm_mem_remote_map(
+    struct devmm_svm_process *svm_proc, struct devmm_devid *devids, struct devmm_mem_remote_map_para *map_para,
+    struct devmm_memory_attributes *attr)
 {
     if (attr->is_locked_host) {
         return devmm_map_master_svm_mem_to_agent(svm_proc, devids, map_para, attr);
@@ -2013,8 +2146,9 @@ STATIC int devmm_svm_mem_remote_map(struct devmm_svm_process *svm_proc, struct d
     }
 }
 
-static int devmm_mem_remote_map_of_svm_mem(struct devmm_svm_process *svm_proc, struct devmm_devid *devids,
-    struct devmm_mem_remote_map_para *map_para, struct devmm_memory_attributes *attr)
+static int devmm_mem_remote_map_of_svm_mem(
+    struct devmm_svm_process *svm_proc, struct devmm_devid *devids, struct devmm_mem_remote_map_para *map_para,
+    struct devmm_memory_attributes *attr)
 {
     u64 page_bitmap_num;
     int ret;
@@ -2024,20 +2158,23 @@ static int devmm_mem_remote_map_of_svm_mem(struct devmm_svm_process *svm_proc, s
 
     ret = devmm_check_and_set_remote_map_state(svm_proc, attr, map_para, devids, page_bitmap_num);
     if (ret != 0) {
-        devmm_drv_err("Map_para is invalid. (src_va=0x%llx; map_size=%llu; devid=%u; bitmap=%u; ret=%d)\n",
-            map_para->src_va, map_para->size, devids->devid, attr->bitmap, ret);
+        devmm_drv_err(
+            "Map_para is invalid. (src_va=0x%llx; map_size=%llu; devid=%u; bitmap=%u; ret=%d)\n", map_para->src_va,
+            map_para->size, devids->devid, attr->bitmap, ret);
         return ret;
     }
 
     ret = devmm_svm_mem_remote_map(svm_proc, devids, map_para, attr);
     if (ret != 0) {
-        devmm_drv_err("Remote_map svm memory fail. (src_va=0x%llx; size=%llu; is_local_host=%u; devid=%u; ret=%d)\n",
+        devmm_drv_err(
+            "Remote_map svm memory fail. (src_va=0x%llx; size=%llu; is_local_host=%u; devid=%u; ret=%d)\n",
             map_para->src_va, map_para->size, attr->is_local_host, devids->devid, ret);
         goto err_exit;
     }
 
-    devmm_drv_debug("Remote_map svm memory. (src_va=0x%llx; size=%llu; is_local_host=%u; devid=%u)\n",
-        map_para->src_va, map_para->size, attr->is_locked_host, devids->devid);
+    devmm_drv_debug(
+        "Remote_map svm memory. (src_va=0x%llx; size=%llu; is_local_host=%u; devid=%u)\n", map_para->src_va,
+        map_para->size, attr->is_locked_host, devids->devid);
     return 0;
 
 err_exit:
@@ -2045,7 +2182,8 @@ err_exit:
     return ret;
 }
 
-STATIC int devmm_host_remap_to_agent_enable_config(struct devmm_svm_process *svm_proc, struct devmm_devid *devids, u32 map_type)
+STATIC int devmm_host_remap_to_agent_enable_config(
+    struct devmm_svm_process *svm_proc, struct devmm_devid *devids, u32 map_type)
 {
     if (!devmm_is_host_agent(devids->devid) && devmm_is_pcie_connect(devids->devid)) {
         ka_semaphore_t *shm_sem = devmm_get_shm_sem(svm_proc, HOST_MEM_MAP_DEV);
@@ -2079,7 +2217,8 @@ STATIC int devmm_host_remap_to_agent_enable_config(struct devmm_svm_process *svm
         ka_task_up(shm_sem);
         if (ret != 0) {
 #ifndef EMU_ST
-            devmm_drv_err_if((ret != -EOPNOTSUPP), "Config txatu fail. (succ_flag=%u; ret=%d)\n", g_mem_info.succ_flag, ret);
+            devmm_drv_err_if(
+                (ret != -EOPNOTSUPP), "Config txatu fail. (succ_flag=%u; ret=%d)\n", g_mem_info.succ_flag, ret);
 #endif
             return ret;
         }
@@ -2090,7 +2229,8 @@ STATIC int devmm_host_remap_to_agent_enable_config(struct devmm_svm_process *svm
 
 static bool devmm_is_local_remote_map(u32 map_type, struct devmm_memory_attributes *attr)
 {
-    return (devmm_is_local_dev_mem_type(map_type) || attr->is_local_host ||
+    return (
+        devmm_is_local_dev_mem_type(map_type) || attr->is_local_host ||
         (attr->is_locked_host && devmm_is_mem_map_by_pcie_th(map_type)));
 }
 
@@ -2107,8 +2247,9 @@ int devmm_ioctl_mem_remote_map(struct devmm_svm_process *svm_proc, struct devmm_
         return -EINVAL;
     }
 
-    devmm_drv_debug("Remote map info. (map_type=%u; proc_type=%u; src_va=0x%llx; dst_va=0x%llx; size=%llu)\n",
-        map_type, map_para->proc_type, map_para->src_va, map_para->dst_va, map_para->size);
+    devmm_drv_debug(
+        "Remote map info. (map_type=%u; proc_type=%u; src_va=0x%llx; dst_va=0x%llx; size=%llu)\n", map_type,
+        map_para->proc_type, map_para->src_va, map_para->dst_va, map_para->size);
 
     if (devmm_is_local_dev_mem_type(map_type) == false) {
         ret = devmm_get_memory_attributes(svm_proc, map_para->src_va, &attr);
@@ -2139,7 +2280,8 @@ int devmm_ioctl_mem_remote_map(struct devmm_svm_process *svm_proc, struct devmm_
         }
     }
 
-    devmm_drv_debug("Remote_map info. (map_type=%u; proc_type=%u; src_va=0x%llx; dst_va=0x%llx; size=%llu; "
+    devmm_drv_debug(
+        "Remote_map info. (map_type=%u; proc_type=%u; src_va=0x%llx; dst_va=0x%llx; size=%llu; "
         "logical_devid=%u; is_local_host=%d; is_locked_host=%d; is_locked_device=%d)\n",
         map_type, map_para->proc_type, map_para->src_va, map_para->dst_va, map_para->size, attr.logical_devid,
         attr.is_local_host, attr.is_locked_host, attr.is_locked_device);
@@ -2151,8 +2293,8 @@ int devmm_ioctl_mem_remote_map(struct devmm_svm_process *svm_proc, struct devmm_
     }
 }
 
-STATIC int devmm_check_unmap_para_of_svm_mem(struct devmm_svm_process *svm_proc,
-    struct devmm_memory_attributes *attr, u64 src_va)
+STATIC int devmm_check_unmap_para_of_svm_mem(
+    struct devmm_svm_process *svm_proc, struct devmm_memory_attributes *attr, u64 src_va)
 {
     if ((src_va & (attr->page_size - 1)) != 0) {
         devmm_drv_err("Src_va is not page alignment. (src_va=0x%llx; page_size=%u)\n", src_va, attr->page_size);
@@ -2177,15 +2319,16 @@ STATIC int devmm_check_unmap_para(u32 unmap_type)
     return 0;
 }
 
-static void devmm_unmap_local_host_mem(struct devmm_svm_process *svm_proc, struct devmm_devid *devids,
-    struct devmm_shm_node *node)
+static void devmm_unmap_local_host_mem(
+    struct devmm_svm_process *svm_proc, struct devmm_devid *devids, struct devmm_shm_node *node)
 {
     int ret;
 
     ret = devmm_local_host_unmap(svm_proc, devids, node);
     if (ret != 0) {
-        devmm_drv_warn("Send message fail. (src_va=0x%llx; size=%llu; dst_va=0x%llx; devid=%u; ret=%d)\n",
-            node->src_va, node->size, node->dst_va, devids->devid, ret);
+        devmm_drv_warn(
+            "Send message fail. (src_va=0x%llx; size=%llu; dst_va=0x%llx; devid=%u; ret=%d)\n", node->src_va,
+            node->size, node->dst_va, devids->devid, ret);
         /* host should unpin page when msg send failed */
     }
     devmm_dma_unmap_pages_by_node(node);
@@ -2198,8 +2341,8 @@ static void devmm_unmap_local_host_mem(struct devmm_svm_process *svm_proc, struc
     }
 }
 
-static void devmm_unmap_local_dev_mem(struct devmm_svm_process *svm_proc,
-    struct devmm_devid *devids, struct devmm_shm_node *node)
+static void devmm_unmap_local_dev_mem(
+    struct devmm_svm_process *svm_proc, struct devmm_devid *devids, struct devmm_shm_node *node)
 {
     devmm_unmap_mem(svm_proc, node->dst_va, node->size);
     devmm_put_remote_page(svm_proc, devids, node);
@@ -2220,16 +2363,18 @@ static void devmm_get_local_mem_unmap_type_info(u32 unmap_type, u32 *unmap_type_
     }
 }
 
-static int _devmm_unmap_local_mem(struct devmm_svm_process *svm_proc, struct devmm_devid *devids,
-    struct devmm_shm_node *node)
+static int _devmm_unmap_local_mem(
+    struct devmm_svm_process *svm_proc, struct devmm_devid *devids, struct devmm_shm_node *node)
 {
     if (node->ref > 0) {
-        devmm_drv_debug("Shm still used by device. (src_va=0x%llx; src_va=0x%llx; ref=%llu; map_type=%u; devid=%u)\n",
-            node->src_va, node->dst_va, node->ref, node->map_type, devids->devid);
+        devmm_drv_debug(
+            "Shm still used by device. (src_va=0x%llx; src_va=0x%llx; ref=%llu; map_type=%u; devid=%u)\n", node->src_va,
+            node->dst_va, node->ref, node->map_type, devids->devid);
         return -EBUSY;
     }
-    devmm_drv_debug("Unmap local mem. (src_va=0x%llx; dst_va=0x%llx; unmap_type=%u; size=%llu; devid=%u)\n",
-        node->src_va, node->dst_va, node->map_type, node->size, devids->devid);
+    devmm_drv_debug(
+        "Unmap local mem. (src_va=0x%llx; dst_va=0x%llx; unmap_type=%u; size=%llu; devid=%u)\n", node->src_va,
+        node->dst_va, node->map_type, node->size, devids->devid);
 
     if ((node->map_type == HOST_MEM_MAP_DEV) || devmm_is_mem_map_by_pcie_th(node->map_type)) {
         devmm_unmap_local_host_mem(svm_proc, devids, node);
@@ -2239,8 +2384,9 @@ static int _devmm_unmap_local_mem(struct devmm_svm_process *svm_proc, struct dev
     return 0;
 }
 
-static int devmm_unmap_local_mem(struct devmm_svm_process *svm_proc, struct devmm_devid *devids,
-    struct devmm_mem_remote_unmap_para *unmap_para, u32 unmap_type)
+static int devmm_unmap_local_mem(
+    struct devmm_svm_process *svm_proc, struct devmm_devid *devids, struct devmm_mem_remote_unmap_para *unmap_para,
+    u32 unmap_type)
 {
     struct devmm_shm_pro_node *shm_pro_node = NULL;
     struct devmm_shm_node *node = NULL;
@@ -2259,8 +2405,8 @@ static int devmm_unmap_local_mem(struct devmm_svm_process *svm_proc, struct devm
     return ret;
 }
 
-static int devmm_mem_remote_unmap_of_local_mem(struct devmm_svm_process *svm_proc, struct devmm_devid *devids,
-    struct devmm_mem_remote_unmap_para *unmap_para)
+static int devmm_mem_remote_unmap_of_local_mem(
+    struct devmm_svm_process *svm_proc, struct devmm_devid *devids, struct devmm_mem_remote_unmap_para *unmap_para)
 {
     ka_semaphore_t *shm_sem = NULL;
     u32 unmap_type_info[DEVMM_LOCAL_MEM_MAX_NUM];
@@ -2277,18 +2423,20 @@ static int devmm_mem_remote_unmap_of_local_mem(struct devmm_svm_process *svm_pro
             return ret;
         }
     }
-    devmm_drv_err("Get shm node fail. (host_va=0x%llx; devid=%u; unmap_type=%u; ret=%d)\n",
-        unmap_para->src_va, devids->devid, unmap_para->map_type, ret);
+    devmm_drv_err(
+        "Get shm node fail. (host_va=0x%llx; devid=%u; unmap_type=%u; ret=%d)\n", unmap_para->src_va, devids->devid,
+        unmap_para->map_type, ret);
     return ret;
 }
 
-static int devmm_svm_mem_remote_unmap(struct devmm_svm_process *svm_proc, struct devmm_devid *devids,
-    struct devmm_memory_attributes *attr, u64 src_va, u64 size)
+static int devmm_svm_mem_remote_unmap(
+    struct devmm_svm_process *svm_proc, struct devmm_devid *devids, struct devmm_memory_attributes *attr, u64 src_va,
+    u64 size)
 {
     if (attr->is_locked_host) {
         return devmm_locked_host_unmap(svm_proc, devids, src_va, size, src_va);
     } else {
-        return devmm_unmap_mem(svm_proc, src_va, size);
+        return devmm_check_and_unmap_mem(svm_proc, src_va, size);
     }
 }
 
@@ -2305,9 +2453,8 @@ STATIC u64 devmm_get_remote_map_size_from_va(struct devmm_svm_heap *heap, u32 *b
     alloc_page_num = devmm_get_page_num_from_va(heap, va);
     seek_page_num = alloc_page_num - ((va - alloced_va) / heap->chunk_page_size);
 
-    for (i = 1; i < seek_page_num; i++) {  /* va is already check */
-        if (!devmm_page_bitmap_is_remote_mapped(bitmap + i) ||
-            devmm_page_bitmap_is_remote_mapped_first(bitmap + i)) {
+    for (i = 1; i < seek_page_num; i++) { /* va is already check */
+        if (!devmm_page_bitmap_is_remote_mapped(bitmap + i) || devmm_page_bitmap_is_remote_mapped_first(bitmap + i)) {
             break;
         }
     }
@@ -2316,8 +2463,9 @@ STATIC u64 devmm_get_remote_map_size_from_va(struct devmm_svm_heap *heap, u32 *b
     return size;
 }
 
-static int devmm_mem_remote_unmap_of_svm_mem(struct devmm_svm_process *svm_proc, struct devmm_devid *devids,
-    struct devmm_mem_remote_unmap_para *unmap_para, struct devmm_memory_attributes *attr)
+static int devmm_mem_remote_unmap_of_svm_mem(
+    struct devmm_svm_process *svm_proc, struct devmm_devid *devids, struct devmm_mem_remote_unmap_para *unmap_para,
+    struct devmm_memory_attributes *attr)
 {
     struct devmm_svm_heap *heap = NULL;
     u64 page_bitmap_num, size;
@@ -2326,8 +2474,8 @@ static int devmm_mem_remote_unmap_of_svm_mem(struct devmm_svm_process *svm_proc,
 
     ret = devmm_check_unmap_para_of_svm_mem(svm_proc, attr, unmap_para->src_va);
     if (ret != 0) {
-        devmm_drv_err("Check unmap_para fail. (src_va=0x%llx; devid=%u; ret=%d)\n",
-            unmap_para->src_va, devids->devid, ret);
+        devmm_drv_err(
+            "Check unmap_para fail. (src_va=0x%llx; devid=%u; ret=%d)\n", unmap_para->src_va, devids->devid, ret);
         return ret;
     }
 
@@ -2351,8 +2499,9 @@ static int devmm_mem_remote_unmap_of_svm_mem(struct devmm_svm_process *svm_proc,
 
     ret = devmm_svm_mem_remote_unmap(svm_proc, devids, attr, unmap_para->src_va, size);
     if (ret != 0) {
-        devmm_drv_err("Unmap mem fail. (src_va=0x%llx; size=%llu; is_locked_host=%u; devid=%u; ret=%d)\n",
-            unmap_para->src_va, size, attr->is_locked_host, devids->devid, ret);
+        devmm_drv_err(
+            "Unmap mem fail. (src_va=0x%llx; size=%llu; is_locked_host=%u; devid=%u; ret=%d)\n", unmap_para->src_va,
+            size, attr->is_locked_host, devids->devid, ret);
         return ret;
     }
 
@@ -2363,8 +2512,9 @@ static int devmm_mem_remote_unmap_of_svm_mem(struct devmm_svm_process *svm_proc,
         devmm_vmmas_occupy_dec(&heap->vmma_mng, unmap_para->src_va, size);
     }
 
-    devmm_drv_debug("Unmap svm mem. (src_va=0x%llx; size=%llu; is_locked_host=%u; devid=%u)\n",
-        unmap_para->src_va, size, attr->is_locked_host, devids->devid);
+    devmm_drv_debug(
+        "Unmap svm mem. (src_va=0x%llx; size=%llu; is_locked_host=%u; devid=%u)\n", unmap_para->src_va, size,
+        attr->is_locked_host, devids->devid);
 
     return 0;
 }
@@ -2395,9 +2545,10 @@ int devmm_ioctl_mem_remote_unmap(struct devmm_svm_process *svm_proc, struct devm
         devmm_update_devids(&devids, attr.logical_devid, attr.devid, attr.vfid);
     }
 
-    devmm_drv_debug("Remote_unmap info. (src_va=0x%llx; unmap_type=%u; logical_devid=%u; "
-        "is_local_host=%d; is_locked_host=%d; is_locked_device=%d)\n", unmap_para->src_va,
-        unmap_type, attr.logical_devid, attr.is_local_host, attr.is_locked_host,
+    devmm_drv_debug(
+        "Remote_unmap info. (src_va=0x%llx; unmap_type=%u; logical_devid=%u; "
+        "is_local_host=%d; is_locked_host=%d; is_locked_device=%d)\n",
+        unmap_para->src_va, unmap_type, attr.logical_devid, attr.is_local_host, attr.is_locked_host,
         attr.is_locked_device);
     if (devmm_is_local_remote_map(unmap_type, &attr)) {
         return devmm_mem_remote_unmap_of_local_mem(svm_proc, &devids, unmap_para);
@@ -2435,7 +2586,8 @@ void devmm_try_destroy_remote_map_nodes(struct devmm_svm_process *svm_proc, u32 
         }
         /* try destory_shm_node */
         if (!ka_list_empty_careful(&shm_pro_node->shm_head.list)) {
-            ka_list_for_each_safe(pos, n, &shm_pro_node->shm_head.list) {
+            ka_list_for_each_safe(pos, n, &shm_pro_node->shm_head.list)
+            {
                 node = ka_list_entry(pos, struct devmm_shm_node, list);
                 if ((node->logical_devid == log_dev) && (node->dev_id == phy_dev) && (node->vfid == vfid)) {
                     ret = _devmm_unmap_local_mem(svm_proc, &devids, node);
@@ -2458,8 +2610,8 @@ void devmm_try_destroy_remote_map_nodes(struct devmm_svm_process *svm_proc, u32 
     return;
 }
 
-void devmm_destory_remote_map_mem_by_devid(struct devmm_svm_process *svm_proc,
-    struct devmm_svm_heap *heap, u32 logical_devid)
+void devmm_destory_remote_map_mem_by_devid(
+    struct devmm_svm_process *svm_proc, struct devmm_svm_heap *heap, u32 logical_devid)
 {
     u64 page_cnt = heap->heap_size / heap->chunk_page_size;
     u32 *bitmap = heap->page_bitmap;

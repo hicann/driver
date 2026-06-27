@@ -19,10 +19,12 @@
 #include "svm_master_mem_share.h"
 #include "svm_shmem_node.h"
 #include "svm_dev_res_mng.h"
-
+#ifndef UVM_OPEN
+#include "pbl_uda.h"
+#endif
 static KA_TASK_DEFINE_RWLOCK(mng_rwlock);
 static struct devmm_dev_res_mng *dev_res_mng[SVM_DEV_INST_MAX_NUM];
-   
+
 void devmm_init_task_dev_res_info(struct devmm_task_dev_res_info *info)
 {
     KA_INIT_LIST_HEAD(&info->head);
@@ -80,8 +82,7 @@ static void devmm_uninit_dev_msg_client(struct devmm_dev_msg_client *msg_client)
     msg_client->msg_chan = NULL;
 }
 
-static int devmm_dev_res_mng_res_init(struct devmm_dev_res_mng *mng,
-    struct svm_id_inst *id_inst, ka_device_t *dev)
+static int devmm_dev_res_mng_res_init(struct devmm_dev_res_mng *mng, struct svm_id_inst *id_inst, ka_device_t *dev)
 {
     mng->id_inst = *id_inst;
     mng->dev = dev;

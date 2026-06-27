@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2025. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -27,12 +27,15 @@ int apm_msg_send(u32 udevid, struct apm_msg_header *header, u32 size)
 
     ret = devdrv_common_msg_send(udevid, (void *)header, size, size, &real_out_len, DEVDRV_COMMON_MSG_SMMU);
     if (ret != 0) {
-        apm_err("Msg send fail. (ret=%d; udevid=%u; msg_type=%u)\n", ret, udevid, header->msg_type);
+        apm_err_if(
+            (header->msg_type != APM_MSG_TYPE_MASTER_DESTROY), "Msg send fail. (ret=%d; udevid=%u; msg_type=%u)\n", ret,
+            udevid, header->msg_type);
         return ret;
     }
 
     if (header->result != 0) {
-        apm_warn("Msg process result warn. (result=%d; udevid=%u; msg_type=%u)\n", header->result, udevid, header->msg_type);
+        apm_warn(
+            "Msg process result warn. (result=%d; udevid=%u; msg_type=%u)\n", header->result, udevid, header->msg_type);
         return header->result;
     }
 
@@ -51,9 +54,5 @@ int apm_host_msg_init(void)
 }
 DECLAER_FEATURE_AUTO_INIT(apm_host_msg_init, FEATURE_LOADER_STAGE_2);
 
-void apm_host_msg_uninit(void)
-{
-    (void)devdrv_unregister_common_msg_client(0, &apm_host_msg_client);
-}
+void apm_host_msg_uninit(void) { (void)devdrv_unregister_common_msg_client(0, &apm_host_msg_client); }
 DECLAER_FEATURE_AUTO_UNINIT(apm_host_msg_uninit, FEATURE_LOADER_STAGE_2);
-

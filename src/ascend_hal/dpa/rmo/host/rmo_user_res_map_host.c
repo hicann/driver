@@ -40,8 +40,9 @@ static pid_t dpa_get_dev_pid(uint32_t dev_id)
     hostpidinfo.vfid = 0;
     ret = halQueryDevpid(hostpidinfo, &devpid);
     if (ret != 0) {
-        rmo_err("Query devpid failed. (devId=%u; vfid=%u; hostpid=%d; proc_type=%u; ret=%d).\n",
-            dev_id, 0, getpid(), hostpidinfo.proc_type, ret);
+        rmo_err(
+            "Query devpid failed. (devId=%u; vfid=%u; hostpid=%d; proc_type=%u; ret=%d).\n", dev_id, 0, getpid(),
+            hostpidinfo.proc_type, ret);
         return ret;
     }
 
@@ -77,8 +78,8 @@ static drvError_t dpa_get_event_grpId(uint32_t devid, uint32_t *grp_id, const ch
     return ret;
 }
 
-static drvError_t dpa_fill_event(struct event_summary *event_info, uint32_t devid,
-    uint32_t subevent_id, const char *msg, uint32_t msg_len)
+static drvError_t dpa_fill_event(
+    struct event_summary *event_info, uint32_t devid, uint32_t subevent_id, const char *msg, uint32_t msg_len)
 {
     struct event_sync_msg *msg_head = NULL;
     drvError_t ret;
@@ -147,8 +148,8 @@ drvError_t dpa_res_map(unsigned int dev_id, struct res_map_info *res_info, unsig
 
     if ((reply.reply_len != reply.buf_len) || (result.ret != 0)) {
         dpa_clear_event(&event_info);
-        rmo_err("Remote map failed. (reply_len=%u; buf_len=%u; result=%d)\n",
-            reply.reply_len, reply.buf_len, result.ret);
+        rmo_err(
+            "Remote map failed. (reply_len=%u; buf_len=%u; result=%d)\n", reply.reply_len, reply.buf_len, result.ret);
         return DRV_ERROR_INNER_ERR;
     }
 
@@ -190,8 +191,8 @@ drvError_t dpa_res_unmap(unsigned int dev_id, struct res_map_info *res_info)
 
     if ((reply.reply_len != reply.buf_len) || (result.ret != 0)) {
         dpa_clear_event(&event_info);
-        rmo_err("Remote unmap failed. (reply_len=%u; buf_len=%u; result=%d)\n",
-            reply.reply_len, reply.buf_len, result.ret);
+        rmo_err(
+            "Remote unmap failed. (reply_len=%u; buf_len=%u; result=%d)\n", reply.reply_len, reply.buf_len, result.ret);
         return DRV_ERROR_INNER_ERR;
     }
 

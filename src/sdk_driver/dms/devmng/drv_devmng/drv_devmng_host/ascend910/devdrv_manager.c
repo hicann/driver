@@ -86,11 +86,10 @@
 #include "ka_hashtable_pub.h"
 #include "ka_common_pub.h"
 #include "ka_pci_pub.h"
+#include "ka_feature_pub.h"
 
 #ifndef DEVMNG_UT
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 17, 0)
 #include "pbl/pbl_kernel_adapt.h"
-#endif
 #endif
 #include "devdrv_manager.h"
 #include "devdrv_manager_ioctl.h"
@@ -523,9 +522,9 @@ STATIC struct devdrv_manager_context *devdrv_manager_context_init(void)
 
     dev_manager_context->pid = ka_task_get_current_pid();
     dev_manager_context->tgid = ka_task_get_current_tgid();
-    dev_manager_context->task = current;
+    dev_manager_context->task = ka_task_get_current();
     dev_manager_context->start_time = ka_task_get_current_starttime();
-    dev_manager_context->real_start_time = get_start_time(current);
+    dev_manager_context->real_start_time = get_start_time(ka_task_get_current());
     dev_manager_context->mnt_ns = ka_task_get_current_mnt_ns();
     dev_manager_context->pid_ns = ka_task_get_current_pid_ns();
 
@@ -561,8 +560,10 @@ STATIC int devdrv_manager_open(ka_inode_t *inode, ka_file_t *filep)
     filep->private_data = dev_manager_context;
 
 #ifndef CFG_FEATURE_APM_SUPP_PID
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 17, 0)) && defined(CFG_HOST_ENV)
-    devdrv_check_pid_map_process_sign(dev_manager_context->tgid, dev_manager_context->start_time);
+#if defined(CFG_HOST_ENV)
+    if (ka_feature_is_enable()) {
+        devdrv_check_pid_map_process_sign(dev_manager_context->tgid, dev_manager_context->start_time);
+    }
 #endif
 #endif
     return 0;
@@ -850,12 +851,6 @@ STATIC int devdrv_get_board_info_from_dev(unsigned int dev_id, struct devdrv_boa
         return -ENODEV;
     }
 
-    ret = dms_hotreset_task_cnt_increase(dev_id);
-    if (ret != 0) {
-        devdrv_drv_err("Hotreset task cnt increase failed. (phy_id=%u; ret=%d)\n", dev_id, ret);
-        return ret;
-    }
-
     ka_base_atomic_inc(&dev_info->occupy_ref);
     if (dev_info->status == DEVINFO_STATUS_REMOVED) {
         devdrv_drv_warn("Device has been reset. (phy_id=%u)\n", dev_id);
@@ -878,13 +873,72 @@ STATIC int devdrv_get_board_info_from_dev(unsigned int dev_id, struct devdrv_boa
 
 OCCUPY_AND_TASK_CNT_OUT:
     ka_base_atomic_dec(&dev_info->occupy_ref);
-    dms_hotreset_task_cnt_decrease(dev_id);
     return ret;
+}
+
+STATIC int dms_get_slot_id_by_dmi(unsigned int dev_id, unsigned int *slot_id)
+{
+    unsigned long long product_type;
+    ka_pci_dev_t *pci_pdev = NULL;
+    int ret;
+
+    ret = soc_resmng_dev_get_key_value(dev_id, "PRODUCT_TYPE", &product_type);
+    if (ret != 0) {
+        devdrv_drv_err("Get product type failed. (dev_id=%u, ret=%d)\n", dev_id, ret);
+        return ret;
+    }
+
+    if (product_type == 0x3) { /* 0x3: pcie card */
+        pci_pdev = hal_kernel_devdrv_get_pci_pdev_by_devid(dev_id);
+        if (pci_pdev == NULL) {
+            devdrv_drv_err("Failed to obtain the pci_pdev. (dev_id=%u)\n", dev_id);
+            return -ENODEV;
+        }
+
+        ret = ka_driver_dmi_find_devid(pci_pdev, DMI_DEV_TYPE_DEV_SLOT, slot_id);
+        if (ret != 0) {
+            devdrv_drv_ex_notsupport_err(ret, "Failed to find the device by DMI. (dev_id=%u; ret=%d)\n", dev_id, ret);
+            return ret;
+        }
+    }
+
+    return 0;
+}
+
+STATIC int dms_host_set_slot_id(u32 dev_id, u32 slot_id)
+{
+    struct devdrv_manager_msg_info dev_manager_msg_info = {{0}, {0}};
+    int out_len = 0;
+    int ret;
+
+    dev_manager_msg_info.header.msg_id = DEVDRV_MANAGER_CHAN_H2D_HOST_SET_SLOT_ID;
+    dev_manager_msg_info.header.valid = DEVDRV_MANAGER_MSG_VALID;
+    dev_manager_msg_info.header.result = (u16)DEVDRV_MANAGER_MSG_INVALID_RESULT;
+    dev_manager_msg_info.header.dev_id = dev_id;
+    *(u32 *)dev_manager_msg_info.payload = slot_id;
+
+    ret = devdrv_common_msg_send(dev_id, (void *)&dev_manager_msg_info, sizeof(struct devdrv_manager_msg_info),
+        sizeof(struct devdrv_manager_msg_info), (u32 *)&out_len, DEVDRV_COMMON_MSG_DEVDRV_MANAGER);
+    if (ret != 0) {
+        devdrv_drv_err("Send msg fail. (dev_id=%u; ret=%d)\n", dev_id, ret);
+        return -EAGAIN;
+    }
+    if (out_len != sizeof(struct devdrv_manager_msg_head)) {
+        devdrv_drv_err("Send msg out_len invalid. (dev_id=%u; out_len=%d)\n", dev_id, out_len);
+        return -EAGAIN;
+    }
+    if (dev_manager_msg_info.header.result != 0) {
+        devdrv_drv_err("Send msg header result fail. (dev_id=%u; result=%u)\n",
+            dev_id, dev_manager_msg_info.header.result);
+        return -EAGAIN;
+    }
+    return 0;
 }
 
 STATIC int devdrv_save_board_info_in_host(unsigned int dev_id)
 {
     int ret;
+    u32 chip_type;
     struct devdrv_board_info_cache *board_info = NULL;
 
     if (g_devdrv_board_info[dev_id] == NULL) {
@@ -901,6 +955,21 @@ STATIC int devdrv_save_board_info_in_host(unsigned int dev_id)
         }
 
         g_devdrv_board_info[dev_id] = board_info;
+
+        chip_type = uda_get_chip_type(dev_id);
+        if ((chip_type == HISI_CLOUD_V4) || (chip_type == HISI_CLOUD_V5) || (chip_type == HISI_MINI_V4)) {
+            ret = dms_get_slot_id_by_dmi(dev_id, &g_devdrv_board_info[dev_id]->slot_id);
+            if (ret != 0) {
+                devdrv_drv_ex_notsupport_err(ret, "Failed to obtain the pci_pdev. (dev_id=%u; ret=%d)\n", dev_id, ret);
+                goto release_board_info;
+            }
+
+            ret = dms_host_set_slot_id(dev_id, g_devdrv_board_info[dev_id]->slot_id);
+            if (ret != 0) {
+                devdrv_drv_ex_notsupport_err(ret, "Failed to set the slot id. (dev_id=%u; ret=%d)\n", dev_id, ret);
+                goto release_board_info;
+            }
+        }
     }
 
     return 0;
@@ -911,10 +980,26 @@ release_board_info:
     return ret;
 }
 
+STATIC void devdrv_board_info_init(unsigned int dev_id)
+{
+    u32 task_cnt = 0;
+
+    /* retry times: 10 */
+    while (task_cnt < 10) {
+        if (devdrv_save_board_info_in_host(dev_id) == 0) {
+            devdrv_drv_info("succeed to save board info into host. (dev_id=%u; task_cnt=%u; board_id=%u; pcb_id=%u; bom_id=%u; slot_id=%u)\n",
+                dev_id, task_cnt, g_devdrv_board_info[dev_id]->board_id, g_devdrv_board_info[dev_id]->pcb_id,
+                g_devdrv_board_info[dev_id]->bom_id, g_devdrv_board_info[dev_id]->slot_id);
+            return;
+        }
+        /* Check interval: 2 seconds */
+        ka_system_ssleep(2);
+        task_cnt++;
+    }
+}
+
 int devdrv_manager_register(struct devdrv_info *dev_info)
 {
-    int ret;
-
     if (dev_info == NULL) {
         devdrv_drv_err("devdrv manager has not initialized\n");
         return -EINVAL;
@@ -941,16 +1026,19 @@ int devdrv_manager_register(struct devdrv_info *dev_info)
         goto devinfo_unregister_client;
     }
 
+    devdrv_board_info_init(dev_info->dev_id);
+
     if (dms_device_register(dev_info)) {
         devdrv_drv_err("Dms device register failed. (dev_id=%u)\n", dev_info->dev_id);
         goto devinfo_unregister_client;
     }
 
-    ret = adap_set_module_init_finish(dev_info->dev_id, DEVDRV_HOST_MODULE_DEVMNG);
-    if (ret) {
+#ifndef CFG_FEATURE_UB
+    if (adap_set_module_init_finish(dev_info->dev_id, DEVDRV_HOST_MODULE_DEVMNG)) {
         devdrv_drv_err("set module init finish failed, dev_id = %u\n", dev_info->dev_id);
         goto devinfo_unregister_client;
     }
+#endif
 
     return 0;
 devinfo_unregister_client:
@@ -1022,6 +1110,7 @@ STATIC int devdrv_manager_device_ready_info(struct devdrv_info *dev_info, struct
     dev_info->vector_core_num = drv_info->vector_core_num;
     dev_info->vector_core_freq = drv_info->vector_core_freq;
     dev_info->aicore_bitmap = drv_info->aicore_bitmap;
+    dev_info->vector_core_bitmap = drv_info->vector_core_bitmap;
 
     dev_info->chip_id = drv_info->chip_id;
     dev_info->multi_chip = drv_info->multi_chip;
@@ -1049,11 +1138,14 @@ STATIC int devdrv_manager_device_ready_info(struct devdrv_info *dev_info, struct
     devdrv_drv_info("device: %u"
                     "ai cpu num: %d, "
                     "ai cpu broken bitmap: 0x%x, "
-                    "ai core num: %d,"
+                    "ai core num: %d, vector core num:%d, "
+                    "ai core bitmap:0x%llx, vector core bitmap:0x%llx, "
                     "ai core broken bitmap: 0x%x, "
                     "ai subsys broken map: 0x%x.\n",
                     dev_info->dev_id, drv_info->ai_cpu_ready_num, drv_info->ai_cpu_broken_map,
-                    drv_info->ai_core_ready_num, drv_info->ai_core_broken_map, drv_info->ai_subsys_ip_map);
+                    drv_info->ai_core_ready_num, dev_info->vector_core_num,
+                    dev_info->aicore_bitmap, dev_info->vector_core_bitmap,
+                    drv_info->ai_core_broken_map, drv_info->ai_subsys_ip_map);
 #endif
     if ((dev_info->ai_cpu_core_num > U32_MAX_BIT_NUM) || (dev_info->ai_core_num > U64_MAX_BIT_NUM)) {
         devdrv_drv_err("Invalid core num. (aicpu=%u; aicore=%u; max_aipcu_bit=%u; max_aicore_bit=%u)\n",
@@ -1337,22 +1429,6 @@ free_argv:
 }
 #endif
 
-STATIC void devdrv_board_info_init(unsigned int dev_id)
-{
-    u32 task_cnt = 0;
-
-    /* retry times: 10 */
-    while (task_cnt < 10) {
-        if (devdrv_save_board_info_in_host(dev_id) == 0) {
-            devdrv_drv_info("succeed to save board info into host. (dev_id=%u; task_cnt=%u)\n", dev_id, task_cnt);
-            return;
-        }
-        /* Check interval: 2 seconds */
-        ka_system_ssleep(2);
-        task_cnt++;
-    }
-}
-
 STATIC void devdrv_manager_dev_ready_work(ka_work_struct_t *work)
 {
     struct devdrv_info *dev_info = NULL;
@@ -1409,8 +1485,6 @@ STATIC void devdrv_manager_dev_ready_work(ka_work_struct_t *work)
     }
 #endif
 
-    devdrv_board_info_init(dev_info->dev_id);
-
     ret = module_feature_auto_init_dev(dev_id);
     if (ret != 0) {
         devdrv_drv_ex_notsupport_err(ret, "Module auto init dev fail. (udevid=%u; ret=%d)\n", dev_id, ret);
@@ -1423,7 +1497,6 @@ struct tsdrv_drv_ops *devdrv_manager_get_drv_ops(void)
 }
 KA_EXPORT_SYMBOL(devdrv_manager_get_drv_ops);
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 15, 0)
 struct devdrv_check_start_s {
     u32 dev_id;
     ka_timer_list_t check_timer;
@@ -1440,41 +1513,29 @@ STATIC void devdrv_check_start_event(ka_timer_list_t *t)
     u32 tsid = 0;
 
     dev_id = devdrv_start_check->dev_id;
-#else /* LINUX_VERSION_CODE >= KERNEL_VERSION(4,15,0) */
 
-STATIC ka_timer_list_t devdrv_check_start[ASCEND_DEV_MAX_NUM];
+    devdrv_drv_debug("Checking whether device is started. (dev_id=%u)\n", dev_id);
 
-STATIC void devdrv_check_start_event(unsigned long data)
-{
-    struct devdrv_info *dev_info = NULL;
-    struct timespec stamp;
-    u32 dev_id = (u32)data;
-    u32 tsid = 0;
-#endif /* LINUX_VERSION_CODE >= KERNEL_VERSION(4,15,0) */
-
-    devdrv_drv_debug("*** time event for checking whether device is started or not ***\n");
-
-    stamp = current_kernel_time();
+    stamp = ka_system_current_kernel_time();
 
     dev_info = devdrv_get_devdrv_info_array(dev_id);
-    ;
     if (dev_info == NULL) {
-        devdrv_drv_err("device(%u) is not ready.\n", dev_id);
+        devdrv_drv_err("Device info array is not ready. (dev_id=%u)\n", dev_id);
         return;
     }
 
     if (dev_info->dev_ready < DEVDRV_DEV_READY_EXIST) {
-        devdrv_drv_err("device(%u) is not ready, "
-                       "dev_ready = %d, dev_id = %u\n",
-                       dev_id, dev_info->dev_ready, dev_info->dev_id);
+        devdrv_drv_err("Device is not ready. (dev_id=%u; dev_ready=%d; info_dev_id=%u)\n",
+            dev_id, dev_info->dev_ready, dev_info->dev_id);
         (void)devdrv_host_black_box_add_exception(dev_info->dev_id, DEVDRV_BB_DEVICE_LOAD_TIMEOUT, stamp, NULL);
         tsdrv_set_ts_status(dev_info->dev_id, tsid, TS_DOWN);
         return;
     }
 
-    devdrv_drv_debug("*** device(%u) is started and working ***\n", dev_id);
+    devdrv_drv_debug("Device is started and working. (dev_id=%u)\n", dev_id);
 }
 
+#ifndef CFG_FEATURE_UB
 STATIC int devdrv_manager_dev_state_notify(u32 probe_num, u32 devid, u32 state)
 {
     struct devdrv_black_box_state_info *bbox_state_info = NULL;
@@ -1579,6 +1640,7 @@ STATIC int devdrv_manager_dev_startup_notify(u32 prob_num, const u32 devids[], u
 #endif
     return 0;
 }
+#endif
 
 STATIC void devmng_basic_info_uninit(void)
 {
@@ -1653,14 +1715,16 @@ STATIC int devdrv_manager_init_board_hw_info(struct devdrv_info *dev_info)
     dev_info->super_pod_id = hw_info.super_pod_id;
     dev_info->chassis_id   = hw_info.chassis_id;
     dev_info->super_pod_type = hw_info.super_pod_type;
+    dev_info->super_pod_intercon_type = hw_info.super_pod_intercon_type;
 
     devdrv_drv_info("Get hardware info success." \
         "(chip_id=%u; multi_chip=%u; multi_die=%u; mainboard_id=0x%x; " \
         "addr_mode=%u; inter_connect_type=%u; board_id=0x%x;" \
-        "server_id=%u; scale_type=%u; super_pod_id=%u; chassis_id=%u; super_pod_type=%u)\n",
+        "server_id=%u; scale_type=%u; super_pod_id=%u; chassis_id=%u; super_pod_type=%u; super_pod_intercon_type=%u)\n",
         dev_info->chip_id, dev_info->multi_chip, dev_info->multi_die, dev_info->mainboard_id,
         dev_info->addr_mode, dev_info->connect_type, dev_info->board_id,
-        dev_info->server_id, dev_info->scale_type, dev_info->super_pod_id, dev_info->chassis_id, dev_info->super_pod_type);
+        dev_info->server_id, dev_info->scale_type, dev_info->super_pod_id, dev_info->chassis_id, dev_info->super_pod_type,
+        dev_info->super_pod_intercon_type);
 #endif
     return ret;
 }
@@ -1695,9 +1759,9 @@ STATIC int devdrv_manager_init_cpu_info(u32 udevid, struct devdrv_info *dev_info
     dev_info->ctrl_cpu_core_num = info.total_num;
     dev_info->ctrl_cpu_id = __ka_base_ffs(info.bitmap);
     dev_info->ctrl_cpu_occupy_bitmap = info.bitmap;
-#if defined(__LITTLE_ENDIAN)
+#if defined(__KA_LITTLE_ENDIAN)
     dev_info->ctrl_cpu_endian_little = 1;
-#elif defined(__BIG_ENDIAN)
+#elif defined(__KA_BIG_ENDIAN)
     dev_info->ctrl_cpu_endian_little = 0;
 #endif
 
@@ -1710,8 +1774,8 @@ STATIC int devdrv_manager_init_cpu_info(u32 udevid, struct devdrv_info *dev_info
     dev_info->ai_cpu_core_num = info.total_num;
     dev_info->aicpu_occupy_bitmap = info.bitmap;
 
-    devdrv_drv_info("(devid=%u; ctrl_cpu_core_num=0x%x; ctrl_cpu_id=0x%x; ctrl_cpu_occupy_bitmap=0x%x;"
-        "ctrl_cpu_endian_little=0x%x; ai_cpu_core_id=0x%x; ai_cpu_core_num=0x%x; aicpu_occupy_bitmap=0x%x;)\n",
+    devdrv_drv_info("(devid=%u; ctrl_cpu_core_num=0x%x; ctrl_cpu_id=0x%x; ctrl_cpu_occupy_bitmap=0x%llx;"
+        "ctrl_cpu_endian_little=0x%x; ai_cpu_core_id=0x%x; ai_cpu_core_num=0x%x; aicpu_occupy_bitmap=0x%llx;)\n",
         udevid, dev_info->ctrl_cpu_core_num, dev_info->ctrl_cpu_id,
         dev_info->ctrl_cpu_occupy_bitmap, dev_info->ctrl_cpu_endian_little,
         dev_info->ai_cpu_core_id, dev_info->ai_cpu_core_num, dev_info->aicpu_occupy_bitmap);
@@ -1719,13 +1783,38 @@ STATIC int devdrv_manager_init_cpu_info(u32 udevid, struct devdrv_info *dev_info
     return 0;
 }
 
+STATIC u64 devdrv_manager_repeat_bits(u64 bitmap, u32 unit)
+{
+    int i;
+    u64 result = 0;
+    u64 temp_bitmap = bitmap;
+    u32 n = ka_base_fls64(bitmap);
+    for (i = 0; i < unit; i++) {
+        result |= temp_bitmap;
+        if (i < unit - 1) {
+            temp_bitmap <<= n;
+        }
+    }
+
+    return result;
+}
+
+STATIC void devdrv_manager_init_aiv_res_info(struct devdrv_info *dev_info, struct soc_mia_res_info_ex *info, u64 die_id)
+{
+    dev_info->vector_core_num += info->total_num;
+    dev_info->vector_core_freq = info->freq;
+    dev_info->vector_core_bitmap |=
+        devdrv_manager_repeat_bits(info->bitmap, info->unit_per_bit) << (die_id * SOC_MAX_AIVECTOR_NUM_PER_DIE);
+    if (die_id != 0) {
+        dev_info->vector_core_bitmap_h |=
+            devdrv_manager_repeat_bits(info->bitmap, info->unit_per_bit) >> (die_id * SOC_MAX_AIVECTOR_NUM_DIE1_OFFSET);
+    }
+}
+
 STATIC int devdrv_manager_init_res_info(struct devdrv_info *dev_info)
 {
     int ret;
     u64 die_id, die_num;
-    u32 ai_core_num = 0;
-    u64 ai_core_bitmap = 0;
-    u32 vector_core_num = 0;
     u32 dev_id = dev_info->dev_id;
     struct soc_mia_res_info_ex info = {0};
 
@@ -1735,15 +1824,20 @@ STATIC int devdrv_manager_init_res_info(struct devdrv_info *dev_info)
         return ret;
     }
 
+    dev_info->ai_core_num = 0;
+    dev_info->aicore_bitmap = 0;
+    dev_info->vector_core_num = 0;
+    dev_info->vector_core_bitmap = 0;
+    dev_info->vector_core_bitmap_h = 0;
     for (die_id = 0; die_id < die_num; die_id++) {
         ret = soc_resmng_dev_die_get_res(dev_id, (u32)die_id, MIA_AC_AIC, &info);
         if (ret != 0) {
             devdrv_drv_err("Get aic info failed. (devid=%u; die_id=0x%llx; ret=%d)\n", dev_id, die_id, ret);
             return ret;
         }
-        ai_core_num += info.total_num;
+        dev_info->ai_core_num += info.total_num;
         dev_info->ai_core_id = 0;
-        ai_core_bitmap |= info.bitmap << (die_id * SOC_MAX_AICORE_NUM_PER_DIE);
+        dev_info->aicore_bitmap |= info.bitmap << (die_id * SOC_MAX_AICORE_NUM_PER_DIE);
         dev_info->aicore_freq = info.freq;
 
         ret = soc_resmng_dev_die_get_res(dev_id, (u32)die_id, MIA_AC_AIV, &info);
@@ -1751,12 +1845,9 @@ STATIC int devdrv_manager_init_res_info(struct devdrv_info *dev_info)
             devdrv_drv_err("Get aiv info failed. (devid=%u; die_id=0x%llx; ret=%d)\n", dev_id, die_id, ret);
             return ret;
         }
-        vector_core_num += info.total_num;
-        dev_info->vector_core_freq = info.freq;
+
+        devdrv_manager_init_aiv_res_info(dev_info, &info, die_id);
     }
-    dev_info->ai_core_num = ai_core_num;
-    dev_info->aicore_bitmap = ai_core_bitmap;
-    dev_info->vector_core_num = vector_core_num;
 
     ret = soc_resmng_subsys_get_num(dev_id, TS_SUBSYS, &dev_info->ts_num);
     if (ret != 0) {
@@ -1775,12 +1866,6 @@ STATIC int devdrv_manager_init_res_info(struct devdrv_info *dev_info)
         return ret;
     }
 
-    devdrv_drv_info("(devid=%u; aicore_num=0x%x; ai_core_id=0x%x; aicore_bitmap=0x%llx; aicore_freq=0x%llx;"
-        "vector_core_num=0x%x; vector_core_freq=0x%llx; ts_num=0x%x; soc_version=%s)\n",
-        dev_id, dev_info->ai_core_num, dev_info->ai_core_id,
-        dev_info->aicore_bitmap, dev_info->aicore_freq,
-        dev_info->vector_core_num, dev_info->vector_core_freq,
-        dev_info->ts_num, dev_info->soc_version);
     return ret;
 }
 
@@ -1820,6 +1905,12 @@ STATIC int devdrv_manager_init_devinfo(struct devdrv_info *dev_info)
         return ret;
     }
 
+    devdrv_drv_info("(devid=%u; aicore_num=0x%x; ai_core_id=0x%x; aicore_bitmap=0x%llx; aicore_freq=0x%llx;"
+        "vector_core_num=0x%x; vector_core_bitmap=0x%llx; vector_core_bitmap_h=0x%llx; vector_core_freq=0x%llx;"
+        " ts_num=0x%x; soc_version=%s)\n", dev_info->dev_id, dev_info->ai_core_num, dev_info->ai_core_id,
+        dev_info->aicore_bitmap, dev_info->aicore_freq, dev_info->vector_core_num, dev_info->vector_core_bitmap,
+        dev_info->vector_core_bitmap_h, dev_info->vector_core_freq, dev_info->ts_num, dev_info->soc_version);
+
 #ifdef CFG_FEATURE_BIOS_HW_INFO_BY_SOC_RES
     ret = devdrv_manager_init_board_hw_info(dev_info);
     if (ret != 0) {
@@ -1854,6 +1945,11 @@ STATIC int devdrv_manager_init_vf_splited_res(struct devdrv_info *dev_info_vf)
         return ret;
     }
 
+    dev_info_vf->ai_core_num = 0;
+    dev_info_vf->aicore_bitmap = 0;
+    dev_info_vf->vector_core_num = 0;
+    dev_info_vf->vector_core_bitmap = 0;
+    dev_info_vf->vector_core_bitmap_h = 0;
     for (i = 0; i < die_num; i++) {
         ret = soc_resmng_dev_die_get_res(dev_id, i, MIA_AC_AIC, &info);
         if (ret != 0) {
@@ -1861,21 +1957,17 @@ STATIC int devdrv_manager_init_vf_splited_res(struct devdrv_info *dev_info_vf)
                 dev_id, i, MIA_AC_AIC, ret);
             return ret;
         }
-        if (info.total_num != 0) {
-            dev_info_vf->ai_core_num = info.total_num;
-            dev_info_vf->aicore_bitmap = info.bitmap;
-        }
 
+        dev_info_vf->ai_core_num += info.total_num;
+        dev_info_vf->aicore_bitmap |= info.bitmap << (i * SOC_MAX_AICORE_NUM_PER_DIE);
         ret = soc_resmng_dev_die_get_res(dev_id, i, MIA_AC_AIV, &info);
         if (ret != 0) {
             devdrv_drv_err("Get vf aiv info failed. (dev_id=%u; die_id=%d; type=%u; ret=%d)\n",
                 dev_id, i, MIA_AC_AIV, ret);
             return ret;
         }
-        if (info.total_num != 0) {
-            dev_info_vf->vector_core_num = info.total_num;
-            dev_info_vf->vector_core_bitmap = info.bitmap;
-        }
+
+        devdrv_manager_init_aiv_res_info(dev_info_vf, &info, i);
     }
 
     ret = soc_resmng_dev_get_mia_res(dev_id, MIA_CPU_DEV_ACPU, &bitmap, &unit_per_bit);
@@ -1919,12 +2011,13 @@ STATIC int devdrv_manager_init_vf_res_info(struct devdrv_info *dev_info_pf, stru
     }
 
     devdrv_drv_info("(devid=%u; aicore_num=0x%x; ai_core_id=0x%x; aicore_bitmap=0x%llx; aicore_freq=0x%llx;"
-        "vector_core_num=0x%x; vector_core_freq=0x%llx; ts_num=0x%x; soc_version=%s;"
-        "ctrl_cpu_core_num=0x%x; ctrl_cpu_id=0x%x; ctrl_cpu_occupy_bitmap=0x%x; ctrl_cpu_endian_little=0x%x;"
-        "ai_cpu_core_id=0x%x; ai_cpu_core_num=0x%x; aicpu_occupy_bitmap=0x%x;)\n",
+        "vector_core_num=0x%x; vector_core_freq=0x%llx; vector_core_bitmap=0x%llx; vector_core_bitmap_h=0x%llx;"
+        "ts_num=0x%x; soc_version=%s; ctrl_cpu_core_num=0x%x; ctrl_cpu_id=0x%x; ctrl_cpu_occupy_bitmap=0x%llx;"
+        "ctrl_cpu_endian_little=0x%x; ai_cpu_core_id=0x%x; ai_cpu_core_num=0x%x; aicpu_occupy_bitmap=0x%llx;)\n",
         dev_info_vf->dev_id, dev_info_vf->ai_core_num, dev_info_vf->ai_core_id,
         dev_info_vf->aicore_bitmap, dev_info_vf->aicore_freq,
         dev_info_vf->vector_core_num, dev_info_vf->vector_core_freq,
+        dev_info_vf->vector_core_bitmap, dev_info_vf->vector_core_bitmap_h,
         dev_info_vf->ts_num, dev_info_vf->soc_version, dev_info_vf->ctrl_cpu_core_num,
         dev_info_vf->ctrl_cpu_id, dev_info_vf->ctrl_cpu_occupy_bitmap, dev_info_vf->ctrl_cpu_endian_little,
         dev_info_vf->ai_cpu_core_id, dev_info_vf->ai_cpu_core_num, dev_info_vf->aicpu_occupy_bitmap);
@@ -2059,18 +2152,13 @@ STATIC int devdrv_manager_init_instance(u32 dev_id, ka_device_t *dev)
     }
 
     /* init a timer for check whether device manager is ready */
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 15, 0)
     devdrv_check_start[dev_id].dev_id = dev_id;
-    timer_setup(&devdrv_check_start[dev_id].check_timer, devdrv_check_start_event, 0);
+    ka_system_timer_setup(&devdrv_check_start[dev_id].check_timer, devdrv_check_start_event, 0);
     devdrv_check_start[dev_id].check_timer.expires = ka_jiffies + LOAD_DEVICE_TIME * KA_HZ;
     ka_system_add_timer(&devdrv_check_start[dev_id].check_timer);
-#else
-    setup_timer(&devdrv_check_start[dev_id], devdrv_check_start_event, (unsigned long)dev_id);
-    devdrv_check_start[dev_id].expires = ka_jiffies + LOAD_DEVICE_TIME * KA_HZ;
-    ka_system_add_timer(&devdrv_check_start[dev_id]);
-#endif
+
     /* device online inform user */
-    devdrv_manager_online_devid_update(dev_id); 
+    devdrv_manager_online_devid_update(dev_id);
     dbl_dev_base_info_init(dev_id);
     devdrv_drv_info("devdrv_manager_init_instance dev_id :%u OUT !\n", dev_id);
     return 0;
@@ -2127,11 +2215,7 @@ STATIC int devdrv_manager_uninit_instance(u32 dev_id)
     dev_info->work.func = NULL;
     devdrv_drv_info("dev_id(%u) wait ioctrl retry_cnt %d.\n", dev_id, retry_cnt);
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 15, 0)
     ka_system_del_timer_sync(&devdrv_check_start[dev_id].check_timer);
-#else
-    ka_system_del_timer_sync(&devdrv_check_start[dev_id]);
-#endif
 
 #ifdef CFG_FEATURE_TIMESYNC
     dms_time_sync_exit(dev_id);
@@ -2271,7 +2355,7 @@ STATIC int devdrv_manager_reboot_handle(ka_notifier_block_t *self, unsigned long
 #endif
 
     devdrv_drv_info("System reboot now.....\n");
-    return NOTIFY_OK;
+    return KA_NOTIFY_OK;
 }
 
 #ifndef CFG_FEATURE_APM_SUPP_PID
@@ -2561,8 +2645,10 @@ int devdrv_manager_init(void)
         goto vmngh_register_failed;
     }
 
-    adap_dev_startup_register(devdrv_manager_dev_startup_notify);
-    adap_dev_state_notifier_register(devdrv_manager_dev_state_notify);
+#ifndef CFG_FEATURE_UB	 
+    adap_dev_startup_register(devdrv_manager_dev_startup_notify);	 
+    adap_dev_state_notifier_register(devdrv_manager_dev_state_notify);	 
+#endif
 
     ret = log_level_file_init();
     if (ret != 0) {
@@ -2612,7 +2698,10 @@ void devdrv_manager_exit(void)
     struct uda_dev_type type;
 
     log_level_file_remove();
+
+#ifndef CFG_FEATURE_UB
     adap_dev_state_notifier_unregister();
+#endif
 
 #ifdef CONFIG_SYSFS
     ka_sysfs_remove_group(&dev_manager_info->dev->kobj, &devdrv_manager_attr_group);

@@ -11,54 +11,53 @@
  * GNU General Public License for more details.
  */
 
-#include <linux/errno.h>
-#include <linux/kernel.h>
-#include <linux/rwsem.h>
+#include "ka_task_pub.h"
+#include "ka_kernel_def_pub.h"
 
 #include "pbl_ka_mem_query.h"
 
 static struct svm_mem_query_ops g_svm_mem_query_ops = {0};
-struct rw_semaphore g_svm_mem_query_lock;
+ka_rw_semaphore_t g_svm_mem_query_lock;
 
 int hal_kernel_get_mem_pa_list(u32 devid, int tgid, struct ka_mem_attr *mem, u64 *pa_num, struct ka_pa_wraper *pa_list)
 {
     int ret = -EFAULT;
-    down_read(&g_svm_mem_query_lock);
+    ka_task_down_read(&g_svm_mem_query_lock);
     if (g_svm_mem_query_ops.get_svm_mem_pa != NULL) {
         ret = g_svm_mem_query_ops.get_svm_mem_pa(devid, tgid, mem, pa_num, pa_list);
     }
 
-    up_read(&g_svm_mem_query_lock);
+    ka_task_up_read(&g_svm_mem_query_lock);
     return ret;
 }
-EXPORT_SYMBOL_GPL(hal_kernel_get_mem_pa_list);
+KA_EXPORT_SYMBOL_GPL(hal_kernel_get_mem_pa_list);
 
 int hal_kernel_put_mem_pa_list(u32 devid, int tgid, struct ka_mem_attr *mem, u64 pa_num, struct ka_pa_wraper *pa_list)
 {
     int ret = -EFAULT;
-    down_read(&g_svm_mem_query_lock);
+    ka_task_down_read(&g_svm_mem_query_lock);
     if (g_svm_mem_query_ops.put_svm_mem_pa != NULL) {
         ret = g_svm_mem_query_ops.put_svm_mem_pa(devid, tgid, mem, pa_num, pa_list);
     }
 
-    up_read(&g_svm_mem_query_lock);
+    ka_task_up_read(&g_svm_mem_query_lock);
     return ret;
 }
-EXPORT_SYMBOL_GPL(hal_kernel_put_mem_pa_list);
+KA_EXPORT_SYMBOL_GPL(hal_kernel_put_mem_pa_list);
 
 u32 hal_kernel_get_mem_page_size(u32 devid, int tgid, struct ka_mem_attr *mem)
 {
     u32 page_size = 0;
 
-    down_read(&g_svm_mem_query_lock);
+    ka_task_down_read(&g_svm_mem_query_lock);
     if (g_svm_mem_query_ops.get_svm_mem_page_size != NULL) {
         page_size = g_svm_mem_query_ops.get_svm_mem_page_size(devid, tgid, mem);
     }
 
-    up_read(&g_svm_mem_query_lock);
+    ka_task_up_read(&g_svm_mem_query_lock);
     return page_size;
 }
-EXPORT_SYMBOL_GPL(hal_kernel_get_mem_page_size);
+KA_EXPORT_SYMBOL_GPL(hal_kernel_get_mem_page_size);
 
 int hal_kernel_register_mem_query_ops(struct svm_mem_query_ops *query_ops)
 {
@@ -66,28 +65,28 @@ int hal_kernel_register_mem_query_ops(struct svm_mem_query_ops *query_ops)
         return -EINVAL;
     }
 
-    down_write(&g_svm_mem_query_lock);
+    ka_task_down_write(&g_svm_mem_query_lock);
 
     g_svm_mem_query_ops.get_svm_mem_pa = query_ops->get_svm_mem_pa;
     g_svm_mem_query_ops.put_svm_mem_pa = query_ops->put_svm_mem_pa;
     g_svm_mem_query_ops.get_svm_mem_page_size = query_ops->get_svm_mem_page_size;
 
-    up_write(&g_svm_mem_query_lock);
+    ka_task_up_write(&g_svm_mem_query_lock);
 
     return 0;
 }
-EXPORT_SYMBOL_GPL(hal_kernel_register_mem_query_ops);
+KA_EXPORT_SYMBOL_GPL(hal_kernel_register_mem_query_ops);
 
 int hal_kernel_unregister_mem_query_ops(void)
 {
-    down_write(&g_svm_mem_query_lock);
+    ka_task_down_write(&g_svm_mem_query_lock);
 
     g_svm_mem_query_ops.get_svm_mem_pa = NULL;
     g_svm_mem_query_ops.put_svm_mem_pa = NULL;
     g_svm_mem_query_ops.get_svm_mem_page_size = NULL;
 
-    up_write(&g_svm_mem_query_lock);
+    ka_task_up_write(&g_svm_mem_query_lock);
 
     return 0;
 }
-EXPORT_SYMBOL_GPL(hal_kernel_unregister_mem_query_ops);
+KA_EXPORT_SYMBOL_GPL(hal_kernel_unregister_mem_query_ops);

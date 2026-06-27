@@ -74,10 +74,11 @@ u64 trs_sec_eh_alloc_sq_mem(struct trs_sec_eh_ts_inst *sec_eh_cfg, struct trs_se
     struct trs_chan_mem_attr mem_attr = {0};
     u64 size = ctx->sqesize * ctx->sqdepth;
     int ret;
-    struct trs_sq_mem_map_para  sec_sq_map_param;
+    struct trs_sq_mem_map_para sec_sq_map_param;
     if ((size == 0) || (ctx->sqesize > TRS_SEC_EH_MAX_SQE_SIZE) || (ctx->sqdepth > TRS_SEC_EH_MAX_SQDEPTH_SIZE)) {
-        trs_err("Invalid. (devid=%u; tsid=%u; sqid=%u; offset=0x%pK)\n",
-            sec_eh_cfg->inst.devid, sec_eh_cfg->inst.tsid, ctx->sqid, (void *)ctx->addr_offset);
+        trs_err(
+            "Invalid. (devid=%u; tsid=%u; sqid=%u; offset=0x%pK)\n", sec_eh_cfg->inst.devid, sec_eh_cfg->inst.tsid,
+            ctx->sqid, (void *)ctx->addr_offset);
         return -EINVAL;
     }
 
@@ -121,9 +122,9 @@ static void sec_sq_unmap_param_pack(struct trs_sq_mem_map_para *sq_map_param, st
 void trs_sec_eh_free_sq_mem(struct trs_sec_eh_ts_inst *sec_eh_cfg, u32 sqid)
 {
     struct trs_sec_eh_sq_ctx *sq_ctx = sec_eh_cfg->sq_ctx;
-    struct trs_sq_mem_map_para  sec_sq_map_param;
-    struct trs_chan_mem_attr mem_attr = {sq_ctx[sqid].sq_paddr,
-        sq_ctx[sqid].sq_depth * sq_ctx[sqid].sqe_size, sq_ctx[sqid].mem_type};
+    struct trs_sq_mem_map_para sec_sq_map_param;
+    struct trs_chan_mem_attr mem_attr = {
+        sq_ctx[sqid].sq_paddr, sq_ctx[sqid].sq_depth * sq_ctx[sqid].sqe_size, sq_ctx[sqid].mem_type};
 
     ka_task_mutex_lock(&sec_eh_cfg->mutex);
     if (sq_ctx[sqid].d_addr != NULL) {
@@ -150,8 +151,9 @@ void trs_sec_eh_free_sq_mem_all(struct trs_id_inst *inst)
             num++;
         }
 
-        trs_info("Kernel free sq success. (devid=%u; pm_devid=%u; num=%u)\n",
-            sec_eh_cfg->inst.devid, sec_eh_cfg->pm_inst.devid, num);
+        trs_info(
+            "Kernel free sq success. (devid=%u; pm_devid=%u; num=%u)\n", sec_eh_cfg->inst.devid,
+            sec_eh_cfg->pm_inst.devid, num);
         trs_sec_eh_ts_inst_put(sec_eh_cfg);
     }
 }
@@ -212,8 +214,7 @@ int _trs_sec_eh_sqe_update(struct trs_id_inst *inst, int pid, u32 sqid, u32 sqei
     return ret;
 }
 
-int trs_sec_eh_check_and_update_cq_ctx_info(struct trs_sec_eh_ts_inst *sec_eh_cfg,
-    struct trs_sec_eh_cq_ctx_info *ctx)
+int trs_sec_eh_check_and_update_cq_ctx_info(struct trs_sec_eh_ts_inst *sec_eh_cfg, struct trs_sec_eh_cq_ctx_info *ctx)
 {
     struct uda_mia_dev_para mia_para = {0};
     u64 cq_addr_gfn, cq_addr_mfn;
@@ -230,8 +231,9 @@ int trs_sec_eh_check_and_update_cq_ctx_info(struct trs_sec_eh_ts_inst *sec_eh_cf
 #ifndef EMU_ST
     if (((ctx->cqesize % TRS_SEC_EH_CQE_ALIGN_SIZE) != 0) || ((ctx->cqesize * ctx->cqdepth) != KA_MM_PAGE_SIZE) ||
         (ctx->cq_paddr == 0) || ((ctx->cq_paddr & (KA_MM_PAGE_SIZE - 1)) != 0)) {
-        trs_err("Invalid cq size or addr. (devid=%u; cqesize=%u; cqdepth=%u; pagesize=0x%lx)\n",
-            inst.devid, ctx->cqesize, ctx->cqdepth, KA_MM_PAGE_SIZE);
+        trs_err(
+            "Invalid cq size or addr. (devid=%u; cqesize=%u; cqdepth=%u; pagesize=0x%lx)\n", inst.devid, ctx->cqesize,
+            ctx->cqdepth, KA_MM_PAGE_SIZE);
         return -EINVAL;
     }
 
@@ -243,7 +245,8 @@ int trs_sec_eh_check_and_update_cq_ctx_info(struct trs_sec_eh_ts_inst *sec_eh_cf
 
     pf_id = mia_para.phy_devid;
     vf_id = mia_para.sub_devid + 1;
-    trs_debug("Get vdavinci. (devid=%u; pf_id=%u; vf_id=%u; pm_devid=%u)\n", inst.devid, pf_id, vf_id,
+    trs_debug(
+        "Get vdavinci. (devid=%u; pf_id=%u; vf_id=%u; pm_devid=%u)\n", inst.devid, pf_id, vf_id,
         sec_eh_cfg->pm_inst.devid);
 
     vdavinci = vmngh_get_vdavinci_by_id(pf_id, vf_id);

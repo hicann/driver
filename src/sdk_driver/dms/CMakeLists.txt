@@ -14,7 +14,7 @@ endif()
 
 if(${PRODUCT} STREQUAL ascend950)
     set(asdrv_dms_depends drv_pcie_host drv_seclib_host asdrv_fms asdrv_pbl ascend_kernel_open_adapt
-                        asdrv_dpa ascend_adapter asdrv_vmng)
+                        asdrv_dpa ascend_adapter asdrv_vmng asdrv_vascend_adapt)
 endif()
 
 list(APPEND MAKE_ARGS

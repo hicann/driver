@@ -20,5 +20,7 @@ drvError_t queue_subscribe(unsigned int dev_id, unsigned int qid, unsigned int s
 drvError_t queue_unsubscribe(unsigned int dev_id, unsigned int qid, unsigned int subevent_id);
 void queue_updata_timeout(struct timeval start, struct timeval end, int *timeout);
 drvError_t queue_wait_event(unsigned int devid, unsigned int qid, int result, int timeout);
-drvError_t queue_param_check(unsigned int dev_id, unsigned int qid, const struct buff_iovec *vector);
+drvError_t queue_param_check(unsigned int dev_id, unsigned int qid, const struct buff_iovec *vector,
+                             const char *func_name);
+void queue_report_insufficient_device_memory(struct buff_iovec *vector, int ret);
 #endif

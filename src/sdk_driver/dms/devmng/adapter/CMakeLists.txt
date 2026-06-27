@@ -7,7 +7,7 @@
 # INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
 # See LICENSE in the root of the software repository for the full text of the License.
 # ------------------------------------------------------------------------------------------------------------
-set(ascend_adapter_depends drv_seclib_host)
+set(ascend_adapter_depends drv_seclib_host ascend_kernel_open_adapt)
 list(APPEND MAKE_ARGS
     KBUILD_MODPOST_WARN=1
 )

@@ -22,18 +22,24 @@
 #include "devdrv_alarm.h"
 #include "config.h"
 #include "dsmi_dmp_command.h"
-#include "dms_drv_internal.h"
 #include "drv_type.h"
 #include "ascend_hal_error.h"
-#include "dsmi_common_interface_custom.h"
-#include "dms_devdrv_info_comm.h"
+#include "dsmi_common_interface.h"
 #include "devdrv_user_common.h"
 #include "dsmi_product_ext.h"
 #include "dsmi_product_user_config.h"
 #include "pbl_uda_user.h"
+#include "udis_user.h"
 
 #ifdef CFG_SOC_PLATFORM_CLOUD
 #include "dms_user_interface.h"
+#endif
+
+#if defined(CFG_FEATURE_SERDES_INFO) || defined(CFG_FEATURE_SERDES_INFO_A5)
+int dsmi_cmd_set_serdes_info(unsigned int dev_id, SERDES_MAIN_CMD main_cmd, unsigned int sub_cmd,
+    const void *buf, unsigned int buf_size);
+int dsmi_cmd_get_serdes_info(unsigned int dev_id, SERDES_MAIN_CMD main_cmd, unsigned int sub_cmd,
+    void *buf, unsigned int *size);
 #endif
 
 int get_nve_level_check_para(unsigned int config_cmd, unsigned char *buf, unsigned int buf_size)
@@ -94,7 +100,7 @@ int set_cpu_freq_check_para(unsigned int config_cmd, unsigned char *buf, unsigne
     }
     return 0;
 }
- 
+
 int get_cpu_freq_check_para(unsigned int config_cmd, unsigned char *buf, unsigned int buf_size)
 {
     if (config_cmd != DEVDRV_FLASH_CONFIG_READ_PRODUCT_CMD) {
@@ -128,6 +134,7 @@ int dsmi_get_device_ndie(int device_id, struct dsmi_soc_die_stru *pdevice_die)
     soc_type = NDIE_TYPE;
     return dsmi_cmd_get_device_die(device_id, soc_type, pdevice_die);
 #else
+    (void)pdevice_die;
     DEV_MON_ERR("Dsmi not support. (device_id=%d)\n", device_id);
     return DRV_ERROR_NOT_SUPPORT;
 #endif
@@ -340,6 +347,48 @@ STATIC int get_davinci_device_health(void)
     return DRV_ERROR_NONE;
 }
 
+bool dsmi_get_device_is_950(unsigned int main_board_id)
+{
+    switch (main_board_id) {
+        case DEV_950_1P_MAINBOARD_ID:
+        case DEV_950_2P_MAINBOARD_ID:
+        case DEV_950_4P_MAINBOARD_ID:
+        case DEV_UBOE_CARD_950_MAIN_BOARD_ID:
+        case DEV_950_pod_2D_MAINBOARD_ID:
+        case DEV_950_pod_2D_BackUp_MAINBOARD_ID:
+        case DEV_950_pod_1D_MAINBOARD_ID:
+        case DEV_950_pod_PCIE_MAINBOARD_ID:
+        case DEV_950_pod_UBoE_MAINBOARD_ID:
+        case DEV_950_Server_A_K_2_4_MAINBOARD_ID:
+        case DEV_950_Server_A_K_2_4_UBoE_MAINBOARD_ID:
+        case DEV_950_Server_A_K_2_6_MAINBOARD_ID:
+        case DEV_950_Server_A_K_2_6_UBoE_MAINBOARD_ID:
+        case DEV_950_Server_A_X_2_4_MAINBOARD_ID:
+        case DEV_950_Server_A_X_2_4_UBoE_MAINBOARD_ID:
+        case DEV_950_Server_A_X_PCIE_MAINBOARD_ID:
+        case DEV_950_Server_A_X_UBoE_MAINBOARD_ID:
+        case DEV_950_UBX_PCIE_MAINBOARD_ID:
+        case DEV_950_UBX_UBoE_MAINBOARD_ID:
+            return TRUE;
+        default:
+            return FALSE;
+    }
+}
+
+int dsmi_get_mainboard_id_950(int chip_id, unsigned int *main_board_id)
+{
+    int ret;
+    struct devdrv_device_info data = {0};
+
+    ret = drvGetDevInfo((unsigned int)chip_id, &data);
+    if (ret != DRV_ERROR_NONE) {
+        DEV_MON_ERR("get dev mainboard_id info failed.(ret=%d)\n", ret);
+        return ret;
+    }
+    *main_board_id = data.mainboard_id;
+    return DRV_ERROR_NONE;
+}
+
 int dsmi_get_driver_health(unsigned int *phealth)
 {
     int ret;
@@ -348,9 +397,16 @@ int dsmi_get_driver_health(unsigned int *phealth)
     const char *host_dev_path_ep[] = {DEV_HISI_HDC_PATH, DEV_DAVINCI_MANAGER_PATH, DEV_DEVMMM_SVM_PATH};
     const char *host_dev_path_rc[] = {DEV_DAVINCI_MANAGER_PATH, DEV_SVM0_PATH};
     int dev_path_ep_num, dev_path_rc_num;
+    unsigned int main_board_id = 0;
 
     if (phealth == NULL) {
         DEV_MON_ERR("Get driver health parameter error.\n");
+        return DRV_ERROR_PARA_ERROR;
+    }
+
+    ret = dsmi_get_mainboard_id_950(0, &main_board_id);
+    if (ret != 0) {
+        DEV_MON_ERR("dev_mon_get_mainboard_id_950 failed.(ret=%d)\n", ret);
         return DRV_ERROR_PARA_ERROR;
     }
 
@@ -370,7 +426,12 @@ int dsmi_get_driver_health(unsigned int *phealth)
         }
     } else {
         for (i = 0; i < dev_path_ep_num; i++) {
-            if (access(host_dev_path_ep[i], F_OK) != 0) {
+            if (access(host_dev_path_ep[i], F_OK) == 0) {
+                continue;
+            }
+            if ((strcmp(host_dev_path_ep[i], DEV_DEVMMM_SVM_PATH) == 0) && dsmi_get_device_is_950(main_board_id)) {
+                *phealth = 0;
+            } else {
                 *phealth = DSMI_HEALTH_ERROR_LEVEL;
                 return DRV_ERROR_NONE;
             }
@@ -800,7 +861,7 @@ STATIC int dsmi_cmd_get_memory_info(int device_id, struct dsmi_get_memory_info_s
     DM_COMMAND_END()
 }
 
-int dsmi_get_memory_info_v2(int device_id, struct dsmi_get_memory_info_stru *pdevice_memory_info)
+DLLEXPORT int dsmi_get_memory_info_v2(int device_id, struct dsmi_get_memory_info_stru *pdevice_memory_info)
 {
     int ret;
 
@@ -817,6 +878,32 @@ int dsmi_get_memory_info_v2(int device_id, struct dsmi_get_memory_info_stru *pde
 
     return ret;
 }
+
+#ifdef CFG_SOC_PLATFORM_CLOUD_V4
+STATIC int dsmi_cmd_get_hbm_manufacturer_id_from_udis(unsigned int device_id, unsigned int *manufacturer_id)
+{
+    int ret = 0;
+    struct udis_dev_info udis_hbm_info = {0};
+ 
+    udis_hbm_info.module_type = UDIS_MODULE_DEVMNG;
+    ret = strcpy_s(udis_hbm_info.name, UDIS_MAX_NAME_LEN, "hbm_mfr_id");
+    if (ret != 0) {
+        DEV_MON_ERR("strcpy hbm mfr info failed. (devid=%d; ret=%d)\n", device_id, ret);
+        return DRV_ERROR_INNER_ERR;
+    }
+    ret = udis_get_device_info(device_id, &udis_hbm_info);
+    if (ret != 0) {
+        DEV_MON_ERR("udis_get_device_info failed. (devid=%d; ret=%d)\n", device_id, ret);
+        return ret;
+    }
+    ret = memcpy_s(manufacturer_id, sizeof(unsigned int), udis_hbm_info.data, udis_hbm_info.data_len);
+    if (ret != 0) {
+        DEV_MON_ERR("Copy udis_hbm_info.data to manufacturer_id failed. (devid=%d; ret=%d)\n", device_id, ret);
+        return DRV_ERROR_INNER_ERR;
+    }
+    return ret;
+}
+#endif
 
 #ifdef CFG_FEATURE_HBM_MANUFACTURER_ID
 STATIC int dsmi_check_hbm_manufacturer_id(unsigned int manufacturer_id)
@@ -836,7 +923,9 @@ STATIC int dsmi_check_hbm_manufacturer_id(unsigned int manufacturer_id)
         return DRV_ERROR_INNER_ERR;
     }
 }
+#endif
 
+#ifdef CFG_SOC_PLATFORM_CLOUD_V2
 STATIC int dsmi_cmd_get_hbm_manufacturer_id(unsigned int device_id, unsigned int *manufacturer_id)
 {
     DM_COMMAND_BIGIN(DEV_MON_CMD_D_GET_HBM_MANUFACTURER_ID, device_id, 0, sizeof(unsigned int))
@@ -846,7 +935,7 @@ STATIC int dsmi_cmd_get_hbm_manufacturer_id(unsigned int device_id, unsigned int
 }
 #endif
 
-int dsmi_get_hbm_manufacturer_id(unsigned int device_id, unsigned int *manufacturer_id)
+DLLEXPORT int dsmi_get_hbm_manufacturer_id(unsigned int device_id, unsigned int *manufacturer_id)
 {
 #ifdef CFG_FEATURE_HBM_MANUFACTURER_ID
     int ret;
@@ -855,13 +944,19 @@ int dsmi_get_hbm_manufacturer_id(unsigned int device_id, unsigned int *manufactu
         DEV_MON_ERR("The parameter error.(device_id=%u)\n", device_id);
         return DRV_ERROR_PARA_ERROR;
     }
-
+#ifndef CFG_SOC_PLATFORM_CLOUD_V4
     ret = dsmi_cmd_get_hbm_manufacturer_id(device_id, manufacturer_id);
     if (ret) {
         DEV_MON_ERR("Dsmi_cmd_get_hbm_manufacturer_id call error.(device_id=%u; ret=%d)\n", device_id, ret);
         return ret;
     }
-
+#else
+    ret = dsmi_cmd_get_hbm_manufacturer_id_from_udis(device_id, manufacturer_id);
+    if (ret) {
+        DEV_MON_ERR("dsmi_cmd_get_hbm_manufacturer_id_from_udis call error.(device_id=%u; ret=%d)\n", device_id, ret);
+        return ret;
+    }
+#endif
     ret = dsmi_check_hbm_manufacturer_id(*manufacturer_id);
     if (ret) {
         DEV_MON_ERR("Check hbm manufacturer_id failed.(device_id=%u; ret=%d)\n", device_id, ret);
@@ -871,6 +966,88 @@ int dsmi_get_hbm_manufacturer_id(unsigned int device_id, unsigned int *manufactu
     return ret;
 #else
     DEV_MON_ERR("Dsmi not support. (device_id=%u)\n", device_id);
+    return DRV_ERROR_NOT_SUPPORT;
+#endif
+}
+
+#ifdef CFG_ATTEST_EVIDENCE
+STATIC int dsmi_cmd_get_attest_evidence(unsigned int device_id, ATTEST_OPERATE_REQUEST *req,
+    ATTEST_OPERATE_RESPONSE *rep)
+{
+    DM_COMMAND_BIGIN(DEV_MON_CMD_D_GET_ATTEST_EVIDENCE, device_id,
+        sizeof(ATTEST_OPERATE_REQUEST), sizeof(ATTEST_OPERATE_RESPONSE))
+    DM_COMMAND_ADD_REQ(req, sizeof(ATTEST_OPERATE_REQUEST))
+    DM_COMMAND_SEND()
+    DM_COMMAND_PUSH_OUT(rep, sizeof(ATTEST_OPERATE_RESPONSE))
+    DM_COMMAND_END()
+}
+
+STATIC int dsmi_cmd_get_akcert(unsigned int device_id, unsigned int *akcertLen, ATTEST_OPERATE_RESPONSE *rep)
+{
+    DM_COMMAND_BIGIN(DEV_MON_CMD_D_GET_AKCERT, device_id, sizeof(unsigned int), sizeof(ATTEST_OPERATE_RESPONSE))
+    DM_COMMAND_ADD_REQ(akcertLen, sizeof(unsigned int))
+    DM_COMMAND_SEND()
+    DM_COMMAND_PUSH_OUT(rep, sizeof(ATTEST_OPERATE_RESPONSE))
+    DM_COMMAND_END()
+}
+#endif
+
+DLLEXPORT int dsmi_attest_get_evidence(unsigned int device_id, ATTEST_OPERATE_REQUEST *req,
+    ATTEST_OPERATE_RESPONSE *rep)
+{
+#ifdef CFG_ATTEST_EVIDENCE
+    int ret;
+
+    if ((device_id >= DEVDRV_MAX_DAVINCI_NUM) || (req == NULL) || (rep == NULL)) {
+        DEV_MON_ERR("The parameter error.(device_id=%u)\n", device_id);
+        return DRV_ERROR_PARA_ERROR;
+    }
+
+    ret = dsmi_cmd_get_attest_evidence(device_id, req, rep);
+    if (ret != 0) {
+        DEV_MON_ERR("dsmi_cmd_get_attest_evidence call error. ret = %d", ret);
+    }
+    return ret;
+#else
+    (void)device_id;
+    (void)req;
+    (void)rep;
+    DEV_MON_ERR("Dsmi do not support.");
+    return DRV_ERROR_NOT_SUPPORT;
+#endif
+}
+
+DLLEXPORT int dsmi_attest_get_akcert(unsigned int device_id, unsigned int *akcertLen, ATTEST_OPERATE_RESPONSE *rep)
+{
+#ifdef CFG_ATTEST_EVIDENCE
+    int ret;
+
+    if (akcertLen == NULL || rep == NULL) {
+        DEV_MON_ERR("The parameter error. device_id = %d", device_id);
+        return DRV_ERROR_PARA_ERROR;
+    }
+
+    if (*akcertLen == 0) {
+        DEV_MON_ERR("The parameter error.akcertLen=0 device_id = %d", device_id);
+        return DRV_ERROR_PARA_ERROR;
+    }
+
+    if (device_id >= DEVDRV_MAX_DAVINCI_NUM) {
+        DEV_MON_ERR("The parameter error.(device_id=%u)\n", device_id);
+        return DRV_ERROR_PARA_ERROR;
+    }
+
+    ret = dsmi_cmd_get_akcert(device_id, akcertLen, rep);
+    if (ret != 0) {
+        DEV_MON_ERR("dsmi_cmd_get_akcert call error.ret = %d", ret);
+        return ret;
+    }
+    return ret;
+#else
+    (void)device_id;
+    (void)akcertLen;
+    (void)rep;
+    DEV_MON_ERR("Dsmi do not support.");
     return DRV_ERROR_NOT_SUPPORT;
 #endif
 }
@@ -886,7 +1063,7 @@ STATIC int dsmi_cmd_get_rootkey_status(unsigned int device_id, unsigned int key_
 }
 #endif
 
-int dsmi_get_rootkey_status(unsigned int device_id, unsigned int key_type, unsigned int *rootkey_status)
+DLLEXPORT int dsmi_get_rootkey_status(unsigned int device_id, unsigned int key_type, unsigned int *rootkey_status)
 {
 #ifdef CFG_FEATURE_ROOTKEY_STATUS
     int ret;
@@ -904,12 +1081,14 @@ int dsmi_get_rootkey_status(unsigned int device_id, unsigned int key_type, unsig
 
     return ret;
 #else
+    (void)key_type;
+    (void)rootkey_status;
     DEV_MON_ERR("Dsmi not support. (device_id=%u)\n", device_id);
     return DRV_ERROR_NOT_SUPPORT;
 #endif
 }
 
-int dsmi_get_hccs_status(unsigned int device_id1, unsigned int device_id2, int *hccs_status)
+DLLEXPORT int dsmi_get_hccs_status(unsigned int device_id1, unsigned int device_id2, int *hccs_status)
 {
 #ifdef CFG_SOC_PLATFORM_CLOUD
     int ret;
@@ -942,6 +1121,7 @@ int dsmi_get_hccs_status(unsigned int device_id1, unsigned int device_id2, int *
     *hccs_status = hccs_status_tmp;
     return ret;
 #else
+    (void)hccs_status;
     DEV_MON_ERR("Dsmi not support. (device_id1=%u, device_id2=%u)\n", device_id1, device_id2);
     return DRV_ERROR_NOT_SUPPORT;
 #endif
@@ -997,7 +1177,7 @@ int dsmi_get_multi_ecc_time_info(int device_id, struct dsmi_multi_ecc_time_data 
     return DRV_ERROR_NOT_SUPPORT;
 #endif
 }
- 
+
 int dsmi_get_multi_ecc_record_info(int device_id, unsigned int *ecc_count, unsigned char read_type,
     unsigned char module_type, struct dsmi_ecc_common_data *ecc_common_data_s)
 {
@@ -1054,10 +1234,10 @@ int dsmi_get_multi_ecc_record_info(int device_id, unsigned int *ecc_count, unsig
 #endif
 }
 
-int dsmi_get_serdes_info(unsigned int device_id, SERDES_MAIN_CMD main_cmd,
+DLLEXPORT int dsmi_get_serdes_info(unsigned int device_id, SERDES_MAIN_CMD main_cmd,
     unsigned int sub_cmd, void* buf, unsigned int* size)
 {
-#ifdef CFG_FEATURE_SERDES_INFO
+#if defined(CFG_FEATURE_SERDES_INFO) || defined(CFG_FEATURE_SERDES_INFO_A5)
     int ret = 0;
     if ((main_cmd >= DSMI_SERDES_CMD_MAX) || (sub_cmd >= DSMI_SERDES_PRBS_SUB_CMD_MAX) ||
         (sub_cmd == DSMI_SERDES_PRBS_SUB_CMD_SET_TYPE)) {
@@ -1084,10 +1264,10 @@ int dsmi_get_serdes_info(unsigned int device_id, SERDES_MAIN_CMD main_cmd,
 #endif
 }
 
-int dsmi_set_serdes_info(unsigned int device_id, SERDES_MAIN_CMD main_cmd,
+DLLEXPORT int dsmi_set_serdes_info(unsigned int device_id, SERDES_MAIN_CMD main_cmd,
     unsigned int sub_cmd, void* buf, unsigned int size)
 {
-#ifdef CFG_FEATURE_SERDES_INFO
+#if defined(CFG_FEATURE_SERDES_INFO) || defined(CFG_FEATURE_SERDES_INFO_A5)
     int ret = 0;
     if ((main_cmd >= DSMI_SERDES_CMD_MAX) || (sub_cmd >= DSMI_SERDES_PRBS_SUB_CMD_MAX) ||
         (sub_cmd != DSMI_SERDES_PRBS_SUB_CMD_SET_TYPE)) {
@@ -1116,7 +1296,7 @@ int dsmi_set_serdes_info(unsigned int device_id, SERDES_MAIN_CMD main_cmd,
 int dsmi_cmd_set_serdes_info(unsigned int dev_id, SERDES_MAIN_CMD main_cmd, unsigned int sub_cmd,
     const void *buf, unsigned int buf_size)
 {
-#ifdef CFG_FEATURE_SERDES_INFO
+#if defined(CFG_FEATURE_SERDES_INFO) || defined(CFG_FEATURE_SERDES_INFO_A5)
     DM_COMMAND_BIGIN(DEV_MON_CMD_D_SET_SERDES_INFO, dev_id, (sizeof(SERDES_MAIN_CMD) + sizeof(unsigned int) +
                      sizeof(unsigned int) + buf_size), 0)
     DM_COMMAND_ADD_REQ(&main_cmd, sizeof(SERDES_MAIN_CMD))
@@ -1133,7 +1313,7 @@ int dsmi_cmd_set_serdes_info(unsigned int dev_id, SERDES_MAIN_CMD main_cmd, unsi
 int dsmi_cmd_get_serdes_info(unsigned int dev_id, SERDES_MAIN_CMD main_cmd, unsigned int sub_cmd,
     void *buf, unsigned int *size)
 {
-#ifdef CFG_FEATURE_SERDES_INFO
+#if defined(CFG_FEATURE_SERDES_INFO) || defined(CFG_FEATURE_SERDES_INFO_A5)
     unsigned int out_length = 0;
 
     DM_COMMAND_BIGIN(DEV_MON_CMD_D_GET_SERDES_INFO, dev_id, (sizeof(SERDES_MAIN_CMD) + sizeof(unsigned int) +
@@ -1185,6 +1365,8 @@ int dsmi_product_get_mcu_board_id(unsigned int device_id, unsigned int *mcu_boar
 
     return DRV_ERROR_NONE;
 #else
+    (void)device_id;
+    (void)mcu_board_id;
     return DRV_ERROR_NOT_SUPPORT;
 #endif
 }
@@ -1193,30 +1375,30 @@ int dsmi_product_get_mcu_board_id(unsigned int device_id, unsigned int *mcu_boar
 int dsmi_cmd_get_custom_cert_show_info(unsigned int device_id, const char *buf, unsigned int buf_size,
                                        void *show_info, unsigned int show_info_size)
 {
-    DM_COMMAND_BIGIN(DEV_MOV_CMD_GET_CUSTOM_OP_SECVERIFY_CERT, device_id,
+    DM_COMMAND_BIGIN(DEV_MON_CMD_GET_CUSTOM_OP_SECVERIFY_CERT, device_id,
         (buf_size + sizeof(unsigned int) + sizeof(unsigned int)), show_info_size)
     DM_COMMAND_ADD_REQ(&show_info_size, sizeof(unsigned int))
     DM_COMMAND_ADD_REQ(&buf_size, sizeof(unsigned int))
     DM_COMMAND_ADD_REQ(buf, buf_size)
     DM_COMMAND_SEND()
-    DM_COMMAND_PUSH_OUT(&show_info, show_info_size)
+    DM_COMMAND_PUSH_OUT(show_info, show_info_size)
     DM_COMMAND_END()
 }
 #endif
 
-int dsmi_get_custom_op_secverify_cert_show_info(unsigned int device_id, const char *buf, unsigned int buf_size,
+DLLEXPORT int dsmi_get_custom_op_secverify_cert_show_info(unsigned int device_id, const char *buf, unsigned int buf_size,
                                                 void *show_info, unsigned int show_info_size)
 {
 #ifdef CFG_FEATURE_AICPU_CUSTOM_CERT
     int ret;
     if (show_info == NULL || device_id >= DEVDRV_MAX_DAVINCI_NUM || buf == NULL) {
-        DEV_MON_ERR("The buf is null or the device_id is too large. (devid=%u;)\n", device_id);
+        DEV_MON_ERR("The buf is null or the device_id is too large. (devid=%u)\n", device_id);
         return DRV_ERROR_PARA_ERROR;
     }
 
     if ((buf_size <= 0 || buf_size > DSMI_CUSTOM_OP_SECVERIFY_CERT_CHAIN_SIZE_MAX) ||
         (show_info_size <= 0 || show_info_size > DSMI_CUSTOM_OP_SECVERIFY_CERT_SHOW_INFO_SIZE_MAX)) {
-        DEV_MON_ERR("Invaild buf_size or show_info_size. (buf_size=%u; show_info_size=%u)\n", buf_size, show_info_size);
+        DEV_MON_ERR("Invalid buf_size or show_info_size. (buf_size=%u; show_info_size=%u)\n", buf_size, show_info_size);
         return DRV_ERROR_PARA_ERROR;
     }
 
@@ -1228,13 +1410,11 @@ int dsmi_get_custom_op_secverify_cert_show_info(unsigned int device_id, const ch
 
     return DRV_ERROR_NONE;
 #else
+    (void)device_id;
+    (void)buf;
+    (void)buf_size;
+    (void)show_info;
+    (void)show_info_size;
     return DRV_ERROR_NOT_SUPPORT;
 #endif
-}
-
-int dsmi_get_ub_bandwidth(int device_id __attribute__((unused)), int udie_id __attribute__((unused)), 
-                          int port_id __attribute__((unused)), unsigned int time_interval __attribute__((unused)),
-                          struct ub_bandwidth_t *bw __attribute__((unused)))
-{
-    return DRV_ERROR_NOT_SUPPORT;
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * Copyright (c) 2026 Huawei Technologies Co., Ltd.
  * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ struct svm_mem_repair_ops {
     int (*normal_map)(u64 va, struct svm_prop *prop);
     void (*normal_unmap)(u64 va, struct svm_prop *prop);
     int (*vmm_map)(void *seg_handle, u32 devid, u64 va, struct svm_global_va *src_info);
-    void (*vmm_unmap)(void *seg_handle, u32 devid, u64 va, struct svm_global_va *src_info);   
+    void (*vmm_unmap)(void *seg_handle, u32 devid, u64 va, struct svm_global_va *src_info);
 };
 
 void svm_mem_repair_set_ops(struct svm_mem_repair_ops *ops);

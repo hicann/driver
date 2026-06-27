@@ -19,6 +19,7 @@ bbox_status bbox_mkdir_recur(const char *dir_path);
 bbox_status bbox_age_add_folder(const char *old_path, const char *folder, char *new_path, u32 len);
 s32 bbox_format_path(char *buf, u32 len, const char *parent, const char *child);
 s32 bbox_format_device_path(char *buf, u32 len, const char *parent, u32 dev);
+s32 bbox_format_device_offline_path(char *buf, u32 len, const char *parent, u32 dev);
 s32 bbox_write_done_file(const char *path, s32 stat);
 bbox_status bbox_dir_chmod(const char *log_path, s32 mode, u32 rec_num);
 s32 bbox_save_log_buf_to_fs(const char *log_path, const char *file_name,

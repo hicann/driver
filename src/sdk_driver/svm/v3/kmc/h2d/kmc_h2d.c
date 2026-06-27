@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2025. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -59,12 +59,11 @@ int svm_kmc_h2d_send(u32 udevid, void *msg, u32 in_len, u32 out_len, u32 *real_o
     return (out_len != 0) ? head->ret : 0;
 }
 
-
 static int kmc_d2h_recv(u32 udevid, void *msg, u32 in_len, u32 out_len, u32 *real_out_len)
 {
     struct svm_kmc_msg_head *head = NULL;
     struct svm_kmc_d2h_recv_handle *handle = NULL;
-    u32 actual_len;
+    u32 actual_len, data_len;
 
     if (msg == NULL) {
         svm_err("Data is NULL. \n");
@@ -93,9 +92,12 @@ static int kmc_d2h_recv(u32 udevid, void *msg, u32 in_len, u32 out_len, u32 *rea
     }
 
     handle = g_d2h_handle[head->msg_id];
+    data_len = ka_base_max_t(u32, in_len, out_len);
     actual_len = handle->raw_msg_size + head->extend_num * handle->extend_gran_size;
-    if (in_len < actual_len) {
-        svm_err("Invalid data len. (in_len=%u; actual_len=%u)\n", in_len, actual_len);
+    if (data_len < actual_len) {
+        svm_err(
+            "Invalid data len. (data_len=%u; actual_len=%u; msg_id=%u; extend_num=%u)\n", data_len, actual_len,
+            head->msg_id, head->extend_num);
         return -EMSGSIZE;
     }
 
@@ -118,7 +120,7 @@ static int kmc_rx_msg_process(void *msg_chan, void *msg, u32 in_len, u32 out_len
     return kmc_d2h_recv(udevid, msg, in_len, out_len, real_out_len);
 }
 
-#define SVM_NON_TRANS_MSG_DESC_SIZE     (64ULL * SVM_BYTES_PER_KB)
+#define SVM_NON_TRANS_MSG_DESC_SIZE (64ULL * SVM_BYTES_PER_KB)
 static struct devdrv_non_trans_msg_chan_info chan_info = {
     .msg_type = devdrv_msg_client_devmm,
     .flag = 0,
@@ -179,7 +181,7 @@ void kmc_h2d_uninit_dev(u32 udevid)
     msg_chan = svm_dev_get_feature_priv(dev_ctx, kmc_h2d_feature_id);
     if (msg_chan != NULL) {
         (void)svm_dev_set_feature_priv(dev_ctx, kmc_h2d_feature_id, NULL, NULL);
-        svm_dev_ctx_put(dev_ctx);    /* paired with init */
+        svm_dev_ctx_put(dev_ctx); /* paired with init */
         svm_dev_ctx_put(dev_ctx);
         (void)devdrv_pcimsg_free_non_trans_queue(msg_chan);
     }
@@ -193,7 +195,5 @@ int kmc_h2d_init(void)
 }
 DECLAER_FEATURE_AUTO_INIT(kmc_h2d_init, FEATURE_LOADER_STAGE_0);
 
-void kmc_h2d_uninit(void)
-{
-}
+void kmc_h2d_uninit(void) {}
 DECLAER_FEATURE_AUTO_UNINIT(kmc_h2d_uninit, FEATURE_LOADER_STAGE_0);

@@ -18,9 +18,9 @@
 #include "trs_msg.h"
 
 #ifndef CFG_SOC_PLATFORM_MINIV3
-#define MAX_CDQM_CDQ_NUM   128
+#define MAX_CDQM_CDQ_NUM 128
 #else
-#define MAX_CDQM_CDQ_NUM   16
+#define MAX_CDQM_CDQ_NUM 16
 #endif
 
 struct cdqm_adapt_ops {
@@ -39,4 +39,3 @@ int cdqm_ts_inst_unregister(struct trs_id_inst *inst);
 bool cdqid_is_belong_to_proc(struct trs_id_inst *inst, ka_pid_t tgid, int res_type, u32 id);
 
 #endif
-

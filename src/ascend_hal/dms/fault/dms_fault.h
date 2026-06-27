@@ -13,7 +13,9 @@
 
 #include <ascend_hal.h>
 
-drvError_t DmsGetFaultEvent(int timeout, struct dms_fault_event *event);
+#define DMS_FAULT_DEVICE_ALL (-1)
+
+drvError_t DmsGetFaultEvent(int dev_id, struct dms_event_filter *filter, int timeout, struct dms_fault_event *event);
 drvError_t DmsGetHistoryFaultEvent(int device_id, struct dsmi_event *event_buf, int event_buf_size, int *event_cnt);
 drvError_t dms_clear_fault_event(u32 devid);
 drvError_t dms_disable_fault_event(u32 devid, u32 event_id);

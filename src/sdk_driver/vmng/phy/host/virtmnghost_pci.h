@@ -36,7 +36,7 @@
 #define VMNG_START_TIMER_OUT 100
 #define VMNG_START_TIMER_CYCLE (1 * KA_HZ)
 #define VMNG_AICORE_NUM 32
-#define VMNGH_INIT_INSTANCE_TIMEOUT (4 * KA_HZ)   /* 4s */
+#define VMNGH_INIT_INSTANCE_TIMEOUT (4 * KA_HZ) /* 4s */
 
 #define VMNG_NON_TRANS_MSG_S_DESC_SIZE 0x10000 /* 64k, pcie support */
 #define VMNG_NON_TRANS_MSG_C_DESC_SIZE 0x10000 /* 64k, pcie support */

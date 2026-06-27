@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2025. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -71,8 +71,8 @@ int pma_ub_get_register_seg_info(u32 udevid, int tgid, u64 va, u64 *start, u64 *
     return ret;
 }
 
-int pma_ub_acquire_seg(u32 udevid, int tgid, u64 va, u64 size,
-    int (*invalidate)(u64 invalidate_tag), u64 invalidate_tag, u32 *token_id)
+int pma_ub_acquire_seg(
+    u32 udevid, int tgid, u64 va, u64 size, int (*invalidate)(u64 invalidate_tag), u64 invalidate_tag, u32 *token_id)
 {
     struct pma_ub_ctx *ctx = NULL;
     int ret;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2025. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -47,10 +47,7 @@ struct smp_ctx *smp_ctx_get(u32 udevid, int tgid)
     return smp_ctx;
 }
 
-void smp_ctx_put(struct smp_ctx *smp_ctx)
-{
-    svm_task_ctx_put(smp_ctx->task_ctx);
-}
+void smp_ctx_put(struct smp_ctx *smp_ctx) { svm_task_ctx_put(smp_ctx->task_ctx); }
 
 static void smp_ctx_init(struct smp_ctx *smp_ctx)
 {
@@ -87,8 +84,7 @@ int smp_init_task(u32 udevid, int tgid, void *start_time)
         return -EINVAL;
     }
 
-    ret = svm_task_set_feature_priv(task_ctx, smp_feature_id, "smp",
-        (void *)smp_ctx, smp_ctx_release);
+    ret = svm_task_set_feature_priv(task_ctx, smp_feature_id, "smp", (void *)smp_ctx, smp_ctx_release);
     if (ret != 0) {
         svm_task_ctx_put(task_ctx);
         svm_vfree(smp_ctx);
@@ -107,7 +103,7 @@ static void smp_destroy_task(struct smp_ctx *smp_ctx)
 {
     svm_inst_trace("Destroy task. (udevid=%u; tgid=%d)\n", smp_ctx->udevid, smp_ctx->tgid);
     svm_task_set_feature_invalid(smp_ctx->task_ctx, smp_feature_id);
-    smp_mem_recycle(smp_ctx);
+    (void)smp_mem_recycle(smp_ctx, true);
     svm_task_ctx_put(smp_ctx->task_ctx); /* with init pair */
 }
 
@@ -124,7 +120,7 @@ void smp_uninit_task(u32 udevid, int tgid, void *start_time)
     smp_ctx_put(smp_ctx);
 
     if (!svm_task_is_exit_abort(smp_ctx->task_ctx)) {
-        if ((!svm_task_is_exit_force(smp_ctx->task_ctx)) && (smp_ctx->range_tree.node_num > 0)) {
+        if ((!svm_task_is_exit_force(smp_ctx->task_ctx)) && (smp_mem_recycle(smp_ctx, false) == -EBUSY)) {
             svm_task_set_exit_abort(smp_ctx->task_ctx);
             return;
         }
@@ -162,8 +158,5 @@ int svm_smp_init(void)
 }
 DECLAER_FEATURE_AUTO_INIT(svm_smp_init, FEATURE_LOADER_STAGE_4);
 
-void svm_smp_uninit(void)
-{
-}
+void svm_smp_uninit(void) {}
 DECLAER_FEATURE_AUTO_UNINIT(svm_smp_uninit, FEATURE_LOADER_STAGE_4);
-

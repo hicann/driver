@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * Copyright (c) 2026 Huawei Technologies Co., Ltd.
  * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -37,12 +37,12 @@ struct ascend_urma_seg_mng {
 struct ascend_urma_seg {
     struct rbtree_node node;
     atomic_int ref;
- 
+
     u64 start;
     u64 size;
     u32 seg_flag;
     void *token;
- 
+
     urma_target_seg_t *tseg;
 };
 
@@ -80,8 +80,8 @@ static urma_target_seg_t *_ascend_urma_register_segment(void *urma_ctx,
     urma_target_seg_t *tseg = NULL;
     urma_seg_cfg_t seg_cfg = {0};
 
-    seg_cfg.va = ascend_urma_adapt_align_down(start, getpagesize());
-    seg_cfg.len = ascend_urma_adapt_align_up(start + size, getpagesize()) - seg_cfg.va;
+    seg_cfg.va = ascend_urma_adapt_align_down(start, (u64)getpagesize());
+    seg_cfg.len = ascend_urma_adapt_align_up(start + size, (u64)getpagesize()) - seg_cfg.va;
     seg_cfg.token_id = ascend_urma_token_to_id(token);
     seg_cfg.token_value = ascend_urma_token_to_val(token);
 
@@ -138,7 +138,7 @@ static struct ascend_urma_seg *ascend_urma_seg_alloc(u32 devid, u64 start, u64 s
 
     seg = calloc(1, sizeof(struct ascend_urma_seg));
     if (seg == NULL) {
-        ascend_urma_err("Calloc ascend_urma_seg_inst failed. (size=%llu)\n", sizeof(struct ascend_urma_seg));
+        ascend_urma_err("Calloc ascend_urma_seg_inst failed. (size=%zu)\n", sizeof(struct ascend_urma_seg));
         return NULL;
     }
 
@@ -154,6 +154,7 @@ static struct ascend_urma_seg *ascend_urma_seg_alloc(u32 devid, u64 start, u64 s
     seg->seg_flag = seg_flag;
     seg->token = token;
     seg->tseg = tseg;
+    atomic_init(&seg->ref, 0);
 
     return seg;
 }
@@ -202,8 +203,8 @@ static int ascend_urma_seg_register(struct ascend_urma_seg_mng *seg_mng,
 {
     struct ascend_urma_seg *seg = NULL, *tmp_seg = NULL;
     void *token = NULL;
-    u64 aligned_va = ascend_urma_adapt_align_down(start, getpagesize());
-    u64 aligned_size = ascend_urma_adapt_align_up(start + size, getpagesize()) - aligned_va;
+    u64 aligned_va = ascend_urma_adapt_align_down(start, (u64)getpagesize());
+    u64 aligned_size = ascend_urma_adapt_align_up(start + size, (u64)getpagesize()) - aligned_va;
     u32 devid = seg_mng->devid;
     u32 token_flag = 0;
     int ret;
@@ -211,9 +212,9 @@ static int ascend_urma_seg_register(struct ascend_urma_seg_mng *seg_mng,
     tmp_seg = ascend_urma_get_seg(seg_mng, start, size);
     if (tmp_seg != NULL) {
         if ((tmp_seg->start != start) || (tmp_seg->size != size)) {
-            ascend_urma_err("Urma seg info is invalid. (start=0x%llx; size=%llu; seg_start=0x%llx; seg_size=%llu)\n",
+            ascend_urma_debug("Urma seg info is overlap. (start=0x%llx; size=%llu; seg_start=0x%llx; seg_size=%llu)\n",
                 start, size, tmp_seg->start, tmp_seg->size);
-            return DRV_ERROR_INVALID_VALUE;
+            return DRV_ERROR_BUSY;
         }
         atomic_fetch_add(&tmp_seg->ref, 1);
         return 0;
@@ -233,7 +234,7 @@ static int ascend_urma_seg_register(struct ascend_urma_seg_mng *seg_mng,
         ascend_urma_err("Alloc seg failed. (devid=%u; start=0x%llx; size=%llu; flag=0x%x)\n",
             devid, start, size, seg_flag);
         ascend_urma_token_release(token);
-        return DRV_ERROR_INNER_ERR;
+        return DRV_ERROR_PARA_ERROR;
     }
 
     ret = ascend_urma_seg_insert(seg_mng, seg);

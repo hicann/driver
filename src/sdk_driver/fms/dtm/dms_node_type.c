@@ -177,6 +177,10 @@ static struct dms_node_type_string g_dms_node_type[] = {
     {DMS_DEV_TYPE_UBSUB_DISP, "UB subsys DISP"},
     {DMS_DEV_TYPE_ADSPC, "ADSPC"},
     {DMS_DEV_TYPE_CFG_BUS, "CFG_BUS"},
+    {DMS_DEV_TYPE_MBIGEN, "MBIGEN"},
+    {DMS_DEV_TYPE_HSCB, "HSCB"},
+    {DMS_DEV_TYPE_DQS, "DQS"},
+    {DMS_DEV_TYPE_NTS, "NTS"},
     {DMS_DEV_TYPE_DJTAG, "DJTAG"}
 };
 

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * Copyright (c) 2026 Huawei Technologies Co., Ltd.
  * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -23,7 +23,9 @@
 #include "svm_user_adapt.h"
 #include "svm_log.h"
 #include "svm_pub.h"
+#include "svm_criu.h"
 #include "svm_ioctl_ex.h"
+#include "svm_ioctl_api.h"
 
 struct svm_dev_intf {
     int valid;
@@ -72,7 +74,9 @@ static int svm_char_dev_open(u32 udevid, int *fd)
     *fd = svm_file_open(davinci_intf_get_dev_path(), O_RDWR | O_CLOEXEC);
     if (*fd < 0) {
         tmp_errno = errno;
-        svm_err("Open device failed. (udevid=%u; fd=%d; errno=%d, error=%s)\n", udevid, *fd, tmp_errno, strerror(tmp_errno));
+        svm_err(
+            "Open device failed. (udevid=%u; fd=%d; errno=%d, error=%s)\n", udevid, *fd, tmp_errno,
+            strerror(tmp_errno));
         return errno_to_user_errno(tmp_errno);
     }
 
@@ -120,10 +124,14 @@ static int svm_char_dev_close(u32 udevid, int fd)
     return 0;
 }
 
-#define SVM_IOCTL_DEV_HANDLE_MAX_NUM  20
+#define SVM_IOCTL_DEV_HANDLE_MAX_NUM 20
 
-static int (* svm_ioctl_dev_init_post_handle[SVM_IOCTL_DEV_HANDLE_MAX_NUM])(u32 devid) = {NULL, };
-static int (* svm_ioctl_dev_uninit_pre_handle[SVM_IOCTL_DEV_HANDLE_MAX_NUM])(u32 devid) = {NULL, };
+static int (*svm_ioctl_dev_init_post_handle[SVM_IOCTL_DEV_HANDLE_MAX_NUM])(u32 devid) = {
+    NULL,
+};
+static int (*svm_ioctl_dev_uninit_pre_handle[SVM_IOCTL_DEV_HANDLE_MAX_NUM])(u32 devid) = {
+    NULL,
+};
 
 int svm_register_ioctl_dev_init_post_handle(int (*fn)(u32 devid))
 {
@@ -292,6 +300,10 @@ int svm_cmd_ioctl(u32 devid, u32 cmd, void *para)
         return DRV_ERROR_INVALID_VALUE;
     }
 
+    if (svm_criu_is_resetting(devid)) {
+        return DRV_ERROR_NONE;
+    }
+
     fd = svm_get_dev_fd(devid);
     if (fd < 0) {
         svm_err("No valid fd. (devid=%u)\n", devid);
@@ -307,4 +319,10 @@ int svm_cmd_ioctl(u32 devid, u32 cmd, void *para)
     } while ((ret == -1) && (tmp_errno == EINTR));
 
     return (ret == 0) ? 0 : errno_to_user_errno(tmp_errno);
+}
+
+int svm_ioctl_criu_reset(u32 devid)
+{
+    svm_set_dev_fd(devid, -1);
+    return 0;
 }

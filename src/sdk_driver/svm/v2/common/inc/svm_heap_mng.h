@@ -14,7 +14,7 @@
 #ifndef SVM_HEAP_MNG_H
 #define SVM_HEAP_MNG_H
 
-#include <linux/types.h>
+#include "ka_type.h"
 
 #include "svm_log.h"
 #include "svm_vmma_mng.h"
@@ -114,11 +114,11 @@
  * -----------------------------------------------------------------------------------------------------------------
  */
 struct devmm_heap_ref {
-    u32 count : 29;  /* pages count(max:2TB) / offset / ref count */
-    u32 flag : 1;    /* switch flag to express different meanings of count */
+    u32 count : 29; /* pages count(max:2TB) / offset / ref count */
+    u32 flag : 1;   /* switch flag to express different meanings of count */
 
-    u32 free : 1;    /* free flag */
-    u32 lock : 1;    /* lock ref */
+    u32 free : 1; /* free flag */
+    u32 lock : 1; /* lock ref */
 };
 
 #define DEVMM_HEAP_USED_BITS_NUM_MAX 128U
@@ -126,15 +126,15 @@ struct devmm_heap_ref {
 struct devmm_svm_heap {
     u32 heap_type;
     u32 heap_sub_type;
-    u32 heap_idx;     /* point to the first addr heap */
-    u32 chunk_page_size;       /* Bitmap's granularity, not equal with pagesize */
+    u32 heap_idx;        /* point to the first addr heap */
+    u32 chunk_page_size; /* Bitmap's granularity, not equal with pagesize */
     u64 start;
-    unsigned long *used_mask;    /* accelerate proc exit process */
+    unsigned long *used_mask; /* accelerate proc exit process */
     u64 heap_size;
     /*
      * page_bitmap define see svm_heap_mng.h define
      */
-    u32 *page_bitmap;          /* A page_bitmap manages a chunk_page_size. */
+    u32 *page_bitmap; /* A page_bitmap manages a chunk_page_size. */
     /*
      * bit31:lock ref
      * bit30:free ref
@@ -223,10 +223,7 @@ static inline void devmm_page_clean_bitmap(u32 *bitmap)
     devmm_page_bitmap_unlock(bitmap);
 }
 
-static inline u32 devmm_page_read_bitmap(u32 *bitmap)
-{
-    return ((*bitmap) & (~DEVMM_PAGE_BITMAP_LOCKED_MASK));
-}
+static inline u32 devmm_page_read_bitmap(u32 *bitmap) { return ((*bitmap) & (~DEVMM_PAGE_BITMAP_LOCKED_MASK)); }
 
 static inline void devmm_page_bitmap_set_devid(u32 *bitmap, u32 devid)
 {
@@ -238,10 +235,7 @@ static inline u32 devmm_page_bitmap_get_devid(u32 *bitmap)
     return devmm_page_bitmap_get_value(bitmap, DEVMM_PAGE_DEVID_SHIT, DEVMM_PAGE_DEVID_WID);
 }
 
-static inline void devmm_page_bitmap_set_flag_without_lock(u32 *bitmap, u32 flag)
-{
-    (*bitmap) |= flag;
-}
+static inline void devmm_page_bitmap_set_flag_without_lock(u32 *bitmap, u32 flag) { (*bitmap) |= flag; }
 
 static inline void devmm_page_bitmap_set_flag(u32 *bitmap, u32 flag)
 {
@@ -374,20 +368,11 @@ static inline bool devmm_page_bitmap_is_translate(u32 *bitmap)
     return (bool)devmm_page_bitmap_get_value(bitmap, DEVMM_PAGE_IS_TRANSLATE_BIT, 1);
 }
 
-static inline void devmm_heap_ref_set_flag(struct devmm_heap_ref *ref, u32 flag)
-{
-    ref->flag = flag;
-}
+static inline void devmm_heap_ref_set_flag(struct devmm_heap_ref *ref, u32 flag) { ref->flag = flag; }
 
-static inline bool devmm_heap_ref_cnt_is_used_as_ref(struct devmm_heap_ref *ref)
-{
-    return ref->flag == 1;
-}
+static inline bool devmm_heap_ref_cnt_is_used_as_ref(struct devmm_heap_ref *ref) { return ref->flag == 1; }
 
-static inline void devmm_heap_ref_set_cnt(struct devmm_heap_ref *ref, u32 cnt)
-{
-    ref->count = cnt;
-}
+static inline void devmm_heap_ref_set_cnt(struct devmm_heap_ref *ref, u32 cnt) { ref->count = cnt; }
 
 static inline void devmm_page_ref_lock(struct devmm_heap_ref *ref)
 {
@@ -407,8 +392,7 @@ static inline int devmm_set_page_ref_malloc(struct devmm_heap_ref *ref)
 {
     devmm_page_ref_lock(ref);
     if ((ref->count != 0) || (ref->free == 1)) {
-        devmm_drv_err("Set malloc error. (ref_lock=%d; ref_free=%d; ref_count=%d)\n",
-            ref->lock, ref->free, ref->count);
+        devmm_drv_err("Set malloc error. (ref_lock=%d; ref_free=%d; ref_count=%d)\n", ref->lock, ref->free, ref->count);
         devmm_page_ref_unlock(ref);
         return -EBUSY;
     }
@@ -429,8 +413,7 @@ static inline int devmm_set_page_ref_advise(struct devmm_heap_ref *ref)
     devmm_page_ref_lock(ref);
     /* do not act with other action */
     if (ref->count != 1 || ref->free == 1) {
-        devmm_drv_err("Advise is acting. (ref_lock=%d; ref_free=%d; ref_count=%d)\n",
-            ref->lock, ref->free, ref->count);
+        devmm_drv_err("Advise is acting. (ref_lock=%d; ref_free=%d; ref_count=%d)\n", ref->lock, ref->free, ref->count);
         devmm_page_ref_unlock(ref);
         return -EBUSY;
     }
@@ -450,8 +433,7 @@ static inline int devmm_add_page_ref(struct devmm_heap_ref *ref)
 {
     devmm_page_ref_lock(ref);
     if ((ref->count == 0) || (ref->free == 1)) {
-        devmm_drv_err("Add ref error. (ref_lock=%d; ref_free=%d; ref_count=%d)\n",
-            ref->lock, ref->free, ref->count);
+        devmm_drv_err("Add ref error. (ref_lock=%d; ref_free=%d; ref_count=%d)\n", ref->lock, ref->free, ref->count);
         devmm_page_ref_unlock(ref);
         return -EBUSY;
     }

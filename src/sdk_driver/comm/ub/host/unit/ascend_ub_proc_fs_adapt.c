@@ -341,7 +341,7 @@ STATIC_PROCFS_FILE_FUNC_OPS(nontrans_stat, ubdrv_procfs_non_trans_dfx, NULL);
 STATIC_PROCFS_FILE_FUNC_OPS(rao_stat, ubdrv_procfs_rao_chan_dfx, NULL);
 STATIC_PROCFS_FILE_FUNC_OPS(common_stat, ubdrv_procfs_common_dfx, NULL);
 
-int ubdrv_proc_create_data_proc(struct proc_dir_entry *top_entry, struct ubdrv_procfs_entry *procfs_entry)
+int ubdrv_proc_create_data_proc(ka_proc_dir_entry_t *top_entry, struct ubdrv_procfs_entry *procfs_entry)
 {
     procfs_entry->dev_id = ka_fs_proc_create_data("dev_id", KA_S_IRUSR | KA_S_IWUSR, top_entry, &dev_id, NULL);
     procfs_entry->admin_stat = ka_fs_proc_create_data("admin", KA_S_IRUSR, top_entry, &admin_stat, NULL);
@@ -351,7 +351,7 @@ int ubdrv_proc_create_data_proc(struct proc_dir_entry *top_entry, struct ubdrv_p
     procfs_entry->host_mem_cfg = ka_fs_proc_create_data("host_decoder", KA_S_IRUSR, top_entry, &mem_host_cfg, NULL);
 
     if (ubdrv_proc_check_data_valid(procfs_entry) == false) {
-        ubdrv_err("Creat chan dfx proc data error.\n");
+        ubdrv_err("Create chan dfx proc data error.\n");
         return -EBADR;
     }
 

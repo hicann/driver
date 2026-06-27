@@ -22,7 +22,7 @@
 #include "virtmng_resource.h"
 
 STATIC int vmnga_admin_para_check(const struct vmng_msg_dev *msg_dev,
-    const struct vmng_msg_chan_rx_proc_info *proc_info)
+                                  const struct vmng_msg_chan_rx_proc_info *proc_info)
 {
     if (msg_dev == NULL) {
         vmng_err("Input parameter is error.\n");
@@ -56,8 +56,8 @@ STATIC int vmnga_fill_msg_cluster_res(struct vmng_msg_chan_res *res, u32 tx_base
     rx_max = rx_base + rx_num;
     if ((tx_base >= VMNG_MSG_CHAN_NUM_MAX) || (tx_num >= VMNG_MSG_CHAN_NUM_MAX) || (rx_base >= VMNG_MSG_CHAN_NUM_MAX) ||
         (rx_num >= VMNG_MSG_CHAN_NUM_MAX) || (tx_max > VMNG_MSG_CHAN_NUM_MAX) || (rx_max > VMNG_MSG_CHAN_NUM_MAX)) {
-        vmng_err("Prarmeter check failed. (tx_base=%u; tx_num=%u; rx_base=%u; rx_num=%u)\n",
-                 tx_base, tx_num, rx_base, rx_num);
+        vmng_err("Prarmeter check failed. (tx_base=%u; tx_num=%u; rx_base=%u; rx_num=%u)\n", tx_base, tx_num, rx_base,
+                 rx_num);
         return -EINVAL;
     }
     res->tx_base = rx_base;
@@ -137,7 +137,7 @@ STATIC int vmnga_admin_rx_alloc_msg_cluster(struct vmng_msg_dev *msg_dev, struct
     msg_dev->msg_cluster[chan_type].status = VMNG_MSG_CLUSTER_STATUS_ENABLE;
 
     vmng_info("Alloc cluster success. (dev_id=%u; chan_type=%u; tx_base=%u; tx_num=%u; rx_base=%u; rx_num=%u)\n",
-        msg_dev->dev_id, cmd->chan_type, cmd->res.tx_base, cmd->res.tx_num, cmd->res.rx_base, cmd->res.rx_num);
+              msg_dev->dev_id, cmd->chan_type, cmd->res.tx_base, cmd->res.tx_num, cmd->res.rx_base, cmd->res.rx_num);
 
     /* 7. reply to host */
     reply = (struct vmng_create_cluster_reply *)proc_info->data;
@@ -255,7 +255,7 @@ int vmnga_init_msg_admin(struct vmng_msg_dev *msg_dev)
     msg_chan_rx->status = VMNG_MSG_CHAN_STATUS_IDLE;
 
     vmng_info("Admin init OK. (dev_id=%u; tx_int=%u; rx_int=%u) \n", msg_dev->dev_id, msg_chan_tx->tx_send_irq,
-        msg_chan_rx->rx_recv_irq);
+              msg_chan_rx->rx_recv_irq);
     return 0;
 }
 

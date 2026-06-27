@@ -42,8 +42,7 @@ int vpc_unregister_client(u32 dev_id, u32 fid, const struct vmng_vpc_client *vpc
 }
 KA_EXPORT_SYMBOL(vpc_unregister_client);
 
-int vpc_msg_send(u32 dev_id, u32 fid, enum vmng_vpc_type vpc_type, struct vmng_tx_msg_proc_info *tx_info,
-    u32 timeout)
+int vpc_msg_send(u32 dev_id, u32 fid, enum vmng_vpc_type vpc_type, struct vmng_tx_msg_proc_info *tx_info, u32 timeout)
 {
     return vmnga_vpc_msg_send(dev_id, vpc_type, tx_info, timeout);
 }
@@ -61,8 +60,7 @@ int vpc_unregister_common_msg_client(u32 dev_id, u32 fid, const struct vmng_comm
 }
 KA_EXPORT_SYMBOL(vpc_unregister_common_msg_client);
 
-int vpc_common_msg_send(u32 dev_id, u32 fid, enum vmng_msg_common_type cmn_type,
-                        struct vmng_tx_msg_proc_info *tx_info)
+int vpc_common_msg_send(u32 dev_id, u32 fid, enum vmng_msg_common_type cmn_type, struct vmng_tx_msg_proc_info *tx_info)
 {
     return vmnga_common_msg_send(dev_id, cmn_type, tx_info);
 }
@@ -77,21 +75,21 @@ STATIC int vmnga_map_bar_va_cloud_v2(const struct vmng_vpc_unit *unit, struct vm
     vpc_unit->db_base = ka_mm_ioremap(unit->mmio.bar0_base, VMNG_DB_MEM_BAR_SIZE);
     if (vpc_unit->db_base == NULL) {
         ka_dfx_pr_err("Ioremap db_base failed. (bdf=%02x:%02x.%d)\n", ka_pci_get_bus_number(pdev),
-            KA_PCI_SLOT(ka_pci_get_devfn(pdev)), KA_PCI_FUNC(ka_pci_get_devfn(pdev)));
+                      KA_PCI_SLOT(ka_pci_get_devfn(pdev)), KA_PCI_FUNC(ka_pci_get_devfn(pdev)));
         goto db_err;
     }
     vpc_unit->shr_para = ka_mm_ioremap(unit->mmio.bar0_base + VMNG_SHR_PARA_ADDR_BASE + VMNG_DB_MEM_BAR_OFFSET,
-                                 VMNG_SHR_PARA_ADDR_SIZE);
+                                       VMNG_SHR_PARA_ADDR_SIZE);
     if (vpc_unit->shr_para == NULL) {
         ka_dfx_pr_err("Ioremap shr failed. (bdf=%02x:%02x.%d)\n", ka_pci_get_bus_number(pdev),
-            KA_PCI_SLOT(ka_pci_get_devfn(pdev)), KA_PCI_FUNC(ka_pci_get_devfn(pdev)));
+                      KA_PCI_SLOT(ka_pci_get_devfn(pdev)), KA_PCI_FUNC(ka_pci_get_devfn(pdev)));
         goto shr_err;
     }
     vpc_unit->msg_base = ka_mm_ioremap(unit->mmio.bar0_base + VMNG_MSG_ADDR_BASE + VMNG_DB_MEM_BAR_OFFSET,
-                                 VMNG_MSG_ADDR_SIZE);
+                                       VMNG_MSG_ADDR_SIZE);
     if (vpc_unit->msg_base == NULL) {
         ka_dfx_pr_err("Ioremap msg base failed. (bdf=%02x:%02x.%d)\n", ka_pci_get_bus_number(pdev),
-            KA_PCI_SLOT(ka_pci_get_devfn(pdev)), KA_PCI_FUNC(ka_pci_get_devfn(pdev)));
+                      KA_PCI_SLOT(ka_pci_get_devfn(pdev)), KA_PCI_FUNC(ka_pci_get_devfn(pdev)));
         goto msg_err;
     }
 
@@ -143,8 +141,8 @@ STATIC int vpc_top_half_init_finish(struct vmnga_vpc_unit *vpc_unit)
     int ret;
 
     start_dev->msix_id = VMNG_MSIX_BASE_LOAD;
-    ret = vmnga_register_vpc_irq_func((void *)vpc_unit, start_dev->msix_id, vmnga_vpc_start_irq,
-                                      (void *)vpc_unit, "vmnga_start");
+    ret = vmnga_register_vpc_irq_func((void *)vpc_unit, start_dev->msix_id, vmnga_vpc_start_irq, (void *)vpc_unit,
+                                      "vmnga_start");
     if (ret != 0) {
         vmng_err("register vpc start irq failed. (ret=%d)\n", ret);
         return ret;
@@ -212,8 +210,8 @@ int vmng_vpc_init(struct vmng_vpc_unit *unit_in, int server_type)
 
         vpc_unit->pdev = unit->pdev;
         ret = memcpy_s(vpc_unit->msix_ctrl.entries, sizeof(ka_msix_entry_t) * VIRTMNGAGENT_MSIX_MAX,
-            unit->msix_info.entries + unit->msix_info.msix_irq_offset,
-            sizeof(ka_msix_entry_t) * unit->msix_info.msix_irq_num);
+                       unit->msix_info.entries + unit->msix_info.msix_irq_offset,
+                       sizeof(ka_msix_entry_t) * unit->msix_info.msix_irq_num);
         if (ret != 0) {
             vmng_err("Memcpy failed. (dev_id=%u;ret=%d)\n", vpc_unit->dev_id, ret);
             vmnga_unmap_bar_va_cloud_v2(vpc_unit);

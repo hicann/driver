@@ -17,6 +17,7 @@
 
 #define MAX_PHY_DEV_NUM 64
 #define BBOX_INVALID_DEVICE_ID (-1)
+#define DEV_BUF_MAX_LEN 32U
 
 enum BBOX_DUMP_MODE {
     BBOX_DUMP_MODE_NONE   = 0,
@@ -77,9 +78,11 @@ typedef struct dump_data_config {
 const dump_data_config_st *bbox_get_data_config(enum EXCEPTION_EVENT_TYPE event);
 u32 bbox_get_data_config_size(enum EXCEPTION_EVENT_TYPE event);
 
-bbox_status bbox_dump_excep_event(u32 phy_id, const char *path, enum EXCEPTION_EVENT_TYPE event, const char *tms);
-bbox_status bbox_dump_runtime(u32 phy_id, const char *path, enum BBOX_DUMP_MODE mode);
+bbox_status bbox_dump_excep_event(u32 phy_id, const char *path, enum EXCEPTION_EVENT_TYPE event, const char *tms, int logic_id);
+bbox_status bbox_dump_runtime(u32 phy_id, const char *path, enum BBOX_DUMP_MODE mode, int logic_id);
 bbox_status bbox_get_device_log_tms(const struct rdr_log_info *info, char *tms, s32 len);
-bbox_status bbox_check_dev_event(u32 phy_id, u16 *event, char *tms, s32 len);
-
+bbox_status bbox_check_dev_event(u32 phy_id, int logic_id, u16 *event, char *tms, s32 len);
+bbox_status bbox_create_excep_dir_adapt(u32 phy_id, int logic_id, enum EXCEPTION_EVENT_TYPE event, const char *path, char *dev_path);
+bbox_status bbox_dump_dev_files(u32 phy_id, int logic_id, const char *path);
+const char *bbox_get_dev_str(u32 phy_id, int logic_id, char *buf, u32 buf_size);
 #endif

@@ -62,6 +62,35 @@ typedef struct dev_pm_ops ka_dev_pm_ops_t;
 #define KA_PCI_EXP_LNKCTL_LD            PCI_EXP_LNKCTL_LD
 #define KA_PCI_CAP_ID_VNDR              PCI_CAP_ID_VNDR
 #define KA_PCI_EXP_LNKSTA_DLLLA         PCI_EXP_LNKSTA_DLLLA
+#define KA_PCI_BASE_ADDRESS_0           PCI_BASE_ADDRESS_0
+#define KA_PCI_BASE_ADDRESS_1           PCI_BASE_ADDRESS_1
+#define KA_PCI_BASE_ADDRESS_2           PCI_BASE_ADDRESS_2
+#define KA_PCI_BASE_ADDRESS_3           PCI_BASE_ADDRESS_3
+#define KA_PCI_BASE_ADDRESS_4           PCI_BASE_ADDRESS_4
+#define KA_PCI_BASE_ADDRESS_5           PCI_BASE_ADDRESS_5
+#define KA_PCI_BASE_ADDRESS_MEM_MASK    PCI_BASE_ADDRESS_MEM_MASK
+#define KA_PCI_CACHE_LINE_SIZE          PCI_CACHE_LINE_SIZE
+#define KA_PCI_CAPABILITY_LIST          PCI_CAPABILITY_LIST
+#define KA_PCI_CAP_ID_MSIX              PCI_CAP_ID_MSIX
+#define KA_PCI_CAP_ID_PM                PCI_CAP_ID_PM
+#define KA_PCI_CARDBUS_CIS              PCI_CARDBUS_CIS
+#define KA_PCI_CFG_SPACE_EXP_SIZE       PCI_CFG_SPACE_EXP_SIZE
+#define KA_PCI_COMMAND                  PCI_COMMAND
+#define KA_PCI_COMMAND_INTX_DISABLE     PCI_COMMAND_INTX_DISABLE
+#define KA_PCI_VENDOR_ID                PCI_VENDOR_ID
+#define KA_PCI_EXP_DEVCAP_FLR           PCI_EXP_DEVCAP_FLR
+#define KA_PCI_EXP_DEVCTL_BCR_FLR       PCI_EXP_DEVCTL_BCR_FLR
+#define KA_PCI_INTERRUPT_LINE           PCI_INTERRUPT_LINE
+#define KA_PCI_INTERRUPT_PIN            PCI_INTERRUPT_PIN
+#define KA_PCI_MSIX_FLAGS_ENABLE        PCI_MSIX_FLAGS_ENABLE
+#define KA_PCI_MSIX_FLAGS_MASKALL       PCI_MSIX_FLAGS_MASKALL
+#define KA_PCI_MSIX_FLAGS_QSIZE         PCI_MSIX_FLAGS_QSIZE
+#define KA_PCI_REVISION_ID              PCI_REVISION_ID
+#define KA_PCI_STATUS                   PCI_STATUS
+#define KA_PCI_SUBSYSTEM_ID             PCI_SUBSYSTEM_ID
+#define KA_PCI_SUBSYSTEM_VENDOR_ID      PCI_SUBSYSTEM_VENDOR_ID
+#define KA_PCI_ANY_ID                   PCI_ANY_ID
+#define KA_PCI_DEVICE_ID                PCI_DEVICE_ID
 
 #define ka_pci_channel_io_normal        pci_channel_io_normal
 #define ka_pci_channel_io_frozen        pci_channel_io_frozen
@@ -176,4 +205,5 @@ bridge_func ka_pci_get_bridge_reset_func(void);
 int ka_pci_enable_pcie_error_reporting(ka_pci_dev_t *dev);
 int ka_pci_disable_pcie_error_reporting(ka_pci_dev_t *dev);
 int ka_pci_configure_extended_capability(ka_pci_dev_t *dev);
+int ka_pci_capability_read_word(ka_pci_dev_t *dev, int pos, u16 *val);
 #endif

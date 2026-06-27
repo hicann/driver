@@ -8,7 +8,6 @@
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
-
 #include <sched.h>
 #include <pthread.h>
 
@@ -44,21 +43,22 @@ pthread_mutex_t g_devmm_mmap_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 static THREAD int g_svm_host_mem_alloc_mode = SVM_HOST_MEM_ALLOCED_BY_MMAP;
 
-void devmm_set_host_mem_alloc_mode(int mode)
-{
-    g_svm_host_mem_alloc_mode = mode;
-}
+#ifndef UVM_OPEN
+static THREAD int g_uvm_host_mem_alloc_mode = UVM_HOST_MEM_ALLOCED_BY_MMAP;
+#endif
 
-int devmm_get_host_mem_alloc_mode(void)
-{
-    return g_svm_host_mem_alloc_mode;
-}
+void devmm_set_host_mem_alloc_mode(int mode) { g_svm_host_mem_alloc_mode = mode; }
 
-bool devmm_is_host_pin_memory_map_failed()
-{
-    return g_host_pin_memory_map_failed;
-}
- 
+int devmm_get_host_mem_alloc_mode(void) { return g_svm_host_mem_alloc_mode; }
+
+bool devmm_is_host_pin_memory_map_failed() { return g_host_pin_memory_map_failed; }
+
+#ifndef UVM_OPEN
+void devmm_set_uvm_host_mem_alloc_mode(int mode) { g_uvm_host_mem_alloc_mode = mode; }
+
+int devmm_get_uvm_host_mem_alloc_mode(void) { return g_uvm_host_mem_alloc_mode; }
+#endif
+
 #ifndef EMU_ST
 STATIC DVresult devmm_davinci_open(int fd, const char *davinci_sub_name)
 {
@@ -113,8 +113,7 @@ STATIC int devmm_svm_open_proc(const char *davinci_sub_name)
     ret = devmm_davinci_open(fd, davinci_sub_name);
     if (ret != DRV_ERROR_NONE) {
         (void)close(fd);
-        DEVMM_DRV_ERR("Davinci open memory device fail. (ret=%d; sub_name=%s)\n",
-            ret, davinci_sub_name);
+        DEVMM_DRV_ERR("Davinci open memory device fail. (ret=%d; sub_name=%s)\n", ret, davinci_sub_name);
         return -1;
     }
     return fd;
@@ -154,8 +153,9 @@ void *devmm_svm_map_with_flag(void *mem_map_addr, uint64_t size, uint64_t flags,
     mem_mapped_addr = mmap(mem_map_addr, size, PROT_READ | PROT_WRITE, (int)(MAP_SHARED | flags), g_devmm_mem_dev, 0);
     if (mem_mapped_addr == MAP_FAILED) {
         err = errno;
-        DEVMM_RUN_INFO("Host mem goto malloc. (mapped=0x%lx; start=0x%lx; errno=%d; errstr=%s)\n",
-            mem_map_addr, mem_mapped_addr, err, strerror(err));
+        DEVMM_RUN_INFO(
+            "Host mem goto malloc. (mapped=%p; start=%p; errno=%d; errstr=%s)\n", mem_map_addr, mem_mapped_addr, err,
+            strerror(err));
         return NULL;
     }
 
@@ -173,10 +173,7 @@ void *devmm_svm_map_with_flag(void *mem_map_addr, uint64_t size, uint64_t flags,
     return mem_mapped_addr;
 }
 
-void devmm_svm_munmap(void *mem_unmap_addr, uint64_t size)
-{
-    (void)munmap(mem_unmap_addr, size);
-}
+void devmm_svm_munmap(void *mem_unmap_addr, uint64_t size) { (void)munmap(mem_unmap_addr, size); }
 #endif
 
 /* DEVMM_MAP_NPTMV is used for distinguish double pgtable by os. */
@@ -184,10 +181,20 @@ void devmm_svm_munmap(void *mem_unmap_addr, uint64_t size)
 void *devmm_svm_map_by_size(void *mem_map_addr, uint64_t size)
 {
     /* MAP_NPTMV is used for distinguish double pgtable by os. */
-    uint64_t flags = (g_is_need_map_nptmv && ((uint64_t)(uintptr_t)mem_map_addr >= (DEVMM_SVM_MEM_START + DEVMM_SVM_MEM_SIZE))) ?
-        DEVMM_MAP_NPTMV : 0;
-
-    return devmm_svm_map_with_flag(mem_map_addr, size, flags, 0);
+    uint64_t flags =
+        (g_is_need_map_nptmv && ((uint64_t)(uintptr_t)mem_map_addr >= (DEVMM_SVM_MEM_START + DEVMM_SVM_MEM_SIZE))) ?
+            DEVMM_MAP_NPTMV :
+            0;
+#ifndef UVM_OPEN
+    int fix_va_flag = ((uint64_t)(uintptr_t)mem_map_addr == DEVMM_UVM_MEM_START ||
+                       (uint64_t)(uintptr_t)mem_map_addr == DEVMM_SOMA_MEM_START) ?
+                          1 :
+                          0;
+    return devmm_svm_map_with_flag(mem_map_addr, size, flags, fix_va_flag);
+#else
+    int fix_va_flag = ((uint64_t)(uintptr_t)mem_map_addr == DEVMM_SOMA_MEM_START) ? 1 : 0;
+    return devmm_svm_map_with_flag(mem_map_addr, size, flags, fix_va_flag);
+#endif
 }
 
 STATIC int devmm_svm_get_mmap_para(struct devmm_mmap_addr_seg *segs, uint32_t *seg_num)
@@ -228,6 +235,9 @@ static DVresult devmm_get_svm_map_err_result(int side)
     if (side == SVM_MASTER_SIDE) {
         /* When asan is enable or host os not support mmap 8T */
         g_mmap_seg_num = 0;
+#ifndef UVM_OPEN
+        devmm_set_uvm_host_mem_alloc_mode(UVM_HOST_MEM_ALLOCED_BY_MALLOC);
+#endif
         devmm_set_host_mem_alloc_mode(SVM_HOST_MEM_ALLOCED_BY_MALLOC);
         return DRV_ERROR_NONE;
     } else {
@@ -255,15 +265,12 @@ bool devmm_is_in_mmap_segs(uint64_t va, uint64_t size)
 }
 
 static uint64_t g_devmm_host_uva_start = DEVMM_DEFAULT_HOST_UVA_START;
-uint64_t devmm_get_host_uva_start(void)
-{
-    return g_devmm_host_uva_start;
-}
+uint64_t devmm_get_host_uva_start(void) { return g_devmm_host_uva_start; }
 
 static bool devmm_is_in_host_uva_range(uint64_t va, uint64_t size)
 {
-    return (((va == DEVMM_DEFAULT_HOST_UVA_START) || (va == DEVMM_HCCS_HOST_UVA_START)) &&
-        (size == DEVMM_HOST_PIN_SIZE));
+    return (
+        ((va == DEVMM_DEFAULT_HOST_UVA_START) || (va == DEVMM_HCCS_HOST_UVA_START)) && (size == DEVMM_HOST_PIN_SIZE));
 }
 
 DVresult devmm_svm_map(int side)
@@ -366,22 +373,10 @@ STATIC void devmm_svm_uninit(void)
     /* davinci chardev will be released in the release process, no need to close */
 }
 
-DVresult devmm_svm_master_init(void)
-{
-    return devmm_svm_init(DAVINCI_SVM_SUB_MODULE_NAME, SVM_MASTER_SIDE);
-}
+DVresult devmm_svm_master_init(void) { return devmm_svm_init(DAVINCI_SVM_SUB_MODULE_NAME, SVM_MASTER_SIDE); }
 
-DVresult devmm_svm_agent_init(void)
-{
-    return devmm_svm_init(DAVINCI_SVM_AGENT_SUB_MODULE_NAME, SVM_AGENT_SIDE);
-}
+DVresult devmm_svm_agent_init(void) { return devmm_svm_init(DAVINCI_SVM_AGENT_SUB_MODULE_NAME, SVM_AGENT_SIDE); }
 
-void devmm_svm_agent_uninit(void)
-{
-    devmm_svm_uninit();
-}
+void devmm_svm_agent_uninit(void) { devmm_svm_uninit(); }
 
-void devmm_svm_master_uninit(void)
-{
-    devmm_svm_uninit();
-}
+void devmm_svm_master_uninit(void) { devmm_svm_uninit(); }

@@ -7,11 +7,12 @@
 # INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
 # See LICENSE in the root of the software repository for the full text of the License.
 # ------------------------------------------------------------------------------------------------------------
+
 get_filename_component(BASE_DIR "${CMAKE_CURRENT_LIST_DIR}" ABSOLUTE)
-add_library(dsmi_network  SHARED
+add_library(dsmi_network SHARED
     ds_net.c
     ds_net_ext.c
-    ${BASE_DIR}/../common/hccn_comm.c)
+    ${DRIVER_CUST_DIR}/network/hccn/common/hccn_comm.c)
 
 target_include_directories(dsmi_network PRIVATE
     ${BASE_DIR}
@@ -23,7 +24,9 @@ target_include_directories(dsmi_network PRIVATE
     ${DRIVER_USER_DIR}/inc/dms
     ${DRIVER_CUST_INC_DIR}
     ${DRIVER_CUST_DIR}/network/inc
-    ${DRIVER_CUST_DIR}/network/common
+    ${DRIVER_CUST_DIR}/network/inc/ascend910B
+    ${DRIVER_CUST_DIR}/network/hccn/common
+    ${DRIVER_CUST_DIR}/network/hccn/hccn_tool/src
     ${DRIVER_CUST_DIR}/dev_prod/user/dsmi_product_ext
     ${DRIVER_KERNEL_DIR}/dms/command/ioctl
 )

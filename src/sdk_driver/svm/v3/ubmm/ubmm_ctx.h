@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2025. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -18,11 +18,12 @@
 #include "ka_task_pub.h"
 #include "ka_hashtable_pub.h"
 
-#define UBMM_NODE_HASH_BIT    10
+#define UBMM_NODE_HASH_BIT 10
 
 struct ubmm_ctx {
     u32 udevid;
     int tgid;
+    bool ubdev_task_added;
     void *task_ctx;
     ka_mutex_t mutex;
     KA_DECLARE_HASHTABLE(htable, UBMM_NODE_HASH_BIT);
@@ -34,10 +35,13 @@ struct ubmm_node {
     u64 va;
     u64 size;
     u64 uba;
+
+    ka_page_t **pages; /* Use to pin pages. */
+    u64 page_num;
+    bool is_remap_addr;
 };
 
 struct ubmm_ctx *ubmm_ctx_get(u32 udevid, int tgid);
 void ubmm_ctx_put(struct ubmm_ctx *ctx);
 
 #endif
-

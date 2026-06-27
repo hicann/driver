@@ -59,4 +59,3 @@ void queue_show_one_qid_status(ka_seq_file_t *seq, struct queue_qid_status *per_
 void queue_show_perf_switch(ka_seq_file_t *seq);
 
 #endif
-

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2025. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -47,10 +47,7 @@ struct casm_ctx *casm_ctx_get(u32 udevid, int tgid)
     return ctx;
 }
 
-void casm_ctx_put(struct casm_ctx *ctx)
-{
-    svm_task_ctx_put(ctx->task_ctx);
-}
+void casm_ctx_put(struct casm_ctx *ctx) { svm_task_ctx_put(ctx->task_ctx); }
 
 static void casm_ctx_init(u32 udevid, struct casm_ctx *ctx)
 {
@@ -87,8 +84,7 @@ int casm_init_task(u32 udevid, int tgid, void *start_time)
         return -EINVAL;
     }
 
-    ret = svm_task_set_feature_priv(task_ctx, casm_task_feature_id, "casm",
-        (void *)ctx, casm_ctx_release);
+    ret = svm_task_set_feature_priv(task_ctx, casm_task_feature_id, "casm", (void *)ctx, casm_ctx_release);
     if (ret != 0) {
         svm_task_ctx_put(task_ctx);
         svm_vfree(ctx);
@@ -158,8 +154,5 @@ int svm_casm_init(void)
 }
 DECLAER_FEATURE_AUTO_INIT(svm_casm_init, FEATURE_LOADER_STAGE_5);
 
-void svm_casm_uninit(void)
-{
-}
+void svm_casm_uninit(void) {}
 DECLAER_FEATURE_AUTO_UNINIT(svm_casm_uninit, FEATURE_LOADER_STAGE_5);
-

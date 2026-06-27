@@ -13,7 +13,7 @@
 #ifndef ID_POOL_H
 #define ID_POOL_H
 
-#include <linux/types.h>
+#include "ka_type.h"
 #include "ka_compiler_pub.h"
 
 #include "trs_pub_def.h"
@@ -28,7 +28,7 @@ struct id_pool_inst {
 };
 
 struct id_pool_attr {
-    u32 node_tunable;   /* create vf need adjust rsv sqcq num */
+    u32 node_tunable; /* create vf need adjust rsv sqcq num */
     u32 id_start;
     u32 id_total_num;
 };

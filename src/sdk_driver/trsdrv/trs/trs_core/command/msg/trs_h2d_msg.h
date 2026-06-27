@@ -29,12 +29,12 @@ struct trs_msg_head {
     s16 result; /* process result from rp, zero for succ, non zero for fail */
 };
 
-#define TRS_MSG_TOTAL_LEN       512
-#define TRS_MSG_DATA_LEN        (TRS_MSG_TOTAL_LEN - sizeof(struct trs_msg_head) - sizeof(u64))
+#define TRS_MSG_TOTAL_LEN 512
+#define TRS_MSG_DATA_LEN (TRS_MSG_TOTAL_LEN - sizeof(struct trs_msg_head) - sizeof(u64))
 
-#define TRS_MSG_SEND_MAGIC      0x5A5A
-#define TRS_MSG_RCV_MAGIC       0xA5A5
-#define TRS_MSG_INVALID_RESULT  0x1A
+#define TRS_MSG_SEND_MAGIC 0x5A5A
+#define TRS_MSG_RCV_MAGIC 0xA5A5
+#define TRS_MSG_INVALID_RESULT 0x1A
 
 struct trs_msg_data {
     struct trs_msg_head header;
@@ -89,8 +89,8 @@ struct trs_msg_res_id_check {
 struct trs_msg_id_sync_head {
     int type;
     u32 flag;
-    u16 req_num;    // request id num
-    u16 ret_num;    // return id num
+    u16 req_num; // request id num
+    u16 ret_num; // return id num
 };
 
 #define TRS_MSG_ID_SYNC_MAX_NUM 64
@@ -131,8 +131,8 @@ struct trs_msg_stream_bind_sqcq {
 };
 
 struct trs_msg_map_stars_sq {
-    u64     va;         /* stars va addr for cp proc  */
-    size_t  size;
+    u64 va; /* stars va addr for cp proc  */
+    size_t size;
 };
 
 struct trs_msg_sqcq_sync {
@@ -152,8 +152,8 @@ struct trs_msg_map_sq_mem {
     u32 phy_devid;
     u32 vfid;
     int remote_tgid;
-    u64 dev_paddr;    /* sq device rsv mem phy addr */
-    size_t  size;
+    u64 dev_paddr; /* sq device rsv mem phy addr */
+    size_t size;
     struct trs_msg_map_stars_sq sq_map;
 };
 
@@ -170,6 +170,7 @@ struct trs_msg_jetty_info {
     struct ubcore_eid_info eid_info;
     struct ubcore_seg notify_seg;
     struct ubcore_seg cnt_notify_seg;
+    struct ubcore_seg sq_reg_seg;
     u32 die_id;
     u32 func_id;
     u32 vfid;
@@ -218,7 +219,7 @@ struct aicpu_task_info {
 struct stars_abnormal_info {
     u32 vfid;
     u16 sqid;
-    u16 sqe_id;  /* prepare for future */
+    u16 sqe_id; /* prepare for future */
     u16 task_id;
     u8 task_type;
     u8 err_type;
@@ -237,68 +238,68 @@ struct trs_msg_ts_cq_process {
 };
 
 /* trs_mailbox_def.h start */
-#define TRS_MBOX_NOTICE_ACK_IRQ_VALUE       0U
-#define TRS_MBOX_CREATE_CQSQ_CALC           1U // normal sqcq alloc
-#define TRS_MBOX_RELEASE_CQSQ_CALC          2U // normal sqcq free
-#define TRS_MBOX_LOG_CQSQ_CREATE            3U
-#define TRS_MBOX_LOG_CQSQ_RELEASE           4U
-#define TRS_MBOX_DBG_CQSQ_CREATE            5U
-#define TRS_MBOX_DBG_CQSQ_RELEASE           6U
-#define TRS_MBOX_CREATE_PROF_SQCQ           7U
-#define TRS_MBOX_RELEASE_PROF_SQCQ          8U
-#define TRS_MBOX_CREATE_HB_SQCQ             9U
-#define TRS_MBOX_RELEASE_HB_SQCQ            10U
-#define TRS_MBOX_SEND_RDMA_INFO             15U
-#define TRS_MBOX_RESET_NOTIFY               16U
-#define TRS_MBOX_RECYCLE_PID                18U
-#define TRS_MBOX_RECORD_NOTIFY              19U
-#define TRS_MBOX_CREATE_TASKSCHED_SQCQ      24U
-#define TRS_MBOX_RELEASE_TASKSCHED_SQCQ     25U
-#define TRS_MBOX_CREATE_CB_CQ               26U
-#define TRS_MBOX_RELEASE_CB_CQ              27U
-#define TRS_MBOX_CREATE_MIA                 30U
-#define TRS_MBOX_DESTROY_MIA                31U
-#define TRS_MBOX_RESET_EVENT_ID             32U
-#define TRS_MBOX_SHM_SQCQ_ALLOC             33U
-#define TRS_MBOX_SHM_SQCQ_FREE              34U
-#define TRS_MBOX_LOGIC_CQ_ALLOC             35U
-#define TRS_MBOX_LOGIC_CQ_FREE              36U
-#define TRS_MBOX_CREATE_TOPIC_SQCQ          37U // esched alloc
-#define TRS_MBOX_RELEASE_TOPIC_SQCQ         38U // esched alloc
-#define TRS_MBOX_RES_MAP                    39U
-#define TRS_MBOX_RECYCLE_CHECK              40U
-#define TRS_MBOX_ALLOC_STREAM               41U
-#define TRS_MBOX_FREE_STREAM                42U
-#define TRS_MBOX_CREATE_KERNEL_SQCQ         43U // dvpp alloc
-#define TRS_MBOX_RELEASE_KERNEL_SQCQ        44U // dvpp free
-#define TRS_MBOX_NOTICE_SSID                45U // notice ssid to tsfw from device
-#define TRS_MBOX_QUERY_SSID                 46U // notice ssid to tsfw from device
-#define TRS_MBOX_NOTICE_TS_SQCQ_CREATE      47U
-#define TRS_MBOX_NOTICE_TS_SQCQ_FREE        48U
-#define TRS_MBOX_CREATE_CTRL_CQSQ           49U
-#define TRS_MBOX_RELEASE_CTRL_CQSQ          50U
-#define TRS_MBOX_NOTICE_SQ_TRIGGER          51U
-#define TRS_MBOX_RPC_CALL                   52U
-#define TRS_MBOX_CONFIG_STARS_URPC          53U
-#define TRS_MBOX_SQ_TASK_SEND               54U
-#define TRS_MBOX_CQ_REPORT_RECV             55U
-#define TRS_MBOX_QUERY_SQ_STATUS            56U
-#define TRS_MBOX_QUERY_CORE_RATE_START      57U
-#define TRS_MBOX_QUERY_CORE_RATE_END        58U
-#define TRS_MBOX_CORE_RATE_SHARE_MEMORY     59U
-#define TRS_MBOX_MEM_DISPATCH               60U
-#define TRS_MBOX_DSMI_RPC_CALL              61U
-#define TRS_MBOX_NOTICE_TS_CMDLIST_INFO     62U
-#define TRS_MBOX_SQ_SWITCH_STREAM           64U
-#define TRS_MBOX_CMD_MAX                    65U
+#define TRS_MBOX_NOTICE_ACK_IRQ_VALUE 0U
+#define TRS_MBOX_CREATE_CQSQ_CALC 1U  // normal sqcq alloc
+#define TRS_MBOX_RELEASE_CQSQ_CALC 2U // normal sqcq free
+#define TRS_MBOX_LOG_CQSQ_CREATE 3U
+#define TRS_MBOX_LOG_CQSQ_RELEASE 4U
+#define TRS_MBOX_DBG_CQSQ_CREATE 5U
+#define TRS_MBOX_DBG_CQSQ_RELEASE 6U
+#define TRS_MBOX_CREATE_PROF_SQCQ 7U
+#define TRS_MBOX_RELEASE_PROF_SQCQ 8U
+#define TRS_MBOX_CREATE_HB_SQCQ 9U
+#define TRS_MBOX_RELEASE_HB_SQCQ 10U
+#define TRS_MBOX_SEND_RDMA_INFO 15U
+#define TRS_MBOX_RESET_NOTIFY 16U
+#define TRS_MBOX_RECYCLE_PID 18U
+#define TRS_MBOX_RECORD_NOTIFY 19U
+#define TRS_MBOX_CREATE_TASKSCHED_SQCQ 24U
+#define TRS_MBOX_RELEASE_TASKSCHED_SQCQ 25U
+#define TRS_MBOX_CREATE_CB_CQ 26U
+#define TRS_MBOX_RELEASE_CB_CQ 27U
+#define TRS_MBOX_CREATE_MIA 30U
+#define TRS_MBOX_DESTROY_MIA 31U
+#define TRS_MBOX_RESET_EVENT_ID 32U
+#define TRS_MBOX_SHM_SQCQ_ALLOC 33U
+#define TRS_MBOX_SHM_SQCQ_FREE 34U
+#define TRS_MBOX_LOGIC_CQ_ALLOC 35U
+#define TRS_MBOX_LOGIC_CQ_FREE 36U
+#define TRS_MBOX_CREATE_TOPIC_SQCQ 37U  // esched alloc
+#define TRS_MBOX_RELEASE_TOPIC_SQCQ 38U // esched alloc
+#define TRS_MBOX_RES_MAP 39U
+#define TRS_MBOX_RECYCLE_CHECK 40U
+#define TRS_MBOX_ALLOC_STREAM 41U
+#define TRS_MBOX_FREE_STREAM 42U
+#define TRS_MBOX_CREATE_KERNEL_SQCQ 43U  // dvpp alloc
+#define TRS_MBOX_RELEASE_KERNEL_SQCQ 44U // dvpp free
+#define TRS_MBOX_NOTICE_SSID 45U         // notice ssid to tsfw from device
+#define TRS_MBOX_QUERY_SSID 46U          // notice ssid to tsfw from device
+#define TRS_MBOX_NOTICE_TS_SQCQ_CREATE 47U
+#define TRS_MBOX_NOTICE_TS_SQCQ_FREE 48U
+#define TRS_MBOX_CREATE_CTRL_CQSQ 49U
+#define TRS_MBOX_RELEASE_CTRL_CQSQ 50U
+#define TRS_MBOX_NOTICE_SQ_TRIGGER 51U
+#define TRS_MBOX_RPC_CALL 52U
+#define TRS_MBOX_CONFIG_STARS_URPC 53U
+#define TRS_MBOX_SQ_TASK_SEND 54U
+#define TRS_MBOX_CQ_REPORT_RECV 55U
+#define TRS_MBOX_QUERY_SQ_STATUS 56U
+#define TRS_MBOX_QUERY_CORE_RATE_START 57U
+#define TRS_MBOX_QUERY_CORE_RATE_END 58U
+#define TRS_MBOX_CORE_RATE_SHARE_MEMORY 59U
+#define TRS_MBOX_MEM_DISPATCH 60U
+#define TRS_MBOX_DSMI_RPC_CALL 61U
+#define TRS_MBOX_NOTICE_TS_CMDLIST_INFO 62U
+#define TRS_MBOX_SQ_SWITCH_STREAM 64U
+#define TRS_MBOX_CMD_MAX 65U
 
-#define TRS_MBOX_INVALID_INDEX              0xFFFF
-#define TRS_MBOX_MESSAGE_VALID              0x5A5A
+#define TRS_MBOX_INVALID_INDEX 0xFFFF
+#define TRS_MBOX_MESSAGE_VALID 0x5A5A
 
-#define TRS_MBOX_SEND_FROM_DEVICE           0
-#define TRS_MBOX_SEND_FROM_HOST             1
+#define TRS_MBOX_SEND_FROM_DEVICE 0
+#define TRS_MBOX_SEND_FROM_HOST 1
 
-#define TRS_DEVICE_CHAN_MBOX_TIMEOUT_MS    3000
+#define TRS_DEVICE_CHAN_MBOX_TIMEOUT_MS 3000
 
 #define TSFW_MAILBOX_SIZE 64U
 
@@ -313,7 +314,7 @@ struct trs_mb_header {
 struct trs_sqcq_ext_info {
     u32 ext_msg_len;
     void *ext_msg;
-    u32 *info;    /* len is SQCQ_INFO_LENGTH */
+    u32 *info; /* len is SQCQ_INFO_LENGTH */
 };
 #pragma pack()
 struct trs_normal_cqsq_mailbox {
@@ -325,11 +326,11 @@ struct trs_normal_cqsq_mailbox {
     u16 sq_index;  /* invalid idx: 0xFFFF */
     u16 cq0_index; /* sq's return */
 
-    u8 app_type : 1;  /* inform TS, app is in host or device, device: 0 host: 1 */
+    u8 app_type : 1;    /* inform TS, app is in host or device, device: 0 host: 1 */
     u8 sw_reg_flag : 1; /* 1: sq saves head and tail in share memory at the last 2 sqe, 0: not save */
-    u8 fid : 6;       /* 0:host, 1~16:virt machine */
+    u8 fid : 6;         /* 0:host, 1~16:virt machine */
 
-    u8 sq_cq_side : 2;    /* bit 0 sq side, bit 1 cq side. device: 0 host: 1  */
+    u8 sq_cq_side : 2; /* bit 0 sq side, bit 1 cq side. device: 0 host: 1  */
     u8 master_pid_flag : 1;
     u8 sq_addr_is_virtual : 1;
     u8 cq_addr_is_virtual : 1;
@@ -337,7 +338,7 @@ struct trs_normal_cqsq_mailbox {
     u8 rsv : 2;
 
     u8 sqesize;
-    u8 cqesize;  /* calculation cq's slot size, default: 12 bytes */
+    u8 cqesize; /* calculation cq's slot size, default: 12 bytes */
     u16 cqdepth;
     u16 sqdepth;
     pid_t pid;
@@ -364,8 +365,8 @@ struct trs_maint_sqcq_mbox {
 
     u64 sq_addr; /* invalid addr: 0x0 */
     u64 cq0_addr;
-    u64 cq1_addr; /* cq1_addr or sq size */
-    u64 cq2_addr; /* cq2_addr or cq size */
+    u64 cq1_addr;  /* cq1_addr or sq size */
+    u64 cq2_addr;  /* cq2_addr or cq size */
     u64 cq3_addr;  /* reserved or pid */
     u16 sq_index;  /* invalid idx: 0xFFFF */
     u16 cq0_index; /* sq's return */
@@ -381,11 +382,11 @@ struct trs_task_sched_sqcq_alloc_mbox {
     struct trs_mb_header header;
     u64 sq_addr;
     u64 cq_addr;
-    u32 sq_index;   /* sq idx */
+    u32 sq_index; /* sq idx */
     u32 cq_index;
     u16 sqe_size;
     u16 cqe_size;
-    u16 sq_depth;   /* sq depth */
+    u16 sq_depth; /* sq depth */
     u16 cq_depth;
     u8 plat_type;
     u8 reserved[3]; /* reserved */
@@ -443,18 +444,18 @@ struct trs_ts_sqcq_mbox {
 struct trs_shm_sqcq_mbox {
     struct trs_mb_header header;
 
-    u64 sq_addr;    /* invalid addr: 0x0 */
+    u64 sq_addr; /* invalid addr: 0x0 */
     u64 cq_addr;
 
-    u16 sq_id;  /* invalid idx: 0xFFFF */
+    u16 sq_id; /* invalid idx: 0xFFFF */
     u16 cq_id; /* sq's return */
 
-    u8 app_type : 2;  /* inform TS, msg is sent from host or device, device: 0 host: 1 */
-    u8 fid : 6;       /* 0:hsot, 1~16:virt machine */
-    u8 sq_cq_side;    /* bit 0 sq side, bit 1 cq side. device: 0 host: 1  */
+    u8 app_type : 2; /* inform TS, msg is sent from host or device, device: 0 host: 1 */
+    u8 fid : 6;      /* 0:hsot, 1~16:virt machine */
+    u8 sq_cq_side;   /* bit 0 sq side, bit 1 cq side. device: 0 host: 1  */
 
     u8 sqesize;
-    u8 cqesize;  /* calculation cq's slot size, default: 12 bytes */
+    u8 cqesize; /* calculation cq's slot size, default: 12 bytes */
     u16 cqdepth;
     u16 sqdepth;
     pid_t pid;
@@ -497,7 +498,7 @@ struct trs_rpc_call_header {
     u32 pid;
     u8 app_flag;
     u8 vfid;
-    u8 len;    /* in, out */
+    u8 len; /* in, out */
     u8 rsv[5];
 };
 
@@ -520,13 +521,13 @@ struct trs_mem_dispatch_msg {
     u32 hostpid;
     u8 vfid;
     u8 is_addr_ext; /* 0 use paddr 1 use ext_addr */
-    u8 flag; /* 0 disable 1 enable */
+    u8 flag;        /* 0 disable 1 enable */
     u8 rsv;
     u32 addr_len;
 };
 
-#define TRS_MBOX_NOTIFY_TYPE     0
-#define TRS_MBOX_EVENT_TYPE      1
+#define TRS_MBOX_NOTIFY_TYPE 0
+#define TRS_MBOX_EVENT_TYPE 1
 #define TRS_MBOX_CNT_NOTIFY_TYPE 2
 struct trs_notify_msg {
     struct trs_mb_header header;
@@ -534,7 +535,7 @@ struct trs_notify_msg {
     u32 tgid;
     u16 plat_type;
     u16 notifyId; /* ts use for convert id to notifyid */
-    u8  fid;
+    u8 fid;
     u8 notify_type;
     u8 reserved[42];
 };
@@ -547,8 +548,8 @@ struct trs_stream_msg {
 struct trs_res_map_msg {
     struct trs_mb_header header;
     u8 vf_id;
-    u8 resource_type;   // 0:notify id, 1:event id
-    u8 operation_type;  // 0:map, 1:unmap
+    u8 resource_type;  // 0:notify id, 1:event id
+    u8 operation_type; // 0:map, 1:unmap
     u8 reserve0;
     u16 id;
     u16 phy_id;
@@ -639,8 +640,8 @@ struct trs_urpc_jetty_config {
     u32 rmt_token_value;
 
     union {
-        u8 int_mode;                // cqe
-        u64 sq_base_addr;           // sq head
+        u8 int_mode;      // cqe
+        u64 sq_base_addr; // sq head
     };
 
     u32 urpc_aw_wqe_setting_0;

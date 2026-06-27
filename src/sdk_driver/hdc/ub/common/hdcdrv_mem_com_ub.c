@@ -25,8 +25,8 @@ STATIC int hdcdrv_follow_pfn_check(const void *ctx, ka_vm_area_struct_t *vma, un
 
     for (va_check = user_va; va_check < end; va_check += KA_MM_PAGE_SIZE) {
         if (ka_mm_follow_pfn(vma, va_check, &pfn) == 0) {
-            hdcdrv_err("va_check is invalid. (ddr=%pK; size=%lu; va_check=%lx)\n",
-                (void *)(uintptr_t)user_va, size, va_check);
+            hdcdrv_err("va_check is invalid. (ddr=%pK; size=%lu; va_check=%lx)\n", (void *)(uintptr_t)user_va, size,
+                       va_check);
             return HDCDRV_PARA_ERR;
         }
     }
@@ -40,8 +40,8 @@ int hdcdrv_check_va(const void *ctx, ka_vm_area_struct_t *vma, unsigned long lon
     unsigned long end = user_va + KA_MM_PAGE_ALIGN(size);
 
     if (ka_mm_get_vm_private_data(vma) != ctx) {
-        hdcdrv_err("addr %pK ka_mm_get_vm_private_data() %pK ctx %pK\n",
-            (void *)(uintptr_t)user_va, ka_mm_get_vm_private_data(vma), ctx);
+        hdcdrv_err("addr %pK ka_mm_get_vm_private_data() %pK ctx %pK\n", (void *)(uintptr_t)user_va,
+                   ka_mm_get_vm_private_data(vma), ctx);
         return HDCDRV_PARA_ERR;
     }
 
@@ -50,9 +50,9 @@ int hdcdrv_check_va(const void *ctx, ka_vm_area_struct_t *vma, unsigned long lon
         return HDCDRV_PARA_ERR;
     }
 
-    if ((user_va < ka_mm_get_vm_start(vma)) || (user_va > ka_mm_get_vm_end(vma)) || (end > ka_mm_get_vm_end(vma)) || (user_va >= end)) {
-        hdcdrv_err("Input parameter is error. (vma_user_addr=%pK; dev_id=%u)\n",
-            (void *)(uintptr_t)user_va, dev_id);
+    if ((user_va < ka_mm_get_vm_start(vma)) || (user_va > ka_mm_get_vm_end(vma)) || (end > ka_mm_get_vm_end(vma)) ||
+        (user_va >= end)) {
+        hdcdrv_err("Input parameter is error. (vma_user_addr=%pK; dev_id=%u)\n", (void *)(uintptr_t)user_va, dev_id);
         return HDCDRV_PARA_ERR;
     }
 
@@ -92,10 +92,11 @@ int hdcdrv_remap_mem_pool_va(const void *ctx, struct hdcdrv_mem_pool *mem_pool, 
     ka_mm_set_vm_pgprot(vma);
 
 #ifndef EMU_ST
-    ret = ka_mm_remap_pfn_range(vma, user_va, ka_mm_page_to_pfn(mem_pool->page), HDCDRV_UB_MEM_POOL_LEN, *(ka_mm_get_vm_pgprot(vma)));
+    ret = ka_mm_remap_pfn_range(vma, user_va, ka_mm_page_to_pfn(mem_pool->page), HDCDRV_UB_MEM_POOL_LEN,
+                                *(ka_mm_get_vm_pgprot(vma)));
 #else
     ret = hdc_remap_pfn_range_stub(vma, user_va, ka_mm_page_to_pfn(mem_pool->page), HDCDRV_UB_MEM_POOL_LEN,
-        *(ka_mm_get_vm_pgprot(vma)));
+                                   *(ka_mm_get_vm_pgprot(vma)));
 #endif
     if (ret != 0) {
         ka_task_up_write(get_mmap_sem(ka_task_get_current_mm()));

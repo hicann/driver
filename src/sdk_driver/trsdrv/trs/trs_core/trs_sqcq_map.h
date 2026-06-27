@@ -22,11 +22,11 @@
 
 struct trs_core_ts_inst;
 
-int trs_sq_remap(struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst,
-    struct halSqCqInputInfo *para, struct trs_sq_ctx *sq_ctx, struct trs_chan_sq_info *sq_info);
+int trs_sq_remap(
+    struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst, struct halSqCqInputInfo *para,
+    struct trs_sq_ctx *sq_ctx, struct trs_chan_sq_info *sq_info);
 void trs_sq_unmap(struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst, struct trs_sq_ctx *sq_ctx);
 void trs_sq_clear_map_info(struct trs_sq_ctx *sq_ctx);
 void trs_sq_ctx_mem_free(struct trs_sq_ctx *sq_ctx);
 
 #endif
-

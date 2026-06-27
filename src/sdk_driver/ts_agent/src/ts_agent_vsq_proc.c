@@ -30,7 +30,7 @@ STATIC int convert_task_basic(const vsq_base_info_t *vsq_base_info, ts_task_t *t
     ret = convert_stream_id(vsq_base_info, v_stream_id, &task->streamID);
     if (ret != 0) {
         ts_agent_err("convert stream id failed. v_stream_id=%u, ret=%d.", v_stream_id, ret);
-        task->streamID = U16_MAX;
+        task->streamID = KA_U16_MAX;
     } else {
         ts_agent_debug("convert v_stream_id=%u to stream_id=%u.", v_stream_id, task->streamID);
     }
@@ -46,7 +46,7 @@ STATIC int convert_event_record_task(const vsq_base_info_t *vsq_base_info, ts_ta
     ret = convert_event_id(vsq_base_info, v_event_id, &event_record_task->eventID);
     if (ret != 0) {
         ts_agent_err("convert event id failed. v_stream_id=%u, ret=%d.", v_stream_id, ret);
-        event_record_task->eventID = U16_MAX;
+        event_record_task->eventID = KA_U16_MAX;
     } else {
         ts_agent_debug("convert v_event_id=%u to event_id=%u. v_stream_id=%u.",
                        v_event_id, event_record_task->eventID, v_stream_id);
@@ -63,7 +63,7 @@ STATIC int convert_stream_wait_event_task(const vsq_base_info_t *vsq_base_info, 
     ret = convert_event_id(vsq_base_info, v_event_id, &stream_wait_event_task->eventID);
     if (ret != 0) {
         ts_agent_err("convert event id failed. v_stream_id=%u, ret=%d.", v_stream_id, ret);
-        stream_wait_event_task->eventID = U16_MAX;
+        stream_wait_event_task->eventID = KA_U16_MAX;
     } else {
         ts_agent_debug("convert v_event_id=%u to event_id=%u. v_stream_id=%u.",
                        v_event_id, stream_wait_event_task->eventID, v_stream_id);
@@ -83,7 +83,7 @@ STATIC int convert_maintenance_task(const vsq_base_info_t *vsq_base_info, ts_tas
         if (ret != 0) {
             ts_agent_err("convert maintenance target (stream)id failed. v_stream_id=%u, target_id=%u, ret=%d.",
                          v_stream_id, target_id, ret);
-            maintenance_task->targetID = U16_MAX;
+            maintenance_task->targetID = KA_U16_MAX;
         } else {
             maintenance_task->v_target_id = target_id;
             ts_agent_debug("convert v_stream_id=%u to event_id=%u. v_stream_id=%u.",
@@ -94,7 +94,7 @@ STATIC int convert_maintenance_task(const vsq_base_info_t *vsq_base_info, ts_tas
         if (ret != 0) {
             ts_agent_err("convert maintenance target (event)id failed. v_stream_id=%u, target_id=%u, ret=%d.",
                          v_stream_id, target_id, ret);
-            maintenance_task->targetID = U16_MAX;
+            maintenance_task->targetID = KA_U16_MAX;
         } else {
             maintenance_task->v_target_id = target_id;
             ts_agent_debug("convert v_event_id=%u to event_id=%u. v_stream_id=%u.",
@@ -127,7 +127,7 @@ STATIC int convert_notify_wait_task(const vsq_base_info_t *vsq_base_info, ts_tas
     if (ret != 0) {
         ts_agent_err("convert notify id failed. v_stream_id=%u, v_notify_id=%u, ret=%d.",
                      v_stream_id, v_notify_id, ret);
-        notify_wait_task->notify_id = U16_MAX;
+        notify_wait_task->notify_id = KA_U16_MAX;
     } else {
         ts_agent_debug("convert v_notify_id=%u to notify_id=%u. v_stream_id=%u.",
                        v_notify_id, notify_wait_task->notify_id, v_stream_id);
@@ -147,7 +147,7 @@ STATIC int convert_model_maintaince_task(const vsq_base_info_t *vsq_base_info, t
     if (convert_model_ret != 0) {
         ts_agent_err("convert model id failed. v_stream_id=%u, v_model_id=%u, ret=%d.",
                      v_stream_id, v_model_id, convert_model_ret);
-        model_maintaince_task->model_id = U16_MAX;
+        model_maintaince_task->model_id = KA_U16_MAX;
         // convert failed need convert sub stream_id also.
     } else {
         ts_agent_debug("convert v_model_id=%u to model_id=%u. v_stream_id=%u.",
@@ -159,7 +159,7 @@ STATIC int convert_model_maintaince_task(const vsq_base_info_t *vsq_base_info, t
     if (convert_stream_ret != 0) {
         ts_agent_err("convert stream id failed. v_stream_id=%u, v_sub_stream_id=%u, ret=%d.",
                      v_stream_id, v_sub_stream_id, convert_stream_ret);
-        model_maintaince_task->stream_id = U16_MAX;
+        model_maintaince_task->stream_id = KA_U16_MAX;
     } else {
         ts_agent_debug("convert v_sub_stream_id=%u to sub_stream_id=%u. v_stream_id=%u.",
                        v_sub_stream_id, model_maintaince_task->stream_id, v_stream_id);
@@ -177,7 +177,7 @@ STATIC int convert_model_execute_task(const vsq_base_info_t *vsq_base_info, ts_t
     if (convert_model_ret != 0) {
         ts_agent_err("convert model id failed. v_stream_id=%u, v_model_id=%u, ret=%d.",
                      v_stream_id, v_model_id, convert_model_ret);
-        model_execute_task->model_id = U16_MAX;
+        model_execute_task->model_id = KA_U16_MAX;
     } else {
         ts_agent_debug("convert v_model_id=%u to model_id=%u. v_stream_id=%u.",
                        v_model_id, model_execute_task->model_id, v_stream_id);
@@ -194,7 +194,7 @@ STATIC int convert_stream_switch_task(const vsq_base_info_t *vsq_base_info, ts_t
     if (ret != 0) {
         ts_agent_err("convert true stream id failed. v_stream_id=%u, v_true_stream_id=%u, ret=%d.",
                      v_stream_id, v_true_stream_id, ret);
-        stream_switch_task->trueStreamId = U16_MAX;
+        stream_switch_task->trueStreamId = KA_U16_MAX;
     } else {
         ts_agent_debug("convert v_true_stream_id=%u to true_stream_id=%u. v_stream_id=%u.",
                        v_true_stream_id, stream_switch_task->trueStreamId, v_stream_id);
@@ -211,7 +211,7 @@ STATIC int convert_stream_active_task(const vsq_base_info_t *vsq_base_info, ts_t
     if (ret != 0) {
         ts_agent_err("convert active stream id failed. v_stream_id=%u, v_active_stream_id=%u, ret=%d.",
                      v_stream_id, v_active_stream_id, ret);
-        stream_active_task->activeStreamId = U16_MAX;
+        stream_active_task->activeStreamId = KA_U16_MAX;
     } else {
         ts_agent_debug("convert v_true_stream_id=%u to true_stream_id=%u. v_stream_id=%u.",
                        v_active_stream_id, stream_active_task->activeStreamId, v_stream_id);
@@ -228,7 +228,7 @@ STATIC int convert_event_reset_task(const vsq_base_info_t *vsq_base_info, ts_tas
     if (ret != 0) {
         ts_agent_err("convert event id failed. v_stream_id=%u, v_event_id=%u, ret=%d.",
                      v_stream_id, v_event_id, ret);
-        event_reset_task->eventID = U16_MAX;
+        event_reset_task->eventID = KA_U16_MAX;
     } else {
         ts_agent_debug("convert v_event_id=%u to event_id=%u. v_stream_id=%u.",
                        v_event_id, event_reset_task->eventID, v_stream_id);
@@ -247,7 +247,7 @@ STATIC int convert_model_end_graph_task(const vsq_base_info_t *vsq_base_info, ts
     if (ret != 0) {
         ts_agent_err("convert model id failed. v_stream_id=%u, v_model_id=%u, ret=%d.",
                      v_stream_id, v_model_id, ret);
-        end_graph_task->model_id = U16_MAX;
+        end_graph_task->model_id = KA_U16_MAX;
     } else {
         end_graph_task->model_id = model_id;
         ts_agent_debug("convert v_model_id=%u to model_id=%u. v_stream_id=%u.",
@@ -270,7 +270,7 @@ STATIC int convert_model_exit_task(const vsq_base_info_t *vsq_base_info, ts_task
     if (convert_model_ret != 0) {
         ts_agent_err("convert model id failed. v_stream_id=%u, v_model_id=%u, ret=%d.",
                      v_stream_id, v_model_id, convert_model_ret);
-        model_exit_task->model_id = U16_MAX;
+        model_exit_task->model_id = KA_U16_MAX;
         // convert failed need convert sub stream_id also.
     } else {
         model_exit_task->model_id = model_id;
@@ -282,7 +282,7 @@ STATIC int convert_model_exit_task(const vsq_base_info_t *vsq_base_info, ts_task
     if (convert_stream_ret != 0) {
         ts_agent_err("convert stream id failed. v_stream_id=%u, v_sub_stream_id=%u, ret=%d.",
                      v_stream_id, v_sub_stream_id, convert_stream_ret);
-        model_exit_task->stream_id = U16_MAX;
+        model_exit_task->stream_id = KA_U16_MAX;
     } else {
         model_exit_task->stream_id = sub_stream_id;
         ts_agent_debug("convert v_sub_stream_id=%u to sub_stream_id=%u. v_stream_id=%u.",
@@ -302,7 +302,7 @@ static int convert_aicpu_task(const vsq_base_info_t *vsq_base_info, ts_task_t *t
     if (ret != 0) {
         ts_agent_err("convert model id failed. v_stream_id=%u, v_model_id=%u, ret=%d.",
                      v_stream_id, v_model_id, ret);
-        aicpu_task->model_id = U16_MAX;
+        aicpu_task->model_id = KA_U16_MAX;
     } else {
         aicpu_task->model_id = model_id;
         ts_agent_debug("convert v_model_id=%u to model_id=%u. v_stream_id=%u.",
@@ -320,7 +320,7 @@ static int convert_stream_label_goto_task(const vsq_base_info_t *vsq_base_info, 
     if (ret != 0) {
         ts_agent_err("convert model id failed. v_stream_id=%u, v_model_id=%u, ret=%d.",
                      v_stream_id, v_model_id, ret);
-        stream_label_goto_task->model_id = U16_MAX;
+        stream_label_goto_task->model_id = KA_U16_MAX;
     } else {
         ts_agent_debug("convert v_model_id=%u to model_id=%u. v_stream_id=%u.",
                        v_model_id, stream_label_goto_task->model_id, v_stream_id);
@@ -471,7 +471,7 @@ static int proc_task(const vsq_base_info_t *vsq_base_info, char *task_buf, size_
             ret = convert_stream_id(vsq_base_info, v_stream_id, &callback_msg->stream_id);
             if (ret != 0) {
                 ts_agent_err("convert stream id failed. v_stream_id=%u, ret=%d.", v_stream_id, ret);
-                callback_msg->stream_id = U16_MAX;
+                callback_msg->stream_id = KA_U16_MAX;
             } else {
                 ts_agent_debug("callback sq stream id is need convert now. dev_id=%u, vf_id=%u, ts_id=%u, "
                                "vsq_id=%u, stream_id=%u, task_id=%u, v_stream_id=%u.",

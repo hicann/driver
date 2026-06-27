@@ -37,7 +37,8 @@ struct spod_info {
     unsigned int server_id;
     unsigned int chassis_id;
     unsigned int super_pod_type;
-    unsigned int reserve[6];
+    unsigned int super_pod_intercon_type;
+    unsigned int reserve[5];
 };
 
 struct sdid_parse_info {

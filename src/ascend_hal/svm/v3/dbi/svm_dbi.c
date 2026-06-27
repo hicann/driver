@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * Copyright (c) 2026 Huawei Technologies Co., Ltd.
  * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -14,24 +14,27 @@
 #include "ascend_hal_error.h"
 #include "ascend_hal.h"
 #include "svm_init_pri.h"
+#include "svm_criu.h"
 #include "svm_sys_cmd.h"
 #include "svm_ioctl_ex.h"
 #include "svm_pub.h"
 #include "svm_log.h"
 #include "svm_dbi.h"
 
+#define SVM_SERVER_ID_UNSET (SVM_INVALID_SERVER_ID + 1U)
+
 static struct svm_device_basic_info svm_dbi[SVM_MAX_DEV_NUM];
 static int svm_dbi_valid[SVM_MAX_DEV_NUM];
 static u32 device_connect_type[SVM_MAX_DEV_NUM];
+static u32 g_cur_server_id = SVM_SERVER_ID_UNSET;
 
-static bool svm_dev_cap_is_support_sva(u32 flag)
-{
-    return ((flag & SVM_DEV_CAP_SVA) != 0);
-}
+static bool svm_dev_cap_is_support_sva(u32 flag) { return ((flag & SVM_DEV_CAP_SVA) != 0); }
 
-static bool svm_dev_cap_is_support_assign_gap(u32 flag)
+static bool svm_dev_cap_is_support_assign_gap(u32 flag) { return ((flag & SVM_DEV_CAP_ASSIGN_GAP) != 0); }
+
+static bool svm_dev_cap_is_support_pci_bar(u32 flag)
 {
-    return ((flag & SVM_DEV_CAP_ASSIGN_GAP) != 0);
+    return ((flag & SVM_DEV_CAP_PCI_BAR) != 0);
 }
 
 int svm_dbi_query_host_align_page_size(u32 devid, u64 *page_size)
@@ -42,8 +45,9 @@ int svm_dbi_query_host_align_page_size(u32 devid, u64 *page_size)
         ret = svm_dbi_query_npage_size(svm_get_host_devid(), &host_npage_size);
         if (ret == 0) {
             if (npage_size > host_npage_size) {
-                svm_err("Invalid page size. (devid=%u; npage_size=%llu; host_npage_size=%llu)\n",
-                    devid, npage_size, host_npage_size);
+                svm_err(
+                    "Invalid page size. (devid=%u; npage_size=%llu; host_npage_size=%llu)\n", devid, npage_size,
+                    host_npage_size);
                 return DRV_ERROR_INVALID_VALUE;
             }
 
@@ -118,6 +122,16 @@ bool svm_dbi_is_support_assign_gap(u32 devid)
     return svm_dev_cap_is_support_assign_gap(svm_dbi[devid].cap_flag);
 }
 
+bool svm_dbi_is_support_pci_bar(u32 devid)
+{
+    if ((devid >= SVM_MAX_DEV_NUM) || (svm_dbi_valid[devid] == 0)) {
+        svm_err("Invalid device. (devid=%u)\n", devid);
+        return false;
+    }
+
+    return svm_dev_cap_is_support_pci_bar(svm_dbi[devid].cap_flag);
+}
+
 static int dbi_user_query(u32 devid, struct svm_device_basic_info *dbi)
 {
     struct svm_dbi_query_para para;
@@ -130,8 +144,9 @@ static int dbi_user_query(u32 devid, struct svm_device_basic_info *dbi)
     }
 
     if ((para.dbi.npage_size == 0) || (para.dbi.hpage_size == 0) || (para.dbi.gpage_size == 0)) {
-        svm_err("Invalid page_size. (page_size=0x%llx; hpage_size=0x%llx; gpage_size=0x%llx)\n",
-            para.dbi.npage_size, para.dbi.hpage_size, para.dbi.gpage_size);
+        svm_err(
+            "Invalid page_size. (page_size=0x%llx; hpage_size=0x%llx; gpage_size=0x%llx)\n", para.dbi.npage_size,
+            para.dbi.hpage_size, para.dbi.gpage_size);
         return DRV_ERROR_INNER_ERR;
     }
 
@@ -183,6 +198,19 @@ static int svm_dev_dbi_uninit(u32 devid)
     return 0;
 }
 
+static int svm_dbi_criu_reset(u32 devid, void *data)
+{
+    SVM_UNUSED(data);
+    g_cur_server_id = SVM_SERVER_ID_UNSET;
+    device_connect_type[devid] = HOST_DEVICE_CONNECT_PROTOCOL_UNKNOWN;
+    return svm_dev_dbi_uninit(devid);
+}
+
+static const struct svm_criu_ops g_dbi_criu_ops = {
+    .name = "dbi",
+    .reset = svm_dbi_criu_reset,
+};
+
 void __attribute__((constructor(SVM_INIT_PRI_FISRT))) svm_dbi_init(void)
 {
     int ret;
@@ -201,6 +229,11 @@ void __attribute__((constructor(SVM_INIT_PRI_FISRT))) svm_dbi_init(void)
     if (ret != DRV_ERROR_NONE) {
         svm_err("Register ioctl dev uninit post handle failed.\n");
     }
+
+    ret = svm_criu_register_ops(&g_dbi_criu_ops);
+    if (ret != DRV_ERROR_NONE) {
+        svm_err("Register CRIU ops failed.\n");
+    }
 }
 
 static void svm_update_cur_server_id(u32 *server_id)
@@ -214,16 +247,22 @@ static void svm_update_cur_server_id(u32 *server_id)
 
 u32 svm_get_cur_server_id(void)
 {
-    static u32 server_id = SVM_INVALID_SERVER_ID + 1;
-
-    if (server_id == (SVM_INVALID_SERVER_ID + 1)) {
-        svm_update_cur_server_id(&server_id);
+    if (g_cur_server_id == SVM_SERVER_ID_UNSET) {
+        svm_update_cur_server_id(&g_cur_server_id);
     }
 
-    return server_id;
+    return g_cur_server_id;
 }
 
 u32 svm_get_device_connect_type(u32 devid)
 {
-    return (devid >= SVM_MAX_DEV_NUM) ? HOST_DEVICE_CONNECT_PROTOCOL_UNKNOWN : device_connect_type[devid];
+    if (devid >= SVM_MAX_DEV_NUM) {
+        return HOST_DEVICE_CONNECT_PROTOCOL_UNKNOWN;
+    }
+    if (device_connect_type[devid] == HOST_DEVICE_CONNECT_PROTOCOL_UNKNOWN) {
+        if (devid != svm_get_host_devid()) {
+            (void)svm_init_device_connect_type(devid);
+        }
+    }
+    return device_connect_type[devid];
 }

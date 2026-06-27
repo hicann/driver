@@ -13,7 +13,7 @@
 
 #ifndef SVM_SHM_MSG_H
 #define SVM_SHM_MSG_H
- 
+
 #define DEVMM_DATA_SIZE 40
 #pragma pack(1)
 struct devmm_share_memory_data {
@@ -27,5 +27,5 @@ struct devmm_share_memory_data {
     u64 va;
 };
 #pragma pack()
- 
+
 #endif

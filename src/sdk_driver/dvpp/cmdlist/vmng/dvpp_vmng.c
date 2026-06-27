@@ -11,7 +11,7 @@
  * GNU General Public License for more details.
  */
 #include "dvpp_vmng.h"
-#include <linux/types.h>
+#include "ka_type.h"
 #include "comm_kernel_interface.h"
 #include "vmng_kernel_interface.h"
 #include "dvpp_vcm_host.h"

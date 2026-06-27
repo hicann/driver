@@ -14,7 +14,6 @@
 #ifndef ESCHED_FOPS_H
 #define ESCHED_FOPS_H
 
-
 #include "esched_kernel_interface.h"
 #include "esched.h"
 #include "ka_compiler_pub.h"
@@ -29,9 +28,9 @@ struct sched_char_dev {
 
 struct sched_task {
     ka_hlist_node_t hnode; /* hash task link */
-    ka_pid_t             pid;
-    unsigned int      devid;
-    unsigned int      status;
+    ka_pid_t pid;
+    unsigned int devid;
+    unsigned int status;
 };
 
 #define MINOR_DEV_COUNT 1
@@ -46,8 +45,8 @@ int32_t copy_from_user_safe(void *to, const void __ka_user *from, unsigned long 
 int32_t copy_to_user_safe(void __ka_user *to, const void *from, unsigned long n);
 
 int32_t sched_publish_event_para_check(struct sched_published_event_info *event_info);
-int sched_submit_event_pre_proc(unsigned int dev_id, SCHED_PROC_POS pos,
-    struct sched_published_event_info *event_info, struct sched_published_event_func *event_func);
+int sched_submit_event_pre_proc(unsigned int dev_id, SCHED_PROC_POS pos, struct sched_published_event_info *event_info,
+                                struct sched_published_event_func *event_func);
 u32 sched_ioctl_devid(u32 open_devid, u32 cmd_devid);
 void esched_register_ioctl_cmd_func(int nr, int32_t (*fn)(u32 devid, unsigned long arg));
 int32_t sched_submit_event_to_thread(uint32_t chip_id, struct sched_published_event *event);

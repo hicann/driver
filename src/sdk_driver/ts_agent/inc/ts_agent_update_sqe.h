@@ -14,7 +14,7 @@
 #ifndef TS_AGENT_UPDATE_SQE_H
 #define TS_AGENT_UPDATE_SQE_H
 
-#include <linux/types.h>
+#include "ka_type.h"
 #if defined(CFG_SOC_PLATFORM_KPSTARS)
 #include "ts_agent_kp_update_sqe.h"
 #endif
@@ -53,7 +53,15 @@ struct tsagent_sq_base_info {
 #define TSAGENT_WARNING_BIT_SRAM_OFFSET    0x200
 #define TSAGENT_WARNING_BIT_SIZE           512
 #define TSAGENT_WARNING_BIT_UNIT           4
+
+#if defined(CFG_HOST_ENV) || defined(TS_AGENT_UT)
 #define TSAGENT_MAX_DEV_ID                 1124 /* devid: 100 + 64*16 */
+#endif
+
+#ifdef CFG_DEVICE_ENV
+#define TSAGENT_MAX_DEV_ID 64 /*devid: 0 ： 63*/
+#endif
+
 int tsagent_device_init(u32 devid, u32 tsid, struct trs_sqcq_agent_para *para);
 int tsagent_device_uninit(u32 devid, u32 tsid);
 int tsagent_sqe_update(u32 devid, u32 tsid, struct trs_sqe_update_info *update_info);

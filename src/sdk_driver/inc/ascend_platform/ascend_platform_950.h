@@ -115,6 +115,8 @@
 
 /* Max spec: aicore/hbm/mata. */
 #define SOC_MAX_AICORE_NUM_PER_DIE        18
+#define SOC_MAX_AIVECTOR_NUM_PER_DIE        36
+#define SOC_MAX_AIVECTOR_NUM_DIE1_OFFSET    28
 #define SOC_MAX_HBM_NUM_PER_DIE           2
 #define SOC_MAX_MATA_NUM_PER_DIE          16
 
@@ -193,5 +195,7 @@ typedef struct soc_chip_ver_reg {
 /****************************************************/
 
 #define SOC_CRACK_CHECK_NUM     14
+
+#define CONTROLLER_GUID_GROUP_ADDR 0x248040c1000
 
 #endif

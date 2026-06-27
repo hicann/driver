@@ -52,7 +52,7 @@
 /* HSM module, log */
 #define DATA_MODEL_HSM_LOG MODEL_VECTOR(HSM_LOG) = { \
     {"log level",       ELEM_OUTPUT_INT,      {0x44},     {0x4}}, \
-    {"hsm log info",    ELEM_OUTPUT_STR_NL,   {0x80}, {0xFFF80}}, \
+    {"hsm log info",    ELEM_OUTPUT_STR_NL,   {0x80}, {0x100000 - 0x80}}, \
 }
 
 /* TEE module */
@@ -295,7 +295,17 @@
 
 /* TS module, ts log */
 #define DATA_MODEL_TS_LOG MODEL_VECTOR(TS_LOG) = { \
-    {"ts log info",   ELEM_OUTPUT_STR_NL,   {0x80}, {0xFFF80UL}}, \
+    {"ts log info",   ELEM_OUTPUT_STR_NL,   {0x80}, {0xC0000 - 0x80}}, \
+}
+
+/* IMP module, imp log */
+#define DATA_MODEL_IMP_LOG MODEL_VECTOR(IMP_LOG) = { \
+    {"imp log info",   ELEM_OUTPUT_STR_NL,   {0x80}, {0x200000 - 0x80}}, \
+}
+
+/* IMU module, imu log */
+#define DATA_MODEL_IMU_LOG MODEL_VECTOR(IMU_LOG) = { \
+    {"imu log info",   ELEM_OUTPUT_STR_NL,   {0x80}, {0x80000 - 0x80}}, \
 }
 
 /* LOG module, run or debug device os log : 3 * 1M */

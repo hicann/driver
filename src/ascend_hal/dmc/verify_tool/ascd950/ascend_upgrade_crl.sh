@@ -28,7 +28,9 @@ log() {
 
     chmod 600 $LOG_FILE
     cur_date=$(date +"%Y-%m-%d %H:%M:%S")
-    echo "[crl upgrade] [$cur_date] "$1 >> $LOG_FILE
+    local safe_msg
+    safe_msg=$(printf '%s' "$1" | tr -d '\n\r' | sed 's/[^[:print:]]//g')
+    echo "[crl upgrade] [$cur_date] $safe_msg" >> $LOG_FILE
 }
 
 # check upgrade crl's integrity
@@ -47,7 +49,7 @@ check_crl_integrity() {
     fi
 
     # use crl check tool to get crl file is valid or not, para 2 means check integrity
-    result=$(echo "$($CHECK_TOOL_FILE 2 $CRL_FILE)$?")
+    result=$(echo "$($CHECK_TOOL_FILE 2 "$CRL_FILE")$?")
     if [ "$result" -ne 0 ]; then
         log "[ERROR] input crl file is not a valid file, ret=$result."
         echo "upgrade fail, input crl file is illegal, please choose legal file to upgrade."
@@ -71,7 +73,7 @@ crl_file_update() {
         log "[INFO] touch $CHECK_TOOL_PATH_CRL success"
     fi
 
-    cp -f $CRL_FILE $CHECK_TOOL_PATH_CRL
+    cp -f "$CRL_FILE" $CHECK_TOOL_PATH_CRL
 }
 
 # check check
@@ -94,7 +96,7 @@ upgrade_crl() {
         log "[INFO] old crl file is exist"
         result=$(echo "$($CHECK_TOOL_FILE 2 $CHECK_TOOL_PATH_CRL)$?")
         if [ "$result" -eq 0 ]; then
-            result=$(echo "$($CHECK_TOOL_FILE 1 $CRL_FILE $CHECK_TOOL_PATH_CRL)$?")
+            result=$(echo "$($CHECK_TOOL_FILE 1 "$CRL_FILE" $CHECK_TOOL_PATH_CRL)$?")
             if [ "$result" -gt 1 ]; then
                 log "[ERROR] upgrade crl file is old, upgrade failed"
                 echo "The uploaded CRL is older than the one on the device, and the CRL file on the device is not updated."
@@ -123,7 +125,7 @@ upgrade_crl() {
         if [ "$result" -ne 0 ]; then
             log "[INFO] image do not have crl file, upgrade crl file directly"
         else
-            result=$(echo "$($CHECK_TOOL_FILE 3 $CRL_FILE $img_file)$?")
+            result=$(echo "$($CHECK_TOOL_FILE 3 "$CRL_FILE" $img_file)$?")
             if [ $result -ne 0 ]; then
                 rm -f $CRL_TMP_FILE
                 log "[ERROR] image verify failed, need to upgrade image file first"

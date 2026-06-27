@@ -11,6 +11,7 @@
 #define PROF_URMA_COMM_H
 #include "prof_common.h"
 #include "urma_types.h"
+#include "comm_user_interface.h"
 #include "prof_h2d_kernel_msg.h"
 
 #define TRS_JFS_MAX_DEPTH 2048
@@ -19,7 +20,7 @@
 
 #define PROF_URMA_MAX_DEVNUM     DEV_NUM
 #define PROF_URMA_DEVID_INVALID  PROF_URMA_MAX_DEVNUM
-#define PROF_URMA_PRIORITY_LOW 13U
+#define PROF_URMA_JFC_CTX_LEN 128U
 
 struct prof_urma_chan_info {
     uint32_t dev_id;

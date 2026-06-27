@@ -14,7 +14,7 @@
 #ifndef TLV_DVPP_TLV_BUF_H
 #define TLV_DVPP_TLV_BUF_H
 
-#include <linux/types.h>
+#include "ka_type.h"
 #include "dvpp_cmdlist_define.h"
 #include "dvpp_tlv_types.h"
 #include "dvpp_decoder.h"

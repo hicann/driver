@@ -40,7 +40,7 @@
     {"hboot1 exc point", ELEM_OUTPUT_INT, {0x28}, {0x4}}, \
     {"hboot2 point",     ELEM_OUTPUT_INT, {0x2C}, {0x4}}, \
     {"hboot2 exc point", ELEM_OUTPUT_INT, {0x30}, {0x4}}, \
-    {"[BIOS info]",      ELEM_OUTPUT_STR_NL, {0x480}, {0x2780}}, \
+    {"[BIOS info]",      ELEM_OUTPUT_STR_NL, {0x480}, {0x2B80}}, \
 }
 
 #define DATA_MODEL_HDR_BOOT_DDR MODEL_VECTOR(HDR_BOOT_DDR) = { \
@@ -558,7 +558,7 @@
     {"NL", ELEM_OUTPUT_NL, {0x0}, {0x0}}, \
     {"HSM INFO", ELEM_OUTPUT_DIVIDE, {0x0}, {0x2D}}, \
     {"HDR_BOOT_HSM", ELEM_CTRL_TABLE_GOTO, {0x4000}, {0x1000}}, \
-    {"table_index", ELEM_CTRL_TABLE_RANGE, {PLAINTEXT_TABLE_HDR_BOOT_TEE}, {0x1}}, \
+    {"table_index", ELEM_CTRL_TABLE_RANGE, {PLAINTEXT_TABLE_HDR_BOOT_HSM}, {0x1}}, \
     {"NL", ELEM_OUTPUT_NL, {0x0}, {0x0}}, \
     {"ATF INFO", ELEM_OUTPUT_DIVIDE, {0x0}, {0x2D}}, \
     {"HDR_BOOT_ATF", ELEM_CTRL_TABLE_GOTO, {0x5000}, {0x1000}}, \

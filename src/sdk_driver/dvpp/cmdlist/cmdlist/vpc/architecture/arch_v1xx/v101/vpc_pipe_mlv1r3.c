@@ -557,6 +557,7 @@ static dvpp_vpc_pipe_export_func_t g_export_mlv1r3_func = {
     .pfn_vpc_pipe_set_raw_yyuv_rd = NULL,
     .pfn_vpc_pipe_set_raw_yyuv_wr = NULL,
     .pfn_vpc_pipe_set_raw_bayer_wr = NULL,
+    .pfn_vpc_pipe_in0_out_cvdr = NULL,
 };
 
 void vpc_pipe_register_export_func(void)

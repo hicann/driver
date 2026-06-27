@@ -22,53 +22,11 @@
 #define STATIC static
 #endif
 
-STATIC int udis_check_is_vdev(unsigned int dev_id, unsigned int *vdev_flag)
-{
-    int ret;
-    unsigned int physical_id = 0;
-    unsigned int split_mode = 0;
-    unsigned int container_flag = 0;
-#ifdef CFG_EDGE_HOST
-    (void) physical_id;
-    ret = halGetDeviceSplitMode(dev_id, &split_mode);
-    if (ret != 0) {
-        DMS_ERR("Get split mode failed. (dev_id=%u; ret=%d)\n", dev_id, ret);
-        return ret;
-    }
-
-    if ((split_mode == 0) || (split_mode == VMNG_VIRTUAL_SPLIT_MODE)) {
-        *vdev_flag = (split_mode == 0 ? 0 : 1);
-        return 0;
-    }
-
-    ret = dmanage_get_container_flag(&container_flag);
-    if (ret != 0) {
-        DMS_ERR("Get container flag failed. (dev_id=%u; ret=%d)\n", dev_id, ret);
-        return ret;
-    }
-
-    *vdev_flag = ((container_flag == 0 && dev_id < ASCEND_PDEV_MAX_NUM )? 0 : 1);
-#else
-    (void) split_mode;
-    (void) container_flag;
-    ret = drvDeviceGetPhyIdByIndex(dev_id, &physical_id);
-    if (ret != 0) {
-        DMS_ERR("Get physical_id failed. (dev_id=%u; ret=%d)\n", dev_id, ret);
-        return ret;
-    }
-
-    *vdev_flag = (physical_id >= ASCEND_PDEV_MAX_NUM ? 1 : 0);
-#endif
-    return 0;
-}
-
 STATIC int udis_is_supported(unsigned int dev_id)
 {
     int ret;
     halChipInfo chip_info = {{0}, {0}, {0}};
     const char *chip_type = "Ascend";
-    const char *cloud_v3_name = "910_93";
-    unsigned int vdev_flag = 0;
 
     ret = halGetChipInfo(dev_id, &chip_info);
     if (ret != 0) {
@@ -77,20 +35,6 @@ STATIC int udis_is_supported(unsigned int dev_id)
     }
 
     if (strncmp((const char *)chip_info.type, chip_type, strlen(chip_type)) != 0) {
-        return DRV_ERROR_NOT_SUPPORT;
-    }
-
-    if (strncmp((const char *)chip_info.name, cloud_v3_name, strlen(cloud_v3_name)) != 0) {
-        return 0;
-    }
-
-    ret = udis_check_is_vdev(dev_id, &vdev_flag);
-    if (ret != 0) {
-        DMS_ERR("Get vdev flag failed. (dev_id=%u; ret=%d)\n", dev_id, ret);
-        return ret;
-    }
-
-    if (vdev_flag == 1) {
         return DRV_ERROR_NOT_SUPPORT;
     }
 

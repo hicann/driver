@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * Copyright (c) 2026 Huawei Technologies Co., Ltd.
  * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -97,10 +97,7 @@ bool svm_support_get_user_malloc_attr(uint32_t dev_id)
     return true;
 }
 
-bool svm_support_vmm_normal_granularity(uint32_t dev_id)
-{
-    return (dev_id < SVM_MAX_DEV_AGENT_NUM);
-}
+bool svm_support_vmm_normal_granularity(uint32_t dev_id) { return (dev_id < SVM_MAX_DEV_AGENT_NUM); }
 
 bool svm_support_mem_register_query_and_get_attr(uint32_t dev_id)
 {
@@ -109,7 +106,4 @@ bool svm_support_mem_register_query_and_get_attr(uint32_t dev_id)
     return false;
 }
 
-bool svm_support_mem_host_uva(uint32_t dev_id)
-{
-    return (dev_id < SVM_MAX_DEV_AGENT_NUM);
-}
+bool svm_support_mem_host_uva(uint32_t dev_id) { return (dev_id < SVM_MAX_DEV_AGENT_NUM); }

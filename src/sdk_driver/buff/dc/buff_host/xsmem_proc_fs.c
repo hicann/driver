@@ -11,7 +11,6 @@
  * GNU General Public License for more details.
  */
 
-
 #include "securec.h"
 #include "kernel_version_adapt.h"
 #include "xsmem_res_dispatch.h"
@@ -43,16 +42,17 @@ static int task_node_show(ka_seq_file_t *seq, void *offset)
     ka_fs_seq_printf(seq, "block id: offset alloc_size real_size alloc_pid refcnt\n");
 
     ka_task_mutex_lock(&xp->xp_block_mutex);
-    ka_list_for_each_entry(task_blk_node, &node->task_blk_head, node_list) {
+    ka_list_for_each_entry(task_blk_node, &node->task_blk_head, node_list)
+    {
         struct xsm_block *blk = task_blk_node->blk;
-        ka_fs_seq_printf(seq, "    %-4d:%-8pK %-8lu %-8lu %-4d %-4ld\n", blk->id,
-            (void *)(uintptr_t)blk->offset, blk->alloc_size, blk->real_size, blk->pid, blk->refcnt);
+        ka_fs_seq_printf(seq, "    %-4d:%-8pK %-8lu %-8lu %-4d %-4ld\n", blk->id, (void *)(uintptr_t)blk->offset,
+                         blk->alloc_size, blk->real_size, blk->pid, blk->refcnt);
         num++;
     }
     ka_task_mutex_unlock(&xp->xp_block_mutex);
 
-    ka_fs_seq_printf(seq, "total block %d, total alloc size %llu, total real size %llu\n",
-        num, node->alloc_size, node->real_alloc_size);
+    ka_fs_seq_printf(seq, "total block %d, total alloc size %llu, total real size %llu\n", num, node->alloc_size,
+                     node->real_alloc_size);
 
     return 0;
 }
@@ -63,7 +63,6 @@ STATIC int task_node_open(ka_inode_t *inode, ka_file_t *file)
 }
 
 STATIC_PROCFS_FILE_FUNC_OPS_OPEN(task_node_ops, task_node_open);
-
 
 static void proc_fs_format_task_dir_name(const struct xsm_task *task, char *name, int len)
 {
@@ -143,10 +142,11 @@ static void per_task_info_show(ka_seq_file_t *seq, struct xsm_task *task)
 
     ka_fs_seq_printf(seq, "pool id(name): alloc_size real_size peak_size\n");
 
-    ka_list_for_each_entry(node, &task->node_list_head, task_node) {
+    ka_list_for_each_entry(node, &task->node_list_head, task_node)
+    {
         /* can not modify the string format, because udf&aicpu will parse it for dfx. */
-        ka_fs_seq_printf(seq, "%d(%s) %-8llu %-8llu %-8llu\n", node->pool->pool_id, node->pool->key,
-                node->alloc_size, node->real_alloc_size, node->alloc_peak_size);
+        ka_fs_seq_printf(seq, "%d(%s) %-8llu %-8llu %-8llu\n", node->pool->pool_id, node->pool->key, node->alloc_size,
+                         node->real_alloc_size, node->alloc_peak_size);
         alloc_size += node->alloc_size;
         real_alloc_size += node->real_alloc_size;
     }
@@ -172,7 +172,6 @@ STATIC int task_sum_open(ka_inode_t *inode, ka_file_t *file)
 }
 
 STATIC_PROCFS_FILE_FUNC_OPS_OPEN(task_sum_ops, task_sum_open);
-
 
 void proc_fs_add_task(struct xsm_task *task)
 {
@@ -200,9 +199,11 @@ static int per_pool_info_show(int id, void *p, void *data)
     struct xsm_pool *xp = p;
     ka_seq_file_t *seq = data;
 
-    ka_fs_seq_printf(seq, "id:%d\n    key:%s, create_pid %d, refcnt:%d, algo:%s, alloc_size %lu, real_alloc_size %lu, "
-        "alloc_peak_size %lu\n", id, xp->key, xp->create_pid, ka_base_atomic_read(&xp->refcnt), xp->algo->name,
-        xp->alloc_size, xp->real_alloc_size, xp->alloc_peak_size);
+    ka_fs_seq_printf(seq,
+                     "id:%d\n    key:%s, create_pid %d, refcnt:%d, algo:%s, alloc_size %lu, real_alloc_size %lu, "
+                     "alloc_peak_size %lu\n",
+                     id, xp->key, xp->create_pid, ka_base_atomic_read(&xp->refcnt), xp->algo->name, xp->alloc_size,
+                     xp->real_alloc_size, xp->alloc_peak_size);
     if (xp->algo->xsm_pool_show) {
         ka_task_mutex_lock(&xp->xp_block_mutex);
         xp->algo->xsm_pool_show(xp, seq);

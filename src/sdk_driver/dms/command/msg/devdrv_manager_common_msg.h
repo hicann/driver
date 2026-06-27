@@ -33,14 +33,14 @@ struct devdrv_device_info {
     u32 ctrl_cpu_ip;
     u32 ctrl_cpu_id;
     u32 ctrl_cpu_core_num;
-    u32 ctrl_cpu_occupy_bitmap;
+    u64 ctrl_cpu_occupy_bitmap;
     u32 ctrl_cpu_endian_little;
     u32 ts_cpu_core_num;
     u32 ai_cpu_core_num;
     u32 ai_core_num;
     u32 ai_cpu_core_id;
     u32 ai_core_id;
-    u32 aicpu_occupy_bitmap;
+    u64 aicpu_occupy_bitmap;
     u32 hardware_version;
     u32 ts_load_fail;
     u32 dump_ddr_size;
@@ -72,19 +72,20 @@ struct devdrv_device_info { /* for device sync to host */
     u32 ai_cpu_broken_map;
     u32 ai_core_broken_map;
     u64 aicore_bitmap;
+    u64 vector_core_bitmap;
     u32 ai_subsys_ip_map;
 
     u32 ctrl_cpu_ip;
     u32 ctrl_cpu_id;
     u32 ctrl_cpu_core_num;
-    u32 ctrl_cpu_occupy_bitmap;
+    u64 ctrl_cpu_occupy_bitmap;
     u32 ctrl_cpu_endian_little;
     u32 ts_cpu_core_num;
     u32 ai_cpu_core_num;
     u32 ai_core_num;
     u32 ai_cpu_core_id;
     u32 ai_core_id;
-    u32 aicpu_occupy_bitmap;
+    u64 aicpu_occupy_bitmap;
 
     u32 hardware_version;
     u32 ts_load_fail;

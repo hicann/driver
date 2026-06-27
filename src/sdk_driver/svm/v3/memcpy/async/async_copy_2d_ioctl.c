@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2025-2025. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -30,8 +30,9 @@
 static inline int async_copy_2d_para_check(struct svm_async_copy_submit_2d_para *para)
 {
     if ((para->width > para->dpitch) || (para->width > para->spitch)) {
-        svm_err("Dpitch and spitch should both larger than width. (dpitch=%llu; spitch=%llu; width=%llu)\n",
-            para->dpitch, para->spitch, para->width);
+        svm_err(
+            "Dpitch and spitch should both larger than width. (dpitch=%llu; spitch=%llu; width=%llu)\n", para->dpitch,
+            para->spitch, para->width);
         return -EINVAL;
     }
 
@@ -43,8 +44,8 @@ static inline int async_copy_2d_para_check(struct svm_async_copy_submit_2d_para 
     return 0;
 }
 
-static int async_copy_extract_va_info_from_ioctl_2d_para(struct svm_async_copy_submit_2d_para *para,
-    struct copy_2d_va_info *info)
+static int async_copy_extract_va_info_from_ioctl_2d_para(
+    struct svm_async_copy_submit_2d_para *para, struct copy_2d_va_info *info)
 {
     int ret;
 
@@ -124,7 +125,7 @@ static int async_copy_ioctl_submit_2d(u32 udevid, u32 cmd, unsigned long arg)
 
 int async_copy_2d_ioctl_init(void)
 {
-    svm_register_ioctl_cmd_handle(_IOC_NR(SVM_ASYNC_COPY_SUBMIT_2D), async_copy_ioctl_submit_2d);
+    svm_register_ioctl_cmd_handle(_KA_IOC_NR(SVM_ASYNC_COPY_SUBMIT_2D), async_copy_ioctl_submit_2d);
     return 0;
 }
 DECLAER_FEATURE_AUTO_INIT(async_copy_2d_ioctl_init, FEATURE_LOADER_STAGE_6);

@@ -14,8 +14,8 @@
 #ifndef TS_AGENT_COMMON_H
 #define TS_AGENT_COMMON_H
 
-// AR20241204266067 ts_agent不能直接包含除<linux/types.h>外的内核头文件
-#include <linux/types.h>
+#include "ka_type.h"
+#include "ka_kernel_def_pub.h"
 #include "ascend_kernel_hal.h"
 #include "hvtsdrv_tsagent.h"
 #ifndef CFG_SOC_PLATFORM_DAVID
@@ -91,14 +91,6 @@
 #define TS_AGENT_WQ_VF_MAX 0 // stars create wq by pf instead of vf
 #else
 #define TS_AGENT_WQ_VF_MAX TS_AGENT_VF_ID_MAX
-#endif
-
-#ifndef U32_MAX
-#define U32_MAX 0xFFFFFFFFU
-#endif
-
-#ifndef U16_MAX
-#define U16_MAX 0xFFFFU
 #endif
 
 typedef struct ts_agent_vsq_base_info {

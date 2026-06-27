@@ -57,6 +57,7 @@ STATIC void devdrv_make_set_sdid(u32 host_udevid, struct devdrv_info *dev_info)
     spod_stru.server_id = dev_info->server_id;
     spod_stru.chassis_id = dev_info->chassis_id;
     spod_stru.super_pod_type = dev_info->super_pod_type;
+    spod_stru.super_pod_intercon_type = dev_info->super_pod_intercon_type;
     ret = dbl_set_spod_info(dev_info->dev_id, &spod_stru);
     if (ret != 0) {
         devdrv_drv_err("set spod info fail.(ret=%d)\n", ret);

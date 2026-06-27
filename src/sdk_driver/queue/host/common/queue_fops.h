@@ -32,8 +32,7 @@ extern long hdcdrv_kernel_close(int session, const char *session_id);
 extern long hdcdrv_kernel_send(int session, const char *session_id, void *buf, int len);
 extern long hdcdrv_kernel_send_timeout(int session, const char *session_id, void *buf, int len, int timeout);
 
-extern long (*const drv_queue_ioctl_handlers[QUEUE_CMD_MAX])
-    (ka_file_t *filep, unsigned int cmd, unsigned long arg);
+extern long (*const drv_queue_ioctl_handlers[QUEUE_CMD_MAX])(ka_file_t *filep, unsigned int cmd, unsigned long arg);
 
 int queue_drv_open(ka_inode_t *inode, ka_file_t *file);
 int queue_drv_release(ka_inode_t *inode, ka_file_t *file);

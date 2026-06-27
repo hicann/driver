@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2025. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -19,6 +19,10 @@
 #include "svm_gfp.h"
 #include "normal_pgtable.h"
 
+static svm_normal_free_ptes_ops_t free_ptes_ops = NULL;
+
+void svm_normal_register_free_ptes_ops(svm_normal_free_ptes_ops_t ops) { free_ptes_ops = ops; }
+
 static int svm_remap_normal_pages(ka_vm_area_struct_t *vma, u64 va, u64 pa, u64 page_num, ka_mm_pgprot_t pg_prot)
 {
     int ret;
@@ -34,9 +38,13 @@ static int svm_remap_normal_pages(ka_vm_area_struct_t *vma, u64 va, u64 pa, u64 
 
 static void svm_unmap_normal_pages(ka_vm_area_struct_t *vma, u64 va, u64 page_num)
 {
-    ka_mm_zap_vma_ptes(vma, va, page_num * KA_MM_PAGE_SIZE);
-}
+    u64 size = page_num * KA_MM_PAGE_SIZE;
 
+    ka_mm_zap_vma_ptes(vma, va, size);
+    if (free_ptes_ops != NULL) {
+        free_ptes_ops(vma, va, va + size);
+    }
+}
 
 static const struct svm_page_table_ops normal_pgtbl_ops = {
     .remap = svm_remap_normal_pages,
@@ -49,4 +57,3 @@ int svm_normal_pgtbl_init(void)
     return 0;
 }
 DECLAER_FEATURE_AUTO_INIT(svm_normal_pgtbl_init, FEATURE_LOADER_STAGE_0);
-

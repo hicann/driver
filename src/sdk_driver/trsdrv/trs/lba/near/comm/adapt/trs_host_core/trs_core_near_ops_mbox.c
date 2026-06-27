@@ -34,7 +34,7 @@ static int trs_core_ops_cbcq_msg_fill(struct trs_id_inst *inst, u8 *msg, u32 len
 
 static int trs_core_ops_shm_sqcq_msg_fill(struct trs_id_inst *inst, u8 *msg, u32 len)
 {
-    struct trs_shm_sqcq_mbox *tmp_msg  = (struct trs_shm_sqcq_mbox *)msg;
+    struct trs_shm_sqcq_mbox *tmp_msg = (struct trs_shm_sqcq_mbox *)msg;
 
     tmp_msg->app_type = TRS_MBOX_SEND_FROM_DEVICE;
     tmp_msg->sq_cq_side = (0 << TRS_CHAN_SQ_MEM_OFFSET) | (0 << TRS_CHAN_CQ_MEM_OFFSET);
@@ -54,7 +54,7 @@ static int trs_core_ops_sqcq_msg_fill(struct trs_id_inst *inst, u8 *msg, u32 len
 
     tmp_msg->app_type = TRS_MBOX_SEND_FROM_HOST;
     tmp_msg->sq_cq_side = (u8)((trs_soc_get_sq_mem_side(inst, &types) << TRS_CHAN_SQ_MEM_OFFSET) |
-        (trs_soc_get_cq_mem_side(inst) << TRS_CHAN_CQ_MEM_OFFSET));
+                               (trs_soc_get_cq_mem_side(inst) << TRS_CHAN_CQ_MEM_OFFSET));
     tmp_msg->fid = 0;
 
     if ((tmp_msg->header.cmd_type == TRS_MBOX_RELEASE_CQSQ_CALC) || (tmp_msg->cq_irq == 0)) { /* free or reuse cq */
@@ -119,7 +119,7 @@ static int trs_core_ops_reset_notify(struct trs_id_inst *inst, u8 *msg, u32 len)
 }
 #endif
 
-static int (* const trs_core_ops_fill_mbox_msg[TRS_MBOX_CMD_MAX])(struct trs_id_inst *inst, u8 *msg, u32 len) = {
+static int (*const trs_core_ops_fill_mbox_msg[TRS_MBOX_CMD_MAX])(struct trs_id_inst *inst, u8 *msg, u32 len) = {
 #ifndef EMU_ST
     [TRS_MBOX_CREATE_CB_CQ] = trs_core_ops_cbcq_msg_fill,
     [TRS_MBOX_RELEASE_CB_CQ] = trs_core_ops_cbcq_msg_fill,
@@ -159,4 +159,3 @@ int trs_core_ops_send_ctrl_msg(struct trs_id_inst *inst, u8 *msg, u32 len)
 
     return trs_mbox_send_rpc_call_msg(inst, 0, (void *)msg, (size_t)len, 3000); /* mbox timeout: 3000 ms */
 }
-

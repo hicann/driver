@@ -21,4 +21,3 @@ int trs_chan_ops_sqcq_speified_id_alloc(struct trs_id_inst *inst, int type, u32 
 int trs_chan_ops_sqcq_speified_id_free(struct trs_id_inst *inst, int type, u32 flag, u32 id);
 
 #endif
-

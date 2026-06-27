@@ -125,12 +125,12 @@ drvError_t drvHdcEpollClose(HDC_EPOLL epoll)
 }
 
 STATIC drvError_t drv_hdc_epoll_ctl_para_check(HDC_EPOLL epoll, signed int op, const void *target,
-    const struct drvHdcEvent *event)
+                                               const struct drvHdcEvent *event)
 {
     struct hdc_epoll_head *epoll_head = (struct hdc_epoll_head *)epoll;
     signed int epfd;
-    unsigned int event_mask = (HDC_EPOLL_DATA_IN | HDC_EPOLL_FAST_DATA_IN |
-                               HDC_EPOLL_CONN_IN | HDC_EPOLL_SESSION_CLOSE);
+    unsigned int event_mask = (HDC_EPOLL_DATA_IN | HDC_EPOLL_FAST_DATA_IN | HDC_EPOLL_CONN_IN |
+                               HDC_EPOLL_SESSION_CLOSE);
 
     if ((epoll_head == NULL) || (target == NULL) || (event == NULL)) {
         HDC_LOG_ERR("Input parameter is NULL.\n");
@@ -187,8 +187,8 @@ drvError_t drvHdcEpollCtl(HDC_EPOLL epoll, signed int op, void *target, struct d
     /* epoll_ctl cannot mocker for ut, check ret here */
     ret = epoll_ops->hdc_epoll_ctl(epoll_head, op, target, event);
     if (ret != 0) {
-        HDC_LOG_ERR("Call epoll_ctl failed. (epfd=%d; op=%d; ret=%d; strerror=\"%s\"; errno=%d)\n",
-            epoll_head->epfd, op, ret, strerror(errno), errno);
+        HDC_LOG_ERR("Call epoll_ctl failed. (epfd=%d; op=%d; ret=%d; strerror=\"%s\"; errno=%d)\n", epoll_head->epfd,
+                    op, ret, strerror(errno), errno);
         if (ret == (-HDCDRV_SESSION_HAS_CLOSED)) {
             return DRV_ERROR_SOCKET_CLOSE;
         } else if (ret == (-HDCDRV_NO_PERMISSION)) {
@@ -206,7 +206,7 @@ drvError_t drvHdcEpollCtl(HDC_EPOLL epoll, signed int op, void *target, struct d
 }
 
 STATIC drvError_t drv_hdc_epoll_wait_para_check(HDC_EPOLL epoll, const struct drvHdcEvent *events, signed int maxevents,
-    signed int timeout, const signed int *eventnum)
+                                                signed int timeout, const signed int *eventnum)
 {
     struct hdc_epoll_head *epoll_head = (struct hdc_epoll_head *)epoll;
 
@@ -226,8 +226,8 @@ STATIC drvError_t drv_hdc_epoll_wait_para_check(HDC_EPOLL epoll, const struct dr
     }
 
     if (epoll_head->size < maxevents) {
-        HDC_LOG_ERR("maxevents out of range. (epfd=%d; maxevents=%d; range=%d)\n",
-                    (signed int)epoll_head->epfd, maxevents, epoll_head->size);
+        HDC_LOG_ERR("maxevents out of range. (epfd=%d; maxevents=%d; range=%d)\n", (signed int)epoll_head->epfd,
+                    maxevents, epoll_head->size);
         return DRV_ERROR_INVALID_VALUE;
     }
 
@@ -240,7 +240,7 @@ STATIC drvError_t drv_hdc_epoll_wait_para_check(HDC_EPOLL epoll, const struct dr
 }
 
 drvError_t drvHdcEpollWait(HDC_EPOLL epoll, struct drvHdcEvent *events, signed int maxevents, signed int timeout,
-    signed int *eventnum)
+                           signed int *eventnum)
 {
     signed int ret;
     struct hdc_epoll_head *epoll_head = (struct hdc_epoll_head *)epoll;

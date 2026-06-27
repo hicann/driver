@@ -295,6 +295,69 @@ STATIC ssize_t devdrv_sysfs_aer_cnt_store(ka_device_t *dev, ka_device_attribute_
     return (ssize_t)count;
 }
 
+STATIC ssize_t devdrv_sysfs_profiling_is_enabled(ka_device_t *dev, ka_device_attribute_t *attr, char *buf)
+{
+    int ret;
+    bool status;
+
+    (void)dev;
+    (void)attr;
+
+    status = devdrv_profiling_is_enabled();
+    devdrv_info("get profiling enable status. (status=%u)\n", status);
+    ret = snprintf_s(buf, KA_MM_PAGE_SIZE, KA_MM_PAGE_SIZE - 1, "%u\n", status);
+
+    return ret == -1 ? 0 : ret;
+}
+
+STATIC ssize_t devdrv_sysfs_set_profiling_enable(ka_device_t *dev, ka_device_attribute_t *attr, const char *buf,
+    size_t count)
+{
+    int ret;
+    u32 real_out_len = 0, dev_id, val;
+    struct devdrv_sysfs_msg *msg = NULL;
+    struct devdrv_msg_dev *msg_dev = NULL;
+    struct devdrv_pci_ctrl *pci_ctrl = devdrv_sysfs_get_pci_ctrl_by_dev(dev);
+
+    (void)attr;
+
+    if (pci_ctrl == NULL) {
+        devdrv_err("Get pci_ctrl failed.\n");
+        return 0;
+    }
+
+    if (ka_base_kstrtou32(buf, 0, &val) < 0) {
+        devdrv_err("Call ka_base_kstrtou32 failed.\n");
+        return (ssize_t)count;
+    }
+
+    if (val > 1) {
+        devdrv_err("profiling_enable_status only supports 0 or 1. (val=%u)\n", val);
+        return (ssize_t)count;
+    }
+
+    dev_id = pci_ctrl->dev_id;
+    msg_dev = pci_ctrl->msg_dev;
+    devdrv_set_profiling_enable(val);
+
+    msg = (struct devdrv_sysfs_msg *)devdrv_kzalloc(sizeof(struct devdrv_sysfs_msg), KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
+    if (msg == NULL) {
+        devdrv_err("malloc failed.\n");
+        return 0;
+    }
+
+    msg->type = DEVDRV_SYSFS_PROFILING_ENABLE;
+    msg->profiling_enable.profiling_enable_status = val;
+    ret = devdrv_sysfs_common_msg_send(dev_id, (void *)msg, &real_out_len);
+    if (ret != 0) {
+        devdrv_err("Common msg send failed.\n");
+    }
+    devdrv_kfree(msg);
+    msg = NULL;
+
+    return (ssize_t)count;
+}
+
 STATIC ssize_t devdrv_sysfs_bdf_to_devid_show(ka_device_t *dev, ka_device_attribute_t *attr, char *buf)
 {
     struct devdrv_ctrl *ctrl = NULL;
@@ -1004,6 +1067,72 @@ STATIC ssize_t devdrv_sysfs_dump_dfx_part2_show(ka_device_t *dev, ka_device_attr
 #endif
 }
 
+STATIC ssize_t devdrv_sysfs_features_show(ka_device_t *dev, ka_device_attribute_t *attr, char *buf)
+{
+    int ret;
+    u32 i;
+    int max_name_width = 0, max_desc_width = 0;
+    ssize_t offset = 0;
+    const char *status_str;
+    struct devdrv_pci_ctrl *pci_ctrl = devdrv_sysfs_get_pci_ctrl_by_dev(dev);
+    const struct devdrv_feature_meta *meta = g_devdrv_feature_mgr.meta;
+
+    (void)attr;
+
+    for (i = 0; i < DEVDRV_FEATURE_MAX; i++) {
+        if (strlen(meta[i].name) > max_name_width) {
+            max_name_width = strlen(meta[i].name);
+        }
+        if (strlen(meta[i].desc) > max_desc_width) {
+            max_desc_width = strlen(meta[i].desc);
+        }
+    }
+
+    ret = snprintf_s(buf + offset, KA_MM_PAGE_SIZE - offset, KA_MM_PAGE_SIZE - offset - 1,
+                    "\n%-*s | %-*s | %s\n", max_name_width, "feature name", max_desc_width, "desc", "supported or not");
+    if (ret != -1) {
+        offset += ret;
+    }
+
+    for (i = 0; i < DEVDRV_FEATURE_MAX; i++) {
+        status_str = devdrv_feature_is_support(pci_ctrl->features, i) ? "supported" : "not";
+        ret = snprintf_s(buf + offset, KA_MM_PAGE_SIZE - offset, KA_MM_PAGE_SIZE - offset - 1, "%-*s | %-*s | %s\n",
+                        max_name_width, meta[i].name,
+                        max_desc_width, meta[i].desc, status_str);
+        if (ret != -1) {
+            offset += ret;
+        }
+    }
+
+    return offset;
+}
+
+STATIC ssize_t devdrv_sysfs_features_bitmap_show(ka_device_t *dev, ka_device_attribute_t *attr, char *buf)
+{
+    int ret;
+    u32 i;
+    ssize_t offset = 0;
+    const struct devdrv_feature_ops_meta *meta = g_devdrv_feature_mgr.ops_meta;
+
+    (void)attr;
+
+    ret = snprintf_s(buf + offset, KA_MM_PAGE_SIZE - offset, KA_MM_PAGE_SIZE - offset - 1,
+                    "\n%-30s | %s\n", "feature name", "bit");
+    if (ret != -1) {
+        offset += ret;
+    }
+
+    for (i = 0; i < DEVDRV_FEATURE_OPS_BIT_NUM; i++) {
+        ret = snprintf_s(buf + offset, KA_MM_PAGE_SIZE - offset, KA_MM_PAGE_SIZE - offset - 1, "%-30s | %s\n",
+                        meta[i].name, meta[i].bit);
+        if (ret != -1) {
+            offset += ret;
+        }
+    }
+
+    return offset;
+}
+
 static KA_DRIVER_DEVICE_ATTR(devdrv_sysfs_link_info, KA_S_IRUSR | KA_S_IRGRP, devdrv_sysfs_link_info_show, NULL);
 static KA_DRIVER_DEVICE_ATTR(devdrv_sysfs_rx_para_info, KA_S_IRUSR | KA_S_IRGRP, devdrv_sysfs_rx_para_show, NULL);
 static KA_DRIVER_DEVICE_ATTR(devdrv_sysfs_tx_para_info, KA_S_IRUSR | KA_S_IRGRP, devdrv_sysfs_tx_para_show, NULL);
@@ -1021,10 +1150,14 @@ static KA_DRIVER_DEVICE_ATTR(bus_name, KA_S_IRUSR | KA_S_IRGRP, devdrv_sysfs_get
 static KA_DRIVER_DEVICE_ATTR(hotreset_flag, KA_S_IWUSR | KA_S_IWGRP, NULL, devdrv_sysfs_set_hotreset_flag);
 static KA_DRIVER_DEVICE_ATTR(common_msg, KA_S_IRUSR | KA_S_IRGRP, devdrv_sysfs_get_common_msg, NULL);
 static KA_DRIVER_DEVICE_ATTR(non_trans_msg, KA_S_IRUSR | KA_S_IRGRP, devdrv_sysfs_get_non_trans_msg, NULL);
+static KA_DRIVER_DEVICE_ATTR(profiling_enable_status, KA_S_IRUSR | KA_S_IRGRP | KA_S_IWUSR | KA_S_IWGRP,
+    devdrv_sysfs_profiling_is_enabled, devdrv_sysfs_set_profiling_enable);
 static KA_DRIVER_DEVICE_ATTR(dma_info, KA_S_IRUGO, devdrv_sysfs_sync_dma_info_show, NULL);
 static KA_DRIVER_DEVICE_ATTR(aer_info, KA_S_IRUSR | KA_S_IRGRP, devdrv_sysfs_aer_info_show, NULL);
 static KA_DRIVER_DEVICE_ATTR(dump_dfx_part1, KA_S_IRUSR | KA_S_IRGRP, devdrv_sysfs_dump_dfx_part1_show, NULL);
 static KA_DRIVER_DEVICE_ATTR(dump_dfx_part2, KA_S_IRUSR | KA_S_IRGRP, devdrv_sysfs_dump_dfx_part2_show, NULL);
+static KA_DRIVER_DEVICE_ATTR(features, KA_S_IRUSR | KA_S_IRGRP, devdrv_sysfs_features_show, NULL);
+static KA_DRIVER_DEVICE_ATTR(features_bitmap, KA_S_IRUSR | KA_S_IRGRP, devdrv_sysfs_features_bitmap_show, NULL);
 
 static ka_attribute_t *g_devdrv_sysfs_attrs[] = {
     ka_fs_get_dev_attr(dev_attr_devdrv_sysfs_link_info)
@@ -1041,6 +1174,8 @@ static ka_attribute_t *g_devdrv_sysfs_attrs[] = {
     ka_fs_get_dev_attr(dev_attr_aer_info)
     ka_fs_get_dev_attr(dev_attr_dump_dfx_part1)
     ka_fs_get_dev_attr(dev_attr_dump_dfx_part2)
+    ka_fs_get_dev_attr(dev_attr_features)
+    ka_fs_get_dev_attr(dev_attr_features_bitmap)
     NULL,
 };
 
@@ -1051,6 +1186,7 @@ static const ka_attribute_group_t g_devdrv_sysfs_group = {
 static ka_attribute_t *g_devdrv_sysfs_msg_attrs[] = {
     ka_fs_get_dev_attr(dev_attr_common_msg)
     ka_fs_get_dev_attr(dev_attr_non_trans_msg)
+    ka_fs_get_dev_attr(dev_attr_profiling_enable_status)
     ka_fs_get_dev_attr(dev_attr_dma_info)
     NULL,
 };

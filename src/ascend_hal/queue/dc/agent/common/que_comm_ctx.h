@@ -29,9 +29,9 @@ struct que_ctx {
     unsigned int devid;
     unsigned int res_bitmap;
 
-    pid_t devpid;  /* host h2d only */
-    pid_t hostpid; /* host h2d only */
-    urma_target_jetty_t *tjetty; /* host h2d only */
+    pid_t devpid;                    /* host h2d only */
+    pid_t hostpid;                   /* host h2d only */
+    urma_target_jetty_t *tjetty;     /* host h2d only */
     struct queue_sub_flag *sub_flag; /* host h2d only */
     urma_token_t token[TRANS_TYPE_MAX];
 
@@ -53,9 +53,11 @@ int que_ctx_init(struct que_ctx *ctx);
 void que_ctx_uninit(struct que_ctx *ctx);
 void que_ctx_chan_recycle(unsigned int devid, struct que_query_alive_msg *qid_list);
 int que_ctx_chan_check(unsigned int devid, unsigned int qid, unsigned long create_time);
-int que_ctx_chan_create(unsigned int devid, unsigned int qid, QUEUE_CHAN_TYPE chan_type, unsigned long create_time, unsigned int d2d_flag);
+int que_ctx_chan_create(unsigned int devid, unsigned int qid, QUEUE_CHAN_TYPE chan_type, unsigned long create_time,
+                        unsigned int d2d_flag);
 int que_ctx_chan_destroy(unsigned int devid, unsigned int qid);
-int que_ctx_chan_update(unsigned int devid, unsigned int peer_devid, unsigned int qid, urma_jfr_id_t *tjfr_id, urma_token_t *token);
+int que_ctx_chan_update(unsigned int devid, unsigned int peer_devid, unsigned int qid, urma_jfr_id_t *tjfr_id,
+                        urma_token_t *token);
 int que_ctx_get_f2nf_res(unsigned int devid, unsigned int qid, struct que_f2nf_res *f2nf_res);
 void que_ctx_poll(unsigned int devid, unsigned int d2d_flag);
 int que_ctx_async_ini(unsigned int devid, unsigned int qid, void *mbuf);

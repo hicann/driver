@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * Copyright (c) 2026 Huawei Technologies Co., Ltd.
  * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -11,6 +11,8 @@
 #include <stdio.h>
 #include <pthread.h>
 #include <stdlib.h>
+#include <time.h>
+#include <errno.h>
 
 #include "urma_api.h"
 #include "urma_types.h"
@@ -104,5 +106,55 @@ urma_target_jetty_t *ascend_urma_import_jfr(urma_context_t *urma_ctx, urma_rjfr_
 #else
     return urma_import_jfr(urma_ctx, rjfr, token_value);
 #endif
+}
+
+#define MS_PER_SECOND 1000L
+#define NS_PER_MSECOND 1000000L
+static int update_timecost(struct timespec *start_time, int time_out, int *real_time_out)
+{
+    struct timespec current_time;
+    long recv_time, wait_time;
+
+    if (time_out < 0) {
+        *real_time_out = time_out;
+        return DRV_ERROR_NONE;
+    }
+
+    wait_time = time_out;
+    (void)clock_gettime(CLOCK_MONOTONIC, &current_time);
+
+    recv_time = (current_time.tv_sec * MS_PER_SECOND + current_time.tv_nsec / NS_PER_MSECOND) -
+                (start_time->tv_sec * MS_PER_SECOND + start_time->tv_nsec / NS_PER_MSECOND);
+    if (recv_time >= wait_time) {
+        return DRV_ERROR_INNER_ERR;
+    }
+
+    *real_time_out = time_out - (int)recv_time;
+    return DRV_ERROR_NONE;
+}
+
+int ascend_urma_wait_jfc(urma_jfce_t *jfce, uint32_t jfc_cnt, int time_out, urma_jfc_t *jfc[])
+{
+    int real_timeout = time_out;
+    struct timespec start_time;
+    int ret;
+
+    if (time_out == 0) {
+        return urma_wait_jfc(jfce, jfc_cnt, time_out, jfc);
+    }
+
+    (void)clock_gettime(CLOCK_MONOTONIC, &start_time);
+    do {
+        ret = urma_wait_jfc(jfce, jfc_cnt, real_timeout, jfc);
+        if ((ret != -1) || (errno != EINTR)) {
+            return ret;
+        }
+
+        if (update_timecost(&start_time, time_out, &real_timeout) != 0) {
+            return ret;
+        }
+    } while (1);
+
+    return ret;
 }
 

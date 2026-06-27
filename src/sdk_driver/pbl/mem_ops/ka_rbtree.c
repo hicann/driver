@@ -11,26 +11,25 @@
  * GNU General Public License for more details.
  */
 
-#include <linux/sched.h>
 #include "ka_rbtree.h"
 
-int ka_rb_erase(struct rb_root *root, struct rb_node *node)
+int ka_rb_erase(ka_rb_root_t *root, ka_rb_node_t *node)
 {
     int ret = -ENODEV;
 
-    if (RB_EMPTY_NODE(node) == false) {
-        rb_erase(node, root);
-        RB_CLEAR_NODE(node);
+    if (KA_BASE_RB_EMPTY_NODE(node) == false) {
+        ka_base_rb_erase(node, root);
+        KA_BASE_RB_CLEAR_NODE(node);
         ret = 0;
     }
 
     return ret;
 }
 
-int ka_rb_insert(struct rb_root *root, struct rb_node *node, rb_handle_func get_handle)
+int ka_rb_insert(ka_rb_root_t *root, ka_rb_node_t *node, rb_handle_func get_handle)
 {
-    struct rb_node **cur_node = &root->rb_node;
-    struct rb_node *parent = NULL;
+    ka_rb_node_t **cur_node = ka_base_get_rb_root_node_addr(root);
+    ka_rb_node_t *parent = NULL;
     unsigned long handle = get_handle(node);
 
     /* Figure out where to put new node */
@@ -39,31 +38,31 @@ int ka_rb_insert(struct rb_root *root, struct rb_node *node, rb_handle_func get_
 
         parent = *cur_node;
         if (handle < tmp_handle) {
-            cur_node = &((*cur_node)->rb_left);
+            cur_node = ka_base_get_rb_node_left_addr(*cur_node);
         } else if (handle > tmp_handle) {
-            cur_node = &((*cur_node)->rb_right);
+            cur_node = ka_base_get_rb_node_right_addr(*cur_node);
         } else {
             return -EINVAL;
         }
     }
 
     /* Add new node and rebalance tree. */
-    rb_link_node(node, parent, cur_node);
-    rb_insert_color(node, root);
+    ka_base_rb_link_node(node, parent, cur_node);
+    ka_base_rb_insert_color(node, root);
     return 0;
 }
 
-struct rb_node *ka_rb_search(struct rb_root *root, unsigned long handle, rb_handle_func get_handle)
+ka_rb_node_t *ka_rb_search(ka_rb_root_t *root, unsigned long handle, rb_handle_func get_handle)
 {
-    struct rb_node *node = NULL;
+    ka_rb_node_t *node = NULL;
 
-    node = root->rb_node;
+    node = ka_base_get_rb_root_node(root);
     while (node != NULL) {
         unsigned long tmp_handle = get_handle(node);
         if (handle < tmp_handle) {
-            node = node->rb_left;
+            node = ka_base_get_rb_node_left(node);
         } else if (handle > tmp_handle) {
-            node = node->rb_right;
+            node = ka_base_get_rb_node_right(node);
         } else {
             return node;
         }
@@ -72,18 +71,17 @@ struct rb_node *ka_rb_search(struct rb_root *root, unsigned long handle, rb_hand
     return NULL;
 }
 
-struct rb_node *ka_rb_erase_one_node(struct rb_root *root)
+ka_rb_node_t *ka_rb_erase_one_node(ka_rb_root_t *root)
 {
-    struct rb_node *node = NULL;
+    ka_rb_node_t *node = NULL;
 
-    if (RB_EMPTY_ROOT(root) == true) {
+    if (KA_BASE_RB_EMPTY_ROOT(root) == true) {
         return NULL;
     }
-    node = rb_first(root);
+    node = ka_base_rb_first(root);
     if (node != NULL) {
-        rb_erase(node, root);
-        RB_CLEAR_NODE(node);
+        ka_base_rb_erase(node, root);
+        KA_BASE_RB_CLEAR_NODE(node);
     }
     return node;
 }
-

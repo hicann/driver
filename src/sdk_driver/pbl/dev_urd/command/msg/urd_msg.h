@@ -23,12 +23,12 @@ struct devdrv_manager_hccl_devinfo {
     u32 ctrl_cpu_ip;
     u32 ctrl_cpu_id;
     u32 ctrl_cpu_core_num;
-    u32 ctrl_cpu_occupy_bitmap;
+    u64 ctrl_cpu_occupy_bitmap;
     u32 ctrl_cpu_endian_little;
     u32 ts_cpu_core_num;
     u32 ai_cpu_core_num;
     u32 ai_core_num;
-    u32 ai_cpu_bitmap;
+    u64 ai_cpu_bitmap;
     u32 ai_core_id;
     u32 ai_cpu_core_id;
     u32 hardware_version; /* mini, cloud, lite, etc. */
@@ -48,8 +48,9 @@ struct devdrv_manager_hccl_devinfo {
     u32 mainboard_id;
     char soc_version[SOC_VERSION_LENGTH];
     u64 aicore_bitmap[2]; /* support max 128 aicore */
+    u64 vector_core_bitmap[2]; /* support max 128 vector core */
     u8 product_type;
-    u32 resv[31];
+    u32 resv[27];
 };
 
 #endif

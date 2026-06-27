@@ -18,10 +18,10 @@
 int trs_stars_v2_chan_ops_sqcq_speicified_id_alloc(struct trs_id_inst *inst, int type, u32 *id);
 int trs_stars_v2_chan_ops_sqcq_speicified_id_free(struct trs_id_inst *inst, int type, u32 id);
 
-int _trs_sqcq_event_update(u32 devid, struct sched_published_event_info *event_info,
-                           struct sched_published_event_func *event_func);
-int trs_sqcq_event_update(u32 devid, struct sched_published_event_info *event_info,
-                          struct sched_published_event_func *event_func);
+int _trs_sqcq_event_update(
+    u32 devid, struct sched_published_event_info *event_info, struct sched_published_event_func *event_func);
+int trs_sqcq_event_update(
+    u32 devid, struct sched_published_event_info *event_info, struct sched_published_event_func *event_func);
 
 int trs_sqcq_event_dev_init(u32 ts_inst_id);
 void trs_sqcq_event_dev_uninit(u32 ts_inst_id);

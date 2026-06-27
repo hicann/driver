@@ -10,16 +10,14 @@
 
 #include <stdio.h>
 #include "dsmi_dmp_command.h"
-#include "dms/dms_cmd_def.h"
-#include "dms/dms_soc_interface.h"
+#include "dms_user_interface.h"
 #include "dev_mon_log.h"
 #include "devdrv_ioctl.h"
 #include "errno.h"
-#include "dms_devdrv_info_comm.h"
 #include "ascend_hal_error.h"
 #include "mmpa_linux.h"
 #include "mmpa_api.h"
-#include "dmc_log_user.h"
+#include "dmc_user_interface.h"
 #include "dev_mon_cmd_manager.h"
 #include "dms_user_common.h"
 #include "dsmi_device_pcie_domain.h"
@@ -114,7 +112,7 @@ drvError_t drvDeviceGetPcieIdInfoAll(unsigned int devId, struct tag_pcie_idinfo_
     return DRV_ERROR_NONE;
 }
 
-int dsmi_get_pcie_info_v2(int device_id, struct tag_pcie_idinfo_all *pcie_idinfo)
+DLLEXPORT int dsmi_get_pcie_info_v2(int device_id, struct tag_pcie_idinfo_all *pcie_idinfo)
 {
 #ifndef CFG_SOC_PLATFORM_RC
     int ret;

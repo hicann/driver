@@ -16,7 +16,6 @@
 #include "pbl_prof_interface_cmd.h"
 #include "prof_command_base.h"
 
-
 #define PROF_EID_SIZE (16) /* #define UBCORE_EID_SIZE (16), #define URMA_EID_SIZE (16) */
 
 enum prof_hdc_msg_type {
@@ -99,11 +98,11 @@ struct prof_hdc_msg {
 };
 
 struct prof_hdc_start_para {
-    uint32_t channel_type;          /* for ts and other device */
-    uint32_t buf_len;               /* buffer size */
+    uint32_t channel_type; /* for ts and other device */
+    uint32_t buf_len;      /* buffer size */
     uint32_t sample_period;
     char user_data[PROF_USER_DATA_LEN]; /* ts data */
-    uint32_t user_data_size;        /* user data's size */
+    uint32_t user_data_size;            /* user data's size */
 };
 
 #endif

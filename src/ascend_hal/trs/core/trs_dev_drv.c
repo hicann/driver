@@ -50,13 +50,19 @@ int trs_munmap(void *addr, size_t length);
 #define trs_munmap munmap
 #endif
 
-static int trs_dev_fd[TRS_DEV_NUM] = {-1, };
-static int trs_dev_mmap_fd[TRS_DEV_NUM] = {-1, };
+static int trs_dev_fd[TRS_DEV_NUM] = {
+    -1,
+};
+static int trs_dev_mmap_fd[TRS_DEV_NUM] = {
+    -1,
+};
 static pthread_mutex_t trs_dev_mutex = PTHREAD_MUTEX_INITIALIZER;
 
-#define TRS_DEV_INT_HANDLE_NUM_MAX  4
+#define TRS_DEV_INT_HANDLE_NUM_MAX 4
 
-struct trs_dev_init_ops *g_dev_init_ops[TRS_DEV_INT_HANDLE_NUM_MAX] = {NULL, };
+struct trs_dev_init_ops *g_dev_init_ops[TRS_DEV_INT_HANDLE_NUM_MAX] = {
+    NULL,
+};
 int trs_register_dev_init_ops(struct trs_dev_init_ops *ops)
 {
     int i;
@@ -105,7 +111,17 @@ static void trs_call_dev_uninit_ops(uint32_t dev_id)
     _trs_call_dev_uninit_ops(dev_id, TRS_DEV_INT_HANDLE_NUM_MAX - 1);
 }
 
-signed int __attribute__((constructor)) trs_core_init_user(void)  //lint !e527
+void trs_dev_mutex_lock(void)
+{
+    (void)pthread_mutex_lock(&trs_dev_mutex);
+}
+
+void trs_dev_mutex_unlock(void)
+{
+    (void)pthread_mutex_unlock(&trs_dev_mutex);
+}
+
+signed int __attribute__((constructor)) trs_core_init_user(void) // lint !e527
 {
     int i;
 
@@ -117,25 +133,13 @@ signed int __attribute__((constructor)) trs_core_init_user(void)  //lint !e527
     return 0;
 }
 
-static void trs_set_dev_fd(uint32_t dev_id, int fd)
-{
-    trs_dev_fd[dev_id] = fd;
-}
+static void trs_set_dev_fd(uint32_t dev_id, int fd) { trs_dev_fd[dev_id] = fd; }
 
-static int trs_get_dev_fd(uint32_t dev_id)
-{
-    return trs_dev_fd[dev_id];
-}
+static int trs_get_dev_fd(uint32_t dev_id) { return trs_dev_fd[dev_id]; }
 
-static void trs_set_dev_mmap_fd(uint32_t dev_id, int fd)
-{
-    trs_dev_mmap_fd[dev_id] = fd;
-}
+static void trs_set_dev_mmap_fd(uint32_t dev_id, int fd) { trs_dev_mmap_fd[dev_id] = fd; }
 
-static int trs_get_dev_mmap_fd(uint32_t dev_id)
-{
-    return trs_dev_mmap_fd[dev_id];
-}
+static int trs_get_dev_mmap_fd(uint32_t dev_id) { return trs_dev_mmap_fd[dev_id]; }
 
 void *trs_dev_mmap(uint32_t dev_id, void *addr, size_t length, int prot, int flags)
 {
@@ -148,14 +152,11 @@ void *trs_dev_mmap(uint32_t dev_id, void *addr, size_t length, int prot, int fla
     return trs_mmap_user(addr, length, prot, flags, fd, 0);
 }
 
-int trs_dev_munmap(void *addr, size_t length)
-{
-    return trs_munmap(addr, length);
-}
+int trs_dev_munmap(void *addr, size_t length) { return trs_munmap(addr, length); }
 
 #define MAX_TRS_OPEN_DEV_RETRY_TIME 2400
 #define TRS_OPEN_DEV_RETRY_INTERVAL 100000 // 100ms
-static int _trs_char_dev_open(uint32_t v_dev_id, int *fd, const char* intf_module_name)
+static int _trs_char_dev_open(uint32_t v_dev_id, int *fd, const char *intf_module_name)
 {
     struct davinci_intf_open_arg arg;
     int ret, cnt = 0;
@@ -171,7 +172,8 @@ static int _trs_char_dev_open(uint32_t v_dev_id, int *fd, const char* intf_modul
     *fd = trs_file_open(davinci_intf_get_dev_path(), O_RDWR | O_CLOEXEC);
     if (*fd < 0) {
         ret = errno;
-        trs_err("Open device failed. (v_dev_id=%u; fd=%d; errno=%d, error=%s)\n", v_dev_id, *fd, errno, strerror(errno));
+        trs_err(
+            "Open device failed. (v_dev_id=%u; fd=%d; errno=%d, error=%s)\n", v_dev_id, *fd, errno, strerror(errno));
         return ret;
     }
 
@@ -203,7 +205,7 @@ static int trs_char_dev_mmap_open(uint32_t v_dev_id, int *fd)
     return _trs_char_dev_open(v_dev_id, fd, DAVINCI_INTF_MODULE_TSDRV_MMAP_NAME);
 }
 
-static int _trs_char_dev_close(uint32_t v_dev_id, int fd, const char* intf_module_name)
+static int _trs_char_dev_close(uint32_t v_dev_id, int fd, const char *intf_module_name)
 {
     struct davinci_intf_close_arg arg;
     int ret;
@@ -242,10 +244,7 @@ drvError_t __attribute__((weak)) trs_urma_proc_ctx_init_by_devid(uint32_t dev_id
     return DRV_ERROR_NONE;
 }
 
-void __attribute__((weak)) trs_urma_proc_ctx_uninit_by_devid(uint32_t dev_id)
-{
-    (void)dev_id;
-}
+void __attribute__((weak)) trs_urma_proc_ctx_uninit_by_devid(uint32_t dev_id) { (void)dev_id; }
 
 static int trs_dev_init(uint32_t dev_id)
 {
@@ -311,13 +310,25 @@ static void trs_dev_uninit(uint32_t dev_id, uint32_t close_type)
     trs_urma_proc_ctx_uninit_by_devid(dev_id);
 }
 
+static void trs_dev_open_init_fail_rollback(uint32_t dev_id, uint32_t udev_id, int fd, int mmap_fd)
+{
+    trs_set_dev_mmap_fd(dev_id, -1);
+    trs_set_dev_fd(dev_id, -1);
+    trs_set_dev_open_status(dev_id, false);
+    (void)trs_char_dev_mmap_close(udev_id, mmap_fd);
+    (void)trs_char_dev_close(udev_id, fd);
+    (void)pthread_mutex_unlock(&trs_dev_mutex);
+    share_log_destroy(HAL_MODULE_TYPE_TS_DRIVER);
+}
+
 static drvError_t drvDeviceOpenComm(void **dev_info, uint32_t dev_id)
 {
     uint32_t udev_id;
     int fd, mmap_fd, ret;
 
     if ((dev_info == NULL) || (dev_id >= TRS_DEV_NUM)) {
-        trs_err("Invalid ptr or dev_id. (dev_info_Null=%d; devid=%u; max=%d)\n", (dev_info == NULL), dev_id, TRS_DEV_NUM);
+        trs_err(
+            "Invalid ptr or dev_id. (dev_info_Null=%d; devid=%u; max=%d)\n", (dev_info == NULL), dev_id, TRS_DEV_NUM);
         return DRV_ERROR_INVALID_VALUE;
     }
 
@@ -358,15 +369,11 @@ static drvError_t drvDeviceOpenComm(void **dev_info, uint32_t dev_id)
 
     ret = trs_dev_init(dev_id);
     if (ret != DRV_ERROR_NONE) {
-        trs_set_dev_mmap_fd(dev_id, -1);
-        trs_set_dev_fd(dev_id, -1);
-        (void)trs_char_dev_mmap_close(udev_id, mmap_fd);
-        (void)trs_char_dev_close(udev_id, fd);
-        (void)pthread_mutex_unlock(&trs_dev_mutex);
-        share_log_destroy(HAL_MODULE_TYPE_TS_DRIVER);
+        trs_dev_open_init_fail_rollback(dev_id, udev_id, fd, mmap_fd);
         return ret;
     }
 
+    trs_set_dev_open_status(dev_id, true);
     ((struct drvDevInfo *)dev_info)->fd = fd;
     (void)pthread_mutex_unlock(&trs_dev_mutex);
 
@@ -376,9 +383,12 @@ static drvError_t drvDeviceOpenComm(void **dev_info, uint32_t dev_id)
 
 drvError_t drvTrsDeviceCloseUserResInner(uint32_t dev_id, halDevCloseIn *in)
 {
+    (void)pthread_mutex_lock(&trs_dev_mutex);
     shrid_set_fd(-1);
     trs_set_dev_mmap_fd(dev_id, -1);
     trs_set_dev_fd(dev_id, -1);
+    trs_set_dev_open_status(dev_id, false);
+    (void)pthread_mutex_unlock(&trs_dev_mutex);
     share_log_destroy(HAL_MODULE_TYPE_TS_DRIVER);
     (void)in;
     return DRV_ERROR_NONE;
@@ -387,16 +397,13 @@ drvError_t drvTrsDeviceCloseUserResInner(uint32_t dev_id, halDevCloseIn *in)
 drvError_t drvDeviceOpenInner(uint32_t dev_id, halDevOpenIn *in, halDevOpenOut *out)
 {
     struct drvDevInfo dev_info;
-	(void)in;
+    (void)in;
     (void)out;
 
     return drvDeviceOpenComm((void **)(&dev_info), dev_id);
 }
 
-drvError_t drvDeviceOpen(void **devInfo, uint32_t devId)
-{
-    return drvDeviceOpenComm(devInfo, devId);
-}
+drvError_t drvDeviceOpen(void **devInfo, uint32_t devId) { return drvDeviceOpenComm(devInfo, devId); }
 
 static int trs_set_close_type(uint32_t dev_id, uint32_t ts_id, uint32_t close_type)
 {
@@ -430,6 +437,7 @@ static drvError_t drvDeviceCloseComm(uint32_t dev_id, halDevCloseIn *in)
         return DRV_ERROR_INVALID_DEVICE;
     }
 
+    trs_set_dev_open_status(dev_id, false);
     trs_dev_uninit(dev_id, in->close_type);
 
     ret = trs_set_close_type(dev_id, 0, in->close_type);
@@ -540,8 +548,8 @@ int trs_dev_ioctl(int fd, uint32_t cmd, void *para)
 static bool trs_can_open_alone(uint32_t cmd)
 {
     return (cmd == TRS_RES_ID_NUM_QUERY) || (cmd == TRS_RES_ID_MAX_QUERY) || (cmd == TRS_RES_ID_USED_NUM_QUERY) ||
-        (cmd == TRS_RES_ID_REG_OFFSET_QUERY) || (cmd == TRS_RES_ID_REG_SIZE_QUERY) || (cmd == TRS_RES_ID_ENABLE) ||
-        (cmd == TRS_RES_ID_DISABLE) || (cmd == TRS_RES_ID_AVAIL_NUM_QUERY) || (cmd == TRS_TS_CMDLIST_MAP_UNMAP);
+           (cmd == TRS_RES_ID_REG_OFFSET_QUERY) || (cmd == TRS_RES_ID_REG_SIZE_QUERY) || (cmd == TRS_RES_ID_ENABLE) ||
+           (cmd == TRS_RES_ID_DISABLE) || (cmd == TRS_RES_ID_AVAIL_NUM_QUERY) || (cmd == TRS_TS_CMDLIST_MAP_UNMAP);
 }
 
 int trs_dev_open_ioctl(uint32_t dev_id, uint32_t cmd, void *para)
@@ -692,9 +700,9 @@ static drvError_t trs_mbox_msg_ctrl(uint32_t dev_id, void *param, size_t param_s
         return DRV_ERROR_INVALID_VALUE;
     }
 
-    if ((param == NULL) || (param_size != sizeof(struct tsdrv_ctrl_msg)) ||
-        (in->msg == NULL) || (out == NULL) || (out_size == NULL)) {
-        trs_err("Invalid param. (dev_id=%u; param_size=%u)\n", dev_id, param_size);
+    if ((param == NULL) || (param_size != sizeof(struct tsdrv_ctrl_msg)) || (in->msg == NULL) || (out == NULL) ||
+        (out_size == NULL)) {
+        trs_err("Invalid param. (dev_id=%u; param_size=%zu)\n", dev_id, param_size);
         return DRV_ERROR_INVALID_VALUE;
     }
 
@@ -702,7 +710,7 @@ static drvError_t trs_mbox_msg_ctrl(uint32_t dev_id, void *param, size_t param_s
     para.msg_len = in->msg_len;
     ret = memcpy_s(para.msg, sizeof(para.msg), in->msg, in->msg_len);
     if (ret != 0) {
-        trs_err("Memcpy_s failed. (dev_id=%u; dest_size=%u; src_size=%u)\n", dev_id, sizeof(para.msg), in->msg_len);
+        trs_err("Memcpy_s failed. (dev_id=%u; dest_size=%zu; src_size=%u)\n", dev_id, sizeof(para.msg), in->msg_len);
         return ret;
     }
 
@@ -714,7 +722,7 @@ static drvError_t trs_mbox_msg_ctrl(uint32_t dev_id, void *param, size_t param_s
 
     ret = memcpy_s(out, *out_size, para.msg, para.msg_len);
     if (ret != 0) {
-        trs_err("Memcpy_s failed. (dev_id=%u; dest_size=%u; src_size=%u)\n", dev_id, *out_size, para.msg_len);
+        trs_err("Memcpy_s failed. (dev_id=%u; dest_size=%zu; src_size=%u)\n", dev_id, *out_size, para.msg_len);
         return ret;
     }
 
@@ -755,7 +763,7 @@ static drvError_t trs_mode_op_by_urd(struct trs_mode_info *info, enum urd_main_c
     }
 
     if ((info->dev_id >= TRS_DEV_NUM) || (info->ts_id >= TRS_TS_NUM) || (info->mode_type >= TRS_MODE_TYPE_MAX)) {
-        trs_err("Invalid para. (dev_id=%u; ts_id=%u)\n", info->dev_id, info->ts_id, info->mode_type);
+        trs_err("Invalid para. (dev_id=%u; ts_id=%u; mode_type=%u)\n", info->dev_id, info->ts_id, info->mode_type);
         return DRV_ERROR_INVALID_VALUE;
     }
 
@@ -772,12 +780,6 @@ static drvError_t trs_mode_op_by_urd(struct trs_mode_info *info, enum urd_main_c
     return ret;
 }
 
-drvError_t trs_mode_config(struct trs_mode_info *info)
-{
-    return trs_mode_op_by_urd(info, URD_TRS_MODE_CONFIG_CMD);
-}
+drvError_t trs_mode_config(struct trs_mode_info *info) { return trs_mode_op_by_urd(info, URD_TRS_MODE_CONFIG_CMD); }
 
-drvError_t trs_mode_query(struct trs_mode_info *info)
-{
-    return trs_mode_op_by_urd(info, URD_TRS_MODE_QUERY_CMD);
-}
+drvError_t trs_mode_query(struct trs_mode_info *info) { return trs_mode_op_by_urd(info, URD_TRS_MODE_QUERY_CMD); }

@@ -14,11 +14,15 @@
 #ifndef DVPP_CMDLIST_DVPP_VPU_BUF
 #define DVPP_CMDLIST_DVPP_VPU_BUF
 
-#include <linux/types.h>
+#include "ka_type.h"
 
 #include "dvpp_cmdlist_define.h"
 #include "dvpp_decoder.h"
 #include "dvpp_vpu_types.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 typedef struct {
     void **vpu_config;
@@ -35,4 +39,7 @@ extern uint32_t g_vpu_mod_vpc_stru_len[VPU_VPC_TYPE_BUTT];
 extern uint32_t g_vpu_mod_jpegd_stru_len[VPU_JPEGD_TYPE_BUTT];
 extern uint32_t g_vpu_mod_jpege_stru_len[VPU_JPEGE_TYPE_BUTT];
 
+#ifdef __cplusplus
+}
+#endif
 #endif // #ifndef DVPP_CMDLIST_DVPP_VPU_BUF

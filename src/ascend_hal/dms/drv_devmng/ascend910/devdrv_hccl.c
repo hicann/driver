@@ -385,6 +385,10 @@ static drvError_t _drvOpenIpcNotify(const char *name, struct drvIpcNotifyInfo *i
 
 drvError_t drvOpenIpcNotify(const char *name, struct drvIpcNotifyInfo *info)
 {
+    if (info == NULL) {
+        DEVDRV_DRV_ERR("The argument info is a null pointer.\n");
+        return DRV_ERROR_INVALID_VALUE;
+    }
     info->devId = 0;
 
     return _drvOpenIpcNotify(name, info, 0);
@@ -395,7 +399,7 @@ drvError_t drvCloseIpcNotify(const char *name, struct drvIpcNotifyInfo *info)
     uint32_t notifyId;
 
     if (info == NULL) {
-        DEVDRV_DRV_ERR("info is null pointer\n");
+        DEVDRV_DRV_ERR("The argument info is a null pointer.\n");
         return DRV_ERROR_INVALID_VALUE;
     }
 

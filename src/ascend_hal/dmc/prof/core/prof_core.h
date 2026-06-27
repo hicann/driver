@@ -11,7 +11,7 @@
 #define PROF_CORE_H
 #include "ascend_inpackage_hal.h"
 
-drvError_t prof_core_register_channel(uint32_t dev_id, uint32_t chan_id, struct prof_sample_register_para *para);
+drvError_t prof_core_register_channel(uint32_t dev_id, uint32_t chan_id, struct prof_sample_register_para *para, bool support_host_sample);
 drvError_t prof_core_get_channels(uint32_t dev_id, struct channel_list *channels);
 int prof_core_poll_channels(struct prof_poll_info *out_buf, uint32_t num, int timeout);
 

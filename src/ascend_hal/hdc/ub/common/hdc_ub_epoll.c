@@ -74,7 +74,7 @@ drvError_t drv_hdc_ub_epoll_close(struct hdc_epoll_head *epoll_head)
 }
 
 STATIC int hdc_alloc_event_info(void *target, struct epoll_event *ep_event, void *data_ptr, signed int fd,
-    unsigned int flag)
+                                unsigned int flag)
 {
     struct hdc_epoll_node_info *event_info = NULL;
     struct hdc_session *session_head = NULL;
@@ -104,8 +104,8 @@ STATIC int hdc_alloc_event_info(void *target, struct epoll_event *ep_event, void
         event_info->data_id = (unsigned int)server_head->serviceType;
     }
     INIT_LIST_HEAD(&event_info->node);
-    event_info->data_ptr = data_ptr;    // Need to return to user when epoll_wait
-    event_info->fd = fd;                // fd for which add in epoll
+    event_info->data_ptr = data_ptr; // Need to return to user when epoll_wait
+    event_info->fd = fd;             // fd for which add in epoll
     event_info->op_type = flag;
     ep_event->data.ptr = event_info;
 
@@ -144,8 +144,8 @@ STATIC void hdc_find_event_info_and_free(signed int fd, struct hdc_epoll_head *e
     return;
 }
 
-STATIC drvError_t drv_hdc_ub_epoll_ctrl_connect_in(struct hdc_epoll_head *epoll_head,
-    signed int ep_op, void *target, struct epoll_event *ep_event, void *data_ptr)
+STATIC drvError_t drv_hdc_ub_epoll_ctrl_connect_in(struct hdc_epoll_head *epoll_head, signed int ep_op, void *target,
+                                                   struct epoll_event *ep_event, void *data_ptr)
 {
     struct hdc_server_head *server_head = (struct hdc_server_head *)target;
     struct hdc_epoll_node_info *event_info = NULL;
@@ -187,8 +187,8 @@ STATIC drvError_t drv_hdc_ub_epoll_ctrl_connect_in(struct hdc_epoll_head *epoll_
     return 0;
 }
 
-STATIC drvError_t drv_hdc_ub_epoll_ctrl_data_in(struct hdc_epoll_head *epoll_head,
-    signed int ep_op, void *target, struct epoll_event *ep_event, void *data_ptr)
+STATIC drvError_t drv_hdc_ub_epoll_ctrl_data_in(struct hdc_epoll_head *epoll_head, signed int ep_op, void *target,
+                                                struct epoll_event *ep_event, void *data_ptr)
 {
     struct hdc_session *session_head = (struct hdc_session *)target;
     struct hdc_epoll_node_info *event_info = NULL;
@@ -250,8 +250,8 @@ STATIC drvError_t drv_hdc_ub_epoll_ctrl_data_in(struct hdc_epoll_head *epoll_hea
     return 0;
 }
 
-STATIC drvError_t drv_hdc_ub_epoll_ctrl_session_close(struct hdc_epoll_head *epoll_head,
-    signed int ep_op, void *target, struct epoll_event *ep_event, void *data_ptr)
+STATIC drvError_t drv_hdc_ub_epoll_ctrl_session_close(struct hdc_epoll_head *epoll_head, signed int ep_op, void *target,
+                                                      struct epoll_event *ep_event, void *data_ptr)
 {
     struct hdc_session *session_head = (struct hdc_session *)target;
     struct hdc_epoll_node_info *event_info = NULL;
@@ -308,8 +308,8 @@ STATIC drvError_t drv_hdc_ub_epoll_ctrl_session_close(struct hdc_epoll_head *epo
     return 0;
 }
 
-drvError_t drv_hdc_ub_epoll_ctl(struct hdc_epoll_head *epoll_head,
-    signed int op, void *target, const struct drvHdcEvent *event)
+drvError_t drv_hdc_ub_epoll_ctl(struct hdc_epoll_head *epoll_head, signed int op, void *target,
+                                const struct drvHdcEvent *event)
 {
     struct epoll_event ep_event;
     signed int epfd;
@@ -348,7 +348,7 @@ drvError_t drv_hdc_ub_epoll_ctl(struct hdc_epoll_head *epoll_head,
 }
 
 drvError_t drv_hdc_ub_epoll_wait(const struct hdc_epoll_head *epoll_head, struct drvHdcEvent *events,
-    signed int maxevents, signed int timeout, signed int *eventnum)
+                                 signed int maxevents, signed int timeout, signed int *eventnum)
 {
     signed int i, idx;
     signed int epfd = (signed int)epoll_head->epfd;
@@ -400,7 +400,7 @@ struct hdc_epoll_ops *drv_get_hdc_ub_epoll_ops(void)
     return &ub_epoll_ops;
 }
 
-HDC_EPOLL g_thread_epoll;    // To solve wait_jfc can not quit when delete_jfc
+HDC_EPOLL g_thread_epoll; // To solve wait_jfc can not quit when delete_jfc
 mmMutex_t g_thread_epoll_lock = PTHREAD_MUTEX_INITIALIZER;
 pthread_t g_epoll_thread;
 bool g_epoll_thread_create = false;
@@ -412,6 +412,7 @@ STATIC void *hdc_ub_epoll_thread_handle(void *arg)
     signed int epfd = (signed int)epoll_head->epfd;
     int eventnum;
 
+    (void)arg;
     (void)mmMutexLock(&g_thread_epoll_lock);
     while (g_epoll_ref != 0) {
         (void)mmMutexUnLock(&g_thread_epoll_lock);
@@ -505,8 +506,8 @@ int hdc_ub_add_ctl_to_thread_epoll(struct hdc_ub_session *session)
     // listen data_in
     ret = epoll_ctl((signed int)epoll_head->epfd, EPOLL_CTL_ADD, recv_listen_fd, &ep_event);
     if (ret != 0) {
-        HDC_LOG_ERR("Call epoll_ctl for data_in failed. (ret=%d; dev_id=%d; l_id=%u; service_type=\"%s\")\n",
-            ret, session->dev_id, session->local_id, hdc_get_sevice_str(session->service_type));
+        HDC_LOG_ERR("Call epoll_ctl for data_in failed. (ret=%d; dev_id=%d; l_id=%u; service_type=\"%s\")\n", ret,
+                    session->dev_id, session->local_id, hdc_get_sevice_str(session->service_type));
         return ret;
     }
 

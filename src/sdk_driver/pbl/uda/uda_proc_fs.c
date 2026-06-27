@@ -17,6 +17,7 @@
 #include "ka_task_pub.h"
 #include "ka_kernel_def_pub.h"
 #include "ka_fs_pub.h"
+#include "ka_feature_pub.h"
 
 #include "securec.h"
 
@@ -115,7 +116,9 @@ static void uda_ns_node_single_show(struct uda_ns_node *ns_node, void *priv)
 
 static int uda_ns_node_show(ka_seq_file_t *seq, void *offset)
 {
-    uda_recycle_idle_ns_node_immediately();
+    if (ka_feature_is_enable()) {
+            uda_recycle_idle_ns_node_immediately();
+    }
     uda_for_each_ns_node_safe(seq, uda_ns_node_single_show);
     return 0;
 }

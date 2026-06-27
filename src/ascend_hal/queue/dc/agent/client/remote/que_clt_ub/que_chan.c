@@ -116,7 +116,8 @@ static void que_clt_chan_put(struct que_chan *chan)
 void que_ini_timestamp_update(struct que_ini_proc *ini_proc, struct buff_iovec *vector, uint64_t *stamp)
 {
     int ini_log_level = que_get_ini_log_level();
-    unsigned int num = TRACE_INI_LEVLE0_BUTT + vector->count * (TRACE_INI_LEVLE1_BUTT - TRACE_INI_LEVLE1_START) * (unsigned int)ini_log_level;
+    unsigned int num = TRACE_INI_LEVLE0_BUTT +
+                       vector->count * (TRACE_INI_LEVLE1_BUTT - TRACE_INI_LEVLE1_START) * (unsigned int)ini_log_level;
     uint64_t *timestamp = calloc(num, sizeof(uint64_t));
     if (timestamp == NULL) {
         return;
@@ -127,7 +128,8 @@ void que_ini_timestamp_update(struct que_ini_proc *ini_proc, struct buff_iovec *
     ini_proc->timestamp = timestamp;
 }
 
-int que_chan_pkt_send(unsigned int devid, unsigned int qid, QUEUE_AGENT_TYPE que_type, struct buff_iovec *vector, uint64_t *stamp)
+int que_chan_pkt_send(unsigned int devid, unsigned int qid, QUEUE_AGENT_TYPE que_type, struct buff_iovec *vector,
+                      uint64_t *stamp)
 {
     struct que_chan *chan = NULL;
     int ret;
@@ -175,8 +177,9 @@ int que_chan_wait(unsigned int devid, unsigned int qid, QUEUE_AGENT_TYPE que_typ
     return ret;
 }
 
-int que_chan_ini_update(unsigned int devid, unsigned int qid, struct que_jfs_pool_info *jfs_info, struct que_jfr_pool_info *jfr_info,
-    urma_target_jetty_t *tjetty, urma_token_t token, QUEUE_AGENT_TYPE que_type, unsigned int d2d_flag)
+int que_chan_ini_update(unsigned int devid, unsigned int qid, struct que_jfs_pool_info *jfs_info,
+                        struct que_jfr_pool_info *jfr_info, urma_target_jetty_t *tjetty, urma_token_t token,
+                        QUEUE_AGENT_TYPE que_type, unsigned int d2d_flag)
 {
     struct que_chan *chan = que_chan_get(devid, qid);
     if (que_unlikely(chan == NULL)) {
@@ -217,11 +220,9 @@ static int __attribute__((constructor)) que_clt_chan_init(void)
     list->que_chan_del = que_clt_chan_del;
     return DRV_ERROR_NONE;
 }
-#else   /* EMU_ST */
+#else /* EMU_ST */
 
 void que_clt_chan_emu_test(void)
-{
-}
+{}
 
-#endif  /* EMU_ST */
-
+#endif /* EMU_ST */

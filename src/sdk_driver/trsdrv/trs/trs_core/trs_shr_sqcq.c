@@ -27,7 +27,9 @@ struct trs_shr_ctx_mng {
     struct trs_sq_ctx *sq_ctx;
     struct kref_safe ref;
 };
-struct trs_shr_ctx_mng *shr_ctx_mng[TRS_TS_INST_MAX_NUM] = {NULL, };
+struct trs_shr_ctx_mng *shr_ctx_mng[TRS_TS_INST_MAX_NUM] = {
+    NULL,
+};
 static KA_TASK_DEFINE_RWLOCK(shr_ctx_mng_lock);
 
 struct trs_shr_ctx_mng *trs_get_shr_ctx(struct trs_id_inst *inst)
@@ -70,10 +72,7 @@ void trs_shr_ctx_mng_release(struct kref_safe *kref)
 #endif
 }
 
-void trs_put_shr_ctx(struct trs_shr_ctx_mng *shr_ctx)
-{
-    kref_safe_put(&shr_ctx->ref, trs_shr_ctx_mng_release);
-}
+void trs_put_shr_ctx(struct trs_shr_ctx_mng *shr_ctx) { kref_safe_put(&shr_ctx->ref, trs_shr_ctx_mng_release); }
 
 int trs_shr_ctx_mng_init(struct trs_id_inst *inst)
 {
@@ -85,32 +84,36 @@ int trs_shr_ctx_mng_init(struct trs_id_inst *inst)
 #ifndef EMU_ST
     shr_ctx = trs_vzalloc(sizeof(struct trs_shr_ctx_mng));
     if (shr_ctx == NULL) {
-        trs_err("Mem alloc failed. (devid=%u; tsid=%u; size=%lx)\n",
-            inst->devid, inst->tsid, sizeof(struct trs_shr_ctx_mng));
+        trs_err(
+            "Mem alloc failed. (devid=%u; tsid=%u; size=%lx)\n", inst->devid, inst->tsid,
+            sizeof(struct trs_shr_ctx_mng));
         return -ENOMEM;
     }
 
     ret = trs_id_get_max_id(inst, TRS_HW_SQ_ID, &sqid_max_num);
     if (ret != 0) {
         trs_vfree(shr_ctx);
-        trs_err("Get sq max id failed. (devid=%u; tsid=%u; res_type=%d; ret=%d)\n",
-            inst->devid, inst->tsid, TRS_HW_SQ_ID, ret);
+        trs_err(
+            "Get sq max id failed. (devid=%u; tsid=%u; res_type=%d; ret=%d)\n", inst->devid, inst->tsid, TRS_HW_SQ_ID,
+            ret);
         return ret;
     }
 
     shr_ctx->sq_ctx = (struct trs_sq_ctx *)trs_vzalloc(sizeof(struct trs_sq_ctx) * sqid_max_num);
     if (shr_ctx->sq_ctx == NULL) {
         trs_vfree(shr_ctx);
-        trs_err("Mem alloc failed. (devid=%u; tsid=%u; res_type=%d; size=0x%lx)\n",
-            inst->devid, inst->tsid, TRS_HW_SQ_ID, sizeof(struct trs_sq_ctx) * sqid_max_num);
+        trs_err(
+            "Mem alloc failed. (devid=%u; tsid=%u; res_type=%d; size=0x%lx)\n", inst->devid, inst->tsid, TRS_HW_SQ_ID,
+            sizeof(struct trs_sq_ctx) * sqid_max_num);
         return -ENOMEM;
     }
 
     kref_safe_init(&shr_ctx->ref);
     shr_ctx_mng[ts_inst_id] = shr_ctx;
 
-    trs_info("Shr init info. (devid=%u; tsid=%u; res_type=%d; size=%lx; num=%u)\n",
-        inst->devid, inst->tsid, TRS_HW_SQ_ID, sizeof(struct trs_sq_ctx) * sqid_max_num, sqid_max_num);
+    trs_info(
+        "Shr init info. (devid=%u; tsid=%u; res_type=%d; size=%lx; num=%u)\n", inst->devid, inst->tsid, TRS_HW_SQ_ID,
+        sizeof(struct trs_sq_ctx) * sqid_max_num, sqid_max_num);
 #endif
 
     return 0;
@@ -159,7 +162,8 @@ ka_task_struct_t *trs_shr_get_task_struct(ka_pid_t pid)
     ka_task_struct_t *tsk = NULL;
 
     ka_task_rcu_read_lock();
-    ka_for_each_process(tsk) {
+    ka_for_each_process(tsk)
+    {
         if (tsk->tgid == pid) {
             ka_task_get_task_struct(tsk);
             ka_task_rcu_read_unlock();
@@ -171,18 +175,11 @@ ka_task_struct_t *trs_shr_get_task_struct(ka_pid_t pid)
     return NULL;
 }
 
-void trs_shr_put_task_struct(ka_task_struct_t *tsk)
-{
-    ka_task_put_task_struct(tsk);
-}
+void trs_shr_put_task_struct(ka_task_struct_t *tsk) { ka_task_put_task_struct(tsk); }
 
-inline ka_rw_semaphore_t *trs_shr_get_mmap_sem(ka_mm_struct_t *mm)
-{
-    return ka_mm_get_mmap_sem(mm);
-}
+inline ka_rw_semaphore_t *trs_shr_get_mmap_sem(ka_mm_struct_t *mm) { return ka_mm_get_mmap_sem(mm); }
 
-int trs_shr_unmap_sq(struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst,
-    struct trs_mem_unmap_para *para)
+int trs_shr_unmap_sq(struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst, struct trs_mem_unmap_para *para)
 {
     ka_task_struct_t *tsk = NULL;
     ka_vm_area_struct_t *vma = NULL;
@@ -227,8 +224,7 @@ get_task_mm_failed:
     return ret;
 }
 
-int trs_shr_remap_sq(struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst,
-    struct trs_mem_map_para *para)
+int trs_shr_remap_sq(struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst, struct trs_mem_map_para *para)
 {
     ka_vm_area_struct_t *vma = NULL;
     int ret;
@@ -248,14 +244,12 @@ int trs_shr_remap_sq(struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_
     return ret;
 }
 #else
-int trs_shr_unmap_sq(struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst,
-    struct trs_mem_unmap_para *para)
+int trs_shr_unmap_sq(struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst, struct trs_mem_unmap_para *para)
 {
     return 0;
 }
 
-int trs_shr_remap_sq(struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst,
-    struct trs_mem_map_para *para)
+int trs_shr_remap_sq(struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst, struct trs_mem_map_para *para)
 {
     return 0;
 }
@@ -289,15 +283,15 @@ void trs_shr_sq_unmap(struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts
     }
 
     if (shr_sq_ctx->que_mem.uva != 0) {
-        trs_unmap_fill_para(&unmap_para, shr_sq_ctx->que_mem.mem_type, shr_sq_ctx->que_mem.uva,
-            shr_sq_ctx->que_mem.len);
+        trs_unmap_fill_para(
+            &unmap_para, shr_sq_ctx->que_mem.mem_type, shr_sq_ctx->que_mem.uva, shr_sq_ctx->que_mem.len);
         (void)trs_shr_unmap_sq(proc_ctx, ts_inst, &unmap_para);
         trs_clear_map_addr_info(&shr_sq_ctx->que_mem);
     }
 
     if (shr_sq_ctx->shr_info.uva != 0) {
-        trs_unmap_fill_para(&unmap_para, shr_sq_ctx->shr_info.mem_type, shr_sq_ctx->shr_info.uva,
-            shr_sq_ctx->shr_info.len);
+        trs_unmap_fill_para(
+            &unmap_para, shr_sq_ctx->shr_info.mem_type, shr_sq_ctx->shr_info.uva, shr_sq_ctx->shr_info.len);
         (void)trs_shr_unmap_sq(proc_ctx, ts_inst, &unmap_para);
         trs_clear_map_addr_info(&shr_sq_ctx->shr_info);
     }
@@ -309,8 +303,9 @@ void trs_shr_sq_unmap(struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts
     return;
 }
 
-int trs_shr_sq_remap(struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst,
-    struct halSqCqInputInfo *para, struct trs_sq_ctx *sq_ctx, struct trs_chan_sq_info *sq_info)
+int trs_shr_sq_remap(
+    struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst, struct halSqCqInputInfo *para,
+    struct trs_sq_ctx *sq_ctx, struct trs_chan_sq_info *sq_info)
 {
     struct trs_alloc_para *alloc_para = get_alloc_para_addr(para);
     struct trs_uio_info *uio_info = alloc_para->uio_info;
@@ -343,8 +338,9 @@ int trs_shr_sq_remap(struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_
         return 0;
     }
 
-    trs_remap_fill_para(&map_para, TRS_MAP_TYPE_MEM, uio_info->sq_ctrl_addr[TRS_UIO_SHR_INFO],
-        ka_mm_virt_to_phys(sq_ctx->shr_info.kva), KA_MM_PAGE_SIZE);
+    trs_remap_fill_para(
+        &map_para, TRS_MAP_TYPE_MEM, uio_info->sq_ctrl_addr[TRS_UIO_SHR_INFO], ka_mm_virt_to_phys(sq_ctx->shr_info.kva),
+        KA_MM_PAGE_SIZE);
     ret = trs_shr_remap_sq(proc_ctx, ts_inst, &map_para);
     if (ret != 0) {
         goto out;
@@ -359,7 +355,8 @@ int trs_shr_sq_remap(struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_
     }
     trs_fill_map_addr_info(&shr_sq_ctx->que_mem, &map_para);
 
-    trs_remap_fill_para(&map_para, TRS_MAP_TYPE_REG, uio_info->sq_ctrl_addr[TRS_UIO_HEAD],
+    trs_remap_fill_para(
+        &map_para, TRS_MAP_TYPE_REG, uio_info->sq_ctrl_addr[TRS_UIO_HEAD],
         KA_DRIVER_ALIGN_DOWN(sq_info->head_addr, KA_MM_PAGE_SIZE), KA_MM_PAGE_SIZE);
     uio_info->sq_ctrl_addr[TRS_UIO_HEAD] += sq_info->head_addr % KA_MM_PAGE_SIZE;
     ret = trs_shr_remap_sq(proc_ctx, ts_inst, &map_para);
@@ -369,7 +366,8 @@ int trs_shr_sq_remap(struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_
     }
     trs_fill_map_addr_info(&shr_sq_ctx->head, &map_para);
 
-    trs_remap_fill_para(&map_para, TRS_MAP_TYPE_REG, uio_info->sq_ctrl_addr[TRS_UIO_DB],
+    trs_remap_fill_para(
+        &map_para, TRS_MAP_TYPE_REG, uio_info->sq_ctrl_addr[TRS_UIO_DB],
         KA_DRIVER_ALIGN_DOWN(sq_info->db_addr, KA_MM_PAGE_SIZE), KA_MM_PAGE_SIZE);
     uio_info->sq_ctrl_addr[TRS_UIO_DB] += sq_info->db_addr % KA_MM_PAGE_SIZE;
     ret = trs_shr_remap_sq(proc_ctx, ts_inst, &map_para);
@@ -392,8 +390,9 @@ int trs_shr_sq_remap(struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_
 out:
     trs_shr_sq_unmap(proc_ctx, ts_inst, sq_ctx);
     trs_put_shr_ctx(shr_ctx);
-    trs_debug("Share sq send use kernel mode. (devid=%u; tsid=%u; sqid=%u; type=%u; flag=%u, ret=%d)\n",
-        inst->devid, inst->tsid, para->sqId, para->type, para->flag, ret);
+    trs_debug(
+        "Share sq send use kernel mode. (devid=%u; tsid=%u; sqid=%u; type=%u; flag=%u, ret=%d)\n", inst->devid,
+        inst->tsid, para->sqId, para->type, para->flag, ret);
 #endif
 
     return ret;

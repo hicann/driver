@@ -33,14 +33,14 @@
 #endif
 STATIC unsigned int g_dm_hdc_run = 1;
 #ifdef CFG_FEATURE_UB
-#define DM_HDC_RETRY_TIME 400
+#define DM_HDC_RETRY_TIMES 400
 #else
-#define DM_HDC_RETRY_TIME 40
+#define DM_HDC_RETRY_TIMES 40
 #endif
 #define DM_HDC_RETRY_TIMEDELAY 3
 #define DMHDC_CLIENT_SEND_RETRYTIME 40
 #define DMHDC_CLIENT_SEND_NO_SESSION_RETRYTIME 20
-#define DMHDC_CLIENT_SEND_TIMEOUT_RETRY_TIME 3
+#define DMHDC_CLIENT_SEND_TIMEOUT_RETRY_TIMES 3
 
 #if (defined CFG_ENV_FPGA || defined CFG_ENV_ESL)
 #define HDC_MSG_TIMEOUT (3000 * 50)
@@ -327,7 +327,7 @@ STATIC int __dm_hdc_open(DM_INTF_S *intf)
     HDC_SERVER server = NULL;
     DM_HDC_CB_ST *chan_cb = NULL;
     int ret;
-    unsigned int retry_time = 0;
+    unsigned int retry_times = 0;
     DM_HDC_ADDR_ST *myaddr = NULL;
     pthread_t server_thread;
     mmThreadAttr thread_attr = {0};
@@ -369,7 +369,7 @@ STATIC int __dm_hdc_open(DM_INTF_S *intf)
     retry:
         ret = drvHdcServerCreate(myaddr->dev_id, HDC_SERVICE_TYPE_DMP, &server);
         if (ret != OK) {
-            if (retry_time++ > DM_HDC_RETRY_TIME) {
+            if (retry_times++ > DM_HDC_RETRY_TIMES) {
                 free(intf->channel_cb);
                 intf->channel_cb = NULL;
                 DEV_MON_ERR("drvHdcServerCreate failed,%s%d%s%d\n", __FUNCTION__, __LINE__, "error=", ret);
@@ -473,7 +473,7 @@ STATIC int dm_hdc_send_msg(const DM_ADDR_ST *addr, DM_INTF_S *intf, const DM_MSG
         goto FREE_MSG_SND;
     }
 
-    while (retry_times < DMHDC_CLIENT_SEND_TIMEOUT_RETRY_TIME) {
+    while (retry_times < DMHDC_CLIENT_SEND_TIMEOUT_RETRY_TIMES) {
         ret = halHdcSend(session, p_msg_snd, HDC_FLAG_WAIT_TIMEOUT, HDC_MSG_TIMEOUT);
         if (ret == DRV_ERROR_WAIT_TIMEOUT) {
             DEV_MON_INFO("halHdcSend timeout. (ret=%d; retry_count=%d)\n", ret, retry_times);
@@ -813,6 +813,7 @@ int dm_hdc_init(DM_INTF_S **my_intf, DM_CB_S *cb, DM_MSG_TIMEOUT_HNDL_T timeout_
     struct drvHdcCapacity capacity = {0};
     int ret;
     DM_HDC_ADDR_ST *hdc_addr = (DM_HDC_ADDR_ST *)my_addr;
+    unsigned int channel_max_trans_len;
 
     if (cb == NULL) {
         return -EINVAL;
@@ -864,7 +865,13 @@ int dm_hdc_init(DM_INTF_S **my_intf, DM_CB_S *cb, DM_MSG_TIMEOUT_HNDL_T timeout_
 
     intf->retries = 0;
     intf->retry_time_ms = DSMI_MSG_TIMEOUT;
-    intf->max_trans_len = capacity.maxSegment > DM_MSG_DATA_MAX ? DM_MSG_DATA_MAX : capacity.maxSegment;
+    /* Data frame format: | dm: hdc msg head | dm msg head | dm cmd payload | */
+    channel_max_trans_len = capacity.maxSegment > DM_MSG_DATA_MAX ? DM_MSG_DATA_MAX : capacity.maxSegment;
+    DRV_CHECK_RETV_DO_SOMETHING((channel_max_trans_len > (unsigned int)HDCMSG_HEAD_SIZE), -EINVAL,
+                                DEV_MON_ERR("Hdc channel length is abnormal.\n");
+                                __dm_hdc_close(intf);
+                                free(intf); intf = NULL);
+    intf->max_trans_len = (unsigned int)(channel_max_trans_len - HDCMSG_HEAD_SIZE);
     intf->recv_msg = __dm_hdc_recv;
     intf->send_msg = __dm_hdc_send;
     intf->send_msg_settime = __dm_hdc_settime_send;

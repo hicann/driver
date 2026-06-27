@@ -30,7 +30,7 @@
 #include "rmo_mem_sharing_ctx.h"
 #include "rmo_mem_sharing.h"
 
-#define RMO_MEM_SHARING_MAX_SIZE 4096  /* 4KB */
+#define RMO_MEM_SHARING_MAX_SIZE 4096 /* 4KB */
 
 static struct task_ctx_domain *res_mem_sharing_ops_domain = NULL;
 
@@ -39,7 +39,7 @@ static inline void rmo_pack_mem_attr(u64 addr, u64 size, struct ka_mem_attr *mem
     mem_attr->addr = addr;
     mem_attr->size = size;
     mem_attr->cp_only_flag = false; /* host mem, not cp */
-    mem_attr->raw_pa_flag = true; /* host mem should return raw pa */
+    mem_attr->raw_pa_flag = true;   /* host mem should return raw pa */
 }
 
 static int rmo_mem_get_pa_list(u32 devid, u64 addr, u64 size, u64 *pa_list)
@@ -96,8 +96,8 @@ void rmo_mem_sharing_unregister(accessMember_t accessor)
 }
 KA_EXPORT_SYMBOL_GPL(rmo_mem_sharing_unregister);
 
-static int rmo_mem_sharing_func_proc(u32 devid, struct rmo_mem_raw_addr *raw_addr,
-    struct rmo_cmd_mem_sharing *mem_sharing)
+static int rmo_mem_sharing_func_proc(
+    u32 devid, struct rmo_mem_raw_addr *raw_addr, struct rmo_cmd_mem_sharing *mem_sharing)
 {
     int ret;
 
@@ -108,8 +108,9 @@ static int rmo_mem_sharing_func_proc(u32 devid, struct rmo_mem_raw_addr *raw_add
 
     ret = g_mem_sharing_func[mem_sharing->accessor](devid, raw_addr, mem_sharing->size);
     if (ret != 0) {
-        rmo_err("Failed to share. (ret=%d; devid=%u; accessor=%u; len=%llu; enable_flag=%u)\n",
-            ret, devid, mem_sharing->accessor, mem_sharing->size, mem_sharing->enable_flag);
+        rmo_err(
+            "Failed to share. (ret=%d; devid=%u; accessor=%u; len=%llu; enable_flag=%u)\n", ret, devid,
+            mem_sharing->accessor, mem_sharing->size, mem_sharing->enable_flag);
     }
     return ret;
 }
@@ -126,22 +127,23 @@ static int rmo_mem_sharing_enable(struct rmo_cmd_mem_sharing *mem_sharing)
 
     ret = rmo_mem_get_func[mem_sharing->accessor](id, (u64)(uintptr_t)mem_sharing->ptr, mem_sharing->size, &paddr);
     if (ret != 0) {
-        rmo_err("Failed to get addr. (ret=%d; devid=%u; accessor=%u; tgid=%d)\n",
-            ret, id, mem_sharing->accessor, tgid);
+        rmo_err("Failed to get addr. (ret=%d; devid=%u; accessor=%u; tgid=%d)\n", ret, id, mem_sharing->accessor, tgid);
         return ret;
     }
 
     ret = rmo_mem_addr_map(devid, paddr, mem_sharing->size, &convert_addr);
     if (ret != 0) {
-        rmo_err("Failed to update addr. (ret=%d; devid=%u; accessor=%u; tgid=%d)\n",
-            ret, devid, mem_sharing->accessor, tgid);
+        rmo_err(
+            "Failed to update addr. (ret=%d; devid=%u; accessor=%u; tgid=%d)\n", ret, devid, mem_sharing->accessor,
+            tgid);
         goto err_to_put;
     }
 
     ret = rmo_mem_sharing_func_proc(devid, &convert_addr.raw_addr, mem_sharing);
     if (ret != 0) {
-        rmo_err("Failed to share. (ret=%d; devid=%u; accessor=%u; len=%llu; tgid=%d)\n",
-            ret, devid, mem_sharing->accessor, mem_sharing->size, tgid);
+        rmo_err(
+            "Failed to share. (ret=%d; devid=%u; accessor=%u; len=%llu; tgid=%d)\n", ret, devid, mem_sharing->accessor,
+            mem_sharing->size, tgid);
         goto err_to_unmap;
     }
 
@@ -150,13 +152,19 @@ static int rmo_mem_sharing_enable(struct rmo_cmd_mem_sharing *mem_sharing)
     info.mem_shr = *mem_sharing;
     ret = rmo_mem_sharing_add_node(res_mem_sharing_ops_domain, tgid, &info);
     if (ret != 0) {
-        rmo_err("Failed to add node. (ret=%d; tgid=%d; devid=%u; accessor=%u; tgid=%d)\n",
-            ret, tgid, devid, mem_sharing->accessor, tgid);
-        goto err_to_func;
+        if (ret == -EAGAIN) {
+            goto err_to_unmap;
+        } else {
+            rmo_err(
+                "Failed to add node. (ret=%d; tgid=%d; devid=%u; accessor=%u; tgid=%d)\n", ret, tgid, devid,
+                mem_sharing->accessor, tgid);
+            goto err_to_func;
+        }
     }
 
-    rmo_debug("Enable success. (devid=%u; accessor=%u; len=%llu; enable_flag=%u; tgid=%d)\n",
-        devid, mem_sharing->accessor, mem_sharing->size, mem_sharing->enable_flag, tgid);
+    rmo_debug(
+        "Enable success. (devid=%u; accessor=%u; len=%llu; enable_flag=%u; tgid=%d)\n", devid, mem_sharing->accessor,
+        mem_sharing->size, mem_sharing->enable_flag, tgid);
     return 0;
 
 err_to_func:
@@ -179,35 +187,38 @@ static int rmo_mem_sharing_disable(struct rmo_cmd_mem_sharing *mem_sharing)
     info.mem_shr = *mem_sharing;
     ret = rmo_mem_sharing_query_node(res_mem_sharing_ops_domain, tgid, &info);
     if (ret != 0) {
-        rmo_err("Failed to find node. (ret=%d; devid=%u; accessor=%u; len=%llu; tgid=%d)\n",
-            ret, devid, mem_sharing->accessor, mem_sharing->size, tgid);
+        rmo_err(
+            "Failed to find node. (ret=%d; devid=%u; accessor=%u; len=%llu; tgid=%d)\n", ret, devid,
+            mem_sharing->accessor, mem_sharing->size, tgid);
         return ret;
     }
 
     ret = rmo_mem_sharing_del_node(res_mem_sharing_ops_domain, tgid, &info);
     if (ret != 0) {
-        rmo_err("Failed to del node. (ret=%d; devid=%u; accessor=%u; len=%llu; tgid=%d)\n",
-            ret, devid, mem_sharing->accessor, mem_sharing->size, tgid);
+        rmo_err(
+            "Failed to del node. (ret=%d; devid=%u; accessor=%u; len=%llu; tgid=%d)\n", ret, devid,
+            mem_sharing->accessor, mem_sharing->size, tgid);
         return ret;
     }
 
     ret = rmo_mem_sharing_func_proc(devid, NULL, mem_sharing);
     if (ret != 0) {
         (void)rmo_mem_sharing_add_node(res_mem_sharing_ops_domain, tgid, &info);
-        rmo_err("Failed to share. (ret=%d; devid=%u; accessor=%u; len=%llu; tgid=%d)\n",
-            ret, devid, mem_sharing->accessor, mem_sharing->size, tgid);
+        rmo_err(
+            "Failed to share. (ret=%d; devid=%u; accessor=%u; len=%llu; tgid=%d)\n", ret, devid, mem_sharing->accessor,
+            mem_sharing->size, tgid);
         return ret;
     }
 
     (void)rmo_mem_addr_unmap(devid, &info.convert_addr, mem_sharing->size);
-    ret = rmo_mem_put_func[mem_sharing->accessor](id, (u64)(uintptr_t)mem_sharing->ptr, mem_sharing->size,
-        &info.sharing_pa);
+    ret = rmo_mem_put_func[mem_sharing->accessor](
+        id, (u64)(uintptr_t)mem_sharing->ptr, mem_sharing->size, &info.sharing_pa);
     if (ret != 0) {
-        rmo_warn("Put addr warnning. (ret=%d; devid=%u; accessor=%u)\n",
-            ret, id, mem_sharing->accessor);
+        rmo_warn("Put addr warnning. (ret=%d; devid=%u; accessor=%u)\n", ret, id, mem_sharing->accessor);
     } else {
-        rmo_debug("Disable success. (devid=%u; accessor=%u; len=%llu; enable_flag=%u; tgid=%d)\n",
-            devid, mem_sharing->accessor, mem_sharing->size, mem_sharing->enable_flag, tgid);
+        rmo_debug(
+            "Disable success. (devid=%u; accessor=%u; len=%llu; enable_flag=%u; tgid=%d)\n", devid,
+            mem_sharing->accessor, mem_sharing->size, mem_sharing->enable_flag, tgid);
     }
     return 0;
 }

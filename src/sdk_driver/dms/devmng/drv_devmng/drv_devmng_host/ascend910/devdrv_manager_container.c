@@ -143,37 +143,10 @@ bool devdrv_manager_container_is_host_system(ka_mnt_namespace_t *mnt_ns)
 #define DEVMNG_UNKNOWN_CONTAINER_ID 0xFFFFFFFFFFFFUL
 #define HEXADECIMAL 16
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 14, 0)
-STATIC int new_cpuset_read(char *buf, size_t count)
-{
-    ka_cgroup_subsys_state_t *css = NULL;
-    int retval;
-
-    css = ka_task_task_get_css(current, cpuset_cgrp_id);
-    if (css == NULL) {
-        devdrv_drv_err("task get css failed.\n");
-        return -EINVAL;
-    }
-
-    retval = ka_task_cgroup_path_ns(css->cgroup, buf,
-        count, ka_task_get_current_cgroup_ns());
-    ka_task_css_put(css);
-    if (retval <= 0) {
-        devdrv_drv_err("read buf failed. (retval=%d)\n", retval);
-        return -EINVAL;
-    }
-
-    return count;
-}
-#endif
-
 STATIC void devdrv_manager_get_container_id(unsigned long long *container_id)
 {
     char cpuset_file_text[DEVMNG_MAX_TEXT_LENGTH] = {0};
     ka_file_t *fp = NULL;
-#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 14, 0)
-    loff_t pos = 0;
-#endif
     int ret;
     char *res = NULL;
     char container_id_string[DEVMNG_MAX_TEXT_LENGTH] = {0};
@@ -198,11 +171,7 @@ STATIC void devdrv_manager_get_container_id(unsigned long long *container_id)
         return;
     }
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 14, 0)
-    ret = new_cpuset_read(cpuset_file_text, DEVMNG_MAX_TEXT_LENGTH);
-#else
-    ret = ka_fs_kernel_read(fp, cpuset_file_text, DEVMNG_MAX_TEXT_LENGTH, &pos);
-#endif
+    ret = ka_task_kernel_read(fp, cpuset_file_text, DEVMNG_MAX_TEXT_LENGTH);
     (void)ka_fs_filp_close(fp, NULL);
     if ((ret <= 0) || (ret > DEVMNG_MAX_TEXT_LENGTH)) {
         devdrv_drv_err("get cpuset file context failed, ret = %d.\n", ret);
@@ -234,9 +203,9 @@ STATIC void devdrv_manager_get_container_id(unsigned long long *container_id)
 STATIC int devdrv_manager_container_check_current(void)
 {
     /* current->nsproxy is NULL when the release function is called */
-    if (current == NULL || current->nsproxy == NULL || current->nsproxy->mnt_ns == NULL) {
-        devdrv_drv_warn("(current == NULL) is %d, (current->nsproxy == NULL) is %d\n",
-            (current == NULL), ((current == NULL) ? (-EINVAL) : (current->nsproxy == NULL)));
+    if (ka_task_get_current() == NULL || ka_task_get_current_nsproxy() == NULL || ka_task_get_current_mnt_ns() == NULL) {
+        devdrv_drv_warn("(current == NULL) is %d, (current->nsproxy == NULL) is %d\n", (ka_task_get_current() == NULL),
+        ((ka_task_get_current() == NULL) ? (-EINVAL) : (ka_task_get_current_nsproxy() == NULL)));
         return -EINVAL;
     }
 
@@ -423,7 +392,7 @@ int devdrv_manager_container_check_devid_in_container(u32 devid, ka_pid_t hostpi
 KA_EXPORT_SYMBOL(devdrv_manager_container_check_devid_in_container);
 int devdrv_manager_container_check_devid_in_container_ns(u32 devid, ka_task_struct_t *task)
 {
-    bool ret = (task == current) ? uda_can_access_udevid(devid) : uda_proc_can_access_udevid(task->tgid, devid);
+    bool ret = (task == ka_task_get_current()) ? uda_can_access_udevid(devid) : uda_proc_can_access_udevid(task->tgid, devid);
     return ret ? 0 : -EINVAL;
 }
 KA_EXPORT_SYMBOL(devdrv_manager_container_check_devid_in_container_ns);

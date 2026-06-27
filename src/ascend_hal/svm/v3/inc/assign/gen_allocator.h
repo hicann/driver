@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * Copyright (c) 2026 Huawei Technologies Co., Ltd.
  * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -31,18 +31,15 @@ struct svm_ga_attr {
     u64 gran_size;
 };
 
-static inline void svm_ga_attr_pack(u64 gran_size, struct svm_ga_attr *attr)
-{
-    attr->gran_size = gran_size;
-}
+static inline void svm_ga_attr_pack(u64 gran_size, struct svm_ga_attr *attr) { attr->gran_size = gran_size; }
 
 /*
     FIXED_ADDR: alloc by fixed addr, if addr is already alloced, return fail
     IN_FIXED_ADDR_RANGE: alloc in the addr range which seg[addr, addr+1) belongs, if fail go alloc by size
     priority: FIXED_ADDR > IN_FIXED_ADDR_RANGE
 */
-#define SVM_GA_FLAG_FIXED_ADDR                      (1U << 0U)
-#define SVM_GA_FLAG_IN_FIXED_ADDR_RANGE             (1U << 1U)
+#define SVM_GA_FLAG_FIXED_ADDR (1U << 0U)
+#define SVM_GA_FLAG_IN_FIXED_ADDR_RANGE (1U << 1U)
 
 void *svm_ga_inst_create(struct svm_ga_attr *attr);
 void svm_ga_inst_destroy(void *ga_inst);
@@ -61,4 +58,3 @@ int svm_ga_free(void *ga_inst, u64 addr, u64 size);
 u32 svm_ga_show(void *ga_inst, char *buf, u32 buf_len);
 
 #endif
-

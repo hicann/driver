@@ -79,4 +79,3 @@ int devmm_convert_one_addr(struct devmm_svm_process *svm_pro, struct devmm_mem_c
 void devmm_destroy_one_addr(struct devmm_copy_res *res);
 
 #endif /* SVM_MASTER_CONVERT_H */
-

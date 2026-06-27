@@ -52,6 +52,16 @@ THREAD__ void (*esched_ack_func[SCHED_MAX_GRP_NUM][EVENT_MAX_NUM])(unsigned int 
 THREAD__ void (*esched_trace_record_func[SCHED_MAX_GRP_NUM][EVENT_MAX_NUM])(unsigned int grp_id, unsigned int event_id,
     unsigned int subevent_id, sched_trace_time_info *sched_trace_time_info) = {{NULL}};
 
+static bool g_esched_snapshot_flag = false;
+unsigned long long esched_get_cur_cpu_timestamp(void)
+{
+    unsigned long long cur_tick = esched_get_cur_cpu_tick();
+    if (g_esched_snapshot_flag) {
+        return sched_adapt_curr_time(cur_tick);
+    } 
+    return cur_tick;
+}
+
 STATIC bool esched_is_host_virtual_dev(unsigned int dev_id)
 {
 #ifdef CFG_SOC_PLATFORM_CLOUD_V4
@@ -618,7 +628,11 @@ drvError_t halEschedAttachDevice(uint32_t devId)
 {
     struct sched_ioctl_para_attach para_attach;
     int ret;
-
+    if (esched_device_check(devId) != 0) {
+        sched_err("devId is invalid. (devId=%u; max=%u)\n", devId, ESCHED_LOGIC_DEV_NUM);
+        report_arg_out_of_range(__FUNCTION__, "device ID", devId, 0, ESCHED_LOGIC_DEV_NUM);
+        return DRV_ERROR_PARA_ERROR;
+    }
     ret = esched_attach_device_inner(devId, &para_attach);
     if (ret == DRV_ERROR_NONE) {
         (void)pthread_once(&esched_thread_key_init, esched_create_thread_key_once);
@@ -1125,9 +1139,14 @@ drvError_t halEschedCreateGrp(uint32_t devId, uint32_t grpId, GROUP_TYPE type)
 {
     struct esched_grp_para grp_para;
 
-    if ((esched_device_check(devId) != 0) || (grpId >= SCHED_MAX_DEFAULT_GRP_NUM)) {
-        sched_err("The devId or grpId is invalid. (devId=%u; max=%u; grpId=%u; max=%u)\n",
-            devId, ESCHED_LOGIC_DEV_NUM, grpId, SCHED_MAX_DEFAULT_GRP_NUM);
+    if (esched_device_check(devId) != 0) {
+        sched_err("devId is invalid.(devId=%u;max=%u;)\n", devId, ESCHED_LOGIC_DEV_NUM);
+        report_arg_out_of_range(__FUNCTION__, "device ID", devId, 0, ESCHED_LOGIC_DEV_NUM);
+        return DRV_ERROR_PARA_ERROR;
+    }
+    if (grpId >= SCHED_MAX_DEFAULT_GRP_NUM) {
+        sched_err("grpId is invalid.(grpId=%u;max=%u)\n", grpId, SCHED_MAX_DEFAULT_GRP_NUM);
+        report_arg_out_of_range(__FUNCTION__, "grpId", grpId, 0, SCHED_MAX_DEFAULT_GRP_NUM);
         return DRV_ERROR_PARA_ERROR;
     }
 
@@ -1194,10 +1213,24 @@ drvError_t halEschedQueryInfo(unsigned int devId, ESCHED_QUERY_TYPE type,
     struct esched_input_info *inPut, struct esched_output_info *outPut)
 {
     struct sched_ioctl_para_query_info para;
-
-    if ((esched_device_check(devId) != 0) || (type >= QUERY_TYPE_MAX) || (inPut == NULL) || (outPut == NULL)) {
-        sched_err("Invalid para. (devId=%u; type=%u; inPut=%u; outPut=%u)\n",
-            devId, type, inPut == NULL ? 1 : 0, outPut == NULL ? 1 : 0);
+    if (esched_device_check(devId) != 0) {
+        sched_err("Invalid para.(devId=%u,maxId=%u)\n", devId, ESCHED_LOGIC_DEV_NUM);
+        report_arg_out_of_range(__FUNCTION__, "device ID", devId, 0, ESCHED_LOGIC_DEV_NUM);
+        return DRV_ERROR_PARA_ERROR;
+    }
+    if (type >= QUERY_TYPE_MAX) {
+        sched_err("Invalid para.(type=%u)\n", type);
+        report_arg_out_of_range(__FUNCTION__, "type", type, 0, QUERY_TYPE_MAX);
+        return DRV_ERROR_PARA_ERROR;
+    }
+    if (inPut == NULL) {
+        sched_err("inPut is null.\n");
+        report_arg_null_pointer(__FUNCTION__, "inPut");
+        return DRV_ERROR_PARA_ERROR;
+    }
+    if (outPut == NULL) {
+        sched_err("outPut is null.\n");
+        report_arg_null_pointer(__FUNCTION__, "outPut");
         return DRV_ERROR_PARA_ERROR;
     }
 
@@ -1216,15 +1249,22 @@ drvError_t halEschedQueryInfoEx(unsigned int devId, unsigned int dstDevId, ESCHE
     struct esched_input_info *inPut, struct esched_output_info *outPut)
 {
     struct sched_ioctl_para_query_info para;
+    unsigned int phy_dest_devid = 0;
+    drvError_t ret;
 
     if ((esched_device_check(devId) != 0) || (type >= QUERY_TYPE_MAX) || (inPut == NULL) || (outPut == NULL)) {
         sched_err("Invalid para. (devId=%u; type=%u; inPut=%u; outPut=%u)\n",
             devId, type, inPut == NULL ? 1 : 0, outPut == NULL ? 1 : 0);
         return DRV_ERROR_PARA_ERROR;
     }
+    ret = uda_get_udevid_by_devid_ex(dstDevId, &phy_dest_devid);
+    if (ret != DRV_ERROR_NONE) {
+        sched_err("get udevid failed. (dstDevId=%u)\n", dstDevId);
+        return ret;
+    }
 
     para.dev_id = devId;
-    para.dst_devid = dstDevId;
+    para.dst_devid = phy_dest_devid;
     para.type = type;
     para.input.inBuff = inPut->inBuff;
     para.input.inLen = inPut->inLen;
@@ -1480,7 +1520,7 @@ drvError_t esched_device_close_user(uint32_t devid, halDevCloseIn *in)
 #ifndef DRV_HOST
     g_sched_mode[devid] = 0xff;
 #endif
-
+    g_esched_snapshot_flag = true;
     sched_run_info("Close user success. (dev_id=%u)\n", devid);
     return DRV_ERROR_NONE;
 }
@@ -1533,6 +1573,7 @@ drvError_t esched_device_open(uint32_t devid, halDevOpenIn *in, halDevOpenOut *o
     }
 
     if (sched_dev_fd[devid] >= 0) {
+        halEschedAttachDevice(devid);
         sched_run_info("The dev_id has opened. (dev_id=%u)\n", devid);
         return DRV_ERROR_NONE;
     }
@@ -1541,6 +1582,7 @@ drvError_t esched_device_open(uint32_t devid, halDevOpenIn *in, halDevOpenOut *o
 #ifndef DRV_HOST
     g_sched_mode[devid] = 0xff;
 #endif
+    halEschedAttachDevice(devid);
     sched_run_info("The dev_id open success. (dev_id=%u)\n", devid);
     return DRV_ERROR_NONE;
 }

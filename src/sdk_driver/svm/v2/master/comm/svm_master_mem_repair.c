@@ -10,7 +10,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#include <linux/types.h>
+#include "ka_type.h"
 
 #include "svm_define.h"
 #include "devmm_proc_info.h"
@@ -33,10 +33,11 @@ static int devmm_mem_repair_para_check(struct devmm_mem_repair_para *para)
 
     for (i = 0; i < para->count; i++) {
         if ((para->repair_addrs[i].ptr == 0) || ((para->repair_addrs[i].len != devmm_svm->device_page_size) &&
-            (para->repair_addrs[i].len != devmm_svm->device_hpage_size) &&
-            (para->repair_addrs[i].len != DEVMM_GIANT_PAGE_SIZE))) {
-            devmm_drv_err("Repair addr info is invalid. (i=%u; cnt=%u; ptr=0x%llx; len=0x%llx)\n",
-                i, para->count, para->repair_addrs[i].ptr, para->repair_addrs[i].len);
+                                                 (para->repair_addrs[i].len != devmm_svm->device_hpage_size) &&
+                                                 (para->repair_addrs[i].len != DEVMM_GIANT_PAGE_SIZE))) {
+            devmm_drv_err(
+                "Repair addr info is invalid. (i=%u; cnt=%u; ptr=0x%llx; len=0x%llx)\n", i, para->count,
+                para->repair_addrs[i].ptr, para->repair_addrs[i].len);
             return -EINVAL;
         }
     }
@@ -44,8 +45,9 @@ static int devmm_mem_repair_para_check(struct devmm_mem_repair_para *para)
     return 0;
 }
 
-static void devmm_giant_page_mem_set_pages_cache(struct devmm_svm_process *svm_proc, u32 logical_devid,
-    struct devmm_pages_cache_info *cache_info, struct devmm_chan_mem_repair *mem_repair)
+static void devmm_giant_page_mem_set_pages_cache(
+    struct devmm_svm_process *svm_proc, u32 logical_devid, struct devmm_pages_cache_info *cache_info,
+    struct devmm_chan_mem_repair *mem_repair)
 {
     struct devmm_chan_query_phy_blk *blk = NULL;
     u64 blks_len, i;
@@ -68,8 +70,8 @@ static void devmm_giant_page_mem_set_pages_cache(struct devmm_svm_process *svm_p
     devmm_kvfree_ex(blk);
 }
 
-static void devmm_mem_repair_pages_cache_update(struct devmm_svm_process *svm_proc, struct devmm_ioctl_arg *arg,
-    struct devmm_chan_mem_repair *mem_repair)
+static void devmm_mem_repair_pages_cache_update(
+    struct devmm_svm_process *svm_proc, struct devmm_ioctl_arg *arg, struct devmm_chan_mem_repair *mem_repair)
 {
     struct devmm_pages_cache_info cache_info = {0};
     struct devmm_svm_heap *heap = NULL;
@@ -77,8 +79,9 @@ static void devmm_mem_repair_pages_cache_update(struct devmm_svm_process *svm_pr
 
     heap = devmm_svm_get_heap(svm_proc, mem_repair->addr);
     if (heap == NULL) {
-        devmm_drv_warn("Heap is null, no update page cache. (devid=%u; vifd=%u; repair_addr=0x%llx; len=%llx)\n",
-            arg->head.devid, arg->head.vfid, mem_repair->addr, mem_repair->len);
+        devmm_drv_warn(
+            "Heap is null, no update page cache. (devid=%u; vifd=%u; repair_addr=0x%llx; len=%llx)\n", arg->head.devid,
+            arg->head.vfid, mem_repair->addr, mem_repair->len);
         return;
     }
 
@@ -94,8 +97,8 @@ static void devmm_mem_repair_pages_cache_update(struct devmm_svm_process *svm_pr
     }
 }
 
-static int devmm_agent_mem_repair_post_process(struct devmm_svm_process *svm_proc, struct devmm_ioctl_arg *arg,
-    struct devmm_chan_mem_repair *mem_repair)
+static int devmm_agent_mem_repair_post_process(
+    struct devmm_svm_process *svm_proc, struct devmm_ioctl_arg *arg, struct devmm_chan_mem_repair *mem_repair)
 {
     u32 *bitmap = NULL;
 
@@ -104,8 +107,9 @@ static int devmm_agent_mem_repair_post_process(struct devmm_svm_process *svm_pro
 
     bitmap = devmm_get_alloced_va_fst_page_bitmap(svm_proc, mem_repair->addr);
     if (bitmap == NULL) {
-        devmm_drv_err("Find first page bitmap failed. (bitmap=%u; addr=0x%llx; len=0x%llx)\n",
-            mem_repair->bitmap, mem_repair->addr, mem_repair->len);
+        devmm_drv_err(
+            "Find first page bitmap failed. (bitmap=%u; addr=0x%llx; len=0x%llx)\n", mem_repair->bitmap,
+            mem_repair->addr, mem_repair->len);
         return -EINVAL;
     }
     if (devmm_page_bitmap_is_ipc_create_mem(bitmap)) {
@@ -114,8 +118,8 @@ static int devmm_agent_mem_repair_post_process(struct devmm_svm_process *svm_pro
     return 0;
 }
 
-static int devmm_agent_mem_repair(struct devmm_svm_process *svm_proc, struct devmm_ioctl_arg *arg,
-    u64 addr, u64 len, bool svm_range)
+static int devmm_agent_mem_repair(
+    struct devmm_svm_process *svm_proc, struct devmm_ioctl_arg *arg, u64 addr, u64 len, bool svm_range)
 {
     struct devmm_chan_mem_repair mem_repair;
     u32 *bitmap = NULL;
@@ -140,13 +144,15 @@ static int devmm_agent_mem_repair(struct devmm_svm_process *svm_proc, struct dev
 
     ret = devmm_chan_msg_send(&mem_repair, sizeof(struct devmm_chan_mem_repair), sizeof(struct devmm_chan_mem_repair));
     if (ret != 0) {
-        devmm_drv_err("Mem repair h2d failed. (devid=%u; vifd=%u; repair_addr=0x%llx; len=%llx; svm_range=%d)\n",
-            arg->head.devid, arg->head.vfid, addr, len, svm_range);
+        devmm_drv_err(
+            "Mem repair h2d failed. (devid=%u; vifd=%u; repair_addr=0x%llx; len=%llx; svm_range=%d)\n", arg->head.devid,
+            arg->head.vfid, addr, len, svm_range);
         return ret;
     }
-    devmm_drv_debug("Mem repair succ. (devid=%u; vifd=%u; addr=0x%llx; len=%llx; svm_range=%d; cache_update=%d; "
-        "is_giant_page=%d)\n", arg->head.devid, arg->head.vfid, addr, len, svm_range, mem_repair.need_cache_update,
-        mem_repair.is_giant_page);
+    devmm_drv_debug(
+        "Mem repair succ. (devid=%u; vifd=%u; addr=0x%llx; len=%llx; svm_range=%d; cache_update=%d; "
+        "is_giant_page=%d)\n",
+        arg->head.devid, arg->head.vfid, addr, len, svm_range, mem_repair.need_cache_update, mem_repair.is_giant_page);
 
     if (svm_range && mem_repair.need_cache_update) {
         return devmm_agent_mem_repair_post_process(svm_proc, arg, &mem_repair);
@@ -155,8 +161,8 @@ static int devmm_agent_mem_repair(struct devmm_svm_process *svm_proc, struct dev
     return ret;
 }
 
-static bool devmm_svm_range_repair_heap_and_bitmap_chk(struct devmm_svm_heap *heap, struct devmm_ioctl_arg *arg,
-    u64 addr, u64 len, u64 *need_repair)
+static bool devmm_svm_range_repair_heap_and_bitmap_chk(
+    struct devmm_svm_heap *heap, struct devmm_ioctl_arg *arg, u64 addr, u64 len, u64 *need_repair)
 {
     bool support_shmem_repair = devmm_dev_capability_support_shmem_repair(arg->head.devid);
     u32 *fst_bitmap = NULL;
@@ -164,20 +170,23 @@ static bool devmm_svm_range_repair_heap_and_bitmap_chk(struct devmm_svm_heap *he
 
     bitmap = devmm_get_page_bitmap_with_heap(heap, addr);
     if (bitmap == NULL) {
-        devmm_drv_err("Get bitmap error. (devid=%u; vfid=%u; repair_addr=0x%llx; len=%llx)\n",
-            arg->head.devid, arg->head.vfid, addr, len);
+        devmm_drv_err(
+            "Get bitmap error. (devid=%u; vfid=%u; repair_addr=0x%llx; len=%llx)\n", arg->head.devid, arg->head.vfid,
+            addr, len);
         return false;
     }
     if ((heap->heap_sub_type == SUB_HOST_TYPE) ||
         (!devmm_page_bitmap_is_ipc_open_mem(bitmap) && (heap->heap_sub_type == SUB_SVM_TYPE))) {
-        devmm_drv_err("No support repair heap_sub_type. (devid=%u; vfid=%u; heap_sub_type=%u)\n",
-            arg->head.devid, arg->head.vfid, heap->heap_sub_type);
+        devmm_drv_err(
+            "No support repair heap_sub_type. (devid=%u; vfid=%u; heap_sub_type=%u)\n", arg->head.devid, arg->head.vfid,
+            heap->heap_sub_type);
         return false;
     }
 
     if (((heap->heap_type == DEVMM_HEAP_CHUNK_PAGE) && devmm_page_bitmap_is_advise_continuty(bitmap)) ||
         devmm_page_bitmap_advise_memory_shared(bitmap) || devmm_page_bitmap_is_remote_mapped(bitmap)) {
-        devmm_drv_err("No support repair type. (devid=%u; vfid=%u; addr=%llx; len=0x%llx; bitmap=%u; heap_type=%u)\n",
+        devmm_drv_err(
+            "No support repair type. (devid=%u; vfid=%u; addr=%llx; len=0x%llx; bitmap=%u; heap_type=%u)\n",
             arg->head.devid, arg->head.vfid, addr, len, *bitmap, heap->heap_type);
         return false;
     }
@@ -190,7 +199,8 @@ static bool devmm_svm_range_repair_heap_and_bitmap_chk(struct devmm_svm_heap *he
         fst_bitmap = devmm_get_alloced_va_fst_page_bitmap_with_heap(heap, addr);
         if ((fst_bitmap == NULL) || devmm_page_bitmap_is_ipc_create_mem(fst_bitmap) ||
             devmm_page_bitmap_is_ipc_open_mem(bitmap)) {
-            devmm_drv_err("No support repair ipc shmem. (dev=%u; addr=%llx; len=%llu; bitmap=%u; fst_bitmap=%u)\n",
+            devmm_drv_err(
+                "No support repair ipc shmem. (dev=%u; addr=%llx; len=%llu; bitmap=%u; fst_bitmap=%u)\n",
                 arg->head.devid, addr, len, *bitmap, ((fst_bitmap == NULL) ? 0 : *fst_bitmap));
             return false;
         }
@@ -211,23 +221,25 @@ static bool devmm_svm_range_repair_attr_chk(struct devmm_svm_process *svm_proc, 
     }
 
     if ((attr.is_mem_export == true) || (attr.is_mem_import == true)) {
-        devmm_drv_err("No support repair type. (addr=0x%llx; is_mem_export=%d; is_mem_import=%d)\n",
-            addr, attr.is_mem_export, attr.is_mem_import);
+        devmm_drv_err(
+            "No support repair type. (addr=0x%llx; is_mem_export=%d; is_mem_import=%d)\n", addr, attr.is_mem_export,
+            attr.is_mem_import);
         return false;
     }
 
     return true;
 }
 
-static bool devmm_svm_range_addr_is_support_repair(struct devmm_svm_process *svm_proc, struct devmm_ioctl_arg *arg,
-    u64 addr, u64 len, u64 *need_repair)
+static bool devmm_svm_range_addr_is_support_repair(
+    struct devmm_svm_process *svm_proc, struct devmm_ioctl_arg *arg, u64 addr, u64 len, u64 *need_repair)
 {
     struct devmm_svm_heap *heap = NULL;
 
     heap = devmm_svm_get_heap(svm_proc, addr);
     if (heap == NULL) {
-        devmm_drv_err("Heap is null. (devid=%u; vifd=%u; repair_addr=%llx; len=%llx)\n",
-            arg->head.devid, arg->head.vfid, addr, len);
+        devmm_drv_err(
+            "Heap is null. (devid=%u; vifd=%u; repair_addr=%llx; len=%llx)\n", arg->head.devid, arg->head.vfid, addr,
+            len);
         return false;
     }
 
@@ -242,8 +254,8 @@ static bool devmm_svm_range_addr_is_support_repair(struct devmm_svm_process *svm
     return true;
 }
 
-static int devmm_repair_svm_range_addr(struct devmm_svm_process *svm_proc, struct devmm_ioctl_arg *arg,
-    u64 addr, u64 len)
+static int devmm_repair_svm_range_addr(
+    struct devmm_svm_process *svm_proc, struct devmm_ioctl_arg *arg, u64 addr, u64 len)
 {
     u64 need_repair = true;
 
@@ -257,8 +269,8 @@ static int devmm_repair_svm_range_addr(struct devmm_svm_process *svm_proc, struc
     return devmm_agent_mem_repair(svm_proc, arg, addr, len, true);
 }
 
-static int devmm_repair_no_svm_range_addr(struct devmm_svm_process *svm_proc, struct devmm_ioctl_arg *arg,
-    u64 addr, u64 len)
+static int devmm_repair_no_svm_range_addr(
+    struct devmm_svm_process *svm_proc, struct devmm_ioctl_arg *arg, u64 addr, u64 len)
 {
     return devmm_agent_mem_repair(svm_proc, arg, addr, len, false);
 }
@@ -282,12 +294,12 @@ int devmm_ioctl_mem_repair(struct devmm_svm_process *svm_proc, struct devmm_ioct
         }
 
         if (ret != 0) {
-            devmm_drv_err("Repair addr failed. (i=%u; count=%u; ptr=0x%llx; len=0x%llx; ret=%d)\n",
-                i, para->count, para->repair_addrs[i].ptr, para->repair_addrs[i].len, ret);
+            devmm_drv_err(
+                "Repair addr failed. (i=%u; count=%u; ptr=0x%llx; len=0x%llx; ret=%d)\n", i, para->count,
+                para->repair_addrs[i].ptr, para->repair_addrs[i].len, ret);
             return ret;
         }
     }
 
     return 0;
 }
-

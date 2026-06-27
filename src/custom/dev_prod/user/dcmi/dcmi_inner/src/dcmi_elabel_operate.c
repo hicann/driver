@@ -14,7 +14,7 @@
 #include <fcntl.h>
 
 #include "securec.h"
-#include "dsmi_common_interface_custom.h"
+#include "dsmi_common_interface.h"
 #include "dcmi_i2c_operate.h"
 #include "dcmi_interface_api.h"
 #include "dcmi_log.h"
@@ -115,11 +115,10 @@ static int dcmi_elabel_item_set_default(unsigned int i)
 
 static const struct dcmi_elabel_item *dcmi_elabel_find_item(unsigned char item_id)
 {
-    unsigned int elabel_index;
+    unsigned int elabel_index, count;
     const struct dcmi_elabel_item *items;
-    int count;
 
-    if (dcmi_board_chip_type_is_ascend_910_95()) {
+    if (dcmi_board_chip_type_is_ascend_950()) {
         items = elabel_items_v2;
         count = sizeof(elabel_items_v2) / sizeof(elabel_items_v2[0]);
     } else {
@@ -132,6 +131,7 @@ static const struct dcmi_elabel_item *dcmi_elabel_find_item(unsigned char item_i
             return &items[elabel_index];
         }
     }
+
     return NULL;
 }
 
@@ -655,7 +655,7 @@ int dcmi_ao_get_elabel_info(int card_id, int device_id, unsigned char item_id, c
     }
 
     ret = dcmi_get_npu_device_info(card_id, device_id, DCMI_MAIN_CMD_CHIP_INF, DCMI_CHIP_INF_SUB_CMD_CUST_BOARD_INF,
-         elabel_data, &len);
+                                   elabel_data, &len);
     if (ret != DCMI_OK) {
         gplog(LOG_ERR, "call dcmi_get_npu_device_info failed. ret is %d", ret);
         free(elabel_data);
@@ -664,7 +664,7 @@ int dcmi_ao_get_elabel_info(int card_id, int device_id, unsigned char item_id, c
     }
 
     item_data = (struct dcmi_elabel_field_bytes *)((unsigned char *)elabel_data + item->offset);
-
+ 
     ret = memcpy_s(data, data_size, item_data->data, item_data->len);
     if (ret != EOK) {
         gplog(LOG_ERR, "call memcpy_s failed. ret is %d", ret);

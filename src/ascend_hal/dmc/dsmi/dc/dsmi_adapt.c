@@ -18,6 +18,7 @@
 #include "ascend_hal.h"
 #include "drv_type.h"
 #include "dsmi_common.h"
+#include "dms_cmd_def.h"
 #include "dms_fault.h"
 #include "dsmi_common_interface.h"
 #include "dsmi_dmp_command.h"
@@ -297,23 +298,7 @@ int _dsmi_check_partitions(const char *config_xml_path)
 
 int _dsmi_get_device_utilization_rate(int device_id, int device_type, unsigned int *putilization_rate)
 {
-    int ret = 0;
-    switch (device_type) {
-#ifdef CFG_FEATURE_SUPPORT_UDIS
-        case REQ_D_INFO_DEV_TYPE_CTRL_CPU:
-        case REQ_D_INFO_DEV_TYPE_AI_CPU:
-            ret = dsmi_udis_get_cpu_rate(device_id, device_type, putilization_rate);
-            if (ret == 0) {
-                return ret;
-            }
-            DEV_MON_WARNING("dmsi get device util from udis not success.(devid=%u; dev_type=%u; ret=%d)\n",
-                device_id, device_type, ret);
-            return dsmi_get_davinchi_info(device_id, device_type, REQ_D_INFO_INFO_TYPE_RATE, putilization_rate);   
-#endif
-        (void)ret;
-        default:
-            return dsmi_get_davinchi_info(device_id, device_type, REQ_D_INFO_INFO_TYPE_RATE, putilization_rate);
-    }
+    return dsmi_get_davinchi_info(device_id, device_type, REQ_D_INFO_INFO_TYPE_RATE, putilization_rate);
 }
 
 int _dsmi_get_ecc_enable(int device_id, DSMI_DEVICE_TYPE device_type, int *enable_flag)
@@ -564,6 +549,10 @@ int _dsmi_get_device_info(unsigned int device_id, DSMI_MAIN_CMD main_cmd, unsign
     }
 #endif
 
+    if ((main_cmd == DSMI_MAIN_CMD_TS) && (sub_cmd == DSMI_TS_SUB_CMD_NPU_MULTI_UTILIZATION_RATE_V2)) {
+        return DRV_ERROR_NOT_SUPPORT;
+    }
+
     cmd_type = dsmi_get_dev_info_main_cmd_type(main_cmd, sub_cmd);
     switch (cmd_type) {
         case MAIN_CMD_TYPE_PRODUCT:
@@ -604,5 +593,23 @@ int dsmi_get_device_die_v2(struct dsmi_device_info device_info, struct dsmi_soc_
 {
     (void)device_info;
     (void)pdevice_die;
+    return DRV_ERROR_NOT_SUPPORT;
+}
+
+int dsmi_get_ecc_info_v2(struct dsmi_device_info device_info, int device_type,
+    struct dsmi_ecc_info_stru *pdevice_ecc_info)
+{
+    (void)device_info;
+    (void)device_type;
+    (void)pdevice_ecc_info;
+    return DRV_ERROR_NOT_SUPPORT;
+}
+
+int dsmi_get_device_frequency_v2(struct dsmi_device_info device_info, int device_type,
+    unsigned int *pfrequency)
+{
+    (void)device_info;
+    (void)device_type;
+    (void)pfrequency;
     return DRV_ERROR_NOT_SUPPORT;
 }

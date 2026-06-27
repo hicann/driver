@@ -47,26 +47,26 @@ struct hdcdrv_mem {
 #define HDCDRV_USE_POOL 0
 #define HDCDRV_USE_PAGE 1
 
-#define HDCDRV_PAGE_NOT_ALLOC 0     /* page addr is NULL, if need to use, alloc first */
-#define HDCDRV_PAGE_PRE_STATUS 1    /* this page is preparing to alloc, need to retry until this status has changed */
-#define HDCDRV_PAGE_HAS_ALLOC 2     /* this page has alloc, can use it immediately if it has free blocks */
+#define HDCDRV_PAGE_NOT_ALLOC 0  /* page addr is NULL, if need to use, alloc first */
+#define HDCDRV_PAGE_PRE_STATUS 1 /* this page is preparing to alloc, need to retry until this status has changed */
+#define HDCDRV_PAGE_HAS_ALLOC 2  /* this page has alloc, can use it immediately if it has free blocks */
 
 #define HDCDRV_BLOCK_IS_ALLOC 1
 #define HDCDRV_BLOCK_IS_IDLE 0
 
-#define HDCDRV_ALLOC_LATER_WITH_INDEX 1    /* page alloc in spin_lock failed, need to alloc with index out of lock */
-#define HDCDRV_ALLOC_AGAIN 2   /* page status is HDCDRV_PAGE_PRE_STATUS, retry until this status change */
+#define HDCDRV_ALLOC_LATER_WITH_INDEX 1 /* page alloc in spin_lock failed, need to alloc with index out of lock */
+#define HDCDRV_ALLOC_AGAIN 2            /* page status is HDCDRV_PAGE_PRE_STATUS, retry until this status change */
 
 #define HDCDRV_ALLOC_MEM_BY_HUGE_PAGE 0
 #define HDCDRV_ALLOC_MEM_BY_PAGE_NODE 1
 
 struct hdcdrv_huge_page {
-    ka_page_t *page_addr;    /* huge page addr */
-    int used_block_num;        /* max is 4, means the whole page is used; 0 means this page is empty or going to free */
-    int used_block[HDCDRV_PAGE_BLOCK_NUM];  /* record which blocks are used */
+    ka_page_t *page_addr; /* huge page addr */
+    int used_block_num;   /* max is 4, means the whole page is used; 0 means this page is empty or going to free */
+    int used_block[HDCDRV_PAGE_BLOCK_NUM]; /* record which blocks are used */
     void *buf;
     int valid;
-    int alloc_flag;             /* used to distinguish mem alloc method in OS6.6 */
+    int alloc_flag; /* used to distinguish mem alloc method in OS6.6 */
 };
 #endif
 
@@ -120,7 +120,7 @@ struct hdcdrv_mem_block_head {
     u32 devid;
     u32 type;
     u32 size;
-    u32 offset;     // dma addr seque offset
+    u32 offset; // dma addr seque offset
     void *dma_buf;
     ka_dma_addr_t dma_addr;
     ka_page_t *pool_page;
@@ -129,11 +129,11 @@ struct hdcdrv_mem_block_head {
     ka_atomic_t status;
 };
 
-#define HDCDRV_MEM_CACHE_LINE   64
-#define HDCDRV_MEM_BLOCK_MAGIC  0x48444342 /* HDCB */
+#define HDCDRV_MEM_CACHE_LINE 64
+#define HDCDRV_MEM_BLOCK_MAGIC 0x48444342 /* HDCB */
 
-#define HDCDRV_BLOCK_STATE_NORMAL   0
-#define HDCDRV_BLOCK_STATE_OCCUPY   1
+#define HDCDRV_BLOCK_STATE_NORMAL 0
+#define HDCDRV_BLOCK_STATE_OCCUPY 1
 
 /* sizeof(struct hdcdrv_mem_block_head) must less than HDCDRV_MEM_CACHE_LINE */
 #define HDCDRV_MEM_BLOCK_HEAD_SIZE 0
@@ -169,21 +169,21 @@ struct hdccom_alloc_mem_para {
 };
 
 /* fast mem use define and struct in ctrl->device[devid] */
-#define HDCDRV_SYNC_CHECK       1
-#define HDCDRV_SYNC_NO_CHECK    0
+#define HDCDRV_SYNC_CHECK 1
+#define HDCDRV_SYNC_NO_CHECK 0
 
 #define HDCDRV_BUF_LEN 256
 
 #define HDCDRV_LIST_MEM_NUM 1024
 
-#define HDCDRV_RGISTER_MEM  2
-#define HDCDRV_DMA_MEM      1
-#define HDCDRV_NORMAL_MEM   0
+#define HDCDRV_RGISTER_MEM 2
+#define HDCDRV_DMA_MEM 1
+#define HDCDRV_NORMAL_MEM 0
 
-#define HDCDRV_MAX_COST_TIME  100
-#define HDCDRV_ALLOC_POOL_MAX_TIME  125
-#define HDCDRV_INIT_TRANS_MAX_TIME  600
-#define HDCDRV_THRESHOLD_COST_TIME  5000
+#define HDCDRV_MAX_COST_TIME 100
+#define HDCDRV_ALLOC_POOL_MAX_TIME 125
+#define HDCDRV_INIT_TRANS_MAX_TIME 600
+#define HDCDRV_THRESHOLD_COST_TIME 5000
 
 #define HDCDRV_FRBTREE_FID_BEG 60
 #define HDCDRV_FRBTREE_FID_MASK 0xFULL
@@ -196,8 +196,8 @@ struct hdccom_alloc_mem_para {
 #define HDCDRV_HASH_VA_ADDR_MASK 0x0FFFFFFFF0000000ULL
 
 /* tree search type */
-#define HDCDRV_SEARCH_WITH_HASH  0U
-#define HDCDRV_SEARCH_WITH_VA  1U
+#define HDCDRV_SEARCH_WITH_HASH 0U
+#define HDCDRV_SEARCH_WITH_VA 1U
 #define HDCDRV_SEARCH_NODE_CONFLICT 2U
 #define HDCDRV_SEARCH_NODE_EXIST 3U
 
@@ -227,7 +227,7 @@ struct hdcdrv_wait_mem_fin_msg {
 };
 
 /* fifo size in elements (bytes) */
-#define HDC_WAIT_MEM_FIFO_SIZE  (128U * sizeof(struct hdcdrv_wait_mem_fin_msg))
+#define HDC_WAIT_MEM_FIFO_SIZE (128U * sizeof(struct hdcdrv_wait_mem_fin_msg))
 
 struct hdcdrv_mem_f {
     void *buf;
@@ -257,7 +257,7 @@ struct hdcdrv_fast_mem {
     struct hdcdrv_mem_f *mem;
 
 #ifdef CFG_FEATURE_HDC_REG_MEM
-    u32 align_size; /* register memory align size, HUGE_PAGE->2M, NORMAL_PAGE->4k */
+    u32 align_size;                 /* register memory align size, HUGE_PAGE->2M, NORMAL_PAGE->4k */
     u32 register_inner_page_offset; /* register memory va start offset within the corresponding PAGE(HUGE or Normal) */
 #endif
 #ifdef CFG_FEATURE_OVER_XCOM
@@ -314,15 +314,15 @@ struct hdcdrv_fast_node {
     u32 max_cost;
     ka_atomic_t status;
     void *ctx;
-    u32 unregister_flag;  /* use to indicate if mem is unregistering */
+    u32 unregister_flag; /* use to indicate if mem is unregistering */
     struct hdcdrv_mem_fd_list *mem_fd_node;
-    struct hdcdrv_fast_mem fast_mem;  // must be last one
+    struct hdcdrv_fast_mem fast_mem; // must be last one
 };
 
 struct hdcdrv_fast_addr_info {
 #ifdef CFG_FEATURE_HDC_REG_MEM
     /* first page addr offset, eg: start cpy addr = va_addr + pagesize(4k) * page_start_Idx + page_start_offset */
-    u32 page_start_idx; /* first use page id, default:0 */
+    u32 page_start_idx;         /* first use page id, default:0 */
     u32 send_inner_page_offset; /* actually send va start offset within the corresponding PAGE(HUGE or Normal) */
 #endif
 #ifdef CFG_FEATURE_OVER_XCOM
@@ -333,7 +333,7 @@ struct hdcdrv_fast_addr_info {
 
 struct hdcdrv_fast_node_msg_info {
     u32 dev_id;
-    u32 process_stage;  /* 0:register 1:send or recv 2:unregister */
+    u32 process_stage; /* 0:register 1:send or recv 2:unregister */
 
     u64 pid;
     u32 fid;
@@ -344,13 +344,13 @@ struct hdcdrv_fast_node_msg_info {
     u64 hash_val;
 };
 
-#define HDCDRV_SEARCH_NODE_REGISTER  0U
-#define HDCDRV_SEARCH_NODE_SENDRECV  1U
-#define HDCDRV_SEARCH_NODE_UNREGISTER  2U
-#define HDCDRV_SEARCH_NODE_REMOTE  3U
+#define HDCDRV_SEARCH_NODE_REGISTER 0U
+#define HDCDRV_SEARCH_NODE_SENDRECV 1U
+#define HDCDRV_SEARCH_NODE_UNREGISTER 2U
+#define HDCDRV_SEARCH_NODE_REMOTE 3U
 
 struct hdcdrv_node_search_info {
-    u32 search_type;  /* 0:search with hash_va 1:search with va */
+    u32 search_type;   /* 0:search with hash_va 1:search with va */
     u32 process_stage; /* 0:register 1:send or recv 2:unregister, valid when search_type is 1*/
 };
 
@@ -441,33 +441,31 @@ void free_mem_pool_single(ka_device_t *dev, u32 segment, struct hdcdrv_mem_block
 long hdcdrv_get_page_size(struct hdcdrv_cmd_get_page_size *cmd);
 
 ka_delayed_work_t *hdcdrv_get_recycle_mem(void);
-ka_device_t* hdcdrv_get_pdev_dev(int dev_id);
+ka_device_t *hdcdrv_get_pdev_dev(int dev_id);
 struct hdcdrv_dev_fmem *hdcdrv_get_dev_fmem_uni(void);
 struct hdcdrv_node_tree_ctrl *hdcdrv_get_node_tree(void);
 struct hdcdrv_node_tree_info *hdcdrv_get_node_tree_info(int idx, u32 rb_side);
 struct hdcdrv_dev_fmem *hdcdrv_get_ctrl_arry_uni_ex(int idx, int devid, u32 side);
 int hdcdrv_dma_unmap(struct hdcdrv_fast_mem *f_mem, u32 devid, int sync, int flag);
 struct hdcdrv_dev_fmem *hdcdrv_get_dev_fmem_ex(int devid, u32 fid, u32 side);
-struct hdcdrv_fast_node *hdcdrv_fast_node_search_from_new_tree(u32 rb_side,
-    int timeout, struct hdcdrv_fast_node_msg_info *node_info);
+struct hdcdrv_fast_node *hdcdrv_fast_node_search_from_new_tree(u32 rb_side, int timeout,
+                                                               struct hdcdrv_fast_node_msg_info *node_info);
 void hdcdrv_node_msg_info_fill(u32 pid, u32 fid, int len, u64 addr, u32 process_stage,
-    struct hdcdrv_fast_node_msg_info *msg);
+                               struct hdcdrv_fast_node_msg_info *msg);
 void hdcdrv_fast_node_arry_tree_reset(ka_task_spinlock_t *lock, ka_rb_root_t *root,
-    struct hdcdrv_node_tree_ctrl *ctrl_arry);
+                                      struct hdcdrv_node_tree_ctrl *ctrl_arry);
 struct hdcdrv_fast_node *hdcdrv_fast_nodes_conflict(ka_task_spinlock_t *lock, ka_rb_root_t *root,
-    struct hdcdrv_fast_node *new_node);
+                                                    struct hdcdrv_fast_node *new_node);
 struct hdcdrv_fast_node *hdcdrv_fast_node_arry_search(ka_task_spinlock_t *lock, ka_rb_root_t *root,
-    struct hdcdrv_fast_node_msg_info *node_info);
+                                                      struct hdcdrv_fast_node_msg_info *node_info);
 void hdcdrv_fast_register_recycle(const struct hdcdrv_cmd_register_mem *cmd, struct hdcdrv_fast_node *f_node);
 long hdccom_fast_register_mem(struct hdcdrv_cmd_register_mem *cmd, struct hdcdrv_fast_node **f_node_ret);
-ka_rb_root_t* hdcdrv_get_rbtree(struct hdcdrv_dev_fmem *dev_fmem, u32 side);
+ka_rb_root_t *hdcdrv_get_rbtree(struct hdcdrv_dev_fmem *dev_fmem, u32 side);
 void hdcdrv_fast_mem_uninit(ka_task_spinlock_t *lock, ka_rb_root_t *root, int reset, int flag);
-void hdcdrv_get_fast_mem(struct hdcdrv_dev_fmem *dev_fmem, int type,
-    struct hdcdrv_fast_node_msg_info *node_msg, struct hdcdrv_fast_addr_info *addr_info);
-int hdcdrv_fast_node_insert_new_tree(int devid, u64 pid, u32 fid, u32 rb_side,
-    struct hdcdrv_fast_node *new_node);
-struct hdcdrv_fast_mem *hdcdrv_get_fast_mem_timeout(int dev_id, int type,
-    int len, u64 hash_va, u64 user_va);
+void hdcdrv_get_fast_mem(struct hdcdrv_dev_fmem *dev_fmem, int type, struct hdcdrv_fast_node_msg_info *node_msg,
+                         struct hdcdrv_fast_addr_info *addr_info);
+int hdcdrv_fast_node_insert_new_tree(int devid, u64 pid, u32 fid, u32 rb_side, struct hdcdrv_fast_node *new_node);
+struct hdcdrv_fast_mem *hdcdrv_get_fast_mem_timeout(int dev_id, int type, int len, u64 hash_va, u64 user_va);
 void hdcdrv_kvfree(void **addr, int level);
 
 extern long hdcdrv_fast_dma_map(const struct hdcdrv_cmd_dma_map *cmd);
@@ -475,8 +473,8 @@ extern long hdcdrv_fast_dma_unmap(const struct hdcdrv_cmd_dma_unmap *cmd);
 extern long hdcdrv_fast_dma_remap(const struct hdcdrv_cmd_dma_remap *cmd);
 extern long hdcdrv_fast_unregister_mem(const void *ctx, struct hdcdrv_cmd_unregister_mem *cmd);
 extern void hdcdrv_fast_mem_arry_uninit(void);
-extern void hdcdrv_fast_node_erase_from_new_tree(u64 pid,
-    u32 fid, int devid, u32 rb_side, struct hdcdrv_fast_node *fast_node);
+extern void hdcdrv_fast_node_erase_from_new_tree(u64 pid, u32 fid, int devid, u32 rb_side,
+                                                 struct hdcdrv_fast_node *fast_node);
 extern void hdcdrv_fast_node_free(const struct hdcdrv_fast_node *fast_node);
 extern void hdcdrv_fast_free_phy_mem(struct hdcdrv_fast_mem *f_mem);
 
@@ -484,12 +482,12 @@ void *hdcdrv_kvmalloc(size_t size, int level);
 
 void hdcdrv_fast_mem_continuity_check(u32 alloc_len, u32 addr_num, const int segment_mem_num[], u32 segment_num);
 void hdcdrv_recycle_mem_work(ka_work_struct_t *p_work);
-struct hdcdrv_fast_node *hdcdrv_fast_node_search_timeout(ka_task_spinlock_t *lock,
-    ka_rb_root_t *root, u64 hash_va, int timeout);
-int hdcdrv_fast_node_insert(ka_task_spinlock_t *lock, ka_rb_root_t *root, struct hdcdrv_fast_node *fast_node, u64 search_type);
+struct hdcdrv_fast_node *hdcdrv_fast_node_search_timeout(ka_task_spinlock_t *lock, ka_rb_root_t *root, u64 hash_va,
+                                                         int timeout);
+int hdcdrv_fast_node_insert(ka_task_spinlock_t *lock, ka_rb_root_t *root, struct hdcdrv_fast_node *fast_node,
+                            u64 search_type);
 void hdcdrv_fast_node_erase(ka_task_spinlock_t *lock, ka_rb_root_t *root, struct hdcdrv_fast_node *fast_node);
-long hdccom_fast_alloc_mem(void *ctx, struct hdcdrv_cmd_alloc_mem *cmd,
-    struct hdcdrv_fast_node **f_node_ret);
+long hdccom_fast_alloc_mem(void *ctx, struct hdcdrv_cmd_alloc_mem *cmd, struct hdcdrv_fast_node **f_node_ret);
 long hdcdrv_fast_free_mem(const void *ctx, struct hdcdrv_cmd_free_mem *cmd);
 
 void hdcdrv_init_stamp_init(void);
@@ -497,13 +495,14 @@ void hdcdrv_alloc_pool_stamp_init(void);
 void hdcdrv_set_time_stamp(u64 *stamp);
 struct hdcdrv_init_stamp *hdcdrv_get_init_stamp_info(void);
 void hdcdrv_init_stamp_record(void);
-int hdcdrv_save_fast_mem_info(struct hdcdrv_fast_mem *fast_mem,
-    u64 send_addr_va, struct hdcdrv_fast_addr_info *addr_info);
+int hdcdrv_save_fast_mem_info(struct hdcdrv_fast_mem *fast_mem, u64 send_addr_va,
+                              struct hdcdrv_fast_addr_info *addr_info);
 void hdcdrv_fast_free_mem_node(struct hdcdrv_fast_mem *f_mem);
 void hdcdrv_fast_unpin_mem_normal(struct hdcdrv_fast_mem *f_mem);
 void hdcdrv_register_mem_scatter_list_uninit(struct hdcdrv_fast_mem *f_mem);
-struct hdcdrv_fast_node *hdcdrv_fast_node_search(ka_task_spinlock_t *lock, ka_rb_root_t *root,
-    u64 new_node_hash, struct hdcdrv_node_status *node_status, struct hdcdrv_node_search_info *node_search_info);
+struct hdcdrv_fast_node *hdcdrv_fast_node_search(ka_task_spinlock_t *lock, ka_rb_root_t *root, u64 new_node_hash,
+                                                 struct hdcdrv_node_status *node_status,
+                                                 struct hdcdrv_node_search_info *node_search_info);
 void hdcdrv_fast_free_huge_page_mem(struct hdcdrv_fast_mem *f_mem);
 void hdcdrv_fill_fast_mem_info(struct hdcdrv_fast_mem *f_mem, u64 va, u32 len, u32 type);
 int hdcdrv_dma_map(struct hdcdrv_fast_mem *f_mem, int devid, int flag);

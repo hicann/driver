@@ -14,4 +14,3 @@
 #define SVM_MASTER_PM_PROC_MNG_H
 
 #endif /* SVM_MASTER_PM_PROC_MNG_H */
-

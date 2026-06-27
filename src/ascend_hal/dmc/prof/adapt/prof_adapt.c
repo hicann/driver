@@ -26,9 +26,9 @@ struct prof_adapt_core_notifier *prof_adapt_get_notifier(void)
     return &g_adapt_core_notifier;
 }
 
-drvError_t prof_adapt_register_channel(uint32_t dev_id, uint32_t chan_id, struct prof_sample_register_para *para)
+drvError_t prof_adapt_register_channel(uint32_t dev_id, uint32_t chan_id, struct prof_sample_register_para *para, bool support_host_sample)
 {
-    return prof_user_register_channel(dev_id, chan_id, para);
+    return prof_user_register_channel(dev_id, chan_id, para, support_host_sample);
 }
 
 drvError_t prof_adapt_get_channels(uint32_t dev_id, struct prof_channel_list *channels)
@@ -36,7 +36,14 @@ drvError_t prof_adapt_get_channels(uint32_t dev_id, struct prof_channel_list *ch
     return prof_kernel_get_channels(dev_id, channels);
 }
 
-drvError_t prof_adapt_get_chan_ops(uint32_t dev_id, uint32_t chan_mode, struct prof_chan_ops **ops)
+drvError_t __attribute__((weak)) prof_user_get_host_sample_chan_ops(struct prof_chan_ops **ops)
+{
+    PROF_ERR("Error function.\n");
+    *ops = NULL;
+    return (drvError_t)0;
+}
+
+drvError_t prof_adapt_get_chan_ops(uint32_t dev_id, uint32_t chan_mode, struct prof_chan_ops **ops, bool support_host_sample)
 {
 #ifdef CFG_SOC_PLATFORM_CLOUD_V4
     HAL_CC_INFO cc_info = {0};
@@ -53,7 +60,10 @@ drvError_t prof_adapt_get_chan_ops(uint32_t dev_id, uint32_t chan_mode, struct p
         }
     }
 #endif
-    if (chan_mode == PROF_CHAN_MODE_USER) {
+    if (support_host_sample) {
+        return prof_user_get_host_sample_chan_ops(ops);
+    }
+    if (chan_mode == (uint32_t)PROF_CHAN_MODE_USER) {
         return prof_user_get_chan_ops(ops);
     } else {
         return prof_kernel_get_chan_ops(dev_id, ops);

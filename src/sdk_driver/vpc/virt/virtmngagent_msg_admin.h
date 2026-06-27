@@ -16,8 +16,7 @@
 
 #include "virtmng_msg_pub.h"
 
-typedef int (*vmnga_admin_func)(struct vmng_msg_dev *msg_dev,
-    struct vmng_msg_chan_rx_proc_info *proc_info);
+typedef int (*vmnga_admin_func)(struct vmng_msg_dev *msg_dev, struct vmng_msg_chan_rx_proc_info *proc_info);
 
 int vmnga_register_admin_rx_func(int opcode, vmnga_admin_func admin_func);
 void vmnga_unregister_admin_rx_func(int opcode);

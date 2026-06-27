@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * Copyright (c) 2026 Huawei Technologies Co., Ltd.
  * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@ static int svm_pcie_share_register(u32 devid)
     return DRV_ERROR_NONE;
 }
 
-static void __attribute__ ((constructor(SVM_INIT_PRI_MEDIUM))) svm_pcie_share_init(void)
+static void __attribute__((constructor(SVM_INIT_PRI_MEDIUM))) svm_pcie_share_init(void)
 {
     int ret;
 

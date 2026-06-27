@@ -13,8 +13,33 @@
 
 #include "ka_kernel_def_pub.h"
 #include "msg_chan_main.h"
+#include "pbl/pbl_soc_res.h"
 
 ka_device_t *devdrv_base_comm_get_device(u32 devid, u32 vfid, u32 udevid);
+int __attribute__((weak)) soc_get_dev_topology(unsigned int dev_id1, unsigned int dev_id2, int *topology_type)
+{
+    return -EOPNOTSUPP;
+}
+
+STATIC bool devdrv_is_topology_ub(struct devdrv_base_comm_p2p_attr *attr)
+{
+    int ret, topology_type = SOC_TOPOLOGY_SYS;
+
+    if (attr->type != DEVDRV_P2P_TYPE_NOTIFY) {
+        return false;
+    } else {
+        ret = soc_get_dev_topology(attr->devid, attr->peer_dev_id, &topology_type);
+        if (ret != 0) {
+            devdrv_err("get dev topology fail.(devid=%u; peer_id=%u; ret=%d)\n", attr->devid, attr->peer_dev_id, ret);
+            return false;
+        } else if (topology_type != SOC_TOPOLOGY_UB) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
 int devdrv_get_device_boot_status_inner(u32 index_id, u32 *boot_status)
 {
     int ret;
@@ -191,17 +216,23 @@ KA_EXPORT_SYMBOL(devdrv_hotreset_atomic_rescan);
 
 int devdrv_p2p_attr_op(struct devdrv_base_comm_p2p_attr *attr)
 {
-    struct devdrv_comm_dev_ops *dev_ops = devdrv_add_ops_ref();
+    struct devdrv_comm_dev_ops *dev_ops = NULL;
     int ret = -EOPNOTSUPP;
 
+    if (devdrv_is_topology_ub(attr)) {
+        return 0;
+    }
+
+    dev_ops = devdrv_add_ops_ref();
     if (dev_ops == NULL) {
-        devdrv_err("Get p2p attr fail.\n");
+        devdrv_err("get dev ops fail.(devid=%u)\n", attr->devid);
         return -ENODEV;
     }
 
     if (dev_ops->ops.p2p_attr_op != NULL) {
         ret = dev_ops->ops.p2p_attr_op(attr);
     }
+
     devdrv_sub_ops_ref(dev_ops);
     return ret;
 }

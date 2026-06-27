@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * Copyright (c) 2026 Huawei Technologies Co., Ltd.
  * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 #include "svm_pub.h"
 #include "svm_pagesize.h"
 #include "svm_dbi.h"
+#include "svm_log.h"
 
 static inline int svm_share_dst_align_use_gpage_size(u64 src_va, u64 size, u32 dst_devid, u64 *align)
 {
@@ -88,8 +89,7 @@ static inline int svm_share_check_dst_va_align(u64 src_va, u64 size, u32 dst_dev
     return ((ret == DRV_ERROR_NONE) && SVM_IS_ALIGNED(dst_va, align)) ? DRV_ERROR_NONE : DRV_ERROR_INVALID_VALUE;
 }
 
-static inline int svm_share_get_gpage_src_aligned_size(u32 src_devid, u64 src_va, u64 size,
-    u64 *aligned_size)
+static inline int svm_share_get_gpage_src_aligned_size(u32 src_devid, u64 src_va, u64 size, u64 *aligned_size)
 {
     if (svm_is_va_gpage_align(src_devid, src_va)) {
         return svm_get_hpage_aligned_size(src_devid, size, aligned_size); /* gpage src aligned by hpage_size */
@@ -100,8 +100,7 @@ static inline int svm_share_get_gpage_src_aligned_size(u32 src_devid, u64 src_va
     }
 }
 
-static inline int svm_share_get_hpage_src_aligned_size(u32 src_devid, u64 src_va, u64 size,
-    u64 *aligned_size)
+static inline int svm_share_get_hpage_src_aligned_size(u32 src_devid, u64 src_va, u64 size, u64 *aligned_size)
 {
     if (svm_is_va_hpage_align(src_devid, src_va)) {
         return svm_get_hpage_aligned_size(src_devid, size, aligned_size);
@@ -110,8 +109,7 @@ static inline int svm_share_get_hpage_src_aligned_size(u32 src_devid, u64 src_va
     }
 }
 
-static inline int svm_share_get_npage_src_aligned_size(u32 src_devid, u64 src_va, u64 size,
-    u64 *aligned_size)
+static inline int svm_share_get_npage_src_aligned_size(u32 src_devid, u64 src_va, u64 size, u64 *aligned_size)
 {
     if (svm_is_va_npage_align(src_devid, src_va)) {
         return svm_get_npage_aligned_size(src_devid, size, aligned_size);
@@ -120,8 +118,7 @@ static inline int svm_share_get_npage_src_aligned_size(u32 src_devid, u64 src_va
     }
 }
 
-static inline int svm_share_get_src_aligned_size(u32 src_devid, u64 svm_flag, u64 src_va, u64 size,
-    u64 *aligned_size)
+static inline int svm_share_get_src_aligned_size(u32 src_devid, u64 svm_flag, u64 src_va, u64 size, u64 *aligned_size)
 {
     if (svm_flag_attr_is_gpage(svm_flag)) {
         return svm_share_get_gpage_src_aligned_size(src_devid, src_va, size, aligned_size);

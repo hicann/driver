@@ -63,8 +63,7 @@ int subsys_ts_get_rsv_mem(struct soc_resmng_ts *ts_resmng, const char *name, str
     return 0;
 }
 
-int subsys_ts_set_reg_base(struct soc_resmng_ts *ts_resmng, const char *name,
-    struct soc_reg_base_info *io_base)
+int subsys_ts_set_reg_base(struct soc_resmng_ts *ts_resmng, const char *name, struct soc_reg_base_info *io_base)
 {
     struct soc_reg_base *reg = NULL;
 
@@ -92,8 +91,7 @@ int subsys_ts_set_reg_base(struct soc_resmng_ts *ts_resmng, const char *name,
     return 0;
 }
 
-int subsys_ts_get_reg_base(struct soc_resmng_ts *ts_resmng, const char *name,
-    struct soc_reg_base_info *io_base)
+int subsys_ts_get_reg_base(struct soc_resmng_ts *ts_resmng, const char *name, struct soc_reg_base_info *io_base)
 {
     struct soc_reg_base *reg = NULL;
 
@@ -350,8 +348,8 @@ int subsys_ts_set_tscpu_to_taishan_irq(struct soc_resmng_ts *ts_resmng, u32 irq_
     return 0;
 }
 
-int subsys_ts_get_tscpu_to_taishan_irq(struct soc_resmng_ts *ts_resmng, u32 irq_type, u32 irq,
-    u32 *tscpu_to_taishan_irq)
+int subsys_ts_get_tscpu_to_taishan_irq(
+    struct soc_resmng_ts *ts_resmng, u32 irq_type, u32 irq, u32 *tscpu_to_taishan_irq)
 {
     struct soc_irq_info *info = NULL;
     int index;
@@ -446,4 +444,3 @@ int subsys_ts_get_mia_res_ex(struct soc_resmng_ts *ts_resmng, u32 type, struct s
 
     return 0;
 }
-

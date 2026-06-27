@@ -7,7 +7,7 @@
  * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
  */
-
+ 
 #include <stdio.h>
 #include <time.h>
 #include <limits.h>
@@ -17,7 +17,7 @@
 #include <string.h>
  
 #include "securec.h"
-#include "dsmi_common_interface_custom.h"
+#include "dsmi_common_interface.h"
 #include "dcmi_interface_api.h"
 #include "dcmi_init_basic.h"
 #include "dcmi_fault_manage_intf.h"
@@ -183,6 +183,7 @@ int dcmi_sm_encrypt(int card_id, int device_id, struct dcmi_sm_parm *parm, struc
         gplog(LOG_ERR, "call dcmi_encrypt_param_valid failed. err is %d.", err);
         return err;
     }
+
     err = dcmi_get_device_logic_id(&device_logic_id, card_id, device_id);
     if (err != DCMI_OK) {
         gplog(LOG_ERR, "call dcmi_get_device_logic_id failed. err is %d.", err);
@@ -320,5 +321,93 @@ int dcmi_sm_decrypt(int card_id, int device_id, struct dcmi_sm_parm *parm, struc
     (void)memset_s(&buf, sizeof(buf), 0, sizeof(buf));
     gplog(LOG_INFO, "call dcmi_sm_decrypt success.");
     return DCMI_OK;
+}
+
+int dcmi_get_attest_evidence(int card_id, int device_id, struct attest_ctx *ctx,
+    unsigned char *evidence, unsigned int *evidence_len)
+{
+    int ret;
+    int device_logic_id = 0;
+    unsigned int buffer_len = 0;
+    struct ATTEST_OPERATE_REQUEST req = {0};
+    struct ATTEST_OPERATE_RESPONSE rep = {0};
+
+    if (evidence == NULL || evidence_len == NULL || ctx == NULL) {
+        gplog(LOG_ERR, "evidence is NULL.");
+        return DCMI_ERR_CODE_INVALID_PARAMETER;
+    }
+    buffer_len = *evidence_len;
+
+    req.evidence_type = ctx->evidence_type;
+    req.challenge_len = ctx->challenge_len;
+    req.evidence_len = *evidence_len;
+
+    ret = memcpy_s(req.challenge, MAX_CHALLENGE_LEN, ctx->challenge, ctx->challenge_len);
+    if (ret != 0) {
+        gplog(LOG_ERR, "memcpy_s failed, ret = %d", ret);
+        return DCMI_ERR_CODE_SECURE_FUN_FAIL;
+    }
+
+    ret = dcmi_get_device_logic_id(&device_logic_id, card_id, device_id);
+    if (ret != 0) {
+        gplog(LOG_ERR, "dcmi_get_device_logic_id failed.(device_logic_id=%d, card_id=%d, device_id=%d, ret=%d)",
+            device_logic_id, card_id, device_id, ret);
+        return ret;
+    }
+
+    do {
+        ret = dsmi_attest_get_evidence(device_logic_id, &req, &rep);
+        if (ret != 0) {
+            gplog(LOG_ERR, "dsmi_attest_get_evidence failed, device_logic_id = %d,ret = %d", device_logic_id, ret);
+            return dcmi_convert_error_code(ret);
+        }
+        *evidence_len = rep.data_len;
+        ret = memcpy_s(evidence + req.start_len, buffer_len - req.start_len, rep.data, rep.copied_len);
+        if (ret != 0) {
+            gplog(LOG_ERR, "memcpy_s failed, ret = %d", ret);
+            return DCMI_ERR_CODE_SECURE_FUN_FAIL;
+        }
+        req.start_len += rep.copied_len;
+        gplog(LOG_INFO, "start len = %u, copied len = %u, remain len = %u",
+            req.start_len, rep.copied_len, rep.remain_len);
+    } while (rep.remain_len > 0);
+
+    return ret;
+}
+
+int dcmi_get_attest_akcert(int card_id, int device_id, unsigned char *ak_cert, unsigned int *ak_cert_len)
+{
+    int ret;
+    struct ATTEST_OPERATE_RESPONSE rep = {0};
+    unsigned int buffer_len = 0;
+    int device_logic_id = 0;
+ 
+    if (ak_cert == NULL || ak_cert_len == NULL) {
+        gplog(LOG_ERR, "ak_cert is NULL.");
+        return DCMI_ERR_CODE_INVALID_PARAMETER;
+    }
+    buffer_len = *ak_cert_len;
+ 
+    ret = dcmi_get_device_logic_id(&device_logic_id, card_id, device_id);
+    if (ret != 0) {
+        gplog(LOG_ERR, "dcmi_get_device_logic_id failed device_logic_id = %d, card_id = %d, device_id = %d, ret = %d",
+            device_logic_id, card_id, device_id, ret);
+        return ret;
+    }
+ 
+    ret = dsmi_attest_get_akcert(device_logic_id, ak_cert_len, &rep);
+    if (ret != 0) {
+        gplog(LOG_ERR, "dsmi_attest_get_akcert, device_logic_id = %d,ret = %d", device_logic_id, ret);
+        return dcmi_convert_error_code(ret);
+    }
+    *ak_cert_len = rep.data_len;
+ 
+    ret = memcpy_s(ak_cert, buffer_len, rep.data, *ak_cert_len);
+    if (ret != 0) {
+        gplog(LOG_ERR, "memcpy_s failed.(buffer_len=%d, ret=%d", buffer_len, ret);
+        return DCMI_ERR_CODE_SECURE_FUN_FAIL;
+    }
+ 
+    return ret;
 }
 #endif

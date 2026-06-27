@@ -16,7 +16,7 @@
 #include "virtmng_extension.h"
 
 void vmng_msg_cmn_verify_send_prepare(struct vmng_msg_common_pcie_txd_verify *x1,
-    struct vmng_msg_common_pcie_txd_verify *x2, struct vmng_tx_msg_proc_info *tx_info)
+                                      struct vmng_msg_common_pcie_txd_verify *x2, struct vmng_tx_msg_proc_info *tx_info)
 {
     u32 data_len = sizeof(struct vmng_msg_common_pcie_txd_verify);
 
@@ -34,4 +34,3 @@ void vmng_msg_cmn_verify_send_prepare(struct vmng_msg_common_pcie_txd_verify *x1
 
     vmng_debug("Get process value. (d1=%x; d2=%x; len=%u)\n", x1->d1, x1->d2, tx_info->out_data_len);
 }
-

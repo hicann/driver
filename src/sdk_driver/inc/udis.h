@@ -19,6 +19,10 @@
 typedef unsigned long long va_addr_t;
 #endif
 
+#ifndef dma_addr_t
+typedef unsigned long long dma_addr_t;
+#endif
+
 typedef enum {
     ADDR_ATTR_RAM = 0,
     ADDR_ATTR_MMIO,
@@ -32,6 +36,7 @@ typedef enum {
     UDIS_MODULE_SVM,
     UDIS_MODULE_NETWORK,
     UDIS_MODULE_TS,
+    UDIS_MODULE_APM,
     UDIS_MODULE_MAX
 } UDIS_MODULE_TYPE;
 
@@ -67,16 +72,14 @@ struct udis_addr_info {
     unsigned int acc_ctrl;
     va_addr_t user_addr;
     UDIS_ADDR_ATTR user_addr_attr;
-    char reserved[16];
+    unsigned int user_addr_offset;
+    unsigned int user_addr_len;
+    char reserved[8];
 };
-
-typedef int (*udis_trigger)(unsigned int udevid, struct udis_dev_info *udis_info);
 
 int hal_kernel_set_udis_info(unsigned int udevid, UDIS_MODULE_TYPE module_type, const struct udis_dev_info *udis_info);
 int hal_kernel_get_udis_info(unsigned int udevid, UDIS_MODULE_TYPE module_type, struct udis_dev_info *udis_info);
 int hal_kernel_register_udis_addr(unsigned int udevid, UDIS_MODULE_TYPE module_type, struct udis_addr_info *addr_info);
 int hal_kernel_unregister_udis_addr(unsigned int udevid, UDIS_MODULE_TYPE module_type, char name[]);
-int hal_kernel_register_udis_func(UDIS_MODULE_TYPE module_type, const char *name, udis_trigger func);
-int hal_kernel_unregister_udis_func(UDIS_MODULE_TYPE module_type, const char *name);
 
 #endif

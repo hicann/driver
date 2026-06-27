@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * Copyright (c) 2026 Huawei Technologies Co., Ltd.
  * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -9,6 +9,9 @@
  */
 #include "securec.h"
 #include "apm_ioctl.h"
+
+#define APM_BIND_RETRY_COUNT 2000
+#define APM_BIND_RETRY_DELAY 100000
 
 static void drv_fill_bind_para(struct apm_cmd_bind *para, struct drvBindHostpidInfo *info)
 {
@@ -25,7 +28,8 @@ static void drv_fill_bind_para(struct apm_cmd_bind *para, struct drvBindHostpidI
 drvError_t drvBindHostPid(struct drvBindHostpidInfo info)
 {
     struct apm_cmd_bind para;
-    int ret;
+    int ret, cnt = 0;
+    bool retry = false;
 
     if ((info.len != PROCESS_SIGN_LENGTH) || (info.vfid != 0)) {
         apm_err("Invalid param. (sig_len=%u; proc_type=%d; vfid=%d)\n", info.len, (int)info.cp_type, info.vfid);
@@ -34,10 +38,18 @@ drvError_t drvBindHostPid(struct drvBindHostpidInfo info)
 
     drv_fill_bind_para(&para, &info);
 
-    ret = apm_cmd_ioctl(APM_BIND, &para);
+    do {
+        ret = apm_cmd_ioctl(APM_BIND, &para);
+        cnt++;
+        retry = ((ret != 0) && (errno == EAGAIN) && (cnt < APM_BIND_RETRY_COUNT));
+        if (retry) {
+            usleep(APM_BIND_RETRY_DELAY);
+        }
+    } while (retry);
     if (ret != 0) {
-        apm_err("Bind pid fail. (ret=%d; devid=%u; master_pid=%d; proc_type=%d; mode=%d)\n",
-            ret, para.devid, para.master_pid, para.proc_type, para.mode);
+        apm_err(
+            "Bind pid failed. (ret=%d; devid=%u; master_pid=%d; proc_type=%d; mode=%d)\n", ret, para.devid,
+            para.master_pid, para.proc_type, para.mode);
         return ret;
     }
 
@@ -58,8 +70,9 @@ drvError_t drvUnbindHostPid(struct drvBindHostpidInfo info)
 
     ret = apm_cmd_ioctl(APM_UNBIND, &para);
     if (ret != 0) {
-        apm_err("Unbind pid fail. (ret=%d; devid=%u; master_pid=%d; proc_type=%d)\n",
-            ret, para.devid, para.master_pid, para.proc_type);
+        apm_err(
+            "Unbind pid failed. (ret=%d; devid=%u; master_pid=%d; proc_type=%d)\n", ret, para.devid, para.master_pid,
+            para.proc_type);
         return ret;
     }
 
@@ -79,13 +92,13 @@ static inline int apm_trans_first_proc_type_from_bitmap(unsigned int proc_type_b
     return proc_type;
 }
 
-int apm_query_master_pid(unsigned int cmd, int slave_pid,
-    unsigned int *udevid, unsigned int *master_pid, unsigned int *proc_type)
+int apm_query_master_pid(
+    unsigned int cmd, int slave_pid, unsigned int *udevid, unsigned int *master_pid, unsigned int *proc_type)
 {
     struct apm_cmd_query_master_info para = {.slave_pid = (unsigned int)slave_pid};
     int ret;
 
-    if (cmd == APM_QUERY_MASTER_INFO_BY_DEVICE_SLAVE) {
+    if (udevid != NULL && cmd == APM_QUERY_MASTER_INFO_BY_DEVICE_SLAVE) {
         para.udevid = *udevid;
     }
 
@@ -110,8 +123,8 @@ int apm_query_master_pid(unsigned int cmd, int slave_pid,
     return DRV_ERROR_NONE;
 }
 
-drvError_t drvQueryProcessHostPid(int pid, unsigned int *chip_id, unsigned int *vfid,
-    unsigned int *host_pid, unsigned int *cp_type)
+drvError_t drvQueryProcessHostPid(
+    int pid, unsigned int *chip_id, unsigned int *vfid, unsigned int *host_pid, unsigned int *cp_type)
 {
     if (vfid != NULL) {
         *vfid = 0;

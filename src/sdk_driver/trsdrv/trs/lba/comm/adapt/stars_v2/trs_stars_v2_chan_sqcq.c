@@ -25,8 +25,8 @@
 #include "comm_kernel_interface.h"
 #include "trs_stars_v2_chan_sqcq.h"
 
-int trs_stars_v2_chan_ops_get_valid_cq_list(struct trs_id_inst *inst, u32 group, u32 cqid[], u32 cq_id_num,
-    u32 *valid_cq_num)
+int trs_stars_v2_chan_ops_get_valid_cq_list(
+    struct trs_id_inst *inst, u32 group, u32 cqid[], u32 cq_id_num, u32 *valid_cq_num)
 {
 #ifndef EMU_ST
     return trs_stars_v2_cq_get_valid_list(inst, group, cqid, cq_id_num, valid_cq_num);
@@ -122,6 +122,26 @@ static int trs_stars_v2_chan_ops_get_sq_tail(struct trs_id_inst *inst, u32 sqid,
     return trs_stars_get_sq_tail(inst, sqid, tail);
 }
 
+static int trs_stars_v2_chan_ops_get_stars_sq_head(struct trs_id_inst *inst, u32 sqid, u32 *head)
+{
+#if defined(CFG_FEATURE_SUPPORT_UB_CONNECTION) && defined(CFG_FEATURE_HOST_ENV)
+    if (devdrv_get_connect_protocol(inst->devid) == CONNECT_PROTOCOL_UB) {
+        return trs_ub_get_stars_sq_head(inst, sqid, head);
+    }
+#endif
+    return trs_stars_get_sq_head(inst, sqid, head);
+}
+
+static int trs_stars_v2_chan_ops_get_stars_sq_tail(struct trs_id_inst *inst, u32 sqid, u32 *tail)
+{
+#if defined(CFG_FEATURE_SUPPORT_UB_CONNECTION) && defined(CFG_FEATURE_HOST_ENV)
+    if (devdrv_get_connect_protocol(inst->devid) == CONNECT_PROTOCOL_UB) {
+        return trs_ub_get_stars_sq_tail(inst, sqid, tail);
+    }
+#endif
+    return trs_stars_get_sq_tail(inst, sqid, tail);
+}
+
 static int trs_stars_v2_chan_ops_get_cq_head(struct trs_id_inst *inst, u32 cqid, u32 *head)
 {
 #if defined(CFG_FEATURE_SUPPORT_UB_CONNECTION) && defined(CFG_FEATURE_HOST_ENV)
@@ -198,16 +218,36 @@ static int trs_stars_v2_chan_ops_cq_resume(struct trs_id_inst *inst, u32 cqid)
     return 0;
 }
 
+static int trs_stars_v2_chan_ops_set_sq_head(struct trs_id_inst *inst, u32 sqid, u32 head)
+{
+#if defined(CFG_FEATURE_SUPPORT_UB_CONNECTION) && defined(CFG_FEATURE_HOST_ENV)
+    if (devdrv_get_connect_protocol(inst->devid) == CONNECT_PROTOCOL_UB) {
+        return trs_ub_set_sq_head(inst, sqid, head);
+    }
+#endif
+    return trs_stars_set_sq_head(inst, sqid, head);
+}
+
+static int trs_stars_v2_chan_ops_set_sq_tail(struct trs_id_inst *inst, u32 sqid, u32 tail)
+{
+#if defined(CFG_FEATURE_SUPPORT_UB_CONNECTION) && defined(CFG_FEATURE_HOST_ENV)
+    if (devdrv_get_connect_protocol(inst->devid) == CONNECT_PROTOCOL_UB) {
+        return trs_ub_set_sq_tail(inst, sqid, tail);
+    }
+#endif
+    return trs_stars_set_sq_tail(inst, sqid, tail);
+}
+
 int trs_stars_v2_chan_ops_ctrl_sqcq(struct trs_id_inst *inst, u32 id, u32 cmd, u32 para)
 {
     int ret = -EINVAL;
 
     switch (cmd) {
         case CTRL_CMD_SQ_HEAD_UPDATE:
-            ret = trs_stars_set_sq_head(inst, id, para);
+            ret = trs_stars_v2_chan_ops_set_sq_head(inst, id, para);
             break;
         case CTRL_CMD_SQ_TAIL_UPDATE:
-            ret = trs_stars_set_sq_tail(inst, id, para);
+            ret = trs_stars_v2_chan_ops_set_sq_tail(inst, id, para);
             break;
         case CTRL_CMD_CQ_HEAD_UPDATE:
             ret = trs_stars_v2_cq_head_update(inst, id, para);
@@ -290,6 +330,12 @@ int trs_stars_v2_chan_ops_query_sqcq(struct trs_id_inst *inst, u32 id, u32 cmd, 
             break;
         case QUERY_CMD_SQ_DB_PADDR:
             ret = trs_get_ts_db_paddr(inst, TRS_DB_TRIGGER_SQ, 0, value);
+            break;
+        case QUERY_CMD_STARS_SQ_HEAD:
+            ret = trs_stars_v2_chan_ops_get_stars_sq_head(inst, id, (u32 *)value);
+            break;
+        case QUERY_CMD_STARS_SQ_TAIL:
+            ret = trs_stars_v2_chan_ops_get_stars_sq_tail(inst, id, (u32 *)value);
             break;
         default:
             break;

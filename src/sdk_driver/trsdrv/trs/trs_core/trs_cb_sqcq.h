@@ -14,7 +14,7 @@
 #ifndef TRS_CB_SQCQ_H
 #define TRS_CB_SQCQ_H
 
-#include <linux/types.h>
+#include "ka_type.h"
 #include "ascend_hal_define.h"
 #include "trs_ioctl.h"
 #include "trs_proc.h"
@@ -28,7 +28,7 @@ struct trs_cb_cq {
     int pid;
     u32 cqe_size; // cq slot size
     u32 cq_depth; // cq depth
-    u32 grpid; // indicates thread group id, 0~127
+    u32 grpid;    // indicates thread group id, 0~127
 };
 
 struct trs_cb_phy_sqcq {
@@ -56,4 +56,3 @@ int trs_cb_sqcq_init(struct trs_core_ts_inst *ts_inst);
 void trs_cb_sqcq_uninit(struct trs_core_ts_inst *ts_inst);
 
 #endif
-

@@ -81,7 +81,7 @@
 <p id="p37345343205"><a name="p37345343205"></a><a name="p37345343205"></a>};</p>
 <a name="ul87874572324"></a><a name="ul87874572324"></a><ul id="ul87874572324"><li>group_id表示算力组ID，全局唯一。可配置范围：0~3，创建重复失败。</li></ul>
 <a name="ul11464113418334"></a><a name="ul11464113418334"></a><ul id="ul11464113418334"><li>state表示算力组创建状态。0：not created, 1: created。该字段作为输入时，无意义。</li><li>extend_attribute表示默认昇腾虚拟化实例标志，1：表示系统默认使用该昇腾虚拟化实例，其他值表示不使用该昇腾虚拟化实例为默认组，缺省值：0。</li><li>aicore_number可配置范围：0~8或255，具体参照如下说明。</li><li>aivector_number、sdma_number、aicpu_number、active_sq_number仅支持配置为255，表示配置为剩余可用值，不支持切分。</li><li>aicore_mask表示aicore的编号掩码，其中每个bit表示一个core。1：该算力组内aicore，0：非算力组内aicore。该字段作为输入时，无意义。</li><li>res表示预留参数。<div class="p" id="p144411234102218"><a name="p144411234102218"></a><a name="p144411234102218"></a><div class="note" id="note188303923512"><a name="note188303923512"></a><a name="note188303923512"></a><span class="notetitle"> 说明： </span><div class="notebody"><p id="p653145383518"><a name="p653145383518"></a><a name="p653145383518"></a>group_info参数的约束说明：</p>
-<a name="ul34731046183513"></a><a name="ul34731046183513"></a><ul id="ul34731046183513"><li>group_id取值范围为0~3，且每次创建时需要使用未使用过的group_id，否则将会返回失败。</li><li>当创建不同分组时，各参数变量需要满足以下条件：<a name="ul97411537203318"></a><a name="ul97411537203318"></a><ul id="ul97411537203318"><li><a name="image15114194043912"></a><a name="image15114194043912"></a><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><mrow><mrow><munder><mo>&#x2211;</mo><mrow><mi mathvariant="italic">g</mi><mi mathvariant="italic">r</mi><mi mathvariant="italic">o</mi><mi mathvariant="italic">u</mi><mi mathvariant="italic">p</mi><mtext>_</mtext><mi mathvariant="italic">i</mi><mi mathvariant="italic">d</mi></mrow></munder><mrow><mi mathvariant="italic">a</mi><mi mathvariant="italic">i</mi><mi mathvariant="italic">c</mi><mi mathvariant="italic">o</mi><mi mathvariant="italic">r</mi><mi mathvariant="italic">e</mi><mtext>_</mtext><mi mathvariant="italic">n</mi><mi mathvariant="italic">u</mi><mi mathvariant="italic">m</mi><mi mathvariant="italic">b</mi><mi mathvariant="italic">e</mi><mi mathvariant="italic">r</mi><msub><mrow></mrow><mrow><mi mathvariant="italic">g</mi><mi mathvariant="italic">r</mi><mi mathvariant="italic">o</mi><mi mathvariant="italic">u</mi><mi mathvariant="italic">p</mi><mtext>_</mtext><mi mathvariant="italic">i</mi><mi mathvariant="italic">d</mi><mtext>&#x2009;</mtext></mrow></msub></mrow></mrow><mrow><mo>&#x3C;</mo><mrow><mo>&#x3D;</mo><mrow><mi mathvariant="italic">t</mi><mi mathvariant="italic">o</mi><mi mathvariant="italic">t</mi><mi mathvariant="italic">a</mi><mi mathvariant="italic">l</mi><mtext>_</mtext><mi mathvariant="italic">a</mi><mi mathvariant="italic">i</mi><mi mathvariant="italic">c</mi><mi mathvariant="italic">o</mi><mi mathvariant="italic">r</mi><mi mathvariant="italic">e</mi><mtext>_</mtext><mi mathvariant="italic">n</mi><mi mathvariant="italic">u</mi><mi mathvariant="italic">m</mi><mi mathvariant="italic">b</mi><mi mathvariant="italic">e</mi><mi mathvariant="italic">r</mi></mrow></mrow></mrow></mrow></math></li><li>total_aicore_number为8。</li><li>当aicore_number配置为255时，表示配置为剩余可用值，如果多个group配置255，这几个group共用剩余可用值。</li></ul>
+<a name="ul34731046183513"></a><a name="ul34731046183513"></a><ul id="ul34731046183513"><li>group_id取值范围为0~3，且每次创建时需要使用未使用过的group_id，否则将会返回失败。</li><li>当创建不同分组时，各参数变量需要满足以下条件：<a name="ul97411537203318"></a><a name="ul97411537203318"></a><ul id="ul97411537203318"><li><img class="mathml" id="image15114194043912" src="../../../zh/figures/gongshi.png" width="226.10000000000002" height="31.348100000000002">&nbsp;</li><li>total_aicore_number为8。</li><li>当aicore_number配置为255时，表示配置为剩余可用值，如果多个group配置255，这几个group共用剩余可用值。</li></ul>
 </li></ul>
 </div></div>
 </div>
@@ -115,8 +115,8 @@
 
 **约束说明<a name="section3125938142713"></a>**
 
--   仅Control CPU开放形态使用该接口。
--   调用该接口前，请先调用[dcmi\_get\_capability\_group\_info](dcmi_get_capability_group_info.md)查询已配置的资源信息，结合ts\_id参数的说明和group\_info参数的约束说明进行配置，否则可能出现接口调用失败。如果需要删除已有配置，可以调用[dcmi\_delete\_capability\_group](dcmi_delete_capability_group.md)接口进行删除。
+- 仅Control CPU开放形态使用该接口。
+- 调用该接口前，请先调用[dcmi\_get\_capability\_group\_info](dcmi_get_capability_group_info.md)查询已配置的资源信息，结合ts\_id参数的说明和group\_info参数的约束说明进行配置，否则可能出现接口调用失败。如果需要删除已有配置，可以调用[dcmi\_delete\_capability\_group](dcmi_delete_capability_group.md)接口进行删除。
 
 **表 1** 不同部署场景下的支持情况
 
@@ -184,7 +184,7 @@
 
 **调用示例<a name="section206582034172018"></a>**
 
-```
+```c
 … 
 int ret = 0;
 int card_id = 0;
@@ -205,4 +205,3 @@ if (ret != 0){
 }
 …
 ```
-

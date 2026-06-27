@@ -11,11 +11,11 @@
 #ifndef _DCMI_MCU_HEALTH_ERROR_INFO_H_
 #define _DCMI_MCU_HEALTH_ERROR_INFO_H_
 
-#define DCMI_MCU_ERROR_STRING_LENTH 48
+#define DCMI_MCU_ERROR_STRING_LENGTH 82
 
 struct dcmi_health_info {
     int error_code;
-    const char error_info[DCMI_MCU_ERROR_STRING_LENTH];
+    const char error_info[DCMI_MCU_ERROR_STRING_LENGTH];
 };
 
 struct dcmi_health_info g_310p_1p_card_health_error_info[] = {
@@ -25,8 +25,8 @@ struct dcmi_health_info g_310p_1p_card_health_error_info[] = {
     {7503, "LM75B access failure"},
     {7504, "12V PSU power access failure"},
     {7505, "3V3 PSU power access failure"},
-    {7520, "310P access failure"},
-    {7528, "310P inner error"},
+    {7520, "1910P access failure"},
+    {7528, "1910P inner error"},
     {7551, "12V PSU power is too high"},
     {7578, "V_0V75_CPU02 voltage is too high"},
     {7579, "V_0V75_CPU02 voltage is too low"},
@@ -44,11 +44,11 @@ struct dcmi_health_info g_310p_1p_card_health_error_info[] = {
     {7591, "V_0V75_CORE voltage is too low"},
     {7592, "V_12V0_CON voltage is too high"},
     {7593, "V_12V0_CON voltage is too low"},
-    {7594, "ADC access failure"},
+    {7594, "KTA7828 access failure"},
     {7600, "vrd PSU firmware upgrade failure"},
-    {7601, "310P NPU inner error"},
-    {7602, "310P NPU inner error"},
-    {7603, "310P NPU inner error"}
+    {7601, "1910P NPU inner error"},
+    {7602, "1910P NPU inner error"},
+    {7603, "1910P NPU inner error"}
 };
 
 struct dcmi_health_info g_310p_2p_card_health_error_info[] = {
@@ -58,10 +58,10 @@ struct dcmi_health_info g_310p_2p_card_health_error_info[] = {
     {7503, "LM75B access failure"},
     {7504, "12V PSU power access failure"},
     {7505, "3V3 PSU power access failure"},
-    {7520, "310P NPU0 access failure"},
-    {7521, "310P NPU1 access failure"},
-    {7528, "310P NPU0 inner error"},
-    {7529, "310P NPU1 inner error"},
+    {7520, "1910P NPU0 access failure"},
+    {7521, "1910P NPU1 access failure"},
+    {7528, "1910P NPU0 inner error"},
+    {7529, "1910P NPU1 inner error"},
     {7551, "12V PSU power is too high"},
     {7562, "V_0V75_CPU02_M voltage is too high"},
     {7563, "V_0V75_CPU02_M voltage is too low"},
@@ -95,15 +95,15 @@ struct dcmi_health_info g_310p_2p_card_health_error_info[] = {
     {7591, "V_0V75_CORE_S voltage is too low"},
     {7592, "V_12V0_CON voltage is too high"},
     {7593, "V_12V0_CON voltage is too low"},
-    {7594, "ADCA access failure"},
-    {7595, "ADCB access failure"},
+    {7594, "KTA7828A access failure"},
+    {7595, "KTA7828B access failure"},
     {7600, "vrd PSU firmware upgrade failure"},
-    {7601, "310P NPU0 inner error"},
-    {7602, "310P NPU0 inner error"},
-    {7603, "310P NPU0 inner error"},
-    {7604, "310P NPU1 inner error"},
-    {7605, "310P NPU1 inner error"},
-    {7606, "310P NPU1 inner error"}
+    {7601, "1910P NPU0 inner error"},
+    {7602, "1910P NPU0 inner error"},
+    {7603, "1910P NPU0 inner error"},
+    {7604, "1910P NPU1 inner error"},
+    {7605, "1910P NPU1 inner error"},
+    {7606, "1910P NPU1 inner error"}
 };
 
 struct dcmi_health_info g_910_card_health_error_info[] = {
@@ -111,8 +111,8 @@ struct dcmi_health_info g_910_card_health_error_info[] = {
     {7199, "mcu flash app error"},
     {7502, "LM75A access failure"},
     {7503, "LM75B access failure"},
-    {7520, "910A access failure"},
-    {7528, "910A inner error"},
+    {7520, "1980 access failure"},
+    {7528, "1980 inner error"},
     {7562, "V_0V8_VDDFIX_R voltage is too high"},
     {7563, "V_0V8_VDDFIX_R voltage is too low"},
     {7564, "V_1V2_HVCC_R voltage is too high"},
@@ -145,8 +145,8 @@ struct dcmi_health_info g_910_card_health_error_info[] = {
     {7591, "V_3V3_QSFP_1_R voltage is too low"},
     {7592, "V_12V_SLOT_DET voltage is too high"},
     {7593, "V_12V_SLOT_DET voltage is too low"},
-    {7594, "ADCA access failure"},
-    {7595, "ADCB access failure"},
+    {7594, "KTA7828A access failure"},
+    {7595, "KTA7828B access failure"},
     {7596, "PCA9555 12V ATX eFUSE overcurrent indication"},
     {7597, "PCA9555 12V ATX eFUSE PG indication"},
     {7598, "PCA9555 VRM PSU abnormal"},
@@ -159,8 +159,8 @@ struct dcmi_health_info g_910b_card_health_error_info[] = {
     {7199, "mcu operate flash error"},
     {7502, "LM75A access failure"},
     {7503, "LM75B access failure"},
-    {7520, "910B access failure"},
-    {7528, "910B inner error"},
+    {7520, "1980B access failure"},
+    {7528, "1980B inner error"},
     {7562, "V_0V8_LVCC_R voltage is too high"},
     {7563, "V_0V8_LVCC_R voltage is too low"},
     {7564, "V_1V2_AVDD_R voltage is too high"},
@@ -193,8 +193,8 @@ struct dcmi_health_info g_910b_card_health_error_info[] = {
     {7591, "V_3V3_IN_R voltage is too low"},
     {7592, "V_12V_SLOT_DET voltage is too high"},
     {7593, "V_12V_SLOT_DET voltage is too low"},
-    {7594, "ADCA access failure"},
-    {7595, "ADCB access failure"},
+    {7594, "KTA7828A access failure"},
+    {7595, "KTA7828B access failure"},
     {7599, "vrd PSU firmware needs to be upgraded"},
     {7600, "vrd PSU firmware upgrade failure"}
 };
@@ -204,8 +204,8 @@ struct dcmi_health_info g_910b_pod_health_error_info[] = {
     {7199, "mcu operate flash error"},
     {7502, "LM75A access failure"},
     {7503, "LM75B access failure"},
-    {7520, "910B access failure"},
-    {7528, "910B inner error"},
+    {7520, "1980B access failure"},
+    {7528, "1980B inner error"},
     {7562, "V_5V_DRMOS_R voltage is too high"},
     {7563, "V_5V_DRMOS_R voltage is too low"},
     {7564, "V_2V5_HBM_R voltage is too high"},
@@ -230,8 +230,8 @@ struct dcmi_health_info g_910b_box_health_error_info[] = {
     {7199, "mcu operate flash error"},
     {7502, "LM75A access failure"},
     {7503, "LM75B access failure"},
-    {7520, "910B access failure"},
-    {7528, "910B inner error"},
+    {7520, "1980B access failure"},
+    {7528, "1980B inner error"},
     {7562, "V_HBM_NPU1_R voltage is too high"},
     {7563, "V_HBM_NPU1_R voltage is too low"},
     {7564, "V_DVDDNPU0_R voltage is too high"},

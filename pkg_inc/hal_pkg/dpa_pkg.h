@@ -21,11 +21,13 @@ typedef enum {
 } BIND_CGROUP_TYPE;
 
 enum res_map_type {
-	RES_AICORE = 0,
-	RES_HSCB_AICORE,
-	RES_L2BUFF,
-	RES_C2C,
-	RES_MAP_TYPE_MAX
+    RES_AICORE = 0,
+    RES_HSCB_AICORE,
+    RES_L2BUFF,
+    RES_C2C,
+    /* 0x04-0x0F: reserved for future use */
+    /* 0x10: used by rts for aicore debug */
+    RES_MAP_TYPE_MAX = 0x11
 };
 
 #define RES_MAP_INFO_RSV_LEN 1

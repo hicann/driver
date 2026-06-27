@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * Copyright (c) 2026 Huawei Technologies Co., Ltd.
  * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -13,11 +13,22 @@
 #include "smm_client.h"
 #include "casm.h"
 
+static u32 svm_casm_flag_to_smm_flag(u32 casm_flag)
+{
+    u32 smm_flag = SVM_SMM_FLAG_SRC_INVALID;
+
+    smm_flag |= ((casm_flag & SVM_CASM_FLAG_PG_NC) != 0) ? SVM_SMM_FLAG_PG_NC : 0;
+    smm_flag |= ((casm_flag & SVM_CASM_FLAG_PG_RDONLY) != 0) ? SVM_SMM_FLAG_PG_RDONLY : 0;
+    smm_flag |= ((casm_flag & SVM_CASM_FLAG_MAP_UB_ONE_PORT_PATH) != 0) ? SVM_SMM_FLAG_MAP_UB_ONE_PORT_PATH : 0;
+    smm_flag |= ((casm_flag & SVM_CASM_FLAG_MAP_UB_MULTI_PORT_PATH) != 0) ? SVM_SMM_FLAG_MAP_UB_MULTI_PORT_PATH : 0;
+
+    return smm_flag;
+}
+
 int svm_casm_mem_map(u32 devid, u64 va, u64 size, u64 key, u32 flag)
 {
     struct svm_dst_va dst_info;
     struct svm_global_va src_info = {0};
-    u32 smm_flag = SVM_SMM_FLAG_SRC_INVALID;
     int ret;
 
     ret = svm_casm_mem_pin(devid, va, size, key);
@@ -25,18 +36,10 @@ int svm_casm_mem_map(u32 devid, u64 va, u64 size, u64 key, u32 flag)
         return ret;
     }
 
-    if ((flag & SVM_CASM_FLAG_PG_NC) != 0) {
-        smm_flag |= SVM_SMM_FLAG_PG_NC;
-    }
-
-    if ((flag & SVM_CASM_FLAG_PG_RDONLY) != 0) {
-        smm_flag |= SVM_SMM_FLAG_PG_RDONLY;
-    }
-
     svm_dst_va_pack(devid, PROCESS_CP1, va, size, &dst_info);
 
     /* update src info in kernel */
-    ret = svm_smm_client_map(&dst_info, &src_info, smm_flag);
+    ret = svm_smm_client_map(&dst_info, &src_info, svm_casm_flag_to_smm_flag(flag));
     if (ret != 0) {
         (void)svm_casm_mem_unpin(devid, va, size);
         svm_err("Smm map failed. (devid=%u; va=0x%llx; size=0x%llx; key=0x%llx; ret=%d)\n", devid, va, size, key, ret);
@@ -69,4 +72,3 @@ int svm_casm_mem_unmap(u32 devid, u64 va, u64 size)
 
     return 0;
 }
-

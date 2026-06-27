@@ -322,13 +322,15 @@ STATIC void prof_hdc_receive_channels(uint32_t dev_id, struct prof_hdc_msg *msg_
         return;
     }
     (void)sem_post(&info->sem);
-    (void)pthread_mutex_unlock(&info->mutex);
 
     ret = prof_session_destroy(dev_id, 0);
     if ((ret != PROF_OK) && (ret != (int)DRV_ERROR_NOT_SUPPORT)) {
         PROF_ERR("Failed to destroy hdc session client. (dev_id=%u, ret=%d)\n", dev_id, ret);
+        (void)pthread_mutex_unlock(&info->mutex);
         return;
     }
+
+    (void)pthread_mutex_unlock(&info->mutex);
 }
 
 STATIC void prof_hdc_receive_chan_respond(uint32_t dev_id, struct prof_hdc_msg *msg_head)

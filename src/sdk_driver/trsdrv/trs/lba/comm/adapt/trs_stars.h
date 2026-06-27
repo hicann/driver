@@ -13,7 +13,7 @@
 #ifndef TRS_STARS_H
 #define TRS_STARS_H
 
-#include <linux/types.h>
+#include "ka_type.h"
 
 #include "trs_pub_def.h"
 
@@ -36,9 +36,9 @@ enum {
     TRS_STARS_MAX,
 };
 
-typedef void (* trs_stars_set_cq_l1_mask_t)(struct trs_stars_cqint *cqint, int val);
-typedef int (* trs_stars_get_valid_cq_list_t)(struct trs_stars_cqint *cqint, u32 cqid[], u32 num, u32 *valid_num);
-typedef u32 (* trs_stars_addr_adjust_t)(u32 devid, u32 val);
+typedef void (*trs_stars_set_cq_l1_mask_t)(struct trs_stars_cqint *cqint, int val);
+typedef int (*trs_stars_get_valid_cq_list_t)(struct trs_stars_cqint *cqint, u32 cqid[], u32 num, u32 *valid_num);
+typedef u32 (*trs_stars_addr_adjust_t)(u32 devid, u32 val);
 
 struct trs_stars_attr {
     phys_addr_t paddr;
@@ -75,8 +75,7 @@ int trs_stars_get_cq_affinity_group(struct trs_id_inst *inst, u32 cq_id, u32 *gr
 
 int trs_stars_test_bit(u32 nr, u32 val);
 int trs_stars_get_rtsq_paddr(struct trs_id_inst *inst, u32 sqid, phys_addr_t *paddr, size_t *size);
-int trs_stars_addr_adjust_register(struct trs_id_inst *inst, int type,
-    trs_stars_addr_adjust_t addr_adjust);
+int trs_stars_addr_adjust_register(struct trs_id_inst *inst, int type, trs_stars_addr_adjust_t addr_adjust);
 void trs_stars_addr_adjust_unregister(struct trs_id_inst *inst, int type);
 #ifdef __cplusplus
 }

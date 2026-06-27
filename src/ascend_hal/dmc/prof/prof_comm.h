@@ -12,15 +12,15 @@
 #include "pbl/pbl_prof_interface.h"
 
 #ifndef PROF_UNIT_TEST
-#define PROF_EVENT_REPLY_BUFFER_RET_OFFSET       (sizeof(int))
+#define PROF_EVENT_REPLY_BUFFER_RET_OFFSET (sizeof(int))
 #else
-#define PROF_EVENT_REPLY_BUFFER_RET_OFFSET       (sizeof(unsigned long long))
+#define PROF_EVENT_REPLY_BUFFER_RET_OFFSET (sizeof(unsigned long long))
 #endif
-#define PROF_EVENT_REPLY_BUFFER_RET(ptr)         (*((int *)ptr))
-#define PROF_EVENT_REPLY_BUFFER_DATA_PTR(ptr)    (((char *)ptr) + PROF_EVENT_REPLY_BUFFER_RET_OFFSET)
+#define PROF_EVENT_REPLY_BUFFER_RET(ptr) (*((int *)ptr))
+#define PROF_EVENT_REPLY_BUFFER_DATA_PTR(ptr) (((char *)ptr) + PROF_EVENT_REPLY_BUFFER_RET_OFFSET)
 
-#define PROF_MIN(a, b)          (((a) < (b)) ? (a) : (b))
-#define PROF_MAX(a, b)          (((a) > (b)) ? (a) : (b))
+#define PROF_MIN(a, b) (((a) < (b)) ? (a) : (b))
+#define PROF_MAX(a, b) (((a) > (b)) ? (a) : (b))
 
 #define PROF_CHAN_NAME_LEN 32
 #define PROF_POLL_DEPTH 512U
@@ -32,6 +32,9 @@ enum channel_poll_flag {
 /* sample period time / ms */
 #define PROF_PERIOD_MIN 10U    /* 10ms */
 #define PROF_PERIOD_MAX 10000U /* 10s */
+
+#define PROF_HOST_SAMPLE_PERIOD_MIN 7U     /* 7ms */
+#define PROF_HOST_SAMPLE_PERIOD_MAX 10000U /* 10s */
 
 /* prof wait time(us) */
 #define PROF_WAIT_US_MIN 1000U

@@ -10,7 +10,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#include <linux/types.h>
+#include "ka_type.h"
 
 #include "svm_kernel_msg.h"
 #include "svm_msg_client.h"
@@ -22,9 +22,9 @@ int devmm_chan_report_process_status_d2h(
 {
     struct devmm_chan_process_status *process_status = (struct devmm_chan_process_status *)msg;
 
-    devmm_drv_debug("rev process_status  (devid=%u, vifd=%u,status=%u, dev_pid=%u, dev_tid=%u)\n",
-        process_status->head.dev_id, process_status->head.vfid, process_status->pid_status,
-        process_status->pid, process_status->tid);
+    devmm_drv_debug(
+        "rev process_status  (devid=%u, vifd=%u,status=%u, dev_pid=%u, dev_tid=%u)\n", process_status->head.dev_id,
+        process_status->head.vfid, process_status->pid_status, process_status->pid, process_status->tid);
 
     devmm_modify_process_status(
         svm_process, process_status->head.dev_id, process_status->head.vfid, process_status->pid_status, true);
@@ -32,8 +32,8 @@ int devmm_chan_report_process_status_d2h(
     return 0;
 }
 
-STATIC int devmm_query_process_status(struct devmm_svm_process *svm_proc,
-    struct devmm_chan_process_status *process_status, struct devmm_ioctl_arg *arg)
+STATIC int devmm_query_process_status(
+    struct devmm_svm_process *svm_proc, struct devmm_chan_process_status *process_status, struct devmm_ioctl_arg *arg)
 {
     int ret;
 
@@ -46,7 +46,8 @@ STATIC int devmm_query_process_status(struct devmm_svm_process *svm_proc,
     ret = devmm_chan_msg_send(
         process_status, sizeof(struct devmm_chan_process_status), sizeof(struct devmm_chan_process_status));
 
-    devmm_drv_debug("query process_status. (devid=%u, vifd=%u,status=%u, occur=%d)\n", process_status->head.dev_id,
+    devmm_drv_debug(
+        "query process_status. (devid=%u, vifd=%u,status=%u, occur=%d)\n", process_status->head.dev_id,
         process_status->head.vfid, process_status->pid_status, process_status->status_occur);
 
     return ret;
@@ -98,8 +99,9 @@ int devmm_ioctl_query_process_status(struct devmm_svm_process *svm_proc, struct 
         return ret;
     }
 
-    devmm_modify_process_status(svm_proc, process_status.head.dev_id, process_status.head.process_id.vfid,
-        process_status.pid_status, process_status.status_occur);
+    devmm_modify_process_status(
+        svm_proc, process_status.head.dev_id, process_status.head.process_id.vfid, process_status.pid_status,
+        process_status.status_occur);
     *result = (u32)process_status.status_occur;
 
     if ((pid_status == STATUS_NOMEM) && (process_status.status_occur == true)) {
@@ -107,4 +109,3 @@ int devmm_ioctl_query_process_status(struct devmm_svm_process *svm_proc, struct 
     }
     return 0;
 }
-

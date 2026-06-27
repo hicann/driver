@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2025. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -21,28 +21,9 @@
 
 #define MPL_HUGEPAGE_2M_ORDER 9
 
-#ifndef HUGETLB_ALLOC_NONE
-#define HUGETLB_ALLOC_NONE             0x00
-#endif
-#ifndef HUGETLB_ALLOC_NORMAL
-#define HUGETLB_ALLOC_NORMAL           0x01
-#endif
-#ifndef HUGETLB_ALLOC_BUDDY
-#define HUGETLB_ALLOC_BUDDY            0x02
-#endif
-#ifndef HUGETLB_ALLOC_NORECLAIM
-#define HUGETLB_ALLOC_NORECLAIM        0x04
-#endif
+static void svm_clear_huge_page(ka_page_t *pg) { svm_clear_single_page(pg, KA_HPAGE_SIZE); }
 
-static void svm_clear_huge_page(ka_page_t *pg)
-{
-    svm_clear_single_page(pg, KA_HPAGE_SIZE);
-}
-
-static inline void svm_put_page(ka_page_t *pg)
-{
-    ka_mm_put_page(pg);
-}
+static inline void svm_put_page(ka_page_t *pg) { ka_mm_put_page(pg); }
 
 static void svm_free_huge_page(ka_page_t *pg, u32 flag)
 {
@@ -68,25 +49,28 @@ static ka_page_t *svm_alloc_hpage(int nid, u32 flag)
     u32 tmp_flag = flag;
     ka_gfp_t gfp_mask;
 
-    if (tmp_flag == HUGETLB_ALLOC_NORMAL) {
+    if (tmp_flag == KA_HUGETLB_ALLOC_NORMAL) {
 #ifdef CFG_FEATURE_SURPORT_HUGETLB_FOLIO
         return (ka_page_t *)alloc_np_page_nid(KA_HPAGE_SIZE, nid);
 #else
-        return (ka_page_t*)alloc_hugetlb_folio_size(nid, KA_HPAGE_SIZE);
+        return (ka_page_t *)alloc_hugetlb_folio_size(nid, KA_HPAGE_SIZE);
 #endif
-    } else if (tmp_flag == (HUGETLB_ALLOC_BUDDY | HUGETLB_ALLOC_NORECLAIM)) {
+    } else if (tmp_flag == (KA_HUGETLB_ALLOC_BUDDY | KA_HUGETLB_ALLOC_NORECLAIM)) {
 #ifdef CFG_FEATURE_SURPORT_HUGETLB_FOLIO
-        gfp_mask = ((KA_GFP_HIGHUSER_MOVABLE | __KA_GFP_THISNODE | KA_GFP_KERNEL | __KA_GFP_COMP | __KA_GFP_ACCOUNT | __KA_GFP_NOWARN |
-            __KA_GFP_RETRY_MAYFAIL) & (~__KA_GFP_RECLAIM));
+        gfp_mask =
+            ((KA_GFP_HIGHUSER_MOVABLE | __KA_GFP_THISNODE | KA_GFP_KERNEL | __KA_GFP_COMP | __KA_GFP_ACCOUNT |
+              __KA_GFP_NOWARN | __KA_GFP_RETRY_MAYFAIL) &
+             (~__KA_GFP_RECLAIM));
         return (ka_page_t *)alloc_temporary_hugetlb_folio(nid, gfp_mask);
-    } else if (tmp_flag == HUGETLB_ALLOC_BUDDY) {
-        gfp_mask = (KA_GFP_HIGHUSER_MOVABLE | __KA_GFP_THISNODE | KA_GFP_KERNEL | __KA_GFP_COMP | __KA_GFP_ACCOUNT | __KA_GFP_NOWARN |
-            __KA_GFP_RETRY_MAYFAIL);
+    } else if (tmp_flag == KA_HUGETLB_ALLOC_BUDDY) {
+        gfp_mask =
+            (KA_GFP_HIGHUSER_MOVABLE | __KA_GFP_THISNODE | KA_GFP_KERNEL | __KA_GFP_COMP | __KA_GFP_ACCOUNT |
+             __KA_GFP_NOWARN | __KA_GFP_RETRY_MAYFAIL);
         return (ka_page_t *)alloc_temporary_hugetlb_folio(nid, gfp_mask);
 #else
         gfp_mask = ((KA_GFP_KERNEL | __KA_GFP_COMP | __KA_GFP_ACCOUNT) & (~__KA_GFP_RECLAIM));
         return ka_mm_alloc_pages_node(nid, gfp_mask, MPL_HUGEPAGE_2M_ORDER);
-    } else if (tmp_flag == HUGETLB_ALLOC_BUDDY) {
+    } else if (tmp_flag == KA_HUGETLB_ALLOC_BUDDY) {
         gfp_mask = (KA_GFP_KERNEL | __KA_GFP_COMP | __KA_GFP_ACCOUNT);
         return ka_mm_alloc_pages_node(nid, gfp_mask, MPL_HUGEPAGE_2M_ORDER);
 #endif
@@ -126,17 +110,17 @@ static ka_page_t *svm_alloc_huge_page(int nids[], u32 nid_num, u32 *latest_nid)
 {
     ka_page_t *hpage = NULL;
 
-    hpage = _svm_alloc_huge_page(nids, nid_num, latest_nid, HUGETLB_ALLOC_NORMAL);
+    hpage = _svm_alloc_huge_page(nids, nid_num, latest_nid, KA_HUGETLB_ALLOC_NORMAL);
     if (hpage != NULL) {
         return hpage;
     }
 
-    hpage = _svm_alloc_huge_page(nids, nid_num, latest_nid, HUGETLB_ALLOC_BUDDY | HUGETLB_ALLOC_NORECLAIM);
+    hpage = _svm_alloc_huge_page(nids, nid_num, latest_nid, KA_HUGETLB_ALLOC_BUDDY | KA_HUGETLB_ALLOC_NORECLAIM);
     if (hpage != NULL) {
         return hpage;
     }
 
-    return _svm_alloc_huge_page(nids, nid_num, latest_nid, HUGETLB_ALLOC_BUDDY);
+    return _svm_alloc_huge_page(nids, nid_num, latest_nid, KA_HUGETLB_ALLOC_BUDDY);
 }
 
 static int svm_alloc_huge_pages(int nids[], u32 nid_num, ka_page_t **pages, u64 page_num, u32 flag)
@@ -168,4 +152,3 @@ int svm_huge_page_init(void)
     return 0;
 }
 DECLAER_FEATURE_AUTO_INIT(svm_huge_page_init, FEATURE_LOADER_STAGE_0);
-

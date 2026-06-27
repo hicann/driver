@@ -14,13 +14,11 @@
 #ifndef FMS_DTM_H
 #define FMS_DTM_H
 
-#include <linux/list.h>
-#include <linux/types.h>
-#include <linux/mutex.h>
-#include <linux/wait.h>
-#include <linux/version.h>
-#include <linux/timer.h>
-#include <linux/ktime.h>
+#include "ka_list_pub.h"
+#include "ka_task_pub.h"
+#include "ka_system_pub.h"
+#include "ka_base_pub.h"
+
 #include "dms/dms_cmd_def.h"
 #include "ascend_dev_num.h"
 #include "dms_device_node_type.h"
@@ -45,20 +43,6 @@
 
 #ifndef ASCEND_DEV_MAX_NUM
 #define ASCEND_DEV_MAX_NUM           64
-#endif
-
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 5, 0)
-#ifndef STRUCT_TIMEVAL_SPEC
-#define STRUCT_TIMEVAL_SPEC
-struct timespec {
-    __kernel_old_time_t    tv_sec;          /* seconds */
-    long                   tv_nsec;         /* nanoseconds */
-};
-struct timeval {
-    __kernel_old_time_t    tv_sec;          /* seconds */
-    __kernel_suseconds_t   tv_usec;         /* microseconds */
-};
-#endif
 #endif
 
 typedef enum {
@@ -174,7 +158,7 @@ struct dms_dev_data_attr {
 struct dms_node_operations;
 /* Device management node structure */
 struct dms_node {
-    struct list_head list;
+    ka_list_head_t list;
     /* Device node (global edition) */
     int node_type;
     int node_id;   /* global node index in chip */
@@ -233,16 +217,16 @@ struct dms_node_operations {
 
 
 struct dms_converge_event_list {
-    struct list_head head;
+    ka_list_head_t head;
     unsigned int event_num;
     unsigned int health_code;
-    struct mutex lock;
+    ka_mutex_t lock;
 };
 
 struct dms_sensor_reported_list {
-    struct list_head head;
+    ka_list_head_t head;
     unsigned int reported_num;
-    struct mutex lock;
+    ka_mutex_t lock;
 };
 
 /* General threshold type sensor */
@@ -485,7 +469,7 @@ struct dms_sensor_object_cb {
     and the most serious level as the status of the sensor */
     unsigned int fault_status;
 
-    struct list_head list;
+    ka_list_head_t list;
 
     DMS_EVENT_LIST_ITEM *p_event_list;
     /* The parameter of the currently detected event updated by the detection function has a
@@ -558,8 +542,8 @@ struct dms_sensor_scan_time_recorder {
     void (*start_dev_scan_record)(struct dms_dev_sensor_cb *dev_sensor_cb);
     /* Start recording the execution time of the device scan function */
     void (*stop_dev_scan_record)(struct dms_dev_sensor_cb *dev_sensor_cb);
-    ktime_t sensor_start_time;
-    ktime_t dev_start_time;
+    ka_ktime_t sensor_start_time;
+    ka_ktime_t dev_start_time;
 };
 
 /* Each child node has an instance of the structure, and the sensor registration of the child node will be attached to
@@ -576,24 +560,24 @@ struct dms_node_sensor_cb {
     unsigned short version;
     /* ID of the device to which the node belongs */
     struct dms_node *owner_node;
-    struct list_head list;
+    ka_list_head_t list;
     /* Number of sensor types */
     unsigned int sensor_object_num;
     unsigned short health;
     /* Sensor instance table */
-    struct list_head sensor_object_table;
+    ka_list_head_t sensor_object_table;
 };
 
 struct dms_dev_sensor_cb {
     /* device id, 0 in AMP mode, 0~3 in 910 SMP mode */
     int deviceid;
     /* Resource lock */
-    struct mutex dms_sensor_mutex;
+    ka_mutex_t dms_sensor_mutex;
     int node_cb_num;
     unsigned short health;
     /* Device data group, initial allocation, call for 1 device (device id = 0x1000) on the host side, if device, AMP is
      * 1 device, 910 SMP is 4 devices */
-    struct list_head dms_node_sensor_cb_list;
+    ka_list_head_t dms_node_sensor_cb_list;
     /* Task scanning process information record */
     struct dms_sensor_scan_fail_record sensor_scan_fail_record;
     /* Sensor timing detection execution time recorder */
@@ -609,10 +593,10 @@ enum {
 };
 
 struct dms_event_dfx_table {
-    atomic_t recv_from_sensor[DMS_EVENT_TYPE_MAX];
-    atomic_t report_to_consumer[DMS_EVENT_TYPE_MAX];
-    struct list_head mask_list;
-    struct mutex lock;
+    ka_atomic_t recv_from_sensor[DMS_EVENT_TYPE_MAX];
+    ka_atomic_t report_to_consumer[DMS_EVENT_TYPE_MAX];
+    ka_list_head_t mask_list;
+    ka_mutex_t lock;
 };
 
 struct dms_event_ctrl {
@@ -624,12 +608,12 @@ struct dms_event_ctrl {
 struct dms_dev_ctrl_block {
     u32 state;
     void *dev_info;
-    atomic_t work_count;
+    ka_atomic_t work_count;
     int sub_node_num;
     struct dms_event_ctrl dev_event_cb;
-    struct mutex node_lock;
+    ka_mutex_t node_lock;
     /* List of registered devices, manage all sub-devices on this device on the system */
-    struct list_head dev_node_list;
+    ka_list_head_t dev_node_list;
     /* Sensor control block of each chip */
     struct dms_dev_sensor_cb dev_sensor_cb;
 };
@@ -640,11 +624,11 @@ struct dms_system_ctrl_block {
     struct task_struct *sensor_scan_task;
     /* Scan task synchronization signal */
     wait_queue_head_t sensor_scan_wait;
-    atomic_t sensor_scan_task_state;
+    ka_atomic_t sensor_scan_task_state;
     /* This flag records whether system suspend, if true, the sensor scan task will not run */
     int sensor_scan_suspend_flag;
 
-    struct timer_list dms_sensor_check_timer;
+    ka_timer_list_t dms_sensor_check_timer;
     /*
      * Device data group, initial allocation, call for 1 device (device id = 0x1000) on the host side,
      * if device, AMP is 1 device, 910 SMP is 4 devices

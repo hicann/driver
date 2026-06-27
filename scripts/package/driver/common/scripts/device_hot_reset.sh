@@ -122,8 +122,8 @@ remove_all_ko()
     do
         log "[INFO]rmmod $module"
         rmmod $module >& /dev/null
-        if [ $? -ne 0 ] && [ "$module" != "host_notify" ] && [ "$module" != "drv_vascend" ] && [ "$module" != "ascend_kernel_open_adapt" ];then
-            log "[ERROR]rmmod failed"
+        if [ $? -ne 0 ] && [ "$module" != "drv_vascend" ] && [ "$module" != "ascend_kernel_open_adapt" ];then
+            log "[ERROR]rmmod $module failed"
             return 1
         fi
     done
@@ -353,10 +353,10 @@ is_support_hot_reset() {
     fi
 }
 
-hot_reset()
+hot_reset_pcie()
 {
     if is_splited;then
-        log "[INFO]hot reset skip by split"
+        log "[INFO]hot reset skip by splited"
         return
     fi
     if [ -e "$hotreset_status_file" ];then
@@ -375,11 +375,11 @@ hot_reset()
     echo "start" > "$hotreset_status_file"
 
     check_user_process >& /dev/null
-        if [ $? -ne 0 ]; then
-                log "[INFO]user process exist, no hot reset"
-                echo "abort" > "$hotreset_status_file"
-                return
-        fi
+    if [ $? -ne 0 ]; then
+        log "[INFO]user process exist, no hot reset"
+        echo "abort" > "$hotreset_status_file"
+        return
+    fi
 
     local allDevs=`get_bdfs "all"`
     log "[INFO]allDevs: $allDevs"
@@ -490,5 +490,70 @@ hot_reset()
     echo "scan_success."$(date +%s) > "$hotreset_status_file"
 }
 
-hot_reset
+hot_reset_ub()
+{
+    if is_splited;then
+        log "[INFO]hot reset skip by splited"
+        return
+    fi
+    if [ -e "$hotreset_status_file" ];then
+        hotreset_status=`cat "$hotreset_status_file"`
+        hotreset_status=${hotreset_status%.*}
+    else
+        hotreset_status="unknown"
+    fi
+    log "[INFO]hotreset_status:"$hotreset_status
+    if [ "$hotreset_status" = "scan_success" ];then
+        log "[INFO]hot reset has already executed"
+        return
+    fi
 
+    log "[INFO]try hot reset device"
+    echo "start" > "$hotreset_status_file"
+
+    check_user_process >& /dev/null
+    if [ $? -ne 0 ]; then
+        log "[INFO]user process exist, no hot reset"
+        echo "abort" > "$hotreset_status_file"
+        return
+    fi
+
+    drvEcho "[INFO]device hot reset start"
+    log "[INFO]1.check sriov and disable sriov when enable"
+
+    log "[INFO]2.performing hot reset"
+    if [ ! -f "${Driver_Install_Path_Param}/driver/tools/upgrade-tool" ]; then
+        log "[INFO]The [${Driver_Install_Path_Param}/driver/tools/upgrade-tool] doesn't exist."
+        echo "abort" > "$hotreset_status_file"
+        return
+    fi
+    ${Driver_Install_Path_Param}/driver/tools/upgrade-tool --device_index -1 --hot_reset >/dev/null 2>&1
+    if [ $? -ne 0 ]; then
+        log "[WARNING]The upgrade-tool command fails to perform a hot reset."
+        echo "abort" > "$hotreset_status_file"
+        return
+    fi
+
+    log "[INFO]3.remove old version modules ko"
+    remove_all_ko
+    if [ $? -ne 0 ]; then
+        log "[WARNING]ko can not be removed"
+        echo "abort" > "$hotreset_status_file"
+        return
+    fi
+
+    drvEcho "[INFO]device hot reset finish"
+    log "[INFO]device hot reset finish"
+    echo "scan_success."$(date +%s) > "$hotreset_status_file"
+}
+
+hot_reset()
+{
+    if [ $feature_hd_connect_is_ub = y ]; then
+        hot_reset_ub
+    else
+        hot_reset_pcie
+    fi
+}
+
+hot_reset

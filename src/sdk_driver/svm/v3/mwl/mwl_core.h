@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2025. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -21,4 +21,3 @@ void mwl_mem_show(struct mwl_ctx *mwl_ctx, ka_seq_file_t *seq);
 void mwl_mem_recycle(struct mwl_ctx *mwl_ctx);
 
 #endif
-

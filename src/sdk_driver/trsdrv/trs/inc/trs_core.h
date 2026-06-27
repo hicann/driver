@@ -44,9 +44,9 @@ enum {
 
 /* set ts_inst_feature_mode force level */
 enum {
-    TRS_SET_TS_INST_MODE_FORCE_LEVEL_NONE = 0,  /* check proc_list and exit proc_list */
-    TRS_SET_TS_INST_MODE_FORCE_LEVEL_PART,      /* check proc_list */
-    TRS_SET_TS_INST_MODE_FORCE_LEVEL_ALL,       /* ignore if any proc exist */
+    TRS_SET_TS_INST_MODE_FORCE_LEVEL_NONE = 0, /* check proc_list and exit proc_list */
+    TRS_SET_TS_INST_MODE_FORCE_LEVEL_PART,     /* check proc_list */
+    TRS_SET_TS_INST_MODE_FORCE_LEVEL_ALL,      /* ignore if any proc exist */
 };
 
 /* stars scenario define soft logic cqe */
@@ -98,8 +98,8 @@ struct trs_notify_reg_map_para {
     unsigned int rudevid;
     unsigned int res_id;
     unsigned int flag;
-    unsigned long va;       /* output */
-    unsigned int len;       /* output */
+    unsigned long va; /* output */
+    unsigned int len; /* output */
     enum res_addr_type res_type;
 };
 
@@ -124,19 +124,19 @@ struct trs_res_info_query {
 
 struct trs_core_adapt_ops {
     ka_module_t *owner;
-    void* (*cq_mem_alloc)(struct trs_id_inst *inst, size_t size);
+    void *(*cq_mem_alloc)(struct trs_id_inst *inst, size_t size);
     void (*cq_mem_free)(struct trs_id_inst *inst, void *vaddr, size_t size);
     void *(*proc_bind_smmu)(struct trs_id_inst *inst);
     void (*proc_unbind_smmu)(void *smmu_inst, int pid);
     int (*ssid_query)(struct trs_id_inst *inst, int *user_visible_flag, int *ssid);
     int (*res_id_check)(struct trs_id_inst *inst, int type, u32 id);
-    int (*get_res_support_proc_num)(struct trs_id_inst *inst, u32 *proc_num); /* not must */
-    int (*id_alloc)(struct trs_id_inst *inst, int type, u32 flag, u32 *id, u32 para); /* not must */
-    int (*id_free)(struct trs_id_inst *inst, int type, u32 id); /* not must */
-    int (*get_sq_id_head_from_hw_cqe)(struct trs_id_inst *inst, void *hw_cqe, u32 *sqid, u32 *sq_head); /* not must */
-    int (*get_stream_id_from_hw_cqe)(struct trs_id_inst *inst, void *hw_cqe, u32 *stream_id); /* not must */
+    int (*get_res_support_proc_num)(struct trs_id_inst *inst, u32 *proc_num);                            /* not must */
+    int (*id_alloc)(struct trs_id_inst *inst, int type, u32 flag, u32 *id, u32 para);                    /* not must */
+    int (*id_free)(struct trs_id_inst *inst, int type, u32 id);                                          /* not must */
+    int (*get_sq_id_head_from_hw_cqe)(struct trs_id_inst *inst, void *hw_cqe, u32 *sqid, u32 *sq_head);  /* not must */
+    int (*get_stream_id_from_hw_cqe)(struct trs_id_inst *inst, void *hw_cqe, u32 *stream_id);            /* not must */
     int (*hw_cqe_to_logic_cqe)(struct trs_id_inst *inst, void *hw_cqe, struct trs_logic_cqe *logic_cqe); /* not must */
-    bool (*is_drop_cqe)(struct trs_id_inst *inst, struct trs_logic_cqe *logic_cqe); /* not must */
+    bool (*is_drop_cqe)(struct trs_id_inst *inst, struct trs_logic_cqe *logic_cqe);                      /* not must */
     int (*notice_ts)(struct trs_id_inst *inst, u8 *msg, u32 len);
     int (*sqcq_reg_map)(struct trs_id_inst *inst, struct trs_sqcq_reg_map_para *para);
     int (*sqcq_reg_unmap)(struct trs_id_inst *inst, struct trs_sqcq_reg_map_para *para);
@@ -145,10 +145,10 @@ struct trs_core_adapt_ops {
     int (*get_res_reg_offset)(struct trs_id_inst *inst, int type, u32 id, u32 *offset);
     int (*get_res_reg_total_size)(struct trs_id_inst *inst, int type, u32 *total_size);
     int (*get_sq_trigger_irq)(struct trs_id_inst *inst, u32 *irq, u32 *irq_type); /* not must */
-    int (*get_trigger_sqid)(struct trs_id_inst *inst, u32 *sqid); /* not must */
-    void (*set_trigger_irq_affinity)(struct trs_id_inst *inst, u32 irq, u32 op); /* not must */
-    int (*request_irq)(struct trs_id_inst *inst, u32 irq_type, u32 irq, void *para,
-        ka_irqreturn_t (*handler)(int irq, void *para));
+    int (*get_trigger_sqid)(struct trs_id_inst *inst, u32 *sqid);                 /* not must */
+    void (*set_trigger_irq_affinity)(struct trs_id_inst *inst, u32 irq, u32 op);  /* not must */
+    int (*request_irq)(
+        struct trs_id_inst *inst, u32 irq_type, u32 irq, void *para, ka_irqreturn_t (*handler)(int irq, void *para));
     void (*free_irq)(struct trs_id_inst *inst, u32 irq_type, u32 irq, void *para);
     void (*set_thread_affinity)(struct trs_id_inst *inst, ka_task_struct_t *thread);
     int (*ts_rpc_call)(struct trs_id_inst *inst, u8 *msg, u32 len);
@@ -181,10 +181,10 @@ enum {
     TRS_CORE_SQ_TRIGGER_WQ_UNBIND_FLAG_BIT = 0,
 };
 
-#define TRS_CORE_SQ_TRIGGER_WQ_UNBIND_FLAG  (1U << TRS_CORE_SQ_TRIGGER_WQ_UNBIND_FLAG_BIT)
+#define TRS_CORE_SQ_TRIGGER_WQ_UNBIND_FLAG (1U << TRS_CORE_SQ_TRIGGER_WQ_UNBIND_FLAG_BIT)
 
-int trs_core_ts_inst_register(struct trs_id_inst *inst, int hw_type, int location, u32 ts_inst_flag,
-    struct trs_core_adapt_ops *ops);
+int trs_core_ts_inst_register(
+    struct trs_id_inst *inst, int hw_type, int location, u32 ts_inst_flag, struct trs_core_adapt_ops *ops);
 void trs_core_ts_inst_unregister(struct trs_id_inst *inst);
 
 int trs_stream_bind_remote_sqcq(struct trs_id_inst *inst, u32 stream_id, u32 sqid, u32 cqid, int host_pid);
@@ -198,7 +198,7 @@ int trs_res_id_ctrl(struct trs_id_inst *inst, int res_type, u32 res_id, u32 cmd)
 
 bool trs_res_is_belong_to_proc(struct trs_id_inst *inst, int pid, int res_type, u32 res_id);
 
-typedef bool (* trs_res_share_by_proc_ops_t)(struct trs_id_inst *inst, int pid, int res_type, u32 res_id);
+typedef bool (*trs_res_share_by_proc_ops_t)(struct trs_id_inst *inst, int pid, int res_type, u32 res_id);
 void trs_res_share_proc_ops_register(int res_type, trs_res_share_by_proc_ops_t func);
 int trs_set_ts_inst_feature_mode(struct trs_id_inst *inst, u32 mode, u32 force);
 bool trs_check_ts_inst_has_proc(struct trs_id_inst *inst);
@@ -215,4 +215,3 @@ int trs_notice_check_proc_recycle(struct trs_id_inst *inst, int pid);
 int trs_core_init_module(void);
 void trs_core_exit_module(void);
 #endif
-

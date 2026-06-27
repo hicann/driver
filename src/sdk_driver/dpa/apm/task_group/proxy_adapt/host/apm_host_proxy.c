@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2025. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -66,8 +66,9 @@ static int apm_host_proxy_msg_bind(int master_tgid, int slave_tgid, struct apm_c
 
     ret = apm_device_slave_proxy_domain_bind(slave_tgid, master_tgid, para);
     if (ret != 0) {
-        apm_err("Slave bind failed. (ret=%d; devid=%u; proc_type=%d; mode=%d; slave_pid=%d; master_pid=%d)\n",
-            ret, para->devid, para->proc_type, para->mode, para->slave_pid, para->master_pid);
+        apm_err(
+            "Slave bind failed. (ret=%d; devid=%u; proc_type=%d; mode=%d; slave_pid=%d; master_pid=%d)\n", ret,
+            para->devid, para->proc_type, para->mode, para->slave_pid, para->master_pid);
         return ret;
     }
 
@@ -76,8 +77,9 @@ static int apm_host_proxy_msg_bind(int master_tgid, int slave_tgid, struct apm_c
         (void)apm_device_slave_proxy_domain_unbind(slave_tgid, para);
         /* The master may have exited. To avoid residual ctx of the slave, destroy the slave ctx. */
         apm_device_slave_proxy_domain_task_exit(para->devid, slave_tgid);
-        apm_err("Master bind failed. (ret=%d; devid=%u; proc_type=%d; mode=%d; slave_pid=%d; master_pid=%d)\n",
-            ret, para->devid, para->proc_type, para->mode, para->slave_pid, para->master_pid);
+        apm_err(
+            "Master bind failed. (ret=%d; devid=%u; proc_type=%d; mode=%d; slave_pid=%d; master_pid=%d)\n", ret,
+            para->devid, para->proc_type, para->mode, para->slave_pid, para->master_pid);
         return ret;
     }
 
@@ -90,21 +92,24 @@ static int apm_host_proxy_msg_unbind(int master_tgid, int slave_tgid, struct apm
 
     ret = apm_master_domain_pre_unbind(master_tgid, para);
     if (ret != 0) {
-        apm_warn("Master pre unbind warn. (ret=%d; devid=%u; proc_type=%d; mode=%d; slave_pid=%d; master_pid=%d)\n",
-            ret, para->devid, para->proc_type, para->mode, para->slave_pid, para->master_pid);
+        apm_warn(
+            "Master pre unbind warn. (ret=%d; devid=%u; proc_type=%d; mode=%d; slave_pid=%d; master_pid=%d)\n", ret,
+            para->devid, para->proc_type, para->mode, para->slave_pid, para->master_pid);
         return ret;
     }
 
     ret = apm_master_domain_del_slave(para, master_tgid, slave_tgid);
     if (ret != 0) { /* when fails, release other resources to avoid residual resources. */
-        apm_warn("Master unbind warn. (ret=%d; devid=%u; proc_type=%d; mode=%d; slave_pid=%d; master_pid=%d)\n",
-            ret, para->devid, para->proc_type, para->mode, para->slave_pid, para->master_pid);
+        apm_warn(
+            "Master unbind warn. (ret=%d; devid=%u; proc_type=%d; mode=%d; slave_pid=%d; master_pid=%d)\n", ret,
+            para->devid, para->proc_type, para->mode, para->slave_pid, para->master_pid);
     }
 
     ret = apm_device_slave_proxy_domain_unbind(slave_tgid, para);
     if (ret != 0) {
-        apm_warn("Slave unbind warn. (ret=%d; devid=%u; proc_type=%d; mode=%d; slave_pid=%d; master_pid=%d)\n",
-            ret, para->devid, para->proc_type, para->mode, para->slave_pid, para->master_pid);
+        apm_warn(
+            "Slave unbind warn. (ret=%d; devid=%u; proc_type=%d; mode=%d; slave_pid=%d; master_pid=%d)\n", ret,
+            para->devid, para->proc_type, para->mode, para->slave_pid, para->master_pid);
     }
 
     return 0;
@@ -128,8 +133,8 @@ static int apm_host_proxy_msg_query_tast_group_exit_stage(u32 udevid, struct apm
 {
     struct apm_msg_query_task_group_exit_stage *msg = (struct apm_msg_query_task_group_exit_stage *)(void *)header;
 
-    return apm_master_domain_get_tast_group_exit_stage(msg->master_tgid, msg->slave_tgid, udevid,
-        msg->proc_type_bitmap, &msg->exit_stage);
+    return apm_master_domain_get_tast_group_exit_stage(
+        msg->master_tgid, msg->slave_tgid, udevid, msg->proc_type_bitmap, &msg->exit_stage);
 }
 
 static int apm_host_proxy_msg_slave_destroy(u32 udevid, struct apm_msg_header *header)
@@ -156,8 +161,9 @@ static int apm_host_proxy_msg_handle(u32 udevid, struct apm_msg_header *header)
     /* master is in local, tgid trans to vpid */
     ret = apm_master_domain_tgid_to_pid(cfg->master_tgid, &para->master_pid);
     if (ret != 0) {
-        apm_warn("Master tgid to pid warn. (ret=%d; devid=%u; proc_type=%d; mode=%d; slave_pid=%d; master_pid=%d)\n",
-            ret, para->devid, para->proc_type, para->mode, para->slave_pid, para->master_pid);
+        apm_warn(
+            "Master tgid to pid warn. (ret=%d; devid=%u; proc_type=%d; mode=%d; slave_pid=%d; master_pid=%d)\n", ret,
+            para->devid, para->proc_type, para->mode, para->slave_pid, para->master_pid);
         return ret;
     }
 
@@ -187,8 +193,8 @@ static int apm_host_proxy_notice_device_bind_unbind(enum apm_msg_type msg_type, 
     return apm_msg_send(cfg->para.devid, &msg.header, sizeof(msg));
 }
 
-static int apm_master_proxy_bind_unbind(struct master_ctx *m_ctx, enum apm_msg_type msg_type, int master_tgid,
-    int slave_tgid, struct apm_cmd_bind *para)
+static int apm_master_proxy_bind_unbind(
+    struct master_ctx *m_ctx, enum apm_msg_type msg_type, int master_tgid, int slave_tgid, struct apm_cmd_bind *para)
 {
     struct apm_task_group_cfg cfg;
     int ret;
@@ -205,8 +211,9 @@ static int apm_master_proxy_bind_unbind(struct master_ctx *m_ctx, enum apm_msg_t
             cfg.para.devid = i;
             ret = apm_host_proxy_notice_device_bind_unbind(msg_type, &cfg);
             if (ret != 0) {
-                apm_warn("Notice failed. (ret=%d; udevid=%u; msg=%d; slave_pid=%d; master_pid=%d)\n",
-                    ret, i, msg_type, para->slave_pid, para->master_pid);
+                apm_warn(
+                    "Notice failed. (ret=%d; udevid=%u; msg=%d; slave_pid=%d; master_pid=%d)\n", ret, i, msg_type,
+                    para->slave_pid, para->master_pid);
             }
         }
         return 0;
@@ -255,10 +262,15 @@ static void apm_master_proxy_destroy(struct master_ctx *m_ctx, int tgid)
     }
 }
 
-static int apm_master_proxy_query_slave_meminfo(u32 udevid, int slave_tgid, processMemType_t type, u64 *size)
+static int apm_master_proxy_query_slave_meminfo(
+    u32 udevid, int slave_tgid, processType_t process_type, processMemType_t type, u64 *size)
 {
     struct apm_msg_query_slave_meminfo msg = {0};
     int ret;
+
+    if ((type == PROC_MEM_TYPE_ALL) && (process_type != PROCESS_CP1)) {
+        return -EOPNOTSUPP;
+    }
 
     apm_msg_fill_header(&msg.header, APM_MSG_TYPE_QUERY_SLAVE_MEMINFO);
     msg.udevid = udevid;
@@ -285,16 +297,18 @@ static struct apm_master_domain_cmd_ops master_domain_cmd_ops = {
 
 int apm_host_proxy_init(void)
 {
-    apm_register_msg_handle(APM_MSG_TYPE_SLAVE_DESTROY, (u32)sizeof(struct apm_msg_slave_destroy),
-        apm_host_proxy_msg_slave_destroy);
+    apm_register_msg_handle(
+        APM_MSG_TYPE_SLAVE_DESTROY, (u32)sizeof(struct apm_msg_slave_destroy), apm_host_proxy_msg_slave_destroy);
     apm_register_msg_handle(APM_MSG_TYPE_BIND, (u32)sizeof(struct apm_msg_bind_unbind), apm_host_proxy_msg_handle);
     apm_register_msg_handle(APM_MSG_TYPE_UNBIND, (u32)sizeof(struct apm_msg_bind_unbind), apm_host_proxy_msg_handle);
-    apm_register_msg_handle(APM_MSG_TYPE_QUERY_MASTER, (u32)sizeof(struct apm_msg_query_master),
-        apm_host_proxy_msg_query_master);
-    apm_register_msg_handle(APM_MSG_TYPE_SET_SLAVE_STATUS, (u32)sizeof(struct apm_msg_set_slave_status),
+    apm_register_msg_handle(
+        APM_MSG_TYPE_QUERY_MASTER, (u32)sizeof(struct apm_msg_query_master), apm_host_proxy_msg_query_master);
+    apm_register_msg_handle(
+        APM_MSG_TYPE_SET_SLAVE_STATUS, (u32)sizeof(struct apm_msg_set_slave_status),
         apm_host_proxy_msg_set_slave_status);
-    apm_register_msg_handle(APM_MSG_TYPE_QUERY_TASK_GROUP_EXIT_STAGE,
-        (u32)sizeof(struct apm_msg_query_task_group_exit_stage), apm_host_proxy_msg_query_tast_group_exit_stage);
+    apm_register_msg_handle(
+        APM_MSG_TYPE_QUERY_TASK_GROUP_EXIT_STAGE, (u32)sizeof(struct apm_msg_query_task_group_exit_stage),
+        apm_host_proxy_msg_query_tast_group_exit_stage);
 
     apm_master_domain_ops_register(&proxy_master_ops);
     apm_master_domain_cmd_ops_register(&master_domain_cmd_ops);
@@ -303,8 +317,5 @@ int apm_host_proxy_init(void)
 }
 DECLAER_FEATURE_AUTO_INIT(apm_host_proxy_init, FEATURE_LOADER_STAGE_3);
 
-void apm_host_proxy_uninit(void)
-{
-}
+void apm_host_proxy_uninit(void) {}
 DECLAER_FEATURE_AUTO_UNINIT(apm_host_proxy_uninit, FEATURE_LOADER_STAGE_3);
-

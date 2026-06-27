@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2025-2025. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -31,17 +31,17 @@ enum accelerator_core_type {
 };
 
 /* shared memory distribution: 0:statue 1-25:AIC 26-75:AIV */
-#define TRS_AI_CORE_OFFSET             1U
-#define TRS_AI_VECTOR_OFFSET           26U
-#define TRS_AI_CORE_MAX_NUM            25U
-#define TRS_AI_VECTOR_MAX_NUM          50U
+#define TRS_AI_CORE_OFFSET 1U
+#define TRS_AI_VECTOR_OFFSET 26U
+#define TRS_AI_CORE_MAX_NUM 25U
+#define TRS_AI_VECTOR_MAX_NUM 50U
 
-#define TRS_UTIL_SLEEP_TIME            50U
-#define TRS_CORE_UTILSTORE_SIZE        76U
+#define TRS_UTIL_SLEEP_TIME 50U
+#define TRS_CORE_UTILSTORE_SIZE 76U
 
-#define TRS_CORE_UTIL_UNUSE_STATUS     0xED /* core does not belong to this device. */
-#define TRS_CORE_UTIL_DAMAGE_STATUS    0xEE /* core damage */
-#define TRS_CORE_UTIL_INVALID_STATUS   0xEF
+#define TRS_CORE_UTIL_UNUSE_STATUS 0xED  /* core does not belong to this device. */
+#define TRS_CORE_UTIL_DAMAGE_STATUS 0xEE /* core damage */
+#define TRS_CORE_UTIL_INVALID_STATUS 0xEF
 
 #define TRS_CORE_UTIL_IPC_CONFILCT_RET 10U /* conflict witth ipc */
 
@@ -64,7 +64,7 @@ static void trs_get_core_info(u8 *base, enum accelerator_core_type type, u32 *co
 {
     switch (type) {
         case TRS_AICUBE:
-            *core_num  = TRS_AI_CORE_MAX_NUM;
+            *core_num = TRS_AI_CORE_MAX_NUM;
             *core_base = base + TRS_AI_CORE_OFFSET;
             break;
         case TRS_AIV:
@@ -78,14 +78,11 @@ static void trs_get_core_info(u8 *base, enum accelerator_core_type type, u32 *co
         default:
             *core_num = 0; // The value 0 is returned, and no operation is performed.
             *core_base = base;
-            break; 
+            break;
     }
 }
 
-static inline bool trs_util_status_is_valid(u8 *status)
-{
-    return (*status == 0);
-}
+static inline bool trs_util_status_is_valid(u8 *status) { return (*status == 0); }
 
 static int trs_calculate_util(u8 *base, enum accelerator_core_type type, u32 *utilization)
 {
@@ -115,7 +112,8 @@ static int trs_calculate_util(u8 *base, enum accelerator_core_type type, u32 *ut
 
     *utilization = (unuse_num == core_num) ? 0 : (core_ans / (core_num - unuse_num));
 
-    trs_debug("Core util info. (util=%u; core_num=%u; unuse_num=%u; type=%d)\n", *utilization, core_num, unuse_num, type);
+    trs_debug(
+        "Core util info. (util=%u; core_num=%u; unuse_num=%u; type=%d)\n", *utilization, core_num, unuse_num, type);
 
     return 0;
 }
@@ -129,15 +127,9 @@ static void trs_util_result_fill(struct udis_dev_info *core_res, u32 utilization
     core_res->last_update_time = ktime_get_raw_ns() / KA_NSEC_PER_MSEC;
 }
 
-static inline void trs_init_util_status(u8 *status)
-{
-    *status = TRS_CORE_UTIL_INVALID_STATUS;
-}
+static inline void trs_init_util_status(u8 *status) { *status = TRS_CORE_UTIL_INVALID_STATUS; }
 
-static inline bool trs_util_status_is_conflict(u8 *status)
-{
-    return (*status == TRS_CORE_UTIL_IPC_CONFILCT_RET);
-}
+static inline bool trs_util_status_is_conflict(u8 *status) { return (*status == TRS_CORE_UTIL_IPC_CONFILCT_RET); }
 
 static int trs_notice_tsfw_get_util_start(struct trs_id_inst *inst, enum accelerator_core_type type, u8 *base)
 {
@@ -148,11 +140,12 @@ static int trs_notice_tsfw_get_util_start(struct trs_id_inst *inst, enum acceler
         trs_debug("Start not success. (type=%d; ret=%d; status=%u)\n", type, ret, *base);
         ret = -ENODATA;
     }
-    
+
     return ret;
 }
 
-static int _trs_get_accelerator_util(u32 devid, enum accelerator_core_type type, u8 *base, struct udis_dev_info *udis_info)
+static int _trs_get_accelerator_util(
+    u32 devid, enum accelerator_core_type type, u8 *base, struct udis_dev_info *udis_info)
 {
     struct trs_id_inst inst = {.devid = devid, .tsid = 0};
     u32 utilization;
@@ -179,7 +172,7 @@ static int _trs_get_accelerator_util(u32 devid, enum accelerator_core_type type,
         trs_warn("Calculate util not success. (devid=%u; type=%d; ret=%d)\n", devid, type, ret);
         return ret;
     }
- 
+
     trs_util_result_fill(udis_info, utilization);
 
     ret = hal_kernel_set_udis_info(devid, UDIS_MODULE_TS, udis_info);
@@ -192,12 +185,12 @@ static int _trs_get_accelerator_util(u32 devid, enum accelerator_core_type type,
 
 static int trs_get_accelerator_util(u32 devid, enum accelerator_core_type type, struct udis_dev_info *udis_info)
 {
-    void __iomem *base = NULL;
+    void __ka_mm_iomem *base = NULL;
     size_t size;
     u64 addr;
     int ret;
 
-    if ((devid >= TRS_DEV_MAX_NUM) || (udis_info == NULL))  {
+    if ((devid >= TRS_DEV_MAX_NUM) || (udis_info == NULL)) {
         trs_err("Invalid value. (devid=%u; type=%d)\n", devid, type);
         return -EINVAL;
     }
@@ -209,17 +202,17 @@ static int trs_get_accelerator_util(u32 devid, enum accelerator_core_type type, 
     }
 
     base = ka_mm_ioremap(addr, size);
-    if (base == NULL)  {
+    if (base == NULL) {
         trs_warn("Ioremap not success. (devid=%u; type=%d)\n", devid, type);
         return -ENODATA;
     }
 
     ka_task_mutex_lock(&g_util_mutex[devid]);
     ret = _trs_get_accelerator_util(devid, type, (u8 *)base, udis_info);
-    if (ret != 0)  {
+    if (ret != 0) {
         trs_warn("Get accelerator util not success. (devid=%u; type=%d)\n", devid, type);
     }
-    ka_task_mutex_unlock(&g_util_mutex[devid]);  
+    ka_task_mutex_unlock(&g_util_mutex[devid]);
 
     ka_mm_iounmap(base);
 
@@ -277,11 +270,7 @@ void trs_accelerator_util_uninit(void)
     trs_info("Trs accelerator util uninit succeed.\n");
 }
 #else
-void trs_accelerator_util_init(void)
-{
-}
+void trs_accelerator_util_init(void) {}
 
-void trs_accelerator_util_uninit(void)
-{
-}
+void trs_accelerator_util_uninit(void) {}
 #endif

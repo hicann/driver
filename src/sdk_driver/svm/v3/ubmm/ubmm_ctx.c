@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2025. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -23,6 +23,7 @@
 #include "pbl_uda.h"
 #include "pbl_soc_res.h"
 #include "pbl_runenv_config.h"
+#include "pbl_ubmm.h"
 #include "dpa_kernel_interface.h"
 
 #include "svm_kern_log.h"
@@ -31,9 +32,8 @@
 #include "framework_dev.h"
 #include "framework_task.h"
 #include "dbi_kern.h"
-#include "ubmm_uba.h"
-#include "ubmm_map.h"
 #include "ubmm_core.h"
+#include "ubmm_usage_counter.h"
 #include "ubmm_ctx.h"
 
 static u32 ubmm_dev_feature_id;
@@ -59,61 +59,13 @@ struct ubmm_ctx *ubmm_ctx_get(u32 udevid, int tgid)
     return ctx;
 }
 
-void ubmm_ctx_put(struct ubmm_ctx *ctx)
-{
-    svm_task_ctx_put(ctx->task_ctx);
-}
+void ubmm_ctx_put(struct ubmm_ctx *ctx) { svm_task_ctx_put(ctx->task_ctx); }
 
 static void ubmm_ctx_init(struct ubmm_ctx *ctx)
 {
+    ctx->ubdev_task_added = false;
     ka_hash_init(ctx->htable);
     ka_task_mutex_init(&ctx->mutex);
-}
-
-static int ubmm_query_uba_info(u32 udevid, u64 *uba_base, u64 *uba_size)
-{
-    struct soc_reg_base_info io_base;
-    int ret;
-
-    ret = soc_resmng_dev_get_reg_base(udevid, "UBA_BASE", &io_base);
-    if (ret != 0) {
-        return -EAGAIN;
-    }
-
-    *uba_base = (u64)io_base.io_base;
-    *uba_size = (u64)io_base.io_base_size;
-
-    return 0;
-}
-
-static int ubmm_init_uba(u32 udevid)
-{
-    u64 uba_base, uba_size;
-    int ret;
-
-    ret = ubmm_query_uba_info(udevid, &uba_base, &uba_size);
-    if (ret != 0) {
-        return ret;
-    }
-
-    return ubmm_uba_pool_create(uba_base, uba_size);
-}
-
-static int ubmm_init_dev_res(u32 udevid)
-{
-    int ret;
-
-    ret = ubmm_init_map(udevid);
-    if (ret != 0) {
-        return ret;
-    }
-
-    ret = ubmm_init_uba(udevid);
-    if (ret != 0) {
-        ubmm_uninit_map(udevid);
-    }
-
-    return ret;
 }
 
 /* return -EAGAIN: UBMEM has not been configured. */
@@ -137,6 +89,14 @@ static int _ubmm_init_dev(u32 udevid)
     return 0;
 }
 
+static void _ubmm_uninit_dev(u32 udevid)
+{
+    if (g_ubmm_is_inited) {
+        ubmm_uninit_dev_res(udevid);
+        g_ubmm_is_inited = false;
+    }
+}
+
 static void ubmm_try_init_dev(u32 udevid)
 {
     static KA_TASK_DEFINE_MUTEX(mutex);
@@ -146,8 +106,13 @@ static void ubmm_try_init_dev(u32 udevid)
     if (!g_ubmm_is_inited && g_ubmm_is_need) {
         ka_task_mutex_lock(&mutex);
         if (try_cnt == 0) {
+            u32 udevid_ex = 0;
+
+            (void)uda_get_cur_ns_udevids(&udevid_ex, 1);
+            udevid_ex =
+                (udevid == uda_get_host_id()) ? udevid_ex : udevid; /* Not host_id real dev, change to first udevid. */
             /* trigger ub dev adapt to update uba addr */
-            ret = uda_dev_ctrl(udevid, UDA_CTRL_UPDATE_P2P_ADDR);
+            ret = uda_dev_ctrl(udevid_ex, UDA_CTRL_UPDATE_P2P_ADDR);
             if (ret == 0) {
                 (void)_ubmm_init_dev(udevid);
             }
@@ -204,8 +169,7 @@ int ubmm_init_task(u32 udevid, int tgid, void *start_time)
         return -EINVAL;
     }
 
-    ret = svm_task_set_feature_priv(task_ctx, ubmm_task_feature_id, "ubmm",
-        (void *)ctx, ubmm_ctx_release);
+    ret = svm_task_set_feature_priv(task_ctx, ubmm_task_feature_id, "ubmm", (void *)ctx, ubmm_ctx_release);
     if (ret != 0) {
         svm_task_ctx_put(task_ctx);
         svm_vfree(ctx);
@@ -221,6 +185,7 @@ DECLAER_FEATURE_AUTO_INIT_TASK(ubmm_init_task, FEATURE_LOADER_STAGE_2);
 static void ubmm_destroy_task(struct ubmm_ctx *ctx)
 {
     svm_task_set_feature_invalid(ctx->task_ctx, ubmm_task_feature_id);
+    ubmm_usage_counter_recycle(ctx);
     ubmm_node_recycle(ctx);
     svm_task_ctx_put(ctx->task_ctx); /* with init pair */
 }
@@ -310,6 +275,22 @@ int ubmm_init_dev(u32 udevid)
 }
 DECLAER_FEATURE_AUTO_INIT_DEV(ubmm_init_dev, FEATURE_LOADER_STAGE_2);
 
+int ubmm_uninit_dev(u32 udevid)
+{
+    if (dbl_get_deployment_mode() == DBL_HOST_DEPLOYMENT) {
+        if (udevid != uda_get_host_id()) {
+            return 0;
+        }
+    }
+
+    if (g_ubmm_is_inited) {
+        _ubmm_uninit_dev(udevid);
+    }
+
+    return 0;
+}
+DECLAER_FEATURE_AUTO_UNINIT_DEV(ubmm_uninit_dev, FEATURE_LOADER_STAGE_2);
+
 int ubmm_init(void)
 {
     ubmm_dev_feature_id = svm_dev_obtain_feature_id();
@@ -318,10 +299,5 @@ int ubmm_init(void)
 }
 DECLAER_FEATURE_AUTO_INIT(ubmm_init, FEATURE_LOADER_STAGE_2);
 
-void ubmm_uninit(void)
-{
-    g_ubmm_is_inited = false;
-    ubmm_uba_pool_destroy();
-}
+void ubmm_uninit(void) { g_ubmm_is_inited = false; }
 DECLAER_FEATURE_AUTO_UNINIT(ubmm_uninit, FEATURE_LOADER_STAGE_2);
-

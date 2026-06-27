@@ -11,9 +11,26 @@
  * GNU General Public License for more details.
  */
 
+#include "ka_task_pub.h"
+#include "ka_compiler_pub.h"
+#include "ka_pci_pub.h"
+#include "ka_barrier_pub.h"
 #include "dvt.h"
 #include "vfio_ops.h"
 #include "mmio.h"
+#include "priv_ops.h"
+
+#define VF_BAR2_SPARSE_SIZE         5
+#define VF_BAR2_STARS_OFFSET        0x8000
+#define VF_BAR2_STARS_SIZE          0x2000000
+#define VF_BAR2_TS_DOORBELL_OFFSET  0x2008000
+#define VF_BAR2_TS_DOORBELL_SIZE    0x40000
+#define VF_BAR2_HWTS_OFFSET         0x2408000
+#define VF_BAR2_HWTS_SIZE           0x10000
+#define VF_BAR2_SOC_DOORBELL_OFFSET 0x2808000
+#define VF_BAR2_SOC_DOORBELL_SIZE   0x1000
+#define VF_BAR2_PARA_OFFSET         0x2908000
+#define VF_BAR2_PARA_SIZE           0x4000
 
 #define DVT_MMIO_BAR0_SIZE_910B 0x40000000
 #define DVT_MMIO_BAR2_SIZE_910B 0x20000000
@@ -25,9 +42,6 @@
 #define DVT_MMIO_BAR2_SIZE_950 0x20000000
 #define DVT_MMIO_BAR4_SIZE_950 0x1000000000
 
-#define reg_is_mmio(dvt, reg)                                 \
-    ((reg) >= 0 && (reg) < (dvt)->device_info.mmio_size)
-
 struct mmio_device_init_info {
     unsigned short device;
     unsigned int cfg_space_size;
@@ -35,111 +49,13 @@ struct mmio_device_init_info {
     unsigned int mmio_bar;
 };
 
-int hw_dvt_doorbell_write(struct hw_vdavinci *vdavinci, unsigned int offset,
-                          void *p_data, unsigned int bytes);
-static struct hw_dvt_mmio_info mmio_info_table[MMIO_INFO_TYPE_MAX] = {
-    {DOORBELL, 0, DOORBELL_MAX * DOORBELL_SIZE, 0, DOORBELL_SIZE, NULL, hw_dvt_doorbell_write},
-};
-
 STATIC const struct mmio_device_init_info mmio_init_info[] = {
-    { PCI_DEVICE_ID_ASCEND910B, PCI_CFG_SPACE_EXP_SIZE, DVT_MMIO_BAR0_SIZE_910B, 0 },
-    { PCI_DEVICE_ID_ASCEND910_93, PCI_CFG_SPACE_EXP_SIZE, DVT_MMIO_BAR0_SIZE_910_93, 0 },
-    { PCI_DEVICE_ID_ASCEND950, PCI_CFG_SPACE_EXP_SIZE, DVT_MMIO_BAR0_SIZE_950, 0 },
-    { PCI_ANY_ID, PCI_CFG_SPACE_EXP_SIZE, DVT_MMIO_BAR0_SIZE, 0 },
+    { PCI_DEVICE_ID_ASCEND910B, KA_PCI_CFG_SPACE_EXP_SIZE, DVT_MMIO_BAR0_SIZE_910B, 0 },
+    { PCI_DEVICE_ID_ASCEND910_93, KA_PCI_CFG_SPACE_EXP_SIZE, DVT_MMIO_BAR0_SIZE_910_93, 0 },
+    { PCI_DEVICE_ID_ASCEND950, KA_PCI_CFG_SPACE_EXP_SIZE, DVT_MMIO_BAR0_SIZE_950, 0 },
+    { KA_PCI_ANY_ID, KA_PCI_CFG_SPACE_EXP_SIZE, DVT_MMIO_BAR0_SIZE, 0 },
     {}
 };
-
-STATIC inline u64 hw_vdavinci_get_bar_gpa(struct hw_vdavinci *vdavinci, int bar)
-{
-    /* We are 64bit bar. */
-    return (*(u64 *)(vdavinci->cfg_space.config + bar)) &
-                    PCI_BASE_ADDRESS_MEM_MASK;
-}
-
-STATIC unsigned int hw_vdavinci_gpa_to_mmio_offset(struct hw_vdavinci *vdavinci, u64 gpa)
-{
-    return gpa - hw_vdavinci_get_bar_gpa(vdavinci, PCI_BASE_ADDRESS_0);
-}
-
-STATIC struct hw_dvt_mmio_info *find_mmio_info(struct hw_dvt *dvt, u32 offset)
-{
-    int i;
-
-    for (i = 0; i < MMIO_INFO_TYPE_MAX; i++) {
-        if (offset >= mmio_info_table[i].offset && offset < mmio_info_table[i].end) {
-            return mmio_info_table + i;
-        }
-    }
-    return NULL;
-}
-
-STATIC int hw_vdavinci_mmio_reg_read(struct hw_vdavinci *vdavinci, u32 offset,
-                                     void *pdata, unsigned int bytes)
-{
-    struct hw_dvt_mmio_info *info = find_mmio_info(vdavinci->dvt, offset);
-
-    if (unlikely(info == NULL || info->read == NULL)) {
-        vascend_err(vdavinci_to_dev(vdavinci), "untracked MMIO read, "
-            "offset: %08x, len: %d, vid: %u\n", offset, bytes, vdavinci->id);
-        return 0;
-    }
-
-    return info->read(vdavinci, offset, pdata, bytes);
-}
-
-STATIC int hw_vdavinci_mmio_reg_write(struct hw_vdavinci *vdavinci, u32 offset,
-                                      void *pdata, unsigned int bytes)
-{
-    struct hw_dvt_mmio_info *info = find_mmio_info(vdavinci->dvt, offset);
-
-    if (unlikely(info == NULL || info->write == NULL)) {
-        vascend_err(vdavinci_to_dev(vdavinci), "untracked MMIO write, "
-            "offset: %08x, len: %d, vid: %u\n", offset, bytes, vdavinci->id);
-        return 0;
-    }
-
-    return info->write(vdavinci, offset, pdata, bytes);
-}
-
-STATIC int hw_vdavinci_emulate_mmio_rw(struct hw_vdavinci *vdavinci, uint64_t pa,
-                                void *buf, unsigned int bytes, dvt_mmio_func fn)
-{
-    int ret = -EINVAL;
-    unsigned int offset = hw_vdavinci_gpa_to_mmio_offset(vdavinci, pa);
-
-    mutex_lock(&vdavinci->vdavinci_lock);
-    if (unlikely(bytes > 8)) {
-        vascend_err(vdavinci_to_dev(vdavinci), "failed to emulate MMIO "
-            "read %08x len %d, vid %u\n", offset, bytes, vdavinci->id);
-        goto OUT;
-    }
-
-    if (unlikely(!reg_is_mmio(vdavinci->dvt, offset) ||
-        !reg_is_mmio(vdavinci->dvt, offset + bytes - 1))) {
-        vascend_err(vdavinci_to_dev(vdavinci), "failed to emulate MMIO "
-            "read %08x len %d, vid %u\n", offset, bytes, vdavinci->id);
-        goto OUT;
-    }
-
-    ret = fn(vdavinci, offset, buf, bytes);
-OUT:
-    mutex_unlock(&vdavinci->vdavinci_lock);
-    return ret;
-}
-
-int hw_vdavinci_emulate_mmio_read(struct hw_vdavinci *vdavinci, uint64_t pa,
-                                  void *buf, unsigned int bytes)
-{
-    return hw_vdavinci_emulate_mmio_rw(vdavinci, pa, buf, bytes,
-                    hw_vdavinci_mmio_reg_read);
-}
-
-int hw_vdavinci_emulate_mmio_write(struct hw_vdavinci *vdavinci, uint64_t pa,
-                                   void *buf, unsigned int bytes)
-{
-    return hw_vdavinci_emulate_mmio_rw(vdavinci, pa, buf, bytes,
-                    hw_vdavinci_mmio_reg_write);
-}
 
 STATIC void hw_vdavinci_reset_sparse_mmio(struct hw_vdavinci *vdavinci,
                                           struct vdavinci_mapinfo *mmio_map_info)
@@ -187,8 +103,8 @@ STATIC int hw_vdavinci_mmio_check_sparse(struct hw_vdavinci *vdavinci)
         map = &vdavinci->mmio.mem_sparse.map_info[i];
         if (map->offset == 0 || map->offset > vdavinci->type->bar4_size ||
             map->size == 0 || map->size > vdavinci->type->bar4_size - map->offset ||
-            !PAGE_ALIGNED(map->offset) || !PAGE_ALIGNED(map->size) ||
-            !PAGE_ALIGNED(map->paddr)) {
+            !KA_MM_PAGE_ALIGNED(map->offset) || !KA_MM_PAGE_ALIGNED(map->size) ||
+            !KA_MM_PAGE_ALIGNED(map->paddr)) {
             vascend_err(vdavinci_to_dev(vdavinci),
                         "check sparse failed: invalid map: offset:%lx size:%lx paddr:%llx, bar4_size:%lx\n",
                         map->offset, map->size, map->paddr, vdavinci->type->bar4_size);
@@ -226,17 +142,12 @@ STATIC int hw_dvt_vdavinci_getmapinfo(struct hw_vdavinci *vdavinci)
     struct vdavinci_type tp;
     struct hw_dvt *dvt = vdavinci->dvt;
 
-    if (dvt->vdavinci_priv->ops == NULL ||
-        dvt->vdavinci_priv->ops->vdavinci_getmapinfo == NULL) {
-        return -EINVAL;
-    }
     ret = init_vdavinci_type(vdavinci->type, &tp);
     if (ret != 0) {
         return ret;
     }
-    ret = dvt->vdavinci_priv->ops->vdavinci_getmapinfo(&vdavinci->dev, &tp,
-                                                       VFIO_PCI_BAR4_REGION_INDEX,
-                                                       &vdavinci->mmio.mem_sparse);
+    ret = vdavinci_priv_vdev_getmapinfo(vdavinci, &tp, VFIO_PCI_BAR4_REGION_INDEX,
+                                        &vdavinci->mmio.mem_sparse);
     if (ret != 0) {
         vascend_err(dvt->vdavinci_priv->dev,
                     "get map info failed, vid:%u type bar4_size:%lx ret:%d\n",
@@ -247,31 +158,30 @@ STATIC int hw_dvt_vdavinci_getmapinfo(struct hw_vdavinci *vdavinci)
     return 0;
 }
 
-STATIC int hw_dvt_vdavinci_putmapinfo(struct hw_vdavinci *vdavinci)
-{
-    struct hw_dvt *dvt = vdavinci->dvt;
-
-    if (dvt->vdavinci_priv->ops && dvt->vdavinci_priv->ops->vdavinci_putmapinfo) {
-        return dvt->vdavinci_priv->ops->vdavinci_putmapinfo(&vdavinci->dev);
-    }
-
-    return -EINVAL;
-}
-
-STATIC void hw_vdavinci_sparse_mmio_uninit(struct vdavinci_mapinfo *mmio_map_info)
+STATIC void hw_vdavinci_sparse_mmio_uninit(struct hw_vdavinci *vdavinci,
+                                           struct vdavinci_mapinfo *mmio_map_info)
 {
     u64 i = 0;
+    ka_pci_dev_t *pdev = NULL;
     struct vdavinci_bar_map *map;
 
     for (i = 0; i < mmio_map_info->num; i++) {
         map = &mmio_map_info->map_info[i];
         if (map->map_type == MAP_TYPE_BACKEND && map->vaddr) {
-            vfree(map->vaddr);
+            ka_mm_vfree(map->vaddr);
             map->vaddr = NULL;
         }
     }
 
     mmio_map_info->num = 0;
+    if (mmio_map_info->io_addr != NULL) {
+        pdev = ka_container_of(vdavinci_resource_dev(vdavinci), ka_pci_dev_t, dev);
+        if (pdev == NULL) {
+            return;
+        }
+        ka_mm_pci_iounmap(pdev, mmio_map_info->io_addr);
+        mmio_map_info->io_addr = NULL;
+    }
 }
 
 #ifdef DAVINCI_TEST
@@ -308,7 +218,7 @@ int hw_vdavinci_310_mmio_init(struct hw_vdavinci *vdavinci)
     vdavinci->mmio.bar4_sparse.map_info[0].size = vdavinci->type->bar4_size;
 
     vdavinci->mmio.bar0_sparse.map_info[0].vaddr =
-        vzalloc(vdavinci->mmio.bar0_sparse.map_info[0].size);
+        ka_mm_vzalloc(vdavinci->mmio.bar0_sparse.map_info[0].size);
     if (!vdavinci->mmio.bar0_sparse.map_info[0].vaddr) {
         goto put_mapinfo;
     }
@@ -335,21 +245,21 @@ int hw_vdavinci_310_mmio_init(struct hw_vdavinci *vdavinci)
     return 0;
 
 mem_failed:
-    vfree(vdavinci->mmio.bar2_sparse.map_info[0].vaddr);
+    ka_mm_vfree(vdavinci->mmio.bar2_sparse.map_info[0].vaddr);
 io_failed:
-    vfree(vdavinci->mmio.bar0_sparse.map_info[0].vaddr);
+    ka_mm_vfree(vdavinci->mmio.bar0_sparse.map_info[0].vaddr);
 put_mapinfo:
-    (void)hw_dvt_vdavinci_putmapinfo(vdavinci);
+    (void)vdavinci_priv_vdev_putmapinfo(vdavinci);
     return -ENOMEM;
 }
 
 void hw_vdavinci_310_mmio_uninit(struct hw_vdavinci *vdavinci)
 {
-    (void)hw_dvt_vdavinci_putmapinfo(vdavinci);
+    (void)vdavinci_priv_vdev_putmapinfo(vdavinci);
 
-    hw_vdavinci_sparse_mmio_uninit(&vdavinci->mmio.bar0_sparse);
-    hw_vdavinci_sparse_mmio_uninit(&vdavinci->mmio.bar2_sparse);
-    hw_vdavinci_sparse_mmio_uninit(&vdavinci->mmio.bar4_sparse);
+    hw_vdavinci_sparse_mmio_uninit(vdavinci, &vdavinci->mmio.bar0_sparse);
+    hw_vdavinci_sparse_mmio_uninit(vdavinci, &vdavinci->mmio.bar2_sparse);
+    hw_vdavinci_sparse_mmio_uninit(vdavinci, &vdavinci->mmio.bar4_sparse);
     vdavinci->mmio.msix_base = NULL;
     vdavinci->mmio.io_base = NULL;
     vdavinci->mmio.mem_base = NULL;
@@ -420,19 +330,19 @@ int hw_vdavinci_310pro_mmio_init(struct hw_vdavinci *vdavinci)
     return 0;
 
 mem_failed:
-    vfree(vdavinci->mmio.bar2_sparse.map_info[0].vaddr);
+    ka_mm_vfree(vdavinci->mmio.bar2_sparse.map_info[0].vaddr);
 put_mapinfo:
-    (void)hw_dvt_vdavinci_putmapinfo(vdavinci);
+    (void)vdavinci_priv_vdev_putmapinfo(vdavinci);
     return -ENOMEM;
 }
 
 void hw_vdavinci_310pro_mmio_uninit(struct hw_vdavinci *vdavinci)
 {
-    (void)hw_dvt_vdavinci_putmapinfo(vdavinci);
+    (void)vdavinci_priv_vdev_putmapinfo(vdavinci);
 
-    hw_vdavinci_sparse_mmio_uninit(&vdavinci->mmio.bar0_sparse);
-    hw_vdavinci_sparse_mmio_uninit(&vdavinci->mmio.bar2_sparse);
-    hw_vdavinci_sparse_mmio_uninit(&vdavinci->mmio.bar4_sparse);
+    hw_vdavinci_sparse_mmio_uninit(vdavinci, &vdavinci->mmio.bar0_sparse);
+    hw_vdavinci_sparse_mmio_uninit(vdavinci, &vdavinci->mmio.bar2_sparse);
+    hw_vdavinci_sparse_mmio_uninit(vdavinci, &vdavinci->mmio.bar4_sparse);
     vdavinci->mmio.io_base = NULL;
     vdavinci->mmio.mem_base = NULL;
 
@@ -492,19 +402,19 @@ int hw_vdavinci_910_mmio_init(struct hw_vdavinci *vdavinci)
     return 0;
 
 mem_failed:
-    vfree(vdavinci->mmio.bar2_sparse.map_info[0].vaddr);
+    ka_mm_vfree(vdavinci->mmio.bar2_sparse.map_info[0].vaddr);
 put_mapinfo:
-    (void)hw_dvt_vdavinci_putmapinfo(vdavinci);
+    (void)vdavinci_priv_vdev_putmapinfo(vdavinci);
     return -ENOMEM;
 }
 
 void hw_vdavinci_910_mmio_uninit(struct hw_vdavinci *vdavinci)
 {
-    (void)hw_dvt_vdavinci_putmapinfo(vdavinci);
+    (void)vdavinci_priv_vdev_putmapinfo(vdavinci);
 
-    hw_vdavinci_sparse_mmio_uninit(&vdavinci->mmio.bar0_sparse);
-    hw_vdavinci_sparse_mmio_uninit(&vdavinci->mmio.bar2_sparse);
-    hw_vdavinci_sparse_mmio_uninit(&vdavinci->mmio.bar4_sparse);
+    hw_vdavinci_sparse_mmio_uninit(vdavinci, &vdavinci->mmio.bar0_sparse);
+    hw_vdavinci_sparse_mmio_uninit(vdavinci, &vdavinci->mmio.bar2_sparse);
+    hw_vdavinci_sparse_mmio_uninit(vdavinci, &vdavinci->mmio.bar4_sparse);
     vdavinci->mmio.io_base = NULL;
     vdavinci->mmio.mem_base = NULL;
 
@@ -513,9 +423,9 @@ void hw_vdavinci_910_mmio_uninit(struct hw_vdavinci *vdavinci)
 
 void hw_vdavinci_910b_vf_mmio_uninit(struct hw_vdavinci *vdavinci)
 {
-    hw_vdavinci_sparse_mmio_uninit(&vdavinci->mmio.bar0_sparse);
-    hw_vdavinci_sparse_mmio_uninit(&vdavinci->mmio.bar2_sparse);
-    hw_vdavinci_sparse_mmio_uninit(&vdavinci->mmio.bar4_sparse);
+    hw_vdavinci_sparse_mmio_uninit(vdavinci, &vdavinci->mmio.bar0_sparse);
+    hw_vdavinci_sparse_mmio_uninit(vdavinci, &vdavinci->mmio.bar2_sparse);
+    hw_vdavinci_sparse_mmio_uninit(vdavinci, &vdavinci->mmio.bar4_sparse);
 
     vdavinci->mmio.io_base = NULL;
     vdavinci->mmio.mem_base = NULL;
@@ -525,9 +435,9 @@ void hw_vdavinci_910b_vf_mmio_uninit(struct hw_vdavinci *vdavinci)
 
 void hw_vdavinci_910_93_vf_mmio_uninit(struct hw_vdavinci *vdavinci)
 {
-    hw_vdavinci_sparse_mmio_uninit(&vdavinci->mmio.bar0_sparse);
-    hw_vdavinci_sparse_mmio_uninit(&vdavinci->mmio.bar2_sparse);
-    hw_vdavinci_sparse_mmio_uninit(&vdavinci->mmio.bar4_sparse);
+    hw_vdavinci_sparse_mmio_uninit(vdavinci, &vdavinci->mmio.bar0_sparse);
+    hw_vdavinci_sparse_mmio_uninit(vdavinci, &vdavinci->mmio.bar2_sparse);
+    hw_vdavinci_sparse_mmio_uninit(vdavinci, &vdavinci->mmio.bar4_sparse);
 
     vdavinci->mmio.io_base = NULL;
     vdavinci->mmio.mem_base = NULL;
@@ -537,9 +447,9 @@ void hw_vdavinci_910_93_vf_mmio_uninit(struct hw_vdavinci *vdavinci)
 
 void hw_vdavinci_950_vf_mmio_uninit(struct hw_vdavinci *vdavinci)
 {
-    hw_vdavinci_sparse_mmio_uninit(&vdavinci->mmio.bar0_sparse);
-    hw_vdavinci_sparse_mmio_uninit(&vdavinci->mmio.bar2_sparse);
-    hw_vdavinci_sparse_mmio_uninit(&vdavinci->mmio.bar4_sparse);
+    hw_vdavinci_sparse_mmio_uninit(vdavinci, &vdavinci->mmio.bar0_sparse);
+    hw_vdavinci_sparse_mmio_uninit(vdavinci, &vdavinci->mmio.bar2_sparse);
+    hw_vdavinci_sparse_mmio_uninit(vdavinci, &vdavinci->mmio.bar4_sparse);
  
     vdavinci->mmio.io_base = NULL;
     vdavinci->mmio.mem_base = NULL;
@@ -572,7 +482,7 @@ STATIC int hw_vdavinci_vf_bar0_init(struct hw_vdavinci *vdavinci, phys_addr_t ba
     }
     *io_base_idx = idx;
     if (++idx >= vdavinci->mmio.bar0_sparse.num) {
-        vfree(vdavinci->mmio.bar0_sparse.map_info[*io_base_idx].vaddr);
+        ka_mm_vfree(vdavinci->mmio.bar0_sparse.map_info[*io_base_idx].vaddr);
         return -EINVAL;
     }
 
@@ -583,7 +493,7 @@ STATIC int hw_vdavinci_vf_bar0_init(struct hw_vdavinci *vdavinci, phys_addr_t ba
     vdavinci->mmio.bar0_sparse.map_info[idx].vaddr =
          vmalloc_user(vdavinci->mmio.bar0_sparse.map_info[idx].size);
     if (!vdavinci->mmio.bar0_sparse.map_info[idx].vaddr) {
-        vfree(vdavinci->mmio.bar0_sparse.map_info[*io_base_idx].vaddr);
+        ka_mm_vfree(vdavinci->mmio.bar0_sparse.map_info[*io_base_idx].vaddr);
         vascend_err(vdavinci_to_dev(vdavinci), "not enough memory");
         return -ENOMEM;
     }
@@ -617,8 +527,8 @@ STATIC int hw_vdavinci_vf_bar0_init(struct hw_vdavinci *vdavinci, phys_addr_t ba
     return 0;
 
 out_invaild_idx:
-    vfree(vdavinci->mmio.bar0_sparse.map_info[*io_base_idx].vaddr);
-    vfree(vdavinci->mmio.bar0_sparse.map_info[*mem_base_idx].vaddr);
+    ka_mm_vfree(vdavinci->mmio.bar0_sparse.map_info[*io_base_idx].vaddr);
+    ka_mm_vfree(vdavinci->mmio.bar0_sparse.map_info[*mem_base_idx].vaddr);
     return -EINVAL;
 }
 
@@ -647,7 +557,7 @@ STATIC int hw_vdavinci_910_93_vf_bar0_init(struct hw_vdavinci *vdavinci, phys_ad
     }
     *io_base_idx = idx;
     if (++idx >= vdavinci->mmio.bar0_sparse.num) {
-        vfree(vdavinci->mmio.bar0_sparse.map_info[*io_base_idx].vaddr);
+        ka_mm_vfree(vdavinci->mmio.bar0_sparse.map_info[*io_base_idx].vaddr);
         return -EINVAL;
     }
 
@@ -658,7 +568,7 @@ STATIC int hw_vdavinci_910_93_vf_bar0_init(struct hw_vdavinci *vdavinci, phys_ad
     vdavinci->mmio.bar0_sparse.map_info[idx].vaddr =
          vmalloc_user(vdavinci->mmio.bar0_sparse.map_info[idx].size);
     if (!vdavinci->mmio.bar0_sparse.map_info[idx].vaddr) {
-        vfree(vdavinci->mmio.bar0_sparse.map_info[*io_base_idx].vaddr);
+        ka_mm_vfree(vdavinci->mmio.bar0_sparse.map_info[*io_base_idx].vaddr);
         vascend_err(vdavinci_to_dev(vdavinci), "not enough memory");
         return -ENOMEM;
     }
@@ -671,7 +581,7 @@ STATIC int hw_vdavinci_910_93_vf_bar0_init(struct hw_vdavinci *vdavinci, phys_ad
     vdavinci->mmio.bar0_sparse.map_info[idx].map_type = MAP_TYPE_PASSTHROUGH;
     vdavinci->mmio.bar0_sparse.map_info[idx].offset = VF_BAR0_MSG_OFFSET;
     vdavinci->mmio.bar0_sparse.map_info[idx].size =
-        min((unsigned long)len, (unsigned long)(DVT_MMIO_BAR0_SIZE_910_93 - VF_BAR0_MSG_OFFSET));
+        ka_base_min((unsigned long)len, (unsigned long)(DVT_MMIO_BAR0_SIZE_910_93 - VF_BAR0_MSG_OFFSET));
     vdavinci->mmio.bar0_sparse.map_info[idx].paddr = base;
     if (++idx >= vdavinci->mmio.bar0_sparse.num) {
         goto out_invaild_idx;
@@ -680,8 +590,8 @@ STATIC int hw_vdavinci_910_93_vf_bar0_init(struct hw_vdavinci *vdavinci, phys_ad
     return 0;
 
 out_invaild_idx:
-    vfree(vdavinci->mmio.bar0_sparse.map_info[*io_base_idx].vaddr);
-    vfree(vdavinci->mmio.bar0_sparse.map_info[*mem_base_idx].vaddr);
+    ka_mm_vfree(vdavinci->mmio.bar0_sparse.map_info[*io_base_idx].vaddr);
+    ka_mm_vfree(vdavinci->mmio.bar0_sparse.map_info[*mem_base_idx].vaddr);
     return -EINVAL;
 }
 
@@ -700,6 +610,7 @@ static struct bar_info {
 STATIC void hw_vdavinci_vf_bar2_init(struct hw_vdavinci *vdavinci, phys_addr_t base)
 {
     int i = 0;
+
     vdavinci->mmio.bar2_sparse.num = VF_BAR2_SPARSE_SIZE;
     for (i = 0; i <  VF_BAR2_SPARSE_SIZE; i++) {
         vdavinci->mmio.bar2_sparse.map_info[i].map_type = bar2_sparse_info[i].map_type;
@@ -716,20 +627,22 @@ STATIC void hw_vdavinci_vf_bar4_init(struct hw_vdavinci *vdavinci, phys_addr_t b
     /* HBM 4GB */
     vdavinci->mmio.bar4_sparse.map_info[idx].map_type = MAP_TYPE_PASSTHROUGH;
     vdavinci->mmio.bar4_sparse.map_info[idx].offset = VF_BAR4_HBM_OFFSET;
-    vdavinci->mmio.bar4_sparse.map_info[idx].size = VF_BAR4_HBM_SIZE;
+    vdavinci->mmio.bar4_sparse.map_info[idx].size = vdavinci->type->bar4_size;
     vdavinci->mmio.bar4_sparse.map_info[idx].paddr = base;
+
+    vascend_info(vdavinci_to_dev(vdavinci), "VF mmio init bar4 size success: 0x%lx\n", VF_BAR4_HBM_SIZE);
 }
 
 int hw_vdavinci_910b_vf_mmio_init(struct hw_vdavinci *vdavinci)
 {
-    struct pci_dev *pdev = container_of(vdavinci_resource_dev(vdavinci), struct pci_dev, dev);
+    ka_pci_dev_t *pdev = ka_container_of(vdavinci_resource_dev(vdavinci), ka_pci_dev_t, dev);
     phys_addr_t bar0_base, bar2_base, bar4_base;
     int io_base_idx, mem_base_idx;
     int ret;
 
-    bar0_base = pci_resource_start(pdev, VFIO_PCI_BAR0_REGION_INDEX);
-    bar2_base = pci_resource_start(pdev, VFIO_PCI_BAR2_REGION_INDEX);
-    bar4_base = pci_resource_start(pdev, VFIO_PCI_BAR4_REGION_INDEX);
+    bar0_base = ka_pci_resource_start(pdev, VFIO_PCI_BAR0_REGION_INDEX);
+    bar2_base = ka_pci_resource_start(pdev, VFIO_PCI_BAR2_REGION_INDEX);
+    bar4_base = ka_pci_resource_start(pdev, VFIO_PCI_BAR4_REGION_INDEX);
 
     ret = hw_vdavinci_vf_bar0_init(vdavinci, bar0_base, &io_base_idx, &mem_base_idx);
     if (ret) {
@@ -749,25 +662,32 @@ int hw_vdavinci_910b_vf_mmio_init(struct hw_vdavinci *vdavinci)
 
 int hw_vdavinci_910_93_vf_mmio_init(struct hw_vdavinci *vdavinci)
 {
-    struct pci_dev *pdev = container_of(vdavinci_resource_dev(vdavinci), struct pci_dev, dev);
+    ka_pci_dev_t *pdev = ka_container_of(vdavinci_resource_dev(vdavinci), ka_pci_dev_t, dev);
+    ka_pci_dev_t *parent = ka_container_of(vdavinci->dvt->vdavinci_priv->dev, ka_pci_dev_t, dev);
     phys_addr_t bar0_base, bar2_base, bar4_base;
-    phys_addr_t bar0_len;
+    phys_addr_t bar0_len, bar4_len;
     int io_base_idx, mem_base_idx;
     int ret;
 
-    bar0_base = pci_resource_start(pdev, VFIO_PCI_BAR0_REGION_INDEX);
-    bar2_base = pci_resource_start(pdev, VFIO_PCI_BAR2_REGION_INDEX);
-    bar4_base = pci_resource_start(pdev, VFIO_PCI_BAR4_REGION_INDEX);
+    bar0_base = ka_pci_resource_start(pdev, VFIO_PCI_BAR0_REGION_INDEX);
+    bar2_base = ka_pci_resource_start(pdev, VFIO_PCI_BAR2_REGION_INDEX);
 
-    bar0_len = pci_resource_len(pdev, VFIO_PCI_BAR0_REGION_INDEX);
+    bar0_len = ka_pci_resource_len(pdev, VFIO_PCI_BAR0_REGION_INDEX);
+    bar4_len = ka_pci_resource_len(pdev, VFIO_PCI_BAR4_REGION_INDEX);
 
     ret = hw_vdavinci_910_93_vf_bar0_init(vdavinci, bar0_base, bar0_len,
-                                        &io_base_idx, &mem_base_idx);
+                                          &io_base_idx, &mem_base_idx);
     if (ret != 0) {
         return ret;
     }
 
     hw_vdavinci_vf_bar2_init(vdavinci, bar2_base);
+    hw_vdavinci_map_quirk_split(vdavinci, bar2_base);
+    if (vdavinci->type->bar4_size != bar4_len && vdavinci->type->is_pf_bar4) {
+        bar4_base = ka_pci_resource_start(parent, VFIO_PCI_BAR4_REGION_INDEX);
+    } else {
+        bar4_base = ka_pci_resource_start(pdev, VFIO_PCI_BAR4_REGION_INDEX);
+    }
     hw_vdavinci_vf_bar4_init(vdavinci, bar4_base);
 
     /* mmio.io_base ref for vpc cqsq, mmio.mem_base ref for dvpp share memory */
@@ -780,14 +700,14 @@ int hw_vdavinci_910_93_vf_mmio_init(struct hw_vdavinci *vdavinci)
 
 int hw_vdavinci_950_vf_mmio_init(struct hw_vdavinci *vdavinci)
 {
-    struct pci_dev *pdev = container_of(vdavinci_resource_dev(vdavinci), struct pci_dev, dev);
+    ka_pci_dev_t *pdev = ka_container_of(vdavinci_resource_dev(vdavinci), ka_pci_dev_t, dev);
     phys_addr_t bar0_base, bar2_base, bar4_base;
     int io_base_idx, mem_base_idx;
     int ret;
  
-    bar0_base = pci_resource_start(pdev, VFIO_PCI_BAR0_REGION_INDEX);
-    bar2_base = pci_resource_start(pdev, VFIO_PCI_BAR2_REGION_INDEX);
-    bar4_base = pci_resource_start(pdev, VFIO_PCI_BAR4_REGION_INDEX);
+    bar0_base = ka_pci_resource_start(pdev, VFIO_PCI_BAR0_REGION_INDEX);
+    bar2_base = ka_pci_resource_start(pdev, VFIO_PCI_BAR2_REGION_INDEX);
+    bar4_base = ka_pci_resource_start(pdev, VFIO_PCI_BAR4_REGION_INDEX);
  
     ret = hw_vdavinci_vf_bar0_init(vdavinci, bar0_base, &io_base_idx, &mem_base_idx);
     if (ret != 0) {
@@ -839,7 +759,7 @@ int hw_dvt_set_mmio_device_info(struct hw_dvt *dvt)
 
     for (i = 0; mmio_init_info[i].device != 0; i++) {
         if (dvt->device == mmio_init_info[i].device ||
-            mmio_init_info[i].device == (unsigned short)PCI_ANY_ID) {
+            mmio_init_info[i].device == (unsigned short)KA_PCI_ANY_ID) {
             info->cfg_space_size = mmio_init_info[i].cfg_space_size;
             info->mmio_bar = mmio_init_info[i].mmio_bar;
             info->mmio_size = mmio_init_info[i].mmio_size;
@@ -849,18 +769,4 @@ int hw_dvt_set_mmio_device_info(struct hw_dvt *dvt)
     }
 
     return -ENOTSUPP;
-}
-
-int hw_dvt_doorbell_write(struct hw_vdavinci *vdavinci, unsigned int offset,
-                          void *p_data, unsigned int bytes)
-{
-    struct hw_dvt *dvt = vdavinci->dvt;
-
-    if (dvt->vdavinci_priv->ops &&
-        dvt->vdavinci_priv->ops->vdavinci_notify) {
-        dvt->vdavinci_priv->ops->vdavinci_notify(&vdavinci->dev, offset / DOORBELL_SIZE);
-    }
-
-    vdavinci->debugfs.notify_count++;
-    return 0;
 }

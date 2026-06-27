@@ -13,7 +13,7 @@
 #include <errno.h>
 
 #include "securec.h"
-#include "dsmi_common_interface_custom.h"
+#include "dsmi_common_interface.h"
 #include "dcmi_os_adapter.h"
 #include "dcmi_fault_manage_intf.h"
 #include "dcmi_log.h"
@@ -64,13 +64,13 @@ STATIC int dcmi_init_bdf_info(int *device_logic_phy_id_map, int card_count)
         gplog(LOG_ERR, "malloc device_logic_id_list failed.");
         return DCMI_ERR_CODE_INNER_ERR;
     }
-
+ 
     if (dcmi_mainboard_is_a900_a5_ub(g_mainboard_info.mainboard_id)) {
         free(device_logic_id_list);
         device_logic_id_list = NULL;
         return DCMI_OK;
     }
-
+ 
     /* 此函数只在服务器场景使用，一个910对应一个card */
     for (i = 0; i < card_count; i++) {
         dcmi_init_server_get_device_in_card(i, device_logic_id_list, device_logic_phy_id_map);
@@ -84,7 +84,7 @@ STATIC int dcmi_init_bdf_info(int *device_logic_phy_id_map, int card_count)
             if (ret != DSMI_OK) {
                 continue;
             }
-
+ 
             card_info = &g_board_details.card_info[i];
             ret = snprintf_s(card_info->device_info[j].chip_pcieinfo, MAX_PCIE_INFO_LENTH, MAX_PCIE_INFO_LENTH - 1,
                 "%02x:%02x.%1x", card_info->str_pci_info.bdf_busid, card_info->str_pci_info.bdf_deviceid,
@@ -115,6 +115,42 @@ static void handle_init_abnormal(int card_id, int *init_abnomal_flag)
     (void)dcmi_init_board_info_exit_abnormally(card_id);
 }
 
+STATIC int dcmi_process_board_info_and_phyid(int logic_id, int card_id, int position,
+    struct dsmi_board_info_stru *board_info, int *init_abnormal_flag)
+{
+    unsigned int device_phy_id;
+    int ret;
+
+    ret = dsmi_get_board_info(logic_id, board_info);
+    if (ret != DSMI_OK) {
+        (void)dcmi_init_board_info_exit_abnormally(card_id);
+        if (ret != DSMI_ERR_RESOURCE_OCCUPIED) {
+            gplog(LOG_ERR, "call dsmi_get_board_info get chip %d board info failed %d", logic_id, ret);
+        }
+        *init_abnormal_flag = 1;
+        return DCMI_ERR_CODE_INNER_ERR;
+    }
+
+    g_board_details.card_info[card_id].device_info[position].logic_id = logic_id;
+    ret = dsmi_get_phyid_from_logicid((unsigned int)logic_id, &device_phy_id);
+    if (ret != DSMI_OK) {
+        gplog(LOG_ERR, "dsmi_get_phyid_from_logicid failed. err is %d", ret);
+        *init_abnormal_flag = 1;
+        return DCMI_ERR_CODE_INNER_ERR;
+    }
+
+    g_board_details.card_info[card_id].device_info[position].phy_id = device_phy_id;
+    // A5上card_id为phy_id
+    if (dcmi_board_chip_type_is_ascend_950()) {
+        g_board_details.card_info[card_id].card_id = (int)device_phy_id;
+    }
+
+    g_board_details.card_info[card_id].device_info[position].chip_slot =
+        position;  // ascend910卡或ascend910板的NPU单元都只有一个npu芯片
+
+    return 0;
+}
+
 STATIC void dcmi_init_server_per_device(int *device_logic_phy_id_map, int card_id,
     struct dsmi_board_info_stru *board_info, int* init_abnomal_flag)
 {
@@ -141,7 +177,7 @@ STATIC void dcmi_init_server_per_device(int *device_logic_phy_id_map, int card_i
                 device_logic_id_list[i], health, ret);
             continue;
         }
-
+        
         ret = dsmi_get_board_info(device_logic_id_list[i], board_info);  // 每个芯片均获得board_info
         if (ret != DSMI_OK) {
             (void)dcmi_init_board_info_exit_abnormally(card_id);
@@ -161,8 +197,8 @@ STATIC void dcmi_init_server_per_device(int *device_logic_phy_id_map, int card_i
         }
         g_board_details.card_info[card_id].device_info[i].phy_id = device_phy_id;
         // A5上card_id为phy_id
-        if (dcmi_board_chip_type_is_ascend_910_95()) {
-            g_board_details.card_info[card_id].card_id = device_phy_id;
+        if (dcmi_board_chip_type_is_ascend_950()) {
+            g_board_details.card_info[card_id].card_id = (int)device_phy_id;
         }
         g_board_details.card_info[card_id].device_info[i].chip_slot = i; // ascend910卡或ascend910板的NPU单元都只有一个npu芯片
     }
@@ -171,22 +207,73 @@ STATIC void dcmi_init_server_per_device(int *device_logic_phy_id_map, int card_i
     return;
 }
 
+STATIC void dcmi_init_server_support_single_device(int *device_logic_phy_id_map, int card_id,
+    struct dsmi_board_info_stru *board_info, int *init_abnomal_flag)
+{
+    int ret, i;
+    unsigned int init_device_count = 0;
+    unsigned int health = HEALTH_UNKNOWN;
+    int *device_logic_id_list = NULL;
+    device_logic_id_list = (int *)malloc(sizeof(int) * g_board_details.device_count_in_one_card);
+    if (device_logic_id_list == NULL) {
+        gplog(LOG_ERR, "malloc device_logic_id_list failed.");
+        handle_init_abnormal(card_id, init_abnomal_flag);
+        return;
+    }
+    for (i = 0; i < g_board_details.device_count_in_one_card; i++) {
+        device_logic_id_list[i] = -1;
+    }
+    dcmi_init_server_get_device_in_card(card_id, device_logic_id_list, device_logic_phy_id_map);
+
+    for (i = 0; i < g_board_details.device_count_in_one_card; i++) {
+        ret = dsmi_get_device_health(device_logic_id_list[i], &health);
+        if (ret != DSMI_OK || health == DCMI_DEVICE_NOT_EXIST) {
+            gplog(LOG_ERR, "call dsmi_get_device_health error.(logic_id=%d, health=%u, ret=%d).",
+                  device_logic_id_list[i], health, ret);
+            continue;
+        }
+        if (dcmi_process_board_info_and_phyid(device_logic_id_list[i], card_id, i,
+            board_info, init_abnomal_flag) == 0) {
+            init_device_count++;
+        }
+    }
+    if (init_device_count == 0) {
+        handle_init_abnormal(card_id, init_abnomal_flag);
+    }
+    free(device_logic_id_list);
+    device_logic_id_list = NULL;
+    return;
+}
+
 STATIC int dcmi_init_board_info(int *device_logic_phy_id_map, int card_count)
 {
-    int i, init_abnomal_flag;
+    int i, init_abnomal_flag, ret;
+    enum dcmi_multi_die_policy policy = DCMI_MULTI_DIE_UNION_POLICY;
     struct dsmi_board_info_stru board_info = { 0 };
     bool support_chip_type = (dcmi_board_chip_type_is_ascend_910b() || dcmi_board_chip_type_is_ascend_910_93());
+
+    if (dcmi_board_chip_type_is_ascend_910_93()) {
+        ret = dcmi_get_multi_die_policy(&policy);
+        if (ret != DCMI_OK) {
+            gplog(LOG_INFO,
+                "Failed to retrieve the policy, proceeding with the default initialization process. ret = %d", ret);
+        }
+    }
 
     /* 服务器场景每个芯片作为一个card */
     for (i = 0; i < card_count; i++) {
         init_abnomal_flag = 0;
-        dcmi_init_server_per_device(device_logic_phy_id_map, i, &board_info, &init_abnomal_flag);
+        if (policy == DCMI_MULTI_DIE_INDEP_POLICY) {
+            dcmi_init_server_support_single_device(device_logic_phy_id_map, i, &board_info, &init_abnomal_flag);
+        } else {
+            dcmi_init_server_per_device(device_logic_phy_id_map, i, &board_info, &init_abnomal_flag);
+        }
         if (init_abnomal_flag != 0) {
             // 如果有某个die初始化失败，跳过下面赋值流程，910_93双die状态保持一直，不需单独拆分
             continue;
         }
-        // slot_id表示的是os域的id，A5上一个os域内有8个npu
-        if (!dcmi_board_chip_type_is_ascend_910_95()) {
+        // slot_id表示的是os域的id,A5上一个os域内有8个npu
+        if (!dcmi_board_chip_type_is_ascend_950()) {
             g_board_details.card_info[i].card_id = (int)board_info.slot_id;
         }
         g_board_details.card_info[i].slot_id = (int)board_info.slot_id;
@@ -195,7 +282,7 @@ STATIC int dcmi_init_board_info(int *device_logic_phy_id_map, int card_count)
         g_board_details.card_info[i].board_id_pos = (support_chip_type ?
             DCMI_BOARD_ID_ACCESS_BY_MCU : DCMI_BOARD_ID_ACCESS_BY_NPU);
         g_board_details.card_info[i].device_count = g_board_details.device_count_in_one_card;
-        if (dcmi_board_chip_type_is_ascend_910_95()) {
+        if (dcmi_board_chip_type_is_ascend_950()) {
             g_board_details.card_info[i].elabel_pos = DCMI_ELABEL_ACCESS_BY_NPU;
         }
     }
@@ -241,6 +328,10 @@ int dcmi_init_for_server(int *device_id_list, int device_count)
     g_board_details.is_has_mcu = (support_chip_type ? TRUE : FALSE);
     g_board_details.is_has_npu = TRUE;
     g_board_details.mcu_access_chan = (support_chip_type ? DCMI_MCU_ACCESS_BY_NPU : DCMI_MCU_ACCESS_INVALID);
+    if (dcmi_board_chip_type_is_ascend_950()) {
+        g_board_details.mcu_access_chan = DCMI_MCU_ACCESS_BY_NPU;
+    }
+    
     g_board_details.card_count = (device_count + g_board_details.device_count_in_one_card - 1) /
                                  g_board_details.device_count_in_one_card;
     g_board_details.device_count = device_count;

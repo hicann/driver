@@ -31,7 +31,7 @@
 typedef int (*container_virtual_to_physical_devid)(u32, u32 *, u32 *);
 typedef int (*devdrv_manager_get_run_env)(ka_mnt_namespace_t *mnt_ns);
 typedef int (*hdcdrv_is_in_container)(void);
-typedef int (*get_container_id)(u32  *docker_id);
+typedef int (*get_container_id)(u32 *docker_id);
 
 int devdrv_manager_container_logical_id_to_physical_id(u32 logical_dev_id, u32 *physical_dev_id, u32 *vfid);
 #ifdef CFG_FEATURE_NOT_SUPPORT_UDA

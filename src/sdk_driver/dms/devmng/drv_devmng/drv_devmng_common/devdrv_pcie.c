@@ -95,7 +95,11 @@ int devdrv_manager_check_and_disable_sriov(unsigned int dev_id)
      *  2. if device id is single device's id, check and disable sriov when it's enable.
      */
     if (dev_id == DEVDRV_RESET_ALL_DEVICE_ID) {
+#ifdef CFG_FEATURE_UB
+        dev_num = uda_get_dev_num();
+#else
         dev_num = uda_get_detected_phy_dev_num();
+#endif
         if (dev_num <= 0) {
             devdrv_drv_err("There is no pcie device. (dev_id=%u)\n", dev_id);
             return -ENODEV;
@@ -581,7 +585,7 @@ int drv_get_device_boot_status(ka_file_t *filep, unsigned int cmd, unsigned long
 
     /* only judge the physical id is available in container */
     if (devdrv_manager_container_is_in_container()) {
-        if (!uda_task_can_access_udevid_inherit(current, phys_id)) {
+        if (!uda_task_can_access_udevid_inherit(ka_task_get_current(), phys_id)) {
             devdrv_drv_err("device phyid is not belong to current docker. (phy_is=%d)\n", phys_id);
             return -EFAULT;
         }
@@ -691,7 +695,7 @@ int devdrv_manager_pcie_pre_reset(ka_file_t *filep, unsigned int cmd, unsigned l
     }
 #endif
 
-    ret = adap_pcie_prereset(phys_id);
+    ret = devdrv_hot_pre_reset(phys_id);
     if (ret != 0) {
 #ifndef DEVDRV_MANAGER_HOST_UT_TEST
         devdrv_uda_one_dev_ctrl_hotreset_cancel(phys_id);

@@ -48,10 +48,16 @@ struct urd_forward_msg {
     u32 payload_len;
     char payload[PAYLOAD_LEN_MAX];
 };
+
+struct dms_timespec_info {
+    u64 tv_sec;
+    u32 tv_nsec;
+};
+
 struct dms_walltime_info {
     u32 dev_id;
     u32 time_update;                /* if time_update = 1, you need send time to device to update */
-    struct timespec64 wall_time;
+    struct dms_timespec_info wall_time;
 };
 
 #endif

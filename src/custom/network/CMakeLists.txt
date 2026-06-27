@@ -7,4 +7,10 @@
 # INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
 # See LICENSE in the root of the software repository for the full text of the License.
 # ------------------------------------------------------------------------------------------------------------
-add_subdirectory(dsmi)
+
+if (PRODUCT STREQUAL "ascend950")
+    add_subdirectory(orion)
+else()
+    add_subdirectory(dsmi)
+    # add_subdirectory(hccn)
+endif()

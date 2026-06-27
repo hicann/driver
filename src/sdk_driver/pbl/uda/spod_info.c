@@ -15,8 +15,8 @@
 #include "pbl_spod_info.h"
 #include "ka_barrier_pub.h"
 #include "ka_kernel_def_pub.h"
-#include "ka_base_pub.h"	 
-#include "ka_task_pub.h"	 
+#include "ka_base_pub.h"
+#include "ka_task_pub.h"
 #include "ka_memory_pub.h"
 #include "pbl/pbl_uda.h"
 #include "pbl_mem_alloc_interface.h"
@@ -113,6 +113,11 @@ KA_EXPORT_SYMBOL(dbl_make_sdid);
 static int dbl_get_spod_node_status(unsigned int local_udevid, unsigned int index, unsigned int *status)
 {
     struct spod_node_status *nodes_status = NULL;
+
+    if (index >= DBL_SPOD_MAX_NUM) {
+        uda_err("Invalid index. (index=%u)\n", index);
+        return -EINVAL;
+    }
 
     ka_task_down_read(&g_spod_node_status_lock[local_udevid]);
 

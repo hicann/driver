@@ -18,21 +18,9 @@
 #include "dms_user_interface.h"
 #include "queue_interface.h"
 #include "que_urma.h"
+#include "que_platform_ub.h"
 
-#define QUE_URMA_MAX_DEVNUM     MAX_DEVICE
-
-struct que_urma_ctx {
-    unsigned int urma_devid;
-    urma_device_t *urma_dev[TRANS_TYPE_MAX];
-    urma_context_t *context[TRANS_TYPE_MAX];
-
-    uint32_t eid_index[TRANS_TYPE_MAX];
-
-    struct que_urma_token token_info[TRANS_TYPE_MAX];
-    urma_target_seg_t *tseg[TRANS_TYPE_MAX];
-    size_t page_size;
-    struct uref ref;
-};
+#define QUE_URMA_MAX_DEVNUM MAX_DEVICE
 
 static struct que_urma_ctx *g_urma_ctx[QUE_URMA_MAX_DEVNUM] = {NULL};
 static pthread_mutex_t g_urma_ctx_lock = PTHREAD_MUTEX_INITIALIZER;
@@ -45,6 +33,21 @@ static inline void que_urma_ctx_lock(void)
 static inline void que_urma_ctx_unlock(void)
 {
     (void)pthread_mutex_unlock(&g_urma_ctx_lock);
+}
+
+static bool que_urma_eid_equal(const urma_eid_t *lhs, const urma_eid_t *rhs)
+{
+    return memcmp(lhs->raw, rhs->raw, sizeof(lhs->raw)) == 0;
+}
+
+static inline void que_urma_tp_list_lock(struct que_urma_ctx *urma_ctx)
+{
+    (void)pthread_mutex_lock(&urma_ctx->tp_list_lock);
+}
+
+static inline void que_urma_tp_list_unlock(struct que_urma_ctx *urma_ctx)
+{
+    (void)pthread_mutex_unlock(&urma_ctx->tp_list_lock);
 }
 
 static unsigned int que_devid_to_urma_devid(unsigned int devid)
@@ -63,22 +66,23 @@ static struct que_urma_ctx *_que_urma_ctx_create(unsigned int urma_devid)
     urma_ctx->page_size = (size_t)getpagesize();
     urma_ctx->urma_devid = urma_devid;
     uref_init(&urma_ctx->ref);
+    if (pthread_mutex_init(&urma_ctx->tp_list_lock, NULL) != 0) {
+        free(urma_ctx);
+        return NULL;
+    }
 
     return urma_ctx;
 }
 
 static inline void _que_urma_ctx_destroy(struct que_urma_ctx *urma_ctx)
 {
+    (void)pthread_mutex_destroy(&urma_ctx->tp_list_lock);
     free(urma_ctx);
 }
 
 static int que_get_trans_num(void)
 {
-#ifdef DRV_HOST
-    return TRANS_HOST_MAX;
-#else
-    return TRANS_TYPE_MAX;
-#endif
+    return que_get_trans_num_platform();
 }
 
 static void que_urma_dev_eid_uninit(struct que_urma_ctx *urma_ctx)
@@ -89,76 +93,6 @@ static void que_urma_dev_eid_uninit(struct que_urma_ctx *urma_ctx)
         urma_ctx->urma_dev[trans_type] = NULL;
     }
 }
-
-#ifndef EMU_ST
-#ifndef DRV_HOST
-#ifndef CFG_SOC_PLATFORM_910_96
-STATIC int que_cmp_urma_eid(urma_eid_t *eid1, urma_eid_t *eid2)
-{
-    int i;
-
-    for (i = 0; i < URMA_EID_SIZE; i++) {
-        if (eid1->raw[i] != eid2->raw[i]) {
-            return DRV_ERROR_INVALID_VALUE;
-        }
-    }
-
-    return DRV_ERROR_NONE;
-}
-
-static int que_get_ub_d2d_dev_info(unsigned int dev_id, struct dms_ub_dev_info *eid_info)
-{
-    int ret;
-    urma_eid_t eid;
-    urma_eid_info_t *eid_list;
-    uint32_t eid_cnt, i;
-    urma_device_t *urma_dev = NULL;
-    struct dms_ub_d2d_eid d2d_eid = {0};
-    ret = dms_get_ub_d2d_eid(dev_id, &d2d_eid);
-    if (ret != DRV_ERROR_NONE) {
-        QUEUE_LOG_ERR("get ub d2d eid failed. (ret=%d, devid=%u)\n", ret, dev_id);
-        return ret;
-    }
-
-    ret = memcpy_s(&eid, sizeof(urma_eid_t), &d2d_eid.d2d_eid, sizeof(urma_eid_t));
-    if (ret != DRV_ERROR_NONE) {
-        QUEUE_LOG_ERR("memcpy_s failed. (ret=%d, devid=%u)\n", ret, dev_id);
-        return ret;
-    }
-
-    urma_dev = urma_get_device_by_eid(eid, URMA_TRANSPORT_UB);
-    if (urma_dev == NULL) {
-        QUEUE_LOG_ERR("urma_get_device_by_eid failed.(devid=%u)\n", dev_id);
-        return DRV_ERROR_NO_RESOURCES;
-    }
-
-    eid_list = urma_get_eid_list(urma_dev, &eid_cnt);
-    if (eid_list == NULL) {
-        QUEUE_LOG_ERR("urma_get_eid_list failed.(devid=%u)\n", dev_id);
-        return DRV_ERROR_NO_RESOURCES;
-    }
-
-    for (i = 0; i < eid_cnt; i++) {
-        if (que_cmp_urma_eid(&eid_list[i].eid, &eid) == 0) {
-            eid_info->eid_index[0] = eid_list[i].eid_index;
-            break;
-        }
-    }
-
-    if (i == eid_cnt) {
-        QUEUE_LOG_ERR("urma_dev find eid_index failed.(devid=%u; eid="EID_FMT")\n", dev_id, EID_ARGS(eid));
-        urma_free_eid_list(eid_list);
-        return DRV_ERROR_NO_RESOURCES;
-    }
-
-    eid_info->urma_dev[0] = (void *)urma_dev;
-    urma_free_eid_list(eid_list);
-
-    return DRV_ERROR_NONE;
-}
-#endif
-#endif
-#endif
 
 static int que_urma_dev_eid_init(struct que_urma_ctx *urma_ctx)
 {
@@ -172,19 +106,12 @@ static int que_urma_dev_eid_init(struct que_urma_ctx *urma_ctx)
         QUEUE_LOG_ERR("que dms get ub dev info failed.(dev_id=%u; ret=%d; num=%d)\n", urma_ctx->urma_devid, ret, num);
         return ret;
     }
-#ifndef DRV_HOST
-#if defined(CFG_SOC_PLATFORM_910_96)
-    /* The david121 does not support the D2D, stub to avoid temporarily. */
-    dev_info[TRANS_D2D].urma_dev[0] = dev_info[TRANS_D2H_H2D].urma_dev[0];
-    dev_info[TRANS_D2D].eid_index[0] = dev_info[TRANS_D2H_H2D].eid_index[0];
-#else
-    ret = que_get_ub_d2d_dev_info(urma_ctx->urma_devid, &dev_info[TRANS_D2D]);
-#endif
+
+    ret = que_get_ub_d2d_dev_info_platform(urma_ctx->urma_devid, dev_info, ret);
     if (que_unlikely(ret != 0)) {
         QUEUE_LOG_ERR("que dms get ub d2d dev info failed.(dev_id=%u; ret=%d)\n", urma_ctx->urma_devid, ret);
         return ret;
     }
-#endif
     for (trans_idx = TRANS_D2H_H2D; trans_idx < trans_num; trans_idx++) {
         urma_ctx->urma_dev[trans_idx] = dev_info[trans_idx].urma_dev[0];
         urma_ctx->eid_index[trans_idx] = dev_info[trans_idx].eid_index[0];
@@ -194,54 +121,13 @@ static int que_urma_dev_eid_init(struct que_urma_ctx *urma_ctx)
     return DRV_ERROR_NONE;
 }
 
-#ifndef EMU_ST
-#ifndef DRV_HOST
-static int que_register_share_urma_seg(struct que_urma_ctx *urma_ctx, int trans_idx)
-{
-    urma_target_seg_t *tseg = NULL;
-    urma_seg_cfg_t seg_cfg = {0};
-
-    seg_cfg.flag.bs.token_policy = URMA_TOKEN_PLAIN_TEXT;
-    seg_cfg.flag.bs.cacheable = URMA_NON_CACHEABLE;
-    seg_cfg.flag.bs.access = URMA_ACCESS_READ | URMA_ACCESS_WRITE;
-    seg_cfg.flag.bs.reserved = 0;
-    seg_cfg.flag.bs.token_id_valid = 1;
-    seg_cfg.flag.bs.non_pin = 1; /* alloc_pages memory need non pin, malloc need pin*/
-
-    seg_cfg.va = QUE_SP_VA_START;
-    seg_cfg.len = QUE_SP_VA_SIZE;
-    seg_cfg.token_value.token = urma_ctx->token_info[trans_idx].token.token;
-    seg_cfg.user_ctx = (uintptr_t)NULL;
-    seg_cfg.iova = 0;
-    seg_cfg.token_id = urma_ctx->token_info[trans_idx].token_id;
-
-    tseg = urma_register_seg(urma_ctx->context[trans_idx], &seg_cfg);
-    if (tseg == NULL) {
-        QUEUE_LOG_ERR("que share mem urma register seg failed. \n");
-        return DRV_ERROR_INNER_ERR;
-    }
-
-    urma_ctx->tseg[trans_idx] = tseg;
-    return DRV_ERROR_NONE;
-}
-
-static void que_unregister_share_urma_seg(urma_target_seg_t *tseg)
-{
-    if (tseg == NULL) {
-        return;
-    }
-    (void)urma_unregister_seg(tseg);
-}
-#endif
-#endif
-
 static int que_urma_token_init(struct que_urma_ctx *urma_ctx)
 {
     int ret, trans_idx, trans_num;
     unsigned int token_val;
     urma_token_id_t *token_id[TRANS_TYPE_MAX] = {0};
     trans_num = que_get_trans_num();
-    for(trans_idx = TRANS_D2H_H2D; trans_idx < trans_num; trans_idx++) {
+    for (trans_idx = TRANS_D2H_H2D; trans_idx < trans_num; trans_idx++) {
         token_id[trans_idx] = urma_alloc_token_id(urma_ctx->context[trans_idx]);
         if (que_unlikely(token_id[trans_idx] == NULL)) {
             goto cleanup;
@@ -255,17 +141,16 @@ static int que_urma_token_init(struct que_urma_ctx *urma_ctx)
         goto cleanup;
     }
 #endif
-    for(trans_idx = TRANS_D2H_H2D; trans_idx < trans_num; trans_idx++) {
+    for (trans_idx = TRANS_D2H_H2D; trans_idx < trans_num; trans_idx++) {
         urma_ctx->token_info[trans_idx].token_id = token_id[trans_idx];
         urma_ctx->token_info[trans_idx].token.token = token_val;
 #ifndef EMU_ST
-#ifndef DRV_HOST
         ret = que_register_share_urma_seg(urma_ctx, trans_idx);
         if (que_unlikely(ret != DRV_ERROR_NONE)) {
-            QUEUE_LOG_ERR("que register share urma seg failed. (ret=%d, devid=%u, trans_idx=%d)\n", ret, urma_ctx->urma_devid, trans_idx);
+            QUEUE_LOG_ERR("que register share urma seg failed. (ret=%d, devid=%u, trans_idx=%d)\n", ret,
+                          urma_ctx->urma_devid, trans_idx);
             goto cleanup;
         }
-#endif
 #endif
     }
 
@@ -286,14 +171,13 @@ static void que_urma_token_uninit(struct que_urma_ctx *urma_ctx)
     trans_num = que_get_trans_num();
     for (trans_idx = TRANS_D2H_H2D; trans_idx < trans_num; trans_idx++) {
 #ifndef EMU_ST
-#ifndef DRV_HOST
         que_unregister_share_urma_seg(urma_ctx->tseg[trans_idx]);
-#endif
 #endif
         if (urma_ctx->token_info[trans_idx].token_id != NULL) {
             urma_status_t status = urma_free_token_id(urma_ctx->token_info[trans_idx].token_id);
             if (que_unlikely(status != URMA_SUCCESS)) {
-                QUEUE_LOG_WARN("urma free token id abnormal. (urma_devid=%u; trans_idx=%d; status=%d)\n", urma_ctx->urma_devid, trans_idx, status);
+                QUEUE_LOG_WARN("urma free token id abnormal. (urma_devid=%u; trans_idx=%d; status=%d)\n",
+                               urma_ctx->urma_devid, trans_idx, status);
             }
             urma_ctx->token_info[trans_idx].token_id = NULL;
         }
@@ -305,19 +189,29 @@ static void que_urma_token_uninit(struct que_urma_ctx *urma_ctx)
 static int que_urma_context_init(struct que_urma_ctx *urma_ctx)
 {
     urma_context_t *context = NULL;
-    int trans_type, trans_num;
+    int trans_type, trans_num, ret;
     trans_num = que_get_trans_num();
     for (trans_type = TRANS_D2H_H2D; trans_type < trans_num; trans_type++) {
         context = urma_create_context(urma_ctx->urma_dev[trans_type], urma_ctx->eid_index[trans_type]);
         if (que_unlikely(context == NULL)) {
-            QUEUE_LOG_ERR("urma context create fail. (urma_devid=%u; eid_index=%u)\n",
-            urma_ctx->urma_devid, urma_ctx->eid_index[trans_type]);
-            return DRV_ERROR_INNER_ERR;
+            QUEUE_LOG_ERR("urma context create fail. (urma_devid=%u; eid_index=%u)\n", urma_ctx->urma_devid,
+                          urma_ctx->eid_index[trans_type]);
+            ret = DRV_ERROR_INNER_ERR;
+            goto context_clean;
         }
         urma_ctx->context[trans_type] = context;
     }
-    
+
     return DRV_ERROR_NONE;
+
+context_clean:
+    for (trans_type = TRANS_D2H_H2D; trans_type < trans_num; trans_type++) {
+        if (urma_ctx->context[trans_type] != NULL) {
+            (void)urma_delete_context(urma_ctx->context[trans_type]);
+            urma_ctx->context[trans_type] = NULL;
+        }
+    }
+    return ret;
 }
 
 static void que_urma_context_uninit(struct que_urma_ctx *urma_ctx)
@@ -325,11 +219,14 @@ static void que_urma_context_uninit(struct que_urma_ctx *urma_ctx)
     int trans_type, trans_num;
     trans_num = que_get_trans_num();
     for (trans_type = TRANS_D2H_H2D; trans_type < trans_num; trans_type++) {
-        urma_status_t status = urma_delete_context(urma_ctx->context[trans_type]);
-        if (que_unlikely(status != URMA_SUCCESS)) {
-            QUEUE_LOG_WARN("urma context delete abnormal. (urma_devid=%u; status=%d)\n", urma_ctx->urma_devid, status);
+        if (urma_ctx->context[trans_type] != NULL) {
+            urma_status_t status = urma_delete_context(urma_ctx->context[trans_type]);
+            if (que_unlikely(status != URMA_SUCCESS)) {
+                QUEUE_LOG_WARN("urma context delete abnormal. (urma_devid=%u; status=%d)\n", urma_ctx->urma_devid,
+                               status);
+            }
+            urma_ctx->context[trans_type] = NULL;
         }
-        urma_ctx->context[trans_type] = NULL;
     }
 }
 
@@ -619,22 +516,22 @@ urma_jfs_t *que_urma_jfs_create(unsigned int devid, urma_jfs_cfg_t *cfg, unsigne
 {
     struct que_urma_ctx *urma_ctx = NULL;
     urma_jfs_t *jfs = NULL;
- 
+
     urma_ctx = que_urma_ctx_get(devid);
     if (que_unlikely(urma_ctx == NULL)) {
         QUEUE_LOG_ERR("get urma ctx fail. (devid=%u)\n", devid);
         return NULL;
     }
- 
+
     jfs = urma_create_jfs(urma_ctx->context[d2d_flag], cfg);
     que_urma_ctx_put(urma_ctx);
     if (que_unlikely(jfs == NULL)) {
         QUEUE_LOG_ERR("urma create jfs fail. (devid=%u)\n", devid);
     }
- 
+
     return jfs;
 }
- 
+
 void que_urma_jfs_destroy(urma_jfs_t *jfs)
 {
     urma_status_t status = urma_delete_jfs(jfs);
@@ -642,28 +539,28 @@ void que_urma_jfs_destroy(urma_jfs_t *jfs)
         QUEUE_LOG_WARN("delete jfs abnormal. (status=%d)\n", status);
     }
 }
- 
+
 urma_jfr_t *que_urma_jfr_create(unsigned int devid, urma_jfr_cfg_t *cfg, unsigned int d2d_flag)
 {
     struct que_urma_ctx *urma_ctx = NULL;
     urma_jfr_t *jfr = NULL;
- 
+
     urma_ctx = que_urma_ctx_get(devid);
     if (que_unlikely(urma_ctx == NULL)) {
         QUEUE_LOG_ERR("get urma ctx fail. (devid=%u)\n", devid);
         return NULL;
     }
- 
+
     cfg->token_value = urma_ctx->token_info[d2d_flag].token;
     jfr = urma_create_jfr(urma_ctx->context[d2d_flag], cfg);
     que_urma_ctx_put(urma_ctx);
     if (que_unlikely(jfr == NULL)) {
         QUEUE_LOG_ERR("urma create jfr fail. (devid=%u)\n", devid);
     }
- 
+
     return jfr;
 }
- 
+
 void que_urma_jfr_destroy(urma_jfr_t *jfr)
 {
     urma_status_t status = urma_delete_jfr(jfr);
@@ -671,8 +568,9 @@ void que_urma_jfr_destroy(urma_jfr_t *jfr)
         QUEUE_LOG_WARN("delete jfr abnormal. (status=%d)\n", status);
     }
 }
- 
-urma_target_jetty_t *que_jfr_import(unsigned int devid, urma_jfr_id_t *jfr_id, urma_token_t *token, unsigned int d2d_flag)
+
+urma_target_jetty_t *que_jfr_import(unsigned int devid, urma_jfr_id_t *jfr_id, urma_token_t *token,
+                                    unsigned int d2d_flag)
 {
 #ifdef SSAPI_USE_MAMI
     uint32_t tp_cnt = 1;
@@ -693,17 +591,27 @@ urma_target_jetty_t *que_jfr_import(unsigned int devid, urma_jfr_id_t *jfr_id, u
 #ifdef SSAPI_USE_MAMI
     urma_get_tp_cfg_t tpid_cfg = {
         .trans_mode = URMA_TM_RM,
-        .local_eid = urma_ctx->context[d2d_flag]->eid,  // local_eid
-        .peer_eid = jfr_id->eid,  // remote_eid
+        .local_eid = urma_ctx->context[d2d_flag]->eid, // local_eid
+        .peer_eid = jfr_id->eid,                       // remote_eid
         .flag.bs.ctp = true,
     };
 
-    status = urma_get_tp_list(urma_ctx->context[d2d_flag], &tpid_cfg, &tp_cnt, &tpid_info);
-    if ((status != 0) || (tp_cnt == 0)) {
-        QUEUE_LOG_ERR("urma get tp list failed (status=%d; tp_cnt=%u)\n", status, tp_cnt);
-        que_urma_ctx_put(urma_ctx);
-        return tjetty;
+    que_urma_tp_list_lock(urma_ctx);
+    if (urma_ctx->tp_list_fetched[d2d_flag] && que_urma_eid_equal(&urma_ctx->tp_peer_eid[d2d_flag], &jfr_id->eid)) {
+        tpid_info = urma_ctx->stored_tpid_info[d2d_flag];
+    } else {
+        status = urma_get_tp_list(urma_ctx->context[d2d_flag], &tpid_cfg, &tp_cnt, &tpid_info);
+        if ((status != 0) || (tp_cnt == 0)) {
+            que_urma_tp_list_unlock(urma_ctx);
+            QUEUE_LOG_ERR("urma get tp list failed (status=%d; tp_cnt=%u)\n", status, tp_cnt);
+            que_urma_ctx_put(urma_ctx);
+            return tjetty;
+        }
+        urma_ctx->tp_list_fetched[d2d_flag] = true;
+        urma_ctx->tp_peer_eid[d2d_flag] = jfr_id->eid;
+        urma_ctx->stored_tpid_info[d2d_flag] = tpid_info;
     }
+    que_urma_tp_list_unlock(urma_ctx);
 
     active_tp_cfg.tp_handle = tpid_info.tp_handle;
     rjfr.tp_type = URMA_CTP;
@@ -723,16 +631,17 @@ void que_jfr_unimport(urma_target_jetty_t *tjetty)
     }
 }
 
-static void que_seg_cfg_pack_template(struct que_urma_ctx *urma_ctx,
-    unsigned long long va, unsigned long long size, unsigned int access, unsigned int pin_flag, urma_seg_cfg_t *seg_cfg, unsigned int d2d_flag)
+static void que_seg_cfg_pack_template(struct que_urma_ctx *urma_ctx, unsigned long long va, unsigned long long size,
+                                      unsigned int access, unsigned int pin_flag, urma_seg_cfg_t *seg_cfg,
+                                      unsigned int d2d_flag)
 {
     static urma_reg_seg_flag_t flag = {0};
 
-    flag.bs.cacheable = URMA_NON_CACHEABLE;
-    flag.bs.access = access;
-    flag.bs.token_id_valid = URMA_TOKEN_ID_VALID;
-    flag.bs.token_policy = URMA_TOKEN_PLAIN_TEXT;
-    flag.bs.non_pin = ((pin_flag == QUE_PIN) ? 0 : 1); /* segment pages: 0-pinned; 1-non-pinned */
+    flag.bs.cacheable = (uint32_t)URMA_NON_CACHEABLE & 1u;
+    flag.bs.access = (unsigned int)access & 0x3Fu;
+    flag.bs.token_id_valid = (uint32_t)URMA_TOKEN_ID_VALID & 1u;
+    flag.bs.token_policy = (uint32_t)URMA_TOKEN_PLAIN_TEXT & 7u;
+    flag.bs.non_pin = ((pin_flag == QUE_PIN) ? 0u : 1u) & 1u; /* segment pages: 0-pinned; 1-non-pinned */
     seg_cfg->va = que_align_down(va, urma_ctx->page_size);
     seg_cfg->len = que_align_up(va + size, urma_ctx->page_size) - seg_cfg->va;
     seg_cfg->token_value = urma_ctx->token_info[d2d_flag].token;
@@ -753,7 +662,7 @@ static void que_update_seg_cfg_token(struct que_urma_token *token, urma_seg_cfg_
 }
 
 urma_target_seg_t *que_pin_seg_create(unsigned int devid, unsigned long long va, unsigned long long size,
-    unsigned int access, struct que_urma_token *token, unsigned int d2d_flag)
+                                      unsigned int access, struct que_urma_token *token, unsigned int d2d_flag)
 {
     struct que_urma_ctx *urma_ctx = NULL;
     urma_target_seg_t *tseg = NULL;
@@ -773,7 +682,7 @@ urma_target_seg_t *que_pin_seg_create(unsigned int devid, unsigned long long va,
 }
 
 urma_target_seg_t *que_nonpin_seg_create(unsigned int devid, unsigned long long va, unsigned long long size,
-    unsigned int access, struct que_urma_token *token, unsigned int d2d_flag)
+                                         unsigned int access, struct que_urma_token *token, unsigned int d2d_flag)
 {
     struct que_urma_ctx *urma_ctx = NULL;
     urma_target_seg_t *tseg = NULL;
@@ -797,15 +706,16 @@ void que_seg_destroy(urma_target_seg_t *tseg)
     (void)urma_unregister_seg(tseg);
 }
 
-urma_target_seg_t *que_seg_import(unsigned int devid, unsigned int d2d_flag, struct urma_seg *seg, unsigned int access, urma_token_t *token)
+urma_target_seg_t *que_seg_import(unsigned int devid, unsigned int d2d_flag, struct urma_seg *seg, unsigned int access,
+                                  urma_token_t *token)
 {
     struct que_urma_ctx *urma_ctx = NULL;
-    urma_import_seg_flag_t flag = {
-        .bs.cacheable = URMA_NON_CACHEABLE,
-        .bs.access = access,
-        .bs.mapping = URMA_SEG_NOMAP,
-        .bs.reserved = 0
-    };
+    urma_import_seg_flag_t flag = {0};
+
+    flag.bs.cacheable = (uint32_t)URMA_NON_CACHEABLE & 1u;
+    flag.bs.access = (unsigned int)access & 0x3Fu;
+    flag.bs.mapping = (uint32_t)URMA_SEG_NOMAP & 1u;
+    flag.bs.reserved = 0u;
     urma_target_seg_t *tseg = NULL;
 
     urma_ctx = que_urma_ctx_get(devid);

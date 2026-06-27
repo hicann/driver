@@ -29,13 +29,13 @@
 #include "que_comm_chan.h"
 
 #ifndef EMU_ST
-struct que_chan *_que_chan_create(unsigned int devid, unsigned int qid, QUEUE_CHAN_TYPE chan_type, unsigned long create_time)
+struct que_chan *_que_chan_create(unsigned int devid, unsigned int qid, QUEUE_CHAN_TYPE chan_type,
+                                  unsigned long create_time)
 {
     struct que_chan *chan = NULL;
     chan = (struct que_chan *)calloc(1, sizeof(struct que_chan));
     if (que_unlikely(chan == NULL)) {
-        QUEUE_LOG_ERR("que chan alloc fail. (devid=%u; qid=%u; size=%ld)\n",
-            devid, qid, sizeof(struct que_chan));
+        QUEUE_LOG_ERR("que chan alloc fail. (devid=%u; qid=%u; size=%ld)\n", devid, qid, sizeof(struct que_chan));
         return NULL;
     }
 
@@ -100,8 +100,8 @@ int que_chan_tgt_init(struct que_chan *chan)
         QUEUE_LOG_ERR("que tgt proc create fail. (devid=%u; qid=%u)\n", chan->devid, chan->qid);
         return DRV_ERROR_QUEUE_INNER_ERROR;
     }
-    tgt_proc->pre_pkt_sn = 0x1FF; /* pre_pkt_sn is initialized to an invalid value.*/
-    chan->tgt_proc  = tgt_proc;
+    tgt_proc->pre_pkt_sn = 0x1FFu; /* pre_pkt_sn is initialized to an invalid value. */
+    chan->tgt_proc = tgt_proc;
 
     return DRV_ERROR_NONE;
 }
@@ -174,7 +174,8 @@ int que_chan_create_check(unsigned int devid, unsigned int qid, unsigned long cr
     return DRV_ERROR_NONE;
 }
 
-int que_chan_create(unsigned int devid, unsigned int qid, QUEUE_CHAN_TYPE chan_type, unsigned long create_time, unsigned int d2d_flag)
+int que_chan_create(unsigned int devid, unsigned int qid, QUEUE_CHAN_TYPE chan_type, unsigned long create_time,
+                    unsigned int d2d_flag)
 {
     struct que_chan *chan = NULL;
     int ret;
@@ -236,7 +237,7 @@ int que_chan_destroy(unsigned int devid, unsigned int qid)
 }
 
 int que_chan_update_jfs_info(unsigned int devid, unsigned int qid, struct que_jfs_pool_info *jfs_pool,
-    struct que_jfr *qjfr, urma_jfr_id_t *tjfr_id, urma_token_t token)
+                             struct que_jfr *qjfr, urma_jfr_id_t *tjfr_id, urma_token_t token)
 {
     struct que_chan *chan = NULL;
 
@@ -273,14 +274,14 @@ static int _que_qjfs_alloc(struct que_jfs_pool_info *jfs_pool, int *idx)
     (void)pthread_mutex_unlock(&g_queue_ctx_mutex);
     return DRV_ERROR_WAIT_TIMEOUT;
 }
- 
+
 int que_qjfs_alloc(struct que_jfs_pool_info *jfs_pool, int timeout, int *idx, unsigned int d2d_flag)
 {
     int idx_tmp = 0;
     struct que_jfs *qjfs = NULL;
     int ret = DRV_ERROR_NONE;
     int timeout_ms_ = timeout;
- 
+
     while (timeout_ms_ > 0) {
         struct timeval start, end;
         que_get_time(&start);
@@ -331,7 +332,7 @@ static int _que_qjfr_alloc(struct que_jfr_pool_info *jfr_pool, int *idx)
     (void)pthread_mutex_unlock(&g_queue_ctx_mutex);
     return DRV_ERROR_WAIT_TIMEOUT;
 }
- 
+
 int que_qjfr_alloc(struct que_jfr_pool_info *jfr_pool, int timeout, int *idx)
 {
     int ret = DRV_ERROR_NONE;
@@ -372,22 +373,27 @@ void que_ini_timeout_print(struct que_ini_proc *ini_proc)
 
     curr_delta = timestamp[TRACE_FINISH] - timestamp[TRACE_INI_START];
     if ((curr_delta / NS_PER_SECOND) > QUE_TIMEOUT_SECOND) {
-        QUEUE_RUN_LOG_INFO_FLOWCTRL("que ini proc timeout, que_type=%d, cost_time=%lluns, "
-            "start=%llu, update=%llu, pkt_seg_create_start=%llu, pkt_seg_create_end=%llu, ctx_seg_create_start=%llu, "
-            "ctx_seg_create_end=%llu, tx_create=%llu, pkt_fill=%llu, tx_send=%llu, ack_wait_start=%llu, tgt_time=%dns, ack_wait_end=%llu, "
-            "finish=%llu. (devid=%d, qid=%u)\n", ini_proc->que_type, curr_delta,
-            timestamp[TRACE_INI_START], timestamp[TRACE_UPDATE], timestamp[TRACE_PKT_SEG_CREATE_START],
-            timestamp[TRACE_PKT_SEG_CREATE_END], timestamp[TRACE_CTX_SEG_CREATE_START], timestamp[TRACE_CTX_SEG_CREATE_END],
-            timestamp[TRACE_TX_CREATE], timestamp[TRACE_PKT_FILL], timestamp[TRACE_TX_SEND], timestamp[TRACE_ACK_WAIT_START],
-            ini_proc->tgt_time, timestamp[TRACE_ACK_WAIT_END], timestamp[TRACE_FINISH], ini_proc->devid, ini_proc->qid);
+        QUEUE_RUN_LOG_INFO_FLOWCTRL(
+            "que ini proc timeout, que_type=%d, cost_time=%luns, "
+            "start=%lu, update=%lu, pkt_seg_create_start=%lu, pkt_seg_create_end=%lu, ctx_seg_create_start=%lu, "
+            "ctx_seg_create_end=%lu, tx_create=%lu, pkt_fill=%lu, tx_send=%lu, ack_wait_start=%lu, tgt_time=%uns, "
+            "ack_wait_end=%lu, "
+            "finish=%lu. (devid=%d, qid=%u)\n",
+            ini_proc->que_type, curr_delta, timestamp[TRACE_INI_START], timestamp[TRACE_UPDATE],
+            timestamp[TRACE_PKT_SEG_CREATE_START], timestamp[TRACE_PKT_SEG_CREATE_END],
+            timestamp[TRACE_CTX_SEG_CREATE_START], timestamp[TRACE_CTX_SEG_CREATE_END], timestamp[TRACE_TX_CREATE],
+            timestamp[TRACE_PKT_FILL], timestamp[TRACE_TX_SEND], timestamp[TRACE_ACK_WAIT_START], ini_proc->tgt_time,
+            timestamp[TRACE_ACK_WAIT_END], timestamp[TRACE_FINISH], ini_proc->devid, ini_proc->qid);
     }
 
     if (ini_log_level != 0) {
         for (iovec_idx = 0; iovec_idx < ini_proc->total_iovec_num; iovec_idx++) {
             id_start = TRACE_INI_IOVEC_SEG_CREATE_START + iovec_idx * (TRACE_INI_LEVLE1_BUTT - TRACE_INI_LEVLE1_START);
             id_end = TRACE_INI_IOVEC_SEG_CREATE_END + iovec_idx * (TRACE_INI_LEVLE1_BUTT - TRACE_INI_LEVLE1_START);
-             QUEUE_RUN_LOG_INFO("que seg create timeout, que_type=%d, iovec_idx=%d, seg_create_start=%llu, seg_create_end=%llu. "
-             "(devid=%d, qid=%u)\n", ini_proc->que_type, iovec_idx, timestamp[id_start], timestamp[id_end], ini_proc->devid, ini_proc->qid);
+            QUEUE_RUN_LOG_INFO(
+                "que seg create timeout, que_type=%d, iovec_idx=%d, seg_create_start=%lu, seg_create_end=%lu. "
+                "(devid=%d, qid=%u)\n",
+                ini_proc->que_type, iovec_idx, timestamp[id_start], timestamp[id_end], ini_proc->devid, ini_proc->qid);
         }
     }
 }
@@ -463,7 +469,7 @@ static void que_chan_free_jetty_for_data_wr(struct que_tgt_proc *tgt_proc)
     tgt_proc->rw_wr = NULL;
 }
 
-static void que_fill_ack_send_jfs(struct que_jfs *qjfs, struct que_ack_jfs *ack_send_jfs) 
+static void que_fill_ack_send_jfs(struct que_jfs *qjfs, struct que_ack_jfs *ack_send_jfs)
 {
     ack_send_jfs->attr = qjfs->attr;
     ack_send_jfs->devid = qjfs->devid;
@@ -473,17 +479,18 @@ static void que_fill_ack_send_jfs(struct que_jfs *qjfs, struct que_ack_jfs *ack_
 }
 
 static void que_abnormal_ack(struct que_pkt *pkt, struct que_jfs *qjfs, urma_target_jetty_t *tjetty,
-        struct que_tgt_proc *tgt_proc, uint64_t tgt_start_time, int result)
+                             struct que_tgt_proc *tgt_proc, uint64_t tgt_start_time, int result)
 {
     que_ack_data ack_data;
     struct que_ack_jfs ack_send_jetty;
     uint64_t curtime;
     int ret;
 
-    curtime = que_get_cur_time_ns(); 
-    ack_data.ack_msg.sn = pkt->head.sn;
-    ack_data.ack_msg.tgt_time = (curtime > tgt_start_time) ? (int)(curtime - tgt_start_time) : 0;
-    ack_data.ack_msg.result = result;
+    curtime = que_get_cur_time_ns();
+    ack_data.ack_msg.sn = QUE_ACK_PACK_SN(pkt->head.sn);
+    ack_data.ack_msg.tgt_time = QUE_ACK_PACK_TGT_TIME_NS((curtime > tgt_start_time) ? (curtime - tgt_start_time) :
+                                                                                      0ULL);
+    ack_data.ack_msg.result = QUE_ACK_RESULT_PACK_16(result);
     ack_send_jetty.tjetty = tjetty;
 
     que_fill_ack_send_jfs(qjfs, &ack_send_jetty);
@@ -500,7 +507,9 @@ static void que_abnormal_ack(struct que_pkt *pkt, struct que_jfs *qjfs, urma_tar
 void que_tgt_timestamp_update(struct que_tgt_proc *tgt_proc, struct que_pkt *pkt, uint64_t *stamp)
 {
     int tgt_log_level = que_get_tgt_log_level();
-    unsigned int num = TRACE_TGT_LEVLE0_BUTT + pkt->head.total_iovec_num * (TRACE_TGT_LEVLE1_BUTT - TRACE_TGT_LEVLE1_START) * (unsigned int)tgt_log_level;
+    unsigned int num = TRACE_TGT_LEVLE0_BUTT + pkt->head.total_iovec_num *
+                                                   (TRACE_TGT_LEVLE1_BUTT - TRACE_TGT_LEVLE1_START) *
+                                                   (unsigned int)tgt_log_level;
     uint64_t *timestamp = calloc(num, sizeof(uint64_t));
     if (timestamp == NULL) {
         return;
@@ -511,8 +520,9 @@ void que_tgt_timestamp_update(struct que_tgt_proc *tgt_proc, struct que_pkt *pkt
     tgt_proc->timestamp = timestamp;
 }
 
-static int que_chan_tgt_update(struct que_chan *chan, unsigned int devid, unsigned int qid, 
-    struct que_jfs *qjfs, struct que_pkt *pkt, uint64_t *tgt_import_jetty_time, uint64_t tgt_start_time, unsigned int d2d_flag)
+static int que_chan_tgt_update(struct que_chan *chan, unsigned int devid, unsigned int qid, struct que_jfs *qjfs,
+                               struct que_pkt *pkt, uint64_t *tgt_import_jetty_time, uint64_t tgt_start_time,
+                               unsigned int d2d_flag)
 {
     int ret, result = DRV_ERROR_BUSY;
     urma_target_jetty_t *tjetty = NULL;
@@ -541,8 +551,8 @@ static int que_chan_tgt_update(struct que_chan *chan, unsigned int devid, unsign
     }
 
     if (tgt_proc->pre_pkt_sn == pkt->head.sn) {
-        QUEUE_LOG_WARN("The same packet has already been received. (qid=%u, pre_sn=%d, sn=%d)\n",
-            tgt_proc->qid, tgt_proc->pre_pkt_sn, pkt->head.sn);
+        QUEUE_LOG_WARN("The same packet has already been received. (qid=%u, pre_sn=%u, sn=%u)\n", tgt_proc->qid,
+                       tgt_proc->pre_pkt_sn, pkt->head.sn);
         result = DRV_ERROR_TRANS_LINK_ACK_TIMEOUT_ERR;
         goto abnormal_ack;
     }
@@ -595,12 +605,14 @@ int que_chan_tgt_recv(unsigned int urma_devid, struct que_jfs *qjfs, struct que_
     actual_qid = queue_get_actual_qid(pkt->head.qid);
     cur_time = que_get_cur_time_ns();
     tgt_basetime = que_get_tgt_basetime(devid);
-    /* Logs are recorded when the time of the UB link is longer NS_PER_SECOND than the time of the que init send event. */
+    /* Logs are recorded when the time of the UB link is longer NS_PER_SECOND than the time of the que init send event.
+     */
     if ((cur_time + pkt->head.ini_base_timestamp) > (tgt_basetime + pkt->head.pkt_timestamp + NS_PER_SECOND)) {
-        QUEUE_RUN_LOG_INFO_FLOWCTRL("que chan pkt send over time, send_cost_time=%lluns; clt_base=%llu, svr_base=%llu,"
-            "ini_send=%llu, tgt_proc=%llu. (qid=%u; devie=%u)\n",
+        QUEUE_RUN_LOG_INFO_FLOWCTRL(
+            "que chan pkt send over time, send_cost_time=%luns; clt_base=%lu, svr_base=%lu,"
+            "ini_send=%lu, tgt_proc=%lu. (qid=%u; devie=%u)\n",
             ((cur_time + pkt->head.ini_base_timestamp) - (tgt_basetime + pkt->head.pkt_timestamp)),
-             pkt->head.ini_base_timestamp, tgt_basetime, pkt->head.pkt_timestamp, cur_time, actual_qid, devid);
+            pkt->head.ini_base_timestamp, tgt_basetime, pkt->head.pkt_timestamp, cur_time, actual_qid, devid);
     }
 
     chan = que_chan_get(devid, actual_qid);
@@ -610,7 +622,8 @@ int que_chan_tgt_recv(unsigned int urma_devid, struct que_jfs *qjfs, struct que_
     }
 
     stamp[TRACE_TGT_START] = que_get_cur_time_ns();
-    ret = que_chan_tgt_update(chan, urma_devid, actual_qid, qjfs, pkt, &stamp[TRACE_IMPORT_JETTY], stamp[TRACE_TGT_START], d2d_flag);
+    ret = que_chan_tgt_update(chan, urma_devid, actual_qid, qjfs, pkt, &stamp[TRACE_IMPORT_JETTY],
+                              stamp[TRACE_TGT_START], d2d_flag);
     if (ret != DRV_ERROR_NONE) {
         que_chan_put(chan);
         return ret;
@@ -645,8 +658,9 @@ int que_chan_tgt_data_read_and_ack(urma_cr_t *cr)
 
 static bool que_mbuf_array_is_full(struct que_mbuf_list *mbuf_list)
 {
-    unsigned int slot = (mbuf_list->tail >= mbuf_list->head) ? (mbuf_list->head + mbuf_list->depth - 1 - mbuf_list->tail) :
-        (mbuf_list->head - mbuf_list->tail - 1);
+    unsigned int slot = (mbuf_list->tail >= mbuf_list->head) ?
+                            (mbuf_list->head + mbuf_list->depth - 1 - mbuf_list->tail) :
+                            (mbuf_list->head - mbuf_list->tail - 1);
     return (slot == 0);
 }
 
@@ -696,7 +710,7 @@ static void free_mbuf_for_async_queue(uint32_t devid, uint32_t qid, void *mbuf)
 
     in_buff = mbuf;
     ret = halBuffGetInfo(BUFF_GET_MBUF_TYPE_INFO, (void *)(uintptr_t)&in_buff, sizeof(in_buff),
-        (void *)(uintptr_t)&type_info, &out_len);
+                         (void *)(uintptr_t)&type_info, &out_len);
     if ((ret == DRV_ERROR_NONE) && (type_info.type == MBUF_CREATE_BY_BUILD)) {
         ret = halMbufUnBuild(in_buff, &buff, &buff_len);
         if (ret != DRV_ERROR_NONE) {
@@ -747,7 +761,7 @@ static void que_mbuf_node_clear(unsigned int devid, unsigned int qid, struct que
     }
 
     (void)pthread_rwlock_wrlock(&mbuf_list->mbuf_lock);
-    while(!que_mbuf_array_is_empty(mbuf_list)) {
+    while (!que_mbuf_array_is_empty(mbuf_list)) {
         head = mbuf_list->head;
         free_mbuf_for_async_queue(devid, qid, mbuf_list->mbuf_array[head]);
         mbuf_list->mbuf_array[head] = NULL;
@@ -799,7 +813,7 @@ void que_put_iovector(struct que_ini_proc *ini_proc)
 }
 
 static int que_get_inter_dev_tjetty(unsigned int devid, unsigned int qid, urma_jfr_id_t *tjfr_id, urma_token_t *token,
-    struct que_ini_proc *ini_proc)
+                                    struct que_ini_proc *ini_proc)
 {
     unsigned int urma_devid = que_get_urma_devid(devid, ini_proc->peer_devid);
     urma_target_jetty_t *tjetty = NULL;
@@ -905,7 +919,6 @@ out:
 }
 
 static int que_inter_dev_ini_init(unsigned int devid, unsigned int qid, struct que_ini_proc *ini_proc)
- 
 {
     int ret;
     int jfs_idx;
@@ -914,7 +927,7 @@ static int que_inter_dev_ini_init(unsigned int devid, unsigned int qid, struct q
         QUEUE_LOG_ERR("que jfs alloc fail. (ret=%d; devid=%u; qid=%u)\n", ret, devid, qid);
         return ret;
     }
-    ini_proc->jfs_idx = jfs_idx;
+    ini_proc->jfs_idx = (unsigned int)jfs_idx;
     ini_proc->pkt_send_jetty = ini_proc->jfs_info[jfs_idx].qjfs;
     ini_proc->tx = NULL;
     ini_proc->imm_recv_jetty = NULL;
@@ -922,10 +935,10 @@ static int que_inter_dev_ini_init(unsigned int devid, unsigned int qid, struct q
     ini_proc->pkt_send_jetty->tjetty = ini_proc->tjetty;
     return DRV_ERROR_NONE;
 }
- 
+
 static void que_inter_dev_ini_uninit(struct que_ini_proc *ini_proc)
 {
-    que_qjfs_free(ini_proc->jfs_info, ini_proc->jfs_idx);
+    que_qjfs_free(ini_proc->jfs_info, (int)ini_proc->jfs_idx);
     ini_proc->pkt_send_jetty->tjetty = NULL;
     ini_proc->pkt_send_jetty = NULL;
 }
@@ -951,7 +964,7 @@ static bool que_update_status(struct que_ini_proc *ini_proc, ASYNC_QUE_INI_EVENT
             } else if (event == INI_ACK_ERROR) {
                 ini_proc->ini_status = INI_ABNORMAL;
             } else if (event == INI_ACK_FULL) {
-                if(ini_proc->f2nf_back == ini_proc->f2nf_update) {
+                if (ini_proc->f2nf_back == ini_proc->f2nf_update) {
                     ini_proc->ini_status = INI_WAIT_F2NF;
                 } else {
                     ini_proc->f2nf_back = ini_proc->f2nf_update;
@@ -1076,14 +1089,16 @@ void que_chan_cnt_info(unsigned int devid, unsigned int qid)
     for (i = H2D_SYNC_ENQUE; i < QUEUE_ENQUE_BUTT; i++) {
         ini_proc = chan->ini_proc[i];
         QUEUE_RUN_LOG_INFO("que chan ini send_succ_cnt=%u, send_fail_cnt=%u, wait_succ_cnt=%u, wait_fail_cnt=%u. "
-        "que_type=%d. (qid=%u, devid=%u)\n", ini_proc->cnt[INI_SEND_SUCCESS],
-        ini_proc->cnt[INI_SEND_FAIL], ini_proc->cnt[INI_WAIT_SUCCESS], ini_proc->cnt[INI_WAIT_FAIL], i, qid, devid);
+                           "que_type=%d. (qid=%u, devid=%u)\n",
+                           ini_proc->cnt[INI_SEND_SUCCESS], ini_proc->cnt[INI_SEND_FAIL],
+                           ini_proc->cnt[INI_WAIT_SUCCESS], ini_proc->cnt[INI_WAIT_FAIL], i, qid, devid);
     }
-    
+
     tgt_proc = chan->tgt_proc;
     QUEUE_RUN_LOG_INFO("que chan tgt recv_succ_cnt=%u, recv_fail_cnt=%u, send_ack_succ_cnt=%u, send_ack_fail_cnt=%u. "
-        "(qid=%u, devid=%u)\n", tgt_proc->cnt[TGT_RECV_SUCCESS],
-        tgt_proc->cnt[TGT_RECV_FAIL], tgt_proc->cnt[TGT_SEND_ACK_SUCCESS], tgt_proc->cnt[TGT_SEND_ACK_FAIL], qid, devid);
+                       "(qid=%u, devid=%u)\n",
+                       tgt_proc->cnt[TGT_RECV_SUCCESS], tgt_proc->cnt[TGT_RECV_FAIL],
+                       tgt_proc->cnt[TGT_SEND_ACK_SUCCESS], tgt_proc->cnt[TGT_SEND_ACK_FAIL], qid, devid);
 
     que_chan_put(chan);
 }
@@ -1096,6 +1111,5 @@ static int __attribute__((constructor)) que_comm_chan_init(void)
 }
 #else
 void que_comm_chan_emu_test(void)
-{
-}
+{}
 #endif

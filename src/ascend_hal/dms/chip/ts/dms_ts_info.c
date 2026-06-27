@@ -165,15 +165,39 @@ STATIC int dms_set_stl_running_status(unsigned int dev_id, unsigned int sub_cmd,
 }
 #endif
 
+struct udis_ts_info_adapter {
+    unsigned int sub_cmd;
+    const char *name;
+    int (*callback)(unsigned int device_id, const char *name, void *buf, unsigned int *size);
+};
+
+static struct udis_ts_info_adapter g_get_ts_info_table[] = {
+#ifdef CFG_FEATURE_UDIS_UTIL_FROM_TS
+    {DSMI_TS_SUB_CMD_AICORE_UTILIZATION_RATE, "aic_util", dms_get_ts_info_from_udis},
+    {DSMI_TS_SUB_CMD_VECTORCORE_UTILIZATION_RATE, "aiv_util", dms_get_ts_info_from_udis},
+    {DSMI_TS_SUB_CMD_NPU_MULTI_UTILIZATION_RATE, "npu_multi_util", dms_get_npu_multi_util_from_udis},
+    {DSMI_TS_SUB_CMD_NPU_MULTI_UTILIZATION_RATE_V2, "npu_multi_util_v2", dms_get_npu_multi_util_from_udis},
+#endif
+};
+
 int dms_get_ts_info(unsigned int dev_id, unsigned int vfid, unsigned int sub_cmd, void *out_buf, unsigned int *size)
 {
     int ret = 0;
+    unsigned int i;
+    unsigned int table_size = sizeof(g_get_ts_info_table) / sizeof(g_get_ts_info_table[0]);
 
     if (sub_cmd >= DSMI_TS_SUB_CMD_MAX) {
         DMS_ERR("Sub_cmd is invalid. (dev_id=%u; vfid=%u; sub_cmd=%u)\n", dev_id, vfid, sub_cmd);
         return DRV_ERROR_INVALID_VALUE;
     }
 
+    for (i = 0; i < table_size; i++) {
+        if (g_get_ts_info_table[i].sub_cmd == sub_cmd) {
+            return g_get_ts_info_table[i].callback(dev_id, g_get_ts_info_table[i].name, out_buf, size);
+        }
+    }
+
+    /* CFG_FEATURE_UDIS_UTIL_FROM_TS not enable */
     switch (sub_cmd) {
 #ifdef CFG_FEATURE_AIC_AIV_UTIL_FROM_TS
         case DSMI_TS_SUB_CMD_AICORE_UTILIZATION_RATE:
@@ -181,8 +205,7 @@ int dms_get_ts_info(unsigned int dev_id, unsigned int vfid, unsigned int sub_cmd
         case DSMI_TS_SUB_CMD_NPU_MULTI_UTILIZATION_RATE:
             ret = dms_get_single_util_from_ts(dev_id, vfid, sub_cmd, out_buf, size);
             if (ret != 0) {
-                DMS_EX_NOTSUPPORT_ERR(ret, "Get single util from ts failed. (dev_id=%u; vfid=%u; ret=%d)\n",
-                    dev_id, vfid, ret);
+                DMS_EX_NOTSUPPORT_ERR(ret, "Get single util from ts failed. (dev_id=%u; vfid=%u; ret=%d)\n", dev_id, vfid, ret);
                 return ret;
             }
             break;
@@ -196,8 +219,7 @@ int dms_get_ts_info(unsigned int dev_id, unsigned int vfid, unsigned int sub_cmd
         case DSMI_TS_SUB_CMD_GET_FAULT_MASK:
             ret = DmsGetDeviceInfo(dev_id, DSMI_MAIN_CMD_TS, sub_cmd, out_buf, size);
             if (ret != 0) {
-                DEV_MON_EX_NOTSUPPORT_ERR(ret,
-                    "Get ts fault mask failed. (dev_id=%u; vfid=%u; ret=%d)\n", dev_id, vfid, ret);
+                DEV_MON_EX_NOTSUPPORT_ERR(ret, "Get ts fault mask failed. (dev_id=%u; vfid=%u; ret=%d)\n", dev_id, vfid, ret);
                 return ret;
             }
             break;

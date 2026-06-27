@@ -7,7 +7,7 @@
  * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
  */
-
+ 
 #ifndef __DCMI_PRBS_INTF_H__
 #define __DCMI_PRBS_INTF_H__
 #include "dcmi_interface_api.h"
@@ -24,7 +24,10 @@ enum PRBS_ADAPT_MODE {
     PRBS_RX_RETIMER_MEDIA_ADAPT,
     PRBS_RETIMER_TX_ENABLE,
 };
- 
+
+int dcmi_prbs_set_operate(int device_logic_id, unsigned int mainboard_id, DCMI_PRBS_OPERATE_PARAM operate_para,
+                          void *buf, unsigned int buf_size);
+int check_prbs_operate_para(DCMI_PRBS_OPERATE_PARAM operate_para, void *buf);
 #endif
  
 #endif /* __DCMI_PRBS_INTF_H__ */

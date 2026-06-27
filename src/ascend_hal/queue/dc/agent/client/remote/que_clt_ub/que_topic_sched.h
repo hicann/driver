@@ -18,7 +18,7 @@ struct que_sqcq_info {
     drvSqCqType_t type; // normal : 0, callback : 1
     unsigned int ts_id;
     unsigned int sq_id;
-    unsigned int cq_id;  // cq_id to be freed, if flag bit 0 is 0, don't care about it
+    unsigned int cq_id; // cq_id to be freed, if flag bit 0 is 0, don't care about it
     unsigned int flag;  // bit 0 : whether cq is to be freed  0 : free, 1 : no free
 };
 

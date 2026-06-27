@@ -57,6 +57,7 @@
 
 typedef struct vfsmount ka_vfsmount_t;
 typedef struct attribute ka_attribute_t;
+typedef struct virqfd ka_virqfd_t;
 #define ka_fs_get_dev_attr(dev_attr) \
     &dev_attr.attr,
 
@@ -169,7 +170,10 @@ static inline void *ka_fs_get_seq_file_private(ka_seq_file_t *seq_file)
 
 #define ka_fs_single_open single_open
 #define ka_fs_single_release single_release
+#define ka_fs_seq_open seq_open
+#define ka_fs_seq_release seq_release
 #define ka_fs_seq_read seq_read
+#define ka_fs_seq_write seq_write
 #define ka_fs_seq_lseek seq_lseek
 #define ka_fs_seq_printf seq_printf
 #define ka_fs_generic_file_llseek_size(file, offset, whence, maxsize, eof) generic_file_llseek_size(file, offset, whence, maxsize, eof)
@@ -244,6 +248,8 @@ ssize_t ka_fs_read_file(ka_file_t *file, loff_t *pos, char *addr, size_t count);
 #define ka_fs_filp_open(filename, flags, mode) filp_open(filename, flags, mode)
 #define ka_fs_filp_close(filp, id) filp_close(filp, id)
 #define ka_fs_stream_open(inode, filp) stream_open(inode, filp)
+#define ka_fs_kernel_restart(cmd) kernel_restart(cmd)
+#define ka_fs_emergency_restart(void) emergency_restart(void)
 
 #define ka_sysfs_create_group(kobj, grp) sysfs_create_group(kobj, grp)
 #define ka_sysfs_remove_group(kobj, grp) sysfs_remove_group(kobj, grp)
@@ -253,6 +259,7 @@ ssize_t ka_fs_read_file(ka_file_t *file, loff_t *pos, char *addr, size_t count);
 #define ka_fs_debugfs_remove_recursive(dentry) debugfs_remove_recursive(dentry)
 #define ka_fs_debugfs_create_file(name, mode, parent, data, fops) debugfs_create_file(name, mode, parent, data, fops)
 #define ka_fs_debugfs_create_ulong(name, mode, parent, value) debugfs_create_ulong(name, mode, parent, value)
+#define ka_debugfs_create_u64(name, mode, parent, value) debugfs_create_u64(name, mode, parent, value)
 
 #define ka_fs_iminor(inode) iminor(inode)
 
@@ -285,4 +292,7 @@ static inline void *ka_fs_get_inode_i_private(ka_inode_t *inode)
 #define __KA_FS_ATTR(_name, _mode, _show, _store) __ATTR(_name, _mode, _show, _store)
 #define __KA_FS_ATTR_RO(_name) __ATTR_RO(_name)
 ssize_t ka_fs_kernel_write_ret(struct file *file, const void *buf, size_t count, loff_t *pos);
+int ka_fs_get_file_kstat(ka_kstat_t *src_stat, const char *path);
+#define ka_eventfd_ctx_fdget(fd) eventfd_ctx_fdget(fd)
+#define ka_eventfd_ctx_put(ctx) eventfd_ctx_put(ctx)
 #endif

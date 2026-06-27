@@ -486,7 +486,7 @@ int ubdrv_alloc_attr_info(void)
 {
     ka_task_mutex_init(&g_ubdrv_p2p_mutex);
 
-    g_p2p_attr_info =  ubdrv_kzalloc(UBDRV_P2P_SUPPORT_MAX_DEVICE * UBDRV_P2P_SUPPORT_MAX_DEVICE *
+    g_p2p_attr_info = ubdrv_kzalloc(UBDRV_P2P_SUPPORT_MAX_DEVICE * UBDRV_P2P_SUPPORT_MAX_DEVICE *
         sizeof(struct ubdrv_p2p_attr_info), KA_GFP_KERNEL);
     if (g_p2p_attr_info == NULL) {
         ubdrv_err("Alloc p2p_attr_info failed.\n");
@@ -1120,26 +1120,50 @@ STATIC int ubdrv_host_notifier_func(u32 udevid, enum uda_notified_action action)
     return ret;
 }
 
+STATIC int ubdrv_near_entity_dev_notifier_func(u32 udevid, enum uda_notified_action action)
+{
+    if (udevid >= ASCEND_UB_DEV_MAX_NUM) {
+        ubdrv_err("Invalid para. (udevid=%u;action=%d)\n", udevid, action);
+        return -EINVAL;
+    }
+    if (action == UDA_INIT) {
+        ubdrv_set_msg_retry_cnt(udevid, ASCEND_MSG_NORMAL_RETRY_CNT);
+    }
+    ubdrv_info("Last notifier action. (udevid=%u;action=%d)\n", udevid, action);
+    return 0;
+}
+
 STATIC int ubdrv_host_register_uda_notifier(void)
 {
-    struct uda_dev_type mia_near_real_type;
-    struct uda_dev_type real_near_real_type;
+    struct uda_dev_type near_real_type;
     int ret;
 
-    uda_davinci_near_real_entity_type_pack(&mia_near_real_type);
-    ret = uda_notifier_register(ASCEND_UB_MIA_NOTIFIER, &mia_near_real_type, UDA_PRI0, ubdrv_mia_dev_notifier_func);
+    uda_davinci_near_real_entity_type_pack(&near_real_type);
+    ret = uda_notifier_register(ASCEND_UB_MIA_NOTIFIER, &near_real_type, UDA_PRI0, ubdrv_mia_dev_notifier_func);
     if (ret != 0) {
         ubdrv_err("Register near virtual entity type uda failed. (ret=%d)\n", ret);
         return ret;
     }
 
-    uda_davinci_near_real_entity_type_pack(&real_near_real_type);
-    ret = uda_notifier_register(ASCEND_UB_REAL_NOTIFIER, &real_near_real_type, UDA_PRI3, ubdrv_host_notifier_func);
+    ret = uda_notifier_register(ASCEND_UB_REAL_NOTIFIER, &near_real_type, UDA_PRI3, ubdrv_host_notifier_func);
     if (ret != 0) {
         ubdrv_err("Register local real entity type uda failed. (ret=%d)\n", ret);
-        (void)uda_notifier_unregister(ASCEND_UB_MIA_NOTIFIER, &mia_near_real_type);
+        goto unregister_mia;
+    }
+
+    ret = uda_notifier_register(ASCEND_UB_DAVINCI_NOTIFIER, &near_real_type, UDA_PRI5,
+        ubdrv_near_entity_dev_notifier_func);
+    if (ret != 0) {
+        ubdrv_err("Register host last real entity type uda failed. (ret=%d)\n", ret);
+        goto unregister_host_func;
     }
     return 0;
+
+unregister_host_func:
+    (void)uda_notifier_unregister(ASCEND_UB_REAL_NOTIFIER, &near_real_type);
+unregister_mia:
+    (void)uda_notifier_unregister(ASCEND_UB_MIA_NOTIFIER, &near_real_type);
+    return ret;
 }
 
 int ubdrv_get_token_val(u32 devid, u32 *token_val)
@@ -1227,9 +1251,14 @@ int ubdrv_register_uda_notifier(void)
     return ubdrv_host_register_uda_notifier();
 }
 
-void ubdrv_unregister_uda_notifier_proc(struct uda_dev_type *type)
+void ubdrv_unregister_uda_notifier(void)
 {
-    uda_davinci_near_real_entity_type_pack(type);
+    struct uda_dev_type type;
+
+    uda_davinci_near_real_entity_type_pack(&type);
+    (void)uda_notifier_unregister(ASCEND_UB_DAVINCI_NOTIFIER, &type);
+    (void)uda_notifier_unregister(ASCEND_UB_REAL_NOTIFIER, &type);
+    (void)uda_notifier_unregister(ASCEND_UB_MIA_NOTIFIER, &type);
 }
 
 int ubdrv_get_ub_pcie_sel(void)

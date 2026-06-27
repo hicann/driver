@@ -7,17 +7,18 @@
  * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
  */
-
+ 
 #include <stdio.h>
 #include <stdlib.h>
 #include <stddef.h>
 #include <time.h>
+#include <limits.h>
 #ifndef _WIN32
 #include <unistd.h>
 #include <sys/mman.h>
 #endif
 #include "securec.h"
-#include "dsmi_common_interface_custom.h"
+#include "dsmi_common_interface.h"
 
 #ifndef _WIN32
 #include "ascend_hal.h"
@@ -27,11 +28,18 @@
 #include "dcmi_product_judge.h"
 #include "dcmi_environment_judge.h"
 #include "dcmi_inner_info_get.h"
+#include "dcmi_basic_info_intf.h"
+#include "dcmi_virtual_intf.h"
 #include "dcmi_permission_judge.h"
 
-int dcmi_get_device_info_maincmd_permission(int main_cmd, int *cmd_permission)
+int dcmi_get_device_info_cmd_permission(int main_cmd, unsigned int sub_cmd, int *cmd_permission)
 {
     size_t index, table_size;
+    if (sub_cmd == DCMI_QOS_SUB_MASTER_CONFIG && (dcmi_is_in_phy_privileged_docker_root()
+        || dcmi_is_in_phy_machine_root()) && dcmi_board_chip_type_is_ascend_910_93()) {
+        *cmd_permission = DCMI_GET_DEVICE_INFO_CMD_SUPPORT_NO_LIMIT;
+        return DCMI_OK;
+    }
 
     struct dcmi_get_device_main_cmd_table cmd_permission_table[] = {
         {DCMI_MAIN_CMD_DVPP, DCMI_GET_DEVICE_INFO_CMD_SUPPORT_NO_LIMIT},
@@ -232,7 +240,7 @@ int dcmi_check_user_config_parameter(const char *config_name, unsigned int buf_s
     return DCMI_OK;
 }
 
-// A2/A3热复位容器权限检查
+// A2/A3/A5热复位容器权限检查
 int dcmi_check_a2_a3_a5_device_reset_docker_permission()
 {
     int ret;
@@ -244,8 +252,8 @@ int dcmi_check_a2_a3_a5_device_reset_docker_permission()
         return ret;
     }
 
-    // A3，A5, 仅支持物理机特权容器，虚机不支持
-    if (dcmi_board_chip_type_is_ascend_910_93() || dcmi_board_chip_type_is_ascend_910_95()) {
+    // 910A3,910A5，仅支持物理机特权容器，虚机不支持
+    if (dcmi_board_chip_type_is_ascend_910_93() || dcmi_board_chip_type_is_ascend_950()) {
         if (env_flag != ENV_PHYSICAL_PRIVILEGED_CONTAINER) {
             gplog(LOG_OP, "Operation not permitted, only physical privileged containers are supported.");
             return DCMI_ERR_CODE_OPER_NOT_PERMITTED;
@@ -254,7 +262,7 @@ int dcmi_check_a2_a3_a5_device_reset_docker_permission()
         }
     }
 
-    // A2，支持物理机特权容器与虚机特权容器
+    // 910A2，支持物理机特权容器与虚机特权容器
     if (env_flag != ENV_PHYSICAL_PRIVILEGED_CONTAINER && env_flag != ENV_VIRTUAL_PRIVILEGED_CONTAINER) {
         gplog(LOG_OP, "Operation not permitted, only privileged containers are supported.");
         return DCMI_ERR_CODE_OPER_NOT_PERMITTED;
@@ -336,19 +344,6 @@ STATIC int dcmi_ckeck_chip_inf_sub_set_cmd_product(unsigned int main_cmd, unsign
     return DCMI_OK;
 }
 
-int dcmi_check_device_share_set_cmd_permission(unsigned int main_cmd, unsigned int sub_cmd)
-{
-    if (main_cmd == DCMI_MAIN_CMD_DEVICE_SHARE && sub_cmd == DCMI_DEVICE_SHARE_SUB_CMD_COMMON) {
-        if ((dcmi_board_chip_type_is_ascend_910_93() != TRUE) && (dcmi_board_chip_type_is_ascend_910b() != TRUE) &&
-            (dcmi_board_chip_type_is_ascend_310p() != TRUE) && dcmi_board_chip_type_is_ascend_310b() != TRUE) {
-            // 容器共享持久化功能暂时仅支持A3、A2、310P、310b
-            gplog(LOG_OP, "This device does not support setting device-share status.");
-            return DCMI_ERR_CODE_NOT_SUPPORT;
-        }
-    }
-    return DCMI_OK;
-}
-
 int dcmi_set_device_info_permission_check(unsigned int main_cmd, unsigned int sub_cmd)
 {
     size_t index, table_size;
@@ -358,6 +353,7 @@ int dcmi_set_device_info_permission_check(unsigned int main_cmd, unsigned int su
         {DCMI_MAIN_CMD_TS, DCMI_TS_SUB_CMD_COMMON_MSG, DCMI_ACC_ROOT | DCMI_ENV_NOT_NORMAL_DOCKER},
         {DCMI_MAIN_CMD_CHIP_INF, DCMI_CHIP_INF_SUB_CMD_SPOD_NODE_STATUS, DCMI_ACC_ROOT | DCMI_ENV_NOT_NORMAL_DOCKER},
         {DCMI_MAIN_CMD_DEVICE_SHARE, DCMI_DEVICE_SHARE_SUB_CMD_COMMON, DCMI_ENV_PHY_ADMIN_DOCKER | DCMI_ACC_ROOT},
+        {DCMI_MAIN_CMD_QOS, DCMI_QOS_SUB_MASTER_CONFIG, DCMI_ENV_PHY_ADMIN_DOCKER | DCMI_ACC_ROOT},
     };
 
     table_size = sizeof(cmd_permission_table) / sizeof(cmd_permission_table[0]);
@@ -386,7 +382,6 @@ int dcmi_cmd_product_support_check(unsigned int main_cmd, unsigned int sub_cmd)
         {DCMI_MAIN_CMD_SOC_INFO, dcmi_check_custom_op_cmd_permission},
         {DCMI_MAIN_CMD_LP, dcmi_check_lp_sub_cmd_permission},
         {DCMI_MAIN_CMD_CHIP_INF, dcmi_ckeck_chip_inf_sub_set_cmd_product},
-        {DCMI_MAIN_CMD_DEVICE_SHARE, dcmi_check_device_share_set_cmd_permission},
     };
 
     table_size = sizeof(cmd_product_table) / sizeof(cmd_product_table[0]);
@@ -400,19 +395,165 @@ int dcmi_cmd_product_support_check(unsigned int main_cmd, unsigned int sub_cmd)
     return DCMI_OK;
 }
 
-int dcmi_check_device_share_set_cmd_permission_and_product(void)
+int dcmi_check_hbm_manufacturer_id(unsigned int manufacturer_id)
 {
-    if (dcmi_board_chip_type_is_ascend_310b() || dcmi_board_chip_type_is_ascend_310p() ||
-        dcmi_board_chip_type_is_ascend_910b() || dcmi_board_chip_type_is_ascend_910_93()) {
-        if ((!dcmi_is_in_phy_privileged_docker_root()) && (!dcmi_is_in_phy_machine_root())) {
-            gplog(LOG_OP,
-                "Operation not permitted, only root user on physical machine or on physical privileged container"
-                " can call this api.");
-            return DCMI_ERR_CODE_OPER_NOT_PERMITTED;
-        }
+    unsigned char check = 0;
+    unsigned int data = manufacturer_id;
+
+    check ^= (data >> CHECK_THREE_BYTE_BIT) & 0xFF;
+    check ^= (data >> CHECK_TWO_BYTE_BIT) & 0xFF;
+    check ^= (data >> CHECK_ONE_BYTE_BIT) & 0xFF;
+    check ^= data & 0xFF;
+
+    if (check == 0) {
+        return DCMI_OK;
     } else {
-        gplog(LOG_OP, "This device does not support setting device-share status.");
+        gplog(LOG_ERR, "The manufacturer_id check error. (manufacturer_id=0x%x)", manufacturer_id);
+        return DCMI_ERR_CODE_INNER_ERR;
+    }
+}
+
+int dcmi_check_permission_of_get_compatibility(int card_id, int device_id, enum dcmi_device_compat *compatibility)
+{
+    int ret, device_logic_id;
+    enum dcmi_unit_type device_type = INVALID_TYPE;
+
+    if (compatibility == NULL) {
+        gplog(LOG_ERR, "compatibility is NULL.");
+        return DCMI_ERR_CODE_INVALID_PARAMETER;
+    }
+    // 仅root用户
+    if (dcmi_check_run_not_root()) {
+        gplog(LOG_OP, "Operation not permitted, only root user can call this api.");
+        return DCMI_ERR_CODE_OPER_NOT_PERMITTED;
+    }
+
+    // 入参检测
+    if (dcmi_board_chip_type_is_ascend_950()) {
+#ifndef ENABLE_EQUIPMENT
+        ret = dcmiv2_get_device_logic_id(&device_logic_id, card_id, device_id);
+        if (ret != DCMI_OK) {
+            gplog(LOG_ERR, "Get device logic id failed. (card_id=%d, device_id=%d, err=%d)", card_id, device_id, ret);
+            return ret;
+        }
+        ret = dcmiv2_get_device_type(device_logic_id, &device_type);
+#else
+        (void)device_logic_id;
+        ret = dcmi_get_device_type(card_id, device_id, &device_type);
+#endif
+    } else {
+        ret = dcmi_get_device_type(card_id, device_id, &device_type);
+    }
+    if (ret != DCMI_OK) {
+        gplog(LOG_ERR, "Get device type failed. card_id=%d, device_id=%d, err=%d", card_id, device_id, ret);
+        return ret;
+    }
+    // 仅支持EP
+    if (device_type != NPU_TYPE) {
+        gplog(LOG_ERR, "device_type %d is not supported.", device_type);
         return DCMI_ERR_CODE_NOT_SUPPORT;
+    }
+    // soc和 310不支持
+    if ((dcmi_board_type_is_soc()) || (dcmi_board_chip_type_is_ascend_310())) {
+        gplog(LOG_ERR, "This device does not support querying compatibility.");
+        return DCMI_ERR_CODE_NOT_SUPPORT;
+    }
+
+    return DCMI_OK;
+}
+
+int dcmi_check_vnpu_in_docker(int card_id, int device_id)
+{
+    int ret;
+    unsigned int env_flag = ENV_PHYSICAL;
+    struct dcmi_chip_info_v2 chip_info = { { 0 } };
+
+    ret = dcmi_get_npu_chip_info(card_id, device_id, &chip_info);
+    if (ret != DCMI_OK) {
+        gplog(LOG_ERR, "call dcmi_get_npu_chip_info failed. ret is %d.", ret);
+        return ret;
+    }
+    ret = dcmi_get_environment_flag(&env_flag);
+    if (ret != DCMI_OK) {
+        gplog(LOG_ERR, "get environment flag failed. ret is %d", ret);
+        return ret;
+    }
+
+    if (strstr((char *)chip_info.chip_name, "vir") &&
+        (env_flag == ENV_PHYSICAL_PLAIN_CONTAINER || env_flag == ENV_VIRTUAL_PLAIN_CONTAINER)) {
+        return DCMI_ERR_CODE_NOT_SUPPORT_IN_CONTAINER;
+    }
+    return DCMI_OK;
+}
+
+
+int dcmi_netdev_validity_check(int dev_id, const char *netdev_name, unsigned int netdev_name_len)
+{
+    int ret;
+    const char *num_part_start;
+    char *endptr;
+    long bond_id;
+    int pcie_slot_id;
+
+    if (netdev_name == NULL) {
+        gplog(LOG_ERR, "netdev_name[%d] is invalid.", netdev_name == NULL);
+        return DCMI_ERR_CODE_INVALID_PARAMETER;
+    }
+
+    if (netdev_name_len == 0 || netdev_name_len > MAX_NETDEV_NAME_LEN - 1 || netdev_name_len <= UBOE_BOND_PREFIX_LEN) {
+        gplog(LOG_ERR, "netdev_name_len[%u] is invalid.", netdev_name_len);
+        return DCMI_ERR_CODE_INVALID_PARAMETER;
+    }
+
+    if (strncmp(netdev_name, UBOE_BOND_PREFIX, UBOE_BOND_PREFIX_LEN) != 0) {
+        gplog(LOG_ERR, "This function is only applicable to bond devices, expected bond name.");
+        return DCMI_ERR_CODE_INVALID_PARAMETER;
+    }
+
+    num_part_start = netdev_name + UBOE_BOND_PREFIX_LEN;
+    if (*num_part_start == '0' && *(num_part_start + 1) != '\0') {
+        gplog(LOG_ERR, "netdev_name[%d] is invalid.", netdev_name == NULL);
+        return DCMI_ERR_CODE_INVALID_PARAMETER;
+    }
+
+    bond_id = strtol(num_part_start, &endptr, IP_ADDRESS_RADIX);
+    if (*endptr != '\0' || bond_id < 0 || bond_id > INT_MAX) {
+        gplog(LOG_ERR, "netdev_name[%d] is invalid.", netdev_name == NULL);
+        return DCMI_ERR_CODE_INVALID_PARAMETER;
+    }
+
+    ret = dcmiv2_get_device_pcie_slot_id(dev_id, &pcie_slot_id);
+    if (ret != DCMI_OK) {
+        gplog(LOG_ERR, "Call dcmiv2_get_pcie_slot failed. (ret=%d)", ret);
+        return ret;
+        }
+    
+    if ((int)bond_id != pcie_slot_id) {
+        gplog(LOG_ERR, "Bond id mismatch: input is '%s', expected 'bond%d'.", netdev_name, pcie_slot_id);
+        return DCMI_ERR_CODE_INVALID_PARAMETER;
+    }
+    
+    return DCMI_OK;
+}
+
+int dcmi_netdev_permission_judge(int dev_id)
+{
+    // 非root用户，不支持该命令
+    if (dcmi_check_run_not_root()) {
+        gplog(LOG_OP, "Operation not permitted, only root user is supported.");
+        return DCMI_ERR_CODE_OPER_NOT_PERMITTED;
+    }
+
+    // 普通容器场景下，不支持该命令
+    if (dcmi_check_run_in_docker() && (!dcmi_check_run_in_privileged_docker())) {
+        gplog(LOG_OP, "Operation not permitted, docker user does not supported.");
+        return DCMI_ERR_CODE_OPER_NOT_PERMITTED;
+    }
+
+    // 算力切分场景下，不支持该命令
+    if (dcmi_check_card_is_split_phy(dev_id) == TRUE || dcmi_check_vnpu_in_docker_or_virtual(dev_id) == TRUE) {
+        gplog(LOG_OP, "In the vNPU scenario, this operation does not supported.");
+        return DCMI_ERR_CODE_OPER_NOT_PERMITTED;
     }
 
     return DCMI_OK;

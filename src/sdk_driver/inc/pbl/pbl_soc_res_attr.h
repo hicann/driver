@@ -14,11 +14,11 @@
 #ifndef PBL_SOC_RES_ATTR_H
 #define PBL_SOC_RES_ATTR_H
 
-#include <linux/types.h>
+#include "ka_type.h"
 
 /* board hardware info */
 #define BOARD_HW_INFO "board_hw_info"
-#define HW_INFO_RESERVED_LEN 3
+#define HW_INFO_RESERVED_LEN 2
 typedef struct soc_res_board_hw_info {
     u8 chip_id;
     u8 multi_chip;  /* multi-chip or single-chip */
@@ -38,6 +38,7 @@ typedef struct soc_res_board_hw_info {
     u16 chassis_id;  /* supor global frame number */
     u8  super_pod_type; /* 1D/2D */
     u8 slot_id;
+    u8 super_pod_intercon_type;
     u8 reserved2[HW_INFO_RESERVED_LEN];
 } soc_res_board_hw_info_t;
 

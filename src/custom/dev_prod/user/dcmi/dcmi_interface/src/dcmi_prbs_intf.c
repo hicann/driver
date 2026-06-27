@@ -7,7 +7,7 @@
  * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
  */
-
+ 
 #include <stdio.h>
 #include <time.h>
 #include <limits.h>
@@ -18,7 +18,7 @@
 #include <unistd.h>
  
 #include "securec.h"
-#include "dsmi_common_interface_custom.h"
+#include "dsmi_common_interface.h"
 #include "dsmi_network_interface.h"
 #include "dcmi_interface_api.h"
 #include "dcmi_init_basic.h"
@@ -373,8 +373,8 @@ STATIC int dcmi_prbs_open_operate(int device_logic_id, unsigned int mainboard_id
     return 0;
 }
 
-STATIC int dcmi_prbs_set_operate(int device_logic_id, unsigned int mainboard_id, DCMI_PRBS_OPERATE_PARAM operate_para,
-                                 void *buf, unsigned int buf_size)
+int dcmi_prbs_set_operate(int device_logic_id, unsigned int mainboard_id, DCMI_PRBS_OPERATE_PARAM operate_para,
+                          void *buf, unsigned int buf_size)
 {
     int ret;
     unsigned int prbs_type = operate_para.operate_para.set_param.serdes_prbs_type;
@@ -449,7 +449,7 @@ int dcmi_prbs_operate(int card_id, int device_id, DCMI_PRBS_OPERATE_PARAM operat
     }
 
     if (dcmi_mainboard_is_a9000_a3_superpod(mainboard_id) || (mainboard_id == POD_A_MAINBOARD_ID)
-            || dcmi_board_chip_type_is_ascend_910b_300i_a2()) {
+            || dcmi_board_chip_type_is_ascend_910b_300i_a2() || dcmi_board_chip_type_is_ascend_950()) {
         gplog(LOG_ERR, "This device does not support prbs operate.");
         return DCMI_ERR_CODE_NOT_SUPPORT;
     }

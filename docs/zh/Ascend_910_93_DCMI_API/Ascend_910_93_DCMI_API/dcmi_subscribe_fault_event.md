@@ -60,9 +60,9 @@
 <p id="p10783114114268"><a name="p10783114114268"></a><a name="p10783114114268"></a>DCMI_EVENT_FILTER_FLAG_EVENT_ID：只接收指定的事件</p>
 <p id="p27831841172610"><a name="p27831841172610"></a><a name="p27831841172610"></a>DCMI_EVENT_FILTER_FLAG_SERVERITY：只接收指定级别及以上的事件</p>
 <p id="p1078314142613"><a name="p1078314142613"></a><a name="p1078314142613"></a>DCMI_EVENT_FILTER_FLAG_NODE_TYPE：只接收指定节点类型的事件</p>
-<p id="p478314142614"><a name="p478314142614"></a><a name="p478314142614"></a>unsigned int event_id;  //接收指定的事件：参考《健康管理故障定义》</p>
+<p id="p478314142614"><a name="p478314142614"></a><a name="p478314142614"></a>unsigned int event_id;  //接收指定的事件</p>
 <p id="p1078313417269"><a name="p1078313417269"></a><a name="p1078313417269"></a>unsigned char severity; //接收指定级别及以上的事件：见struct dcmi_dms_fault_event结构体中severity定义</p>
-<p id="p12783174114261"><a name="p12783174114261"></a><a name="p12783174114261"></a>unsigned char node_type;  //接收指定节点类型的事件：参考《健康管理故障定义》</p>
+<p id="p12783174114261"><a name="p12783174114261"></a><a name="p12783174114261"></a>unsigned char node_type;  //接收指定节点类型的事件</p>
 <p id="p6783184122615"><a name="p6783184122615"></a><a name="p6783184122615"></a>unsigned char resv[DCMI_MAX_EVENT_RESV_LENGTH]; //保留</p>
 <p id="p20783541132610"><a name="p20783541132610"></a><a name="p20783541132610"></a>};</p>
 </td>
@@ -137,11 +137,11 @@
 
 **约束说明<a name="zh-cn_topic_0000001251427187_zh-cn_topic_0000001188446388_zh-cn_topic_0000001167913765_toc533412082"></a>**
 
--   当card\_id和device\_id的取值都为-1时，支持订阅当前环境中所有设备的故障事件。
--   该接口可获取故障产生时正在上报故障或恢复事件，不能获取已经产生的历史事件。
--   该接口支持多进程不支持多线程，最大支持64个进程同时调用。同一个进程中，不能与dcmi\_get\_fault\_event接口同时调用。
--   一个进程内只能调用一次，且物理机和特权容器共享64个进程资源，进程退出时才会释放该进程资源。
--   在SMP模式下，对于OS类的故障，只能从SMP下头节点的device\_id订阅到该OS类故障。
+- 当card\_id和device\_id的取值都为-1时，支持订阅当前环境中所有设备的故障事件。
+- 该接口可获取故障产生时正在上报故障或恢复事件，不能获取已经产生的历史事件。
+- 该接口支持多进程不支持多线程，最大支持64个进程同时调用。同一个进程中，不能与dcmi\_get\_fault\_event接口同时调用。
+- 一个进程内只能调用一次，且物理机和特权容器共享64个进程资源，进程退出时才会释放该进程资源。
+- 在SMP模式下，对于OS类的故障，只能从SMP下头节点的device\_id订阅到该OS类故障。
 
 **表 1** 不同部署场景下的支持情况
 
@@ -209,7 +209,7 @@
 
 **调用示例<a name="zh-cn_topic_0000001251427187_zh-cn_topic_0000001188446388_zh-cn_topic_0000001167913765_toc533412083"></a>**
 
-```
+```c
 void event_handler(struct dcmi_event *event){
     // todo
 }
@@ -225,4 +225,3 @@ if (ret != 0) {
 } else {
 }
 ```
-

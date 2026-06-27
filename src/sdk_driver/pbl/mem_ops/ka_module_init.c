@@ -10,10 +10,6 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#include <linux/module.h>
-#include <linux/version.h>
-#include <linux/pci.h>
-
 #include "ka_memory_mng.h"
 #include "ka_proc_fs.h"
 
@@ -27,7 +23,7 @@
 #define STATIC static
 #endif
 
-int ka_module_init(void)
+int ka_mem_ops_module_init(void)
 {
     int ret;
 
@@ -54,7 +50,7 @@ TRACE_SCHED_FAILED:
     return ret;
 }
 
-void ka_module_exit(void)
+void ka_mem_ops_module_exit(void)
 {
     event_notify_proc_uninit();
     ka_proc_fs_uninit();

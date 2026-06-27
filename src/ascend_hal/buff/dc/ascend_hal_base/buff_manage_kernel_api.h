@@ -12,6 +12,7 @@
 #define __BUFF_MANAGE_KERNEL_API_H__
 
 #include "ascend_hal_define.h"
+#include "buff_ioctl.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -19,6 +20,7 @@ extern "C" {
 
 void buff_set_pid_base(pid_t pid);
 int buff_api_getpid_base(void);
+drvError_t buff_pool_feature_get_all(struct xsm_feature_get_arg *all_features);
 
 #ifdef __cplusplus
 }

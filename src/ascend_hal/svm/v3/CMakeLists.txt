@@ -1,5 +1,5 @@
 # ------------------------------------------------------------------------------------------------------------
-# Copyright (c) 2025 Huawei Technologies Co., Ltd.
+# Copyright (c) 2026 Huawei Technologies Co., Ltd.
 # This program is free software, you can redistribute it and/or modify it under the terms and conditions of
 # CANN Open Software License Agreement Version 2.0 (the "License").
 # Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ set(SVM_COMPILE_DEFINITIONS)
 add_library(devmm_obj OBJECT)
 
 include(${SVM_USER_DIR}/api/svm_api.cmake)
+include(${SVM_USER_DIR}/criu/svm_criu.cmake)
 include(${SVM_USER_DIR}/assign/svm_assign.cmake)
 include(${SVM_USER_DIR}/share/svm_share.cmake)
 include(${SVM_USER_DIR}/op/svm_op.cmake)
@@ -27,6 +28,7 @@ include(${SVM_USER_DIR}/dbi/svm_dbi.cmake)
 include(${SVM_USER_DIR}/mem_show_cfg/svm_mem_show_cfg.cmake)
 include(${SVM_USER_DIR}/urma_adapt/svm_urma_adapt.cmake)
 include(${SVM_USER_DIR}/apbi/svm_apbi.cmake)
+include(${SVM_USER_DIR}/mem_pool/mem_pool.cmake)
 
 target_sources(devmm_obj PRIVATE
     ${SVM_SRC_FILES}
@@ -35,14 +37,17 @@ target_sources(devmm_obj PRIVATE
 list(APPEND SVM_SRC_INC_DIRS
     ${SVM_USER_DIR}/inc/
     ${SVM_USER_DIR}/inc/assign
-    ${SVM_USER_DIR}/inc/def
     ${SVM_USER_DIR}/inc/op
     ${SVM_USER_DIR}/inc/share
     ${SVM_USER_DIR}/inc/query
+    ${SVM_USER_DIR}/inc/mem_pool
     ${SVM_USER_DIR}/inc/umc
     ${SVM_USER_DIR}/command/msg
     ${SVM_USER_DIR}/inc/urma_adapt
     ${DRIVER_KERNEL_DIR}/svm/v3/command/ioctl/
+    ${DRIVER_KERNEL_DIR}/svm/v3/command/ioctl/def/
+    ${DRIVER_KERNEL_DIR}/svm/v3/command/ioctl/uk_msg/
+    $<$<STREQUAL:${ENABLE_UBE},true>:/usr/include/ub/umdk/urma>
 )
 
 target_include_directories(devmm_obj PRIVATE
@@ -58,9 +63,10 @@ target_include_directories(devmm_obj PRIVATE
     ${DRIVER_USER_DIR}/inc/pbl
     ${DRIVER_USER_DIR}/inc/common
 
-    ${DRIVER_KERNEL_DIR}/inc
     ${DRIVER_KERNEL_DIR}/dpa/apm/command/ioctl
-
+    ${DRIVER_KERNEL_DIR}/comm/ub/command/ioctl
+    ${DRIVER_KERNEL_DIR}/inc
+    ${DRIVER_KERNEL_DIR}/inc/pbl
     ${SVM_SRC_INC_DIRS}
 )
 
@@ -68,10 +74,11 @@ if(${ENABLE_UBE})
     list(APPEND SVM_COMPILE_DEFINITIONS
         CFG_FEATURE_SUPPORT_UB
     )
+else()
+    list(APPEND SVM_COMPILE_DEFINITIONS
+        CFG_FEATURE_NOT_SUPPORT_URMA
+    )
 endif()
-
-list(APPEND SVM_COMPILE_DEFINITIONS
-    CFG_FEATURE_NOT_SUPPORT_URMA)
 
 target_compile_definitions(devmm_obj PRIVATE
     DRV_HOST

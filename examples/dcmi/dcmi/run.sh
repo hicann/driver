@@ -51,14 +51,83 @@ show_help() {
     for map in "${MAIN_DIR_ALIASES[@]}"; do
         local alias="${map%%=*}"
         local real_dir="${map#*=}"
-        echo "                $alias → 实际目录: ${real_dir}"
+        echo "                $alias -> 实际目录: ${real_dir}"
     done
     echo "  <子目录前缀>  子目录的开头字符（如 0、1、test 等，匹配以该前缀开头的子目录）"
-    echo "                示例:user 目录下有 0_test 和 1_test,可分别用前缀 0 和 1 匹配"
+    echo "                示例：user 目录下有 0_test 和 1_test，可分别用前缀 0 和 1 匹配"
     echo "示例:"
-    echo "  bash $0 user 0      # 运行 user (实际: 0_configure_manager)下以 0 开头的子目录（如 0_test)"
-    echo "  bash $0 user 1      # 运行 user (实际: 0_configure_manager)下以 1 开头的子目录（如 1_test)"
-    echo "  bash $0 query 1     # 运行 query(实际: 1_query_npuinfo)下以 1 开头的子目录"
+    echo "  bash $0 user 0"
+    echo "  bash $0 user 1"
+    echo "  bash $0 query 1"
+    echo "特殊用法:"
+    echo "  bash $0 all         # 运行全部用例"
+}
+
+run_all_possible_params() {
+    local map alias real_main_dir target_dir sub_dir
+    local current_dir
+    local has_failure=0
+    local build_ret
+    local run_ret
+
+    current_dir=$(pwd)
+    for map in "${MAIN_DIR_ALIASES[@]}"; do
+        alias="${map%%=*}"
+        real_main_dir="${map#*=}"
+
+        if [ ! -d "${real_main_dir}" ]; then
+            continue
+        fi
+
+        for target_dir in "${real_main_dir}"/*/; do
+            [ -d "${target_dir}" ] || continue
+            target_dir="${target_dir%/}"
+            [ -f "${target_dir}/main.c" ] || continue
+
+            sub_dir=$(basename "${target_dir}")
+            echo ""
+            echo "Processing [${alias}/${sub_dir}]"
+
+            cd "${target_dir}" || {
+                echo "FAILED_FILE: ${target_dir}/main.c"
+                cd "${current_dir}" || true
+                has_failure=1
+                continue
+            }
+
+            if [ -f "main" ]; then
+                rm -f main
+            fi
+
+            $BUILD_CMD
+            build_ret=$?
+            if [ ${build_ret} -ne 0 ] || [ ! -f "main" ]; then
+                echo "FAILED_FILE: ${target_dir}/main.c"
+                has_failure=1
+                cd "${current_dir}" || true
+                continue
+            fi
+
+            ./main
+            run_ret=$?
+            if [ ${run_ret} -ne 0 ]; then
+                echo "FAILED_FILE: ${target_dir}/main.c"
+                has_failure=1
+                cd "${current_dir}" || true
+                continue
+            else
+                echo "SUCCESS_FILE: ${target_dir}/main.c"
+            fi
+
+            cd "${current_dir}" || true
+        done
+    done
+
+    if [ ${has_failure} -ne 0 ]; then
+        return 1
+    fi
+
+    return 0
 }
 
 # 检查参数
@@ -68,11 +137,16 @@ if [ $# -eq 0 ] || [ "$1" = "--help" ]; then
 fi
 
 # 验证参数数量
-if [ $# -ne 2 ]; then
+if [ $# -ne 2 ] && ! { [ $# -eq 1 ] && [ "$1" = "all" ]; }; then
     echo "错误: 请提供 主目录别名 和 子目录前缀 两个参数！"
     echo "可用的主目录别名：$(get_all_aliases)"
     echo "使用 --help 查看详细用法"
     exit 1
+fi
+
+if [ $# -eq 1 ] && [ "$1" = "all" ]; then
+    run_all_possible_params
+    exit $?
 fi
 
 # 解析参数
@@ -113,10 +187,9 @@ fi
 
 for dir in "${MATCHED_DIRS[@]}"; do
     sub_dir=$(basename "$dir")
-    echo "  - [${ALIAS}/${sub_dir}] → 实际路径: ${dir}"
+    echo "  - [${ALIAS}/${sub_dir}] -> 实际路径: ${dir}"
 done
 echo
-
 
 for target_dir in "${MATCHED_DIRS[@]}"; do
     sub_dir=$(basename "$target_dir")

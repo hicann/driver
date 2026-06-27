@@ -25,33 +25,31 @@
 #include "udis_log.h"
 #include "udis_interface.h"
 
-
 #define UDIS_HOST_NOTIFIER "udis_host"
 #define UDIS_HB_MONITOR "udis_hb_mon"
 #define UDIS_HB_MONITOR_PERIOD_MS 1000
 
-#define PCI_VENDOR_ID_HUAWEI            0x19e5
+#define PCI_VENDOR_ID_HUAWEI 0x19e5
 #define DEVDRV_DIVERSITY_PCIE_VENDOR_ID 0xFFFF
 static const ka_pci_device_id_t g_udis_tbl[] = {
-    { KA_PCI_VDEVICE(HUAWEI, 0xd100),           0 },
-    { KA_PCI_VDEVICE(HUAWEI, 0xd105),           0 },
-    { KA_PCI_VDEVICE(HUAWEI, PCI_DEVICE_CLOUD), 0 },
-    { KA_PCI_VDEVICE(HUAWEI, 0xd801),           0 },
-    { KA_PCI_VDEVICE(HUAWEI, 0xd500),           0 },
-    { KA_PCI_VDEVICE(HUAWEI, 0xd501),           0 },
-    { KA_PCI_VDEVICE(HUAWEI, 0xd802),           0 },
-    { KA_PCI_VDEVICE(HUAWEI, 0xd803),           0 },
-    { KA_PCI_VDEVICE(HUAWEI, 0xd804),           0 },
-    { KA_PCI_VDEVICE(HUAWEI, 0xd805),           0 },
-    { DEVDRV_DIVERSITY_PCIE_VENDOR_ID, 0xd500, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0 },
-    { 0x20C6, 0xd500, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0 },
-    { 0x203F, 0xd500, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0 },
-    { 0x20E9, 0xd500, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0 },
-    { 0x20C6, 0xd802, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0 },
-    { 0x203F, 0xd802, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0 },
-    { 0x20E9, 0xd802, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0 },
-    {}
-};
+    {KA_PCI_VDEVICE(HUAWEI, 0xd100), 0},
+    {KA_PCI_VDEVICE(HUAWEI, 0xd105), 0},
+    {KA_PCI_VDEVICE(HUAWEI, PCI_DEVICE_CLOUD), 0},
+    {KA_PCI_VDEVICE(HUAWEI, 0xd801), 0},
+    {KA_PCI_VDEVICE(HUAWEI, 0xd500), 0},
+    {KA_PCI_VDEVICE(HUAWEI, 0xd501), 0},
+    {KA_PCI_VDEVICE(HUAWEI, 0xd802), 0},
+    {KA_PCI_VDEVICE(HUAWEI, 0xd803), 0},
+    {KA_PCI_VDEVICE(HUAWEI, 0xd804), 0},
+    {KA_PCI_VDEVICE(HUAWEI, 0xd805), 0},
+    {DEVDRV_DIVERSITY_PCIE_VENDOR_ID, 0xd500, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0},
+    {0x20C6, 0xd500, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0},
+    {0x203F, 0xd500, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0},
+    {0x20E9, 0xd500, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0},
+    {0x20C6, 0xd802, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0},
+    {0x203F, 0xd802, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0},
+    {0x20E9, 0xd802, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0},
+    {}};
 KA_MODULE_DEVICE_TABLE(pci, g_udis_tbl);
 
 STATIC int udis_common_chan_register(unsigned int udevid)
@@ -89,22 +87,24 @@ STATIC int udis_cb_constructor(unsigned int udevid, struct udis_ctrl_block *udis
     int ret, i;
 
     if ((devdrv_get_connect_protocol(udevid) == CONNECT_PROTOCOL_UB)) {
-        udis_cb->udis_info_buf = (struct udis_info_stu *)dbl_kzalloc(UDIS_MODULE_OFFSET * UDIS_MODULE_MAX, KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
+        udis_cb->udis_info_buf =
+            (struct udis_info_stu *)dbl_kzalloc(UDIS_MODULE_OFFSET * UDIS_MODULE_MAX, KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
         if (udis_cb->udis_info_buf == NULL) {
             udis_err("Failed to call dbl_kzalloc. (udevid=%u)\n", udevid);
             return -ENOMEM;
         }
     } else {
-        udis_cb->udis_info_buf = (struct udis_info_stu *)hal_kernel_devdrv_dma_alloc_coherent(uda_get_device(udevid),
-            UDIS_MODULE_OFFSET * UDIS_MODULE_MAX, &udis_cb->udis_info_buf_dma, KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
+        udis_cb->udis_info_buf = (struct udis_info_stu *)hal_kernel_devdrv_dma_alloc_coherent(
+            uda_get_device(udevid), UDIS_MODULE_OFFSET * UDIS_MODULE_MAX, &udis_cb->udis_info_buf_dma,
+            KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
         if (udis_cb->udis_info_buf == NULL) {
             udis_err("Failed to call hal_kernel_devdrv_dma_alloc_coherent. (udevid=%u)\n", udevid);
             return -ENOMEM;
         }
     }
 
-    ret = memset_s(udis_cb->udis_info_buf, UDIS_MODULE_OFFSET * UDIS_MODULE_MAX, 0,
-        UDIS_MODULE_OFFSET * UDIS_MODULE_MAX);
+    ret =
+        memset_s(udis_cb->udis_info_buf, UDIS_MODULE_OFFSET * UDIS_MODULE_MAX, 0, UDIS_MODULE_OFFSET * UDIS_MODULE_MAX);
     if (ret != 0) {
         udis_err("Call memset_s failed. (udevid=%u; ret=%d)\n", udevid, ret);
         ret = -EIO;
@@ -123,8 +123,9 @@ free_dma_buf:
     if ((devdrv_get_connect_protocol(udevid) == CONNECT_PROTOCOL_UB)) {
         dbl_kfree(udis_cb->udis_info_buf);
     } else {
-        hal_kernel_devdrv_dma_free_coherent(uda_get_device(udevid), UDIS_MODULE_OFFSET * UDIS_MODULE_MAX,
-            udis_cb->udis_info_buf, udis_cb->udis_info_buf_dma);
+        hal_kernel_devdrv_dma_free_coherent(
+            uda_get_device(udevid), UDIS_MODULE_OFFSET * UDIS_MODULE_MAX, udis_cb->udis_info_buf,
+            udis_cb->udis_info_buf_dma);
     }
     udis_cb->udis_info_buf = NULL;
     udis_cb->udis_info_buf_dma = 0;
@@ -137,7 +138,8 @@ STATIC void udis_cb_destructor(unsigned int udevid, struct udis_ctrl_block *udis
     struct udis_node *addr_node, *tmp;
 
     for (i = UPDATE_ONLY_ONCE; i < UPDATE_TYPE_MAX; ++i) {
-        ka_list_for_each_entry_safe(addr_node, tmp, &udis_cb->addr_list[i], list) {
+        ka_list_for_each_entry_safe(addr_node, tmp, &udis_cb->addr_list[i], list)
+        {
             ka_list_del(&addr_node->list);
             dbl_kfree(addr_node);
             addr_node = NULL;
@@ -147,8 +149,9 @@ STATIC void udis_cb_destructor(unsigned int udevid, struct udis_ctrl_block *udis
     if ((devdrv_get_connect_protocol(udevid) == CONNECT_PROTOCOL_UB)) {
         dbl_kfree(udis_cb->udis_info_buf);
     } else {
-        hal_kernel_devdrv_dma_free_coherent(uda_get_device(udevid), UDIS_MODULE_OFFSET * UDIS_MODULE_MAX,
-            udis_cb->udis_info_buf, udis_cb->udis_info_buf_dma);
+        hal_kernel_devdrv_dma_free_coherent(
+            uda_get_device(udevid), UDIS_MODULE_OFFSET * UDIS_MODULE_MAX, udis_cb->udis_info_buf,
+            udis_cb->udis_info_buf_dma);
     }
     udis_cb->udis_info_buf = NULL;
     udis_cb->udis_info_buf_dma = 0;
@@ -159,7 +162,7 @@ STATIC int udis_init_ucb(unsigned int udevid)
     int ret;
     struct udis_ctrl_block *ucb = NULL;
 
-    ucb = (struct udis_ctrl_block*)dbl_kzalloc(sizeof(struct udis_ctrl_block), KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
+    ucb = (struct udis_ctrl_block *)dbl_kzalloc(sizeof(struct udis_ctrl_block), KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
     if (ucb == NULL) {
         udis_err("Failed to alloc for udis ctrl block. (udevid=%u)\n", udevid);
         return -ENOMEM;
@@ -226,7 +229,7 @@ STATIC int (*udis_device_up_notify_func_table[UDIS_NOTIFY_FUNC_TALBE_SIZE])(unsi
     [UDIS_PERIOD_LINK_TASK_NOTIFY_FUNC] = period_link_task_init,
 };
 
-STATIC void (*udis_device_down_notify_func_table[UDIS_NOTIFY_FUNC_TALBE_SIZE])(unsigned int udevid)= {
+STATIC void (*udis_device_down_notify_func_table[UDIS_NOTIFY_FUNC_TALBE_SIZE])(unsigned int udevid) = {
     [UDIS_LINK_NODES_NOTIFY_FUNC] = udis_link_nodes_uninit,
     [UDIS_CTRL_BLOCK_NOTIFY_FUNC] = udis_uninit_ucb,
     [UDIS_COMMON_CHANNEL_NOTIFY_FUNC] = udis_common_chan_unregister,
@@ -446,7 +449,7 @@ int udis_init(void)
     }
 
     uda_davinci_near_real_entity_type_pack(&type);
-    ret = uda_notifier_register(UDIS_HOST_NOTIFIER, &type, UDA_PRI0, udis_host_notifier_func);
+    ret = uda_notifier_register(UDIS_HOST_NOTIFIER, &type, UDA_PRI4, udis_host_notifier_func);
     if (ret != 0) {
         udis_err("Rigister uda notifier failed. (ret=%d)\n", ret);
         goto uda_register_fail;

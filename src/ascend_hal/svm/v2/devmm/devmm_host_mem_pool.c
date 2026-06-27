@@ -127,10 +127,7 @@ static DVresult devmm_host_mem_pool_list_init(uint32_t devid, struct devmm_host_
 void devmm_host_mem_pool_init(uint32_t devid)
 {
     struct devmm_host_mem_pool_cfg info[DEVMM_HOST_MEM_POOL_LEVEL_CNT] = {
-        {.size = 128, .num = 10000},
-        {.size = 4096, .num = 1000},
-        {.size = 2097152, .num = 2}
-    };
+        {.size = 128, .num = 10000}, {.size = 4096, .num = 1000}, {.size = 2097152, .num = 2}};
     uint32_t i, j;
     DVresult ret;
 
@@ -171,7 +168,8 @@ void *devmm_host_mem_pool_get(uint32_t devid, size_t size, void **cache_va)
     uint32_t i;
 
 #ifndef EMU_ST
-    if ((devid >= DEVMM_MAX_PHY_DEVICE_NUM) || (g_pool_inited[devid] == false) || (size == 0) || (size > g_pool[devid][DEVMM_HOST_MEM_POOL_LEVEL_CNT - 1].cfg.size)) {
+    if ((devid >= DEVMM_MAX_PHY_DEVICE_NUM) || (g_pool_inited[devid] == false) || (size == 0) ||
+        (size > g_pool[devid][DEVMM_HOST_MEM_POOL_LEVEL_CNT - 1].cfg.size)) {
         return NULL;
     }
 #endif

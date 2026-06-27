@@ -11,10 +11,7 @@
 #include "devmm_cache_coherence.h"
 #include "devmm_virt_interface.h"
 
-int devmm_init_convert_task_mgmt(void)
-{
-    return DRV_ERROR_NONE;
-}
+int devmm_init_convert_task_mgmt(void) { return DRV_ERROR_NONE; }
 
 int devmm_destroy_convert_task_node(void *priv)
 {

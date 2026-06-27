@@ -16,7 +16,7 @@
 #include "ascend_ub_common.h"
 #include "ascend_ub_unit_adapt.h"
 
-#define ASCEND_UB_MEM_NONLINEAR_NUM 32u
+#define ASCEND_UB_MEM_NONLINEAR_NUM 36u
 #define UB_MEM_KEY_UB_BASE          "UBA_BASE"
 #define UB_MEM_KEY_UB_TID           "UB_TID"
 #define UB_MEM_KEY_UB_MEM_ID        "UB_MEM_ID"

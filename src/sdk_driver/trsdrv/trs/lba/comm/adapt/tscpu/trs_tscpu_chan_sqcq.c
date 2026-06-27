@@ -42,7 +42,7 @@ int trs_tscpu_chan_ops_ctrl_sqcq(struct trs_id_inst *inst, u32 id, u32 cmd, u32 
     int ret = -EINVAL;
 
     switch (cmd) {
-        case CTRL_CMD_SQ_HEAD_UPDATE:  /* no effect */
+        case CTRL_CMD_SQ_HEAD_UPDATE: /* no effect */
             ret = 0;
             break;
         case CTRL_CMD_SQ_TAIL_UPDATE:
@@ -53,7 +53,7 @@ int trs_tscpu_chan_ops_ctrl_sqcq(struct trs_id_inst *inst, u32 id, u32 cmd, u32 
             break;
         case CTRL_CMD_SQ_STATUS_SET: /* not support */
             break;
-        case CTRL_CMD_SQ_DISABLE_TO_ENABLE:  /* not support */
+        case CTRL_CMD_SQ_DISABLE_TO_ENABLE: /* not support */
             break;
         case CTRL_CMD_CQ_RESET:
         case CTRL_CMD_SQ_RESET:
@@ -97,4 +97,3 @@ int trs_tscpu_chan_ops_query_sqcq(struct trs_id_inst *inst, u32 id, u32 cmd, u64
 
     return ret;
 }
-

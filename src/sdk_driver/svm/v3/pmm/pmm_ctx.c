@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2025. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -55,10 +55,7 @@ struct pmm_ctx *pmm_ctx_get(u32 udevid, int tgid)
     return pmm_ctx;
 }
 
-void pmm_ctx_put(struct pmm_ctx *pmm_ctx)
-{
-    svm_task_ctx_put(pmm_ctx->task_ctx);
-}
+void pmm_ctx_put(struct pmm_ctx *pmm_ctx) { svm_task_ctx_put(pmm_ctx->task_ctx); }
 
 #if (PMM_MEM_SIZE_PER_BIT > KA_UINT_MAX)
 #error "PMM_MEM_SIZE_PER_BIT is out of u32 range.!"
@@ -90,7 +87,7 @@ static int pmm_ctx_init(struct pmm_ctx *pmm_ctx)
     pmm_ctx->recycling_vma = NULL;
     ka_task_init_rwsem(&pmm_ctx->rwsem);
 
-    pmm_ctx->bit_size_stats = svm_vzalloc(pmm_ctx->nbits * sizeof(u32));  // clear zero
+    pmm_ctx->bit_size_stats = svm_vzalloc(pmm_ctx->nbits * sizeof(u32)); // clear zero
     if (pmm_ctx->bit_size_stats == NULL) {
         return -ENOMEM;
     }
@@ -99,12 +96,9 @@ static int pmm_ctx_init(struct pmm_ctx *pmm_ctx)
     return 0;
 }
 
-static void pmm_ctx_uninit(struct pmm_ctx *pmm_ctx)
-{
-    svm_vfree(pmm_ctx->bit_size_stats);
-}
+static void pmm_ctx_uninit(struct pmm_ctx *pmm_ctx) { svm_vfree(pmm_ctx->bit_size_stats); }
 
-static void pma_ctx_release(void *priv)
+static void pmm_ctx_release(void *priv)
 {
     struct pmm_ctx *ctx = (struct pmm_ctx *)priv;
     pmm_ctx_uninit(ctx);
@@ -140,8 +134,7 @@ int pmm_init_task(u32 udevid, int tgid, void *start_time)
         return -EINVAL;
     }
 
-    ret = svm_task_set_feature_priv(task_ctx, pmm_feature_id, "pmm",
-        (void *)pmm_ctx, pma_ctx_release);
+    ret = svm_task_set_feature_priv(task_ctx, pmm_feature_id, "pmm", (void *)pmm_ctx, pmm_ctx_release);
     if (ret != 0) {
         svm_task_ctx_put(task_ctx);
         pmm_ctx_uninit(pmm_ctx);
@@ -228,9 +221,5 @@ int pmm_init(void)
 }
 DECLAER_FEATURE_AUTO_INIT(pmm_init, FEATURE_LOADER_STAGE_2);
 
-void pmm_uninit(void)
-{
-    apm_proc_mem_query_handle_unregister();
-}
+void pmm_uninit(void) { apm_proc_mem_query_handle_unregister(); }
 DECLAER_FEATURE_AUTO_UNINIT(pmm_uninit, FEATURE_LOADER_STAGE_2);
-

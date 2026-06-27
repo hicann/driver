@@ -20,8 +20,8 @@
 
 int devmm_ioctl_mem_create(struct devmm_svm_process *svm_proc, struct devmm_ioctl_arg *arg);
 int devmm_ioctl_mem_release(struct devmm_svm_process *svm_proc, struct devmm_ioctl_arg *arg);
-int devmm_agent_mem_release(struct devmm_svm_process *svm_proc, struct devmm_devid *devids,
-    u64 pg_num, int id, u32 free_type);
+int devmm_agent_mem_release(
+    struct devmm_svm_process *svm_proc, struct devmm_devid *devids, u64 pg_num, int id, u32 free_type);
 int devmm_agent_mem_release_public(struct devmm_chan_mem_release *msg);
 int devmm_master_mem_release(struct devmm_svm_process *svm_proc, u64 pg_num, int id, u32 free_type);
 

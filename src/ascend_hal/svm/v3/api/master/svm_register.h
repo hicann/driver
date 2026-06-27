@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * Copyright (c) 2026 Huawei Technologies Co., Ltd.
  * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -23,9 +23,18 @@
 */
 
 /* devid is peer devid */
-int svm_register_to_peer(u64 va, u64 size, u32 devid);
+int svm_register_to_peer(u64 va, u64 size, u32 devid, u64 *dst_va);
 int svm_unregister_to_peer(u64 va, u32 devid);
 
 void svm_register_recycle(u32 devid);
 
+struct svm_register_ops {
+    int (*post_map)(struct svm_global_va *src_info, u32 devid, u64 dst_va);
+    void (*pre_unmap)(struct svm_global_va *src_info, u32 devid, u64 dst_va);
+};
+
+void svm_register_set_ops(struct svm_register_ops *ops);
+int svm_register_for_each_seg(
+    u32 dst_devid, int (*handle)(void *va_handle, u64 start, struct svm_global_va *src_info, void *priv), void *priv);
+bool svm_is_register_to_peer_src_range(u64 src_va, u64 size, u32 dst_devid);
 #endif

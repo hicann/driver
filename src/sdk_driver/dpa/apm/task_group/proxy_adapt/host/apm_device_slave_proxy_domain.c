@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2025. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -22,7 +22,7 @@
 #include "apm_slab.h"
 #include "apm_device_slave_proxy_domain.h"
 
-#define APM_DOMAIN_NAME_LEN     64
+#define APM_DOMAIN_NAME_LEN 64
 
 static struct task_ctx_domain **device_slave_proxy_domain = NULL;
 static ka_mutex_t proxy_domain_mutex;
@@ -47,7 +47,7 @@ int apm_query_master_tgid_by_device_slave(u32 udevid, int slave_tgid, int *maste
 
 static int apm_device_slave_proxy_domain_create(u32 udevid)
 {
-    char *domain_name= NULL;
+    char *domain_name = NULL;
 
     domain_name = (char *)apm_vzalloc(APM_DOMAIN_NAME_LEN);
     if (domain_name == NULL) {
@@ -110,7 +110,7 @@ int apm_device_slave_proxy_domain_bind(int slave_tgid, int master_tgid, struct a
         return -EFAULT;
     }
 
-    ret = apm_slave_ctx_create(domain, slave_tgid, para->slave_pid);
+    ret = apm_slave_ctx_create(domain, slave_tgid, para->slave_pid, NULL);
     if (ret != 0) {
         apm_err("Create slave ctx failed. (slave_pid=%d)\n", para->slave_pid);
         return ret;
@@ -244,15 +244,16 @@ int apm_device_slave_proxy_domain_init(void)
 
     device_slave_proxy_domain = apm_vzalloc(sizeof(struct task_ctx_domain *) * max_dev_num);
     if (device_slave_proxy_domain == NULL) {
-        apm_err("Malloc proxy domain failed. (max_dev_num=%u; size=%ld)\n",
-            max_dev_num, sizeof(struct task_ctx_domain *) * max_dev_num);
+        apm_err(
+            "Malloc proxy domain failed. (max_dev_num=%u; size=%ld)\n", max_dev_num,
+            sizeof(struct task_ctx_domain *) * max_dev_num);
         return -ENOMEM;
     }
 
     ka_task_mutex_init(&proxy_domain_mutex);
 
-    apm_register_ioctl_cmd_func(_KA_IOC_NR(APM_QUERY_MASTER_INFO_BY_DEVICE_SLAVE),
-        apm_device_slave_proxy_domain_fops_query_master_pid);
+    apm_register_ioctl_cmd_func(
+        _KA_IOC_NR(APM_QUERY_MASTER_INFO_BY_DEVICE_SLAVE), apm_device_slave_proxy_domain_fops_query_master_pid);
 
     return 0;
 }
@@ -272,4 +273,3 @@ void apm_device_slave_proxy_domain_uninit(void)
     device_slave_proxy_domain = NULL;
 }
 DECLAER_FEATURE_AUTO_UNINIT(apm_device_slave_proxy_domain_uninit, FEATURE_LOADER_STAGE_3);
-

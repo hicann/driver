@@ -32,33 +32,12 @@
 
 #define adap_get_p2p_access_status devdrv_get_p2p_access_status
 
-/* dma */
-#define adap_dma_alloc_coherent hal_kernel_devdrv_dma_alloc_coherent
-
-#define adap_dma_free_coherent hal_kernel_devdrv_dma_free_coherent
-
-#define adap_dma_map_single hal_kernel_devdrv_dma_map_single
-
-#define adap_dma_unmap_single hal_kernel_devdrv_dma_unmap_single
-
-#define adap_dma_link_free devdrv_dma_link_free
-
-#define adap_dma_link_prepare devdrv_dma_link_prepare
-
-#define adap_dma_sync_copy hal_kernel_devdrv_dma_sync_copy
-
 /* pcie */
 #define adap_get_pci_dev_info devdrv_get_pci_dev_info
 
 #define adap_get_pcie_id_info devdrv_get_pcie_id_info
 
-#define adap_get_dev_topology devdrv_get_dev_topology
-
-#define adap_hot_reset_device devdrv_hot_reset_device
-
 #define adap_pcie_read_proc devdrv_pcie_read_proc
-
-#define adap_pcie_prereset devdrv_hot_pre_reset
 
 #define adap_get_addr_info devdrv_get_addr_info
 
@@ -93,27 +72,10 @@ void adap_flush_p2p(int pid);
 int adap_get_p2p_capability(u32 dev_id, u64 *capability);
 int adap_get_p2p_access_status(u32 devid, u32 peer_devid, int *status);
 
-/* dma */
-void *adap_dma_alloc_coherent(struct device *dev, size_t size, dma_addr_t *dma_addr, gfp_t gfp);
-void adap_dma_free_coherent(struct device *dev, size_t size, void *addr, dma_addr_t dma_addr);
-dma_addr_t adap_dma_map_single(struct device *dev, void *ptr, size_t size, enum dma_data_direction dir);
-void adap_dma_unmap_single(struct device *dev, dma_addr_t addr, size_t size, enum dma_data_direction dir);
-dma_addr_t adap_dma_map_page(struct device *dev, struct page *page,
-    size_t offset, size_t size, enum dma_data_direction dir);
-void adap_dma_unmap_page(struct device *dev, dma_addr_t addr, size_t size, enum dma_data_direction dir);
-int adap_dma_link_free(struct devdrv_dma_prepare *dma_prepare);
-struct devdrv_dma_prepare *adap_dma_link_prepare(u32 devid, enum devdrv_dma_data_type type,
-    struct devdrv_dma_node *dma_node, u32 node_cnt, u32 fill_status);
-int adap_dma_sync_copy(u32 dev_id, enum devdrv_dma_data_type type, u64 src, u64 dst, u32 size,
-    enum devdrv_dma_direction direction);
-
 /* pcie */
 int adap_get_pci_dev_info(u32 devid, struct devdrv_pci_dev_info *dev_info);
 int adap_get_pcie_id_info(u32 devid, struct devdrv_pcie_id_info  *pcie_id_info);
-int adap_get_dev_topology(u32 devid, u32 peer_devid, int *topo_type);
-int adap_hot_reset_device(u32 dev_id);
 int adap_pcie_read_proc(u32 dev_id, enum devdrv_addr_type type, u32 offset, unsigned char *value, u32 len);
-int adap_pcie_prereset(u32 dev_id);
 int adap_get_addr_info(u32 devid, enum devdrv_addr_type type, u32 index, u64 *addr, size_t *size);
 int adap_get_bbox_reservd_mem(unsigned int devid, unsigned long long *dma_addr,
     struct page **dma_pages, unsigned int *len);

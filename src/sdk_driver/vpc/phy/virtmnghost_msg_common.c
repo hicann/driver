@@ -22,7 +22,7 @@
 #include "virtmnghost_msg_common.h"
 
 STATIC int vmngh_common_msg_send_para_check(u32 dev_id, u32 fid, enum vmng_msg_common_type cmn_type,
-    const struct vmng_tx_msg_proc_info *tx_info)
+                                            const struct vmng_tx_msg_proc_info *tx_info)
 {
     if (vmngh_dev_id_check(dev_id, fid) != 0) {
         vmng_err("Parameter check failed. (dev_id=%u; fid=%u; cmn_type=%u)\n", dev_id, fid, cmn_type);
@@ -40,7 +40,7 @@ STATIC int vmngh_common_msg_send_para_check(u32 dev_id, u32 fid, enum vmng_msg_c
 }
 
 int vmngh_common_msg_send(u32 dev_id, u32 fid, enum vmng_msg_common_type cmn_type,
-    struct vmng_tx_msg_proc_info *tx_info)
+                          struct vmng_tx_msg_proc_info *tx_info)
 {
     enum vmng_msg_chan_type chan_type = VMNG_MSG_CHAN_TYPE_COMMON;
     struct vmng_msg_cluster *msg_cluster = NULL;
@@ -61,8 +61,8 @@ int vmngh_common_msg_send(u32 dev_id, u32 fid, enum vmng_msg_common_type cmn_typ
 
     msg_cluster = &(msg_dev->msg_cluster[chan_type]);
     if (msg_cluster->status != VMNG_MSG_CLUSTER_STATUS_ENABLE) {
-        vmng_err("Cluster status error. (dev_id=%u; fid=%u; cmn=%u; status=%u)\n",
-                 dev_id, fid, cmn_type, msg_cluster->status);
+        vmng_err("Cluster status error. (dev_id=%u; fid=%u; cmn=%u; status=%u)\n", dev_id, fid, cmn_type,
+                 msg_cluster->status);
         return -EINVAL;
     }
 
@@ -88,10 +88,10 @@ STATIC int vmngh_msg_cluster_recv_common(void *msg_chan_in, struct vmng_msg_chan
     client_proc_info.in_data_len = proc_info->in_data_len;
     client_proc_info.out_data_len = proc_info->out_data_len;
     client_proc_info.real_out_len = proc_info->real_out_len;
-    if ((client_proc_info.in_data_len > VMNG_MSG_SQ_DATA_MAX_SIZE) || (client_proc_info.out_data_len > 
-        VMNG_MSG_SQ_DATA_MAX_SIZE)) {
-        vmng_err("Data length check failed. (dev_id=%u; fid=%u; in_data_len=%u; out_data_len=%u)\n", 
-            dev_id, fid, client_proc_info.in_data_len, client_proc_info.out_data_len);
+    if ((client_proc_info.in_data_len > VMNG_MSG_SQ_DATA_MAX_SIZE) ||
+        (client_proc_info.out_data_len > VMNG_MSG_SQ_DATA_MAX_SIZE)) {
+        vmng_err("Data length check failed. (dev_id=%u; fid=%u; in_data_len=%u; out_data_len=%u)\n", dev_id, fid,
+                 client_proc_info.in_data_len, client_proc_info.out_data_len);
         return -EINVAL;
     }
     common_msg_type = proc_info->opcode_d2;
@@ -100,7 +100,8 @@ STATIC int vmngh_msg_cluster_recv_common(void *msg_chan_in, struct vmng_msg_chan
         return -EINVAL;
     }
 
-    ret = memcpy_s(msg_chan->sq_rx_safe_data, client_proc_info.in_data_len, proc_info->data, client_proc_info.in_data_len);
+    ret = memcpy_s(msg_chan->sq_rx_safe_data, client_proc_info.in_data_len, proc_info->data,
+                   client_proc_info.in_data_len);
     if (ret != 0) {
         vmng_err("Memcpy_s failed. (dev_id=%u; fid=%u; common_type=%u; ret=%d)\n", dev_id, fid, common_msg_type, ret);
         return ret;
@@ -114,15 +115,16 @@ STATIC int vmngh_msg_cluster_recv_common(void *msg_chan_in, struct vmng_msg_chan
 
     ret = msg_dev->common_msg.common_fun[common_msg_type](dev_id, fid, &client_proc_info);
     if (ret != 0) {
-        vmng_err("Message recv error. (dev_id=%u; fid=%u; common_type=%u; ret=%d)\n",
-                 dev_id, fid, common_msg_type, ret);
+        vmng_err("Message recv error. (dev_id=%u; fid=%u; common_type=%u; ret=%d)\n", dev_id, fid, common_msg_type,
+                 ret);
         return ret;
     }
     if (*client_proc_info.real_out_len > client_proc_info.out_data_len) {
         vmng_err("Real out len check failed. (dev_id=%u; fid=%u; common_type=%u; real_out_len=%u; out_data_len=%u)\n",
-            dev_id, fid, common_msg_type, *client_proc_info.real_out_len, client_proc_info.out_data_len);
+                 dev_id, fid, common_msg_type, *client_proc_info.real_out_len, client_proc_info.out_data_len);
     }
-    ret = memcpy_s(proc_info->data, *client_proc_info.real_out_len, client_proc_info.data, *client_proc_info.real_out_len);
+    ret = memcpy_s(proc_info->data, *client_proc_info.real_out_len, client_proc_info.data,
+                   *client_proc_info.real_out_len);
     if (ret != 0) {
         vmng_err("Memcpy_s failed. (dev_id=%u; fid=%u; common_type=%u; ret=%d)\n", dev_id, fid, common_msg_type, ret);
         return ret;

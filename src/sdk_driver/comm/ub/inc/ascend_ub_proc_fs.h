@@ -75,7 +75,7 @@ struct ubdrv_user_input {
 };
 
 int ubdrv_procfs_device_dfx_info(struct ascend_ub_msg_dev *msg_dev, void *data);
-int ubdrv_proc_create_data_proc(struct proc_dir_entry *top_entry, struct ubdrv_procfs_entry *procfs_entry);
+int ubdrv_proc_create_data_proc(ka_proc_dir_entry_t *top_entry, struct ubdrv_procfs_entry *procfs_entry);
 struct ubdrv_user_input *get_global_user_data(void);
 int ubdrv_procfs_send_admin_msg(struct ubdrv_chan_dfx_cmd *cmd, u32 dev_id, u32 sub_cmd, u32 chan_id);
 void ubdrv_procfs_show_common_chan_dfx_head(ka_seq_file_t *seq);

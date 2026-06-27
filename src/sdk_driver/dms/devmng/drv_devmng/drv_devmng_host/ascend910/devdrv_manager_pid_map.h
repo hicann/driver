@@ -108,7 +108,7 @@ struct bind_cost_statistics {
     ka_ktime_t update_hash_end;
 };
 
-int devdrv_bind_hostpid(struct devdrv_ioctl_para_bind_host_pid para_info, struct bind_cost_statistics cost_stat);
+int devdrv_bind_hostpid(struct devdrv_ioctl_para_bind_host_pid para_info, struct bind_cost_statistics *cost_stat);
 int devdrv_unbind_hostpid(struct devdrv_ioctl_para_bind_host_pid para_info);
 void devdrv_manager_process_sign_release(ka_pid_t devpid);
 void devdrv_manager_free_hashtable(void);
@@ -126,4 +126,5 @@ void devdrv_put_dev_process(ka_pid_t devpid);
 void devdrv_release_pid_with_start_time(struct devdrv_process_sign *d_sign, ka_pid_t devpid, u64 start_time,
     ka_list_head_t *free_list, int *release_flag);
 void devdrv_release_try_to_sync_to_peer(ka_pid_t slave_pid);
+void bind_cost_print(struct bind_cost_statistics *cost_stat);
 #endif

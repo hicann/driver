@@ -19,7 +19,7 @@
 #include <unistd.h>
 
 #include "securec.h"
-#include "dsmi_common_interface_custom.h"
+#include "dsmi_common_interface.h"
 #include "dcmi_interface_api.h"
 #include "dcmi_init_basic.h"
 #include "dcmi_fault_manage_intf.h"
@@ -33,6 +33,7 @@
 #include "dcmi_inner_cfg_manage.h"
 #include "dcmi_inner_info_get.h"
 #include "dcmi_environment_judge.h"
+#include "dcmi_basic_info_intf.h"
 #include "dcmi_hot_reset_intf.h"
 
 int g_brother_card_id[MAX_RESET_CARD_NUM] = {-1, -1, -1, -1, -1, -1, -1, -1};
@@ -52,7 +53,7 @@ int dcmi_reset_device(int card_id, int device_id)
     return dcmi_set_device_reset(card_id, device_id, OUTBAND_CHANNEL);
 }
 
-STATIC int dcmi_call_dsmi_hot_reset(int device_logic_id)
+int dcmi_call_dsmi_hot_reset(int device_logic_id)
 {
     int ret;
 
@@ -71,7 +72,7 @@ STATIC int dcmi_call_dsmi_hot_reset(int device_logic_id)
     return dcmi_convert_error_code(ret);
 }
 
-STATIC int dcmi_reset_device_inband_param_check(int card_id, int device_id, enum dcmi_unit_type *device_type)
+int dcmi_reset_device_inband_param_check(int card_id, int device_id, enum dcmi_unit_type *device_type)
 {
     int err;
 
@@ -80,10 +81,12 @@ STATIC int dcmi_reset_device_inband_param_check(int card_id, int device_id, enum
         return DCMI_ERR_CODE_OPER_NOT_PERMITTED;
     }
 
-    err = dcmi_get_device_type(card_id, device_id, device_type);
-    if (err != DCMI_OK) {
-        gplog(LOG_ERR, "dcmi_get_device_type failed. err is %d.", err);
-        return err;
+    if (!dcmi_board_chip_type_is_ascend_950()) {
+        err = dcmi_get_device_type(card_id, device_id, device_type);
+        if (err != DCMI_OK) {
+            gplog(LOG_ERR, "dcmi_get_device_type failed. err is %d.", err);
+            return err;
+        }
     }
 
     if (dcmi_board_chip_type_is_ascend_910() || dcmi_board_chip_type_is_ascend_910b() ||
@@ -117,6 +120,11 @@ int dcmi_reset_device_inband(int card_id, int device_id)
         return err;
     }
 
+    if (dcmi_board_chip_type_is_ascend_950()) {
+        gplog(LOG_OP, "This product does not support this api.");
+        return DCMI_ERR_CODE_NOT_SUPPORT;
+    }
+
     if (device_type == NPU_TYPE) {
         err = dcmi_get_device_logic_id(&device_logic_id, card_id, device_id);
         if (err != DCMI_OK) {
@@ -143,15 +151,15 @@ int dcmi_set_device_pre_reset(int card_id, int device_id)
     enum dcmi_unit_type device_type = NPU_TYPE;
     unsigned int main_board_id = 0;
 
-    // 支持物理机和A3特权容器场景
+    // 支持物理机和A3、A5 Pod及Server特权容器场景
     main_board_id = dcmi_get_maindboard_id_inner();
     if (!dcmi_is_in_phy_machine_root() && !(dcmi_is_in_privileged_docker_root() &&
-        dcmi_mainboard_is_arm_910_93(main_board_id))) {
+        ((dcmi_mainboard_is_arm_910_93(main_board_id))))) {
         gplog(LOG_OP, "Operation not permitted, only root user on physical machine can call this api.");
         return DCMI_ERR_CODE_OPER_NOT_PERMITTED;
     }
-
-    if (!dcmi_mainboard_is_arm_910_93(main_board_id)) {
+    
+    if (!(dcmi_mainboard_is_arm_910_93(main_board_id))) {
         if (dcmi_check_device_reset_vnpu_mode(card_id) == DCMI_OK) {
             gplog(LOG_OP, "card_id %d is in vnpu mode can not reset.\n", card_id);
             return DCMI_ERR_CODE_OPER_NOT_PERMITTED;
@@ -188,10 +196,22 @@ int dcmi_set_device_pre_reset(int card_id, int device_id)
 STATIC int dcmi_check_permission_by_channel_type(const enum dcmi_reset_channel channel_type)
 {
     if (channel_type != INBAND_CHANNEL) {
-        if (!dcmi_board_chip_type_is_ascend_910_93() || !dcmi_is_in_privileged_docker_root()) {
+        if (!(dcmi_board_chip_type_is_ascend_910_93() ||
+              dcmi_board_chip_type_is_ascend_950_pod() ||
+              dcmi_board_chip_type_is_ascend_950_server()) || !dcmi_is_in_privileged_docker_root()) {
             gplog(LOG_OP, "Operation not permitted, only inband mode is supported on virtual machine or container.");
             return DCMI_ERR_CODE_OPER_NOT_PERMITTED;
         }
+    }
+    return DCMI_OK;
+}
+
+int dcmi_check_910b_card_vm_docker(void)
+{
+    if ((dcmi_board_type_is_card() == TRUE) && (dcmi_board_chip_type_is_ascend_910b()) &&
+        (dcmi_check_run_in_docker() || dcmi_check_run_in_vm())) {
+            gplog(LOG_ERR, "Operation not permitted, this device can't call this api on virtual machine or container.");
+            return DCMI_ERR_CODE_OPER_NOT_PERMITTED;
     }
     return DCMI_OK;
 }
@@ -217,16 +237,23 @@ int dcmi_check_device_reset_permission(const enum dcmi_reset_channel channel_typ
             (!dcmi_board_chip_type_is_ascend_910b()) &&
             (!dcmi_board_chip_type_is_ascend_910()) &&
             (!dcmi_board_chip_type_is_ascend_910_93()) &&
-            (!dcmi_board_chip_type_is_ascend_910_95())) {
+            (!dcmi_board_chip_type_is_ascend_950())) {
             gplog(LOG_OP, "Operation not permitted, this device can't call this api on virtual machine or container.");
             return DCMI_ERR_CODE_OPER_NOT_PERMITTED;
         }
     }
 
+    /* 910B标卡在容器和虚拟机场景不支持热复位 */
+    ret = dcmi_check_910b_card_vm_docker();
+    if (ret != DCMI_OK) {
+        printf("This command cannot be executed on a VM or container.\n");
+        return ret;
+    }
+
     /* 910B 支持物理机 + 特权容器 */
     if (dcmi_check_run_in_docker() &&
         (dcmi_board_chip_type_is_ascend_910b() || dcmi_board_chip_type_is_ascend_910_93() ||
-        dcmi_board_chip_type_is_ascend_910_95())) {
+        dcmi_board_chip_type_is_ascend_950())) {
         ret = dcmi_check_a2_a3_a5_device_reset_docker_permission();
         if (ret != DCMI_OK) {
             gplog(LOG_ERR, "call dcmi_check_a2_a3_a5_device_reset_docker_permission failed. err is %d.", ret);
@@ -287,10 +314,10 @@ int dcmi_check_device_reset_vnpu_mode(int card_id)
     return DCMI_ERR_CODE_INNER_ERR;
 }
 
-static int execute_npu_reset(int card_id, int device_id, enum dcmi_reset_channel channel_type)
+int execute_npu_reset(int card_id, int device_id, enum dcmi_reset_channel channel_type)
 {
     int err;
-
+    
     switch (channel_type) {
         case INBAND_CHANNEL:
             err = dcmi_set_npu_device_reset_inband(card_id, device_id);
@@ -302,7 +329,7 @@ static int execute_npu_reset(int card_id, int device_id, enum dcmi_reset_channel
             gplog(LOG_ERR, "channel_type %d is error.", channel_type);
             return DCMI_ERR_CODE_NOT_SUPPORT;
     }
-
+    
     return err;
 }
 
@@ -321,9 +348,13 @@ int dcmi_set_device_reset(int card_id, int device_id, enum dcmi_reset_channel ch
         return DCMI_ERR_CODE_INVALID_PARAMETER;
     }
 
-    if (card_id != ALL_DEVICE_RESET_CARD_ID || 
-        !(dcmi_board_chip_type_is_ascend_910_93() || dcmi_board_chip_type_is_ascend_910_95_card())) {
-        err = dcmi_get_device_type(card_id, device_id, &device_type);
+    if (card_id != ALL_DEVICE_RESET_CARD_ID ||
+        !dcmi_board_chip_type_is_ascend_910_93()) {
+        if (dcmi_board_chip_type_is_ascend_950()) {
+            err = dcmiv2_get_device_type(card_id, &device_type);
+        } else {
+            err = dcmi_get_device_type(card_id, device_id, &device_type);
+        }
         if (err != DCMI_OK) {
             gplog(LOG_ERR, "dcmi_get_device_type failed. err is %d.", err);
             return err;
@@ -358,10 +389,10 @@ int dcmi_set_device_rescan(int card_id, int device_id)
     enum dcmi_unit_type device_type = NPU_TYPE;
     unsigned int main_board_id = 0;
 
-    // 支持物理机和A3特权容器场景
+    // 支持物理机和A3特权容器场景和A5Pod,Server特权容器
     main_board_id = dcmi_get_maindboard_id_inner();
     if (!dcmi_is_in_phy_machine_root() && !(dcmi_is_in_privileged_docker_root() &&
-        dcmi_mainboard_is_arm_910_93(main_board_id))) {
+        (dcmi_mainboard_is_arm_910_93(main_board_id)))) {
         gplog(LOG_OP, "Operation not permitted, only root user on physical machine can call this api.");
         return DCMI_ERR_CODE_OPER_NOT_PERMITTED;
     }
@@ -393,44 +424,37 @@ int dcmi_set_device_rescan(int card_id, int device_id)
     }
 }
 
-static int dcmi_get_npu_outband_channel_state(int *channel_state)
-{
-#ifdef _WIN32
-    return DCMI_ERR_CODE_NOT_SUPPORT;
-#else
-    int ret;
-
-    // 用该函数查询复位结果,用以判断通路状态共获取两次
-    ret = dcmi_ipmi_get_npu_outband_channel_state(channel_state);
-    if (ret != DCMI_OK) {
-        sleep(1); // 延迟1s
-        ret = dcmi_ipmi_get_npu_outband_channel_state(channel_state);
-        if (ret != DCMI_OK) {
-            gplog(LOG_ERR, "Call dcmi_ipmi_get_npu_outband_channel_state failed. err is %d.", ret);
-            return ret;
-        }
-    }
-
-    return DCMI_OK;
-#endif
-}
-
 int dcmi_get_npu_outband_reset_state(int card_id, int device_id, unsigned char *reset_state)
 {
 #ifdef _WIN32
     return DCMI_ERR_CODE_NOT_SUPPORT;
 #else
-    int ret;
+    int ret, logic_id;
     int pcie_slot_id; /* pcie卡的槽位号 */
 
     if (dcmi_board_type_is_card() != TRUE) {
         return DCMI_ERR_CODE_NOT_SUPPORT;
     }
+
     // 获取pcie卡的槽位号
-    ret = dcmi_get_card_pcie_slot(card_id, &pcie_slot_id);
-    if (ret != DCMI_OK) {
-        gplog(LOG_ERR, "Call dcmi_get_pcie_slot failed. %d.", ret);
-        return ret;
+    if (dcmi_board_chip_type_is_ascend_950()) {
+        ret = dcmiv2_get_device_logic_id(&logic_id, card_id, device_id);
+        if (ret != DCMI_OK) {
+            gplog(LOG_ERR, "dcmiv2_get_device_logic_id failed. (ret=%d)", ret);
+            return ret;
+        }
+
+        ret = dcmiv2_get_device_pcie_slot_id(logic_id, &pcie_slot_id);
+        if (ret != DCMI_OK) {
+            gplog(LOG_ERR, "Call dcmiv2_get_pcie_slot failed. (ret=%d)", ret);
+            return ret;
+        }
+    } else {
+        ret = dcmi_get_card_pcie_slot(card_id, &pcie_slot_id);
+        if (ret != DCMI_OK) {
+            gplog(LOG_ERR, "Call dcmi_get_pcie_slot failed. (ret=%d)", ret);
+            return ret;
+        }
     }
 
     // 用该函数查询复位结果,用以判断通路状态共获取两次
@@ -448,47 +472,18 @@ int dcmi_get_npu_outband_reset_state(int card_id, int device_id, unsigned char *
 #endif
 }
 
-STATIC int dcmi_get_device_npu_outband_channel_state(int card_id, int device_id, int *channel_state)
-{
-    int ret = 0;
-    unsigned int main_board_id = 0;
-    unsigned char reset_state = BMC_RESET_CHIP_FAILED; /* 默认是复位失败 */
-    const int CHANNEL_STATUS_SUCCESS = 1;
-
-    main_board_id = dcmi_get_maindboard_id_inner();
-    if (dcmi_mainboard_is_arm_910_93(main_board_id)) {
-        // 910_93场景下bmc不支持直接获取复位状态
-        ret = dcmi_get_npu_outband_channel_state(channel_state);
-        if (ret != DCMI_OK || *channel_state != CHANNEL_STATUS_SUCCESS) {
-            gplog(LOG_ERR, "call dcmi_get_npu_outband_channel_state failed. err is %d.", ret);
-            return ret;
-        }
-        gplog(LOG_OP, "call dcmi_get_npu_outband_channel_state success. card_id=%d, device_id=%d", card_id,
-            device_id);
-    } else {
-        ret = dcmi_get_npu_outband_reset_state(card_id, device_id, &reset_state);
-        if (ret != DCMI_OK) {
-            gplog(LOG_ERR, "call dcmi_get_npu_outband_reset_state failed. err is %d.", ret);
-            return ret;
-        }
-        bool check_result = ((reset_state == BMC_RESET_CHIP_SUCCESS) || (reset_state == BMC_RESET_CHIP_FAILED) ||
-            (reset_state == BMC_RESET_CHIP_UNKNOWN));
-        *channel_state = check_result ? CHANNEL_STATUS_SUCCESS : *channel_state;
-    }
-
-    return DCMI_OK;
-}
-
 int dcmi_get_device_outband_channel_state(int card_id, int device_id, int *channel_state)
 {
     enum dcmi_unit_type device_type = NPU_TYPE;
     int ret;
     unsigned int main_board_id = 0;
 
-    // 支持物理机和A3特权容器场景
+    // 支持物理机和A3、A5 Pod及Server特权容器场景
     main_board_id = dcmi_get_maindboard_id_inner();
     if (!dcmi_is_in_phy_machine_root() && !(dcmi_is_in_privileged_docker_root() &&
-        dcmi_mainboard_is_arm_910_93(main_board_id))) {
+        (dcmi_mainboard_is_arm_910_93(main_board_id) ||
+         dcmi_board_chip_type_is_ascend_950_pod() ||
+         dcmi_board_chip_type_is_ascend_950_server()))) {
         gplog(LOG_ERR, "Operation not permitted, only root user on physical machine can call this api.");
         return DCMI_ERR_CODE_OPER_NOT_PERMITTED;
     }
@@ -496,6 +491,11 @@ int dcmi_get_device_outband_channel_state(int card_id, int device_id, int *chann
     if (channel_state == NULL) {
         gplog(LOG_ERR, "channel state is invalid.");
         return DCMI_ERR_CODE_INVALID_PARAMETER;
+    }
+
+    if (dcmi_board_chip_type_is_ascend_950()) {
+        gplog(LOG_OP, "This product does not support this api.");
+        return DCMI_ERR_CODE_NOT_SUPPORT;
     }
 
     ret = dcmi_get_device_type(card_id, device_id, &device_type);
@@ -603,7 +603,7 @@ int dcmi_check_device_cpld_version(int card_id)
 }
 
 int dcmi_pre_reset_brother_card_set_flag(int master_logic_id, int slaver_logic_id,
-                                        int brother_master_logic_id, int brother_slave_logic_id, int brother_card_id) 
+                                         int brother_master_logic_id, int brother_slave_logic_id, int brother_card_id)
 {
     int ret;
     ret = dsmi_hot_reset_atomic(master_logic_id, DSMI_SUBCMD_HOTRESET_SETFLAG);
@@ -624,16 +624,16 @@ int dcmi_pre_reset_brother_card_set_flag(int master_logic_id, int slaver_logic_i
             (void)dsmi_hot_reset_atomic(slaver_logic_id, DSMI_SUBCMD_HOTRESET_CLEARFLAG);
             gplog(LOG_ERR, "call dsmi_hot_reset_atomic failed. err is %d.brother_master_logic_id=%d",
                 ret, brother_master_logic_id);
-                return dcmi_convert_error_code(ret);
-            }
-            ret = dsmi_hot_reset_atomic(brother_slave_logic_id, DSMI_SUBCMD_HOTRESET_SETFLAG);
-            if (ret != DSMI_OK) {
-                (void)dsmi_hot_reset_atomic(master_logic_id, DSMI_SUBCMD_HOTRESET_CLEARFLAG);
-                (void)dsmi_hot_reset_atomic(slaver_logic_id, DSMI_SUBCMD_HOTRESET_CLEARFLAG);
-                (void)dsmi_hot_reset_atomic(brother_master_logic_id, DSMI_SUBCMD_HOTRESET_CLEARFLAG);
-                gplog(LOG_ERR, "call dsmi_hot_reset_atomic failed. err is %d.brother_slave_logic_id=%d",
-                    ret, brother_slave_logic_id);
-                return dcmi_convert_error_code(ret);
+            return dcmi_convert_error_code(ret);
+        }
+        ret = dsmi_hot_reset_atomic(brother_slave_logic_id, DSMI_SUBCMD_HOTRESET_SETFLAG);
+        if (ret != DSMI_OK) {
+            (void)dsmi_hot_reset_atomic(master_logic_id, DSMI_SUBCMD_HOTRESET_CLEARFLAG);
+            (void)dsmi_hot_reset_atomic(slaver_logic_id, DSMI_SUBCMD_HOTRESET_CLEARFLAG);
+            (void)dsmi_hot_reset_atomic(brother_master_logic_id, DSMI_SUBCMD_HOTRESET_CLEARFLAG);
+            gplog(LOG_ERR, "call dsmi_hot_reset_atomic failed. err is %d.brother_slave_logic_id=%d",
+                ret, brother_slave_logic_id);
+            return dcmi_convert_error_code(ret);
         }
     }
     return dcmi_convert_error_code(ret);
@@ -651,13 +651,13 @@ int dcmi_pre_reset_brother_card_outbind(int card_id, int brother_card_id)
         ret |= dcmi_get_device_logic_id(&brother_slave_logic_id, brother_card_id, 1);
     }
     if (ret != 0) {
-        gplog(LOG_ERR, "get_logicid failed. err is %d. card_id =%d, brother_card_id=%d", ret, card_id, brother_card_id);
+        gplog(LOG_ERR, "get_logicid failed. err is %d. card_id=%d, brother_card_id=%d", ret, card_id, brother_card_id);
         return DCMI_ERR_CODE_INNER_ERR;
     }
 
     /* 依次判断4个device是否可以复位 */
     ret = dcmi_pre_reset_brother_card_set_flag(master_logic_id, slaver_logic_id,
-                                                brother_master_logic_id, brother_slave_logic_id,brother_card_id);
+                                               brother_master_logic_id, brother_slave_logic_id, brother_card_id);
     if (ret != DCMI_OK) {
         return ret;
     }
@@ -699,6 +699,7 @@ int dcmi_pre_reset_device(int card_id, int brother_card_id, int id)
                 gplog(LOG_ERR, "call dcmi_check_device_cpld_version failed, id=%d. err is %d.", brother_card_id, ret);
                 return ret;
             }
+
             ret = dcmi_clear_running_proc();
             if (ret != DCMI_OK) {
                 gplog(LOG_ERR, "call dcmi_clear_running_proc failed, id=%d. err is %d.", card_id, ret);
@@ -708,7 +709,6 @@ int dcmi_pre_reset_device(int card_id, int brother_card_id, int id)
         ret = dcmi_pre_reset_brother_card_outbind(card_id, brother_card_id);
         return ret;
     }
-
     if (dcmi_board_chip_type_is_ascend_910b() || dcmi_board_chip_type_is_ascend_910_93()) {
         ret = dcmi_clear_running_proc();
         if (ret != DCMI_OK) {
@@ -735,7 +735,8 @@ int dcmi_set_npu_device_pre_reset(int card_id, int device_id)
     int brother_card_id = -1;
 
     main_board_id = dcmi_get_maindboard_id_inner();
-    if (dcmi_board_type_is_card() != TRUE && !dcmi_mainboard_is_arm_910_93(main_board_id)) {
+    if (dcmi_board_type_is_card() != TRUE && !dcmi_mainboard_is_arm_910_93(main_board_id) &&
+        !dcmi_board_chip_type_is_ascend_950_pod() && !dcmi_board_chip_type_is_ascend_950_server()) {
         return DCMI_ERR_CODE_NOT_SUPPORT;
     }
     // 获取卡的信息
@@ -771,7 +772,7 @@ int dcmi_set_npu_device_pre_reset(int card_id, int device_id)
     sleep(1);
 #ifndef _WIN32
     // 关闭上游端口
-    if (!dcmi_mainboard_is_arm_910_93(main_board_id)) {
+    if (!(dcmi_mainboard_is_arm_910_93(main_board_id) || dcmi_board_chip_type_is_ascend_950())) {
         ret = dcmi_set_npu_device_close_pcie_upstream(card_id, device_id, card_info);
         if (ret != DCMI_OK) {
             gplog(LOG_ERR, "call dcmi_set_npu_device_close_pcie_upstream failed, id=%d. err is %d.", card_id, ret);
@@ -872,7 +873,8 @@ int dcmi_set_npu_device_rescan(int card_id, int device_id)
 
     main_board_id = dcmi_get_maindboard_id_inner();
     struct dcmi_card_info *card_info = NULL;
-    if (dcmi_board_type_is_card() != TRUE && !dcmi_mainboard_is_arm_910_93(main_board_id)) {
+    if (dcmi_board_type_is_card() != TRUE && !dcmi_mainboard_is_arm_910_93(main_board_id)
+        && !dcmi_board_chip_type_is_ascend_950_pod() && !dcmi_board_chip_type_is_ascend_950_server()) {
         return DCMI_ERR_CODE_NOT_SUPPORT;
     }
     // 获取卡的信息
@@ -891,10 +893,12 @@ int dcmi_set_npu_device_rescan(int card_id, int device_id)
         }
         return ret;
     } else {
-        ret = dcmi_set_npu_device_open_pcie_upstream(card_id, device_id, card_info); // 打开上游端口
-        if (ret != DCMI_OK) {
-            gplog(LOG_ERR, "call dcmi_set_npu_device_open_pcie_upstream failed. err is %d.", ret);
-            return ret;
+        if (!dcmi_board_chip_type_is_ascend_950()) { // 910A5不需要打开上游端口
+            ret = dcmi_set_npu_device_open_pcie_upstream(card_id, device_id, card_info); // 打开上游端口
+            if (ret != DCMI_OK) {
+                gplog(LOG_ERR, "call dcmi_set_npu_device_open_pcie_upstream failed. err is %d.", ret);
+                return ret;
+            }
         }
     }
 #endif
@@ -970,7 +974,11 @@ void dcmi_npu_msn_env_clean(int cardId)
         " > /dev/null 2>&1");
     } else {
         // kill 一个 msn日志传输进程
-        ret = dcmi_get_device_logic_id(&logicId, cardId, 0); // 仅使用die0去拉起msn日志传输进程，故只清除die0相关进程
+        if (dcmi_board_chip_type_is_ascend_950() == TRUE) {
+            ret = dcmiv2_get_device_logic_id(&logicId, cardId, 0); // 仅使用die0去拉起msn日志传输进程，故只清除die0相关进程
+        } else {
+            ret = dcmi_get_device_logic_id(&logicId, cardId, 0); // 仅使用die0去拉起msn日志传输进程，故只清除die0相关进程
+        }
         if (ret != DCMI_OK) {
             gplog(LOG_ERR, "call dcmi_get_device_logic_id failed. err is %d.", ret);
             return;
@@ -1183,7 +1191,7 @@ int dcmi_check_if_occupy_proc_exist(OCCUPIED_PROC_INFO *info, bool *need_kill)
     int ret;
     bool tmp_flag = false;
 
-    for (i = 0;i < info->pid_cnt; i++) {
+    for (i = 0; i < info->pid_cnt; i++) {
         if (info->state[i] == PROC_STATE_DEAD) {
             continue;
         }
@@ -1230,6 +1238,7 @@ int dcmi_kill_all_occupy_npu_proc(OCCUPIED_PROC_INFO *info)
                 return DCMI_ERR_CODE_INNER_ERR;
             }
         }
+
         sleep(WHITE_PROC_KILL_WAIT_TIME);
 
         ret = dcmi_check_if_occupy_proc_exist(info, &need_kill);
@@ -1237,6 +1246,7 @@ int dcmi_kill_all_occupy_npu_proc(OCCUPIED_PROC_INFO *info)
             gplog(LOG_ERR, "call dcmi_check_if_occupy_proc_exist fail! ret = %d", ret);
             return ret;
         }
+
         try_cnt++;
     }
     return DCMI_OK;
@@ -1375,7 +1385,7 @@ bool dcmi_check_is_in_white_proc(WHITE_PROC_INFO proc_info, int pid)
 }
 
 int dcmi_get_current_device_proc(WHITE_PROC_INFO proc_info,
-                                  int card_id, int device_id, OCCUPIED_PROC_INFO *info)
+                                 int card_id, int device_id, OCCUPIED_PROC_INFO *info)
 {
     int ret;
     int pid = -1;
@@ -1447,7 +1457,6 @@ int dcmi_kill_occupy_npu_proc(WHITE_PROC_INFO proc_info)
     int card_num;
     int card_id_list[MAX_CARD_NUM] = {0};
     OCCUPIED_PROC_INFO info = {0};
-
     // 获取当前所有卡的信息和die数量
     ret = dcmi_get_card_list(&card_num, card_id_list, MAX_CARD_NUM);
     if (ret != DCMI_OK) {
@@ -1504,7 +1513,7 @@ int dcmi_clear_running_proc()
 
 int dcmi_reset_brother_card(int card_id, int brother_card_id)
 {
-    int ret ;
+    int ret;
     int master_logic_id, slaver_logic_id, brother_master_logic_id, brother_slave_logic_id;
 
     ret = dcmi_get_device_logic_id(&master_logic_id, card_id, 0);
@@ -1520,7 +1529,7 @@ int dcmi_reset_brother_card(int card_id, int brother_card_id)
 
     /* 依次判断4个device是否可以复位 */
     ret = dcmi_pre_reset_brother_card_set_flag(master_logic_id, slaver_logic_id,
-                                                brother_master_logic_id, brother_slave_logic_id, brother_card_id);
+                                               brother_master_logic_id, brother_slave_logic_id, brother_card_id);
     if (ret != DCMI_OK) {
         return ret;
     }
@@ -1586,7 +1595,7 @@ STATIC int dcmi_get_hccs_status_inband(int card_id, int device_id, int *hccs_sta
             return DCMI_ERR_CODE_INVALID_PARAMETER;
         }
 
-        if (!((dcmi_board_chip_type_is_ascend_910_93() || dcmi_board_chip_type_is_ascend_910_95()) &&
+        if (!((dcmi_board_chip_type_is_ascend_910_93() || dcmi_board_chip_type_is_ascend_950()) &&
             (dcmi_is_in_phy_machine_root() || dcmi_check_run_in_privileged_docker()))) {
             gplog(LOG_ERR, "This card_id is not supported in this scenario.");
             return DCMI_ERR_CODE_INVALID_PARAMETER;
@@ -1613,131 +1622,6 @@ STATIC int dcmi_get_hccs_status_inband(int card_id, int device_id, int *hccs_sta
     return DCMI_OK;
 }
 
-void dcmi_smp_rst_clr_all(int *dev_list, int dev_cnt)
-{
-    for (int i = 0; i < dev_cnt; i++) {
-        if (dev_list[i] != DCMI_SMP_INVALID_ID) {
-            (void)dsmi_hot_reset_atomic(dev_list[i], DSMI_SUBCMD_HOTRESET_CLEARFLAG);
-        }
-    }
-}
-
-int dcmi_smp_rst_btch_ops(int *dev_list, int dev_cnt, int sub_cmd, char *cmd_str)
-{
-    int ret;
-
-    for (int i = 0; i < dev_cnt; i++) {
-        if (dev_list[i] != DCMI_SMP_INVALID_ID) {
-            ret = dsmi_hot_reset_atomic(dev_list[i], sub_cmd);
-            if (ret != DSMI_OK) {
-                gplog(LOG_ERR, "call %s failed. err is %d, dev_id=%d", cmd_str, ret, dev_list[i]);
-                return ret;
-            }
-        }
-    }
-
-    return DSMI_OK;
-}
-
-int dcmi_smp_rst_prepare(int master_card_id, int *dev_list)
-{
-    int ret;
-    int master_logic_id, slaver_logic_id1, slaver_logic_id2, slaver_logic_id3;
-
-    ret = dcmi_get_device_logic_id(&master_logic_id, master_card_id, 0);
-    ret |= dcmi_get_device_logic_id(&slaver_logic_id1, master_card_id + DCMI_SMP_SLAVER_NUM0, 0);
-    ret |= dcmi_get_device_logic_id(&slaver_logic_id2, master_card_id + DCMI_SMP_SLAVER_NUM2, 0);
-    ret |= dcmi_get_device_logic_id(&slaver_logic_id3, master_card_id + DCMI_SMP_SLAVER_NUM2, 0);
-    if (ret != DCMI_OK) {
-        gplog(LOG_ERR, "get_logic_id failed. err is %d, master_card_id=%d", ret, master_card_id);
-        return ret;
-    }
-   /* 依次判断4个device是否可以复位 */
-    ret = dsmi_hot_reset_atomic(slaver_logic_id1, DSMI_SUBCMD_HOTRESET_SETFLAG);
-    if (ret != DSMI_OK) {
-        gplog(LOG_ERR, "call set flg failed. err is %d, slaver_logic_id1=%d", ret, slaver_logic_id1);
-        return ret;
-    }
-    dev_list[DCMI_SMP_SLAVER_NUM0] = slaver_logic_id1;
-
-    ret = dsmi_hot_reset_atomic(slaver_logic_id2, DSMI_SUBCMD_HOTRESET_SETFLAG);
-    if (ret != DSMI_OK) {
-        (void)dsmi_hot_reset_atomic(slaver_logic_id1, DSMI_SUBCMD_HOTRESET_CLEARFLAG);
-        gplog(LOG_ERR, "call set flg failed. err is %d, slaver_logic_id2=%d", ret, slaver_logic_id2);
-        return ret;
-    }
-    dev_list[DCMI_SMP_SLAVER_NUM1] = slaver_logic_id2;
-
-    ret = dsmi_hot_reset_atomic(slaver_logic_id3, DSMI_SUBCMD_HOTRESET_SETFLAG);
-    if (ret != DSMI_OK) {
-        dcmi_smp_rst_clr_all(dev_list, DCMI_SMP_DEVICE_NUMBER);
-        gplog(LOG_ERR, "call set flg failed. err is %d, slaver_logic_id3=%d", ret, slaver_logic_id3);
-        return ret;
-    }
-    dev_list[DCMI_SMP_SLAVER_NUM2] = slaver_logic_id3;
-
-    ret = dsmi_hot_reset_atomic(master_logic_id, DSMI_SUBCMD_HOTRESET_SETFLAG);
-    if (ret != DSMI_OK) {
-        dcmi_smp_rst_clr_all(dev_list, DCMI_SMP_DEVICE_NUMBER);
-        gplog(LOG_ERR, "call set flg failed. err is %d, master_card_id=%d", ret, master_card_id);
-        return ret;
-    }
-    dev_list[DCMI_SMP_MASTER_NUM] = master_logic_id;
-
-    return DSMI_OK;
-}
-
-int dcmi_reset_smp_card(int card_id, int device_id)
-{
-    int ret;
-    int master_card_id, master_logic_id;
-    int dev_list[DCMI_SMP_DEVICE_NUMBER] = {DCMI_SMP_INVALID_ID};
-
-    gplog(LOG_OP, "dcmi_reset_smp_card card_id=%d device_id=%d", card_id, device_id);
-
-    master_card_id = (card_id >= DCMI_SMP_MASTER_CARD_ID2) ? DCMI_SMP_MASTER_CARD_ID2 : DCMI_SMP_MASTER_CARD_ID1;
-    ret = dcmi_smp_rst_prepare(master_card_id, dev_list);
-    if (ret != DSMI_OK) {
-        gplog(LOG_ERR, "dcmi_smp_rst_prepare failed. err is %d, master_card_id=%d", ret, master_card_id);
-        return dcmi_convert_error_code(ret);
-    }
-
-    dcmi_npu_msn_env_clean(master_card_id);
-
-    ret = dcmi_smp_rst_btch_ops(dev_list, DCMI_SMP_DEVICE_NUMBER, DSMI_SUBCMD_HOTRESET_UNBIND, "unbind");
-    if (ret != DSMI_OK) {
-        dcmi_smp_rst_clr_all(dev_list, DCMI_SMP_DEVICE_NUMBER);
-        return dcmi_convert_error_code(ret);
-    }
-
-    /*先remove从设备*/
-    master_logic_id = dev_list[DCMI_SMP_MASTER_NUM];
-    dev_list[DCMI_SMP_MASTER_NUM] = DCMI_SMP_INVALID_ID;
-    ret = dcmi_smp_rst_btch_ops(dev_list, DCMI_SMP_DEVICE_NUMBER, DSMI_SUBCMD_HOTRESET_REMOVE, "remove");
-    dev_list[DCMI_SMP_MASTER_NUM] = master_logic_id;
-    if (ret != DSMI_OK) {
-        dcmi_smp_rst_clr_all(dev_list, DCMI_SMP_DEVICE_NUMBER);
-        return dcmi_convert_error_code(ret);
-    }
-
-    /*复位主设备后再remove*/
-    ret = dsmi_hot_reset_atomic(master_logic_id, DSMI_SUBCMD_HOTRESET_RESET);
-    if (ret != DSMI_OK) {
-        dcmi_smp_rst_clr_all(dev_list, DCMI_SMP_DEVICE_NUMBER);
-        gplog(LOG_ERR, "call reset failed. err is %d, master_logic_id=%d", ret, master_logic_id);
-        return dcmi_convert_error_code(ret);
-    }
-
-    (void)dsmi_hot_reset_atomic(master_logic_id, DSMI_SUBCMD_HOTRESET_REMOVE);
-
-    for (int i = 0; i < DCMI_SMP_DEVICE_NUMBER; i++) {
-        (void)dsmi_hot_reset_atomic(dev_list[i], DSMI_SUBCMD_HOTRESET_RESCAN);
-    }
-
-    gplog(LOG_OP, "dcmi_reset_smp_card reset successfully! card_id=%d device_id=%d", card_id, device_id);
-    return DSMI_OK;
-}
-
 int dcmi_set_npu_device_reset_inband(int card_id, int device_id)
 {
     int ret, device_logic_id = 0, brother_card_id = 0, hccs_status = HCCS_OFF;
@@ -1755,10 +1639,10 @@ int dcmi_set_npu_device_reset_inband(int card_id, int device_id)
     }
 
     if (card_id != ALL_DEVICE_RESET_CARD_ID) {
-        ret = dcmi_get_device_logic_id(&device_logic_id, card_id, device_id);
-        if (ret != DCMI_OK) {
-            gplog(LOG_ERR, "call dcmi_get_device_logic_id failed. err is %d.", ret);
-            return ret;
+        if (!dcmi_board_chip_type_is_ascend_950()) {
+            ret = dcmi_get_device_logic_id(&device_logic_id, card_id, device_id);
+        } else {
+            ret = dcmiv2_get_device_logic_id(&device_logic_id, card_id, device_id);
         }
     }
 
@@ -1767,8 +1651,7 @@ int dcmi_set_npu_device_reset_inband(int card_id, int device_id)
         return hccs_reset_all();
     }
 
-    if (dcmi_board_chip_type_is_ascend_910_93() || dcmi_board_chip_type_is_ascend_910b() ||
-        dcmi_board_chip_type_is_ascend_910_95()) {
+    if (dcmi_board_chip_type_is_ascend_910_93() || dcmi_board_chip_type_is_ascend_910b()) {
         ret = dcmi_clear_running_proc();
         if (ret != 0) {
             gplog(LOG_ERR, "call dcmi_clear_running_proc failed, card_id=%d. err is %d.", card_id, ret);
@@ -1779,7 +1662,7 @@ int dcmi_set_npu_device_reset_inband(int card_id, int device_id)
     if (dcmi_board_chip_type_is_ascend_910_93()) {
         ret = dcmi_get_netdev_brother_device(card_id, device_id, &brother_card_id);
         if (ret != 0) {
-            gplog(LOG_ERR, "dcmi_get_netdev_brother_device failed. err is %d.", ret);
+            gplog(LOG_ERR, "get_net_dev_brother_device failed. err is %d.", ret);
             return ret;
         }
         return dcmi_reset_brother_card(card_id, brother_card_id);
@@ -1848,9 +1731,37 @@ static int dcmi_set_npu_device_reset(int card_id, int device_id, int outband_id,
     int retry_times;
     int set_ret;
     int get_ret = 0;
+    unsigned int device_phy_id = 0;
+    struct dcmi_card_info *card_info = NULL;
+    int ret;
+
+    if (dcmi_board_chip_type_is_ascend_950_pod() || dcmi_board_chip_type_is_ascend_950_server()) {
+        ret = dcmi_get_card_info(card_id, &card_info);
+        if (ret != DCMI_OK) {
+            gplog(LOG_ERR, "call dcmi_get_card_info failed, id=%d. err is %d.", card_id, ret);
+            return ret;
+        }
+        ret = dsmi_get_phyid_from_logicid(card_info->device_info[device_id].logic_id, &device_phy_id);
+        if (ret != DSMI_OK) {
+            gplog(LOG_ERR, "call dsmi_get_phyid_from_logicid failed. err is %d.", ret);
+            return dcmi_convert_error_code(ret);
+        }
+    }
+
     for (retry_times = 0; retry_times < MAX_RETRY_CNT; retry_times++) {
-        set_ret = dcmi_ipmi_reset_npu(pcie_slot_id, outband_id);
-        if (set_ret == DCMI_OK) {
+        if (dcmi_board_chip_type_is_ascend_950()) {
+            // A5仅支持查询复位请求的发送结果，不支持查询复位状态
+            set_ret = dcmi_ipmi_reset_npu_950(device_phy_id);
+        } else {
+            set_ret = dcmi_ipmi_reset_npu(pcie_slot_id, outband_id);
+        }
+
+        if (set_ret == DCMI_OK && dcmi_board_chip_type_is_ascend_950()) {
+            get_ret = DCMI_OK;
+            break;
+        }
+
+        if (set_ret == DCMI_OK && !dcmi_board_chip_type_is_ascend_950()) {
             get_ret = dcmi_ipmi_get_npu_reset_state(pcie_slot_id, outband_id, &reset_state);
             if (get_ret == DCMI_OK && reset_state == BMC_RESET_CHIP_SUCCESS) {
                 break;
@@ -1934,7 +1845,10 @@ int dcmi_set_npu_device_reset_outband(int card_id, int device_id)
     unsigned int main_board_id = 0;
 
     main_board_id = dcmi_get_maindboard_id_inner();
-    if (dcmi_board_type_is_card() != TRUE && !dcmi_mainboard_is_arm_910_93(main_board_id)) {
+    /* A5标卡暂不支持带外复位 */
+    if ((dcmi_board_type_is_card() != TRUE || dcmi_board_chip_type_is_ascend_950() == TRUE) &&
+        !dcmi_mainboard_is_arm_910_93(main_board_id) && !dcmi_board_chip_type_is_ascend_950_pod() &&
+        !dcmi_board_chip_type_is_ascend_950_server()) {
         gplog(LOG_OP, "The device does not support outband reset. card_id=%d, device_id=%d, main_board_id=%u", card_id,
             device_id, main_board_id);
         return DCMI_ERR_CODE_NOT_SUPPORT;

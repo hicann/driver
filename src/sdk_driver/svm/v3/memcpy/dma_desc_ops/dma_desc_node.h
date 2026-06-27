@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2025. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -49,12 +49,10 @@ struct dma_desc_node {
     struct devdrv_dma_prepare dma_prepare;
 };
 
-int dma_desc_node_create(struct dma_desc_ctx *ctx,
-    struct svm_copy_task *copy_task, struct DMA_ADDR *dma_desc);
+int dma_desc_node_create(struct dma_desc_ctx *ctx, struct svm_copy_task *copy_task, struct DMA_ADDR *dma_desc);
 void dma_desc_node_destroy(struct dma_desc_ctx *ctx, struct dma_desc_node *node);
 struct dma_desc_node *dma_desc_node_get(struct dma_desc_ctx *ctx, u64 handle);
 void dma_desc_node_put(struct dma_desc_node *node);
 int dma_desc_node_state_trans(struct dma_desc_node *node, int src_state, int dst_state);
 
 #endif
-

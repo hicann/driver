@@ -166,6 +166,7 @@ struct dms_ubdev_id_info {
     unsigned short vendor_id;
     unsigned short module_vendor_id;
     unsigned short module_id;
+    unsigned char reserved[32];
 };
 drvError_t dms_get_ub_dev_id_info(unsigned int dev_id, struct dms_ubdev_id_info *id_info);
 

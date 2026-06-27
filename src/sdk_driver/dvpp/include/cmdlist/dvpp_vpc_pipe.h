@@ -205,7 +205,7 @@ typedef void fn_vpc_pipe_set_raw_yyuv_rd(const vpc_pipe_ctx_t *ctx);
 typedef void fn_vpc_pipe_set_raw_yyuv_wr(
     const vpc_pipe_ctx_t *ctx, uint32_t valid_width, uint32_t top_offset, uint32_t left_offset);
 typedef void fn_vpc_pipe_set_raw_bayer_wr(const vpc_pipe_ctx_t *ctx);
-
+typedef void fn_vpc_pipe_in0_out_cvdr(const vpc_pipe_ctx_t *ctx);
 
 typedef struct {
     // common
@@ -302,6 +302,8 @@ typedef struct {
     fn_vpc_pipe_set_raw_yyuv_rd *pfn_vpc_pipe_set_raw_yyuv_rd;
     fn_vpc_pipe_set_raw_yyuv_wr *pfn_vpc_pipe_set_raw_yyuv_wr;
     fn_vpc_pipe_set_raw_bayer_wr *pfn_vpc_pipe_set_raw_bayer_wr;
+    fn_vpc_pipe_in0_out_cvdr *pfn_vpc_pipe_in0_out_cvdr;
+
 } dvpp_vpc_pipe_export_func_t;
 
 void dvpp_vpc_pipe_register_export_func(dvpp_vpc_pipe_export_func_t *export_func);

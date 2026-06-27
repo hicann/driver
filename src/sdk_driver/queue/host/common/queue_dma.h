@@ -49,7 +49,7 @@ struct queue_va_info {
 };
 
 int queue_make_dma_list(ka_device_t *dev, bool hccs_vm_flag, u32 dev_id, struct queue_dma_list *dma_list);
-void queue_clear_dma_list(ka_device_t *dev, bool hccs_vm_flag, struct queue_dma_list *dma_list);
+void queue_clear_dma_list(ka_device_t *dev, bool hccs_vm_flag, struct queue_dma_list *dma_list, u32 dev_id);
 
 int queue_dma_sync_link_copy(u32 dev_id, struct devdrv_dma_node *dma_node, u64 dma_node_num);
 void *queue_kvalloc(u64 size, ka_gfp_t flags);

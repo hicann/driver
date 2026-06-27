@@ -29,8 +29,8 @@ static int trs_chan_update_dev_mem_addr(struct trs_id_inst *inst, struct trs_cha
 
     /* when set TSDRV_FLAG_ONLY_SQCQ_ID flag, no sq mem, but sq_mem_side is 0 */
     if ((chan_info->sq_info.sq_vaddr != NULL) && (trs_chan_mem_is_dev_mem(sq_mem_side))) {
-        ret = trs_chan_near_sqcq_mem_h2d(inst, chan_info->sq_info.sq_phy_addr, &chan_info->sq_info.sq_phy_addr,
-            sq_mem_side);
+        ret = trs_chan_near_sqcq_mem_h2d(
+            inst, chan_info->sq_info.sq_phy_addr, &chan_info->sq_info.sq_phy_addr, sq_mem_side);
         if (ret != 0) {
             trs_err("Rsv mem h2d failed. (devid=%u; tsid=%u; ret=%d)\n", inst->devid, inst->tsid, ret);
             return ret;
@@ -38,8 +38,8 @@ static int trs_chan_update_dev_mem_addr(struct trs_id_inst *inst, struct trs_cha
     }
 
     if (trs_chan_mem_is_dev_mem(cq_mem_side)) {
-        ret = trs_chan_near_sqcq_mem_h2d(inst, chan_info->cq_info.cq_phy_addr, &chan_info->cq_info.cq_phy_addr,
-            cq_mem_side);
+        ret = trs_chan_near_sqcq_mem_h2d(
+            inst, chan_info->cq_info.cq_phy_addr, &chan_info->cq_info.cq_phy_addr, cq_mem_side);
         if (ret != 0) {
             trs_err("Rsv mem h2d failed. (devid=%u; tsid=%u; ret=%d)\n", inst->devid, inst->tsid, ret);
             return ret;

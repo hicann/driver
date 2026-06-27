@@ -43,6 +43,6 @@ struct bbox_devices_info {
 };
 
 bbox_status bbox_dump_exception(s32 dev_id, const char *path, u32 p_size, enum BBOX_DUMP_MODE mode);
-
+s32 bbox_format_devices_info(char *buf, const char *status, u32 dev_status, int logic_id, u32 phy_id);
 #endif // BBOX_DUMP_EXCEPTION_H
 

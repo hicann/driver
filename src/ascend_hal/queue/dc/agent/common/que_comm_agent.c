@@ -18,6 +18,7 @@
 #include "que_compiler.h"
 #include "queue_interface.h"
 #include "que_comm_agent.h"
+#include "que_platform_ub.h"
 
 #ifndef EMU_ST
 struct que_agent_interface_list que_agent_interface = {NULL};
@@ -41,7 +42,7 @@ int que_ctx_add(struct que_ctx *ctx)
 {
     return que_agent_interface.que_ctx_add(ctx);
 }
- 
+
 int que_ctx_del(struct que_ctx *ctx)
 {
     return que_agent_interface.que_ctx_del(ctx);
@@ -89,14 +90,7 @@ void que_mem_free(void *addr)
 
 bool que_is_share_mem(unsigned long long addr)
 {
-#ifndef DRV_HOST
-    if ((addr >= QUE_SP_VA_START) && (addr < (QUE_SP_VA_START + QUE_SP_VA_SIZE))) {
-        return true;
-    } else {
-        return false;
-    }
-#endif
-    return false;
+    return que_is_share_mem_platform(addr);
 }
 
 void queue_agent_update_time(struct timeval start, struct timeval end, int *timeout)
@@ -111,7 +105,7 @@ void queue_agent_update_time(struct timeval start, struct timeval end, int *time
 }
 
 int que_get_peer_que_info(unsigned int dev_id, unsigned int qid, unsigned int *remote_qid,
-    struct que_peer_que_attr *peer_que_attr)
+                          struct que_peer_que_attr *peer_que_attr)
 {
     struct queue_manages *que_manage = NULL;
 
@@ -131,7 +125,7 @@ int que_get_peer_que_info(unsigned int dev_id, unsigned int qid, unsigned int *r
         QUEUE_LOG_ERR("Queue local manage is null. (dev_id=%u, qid=%u)\n", dev_id, qid);
         return DRV_ERROR_NOT_EXIST;
     }
- 
+
     if (que_manage->valid != QUEUE_CREATED) {
         queue_put(qid);
         QUEUE_LOG_ERR(" queue(%u) is not created.\n", qid);
@@ -165,7 +159,7 @@ int que_get_peer_que_info(unsigned int dev_id, unsigned int qid, unsigned int *r
 }
 
 int que_get_peer_proc_info(unsigned int dev_id, unsigned int qid, pid_t *remote_pid, unsigned int *remote_devid,
-    unsigned int *remote_grpid)
+                           unsigned int *remote_grpid)
 {
     struct queue_manages *que_manage = NULL;
 
@@ -193,13 +187,14 @@ int que_get_peer_proc_info(unsigned int dev_id, unsigned int qid, pid_t *remote_
     }
 
     *remote_pid = que_manage->remote_devpid;
-    *remote_devid = que_manage->remote_devid;
-    *remote_grpid = que_manage->remote_grpid;
+    *remote_devid = que_manage->phy_remote_devid;
+    *remote_grpid = (unsigned int)que_manage->remote_grpid;
     queue_put(qid);
     return DRV_ERROR_NONE;
 }
 
-int que_set_tjfr_id_and_token(unsigned int dev_id, unsigned int qid, urma_jfr_id_t *tjfr_id, urma_token_t *token)
+int que_set_tjfr_id_and_token(unsigned int dev_id, unsigned int qid, const urma_jfr_id_t *tjfr_id,
+                              const urma_token_t *token)
 {
     struct queue_manages *que_manage = NULL;
 
@@ -275,16 +270,13 @@ static inline bool que_inter_export_queue_status(unsigned int dev_id, int pid, u
         return false;
     }
 
-    if ((que_manage->valid != QUEUE_CREATED)
-        || (que_manage->dev_id != dev_id)
-        || (que_manage->creator_pid != pid)) {
+    if ((que_manage->valid != QUEUE_CREATED) || (que_manage->dev_id != dev_id) || (que_manage->creator_pid != pid)) {
         queue_put(qid);
         return false;
     }
 
     *inter_dev_state = que_manage->inter_dev_state;
-    if ((que_manage->inter_dev_state != QUEUE_STATE_EXPORTED)
-        || (que_manage->remote_qid == QUEUE_INVALID_VALUE)) {
+    if ((que_manage->inter_dev_state != QUEUE_STATE_EXPORTED) || (que_manage->remote_qid == QUEUE_INVALID_VALUE)) {
         queue_put(qid);
         return false;
     }
@@ -295,7 +287,7 @@ static inline bool que_inter_export_queue_status(unsigned int dev_id, int pid, u
 void que_get_single_export_que_import_stat(unsigned int dev_id, unsigned int qid, unsigned int *status)
 {
     int is_imported, inter_dev_state;
-    int not_imported_num = 0;
+    unsigned int not_imported_num = 0;
     int inter_export_queue_num = 0;
     int pid = getpid();
 
@@ -318,13 +310,13 @@ void que_get_single_export_que_import_stat(unsigned int dev_id, unsigned int qid
 void que_get_all_export_que_import_stat(unsigned int dev_id, unsigned int *status)
 {
     int qid_idx, is_imported, inter_dev_state;
-    int not_imported_num = 0;
+    unsigned int not_imported_num = 0;
     int inter_export_queue_num = 0;
     int pid = getpid();
 
     for (qid_idx = 0; qid_idx < MAX_SURPORT_QUEUE_NUM; qid_idx++) {
         inter_dev_state = QUEUE_STATE_DISABLED;
-        is_imported = que_inter_export_queue_status(dev_id, pid, qid_idx, &inter_dev_state);
+        is_imported = que_inter_export_queue_status(dev_id, pid, (unsigned int)qid_idx, &inter_dev_state);
         if (inter_dev_state == QUEUE_STATE_EXPORTED) {
             if (is_imported == false) {
                 not_imported_num++;
@@ -343,10 +335,7 @@ void que_get_all_export_que_import_stat(unsigned int dev_id, unsigned int *statu
 
 unsigned int que_get_chan_devid(unsigned int devid)
 {
-#ifdef DRV_HOST
-    return halGetHostDevid();
-#endif
-    return devid;
+    return que_get_chan_devid_platform(devid);
 }
 
 unsigned int que_get_urma_devid(unsigned int devid, unsigned int peer_devid)
@@ -360,10 +349,9 @@ uint64_t que_get_cur_time_ns(void)
     (void)clock_gettime(CLOCK_MONOTONIC, &timestamp);
     return (uint64_t)((timestamp.tv_sec * NS_PER_SECOND) + timestamp.tv_nsec);
 }
-#else   /* EMU_ST */
+#else /* EMU_ST */
 
 void que_comm_agent_emu_test(void)
-{
-}
+{}
 
-#endif  /* EMU_ST */
+#endif /* EMU_ST */

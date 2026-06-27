@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * Copyright (c) 2026 Huawei Technologies Co., Ltd.
  * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
 #include "svm_addr_desc.h"
 #include "svm_log.h"
 #include "va_allocator.h"
+#include "svm_criu.h"
 #include "svm_sys_cmd.h"
 #include "svm_user_adapt.h"
 #include "svm_urma_seg_mng.h"
@@ -23,10 +24,7 @@
 
 static int svm_urma_dev_valid[SVM_MAX_DEV_NUM];
 
-bool svm_urma_id_dev_valid(u32 devid)
-{
-    return (svm_urma_dev_valid[devid] != 0);
-}
+bool svm_urma_id_dev_valid(u32 devid) { return (svm_urma_dev_valid[devid] != 0); }
 
 static int svm_urma_seg_sp_init(u32 devid)
 {
@@ -37,8 +35,9 @@ static int svm_urma_seg_sp_init(u32 devid)
 
     ret = svm_urma_register_seg(svm_get_host_devid(), &dst_va, SVM_URMA_SEG_FLAG_ACCESS_WRITE);
     if (ret == DRV_ERROR_NONE) {
-        svm_debug("Urma seg init. (devid=%u; va=0x%llx; size=0x%llx; user_devid=%u)\n",
-            devid, SP_VA_START, SP_VA_SIZE, svm_get_host_devid());
+        svm_debug(
+            "Urma seg init. (devid=%u; va=0x%llx; size=0x%llx; user_devid=%u)\n", devid, SP_VA_START, SP_VA_SIZE,
+            svm_get_host_devid());
     }
 
     /* may be not support, return ok */
@@ -50,8 +49,9 @@ static void svm_urma_seg_sp_uninit(u32 devid)
     struct svm_dst_va dst_va;
     svm_dst_va_pack(devid, PROCESS_CP1, SP_VA_START, SP_VA_SIZE, &dst_va);
 
-    svm_debug("Urma seg uninit. (devid=%u; va=0x%llx; size=0x%llx; user_devid=%u)\n",
-        devid, SP_VA_START, SP_VA_SIZE, svm_get_host_devid());
+    svm_debug(
+        "Urma seg uninit. (devid=%u; va=0x%llx; size=0x%llx; user_devid=%u)\n", devid, SP_VA_START, SP_VA_SIZE,
+        svm_get_host_devid());
     (void)svm_urma_unregister_seg(svm_get_host_devid(), &dst_va, 0);
 }
 
@@ -134,10 +134,7 @@ static int svm_urma_seg_init_devices(u64 va, u64 size, u32 max_devid)
     return 0;
 }
 
-static int svm_urma_va_reserve(u64 va, u64 size)
-{
-    return svm_urma_seg_init_devices(va, size, SVM_MAX_AGENT_NUM);
-}
+static int svm_urma_va_reserve(u64 va, u64 size) { return svm_urma_seg_init_devices(va, size, SVM_MAX_AGENT_NUM); }
 
 static int svm_urma_va_release(u64 va, u64 size)
 {
@@ -216,7 +213,7 @@ int svm_urma_master_dev_init(u32 devid)
 {
     int ret = 0;
 
-    if (devid != svm_get_host_devid()) {
+    if ((devid < SVM_MAX_DEV_AGENT_NUM) && !svm_urma_id_dev_valid(devid)) {
         ret = _svm_urma_master_dev_init(devid);
     }
 
@@ -227,12 +224,23 @@ int svm_urma_master_dev_uninit(u32 devid)
 {
     int ret = 0;
 
-    if (devid != svm_get_host_devid()) {
+    if ((devid < SVM_MAX_DEV_AGENT_NUM) && svm_urma_id_dev_valid(devid)) {
         ret = _svm_urma_master_dev_uninit(devid);
     }
 
     return ret;
 }
+
+static int svm_urma_criu_reset(u32 devid, void *data)
+{
+    SVM_UNUSED(data);
+    return svm_urma_master_dev_uninit(devid);
+}
+
+static const struct svm_criu_ops g_urma_adapt_criu_ops = {
+    .name = "urma_adapt",
+    .reset = svm_urma_criu_reset,
+};
 
 void __attribute__((constructor)) svm_urma_adapt_init(void)
 {
@@ -248,6 +256,11 @@ void __attribute__((constructor)) svm_urma_adapt_init(void)
         svm_err("Register ioctl dev uninit pre handle failed.\n");
     }
 
+    ret = svm_criu_register_ops(&g_urma_adapt_criu_ops);
+    if (ret != DRV_ERROR_NONE) {
+        svm_err("Register CRIU ops failed.\n");
+    }
+
     ret = svm_register_va_reserve_post_handle(svm_urma_va_reserve);
     if (ret != DRV_ERROR_NONE) {
         svm_err("Register va reserve post handle failed.\n");
@@ -258,4 +271,3 @@ void __attribute__((constructor)) svm_urma_adapt_init(void)
         svm_err("Register va release pre handle failed.\n");
     }
 }
-

@@ -11,7 +11,6 @@
  * GNU General Public License for more details.
  */
 
-#include "dms_kernel_version_adapt.h"
 #include "dms/dms_interface.h"
 #include "dms_sensor_notify.h"
 #include "dms_sensor.h"
@@ -141,12 +140,7 @@ static unsigned int dms_sensor_task_init(void)
     return DRV_ERROR_NONE;
 }
 
-
-#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 15, 0)
-STATIC void dms_release_sensor_scan_task_sem(unsigned long time)
-#else
-STATIC void dms_release_sensor_scan_task_sem(ka_timer_list_t *t)
-#endif
+STATIC void dms_release_sensor_scan_task_sem(ka_system_timer_list t)
 {
     struct dms_system_ctrl_block *sys_cb = NULL;
     sys_cb = dms_get_sys_ctrl_cb();
@@ -158,12 +152,7 @@ static unsigned int dms_init_sensor_timer(void)
 {
     struct dms_system_ctrl_block *sys_cb = NULL;
     sys_cb = dms_get_sys_ctrl_cb();
-#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 15, 0)
-    init_timer(&sys_cb->dms_sensor_check_timer);
-    sys_cb->dms_sensor_check_timer.function = dms_release_sensor_scan_task_sem;
-#else
-    ka_system_timer_setup(&sys_cb->dms_sensor_check_timer, dms_release_sensor_scan_task_sem, 0);
-#endif
+    ka_system_timer_setup_extra(&sys_cb->dms_sensor_check_timer, dms_release_sensor_scan_task_sem, 0);
     sys_cb->dms_sensor_check_timer.expires = ka_jiffies + ka_system_msecs_to_jiffies(DMS_SENSOR_CHECK_TIMER_LEN);
 #ifndef CFG_EDGE_HOST
     add_timer_affinity(&sys_cb->dms_sensor_check_timer);

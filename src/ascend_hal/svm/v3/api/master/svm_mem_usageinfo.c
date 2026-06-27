@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * Copyright (c) 2026 Huawei Technologies Co., Ltd.
  * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -14,6 +14,8 @@
 #include "ascend_hal_define.h"
 
 #include "mms.h"
+
+SVM_DECLARE_MODULE_NAME(svm_module_name);
 
 static int svm_mem_stats_get_value(u32 devid, u32 module_id, u64 *alloc_size, u64 *peak_size)
 {
@@ -39,9 +41,9 @@ static int svm_mem_stats_get_value(u32 devid, u32 module_id, u64 *alloc_size, u6
     return 0;
 }
 
-static void svm_mem_module_usage_info_pack(u32 module_id, u64 cur_size, u64 peak_size, struct mem_module_usage *usage_info)
+static void svm_mem_module_usage_info_pack(
+    u32 module_id, u64 cur_size, u64 peak_size, struct mem_module_usage *usage_info)
 {
-    SVM_DECLARE_MODULE_NAME(svm_module_name);
     usage_info->cur_mem_size = cur_size;
     usage_info->mem_peak_size = peak_size;
     (void)strcpy_s(usage_info->name, sizeof(usage_info->name), SVM_GET_MODULE_NAME(svm_module_name, module_id));
@@ -60,7 +62,8 @@ static u32 svm_mem_usage_find_pos(struct mem_module_usage new_info, struct mem_m
     return i;
 }
 
-static void svm_mem_usage_insert(struct mem_module_usage new_info, struct mem_module_usage *mem_info, u32 pos, u32 max_num)
+static void svm_mem_usage_insert(
+    struct mem_module_usage new_info, struct mem_module_usage *mem_info, u32 pos, u32 max_num)
 {
     u32 i;
 
@@ -71,7 +74,8 @@ static void svm_mem_usage_insert(struct mem_module_usage new_info, struct mem_mo
     return;
 }
 
-static void svm_mem_usage_sort_insert(struct mem_module_usage new_info, struct mem_module_usage *mem_info, u32 cur_num, size_t max_num)
+static void svm_mem_usage_sort_insert(
+    struct mem_module_usage new_info, struct mem_module_usage *mem_info, u32 cur_num, size_t max_num)
 {
     u32 pos;
 
@@ -79,7 +83,7 @@ static void svm_mem_usage_sort_insert(struct mem_module_usage new_info, struct m
     if (pos == max_num) {
         return;
     }
-    
+
     svm_mem_usage_insert(new_info, mem_info, pos, ((cur_num < max_num) ? (cur_num + 1) : cur_num));
     return;
 }
@@ -105,11 +109,19 @@ drvError_t halGetMemUsageInfo(uint32_t dev_id, struct mem_module_usage *mem_usag
         svm_mem_module_usage_info_pack(module_id, cur_size, peak_size, &cur_usage_info);
         svm_mem_usage_sort_insert(cur_usage_info, mem_usage, (u32)cur_module_num, in_num);
         /* If the in_num provided by the user is less than the number of modules that occupy non-zero memory,
-        need continue to get the memory usage information of in_num modules in descending order based on current memory usage. */
+        need continue to get the memory usage information of in_num modules in descending order based on current memory
+        usage. */
         if (cur_module_num < in_num) {
             cur_module_num++;
         }
     }
     *out_num = cur_module_num;
     return DRV_ERROR_NONE;
+}
+
+const char *halGetMemModuleName(uint32_t module_id)
+{
+    uint32_t tmp_id = (module_id >= MAX_MODULE_ID) ? UNKNOWN_MODULE_ID : module_id;
+
+    return SVM_GET_MODULE_NAME(svm_module_name, tmp_id);
 }

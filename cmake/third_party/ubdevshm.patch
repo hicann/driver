@@ -1,0 +1,86 @@
+diff -ruN ubdevshm/ubdevshm_attr.c ubdevshm_patch/ubdevshm_attr.c
+--- ubdevshm/ubdevshm_attr.c	2026-06-25 08:25:04.776064300 +0000
++++ ubdevshm_patch/ubdevshm_attr.c	2026-06-25 08:33:24.958648231 +0000
+@@ -8,8 +8,9 @@
+ #include <linux/list.h>
+ #include <linux/kobject.h>
+ #include <linux/sysfs.h>
+-#include <ub/ubdevshm/ubdevshm.h>
++#include "ubdevshm.h"
+ #include "ubdevshm_main.h"
++#include "ubdevshm_attr.h"
+ 
+ static struct kobject *ubdevshm_kobj;
+ static int container_attr_index;
+diff -ruN ubdevshm/ubdevshm_main.c ubdevshm_patch/ubdevshm_main.c
+--- ubdevshm/ubdevshm_main.c	2026-06-25 08:25:04.776064300 +0000
++++ ubdevshm_patch/ubdevshm_main.c	2026-06-25 08:38:38.347203692 +0000
+@@ -20,7 +20,8 @@
+ #include <linux/kthread.h>
+ #include <linux/sched/task.h>
+ #include <linux/version.h>
+-#include <ub/ubdevshm/ubdevshm.h>
++
++#include "ubdevshm.h"
+ #include "ubdevshm_attr.h"
+ #include "ubdevshm_main.h"
+ 
+@@ -44,6 +45,46 @@
+ struct idr mem_provider_idr;
+ static struct idr access_ctx_idr;
+ 
++#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 10, 0)
++static struct rb_node *rb_find(const void *target, const struct rb_root *area_tree,
++							   int (*area_cmp)(const void *key, const struct rb_node *node))
++{
++	struct rb_node *area_node = area_tree->rb_node;
++	int ret;
++
++	while (area_node) {
++		ret = area_cmp(target, area_node);
++
++		if (ret < 0)
++			area_node = area_node->rb_left;
++		else if (ret > 0)
++			area_node = area_node->rb_right;
++		else
++			return area_node;
++	}
++
++	return NULL;
++}
++
++static void rb_add(struct rb_node *target, struct rb_root *area_tree,
++				   bool (*area_less)(struct rb_node *a, const struct rb_node *b))
++{
++	struct rb_node **parent_p = &area_tree->rb_node;
++	struct rb_node *parent = NULL;
++
++	while (*parent_p) {
++		parent = *parent_p;
++		if (area_less(target, parent))
++			parent_p = &parent->rb_left;
++		else
++			parent_p = &parent->rb_right;
++	}
++
++	rb_link_node(target, parent, parent_p);
++	rb_insert_color(target, area_tree);
++}
++#endif
++
+ bool ubdevshm_is_inited(void)
+ {
+ 	return ubdevshm_init_state;
+diff -ruN ubdevshm/ubdevshm_main.h ubdevshm_patch/ubdevshm_main.h
+--- ubdevshm/ubdevshm_main.h	2026-06-25 08:25:04.776064300 +0000
++++ ubdevshm_patch/ubdevshm_main.h	2026-06-25 08:30:59.336862175 +0000
+@@ -13,7 +13,7 @@
+ #include <linux/mutex.h>
+ #include <linux/refcount.h>
+ #include <linux/idr.h>
+-#include <ub/ubdevshm/ubdevshm.h>
++#include "ubdevshm.h"
+ 
+ extern struct rw_semaphore ubdevshm_rw_semlock;
+ extern struct list_head provider_list;

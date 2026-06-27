@@ -18,47 +18,29 @@
 #include "udis_log.h"
 #include "udis_management.h"
 
-struct udis_node *udis_addr_list_find_node(const struct udis_ctrl_block *udis_cb, UDIS_MODULE_TYPE module_type,
-    const char *name)
-{
-    int i;
-    struct udis_node *addr_node, *next = NULL;
-
-    for (i = UPDATE_ONLY_ONCE; i < UPDATE_TYPE_MAX; ++i) {
-        ka_list_for_each_entry_safe(addr_node, next, &udis_cb->addr_list[i], list) {
-            if ((addr_node->module_type == module_type) && (ka_base_strcmp(addr_node->name, name) == 0)) {
-                return addr_node;
-            }
-        }
-    }
-    return NULL;
-}
-
-int udis_addr_list_add_node(unsigned int udevid, struct udis_ctrl_block *udis_cb,
-    const struct udis_node *addr_node)
+int udis_addr_list_add_node(unsigned int udevid, struct udis_ctrl_block *udis_cb, const struct udis_node *addr_node)
 {
     int ret;
     struct udis_node *new_node = NULL;
 
     new_node = dbl_kzalloc(sizeof(struct udis_node), KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
     if (new_node == NULL) {
-        udis_err("Failed to malloc for udis_node. (udevid=%u; module_type=%u; name=%s)\n",
-            udevid, addr_node->module_type, addr_node->name);
+        udis_err(
+            "Failed to malloc for udis_node. (udevid=%u; module_type=%u; name=%s)\n", udevid, addr_node->module_type,
+            addr_node->name);
         return -ENOMEM;
     }
 
     ret = strcpy_s(new_node->name, UDIS_MAX_NAME_LEN, addr_node->name);
     if (ret != 0) {
-        udis_err("strncpy_s failed. (module_type=%u; name=%s; ret=%d)\n",
-            addr_node->module_type, addr_node->name, ret);
+        udis_err("strncpy_s failed. (module_type=%u; name=%s; ret=%d)\n", addr_node->module_type, addr_node->name, ret);
         dbl_kfree(new_node);
         return -ENOMEM;
     }
 
     ret = strcpy_s(new_node->device_segment, UDIS_SEGMENT_MAX_LEN, addr_node->device_segment);
     if (ret != 0) {
-        udis_err("strncpy_s failed. (module_type=%u; name=%s; ret=%d)\n",
-            addr_node->module_type, addr_node->name, ret);
+        udis_err("strncpy_s failed. (module_type=%u; name=%s; ret=%d)\n", addr_node->module_type, addr_node->name, ret);
         dbl_kfree(new_node);
         return -ENOMEM;
     }
@@ -73,25 +55,26 @@ int udis_addr_list_add_node(unsigned int udevid, struct udis_ctrl_block *udis_cb
     new_node->dev_va_addr_attr = addr_node->dev_va_addr_attr;
     new_node->host_segment = addr_node->host_segment;
     new_node->device_segment_import = addr_node->device_segment_import;
+    new_node->device_segment_ptr = addr_node->device_segment_ptr;
     new_node->host_segment_len = addr_node->host_segment_len;
     new_node->device_segment_import_len = addr_node->device_segment_import_len;
     new_node->token_value = addr_node->token_value;
     new_node->device_segment_len = addr_node->device_segment_len;
-
+    new_node->device_addr_offset = addr_node->device_addr_offset;
 
     ka_list_add(&new_node->list, &udis_cb->addr_list[addr_node->update_type]);
 
     return 0;
 }
 
-void udis_addr_list_remove_node(unsigned int udevid, struct udis_ctrl_block *udis_cb,
-    const struct udis_node *addr_node)
+void udis_addr_list_remove_node(unsigned int udevid, struct udis_ctrl_block *udis_cb, const struct udis_node *addr_node)
 {
     struct udis_node *node = NULL;
 
     node = udis_addr_list_find_node(udis_cb, addr_node->module_type, addr_node->name);
     if (node == NULL) {
-        udis_err("No matched node found. (udevid=%u; module_type=%u; name=%s)\n", udevid, addr_node->module_type,
+        udis_err(
+            "No matched node found. (udevid=%u; module_type=%u; name=%s)\n", udevid, addr_node->module_type,
             addr_node->name);
         return;
     }

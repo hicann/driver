@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * Copyright (c) 2026 Huawei Technologies Co., Ltd.
  * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -101,6 +101,7 @@ static struct cache_allocator *cache_allocator_alloc(u32 devid, u32 flag)
 
 static void cache_allocator_free(struct cache_allocator *ca)
 {
+    (void)pthread_rwlock_destroy(&ca->rwlock);
     svm_ga_inst_destroy(ca->ga_inst);
     free(ca);
 }
@@ -174,20 +175,26 @@ void cache_allocator_destroy(u32 devid, u32 flag)
 static u32 _cache_allocator_show(struct cache_allocator *ca, char *buf, u32 buf_len)
 {
     if (buf == NULL) {
-        svm_info("flag 0x%x: shrink_thres_cur=%llu(Bytes) "
+        svm_info(
+            "flag 0x%x: shrink_thres_cur=%llu(Bytes) "
             "stats(total=%llu idle=%llu cur_alloced=%llu peak_alloced=%llu)(Bytes)\n",
-            ca->flag, ca->strategy.shrink_thres_cur,
-            ca->stats.total, ca->stats.idle, ca->stats.cur_alloced, ca->stats.peak_alloced);
+            ca->flag, ca->strategy.shrink_thres_cur, ca->stats.total, ca->stats.idle, ca->stats.cur_alloced,
+            ca->stats.peak_alloced);
         (void)svm_ga_show(ca->ga_inst, buf, buf_len);
         return 0;
     } else {
+        if (buf_len == 0) {
+            return 0;
+        }
         int len;
         u32 ga_format_len;
 
-        len = snprintf_s(buf, buf_len, buf_len - 1, "flag 0x%x: shrink_thres_cur=%llu(Bytes) "
+        len = snprintf_s(
+            buf, buf_len, buf_len - 1,
+            "flag 0x%x: shrink_thres_cur=%llu(Bytes) "
             "stats(total=%llu idle=%llu cur_alloced=%llu peak_alloced=%llu)(Bytes)\n",
-            ca->flag, ca->strategy.shrink_thres_cur,
-            ca->stats.total, ca->stats.idle, ca->stats.cur_alloced, ca->stats.peak_alloced);
+            ca->flag, ca->strategy.shrink_thres_cur, ca->stats.total, ca->stats.idle, ca->stats.cur_alloced,
+            ca->stats.peak_alloced);
         if (len < 0) {
             return 0;
         }
@@ -214,18 +221,19 @@ u32 cache_allocator_show(u32 devid, char *buf, u32 buf_len)
 
 struct cache_for_each_range {
     u32 devid;
+    u32 flag;
     void *priv;
-    int (*handle)(u32 devid, u64 start, u64 size, void *priv);
+    int (*handle)(u32 devid, u64 start, u64 size, u32 flag, void *priv);
 };
 
 static int svm_cache_single_range_proc(u64 start, u64 size, void *priv)
 {
     struct cache_for_each_range *para = (struct cache_for_each_range *)priv;
 
-    return para->handle(para->devid, start, size, para->priv);
+    return para->handle(para->devid, start, size, para->flag, para->priv);
 }
 
-int svm_cache_for_each_range(u32 devid, int (*handle)(u32 devid, u64 start, u64 size, void *priv), void *priv)
+int svm_cache_for_each_range(u32 devid, int (*handle)(u32 devid, u64 start, u64 size, u32 flag, void *priv), void *priv)
 {
     struct cache_for_each_range para = {.devid = devid, .priv = priv, .handle = handle};
     struct cache_allocator *ca = NULL;
@@ -240,6 +248,7 @@ int svm_cache_for_each_range(u32 devid, int (*handle)(u32 devid, u64 start, u64 
     for (i = 0; i < CACHE_TYPE_MAX; i++) {
         ca = g_ca[devid][i];
         if (ca != NULL) {
+            para.flag = ca->flag;
             ret = svm_ga_for_each_range(ca->ga_inst, svm_cache_single_range_proc, (void *)&para);
             if (ret != 0) {
                 return ret;

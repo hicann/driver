@@ -216,7 +216,8 @@ static bool dms_is_need_high_capacity_memory(struct urd_cmd* cmd)
         (cmd->main_cmd == DMS_MAIN_CMD_BASIC && cmd->sub_cmd == DMS_SUBCMD_GET_DEVICE_STATE) ||
         (cmd->main_cmd == DMS_MAIN_CMD_BASIC && cmd->sub_cmd == DMS_SUBCMD_GET_DEV_PROBE_LIST) ||
         (cmd->main_cmd == DMS_MAIN_CMD_BASIC && cmd->sub_cmd == DMS_SUBCMD_GET_ALL_DEV_LIST) ||
-        (cmd->main_cmd == DMS_MAIN_CMD_BASIC && cmd->sub_cmd == DMS_SUBCMD_GET_DEVICE_FROM_CHIP)) {
+        (cmd->main_cmd == DMS_MAIN_CMD_BASIC && cmd->sub_cmd == DMS_SUBCMD_GET_DEVICE_FROM_CHIP) ||
+        (cmd->main_cmd == DMS_MAIN_CMD_BBOX && cmd->sub_cmd == DMS_SUBCMD_GET_BBOX_FEATURE)) {
         return true;
     }
     return false;

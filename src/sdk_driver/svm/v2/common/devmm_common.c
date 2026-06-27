@@ -28,10 +28,7 @@
 bool g_devmm_true = 1;
 bool g_devmm_false = 0;
 
-bool devmm_is_host_agent(u32 agent_id)
-{
-    return (agent_id == SVM_HOST_AGENT_ID);
-}
+bool devmm_is_host_agent(u32 agent_id) { return (agent_id == SVM_HOST_AGENT_ID); }
 
 void devmm_try_usleep_by_time(u32 *pre_stamp, u32 time)
 {
@@ -55,10 +52,7 @@ void devmm_try_cond_resched_by_time(u32 *pre_stamp, u32 time)
     }
 }
 
-void devmm_try_cond_resched(u32 *pre_stamp)
-{
-    devmm_try_cond_resched_by_time(pre_stamp, DEVMM_WAKEUP_TIMEINTERVAL);
-}
+void devmm_try_cond_resched(u32 *pre_stamp) { devmm_try_cond_resched_by_time(pre_stamp, DEVMM_WAKEUP_TIMEINTERVAL); }
 
 bool devmm_smmu_is_opening(void)
 {
@@ -71,7 +65,7 @@ static int devmm_ka_mm_pin_user_pages_fast(unsigned long start, int nr_pages, in
     int tmp_num;
 
     for (i = 0; i < try_times; i++) {
-        tmp_num = ka_mm_pin_user_pages_fast(start, nr_pages, (write != 0) ? FOLL_WRITE : 0, pages);
+        tmp_num = ka_mm_pin_user_pages_fast(start, nr_pages, (write != 0) ? KA_FOLL_WRITE : 0, pages);
         if (tmp_num == nr_pages) {
             return nr_pages;
         }
@@ -99,8 +93,9 @@ int devmm_pin_user_pages_fast(u64 va, u64 total_num, int write, ka_page_t **page
         tmp_num = devmm_ka_mm_pin_user_pages_fast(tmp_va, expected_num, write, &pages[got_num]);
         got_num += (tmp_num > 0) ? (u32)tmp_num : 0;
         if (tmp_num != expected_num) {
-            devmm_drv_err("Get_user_pages_fast fail. (va=0x%llx; expected_page_num=%d; real_got_page_num=%d)\n",
-                tmp_va, expected_num, tmp_num);
+            devmm_drv_err(
+                "Get_user_pages_fast fail. (va=0x%llx; expected_page_num=%d; real_got_page_num=%d)\n", tmp_va,
+                expected_num, tmp_num);
             goto page_err;
         }
         devmm_try_cond_resched(&stamp);
@@ -169,8 +164,10 @@ u64 devmm_get_pagecount_by_size(u64 vptr, u64 sizes, u32 page_size)
     u64 tem_byte;
 
     if ((page_size == 0) || ((vptr < (DEVMM_SVM_MEM_START + DEVMM_SVM_MEM_SIZE)) && (sizes > DEVMM_MAX_MAPPED_RANGE))) {
-        devmm_drv_err("Chunk_page_size or byte_count is error. "
-            "(chunk_page_size=%u; byte_count=%llu)", page_size, sizes);
+        devmm_drv_err(
+            "Chunk_page_size or byte_count is error. "
+            "(chunk_page_size=%u; byte_count=%llu)",
+            page_size, sizes);
         return chunk_cnt;
     }
     tem_byte = ((vptr & (page_size - 1)) + sizes);
@@ -224,14 +221,35 @@ char *devmm_read_line(ka_file_t *fp, loff_t *offset, char *buf, u32 buf_len)
 
     return buf;
 }
+#ifndef UVM_OPEN
+int devmm_check_va_add_size_by_uvm_heap(struct devmm_uvm_heap *uvm_heap, u64 va, u64 size)
+{
+    u64 heap_total_cnt, heap_used_count, heap_free_count, va_need_count;
+    if (size > uvm_heap->heap_size) {
+        devmm_drv_err("Size is bad. (va=0x%llx; size=%llu; heap_size=%llu)\n", va, size, uvm_heap->heap_size);
+        return -EINVAL;
+    }
+    heap_used_count = (va - uvm_heap->start) / uvm_heap->chunk_page_size;
+    heap_total_cnt = uvm_heap->heap_size / uvm_heap->chunk_page_size;
+    heap_free_count = heap_total_cnt - heap_used_count;
+    va_need_count = devmm_get_pagecount_by_size(va, size, uvm_heap->chunk_page_size);
+    if ((va_need_count == 0) || (heap_free_count < va_need_count)) {
+        devmm_drv_err(
+            "Va_need_count is zero, or heap_free_count < va_need_count. (heap_free_count=%llu; "
+            "va_need_count=%llu; va=0x%llx; size=%llu; heap_start_va=0x%llx; page_size=%u)\n",
+            heap_free_count, va_need_count, va, size, uvm_heap->start, uvm_heap->chunk_page_size);
+        return -EINVAL;
+    }
 
+    return 0;
+}
+#endif
 int devmm_check_va_add_size_by_heap(struct devmm_svm_heap *heap, u64 va, u64 size)
 {
     u64 heap_total_cnt, heap_used_count, heap_free_count, va_need_count;
 
     if (size > heap->heap_size) {
-        devmm_drv_err("Size is bad. (va=0x%llx; size=%llu; heap_size=%llu)\n",
-                      va, size, heap->heap_size);
+        devmm_drv_err("Size is bad. (va=0x%llx; size=%llu; heap_size=%llu)\n", va, size, heap->heap_size);
         return -EINVAL;
     }
     heap_used_count = (va - heap->start) / heap->chunk_page_size;
@@ -239,9 +257,10 @@ int devmm_check_va_add_size_by_heap(struct devmm_svm_heap *heap, u64 va, u64 siz
     heap_free_count = heap_total_cnt - heap_used_count;
     va_need_count = devmm_get_pagecount_by_size(va, size, heap->chunk_page_size);
     if ((va_need_count == 0) || (heap_free_count < va_need_count)) {
-        devmm_drv_err("Va_need_count is zero, or heap_free_count < va_need_count. (heap_free_count=%llu; "
-                      "va_need_count=%llu; va=0x%llx; size=%llu; heap_start_va=0x%llx; page_size=%u)\n",
-                      heap_free_count, va_need_count, va, size, heap->start, heap->chunk_page_size);
+        devmm_drv_err(
+            "Va_need_count is zero, or heap_free_count < va_need_count. (heap_free_count=%llu; "
+            "va_need_count=%llu; va=0x%llx; size=%llu; heap_start_va=0x%llx; page_size=%u)\n",
+            heap_free_count, va_need_count, va, size, heap->start, heap->chunk_page_size);
         return -EINVAL;
     }
 
@@ -258,21 +277,24 @@ static int devmm_check_common_input_heap_id_and_size(struct devmm_svm_process *s
     }
 
     if ((heap_idx >= DEVMM_TOTAL_MAX_HEAP_NUM) || ((heap_idx + heap_num) > DEVMM_TOTAL_MAX_HEAP_NUM)) {
-        devmm_drv_err("Input para. (heap_idx=%u; heap_size=0x%llx; heap_num=%u; DEVMM_TOTAL_MAX_HEAP_NUM=%llu)\n",
-            heap_idx, heap_size, heap_num, DEVMM_TOTAL_MAX_HEAP_NUM);
+        devmm_drv_err(
+            "Input para. (heap_idx=%u; heap_size=0x%llx; heap_num=%u; DEVMM_TOTAL_MAX_HEAP_NUM=%llu)\n", heap_idx,
+            heap_size, heap_num, DEVMM_TOTAL_MAX_HEAP_NUM);
         return -EINVAL;
     }
 
     if ((heap_idx < DEVMM_MAX_HEAP_NUM) && ((heap_idx + heap_num) > DEVMM_MAX_HEAP_NUM)) {
-        devmm_drv_err("Input para. (heap_idx=%u; heap_size=0x%llx; heap_num=%u; DEVMM_MAX_HEAP_NUM=%llu)\n",
-            heap_idx, heap_size, heap_num, DEVMM_MAX_HEAP_NUM);
+        devmm_drv_err(
+            "Input para. (heap_idx=%u; heap_size=0x%llx; heap_num=%u; DEVMM_MAX_HEAP_NUM=%llu)\n", heap_idx, heap_size,
+            heap_num, DEVMM_MAX_HEAP_NUM);
         return -EINVAL;
     }
 
     if (heap_idx < DEVMM_MAX_HEAP_NUM) {
         if (heap_size > (DEVMM_MAX_ALLOC_PAGE_NUM * KA_MM_PAGE_SIZE)) {
-            devmm_drv_err("Input para. (heap_idx=%u; heap_size=0x%llx; max_heap_size=0x%llx)\n",
-                heap_idx, heap_size, DEVMM_MAX_ALLOC_PAGE_NUM * KA_MM_PAGE_SIZE);
+            devmm_drv_err(
+                "Input para. (heap_idx=%u; heap_size=0x%llx; max_heap_size=0x%llx)\n", heap_idx, heap_size,
+                DEVMM_MAX_ALLOC_PAGE_NUM * KA_MM_PAGE_SIZE);
             return -EINVAL;
         }
     } else {
@@ -282,8 +304,8 @@ static int devmm_check_common_input_heap_id_and_size(struct devmm_svm_process *s
     return 0;
 }
 
-static bool devmm_check_common_input_heap_info(struct devmm_svm_process *svm_pro,
-    struct devmm_update_heap_para *cmd, u32 devid)
+static bool devmm_check_common_input_heap_info(
+    struct devmm_svm_process *svm_pro, struct devmm_update_heap_para *cmd, u32 devid)
 {
     if ((cmd->op == DEVMM_HEAP_ENABLE) && (devmm_svm_mem_is_enable(svm_pro) == false) &&
         cmd->heap_sub_type == SUB_HOST_TYPE) {
@@ -291,10 +313,12 @@ static bool devmm_check_common_input_heap_info(struct devmm_svm_process *svm_pro
         return false;
     }
 
-    if ((cmd->op == DEVMM_HEAP_ENABLE)&& devmm_is_host_agent(devid) &&
+    if ((cmd->op == DEVMM_HEAP_ENABLE) && devmm_is_host_agent(devid) &&
         ((cmd->heap_sub_type != SUB_DEVICE_TYPE) || (cmd->heap_type != DEVMM_HEAP_CHUNK_PAGE))) {
-        devmm_drv_err("Host agent only support heap SUB_DEVICE_TYPE DEVMM_HEAP_CHUNK_PAGE."
-            " (heap_sub_type=%u; heap_type=%u).\n", cmd->heap_sub_type, cmd->heap_type);
+        devmm_drv_err(
+            "Host agent only support heap SUB_DEVICE_TYPE DEVMM_HEAP_CHUNK_PAGE."
+            " (heap_sub_type=%u; heap_type=%u).\n",
+            cmd->heap_sub_type, cmd->heap_type);
         return false;
     }
 
@@ -315,9 +339,9 @@ static bool devmm_check_common_input_heap_info(struct devmm_svm_process *svm_pro
         struct devmm_svm_heap *heap = devmm_get_heap_by_idx(svm_pro, cmd->heap_idx);
         if ((devmm_check_heap_is_entity(heap) == false) || (heap->heap_idx != cmd->heap_idx) ||
             (heap->heap_size != cmd->heap_size)) {
-            devmm_drv_err("Disable input error. (hostpid=%d; devid=%d; vfid=%d; size=0x%llx)\n",
-                svm_pro->process_id.hostpid, svm_pro->process_id.devid, svm_pro->process_id.vfid,
-                cmd->heap_size);
+            devmm_drv_err(
+                "Disable input error. (hostpid=%d; devid=%d; vfid=%d; size=0x%llx)\n", svm_pro->process_id.hostpid,
+                svm_pro->process_id.devid, svm_pro->process_id.vfid, cmd->heap_size);
             return false;
         }
         return true;
@@ -326,15 +350,15 @@ static bool devmm_check_common_input_heap_info(struct devmm_svm_process *svm_pro
     return false;
 }
 
-bool devmm_check_input_heap_info(struct devmm_svm_process *svm_pro,
-    struct devmm_update_heap_para *cmd, u32 devid)
+bool devmm_check_input_heap_info(struct devmm_svm_process *svm_pro, struct devmm_update_heap_para *cmd, u32 devid)
 {
     struct devmm_svm_heap *heap_check = NULL;
     u32 heap_num, i;
 
     if (devmm_check_common_input_heap_info(svm_pro, cmd, devid) == false) {
-        devmm_drv_err("Input error. (hostpid=%d; devid=%d; vfid=%d; size=0x%llx)\n",
-            svm_pro->process_id.hostpid, svm_pro->process_id.devid, svm_pro->process_id.vfid, cmd->heap_size);
+        devmm_drv_err(
+            "Input error. (hostpid=%d; devid=%d; vfid=%d; size=0x%llx)\n", svm_pro->process_id.hostpid,
+            svm_pro->process_id.devid, svm_pro->process_id.vfid, cmd->heap_size);
         return false;
     }
 
@@ -343,16 +367,16 @@ bool devmm_check_input_heap_info(struct devmm_svm_process *svm_pro,
         heap_check = devmm_get_heap_by_idx(svm_pro, i + cmd->heap_idx);
         if (cmd->op == DEVMM_HEAP_ENABLE) {
             if (devmm_check_heap_is_entity(heap_check) == true) {
-                devmm_drv_info("The heap already exists. (hostpid=%d; devid=%d; vfid=%d; size=0x%llx)\n",
-                    svm_pro->process_id.hostpid, svm_pro->process_id.devid, svm_pro->process_id.vfid,
-                    cmd->heap_size);
+                devmm_drv_info(
+                    "The heap already exists. (hostpid=%d; devid=%d; vfid=%d; size=0x%llx)\n",
+                    svm_pro->process_id.hostpid, svm_pro->process_id.devid, svm_pro->process_id.vfid, cmd->heap_size);
                 return false;
             }
         } else {
             if (devmm_check_heap_is_entity(heap_check) == false) {
-                devmm_drv_err("Disable input error. (hostpid=%d; devid=%d; vfid=%d; size=0x%llx)\n",
-                    svm_pro->process_id.hostpid, svm_pro->process_id.devid, svm_pro->process_id.vfid,
-                    cmd->heap_size);
+                devmm_drv_err(
+                    "Disable input error. (hostpid=%d; devid=%d; vfid=%d; size=0x%llx)\n", svm_pro->process_id.hostpid,
+                    svm_pro->process_id.devid, svm_pro->process_id.vfid, cmd->heap_size);
                 return false;
             }
         }
@@ -390,10 +414,7 @@ void *devmm_kvalloc(u64 size, ka_gfp_t flags)
     return ptr;
 }
 
-void *devmm_kvzalloc(u64 size)
-{
-    return devmm_kvalloc(size, __KA_GFP_ZERO);
-}
+void *devmm_kvzalloc(u64 size) { return devmm_kvalloc(size, __KA_GFP_ZERO); }
 #endif
 
 /* used with the devmm_zalloc, function as free */
@@ -409,14 +430,18 @@ void devmm_kvfree(const void *ptr)
 ka_vm_area_struct_t *devmm_find_vma(struct devmm_svm_process *svm_proc, u64 vaddr)
 {
     u64 double_pgtable_offset;
-
-    if (devmm_va_is_in_svm_range(vaddr)) {
+#ifndef UVM_OPEN
+    if (devmm_va_is_in_svm_range(vaddr) || devmm_va_is_in_uvm_range(vaddr) || devmm_va_is_in_soma_range(vaddr)) {
         return devmm_find_vma_proc(svm_proc->mm, svm_proc->vma, svm_proc->vma_num, vaddr);
     }
-
+#else
+    if (devmm_va_is_in_svm_range(vaddr) || devmm_va_is_in_soma_range(vaddr)) {
+        return devmm_find_vma_proc(svm_proc->mm, svm_proc->vma, svm_proc->vma_num, vaddr);
+    }
+#endif
     double_pgtable_offset = devmm_get_double_pgtable_offset();
-    if ((double_pgtable_offset != 0) && (vaddr >= double_pgtable_offset)
-        && devmm_va_is_in_svm_range(vaddr - double_pgtable_offset)) {
+    if ((double_pgtable_offset != 0) && (vaddr >= double_pgtable_offset) &&
+        devmm_va_is_in_svm_range(vaddr - double_pgtable_offset)) {
         return devmm_find_vma_proc(svm_proc->mm, svm_proc->vma, svm_proc->vma_num, vaddr);
     }
 
@@ -478,8 +503,8 @@ static void devmm_set_heap_info(struct devmm_svm_heap *heap, struct devmm_update
     heap->is_invalid = false;
 }
 
-static void devmm_set_svm_heap_struct(struct devmm_svm_process *svm_process, struct devmm_svm_heap *heap,
-    u32 heap_idx, u32 heap_num)
+static void devmm_set_svm_heap_struct(
+    struct devmm_svm_process *svm_process, struct devmm_svm_heap *heap, u32 heap_idx, u32 heap_num)
 {
     if (heap_idx < DEVMM_MAX_HEAP_NUM) {
         u32 i;
@@ -532,8 +557,8 @@ void devmm_free_heap_struct(struct devmm_svm_process *svm_process, u32 heap_idx,
     }
 }
 
-int devmm_update_heap_info(struct devmm_svm_process *svm_process, struct devmm_update_heap_para *cmd,
-    struct devmm_svm_heap *free_heap)
+int devmm_update_heap_info(
+    struct devmm_svm_process *svm_process, struct devmm_update_heap_para *cmd, struct devmm_svm_heap *free_heap)
 {
     struct devmm_svm_heap *heap = NULL;
     u32 heap_num;
@@ -556,7 +581,8 @@ int devmm_update_heap_info(struct devmm_svm_process *svm_process, struct devmm_u
         }
 
         used_mask_size = sizeof(unsigned long) *
-            KA_BASE_BITS_TO_LONGS((u64)(ka_base_round_up(cmd->heap_size, HEAP_USED_PER_MASK_SIZE) / HEAP_USED_PER_MASK_SIZE));
+                         KA_BASE_BITS_TO_LONGS((u64)(ka_base_round_up(cmd->heap_size, HEAP_USED_PER_MASK_SIZE) /
+                                                     HEAP_USED_PER_MASK_SIZE));
 
         heap = devmm_kvzalloc(sizeof(struct devmm_svm_heap) + used_mask_size);
         if (heap == NULL) {
@@ -579,7 +605,8 @@ int devmm_update_heap_info(struct devmm_svm_process *svm_process, struct devmm_u
 
         svm_process->alloced_heap_size += (cmd->heap_sub_type == SUB_SVM_TYPE) ? cmd->heap_size : 0;
         svm_process->max_heap_use = (svm_process->max_heap_use > (cmd->heap_idx + heap_num)) ?
-            svm_process->max_heap_use : (cmd->heap_idx + heap_num);
+                                        svm_process->max_heap_use :
+                                        (cmd->heap_idx + heap_num);
         devmm_set_svm_heap_struct(svm_process, heap, cmd->heap_idx, heap_num);
     } else {
         if (free_heap == NULL) {
@@ -624,21 +651,12 @@ u32 devmm_get_max_page_num_of_per_msg(u32 *bitmap)
     return num;
 }
 
-const char *devmm_get_chrdev_name(void)
-{
-    return (const char *)DEVMM_CHRDEV_NAME;
-}
+const char *devmm_get_chrdev_name(void) { return (const char *)DEVMM_CHRDEV_NAME; }
 
 #ifndef DEVMM_UT
-bool devmm_is_pcie_connect(u32 dev_id)
-{
-    return (devdrv_get_connect_protocol(dev_id) == CONNECT_PROTOCOL_PCIE);
-}
+bool devmm_is_pcie_connect(u32 dev_id) { return (devdrv_get_connect_protocol(dev_id) == CONNECT_PROTOCOL_PCIE); }
 
-bool devmm_is_hccs_connect(u32 dev_id)
-{
-    return (devdrv_get_connect_protocol(dev_id) == CONNECT_PROTOCOL_HCCS);
-}
+bool devmm_is_hccs_connect(u32 dev_id) { return (devdrv_get_connect_protocol(dev_id) == CONNECT_PROTOCOL_HCCS); }
 #endif
 
 bool devmm_is_dma_link_abnormal(u32 dev_id)
@@ -651,30 +669,22 @@ bool devmm_is_dma_link_abnormal(u32 dev_id)
     status_para.para.device_id = dev_id;
 #ifndef EMU_ST
     ret = ascend_intf_get_status(status_para, &status);
-    if ((ret != 0) || ((status & DAVINCI_INTF_DEVICE_STATUS_LINK_ABNORMAL) == DAVINCI_INTF_DEVICE_STATUS_LINK_ABNORMAL)) {
+    if ((ret != 0) ||
+        ((status & DAVINCI_INTF_DEVICE_STATUS_LINK_ABNORMAL) == DAVINCI_INTF_DEVICE_STATUS_LINK_ABNORMAL)) {
         return true;
     }
 #endif
     return false;
 }
 
-void devmm_svm_mem_enable(struct devmm_svm_process *svm_proc)
-{
-    svm_proc->is_enable_svm_mem = true;
-}
+void devmm_svm_mem_enable(struct devmm_svm_process *svm_proc) { svm_proc->is_enable_svm_mem = true; }
 
-void devmm_svm_mem_disable(struct devmm_svm_process *svm_proc)
-{
-    svm_proc->is_enable_svm_mem = false;
-}
+void devmm_svm_mem_disable(struct devmm_svm_process *svm_proc) { svm_proc->is_enable_svm_mem = false; }
 
-bool devmm_svm_mem_is_enable(struct devmm_svm_process *svm_proc)
-{
-    return svm_proc->is_enable_svm_mem;
-}
+bool devmm_svm_mem_is_enable(struct devmm_svm_process *svm_proc) { return svm_proc->is_enable_svm_mem; }
 
-void devmm_phy_addr_attr_pack(struct devmm_svm_process *svm_proc, u32 pg_type, u32 mem_type, bool is_continuous,
-    struct devmm_phy_addr_attr *attr)
+void devmm_phy_addr_attr_pack(
+    struct devmm_svm_process *svm_proc, u32 pg_type, u32 mem_type, bool is_continuous, struct devmm_phy_addr_attr *attr)
 {
     attr->side = DEVMM_SIDE_TYPE;
     attr->devid = svm_proc->process_id.devid;
@@ -684,8 +694,8 @@ void devmm_phy_addr_attr_pack(struct devmm_svm_process *svm_proc, u32 pg_type, u
     attr->pg_type = pg_type;
     attr->mem_type = mem_type;
     attr->is_continuous = (pg_type == DEVMM_NORMAL_PAGE_TYPE) ? is_continuous : false;
-    attr->is_compound_page = ((DEVMM_SIDE_TYPE == DEVMM_SIDE_MASTER) || (DEVMM_SIDE_TYPE == DEVMM_SIDE_HOST_AGENT)) ?
-        true : false;
+    attr->is_compound_page =
+        ((DEVMM_SIDE_TYPE == DEVMM_SIDE_MASTER) || (DEVMM_SIDE_TYPE == DEVMM_SIDE_HOST_AGENT)) ? true : false;
 }
 
 #define DEVMM_NSEC_PER_SEC 1000000000L
@@ -761,4 +771,3 @@ void devmm_update_devids(struct devmm_devid *devids, u32 logical_devid, u32 devi
     devids->devid = devid;
     devids->vfid = vfid;
 }
-

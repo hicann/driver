@@ -36,4 +36,3 @@ void trs_agent_register_ops(u32 devid, struct trs_device_agent_ops *ops);
 void trs_agent_unregister_ops(u32 devid);
 
 #endif
-

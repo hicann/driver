@@ -48,7 +48,7 @@ extern "C" {
 #include "ascend_hal_define.h"
 
 #ifdef __linux
-#define DLLEXPORT
+#define DLLEXPORT __attribute__((visibility("default")))
 #else
 #define DLLEXPORT _declspec(dllexport)
 #ifndef pid_t
@@ -129,7 +129,8 @@ typedef struct mp_attr {
     unsigned long hugePageFlag; /**< huge page support */
     char poolName[BUFF_POOL_NAME_LEN];
     unsigned int poolType;      /* 00: soft buff/mbuf pool; 01: DQS Mbuf */
-    int reserve[BUFF_RESERVE_LEN-1];
+    unsigned int useFlag;       /* 00: normal pool; 01: created by DataGW for inter-chip/inter-domain use. */
+    int reserve[BUFF_RESERVE_LEN - 2];
 }mpAttr;
 
 struct memzone_buff_cfg {
@@ -497,11 +498,6 @@ typedef enum queue_status {
     QUEUE_EMPTY,
     QUEUE_FULL,
 }QUEUE_STATUS;
-
-typedef enum queue_work_mode {
-    QUEUE_MODE_PUSH = 1,
-    QUEUE_MODE_PULL,
-}QUEUE_WORK_MODE;
 
 typedef enum queue_type {
     QUEUE_TYPE_GROUP = 1,

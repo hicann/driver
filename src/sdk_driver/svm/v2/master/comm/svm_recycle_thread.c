@@ -20,10 +20,12 @@
 #include "svm_log.h"
 #include "svm_recycle_thread.h"
 
-#define SVM_MAX_RECYCLE_HANDLE_NUM  2U
+#define SVM_MAX_RECYCLE_HANDLE_NUM 2U
 
 static ka_task_struct_t *g_recycle_thread = NULL;
-static void (* g_recycle_handle[SVM_MAX_RECYCLE_HANDLE_NUM])(void) = {NULL, };
+static void (*g_recycle_handle[SVM_MAX_RECYCLE_HANDLE_NUM])(void) = {
+    NULL,
+};
 static u32 g_recycle_thread_pause = 0U;
 static u32 g_recycle_thread_quick_exit = 0U;
 
@@ -49,20 +51,14 @@ static void svm_call_recycle_handle(void)
     }
 }
 
-void svm_recycle_thread_pause(void)
-{
-    g_recycle_thread_pause = 1U;
-}
+void svm_recycle_thread_pause(void) { g_recycle_thread_pause = 1U; }
 
-void svm_recycle_thread_continue(void)
-{
-    g_recycle_thread_pause = 0U;
-}
+void svm_recycle_thread_continue(void) { g_recycle_thread_pause = 0U; }
 #ifndef EMU_ST
 static void ssleep_interruptible(u32 seconds)
 {
     u32 i;
- 	 
+
     for (i = 0; i < seconds; i++) {
         if (g_recycle_thread_quick_exit == 1U) {
             break;

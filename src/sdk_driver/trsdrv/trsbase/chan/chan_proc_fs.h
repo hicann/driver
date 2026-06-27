@@ -24,4 +24,3 @@ void chan_proc_fs_init(void);
 void chan_proc_fs_uninit(void);
 
 #endif
-

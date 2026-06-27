@@ -13,7 +13,7 @@
 #ifndef TRS_TS_STATUS_H
 #define TRS_TS_STATUS_H
 
-#include <linux/types.h>
+#include "ka_type.h"
 
 #include "trs_pub_def.h"
 int trs_set_ts_status(struct trs_id_inst *inst, u32 status);

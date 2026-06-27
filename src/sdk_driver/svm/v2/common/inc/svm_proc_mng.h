@@ -20,9 +20,9 @@
 #include "svm_ioctl.h"
 
 /* proc_status */
-#define DEVMM_SVM_THREAD_EXITING   0x2   /* svm proc exiting, above pcie msg */
-#define DEVMM_SVM_THREAD_WAIT_EXIT 0x4   /* svm proc wait exit, wait pcie msg proc over */
-#define DEVMM_RELEASE_WAIT_FOREVER   0xFFFFFFFF
+#define DEVMM_SVM_THREAD_EXITING 0x2   /* svm proc exiting, above pcie msg */
+#define DEVMM_SVM_THREAD_WAIT_EXIT 0x4 /* svm proc wait exit, wait pcie msg proc over */
+#define DEVMM_RELEASE_WAIT_FOREVER 0xFFFFFFFF
 
 #define DEVMM_SVM_PROC_ABORT_STATE (DEVMM_SVM_THREAD_EXITING | DEVMM_SVM_THREAD_WAIT_EXIT)
 
@@ -41,7 +41,7 @@ typedef void (*srcu_mng_release_fun)(u64 arg);
 typedef void (*proc_mng_callback_hander)(struct devmm_svm_process *, u64);
 typedef void (*proc_mng_put_hander)(struct devmm_svm_process *);
 
-//extern ka_task_t init_task;
+// extern ka_task_t init_task;
 
 int devmm_add_to_svm_proc_hashtable(struct devmm_svm_process *svm_proc);
 void devmm_wait_exit_and_del_from_hashtable(struct devmm_svm_process *svm_proc);
@@ -74,10 +74,9 @@ int devmm_alloc_svm_proc_set_to_file(ka_file_t *file);
 struct devmm_svm_process *devmm_alloc_svm_proc(void);
 void devmm_free_svm_proc(struct devmm_svm_process *svm_proc);
 
-int devmm_add_svm_proc_pid(struct devmm_svm_process *svm_proc,
-    struct devmm_svm_process_id *process_id, int dev_pid);
-int devmm_add_svm_proc_pid_lock(struct devmm_svm_process *svm_proc,
-    struct devmm_svm_process_id *process_id, int dev_pid);
+int devmm_add_svm_proc_pid(struct devmm_svm_process *svm_proc, struct devmm_svm_process_id *process_id, int dev_pid);
+int devmm_add_svm_proc_pid_lock(
+    struct devmm_svm_process *svm_proc, struct devmm_svm_process_id *process_id, int dev_pid);
 void devmm_del_first_svm_proc_pid(struct devmm_svm_process *svm_proc);
 void devmm_del_first_svm_proc_pid_lock(struct devmm_svm_process *svm_proc);
 void devmm_set_svm_proc_state(struct devmm_svm_process *svm_proc, u32 state);

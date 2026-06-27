@@ -15,43 +15,31 @@
 #include "soc_adapt_res_mini_v2.h"
 
 /* Notify */
-#define TRS_MINI_V2_NOTIFY_SIZE             8
+#define TRS_MINI_V2_NOTIFY_SIZE 8
 
 /* Event */
-#define TRS_MINI_V2_EVENT_SIZE              8
+#define TRS_MINI_V2_EVENT_SIZE 8
 
 /* Doorbell */
-#define TRS_SOC_MINI_V2_DB_STRIDE   (4 * 1024)
+#define TRS_SOC_MINI_V2_DB_STRIDE (4 * 1024)
 
-#define TRS_DB_MINI_V2_ONLINE_MBOX_START    1006u
-#define TRS_DB_MINI_V2_ONLINE_MBOX_END      1007u
+#define TRS_DB_MINI_V2_ONLINE_MBOX_START 1006u
+#define TRS_DB_MINI_V2_ONLINE_MBOX_END 1007u
 
-#define TRS_DB_MINI_V2_ONLINE_TASK_SQ_START    0u
-#define TRS_DB_MINI_V2_ONLINE_TASK_SQ_END      512u
+#define TRS_DB_MINI_V2_ONLINE_TASK_SQ_START 0u
+#define TRS_DB_MINI_V2_ONLINE_TASK_SQ_END 512u
 
-#define TRS_DB_MINI_V2_ONLINE_TASK_CQ_START    512u
-#define TRS_DB_MINI_V2_ONLINE_TASK_CQ_END      864u
+#define TRS_DB_MINI_V2_ONLINE_TASK_CQ_START 512u
+#define TRS_DB_MINI_V2_ONLINE_TASK_CQ_END 864u
 
-u32 trs_soc_get_mini_v2_notify_offset(u32 notify_id)
-{
-    return notify_id * TRS_MINI_V2_NOTIFY_SIZE;
-}
+u32 trs_soc_get_mini_v2_notify_offset(u32 notify_id) { return notify_id * TRS_MINI_V2_NOTIFY_SIZE; }
 
-size_t trs_soc_get_mini_v2_notify_size(void)
-{
-    return (size_t)TRS_MINI_V2_NOTIFY_SIZE;
-}
+size_t trs_soc_get_mini_v2_notify_size(void) { return (size_t)TRS_MINI_V2_NOTIFY_SIZE; }
 
 #ifndef EMU_ST
-u32 trs_soc_get_mini_v2_event_offset(u32 event_id)
-{
-    return event_id * TRS_MINI_V2_EVENT_SIZE;
-}
+u32 trs_soc_get_mini_v2_event_offset(u32 event_id) { return event_id * TRS_MINI_V2_EVENT_SIZE; }
 #endif
-size_t trs_soc_get_mini_v2_db_stride(void)
-{
-    return (size_t)TRS_SOC_MINI_V2_DB_STRIDE;
-}
+size_t trs_soc_get_mini_v2_db_stride(void) { return (size_t)TRS_SOC_MINI_V2_DB_STRIDE; }
 
 int trs_soc_get_mini_v2_db_cfg(int db_type, u32 *start, u32 *end)
 {
@@ -75,4 +63,3 @@ int trs_soc_get_mini_v2_db_cfg(int db_type, u32 *start, u32 *end)
 
     return 0;
 }
-

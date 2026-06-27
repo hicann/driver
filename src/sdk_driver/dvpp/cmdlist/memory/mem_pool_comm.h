@@ -14,7 +14,7 @@
 #ifndef MEM_POOL_COMM_H
 #define MEM_POOL_COMM_H
 
-#include <linux/types.h>
+#include "ka_type.h"
 #include "ka_list_pub.h"
 #include "ka_task_pub.h"
 

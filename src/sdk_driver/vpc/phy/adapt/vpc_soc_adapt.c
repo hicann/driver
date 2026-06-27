@@ -37,7 +37,7 @@ struct vmng_msg_chan_res *vmngh_get_msg_cluster_res(struct vmng_msg_dev *msg_dev
 }
 
 void vmngh_set_blk_irq_array_adapt(struct vmng_msg_dev *msg_dev, enum vmng_msg_chan_type chan_type,
-    const struct vmng_msg_chan_res *res, struct vmng_msg_chan_irqs *irq_array)
+                                   const struct vmng_msg_chan_res *res, struct vmng_msg_chan_irqs *irq_array)
 {
     if (vmngh_is_support_sriov(msg_dev)) {
         vmngh_set_blk_irq_array_sriov(msg_dev, chan_type, res, irq_array);

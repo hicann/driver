@@ -21,7 +21,6 @@
 #include "dms_common.h"
 #include "pbl/pbl_davinci_api.h"
 #include "davinci_interface.h"
-#include "dms_kernel_version_adapt.h"
 #include "ka_memory_pub.h"
 #include "ka_task_pub.h"
 #include "ka_fs_pub.h"

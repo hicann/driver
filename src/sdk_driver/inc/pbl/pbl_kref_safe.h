@@ -18,6 +18,7 @@
 #include "ka_common_pub.h"
 #include "ka_task_pub.h"
 #include "ka_system_pub.h"
+#include "ka_compiler_pub.h"
 
 struct kref_safe {
     ka_kref_t kref;
@@ -67,7 +68,7 @@ static inline int kref_safe_put(struct kref_safe *kref_s, void (*release)(struct
 	return 0;
 }
 
-static inline int __must_check kref_safe_get_unless_zero(struct kref_safe *kref_s)
+static inline int __ka_must_check kref_safe_get_unless_zero(struct kref_safe *kref_s)
 {
 	return ka_base_kref_get_unless_zero(&kref_s->kref);
 }

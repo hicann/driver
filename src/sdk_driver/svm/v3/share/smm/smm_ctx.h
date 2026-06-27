@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2025. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -28,7 +28,8 @@ struct smm_ctx {
 struct smm_ctx *smm_ctx_get(u32 udevid);
 void smm_ctx_put(struct smm_ctx *ctx);
 
-int smm_pa_get(struct smm_ctx *ctx, struct svm_global_va *src_info, struct svm_pa_seg pa_seg[], u64 *seg_num);
+int smm_pa_get(struct smm_ctx *ctx, struct svm_global_va *src_info, struct svm_pa_seg pa_seg[], u64 *seg_num,
+    u64 flag);
 int smm_pa_put(struct smm_ctx *ctx, struct svm_global_va *src_info, struct svm_pa_seg pa_seg[], u64 seg_num);
 
 u32 smm_get_src_max_udev_num(void);
@@ -71,4 +72,3 @@ int smm_ops_feature_init(void);
 void smm_ops_feature_uninit(void);
 
 #endif
-

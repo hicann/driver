@@ -99,10 +99,12 @@ struct ipmi_get_hardware_reg_info_rsp {
 int dcmi_ipmi_reset_npu(int slot_id, int chip_id);
 int dcmi_ipmi_get_npu_outband_channel_state(int *channel_state);
 int dcmi_ipmi_reset_npu_910_93(int card_id);
+int dcmi_ipmi_reset_npu_950(int card_id);
 int dcmi_ipmi_get_npu_reset_state(int slot_id, int chip_id, unsigned char *state);
 int dcmi_ipmi_get_cpld_value(int addr, unsigned char *value);
 int dcmi_ipmi_get_npu_fru_id(int card_id, unsigned char *fru_id);
 int dcmi_ipmi_get_cpld_version(unsigned char fru_id, unsigned char *cpld_version);
+int dcmi_ipmi_get_npu_outband_channel_state(int *channel_state);
 
 #ifdef __cplusplus
 #if __cplusplus

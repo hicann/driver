@@ -342,7 +342,7 @@ STATIC struct ascend_ub_admin_chan *ubdrv_get_admin_msg_chan(u32 dev_id)
     }
 
     msg_chan = &(msg_dev->admin_msg_chan);
-    ka_task_mutex_lock(&msg_chan->mutex_lock);
+    ubdrv_mutex_lock_polling(dev_id, &msg_chan->mutex_lock);
     if (msg_chan->valid == UB_ADMIN_MSG_DISABLE) {
         ubdrv_err("Msg_chan is invalid. (dev_id=%u)\n", dev_id);
         ka_task_mutex_unlock(&msg_chan->mutex_lock);
@@ -466,8 +466,8 @@ admin_msg_tatimeout:
         goto clear_user_data;
     }
     jetty_ctrl = &msg_chan->admin_jetty->send_jetty;
-    ret = ubdrv_interval_poll_send_jfs_jfc(jetty_ctrl->jfs_jfc, (u64)desc->seg_id, MSG_MAX_WAIT_CNT, &cr, stat, true);
-    if ((ret == 0) && (cr.status == UBCORE_CR_ACK_TIMEOUT_ERR) && (ta_timeout_cnt < ASCEND_TATIMEOUT_RETRY_CNT)) {
+    ret = ubdrv_interval_poll_send_jfs_jfc(jetty_ctrl, (u64)desc->seg_id, MSG_MAX_WAIT_CNT, &cr, stat, true);
+    if ((ret == 0) && (cr.status == UBCORE_CR_ACK_TIMEOUT_ERR) && (ta_timeout_cnt < ubdrv_get_msg_retry_cnt(dev_id))) {
         ubdrv_rebuild_chan_send_jetty(dev_id, 0, stat, jetty_ctrl, &wr_cfg);
         ta_timeout_cnt++;
         goto admin_msg_tatimeout;
@@ -699,7 +699,7 @@ STATIC int ubdrv_admin_recv_process(struct ascend_ub_jetty_ctrl *cfg, struct asc
     ret = ubdrv_wait_add_davinci_dev();
     if (ret != 0) {
         ubdrv_err("Wait davinci dev online error. (opcode=%u;ret=%d)\n", desc->opcode, ret);
-        desc->status = UB_MSG_NULL_PROCSESS;
+        desc->status = UB_MSG_NULL_PROCESS;
         return -EINVAL;
     }
 
@@ -783,6 +783,7 @@ void ubdrv_admin_recv_prepare_process(struct ascend_ub_jetty_ctrl *cfg,
 {
     struct ascend_ub_admin_chan *chan = (struct ascend_ub_admin_chan*)cfg->msg_chan;
     struct ubdrv_msg_chan_stat *stat = &chan->chan_stat;
+    char dfx_info[UBDRV_DFX_INFO_LEN] = {0};
     u32 cost_time;
     int ret;
 
@@ -800,7 +801,9 @@ void ubdrv_admin_recv_prepare_process(struct ascend_ub_jetty_ctrl *cfg,
         stat->rx_process_err++;
         goto reply_admin_msg;
     }
-    cost_time = ubdrv_record_resq_time(stat->rx_stamp, "admin recv prepare process stamp", UBDRV_SCEH_RESP_TIME);
+    (void)sprintf_s(dfx_info, UBDRV_DFX_INFO_LEN, "device-%u admin call opcode-%u process stamp",
+        chan->dev_id, desc->opcode);
+    cost_time = ubdrv_record_resq_time(stat->rx_stamp, dfx_info, UBDRV_SCEH_RESP_TIME);
     if (cost_time > stat->rx_max_time) {
         stat->rx_max_time = cost_time;
     }

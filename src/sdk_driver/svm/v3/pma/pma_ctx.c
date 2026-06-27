@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2025. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -30,30 +30,15 @@
 
 u32 pma_feature_id;
 
-static void pma_init_pipeline(struct pma_ctx *pma_ctx)
-{
-    ka_task_init_rwsem(&pma_ctx->pipeline_rw_sem);
-}
+static void pma_init_pipeline(struct pma_ctx *pma_ctx) { ka_task_init_rwsem(&pma_ctx->pipeline_rw_sem); }
 
-void pma_use_pipeline(struct pma_ctx *pma_ctx)
-{
-    ka_task_down_read(&pma_ctx->pipeline_rw_sem);
-}
+void pma_use_pipeline(struct pma_ctx *pma_ctx) { ka_task_down_read(&pma_ctx->pipeline_rw_sem); }
 
-void pma_unuse_pipeline(struct pma_ctx *pma_ctx)
-{
-    ka_task_up_read(&pma_ctx->pipeline_rw_sem);
-}
+void pma_unuse_pipeline(struct pma_ctx *pma_ctx) { ka_task_up_read(&pma_ctx->pipeline_rw_sem); }
 
-void pma_occupy_pipeline(struct pma_ctx *pma_ctx)
-{
-    ka_task_down_write(&pma_ctx->pipeline_rw_sem);
-}
+void pma_occupy_pipeline(struct pma_ctx *pma_ctx) { ka_task_down_write(&pma_ctx->pipeline_rw_sem); }
 
-void pma_release_pipeline(struct pma_ctx *pma_ctx)
-{
-    ka_task_up_write(&pma_ctx->pipeline_rw_sem);
-}
+void pma_release_pipeline(struct pma_ctx *pma_ctx) { ka_task_up_write(&pma_ctx->pipeline_rw_sem); }
 
 struct pma_ctx *pma_ctx_get(u32 udevid, int tgid)
 {
@@ -73,10 +58,7 @@ struct pma_ctx *pma_ctx_get(u32 udevid, int tgid)
     return pma_ctx;
 }
 
-void pma_ctx_put(struct pma_ctx *pma_ctx)
-{
-    svm_task_ctx_put(pma_ctx->task_ctx);
-}
+void pma_ctx_put(struct pma_ctx *pma_ctx) { svm_task_ctx_put(pma_ctx->task_ctx); }
 
 static void pma_ctx_init(struct pma_ctx *pma_ctx)
 {
@@ -118,8 +100,7 @@ int pma_init_task(u32 udevid, int tgid, void *start_time)
         return -EINVAL;
     }
 
-    ret = svm_task_set_feature_priv(task_ctx, pma_feature_id, "pma",
-        (void *)pma_ctx, pma_ctx_release);
+    ret = svm_task_set_feature_priv(task_ctx, pma_feature_id, "pma", (void *)pma_ctx, pma_ctx_release);
     if (ret != 0) {
         svm_task_ctx_put(task_ctx);
         svm_kvfree(pma_ctx);
@@ -148,7 +129,7 @@ void pma_uninit_task(u32 udevid, int tgid, void *start_time)
 
     pma_ctx = pma_ctx_get(udevid, tgid);
     if (pma_ctx == NULL) {
-        return ;
+        return;
     }
 
     pma_ctx_put(pma_ctx);
@@ -187,8 +168,5 @@ int pma_init(void)
 }
 DECLAER_FEATURE_AUTO_INIT(pma_init, FEATURE_LOADER_STAGE_6);
 
-void pma_uninit(void)
-{
-}
+void pma_uninit(void) {}
 DECLAER_FEATURE_AUTO_UNINIT(pma_uninit, FEATURE_LOADER_STAGE_6);
-

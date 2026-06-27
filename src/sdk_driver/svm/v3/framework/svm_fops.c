@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2025. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -88,10 +88,7 @@ static int svm_open(ka_inode_t *inode, ka_file_t *file)
     return 0;
 }
 
-static int svm_release(ka_inode_t *inode, ka_file_t *file)
-{
-    return 0;
-}
+static int svm_release(ka_inode_t *inode, ka_file_t *file) { return 0; }
 
 static int svm_pre_release(ka_file_t *file, unsigned long mode)
 {
@@ -108,10 +105,18 @@ static int svm_pre_release(ka_file_t *file, unsigned long mode)
     return 0;
 }
 
-static int (* svm_ioctl_handler[SVM_MAX_CMD])(u32 udevid, u32 cmd, unsigned long arg) = {NULL, };
-static int (* svm_ioctl_pre_handler[SVM_MAX_CMD])(u32 udevid, u32 cmd, void *para) = {NULL, };
-static void (* svm_ioctl_pre_cancle_handler[SVM_MAX_CMD])(u32 udevid, u32 cmd, void *para) = {NULL, };
-static int (* svm_ioctl_post_handler[SVM_MAX_CMD])(u32 udevid, u32 cmd, void *para) = {NULL, };
+static int (*svm_ioctl_handler[SVM_MAX_CMD])(u32 udevid, u32 cmd, unsigned long arg) = {
+    NULL,
+};
+static int (*svm_ioctl_pre_handler[SVM_MAX_CMD])(u32 udevid, u32 cmd, void *para) = {
+    NULL,
+};
+static void (*svm_ioctl_pre_cancle_handler[SVM_MAX_CMD])(u32 udevid, u32 cmd, void *para) = {
+    NULL,
+};
+static int (*svm_ioctl_post_handler[SVM_MAX_CMD])(u32 udevid, u32 cmd, void *para) = {
+    NULL,
+};
 
 void svm_register_ioctl_cmd_handle(int nr, int (*fn)(u32 udevid, u32 cmd, unsigned long arg))
 {
@@ -194,18 +199,10 @@ static long svm_ioctl(ka_file_t *file, u32 cmd, unsigned long arg)
     return (long)svm_ioctl_handler[cmd_nr](udevid, cmd, arg);
 }
 
-static int svm_mmap(ka_file_t *file, ka_vm_area_struct_t *vma)
-{
-    return -EOPNOTSUPP;
-}
+static int svm_mmap(ka_file_t *file, ka_vm_area_struct_t *vma) { return -EOPNOTSUPP; }
 
 static ka_file_operations_t svm_fops = {
-    .owner = KA_THIS_MODULE,
-    .open = svm_open,
-    .release = svm_release,
-    .unlocked_ioctl = svm_ioctl,
-    .mmap = svm_mmap
-};
+    .owner = KA_THIS_MODULE, .open = svm_open, .release = svm_release, .unlocked_ioctl = svm_ioctl, .mmap = svm_mmap};
 
 static const struct notifier_operations svm_notifier_ops = {
     .notifier_call = svm_pre_release,
@@ -236,4 +233,3 @@ void svm_fops_uninit(void)
     (void)drv_ascend_unregister_notify(SVM_CHAR_DEV_NAME);
     (void)drv_ascend_unregister_sub_module(SVM_CHAR_DEV_NAME);
 }
-

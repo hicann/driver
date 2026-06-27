@@ -19,16 +19,16 @@ STATIC int __ka_init init_hdc(void)
 {
     int ret;
 
-	ret = hdcdrv_pcie_init_module();
-	if (ret != 0) {
-		return ret;
-	}
+    ret = hdcdrv_pcie_init_module();
+    if (ret != 0) {
+        return ret;
+    }
 
 #ifdef CFG_FEATURE_UB_COMM
-	ret = hdcdrv_ub_init_module();
-	if (ret != 0) {
-		hdcdrv_pcie_exit_module();
-	}
+    ret = hdcdrv_ub_init_module();
+    if (ret != 0) {
+        hdcdrv_pcie_exit_module();
+    }
 #endif
 
     return ret;
@@ -37,9 +37,9 @@ STATIC int __ka_init init_hdc(void)
 STATIC void __ka_exit exit_hdc(void)
 {
 #ifdef CFG_FEATURE_UB_COMM
-	hdcdrv_ub_exit_module();
+    hdcdrv_ub_exit_module();
 #endif
-	hdcdrv_pcie_exit_module();
+    hdcdrv_pcie_exit_module();
 }
 
 ka_module_init(init_hdc);

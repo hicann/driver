@@ -23,18 +23,6 @@
 #include "ascend_hal_define.h"
 #include "dms/dms_devdrv_manager_comm.h"
 
-#ifndef __GFP_ACCOUNT
-#ifdef __GFP_KMEMCG
-#define GFP_ACCOUNT __GFP_KMEMCG /* for linux version 3.10 */
-#endif
-
-#ifdef __GFP_NOACCOUNT
-#define GFP_ACCOUNT 0 /* for linux version 4.1 */
-#endif
-#else
-#define GFP_ACCOUNT __GFP_ACCOUNT
-#endif
-
 struct dp_proc_mng_info {
     ka_list_head_t bind_cgroup_list;
     ka_mutex_t bind_cgroup_list_lock;
@@ -42,8 +30,8 @@ struct dp_proc_mng_info {
     ka_workqueue_struct_t *bind_cgroup_wq;
 };
 
-extern int (* const dp_proc_mng_ioctl_handlers[DP_PROC_MNG_CMD_MAX_CMD])(ka_file_t *file,
-    struct dp_proc_mng_ioctl_arg *arg);
+extern int (*const dp_proc_mng_ioctl_handlers[DP_PROC_MNG_CMD_MAX_CMD])(
+    ka_file_t *file, struct dp_proc_mng_ioctl_arg *arg);
 
 int dp_proc_mng_davinci_module_init(const ka_file_operations_t *ops);
 void dp_proc_mng_davinci_module_uninit(void);

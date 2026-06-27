@@ -52,11 +52,11 @@ static bool featureSupportProfAicpuChan(uint32_t devId)
 {
     (void)devId;
 #ifdef CFG_FEATURE_PROF_AICPU_CHAN_DEFUALT
-    #ifdef CFG_FEATURE_PROF_AICPU_CHAN_NOT_SUPPORT
-        return false;
-    #else
-        return true;
-    #endif
+#ifdef CFG_FEATURE_PROF_AICPU_CHAN_NOT_SUPPORT
+    return false;
+#else
+    return true;
+#endif
 #else
     int ret;
     unsigned int mode;
@@ -72,7 +72,7 @@ static bool featureSupportProfAicpuChan(uint32_t devId)
 
 static bool featureSupportDmsGetQosMasterConfig(uint32_t devId)
 {
-(void)devId;
+    (void)devId;
 #ifdef CFG_FEATURE_GET_QOS_MASTER_CFG
     return true;
 #else
@@ -107,6 +107,7 @@ static const feature_support_handle g_feature_support[FEATURE_MAX] = {
     [FEATURE_SVM_MEM_HOST_UVA] = svm_support_mem_host_uva,
     [FEATURE_DMS_GET_QOS_MASTER_CONFIG] = featureSupportDmsGetQosMasterConfig,
     [FEATURE_DMS_QUERY_CHIP_DIE_ID] = featureSupportDmsQueryChipDieIdByPhyId,
+    [FEATURE_SVM_MEM_REGISTER_QUERY_AND_GET_ATTR] = svm_support_mem_register_query_and_get_attr,
     [FEATURE_APM_RES_MAP_REMOTE] = featureSupportApmResMapRemote,
 };
 

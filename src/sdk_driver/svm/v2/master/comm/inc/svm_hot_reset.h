@@ -14,7 +14,7 @@
 #ifndef SVM_HOT_RESET_H
 #define SVM_HOT_RESET_H
 
-#include <linux/types.h>
+#include "ka_type.h"
 #include "ka_net_pub.h"
 #include "ka_task_pub.h"
 #include "ka_list_pub.h"

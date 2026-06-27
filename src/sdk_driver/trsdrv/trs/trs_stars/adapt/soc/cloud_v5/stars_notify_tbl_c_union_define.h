@@ -13,11 +13,11 @@
 #ifndef __STARS_NOTIFY_TBL_C_UNION_DEFINE_H__
 #define __STARS_NOTIFY_TBL_C_UNION_DEFINE_H__
 
-#define STARS_TABLE_NOTIFY_NUM          4864U
-#define STARS_TABLE_NOTIFY_UNIT_NUM     304U
+#define STARS_TABLE_NOTIFY_NUM 4864U
+#define STARS_TABLE_NOTIFY_UNIT_NUM 304U
 #define STARS_TABLE_NOTIFY_NUM_PER_UNIT 16U
 
-#define STARS_TABLE_NOTIFY_GRP_NUM      16U
+#define STARS_TABLE_NOTIFY_GRP_NUM 16U
 /*
  * DEFINE REGISTER UNION
  */
@@ -26,8 +26,8 @@ typedef union {
     /* Define the struct bits */
     struct {
         unsigned int notifyTableFlagSlice;
-        unsigned int notifyTablePendingClrSlice : 1;    /* rsv, not used */
-        unsigned int reserved                   : 31;   /* rsv, not used */
+        unsigned int notifyTablePendingClrSlice : 1; /* rsv, not used */
+        unsigned int reserved : 31;                  /* rsv, not used */
     } bits;
 
     unsigned long long data[16];

@@ -17,7 +17,9 @@
 #include "pbl/pbl_uda.h"
 #include "ascend_ub_link_chan.h"
 #include "ascend_ub_hotreset.h"
+#ifndef CFG_FEATURE_SUPPORT_RUN_INSTALL
 #include "ascend_ub_socket.h"
+#endif
 #include "ascend_ub_dev.h"
 #include "ascend_ub_pair_dev_info.h"
 #include "pair_dev_info.h"
@@ -374,20 +376,13 @@ STATIC void ubdrv_dev_info_eid_convert(struct pair_dev_info *dev_info)
 
 STATIC int ubdrv_check_and_convert_pair_dev_info(u32 pair_index, struct pair_dev_info *dev_info)
 {
-    u32 expect_devid;
-
     if ((dev_info->chan_num == 0) || (dev_info->chan_num > PAIR_CHAN_MAX_NUM)) {
         ubdrv_err("User ctrl get chan_num failed. (pair_index=%u;chan_num=%d)\n", pair_index, dev_info->chan_num);
         return -EINVAL;
     }
 
+    dev_info->dev_id = dev_info->module_id;
     if (ubdrv_check_devid(dev_info->dev_id) == false) {
-        return -EINVAL;
-    }
-    expect_devid = ((dev_info->slot_id * UBDRV_DEVNUM_PER_SLOT) + dev_info->module_id);
-    if (expect_devid != dev_info->dev_id) {
-        ubdrv_err("Check dev_info dev_id failed. (pair_index=%u;dev_id=%u;expect_devid=%u;slot_id=%u;module_id=%u)\n",
-            pair_index, dev_info->dev_id, expect_devid, dev_info->slot_id, dev_info->module_id);
         return -EINVAL;
     }
     ubdrv_dev_info_eid_convert(dev_info);
@@ -575,7 +570,7 @@ STATIC int ubdrv_pair_info_call_process(struct ubcore_device *dev, void *data, u
             len, expect_data_len);
         return -EINVAL;
     }
-    dev_id = new_data->notice_dev_info.dev_id;
+    dev_id = new_data->notice_dev_info.module_id;
     if (ubdrv_check_and_convert_pair_dev_info(dev_id, &new_data->notice_dev_info) != 0) {
         return -EINVAL;
     }
@@ -790,7 +785,7 @@ STATIC void ubdrv_pair_info_work_sched(ka_work_struct_t *p_work)
 
 void ubdrv_pair_info_init_work(struct ub_idev *idev)
 {
-    if ((idev->idev_id != USER_CTRL_DEFAULT_DEV_ID) || (idev->ue_idx != USER_CTRL_DEFAULT_FE_IDX)) {
+    if (idev->idev_id != USER_CTRL_DEFAULT_DEV_ID) {
         return;
     }
 #ifdef CFG_FEATURE_SUPPORT_RUN_INSTALL
@@ -805,7 +800,7 @@ void ubdrv_pair_info_init_work(struct ub_idev *idev)
 
 void ubdrv_pair_info_uninit_work(struct ub_idev *idev)
 {
-    if ((idev->idev_id != USER_CTRL_DEFAULT_DEV_ID) || (idev->ue_idx != USER_CTRL_DEFAULT_FE_IDX)) {
+    if (idev->idev_id != USER_CTRL_DEFAULT_DEV_ID) {
         return;
     }
     g_pair_info_work.work_magic = 0;

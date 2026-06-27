@@ -14,7 +14,7 @@
 #ifndef TRS_SEC_EH_MBOX_H
 #define TRS_SEC_EH_MBOX_H
 
-#include <linux/types.h>
+#include "ka_type.h"
 
 #include "trs_pub_def.h"
 #include "trs_mailbox_def.h"

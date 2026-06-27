@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2025. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -17,10 +17,7 @@
 #include "apm_task_group_def.h"
 #include "apm_slave_ssid.h"
 
-int _apm_query_slave_ssid(u32 udevid, int slave_tgid, int *ssid)
-{
-    return -EOPNOTSUPP;
-}
+int _apm_query_slave_ssid(u32 udevid, int slave_tgid, int *ssid) { return -EOPNOTSUPP; }
 
 int _apm_query_slave_ssid_by_master(u32 udevid, int master_tgid, processType_t proc_type, u32 *ssid)
 {
@@ -73,4 +70,3 @@ int apm_slave_ssid_init(void)
     return 0;
 }
 DECLAER_FEATURE_AUTO_INIT(apm_slave_ssid_init, FEATURE_LOADER_STAGE_8);
-

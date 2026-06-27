@@ -42,6 +42,9 @@ typedef enum bbox_dump_data_file {
     BBOX_DUMP_FILE_HBOOT,
     BBOX_DUMP_VMCORE_STAT,
     BBOX_DUMP_FILE_VMCORE,
+    BBOX_DUMP_FILE_IMP_LOG,
+    BBOX_DUMP_FILE_IMU_LOG,
+    BBOX_DUMP_FILE_HSM_LOG,
     BBOX_DUMP_FILE_NUM,
     BBOX_DUMP_FILE_NONE = BBOX_DUMP_FILE_NUM
 } bbox_dump_data_file_enum;

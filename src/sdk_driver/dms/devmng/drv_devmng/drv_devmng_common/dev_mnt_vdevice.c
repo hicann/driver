@@ -35,6 +35,7 @@
 #include "ka_base_pub.h"
 #include "ka_memory_pub.h"
 #include "ka_list_pub.h"
+#include "ka_feature_pub.h"
 #include "dev_mnt_vdevice.h"
 
 #define DEVDRV_DESTROY_ALL_VDEVICE 0xffff
@@ -284,7 +285,7 @@ void dev_mnt_released_one_vm_vdevice(unsigned int phy_id, unsigned int fid)
 }
 
 #ifdef CFG_FEATURE_VFIO
-static bool dev_mnt_check_vdev_id_is_valid(u32 vdev_id, u32 phy_id)
+STATIC bool dev_mnt_check_vdev_id_is_valid(u32 vdev_id, u32 phy_id)
 {
     if (vdev_id > VDAVINCI_MAX_VDEV_ID || vdev_id < VDAVINCI_VDEV_OFFSET) {
         return false;
@@ -1318,7 +1319,9 @@ int devdrv_manager_ioctl_destroy_vdev(ka_file_t *filep, unsigned int cmd, unsign
         return ret;
     }
 #endif
-    uda_release_idle_ns_by_vdev_id(phy_id, vinfo.vdevid);
+    if (ka_feature_is_enable()) {
+        uda_release_idle_ns_by_vdev_id(phy_id, vinfo.vdevid);
+    }
     ret = dev_mnt_destory_vdevice(phy_id, vinfo.vdevid);
     if (ret) {
         devdrv_drv_err("destroy_vdevice fail, devid(%u) vdevid(%d), ret(%d).\n", vinfo.devid, vinfo.vdevid, ret);

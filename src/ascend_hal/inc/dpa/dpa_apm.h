@@ -14,8 +14,9 @@
 #include "ascend_hal_define.h"
 #include "apm_kernel_ioctl.h"
 
-drvError_t halQuerySlaveProcMeminfo(int master_pid, uint32_t devid, processType_t processType,
-    processMemType_t memType, unsigned long long *size);
+drvError_t halQuerySlaveProcMeminfo(
+    int master_pid, uint32_t devid, processType_t processType, processMemType_t memType, unsigned long long *size);
 
-int halQueryMasterPidByDeviceSlave(unsigned int devid, int slave_pid, unsigned int *master_pid, unsigned int *proc_type);
+int halQueryMasterPidByDeviceSlave(
+    unsigned int devid, int slave_pid, unsigned int *master_pid, unsigned int *proc_type);
 #endif

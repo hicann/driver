@@ -16,6 +16,8 @@
 
 static THREAD__ int32_t attach_refcnt[ESCHED_DEV_NUM] = {0};
 pthread_mutex_t esched_proc_mutex = PTHREAD_MUTEX_INITIALIZER;
+static THREAD__ unsigned long long g_sched_usr_time = 0LL;
+static THREAD__ unsigned long long g_sched_kernel_time = 0LL;
 
 void esched_share_log_create(void)
 {
@@ -49,6 +51,24 @@ int32_t esched_init_sched_cpu_num(unsigned int dev_id, int fd)
     return 0;
 }
 
+void sched_set_k2u_time_delta(unsigned long long kernel_tick)
+{
+    if (kernel_tick > 0) {
+        g_sched_usr_time = esched_get_cur_cpu_tick();
+        g_sched_kernel_time = kernel_tick;
+    }
+    sched_info("Attach kernel tick. (user_tick=%llu; kernel_tick=%llu)\n", g_sched_usr_time, kernel_tick);
+}
+
+unsigned long long sched_adapt_curr_time(unsigned long long curr_tick)
+{
+#if defined(__arm__) || defined(__aarch64__) || defined(USER_EVENT_SCHED_UT)
+    return curr_tick;
+#else
+    return (curr_tick - g_sched_usr_time + g_sched_kernel_time);
+#endif
+}
+
 int32_t esched_attach_device_inner(unsigned int dev_id, struct sched_ioctl_para_attach *para_attach)
 {
     int ret;
@@ -67,6 +87,8 @@ int32_t esched_attach_device_inner(unsigned int dev_id, struct sched_ioctl_para_
     ret = esched_dev_ioctl(dev_id, SCHED_ATTACH_PROCESS_TO_CHIP_ID, para_attach);
     if (ret != DRV_ERROR_NONE) {
         attach_refcnt[dev_id]--;
+    } else {
+        sched_set_k2u_time_delta(para_attach->kernel_time);
     }
     (void)pthread_mutex_unlock(&esched_proc_mutex);
     sched_info("Attach device. (ret=%d; dev_id=%u)\n", ret, dev_id);
@@ -145,5 +167,5 @@ void esched_clear_attach_refcnt(unsigned int dev_id)
 {
     (void)pthread_mutex_lock(&esched_proc_mutex);
     attach_refcnt[dev_id] = 0;
-    (void)pthread_mutex_unlock(&esched_proc_mutex);    
+    (void)pthread_mutex_unlock(&esched_proc_mutex);
 }

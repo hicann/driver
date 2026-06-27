@@ -15,7 +15,7 @@
 #define SVM_LOG_H
 
 #ifndef EMU_ST
-#include <linux/types.h>
+#include "ka_type.h"
 #include "dmc_kernel_interface.h"
 #else
 #include "ut_log.h"
@@ -26,27 +26,41 @@
 void devmm_share_log_err_inner(const char *fmt, ...);
 void devmm_share_log_run_info_inner(const char *fmt, ...);
 
-#define devmm_drv_err(fmt, ...) do { \
-    drv_err(module_devmm, "<%s:%d,%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), ka_task_get_current_pid(), ##__VA_ARGS__); \
-    devmm_share_log_err_inner(fmt, ##__VA_ARGS__); \
-} while (0)
+#define devmm_drv_err(fmt, ...)                                                                      \
+    do {                                                                                             \
+        drv_err(                                                                                     \
+            module_devmm, "<%s:%d,%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), \
+            ka_task_get_current_pid(), ##__VA_ARGS__);                                               \
+        devmm_share_log_err_inner(fmt, ##__VA_ARGS__);                                               \
+    } while (0)
 
-#define devmm_drv_run_info(fmt, ...) do { \
-    drv_info(module_devmm, "<%s:%d,%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), ka_task_get_current_pid(), ##__VA_ARGS__); \
-    devmm_share_log_run_info_inner(fmt, ##__VA_ARGS__); \
-} while (0)
+#define devmm_drv_run_info(fmt, ...)                                                                 \
+    do {                                                                                             \
+        drv_info(                                                                                    \
+            module_devmm, "<%s:%d,%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), \
+            ka_task_get_current_pid(), ##__VA_ARGS__);                                               \
+        devmm_share_log_run_info_inner(fmt, ##__VA_ARGS__);                                          \
+    } while (0)
 
-#define devmm_drv_warn(fmt, ...) \
-    drv_warn(module_devmm, "<%s:%d,%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), ka_task_get_current_pid(), ##__VA_ARGS__)
+#define devmm_drv_warn(fmt, ...)                                                                 \
+    drv_warn(                                                                                    \
+        module_devmm, "<%s:%d,%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), \
+        ka_task_get_current_pid(), ##__VA_ARGS__)
 
-#define devmm_drv_info(fmt, ...) \
-    drv_info(module_devmm, "<%s:%d,%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), ka_task_get_current_pid(), ##__VA_ARGS__)
+#define devmm_drv_info(fmt, ...)                                                                 \
+    drv_info(                                                                                    \
+        module_devmm, "<%s:%d,%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), \
+        ka_task_get_current_pid(), ##__VA_ARGS__)
 
-#define devmm_drv_debug_arg(fmt, ...) \
-    drv_debug(module_devmm, "<%s:%d,%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), ka_task_get_current_pid(), ##__VA_ARGS__)
+#define devmm_drv_debug_arg(fmt, ...)                                                            \
+    drv_debug(                                                                                   \
+        module_devmm, "<%s:%d,%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), \
+        ka_task_get_current_pid(), ##__VA_ARGS__)
 
-#define devmm_drv_debug(fmt, ...) \
-    drv_pr_debug(module_devmm, "<%s:%d,%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), ka_task_get_current_pid(), ##__VA_ARGS__)
+#define devmm_drv_debug(fmt, ...)                                                                \
+    drv_pr_debug(                                                                                \
+        module_devmm, "<%s:%d,%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), \
+        ka_task_get_current_pid(), ##__VA_ARGS__)
 
 #define devmm_drv_info_if(cond, fmt, ...) \
     if (cond)                             \

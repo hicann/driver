@@ -16,7 +16,7 @@
 #define DVPP_CMDLIST_DVPP_PROTOCOL
 
 #ifdef __KERNEL__
-#include <linux/types.h>
+#include "ka_type.h"
 #else
 #include <stdint.h>
 #include <stddef.h>

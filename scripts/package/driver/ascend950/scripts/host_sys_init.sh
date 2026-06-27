@@ -169,7 +169,7 @@ wait_ub_device_init() {
 }
 
 wait_device_init() {
-    if [ "$connect_type"  == "pcie" ]; then
+    if [ "$connect_type" == "pcie" ]; then
         wait_pcie_device_init
     else
         wait_ub_device_init
@@ -217,7 +217,8 @@ set_sock_option() {
 }
 
 get_connect_type() {
-    if [ -d "/sys/bus/ub" ]; then
+    config=$(cat "$Driver_Install_Path_Param"/driver/script/feature.conf | grep FEATURE_HD_CONNECT_IS_UB)
+    if [ "$config"x = "FEATURE_HD_CONNECT_IS_UB=y"x ]; then
         connect_type="ub"
     else
         connect_type="pcie"
@@ -225,7 +226,7 @@ get_connect_type() {
 }
 
 ub_insmod_asdrv() {
-    if [ ! -d "/sys/bus/ub" ]; then
+    if [ "$connect_type" = "pcie" ]; then
         return
     fi
 
@@ -238,37 +239,34 @@ ub_insmod_asdrv() {
         sleep 1
     done
 
-    local ubdrv_ko_num=$(lsmod | grep -cE ^ascend_ub_drv)
+    local ubdrv_ko_num=$(lsmod | grep -cE ^asdrv_ub)
     if [ $ubdrv_ko_num -ne 0 ]; then
         return
     fi
 
-    if [ ! -f "/lib/modules/`uname -r`/updates/ascend_ub_drv.ko" ]; then
-        return
-    fi
-
-    insmod /lib/modules/`uname -r`/updates/asdrv_vascend_adapt.ko
-    insmod /lib/modules/`uname -r`/updates/drv_seclib_host.ko
-    insmod /lib/modules/`uname -r`/updates/ascend_kernel_open_adapt.ko
-    insmod /lib/modules/`uname -r`/updates/asdrv_pbl.ko
-    insmod /lib/modules/`uname -r`/updates/asdrv_trsbase.ko
-    insmod /lib/modules/`uname -r`/updates/ascend_adapter.ko
-    insmod /lib/modules/`uname -r`/updates/ascend_ub_drv.ko
-    insmod /lib/modules/`uname -r`/updates/asdrv_dpa.ko
-    insmod /lib/modules/`uname -r`/updates/asdrv_vpc.ko
-    insmod /lib/modules/`uname -r`/updates/drv_pcie_host.ko
-    insmod /lib/modules/`uname -r`/updates/asdrv_vnic.ko
-    insmod /lib/modules/`uname -r`/updates/asdrv_vmng.ko
-    insmod /lib/modules/`uname -r`/updates/asdrv_fms.ko
-    insmod /lib/modules/`uname -r`/updates/asdrv_dms.ko
-    insmod /lib/modules/`uname -r`/updates/asdrv_esched.ko
-    insmod /lib/modules/`uname -r`/updates/drv_pcie_hdc_host.ko
-    insmod /lib/modules/`uname -r`/updates/asdrv_svm.ko
-    insmod /lib/modules/`uname -r`/updates/asdrv_trs.ko
-    insmod /lib/modules/`uname -r`/updates/asdrv_buff.ko
-    insmod /lib/modules/`uname -r`/updates/asdrv_queue.ko
-    insmod /lib/modules/`uname -r`/updates/ts_agent.ko
-    insmod /lib/modules/`uname -r`/updates/drv_vascend.ko
+    modprobe drv_seclib_host
+    modprobe ascend_kernel_open_adapt
+    modprobe asdrv_vascend_adapt
+    modprobe drv_vascend
+    modprobe asdrv_pbl
+    modprobe asdrv_trsbase
+    modprobe ascend_adapter
+    modprobe asdrv_ub
+    modprobe asdrv_dpa
+    modprobe asdrv_vpc
+    modprobe drv_pcie_host
+    modprobe asdrv_vnic
+    modprobe asdrv_vmng
+    modprobe asdrv_fms
+    modprobe asdrv_dms
+    modprobe asdrv_esched
+    modprobe drv_pcie_hdc_host
+    modprobe ubdevshm
+    modprobe asdrv_svm
+    modprobe asdrv_trs
+    modprobe asdrv_buff
+    modprobe asdrv_queue
+    modprobe ts_agent
 }
 
 init_signature_configuration() {
@@ -290,7 +288,7 @@ init_signature_configuration() {
             mkdir -p /var/asdrv/dev${devid}/device-sw-plugin/verify
             chmod 755 /var/asdrv/dev${devid}/device-sw-plugin/verify
 
-            echo "verify_flag=1" > "/var/asdrv/dev${devid}/device-sw-plugin/verify/flag";
+            echo "verify_flag=5" > "/var/asdrv/dev${devid}/device-sw-plugin/verify/flag";
             touch "/var/asdrv/dev${devid}/device-sw-plugin/verify/user-certificate";
             chmod 644 "/var/asdrv/dev${devid}/device-sw-plugin/verify/flag";
             chmod 644 "/var/asdrv/dev${devid}/device-sw-plugin/verify/user-certificate";
@@ -304,9 +302,9 @@ init_signature_configuration() {
 }
 
 servers_start() {
+    get_connect_type
     ub_insmod_asdrv
     clean_servers_log
-    get_connect_type
     if [ -d "$targetdir"/driver/tools ];then
         hdc_file_check
         changeDavinciMode

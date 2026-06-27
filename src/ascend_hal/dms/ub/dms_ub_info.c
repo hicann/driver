@@ -140,7 +140,8 @@ drvError_t dms_get_ub_dev_info(unsigned int dev_id, struct dms_ub_dev_info *eid_
     struct dms_eid_query_info query_info = {0};
     struct urd_cmd_para cmd_para = {0};
     struct urd_cmd cmd = {0};
-    int ret, i;
+    unsigned int i;
+    int ret;
 
     if ((eid_info == NULL) || (num == NULL)) {
         DMS_ERR("eid_info or num is Null.(devid=%u)\n", dev_id);
@@ -478,7 +479,7 @@ STATIC int dms_get_ub_dfx_info(unsigned int dev_id, void *buf, unsigned int *siz
         return DRV_ERROR_NOT_SUPPORT;
     }
 
-    if (input->buf_size > MAMI_INPUT_MAX_SIZE) {
+    if (input->buf_size > MAMI_INPUT_MAX_SIZE || input->buf_size + offsetof(struct dsmi_ub_dfx_input, buf) > *size) {
         DMS_ERR("Invalid input buf size. (dev_id=%u; size=%u)\n", dev_id, input->buf_size);
         dlclose(handle);
         return DRV_ERROR_PARA_ERROR;
@@ -529,7 +530,7 @@ STATIC int dms_get_ub_dfx_info(unsigned int dev_id, void *buf, unsigned int *siz
 int dms_get_ub_info_by_dmp(unsigned int dev_id, unsigned int vfid, unsigned int sub_cmd, void *buf, unsigned int *size)
 {
     (void)vfid;
-    if (dev_id > DMS_MAX_DEV_NUM || buf == NULL || size == NULL) {
+    if (dev_id >= DMS_MAX_DEV_NUM || buf == NULL || size == NULL) {
         DMS_ERR("Invalid parameter. (dev_id=%u; buf_is_NULL=%d; size_is_NULL=%d)\n",
             dev_id, (buf == NULL), (size == NULL));
         return DRV_ERROR_PARA_ERROR;

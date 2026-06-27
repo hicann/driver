@@ -30,6 +30,7 @@ STATIC void bbox_online_device_state(struct bbox_devices_info *info)
 {
     drvStatus_t device_status = DRV_STATUS_INITING;
     u32 boot_status = DSMI_BOOT_STATUS_UNINIT;
+    char dev_buf[DEV_BUF_MAX_LEN];
     u32 phy_id = 0;
     u32 i;
 
@@ -56,13 +57,13 @@ STATIC void bbox_online_device_state(struct bbox_devices_info *info)
 
         err = drvGetDeviceBootStatus((s32)phy_id, &boot_status);
         if (err != DRV_ERROR_NONE) {
-            BBOX_ERR("get device[%u] boot status failed with %d.", phy_id, (int)err);
+            BBOX_ERR("[%s] get boot status failed with %d.", bbox_get_dev_str(phy_id, i, dev_buf, sizeof(dev_buf)), (int)err);
             continue;
         }
 
         err = drvDeviceStatus(i, &device_status);
         if (err != DRV_ERROR_NONE) {
-            BBOX_ERR("get device[%u] run status failed with %d.", phy_id, (int)err);
+            BBOX_ERR("[%s] get run status failed with %d.", bbox_get_dev_str(phy_id, i, dev_buf, sizeof(dev_buf)), (int)err);
             continue;
         }
 
@@ -152,7 +153,7 @@ STATIC void bbox_save_devices_info(const struct bbox_devices_info *info, const c
                         "offline num:\t\t0x%x\n\n"
                         "devices info:\n"
                         "==================================================\n"
-                        "dir        phy-id    logic-id    status\n",
+                        "dir                phy-id    logic-id    status\n",
                         info->dev_num,
                         info->prob_num,
                         info->online_num,
@@ -167,12 +168,10 @@ STATIC void bbox_save_devices_info(const struct bbox_devices_info *info, const c
             continue;
         }
         s32 dev_id = ((info->dev_id[i] == UINT_INVALID) ? (-1) : (s32)info->dev_id[i]);
-        ret = sprintf_s(buf, DEV_INFO_MAXLEN,
-                        "device-%-2d  %-2d        %-2d          %s\n",
-                        i, i, dev_id, bbox_get_devices_status_des(info->status[i]));
-        BBOX_CHK_EXPR_CTRL(BBOX_ERR, ret == -1, return, "format device-%d information failed.", i);
+        ret = bbox_format_devices_info(buf, bbox_get_devices_status_des(info->status[i]), info->status[i], dev_id, i);
+        BBOX_CHK_EXPR_CTRL(BBOX_ERR, ret == -1, return, "format device information failed.");
         ret = bbox_save_buf_to_fs(path, DEV_INFO_FILE, buf, (u32)strlen(buf), BBOX_TRUE);
-        BBOX_CHK_EXPR_CTRL(BBOX_ERR, ret < 0, return, "save device-%d information failed.", i);
+        BBOX_CHK_EXPR_CTRL(BBOX_ERR, ret < 0, return, "save device information failed.");
     }
 }
 
@@ -204,6 +203,19 @@ STATIC void bbox_init_devices_status(struct bbox_devices_info *info)
     }
 }
 
+STATIC int bbox_get_logic_id(const struct bbox_devices_info *info, u32 phy_id)
+{
+    if (phy_id >= MAX_PHY_DEV_NUM) {
+        return BBOX_INVALID_DEVICE_ID;
+    }
+
+    if ((info->status[phy_id] == SOC_STATUS_NO_DEVICE) || (info->dev_id[phy_id] == UINT_INVALID)) {
+        return BBOX_INVALID_DEVICE_ID;
+    }
+
+    return (int)info->dev_id[phy_id];
+}
+
 /**
  * @brief       dump exception data of device id
  * @param [in]  phy_id:      logic id of device
@@ -216,26 +228,28 @@ STATIC bbox_status bbox_dump_excep_event_by_id(u32 phy_id, const char *path, enu
 {
     bool err = false;
     bbox_status ret = BBOX_SUCCESS;
+    int logic_id = bbox_get_logic_id(info, phy_id);
+
     // dump if device heart beat lost when msnpureport permanent
     if (mode == BBOX_DUMP_MODE_HBL) {
         if (info->status[phy_id] == SOC_STATUS_HEARTBEAT_LOST) {
-            ret = bbox_dump_excep_event(phy_id, path, EVENT_HEARTBEAT_LOST, NULL);
+            ret = bbox_dump_excep_event(phy_id, path, EVENT_HEARTBEAT_LOST, NULL, logic_id);
         }
         return ret;
     }
     switch (info->status[phy_id]) {
         case SOC_STATUS_BOOT_FAILED:
-            ret = bbox_dump_excep_event(phy_id, path, EVENT_LOAD_TIMEOUT, NULL);
+            ret = bbox_dump_excep_event(phy_id, path, EVENT_LOAD_TIMEOUT, NULL, logic_id);
             break;
         case SOC_STATUS_HEARTBEAT_LOST:
-            ret = bbox_dump_excep_event(phy_id, path, EVENT_HEARTBEAT_LOST, NULL);
+            ret = bbox_dump_excep_event(phy_id, path, EVENT_HEARTBEAT_LOST, NULL, logic_id);
             break;
         case SOC_STATUS_OS_RUNNING:
-            ret = bbox_dump_runtime(phy_id, path, mode);
+            ret = bbox_dump_runtime(phy_id, path, mode, logic_id);
             break;
         default:
             ret = BBOX_SUCCESS;
-            BBOX_DBG("device[%u] status unknown or not found.", phy_id);
+            BBOX_DBG("status unknown or not found.");
             break;
     }
     err = ((ret == BBOX_SUCCESS) ? err : true);
@@ -243,7 +257,7 @@ STATIC bbox_status bbox_dump_excep_event_by_id(u32 phy_id, const char *path, enu
     if (mode == BBOX_DUMP_MODE_FORCE) {
         if (info->status[phy_id] == SOC_STATUS_OS_RUNNING ||
             info->status[phy_id] == SOC_STATUS_HEARTBEAT_LOST) {
-            ret = bbox_dump_excep_event(phy_id, path, EVENT_DUMP_FORCE, NULL);
+            ret = bbox_dump_excep_event(phy_id, path, EVENT_DUMP_FORCE, NULL, logic_id);
             err = ((ret == BBOX_SUCCESS) ? err : true);
         }
     }
@@ -254,13 +268,13 @@ STATIC bbox_status bbox_dump_excep_event_by_id(u32 phy_id, const char *path, enu
         if (info->status[phy_id] == SOC_STATUS_HEARTBEAT_LOST) {
             ret = bbox_pcie_set_kdump_flag(phy_id, 0, KDUMP_FLAG_NUM * sizeof(unsigned int), setbuffer);
             if (ret == BBOX_FAILURE) {
-                BBOX_DBG("device[%u] kdump flag set not succeed.", phy_id);
+                BBOX_DBG("kdump flag set not succeed.");
             } else {
-                ret = bbox_dump_excep_event(phy_id, path, EVENT_DUMP_VMCORE, NULL);
+                ret = bbox_dump_excep_event(phy_id, path, EVENT_DUMP_VMCORE, NULL, logic_id);
                 err = ((ret == BBOX_SUCCESS) ? err : true);
             }
         } else {
-            BBOX_DBG("device[%u] status is normal, no need to dump vmcore.", phy_id);
+            BBOX_DBG("status is normal, no need to dump vmcore.");
         }
     }
     return (err == false) ? BBOX_SUCCESS : BBOX_FAILURE;

@@ -24,13 +24,13 @@
 struct prof_peri_para {
     unsigned int device_id;
     unsigned int vfid;
-    void *user_data;                /* sample Configuration information */
-    unsigned int user_data_len;     /* sample Length of the configuration information data */
-    unsigned int sample_flag;       /* Indicates whether it is the first sample. SAMPLE_ONLY_DATA: not the first sample; SAMPLE_WITH_HEADER: the first sample */
-    void *buff;                     /* sample buff address */
-    unsigned int buff_len;          /* sample buff total length */
+    void *user_data;            /* sample Configuration information */
+    unsigned int user_data_len; /* sample Length of the configuration information data */
+    unsigned int sample_flag;   /* Indicates whether it is the first sample. SAMPLE_ONLY_DATA: not the first sample;
+                                   SAMPLE_WITH_HEADER: the first sample */
+    void *buff;                 /* sample buff address */
+    unsigned int buff_len;      /* sample buff total length */
     int target_pid;
     unsigned int reserve[PROF_PERI_REV_NUM];
 };
 #endif /* _DMC_PROFILE_H_ */
-

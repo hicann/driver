@@ -19,4 +19,3 @@
 void trs_stars_v2_trace_sqe_fill(struct trs_id_inst *inst, struct trs_chan_sq_trace *sq_trace, void *sqe);
 
 #endif
-

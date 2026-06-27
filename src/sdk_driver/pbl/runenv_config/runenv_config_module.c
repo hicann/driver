@@ -10,10 +10,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-
-#include <linux/module.h>
-#include <linux/pci.h>
-#include <linux/types.h>
+#include "ka_kernel_def_pub.h"
+#include "ka_fs_pub.h"
 
 #include "pbl/pbl_runenv_config.h"
 #include "docker_query.h"
@@ -25,17 +23,17 @@ void recfg_exit(void);
 
 /* The name cannot be changed because it is exposed to the user. */
 static u32 deployment_mode = DBL_DEVICE_DEPLOYMENT;
-module_param(deployment_mode, uint, S_IRUSR);
+ka_module_param(deployment_mode, uint, KA_S_IRUSR);
 
 u32 dbl_get_deployment_mode(void)
 {
     return deployment_mode;
 }
-EXPORT_SYMBOL(dbl_get_deployment_mode);
+KA_EXPORT_SYMBOL(dbl_get_deployment_mode);
 
 int dbl_get_run_env(void)
 {
-    int mach_flag = DBL_IN_PHYSICAL_MACH;
+    int mach_flag = DBL_IN_UNKNOWN_MACH;
 
     if (run_in_normal_docker() == true) {
         mach_flag = DBL_IN_NORMAL_DOCKER;
@@ -43,11 +41,13 @@ int dbl_get_run_env(void)
         mach_flag = DBL_IN_ADMIN_DOCKER;
     } else if (run_in_virtual_mach() == true) {
         mach_flag = DBL_IN_VIRTUAL_MACH;
+    } else if (check_in_host_mach() == true) {
+        mach_flag = DBL_IN_PHYSICAL_MACH;
     }
 
     return mach_flag;
 }
-EXPORT_SYMBOL(dbl_get_run_env);
+KA_EXPORT_SYMBOL(dbl_get_run_env);
 
 int recfg_init(void)
 {

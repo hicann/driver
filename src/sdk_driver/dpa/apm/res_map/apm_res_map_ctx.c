@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2025. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -13,7 +13,6 @@
 #include "ka_base_pub.h"
 #include "ka_common_pub.h"
 #include "ka_fs_pub.h"
-#include "ka_list_pub.h"
 #include "ka_task_pub.h"
 
 #include "apm_task_group_def.h"
@@ -21,6 +20,57 @@
 #include "apm_slab.h"
 #include "apm_res_map_ops.h"
 #include "apm_sched.h"
+#include "apm_res_map.h"
+
+#define APM_RES_MAP_CMP(a, b) (((a) > (b)) - ((a) < (b)))
+
+static int apm_res_map_info_compare(const struct apm_res_map_info *tar, const struct apm_res_map_info *cur)
+{
+    int ret;
+
+    ret = APM_RES_MAP_CMP(tar->udevid, cur->udevid);
+    if (ret != 0) {
+        return ret;
+    }
+
+    ret = APM_RES_MAP_CMP(tar->res_info.id, cur->res_info.id);
+    if (ret != 0) {
+        return ret;
+    }
+
+    ret = APM_RES_MAP_CMP(tar->res_info.target_proc_type, cur->res_info.target_proc_type);
+    if (ret != 0) {
+        return ret;
+    }
+
+    ret = APM_RES_MAP_CMP(apm_res_use_svm_va(tar->res_info.flag), apm_res_use_svm_va(cur->res_info.flag));
+    if (ret != 0) {
+        return ret;
+    }
+
+    ret = APM_RES_MAP_CMP(tar->res_info.res_type, cur->res_info.res_type);
+    if (ret != 0) {
+        return ret;
+    }
+
+    return APM_RES_MAP_CMP(tar->res_info.res_id, cur->res_info.res_id);
+}
+
+static int apm_res_map_node_rb_compare_of_insert(ka_rb_node_t *tar, ka_rb_node_t *cur)
+{
+    struct apm_res_map_node *tar_node = ka_container_of(tar, struct apm_res_map_node, rb_node);
+    struct apm_res_map_node *cur_node = ka_container_of(cur, struct apm_res_map_node, rb_node);
+
+    return apm_res_map_info_compare(&tar_node->ctx, &cur_node->ctx);
+}
+
+static int apm_res_map_node_rb_compare_of_search(void *handle, ka_rb_node_t *cur)
+{
+    struct apm_res_map_info *tar_ctx = (struct apm_res_map_info *)handle;
+    struct apm_res_map_node *cur_node = ka_container_of(cur, struct apm_res_map_node, rb_node);
+
+    return apm_res_map_info_compare(tar_ctx, &cur_node->ctx);
+}
 
 void apm_res_map_free_node_pa_array(struct apm_res_map_info *res_map_info)
 {
@@ -33,16 +83,19 @@ void apm_res_map_free_node_pa_array(struct apm_res_map_info *res_map_info)
 
 static void apm_res_map_ctx_try_recycle_node(struct apm_res_map_ctx *map_ctx)
 {
-    struct apm_res_map_node *node = NULL, *tmp_node = NULL;
+    struct apm_res_map_node *node = NULL, *next = NULL;
     unsigned long stamp = ka_jiffies;
 
-    ka_list_for_each_entry_safe(node, tmp_node, &map_ctx->head, node) {
+    ka_base_rbtree_postorder_for_each_entry_safe(node, next, &map_ctx->rb_root, rb_node)
+    {
         int proc_type = node->ctx.res_info.target_proc_type;
-        apm_debug("Recycle map node. (udevid=%u; proc_type=%d(%s); res_type=%d; res_id=%u; va=0x%lx; len=%u\n",
+
+        apm_debug(
+            "Recycle map node. (udevid=%u; proc_type=%d(%s); res_type=%d; res_id=%u; va=0x%lx; len=%u\n",
             node->ctx.udevid, proc_type, apm_proc_type_to_name(proc_type), node->ctx.res_info.res_type,
             node->ctx.res_info.res_id, node->ctx.va, node->ctx.len);
+        (void)pbl_rb_erase(&map_ctx->rb_root, &node->rb_node); /* Won't fail. */
         apm_res_map_free_node_pa_array(&node->ctx);
-        ka_list_del(&node->node);
         apm_vfree(node);
 
         apm_try_cond_resched(&stamp);
@@ -71,7 +124,7 @@ static int _apm_res_map_ctx_create(struct task_ctx_domain *domain, int tgid)
         return -ENOMEM;
     }
 
-    KA_INIT_LIST_HEAD(&map_ctx->head);
+    map_ctx->rb_root = KA_RB_ROOT;
 
     ret = task_ctx_create(domain, tgid, map_ctx, apm_res_map_ctx_release);
     if (ret != 0) {
@@ -122,19 +175,12 @@ void apm_res_map_ctx_destroy(struct task_ctx_domain *domain, int tgid)
     ka_task_mutex_unlock(&domain->mutex);
 }
 
-static struct apm_res_map_node *apm_res_map_ctx_find_node(struct apm_res_map_ctx *map_ctx,
-    struct apm_res_map_info *para)
+static struct apm_res_map_node *apm_res_map_ctx_find_node(
+    struct apm_res_map_ctx *map_ctx, struct apm_res_map_info *para)
 {
-    struct apm_res_map_node *node = NULL;
-
-    ka_list_for_each_entry(node, &map_ctx->head, node) {
-        if ((node->ctx.udevid == para->udevid) &&
-            (node->ctx.res_info.id == para->res_info.id) &&
-            (node->ctx.res_info.target_proc_type == para->res_info.target_proc_type) &&
-            (node->ctx.res_info.res_type == para->res_info.res_type) &&
-            (node->ctx.res_info.res_id == para->res_info.res_id)) {
-            return node;
-        }
+    ka_rb_node_t *rb_node = pbl_rb_search(&map_ctx->rb_root, (void *)para, apm_res_map_node_rb_compare_of_search);
+    if (rb_node != NULL) {
+        return ka_container_of(rb_node, struct apm_res_map_node, rb_node);
     }
 
     return NULL;
@@ -145,12 +191,13 @@ static int apm_res_map_ctx_add_node(struct task_ctx *ctx, void *priv)
     struct apm_res_map_ctx *map_ctx = (struct apm_res_map_ctx *)ctx->priv;
     struct apm_res_map_info *para = (struct apm_res_map_info *)priv;
     struct apm_res_map_node *node = apm_res_map_ctx_find_node(map_ctx, para);
+    int ret;
+
     if (node != NULL) {
         ka_base_atomic_inc(&node->ctx.ref);
-#ifndef EMU_ST
-        apm_debug("Already mapped. (res_type=%d; res_id=%u; va=0x%lx; ref=%d)\n", para->res_info.res_type,
-            para->res_info.res_id, node->ctx.va,  ka_base_atomic_read(&node->ctx.ref));
-#endif
+        apm_debug(
+            "Already mapped. (res_type=%d; res_id=%u; va=0x%lx; ref=%d)\n", para->res_info.res_type,
+            para->res_info.res_id, node->ctx.va, ka_base_atomic_read(&node->ctx.ref));
         return 0;
     }
 
@@ -162,9 +209,15 @@ static int apm_res_map_ctx_add_node(struct task_ctx *ctx, void *priv)
 
     ka_base_atomic_set(&para->ref, 1);
     node->ctx = *para;
-    ka_list_add_tail(&node->node, &map_ctx->head);
-    apm_debug("Add map node success. (res_type=%d; res_id=%u; va=0x%lx; ref=%d)\n", para->res_info.res_type,
-        para->res_info.res_id, node->ctx.va,  ka_base_atomic_read(&node->ctx.ref));
+    ret = pbl_rb_insert(&map_ctx->rb_root, &node->rb_node, apm_res_map_node_rb_compare_of_insert);
+    if (ret != 0) {
+        apm_vfree(node);
+        return ret;
+    }
+
+    apm_debug(
+        "Add map node success. (res_type=%d; res_id=%u; va=0x%lx; ref=%d)\n", para->res_info.res_type,
+        para->res_info.res_id, node->ctx.va, ka_base_atomic_read(&node->ctx.ref));
 
     return 0;
 }
@@ -194,15 +247,17 @@ static int apm_res_map_ctx_del_node(struct task_ctx *ctx, void *priv)
     }
 
     if (ka_base_atomic_dec_and_test(&node->ctx.ref)) {
-        apm_debug("Del success. (res_type=%d; res_id=%u; va=0x%lx; ref=%d)\n", para->res_info.res_type,
-            para->res_info.res_id, node->ctx.va, ka_base_atomic_read(&node->ctx.ref));
+        apm_debug(
+            "Del success. (res_type=%d; res_id=%u; va=0x%lx; ref=%d)\n", para->res_info.res_type, para->res_info.res_id,
+            node->ctx.va, ka_base_atomic_read(&node->ctx.ref));
         ref = (int)ka_base_atomic_read(&node->ctx.ref);
+        (void)pbl_rb_erase(&map_ctx->rb_root, &node->rb_node); /* Won't fail. */
         apm_res_map_free_node_pa_array(&node->ctx);
-        ka_list_del(&node->node);
         apm_vfree(node);
     } else {
         ref = (int)ka_base_atomic_read(&node->ctx.ref);
-        apm_debug("Not del for ref. (res_type=%d; res_id=%u; va=0x%lx; ref=%d)\n", para->res_info.res_type,
+        apm_debug(
+            "Not del for ref. (res_type=%d; res_id=%u; va=0x%lx; ref=%d)\n", para->res_info.res_type,
             para->res_info.res_id, node->ctx.va, ka_base_atomic_read(&node->ctx.ref));
     }
     return (ref == 0) ? 0 : -EBUSY;
@@ -240,16 +295,22 @@ int apm_res_map_query_node(struct task_ctx_domain *domain, int tgid, struct apm_
 static int apm_res_map_ctx_show_details(struct task_ctx *ctx, void *priv)
 {
     struct apm_res_map_ctx *map_ctx = (struct apm_res_map_ctx *)ctx->priv;
+    struct apm_res_map_node *node = NULL, *next = NULL;
     ka_seq_file_t *seq = (ka_seq_file_t *)priv;
-    struct apm_res_map_node *node = NULL;
+    unsigned long stamp = ka_jiffies;
 
     ka_fs_seq_printf(seq, "domain: %s tgid %d(%s)\n", ctx->domain->name, ctx->tgid, ctx->name);
 
-    ka_list_for_each_entry(node, &map_ctx->head, node) {
+    ka_base_rbtree_postorder_for_each_entry_safe(node, next, &map_ctx->rb_root, rb_node)
+    {
         int proc_type = node->ctx.res_info.target_proc_type;
-        ka_fs_seq_printf(seq, "    udevid %u proc_type %d(%s) res_type %d res_id %u va 0x%lx pa 0x%llx len %u\n",
-            node->ctx.udevid, proc_type, apm_proc_type_to_name(proc_type), node->ctx.res_info.res_type,
-            node->ctx.res_info.res_id, node->ctx.va, node->ctx.pa, node->ctx.len);
+
+        ka_fs_seq_printf(
+            seq, "    udevid %u proc_type %d(%s) res_type %d res_id %u va 0x%lx pa 0x%llx len %u\n", node->ctx.udevid,
+            proc_type, apm_proc_type_to_name(proc_type), node->ctx.res_info.res_type, node->ctx.res_info.res_id,
+            node->ctx.va, node->ctx.pa, node->ctx.len);
+
+        apm_try_cond_resched(&stamp);
     }
 
     ka_fs_seq_printf(seq, "\n");
@@ -260,4 +321,3 @@ void apm_res_map_ctx_show(struct task_ctx_domain *domain, int tgid, ka_seq_file_
 {
     (void)task_ctx_lock_call_func(domain, tgid, apm_res_map_ctx_show_details, (void *)seq);
 }
-

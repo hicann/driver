@@ -38,7 +38,7 @@
 #include "pbl/pbl_davinci_api.h"
 #include "dms_sysfs.h"
 /* The AOS linux kernel version is later than 5.17, but the profile interface of the kernel is still used. */
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 17, 0)) && defined(CFG_FEATURE_KA)
+#ifdef CFG_FEATURE_KA
 #include "pbl/pbl_kernel_adapt.h"
 #endif
 
@@ -47,7 +47,6 @@
 #include "dms_init.h"
 #define MAX_EVENT_CONFIG_SIZE  (2*1024*1024)
 
-#ifndef CFG_FEATURE_UNSUPPORT_FAULT_MANAGE
 STATIC int dms_event_config_verify(u32 event_code, u32 severity, int config_cnt)
 {
     int i;
@@ -67,6 +66,7 @@ STATIC int dms_event_config_verify(u32 event_code, u32 severity, int config_cnt)
 
     return 0;
 }
+
 STATIC int dms_parse_event_config(const char *line_buf, int size, struct dms_event_config *conf, int *cnt)
 {
     int ret;
@@ -176,23 +176,7 @@ STATIC int get_file_size(size_t *buf_size)
     int ret;
     ka_kstat_t src_stat;
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 20, 0)
-    ka_path_t kernel_path;
-
-    ret = ka_fs_kern_path(EVENT_INFO_CONFIG_PATH, KA_LOOKUP_FOLLOW, &kernel_path);
-    if (ret != 0) {
-        return ret;
-    }
-    ret = ka_fs_vfs_getattr(&kernel_path, &src_stat, KA_STATX_BASIC_STATS, KA_AT_NO_AUTOMOUNT);
-    ka_fs_path_put(&kernel_path);
-#else
-    ka_mm_segment_t old_fs;
-
-    old_fs = ka_fs_get_fs();
-    ka_fs_set_fs(KERNEL_DS);
-    ret = vfs_stat(EVENT_INFO_CONFIG_PATH, &src_stat);
-    ka_fs_set_fs(old_fs);
-#endif
+    ret = ka_fs_get_file_kstat(&src_stat, EVENT_INFO_CONFIG_PATH);
     if (ret != 0) {
         dms_err("vfs_getattr failed. (file: %s, src_stat.size = %lld, ret = %d)\n",
             EVENT_INFO_CONFIG_PATH, src_stat.size, ret);
@@ -287,18 +271,13 @@ undo_acBuf_alloc:
     return ret;
 }
 KA_EXPORT_SYMBOL(get_eventinfo_from_config);
-#endif
 
 STATIC int dms_release_prepare(ka_notifier_block_t *self, unsigned long val, void *data)
 {
     ka_task_struct_t *task = (ka_task_struct_t *)data;
     (void)self;
 
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 17, 0))
-    if ((task != NULL) && (task->tgid != 0)) {
-#else
-    if ((task != NULL) && (task->mm != NULL) && (task->tgid != 0)) {
-#endif
+    if ((task != NULL) && ka_task_judge_mm(task) && (task->tgid != 0)) {
         dms_event_release_proc(task->tgid, task->pid);
     }
     return 0;
@@ -361,13 +340,11 @@ int dms_init(void)
         return ret;
     }
 
-#ifndef CFG_FEATURE_UNSUPPORT_FAULT_MANAGE
     ret = get_eventinfo_from_config();
     if (ret != 0) {
         dms_err("get_eventinfo_from_config failed. (ret=%d)\n", ret);
         goto register_notify_fail;
     }
-#endif
 
     ret = dms_init_submodule();
     if (ret != 0) {

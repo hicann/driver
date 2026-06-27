@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2025. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -12,6 +12,7 @@
  */
 #include "ka_base_pub.h"
 #include "ka_compiler_pub.h"
+#include "ka_ioctl_pub.h"
 
 #include "pbl_feature_loader.h"
 #include "pbl_spod_info.h"
@@ -29,15 +30,9 @@
 
 static u32 local_server_id = SVM_INVALID_SERVER_ID;
 
-static bool casm_cs_is_local_server_id_uninited(void)
-{
-    return (local_server_id == SVM_INVALID_SERVER_ID);
-}
+static bool casm_cs_is_local_server_id_uninited(void) { return (local_server_id == SVM_INVALID_SERVER_ID); }
 
-void casm_cs_set_local_server_id(u32 server_id) /* for emu st, not add static */
-{
-    local_server_id = server_id;
-}
+void casm_cs_set_local_server_id(u32 server_id) /* for emu st, not add static */ { local_server_id = server_id; }
 
 static int casm_init_local_server_id(u32 udevid)
 {
@@ -46,7 +41,7 @@ static int casm_init_local_server_id(u32 udevid)
 
     ret = dbl_get_spod_info(udevid, &info);
     if (ret != 0) {
-        svm_err("Get server id failed. (udevid=%u)\n", udevid);
+        svm_warn("Get server id failed. (udevid=%u)\n", udevid);
         return ret;
     }
 
@@ -144,10 +139,9 @@ static int casm_ioctl_cs_query_src(u32 udevid, u32 cmd, unsigned long arg)
 
 int casm_cs_key_init(void)
 {
-    svm_register_ioctl_cmd_handle(_IOC_NR(SVM_CASM_CS_QUERY_SRC), casm_ioctl_cs_query_src);
+    svm_register_ioctl_cmd_handle(_KA_IOC_NR(SVM_CASM_CS_QUERY_SRC), casm_ioctl_cs_query_src);
 
     svm_casm_register_key_ops(&g_casm_cs_key_ops);
     return 0;
 }
 DECLAER_FEATURE_AUTO_INIT(casm_cs_key_init, FEATURE_LOADER_STAGE_7);
-

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * Copyright (c) 2026 Huawei Technologies Co., Ltd.
  * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -10,6 +10,7 @@
 #include "securec.h"
 
 #include "davinci_interface.h"
+#include "apm_user_interface.h"
 #include "apm_ioctl.h"
 
 #ifdef EMU_ST
@@ -19,7 +20,8 @@ int apm_file_ioctl(int fd, unsigned long cmd, void *para);
 #else
 #define apm_file_open open
 #define apm_file_close close
-static inline int apm_file_ioctl(int fd, unsigned long cmd, void *arg) {
+static inline int apm_file_ioctl(int fd, unsigned long cmd, void *arg)
+{
     int ret = ioctl(fd, cmd, arg);
     if (ret != 0) {
         share_log_read_err(HAL_MODULE_TYPE_APM);
@@ -146,3 +148,11 @@ void apm_user_uninit(void)
     }
 }
 
+drvError_t apm_device_close_user(uint32_t devid, halDevCloseIn *in)
+{
+    (void)in;
+    apm_fd = -1;
+    apm_cur_pid = -1;
+    apm_debug("Close device. (devid=%u)\n", devid);
+    return DRV_ERROR_NONE;
+}

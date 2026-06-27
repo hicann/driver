@@ -7,12 +7,12 @@
  * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
  */
-
+ 
 #ifndef __DCMI_HOT_RESET_INTF_H__
 #define __DCMI_HOT_RESET_INTF_H__
-
+ 
 #include "dcmi_interface_api.h"
-
+ 
 #ifdef __cplusplus
 #if __cplusplus
 extern "C" {
@@ -71,7 +71,7 @@ extern "C" {
 #define KILL_MAX_TRY_CNT            2
 #define BASE_TEN_NUMERAL_SYSTEM     10
 #define PROC_STATE_ALIVE            1
-#define PROC_STATE_DEAD            0
+#define PROC_STATE_DEAD             0
 
 typedef struct proc_info {
     int proc_num;
@@ -84,17 +84,8 @@ typedef struct proc_occupy_state {
     int pid_cnt;
 } OCCUPIED_PROC_INFO;
 
-#define DCMI_SMP_INVALID_ID (0xFFFFFFFF)
-#define DCMI_SMP_DEVICE_NUMBER (4)
-#define DCMI_SMP_MASTER_CARD_ID1 (0)
-#define DCMI_SMP_MASTER_CARD_ID2 (4)
-#define DCMI_SMP_SLAVER_NUM0 (0)
-#define DCMI_SMP_SLAVER_NUM1 (1)
-#define DCMI_SMP_SLAVER_NUM2 (2)
-#define DCMI_SMP_MASTER_NUM (3)
-
 int dcmi_check_device_reset_vnpu_mode(int card_id);
-
+ 
 int dcmi_get_npu_outband_reset_state(int card_id, int device_id, unsigned char *reset_state);
 
 int dcmi_check_device_reset_permission(const enum dcmi_reset_channel channel_type);
@@ -117,13 +108,17 @@ int dcmi_get_npu_device_outband_id(int card_id, int device_id, int *outband_id);
 
 int dcmi_set_npu_device_reset_outband(int card_id, int device_id);
 
-int dcmi_clear_running_proc();
+int dcmi_call_dsmi_hot_reset(int device_logic_id);
 
-int dcmi_reset_smp_card(int card_id, int device_id);
+int dcmi_reset_device_inband_param_check(int card_id, int device_id, enum dcmi_unit_type *device_type);
+
+int execute_npu_reset(int card_id, int device_id, enum dcmi_reset_channel channel_type);
+
+int dcmi_clear_running_proc();
 #ifdef __cplusplus
 #if __cplusplus
 }
 #endif
 #endif /* __cplusplus */
-
+ 
 #endif /* __DCMI_HOT_RESET_INTF_H__ */

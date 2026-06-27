@@ -46,7 +46,7 @@ struct pair_chan_info{
 struct pair_dev_info
 {
     union ubcore_eid bus_instance_eid;
-    u32 dev_id;  // real phy dev_id, of local view peer, must match dev_id == slot_id*8+module_id
+    u32 dev_id;  // real phy dev_id, of local view peer, must match dev_id = module_id
     u32 module_id  : 16;  // peer info, bit0~15:module_id
     u32 slot_id    : 16;  // peer info, bit16~31:slot_id
     u32 chan_num;  // chan num. max is 8

@@ -27,6 +27,7 @@
 #include "queue_agent.h"
 #include "que_jetty.h"
 #include "que_tgt_proc.h"
+#include "que_platform_ub.h"
 
 #ifndef EMU_ST
 static int g_tgt_level = 0;
@@ -50,7 +51,9 @@ void que_update_tgt_basetime(unsigned int devid)
 void que_tgt_time_stamp(struct que_tgt_proc *tgt_proc, QUE_TRACE_TGT_TIMESTAMP type)
 {
     int tgt_log_level = que_get_tgt_log_level();
-    unsigned int num = TRACE_TGT_LEVLE0_BUTT + tgt_proc->total_iovec_num * (TRACE_TGT_LEVLE1_BUTT - TRACE_TGT_LEVLE1_START) * (unsigned int)tgt_log_level;
+    unsigned int num = TRACE_TGT_LEVLE0_BUTT + tgt_proc->total_iovec_num *
+                                                   (TRACE_TGT_LEVLE1_BUTT - TRACE_TGT_LEVLE1_START) *
+                                                   (unsigned int)tgt_log_level;
     if ((unsigned int)type >= num) {
         return;
     }
@@ -67,8 +70,8 @@ static struct que_tgt_proc *_que_tgt_proc_create(struct que_tgt_proc_attr *attr)
 
     tgt_proc = (struct que_tgt_proc *)calloc(1, sizeof(struct que_tgt_proc));
     if (que_unlikely(tgt_proc == NULL)) {
-        QUEUE_LOG_ERR("que tgt proc malloc fail. (size=%ld; devid=%u; qid=%u)\n",
-            sizeof(struct que_tgt_proc), attr->devid, attr->qid);
+        QUEUE_LOG_ERR("que tgt proc malloc fail. (size=%ld; devid=%u; qid=%u)\n", sizeof(struct que_tgt_proc),
+                      attr->devid, attr->qid);
         return NULL;
     }
 
@@ -100,7 +103,8 @@ void que_tgt_proc_destroy(struct que_tgt_proc *tgt_proc)
     _que_tgt_proc_destroy(tgt_proc);
 }
 
-int que_rx_send_ack_and_wait(struct que_tgt_proc *tgt_proc, unsigned long long imm_data, struct que_ack_jfs *ack_send_jfs, unsigned int d2d_flag)
+int que_rx_send_ack_and_wait(struct que_tgt_proc *tgt_proc, unsigned long long imm_data,
+                             struct que_ack_jfs *ack_send_jfs, unsigned int d2d_flag)
 {
     int ret;
     struct que_uma_wait_attr wait_attr;
@@ -123,7 +127,8 @@ int que_rx_send_ack_and_wait(struct que_tgt_proc *tgt_proc, unsigned long long i
     }
 
     if (cr.status == URMA_CR_ACK_TIMEOUT_ERR) {
-        ret = que_recreate_jfs(ack_send_jfs->attr.jfs_depth, ack_send_jfs->jfc_s, ack_send_jfs->devid, ack_send_jfs->jfs, d2d_flag);
+        ret = que_recreate_jfs(ack_send_jfs->attr.jfs_depth, ack_send_jfs->jfc_s, ack_send_jfs->devid,
+                               ack_send_jfs->jfs, d2d_flag);
         if (que_unlikely(ret != DRV_ERROR_NONE)) {
             QUEUE_LOG_ERR("que recreate send ack jfs fail. (ret=%d)\n", ret);
             return ret;
@@ -142,6 +147,7 @@ int que_rx_send_ack_and_wait(struct que_tgt_proc *tgt_proc, unsigned long long i
             return (ret == DRV_ERROR_NONE) ? DRV_ERROR_INNER_ERR : ret;
         }
     } else if (cr.status != URMA_CR_SUCCESS) {
+        que_print_urma_ctx_info(ack_send_jfs->devid, *(ack_send_jfs->jfs), NULL, ack_send_jfs->jfc_s);
         QUEUE_LOG_ERR("cr status err. (status=%d)\n", cr.status);
         return DRV_ERROR_INNER_ERR;
     }
@@ -182,9 +188,11 @@ int que_mbuf_ctx_init(struct que_tgt_proc *tgt_proc, struct que_rx *rx, struct q
     unsigned int devid, qid;
     devid = tgt_proc->devid;
     qid = tgt_proc->qid;
-    unsigned int access = (rx->que_type == H2D_SYNC_DEQUE) ? DEQUE_TGT_ACCESS : ENQUE_TGT_ACCESS;
+    unsigned int access = ENQUE_TGT_ACCESS;
     void *addr = NULL;
     int ret;
+
+    (void)pkt;
 
     ret = halMbufGetPrivInfo(rx->rx_mbuf.mbuf, &addr, &size);
     if (que_unlikely(ret != DRV_ERROR_NONE)) {
@@ -195,8 +203,7 @@ int que_mbuf_ctx_init(struct que_tgt_proc *tgt_proc, struct que_rx *rx, struct q
     ctx_aligned_size = que_align_up(size, (size_t)getpagesize());
     ret = que_mem_alloc((void **)(&ctx_aligned_addr), (unsigned long long)ctx_aligned_size);
     if (que_unlikely(ret != DRV_ERROR_NONE)) {
-        QUEUE_LOG_ERR("que mem alloc fail. (ret=%d; devid=%u; qid=%u; size=%u)\n",
-            ret, devid, qid, ctx_aligned_size);
+        QUEUE_LOG_ERR("que mem alloc fail. (ret=%d; devid=%u; qid=%u; size=%u)\n", ret, devid, qid, ctx_aligned_size);
         return DRV_ERROR_MEMORY_OPT_FAIL;
     }
 
@@ -211,15 +218,16 @@ int que_mbuf_ctx_init(struct que_tgt_proc *tgt_proc, struct que_rx *rx, struct q
 
     que_tgt_time_stamp(tgt_proc, TRACE_TGT_CTX_SEG_CREATE_START);
     if (que_is_share_mem((unsigned long long)(uintptr_t)ctx_aligned_addr) == false) {
-        tseg = que_pin_seg_create(devid, (unsigned long long)(uintptr_t)ctx_aligned_addr, ctx_aligned_size, access, NULL, tgt_proc->d2d_flag);
+        tseg = que_pin_seg_create(devid, (unsigned long long)(uintptr_t)ctx_aligned_addr, ctx_aligned_size, access,
+                                  NULL, tgt_proc->d2d_flag);
     } else {
         tseg = que_get_urma_ctx_tseg(devid, tgt_proc->d2d_flag);
     }
-    
+
     if (que_unlikely(tseg == NULL)) {
         que_mem_free(ctx_aligned_addr);
-        QUEUE_LOG_ERR("que create seg fail. (devid=%u; qid=%u; ctx_addr=0x%llx; ctx_len=%u)\n",
-            devid, qid, (unsigned long long)(uintptr_t)addr, size);
+        QUEUE_LOG_ERR("que create seg fail. (devid=%u; qid=%u; ctx_addr=0x%llx; ctx_len=%u)\n", devid, qid,
+                      (unsigned long long)(uintptr_t)addr, size);
         return DRV_ERROR_INNER_ERR;
     }
     que_tgt_time_stamp(tgt_proc, TRACE_TGT_CTX_SEG_CREATE_END);
@@ -240,7 +248,7 @@ void que_mbuf_ctx_uninit(struct que_rx *rx)
         que_seg_destroy(rx->rx_mbuf.ctx_aligned_tseg);
         rx->rx_mbuf.ctx_aligned_tseg = NULL;
     }
-    
+
     que_mem_free(rx->rx_mbuf.ctx_aligned_va);
     rx->rx_mbuf.ctx_aligned_va = NULL;
 
@@ -318,7 +326,8 @@ static int que_local_pkt_create(struct que_tgt_proc *tgt_proc, struct que_rx *rx
 
     que_tgt_time_stamp(tgt_proc, TRACE_REMAIN_PKT_ALLOC);
     if (que_is_share_mem((unsigned long long)(uintptr_t)remain_pkt_base) == false) {
-        local_pkt_tseg = que_pin_seg_create(tgt_proc->devid, (unsigned long long)(uintptr_t)remain_pkt_base, remain_pkt_size, access, NULL, tgt_proc->d2d_flag);
+        local_pkt_tseg = que_pin_seg_create(tgt_proc->devid, (unsigned long long)(uintptr_t)remain_pkt_base,
+                                            remain_pkt_size, access, NULL, tgt_proc->d2d_flag);
     } else {
         local_pkt_tseg = que_get_urma_ctx_tseg(tgt_proc->devid, tgt_proc->d2d_flag);
     }
@@ -378,8 +387,7 @@ static int _que_mbuf_create(unsigned int devid, unsigned int qid, struct que_rx 
             ret = (int)hal_mbuf_alloc_align(mbuf_size, QUE_URMA_BUFF_ALIGN_VALUE, &mbuf);
         }
         if (que_unlikely(ret != DRV_ERROR_NONE)) {
-            QUEUE_LOG_ERR("alloc mbuf fail. (ret=%d; devid=%u; qid=%u; mbuf_size=%llu)\n",
-                ret, _devid, qid, mbuf_size);
+            QUEUE_LOG_ERR("alloc mbuf fail. (ret=%d; devid=%u; qid=%u; mbuf_size=%llu)\n", ret, _devid, qid, mbuf_size);
             return ret;
         }
         (void)halMbufSetDataLen(mbuf, mbuf_size);
@@ -404,25 +412,31 @@ static void _que_mbuf_destroy(struct que_rx *rx)
     }
 }
 
-static int _que_mbuf_data_init(unsigned int devid, unsigned int qid, struct que_rx *rx, struct que_pkt *pkt, unsigned int d2d_flag)
+static int _que_mbuf_data_init(unsigned int devid, unsigned int qid, struct que_rx *rx, struct que_pkt *pkt,
+                               unsigned int d2d_flag)
 {
     urma_target_seg_t *tseg = NULL;
     Mbuf *mbuf = rx->rx_mbuf.mbuf;
-    unsigned int access = (rx->que_type == H2D_SYNC_DEQUE) ? DEQUE_TGT_ACCESS : ENQUE_TGT_ACCESS;
+    unsigned int access = ENQUE_TGT_ACCESS;
+
+    (void)pkt;
 
     if (rx->mem_type != MEM_DEVICE_SVM) {
         if (que_is_share_mem((unsigned long long)(uintptr_t)mbuf->data) == false) {
             if ((rx->que_type == H2D_SYNC_DEQUE) && (mbuf->buff_type == MBUF_BARE_BUFF)) {
-                tseg = que_nonpin_seg_create(devid, (unsigned long long)(uintptr_t)mbuf->data, mbuf->data_len, access, NULL, d2d_flag);
+                tseg = que_nonpin_seg_create(devid, (unsigned long long)(uintptr_t)mbuf->data, mbuf->data_len, access,
+                                             NULL, d2d_flag);
             } else {
-                tseg = que_pin_seg_create(devid, (unsigned long long)(uintptr_t)mbuf->data, mbuf->data_len, access, NULL, d2d_flag);
+                tseg = que_pin_seg_create(devid, (unsigned long long)(uintptr_t)mbuf->data, mbuf->data_len, access,
+                                          NULL, d2d_flag);
             }
         } else {
             tseg = que_get_urma_ctx_tseg(devid, d2d_flag);
         }
         if (que_unlikely(tseg == NULL)) {
-            QUEUE_LOG_ERR("mbuf data seg reg fail. (devid=%u; qid=%u; len=%llu; memtype=%d; quetype=%d; bufftype=%llu)\n",
-                devid, qid, (unsigned long long)mbuf->data_len, rx->mem_type, rx->que_type, mbuf->buff_type);
+            QUEUE_LOG_ERR(
+                "mbuf data seg reg fail. (devid=%u; qid=%u; len=%llu; memtype=%d; quetype=%d; bufftype=%lu)\n", devid,
+                qid, (unsigned long long)mbuf->data_len, rx->mem_type, rx->que_type, mbuf->buff_type);
             return DRV_ERROR_QUEUE_INNER_ERROR;
         }
     }
@@ -440,7 +454,7 @@ static void _que_mbuf_data_uninit(struct que_rx *rx)
         if (que_is_share_mem(rx->rx_mbuf.data_va) == false) {
             que_seg_destroy(rx->rx_mbuf.data_tseg);
             rx->rx_mbuf.data_tseg = NULL;
-        } 
+        }
     }
     rx->rx_mbuf.data_va = 0;
     rx->rx_mbuf.data_size = 0;
@@ -493,20 +507,21 @@ static inline bool que_rx_is_finish(struct que_rx *rx)
 static int que_rx_pkt_head_check(unsigned int devid, unsigned int qid, struct que_pkt *pkt)
 {
     /* In the interface, the vector->count type is Unsigned int, with a maximum value of QUEUE_MAX_IOVEC_NUM. */
-    if (que_unlikely((pkt->head.total_iovec_num ==  0)  ||
-        (pkt->head.total_iovec_num != (pkt->head.first_iovec_num + pkt->head.remain_iovec_num)))) {
-        QUEUE_LOG_ERR("invalid iovec num. (devid=%u; qid=%u; total_iovec_num=%u; first_iovec_num=%u; remain_iovec_num=%u)\n",
+    if (que_unlikely((pkt->head.total_iovec_num == 0) ||
+                     (pkt->head.total_iovec_num != (pkt->head.first_iovec_num + pkt->head.remain_iovec_num)))) {
+        QUEUE_LOG_ERR(
+            "invalid iovec num. (devid=%u; qid=%u; total_iovec_num=%u; first_iovec_num=%u; remain_iovec_num=%u)\n",
             devid, qid, pkt->head.total_iovec_num, pkt->head.first_iovec_num, pkt->head.remain_iovec_num);
         return DRV_ERROR_PARA_ERROR;
     }
 
     if (que_unlikely((pkt->head.first_iovec_num == 0) || (pkt->head.first_iovec_num != pkt->iovec_node_num) ||
-        (pkt->head.first_iovec_num > _que_get_node_num()))) {
+                     (pkt->head.first_iovec_num > _que_get_node_num()))) {
         QUEUE_LOG_ERR("invalid pkt num. (devid=%u; qid=%u; pkt_num=%u)\n", devid, qid, pkt->head.first_iovec_num);
         return DRV_ERROR_PARA_ERROR;
     }
 
-    unsigned int max_wr_num = (pkt->head.default_wr_flag == true) ? QUE_DEFAULT_RW_WR_NUM : QUE_MAX_RW_WR_NUM;
+    unsigned int max_wr_num = QUE_MAX_RW_WR_NUM;
     unsigned long long first_pkt_size = _que_get_pkt_size(pkt->head.first_iovec_num);
     unsigned long long wr_num = que_align_up(first_pkt_size, QUE_URMA_MAX_SIZE) / QUE_URMA_MAX_SIZE;
 
@@ -516,7 +531,7 @@ static int que_rx_pkt_head_check(unsigned int devid, unsigned int qid, struct qu
     }
     if (que_unlikely(wr_num > max_wr_num)) {
         QUEUE_LOG_ERR("que pkt read size over limit. (devid=%u; qid=%u; max_wr_num=%u; wr_num=%llu)\n", devid, qid,
-            max_wr_num, wr_num);
+                      max_wr_num, wr_num);
         return DRV_ERROR_PARA_ERROR;
     }
     return DRV_ERROR_NONE;
@@ -525,20 +540,20 @@ static int que_rx_pkt_head_check(unsigned int devid, unsigned int qid, struct qu
 static int que_rx_remain_pkt_check(unsigned int devid, unsigned int qid, struct que_pkt *pkt, struct que_rx *rx)
 {
     if (que_unlikely(pkt->head.total_iovec_num != rx->total_iovec_num)) {
-        QUEUE_LOG_ERR("invalid pkt head. (devid=%u; qid=%u; total_iovec_num=%u; exp_total_iovec_num=%u)\n",
-            devid, qid, pkt->head.total_iovec_num, rx->total_iovec_num);
+        QUEUE_LOG_ERR("invalid pkt head. (devid=%u; qid=%u; total_iovec_num=%u; exp_total_iovec_num=%u)\n", devid, qid,
+                      pkt->head.total_iovec_num, rx->total_iovec_num);
         return DRV_ERROR_PARA_ERROR;
     }
 
     if (que_unlikely(pkt->head.total_iovec_size != rx->total_iovec_size)) {
-        QUEUE_LOG_ERR("invalid pkt head. (devid=%u; qid=%u; total_iovec_size=%llu; exp_total_iovec_size=%llu)\n",
-            devid, qid, pkt->head.total_iovec_size, rx->total_iovec_size);
+        QUEUE_LOG_ERR("invalid pkt head. (devid=%u; qid=%u; total_iovec_size=%llu; exp_total_iovec_size=%llu)\n", devid,
+                      qid, pkt->head.total_iovec_size, rx->total_iovec_size);
         return DRV_ERROR_PARA_ERROR;
     }
 
-    if (que_unlikely((pkt->head.mem_type !=  rx->mem_type) || (pkt->head.que_type !=  rx->que_type))) {
-        QUEUE_LOG_ERR("invalid pkt head. (qid=%u; mem_type=%d; exp_mem_type=%d; que_type=%d; exp_que_type=%d)\n",
-            qid, pkt->head.mem_type, rx->mem_type, pkt->head.que_type, rx->que_type);
+    if (que_unlikely((pkt->head.mem_type != rx->mem_type) || (pkt->head.que_type != rx->que_type))) {
+        QUEUE_LOG_ERR("invalid pkt head. (qid=%u; mem_type=%d; exp_mem_type=%d; que_type=%d; exp_que_type=%d)\n", qid,
+                      pkt->head.mem_type, rx->mem_type, pkt->head.que_type, rx->que_type);
         return DRV_ERROR_PARA_ERROR;
     }
 
@@ -598,8 +613,8 @@ static int que_tgt_post_proc(struct que_tgt_proc *tgt_proc)
     unsigned int virtual_qid = queue_get_virtual_qid(tgt_proc->qid, LOCAL_QUEUE);
 
     if ((queue_is_inter_dev(devid, tgt_proc->qid)) && (rx->que_type != ASYNC_ENQUE)) {
-        QUEUE_LOG_ERR("inter dev que not support other type. (devid=%u; qid=%u; que_type=%d)\n",
-            ret, devid, tgt_proc->qid, rx->que_type);
+        QUEUE_LOG_ERR("inter dev que not support other type. (devid=%u; qid=%u; que_type=%d)\n", devid, tgt_proc->qid,
+                      rx->que_type);
         return DRV_ERROR_NOT_SUPPORT;
     }
     if (rx->que_type == H2D_SYNC_DEQUE) {
@@ -616,12 +631,12 @@ static int que_tgt_post_proc(struct que_tgt_proc *tgt_proc)
             return ret;
         } else {
             QUEUE_LOG_ERR("que proc not finish. (qid=%u; que_type=%d; total_iovec_num=%u; copied_iovec_num=%u)\n",
-                tgt_proc->qid, rx->que_type, rx->total_iovec_num, rx->copied_iovec_num);
+                          tgt_proc->qid, rx->que_type, rx->total_iovec_num, rx->copied_iovec_num);
         }
     } else {
         if (que_rx_is_finish(rx) == true) {
             ret = memcpy_s(rx->rx_mbuf.mbuf_ctx_va, rx->rx_mbuf.mbuf_ctx_size, rx->rx_mbuf.ctx_aligned_va,
-                rx->rx_mbuf.mbuf_ctx_size);
+                           rx->rx_mbuf.mbuf_ctx_size);
             if (que_unlikely(ret != EOK)) {
                 QUEUE_LOG_ERR("copy mbuf ctx fail. (ret=%d; devid=%u; qid=%u)\n", ret, devid, tgt_proc->qid);
                 que_mbuf_uninit(rx);
@@ -635,54 +650,15 @@ static int que_tgt_post_proc(struct que_tgt_proc *tgt_proc)
             }
         } else {
             QUEUE_LOG_ERR("que proc not finish. (qid=%u; que_type=%d; total_iovec_num=%u; copied_iovec_num=%u)\n",
-                tgt_proc->qid, rx->que_type, rx->total_iovec_num, rx->copied_iovec_num);
+                          tgt_proc->qid, rx->que_type, rx->total_iovec_num, rx->copied_iovec_num);
         }
         que_mbuf_uninit(rx);
     }
     return ret;
 }
 
-#ifndef DRV_HOST
-static int que_rx_pkt_bare(struct que_tgt_proc *tgt_proc, struct que_node *node)
-{
-    struct que_rx *rx = tgt_proc->rx;
-    unsigned long long remain_size = rx->total_copy_size - rx->copied_iovec_size;
-    unsigned long long copy_size;
-    int ret;
-
-    if (remain_size == 0) {
-        return DRV_ERROR_NONE;
-    }
-
-    ret = halMemGet(node->va, node->size);
-    if (que_unlikely(ret != DRV_ERROR_NONE)) {
-        QUEUE_LOG_ERR("invalid bare va. (ret=%d; devid=%u; qid=%u; va=0x%llx; size=%lld)\n",
-            ret, tgt_proc->devid, tgt_proc->qid, node->va, node->size);
-        return DRV_ERROR_BAD_ADDRESS;
-    }
-
-    copy_size = que_min(node->size, remain_size);
-    if (tgt_proc->rx->que_type == H2D_SYNC_DEQUE) {
-        ret = que_bare_copy(rx->rx_mbuf.data_va + rx->copied_iovec_size, node->va, copy_size);
-    } else {
-        if (rx->total_iovec_num != 1) {    /* For 1 iovec, copy content is not needed  */
-            ret = que_bare_copy(node->va, rx->rx_mbuf.data_va + rx->copied_iovec_size, copy_size);
-        }
-    }
-
-    (void)halMemPut(node->va, node->size);
-    if (que_unlikely(ret != DRV_ERROR_NONE)) {
-        QUEUE_LOG_ERR("bare mem copy fail. (ret=%d; devid=%u; qid=%u; copy_size=%llu; node.va=0x%llx; "
-            "mbuf.va=0x%llx; copied_size=%llu)\n", ret, tgt_proc->devid, tgt_proc->qid, copy_size, node->va,
-            rx->rx_mbuf.data_va, rx->copied_iovec_size);
-        return ret;
-    }
-    rx->copied_iovec_size += copy_size;
-    return DRV_ERROR_NONE;
-}
-#endif
-
-static int que_data_wr_fill(struct que_tgt_proc *tgt_proc, struct que_node *node, unsigned int iovec_index, urma_token_t *token)
+static int que_data_wr_fill(struct que_tgt_proc *tgt_proc, struct que_node *node, unsigned int iovec_index,
+                            urma_token_t *token)
 {
     struct que_rx *rx = tgt_proc->rx;
     unsigned long long remain_size = rx->total_copy_size - rx->copied_iovec_size;
@@ -699,17 +675,19 @@ static int que_data_wr_fill(struct que_tgt_proc *tgt_proc, struct que_node *node
     wr_num = que_align_up(copy_size, QUE_URMA_MAX_SIZE) / QUE_URMA_MAX_SIZE;
     if ((wr_num + tgt_proc->rw_wr->cur_wr_idx) > tgt_proc->rw_wr->max_wr_num) {
         QUEUE_LOG_ERR("que wr num is over limit. (devid=%u; qid=%u; wr num=%llu; max_wr_num=%u; cur_wr_idx=%u)\n",
-        tgt_proc->devid, tgt_proc->qid, wr_num, tgt_proc->rw_wr->max_wr_num, tgt_proc->rw_wr->cur_wr_idx);
+                      tgt_proc->devid, tgt_proc->qid, wr_num, tgt_proc->rw_wr->max_wr_num, tgt_proc->rw_wr->cur_wr_idx);
         return DRV_ERROR_OVER_LIMIT;
     }
 
-    que_tgt_time_stamp(tgt_proc, TRACE_IOVEC_SEG_IMPORT_START + iovec_index * (TRACE_TGT_LEVLE1_BUTT - TRACE_TGT_LEVLE1_START));
+    que_tgt_time_stamp(tgt_proc,
+                       TRACE_IOVEC_SEG_IMPORT_START + iovec_index * (TRACE_TGT_LEVLE1_BUTT - TRACE_TGT_LEVLE1_START));
     tseg = que_seg_import(tgt_proc->devid, tgt_proc->d2d_flag, &node->seg, access, token);
     if (que_unlikely(tseg == NULL)) {
         QUEUE_LOG_ERR("buf memory seg import fail. (devid=%u; qid=%u)\n", tgt_proc->devid, tgt_proc->qid);
         return DRV_ERROR_QUEUE_INNER_ERROR;
     }
-    que_tgt_time_stamp(tgt_proc, TRACE_IOVEC_SEG_IMPORT_END + iovec_index * (TRACE_TGT_LEVLE1_BUTT - TRACE_TGT_LEVLE1_START));
+    que_tgt_time_stamp(tgt_proc,
+                       TRACE_IOVEC_SEG_IMPORT_END + iovec_index * (TRACE_TGT_LEVLE1_BUTT - TRACE_TGT_LEVLE1_START));
 
     local.va = rx->rx_mbuf.data_va + rx->copied_iovec_size;
     local.tseg = rx->rx_mbuf.data_tseg;
@@ -722,7 +700,7 @@ static int que_data_wr_fill(struct que_tgt_proc *tgt_proc, struct que_node *node
 
     if (rx->iovec_idx_in_wr_link >= QUE_MAX_RW_WR_NUM) {
         QUEUE_LOG_ERR("que iovec idx access tseg out of bounds. (devid=%u; qid=%u; iovec_idx_in_wr_link=%u)\n",
-        tgt_proc->devid, tgt_proc->qid, rx->iovec_idx_in_wr_link);
+                      tgt_proc->devid, tgt_proc->qid, rx->iovec_idx_in_wr_link);
         return DRV_ERROR_OVER_LIMIT;
     }
     rx->tseg[rx->iovec_idx_in_wr_link] = tseg;
@@ -756,7 +734,8 @@ static int que_rx_pkt_read_wr_fill(struct que_tgt_proc *tgt_proc, struct que_pkt
     }
 
     que_tgt_time_stamp(tgt_proc, TRACE_REMAIN_PKT_SEG_IMPORT_START);
-    remote_pkt_tseg = que_seg_import(tgt_proc->devid, tgt_proc->d2d_flag, &pkt->head.pkt_node.seg, access, &pkt->head.token);
+    remote_pkt_tseg = que_seg_import(tgt_proc->devid, tgt_proc->d2d_flag, &pkt->head.pkt_node.seg, access,
+                                     &pkt->head.token);
     if (que_unlikely(remote_pkt_tseg == NULL)) {
         QUEUE_LOG_ERR("que seg import fail. (devid=%u; qid=%u)\n", tgt_proc->devid, tgt_proc->qid);
         return DRV_ERROR_QUEUE_INNER_ERROR;
@@ -768,8 +747,8 @@ static int que_rx_pkt_read_wr_fill(struct que_tgt_proc *tgt_proc, struct que_pkt
     remote.va = pkt->head.pkt_node.va + QUE_UMA_MAX_SEND_SIZE;
     remote.tseg = remote_pkt_tseg;
 
-    struct que_jfs_rw_wr_data rw_data = {.remote = remote, .local = local, .size = rx->remain_pkt_size,
-        .opcode = URMA_OPC_READ};
+    struct que_jfs_rw_wr_data rw_data = {
+        .remote = remote, .local = local, .size = rx->remain_pkt_size, .opcode = URMA_OPC_READ};
     que_jfs_rw_wr_fill(tgt_proc->data_read_jetty, tgt_proc->rw_wr, &rw_data);
     rx->remote_pkt_tseg = remote_pkt_tseg;
     return DRV_ERROR_NONE;
@@ -796,8 +775,8 @@ static int que_rx_pkt_buff_proc(struct que_tgt_proc *tgt_proc, struct que_pkt *p
     if (rx->copied_iovec_num >= rx->first_iovec_num) {
         ret = que_rx_remain_pkt_check(tgt_proc->devid, tgt_proc->qid, pkt, rx);
         if (que_unlikely(ret != DRV_ERROR_NONE)) {
-            QUEUE_LOG_ERR("que buff pkt check fail. (copied_iovec_num=%u; first_iovec_num=%u)\n",
-                rx->copied_iovec_num, rx->first_iovec_num);
+            QUEUE_LOG_ERR("que buff pkt check fail. (copied_iovec_num=%u; first_iovec_num=%u)\n", rx->copied_iovec_num,
+                          rx->first_iovec_num);
             return ret;
         }
 
@@ -815,8 +794,8 @@ static int que_rx_pkt_buff_proc(struct que_tgt_proc *tgt_proc, struct que_pkt *p
         }
 
         if (que_unlikely(ret != DRV_ERROR_NONE)) {
-            QUEUE_LOG_ERR("que buff read fail. (ret=%d; devid=%u; qid=%u; i=%u)\n", ret, tgt_proc->devid,
-                tgt_proc->qid, i);
+            QUEUE_LOG_ERR("que buff read fail. (ret=%d; devid=%u; qid=%u; i=%u)\n", ret, tgt_proc->devid, tgt_proc->qid,
+                          i);
             que_data_read_post(tgt_proc);
             return ret;
         }
@@ -827,20 +806,7 @@ static int que_rx_pkt_buff_proc(struct que_tgt_proc *tgt_proc, struct que_pkt *p
 
 static int que_rx_pkt_bare_proc(struct que_tgt_proc *tgt_proc, struct que_pkt *pkt)
 {
-#ifndef DRV_HOST
-    unsigned int i;
-    struct que_rx *rx = tgt_proc->rx;
-    for (i = 0; i < pkt->iovec_node_num; i++) {
-        int ret = que_rx_pkt_bare(tgt_proc, &pkt->iovec_node[i]);
-        if (que_unlikely(ret != DRV_ERROR_NONE)) {
-            QUEUE_LOG_ERR("que pkt recv fail. (ret=%d; devid=%u; qid=%u; i=%u)\n", ret, tgt_proc->devid,
-                tgt_proc->qid, i);
-            return ret;
-        }
-        rx->copied_iovec_num++;
-    }
-#endif
-    return DRV_ERROR_NONE;
+    return que_rx_pkt_bare_proc_platform(tgt_proc, pkt);
 }
 
 void que_tgt_timeout_print(struct que_tgt_proc *tgt_proc)
@@ -855,26 +821,31 @@ void que_tgt_timeout_print(struct que_tgt_proc *tgt_proc)
 
     curr_delta = timestamp[TRACE_TGT_ACK_END] - timestamp[TRACE_TGT_START];
     if ((curr_delta / NS_PER_SECOND) > QUE_TIMEOUT_SECOND) {
-        QUEUE_RUN_LOG_INFO_FLOWCTRL("que tgt proc timeout, que_type=%d, cost_time=%lluns, "
-            "start=%llu, import_jetty=%llu, chan_update=%llu, remain_pkt_alloc=%llu, pkt_seg_create=%llu, "
-            "mbuf_create=%llu, ctx_seg_create_start=%llu, ctx_seg_create_end=%llu, data_init=%llu, remain_pkt_seg_import_start=%llu, "
-            "remain_pkt_seg_import_end=%llu, mbuf_seg_import_start=%llu, mbuf_seg_import_end=%llu, first_pkt_proc=%llu, "
-            "post_proc=%llu, ack_start=%llu, ack_end=%llu. (devid=%d, qid=%u)\n", tgt_proc->que_type, curr_delta,
-            timestamp[TRACE_TGT_START], timestamp[TRACE_IMPORT_JETTY], timestamp[TRACE_CHAN_UPDATE],
-            timestamp[TRACE_REMAIN_PKT_ALLOC], timestamp[TRACE_TGT_PKT_SEG_CREATE], timestamp[TRACE_TGT_MBUF_CREATE],
-            timestamp[TRACE_TGT_CTX_SEG_CREATE_START], timestamp[TRACE_TGT_CTX_SEG_CREATE_END], timestamp[TRACE_DATA_INIT],
+        QUEUE_RUN_LOG_INFO_FLOWCTRL(
+            "que tgt proc timeout, que_type=%d, cost_time=%luns, "
+            "start=%lu, import_jetty=%lu, chan_update=%lu, remain_pkt_alloc=%lu, pkt_seg_create=%lu, "
+            "mbuf_create=%lu, ctx_seg_create_start=%lu, ctx_seg_create_end=%lu, data_init=%lu, "
+            "remain_pkt_seg_import_start=%lu, "
+            "remain_pkt_seg_import_end=%lu, mbuf_seg_import_start=%lu, mbuf_seg_import_end=%lu, first_pkt_proc=%lu, "
+            "post_proc=%lu, ack_start=%lu, ack_end=%lu. (devid=%d, qid=%u)\n",
+            tgt_proc->que_type, curr_delta, timestamp[TRACE_TGT_START], timestamp[TRACE_IMPORT_JETTY],
+            timestamp[TRACE_CHAN_UPDATE], timestamp[TRACE_REMAIN_PKT_ALLOC], timestamp[TRACE_TGT_PKT_SEG_CREATE],
+            timestamp[TRACE_TGT_MBUF_CREATE], timestamp[TRACE_TGT_CTX_SEG_CREATE_START],
+            timestamp[TRACE_TGT_CTX_SEG_CREATE_END], timestamp[TRACE_DATA_INIT],
             timestamp[TRACE_REMAIN_PKT_SEG_IMPORT_START], timestamp[TRACE_REMAIN_PKT_SEG_IMPORT_END],
-            timestamp[TRACE_MBUF_SEG_IMPORT_START], timestamp[TRACE_MBUF_SEG_IMPORT_END], timestamp[TRACE_FIRST_PKT_PROC],
-            timestamp[TRACE_TGT_POST_PROC], timestamp[TRACE_TGT_ACK_START], timestamp[TRACE_TGT_ACK_END],
-            tgt_proc->devid, tgt_proc->qid);
+            timestamp[TRACE_MBUF_SEG_IMPORT_START], timestamp[TRACE_MBUF_SEG_IMPORT_END],
+            timestamp[TRACE_FIRST_PKT_PROC], timestamp[TRACE_TGT_POST_PROC], timestamp[TRACE_TGT_ACK_START],
+            timestamp[TRACE_TGT_ACK_END], tgt_proc->devid, tgt_proc->qid);
     }
 
     if (tgt_log_level != 0) {
         for (iovec_idx = 0; iovec_idx < tgt_proc->total_iovec_num; iovec_idx++) {
-            id_start =  TRACE_IOVEC_SEG_IMPORT_START + iovec_idx * (TRACE_TGT_LEVLE1_BUTT - TRACE_TGT_LEVLE1_START);
+            id_start = TRACE_IOVEC_SEG_IMPORT_START + iovec_idx * (TRACE_TGT_LEVLE1_BUTT - TRACE_TGT_LEVLE1_START);
             id_end = TRACE_IOVEC_SEG_IMPORT_END + iovec_idx * (TRACE_TGT_LEVLE1_BUTT - TRACE_TGT_LEVLE1_START);
-             QUEUE_RUN_LOG_INFO("que tgt seg import timeout, que_type=%d, iovec_idx=%d, seg_create_start=%llu, seg_create_end=%llu. "
-             "(devid=%d, qid=%u)\n", tgt_proc->que_type, iovec_idx, timestamp[id_start], timestamp[id_end], tgt_proc->devid, tgt_proc->qid);
+            QUEUE_RUN_LOG_INFO(
+                "que tgt seg import timeout, que_type=%d, iovec_idx=%d, seg_create_start=%lu, seg_create_end=%lu. "
+                "(devid=%d, qid=%u)\n",
+                tgt_proc->que_type, iovec_idx, timestamp[id_start], timestamp[id_end], tgt_proc->devid, tgt_proc->qid);
         }
     }
 }
@@ -883,12 +854,15 @@ static void que_tgt_proc_ack(struct que_tgt_proc *tgt_proc, int sn)
 {
     que_ack_data ack_data;
     int ret;
+    uint64_t delta_ns = 0;
 
-    ack_data.ack_msg.tgt_time = (tgt_proc->timestamp[TRACE_TGT_ACK_START] > tgt_proc->timestamp[TRACE_TGT_START]) ? 
-    (int)(tgt_proc->timestamp[TRACE_TGT_ACK_START] - tgt_proc->timestamp[TRACE_TGT_START]) : 0;
-    ack_data.ack_msg.result = tgt_proc->tgt_proc_result;
-    ack_data.ack_msg.qid = (tgt_proc->que_type != ASYNC_ENQUE) ? tgt_proc->qid : tgt_proc->peer_qid;
-    ack_data.ack_msg.sn = sn;
+    if (tgt_proc->timestamp[TRACE_TGT_ACK_START] > tgt_proc->timestamp[TRACE_TGT_START]) {
+        delta_ns = tgt_proc->timestamp[TRACE_TGT_ACK_START] - tgt_proc->timestamp[TRACE_TGT_START];
+    }
+    ack_data.ack_msg.qid = QUE_ACK_PACK_Q16((tgt_proc->que_type != ASYNC_ENQUE) ? tgt_proc->qid : tgt_proc->peer_qid);
+    ack_data.ack_msg.result = QUE_ACK_RESULT_PACK_16(tgt_proc->tgt_proc_result);
+    ack_data.ack_msg.sn = QUE_ACK_PACK_SN(sn);
+    ack_data.ack_msg.tgt_time = QUE_ACK_PACK_TGT_TIME_NS(delta_ns);
 
     ret = que_rx_send_ack_and_wait(tgt_proc, ack_data.imm_data, &tgt_proc->ack_send_jetty, tgt_proc->d2d_flag);
     if (que_unlikely(ret != DRV_ERROR_NONE)) {
@@ -897,8 +871,8 @@ static void que_tgt_proc_ack(struct que_tgt_proc *tgt_proc, int sn)
     } else {
         ATOMIC_INC((volatile int *)&tgt_proc->cnt[TGT_SEND_ACK_SUCCESS]);
     }
-    QUEUE_LOG_DEBUG("que send ack . (que_type=%d; qid=%d; ret=%d; sn=%d)\n",
-        tgt_proc->que_type, ack_data.ack_msg.qid, ack_data.ack_msg.result, sn);
+    QUEUE_LOG_DEBUG("que send ack . (que_type=%d; qid=%u; ret=%d; sn=%u)\n", tgt_proc->que_type,
+                    (unsigned int)ack_data.ack_msg.qid, ack_data.ack_msg.result, sn);
 }
 
 static void que_tgt_last_wrlink_post_proc(struct que_tgt_proc *tgt_proc)
@@ -931,7 +905,8 @@ static int que_tgt_first_pkt_pre_proc(struct que_tgt_proc *tgt_proc, struct que_
         ret = que_rx_pkt_buff_proc(tgt_proc, pkt);
     }
     if (que_unlikely(ret != DRV_ERROR_NONE)) {
-        QUEUE_LOG_ERR("que data rw wr fill fail. (ret=%d; devid=%u; qid=%u; mem_type=%d)\n", ret, tgt_proc->devid, tgt_proc->qid, tgt_proc->rx->mem_type);
+        QUEUE_LOG_ERR("que data rw wr fill fail. (ret=%d; devid=%u; qid=%u; mem_type=%d)\n", ret, tgt_proc->devid,
+                      tgt_proc->qid, tgt_proc->rx->mem_type);
         goto ctx_read_post;
     }
     return DRV_ERROR_NONE;
@@ -985,7 +960,7 @@ void que_tgt_pkt_proc_ex(struct que_tgt_proc *tgt_proc, int cr_status)
 
     if (cr_status == URMA_CR_ACK_TIMEOUT_ERR) {
         ret = que_recreate_jfs(tgt_proc->data_read_jetty->attr.jfs_depth, tgt_proc->data_read_jetty->jfc_s,
-                tgt_proc->data_read_jetty->devid, &tgt_proc->data_read_jetty->jfs, tgt_proc->d2d_flag);
+                               tgt_proc->data_read_jetty->devid, &tgt_proc->data_read_jetty->jfs, tgt_proc->d2d_flag);
         if (que_unlikely(ret != DRV_ERROR_NONE)) {
             QUEUE_LOG_ERR("que recreate data read jfs fail. (ret=%d)\n", ret);
             goto ack;
@@ -1016,7 +991,8 @@ void que_tgt_pkt_proc_ex(struct que_tgt_proc *tgt_proc, int cr_status)
         ret = que_rx_pkt_buff_proc(tgt_proc, pkt);
     }
     if (que_unlikely(ret != DRV_ERROR_NONE)) {
-        QUEUE_LOG_ERR("que buff read fail. (ret=%d; devid=%u; qid=%u; mem_type=%d)\n", ret, tgt_proc->devid, tgt_proc->qid, tgt_proc->rx->mem_type);
+        QUEUE_LOG_ERR("que buff read fail. (ret=%d; devid=%u; qid=%u; mem_type=%d)\n", ret, tgt_proc->devid,
+                      tgt_proc->qid, tgt_proc->rx->mem_type);
         goto mbuf_uninit;
     }
 
@@ -1049,7 +1025,7 @@ void que_tgt_pkt_proc(struct que_tgt_proc *tgt_proc, struct que_pkt *pkt)
 
     ret = que_rx_init(tgt_proc, pkt);
     if (que_unlikely(ret != DRV_ERROR_NONE)) {
-        if (que_unlikely((ret != DRV_ERROR_QUEUE_EMPTY) &&(ret != DRV_ERROR_TRANS_LINK_ACK_TIMEOUT_ERR))) {
+        if (que_unlikely((ret != DRV_ERROR_QUEUE_EMPTY) && (ret != DRV_ERROR_TRANS_LINK_ACK_TIMEOUT_ERR))) {
             QUEUE_LOG_ERR("que rx init fail. (ret=%d; devid=%u; qid=%u)\n", ret, tgt_proc->devid, tgt_proc->qid);
         }
         goto ack;
@@ -1087,7 +1063,6 @@ ack:
 #else /* EMU_ST */
 
 void que_enque_emu_test(void)
-{
-}
+{}
 
 #endif

@@ -20,10 +20,7 @@
 #include "trs_mailbox_def.h"
 #include "trs_sec_eh_auto_init.h"
 
-static int trs_vpc_msg_recv(u32 devid, u32 fid, struct vmng_rx_msg_proc_info *proc_info)
-{
-    return -EPERM;
-}
+static int trs_vpc_msg_recv(u32 devid, u32 fid, struct vmng_rx_msg_proc_info *proc_info) { return -EPERM; }
 
 static struct vmng_vpc_client trs_vpc_client = {
     .vpc_type = VMNG_VPC_TYPE_TSDRV,
@@ -65,7 +62,7 @@ int trs_sec_eh_vpc_msg_send(u32 devid, void *msg, size_t size)
         if (ret != -ENOSPC) {
             break;
         }
-        ka_system_usleep_range(100, 200);  /* 100 us ~ 200 us */
+        ka_system_usleep_range(100, 200); /* 100 us ~ 200 us */
     } while (--retry >= 0);
 
     return ret;
@@ -73,7 +70,7 @@ int trs_sec_eh_vpc_msg_send(u32 devid, void *msg, size_t size)
 
 static void trs_sec_eh_vpc_mbox_msg_pos_proc(int cmd_type, void *vpc_data, void *msg)
 {
-    if (cmd_type == TRS_MBOX_RPC_CALL) {
+    if ((cmd_type == TRS_MBOX_RPC_CALL) || (cmd_type == TRS_MBOX_DSMI_RPC_CALL)) {
         *((struct trs_rpc_call_msg *)msg) = *((struct trs_rpc_call_msg *)vpc_data);
     }
 }
@@ -111,6 +108,16 @@ static int trs_sec_eh_vpc_mbox_msg_send(struct trs_id_inst *inst, void *msg, siz
     return ret;
 }
 
+static bool trs_is_mb_update_only(void *data)
+{
+    struct trs_mb_header *header = (struct trs_mb_header *)data;
+
+    if (header->cmd_type == TRS_MBOX_FREE_STREAM) {
+        return true;
+    }
+    return false;
+}
+
 int trs_mbox_send(struct trs_id_inst *inst, u32 chan_id, void *data, size_t size, int timeout)
 {
     int ret;
@@ -118,6 +125,10 @@ int trs_mbox_send(struct trs_id_inst *inst, u32 chan_id, void *data, size_t size
     ret = trs_mb_update(inst, (int)ka_task_get_current_tgid(), data, (u32)size);
     if (ret != 0) {
         return ret;
+    }
+
+    if (trs_is_mb_update_only(data)) {
+        return 0;
     }
 
     return trs_sec_eh_vpc_mbox_msg_send(inst, data, size);

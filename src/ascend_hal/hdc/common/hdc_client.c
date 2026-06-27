@@ -19,7 +19,7 @@
 #include "hdc_core.h"
 
 STATIC hdcError_t drv_hdc_client_create_para_checker(const HDC_CLIENT *pClient, signed int maxSessionNum,
-    signed int serviceType, signed int flag)
+                                                     signed int serviceType, signed int flag)
 {
     signed int max_session_num_by_type;
 
@@ -48,22 +48,22 @@ STATIC hdcError_t drv_hdc_client_create_para_checker(const HDC_CLIENT *pClient, 
 }
 
 /*****************************************************************************
-   Function Name         : drvHdcClientCreate
-   Function Description  : Create an HDC client and initialize it based on the maximum number of sessions and service type
-   Input Parameters      : int maxSessionNum  The maximum number of sessions currently required by Client
-                           int serviceType  select service type
-                           int flag         Reserved parameters, [bit0 - bit7] session connect timeout, other fixed to 0
-   Output Parameters     : HDC_CLIENT *client  Created HDC Client pointer
-   Return Value          : DRV_ERROR_NONE
-                           DRV_ERROR_INVALID_VALUE
-   Caller Function       :
-   Called Function       :
-
-   Modification History  :
-   1.Date                : January 15, 2018
-    Modification         : New generated function
-
-*****************************************************************************/
+ * Function Name        : drvHdcClientCreate
+ * Function Description : Create an HDC client and initialize it based on the maximum number of sessions and service type
+ * Input Parameters     : int maxSessionNum  The maximum number of sessions currently required by Client
+ *                        int serviceType  select service type
+ *                        int flag         Reserved parameters, [bit0 - bit7] session connect timeout, other fixed to 0
+ * Output Parameters    : HDC_CLIENT *client  Created HDC Client pointer
+ * Return Value         : DRV_ERROR_NONE
+ *                        DRV_ERROR_INVALID_VALUE
+ * Caller Function      :
+ * Called Function      :
+ *
+ * Modification History :
+ * 1.Date               : January 15, 2018
+ *  Modification        : New generated function
+ *
+ *****************************************************************************/
 hdcError_t drvHdcClientCreate(HDC_CLIENT *client, signed int maxSessionNum, signed int serviceType, signed int flag)
 {
     struct hdc_client_session *pSession = NULL;
@@ -82,6 +82,7 @@ hdcError_t drvHdcClientCreate(HDC_CLIENT *client, signed int maxSessionNum, sign
     pHead = (struct hdc_client_head *)drv_hdc_zalloc(size);
     if (pHead == NULL) {
         HDC_LOG_ERR("Call malloc failed.\n");
+        hdc_report_out_of_mem_err_msg(size);
         return DRV_ERROR_OUT_OF_MEMORY;
     }
 
@@ -111,25 +112,25 @@ hdcError_t drvHdcClientCreate(HDC_CLIENT *client, signed int maxSessionNum, sign
 }
 
 /*****************************************************************************
-   Function Name         : drvHdcClientDestroy
-   Function Description  : Release HDC Client
-   Input Parameters      : HDC_CLIENT client  HDC Client to be released
-   Output Parameters     : None
-   Return Value          : DRV_ERROR_NONE
-                           DRV_ERROR_INVALID_VALUE
-                           DRV_ERROR_CLIENT_BUSY
-   Caller Function       :
-   Called Function       :
-
-   Modification History  :
-   1.Date                : January 15, 2018
-    Modification         : New generated function
-
-*****************************************************************************/
+ * Function Name         : drvHdcClientDestroy
+ * Function Description  : Release HDC Client
+ * Input Parameters      : HDC_CLIENT client  HDC Client to be released
+ * Output Parameters     : None
+ * Return Value          : DRV_ERROR_NONE
+ *                        DRV_ERROR_INVALID_VALUE
+ *                        DRV_ERROR_CLIENT_BUSY
+ * Caller Function       :
+ * Called Function       :
+ *
+ * Modification History  :
+ * 1.Date                : January 15, 2018
+ *  Modification         : New generated function
+ *
+ *****************************************************************************/
 hdcError_t drvHdcClientDestroy(HDC_CLIENT client)
 {
-    struct hdc_client_head *pHead = NULL;
     struct hdc_client_session *pSession = NULL;
+    struct hdc_client_head *pHead = NULL;
     bool alive = false;
     unsigned int maxSessionNum;
     unsigned int cnt;
@@ -186,19 +187,19 @@ hdcError_t drvHdcClientDestroy(HDC_CLIENT client)
 }
 
 /*****************************************************************************
-   Function Name         : drv_hdc_client_alloc_session
-   Function Description  : Find an available Session
-   Input Parameters      : struct hdc_client_head
-   Output Parameters     : struct hdc_client_session **ppSession
-   Return Value          :
-   Caller Function       :
-   Called Function       :
-
-   Modification History  :
-   1.Date                : January 16, 2018
-    Modification         : New generated function
-
-*****************************************************************************/
+ * Function Name         : drv_hdc_client_alloc_session
+ * Function Description  : Find an available Session
+ * Input Parameters      : struct hdc_client_head
+ * Output Parameters     : struct hdc_client_session **ppSession
+ * Return Value          :
+ * Caller Function       :
+ * Called Function       :
+ *
+ * Modification History  :
+ * 1.Date                : January 16, 2018
+ *  Modification         : New generated function
+ *
+ *****************************************************************************/
 STATIC bool drv_hdc_client_alloc_session(struct hdc_client_head *pHead, struct hdc_client_session **ppSession)
 {
     struct hdc_client_session *pSession = NULL;
@@ -242,18 +243,18 @@ STATIC bool drv_hdc_client_alloc_session(struct hdc_client_head *pHead, struct h
 }
 
 /*****************************************************************************
-   Function Name         : drv_hdc_client_free_session
-   Function Description  : Release Client-side Session
-   Input Parameters      : struct hdc_client_session *pSession
-   Output Parameters     : None
-   Return Value          :
-   Caller Function       :
-   Called Function       :
-
-   Modification History  :
-   1.Date                : January 17, 2018
-    Modification         : New generated function
-*****************************************************************************/
+ * Function Name         : drv_hdc_client_free_session
+ * Function Description  : Release Client-side Session
+ * Input Parameters      : struct hdc_client_session *pSession
+ * Output Parameters     : None
+ * Return Value          :
+ * Caller Function       :
+ * Called Function       :
+ *
+ * Modification History  :
+ * 1.Date                : January 17, 2018
+ *  Modification         : New generated function
+ *****************************************************************************/
 STATIC void drv_hdc_client_free_session(struct hdc_client_head *pHead, struct hdc_client_session *pSession)
 {
     (void)mmMutexLock(&pHead->mutex);
@@ -266,7 +267,7 @@ STATIC void drv_hdc_client_free_session(struct hdc_client_head *pHead, struct hd
 }
 
 STATIC hdcError_t drv_hdc_connect_para_check(signed int peer_node, signed int peer_devid,
-    const struct hdc_client_head *pHead, const HDC_SESSION *pSession)
+                                             const struct hdc_client_head *pHead, const HDC_SESSION *pSession)
 {
     if (peer_node != 0) {
         HDC_LOG_ERR("Input parameter peer_node is error.\n");
@@ -293,12 +294,11 @@ STATIC hdcError_t drv_hdc_connect_para_check(signed int peer_node, signed int pe
 }
 
 /*lint -e413*/
-hdcError_t halHdcSessionConnectEx(int peer_node, int peer_devid, int peer_pid, HDC_CLIENT client,
-    HDC_SESSION *pSession)
+hdcError_t halHdcSessionConnectEx(int peer_node, int peer_devid, int peer_pid, HDC_CLIENT client, HDC_SESSION *pSession)
 {
     struct hdc_client_head *pHead = (struct hdc_client_head *)client;
-    struct hdc_client_session *p_client_session = NULL;
     struct hdc_client_session *p_client_session_ppc = NULL;
+    struct hdc_client_session *p_client_session = NULL;
     bool result = false;
     hdcError_t err_code;
     signed int ret;
@@ -319,7 +319,7 @@ hdcError_t halHdcSessionConnectEx(int peer_node, int peer_devid, int peer_pid, H
             ret = hdc_ub_connect(peer_devid, pHead, peer_pid, &p_client_session->session);
         } else if (g_hdcConfig.h2d_type == HDC_TRANS_USE_PCIE) {
             ret = hdc_pcie_connect(g_hdcConfig.pcie_handle, peer_devid, pHead->serviceType, pHead->flag, peer_pid,
-                &p_client_session->session);
+                                   &p_client_session->session);
         } else {
             HDC_LOG_ERR("Variable h2d_type is invalid. (h2d_type=%#x)\n", g_hdcConfig.h2d_type);
             ret = DRV_ERROR_INVALID_HANDLE;
@@ -353,7 +353,8 @@ hdcError_t halHdcSessionConnectEx(int peer_node, int peer_devid, int peer_pid, H
             return (hdcError_t)ret;
         }
     } else {
-        err_code = drv_hdc_socket_session_connect(peer_devid, pHead->serviceType, (HDC_SESSION *)(&p_client_session_ppc));
+        err_code = drv_hdc_socket_session_connect(peer_devid, pHead->serviceType,
+                                                  (HDC_SESSION *)(&p_client_session_ppc));
         if (err_code != DRV_ERROR_NONE) {
             drv_hdc_client_free_session(pHead, p_client_session);
             HDC_LOG_WARN("PPC client session connect not success. (err_code=%d)\n", (signed int)err_code);
@@ -376,43 +377,43 @@ hdcError_t halHdcSessionConnectEx(int peer_node, int peer_devid, int peer_pid, H
 }
 /*lint +e413*/
 /*****************************************************************************
-   Function Name         : drvHdcSessionConnect
-   Function Description  : Create HDC Session for Host and Device communication
-   Input Parameters      : signed int peer_node        The node number of the node where the Device is located. Currently
-                                                      only 1 node is supported. Remote nodes are not supported. You need
-                                                      to pass a fixed value of 0
-                           signed int peer_devid       Device's uniform ID in the host (number in each node)
-                           HDC_CLIENT client          HDC Client handle corresponding to the newly created Session
-   Output Parameters     : HDC_SESSION *session       Created session
-   Return Value          : DRV_ERROR_NONE
-                           DRV_ERROR_INVALID_VALUE
-   Caller Function       :
-   Called Function       :
-
-   Modification History  :
-   1.Date                : January 15, 2018
-    Modification         : New generated function
-
-*****************************************************************************/
+ * Function Name         : drvHdcSessionConnect
+ * Function Description  : Create HDC Session for Host and Device communication
+ * Input Parameters      : signed int peer_node        The node number of the node where the Device is located. Currently
+ *                                                only 1 node is supported. Remote nodes are not supported. You need
+ *                                                to pass a fixed value of 0
+ *                        signed int peer_devid       Device's uniform ID in the host (number in each node)
+ *                        HDC_CLIENT client          HDC Client handle corresponding to the newly created Session
+ * Output Parameters     : HDC_SESSION *session       Created session
+ * Return Value          : DRV_ERROR_NONE
+ *                        DRV_ERROR_INVALID_VALUE
+ * Caller Function       :
+ * Called Function       :
+ *
+ * Modification History  :
+ * 1.Date                : January 15, 2018
+ *  Modification         : New generated function
+ *
+ *****************************************************************************/
 hdcError_t drvHdcSessionConnect(int peer_node, int peer_devid, HDC_CLIENT client, HDC_SESSION *session)
 {
     return halHdcSessionConnectEx(peer_node, peer_devid, HDCDRV_INVALID_PEER_PID, client, session);
 }
 /*****************************************************************************
-   Function Name         : drv_hdc_client_session_close
-   Function Description  : Release HDC Session
-   Input Parameters      : HDC_SESSION session    The session to be released
-   Output Parameters     : None
-   Return Value          : DRV_ERROR_NONE
-                           DRV_ERROR_INVALID_VALUE
-   Caller Function       :
-   Called Function       :
-
-   Modification History  :
-   1.Date                : January 15, 2018
-    Modification         : New generated function
-
-*****************************************************************************/
+ * Function Name         : drv_hdc_client_session_close
+ * Function Description  : Release HDC Session
+ * Input Parameters      : HDC_SESSION session    The session to be released
+ * Output Parameters     : None
+ * Return Value          : DRV_ERROR_NONE
+ *                        DRV_ERROR_INVALID_VALUE
+ * Caller Function       :
+ * Called Function       :
+ *
+ * Modification History  :
+ * 1.Date                : January 15, 2018
+ *  Modification         : New generated function
+ *
+ *****************************************************************************/
 hdcError_t drv_hdc_client_session_close(HDC_SESSION session, int close_state, int flag)
 {
     struct hdc_client_session *p_client_session = NULL;
@@ -435,19 +436,22 @@ hdcError_t drv_hdc_client_session_close(HDC_SESSION session, int close_state, in
 
     if (g_hdcConfig.trans_type == HDC_TRANS_USE_PCIE) {
         if (g_hdcConfig.h2d_type == HDC_TRANS_USE_UB) {
-            ret = hdc_ub_session_close((unsigned int)p_client_session->devid, &p_client_session->session, close_state, flag);
+            ret = hdc_ub_session_close((unsigned int)p_client_session->devid, &p_client_session->session, close_state,
+                                       flag);
         } else if (g_hdcConfig.h2d_type == HDC_TRANS_USE_PCIE) {
-            ret = hdc_pcie_close(g_hdcConfig.pcie_handle, (unsigned int)p_client_session->devid, &p_client_session->session);
+            ret = hdc_pcie_close(g_hdcConfig.pcie_handle, (unsigned int)p_client_session->devid,
+                                 &p_client_session->session);
         } else {
             HDC_LOG_ERR("Variable h2d_type is invalid. (h2d_type=%#x)\n", g_hdcConfig.h2d_type);
             ret = DRV_ERROR_INVALID_HANDLE;
         }
         if (ret != 0) {
-            HDC_LOG_WARN("Close device not success. (device=%d; errno=%d)\n", (signed int)(p_client_session->devid), ret);
+            HDC_LOG_WARN("Close device not success. (device=%d; errno=%d)\n", (signed int)(p_client_session->devid),
+                         ret);
         }
 
         if (g_hdcConfig.h2d_type == HDC_TRANS_USE_UB) {
-            hdc_link_event_pre_uninit(p_client_session->devid, false);
+            hdc_link_event_pre_uninit(p_client_session->devid);
         }
 
         hdc_pcie_close_bind_fd(p_client_session->session.bind_fd);

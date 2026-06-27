@@ -22,7 +22,7 @@ static drvError_t buff_mbuf_info_para_check(struct buff_get_info_handle_arg *par
     if ((para_in->in_size != sizeof(struct Mbuf *)) || (*((struct Mbuf **)para_in->in) == NULL) ||
         (para_in->out_size != out_size)) {
         buff_err("para size invalid: in size:%u, %u. out size:%u, %u\n", para_in->in_size,
-            (uint32)sizeof(struct Mbuf *), para_in->out_size, out_size);
+                 (uint32)sizeof(struct Mbuf *), para_in->out_size, out_size);
         return DRV_ERROR_INVALID_VALUE;
     }
 
@@ -59,8 +59,8 @@ drvError_t buff_get_mbuf_use_info(struct buff_get_info_handle_arg *para_in)
     if (head->ext_flag == 1) {
         ext_info = buff_get_ext_info(head, s_mbuf->blk_id);
         if (ext_info == NULL) {
-            buff_err("Can not find get buff ext info. (buff_type=%u; ext_flag=%u; mbuf=%pK)\n",
-                head->buff_type, head->ext_flag, (void *)s_mbuf);
+            buff_err("Can not find get buff ext info. (buff_type=%u; ext_flag=%u; mbuf=%pK)\n", head->buff_type,
+                     head->ext_flag, (void *)s_mbuf);
             return DRV_ERROR_BAD_ADDRESS;
         }
 
@@ -99,7 +99,7 @@ drvError_t buff_get_mbuf_type_info(struct buff_get_info_handle_arg *para_in)
     }
 
     mbuf = *((struct Mbuf **)para_in->in);
-    s_mbuf =  get_share_mbuf_by_mbuf(mbuf);
+    s_mbuf = get_share_mbuf_by_mbuf(mbuf);
     info->type = (unsigned int)s_mbuf->buff_type;
 
     return DRV_ERROR_NONE;
@@ -152,8 +152,8 @@ static drvError_t buff_mempool_info_para_check(struct buff_get_info_handle_arg *
     }
 
     if ((para_in->in_size != sizeof(struct mempool_t *)) || (para_in->out_size != out_size)) {
-        buff_err("Para size invalid. (in_size=%u; input out_size=%u; out_size=%u)\n",
-            para_in->in_size, para_in->out_size, out_size);
+        buff_err("Para size invalid. (in_size=%u; input out_size=%u; out_size=%u)\n", para_in->in_size,
+                 para_in->out_size, out_size);
         return DRV_ERROR_INVALID_VALUE;
     }
 

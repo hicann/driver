@@ -23,25 +23,32 @@
 
 #define MODULE_RMO "rmo"
 
-#define rmo_err(fmt, ...) do { \
-    drv_err(MODULE_RMO, "<%s:%d:%d:%d> " fmt, \
-        ka_task_get_current_comm(), ka_task_get_current_tgid(), ka_task_get_current_pid(), ka_system_raw_smp_processor_id(), ##__VA_ARGS__); \
-} while (0)
+#define rmo_err(fmt, ...)                                                                             \
+    do {                                                                                              \
+        drv_err(                                                                                      \
+            MODULE_RMO, "<%s:%d:%d:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), \
+            ka_task_get_current_pid(), ka_system_raw_smp_processor_id(), ##__VA_ARGS__);              \
+    } while (0)
 
-#define rmo_warn(fmt, ...) do { \
-    drv_warn(MODULE_RMO, "<%s:%d:%d:%d> " fmt, \
-        ka_task_get_current_comm(), ka_task_get_current_tgid(), ka_task_get_current_pid(), ka_system_raw_smp_processor_id(), ##__VA_ARGS__); \
-} while (0)
+#define rmo_warn(fmt, ...)                                                                            \
+    do {                                                                                              \
+        drv_warn(                                                                                     \
+            MODULE_RMO, "<%s:%d:%d:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), \
+            ka_task_get_current_pid(), ka_system_raw_smp_processor_id(), ##__VA_ARGS__);              \
+    } while (0)
 
-#define rmo_info(fmt, ...) do { \
-    drv_info(MODULE_RMO, "<%s:%d:%d:%d> " fmt, \
-        ka_task_get_current_comm(), ka_task_get_current_tgid(), ka_task_get_current_pid(), ka_system_raw_smp_processor_id(), ##__VA_ARGS__); \
-} while (0)
+#define rmo_info(fmt, ...)                                                                            \
+    do {                                                                                              \
+        drv_info(                                                                                     \
+            MODULE_RMO, "<%s:%d:%d:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), \
+            ka_task_get_current_pid(), ka_system_raw_smp_processor_id(), ##__VA_ARGS__);              \
+    } while (0)
 
-#define rmo_debug(fmt, ...) do { \
-    drv_pr_debug(MODULE_RMO, "<%s:%d:%d:%d> " fmt, \
-        ka_task_get_current_comm(), ka_task_get_current_tgid(), ka_task_get_current_pid(), ka_system_raw_smp_processor_id(), ##__VA_ARGS__); \
-} while (0)
+#define rmo_debug(fmt, ...)                                                                           \
+    do {                                                                                              \
+        drv_pr_debug(                                                                                 \
+            MODULE_RMO, "<%s:%d:%d:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), \
+            ka_task_get_current_pid(), ka_system_raw_smp_processor_id(), ##__VA_ARGS__);              \
+    } while (0)
 
 #endif
-

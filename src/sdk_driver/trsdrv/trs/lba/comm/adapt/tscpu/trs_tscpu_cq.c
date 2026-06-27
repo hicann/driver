@@ -15,9 +15,9 @@
 #include "trs_chip_def_comm.h"
 
 /**
-* @ingroup
-* @brief the struct define of report msg when task is completed
-*/
+ * @ingroup
+ * @brief the struct define of report msg when task is completed
+ */
 typedef struct tag_ts_task_report_msg {
     uint16_t sop : 1; /* start of packet, indicates this is the first 32bit return payload */
     uint16_t mop : 1; /* middle of packet, indicates the payload is a continuation of previous task return payload */
@@ -31,9 +31,9 @@ typedef struct tag_ts_task_report_msg {
     uint16_t reserved : 6;
     uint16_t phase : 1;
     uint16_t sq_head : 14;
-    uint16_t stream_id_ex : 1; /* streamID high bit */
+    uint16_t stream_id_ex : 1;       /* streamID high bit */
     uint16_t fault_stream_id_ex : 1; /* fault streamID high bit */
-} rt_task_report_t; /* Non stars Cq report */
+} rt_task_report_t;                  /* Non stars Cq report */
 
 int trs_tscpu_cqe_get_streamid(struct trs_id_inst *inst, void *cqe, u32 *stream_id)
 {
@@ -60,4 +60,3 @@ int trs_tscpu_cq_head_update(struct trs_id_inst *inst, u32 cqid, u32 head)
 {
     return trs_ring_ts_db(inst, TRS_DB_TASK_CQ, cqid, head);
 }
-

@@ -14,17 +14,10 @@
 #ifndef _DVT_SYSFS_H_
 #define _DVT_SYSFS_H_
 
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(6,1,0))
-unsigned int available_instances_show(struct mdev_type *mtype);
-ssize_t description_show(struct mdev_type *mtype, char *buf);
-#else
-struct attribute **get_hw_vdavinci_type_attrs(void);
-#endif /* KERNEL_VERSION(6,1,0) */
-
-const struct attribute_group **get_hw_vdavinci_groups(void);
-unsigned int available_instances_ops(struct device *dev, const char *name);
-ssize_t description_ops(struct device *dev, const char *name, char *buf);
-ssize_t device_api_ops(char *buf);
-ssize_t vfg_id_store_ops(struct device *dev, const char *name,
+const ka_attribute_group_t **get_hw_vdavinci_groups(void);
+ssize_t available_instances_ops(ka_device_t *dev, const char *name, char *buf);
+ssize_t description_ops(ka_device_t *dev, const char *name, char *buf);
+ssize_t device_api_ops(ka_device_t *dev, char *buf);
+ssize_t vfg_id_store_ops(ka_device_t *dev, const char *name,
                          const char *buf, size_t count);
 #endif

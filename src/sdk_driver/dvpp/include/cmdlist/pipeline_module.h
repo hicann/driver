@@ -14,7 +14,11 @@
 #ifndef VPC_CMDLIST_PIPELINE_MODULE_H
 #define VPC_CMDLIST_PIPELINE_MODULE_H
 
-#include <linux/types.h>
+#ifdef __KERNEL__
+#include "ka_type.h"
+#else
+#include <stdint.h>
+#endif
 
 #include "pipeline_define.h"
 #include "pipeline_kernel.h"
@@ -55,7 +59,7 @@ typedef struct IrCsc {
     uint8_t renormEn;
     uint8_t degammaEn;
     uint8_t outRgbFlg;
-    uint16_t gammaCoef[257]; // 需要257个系数 
+    uint16_t gammaCoef[257]; // 锟斤拷要257锟斤拷系锟斤拷 
     uint64_t readAddr;
     uint8_t readEn;
 } ircsc_t;

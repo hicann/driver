@@ -9,11 +9,7 @@
 
 #define SOC_RESMNG_MODULE_NAME "RESMNG"
 
-enum soc_ver_type {
-    VER_TYPE_DEV = 0,
-    VER_TYPE_HOST,
-    VER_TYPE_MAX
-};
+enum soc_ver_type { VER_TYPE_DEV = 0, VER_TYPE_HOST, VER_TYPE_MAX };
 
 int soc_resnmg_get_version(enum soc_ver_type type);
 

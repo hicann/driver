@@ -279,7 +279,7 @@ int dmanage_check_module_init(const char *module_name)
     char *buff = NULL;
     FILE *fp = NULL;
     size_t name_len;
-    int retry_time = -1;
+    int retry_times= -1;
 
     if (module_name == NULL) {
         DMS_ERR("para is NULL.\n");
@@ -298,12 +298,12 @@ int dmanage_check_module_init(const char *module_name)
 
     do {
         fp = fopen(PROC_MOUDULE_FILE_NAME, "r");
-        retry_time++;
-    } while (fp == NULL && retry_time < MAX_FOPEN_RETRY_TIMES);
+        retry_times++;
+    } while (fp == NULL && retry_times < MAX_FOPEN_RETRY_TIMES);
 
     if (fp == NULL) {
-        DMS_ERR("fopen error. (file=\"%s\"; errno:%d, retry_time=%d.)\n",
-            PROC_MOUDULE_FILE_NAME, errno, retry_time);
+        DMS_ERR("fopen error. (file=\"%s\"; errno:%d, retry_times=%d.)\n",
+            PROC_MOUDULE_FILE_NAME, errno, retry_times);
         (void)free(buff);
         buff = NULL;
         return -1;
@@ -505,4 +505,56 @@ drvError_t dmsProcResRestoreHandler(halProcResRestoreInfo *info)
     dms_set_p2p_restore_info_flag(DMS_RES_FLAG_ENABLE);
 
     return ret;
+}
+
+void hal_report_not_support(const char *func_name, const char *reason)
+{
+    const char *keys[] = {"func_name", "reason"};
+    const char *values[] = {
+        func_name,
+        reason
+    };
+
+    REPORT_PREDEFINED_ERR_MSG("EL0021", keys, values, 2UL);
+}
+
+void hal_report_device_occupied(uint32_t devId)
+{
+    int ret = 0;
+    char dev_id_str[16] = {0};
+    const char *keys[] = {"deviceid"};
+    const char *values[] = {dev_id_str};
+
+    ret = snprintf_s(dev_id_str, sizeof(dev_id_str), sizeof(dev_id_str) - 1, "%u", devId);
+    if (ret < 0) {
+        return;
+    }
+    REPORT_PREDEFINED_ERR_MSG("EL0020", keys, values, 1UL);
+}
+
+void hal_report_invalid_dev_id(const char *func_name, uint32_t devId, uint32_t max_devid)
+{
+    int ret = 0;
+    char dev_id_str[16] = {0};
+    char reason[128] = {0};
+    const char *keys[] = {"func_name", "para_value", "para_name", "reason"};
+    const char *values[] = {
+        func_name,
+        dev_id_str,
+        "devId",
+        reason
+    };
+
+    ret = snprintf_s(dev_id_str, sizeof(dev_id_str), sizeof(dev_id_str) - 1, "%u", devId);
+    if (ret < 0) {
+        return;
+    }
+
+    ret = snprintf_s(reason, sizeof(reason), sizeof(reason) - 1,
+        "The parameter value is out of range. The valid range is [0, %u]", max_devid);
+    if (ret < 0) {
+        return;
+    }
+
+    REPORT_PREDEFINED_ERR_MSG("EL0016", keys, values, 4UL);
 }

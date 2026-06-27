@@ -16,7 +16,6 @@
 #include "ka_system_pub.h"
 #include "ka_memory_pub.h"
 #include "ka_errno_pub.h"
-#include "linux/iommu.h"
 #include "comm_kernel_interface.h"
 #include "ascend_ub_common.h"
 #include "ascend_ub_jetty.h"
@@ -25,6 +24,7 @@
 #include "ascend_ub_main.h"
 #include "ascend_ub_pair_dev_info.h"
 #include "ascend_ub_load.h"
+#include "ka_driver_pub.h"
 
 STATIC char g_devdrv_sdk_path[UBDRV_STR_MAX_LEN] = {0};
 STATIC char *g_davinci_config_file = "/lib/davinci.conf";
@@ -57,6 +57,7 @@ STATIC char *g_davinci_config_file = "/lib/davinci.conf";
  * Lhash               0x18    hash                        ascend_xxxx_lhash.bin
  * crl                 0x19    crl                         ascend_xxxx_.crl
  * ubcfg               0x1A    ub_port_cfg.bin             ascend_xxxx_ubcfg.bin
+ * imp                 0x1B    imp_david_asic.bin          ascend_xxxx_imp.bin
  */
 
 struct ubdrv_load_file_cfg g_load_file[UBDRV_LOAD_FILE_NUM] = {
@@ -109,6 +110,13 @@ struct ubdrv_load_file_cfg g_load_file[UBDRV_LOAD_FILE_NUM] = {
         .file_name = "/driver/device/ascend_950_ubcfg.bin",
         .file_type = UBDRV_CRITICAL_FILE,
     },
+    {
+        .id = 0x1B,
+        .file_name = "/driver/device/ascend_950_imp.bin",
+        .file_type = UBDRV_CRITICAL_FILE,
+    },
+    {.id = 0x1C, .file_name = "",}, {.id = 0x1D, .file_name = "",},
+    {.id = 0x1E, .file_name = "",}, {.id = 0x1F, .file_name = "",},
 };
 
 void ubdrv_set_load_abort(struct ubdrv_loader *loader)
@@ -247,7 +255,7 @@ int ubdrv_load_file_fill_blocks(struct ubdrv_loader *loader, u32 dev_id, const c
             goto fill_exit;
         }
         for (i = 0; i < blocks->blocks_valid_num; i++) {
-            len = kernel_read(p_file, blocks->blocks_addr[i].addr,
+            len = ka_fs_kernel_read(p_file, blocks->blocks_addr[i].addr,
                 (size_t)blocks->blocks_addr[i].data_size, offset);
             if ((len < 0) || (len != (ssize_t)blocks->blocks_addr[i].data_size)) {
                 ubdrv_err("Read file failed. (dev_id=%u;file_name=%s;len=%llu;data_size=%llu)\n",
@@ -470,6 +478,15 @@ free_tdev:
     return ret;
 }
 
+STATIC void ubdrv_ksva_iotlb_flush(struct iommu_domain *domain, unsigned long addr, size_t size)
+{
+    ka_iommu_iotlb_gather_t gather;
+
+    ka_iommu_iotlb_gather_init(&gather);
+    ka_iommu_iotlb_gather_add_range(&gather, addr, PAGE_ALIGN(size));
+    ka_iommu_iotlb_sync(domain, &gather);
+}
+
 void ubdrv_free_load_segment(u32 dev_id, struct ubdrv_loader *loader)
 {
     struct ubdrv_load_blocks *blocks = loader->blocks;
@@ -486,6 +503,10 @@ void ubdrv_free_load_segment(u32 dev_id, struct ubdrv_loader *loader)
     if (ret != 0) {
         ubdrv_err("UMMU sva ungrant failed. (dev_id=%u; ret=%d)\n", dev_id, ret);
     }
+
+    ubdrv_ksva_iotlb_flush(loader->sva->handle.domain, (unsigned long)blocks->blocks_addr[0].addr,
+        blocks->blocks_addr[0].size);
+
     ubdrv_vfree(blocks->blocks_addr[0].addr);
     blocks->blocks_addr[0].addr = NULL;
     iommu_ksva_unbind_device(loader->sva);
@@ -523,6 +544,11 @@ int ubdrv_single_file_path_init(char *file_path, u32 len, const u32 file_id)
 
     if (file_id >= UBDRV_LOAD_FILE_NUM) {
         ubdrv_err("Check file id failed. (file_id=%u)\n", file_id);
+        return -EINVAL;
+    }
+
+    if (g_load_file[file_id].file_name == NULL) {
+        ubdrv_err("Check file name is null. (file_id=%u)\n", file_id);
         return -EINVAL;
     }
 

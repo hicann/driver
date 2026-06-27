@@ -26,7 +26,7 @@ typedef enum sched_grp_type {
     EVENT_DRV_MSG_GRP = 0,
     PROXY_HOST_QUEUE_GRP,
     GRP_TYPE_BUTT
-}sched_grp_type_t;
+} sched_grp_type_t;
 
 static int g_grpid[MAX_DEVICE][GRP_TYPE_BUTT];
 static pthread_mutex_t g_event_lock = PTHREAD_MUTEX_INITIALIZER;
@@ -52,7 +52,7 @@ static int _que_event_get_grpid(unsigned int devid, pid_t devpid, unsigned int g
     struct esched_output_info out = {0};
     struct esched_input_info in = {0};
     size_t name_len[GRP_TYPE_BUTT] = {strlen(EVENT_DRV_MSG_GRP_NAME), strlen(PROXY_HOST_QUEUE_GRP_NAME)};
-    char* grp_name[GRP_TYPE_BUTT] = {EVENT_DRV_MSG_GRP_NAME, PROXY_HOST_QUEUE_GRP_NAME};
+    const char *grp_name[GRP_TYPE_BUTT] = {EVENT_DRV_MSG_GRP_NAME, PROXY_HOST_QUEUE_GRP_NAME};
     int ret;
 
     gid_in.pid = devpid;
@@ -89,13 +89,13 @@ static int que_event_get_grpid(unsigned int devid, pid_t devpid, unsigned int gr
     }
 
     if (g_grpid[devid][grp_type] != -1) {
-        *grpid = g_grpid[devid][grp_type];
+        *grpid = (unsigned int)g_grpid[devid][grp_type];
         return DRV_ERROR_NONE;
     }
 
     (void)pthread_mutex_lock(&g_event_lock);
     if (g_grpid[devid][grp_type] != -1) {
-        *grpid = g_grpid[devid][grp_type];
+        *grpid = (unsigned int)g_grpid[devid][grp_type];
         (void)pthread_mutex_unlock(&g_event_lock);
         return DRV_ERROR_NONE;
     }
@@ -118,9 +118,12 @@ int que_event_sum_init(struct que_event_attr *attr, struct que_event_msg *msg, s
 {
     int ret;
     /* DRV_SUBEVENT_CREATE_MSG msg len is greater than sqe payload length 40byte */
-    unsigned int grp_type = ((attr->sub_event != DRV_SUBEVENT_CREATE_MSG) && 
-        (attr->sub_event != DRV_SUBEVENT_QUEUE_INIT_MSG) && (attr->sub_event != DRV_SUBEVENT_QUEUE_ALIVE_MSG) &&
-        (attr->sub_event != DRV_SUBEVENT_ATTACH_INTER_DEV_MSG)) ? PROXY_HOST_QUEUE_GRP : EVENT_DRV_MSG_GRP;
+    unsigned int grp_type = ((attr->sub_event != DRV_SUBEVENT_CREATE_MSG) &&
+                             (attr->sub_event != DRV_SUBEVENT_QUEUE_INIT_MSG) &&
+                             (attr->sub_event != DRV_SUBEVENT_QUEUE_ALIVE_MSG) &&
+                             (attr->sub_event != DRV_SUBEVENT_ATTACH_INTER_DEV_MSG)) ?
+                                PROXY_HOST_QUEUE_GRP :
+                                EVENT_DRV_MSG_GRP;
 
     ret = que_event_get_grpid(attr->devid, attr->devpid, grp_type, &event_sum->grp_id);
     if (que_unlikely(ret != DRV_ERROR_NONE)) {
@@ -128,11 +131,11 @@ int que_event_sum_init(struct que_event_attr *attr, struct que_event_msg *msg, s
         return ret;
     }
 
-    event_sum->msg_len = sizeof(struct event_sync_msg) + msg->in_len;
+    event_sum->msg_len = (unsigned int)(sizeof(struct event_sync_msg) + msg->in_len);
     event_sum->msg = (char *)malloc(event_sum->msg_len);
     if (que_unlikely(event_sum->msg == NULL)) {
-        QUEUE_LOG_ERR("event msg alloc fail. (size=%d; devid=%u; devpid=%d)\n",
-            event_sum->msg_len, attr->devid, attr->devpid);
+        QUEUE_LOG_ERR("event msg alloc fail. (size=%d; devid=%u; devpid=%d)\n", event_sum->msg_len, attr->devid,
+                      attr->devpid);
         return DRV_ERROR_QUEUE_OUT_OF_MEM;
     }
 
@@ -159,25 +162,26 @@ void que_event_sum_uninit(struct event_summary *event)
     que_comm_event_sum_uninit(event);
 }
 
-drvError_t que_event_sync_send(uint32_t dev_id, int32_t timeout,
-    struct event_summary *event, struct event_res *res, struct event_info *back_event_info)
+drvError_t que_event_sync_send(uint32_t dev_id, int32_t timeout, struct event_summary *event, struct event_res *res,
+                               struct event_info *back_event_info)
 {
     drvError_t ret;
-    unsigned long timestamp = esched_get_cur_cpu_tick();
+    unsigned long timestamp = esched_get_cur_cpu_timestamp();
 
     ret = (int)halEschedSubmitEvent(dev_id, event);
     if (que_unlikely(ret != DRV_ERROR_NONE)) {
 #ifndef EMU_ST
         /* flowgw maybe not ready, client will retry. */
-        QUEUE_LOG_WARN("unable to invoke the halEschedSubmitEvent. (dev_id=%u, event_id=%u; ret=%d)\n", dev_id, event->event_id, ret);
+        QUEUE_LOG_WARN("unable to invoke the halEschedSubmitEvent. (dev_id=%u, event_id=%u; ret=%d)\n", dev_id,
+                       event->event_id, ret);
 #endif
         return ret;
     }
     return wait_event_and_check(dev_id, res, back_event_info, timeout, timestamp);
 }
 
-static drvError_t que_esched_submit_event_sync(uint32_t dev_id, unsigned int retry_flg, struct event_summary *event, int32_t timeout,
-    struct event_reply *reply)
+static drvError_t que_esched_submit_event_sync(uint32_t dev_id, unsigned int retry_flg, struct event_summary *event,
+                                               int32_t timeout, struct event_reply *reply)
 {
     struct event_info back_event_info;
     esched_event_buffer *event_buffer = (esched_event_buffer *)back_event_info.priv.msg;
@@ -202,7 +206,7 @@ static drvError_t que_esched_submit_event_sync(uint32_t dev_id, unsigned int ret
 
     ret = que_event_sync_send(dev_id, timeout, event, &res, &back_event_info);
     if ((retry_flg == QUE_SEND_WITH_RETRY) && (ret == DRV_ERROR_WAIT_TIMEOUT)) {
-         ret = que_event_sync_send(dev_id, QUE_EVENT_MAX_WAIT_10S, event, &res, &back_event_info);
+        ret = que_event_sync_send(dev_id, QUE_EVENT_MAX_WAIT_10S, event, &res, &back_event_info);
     }
 
     if (ret == DRV_ERROR_WAIT_TIMEOUT) {
@@ -226,23 +230,23 @@ int que_event_send(struct que_event_attr *attr, struct que_event_msg *msg, int t
 
     ret = que_event_sum_init(attr, msg, &event_sum);
     if (que_unlikely(ret != DRV_ERROR_NONE)) {
-        QUEUE_LOG_ERR("event summary init fail. (ret=%d; devid=%u; hostpid=%d; devpid=%d; sub_event=%u)\n",
-            ret, attr->devid, attr->hostpid, attr->devpid, attr->sub_event);
+        QUEUE_LOG_ERR("event summary init fail. (ret=%d; devid=%u; hostpid=%d; devpid=%d; sub_event=%u)\n", ret,
+                      attr->devid, attr->hostpid, attr->devpid, attr->sub_event);
         return ret;
     }
 
     ret = que_event_reply_init(msg, &reply);
     if (que_unlikely(ret != DRV_ERROR_NONE)) {
         que_event_sum_uninit(&event_sum);
-        QUEUE_LOG_ERR("event reply init fail. (ret=%d; devid=%u; hostpid=%d; devpid=%d; sub_event=%u)\n",
-            ret, attr->devid, attr->hostpid, attr->devpid, attr->sub_event);
+        QUEUE_LOG_ERR("event reply init fail. (ret=%d; devid=%u; hostpid=%d; devpid=%d; sub_event=%u)\n", ret,
+                      attr->devid, attr->hostpid, attr->devpid, attr->sub_event);
         return ret;
     }
 
     ret = que_esched_submit_event_sync(attr->devid, attr->retry_flg, &event_sum, timeout_ms, &reply);
     if (que_unlikely(ret != DRV_ERROR_NONE)) {
-        QUEUE_LOG_ERR("submit event fail. (ret=%d; devid=%u; hostpid=%d; devpid=%d; sub_event=%u)\n",
-            ret, attr->devid, attr->hostpid, attr->devpid, attr->sub_event);
+        QUEUE_LOG_ERR("submit event fail. (ret=%d; devid=%u; hostpid=%d; devpid=%d; sub_event=%u)\n", ret, attr->devid,
+                      attr->hostpid, attr->devpid, attr->sub_event);
         ret = DRV_ERROR_INNER_ERR;
         goto out;
     }
@@ -257,8 +261,8 @@ int que_event_send(struct que_event_attr *attr, struct que_event_msg *msg, int t
     ret = (reply.reply_len != reply.buf_len) ? DRV_ERROR_PARA_ERROR : DRV_ERROR_NONE;
     if (que_unlikely(ret != DRV_ERROR_NONE)) {
         QUEUE_LOG_ERR("reply len invalid. (ret=%d; devid=%u; hostpid=%d; devpid=%d; sub_event=%u; "
-            "reply_len=%u; buf_len=%u)\n", ret, attr->devid, attr->hostpid, attr->devpid, attr->sub_event,
-            reply.reply_len, reply.buf_len);
+                      "reply_len=%u; buf_len=%u)\n",
+                      ret, attr->devid, attr->hostpid, attr->devpid, attr->sub_event, reply.reply_len, reply.buf_len);
     }
 out:
     que_event_reply_uninit(&reply);
@@ -266,15 +270,16 @@ out:
     return ret;
 }
 
-int que_event_send_ex(unsigned int devid, unsigned int retry_flg, unsigned int sub_event, struct que_event_msg *msg, int timeout_ms)
+int que_event_send_ex(unsigned int devid, unsigned int retry_flg, unsigned int sub_event, struct que_event_msg *msg,
+                      int timeout_ms)
 {
     struct que_event_attr attr = {.devid = devid, .sub_event = sub_event, .retry_flg = retry_flg};
     int ret;
 
     ret = que_ctx_get_pids(devid, &attr.hostpid, &attr.devpid);
     if (que_unlikely(ret != DRV_ERROR_NONE)) {
-        QUEUE_LOG_ERR("que ctx get pids fail. (ret=%d; devid=%u; sub_event=%u; timeout_ms=%dms)\n",
-            ret, devid, sub_event, timeout_ms);
+        QUEUE_LOG_ERR("que ctx get pids fail. (ret=%d; devid=%u; sub_event=%u; timeout_ms=%dms)\n", ret, devid,
+                      sub_event, timeout_ms);
         return ret;
     }
     ret = que_event_send(&attr, msg, timeout_ms);
@@ -282,7 +287,7 @@ int que_event_send_ex(unsigned int devid, unsigned int retry_flg, unsigned int s
 }
 
 int que_clt_send_event_with_wait(unsigned int devid, unsigned int qid, unsigned int sub_event,
-    struct que_event_msg *msg, int timeout_ms)
+                                 struct que_event_msg *msg, int timeout_ms)
 {
     int ret, wait_ret;
     int timeout_ms_tmp = timeout_ms;
@@ -315,8 +320,6 @@ int que_clt_send_event_with_wait(unsigned int devid, unsigned int qid, unsigned 
 #else /* EMU_ST */
 
 void que_clt_event_emu_test(void)
-{
-}
+{}
 
-#endif  /* EMU_ST */
-
+#endif /* EMU_ST */

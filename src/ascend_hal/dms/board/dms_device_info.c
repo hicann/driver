@@ -59,7 +59,7 @@ drvError_t dms_get_basic_info_host(unsigned int dev_id, void *buff, unsigned int
 #endif
 }
 
-static int dms_custom_sign_errno_convert(int ret) {
+static int dms_errno_convert(int ret) {
     if (ret == DRV_ERROR_NOT_SUPPORT || ret == DRV_ERROR_OPER_NOT_PERMITTED) {
         return ret;
     }
@@ -84,12 +84,12 @@ static drvError_t dms_set_ioctl(DSMI_MAIN_CMD main_cmd, struct dms_filter_st fil
 
     ret = DmsIoctl(DMS_IOCTL_CMD, &ioarg);
     if (main_cmd == DSMI_MAIN_CMD_SEC && ret != 0) {
-        ret = dms_custom_sign_errno_convert(ret);
+        ret = dms_errno_convert(ret);
         if (ret != 0) {
-            DMS_EX_NOTSUPPORT_ERR(ret, "Set Device sec info failed. (ret=%d; filter:\"%s\")\n", ret, filter.filter);
+            DMS_EX_NOTSUPPORT_ERR(ret, "Set device info failed. (ret=%d; filter:\"%s\")\n", ret, filter.filter);
             return ret;
         }
-         DMS_DEBUG("Set Device sec info success.\n");
+        DMS_DEBUG("Set device info success.\n");
         return DRV_ERROR_NONE;
     }
 
@@ -229,13 +229,14 @@ static drvError_t dms_get_ioctl(DSMI_MAIN_CMD main_cmd, struct dms_filter_st fil
     ioarg.output_len = sizeof(struct dms_get_device_info_out);
 
     ret = DmsIoctl(DMS_IOCTL_CMD, &ioarg);
-    if (main_cmd == DSMI_MAIN_CMD_SEC && ret != 0) {
-        ret = dms_custom_sign_errno_convert(ret);
+    /* when main_cmd is DSMI_MAIN_CMD_PCIE, only DSMI_PCIE_SUB_CMD_PCIE_INFO sub_cmd calls current function */
+    if (ret != 0 && (main_cmd == DSMI_MAIN_CMD_SEC || main_cmd == DSMI_MAIN_CMD_PCIE)) {
+        ret = dms_errno_convert(ret);
         if (ret != 0) {
-            DMS_EX_NOTSUPPORT_ERR(ret, "Get Device sec info failed. (ret=%d; filter:\"%s\")\n", ret, filter.filter);
+            DMS_EX_NOTSUPPORT_ERR(ret, "Get device info failed. (ret=%d; filter:\"%s\")\n", ret, filter.filter);
             return ret;
         }
-         DMS_DEBUG("Set Device sec info success.\n");
+        DMS_DEBUG("Set device info success.\n");
         return DRV_ERROR_NONE;
     }
 
@@ -432,7 +433,17 @@ drvError_t DmsGetDevProbeList(unsigned int *devices, unsigned int len)
         return ret;
     }
 
-    for (i = 0; i < len; i++) {
+    if (para.num_dev > URD_MAX_UDEV_NUM) {
+        DMS_ERR("Invalid parameter. (num_dev=%u)\n", para.num_dev);
+        return DRV_ERROR_INVALID_VALUE;
+    }
+
+    if (para.num_dev > len) {
+        DMS_WARN("More devices than expected. (len=%u; num_dev=%u)\n", len, para.num_dev);
+    }
+
+    unsigned int copy_len = (len < para.num_dev) ? len : para.num_dev;
+    for (i = 0; i < copy_len; i++) {
         devices[i] = para.devids[i];
     }
 
@@ -521,12 +532,20 @@ drvError_t DmsHalSetDeviceInfoEx(unsigned int dev_id, int module_type, int info_
     ret = dms_hal_dev_info_ioctl(DMS_GET_SET_DEVICE_INFO_CMD, filter, &info);
     return ret;
 }
-drvError_t dms_set_detect_ioctl(DSMI_DETECT_MAIN_CMD main_cmd, struct dms_filter_st filter, struct dms_set_device_info_in in)
+drvError_t dms_set_detect_info(unsigned int dev_id, DSMI_DETECT_MAIN_CMD main_cmd, unsigned int sub_cmd, void *buf,
+    unsigned int size)
 {
+    struct dms_set_device_info_in in = {0};
+    struct dms_filter_st filter = {0};
     struct dms_ioctl_arg ioarg = {0};
     int ret;
 
-    (void)main_cmd;
+    DMS_MAKE_UP_FILTER_DEVICE_INFO(&filter, main_cmd);
+    in.dev_id = dev_id;
+    in.sub_cmd = sub_cmd;
+    in.buff = buf;
+    in.buff_size = size;
+
     ioarg.main_cmd = DMS_GET_SET_DETECT_INFO_CMD;
     ioarg.sub_cmd = ZERO_CMD;
     ioarg.filter = &filter.filter[0];
@@ -547,13 +566,25 @@ drvError_t dms_set_detect_ioctl(DSMI_DETECT_MAIN_CMD main_cmd, struct dms_filter
     return DRV_ERROR_NONE;
 }
 
-drvError_t dms_get_detect_ioctl(DSMI_DETECT_MAIN_CMD main_cmd, struct dms_filter_st filter, struct dms_get_device_info_in in,
+drvError_t dms_get_detect_info(unsigned int dev_id, DSMI_DETECT_MAIN_CMD main_cmd, unsigned int sub_cmd, void *buf,
     unsigned int *size)
 {
-    struct dms_ioctl_arg ioarg = {0};
     struct dms_get_device_info_out out = {0};
+    struct dms_get_device_info_in in = {0};
+    struct dms_filter_st filter = {0};
+    struct dms_ioctl_arg ioarg = {0};
     int ret;
-    (void)main_cmd;
+
+    if ((buf == NULL) || (size == NULL) || (*size == 0)) {
+        DMS_ERR("Invalid parameter. (dev_id=%u; buf=%d; size=%d)\n", dev_id, (buf != NULL), (size != NULL));
+        return DRV_ERROR_PARA_ERROR;
+    }
+
+    DMS_MAKE_UP_FILTER_DEVICE_INFO(&filter, main_cmd);
+    in.dev_id = dev_id;
+    in.sub_cmd = sub_cmd;
+    in.buff = buf;
+    in.buff_size = *size;
 
     ioarg.main_cmd = DMS_GET_GET_DETECT_INFO_CMD;
     ioarg.sub_cmd = ZERO_CMD;
@@ -588,7 +619,7 @@ drvError_t DmsGetAiCoreDieNum(unsigned int dev_id, long long *value)
 
     urd_usr_cmd_fill(&cmd, DMS_MAIN_CMD_BASIC, DMS_SUBCMD_GET_AICORE_DIE_NUM, NULL, 0);
     urd_usr_cmd_para_fill(&cmd_para, NULL, 0, (void *)&die_num, sizeof(unsigned int));
-    ret = urd_dev_usr_cmd(dev_id, &cmd, &cmd_para);
+    ret = urd_dev_usr_cmd_ex(dev_id, DMS_GET_AICORE_DIE_NUM, &cmd, &cmd_para);
     if (ret != 0) {
         DMS_EX_NOTSUPPORT_ERR(ret, "Get aicore die num failed. (dev_id=%u; ret=%d)\n", dev_id, ret);
         return ret;
@@ -753,9 +784,9 @@ drvError_t dms_get_process_resource(unsigned int dev_id, struct dsmi_resource_pa
         return DRV_ERROR_PARA_ERROR;
     }
 
-    if (para->resource_type == DSMI_DEV_PROCESS_PID) {
+    if ((para->resource_type == DSMI_DEV_PROCESS_PID) || (para->resource_type == DSMI_DEV_PROCESS_CONTAINER_PID)) {
         urd_usr_cmd_fill(&cmd, DMS_MAIN_CMD_BASIC, DMS_SUBCMD_GET_PROCESS_LIST, NULL, 0);
-        urd_usr_cmd_para_fill(&cmd_para, NULL, 0, buf, buf_len);
+        urd_usr_cmd_para_fill(&cmd_para, &para->resource_type, sizeof(unsigned int), buf, buf_len);
     } else if (para->resource_type == DSMI_DEV_PROCESS_MEM) {
         urd_usr_cmd_fill(&cmd, DMS_MAIN_CMD_BASIC, DMS_SUBCMD_GET_PROCESS_MEMORY, NULL, 0);
         urd_usr_cmd_para_fill(&cmd_para, (void *)&para->owner_id, sizeof(unsigned int), buf, buf_len);

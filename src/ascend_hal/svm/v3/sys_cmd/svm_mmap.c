@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * Copyright (c) 2026 Huawei Technologies Co., Ltd.
  * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@
 #include "svm_log.h"
 #include "svm_pub.h"
 #include "svm_ioctl_ex.h"
+#include "svm_mmap.h"
 
 static int svm_mmap_fd = -1;
 static pthread_mutex_t svm_mmap_fd_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -63,6 +64,7 @@ static int svm_mmap_char_dev_open(int *fd)
     if (ret != 0) {
         svm_err("Ioctl failed. (fd=%d; errno=%d, error=%s)\n", *fd, errno, strerror(errno));
         svm_file_close(*fd);
+        *fd = -1;
         return ret;
     }
 
@@ -113,14 +115,26 @@ static int svm_mmap_init(void)
     return ret;
 }
 
+/* May be interrupted by signals, should retry. */
+#define SVM_MMAP_MAX_RETRY_CNT 10
 void *svm_cmd_mmap(void *addr, size_t length, int prot, int flags, off_t offset)
 {
-    int ret = svm_mmap_init();
+    void *mapped_addr = MAP_FAILED;
+    int cnt, ret;
+
+    ret = svm_mmap_init();
     if (ret != 0) {
-        return NULL;
+        return MAP_FAILED;
     }
 
-    return svm_user_mmap(addr, length, prot, flags, svm_mmap_fd, offset);
+    for (cnt = 0; cnt < SVM_MMAP_MAX_RETRY_CNT; cnt++) {
+        mapped_addr = svm_user_mmap(addr, length, prot, flags, svm_mmap_fd, offset);
+        if ((mapped_addr != MAP_FAILED) || (errno != EINTR)) {
+            break;
+        }
+    }
+
+    return mapped_addr;
 }
 
 int svm_cmd_munmap(void *addr, size_t length)
@@ -133,6 +147,8 @@ int svm_cmd_munmap(void *addr, size_t length)
     return svm_user_munmap(addr, length);
 }
 
+void svm_mmap_criu_reset(void) { svm_mmap_fd = -1; }
+
 void __attribute__((destructor)) svm_mmap_uninit(void)
 {
     if (svm_mmap_fd >= 0) {
@@ -140,4 +156,3 @@ void __attribute__((destructor)) svm_mmap_uninit(void)
         svm_mmap_fd = -1;
     }
 }
-

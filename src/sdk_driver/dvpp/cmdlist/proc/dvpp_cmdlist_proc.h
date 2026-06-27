@@ -14,7 +14,14 @@
 #ifndef DVPP_CMDLIST_PROC_H
 #define DVPP_CMDLIST_PROC_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void dvpp_cmdlist_init_proc(void);
 void dvpp_cmdlist_remove_proc(void);
 
+#ifdef __cplusplus
+}
+#endif
 #endif // #ifndef DVPP_CMDLIST_PROC_H

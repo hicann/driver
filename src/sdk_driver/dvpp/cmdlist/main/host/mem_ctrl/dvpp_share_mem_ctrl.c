@@ -17,8 +17,8 @@
 #include "comm_kernel_interface.h"
 #include "dvpp_cmdlist_log.h"
 
-ka_spinlock_t g_share_mem_pool_lock;
-dvpp_share_mem_pool *g_share_mem_pool = NULL;
+ka_spinlock_t g_share_mem_pool_lock[DVPP_VMNG_DEVICE_NUM_MAX];
+dvpp_share_mem_pool *g_share_mem_pool[DVPP_VMNG_DEVICE_NUM_MAX] = {[0 ... DVPP_VMNG_DEVICE_NUM_MAX - 1U] = NULL};
 static ka_mutex_t g_normal_blks_mutex[MOD_NUM];
 static ka_mutex_t g_super_blks_mutex;
 
@@ -96,9 +96,12 @@ dvpp_share_mem_pool* dvpp_init_share_mem_pool(uint32_t devid, dvpp_sqe_args *sqe
 
 void dvpp_uninit_share_mem_pool(void)
 {
-    if (g_share_mem_pool != NULL) {
-        ka_mm_iounmap(g_share_mem_pool);
-        g_share_mem_pool = NULL;
+    uint32_t devid;
+    for (devid = 0; devid < DVPP_VMNG_DEVICE_NUM_MAX; devid++) {
+        if (g_share_mem_pool[devid] != NULL) {
+            ka_mm_iounmap(g_share_mem_pool[devid]);
+            g_share_mem_pool[devid] = NULL;
+        }
     }
 }
 

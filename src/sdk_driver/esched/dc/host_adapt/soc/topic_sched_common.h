@@ -17,7 +17,7 @@
 #include "ascend_hal_define.h"
 #include "esched.h"
 
-#define ESCHED_DRV_REASSIGN_VFID(vf_id)  (((vf_id) == 0) ? (vf_id) : ((vf_id) - 1))
+#define ESCHED_DRV_REASSIGN_VFID(vf_id) (((vf_id) == 0) ? (vf_id) : ((vf_id) - 1))
 
 STATIC inline void esched_drv_reg_wr(void __ka_mm_iomem *io_base, u32 offset, u32 val)
 {
@@ -34,7 +34,7 @@ STATIC inline void esched_drv_reg_rd(const void __ka_mm_iomem *io_base, u32 offs
     }
 }
 
-STATIC inline void esched_drv_reg_mem_wr(const void __ka_mm_iomem *io_base, u32 offset, void* val, u32 size)
+STATIC inline void esched_drv_reg_mem_wr(const void __ka_mm_iomem *io_base, u32 offset, void *val, u32 size)
 {
     sched_debug("Memory write. (offset=%x; size=%x)\n", offset, size);
 #ifdef CFG_PLATFORM_ESL

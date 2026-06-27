@@ -63,15 +63,15 @@ struct devmm_vpc_mng_msg_sync {
     u64 dev_mem_p2p[DEVMM_EXCHANGE_MAX_MEM_TYPE];
     u64 dvpp_memsize;
     u8 feature_phycial_address;
-    u8 resv1[7];    /* 7:reserved num */
-    u64 resv[2];    /* 2:reserved num */
+    u8 resv1[7]; /* 7:reserved num */
+    u64 resv[2]; /* 2:reserved num */
 
     u64 double_pgtable_offset;
 };
 
 struct devmm_vpc_mng_msg_init_process {
     struct devmm_vpc_mng_msg_head head;
-    u64 resv[4];    /* 4:reserved num */
+    u64 resv[4]; /* 4:reserved num */
 };
 
 struct devmm_vpc_mng_msg_create_dev_page {
@@ -82,7 +82,7 @@ struct devmm_vpc_mng_msg_create_dev_page {
     u32 page_size;
     u32 bitmap;
     u64 page_cnt;
-    u64 resv[4];    /* 4:reserved num */
+    u64 resv[4]; /* 4:reserved num */
 };
 
 #define DEL_PAGE_CACHE_TYPE_VA 0
@@ -95,7 +95,7 @@ struct devmm_vpc_mng_msg_del_dev_page_cache {
     u32 page_num;
     u32 page_size;
     u32 reuse;
-    u32 resv[9];    /* 9:reserved num */
+    u32 resv[9]; /* 9:reserved num */
 };
 
 struct devmm_vpc_mem_copy_convrt_para {
@@ -124,7 +124,7 @@ struct devmm_vpc_memory_attributes {
     u64 va;
     u32 logical_devid;
     u8 is_svm_huge;
-    u8 resv1[3];  /* 3:reserved num */
+    u8 resv1[3]; /* 3:reserved num */
     u32 host_page_size;
     u32 resv2;
     u64 resv3[2]; /* 2:reserved num */
@@ -149,10 +149,10 @@ struct devmm_vpc_mem_convrt_addr_para {
     struct DMA_ADDR dmaAddr;
     u32 direction;
     u32 dma_node_num;
-    u32 virt_id;           /* store logic id to destroy addr */
-    u32 destroy_flag;      /* used in virt machine, to destroy the res */
-    u32 convert_id;        /* for vm limit convert times */
-    u32 resv[9];           /* 9:reserved num */
+    u32 virt_id;      /* store logic id to destroy addr */
+    u32 destroy_flag; /* used in virt machine, to destroy the res */
+    u32 convert_id;   /* for vm limit convert times */
+    u32 resv[9];      /* 9:reserved num */
 };
 
 struct devmm_vpc_mng_msg_convert_addr {
@@ -171,7 +171,7 @@ struct devmm_vpc_mng_msg_convert_dma_addr {
 };
 
 struct devmm_vpc_mem_desty_addr_para {
-    u64 pSrc;  /* pSrc pDst just use in virt machine */
+    u64 pSrc; /* pSrc pDst just use in virt machine */
     u64 pDst;
     u64 spitch;
     u64 dpitch;
@@ -190,7 +190,7 @@ struct devmm_vpc_mng_msg_destroy_addr {
 struct devmm_vpc_translate_info {
     u64 va;
     u32 page_size;
-    u32 resv[9];    /* 9:reserved num */
+    u32 resv[9]; /* 9:reserved num */
 };
 
 struct devmm_vpc_mng_msg_translate_addr {
@@ -203,7 +203,7 @@ struct devmm_vpc_mng_msg_clear_translate_addr {
     struct devmm_vpc_mng_msg_head head;
     u64 va;
     u64 len;
-    u64 resv[4];    /* 4:reserved num */
+    u64 resv[4]; /* 4:reserved num */
 };
 
 #define PAGE_FAULT_STAGE_QUERY 0
@@ -214,7 +214,7 @@ struct devmm_vpc_mng_msg_page_fault {
     u32 page_size;
     u32 stage; /* use in device page fault, stage 0: query vm pa list, stage 1: free vm page */
     struct devmm_pa_list pa_list;
-    u64 resv[4];    /* 4:reserved num */
+    u64 resv[4]; /* 4:reserved num */
 };
 
 struct devmm_vpc_mng_msg_agent_mem_map {
@@ -229,8 +229,7 @@ struct devmm_vpc_mng_msg_agent_mem_map {
     u64 phy_addr_blk_pg_num;
     u32 result;
     u32 resv1;
-    u64 resv2[3];    /* 3:reserved num */
+    u64 resv2[3]; /* 3:reserved num */
 };
-
 
 #endif

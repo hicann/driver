@@ -94,14 +94,14 @@ struct queue_mcast_para {
     unsigned int rsv : 1;
     unsigned int event_sn : 22;
 };
- 
+
 struct queue_common_para {
     unsigned int devid : 16;
     unsigned int qid : 16;
     unsigned int host_timestamp;
     struct queue_mcast_para mcast_para;
 };
- 
+
 struct queue_event_msg_head {
     struct event_sync_msg sync;
     struct queue_common_para comm;
@@ -124,24 +124,24 @@ union queue_req_arg {
 };
 
 #define DAVINCI_QUEUE_SUB_MODULE_NAME "QUEUE"
-#define QUEUE_IOC_MAGIC                       'Q'
+#define QUEUE_IOC_MAGIC 'Q'
 
-#define QUEUE_HOST_COMMON_OP_CMD              _IOW(QUEUE_IOC_MAGIC, 1, struct queue_ioctl_host_common_op)
-#define QUEUE_ENQUEUE_CMD                     _IOW(QUEUE_IOC_MAGIC, 2, struct queue_ioctl_enqueue)
-#define QUEUE_CTRL_MSG_SEND_CMD               _IOW(QUEUE_IOC_MAGIC, 6, struct queue_ioctl_ctrl_msg_send)
-#define QUEUE_COPY_CMD                        _IOWR(QUEUE_IOC_MAGIC, 3, struct queue_ioctl_copy)
-#define QUEUE_REPLY_CLIENT_CMD                _IOW(QUEUE_IOC_MAGIC, 4, struct queue_ioctl_reply)
-#define QUEUE_SESSION_INIT                    _IOW(QUEUE_IOC_MAGIC, 5, struct queue_init_para)
-#define QUEUE_CTRL_MSG_RECV_CMD               _IOWR(QUEUE_IOC_MAGIC, 7, struct queue_ioctl_ctrl_msg_recv)
-#define QUEUE_GET_IOVEC_NUM_CMD               _IOWR(QUEUE_IOC_MAGIC, 8, struct queue_ioctl_iovec_num)
+#define QUEUE_HOST_COMMON_OP_CMD _IOW(QUEUE_IOC_MAGIC, 1, struct queue_ioctl_host_common_op)
+#define QUEUE_ENQUEUE_CMD _IOW(QUEUE_IOC_MAGIC, 2, struct queue_ioctl_enqueue)
+#define QUEUE_CTRL_MSG_SEND_CMD _IOW(QUEUE_IOC_MAGIC, 6, struct queue_ioctl_ctrl_msg_send)
+#define QUEUE_COPY_CMD _IOWR(QUEUE_IOC_MAGIC, 3, struct queue_ioctl_copy)
+#define QUEUE_REPLY_CLIENT_CMD _IOW(QUEUE_IOC_MAGIC, 4, struct queue_ioctl_reply)
+#define QUEUE_SESSION_INIT _IOW(QUEUE_IOC_MAGIC, 5, struct queue_init_para)
+#define QUEUE_CTRL_MSG_RECV_CMD _IOWR(QUEUE_IOC_MAGIC, 7, struct queue_ioctl_ctrl_msg_recv)
+#define QUEUE_GET_IOVEC_NUM_CMD _IOWR(QUEUE_IOC_MAGIC, 8, struct queue_ioctl_iovec_num)
 
-#define QUEUE_DEV_FULL_NAME   "/dev/hi-queue-manage"
+#define QUEUE_DEV_FULL_NAME "/dev/hi-queue-manage"
 #define QUEUE_ENQUEUE_FLAG 0
 #define QUEUE_DEQUEUE_FLAG 1
 
 /* user agent and kernel use */
 #define MSG_MAX_LEN 64
-#define QUEUE_CTRL_MSG_SEND_CMD               _IOW(QUEUE_IOC_MAGIC, 6, struct queue_ioctl_ctrl_msg_send)
-#define QUEUE_CMD_MAX                         9
+#define QUEUE_CTRL_MSG_SEND_CMD _IOW(QUEUE_IOC_MAGIC, 6, struct queue_ioctl_ctrl_msg_send)
+#define QUEUE_CMD_MAX 9
 
 #endif

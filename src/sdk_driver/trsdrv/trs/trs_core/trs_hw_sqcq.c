@@ -31,27 +31,18 @@
 #include "trs_shr_sqcq.h"
 #include "trs_hw_sqcq.h"
 
-static bool trs_is_sqcq_pair_mode(struct trs_core_ts_inst *ts_inst)
-{
-    return trs_is_stars_inst(ts_inst);
-}
+static bool trs_is_sqcq_pair_mode(struct trs_core_ts_inst *ts_inst) { return trs_is_stars_inst(ts_inst); }
 
-static inline u32 trs_hw_get_sq_head(struct trs_sq_ctx *sq_ctx)
-{
-    return *(u32 *)sq_ctx->head.kva;
-}
+static inline u32 trs_hw_get_sq_head(struct trs_sq_ctx *sq_ctx) { return *(u32 *)sq_ctx->head.kva; }
 
 static inline void trs_hw_set_sq_head(struct trs_sq_ctx *sq_ctx, u32 head)
 {
-     ka_smp_mb();
+    ka_smp_mb();
 
     *(u32 *)sq_ctx->head.kva = head;
 }
 
-static inline u32 trs_hw_get_sq_tail(struct trs_sq_ctx *sq_ctx)
-{
-    return *(u32 *)sq_ctx->tail.kva;
-}
+static inline u32 trs_hw_get_sq_tail(struct trs_sq_ctx *sq_ctx) { return *(u32 *)sq_ctx->tail.kva; }
 
 static void trs_trace_hw_cqe_fill(struct trs_id_inst *inst, struct trs_chan_cq_trace *cq_trace, void *cqe)
 {
@@ -99,8 +90,9 @@ int trs_hw_sq_send_task(struct trs_sq_ctx *sq_ctx, enum trs_sq_send_sched_type s
         int ret;
 
         if ((head >= sq_ctx->sq_depth) || (tail >= sq_ctx->sq_depth)) {
-            trs_err("Invalid head tail. (devid=%u; tsid=%u; sqId=%u; sq_depth=%u; head=%u; tail=%u)\n",
-                inst->devid, inst->tsid, sq_ctx->sqid, sq_ctx->sq_depth, head, tail);
+            trs_err(
+                "Invalid head tail. (devid=%u; tsid=%u; sqId=%u; sq_depth=%u; head=%u; tail=%u)\n", inst->devid,
+                inst->tsid, sq_ctx->sqid, sq_ctx->sq_depth, head, tail);
             break;
         }
 
@@ -109,8 +101,9 @@ int trs_hw_sq_send_task(struct trs_sq_ctx *sq_ctx, enum trs_sq_send_sched_type s
         ret = hal_kernel_trs_chan_send(inst, sq_ctx->chan_id, &para);
         if (ret != 0) {
             sq_ctx->send_fail++;
-            trs_debug("Send failed. (devid=%u; tsid=%u; sqId=%u; sq_depth=%u; head=%u; tail=%u; ret=%d)\n",
-                inst->devid, inst->tsid, sq_ctx->sqid, sq_ctx->sq_depth, head, tail, ret);
+            trs_debug(
+                "Send failed. (devid=%u; tsid=%u; sqId=%u; sq_depth=%u; head=%u; tail=%u; ret=%d)\n", inst->devid,
+                inst->tsid, sq_ctx->sqid, sq_ctx->sq_depth, head, tail, ret);
             break;
         }
 
@@ -125,8 +118,9 @@ int trs_hw_sq_send_task(struct trs_sq_ctx *sq_ctx, enum trs_sq_send_sched_type s
     ka_task_mutex_unlock(&sq_ctx->mutex);
 
     if (num > 1) {
-        trs_debug("Tx burst. (devid=%u; tsid=%u; sqId=%u; num=%u; tail=%u)\n",
-            inst->devid, inst->tsid, sq_ctx->sqid, num, tail);
+        trs_debug(
+            "Tx burst. (devid=%u; tsid=%u; sqId=%u; num=%u; tail=%u)\n", inst->devid, inst->tsid, sq_ctx->sqid, num,
+            tail);
     }
     return num;
 }
@@ -200,7 +194,7 @@ static bool trs_sq_work_is_need_retry(struct trs_core_ts_inst *ts_inst, u32 num)
 
 #ifndef EMU_ST
     if (num != 0) {
-        ts_inst->sq_work_retry_time = 3;    /* 3:retry time */
+        ts_inst->sq_work_retry_time = 3; /* 3:retry time */
         return true;
     }
 
@@ -382,26 +376,22 @@ static int trs_hw_cq_recv(struct trs_id_inst *inst, u32 cqid, void *cqe)
 
 static int trs_chan_cq_full_proc(struct trs_id_inst *inst, int chan_id)
 {
-    u8 cqe[128];    /* max cqe size is 128B */
-    struct trs_chan_recv_para recv_para = {
-        .cqe = cqe,
-        .cqe_num = 1,
-        .recv_cqe_num = 0,
-        .timeout = 1000
-    };
+    u8 cqe[128]; /* max cqe size is 128B */
+    struct trs_chan_recv_para recv_para = {.cqe = cqe, .cqe_num = 1, .recv_cqe_num = 0, .timeout = 1000};
     int ret;
 
     ret = trs_chan_ctrl(inst, chan_id, CHAN_CTRL_CMD_SQ_STATUS_SET, 0);
     if (ret != 0) {
-        trs_err("Set sq status failed. (devid=%u; tsid=%u; chan_id=%d; ret=%d)\n",
-            inst->devid, inst->tsid, chan_id, ret);
+        trs_err(
+            "Set sq status failed. (devid=%u; tsid=%u; chan_id=%d; ret=%d)\n", inst->devid, inst->tsid, chan_id, ret);
         return ret;
     }
 
     ret = hal_kernel_trs_chan_recv(inst, chan_id, &recv_para);
     if (ret != 0) {
-        trs_err("Fetch cq and update cq head failed. (devid=%u; tsid=%u; chan_id=%d; ret=%d)\n",
-            inst->devid, inst->tsid, chan_id, ret);
+        trs_err(
+            "Fetch cq and update cq head failed. (devid=%u; tsid=%u; chan_id=%d; ret=%d)\n", inst->devid, inst->tsid,
+            chan_id, ret);
         return ret;
     }
 
@@ -410,8 +400,7 @@ static int trs_chan_cq_full_proc(struct trs_id_inst *inst, int chan_id)
 
 typedef int (*trs_hw_sqcq_abnormal_handle)(struct trs_id_inst *inst, int chan_id);
 static const trs_hw_sqcq_abnormal_handle hw_sqcq_abnormal_handle[ABNORMAL_ERR_TYPE_MAX] = {
-    [ABNORMAL_ERR_TYPE_CQ_FULL] = trs_chan_cq_full_proc
-};
+    [ABNORMAL_ERR_TYPE_CQ_FULL] = trs_chan_cq_full_proc};
 
 static int trs_hw_sqcq_abnormal_proc(struct trs_id_inst *inst, int chan_id, u8 err_type)
 {
@@ -426,15 +415,17 @@ static int trs_hw_sqcq_abnormal_proc(struct trs_id_inst *inst, int chan_id, u8 e
     return 0;
 }
 
-static int trs_hw_alloc_chan(struct trs_proc_ctx *proc_ctx, struct trs_id_inst *inst,
-    struct halSqCqInputInfo *para, int *chan_id)
+static int trs_hw_alloc_chan(
+    struct trs_proc_ctx *proc_ctx, struct trs_id_inst *inst, struct halSqCqInputInfo *para, int *chan_id)
 {
     struct trs_chan_para chan_para = {0};
     int ret;
 
-    trs_debug("Alloc chan. (devid=%u; tsid=%u; flag=0x%x; sqeSize=%u; sqeDepth=%u; cqeSize=%u; cqeDepth=%u; "
-        "info[0]=%u)\n", inst->devid, inst->tsid, para->flag, para->sqeSize, para->sqeDepth, para->cqeSize,
-        para->cqeDepth, para->info[0]);
+    trs_debug(
+        "Alloc chan. (devid=%u; tsid=%u; flag=0x%x; sqeSize=%u; sqeDepth=%u; cqeSize=%u; cqeDepth=%u; "
+        "info[0]=%u)\n",
+        inst->devid, inst->tsid, para->flag, para->sqeSize, para->sqeDepth, para->cqeSize, para->cqeDepth,
+        para->info[0]);
     chan_para.types.type = CHAN_TYPE_HW;
     if ((para->flag & TSDRV_FLAG_ONLY_SQCQ_ID) != 0) {
         chan_para.types.sub_type = CHAN_SUB_TYPE_HW_TS;
@@ -480,7 +471,7 @@ static int trs_hw_alloc_chan(struct trs_proc_ctx *proc_ctx, struct trs_id_inst *
     if ((para->flag & TSDRV_FLAG_RANGE_ID) != 0) {
 #ifndef EMU_ST
         chan_para.flag |= (0x1 << CHAN_FLAG_RANGE_SQ_ID_BIT) | (0x1 << CHAN_FLAG_RANGE_CQ_ID_BIT) |
-            (0x1 << CHAN_FLAG_SPECIFIED_SQ_ID_BIT) | (0x1 << CHAN_FLAG_SPECIFIED_CQ_ID_BIT);
+                          (0x1 << CHAN_FLAG_SPECIFIED_SQ_ID_BIT) | (0x1 << CHAN_FLAG_SPECIFIED_CQ_ID_BIT);
 #endif
     }
 
@@ -532,6 +523,7 @@ static int trs_hw_alloc_chan(struct trs_proc_ctx *proc_ctx, struct trs_id_inst *
         }
         ret = trs_core_get_host_pid(ka_task_get_current_tgid(), &master_pid);
         if (ret != 0) {
+            trs_err("Query host pid fail. (ret=%d)\n", ret);
             return ret;
         }
         chan_para.msg[SQCQ_INFO_LENGTH - 1] = (u32)master_pid;
@@ -547,17 +539,16 @@ static int trs_pair_mode_alloc_para_check(struct trs_id_inst *inst, struct halSq
         return -EINVAL;
     }
 
-    if (para->sqeSize != 64) {  /* rtsq sqe size must be 64 */
-        trs_err("Invalid sqe size. (devid=%u; tsid=%u; sqeSize=%u)\n",
-            inst->devid, inst->tsid, para->sqeSize);
+    if (para->sqeSize != 64) { /* rtsq sqe size must be 64 */
+        trs_err("Invalid sqe size. (devid=%u; tsid=%u; sqeSize=%u)\n", inst->devid, inst->tsid, para->sqeSize);
         return -EINVAL;
     }
 
     return 0;
 }
 
-static int trs_hw_sqcq_alloc_pair(struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst,
-    struct halSqCqInputInfo *para)
+static int trs_hw_sqcq_alloc_pair(
+    struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst, struct halSqCqInputInfo *para)
 {
     struct trs_id_inst *inst = &ts_inst->inst;
     struct trs_sqcq_reg_map_para reg_map_para;
@@ -578,8 +569,9 @@ static int trs_hw_sqcq_alloc_pair(struct trs_proc_ctx *proc_ctx, struct trs_core
     ret = trs_hw_alloc_chan(proc_ctx, &ts_inst->inst, para, &chan_id);
     if (ret != 0) {
         if (trs_get_proc_id_dfx_times(proc_ctx, inst->tsid, TRS_HW_SQ) <= TRS_PROC_DFX_TIMES_MAX) {
-            trs_warn("Alloc chan failed. (devid=%u; tsid=%u; type=%d; cur_sq_num=%u; cur_cq_num=%u; ret=%d)\n",
-                inst->devid, inst->tsid, para->type, trs_get_proc_res_num(proc_ctx, inst->tsid, TRS_HW_SQ),
+            trs_warn(
+                "Alloc chan failed. (devid=%u; tsid=%u; type=%d; cur_sq_num=%u; cur_cq_num=%u; ret=%d)\n", inst->devid,
+                inst->tsid, para->type, trs_get_proc_res_num(proc_ctx, inst->tsid, TRS_HW_SQ),
                 trs_get_proc_res_num(proc_ctx, inst->tsid, TRS_HW_CQ), ret);
         }
         return ret;
@@ -613,8 +605,9 @@ static int trs_hw_sqcq_alloc_pair(struct trs_proc_ctx *proc_ctx, struct trs_core
     (void)trs_sq_remap(proc_ctx, ts_inst, para, &ts_inst->sq_ctx[sq_info.sqid], &sq_info);
     trs_set_sq_status(&ts_inst->sq_ctx[sq_info.sqid], 1);
 
-    trs_debug("Alloc pair sqcq. (devid=%u; tsid=%u; flag=0x%x; sqId=%u; cqId=%u)\n",
-        inst->devid, inst->tsid, para->flag, para->sqId, para->cqId);
+    trs_debug(
+        "Alloc pair sqcq. (devid=%u; tsid=%u; flag=0x%x; sqId=%u; cqId=%u)\n", inst->devid, inst->tsid, para->flag,
+        para->sqId, para->cqId);
     return 0;
 
 del_sq_res:
@@ -642,8 +635,8 @@ int trs_get_stream_with_sq(struct trs_id_inst *inst, u32 sqid, u32 *stream_id)
 }
 KA_EXPORT_SYMBOL_GPL(trs_get_stream_with_sq);
 
-static int pair_mode_free_para_check(struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst,
-    struct halSqCqFreeInfo *para)
+static int pair_mode_free_para_check(
+    struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst, struct halSqCqFreeInfo *para)
 {
     struct trs_id_inst *inst = &ts_inst->inst;
     u32 stream_id;
@@ -664,8 +657,8 @@ static int pair_mode_free_para_check(struct trs_proc_ctx *proc_ctx, struct trs_c
     }
 
     if (ts_inst->sq_ctx[para->sqId].chan_id != ts_inst->cq_ctx[para->cqId].chan_id) {
-        trs_err("Not pair sqcq. (devid=%u; tsid=%u; sqId=%u; cqId=%u)\n",
-            inst->devid, inst->tsid, para->sqId, para->cqId);
+        trs_err(
+            "Not pair sqcq. (devid=%u; tsid=%u; sqId=%u; cqId=%u)\n", inst->devid, inst->tsid, para->sqId, para->cqId);
         return -EINVAL;
     }
 
@@ -678,14 +671,15 @@ static int pair_mode_free_para_check(struct trs_proc_ctx *proc_ctx, struct trs_c
     return 0;
 }
 
-static void _trs_hw_sqcq_free_pair(struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst,
-    u32 flag, u32 sqId, u32 cqId)
+static void _trs_hw_sqcq_free_pair(
+    struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst, u32 flag, u32 sqId, u32 cqId)
 {
     struct trs_id_inst *inst = &ts_inst->inst;
     int chan_id;
 
-    trs_debug("Free pair sqcq. (devid=%u; tsid=%u; flag=0x%x; sqId=%u; cqId=%u)\n",
-        inst->devid, inst->tsid, flag, sqId, cqId);
+    trs_debug(
+        "Free pair sqcq. (devid=%u; tsid=%u; flag=0x%x; sqId=%u; cqId=%u)\n", inst->devid, inst->tsid, flag, sqId,
+        cqId);
 
     chan_id = ts_inst->sq_ctx[sqId].chan_id;
 
@@ -699,8 +693,9 @@ static void _trs_hw_sqcq_free_pair(struct trs_proc_ctx *proc_ctx, struct trs_cor
     hal_kernel_trs_chan_destroy_ex(inst, flag, chan_id);
 }
 
-static void trs_fill_notice_ts_msg(struct trs_proc_ctx *proc_ctx, u16 cmd_type,
-    struct trs_chan_sq_info *sq_info, struct trs_chan_cq_info *cq_info, struct trs_normal_cqsq_mailbox *msg)
+static void trs_fill_notice_ts_msg(
+    struct trs_proc_ctx *proc_ctx, u16 cmd_type, struct trs_chan_sq_info *sq_info, struct trs_chan_cq_info *cq_info,
+    struct trs_normal_cqsq_mailbox *msg)
 {
     trs_mbox_init_header(&msg->header, cmd_type);
 
@@ -721,8 +716,8 @@ static void trs_fill_notice_ts_msg(struct trs_proc_ctx *proc_ctx, u16 cmd_type,
     /* adapt fill: app_type, fid, sq_cq_side */
 }
 
-static int trs_hw_sqcq_status_query_notice_ts(struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst,
-    struct halSqCqFreeInfo *para)
+static int trs_hw_sqcq_status_query_notice_ts(
+    struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst, struct halSqCqFreeInfo *para)
 {
     struct trs_normal_cqsq_mailbox msg = {0};
     struct trs_chan_sq_info sq_info;
@@ -746,8 +741,8 @@ static int trs_hw_sqcq_status_query_notice_ts(struct trs_proc_ctx *proc_ctx, str
     return msg.header.result;
 }
 
-static int trs_hw_sqcq_free_pair(struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst,
-    struct halSqCqFreeInfo *para)
+static int trs_hw_sqcq_free_pair(
+    struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst, struct halSqCqFreeInfo *para)
 {
     struct trs_sqcq_reg_map_para reg_map_para;
     struct trs_sq_ctx *sq_ctx = NULL;
@@ -787,8 +782,8 @@ static int trs_hw_sqcq_free_pair(struct trs_proc_ctx *proc_ctx, struct trs_core_
     return 0;
 }
 
-static int non_pair_mode_alloc_para_check(struct trs_proc_ctx *proc_ctx,
-    struct trs_core_ts_inst *ts_inst, struct halSqCqInputInfo *para)
+static int non_pair_mode_alloc_para_check(
+    struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst, struct halSqCqInputInfo *para)
 {
     struct trs_id_inst *inst = &ts_inst->inst;
 
@@ -814,8 +809,9 @@ static int non_pair_mode_alloc_para_check(struct trs_proc_ctx *proc_ctx,
     return 0;
 }
 
-static int trs_hw_sqcq_alloc_sq_chan(struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst,
-    struct halSqCqInputInfo *para, struct trs_chan_sq_info *sq_info, int *chan_id)
+static int trs_hw_sqcq_alloc_sq_chan(
+    struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst, struct halSqCqInputInfo *para,
+    struct trs_chan_sq_info *sq_info, int *chan_id)
 {
     struct trs_id_inst *inst = &ts_inst->inst;
     int ret;
@@ -849,8 +845,9 @@ static void trs_hw_sqcq_free_sq_chan(struct trs_proc_ctx *proc_ctx, struct trs_c
     trs_sq_ctx_uninit(&ts_inst->sq_ctx[sqid]);
 }
 
-static int trs_hw_sqcq_alloc_cq_chan(struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst,
-    struct halSqCqInputInfo *para, struct trs_chan_cq_info *cq_info, int *chan_id)
+static int trs_hw_sqcq_alloc_cq_chan(
+    struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst, struct halSqCqInputInfo *para,
+    struct trs_chan_cq_info *cq_info, int *chan_id)
 {
     struct trs_id_inst *inst = &ts_inst->inst;
     int ret;
@@ -880,8 +877,9 @@ static void trs_hw_sqcq_free_cq_chan(struct trs_proc_ctx *proc_ctx, struct trs_c
     trs_cq_ctx_uninit(&ts_inst->cq_ctx[cqid]);
 }
 
-static int trs_hw_sqcq_alloc_notice_ts(struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst,
-    struct halSqCqInputInfo *para, struct trs_chan_sq_info *sq_info, struct trs_chan_cq_info *cq_info)
+static int trs_hw_sqcq_alloc_notice_ts(
+    struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst, struct halSqCqInputInfo *para,
+    struct trs_chan_sq_info *sq_info, struct trs_chan_cq_info *cq_info)
 {
     struct trs_normal_cqsq_mailbox msg;
     int ret;
@@ -897,8 +895,8 @@ static int trs_hw_sqcq_alloc_notice_ts(struct trs_proc_ctx *proc_ctx, struct trs
     return trs_core_notice_ts(ts_inst, (u8 *)&msg, sizeof(msg));
 }
 
-static int trs_hw_sqcq_alloc_non_pair(struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst,
-    struct halSqCqInputInfo *para)
+static int trs_hw_sqcq_alloc_non_pair(
+    struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst, struct halSqCqInputInfo *para)
 {
     struct trs_id_inst *inst = &ts_inst->inst;
     struct trs_sqcq_reg_map_para reg_map_para;
@@ -974,14 +972,15 @@ static int trs_hw_sqcq_alloc_non_pair(struct trs_proc_ctx *proc_ctx, struct trs_
         trs_set_sq_status(&ts_inst->sq_ctx[sq_info.sqid], 1);
     }
 
-    trs_info("Alloc non pair sqcq. (devid=%u; tsid=%u; sqId=%u; cqId=%u; flag=%x)\n",
-        inst->devid, inst->tsid, para->sqId, para->cqId, para->flag);
+    trs_info(
+        "Alloc non pair sqcq. (devid=%u; tsid=%u; sqId=%u; cqId=%u; flag=%x)\n", inst->devid, inst->tsid, para->sqId,
+        para->cqId, para->flag);
 
     return 0;
 }
 
-static int non_pair_mode_free_para_check(struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst,
-    struct halSqCqFreeInfo *para)
+static int non_pair_mode_free_para_check(
+    struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst, struct halSqCqFreeInfo *para)
 {
     struct trs_id_inst *inst = &ts_inst->inst;
 
@@ -1000,8 +999,8 @@ static int non_pair_mode_free_para_check(struct trs_proc_ctx *proc_ctx, struct t
     return 0;
 }
 
-static int trs_hw_sqcq_free_notice_ts(struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst,
-    struct halSqCqFreeInfo *para)
+static int trs_hw_sqcq_free_notice_ts(
+    struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst, struct halSqCqFreeInfo *para)
 {
     struct trs_normal_cqsq_mailbox msg;
     struct trs_chan_sq_info sq_info;
@@ -1023,8 +1022,8 @@ static int trs_hw_sqcq_free_notice_ts(struct trs_proc_ctx *proc_ctx, struct trs_
     return trs_core_notice_ts(ts_inst, (u8 *)&msg, sizeof(msg));
 }
 
-static int trs_hw_sqcq_free_non_pair(struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst,
-    struct halSqCqFreeInfo *para)
+static int trs_hw_sqcq_free_non_pair(
+    struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst, struct halSqCqFreeInfo *para)
 {
     struct trs_id_inst *inst = &ts_inst->inst;
     int ret;
@@ -1036,13 +1035,15 @@ static int trs_hw_sqcq_free_non_pair(struct trs_proc_ctx *proc_ctx, struct trs_c
 
     ret = trs_hw_sqcq_free_notice_ts(proc_ctx, ts_inst, para);
     if (ret != 0) {
-        trs_info("Notice ts warn. (devid=%u; tsid=%u; sqId=%u; cqId=%u; flag=%x)\n",
-            inst->devid, inst->tsid, para->sqId, para->cqId, para->flag);
+        trs_info(
+            "Notice ts warn. (devid=%u; tsid=%u; sqId=%u; cqId=%u; flag=%x)\n", inst->devid, inst->tsid, para->sqId,
+            para->cqId, para->flag);
         return ret;
     }
 
-    trs_info("Free non pair sqcq. (devid=%u; tsid=%u; sqId=%u; cqId=%u; flag=%x)\n",
-        inst->devid, inst->tsid, para->sqId, para->cqId, para->flag);
+    trs_info(
+        "Free non pair sqcq. (devid=%u; tsid=%u; sqId=%u; cqId=%u; flag=%x)\n", inst->devid, inst->tsid, para->sqId,
+        para->cqId, para->flag);
 
     trs_set_sq_status(&ts_inst->sq_ctx[para->sqId], 0);
     trs_sq_unmap(proc_ctx, ts_inst, &ts_inst->sq_ctx[para->sqId]);
@@ -1062,7 +1063,7 @@ int trs_hw_sqcq_alloc(struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts
     struct trs_ext_info_header *header = NULL;
     u8 *user_ext_info = (u8 *)para->ext_info;
     u32 stream_id = para->info[0];
-    int ret;
+    int ret = 0;
 
     if (para->ext_info != NULL) {
         if ((para->ext_info_len == 0) || (para->ext_info_len > TRS_SQCQ_EXT_INFO_MAX_LEN)) {
@@ -1078,17 +1079,21 @@ int trs_hw_sqcq_alloc(struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts
     }
 
     header = para->ext_info;
-    if (((header == NULL) || ((header != NULL) && (header->type == CHAN_SUB_TYPE_HW_RTS))) && (stream_id != KA_U32_MAX)) {
+    if (((header == NULL) || ((header != NULL) && (header->type == CHAN_SUB_TYPE_HW_RTS))) &&
+        (stream_id != KA_U32_MAX)) {
         if (!trs_proc_has_res(proc_ctx, ts_inst, TRS_STREAM, stream_id)) {
-            int ret = -EINVAL;
             if ((para->flag & TSDRV_FLAG_AGENT_ID) != 0) {
                 if (ts_inst->ops.res_id_check != NULL) {
                     ret = ts_inst->ops.res_id_check(&ts_inst->inst, TRS_STREAM, stream_id);
                 }
+            } else {
+                ret = -EINVAL;
             }
+
             if (ret != 0) {
-                trs_err("No stream. (ret=%d; devid=%u; tsid=%u; stream_id=%u)\n",
-                    ret, ts_inst->inst.devid, ts_inst->inst.tsid, stream_id);
+                trs_err(
+                    "No stream. (ret=%d; devid=%u; tsid=%u; stream_id=%u)\n", ret, ts_inst->inst.devid,
+                    ts_inst->inst.tsid, stream_id);
                 return ret;
             }
         }
@@ -1142,8 +1147,8 @@ static bool trs_stream_mem_is_need_update(struct trs_core_ts_inst *ts_inst, u64 
     return false;
 }
 
-static int trs_sq_switch_stream_notice_ts(struct trs_core_ts_inst *ts_inst, u32 sqid, u32 stream_id,
-    u64 stream_pa_addr, u32 sq_depth)
+static int trs_sq_switch_stream_notice_ts(
+    struct trs_core_ts_inst *ts_inst, u32 sqid, u32 stream_id, u64 stream_pa_addr, u32 sq_depth)
 {
     struct trs_sq_switch_stream_info msg;
     u64 stream_device_pa = stream_pa_addr;
@@ -1170,15 +1175,16 @@ static int trs_sq_switch_stream_notice_ts(struct trs_core_ts_inst *ts_inst, u32 
 
     ret = ts_inst->ops.notice_ts(&ts_inst->inst, (u8 *)&msg, sizeof(struct trs_sq_switch_stream_info));
     if ((ret != 0) || (msg.header.result != 0)) {
-        trs_err("Notice ts failed. (ret=%d; result=%u; devid=%u; stream_id=%u; sqid=%u)\n", ret, msg.header.result,
+        trs_err(
+            "Notice ts failed. (ret=%d; result=%u; devid=%u; stream_id=%u; sqid=%u)\n", ret, msg.header.result,
             ts_inst->inst.devid, stream_id, sqid);
         return (ret != 0) ? ret : -EINVAL;
     }
     return 0;
 }
 
-int trs_sq_switch_stream(struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst,
-    struct sq_switch_stream_info *info)
+int trs_sq_switch_stream(
+    struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst, struct sq_switch_stream_info *info)
 {
     struct trs_id_inst *inst = &ts_inst->inst;
     struct trs_stream_ctx *new_stream_ctx = NULL;
@@ -1197,7 +1203,7 @@ int trs_sq_switch_stream(struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst 
         return -EINVAL;
     }
 
-    ret = trs_chan_update_sq_depth(&ts_inst->inst, ts_inst->sq_ctx[info->sq_id].chan_id, info->sq_depth);
+    ret = trs_sq_switch_stream_chan_update(&ts_inst->inst, ts_inst->sq_ctx[info->sq_id].chan_id, info->sq_depth);
     if (ret != 0) {
         return ret;
     }
@@ -1224,13 +1230,15 @@ int trs_sq_switch_stream(struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst 
         }
 
         stream_pa_addr = ts_inst->stream_ctx[info->stream_id].pa_list[0] +
-            ts_inst->stream_ctx[info->stream_id].stream_base_addr - ts_inst->stream_ctx[info->stream_id].stream_uva;
+                         ts_inst->stream_ctx[info->stream_id].stream_base_addr -
+                         ts_inst->stream_ctx[info->stream_id].stream_uva;
     }
 
     ret = trs_sq_switch_stream_notice_ts(ts_inst, info->sq_id, info->stream_id, stream_pa_addr, info->sq_depth);
     if (ret != 0) {
-        trs_err("Notice ts failed. (ret=%d; devid=%u; tsid=%u; stream_id=%u; sqid=%u)\n",
-            ret, inst->devid, inst->tsid, info->stream_id, info->sq_id);
+        trs_err(
+            "Notice ts failed. (ret=%d; devid=%u; tsid=%u; stream_id=%u; sqid=%u)\n", ret, inst->devid, inst->tsid,
+            info->stream_id, info->sq_id);
         goto put_mem;
     }
 
@@ -1242,12 +1250,13 @@ int trs_sq_switch_stream(struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst 
 
     if (info->stream_id != KA_U32_MAX) {
         ts_inst->stream_ctx[info->stream_id].sq = info->sq_id;
-        trs_stream_set_bind_sqcq(ts_inst, info->stream_id, info->sq_id, ts_inst->sq_ctx[info->sq_id].cqid,
-            proc_ctx->pid);
+        trs_stream_set_bind_sqcq(
+            ts_inst, info->stream_id, info->sq_id, ts_inst->sq_ctx[info->sq_id].cqid, proc_ctx->pid);
     }
 
-    trs_debug("Sq switches stream success. (devid=%u; tsid=%u; stream_id=%u; sqid=%u)\n",
-        inst->devid, inst->tsid, info->stream_id, info->sq_id);
+    trs_debug(
+        "Sq switches stream success. (devid=%u; tsid=%u; stream_id=%u; sqid=%u)\n", inst->devid, inst->tsid,
+        info->stream_id, info->sq_id);
 
     return 0;
 
@@ -1338,21 +1347,23 @@ int trs_hw_sqcq_get(struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_i
     para->cqeDepth = cq_info.cq_para.cq_depth;
     para->cqeSize = cq_info.cq_para.cqe_size;
 #else
-    para->sqeDepth = 1024;  /* 1024 is sq depth for ut */
-    para->sqeSize = 64;     /* 64 is sqe size for ut */
-    para->cqeDepth = 512;   /* 512 is cq depth for ut */
-    para->cqeSize = 32;     /* 32 is cqe size for ut */
+    para->sqeDepth = 1024; /* 1024 is sq depth for ut */
+    para->sqeSize = 64;    /* 64 is sqe size for ut */
+    para->cqeDepth = 512;  /* 512 is cq depth for ut */
+    para->cqeSize = 32;    /* 32 is cqe size for ut */
 #endif
 
-    trs_debug("Share sqcq info. (devid=%u; streamid=%u; sqid=%u; sq_depth=%u; sqe_size=%u; cqid=%u; "
-        "cq_depth=%u; cqe_size=%u; logic_cqid=%d)\n", proc_ctx->devid, stream_id, para->sqId, para->sqeDepth, para->sqeSize,
-        para->cqId, para->cqeDepth, para->cqeSize, para->info[1]);
+    trs_debug(
+        "Share sqcq info. (devid=%u; streamid=%u; sqid=%u; sq_depth=%u; sqe_size=%u; cqid=%u; "
+        "cq_depth=%u; cqe_size=%u; logic_cqid=%d)\n",
+        proc_ctx->devid, stream_id, para->sqId, para->sqeDepth, para->sqeSize, para->cqId, para->cqeDepth,
+        para->cqeSize, para->info[1]);
 
     return 0;
 }
 
-static int trs_sqcq_restore_para_check(struct trs_proc_ctx *proc_ctx,
-    struct trs_core_ts_inst *ts_inst, struct halSqCqInputInfo *para)
+static int trs_sqcq_restore_para_check(
+    struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst, struct halSqCqInputInfo *para)
 {
     struct trs_id_inst *inst = &ts_inst->inst;
 
@@ -1373,8 +1384,8 @@ static int trs_sqcq_restore_para_check(struct trs_proc_ctx *proc_ctx,
 
     if (ts_inst->sq_ctx[para->sqId].chan_id != ts_inst->cq_ctx[para->cqId].chan_id) {
 #ifndef EMU_ST
-        trs_err("Not pair sqcq. (devid=%u; tsid=%u; sqId=%u; cqId=%u)\n",
-            inst->devid, inst->tsid, para->sqId, para->cqId);
+        trs_err(
+            "Not pair sqcq. (devid=%u; tsid=%u; sqId=%u; cqId=%u)\n", inst->devid, inst->tsid, para->sqId, para->cqId);
         return -EINVAL;
 #endif
     }
@@ -1382,8 +1393,7 @@ static int trs_sqcq_restore_para_check(struct trs_proc_ctx *proc_ctx,
     return 0;
 }
 
-int trs_hw_sqcq_restore(struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst,
-    struct halSqCqInputInfo *para)
+int trs_hw_sqcq_restore(struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst, struct halSqCqInputInfo *para)
 {
     struct trs_id_inst *inst = &ts_inst->inst;
     struct trs_chan_sq_info sq_info;
@@ -1403,32 +1413,33 @@ int trs_hw_sqcq_restore(struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *
         return ret;
     }
 
-    trs_debug("Restore sqcq. (devid=%u; tsid=%u; flag=0x%x; sqId=%u; cqId=%u)\n",
-        inst->devid, inst->tsid, para->flag, para->sqId, para->cqId);
+    trs_debug(
+        "Restore sqcq. (devid=%u; tsid=%u; flag=0x%x; sqId=%u; cqId=%u)\n", inst->devid, inst->tsid, para->flag,
+        para->sqId, para->cqId);
 
     return 0;
 }
 
-void trs_proc_diable_sq_status(struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst,
-    int res_type, u32 res_id)
+void trs_proc_diable_sq_status(
+    struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst, int res_type, u32 res_id)
 {
     struct trs_sq_ctx *sq_ctx = &ts_inst->sq_ctx[res_id];
     struct trs_id_inst *inst = &ts_inst->inst;
 
     trs_set_sq_status(sq_ctx, 0);
-    trs_debug("Disable sq success. (devid=%u; tsid=%u; pid=%u; sqid=%u)\n", inst->devid, inst->tsid,
-        proc_ctx->pid, res_id);
+    trs_debug(
+        "Disable sq success. (devid=%u; tsid=%u; pid=%u; sqid=%u)\n", inst->devid, inst->tsid, proc_ctx->pid, res_id);
 }
 
-static void trs_proc_enable_sq_status(struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst,
-    int res_type, u32 res_id)
+static void trs_proc_enable_sq_status(
+    struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst, int res_type, u32 res_id)
 {
     struct trs_sq_ctx *sq_ctx = &ts_inst->sq_ctx[res_id];
     struct trs_id_inst *inst = &ts_inst->inst;
 
     trs_set_sq_status(sq_ctx, 1);
-    trs_debug("Enable sq success. (devid=%u; tsid=%u; pid=%u; sqid=%u)\n", inst->devid, inst->tsid,
-        proc_ctx->pid, res_id);
+    trs_debug(
+        "Enable sq success. (devid=%u; tsid=%u; pid=%u; sqid=%u)\n", inst->devid, inst->tsid, proc_ctx->pid, res_id);
 }
 
 static int trs_sq_task_stop(struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst, u32 sqid)
@@ -1443,16 +1454,16 @@ static int trs_sq_task_resume(struct trs_proc_ctx *proc_ctx, struct trs_core_ts_
     return 0;
 }
 
-static int trs_hw_sqcq_config_of_proc(struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst,
-    uint32_t type, int prop)
+static int trs_hw_sqcq_config_of_proc(
+    struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst, uint32_t type, int prop)
 {
     u32 i;
     int ret = 0;
 
     for (i = 0; i < ts_inst->res_mng[type].max_id; i++) {
         struct trs_res_ids *id = &ts_inst->res_mng[type].ids[i];
-        if ((id->ref != 0) && (proc_ctx->pid == id->pid) &&
-            (proc_ctx->task_id == id->task_id) && (id->status == RES_STATUS_NORMAL)) {
+        if ((id->ref != 0) && (proc_ctx->pid == id->pid) && (proc_ctx->task_id == id->task_id) &&
+            (id->status == RES_STATUS_NORMAL)) {
             if ((type == TRS_HW_SQ) && (prop == DRV_SQCQ_PROP_SQ_PAUSE)) {
                 ret |= trs_sq_task_stop(proc_ctx, ts_inst, i);
             }
@@ -1477,21 +1488,23 @@ static int trs_config_sq_tail_check(struct trs_core_ts_inst *ts_inst, struct hal
 {
     u32 stream_id = ts_inst->sq_ctx[para->sqId].stream_id;
     if (stream_id >= trs_res_get_max_id(ts_inst, TRS_STREAM)) {
-        trs_err("Stream id is invalid. (devid=%u; sqid=%u; stream_id=%u)\n",
-            ts_inst->inst.devid, para->sqId, stream_id);
+        trs_err(
+            "Stream id is invalid. (devid=%u; sqid=%u; stream_id=%u)\n", ts_inst->inst.devid, para->sqId, stream_id);
         return -EINVAL;
     }
 
-    if ((ts_inst->stream_ctx[stream_id].pa_list != NULL) && ((ts_inst->ops.get_sq_send_mode == NULL) ||
-        (ts_inst->ops.get_sq_send_mode(ts_inst->inst.devid) == TRS_MODE_TYPE_SQ_SEND_HIGH_SECURITY))) {
+    if ((ts_inst->stream_ctx[stream_id].pa_list != NULL) &&
+        ((ts_inst->ops.get_sq_send_mode == NULL) ||
+         (ts_inst->ops.get_sq_send_mode(ts_inst->inst.devid) == TRS_MODE_TYPE_SQ_SEND_HIGH_SECURITY))) {
         if (para->value[0] > ts_inst->stream_ctx[stream_id].tail) {
             trs_err("Invalid tail. (tail=%u; value=%u)\n", ts_inst->stream_ctx[stream_id].tail, para->value[0]);
             return -EINVAL;
         }
     }
 
-    trs_debug("Config tail success. (devid=%u; sqid=%u; tail=%u; value=%u)\n",
-        ts_inst->inst.devid, para->sqId, ts_inst->stream_ctx[stream_id].tail, para->value[0]);
+    trs_debug(
+        "Config tail success. (devid=%u; sqid=%u; tail=%u; value=%u)\n", ts_inst->inst.devid, para->sqId,
+        ts_inst->stream_ctx[stream_id].tail, para->value[0]);
     return 0;
 }
 
@@ -1507,8 +1520,9 @@ int trs_hw_sqcq_config(struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *t
         ret = trs_hw_sqcq_config_of_proc(proc_ctx, ts_inst, TRS_HW_SQ, para->prop);
         ret |= trs_hw_sqcq_config_of_proc(proc_ctx, ts_inst, TRS_HW_CQ, para->prop); /* cq need to pause in UB scene */
         if (ret != 0) {
-            trs_err("Proc sqcq config failed. (devid=%u; pid=%u; prop=%d; ret=%d)\n",
-                inst->devid, proc_ctx->pid, para->prop, ret);
+            trs_err(
+                "Proc sqcq config failed. (devid=%u; pid=%u; prop=%d; ret=%d)\n", inst->devid, proc_ctx->pid,
+                para->prop, ret);
             return ret;
         }
         trs_debug("Proc sqcq config success. (devid=%u; pid=%u; prop=%d)\n", inst->devid, proc_ctx->pid, para->prop);
@@ -1555,8 +1569,9 @@ int trs_hw_sqcq_config(struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *t
     }
 
     if (ret != 0) {
-        trs_err("Cfg failed. (devid=%u; tsid=%u; sqId=%u; cqId=%u; prop=%d)\n",
-            inst->devid, inst->tsid, sqid, cqid, para->prop);
+        trs_err(
+            "Cfg failed. (devid=%u; tsid=%u; sqId=%u; cqId=%u; prop=%d)\n", inst->devid, inst->tsid, sqid, cqid,
+            para->prop);
     }
 
     return ret;
@@ -1577,8 +1592,7 @@ int trs_set_sq_reg_vaddr(struct trs_id_inst *inst, u32 sqid, u64 va, size_t size
     }
     if (sqid >= trs_res_get_max_id(ts_inst, TRS_HW_SQ)) {
         trs_core_ts_inst_put(ts_inst);
-        trs_err("Invalid para. (devid=%u; tsid=%u; sqid=%u)\n",
-            inst->devid, inst->tsid, sqid);
+        trs_err("Invalid para. (devid=%u; tsid=%u; sqid=%u)\n", inst->devid, inst->tsid, sqid);
         return -EINVAL;
     }
     ts_inst->sq_ctx[sqid].reg_mem.uva = va;
@@ -1674,8 +1688,9 @@ int trs_sqcq_query(struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_in
     }
 
     if (ret != 0) {
-        trs_err("Query failed. (devid=%u; tsid=%u; sqId=%u; prop=%d; ret=%d)\n",
-            inst->devid, inst->tsid, sqid, para->prop, ret);
+        trs_err(
+            "Query failed. (devid=%u; tsid=%u; sqId=%u; prop=%d; ret=%d)\n", inst->devid, inst->tsid, sqid, para->prop,
+            ret);
     }
 
     return ret;
@@ -1759,8 +1774,8 @@ void trs_hw_sqcq_recycle(struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst 
     }
 }
 
-int trs_hw_sqcq_dma_desc_create(struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst,
-    struct trs_cmd_dma_desc *para)
+int trs_hw_sqcq_dma_desc_create(
+    struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst, struct trs_cmd_dma_desc *para)
 {
     struct trs_id_inst *inst = &ts_inst->inst;
     u32 sqid = para->sq_id;
@@ -1774,8 +1789,9 @@ int trs_hw_sqcq_dma_desc_create(struct trs_proc_ctx *proc_ctx, struct trs_core_t
     chan_id = ts_inst->sq_ctx[sqid].chan_id;
     ret = trs_chan_dma_desc_create(inst, chan_id, (struct trs_chan_dma_desc *)para);
     if (ret != 0) {
-        trs_err("Sqcq dma desc create failed. (devid=%u; tsid=%u; sqid=%u; ret=%d)\n",
-            proc_ctx->devid, para->tsid, para->sq_id, ret);
+        trs_err(
+            "Sqcq dma desc create failed. (devid=%u; tsid=%u; sqid=%u; ret=%d)\n", proc_ctx->devid, para->tsid,
+            para->sq_id, ret);
         return -EINVAL;
     }
 
@@ -1820,15 +1836,9 @@ static u32 trs_hw_sq_get_wq_flag(u32 ts_inst_flag)
     return flag;
 }
 
-static u32 trs_hw_sq_get_trigger_wq_flag(u32 ts_inst_flag)
-{
-    return trs_hw_sq_get_wq_flag(ts_inst_flag) | WQ_HIGHPRI;
-}
+static u32 trs_hw_sq_get_trigger_wq_flag(u32 ts_inst_flag) { return trs_hw_sq_get_wq_flag(ts_inst_flag) | WQ_HIGHPRI; }
 
-static u32 trs_hw_sq_get_fair_wq_flag(u32 ts_inst_flag)
-{
-    return trs_hw_sq_get_wq_flag(ts_inst_flag);
-}
+static u32 trs_hw_sq_get_fair_wq_flag(u32 ts_inst_flag) { return trs_hw_sq_get_wq_flag(ts_inst_flag); }
 
 static int trs_hw_sq_trigger_init(struct trs_core_ts_inst *ts_inst)
 {
@@ -1845,8 +1855,8 @@ static int trs_hw_sq_trigger_init(struct trs_core_ts_inst *ts_inst)
         return ret;
     }
 
-    ts_inst->work_queue = ka_task_alloc_workqueue("dev%u_sq_send_wq",
-        trs_hw_sq_get_trigger_wq_flag(ts_inst->ts_inst_flag), 1, inst->devid);
+    ts_inst->work_queue = ka_task_alloc_workqueue(
+        "dev%u_sq_send_wq", trs_hw_sq_get_trigger_wq_flag(ts_inst->ts_inst_flag), 1, inst->devid);
     if (ts_inst->work_queue == NULL) {
         trs_err("Createn wq failed. (devid=%u; tsid=%u)\n", inst->devid, inst->tsid);
 #ifndef EMU_ST
@@ -1854,8 +1864,8 @@ static int trs_hw_sq_trigger_init(struct trs_core_ts_inst *ts_inst)
 #endif
     }
 
-    ts_inst->fair_work_queue = ka_task_alloc_workqueue("dev%u_sq_fair_wq",
-        trs_hw_sq_get_fair_wq_flag(ts_inst->ts_inst_flag), 1, inst->devid);
+    ts_inst->fair_work_queue =
+        ka_task_alloc_workqueue("dev%u_sq_fair_wq", trs_hw_sq_get_fair_wq_flag(ts_inst->ts_inst_flag), 1, inst->devid);
     if (ts_inst->fair_work_queue == NULL) {
         ka_task_destroy_workqueue(ts_inst->work_queue);
         trs_err("Create fair wq failed. (devid=%u; tsid=%u)\n", inst->devid, inst->tsid);
@@ -1876,8 +1886,8 @@ static int trs_hw_sq_trigger_init(struct trs_core_ts_inst *ts_inst)
         return ret;
     }
 
-    ret = ts_inst->ops.request_irq(inst, ts_inst->irq_type, ts_inst->sq_trigger_irq,
-        (void *)ts_inst, trs_sq_trigger_irq_proc);
+    ret = ts_inst->ops.request_irq(
+        inst, ts_inst->irq_type, ts_inst->sq_trigger_irq, (void *)ts_inst, trs_sq_trigger_irq_proc);
     if (ret != 0) {
 #ifndef EMU_ST
         trs_hw_sq_send_thread_destroy(ts_inst);
@@ -1895,7 +1905,7 @@ static int trs_hw_sq_trigger_init(struct trs_core_ts_inst *ts_inst)
     return 0;
 }
 
-void trs_hw_sq_trigger_irq_hw_res_uninit(struct trs_core_ts_inst * ts_inst)
+void trs_hw_sq_trigger_irq_hw_res_uninit(struct trs_core_ts_inst *ts_inst)
 {
     if (ts_inst->ops.get_sq_trigger_irq != NULL) {
         if (ts_inst->ops.set_trigger_irq_affinity != NULL) {
@@ -1925,13 +1935,15 @@ int trs_hw_sqcq_init(struct trs_core_ts_inst *ts_inst)
     u32 cq_max_id = trs_res_get_max_id(ts_inst, TRS_HW_CQ);
     int ret;
 
-    trs_debug("Init hw sqcq. (devid=%u; tsid=%u; sq_id_num=%u; sq_max_id=%u; cq_id_num=%u; cq_max_id=%u)\n",
-        inst->devid, inst->tsid, sq_id_num, sq_max_id, cq_id_num, cq_max_id);
+    trs_debug(
+        "Init hw sqcq. (devid=%u; tsid=%u; sq_id_num=%u; sq_max_id=%u; cq_id_num=%u; cq_max_id=%u)\n", inst->devid,
+        inst->tsid, sq_id_num, sq_max_id, cq_id_num, cq_max_id);
 
     ts_inst->sq_ctx = (struct trs_sq_ctx *)trs_vzalloc(sizeof(struct trs_sq_ctx) * sq_max_id);
     if (ts_inst->sq_ctx == NULL) {
-        trs_err("Mem alloc failed. (devid=%u; tsid=%u; size=%lx)\n",
-            inst->devid, inst->tsid, sizeof(struct trs_sq_ctx) * sq_max_id);
+        trs_err(
+            "Mem alloc failed. (devid=%u; tsid=%u; size=%lx)\n", inst->devid, inst->tsid,
+            sizeof(struct trs_sq_ctx) * sq_max_id);
         return -ENOMEM;
     }
     ts_inst->sq_ctx->sq_num = sq_max_id;
@@ -1942,8 +1954,9 @@ int trs_hw_sqcq_init(struct trs_core_ts_inst *ts_inst)
         trs_sq_ctxs_uninit(ts_inst->sq_ctx);
         trs_vfree(ts_inst->sq_ctx);
         ts_inst->sq_ctx = NULL;
-        trs_err("Mem alloc failed. (devid=%u; tsid=%u; size=%lx)\n",
-            inst->devid, inst->tsid, sizeof(struct trs_cq_ctx) * cq_max_id);
+        trs_err(
+            "Mem alloc failed. (devid=%u; tsid=%u; size=%lx)\n", inst->devid, inst->tsid,
+            sizeof(struct trs_cq_ctx) * cq_max_id);
         return -ENOMEM;
     }
 

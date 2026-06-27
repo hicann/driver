@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2025. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -19,6 +19,7 @@
 #include "ka_sched_pub.h"
 
 #include "kernel_version_adapt.h"
+#include "pbl/pbl_task_ctx.h"
 
 #include "pbl_ka_mem_query.h"
 #include "svm_kernel_interface.h"
@@ -62,7 +63,7 @@ void svm_unpin_user_npages(ka_page_t **pages, u64 page_num, u64 unpin_num)
     }
 }
 
-#define SVM_PIN_512_PAGE_NUM    512ull
+#define SVM_PIN_512_PAGE_NUM 512ull
 int svm_pin_user_npages_fast(u64 va, u64 total_num, bool write, ka_page_t **pages)
 {
     u64 got_num, remained_num, tmp_va;
@@ -77,8 +78,9 @@ int svm_pin_user_npages_fast(u64 va, u64 total_num, bool write, ka_page_t **page
         tmp_num = ka_mm_pin_user_pages_fast(tmp_va, expected_num, write ? KA_FOLL_WRITE : 0, &pages[got_num]);
         got_num += (tmp_num > 0) ? (u32)tmp_num : 0;
         if (tmp_num != expected_num) {
-            svm_err("Get_user_pages_fast fail. (va=0x%llx; expected_page_num=%d; real_got_page_num=%d)\n",
-                tmp_va, expected_num, tmp_num);
+            svm_err(
+                "Get_user_pages_fast fail. (va=0x%llx; expected_page_num=%d; real_got_page_num=%d)\n", tmp_va,
+                expected_num, tmp_num);
             goto page_err;
         }
         ka_try_cond_resched(&stamp);
@@ -92,8 +94,7 @@ page_err:
     return -EINVAL;
 }
 
-static long _svm_pin_user_npages_remote(ka_task_struct_t *tsk, ka_mm_struct_t *mm,
-    u64 va, u32 num, ka_page_t **pages)
+static long _svm_pin_user_npages_remote(ka_task_struct_t *tsk, ka_mm_struct_t *mm, u64 va, u32 num, ka_page_t **pages)
 {
     long got_num;
     ka_task_down_read(get_mmap_sem(mm));
@@ -103,8 +104,7 @@ static long _svm_pin_user_npages_remote(ka_task_struct_t *tsk, ka_mm_struct_t *m
     return got_num;
 }
 
-int svm_pin_user_npages_remote(ka_task_struct_t *tsk, ka_mm_struct_t *mm,
-    u64 va, u32 num, ka_page_t **pages)
+int svm_pin_user_npages_remote(ka_task_struct_t *tsk, ka_mm_struct_t *mm, u64 va, u32 num, ka_page_t **pages)
 {
     long got_num;
 
@@ -124,8 +124,8 @@ struct svm_pgwalk_data_of_pin_npages {
     ka_page_t **pages;
 };
 
-static int svm_pte_entry_of_pin_npages(ka_pte_t *pte, u64 addr, u64 next,
-    enum ka_pte_level level, struct ka_pgwalk *walk)
+static int svm_pte_entry_of_pin_npages(
+    ka_pte_t *pte, u64 addr, u64 next, enum ka_pte_level level, struct ka_pgwalk *walk)
 {
     struct svm_pgwalk_data_of_pin_npages *data = (struct svm_pgwalk_data_of_pin_npages *)walk->priv;
     ka_page_t *page = NULL;
@@ -155,8 +155,7 @@ static int svm_pte_entry_of_pin_npages(ka_pte_t *pte, u64 addr, u64 next,
     page = svm_pa_to_page(pa);
     pg_num = (ka_base_round_up(next, KA_MM_PAGE_SIZE) - ka_base_round_down(addr, KA_MM_PAGE_SIZE)) / KA_MM_PAGE_SIZE;
 
-    for (i = 0; (i < pg_num) && (data->got_num < data->page_num);
-        i++, page++, data->got_num++) {
+    for (i = 0; (i < pg_num) && (data->got_num < data->page_num); i++, page++, data->got_num++) {
         ka_mm_get_page(page);
         data->pages[data->got_num] = page;
     }
@@ -164,8 +163,7 @@ static int svm_pte_entry_of_pin_npages(ka_pte_t *pte, u64 addr, u64 next,
     return 0;
 }
 
-static int svm_pte_hole_of_pin_npages(u64 addr, u64 next,
-    enum ka_pte_level level, struct ka_pgwalk *walk)
+static int svm_pte_hole_of_pin_npages(u64 addr, u64 next, enum ka_pte_level level, struct ka_pgwalk *walk)
 {
     struct svm_pgwalk_data_of_pin_npages *data = (struct svm_pgwalk_data_of_pin_npages *)walk->priv;
 
@@ -175,8 +173,7 @@ static int svm_pte_hole_of_pin_npages(u64 addr, u64 next,
     return -EFAULT;
 }
 
-int svm_pin_svm_npages(ka_vm_area_struct_t *vma, u64 va, u64 page_num, bool check_local,
-    ka_page_t **pages)
+int svm_pin_svm_npages(ka_vm_area_struct_t *vma, u64 va, u64 page_num, bool check_local, ka_page_t **pages)
 {
     struct svm_pgwalk_data_of_pin_npages data = {0};
     struct ka_pgwalk_ops ops = {NULL};
@@ -260,6 +257,64 @@ int svm_pin_svm_range_uva_npages(int tgid, u64 va, bool is_write, ka_page_t **pa
 void svm_unpin_svm_range_uva_npages(ka_page_t **pages, u64 page_num, u64 unpin_num)
 {
     svm_unpin_svm_npages(pages, page_num, unpin_num);
+}
+
+static int _svm_get_user_pages(
+    ka_task_struct_t *tsk, ka_mm_struct_t *mm, u64 va, u64 page_num, void **pages, bool *is_remap_addr)
+{
+    ka_vm_area_struct_t *vma = NULL;
+    int ret;
+
+    ka_task_down_read(get_mmap_sem(mm));
+    vma = ka_mm_find_vma(mm, va);
+    if ((vma == NULL) || (ka_mm_get_vm_start(vma) > va)) {
+        svm_err("Invalid addr. (va=0x%llx)\n", va);
+        ka_task_up_read(get_mmap_sem(mm));
+        return -EINVAL;
+    }
+
+    if ((ka_mm_get_vm_flags(vma) & KA_VM_PFNMAP) != 0) {
+        *is_remap_addr = true;
+        ret = svm_pin_svm_npages(vma, va, page_num, true, (ka_page_t **)pages);
+        ka_task_up_read(get_mmap_sem(mm));
+    } else {
+        ka_task_up_read(get_mmap_sem(mm));
+        *is_remap_addr = false;
+        ret = svm_pin_user_npages_remote(tsk, mm, va, page_num, (ka_page_t **)pages);
+    }
+    return ret;
+}
+
+int svm_get_user_pages(int pid, u64 va, u64 page_num, void **pages, bool *is_remap_addr)
+{
+    ka_task_struct_t *tsk = NULL;
+    ka_mm_struct_t *mm = NULL;
+    int ret;
+
+    tsk = task_get_by_tgid(pid);
+    if (tsk == NULL) {
+        return -ESRCH;
+    }
+
+    mm = ka_task_get_task_mm(tsk);
+    if (mm == NULL) {
+        ka_task_put_task_struct(tsk);
+        return -ESRCH;
+    }
+
+    ret = _svm_get_user_pages(tsk, mm, va, page_num, pages, is_remap_addr);
+    ka_mm_mmput(mm);
+    ka_task_put_task_struct(tsk);
+    return ret;
+}
+
+void svm_put_user_pages(void **pages, u64 page_num, bool is_remap_addr)
+{
+    if (is_remap_addr) {
+        svm_unpin_svm_range_uva_npages((ka_page_t **)pages, page_num, page_num);
+    } else {
+        svm_unpin_user_npages((ka_page_t **)pages, page_num, page_num);
+    }
 }
 
 /* For queue */

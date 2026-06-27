@@ -19,6 +19,7 @@
 #include "hdc_kernel_interface.h"
 #include "queue_context.h"
 #include "pbl/pbl_uda.h"
+#include "queue_feature_check.h"
 
 STATIC ka_device_t *queue_devices[MAX_DEVICE] = {NULL};
 STATIC ka_rw_semaphore_t queue_dev_sem[MAX_DEVICE];
@@ -63,12 +64,19 @@ STATIC void queue_uninit_instance(u32 devid)
 #define QUEUE_HOST_NOTIFIER "queue_host"
 static int queue_host_notifier_func(u32 udevid, enum uda_notified_action action)
 {
+    int ret;
+
     if (udevid >= MAX_DEVICE) {
         queue_err("Invalid para. (udevid=%u)\n", udevid);
         return -EINVAL;
     }
 
     if (action == UDA_INIT) {
+        ret = queue_feature_init_by_devid(udevid);
+        if (ret != DRV_ERROR_NONE) {
+            queue_err("Feature init failed. (ret=%d; udevid=%u)\n", ret, udevid);
+            return ret;
+        }
         queue_init_instance(udevid, uda_get_device(udevid));
     } else if (action == UDA_UNINIT) {
         queue_uninit_instance(udevid);
@@ -82,6 +90,8 @@ int queue_drv_msg_chan_init(void)
     struct uda_dev_type type;
     u32 devid;
 
+    queue_feature_system_init();
+
     for (devid = 0; devid < MAX_DEVICE; devid++) {
         ka_task_init_rwsem(&queue_dev_sem[devid]);
     }
@@ -94,6 +104,7 @@ void queue_drv_msg_chan_uninit(void)
     struct uda_dev_type type;
     uda_davinci_near_real_entity_type_pack(&type);
     (void)uda_notifier_unregister(QUEUE_HOST_NOTIFIER, &type);
+    queue_feature_uninit();
 }
 
 STATIC int queue_data_in(int devid, int vfid, int local_pid, struct hdcdrv_data_info data)
@@ -124,7 +135,7 @@ STATIC int queue_data_in(int devid, int vfid, int local_pid, struct hdcdrv_data_
         queue_set_qid_status_timestamp(qid_status, HOST_HDC_RECV);
         queue_set_qid_status_dma_node_num(qid_status, reply_msg->dma_node_num);
         (void)memcpy_s(&qid_status->time_record[DEV_QUEUE_STATUS_RECORE_START], REPLY_MSG_TIME_RECORD_SIZE,
-            reply_msg->time_record, REPLY_MSG_TIME_RECORD_SIZE);
+                       reply_msg->time_record, REPLY_MSG_TIME_RECORD_SIZE);
     }
 
     ret = queue_wakeup_enqueue(ctx, reply_msg->dma_info.que_chan_addr);
@@ -132,8 +143,8 @@ STATIC int queue_data_in(int devid, int vfid, int local_pid, struct hdcdrv_data_
 
     queue_context_put(ctx);
     if (ret != 0) {
-        queue_err("queue_free_dma_node failed. (ret=%d, serial_num=%llu; que_chan_addr=0x%pK).\n",
-            ret, reply_msg->dma_info.serial_num, (void *)(uintptr_t)reply_msg->dma_info.que_chan_addr);
+        queue_err("queue_free_dma_node failed. (ret=%d, serial_num=%llu; que_chan_addr=0x%pK).\n", ret,
+                  reply_msg->dma_info.serial_num, (void *)(uintptr_t)reply_msg->dma_info.que_chan_addr);
     }
 
     return HDCDRV_RX_FINISH;

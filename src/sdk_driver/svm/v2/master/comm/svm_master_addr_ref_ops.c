@@ -11,7 +11,7 @@
  * GNU General Public License for more details.
  */
 
-#include <linux/types.h>
+#include "ka_type.h"
 
 #include "svm_master_addr_ref_ops.h"
 
@@ -37,7 +37,7 @@ static void devmm_get_memcpy_addr_info(struct devmm_ioctl_arg *arg, struct devmm
 {
     struct devmm_mem_copy_para *para = &arg->data.copy_para;
 
-    info->num = 2;  /* 2 addr */
+    info->num = 2; /* 2 addr */
     info->va[0] = para->dst;
     info->size[0] = para->ByteCount;
     info->va[1] = para->src;
@@ -48,7 +48,7 @@ static void devmm_get_memcpy2d_addr_info(struct devmm_ioctl_arg *arg, struct dev
 {
     struct devmm_mem_copy2d_para *para = &arg->data.copy2d_para;
 
-    info->num = 2;  /* 2 addr */
+    info->num = 2; /* 2 addr */
     info->va[0] = para->dst;
     info->size[0] = SVM_ADDR_REF_OPS_UNKNOWN_SIZE;
     info->va[1] = para->src;
@@ -59,7 +59,7 @@ static void devmm_get_async_cpy_addr_info(struct devmm_ioctl_arg *arg, struct de
 {
     struct devmm_mem_async_copy_para *para = &arg->data.async_copy_para;
 
-    info->num = 2;  /* 2 addr */
+    info->num = 2; /* 2 addr */
     info->va[0] = para->dst;
     info->size[0] = para->byte_count;
     info->va[1] = para->src;
@@ -71,7 +71,7 @@ static void devmm_get_convert_addr_info(struct devmm_ioctl_arg *arg, struct devm
     struct devmm_mem_convrt_addr_para *para = &arg->data.convrt_para;
 
     /* If 1d's len out of limit size, will goto 2d, 2d's destroy will vmma dec by height. */
-    info->num = 2;  /* 2 addr */
+    info->num = 2; /* 2 addr */
     info->va[0] = para->pSrc;
     info->size[0] = SVM_ADDR_REF_OPS_UNKNOWN_SIZE;
     info->va[1] = para->pDst;
@@ -111,7 +111,7 @@ static void devmm_get_translate_addr_info(struct devmm_ioctl_arg *arg, struct de
 
     info->num = 1;
     info->va[0] = para->vptr;
-    info->size[0] = 1;      /* MEM_RESERVE_VAL not support continuty phy addr, other attr only set fist page ref */
+    info->size[0] = 1; /* MEM_RESERVE_VAL not support continuty phy addr, other attr only set fist page ref */
 }
 
 static void devmm_get_ipc_open_addr_info(struct devmm_ioctl_arg *arg, struct devmm_ioctl_addr_info *info)
@@ -120,7 +120,7 @@ static void devmm_get_ipc_open_addr_info(struct devmm_ioctl_arg *arg, struct dev
 
     info->num = 1;
     info->va[0] = para->vptr;
-    info->size[0] = 1;      /* vptr is MEM_SVM_VAL, only set first page ref */
+    info->size[0] = 1; /* vptr is MEM_SVM_VAL, only set first page ref */
 }
 
 static void devmm_get_ipc_close_addr_info(struct devmm_ioctl_arg *arg, struct devmm_ioctl_addr_info *info)
@@ -129,7 +129,7 @@ static void devmm_get_ipc_close_addr_info(struct devmm_ioctl_arg *arg, struct de
 
     info->num = 1;
     info->va[0] = para->vptr;
-    info->size[0] = 1;      /* vptr is MEM_SVM_VAL, only set first page ref */
+    info->size[0] = 1; /* vptr is MEM_SVM_VAL, only set first page ref */
 }
 
 static void devmm_get_ipc_create_addr_info(struct devmm_ioctl_arg *arg, struct devmm_ioctl_addr_info *info)
@@ -169,7 +169,7 @@ static void devmm_get_mem_map_addr_info(struct devmm_ioctl_arg *arg, struct devm
 
     info->num = 1;
     info->va[0] = para->va;
-    info->size[0] = SVM_ADDR_REF_OPS_UNKNOWN_SIZE;   /* Will create vmma, shouldn't vmma_occupy_inc */
+    info->size[0] = SVM_ADDR_REF_OPS_UNKNOWN_SIZE; /* Will create vmma, shouldn't vmma_occupy_inc */
 }
 
 static void devmm_get_mem_unmap_addr_info(struct devmm_ioctl_arg *arg, struct devmm_ioctl_addr_info *info)
@@ -178,7 +178,7 @@ static void devmm_get_mem_unmap_addr_info(struct devmm_ioctl_arg *arg, struct de
 
     info->num = 1;
     info->va[0] = para->va;
-    info->size[0] = SVM_ADDR_REF_OPS_UNKNOWN_SIZE;  /* Will destroy vmma, shouldn't vmma_occupy_inc */
+    info->size[0] = SVM_ADDR_REF_OPS_UNKNOWN_SIZE; /* Will destroy vmma, shouldn't vmma_occupy_inc */
 }
 
 static void devmm_get_register_dma_addr_info(struct devmm_ioctl_arg *arg, struct devmm_ioctl_addr_info *info)
@@ -220,29 +220,29 @@ static void devmm_get_reserve_addr_info(struct devmm_ioctl_arg *arg, struct devm
     info->size[0] = SVM_ADDR_REF_OPS_UNKNOWN_SIZE;
 }
 
-static void (*get_ioctl_addr_info[DEVMM_SVM_CMD_MAX_CMD])
-    (struct devmm_ioctl_arg *arg, struct devmm_ioctl_addr_info *info) = {
-        [_KA_IOC_NR(DEVMM_SVM_ALLOC)] = devmm_get_alloc_addr_info,
-        [_KA_IOC_NR(DEVMM_SVM_FREE_PAGES)] = devmm_get_free_addr_info,
-        [_KA_IOC_NR(DEVMM_SVM_MEMCPY)] = devmm_get_memcpy_addr_info,
-        [_KA_IOC_NR(DEVMM_SVM_MEMCPY2D)] = devmm_get_memcpy2d_addr_info,
-        [_KA_IOC_NR(DEVMM_SVM_ASYNC_MEMCPY)] = devmm_get_async_cpy_addr_info,
-        [_KA_IOC_NR(DEVMM_SVM_CONVERT_ADDR)] = devmm_get_convert_addr_info,
-        [_KA_IOC_NR(DEVMM_SVM_ADVISE)] = devmm_get_advise_addr_info,
-        [_KA_IOC_NR(DEVMM_SVM_PREFETCH)] = devmm_get_prefetch_addr_info,
-        [_KA_IOC_NR(DEVMM_SVM_MEMSET8)] = devmm_get_memset_addr_info,
-        [_KA_IOC_NR(DEVMM_SVM_TRANSLATE)] = devmm_get_translate_addr_info,
-        [_KA_IOC_NR(DEVMM_SVM_IPC_MEM_OPEN)] = devmm_get_ipc_open_addr_info,
-        [_KA_IOC_NR(DEVMM_SVM_IPC_MEM_CLOSE)] = devmm_get_ipc_close_addr_info,
-        [_KA_IOC_NR(DEVMM_SVM_IPC_MEM_CREATE)] = devmm_get_ipc_create_addr_info,
-        [_KA_IOC_NR(DEVMM_SVM_MEM_REMOTE_MAP)] = devmm_get_remote_map_addr_info,
-        [_KA_IOC_NR(DEVMM_SVM_MEM_REMOTE_UNMAP)] = devmm_get_remote_unmap_addr_info,
-        [_KA_IOC_NR(DEVMM_SVM_MEM_MAP)] = devmm_get_mem_map_addr_info,
-        [_KA_IOC_NR(DEVMM_SVM_MEM_UNMAP)] = devmm_get_mem_unmap_addr_info,
-        [_KA_IOC_NR(DEVMM_SVM_REGISTER_DMA)] = devmm_get_register_dma_addr_info,
-        [_KA_IOC_NR(DEVMM_SVM_UNREGISTER_DMA)] = devmm_get_unregister_dma_addr_info,
-        [_KA_IOC_NR(DEVMM_SVM_MEM_REPLAIR)] = devmm_get_mem_repair_addr_info,
-        [_KA_IOC_NR(DEVMM_SVM_RESERVE_ADDR_INFO_QUERY)] = devmm_get_reserve_addr_info,
+static void (*get_ioctl_addr_info[DEVMM_SVM_CMD_MAX_CMD])(
+    struct devmm_ioctl_arg *arg, struct devmm_ioctl_addr_info *info) = {
+    [_KA_IOC_NR(DEVMM_SVM_ALLOC)] = devmm_get_alloc_addr_info,
+    [_KA_IOC_NR(DEVMM_SVM_FREE_PAGES)] = devmm_get_free_addr_info,
+    [_KA_IOC_NR(DEVMM_SVM_MEMCPY)] = devmm_get_memcpy_addr_info,
+    [_KA_IOC_NR(DEVMM_SVM_MEMCPY2D)] = devmm_get_memcpy2d_addr_info,
+    [_KA_IOC_NR(DEVMM_SVM_ASYNC_MEMCPY)] = devmm_get_async_cpy_addr_info,
+    [_KA_IOC_NR(DEVMM_SVM_CONVERT_ADDR)] = devmm_get_convert_addr_info,
+    [_KA_IOC_NR(DEVMM_SVM_ADVISE)] = devmm_get_advise_addr_info,
+    [_KA_IOC_NR(DEVMM_SVM_PREFETCH)] = devmm_get_prefetch_addr_info,
+    [_KA_IOC_NR(DEVMM_SVM_MEMSET8)] = devmm_get_memset_addr_info,
+    [_KA_IOC_NR(DEVMM_SVM_TRANSLATE)] = devmm_get_translate_addr_info,
+    [_KA_IOC_NR(DEVMM_SVM_IPC_MEM_OPEN)] = devmm_get_ipc_open_addr_info,
+    [_KA_IOC_NR(DEVMM_SVM_IPC_MEM_CLOSE)] = devmm_get_ipc_close_addr_info,
+    [_KA_IOC_NR(DEVMM_SVM_IPC_MEM_CREATE)] = devmm_get_ipc_create_addr_info,
+    [_KA_IOC_NR(DEVMM_SVM_MEM_REMOTE_MAP)] = devmm_get_remote_map_addr_info,
+    [_KA_IOC_NR(DEVMM_SVM_MEM_REMOTE_UNMAP)] = devmm_get_remote_unmap_addr_info,
+    [_KA_IOC_NR(DEVMM_SVM_MEM_MAP)] = devmm_get_mem_map_addr_info,
+    [_KA_IOC_NR(DEVMM_SVM_MEM_UNMAP)] = devmm_get_mem_unmap_addr_info,
+    [_KA_IOC_NR(DEVMM_SVM_REGISTER_DMA)] = devmm_get_register_dma_addr_info,
+    [_KA_IOC_NR(DEVMM_SVM_UNREGISTER_DMA)] = devmm_get_unregister_dma_addr_info,
+    [_KA_IOC_NR(DEVMM_SVM_MEM_REPLAIR)] = devmm_get_mem_repair_addr_info,
+    [_KA_IOC_NR(DEVMM_SVM_RESERVE_ADDR_INFO_QUERY)] = devmm_get_reserve_addr_info,
 };
 
 int devmm_get_ioctl_addr_info(struct devmm_ioctl_arg *arg, u32 cmd_id, struct devmm_ioctl_addr_info *info)
@@ -256,4 +256,3 @@ int devmm_get_ioctl_addr_info(struct devmm_ioctl_arg *arg, u32 cmd_id, struct de
         return -EINVAL;
     }
 }
-

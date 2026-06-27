@@ -20,7 +20,7 @@
 #include "xsmem_framework_log.h"
 #include "xsmem_ns_adapt.h"
 
-#define NS_MAX_SP_NUM            512U
+#define NS_MAX_SP_NUM 512U
 
 static KA_LIST_HEAD(ns_pool_list);
 KA_TASK_DEFINE_MUTEX(ns_mutex);
@@ -45,12 +45,11 @@ struct xsm_ns_mng {
 };
 
 static const struct xsm_ns_algo_ctrl g_ns_algo_ctrl[POOL_NUM_CTRL_TYPE_MAX] = {
-    [SP_NUM_CTRL_TYPE] = {
-        .max_pool_num = NS_MAX_SP_NUM /* For docker, we should check pool num */
-    },
-    [VMA_NUM_CTRL_TYPE] = {
-        .max_pool_num = KA_UINT_MAX
-    },
+    [SP_NUM_CTRL_TYPE] =
+        {
+            .max_pool_num = NS_MAX_SP_NUM /* For docker, we should check pool num */
+        },
+    [VMA_NUM_CTRL_TYPE] = {.max_pool_num = KA_UINT_MAX},
 };
 
 /*
@@ -66,12 +65,10 @@ static bool xsmem_is_host_system(unsigned long mnt_ns)
     return false;
 }
 
-static const int g_xsmem_ctrl_type[XSMEM_ALGO_MAX] = {
-    [XSMEM_ALGO_VMA] = VMA_NUM_CTRL_TYPE,
-    [XSMEM_ALGO_SP] = SP_NUM_CTRL_TYPE,
-    [XSMEM_ALGO_CACHE_VMA] = VMA_NUM_CTRL_TYPE,
-    [XSMEM_ALGO_CACHE_SP] = SP_NUM_CTRL_TYPE
-};
+static const int g_xsmem_ctrl_type[XSMEM_ALGO_MAX] = {[XSMEM_ALGO_VMA] = VMA_NUM_CTRL_TYPE,
+                                                      [XSMEM_ALGO_SP] = SP_NUM_CTRL_TYPE,
+                                                      [XSMEM_ALGO_CACHE_VMA] = VMA_NUM_CTRL_TYPE,
+                                                      [XSMEM_ALGO_CACHE_SP] = SP_NUM_CTRL_TYPE};
 
 static inline int xsmem_algo_to_ctrl(int algo)
 {
@@ -115,7 +112,8 @@ static struct xsm_ns_mng *_xsmem_ns_mng_find(unsigned long mnt_ns)
 {
     struct xsm_ns_mng *ns_mng = NULL;
 
-    ka_list_for_each_entry(ns_mng, &ns_pool_list, ns_pool_node) {
+    ka_list_for_each_entry(ns_mng, &ns_pool_list, ns_pool_node)
+    {
         if (ns_mng->mnt_ns == mnt_ns) {
             return ns_mng;
         }
@@ -256,7 +254,8 @@ int xsmem_get_tgid_by_vpid(ka_pid_t vpid, ka_pid_t *tgid)
 
 int xsmem_strcat_with_ns(char *str_dest, unsigned int dest_max, const char *str_src)
 {
-    return sprintf_s(str_dest, dest_max, "%s_%lu", str_src, (unsigned long)(uintptr_t)ka_task_get_current()->nsproxy->mnt_ns);
+    return sprintf_s(str_dest, dest_max, "%s_%lu", str_src,
+                     (unsigned long)(uintptr_t)ka_task_get_current()->nsproxy->mnt_ns);
 }
 
 static int xsmem_ns_blkid_alloc(struct xsm_ns_mng *ns_mng)
@@ -305,4 +304,3 @@ void xsmem_blockid_put(unsigned long mnt_ns, int id)
         }
     }
 }
-

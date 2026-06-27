@@ -11,7 +11,7 @@
 #ifndef __DEV_MON_CMD_MANAGER_EXT_H__
 #define __DEV_MON_CMD_MANAGER_EXT_H__
 
-#if defined(CFG_SOC_PLATFORM_CLOUD_V2)
+#if (defined(CFG_SOC_PLATFORM_CLOUD_V2) || defined(CFG_SOC_PLATFORM_CLOUD_V4))
 
 typedef struct struct_head {
     char cmd_version;          // BYTE[0], 首次默认版本为0，后续涉及修改递增
@@ -124,10 +124,118 @@ typedef struct outband_huyang_fmea_info {
 
 #endif /* CFG_SOC_PLATFORM_CLOUD_V2 */
 
+#ifdef CFG_SOC_PLATFORM_CLOUD_V3
+#define GET_FLAG    0
+#define SET_FLAG    1
+
+#define LIGHT_STATUS_NOTHING    0
+#define LIGHT_STATUS_OFF        1
+
+typedef struct outband_light_control_status {
+    STRUCT_HEAD struct_head;
+    unsigned char control_status;
+} OUTBAND_LIGHT_CONTROL_STATUS;
+
+void dev_mon_api_out_band_light_control(SYSTEM_CB_T *cb, DM_INTF_S *intf, DM_RECV_ST *msg);
+#endif /* CFG_SOC_PLATFORM_CLOUD_V3 */
+
 #if defined(CFG_SOC_PLATFORM_CLOUD_V2)
 void dev_mon_api_out_band_get_hccs_info(SYSTEM_CB_T *cb, DM_INTF_S *intf, DM_RECV_ST *msg);
-void dev_mon_api_out_band_get_xsfp_power_info_extra(SYSTEM_CB_T *cb, DM_INTF_S *intf, DM_RECV_ST *msg);
 void dev_mon_api_out_band_get_huyang_fmea(SYSTEM_CB_T *cb, DM_INTF_S *intf, DM_RECV_ST *msg);
 #endif /* CFG_SOC_PLATFORM_CLOUD_V2 */
+
+#ifdef CFG_SOC_PLATFORM_CLOUD_V4
+#define DEV_950_1P_MAINBOARD_ID    0x68
+#define DEV_950_2P_MAINBOARD_ID    0x6A
+#define DEV_950_4P_MAINBOARD_ID    0x6C
+#define DEV_UBOE_CARD_950_MAIN_BOARD_ID    0xD2
+
+#define DEV_UBOE_CARD_950_PORT    8
+
+#define UB_INFO_TYPE_BASIC       1
+#define UB_INFO_TYPE_PEAK_BW     2
+
+#define UB_INFO_TYPE_STAT_ONE    1
+#define UB_INFO_TYPE_STAT_TWO    2
+#define UBOE_PKT_UNION_STRU_NUM  8
+
+typedef enum {
+    CARD_2P_UB_PORT_4 = 4,
+    CARD_2P_UB_PORT_5 = 5,
+    CARD_2P_UB_PORT_6 = 6,
+    CARD_2P_UB_PORT_8 = 8
+} DEV_950_CARD_2P_UB_PORT;
+
+typedef enum {
+    CARD_4P_UB_PORT_4 = 4,
+    CARD_4P_UB_PORT_5 = 5,
+    CARD_4P_UB_PORT_6 = 6
+} DEV_950_CARD_4P_UB_PORT;
+
+typedef struct tg_dev_mp_msg_extra {
+    uint8_t udie_id;
+    uint8_t ub_port_id;
+    uint8_t info_type;
+    uint8_t peak_bw_time;
+} REQ_MSG_UB_PARA;
+
+typedef struct ub_port_statistic_info1 {
+    unsigned int port_id;
+    unsigned int is_uboe_port;
+    unsigned long long ub_ipv4_pkt_cnt_rx;
+    unsigned long long ub_ipv6_pkt_cnt_rx;
+    unsigned long long unic_ipv4_pkt_cnt_rx;
+    unsigned long long unic_ipv6_pkt_cnt_rx;
+    unsigned long long ub_compact_pkt_cnt_rx;
+    unsigned long long ub_umoc_ctph_cnt_rx;
+    unsigned long long ub_umoc_ntph_cnt_rx;
+    unsigned long long ub_mem_pkt_cnt_rx;
+    unsigned long long unknown_pkt_cnt_rx;
+    unsigned long long drop_ind_cnt_rx;
+    unsigned long long err_ind_cnt_rx;
+    unsigned long long to_host_pkt_cnt_rx;
+    unsigned long long to_imp_pkt_cnt_rx;
+    unsigned long long to_mar_pkt_cnt_rx;
+    unsigned long long to_link_pkt_cnt_rx;
+    unsigned long long to_noc_pkt_cnt_rx;
+    unsigned long long route_err_cnt_rx;
+    unsigned long long out_err_cnt_rx;
+    unsigned long long length_err_cnt_rx;
+    unsigned long long rx_busi_flit_num;
+    unsigned long long rx_send_ack_flit;
+} UB_STAT_INFO_PART_ONE;
+
+typedef struct ub_port_statistic_info2 {
+    unsigned long long ub_ipv4_pkt_cnt_tx;
+    unsigned long long ub_ipv6_pkt_cnt_tx;
+    unsigned long long unic_ipv4_pkt_cnt_tx;
+    unsigned long long unic_ipv6_pkt_cnt_tx;
+    unsigned long long ub_compact_pkt_cnt_tx;
+    unsigned long long ub_umoc_ctph_cnt_tx;
+    unsigned long long ub_umoc_ntph_cnt_tx;
+    unsigned long long ub_mem_pkt_cnt_tx;
+    unsigned long long unknown_pkt_cnt_tx;
+    unsigned long long drop_ind_cnt_tx;
+    unsigned long long err_ind_cnt_tx;
+    unsigned long long lpbk_ind_cnt_tx;
+    unsigned long long out_err_cnt_tx;
+    unsigned long long length_err_cnt_tx;
+    unsigned long long tx_busi_flit_num;
+    unsigned long long tx_recv_ack_flit;
+    unsigned long long retry_req_sum;
+    unsigned long long retry_ack_sum;
+    unsigned long long crc_error_sum;
+    unsigned long long st_fec_decoding_fail_num;
+    unsigned long long st_fec_err_bit_num;
+} UB_STAT_INFO_PART_TWO;
+
+void dev_mon_api_out_band_get_ub_port_info(SYSTEM_CB_T *cb, DM_INTF_S *intf, DM_RECV_ST *msg);
+void dev_mon_api_out_band_get_ub_port_statistic_info(SYSTEM_CB_T *cb, DM_INTF_S *intf, DM_RECV_ST *msg);
+void dev_mon_api_out_band_get_ub_port_link_info(SYSTEM_CB_T *cb, DM_INTF_S *intf, DM_RECV_ST *msg);
+#endif /* CFG_SOC_PLATFORM_CLOUD_V4 */
+
+#if defined(CFG_FEATURE_INIT_MCU_BOARD_ID)
+void dev_mon_api_get_mcu_board_id(SYSTEM_CB_T *cb, DM_INTF_S *intf, DM_RECV_ST *msg);
+#endif
 
 #endif /* __DEV_MON_CMD_MANAGER_EXT_H__ */

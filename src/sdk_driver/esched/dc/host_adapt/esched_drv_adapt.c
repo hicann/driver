@@ -30,13 +30,13 @@
 #include "esched_drv_adapt.h"
 
 /* host intr reg */
-#define STARS_TOPIC_HCPU_INT_REG_NUM                                2
+#define STARS_TOPIC_HCPU_INT_REG_NUM 2
 
-#define STARS_TOPIC_HOST_AICPU_INT_MASK_NUM                         2
+#define STARS_TOPIC_HOST_AICPU_INT_MASK_NUM 2
 
-#define SCHED_HOST_CONF_INTR_FREQ         3
-#define SCHED_HOST_MB_COUNT              (sizeof(u32) * KA_BITS_PER_BYTE)
-#define SOFT_FAULT_REPORT_THR         60
+#define SCHED_HOST_CONF_INTR_FREQ 3
+#define SCHED_HOST_MB_COUNT (sizeof(u32) * KA_BITS_PER_BYTE)
+#define SOFT_FAULT_REPORT_THR 60
 
 struct esched_drv_dev_attr {
     u32 valid;
@@ -118,8 +118,8 @@ STATIC void esched_drv_host_uninit_priv(struct sched_hard_res *res)
     res->priv = NULL;
 }
 
-STATIC void topic_sched_host_aicpu_intr_mask_set(u32 dev_id, void __ka_mm_iomem *io_base,
-    u32 mask_index, u32 vf_id, u32 val)
+STATIC void topic_sched_host_aicpu_intr_mask_set(u32 dev_id, void __ka_mm_iomem *io_base, u32 mask_index, u32 vf_id,
+                                                 u32 val)
 {
     if (esched_drv_get_topic_sched_version(dev_id) == (u32)TOPIC_SCHED_VERSION_V2) {
 #ifndef EMU_ST
@@ -215,8 +215,8 @@ STATIC void topic_sched_host_aicpu_intr_all_clr(u32 dev_id, void __ka_mm_iomem *
     }
 }
 
-STATIC void topic_sched_host_aicpu_int_status(u32 dev_id, const void __ka_mm_iomem *io_base,
-    u32 intr_index, u32 *val, u32 vf_id)
+STATIC void topic_sched_host_aicpu_int_status(u32 dev_id, const void __ka_mm_iomem *io_base, u32 intr_index, u32 *val,
+                                              u32 vf_id)
 {
     if (esched_drv_get_topic_sched_version(dev_id) == (u32)TOPIC_SCHED_VERSION_V2) {
 #ifndef EMU_ST
@@ -267,8 +267,7 @@ int esched_drv_config_pid(struct sched_proc_ctx *proc_ctx, u32 identity, devdrv_
         return 0;
     }
 
-    return esched_drv_remote_add_pid(proc_ctx->node->node_id, proc_ctx->host_pid,
-        pids_info->cp_type[0], proc_ctx->pid);
+    return esched_drv_remote_add_pid(proc_ctx->node->node_id, proc_ctx->host_pid, pids_info->cp_type[0], proc_ctx->pid);
 }
 
 void esched_drv_del_pid(struct sched_proc_ctx *proc_ctx, u32 identity)
@@ -303,8 +302,7 @@ void esched_drv_cpu_report(struct topic_data_chan *topic_chan, u32 error_code, u
 }
 
 void esched_drv_get_status_report(struct topic_data_chan *topic_chan, u32 status)
-{
-}
+{}
 
 bool esched_drv_is_mb_valid(struct topic_data_chan *topic_chan)
 {
@@ -317,10 +315,10 @@ bool esched_drv_is_mb_valid(struct topic_data_chan *topic_chan)
 
     if (topic_chan->mb_type == ACPU_HOST) {
         return topic_sched_host_aicpu_is_mb_valid(topic_chan->hard_res->dev_id, topic_chan->hard_res->io_base,
-            topic_chan->mb_id, dev_attr->vf_id);
+                                                  topic_chan->mb_id, dev_attr->vf_id);
     } else {
         return topic_sched_host_ccpu_is_mb_valid(topic_chan->hard_res->dev_id, topic_chan->hard_res->io_base,
-            topic_chan->mb_id, dev_attr->vf_id);
+                                                 topic_chan->mb_id, dev_attr->vf_id);
     }
 }
 
@@ -335,14 +333,13 @@ int esched_cpu_port_submit_task(struct topic_data_chan *topic_chan, void *split_
 }
 
 void esched_cpu_port_reset(struct topic_data_chan *topic_chan, struct sched_cpu_port_clear_info *clr_info)
-{
-}
+{}
 
 STATIC void esched_drv_host_mb_intr_clr(struct topic_data_chan *topic_chan, u32 intr_index, u32 val, u32 vf_id)
 {
     if (topic_chan->mb_type == ACPU_HOST) {
-        topic_sched_host_aicpu_intr_clr(topic_chan->hard_res->dev_id, topic_chan->hard_res->io_base,
-            intr_index, vf_id, val);
+        topic_sched_host_aicpu_intr_clr(topic_chan->hard_res->dev_id, topic_chan->hard_res->io_base, intr_index, vf_id,
+                                        val);
     }
 
     if (topic_chan->mb_type == CCPU_HOST) {
@@ -353,7 +350,8 @@ STATIC void esched_drv_host_mb_intr_clr(struct topic_data_chan *topic_chan, u32 
 static void esched_drv_host_init_node_aicpu_chan(struct sched_numa_node *node)
 {
     u32 chip_type = uda_get_chip_type(node->node_id);
-    if ((chip_type == HISI_CLOUD_V2) || (chip_type == HISI_CLOUD_V4) || (chip_type == HISI_CLOUD_V5)) {
+    if ((chip_type == HISI_CLOUD_V2) || (chip_type == HISI_CLOUD_V4) || (chip_type == HISI_CLOUD_V5) ||
+        (chip_type == HISI_MINI_V4)) {
         node->hard_res.aicpu_chan_num = TOPIC_SCHED_HOST_AICPU_CHAN_NUM;
     } else {
         node->hard_res.aicpu_chan_num = 0;
@@ -389,7 +387,6 @@ STATIC struct topic_data_chan *esched_drv_interrupt_get_topic_chan(u32 dev_id, u
 
     return node->hard_res.topic_chan[chan_id];
 }
-
 
 STATIC ka_irqreturn_t esched_drv_host_task_interrupt(int irq, void *data)
 {
@@ -448,19 +445,19 @@ void esched_drv_mb_intr_enable(struct topic_data_chan *topic_chan)
         return;
     }
 
-    sched_debug("(uda_get_chip_type=%u; topic_chan->mb_type=%u)\n",
-        uda_get_chip_type(topic_chan->hard_res->dev_id), topic_chan->mb_type);
+    sched_debug("(uda_get_chip_type=%u; topic_chan->mb_type=%u)\n", uda_get_chip_type(topic_chan->hard_res->dev_id),
+                topic_chan->mb_type);
 
     if (topic_chan->mb_type == ACPU_HOST) {
         topic_sched_host_aicpu_intr_enable(topic_chan->hard_res->dev_id, topic_chan->hard_res->io_base,
-            topic_chan->mb_id, dev_attr->vf_id);
+                                           topic_chan->mb_id, dev_attr->vf_id);
     } else {
         topic_sched_host_ctrlcpu_intr_enable(topic_chan->hard_res->dev_id, topic_chan->hard_res->io_base,
-            topic_chan->mb_id, dev_attr->vf_id);
+                                             topic_chan->mb_id, dev_attr->vf_id);
     }
 
-    sched_debug("Show details. (mb_id=%u; mb_type=%u; irq=%d)\n",
-        topic_chan->mb_id, topic_chan->mb_type, topic_chan->irq);
+    sched_debug("Show details. (mb_id=%u; mb_type=%u; irq=%d)\n", topic_chan->mb_id, topic_chan->mb_type,
+                topic_chan->irq);
 }
 
 STATIC void esched_drv_host_init_cpu_mb(u32 chip_id, u32 mb_index, u32 wait_mb_id)
@@ -474,8 +471,8 @@ STATIC void esched_drv_host_init_cpu_mb(u32 chip_id, u32 mb_index, u32 wait_mb_i
     /* host rsv_mem_va only use for mailbox */
     topic_chan->wait_mb = (struct topic_sched_mailbox *)(topic_chan->hard_res->rsv_mem_va + offset);
 
-    sched_debug("Show details. (chip_id=%u; mb_type=%u; mb_index=%u; wait_mb_id=%u; offset=0x%x)\n",
-        chip_id, topic_chan->mb_type, mb_index, wait_mb_id, offset);
+    sched_debug("Show details. (chip_id=%u; mb_type=%u; mb_index=%u; wait_mb_id=%u; offset=0x%x)\n", chip_id,
+                topic_chan->mb_type, mb_index, wait_mb_id, offset);
 
     return;
 }
@@ -487,8 +484,8 @@ STATIC int esched_drv_host_config_intr(struct sched_hard_res *res)
     /* hard sched just need to handle one irq in host */
     ret = esched_drv_remote_config_intr(res->dev_id, res->irq[0]);
     if (ret != 0) {
-        sched_debug("Remote config irq_base not success. (dev_id=%u; irq_base=%d; ret=%d)\n",
-            res->dev_id, res->irq[0], ret);
+        sched_debug("Remote config irq_base not success. (dev_id=%u; irq_base=%d; ret=%d)\n", res->dev_id, res->irq[0],
+                    ret);
         return ret;
     }
 
@@ -592,7 +589,7 @@ STATIC int esched_drv_init_ccpu_chan(struct sched_numa_node *node, u32 mb_id)
         return DRV_ERROR_INNER_ERR;
     }
 
-    topic_chan->irq = res->irq[0];   /* Not used in host side */
+    topic_chan->irq = res->irq[0]; /* Not used in host side */
     topic_chan->mb_type = CCPU_HOST;
     topic_chan->hard_res = res;
     topic_chan->serial_no = 0;
@@ -666,8 +663,8 @@ STATIC int esched_drv_host_init_irq(struct sched_hard_res *res)
         return DRV_ERROR_PARA_ERROR;
     }
 
-    ret = devdrv_register_irq_by_vector_index(dev_id, (int)res->irq[0], esched_drv_host_task_interrupt,
-        (void *)res, "topic_sched_aicpu");
+    ret = devdrv_register_irq_by_vector_index(dev_id, (int)res->irq[0], esched_drv_host_task_interrupt, (void *)res,
+                                              "topic_sched_aicpu");
     if (ret != 0) {
         sched_err("Request irq failed. (dev_id=%u; irq=%u; ret=%d)\n", dev_id, attr->irq, ret);
         return ret;
@@ -854,7 +851,7 @@ STATIC void esched_drv_host_mb_intr_all_reset(struct sched_hard_res *res)
 
     chip_type = uda_get_chip_type(res->dev_id);
     /* topic v2 only support aicpu. */
-    if ((chip_type != HISI_CLOUD_V4) && (chip_type != HISI_CLOUD_V5)) {
+    if ((chip_type != HISI_CLOUD_V4) && (chip_type != HISI_CLOUD_V5) && (chip_type != HISI_MINI_V4)) {
         cpu_ctx = sched_get_cpu_ctx(sched_get_numa_node(res->dev_id), NON_SCHED_DEFAULT_CPUID);
         topic_sched_host_ccpu_int_status(res->dev_id, res->io_base, &val, vf_id);
         if (val != 0) {
@@ -1099,22 +1096,23 @@ int esched_hw_dev_init(struct sched_numa_node *node)
     }
 
     chip_type = uda_get_chip_type(chip_id);
-    if (!uda_is_phy_dev(chip_id) && ((chip_type == HISI_CLOUD_V4) || (chip_type == HISI_CLOUD_V5))) {
+    if (!uda_is_phy_dev(chip_id) &&
+        ((chip_type == HISI_CLOUD_V4) || (chip_type == HISI_CLOUD_V5) || (chip_type == HISI_MINI_V4))) {
         ret = esched_drv_host_get_udev_pool_id(chip_id, &pool_id);
         if (ret != 0) {
-    #ifndef EMU_ST
+#ifndef EMU_ST
             esched_host_iounmap(res);
             esched_drv_host_uninit_priv(res);
             sched_vfree(res->irq);
             res->irq = NULL;
             sched_err("Get udev pool id failed. (udev_id=%u; ret=%d)\n", res->dev_id, ret);
             return ret;
-    #endif
+#endif
         }
 
         ret = esched_drv_init_sched_task_submit_chan(chip_id, pool_id, 1, 1);
         if (ret != 0) {
-    #ifndef EMU_ST
+#ifndef EMU_ST
             esched_host_iounmap(res);
             esched_drv_host_uninit_priv(res);
             sched_vfree(res->irq);
@@ -1122,7 +1120,7 @@ int esched_hw_dev_init(struct sched_numa_node *node)
             esched_kernel_soft_fault_report(chip_id);
             sched_err("Sched task chan init failed. (dev_id=%u; ret=%d)\n", res->dev_id, ret);
             return ret;
-    #endif
+#endif
         }
         res->init_flag = SCHED_VALID;
         sched_info("Host VF init success. (chip_id=%u, topic_sched_version=%u)\n", chip_id, res->topic_sched_version);
@@ -1133,7 +1131,7 @@ int esched_hw_dev_init(struct sched_numa_node *node)
     ret = esched_drv_init_msg_chan(res);
     if (ret != 0) {
         sched_warn("device not ready, need start delay work to retry. (chip_id=%u)\n", chip_id);
-        KA_TASK_INIT_DELAYED_WORK(&res->init,  esched_drv_init_msg_chan_work);
+        KA_TASK_INIT_DELAYED_WORK(&res->init, esched_drv_init_msg_chan_work);
         (void)ka_task_schedule_delayed_work(&res->init, 0);
         res->delay_work_enable = 1;
     }
@@ -1160,7 +1158,8 @@ void esched_hw_dev_uninit(struct sched_numa_node *node)
     res->delay_work_enable = 0;
 
     chip_type = uda_get_chip_type(chip_id);
-    if (!uda_is_phy_dev(chip_id) && ((chip_type == HISI_CLOUD_V4) || (chip_type == HISI_CLOUD_V5))) {
+    if (!uda_is_phy_dev(chip_id) &&
+        ((chip_type == HISI_CLOUD_V4) || (chip_type == HISI_CLOUD_V5) || (chip_type == HISI_MINI_V4))) {
         esched_drv_uninit_sched_task_submit_chan(chip_id);
         esched_host_iounmap(res);
         esched_drv_host_uninit_priv(res);
@@ -1185,6 +1184,5 @@ void esched_hw_dev_uninit(struct sched_numa_node *node)
 }
 #else
 void esched_drv_adapt_ut(void)
-{
-}
+{}
 #endif

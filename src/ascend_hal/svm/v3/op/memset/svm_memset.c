@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * Copyright (c) 2026 Huawei Technologies Co., Ltd.
  * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -26,15 +26,17 @@ int svm_memset(u64 dst, u64 dst_max, u8 value, u64 count)
     if (count <= SECUREC_MEM_MAX_LEN && dst_max <= SECUREC_MEM_MAX_LEN) {
         ret = svm_memset_s((void *)(uintptr_t)tmp_dst, dst_max, value, count);
         if (ret != 0) {
-            svm_err("Memset error. (dst=0x%llx; dstMax=%llu; value=%u; count=%llu; ret=%d)\n",
-                tmp_dst, dst_max, value, count, ret);
+            svm_err(
+                "Memset error. (dst=0x%llx; dstMax=%llu; value=%u; count=%llu; ret=%d)\n", tmp_dst, dst_max, value,
+                count, ret);
             return DRV_ERROR_INVALID_VALUE;
         }
     } else if (count <= SECUREC_MEM_MAX_LEN && dst_max > SECUREC_MEM_MAX_LEN) {
         ret = svm_memset_s((void *)(uintptr_t)tmp_dst, SECUREC_MEM_MAX_LEN, value, count);
         if (ret != 0) {
-            svm_err("Memset error. (dst=0x%llx; dstMax=%llu; value=%u; count=%llu; ret=%d)\n",
-                tmp_dst, SECUREC_MEM_MAX_LEN, value, count, ret);
+            svm_err(
+                "Memset error. (dst=0x%llx; dstMax=%lu; value=%u; count=%llu; ret=%d)\n", tmp_dst, SECUREC_MEM_MAX_LEN,
+                value, count, ret);
             return DRV_ERROR_INVALID_VALUE;
         }
     } else if (count > SECUREC_MEM_MAX_LEN) {
@@ -42,8 +44,8 @@ int svm_memset(u64 dst, u64 dst_max, u8 value, u64 count)
             per_count = rest_count > SECUREC_MEM_MAX_LEN ? SECUREC_MEM_MAX_LEN : rest_count;
             ret = svm_memset_s((void *)(uintptr_t)tmp_dst, per_count, value, per_count);
             if (ret != 0) {
-                svm_err("Memset error. (dst=0x%llx; value=%u; per_count=%lu; ret=%d)\n",
-                    tmp_dst, value, per_count, ret);
+                svm_err(
+                    "Memset error. (dst=0x%llx; value=%u; per_count=%lu; ret=%d)\n", tmp_dst, value, per_count, ret);
                 return DRV_ERROR_INVALID_VALUE;
             }
             tmp_dst = tmp_dst + per_count;

@@ -20,9 +20,7 @@
 #include "devdrv_common_msg.h"
 #include "comm_kernel_interface.h"
 #include "devdrv_msg_def.h"
-#ifdef CFG_FEATURE_S2S
 #include "devdrv_s2s_msg.h"
-#endif
 
 #define DEVDRV_SUCCESS 0x5a
 #define DEVDRV_FAILED 0xa5
@@ -96,6 +94,41 @@ struct devdrv_msg_chan_sched_status {
     ka_atomic_t state;
 };
 
+struct devdrv_profiling_timestamp {
+    u64 start_t;
+    u64 duration;
+};
+
+enum devdrv_profiling_tx_index {
+    DEVDRV_PROFILING_TX_WRITE_BAR = 0,
+    DEVDRV_PROFILING_TX_WAIT_IRQ_BEGIN,
+    DEVDRV_PROFILING_TX_WAIT_PEER_RECV,
+    DEVDRV_PROFILING_TX_MAX,
+};
+
+enum devdrv_profiling_rx_index {
+    DEVDRV_PROFILING_RX_QUEUE_WORK = 0,
+    DEVDRV_PROFILING_RX_SCHEDULE_CB,
+    DEVDRV_PROFILING_RX_WRITE_BAR,
+    DEVDRV_PROFILING_RX_MAX,
+};
+
+struct devdrv_profiling_info {
+    bool is_enable;
+    u32 tx_phase_index;
+    u32 rx_phase_index;
+    u64 tx_seq_num;
+    u64 rx_seq_num;
+    u64 tx_total_duration;
+    u64 rx_total_duration;
+    u32 tx_in_data_len;
+    u32 tx_out_data_len;
+    u32 rx_in_data_len;
+    u32 rx_out_data_len;
+    struct devdrv_profiling_timestamp tx_intervals[DEVDRV_PROFILING_TX_MAX];
+    struct devdrv_profiling_timestamp rx_intervals[DEVDRV_PROFILING_RX_MAX];
+};
+
 struct devdrv_msg_chan {
     struct devdrv_msg_dev *msg_dev;
     u32 chan_id;
@@ -119,6 +152,7 @@ struct devdrv_msg_chan {
     u64 stamp;
     struct devdrv_msg_chan_stat chan_stat;
     enum msg_queue_type queue_type;
+    struct devdrv_profiling_info profiling_info;
     struct devdrv_msg_chan_sched_status sched_status;
 };
 
@@ -157,10 +191,8 @@ struct devdrv_msg_dev {
 
     struct devdrv_msg_slave_mem slave_mem;
     ka_list_head_t slave_mem_list; /* for realloc msg chan */
-#ifdef CFG_FEATURE_S2S
-    struct devdrv_s2s_msg_chan s2s_chan[DEVDRV_S2S_SUPPORT_MAX_CHAN_NUM];
-    struct devdrv_s2s_non_trans_ctrl s2s_non_trans;
-#endif
+    struct devdrv_s2s_msg_chan *s2s_chan;
+    struct devdrv_s2s_non_trans_ctrl *s2s_non_trans;
     /* msg_chan must be the last element */
     struct devdrv_msg_chan *msg_chan;
 };
@@ -188,7 +220,8 @@ int devdrv_free_non_trans_queue(struct devdrv_msg_chan *msg_chan);
 
 int devdrv_msg_init(struct devdrv_pci_ctrl *pci_ctrl);
 void devdrv_msg_exit(struct devdrv_pci_ctrl *pci_ctrl);
-
+bool devdrv_profiling_is_enabled(void);
+void devdrv_set_profiling_enable(bool enabled);
 int devdrv_sync_non_trans_msg_send(struct devdrv_msg_chan *msg_chan, void *data, u32 in_data_len, u32 out_data_len,
                                    u32 *real_out_len, enum devdrv_common_msg_type msg_type);
 int devdrv_notify_dev_online(struct devdrv_msg_dev *msg_dev, u32 devid, u32 status);
@@ -209,4 +242,16 @@ int devdrv_pci_sync_msg_send(void *msg_chan, void *data, u32 in_data_len, u32 ou
 int devdrv_pci_get_msg_chan_devid(void *msg_chan);
 int devdrv_pci_set_msg_chan_priv(void *msg_chan, void *priv);
 void *devdrv_pci_get_msg_chan_priv(void *msg_chan);
+void devdrv_pci_msg_ring_doorbell(void *msg_chan);
+void devdrv_pci_msg_ring_cq_doorbell(void *msg_chan);
+void *devdrv_pci_get_msg_chan_host_sq_head(void *msg_chan, u32 *head);
+void devdrv_pci_move_msg_chan_host_sq_head(void *msg_chan);
+void *devdrv_pci_get_msg_chan_host_cq_head(void *msg_chan);
+void devdrv_pci_move_msg_chan_host_cq_head(void *msg_chan);
+void devdrv_pci_set_msg_chan_slave_sq_head(void *msg_chan, u32 head);
+void *devdrv_pci_get_msg_chan_slave_sq_tail(void *msg_chan, u32 *tail);
+void devdrv_pci_move_msg_chan_slave_sq_tail(void *msg_chan);
+bool devdrv_pci_msg_chan_slave_sq_full_check(void *msg_chan);
+void *devdrv_pci_get_msg_chan_slave_cq_tail(void *msg_chan);
+void devdrv_pci_move_msg_chan_slave_cq_tail(void *msg_chan);
 #endif

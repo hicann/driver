@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * Copyright (c) 2026 Huawei Technologies Co., Ltd.
  * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -15,9 +15,9 @@
 #include "cache_malloc.h"
 #include "normal_malloc.h"
 
-#define CACHE_TYPE_MAX_BIT          4U
-#define CACHE_TYPE_BIT_MASK         ((1U << CACHE_TYPE_MAX_BIT) - 1U)
-#define CACHE_TYPE_MAX              (CACHE_TYPE_BIT_MASK + 1U)
+#define CACHE_TYPE_MAX_BIT 4U
+#define CACHE_TYPE_BIT_MASK ((1U << CACHE_TYPE_MAX_BIT) - 1U)
+#define CACHE_TYPE_MAX (CACHE_TYPE_BIT_MASK + 1U)
 
 static inline u32 cache_flag_to_cache_type(u32 devid, u32 cache_flag)
 {

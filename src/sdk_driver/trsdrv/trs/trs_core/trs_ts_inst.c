@@ -22,7 +22,9 @@
 ka_mutex_t core_ts_inst_mutex;
 static ka_rwlock_t core_ts_inst_lock;
 
-struct trs_core_ts_inst *core_ts_inst[TRS_TS_INST_MAX_NUM] = {NULL, };
+struct trs_core_ts_inst *core_ts_inst[TRS_TS_INST_MAX_NUM] = {
+    NULL,
+};
 
 static int trs_core_ts_inst_init(struct trs_core_ts_inst *ts_inst)
 {
@@ -121,8 +123,8 @@ static void trs_core_ts_inst_uninit(struct trs_core_ts_inst *ts_inst)
     trs_res_mng_uninit(ts_inst);
 }
 
-static int trs_core_ts_inst_create(struct trs_id_inst *inst, int hw_type, int location, u32 ts_inst_flag,
-    struct trs_core_adapt_ops *ops)
+static int trs_core_ts_inst_create(
+    struct trs_id_inst *inst, int hw_type, int location, u32 ts_inst_flag, struct trs_core_adapt_ops *ops)
 {
     u32 ts_inst_id = trs_id_inst_to_ts_inst(inst);
     struct trs_core_ts_inst *ts_inst = NULL;
@@ -135,14 +137,15 @@ static int trs_core_ts_inst_create(struct trs_id_inst *inst, int hw_type, int lo
 
     ts_inst = trs_vzalloc(sizeof(struct trs_core_ts_inst));
     if (ts_inst == NULL) {
-        trs_err("Mem alloc failed. (devid=%u; tsid=%u; size=%lx)\n",
-            inst->devid, inst->tsid, sizeof(struct trs_core_ts_inst));
+        trs_err(
+            "Mem alloc failed. (devid=%u; tsid=%u; size=%lx)\n", inst->devid, inst->tsid,
+            sizeof(struct trs_core_ts_inst));
         return -ENOMEM;
     }
 
     ts_inst->inst = *inst;
     ts_inst->hw_type = hw_type;
-    ts_inst->location  = location;
+    ts_inst->location = location;
     ts_inst->ts_inst_flag = ts_inst_flag;
     ts_inst->ops = *ops;
     ts_inst->featur_mode = TRS_INST_ALL_FEATUR_MODE;
@@ -208,8 +211,8 @@ static int trs_core_check_ts_inst_ops(struct trs_core_adapt_ops *ops)
     return 0;
 }
 
-int trs_core_ts_inst_register(struct trs_id_inst *inst, int hw_type, int location, u32 ts_inst_flag,
-    struct trs_core_adapt_ops *ops)
+int trs_core_ts_inst_register(
+    struct trs_id_inst *inst, int hw_type, int location, u32 ts_inst_flag, struct trs_core_adapt_ops *ops)
 {
     int ret;
 
@@ -264,10 +267,7 @@ struct trs_core_ts_inst *trs_core_ts_inst_get(struct trs_id_inst *inst)
     return ts_inst;
 }
 
-void trs_core_ts_inst_put(struct trs_core_ts_inst *ts_inst)
-{
-    kref_safe_put(&ts_inst->ref, trs_core_ts_inst_release);
-}
+void trs_core_ts_inst_put(struct trs_core_ts_inst *ts_inst) { kref_safe_put(&ts_inst->ref, trs_core_ts_inst_release); }
 
 static void trs_core_destroy_all_proc(struct trs_core_ts_inst *ts_inst)
 {
@@ -276,13 +276,15 @@ static void trs_core_destroy_all_proc(struct trs_core_ts_inst *ts_inst)
 
     ka_task_down_write(&ts_inst->sem);
 
-    ka_list_for_each_entry_safe(proc_ctx, tmp, &ts_inst->proc_list_head, node) {
+    ka_list_for_each_entry_safe(proc_ctx, tmp, &ts_inst->proc_list_head, node)
+    {
         trs_info("Recycle proc. (pid=%d, name=%s)", proc_ctx->pid, proc_ctx->name);
         ka_list_del(&proc_ctx->node);
         trs_proc_ctx_put(proc_ctx);
     }
 
-    ka_list_for_each_entry_safe(proc_ctx, tmp, &ts_inst->exit_proc_list_head, node) {
+    ka_list_for_each_entry_safe(proc_ctx, tmp, &ts_inst->exit_proc_list_head, node)
+    {
         trs_info("Recycle proc. (pid=%d, name=%s)", proc_ctx->pid, proc_ctx->name);
         ka_list_del(&proc_ctx->node);
         trs_proc_ctx_put(proc_ctx);

@@ -14,10 +14,13 @@
 #include "ka_common_pub.h"
 #include "ka_driver_pub.h"
 #include "ka_fs_pub.h"
+#include "ka_base_pub.h"
+#include "ka_compiler_pub.h"
 
 #include "pbl/pbl_davinci_api.h"
 #include "pbl_mem_alloc_interface.h"
 #include "fms_kernel_interface.h"
+#include "urd_acc_ctrl.h"
 #include "urd_feature.h"
 #include "dms_sensor.h"
 #include "dms_event_dfx.h"
@@ -31,6 +34,11 @@
 #define DMS_ATTR_RW (DMS_ATTR_RD | DMS_ATTR_WR)
 #define MAX_CAT_BUFSIZE 2010
 #define PRINTT_LINE 30
+#define DSMI_PROC_NAME       "dsmi_log"
+#define DSMI_PROC_ATTR 0640
+
+STATIC struct dsmi_log_ctrl g_log = {0};
+STATIC ka_proc_dir_entry_t *g_dsmi_proc = NULL;
 
 STATIC ssize_t dms_sysfs_feature_list_show(ka_device_t *dev, ka_device_attribute_t *attr, char *buf)
 {
@@ -147,7 +155,7 @@ ssize_t dms_sysfs_imu_hb_store(ka_device_t *dev, ka_device_attribute_t *attr, co
     static DRV_DMS_FS_ATTR(subscribe_process, DMS_ATTR_RD, dms_sysfs_subscribe_process_show, NULL)
 
 #define DECLARE_DMS_FS_ATTR_LIST(_struct_type, _profix) \
-    static struct _struct_type *g_dms_##_profix##_attr_list[] = { \
+    static _struct_type *g_dms_##_profix##_attr_list[] = { \
         DRV_FS_ATTR_NAME_POINTER(feature_list), \
         DRV_FS_ATTR_NAME_POINTER(node_list), \
         DRV_FS_ATTR_NAME_POINTER(sensor_list), \
@@ -168,7 +176,7 @@ ssize_t dms_sysfs_imu_hb_store(ka_device_t *dev, ka_device_attribute_t *attr, co
 #endif
 
 DECLARE_DMS_FS_ATTR;
-DECLARE_DMS_FS_ATTR_LIST(attribute, sysfs);
+DECLARE_DMS_FS_ATTR_LIST(ka_attribute_t, sysfs);
 
 #if (defined CFG_BUILD_DEBUG) && (!defined(CFG_HOST_ENV)) && defined(CFG_FEATURE_IMU_CORE)
 DECLARE_DEBUG_DMS_FS_ATTR;
@@ -179,10 +187,166 @@ static const ka_attribute_group_t g_dms_sysfs_group = {
     ka_fs_init_ag_name("dms")
 };
 
+static void *dsmi_log_proc_start(ka_seq_file_t *m, loff_t *pos)
+{
+    if (pos != NULL && *pos <= 1) {
+        return pos;
+    }
+
+    return NULL;
+}
+
+static void *dsmi_log_proc_next(ka_seq_file_t *m, void *v, loff_t *pos)
+{
+    if (pos != NULL) {
+        (*pos)++;
+    }
+
+    return dsmi_log_proc_start(m, pos);
+}
+
+static void dsmi_log_proc_stop(ka_seq_file_t *m, void *v) {}
+
+static int dsmi_log_proc_show(ka_seq_file_t *m, void *v)
+{
+    u32 w_pos;
+
+    // only support admin docker and physical read
+    if (dms_feature_access_identify(DMS_ACC_ALL | DMS_ADMIN_DOCKER_ONLY | DMS_PHYSICAL_ONLY, 0) != 0) {
+        return 0;
+    }
+
+    if (m == NULL || v == NULL) {
+        return 0;
+    }
+
+    ka_task_mutex_lock(&g_log.lock);
+    if (*(loff_t *)v == 1) {
+        // First output log，then output dfx
+        ka_fs_seq_printf(m, "[DFX] size=%u cnt=%llu bytes=%llu ov=%llu used=%u free=%u pos=%u ret=%d.\n",
+            g_log.dfx.buffer_size, g_log.dfx.write_cnt, g_log.dfx.write_bytes, g_log.dfx.overwrite_cnt,
+            g_log.dfx.buf_used, g_log.dfx.buf_free, g_log.dfx.w_pos, g_log.dfx.last_write_ret);
+        ka_task_mutex_unlock(&g_log.lock);
+        return 0;
+    }
+
+    // output log(latest at the end)
+    w_pos = g_log.dfx.w_pos;
+    if (g_log.dfx.buf_used < DSMI_LOG_BUF_SIZE && g_log.dfx.buf_used != 0) {
+        ka_fs_seq_write(m, g_log.buf, w_pos);
+    } else if (g_log.dfx.buf_used >= DSMI_LOG_BUF_SIZE) {
+        ka_fs_seq_write(m, g_log.buf + w_pos, DSMI_LOG_BUF_SIZE - w_pos);
+        ka_fs_seq_write(m, g_log.buf, w_pos);
+    }
+
+    ka_task_mutex_unlock(&g_log.lock);
+    return 0;
+}
+
+static const ka_seq_operations_t dsmi_log_seq_ops = {
+    ka_seq_init_start(dsmi_log_proc_start)
+    ka_seq_init_next(dsmi_log_proc_next)
+    ka_seq_init_stop(dsmi_log_proc_stop)
+    ka_seq_init_show(dsmi_log_proc_show)
+};
+
+static int dsmi_log_proc_open(ka_inode_t *inode, ka_file_t *file)
+{
+    return ka_fs_seq_open(file, &dsmi_log_seq_ops);
+}
+
+static void dsmi_log_update_dfx(size_t len, int ret)
+{
+    g_log.dfx.write_cnt += (len == 0) ? 0: 1;
+    g_log.dfx.write_bytes += len;
+    g_log.dfx.last_write_ret = ret;
+
+    if (g_log.dfx.buf_used + len <= DSMI_LOG_BUF_SIZE) {
+        g_log.dfx.buf_used += len;
+    } else {
+        g_log.dfx.buf_used = DSMI_LOG_BUF_SIZE;
+    }
+
+    g_log.dfx.buf_free = DSMI_LOG_BUF_SIZE - g_log.dfx.buf_used;
+}
+
+static ssize_t dsmi_log_proc_write(ka_file_t *file, const char __ka_user *buf, size_t count, loff_t *ppos)
+{
+    size_t remain = count;
+    size_t copy_len;
+    const char __ka_user *ubuf = buf;
+    int ret = 0;
+
+    // only support admin docker write
+    if (dms_feature_access_identify(DMS_ACC_MANAGE_USER | DMS_ADMIN_DOCKER_ONLY, 0) != 0) {
+        dsmi_log_update_dfx(0, -DRV_ERROR_OPER_NOT_PERMITTED);
+        return -EPERM;
+    }
+
+    if (count == 0 || buf == NULL) {
+        return 0;
+    }
+
+    ka_task_mutex_lock(&g_log.lock);
+    while (remain > 0) {
+        copy_len = ka_base_min(remain, (size_t)(DSMI_LOG_BUF_SIZE - g_log.dfx.w_pos));
+        if (ka_base_copy_from_user(g_log.buf + g_log.dfx.w_pos, ubuf, copy_len)) {
+            dms_err("Log copy_from_user fail.\n");
+            ret = -EFAULT;
+            break;
+        }
+
+        ubuf += copy_len;
+        remain -= copy_len;
+        g_log.dfx.w_pos += copy_len;
+
+        if (g_log.dfx.w_pos >= DSMI_LOG_BUF_SIZE) {
+            g_log.dfx.w_pos = 0;
+            g_log.dfx.overwrite_cnt++;
+        }
+    }
+
+    dsmi_log_update_dfx(ret == 0 ? count : 0, ret);
+    ka_task_mutex_unlock(&g_log.lock);
+
+    return ret;
+}
+
+static const ka_procfs_ops_t dsmi_log_proc_fops = {
+    ka_fs_init_pf_open(dsmi_log_proc_open)
+    ka_fs_init_pf_read(ka_fs_seq_read)
+    ka_fs_init_pf_write(dsmi_log_proc_write)
+    ka_fs_init_pf_lseek(ka_fs_seq_lseek)
+    ka_fs_init_pf_release(ka_fs_seq_release)
+};
+
+static void dsmi_log_init(void)
+{
+    ka_task_mutex_init(&g_log.lock);
+    g_log.dfx.buffer_size = DSMI_LOG_BUF_SIZE;
+    g_log.dfx.buf_free = DSMI_LOG_BUF_SIZE;
+    g_log.dfx.last_write_ret = 0;
+    g_log.dfx.buf_used = 0;
+    g_dsmi_proc = ka_fs_proc_create(DSMI_PROC_NAME, DSMI_PROC_ATTR, NULL, &dsmi_log_proc_fops);
+    if (g_dsmi_proc == NULL) {
+        dms_err("Proc_create fail, g_dsmi_proc is NULL.\n");
+        return;
+    }
+}
+
+static void dsmi_log_uninit(void)
+{
+    ka_fs_proc_remove(g_dsmi_proc);
+    ka_task_mutex_destroy(&g_log.lock);
+}
+
 void dms_sysfs_init(void)
 {
     int ret;
-    ka_device_t *dev = davinci_intf_get_owner_device();
+    ka_device_t *dev = NULL;
+    
+    dsmi_log_init();
+    dev = davinci_intf_get_owner_device();
     if (dev == NULL) {
         dms_err("dms dev is NULL, sysfs init failed.\n");
         return;
@@ -205,7 +369,10 @@ void dms_sysfs_init(void)
 
 void dms_sysfs_uninit(void)
 {
-    ka_device_t *dev = davinci_intf_get_owner_device();
+    ka_device_t *dev = NULL;
+
+    dsmi_log_uninit();
+    dev = davinci_intf_get_owner_device();
     if (dev == NULL) {
         return;
     }

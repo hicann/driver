@@ -23,7 +23,7 @@
 
 struct hdcdrv_cmd_get_stat {
     int ret;
-    int dev_id;       /* input, -1 not care */
+    int dev_id; /* input, -1 not care */
     int fid;
     int pid;
     int service_type; /* input, -1 not care */

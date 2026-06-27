@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2025. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -21,14 +21,14 @@
 #include "svm_kern_log.h"
 #include "dma_copy.h"
 
-#define SVM_DMA_DATA_PCIE_MSG_THRES_SIZE    SVM_BYTES_PER_KB
-#define SVM_DMA_DATA_TRAFFIC_THRES_SIZE     (256ULL * SVM_BYTES_PER_KB)
+#define SVM_DMA_DATA_PCIE_MSG_THRES_SIZE SVM_BYTES_PER_KB
+#define SVM_DMA_DATA_TRAFFIC_THRES_SIZE (512ULL * SVM_BYTES_PER_KB)
 
-#define SVM_DMA_WAIT_QUREY_THREAD_NUM       8U
+#define SVM_DMA_WAIT_QUREY_THREAD_NUM 8U
 
-#define SVM_DMA_WAIT_MIN_TIME               100U
-#define SVM_DMA_WAIT_MAX_TIME               200U
-#define SVM_DMA_RETRY_CNT                   5000U
+#define SVM_DMA_WAIT_MIN_TIME 100U
+#define SVM_DMA_WAIT_MAX_TIME 200U
+#define SVM_DMA_RETRY_CNT 500000U
 
 static inline u32 svm_get_total_dma_node_size(struct devdrv_dma_node *dma_node, u32 node_cnt)
 {
@@ -56,10 +56,10 @@ static void svm_get_dma_copy_type(u32 size, enum devdrv_dma_data_type *type, int
     }
 }
 
-static int _svm_dma_sync_cpy(u32 udevid, struct devdrv_dma_node *dma_nodes, u32 cnt,
-    enum devdrv_dma_data_type type, int wait_type, u32 instance)
+static int _svm_dma_sync_cpy(
+    u32 udevid, struct devdrv_dma_node *dma_nodes, u32 cnt, enum devdrv_dma_data_type type, int wait_type, u32 instance)
 {
-    int retry_cnt = 0;
+    u32 retry_cnt = 0;
     int ret;
 
     while (1) {
@@ -73,7 +73,8 @@ static int _svm_dma_sync_cpy(u32 udevid, struct devdrv_dma_node *dma_nodes, u32 
         retry_cnt++;
     }
     if (ret != 0) {
-        svm_err("hal_kernel_devdrv_dma_sync_link_copy_plus failed. (ret=%d; udevid=%u; node_cnt=%u)\n", ret, udevid, cnt);
+        svm_err(
+            "hal_kernel_devdrv_dma_sync_link_copy_plus failed. (ret=%d; udevid=%u; node_cnt=%u)\n", ret, udevid, cnt);
     }
 
     return ret;
@@ -101,10 +102,10 @@ int svm_dma_sync_cpy(u32 udevid, struct devdrv_dma_node *dma_nodes, u32 cnt, u32
     return ret;
 }
 
-#define SVM_MAX_UDEV_NUM    1140U   /* todo */
+#define SVM_MAX_UDEV_NUM 1140U /* todo */
 
-int svm_dma_async_cpy(u32 udevid, struct devdrv_dma_node *dma_nodes, u32 cnt,
-    dma_finish_notify call_back, void *priv, u32 instance)
+int svm_dma_async_cpy(
+    u32 udevid, struct devdrv_dma_node *dma_nodes, u32 cnt, dma_finish_notify call_back, void *priv, u32 instance)
 {
     static bool sync_flag[SVM_MAX_UDEV_NUM] = {0};
     struct devdrv_asyn_dma_para_info para_info;
@@ -123,7 +124,8 @@ int svm_dma_async_cpy(u32 udevid, struct devdrv_dma_node *dma_nodes, u32 cnt,
         para_info.trans_id = (u32)instance;
         para_info.finish_notify = call_back;
         para_info.interrupt_and_attr_flag = DEVDRV_LOCAL_IRQ_FLAG;
-        ret = hal_kernel_devdrv_dma_async_link_copy_plus(udevid, DEVDRV_DMA_DATA_TRAFFIC, (int)instance, dma_nodes, cnt, &para_info);
+        ret = hal_kernel_devdrv_dma_async_link_copy_plus(
+            udevid, DEVDRV_DMA_DATA_TRAFFIC, (int)instance, dma_nodes, cnt, &para_info);
         if (ret == -ENOSPC) {
             sync_flag[udevid] = true;
             ret = _svm_dma_sync_cpy(udevid, dma_nodes, cnt, DEVDRV_DMA_DATA_TRAFFIC, DEVDRV_DMA_WAIT_INTR, instance);
@@ -135,4 +137,3 @@ int svm_dma_async_cpy(u32 udevid, struct devdrv_dma_node *dma_nodes, u32 cnt,
 
     return ret;
 }
-

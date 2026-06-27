@@ -14,9 +14,9 @@
 #ifndef SVM_MEM_SPLIT_H
 #define SVM_MEM_SPLIT_H
 
-#include <linux/types.h>
+#include "ka_type.h"
 
-#define SUPPORT_MEMORY_SPLIT    1
+#define SUPPORT_MEMORY_SPLIT 1
 
 void devmm_set_memory_split_feature(u32 flag);
 
@@ -28,4 +28,3 @@ void devmm_alloc_numa_info_init(u32 devid, u32 vfid, int nids[], u32 *nid_num);
 void devmm_alloc_numa_enable_threshold(u32 devid, u32 vfid, int nid);
 
 #endif /* SVM_MEM_SPLIT_H */
-

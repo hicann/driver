@@ -13,7 +13,7 @@
 #ifndef TRS_MSG_H
 #define TRS_MSG_H
 
-#include <linux/types.h>
+#include "ka_type.h"
 #ifdef CFG_FEATURE_SUPPORT_UB_CONNECTION
 #include "ubcore_uapi.h"
 #endif
@@ -23,7 +23,7 @@
 #include "trs_mailbox_def.h"
 #include "trs_h2d_msg.h"
 
-typedef int (* trs_msg_send_func_t)(u32, struct trs_msg_data *);
-typedef int (* trs_msg_rdv_func_t)(u32, struct trs_msg_data *);
+typedef int (*trs_msg_send_func_t)(u32, struct trs_msg_data *);
+typedef int (*trs_msg_rdv_func_t)(u32, struct trs_msg_data *);
 
 #endif /* TRS_MSG_H */

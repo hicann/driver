@@ -17,7 +17,7 @@
 #include <sys/mman.h>
 #endif
 #include "securec.h"
-#include "dsmi_common_interface_custom.h"
+#include "dsmi_common_interface.h"
 #include "dcmi_fault_manage_intf.h"
 #include "dcmi_os_adapter.h"
 #include "dcmi_log.h"
@@ -143,7 +143,7 @@ STATIC int dcmi_save_pcie_info(FILE **pci_file)
     int ret;
     char mat_string_new[MAX_PCIE_INFO_LENTH] = {0};
     char mat_string[] =
-        "/usr/bin/find /sys/devices/ 2>/dev/null -name \"[0-f][0-f][0-f][0-f]:[0-f][0-f]:[0-f][0-f].[0-f]\" | grep "
+        "/usr/bin/find /sys/devices/pci* 2>/dev/null -name \"[0-f][0-f][0-f][0-f]:[0-f][0-f]:[0-f][0-f].[0-f]\" | grep "
         "\"[0-f][0-f][0-f][0-f]:[0-f][0-f]:[0-f][0-f].[0-f]/[0-f][0-f][0-f][0-f]:[0-f][0-f]:[0-f][0-f].[0-f]\" | awk "
         "-F \"pci[0-f][0-f][0-f][0-f]:\" '{print $2}' | cut -d \"/\" -f 2-$NF";
     char mat_string_vm[] =
@@ -201,6 +201,10 @@ STATIC int dcmi_card_is_without_switch(void)
                 g_board_details.board_id == DCMI_A3_560T_BIN1_BOARD_ID ||
                 g_board_details.board_id == DCMI_A3_ZQ_752T_BOARD_ID ||
                 g_board_details.board_id == DCMI_A3_ZQ_560T_BOARD_ID);
+        case DCMI_CHIP_TYPE_D950:
+            return (g_board_details.board_id == DCMI_A900_A5_CARD_V100_BIN2_1_BOARD_ID ||
+                g_board_details.board_id == DCMI_A900_A5_CARD_V100_BIN2_2_BOARD_ID ||
+                g_board_details.board_id == DCMI_A900_A5_CARD_V100_BIN11_3_BOARD_ID);
         default:
             return FALSE;
     }
@@ -360,7 +364,7 @@ STATIC int dcmi_get_pcie_info_inner(char *msginfo, int msginfo_len, struct dcmi_
 
     if (dcmi_card_is_without_switch()) {
         /* 消A D卡的switch这级已经不存在，因而card和switch的index都相等为1 */
-        if (dcmi_check_run_in_vm()) {
+        if (dcmi_check_run_in_vm() || dcmi_check_run_in_docker()) {
             /* 与公有云确认虚拟机中只有一级PCIE，此处直接返回pcie设备地址 */
             pcie_pre_index.pci_pre_index = CHIP_PCIE_INFO_INDEX;
             pcie_pre_index.switch_pre_index = CHIP_PCIE_INFO_INDEX;
@@ -370,7 +374,7 @@ STATIC int dcmi_get_pcie_info_inner(char *msginfo, int msginfo_len, struct dcmi_
         }
         ret = dcmi_get_pcie_before_info(msginfo, msginfo_len, card_pcie_info, pcie_pre_index, device_id_info);
     } else {
-        if (dcmi_check_run_in_vm()) {
+        if (dcmi_check_run_in_vm() || dcmi_check_run_in_docker()) {
             /* 与公有云确认虚拟机中只有一级PCIE，此处直接返回pcie设备地址 */
             pcie_pre_index.pci_pre_index = CHIP_PCIE_INFO_INDEX;
             pcie_pre_index.switch_pre_index = CHIP_PCIE_INFO_INDEX;
@@ -401,11 +405,15 @@ STATIC int dcmi_init_card_info_for_new(
     } else {
         g_board_details.card_info[card_index].card_id = card_id;
     }
-    g_board_details.card_info[card_index].elabel_pos = DCMI_ELABEL_ACCESS_BY_MCU;
-    g_board_details.card_info[card_index].board_id_pos = DCMI_BOARD_ID_ACCESS_BY_MCU;
+    if (dcmi_get_board_chip_type() == DCMI_CHIP_TYPE_D950) {
+        g_board_details.card_info[card_index].elabel_pos = DCMI_ELABEL_ACCESS_BY_NPU;
+        g_board_details.card_info[card_index].board_id_pos = DCMI_BOARD_ID_ACCESS_BY_NPU;
+    } else {
+        g_board_details.card_info[card_index].elabel_pos = DCMI_ELABEL_ACCESS_BY_MCU;
+        g_board_details.card_info[card_index].board_id_pos = DCMI_BOARD_ID_ACCESS_BY_MCU;
+    }
     g_board_details.card_info[card_index].str_pci_info = card_pcie_info->pcie_info_curr;
     g_board_details.card_info[card_index].device_info[device_id_curr].logic_id = logic_id;
-
     ret = dsmi_get_phyid_from_logicid((unsigned int)logic_id, &device_phy_id);
     if (ret != DSMI_OK) {
         gplog(LOG_ERR, "dsmi_get_phyid_from_logicid failed. err is %d.", ret);
@@ -490,7 +498,6 @@ STATIC void dcmi_init_card_info(
     if (tmp_card_id == DCMI_INVALID_CARD_ID) {  // 如果在当前的前一级中找不到，则另立门户
         tmp_card_id = g_board_details.card_count;
         g_board_details.card_count++;
-
         ret = dcmi_init_card_info_for_new(tmp_card_id, bus_id, card_pcie_info, logic_id, chip_slot);
         if (ret != DCMI_OK) {
             gplog(LOG_ERR, "dcmi_init_card_info_for_new. ret is %d.", ret);
@@ -655,7 +662,7 @@ STATIC void dcmi_get_bus_id_from_root_pcie_info(int device_id_logic, struct dcmi
             health, ret);
         return;
     }
-    
+
     ret = dsmi_get_board_info(device_id_logic, &board_info);
     if (ret != DSMI_OK) {
         if (ret != DSMI_ERR_RESOURCE_OCCUPIED) {
@@ -870,15 +877,14 @@ int dcmi_init_for_card(const int *device_id_list, int device_count)
     int ret;
     struct dcmi_card_pcie_info card_pcie_info = { { 0 } };
     g_board_details.device_count = device_count;
-
     ret = dcmi_get_card_id_from_bus_id(device_id_list, device_count, &card_pcie_info);
     if (ret != DCMI_OK) {
         gplog(LOG_ERR, "dcmi_get_card_id_from_bus_id failed. ret is %d", ret);
         return ret;
     }
-
     dcmi_flush_pcie_device();
     g_board_details.is_has_mcu = !(dcmi_board_chip_type_is_ascend_310p_200i_pro() ||
+        (dcmi_board_chip_type_is_ascend_950()) ||
         (dcmi_board_chip_type_is_ascend_310() && !dcmi_is_in_phy_machine()));
     g_board_details.is_has_npu = TRUE;
     g_board_details.mcu_access_chan = DCMI_MCU_ACCESS_BY_NPU;

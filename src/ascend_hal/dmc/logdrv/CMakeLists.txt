@@ -15,8 +15,14 @@ target_sources(drv_log_obj PRIVATE
     drv_log_user.c
 )
 
+target_compile_options(drv_log_obj PRIVATE
+    -fPIC
+)
+
 target_compile_definitions(drv_log_obj PRIVATE
     DRV_HOST
+    __USE_GNU
+    _GNU_SOURCE
 )
 
 target_include_directories(drv_log_obj PRIVATE

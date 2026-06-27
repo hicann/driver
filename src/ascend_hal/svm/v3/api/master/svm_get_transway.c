@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * Copyright (c) 2026 Huawei Technologies Co., Ltd.
  * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -64,7 +64,8 @@ drvError_t drvDeviceGetTransWay(void *src, void *dest, uint8_t *trans_type)
     int ret;
 
     if ((src == NULL) || (dest == NULL) || (trans_type == NULL)) {
-        svm_err("Src or dest or trans_type is NULL. (src_is_null=%d; dest_is_null=%d; trans_type_is_null=%d;)\n",
+        svm_err(
+            "Src or dest or trans_type is NULL. (src_is_null=%d; dest_is_null=%d; trans_type_is_null=%d;)\n",
             (src == NULL), (dest == NULL), (trans_type == NULL));
         return DRV_ERROR_INVALID_VALUE;
     }
@@ -88,4 +89,3 @@ drvError_t drvDeviceGetTransWay(void *src, void *dest, uint8_t *trans_type)
 
     return svm_get_transway(src_prop.devid, dst_prop.devid, trans_type);
 }
-

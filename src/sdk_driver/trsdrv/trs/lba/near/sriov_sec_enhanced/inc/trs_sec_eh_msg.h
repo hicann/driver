@@ -14,7 +14,7 @@
 #ifndef TRS_SEC_EH_MSG_H
 #define TRS_SEC_EH_MSG_H
 
-#include <linux/types.h>
+#include "ka_type.h"
 
 #define TRS_SEC_EH_VER 1
 #define TRS_HW_SQE_SIZE 64

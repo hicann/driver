@@ -141,6 +141,7 @@ static const struct pci_device_id g_debug_switch_tbl[] = {
     {KA_PCI_VDEVICE(HUAWEI, 0xd802), 0},
     {KA_PCI_VDEVICE(HUAWEI, 0xd803), 0},
     {KA_PCI_VDEVICE(HUAWEI, 0xd500), 0},
+    {KA_PCI_VDEVICE(HUAWEI, 0xd806), 0},
     {}
 };
 KA_MODULE_DEVICE_TABLE(pci, g_debug_switch_tbl);

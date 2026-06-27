@@ -13,7 +13,7 @@
 #ifndef TRS_CHAN_MEM_POOL_H
 #define TRS_CHAN_MEM_POOL_H
 
-#include <linux/types.h>
+#include "ka_type.h"
 
 #include "ka_common_pub.h"
 #include "ka_compiler_pub.h"
@@ -21,7 +21,7 @@
 #include "trs_pub_def.h"
 
 struct trs_chan_mem_node_ops {
-    void* (*alloc_ddr)(struct trs_id_inst *inst, size_t size, phys_addr_t *phy_addr);
+    void *(*alloc_ddr)(struct trs_id_inst *inst, size_t size, phys_addr_t *phy_addr);
     void (*free_ddr)(struct trs_id_inst *inst, void *vaddr, size_t size, phys_addr_t phy_addr);
 };
 

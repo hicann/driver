@@ -13,7 +13,7 @@
 #ifndef TRS_HOST_ID_H
 #define TRS_HOST_ID_H
 
-#include <linux/types.h>
+#include "ka_type.h"
 
 #include "trs_host_msg.h"
 

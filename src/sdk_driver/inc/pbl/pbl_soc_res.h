@@ -105,6 +105,8 @@ enum soc_mia_res_type {
     MIA_CPU_DEV_COMCPU,
 
     MIA_SYS_STARS,
+    MIA_SYS_L3D,
+ 	MIA_SYS_HVCV,
     MIA_MAX_RES_TYPE
 };
 
@@ -161,7 +163,10 @@ static const char *mia_res_name[MIA_MAX_RES_TYPE] = {
     [MIA_CPU_DEV_CCPU] = "mia_cpu_dev_ccpu",
     [MIA_CPU_DEV_DCPU] = "mia_cpu_dev_dcpu",
     [MIA_CPU_DEV_CPU] = "mia_cpu_dev_cpu",
-    [MIA_CPU_DEV_COMCPU] = "mia_cpu_dev_comcpu"
+    [MIA_CPU_DEV_COMCPU] = "mia_cpu_dev_comcpu",
+    [MIA_SYS_STARS] = "mia_sys_stars",
+ 	[MIA_SYS_L3D] = "mia_sys_l3d",
+ 	[MIA_SYS_HVCV] = "mia_sys_hvcv"
 };
 
 static inline u32 soc_resmng_get_mia_res_type_by_name(const char *name)
@@ -256,6 +261,7 @@ struct soc_mia_res_info_ex {
     u32 start;
     u32 total_num;
     u32 freq;
+    u32 min_num;
 };
 
 struct soc_reg_base_info {
@@ -295,6 +301,11 @@ struct soc_mia_grp_info {
     struct soc_mia_res_info_ex aiv_info[MAX_DIE_NUM_PER_DEV];
     struct soc_mia_res_info_ex rtsq_info;
     struct soc_mia_res_info_ex notify_info;
+};
+
+struct soc_vnic_info {
+    u8 valid;
+    u32 vnic_ip;
 };
 
 static inline enum soc_sub_type soc_resmng_subsys_type(enum soc_mia_res_type res_type)
@@ -394,5 +405,8 @@ int soc_resmng_dev_set_mia_grp_info(u32 devid, u32 grp_id, struct soc_mia_grp_in
 int soc_resmng_dev_get_mia_grp_info(u32 devid, u32 grp_id, struct soc_mia_grp_info *grp_info);
 
 int soc_get_dev_topology(unsigned int dev_id1, unsigned int dev_id2, int *topology_type);
+
+int soc_resmng_dev_set_vnic_ip(u32 devid, u32 vnic_ip);
+int soc_resmng_dev_get_vnic_ip(u32 devid, u32 *vnic_ip);
 
 #endif /* PBL_SOC_RES_H */

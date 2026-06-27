@@ -15,6 +15,8 @@ target_include_directories(queue_obj PRIVATE
     ${DRIVER_USER_DIR}/queue/dc/agent/server/que_svr_pci
     ${DRIVER_USER_DIR}/svm/v2/common
     ${DRIVER_USER_DIR}/inc/dms
+    ${DRIVER_USER_DIR}/dmc/device_monitor/lib/include
+    $<$<STREQUAL:${ENABLE_UBE},true>:/usr/include/ub/umdk/urma>
 )
 
 add_subdirectory(common)

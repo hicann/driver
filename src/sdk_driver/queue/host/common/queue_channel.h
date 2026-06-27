@@ -31,7 +31,6 @@ struct queue_numa_nids {
     int nid_num;
 };
 
-
 enum que_chan_mem_node_type {
     QUEUE_CHAN_MEM_NODE_VA = 0,
     QUEUE_CHAN_MEM_NODE_DMA,
@@ -125,14 +124,14 @@ struct queue_chan {
     u64 remote_total_va_len;
     u64 remote_total_dma_blk_num;
 
-    u32 remote_va_num;        /* Remote va num that already added to que_chan */
-    u64 remote_dma_blk_num;         /* Remote dma blk num that already added to que_chan */
+    u32 remote_va_num;      /* Remote va num that already added to que_chan */
+    u64 remote_dma_blk_num; /* Remote dma blk num that already added to que_chan */
     struct queue_chan_mem_node *remote_mem_node;
 
     u32 local_total_va_num;
-    u64 local_va_len;         /* Local va len that already added to que_chan */
-    u32 local_va_num;         /* Local va num that already added to que_chan */
-    u64 local_dma_blk_num;          /* Local dma blk num that already added to que_chan */
+    u64 local_va_len;      /* Local va len that already added to que_chan */
+    u32 local_va_num;      /* Local va num that already added to que_chan */
+    u64 local_dma_blk_num; /* Local dma blk num that already added to que_chan */
     struct queue_chan_dma *local_chan_dma;
 
     ka_semaphore_t tx_complete;
@@ -169,12 +168,10 @@ void queue_chan_destroy(struct queue_chan *que_chan);
 int queue_chan_dma_create(struct queue_chan *que_chan, u32 local_total_va_num);
 
 int queue_chan_iovec_add(struct queue_chan *que_chan, struct queue_chan_iovec *iovec);
-int queue_chan_iovec_get(struct queue_chan *que_chan, struct iovec_info *iovec, u32 num,
-    u32 *real_num);
+int queue_chan_iovec_get(struct queue_chan *que_chan, struct iovec_info *iovec, u32 num, u32 *real_num);
 int queue_chan_send(struct queue_chan *que_chan, int time_out);
 
-int queue_chan_mem_node_create(struct queue_chan *que_chan, u32 total_va_num,
-    u64 total_va_len, u64 total_dma_blk_num);
+int queue_chan_mem_node_create(struct queue_chan *que_chan, u32 total_va_num, u64 total_va_len, u64 total_dma_blk_num);
 int queue_chan_enque_add(struct queue_chan *que_chan, struct queue_chan_enque *enque);
 bool queue_chan_enque_add_finished(struct queue_chan *que_chan);
 

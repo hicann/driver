@@ -504,6 +504,7 @@ STATIC void devdrv_dma_fill_sq_desc(struct devdrv_dma_channel *dma_chan, struct 
     struct devdrv_dma_node *dma_node, struct devdrv_asyn_dma_para_info *para_info, int intr_flag, int pava_flag)
 {
     struct devdrv_pci_ctrl *pci_ctrl = dma_chan->dma_dev->pci_ctrl;
+    struct devdrv_dma_sq_node sq_desc_info;
     u32 rdie = 0;
     u32 ldie = 0;
     u32 msi = 0;
@@ -531,7 +532,7 @@ STATIC void devdrv_dma_fill_sq_desc(struct devdrv_dma_channel *dma_chan, struct 
     }
 
     if ((chip_type == HISI_CLOUD_V2) || (chip_type == HISI_CLOUD_V4) || (chip_type == HISI_MINI_V3) ||
-        (chip_type == HISI_CLOUD_V5)) {
+        (chip_type == HISI_CLOUD_V5) || (chip_type == HISI_MINI_V4)) {
         attr = DEVDRV_DMA_RO_RELEX_ORDER;
     }
 
@@ -551,11 +552,19 @@ STATIC void devdrv_dma_fill_sq_desc(struct devdrv_dma_channel *dma_chan, struct 
         devdrv_dma_parse_sq_interrupt_info(dma_chan, para_info, &ldie, &rdie, &msi);
     }
 
+    sq_desc_info.opcode = opcode;
+    sq_desc_info.attr = attr;
+    sq_desc_info.pf = dma_chan->dma_dev->dma_pf_num;
+    sq_desc_info.vfen = dma_chan->dma_dev->dma_vf_en;
+    sq_desc_info.vf = dma_chan->dma_dev->dma_vf_num;
+    sq_desc_info.wd_barrier = wd_barrier;
+    sq_desc_info.rd_barrier = rd_barrier;
+
     /* fill addr */
     devdrv_dma_set_sq_addr_info(sq_desc, dma_node->src_addr, dma_node->dst_addr, dma_node->size);
 
     /* fill attr */
-    devdrv_dma_set_sq_attr(sq_desc, opcode, attr, dma_chan->dma_dev, wd_barrier, rd_barrier);
+    devdrv_dma_set_sq_attr(sq_desc, sq_desc_info);
 
     /* fill interrupt info */
     devdrv_dma_set_sq_irq(sq_desc, rdie, ldie, msi);
@@ -717,6 +726,27 @@ STATIC void devdrv_updata_sq_tail(struct devdrv_dma_channel *dma_chan, u32 cnt, 
         dma_chan->sq_tail = (dma_chan->sq_depth + dma_chan->sq_tail + cnt) % dma_chan->sq_depth;
     } else {
         dma_chan->sq_tail = (dma_chan->sq_depth + dma_chan->sq_tail - cnt) % dma_chan->sq_depth;
+    }
+}
+
+STATIC void devdrv_dma_chan_ptr_show(struct devdrv_dma_channel *dma_chan, int wait_status)
+{
+    u32 sq_tail, cq_tail, cq_head, sq_head;
+    void __ka_mm_iomem *io_base = dma_chan->io_base;
+
+    sq_tail = ka_mm_readl(io_base + DMA_QUEUE_SQ_TAIL);
+    cq_head = ka_mm_readl(io_base + DMA_QUEUE_CQ_HEAD);
+    cq_tail = ka_mm_readl(io_base + DMA_QUEUE_CQ_TAIL) & DMA_QUEUE_CQ_TAIL_VALID_BIT;
+    sq_head = (ka_mm_readl(io_base + DMA_QUEUE_CQ_TAIL) & DMA_QUEUE_SQ_HEAD_VALID_BIT) >> DMA_QUEUE_SQ_HEAD_OFFSET;
+
+    if (is_need_dma_copy_retry(dma_chan->dma_dev->dev_id, wait_status) == true) {
+        devdrv_warn("dma_chan ptr show. (hardware_sq_tail=0x%x; cq_head=0x%x; cq_tail=0x%x; sq_head=0x%x; "
+                   "software_sq_tail=0x%x; sq_head=0x%x; cq_head=0x%x)\n",
+                   sq_tail, cq_head, cq_tail, sq_head, dma_chan->sq_tail, dma_chan->sq_head, dma_chan->cq_head);
+    } else {
+        devdrv_err("dma_chan ptr show. (hardware_sq_tail=0x%x; cq_head=0x%x; cq_tail=0x%x; sq_head=0x%x; "
+                   "software_sq_tail=0x%x; sq_head=0x%x; cq_head=0x%x)\n",
+                   sq_tail, cq_head, cq_tail, sq_head, dma_chan->sq_tail, dma_chan->sq_head, dma_chan->cq_head);
     }
 }
 
@@ -1094,7 +1124,6 @@ bool is_need_dma_copy_retry(u32 dev_id, int wait_status)
     }
 }
 
-#ifdef CFG_FEATURE_S2S
 STATIC bool devdrv_dma_chan_copy_retry_judge(u32 dev_id, struct devdrv_dma_soft_bd_wait_status wait_status,
     u8 *retry_cnt, int timeout)
 {
@@ -1117,21 +1146,19 @@ STATIC bool devdrv_dma_chan_copy_retry_judge(u32 dev_id, struct devdrv_dma_soft_
 
     return false;
 }
-#endif
 
 int devdrv_dma_chan_copy(u32 dev_id, struct devdrv_dma_channel *dma_chan, struct devdrv_dma_node *dma_node,
     u32 node_cnt, struct devdrv_dma_copy_para *para)
 {
+    struct devdrv_pci_ctrl *pci_ctrl = dma_chan->dma_dev->pci_ctrl;
     struct devdrv_dma_soft_bd_wait_status wait_status;
     struct devdrv_dma_soft_bd *soft_bd = NULL;
     int sq_idle_bd_cnt;
     u32 chan_id;
     int ret = 0;
-#ifdef CFG_FEATURE_S2S
     u8 retry_cnt = 0;
 
 retry:
-#endif
     if (devdrv_is_mdev_vm_boot_mode_inner(dev_id) == true) {
         ret = devdrv_dma_chan_copy_by_vpc(dev_id, dma_chan, dma_node, node_cnt, para);
         return ret;
@@ -1183,11 +1210,11 @@ retry:
 
     if ((para->copy_type == DEVDRV_DMA_SYNC) && (soft_bd != NULL)) {
         ret = devdrv_dma_chan_sync_wait(dev_id, dma_chan, soft_bd, &wait_status);
-#ifdef CFG_FEATURE_S2S
-        if (devdrv_dma_chan_copy_retry_judge(dev_id, wait_status, &retry_cnt, DEVDRV_DMA_COPY_RETRY_DELAY)) {
-            goto retry;
+        if (devdrv_feature_is_support(pci_ctrl->features, DEVDRV_FEATURE_S2S)) {
+            if (devdrv_dma_chan_copy_retry_judge(dev_id, wait_status, &retry_cnt, DEVDRV_DMA_COPY_RETRY_DELAY)) {
+                goto retry;
+            }
         }
-#endif
     }
 
     return ret;
@@ -1291,6 +1318,7 @@ STATIC int devdrv_dma_chan_copy_sml_pkt(int dev_id, struct devdrv_dma_channel *d
     struct devdrv_dma_sq_node *sq_desc = NULL;
     struct devdrv_dma_soft_bd *soft_bd = NULL;
     int connect_type = devdrv_get_connect_protocol_inner((u32)dev_id);
+    struct devdrv_dma_sq_node sq_desc_info;
 
     ka_task_spin_lock_bh(&dma_chan->lock);
 
@@ -1308,11 +1336,19 @@ STATIC int devdrv_dma_chan_copy_sml_pkt(int dev_id, struct devdrv_dma_channel *d
         return -ENOMEM;
     }
 
+    sq_desc_info.opcode = DEVDRV_DMA_SMALL_PACKET;
+    sq_desc_info.attr = 0;
+    sq_desc_info.pf = dma_chan->dma_dev->dma_pf_num;
+    sq_desc_info.vfen = dma_chan->dma_dev->dma_vf_en;
+    sq_desc_info.vf = dma_chan->dma_dev->dma_vf_num;
+    sq_desc_info.wd_barrier = 1;
+    sq_desc_info.rd_barrier = 1;
+
     /* fill addr */
     devdrv_dma_set_sq_addr_info(sq_desc, 0, dst, size);
 
     /* fill attr */
-    devdrv_dma_set_sq_attr(sq_desc, DEVDRV_DMA_SMALL_PACKET, 0, dma_chan->dma_dev, 1, 1);
+    devdrv_dma_set_sq_attr(sq_desc, sq_desc_info);
 
     /* fill interrupt info */
     devdrv_dma_set_sq_irq(sq_desc, 0, 1, 0);

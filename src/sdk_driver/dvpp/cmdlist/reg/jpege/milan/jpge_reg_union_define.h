@@ -14,7 +14,7 @@
 #ifndef JPEGE_REG_UNION_DEFINE_H
 #define JPEGE_REG_UNION_DEFINE_H
 
-#include <linux/types.h>
+#include "ka_type.h"
 
 union Prefetch {
     // Define the struct bits

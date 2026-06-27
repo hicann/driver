@@ -15,7 +15,6 @@
 #define __SVM_KERNEL_INTERFACE_H__
 
 #ifdef __KERNEL__
-#include <linux/types.h>
 #include "ka_memory_pub.h"
 #include "ka_list_pub.h"
 #include "pbl_ka_mem_query.h"
@@ -39,8 +38,8 @@ int devmm_get_pages_list(ka_mm_struct_t *mm, u64 va, u64 num, ka_page_t **pages)
 int svm_get_pages_list(ka_mm_struct_t *mm, u64 va, u64 num, ka_page_t **pages);
 
 /* pin normal mem which can be shared and op */
-int svm_smp_pin_mem(u32 udevid, int tgid, u64 va, u64 size);
-int svm_smp_unpin_mem(u32 udevid, int tgid, u64 va, u64 size);
+int svm_smp_pin_mem(u32 udevid, int tgid, u64 va, u64 size, bool is_cross_app);
+int svm_smp_unpin_mem(u32 udevid, int tgid, u64 va, u64 size, bool is_cross_app);
 
 
 /* pin device cp only mem */
@@ -48,7 +47,7 @@ int svm_smp_pin_dev_cp_only_mem(u32 udevid, int tgid, u64 va, u64 size);
 int svm_smp_unpin_dev_cp_only_mem(u32 udevid, int tgid, u64 va, u64 size);
 
 typedef struct ka_pa_wraper svm_pa_seg_wraper_t;
-int svm_pmq_client_cp_pa_query(u32 udevid, u64 va, u64 size, svm_pa_seg_wraper_t pa_seg[], u64 *seg_num);
+int svm_pmq_client_cp_pa_query(u32 udevid, u64 va, u64 size, svm_pa_seg_wraper_t pa_seg_wraper[], u64 *seg_num);
 #endif
 
 struct devmm_set_convert_len_para {

@@ -12,11 +12,6 @@
  */
 #include "dp_proc_mng_register_ops.h"
 
-int dp_proc_mng_register_ops_init(void)
-{
-    return 0;
-}
+int dp_proc_mng_register_ops_init(void) { return 0; }
 
-void dp_proc_mng_unregister_ops_init(void)
-{
-}
+void dp_proc_mng_unregister_ops_init(void) {}

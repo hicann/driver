@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2025. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -18,7 +18,9 @@
 #include "apm_kern_log.h"
 #include "apm_res_map_ops.h"
 
-static struct apm_res_map_ops *res_ops[RES_ADDR_TYPE_MAX] = {NULL, };
+static struct apm_res_map_ops *res_ops[RES_ADDR_TYPE_MAX] = {
+    NULL,
+};
 
 int hal_kernel_apm_res_map_ops_register(enum res_addr_type res_type, struct apm_res_map_ops *ops)
 {
@@ -83,8 +85,9 @@ int apm_get_res_addr(u32 udevid, struct res_map_info_in *res_info, u64 pa[], u32
         u32 i, query_num;
         ret = ops->get_res_addr_array(udevid, res_info, pa, num, len);
         if (ret != 0) {
-            apm_err("Get res addr array failed. (udevid=%u; res_type=%d; num=%u; ret=%d)\n",
-                udevid, res_info->res_type, num, ret);
+            apm_err(
+                "Get res addr array failed. (udevid=%u; res_type=%d; num=%u; ret=%d)\n", udevid, res_info->res_type,
+                num, ret);
             return -EFAULT;
         }
 
@@ -129,4 +132,26 @@ int apm_update_res_info(u32 udevid, struct res_map_info_in *res_info)
     }
 
     return ops->update_res_info(udevid, res_info);
+}
+
+int apm_res_map_post_handle(u32 udevid, int slave_tgid, struct res_map_info_in *res_info, u64 va, u64 size)
+{
+    struct apm_res_map_ops *ops = res_ops[res_info->res_type];
+
+    if ((ops == NULL) || (ops->res_map_post_handle == NULL)) {
+        return 0;
+    }
+
+    return ops->res_map_post_handle(udevid, slave_tgid, res_info, va, size);
+}
+
+int apm_res_unmap_pre_handle(u32 udevid, int slave_tgid, struct res_map_info_in *res_info, u64 va, u64 size)
+{
+    struct apm_res_map_ops *ops = res_ops[res_info->res_type];
+
+    if ((ops == NULL) || (ops->res_unmap_pre_handle == NULL)) {
+        return 0;
+    }
+
+    return ops->res_unmap_pre_handle(udevid, slave_tgid, res_info, va, size);
 }

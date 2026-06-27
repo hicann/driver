@@ -20,11 +20,11 @@
 
 int (*global_common_fun[DEVDRV_COMMON_MSG_TYPE_MAX])(u32 devid, void *data, u32 in_data_len, u32 out_data_len,
                                                      u32 *real_out_len);
-ka_mutex_t g_common_mutex[DEVDRV_COMMON_MSG_TYPE_MAX];
+ka_rw_semaphore_t g_common_rw_sem[DEVDRV_COMMON_MSG_TYPE_MAX];
 
-ka_mutex_t *devdrv_get_common_msg_mutex(void)
+ka_rw_semaphore_t *devdrv_get_common_msg_rw_sem(void)
 {
-    return g_common_mutex;
+    return g_common_rw_sem;
 }
 
 STATIC int rx_msg_common_msg_process(void *msg_chan, void *data, u32 in_data_len, u32 out_data_len,
@@ -57,10 +57,10 @@ STATIC int rx_msg_common_msg_process(void *msg_chan, void *data, u32 in_data_len
         return -EOPNOTSUPP;
     }
 
-    ka_task_mutex_lock(&g_common_mutex[msg_desc->msg_type]);
+    ka_task_down_read(&g_common_rw_sem[msg_desc->msg_type]);
     if ((chan->msg_dev->common_msg.common_fun[msg_desc->msg_type] == NULL) &&
         (global_common_fun[msg_desc->msg_type] == NULL)) {
-        ka_task_mutex_unlock(&g_common_mutex[msg_desc->msg_type]);
+        ka_task_up_read(&g_common_rw_sem[msg_desc->msg_type]);
         devdrv_warn("Rx common callback func is null. (dev_id=%u; common_type=%d)\n", chan->msg_dev->pci_ctrl->dev_id,
                     msg_desc->msg_type);
         return -EUNATCH;
@@ -84,7 +84,7 @@ STATIC int rx_msg_common_msg_process(void *msg_chan, void *data, u32 in_data_len
         ret = global_common_fun[msg_desc->msg_type](devdrv_get_devid_by_dev(chan->msg_dev), data, in_data_len,
                                                     out_data_len, real_out_len);
     }
-    ka_task_mutex_unlock(&g_common_mutex[msg_desc->msg_type]);
+    ka_task_up_read(&g_common_rw_sem[msg_desc->msg_type]);
 
     if (ret == 0) {
         chan->msg_dev->common_msg.com_msg_stat[msg_desc->msg_type].rx_success_cnt++;
@@ -179,9 +179,9 @@ int devdrv_pci_register_common_msg_client(const struct devdrv_common_msg_client 
         return -EOPNOTSUPP;
     }
 
-    ka_task_mutex_lock(&g_common_mutex[msg_client->type]);
+    ka_task_down_write(&g_common_rw_sem[msg_client->type]);
     global_common_fun[msg_client->type] = msg_client->common_msg_recv;
-    ka_task_mutex_unlock(&g_common_mutex[msg_client->type]);
+    ka_task_up_write(&g_common_rw_sem[msg_client->type]);
 
     for (i = 0; i < MAX_DEV_CNT; i++) {
         ctrl = devdrv_get_devctrl_by_id(i);
@@ -199,9 +199,9 @@ int devdrv_pci_register_common_msg_client(const struct devdrv_common_msg_client 
             devdrv_info("msg_dev is NULL.\n");
             continue;
         }
-        ka_task_mutex_lock(&g_common_mutex[msg_client->type]);
+        ka_task_down_write(&g_common_rw_sem[msg_client->type]);
         pci_ctrl->msg_dev->common_msg.common_fun[msg_client->type] = msg_client->common_msg_recv;
-        ka_task_mutex_unlock(&g_common_mutex[msg_client->type]);
+        ka_task_up_write(&g_common_rw_sem[msg_client->type]);
         if (msg_client->init_notify != NULL) {
             msg_client->init_notify(pci_ctrl->dev_id, 0);
         }
@@ -236,10 +236,10 @@ int devdrv_pci_unregister_common_msg_client(u32 index_id, const struct devdrv_co
         return -EINVAL;
     }
     pci_ctrl = ctrl->priv;
-    ka_task_mutex_lock(&g_common_mutex[msg_client->type]);
+    ka_task_down_write(&g_common_rw_sem[msg_client->type]);
     pci_ctrl->msg_dev->common_msg.common_fun[msg_client->type] = NULL;
     global_common_fun[msg_client->type] = NULL;
-    ka_task_mutex_unlock(&g_common_mutex[msg_client->type]);
+    ka_task_up_write(&g_common_rw_sem[msg_client->type]);
     devdrv_debug("Unregister common msg_client success. (index_id=%u; msg_client_type=%d)\n", index_id,
         msg_client->type);
 

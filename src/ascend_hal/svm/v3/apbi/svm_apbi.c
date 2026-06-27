@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * Copyright (c) 2026 Huawei Technologies Co., Ltd.
  * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -14,13 +14,14 @@
 #include "svm_pub.h"
 #include "svm_log.h"
 #include "svm_init_pri.h"
+#include "svm_criu.h"
 #include "svm_user_adapt.h"
 #include "svm_sys_cmd.h"
 #include "svm_event_grp_id.h"
 #include "svm_dbi.h"
 #include "svm_apbi.h"
 
-#define APBI_INVALID_GRP_ID     UINT_MAX
+#define APBI_INVALID_GRP_ID UINT_MAX
 
 struct svm_apbi g_apbi[SVM_MAX_DEV_NUM][DEVDRV_PROCESS_CPTYPE_MAX];
 
@@ -53,8 +54,7 @@ static int apbi_clear(u32 devid)
 
 static int apbi_update_tgid(u32 devid, int task_type)
 {
-    struct halQueryDevpidInfo info = {
-        .proc_type = task_type, .hostpid = svm_getpid(), .devid = devid, .vfid = 0};
+    struct halQueryDevpidInfo info = {.proc_type = task_type, .hostpid = svm_getpid(), .devid = devid, .vfid = 0};
     int ret;
 
     ret = halQueryDevpid(info, &g_apbi[devid][task_type].tgid);
@@ -65,8 +65,10 @@ static int apbi_update_tgid(u32 devid, int task_type)
         return ret;
     }
 
-    if ((task_type != DEVDRV_PROCESS_CP1) && (g_apbi[devid][task_type].tgid == g_apbi[devid][DEVDRV_PROCESS_CP1].tgid)) {
-        svm_warn("Same to cp tgid. (devid=%u; task_type=%d; tpid=%d)\n", devid, task_type, g_apbi[devid][task_type].tgid);
+    if ((task_type != DEVDRV_PROCESS_CP1) &&
+        (g_apbi[devid][task_type].tgid == g_apbi[devid][DEVDRV_PROCESS_CP1].tgid)) {
+        svm_warn(
+            "Same to cp tgid. (devid=%u; task_type=%d; tpid=%d)\n", devid, task_type, g_apbi[devid][task_type].tgid);
         _apbi_clear(devid, task_type);
         return DRV_ERROR_NO_PROCESS;
     }
@@ -133,6 +135,17 @@ static void apbi_clear_all(void)
     }
 }
 
+static int svm_apbi_criu_reset(u32 devid, void *data)
+{
+    SVM_UNUSED(data);
+    return apbi_clear(devid);
+}
+
+static const struct svm_criu_ops g_apbi_criu_ops = {
+    .name = "apbi",
+    .reset = svm_apbi_criu_reset,
+};
+
 static void __attribute__((constructor(SVM_INIT_PRI_FISRT))) apbi_init(void)
 {
     int ret;
@@ -147,6 +160,11 @@ static void __attribute__((constructor(SVM_INIT_PRI_FISRT))) apbi_init(void)
     ret = svm_register_ioctl_dev_uninit_pre_handle(apbi_clear);
     if (ret != DRV_ERROR_NONE) {
         svm_err("Register ioctl dev uninit pre handle failed.\n");
+    }
+
+    ret = svm_criu_register_ops(&g_apbi_criu_ops);
+    if (ret != DRV_ERROR_NONE) {
+        svm_err("Register CRIU ops failed.\n");
     }
 }
 
@@ -178,4 +196,3 @@ void svm_apbi_clear(u32 devid, int task_type)
 
     _apbi_clear(devid, task_type);
 }
-

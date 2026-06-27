@@ -31,7 +31,6 @@ set(DRIVER_TARGETS
     asdrv_svm
     asdrv_queue
     ts_agent
-    # asdrv_ub -- feature ub
     # cis
     # odf
 
@@ -40,6 +39,10 @@ set(DRIVER_TARGETS
     drvdsmi_host
     hdcBasic_cfg
 )
+
+if(ENABLE_UBE)
+    list(APPEND DRIVER_TARGETS asdrv_ub)
+endif()
 
 set(DRIVER_CUSTOM_TARGETS
     # kernel
@@ -52,6 +55,8 @@ set(DRIVER_CUSTOM_TARGETS
     dcmi
     lingqu-dcmi
     dsmi_network
+    npu-smi
+    hccn_tool
 )
 
 set(DRIVER_COMPAT_TARGETS

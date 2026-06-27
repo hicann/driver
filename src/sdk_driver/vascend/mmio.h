@@ -63,4 +63,14 @@ int hw_vdavinci_950_vf_mmio_init(struct hw_vdavinci *vdavinci);
 void hw_vdavinci_950_vf_mmio_uninit(struct hw_vdavinci *vdavinci);
 
 int hw_dvt_set_mmio_device_info(struct hw_dvt *dvt);
+
+int hw_vdavinci_emulate_mmio_read(struct hw_vdavinci *vdavinci,
+                                  uint64_t pa, void *buf, unsigned int bytes);
+int hw_vdavinci_emulate_mmio_write(struct hw_vdavinci *vdavinci,
+                                   uint64_t pa, void *buf, unsigned int bytes);
+int hw_vdavinci_emulate_mmio_quirk_read(struct hw_vdavinci *vdavinci, uint64_t pa,
+                                        void *buf, unsigned int bytes);
+int hw_vdavinci_emulate_mmio_quirk_write(struct hw_vdavinci *vdavinci, uint64_t pa,
+                                         void *buf, unsigned int bytes);
+void hw_vdavinci_map_quirk_split(struct hw_vdavinci *vdavinci, phys_addr_t base);
 #endif

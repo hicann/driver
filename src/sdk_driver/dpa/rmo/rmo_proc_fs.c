@@ -19,9 +19,9 @@
 #include "rmo_kern_log.h"
 #include "rmo_proc_fs.h"
 
-#define RMO_PROC_TOP_NAME    "rmo"
-#define RMO_PROC_FS_MODE     0444
-#define RMO_PROC_NAME_LEN   64
+#define RMO_PROC_TOP_NAME "rmo"
+#define RMO_PROC_FS_MODE 0444
+#define RMO_PROC_NAME_LEN 64
 
 static ka_proc_dir_entry_t *rmo_top_entry;
 
@@ -38,13 +38,9 @@ int rmo_proc_open(ka_inode_t *inode, ka_file_t *file)
     return ka_fs_single_open(file, rmo_proc_show, ka_base_pde_data(inode));
 }
 
-static const ka_procfs_ops_t rmo_proc = {
-    ka_fs_init_pf_owner(KA_THIS_MODULE) \
-    ka_fs_init_pf_open(rmo_proc_open) \
-    ka_fs_init_pf_read(ka_fs_seq_read) \
-    ka_fs_init_pf_lseek(ka_fs_seq_lseek) \
-    ka_fs_init_pf_release(ka_fs_single_release) \
-};
+static const ka_procfs_ops_t rmo_proc = {ka_fs_init_pf_owner(KA_THIS_MODULE) ka_fs_init_pf_open(rmo_proc_open)
+                                             ka_fs_init_pf_read(ka_fs_seq_read) ka_fs_init_pf_lseek(ka_fs_seq_lseek)
+                                                 ka_fs_init_pf_release(ka_fs_single_release)};
 
 ka_proc_dir_entry_t *rmo_proc_fs_add_task(const char *domain, int tgid)
 {
@@ -55,7 +51,8 @@ ka_proc_dir_entry_t *rmo_proc_fs_add_task(const char *domain, int tgid)
     }
 
     (void)sprintf_s(name, RMO_PROC_NAME_LEN, "%s-%d", domain, tgid);
-    return ka_fs_proc_create_data((const char *)name, RMO_PROC_FS_MODE, rmo_top_entry, &rmo_proc, (void *)(uintptr_t)tgid);
+    return ka_fs_proc_create_data(
+        (const char *)name, RMO_PROC_FS_MODE, rmo_top_entry, &rmo_proc, (void *)(uintptr_t)tgid);
 }
 
 void rmo_proc_fs_del_task(ka_proc_dir_entry_t *task_entry)
@@ -87,7 +84,4 @@ void rmo_proc_fs_uninit(void)
     }
 }
 
-ka_proc_dir_entry_t *rmo_get_top_entry(void)
-{
-    return rmo_top_entry;
-}
+ka_proc_dir_entry_t *rmo_get_top_entry(void) { return rmo_top_entry; }

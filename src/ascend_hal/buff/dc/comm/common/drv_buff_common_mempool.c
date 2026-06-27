@@ -30,7 +30,7 @@ drvError_t mp_free_buff(void *mempool, void *buff)
         if (cur_timestamp < head->timestamp) {
             cost_timestamp = (unsigned int)((unsigned long)cur_timestamp + BUFF_TIME_OVERTURN_OFFSET - head->timestamp);
         }
-                         
+
         if (mp->stat.over_time_value <= cost_timestamp) {
             buff_api_atomic_inc(&mp->stat.blk_over_time_num);
         }
@@ -138,7 +138,7 @@ void mp_scan_free_all_buff(struct mempool_t *mp)
 
 void *mp_get_valist_start_addr(struct mempool_t *mp, uint32 bit_num)
 {
-    return (void *)((uintptr_t)&mp->bitmap[bit_num / BITS_PER_LONG]); //lint !e507
+    return (void *)((uintptr_t)&mp->bitmap[bit_num / BITS_PER_LONG]); // lint !e507
 }
 #else
 void drv_buff_common_mempool_ut(void)

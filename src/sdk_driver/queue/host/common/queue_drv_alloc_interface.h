@@ -10,20 +10,26 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
- 
+
 #ifndef QUEUE_DRV_ALLOC_INTERFACE_H
 #define QUEUE_DRV_ALLOC_INTERFACE_H
- 
+
 #include "pbl_ka_memory.h"
 #include "ascend_hal_define.h"
- 
-#define queue_drv_kmalloc(size, flags)  ka_kmalloc(size, flags, ka_get_module_id(HAL_MODULE_TYPE_QUEUE_MANAGER, KA_SUB_MODULE_TYPE_0))
-#define queue_drv_kzalloc(size, flags)  ka_kzalloc(size, flags, ka_get_module_id(HAL_MODULE_TYPE_QUEUE_MANAGER, KA_SUB_MODULE_TYPE_0))
-#define queue_drv_kcalloc(size, flags)  ka_kcalloc(size, flags, ka_get_module_id(HAL_MODULE_TYPE_QUEUE_MANAGER, KA_SUB_MODULE_TYPE_0))
-#define queue_drv_kfree(addr)  ka_kfree(addr, ka_get_module_id(HAL_MODULE_TYPE_QUEUE_MANAGER, KA_SUB_MODULE_TYPE_0))
 
-#define queue_drv_kvzalloc(size, flags)  ka_kvzalloc(size, flags, ka_get_module_id(HAL_MODULE_TYPE_QUEUE_MANAGER, KA_SUB_MODULE_TYPE_0))
-#define queue_drv_kvmalloc_node(size, flags, node)  ka_kvmalloc_node(size, flags, node, ka_get_module_id(HAL_MODULE_TYPE_QUEUE_MANAGER, KA_SUB_MODULE_TYPE_0))
-#define queue_drv_kvmalloc(size, flags)  ka_kvmalloc(size, flags, ka_get_module_id(HAL_MODULE_TYPE_QUEUE_MANAGER, KA_SUB_MODULE_TYPE_0))
-#define queue_drv_kvfree(addr)  ka_kvfree(addr, ka_get_module_id(HAL_MODULE_TYPE_QUEUE_MANAGER, KA_SUB_MODULE_TYPE_0))
+#define queue_drv_kmalloc(size, flags) \
+    ka_kmalloc(size, flags, ka_get_module_id(HAL_MODULE_TYPE_QUEUE_MANAGER, KA_SUB_MODULE_TYPE_0))
+#define queue_drv_kzalloc(size, flags) \
+    ka_kzalloc(size, flags, ka_get_module_id(HAL_MODULE_TYPE_QUEUE_MANAGER, KA_SUB_MODULE_TYPE_0))
+#define queue_drv_kcalloc(size, flags) \
+    ka_kcalloc(size, flags, ka_get_module_id(HAL_MODULE_TYPE_QUEUE_MANAGER, KA_SUB_MODULE_TYPE_0))
+#define queue_drv_kfree(addr) ka_kfree(addr, ka_get_module_id(HAL_MODULE_TYPE_QUEUE_MANAGER, KA_SUB_MODULE_TYPE_0))
+
+#define queue_drv_kvzalloc(size, flags) \
+    ka_kvzalloc(size, flags, ka_get_module_id(HAL_MODULE_TYPE_QUEUE_MANAGER, KA_SUB_MODULE_TYPE_0))
+#define queue_drv_kvmalloc_node(size, flags, node) \
+    ka_kvmalloc_node(size, flags, node, ka_get_module_id(HAL_MODULE_TYPE_QUEUE_MANAGER, KA_SUB_MODULE_TYPE_0))
+#define queue_drv_kvmalloc(size, flags) \
+    ka_kvmalloc(size, flags, ka_get_module_id(HAL_MODULE_TYPE_QUEUE_MANAGER, KA_SUB_MODULE_TYPE_0))
+#define queue_drv_kvfree(addr) ka_kvfree(addr, ka_get_module_id(HAL_MODULE_TYPE_QUEUE_MANAGER, KA_SUB_MODULE_TYPE_0))
 #endif

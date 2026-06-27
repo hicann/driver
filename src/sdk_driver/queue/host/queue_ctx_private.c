@@ -21,8 +21,8 @@ void *queue_context_private_data_create(void)
     struct context_private_data *ctx_private = NULL;
     int devid;
 
-    ctx_private = (struct context_private_data *)queue_drv_kmalloc(
-        sizeof(struct context_private_data), KA_GFP_ATOMIC | __KA_GFP_ACCOUNT);
+    ctx_private = (struct context_private_data *)queue_drv_kmalloc(sizeof(struct context_private_data),
+                                                                   KA_GFP_ATOMIC | __KA_GFP_ACCOUNT);
     if (ctx_private == NULL) {
         return NULL;
     }
@@ -50,4 +50,3 @@ void queue_context_host()
     return;
 }
 #endif
-

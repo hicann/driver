@@ -51,46 +51,48 @@
     {"TP Key", ELEM_OUTPUT_R4_BLOCK, {0xAE54}, {0x1358}}, \
     {"UB_CCU Key", ELEM_OUTPUT_R4_BLOCK, {0xC1AC}, {0x9d8}}, \
     {"UMMU Key", ELEM_OUTPUT_R4_BLOCK, {0xCB84}, {0x1b0}}, \
+    {"UCMI Key", ELEM_OUTPUT_R4_BLOCK, {0xCD34}, {0x180}}, \
 }
 
 #define DATA_MODEL_CDR_FULL MODEL_VECTOR(CDR_FULL) = { \
     {"AA FullInfo", ELEM_OUTPUT_R4_BLOCK, {0xc}, {0xa87e0}}, \
-    {"AIC FullInfo", ELEM_OUTPUT_R4_BLOCK, {0xa87ec}, {0x49830}}, \
-    {"AIV FullInfo", ELEM_OUTPUT_R4_BLOCK, {0xf201c}, {0xde780}}, \
-    {"ASMB FullInfo", ELEM_OUTPUT_R4_BLOCK, {0x1d079c}, {0x820}}, \
-    {"BAILU FullInfo", ELEM_OUTPUT_R4_BLOCK, {0x1d0fbc}, {0x3c80}}, \
-    {"CPU FullInfo", ELEM_OUTPUT_R4_BLOCK, {0x1d4c3c}, {0x7020}}, \
-    {"CPU FullInfo", ELEM_OUTPUT_R4_BLOCK, {0x1dbc5c}, {0x7020}}, \
-    {"CS FullInfo", ELEM_OUTPUT_R4_BLOCK, {0x1e2c7c}, {0x276e0}}, \
-    {"DISP FullInfo", ELEM_OUTPUT_R4_BLOCK, {0x20a35c}, {0x52a8}}, \
-    {"DLPHY FullInfo", ELEM_OUTPUT_R4_BLOCK, {0x20f604}, {0xe1c8}}, \
-    {" EFUSE FullInfo", ELEM_OUTPUT_R4_BLOCK, {0x21d7cc}, {0x4580}}, \
-    {"HILINK FullInfo", ELEM_OUTPUT_R4_BLOCK, {0x221d4c}, {0x13c20}}, \
-    {"HSCB FullInfo", ELEM_OUTPUT_R4_BLOCK, {0x23596c}, {0xc98}}, \
-    {"L2B FullInfo", ELEM_OUTPUT_R4_BLOCK, {0x236604}, {0x60680}}, \
-    {"L3D FullInfo", ELEM_OUTPUT_R4_BLOCK, {0x296c84}, {0xc880}}, \
-    {"L3T FullInfo", ELEM_OUTPUT_R4_BLOCK, {0x2a3504}, {0x10680}}, \
-    {"MN FullInfo", ELEM_OUTPUT_R4_BLOCK, {0x2b3b84}, {0x14880}}, \
-    {"PCIE FullInfo", ELEM_OUTPUT_R4_BLOCK, {0x2c8404}, {0x1070}}, \
-    {"PLL FullInfo", ELEM_OUTPUT_R4_BLOCK, {0x2c9474}, {0x624}}, \
-    {"PMC FullInfo", ELEM_OUTPUT_R4_BLOCK, {0x2c9a98}, {0x1288}}, \
-    {"PPU FullInfo", ELEM_OUTPUT_R4_BLOCK, {0x2cad20}, {0x4af8}}, \
-    {"SCHE FullInfo", ELEM_OUTPUT_R4_BLOCK, {0x2cf818}, {0x1e410}}, \
-    {"SDMA FullInfo", ELEM_OUTPUT_R4_BLOCK, {0x2edc28}, {0x71e0}}, \
-    {"SIOE FullInfo", ELEM_OUTPUT_R4_BLOCK, {0x2f4e08}, {0x5d6e0}}, \
-    {"SLLC FullInfo", ELEM_OUTPUT_R4_BLOCK, {0x3524e8}, {0x90780}}, \
-    {"SMMU FullInfo", ELEM_OUTPUT_R4_BLOCK, {0x3e2c68}, {0x1892b0}}, \
-    {"STARS FullInfo", ELEM_OUTPUT_R4_BLOCK, {0x56bf18}, {0x9e28}}, \
-    {"SUBSTRL FullInfo", ELEM_OUTPUT_R4_BLOCK, {0x575d40}, {0xa08}}, \
-    {"UB_BA FullInfo", ELEM_OUTPUT_R4_BLOCK, {0x576748}, {0xff88}}, \
-    {"UB_CCU FullInfo", ELEM_OUTPUT_R4_BLOCK, {0x5866d0}, {0x6318}}, \
-    {"UB_MISC FullInfo", ELEM_OUTPUT_R4_BLOCK, {0x58c9e8}, {0x2360}}, \
-    {"UB_NL FullInfo", ELEM_OUTPUT_R4_BLOCK, {0x58ed48}, {0x32408}}, \
-    {"UB_TA FullInfo", ELEM_OUTPUT_R4_BLOCK, {0x5c1150}, {0xb40}}, \
-    {"UB_TP FullInfo", ELEM_OUTPUT_R4_BLOCK, {0x5c1c90}, {0x29b8}}, \
-    {"UB_UMMU FullInfo", ELEM_OUTPUT_R4_BLOCK, {0x5c4648}, {0x1940}}, \
-    {"VPC FullInfo", ELEM_OUTPUT_R4_BLOCK, {0x5c5f88}, {0x357e0}}, \
-    {"HA FullInfo", ELEM_OUTPUT_R4_BLOCK, {0x5fb768}, {0x1a2400}}, \
+    {"AIC FullInfo", ELEM_OUTPUT_R4_BLOCK, {0xa87ec}, {0xd890}}, \
+    {"AIV FullInfo", ELEM_OUTPUT_R4_BLOCK, {0xb607c}, {0x18d20}}, \
+    {"ASMB FullInfo", ELEM_OUTPUT_R4_BLOCK, {0xced9c}, {0x820}}, \
+    {"BAILU FullInfo", ELEM_OUTPUT_R4_BLOCK, {0xcf5bc}, {0x16d20}}, \
+    {"CPU FullInfo", ELEM_OUTPUT_R4_BLOCK, {0xe62dc}, {0x7020}}, \
+    {"CPU FullInfo", ELEM_OUTPUT_R4_BLOCK, {0xed2fc}, {0x7020}}, \
+    {"CS FullInfo", ELEM_OUTPUT_R4_BLOCK, {0xf431c}, {0x276e0}}, \
+    {"DISP FullInfo", ELEM_OUTPUT_R4_BLOCK, {0x11b9fc}, {0x52a8}}, \
+    {"DLPHY FullInfo", ELEM_OUTPUT_R4_BLOCK, {0x120ca4}, {0xe1c8}}, \
+    {" EFUSE FullInfo", ELEM_OUTPUT_R4_BLOCK, {0x12ee6c}, {0x4580}}, \
+    {"HILINK FullInfo", ELEM_OUTPUT_R4_BLOCK, {0x1333ec}, {0x13c20}}, \
+    {"HSCB FullInfo", ELEM_OUTPUT_R4_BLOCK, {0x14700c}, {0xc98}}, \
+    {"L2B FullInfo", ELEM_OUTPUT_R4_BLOCK, {0x147ca4}, {0x60680}}, \
+    {"L3D FullInfo", ELEM_OUTPUT_R4_BLOCK, {0x1a8324}, {0xc880}}, \
+    {"L3T FullInfo", ELEM_OUTPUT_R4_BLOCK, {0x1b4ba4}, {0x10680}}, \
+    {"MN FullInfo", ELEM_OUTPUT_R4_BLOCK, {0x1c5224}, {0x14880}}, \
+    {"PCIE FullInfo", ELEM_OUTPUT_R4_BLOCK, {0x1d9aa4}, {0x1070}}, \
+    {"PLL FullInfo", ELEM_OUTPUT_R4_BLOCK, {0x1dab14}, {0x624}}, \
+    {"PMC FullInfo", ELEM_OUTPUT_R4_BLOCK, {0x1db138}, {0x1288}}, \
+    {"PPU FullInfo", ELEM_OUTPUT_R4_BLOCK, {0x1dc3c0}, {0x4af8}}, \
+    {"SCHE FullInfo", ELEM_OUTPUT_R4_BLOCK, {0x1e0eb8}, {0x1e410}}, \
+    {"SDMA FullInfo", ELEM_OUTPUT_R4_BLOCK, {0x1ff2c8}, {0x71e0}}, \
+    {"SIOE FullInfo", ELEM_OUTPUT_R4_BLOCK, {0x2064a8}, {0x5d6e0}}, \
+    {"SLLC FullInfo", ELEM_OUTPUT_R4_BLOCK, {0x263b88}, {0x90780}}, \
+    {"SMMU FullInfo", ELEM_OUTPUT_R4_BLOCK, {0x2f4308}, {0x1892b0}}, \
+    {"STARS FullInfo", ELEM_OUTPUT_R4_BLOCK, {0x47d5b8}, {0x9e28}}, \
+    {"SUBSTRL FullInfo", ELEM_OUTPUT_R4_BLOCK, {0x4873e0}, {0xa08}}, \
+    {"UB_BA FullInfo", ELEM_OUTPUT_R4_BLOCK, {0x487de8}, {0xff88}}, \
+    {"UB_CCU FullInfo", ELEM_OUTPUT_R4_BLOCK, {0x497d70}, {0x6318}}, \
+    {"UB_MISC FullInfo", ELEM_OUTPUT_R4_BLOCK, {0x49e088}, {0x2360}}, \
+    {"UB_NL FullInfo", ELEM_OUTPUT_R4_BLOCK, {0x4a03e8}, {0x32408}}, \
+    {"UB_TA FullInfo", ELEM_OUTPUT_R4_BLOCK, {0x4d27f0}, {0xb40}}, \
+    {"UB_TP FullInfo", ELEM_OUTPUT_R4_BLOCK, {0x4d3330}, {0x29b8}}, \
+    {"UB_UMMU FullInfo", ELEM_OUTPUT_R4_BLOCK, {0x4d5ce8}, {0x1940}}, \
+    {"VPC FullInfo", ELEM_OUTPUT_R4_BLOCK, {0x4d7628}, {0x357e0}}, \
+    {"HA FullInfo", ELEM_OUTPUT_R4_BLOCK, {0x50ce08}, {0x1a2400}}, \
+    {"UCMI FullInfo", ELEM_OUTPUT_R4_BLOCK, {0x6af208}, {0x1b8}}, \
 }
 
 #define DATA_MODEL_CDR_SRAM MODEL_VECTOR(CDR_SRAM) = { \

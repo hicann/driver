@@ -39,6 +39,9 @@ target_include_directories(drvdsmi_host PRIVATE
     $<$<STREQUAL:${PRODUCT},ascend910B>:${DRIVER_USER_DIR}/inc/config/user_config/cloudv2>
     $<$<STREQUAL:${PRODUCT},ascend950>:${DRIVER_USER_DIR}/inc/config/user_config/cloudv4>
     ${DRIVER_USER_DIR}/dms/hbm
+    ${DRIVER_USER_DIR}/src/comm/ascend_urma_adapt
+    ${TOP_DIR}/ubengine/ssapi/userspace/umdk/src/urma/lib/urma/core/include
+    ${TOP_DIR}/ubengine/ssapi/userspace/umdk/src/urma/lib/urma/core
 )
 
 set(support_ssh_config_host_list "ascend910B" "ascend950")
@@ -68,7 +71,6 @@ target_compile_definitions(drvdsmi_host PRIVATE
     $<$<STREQUAL:${PRODUCT},ascend910B>:CFG_FEATURE_UPGRADE_PATCH_CONFIG>
     $<$<STREQUAL:${PRODUCT},ascend950>:CFG_FEATURE_UPGRADE_PATCH_CONFIG>
     $<$<STREQUAL:${PRODUCT},ascend950>:CFG_FEATURE_UPGRADE_MAMI_PATCH_CONFIG>
-    $<$<STREQUAL:${PRODUCT},ascend950>:CFG_FEATURE_FIRMWARE_TYPE_STRONG_MATCH>
     $<$<IN_LIST:${PRODUCT},${support_ssh_config_host_list}>:CFG_FEATURE_SUPPORT_SSH_CONFIG>
     $<$<IN_LIST:${PRODUCT},${support_p2p_config_host_list}>:CFG_FEATURE_SUPPORT_P2P_CONFIG>
     $<$<IN_LIST:${PRODUCT},${support_ccpu_usr_cert_config_host_list}>:CFG_FEATURE_SUPPORT_CCPU_USR_CERT_CONFIG>
@@ -80,6 +82,7 @@ target_compile_definitions(drvdsmi_host PRIVATE
     $<$<STREQUAL:${PRODUCT},ascend910B>:CFG_FEATURE_PCIE_LINK_ERROR_INFO>
     $<$<STREQUAL:${PRODUCT},ascend950>:CFG_ENV_FPGA>
     $<$<IN_LIST:${PRODUCT},${product_950_series}>:CFG_FEATURE_PCIE_LINK_ERROR_INFO>
+    $<$<IN_LIST:${PRODUCT},${product_950_series}>:CFG_FEATURE_PCIE_LINK_INFO>
     $<$<IN_LIST:${PRODUCT},${product_950_series}>:CFG_FEATURE_FAULT_EVENT>
     $<$<STREQUAL:${PRODUCT},ascend950>:CFG_FEATURE_BIST>
     $<$<STREQUAL:${PRODUCT},ascend910_96>:CFG_FEATURE_BIST>
@@ -89,6 +92,12 @@ target_compile_definitions(drvdsmi_host PRIVATE
     $<$<STREQUAL:${PRODUCT},ascend950>:CFG_FEATURE_SUPPORT_UDIS>
     $<$<STREQUAL:${PRODUCT},ascend910_96>:CFG_FEATURE_SUPPORT_UDIS>
     $<$<STREQUAL:${PRODUCT},ascend910_96esl>:CFG_FEATURE_SUPPORT_UDIS>
+    $<$<STREQUAL:${PRODUCT},ascend910B>:CFG_FEATURE_UDIS_UTIL_FROM_TS>
+    $<$<STREQUAL:${PRODUCT},ascend950>:CFG_FEATURE_UDIS_UTIL_FROM_TS>
+)
+
+target_compile_options(drvdsmi_host PRIVATE
+    -fvisibility=hidden
 )
 
 target_link_libraries(drvdsmi_host PRIVATE

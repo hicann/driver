@@ -37,7 +37,7 @@ typedef struct st_dm_queue_msg_type {
 unsigned long dm_queue_read(unsigned long ul_queue_id, unsigned long ul_time_out, void *p_buffer_addr,
     unsigned long ul_buffer_size);
 
-unsigned long dm_queue_asy_write(unsigned long ul_queue_id, const void *p_buffer_addr, unsigned long ul_buffer_size);
+int dm_queue_asy_write(unsigned long ul_queue_id, const void *p_buffer_addr, unsigned long ul_buffer_size);
 
 int dm_queue_delete(unsigned long ul_queue_id);
 

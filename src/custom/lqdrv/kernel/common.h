@@ -228,14 +228,14 @@ struct devdrv_info {
     unsigned int ctrl_cpu_ip;
     unsigned int ctrl_cpu_id;
     unsigned int ctrl_cpu_core_num;
-    unsigned int ctrl_cpu_occupy_bitmap;
+    unsigned long long ctrl_cpu_occupy_bitmap;
     unsigned int ctrl_cpu_endian_little;
 
     unsigned int ai_cpu_core_num;
     unsigned int ai_core_num;
     unsigned int ai_cpu_core_id;
     unsigned int ai_core_id;
-    unsigned int aicpu_occupy_bitmap;
+    unsigned long long aicpu_occupy_bitmap;
     unsigned int ai_subsys_ip_broken_map;
     unsigned int hardware_version;
     unsigned long long aicore_bitmap;

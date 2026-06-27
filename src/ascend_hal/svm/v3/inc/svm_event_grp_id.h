@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * Copyright (c) 2026 Huawei Technologies Co., Ltd.
  * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -25,8 +25,7 @@ static inline int svm_event_get_grp_id(u32 devid, int pid, enum esched_query_typ
 
     ret = halEschedQueryInfo(devid, type, &in_put, &out_put);
     if (ret != DRV_ERROR_NONE) {
-        svm_err_if((ret != DRV_ERROR_NO_PROCESS),
-            "Get grpid failed. (ret=%d; devid=%u; pid=%d).\n", ret, devid, pid);
+        svm_err_if((ret != DRV_ERROR_NO_PROCESS), "Get grpid failed. (ret=%d; devid=%u; pid=%d).\n", ret, devid, pid);
         return (ret != DRV_ERROR_NO_PROCESS) ? DRV_ERROR_INNER_ERR : ret;
     }
 

@@ -11,6 +11,9 @@
 #ifndef DEVDRV_PCIE_H
 #define DEVDRV_PCIE_H
 
+#include <stdint.h>
+#include "ascend_hal_error.h"
+
 int drvGetDeviceDevIDByHostDevID(uint32_t host_dev_id, uint32_t *local_dev_id);
 
 #ifdef CFG_FEATURE_SUPPORT_DEVMNG_BBOX
@@ -23,4 +26,7 @@ drvError_t drv_pcie_ddr_read(uint32_t devId, uint32_t offset, uint8_t *value, ui
 drvError_t drv_pcie_bbox_hdr_read(uint32_t devId, uint32_t offset, uint8_t *value, uint32_t len);
 drvError_t drv_reg_sram_read(uint32_t devId, uint32_t offset, uint8_t *value, uint32_t len);
 #endif
+
+drvError_t drv_get_pcieinfo(uint32_t devId, int32_t info_type, int64_t *value);
+
 #endif

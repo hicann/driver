@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2025. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -19,4 +19,6 @@ bool apm_res_is_belong_to_proc(int master_tgid, int slave_tgid, u32 udevid, stru
 int apm_get_res_addr(u32 udevid, struct res_map_info_in *res_info, u64 pa[], u32 num, u32 *len);
 void apm_put_res_addr(u32 udevid, struct res_map_info_in *res_info, u64 pa[], u32 len);
 int apm_update_res_info(u32 udevid, struct res_map_info_in *res_info);
+int apm_res_map_post_handle(u32 udevid, int slave_tgid, struct res_map_info_in *res_info, u64 va, u64 size);
+int apm_res_unmap_pre_handle(u32 udevid, int slave_tgid, struct res_map_info_in *res_info, u64 va, u64 size);
 #endif

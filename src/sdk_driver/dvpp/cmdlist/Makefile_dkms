@@ -34,7 +34,7 @@ drv_dvpp_cmdlist-objs := dvpp_cmdlist_init.o \
                          memory/mem_allocater.o \
                          memory/dvpp_mem_allocater_comm.o \
                          memory/dvpp_mem_allocater_args.o \
-                         fops/dvpp_cmdlist_ioctl.o \
+                         command/ioctl/dvpp_cmdlist_ioctl.o \
                          cmdlist/vpc/init/init.o
 
 drv_dvpp_cmdlist-objs += main/host/dvpp_sqe_update_host.o
@@ -106,7 +106,7 @@ EXTRA_CFLAGS += -I$(LOCAL_PATH)/reg/vpc/arch_v1xx \
                 -I$(LOCAL_PATH)/cmdlist/jpege \
                 -I$(LOCAL_PATH)/cmdlist/jpege/drv \
                 -I$(LOCAL_PATH)/cmdlist/jpege/drv/milan \
-                -I$(LOCAL_PATH)/fops \
+                -I$(LOCAL_PATH)/command/ioctl \
                 -I$(LOCAL_PATH)/proc \
                 -I$(LOCAL_PATH)/context \
                 -I$(LOCAL_PATH)/memory \

@@ -51,7 +51,7 @@ modprobe_host_kos() {
         if [ "${module_name}" = "host_notify" ] || [ "${module_name}" = "drv_vascend" ] || [ "${module_name}" = "tc_pcidev" ]  || [ "${module_name}" = "ascend_dms_mng" ];then
             modprobe ${module_name} >& /dev/null
         else
-            modprobe ${module_name} >& /dev/null
+            modprobe ${module_name} > /dev/null 2>>${logFile}
             if [ $? -ne 0 ]; then
                 log "[ERROR]${module_name} modprobe failed"
                 return 1
@@ -246,7 +246,7 @@ driver_ko_install() {
         fi
     fi
 
-    g_kos="$(ls ${targetdir}/host/*)"
+    g_kos="$(ls ${targetdir}/host/*.ko)"
 
     # when compile by dkms, KO will be insmoded by it automatically.
     # drv_pcie_host: Physical machine

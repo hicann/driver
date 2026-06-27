@@ -18,12 +18,12 @@
 #include "esched.h"
 #include "topic_sched_drv.h"
 
-#define TOPIC_SCHED_SPLIT_TASK_LEN  64U
+#define TOPIC_SCHED_SPLIT_TASK_LEN 64U
 
 int esched_drv_fill_sqe(u32 chip_id, u32 event_src, struct topic_sched_sqe *sqe,
-    struct sched_published_event_info *event_info, bool wait_thread_check);
+                        struct sched_published_event_info *event_info, bool wait_thread_check);
 int esched_drv_fill_split_task(u32 chip_id, u32 event_src, struct sched_published_event_info *event_info,
-    void *split_task);
+                               void *split_task);
 int esched_restore_mb_user_data(struct topic_sched_mailbox *mb, u32 *dst_devid, u32 *tid, u32 *pid);
 int esched_drv_map_host_dev_pid(struct sched_proc_ctx *proc_ctx, u32 identity);
 void esched_drv_unmap_host_dev_pid(struct sched_proc_ctx *proc_ctx, u32 identity);

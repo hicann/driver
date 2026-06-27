@@ -69,7 +69,7 @@
 <td class="cellrowborder" valign="top" width="17.98%" headers="mcps1.1.5.1.3 "><p id="zh-cn_topic_0000001178213190_zh-cn_topic_0000001148519203_p168512307469"><a name="zh-cn_topic_0000001178213190_zh-cn_topic_0000001148519203_p168512307469"></a><a name="zh-cn_topic_0000001178213190_zh-cn_topic_0000001148519203_p168512307469"></a>int</p>
 </td>
 <td class="cellrowborder" valign="top" width="50%" headers="mcps1.1.5.1.4 "><p id="zh-cn_topic_0000001178213190_p1661902431918"><a name="zh-cn_topic_0000001178213190_p1661902431918"></a><a name="zh-cn_topic_0000001178213190_p1661902431918"></a>传入的errorinfo取值范围是大于等于48Byte。</p>
-<a name="zh-cn_topic_0000001178213190_ul1060910207250"></a><a name="zh-cn_topic_0000001178213190_ul1060910207250"></a><ul id="zh-cn_topic_0000001178213190_ul1060910207250"><li>若设置的errorinfo小于48Byte，则系统报错。</li><li>若设置的errorinfo在48~255Byte之间，则在《健康管理故障定义》中的故障码，查询出来的故障信息为简化信息。</li><li>若设置的errorinfo大于等于256Byte，则查询出来的故障信息为实际故障信息。</li></ul>
+<a name="zh-cn_topic_0000001178213190_ul1060910207250"></a><a name="zh-cn_topic_0000001178213190_ul1060910207250"></a><ul id="zh-cn_topic_0000001178213190_ul1060910207250"><li>若设置的errorinfo小于48Byte，则系统报错。</li><li>若设置的errorinfo在48~255Byte之间，则查询出来的故障信息为简化信息。</li><li>若设置的errorinfo大于等于256Byte，则查询出来的故障信息为实际故障信息。</li></ul>
 </td>
 </tr>
 </tbody>
@@ -167,7 +167,7 @@
 
 **调用示例<a name="zh-cn_topic_0000001178213190_zh-cn_topic_0000001148519203_toc533412083"></a>**
 
-```
+```c
 #define ERROR_CODE_MAX_NUM  (128)
 #define BUF_SIZE          (256)
 … 
@@ -190,4 +190,3 @@ if (ret != 0){
 }
 …
 ```
-

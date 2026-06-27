@@ -14,23 +14,11 @@
 #ifndef KA_MEMORY_MNG_H
 #define KA_MEMORY_MNG_H
 
-#include <linux/seq_file.h>
-
-#ifndef __GFP_ACCOUNT
-
-#ifdef __GFP_KMEMCG
-#define __GFP_ACCOUNT __GFP_KMEMCG /* for linux version 3.10 */
-#endif
-
-#ifdef __GFP_NOACCOUNT
-#define __GFP_ACCOUNT 0 /* for linux version 4.1 */
-#endif
-
-#endif
+#include "ka_fs_pub.h"
 
 void ka_mem_mng_init(void);
 void ka_mem_mng_uninit(void);
-int ka_mem_stats_show(struct seq_file *seq, void *offset);
+int ka_mem_stats_show(ka_seq_file_t *seq, void *offset);
 bool ka_is_enable_mem_record(void);
 void ka_mem_record_status_reset(bool is_enable);
 void ka_mem_alloc_stat_add(unsigned int module_id, size_t size, unsigned long va);

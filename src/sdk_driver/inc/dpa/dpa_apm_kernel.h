@@ -97,25 +97,20 @@ enum apm_exit_stage {
     APM_STAGE_STOP_STREAM,
     APM_STAGE_PRE_RECYCLE_RES,
     APM_STAGE_RECYCLE_RES,
+    APM_STAGE_POST_RECYCLE_RES,
     APM_STAGE_MAX
 };
 
-#define APM_STAGE_OFFSET            32U
-#define APM_FORCE_EXIT_FLAG_OFFSET  48U
+#define APM_STAGE_OFFSET 32U
+#define APM_FORCE_EXIT_FLAG_OFFSET 48U
 static inline bool apm_get_exit_force_flag(unsigned long val)
 {
     return (((val >> APM_FORCE_EXIT_FLAG_OFFSET) & 0x1ULL) == 1U);
 }
 
-static inline int apm_get_exit_stage(unsigned long val)
-{
-    return (int)((val >> APM_STAGE_OFFSET) & 0xFFFF);
-}
+static inline int apm_get_exit_stage(unsigned long val) { return (int)((val >> APM_STAGE_OFFSET) & 0xFFFF); }
 
-static inline int apm_get_exit_tgid(unsigned long val)
-{
-    return (int)((val) & 0xFFFFFFFF);
-}
+static inline int apm_get_exit_tgid(unsigned long val) { return (int)((val) & 0xFFFFFFFF); }
 
 bool apm_master_domain_check_set_pre_exit(int tgid, struct task_start_time *time);
 bool apm_slave_domain_check_set_pre_exit(int tgid, struct task_start_time *time);
@@ -183,6 +178,8 @@ struct apm_res_map_ops {
     int (*get_res_addr_array)(u32 udevid, struct res_map_info_in *res_info, u64 pa[], u32 num, u32 *len);
     void (*put_res_addr_array)(u32 udevid, struct res_map_info_in *res_info, u64 pa[], u32 len);
     int (*update_res_info)(u32 udevid, struct res_map_info_in *res_info);
+    int (*res_map_post_handle)(u32 udevid, int slave_tgid, struct res_map_info_in *res_info, u64 va, u64 size);
+    int (*res_unmap_pre_handle)(u32 udevid, int slave_tgid, struct res_map_info_in *res_info, u64 va, u64 size);
 };
 
 int hal_kernel_apm_res_map_ops_register(enum res_addr_type res_type, struct apm_res_map_ops *ops);
@@ -192,4 +189,3 @@ int apm_master_use(int master_tgid, u32 udevid);
 int apm_master_unuse(int master_tgid, u32 udevid);
 
 #endif
-

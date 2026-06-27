@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2025. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -47,10 +47,7 @@ struct dma_map_ctx *dma_map_ctx_get(u32 udevid, int tgid)
     return ctx;
 }
 
-void dma_map_ctx_put(struct dma_map_ctx *ctx)
-{
-    svm_task_ctx_put(ctx->task_ctx);
-}
+void dma_map_ctx_put(struct dma_map_ctx *ctx) { svm_task_ctx_put(ctx->task_ctx); }
 
 static void dma_map_ctx_init(u32 udevid, struct dma_map_ctx *ctx)
 {
@@ -87,8 +84,7 @@ int dma_map_init_task(u32 udevid, int tgid, void *start_time)
         return -EINVAL;
     }
 
-    ret = svm_task_set_feature_priv(task_ctx, dma_map_task_feature_id, "dma_map",
-        (void *)ctx, dma_map_ctx_release);
+    ret = svm_task_set_feature_priv(task_ctx, dma_map_task_feature_id, "dma_map", (void *)ctx, dma_map_ctx_release);
     if (ret != 0) {
         svm_task_ctx_put(task_ctx);
         svm_vfree(ctx);
@@ -155,7 +151,5 @@ int svm_dma_map_init(void)
 }
 DECLAER_FEATURE_AUTO_INIT(svm_dma_map_init, FEATURE_LOADER_STAGE_5);
 
-void svm_dma_map_uninit(void)
-{
-}
+void svm_dma_map_uninit(void) {}
 DECLAER_FEATURE_AUTO_UNINIT(svm_dma_map_uninit, FEATURE_LOADER_STAGE_5);

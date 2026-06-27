@@ -30,32 +30,27 @@
 /* stub for david ub scene start */
 #ifndef EMU_ST
 #ifdef CFG_FEATURE_SUPPORT_UB_CONNECTION
-ka_device_t *hal_kernel_devdrv_get_pci_dev_by_devid(u32 udevid)
-{
-    return NULL;
-}
+ka_device_t *hal_kernel_devdrv_get_pci_dev_by_devid(u32 udevid) { return NULL; }
 
-ka_dma_addr_t hal_kernel_devdrv_dma_map_single(ka_device_t *dev, void *ptr, size_t size,
-    ka_dma_data_direction_t dir)
+ka_dma_addr_t hal_kernel_devdrv_dma_map_single(ka_device_t *dev, void *ptr, size_t size, ka_dma_data_direction_t dir)
 {
     return (ka_dma_addr_t)NULL;
 }
 
-void hal_kernel_devdrv_dma_unmap_single(ka_device_t *dev, ka_dma_addr_t addr, size_t size,
-    ka_dma_data_direction_t dir)
-{
-}
+void hal_kernel_devdrv_dma_unmap_single(ka_device_t *dev, ka_dma_addr_t addr, size_t size, ka_dma_data_direction_t dir)
+{}
 #endif
 #endif
 /* stub for david ub scene end */
 
-static void *trs_chan_mem_alloc_dma(struct trs_id_inst *inst, ka_device_t *dev,
-    size_t size, ka_dma_addr_t *dma_addr, ka_dma_data_direction_t dir)
+static void *trs_chan_mem_alloc_dma(
+    struct trs_id_inst *inst, ka_device_t *dev, size_t size, ka_dma_addr_t *dma_addr, ka_dma_data_direction_t dir)
 {
     void *vaddr = NULL;
 
     if (dev != NULL) {
-        vaddr = ka_alloc_pages_exact_ex(size, KA_GFP_KERNEL | __KA_GFP_ZERO  | __KA_GFP_ACCOUNT | __KA_GFP_RETRY_MAYFAIL);
+        vaddr =
+            ka_alloc_pages_exact_ex(size, KA_GFP_KERNEL | __KA_GFP_ZERO | __KA_GFP_ACCOUNT | __KA_GFP_RETRY_MAYFAIL);
         if (vaddr == NULL) {
             return NULL;
         }
@@ -72,12 +67,12 @@ static void *trs_chan_mem_alloc_dma(struct trs_id_inst *inst, ka_device_t *dev,
 
 static void *trs_chan_mem_alloc_ddr_dma(struct trs_id_inst *inst, size_t size, phys_addr_t *paddr)
 {
-    return trs_chan_mem_alloc_dma(inst, hal_kernel_devdrv_get_pci_dev_by_devid(inst->devid),
-        size, (ka_dma_addr_t *)paddr, KA_DMA_BIDIRECTIONAL);
+    return trs_chan_mem_alloc_dma(
+        inst, hal_kernel_devdrv_get_pci_dev_by_devid(inst->devid), size, (ka_dma_addr_t *)paddr, KA_DMA_BIDIRECTIONAL);
 }
 
-static void trs_chan_mem_free_dma(struct trs_id_inst *inst, ka_device_t *dev, void *vaddr,
-    ka_dma_addr_t dma_addr, size_t size)
+static void trs_chan_mem_free_dma(
+    struct trs_id_inst *inst, ka_device_t *dev, void *vaddr, ka_dma_addr_t dma_addr, size_t size)
 {
     if (dev != NULL) {
         hal_kernel_devdrv_dma_unmap_single(dev, dma_addr, size, KA_DMA_BIDIRECTIONAL);
@@ -95,7 +90,7 @@ static void *trs_chan_mem_alloc_ddr_phy(struct trs_id_inst *inst, size_t size, p
 {
     void *vaddr = NULL;
 
-    vaddr = ka_alloc_pages_exact_ex(size, KA_GFP_KERNEL | __KA_GFP_ZERO  | __KA_GFP_ACCOUNT | __KA_GFP_RETRY_MAYFAIL);
+    vaddr = ka_alloc_pages_exact_ex(size, KA_GFP_KERNEL | __KA_GFP_ZERO | __KA_GFP_ACCOUNT | __KA_GFP_RETRY_MAYFAIL);
     if (vaddr == NULL) {
         return NULL;
     }
@@ -120,8 +115,7 @@ static void *trs_chan_mem_get_ddr_dma(struct trs_id_inst *inst, size_t size, phy
     return vaddr;
 }
 
-static void trs_chan_mem_put_ddr_dma(struct trs_id_inst *inst, void *vaddr,
-    size_t size, phys_addr_t phy_addr)
+static void trs_chan_mem_put_ddr_dma(struct trs_id_inst *inst, void *vaddr, size_t size, phys_addr_t phy_addr)
 {
     int ret;
     struct trs_chan_mem_node_attr attr = {
@@ -150,8 +144,7 @@ static void *trs_chan_mem_get_ddr_phy(struct trs_id_inst *inst, size_t size, phy
     return vaddr;
 }
 
-static void trs_chan_mem_put_ddr_phy(struct trs_id_inst *inst, void *vaddr,
-    size_t size, phys_addr_t phy_addr)
+static void trs_chan_mem_put_ddr_phy(struct trs_id_inst *inst, void *vaddr, size_t size, phys_addr_t phy_addr)
 {
     int ret;
     struct trs_chan_mem_node_attr attr = {
@@ -169,8 +162,8 @@ static void trs_chan_mem_put_ddr_phy(struct trs_id_inst *inst, void *vaddr,
     }
 }
 
-static void *trs_chan_mem_alloc_pm_inst_rsv(struct trs_id_inst *inst, int type,
-    size_t size, phys_addr_t *paddr, u32 flag)
+static void *trs_chan_mem_alloc_pm_inst_rsv(
+    struct trs_id_inst *inst, int type, size_t size, phys_addr_t *paddr, u32 flag)
 {
     struct uda_mia_dev_para dev_para;
     struct trs_id_inst pm_inst;
@@ -215,7 +208,7 @@ static void trs_chan_mem_free_pm_inst_rsv(struct trs_id_inst *inst, int type, ph
 static int trs_pin_svm_mem(u32 udevid, int tgid, u64 va, u64 size)
 {
     if (trs_get_sq_send_mode(udevid) == TRS_MODE_TYPE_SQ_SEND_HIGH_PERFORMANCE) {
-        return svm_smp_pin_mem(udevid, tgid, va, size);
+        return svm_smp_pin_mem(udevid, tgid, va, size, false);
     } else {
         return svm_smp_pin_dev_cp_only_mem(udevid, tgid, va, size);
     }
@@ -224,7 +217,7 @@ static int trs_pin_svm_mem(u32 udevid, int tgid, u64 va, u64 size)
 static int trs_unpin_svm_mem(u32 udevid, int tgid, u64 va, u64 size)
 {
     if (trs_get_sq_send_mode(udevid) == TRS_MODE_TYPE_SQ_SEND_HIGH_PERFORMANCE) {
-        return svm_smp_unpin_mem(udevid, tgid, va, size);
+        return svm_smp_unpin_mem(udevid, tgid, va, size, false);
     } else {
         return svm_smp_unpin_dev_cp_only_mem(udevid, tgid, va, size);
     }
@@ -254,8 +247,8 @@ static int trs_chan_devmem_addr_d2h(u32 devid, u64 host_addr, u64 *dev_addr)
 }
 #endif
 
-static void *trs_chan_mem_get_svm_mem(struct trs_id_inst *inst, size_t size, void *specified_uva,
-    struct trs_chan_mem_attr *mem_attr)
+static void *trs_chan_mem_get_svm_mem(
+    struct trs_id_inst *inst, size_t size, void *specified_uva, struct trs_chan_mem_attr *mem_attr)
 {
 #ifdef CFG_FEATURE_SQ_SUPPORT_SVM_MEM
     svm_pa_seg_wraper_t pa_seg;
@@ -338,18 +331,21 @@ static int trs_chan_check_sqcq_mem_size(struct trs_id_inst *inst, u32 mem_side, 
         }
         /* In HCCS connection, virtual machine and using host mem, sqcq size should be less or equal 4K */
         if ((host_flag == 0) && is_host_mem(mem_side) && is_size_out_of_range(size)) {
-            trs_err("Check sqcq mem size failed. (devid=%u; host_flag=0x%x; mem_side=%u; size=0x%lx)\n",
-                inst->devid, host_flag, mem_side, size);
+            trs_err(
+                "Check sqcq mem size failed. (devid=%u; host_flag=0x%x; mem_side=%u; size=0x%lx)\n", inst->devid,
+                host_flag, mem_side, size);
             return -EINVAL;
         }
-        trs_debug("Check sqcq mem size. (devid=%u; host_flag=0x%x; mem_side=%u; size=0x%lx)\n",
-                inst->devid, host_flag, mem_side, size);
+        trs_debug(
+            "Check sqcq mem size. (devid=%u; host_flag=0x%x; mem_side=%u; size=0x%lx)\n", inst->devid, host_flag,
+            mem_side, size);
     }
     return 0;
 }
 
-void *trs_chan_ops_sq_mem_alloc(struct trs_id_inst *inst, struct trs_chan_type *types,
-    struct trs_chan_sq_para *sq_para, struct trs_chan_mem_attr *mem_attr)
+void *trs_chan_ops_sq_mem_alloc(
+    struct trs_id_inst *inst, struct trs_chan_type *types, struct trs_chan_sq_para *sq_para,
+    struct trs_chan_mem_attr *mem_attr)
 {
     size_t size = sq_para->sqe_size * sq_para->sq_depth;
     void *vaddr = NULL;
@@ -389,8 +385,8 @@ void *trs_chan_ops_sq_mem_alloc(struct trs_id_inst *inst, struct trs_chan_type *
     return vaddr;
 }
 
-void trs_chan_ops_sq_mem_free(struct trs_id_inst *inst, struct trs_chan_type *types,
-    void *sq_addr, struct trs_chan_mem_attr *mem_attr)
+void trs_chan_ops_sq_mem_free(
+    struct trs_id_inst *inst, struct trs_chan_type *types, void *sq_addr, struct trs_chan_mem_attr *mem_attr)
 {
     u32 mem_side;
 
@@ -420,14 +416,15 @@ KA_EXPORT_SYMBOL_GPL(trs_chan_sq_mem_alloc);
 
 void trs_chan_sq_mem_free(struct trs_id_inst *inst, void *sq_addr, struct trs_chan_mem_attr *mem_attr)
 {
-    struct trs_chan_type types  = {.type = CHAN_TYPE_HW, .sub_type = CHAN_SUB_TYPE_HW_RTS};
+    struct trs_chan_type types = {.type = CHAN_TYPE_HW, .sub_type = CHAN_SUB_TYPE_HW_RTS};
 
     return trs_chan_ops_sq_mem_free(inst, &types, sq_addr, mem_attr);
 }
 KA_EXPORT_SYMBOL_GPL(trs_chan_sq_mem_free);
 
-void *trs_chan_ops_cq_mem_alloc(struct trs_id_inst *inst, struct trs_chan_type *types,
-    struct trs_chan_cq_para *cq_para, struct trs_chan_mem_attr *mem_attr)
+void *trs_chan_ops_cq_mem_alloc(
+    struct trs_id_inst *inst, struct trs_chan_type *types, struct trs_chan_cq_para *cq_para,
+    struct trs_chan_mem_attr *mem_attr)
 {
     size_t size = cq_para->cqe_size * cq_para->cq_depth;
     void *vaddr = NULL;
@@ -453,8 +450,8 @@ void *trs_chan_ops_cq_mem_alloc(struct trs_id_inst *inst, struct trs_chan_type *
     return vaddr;
 }
 
-void trs_chan_ops_cq_mem_free(struct trs_id_inst *inst, struct trs_chan_type *types,
-    void *cq_addr, struct trs_chan_mem_attr *mem_attr)
+void trs_chan_ops_cq_mem_free(
+    struct trs_id_inst *inst, struct trs_chan_type *types, void *cq_addr, struct trs_chan_mem_attr *mem_attr)
 {
     u32 mem_side;
 
@@ -550,8 +547,8 @@ int trs_chan_near_sqcq_mem_h2d(struct trs_id_inst *inst, u64 host_addr, u64 *dev
 }
 KA_EXPORT_SYMBOL_GPL(trs_chan_near_sqcq_mem_h2d);
 
-static int _trs_chan_sq_rsvmem_map(struct trs_id_inst *inst, u64 host_paddr, u32 host_pid,
-                                  struct trs_chan_sq_para *sq_param, u64 *dev_vaddr)
+static int _trs_chan_sq_rsvmem_map(
+    struct trs_id_inst *inst, u64 host_paddr, u32 host_pid, struct trs_chan_sq_para *sq_param, u64 *dev_vaddr)
 {
 #ifndef EMU_ST
     struct trs_msg_map_sq_mem *msg_map_sq_mem = NULL;
@@ -585,12 +582,14 @@ static int _trs_chan_sq_rsvmem_map(struct trs_id_inst *inst, u64 host_paddr, u32
         msg_map_sq_mem->phy_devid = mia_para.phy_devid;
         msg_map_sq_mem->vfid = mia_para.sub_devid;
     }
-    trs_debug("devid info. (devid=%u; phy_devid=%u; vfid=%u)\n",
-        inst->devid, msg_map_sq_mem->phy_devid, msg_map_sq_mem->vfid);
+    trs_debug(
+        "devid info. (devid=%u; phy_devid=%u; vfid=%u)\n", inst->devid, msg_map_sq_mem->phy_devid,
+        msg_map_sq_mem->vfid);
     ret = trs_host_msg_send(msg_map_sq_mem->phy_devid, &msg, sizeof(struct trs_msg_data));
     if ((ret != 0) && (ret != -ESRCH)) {
-        trs_err("Msg send fail. (devid=%u; phy_devid=%u; vfid=%d, ret=%d; header_result=%d)\n",
-            inst->devid, msg_map_sq_mem->phy_devid, msg_map_sq_mem->vfid, ret, msg.header.result);
+        trs_err(
+            "Msg send fail. (devid=%u; phy_devid=%u; vfid=%d, ret=%d; header_result=%d)\n", inst->devid,
+            msg_map_sq_mem->phy_devid, msg_map_sq_mem->vfid, ret, msg.header.result);
         return ret;
     }
 
@@ -633,8 +632,8 @@ int trs_chan_sq_rsvmem_map(struct trs_id_inst *inst, struct trs_sq_mem_map_para 
 }
 KA_EXPORT_SYMBOL_GPL(trs_chan_sq_rsvmem_map);
 
-static int _trs_chan_sq_rsvmem_unmap(struct trs_id_inst *inst, struct trs_chan_sq_para *sq_para,
-                                    u32 pid, void *dev_vaddr)
+static int _trs_chan_sq_rsvmem_unmap(
+    struct trs_id_inst *inst, struct trs_chan_sq_para *sq_para, u32 pid, void *dev_vaddr)
 {
 #ifndef EMU_ST
     struct trs_msg_map_sq_mem *msg_map_sq_mem = NULL;
@@ -663,8 +662,9 @@ static int _trs_chan_sq_rsvmem_unmap(struct trs_id_inst *inst, struct trs_chan_s
     }
     ret = trs_host_msg_send(msg_map_sq_mem->phy_devid, &msg, sizeof(struct trs_msg_data));
     if (ret != 0) {
-        trs_err("Msg send fail. (devid=%u; phy_devid=%d; ret=%d; header_result=%d)\n",
-            inst->devid, msg_map_sq_mem->phy_devid, ret, msg.header.result);
+        trs_err(
+            "Msg send fail. (devid=%u; phy_devid=%d; ret=%d; header_result=%d)\n", inst->devid,
+            msg_map_sq_mem->phy_devid, ret, msg.header.result);
         return ret;
     }
     return 0;

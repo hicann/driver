@@ -15,10 +15,10 @@
 
 #include "hal_pkg/esched_pkg.h"
 
-#if defined(CFG_FEATURE_HARDWARE_SCHED) && !defined(CFG_FEATURE_REMOTE_PUB_HARD_SCHED)  && !defined(CFG_FEATURE_STARS_V2)
-#define SCHED_MAX_EVENT_MSG_LEN_EX  768U
+#if defined(CFG_FEATURE_HARDWARE_SCHED) && !defined(CFG_FEATURE_REMOTE_PUB_HARD_SCHED) && !defined(CFG_FEATURE_STARS_V2)
+#define SCHED_MAX_EVENT_MSG_LEN_EX 768U
 #else
-#define SCHED_MAX_EVENT_MSG_LEN_EX  EVENT_MAX_MSG_LEN
+#define SCHED_MAX_EVENT_MSG_LEN_EX EVENT_MAX_MSG_LEN
 #endif
 
 typedef enum esched_msg_type {

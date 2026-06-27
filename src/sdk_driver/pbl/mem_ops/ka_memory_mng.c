@@ -11,24 +11,12 @@
  * GNU General Public License for more details.
  */
 
-#include <linux/types.h>
-#include <linux/seq_file.h>
-#include <linux/proc_fs.h>
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/fs.h>
-#include <linux/cdev.h>
-#include <linux/device.h>
-#include <linux/uaccess.h>
-#include <linux/dma-mapping.h>
-#include <linux/slab.h>
-#include <linux/version.h>
-#include <linux/gfp.h>
-#include <linux/sched.h>
-#include <linux/delay.h>
+#include "ka_base_pub.h"
+#include "ka_task_pub.h"
+#include "ka_memory_pub.h"
+#include "ka_system_pub.h"
+#include "ka_fs_pub.h"
+#include "ka_compiler_pub.h"
 
 #include "ascend_hal_define.h"
 #include "ka_rbtree.h"
@@ -43,16 +31,16 @@
 #define ka_get_sub_module_type(module_id) ((module_id) & KA_SUB_MODULE_TYPE_MASK)
 
 struct ka_mem_stats {
-    atomic64_t cur_alloc_times;
-    atomic64_t cur_free_times;
-    atomic64_t cur_alloc_size[KA_SUB_MODULE_TYPE_MAX];
-    atomic64_t peak_alloc_size[KA_SUB_MODULE_TYPE_MAX];
+    ka_atomic64_t cur_alloc_times;
+    ka_atomic64_t cur_free_times;
+    ka_atomic64_t cur_alloc_size[KA_SUB_MODULE_TYPE_MAX];
+    ka_atomic64_t peak_alloc_size[KA_SUB_MODULE_TYPE_MAX];
 };
 
 struct ka_module_mem_mng {
     struct ka_mem_stats mem_stats;
-    struct rb_root rbroot;
-    spinlock_t rb_spinlock;
+    ka_rb_root_t rbroot;
+    ka_task_spinlock_t rb_spinlock;
 };
 
 struct ka_mem_mng {
@@ -61,7 +49,7 @@ struct ka_mem_mng {
 };
 
 struct ka_mem_node {
-    struct rb_node node;
+    ka_rb_node_t node;
     size_t size;
     unsigned long va;
 };
@@ -85,8 +73,8 @@ STATIC void ka_mem_size_record_clear(void)
     for (i = 0; i < HAL_MODULE_TYPE_MAX; i++) {
         for (j = 0; j < KA_SUB_MODULE_TYPE_MAX; j++) {
             struct ka_mem_stats *mem_stats = ka_get_mem_stats(i);
-            atomic64_set(&mem_stats->cur_alloc_size[j], 0);
-            atomic64_set(&mem_stats->peak_alloc_size[j], 0);
+            ka_base_atomic64_set(&mem_stats->cur_alloc_size[j], 0);
+            ka_base_atomic64_set(&mem_stats->peak_alloc_size[j], 0);
         }
     }
 }
@@ -128,12 +116,12 @@ STATIC char *ka_module_type_to_str(uint32_t module_type)
 
 STATIC void ka_mem_node_free(struct ka_mem_node *mem_node)
 {
-    kfree(mem_node);
+    ka_mm_kfree(mem_node);
 }
 
-STATIC void ka_mem_node_release(struct rb_node *node)
+STATIC void ka_mem_node_release(ka_rb_node_t *node)
 {
-    struct ka_mem_node *mem_node = rb_entry(node, struct ka_mem_node, node);
+    struct ka_mem_node *mem_node = ka_base_rb_entry(node, struct ka_mem_node, node);
 
     ka_mem_node_free(mem_node);
 }
@@ -143,26 +131,26 @@ STATIC void ka_try_cond_resched(unsigned long *pre_stamp)
 {
     unsigned int timeinterval;
 
-    timeinterval = jiffies_to_msecs(jiffies - *pre_stamp);
+    timeinterval = ka_system_jiffies_to_msecs(ka_jiffies - *pre_stamp);
     if (timeinterval > KA_WAKEUP_TIMEINTERVAL) {
-        cond_resched();
-        *pre_stamp = (unsigned long)jiffies;
+        ka_task_cond_resched();
+        *pre_stamp = (unsigned long)ka_jiffies;
     }
 }
 
 STATIC void ka_destory_all_mem_node(void)
 {
-    unsigned long stamp = (unsigned long)jiffies;
+    unsigned long stamp = (unsigned long)ka_jiffies;
     int i;
 
     for (i = 0; i < HAL_MODULE_TYPE_MAX; i++) {
         struct ka_module_mem_mng *mem_mng = ka_get_mem_mng_node(i);
-        struct rb_node *node = NULL;
+        ka_rb_node_t *node = NULL;
         unsigned long flags;
         while (1) {
-            spin_lock_irqsave(&mem_mng->rb_spinlock, flags);
+            ka_task_spin_lock_irqsave(&mem_mng->rb_spinlock, flags);
             node = ka_rb_erase_one_node(&mem_mng->rbroot);
-            spin_unlock_irqrestore(&mem_mng->rb_spinlock, flags);
+            ka_task_spin_unlock_irqrestore(&mem_mng->rb_spinlock, flags);
             if (node == NULL) {
                 break;
             }
@@ -189,23 +177,23 @@ bool ka_is_enable_mem_record(void)
     return g_ka_mem_mng.is_enable_mem_record;
 }
 
-int ka_mem_stats_show(struct seq_file *seq, void *offset)
+int ka_mem_stats_show(ka_seq_file_t *seq, void *offset)
 {
     unsigned int i, j;
 
     for (i = 0; i < HAL_MODULE_TYPE_MAX; i++) {
         struct ka_mem_stats *mem_stats = ka_get_mem_stats(i);
-        if (atomic64_read(&mem_stats->cur_alloc_times) != 0) {
-            seq_printf(seq, "Ka_mem_alloc_times_stats. (module_name=%s; cur_alloc_times=%lu; cur_free_times=%lu)\n",
-                ka_module_type_to_str(i), (unsigned long)atomic64_read(&mem_stats->cur_alloc_times),
-                (unsigned long)atomic64_read(&mem_stats->cur_free_times));
+        if (ka_base_atomic64_read(&mem_stats->cur_alloc_times) != 0) {
+            ka_fs_seq_printf(seq, "Ka_mem_alloc_times_stats. (module_name=%s; cur_alloc_times=%lu; cur_free_times=%lu)\n",
+                ka_module_type_to_str(i), (unsigned long)ka_base_atomic64_read(&mem_stats->cur_alloc_times),
+                (unsigned long)ka_base_atomic64_read(&mem_stats->cur_free_times));
         }
         if (g_ka_mem_mng.is_enable_mem_record) {
             for (j = 0; j < KA_SUB_MODULE_TYPE_MAX; j++) {
-                if (atomic64_read(&mem_stats->peak_alloc_size[j]) != 0) {
-                    seq_printf(seq, "Ka_mem_alloc_size_stats(bytes). (module_name=%s; sub_module_type=%u; cur_size=%lu; peak_size=%lu)\n",
-                        ka_module_type_to_str(i), j, (unsigned long)atomic64_read(&mem_stats->cur_alloc_size[j]),
-                        (unsigned long)atomic64_read(&mem_stats->peak_alloc_size[j]));
+                if (ka_base_atomic64_read(&mem_stats->peak_alloc_size[j]) != 0) {
+                    ka_fs_seq_printf(seq, "Ka_mem_alloc_size_stats(bytes). (module_name=%s; sub_module_type=%u; cur_size=%lu; peak_size=%lu)\n",
+                        ka_module_type_to_str(i), j, (unsigned long)ka_base_atomic64_read(&mem_stats->cur_alloc_size[j]),
+                        (unsigned long)ka_base_atomic64_read(&mem_stats->peak_alloc_size[j]));
                 }
             }
         }
@@ -218,8 +206,8 @@ STATIC void ka_mng_node_init(void)
     int i;
 
     for (i = 0; i < HAL_MODULE_TYPE_MAX; i++) {
-        spin_lock_init(&(g_ka_mem_mng.mem_mng[i].rb_spinlock));
-        g_ka_mem_mng.mem_mng[i].rbroot = RB_ROOT;
+        ka_task_spin_lock_init(&(g_ka_mem_mng.mem_mng[i].rb_spinlock));
+        g_ka_mem_mng.mem_mng[i].rbroot = KA_RB_ROOT;
     }
 }
 
@@ -238,11 +226,11 @@ STATIC struct ka_mem_node *ka_mem_node_alloc(size_t size, unsigned long va)
 {
     struct ka_mem_node *mem_node = NULL;
 
-    mem_node = (struct ka_mem_node *)kmalloc(sizeof(struct ka_mem_node), GFP_ATOMIC | __GFP_ACCOUNT);
+    mem_node = (struct ka_mem_node *)ka_mm_kmalloc(sizeof(struct ka_mem_node), KA_GFP_ATOMIC | __KA_GFP_ACCOUNT);
     if (mem_node == NULL) {
         return NULL;
     }
-    RB_CLEAR_NODE(&mem_node->node);
+    KA_BASE_RB_CLEAR_NODE(&mem_node->node);
     mem_node->size = size;
     mem_node->va = va;
 
@@ -257,28 +245,28 @@ STATIC void ka_mem_alloc_size_inc(unsigned int module_id, size_t size, unsigned 
     unsigned long tmp;
     int retry = 0;
 
-    tmp = (unsigned long)atomic64_add_return(size, &mem_stats->cur_alloc_size[sub_type]);
+    tmp = (unsigned long)ka_base_atomic64_add_return(size, &mem_stats->cur_alloc_size[sub_type]);
     while (retry < KA_MAX_RETRY_TIMES) {
-        unsigned long peak_size = (unsigned long)atomic64_read(&mem_stats->peak_alloc_size[sub_type]);
+        unsigned long peak_size = (unsigned long)ka_base_atomic64_read(&mem_stats->peak_alloc_size[sub_type]);
         if (tmp <= peak_size) {
             break;
         }
-        if ((unsigned long)atomic64_cmpxchg(&mem_stats->peak_alloc_size[sub_type], peak_size, tmp) == peak_size) {
+        if ((unsigned long)ka_base_atomic64_cmpxchg(&mem_stats->peak_alloc_size[sub_type], peak_size, tmp) == peak_size) {
             break;
         }
         retry++;
     }
 
     ka_debug("Size_inc_record. (va=0x%lx; sub_type=%u; cur_size=%lu bytes; peak_size=%lu bytes; cur_alloc_times=%lu; cur_free_times=%lu)\n",
-        va, sub_type, (unsigned long)atomic64_read(&mem_stats->cur_alloc_size[sub_type]),
-        (unsigned long)atomic64_read(&mem_stats->peak_alloc_size[sub_type]),
-        (unsigned long)atomic64_read(&mem_stats->cur_alloc_times),
-        (unsigned long)atomic64_read(&mem_stats->cur_free_times));
+        va, sub_type, (unsigned long)ka_base_atomic64_read(&mem_stats->cur_alloc_size[sub_type]),
+        (unsigned long)ka_base_atomic64_read(&mem_stats->peak_alloc_size[sub_type]),
+        (unsigned long)ka_base_atomic64_read(&mem_stats->cur_alloc_times),
+        (unsigned long)ka_base_atomic64_read(&mem_stats->cur_free_times));
 }
 
-STATIC unsigned long rb_handle_of_mem_stats_node(struct rb_node *node)
+STATIC unsigned long rb_handle_of_mem_stats_node(ka_rb_node_t *node)
 {
-    struct ka_mem_node *mem_node = rb_entry(node, struct ka_mem_node, node);
+    struct ka_mem_node *mem_node = ka_base_rb_entry(node, struct ka_mem_node, node);
 
     return mem_node->va;
 }
@@ -289,9 +277,9 @@ STATIC int ka_mem_node_insert(struct ka_mem_node *mem_node, unsigned int module_
     unsigned long flags;
     int ret;
 
-    spin_lock_irqsave(&module_mng->rb_spinlock, flags);
+    ka_task_spin_lock_irqsave(&module_mng->rb_spinlock, flags);
     ret = ka_rb_insert(&module_mng->rbroot, &mem_node->node, rb_handle_of_mem_stats_node);
-    spin_unlock_irqrestore(&module_mng->rb_spinlock, flags);
+    ka_task_spin_unlock_irqrestore(&module_mng->rb_spinlock, flags);
 
     return ret;
 }
@@ -318,13 +306,13 @@ STATIC void ka_mem_alloc_size_dec(unsigned int module_id, size_t size, unsigned 
     struct ka_mem_stats *mem_stats = ka_get_mem_stats(ka_get_module_type(module_id));
     unsigned int sub_type = ka_get_sub_module_type(module_id);
 
-    atomic64_sub(size, &mem_stats->cur_alloc_size[sub_type]);
+    ka_base_atomic64_sub(size, &mem_stats->cur_alloc_size[sub_type]);
 
     ka_debug("Size_dec_record. (va=0x%lx; sub_type=%u; cur_size=%lu bytes; peak_size=%lu bytes; cur_alloc_times=%lu; cur_free_times=%lu)\n",
-        va, sub_type, (unsigned long)atomic64_read(&mem_stats->cur_alloc_size[sub_type]),
-        (unsigned long)atomic64_read(&mem_stats->peak_alloc_size[sub_type]),
-        (unsigned long)atomic64_read(&mem_stats->cur_alloc_times),
-        (unsigned long)atomic64_read(&mem_stats->cur_free_times));
+        va, sub_type, (unsigned long)ka_base_atomic64_read(&mem_stats->cur_alloc_size[sub_type]),
+        (unsigned long)ka_base_atomic64_read(&mem_stats->peak_alloc_size[sub_type]),
+        (unsigned long)ka_base_atomic64_read(&mem_stats->cur_alloc_times),
+        (unsigned long)ka_base_atomic64_read(&mem_stats->cur_free_times));
 }
 
 STATIC void ka_mem_node_destroy(unsigned int module_id, struct ka_mem_node *mem_node, unsigned long va)
@@ -335,12 +323,12 @@ STATIC void ka_mem_node_destroy(unsigned int module_id, struct ka_mem_node *mem_
 
 STATIC inline void ka_mem_alloc_times_inc(unsigned int module_id)
 {
-    atomic64_inc(&ka_get_mem_stats(ka_get_module_type(module_id))->cur_alloc_times);
+    ka_base_atomic64_inc(&ka_get_mem_stats(ka_get_module_type(module_id))->cur_alloc_times);
 }
 
 STATIC inline void ka_mem_free_times_inc(unsigned int module_id)
 {
-    atomic64_inc(&ka_get_mem_stats(ka_get_module_type(module_id))->cur_free_times);
+    ka_base_atomic64_inc(&ka_get_mem_stats(ka_get_module_type(module_id))->cur_free_times);
 }
 
 void ka_mem_alloc_stat_add(unsigned int module_id, size_t size, unsigned long va)
@@ -348,7 +336,7 @@ void ka_mem_alloc_stat_add(unsigned int module_id, size_t size, unsigned long va
     if (va == 0) {
         return;
     }
-    if (unlikely(g_ka_mem_mng.is_enable_mem_record)) {
+    if (ka_unlikely(g_ka_mem_mng.is_enable_mem_record)) {
         ka_mem_node_create(module_id, size, va);
     }
     ka_mem_alloc_times_inc(module_id);
@@ -357,24 +345,24 @@ void ka_mem_alloc_stat_add(unsigned int module_id, size_t size, unsigned long va
 STATIC struct ka_mem_node *ka_mem_rbnode_search_and_erase(unsigned int module_id, unsigned long va)
 {
     struct ka_module_mem_mng *module_mng = ka_get_mem_mng_node(module_id);
-    struct rb_node *node = NULL;
+    ka_rb_node_t *node = NULL;
     unsigned long flags;
 
-    spin_lock_irqsave(&module_mng->rb_spinlock, flags);
+    ka_task_spin_lock_irqsave(&module_mng->rb_spinlock, flags);
     node = ka_rb_search(&module_mng->rbroot, va, rb_handle_of_mem_stats_node);
     if (node != NULL) {
         ka_rb_erase(&module_mng->rbroot, node);
     }
-    spin_unlock_irqrestore(&module_mng->rb_spinlock, flags);
+    ka_task_spin_unlock_irqrestore(&module_mng->rb_spinlock, flags);
     if (node == NULL) {
         return NULL;
     }
-    return rb_entry(node, struct ka_mem_node, node);
+    return ka_base_rb_entry(node, struct ka_mem_node, node);
 }
 
 void ka_mem_alloc_stat_del(unsigned long va, unsigned int module_id)
 {
-    if (unlikely(g_ka_mem_mng.is_enable_mem_record)) {
+    if (ka_unlikely(g_ka_mem_mng.is_enable_mem_record)) {
         struct ka_mem_node *mem_node = ka_mem_rbnode_search_and_erase(module_id, va);
         if (mem_node != NULL) {
             ka_mem_node_destroy(module_id, mem_node, va);

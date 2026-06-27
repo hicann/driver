@@ -14,7 +14,8 @@
 #ifndef FMS_SMF_H
 #define FMS_SMF_H
 
-#include <linux/workqueue.h>
+#include "ka_list_pub.h"
+#include "ka_task_pub.h"
 
 #include "dms/dms_shm_info.h"
 #include "dms/dms_cmd_def.h"
@@ -24,13 +25,13 @@
 
 typedef struct {
     struct dms_event_para event;
-    struct list_head node;
+    ka_list_head_t node;
 } DMS_EVENT_NODE_STRU;
 
 struct dms_device_event {
-    struct list_head head;
+    ka_list_head_t head;
     int event_num; /* max 128 */
-    struct mutex lock;
+    ka_mutex_t lock;
 	unsigned int highest_severity;
 };
 
@@ -131,7 +132,7 @@ int dms_event_set_add_exception_handle(add_exception_handle func);
 
 struct dms_device_event* dms_get_device_event(u32 dev_id);
 void dms_release_one_device_remote_event(unsigned int dev_id);
-int dms_event_get_exception(struct dms_event_para *fault_event, int timeout, enum cmd_source cmd_src);
+int dms_event_get_exception(int dev_id, struct dms_event_filter *filter, struct dms_event_para *fault_event, int timeout, enum cmd_source cmd_src);
 void dms_event_release_proc(int tgid, int pid);
 int dms_event_subscribe_register(DMS_EVENT_DISTRIBUTE_HANDLE_T handle_func,
     DMS_DISTRIBUTE_PRIORITY priority);

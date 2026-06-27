@@ -31,9 +31,9 @@ typedef union {
          *    Only the case that during TS FW initialziation,
          *    we would allow using write to to notify table entry with flag == 1
          */
-        unsigned int notifyTableFlagSlice       : 1;    /* [0] */
-        unsigned int notifyTablePendingClrSlice : 1;    /* [1], reserved */
-        unsigned int reserved                   : 30;   /* [31:2] */
+        unsigned int notifyTableFlagSlice : 1;       /* [0] */
+        unsigned int notifyTablePendingClrSlice : 1; /* [1], reserved */
+        unsigned int reserved : 30;                  /* [31:2] */
         unsigned int reserved1;
     } bits;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2025. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -19,16 +19,16 @@
 #include "ka_sched_pub.h"
 
 #include "svm_kern_log.h"
+#include "svm_slab.h"
 #include "casm_ctx.h"
 #include "casm_key.h"
 #include "casm_src.h"
 
 static struct svm_casm_src_ops *casm_src_ops = NULL;
 
-void svm_casm_register_src_ops(const struct svm_casm_src_ops *ops)
-{
-    casm_src_ops = (struct svm_casm_src_ops *)ops;
-}
+#define SHOW_NODE_MAX 100000
+
+void svm_casm_register_src_ops(const struct svm_casm_src_ops *ops) { casm_src_ops = (struct svm_casm_src_ops *)ops; }
 
 static int casm_src_add_handle(u32 udevid, struct svm_global_va *src_va, struct casm_src_ex *src_ex)
 {
@@ -68,6 +68,7 @@ int casm_add_src_node(u32 udevid, int tgid, struct casm_src_node *node)
     src_ctx = &ctx->src_ctx;
     ka_task_write_lock_bh(&src_ctx->lock);
     ka_list_add_tail(&node->node, &src_ctx->head);
+    src_ctx->node_num++;
     ka_task_write_unlock_bh(&src_ctx->lock);
     casm_ctx_put(ctx);
 
@@ -88,6 +89,9 @@ void casm_del_src_node(u32 udevid, int tgid, struct casm_src_node *node)
     src_ctx = &ctx->src_ctx;
     ka_task_write_lock_bh(&src_ctx->lock);
     ka_list_del(&node->node);
+    if (src_ctx->node_num > 0) {
+        src_ctx->node_num--;
+    }
     ka_task_write_unlock_bh(&src_ctx->lock);
     casm_ctx_put(ctx);
 
@@ -97,28 +101,51 @@ void casm_del_src_node(u32 udevid, int tgid, struct casm_src_node *node)
 void casm_src_ctx_show(struct casm_src_ctx *src_ctx, ka_seq_file_t *seq)
 {
     struct casm_src_node *node = NULL;
-    int i = 0;
+    struct casm_src_node *dump_info = NULL;
+    u64 node_num = src_ctx->node_num;
+    u64 dump_num = 0;
+    u64 i;
 
-    ka_task_read_lock_bh(&src_ctx->lock);
-
-    ka_list_for_each_entry(node, &src_ctx->head, node) {
-        struct svm_global_va *src_va = &node->src_va;
-        if (i == 0) {
-            ka_fs_seq_printf(seq, "casm src info:index    key    owner_tgid  udevid   tgid   va   size    updated_va\n");
-        }
-
-        ka_fs_seq_printf(seq, "    %d   0x%llx    %d   %u  %d  0x%llx   0x%llx   0x%llx\n",
-            i++, node->key, node->src_ex.owner_tgid, src_va->udevid, src_va->tgid, src_va->va, src_va->size,
-            node->src_ex.updated_va);
+    if ((node_num == 0) || (node_num > SHOW_NODE_MAX)) {
+        svm_info("Skip show src ctx. (node_num=%llu)\n", node_num);
+        return;
     }
 
+    dump_info = (struct casm_src_node *)svm_vzalloc(sizeof(*dump_info) * node_num);
+    if (dump_info == NULL) {
+        svm_warn("No mem for src show. (num=%llu)\n", node_num);
+        return;
+    }
+
+    ka_task_read_lock_bh(&src_ctx->lock);
+    ka_list_for_each_entry(node, &src_ctx->head, node)
+    {
+        if (dump_num >= node_num) {
+            break;
+        }
+
+        dump_info[dump_num] = *node;
+        dump_num++;
+    }
     ka_task_read_unlock_bh(&src_ctx->lock);
+
+    ka_fs_seq_printf(seq, "casm src info:index    key    owner_tgid  udevid   tgid   va   size    updated_va\n");
+    for (i = 0; i < dump_num; i++) {
+        struct svm_global_va *src_va = &dump_info[i].src_va;
+        ka_fs_seq_printf(
+            seq, "    %llu   0x%llx    %d   %u  %d  0x%llx   0x%llx   0x%llx\n", i, dump_info[i].key,
+            dump_info[i].src_ex.owner_tgid, src_va->udevid, src_va->tgid, src_va->va, src_va->size,
+            dump_info[i].src_ex.updated_va);
+    }
+
+    svm_vfree(dump_info);
 }
 
 void casm_src_ctx_init(u32 udevid, struct casm_src_ctx *src_ctx)
 {
     ka_task_rwlock_init(&src_ctx->lock);
     KA_INIT_LIST_HEAD(&src_ctx->head);
+    src_ctx->node_num = 0;
 }
 
 static int casm_get_first_src_node_key(struct casm_src_ctx *src_ctx, u64 *key)
@@ -139,7 +166,7 @@ static int casm_get_first_src_node_key(struct casm_src_ctx *src_ctx, u64 *key)
 void casm_src_ctx_uninit(u32 udevid, struct casm_src_ctx *src_ctx)
 {
     unsigned long stamp = (unsigned long)ka_jiffies;
-    u64 last_key = 0;
+    u64 last_key = U64_MAX;
     int num = 0;
 
     while (1) {
@@ -154,7 +181,7 @@ void casm_src_ctx_uninit(u32 udevid, struct casm_src_ctx *src_ctx)
             break;
         }
 
-        (void)casm_destroy_key(key);
+        (void)casm_destroy_key(key, true);
         last_key = key;
         num++;
         ka_try_cond_resched(&stamp);
@@ -164,4 +191,3 @@ void casm_src_ctx_uninit(u32 udevid, struct casm_src_ctx *src_ctx)
         svm_info("Recycle src key. (udevid=%u; num=%d)\n", udevid, num);
     }
 }
-

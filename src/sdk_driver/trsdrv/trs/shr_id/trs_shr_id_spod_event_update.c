@@ -25,11 +25,11 @@
 #include "trs_shr_id_spod_event_update.h"
 
 /* for shrid pa addr manage */
-#define SHRID_ASCEND910_93_CROSS_NODE_BASE_ADDR          0x300000000000ULL // 48T
-#define SHRID_ASCEND910_93_SERVER_ADDR_OFFSET            0x10000000000ULL // 1T
-#define SHRID_ASCEND910_93_CHIP_ADDR_OFFSET              0x2000000000ULL  // 128G
-#define SHRID_ASCEND910_93_DIE_ADDR_OFFSET               0x1000000000ULL // 64G
-#define SHRID_ASCEND910_93_NOTIFY_ADDR_OFFSET_PER_DIE    0x1100000ULL
+#define SHRID_ASCEND910_93_CROSS_NODE_BASE_ADDR 0x300000000000ULL // 48T
+#define SHRID_ASCEND910_93_SERVER_ADDR_OFFSET 0x10000000000ULL    // 1T
+#define SHRID_ASCEND910_93_CHIP_ADDR_OFFSET 0x2000000000ULL       // 128G
+#define SHRID_ASCEND910_93_DIE_ADDR_OFFSET 0x1000000000ULL        // 64G
+#define SHRID_ASCEND910_93_NOTIFY_ADDR_OFFSET_PER_DIE 0x1100000ULL
 
 static int shr_id_get_notify_base_addr(u32 devid, u32 sdid, u64 *base_addr)
 {
@@ -43,17 +43,18 @@ static int shr_id_get_notify_base_addr(u32 devid, u32 sdid, u64 *base_addr)
     }
 
     *base_addr = SHRID_ASCEND910_93_CROSS_NODE_BASE_ADDR +
-                parse_info.server_id * SHRID_ASCEND910_93_SERVER_ADDR_OFFSET +
-                parse_info.chip_id * SHRID_ASCEND910_93_CHIP_ADDR_OFFSET +
-                parse_info.die_id * SHRID_ASCEND910_93_DIE_ADDR_OFFSET + SHRID_ASCEND910_93_NOTIFY_ADDR_OFFSET_PER_DIE;
+                 parse_info.server_id * SHRID_ASCEND910_93_SERVER_ADDR_OFFSET +
+                 parse_info.chip_id * SHRID_ASCEND910_93_CHIP_ADDR_OFFSET +
+                 parse_info.die_id * SHRID_ASCEND910_93_DIE_ADDR_OFFSET + SHRID_ASCEND910_93_NOTIFY_ADDR_OFFSET_PER_DIE;
 
-    trs_debug("Sdid info. (devid=%u; sdid=0x%x; server_id=%u; chip_id=%u; die_id=%u)\n",
-        devid, sdid, parse_info.server_id, parse_info.chip_id, parse_info.die_id);
+    trs_debug(
+        "Sdid info. (devid=%u; sdid=0x%x; server_id=%u; chip_id=%u; die_id=%u)\n", devid, sdid, parse_info.server_id,
+        parse_info.chip_id, parse_info.die_id);
     return 0;
 }
 
-STATIC int _shr_id_spod_event_update(unsigned int devid, struct sched_published_event_info *event_info,
-    struct sched_published_event_func *event_func)
+STATIC int _shr_id_spod_event_update(
+    unsigned int devid, struct sched_published_event_info *event_info, struct sched_published_event_func *event_func)
 {
     struct drvShrIdInfo *info = NULL;
     u64 base_addr, notify_addr;
@@ -77,7 +78,7 @@ STATIC int _shr_id_spod_event_update(unsigned int devid, struct sched_published_
 
     if ((info->flag & TSDRV_FLAG_SHR_ID_SHADOW) == 0) {
         trs_debug("Goto event update. (flag=0x%x).\n", info->flag);
-        return 0;   /* Not spod, goto shr_id_event_update. */
+        return 0; /* Not spod, goto shr_id_event_update. */
     }
 
     res_type = shr_id_type_trans_res_type(info->id_type);
@@ -88,8 +89,9 @@ STATIC int _shr_id_spod_event_update(unsigned int devid, struct sched_published_
 
     if (event_info->subevent_id == DRV_SUBEVENT_TRS_SHR_ID_CONFIG_MSG) { /* only shrIdOpen need check shrid. */
         if (!hal_kernel_trs_is_belong_to_pod_proc(sdid, tsid, ka_task_get_current_tgid(), res_type, info->shrid)) {
-            trs_err("Id invalid. (devid=%u; sdid=%u; tsid=%u; pid=%d; type=%u; shrid=%u)\n",
-                devid, sdid, tsid, ka_task_get_current_tgid(), info->id_type, info->shrid);
+            trs_err(
+                "Id invalid. (devid=%u; sdid=%u; tsid=%u; pid=%d; type=%u; shrid=%u)\n", devid, sdid, tsid,
+                ka_task_get_current_tgid(), info->id_type, info->shrid);
             return -EACCES;
         }
     }
@@ -101,16 +103,17 @@ STATIC int _shr_id_spod_event_update(unsigned int devid, struct sched_published_
 
     notify_addr = base_addr + shr_id_get_notify_offset(info->shrid);
     info->rsv[0] = (u32)(notify_addr & 0xffffffffULL); /* 0xffffffffULL is low 32 bit */
-    info->rsv[1] = (u32)(notify_addr >> 32); /* 32 is high bit */
+    info->rsv[1] = (u32)(notify_addr >> 32);           /* 32 is high bit */
 
-    trs_debug("Notify info. (devid=%u; remote_devid=%u; type=%u; shrid=%u; sub_id=%u; flag=0x%x)\n",
-        devid, info->devid, info->id_type, info->shrid, event_info->subevent_id, info->flag);
+    trs_debug(
+        "Notify info. (devid=%u; remote_devid=%u; type=%u; shrid=%u; sub_id=%u; flag=0x%x)\n", devid, info->devid,
+        info->id_type, info->shrid, event_info->subevent_id, info->flag);
 
     return 0;
 }
 
-int shr_id_spod_event_update(unsigned int devid, struct sched_published_event_info *event_info,
-    struct sched_published_event_func *event_func)
+int shr_id_spod_event_update(
+    unsigned int devid, struct sched_published_event_info *event_info, struct sched_published_event_func *event_func)
 {
     int ret = _shr_id_spod_event_update(devid, event_info, event_func);
     return trs_event_kerror_to_uerror(ret);
@@ -118,14 +121,16 @@ int shr_id_spod_event_update(unsigned int devid, struct sched_published_event_in
 
 STATIC int shr_id_spod_event_init(void)
 {
-    return hal_kernel_sched_register_event_pre_proc_handle(EVENT_DRV_MSG, SCHED_PRE_PROC_POS_LOCAL, shr_id_spod_event_update);
+    return hal_kernel_sched_register_event_pre_proc_handle(
+        EVENT_DRV_MSG, SCHED_PRE_PROC_POS_LOCAL, shr_id_spod_event_update);
 }
 DECLAER_FEATURE_AUTO_INIT(shr_id_spod_event_init, FEATURE_LOADER_STAGE_5);
 
 STATIC void shr_id_spod_event_uninit(void)
 {
 #ifndef EMU_ST
-    hal_kernel_sched_unregister_event_pre_proc_handle(EVENT_DRV_MSG, SCHED_PRE_PROC_POS_LOCAL, shr_id_spod_event_update);
+    hal_kernel_sched_unregister_event_pre_proc_handle(
+        EVENT_DRV_MSG, SCHED_PRE_PROC_POS_LOCAL, shr_id_spod_event_update);
 #endif
 }
 DECLAER_FEATURE_AUTO_UNINIT(shr_id_spod_event_uninit, FEATURE_LOADER_STAGE_5);

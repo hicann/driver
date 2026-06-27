@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2025. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -30,8 +30,8 @@
 #include "pma_ctx.h"
 #include "pma_core.h"
 
-static struct pma_mem_node *pma_mem_node_alloc(struct pma_ctx *ctx, u64 va, u64 size,
-    void (*free_callback)(void *data), void *data)
+static struct pma_mem_node *pma_mem_node_alloc(
+    struct pma_ctx *ctx, u64 va, u64 size, void (*free_callback)(void *data), void *data)
 {
     struct pma_mem_node *mem_node = NULL;
 
@@ -55,10 +55,7 @@ static struct pma_mem_node *pma_mem_node_alloc(struct pma_ctx *ctx, u64 va, u64 
     return mem_node;
 }
 
-static void pma_mem_node_free(struct pma_mem_node *mem_node)
-{
-    svm_kvfree(mem_node);
-}
+static void pma_mem_node_free(struct pma_mem_node *mem_node) { svm_kvfree(mem_node); }
 
 static void pma_mem_node_insert(struct pma_ctx *ctx, struct pma_mem_node *mem_node)
 {
@@ -89,8 +86,7 @@ int pma_mem_node_erase(struct pma_ctx *ctx, struct pma_mem_node *mem_node)
     return 0;
 }
 
-static u64 pma_get_dev_pa_seg_page_size(u32 udevid, u64 va, u64 size,
-    struct svm_pa_seg *pa_seg, u64 seg_num)
+static u64 pma_get_dev_pa_seg_page_size(u32 udevid, u64 va, u64 size, struct svm_pa_seg *pa_seg, u64 seg_num)
 {
     u64 npage_size, hpage_size, gpage_size, i;
     bool is_gpage = true;
@@ -137,14 +133,14 @@ static u64 pma_get_dev_pa_seg_page_size(u32 udevid, u64 va, u64 size,
     } else if (SVM_IS_ALIGNED(va, npage_size) && SVM_IS_ALIGNED(size, npage_size)) {
         return npage_size;
     } else {
-        svm_err("Va or size isn't aligned by npage_size. (va=0x%llx; size=%llu; npage_size=%llu)\n",
-            va, size, npage_size);
+        svm_err(
+            "Va or size isn't aligned by npage_size. (va=0x%llx; size=%llu; npage_size=%llu)\n", va, size, npage_size);
         return 0;
     }
 }
 
-static int _pma_page_table_init(u64 page_size, u64 page_num, struct svm_pa_seg pa_seg[], u64 seg_num,
-    struct p2p_page_table *page_table)
+static int _pma_page_table_init(
+    u64 page_size, u64 page_num, struct svm_pa_seg pa_seg[], u64 seg_num, struct p2p_page_table *page_table)
 {
     struct p2p_page_info *pages_info = NULL;
     u64 i, j, num = 0;
@@ -210,10 +206,7 @@ static int pma_pa_seg_alloc(u32 udevid, u64 va, u64 size, struct svm_pa_seg **pa
     return 0;
 }
 
-static void pma_pa_seg_free(struct svm_pa_seg *pa_seg)
-{
-    svm_kvfree(pa_seg);
-}
+static void pma_pa_seg_free(struct svm_pa_seg *pa_seg) { svm_kvfree(pa_seg); }
 
 static int pma_page_table_init(struct pma_mem_node *mem_node)
 {
@@ -239,8 +232,9 @@ static int pma_page_table_init(struct pma_mem_node *mem_node)
 
     ret = svm_pmq_client_host_bar_query(uda_get_host_id(), &src_info, pa_seg, &seg_num);
     if (ret != 0) {
-        svm_err("Query host bar failed. (ret=%d; udevid=%u; tgid=%d; va=0x%llx; size=%llu)\n",
-            ret, udevid, src_info.tgid, va, size);
+        svm_err(
+            "Query host bar failed. (ret=%d; udevid=%u; tgid=%d; va=0x%llx; size=%llu)\n", ret, udevid, src_info.tgid,
+            va, size);
         pma_pa_seg_free(pa_seg);
         return ret;
     }
@@ -258,13 +252,11 @@ static int pma_page_table_init(struct pma_mem_node *mem_node)
     return ret;
 }
 
-static void pma_page_table_uninit(struct pma_mem_node *mem_node)
-{
-    _pmq_page_table_uninit(&mem_node->page_table);
-}
+static void pma_page_table_uninit(struct pma_mem_node *mem_node) { _pmq_page_table_uninit(&mem_node->page_table); }
 
-static int _pma_mem_node_create(struct pma_ctx *ctx, u64 va, u64 size,
-    void (*free_callback)(void *data), void *data, struct pma_mem_node **mem_node)
+static int _pma_mem_node_create(
+    struct pma_ctx *ctx, u64 va, u64 size, void (*free_callback)(void *data), void *data,
+    struct pma_mem_node **mem_node)
 {
     struct pma_mem_node *new_node = NULL;
     int ret;
@@ -285,8 +277,9 @@ static int _pma_mem_node_create(struct pma_ctx *ctx, u64 va, u64 size,
     return 0;
 }
 
-int pma_mem_node_create(struct pma_ctx *ctx, u64 va, u64 size,
-    void (*free_callback)(void *data), void *data, struct pma_mem_node **mem_node)
+int pma_mem_node_create(
+    struct pma_ctx *ctx, u64 va, u64 size, void (*free_callback)(void *data), void *data,
+    struct pma_mem_node **mem_node)
 {
     int ret;
 
@@ -310,15 +303,9 @@ static void pma_mem_node_release(ka_kref_t *kref)
     _pma_mem_node_release(mem_node);
 }
 
-void pma_mem_node_get(struct pma_mem_node *mem_node)
-{
-    ka_base_kref_get(&mem_node->ref);
-}
+void pma_mem_node_get(struct pma_mem_node *mem_node) { ka_base_kref_get(&mem_node->ref); }
 
-void pma_mem_node_put(struct pma_mem_node *mem_node)
-{
-    ka_base_kref_put(&mem_node->ref, pma_mem_node_release);
-}
+void pma_mem_node_put(struct pma_mem_node *mem_node) { ka_base_kref_put(&mem_node->ref, pma_mem_node_release); }
 
 static struct pma_mem_node *pma_mem_node_erase_one_with_get(struct pma_ctx *ctx)
 {
@@ -344,7 +331,8 @@ static struct pma_mem_node *pma_mem_node_erase_by_range_with_get(struct pma_ctx 
     unsigned long stamp = (unsigned long)ka_jiffies;
 
     ka_task_down_write(&ctx->rw_sem);
-    ka_list_for_each_entry_safe(mem_node, n, &ctx->head, node) {
+    ka_list_for_each_entry_safe(mem_node, n, &ctx->head, node)
+    {
         if (!(((va + size) <= mem_node->va) || ((mem_node->va + mem_node->size) <= va))) {
             _pma_mem_node_erase(ctx, mem_node);
             pma_mem_node_get(mem_node);
@@ -367,10 +355,12 @@ void pma_mem_show(struct pma_ctx *ctx, ka_seq_file_t *seq)
 
     ka_task_down_read(&ctx->rw_sem);
 
-    ka_fs_seq_printf(seq, "pma: udevid %u tgid %d mem num %llu get_cnt %llu put cnt %llu\n",
-        ctx->udevid, ctx->tgid, ctx->mem_node_num, ctx->get_cnt, ctx->put_cnt);
+    ka_fs_seq_printf(
+        seq, "pma: udevid %u tgid %d mem num %llu get_cnt %llu put cnt %llu\n", ctx->udevid, ctx->tgid,
+        ctx->mem_node_num, ctx->get_cnt, ctx->put_cnt);
 
-    ka_list_for_each_entry_safe(mem_node, n, &ctx->head, node) {
+    ka_list_for_each_entry_safe(mem_node, n, &ctx->head, node)
+    {
         if (i == 0) {
             ka_fs_seq_printf(seq, "   %-5s %-17s %-15s\n", "id", "va", "size(Bytes)");
         }
@@ -381,10 +371,7 @@ void pma_mem_show(struct pma_ctx *ctx, ka_seq_file_t *seq)
     ka_task_up_read(&ctx->rw_sem);
 }
 
-static void pma_mem_node_recycle_notify(struct pma_mem_node *mem_node)
-{
-    mem_node->free_callback(mem_node->data);
-}
+static void pma_mem_node_recycle_notify(struct pma_mem_node *mem_node) { mem_node->free_callback(mem_node->data); }
 
 static void _pma_mem_recycle(struct pma_ctx *ctx, u64 va, u64 size)
 {
@@ -410,17 +397,14 @@ static void _pma_mem_recycle(struct pma_ctx *ctx, u64 va, u64 size)
         ka_try_cond_resched(&stamp);
     } while (1);
 
-    if (!recycle_by_range &&
-        ((recycle_num > 0) || (ctx->get_cnt != ctx->put_cnt))) {
-        svm_info("Recycle mem. (udevid=%u; tgid=%d; get_cnt=%llu; put_cnt=%llu; recycle_num=%d)\n",
-            ctx->udevid, ctx->tgid, ctx->get_cnt, ctx->put_cnt, recycle_num);
+    if (!recycle_by_range && ((recycle_num > 0) || (ctx->get_cnt != ctx->put_cnt))) {
+        svm_info(
+            "Recycle mem. (udevid=%u; tgid=%d; get_cnt=%llu; put_cnt=%llu; recycle_num=%d)\n", ctx->udevid, ctx->tgid,
+            ctx->get_cnt, ctx->put_cnt, recycle_num);
     }
 }
 
-void pma_mem_recycle(struct pma_ctx *ctx)
-{
-    _pma_mem_recycle(ctx, 0, 0);
-}
+void pma_mem_recycle(struct pma_ctx *ctx) { _pma_mem_recycle(ctx, 0, 0); }
 
 void pma_mem_recycle_notify(u32 udevid, int tgid, u64 va, u64 size)
 {

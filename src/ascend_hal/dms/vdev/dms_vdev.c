@@ -70,7 +70,7 @@ drvError_t dms_set_sriov_switch(unsigned int dev_id, unsigned int sub_cmd, const
     ioarg.sub_cmd = DMS_SUBCMD_SRIOV_SWITCH;
     ioarg.filter_len = 0;
     ioarg.input = (void *)&in;
-    ioarg.input_len = sizeof(struct dms_get_vdevice_info_in);
+    ioarg.input_len = sizeof(struct dms_sriov_switch_in);
     ioarg.output = NULL;
     ioarg.output_len = 0;
 

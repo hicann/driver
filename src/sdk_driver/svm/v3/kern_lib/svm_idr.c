@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2025. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -31,8 +31,9 @@ void svm_idr_uninit(struct svm_idr *idr, void (*release_priv)(void *priv), bool 
     void *priv = NULL;
     int id;
 
-    ka_base_idr_for_each_entry(&idr->idr, priv, id) {
-         /* Unlikely fail */
+    ka_base_idr_for_each_entry(&idr->idr, priv, id)
+    {
+        /* Unlikely fail */
         (void)ka_base_idr_remove(&idr->idr, id);
         if (release_priv != NULL) {
             release_priv(priv);

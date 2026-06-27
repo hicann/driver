@@ -25,8 +25,8 @@ bool pcivnic_is_register_netdev(u32 dev_id)
     }
 
     /* CLOUD_V1 and CLOUD_V2's host not support vnic in release run pkg */
-    if ((chip_type == HISI_CLOUD_V1) || (chip_type == HISI_CLOUD_V2) ||
-        (chip_type == HISI_CLOUD_V4) || (chip_type == HISI_CLOUD_V5)) {
+    if ((chip_type == HISI_CLOUD_V1) || (chip_type == HISI_CLOUD_V2) || (chip_type == HISI_CLOUD_V4) ||
+        (chip_type == HISI_CLOUD_V5) || (chip_type == HISI_MINI_V4)) {
         return false;
     } else {
         return true;

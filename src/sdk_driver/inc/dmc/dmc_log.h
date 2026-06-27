@@ -19,9 +19,9 @@
 #include "ka_base_pub.h"
 #endif
 
-#define LOG_LEVEL_INFO_INPUT_LEN                (2U)
-#define LOG_LEVEL_FILE_INFO_LEN                 (3U)
-#define DEVDRV_HOST_LOG_FILE_CREAT_AUTHORITY    (436U)  /* 0664 */
+#define LOG_LEVEL_INFO_INPUT_LEN (2U)
+#define LOG_LEVEL_FILE_INFO_LEN (3U)
+#define DEVDRV_HOST_LOG_FILE_CREAT_AUTHORITY (436U) /* 0664 */
 int log_level_file_init(void);
 void log_level_file_remove(void);
 int log_level_get(void);
@@ -43,6 +43,7 @@ typedef struct log_buf_info {
 
 #ifdef CFG_FEATURE_LOG_GROUPING
 #define DRV_FACILITY ((int)86)
+int drv_vprintk_emit(int level, const char *fmt, ...) __attribute__((format(printf, 2, 3)));
 int __attribute__((weak)) drv_vprintk_emit(int level, const char *fmt, ...)
 {
     ka_va_list args;
@@ -66,12 +67,11 @@ int __attribute__((weak)) drv_vprintk_emit(int level, const char *fmt, ...)
 #else
 #ifdef CFG_FEATURE_HOST_LOG
 #define drv_log_print(kern_level, level, module, fmt, ...) \
-    log_save_to_ring_buf(kern_level "[ascend] [%s] [%s] [%s %d] " fmt, \
-        module, level, __func__, __LINE__, ##__VA_ARGS__)
+    log_save_to_ring_buf(kern_level "[ascend] [%s] [%s] [%s %d] " fmt, module, level, __func__, __LINE__, ##__VA_ARGS__)
 
-#define drv_err(module, fmt, ...) \
-    log_to_printk_and_ringbuf(KA_KERN_NOTICE "[ascend] [ERROR] [%s] [%s %d] " fmt, \
-        module, __func__, __LINE__, ##__VA_ARGS__)
+#define drv_err(module, fmt, ...)                                                                              \
+    log_to_printk_and_ringbuf(KA_KERN_NOTICE "[ascend] [ERROR] [%s] [%s %d] " fmt, module, __func__, __LINE__, \
+                              ##__VA_ARGS__)
 #define drv_warn(module, fmt, ...) drv_log_print(KA_KERN_WARNING, "WARN", module, fmt, ##__VA_ARGS__)
 #define drv_info(module, fmt, ...) drv_log_print(KA_KERN_INFO, "INFO", module, fmt, ##__VA_ARGS__)
 #define drv_event(module, fmt, ...) drv_log_print(KA_KERN_NOTICE, "NOTICE", module, fmt, ##__VA_ARGS__)
@@ -98,16 +98,19 @@ int __attribute__((weak)) drv_vprintk_emit(int level, const char *fmt, ...)
 #endif
 
 void log_drv_get_date(char *date, unsigned int len);
-void log_user_write_fault_mng(const char *module, int pid, const char *comm, const char *date, const char *file, int line, const char *fmt, ...);
+void log_user_write_fault_mng(const char *module, int pid, const char *comm, const char *date, const char *file,
+                              int line, const char *fmt, ...);
 #define drv_warn(module, fmt, ...) drv_printk(KA_KERN_WARNING, module, fmt, ##__VA_ARGS__)
 #define drv_info(module, fmt, ...) drv_printk(KA_KERN_INFO, module, fmt, ##__VA_ARGS__)
 #define drv_debug(module, fmt, ...) drv_printk(KA_KERN_DEBUG, module, fmt, ##__VA_ARGS__)
 #define drv_event(module, fmt, ...) drv_printk(KA_KERN_NOTICE, module, fmt, ##__VA_ARGS__)
-#define drv_slog_event(module, fmt, ...) do { \
-    char date[64] = { 0 }; \
-    log_drv_get_date(date, sizeof(date)); \
-    log_user_write_fault_mng(module, (int)ka_task_get_current()->pid, ka_task_get_current()->comm, date, FILENAME, __LINE__, fmt, ##__VA_ARGS__);\
-} while (0) 
+#define drv_slog_event(module, fmt, ...)                                                                               \
+    do {                                                                                                               \
+        char date[64] = {0};                                                                                           \
+        log_drv_get_date(date, sizeof(date));                                                                          \
+        log_user_write_fault_mng(module, (int)ka_task_get_current()->pid, ka_task_get_current()->comm, date, FILENAME, \
+                                 __LINE__, fmt, ##__VA_ARGS__);                                                        \
+    } while (0)
 
 #endif
 #endif
@@ -121,6 +124,7 @@ void log_user_write_fault_mng(const char *module, int pid, const char *comm, con
 #define drv_printk_ratelimited(level, module, fmt, ...) \
     ka_dfx_printk_ratelimited(level "[ascend] [%s] [%s %d] " fmt, module, __func__, __LINE__, ##__VA_ARGS__)
 
+#define drv_warn_ratelimited(module, fmt, ...) drv_printk_ratelimited(KA_KERN_WARNING, module, fmt, ##__VA_ARGS__)
 #define drv_info_ratelimited(module, fmt, ...) drv_printk_ratelimited(KA_KERN_INFO, module, fmt, ##__VA_ARGS__)
 #define drv_err_ratelimited(module, fmt, ...) drv_printk_ratelimited(KA_KERN_ERR, module, fmt, ##__VA_ARGS__)
 
@@ -139,34 +143,60 @@ void log_user_write_fault_mng(const char *module, int pid, const char *comm, con
  * (3) the max size of logs can be saved continuously is LOG_BUF_SIZE_MAX bytes;
  * (4) only error logs can be recorded.
  */
-#define drv_log_init() \
-    log_buf_info_t buf_info = {0}
+#define drv_log_init() log_buf_info_t buf_info = {0}
 
-#define DRV_LOG_SAVE(level_code, module, fmt, ...) do { \
-    int ret; \
-    ret = snprintf_s(buf_info.log_buf + buf_info.log_size, LOG_BUF_SIZE_MAX - buf_info.log_size, \
-        LOG_BUF_SIZE_MAX - buf_info.log_size - 1, \
-        level_code "[ascend] [ERROR] [%s] [%s %d] " fmt, module, __func__, __LINE__, ##__VA_ARGS__); \
-    if (ret > 0) { \
-        buf_info.log_size += ret; \
-    } \
-} while (0)
+#define DRV_LOG_SAVE(level_code, module, fmt, ...)                                                                  \
+    do {                                                                                                            \
+        int ret;                                                                                                    \
+        ret = snprintf_s(buf_info.log_buf + buf_info.log_size, LOG_BUF_SIZE_MAX - buf_info.log_size,                \
+                         LOG_BUF_SIZE_MAX - buf_info.log_size - 1, level_code "[ascend] [ERROR] [%s] [%s %d] " fmt, \
+                         module, __func__, __LINE__, ##__VA_ARGS__);                                                \
+        if (ret > 0) {                                                                                              \
+            buf_info.log_size += ret;                                                                               \
+        }                                                                                                           \
+    } while (0)
 
-#define drv_err_log_save(module, fmt, ...) do { \
-    if (buf_info.log_size < (LOG_BUF_SIZE_MAX - 1)) { \
-        if (buf_info.log_size == 0) { \
-            DRV_LOG_SAVE(KA_KERN_NOTICE, module, fmt, ##__VA_ARGS__); \
-        } else { \
-            DRV_LOG_SAVE("", module, fmt, ##__VA_ARGS__); \
-        } \
-    } \
-} while (0)
+#define drv_err_log_save(module, fmt, ...)                                \
+    do {                                                                  \
+        if (buf_info.log_size < (LOG_BUF_SIZE_MAX - 1)) {                 \
+            if (buf_info.log_size == 0) {                                 \
+                DRV_LOG_SAVE(KA_KERN_NOTICE, module, fmt, ##__VA_ARGS__); \
+            } else {                                                      \
+                DRV_LOG_SAVE("", module, fmt, ##__VA_ARGS__);             \
+            }                                                             \
+        }                                                                 \
+    } while (0)
 
-#define drv_log_output() do { \
-    if (buf_info.log_size > 0) { \
-        (void)ka_dfx_printk(buf_info.log_buf); \
-        buf_info.log_size = 0; \
-    } \
-} while (0)
+#define drv_log_output()                           \
+    do {                                           \
+        if (buf_info.log_size > 0) {               \
+            (void)ka_dfx_printk(buf_info.log_buf); \
+            buf_info.log_size = 0;                 \
+        }                                          \
+    } while (0)
+
+/* NOTE: Do not include a newline ('\n') in @fmt. The macro adds
+ * a space and a newline automatically for each line.
+ */
+#define drv_err_hex_dump(module, buf, len, fmt, ...)               \
+    do {                                                           \
+        const u8 *data_ptr = (buf);                                \
+        size_t remain = (len);                                     \
+        size_t offset = 0;                                         \
+        char line_buf[129];                                        \
+                                                                   \
+        if ((data_ptr == NULL) || (remain == 0)) {                 \
+            break;                                                 \
+        }                                                          \
+                                                                   \
+        while (remain > 0) {                                       \
+            size_t chunk = min_t(size_t, remain, 64);              \
+            ka_base_bin2hex(line_buf, data_ptr + offset, chunk);   \
+            line_buf[chunk * 2] = '\0';                            \
+            drv_err(module, fmt " %s\n", ##__VA_ARGS__, line_buf); \
+            offset += chunk;                                       \
+            remain -= chunk;                                       \
+        }                                                          \
+    } while (0)
 
 #endif /* _DMC_LOG_H_ */

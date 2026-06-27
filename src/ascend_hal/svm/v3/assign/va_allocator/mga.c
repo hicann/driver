@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * Copyright (c) 2026 Huawei Technologies Co., Ltd.
  * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -38,8 +38,7 @@ static u64 mga_align_type_to_size(u32 align_type)
         [MGA_ALIGN_TYPE_4K] = 4ULL * SVM_BYTES_PER_KB,
         [MGA_ALIGN_TYPE_64K] = 64ULL * SVM_BYTES_PER_KB,
         [MGA_ALIGN_TYPE_2M] = 2ULL * SVM_BYTES_PER_MB,
-        [MGA_ALIGN_TYPE_1G] = 1ULL * SVM_BYTES_PER_GB
-    };
+        [MGA_ALIGN_TYPE_1G] = 1ULL * SVM_BYTES_PER_GB};
 
     return align_type_to_size[align_type];
 }
@@ -157,8 +156,7 @@ static int mga_release_va(u64 start, u64 size, void *priv)
 static void mga_release_all_va(struct mga_inst *inst)
 {
     if (inst->ga_inst[inst->base_align_type] != NULL) {
-        (void)svm_ga_for_each_range(inst->ga_inst[inst->base_align_type],
-            mga_release_va, inst);
+        (void)svm_ga_for_each_range(inst->ga_inst[inst->base_align_type], mga_release_va, inst);
     }
 }
 

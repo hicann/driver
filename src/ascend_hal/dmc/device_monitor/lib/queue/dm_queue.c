@@ -176,7 +176,7 @@ unsigned long dm_queue_read(unsigned long ul_queue_id, unsigned long ul_time_out
     return DM_NULL_LONG;
 }
 
-STATIC bool dm_queue_write_check(struct timespec start, unsigned int *wr_cnt, unsigned long *ret)
+STATIC bool dm_queue_write_check(struct timespec start, unsigned int *wr_cnt, int *ret)
 {
     struct timespec end;
     long recv_time;
@@ -207,9 +207,9 @@ STATIC bool dm_queue_write_check(struct timespec start, unsigned int *wr_cnt, un
               ul_buffer_size  : the size of message buffer
  return     : 0 on success or errno on failure
  *****************************************************************************/
-unsigned long dm_queue_asy_write(unsigned long ul_queue_id, const void *p_buffer_addr, unsigned long ul_buffer_size)
+int dm_queue_asy_write(unsigned long ul_queue_id, const void *p_buffer_addr, unsigned long ul_buffer_size)
 {
-    unsigned long ul_return_code;
+    int ul_return_code;
     ST_DM_QUEUE_MSG_TYPE send_buf = {0};
     unsigned int wr_cnt = 0;
     struct timespec time_start = { 0, 0 };
@@ -242,18 +242,19 @@ unsigned long dm_queue_asy_write(unsigned long ul_queue_id, const void *p_buffer
 
     (void)clock_gettime(CLOCK_MONOTONIC, &time_start);
     do {
-        ul_return_code = (unsigned long)mmMsgSnd((mmMsgid)ul_queue_id, &send_buf, sizeof(void *), IPC_NOWAIT);
+        ul_return_code = mmMsgSnd((mmMsgid)ul_queue_id, &send_buf, sizeof(void *), IPC_NOWAIT);
     } while ((ul_return_code != 0) && (errno == EINTR) && (dm_queue_write_check(time_start, &wr_cnt, &ul_return_code)));
 
     if (ul_return_code != 0) {
         if (errno == EAGAIN) {
             do {
-                ul_return_code = (unsigned long)mmMsgSnd((mmMsgid)ul_queue_id, &send_buf, sizeof(void *), IPC_NOWAIT);
+                ul_return_code = mmMsgSnd((mmMsgid)ul_queue_id, &send_buf, sizeof(void *), IPC_NOWAIT);
             } while ((ul_return_code != 0) && (errno == EINTR) &&
                      (dm_queue_write_check(time_start, &wr_cnt, &ul_return_code)));
         }
 
         if (ul_return_code != 0) {
+            DEV_MON_ERR("Failed to write to message queue. (ul_return_code=%lu, errno=%d)\n", ul_return_code, errno);
             free(send_buf.mtext);
             send_buf.mtext = NULL;
         }

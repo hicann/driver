@@ -11,7 +11,7 @@
  * GNU General Public License for more details.
  */
 #include "dvpp_cmdlist_proc.h"
-#include <linux/types.h>
+#include "ka_type.h"
  
 #include "ka_fs_pub.h"
 #include "ka_base_pub.h"
@@ -21,6 +21,7 @@
 #include "securec.h"
 #include "dvpp_cmdlist_log.h"
 #include "dvpp_cmdlist_context.h"
+#include "ka_compiler_pub.h"
  
 #define PROC_NAME "dvpp_cmdlist"
 #define PROC_BUF_LEN 128
@@ -156,7 +157,7 @@ static int32_t hanle_left_str_and_right_num(char *buf, char *target, uint64_t le
     return -1;
 }
  
-static ssize_t dvpp_cmdlist_proc_write(ka_file_t *file, const char __user *buffer, size_t count, loff_t *pos)
+static ssize_t dvpp_cmdlist_proc_write(ka_file_t *file, const char __ka_user *buffer, size_t count, loff_t *pos)
 {
     dvpp_cmdlist_context *ctx = get_dvpp_cmdlist_ctx();
     uint8_t buf[PROC_BUF_LEN] = {0};

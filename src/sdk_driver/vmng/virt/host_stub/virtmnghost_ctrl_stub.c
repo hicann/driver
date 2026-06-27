@@ -25,21 +25,20 @@
 #define HISI_EP_DEVICE_ID_CLOUD_V5 0xd807
 #define DEVDRV_DIVERSITY_PCIE_VENDOR_ID 0xFFFF
 
-static const ka_pci_device_id_t g_vmng_stub_tbl[] = {{ KA_PCI_VDEVICE(HUAWEI, HISI_EP_DEVICE_ID_MINIV2), 0 },
-                                                   { KA_PCI_VDEVICE(HUAWEI, HISI_EP_DEVICE_ID_CLOUD), 0 },
-                                                   { KA_PCI_VDEVICE(HUAWEI, HISI_EP_DEVICE_ID_CLOUD_V2), 0 },
-                                                   { DEVDRV_DIVERSITY_PCIE_VENDOR_ID, 0xd500,
-                                                     KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0 },
-                                                   { KA_PCI_VDEVICE(HUAWEI, HISI_EP_DEVICE_ID_CLOUD_V5), 0 },
-                                                   { 0x20C6, 0xd500, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0 },
-                                                   { 0x203F, 0xd500, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0 },
-                                                   { 0x20C6, 0xd802, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0 },
-                                                   { 0x203F, 0xd802, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0 },
-                                                   { 0x20E9, 0xd802, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0 },
-                                                   { 0x20E9, 0xd500, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0 },
-                                                   {}};
+static const ka_pci_device_id_t g_vmng_stub_tbl[] = {
+    {KA_PCI_VDEVICE(HUAWEI, HISI_EP_DEVICE_ID_MINIV2), 0},
+    {KA_PCI_VDEVICE(HUAWEI, HISI_EP_DEVICE_ID_CLOUD), 0},
+    {KA_PCI_VDEVICE(HUAWEI, HISI_EP_DEVICE_ID_CLOUD_V2), 0},
+    {DEVDRV_DIVERSITY_PCIE_VENDOR_ID, 0xd500, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0},
+    {KA_PCI_VDEVICE(HUAWEI, HISI_EP_DEVICE_ID_CLOUD_V5), 0},
+    {0x20C6, 0xd500, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0},
+    {0x203F, 0xd500, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0},
+    {0x20C6, 0xd802, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0},
+    {0x203F, 0xd802, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0},
+    {0x20E9, 0xd802, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0},
+    {0x20E9, 0xd500, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0},
+    {}};
 KA_MODULE_DEVICE_TABLE(pci, g_vmng_stub_tbl);
-
 
 int vmngh_get_virtual_addr_info(u32 dev_id, u32 fid, enum vmng_get_addr_type type, u64 *addr, u64 *size)
 {
@@ -48,18 +47,15 @@ int vmngh_get_virtual_addr_info(u32 dev_id, u32 fid, enum vmng_get_addr_type typ
 KA_EXPORT_SYMBOL(vmngh_get_virtual_addr_info);
 
 ka_dma_addr_t vmngh_dma_map_guest_page(u32 dev_id, u32 fid, unsigned long addr, unsigned long size,
-    ka_sg_table_t **dma_sgt)
+                                       ka_sg_table_t **dma_sgt)
 {
     return 0;
 }
 KA_EXPORT_SYMBOL(vmngh_dma_map_guest_page);
 
 void vmngh_dma_unmap_guest_page(u32 dev_id, u32 fid, ka_sg_table_t *dma_sgt)
-{
-
-}
+{}
 KA_EXPORT_SYMBOL(vmngh_dma_unmap_guest_page);
-
 
 int vmngh_ctrl_get_vm_id(u32 dev_id, u32 fid)
 {
@@ -108,15 +104,15 @@ bool vmngh_dma_pool_active(u32 dev_id, u32 fid)
 }
 KA_EXPORT_SYMBOL(vmngh_dma_pool_active);
 
-int vmngh_dma_map_guest_page_batch(u32 dev_id, u32 fid, unsigned long *gfn,
-    unsigned long *dma_addr, unsigned long count)
+int vmngh_dma_map_guest_page_batch(u32 dev_id, u32 fid, unsigned long *gfn, unsigned long *dma_addr,
+                                   unsigned long count)
 {
     return 0;
 }
 KA_EXPORT_SYMBOL(vmngh_dma_map_guest_page_batch);
 
-void vmngh_dma_unmap_guest_page_batch(u32 dev_id, u32 fid,
-    unsigned long *gfn, unsigned long *dma_addr, unsigned long count)
+void vmngh_dma_unmap_guest_page_batch(u32 dev_id, u32 fid, unsigned long *gfn, unsigned long *dma_addr,
+                                      unsigned long count)
 {
     return;
 }

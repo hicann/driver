@@ -153,7 +153,7 @@ int devdrv_get_ub_urma_info_by_udevid(u32 udevid, struct ascend_urma_dev_info *u
     if (dev_ops->ops.get_urma_info_by_eid != NULL) {
         index_id = devdrv_get_index_id_by_devid(udevid);
         ret = dev_ops->ops.get_urma_info_by_eid(index_id, urma_info);
-    }else {
+    } else {
         devdrv_err("Get_urma_info_by_eid is not registered.\n");
         devdrv_sub_ops_ref(dev_ops);
         return -EINVAL;
@@ -183,7 +183,7 @@ int devdrv_get_ub_dev_info(u32 dev_id, struct devdrv_ub_dev_info *eid_info, int 
 KA_EXPORT_SYMBOL(devdrv_get_ub_dev_info);
 
 int devdrv_addr_trans_p2p_peer_to_local(u32 udevid, u32 peer_udevid, struct devdrv_addr_desc *addr_desc,
-    u64 *trans_addr)
+                                        u64 *trans_addr)
 {
     int ret = -EOPNOTSUPP;
     u32 index_id, peer_index_id;
@@ -203,8 +203,8 @@ int devdrv_addr_trans_p2p_peer_to_local(u32 udevid, u32 peer_udevid, struct devd
 }
 KA_EXPORT_SYMBOL(devdrv_addr_trans_p2p_peer_to_local);
 
-int devdrv_addr_trans_cs_p2p_peer_to_local(u32 udevid, u32 peer_sdid,
-    struct devdrv_addr_desc *addr_desc, u64 *trans_addr)
+int devdrv_addr_trans_cs_p2p_peer_to_local(u32 udevid, u32 peer_sdid, struct devdrv_addr_desc *addr_desc,
+                                           u64 *trans_addr)
 {
     int ret = -EOPNOTSUPP;
     u32 index_id;
@@ -319,7 +319,7 @@ int devdrv_get_bus_instance_eid(u32 udevid, struct devdrv_pair_info_eid *eid)
 KA_EXPORT_SYMBOL(devdrv_get_bus_instance_eid);
 
 int devdrv_urma_copy(u32 dev_id, enum devdrv_urma_chan_type type, enum devdrv_urma_copy_dir dir,
-        struct devdrv_urma_copy *local, struct devdrv_urma_copy *peer)
+                     struct devdrv_urma_copy *local, struct devdrv_urma_copy *peer)
 {
     int ret = -EOPNOTSUPP;
     u32 index_id;
@@ -382,9 +382,9 @@ int devdrv_unregister_seg(u32 dev_id, void *tseg, size_t in_len)
 }
 KA_EXPORT_SYMBOL(devdrv_unregister_seg);
 
-void* devdrv_import_seg(u32 dev_id, u32 peer_token, void *peer_seg, size_t in_len, size_t *out_len)
+void *devdrv_import_seg(u32 dev_id, u32 peer_token, void *peer_seg, size_t in_len, size_t *out_len)
 {
-    void* ret = NULL;
+    void *ret = NULL;
     u32 index_id;
     struct devdrv_comm_dev_ops *dev_ops = devdrv_add_ops_ref();
     if (dev_ops == NULL) {
@@ -444,3 +444,24 @@ int devdrv_get_dev_id_info(u32 udevid, struct devdrv_dev_id_info *info)
     return ret;
 }
 KA_EXPORT_SYMBOL(devdrv_get_dev_id_info);
+
+int devdrv_addr_trans_peer_to_local(u32 udevid, struct devdrv_addr_desc *addr_desc, u64 *trans_addr)
+{
+    int ret = -EOPNOTSUPP;
+    u32 index_id;
+    struct devdrv_comm_dev_ops *dev_ops = devdrv_add_ops_ref_by_type(DEVDRV_COMMNS_UB);
+    if (dev_ops == NULL) {
+        devdrv_err("trans addr peer to local fail.(devid=%d)\n", udevid);
+        return -ENODEV;
+    }
+
+    if (dev_ops->ops.addr_trans_p2l != NULL) {
+        index_id = devdrv_get_index_id_by_devid(udevid);
+        ret = dev_ops->ops.addr_trans_p2l(index_id, addr_desc, trans_addr);
+    } else {
+        devdrv_err("addr_trans_p2l is null. (udevid=%d)\n", udevid);
+    }
+    devdrv_sub_ops_ref_by_type(dev_ops);
+    return ret;
+}
+KA_EXPORT_SYMBOL(devdrv_addr_trans_peer_to_local);

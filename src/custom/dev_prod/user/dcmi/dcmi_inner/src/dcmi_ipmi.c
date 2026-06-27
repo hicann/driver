@@ -25,6 +25,8 @@
 #include "dcmi_interface_api.h"
 #include "dcmi_log.h"
 #include "dcmi_common.h"
+#include "dcmi_inner_info_get.h"
+#include "dcmi_product_judge.h"
 
 #define IPMI_DEV_NO 0
 #define IPMI_RSPBUF_SIZE 80
@@ -34,9 +36,11 @@
 #define IPMI_NETFN_GET_PICMG 0x6
 #define IPMI_CMD_DATA_SIZE 11
 #define IPMI_CMD_DATA_SIZE_2 5
+#define IPMI_CMD_DATA_SIZE_3 18
 #define IPMI_CMD_DATA_SLOT_ID_INDEX 8
 #define IPMI_CMD_DATA_CHIP_ID_INDEX 9
 #define IPMI_CMD_DATA_RESET_CMD_INDEX 10
+#define IPMI_CMD_DATA_RESET_CMD_INDEX_A5_POD 17
 #define IPMI_FRU_CMD_DATA_SLOT_ID_INDEX 7
 #define IPMI_CPLD_CMD_DATA_FRU_ID_INDEX 1
 
@@ -112,6 +116,7 @@ static int dcmi_ipmi_send_req(int fd, struct dcmi_ipmi_msg *ipmiMsg, unsigned ch
 
     g_msg_seq++;
 
+    /* 此处if-case为规避 由于ipmi阻塞重发复位消息导致功能异常 的问题 */
     if (ipmi_req.req_msg.data[3] == 0x53) { /* data[3] 为带外复位查询和设置标志，0x53为设置 */
         ipmi_req_settime.req = ipmi_req;
         ipmi_req_settime.retries = 0;
@@ -239,6 +244,46 @@ int dcmi_ipmi_reset_npu_910_93(int card_id)
     return DCMI_OK;
 }
 
+int dcmi_ipmi_reset_npu_950(int card_id)
+{
+    int ret;
+    int rsp_len = IPMI_MAX_ADDR_SIZE;
+    struct dcmi_ipmi_msg ipmiMsg = {0};
+    // BCM版本 2.1
+    unsigned char cmd_data[IPMI_CMD_DATA_SIZE_3] = { 0xDB, 0x07, 0x00, 0x8F, 0x5C, 0x00,
+        0x00, 0x80, 0xFF, 0x00, 0x00, 0x00, 0xc0, 0x00, 0x00, 0x00, 0x01, 0x00};
+    unsigned char rsp_data[IPMI_RSPBUF_SIZE] = {0};
+ 
+    if (dcmi_board_chip_type_is_ascend_950_pod()) {
+        cmd_data[IPMI_CMD_DATA_CHIP_ID_INDEX] = (unsigned char)(card_id);       /* 需要复位的芯片编号, pod 0-63 */
+    } else if (dcmi_board_chip_type_is_ascend_950_server()) {
+        cmd_data[IPMI_CMD_DATA_CHIP_ID_INDEX] = (unsigned char)(card_id + 1);      /* 需要复位的芯片编号, server 1-8 */
+    }
+
+    cmd_data[IPMI_CMD_DATA_RESET_CMD_INDEX_A5_POD] = 0x01;                  /* 1-计算域复位 */
+ 
+    ipmiMsg.cmd = PICMG_SET_FRU_LED_STATE_CMD;
+    ipmiMsg.netfn = IPMI_NETFN_PICMG;
+    ipmiMsg.data = cmd_data;
+    ipmiMsg.data_len = (unsigned short)sizeof(cmd_data);
+ 
+    /* 复位 D-chip 借用PICMG中设置FRU LED的网络功能码和命令字，在请求数据中传递具体槽位号以及查询还是设置 */
+    ret = dcmi_ipmi_cmd(&ipmiMsg, rsp_data, sizeof(rsp_data), &rsp_len, IPMI_BMC_LUN);
+    if (ret != DCMI_OK) {
+        gplog(LOG_ERR, "reset card %d failed. ret is %d", card_id, ret);
+        return ret;
+    }
+ 
+    // Check complete code
+    if (rsp_data[0] != 0x00) {
+        gplog(LOG_ERR, "wrong complete code[0x%02x].", rsp_data[0]);
+        return DCMI_ERR_CODE_RECV_MSG_FAIL;
+    }
+ 
+    return DCMI_OK;
+}
+ 
+ 
 int dcmi_ipmi_reset_npu(int slot_id, int chip_id)
 {
     int ret;

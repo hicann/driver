@@ -45,23 +45,23 @@ static inline const char *trs_chan_type_to_name(struct trs_chan_type *types)
 int trs_chan_send(struct trs_id_inst *inst, int chan_id, struct trs_chan_send_para *para);
 int trs_chan_recv(struct trs_id_inst *inst, int chan_id, struct trs_chan_recv_para *para);
 
-#define CHAN_CTRL_CMD_SQ_HEAD_UPDATE 0 /* para: sq head, update sw sq head */
-#define CHAN_CTRL_CMD_SQ_HEAD_SET 1 /* para: sq head, set hw sq head */
-#define CHAN_CTRL_CMD_SQ_STATUS_SET 2 /* para: 0: disable, 1: enable */
+#define CHAN_CTRL_CMD_SQ_HEAD_UPDATE 0       /* para: sq head, update sw sq head */
+#define CHAN_CTRL_CMD_SQ_HEAD_SET 1          /* para: sq head, set hw sq head */
+#define CHAN_CTRL_CMD_SQ_STATUS_SET 2        /* para: 0: disable, 1: enable */
 #define CHAN_CTRL_CMD_SQ_DISABLE_TO_ENABLE 3 /* para: timeout */
-#define CHAN_CTRL_CMD_CQ_SCHED 4 /* no para */
-#define CHAN_CTRL_CMD_NOT_NOTICE_TS 5 /* no para */
-#define CHAN_CTRL_CMD_SQCQ_RESET 6 /* no para */
-#define CHAN_CTRL_CMD_CQ_PAUSE   7 /* para: cqid */
-#define CHAN_CTRL_CMD_CQ_RESUME  8 /* para: cqid */
-#define CHAN_CTRL_CMD_SQ_TAIL_SET 9 /* para: sq tail, set hw sq tail */
+#define CHAN_CTRL_CMD_CQ_SCHED 4             /* no para */
+#define CHAN_CTRL_CMD_NOT_NOTICE_TS 5        /* no para */
+#define CHAN_CTRL_CMD_SQCQ_RESET 6           /* no para */
+#define CHAN_CTRL_CMD_CQ_PAUSE 7             /* para: cqid */
+#define CHAN_CTRL_CMD_CQ_RESUME 8            /* para: cqid */
+#define CHAN_CTRL_CMD_SQ_TAIL_SET 9          /* para: sq tail, set hw sq tail */
 int trs_chan_ctrl(struct trs_id_inst *inst, int chan_id, u32 cmd, u32 para);
 
 #define CHAN_QUERY_CMD_SQ_STATUS 0 /* value: sq status 0: disable, 1: enable */
-#define CHAN_QUERY_CMD_SQ_HEAD 1 /* value: sq head */
-#define CHAN_QUERY_CMD_SQ_TAIL 2 /* value: sq tail */
-#define CHAN_QUERY_CMD_SQ_POS  3 /* value: sq pos */
-#define CHAN_QUERY_CMD_CQ_HEAD 4 /* value: cq head */
+#define CHAN_QUERY_CMD_SQ_HEAD 1   /* value: sq head */
+#define CHAN_QUERY_CMD_SQ_TAIL 2   /* value: sq tail */
+#define CHAN_QUERY_CMD_SQ_POS 3    /* value: sq pos */
+#define CHAN_QUERY_CMD_CQ_HEAD 4   /* value: cq head */
 
 int trs_chan_query(struct trs_id_inst *inst, int chan_id, u32 cmd, u32 *value);
 
@@ -90,7 +90,7 @@ int trs_chan_get_sq_info(struct trs_id_inst *inst, int chan_id, struct trs_chan_
 int trs_chan_get_cq_info(struct trs_id_inst *inst, int chan_id, struct trs_chan_cq_info *info);
 int trs_chan_to_string(struct trs_id_inst *inst, int chan_id, char *buff, u32 buff_len);
 int trs_chan_stream_task_update(struct trs_id_inst *inst, int pid, void *vaddr, u32 *long_task_cnt);
-int trs_chan_update_sq_depth(struct trs_id_inst *inst, u32 chan_id, u32 sq_depth);
+int trs_sq_switch_stream_chan_update(struct trs_id_inst *inst, u32 chan_id, u32 sq_depth);
 
 struct trs_chan_info {
     u32 op; /* 1 add, 0 del */
@@ -106,7 +106,7 @@ struct trs_chan_info {
     struct trs_chan_sq_info sq_info;
     struct trs_chan_cq_info cq_info;
     u32 msg[SQCQ_INFO_LENGTH]; /* send to ts */
-    void *ext_msg; /* send to ts */
+    void *ext_msg;             /* send to ts */
     u32 ext_msg_len;
 };
 
@@ -118,35 +118,37 @@ struct trs_sq_mem_map_para {
     u32 mem_type;
 };
 
-#define CTRL_CMD_SQ_HEAD_UPDATE 0 /* para: sq head */
-#define CTRL_CMD_SQ_TAIL_UPDATE 1 /* para: sq tail */
-#define CTRL_CMD_CQ_HEAD_UPDATE 2 /* para: cq head */
-#define CTRL_CMD_SQ_STATUS_SET 3 /* para: 0: disable, 1: enable */
+#define CTRL_CMD_SQ_HEAD_UPDATE 0       /* para: sq head */
+#define CTRL_CMD_SQ_TAIL_UPDATE 1       /* para: sq tail */
+#define CTRL_CMD_CQ_HEAD_UPDATE 2       /* para: cq head */
+#define CTRL_CMD_SQ_STATUS_SET 3        /* para: 0: disable, 1: enable */
 #define CTRL_CMD_SQ_DISABLE_TO_ENABLE 4 /* para: timeout */
-#define CTRL_CMD_CQ_RESET 5 /* no para */
-#define CTRL_CMD_CQ_PAUSE  6 /* para: cqid */
-#define CTRL_CMD_CQ_RESUME 7 /* para: cqid */
-#define CTRL_CMD_SQ_RESET 8 /* no para */
+#define CTRL_CMD_CQ_RESET 5             /* no para */
+#define CTRL_CMD_CQ_PAUSE 6             /* para: cqid */
+#define CTRL_CMD_CQ_RESUME 7            /* para: cqid */
+#define CTRL_CMD_SQ_RESET 8             /* no para */
 #define CTRL_CMD_MAX 9
 
-#define QUERY_CMD_SQ_HEAD 0 /* value: head */
-#define QUERY_CMD_SQ_TAIL 1 /* value: tail */
-#define QUERY_CMD_CQ_HEAD 2 /* value: head */
-#define QUERY_CMD_CQ_TAIL 3 /* value: tail */
-#define QUERY_CMD_SQ_STATUS 4 /* value: sq status */
+#define QUERY_CMD_SQ_HEAD 0       /* value: head */
+#define QUERY_CMD_SQ_TAIL 1       /* value: tail */
+#define QUERY_CMD_CQ_HEAD 2       /* value: head */
+#define QUERY_CMD_CQ_TAIL 3       /* value: tail */
+#define QUERY_CMD_SQ_STATUS 4     /* value: sq status */
 #define QUERY_CMD_SQ_HEAD_PADDR 5 /* value: head head phy addr, for uio */
 #define QUERY_CMD_SQ_TAIL_PADDR 6 /* value: head tail phy addr, for uio */
-#define QUERY_CMD_SQ_DB_PADDR 7 /* value: sq db phy addr, for uio */
-#define QUERY_CMD_MAX 8
+#define QUERY_CMD_SQ_DB_PADDR 7   /* value: sq db phy addr, for uio */
+#define QUERY_CMD_STARS_SQ_HEAD 8 /* value: head */
+#define QUERY_CMD_STARS_SQ_TAIL 9 /* value: tail */
+#define QUERY_CMD_MAX 10
 
-#define TRS_CHAN_DEV_RSV_MEM            0U /* dev rsv mem */
-#define TRS_CHAN_HOST_MEM               1U
-#define TRS_CHAN_HOST_PHY_MEM           2U
-#define TRS_CHAN_DEV_MEM_PRI            3U /* dev mem pri, others alloc host mem, not for mem_attr */
-#define TRS_CHAN_DEV_SVM_MEM            4U /* svm dev mem, alloced in user space */
-#define TRS_CHAN_MEM_LOCAL              (0x1U << 31)
-#define TRS_CHAN_MEM_TYPE_LOCAL_MASK    0x80000000U
-#define TRS_CHAN_MEM_TYPE_SIDE_MASK     0x7FFFFFFFU
+#define TRS_CHAN_DEV_RSV_MEM 0U /* dev rsv mem */
+#define TRS_CHAN_HOST_MEM 1U
+#define TRS_CHAN_HOST_PHY_MEM 2U
+#define TRS_CHAN_DEV_MEM_PRI 3U /* dev mem pri, others alloc host mem, not for mem_attr */
+#define TRS_CHAN_DEV_SVM_MEM 4U /* svm dev mem, alloced in user space */
+#define TRS_CHAN_MEM_LOCAL (0x1U << 31)
+#define TRS_CHAN_MEM_TYPE_LOCAL_MASK 0x80000000U
+#define TRS_CHAN_MEM_TYPE_SIDE_MASK 0x7FFFFFFFU
 
 struct trs_chan_mem_attr {
     u64 phy_addr;
@@ -156,10 +158,7 @@ struct trs_chan_mem_attr {
     void *specified_uva;
 };
 
-static inline bool trs_chan_mem_is_local_mem(u32 mem_type)
-{
-    return ((mem_type & TRS_CHAN_MEM_TYPE_LOCAL_MASK) != 0);
-}
+static inline bool trs_chan_mem_is_local_mem(u32 mem_type) { return ((mem_type & TRS_CHAN_MEM_TYPE_LOCAL_MASK) != 0); }
 
 static inline bool trs_chan_mem_is_dev_mem(u32 mem_type)
 {
@@ -168,27 +167,29 @@ static inline bool trs_chan_mem_is_dev_mem(u32 mem_type)
 }
 
 struct trs_chan_dma_desc {
-    uint32_t tsid;                  /* input */
-    drvSqCqType_t type;             /* input */
-    void *src;                      /* input */
-    uint32_t sq_id;                 /* input */
-    uint32_t sqe_pos;               /* input */
-    uint32_t len;                   /* input */
-    uint32_t dir;                   /* input */
-    unsigned long long dma_base;    /* output */
-    unsigned int dma_node_num;      /* output */
+    uint32_t tsid;               /* input */
+    drvSqCqType_t type;          /* input */
+    void *src;                   /* input */
+    uint32_t sq_id;              /* input */
+    uint32_t sqe_pos;            /* input */
+    uint32_t len;                /* input */
+    uint32_t dir;                /* input */
+    unsigned long long dma_base; /* output */
+    unsigned int dma_node_num;   /* output */
 };
 
 struct trs_chan_adapt_ops {
     ka_module_t *owner;
-    void* (*sq_mem_alloc)(struct trs_id_inst *inst, struct trs_chan_type *types, struct trs_chan_sq_para *sq_para,
+    void *(*sq_mem_alloc)(
+        struct trs_id_inst *inst, struct trs_chan_type *types, struct trs_chan_sq_para *sq_para,
         struct trs_chan_mem_attr *mem_attr);
-    void (*sq_mem_free)(struct trs_id_inst *inst, struct trs_chan_type *types, void *sq_addr,
+    void (*sq_mem_free)(
+        struct trs_id_inst *inst, struct trs_chan_type *types, void *sq_addr, struct trs_chan_mem_attr *mem_attr);
+    void *(*cq_mem_alloc)(
+        struct trs_id_inst *inst, struct trs_chan_type *types, struct trs_chan_cq_para *cq_para,
         struct trs_chan_mem_attr *mem_attr);
-    void* (*cq_mem_alloc)(struct trs_id_inst *inst, struct trs_chan_type *types, struct trs_chan_cq_para *cq_para,
-        struct trs_chan_mem_attr *mem_attr);
-    void (*cq_mem_free)(struct trs_id_inst *inst, struct trs_chan_type *types, void *cq_addr,
-        struct trs_chan_mem_attr *mem_attr);
+    void (*cq_mem_free)(
+        struct trs_id_inst *inst, struct trs_chan_type *types, void *cq_addr, struct trs_chan_mem_attr *mem_attr);
 
     bool (*is_current_proc_sq)(struct trs_id_inst *inst, u32 sqid); /* not must */
     bool (*is_current_proc_cq)(struct trs_id_inst *inst, u32 cqid); /* not must */
@@ -202,15 +203,16 @@ struct trs_chan_adapt_ops {
     bool (*cqe_is_valid)(struct trs_id_inst *inst, void *cqe, u32 loop);
     void (*get_sq_head_in_cqe)(struct trs_id_inst *inst, void *cqe, u32 *sq_head);
     int (*sqe_update)(struct trs_id_inst *inst, struct trs_sqe_update_info *update_info); /* not must */
-    int (*cqe_update)(struct trs_id_inst *inst, int pid, u32 cqid, void *cqe); /* not must */
+    int (*cqe_update)(struct trs_id_inst *inst, int pid, u32 cqid, void *cqe);            /* not must */
     int (*sqcq_ctrl)(struct trs_id_inst *inst, struct trs_chan_type *types, u32 id, u32 cmd, u32 para);
     int (*sqcq_query)(struct trs_id_inst *inst, struct trs_chan_type *types, u32 id, u32 cmd, u64 *value);
     int (*notice_ts)(struct trs_id_inst *inst, struct trs_chan_info *chan_info);
 
     int (*get_irq)(struct trs_id_inst *inst, u32 irq_type, u32 irq[], u32 irq_num, u32 *valid_irq_num);
     int (*get_cq_affinity_irq)(struct trs_id_inst *inst, u32 cq_id, u32 *irq_index);
-    int (*request_irq)(struct trs_id_inst *inst, u32 irq_type, int irq_index,
-        void *para, int (*handler)(int irq_type, int irq_index, void *para, u32 cqid[], u32 cq_num));
+    int (*request_irq)(
+        struct trs_id_inst *inst, u32 irq_type, int irq_index, void *para,
+        int (*handler)(int irq_type, int irq_index, void *para, u32 cqid[], u32 cq_num));
     int (*free_irq)(struct trs_id_inst *inst, int irq_type, int irq_index, void *para);
     int (*sq_mem_map)(struct trs_id_inst *inst, struct trs_sq_mem_map_para *para, void **sq_dev_vaddr);
     int (*sq_mem_unmap)(struct trs_id_inst *inst, struct trs_sq_mem_map_para *para, void *sq_dev_vaddr);

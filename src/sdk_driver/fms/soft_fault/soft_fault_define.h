@@ -29,15 +29,15 @@
 
 #define MODULE_SOFT "drv_soft_fault"
 #define soft_drv_err(fmt, ...)                                                                                 \
-    drv_err(MODULE_SOFT, "<%s:%d,%d> " fmt, current->comm, current->tgid, current->pid, ##__VA_ARGS__)
+    drv_err(MODULE_SOFT, "<%s:%d,%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), ka_task_get_current_pid(), ##__VA_ARGS__)
 #define soft_drv_warn(fmt, ...)                                                                                \
-    drv_warn(MODULE_SOFT, "<%s:%d,%d> " fmt, current->comm, current->tgid, current->pid, ##__VA_ARGS__)
+    drv_warn(MODULE_SOFT, "<%s:%d,%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), ka_task_get_current_pid(), ##__VA_ARGS__)
 #define soft_drv_info(fmt, ...)                                                                                \
-    drv_info(MODULE_SOFT, "<%s:%d,%d> " fmt, current->comm, current->tgid, current->pid, ##__VA_ARGS__)
+    drv_info(MODULE_SOFT, "<%s:%d,%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), ka_task_get_current_pid(), ##__VA_ARGS__)
 #define soft_drv_event(fmt, ...)                                                                               \
-    drv_event(MODULE_SOFT, "<%s:%d,%d> " fmt, current->comm, current->tgid, current->pid, ##__VA_ARGS__)
+    drv_event(MODULE_SOFT, "<%s:%d,%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), ka_task_get_current_pid(), ##__VA_ARGS__)
 #define soft_drv_debug(fmt, ...)                                                                               \
-    drv_debug(MODULE_SOFT, "<%s:%d,%d> " fmt, current->comm, current->tgid, current->pid, ##__VA_ARGS__)
+    drv_debug(MODULE_SOFT, "<%s:%d,%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), ka_task_get_current_pid(), ##__VA_ARGS__)
 
 #ifndef DRV_SOFT_UT
 #define STATIC static
@@ -58,7 +58,7 @@ EXIT_MODULE_FUNC(soft_fault);
     }, \
     .node_type = (type), \
     .node_id = (id), \
-    .pid = (current->tgid), \
+    .pid = (ka_task_get_current_tgid()), \
     .node_name = (name), \
     .capacity = 0, \
     .permission = 0, \
@@ -126,8 +126,16 @@ struct soft_fault {
     unsigned char data[DMS_MAX_EVENT_DATA_LENGTH];
 };
 
+typedef enum {
+    EVENT_REPORT_INIT,
+    EVENT_REPORT_SCANNED,
+    EVENT_REPORT_RECOVERED,
+    EVENT_REPORT_STATUS_MAX,
+} EVENT_REPORT_STATUS;
+
 struct soft_error_list {
     struct soft_fault error;
+    EVENT_REPORT_STATUS report_status;
     ka_list_head_t list;
 };
 

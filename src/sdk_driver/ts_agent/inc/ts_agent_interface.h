@@ -14,7 +14,7 @@
 #ifndef TS_AGENT_INTERFACE_H
 #define TS_AGENT_INTERFACE_H
 
-#include <linux/types.h>
+#include "ka_type.h"
 #include "hvtsdrv_tsagent.h"
 
 int ts_agent_vf_create(u32 dev_id, u32 vf_id);

@@ -20,6 +20,7 @@
 #include "bbox_file_list.h"
 #include "bbox_log_common.h"
 #include "os_data_parser/bbox_ddr_ap_adapter.h"
+#include "bbox_cdr_max_len.h"
 #include "common_parser/bbox_common_parser.h"
 #include "bbox_adapt.h"
 #include "bbox_comm_adapt.h"
@@ -574,33 +575,12 @@ STATIC bbox_status bbox_ddr_dump_get_sd(const char *log_path, const buff *buffer
  */
 STATIC bbox_status bbox_ddr_dump_get_tee(const char *log_path, u8 coreid, const buff *buffer, u32 length)
 {
-#ifdef BBOX_SOC_PLATFORM_MINI
-    const u32 half = 2;
-    // top 64k for tee，the rest 64k for tf
-    u32 tee_len = length / half;
-    char *data = (char *)buffer + tee_len;
-    bbox_status err = bbox_ddr_dump_get_lmodule(log_path, coreid, buffer, tee_len);
-    bbox_status ret = ((err != BBOX_SUCCESS) ? BBOX_FAILURE : BBOX_SUCCESS);
-    err = bbox_plaintext_data(log_path, PLAINTEXT_TABLE_TF, data, tee_len);
-    return (((ret != BBOX_SUCCESS) || (err != BBOX_SUCCESS)) ? BBOX_FAILURE : BBOX_SUCCESS);
-#else
     return bbox_ddr_dump_get_lmodule(log_path, coreid, buffer, length);
-#endif
 }
 
 STATIC bbox_status bbox_ddr_dump_get_atf(const char *log_path, u8 coreid, const buff *buffer, u32 length)
 {
-#ifdef BBOX_SOC_PLATFORM_MINI
-    UNUSED(log_path);
-    UNUSED(coreid);
-    UNUSED(buffer);
-    UNUSED(length);
-    return BBOX_SUCCESS;
-#elif defined BBOX_SOC_PLATFORM_CLOUD
-    return bbox_ddr_dump_get_lmodule(log_path, coreid, buffer, length);
-#else
     return bbox_ddr_dump_get_rmodule(log_path, coreid, buffer, length);
-#endif
 }
 
 /**
@@ -748,8 +728,7 @@ bbox_status bbox_ddr_dump(const buff *buffer, u32 len, const char *log_path)
 
     const struct rdr_head *head = (const struct rdr_head *)buffer;
     if (!bbox_ddr_dump_check(head)) {
-        BBOX_ERR("magic(0x%x) and version(0x%x) is wrong",
-                 head->top_head.magic, head->top_head.version);
+        BBOX_ERR("magic(0x%x) and version(0x%x) is wrong", head->top_head.magic, head->top_head.version);
         return BBOX_FAILURE;
     }
 
@@ -835,13 +814,6 @@ bbox_status bbox_hdr_dump(const buff *buffer, u32 len, const char *log_path)
     return bbox_plaintext_data(path, PLAINTEXT_TABLE_HDR, buffer, hdr_size);
 }
 
-#ifndef CFG_SOC_PLATFORM_CLOUD_V4
-#define CDR_DDR_DATA_MAX_LEN    0xA00000U
-#define CDR_SRAM_DATA_MAX_LEN   0xC000
-#else
-#define CDR_DDR_DATA_MAX_LEN    0x1400000U
-#define CDR_SRAM_DATA_MAX_LEN   0x18000U
-#endif
 /**
  * @brief       dump cdr data in given buffer to specified log path
  * @param [in]  type:       cdr data type

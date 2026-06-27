@@ -15,7 +15,6 @@
 #define _PCIVNIC_HOST_H_
 
 #define PCIVNIC_INIT_NETDEV_RETRY_TIMES 3
-#define PCIVNIC_GUARD_WORK_DELAY_TIME 1000
 
 struct pcivnic_netdev *pcivnic_alloc_vnic_dev(void);
 void pcivnic_free_vnic_dev(void);

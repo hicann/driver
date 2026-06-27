@@ -15,6 +15,7 @@
 #define UDA_PUB_DEF_H
 
 #include "ka_system_pub.h"
+#include "ka_task_pub.h"
 
 #ifndef EMU_ST
 #include "dmc_kernel_interface.h"
@@ -32,20 +33,20 @@
 
 #define uda_err(fmt, ...) do { \
     drv_err(module_uda, "<%s:%d:%d:%d> " fmt, \
-        current->comm, current->tgid, current->pid, ka_system_raw_smp_processor_id(), ##__VA_ARGS__); \
+        ka_task_get_current_comm(), ka_task_get_current_tgid(), ka_task_get_current_pid(), ka_system_raw_smp_processor_id(), ##__VA_ARGS__); \
     share_log_err(DEVMNG_SHARE_LOG_START, fmt, ##__VA_ARGS__); \
 } while (0)
 #define uda_warn(fmt, ...) do { \
     drv_warn(module_uda, "<%s:%d:%d:%d> " fmt, \
-        current->comm, current->tgid, current->pid, ka_system_raw_smp_processor_id(), ##__VA_ARGS__); \
+        ka_task_get_current_comm(), ka_task_get_current_tgid(), ka_task_get_current_pid(), ka_system_raw_smp_processor_id(), ##__VA_ARGS__); \
 } while (0)
 #define uda_info(fmt, ...) do { \
     drv_info(module_uda, "<%s:%d:%d:%d> " fmt, \
-        current->comm, current->tgid, current->pid, ka_system_raw_smp_processor_id(), ##__VA_ARGS__); \
+        ka_task_get_current_comm(), ka_task_get_current_tgid(), ka_task_get_current_pid(), ka_system_raw_smp_processor_id(), ##__VA_ARGS__); \
 } while (0)
 #define uda_debug(fmt, ...) do { \
     drv_pr_debug(module_uda, "<%s:%d:%d:%d> " fmt, \
-        current->comm, current->tgid, current->pid, ka_system_raw_smp_processor_id(), ##__VA_ARGS__); \
+        ka_task_get_current_comm(), ka_task_get_current_tgid(), ka_task_get_current_pid(), ka_system_raw_smp_processor_id(), ##__VA_ARGS__); \
 } while (0)
 
 #ifndef __KA_GFP_ACCOUNT

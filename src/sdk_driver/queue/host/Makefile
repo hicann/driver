@@ -8,7 +8,17 @@
 # See LICENSE in the root of the software repository for the full text of the License.
 # ------------------------------------------------------------------------------------------------------------
 obj-m   += asdrv_queue.o    # host
-asdrv_queue-objs := common/queue_module.o common/queue_context.o common/queue_dma.o common/queue_proc_fs.o common/queue_status_record.o queue_fops.o queue_host_msg.o queue_ctx_private.o common/queue_channel.o
+asdrv_queue-objs := common/queue_module.o \
+    common/queue_context.o \
+    common/queue_dma.o \
+    queue_dma_host_adapt.o \
+    common/queue_proc_fs.o \
+    common/queue_status_record.o \
+    queue_fops.o \
+    queue_host_msg.o \
+    queue_ctx_private.o \
+    common/queue_channel.o \
+    common/queue_feature_check.o
 
 EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/inc \
     -I$(DRIVER_KERNEL_DIR)/inc/pbl \

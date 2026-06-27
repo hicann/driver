@@ -13,7 +13,7 @@
 
 #ifndef TRS_HOST_HARD_MBOX_H
 #define TRS_HOST_HARD_MBOX_H
-#include <linux/types.h>
+#include "ka_type.h"
 
 #include "trs_pub_def.h"
 
@@ -24,4 +24,3 @@ int devdrv_send_rdmainfo_to_ts(u32 devid, const u8 *buf, u32 len, int *result);
 int trs_mbox_init(u32 ts_inst_id);
 void trs_mbox_uninit(u32 ts_inst_id);
 #endif /* TRS_HOST_HARD_MBOX_H */
-

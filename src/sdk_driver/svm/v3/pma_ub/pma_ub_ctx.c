@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2025. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -45,10 +45,7 @@ struct pma_ub_ctx *pma_ub_ctx_get(u32 udevid, int tgid)
     return pma_ub_ctx;
 }
 
-void pma_ub_ctx_put(struct pma_ub_ctx *ctx)
-{
-    svm_task_ctx_put(ctx->task_ctx);
-}
+void pma_ub_ctx_put(struct pma_ub_ctx *ctx) { svm_task_ctx_put(ctx->task_ctx); }
 
 static void pma_ub_ctx_release(void *priv)
 {
@@ -83,8 +80,7 @@ int pma_ub_init_task(u32 udevid, int tgid, void *start_time)
         return -EINVAL;
     }
 
-    ret = svm_task_set_feature_priv(task_ctx, pma_ub_feature_id, "pma_ub",
-        (void *)pma_ub_ctx, pma_ub_ctx_release);
+    ret = svm_task_set_feature_priv(task_ctx, pma_ub_feature_id, "pma_ub", (void *)pma_ub_ctx, pma_ub_ctx_release);
     if (ret != 0) {
         svm_task_ctx_put(task_ctx);
         svm_kvfree(pma_ub_ctx);
@@ -117,7 +113,7 @@ void pma_ub_uninit_task(u32 udevid, int tgid, void *start_time)
 
     pma_ub_ctx = pma_ub_ctx_get(udevid, tgid);
     if (pma_ub_ctx == NULL) {
-        return ;
+        return;
     }
 
     pma_ub_ctx_put(pma_ub_ctx);
@@ -159,6 +155,4 @@ int pma_ub_ctx_init(void)
     return 0;
 }
 
-void pma_ub_ctx_uninit(void)
-{
-}
+void pma_ub_ctx_uninit(void) {}

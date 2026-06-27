@@ -15,21 +15,21 @@
 #include <stdbool.h>
 
 #ifdef STATIC_SKIP
-#  define STATIC
+#define STATIC
 #else
-#  define STATIC    static
+#define STATIC static
 #endif
 
-#define SHARE_LOG_NO_INIT          (0U)
-#define SHARE_LOG_INIT             (1U)
-#define SHARE_LOG_MAGIC_LENGTH     (24U)
-#define SHARE_LOG_RECORD_OFFSET    (100U)
-#define SHARE_LOG_MAGIC            ("drvshartlogab90cd78ef56")
+#define SHARE_LOG_NO_INIT (0U)
+#define SHARE_LOG_INIT (1U)
+#define SHARE_LOG_MAGIC_LENGTH (24U)
+#define SHARE_LOG_RECORD_OFFSET (100U)
+#define SHARE_LOG_MAGIC ("drvshartlogab90cd78ef56")
 
 #ifdef LOG_UT
-#define LOG_PRINT_WARN(fmt, ...)   printf("[WARN][%s %d]" fmt, __func__, __LINE__, ##__VA_ARGS__)
+#define LOG_PRINT_WARN(fmt, ...) printf("[WARN][%s %d]" fmt, __func__, __LINE__, ##__VA_ARGS__)
 #else
-#define LOG_PRINT_WARN(fmt, ...)   DRV_WARN(HAL_MODULE_TYPE_LOG, fmt, ##__VA_ARGS__)
+#define LOG_PRINT_WARN(fmt, ...) DRV_WARN(HAL_MODULE_TYPE_LOG, fmt, ##__VA_ARGS__)
 #endif
 struct share_log_info {
     char magic[SHARE_LOG_MAGIC_LENGTH];
@@ -46,48 +46,30 @@ struct share_log_module_mng {
 };
 
 STATIC struct share_log_module_mng g_module_mng[HAL_MODULE_TYPE_MAX][SHARE_LOG_TYPE_MAX] = {
-    [HAL_MODULE_TYPE_DEVMM] = {
-        {(void *)(uintptr_t)DEVMM_SHARE_LOG_START, SHARE_LOG_NO_INIT},
-        {(void *)(uintptr_t)DEVMM_SHARE_LOG_RUNINFO_START, SHARE_LOG_NO_INIT}
-    },
-    [HAL_MODULE_TYPE_TS_DRIVER] = {
-        {(void *)(uintptr_t)TSDRV_SHARE_LOG_START, SHARE_LOG_NO_INIT},
-        {(void *)(uintptr_t)TSDRV_SHARE_LOG_RUNINFO_START, SHARE_LOG_NO_INIT}
-    },
-    [HAL_MODULE_TYPE_DEV_MANAGER] = {
-        {(void *)(uintptr_t)DEVMNG_SHARE_LOG_START, SHARE_LOG_NO_INIT},
-        {(void *)(uintptr_t)DEVMNG_SHARE_LOG_RUNINFO_START, SHARE_LOG_NO_INIT}
-    },
-    [HAL_MODULE_TYPE_HDC] = {
-        {(void *)(uintptr_t)HDC_SHARE_LOG_START, SHARE_LOG_NO_INIT},
-        {(void *)(uintptr_t)HDC_SHARE_LOG_RUNINFO_START, SHARE_LOG_NO_INIT}
-    },
-    [HAL_MODULE_TYPE_EVENT_SCHEDULE] = {
-        {(void *)(uintptr_t)ESCHED_SHARE_LOG_START, SHARE_LOG_NO_INIT},
-        {(void *)(uintptr_t)ESCHED_SHARE_LOG_RUNINFO_START, SHARE_LOG_NO_INIT}
-    },
-    [HAL_MODULE_TYPE_BUF_MANAGER] = {
-        {(void *)(uintptr_t)XSMEM_SHARE_LOG_START, SHARE_LOG_NO_INIT},
-        {(void *)(uintptr_t)XSMEM_SHARE_LOG_RUNINFO_START, SHARE_LOG_NO_INIT}
-    },
-    [HAL_MODULE_TYPE_QUEUE_MANAGER] = {
-        {(void *)(uintptr_t)QUEUE_SHARE_LOG_START, SHARE_LOG_NO_INIT},
-        {(void *)(uintptr_t)QUEUE_SHARE_LOG_RUNINFO_START, SHARE_LOG_NO_INIT}
-    },
-    [HAL_MODULE_TYPE_COMMON] = {
-        {(void *)(uintptr_t)COMMON_SHARE_LOG_START, SHARE_LOG_NO_INIT},
-        {(void *)(uintptr_t)COMMON_SHARE_LOG_RUNINFO_START, SHARE_LOG_NO_INIT}
-    },
-    [HAL_MODULE_TYPE_APM] = {
- 	    {(void *)(uintptr_t)APM_SHARE_LOG_START, SHARE_LOG_NO_INIT},
- 	    {(void *)(uintptr_t)APM_SHARE_LOG_RUNINFO_START, SHARE_LOG_NO_INIT}
- 	},
+    [HAL_MODULE_TYPE_DEVMM] = {{(void *)(uintptr_t)DEVMM_SHARE_LOG_START, SHARE_LOG_NO_INIT},
+                               {(void *)(uintptr_t)DEVMM_SHARE_LOG_RUNINFO_START, SHARE_LOG_NO_INIT}},
+    [HAL_MODULE_TYPE_TS_DRIVER] = {{(void *)(uintptr_t)TSDRV_SHARE_LOG_START, SHARE_LOG_NO_INIT},
+                                   {(void *)(uintptr_t)TSDRV_SHARE_LOG_RUNINFO_START, SHARE_LOG_NO_INIT}},
+    [HAL_MODULE_TYPE_DEV_MANAGER] = {{(void *)(uintptr_t)DEVMNG_SHARE_LOG_START, SHARE_LOG_NO_INIT},
+                                     {(void *)(uintptr_t)DEVMNG_SHARE_LOG_RUNINFO_START, SHARE_LOG_NO_INIT}},
+    [HAL_MODULE_TYPE_HDC] = {{(void *)(uintptr_t)HDC_SHARE_LOG_START, SHARE_LOG_NO_INIT},
+                             {(void *)(uintptr_t)HDC_SHARE_LOG_RUNINFO_START, SHARE_LOG_NO_INIT}},
+    [HAL_MODULE_TYPE_EVENT_SCHEDULE] = {{(void *)(uintptr_t)ESCHED_SHARE_LOG_START, SHARE_LOG_NO_INIT},
+                                        {(void *)(uintptr_t)ESCHED_SHARE_LOG_RUNINFO_START, SHARE_LOG_NO_INIT}},
+    [HAL_MODULE_TYPE_BUF_MANAGER] = {{(void *)(uintptr_t)XSMEM_SHARE_LOG_START, SHARE_LOG_NO_INIT},
+                                     {(void *)(uintptr_t)XSMEM_SHARE_LOG_RUNINFO_START, SHARE_LOG_NO_INIT}},
+    [HAL_MODULE_TYPE_QUEUE_MANAGER] = {{(void *)(uintptr_t)QUEUE_SHARE_LOG_START, SHARE_LOG_NO_INIT},
+                                       {(void *)(uintptr_t)QUEUE_SHARE_LOG_RUNINFO_START, SHARE_LOG_NO_INIT}},
+    [HAL_MODULE_TYPE_COMMON] = {{(void *)(uintptr_t)COMMON_SHARE_LOG_START, SHARE_LOG_NO_INIT},
+                                {(void *)(uintptr_t)COMMON_SHARE_LOG_RUNINFO_START, SHARE_LOG_NO_INIT}},
+    [HAL_MODULE_TYPE_APM] = {{(void *)(uintptr_t)APM_SHARE_LOG_START, SHARE_LOG_NO_INIT},
+                             {(void *)(uintptr_t)APM_SHARE_LOG_RUNINFO_START, SHARE_LOG_NO_INIT}},
 };
 
 STATIC pthread_mutex_t share_log_mutex[SHARE_LOG_TYPE_MAX] = {PTHREAD_MUTEX_INITIALIZER, PTHREAD_MUTEX_INITIALIZER};
 
-STATIC void share_log_create_single_type(enum devdrv_module_type module_type,
-    enum share_log_type_enum log_type, uint32_t size)
+STATIC void share_log_create_single_type(enum devdrv_module_type module_type, enum share_log_type_enum log_type,
+                                         uint32_t size)
 {
     struct share_log_info *info = NULL;
     int32_t len;
@@ -97,12 +79,12 @@ STATIC void share_log_create_single_type(enum devdrv_module_type module_type,
         (g_module_mng[module_type][log_type].init_flag == SHARE_LOG_INIT)) {
         (void)pthread_mutex_unlock(&share_log_mutex[log_type]);
         LOG_PRINT_WARN("Invalid input or share_log has been inited. (module_type=%d; log_type=%d; size=%u)\n",
-            module_type, log_type, size);
+                       module_type, log_type, size);
         return;
     }
 
-    info = (struct share_log_info *)mmap(g_module_mng[module_type][log_type].start, size,
-        PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+    info = (struct share_log_info *)mmap(g_module_mng[module_type][log_type].start, size, PROT_READ | PROT_WRITE,
+                                         MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
     if (info != (struct share_log_info *)g_module_mng[module_type][log_type].start) {
         (void)pthread_mutex_unlock(&share_log_mutex[log_type]);
 #ifndef LOG_UT
@@ -194,9 +176,9 @@ static void share_log_read_in_single_module(enum share_log_type_enum log_type, e
     (void)pthread_mutex_lock(&share_log_mutex[log_type]);
     info = (struct share_log_info *)g_module_mng[module_type][log_type].start;
     if ((g_module_mng[module_type][log_type].init_flag == SHARE_LOG_NO_INIT) ||
-        (share_log_magic_check(info->magic) == false) ||
-        (info->write == info->read) || (info->write > info->record_size) ||
-        (info->record_size <= 0) || ((unsigned int)(info->record_size) > (SHARE_LOG_MAX_SIZE - SHARE_LOG_RECORD_OFFSET))) {
+        (share_log_magic_check(info->magic) == false) || (info->write == info->read) ||
+        (info->write > info->record_size) || (info->record_size <= 0) ||
+        ((unsigned int)(info->record_size) > (SHARE_LOG_MAX_SIZE - SHARE_LOG_RECORD_OFFSET))) {
         (void)pthread_mutex_unlock(&share_log_mutex[log_type]);
         return;
     }

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * Copyright (c) 2026 Huawei Technologies Co., Ltd.
  * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -14,6 +14,7 @@
 
 int svm_module_mem_malloc(u32 devid, u32 numa_id, u64 flag, u64 *start, u64 size, u32 module_id);
 int svm_module_mem_free(u32 devid, u64 flag, u64 start, u64 size, u32 module_id);
+int svm_mem_malloc(void **va, u64 size, u64 flag);
+int svm_mem_free(void *va);
 
 #endif
-

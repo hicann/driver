@@ -25,9 +25,11 @@ struct que_mem_node {
 };
 
 void que_mem_ctx_init(struct que_mem_merge_ctx *mem_ctx);
-int que_mem_merge(struct que_mem_merge_ctx *mem_ctx, unsigned int devid, unsigned long long va, unsigned long long size);
-urma_target_seg_t *que_mem_seg_register(struct que_mem_merge_ctx *mem_ctx, unsigned int d2d_flag, struct que_urma_token *token,
-    unsigned int pin_flg, unsigned int devid, unsigned long long va, unsigned int access);
+int que_mem_merge(struct que_mem_merge_ctx *mem_ctx, unsigned int devid, unsigned long long va,
+                  unsigned long long size);
+urma_target_seg_t *que_mem_seg_register(struct que_mem_merge_ctx *mem_ctx, unsigned int d2d_flag,
+                                        struct que_urma_token *token, unsigned int pin_flg, unsigned int devid,
+                                        unsigned long long va, unsigned int access);
 void que_mem_seg_unregister(struct que_mem_merge_ctx *mem_ctx, unsigned int devid, unsigned long long va);
 void que_mem_erase_all_node(struct que_mem_merge_ctx *mem_ctx);
 

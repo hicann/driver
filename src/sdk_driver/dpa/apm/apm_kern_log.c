@@ -18,18 +18,18 @@ void apm_share_log_err(const char *fmt, ...)
 {
 #ifdef CFG_FEATURE_SHARE_LOG
     va_list args;
- 
+
     va_start(args, fmt);
     share_log_err_ex(APM_SHARE_LOG_START, fmt, args);
     va_end(args);
 #endif
 }
- 
+
 void apm_share_log_run_info(const char *fmt, ...)
 {
 #ifdef CFG_FEATURE_SHARE_LOG
     va_list args;
- 
+
     va_start(args, fmt);
     share_log_run_info_ex(APM_SHARE_LOG_RUNINFO_START, fmt, args);
     va_end(args);

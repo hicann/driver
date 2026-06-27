@@ -476,10 +476,11 @@ int dms_save_exception_in_local(void *arg)
     int ret;
     int timeout = 100; /* wait for 100ms each time; return if no event occurs within 100ms */
     struct dms_event_para fault_event = {0};
+    struct dms_event_filter filter = {0};
 
     dms_info("dms save remote exception in local task start\n");
     while (!ka_task_kthread_should_stop()) {
-        ret = dms_event_get_exception(&fault_event, timeout, FROM_KERNEL);
+        ret = dms_event_get_exception(DMS_FAULT_DEVICE_ALL, &filter, &fault_event, timeout, FROM_KERNEL);
         if (ret != 0) {
             continue;
         }

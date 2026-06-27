@@ -86,8 +86,7 @@ void hdcdrv_get_mempool_size(u32 *small_packet_num, u32 *huge_packet_num)
     if (mempool_level >= HDC_MEM_POOL_LEVEL_INVALID) {
         *small_packet_num = HDCDRV_SMALL_PACKET_NUM;
         *huge_packet_num = HDCDRV_HUGE_PACKET_NUM;
-    } 
-    else {
+    } else {
         *small_packet_num = HDCDRV_SMALL_PACKET_NUM >> mempool_level;
         *huge_packet_num = HDCDRV_HUGE_PACKET_NUM >> mempool_level;
     }

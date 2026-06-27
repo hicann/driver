@@ -17,7 +17,6 @@
 #include "pbl/pbl_feature_loader.h"
 #include "pbl_mem_alloc_interface.h"
 #include "pbl/pbl_soc_res.h"
-#include "dms_kernel_version_adapt.h"
 #include "dms_time.h"
 #include "dms_define.h"
 #include "urd_feature.h"
@@ -108,14 +107,14 @@ ADD_FEATURE_COMMAND(DMS_MODULE_BASIC_POWER_INFO,
     NULL,
     NULL,
     DMS_ACC_ROOT_ONLY | DMS_ENV_PHYSICAL | DMS_ENV_ADMIN_DOCKER,
-    dms_hotreset_atomic_reset)    
+    dms_hotreset_atomic_reset)
 ADD_FEATURE_COMMAND(DMS_MODULE_BASIC_POWER_INFO,
     DMS_MAIN_CMD_HOTRESET,
     DMS_SUBCMD_HOTRESET_REMOVE,
     NULL,
     NULL,
     DMS_ACC_ROOT_ONLY | DMS_ENV_PHYSICAL | DMS_ENV_ADMIN_DOCKER,
-    dms_hotreset_atomic_remove)    
+    dms_hotreset_atomic_remove)
 END_FEATURE_COMMAND()
 END_MODULE_DECLARATION()
 
@@ -289,7 +288,7 @@ int dms_power_check_phy_mach(unsigned int dev_id)
         return ret;
     }
 
-    // upgrade_tool 拦截910B 标卡非物理机热复位流程 
+    // upgrade_tool 拦截910B 标卡非物理机热复位流程
     if (isCard == true && host_flag != DEVDRV_HOST_PHY_MACH_FLAG  ) {
         dms_err("910_A2 Pcie card not phy mach not support hot_reset. (devid=%u; host_flag=0x%x)\n", dev_id, host_flag);
         return -EPERM;
@@ -519,194 +518,6 @@ STATIC void dms_set_all_device_hotreset_excuting_flag(bool flag)
     ka_task_spin_unlock(&g_hotreset_executing_spinlock);
 }
 
-STATIC int dms_power_set_all_hot_reset(void)
-{
-    int ret = 0;
-
-#ifdef CFG_FEATURE_TIMESYNC
-    int i;
-#endif
-    ret = dms_power_check_all_phy_mach();
-    if (ret) {
-        dms_err("Permission deny or devid is invalid; (ret=%d)\n", ret);
-        return ret;
-    }
-
-#ifdef CFG_FEATURE_TIMESYNC
-    for (i = 0; i < ASCEND_DEV_MAX_NUM; i++) {
-        set_time_need_update(i);
-    }
-#endif
-
-    ret = dms_all_device_hotreset_excuting_check_set();
-    if (ret != 0) {
-        return ret;
-    }
-
-    ret = devdrv_uda_all_dev_ctrl_hotreset(ASCEND_DEV_MAX_NUM);
-    if (ret != 0) {
-        dms_err("Notify all uda device hotreset failed. (ret=%d)\n", ret);
-        goto ALL_DEV_HORESET_END;
-    }
-
-#ifdef CFG_FEATURE_SRIOV
-    ret = devdrv_manager_check_and_disable_sriov(DEVDRV_RESET_ALL_DEVICE_ID);
-    if (ret != 0) {
-        dms_err("Failed to check and disable for all devices. (ret=%d)\n", ret);
-        devdrv_uda_all_dev_ctrl_hotreset_cancel(ASCEND_DEV_MAX_NUM);
-        goto ALL_DEV_HORESET_END;
-    }
-#endif
-
-    ret = devdrv_hot_reset_device(ALL_DEVICE_HOTRESET_FLAG);
-    if (ret != 0) {
-        dms_err("Hotreset all devices failed. (ret=%d)\n", ret);
-        devdrv_uda_all_dev_ctrl_hotreset_cancel(ASCEND_DEV_MAX_NUM);
-    }
-
-ALL_DEV_HORESET_END:
-    dms_set_all_device_hotreset_excuting_flag(false);
-    return ret;
-}
-
-STATIC int dms_single_device_hotreset_excuting_check_set(unsigned int phy_id, unsigned int bro_phy_id)
-{
-    ka_task_spin_lock(&g_hotreset_executing_spinlock);
-    if (g_hotreset_executing_flag[phy_id] || g_hotreset_executing_flag[bro_phy_id]) {
-        ka_task_spin_unlock(&g_hotreset_executing_spinlock);
-        dms_err("Hotreset is executing. (dev_phy_id=%u; bro_phy_id=%u)\n", phy_id, bro_phy_id);
-        return -EBUSY;
-    }
-
-    g_hotreset_executing_flag[phy_id] = true;
-    g_hotreset_executing_flag[bro_phy_id] = true;
-
-    ka_task_spin_unlock(&g_hotreset_executing_spinlock);
-    return 0;
-}
-
-STATIC void dms_set_single_device_hotreset_excuting_flag(unsigned int phy_id, unsigned int bro_phy_id, bool flag)
-{
-    ka_task_spin_lock(&g_hotreset_executing_spinlock);
-
-    g_hotreset_executing_flag[phy_id] = flag;
-    g_hotreset_executing_flag[bro_phy_id] = flag;
-
-    ka_task_spin_unlock(&g_hotreset_executing_spinlock);
-}
-
-STATIC int dms_power_set_single_hot_reset(unsigned int virt_id)
-{
-    int ret = 0;
-    unsigned int phy_id;
-    unsigned int vfid;
-    unsigned int bro_phy_id;
-    /* the single device hot reset */
-    ret = devdrv_manager_container_logical_id_to_physical_id(virt_id, &phy_id, &vfid);
-    if (ret) {
-        dms_err("Trans logical_id to physical_id failed. (devid=%u)\n", virt_id);
-        return ret;
-    }
-
-    if (devdrv_manager_is_pf_device(phy_id)) {
-        ret = dms_power_check_phy_mach(phy_id);
-        if (ret != 0) {
-            dms_err("Permission deny or devid is invalid. (dev_id=%u; ret=%d)\n", virt_id, ret);
-            return ret;
-        }
-
-#ifdef CFG_FEATURE_TIMESYNC
-        set_time_need_update(phy_id);
-#endif
-    }
-
-    if (devdrv_get_brother_udevid(phy_id, &bro_phy_id) != 0) {
-        bro_phy_id = phy_id;
-    }
-
-    ret = dms_single_device_hotreset_excuting_check_set(phy_id, bro_phy_id);
-    if (ret != 0) {
-        return ret;
-    }
-
-    ret = devdrv_uda_one_dev_ctrl_hotreset(phy_id);
-    if (ret != 0) {
-        dms_err("Uda ctrl hotreset failed. (devid=%u; ret=%d)\n", phy_id, ret);
-        goto SINGLE_DEV_HOTRESET_END;
-    }
-
-    if (devdrv_manager_is_pf_device(phy_id)) {
-#ifdef CFG_FEATURE_SRIOV
-        ret = devdrv_manager_check_and_disable_sriov(phy_id);
-        if (ret != 0) {
-            dms_err("Check disable sriov failed. (dev_id=%u; phy_id=%u; ret=%d)\n", virt_id, phy_id, ret);
-            devdrv_uda_one_dev_ctrl_hotreset_cancel(phy_id);
-            goto SINGLE_DEV_HOTRESET_END;
-        }
-#endif
-        ret = devdrv_hot_reset_device(phy_id);
-    } else if (devdrv_manager_is_mdev_vm_mode(phy_id)) {
-        ret = devdrv_hot_reset_device(phy_id);
-#ifdef CFG_FEATURE_SRIOV
-    } else {
-        ret = vmngh_sriov_reset_vdev(phy_id, vfid);
-#endif
-    }
-
-    if (ret != 0) {
-        dms_ex_notsupport_err(ret, "Hotreset single device failed. (dev_id=%u; ret=%d)\n", phy_id, ret);
-        devdrv_uda_one_dev_ctrl_hotreset_cancel(phy_id);
-    }
-
-SINGLE_DEV_HOTRESET_END:
-    dms_set_single_device_hotreset_excuting_flag(phy_id, bro_phy_id, false);
-    return ret;
-}
-
-int dms_power_pcie_pre_reset(void *feature, char *in, unsigned int in_len, char *out, unsigned int out_len)
-{
-    unsigned int virt_id;
-    int ret;
-    unsigned int phys_id = 0;
-    unsigned int vfid = 0;
-
-    if ((in == NULL) || (in_len != sizeof(unsigned int))) {
-        dms_err("Input arg is NULL or in_len is wrong. (in_len=%u)\n", in_len);
-        return -EINVAL;
-    }
-    virt_id = *(unsigned int *)(uintptr_t)in;
-
-    ret = devdrv_manager_container_logical_id_to_physical_id(virt_id, &phys_id, &vfid);
-    if (ret != 0) {
-        dms_err("Failed to transfer dev_id. (dev_id=%u)\n", virt_id);
-        return -EFAULT;
-    }
-
-    if ((vfid != 0) || (!devdrv_manager_is_pf_device(phys_id))) {
-        return -EOPNOTSUPP;
-    }
-
-    ret = dms_power_check_phy_mach(phys_id);
-    if (ret) {
-        dms_err("Permission deny or devid is invalid. (dev_id=%u; ret=%d)\n", phys_id, ret);
-        return -EINVAL;
-    }
-
-    ret = devdrv_uda_one_dev_ctrl_hotreset(phys_id);
-    if (ret != 0) {
-        dms_err("Call uda_dev_ctrl failed, (phys_id=%u; ret=%d).\n", phys_id, ret);
-        return ret;
-    }
-
-    ret = devdrv_hot_pre_reset(phys_id);
-    if (ret != 0) {
-        dms_err("Hotreset failed. (dev_id=%u; ret=%d)\n", phys_id, ret);
-        devdrv_uda_one_dev_ctrl_hotreset_cancel(phys_id);
-    }
-
-    return ret;
-}
-
 #ifdef CFG_FEATURE_SUPPORT_HOTRESET_AO_INFORM
 STATIC void dms_hotreset_one_dev_inform(void *feature, unsigned int dev_id)
 {
@@ -779,6 +590,203 @@ STATIC void dms_hotreset_dev_inform(void *feature, unsigned int dev_id)
 }
 #endif
 
+STATIC int dms_power_set_all_hot_reset(void *feature)
+{
+    int ret = 0;
+
+#ifdef CFG_FEATURE_TIMESYNC
+    int i;
+#endif
+    ret = dms_power_check_all_phy_mach();
+    if (ret) {
+        dms_err("Permission deny or devid is invalid; (ret=%d)\n", ret);
+        return ret;
+    }
+
+#ifdef CFG_FEATURE_TIMESYNC
+    for (i = 0; i < ASCEND_DEV_MAX_NUM; i++) {
+        set_time_need_update(i);
+    }
+#endif
+
+    ret = dms_all_device_hotreset_excuting_check_set();
+    if (ret != 0) {
+        return ret;
+    }
+
+    ret = devdrv_uda_all_dev_ctrl_hotreset(ASCEND_DEV_MAX_NUM);
+    if (ret != 0) {
+        dms_err("Notify all uda device hotreset failed. (ret=%d)\n", ret);
+        goto ALL_DEV_HORESET_END;
+    }
+
+#ifdef CFG_FEATURE_SRIOV
+    ret = devdrv_manager_check_and_disable_sriov(DEVDRV_RESET_ALL_DEVICE_ID);
+    if (ret != 0) {
+        dms_err("Failed to check and disable for all devices. (ret=%d)\n", ret);
+        devdrv_uda_all_dev_ctrl_hotreset_cancel(ASCEND_DEV_MAX_NUM);
+        goto ALL_DEV_HORESET_END;
+    }
+#endif
+
+#ifdef CFG_FEATURE_SUPPORT_HOTRESET_AO_INFORM
+    dms_hotreset_dev_inform(feature, DEVDRV_RESET_ALL_DEVICE_ID);
+#endif
+
+    ret = devdrv_hot_reset_device(ALL_DEVICE_HOTRESET_FLAG);
+    if (ret != 0) {
+        dms_err("Hotreset all devices failed. (ret=%d)\n", ret);
+        devdrv_uda_all_dev_ctrl_hotreset_cancel(ASCEND_DEV_MAX_NUM);
+    }
+
+ALL_DEV_HORESET_END:
+    dms_set_all_device_hotreset_excuting_flag(false);
+    return ret;
+}
+
+STATIC int dms_single_device_hotreset_excuting_check_set(unsigned int phy_id, unsigned int bro_phy_id)
+{
+    ka_task_spin_lock(&g_hotreset_executing_spinlock);
+    if (g_hotreset_executing_flag[phy_id] || g_hotreset_executing_flag[bro_phy_id]) {
+        ka_task_spin_unlock(&g_hotreset_executing_spinlock);
+        dms_err("Hotreset is executing. (dev_phy_id=%u; bro_phy_id=%u)\n", phy_id, bro_phy_id);
+        return -EBUSY;
+    }
+
+    g_hotreset_executing_flag[phy_id] = true;
+    g_hotreset_executing_flag[bro_phy_id] = true;
+
+    ka_task_spin_unlock(&g_hotreset_executing_spinlock);
+    return 0;
+}
+
+STATIC void dms_set_single_device_hotreset_excuting_flag(unsigned int phy_id, unsigned int bro_phy_id, bool flag)
+{
+    ka_task_spin_lock(&g_hotreset_executing_spinlock);
+
+    g_hotreset_executing_flag[phy_id] = flag;
+    g_hotreset_executing_flag[bro_phy_id] = flag;
+
+    ka_task_spin_unlock(&g_hotreset_executing_spinlock);
+}
+
+STATIC int dms_power_set_single_hot_reset(void *feature, unsigned int virt_id)
+{
+    int ret = 0;
+    unsigned int phy_id;
+    unsigned int vfid;
+    unsigned int bro_phy_id;
+    /* the single device hot reset */
+    ret = devdrv_manager_container_logical_id_to_physical_id(virt_id, &phy_id, &vfid);
+    if (ret) {
+        dms_err("Trans logical_id to physical_id failed. (devid=%u)\n", virt_id);
+        return ret;
+    }
+
+    if (devdrv_manager_is_pf_device(phy_id)) {
+        ret = dms_power_check_phy_mach(phy_id);
+        if (ret != 0) {
+            dms_err("Permission deny or devid is invalid. (dev_id=%u; ret=%d)\n", virt_id, ret);
+            return ret;
+        }
+
+#ifdef CFG_FEATURE_TIMESYNC
+        set_time_need_update(phy_id);
+#endif
+    }
+
+    if (devdrv_get_brother_udevid(phy_id, &bro_phy_id) != 0) {
+        bro_phy_id = phy_id;
+    }
+
+    ret = dms_single_device_hotreset_excuting_check_set(phy_id, bro_phy_id);
+    if (ret != 0) {
+        return ret;
+    }
+
+    ret = devdrv_uda_one_dev_ctrl_hotreset(phy_id);
+    if (ret != 0) {
+        dms_err("Uda ctrl hotreset failed. (devid=%u; ret=%d)\n", phy_id, ret);
+        goto SINGLE_DEV_HOTRESET_END;
+    }
+
+    if (devdrv_manager_is_pf_device(phy_id)) {
+#ifdef CFG_FEATURE_SRIOV
+        ret = devdrv_manager_check_and_disable_sriov(phy_id);
+        if (ret != 0) {
+            dms_err("Check disable sriov failed. (dev_id=%u; phy_id=%u; ret=%d)\n", virt_id, phy_id, ret);
+            devdrv_uda_one_dev_ctrl_hotreset_cancel(phy_id);
+            goto SINGLE_DEV_HOTRESET_END;
+        }
+#endif
+
+#ifdef CFG_FEATURE_SUPPORT_HOTRESET_AO_INFORM
+    dms_hotreset_dev_inform(feature, virt_id);
+#endif
+
+        ret = devdrv_hot_reset_device(phy_id);
+    } else if (devdrv_manager_is_mdev_vm_mode(phy_id)) {
+        ret = devdrv_hot_reset_device(phy_id);
+#ifdef CFG_FEATURE_SRIOV
+    } else {
+        ret = vmngh_sriov_reset_vdev(phy_id, vfid);
+#endif
+    }
+
+    if (ret != 0) {
+        dms_ex_notsupport_err(ret, "Hotreset single device failed. (dev_id=%u; ret=%d)\n", phy_id, ret);
+        devdrv_uda_one_dev_ctrl_hotreset_cancel(phy_id);
+    }
+
+SINGLE_DEV_HOTRESET_END:
+    dms_set_single_device_hotreset_excuting_flag(phy_id, bro_phy_id, false);
+    return ret;
+}
+
+int dms_power_pcie_pre_reset(void *feature, char *in, unsigned int in_len, char *out, unsigned int out_len)
+{
+    unsigned int virt_id;
+    int ret;
+    unsigned int phys_id = 0;
+    unsigned int vfid = 0;
+
+    if ((in == NULL) || (in_len != sizeof(unsigned int))) {
+        dms_err("Input arg is NULL or in_len is wrong. (in_len=%u)\n", in_len);
+        return -EINVAL;
+    }
+    virt_id = *(unsigned int *)(uintptr_t)in;
+
+    ret = devdrv_manager_container_logical_id_to_physical_id(virt_id, &phys_id, &vfid);
+    if (ret != 0) {
+        dms_err("Failed to transfer dev_id. (dev_id=%u)\n", virt_id);
+        return -EFAULT;
+    }
+
+    if ((vfid != 0) || (!devdrv_manager_is_pf_device(phys_id))) {
+        return -EOPNOTSUPP;
+    }
+
+    ret = dms_power_check_phy_mach(phys_id);
+    if (ret) {
+        dms_err("Permission deny or devid is invalid. (dev_id=%u; ret=%d)\n", phys_id, ret);
+        return -EINVAL;
+    }
+
+    ret = devdrv_uda_one_dev_ctrl_hotreset(phys_id);
+    if (ret != 0) {
+        dms_err("Call uda_dev_ctrl failed, (phys_id=%u; ret=%d).\n", phys_id, ret);
+        return ret;
+    }
+
+    ret = devdrv_hot_pre_reset(phys_id);
+    if (ret != 0) {
+        dms_err("Hotreset failed. (dev_id=%u; ret=%d)\n", phys_id, ret);
+        devdrv_uda_one_dev_ctrl_hotreset_cancel(phys_id);
+    }
+
+    return ret;
+}
+
 int dms_hotreset_assmemble(void *feature, char *in, unsigned int in_len, char *out, unsigned int out_len)
 {
     unsigned int virt_id;
@@ -789,13 +797,10 @@ int dms_hotreset_assmemble(void *feature, char *in, unsigned int in_len, char *o
         return -EINVAL;
     }
     virt_id = *(unsigned int *)(uintptr_t)in;
-#ifdef CFG_FEATURE_SUPPORT_HOTRESET_AO_INFORM
-    dms_hotreset_dev_inform(feature, virt_id);
-#endif
 
     /* hot reset all devices */
     if (virt_id == DEVDRV_RESET_ALL_DEVICE_ID) {
-        ret = dms_power_set_all_hot_reset();
+        ret = dms_power_set_all_hot_reset(feature);
         if (ret) {
             dms_err("Permission deny or devid is invalid. (dev_id=%d; ret=%d)\n", virt_id, ret);
         }
@@ -803,7 +808,7 @@ int dms_hotreset_assmemble(void *feature, char *in, unsigned int in_len, char *o
     }
 
     /* the single device hot reset */
-    ret = dms_power_set_single_hot_reset(virt_id);
+    ret = dms_power_set_single_hot_reset(feature, virt_id);
     if (ret != 0) {
         dms_ex_notsupport_err(ret, "Set single device hotreset failed. (dev_id=%u; ret=%d)\n", virt_id, ret);
     }
@@ -870,8 +875,8 @@ int dms_hotreset_atomic_setflag(void *feature, char *in, unsigned int in_len, ch
             dms_err("Upgradetool set all device hotreset flag failed. (ret=%d)\n", ret);
         }
         return ret;
-    } 
-    
+    }
+
     ret = devdrv_manager_container_logical_id_to_physical_id(virt_id, &phy_id, &vfid);
     if (ret) {
         dms_err("Trans logical_id to physical_id failed. (devid=%u)\n", virt_id);
@@ -989,7 +994,7 @@ int dms_power_pcie_pre_reset_v1(void *feature, char *in, unsigned int in_len, ch
     if ((chip_type == HISI_CLOUD_V1) || (chip_type == HISI_CLOUD_V2)) {
         return 0;
     } else if ((chip_type == HISI_MINI_V2) || (chip_type == HISI_MINI_V3) || (chip_type == HISI_CLOUD_V4) ||
-               (chip_type == HISI_CLOUD_V5)) {
+        (chip_type == HISI_CLOUD_V5) || (chip_type == HISI_MINI_V4)) {
         ret = devdrv_uda_one_dev_ctrl_hotreset(udevid);
         if (ret != 0) {
             devdrv_drv_err("Call uda_dev_ctrl failed, (udevid=%u; ret=%d).\n", udevid, ret);
@@ -1103,8 +1108,8 @@ static int dms_hotreset_atomic_precheck(void *feature, char *in, unsigned int in
     virt_id = *(unsigned int *)(uintptr_t)in;
     if (virt_id == DEVDRV_RESET_ALL_DEVICE_ID) {
         return -EOPNOTSUPP;
-    } 
-    
+    }
+
     ret = devdrv_manager_container_logical_id_to_physical_id(virt_id, phy_id, &vfid);
     if (ret) {
         dms_err("Trans logical_id to physical_id failed. (devid=%u)\n", virt_id);

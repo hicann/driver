@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * Copyright (c) 2026 Huawei Technologies Co., Ltd.
  * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -19,10 +19,14 @@
 #include "svm_memcpy_ops_register.h"
 #include "svm_memcpy.h"
 
-int svm_pci_async_copy_submit(u32 devid, struct svm_copy_va_info *src_info,
-    struct svm_copy_va_info *dst_info, int *id)
+#define SVM_COPY_SYNC_SIZE (512 * SVM_BYTES_PER_KB)
+
+static inline bool svm_pci_memcpy_judge_sync(u64 size) { return size <= SVM_COPY_SYNC_SIZE; }
+
+static int _svm_pci_copy_submit(
+    u32 devid, struct svm_copy_va_info *src_info, struct svm_copy_va_info *dst_info, u32 flag, int *id)
 {
-    struct svm_async_copy_submit_para para;
+    struct svm_async_copy_submit_para para = {0};
     int ret;
 
     para.src_va = src_info->va;
@@ -32,12 +36,14 @@ int svm_pci_async_copy_submit(u32 devid, struct svm_copy_va_info *src_info,
     para.dst_devid = dst_info->devid;
     para.src_host_tgid = src_info->host_tgid;
     para.dst_host_tgid = dst_info->host_tgid;
+    para.flag = flag;
 
     ret = svm_cmd_ioctl(devid, SVM_ASYNC_COPY_SUBMIT, (void *)&para);
     if (ret != DRV_ERROR_NONE) {
-        svm_err("Ioctl async copy submit failed. (ret=%d; devid=%u; src_va=0x%llx; dst_va=0x%llx; size=%llu; "
-            "src_devid=%u; dst_devid=%u)\n", ret, devid, src_info->va, dst_info->va, src_info->size,
-            src_info->devid, dst_info->devid);
+        svm_err(
+            "Ioctl async copy submit failed. (ret=%d; devid=%u; src_va=0x%llx; dst_va=0x%llx; size=%llu; "
+            "src_devid=%u; dst_devid=%u)\n",
+            ret, devid, src_info->va, dst_info->va, src_info->size, src_info->devid, dst_info->devid);
         return ret;
     }
 
@@ -45,10 +51,15 @@ int svm_pci_async_copy_submit(u32 devid, struct svm_copy_va_info *src_info,
     return DRV_ERROR_NONE;
 }
 
-static int svm_pci_async_copy_submit_2d(u32 devid, struct svm_copy_va_2d_info *src_info,
-    struct svm_copy_va_2d_info *dst_info, int *id)
+int svm_pci_async_copy_submit(u32 devid, struct svm_copy_va_info *src_info, struct svm_copy_va_info *dst_info, int *id)
 {
-    struct svm_async_copy_submit_2d_para para;
+    return _svm_pci_copy_submit(devid, src_info, dst_info, 0, id);
+}
+
+static int svm_pci_async_copy_submit_2d(
+    u32 devid, struct svm_copy_va_2d_info *src_info, struct svm_copy_va_2d_info *dst_info, int *id)
+{
+    struct svm_async_copy_submit_2d_para para = {0};
     int ret;
 
     para.src_va = src_info->va;
@@ -62,9 +73,11 @@ static int svm_pci_async_copy_submit_2d(u32 devid, struct svm_copy_va_2d_info *s
 
     ret = svm_cmd_ioctl(devid, SVM_ASYNC_COPY_SUBMIT_2D, (void *)&para);
     if (ret != DRV_ERROR_NONE) {
-        svm_err("Submit async copy 2d failed. (ret=%d; devid=%u; src_va=0x%llx; dst_va=0x%llx; spitch=%llu; dpitch=%llu; "
-            "width=%llu; height=%llu; src_devid=%u; dst_devid=%u)\n", ret, devid, src_info->va, dst_info->va,
-            src_info->pitch, dst_info->pitch, src_info->width, src_info->height, src_info->devid, dst_info->devid);
+        svm_err(
+            "Submit async copy 2d failed. (ret=%d; devid=%u; src_va=0x%llx; dst_va=0x%llx; spitch=%llu; dpitch=%llu; "
+            "width=%llu; height=%llu; src_devid=%u; dst_devid=%u)\n",
+            ret, devid, src_info->va, dst_info->va, src_info->pitch, dst_info->pitch, src_info->width, src_info->height,
+            src_info->devid, dst_info->devid);
         return ret;
     }
 
@@ -78,7 +91,9 @@ static int svm_pci_async_copy_submit_batch(u32 devid, struct svm_async_copy_subm
 
     ret = svm_cmd_ioctl(devid, SVM_ASYNC_COPY_SUBMIT_BATCH, (void *)submit_para);
     if (ret != DRV_ERROR_NONE) {
-        svm_info("Submit async copy batch not succ. (ret=%d; src_devid=%u; dst_devid=%u)\n", ret, submit_para->src_devid, submit_para->dst_devid);
+        svm_info(
+            "Submit async copy batch not succ. (ret=%d; src_devid=%u; dst_devid=%u)\n", ret, submit_para->src_devid,
+            submit_para->dst_devid);
         return ret;
     }
 
@@ -103,6 +118,10 @@ int svm_pci_sync_copy(u32 devid, struct svm_copy_va_info *src_info, struct svm_c
 {
     int ret, id;
 
+    if (svm_pci_memcpy_judge_sync(src_info->size)) {
+        return _svm_pci_copy_submit(devid, src_info, dst_info, SVM_COPY_FLAG_SYNC, &id);
+    }
+
     ret = svm_pci_async_copy_submit(devid, src_info, dst_info, &id);
     if (ret != DRV_ERROR_NONE) {
         return ret;
@@ -125,8 +144,8 @@ int svm_pci_sync_copy_2d(u32 devid, struct svm_copy_va_2d_info *src_info, struct
 
 int svm_pci_sync_copy_batch(u64 src[], u64 dst[], u64 size[], u64 count, u32 src_devid, u32 dst_devid)
 {
-    struct svm_async_copy_submit_batch_para submit_para = {.src_va = src, .dst_va = dst, .size = size, .count = count,
-        .src_devid = src_devid, .dst_devid = dst_devid};
+    struct svm_async_copy_submit_batch_para submit_para = {
+        .src_va = src, .dst_va = dst, .size = size, .count = count, .src_devid = src_devid, .dst_devid = dst_devid};
     enum svm_cpy_dir dir = copy_dir_get_by_devid(src_devid, dst_devid);
     u32 devid = (dir == SVM_H2D_CPY) ? dst_devid : src_devid;
     int ret;
@@ -139,10 +158,10 @@ int svm_pci_sync_copy_batch(u64 src[], u64 dst[], u64 size[], u64 count, u32 src
     return svm_pci_async_copy_wait(devid, submit_para.id);
 }
 
-int svm_pci_dma_desc_convert(u32 devid, struct svm_copy_va_info *src_info, struct svm_copy_va_info *dst_info,
-    struct DMA_ADDR *dma_desc)
+int svm_pci_dma_desc_convert(
+    u32 devid, struct svm_copy_va_info *src_info, struct svm_copy_va_info *dst_info, struct DMA_ADDR *dma_desc)
 {
-    struct svm_dma_desc_convert_para para;
+    struct svm_dma_desc_convert_para para = {0};
     int ret;
 
     para.src_va = src_info->va;
@@ -155,9 +174,10 @@ int svm_pci_dma_desc_convert(u32 devid, struct svm_copy_va_info *src_info, struc
 
     ret = svm_cmd_ioctl(devid, SVM_DMA_DESC_CONVERT, (void *)&para);
     if (ret != DRV_ERROR_NONE) {
-        svm_err("Ioctl dma desc convert failed. (ret=%d; devid=%u; src_va=0x%llx; dst_va=0x%llx; size=%llu; "
-            "src_devid=%u; dst_devid=%u)\n", ret, devid, src_info->va, dst_info->va, src_info->size,
-            src_info->devid, dst_info->devid);
+        svm_err(
+            "Ioctl dma desc convert failed. (ret=%d; devid=%u; src_va=0x%llx; dst_va=0x%llx; size=%llu; "
+            "src_devid=%u; dst_devid=%u)\n",
+            ret, devid, src_info->va, dst_info->va, src_info->size, src_info->devid, dst_info->devid);
         return ret;
     }
 
@@ -208,10 +228,11 @@ int svm_pci_dma_desc_destroy(u32 devid, struct DMA_ADDR *dma_desc)
     return DRV_ERROR_NONE;
 }
 
-int svm_pci_dma_desc_convert_2d(u32 devid, struct svm_copy_va_2d_info *src_info, struct svm_copy_va_2d_info *dst_info,
-        u64 fixed_size, struct DMA_ADDR *dma_desc)
+int svm_pci_dma_desc_convert_2d(
+    u32 devid, struct svm_copy_va_2d_info *src_info, struct svm_copy_va_2d_info *dst_info, u64 fixed_size,
+    struct DMA_ADDR *dma_desc)
 {
-    struct svm_dma_desc_convert_2d_para para;
+    struct svm_dma_desc_convert_2d_para para = {0};
     int ret;
 
     para.src_va = src_info->va;
@@ -226,9 +247,11 @@ int svm_pci_dma_desc_convert_2d(u32 devid, struct svm_copy_va_2d_info *src_info,
 
     ret = svm_cmd_ioctl(devid, SVM_DMA_DESC_CONVERT_2D, (void *)&para);
     if (ret != DRV_ERROR_NONE) {
-        svm_err("Convert 2d failed. (ret=%d; devid=%u; src_va=0x%llx; dst_va=0x%llx; spitch=%llu; dpitch=%llu; "
-            "width=%llu; height=%llu; src_devid=%u; dst_devid=%u)\n", ret, devid, src_info->va, dst_info->va,
-            src_info->pitch, dst_info->pitch, src_info->width, src_info->height, src_info->devid, dst_info->devid);
+        svm_err(
+            "Convert 2d failed. (ret=%d; devid=%u; src_va=0x%llx; dst_va=0x%llx; spitch=%llu; dpitch=%llu; "
+            "width=%llu; height=%llu; src_devid=%u; dst_devid=%u)\n",
+            ret, devid, src_info->va, dst_info->va, src_info->pitch, dst_info->pitch, src_info->width, src_info->height,
+            src_info->devid, dst_info->devid);
         return ret;
     }
 
@@ -247,11 +270,6 @@ static struct svm_copy_ops g_pci_copy_ops = {
     .dma_desc_destroy = svm_pci_dma_desc_destroy,
     .sync_copy_2d = svm_pci_sync_copy_2d,
     .dma_desc_convert_2d = svm_pci_dma_desc_convert_2d,
-    .sync_copy_batch = svm_pci_sync_copy_batch
-};
+    .sync_copy_batch = svm_pci_sync_copy_batch};
 
-void svm_pci_memcpy_ops_register(u32 devid)
-{
-    svm_copy_ops_register(devid, &g_pci_copy_ops);
-}
-
+void svm_pci_memcpy_ops_register(u32 devid) { svm_copy_ops_register(devid, &g_pci_copy_ops); }

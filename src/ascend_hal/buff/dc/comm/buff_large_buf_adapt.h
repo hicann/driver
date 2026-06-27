@@ -16,4 +16,3 @@
 drvError_t buff_usr_alloc_large_buf(struct buff_req_mz_alloc_huge_buf *info);
 drvError_t buff_usr_free_large_buf(void *huge_mng, struct buff_req_mz_free_huge_buf *info);
 #endif
-

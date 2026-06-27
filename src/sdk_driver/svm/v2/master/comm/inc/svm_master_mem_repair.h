@@ -13,7 +13,7 @@
 
 #ifndef SVM_MASTER_MEM_REPAIR_H
 #define SVM_MASTER_MEM_REPAIR_H
-#include <linux/types.h>
+#include "ka_type.h"
 
 #include "devmm_proc_info.h"
 #include "svm_ioctl.h"
@@ -21,4 +21,3 @@
 int devmm_ioctl_mem_repair(struct devmm_svm_process *svm_proc, struct devmm_ioctl_arg *arg);
 
 #endif
-

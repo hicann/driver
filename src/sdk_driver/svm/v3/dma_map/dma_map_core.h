@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2025. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -23,4 +23,3 @@ void dma_map_addr_recycle(struct dma_map_ctx *ctx);
 int svm_dma_map_core_init(void);
 
 #endif
-

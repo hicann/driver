@@ -14,8 +14,6 @@
 #ifndef __DAVINCI_INTERFACE_H__
 #define __DAVINCI_INTERFACE_H__
 
-#include <linux/fs.h>
-
 #define DAVINIC_MODULE_NAME_MAX              256
 
 #define DAVINCI_INTF_DEV_NAME               "davinci_manager"

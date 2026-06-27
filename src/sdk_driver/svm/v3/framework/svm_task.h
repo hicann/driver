@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2025. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -13,16 +13,17 @@
 #ifndef SVM_TASK_H
 #define SVM_TASK_H
 
-#include <linux/types.h>
+#include "ka_type.h"
 #include "ka_common_pub.h"
-
 #include "pbl_task_ctx.h"
 
-/*
- * 2 is reserved for apm recycle scene, which process is released but hasn't delete task_ctx.
- * 3 is cp1, cp2, hccp.
- */
-#define SVM_MAX_TASK_PER_DEV ((64U * 2U) * 3U)
+#include "svm_pub.h"
+
+#define SVM_MAX_ALIVING_TASK_PER_DEV 64U
+/* 2 is reserved for apm recycle scene, which process is released but hasn't delete task_ctx. 3 is cp1, cp2, hccp. */
+#define SVM_MAX_TASK_PER_DEV_AGENT ((SVM_MAX_ALIVING_TASK_PER_DEV * 2U) * 3U)
+/* 2 is reserved for apm recycle scene, which process is released but hasn't delete task_ctx. */
+#define SVM_MAX_TASK_PER_HOST_AGENT ((SVM_MAX_ALIVING_TASK_PER_DEV * SVM_MAX_DEV_AGENT_NUM) * 2U)
 
 int svm_add_task(u32 udevid, int tgid, struct task_start_time *start_time);
 int svm_del_task(u32 udevid, int tgid, struct task_start_time *start_time);

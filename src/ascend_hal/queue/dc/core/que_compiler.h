@@ -10,13 +10,13 @@
 #ifndef QUE_COMPILER_H
 #define QUE_COMPILER_H
 
-#define que_align_up(val, al)       (((val) + ((typeof(val))(al) - 1)) & ~((typeof(val))(al) - 1))
-#define que_align_down(val, al)     ((val) & ~((typeof(val))(al) - 1))
+#define que_align_up(val, al) (((val) + ((typeof(val))(al) - 1)) & ~((typeof(val))(al) - 1))
+#define que_align_down(val, al) ((val) & ~((typeof(val))(al) - 1))
 
-#define que_likely(x)           __builtin_expect(!!(x), 1)
-#define que_unlikely(x)         __builtin_expect(!!(x), 0)
+#define que_likely(x) __builtin_expect(!!(x), 1)
+#define que_unlikely(x) __builtin_expect(!!(x), 0)
 
-#define que_min(x, y)           (((x) > (y)) ? (y) : (x))
-#define que_max(x, y)           (((x) > (y)) ? (x) : (y))
+#define que_min(x, y) (((x) > (y)) ? (y) : (x))
+#define que_max(x, y) (((x) > (y)) ? (x) : (y))
 
 #endif

@@ -1,24 +1,31 @@
+# ------------------------------------------------------------------------------------------------------------
+# Copyright (c) 2026 Huawei Technologies Co., Ltd.
+# This program is free software, you can redistribute it and/or modify it under the terms and conditions of
+# CANN Open Software License Agreement Version 2.0 (the "License").
+# Please refer to the License for details. You may not use this file except in compliance with the License.
+# THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+# INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+# See LICENSE in the root of the software repository for the full text of the License.
+# ------------------------------------------------------------------------------------------------------------
+
 EXTRA_CFLAGS += -isystem $(shell $(CC) -print-file-name=include)
 EXTRA_CFLAGS += -Iinclude/linux
 
 SVM_KERNEL_DIR := ${DRIVER_KERNEL_DIR}/svm/v3
-SVM_USER_DIR := ${DRIVER_USER_DIR}/svm/v3
 
 EXTRA_CFLAGS += -I${DRIVER_KERNEL_DIR}/inc
 EXTRA_CFLAGS += -I${DRIVER_KERNEL_DIR}/inc/pbl
 EXTRA_CFLAGS += -I${DRIVER_KERNEL_DIR}/inc/comm
 EXTRA_CFLAGS += -I${DRIVER_KERNEL_DIR}/kernel_adapt/include
-EXTRA_CFLAGS += -I${DRIVER_USER_DIR}/msnpureport/inc/libc_sec
 EXTRA_CFLAGS += -I${DRIVER_HAL_INC_DIR}
+EXTRA_CFLAGS += -I$(C_SEC_INCLUDE)
 
 EXTRA_CFLAGS += -DDRV_HOST
 
-EXTRA_CFLAGS += -I${SVM_USER_DIR}/inc/def
-EXTRA_CFLAGS += -I${SVM_USER_DIR}/command/msg
-EXTRA_CFLAGS += -I${SVM_USER_DIR}/urma_adapt/inc
-
 EXTRA_CFLAGS += -I${SVM_KERNEL_DIR}/command/msg
 EXTRA_CFLAGS += -I${SVM_KERNEL_DIR}/command/ioctl
+EXTRA_CFLAGS += -I${SVM_KERNEL_DIR}/command/ioctl/def
+EXTRA_CFLAGS += -I${SVM_KERNEL_DIR}/command/ioctl/uk_msg
 
 EXTRA_CFLAGS += -I${SVM_KERNEL_DIR}/inc
 EXTRA_CFLAGS += -I${SVM_KERNEL_DIR}/inc/framework
@@ -30,7 +37,7 @@ SVM_KERNEL_MASTER_SRCS += $(subst $(SVM_KERNEL_DIR)/,,$(wildcard $(SVM_KERNEL_DI
 SVM_KERNEL_MASTER_SRCS += $(subst $(SVM_KERNEL_DIR)/,,$(wildcard $(SVM_KERNEL_DIR)/dbi/core/*.c))
 SVM_KERNEL_MASTER_SRCS += $(subst $(SVM_KERNEL_DIR)/,,$(wildcard $(SVM_KERNEL_DIR)/um_handle/*.c))
 SVM_KERNEL_MASTER_SRCS += $(subst $(SVM_KERNEL_DIR)/,,$(wildcard $(SVM_KERNEL_DIR)/um_handle_adapt/host/*.c))
-SVM_KERNEL_MASTER_SRCS += $(subst $(SVM_KERNEL_DIR)/,,$(wildcard $(SVM_KERNEL_DIR)/cmd_handle/*.c))
+SVM_KERNEL_MASTER_SRCS += $(subst $(SVM_KERNEL_DIR)/,,$(wildcard $(SVM_KERNEL_DIR)/cmd_handle/host/*.c))
 SVM_KERNEL_MASTER_SRCS += $(subst $(SVM_KERNEL_DIR)/,,$(wildcard $(SVM_KERNEL_DIR)/kern_lib/*.c))
 SVM_KERNEL_MASTER_SRCS += $(subst $(SVM_KERNEL_DIR)/,,$(wildcard $(SVM_KERNEL_DIR)/kern_lib/normal_page/*.c))
 SVM_KERNEL_MASTER_SRCS += $(subst $(SVM_KERNEL_DIR)/,,$(wildcard $(SVM_KERNEL_DIR)/kern_lib/compound_large_page/*.c))
@@ -43,6 +50,7 @@ SVM_KERNEL_MASTER_SRCS += $(subst $(SVM_KERNEL_DIR)/,,$(wildcard $(SVM_KERNEL_DI
 SVM_KERNEL_MASTER_SRCS += $(subst $(SVM_KERNEL_DIR)/,,$(wildcard $(SVM_KERNEL_DIR)/pmq/*.c))
 SVM_KERNEL_MASTER_SRCS += $(subst $(SVM_KERNEL_DIR)/,,$(wildcard $(SVM_KERNEL_DIR)/pmq_adapt/agent/*.c))
 SVM_KERNEL_MASTER_SRCS += $(subst $(SVM_KERNEL_DIR)/,,$(wildcard $(SVM_KERNEL_DIR)/pmq_adapt/agent/host/*.c))
+SVM_KERNEL_MASTER_SRCS += $(subst $(SVM_KERNEL_DIR)/,,$(wildcard $(SVM_KERNEL_DIR)/mwl_adapt/agent/*.c))
 SVM_KERNEL_MASTER_SRCS += $(subst $(SVM_KERNEL_DIR)/,,$(wildcard $(SVM_KERNEL_DIR)/pmq_adapt/client/*.c))
 SVM_KERNEL_MASTER_SRCS += $(subst $(SVM_KERNEL_DIR)/,,$(wildcard $(SVM_KERNEL_DIR)/pmq_adapt/client/host/*.c))
 SVM_KERNEL_MASTER_SRCS += $(subst $(SVM_KERNEL_DIR)/,,$(wildcard $(SVM_KERNEL_DIR)/memcpy/*.c))
@@ -65,6 +73,7 @@ SVM_KERNEL_MASTER_SRCS += $(subst $(SVM_KERNEL_DIR)/,,$(wildcard $(SVM_KERNEL_DI
 SVM_KERNEL_MASTER_SRCS += $(subst $(SVM_KERNEL_DIR)/,,$(wildcard $(SVM_KERNEL_DIR)/ksvmm/*.c))
 SVM_KERNEL_MASTER_SRCS += $(subst $(SVM_KERNEL_DIR)/,,$(wildcard $(SVM_KERNEL_DIR)/pma/*.c))
 SVM_KERNEL_MASTER_SRCS += $(subst $(SVM_KERNEL_DIR)/,,$(wildcard $(SVM_KERNEL_DIR)/mms/*.c))
+SVM_KERNEL_MASTER_SRCS += $(subst $(SVM_KERNEL_DIR)/,,$(wildcard $(SVM_KERNEL_DIR)/soma/host/*.c))
 
 EXTRA_CFLAGS += -I$(SVM_KERNEL_DIR)/framework/
 EXTRA_CFLAGS += -I$(SVM_KERNEL_DIR)/host_dev/
@@ -73,6 +82,7 @@ EXTRA_CFLAGS += -I$(SVM_KERNEL_DIR)/dbi/
 EXTRA_CFLAGS += -I$(SVM_KERNEL_DIR)/um_handle/
 EXTRA_CFLAGS += -I$(SVM_KERNEL_DIR)/um_handle_adapt/host/
 EXTRA_CFLAGS += -I$(SVM_KERNEL_DIR)/cmd_handle/
+EXTRA_CFLAGS += -I$(SVM_KERNEL_DIR)/cmd_handle/host/
 EXTRA_CFLAGS += -I$(SVM_KERNEL_DIR)/kern_lib/
 EXTRA_CFLAGS += -I$(SVM_KERNEL_DIR)/kern_lib/normal_page/
 EXTRA_CFLAGS += -I$(SVM_KERNEL_DIR)/kern_lib/compound_large_page/
@@ -86,6 +96,7 @@ EXTRA_CFLAGS += -I$(SVM_KERNEL_DIR)/pmq
 EXTRA_CFLAGS += -I$(SVM_KERNEL_DIR)/pmq_adapt
 EXTRA_CFLAGS += -I$(SVM_KERNEL_DIR)/pmq_adapt/agent
 EXTRA_CFLAGS += -I$(SVM_KERNEL_DIR)/pmq_adapt/agent/host
+EXTRA_CFLAGS += -I$(SVM_KERNEL_DIR)/mwl_adapt/agent
 EXTRA_CFLAGS += -I$(SVM_KERNEL_DIR)/pmq_adapt/client
 EXTRA_CFLAGS += -I$(SVM_KERNEL_DIR)/pmq_adapt/client/host
 EXTRA_CFLAGS += -I$(SVM_KERNEL_DIR)/memcpy
@@ -109,6 +120,7 @@ EXTRA_CFLAGS += -I$(SVM_KERNEL_DIR)/ksvmm
 EXTRA_CFLAGS += -I$(SVM_KERNEL_DIR)/pma
 EXTRA_CFLAGS += -I$(SVM_KERNEL_DIR)/pma_ub
 EXTRA_CFLAGS += -I$(SVM_KERNEL_DIR)/mms
+EXTRA_CFLAGS += -I$(SVM_KERNEL_DIR)/soma/host
 
 EXTRA_CFLAGS += -DCFG_FEATURE_SHARE_LOG
 EXTRA_CFLAGS += -DCFG_FEATURE_HOST_LOG

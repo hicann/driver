@@ -23,7 +23,7 @@
 #define CPU_INFO_SIZE 256
 #define CPU_BITMAP_LEN 32
 #ifndef EMU_ST
-STATIC int dbl_get_available_cpumask(const char *file_path, cpumask_var_t *cpumask)
+STATIC int dbl_get_available_cpumask(const char *file_path, ka_cpumask_var_t *cpumask)
 {
     ka_file_t *file = NULL;
     char *buf = NULL;
@@ -73,7 +73,7 @@ STATIC int dbl_get_available_cpumask(const char *file_path, cpumask_var_t *cpuma
 }
 #endif
 
-void dbl_get_available_cpu(u32 phy_bitmap, u32 *number, u32 *bitmap)
+void dbl_get_available_cpu(u64 phy_bitmap, u32 *number, u64 *bitmap)
 {
     ka_cpumask_var_t available_cpumask;
     unsigned long bitmap_tmp = 0;
@@ -98,9 +98,7 @@ void dbl_get_available_cpu(u32 phy_bitmap, u32 *number, u32 *bitmap)
         return;
     }
 
-    ka_base_for_each_cpu(i, available_cpumask) {
-        available_bitmap |= (1U << i);
-    }
+    ka_base_for_each_cpu(i, available_cpumask) { available_bitmap |= (1U << i); }
 #endif
 
     (*bitmap) = phy_bitmap & available_bitmap;

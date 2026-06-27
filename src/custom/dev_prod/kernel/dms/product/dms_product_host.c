@@ -110,4 +110,3 @@ int devdrv_set_card_multi_die_policy(void *feature, char *in, u32 in_len, char *
     mutex_unlock(&g_multi_die_control.policy_mutex);
     return 0;
 }
- 

@@ -13,7 +13,7 @@
 
 #ifndef TRS_STARS_V1_FUNC_H
 #define TRS_STARS_V1_FUNC_H
-#include <linux/types.h>
+#include "ka_type.h"
 
 #include "trs_pub_def.h"
 #include "trs_stars_com.h"

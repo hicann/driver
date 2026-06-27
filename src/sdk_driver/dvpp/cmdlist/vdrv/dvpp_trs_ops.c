@@ -33,6 +33,7 @@ static int32_t get_svm_pa_list(ka_pid_t pid, dvpp_sqe_args *sqe_args, dvpp_share
     uint64_t pa_num = 0;
     uint64_t mem_list_size = 0;
     dvpp_svm_pa_info *pa_info = NULL;
+    uint64_t pa_info_size = 0;
     page_size = dvpp_get_page_size(pid, sqe_args->cmdbuf_uva, sqe_args->cmdbuf_size);
     if (page_size == 0) {
         DVPP_CMDLIST_LOG_ERROR("get page size fail.\n");
@@ -45,6 +46,12 @@ static int32_t get_svm_pa_list(ka_pid_t pid, dvpp_sqe_args *sqe_args, dvpp_share
         return -1;
     }
     mem_list_size = sizeof(uint64_t) * pa_num;
+    pa_info_size = sizeof(dvpp_svm_pa_info)  + mem_list_size * 2; // 2 mem_list_size
+    if (sqe_args->args_size + pa_info_size > blk->size) {
+        DVPP_CMDLIST_LOG_ERROR("args size:%llu and painfo size %llu bigger than blk size %llu\n",
+            sqe_args->args_size, pa_info_size, blk->size);
+        return -1;
+    }
 
     pa_info = (dvpp_svm_pa_info*)(sqe_args->args_addr + sqe_args->args_size);
     pa_info->pa_list = (uint64_t)(uintptr_t)(pa_info) + sizeof(dvpp_svm_pa_info);
@@ -58,7 +65,7 @@ static int32_t get_svm_pa_list(ka_pid_t pid, dvpp_sqe_args *sqe_args, dvpp_share
         return -1;
     }
 
-    // 临时方案，先put回去，防止内存无法释放
+    // put回去，防止内存无法释放
     dvpp_put_pa_list(pid, sqe_args->cmdbuf_uva, sqe_args->cmdbuf_size, pa_info);
 
     return 0;
@@ -92,23 +99,28 @@ static int32_t dvpp_trs_sqe_update(uint32_t devid, uint32_t tsid, int32_t pid, v
     }
 
     // 初始化共享内存池
-    if (g_share_mem_pool == NULL) {
-        ka_task_spin_lock(&g_share_mem_pool_lock);
-        if (g_share_mem_pool == NULL) {
-            g_share_mem_pool = dvpp_init_share_mem_pool(devid, sqe_args);
-            if (g_share_mem_pool == NULL) {
-                ka_task_spin_unlock(&g_share_mem_pool_lock);
+    if (g_share_mem_pool[devid] == NULL) {
+        ka_task_spin_lock(&g_share_mem_pool_lock[devid]);
+        if (g_share_mem_pool[devid] == NULL) {
+            g_share_mem_pool[devid] = dvpp_init_share_mem_pool(devid, sqe_args);
+            if (g_share_mem_pool[devid] == NULL) {
+                ka_task_spin_unlock(&g_share_mem_pool_lock[devid]);
                 return -1;
             }
         }
-        ka_task_spin_unlock(&g_share_mem_pool_lock);
+        ka_task_spin_unlock(&g_share_mem_pool_lock[devid]);
     }
 
     // 基于模块从共享内存池取出内存块
     // 用户态有反压机制，确保走到这里一定可以申请到内存块
-    blk = dvpp_get_share_mem_blk_from_pool(blk_type, mod_id, g_share_mem_pool);
+    blk = dvpp_get_share_mem_blk_from_pool(blk_type, mod_id, g_share_mem_pool[devid]);
     if (blk == NULL) {
         DVPP_CMDLIST_LOG_ERROR("get share memory block from pool fail.\n");
+        return -1;
+    }
+
+    if (sqe_args->args_size > blk->size) {
+        DVPP_CMDLIST_LOG_ERROR("args size %lu is bigger than blk size %llu.\n", sqe_args->args_size, blk->size);
         return -1;
     }
 
@@ -128,7 +140,7 @@ static int32_t dvpp_trs_sqe_update(uint32_t devid, uint32_t tsid, int32_t pid, v
     }
 
     // 这里保存offset，因为在物理机上基地址不一样
-    sqe_args->args_addr = (uintptr_t)(blk) - (uintptr_t)(g_share_mem_pool);
+    sqe_args->args_addr = (uintptr_t)(blk) - (uintptr_t)(g_share_mem_pool[devid]);
 
     return 0;
 }
@@ -180,6 +192,11 @@ static int32_t dvpp_gen_cmdlist_handler(dvpp_cmdlist_ioctl_args *arg)
     ret = dvpp_get_gen_cmdlist_info_from_ioctl(arg, &user_data, &pid, &devid, &phyid, &sqe);
     if (ret != 0) {
         return ret;
+    }
+
+    if (devid >= DVPP_VMNG_DEVICE_NUM_MAX) {
+        DVPP_CMDLIST_LOG_ERROR("invalid devid:%u must less than:%u\n", devid, DVPP_VMNG_DEVICE_NUM_MAX);
+        return -1;
     }
 
     // 完成cmdbuf的uva地址转pa地址，该处理只能在虚拟机侧完成

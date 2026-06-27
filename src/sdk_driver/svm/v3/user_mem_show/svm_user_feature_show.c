@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2025. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -28,8 +28,8 @@
 #include "framework_task.h"
 #include "framework_cmd.h"
 #include "svm_ioctl_ex.h"
-#include "svm_sub_event_type.h"
-#include "mem_show_msg.h"
+#include "svm_sub_event_type_uk_msg.h"
+#include "mem_show_uk_msg.h"
 #include "svm_user_feature_show.h"
 
 struct svm_mem_show_msg_sync {
@@ -43,11 +43,8 @@ struct svm_user_feature {
 };
 
 static struct svm_user_feature user_features[] = {
-    {USER_FEATURE_MALLOC_MNG, 0},
-    {USER_FEATURE_CACHE_MALLOC, 0},
-    {USER_FEATURE_PREFETCH, 0},
-    {USER_FEATURE_REGISTER, 0},
-    {USER_FEATURE_MEM_STAT, 0},
+    {USER_FEATURE_MALLOC_MNG, 0}, {USER_FEATURE_CACHE_MALLOC, 0}, {USER_FEATURE_PREFETCH, 0},
+    {USER_FEATURE_REGISTER, 0},   {USER_FEATURE_MEM_STAT, 0},
 };
 
 static u32 user_feature_num = USER_FEATURE_SHOW_NUM;
@@ -91,8 +88,9 @@ int user_feature_init_task(u32 udevid, int tgid, void *start_time)
         struct svm_user_feature *feature = &user_features[i];
         int ret = svm_task_set_feature_priv(task_ctx, feature->task_feature_id, feature->feature_name, NULL, NULL);
         if (ret != 0) {
-            svm_warn("Set feature priv failed. (udevid=%u; tgid=%d; task_feature_id=%d; feature_name=%s)\n",
-                udevid, tgid, feature->task_feature_id, feature->feature_name);
+            svm_warn(
+                "Set feature priv failed. (udevid=%u; tgid=%d; task_feature_id=%d; feature_name=%s)\n", udevid, tgid,
+                feature->task_feature_id, feature->feature_name);
         }
     }
 
@@ -181,7 +179,8 @@ static void user_feature_show(u32 udevid, int tgid, char *feature_name, u32 show
     buf_head->valid = 0;
     ret = user_feature_trigger_event(udevid, tgid, show_type, feature_name);
     if (ret != 0) {
-        ka_fs_seq_printf(seq, "notice user failed. (ret=%d; udevid=%u; tgid=%d; feature=%s)\n", ret, udevid, tgid, feature_name);
+        ka_fs_seq_printf(
+            seq, "notice user failed. (ret=%d; udevid=%u; tgid=%d; feature=%s)\n", ret, udevid, tgid, feature_name);
         return;
     }
 
@@ -258,7 +257,7 @@ int svm_user_feature_init(void)
         user_features[i].task_feature_id = svm_task_obtain_feature_id();
     }
 
-    svm_register_ioctl_cmd_handle(_IOC_NR(SVM_MEM_SHOW_FEATURE_ACK), user_feature_show_ioctl_ack);
+    svm_register_ioctl_cmd_handle(_KA_IOC_NR(SVM_MEM_SHOW_FEATURE_ACK), user_feature_show_ioctl_ack);
     return 0;
 }
 DECLAER_FEATURE_AUTO_INIT(svm_user_feature_init, FEATURE_LOADER_STAGE_6);

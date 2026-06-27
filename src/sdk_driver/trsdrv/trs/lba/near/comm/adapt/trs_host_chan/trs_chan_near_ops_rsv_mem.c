@@ -26,10 +26,7 @@
 /* stub for david ub scene start */
 #ifndef EMU_ST
 #ifdef CFG_FEATURE_SUPPORT_UB_CONNECTION
-int devdrv_devmem_addr_d2h(u32 devid, phys_addr_t device_phy_addr, phys_addr_t *host_bar_addr)
-{
-    return -1;
-}
+int devdrv_devmem_addr_d2h(u32 devid, phys_addr_t device_phy_addr, phys_addr_t *host_bar_addr) { return -1; }
 #endif
 #endif
 /* stub for david ub scene end */
@@ -100,10 +97,7 @@ static int _trs_chan_ops_rsv_mem_init(struct trs_id_inst *inst, int type)
     return ret;
 }
 
-static void _trs_chan_ops_rsv_mem_uninit(struct trs_id_inst *inst, int type)
-{
-    trs_rsv_mem_uninit(inst, type);
-}
+static void _trs_chan_ops_rsv_mem_uninit(struct trs_id_inst *inst, int type) { trs_rsv_mem_uninit(inst, type); }
 
 int trs_chan_near_sqcq_rsv_mem_h2d(struct trs_id_inst *inst, u64 host_addr, u64 *dev_addr)
 {
@@ -180,8 +174,8 @@ static int trs_chan_ops_dev_sqcq_rsv_mem_addr_init(struct trs_id_inst *inst)
 
     ret = trs_host_msg_send(inst->devid, &msg, sizeof(struct trs_msg_data));
     if (ret != 0) {
-        trs_err("Msg send fail. (devid=%u; tsid=%u; ret=%d; result=%d)\n",
-            inst->devid, inst->tsid, ret, msg.header.result);
+        trs_err(
+            "Msg send fail. (devid=%u; tsid=%u; ret=%d; result=%d)\n", inst->devid, inst->tsid, ret, msg.header.result);
         return -ENODEV;
     }
     ret = trs_chan_ops_update_sqcq_rsv_mem(inst, (phys_addr_t)info->addr, (size_t)info->size);
@@ -204,8 +198,4 @@ int trs_chan_near_ops_rsv_mem_init(struct trs_id_inst *inst)
     return ret;
 }
 
-void trs_chan_near_ops_rsv_mem_uninit(struct trs_id_inst *inst)
-{
-    _trs_chan_ops_rsv_mem_uninit(inst, RSV_MEM_HW_SQCQ);
-}
-
+void trs_chan_near_ops_rsv_mem_uninit(struct trs_id_inst *inst) { _trs_chan_ops_rsv_mem_uninit(inst, RSV_MEM_HW_SQCQ); }

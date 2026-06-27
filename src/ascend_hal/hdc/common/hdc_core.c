@@ -8,12 +8,10 @@
  * See LICENSE in the root of the software repository for the full text of the License.
  */
 
-
 #include <stdint.h>
 #include <sys/sysinfo.h>
 #include <sys/mman.h>
 
-#include "esched_user_interface.h"
 #include "dms_user_interface.h"
 #include "hdc_cmn.h"
 #include "hdc_cfg_parse.h"
@@ -24,6 +22,7 @@
 #include "hdcdrv_cmd_ioctl.h"
 #include "hdc_core.h"
 #include "hdc_adapt.h"
+#include "dmc_log_user.h"
 
 static unsigned int g_hdcPageSize = PAGE_SIZE;
 static unsigned int g_hdcHugePageSize = HUGE_PAGE_SIZE;
@@ -81,7 +80,7 @@ const char *g_errno_str[] = {
     "fast node search fail",
     "dma copy fail",
     "safe mem operation fail ",
-    "char dev creat fail",
+    "char dev create fail",
     "dma map fail",
     "find vma fail",
 };
@@ -142,7 +141,7 @@ mmProcess hdc_pcie_create_bind_fd(void)
             (void)fcntl(fd, F_SETFD, flag);
         }
         return fd;
-    } else if (g_hdcConfig.h2d_type == HDC_TRANS_USE_UB){
+    } else if (g_hdcConfig.h2d_type == HDC_TRANS_USE_UB) {
         return hdc_ub_open();
     } else {
         HDC_LOG_ERR("Variable h2d_type is invalid. (h2d_type=%#x)\n", g_hdcConfig.h2d_type);
@@ -187,11 +186,11 @@ STATIC hdcError_t hdc_get_trans_type(PCFGPARSE_CB_T handle, struct hdcConfig *co
             trans_type = atoi(value[0]);
             if ((trans_type > (int)HDC_TRANS_USE_PCIE) || (trans_type < 0)) {
                 HDC_LOG_INFO("Hdc Config File(hdcBasic.cfg) TRANS_TYPE not correct, "
-                    "Please Correct it And Restart Process hdcd. Use Default Type(PCIE)\n");
+                             "Please Correct it And Restart Process hdcd. Use Default Type(PCIE)\n");
             }
         } else {
             HDC_LOG_INFO("Hdc Config File(hdcBasic.cfg) TRANS_TYPE not correct, "
-                "Please Correct it And Restart Process hdcd. Use Default Type(PCIE)\n");
+                         "Please Correct it And Restart Process hdcd. Use Default Type(PCIE)\n");
         }
         config->trans_type = (enum halHdcTransType)trans_type;
     } else {
@@ -257,11 +256,12 @@ STATIC void hdc_sys_mem_info_show(unsigned int log_level)
     huge_page_free = si.freehigh / MEM_SIZE_1M;
 
     if (log_level == HDC_MEM_LOG_LEVEL_ERR) {
-        HDC_LOG_ERR("The current system mem_information. (MemTotal=%ul; MemFree=%ul; Buffers=%ul; HugeFree=%ul)\n",
-            memTotal, memFree, buffers, huge_page_free);
+        HDC_LOG_ERR("The current system mem_information. (MemTotal=%u; MemFree=%u; Buffers=%u; HugeFree=%u)\n",
+                    (unsigned int)memTotal, (unsigned int)memFree, (unsigned int)buffers, (unsigned int)huge_page_free);
     } else {
-        HDC_LOG_WARN("The current system mem_information. (MemTotal=%ul; MemFree=%ul; Buffers=%ul; HugeFree=%ul)\n",
-            memTotal, memFree, buffers, huge_page_free);
+        HDC_LOG_WARN("The current system mem_information. (MemTotal=%u; MemFree=%u; Buffers=%u; HugeFree=%u)\n",
+                     (unsigned int)memTotal, (unsigned int)memFree, (unsigned int)buffers,
+                     (unsigned int)huge_page_free);
     }
 #endif
 }
@@ -330,24 +330,27 @@ STATIC void hdc_mem_info_show(unsigned int log_level)
 
     if (log_level == HDC_MEM_LOG_LEVEL_ERR) {
         HDC_LOG_ERR("Get huge mem_information. (alloc_count=%llu; free_count=%llu; alloc_size=%llu; free_size=%llu)\n",
-            mem_stat_show.huge_alloc_count, mem_stat_show.huge_free_count,
-            mem_stat_show.huge_alloc_size, mem_stat_show.huge_free_size);
+                    mem_stat_show.huge_alloc_count, mem_stat_show.huge_free_count, mem_stat_show.huge_alloc_size,
+                    mem_stat_show.huge_free_size);
         HDC_LOG_ERR("Get va32 mem_information. (alloc_count=%llu; free_count=%llu; alloc_size=%llu; free_size=%llu)\n",
-            mem_stat_show.va32bit_alloc_count, mem_stat_show.va32bit_free_count,
-            mem_stat_show.va32bit_alloc_size, mem_stat_show.va32bit_free_size);
+                    mem_stat_show.va32bit_alloc_count, mem_stat_show.va32bit_free_count,
+                    mem_stat_show.va32bit_alloc_size, mem_stat_show.va32bit_free_size);
         HDC_LOG_ERR("Get total mem_information. (alloc_count=%llu; free_count=%llu; alloc_size=%llu; free_size=%llu)\n",
-            mem_stat_show.total_alloc_count, mem_stat_show.total_free_count,
-            mem_stat_show.total_alloc_size, mem_stat_show.total_free_size);
+                    mem_stat_show.total_alloc_count, mem_stat_show.total_free_count, mem_stat_show.total_alloc_size,
+                    mem_stat_show.total_free_size);
     } else {
         HDC_LOG_WARN("Get huge mem_information. (alloc_count=%llu; free_count=%llu;"
-            "alloc_size=%llu; free_size=%llu)\n", mem_stat_show.huge_alloc_count,
-            mem_stat_show.huge_free_count, mem_stat_show.huge_alloc_size, mem_stat_show.huge_free_size);
+                     "alloc_size=%llu; free_size=%llu)\n",
+                     mem_stat_show.huge_alloc_count, mem_stat_show.huge_free_count, mem_stat_show.huge_alloc_size,
+                     mem_stat_show.huge_free_size);
         HDC_LOG_WARN("Get va32 mem_information. (alloc_count=%llu; free_count=%llu;"
-            "alloc_size=%llu; free_size=%llu)\n", mem_stat_show.va32bit_alloc_count,
-            mem_stat_show.va32bit_free_count, mem_stat_show.va32bit_alloc_size, mem_stat_show.va32bit_free_size);
+                     "alloc_size=%llu; free_size=%llu)\n",
+                     mem_stat_show.va32bit_alloc_count, mem_stat_show.va32bit_free_count,
+                     mem_stat_show.va32bit_alloc_size, mem_stat_show.va32bit_free_size);
         HDC_LOG_WARN("Get total mem_information. (alloc_count=%llu; free_count=%llu;"
-            "alloc_size=%llu; free_size=%llu)\n", mem_stat_show.total_alloc_count,
-            mem_stat_show.total_free_count, mem_stat_show.total_alloc_size, mem_stat_show.total_free_size);
+                     "alloc_size=%llu; free_size=%llu)\n",
+                     mem_stat_show.total_alloc_count, mem_stat_show.total_free_count, mem_stat_show.total_alloc_size,
+                     mem_stat_show.total_free_size);
     }
 
 #endif
@@ -355,10 +358,10 @@ STATIC void hdc_mem_info_show(unsigned int log_level)
 
 STATIC signed int drv_hdc_get_page_size(mmProcess handle)
 {
-    signed int ret;
-    unsigned int hdc_page_size = 0;
     unsigned int hdc_huge_page_size = 0;
     unsigned int hdc_page_size_bit = 0;
+    unsigned int hdc_page_size = 0;
+    signed int ret;
 
     if (handle == (mmProcess)EN_ERROR) {
         HDC_LOG_ERR("Input parameter is error.\n");
@@ -381,16 +384,15 @@ STATIC signed int drv_hdc_get_page_size(mmProcess handle)
 
 STATIC hdcError_t hdc_init_get(PCFGPARSE_CB_T handle, struct hdcConfig *hdcConfig)
 {
-    hdcError_t  ret;
+    hdcError_t ret;
 
     if ((ret = hdc_get_segment_config(handle, hdcConfig)) != DRV_ERROR_NONE) {
         HDC_LOG_INFO("Can not get segment Config. (socket=%d; pcie=%d)\n", hdcConfig->socket_segment,
-            hdcConfig->pcie_segment);
+                     hdcConfig->pcie_segment);
         return ret;
     }
     if ((ret = hdc_get_trans_type(handle, hdcConfig)) != DRV_ERROR_NONE) {
-        HDC_LOG_INFO("Trans_Type not in Config File, use default trans_type.(trans_type=%d)\n",
-            hdcConfig->trans_type);
+        HDC_LOG_INFO("Trans_Type not in Config File, use default trans_type.(trans_type=%d)\n", hdcConfig->trans_type);
     }
 
     return ret;
@@ -401,13 +403,13 @@ void *drv_hdc_zalloc(size_t size)
     void *pBuf = NULL;
 
     if (size == 0) {
-        HDC_LOG_ERR("Input parameter is error. (size=%u)\n", size);
+        HDC_LOG_ERR("Input parameter is error. (size=%lu)\n", (unsigned long)size);
         return NULL;
     }
 
     pBuf = malloc(size);
     if (pBuf == NULL) {
-        HDC_LOG_ERR("Call malloc failed. (size=%u)\n", size);
+        HDC_LOG_ERR("Call malloc failed. (size=%lu)\n", (unsigned long)size);
         return NULL;
     }
 
@@ -542,8 +544,8 @@ STATIC int hdc_get_h2d_type(struct hdcConfig *hdcConfig)
 
 hdcError_t hdc_init(struct hdcConfig *hdcConfig)
 {
-    PCFGPARSE_CB_T handle = NULL;
     hdcError_t ret = DRV_ERROR_NONE;
+    PCFGPARSE_CB_T handle = NULL;
     signed int result;
 
     HDC_SHARE_LOG_CREATE();
@@ -612,8 +614,9 @@ signed int drv_hdc_socket_send(signed int sockfd, const char *buf, signed int le
 
     sendLen = send(sockfd, (void *)&msg_len, sizeof(signed int), MSG_NOSIGNAL);
     if (sendLen != sizeof(signed int)) {
-        HDC_LOG_ERR("Send data failed. (sockfd=%d; StrError=\"%s\"; errno=%d; sendLen=%d; len=%d; sizeof_int=%d)\n",
-            sockfd, StrError(mm_get_error_code()), mm_get_error_code(), sendLen, len, (signed int)sizeof(signed int));
+        HDC_LOG_ERR("Send data failed. (sockfd=%d; StrError=\"%s\"; errno=%d; sendLen=%ld; len=%d; sizeof_int=%d)\n",
+                    sockfd, StrError(mm_get_error_code()), mm_get_error_code(), (long)sendLen, len,
+                    (signed int)sizeof(signed int));
         return DRV_ERROR_SEND_MESG;
     }
 
@@ -623,8 +626,8 @@ signed int drv_hdc_socket_send(signed int sockfd, const char *buf, signed int le
         } while ((ret < 0) && (mm_get_error_code() == EINTR));
 
         if (ret < 0) {
-            HDC_LOG_ERR("(Send data failed. (sockfd=%d; StrError=\"%s\"; errno=%d; sendLen=%d; len=%d)\n", sockfd,
-                StrError(mm_get_error_code()), mm_get_error_code(), sendLen, len);
+            HDC_LOG_ERR("(Send data failed. (sockfd=%d; StrError=\"%s\"; errno=%d; sendLen=%ld; len=%d)\n", sockfd,
+                        StrError(mm_get_error_code()), mm_get_error_code(), (long)sendLen, len);
             return DRV_ERROR_SEND_MESG;
         }
         buf_pos += ret;
@@ -632,6 +635,23 @@ signed int drv_hdc_socket_send(signed int sockfd, const char *buf, signed int le
     }
 
     return DRV_ERROR_NONE;
+}
+
+#define HDC_REPORT_ERR_MSG_STR_LEN 32
+#define HDC_OUT_OF_MEM_ERROR_MSG_ARG_NUM 2
+void hdc_report_out_of_mem_err_msg(size_t size)
+{
+    char size_str[HDC_REPORT_ERR_MSG_STR_LEN] = {0};
+    const char *key[] = {"size", "moduleName"};
+    const char *value[] = {size_str, "hdc"};
+    int ret;
+
+    ret = snprintf_s(size_str, sizeof(size_str), sizeof(size_str) - 1, "%zu bytes", size);
+    if (ret < 0) {
+        HDC_LOG_ERR("snprintf_s error(size=%lu).\n", (unsigned long)size);
+        return;
+    }
+    REPORT_PREDEFINED_ERR_MSG("EL0018", key, value, HDC_OUT_OF_MEM_ERROR_MSG_ARG_NUM);
 }
 
 STATIC void drv_socket_set_recv_time_out(signed int sockfd, signed int wait, unsigned long timeout)
@@ -681,7 +701,7 @@ STATIC void drv_socket_clean_recv_time_out(signed int sockfd, signed int wait, u
 hdcError_t hdc_socket_recv_peek(signed int sockfd, unsigned int *msg_len, signed int wait, unsigned int timeout)
 {
     signed int error_code = 0;
-    struct timespec now_time = { 0, 0 };
+    struct timespec now_time = {0, 0};
     unsigned long start_time;
     unsigned long cost_time = 0;
     unsigned int recvlen;
@@ -697,7 +717,7 @@ hdcError_t hdc_socket_recv_peek(signed int sockfd, unsigned int *msg_len, signed
             error_code = mm_get_error_code();
             (void)clock_gettime(CLOCK_MONOTONIC, &now_time);
             cost_time = ((unsigned long)((now_time.tv_sec * CONVERT_MS_TO_S) + (now_time.tv_nsec / CONVERT_MS_TO_NS)) -
-                start_time);
+                         start_time);
             if (cost_time >= (unsigned long)timeout) {
                 ret = 0;
             }
@@ -707,15 +727,15 @@ hdcError_t hdc_socket_recv_peek(signed int sockfd, unsigned int *msg_len, signed
     drv_socket_clean_recv_time_out(sockfd, wait, timeout);
 
     if (ret == 0) {
-        HDC_LOG_INFO("Client connection closed. (Closed reason=\"%s\"; errno=%d; sock=%d)\n",
-            StrError(error_code), error_code, sockfd);
+        HDC_LOG_INFO("Client connection closed. (Closed reason=\"%s\"; errno=%d; sock=%d)\n", StrError(error_code),
+                     error_code, sockfd);
         return DRV_ERROR_SOCKET_CLOSE;
     } else if (ret < 0) {
         if (error_code == EAGAIN) {
             return DRV_ERROR_WAIT_TIMEOUT;
         } else {
-            HDC_LOG_ERR("Receive error. (StrError=\"%s\"; errno=%d; sock=%d)\n",
-                        StrError(error_code), error_code, sockfd);
+            HDC_LOG_ERR("Receive error. (StrError=\"%s\"; errno=%d; sock=%d)\n", StrError(error_code), error_code,
+                        sockfd);
             return DRV_ERROR_RECV_MESG;
         }
     } else if (ret != sizeof(signed int)) {
@@ -744,12 +764,12 @@ signed int drv_hdc_socket_recv(signed int sockfd, char *pBuf, unsigned int msgLe
     } while ((ret < 0) && (mm_get_error_code() == EINTR));
 
     if (ret == 0) {
-        HDC_LOG_ERR("Client connection closed. (StrError=\"%s\"; errno=%d; sock=%d)\n",
-            StrError(mm_get_error_code()), mm_get_error_code(), sockfd);
+        HDC_LOG_ERR("Client connection closed. (StrError=\"%s\"; errno=%d; sock=%d)\n", StrError(mm_get_error_code()),
+                    mm_get_error_code(), sockfd);
         return DRV_ERROR_SOCKET_CLOSE;
     } else if (ret < 0) {
-        HDC_LOG_ERR("Receive error. (StrError=\"%s\"; errno=%d; sock=%d)\n",
-            StrError(mm_get_error_code()), mm_get_error_code(), sockfd);
+        HDC_LOG_ERR("Receive error. (StrError=\"%s\"; errno=%d; sock=%d)\n", StrError(mm_get_error_code()),
+                    mm_get_error_code(), sockfd);
         return DRV_ERROR_RECV_MESG;
     }
 
@@ -770,11 +790,11 @@ signed int drv_hdc_socket_recv(signed int sockfd, char *pBuf, unsigned int msgLe
 
         if (ret == 0) {
             HDC_LOG_ERR("Client connection closed. (StrError=\"%s\"; errno=%d; sock=%d)\n",
-                StrError(mm_get_error_code()), mm_get_error_code(), sockfd);
+                        StrError(mm_get_error_code()), mm_get_error_code(), sockfd);
             return DRV_ERROR_SOCKET_CLOSE;
         } else if (ret < 0) {
-            HDC_LOG_ERR("Receive error. (StrError=\"%s\"; errno=%d; sock=%d)\n",
-                StrError(mm_get_error_code()), mm_get_error_code(), sockfd);
+            HDC_LOG_ERR("Receive error. (StrError=\"%s\"; errno=%d; sock=%d)\n", StrError(mm_get_error_code()),
+                        mm_get_error_code(), sockfd);
             return DRV_ERROR_RECV_MESG;
         }
         buf_pos += (unsigned int)ret;
@@ -832,8 +852,8 @@ STATIC void drv_hdc_init_buf(const void *buf, unsigned int init_flag, unsigned i
     }
 }
 
-STATIC signed int drv_hdc_malloc_para_check(enum drvHdcMemType mem_type, unsigned int align,
-    unsigned int len, unsigned int flag)
+STATIC signed int drv_hdc_malloc_para_check(enum drvHdcMemType mem_type, unsigned int align, unsigned int len,
+                                            unsigned int flag)
 {
     if (g_hdcConfig.trans_type != HDC_TRANS_USE_PCIE) {
         HDC_LOG_ERR("Socket mode not support. (mem_type=%d)\n", mem_type);
@@ -867,17 +887,16 @@ STATIC signed int drv_hdc_malloc_para_check(enum drvHdcMemType mem_type, unsigne
     return drv_hdc_alloc_len_check(mem_type, len, flag);
 }
 
-STATIC void drv_hdc_mmap_fail_info_show(enum drvHdcMemType mem_type, unsigned int alloc_len,
-    unsigned int flag)
+STATIC void drv_hdc_mmap_fail_info_show(enum drvHdcMemType mem_type, unsigned int alloc_len, unsigned int flag)
 {
     if (HDC_BIT_MAP_IS_HUGE(flag) == 0) {
         HDC_LOG_ERR("Mmap failed. (mem_type=%d; errno=%d; StrError=\"%s\"; len=%u; flag=%u)\n", mem_type,
-            mm_get_error_code(), StrError(mm_get_error_code()), alloc_len, flag);
+                    mm_get_error_code(), StrError(mm_get_error_code()), alloc_len, flag);
         hdc_mem_info_show(HDC_MEM_LOG_LEVEL_ERR);
         hdc_sys_mem_info_show(HDC_MEM_LOG_LEVEL_ERR);
     } else {
         HDC_LOG_WARN("Mmap not success. (mem_type=%d; errno=%d; StrError=\"%s\"; len=%d; flag=%d)\n", mem_type,
-            mm_get_error_code(), StrError(mm_get_error_code()), alloc_len, flag);
+                     mm_get_error_code(), StrError(mm_get_error_code()), alloc_len, flag);
         hdc_mem_info_show(HDC_MEM_LOG_LEVEL_WARN);
         hdc_sys_mem_info_show(HDC_MEM_LOG_LEVEL_WARN);
     }
@@ -995,8 +1014,8 @@ hdcError_t drvHdcFreeEx(enum drvHdcMemType mem_type, void *buf)
     }
 
     if (munmap(buf, len) != 0) {
-        HDC_LOG_ERR("Call munmap failed. (STRERROR=\"%s\"; errno=%d; len=%d)\n",
-            StrError(mm_get_error_code()), mm_get_error_code(), len);
+        HDC_LOG_ERR("Call munmap failed. (STRERROR=\"%s\"; errno=%d; len=%d)\n", StrError(mm_get_error_code()),
+                    mm_get_error_code(), len);
     }
 
     hdc_mem_info_update(mem_flag, len, HDC_MEM_FREE);
@@ -1031,8 +1050,8 @@ hdcError_t drvHdcDmaMap(enum drvHdcMemType mem_type, void *buf, signed int devid
 
     ret = hdc_pcie_dma_map(g_hdcConfig.pcie_handle, (signed int)mem_type, (uintptr_t)buf, devid);
     if (ret != DRV_ERROR_NONE) {
-        HDC_LOG_ERR("DMA map failed. (errno=%d; STRERROR=\"%s\"; mem_type=%d; dev_id=%d)\n",
-            ret, STRERROR(ret), mem_type, devid);
+        HDC_LOG_ERR("DMA map failed. (errno=%d; STRERROR=\"%s\"; mem_type=%d; dev_id=%d)\n", ret, STRERROR(ret),
+                    mem_type, devid);
         return DRV_ERROR_IOCRL_FAIL;
     }
 
@@ -1058,10 +1077,8 @@ hdcError_t drvHdcDmaUnMap(enum drvHdcMemType mem_type, void *buf)
         return DRV_ERROR_NOT_SUPPORT;
     }
 
-    if ((ret = hdc_pcie_dma_unmap(g_hdcConfig.pcie_handle, (signed int)mem_type,
-        (uintptr_t)buf)) != DRV_ERROR_NONE) {
-        HDC_LOG_ERR("DMA unmap failed. (errno=%d; STRERROR=\"%s\"; mem_type=%d)\n",
-            ret, STRERROR(ret), mem_type);
+    if ((ret = hdc_pcie_dma_unmap(g_hdcConfig.pcie_handle, (signed int)mem_type, (uintptr_t)buf)) != DRV_ERROR_NONE) {
+        HDC_LOG_ERR("DMA unmap failed. (errno=%d; STRERROR=\"%s\"; mem_type=%d)\n", ret, STRERROR(ret), mem_type);
         return DRV_ERROR_IOCRL_FAIL;
     }
 
@@ -1092,10 +1109,10 @@ hdcError_t drvHdcDmaReMap(enum drvHdcMemType mem_type, void *buf, signed int dev
         return DRV_ERROR_NOT_SUPPORT;
     }
 
-    if ((ret = hdc_pcie_dma_remap(g_hdcConfig.pcie_handle, (signed int)mem_type,
-        (uintptr_t)buf, devid)) != DRV_ERROR_NONE) {
-        HDC_LOG_ERR("DMA remap failed. (errno=%d; STRERROR=\"%s\"; mem_type=%d; dev_id=%d)\n",
-            ret, STRERROR(ret), mem_type, devid);
+    if ((ret = hdc_pcie_dma_remap(g_hdcConfig.pcie_handle, (signed int)mem_type, (uintptr_t)buf, devid)) !=
+        DRV_ERROR_NONE) {
+        HDC_LOG_ERR("DMA remap failed. (errno=%d; STRERROR=\"%s\"; mem_type=%d; dev_id=%d)\n", ret, STRERROR(ret),
+                    mem_type, devid);
         return DRV_ERROR_IOCRL_FAIL;
     }
 
@@ -1103,23 +1120,23 @@ hdcError_t drvHdcDmaReMap(enum drvHdcMemType mem_type, void *buf, signed int dev
 }
 
 /*****************************************************************************
-   Function Name         : drvHdcAllocMsg
-   Function Description  : Apply for MSG descriptor for sending and receiving
-   Input Parameters      : HDC_SESSION session        Specify in which session to receive data
-                           signed int count           Number of buffers in the message descriptor. Currently only one
-                                                      is supported
-   Output Parameters     : struct drvHdcMsg *ppMsg    Message descriptor pointer, used to store the send and receive
-                                                      buffer address and length
-   Return Value          : DRV_ERROR_NONE
-                           DRV_ERROR_INVALID_VALUE
-   Caller Function       :
-   Called Function       :
-
-   Modification History  :
-   1.Date                : January 15, 2018
-    Modification         : New generated function
-
-*****************************************************************************/
+ * Function Name         : drvHdcAllocMsg
+ * Function Description  : Apply for MSG descriptor for sending and receiving
+ * Input Parameters      : HDC_SESSION session        Specify in which session to receive data
+ *                        signed int count           Number of buffers in the message descriptor. Currently only one
+ *                                                   is supported
+ * Output Parameters     : struct drvHdcMsg *ppMsg    Message descriptor pointer, used to store the send and receive
+ *                                                   buffer address and length
+ * Return Value          : DRV_ERROR_NONE
+ *                        DRV_ERROR_INVALID_VALUE
+ * Caller Function       :
+ * Called Function       :
+ *
+ * Modification History  :
+ * 1.Date                : January 15, 2018
+ *  Modification         : New generated function
+ *
+ *****************************************************************************/
 hdcError_t drvHdcAllocMsg(HDC_SESSION session, struct drvHdcMsg **ppMsg, signed int count)
 {
     struct hdc_server_session *p_serv_session = NULL;
@@ -1157,7 +1174,7 @@ hdcError_t drvHdcAllocMsg(HDC_SESSION session, struct drvHdcMsg **ppMsg, signed 
 
     p_hdc_msg_head->freeBuf = false;
     p_hdc_msg_head->msg.count = count;
-    if(p_hdc_msg_head->msg.bufList[0].pBuf != NULL) {
+    if (p_hdc_msg_head->msg.bufList[0].pBuf != NULL) {
         HDC_LOG_WARN("pbuf is not null.\n");
         p_hdc_msg_head->msg.bufList[0].pBuf = NULL;
     }
@@ -1168,20 +1185,20 @@ hdcError_t drvHdcAllocMsg(HDC_SESSION session, struct drvHdcMsg **ppMsg, signed 
 }
 
 /*****************************************************************************
-   Function Name         : drvHdcFreeMsg
-   Function Description  : Release MSG descriptor for sending and receiving
-   Input Parameters      : struct drvHdcMsg *msg     Pointer to message descriptor to be released
-   Output Parameters     : None
-   Return Value          : DRV_ERROR_NONE
-                           DRV_ERROR_INVALID_VALUE
-   Caller Function       :
-   Called Function       :
-
-   Modification History  :
-   1.Date                : January 15, 2018
-    Modification         : New generated function
-
-*****************************************************************************/
+ * Function Name         : drvHdcFreeMsg
+ * Function Description  : Release MSG descriptor for sending and receiving
+ * Input Parameters      : struct drvHdcMsg *msg     Pointer to message descriptor to be released
+ * Output Parameters     : None
+ * Return Value          : DRV_ERROR_NONE
+ *                        DRV_ERROR_INVALID_VALUE
+ * Caller Function       :
+ * Called Function       :
+ *
+ * Modification History  :
+ * 1.Date                : January 15, 2018
+ *  Modification         : New generated function
+ *
+ *****************************************************************************/
 hdcError_t drvHdcFreeMsg(struct drvHdcMsg *msg)
 {
     struct hdc_msg_head *p_hdc_msg_head = NULL;
@@ -1202,10 +1219,10 @@ hdcError_t drvHdcFreeMsg(struct drvHdcMsg *msg)
     /* Release two parts: 1 p_hdc_msg_head, 2 the address pointed to by pBuf in drvHdcMsgBuf. */
     /* Memory allocated by the caller must be released by the caller themselves;
        the driver only releases the memory allocated by the driver. */
-    p_hdc_msg_head = container_of(msg, struct hdc_msg_head, msg);  //lint !e102 !e42
+    p_hdc_msg_head = container_of(msg, struct hdc_msg_head, msg); // lint !e102 !e42
 
     /* free is false, no need to free pBuf */
-    if (!p_hdc_msg_head->freeBuf) {  //lint !e413
+    if (!p_hdc_msg_head->freeBuf) { // lint !e413
         free(p_hdc_msg_head);
         return DRV_ERROR_NONE;
     }
@@ -1225,27 +1242,27 @@ hdcError_t drvHdcFreeMsg(struct drvHdcMsg *msg)
 }
 
 /*****************************************************************************
-   Function Name         : drvHdcReuseMsg
-   Function Description  : Reuse MSG descriptor
-   Input Parameters      : struct drvHdcMsg *msg     The pointer of message need to Reuse
-   Output Parameters     : None
-   Return Value          : DRV_ERROR_NONE
-                           DRV_ERROR_INVALID_VALUE
-   Caller Function       :
-   Called Function       :
-
-   Modification History  :
-   1.Date                : January 15, 2018
-    Modification         : New generated function
-
-*****************************************************************************/
+ * Function Name         : drvHdcReuseMsg
+ * Function Description  : Reuse MSG descriptor
+ * Input Parameters      : struct drvHdcMsg *msg     The pointer of message need to Reuse
+ * Output Parameters     : None
+ * Return Value          : DRV_ERROR_NONE
+ *                        DRV_ERROR_INVALID_VALUE
+ * Caller Function       :
+ * Called Function       :
+ *
+ * Modification History  :
+ * 1.Date                : January 15, 2018
+ *  Modification         : New generated function
+ *
+ *****************************************************************************/
 hdcError_t drvHdcReuseMsg(struct drvHdcMsg *msg)
 {
     struct hdc_msg_head *p_hdc_msg_head = NULL;
     struct drvHdcMsgBuf *p_msg_buf = NULL;
+    bool freeBuf = false;
     unsigned int buf_num;
     unsigned int count;
-    bool freeBuf = false;
 
     if (msg == NULL) {
         HDC_LOG_ERR("Input parameter msg is NULL.\n");
@@ -1257,8 +1274,8 @@ hdcError_t drvHdcReuseMsg(struct drvHdcMsg *msg)
         return DRV_ERROR_INVALID_VALUE;
     }
 
-    p_hdc_msg_head = container_of(msg, struct hdc_msg_head, msg);  //lint !e102 !e14 !e42 !e564
-    freeBuf = p_hdc_msg_head->freeBuf;                            //lint !e413
+    p_hdc_msg_head = container_of(msg, struct hdc_msg_head, msg); // lint !e102 !e14 !e42 !e564
+    freeBuf = p_hdc_msg_head->freeBuf;                            // lint !e413
 
     /* only support offline */
     p_msg_buf = msg->bufList;
@@ -1272,29 +1289,29 @@ hdcError_t drvHdcReuseMsg(struct drvHdcMsg *msg)
     }
 
     /* �ͷű�־ҲҪ�ָ���false */
-    p_hdc_msg_head->freeBuf = false;  //lint !e413
+    p_hdc_msg_head->freeBuf = false; // lint !e413
     return DRV_ERROR_NONE;
 }
 
 /*****************************************************************************
-   Function Name         : drvHdcAddMsgBuffer
-   Function Description  : Add the receiving and sending buffer to the MSG descriptor
-   Input Parameters      : struct drvHdcMsg *msg  The pointer of the message need to be operated
-                           char *pBuf             Buffer pointer to be added
-                           signed int len         The length of the effective data to be added
-   Output Parameters     : None
-   Return Value          : DRV_ERROR_NONE
-                           DRV_ERROR_INVALID_VALUE
-   Caller Function       :
-   Called Function       :
-
-   Modification History  :
-   1.Date                : January 15, 2018
-    Modification         : New generated function
-
-*****************************************************************************/
+ * Function Name         : drvHdcAddMsgBuffer
+ * Function Description  : Add the receiving and sending buffer to the MSG descriptor
+ * Input Parameters      : struct drvHdcMsg *msg  The pointer of the message need to be operated
+ *                        char *pBuf             Buffer pointer to be added
+ *                        signed int len         The length of the effective data to be added
+ * Output Parameters     : None
+ * Return Value          : DRV_ERROR_NONE
+ *                        DRV_ERROR_INVALID_VALUE
+ * Caller Function       :
+ * Called Function       :
+ *
+ * Modification History  :
+ * 1.Date                : January 15, 2018
+ *  Modification         : New generated function
+ *
+ *****************************************************************************/
 hdcError_t drvHdcAddMsgBuffer(struct drvHdcMsg *msg, char *pBuf, signed int len)
-{//lint !e564
+{ // lint !e564
     struct drvHdcMsgBuf *p_msg_buf = NULL;
     unsigned int buf_num;
     unsigned int count;
@@ -1340,23 +1357,23 @@ hdcError_t drvHdcAddMsgBuffer(struct drvHdcMsg *msg, char *pBuf, signed int len)
 }
 
 /*****************************************************************************
-   Function Name         : drvHdcGetMsgBuffer
-   Function Description  : Pointer to the message descriptor to be manipulated
-   Input Parameters      : struct drvHdcMsg *msg  Pointer to the message descriptor to be operated
-                           signed int index       The first several buffers need to be obtained, but currently only
-                                                  supports one, be fixed to 0
-   Output Parameters     : char **pBuf           Obtained Buffer pointer
-                           signed int *pLen      Length of valid data that can be obtained from the Buffer
-   Return Value          : DRV_ERROR_NONE
-                           DRV_ERROR_INVALID_VALUE
-   Caller Function       :
-   Called Function       :
-
-   Modification History  :
-   1.Date                : January 15, 2018
-    Modification         : New generated function
-
-*****************************************************************************/
+ * Function Name         : drvHdcGetMsgBuffer
+ * Function Description  : Pointer to the message descriptor to be manipulated
+ * Input Parameters      : struct drvHdcMsg *msg  Pointer to the message descriptor to be operated
+ *                        signed int index       The first several buffers need to be obtained, but currently only
+ *                                                supports one, be fixed to 0
+ * Output Parameters     : char **pBuf           Obtained Buffer pointer
+ *                        signed int *pLen      Length of valid data that can be obtained from the Buffer
+ * Return Value          : DRV_ERROR_NONE
+ *                        DRV_ERROR_INVALID_VALUE
+ * Caller Function       :
+ * Called Function       :
+ *
+ * Modification History  :
+ * 1.Date                : January 15, 2018
+ *  Modification         : New generated function
+ *
+ *****************************************************************************/
 hdcError_t drvHdcGetMsgBuffer(struct drvHdcMsg *msg, signed int index, char **pBuf, signed int *pLen)
 {
     struct drvHdcMsgBuf *p_msg_buf = NULL;
@@ -1462,7 +1479,7 @@ STATIC hdcError_t drv_hdc_recv_msg_len(struct hdc_session *pSession, unsigned in
 }
 
 STATIC hdcError_t drv_hdc_add_msg_body(struct hdc_session *pSession, struct drvHdcMsg *pMsg, char **pBuf,
-    unsigned int *msgLen, struct hdc_recv_config *recvConfig)
+                                       unsigned int *msgLen, struct hdc_recv_config *recvConfig)
 {
     hdcError_t ret;
     signed int session_fd = pSession->sockfd;
@@ -1483,6 +1500,7 @@ STATIC hdcError_t drv_hdc_add_msg_body(struct hdc_session *pSession, struct drvH
 
     if (*pBuf == NULL) {
         HDC_LOG_ERR("Call malloc failed. (sock=%d)\n", session_fd);
+        hdc_report_out_of_mem_err_msg((size_t)msg_len);
         return DRV_ERROR_OUT_OF_MEMORY;
     }
 
@@ -1499,24 +1517,24 @@ STATIC hdcError_t drv_hdc_add_msg_body(struct hdc_session *pSession, struct drvH
 }
 
 /*****************************************************************************
-   Function Name         : drv_hdc_recv_msg_body
-   Function Description  : Receive data (message length) based on HDC Session
-   Input Parameters      : struct hdc_session *pSession    Specify the session for data reception
-                           signed int msg_len             Length of each received Buffer in bytes (only meaningful in offline mode)
-   Output Parameters     : struct drvHdcMsg **pMsg        Pointer to the descriptor for receiving messages
-                           signed int *buf_pos            Actually received message length
-   Return Value          : DRV_ERROR_NONE
-                           DRV_ERROR_INVALID_VALUE
-   Caller Function       :
-   Called Function       :
-
-   Modification History  :
-   1.Date                : May 2, 2018
-    Modification         : Newly generated function (optimized cyclomatic complexity)
-
-*****************************************************************************/
+ * Function Name         : drv_hdc_recv_msg_body
+ * Function Description  : Receive data (message length) based on HDC Session
+ * Input Parameters      : struct hdc_session *pSession    Specify the session for data reception
+ *                        signed int msg_len             Length of each received Buffer in bytes (only meaningful in
+ *offline mode) Output Parameters     : struct drvHdcMsg **pMsg        Pointer to the descriptor for receiving messages
+ *                        signed int *buf_pos            Actually received message length
+ * Return Value          : DRV_ERROR_NONE
+ *                        DRV_ERROR_INVALID_VALUE
+ * Caller Function       :
+ * Called Function       :
+ *
+ * Modification History  :
+ * 1.Date                : May 2, 2018
+ *  Modification         : Newly generated function (optimized cyclomatic complexity)
+ *
+ *****************************************************************************/
 STATIC hdcError_t drv_hdc_recv_msg_body(struct hdc_session *pSession, char *pBuf, unsigned int bufLen,
-    unsigned int *msgLen, struct hdc_recv_config *recvConfig)
+                                        unsigned int *msgLen, struct hdc_recv_config *recvConfig)
 {
     signed int ret;
 
@@ -1525,7 +1543,7 @@ STATIC hdcError_t drv_hdc_recv_msg_body(struct hdc_session *pSession, char *pBuf
             ret = hdc_ub_recv(pSession, pBuf, (signed int)bufLen, (signed int *)msgLen, recvConfig);
         } else if (g_hdcConfig.h2d_type == HDC_TRANS_USE_PCIE) {
             ret = hdc_pcie_recv(g_hdcConfig.pcie_handle, pSession, pBuf, (signed int)bufLen, (signed int *)msgLen,
-                recvConfig);
+                                recvConfig);
         } else {
             HDC_LOG_ERR("Variable h2d_type is invalid. (h2d_type=%#x)\n", g_hdcConfig.h2d_type);
             return DRV_ERROR_INVALID_HANDLE;
@@ -1535,8 +1553,8 @@ STATIC hdcError_t drv_hdc_recv_msg_body(struct hdc_session *pSession, char *pBuf
             if (ret == DRV_ERROR_INVALID_HANDLE) {
                 return DRV_ERROR_INVALID_HANDLE;
             }
-            HDC_LOG_ERR("Pcie receive message failed. (session_id=%d; errno=%d; STRERROR=\"%s\")\n",
-                pSession->sockfd, ret, STRERROR(ret));
+            HDC_LOG_ERR("Pcie receive message failed. (session_id=%d; errno=%d; STRERROR=\"%s\")\n", pSession->sockfd,
+                        ret, STRERROR(ret));
             if (drv_hdc_recv_msg_body_ret_check(ret) == DRV_ERROR_SOCKET_CLOSE) {
                 return DRV_ERROR_SOCKET_CLOSE;
             }
@@ -1552,7 +1570,7 @@ STATIC hdcError_t drv_hdc_recv_msg_body(struct hdc_session *pSession, char *pBuf
     return DRV_ERROR_NONE;
 }
 
-STATIC int drv_hdc_get_wait_type(UINT64 flag) //lint !e527
+STATIC int drv_hdc_get_wait_type(UINT64 flag) // lint !e527
 {
     int wait;
 
@@ -1640,21 +1658,22 @@ hdcError_t drvHdcRecvBuf(HDC_SESSION session, char *pBuf, signed int bufLen, sig
 }
 
 /*****************************************************************************
-   Function Name         : drvHdcGetCapacity
-   Function Description  : Before the HDC sends messages, you need to know the size of the sent packet and
-                           the channel type through this API.
-   Input Parameters      : void
-   Output Parameters     : struct drvHdcCapacity *capacity    get the packet size and channel type currently supported
-                                                              by HDCget the packet size and channel type currently
-                                                              supported by HDC
-   Return Value          : 0 for success, others for fail
-   Caller Function       :
-   Called Function       :
-
-   Modification History  :
-   1.Date                : January 15, 2018
-    Modification         : New generated function
-*****************************************************************************/
+ * Function Name         : drvHdcGetCapacity
+ * Function Description  : Before the HDC sends messages, you need to know the size of the sent packet and
+ *                        the channel type through this API.
+ * Input Parameters      : void
+ * Output Parameters     : struct drvHdcCapacity *capacity    get the packet size and channel type currently supported
+ *                                                        by HDCget the packet size and channel type currently
+ *                                                        supported by HDC
+ * Return Value          : 0 for success, others for fail
+ * Caller Function       :
+ * Called Function       :
+ *
+ * Modification History  :
+ * 1.Date                : January 15, 2018
+ *  Modification         : New generated function
+ *
+ *****************************************************************************/
 hdcError_t drvHdcGetCapacity(struct drvHdcCapacity *capacity)
 {
     if (capacity == NULL) {
@@ -1675,17 +1694,17 @@ hdcError_t drvHdcGetCapacity(struct drvHdcCapacity *capacity)
 }
 
 /*****************************************************************************
-   Function Name         : drvHdcSetSessionReference
-   Function Description  : Set session and process affinity
-   Input Parameters      : HDC_SESSION session        Specified session
-
-   Output Parameters     : None
-   Return Value          : DRV_ERROR_NONE
-                           DRV_ERROR_INVALID_VALUE
-   Caller Function       :
-   Called Function       :
-
-*****************************************************************************/
+ * Function Name         : drvHdcSetSessionReference
+ * Function Description  : Set session and process affinity
+ * Input Parameters      : HDC_SESSION session        Specified session
+ *
+ * Output Parameters     : None
+ * Return Value          : DRV_ERROR_NONE
+ *                        DRV_ERROR_INVALID_VALUE
+ * Caller Function       :
+ * Called Function       :
+ *
+ *****************************************************************************/
 hdcError_t drvHdcSetSessionReference(HDC_SESSION session)
 {
     struct hdc_session *pSession = (struct hdc_session *)session;
@@ -1735,21 +1754,21 @@ hdcError_t drvHdcSetSessionReference(HDC_SESSION session)
 }
 
 /*****************************************************************************
-   Function Name         : drvHdcSessionClose
-   Function Description  : Closes the HDC session. Distinguish the disabling mode based on the flag.
-   Input Parameters      : HDC_SESSION session     Specify in which session to close
-                           int type                hdc session close type set by the user
-   Output Parameters     : None
-   Return Value          : DRV_ERROR_NONE
-                           DRV_ERROR_INVALID_VALUE
-   Caller Function       :
-   Called Function       :
-
-   Modification History  :
-   1.Date                : January 15, 2018
-    Modification         : New generated function
-
-*****************************************************************************/
+ * Function Name         : drvHdcSessionClose
+ * Function Description  : Closes the HDC session. Distinguish the disabling mode based on the flag.
+ * Input Parameters      : HDC_SESSION session     Specify in which session to close
+ *                        int type                hdc session close type set by the user
+ * Output Parameters     : None
+ * Return Value          : DRV_ERROR_NONE
+ *                        DRV_ERROR_INVALID_VALUE
+ * Caller Function       :
+ * Called Function       :
+ *
+ * Modification History  :
+ * 1.Date                : January 15, 2018
+ *  Modification         : New generated function
+ *
+ *****************************************************************************/
 hdcError_t halHdcSessionCloseEx(HDC_SESSION session, int type)
 {
     struct hdc_session *psession = NULL;
@@ -1759,10 +1778,8 @@ hdcError_t halHdcSessionCloseEx(HDC_SESSION session, int type)
         return DRV_ERROR_INVALID_VALUE;
     }
 
-    if (type == HDC_SESSION_CLOSE_FLAG_LOCAL)
-    {
-        if (!drv_hdc_is_support_session_close())
-        {
+    if (type == HDC_SESSION_CLOSE_FLAG_LOCAL) {
+        if (!drv_hdc_is_support_session_close()) {
             return DRV_ERROR_NOT_SUPPORT;
         }
     }
@@ -1786,20 +1803,20 @@ hdcError_t halHdcSessionCloseEx(HDC_SESSION session, int type)
 }
 
 /*****************************************************************************
-   Function Name         : drvHdcSessionClose
-   Function Description  : Close HDC Session for communication between Host and Device
-   Input Parameters      : HDC_SESSION session    Specify in which session to receive data
-   Output Parameters     : None
-   Return Value          : DRV_ERROR_NONE
-                           DRV_ERROR_INVALID_VALUE
-   Caller Function       :
-   Called Function       :
-
-   Modification History  :
-   1.Date                : January 15, 2018
-    Modification         : New generated function
-
-*****************************************************************************/
+ * Function Name         : drvHdcSessionClose
+ * Function Description  : Close HDC Session for communication between Host and Device
+ * Input Parameters      : HDC_SESSION session    Specify in which session to receive data
+ * Output Parameters     : None
+ * Return Value          : DRV_ERROR_NONE
+ *                        DRV_ERROR_INVALID_VALUE
+ * Caller Function       :
+ * Called Function       :
+ *
+ * Modification History  :
+ * 1.Date                : January 15, 2018
+ *  Modification         : New generated function
+ *
+ *****************************************************************************/
 hdcError_t drvHdcSessionClose(HDC_SESSION session)
 {
     return halHdcSessionCloseEx(session, HDC_SESSION_CLOSE_FLAG_NORMAL);
@@ -1807,9 +1824,9 @@ hdcError_t drvHdcSessionClose(HDC_SESSION session)
 
 STATIC hdcError_t drv_hdc_get_session_dev_id(HDC_SESSION session, signed int *devid)
 {
-    struct hdc_session *psession = NULL;
     struct hdc_client_session *p_client_session = NULL;
     struct hdc_server_session *p_serv_session = NULL;
+    struct hdc_session *psession = NULL;
 
     if ((session == NULL) || (devid == NULL)) {
         HDC_LOG_ERR("Input parameter session or devid is NULL.\n");
@@ -1908,8 +1925,8 @@ STATIC drvError_t drv_hdc_get_session_attr(HDC_SESSION session, signed int attr,
             return DRV_ERROR_INVALID_VALUE;
         }
 
-        HDC_LOG_ERR("Got session attr failed. (session=%d; errno=%d; STRERROR=\"%s\")\n",
-                    pSession->sockfd, ret, STRERROR(ret));
+        HDC_LOG_ERR("Got session attr failed. (session=%d; errno=%d; STRERROR=\"%s\")\n", pSession->sockfd, ret,
+                    STRERROR(ret));
         return DRV_ERROR_INNER_ERR;
     }
 
@@ -2001,23 +2018,23 @@ STATIC signed int drv_hdc_send_check(const struct hdc_session *pSession, const s
 }
 
 /*****************************************************************************
-   Function Name         : halHdcSend
-   Function Description  : Send data based on HDC Session
-   Input Parameters      : HDC_SESSION session        Specify in which session to send data
-                           struct drvHdcMsg *pMsg     Descriptor pointer for sending messages. The maximum sending length
-                           UINT64 flag                Reserved parameter, currently fixed 0
-                           unsigned int timeout        Allow time for send timeout determined by user mode
-   Output Parameters     : None
-   Return Value          : DRV_ERROR_NONE
-                           DRV_ERROR_INVALID_VALUE
-   Caller Function       :
-   Called Function       :
-
-   Modification History  :
-   1.Date                : January 15, 2018
-    Modification         : New generated function
-
-*****************************************************************************/
+ * Function Name         : halHdcSend
+ * Function Description  : Send data based on HDC Session
+ * Input Parameters      : HDC_SESSION session        Specify in which session to send data
+ *                        struct drvHdcMsg *pMsg     Descriptor pointer for sending messages. The maximum sending length
+ *                        UINT64 flag                Reserved parameter, currently fixed 0
+ *                        unsigned int timeout        Allow time for send timeout determined by user mode
+ * Output Parameters     : None
+ * Return Value          : DRV_ERROR_NONE
+ *                        DRV_ERROR_INVALID_VALUE
+ * Caller Function       :
+ * Called Function       :
+ *
+ * Modification History  :
+ * 1.Date                : January 15, 2018
+ *  Modification         : New generated function
+ *
+ *****************************************************************************/
 hdcError_t halHdcSend(HDC_SESSION session, struct drvHdcMsg *pMsg, UINT64 flag, UINT32 timeout)
 {
     struct hdc_session *pSession = (struct hdc_session *)session;
@@ -2050,10 +2067,9 @@ hdcError_t halHdcSend(HDC_SESSION session, struct drvHdcMsg *pMsg, UINT64 flag, 
             } else if (ret == (-HDCDRV_TX_TIMEOUT)) {
                 return DRV_ERROR_WAIT_TIMEOUT;
             } else if ((ret == (-HDCDRV_TX_REMOTE_CLOSE)) ||
-                       (ret == (-HDCDRV_SESSION_HAS_CLOSED) ||
-                       (ret == (-HDCDRV_PEER_REBOOT)))) {
-                HDC_LOG_WARN("HDC send not success. (errno=%d; STRERROR=\"%s\"; session=%d)\n",
-                             ret, STRERROR(ret), session_fd);
+                       (ret == (-HDCDRV_SESSION_HAS_CLOSED) || (ret == (-HDCDRV_PEER_REBOOT)))) {
+                HDC_LOG_WARN("HDC send not success. (errno=%d; STRERROR=\"%s\"; session=%d)\n", ret, STRERROR(ret),
+                             session_fd);
                 return DRV_ERROR_SOCKET_CLOSE;
             } else if (ret == (-HDCDRV_NO_PERMISSION)) {
                 return DRV_ERROR_OPER_NOT_PERMITTED;
@@ -2125,8 +2141,7 @@ STATIC signed int drv_hdc_fast_send_check(const struct hdc_session *pSession, st
     return DRV_ERROR_NONE;
 }
 
-hdcError_t halHdcFastSend(HDC_SESSION session, struct drvHdcFastSendMsg msg,
-    UINT64 flag, UINT32 timeout)
+hdcError_t halHdcFastSend(HDC_SESSION session, struct drvHdcFastSendMsg msg, UINT64 flag, UINT32 timeout)
 {
     struct hdc_session *pSession = (struct hdc_session *)session;
     signed int ret;
@@ -2150,11 +2165,10 @@ hdcError_t halHdcFastSend(HDC_SESSION session, struct drvHdcFastSendMsg msg,
             HDC_LOG_WARN("HDC send not success mem release info no fetch. (errno=%d; STRERROR=\"%s\"; session=%d)\n",
                          ret, STRERROR(ret), session_fd);
             return DRV_ERROR_NO_RESOURCES;
-        } else if ((ret == (-HDCDRV_TX_REMOTE_CLOSE)) ||
-                   (ret == (-HDCDRV_SESSION_HAS_CLOSED)) ||
+        } else if ((ret == (-HDCDRV_TX_REMOTE_CLOSE)) || (ret == (-HDCDRV_SESSION_HAS_CLOSED)) ||
                    (ret == (-HDCDRV_PEER_REBOOT))) {
-            HDC_LOG_WARN("HDC send not success. (errno=%d; STRERROR=\"%s\"; session=%d)\n",
-                ret, STRERROR(ret), session_fd);
+            HDC_LOG_WARN("HDC send not success. (errno=%d; STRERROR=\"%s\"; session=%d)\n", ret, STRERROR(ret),
+                         session_fd);
             return DRV_ERROR_SOCKET_CLOSE;
         } else if (ret == (-HDCDRV_DEVICE_NOT_READY)) {
             return DRV_ERROR_DEVICE_NOT_READY;
@@ -2167,33 +2181,33 @@ hdcError_t halHdcFastSend(HDC_SESSION session, struct drvHdcFastSendMsg msg,
 }
 
 /*****************************************************************************
-   Function Name         : halHdcRecvEx
-   Function Description  : Receive data based on HDC Session
-   Input Parameters      : HDC_SESSION session    Specify in which session to receive data
-                           signed int bufLen      The length of each receive buffer in bytes
-                           signed int flag        Fixed 0
-                           userConfig             Record the parameters set by the user
-   Output Parameters     : struct drvHdcMsg *pMsg  Descriptor pointer for receiving messages
-                           signed int *recvBufCount  The number of buffers that actually received the data
-   Return Value          : DRV_ERROR_NONE
-                           DRV_ERROR_INVALID_VALUE
-   Caller Function       :
-   Called Function       :
-
-   Modification History  :
-   1.Date                : January 15, 2018
-    Modification         : New generated function
-
-*****************************************************************************/
+ * Function Name         : halHdcRecvEx
+ * Function Description  : Receive data based on HDC Session
+ * Input Parameters      : HDC_SESSION session    Specify in which session to receive data
+ *                        signed int bufLen      The length of each receive buffer in bytes
+ *                        signed int flag        Fixed 0
+ *                        userConfig             Record the parameters set by the user
+ * Output Parameters     : struct drvHdcMsg *pMsg  Descriptor pointer for receiving messages
+ *                        signed int *recvBufCount  The number of buffers that actually received the data
+ * Return Value          : DRV_ERROR_NONE
+ *                        DRV_ERROR_INVALID_VALUE
+ * Caller Function       :
+ * Called Function       :
+ *
+ * Modification History  :
+ * 1.Date                : January 15, 2018
+ *  Modification         : New generated function
+ *
+ *****************************************************************************/
 hdcError_t halHdcRecvEx(HDC_SESSION session, struct drvHdcMsg *pMsg, signed int bufLen,
     signed int *recvBufCount, struct drvHdcRecvConfig *userConfig)
 {
-    struct hdc_msg_head *p_hdc_msg_head = NULL;
     struct hdc_session *pSession = (struct hdc_session *)session;
+    struct hdc_msg_head *p_hdc_msg_head = NULL;
     struct hdc_recv_config p_recv_config = {0};
-    char   *pBuf = NULL;
-    unsigned int msg_len = 0;
     hdcError_t ret = DRV_ERROR_INVALID_VALUE;
+    unsigned int msg_len = 0;
+    char   *pBuf = NULL;
 
     (void)bufLen;
 
@@ -2262,8 +2276,8 @@ hdcError_t halHdcRecvEx(HDC_SESSION session, struct drvHdcMsg *pMsg, signed int 
     return ret;
 }
 
-hdcError_t halHdcRecv(HDC_SESSION session, struct drvHdcMsg *pMsg, signed int bufLen,
-    UINT64 flag, signed int *recvBufCount, UINT32 timeout)
+hdcError_t halHdcRecv(HDC_SESSION session, struct drvHdcMsg *pMsg, signed int bufLen, UINT64 flag,
+                      signed int *recvBufCount, UINT32 timeout)
 {
     struct drvHdcRecvConfig userConfig;
 
@@ -2273,9 +2287,8 @@ hdcError_t halHdcRecv(HDC_SESSION session, struct drvHdcMsg *pMsg, signed int bu
     return halHdcRecvEx(session, pMsg, bufLen, recvBufCount, &userConfig);
 }
 
-hdcError_t halHdcFastRecv(HDC_SESSION session, struct drvHdcFastRecvMsg *msg,
-    UINT64 flag, UINT32 timeout)
-{//lint !e564
+hdcError_t halHdcFastRecv(HDC_SESSION session, struct drvHdcFastRecvMsg *msg, UINT64 flag, UINT32 timeout)
+{ // lint !e564
     struct hdc_session *pSession = (struct hdc_session *)session;
     signed int session_fd;
     signed int ret;
@@ -2320,8 +2333,8 @@ hdcError_t halHdcFastRecv(HDC_SESSION session, struct drvHdcFastRecvMsg *msg,
         } else if (ret == (-HDCDRV_NO_PERMISSION)) {
             return DRV_ERROR_OPER_NOT_PERMITTED;
         } else if ((ret == (-HDCDRV_SESSION_HAS_CLOSED)) || (ret == (-HDCDRV_PEER_REBOOT))) {
-            HDC_LOG_WARN("The session was closed. (errno=%d; STRERROR=\"%s\"; session=%d)\n", ret,
-                STRERROR(ret), session_fd);
+            HDC_LOG_WARN("The session was closed. (errno=%d; STRERROR=\"%s\"; session=%d)\n", ret, STRERROR(ret),
+                         session_fd);
             return DRV_ERROR_SOCKET_CLOSE;
         } else if (ret == (-HDCDRV_DEVICE_NOT_READY)) {
             return DRV_ERROR_DEVICE_NOT_READY;
@@ -2356,7 +2369,7 @@ STATIC hdcError_t drv_hdc_gest_socket_session_status(HDC_SESSION session, int *s
     /* set timeout */
     if (setsockopt(session_fd, SOL_SOCKET, SO_RCVTIMEO, (void *)&timeo, sizeof(timeo)) < 0) {
         HDC_LOG_ERR("Set socket timeout failed. (errno=%d; strerror=\"%s\"; session_fd=%d; flag=%d)\n",
-            mm_get_error_code(), strerror(mm_get_error_code()), session_fd, *status);
+                    mm_get_error_code(), strerror(mm_get_error_code()), session_fd, *status);
         return DRV_ERROR_SOCKET_SET;
     }
 
@@ -2377,7 +2390,7 @@ STATIC hdcError_t drv_hdc_gest_socket_session_status(HDC_SESSION session, int *s
     timeo.tv_usec = 0;
     if (setsockopt(session_fd, SOL_SOCKET, SO_RCVTIMEO, (void *)&timeo, sizeof(timeo)) < 0) {
         HDC_LOG_ERR("Clean socket timeout failed. (errno=%d; strerror=\"%s\"; session_fd=%d; flag=%d)\n",
-            mm_get_error_code(), strerror(mm_get_error_code()), session_fd, *status);
+                    mm_get_error_code(), strerror(mm_get_error_code()), session_fd, *status);
     }
 
     return ret;
@@ -2395,7 +2408,6 @@ STATIC hdcError_t drv_hdc_get_pcie_session_status(HDC_SESSION session, int *stat
 
     return ret;
 }
-
 
 STATIC drvError_t drv_hdc_get_session_status(HDC_SESSION session, int *status)
 {
@@ -2441,7 +2453,7 @@ drvError_t halHdcGetSessionAttr(HDC_SESSION session, int attr, int *value)
             break;
         default:
             HDC_LOG_ERR("Input parameter is error.\n");
-            ret =  DRV_ERROR_INVALID_VALUE;
+            ret = DRV_ERROR_INVALID_VALUE;
             break;
     }
     return ret;
@@ -2459,16 +2471,17 @@ hdcError_t halHdcGetServerAttr(HDC_SERVER server, int attr, int *value)
 }
 
 /*****************************************************************************
- Prototype    : halHdcNotifyRegister
- Description  : For UB, this interface is used by the service to register the notify callback function in user mode.
- Input        : int service_type, struct HdcSessionNotify *notify
- Output       : NULL
- Return Value : hdcError_t, [DRV_ERROR_NONE, DRV_ERROR_INVALID_HANDLE]
-
-  History        :
-  1.Date         : 2024/12/25
-    Modification : Created function
-*****************************************************************************/
+ * Prototype    : halHdcNotifyRegister
+ * Description  : For UB, this interface is used by the service to register the notify callback function in user mode.
+ * Input        : int service_type, struct HdcSessionNotify *notify
+ * Output       : NULL
+ * Return Value : hdcError_t, [DRV_ERROR_NONE, DRV_ERROR_INVALID_HANDLE]
+ *
+ *  History        :
+ *  1.Date         : 2024/12/25
+ *  Modification : Created function
+ *
+ *****************************************************************************/
 hdcError_t halHdcNotifyRegister(int service_type, struct HdcSessionNotify *notify)
 {
     if ((g_hdcConfig.trans_type == HDC_TRANS_USE_SOCKET) || (g_hdcConfig.h2d_type != HDC_TRANS_USE_UB)) {
@@ -2479,16 +2492,17 @@ hdcError_t halHdcNotifyRegister(int service_type, struct HdcSessionNotify *notif
 }
 
 /*****************************************************************************
- Prototype    : halHdcNotifyUnregister
- Description  : For UB, this interface is used by the service to unregister the notify callback function in user mode.
- Input        : int service_type
- Output       : NULL
- Return Value : NULL
-
-  History        :
-  1.Date         : 2024/12/25
-    Modification : Created function
-*****************************************************************************/
+ * Prototype    : halHdcNotifyUnregister
+ * Description  : For UB, this interface is used by the service to unregister the notify callback function in user mode.
+ * Input        : int service_type
+ * Output       : NULL
+ * Return Value : NULL
+ *
+ *  History        :
+ *  1.Date         : 2024/12/25
+ *  Modification : Created function
+ *
+ *****************************************************************************/
 void halHdcNotifyUnregister(int service_type)
 {
     if ((g_hdcConfig.trans_type == HDC_TRANS_USE_SOCKET) || (g_hdcConfig.h2d_type != HDC_TRANS_USE_UB)) {
@@ -2498,36 +2512,15 @@ void halHdcNotifyUnregister(int service_type)
     hdc_ub_notify_unregister(service_type);
 }
 
-#ifdef CFG_FEATURE_EVENT_PROC
-// Only close use common thread to process close_session message, OTHER event no need to register
-struct drv_event_proc g_hdc_event_proc[DRV_SUBEVENT_MAX_MSG] = {
-    [DRV_SUBEVENT_HDC_CREATE_LINK_MSG] = {
-        hdc_connect_event_proc,
-        sizeof(struct hdcdrv_event_msg),
-        "hdc_connect_event_proc"
-    },
-    [DRV_SUBEVENT_HDC_CLOSE_LINK_MSG] = {
-        hdc_sync_event_proc,
-        sizeof(struct hdcdrv_event_msg),
-        "hdc_sync_event_proc"
-    }
-};
-#endif
-
-signed int __attribute__((constructor)) drv_hdc_init(void)  //lint !e527
+signed int __attribute__((constructor)) drv_hdc_init(void) // lint !e527
 {
     int ret;
-#ifdef CFG_FEATURE_EVENT_PROC
-    drv_registert_event_proc(DRV_SUBEVENT_HDC_CREATE_LINK_MSG, &g_hdc_event_proc[DRV_SUBEVENT_HDC_CREATE_LINK_MSG]);
-    drv_registert_event_proc(DRV_SUBEVENT_HDC_CLOSE_LINK_MSG, &g_hdc_event_proc[DRV_SUBEVENT_HDC_CLOSE_LINK_MSG]);
-#endif
     (void)mmMutexInit(&g_mem_fd_mng.mutex);
     drv_hdc_trans_type_mutex_init();
 
     ret = (signed int)hdc_init(&g_hdcConfig);
 #ifdef CFG_FEATURE_SUPPORT_UB
     if ((ret == 0) && (g_hdcConfig.trans_type == HDC_TRANS_USE_PCIE) && (g_hdcConfig.h2d_type == HDC_TRANS_USE_UB)) {
-        hdc_tid_pool_init();
         (void)hdc_ub_init(&g_hdcConfig);
         hdc_max_device_num = HDC_MAX_UB_DEV_CNT;
     }
@@ -2536,20 +2529,20 @@ signed int __attribute__((constructor)) drv_hdc_init(void)  //lint !e527
 }
 
 /*****************************************************************************
-   Function Name         : drv_hdc_exit
-   Function Description  : Cancel HDC driver module initialization
-   Input Parameters      : void
-   Output Parameters     : None
-   Return Value          :
-   Caller Function       :
-   Called Function       :
-
-   Modification History  :
-   1.Date                : January 15, 2018
-    Modification         : New generated function
-
-*****************************************************************************/
-STATIC void __attribute__((destructor)) drv_hdc_exit(void)  //lint !e527
+ * Function Name         : drv_hdc_exit
+ * Function Description  : Cancel HDC driver module initialization
+ * Input Parameters      : void
+ * Output Parameters     : None
+ * Return Value          :
+ * Caller Function       :
+ * Called Function       :
+ *
+ * Modification History  :
+ * 1.Date                : January 15, 2018
+ *  Modification         : New generated function
+ *
+ *****************************************************************************/
+STATIC void __attribute__((destructor)) drv_hdc_exit(void) // lint !e527
 {
 #ifdef CFG_FEATURE_SUPPORT_UB
     if ((g_hdcConfig.trans_type == HDC_TRANS_USE_PCIE) && (g_hdcConfig.h2d_type == HDC_TRANS_USE_UB)) {

@@ -17,7 +17,6 @@
 #include "devdrv_ctrl.h"
 #include "devdrv_util.h"
 
-#ifdef CFG_FEATURE_DMA_COPY_SVA
 #define DEVDRV_NON_TRANS_MSG_SVA_DESC_SIZE 0x400
 struct devdrv_dma_pasid_rbtree_ctrl g_pasid_rbtree[MAX_DEV_CNT];
 
@@ -245,17 +244,26 @@ STATIC struct devdrv_non_trans_msg_chan_info devdrv_pasid_non_trans_msg_chan_inf
     .c_desc_size = DEVDRV_NON_TRANS_MSG_SVA_DESC_SIZE,
     .rx_msg_process = devdrv_pasid_non_trans_msg_recv,
 };
-#endif
 
 bool devdrv_dma_pasid_valid_check(u32 dev_id, u64 pasid, int env_boot_mode)
 {
-#ifdef CFG_FEATURE_DMA_COPY_SVA
+    struct devdrv_pci_ctrl *pci_ctrl = NULL;
     struct devdrv_dma_pasid_rbtree_node *dma_pasid_node = NULL;
     struct devdrv_dma_pasid_rbtree_ctrl *tree = NULL;
 
     if (dev_id >= MAX_DEV_CNT) {
         devdrv_err_spinlock("Invalid dev_id.(dev_id=%u)\n", dev_id);
         return false;
+    }
+
+    pci_ctrl = devdrv_get_top_half_pci_ctrl_by_id(dev_id);
+    if (pci_ctrl == NULL) {
+        devdrv_err("Get pci_ctrl failed. (devid=%u)\n", dev_id);
+        return false;
+    }
+
+    if (!devdrv_feature_is_support(pci_ctrl->features, DEVDRV_FEATURE_DMA_COPY_SVA)) {
+        return true;
     }
 
     if ((env_boot_mode == DEVDRV_MDEV_FULL_SPEC_VF_VM_BOOT) || (env_boot_mode == DEVDRV_MDEV_VF_VM_BOOT)) {
@@ -268,32 +276,34 @@ bool devdrv_dma_pasid_valid_check(u32 dev_id, u64 pasid, int env_boot_mode)
         devdrv_err_spinlock("Pasid is not in rbtree.(dev_id=%u; pasid=%llu)\n", dev_id, pasid);
         return false;
     }
-#endif
 
     return true;
 }
 
 void devdrv_pasid_rbtree_init(struct devdrv_pci_ctrl *pci_ctrl)
 {
-#ifdef CFG_FEATURE_DMA_COPY_SVA
+    if (!devdrv_feature_is_support(pci_ctrl->features, DEVDRV_FEATURE_DMA_COPY_SVA)) {
+        return;
+    }
     g_pasid_rbtree[pci_ctrl->dev_id].rbtree = KA_RB_ROOT;
     ka_task_spin_lock_init(&g_pasid_rbtree[pci_ctrl->dev_id].rb_lock);
-#endif
-    return;
 }
 
 void devdrv_pasid_rbtree_uninit(struct devdrv_pci_ctrl *pci_ctrl)
 {
-#ifdef CFG_FEATURE_DMA_COPY_SVA
+    if (!devdrv_feature_is_support(pci_ctrl->features, DEVDRV_FEATURE_DMA_COPY_SVA)) {
+        return;
+    }
     devdrv_pasid_rbtree_clear(pci_ctrl->dev_id);
-#endif
-    return;
 }
 
 int devdrv_pasid_non_trans_init(struct devdrv_pci_ctrl *pci_ctrl)
 {
-#ifdef CFG_FEATURE_DMA_COPY_SVA
     void *msg_chan = NULL;
+
+    if (!devdrv_feature_is_support(pci_ctrl->features, DEVDRV_FEATURE_DMA_COPY_SVA)) {
+        return 0;
+    }
 
     if (pci_ctrl->virtfn_flag == DEVDRV_SRIOV_TYPE_VF) {
         return 0;
@@ -307,14 +317,16 @@ int devdrv_pasid_non_trans_init(struct devdrv_pci_ctrl *pci_ctrl)
 
     /* save common msg_chan to msg_dev */
     g_pasid_rbtree[pci_ctrl->dev_id].msg_chan = (struct devdrv_msg_chan *)msg_chan;
-#endif
     return 0;
 }
 
 void devdrv_pasid_non_trans_uninit(struct devdrv_pci_ctrl *pci_ctrl)
 {
-#ifdef CFG_FEATURE_DMA_COPY_SVA
     int ret;
+
+    if (!devdrv_feature_is_support(pci_ctrl->features, DEVDRV_FEATURE_DMA_COPY_SVA)) {
+        return;
+    }
 
     if (pci_ctrl->virtfn_flag == DEVDRV_SRIOV_TYPE_VF) {
         return;
@@ -326,6 +338,4 @@ void devdrv_pasid_non_trans_uninit(struct devdrv_pci_ctrl *pci_ctrl)
     }
 
     g_pasid_rbtree[pci_ctrl->dev_id].msg_chan = NULL;
-#endif
-    return;
 }

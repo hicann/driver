@@ -221,6 +221,7 @@ void dev_mon_api_get_driver_ver(SYSTEM_CB_T *cb, DM_INTF_S *intf, DM_RECV_ST *ms
 void dev_mon_api_get_davinci_information(SYSTEM_CB_T *cb, DM_INTF_S *intf, DM_RECV_ST *msg);
 void dev_mon_api_get_peripheral_device_info(SYSTEM_CB_T *cb, DM_INTF_S *intf, DM_RECV_ST *msg);
 void dev_mon_api_get_ecc_statistics(SYSTEM_CB_T *cb, DM_INTF_S *intf, DM_RECV_ST *msg);
+void dev_mon_api_get_ecc_info_v2(SYSTEM_CB_T *cb, DM_INTF_S *intf, DM_RECV_ST *msg);
 void dev_mon_api_get_system_time(SYSTEM_CB_T *cb, DM_INTF_S *intf, DM_RECV_ST *msg);
 void dev_mon_api_get_board_id(SYSTEM_CB_T *cb, DM_INTF_S *intf, DM_RECV_ST *msg);
 void dev_mon_api_get_pcb_ver(SYSTEM_CB_T *cb, DM_INTF_S *intf, DM_RECV_ST *msg);
@@ -255,6 +256,7 @@ void dev_mon_api_get_errstr(SYSTEM_CB_T *cb, DM_INTF_S *intf, DM_RECV_ST *msg);
 void dev_mon_api_get_llc_perf_para(SYSTEM_CB_T *cb, DM_INTF_S *intf, DM_RECV_ST *msg);
 void dev_mon_api_get_soc_die_id(SYSTEM_CB_T *cb, DM_INTF_S *intf, DM_RECV_ST *msg);
 void dev_mon_api_get_soc_die_id_v2(SYSTEM_CB_T *cb, DM_INTF_S *intf, DM_RECV_ST *msg);
+void dev_mon_api_get_freq_v2(SYSTEM_CB_T *cb, DM_INTF_S *intf, DM_RECV_ST *msg);
 void dev_mon_api_get_aicpu_info(SYSTEM_CB_T *cb, DM_INTF_S *intf, DM_RECV_ST *msg);
 void dev_mon_api_set_sec_revocation(SYSTEM_CB_T *cb, DM_INTF_S *intf, DM_RECV_ST *msg);
 void dev_mon_api_set_power_state(SYSTEM_CB_T *cb, DM_INTF_S *intf, DM_RECV_ST *msg);

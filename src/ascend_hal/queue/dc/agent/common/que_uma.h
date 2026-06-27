@@ -15,23 +15,23 @@
 #include "que_jetty.h"
 
 #if (defined CFG_PLATFORM_FPGA)
-#define QUE_UMA_WAIT_TIME       5000000            /* 5000000ms */
-#define QUE_JETTY_ALLOC_TIME_OUT_MS       5000000            /* 5000000ms */
+#define QUE_UMA_WAIT_TIME 5000000           /* 5000000ms */
+#define QUE_JETTY_ALLOC_TIME_OUT_MS 5000000 /* 5000000ms */
 #else
-#define QUE_UMA_WAIT_TIME       5000            /* 5000ms */
-#define QUE_JETTY_ALLOC_TIME_OUT_MS       5000            /* 5000ms */
+#define QUE_UMA_WAIT_TIME 5000           /* 5000ms */
+#define QUE_JETTY_ALLOC_TIME_OUT_MS 5000 /* 5000ms */
 #endif
 
-#define QUE_URMA_BUFF_ALIGN_VALUE 4096          /* 4096 bytes aligned for performance */
-#define QUE_URMA_MAX_SIZE       0x10000000ULL   /* 256MB */
-#define QUE_UMA_MAX_SEND_SIZE   (4 * 1024)      /* For send/recv, max size is 4K */
-#define QUE_DATA_RW_JETTY_POOL_JFC_DEPTH   64U
-#define QUE_DATA_RW_JETTY_POOL_JFR_DEPTH   64U
-#define QUE_DEFAULT_RW_WR_NUM    (2 * 1024)      /* 8 * 2K wrlink need memory 1.25M */
+#define QUE_URMA_BUFF_ALIGN_VALUE 4096   /* 4096 bytes aligned for performance */
+#define QUE_URMA_MAX_SIZE 0x10000000ULL  /* 256MB */
+#define QUE_UMA_MAX_SEND_SIZE (4 * 1024) /* For send/recv, max size is 4K */
+#define QUE_DATA_RW_JETTY_POOL_JFC_DEPTH 64U
+#define QUE_DATA_RW_JETTY_POOL_JFR_DEPTH 64U
+#define QUE_DEFAULT_RW_WR_NUM (2 * 1024) /* 8 * 2K wrlink need memory 1.25M */
 
 struct que_uma_jetty {
-    urma_jfc_t *jfc;    /* jfc_r */
-    urma_jfce_t *jfce;  /* jfce_r */
+    urma_jfc_t *jfc;   /* jfc_r */
+    urma_jfce_t *jfce; /* jfce_r */
     urma_jetty_t *jetty;
 };
 
@@ -48,23 +48,24 @@ struct que_uma_wait_attr {
 };
 
 struct que_recv_para *que_uma_recv_create(unsigned int devid, struct que_jfr *pkt_recv_jetty,
-    struct que_uma_recv_attr *attr, unsigned int d2d_flag);
+                                          struct que_uma_recv_attr *attr, unsigned int d2d_flag);
 void que_uma_recv_destroy(struct que_recv_para *recv);
 
 void que_uma_recv_put_addr(struct que_jfr *pkt_recv_jetty, struct que_recv_para *recv_para, unsigned long long addr);
 int que_uma_wait(struct que_uma_wait_attr *attr, int time_out);
 
 int que_uma_wait_jfc(urma_jfce_t *jfce, int time_out, urma_jfc_t **jfc);
-int que_recreate_jfs(unsigned int jfs_depth, urma_jfc_t *jfc_s, unsigned int devid, urma_jfs_t **jfs_s, unsigned int d2d_flag);
+int que_recreate_jfs(unsigned int jfs_depth, urma_jfc_t *jfc_s, unsigned int devid, urma_jfs_t **jfs_s,
+                     unsigned int d2d_flag);
 int que_uma_send_post_and_wait(struct que_jfs *send_jetty, urma_sge_t *sge, unsigned int d2d_flag);
 int que_uma_poll_send_jfc(urma_jfc_t *jfc, unsigned int cr_num, urma_cr_t *cr, unsigned int *cnt);
 void que_uma_ack_jfc(urma_jfc_t *jfc, unsigned int cnt);
 int que_uma_rearm_jfc(urma_jfc_t *jfc);
- 
-int que_uma_send_ack(struct que_ack_jfs *send_jetty, unsigned long long imm_data);
-int que_uma_imm_wait(struct que_jfr *imm_recv_jetty, struct que_recv_para *recv_para,
-    unsigned long long *imm_data, int timeout);
 
+int que_uma_send_ack(struct que_ack_jfs *send_jetty, unsigned long long imm_data);
+int que_uma_imm_wait(struct que_jfr *imm_recv_jetty, struct que_recv_para *recv_para, unsigned long long *imm_data,
+                     int timeout);
+void que_print_urma_ctx_info(unsigned int devid, urma_jfs_t *jfs, urma_jfr_t *jfr, urma_jfc_t *jfc);
 void que_jfs_rw_wr_fill(struct que_jfs *qjfs, struct que_jfs_rw_wr *rw_wr, struct que_jfs_rw_wr_data *rw_data);
 int que_uma_rw_post_async(unsigned long long usr_ctx, struct que_jfs *qjfs, struct que_jfs_rw_wr *rw_wr);
 #endif

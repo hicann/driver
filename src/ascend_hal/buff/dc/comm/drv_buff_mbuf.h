@@ -12,7 +12,7 @@
 
 #include "drv_buff_common.h"
 #include "drv_buff_adp.h"
-#define MBUF_CHAIN_MAX_LEN  128
+#define MBUF_CHAIN_MAX_LEN 128
 
 enum mbuf_opt_type {
     MBUF_ALLOC_BY_ZONE = 0,

@@ -85,8 +85,8 @@ STATIC int vmngh_msg_get_cluster_from_db(struct vmng_msg_dev *msg_dev, u32 db_ve
         }
         db_id_beg = msg_dev->msg_cluster[i].msg_chan_rx_beg->rx_recv_irq;
         db_id_end = db_id_beg + msg_dev->msg_cluster[i].res.rx_num - 1;
-        vmng_err("Get db_id. (type=%u; status=%u; beg=%u; end=%u)\n",
-                 i, msg_dev->msg_cluster[i].status, db_id_beg, db_id_end);
+        vmng_err("Get db_id. (type=%u; status=%u; beg=%u; end=%u)\n", i, msg_dev->msg_cluster[i].status, db_id_beg,
+                 db_id_end);
     }
     return -EINVAL;
 }
@@ -103,8 +103,8 @@ STATIC struct vmng_msg_chan_rx *vmngh_msg_get_chan_from_db(struct vmng_msg_dev *
     } else {
         cluster_id = vmngh_msg_get_cluster_from_db(msg_dev, db_vector);
         if (cluster_id < 0) {
-            vmng_err("Get cluster from db failed. (dev_id=%u; fid=%u; cluster=%d)\n",
-                     cluster_id, msg_dev->dev_id, msg_dev->fid);
+            vmng_err("Get cluster from db failed. (dev_id=%u; fid=%u; cluster=%d)\n", cluster_id, msg_dev->dev_id,
+                     msg_dev->fid);
             return NULL;
         }
         msg_cluster = &(msg_dev->msg_cluster[cluster_id]);
@@ -125,8 +125,8 @@ int vmngh_msg_db_hanlder(struct vmng_msg_dev *msg_dev, u32 db_vector)
     }
     msg_chan = vmngh_msg_get_chan_from_db(msg_dev, db_vector);
     if (msg_chan == NULL) {
-        vmng_err("Get chan from db failed. (dev_id=%u; fid=%u; db_vector=%u)\n",
-                 msg_dev->dev_id, msg_dev->fid, db_vector);
+        vmng_err("Get chan from db failed. (dev_id=%u; fid=%u; db_vector=%u)\n", msg_dev->dev_id, msg_dev->fid,
+                 db_vector);
         return -EINVAL;
     }
     vmng_msg_push_rx_queue_work(msg_chan);
@@ -164,14 +164,14 @@ int vmngh_tx_finish_db_hander(struct vmng_msg_dev *msg_dev, u32 db_vector)
 
     msg_chan = vmngh_get_tx_chan_by_tx_finsih_db(msg_dev, db_vector);
     if (msg_chan == NULL) {
-        vmng_err("Get tx channel failed. (dev_id=%u; fid=%u; tx_finish=%u)\n",
-                 msg_dev->dev_id, msg_dev->fid, db_vector);
+        vmng_err("Get tx channel failed. (dev_id=%u; fid=%u; tx_finish=%u)\n", msg_dev->dev_id, msg_dev->fid,
+                 db_vector);
         return -EINVAL;
     }
     msg_cluster = (struct vmng_msg_cluster *)msg_chan->msg_cluster;
     if (msg_cluster->msg_proc.tx_finish_proc == NULL) {
         vmng_err("Parameter tx_finish_proc is NULL. (dev_id=%u; fid=%u; chan_type=%u)\n", msg_dev->dev_id, msg_dev->fid,
-            msg_cluster->chan_type);
+                 msg_cluster->chan_type);
         return -EINVAL;
     }
 
@@ -181,7 +181,8 @@ int vmngh_tx_finish_db_hander(struct vmng_msg_dev *msg_dev, u32 db_vector)
 }
 
 STATIC void vmng_fill_create_cluster_cmd(struct vmng_create_cluster_cmd *cmd, struct vmng_msg_cluster *msg_cluster,
-    enum vmng_msg_chan_type chan_type, const struct vmng_msg_chan_irqs *int_irq_ary, u32 irq_array_len)
+                                         enum vmng_msg_chan_type chan_type,
+                                         const struct vmng_msg_chan_irqs *int_irq_ary, u32 irq_array_len)
 {
     u32 i;
 
@@ -198,7 +199,7 @@ STATIC void vmng_fill_create_cluster_cmd(struct vmng_create_cluster_cmd *cmd, st
 }
 
 STATIC int vmngh_alloc_remote_msg_cluster(struct vmng_msg_dev *msg_dev, enum vmng_msg_chan_type chan_type,
-    struct vmng_msg_chan_irqs *int_irq_ary)
+                                          struct vmng_msg_chan_irqs *int_irq_ary)
 {
     struct vmng_tx_msg_proc_info tx_info;
     struct vmng_create_cluster_cmd *cmd = NULL;
@@ -211,15 +212,15 @@ STATIC int vmngh_alloc_remote_msg_cluster(struct vmng_msg_dev *msg_dev, enum vmn
     int ret;
 
     msg_cluster = &(msg_dev->msg_cluster[chan_type]);
-    irq_array_len =
-        (u32)(((u64)msg_cluster->res.tx_num * VMNG_MSG_SQ_TXRX + (u64)msg_cluster->res.rx_num * VMNG_MSG_SQ_TXRX) *
-        sizeof(u32));
+    irq_array_len = (u32)(((u64)msg_cluster->res.tx_num * VMNG_MSG_SQ_TXRX +
+                           (u64)msg_cluster->res.rx_num * VMNG_MSG_SQ_TXRX) *
+                          sizeof(u32));
     send_len = sizeof(struct vmng_create_cluster_cmd) + irq_array_len;
     cmd_len = (send_len >= recv_len) ? send_len : recv_len;
     cmd = vmng_kzalloc(cmd_len, KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
     if (cmd == NULL) {
-        vmng_err("Call ka_mm_kzalloc failed. (dev_id=%u; fid=%u; chan_type=%u)\n",
-                 msg_dev->dev_id, msg_dev->fid, chan_type);
+        vmng_err("Call ka_mm_kzalloc failed. (dev_id=%u; fid=%u; chan_type=%u)\n", msg_dev->dev_id, msg_dev->fid,
+                 chan_type);
         return -EINVAL;
     }
     vmng_fill_create_cluster_cmd(cmd, msg_cluster, chan_type, int_irq_ary, irq_array_len);
@@ -229,15 +230,15 @@ STATIC int vmngh_alloc_remote_msg_cluster(struct vmng_msg_dev *msg_dev, enum vmn
     tx_info.out_data_len = recv_len;
     tx_info.real_out_len = 0;
     ret = vmng_admin_msg_send(msg_dev->admin_tx, &tx_info, (u32)VMNG_MSG_CHAN_TYPE_ADMIN,
-        (u32)VMNGH_ADMIN_OPCODE_CREATE_CLUSTER);
+                              (u32)VMNGH_ADMIN_OPCODE_CREATE_CLUSTER);
     if (ret != 0) {
         vmng_err("Message send failed. (dev_id=%u; fid=%u; ret=%d)\n", msg_dev->dev_id, msg_dev->fid, ret);
         goto free_cmd;
     }
     reply = (struct vmng_create_cluster_reply *)cmd;
     if (reply->remote_alloc_finish != VMNG_CREATE_CLUSTER_FINISH) {
-        vmng_err("Finish status is error. (dev_id=%u; fid=%u; status=0x%x)\n",
-                 msg_dev->dev_id, msg_dev->fid, reply->remote_alloc_finish);
+        vmng_err("Finish status is error. (dev_id=%u; fid=%u; status=0x%x)\n", msg_dev->dev_id, msg_dev->fid,
+                 reply->remote_alloc_finish);
         ret = -EINVAL;
         goto free_cmd;
     }
@@ -248,15 +249,15 @@ free_cmd:
 }
 
 STATIC int vmngh_alloc_msg_cluster_irqs(struct vmng_msg_dev *msg_dev, enum vmng_msg_chan_type chan_type,
-    const struct vmng_msg_chan_res *res, struct vmng_msg_chan_irqs *irq_array)
+                                        const struct vmng_msg_chan_res *res, struct vmng_msg_chan_irqs *irq_array)
 {
     u32 irq_array_len;
     u32 i;
 
     irq_array_len = (u32)(((u64)res->tx_num * VMNG_MSG_SQ_TXRX + (u64)res->rx_num * VMNG_MSG_SQ_TXRX) * sizeof(u32));
     if (irq_array_len == 0) {
-        vmng_info("Parameter tx_num and rx_num both zero. (dev_id=%u; fid=%u; tx_num=%u; rx_num=%u)\n",
-            msg_dev->dev_id, msg_dev->fid, res->tx_num, res->rx_num);
+        vmng_info("Parameter tx_num and rx_num both zero. (dev_id=%u; fid=%u; tx_num=%u; rx_num=%u)\n", msg_dev->dev_id,
+                  msg_dev->fid, res->tx_num, res->rx_num);
         return 0;
     }
     /* irq array: | tx_send_irq | tx_finish_irq | rx_recv_irq | rx_resp_irq | */
@@ -291,7 +292,7 @@ STATIC void vmngh_free_msg_cluster_irqs(struct vmng_msg_chan_irqs *irq_array)
 }
 
 STATIC int vmngh_alloc_msg_cluster_para_check(const struct vmng_msg_dev *msg_dev, enum vmng_msg_chan_type chan_type,
-    const struct vmng_msg_proc *msg_proc)
+                                              const struct vmng_msg_proc *msg_proc)
 {
     u32 dev_id = msg_dev->dev_id;
     u32 fid = msg_dev->fid;
@@ -314,7 +315,7 @@ STATIC int vmngh_alloc_msg_cluster_para_check(const struct vmng_msg_dev *msg_dev
 }
 
 int vmngh_alloc_msg_cluster(struct vmng_msg_dev *msg_dev, enum vmng_msg_chan_type chan_type,
-    struct vmng_msg_proc *msg_proc)
+                            struct vmng_msg_proc *msg_proc)
 {
     struct vmng_msg_chan_res *res = NULL;
     struct vmng_msg_chan_irqs irq_array = {0};
@@ -329,8 +330,8 @@ int vmngh_alloc_msg_cluster(struct vmng_msg_dev *msg_dev, enum vmng_msg_chan_typ
     /* 1. prepare parameter, msg_dev, res, irqs */
     res = vmngh_get_msg_cluster_res(msg_dev, chan_type);
     if (res == NULL) {
-        vmng_err("Get message cluster res. (dev_id=%u; fid=%u; chan_type=%u)\n",
-                 msg_dev->dev_id, msg_dev->fid, chan_type);
+        vmng_err("Get message cluster res. (dev_id=%u; fid=%u; chan_type=%u)\n", msg_dev->dev_id, msg_dev->fid,
+                 chan_type);
         return -EINVAL;
     }
 
@@ -340,9 +341,8 @@ int vmngh_alloc_msg_cluster(struct vmng_msg_dev *msg_dev, enum vmng_msg_chan_typ
 
     ret = vmngh_alloc_msg_cluster_irqs(msg_dev, chan_type, res, &irq_array);
     if (ret != 0) {
-        vmng_err("Alloc irq failed. (dev_id=%u; fid=%u; chan_type=%u; ret=%d)\n",
-                 msg_dev->dev_id, msg_dev->fid, chan_type,
-            ret);
+        vmng_err("Alloc irq failed. (dev_id=%u; fid=%u; chan_type=%u; ret=%d)\n", msg_dev->dev_id, msg_dev->fid,
+                 chan_type, ret);
         return ret;
     }
 
@@ -350,15 +350,15 @@ int vmngh_alloc_msg_cluster(struct vmng_msg_dev *msg_dev, enum vmng_msg_chan_typ
     ret = vmng_alloc_local_msg_cluster(msg_dev, chan_type, res, &irq_array, msg_proc);
     if (ret != 0) {
         vmng_err("Alloc msg cluster failed. (dev_id=%u; fid=%u; chan_type=%u; ret=%d)\n", msg_dev->dev_id, msg_dev->fid,
-            chan_type, ret);
+                 chan_type, ret);
         goto free_irqs;
     }
 
     /* 3. remote msg cluster initial through admin */
     ret = vmngh_alloc_remote_msg_cluster(msg_dev, chan_type, &irq_array);
     if (ret != 0) {
-        vmng_err("Alloc remote msg cluster failed. (dev_id=%u; fid=%u; chan_type=%u; ret=%d)\n",
-            msg_dev->dev_id, msg_dev->fid, chan_type, ret);
+        vmng_err("Alloc remote msg cluster failed. (dev_id=%u; fid=%u; chan_type=%u; ret=%d)\n", msg_dev->dev_id,
+                 msg_dev->fid, chan_type, ret);
         goto free_msg_cluster;
     }
 
@@ -383,10 +383,10 @@ STATIC void vmngh_send_int_to_remote(void *msg_dev_in, u32 vector)
     u32 msix_offset = unit->shr_para->msix_offset;
     int ret;
 
-    ret = hw_dvt_hypervisor_inject_msix(unit->vdavinci, vector + msix_offset);
+    ret = hw_dvt_hypervisor_inject_msix(unit->vdavinci, vector + msix_offset, -1);
     if (ret != 0) {
-        vmng_err("Call hw_dvt_hypervisor_inject_msix error. (dev_id=%u; fid=%u; vector=%u; ret=%d)\n",
-                 msg_dev->dev_id, msg_dev->fid, vector, ret);
+        vmng_err("Call hw_dvt_hypervisor_inject_msix error. (dev_id=%u; fid=%u; vector=%u; ret=%d)\n", msg_dev->dev_id,
+                 msg_dev->fid, vector, ret);
     }
 }
 
@@ -418,8 +418,8 @@ STATIC struct vmng_msg_dev *vmngh_alloc_msg_dev(struct vmngh_vpc_unit *unit)
 
     msg_dev = vmng_kzalloc(sizeof(struct vmng_msg_dev), KA_GFP_KERNEL);
     if (msg_dev == NULL) {
-        vmng_err("Call ka_mm_kzalloc fail. (dev_id=%u; fid=%u; size=%lu)\n",
-                 unit->dev_id, unit->fid, sizeof(struct vmng_msg_dev));
+        vmng_err("Call ka_mm_kzalloc fail. (dev_id=%u; fid=%u; size=%lu)\n", unit->dev_id, unit->fid,
+                 sizeof(struct vmng_msg_dev));
         return NULL;
     }
     unit->msg_dev = msg_dev;

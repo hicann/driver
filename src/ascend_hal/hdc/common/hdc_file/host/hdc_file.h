@@ -34,9 +34,10 @@
 #define MAX_VF_DEVID_START 32
 #endif
 
-#define HDC_LOG_RUN_INFO_LIMIT(format, ...) do { \
-    DRV_RUN_INFO(HAL_MODULE_TYPE_HDC, format, ##__VA_ARGS__); \
-} while (0)
+#define HDC_LOG_RUN_INFO_LIMIT(format, ...)                       \
+    do {                                                          \
+        DRV_RUN_INFO(HAL_MODULE_TYPE_HDC, format, ##__VA_ARGS__); \
+    } while (0)
 
 #define HDC_MAX_UB_DEV_CNT 356
 

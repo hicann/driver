@@ -39,7 +39,9 @@ struct prof_user_chan_node {
     struct list_head list_node;
     uint32_t dev_id;
     uint32_t chan_id;
+    uint32_t sample_buff_size;
     struct prof_sample_ops ops;
+    struct prof_sample_ops ops_ex;
     /* The timer callback is processed asynchronously,
      * so it is necessary to ensure that the semaphore memory is always available */
     sem_t sem;
@@ -47,25 +49,52 @@ struct prof_user_chan_node {
 static LIST_HEAD(g_prof_user_chan_list);
 static pthread_mutex_t g_chan_list_mutex = PTHREAD_MUTEX_INITIALIZER;
 
-STATIC drvError_t prof_user_chan_add(uint32_t dev_id, uint32_t chan_id, struct prof_sample_register_para *para)
+STATIC drvError_t prof_user_chan_add(uint32_t dev_id, uint32_t chan_id, struct prof_sample_register_para *para, bool support_host_sample)
 {
     struct prof_user_chan_node *node = NULL;
+    struct list_head *pos = NULL, *n = NULL;
+    struct prof_sample_ops *ops;
+
+    (void)pthread_mutex_lock(&g_chan_list_mutex);
+    list_for_each_safe(pos, n, &g_prof_user_chan_list) {
+        node = list_entry(pos, struct prof_user_chan_node, list_node);
+        if ((node->dev_id == dev_id) && (node->chan_id == chan_id)) {
+            if (support_host_sample) {
+                ops = &node->ops_ex;
+                node->sample_buff_size = 512 * 1024; /* 512 1024: 512K*/
+            } else {
+                ops = &node->ops;
+            }
+            ops->start_func = para->ops.start_func;
+            ops->sample_func = para->ops.sample_func;
+            ops->flush_func = para->ops.flush_func;
+            ops->stop_func = para->ops.stop_func;
+            (void)pthread_mutex_unlock(&g_chan_list_mutex);
+            return DRV_ERROR_NONE;
+        }
+    }
 
     node = (struct prof_user_chan_node *)malloc(sizeof(*node));
     if (node == NULL) {
+        (void)pthread_mutex_unlock(&g_chan_list_mutex);
         PROF_ERR("Failed to alloc chan_node. (dev_id=%u, chan_id=%u)\n", dev_id, chan_id);
         return DRV_ERROR_MALLOC_FAIL;
     }
-
     node->dev_id = dev_id;
     node->chan_id = chan_id;
-    node->ops.start_func = para->ops.start_func;
-    node->ops.sample_func = para->ops.sample_func;
-    node->ops.flush_func = para->ops.flush_func;
-    node->ops.stop_func = para->ops.stop_func;
-
-    (void)pthread_mutex_lock(&g_chan_list_mutex);
+    node->sample_buff_size = 0;
+    if (support_host_sample) {
+        ops = &node->ops_ex;
+        node->sample_buff_size = 512 * 1024; /* 512 1024: 512K*/
+    } else {
+        ops = &node->ops;
+    }
+    ops->start_func = para->ops.start_func;
+    ops->sample_func = para->ops.sample_func;
+    ops->flush_func = para->ops.flush_func;
+    ops->stop_func = para->ops.stop_func;
     drv_user_list_add_tail(&node->list_node, &g_prof_user_chan_list);
+
     (void)pthread_mutex_unlock(&g_chan_list_mutex);
 
     return DRV_ERROR_NONE;
@@ -92,7 +121,7 @@ STATIC void prof_user_chan_del(uint32_t dev_id, uint32_t chan_id)
     }
 }
 
-STATIC drvError_t prof_user_chan_get(uint32_t dev_id, uint32_t chan_id, struct prof_sample_ops *ops, sem_t **sem)
+drvError_t prof_user_chan_get(uint32_t dev_id, uint32_t chan_id, struct prof_user_chan_priv *chan_priv, sem_t **sem, bool support_host_sample)
 {
     struct prof_user_chan_node *node = NULL;
     struct list_head *pos = NULL, *n = NULL;
@@ -101,11 +130,22 @@ STATIC drvError_t prof_user_chan_get(uint32_t dev_id, uint32_t chan_id, struct p
     list_for_each_safe(pos, n, &g_prof_user_chan_list) {
         node = list_entry(pos, struct prof_user_chan_node, list_node);
         if ((node->dev_id == dev_id) && (node->chan_id == chan_id)) {
-            ops->start_func = node->ops.start_func;
-            ops->sample_func = node->ops.sample_func;
-            ops->flush_func = node->ops.flush_func;
-            ops->stop_func = node->ops.stop_func;
+            if (support_host_sample) {
+                chan_priv->ops.start_func = node->ops_ex.start_func;
+                chan_priv->ops.sample_func = node->ops_ex.sample_func;
+                chan_priv->ops.flush_func = node->ops_ex.flush_func;
+                chan_priv->ops.stop_func = node->ops_ex.stop_func;
+                chan_priv->sample_buff_size = node->sample_buff_size;
+            } else {
+                chan_priv->ops.start_func = node->ops.start_func;
+                chan_priv->ops.sample_func = node->ops.sample_func;
+                chan_priv->ops.flush_func = node->ops.flush_func;
+                chan_priv->ops.stop_func = node->ops.stop_func;
+                chan_priv->sample_buff_size = 0;
+            }
+
             *sem = &node->sem;
+            chan_priv->support_host_sample = support_host_sample;
 
             (void)pthread_mutex_unlock(&g_chan_list_mutex);
             return DRV_ERROR_NONE;
@@ -130,15 +170,19 @@ STATIC bool prof_user_is_need_kernel_reg(uint32_t chan_id)
     return false;
 }
 
-drvError_t prof_user_register_channel(uint32_t dev_id, uint32_t chan_id, struct prof_sample_register_para *para)
+drvError_t prof_user_register_channel(uint32_t dev_id, uint32_t chan_id, struct prof_sample_register_para *para, bool support_host_sample)
 {
     struct prof_user_kernel_ops *kernel_ops = NULL;
     drvError_t ret;
 
-    ret = prof_user_chan_add(dev_id, chan_id, para);
+    ret = prof_user_chan_add(dev_id, chan_id, para, support_host_sample);
     if (ret != DRV_ERROR_NONE) {
         PROF_ERR("Failed to register channel to user. (dev_id=%u, chan_id=%u, ret=%d)\n", dev_id, chan_id, (int)ret);
         return ret;
+    }
+
+    if (support_host_sample) {
+        return DRV_ERROR_NONE;
     }
 
     if (prof_user_is_need_kernel_reg(chan_id) == false) {
@@ -158,25 +202,6 @@ drvError_t prof_user_register_channel(uint32_t dev_id, uint32_t chan_id, struct 
     return DRV_ERROR_NONE;
 }
 
-enum prof_user_sample_type {
-    PROF_SAMPLE_LOCAL_MODE,
-    PROF_SAMPLE_REMOTER_MODE
-};
-
-struct prof_user_chan_priv {
-    uint32_t dev_id;
-    uint32_t chan_id;
-
-    uint32_t sample_mode;
-    uint32_t sample_thread_flag;
-    pthread_t sample_thread;
-    timer_t timer_fd;
-    sem_t *sem;
-    struct prof_sample_ops ops;
-
-    uint8_t *buff;
-};
-
 STATIC drvError_t prof_user_chan_init(uint32_t dev_id, uint32_t chan_id, bool event_flag, char **priv)
 {
     struct prof_user_chan_priv *chan_priv = NULL;
@@ -188,7 +213,7 @@ STATIC drvError_t prof_user_chan_init(uint32_t dev_id, uint32_t chan_id, bool ev
         return DRV_ERROR_MALLOC_FAIL;
     }
 
-    ret = prof_user_chan_get(dev_id, chan_id, &chan_priv->ops, &chan_priv->sem);
+    ret = prof_user_chan_get(dev_id, chan_id, chan_priv, &chan_priv->sem, false);
     if (ret != DRV_ERROR_NONE) {
         free(chan_priv);
         return DRV_ERROR_NOT_SUPPORT;
@@ -200,6 +225,7 @@ STATIC drvError_t prof_user_chan_init(uint32_t dev_id, uint32_t chan_id, bool ev
     chan_priv->sample_mode = event_flag ? PROF_SAMPLE_REMOTER_MODE : PROF_SAMPLE_LOCAL_MODE;
     chan_priv->sample_thread_flag = 0;
     chan_priv->timer_fd = NULL;
+    chan_priv->sample_status = PROF_SAMPLE_NORMAL;
     (void)sem_init(chan_priv->sem, 0, 0);
 
     /* Only local mode requires local buff */
@@ -218,7 +244,7 @@ STATIC drvError_t prof_user_chan_init(uint32_t dev_id, uint32_t chan_id, bool ev
     return DRV_ERROR_NONE;
 }
 
-STATIC void prof_user_chan_uninit(char **priv)
+void prof_user_chan_uninit(char **priv)
 {
     struct prof_user_chan_priv *chan_priv = (struct prof_user_chan_priv *)(*priv);
 
@@ -230,7 +256,7 @@ STATIC void prof_user_chan_uninit(char **priv)
     *priv = NULL;
 }
 
-STATIC drvError_t prof_user_sample_start_check(struct prof_user_chan_priv *chan_priv,
+drvError_t prof_user_sample_start_check(struct prof_user_chan_priv *chan_priv,
     struct prof_user_start_para *para)
 {
     if (para->sample_period == 0) {
@@ -252,7 +278,7 @@ STATIC drvError_t prof_user_sample_start_check(struct prof_user_chan_priv *chan_
     return DRV_ERROR_NONE;
 }
 
-STATIC drvError_t prof_user_sample_start(struct prof_user_chan_priv *chan_priv, struct prof_user_start_para *para)
+drvError_t prof_user_sample_pre_start(struct prof_user_chan_priv *chan_priv, struct prof_user_start_para *para)
 {
     struct prof_sample_start_para start_para = {0};
     int ret;
@@ -261,7 +287,46 @@ STATIC drvError_t prof_user_sample_start(struct prof_user_chan_priv *chan_priv, 
         start_para.dev_id = chan_priv->dev_id;
         start_para.user_data = para->user_data;
         start_para.user_data_len = para->user_data_size;
+        start_para.out_data = (void *)para->addrdata; // pre_start reuse out_data as in_data.
+        start_para.out_data_max_len = PROF_START_OUTDATA_SIZE_MAX;
+        start_para.is_support_host_move = true;
+        start_para.phease = PROF_HOST_SAMPLE_PHEASE1;
 
+        ret = chan_priv->ops.start_func(&start_para);
+        if (ret != PROF_OK) {
+            PROF_ERR("Failed to invoke pre start func. (dev_id=%u, chan_id=%u, ret=%d)\n",
+                chan_priv->dev_id, chan_priv->chan_id, ret);
+            return DRV_ERROR_INVALID_HANDLE;
+        }
+        if (start_para.out_data_len > PROF_START_OUTDATA_SIZE_MAX) {
+            PROF_ERR("out_data_len exceeds the limit. (dev_id=%u, chan_id=%u, out_data_len=%u)\n",
+                chan_priv->dev_id, chan_priv->chan_id, start_para.out_data_len);
+            return DRV_ERROR_INVALID_VALUE;
+        }
+        para->addr_data_len = start_para.out_data_len;
+    }
+
+    return DRV_ERROR_NONE;
+}
+
+drvError_t prof_user_sample_start(struct prof_user_chan_priv *chan_priv, struct prof_user_start_para *para,
+    struct prof_start_event_out_msg *outdata, bool support_host_sample)
+{
+    struct prof_sample_start_para start_para = {0};
+    int ret;
+
+    if (chan_priv->ops.start_func != NULL) {
+        start_para.dev_id = chan_priv->dev_id;
+        start_para.user_data = para->user_data;
+        start_para.user_data_len = para->user_data_size;
+        if (support_host_sample) {
+            start_para.sub_chan_id = outdata->sub_chan_id;
+            start_para.out_data_len = outdata->outdata_len;
+            start_para.out_data = outdata->outdata;
+            start_para.out_data_max_len = PROF_START_OUTDATA_SIZE_MAX;
+            start_para.is_support_host_move = support_host_sample;
+            start_para.phease = PROF_HOST_SAMPLE_PHEASE2;
+        }
         ret = chan_priv->ops.start_func(&start_para);
         if (ret != PROF_OK) {
             PROF_ERR("Failed to invoke start func. (dev_id=%u, chan_id=%u, ret=%d)\n",
@@ -273,14 +338,14 @@ STATIC drvError_t prof_user_sample_start(struct prof_user_chan_priv *chan_priv, 
     return DRV_ERROR_NONE;
 }
 
-STATIC void prof_user_sample_stop(struct prof_user_chan_priv *chan_priv)
+void prof_user_sample_stop(struct prof_user_chan_priv *chan_priv, uint32_t release_flag)
 {
     struct prof_sample_stop_para stop_para = {0};
     int ret;
 
     if (chan_priv->ops.stop_func != NULL) {
         stop_para.dev_id = chan_priv->dev_id;
-
+        stop_para.release_flag = release_flag;
         ret = chan_priv->ops.stop_func(&stop_para);
         if (ret != PROF_OK) {
             PROF_ERR("Failed to invoke stop func. (dev_id=%u, chan_id=%u, ret=%d)\n",
@@ -302,6 +367,13 @@ STATIC void *prof_user_sample_thread(void *arg)
     int ret;
 
     PROF_INFO("Sample thread start. (dev_id=%u, chan_id=%u)\n", dev_id, chan_id);
+    if (chan_priv->support_host_sample) {
+        buff_len = chan_priv->sample_buff_size;
+        if (buff_len == 0) {
+            PROF_ERR("Invalid buff len. (dev_id=%u, chan_id=%u)\n", dev_id, chan_id);
+            return NULL;
+        }
+    }
 
     buff = (uint8_t *)malloc(buff_len);
     if (buff == NULL) {
@@ -313,6 +385,7 @@ STATIC void *prof_user_sample_thread(void *arg)
     while (chan_priv->sample_thread_flag) {
         (void)sem_wait(chan_priv->sem);
 
+        (void)CAS(&chan_priv->sample_status, PROF_SAMPLE_FLUSH_START, PROF_SAMPLE_FLUSH_STARTING);
         para.dev_id = dev_id;
         para.target_pid = getpid();
         para.buff = buff;
@@ -320,10 +393,12 @@ STATIC void *prof_user_sample_thread(void *arg)
         para.report_len = 0;
         ret = chan_priv->ops.sample_func(&para);
         if (ret == DRV_ERROR_CALL_NO_RETRY) {
+            (void)CAS(&chan_priv->sample_status, PROF_SAMPLE_FLUSH_STARTING, PROF_SAMPLE_FLUSH_FINISH);
             break;
         }
 
         if ((ret != 0) || (para.report_len > buff_len)) {
+            (void)CAS(&chan_priv->sample_status, PROF_SAMPLE_FLUSH_STARTING, PROF_SAMPLE_FLUSH_FINISH);
             continue;
         }
 
@@ -332,6 +407,7 @@ STATIC void *prof_user_sample_thread(void *arg)
         }
 
         para.sample_flag = SAMPLE_DATA_ONLY;
+        (void)CAS(&chan_priv->sample_status, PROF_SAMPLE_FLUSH_STARTING, PROF_SAMPLE_FLUSH_FINISH);
     }
 
     free(buff);
@@ -340,7 +416,7 @@ STATIC void *prof_user_sample_thread(void *arg)
     return NULL;
 }
 
-STATIC drvError_t prof_user_sample_thread_enable(struct prof_user_chan_priv *chan_priv)
+drvError_t prof_user_sample_thread_enable(struct prof_user_chan_priv *chan_priv)
 {
     pthread_attr_t attr;
     int ret;
@@ -360,7 +436,7 @@ STATIC drvError_t prof_user_sample_thread_enable(struct prof_user_chan_priv *cha
     return DRV_ERROR_NONE;
 }
 
-STATIC void prof_user_sample_thread_disable(struct prof_user_chan_priv *chan_priv)
+void prof_user_sample_thread_disable(struct prof_user_chan_priv *chan_priv)
 {
     /* Non-periodic sampling */
     if (chan_priv->sample_thread_flag == 0) {
@@ -379,7 +455,7 @@ STATIC void  prof_user_sample_timer_handle(union sigval v)
     (void)sem_post(sem);
 }
 
-STATIC drvError_t prof_user_sample_timer_init(struct prof_user_chan_priv *chan_priv, uint32_t sample_period)
+drvError_t prof_user_sample_timer_init(struct prof_user_chan_priv *chan_priv, uint32_t sample_period)
 {
     struct sigevent sig_ev = {0};
     struct itimerspec ts;
@@ -408,7 +484,7 @@ STATIC drvError_t prof_user_sample_timer_init(struct prof_user_chan_priv *chan_p
     return DRV_ERROR_NONE;
 }
 
-STATIC void prof_user_sample_timer_uninit(struct prof_user_chan_priv *chan_priv)
+void prof_user_sample_timer_uninit(struct prof_user_chan_priv *chan_priv)
 {
     int ret;
 
@@ -429,6 +505,7 @@ STATIC drvError_t prof_user_chan_start(uint32_t dev_id, uint32_t chan_id, struct
 {
     struct prof_user_chan_priv *chan_priv = (struct prof_user_chan_priv *)priv;
     drvError_t ret;
+    struct prof_start_event_out_msg start_out_msg = {0};
 
     ret = prof_user_sample_start_check(chan_priv, para);
     if (ret != DRV_ERROR_NONE) {
@@ -436,7 +513,7 @@ STATIC drvError_t prof_user_chan_start(uint32_t dev_id, uint32_t chan_id, struct
         return ret;
     }
 
-    ret = prof_user_sample_start(chan_priv, para);
+    ret = prof_user_sample_start(chan_priv, para, &start_out_msg, false);
     if (ret != DRV_ERROR_NONE) {
         PROF_ERR("Failed to start user sample. (dev_id=%u, chan_id=%u, ret=%d)\n", dev_id, chan_id, (int)ret);
         return ret;
@@ -449,7 +526,7 @@ STATIC drvError_t prof_user_chan_start(uint32_t dev_id, uint32_t chan_id, struct
 
     ret = prof_user_sample_thread_enable(chan_priv);
     if (ret != DRV_ERROR_NONE) {
-        prof_user_sample_stop(chan_priv);
+        prof_user_sample_stop(chan_priv, PROF_STOP_STAGE_DEFAULT);
         PROF_ERR("Failed to enable thread. (dev_id=%u, chan_id=%u, ret=%d)\n", dev_id, chan_id, (int)ret);
         return ret;
     }
@@ -457,7 +534,7 @@ STATIC drvError_t prof_user_chan_start(uint32_t dev_id, uint32_t chan_id, struct
     ret = prof_user_sample_timer_init(chan_priv, para->sample_period);
     if (ret != DRV_ERROR_NONE) {
         prof_user_sample_thread_disable(chan_priv);
-        prof_user_sample_stop(chan_priv);
+        prof_user_sample_stop(chan_priv, PROF_STOP_STAGE_DEFAULT);
         PROF_ERR("Failed to init timer. (dev_id=%u, chan_id=%u, ret=%d)\n", dev_id, chan_id, (int)ret);
         return ret;
     }
@@ -465,7 +542,7 @@ STATIC drvError_t prof_user_chan_start(uint32_t dev_id, uint32_t chan_id, struct
     return DRV_ERROR_NONE;
 }
 
-STATIC drvError_t prof_user_chan_stop(uint32_t dev_id, uint32_t chan_id, struct prof_user_stop_para *para,
+drvError_t prof_user_chan_stop(uint32_t dev_id, uint32_t chan_id, struct prof_user_stop_para *para,
     char *priv)
 {
     (void)para;
@@ -473,7 +550,7 @@ STATIC drvError_t prof_user_chan_stop(uint32_t dev_id, uint32_t chan_id, struct 
 
     prof_user_sample_timer_uninit(chan_priv);
     prof_user_sample_thread_disable(chan_priv);
-    prof_user_sample_stop(chan_priv);
+    prof_user_sample_stop(chan_priv, para->host_sample_release_flag);
 
     if (chan_priv->sample_mode == PROF_SAMPLE_LOCAL_MODE) {
         prof_buff_wait_read_empty(chan_priv->buff, dev_id, chan_id);
@@ -496,7 +573,7 @@ STATIC drvError_t prof_user_chan_flush(uint32_t dev_id, uint32_t chan_id, uint32
     }
 }
 
-STATIC int prof_user_chan_read(uint32_t dev_id, uint32_t chan_id, prof_user_read_para_t *read_para, char *priv)
+int prof_user_chan_read(uint32_t dev_id, uint32_t chan_id, prof_user_read_para_t *read_para, char *priv)
 {
     (void)dev_id;
     (void)chan_id;
@@ -533,7 +610,7 @@ STATIC drvError_t prof_user_chan_query(uint32_t dev_id, uint32_t chan_id, uint32
     return DRV_ERROR_NONE;
 }
 
-STATIC drvError_t prof_user_chan_report(uint32_t dev_id, uint32_t chan_id, void *data, uint32_t data_len,
+drvError_t prof_user_chan_report(uint32_t dev_id, uint32_t chan_id, void *data, uint32_t data_len,
     char *priv)
 {
     struct prof_user_chan_priv *chan_priv = (struct prof_user_chan_priv *)priv;

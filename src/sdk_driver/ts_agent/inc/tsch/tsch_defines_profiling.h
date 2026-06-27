@@ -26,7 +26,7 @@
 #endif
 
 #ifdef STARS_CTRL_CPU
-#include <linux/types.h>
+#include "ka_type.h"
 #endif
 
 #ifdef __cplusplus

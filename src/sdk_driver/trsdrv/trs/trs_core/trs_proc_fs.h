@@ -28,4 +28,3 @@ void trs_proc_fs_init(void);
 void trs_proc_fs_uninit(void);
 
 #endif
-

@@ -16,7 +16,7 @@
 #include "adpater_def.h"
 #include "dms_define.h"
 
-static inline void *get_symbol_objective_func(const struct kernel_symbol *sym, const char *synname)
+static inline void *get_symbol_objective_func(const ka_kernel_symbol_t *sym, const char *synname)
 {
     const char *module_sym_name = get_symbol_name(sym);
     if (ka_base_strcmp(module_sym_name, synname) != 0) {

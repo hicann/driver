@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2025. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -13,7 +13,7 @@
 
 #ifndef SVM_SHARE_LOG_H
 #define SVM_SHARE_LOG_H
- 
+
 void svm_share_log_err(const char *fmt, ...);
 void svm_share_log_run_info(const char *fmt, ...);
 #endif /* __SVM_SHARE_LOG_H__ */

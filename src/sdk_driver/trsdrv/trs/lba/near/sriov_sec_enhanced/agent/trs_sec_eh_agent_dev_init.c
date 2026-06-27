@@ -17,8 +17,8 @@
 
 #include "trs_sec_eh_agent_dev_init.h"
 
-typedef int (* trs_config_list)(struct trs_id_inst *);
-typedef void (* trs_decofnig_list)(struct trs_id_inst *);
+typedef int (*trs_config_list)(struct trs_id_inst *);
+typedef void (*trs_decofnig_list)(struct trs_id_inst *);
 
 static const trs_config_list g_trs_hw_init[] = {
 #ifndef EMU_ST

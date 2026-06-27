@@ -32,7 +32,8 @@ void devmm_ref_server_occupier_mng_uninit(struct devmm_ref_server_occupier_mng *
 
 int devmm_ref_server_occupier_add(struct devmm_ref_server_occupier_mng *mng, u32 sdid);
 int devmm_ref_server_occupier_del(struct devmm_ref_server_occupier_mng *mng, u32 sdid);
-int devmm_for_each_ref_server_occupier(struct devmm_ref_server_occupier_mng *mng,
-    int (*func)(struct devmm_ref_server_occupier *occupier, void *priv), void *priv);
+int devmm_for_each_ref_server_occupier(
+    struct devmm_ref_server_occupier_mng *mng, int (*func)(struct devmm_ref_server_occupier *occupier, void *priv),
+    void *priv);
 
 #endif

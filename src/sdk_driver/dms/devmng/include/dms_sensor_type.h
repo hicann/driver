@@ -74,16 +74,16 @@ typedef enum {
     DMS_SEN_TYPE_MEMORY_ERR_RECORD,
     DMS_SEN_TYPE_SAFETY_SENSOR = 0xC3,      // SOC EVENT1: SOC system exception
     DMS_SEN_TYPE_EXTEND_SENSOR = 0xC4,      // SOC EVENT2: SOC system exception - hardware error detection assisted by software
-    DMS_SEN_TYPE_BUS_SENSOR = 0xC5,         // SOC EVENT3£ºSOC system exception - external Bus exception
-    DMS_SEN_TYPE_CHECK_SENSOR = 0xC6,       // SOC EVENT4£ºSOC system exception - verification exception
-    DMS_SEN_TYPE_CRYPTO_SENSOR = 0xC7,      // SOC EVENT5£ºSOC system exception - security module exception
+    DMS_SEN_TYPE_BUS_SENSOR = 0xC5,         // SOC EVENT3: SOC system exception - external Bus exception
+    DMS_SEN_TYPE_CHECK_SENSOR = 0xC6,       // SOC EVENT4: SOC system exception - verification exception
+    DMS_SEN_TYPE_CRYPTO_SENSOR = 0xC7,      // SOC EVENT5: SOC system exception - security module exception
     DMS_SEN_TYPE_MODULE_SENSOR1 = 0xC8,     // SOC EVENT6: SOC system exception - public IP module exception
-    DMS_SEN_TYPE_MODULE_SENSOR2 = 0xC9,     // SOC EVENT7£ºSOC system exception - public IP module exception
+    DMS_SEN_TYPE_MODULE_SENSOR2 = 0xC9,     // SOC EVENT7: SOC system exception - public IP module exception
     DMS_SEN_TYPE_DISP_SENSOR = 0xCA,        // Dispatch module exception
     DMS_SEN_TYPE_SMMU_SENSOR = 0xCB,        // SMMU module exception
     DMS_SEN_TYPE_GENERAL_SOFTWARE_FAULT = 0xD0,        // GENERAL SOFTWARE FALUT: common software exception
     DMS_SEN_TYPE_CHIP_HARDWARE = 0xD1,      // CHIP HARDWARE: chip hardware exception
-
+    DMS_SEN_TYPE_UB_SENSOR = 0xD5,
     /* The 0xFE sensor type is reserved, used for product-defined event IDs. */
     DMS_SEN_TYPE_MAX_CUSTOM,
 } DMS_SENSOR_TYPE_T;
@@ -107,6 +107,7 @@ enum ras_error_type {
     RAS_ERROR_TYPE_INIT_ABNORMAL = 0x0D,
     RAS_ERROR_TYPE_IN_CFG_ERR_MINOR = 0x0E,
     RAS_ERROR_TYPE_CFG_ERR_MINIOR = 0x0F,
+    RAS_ERROR_TYPE_DATA_POISON = 0x10,
     RAS_ERROR_TYPE_ERR_TYPE_MAX
 };
 
@@ -137,6 +138,7 @@ enum memory_error_record_type {
     MEMORY_ERROR_RECORD_TYPE_ERROR_RECORD_MAX
 };
 
+/* for DMS_SEN_TYPE_SAFETY_SENSOR(0xC3) sensor */
 enum soc_safety_error_type {
     SOC_SAFETY_LOCKSTEP_ERR = 0x00,
     SOC_SAFETY_REGOVERFLOW_ERR = 0x01,
@@ -157,6 +159,42 @@ enum soc_safety_error_type {
     SOC_SAFETY_CPU_WAKEUP_NOTIF = 0x0E,
     SOC_SAFETY_UN_ACCESS_NOTIF = 0x0F,
     SOC_SAFETY_ERR_TYPE_MAX
+};
+
+ /* for DMS_SEN_TYPE_BUS_SENSOR(0xC5) sensor */
+enum soc_bus_error_type {
+    SOC_BUS_BUS_TIMESTAMP_ABNORMAL = 0x00,
+    SOC_BUS_TXRX_EVENTS_LOST = 0x01,
+    SOC_BUS_BUS_OVERLOAD = 0x02,
+    SOC_BUS_BUS_OFF_STATE = 0x03,
+    SOC_BUS_SPMI_BUS_ERROR = 0x04,
+    SOC_BUS_BUFFER_OVERFLOW = 0x05,
+    SOC_BUS_INVALID_PACKET = 0x06,
+    SOC_BUS_ERR_TYPE_MAX
+};
+
+/* for DMS_SEN_TYPE_CHECK_SENSOR(0xC6) sensor */
+enum soc_check_error_type {
+    SOC_CHECK_CHECK_FAIL = 0x00,
+    SOC_CHECK_CRC_CHECK_FAIL = 0x01,
+    SOC_CHECK_RTSQ_CHECK_FAIL = 0x02,
+    SOC_CHECK_ACSQ_CHECK_FAIL = 0x03,
+    SOC_CHECK_PCIE_DMA_CHECK_FAIL = 0x04,
+    SOC_CHECK_STRESS_CHECK_FAIL = 0x05,
+    SOC_CHECK_STRESS_CHECK_ABNORMAL = 0x06,
+    SOC_CHECK_ERR_TYPE_MAX
+};
+
+/* for DMS_SEN_TYPE_UB_SENSOR(0xD5) sensor */
+enum ub_senor_error_type {
+    UB_ERR_REMOTE_DATA_EXCP_OCCUR = 0x00,
+    UB_ERR_PORT_EXCP_OCCUR = 0x01,
+    UB_ERR_NETWORK_TIMEOUT_OCCUR = 0x02,
+    UB_ERR_REMOTE_CFG_ERROR_OCCUR = 0x03,
+    UB_ERR_LOCAL_CFG_ERROR_OCCUR = 0x04,
+    UB_ERR_ABNORMAL_REMOTE_RESOURCE_SPACE = 0x05,
+    UB_ERR_NETWORK_EXCP_OCCUR = 0x06,
+    UB_SENSOR_ERR_TYPE_MAX
 };
 
 enum temp_error_type {
@@ -204,6 +242,11 @@ enum extend_error_type {
     EXTEND_ERROR_TYPE_CHANNEL_SELF_CHECK = 0x0B,
     EXTEND_ERROR_TYPE_INTERRUPTION_STORM_EXCEPTION = 0x0D,
     EXTEND_ERROR_TYPE_ERR_TYPE_MAX
+};
+
+enum ub_error_type {
+    SOC_UB_ERROR_TYPE_MEM_UN_ACCESS = 0x06,
+    SOC_UB_ERROR_TYPE_ERR_TYPE_MAX
 };
 
 struct dms_sensor_type_string {

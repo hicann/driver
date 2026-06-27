@@ -11,11 +11,28 @@
  * GNU General Public License for more details.
  */
 
+#include "ka_compiler_pub.h"
+#include "ka_task_pub.h"
+#include "ka_list_pub.h"
+#include "ka_errno_pub.h"
 #include "dvt.h"
 #include "hw_vdavinci.h"
 #include "mmio.h"
 #include "domain_manage.h"
 #include "vfio_ops.h"
+#include "priv_ops.h"
+#include "vdavinci.h"
+
+#if KA_IS_DAVINCI_XARRAY_SUPPORT
+static KA_DEFINE_XARRAY(g_vdavinci_xa);
+#else
+static KA_LIST_HEAD(g_vdavinci_list);
+
+STATIC ka_list_head_t *get_vdavinci_list(void)
+{
+    return &g_vdavinci_list;
+}
+#endif
 
 static void hw_vdavinci_reset_debugfs_info(struct hw_vdavinci *vdavinci)
 {
@@ -43,44 +60,85 @@ STATIC void hw_dvt_vdavinci_init(struct hw_vdavinci *vdavinci, struct hw_dvt *dv
     vdavinci->dev.fid = vdavinci->id;
     vdavinci->dev.resource_dev = dvt->vdavinci_priv->dev;
     vdavinci->vf_index = -1;
-    mutex_init(&vdavinci->vdavinci_lock);
+    ka_task_mutex_init(&vdavinci->vdavinci_lock);
 }
 
-LIST_HEAD(g_vdavinci_list);
-
-STATIC struct list_head *get_vdavinci_list(void)
+#if KA_IS_DAVINCI_XARRAY_SUPPORT
+struct hw_vdavinci *find_vdavinci(ka_device_t *dev)
 {
-    return &g_vdavinci_list;
-}
+    if (ka_unlikely(dev == NULL)) {
+        return NULL;
+    }
 
-struct hw_vdavinci *find_vdavinci(struct device *dev)
+    return ka_xa_load(&g_vdavinci_xa, (uintptr_t)dev);
+}
+#else
+struct hw_vdavinci *find_vdavinci(ka_device_t *dev)
 {
     struct hw_vdavinci *vdavinci = NULL, *next = NULL;
-    struct list_head *head = get_vdavinci_list();
+    ka_list_head_t *head = get_vdavinci_list();
 
     if (dev == NULL) {
         return NULL;
     }
-
-    list_for_each_entry_safe(vdavinci, next, head, list) {
+    ka_list_for_each_entry_safe(vdavinci, next, head, list) {
         if (vdavinci->dev.resource_dev == dev) {
             return vdavinci;
         }
     }
     return NULL;
 }
+#endif
 
-STATIC void remove_vdavinci_node(struct hw_vdavinci *vdavinci)
+#if KA_IS_DAVINCI_XARRAY_SUPPORT
+STATIC void unregister_vdavinci(struct hw_vdavinci *vdavinci)
+{
+    if (ka_unlikely(vdavinci == NULL)) {
+        return;
+    }
+
+    (void)ka_xa_erase(&g_vdavinci_xa, (uintptr_t)vdavinci->dev.resource_dev);
+}
+#else
+STATIC void unregister_vdavinci(struct hw_vdavinci *vdavinci)
 {
     struct hw_vdavinci *vdavinci_node = NULL, *next = NULL;
-    struct list_head *head = get_vdavinci_list();
+    ka_list_head_t *head = get_vdavinci_list();
 
-    list_for_each_entry_safe(vdavinci_node, next, head, list) {
+    ka_list_for_each_entry_safe(vdavinci_node, next, head, list) {
         if (vdavinci_node == vdavinci) {
-            list_del(&vdavinci_node->list);
+            ka_list_del(&vdavinci_node->list);
         }
     }
 }
+#endif
+
+#if KA_IS_DAVINCI_XARRAY_SUPPORT
+STATIC int register_vdavinci(struct hw_vdavinci *vdavinci)
+{
+    void *old = NULL;
+
+    if (ka_unlikely(vdavinci == NULL)) {
+        return -EINVAL;
+    }
+    old = ka_xa_store(&g_vdavinci_xa, (uintptr_t)vdavinci->dev.resource_dev,
+                      vdavinci, KA_GFP_KERNEL);
+    if (ka_unlikely(ka_xa_is_err(old))) {
+        return ka_xa_err(old);
+    }
+
+    return 0;
+}
+#else
+STATIC int register_vdavinci(struct hw_vdavinci *vdavinci)
+{
+    ka_list_head_t *head = get_vdavinci_list();
+
+    ka_list_add_tail(&(vdavinci->list), head);
+
+    return 0;
+}
+#endif
 
 STATIC int hw_get_available_vf(struct hw_vdavinci *vdavinci)
 {
@@ -101,9 +159,8 @@ STATIC int hw_get_available_vf(struct hw_vdavinci *vdavinci)
 STATIC int hw_dvt_alloc_vf(struct hw_vdavinci *vdavinci)
 {
     struct hw_dvt *dvt = vdavinci->dvt;
-    struct device *dev = dvt->vdavinci_priv->dev;
-    struct list_head *head = get_vdavinci_list();
-    int index;
+    ka_device_t *dev = dvt->vdavinci_priv->dev;
+    int index = 0, ret = 0;
 
     if (dvt->sriov.vf_used >= dvt->sriov.vf_num) {
         vascend_err(dev, "No available VFs.\n");
@@ -119,7 +176,12 @@ STATIC int hw_dvt_alloc_vf(struct hw_vdavinci *vdavinci)
     dvt->sriov.vf_used += 1;
     vdavinci->vf.irq_type = VFIO_PCI_NUM_IRQS;
     vdavinci->is_passthrough = true;
-    list_add_tail(&(vdavinci->list), head);
+    ret = register_vdavinci(vdavinci);
+    if (ret != 0) {
+        vascend_err(dev, "register vdavinci error: %d\n", ret);
+        return ret;
+    }
+
     return 0;
 }
 
@@ -134,7 +196,7 @@ STATIC int hw_dvt_reclaim_vf(struct hw_vdavinci *vdavinci)
     dvt->sriov.vf_array[index].vdavinci = NULL;
     dvt->sriov.vf_array[index].used = false;
     dvt->sriov.vf_used -= 1;
-    remove_vdavinci_node(vdavinci);
+    unregister_vdavinci(vdavinci);
     vdavinci->dev.resource_dev = NULL;
     vdavinci->vf.pdev = NULL;
     vdavinci->is_passthrough = false;
@@ -152,7 +214,7 @@ int init_vdavinci_type(struct hw_vdavinci_type *type,
     ret = snprintf_s(tp->template_name, HW_DVT_MAX_TYPE_NAME,
                      HW_DVT_MAX_TYPE_NAME - 1, "%s", type->template_name);
     if (ret < 0) {
-        pr_err("vdavinci type init failed, ret: %d\n", ret);
+        ka_dfx_pr_err("vdavinci type init failed, ret: %d\n", ret);
         return ret;
     }
     tp->type = type->type;
@@ -176,24 +238,17 @@ int init_vdavinci_type(struct hw_vdavinci_type *type,
 
 STATIC int hw_dvt_ops_create_vdavinci(struct hw_vdavinci *vdavinci,
                                       struct hw_vdavinci_type *type,
-                                      uuid_le uuid)
+                                      ka_uuid_le_t uuid)
 {
-    struct hw_dvt *dvt = vdavinci->dvt;
     struct vdavinci_type tp;
     int ret = 0;
 
-    if (dvt->vdavinci_priv->ops == NULL ||
-        dvt->vdavinci_priv->ops->vdavinci_create == NULL) {
-        vascend_err(vdavinci_to_dev(vdavinci), "vdavinci_priv's ops is null\n");
-        return -EINVAL;
-    }
     ret = init_vdavinci_type(type, &tp);
     if (ret != 0) {
         vascend_err(vdavinci_to_dev(vdavinci), "init vdavinci type failed\n");
         return ret;
     }
-    ret = dvt->vdavinci_priv->ops->vdavinci_create(&vdavinci->dev, vdavinci,
-                                                   &tp, uuid);
+    ret = vdavinci_priv_vdev_create(vdavinci, &tp, uuid);
     if (ret != 0) {
         vascend_err(vdavinci_to_dev(vdavinci), "create vdavinci failed, call vdavinci_create failed, "
                     "pf : %u, vid: %u, ret: %d\n", vdavinci->dev.dev_index, vdavinci->id, ret);
@@ -204,19 +259,19 @@ STATIC int hw_dvt_ops_create_vdavinci(struct hw_vdavinci *vdavinci,
 }
 
 struct hw_vdavinci *hw_dvt_create_vdavinci(struct hw_dvt *dvt,
-                                           struct hw_vdavinci_type *type, uuid_le uuid)
+                                           struct hw_vdavinci_type *type, ka_uuid_le_t uuid)
 {
     struct hw_vdavinci *vdavinci;
     int ret;
     struct hw_pf_info *pf_info = &dvt->pf[type->dev_index];
 
-    vdavinci = vzalloc(sizeof(*vdavinci));
+    vdavinci = ka_mm_vzalloc(sizeof(*vdavinci));
     if (vdavinci == NULL) {
-        return ERR_PTR(-ENOMEM);
+        return KA_ERR_PTR(-ENOMEM);
     }
 
-    ret = idr_alloc(&pf_info->vdavinci_idr, vdavinci, 0,
-                    DVT_MAX_VDAVINCI, GFP_KERNEL);
+    ret = ka_base_idr_alloc(&pf_info->vdavinci_idr, vdavinci, 0,
+                            DVT_MAX_VDAVINCI, KA_GFP_KERNEL);
     if (ret < 0)
         goto free_vdavinci;
 
@@ -240,8 +295,8 @@ struct hw_vdavinci *hw_dvt_create_vdavinci(struct hw_dvt *dvt,
         goto mmio_uninit;
     }
     hw_dvt_debugfs_add_vdavinci(vdavinci);
-    mutex_init(&vdavinci->ioeventfds_lock);
-    INIT_LIST_HEAD(&vdavinci->ioeventfds_list);
+    ka_task_mutex_init(&vdavinci->ioeventfds_lock);
+    KA_INIT_LIST_HEAD(&vdavinci->ioeventfds_list);
 
     return vdavinci;
 
@@ -250,10 +305,10 @@ mmio_uninit:
 put_vf:
     hw_dvt_reclaim_vf(vdavinci);
 clean_idr:
-    idr_remove(&pf_info->vdavinci_idr, vdavinci->id);
+    ka_base_idr_remove(&pf_info->vdavinci_idr, vdavinci->id);
 free_vdavinci:
-    vfree(vdavinci);
-    return ERR_PTR(ret);
+    ka_mm_vfree(vdavinci);
+    return KA_ERR_PTR(ret);
 }
 
 void hw_dvt_destroy_vdavinci(struct hw_vdavinci *vdavinci)
@@ -261,82 +316,79 @@ void hw_dvt_destroy_vdavinci(struct hw_vdavinci *vdavinci)
     struct hw_dvt *dvt = vdavinci->dvt;
     struct hw_pf_info *pf_info = &dvt->pf[vdavinci->dev.dev_index];
 
-    if (dvt->vdavinci_priv->ops &&
-        dvt->vdavinci_priv->ops->vdavinci_destroy) {
-        dvt->vdavinci_priv->ops->vdavinci_destroy(&vdavinci->dev);
-    }
+    vdavinci_priv_vdev_destroy(vdavinci);
 
     dvt->mmio_uninit(vdavinci);
     hw_dvt_reclaim_vf(vdavinci);
-    idr_remove(&pf_info->vdavinci_idr, vdavinci->id);
+    ka_base_idr_remove(&pf_info->vdavinci_idr, vdavinci->id);
 
     hw_dvt_debugfs_remove_vdavinci(vdavinci);
-    mutex_destroy(&vdavinci->ioeventfds_lock);
+    ka_task_mutex_destroy(&vdavinci->ioeventfds_lock);
 
     if (vdavinci->debugfs.msix_count) {
-        kfree(vdavinci->debugfs.msix_count);
+        ka_mm_kfree(vdavinci->debugfs.msix_count);
         vdavinci->debugfs.msix_count = NULL;
     }
-    vfree(vdavinci);
+    ka_mm_vfree(vdavinci);
 }
 
 void hw_dvt_release_vdavinci(struct hw_vdavinci *vdavinci)
 {
-    struct hw_dvt *dvt = vdavinci->dvt;
-
     hw_dvt_deactivate_vdavinci(vdavinci);
 
-    mutex_lock(&vdavinci->vdavinci_lock);
-    if (dvt->vdavinci_priv->ops &&
-        dvt->vdavinci_priv->ops->vdavinci_release) {
-        dvt->vdavinci_priv->ops->vdavinci_release(&vdavinci->dev);
-    }
-
-    mutex_unlock(&vdavinci->vdavinci_lock);
+    ka_task_mutex_lock(&vdavinci->vdavinci_lock);
+    vdavinci_priv_vdev_release(vdavinci);
+    ka_task_mutex_unlock(&vdavinci->vdavinci_lock);
 }
 
 int hw_dvt_reset_vdavinci(struct hw_vdavinci *vdavinci)
 {
     int ret = -1;
-    struct hw_dvt *dvt = vdavinci->dvt;
 
+    if (ka_unlikely(vdavinci == NULL)) {
+        return -EINVAL;
+    }
     vascend_info(vdavinci_to_dev(vdavinci),
                  "enter reset vdavinci, pf : %u, vid: %u\n", vdavinci->dev.dev_index, vdavinci->id);
-
-    mutex_lock(&vdavinci->vdavinci_lock);
-    if (dvt->vdavinci_priv->ops &&
-        dvt->vdavinci_priv->ops->vdavinci_reset) {
-        ret = dvt->vdavinci_priv->ops->vdavinci_reset(&vdavinci->dev);
-        if (ret) {
-            vascend_err(vdavinci_to_dev(vdavinci),
-                        "reset vdavinci failed, call vdavinci_reset failed, "
-                        "pf : %u, vid: %u, ret: %d\n", vdavinci->dev.dev_index, vdavinci->id, ret);
-            goto out;
-        }
+    ka_task_mutex_lock(&vdavinci->vdavinci_lock);
+    ret = vdavinci_priv_vdev_reset(vdavinci);
+    if (ka_unlikely(ret != 0)) {
+        vascend_err(vdavinci_to_dev(vdavinci),
+                    "reset vdavinci failed, call vdavinci_reset failed, "
+                    "pf : %u, vid: %u, ret: %d\n", vdavinci->dev.dev_index, vdavinci->id, ret);
+        goto out;
     }
 
     hw_vdavinci_reset_mmio(vdavinci);
     hw_vdavinci_reset_cfg_space(vdavinci);
     hw_vdavinci_reset_debugfs_info(vdavinci);
+    vdavinci->msix_injection_allowed = false;
 
     vascend_info(vdavinci_to_dev(vdavinci),
                  "leave reset vdavinci, pf : %u, vid: %u\n", vdavinci->dev.dev_index, vdavinci->id);
 
 out:
-    mutex_unlock(&vdavinci->vdavinci_lock);
+    ka_task_mutex_unlock(&vdavinci->vdavinci_lock);
     return ret;
 }
 
 void hw_dvt_activate_vdavinci(struct hw_vdavinci *vdavinci)
 {
-    mutex_lock(&vdavinci->dvt->lock);
+    ka_task_mutex_lock(&vdavinci->dvt->lock);
     vdavinci->active = true;
-    mutex_unlock(&vdavinci->dvt->lock);
+    ka_task_mutex_unlock(&vdavinci->dvt->lock);
 }
 
 void hw_dvt_deactivate_vdavinci(struct hw_vdavinci *vdavinci)
 {
-    mutex_lock(&vdavinci->dvt->lock);
+    ka_task_mutex_lock(&vdavinci->dvt->lock);
     vdavinci->active = false;
-    mutex_unlock(&vdavinci->dvt->lock);
+    ka_task_mutex_unlock(&vdavinci->dvt->lock);
+}
+
+void vdavinci_module_exit(void)
+{
+#if KA_IS_DAVINCI_XARRAY_SUPPORT
+    ka_xa_destroy(&g_vdavinci_xa);
+#endif
 }

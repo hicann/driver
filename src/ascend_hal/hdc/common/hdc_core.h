@@ -10,8 +10,10 @@
 #ifndef _HDC_CORE_H_
 #define _HDC_CORE_H_
 
-#define PKT_SIZE_1G (1024 * 1024 * 1024)  // 1G Byte
-#define MEM_SIZE_1M 0x100000              // 1M Byte
+#include "drv_type.h"
+
+#define PKT_SIZE_1G (1024 * 1024 * 1024) // 1G Byte
+#define MEM_SIZE_1M 0x100000             // 1M Byte
 
 #define HUGE_PAGE_SIZE (2U * 1024U * 1024U)
 #define HUGE_PAGE_MASK (~0x1FFFFFU)
@@ -19,7 +21,7 @@
 #define CACHE_LINE_SIZE 64
 #define PAGE_MASK (~0xFFFU)
 #define PAGE_BIT 12
-#define LAST_MASK 0x3FFFF  // 256k-1
+#define LAST_MASK 0x3FFFF // 256k-1
 
 #define HDC_BIT_MAP_IS_HUGE(flag) (((flag) & HDC_FLAG_MAP_HUGE) >> 2)
 
@@ -55,4 +57,5 @@ signed int hdc_get_max_device_num(void);
 unsigned int hdc_get_max_vf_dev_id_start(void);
 unsigned int hdc_get_alloc_len(unsigned int len, unsigned int flag);
 bool hdc_is_in_ub(void);
+void hdc_report_out_of_mem_err_msg(size_t size);
 #endif

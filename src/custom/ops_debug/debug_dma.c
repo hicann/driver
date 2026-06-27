@@ -11,6 +11,7 @@
  * GNU General Public License for more details.
  */
 
+#include <linux/types.h>
 #ifdef CFG_SOC_PLATFORM_CLOUD
 #include "trs_sqe_update.h"
 #endif
@@ -19,8 +20,10 @@
 #include "comm_kernel_interface.h"
 #include "kernel_version_adapt.h"
 #include "ascend_kernel_hal.h"
+#include "ascend_kernel_hal.h"
 #include "debug_dma.h"
 
+#include "dpa_apm_kernel.h"
 #include "ka_memory_pub.h"
 #include "ka_common_pub.h"
 #include "ka_dfx_pub.h"
@@ -45,6 +48,7 @@
 
 #define DMA_MAP_FAIL (~(ka_dma_addr_t)0)
 
+#ifndef CFG_SOC_PLATFORM_CLOUD_UB
 static u64 get_page_num(u64 addr, u64 addr_len)
 {
     u64 align_addr_len, page_num;
@@ -170,13 +174,16 @@ static void debug_get_dma_addr_dev(struct dma_param *param, int pid, u32 logical
 
 static int debug_get_passid(u32 devid, u32 tsid, int pid, u32 *passid)
 {
-    #ifndef CFG_SOC_PLATFORM_CLOUD
-        return devdrv_get_ssid(devid, tsid, pid, passid);
-    #else
-        return hal_kernel_trs_get_ssid(devid, tsid, pid, passid);
-    #endif
+#ifndef CFG_SOC_PLATFORM_CLOUD
+    return devdrv_get_ssid(devid, tsid, pid, passid);
+#else
+#ifdef CFG_SOC_PLATFORM_CLOUD_V4
+    return hal_kernel_apm_query_slave_ssid_by_master(devid, pid, PROCESS_CP1, passid);
+#else
+    return hal_kernel_trs_get_ssid(devid, tsid, pid, passid);
+#endif
+#endif
 }
-
 static ka_page_t **dma_prepare_pages(struct dma_param *param, u64 *page_num)
 {
     ka_page_t **pages;
@@ -217,9 +224,11 @@ static void dma_release_pages(ka_page_t **pages, u64 page_num)
     // 释放pages
     kvfree(pages);
 }
+#endif /* !CFG_SOC_PLATFORM_CLOUD_UB */
 
 int dma_copy_sync(u32 logical_devid, u32 devid, u32 tsid, int pid, struct dma_param *param)
 {
+#ifndef CFG_SOC_PLATFORM_CLOUD_UB
     u32 passid;
     u64 page_num, offset, dma_addr, dma_addr_dev;
     int ret;
@@ -253,7 +262,8 @@ int dma_copy_sync(u32 logical_devid, u32 devid, u32 tsid, int pid, struct dma_pa
         dma_release_pages(pages, page_num);
         return ERR_DMA_COPY_FAILED;
     }
-    TD_PRINT_INFO("devdrv_dma_map_page done dma_addr=0x%llx, offset=%llu\n", dma_addr, offset);
+    TD_PRINT_INFO("hal_kernel_devdrv_dma_map_page done dma_addr=0x%llx, offset=%llu\n", dma_addr, offset);
+
     debug_get_dma_addr_dev(param, pid, logical_devid, &dma_addr_dev, &passid);
     debug_make_single_dma_node(&dma_node, param, dma_addr, dma_addr_dev, passid);
 
@@ -262,13 +272,13 @@ int dma_copy_sync(u32 logical_devid, u32 devid, u32 tsid, int pid, struct dma_pa
 
     TD_PRINT_INFO("dma_node src_addr=0x%llx dst_addr=0x%llx size=%u loc_passid=%u direction=%d\n",
         dma_node.src_addr, dma_node.dst_addr, dma_node.size, dma_node.loc_passid, (int)dma_node.direction);
-
     hal_kernel_devdrv_dma_unmap_page(dev, dma_addr, param->size, KA_DMA_BIDIRECTIONAL);
     dma_release_pages(pages, page_num);
     if (ret != 0) {
-        TD_PRINT_ERR("devdrv_dma_sync_link_copy fail. (devid=%u; node_cnt=%d; ret=%d)\n", devid, 1, ret);
+        TD_PRINT_ERR("hal_kernel_devdrv_dma_sync_link_copy fail. (devid=%u; node_cnt=%d; ret=%d)\n", devid, 1, ret);
         return ret;
     }
+#endif /* !CFG_SOC_PLATFORM_CLOUD_UB */
     TD_PRINT_INFO("dma_copy_sync done\n");
     return 0;
 }

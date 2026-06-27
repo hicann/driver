@@ -29,10 +29,6 @@
 STATIC uint64 THREAD g_process_uni_id = 0; // process node's unique id
 pthread_mutex_t g_buff_mutex = PTHREAD_MUTEX_INITIALIZER;
 
-#ifndef DRV_HOST
-STATIC __thread int g_devid = -1;
-#endif
-
 STATIC struct buff_config_para_adp g_buff_config[BUFF_CONF_MAX] = {
     [BUFF_CONF_MBUF_TIMEOUT_CHECK] = {(uint32)sizeof(struct MbufTimeoutCheckPara), buff_timeout_mbuf_check},
     [BUFF_CONF_MBUF_TIMESTAMP_SET] = {0, buff_set_mbuf_timestamp},
@@ -44,8 +40,7 @@ STATIC struct buff_get_info_adp g_buff_get_info[BUFF_GET_MAX] = {
     [BUFF_GET_MBUF_TYPE_INFO] = {0, buff_get_mbuf_type_info},
     [BUFF_GET_BUFF_TYPE_INFO] = {0, buff_get_buff_type_info},
     [BUFF_GET_MEMPOOL_INFO] = {0, buff_get_mempool_info},
-    [BUFF_GET_MEMPOOL_BLK_AVAILABLE] = {0, buff_get_mempool_blk_available}
-};
+    [BUFF_GET_MEMPOOL_BLK_AVAILABLE] = {0, buff_get_mempool_blk_available}};
 
 void buff_set_pid(pid_t pid)
 {
@@ -67,40 +62,14 @@ uint64 buff_get_process_uni_id(void)
     return g_process_uni_id;
 }
 
-#ifndef DRV_HOST
-static long buff_get_cpu(unsigned int *cpu, unsigned int *node)
-{
-    return syscall(SYS_getcpu, cpu, node, NULL);
-}
-#endif
-
-int buff_get_current_devid(void)
-{
-#ifndef DRV_HOST
-    unsigned int cpu, node;
-
-    if (g_devid != -1) {
-        return g_devid;
-    }
-
-    if (buff_get_cpu(&cpu, &node) == 0) {
-        g_devid = (int)node;
-    }
-
-    return g_devid;
-#else
-    return 0;
-#endif
-}
-
 unsigned long buff_make_devid_to_flags(int devid, unsigned long flags)
 {
-    return ((((unsigned long)devid) << BUFF_FLAGS_DEVID_OFFSET) | flags); //lint !e571
+    return ((((unsigned long)devid) << BUFF_FLAGS_DEVID_OFFSET) | flags); // lint !e571
 }
 
 int buff_get_devid_from_flags(unsigned long flags)
 {
-    return (int)((unsigned int)(flags >> BUFF_FLAGS_DEVID_OFFSET) & 0xff); //lint !e571
+    return (int)((unsigned int)(flags >> BUFF_FLAGS_DEVID_OFFSET) & 0xff); // lint !e571
 }
 
 unsigned int buff_get_all_devid_flag(unsigned long flags)
@@ -188,4 +157,3 @@ int halBuffGetInfo(enum BuffGetCmdType cmd, void *inBuff, unsigned int inLen, vo
 
     return ret;
 }
-

@@ -17,10 +17,8 @@
 #include "svm_kernel_msg.h"
 
 /* Will try map continuous pages, the actual mapped blk_num will be returned. */
-int devmm_dma_map_normal_pages(u32 devid, ka_page_t **pages, u64 pg_num,
-    struct devmm_dma_blk *dma_blks, u64 *blk_num);
-int devmm_dma_map_huge_pages(u32 devid, ka_page_t **pages, u64 pg_num,
-    struct devmm_dma_blk *dma_blks, u64 *blk_num);
+int devmm_dma_map_normal_pages(u32 devid, ka_page_t **pages, u64 pg_num, struct devmm_dma_blk *dma_blks, u64 *blk_num);
+int devmm_dma_map_huge_pages(u32 devid, ka_page_t **pages, u64 pg_num, struct devmm_dma_blk *dma_blks, u64 *blk_num);
 void devmm_dma_unmap_pages(u32 devid, struct devmm_dma_blk *dma_blks, u64 blk_num);
 
 #endif

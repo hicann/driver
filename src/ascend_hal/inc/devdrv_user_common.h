@@ -230,12 +230,12 @@ struct devdrv_manager_hccl_devinfo {
     unsigned int ctrl_cpu_ip;
     unsigned int ctrl_cpu_id;
     unsigned int ctrl_cpu_core_num;
-    unsigned int ctrl_cpu_occupy_bitmap;
+    unsigned long long ctrl_cpu_occupy_bitmap;
     unsigned int ctrl_cpu_endian_little;
     unsigned int ts_cpu_core_num;
     unsigned int ai_cpu_core_num;
     unsigned int ai_core_num;
-    unsigned int ai_cpu_bitmap;
+    unsigned long long ai_cpu_bitmap;
     unsigned int ai_core_id;
     unsigned int ai_cpu_core_id;
     unsigned int hardware_version; /* mini, cloud, lite, etc. */
@@ -255,8 +255,9 @@ struct devdrv_manager_hccl_devinfo {
     unsigned int mainboard_id;
     char soc_version[SOC_VERSION_LENGTH];
     unsigned long long aicore_bitmap[2]; /* support max 128 aicore */
+    unsigned long long vector_core_bitmap[2]; /* support max 128 vector core */
     unsigned char product_type;
-    unsigned int resv[31];
+    unsigned int resv[27];
 };
 
 #define DEVDRV_MAX_SPEC_RESERVE 8
@@ -1059,6 +1060,25 @@ struct devdrv_sign_verification_info {
     unsigned int dev_id;
     unsigned char sign_buf;
 };
+
+typedef struct npu_multi_util_info {
+    unsigned char aic_avg_util;
+    unsigned char aiv_avg_util;
+    unsigned char aicore_util;
+    unsigned char aic_max_util;
+    unsigned char aiv_max_util;
+    unsigned char npu_util;
+} NPU_MULTI_UTIL_INFO;
+
+typedef struct npu_multi_util_info_v2 {
+    unsigned char aicube_util[128]; /* support max 128 aicore */
+    unsigned int aicube_count;
+    unsigned char vector_util[128]; /* support max 128 aivector */
+    unsigned int vector_count;
+    unsigned char aicore_util;
+    unsigned char npu_total_util;
+    unsigned char reserved[10];  /* reserve 10 bytes */
+} NPU_MULTI_UTIL_INFO_V2;
 
 #ifdef ENABLE_BUILD_PRODUCT
 int error_code_filter(unsigned int *errorcode, int *errorcount);

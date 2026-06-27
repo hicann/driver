@@ -114,7 +114,7 @@ STATIC bbox_status bbox_get_bbox_ddr(u32 phy_id, u32 offset, u32 size, u8 *buf)
  * @param [in]  : s32 len             string length
  * @return      : 0 on success otherwise -1
  */
-bbox_status bbox_check_dev_event(u32 phy_id, u16 *event, char *tms, s32 len)
+bbox_status bbox_check_dev_event(u32 phy_id, int logic_id, u16 *event, char *tms, s32 len)
 {
     BBOX_CHK_NULL_PTR(event, return BBOX_FAILURE);
     BBOX_CHK_NULL_PTR(tms, return BBOX_FAILURE);

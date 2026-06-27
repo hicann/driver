@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2025. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -17,6 +17,7 @@
 #include "ka_fs_pub.h"
 #include "ka_compiler_pub.h"
 #include "ka_sched_pub.h"
+#include "ka_ioctl_pub.h"
 
 #include "pbl_feature_loader.h"
 
@@ -48,12 +49,10 @@ struct casm_dst_node {
 };
 
 static struct svm_casm_dst_ops *casm_dst_ops = NULL;
-static int (*casm_get_src_va_ex_info_handle)(u32 udevid, struct svm_global_va *src_va, struct casm_src_ex *src_ex, u64 *ex_info) = NULL;
+static int (*casm_get_src_va_ex_info_handle)(
+    u32 udevid, struct svm_global_va *src_va, struct casm_src_ex *src_ex, u64 *ex_info) = NULL;
 
-void svm_casm_register_dst_ops(const struct svm_casm_dst_ops *ops)
-{
-    casm_dst_ops = (struct svm_casm_dst_ops *)ops;
-}
+void svm_casm_register_dst_ops(const struct svm_casm_dst_ops *ops) { casm_dst_ops = (struct svm_casm_dst_ops *)ops; }
 
 static int casm_remote_src_info_query_handle(u32 udevid, u64 key, struct svm_global_va *src_va)
 {
@@ -97,8 +96,9 @@ static int casm_src_info_query(u32 udevid, u64 key, struct svm_global_va *src_va
         }
 
         if (!svm_mwl_task_is_trusted(src_va->udevid, src_ex->owner_tgid, key, SVM_INVALID_SERVER_ID, tgid)) {
-            svm_err("No permission. (udevid=%u; key=0x%llx; va=0x%llx; owner_tgid=%d; checked_tgid=%d)\n",
-                udevid, key, src_va->va, src_ex->owner_tgid, tgid);
+            svm_err(
+                "No permission. (udevid=%u; key=0x%llx; va=0x%llx; owner_tgid=%d; checked_tgid=%d)\n", udevid, key,
+                src_va->va, src_ex->owner_tgid, tgid);
             return -EINVAL;
         }
     } else {
@@ -127,15 +127,17 @@ static int casm_src_info_get(u32 udevid, u64 key, struct svm_global_va *src_va, 
         }
 
         if (!svm_mwl_task_is_trusted(src_va->udevid, src_ex.owner_tgid, key, SVM_INVALID_SERVER_ID, tgid)) {
-            svm_err("No permission. (udevid=%u; key=0x%llx; va=0x%llx; owner_tgid=%d; checked_tgid=%d)\n",
-                udevid, key, src_va->va, src_ex.owner_tgid, tgid);
+            svm_err(
+                "No permission. (udevid=%u; key=0x%llx; va=0x%llx; owner_tgid=%d; checked_tgid=%d)\n", udevid, key,
+                src_va->va, src_ex.owner_tgid, tgid);
             return -EPERM;
         }
 
-        ret = svm_smp_pin_mem(src_va->udevid, src_ex.owner_tgid, src_va->va, src_va->size);
+        ret = svm_smp_pin_mem(src_va->udevid, src_ex.owner_tgid, src_va->va, src_va->size, true);
         if (ret != 0) {
-            svm_err("Mem pin failed. (udevid=%u; va=0x%llx; size=0x%llx; tgid=%d)\n",
-                src_va->udevid, src_va->va, src_va->size, src_ex.owner_tgid);
+            svm_err(
+                "Mem pin failed. (udevid=%u; va=0x%llx; size=0x%llx; tgid=%d)\n", src_va->udevid, src_va->va,
+                src_va->size, src_ex.owner_tgid);
             return ret;
         }
 
@@ -158,10 +160,11 @@ static int casm_src_info_get(u32 udevid, u64 key, struct svm_global_va *src_va, 
 static void casm_src_info_put(u32 udevid, u64 key, struct svm_global_va *src_va, struct casm_src_ex_info *ex_info)
 {
     if (ex_info->is_local) {
-        int ret = svm_smp_unpin_mem(src_va->udevid, ex_info->owner_tgid, src_va->va, src_va->size);
+        int ret = svm_smp_unpin_mem(src_va->udevid, ex_info->owner_tgid, src_va->va, src_va->size, true);
         if (ret != 0) {
-            svm_warn("Mem unpin failed. (udevid=%u; va=0x%llx; size=0x%llx; tgid=%d)\n",
-                src_va->udevid, src_va->va, src_va->size, ex_info->owner_tgid);
+            svm_warn(
+                "Mem unpin failed. (udevid=%u; va=0x%llx; size=0x%llx; tgid=%d)\n", src_va->udevid, src_va->va,
+                src_va->size, ex_info->owner_tgid);
         }
     } else {
         casm_remote_src_info_put_handle(udevid, key, src_va, ex_info->owner_tgid);
@@ -203,8 +206,9 @@ static struct casm_dst_node *casm_dst_node_search(struct casm_dst_ctx *dst_ctx, 
     return node;
 }
 
-static int casm_get_src_info(struct casm_dst_ctx *dst_ctx, struct range_rbtree_node *range_node,
-    u64 *key, struct svm_global_va *src_info, struct casm_src_ex_info *ex_info)
+static int casm_get_src_info(
+    struct casm_dst_ctx *dst_ctx, struct range_rbtree_node *range_node, u64 *key, struct svm_global_va *src_info,
+    struct casm_src_ex_info *ex_info)
 {
     struct casm_dst_node *node = NULL;
     int ret = -EINVAL;
@@ -255,8 +259,9 @@ int svm_casm_get_src_info(u32 udevid, u64 va, u64 size, struct svm_global_va *sr
     return 0;
 }
 
-static int casm_add_dst_node(struct casm_dst_ctx *dst_ctx,
-    struct range_rbtree_node *range_node, u64 key, struct svm_global_va *src_va, struct casm_src_ex_info *ex_info)
+static int casm_add_dst_node(
+    struct casm_dst_ctx *dst_ctx, struct range_rbtree_node *range_node, u64 key, struct svm_global_va *src_va,
+    struct casm_src_ex_info *ex_info)
 {
     struct casm_dst_node *node = NULL;
     int ret;
@@ -383,19 +388,22 @@ void casm_dst_ctx_show(struct casm_dst_ctx *dst_ctx, ka_seq_file_t *seq)
 
     ka_task_read_lock_bh(&dst_ctx->lock);
 
-	ka_base_rbtree_postorder_for_each_entry_safe(range_node, next, &dst_ctx->range_tree.root, node) {
+    ka_base_rbtree_postorder_for_each_entry_safe(range_node, next, &dst_ctx->range_tree.root, node)
+    {
         struct casm_dst_node *node = ka_container_of(range_node, struct casm_dst_node, range_node);
         struct svm_global_va *src_va = &node->src_va;
 
         if (i == 0) {
             ka_fs_seq_printf(seq, "casm dst info:\n");
-            ka_fs_seq_printf(seq, "   index  va              size     owner_tgid  "
-                "src_va(udevid    tgid   va      size)     updated_va    key\n");
+            ka_fs_seq_printf(
+                seq, "   index  va              size     owner_tgid  "
+                     "src_va(udevid    tgid   va      size)     updated_va    key\n");
         }
-        ka_fs_seq_printf(seq, "   %d     0x%llx     0x%llx      %d     (%u  %d      0x%llx      0x%llx)    0x%llx   0x%llx\n",
-            i++, node->range_node.start, node->range_node.size, node->ex_info.owner_tgid,
-            src_va->udevid, src_va->tgid, src_va->va, src_va->size, node->ex_info.updated_va, node->key);
-	}
+        ka_fs_seq_printf(
+            seq, "   %d     0x%llx     0x%llx      %d     (%u  %d      0x%llx      0x%llx)    0x%llx   0x%llx\n", i++,
+            node->range_node.start, node->range_node.size, node->ex_info.owner_tgid, src_va->udevid, src_va->tgid,
+            src_va->va, src_va->size, node->ex_info.updated_va, node->key);
+    }
 
     ka_task_read_unlock_bh(&dst_ctx->lock);
 }
@@ -441,7 +449,8 @@ void casm_dst_ctx_uninit(u32 udevid, int tgid, struct casm_dst_ctx *dst_ctx)
     }
 }
 
-void svm_casm_register_get_src_va_ex_info_handle(int (*handle)(u32 udevid, struct svm_global_va *src_va, struct casm_src_ex *src_ex, u64 *ex_info))
+void svm_casm_register_get_src_va_ex_info_handle(
+    int (*handle)(u32 udevid, struct svm_global_va *src_va, struct casm_src_ex *src_ex, u64 *ex_info))
 {
     casm_get_src_va_ex_info_handle = handle;
 }
@@ -469,6 +478,7 @@ static int casm_ioctl_get_src_va(u32 udevid, u32 cmd, unsigned long arg)
     if (ret != 0) {
         return ret;
     }
+    para.updated_va = src_ex.updated_va;
 
     para.ex_info = 0;
     if (casm_get_src_va_ex_info_handle != NULL) {
@@ -517,10 +527,9 @@ static int casm_ioctl_mem_unpin(u32 udevid, u32 cmd, unsigned long arg)
 
 int casm_dst_init(void)
 {
-    svm_register_ioctl_cmd_handle(_IOC_NR(SVM_CASM_GET_SRC_VA), casm_ioctl_get_src_va);
-    svm_register_ioctl_cmd_handle(_IOC_NR(SVM_CASM_MEM_PIN), casm_ioctl_mem_pin);
-    svm_register_ioctl_cmd_handle(_IOC_NR(SVM_CASM_MEM_UNPIN), casm_ioctl_mem_unpin);
+    svm_register_ioctl_cmd_handle(_KA_IOC_NR(SVM_CASM_GET_SRC_VA), casm_ioctl_get_src_va);
+    svm_register_ioctl_cmd_handle(_KA_IOC_NR(SVM_CASM_MEM_PIN), casm_ioctl_mem_pin);
+    svm_register_ioctl_cmd_handle(_KA_IOC_NR(SVM_CASM_MEM_UNPIN), casm_ioctl_mem_unpin);
     return 0;
 }
 DECLAER_FEATURE_AUTO_INIT(casm_dst_init, FEATURE_LOADER_STAGE_5);
-

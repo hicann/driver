@@ -15,6 +15,7 @@
 #define URD_DEFINE_H
 
 #include "ka_memory_pub.h"
+#include "ka_task_pub.h"
 #include "dmc_kernel_interface.h"
 #include "urd_define_adapt.h"
 
@@ -48,17 +49,17 @@
 #  define dms_debug(fmt, ...) drv_pr_debug(MODULE_URD, fmt, ##__VA_ARGS__)
 #else
 #define dms_err(fmt, ...) do { \
-    drv_err(MODULE_URD, "<%s:%d:%d> " fmt, current->comm, current->tgid, current->pid, ##__VA_ARGS__); \
+    drv_err(MODULE_URD, "<%s:%d:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), ka_task_get_current_pid(), ##__VA_ARGS__); \
     share_log_err(DEVMNG_SHARE_LOG_START, fmt, ##__VA_ARGS__); \
 } while (0)
 #  define dms_warn(fmt, ...) drv_warn(MODULE_URD, \
-      "<%s:%d:%d> " fmt, current->comm, current->tgid, current->pid, ##__VA_ARGS__)
+      "<%s:%d:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), ka_task_get_current_pid(), ##__VA_ARGS__)
 #  define dms_info(fmt, ...) drv_info(MODULE_URD, \
-      "<%s:%d:%d> " fmt, current->comm, current->tgid, current->pid, ##__VA_ARGS__)
+      "<%s:%d:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), ka_task_get_current_pid(), ##__VA_ARGS__)
 #  define dms_event(fmt, ...) drv_event(MODULE_URD, \
-      "<%s:%d:%d> " fmt, current->comm, current->tgid, current->pid, ##__VA_ARGS__)
+      "<%s:%d:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), ka_task_get_current_pid(), ##__VA_ARGS__)
 #  define dms_debug(fmt, ...) drv_pr_debug(MODULE_URD, \
-    "<%s:%d:%d> " fmt, current->comm, current->tgid, current->pid, ##__VA_ARGS__)
+    "<%s:%d:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), ka_task_get_current_pid(), ##__VA_ARGS__)
 #endif
 #define dms_ex_notsupport_err(ret, fmt, ...) do {                      \
     if (((ret) != (int)DRV_ERROR_NOT_SUPPORT) && ((ret) != -EOPNOTSUPP)) {  \

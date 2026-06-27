@@ -17,6 +17,13 @@
 #define __ka_user __user
 #define __ka_init __init
 #define __ka_exit __exit
+#define __ka_must_check __must_check
+#ifdef __BIG_ENDIAN
+#define __KA_BIG_ENDIAN __BIG_ENDIAN
+#endif
+#ifdef __LITTLE_ENDIAN
+#define __KA_LITTLE_ENDIAN __LITTLE_ENDIAN
+#endif
 
 #define ka_likely(x)    likely(x)
 #define ka_unlikely(x)  unlikely(x)

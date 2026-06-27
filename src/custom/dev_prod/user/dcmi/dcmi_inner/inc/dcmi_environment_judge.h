@@ -76,6 +76,8 @@ void dcmi_set_init_flag(int init_flag);
 
 void dcmi_set_env_value(int is_not_root, int is_in_vm, int is_in_docker);
 
+bool dcmi_is_in_root_group(void);
+
 #ifndef _WIN32
 void dcmi_strlwr(char *str, int len);
 #endif

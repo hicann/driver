@@ -21,6 +21,7 @@
 
 #define DMS_GET_FAULT_EVENT    _IO(DMS_MAIN_CMD_BASIC, DMS_SUBCMD_GET_FAULT_EVENT)
 #define DMS_GET_EVENT_CODE     _IO(DMS_MAIN_CMD_BASIC, DMS_SUBCMD_GET_EVENT_CODE)
+#define DMS_GET_TRS_CAPABILITY_GROUP_INFO   _IO(DMS_MAIN_CMD_TRS, DMS_SUBCMD_GET_CAPABILITY_GROUP)
 
 #define DMS_GET_AI_INFO_FROM_TS    _IO(DMS_MAIN_CMD_BASIC, DMS_SUBCMD_GET_AI_INFO_FROM_TS)
 #define DMS_GET_HISTORY_FAULT_EVENT     _IO(DMS_MAIN_CMD_BASIC, DMS_SUBCMD_GET_HISTORY_FAULT_EVENT)
@@ -31,6 +32,10 @@
 #define DMS_GET_FAULT_INJECT_INFO     _IO(DMS_MAIN_CMD_BASIC, DMS_SUBCMD_GET_FAULT_INJECT_INFO)
 
 #define DMS_GET_CHIP_INFO     _IO(DMS_MAIN_CMD_BASIC, DMS_SUBCMD_GET_CHIP_INFO)
+
+#define DMS_GET_AICORE_DIE_NUM    _IO(DMS_MAIN_CMD_BASIC, DMS_SUBCMD_GET_AICORE_DIE_NUM)
+
+#define DMS_GET_DEV_SPLIT_MODE   _IO(DMS_MAIN_CMD_BASIC, DMS_SUBCMD_GET_DEV_SPLIT_MODE)
 
 #define DMS_GET_CPU_INFO    _IO(DMS_MAIN_CMD_SOC, DMS_SUBCMD_GET_CPU_INFO)
 #define DMS_GET_CPU_UTILIZATION    _IO(DMS_MAIN_CMD_SOC, DMS_SUBCMD_GET_CPU_UTILIZATION)
@@ -83,14 +88,26 @@ struct devdrv_event_obj_para {
     struct dms_event_para dms_event[DMS_MAX_EVENT_ARRAY_LENGTH];
 };
 
+#define MAX_EVENT_RESV_LENGTH 32
+struct dms_event_filter {
+    unsigned long long filter_flag; /* bit0: event_id; bit1: severity; bit2: node_type; bit3: current tgid */
+    unsigned int event_id;
+    unsigned char severity;
+    unsigned short node_type;
+    unsigned char resv[MAX_EVENT_RESV_LENGTH]; /* reserve 32byte */
+};
+
 enum cmd_source {
     FROM_DSMI = 0,
     FROM_HAL = 1,
-    FROM_KERNEL = 2
+    FROM_KERNEL = 2,
+    INVALID_SOURCE = 0xFF
 };
 struct dms_read_event_ioctl {
     enum cmd_source cmd_src;
     int timeout;
+    int dev_id;
+ 	struct dms_event_filter filter;
 };
 
 struct dms_event_ioctrl {
@@ -134,8 +151,8 @@ struct dms_hal_device_info_stru {
     unsigned int dev_id; /* in */
     int module_type;     /* in */
     int info_type;       /* in */
-    unsigned int buff_size;     /* in&out */
-    unsigned char payload[300]; /* in&out, valid length is buff_size */
+    unsigned int buff_size;     /* in&out, must be <= sizeof(payload) */
+    unsigned char payload[300]; /* in&out, valid length is min(buff_size, sizeof(payload)) */
 };
 #define DMS_HAL_DEV_INFO_HEAD_LEN (uint32_t)((size_t)&((struct dms_hal_device_info_stru *)0)->payload)
 

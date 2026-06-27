@@ -28,4 +28,3 @@ int trs_mia_core_ops_get_support_proc_num(struct trs_id_inst *inst, u32 *proc_nu
 int trs_mia_device_adapt_init(void);
 void trs_mia_device_adapt_exit(void);
 #endif
-

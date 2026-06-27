@@ -61,6 +61,8 @@
 #define BBOX_FILE_NAME_LPM_LOG          MODULE_MNTN_FILE_NAME_LOG("lpm")
 #define BBOX_FILE_NAME_HSM_LOG          MODULE_MNTN_FILE_NAME_LOG("hsm")
 #define BBOX_FILE_NAME_TS_LOG           MODULE_MNTN_FILE_NAME_LOG("ts")
+#define BBOX_FILE_NAME_IMU_LOG          MODULE_MNTN_FILE_NAME_LOG("imu")
+#define BBOX_FILE_NAME_IMP_LOG          MODULE_MNTN_FILE_NAME_LOG("imp")
 // log/slog/debug, run, security
 #define BBOX_FILE_NAME_DEV_OS_LOG       MODULE_MNTN_FILE_NAME_LOG("device_os")
 #define BBOX_FILE_NAME_DEBUG_DEV_FW_LOG MODULE_MNTN_FILE_NAME_LOG("device_fw")

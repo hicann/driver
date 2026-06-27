@@ -16,7 +16,7 @@
 
 void *devdrv_pcimsg_alloc_non_trans_queue_inner_msg(u32 index_id, struct devdrv_non_trans_msg_chan_info *chan_info)
 {
-    void* ret;
+    void *ret;
     struct devdrv_comm_dev_ops *dev_ops = NULL;
 
     dev_ops = devdrv_add_ops_ref();

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2025-2025. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -29,18 +29,19 @@
 #include "dma_desc_node.h"
 #include "dma_desc_core.h"
 
-#define SVM_CONVERT2D_64M_SIZE           (64ULL * SVM_BYTES_PER_MB)
-#define SVM_CONVERT2D_128M_SIZE          (128ULL * SVM_BYTES_PER_MB)
-#define SVM_CONVERT2D_DMA_DEPTH          (32ULL * SVM_BYTES_PER_KB)
-#define SVM_CONVERT2D_HEIGHT_MAX         (5ULL * SVM_BYTES_PER_MB)
+#define SVM_CONVERT2D_64M_SIZE (64ULL * SVM_BYTES_PER_MB)
+#define SVM_CONVERT2D_128M_SIZE (128ULL * SVM_BYTES_PER_MB)
+#define SVM_CONVERT2D_DMA_DEPTH (32ULL * SVM_BYTES_PER_KB)
+#define SVM_CONVERT2D_HEIGHT_MAX (5ULL * SVM_BYTES_PER_MB)
 
 static inline int dma_desc_convert_2d_para_check(struct svm_dma_desc_convert_2d_para *para)
 {
     u64 svm_va, svm_size;
 
     if ((para->width > para->dpitch) || (para->width > para->spitch)) {
-        svm_err("Dpitch and spitch should both larger than width. (dpitch=%llu; spitch=%llu; width=%llu)\n",
-            para->dpitch, para->spitch, para->width);
+        svm_err(
+            "Dpitch and spitch should both larger than width. (dpitch=%llu; spitch=%llu; width=%llu)\n", para->dpitch,
+            para->spitch, para->width);
         return -EINVAL;
     }
 
@@ -61,7 +62,8 @@ static inline int dma_desc_convert_2d_para_check(struct svm_dma_desc_convert_2d_
     }
 
     if (para->fixed_size > (para->width * para->height)) {
-        svm_err("Fixed_size should smaller than width*height. (fixed_size=%llu; width=%llu; height=%llu)\n",
+        svm_err(
+            "Fixed_size should smaller than width*height. (fixed_size=%llu; width=%llu; height=%llu)\n",
             para->fixed_size, para->width, para->height);
         return -EINVAL;
     }
@@ -111,8 +113,8 @@ static void svm_make_convrt2d_input(struct svm_dma_desc_convert_2d_para *para)
     }
 }
 
-static int dma_desc_extract_va_info_from_convert_2d_para(struct svm_dma_desc_convert_2d_para *para,
-    struct copy_2d_va_info *info)
+static int dma_desc_extract_va_info_from_convert_2d_para(
+    struct svm_dma_desc_convert_2d_para *para, struct copy_2d_va_info *info)
 {
     int ret;
 
@@ -193,8 +195,7 @@ static int dma_desc_ioctl_convert_2d(u32 udevid, u32 cmd, unsigned long __ka_use
 
 int dma_desc_2d_ioctl_init(void)
 {
-    svm_register_ioctl_cmd_handle(_IOC_NR(SVM_DMA_DESC_CONVERT_2D), dma_desc_ioctl_convert_2d);
+    svm_register_ioctl_cmd_handle(_KA_IOC_NR(SVM_DMA_DESC_CONVERT_2D), dma_desc_ioctl_convert_2d);
     return 0;
 }
 DECLAER_FEATURE_AUTO_INIT(dma_desc_2d_ioctl_init, FEATURE_LOADER_STAGE_6);
-

@@ -14,7 +14,11 @@
 #ifndef VPC_CMDLIST_PIPELINE_CHANNEL_H
 #define VPC_CMDLIST_PIPELINE_CHANNEL_H
 
-#include <linux/types.h>
+#ifdef __KERNEL__
+#include "ka_type.h"
+#else
+#include <stdint.h>
+#endif
 
 #include "pipeline_define.h"
 

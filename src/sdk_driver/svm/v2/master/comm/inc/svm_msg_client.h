@@ -31,4 +31,3 @@ void devmm_msg_chan_uninit(void);
 int devmm_dev_res_init(struct devmm_dev_res_mng *dev_res_mng);
 
 #endif
-

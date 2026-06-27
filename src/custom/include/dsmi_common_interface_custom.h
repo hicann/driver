@@ -37,6 +37,7 @@ extern "C" {
 #define DSMI_MAIN_CMD_HCCS_BANDWIDTH      0X8007
 #define DSMI_MAIN_CMD_HCCS_LINKERR        0X8008
 #define DSMI_MAIN_CMD_PCIE_LINKERR        0X8009
+#define DSMI_MAIN_CMD_URMA_INFO           0x8010
 
 typedef enum {
     DSMI_CERT_SUB_CMD_INIT_TLS_PUB_KEY = 0,
@@ -45,7 +46,7 @@ typedef enum {
     DSMI_CERT_SUB_CMD_MAX,
 } DSMI_EX_CERT_SUB_CMD;
 
-#define MAX_CERT_COUNT 15
+#define MAX_CERT_COUNT (15U)
 #define NPU_CERT_MAX_SIZE 2048
 typedef struct _certs_chain_data {
     unsigned int count;
@@ -125,6 +126,12 @@ typedef enum {
     DSMI_HCCS_CMD_GET_LINKERR,
     DSMI_HCCS_SUB_CMD_EX_MAX,
 } DSMI_HCCS_SUB_CMD_EX;
+
+typedef enum {
+    DSMI_URMA_CMD_GET_URMA_DEVICE_COUNT = 0,
+    DSMI_URMA_CMD_GET_EID_LIST,
+    DSMI_URMA_SUB_CMD_EX_MAX,
+} DSMI_URMA_SUB_CMD_EX;
 
 typedef struct dsmi_chip_pcie_err_rate_stru {
     unsigned int reg_deskew_fifo_overflow_intr_status;
@@ -297,6 +304,9 @@ DLLEXPORT int dsmi_get_multi_ecc_record_info(int device_id, unsigned int *ecc_co
  */
 
 typedef void (*fault_event_callback)(struct dsmi_event *event);
+
+DLLEXPORT int dsmi_product_get_device_info(unsigned int device_id, DSMI_MAIN_CMD main_cmd, unsigned int sub_cmd,
+    void *buf, unsigned int *size);
 
 /**
 * @ingroup driver

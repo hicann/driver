@@ -17,7 +17,8 @@
 #include "pbl_ka_memory.h"
 #include "ascend_hal_define.h"
 
-#define pcivnic_kvzalloc(size, flags) ka_kvzalloc(size, flags, ka_get_module_id(HAL_MODULE_TYPE_VNIC, KA_SUB_MODULE_TYPE_0))
+#define pcivnic_kvzalloc(size, flags) \
+    ka_kvzalloc(size, flags, ka_get_module_id(HAL_MODULE_TYPE_VNIC, KA_SUB_MODULE_TYPE_0))
 #define pcivnic_kvfree(addr) ka_kvfree(addr, ka_get_module_id(HAL_MODULE_TYPE_VNIC, KA_SUB_MODULE_TYPE_0))
 
 #define pcivnic_kmalloc(size, flags) \
@@ -28,7 +29,7 @@
     ka_kcalloc(size, flags, ka_get_module_id(HAL_MODULE_TYPE_VNIC, KA_SUB_MODULE_TYPE_0))
 #define pcivnic_kfree(addr) ka_kfree(addr, ka_get_module_id(HAL_MODULE_TYPE_VNIC, KA_SUB_MODULE_TYPE_0))
 
-#define pcivnic_vzalloc(size)  ka_vzalloc(size, ka_get_module_id(HAL_MODULE_TYPE_VNIC, KA_SUB_MODULE_TYPE_0))
+#define pcivnic_vzalloc(size) ka_vzalloc(size, ka_get_module_id(HAL_MODULE_TYPE_VNIC, KA_SUB_MODULE_TYPE_0))
 #define pcivnic_vfree(addr) ka_vfree(addr, ka_get_module_id(HAL_MODULE_TYPE_VNIC, KA_SUB_MODULE_TYPE_0))
 
 #define pcivnic_alloc_pages(gfp_mask, order) \
@@ -41,4 +42,3 @@
 #define __pcivnic_free_pages(page, order) \
     __ka_free_pages(page, order, ka_get_module_id(HAL_MODULE_TYPE_VNIC, KA_SUB_MODULE_TYPE_0))
 #endif
-

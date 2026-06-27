@@ -32,10 +32,7 @@ static THREAD__ int rmo_fd = -1;
 static THREAD__ pid_t rmo_cur_pid = -1;
 static pthread_mutex_t rmo_lock = PTHREAD_MUTEX_INITIALIZER;
 
-int rmo_get_fd(void)
-{
-    return rmo_fd;
-}
+int rmo_get_fd(void) { return rmo_fd; }
 
 static void rmo_char_dev_set_close_exe(int fd)
 {

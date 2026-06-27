@@ -23,8 +23,10 @@
 #define HISI_CLOUD_V4       6
 #define HISI_CLOUD_V5       7
 #define HISI_RESERVED_2     8
-#define HISI_CHIP_NUM       9
-#define HISI_CHIP_UNKNOWN   10
+#define HISI_RESERVED_3     9
+#define HISI_MINI_V4        10
+#define HISI_CHIP_NUM       11
+#define HISI_CHIP_UNKNOWN   12
 
 #endif /* PBL_DEV_IDENTITY_H */
 

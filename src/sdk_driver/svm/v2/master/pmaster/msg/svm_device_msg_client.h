@@ -14,7 +14,7 @@
 #ifndef SVM_DEVICE_MSG_CLIENT_H
 #define SVM_DEVICE_MSG_CLIENT_H
 
-#include <linux/types.h>
+#include "ka_type.h"
 #include "ka_common_pub.h"
 
 #include "comm_kernel_interface.h"

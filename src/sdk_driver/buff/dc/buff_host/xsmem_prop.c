@@ -31,11 +31,11 @@ struct xsm_prop {
     int create_pid;
     int refcnt;
     unsigned long value;
-    ka_list_head_t    pool_node;
+    ka_list_head_t pool_node;
 };
 
 struct xsm_task_prop_node {
-    ka_list_head_t    task_node; /* list node in TASK pool node */
+    ka_list_head_t task_node; /* list node in TASK pool node */
     struct xsm_prop *prop;
 };
 
@@ -45,7 +45,8 @@ static struct xsm_task_prop_node *xsmem_task_prop_node_get(struct xsm_task_pool_
     if (node == NULL) {
         return NULL;
     }
-    ka_list_for_each_entry(prop_node, &node->task_prop_head, task_node) {
+    ka_list_for_each_entry(prop_node, &node->task_prop_head, task_node)
+    {
         if (prop_node->prop == prop) {
             return prop_node;
         }
@@ -81,7 +82,7 @@ static int xsmem_add_prop_to_task(struct xsm_task_pool_node *node, struct xsm_pr
 }
 
 static struct xsm_prop *xsmem_pool_prop_alloc(struct xsm_task *task, struct xsm_task_pool_node *node,
-    struct xsm_prop_op_arg *prop_op, char *key)
+                                              struct xsm_prop_op_arg *prop_op, char *key)
 {
     struct xsm_prop *prop = NULL;
     int ret;
@@ -115,16 +116,16 @@ static struct xsm_prop *xsmem_pool_prop_alloc(struct xsm_task *task, struct xsm_
         }
     }
 
-    xsmem_debug("Alloc. (task=%d; pool=%d; add prop=%s; owner=%d)\n",
-        ka_task_get_current()->tgid, prop_op->pool_id, key, prop->owner);
+    xsmem_debug("Alloc. (task=%d; pool=%d; add prop=%s; owner=%d)\n", ka_task_get_current()->tgid, prop_op->pool_id,
+                key, prop->owner);
 
     return prop;
 }
 
 static void xsmem_pool_prop_free(struct xsm_prop *prop)
 {
-    xsmem_debug("Free. (task=%d; create_pid=%d; del prop=%s)\n",
-        ka_task_get_current()->tgid, prop->create_pid, prop->name);
+    xsmem_debug("Free. (task=%d; create_pid=%d; del prop=%s)\n", ka_task_get_current()->tgid, prop->create_pid,
+                prop->name);
     ka_list_del(&prop->pool_node);
     xsmem_drv_kfree(prop);
 }
@@ -133,8 +134,8 @@ static int xsmem_pool_prop_del(const struct xsm_task *task, struct xsm_task_pool
 {
     struct xsm_task_prop_node *prop_node = NULL;
 
-    xsmem_debug("Delete. (task=%d; create_pid=%d; del prop=%s; owner=%d)\n",
-        ka_task_get_current()->tgid, prop->create_pid, prop->name, prop->owner);
+    xsmem_debug("Delete. (task=%d; create_pid=%d; del prop=%s; owner=%d)\n", ka_task_get_current()->tgid,
+                prop->create_pid, prop->name, prop->owner);
     if (prop->owner != XSMEM_PROP_OWNER_TASK_GRP) {
         if (prop->create_pid != task->pid) {
             return -EFAULT;
@@ -156,8 +157,8 @@ static int xsmem_pool_prop_del(const struct xsm_task *task, struct xsm_task_pool
     return 0;
 }
 
-static int xsmem_pool_prop_op(struct xsm_task *task, struct xsm_task_pool_node *node,
-    struct xsm_prop_op_arg *prop_op, struct xsm_prop_op_arg __ka_user *arg)
+static int xsmem_pool_prop_op(struct xsm_task *task, struct xsm_task_pool_node *node, struct xsm_prop_op_arg *prop_op,
+                              struct xsm_prop_op_arg __ka_user *arg)
 {
     ka_list_head_t *head = (node == NULL) ? &prop_list_head : &node->pool->prop_list_head;
     struct xsm_prop *prop = NULL, *tmp = NULL;
@@ -169,7 +170,8 @@ static int xsmem_pool_prop_op(struct xsm_task *task, struct xsm_task_pool_node *
     }
     key[prop_op->prop_len] = '\0';
 
-    ka_list_for_each_entry(tmp, head, pool_node) {
+    ka_list_for_each_entry(tmp, head, pool_node)
+    {
         if ((prop_op->prop_len == tmp->prop_len) && (ka_base_strncmp(key, tmp->name, tmp->prop_len) == 0)) {
             prop = tmp;
             break;
@@ -214,7 +216,8 @@ void xsmem_proc_grp_prop_del(struct xsm_task_pool_node *node)
     struct xsm_prop *prop = NULL;
 
     ka_task_mutex_lock(&prop_list_mutex);
-    ka_list_for_each_entry_safe(prop_node, tmp, &node->task_prop_head, task_node) {
+    ka_list_for_each_entry_safe(prop_node, tmp, &node->task_prop_head, task_node)
+    {
         prop = prop_node->prop;
         ka_list_del(&prop_node->task_node);
         xsmem_drv_kfree(prop_node);
@@ -232,7 +235,8 @@ void xsmem_task_prop_del(int pid)
     struct xsm_prop *prop = NULL, *tmp = NULL;
 
     ka_task_mutex_lock(&prop_list_mutex);
-    ka_list_for_each_entry_safe(prop, tmp, &prop_list_head, pool_node) {
+    ka_list_for_each_entry_safe(prop, tmp, &prop_list_head, pool_node)
+    {
         if ((prop->create_pid == pid) && (prop->owner == XSMEM_PROP_OWNER_TASK)) {
             xsmem_pool_prop_free(prop);
         }
@@ -245,7 +249,8 @@ void xsmem_pool_prop_clear(struct xsm_pool *xp)
     struct xsm_prop *prop = NULL, *tmp = NULL;
 
     ka_task_mutex_lock(&prop_list_mutex);
-    ka_list_for_each_entry_safe(prop, tmp, &xp->prop_list_head, pool_node) {
+    ka_list_for_each_entry_safe(prop, tmp, &xp->prop_list_head, pool_node)
+    {
         xsmem_pool_prop_free(prop);
     }
     ka_task_mutex_unlock(&prop_list_mutex);
@@ -256,7 +261,8 @@ void xsmem_pool_task_prop_clear(struct xsm_pool *xp, const struct xsm_task *task
     struct xsm_prop *prop = NULL, *tmp = NULL;
 
     ka_task_mutex_lock(&prop_list_mutex);
-    ka_list_for_each_entry_safe(prop, tmp, &xp->prop_list_head, pool_node) {
+    ka_list_for_each_entry_safe(prop, tmp, &xp->prop_list_head, pool_node)
+    {
         if ((prop->create_pid == task->pid) && (prop->owner == XSMEM_PROP_OWNER_TASK)) {
             xsmem_pool_prop_free(prop);
         }
@@ -276,8 +282,8 @@ int ioctl_xsmem_pool_prop_op(struct xsm_task *task, unsigned int cmd, unsigned l
         return -EFAULT;
     }
 
-    if ((prop_op.op == XSMEM_PROP_OP_SET) &&
-        (prop_op.owner != XSMEM_PROP_OWNER_TASK) && (prop_op.owner != XSMEM_PROP_OWNER_TASK_GRP)) {
+    if ((prop_op.op == XSMEM_PROP_OP_SET) && (prop_op.owner != XSMEM_PROP_OWNER_TASK) &&
+        (prop_op.owner != XSMEM_PROP_OWNER_TASK_GRP)) {
         xsmem_err("Owner is invalid. (owner=%d)\n", prop_op.owner);
         return -EINVAL;
     }

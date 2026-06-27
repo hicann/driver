@@ -13,14 +13,14 @@
 
 #ifndef TRS_ADAPT_H
 #define TRS_ADAPT_H
-#include <linux/types.h>
+#include "ka_type.h"
 
 #include "trs_res_id_def.h"
 #include "trs_sqe_update.h"
 
 struct trs_sqcq_agent_para {
     phys_addr_t rsv_phy_addr;
-    size_t      rsv_size;
+    size_t rsv_size;
 };
 
 struct trs_sqe_update_info {
@@ -50,4 +50,3 @@ int trs_res_trans_v2p(u32 devid, u32 tsid, int res_type, int res_id, int *trans_
 int trs_res_trans_p2v(u32 devid, u32 tsid, int res_type, int res_id, int *trans_res_id);
 
 #endif
-

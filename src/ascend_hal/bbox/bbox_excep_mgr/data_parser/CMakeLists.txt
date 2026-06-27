@@ -25,6 +25,32 @@ target_sources(${OBJ_DATA_PARSE}
         rdr_data_parser/bbox_rdr_data_parser.c
 )
 
+# ap_root_info version path
+# Define product feature lists
+set(CLOUD_PRODUCTS ascend910B ascend950 ascend350 ascend950esl ascend910_55esl ascend910_55)
+set(V4_CDR_PRODUCTS ascend950 ascend350 ascend950esl ascend910_55esl ascend910_55)
+
+if(${PRODUCT} IN_LIST CLOUD_PRODUCTS)
+    set(AP_ROOT_INFO_PATH "cloud")
+else()
+    set(AP_ROOT_INFO_PATH "normal")
+endif()
+
+if(${PRODUCT} IN_LIST V4_CDR_PRODUCTS)
+    set(CDR_PATH "v4")
+else()
+    set(CDR_PATH "normal")
+endif()
+
+# kernel_rblog_parser version path
+set(KERNEL_LOG_ADAPT_PRODUCTS ascend350 ascend910B ascend950 ascend950esl ascend910_55esl ascend910_55 ascend310B ascend310Brc)
+
+if(${PRODUCT} IN_LIST KERNEL_LOG_ADAPT_PRODUCTS)
+    set(KERNEL_LOG_ADAPT_PATH "adapt")
+else()
+    set(KERNEL_LOG_ADAPT_PATH "normal")
+endif()
+
 target_include_directories(${OBJ_DATA_PARSE}
     INTERFACE
         ${BASE_DIR}/data_parser/common_parser
@@ -34,6 +60,11 @@ target_include_directories(${OBJ_DATA_PARSE}
         ${BASE_DIR}/utils
         ${PROJ_DIR}/config/${PROD_NAME}/
         ${PROJ_DIR}/
+        ${BASE_DIR}/data_parser/os_data_parser
+        ${BASE_DIR}/data_parser/os_data_parser/${AP_ROOT_INFO_PATH}
+        ${BASE_DIR}/data_parser/os_data_parser/${CDR_PATH}
+        ${BASE_DIR}/data_parser/kernel_log_parser
+        ${BASE_DIR}/data_parser/kernel_log_parser/${KERNEL_LOG_ADAPT_PATH}
 )
 
 target_link_libraries(${OBJ_DATA_PARSE} INTERFACE

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2025. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -43,17 +43,14 @@ static int apm_open(ka_inode_t *inode, ka_file_t *file)
     return 0;
 }
 
-static int apm_release(ka_inode_t *inode, ka_file_t *file)
-{
-    return 0;
-}
+static int apm_release(ka_inode_t *inode, ka_file_t *file) { return 0; }
 
 static int apm_pre_release(ka_file_t *file, unsigned long mode)
 {
 #ifndef EMU_ST
     struct task_id_entity *task = (struct task_id_entity *)ka_fs_get_file_private_data(file);
     if (task != NULL) {
-        module_feature_auto_uninit_task(0, task->tgid, (void*)&(task->start_time));
+        module_feature_auto_uninit_task(0, task->tgid, (void *)&(task->start_time));
         apm_info("Release. (tgid=%d)\n", task->tgid);
         apm_kfree(task);
         ka_fs_set_file_private_data(file, NULL);
@@ -62,12 +59,11 @@ static int apm_pre_release(ka_file_t *file, unsigned long mode)
     return 0;
 }
 
-static int (* apm_ioctl_handler[APM_MAX_CMD])(u32 cmd, unsigned long arg) = {NULL, };
+static int (*apm_ioctl_handler[APM_MAX_CMD])(u32 cmd, unsigned long arg) = {
+    NULL,
+};
 
-void apm_register_ioctl_cmd_func(int nr, int (*fn)(u32 cmd, unsigned long arg))
-{
-    apm_ioctl_handler[nr] = fn;
-}
+void apm_register_ioctl_cmd_func(int nr, int (*fn)(u32 cmd, unsigned long arg)) { apm_ioctl_handler[nr] = fn; }
 
 static long apm_ioctl(ka_file_t *file, u32 cmd, unsigned long arg)
 {
@@ -90,11 +86,7 @@ static long apm_ioctl(ka_file_t *file, u32 cmd, unsigned long arg)
 }
 
 static ka_file_operations_t apm_fops = {
-    .owner = KA_THIS_MODULE,
-    .open = apm_open,
-    .release = apm_release,
-    .unlocked_ioctl = apm_ioctl
-};
+    .owner = KA_THIS_MODULE, .open = apm_open, .release = apm_release, .unlocked_ioctl = apm_ioctl};
 
 static const struct notifier_operations apm_notifier_ops = {
     .notifier_call = apm_pre_release,
@@ -125,4 +117,3 @@ void apm_fops_uninit(void)
     (void)drv_ascend_unregister_notify(APM_CHAR_DEV_NAME);
     (void)drv_ascend_unregister_sub_module(APM_CHAR_DEV_NAME);
 }
-

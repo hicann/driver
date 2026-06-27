@@ -7,7 +7,7 @@
  * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
  */
-
+ 
 #ifndef __DCMI_MCU_INTF_H__
 #define __DCMI_MCU_INTF_H__
  
@@ -24,6 +24,8 @@ extern "C" {
 #define DCMI_MCU_MSG_MAX_TOTAL_LEN    256
  
 #define DCMI_MCU_LOCK_FILE_NAME "/run/mcu_lock_flag"
+#define DCMI_VRD_LOCK_FILE_NAME "/run/vrd_lock_flag"
+#define DCMI_VRD_GET_LOCK_TIME_OUT_MS  1000 // VRD升级获取锁超时时间
 #define DCMI_MCU_MUTEX_FIRST_TRY_TIMES 100 /* 获取超时锁，首先尝试调用trylock的次数 */
 #define DCMI_MCU_MUTEX_SLEEP_TIMES_1MS 1000
 #define DCMI_MCU_TASK_DELAY_10_MS     10000
@@ -40,6 +42,8 @@ extern "C" {
 #define DCMI_MCU_SEND_MSG_DATA_LEN_FOR_310P_AND_910    20
 #define DCMI_MCU_RECV_MSG_DATA_LEN_FOR_310P_AND_910    15
 #define DCMI_MCU_GET_LOCK_TIMOUT                       50
+#define DCMI_MCU_SEND_MSG_DATA_LEN_FOR_950          70
+#define DCMI_MCU_RECV_MSG_DATA_LEN_FOR_950          70
  
 #define DCMI_MCU_ERR_CODE_MAX         128
 #define DCMI_MCU_GET_LOCK_MAX_TIME    50
@@ -80,7 +84,14 @@ extern "C" {
 #define DCMI_MCU_GET_CUSTOMIZED_INFO    0x617
 #define DCMI_MCU_SET_CUSTOMIZED_INFO    0x618
 #define DCMI_MCU_CLEAR_CUSTOMIZED_INFO  0x619
+#define DCMI_AO_SET_GPIO_LEVEL_OPCODE   0x6B8
 #define DCMI_MCU_VRD_INFO_OPCODE        0x69C
+#define DCMI_MCU_VRD_UPGRADE_OPCODE     0x6A2
+#define DCMI_MCU_GET_UPGRADE_APP_OPCODE 0xD2
+#define DCMI_MCU_VRD_FILE_LEN_OPCODE    0xD3
+#define DCMI_MCU_VRD_START_UPDATE_OPCODE 0xD4
+#define DCMI_MCU_VRD_CLEAR_FILE_OPCODE   0xD5
+#define DCMI_MCU_GET_VRD_UPDATE_STATUS_OPCODE 0x6A3
  
 #define DCMI_MCU_HEALTH_LEN             1
 #define DCMI_MCU_ERRCODE_LEN            2
@@ -113,10 +124,24 @@ extern "C" {
 #define DCMI_MCU_CUSTOMIZED_INFO_HEAD_LEN                8
 #define DCMI_MCU_CUSTOMIZED_INFO_VERSION                 1
 #define DCMI_MCU_CUSTOMIZED_INFO_MAX_LEN                 256
+
+#define DCMI_AO_GPIO_NUM                                 6
+#define DCMI_AO_GPIO_15_OFFSET                           3
+#define DCMI_AO_GPIO_24_OFFSET                           4
+#define DCMI_AO_GPIO_19_OFFSET                           0
+#define DCMI_AO_GPIO_20_OFFSET                           1
+#define DCMI_AO_U0_GPIO_71_OFFSET                        5
+#define DCMI_AO_U1_GPIO_71_OFFSET                        6
+#define DCMI_AO_GPIO_DATA_LEN                            1
+
+#define DCMI_VRD_FILE_BUF_LEN                            4
+#define DCMI_PROCESS_INTERVAL                            1500
+#define DCMI_REQ_INDEX_INVALID (-1)
  
 #define PRINT_PROCESS_CNT 1500
 #define PERCENTAGE_FACTOR 100
- 
+#define SHIFT_SIXTEEN_BITS 16
+
 typedef struct mcu_smbus_req_msg {
     unsigned char lun;
     unsigned char arg;
@@ -147,11 +172,26 @@ struct dcmi_mcu_log_info {
     int max_lenth;
     char file_name[MAX_LENTH];
 };
+
+typedef struct {
+    int card_id;              // VRD固件升级卡号
+    int pkg_idx;              // 升级包索引号
+    int cur_bin_idx;          // 当前传输的bin文件的序号
+    int total_bin_num;        // bin文件总体个数
+    bool trigger_by_npu;      // 是否由npu工具触发
+} DCMI_VRD_PER_UPGRADE_INFO;
+
+DCMI_VRD_PER_UPGRADE_INFO dcmi_set_vrd_per_upgrade_info(int card_id, int pkg_idx, int cur_bin_idx,
+                                                        int total_bin_num, bool trigger_by_npu);
  
 int dcmi_mcu_set_lock_up(int *fd, unsigned int timeout);
  
 void dcmi_mcu_set_unlock_up(int fd);
- 
+
+int dcmi_vrd_set_lock_up(int *fd, unsigned int timeout);
+
+void dcmi_vrd_set_unlock_up(int fd);
+
 int dcmi_mcu_release_and_get_lock(int *fd);
  
 int dcmi_mcu_get_send_data_max_len(void);
@@ -212,8 +252,6 @@ int dcmi_mcu_get_voltage(int card_id, unsigned int *voltage);
  
 int dcmi_mcu_get_first_power_on_date(int card_id, unsigned int *first_power_on_date);
  
-int dcmi_mcu_set_info_simple(int card_id, unsigned short opcode, unsigned int len, char *data_info);
- 
 int dcmi_mcu_set_info_dynamic(int card_id, unsigned short opcode, int len, char *data_info);
  
 int dcmi_set_check_customized_is_exist(int card_id);
@@ -235,7 +273,22 @@ int dcmi_set_vrd_upgrade_stage(int card_id, enum dcmi_upgrade_type input_type);
 int dcmi_mcu_get_boot_sel(int card_id, int device_id, int *boot_sel);
 
 int dcmi_mcu_set_boot_sel(int card_id, int device_id, int boot_sel);
+
+int dcmi_get_vrd_version(int card_id, char *version,  int len);
+
+int dcmi_vrd_set_info(int card_id, MCU_SMBUS_REQ_MSG *mcu_req, int index);
+
+int dcmi_set_single_vrd_upgrade_stage(int card_id, int index);
+
+int dcmi_trans_vrd_file(const char *file, DCMI_VRD_PER_UPGRADE_INFO *per_vrd_info);
+
+int dcmi_get_single_vrd_upgrade_status(int card_id, int *status, int index);
+
+int dcmi_get_upgradable_vrd_version(int card_id, char *version,  int len);
  
+int dcmi_set_gpio_level(int device_logic_id, char* level_data, int data_len);
+
+int dcmi_get_vdm_info(int card_id, char *version, int len);
 #ifdef __cplusplus
 #if __cplusplus
 }

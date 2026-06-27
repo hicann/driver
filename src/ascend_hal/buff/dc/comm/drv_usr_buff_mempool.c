@@ -54,7 +54,7 @@ static drvError_t mp_create_mbuf_mp(uint32_t devid, struct mempool_t **mp)
     ret = mp_create(&attr, MEMPOOL_MBUF_LIST, mp);
     if (ret != DRV_ERROR_NONE) {
         buff_err("Create mbuf mp failed. (ret=%d; grp_id=%u; blk size=%u; blk num=%u; align=%u; flag=%lu; devid=%u)\n",
-            ret, attr.mGroupId, attr.blkSize, attr.blkNum, attr.align, attr.hugePageFlag, devid);
+                 ret, attr.mGroupId, attr.blkSize, attr.blkNum, attr.align, attr.hugePageFlag, devid);
         *mp = NULL;
     }
 
@@ -95,14 +95,16 @@ void mp_destroy_all_mbuf_mp(void)
     }
 
     (void)pthread_rwlock_wrlock(&g_mbuf_mp_list_rwlock);
-    list_for_each_safe(pos, n, &g_mbuf_mp_list) {
+    list_for_each_safe(pos, n, &g_mbuf_mp_list)
+    {
         mp = list_entry(pos, struct mempool_t, user_list);
         if (mp == g_latest_mbuf_mp) {
             (void)ATOMIC_SET(&g_latest_mbuf_mp, NULL);
         }
         drv_user_list_del(&mp->user_list);
         g_mbuf_mp_cnt--;
-        arg.mp = (uint64)mp;;
+        arg.mp = (uint64)mp;
+        ;
         (void)buff_usr_mp_delete(&arg);
     }
     (void)pthread_rwlock_unlock(&g_mbuf_mp_list_rwlock);
@@ -182,16 +184,16 @@ drvError_t mp_create(mpAttr *attr, uint32 type, struct mempool_t **mp)
     }
     ret = buff_usr_mp_create(&arg);
     if (ret != DRV_ERROR_NONE) {
-        buff_err("Create mp fail. (ret=0x%x; blk size=%u; blk num=%u; pid=%d; devid=%u)\n",
-            ret, attr->blkSize, attr->blkNum, buff_get_current_pid(), attr->devid);
+        buff_err("Create mp fail. (ret=0x%x; blk size=%u; blk num=%u; pid=%d; devid=%u)\n", ret, attr->blkSize,
+                 attr->blkNum, buff_get_current_pid(), attr->devid);
         return ret;
     }
 
     *mp = (struct mempool_t *)(uintptr_t)(arg.mp_uva);
     buff_scale_out(arg.start, arg.total_size);
 
-    buff_event("Create mp. (mp=%p; ret=0x%x; blk size=%u; blk num=%u; pid=%d; devid=%u)\n",
-        *mp, ret, attr->blkSize, attr->blkNum, buff_get_current_pid(), attr->devid);
+    buff_event("Create mp. (mp=%p; ret=0x%x; blk size=%u; blk num=%u; pid=%d; devid=%u)\n", *mp, ret, attr->blkSize,
+               attr->blkNum, buff_get_current_pid(), attr->devid);
 
     return ret;
 }
@@ -228,7 +230,8 @@ int halBuffDeletePool(struct mempool_t *mp)
     blk_available = buff_api_atomic_read(&mp->blk_available);
     if (mp->blk_num != blk_available) {
         buff_err("Mp is in use. (name=%s; blk_num=%u; blk_available=%u; start=0x%llx; size=0x%llx; devid=%u)\n",
-            mp->pool_name, mp->blk_num, blk_available, mp->blk_start, mp->blk_total_len, mp->head.devid);
+                 mp->pool_name, mp->blk_num, blk_available, (unsigned long long)mp->blk_start, mp->blk_total_len,
+                 mp->head.devid);
         return DRV_ERROR_BUSY;
     }
     pool->head.status = MP_S_DESTROYED;
@@ -251,8 +254,8 @@ static void mp_trace_print(struct mempool_t *mp)
     unsigned int idx;
 
     buff_event("=====mp trace start print=====\n");
-    buff_event("mp=%p, blk_addr=%p, blk_num=%d, blk_avai=%d, bitmap=0x%x, scenes=%d\n",
-        mp, mp->blk_start, mp->blk_num, mp->blk_available, mp->bitmap[0], mp->stat.alloc_fail_scence);
+    buff_event("mp=%p, blk_addr=%p, blk_num=%d, blk_avai=%d, bitmap=0x%lx, scenes=%d\n", mp, mp->blk_start, mp->blk_num,
+               mp->blk_available, mp->bitmap[0], mp->stat.alloc_fail_scence);
 
     for (idx = 0; idx < mp->blk_num; idx++) {
         uni_buff = mp_get_buff_uva_by_index(mp, idx);
@@ -307,7 +310,7 @@ static drvError_t _mp_alloc_buff(struct mempool_t *mp, void **buff, uint32_t *bl
     }
 
     curr = mp->curr_index;
-    end  = mp->blk_num;
+    end = mp->blk_num;
 
     index = mp_alloc_bitmap(mp, curr, end);
     if (index == MP_BITMAP_INDEX_INVALID) {
@@ -335,8 +338,9 @@ static drvError_t _mp_alloc_buff(struct mempool_t *mp, void **buff, uint32_t *bl
     /* check buff valid */
     head = buff_mempool_get_head(uni_buff);
     if ((head->index != (uint32)index) || (head->image != UNI_HEAD_IMAGE)) {
-        buff_err("Index is invalid. (mp=0x%lx; head_index=%u; index=%d; image=%#x)\n",
-            (uintptr_t)mp, head->index, index, head->image); //lint !e507
+        buff_err("Index is invalid. (mp=0x%lx; head_index=%u; index=%d; image=%#x)\n", (uintptr_t)mp, head->index,
+                 index,
+                 head->image); // lint !e507
         goto alloc_mp_fail;
     }
 
@@ -347,8 +351,8 @@ static drvError_t _mp_alloc_buff(struct mempool_t *mp, void **buff, uint32_t *bl
     }
 
     head->timestamp = (unsigned int)buff_api_timestamp();
-    head->status    = UNI_STATUS_ALLOC;
-    head->ref       = 1;
+    head->status = UNI_STATUS_ALLOC;
+    head->ref = 1;
     head->buff_type = BUFF_NORMAL;
     head->align_flag = 0;
     head->recycle_flag = 1;
@@ -576,20 +580,26 @@ int halBuffAllocByPool(poolHandle pHandle, void **buff)
     return ret;
 }
 
-drvError_t halMbufGetDqsHandle(Mbuf *mbuf,  uint64_t *handle)
+drvError_t halMbufGetDqsHandle(Mbuf *mbuf, uint64_t *handle)
 {
     (void)mbuf;
     (void)handle;
     return DRV_ERROR_NOT_SUPPORT;
 }
- 
+
+drvError_t halMbufDqsTracePrint(poolHandle pHandle)
+{
+    (void)pHandle;
+    return DRV_ERROR_NOT_SUPPORT;
+}
+
 drvError_t halBuffGetDQSPoolInfo(struct mempool_t *mp, DqsPoolInfo *poolInfo)
 {
     (void)mp;
     (void)poolInfo;
     return DRV_ERROR_NOT_SUPPORT;
 }
- 
+
 drvError_t halBuffGetDQSPoolInfoById(unsigned int poolId, DqsPoolInfo *poolInfo)
 {
     (void)poolId;

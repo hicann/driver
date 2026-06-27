@@ -7,7 +7,7 @@
  * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
  */
-
+ 
 #include <stdio.h>
 #include <time.h>
 #include <limits.h>
@@ -16,10 +16,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <fcntl.h>
-
+ 
 #include "securec.h"
-#include "dsmi_common_interface_custom.h"
+#include "dsmi_common_interface.h"
 #include "dcmi_interface_api.h"
+#include "dcmi_basic_info_intf.h"
 #include "dcmi_common.h"
 #include "dcmi_init_basic.h"
 #include "dcmi_log.h"
@@ -66,7 +67,67 @@ int dcmi_convert_error_code(int dsmi_err_code)
     return DCMI_ERR_CODE_INNER_ERR;
 }
 
+int dcmi_get_device_errorcode_950(
+    int card_id, int device_id, int *error_count, unsigned int *error_code_list, unsigned int list_len)
+{
+    int ret, remain, ao_count;
+    int ao_err_code_count = 0;
+    unsigned int ao_err_code_list[DCMI_ERROR_CODE_MAX_COUNT] = {0};
+
+    ret = dcmi_get_npu_device_errorcode(card_id, device_id, error_count, error_code_list,
+        list_len);
+    if (ret != DCMI_OK) {
+        gplog(LOG_ERR, "dcmi_get_npu_device_errorcode failed. err is %d.", ret);
+        return ret;
+    }
+    ret = dcmi_mcu_get_device_errorcode(card_id, &ao_err_code_count,
+        ao_err_code_list, list_len);
+    if (ret != DCMI_OK) {
+        gplog(LOG_ERR, "dcmi_mcu_get_device_errorcode failed. err is %d.", ret);
+        return ret;
+    }
+
+    remain = list_len - *error_count;
+    ao_count = (ao_err_code_count < remain) ? ao_err_code_count : remain;
+
+    if (ao_count > 0) {
+        ret = memcpy_s(&error_code_list[*error_count], remain * sizeof(unsigned int), ao_err_code_list,
+        ao_count * sizeof(unsigned int));
+        if (ret != EOK) {
+            gplog(LOG_ERR, "memcpy_s failed. err is %d.", ret);
+            return DCMI_ERR_CODE_SECURE_FUN_FAIL;
+        }
+    }
+    *error_count = *error_count + ao_count;
+
+    return DCMI_OK;
+}
+
 #if defined DCMI_VERSION_2
+int dcmi_get_device_errorcode_based_on_type(int card_id, int device_id, enum dcmi_unit_type device_type,
+    unsigned int *err_code_count, unsigned int *err_code_list)
+{
+    int err;
+    
+    if (device_type == NPU_TYPE) {
+        err = dcmi_get_npu_device_errorcode(card_id, device_id, (int *)(void *)err_code_count, err_code_list,
+        DCMI_ERROR_CODE_MAX_COUNT);
+    } else if (device_type == MCU_TYPE) {
+        err = dcmi_mcu_get_device_errorcode(card_id, (int *)(void *)err_code_count, err_code_list,
+        DCMI_ERROR_CODE_MAX_COUNT);
+#ifndef _WIN32
+    } else if (device_type == CPU_TYPE) {
+        err = dcmi_cpu_get_device_errorcode(card_id, (int *)(void *)err_code_count, err_code_list,
+        DCMI_ERROR_CODE_MAX_COUNT);
+#endif
+    } else {
+        gplog(LOG_ERR, "device_type %d is error.", device_type);
+        return DCMI_ERR_CODE_NOT_SUPPORT;
+    }
+
+    return err;
+}
+
 int dcmi_get_device_errorcode_v2(int card_id, int device_id, int *error_count, unsigned int *error_code_list,
     unsigned int list_len)
 {
@@ -81,33 +142,24 @@ int dcmi_get_device_errorcode_v2(int card_id, int device_id, int *error_count, u
         return DCMI_ERR_CODE_INVALID_PARAMETER;
     }
 
+#ifndef ENABLE_EQUIPMENT
+    if (dcmi_board_chip_type_is_ascend_950()) {
+        gplog(LOG_OP, "This product does not support this api.");
+        return DCMI_ERR_CODE_NOT_SUPPORT;
+    }
+#endif
+
     err = dcmi_get_device_type(card_id, device_id, &device_type);
     if (err != DCMI_OK) {
         gplog(LOG_ERR, "dcmi_get_device_type failed. err is %d.", err);
         return err;
     }
 
-    if (device_type == NPU_TYPE) {
-        err = dcmi_get_npu_device_errorcode(card_id, device_id, (int *)(void *)&err_code_count, err_code_list,
-            DCMI_ERROR_CODE_MAX_COUNT);
-    } else if (device_type == MCU_TYPE) {
-        err = dcmi_mcu_get_device_errorcode(card_id, (int *)(void *)&err_code_count,
-                                            err_code_list, DCMI_ERROR_CODE_MAX_COUNT);
-#ifndef _WIN32
-    } else if (device_type == CPU_TYPE) {
-        err = dcmi_cpu_get_device_errorcode(card_id, (int *)(void *)&err_code_count,
-                                            err_code_list, DCMI_ERROR_CODE_MAX_COUNT);
-#endif
-    } else {
-        gplog(LOG_ERR, "device_type %d is error.", device_type);
-        return DCMI_ERR_CODE_NOT_SUPPORT;
-    }
-
+    err = dcmi_get_device_errorcode_based_on_type(card_id, device_id, device_type, &err_code_count, err_code_list);
     if (err != DCMI_OK) {
         gplog(LOG_ERR, "get device error code failed. err is %d.", err);
         return DCMI_ERR_CODE_INNER_ERR;
     }
-
     if (err_code_count > list_len) {
         gplog(LOG_ERR, "list_len %u is smaller than err_code_count %u.", list_len, err_code_count);
         return DCMI_ERR_CODE_INVALID_PARAMETER;
@@ -134,6 +186,13 @@ int dcmi_get_device_errorcode_string(int card_id, int device_id, unsigned int er
         return DCMI_ERR_CODE_INVALID_PARAMETER;
     }
 
+#ifndef ENABLE_EQUIPMENT
+    if (dcmi_board_chip_type_is_ascend_950()) {
+        gplog(LOG_OP, "This product does not support this api.");
+        return DCMI_ERR_CODE_NOT_SUPPORT;
+    }
+#endif
+
     err = dcmi_get_device_type(card_id, device_id, &device_type);
     if (err != DCMI_OK) {
         gplog(LOG_ERR, "dcmi_get_device_type failed. err is %d.", err);
@@ -154,7 +213,9 @@ int dcmi_get_driver_errorcode(int *error_count, unsigned int *error_code_list, u
 {
 #ifndef _WIN32
     int err;
-    unsigned int err_code_list[DCMI_ERROR_CODE_MAX_COUNT] = {0}, err_count = 0;
+    unsigned int err_code_list[DCMI_ERROR_CODE_MAX_COUNT] = {0}, index, err_count = 0;
+    unsigned int filtered_count = 0;
+    unsigned int filtered_list[DCMI_ERROR_CODE_MAX_COUNT] = {0};
 
     bool check_result = (error_count == NULL || error_code_list == NULL || list_len == 0);
     if (check_result) {
@@ -162,10 +223,31 @@ int dcmi_get_driver_errorcode(int *error_count, unsigned int *error_code_list, u
         return DCMI_ERR_CODE_INVALID_PARAMETER;
     }
 
+    if (dcmi_board_chip_type_is_ascend_950()) {
+        gplog(LOG_OP, "This product does not support this api.");
+        return DCMI_ERR_CODE_NOT_SUPPORT;
+    }
+
     err = dsmi_get_driver_errorcode((int *)(void *)&err_count, err_code_list);
     if (err != DSMI_OK) {
         gplog(LOG_ERR, "dsmi_get_driver_errorcode failed. err is %d.", err);
         return dcmi_convert_error_code(err);
+    }
+
+    /* A5代际没有/dev/devmm_svm */
+    if (dcmi_get_board_chip_type() == DCMI_CHIP_TYPE_D950) {
+        for (index = 0; index < err_count; index++) {
+            if (err_code_list[index] != HOST_SVM_NOT_EXIST) {
+                filtered_list[filtered_count++] = err_code_list[index];
+            }
+        }
+        err_count = filtered_count;
+        err = memcpy_s(err_code_list, DCMI_ERROR_CODE_MAX_COUNT * sizeof(unsigned int),
+                       filtered_list, err_count * sizeof(unsigned int));
+        if (err != EOK) {
+            gplog(LOG_ERR, "memcpy_s failed. err is %d.", err);
+            return DCMI_ERR_CODE_SECURE_FUN_FAIL;
+        }
     }
 
     if (err_count > list_len) {
@@ -206,7 +288,7 @@ int dcmi_get_fault_event(int card_id, int device_id, int timeout, struct dcmi_ev
         return DCMI_ERR_CODE_INVALID_PARAMETER;
     }
 
-    if (dcmi_board_chip_type_is_ascend_310()) {
+    if (dcmi_board_chip_type_is_ascend_310() || dcmi_board_chip_type_is_ascend_950()) {
         gplog(LOG_OP, "Operation not support.");
         return DCMI_ERR_CODE_NOT_SUPPORT;
     }
@@ -223,6 +305,13 @@ int dcmi_get_fault_event(int card_id, int device_id, int timeout, struct dcmi_ev
         gplog(LOG_ERR, "device_type %d is not support.", device_type);
         return DCMI_ERR_CODE_NOT_SUPPORT;
     }
+}
+
+int dcmi_get_device_current_fault_event(int card_id, int device_id, struct dcmi_event *event_buf,
+    int input_event_buf_length, int *output_event_cnt)
+{
+    gplog(LOG_OP, "This product does not support this api.");
+    return DCMI_ERR_CODE_NOT_SUPPORT;
 }
 
 int dcmi_subscribe_fault_event(int card_id, int device_id, struct dcmi_event_filter filter,
@@ -242,7 +331,7 @@ int dcmi_subscribe_fault_event(int card_id, int device_id, struct dcmi_event_fil
         return DCMI_ERR_CODE_INVALID_PARAMETER;
     }
 
-    if (dcmi_board_chip_type_is_ascend_310()) {
+    if (dcmi_board_chip_type_is_ascend_310() || dcmi_board_chip_type_is_ascend_950()) {
         gplog(LOG_OP, "Operation not support.");
         return DCMI_ERR_CODE_NOT_SUPPORT;
     }
@@ -273,6 +362,11 @@ int dcmi_get_device_pcie_error_cnt(int card_id, int device_id, struct dcmi_chip_
     if (pcie_err_code_info == NULL) {
         gplog(LOG_ERR, "pcie_err_code_info is invalid.");
         return DCMI_ERR_CODE_INVALID_PARAMETER;
+    }
+
+    if (dcmi_board_chip_type_is_ascend_950()) {
+        gplog(LOG_OP, "This product does not support this api.");
+        return DCMI_ERR_CODE_NOT_SUPPORT;
     }
 
     err = dcmi_get_device_type(card_id, device_id, &device_type);
@@ -325,7 +419,7 @@ int dcmi_get_device_errorcode(
     }
 
     if (dcmi_board_chip_type_is_ascend_910b() || dcmi_board_chip_type_is_ascend_910_93() ||
-        dcmi_board_chip_type_is_ascend_910_95()) {
+        dcmi_board_chip_type_is_ascend_950()) {
         gplog(LOG_ERR, "This device does not support.");
         return DCMI_ERR_CODE_NOT_SUPPORT;
     }
@@ -435,7 +529,7 @@ int dcmi_hilens_cpu_get_device_errorcode(int *error_count, unsigned int *error_c
 
         // 只包含3个字段，表示是告警头
         if (section_count == CPU_NO_ALARM_SECTION_NUM) {
-            *error_count = (int)strtol(alarm_section_info[CPU_ALARM_COUNT_INDEX], NULL, DCMI_NUMBER_BASE);
+            *error_count = strtol(alarm_section_info[CPU_ALARM_COUNT_INDEX], NULL, DCMI_NUMBER_BASE);
         } else if (section_count == CPU_ALARM_EXIST_SECTION_NUM) {
             // 包含6个字段为告警本身信息
             pcode[alarm_count++] = (unsigned int)strtol(alarm_section_info[CPU_ALARM_ID_INDEX], NULL, DCMI_NUMBER_BASE);
@@ -475,7 +569,15 @@ int dcmi_get_npu_device_errorcode(
     /* 调用点使用的list_len为 dsmi_get_device_errorcode的最大错误码个数128，此处不做有效性判断 */
     (void)list_len;
 
-    ret = dcmi_get_device_logic_id(&device_logic_id, card_id, device_id);
+    if (dcmi_board_chip_type_is_ascend_950()) {
+#ifndef ENABLE_EQUIPMENT
+        ret = dcmiv2_get_device_logic_id(&device_logic_id, card_id, device_id);
+#else
+        ret = dcmi_get_device_logic_id(&device_logic_id, card_id, device_id);
+#endif
+    } else {
+        ret = dcmi_get_device_logic_id(&device_logic_id, card_id, device_id);
+    }
     if (ret != DCMI_OK) {
         gplog(LOG_ERR, "call dcmi_get_device_logic_id failed. err is %d.", ret);
         return ret;
@@ -495,9 +597,17 @@ int dcmi_get_npu_device_errorcode_string(
     int ret;
     int device_logic_id = 0;
 
-    ret = dcmi_get_device_logic_id(&device_logic_id, card_id, device_id);
+    if (dcmi_board_chip_type_is_ascend_950()) {
+#ifndef ENABLE_EQUIPMENT
+        ret = dcmiv2_get_device_logic_id(&device_logic_id, card_id, device_id);
+#else
+        ret = dcmi_get_device_logic_id(&device_logic_id, card_id, device_id);
+#endif
+    } else {
+        ret = dcmi_get_device_logic_id(&device_logic_id, card_id, device_id);
+    }
     if (ret != DCMI_OK) {
-        gplog(LOG_ERR, "call dcmi_get_device_logic_id failed. err is %d.", ret);
+        gplog(LOG_ERR, "call dcmiv2_get_device_logic_id failed. err is %d.", ret);
         return ret;
     }
 
@@ -514,6 +624,10 @@ int dcmi_subscribe_npu_fault_event(int card_id, int device_id, struct dcmi_event
 {
     int ret;
     int device_logic_id = 0;
+    struct dsmi_soc_die_stru die_struct = {0};
+    int card_num = 0;
+    int card_list[MAX_CARD_NUM] = {0};
+    int index;
 
     if (card_id == -1 && device_id == -1) {
         device_logic_id = -1;
@@ -522,6 +636,26 @@ int dcmi_subscribe_npu_fault_event(int card_id, int device_id, struct dcmi_event
         if (ret != DCMI_OK) {
             gplog(LOG_ERR, "call dcmi_get_device_logic_id failed. err is %d.", ret);
             return ret;
+        }
+    }
+    
+    if (dcmi_board_chip_type_is_ascend_950()) {
+        ret = dcmi_get_card_list(&card_num, card_list, sizeof(card_list) / sizeof(card_list[0]));
+        if (card_num <= 0 || ret != DCMI_OK) {
+            gplog(LOG_ERR, "call dcmi_get_card_list failed. err is %d.", ret);
+            return ret;
+        }
+        // 调用接口初始化dmp进程，无实际使用意义
+        for (index = 0; index < card_num; index++) {
+            if (card_list[index] != -1) {
+                break;
+            }
+        }
+
+        ret = dsmi_get_device_die(card_list[index], &die_struct);
+        if (ret != DSMI_OK) {
+            gplog(LOG_ERR, "call dsmi_get_device_die failed. err is %d.", ret);
+            return dcmi_convert_error_code(ret);
         }
     }
 

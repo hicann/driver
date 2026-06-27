@@ -20,22 +20,31 @@
 
 #include "dmc_kernel_interface.h"
 
-#if (defined(TSDRV_UT)) || (defined (EMU_ST))
-#define soc_err(fmt, ...) do { \
-    drv_err(module_soc_resmng, "<%s:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), ##__VA_ARGS__); \
-} while (0)
+#if (defined(TSDRV_UT)) || (defined(EMU_ST))
+#define soc_err(fmt, ...)                                                                                              \
+    do {                                                                                                               \
+        drv_err(                                                                                                       \
+            module_soc_resmng, "<%s:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), ##__VA_ARGS__); \
+    } while (0)
 #else
-#define soc_err(fmt, ...) do { \
-    drv_err(module_soc_resmng, "<%s:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), ##__VA_ARGS__); \
-    share_log_err(TSDRV_SHARE_LOG_START, module_soc_resmng, "<%s:%d> " fmt, ka_task_get_current_comm(), \
-        ka_task_get_current_tgid(), ##__VA_ARGS__); \
-} while (0)
+#define soc_err(fmt, ...)                                                                                              \
+    do {                                                                                                               \
+        drv_err(                                                                                                       \
+            module_soc_resmng, "<%s:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), ##__VA_ARGS__); \
+        share_log_err(                                                                                                 \
+            TSDRV_SHARE_LOG_START, module_soc_resmng, "<%s:%d> " fmt, ka_task_get_current_comm(),                      \
+            ka_task_get_current_tgid(), ##__VA_ARGS__);                                                                \
+    } while (0)
 #endif
 
-#define soc_warn(fmt, ...)  drv_warn(module_soc_resmng, "<%s:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), ##__VA_ARGS__)
-#define soc_info(fmt, ...)  drv_info(module_soc_resmng, "<%s:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), ##__VA_ARGS__)
-#define soc_event(fmt, ...) drv_event(module_soc_resmng, "<%s:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), ##__VA_ARGS__)
-#define soc_debug(fmt, ...) drv_pr_debug(module_soc_resmng, "<%s:%d> " fmt, \
-    ka_task_get_current_comm(), ka_task_get_current_tgid(), ##__VA_ARGS__)
+#define soc_warn(fmt, ...) \
+    drv_warn(module_soc_resmng, "<%s:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), ##__VA_ARGS__)
+#define soc_info(fmt, ...) \
+    drv_info(module_soc_resmng, "<%s:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), ##__VA_ARGS__)
+#define soc_event(fmt, ...) \
+    drv_event(module_soc_resmng, "<%s:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), ##__VA_ARGS__)
+#define soc_debug(fmt, ...) \
+    drv_pr_debug(           \
+        module_soc_resmng, "<%s:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), ##__VA_ARGS__)
 
 #endif /* SOC_RESMNG_LOG_H__ */

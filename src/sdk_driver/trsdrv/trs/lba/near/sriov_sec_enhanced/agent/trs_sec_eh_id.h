@@ -14,7 +14,7 @@
 #ifndef TRS_SEC_EH_ID_H
 #define TRS_SEC_EH_ID_H
 
-#include <linux/types.h>
+#include "ka_type.h"
 #include "trs_pub_def.h"
 
 #include "trs_sec_eh_cfg.h"

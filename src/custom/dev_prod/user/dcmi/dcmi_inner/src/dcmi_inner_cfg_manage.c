@@ -22,7 +22,8 @@
 #include "ctype.h"
 #include "securec.h"
 #include "dcmi_log.h"
-#include "dsmi_common_interface_custom.h"
+#include "dsmi_common_interface.h"
+#include "dsmi_network_interface.h"
 #include "dcmi_interface_api.h"
 #include "dcmi_common.h"
 #include "dcmi_fault_manage_intf.h"
@@ -31,6 +32,7 @@
 #include "dcmi_inner_info_get.h"
 #include "dcmi_mcu_intf.h"
 #include "dcmi_environment_judge.h"
+#include "dcmi_basic_info_intf.h"
 #include "dcmi_inner_cfg_manage.h"
 
 int dcmi_set_npu_device_sec_revocation(
@@ -112,10 +114,18 @@ int dcmi_set_npu_device_ip(int card_id, int device_id, enum dcmi_port_type input
         return DCMI_ERR_CODE_SECURE_FUN_FAIL;
     }
 
-    ret = dcmi_get_device_logic_id(&device_logic_id, card_id, device_id);
-    if (ret != DCMI_OK) {
-        gplog(LOG_ERR, "call dcmi_get_device_logic_id failed. err is %d.", ret);
-        return ret;
+    if (!dcmi_board_chip_type_is_ascend_950()) {
+        ret = dcmi_get_device_logic_id(&device_logic_id, card_id, device_id);
+        if (ret != DCMI_OK) {
+            gplog(LOG_ERR, "call dcmi_get_device_logic_id failed. err is %d.", ret);
+            return ret;
+        }
+    } else {
+        ret = dcmiv2_get_device_logic_id(&device_logic_id, card_id, device_id);
+        if (ret != DCMI_OK) {
+            gplog(LOG_ERR, "call dcmiv2_get_device_logic_id failed. err is %d.", ret);
+            return ret;
+        }
     }
 
     ret = dsmi_set_device_ip_address(device_logic_id, input_type, port_id, ip_addr, mask_addr);
@@ -158,7 +168,12 @@ int dcmi_set_npu_device_user_config(
         }
     }
 
-    ret = dcmi_get_device_logic_id(&device_logic_id, card_id, device_id);
+    if (!dcmi_board_chip_type_is_ascend_950()) {
+        ret = dcmi_get_device_logic_id(&device_logic_id, card_id, device_id);
+    } else {
+        ret = dcmiv2_get_device_logic_id(&device_logic_id, card_id, device_id);
+    }
+
     if (ret != DCMI_OK) {
         gplog(LOG_ERR, "call dcmi_get_device_logic_id failed. err is %d.", ret);
         return ret;
@@ -469,7 +484,7 @@ int dcmi_str2int(int *ptmp_num, const char *str)
         }
     }
 
-    num = (int)strtol(tmp_str, &end_ptr, DCMI_DEC_TO_STR_BASE);
+    num = strtol(tmp_str, &end_ptr, DCMI_DEC_TO_STR_BASE);
     /* 转换后num为0，但实际传入tmp_str不为'0...0'时，说明传入参数有误 */
     if (num == 0) {
         do {
@@ -928,7 +943,7 @@ int dcmi_save_device_share_cfg(int card_id, int device_id, int enable_value)
     unsigned int recover_enable;
 
     if ((!dcmi_board_chip_type_is_ascend_910_93()) && (!dcmi_board_chip_type_is_ascend_310p()) &&
-        (!dcmi_board_chip_type_is_ascend_910b())) {
+        (!dcmi_board_chip_type_is_ascend_910b()) && (!dcmi_board_chip_type_is_ascend_950())) {
         gplog(LOG_ERR, "This device does not support save device-share config recover mode %s.",
             (enable_value == DCMI_CFG_RECOVER_ENABLE) ? "enable" : "disable");
         return DCMI_ERR_CODE_NOT_SUPPORT;
@@ -937,7 +952,7 @@ int dcmi_save_device_share_cfg(int card_id, int device_id, int enable_value)
         gplog(LOG_ERR, "The current user does not have the permission to save device-share config recover mode.");
         return DCMI_ERR_CODE_OPER_NOT_PERMITTED;
     }
-    
+
     err = dcmi_cfg_get_device_share_config_recover_mode(&recover_enable);
     if (err != DCMI_OK) {
         gplog(LOG_ERR, "dcmi_cfg_get_device_share_config_recover_mode failed. err is %d", err);
@@ -948,6 +963,58 @@ int dcmi_save_device_share_cfg(int card_id, int device_id, int enable_value)
         err = dcmi_cfg_insert_set_device_share_cmdline(card_id, device_id, enable_value);
         if (err != DCMI_OK) {
             gplog(LOG_ERR, "dcmi_cfg_insert_set_device_share_cmdline failed. err is %d", err);
+            return err;
+        }
+    }
+    return DCMI_OK;
+}
+
+int dcmi_save_qos_master_cfg(int card_id, int device_id, struct dcmi_qos_master_config qos_cfg)
+{
+    int err;
+
+    if ((!dcmi_is_in_phy_privileged_docker_root()) && (!dcmi_is_in_phy_machine_root())) {
+        gplog(LOG_ERR, "The current user does not have the permission to save qos master config.");
+        return DCMI_ERR_CODE_OPER_NOT_PERMITTED;
+    }
+
+    if (!dcmi_board_chip_type_is_ascend_910_93()) {
+        gplog(LOG_ERR, "This device does not support save qos master config.");
+        return DCMI_ERR_CODE_NOT_SUPPORT;
+    }
+
+    err = dcmi_cfg_insert_set_qos_master_cmdline(card_id, device_id, qos_cfg);
+    if (err != DCMI_OK) {
+        gplog(LOG_ERR, "call dcmi_cfg_insert_set_qos_master_cmdline failed. err is %d", err);
+        return err;
+    }
+    return DCMI_OK;
+}
+
+int dcmi_save_multi_die_policy_cfg(int enable_value)
+{
+    int err;
+    unsigned int recover_enable;
+
+    if (!dcmi_board_chip_type_is_ascend_910_93()) {
+        gplog(LOG_ERR, "This device does not support save multi_die_policy config recover mode");
+        return DCMI_ERR_CODE_NOT_SUPPORT;
+    }
+    if ((!dcmi_is_in_phy_privileged_docker_root()) && (!dcmi_is_in_phy_machine_root())) {
+        gplog(LOG_ERR, "The current user does not have the permission to save multi_die_policy config recover mode.");
+        return DCMI_ERR_CODE_OPER_NOT_PERMITTED;
+    }
+
+    err = dcmi_cfg_get_multi_die_policy_config_recover_mode(&recover_enable);
+    if (err != DCMI_OK) {
+        gplog(LOG_ERR, "dcmi_cfg_get_multi_die_policy_config_recover_mode failed. err is %d", err);
+        return err;
+    }
+
+    if (recover_enable == DCMI_CFG_RECOVER_ENABLE) {
+        err = dcmi_cfg_insert_set_multi_die_policy_cmdline(enable_value);
+        if (err != DCMI_OK) {
+            gplog(LOG_ERR, "dcmi_cfg_insert_set_multi_die_policy_cmdline failed. err is %d", err);
             return err;
         }
     }
@@ -994,15 +1061,24 @@ int handle_device_share_cfg(int card_id, int device_id, const void *buf)
     return DCMI_OK;
 }
 
+int handle_qos_master_cfg(int card_id, int device_id, const void *buf)
+{
+    int ret = dcmi_save_qos_master_cfg(card_id, device_id, *(struct dcmi_qos_master_config *)buf);
+    if (ret != DCMI_OK) {
+        gplog(LOG_ERR, "call dcmi_save_qos_master_cfg failed. err is %d", ret);
+    }
+    return DCMI_OK;
+}
+
 int dcmi_cmd_write_into_recover_cfg(unsigned int main_cmd, unsigned int sub_cmd, int card_id, int device_id,
     const void *buf)
 {
     size_t index, table_size;
-
     static struct dcmi_device_info_main_cmd_cfg_recover_table cmd_recov_support_table[] = {
         {DCMI_MAIN_CMD_SOC_INFO, DCMI_SOC_INFO_SUB_CMD_CUSTOM_OP, handle_soc_info_custom_op},
         {DCMI_MAIN_CMD_DEVICE_SHARE, DCMI_DEVICE_SHARE_SUB_CMD_COMMON, handle_device_share_cfg},
         {DCMI_MAIN_CMD_TS, DCMI_TS_SUB_CMD_COMMON_MSG, handle_op_timeout},
+        {DCMI_MAIN_CMD_QOS, DCMI_QOS_SUB_MASTER_CONFIG, handle_qos_master_cfg},
     };
     table_size = sizeof(cmd_recov_support_table) / sizeof(cmd_recov_support_table[0]);
     for (index = 0; index < table_size; ++index) {
@@ -1058,7 +1134,15 @@ int dcmi_set_npu_device_info(
         return dcmi_convert_error_code(ret);
     }
 
-    ret = dcmi_get_device_logic_id(&device_logic_id, card_id, device_id);
+    if (!dcmi_board_chip_type_is_ascend_950()) {
+        ret = dcmi_get_device_logic_id(&device_logic_id, card_id, device_id);
+    } else {
+#ifndef ENABLE_EQUIPMENT
+        ret = dcmiv2_get_device_logic_id(&device_logic_id, card_id, device_id);
+#else
+        ret = dcmi_get_device_logic_id(&device_logic_id, card_id, device_id);
+#endif
+    }
     if (ret != DCMI_OK) {
         gplog(LOG_ERR, "call dcmi_get_device_logic_id failed. err is %d.", ret);
         return ret;
@@ -1072,7 +1156,6 @@ int dcmi_set_npu_device_info(
         return dcmi_convert_error_code(ret);
     }
 
-    // 根据具体子命令分发处理
     ret = dcmi_cmd_write_into_recover_cfg(main_cmd, sub_cmd, card_id, device_id, buf);
     return ret;
 }
@@ -1138,5 +1221,52 @@ int dcmi_set_device_share_for_910_93(int card_id, enum dcmi_unit_type device_typ
         gplog(LOG_OP, "Set share enable success. card_id=%d, device_id=%d, main_cmd=%d, sub_cmd=%u", card_id, npu_id,
             main_cmd, sub_cmd);
     }
+    return DCMI_OK;
+}
+
+int dcmi_set_custom_cert_info(int logic_device_id, const void *cert_chain_buf, unsigned int size)
+{
+    int ret;
+    unsigned char enable = 0;
+
+    ret = dsmi_get_user_config(logic_device_id, "sign_auth_enable", sizeof(unsigned char), &enable);
+    if (ret != DSMI_OK) {
+        gplog(LOG_ERR, "get custom op secverify enable failed. err is %d", ret);
+        return dcmi_convert_error_code(ret);
+    }
+    if (enable != 1) {
+        printf("\t%-30s : Need set custom-op-secverify-enable as True first on a physical machine.\n", "Message");
+        return DCMI_ERR_CODE_OPER_NOT_PERMITTED;
+    }
+
+    ret = dsmi_set_device_info(logic_device_id, DSMI_MAIN_CMD_SEC,
+                               DSMI_SEC_SUB_CMD_CUST_SIGN_USER_CERT, cert_chain_buf, size);
+    if (ret != DSMI_OK) {
+        gplog(LOG_ERR, "call dsmi_set_device_info failed. err is %d.", ret);
+    }
+
+    return dcmi_convert_error_code(ret);
+}
+
+int dcmi_set_device_offline_nic_down_flag(int card_id, int device_id, int enable_flag)
+{
+    int ret;
+    int device_logic_id = 0;
+
+    ret = dcmi_get_device_logic_id(&device_logic_id, card_id, device_id);
+    if (ret != DCMI_OK) {
+        gplog(LOG_ERR, "call dcmi_get_device_logic_id failed. err is %d.", ret);
+        return ret;
+    }
+
+    ret = dsmi_set_device_offline_nic_down_flag(device_logic_id, enable_flag);
+    if (ret != DSMI_OK) {
+        gplog(LOG_ERR, "call dsmi_set_device_offline_nic_down_flag failed. err is %d.", ret);
+        return dcmi_convert_error_code(ret);
+    }
+
+    gplog(LOG_OP, "dsmi_set_device_offline_nic_down_flag success. card_id=%d, device_id=%d, enable_flag=%d.",
+        card_id, device_id, enable_flag);
+
     return DCMI_OK;
 }

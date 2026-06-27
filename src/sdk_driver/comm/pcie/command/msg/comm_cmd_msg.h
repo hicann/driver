@@ -114,11 +114,11 @@ struct devdrv_host_dma_addr_to_pa_cmd {
 };
 
 struct devdrv_s2s_msg_head_info {
-    u32 status;     /* DEVDRV_MSG_CMD_*, this element must be the first one in this struct */
-    u32 msg_type;   /* enum agentdrv_s2s_msg_type */
-    u32 buf_len;    /* input real length */
-    u32 in_len;     /* output max length */
-    u32 out_len;    /* output real length */
+    u32 status;         /* DEVDRV_MSG_CMD_*, this element must be the first one in this struct */
+    u32 msg_type;       /* enum agentdrv_s2s_msg_type */
+    u32 buf_len;        /* input real length */
+    u32 in_len;         /* output max length */
+    u32 out_len;        /* output real length */
     u32 send_direction; /* recv side is host/device */
     u32 chan_id;
     u32 sdid;
@@ -126,14 +126,14 @@ struct devdrv_s2s_msg_head_info {
     dma_addr_t cq_dma_addr;
     u32 version; /* must be here */
     u64 seq_num; /* msg sequence number */
-}__attribute__((aligned(128)));
+} __attribute__((aligned(128)));
 
 struct devdrv_pasid_msg {
     u64 hash_va;
     u32 op_code;    // operation for node, add or del
     u32 dev_id;     // devid which pasid belongs
     int error_code; // remote process result
-}__attribute__((aligned(128)));
+} __attribute__((aligned(128)));
 
 struct devdrv_s2s_msg {
     struct devdrv_s2s_msg_head_info head_info;

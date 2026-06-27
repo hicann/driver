@@ -7,12 +7,12 @@
  * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
  */
-
+ 
 #ifndef __DCMI_VIRTUAL_INTF_H__
 #define __DCMI_VIRTUAL_INTF_H__
 
 #include "dcmi_interface_api.h"
-
+ 
 #ifdef __cplusplus
 #if __cplusplus
 extern "C" {
@@ -84,12 +84,18 @@ bool dcmi_check_card_is_split_phy(int card_id);
 
 int dcmi_check_chip_is_in_split_mode(int card_id, int device_id);
 
+int dcmiv2_check_chip_is_in_split_mode(int dev_id);
+
 int dcmi_set_sriov_cfg(int card_id, int device_id, unsigned int* sriov_cfg);
+
+int dcmiv2_all_vnpu_is_vir(int *all_vir_flag);
+
+int dcmiv2_check_vnpu_chip_is_vir(int dev_id, int *vir_flag);
 
 #ifdef __cplusplus
 #if __cplusplus
 }
 #endif
 #endif /* __cplusplus */
-
+ 
 #endif /* __DCMI_VIRTUAL_INTF_H__ */

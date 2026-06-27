@@ -12,11 +12,13 @@
  */
 #ifndef _DOCKER_QUERY_H
 #define _DOCKER_QUERY_H
-#include <linux/types.h>
 
+#include "ka_task_pub.h"
+
+bool check_in_host_mach(void);
 bool run_in_normal_docker(void);
 bool run_in_admin_docker(void);
 bool run_in_docker(void);
-int dbl_host_pid_to_container_pid(pid_t host_pid, pid_t *container_pid);
+int dbl_host_pid_to_container_pid(ka_pid_t host_pid, ka_pid_t *container_pid);
 
 #endif

@@ -11,6 +11,7 @@
 #ifndef __DSMI_INNER_INTERFACE_H__
 #define __DSMI_INNER_INTERFACE_H__
 
+#define BUF_MAX_LEN_HDC 4000
 #define MAX_LANE 8
 typedef enum {
     DSMI_STATE_SUB_CMD_ENCRYPT,
@@ -104,6 +105,21 @@ enum ECC_INFO_READ {
     ECC_MAX_READ_CMD
 };
 
+#define MAX_CHALLENGE_LEN 32
+typedef struct {
+    unsigned int evidence_type; // 获取证据的类型
+    unsigned int start_len; // 证据的开始截取的位置
+    unsigned int challenge_len; // 挑战值的长度
+    unsigned int evidence_len; // 证据的长度
+    unsigned char challenge[MAX_CHALLENGE_LEN]; // 挑战值
+}ATTEST_OPERATE_REQUEST;
+
+typedef struct {
+    unsigned int remain_len; // 目前还未获取的证据长度，随着结构体带出
+    unsigned int data_len; // 证据的总长度
+    unsigned int copied_len; // 此次获取证据的长度
+    unsigned char data[BUF_MAX_LEN_HDC]; // 证据存放缓冲区
+}ATTEST_OPERATE_RESPONSE;
 #pragma pack()
 
 /**
@@ -174,6 +190,10 @@ int dsmi_get_pcie_info_v2(int device_id, struct tag_pcie_idinfo_all *pcie_idinfo
 */
 int dsmi_get_work_mode(unsigned int *work_mode);
 
+int dsmi_get_multi_die_policy(unsigned int *out);
+ 
+int dsmi_set_multi_die_policy(unsigned int policy);
+
 /**
 * @ingroup driver
 * @brief Query Main Board ID
@@ -183,11 +203,6 @@ int dsmi_get_work_mode(unsigned int *work_mode);
 * @return  0 for success, others for fail
 * @note Support:Ascend310,Ascend910,Ascend910B,Ascend310P
 */
-
-int dsmi_get_multi_die_policy(unsigned int *out);
-
-int dsmi_set_multi_die_policy(unsigned int policy);
-
 int dsmi_get_mainboard_id(unsigned int device_id, unsigned int *mainboard_id);
  
 /**
@@ -218,31 +233,52 @@ int dsmi_set_serdes_info(unsigned int device_id, SERDES_MAIN_CMD main_cmd, unsig
     void *buf, unsigned int size);
 
 /**
- * @ingroup driver
- * @brief Get custom op secverify sert show info
- * @attention NULL
- * @param [in] device_id  The device id
- * @param [in] buf  Buf send to device
- * @param [in] buf_size  The size of buf
- * @param [in] show_info_size  The size of cert show info
- * @param [out] show_info  cert show info
- * @return  0 for success, others for fail
- */
+* @ingroup driver
+* @brief Get custom op secverify cert show info
+* @attention NULL
+* @param [in] device_id  The device id
+* @param [in] buf  Buf send to device
+* @param [in] buf_size  The size of buf
+* @param [in] show_info_size  The size of cert show info
+* @param [out] show_info  cert show info
+* @return  0 for success, others for fail
+*/
 int dsmi_get_custom_op_secverify_cert_show_info(unsigned int device_id, const char *buf,
     unsigned int buf_size, void *show_info, unsigned int show_info_size);
 
 /**
- * @ingroup driver
- * @brief Get custom op secverify sert show info
- * @attention NULL
- * @param [in] device_id  The device id
- * @param [in] buf  Buf send to device
- * @param [in] buf_size  The size of buf
- * @param [in] show_info_size  The size of cert show info
- * @param [out] show_info  cert show info
- * @return  0 for success, others for fail
- */
-int dsmi_cmd_get_custom_cert_show_info(unsigned int device_id, const char *buf,
-    unsigned int buf_size, void *show_info, unsigned int show_info_size);
+* @ingroup driver
+* @brief Get custom op secverify cert show info
+* @attention NULL
+* @param [in] device_id  The device id
+* @param [in] buf  Buf send to device
+* @param [in] buf_size  The size of buf
+* @param [in] show_info_size  The size of cert show info
+* @param [out] show_info  cert show info
+* @return  0 for success, others for fail
+*/
+int dsmi_cmd_get_custom_cert_show_info(unsigned int device_id, const char *buf, unsigned int buf_size,
+                                       void *show_info, unsigned int show_info_size);
 
+ /**
+ * @ingroup driver
+ * @brief: get evdidence information
+ * @param [in] device_id device id
+ * @param [in] req the request for evidence information
+ * @param [out] rep the response for evidence information
+ * @param [in] challenge input strings to prevent the double-time attack
+ * @return  0 for success, others for fail
+ * @note Support:Ascend910_93
+ */
+int dsmi_attest_get_evidence(unsigned int device_id, ATTEST_OPERATE_REQUEST *req, ATTEST_OPERATE_RESPONSE *rep);
+
+/**
+ * @ingroup driver
+ * @brief: get akcert information
+ * @param [in] device_id device id
+ * @param [out] rep the response for evidence information
+ * @return  0 for success, others for fail
+ * @note Support:Ascend910_93
+ */
+int dsmi_attest_get_akcert(unsigned int device_id, unsigned int *akcertLen, ATTEST_OPERATE_RESPONSE *rep);
 #endif

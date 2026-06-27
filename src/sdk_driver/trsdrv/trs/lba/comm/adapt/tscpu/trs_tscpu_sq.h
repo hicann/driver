@@ -13,7 +13,7 @@
 #ifndef TRS_TSCPU_SQ_H__
 #define TRS_TSCPU_SQ_H__
 
-#include <linux/types.h>
+#include "ka_type.h"
 #include "trs_pub_def.h"
 #include "trs_chan.h"
 

@@ -33,8 +33,8 @@ static drvError_t cache_alloc_para_check(const char *name, GrpCacheAllocPara *pa
     }
 
     if (para->allocMaxSize > para->memSize) {
-        buff_err("alloc_max_size is larger than mem_size. (alloc_max_size=%u; mem_size=%llu)\n",
-            para->allocMaxSize, para->memSize);
+        buff_err("alloc_max_size is larger than mem_size. (alloc_max_size=%u; mem_size=%llu)\n", para->allocMaxSize,
+                 para->memSize);
         return DRV_ERROR_INVALID_VALUE;
     }
 
@@ -69,7 +69,7 @@ drvError_t halGrpCacheAlloc(const char *name, unsigned int devId, GrpCacheAllocP
     ret = buff_pool_cache_create(grp_id, devId, para->memFlag, mem_size, alloc_max_size);
     if (ret != DRV_ERROR_NONE) {
         buff_err("Cache create fail. (ret=%d; name=%s; dev_id=%u; mem_flag=%u; mem_size=%llu; alloc_max_size=%u)\n",
-            ret, name, devId, para->memFlag, para->memSize, para->allocMaxSize);
+                 ret, name, devId, para->memFlag, para->memSize, para->allocMaxSize);
         return ret;
     }
 
@@ -108,4 +108,3 @@ drvError_t halGrpCacheFree(const char *name, unsigned int devId)
 
     return ret;
 }
-

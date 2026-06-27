@@ -32,6 +32,7 @@
 #include "buff_manage_base.h"
 #include "buff_recycle.h"
 #include "buff_ioctl.h"
+#include "buff_feature.h"
 #include "grp_mng.h"
 
 #define BUF_LEN 128
@@ -56,8 +57,8 @@ unsigned int THREAD grp_cache_type = BUFF_NOCACHE;
 
 pthread_mutex_t grp_mutex = PTHREAD_MUTEX_INITIALIZER;
 
-#define SOCKET_CONNECT_MIN_TIMEOUT 3      /* 3s */
-#define SOCKET_CONNECT_MAX_TIMEOUT 100    /* 100s */
+#define SOCKET_CONNECT_MIN_TIMEOUT 3              /* 3s */
+#define SOCKET_CONNECT_MAX_TIMEOUT 100            /* 100s */
 static unsigned int g_socket_connect_timeout = 3; /* default 3s */
 
 static void set_grp_owner(void)
@@ -268,7 +269,7 @@ static int client_socket_connect(const char *name, int pid)
     buff_debug("Connect begin. (name=%s; pid=%d; max_retry_cnt=%u)\n", name, pid, max_retry_cnt);
 
     while (1) {
-        ret = connect(sfd, (struct sockaddr *) &addr, sizeof(struct sockaddr_un));
+        ret = connect(sfd, (struct sockaddr *)&addr, sizeof(struct sockaddr_un));
         if (ret >= 0) {
             break;
         }
@@ -304,7 +305,7 @@ static void scan_remove_residual_socket_file(const char *name)
         buff_warn("get cur time not success\n");
         return;
     }
-    now.tv_sec  = ts.tv_sec;
+    now.tv_sec = ts.tv_sec;
     now.tv_usec = ts.tv_nsec / NSEC_PER_USEC;
 
     ret = format_buff_socket_dir_path(dir_path);
@@ -419,13 +420,14 @@ static drvError_t send_shared_info(int sfd, struct grp_shr_info *shr_info)
 {
     struct msghdr msg;
     char msg_control[CMSG_SPACE(sizeof(int))];
-    struct iovec io = { .iov_base = shr_info, .iov_len = sizeof(*shr_info) };
+    struct iovec io = {.iov_base = shr_info, .iov_len = sizeof(*shr_info)};
 
     msg_hdr_init(&msg, &io, msg_control, sizeof(msg_control));
 
     *(int *)CMSG_DATA(CMSG_FIRSTHDR(&msg)) = get_grp_shr_mem_fd();
 
-    buff_info("memfd %d max_mem_size %llx pool_id %d\n", get_grp_shr_mem_fd(), shr_info->max_mem_size, shr_info->pool_id);
+    buff_info("memfd %d max_mem_size %llx pool_id %d\n", get_grp_shr_mem_fd(), shr_info->max_mem_size,
+              shr_info->pool_id);
 
     if (sendmsg(sfd, &msg, 0) < 0) {
         buff_err("sfd %d send msg failed errno %d\n", sfd, errno);
@@ -439,7 +441,7 @@ static drvError_t recv_shared_info(int sfd, struct grp_shr_info *shr_info)
 {
     struct msghdr msg;
     char msg_control[CMSG_SPACE(sizeof(int))];
-    struct iovec io = { .iov_base = shr_info, .iov_len = sizeof(*shr_info) };
+    struct iovec io = {.iov_base = shr_info, .iov_len = sizeof(*shr_info)};
 
     msg_hdr_init(&msg, &io, msg_control, sizeof(msg_control));
 
@@ -452,7 +454,8 @@ static drvError_t recv_shared_info(int sfd, struct grp_shr_info *shr_info)
     set_grp_pool_id(shr_info->pool_id);
     set_grp_max_mem_size(shr_info->max_mem_size);
 
-    buff_info("memfd %d max_mem_size %llx pool_id %d\n", get_grp_shr_mem_fd(), shr_info->max_mem_size, shr_info->pool_id);
+    buff_info("memfd %d max_mem_size %llx pool_id %d\n", get_grp_shr_mem_fd(), shr_info->max_mem_size,
+              shr_info->pool_id);
 
     return DRV_ERROR_NONE;
 }
@@ -547,7 +550,7 @@ static drvError_t grp_buff_init(const char *name, int mem_fd, unsigned long long
         return ret;
     }
 
-    buff_set_process_uni_id(proc_uid);  //lint !e571
+    buff_set_process_uni_id(proc_uid); // lint !e571
     set_grp_cache_type(cache_type);
 
     ret = buff_pool_task_attr_query(pool_id, buff_get_current_pid(), &attr);
@@ -771,29 +774,24 @@ bool is_cache_size_valid(unsigned long long cache_size)
 
 drvError_t buff_is_support(void)
 {
-#ifndef CFG_FEATURE_HOST_NOT_SUPPORT_SPILT_MODE
     static bool support_flag = false;
     unsigned int split_mode;
     drvError_t ret;
-
     if (support_flag == true) {
 #ifndef EMU_ST
         return DRV_ERROR_NONE;
 #endif
     }
-
     ret = halGetDeviceSplitMode(0, &split_mode);
     if (ret != DRV_ERROR_NONE) {
         buff_err("Get split mode failed. (ret=%d).\n", ret);
         return ret;
     }
-
     if (split_mode != VMNG_NORMAL_NONE_SPLIT_MODE) {
         buff_info("Capacity splitting is not supported. (split_mode=%u).\n", split_mode);
         return DRV_ERROR_NOT_SUPPORT;
     }
     support_flag = true;
-#endif
     return DRV_ERROR_NONE;
 }
 
@@ -810,11 +808,6 @@ int halGrpCreate(const char *name, GroupCfg *cfg)
     int pool_id;
     drvError_t ret;
     unsigned long long max_mem_size;
-
-#ifdef CFG_FEATURE_SYSLOG
-    openlog(NULL, LOG_PID, 0);
-#endif
-
     ret = buff_is_support();
     if (ret != DRV_ERROR_NONE) {
         return ret;
@@ -830,8 +823,8 @@ int halGrpCreate(const char *name, GroupCfg *cfg)
     (void)pthread_mutex_lock(&grp_mutex);
 
     if (get_grp_shr_mem_fd() >= 0) {
-        buff_info("Pool has been registered, only support register one pool. (name=%s; grp_pool_id=%d)\n",
-            name, get_grp_pool_id());
+        buff_info("Pool has been registered, only support register one pool. (name=%s; grp_pool_id=%d)\n", name,
+                  get_grp_pool_id());
         ret = DRV_ERROR_REPEATED_INIT;
         goto out;
     }
@@ -860,8 +853,8 @@ int halGrpCreate(const char *name, GroupCfg *cfg)
     set_grp_owner();
     set_grp_max_mem_size(max_mem_size);
 
-    buff_info("Register success. (grp_name=%s; pool_id=%d; max_size=%llu; cache_flag=%u)\n",
-        name, pool_id, cfg->maxMemSize, cfg->cacheAllocFlag);
+    buff_info("Register success. (grp_name=%s; pool_id=%d; max_size=%llu; cache_flag=%u)\n", name, pool_id,
+              cfg->maxMemSize, cfg->cacheAllocFlag);
 
 out:
     (void)pthread_mutex_unlock(&grp_mutex);
@@ -930,11 +923,6 @@ int halGrpAttach(const char *name, int timeout)
         ret = DRV_ERROR_INVALID_VALUE;
         goto out;
     }
-
-#ifdef CFG_FEATURE_SYSLOG
-    openlog(NULL, LOG_PID, 0);
-#endif
-
     /* self not need get share info */
     if (is_grp_owner(buff_get_current_pid())) {
         ret = grp_buff_init(name, get_grp_shr_mem_fd(), get_grp_max_mem_size());
@@ -957,8 +945,7 @@ int halGrpAttach(const char *name, int timeout)
     }
     (void)pthread_mutex_unlock(&grp_mutex);
 
-    buff_info("Group attach success. (name=%s; pid=%d; grp_id=%d)\n",
-        name, buff_get_current_pid(), get_grp_pool_id());
+    buff_info("Group attach success. (name=%s; pid=%d; grp_id=%d)\n", name, buff_get_current_pid(), get_grp_pool_id());
 
     buf_recycle_init(get_grp_pool_id());
 

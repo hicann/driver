@@ -14,6 +14,7 @@
 #include "ka_base_pub.h"
 #include "ka_task_pub.h"
 #include "ka_fs_pub.h"
+#include "ka_ioctl_pub.h"
 
 #include "trs_ts_inst.h"
 #include "trs_shr_proc.h"
@@ -85,7 +86,8 @@ int trs_shr_proc_open(ka_file_t *file, struct trs_core_ts_inst *ts_inst, struct 
     task_info->unique_id = proc_ctx->cp2_task_id;
     ka_fs_set_file_private_data(file, task_info);
 
-    trs_debug("Share open success. (devid=%u; tgid=%u; task_info_unique_id=%lld; proc_ctx_taskid=%lld; cp2_taskid=%lld)\n",
+    trs_debug(
+        "Share open success. (devid=%u; tgid=%u; task_info_unique_id=%lld; proc_ctx_taskid=%lld; cp2_taskid=%lld)\n",
         ts_inst->inst.devid, proc_ctx->cp2_pid, task_info->unique_id, proc_ctx->task_id, proc_ctx->cp2_task_id);
     return 0;
 #endif
@@ -115,19 +117,15 @@ bool trs_shr_proc_check(struct trs_task_info_struct *task_info)
 bool trs_shr_proc_support_cmd_check(unsigned int cmd)
 {
 #ifndef EMU_ST
-    if ((cmd == TRS_RES_ID_ENABLE) || (cmd == TRS_RES_ID_DISABLE) ||
-        (cmd == TRS_RES_ID_NUM_QUERY) || (cmd == TRS_RES_ID_MAX_QUERY) ||
-        (cmd == TRS_RES_ID_USED_NUM_QUERY) || (cmd == TRS_RES_ID_AVAIL_NUM_QUERY) ||
-        (cmd == TRS_RES_ID_REG_OFFSET_QUERY) || (cmd == TRS_RES_ID_REG_SIZE_QUERY) ||
-        (cmd == TRS_RES_ID_CFG) || (cmd == TRS_HW_INFO_QUERY) ||
-        (cmd == TRS_MSG_CTRL) ||
-        (cmd == TRS_SQCQ_CONFIG) || (cmd == TRS_SQCQ_QUERY) ||
-        (cmd == TRS_SQCQ_SEND) || (cmd == TRS_SQCQ_RECV) ||
-        (cmd == TRS_ID_SQCQ_GET) || (cmd == TRS_ID_SQCQ_RESTORE)) {
+    if ((cmd == TRS_RES_ID_ENABLE) || (cmd == TRS_RES_ID_DISABLE) || (cmd == TRS_RES_ID_NUM_QUERY) ||
+        (cmd == TRS_RES_ID_MAX_QUERY) || (cmd == TRS_RES_ID_USED_NUM_QUERY) || (cmd == TRS_RES_ID_AVAIL_NUM_QUERY) ||
+        (cmd == TRS_RES_ID_REG_OFFSET_QUERY) || (cmd == TRS_RES_ID_REG_SIZE_QUERY) || (cmd == TRS_RES_ID_CFG) ||
+        (cmd == TRS_HW_INFO_QUERY) || (cmd == TRS_MSG_CTRL) || (cmd == TRS_SQCQ_CONFIG) || (cmd == TRS_SQCQ_QUERY) ||
+        (cmd == TRS_SQCQ_SEND) || (cmd == TRS_SQCQ_RECV) || (cmd == TRS_ID_SQCQ_GET) || (cmd == TRS_ID_SQCQ_RESTORE)) {
         return true;
     }
 
-    trs_debug("Not support cmd. (cmd=%d)\n",  _IOC_NR(cmd));
+    trs_debug("Not support cmd. (cmd=%d)\n", _KA_IOC_NR(cmd));
     return false;
 #endif
 }
@@ -141,7 +139,7 @@ bool trs_proc_support_cmd_check(struct trs_task_info_struct *task_info, unsigned
         }
     } else {
         if (cmd == TRS_ID_SQCQ_RESTORE) {
-            trs_debug("Not support cmd. (cmd=%d)\n",  _IOC_NR(cmd));
+            trs_debug("Not support cmd. (cmd=%d)\n", _KA_IOC_NR(cmd));
             return false;
         }
     }

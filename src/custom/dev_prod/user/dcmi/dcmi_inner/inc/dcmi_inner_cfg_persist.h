@@ -90,6 +90,41 @@
 #define DCMI_CFG_DEVICE_SHARE_LOCK_DIR              "/run/device_share_cfg_lock"
 #define DCMI_CFG_DEVICE_SHARE_LOCK_FILE_NAME        "/run/device_share_cfg_lock/device_share_cfg_lock_flag"
 
+#define DCMI_QOS_MASTER_CONF                        "/etc/qos_master.cfg"  // QoS的配置文件
+#define DCMI_QOS_MASTER_CONF_BAK                    "/etc/qos_master.cfg.bak"  // 备份的配置文件
+#define DCMI_CFG_QOS_MASTER_LOCK_DIR                "/run/qos_master_cfg_lock"
+#define DCMI_CFG_QOS_MASTER_LOCK_FILE_NAME          "/run/qos_master_cfg_lock/qos_master_cfg_lock_flag"
+#define DCMI_QOS_MASTER_CFG_CMD_MAX_LEN             256
+#define DCMI_ERR_CODE_QOS_MASTER_CONFIG_ILLEGAL     10
+#define DCMI_QOS_MASTER_FLAG_NOT_FIND               0
+#define DCMI_CFG_QOS_MASTER_CMD_LINE_LEN            183  // 命令字一行最大值
+#define DCMI_QOS_MASTER_CONF_DEFAULT_COMMENT                                  \
+    ("[qos-master-config start]\n[qos-master-config end]\n")
+
+#define DCMI_MULTI_DIE_POLICY_CONF                    "/etc/multi_die_policy.cfg"  // A3 单device通入容器策略的配置文件
+#define DCMI_MULTI_DIE_POLICY_CONF_BAK                "/etc/multi_die_policy.cfg.bak"  // 备份的配置文件
+#define DCMI_CFG_MULTI_DIE_POLICY_LOCK_DIR            "/run/multi_die_policy_cfg_lock"
+#define DCMI_CFG_MULTI_DIE_POLICY_LOCK_FILE_NAME      "/run/multi_die_policy_cfg_lock/multi_die_policy_cfg_lock_flag"
+#define DCMI_MULTI_DIE_POLICY_CONF_ONE_LINE_MAX_LINE  256
+#define DCMI_ERR_CODE_MULTI_DIE_POLIC_CONFIG_ILLEGAL  10
+#define DCMI_MULTI_DIE_POLICY_FLAG_NOT_FIND           0
+#define DCMI_CFG_MULTI_DIE_POLICY_DLINE_LEN           4   // 命令字末尾4个字符
+#define DCMI_CFG_MULTI_DIE_POLICY_CMD_LINE_LEN        40  // 命令字一行最大值
+#define DCMI_MULTI_DIE_POLICY_CONF_DEFAULT_COMMENT                                  \
+    ("multi-die-policy-recover:disable\n[multi-die-policy-config start]\n[multi-die-policy-config end]\n")
+
+enum dcmi_qos_cfg_para {
+    DCMI_QOS_MASTER = 0,
+    DCMI_QOS_MPAMID,
+    DCMI_QOS_QOS,
+    DCMI_QOS_BITMAP_0,
+    DCMI_QOS_BITMAP_1,
+    DCMI_QOS_BITMAP_2,
+    DCMI_QOS_BITMAP_3,
+    DCMI_QOS_MODE,
+    DCMI_QOS_MAX
+};
+
 enum dcmi_cfg_line_type {
     DCMI_CFG_NOT_NEED_INSERT = 0,
     DCMI_CFG_NEED_INSERT,
@@ -104,6 +139,12 @@ struct cfg_buf_info {
     char *buf;
     unsigned int buf_size;
 };
+
+typedef struct {
+    unsigned int card_id;
+    unsigned int chip_id;
+    unsigned int master_id;
+} qos_cmd_id;
 
 int dcmi_cfg_create_lock_dir(char *path);
 
@@ -149,7 +190,11 @@ int dcmi_cfg_get_custom_op_config_recover_mode(unsigned int *mode);
 
 int dcmi_cfg_get_device_share_config_recover_mode(unsigned int *enable_flag);
 
+int dcmi_cfg_get_multi_die_policy_config_recover_mode(unsigned int *enable_flag);
+
 int dcmi_cfg_set_device_share_config_recover_mode(unsigned int enable_flag);
+
+int dcmi_cfg_set_multi_die_policy_config_recover_mode(unsigned int enable_flag);
 
 int dcmi_cfg_insert_set_custom_op_cmdline(int card_id, int chip_id, int enable_value);
 
@@ -161,4 +206,19 @@ int dcmi_cfg_process_action(int action, struct cfg_buf_info *buf_info, unsigned 
 int dcmi_cfg_insert_set_op_timeout_cmdline(int card_id, int chip_id, unsigned int enable_value);
 int dcmi_cfg_insert_set_device_share_cmdline(int card_id, int chip_id, int enable_value);
 int dcmi_cfg_insert_device_share_cmdline_to_buffer(const char *cmdline, FILE *fp, char **buf_out, unsigned int *len);
+int dcmi_cfg_insert_set_multi_die_policy_cmdline(int enable_value);
+int dcmi_cfg_insert_multi_die_policy_cmdline_to_buffer(const char *cmdline, FILE *fp, char **buf_out,
+    unsigned int *len);
+
+int dcmi_cfg_qos_master_open_file(FILE **fp);
+int dcmi_cfg_qos_master_check_cfg_path(char *path, unsigned int path_size, char *path_bak, unsigned int path_bak_size);
+int dcmi_cfg_qos_master_write_to_file(const char *buf, unsigned int buf_len);
+int dcmi_cfg_insert_set_qos_master_cmdline(int card_id, int chip_id, struct dcmi_qos_master_config qos_cfg);
+int dcmi_cfg_qos_master_check_is_cover(const char *cmdline, char *buf_tmp);
+int dcmi_cfg_check_qos_master_cmdline_is_correct(const char *cmdline, unsigned int *card_id,
+    unsigned int  *chip_id, unsigned int *master_id);
+int dcmi_cfg_qos_master_get_action(unsigned int start, unsigned int end, const char *cmdline, char *buf_tmp);
+int dcmi_cfg_insert_qos_master_cmdline_to_buffer(const char *cmdline, FILE *fp, char **buf_out, unsigned int *len);
+int dcmi_cfg_qos_master_get_cfg_path(char *path, unsigned int path_size, char *path_bak, unsigned int path_bak_size);
+
 #endif

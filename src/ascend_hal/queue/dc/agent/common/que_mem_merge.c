@@ -18,11 +18,11 @@
 #include "que_mem_merge.h"
 
 static struct que_mem_node *rbtree_can_insert_range_ex(struct rbtree_root *root, struct rb_range_handle *range,
-    rb_range_handle_func get_range)
+                                                       rb_range_handle_func get_range)
 {
     struct rbtree_node *rb_node = NULL;
     struct rbtree_node **tmp = &(root->rbtree_node);
-#ifndef COMPILE_UT  /* device_monitor's UT macro */
+#ifndef COMPILE_UT /* device_monitor's UT macro */
     while (*tmp != NULL) {
         struct rb_range_handle tmp_range;
 
@@ -55,7 +55,8 @@ static int que_mem_new_node_insert(struct que_mem_merge_ctx *mem_ctx, struct que
     return (ret != 0) ? DRV_ERROR_BUSY : DRV_ERROR_NONE;
 }
 
-static struct que_mem_node *que_mem_find_node(struct que_mem_merge_ctx *mem_ctx, unsigned long long va, unsigned long long size)
+static struct que_mem_node *que_mem_find_node(struct que_mem_merge_ctx *mem_ctx, unsigned long long va,
+                                              unsigned long long size)
 {
     struct rbtree_node *rb_node = NULL;
     struct rb_range_handle range = {.start = va, .end = va + size - 1};
@@ -81,7 +82,8 @@ static struct que_mem_node *que_mem_node_erase(struct que_mem_merge_ctx *mem_ctx
     return mem_node;
 }
 
-static struct que_mem_node *que_exist_mem_conflict(struct que_mem_merge_ctx *mem_ctx, unsigned long long va, unsigned long long size)
+static struct que_mem_node *que_exist_mem_conflict(struct que_mem_merge_ctx *mem_ctx, unsigned long long va,
+                                                   unsigned long long size)
 {
     struct rb_range_handle range_handle = {.start = va, .end = va + size - 1};
 
@@ -103,7 +105,7 @@ static struct que_mem_node *que_mem_node_alloc(unsigned long long va, unsigned l
 
     mem_node = (struct que_mem_node *)malloc(sizeof(struct que_mem_node));
     if (que_unlikely(mem_node == NULL)) {
-        QUEUE_LOG_ERR("malloc new node failed. (size=%llu)\n", sizeof(struct que_mem_node));
+        QUEUE_LOG_ERR("malloc new node failed. (size=%lu)\n", sizeof(struct que_mem_node));
         return NULL;
     }
 
@@ -134,7 +136,7 @@ void que_mem_erase_all_node(struct que_mem_merge_ctx *mem_ctx)
         if (que_unlikely(mem_node->tseg != NULL)) {
             if (que_is_share_mem(mem_node->va) == false) {
                 que_seg_destroy(mem_node->tseg);
-            }  
+            }
         }
         que_mem_node_free(mem_node);
         rb_node = rbtree_erase_one_node(&mem_ctx->rb_root);
@@ -152,8 +154,8 @@ int que_mem_merge(struct que_mem_merge_ctx *mem_ctx, unsigned int devid, unsigne
     struct que_mem_node *new_mem_node = NULL;
     unsigned long long aligned_va = que_align_down(va, (size_t)getpagesize());
     unsigned long long aligned_size = que_align_up(va + size, (size_t)getpagesize()) - aligned_va;
-    unsigned long long judge_va = aligned_va - (size_t)getpagesize();
-    unsigned long long judge_size = aligned_size + (size_t)getpagesize() + 1;
+    unsigned long long judge_va = aligned_va - (unsigned long long)getpagesize();
+    unsigned long long judge_size = aligned_size + (unsigned long long)getpagesize() + 1;
     int ret;
 
     (void)pthread_rwlock_wrlock(&mem_ctx->rwlock);
@@ -169,8 +171,8 @@ int que_mem_merge(struct que_mem_merge_ctx *mem_ctx, unsigned int devid, unsigne
         que_mem_range_merge(mem_node, &aligned_va, &aligned_size);
         que_mem_node_free(mem_node);
 
-        judge_va = aligned_va - (size_t)getpagesize();
-        judge_size = aligned_size + (size_t)getpagesize() + 1;
+        judge_va = aligned_va - (unsigned long long)getpagesize();
+        judge_size = aligned_size + (unsigned long long)getpagesize() + 1;
         confict_node = que_exist_mem_conflict(mem_ctx, judge_va, judge_size);
     }
 
@@ -178,7 +180,7 @@ int que_mem_merge(struct que_mem_merge_ctx *mem_ctx, unsigned int devid, unsigne
     new_mem_node = que_mem_node_alloc(aligned_va, aligned_size);
     if (que_unlikely(new_mem_node == NULL)) {
         (void)pthread_rwlock_unlock(&mem_ctx->rwlock);
-        QUEUE_LOG_ERR("malloc new node failed. (size=%llu)\n", sizeof(struct que_mem_node));
+        QUEUE_LOG_ERR("malloc new node failed. (size=%lu)\n", sizeof(struct que_mem_node));
         return DRV_ERROR_OUT_OF_MEMORY;
     }
     ret = que_mem_new_node_insert(mem_ctx, new_mem_node);
@@ -193,8 +195,9 @@ int que_mem_merge(struct que_mem_merge_ctx *mem_ctx, unsigned int devid, unsigne
     return DRV_ERROR_NONE;
 }
 
-urma_target_seg_t *que_mem_seg_register(struct que_mem_merge_ctx *mem_ctx, unsigned int d2d_flag, struct que_urma_token *token,
-    unsigned int pin_flg, unsigned int devid, unsigned long long va, unsigned int access)
+urma_target_seg_t *que_mem_seg_register(struct que_mem_merge_ctx *mem_ctx, unsigned int d2d_flag,
+                                        struct que_urma_token *token, unsigned int pin_flg, unsigned int devid,
+                                        unsigned long long va, unsigned int access)
 {
     urma_target_seg_t *tseg = NULL;
     struct que_mem_node *mem_node = NULL;
@@ -221,7 +224,7 @@ urma_target_seg_t *que_mem_seg_register(struct que_mem_merge_ctx *mem_ctx, unsig
             tseg = que_pin_seg_create(devid, mem_node->va, mem_node->size, access, token, d2d_flag);
         }
     }
-    
+
     if (que_unlikely(tseg == NULL)) {
         (void)pthread_rwlock_unlock(&mem_ctx->rwlock);
         QUEUE_LOG_ERR("que mem seg fail. (devid=%u; va=0x%llx)\n", devid, va);
@@ -237,6 +240,8 @@ urma_target_seg_t *que_mem_seg_register(struct que_mem_merge_ctx *mem_ctx, unsig
 void que_mem_seg_unregister(struct que_mem_merge_ctx *mem_ctx, unsigned int devid, unsigned long long va)
 {
     struct que_mem_node *mem_node = NULL;
+
+    (void)devid;
 
     (void)pthread_rwlock_wrlock(&mem_ctx->rwlock);
     mem_node = que_mem_node_erase(mem_ctx, va);
@@ -261,4 +266,3 @@ void que_mem_ctx_init(struct que_mem_merge_ctx *mem_ctx)
     (void)pthread_rwlock_init(&mem_ctx->rwlock, NULL);
     rbtree_init(&mem_ctx->rb_root);
 }
-

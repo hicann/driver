@@ -15,7 +15,6 @@
 #include "devmm_rbtree/devmm_rbtree.h"
 
 DVresult devmm_init_read_only_heap_by_devid(uint32_t device, uint32_t heap_sub_type);
-void devmm_fill_read_only_heap_type(uint32_t device, uint32_t heap_sub_type,
-    struct devmm_virt_heap_type *heap_type);
+void devmm_fill_read_only_heap_type(uint32_t device, uint32_t heap_sub_type, struct devmm_virt_heap_type *heap_type);
 
 #endif /* DEVMM_VIRT_READ_ONLY_HEAP_H_ */

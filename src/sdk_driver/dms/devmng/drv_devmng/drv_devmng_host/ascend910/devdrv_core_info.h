@@ -11,6 +11,9 @@
  * GNU General Public License for more details.
  */
 
+#ifndef DEVDRV_CORE_INFO_H
+#define DEVDRV_CORE_INFO_H
+
 #include "devdrv_manager.h"
 #include "devdrv_manager_common.h"
 #include "devdrv_manager_msg.h"
@@ -32,3 +35,5 @@ int devdrv_manager_get_tsdrv_dev_com_info(ka_file_t *filep, unsigned int cmd, un
 int devdrv_manager_get_h2d_devinfo(unsigned long arg);
 #endif
 u32 devdrv_get_ts_num(void);
+
+#endif

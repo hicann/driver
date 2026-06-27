@@ -38,16 +38,17 @@ STATIC hdcError_t drv_hdc_pcie_server_create(signed int devid, signed int servic
     struct hdc_server_head *pHead = NULL;
     mmProcess fd;
     signed int ret;
-	unsigned int grpId;
-    unsigned int session_size = 0;
+    size_t session_size = 0, size;
     int session_num = drv_hdc_get_max_session_num_by_type(serviceType);
 
 #ifdef CFG_FEATURE_PRESET_SESSION
-    session_size = (unsigned int)session_num * (unsigned int)sizeof(struct hdc_server_session);
+    session_size = (size_t)session_num * sizeof(struct hdc_server_session);
 #endif
-    pHead = malloc(sizeof(struct hdc_server_head) + session_size);
+    size = sizeof(struct hdc_server_head) + session_size;
+    pHead = malloc(size);
     if (pHead == NULL) {
         HDC_LOG_ERR("Call malloc failed.\n");
+        hdc_report_out_of_mem_err_msg(size);
         return DRV_ERROR_OUT_OF_MEMORY;
     }
 
@@ -76,7 +77,7 @@ STATIC hdcError_t drv_hdc_pcie_server_create(signed int devid, signed int servic
     }
 
     if (g_hdcConfig.h2d_type == HDC_TRANS_USE_UB) {
-        ret = hdc_ub_server_create(fd, devid, serviceType, &grpId, pHead);
+        ret = hdc_ub_server_create(fd, devid, serviceType, pHead);
     } else if (g_hdcConfig.h2d_type == HDC_TRANS_USE_PCIE) {
         ret = hdc_pcie_server_create(fd, devid, serviceType);
     } else {
@@ -161,6 +162,7 @@ STATIC hdcError_t drv_hdc_pcie_session_accept(HDC_SERVER server, HDC_SESSION *pS
 #endif
     if (p_serv_session == NULL) {
         HDC_LOG_ERR("Call malloc failed.\n");
+        hdc_report_out_of_mem_err_msg(sizeof(struct hdc_server_session));
         return DRV_ERROR_OUT_OF_MEMORY;
     }
 
@@ -175,7 +177,7 @@ STATIC hdcError_t drv_hdc_pcie_session_accept(HDC_SERVER server, HDC_SESSION *pS
         HDC_LOG_ERR("Variable h2d_type is invalid. (h2d_type=%#x)\n", g_hdcConfig.h2d_type);
         ret = DRV_ERROR_INVALID_HANDLE;
     }
-    if (ret !=  DRV_ERROR_NONE) {
+    if (ret != DRV_ERROR_NONE) {
 #ifdef CFG_FEATURE_PRESET_SESSION
         drv_hdc_server_free_session(pServ, p_serv_session);
 #else
@@ -183,20 +185,19 @@ STATIC hdcError_t drv_hdc_pcie_session_accept(HDC_SERVER server, HDC_SESSION *pS
         p_serv_session = NULL;
 #endif
         if (ret == -HDCDRV_PEER_REBOOT) {
-            HDC_LOG_INFO("peer reset. (dev_id=%d; server=%d; ret=%d)\n",
-                         pServ->deviceId, pServ->serviceType, ret);
+            HDC_LOG_INFO("peer reset. (dev_id=%d; server=%d; ret=%d)\n", pServ->deviceId, pServ->serviceType, ret);
             return DRV_ERROR_DEV_PROCESS_HANG;
         }
 
         if (ret == -HDCDRV_DEVICE_RESET) {
-            HDC_LOG_INFO("Server is destroyed or wakeup wait. (dev_id=%d; server=%d; ret=%d)\n",
-                         pServ->deviceId, pServ->serviceType, ret);
+            HDC_LOG_INFO("Server is destroyed or wakeup wait. (dev_id=%d; server=%d; ret=%d)\n", pServ->deviceId,
+                         pServ->serviceType, ret);
             return DRV_ERROR_DEVICE_NOT_READY;
         }
 
         if (ret == -HDCDRV_DEVICE_NOT_READY) {
-            HDC_LOG_RUN_INFO_LIMIT("Dev not ready or has been freed. (dev_id=%d; server=%d; ret=%d)\n",
-                pServ->deviceId, pServ->serviceType, ret);
+            HDC_LOG_RUN_INFO_LIMIT("Dev not ready or has been freed. (dev_id=%d; server=%d; ret=%d)\n", pServ->deviceId,
+                                   pServ->serviceType, ret);
         } else {
             HDC_LOG_ERR("Accept failed. (dev_id=%d; server=%d; ret=%d)\n", pServ->deviceId, pServ->serviceType, ret);
         }
@@ -211,39 +212,39 @@ STATIC hdcError_t drv_hdc_pcie_session_accept(HDC_SERVER server, HDC_SESSION *pS
 STATIC hdcError_t drv_hdc_server_create_para_check(signed int devid, signed int serviceType, const HDC_SERVER *pServer)
 {
     if ((devid >= hdc_get_max_device_num()) || (devid < 0)) {
-            HDC_LOG_ERR("Input parameter is error. (dev_id=%d)\n", devid);
-            return DRV_ERROR_INVALID_DEVICE;
+        HDC_LOG_ERR("Input parameter is error. (dev_id=%d)\n", devid);
+        return DRV_ERROR_INVALID_DEVICE;
     }
 
     if (pServer == NULL) {
-            HDC_LOG_ERR("Input parameter is error.\n");
-            return DRV_ERROR_INVALID_VALUE;
+        HDC_LOG_ERR("Input parameter is error.\n");
+        return DRV_ERROR_INVALID_VALUE;
     }
 
     if ((serviceType < 0) || (serviceType >= HDC_SERVICE_TYPE_MAX)) {
-            HDC_LOG_ERR("Input parameter is error. (service_type=%d)\n", serviceType);
-            return DRV_ERROR_INVALID_VALUE;
+        HDC_LOG_ERR("Input parameter is error. (service_type=%d)\n", serviceType);
+        return DRV_ERROR_INVALID_VALUE;
     }
 
     return DRV_ERROR_NONE;
 }
 
 /*****************************************************************************
-   Function Name         : drvHdcServerCreate
-   Function Description  : Create and initialize HDC Server
-   Input Parameters      : signed int devid             only support [0, 64)
-                           signed int serviceType       select server type
-   Output Parameters     : HDC_SERVER *server     Created HDC server
-   Return Value          : DRV_ERROR_NONE
-                           DRV_ERROR_INVALID_VALUE
-   Caller Function       :
-   Called Function       :
-
-   Modification History  :
-   1.Date                : January 15, 2018
-    Modification         : New generated function
-
-*****************************************************************************/
+ * Function Name         : drvHdcServerCreate
+ * Function Description  : Create and initialize HDC Server
+ * Input Parameters      : signed int devid             only support [0, 64)
+ *                        signed int serviceType       select server type
+ * Output Parameters     : HDC_SERVER *server     Created HDC server
+ * Return Value          : DRV_ERROR_NONE
+ *                        DRV_ERROR_INVALID_VALUE
+ * Caller Function       :
+ * Called Function       :
+ *
+ * Modification History  :
+ * 1.Date                : January 15, 2018
+ *  Modification         : New generated function
+ *
+ *****************************************************************************/
 hdcError_t drvHdcServerCreate(signed int devid, signed int serviceType, HDC_SERVER *pServer)
 {
     struct hdc_server_head *pHead = NULL;
@@ -282,20 +283,20 @@ hdcError_t drvHdcServerCreate(signed int devid, signed int serviceType, HDC_SERV
 }
 
 /*****************************************************************************
-   Function Name         : drvHdcServerDestroy
-   Function Description  : Release HDC Server
-   Input Parameters      : HDC_SERVER server  HDC server to be released
-   Output Parameters     : None
-   Return Value          : DRV_ERROR_NONE
-                           DRV_ERROR_INVALID_VALUE
-   Caller Function       :
-   Called Function       :
-
-   Modification History  :
-   1.Date                : January 15, 2018
-    Modification         : New generated function
-
-*****************************************************************************/
+ * Function Name         : drvHdcServerDestroy
+ * Function Description  : Release HDC Server
+ * Input Parameters      : HDC_SERVER server  HDC server to be released
+ * Output Parameters     : None
+ * Return Value          : DRV_ERROR_NONE
+ *                        DRV_ERROR_INVALID_VALUE
+ * Caller Function       :
+ * Called Function       :
+ *
+ * Modification History  :
+ * 1.Date                : January 15, 2018
+ *  Modification         : New generated function
+ *
+ *****************************************************************************/
 hdcError_t drvHdcServerDestroy(HDC_SERVER server)
 {
     signed int ret;
@@ -343,7 +344,7 @@ hdcError_t drvHdcServerDestroy(HDC_SERVER server)
         }
 
         if (g_hdcConfig.h2d_type == HDC_TRANS_USE_UB) {
-            hdc_link_event_pre_uninit(pServ->deviceId, true);
+            hdc_link_event_pre_uninit(pServ->deviceId);
         }
 
         hdc_pcie_close_bind_fd(pServ->bind_fd);
@@ -398,20 +399,20 @@ hdcError_t drv_hdc_get_server_dev_id(HDC_SERVER server, signed int *devid)
 }
 
 /*****************************************************************************
-   Function Name         : drvHdcSessionAccept
-   Function Description  : Open HDC Session for communication between Host and Device
-   Input Parameters      : HDC_SERVER server      HDC server to which the newly created session belongs
-   Output Parameters     : HDC_SESSION *session   Created session
-   Return Value          : DRV_ERROR_NONE
-                           DRV_ERROR_INVALID_VALUE
-   Caller Function       :
-   Called Function       :
-
-   Modification History  :
-   1.Date                : January 15, 2018
-    Modification         : New generated function
-
-*****************************************************************************/
+ * Function Name         : drvHdcSessionAccept
+ * Function Description  : Open HDC Session for communication between Host and Device
+ * Input Parameters      : HDC_SERVER server      HDC server to which the newly created session belongs
+ * Output Parameters     : HDC_SESSION *session   Created session
+ * Return Value          : DRV_ERROR_NONE
+ *                        DRV_ERROR_INVALID_VALUE
+ * Caller Function       :
+ * Called Function       :
+ *
+ * Modification History  :
+ * 1.Date                : January 15, 2018
+ *  Modification         : New generated function
+ *
+ *****************************************************************************/
 hdcError_t drvHdcSessionAccept(HDC_SERVER server, HDC_SESSION *session)
 {
     struct hdc_server_head *pServ = NULL;
@@ -467,20 +468,20 @@ hdcError_t drvHdcSessionAccept(HDC_SERVER server, HDC_SESSION *session)
 }
 
 /*****************************************************************************
-   Function Name       : drv_hdc_server_session_close
-   Description         : Close HDC Session
-   Input Parameters    : HDC_SESSION session    The session to be closed
-   Output Parameters   : None
-   Return Value        : DRV_ERROR_NONE
-                   DRV_ERROR_INVALID_VALUE
-   Called Functions    :
-   Calling Functions   :
-
-   Modification History:
-   1.Date        : January 15, 2018
-    Modification : Function newly created
-
-*****************************************************************************/
+ * Function Name       : drv_hdc_server_session_close
+ * Description         : Close HDC Session
+ * Input Parameters    : HDC_SESSION session    The session to be closed
+ * Output Parameters   : None
+ * Return Value        : DRV_ERROR_NONE
+ *                     DRV_ERROR_INVALID_VALUE
+ * Called Functions    :
+ * Calling Functions   :
+ *
+ * Modification History:
+ * 1.Date        : January 15, 2018
+ *  Modification : Function newly created
+ *
+ *****************************************************************************/
 hdcError_t drv_hdc_server_session_close(HDC_SESSION session, int close_state, int flag)
 {
     struct hdc_server_head *pServ = NULL;
@@ -512,7 +513,7 @@ hdcError_t drv_hdc_server_session_close(HDC_SESSION session, int close_state, in
         }
         if (ret != 0) {
             HDC_LOG_WARN("Close pcie session not success. (device=%d; sessiondID=%d; errno=%d)\n",
-                p_serv_session->deviceId, p_serv_session->session.sockfd, ret);
+                         p_serv_session->deviceId, p_serv_session->session.sockfd, ret);
         }
 
         if (g_hdcConfig.h2d_type != HDC_TRANS_USE_UB) {

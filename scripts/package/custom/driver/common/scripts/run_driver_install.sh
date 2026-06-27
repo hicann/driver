@@ -45,43 +45,48 @@ do_dkms=n
 no_kernel_flag=n
 first_time=y
 
-check_is_support_dkms()
-{
-    if [ ! -e $sourcedir/script/os_adapt.sh ]; then
-        export DKMS_SUPPORT=n
-        return 1
-    fi
+check_is_support_dkms() 
+{ 
+    if [ ! -e $sourcedir/script/os_adapt.sh ]; then 
+        export DKMS_SUPPORT=n 
+        return 1 
+    fi 
 
-    if [ ! -e $sourcedir/script/dkms_check.sh ]; then
-        export DKMS_SUPPORT=n
-        return 1
-    fi
-    if [ ! -e $sourcedir/script/deal_ko.sh ]; then
-        export DKMS_SUPPORT=n
-        return 1
-    fi
-    if [ ! -e $sourcedir/script/run_driver_dkms_install.sh ]; then
-        export DKMS_SUPPORT=n
-        return 1
-    fi
 
-    if [ ! -e $sourcedir/script/run_driver_map_kernel.sh ]; then
-        export DKMS_SUPPORT=n
-        return 1
-    fi
+    if [ ! -e $sourcedir/script/dkms_check.sh ]; then 
+        export DKMS_SUPPORT=n 
+        return 1 
+    fi 
+    if [ ! -e $sourcedir/script/deal_ko.sh ]; then 
+        export DKMS_SUPPORT=n 
+        return 1 
+    fi 
+    if [ ! -e $sourcedir/script/run_driver_dkms_install.sh ]; then 
+        export DKMS_SUPPORT=n 
+        return 1 
+    fi 
 
-    if [ ! -e $sourcedir/script/run_driver_ko_rebuild.sh ]; then
-        export DKMS_SUPPORT=n
-        return 1
-    fi
 
-    if [ ! -e $sourcedir/script/binary_os_config.sh ]; then
-        export DKMS_SUPPORT=n
-        return 1
-    fi
+    if [ ! -e $sourcedir/script/run_driver_map_kernel.sh ]; then 
+        export DKMS_SUPPORT=n 
+        return 1 
+    fi 
 
-    export DKMS_SUPPORT=y
-    return 0
+
+    if [ ! -e $sourcedir/script/run_driver_ko_rebuild.sh ]; then 
+        export DKMS_SUPPORT=n 
+        return 1 
+    fi 
+
+
+    if [ ! -e $sourcedir/script/binary_os_config.sh ]; then 
+        export DKMS_SUPPORT=n 
+        return 1 
+    fi 
+
+
+    export DKMS_SUPPORT=y 
+    return 0 
 }
 
 chattrDriver() {
@@ -426,6 +431,34 @@ check_uname_kernel() {
     uname_kernel=$?
 }
 
+load_ub_mgmt() {
+    local ube_mgmt_path=""
+    local lock_upgrade_ub_mgmt=""
+    if [ -f ${installPathParam}/driver/tools/load_ube_mgmt_pack.sh ];then
+        #cp load_ube_mgmt_pack.sh to /usr/bin/load_ube_mgmt_pack.sh
+        chattr -i /usr/bin/load_ube_mgmt_pack.sh >& /dev/null
+        cp -f ${installPathParam}/driver/tools/load_ube_mgmt_pack.sh /usr/bin/
+        setFileChmod -f 550 /usr/bin/load_ube_mgmt_pack.sh
+        chattr +i /usr/bin/load_ube_mgmt_pack.sh >& /dev/null
+        log "[INFO]copy load_ube_mgmt_pack.sh to usr bin ok"
+ 
+        #mkdir ub_mgmt dir & touch lock_upgrade_ub_mgmt
+        ube_mgmt_path="${installPathParam}/driver/ube_mgmt"
+        lock_upgrade_ub_mgmt="${installPathParam}/driver/ube_mgmt/upgrade_ube_mgmt_lock"
+        if [ ! -d "${ube_mgmt_path}" ]; then
+            if mkdir "${ube_mgmt_path}"; then
+                log "[INFO]mkdir ube mgmt dir ok"
+                if [ ! -e ${lock_upgrade_ub_mgmt} ]; then
+                    touch "${lock_upgrade_ub_mgmt}" && chmod 600 "${lock_upgrade_ub_mgmt}" >& /dev/null
+                else
+                    chmod 600 "${lock_upgrade_ub_mgmt}" >& /dev/null
+                fi
+            fi
+        fi
+        chmod 700 "${ube_mgmt_path}" >& /dev/null 
+    fi
+}
+
 # start!
 installPathParam="$1"
 installType="$2"
@@ -491,6 +524,7 @@ if [ -f ${installPathParam}/driver/tools/device_boot_init.sh ];then
     setFileChmod -f 550 /usr/bin/device_boot_init.sh
     chattr +i /usr/bin/device_boot_init.sh >& /dev/null
 fi
+load_ub_mgmt
 #check CRL of images
 if [ $feature_crl_check = y ]; then
     if [ $no_kernel_flag = n ]; then
@@ -562,7 +596,7 @@ if [ $no_kernel_flag = n ]; then
 fi
 
 progress_bar $percent $weight 90
-# config pcie vnic mac address
+# config pcie vnic mac addr
 pcivnic_mac_set
 changeMode
 

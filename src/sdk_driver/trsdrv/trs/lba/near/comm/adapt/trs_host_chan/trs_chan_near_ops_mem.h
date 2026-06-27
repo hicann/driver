@@ -25,8 +25,5 @@ int trs_chan_near_sqcq_mem_h2d(struct trs_id_inst *inst, u64 host_addr, u64 *dev
 int trs_chan_sq_rsvmem_map(struct trs_id_inst *inst, struct trs_sq_mem_map_para *para, void **sq_dev_vaddr);
 void trs_chan_sq_rsvmem_unmap(struct trs_id_inst *inst, struct trs_sq_mem_map_para *para, void *sq_dev_vaddr);
 
-static inline u32 trs_chan_get_sqcq_mem_side(u32 mem_type)
-{
-    return mem_type & TRS_CHAN_MEM_TYPE_SIDE_MASK;
-}
+static inline u32 trs_chan_get_sqcq_mem_side(u32 mem_type) { return mem_type & TRS_CHAN_MEM_TYPE_SIDE_MASK; }
 #endif

@@ -39,21 +39,23 @@ static void trs_sq_mem_free(struct trs_sq_ctx *sq_ctx)
 
 static int trs_sq_mem_alloc(struct trs_sq_ctx *sq_ctx, unsigned long que_mem_len)
 {
-    sq_ctx->que_mem.kva = ka_alloc_pages_exact_ex(que_mem_len, KA_GFP_KERNEL | __KA_GFP_ZERO | __KA_GFP_ACCOUNT |
-        __KA_GFP_RETRY_MAYFAIL);
+    sq_ctx->que_mem.kva =
+        ka_alloc_pages_exact_ex(que_mem_len, KA_GFP_KERNEL | __KA_GFP_ZERO | __KA_GFP_ACCOUNT | __KA_GFP_RETRY_MAYFAIL);
     if (sq_ctx->que_mem.kva == NULL) {
         return -ENOMEM;
     }
     sq_ctx->que_mem.len = que_mem_len;
 
-    sq_ctx->head.kva = ka_alloc_pages_exact_ex(KA_MM_PAGE_SIZE, KA_GFP_KERNEL | __KA_GFP_ZERO | __KA_GFP_ACCOUNT | __KA_GFP_RETRY_MAYFAIL);
+    sq_ctx->head.kva = ka_alloc_pages_exact_ex(
+        KA_MM_PAGE_SIZE, KA_GFP_KERNEL | __KA_GFP_ZERO | __KA_GFP_ACCOUNT | __KA_GFP_RETRY_MAYFAIL);
     if (sq_ctx->head.kva == NULL) {
         trs_sq_mem_free(sq_ctx);
         return -ENOMEM;
     }
     sq_ctx->head.len = KA_MM_PAGE_SIZE;
 
-    sq_ctx->tail.kva = ka_alloc_pages_exact_ex(KA_MM_PAGE_SIZE, KA_GFP_KERNEL | __KA_GFP_ZERO | __KA_GFP_ACCOUNT | __KA_GFP_RETRY_MAYFAIL);
+    sq_ctx->tail.kva = ka_alloc_pages_exact_ex(
+        KA_MM_PAGE_SIZE, KA_GFP_KERNEL | __KA_GFP_ZERO | __KA_GFP_ACCOUNT | __KA_GFP_RETRY_MAYFAIL);
     if (sq_ctx->tail.kva == NULL) {
         trs_sq_mem_free(sq_ctx);
         return -ENOMEM;
@@ -63,8 +65,9 @@ static int trs_sq_mem_alloc(struct trs_sq_ctx *sq_ctx, unsigned long que_mem_len
     return 0;
 }
 
-static int trs_sq_que_remap(struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst,
-    struct trs_sq_ctx *sq_ctx, struct trs_mem_map_para *map_para)
+static int trs_sq_que_remap(
+    struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst, struct trs_sq_ctx *sq_ctx,
+    struct trs_mem_map_para *map_para)
 {
     int ret;
 
@@ -89,8 +92,9 @@ static void trs_sq_que_unmap(struct trs_proc_ctx *proc_ctx, struct trs_core_ts_i
     }
 }
 
-static int trs_sq_head_remap(struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst,
-    struct trs_sq_ctx *sq_ctx, struct trs_mem_map_para *map_para)
+static int trs_sq_head_remap(
+    struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst, struct trs_sq_ctx *sq_ctx,
+    struct trs_mem_map_para *map_para)
 {
     int ret;
 
@@ -108,8 +112,8 @@ static int trs_sq_head_remap(struct trs_proc_ctx *proc_ctx, struct trs_core_ts_i
     return ret;
 }
 
-static void trs_sq_head_unmap(struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst,
-    struct trs_sq_ctx *sq_ctx)
+static void trs_sq_head_unmap(
+    struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst, struct trs_sq_ctx *sq_ctx)
 {
     struct trs_mem_unmap_para unmap_para;
 
@@ -120,8 +124,9 @@ static void trs_sq_head_unmap(struct trs_proc_ctx *proc_ctx, struct trs_core_ts_
     }
 }
 
-static int trs_sq_tail_remap(struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst,
-    struct trs_sq_ctx *sq_ctx, struct trs_mem_map_para *map_para)
+static int trs_sq_tail_remap(
+    struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst, struct trs_sq_ctx *sq_ctx,
+    struct trs_mem_map_para *map_para)
 {
     int ret;
 
@@ -139,8 +144,8 @@ static int trs_sq_tail_remap(struct trs_proc_ctx *proc_ctx, struct trs_core_ts_i
     return ret;
 }
 
-static void trs_sq_tail_unmap(struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst,
-    struct trs_sq_ctx *sq_ctx)
+static void trs_sq_tail_unmap(
+    struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst, struct trs_sq_ctx *sq_ctx)
 {
     struct trs_mem_unmap_para unmap_para;
 
@@ -151,8 +156,9 @@ static void trs_sq_tail_unmap(struct trs_proc_ctx *proc_ctx, struct trs_core_ts_
     }
 }
 
-static int trs_sq_db_remap(struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst,
-    struct trs_sq_ctx *sq_ctx, struct trs_mem_map_para *map_para)
+static int trs_sq_db_remap(
+    struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst, struct trs_sq_ctx *sq_ctx,
+    struct trs_mem_map_para *map_para)
 {
     int ret;
 
@@ -194,14 +200,15 @@ static void trs_sq_shr_info_mem_free(struct trs_sq_ctx *sq_ctx)
     }
 }
 
-static int trs_sq_shr_info_remap(struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst,
-    struct trs_uio_info *uio_info, struct trs_sq_ctx *sq_ctx, struct trs_chan_sq_info *sq_info)
+static int trs_sq_shr_info_remap(
+    struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst, struct trs_uio_info *uio_info,
+    struct trs_sq_ctx *sq_ctx, struct trs_chan_sq_info *sq_info)
 {
     struct trs_mem_map_para map_para;
     int ret;
 
-    sq_ctx->shr_info.kva = ka_alloc_pages_exact_ex(KA_MM_PAGE_SIZE, KA_GFP_KERNEL | __KA_GFP_ZERO | __KA_GFP_ACCOUNT |
-        __KA_GFP_RETRY_MAYFAIL);
+    sq_ctx->shr_info.kva = ka_alloc_pages_exact_ex(
+        KA_MM_PAGE_SIZE, KA_GFP_KERNEL | __KA_GFP_ZERO | __KA_GFP_ACCOUNT | __KA_GFP_RETRY_MAYFAIL);
     if (sq_ctx->shr_info.kva == NULL) {
 #ifndef EMU_ST
         return -ENOMEM;
@@ -209,8 +216,9 @@ static int trs_sq_shr_info_remap(struct trs_proc_ctx *proc_ctx, struct trs_core_
     }
     sq_ctx->shr_info.len = KA_MM_PAGE_SIZE;
 
-    trs_remap_fill_para(&map_para, TRS_MAP_TYPE_MEM, uio_info->sq_ctrl_addr[TRS_UIO_SHR_INFO],
-        ka_mm_virt_to_phys(sq_ctx->shr_info.kva), KA_MM_PAGE_SIZE);
+    trs_remap_fill_para(
+        &map_para, TRS_MAP_TYPE_MEM, uio_info->sq_ctrl_addr[TRS_UIO_SHR_INFO], ka_mm_virt_to_phys(sq_ctx->shr_info.kva),
+        KA_MM_PAGE_SIZE);
     ret = trs_remap_sq(proc_ctx, ts_inst, &map_para);
     if (ret != 0) {
         trs_sq_shr_info_mem_free(sq_ctx);
@@ -226,8 +234,8 @@ static int trs_sq_shr_info_remap(struct trs_proc_ctx *proc_ctx, struct trs_core_
     return 0;
 }
 
-static void trs_sq_shr_info_unmap(struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst,
-    struct trs_sq_ctx *sq_ctx)
+static void trs_sq_shr_info_unmap(
+    struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst, struct trs_sq_ctx *sq_ctx)
 {
     if (sq_ctx->shr_info.uva != 0) {
         struct trs_mem_unmap_para unmap_para;
@@ -239,15 +247,17 @@ static void trs_sq_shr_info_unmap(struct trs_proc_ctx *proc_ctx, struct trs_core
     trs_sq_shr_info_mem_free(sq_ctx);
 }
 
-static void trs_sq_reg_remap(struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst,
-    struct trs_uio_info *uio_info, struct trs_sq_ctx *sq_ctx, struct trs_chan_sq_info *sq_info)
+static void trs_sq_reg_remap(
+    struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst, struct trs_uio_info *uio_info,
+    struct trs_sq_ctx *sq_ctx, struct trs_chan_sq_info *sq_info)
 {
     struct trs_mem_map_para map_para;
     int ret;
 
     /* head reg addr not page align */
-    trs_remap_fill_para(&map_para, TRS_MAP_TYPE_RO_REG,
-        uio_info->sq_ctrl_addr[TRS_UIO_HEAD_REG], KA_DRIVER_ALIGN_DOWN(sq_info->head_addr, KA_MM_PAGE_SIZE), KA_MM_PAGE_SIZE);
+    trs_remap_fill_para(
+        &map_para, TRS_MAP_TYPE_RO_REG, uio_info->sq_ctrl_addr[TRS_UIO_HEAD_REG],
+        KA_DRIVER_ALIGN_DOWN(sq_info->head_addr, KA_MM_PAGE_SIZE), KA_MM_PAGE_SIZE);
     ret = trs_remap_sq(proc_ctx, ts_inst, &map_para);
     if (ret == 0) {
         sq_ctx->head_reg.uva = map_para.va;
@@ -259,8 +269,9 @@ static void trs_sq_reg_remap(struct trs_proc_ctx *proc_ctx, struct trs_core_ts_i
     }
 
     /* tail reg addr not page align */
-    trs_remap_fill_para(&map_para, TRS_MAP_TYPE_RO_REG,
-        uio_info->sq_ctrl_addr[TRS_UIO_TAIL_REG], KA_DRIVER_ALIGN_DOWN(sq_info->tail_addr, KA_MM_PAGE_SIZE), KA_MM_PAGE_SIZE);
+    trs_remap_fill_para(
+        &map_para, TRS_MAP_TYPE_RO_REG, uio_info->sq_ctrl_addr[TRS_UIO_TAIL_REG],
+        KA_DRIVER_ALIGN_DOWN(sq_info->tail_addr, KA_MM_PAGE_SIZE), KA_MM_PAGE_SIZE);
     ret = trs_remap_sq(proc_ctx, ts_inst, &map_para);
     if (ret == 0) {
         sq_ctx->tail_reg.uva = map_para.va;
@@ -272,8 +283,7 @@ static void trs_sq_reg_remap(struct trs_proc_ctx *proc_ctx, struct trs_core_ts_i
     }
 }
 
-static void trs_sq_reg_unmap(struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst,
-    struct trs_sq_ctx *sq_ctx)
+static void trs_sq_reg_unmap(struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst, struct trs_sq_ctx *sq_ctx)
 {
     struct trs_mem_unmap_para unmap_para;
 
@@ -290,8 +300,9 @@ static void trs_sq_reg_unmap(struct trs_proc_ctx *proc_ctx, struct trs_core_ts_i
     }
 }
 
-int trs_sq_remap(struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst,
-    struct halSqCqInputInfo *para, struct trs_sq_ctx *sq_ctx, struct trs_chan_sq_info *sq_info)
+int trs_sq_remap(
+    struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst, struct halSqCqInputInfo *para,
+    struct trs_sq_ctx *sq_ctx, struct trs_chan_sq_info *sq_info)
 {
     struct trs_id_inst *inst = &ts_inst->inst;
     struct trs_alloc_para *alloc_para = get_alloc_para_addr(para);
@@ -330,16 +341,20 @@ int trs_sq_remap(struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst
         sq_reg_type = TRS_MAP_TYPE_MEM;
     }
 
-    if ((para->flag & TSDRV_FLAG_SPECIFIED_SQ_MEM) == 0) { /* specific sq mem not need remap pfn */
+    if (((para->flag & TSDRV_FLAG_SPECIFIED_SQ_MEM) == 0) && (sq_info->sq_phy_addr != TRS_INVALID_PHYS_ADDR)) {
+        /* specific sq mem not need remap pfn */
         trs_remap_fill_para(&map_para, TRS_MAP_TYPE_MEM, uio_info->sq_que_addr, sq_info->sq_phy_addr, que_mem_len);
         ret = trs_sq_que_remap(proc_ctx, ts_inst, sq_ctx, &map_para);
         if (ret != 0) {
+#ifndef EMU_ST /* not delete for uio ut */
             goto fail;
+#endif
         }
     }
 
     /* head addr not page align */
-    trs_remap_fill_para(&map_para, sq_reg_type, uio_info->sq_ctrl_addr[TRS_UIO_HEAD],
+    trs_remap_fill_para(
+        &map_para, sq_reg_type, uio_info->sq_ctrl_addr[TRS_UIO_HEAD],
         KA_DRIVER_ALIGN_DOWN(sq_info->head_addr, KA_MM_PAGE_SIZE), KA_MM_PAGE_SIZE);
     uio_info->sq_ctrl_addr[TRS_UIO_HEAD] += sq_info->head_addr % KA_MM_PAGE_SIZE;
     ret = trs_sq_head_remap(proc_ctx, ts_inst, sq_ctx, &map_para);
@@ -348,7 +363,8 @@ int trs_sq_remap(struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst
     }
 
     /* tail addr not page align */
-    trs_remap_fill_para(&map_para, sq_reg_type, uio_info->sq_ctrl_addr[TRS_UIO_TAIL],
+    trs_remap_fill_para(
+        &map_para, sq_reg_type, uio_info->sq_ctrl_addr[TRS_UIO_TAIL],
         KA_DRIVER_ALIGN_DOWN(sq_info->tail_addr, KA_MM_PAGE_SIZE), KA_MM_PAGE_SIZE);
     uio_info->sq_ctrl_addr[TRS_UIO_TAIL] += sq_info->tail_addr % KA_MM_PAGE_SIZE;
     ret = trs_sq_tail_remap(proc_ctx, ts_inst, sq_ctx, &map_para);
@@ -357,7 +373,8 @@ int trs_sq_remap(struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst
     }
 
     /* db addr not page align */
-    trs_remap_fill_para(&map_para, TRS_MAP_TYPE_REG, uio_info->sq_ctrl_addr[TRS_UIO_DB],
+    trs_remap_fill_para(
+        &map_para, TRS_MAP_TYPE_REG, uio_info->sq_ctrl_addr[TRS_UIO_DB],
         KA_DRIVER_ALIGN_DOWN(sq_info->db_addr, KA_MM_PAGE_SIZE), KA_MM_PAGE_SIZE);
     uio_info->sq_ctrl_addr[TRS_UIO_DB] += sq_info->db_addr % KA_MM_PAGE_SIZE;
     ret = trs_sq_db_remap(proc_ctx, ts_inst, sq_ctx, &map_para);
@@ -382,8 +399,9 @@ out:
     uio_info->uio_flag = 0;
     uio_info->soft_que_flag = 0;
     sq_ctx->mode = SEND_MODE_KIO;
-    trs_debug("Sq send use kernel mode. (devid=%u; tsid=%u; sqid=%u; type=%u; flag=%u, ret=%d)\n",
-        inst->devid, inst->tsid, para->sqId, para->type, para->flag, ret);
+    trs_debug(
+        "Sq send use kernel mode. (devid=%u; tsid=%u; sqid=%u; type=%u; flag=%u, ret=%d)\n", inst->devid, inst->tsid,
+        para->sqId, para->type, para->flag, ret);
 
     return ret;
 }

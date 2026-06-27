@@ -25,4 +25,3 @@ void trs_host_mode_config_uninit_dev(u32 ts_inst_id);
 int trs_host_mode_config_init(void);
 void trs_host_mode_config_uninit(void);
 #endif /* TRS_HOST_MODE_CONFIG_H */
-

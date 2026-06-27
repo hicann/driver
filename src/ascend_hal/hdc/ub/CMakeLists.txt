@@ -8,11 +8,11 @@
 # See LICENSE in the root of the software repository for the full text of the License.
 # ------------------------------------------------------------------------------------------------------------
 target_sources(hdc_obj PRIVATE
+    common/hdc_ub_drv.c
     common/hdc_ub_epoll.c
     common/hdc_ub_common.c
     common/hdc_ub_event_proc.c
     common/hdc_ub_get_info.c
     common/hdc_ub_notify.c
-    $<$<STREQUAL:${PRODUCT_SIDE},host>:${DRIVER_USER_DIR}/src/hdc/ub/host/hdc_ub_adapt.c>
-    $<$<STREQUAL:${PRODUCT_SIDE},device>:${DRIVER_USER_DIR}/src/hdc/ub/device/hdc_ub_adapt.c>
+    host/hdc_ub_adapt.c
 )

@@ -16,7 +16,14 @@
 
 #include "dvpp_cmdlist.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void vpc_cmdlist_engine_register(void);
 void vpc_cmdlist_engine_unregister(void);
 
+#ifdef __cplusplus
+}
+#endif
 #endif // #ifndef DVPP_VPC_CMDLIST_COMM_H

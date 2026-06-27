@@ -53,7 +53,7 @@ STATIC long queue_ioctl(ka_file_t *filep, unsigned int cmd, unsigned long arg)
 }
 
 static const ka_file_operations_t g_queue_fops = {
-    .owner =    KA_THIS_MODULE,
+    .owner = KA_THIS_MODULE,
     .unlocked_ioctl = queue_ioctl,
     .open = queue_open,
     .release = queue_release,

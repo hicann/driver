@@ -67,7 +67,6 @@ struct drvHdcEvent {
 #define HDC_FLAG_MAP_VA32BIT (0x1 << 1)   /**< Use low 32bit memory */
 #define HDC_FLAG_MAP_HUGE (0x1 << 2)      /**< Using large pages */
 
-/* 通信类型 */
 enum halHdcTransType {
     HDC_TRANS_USE_SOCKET = 0,
     HDC_TRANS_USE_PCIE = 1,
@@ -424,6 +423,10 @@ typedef enum {
     INFO_TYPE_UB_CONFIG_INFO,
     INFO_TYPE_QOS_MASTER_CONFIG,
     INFO_TYPE_EVENT_RESUME,
+    INFO_TYPE_CPU_TOPO,
+    INFO_TYPE_SLOT_ID,
+    INFO_TYPE_SWPLUGIN_UPGRADE_POLICY,
+    INFO_TYPE_SUPER_POD_INTERCON_TYPE,
 } DEV_INFO_TYPE;
 
 /**
@@ -548,6 +551,9 @@ typedef enum {
     MEM_TYPE_CHIP_LOG_PCIE_BAR,
     MEM_TYPE_TS_LOG_PCIE_BAR,
     MEM_TYPE_BBOX_PCIE_BAR,
+    MEM_TYPE_IMP_LOG,
+    MEM_TYPE_IMU_LOG,
+    MEM_TYPE_HSM_LOG,
     MEM_CTRL_TYPE_MAX,
 } MEM_CTRL_TYPE;
 
@@ -728,6 +734,30 @@ typedef enum {
     DEV_CLOSE_TYPE_MAX,
 } DEV_CLOSE_TYPE;
 
+#define HAL_MAX_CPU_TOPO_NUM 64
+struct halSingleCpuTopologyInfo {
+    unsigned long long cpu_mask;
+    unsigned char cpu_id;
+    unsigned char is_share;
+    unsigned char phy_cpu_id;
+    unsigned char hyperthread_id;
+};
+struct halCpuTopologyInfo {
+    unsigned int total_nums;
+    struct halSingleCpuTopologyInfo single_cpu_topo_info[HAL_MAX_CPU_TOPO_NUM];
+};
+
+typedef enum {
+    HAL_REPAIR_FAULT_TYPE_UBMEM = 5,
+    HAL_REPAIR_FAULT_TYPE_MAX,
+} halRepairFaultType;
+
+typedef struct hal_repair_fault_info {
+    halRepairFaultType fault_type;
+    uint32_t payload_size;
+    uint8_t *payload;
+} halRepairFaultInfo;
+
 /**
 * @ingroup driver
 * @brief This interface is used to invoke the unified device open interfaces of driver components.
@@ -752,6 +782,20 @@ DLLEXPORT drvError_t halDeviceOpen(uint32_t devid, halDevOpenIn *in, halDevOpenO
 * @return 0 success, others for fail
 */
 DLLEXPORT drvError_t halDeviceClose(uint32_t devid, halDevCloseIn *in);
+
+/**
+* @ingroup driver
+* @brief This interface is used to invoke unified fault-repair hooks based on fault type.
+* @attention
+*   1) payload and payload_size are reserved for fault specific extension.
+*   2) If there is no ubmem fault, or no process is using ubmem, this interface returns directly.
+*   3) This interface supports physical-machine scenario only; split scenario is not supported.
+*   4) This interface supports Ascend 950 only; other chips are not supported.
+* @param [in] devId device id
+* @param [in] info fault repair info
+* @return 0 success, others for fail
+*/
+DLLEXPORT drvError_t halRepairFault(uint32_t devid, halRepairFaultInfo *info);
 
 typedef struct hal_proc_res_backup_info {
     uint64_t reserve[8];   // reserved parameter
@@ -1100,6 +1144,9 @@ enum hal_product_type {
 * MODULE_TYPE_SYSTEM        |  INFO_TYPE_BOARD_ID         |   board id                  | used in device |
 * MODULE_TYPE_SYSTEM        |  INFO_TYPE_VNIC_IP          |   device vnic ip            | used in device |
 * MODULE_TYPE_SYSTEM        |  INFO_TYPE_SPOD_VNIC_IP     |   device vnic ip by sdid    | used in device |
+* MODULE_TYPE_SYSTEM        |  INFO_TYPE_SLOT_ID          |   slot id                   |                |
+* MODULE_TYPE_SYSTEM        |  INFO_TYPE_SWPLUGIN_UPGRADE_POLICY |   swplugin upgrade   |                |
+* MODULE_TYPE_SYSTEM        |  INFO_TYPE_SUPER_POD_INTERCON_TYPE |   super pod inter connect type |      |
 * -------------------------------------------------------------------------------------------------------|
 * MODULE_TYPE_AICPU         |  INFO_TYPE_CORE_NUM         |   ai cpu number(vcpu in vf) |                |
 * MODULE_TYPE_AICPU         |  INFO_TYPE_OS_SCHED         |   ai cpu in os sched        | used in device |
@@ -1250,8 +1297,8 @@ typedef struct {
 } HAL_CC_INFO;
 
 typedef enum {
-    HAL_NORMAL_MODE = 0, /* mailbox */
-    HAL_HIGH_PERFORMANCE_MODE, /* msgq */
+    HAL_NORMAL_MODE = 0, /* mailbox */
+    HAL_HIGH_PERFORMANCE_MODE, /* msgq */
     HAL_CPU_WORK_MODE_MAX
 } HAL_CPU_WORK_MODE;
 
@@ -1283,9 +1330,10 @@ typedef enum {
 * --------------------------------------------------------------------------------------------------------
 * MODULE_TYPE_SYSTEM        |  INFO_TYPE_SDK_EX_VERSION   |    SDK extend version       |                |
 * MODULE_TYPE_SYSTEM        |  INFO_TYPE_UUID             |    Device uuid              |                |
+* MODULE_TYPE_SYSTEM        |  INFO_TYPE_CPU_TOPO         |    Cpu topo                 |                |
 * --------------------------------------------------------------------------------------------------------
 * MODULE_TYPE_AICORE        |  INFO_TYPE_OCCUPY           |    Aicore bitmap,           |
-                                                             max bit number is 128      |  buff：u64 aicore_bitmap[2]
+                                                             max bit number is 128      |  buff: u64 aicore_bitmap[2]
 * --------------------------------------------------------------------------------------------------------
 * MODULE_TYPE_UB            |  INFO_TYPE_UB_STATUS        |    UB connection status     |                |
 * MODULE_TYPE_UB            |INFO_TYPE_UB_PACKET_STATISTICS|   UB packet statistics     |                |
@@ -1311,7 +1359,7 @@ typedef enum {
     HAL_UB_ALL_PORT_LINK,
     HAL_UB_PARTIAL_PORT_LINK,
     HAL_UB_NO_NEED_LINK,
-} hal_entire_ub_status;     /* 0-2：actual link status, 3: link requirement*/
+} hal_entire_ub_status;     /* 0-2: actual link status, 3: link requirement */
 
 typedef enum {
     HAL_UB_PORT_STATUS_NONE_LANE = 0,
@@ -1975,6 +2023,8 @@ typedef drvError_t DVresult;
 #define DV_MEM_USER_REGISTER    0x0100
 #define DV_MEM_UVM              0x0200
 
+#define DV_MEM_SOMA             0x0400
+
 #define DV_MEM_RESV 8
 struct DVattribute {
     /**< DV_MEM_SVM_DEVICE : svm memory & mapped device */
@@ -2273,6 +2323,14 @@ DLLEXPORT DV_ONLINE DVresult halMemcpyWait(struct DMA_ADDR *dma_addr);
  */
 DLLEXPORT DV_ONLINE DVresult drvMemPrefetchToDevice(DVdeviceptr dev_ptr, size_t len, DVdevice device);
 
+#ifndef UVM_OPEN
+DLLEXPORT int halGetCurrentThreadNumaNode(void);
+ 
+DLLEXPORT DVresult halMemManagedPrefetch(DVdeviceptr ptr, size_t size, struct drv_uvm_location location, unsigned int flags);
+
+DLLEXPORT DVresult halMemManagedPrefetchBatch(DVdeviceptr* ptrs, size_t* sizes, size_t count, struct drv_uvm_location* prefetchLocs,
+    size_t* prefetchLocIdxs, size_t numPrefetchLocs, unsigned long long flags);
+#endif       
 /**
  * @ingroup driver
  * @brief Create a share corresponding to vptr based on name
@@ -2332,9 +2390,9 @@ DLLEXPORT DV_ONLINE DVresult halShmemSetPodPid(const char *name, uint32_t sdid, 
  * @ingroup driver
  * @brief Open the shared memory corresponding to name, vptr returns the virtual address that can access shared memory
  * @attention
- * 1、Available online, not offline.
- * 2、Ipc not support access double pgtable offset addr.
- * 3、Ipc not support sdma copy in ascend950, ascend910_96, which may lead to unpredictable behavior.
+ * 1. Available online, not offline.
+ * 2. Ipc not support access double pgtable offset addr.
+ * 3. Ipc not support sdma copy in ascend950, ascend910_96, which may lead to unpredictable behavior.
  * @param [in] name: name used for sharing between processes
  * @param [out] vptr: virtual address with access to shared memory
  * @return DRV_ERROR_NONE : success
@@ -2359,6 +2417,36 @@ DLLEXPORT DV_ONLINE DVresult halShmemOpenHandleByDevId(DVdevice dev_id, const ch
 
 /**
  * @ingroup driver
+ * @brief Open the shared memory corresponding to name, vptr returns the virtual address that can access shared memory
+ * @attention
+ * 1. Available online, not offline.
+ * 2. Ipc not support access double pgtable offset addr.
+ * 3. Ipc not support sdma copy in ascend950, ascend910_96, which may lead to unpredictable behavior.
+ * 4. The same name can be opened repeatedly.
+ * @param [in] name: name used for sharing between processes
+ * @param [in] dev_id: logic devid
+ * @param [in] flag: map route can be passed by bitwise OR, see MEM_MAP_ATTR_BIT definition
+ * @param [out] vptr: virtual address with access to shared memory
+ * @return DRV_ERROR_NONE : success
+ * @return DV_ERROR_XXX : open fail
+ */
+DLLEXPORT DV_ONLINE DVresult halShmemOpenHandleV2(DVdevice dev_id, const char *name, DVdeviceptr *vptr, uint64_t flag);
+
+/**
+ * @ingroup driver
+ * @brief Check whether the specified map route exists for shared memory corresponding to name
+ * @attention Available online, not offline.
+ * @param [in] name: name used for sharing between processes
+ * @param [in] dst_devid: destination logic devid
+ * @param [in] map_route: map route to check, see MEM_MAP_ATTR_BIT definition
+ * @return DRV_ERROR_NONE : the specified map route exists
+ * @return DRV_ERROR_NOT_EXIST : the specified map route does not exist
+ * @return DV_ERROR_XXX : check fail
+ */
+DLLEXPORT DV_ONLINE DVresult halShmemMapRouteCheck(const char *name, uint32_t dst_devid, uint32_t map_route);
+
+/**
+ * @ingroup driver
  * @brief Close the shared memory corresponding to name
  * @attention Available online, not offline.
  * @param [in] vptr: the virtual address that halShmemOpenHandle can access to shared memory
@@ -2371,10 +2459,13 @@ DLLEXPORT DV_ONLINE DVresult halShmemCloseHandle(DVdeviceptr vptr);
  * @ingroup driver
  * @brief Set the attribute of shared memory by name
  * @attention Available online, not offline.
+ *   Type is SHMEM_ATTR_TYPE_MEM_MAP:
+ *   1.attr is MEM_MAP_INBUS or MEM_MAP_EXBUS.
  *   Type is SHMEM_ATTR_TYPE_NO_WLIST_IN_SERVER:
- *   1.If the set pid related API has been called, it returns DRV_ERROR_OPER_NOT_PERMITTED;
- *   2.If it is not called by the shmem create process, it returns DRV_ERROR_OPER_NOT_PERMITTED;
- *   3.Currently attr is not supported SHMEM_WLIST_ENABLE.
+ *   1.attr is SHMEM_WLIST_ENABLE or SHMEM_NO_WLIST_ENABLE.
+ *   2.If the set pid related API has been called, it returns DRV_ERROR_OPER_NOT_PERMITTED;
+ *   3.If it is not called by the shmem create process, it returns DRV_ERROR_OPER_NOT_PERMITTED;
+ *   4.Currently attr is not supported SHMEM_WLIST_ENABLE.
  * @param [in] name: name used for sharing between processes, get by halShmemCreateHandle
  * @param [in] type: type of shared memory attribute settings
  * @param [in] attr: attr corresponding to type to set shared memory attribute
@@ -2387,6 +2478,10 @@ DLLEXPORT DV_ONLINE DVresult halShmemSetAttribute(const char *name, uint32_t typ
  * @ingroup driver
  * @brief get the attribute of shared memory by name
  * @attention Available online, not offline.
+ *   Type is SHMEM_ATTR_TYPE_MEM_MAP:
+ *   1.attr return value is MEM_MAP_INBUS or MEM_MAP_EXBUS.
+ *   Type is SHMEM_ATTR_TYPE_NO_WLIST_IN_SERVER:
+ *   1.attr return value is SHMEM_WLIST_ENABLE or SHMEM_NO_WLIST_ENABLE.
  * @param [in] name: name used for sharing between processes
  * @param [in] type: type of shared memory attribute settings
  * @param [out] attr: related attribute information about name
@@ -2479,6 +2574,7 @@ DLLEXPORT DV_ONLINE int drvMemDeviceClose(uint32_t devid);
  * support in Linux versions below 5.19.
  * 6. HOST_SVM_MAP_DEV don't support in virt machine.
  * 7. Not support vmm va, use may result in unexpected behavior.
+ * 8. If multiple registrations are successful for overlapping addresses, halMemHostGetDevPointer will only retrieve the first successful registration.
  * @param [in] src_ptr: requested the src share memory pointer, srcPtr must be page aligned.
  * @param [in] size: requested byte size.
  * @param [in] flag:  requested memory parameter, the flag is made by map type and proc type.
@@ -2585,6 +2681,36 @@ DLLEXPORT drvError_t halMemFree(void *pp);
  * @return DV_ERROR_XXX : set fail
  */
 DLLEXPORT drvError_t halMemAdvise(DVdeviceptr ptr, size_t count, unsigned int type, DVdevice device);
+
+#ifndef UVM_OPEN
+/**
+ * @ingroup driver
+ * @brief This command is used to advise UVM memory.
+ * @attention When advise continuty virtual memory to different devices, only support the devices in same os.
+ * @param [in] ptr: uvm memory pointer, ptr must be 2MB page aligned.
+ * @param [in] size: byte size
+ * @param [in] advise: advise type parameter.
+ * @param [in] location: uvm memlocation.
+ * @return DRV_ERROR_NONE : success
+ * @return DV_ERROR_XXX : set fail
+ */
+DLLEXPORT drvError_t halMemManagedAdvise(DVdeviceptr ptr, size_t size, uint32_t advise, struct drv_uvm_location location);
+
+/**
+ * @ingroup driver
+ * @brief This command is used to get the attributes of the memory which are managed.
+ * @attention Do not exceed the range.
+ * @param [in] attribute: enumerate the memory attributes.
+ * @param [in] ptr: requested the svm memory pointer, ptr must be page aligned.
+ * @param [in] size: requested byte size.
+ * @param [in] data: store the final result -- the memory has the attribute or not.
+ * @param [in] dataSize: requested input device id.
+ * @return DRV_ERROR_NONE : success
+ * @return DV_ERROR_XXX : set fail
+ */
+DLLEXPORT drvError_t halMemManagedRangeGetAttributes(void** data, size_t* data_sizes, uint32_t *attributes,
+    size_t attribute_num, DVdeviceptr ptr, size_t size);
+#endif
 
 /**
  * @ingroup driver
@@ -2885,6 +3011,38 @@ DLLEXPORT drvError_t halMemShareHandleGetAttribute(
     uint64_t shareable_handle, enum ShareHandleAttrType type, struct ShareHandleAttr *attr);
 
 /**
+* @ingroup driver
+* @brief Set the attribute of memory by handle
+* @attention Available online, not offline. Not support compute group.
+    Type is HANDLE_ATTR_MEM_MAP_ROUTE:
+    1.Only supports setting properties for shared memory between different devices on the same dev OS in the Ascend910_93.
+    2.The successfully set attributes will only take effect on subsequent mem map operations.
+* @param [in] handle Value of handle which was returned previously by halMemImportFromShareableHandle\
+    halMemImportFromShareableHandleV2\halMemCreate, etc.
+* @param [in] type value of enum HandleAttrType
+* @param [in] attr Related attribute information about handle
+* @return DRV_ERROR_NONE : success
+* @return DV_ERROR_XXX : set fail
+*/
+DLLEXPORT drvError_t halMemHandleSetAttribute(
+    drv_mem_handle_t *handle, enum HandleAttrType type, struct HandleAttr attr);
+ 
+/**
+* @ingroup driver
+* @brief Get the attribute of memory by handle
+* @attention Available online, not offline. Not support compute group.
+    Type is HANDLE_ATTR_MEM_MAP_ROUTE:
+    1.Only supports setting properties for shared memory between different devices on the same dev OS in the Ascend910_93.
+* @param [in] handle Value of handle which was returned previously by halMemImportFromShareableHandle\
+    halMemImportFromShareableHandleV2\halMemCreate, etc.
+* @param [in] type value of enum HandleAttrType
+* @param [out] attr Related attribute information about handle
+* @return DRV_ERROR_NONE : success
+* @return DV_ERROR_XXX : set fail
+*/
+DLLEXPORT drvError_t halMemHandleGetAttribute(
+    drv_mem_handle_t *handle, enum HandleAttrType type, struct HandleAttr *attr);
+/**
  * @ingroup driver
  * @brief get the info of shared memory by shareable_handle
  * @attention Available online, not offline. Not support compute group.
@@ -3083,6 +3241,15 @@ struct mem_module_usage {
  * @return DV_ERROR_XXX : fail
  */
 DLLEXPORT drvError_t halGetMemUsageInfo(uint32_t dev_id, struct mem_module_usage *mem_usage, size_t in_num, size_t *out_num);
+
+ /**
+ * @ingroup driver
+ * @brief This command is used to get the name of memory module by module id.
+ * @attention If the module id is greater than or equal to the maximum value, will return UNKNOWN.
+ * @param [in] module_id:  module id, maximum value is MAX_MODULE_ID.
+ * @return module name: module name.
+ */
+DLLEXPORT const char *halGetMemModuleName(uint32_t module_id);
 
 /**
 * @ingroup driver
@@ -3802,11 +3969,11 @@ typedef unsigned long long dma_addr_t;
 #define CHANNEL_CUS_AICPU (144)
 #define CHANNEL_ADPROF (145)
 #define CHANNEL_UB (146)
-#define CHANNEL_CCU0_INSTRUCT (147)         /* die0 ccu指令数据 */
-#define CHANNEL_CCU0_CHAN_INSTRUCT (148)    /* die0 chan延迟数据 */
-#define CHANNEL_CCU1_INSTRUCT (149)         /* die1 ccu指令数据 */
+#define CHANNEL_CCU0_INSTRUCT (147)         /* die0 ccu */
+#define CHANNEL_CCU0_CHAN_INSTRUCT (148)    /* die0 chan delay */
+#define CHANNEL_CCU1_INSTRUCT (149)         /* die1 ccu */
 #define CHANNEL_STARS_NANO_PROFILE (150)    /* add for ascend035 */
-#define CHANNEL_CCU1_CHAN_INSTRUCT   (151)  /* die1 chan延迟数据 */
+#define CHANNEL_CCU1_CHAN_INSTRUCT   (151)  /* die1 chan delay */
 #define CHANNEL_NTS_TASK (152)
 #define CHANNEL_NTS_PMU (153)
 #define CHANNEL_IDS_MAX CHANNEL_NUM
@@ -4177,6 +4344,15 @@ DLLEXPORT drvError_t halBuffDestoryInterGrp(unsigned int grpId) ASCEND_HAL_WEAK;
 * @return   0 for success, others for fail
 */
 DLLEXPORT drvError_t halMbufGetDqsHandle(Mbuf *mbuf,  uint64_t *handle);
+
+/**
+* @ingroup driver
+* @brief Print DQS Mbuf Trace
+* @attention null
+* @param [in] poolHandle pHandle: pool handle
+* @return   0 for success, others for fail
+*/
+DLLEXPORT drvError_t halMbufDqsTracePrint(poolHandle pHandle);
 
 /*=========================== Tsdrv ===========================*/
 /*============================add from aicpufw_drv_msg.h"==========================================*/
@@ -4688,6 +4864,62 @@ drvError_t halAsyncDmaCreateBatch(uint32_t devId, struct halAsyncDmaInputBatchPa
  * @return   0 for success, others for fail
  */
 drvError_t halAsyncDmaDestroyBatch(uint32_t devId, struct halAsyncDmaDestroyBatchPara *para);
+
+/**
+ * @ingroup driver
+ * @brief  async dma jetty create
+ * @attention null
+ * @param [in] devId: logic devid
+ * @param [in] in:   see struct halAsyncDmaJettyCreateIn
+ * @param [out] out:  see struct halAsyncDmaJettyCreateOut
+ * @return   0 for success, others for fail
+ */
+drvError_t halAsyncDmaJettyCreate(uint32_t devId, struct halAsyncDmaJettyCreateIn *in,
+    struct halAsyncDmaJettyCreateOut *out);
+
+/**
+ * @ingroup driver
+ * @brief  async dma jetty destroy
+ * @attention null
+ * @param [in] devId: logic devid
+ * @param [in]  para: see struct halAsyncJettyDestroyPara
+ * @return   0 for success, others for fail
+ */
+drvError_t halAsyncDmaJettyDestroy(uint32_t devId, struct halAsyncJettyDestroyPara *para);
+
+/**
+ * @ingroup driver
+ * @brief  async dma jetty query
+ * @attention null
+ * @param [in] devId: logic devid
+ * @param [in] in:   see struct halAsyncDmaJettyQueryIn
+ * @param [out] out:  see struct halAsyncDmaJettyQueryOut
+ * @return   0 for success, others for fail
+ */
+drvError_t halAsyncDmaJettyQuery(uint32_t devId, struct halAsyncDmaJettyQueryIn *in,
+    struct halAsyncDmaJettyQueryOut *out);
+
+/**
+ * @ingroup driver
+ * @brief  async dma wqe convert
+ * @attention null
+ * @param [in] devId: logic devid
+ * @param [in] in:   see struct halAsyncDmaWqeInputPara
+ * @param [out] out:  see struct halAsyncDmaWqeOutputPara
+ * @return   0 for success, others for fail
+ */
+drvError_t halAsyncDmaWqeConvert(uint32_t devId, struct halAsyncDmaWqeInputPara *in,
+    struct halAsyncDmaWqeOutputPara *out);
+
+/**
+ * @ingroup driver
+ * @brief  fill wqe to async dma jetty
+ * @attention This allow users to manage which offset and size to fill jetty queue, such as checking uncovered areas
+ * @param [in] devId: logic devid
+ * @param [in]  para: see struct halAsyncDmaJettyFillInfo
+ * @return   0 for success, others for fail
+ */
+drvError_t halAsyncDmaJettyWqeFill(uint32_t devId, struct halAsyncDmaJettyFillInfo *para);
 
 /**
 * @ingroup driver
@@ -5669,6 +5901,14 @@ DLLEXPORT DV_ONLINE drvError_t halResWrite(
 
 /**
  * @ingroup driver
+ * @brief  Get the value of RES_MAP_TYPE_MAX.
+ * @attention null
+ * @return   The value of RES_MAP_TYPE_MAX
+ */
+DLLEXPORT unsigned int halGetMaxResMapType(void);
+
+/**
+ * @ingroup driver
  * @brief backup stream info
  * @attention null
  * @param [in]  dev_id: logic devid id
@@ -5691,13 +5931,14 @@ enum vmng_split_mode {
     VMNG_NORMAL_NONE_SPLIT_MODE = 0,
     VMNG_VIRTUAL_SPLIT_MODE,
     VMNG_CONTAINER_SPLIT_MODE,
+    VMNG_NORMAL_SPLIT_MODE,
     VMNG_INVALID_SPLIT_MODE
 };
 
 /**
  * @ingroup driver
  * @brief Get device split mode
- * @attention null
+ * @attention VMNG_NORMAL_SPLIT_MODE is used for getting split mode in device side
  * @param [in] dev_id: logic devid id
  * @param [out] mode: split mode
  * @return   0 for success, others for fail
@@ -5715,8 +5956,104 @@ typedef struct {
     uint64_t va;
     uint64_t maxSize;
 } soma_mem_pool_prop;
-     
 
+enum soma_mem_pool_attr {
+    SOMA_MEM_POOL_ATTR_RELEASE_THRESHOLD = 0x1,
+ 
+    SOMA_MEM_POOL_ATTR_RESERVED_MEM_CURRENT = 0x2,
+    SOMA_MEM_POOL_ATTR_RESERVED_MEM_HIGH = 0x3,
+    SOMA_MEM_POOL_ATTR_USED_MEM_CURRENT = 0x4,
+    SOMA_MEM_POOL_ATTR_USED_MEM_HIGH = 0x5
+};
+
+/**
+* @ingroup driver
+* @brief create memory pool
+* @attention null
+* @param [in]  pool: pool info
+* @param [in]  prop: pool prop
+* @return   0 for success, others for fail
+*/
+DLLEXPORT drvError_t halMemPoolCreate(soma_mem_pool_t pool, soma_mem_pool_prop prop);
+           
+/**
+* @ingroup driver
+* @brief destroy memory pool
+* @attention null
+* @param [in]  pool: pool info
+* @return   0 for success, others for fail
+*/
+DLLEXPORT drvError_t halMemPoolDestroy(soma_mem_pool_t pool);
+                  
+/**
+* @ingroup driver
+* @brief apply for memory from the device memory pool
+* @attention null
+* @param [in]  pool: pool info
+* @param [in]  va: virtual memory address
+* @param [in]  size: memory size
+* @param [in]  policy: memory request policy
+* @return   0 for success, others for fail
+*/
+DLLEXPORT DV_ONLINE drvError_t halMemPoolMalloc(soma_mem_pool_t pool, uint64_t va, uint64_t size, int32_t policy);
+                            
+/**
+* @ingroup driver
+* @brief release memory to the device memory pool
+* @attention null
+* @param [in]  pool: pool info
+* @param [in]  va: virtual memory address
+* @param [in]  size: memory size
+* @param [in]  policy: memory release policy
+* @return   0 for success, others for fail
+*/
+DLLEXPORT DV_ONLINE drvError_t halMemPoolFree(soma_mem_pool_t pool, uint64_t va, uint64_t size, int32_t policy);
+                                     
+/**
+* @ingroup driver
+* @brief trigger the memory pool shrinking
+* @attention null
+* @param [in]  pool: pool info
+* @param [in/out]  reservedSize: reserved memory size after shrinking
+* @param [in]  usedSize: busy memory size in memory pool
+* @param [in]  freeSize: free memory size in memory pool
+* @return   0 for success, others for fail
+*/
+DLLEXPORT drvError_t halMemPoolTrim(soma_mem_pool_t pool, uint64_t *reservedSize, uint64_t usedSize, uint64_t freeSize);
+
+/**
+* @ingroup driver
+* @brief malloc and free pre-process before operator dispatch
+* @attention null
+* @param [in]  pool: pool info
+* @param [in]  va: virtual memory address
+* @param [in]  size: memory size
+* @param [in]  flag: 0:malloc flag; 1:free flag
+* @return   0 for success, others for fail
+*/
+DLLEXPORT drvError_t halMemPoolAsyncConfig(soma_mem_pool_t pool, uint64_t va, uint64_t size, uint32_t flag);
+
+/**
+* @ingroup driver
+* @brief set memory pool attribute
+* @attention null
+* @param [in]  pool: pool info
+* @param [in]  attr: attribute type
+* @param [in]  value: attribute value
+* @return   0 for success, others for fail
+*/
+DLLEXPORT drvError_t halMemPoolSetAttr(soma_mem_pool_t pool, enum soma_mem_pool_attr attr, void* value);
+ 
+/**
+* @ingroup driver
+* @brief get memory pool attribute
+* @attention null
+* @param [in]  pool: pool info
+* @param [in]  attr: attribute type
+* @param [out] value: attribute value
+* @return   0 for success, others for fail
+*/
+DLLEXPORT drvError_t halMemPoolGetAttr(soma_mem_pool_t pool, enum soma_mem_pool_attr attr, void* value);
 #ifdef __cplusplus
 }
 #endif

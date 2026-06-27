@@ -14,11 +14,11 @@
 #ifndef __STARS_CNT_NOTIFY_TBL_C_UNION_DEFINE_H__
 #define __STARS_CNT_NOTIFY_TBL_C_UNION_DEFINE_H__
 
-#define STARS_TABLE_CNT_NOTIFY_NUM          4864U
-#define STARS_TABLE_CNT_NOTIFY_UNIT_NUM     304U
+#define STARS_TABLE_CNT_NOTIFY_NUM 4864U
+#define STARS_TABLE_CNT_NOTIFY_UNIT_NUM 304U
 #define STARS_TABLE_CNT_NOTIFY_NUM_PER_UNIT 16U
 
-#define STARS_TABLE_CNT_NOTIFY_GRP_NUM      16U
+#define STARS_TABLE_CNT_NOTIFY_GRP_NUM 16U
 
 typedef union {
     struct {
@@ -48,8 +48,8 @@ typedef struct {
     stars_cnt_notify_table_slice_info stars_cnt_notify_group_table[STARS_TABLE_CNT_NOTIFY_GRP_NUM];
 } stars_cnt_notify_tbl_regs_type;
 
-static inline stars_cnt_notify_table_slice *trs_get_stars_cnt_notify_tab_slice(stars_cnt_notify_tbl_regs_type *tbl_info,
-    u32 id)
+static inline stars_cnt_notify_table_slice *trs_get_stars_cnt_notify_tab_slice(
+    stars_cnt_notify_tbl_regs_type *tbl_info, u32 id)
 {
     u32 group_id = id / STARS_TABLE_CNT_NOTIFY_NUM;
     u32 unit = (id % STARS_TABLE_CNT_NOTIFY_NUM) / STARS_TABLE_CNT_NOTIFY_NUM_PER_UNIT;

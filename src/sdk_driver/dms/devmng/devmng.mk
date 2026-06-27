@@ -38,6 +38,7 @@ EXTRA_CFLAGS += -I$(DRIVER_MODULE_DEVMNG_DIR)/include
 EXTRA_CFLAGS += -I$(DRIVER_MODULE_DEVMNG_DIR)/drv_devmng/drv_devmng_inc
 EXTRA_CFLAGS += -I$(DRIVER_HAL_INC_DIR)
 EXTRA_CFLAGS += -I$(DRIVER_SOURCE_DIR)/pbl/dev_urd/dc
+EXTRA_CFLAGS += -I$(DRIVER_SOURCE_DIR)/pbl/dev_urd/command/ioctl
 
 asdrv_dms-y += devmng/drv_devmng/drv_devmng_common/devdrv_spod_info.o
 asdrv_dms-y += devmng/dc/status/dms_spod_info.o

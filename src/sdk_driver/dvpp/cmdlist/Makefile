@@ -37,7 +37,7 @@ ifeq ($(ENABLE_OPEN_SRC), y)
                             memory/mem_allocater.o \
                             memory/dvpp_mem_allocater_comm.o \
                             memory/dvpp_mem_allocater_args.o \
-                            fops/dvpp_cmdlist_ioctl.o \
+                            command/ioctl/dvpp_cmdlist_ioctl.o \
                             cmdlist/vpc/init/init.o
 
     EXTRA_CFLAGS += -DRUN_MODE_ONLINE
@@ -83,13 +83,14 @@ ifeq ($(ENABLE_OPEN_SRC), y)
                     -I$(LOCAL_PATH)/cmdlist/jpegd/drv/milan \
                     -I$(LOCAL_PATH)/cmdlist/jpege \
                     -I$(LOCAL_PATH)/cmdlist/jpege/drv \
-                    -I$(LOCAL_PATH)/fops \
+                    -I$(LOCAL_PATH)/command/ioctl \
                     -I$(LOCAL_PATH)/proc \
                     -I$(LOCAL_PATH)/context \
                     -I$(LOCAL_PATH)/memory \
                     -I$(LOCAL_PATH)/vmng \
                     -I${C_SEC_INCLUDE}
 
+    EXTRA_CFLAGS += -Iinclude/linux
     EXTRA_CFLAGS += -DSUPPORT_VIR_MACH
     drv_dvpp_cmdlist-objs += cmdlist/vpc/architecture/arch_v1xx/v100/drv_vpc_mlv1r1.o
     drv_dvpp_cmdlist-objs += vmng/dvpp_vcm_host.o
@@ -130,7 +131,7 @@ else
                                 memory/mem_allocater.o \
                                 memory/dvpp_mem_allocater_comm.o \
                                 memory/dvpp_mem_allocater_args.o \
-                                fops/dvpp_cmdlist_ioctl.o \
+                                command/ioctl/dvpp_cmdlist_ioctl.o \
                                 cmdlist/vpc/init/init.o
 
         EXTRA_CFLAGS += -DRUN_MODE_ONLINE
@@ -175,7 +176,7 @@ else
                         -I$(LOCAL_PATH)/cmdlist/jpegd/drv/milan \
                         -I$(LOCAL_PATH)/cmdlist/jpege \
                         -I$(LOCAL_PATH)/cmdlist/jpege/drv \
-                        -I$(LOCAL_PATH)/fops \
+                        -I$(LOCAL_PATH)/command/ioctl \
                         -I$(LOCAL_PATH)/proc \
                         -I$(LOCAL_PATH)/context \
                         -I$(LOCAL_PATH)/memory \

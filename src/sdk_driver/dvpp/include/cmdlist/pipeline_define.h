@@ -14,7 +14,11 @@
 #ifndef VPC_CMDLIST_PIPELINE_DEFINE_H
 #define VPC_CMDLIST_PIPELINE_DEFINE_H
 
-#include <linux/types.h>
+#ifdef __KERNEL__
+#include "ka_type.h"
+#else
+#include <stdint.h>
+#endif
 
 #define ENABLE 1
 #define DISABLE 0

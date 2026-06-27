@@ -9,7 +9,8 @@
 # ------------------------------------------------------------------------------------------------------------
 MODULE_NAME := drv_pcie_host
 obj-m += $(MODULE_NAME).o
-$(MODULE_NAME)-objs := host/devdrv_dma.o
+$(MODULE_NAME)-objs := host/devdrv_feature.o
+$(MODULE_NAME)-objs += host/devdrv_dma.o
 $(MODULE_NAME)-objs += host/devdrv_msg.o
 $(MODULE_NAME)-objs += host/devdrv_ctrl.o
 $(MODULE_NAME)-objs += host/devdrv_sysfs.o
@@ -31,9 +32,7 @@ $(MODULE_NAME)-objs += dc/host/cloud_v2/res_drv_cloud_v2.o
 $(MODULE_NAME)-objs += dc/host/cloud_v4/res_drv_cloud_v4.o
 $(MODULE_NAME)-objs += dc/host/mini_v2/res_drv_mini_v2.o
 $(MODULE_NAME)-objs += dc/host/mini_v3/res_drv_mini_v3.o
-ifneq ($(filter $(PRODUCT), ascend910B),)
-	$(MODULE_NAME)-objs += host/devdrv_s2s_msg.o
-endif
+$(MODULE_NAME)-objs += host/devdrv_s2s_msg.o
 
 EXTRA_CFLAGS += -I$(DRIVER_HAL_INC_DIR)
 EXTRA_CFLAGS += -I${C_SEC_INCLUDE}/
@@ -51,23 +50,16 @@ EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/comm/pcie/host/
 EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/comm/pcie/host/soc_adapt/
 EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/kernel_adapt/include/
 EXTRA_CFLAGS += -isystem $(shell $(CC) -print-file-name=include)
-ifneq ($(filter $(PRODUCT), ascend950),)
+ifneq ($(filter $(PRODUCT), ascend950 ascend350),)
 	EXTRA_CFLAGS += -Iinclude/linux
 endif
 
-EXTRA_CFLAGS += -DCFG_FEATURE_HOST_LOG
 EXTRA_CFLAGS += -DCFG_FEATURE_SRIOV
-EXTRA_CFLAGS += -DCFG_FEATURE_DMA_COPY_SVA
 ifneq ($(filter $(PRODUCT), ascend910B),)
 	EXTRA_CFLAGS += -DCFG_FEATURE_DMI
-	EXTRA_CFLAGS += -DCFG_FEATURE_AGENT_SMMU
-	EXTRA_CFLAGS += -DCFG_FEATURE_S2S
-	EXTRA_CFLAGS += -DCFG_FEATURE_KA_ALLOC_INTERFACE
 endif
 
-ifneq ($(filter $(PRODUCT), ascend950),)
-	EXTRA_CFLAGS += -DCFG_FEATURE_PCIE_PROTO_DIP
-	EXTRA_CFLAGS += -DCFG_FEATURE_LOAD_TEE_IMAGE
+ifneq ($(filter $(PRODUCT), ascend950 ascend350),)
 	ifeq ($(ENABLE_EQUIP), true)
 		EXTRA_CFLAGS += -DCFG_FEATURE_DMI
 	endif

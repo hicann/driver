@@ -23,17 +23,12 @@
 #include "securec.h"
 #include "ascend_kernel_hal.h"
 
-#ifdef CFG_FEATURE_EXTERNAL_CDEV
 #include "pbl/pbl_davinci_api.h"
-#endif
 
 #include "xsmem_algo_vma.h"
 #include "xsmem_algo_cache_vma.h"
 
-#ifdef CFG_FEATURE_SUPPORT_SP
-#include "xsmem_algo_sp.h"
-#include "xsmem_algo_cache_sp.h"
-#endif
+#include "xsmem_framework_platform.h"
 
 #include "xsmem_prop.h"
 #include "xsmem_proc_fs.h"
@@ -43,13 +38,17 @@
 #include "xsmem_framework.h"
 #include "ka_driver_pub.h"
 
+#include "pbl/pbl_uda.h"
+
+#include "xsmem_feature_check.h"
+
 #define XSHM_HLIST_TABLE_BIT 13
 #define XSHM_HLIST_TABLE_MASK ((0x1 << XSHM_HLIST_TABLE_BIT) - 1)
 #define TASK_HASH_TABLE_BIT 10
 #define TASK_HASH_TABLE_MASK ((0x1UL << TASK_HASH_TABLE_BIT) - 1)
 
-#define MAX_XP_NUM_OF_TASK  32
-#define XSMEM_MAX_ADDING_TASK_NUM  32ULL
+#define MAX_XP_NUM_OF_TASK 32
+#define XSMEM_MAX_ADDING_TASK_NUM 32ULL
 #define XSHM_KEY_AND_NAMESPACE_SIZE (XSHM_KEY_SIZE + 64)
 
 /* Protect the lifetime for all POOL */
@@ -59,14 +58,12 @@ KA_TASK_DEFINE_MUTEX(task_mutex);
 static KA_DEFINE_HASHTABLE(xsmem_key_list, XSHM_HLIST_TABLE_BIT);
 static KA_DEFINE_HASHTABLE(task_table, TASK_HASH_TABLE_BIT);
 
-static u64 g_uni_process_id = 0;   // uniqueue id for each process
+static u64 g_uni_process_id = 0; // uniqueue id for each process
 
 /* FIXME: use lock to protect the list_head */
 static KA_LIST_HEAD(registered_algo);
 
-#ifdef CFG_FEATURE_SUPPORT_SP
 extern void xsmem_recycle_callback(void);
-#endif
 
 /* Check user id */
 unsigned int THREAD g_xsmem_authorized_user_id = XSMEM_NOT_CONFIRM_USER_ID;
@@ -113,12 +110,11 @@ void xsmem_register_algo(struct xsm_pool_algo *algo)
 {
     struct xsm_pool_algo *tmp = NULL;
 
-    ka_list_for_each_entry(tmp, &registered_algo, algo_node)
-        if (algo->num == tmp->num) {
-            xsmem_info("Algorithm with the same id, has been registered. (id=%d; name=%s)\n",
-                tmp->num, tmp->name);
-            return;
-        }
+    ka_list_for_each_entry(tmp, &registered_algo, algo_node) if (algo->num == tmp->num)
+    {
+        xsmem_info("Algorithm with the same id, has been registered. (id=%d; name=%s)\n", tmp->num, tmp->name);
+        return;
+    }
 
     ka_list_add_tail(&algo->algo_node, &registered_algo);
 
@@ -131,10 +127,10 @@ static struct xsm_pool_algo *xsmem_find_algo(int algo)
 {
     struct xsm_pool_algo *tmp = NULL;
 
-    ka_list_for_each_entry(tmp, &registered_algo, algo_node)
-        if (tmp->num == algo) {
-            return tmp;
-        }
+    ka_list_for_each_entry(tmp, &registered_algo, algo_node) if (tmp->num == algo)
+    {
+        return tmp;
+    }
 
     return NULL;
 }
@@ -177,7 +173,7 @@ static void xsmem_add_block(struct xsm_pool *xp, struct xsm_block *blk)
             link = &parent->rb_left;
         } else {
             xsmem_warn("pool id %d alloc one block offset %pK more than once, the POOL's algo got broken\n",
-                xp->pool_id, (void *)(uintptr_t)blk->offset);
+                       xp->pool_id, (void *)(uintptr_t)blk->offset);
             return;
         }
     }
@@ -216,11 +212,12 @@ static void xsmem_clear_block(struct xsm_pool *xp)
 }
 
 static struct xsm_task_block_node *xsmem_find_task_block_node(const struct xsm_task_pool_node *node,
-    struct xsm_block *blk)
+                                                              struct xsm_block *blk)
 {
     struct xsm_task_block_node *task_blk_node = NULL;
 
-    ka_list_for_each_entry(task_blk_node, &blk->task_blk_head, blk_list) {
+    ka_list_for_each_entry(task_blk_node, &blk->task_blk_head, blk_list)
+    {
         if (task_blk_node->node == node) {
             return task_blk_node;
         }
@@ -230,7 +227,7 @@ static struct xsm_task_block_node *xsmem_find_task_block_node(const struct xsm_t
 }
 
 static void xsmem_task_link_blk(struct xsm_task_pool_node *node, struct xsm_block *blk,
-    struct xsm_task_block_node *task_blk_node)
+                                struct xsm_task_block_node *task_blk_node)
 {
     task_blk_node->blk = blk;
     task_blk_node->node = node;
@@ -248,8 +245,8 @@ static void node_stat_add(struct xsm_task_pool_node *node, struct xsm_block *blk
 {
     node->alloc_size += blk->alloc_size;
     node->real_alloc_size += blk->real_size;
-    node->alloc_peak_size = (node->real_alloc_size > node->alloc_peak_size) ?
-        node->real_alloc_size : node->alloc_peak_size;
+    node->alloc_peak_size = (node->real_alloc_size > node->alloc_peak_size) ? node->real_alloc_size :
+                                                                              node->alloc_peak_size;
 }
 
 static void node_stat_sub(struct xsm_task_pool_node *node, struct xsm_block *blk)
@@ -262,8 +259,7 @@ static void xsmem_pool_stat_add(struct xsm_pool *xp, struct xsm_block *blk)
 {
     xp->alloc_size += blk->alloc_size;
     xp->real_alloc_size += blk->real_size;
-    xp->alloc_peak_size = (xp->real_alloc_size > xp->alloc_peak_size) ?
-        xp->real_alloc_size : xp->alloc_peak_size;
+    xp->alloc_peak_size = (xp->real_alloc_size > xp->alloc_peak_size) ? xp->real_alloc_size : xp->alloc_peak_size;
 }
 
 static void xsmem_pool_stat_sub(struct xsm_pool *xp, struct xsm_block *blk)
@@ -282,11 +278,13 @@ static void xsmem_task_clear_block(struct xsm_pool *xp, struct xsm_task_pool_nod
     struct xsm_task_block_node *task_blk_node = NULL, *tmp = NULL;
 
     ka_task_mutex_lock(&xp->xp_block_mutex);
-    ka_list_for_each_entry_safe(task_blk_node, tmp, &node->task_blk_head, node_list) {
+    ka_list_for_each_entry_safe(task_blk_node, tmp, &node->task_blk_head, node_list)
+    {
         struct xsm_block *blk = task_blk_node->blk;
 
         xsmem_debug("pool %d task %d exit offset %pK alloced by task %d ref %d blk ref %ld flag %lx\n", xp->pool_id,
-            node->task->pid, (void *)(uintptr_t)blk->offset, blk->pid, task_blk_node->refcnt, blk->refcnt, blk->flag);
+                    node->task->pid, (void *)(uintptr_t)blk->offset, blk->pid, task_blk_node->refcnt, blk->refcnt,
+                    blk->flag);
 
         xsmem_task_unlink_blk(task_blk_node);
         blk->refcnt -= task_blk_node->refcnt;
@@ -306,10 +304,11 @@ static struct xsm_pool *xsmem_pool_hnode_find(const char *name, unsigned int nam
     struct xsm_pool *xp = NULL;
     unsigned int key = ka_base_jhash(name, name_len, 0) & XSHM_HLIST_TABLE_MASK;
 
-    ka_hash_for_each_possible(xsmem_key_list, xp, hnode, key)
-        if ((name_len == xp->key_len) && (ka_base_strncmp(name, xp->key, xp->key_len) == 0)) {
-            return xp;
-        }
+    ka_hash_for_each_possible(xsmem_key_list, xp, hnode,
+                              key) if ((name_len == xp->key_len) && (ka_base_strncmp(name, xp->key, xp->key_len) == 0))
+    {
+        return xp;
+    }
 
     return NULL;
 }
@@ -331,10 +330,10 @@ STATIC struct xsm_task *xsm_task_find(int pid)
     struct xsm_task *task = NULL;
     unsigned int key = (u32)pid & TASK_HASH_TABLE_MASK;
 
-    ka_hash_for_each_possible(task_table, task, link, key)
-        if (task->pid == pid) {
-            return task;
-        }
+    ka_hash_for_each_possible(task_table, task, link, key) if (task->pid == pid)
+    {
+        return task;
+    }
 
     return NULL;
 }
@@ -355,7 +354,8 @@ static struct xsm_task_pool_node *xsmem_pool_task_node_find(struct xsm_pool *xp,
 {
     struct xsm_task_pool_node *node = NULL;
 
-    ka_list_for_each_entry(node, &xp->node_list_head, pool_node) {
+    ka_list_for_each_entry(node, &xp->node_list_head, pool_node)
+    {
         if (node->task->pid == pid) {
             return node;
         }
@@ -368,10 +368,10 @@ struct xsm_task_pool_node *task_pool_node_find(struct xsm_task *task, const stru
 {
     struct xsm_task_pool_node *node = NULL;
 
-    ka_list_for_each_entry(node, &task->node_list_head, task_node)
-        if (node->pool == xp) {
-            return node;
-        }
+    ka_list_for_each_entry(node, &task->node_list_head, task_node) if (node->pool == xp)
+    {
+        return node;
+    }
 
     return NULL;
 }
@@ -438,7 +438,8 @@ static void task_pool_node_del(struct xsm_task_pool_node *node)
     ka_task_mutex_unlock(&xp->mutex);
 
     ka_task_mutex_lock(&node->mutex);
-    ka_list_for_each_entry_safe(exit_task, tmp, &node->exit_task_head, node) {
+    ka_list_for_each_entry_safe(exit_task, tmp, &node->exit_task_head, node)
+    {
         xsmem_debug("task %d id %d exit uid %llu\n", node->task->pid, node->task_id, exit_task->uid);
         ka_list_del(&exit_task->node);
         xsmem_drv_kfree(exit_task);
@@ -462,8 +463,8 @@ static bool xsmem_is_task_has_admin(struct xsm_task *task, struct xsm_pool *xp)
         if (node->attr.admin == 1) {
             return true;
         }
-        xsmem_debug("admin %u, alloc %u, write %u, read %u", node->attr.admin,
-            node->attr.alloc, node->attr.write, node->attr.read);
+        xsmem_debug("admin %u, alloc %u, write %u, read %u", node->attr.admin, node->attr.alloc, node->attr.write,
+                    node->attr.read);
     }
 
     return false;
@@ -476,7 +477,8 @@ static void xsmem_pool_notice_other_task(struct xsm_pool *xp, struct xsm_task_po
 
     ka_task_mutex_lock(&xp->mutex);
 
-    ka_list_for_each_entry(node, &xp->node_list_head, pool_node) {
+    ka_list_for_each_entry(node, &xp->node_list_head, pool_node)
+    {
         if (node == cur_node) {
             continue;
         }
@@ -493,8 +495,8 @@ static void xsmem_pool_notice_other_task(struct xsm_pool *xp, struct xsm_task_po
         ka_task_mutex_lock(&node->mutex);
         ka_list_add_tail(&exit_task->node, &node->exit_task_head);
         ka_task_mutex_unlock(&node->mutex);
-        xsmem_debug("pool %d task proc %d uid %llu exit, notice task %d\n",
-            xp->pool_id, cur_node->task->pid, cur_node->task->uid, node->task->pid);
+        xsmem_debug("pool %d task proc %d uid %llu exit, notice task %d\n", xp->pool_id, cur_node->task->pid,
+                    cur_node->task->uid, node->task->pid);
     }
 
     ka_task_mutex_unlock(&xp->mutex);
@@ -542,10 +544,12 @@ static struct xsm_adding_task *xsmem_pool_adding_task_find(struct xsm_pool *xp, 
         return NULL;
     }
 
-    ka_list_for_each_entry(adding_task, &xp->adding_task_list_head, pool_node)
-        if ((adding_task->pid == pid) && (xsm_proc_start_time_compare(&adding_task->start_time, &start_time) == 0)) {
-            return adding_task;
-        }
+    ka_list_for_each_entry(adding_task, &xp->adding_task_list_head,
+                           pool_node) if ((adding_task->pid == pid) &&
+                                          (xsm_proc_start_time_compare(&adding_task->start_time, &start_time) == 0))
+    {
+        return adding_task;
+    }
 
     return NULL;
 }
@@ -586,7 +590,8 @@ static void xsmem_pool_adding_task_clear(struct xsm_pool *xp)
 {
     struct xsm_adding_task *adding_task = NULL, *tmp = NULL;
 
-    ka_list_for_each_entry_safe(adding_task, tmp, &xp->adding_task_list_head, pool_node) {
+    ka_list_for_each_entry_safe(adding_task, tmp, &xp->adding_task_list_head, pool_node)
+    {
         xsmem_pool_adding_task_del(xp, adding_task);
     }
 }
@@ -601,7 +606,8 @@ static void xsmem_exit_adding_task_find_and_del(struct xsm_pool *xp)
         return;
     }
 
-    ka_list_for_each_entry_safe(adding_task, tmp, &xp->adding_task_list_head, pool_node) {
+    ka_list_for_each_entry_safe(adding_task, tmp, &xp->adding_task_list_head, pool_node)
+    {
         if ((xsm_get_task_start_time(adding_task->pid, &start_time) != 0) ||
             (xsm_proc_start_time_compare(&adding_task->start_time, &start_time) != 0)) {
             xsmem_pool_adding_task_del(xp, adding_task);
@@ -650,7 +656,8 @@ static int xsmem_pool_task_add(struct xsm_pool *xp, int pid, GroupShareAttr attr
     ka_task_wake_up_interruptible(&xp->adding_task_wq);
 
     xsmem_run_info("Xsmem pool task add. (comm=%s, tgid=%d, pid=%d, pool_id=%d, process=%d)\n",
-        ka_task_get_current()->comm, ka_task_get_current()->tgid, ka_task_get_current()->pid, xp->pool_id, pid);
+                   ka_task_get_current()->comm, ka_task_get_current()->tgid, ka_task_get_current()->pid, xp->pool_id,
+                   pid);
 out:
     ka_task_mutex_unlock(&xp->mutex);
 
@@ -673,14 +680,13 @@ static int xsmem_pool_task_del(struct xsm_pool *xp, int pid)
     xsmem_pool_adding_task_del(xp, adding_task);
     ka_task_mutex_unlock(&xp->mutex);
 
-    xsmem_info("<%s:%d,%d> xsmem_pool_task_del, pool_id:%d, pid:%d\n",
-        ka_task_get_current()->comm, ka_task_get_current()->tgid, ka_task_get_current()->pid, xp->pool_id, pid);
+    xsmem_info("<%s:%d,%d> xsmem_pool_task_del, pool_id:%d, pid:%d\n", ka_task_get_current()->comm,
+               ka_task_get_current()->tgid, ka_task_get_current()->pid, xp->pool_id, pid);
 
     return 0;
 }
 
-static int xsmem_pool_task_attr_get(const struct xsm_task *task, struct xsm_pool *xp, int timeout,
-    GroupShareAttr *attr)
+static int xsmem_pool_task_attr_get(const struct xsm_task *task, struct xsm_pool *xp, int timeout, GroupShareAttr *attr)
 {
     struct xsm_adding_task *adding_task = NULL;
     int ret, pid = (int)ka_task_get_current()->tgid, adding_id = xp->adding_id;
@@ -702,8 +708,8 @@ static int xsmem_pool_task_attr_get(const struct xsm_task *task, struct xsm_pool
             }
 
             xsmem_debug("Find adding task. "
-                "(task_id=%d; pool_id=%d; timeout=%dms; admin=%u; alloc=%u; write=%u; adding_task=%d)\n",
-                task->pid, xp->pool_id, timeout, attr->admin, attr->alloc, attr->write, adding_task->pid);
+                        "(task_id=%d; pool_id=%d; timeout=%dms; admin=%u; alloc=%u; write=%u; adding_task=%d)\n",
+                        task->pid, xp->pool_id, timeout, attr->admin, attr->alloc, attr->write, adding_task->pid);
 
             xsmem_pool_adding_task_del(xp, adding_task);
             ka_task_mutex_unlock(&xp->mutex);
@@ -720,11 +726,11 @@ static int xsmem_pool_task_attr_get(const struct xsm_task *task, struct xsm_pool
         jf_timeout = ka_system_msecs_to_jiffies((unsigned int)timeout);
         jf_timeout = (escaped >= jf_timeout) ? 1 : jf_timeout - escaped;
 
-        xsmem_debug("<%s:%d,%d> the pool %d task %d begin wait add event adding_id %d\n",
-            ka_task_get_current()->comm, ka_task_get_current()->tgid, ka_task_get_current()->pid, xp->pool_id, task->pid, adding_id);
+        xsmem_debug("<%s:%d,%d> the pool %d task %d begin wait add event adding_id %d\n", ka_task_get_current()->comm,
+                    ka_task_get_current()->tgid, ka_task_get_current()->pid, xp->pool_id, task->pid, adding_id);
 
-        ret_wait_event =
-            ka_task_wait_event_interruptible_timeout(xp->adding_task_wq, (adding_id != xp->adding_id), (long)jf_timeout);
+        ret_wait_event = ka_task_wait_event_interruptible_timeout(xp->adding_task_wq, (adding_id != xp->adding_id),
+                                                                  (long)jf_timeout);
         if (ret_wait_event <= 0) {
             if (ret_wait_event == 0) {
                 ret = -EAGAIN;
@@ -1024,8 +1030,7 @@ static bool xsmem_confirm_user(void)
         return true;
     }
 
-    if (cred != NULL && (cred->uid.val == g_xsmem_authorized_user_id ||
-        cred->uid.val == XSMEM_ROOT_USER_ID)) {
+    if (cred != NULL && (cred->uid.val == g_xsmem_authorized_user_id || cred->uid.val == XSMEM_ROOT_USER_ID)) {
         return true;
     }
 
@@ -1102,8 +1107,8 @@ static int ioctl_xsmem_pool_register(struct xsm_task *task, unsigned int cmd, un
     ka_list_add_tail(&xp->register_task_list, &task->register_xp_list_head);
     ka_task_mutex_unlock(&task->mutex);
 
-    xsmem_info("Xsmem pool register success. (pool_name=%s; id=%d; algo=%d; size=%lx)\n",
-        key_tmp, pool_id, reg_arg.algo, reg_arg.pool_size);
+    xsmem_info("Xsmem pool register success. (pool_name=%s; id=%d; algo=%d; size=%lx)\n", key_tmp, pool_id,
+               reg_arg.algo, reg_arg.pool_size);
 
     return pool_id;
 }
@@ -1121,7 +1126,8 @@ static int ioctl_xsmem_pool_unregister(struct xsm_task *task, unsigned int cmd, 
     int pool_id = (int)arg;
 
     ka_task_mutex_lock(&task->mutex);
-    ka_list_for_each_entry(xp_tmp, &task->register_xp_list_head, register_task_list) {
+    ka_list_for_each_entry(xp_tmp, &task->register_xp_list_head, register_task_list)
+    {
         if (xp_tmp->pool_id == pool_id) {
             xp = xp_tmp;
             break;
@@ -1155,7 +1161,8 @@ static int ioctl_xsmem_cache_create(struct xsm_task *task, unsigned int cmd, uns
     struct xsm_pool *xp = NULL;
     int ret;
 
-    if (copy_from_user_safe(&cache_arg, (struct xsm_cache_create_arg __ka_user *)(uintptr_t)arg, sizeof(cache_arg)) != 0) {
+    if (copy_from_user_safe(&cache_arg, (struct xsm_cache_create_arg __ka_user *)(uintptr_t)arg, sizeof(cache_arg)) !=
+        0) {
         xsmem_err("Copy_from_user failed.\n");
         return -EFAULT;
     }
@@ -1168,8 +1175,8 @@ static int ioctl_xsmem_cache_create(struct xsm_task *task, unsigned int cmd, uns
 
     if (xp->create_pid != ka_task_get_current()->tgid) {
         xsmem_pool_put(xp);
-        xsmem_err("Task has no cache alloc prop. (proc=%s; tgid=%d; pid=%d; pool_id=%d)\n",
-            ka_task_get_current()->comm, ka_task_get_current()->tgid, ka_task_get_current()->pid, cache_arg.pool_id);
+        xsmem_err("Task has no cache alloc prop. (proc=%s; tgid=%d; pid=%d; pool_id=%d)\n", ka_task_get_current()->comm,
+                  ka_task_get_current()->tgid, ka_task_get_current()->pid, cache_arg.pool_id);
         return -EPERM;
     }
 
@@ -1191,17 +1198,17 @@ static int ioctl_xsmem_cache_create(struct xsm_task *task, unsigned int cmd, uns
     return 0;
 }
 
-static unsigned int _xsmem_show_alloced_mem_info(struct xsm_block *blk,
-    unsigned int max_show_cnt)
+static unsigned int _xsmem_show_alloced_mem_info(struct xsm_block *blk, unsigned int max_show_cnt)
 {
     struct xsm_task_block_node *task_blk_node = NULL;
     unsigned int show_alloced_mem_cnt = 0;
 
-    ka_list_for_each_entry(task_blk_node, &blk->task_blk_head, blk_list) {
+    ka_list_for_each_entry(task_blk_node, &blk->task_blk_head, blk_list)
+    {
         if (show_alloced_mem_cnt < max_show_cnt) {
             show_alloced_mem_cnt++;
-            xsmem_warn("va=0x%pK; flag=%lx; pid=%d, ref=%d\n",
-                (void *)(uintptr_t)blk->offset, blk->flag, task_blk_node->node->task->pid, task_blk_node->refcnt);
+            xsmem_warn("va=0x%pK; flag=%lx; pid=%d, ref=%d\n", (void *)(uintptr_t)blk->offset, blk->flag,
+                       task_blk_node->node->task->pid, task_blk_node->refcnt);
         } else {
             break;
         }
@@ -1243,7 +1250,7 @@ static void xsmem_show_alloced_mem_info(struct xsm_pool *xp)
     }
 
     xsmem_warn("Show alloced mem end. (pool_id=%d; os_mem(Bytes)=%lu; cache_mem(Bytes)=%lu; show_cnt=%u)\n",
-        xp->pool_id, os_mem, cache_mem, show_cnt);
+               xp->pool_id, os_mem, cache_mem, show_cnt);
     ka_task_mutex_unlock(&xp->xp_block_mutex);
 }
 
@@ -1253,8 +1260,8 @@ static int ioctl_xsmem_cache_destroy(struct xsm_task *task, unsigned int cmd, un
     struct xsm_cache_destroy_arg cache_arg;
     struct xsm_pool *xp = NULL;
 
-    if (copy_from_user_safe(&cache_arg, (struct xsm_cache_destroy_arg __ka_user *)(uintptr_t)arg,
-            sizeof(cache_arg)) != 0) {
+    if (copy_from_user_safe(&cache_arg, (struct xsm_cache_destroy_arg __ka_user *)(uintptr_t)arg, sizeof(cache_arg)) !=
+        0) {
         xsmem_err("Copy_from_user failed.\n");
         return -EFAULT;
     }
@@ -1267,8 +1274,8 @@ static int ioctl_xsmem_cache_destroy(struct xsm_task *task, unsigned int cmd, un
 
     if (xp->create_pid != ka_task_get_current()->tgid) {
         xsmem_pool_put(xp);
-        xsmem_err("Task has no cache free prop. (proc=%s; tgid=%d; pid=%d; pool_id=%d)\n",
-            ka_task_get_current()->comm, ka_task_get_current()->tgid, ka_task_get_current()->pid, cache_arg.pool_id);
+        xsmem_err("Task has no cache free prop. (proc=%s; tgid=%d; pid=%d; pool_id=%d)\n", ka_task_get_current()->comm,
+                  ka_task_get_current()->tgid, ka_task_get_current()->pid, cache_arg.pool_id);
         return -EPERM;
     }
 
@@ -1291,7 +1298,6 @@ static int ioctl_xsmem_cache_destroy(struct xsm_task *task, unsigned int cmd, un
     xsmem_pool_put(xp);
     return 0;
 }
-
 
 static int ioctl_xsmem_cache_query(struct xsm_task *task, unsigned int cmd, unsigned long arg)
 {
@@ -1350,8 +1356,7 @@ static int ioctl_xsmem_cache_query(struct xsm_task *task, unsigned int cmd, unsi
     }
 
     if (cache_cnt != 0) {
-        ret = (int)copy_to_user_safe(query_arg.cache_buff, cache_buff,
-            cache_cnt * sizeof(GrpQueryGroupAddrInfo));
+        ret = (int)copy_to_user_safe(query_arg.cache_buff, cache_buff, cache_cnt * sizeof(GrpQueryGroupAddrInfo));
     }
     ret += (int)ka_base_put_user(cache_cnt, &usr_arg->cache_cnt);
 
@@ -1419,8 +1424,7 @@ static int ioctl_xsmem_pool_task_common(struct xsm_task *task, unsigned int cmd,
     if (xsmem_is_task_has_admin(task, xp) == false) {
         ka_task_mutex_unlock(&task->mutex);
         xsmem_pool_put(xp);
-        xsmem_err("task %d has no admin attr in pool %d(creat_pid %d).\n",
-            task->pid, proc_arg.pool_id, create_pid);
+        xsmem_err("task %d has no admin attr in pool %d(creat_pid %d).\n", task->pid, proc_arg.pool_id, create_pid);
         return -EINVAL;
     }
     ka_task_mutex_unlock(&task->mutex);
@@ -1470,7 +1474,8 @@ static int ioctl_xsmem_pool_attach(struct xsm_task *task, unsigned int cmd, unsi
     attach.uid = task->uid;
     attach.cache_type = xp->cache_type;
     xsmem_run_info("<%s:%d,%d> pool_id %d tid %d uid %llu attach success, refcnt %d\n", ka_task_get_current()->comm,
-        ka_task_get_current()->tgid, ka_task_get_current()->pid, pool_id, ka_task_get_current()->tgid, attach.uid, ka_base_atomic_read(&xp->refcnt));
+                   ka_task_get_current()->tgid, ka_task_get_current()->pid, pool_id, ka_task_get_current()->tgid,
+                   attach.uid, ka_base_atomic_read(&xp->refcnt));
     xsmem_pool_put(xp);
 
     ret = (int)ka_base_put_user(attach.uid, &usr_arg->uid);
@@ -1492,7 +1497,8 @@ static int ioctl_xsmem_pool_detach(struct xsm_task *task, unsigned int cmd, unsi
     ka_task_mutex_lock(&task->mutex);
     ret = xsmem_pool_detach(task, xp);
     if (ret == 0) {
-        xsmem_info("pool_id %d task %d detach success,  refcnt %d\n", pool_id, ka_task_get_current()->tgid, ka_base_atomic_read(&xp->refcnt));
+        xsmem_info("pool_id %d task %d detach success,  refcnt %d\n", pool_id, ka_task_get_current()->tgid,
+                   ka_base_atomic_read(&xp->refcnt));
     }
     ka_task_mutex_unlock(&task->mutex);
 
@@ -1506,9 +1512,10 @@ static void xsmem_task_alloc_info_show(struct xsm_pool *xp)
     struct xsm_task_pool_node *node = NULL;
 
     ka_task_mutex_lock(&xp->mutex);
-    ka_list_for_each_entry(node, &xp->node_list_head, pool_node) {
+    ka_list_for_each_entry(node, &xp->node_list_head, pool_node)
+    {
         ka_dfx_pr_notice("Task alloc info, size:Bytes. (pid=%d; alloc_peak_size=%llu; real_alloc_size=%llu)\n",
-            node->task->pid, node->alloc_peak_size, node->real_alloc_size);
+                         node->task->pid, node->alloc_peak_size, node->real_alloc_size);
     }
     ka_task_mutex_unlock(&xp->mutex);
 }
@@ -1521,8 +1528,8 @@ static int ioctl_xsmem_block_alloc(struct xsm_pool *xp, struct xsm_task_pool_nod
     int ret;
 
     if (ka_unlikely(node->attr.alloc == 0)) {
-        xsmem_err("Task has no alloc prop. (proc=%s; tgid=%d; pid=%d; pool_id=%d)\n",
-            ka_task_get_current()->comm, ka_task_get_current()->tgid, ka_task_get_current()->pid, xp->pool_id);
+        xsmem_err("Task has no alloc prop. (proc=%s; tgid=%d; pid=%d; pool_id=%d)\n", ka_task_get_current()->comm,
+                  ka_task_get_current()->tgid, ka_task_get_current()->pid, xp->pool_id);
         return -EINVAL;
     }
 
@@ -1557,9 +1564,10 @@ static int ioctl_xsmem_block_alloc(struct xsm_pool *xp, struct xsm_task_pool_nod
     blk->flag = arg->alloc.flag;
     ret = xp->algo->xsm_block_alloc(xp, blk);
     if (ret < 0) {
-        ka_dfx_pr_notice("Can not alloc block, size:Bytes. (pool_id=%d; pool_size=%lu; alloc_peak_size=%lu; alloced_size=%lu; "
-            "current_alloc_size=%lu; flag=0x%lx; ret=%d)\n", xp->pool_id, xp->pool_size, xp->alloc_peak_size,
-            xp->real_alloc_size, blk->alloc_size, blk->flag, ret);
+        ka_dfx_pr_notice(
+            "Can not alloc block, size:Bytes. (pool_id=%d; pool_size=%lu; alloc_peak_size=%lu; alloced_size=%lu; "
+            "current_alloc_size=%lu; flag=0x%lx; ret=%d)\n",
+            xp->pool_id, xp->pool_size, xp->alloc_peak_size, xp->real_alloc_size, blk->alloc_size, blk->flag, ret);
         xsmem_task_alloc_info_show(xp);
         xsmem_blockid_put(xp->mnt_ns, blkid);
         xsmem_drv_kfree(blk);
@@ -1578,10 +1586,11 @@ static int ioctl_xsmem_block_alloc(struct xsm_pool *xp, struct xsm_task_pool_nod
         xsmem_pool_stat_add(xp, blk);
 
         xsmem_debug("Block alloc success, size:Bytes. (pool=%d; task=%d; alloc_size=%lu; offset=0x%pK; real_size=%lu; "
-            "flag=0x%lx; pool_alloc_size=%lu; pool_real_size=%lu; alloc_peak_size=%lu; pool_size=%lu; "
-            "task_alloc_size=%llu; task_real_size=%llu; task_peak_size=%llu)\n", xp->pool_id, node->task->pid,
-            blk->alloc_size, (void *)(uintptr_t)blk->offset, blk->real_size, blk->flag, xp->alloc_size, xp->real_alloc_size,
-            xp->alloc_peak_size, xp->pool_size, node->alloc_size, node->real_alloc_size, node->alloc_peak_size);
+                    "flag=0x%lx; pool_alloc_size=%lu; pool_real_size=%lu; alloc_peak_size=%lu; pool_size=%lu; "
+                    "task_alloc_size=%llu; task_real_size=%llu; task_peak_size=%llu)\n",
+                    xp->pool_id, node->task->pid, blk->alloc_size, (void *)(uintptr_t)blk->offset, blk->real_size,
+                    blk->flag, xp->alloc_size, xp->real_alloc_size, xp->alloc_peak_size, xp->pool_size,
+                    node->alloc_size, node->real_alloc_size, node->alloc_peak_size);
         ka_task_mutex_unlock(&xp->xp_block_mutex);
     }
 
@@ -1608,8 +1617,8 @@ static int ioctl_xsmem_block_free(struct xsm_pool *xp, struct xsm_task_pool_node
         return -ENODEV;
     }
 
-    xsmem_debug("Block free. (pool=%d; task=%d; offset=0x%pK; alloced_task=%d; ref=%d; blk_ref=%ld)\n",
-        xp->pool_id, node->task->pid, (void *)(uintptr_t)blk->offset, blk->pid, task_blk_node->refcnt, blk->refcnt);
+    xsmem_debug("Block free. (pool=%d; task=%d; offset=0x%pK; alloced_task=%d; ref=%d; blk_ref=%ld)\n", xp->pool_id,
+                node->task->pid, (void *)(uintptr_t)blk->offset, blk->pid, task_blk_node->refcnt, blk->refcnt);
 
     task_blk_node->refcnt--;
     if (task_blk_node->refcnt <= 0) {
@@ -1625,9 +1634,9 @@ static int ioctl_xsmem_block_free(struct xsm_pool *xp, struct xsm_task_pool_node
         xsmem_pool_stat_sub(xp, blk);
         xsmem_blockid_put(xp->mnt_ns, blk->id);
         xsmem_debug("Block free success. (pool=%d; task=%d; alloc_size=0x%lx; offset=0x%pK; real_size=0x%lx; pid=%d; "
-            "pool_alloc_size=0x%lx; pool_real_size=0x%lx; task_alloc_size=0x%llx; task_real_size=0x%llx)\n",
-            xp->pool_id, node->task->pid, blk->alloc_size, (void *)(uintptr_t)blk->offset, blk->real_size, blk->pid,
-            xp->alloc_size, xp->real_alloc_size, node->alloc_size, node->real_alloc_size);
+                    "pool_alloc_size=0x%lx; pool_real_size=0x%lx; task_alloc_size=0x%llx; task_real_size=0x%llx)\n",
+                    xp->pool_id, node->task->pid, blk->alloc_size, (void *)(uintptr_t)blk->offset, blk->real_size,
+                    blk->pid, xp->alloc_size, xp->real_alloc_size, node->alloc_size, node->real_alloc_size);
         xsmem_block_destroy(xp, blk);
     }
 
@@ -1679,8 +1688,8 @@ static int ioctl_xsmem_block_common(struct xsm_task *task, unsigned int cmd, uns
     if (node == NULL) {
         ka_task_mutex_unlock(&task->mutex);
         xsmem_pool_put(xp);
-        xsmem_err("Task is not attached to pool. (proc=%s, tgid=%d, pid=%d, pool_id=%d)\n",
-            ka_task_get_current()->comm, ka_task_get_current()->tgid, ka_task_get_current()->pid, block_arg.pool_id);
+        xsmem_err("Task is not attached to pool. (proc=%s, tgid=%d, pid=%d, pool_id=%d)\n", ka_task_get_current()->comm,
+                  ka_task_get_current()->tgid, ka_task_get_current()->pid, block_arg.pool_id);
         return -EINVAL;
     }
 
@@ -1739,8 +1748,8 @@ static int xsmem_pool_block_get(struct xsm_pool *xp, struct xsm_task_pool_node *
     arg->get.blkid = (u32)blk->id;
 
     xsmem_debug("pool %d task %d get offset %pK, blk offset %pK size %lx alloced by task %d ref %d blk ref %ld\n",
-        xp->pool_id, node->task->pid, (void *)(uintptr_t)offset, (void *)(uintptr_t)blk->offset, blk->alloc_size,
-        blk->pid, task_blk_node->refcnt, blk->refcnt);
+                xp->pool_id, node->task->pid, (void *)(uintptr_t)offset, (void *)(uintptr_t)blk->offset,
+                blk->alloc_size, blk->pid, task_blk_node->refcnt, blk->refcnt);
 
     ka_task_mutex_unlock(&xp->xp_block_mutex);
 
@@ -1758,7 +1767,8 @@ static int ioctl_xsmem_block_get(struct xsm_task *task, unsigned int cmd, unsign
         return -EFAULT;
     }
     ka_task_mutex_lock(&task->mutex);
-    ka_list_for_each_entry(node, &task->node_list_head, task_node) {
+    ka_list_for_each_entry(node, &task->node_list_head, task_node)
+    {
         int ret = xsmem_pool_block_get(node->pool, node, &block_arg);
         if (ret == 0) {
             int pool_id = node->pool->pool_id;
@@ -1857,7 +1867,7 @@ static int ioctl_xsmem_pool_name_query(struct xsm_task *task, unsigned int cmd, 
 
     xsmem_debug("Key info. (key=%s; key_len=%u; query_key_len=%u)\n", xp->key, key_len, query_arg.key_len);
     if ((key_len > 0) && (key_len < query_arg.key_len)) {
-        ret = (int)copy_to_user_safe((void*)query_arg.key, xp->key, key_len);
+        ret = (int)copy_to_user_safe((void *)query_arg.key, xp->key, key_len);
     }
 
     xsmem_pool_put(xp);
@@ -1886,7 +1896,8 @@ static int ioctl_xsmem_pool_task_query(struct xsm_task *task, unsigned int cmd, 
 
     ka_task_mutex_lock(&xp->mutex);
 
-    ka_list_for_each_entry(node, &xp->node_list_head, pool_node) {
+    ka_list_for_each_entry(node, &xp->node_list_head, pool_node)
+    {
         if (task_num < query_arg.pid_num) {
             task_pid = (int)node->task->vpid;
             ret += (int)ka_base_put_user(task_pid, query_arg.pid + task_num);
@@ -1974,10 +1985,11 @@ static int xsmem_task_in_pool_query(struct xsm_query_task_pool_arg *query_arg)
     }
 
     ka_task_mutex_lock(&task->mutex);
-    ka_list_for_each_entry(node, &task->node_list_head, task_node) {
+    ka_list_for_each_entry(node, &task->node_list_head, task_node)
+    {
         if (pool_num >= query_arg->pool_num) {
-            xsmem_info("<%s:%d,%d> task in pool query, query pid: %d, pool num: %d\n",
-                ka_task_get_current()->comm, ka_task_get_current()->tgid, ka_task_get_current()->pid, query_arg->pid, query_arg->pool_num);
+            xsmem_info("<%s:%d,%d> task in pool query, query pid: %d, pool num: %d\n", ka_task_get_current()->comm,
+                       ka_task_get_current()->tgid, ka_task_get_current()->pid, query_arg->pid, query_arg->pool_num);
             break;
         }
 
@@ -2007,7 +2019,8 @@ static int xsmem_adding_task_search(int id, void *p, void *data)
 
     if (query_arg->query_num >= query_arg->pool_num) {
         xsmem_info("<%s:%d,%d> adding task search, query pid: %d, query num: %d, pool num: %d\n",
-            ka_task_get_current()->comm, ka_task_get_current()->tgid, ka_task_get_current()->pid, query_arg->pid, query_arg->query_num, query_arg->pool_num);
+                   ka_task_get_current()->comm, ka_task_get_current()->tgid, ka_task_get_current()->pid, query_arg->pid,
+                   query_arg->query_num, query_arg->pool_num);
         return ret;
     }
 
@@ -2086,8 +2099,8 @@ static int ioctl_xsmem_poll_exit_task(struct xsm_task *task, unsigned int cmd, u
         ka_task_mutex_lock(&node->mutex);
         if ((ka_list_empty_careful(&node->exit_task_head)) == 0) {
             exit_task = ka_list_first_entry(&node->exit_task_head, struct xsm_exit_task, node);
-            xsmem_info("pool %d task %d poll task pid %d uid %llu exit\n",
-                xp->pool_id, task->pid, exit_task->pid, exit_task->uid);
+            xsmem_info("pool %d task %d poll task pid %d uid %llu exit\n", xp->pool_id, task->pid, exit_task->pid,
+                       exit_task->uid);
             query_arg.uid = exit_task->uid;
             ret = (int)ka_base_put_user(query_arg.uid, &usr_arg->uid);
             ka_list_del(&exit_task->node);
@@ -2135,6 +2148,44 @@ static int ioctl_xsmem_pool_va_check(struct xsm_task *task, unsigned int cmd, un
     return (ret != 0) ? ret : (int)ka_base_put_user(query_arg.result, &usr_arg->result);
 }
 
+static int ioctl_xsmem_feature_get(struct xsm_task *task, unsigned int cmd, unsigned long arg)
+{
+    struct xsm_feature_get_arg *karg;
+    const struct buff_chip_features *feat;
+    unsigned int i;
+    unsigned int j;
+    int ret;
+
+    (void)task;
+    (void)cmd;
+
+    karg = xsmem_drv_kzalloc(sizeof(*karg), KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
+    if (karg == NULL) {
+        xsmem_err("ioctl_xsmem_feature_get: kzalloc failed.\n");
+        return -ENOMEM;
+    }
+
+    for (i = 0; i < BUFF_FEATURE_DEV_NUM; i++) {
+        feat = buff_get_dev_features(i);
+        if (feat == NULL) {
+            /* No chip config for this dev_id, bitmap stays 0 (all features disabled) */
+            continue;
+        }
+        for (j = 0; j < feat->feature_count; j++) {
+            karg->feature_bitmaps[i] |= (1ULL << feat->features[j]);
+        }
+    }
+
+    ret = copy_to_user_safe((struct xsm_feature_get_arg __ka_user *)(uintptr_t)arg, karg, sizeof(*karg));
+    xsmem_drv_kfree(karg);
+    if (ret != 0) {
+        xsmem_err("ioctl_xsmem_feature_get: copy_to_user failed (ret=%d)\n", ret);
+        return -EFAULT;
+    }
+
+    return 0;
+}
+
 static int (*const xsmem_ioctl_handles[XSMEM_MAX_CMD])(struct xsm_task *task, unsigned int cmd, unsigned long arg) = {
     [_KA_IOC_NR(XSMEM_POOL_REGISTER)] = ioctl_xsmem_pool_register,
     [_KA_IOC_NR(XSMEM_POOL_UNREGISTER)] = ioctl_xsmem_pool_unregister,
@@ -2158,6 +2209,7 @@ static int (*const xsmem_ioctl_handles[XSMEM_MAX_CMD])(struct xsm_task *task, un
     [_KA_IOC_NR(XSMEM_CACHE_QUERY)] = ioctl_xsmem_cache_query,
     [_KA_IOC_NR(XSMEM_POOL_FLAG_QUERY)] = ioctl_xsmem_priv_flag_query,
     [_KA_IOC_NR(XSMEM_VADDR_CHECK)] = ioctl_xsmem_pool_va_check,
+    [_KA_IOC_NR(XSMEM_FEATURE_GET)] = ioctl_xsmem_feature_get,
 };
 
 STATIC long xsmem_ioctl(ka_file_t *file, unsigned int cmd, unsigned long arg)
@@ -2222,8 +2274,8 @@ STATIC int xsmem_open(ka_inode_t *inode, ka_file_t *file)
 
     proc_fs_add_task(task);
 
-    xsmem_run_info("Xsmem open. (task_name=%s; tgid=%d; pid=%d; task_vpid=%d)\n",
-        ka_task_get_current()->comm, ka_task_get_current()->tgid, ka_task_get_current()->pid, task->vpid);
+    xsmem_run_info("Xsmem open. (task_name=%s; tgid=%d; pid=%d; task_vpid=%d)\n", ka_task_get_current()->comm,
+                   ka_task_get_current()->tgid, ka_task_get_current()->pid, task->vpid);
 
     return 0;
 }
@@ -2239,21 +2291,24 @@ STATIC int xsmem_release(ka_inode_t *inode, ka_file_t *file)
         return -ESRCH;
     }
 
-    xsmem_info("<%s:%d,%d> task %d release\n",
-        ka_task_get_current()->comm, ka_task_get_current()->tgid, ka_task_get_current()->pid, task->pid);
+    xsmem_info("<%s:%d,%d> task %d release\n", ka_task_get_current()->comm, ka_task_get_current()->tgid,
+               ka_task_get_current()->pid, task->pid);
 
     ka_task_mutex_lock(&task->mutex);
-    ka_list_for_each_entry_safe(node, node_tmp, &task->node_list_head, task_node) {
+    ka_list_for_each_entry_safe(node, node_tmp, &task->node_list_head, task_node)
+    {
         xp = node->pool;
         xsmem_info("Release. (pid=%d; pool_id=%d; task_id=%d; refcnt=%d; task_alloc_peak_size=%llu; "
-            "pool_alloc_peak_size=%lu)\n", task->pid, xp->pool_id, node->task_id, ka_base_atomic_read(&xp->refcnt),
-            node->alloc_peak_size, xp->alloc_peak_size);
+                   "pool_alloc_peak_size=%lu)\n",
+                   task->pid, xp->pool_id, node->task_id, ka_base_atomic_read(&xp->refcnt), node->alloc_peak_size,
+                   xp->alloc_peak_size);
 
         xsmem_pool_notice_other_task(xp, node);
         xsmem_pool_task_detach(node);
     }
 
-    ka_list_for_each_entry_safe(xp, xp_tmp, &task->register_xp_list_head, register_task_list) {
+    ka_list_for_each_entry_safe(xp, xp_tmp, &task->register_xp_list_head, register_task_list)
+    {
         ka_list_del(&xp->register_task_list);
         xsmem_task_unregister_pool(task, xp);
     }
@@ -2279,38 +2334,37 @@ static int xsmem_mmap_not_support(ka_file_t *file, ka_vm_area_struct_t *vma)
 }
 
 static ka_file_operations_t xsmem_fops = {
-    .owner          = KA_THIS_MODULE,
-    .open           = xsmem_open,
-    .release        = xsmem_release,
+    .owner = KA_THIS_MODULE,
+    .open = xsmem_open,
+    .release = xsmem_release,
     .unlocked_ioctl = xsmem_ioctl,
-    .mmap           = xsmem_mmap_not_support,
+    .mmap = xsmem_mmap_not_support,
 };
 
-#ifndef CFG_FEATURE_EXTERNAL_CDEV
 static ka_miscdevice_t xsmem_dev;
-static int xsmem_dev_reg(void)
+int xsmem_dev_reg_internal(void)
 {
     xsmem_dev.minor = KA_MISC_DYNAMIC_MINOR;
-    xsmem_dev.name  = XSMEM_DEVICE_NAME;
-    xsmem_dev.fops  = &xsmem_fops;
+    xsmem_dev.name = XSMEM_DEVICE_NAME;
+    xsmem_dev.fops = &xsmem_fops;
     return ka_driver_misc_register(&xsmem_dev);
 }
 
-static void xsmem_dev_unreg(void)
+void xsmem_dev_unreg_internal(void)
 {
     ka_driver_misc_deregister(&xsmem_dev);
 }
-#else
+
 static int xsmem_notifier_release(ka_file_t *file, unsigned long mode)
 {
     return xsmem_release(NULL, file);
 }
 
 static const struct notifier_operations xsmem_notifier_ops = {
-    .notifier_call =  xsmem_notifier_release,
+    .notifier_call = xsmem_notifier_release,
 };
 
-static int xsmem_dev_reg(void)
+int xsmem_dev_reg_external(void)
 {
     int ret;
 
@@ -2331,31 +2385,22 @@ static int xsmem_dev_reg(void)
     return ret;
 }
 
-static void xsmem_dev_unreg(void)
+void xsmem_dev_unreg_external(void)
 {
     (void)drv_ascend_unregister_sub_module(DAVINCI_XSMEM_SUB_MODULE_NAME);
 }
-#endif
 
-static void xsmem_algo_register(void)
-{
-#ifdef CFG_FEATURE_SUPPORT_VMA
-    xsmem_register_algo(xsm_get_vma_algo());
-#endif
-#ifdef CFG_FEATURE_SUPPORT_SP
-    xsmem_register_algo(xsm_get_sp_algo());
-#endif
-
-#ifdef CFG_FEATURE_SUPPORT_VMA
-    xsmem_register_algo(xsm_get_cache_vma_algo());
-#endif
-#ifdef CFG_FEATURE_SUPPORT_SP
-    xsmem_register_algo(xsm_get_cache_sp_algo());
-    /* vma algo for cache memory assignment */
-    xsmem_register_algo(xsm_get_vma_algo());
-#endif
-}
-
+/*
+ * xsmem_dev_reg() / xsmem_dev_unreg() are platform-abstracted functions.
+ * Their actual implementations are resolved at link time via
+ * xsmem_framework_platform.h, which dispatches to platform-specific
+ * code (e.g., xsmem_framework_host.c for host).
+ * On the host platform, registration involves:
+ *   1) uda_notifier_register() – to listen for device init events
+ *   2) xsmem_dev_reg_external() – drv_davinci_register_sub_module()
+ *   3) xsmem_algo_register() – register pool algorithms
+ * See xsmem_framework_host.c for the host implementation.
+ */
 STATIC int KA_MODULE_INIT xsmem_init(void)
 {
     int ret;
@@ -2365,8 +2410,6 @@ STATIC int KA_MODULE_INIT xsmem_init(void)
         xsmem_err("misc_register failed, %d\n", ret);
         return ret;
     }
-    xsmem_algo_register();
-
     xsmem_id_switch_init();
     xsmem_proc_fs_init();
 

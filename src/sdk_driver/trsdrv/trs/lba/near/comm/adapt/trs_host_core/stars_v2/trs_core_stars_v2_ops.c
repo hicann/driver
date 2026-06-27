@@ -47,8 +47,7 @@ int trs_core_stars_v2_ops_get_stream_from_cqe(struct trs_id_inst *inst, void *hw
     return trs_stars_v2_cqe_get_streamid(inst, hw_cqe, stream_id);
 }
 
-int trs_core_stars_v2_ops_cqe_to_logic_cqe(struct trs_id_inst *inst, void *hw_cqe,
-    struct trs_logic_cqe *logic_cqe)
+int trs_core_stars_v2_ops_cqe_to_logic_cqe(struct trs_id_inst *inst, void *hw_cqe, struct trs_logic_cqe *logic_cqe)
 {
 #ifndef EMU_ST
     trs_stars_v2_cqe_to_logic_cqe(hw_cqe, logic_cqe);
@@ -73,7 +72,7 @@ static int trs_core_stars_v2_id_alloc(struct trs_id_inst *inst, int type, u32 fl
     if ((flag & TSDRV_RES_RANGE_ID) != 0) {
         return trs_id_alloc_in_range(inst, type, id, para);
     }
-    return trs_id_alloc_ex(inst, type, 0, id, 1);
+    return trs_id_alloc_ex(inst, type, flag, id, 1);
 }
 
 static bool trs_core_stars_v2_ops_is_drop_cqe(struct trs_id_inst *inst, struct trs_logic_cqe *logic_cqe)
@@ -138,7 +137,4 @@ static struct trs_core_adapt_ops trs_core_stars_v2_ops = {
     .res_num_query = trs_host_res_num_query,
 };
 
-struct trs_core_adapt_ops *trs_core_get_stars_v2_adapt_ops(void)
-{
-    return &trs_core_stars_v2_ops;
-}
+struct trs_core_adapt_ops *trs_core_get_stars_v2_adapt_ops(void) { return &trs_core_stars_v2_ops; }

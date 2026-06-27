@@ -40,8 +40,8 @@ int vmng_msg_recv_common_verfiy_info(u32 dev_id, u32 fid, struct vmng_rx_msg_pro
     struct vmng_msg_common_pcie_txd_verify *test_data = proc_info->data;
     const u32 SLEEP_TIME = 100;
 
-    vmng_debug("Get parameter value. (dev_id=%u; fid=%u; cnt=%u; d1=%u; d2=%u)\n",
-               dev_id, fid, test_data->cnt, test_data->d1, test_data->d2);
+    vmng_debug("Get parameter value. (dev_id=%u; fid=%u; cnt=%u; d1=%u; d2=%u)\n", dev_id, fid, test_data->cnt,
+               test_data->d1, test_data->d2);
     test_data->cnt++;
     test_data->d1 = test_data->d1 >> DATA_SHIFT_OFFSET;
     test_data->d2 = test_data->d2 - DATA_REDUCE_OFFSET;

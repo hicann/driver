@@ -15,7 +15,7 @@
 #include "ka_base_pub.h"
 #include "ka_task_pub.h"
 
-#define LOG_PRINT_LEN         0x400     // 1024 Bytes
+#define LOG_PRINT_LEN 0x400 // 1024 Bytes
 
 typedef struct log_drv_fault_mng {
     unsigned int buf_read;

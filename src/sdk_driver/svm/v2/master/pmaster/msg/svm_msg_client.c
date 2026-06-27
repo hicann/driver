@@ -11,7 +11,7 @@
  * GNU General Public License for more details.
  */
 
-#include <linux/types.h>
+#include "ka_type.h"
 
 #include "devmm_proc_info.h"
 #include "svm_kernel_msg.h"
@@ -24,7 +24,9 @@
 
 typedef int (*svm_agent_msg_send_handle)(u32 agent_id, void *msg, u32 len, u32 out_len);
 
-static svm_agent_msg_send_handle msg_send_handle[SVM_MAX_AGENT_NUM] = {NULL, };
+static svm_agent_msg_send_handle msg_send_handle[SVM_MAX_AGENT_NUM] = {
+    NULL,
+};
 
 ka_device_t *devmm_device_get_by_devid(u32 dev_id)
 {

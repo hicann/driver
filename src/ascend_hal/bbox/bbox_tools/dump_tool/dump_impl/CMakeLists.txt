@@ -18,13 +18,16 @@ target_sources(${OBJ_DUMP_COMMON}
         bbox_dump_process.c
         bbox_drv_adapter.c
         product/bbox_dump_process_${PROD_NAME}.c
+        product/bbox_dump_${PROD_NAME}.c
 )
 
 target_include_directories(${OBJ_DUMP_COMMON}
     PUBLIC
         ${BASE_DIR}
+        ${BASE_DIR}/../dump_lib
         ${PROJ_DIR}/${BBOX_HOST_DIR}/data_parser
         ${PROJ_DIR}/${BBOX_HOST_DIR}/data_parser/rdr_data_parser
+        ${PROJ_DIR}/${BBOX_HOST_DIR}/data_parser/os_data_parser
         ${DRIVER_HAL_INC_DIR}
         ${DRIVER_KERNEL_DIR}/pbl/dev_urd/command/ioctl/
         ${DRIVER_KERNEL_DIR}/dms/command/ioctl
@@ -35,7 +38,6 @@ target_include_directories(${OBJ_DUMP_COMMON}
         ${C_SEC_INCLUDE}
         ${DRIVER_USER_DIR}/msnpureport/inc/slog
     PRIVATE
-        ${TOP_DIR}/abl/adump/external
         ${PROJ_DIR}/config/${PROD_NAME}/
 )
 target_link_libraries(${OBJ_DUMP_COMMON} PRIVATE ${OBJ_TOOL_COMMON})

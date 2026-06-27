@@ -23,7 +23,7 @@
 #define DEVDRV_SYSFS_RX_LANE_MAX 4
 #define DEVDRV_SYSFS_TX_LANE_MAX 4
 
-#define DEVDRV_SYSFS_MSG_IN_BYTES 4
+#define DEVDRV_SYSFS_MSG_IN_BYTES 12
 #define DEVDRV_SYSFS_MSG_OUT_DATA_LEN 128
 
 #define DEVDRV_NVE1_MOVE 4
@@ -84,6 +84,7 @@ enum devdrv_sysfs_msg_type {
     DEVDRV_SYSFS_COMMON_MSG,
     DEVDRV_SYSFS_NON_TRANS_MSG,
     DEVDRV_SYSFS_SYNC_DMA_INFO,
+    DEVDRV_SYSFS_PROFILING_ENABLE,
     DEVDRV_SYSFS_MSG_TYPE_MAX
 };
 
@@ -120,6 +121,10 @@ struct devdrv_sysfs_tx_para {
     struct devdrv_sysfs_tx_lane_para lane_tx_para[DEVDRV_SYSFS_TX_LANE_MAX];
 };
 
+struct devdrv_non_trans_profiling_enable {
+    u32 profiling_enable_status;
+};
+
 struct devdrv_device_non_trans_stat {
     u64 msg_type;
     u64 tx_total_cnt;
@@ -146,6 +151,7 @@ struct devdrv_sysfs_msg {
         struct devdrv_sysfs_link_info link_info;
         struct devdrv_sysfs_rx_para rx_para;
         struct devdrv_sysfs_tx_para tx_para;
+        struct devdrv_non_trans_profiling_enable profiling_enable;
         struct devdrv_common_msg_stat common_stat[DEVDRV_COMMON_MSG_TYPE_MAX];
         struct devdrv_device_non_trans_stat non_trans_stat[devdrv_msg_client_max];
         struct devdrv_sync_dma_stat sync_dma_stat[DEVDRV_SYSFS_DMA_CHAN_NUM];

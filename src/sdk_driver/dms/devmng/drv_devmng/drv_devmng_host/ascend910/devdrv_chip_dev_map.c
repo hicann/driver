@@ -344,7 +344,7 @@ int devdrv_manager_get_chip_list(struct devdrv_chip_list *chip_info)
         int num = 0;
         ka_list_for_each_safe(pos, n, &chip_dev_map->chip_head) {
             chip_node = ka_list_entry(pos, devdrv_chip_node_t, chip_node_list);
-            if (num >= DEVDRV_MAX_CHIP_NUM) {
+            if (num >= ASCEND_PDEV_MAX_NUM) {
                 devdrv_drv_err("chip node num[%d] invalid.\n", num);
                 devdrv_chip_dev_map_resource_free(&chip_dev_map);
                 return -EINVAL;

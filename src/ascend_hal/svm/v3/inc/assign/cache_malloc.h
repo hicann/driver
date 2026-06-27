@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * Copyright (c) 2026 Huawei Technologies Co., Ltd.
  * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -15,10 +15,10 @@
 
 #include "svm_pub.h"
 
-#define SVM_CACHE_MALLOC_FLAG_PA_HPAGE          (1U << 0U)
-#define SVM_CACHE_MALLOC_FLAG_PA_P2P            (1U << 1U)
+#define SVM_CACHE_MALLOC_FLAG_PA_HPAGE (1U << 0U)
+#define SVM_CACHE_MALLOC_FLAG_PA_P2P (1U << 1U)
 
-#define SVM_CACHE_MALLOC_FLAG_MASTER_UVA        (1U << 8U)
+#define SVM_CACHE_MALLOC_FLAG_MASTER_UVA (1U << 8U)
 
 /*
  * Devid & flag should match with align, current support details are as follows:
@@ -44,6 +44,7 @@ struct svm_cache_ops {
 };
 
 void svm_cache_set_ops(struct svm_cache_ops *ops);
-int svm_cache_for_each_range(u32 devid, int (*handle)(u32 devid, u64 start, u64 size, void *priv), void *priv);
+int svm_cache_for_each_range(
+    u32 devid, int (*handle)(u32 devid, u64 start, u64 size, u32 flag, void *priv), void *priv);
 
 #endif

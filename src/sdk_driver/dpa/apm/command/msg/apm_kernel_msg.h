@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2025. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -34,7 +34,7 @@ enum apm_msg_type {
     APM_MSG_TYPE_UNMAP,
     APM_MSG_TYPE_MAP_QUERY,
     APM_MSG_TYPE_QUERY_SLAVE_MEMINFO,
-    APM_MSG_TYPE_NOTICE_HOST_OS_ID,    
+    APM_MSG_TYPE_NOTICE_HOST_OS_ID,
     APM_MSG_TYPE_MAX
 };
 
@@ -56,21 +56,21 @@ struct apm_task_group_cfg {
 struct apm_msg_bind_unbind {
     struct apm_msg_header header;
     struct apm_task_group_cfg cfg;
-    unsigned int rsv[4];    /* reserve */
+    unsigned int rsv[4]; /* reserve */
 };
 
 /* apm_task_group_msg.h */
 struct apm_msg_master_destroy {
     struct apm_msg_header header;
     int tgid;
-    unsigned int rsv[4];    /* reserve */
+    unsigned int rsv[4]; /* reserve */
 };
 
 /* apm_task_group_msg.h */
 struct apm_msg_slave_destroy {
     struct apm_msg_header header;
     int tgid;
-    unsigned int rsv[4];    /* reserve */
+    unsigned int rsv[4]; /* reserve */
 };
 
 /* apm_task_group_msg.h */
@@ -79,7 +79,7 @@ struct apm_msg_query_master {
     u32 udevid;
     int slave_tgid;
     int master_tgid;
-    unsigned int rsv[4];    /* reserve */
+    unsigned int rsv[4]; /* reserve */
 };
 
 /* apm_slave_ssid.h */
@@ -88,7 +88,7 @@ struct apm_msg_query_slave_ssid {
     int master_tgid;
     processType_t proc_type;
     int ssid;
-    unsigned int rsv[4];    /* reserve */
+    unsigned int rsv[4]; /* reserve */
 };
 
 /* apm_task_group_msg.h */
@@ -98,7 +98,7 @@ struct apm_msg_set_slave_status {
     int slave_tgid;
     int type;
     int status;
-    unsigned int rsv[4];    /* reserve */
+    unsigned int rsv[4]; /* reserve */
 };
 
 /* apm_task_group_msg.h */
@@ -108,7 +108,7 @@ struct apm_msg_query_task_group_exit_stage {
     int slave_tgid;
     u32 proc_type_bitmap;
     int exit_stage;
-    unsigned int rsv[4];    /* reserve */
+    unsigned int rsv[4]; /* reserve */
 };
 
 /* apm_res_map_ctx.h */
@@ -123,13 +123,13 @@ struct apm_res_map_info {
     ka_atomic_t ref;
 };
 
-#define APM_RES_MAP_INFO_PRIV_LEN_MAX   128U
+#define APM_RES_MAP_INFO_PRIV_LEN_MAX 128U
 /* apm_task_group_msg.h */
 struct apm_msg_map_unmap {
     struct apm_msg_header header;
     struct apm_res_map_info para;
     char res_map_priv[APM_RES_MAP_INFO_PRIV_LEN_MAX];
-    unsigned int rsv[4];    /* reserve */
+    unsigned int rsv[4]; /* reserve */
 };
 
 /* apm_task_group_msg.h */
@@ -139,7 +139,7 @@ struct apm_msg_query_slave_meminfo {
     int slave_tgid;
     u32 type;
     u64 size;
-    unsigned int rsv[4];    /* reserve */
+    unsigned int rsv[4]; /* reserve */
 };
 
 struct apm_msg_notice_host_os_id {
@@ -147,7 +147,7 @@ struct apm_msg_notice_host_os_id {
     u32 phy_devid;
     u32 sub_devid;
     int host_os_id;
-    unsigned int rsv[4];    /* reserve */
+    unsigned int rsv[4]; /* reserve */
 };
 
 #endif

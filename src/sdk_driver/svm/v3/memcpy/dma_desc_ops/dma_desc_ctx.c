@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2025. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -49,10 +49,7 @@ struct dma_desc_ctx *dma_desc_ctx_get(u32 udevid, int tgid)
     return ctx;
 }
 
-void dma_desc_ctx_put(struct dma_desc_ctx *ctx)
-{
-    svm_task_ctx_put(ctx->task_ctx);
-}
+void dma_desc_ctx_put(struct dma_desc_ctx *ctx) { svm_task_ctx_put(ctx->task_ctx); }
 
 static void dma_desc_ctx_init(struct dma_desc_ctx *ctx)
 {
@@ -86,8 +83,7 @@ static void dma_desc_ctx_uninit(struct dma_desc_ctx *ctx)
     } while (1);
 
     if (recycle_num > 0) {
-        svm_warn("Recycle dma desc node. (udevid=%u; tgid=%d; recycle_num=%d)\n",
-            ctx->udevid, ctx->tgid, recycle_num);
+        svm_warn("Recycle dma desc node. (udevid=%u; tgid=%d; recycle_num=%d)\n", ctx->udevid, ctx->tgid, recycle_num);
     }
 }
 
@@ -120,8 +116,7 @@ int dma_desc_ctx_create(u32 udevid, int tgid)
         return -EINVAL;
     }
 
-    ret = svm_task_set_feature_priv(task_ctx, dma_desc_feature_id, "dma_desc",
-        (void *)ctx, dma_desc_ctx_release);
+    ret = svm_task_set_feature_priv(task_ctx, dma_desc_feature_id, "dma_desc", (void *)ctx, dma_desc_ctx_release);
     if (ret != 0) {
         svm_task_ctx_put(task_ctx);
         svm_kvfree(ctx);
@@ -140,9 +135,7 @@ void dma_desc_ctx_destroy(struct dma_desc_ctx *ctx)
     svm_task_ctx_put(ctx->task_ctx); /* with init pair */
 }
 
-void dma_desc_ctx_show(struct dma_desc_ctx *ctx, ka_seq_file_t *seq)
-{
-}
+void dma_desc_ctx_show(struct dma_desc_ctx *ctx, ka_seq_file_t *seq) {}
 
 int dma_desc_init_task(u32 udevid, int tgid, void *start_time)
 {
@@ -200,7 +193,5 @@ int dma_desc_init(void)
 }
 DECLAER_FEATURE_AUTO_INIT(dma_desc_init, FEATURE_LOADER_STAGE_6);
 
-void dma_desc_uninit(void)
-{
-}
+void dma_desc_uninit(void) {}
 DECLAER_FEATURE_AUTO_UNINIT(dma_desc_uninit, FEATURE_LOADER_STAGE_6);

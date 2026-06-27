@@ -13,7 +13,11 @@
 #include <netinet/in.h>
 #include "dm_msg_intf.h"
 
+#ifdef CFG_FEATURE_UPGRADE_MULTI_FRAME_IPC
+#define MAX_IPC_MAX_TRANSLEN 220
+#else
 #define MAX_IPC_MAX_TRANSLEN 32
+#endif
 
 typedef struct DM_IPC_ADDR_S {
     int addr_type;

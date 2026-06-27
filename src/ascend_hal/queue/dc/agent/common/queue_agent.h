@@ -18,8 +18,7 @@ typedef enum queue_mem_copy_direction {
     QUEUE_COPY_FROM_MBUF
 } QUEUE_MEM_COPY_DIRECTION;
 
-drvError_t queue_mbuf_copy(struct iovec_info *ptr, unsigned int count, Mbuf *mbuf,
-    QUEUE_MEM_COPY_DIRECTION direction);
+drvError_t queue_mbuf_copy(struct iovec_info *ptr, unsigned int count, Mbuf *mbuf, QUEUE_MEM_COPY_DIRECTION direction);
 
 int que_bare_copy(unsigned long long src, unsigned long long dst, unsigned long long size);
 #endif

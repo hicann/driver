@@ -22,16 +22,18 @@
 #include "que_tgt_proc.h"
 #include "queue_h2d_user_ub_msg.h"
 
-struct que_chan *_que_chan_create(unsigned int devid, unsigned int qid, QUEUE_CHAN_TYPE chan_type, unsigned long create_time);
+struct que_chan *_que_chan_create(unsigned int devid, unsigned int qid, QUEUE_CHAN_TYPE chan_type,
+                                  unsigned long create_time);
 void _que_chan_destroy(struct que_chan *chan);
 int que_chan_tgt_init(struct que_chan *chan);
 void que_chan_tgt_uninit(struct que_chan *chan);
 void que_chan_uninit(struct que_chan *chan);
 int que_chan_create_check(unsigned int devid, unsigned int qid, unsigned long create_time);
-int que_chan_create(unsigned int devid, unsigned int qid, QUEUE_CHAN_TYPE chan_type, unsigned long create_time, unsigned int d2d_flag);
+int que_chan_create(unsigned int devid, unsigned int qid, QUEUE_CHAN_TYPE chan_type, unsigned long create_time,
+                    unsigned int d2d_flag);
 int que_chan_destroy(unsigned int devid, unsigned int qid);
 int que_chan_update_jfs_info(unsigned int devid, unsigned int qid, struct que_jfs_pool_info *jfs_pool,
-    struct que_jfr *qjfr, urma_jfs_id_t *tjfr_id, urma_token_t token);
+                             struct que_jfr *qjfr, urma_jfs_id_t *tjfr_id, urma_token_t token);
 void que_get_d2d_flag(unsigned int devid, unsigned int peer_devid, unsigned int *d2d_flag);
 int que_qjfs_alloc(struct que_jfs_pool_info *jfs_pool, int timeout, int *idx, unsigned int d2d_flag);
 void que_qjfs_free(struct que_jfs_pool_info *jfs_pool, int idx);

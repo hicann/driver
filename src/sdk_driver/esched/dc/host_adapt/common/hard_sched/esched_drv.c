@@ -48,7 +48,7 @@ void esched_drv_init_topic_types(u32 chip_id)
     sched_topic_types[ONLY][ACPU_HOST] = TOPIC_TYPE_AICPU_HOST_ONLY;
 
 #ifndef CFG_FEATURE_STARS_V2
-    if ((chip_type != HISI_CLOUD_V4) && (chip_type != HISI_CLOUD_V5)) {
+    if ((chip_type != HISI_CLOUD_V4) && (chip_type != HISI_CLOUD_V5) && (chip_type != HISI_MINI_V4)) {
         sched_topic_types[ONLY][CCPU_DEVICE] = TOPIC_TYPE_CCPU_DEVICE;
         sched_topic_types[ONLY][CCPU_HOST] = TOPIC_TYPE_CCPU_HOST;
         sched_topic_types[ONLY][TS_CPU] = TOPIC_TYPE_TSCPU;
@@ -95,6 +95,7 @@ void esched_drv_init_topic_sched_version(u32 chip_id)
 #ifndef EMU_ST
         case HISI_CLOUD_V4:
         case HISI_CLOUD_V5:
+        case HISI_MINI_V4:
             hard_res->topic_sched_version = (u32)TOPIC_SCHED_VERSION_V2;
             return;
 #endif
@@ -139,8 +140,8 @@ int esched_drv_convert_cpuid_to_topic_chan(u32 devid, u32 cpuid, u32 *topic_chan
 
 STATIC bool esched_can_report_silent_fault(u16 kernel_type, u32 result)
 {
-    if (((kernel_type == TOPIC_SCHED_CUSTOM_KERNEL_TYPE) || (kernel_type == TOPIC_SCHED_CUSTOM_KFC_KERNEL_TYPE))
-        && (result == TOPIC_SCHED_SLIENT_FAULT)) {
+    if (((kernel_type == TOPIC_SCHED_CUSTOM_KERNEL_TYPE) || (kernel_type == TOPIC_SCHED_CUSTOM_KFC_KERNEL_TYPE)) &&
+        (result == TOPIC_SCHED_SLIENT_FAULT)) {
 #ifndef EMU_ST
         sched_err("Cp2 not allow report silent fault. (kernel_type=%u)\n", kernel_type);
         return false;
@@ -193,8 +194,8 @@ STATIC int esched_drv_ack(u32 devid, u32 subevent_id, const char *msg, u32 msg_l
         status = TOPIC_FINISH_STATUS_EXCEPTION;
     }
 
-    sched_debug("Show details. (mb_id=%u; result=%u, status=%u; serial_no=%llu)\n",
-        topic_chan->mb_id, resp->result, status, resp->serial_no);
+    sched_debug("Show details. (mb_id=%u; result=%u, status=%u; serial_no=%llu)\n", topic_chan->mb_id, resp->result,
+                status, resp->serial_no);
 
     esched_drv_cpu_report(topic_chan, resp->result, status);
     topic_chan->report_flag = SCHED_DRV_REPORT_ACK;
@@ -294,7 +295,8 @@ static void esched_drv_finish_task_inner(struct topic_data_chan *topic_chan)
     }
 
     ka_task_spin_lock_bh(&event_list->lock);
-    ka_list_for_each_entry_safe(match_event, tmp, &event_list->head, list) {
+    ka_list_for_each_entry_safe(match_event, tmp, &event_list->head, list)
+    {
         if (match_event == event) { /* event not sched to thread_ctx yet, only need list_del */
             ka_list_del(&event->list);
             event_list->cur_num--;
@@ -358,8 +360,8 @@ int esched_drv_abnormal_task_handle(struct trs_id_inst *inst, u32 sqid, void *sq
     struct sched_cpu_ctx *cpu_ctx = NULL;
     u32 i, chan_id;
 
-    sched_info("Handle abnormal task. (devid=%u; sqid=%u; mb_bitmap=0x%llx)\n",
-        inst->devid, sqid, task_info->mb_bitmap);
+    sched_info("Handle abnormal task. (devid=%u; sqid=%u; mb_bitmap=0x%llx)\n", inst->devid, sqid,
+               task_info->mb_bitmap);
 
     (void)sqe;
     node = esched_dev_get(inst->devid);
@@ -370,9 +372,15 @@ int esched_drv_abnormal_task_handle(struct trs_id_inst *inst, u32 sqid, void *sq
 
     for (i = 0; i < node->hard_res.aicpu_chan_num; i++) {
         chan_id = node->hard_res.aicpu_chan_start_id + i;
-        if (((task_info->mb_bitmap) & (1U << chan_id)) == 0) {
+#ifndef CFG_FEATURE_STARS_V2
+        if (((task_info->mb_bitmap) & (1ULL << chan_id)) == 0) {
             continue;
         }
+#else
+        if (((task_info->mb_bitmap) & (1ULL << i)) == 0) {
+            continue;
+        }
+#endif
         if (node->hard_res.cpu_work_mode == STARS_WORK_MODE_MSGQ) {
 #ifndef CFG_ENV_HOST
             topic_sched_cpu_report(node->hard_res.report_addr, chan_id, 0, TOPIC_FINISH_STATUS_NORMAL);
@@ -390,7 +398,6 @@ int esched_drv_abnormal_task_handle(struct trs_id_inst *inst, u32 sqid, void *sq
                 esched_drv_finish_non_sched_task(topic_chan);
             }
         }
-
     }
 
     sched_info("Handle abnormal task success (cpu_work_mode=%u).\n", node->hard_res.cpu_work_mode);
@@ -416,12 +423,12 @@ void esched_drv_set_chan_create_para(u32 chip_id, u32 pool_id, struct sched_trs_
     param->id_inst.tsid = 0;
 
     param->chan_param.flag = (0x1U << CHAN_FLAG_ALLOC_SQ_BIT) | (0x1U << CHAN_FLAG_ALLOC_CQ_BIT) |
-        (0x1U << CHAN_FLAG_RSV_SQ_ID_PRIOR_BIT) | (0x1U << CHAN_FLAG_RSV_CQ_ID_PRIOR_BIT) |
-        (0x1U << CHAN_FLAG_NOTICE_TS_BIT) | (0x1U << CHAN_FLAG_AUTO_UPDATE_SQ_HEAD_BIT);
-    param->chan_param.msg[0] = 0xffff;   /* 0 : streamid */
-    param->chan_param.msg[1] = TOPIC_SCHED_RTSQ_PRI;   /* 1 : rtsq pri */
-    param->chan_param.msg[2] = 0;   /* 2 : ssid */
-    param->chan_param.msg[3] = pool_id;   /* 3 : pool_id */
+                             (0x1U << CHAN_FLAG_RSV_SQ_ID_PRIOR_BIT) | (0x1U << CHAN_FLAG_RSV_CQ_ID_PRIOR_BIT) |
+                             (0x1U << CHAN_FLAG_NOTICE_TS_BIT) | (0x1U << CHAN_FLAG_AUTO_UPDATE_SQ_HEAD_BIT);
+    param->chan_param.msg[0] = 0xffff;               /* 0 : streamid */
+    param->chan_param.msg[1] = TOPIC_SCHED_RTSQ_PRI; /* 1 : rtsq pri */
+    param->chan_param.msg[2] = 0;                    /* 2 : ssid */
+    param->chan_param.msg[3] = pool_id;              /* 3 : pool_id */
 
     param->chan_param.types.type = CHAN_TYPE_HW;
     param->chan_param.types.sub_type = CHAN_SUB_TYPE_HW_TOPIC_SCHED;
@@ -433,12 +440,12 @@ void esched_drv_set_chan_create_para(u32 chip_id, u32 pool_id, struct sched_trs_
     param->chan_param.cq_para.cqe_size = TOPIC_SCHED_TASK_CQE_SIZE;
 
 #ifdef CFG_FEATURE_STARS_V2
-        param->chan_param.ext_msg = (u32*)&param->ext_msg;
-        param->chan_param.ext_msg_len = sizeof(struct sched_trs_chan_ext_msg);
-        param->ext_msg.msg_header.type = CHAN_SUB_TYPE_HW_TOPIC_SCHED;
+    param->chan_param.ext_msg = (u32 *)&param->ext_msg;
+    param->chan_param.ext_msg_len = sizeof(struct sched_trs_chan_ext_msg);
+    param->ext_msg.msg_header.type = CHAN_SUB_TYPE_HW_TOPIC_SCHED;
 #else
-    if ((chip_type == HISI_CLOUD_V4) || (chip_type == HISI_CLOUD_V5)) {
-        param->chan_param.ext_msg = (u32*)&param->ext_msg;
+    if ((chip_type == HISI_CLOUD_V4) || (chip_type == HISI_CLOUD_V5) || (chip_type == HISI_MINI_V4)) {
+        param->chan_param.ext_msg = (u32 *)&param->ext_msg;
         param->chan_param.ext_msg_len = sizeof(struct sched_trs_chan_ext_msg);
         param->ext_msg.msg_header.type = CHAN_SUB_TYPE_HW_TOPIC_SCHED;
     }
@@ -465,13 +472,14 @@ int esched_drv_init_non_sched_task_submit_chan(u32 chip_id, u32 pool_id)
 #ifndef EMU_ST
         /* Host may retry. */
         sched_debug("Create task submit chan for non sched mode not success. "
-            "(chip_id=%u; pool_id=%u; submit_pool_id=%u; ret=%d)\n", chip_id, pool_id, submit_pool_id, ret);
+                    "(chip_id=%u; pool_id=%u; submit_pool_id=%u; ret=%d)\n",
+                    chip_id, pool_id, submit_pool_id, ret);
 #endif
         return DRV_ERROR_INNER_ERR;
     }
 
     sched_info("Init non sched task submit chan. (chip_id=%u; pool_id=%u; submit_pool_id=%u; submit_chan_id=%d)\n",
-        chip_id, pool_id, submit_pool_id, res->rtsq.non_sched_rtsq.chan_id);
+               chip_id, pool_id, submit_pool_id, res->rtsq.non_sched_rtsq.chan_id);
 
     return ret;
 }
@@ -498,15 +506,15 @@ int esched_drv_init_sched_task_submit_chan_irq(u32 chip_id, u32 pool_id)
     esched_drv_set_chan_create_para(chip_id, pool_id, &para);
     ret = hal_kernel_trs_chan_create(&para.id_inst, &para.chan_param, &chan_id);
     if (ret != 0) {
-        sched_err("Failed to create task submit chan for irq. (chip_id=%u; pool_id=%u; ret=%d)\n",
-            chip_id, pool_id, ret);
+        sched_err("Failed to create task submit chan for irq. (chip_id=%u; pool_id=%u; ret=%d)\n", chip_id, pool_id,
+                  ret);
         return DRV_ERROR_NO_RESOURCES;
     }
     res->rtsq.sched_rtsq[TOPIC_SCHED_RTSQ_FOR_IRQ].sqe_submit[0].chan_id = chan_id;
     res->rtsq.sched_rtsq[TOPIC_SCHED_RTSQ_FOR_IRQ].sqe_submit[0].need_destroy = true;
 
-    sched_info("Init sched task submit chan irq success. (chip_id=%u; pool_id=%u; submit_chan_id=%d)\n",
-        chip_id, pool_id, chan_id);
+    sched_info("Init sched task submit chan irq success. (chip_id=%u; pool_id=%u; submit_chan_id=%d)\n", chip_id,
+               pool_id, chan_id);
 
     return 0;
 }
@@ -529,9 +537,12 @@ static int esched_drv_init_sched_task_submit_chan_normal(u32 chip_id, u32 pool_i
     bool fill_flag = false;
 
     qos_per_chan = ((adapt_chan_num % TOPIC_SCHED_MAX_PRIORITY) == 0) ?
-        1U : (u32)(KA_BASE_DIV_ROUND_UP(TOPIC_SCHED_MAX_PRIORITY, (adapt_chan_num % TOPIC_SCHED_MAX_PRIORITY)));
+                       1U :
+                       (u32)(KA_BASE_DIV_ROUND_UP(TOPIC_SCHED_MAX_PRIORITY,
+                                                  (adapt_chan_num % TOPIC_SCHED_MAX_PRIORITY)));
 
-    rtsq_num_per_qos = ka_base_min(KA_BASE_DIV_ROUND_UP(adapt_chan_num, TOPIC_SCHED_MAX_PRIORITY), TOPIC_SCHED_MAX_RTSQ_NUM_PER_CLASS);
+    rtsq_num_per_qos = ka_base_min(KA_BASE_DIV_ROUND_UP(adapt_chan_num, TOPIC_SCHED_MAX_PRIORITY),
+                                   TOPIC_SCHED_MAX_RTSQ_NUM_PER_CLASS);
     for (i = 0; i < TOPIC_SCHED_MAX_PRIORITY; i++) {
         res->rtsq.sched_rtsq[i].rtsq_num = rtsq_num_per_qos;
         res->rtsq.sched_rtsq[i].init_rtsq_index = 0;
@@ -546,14 +557,15 @@ static int esched_drv_init_sched_task_submit_chan_normal(u32 chip_id, u32 pool_i
         ret = hal_kernel_trs_chan_create(&para.id_inst, &para.chan_param, &chan_id);
         if (ret != 0) {
             sched_err("Failed to create task submit chan for sched mode. (chip_id=%u; pool_id=%u; i=%u; ret=%d)\n",
-                chip_id, pool_id, i, ret);
+                      chip_id, pool_id, i, ret);
             return DRV_ERROR_NO_RESOURCES;
         }
 
         loops = (i < compressed_chan_start) ? 1 : qos_per_chan;
         for (j = 0; j < loops; j++) {
-            res->rtsq.sched_rtsq[qos].sqe_submit[res->rtsq.sched_rtsq[qos].init_rtsq_index].need_destroy =
-                (j == 0) ? true : false;
+            res->rtsq.sched_rtsq[qos].sqe_submit[res->rtsq.sched_rtsq[qos].init_rtsq_index].need_destroy = (j == 0) ?
+                                                                                                               true :
+                                                                                                               false;
             res->rtsq.sched_rtsq[qos].sqe_submit[res->rtsq.sched_rtsq[qos].init_rtsq_index].chan_id = chan_id;
             res->rtsq.sched_rtsq[qos].init_rtsq_index++;
             qos++;
@@ -572,8 +584,9 @@ static int esched_drv_init_sched_task_submit_chan_normal(u32 chip_id, u32 pool_i
         }
     }
 
-    sched_info("Init sched task submit chan success. (chip_id=%u; pool_id=%u; alloc_chan_num=%u; aicpu_chan_num=%u; available_chan_num=%d)\n",
-        chip_id, pool_id, adapt_chan_num, aicpu_chan_num, chan_num);
+    sched_info("Init sched task submit chan success. (chip_id=%u; pool_id=%u; alloc_chan_num=%u; aicpu_chan_num=%u; "
+               "available_chan_num=%d)\n",
+               chip_id, pool_id, adapt_chan_num, aicpu_chan_num, chan_num);
 
     return 0;
 }
@@ -582,11 +595,10 @@ int esched_drv_init_sched_task_submit_chan(u32 chip_id, u32 pool_id, u32 availab
 {
     int ret;
 
-#if !defined (CFG_ENV_HOST) && !defined (CFG_FEATURE_STARS_V2)
+#if !defined(CFG_ENV_HOST) && !defined(CFG_FEATURE_STARS_V2)
     ret = esched_drv_init_sched_task_submit_chan_irq(chip_id, pool_id);
     if (ret != 0) {
-        sched_err("Failed to init task submit chan for irq. (chip_id=%u; pool_id=%u; ret=%d)\n",
-            chip_id, pool_id, ret);
+        sched_err("Failed to init task submit chan for irq. (chip_id=%u; pool_id=%u; ret=%d)\n", chip_id, pool_id, ret);
         return ret;
     }
 #endif
@@ -594,8 +606,8 @@ int esched_drv_init_sched_task_submit_chan(u32 chip_id, u32 pool_id, u32 availab
     ret = esched_drv_init_sched_task_submit_chan_normal(chip_id, pool_id, available_chan_num, aicpu_chan_num);
     if (ret != 0) {
         sched_err("Failed to init task submit chan for normal. "
-            "(chip_id=%u; pool_id=%u; available_chan_num=%u; aicpu_chan_num=%u)\n",
-            chip_id, pool_id, available_chan_num, aicpu_chan_num);
+                  "(chip_id=%u; pool_id=%u; available_chan_num=%u; aicpu_chan_num=%u)\n",
+                  chip_id, pool_id, available_chan_num, aicpu_chan_num);
         esched_drv_uninit_sched_task_submit_chan(chip_id);
         return ret;
     }
@@ -633,14 +645,14 @@ STATIC int esched_drv_get_normal_sched_submit_chan(struct sched_rtsq_res *rtsq, 
     }
 
     rtsq_index = ka_base_atomic_inc_return(&rtsq->sched_rtsq[compress_qos].cur_rtsq_index) %
-        rtsq->sched_rtsq[compress_qos].rtsq_num;
+                 rtsq->sched_rtsq[compress_qos].rtsq_num;
     *chan_id = rtsq->sched_rtsq[compress_qos].sqe_submit[rtsq_index].chan_id;
 
     return 0;
 }
 
-STATIC int esched_drv_get_submit_chan(struct sched_numa_node *node,
-    struct sched_published_event_info *event_info, u32 qos, int *chan_id)
+STATIC int esched_drv_get_submit_chan(struct sched_numa_node *node, struct sched_published_event_info *event_info,
+                                      u32 qos, int *chan_id)
 {
     if (esched_get_sched_mode(event_info->dst_engine) == SCHED_MODE_SCHED_CPU) {
         if ((event_info->tid != SCHED_INVALID_TID) && (node->hard_res.thread_spec.get_chan_func != NULL)) {
@@ -667,7 +679,8 @@ STATIC int esched_drv_submit_task(u32 devid, int chan_id, u8 *sqe, u32 timeout)
 }
 
 STATIC int esched_drv_submit_normal_event(struct sched_numa_node *node, u32 event_src,
-    struct sched_published_event_info *event_info, u32 timeout, int *submit_chan_id)
+                                          struct sched_published_event_info *event_info, u32 timeout,
+                                          int *submit_chan_id)
 {
     struct topic_sched_sqe sqe = {0};
     int ret;
@@ -693,12 +706,12 @@ STATIC int esched_drv_submit_normal_event(struct sched_numa_node *node, u32 even
     }
 
     sched_debug("End of submit normal event. "
-        "(chip_id=%u; dst_engine=%u; policy=%u; topic_type=%u; pid=%u; event_pid=%d; "
-        "submit_chan_id=%d; subtopic_id=%u; topic_id=%u; gid=%u; tid=%u; msg_len=%u; data[0]=%u; "
-        "task_id=%u; stream_id=%u; ret=%d)\n",
-        node->node_id, event_info->dst_engine, event_info->policy, (u32)sqe.topic_type, sqe.pid, event_info->pid,
-        *submit_chan_id, sqe.subtopic_id, sqe.topic_id, sqe.gid, event_info->tid, event_info->msg_len, sqe.user_data[0],
-        sqe.task_id, sqe.rt_streamid, ret);
+                "(chip_id=%u; dst_engine=%u; policy=%u; topic_type=%u; pid=%u; event_pid=%d; "
+                "submit_chan_id=%d; subtopic_id=%u; topic_id=%u; gid=%u; tid=%u; msg_len=%u; data[0]=%u; "
+                "task_id=%u; stream_id=%u; ret=%d)\n",
+                node->node_id, event_info->dst_engine, event_info->policy, (u32)sqe.topic_type, sqe.pid,
+                event_info->pid, *submit_chan_id, sqe.subtopic_id, sqe.topic_id, sqe.gid, event_info->tid,
+                event_info->msg_len, sqe.user_data[0], sqe.task_id, sqe.rt_streamid, ret);
 
     return ret;
 }
@@ -743,15 +756,15 @@ STATIC void esched_drv_finish(struct sched_event_func_info *finish_info, unsigne
 {
     u32 devid = finish_info->devid;
     struct topic_data_chan *topic_chan = (struct topic_data_chan *)priv;
-    u32 topic_finish_flag = (finish_scene != SCHED_TASK_FINISH_SCENE_PROC_EXIT) ?
-        TOPIC_FINISH_STATUS_NORMAL : TOPIC_FINISH_STATUS_EXCEPTION;
+    u32 topic_finish_flag = (finish_scene != SCHED_TASK_FINISH_SCENE_PROC_EXIT) ? TOPIC_FINISH_STATUS_NORMAL :
+                                                                                  TOPIC_FINISH_STATUS_EXCEPTION;
 
     if (topic_chan == NULL) {
         return;
     }
 
-    sched_debug("Proc finish. (devid=%u; mb_id=%u; report_flag=%u; cpu_type=%u; task_finish_scene=%u)\n",
-        devid, topic_chan->mb_id, topic_chan->report_flag, topic_chan->mb_type, finish_scene);
+    sched_debug("Proc finish. (devid=%u; mb_id=%u; report_flag=%u; cpu_type=%u; task_finish_scene=%u)\n", devid,
+                topic_chan->mb_id, topic_chan->report_flag, topic_chan->mb_type, finish_scene);
 
     if ((topic_chan->mb_type == CCPU_DEVICE) || (topic_chan->mb_type == CCPU_HOST)) {
         return;
@@ -774,7 +787,7 @@ STATIC void esched_drv_finish(struct sched_event_func_info *finish_info, unsigne
 }
 
 STATIC void esched_drv_fill_rts_task_event(struct sched_event *event, struct topic_data_chan *topic_chan,
-    struct topic_sched_mailbox *mb)
+                                           struct topic_sched_mailbox *mb)
 {
     struct topic_sched_rts_task_info *rts_task = (struct topic_sched_rts_task_info *)mb->user_data;
     struct hwts_ts_task *task = (struct hwts_ts_task *)event->msg;
@@ -801,7 +814,7 @@ STATIC void esched_drv_fill_rts_task_event(struct sched_event *event, struct top
 }
 
 STATIC int esched_drv_sub_fill_event(struct topic_data_chan *topic_chan, struct sched_event *event,
-    struct topic_sched_mailbox *mb)
+                                     struct topic_sched_mailbox *mb)
 {
     u32 cpu_type = topic_chan->mb_type;
 
@@ -831,7 +844,7 @@ STATIC int esched_drv_sub_fill_event(struct topic_data_chan *topic_chan, struct 
 }
 
 STATIC struct sched_event *esched_drv_fill_event(struct topic_data_chan *topic_chan, struct topic_sched_mailbox *mb,
-    struct sched_grp_ctx *grp_ctx, u32 tid)
+                                                 struct sched_grp_ctx *grp_ctx, u32 tid)
 {
     struct sched_event *event = NULL;
     int ret;
@@ -879,13 +892,14 @@ STATIC struct sched_event *esched_drv_fill_event(struct topic_data_chan *topic_c
             esched_drv_fill_rts_task_event(event, topic_chan, mb);
         } else {
             event->msg_len = (mb->user_data_len > TOPIC_SCHED_USER_DATA_PAYLOAD_LEN) ?
-                TOPIC_SCHED_USER_DATA_PAYLOAD_LEN : mb->user_data_len;
+                                 TOPIC_SCHED_USER_DATA_PAYLOAD_LEN :
+                                 mb->user_data_len;
             ka_mm_memcpy_fromio(event->msg, &mb->user_data[0], event->msg_len);
 
             event->msg_len = mb->user_data_len;
         }
         sched_debug("Show details. (pid=%u; gid=%u; topic_id=%u; subtopic_id=%u; kernel_type=%u; msg_len=%u)\n",
-            mb->pid, mb->gid, mb->topic_id, mb->subtopic_id, (u32)mb->kernel_type, event->msg_len);
+                    mb->pid, mb->gid, mb->topic_id, mb->subtopic_id, (u32)mb->kernel_type, event->msg_len);
     }
 
     /* Performance tuning, recourd publish time */
@@ -914,15 +928,15 @@ STATIC struct sched_grp_ctx *esched_drv_get_grp(struct sched_proc_ctx *proc_ctx,
     return grp_ctx;
 }
 
-STATIC struct sched_thread_ctx *esched_drv_aicpu_get_thread(struct sched_proc_ctx *proc_ctx,
-    u32 gid, u32 cpuid, u32 event_id)
+STATIC struct sched_thread_ctx *esched_drv_aicpu_get_thread(struct sched_proc_ctx *proc_ctx, u32 gid, u32 cpuid,
+                                                            u32 event_id)
 {
     struct sched_grp_ctx *grp_ctx = NULL;
     struct sched_thread_ctx *thread_ctx = NULL;
 
     if (event_id >= (u32)SCHED_MAX_EVENT_TYPE_NUM) {
-        sched_err("The event_id is out of range. (cpuid=%u; pid=%d; gid=%u; event_id=%u; max=%d)\n",
-                  cpuid, proc_ctx->pid, gid, event_id, SCHED_MAX_EVENT_TYPE_NUM);
+        sched_err("The event_id is out of range. (cpuid=%u; pid=%d; gid=%u; event_id=%u; max=%d)\n", cpuid,
+                  proc_ctx->pid, gid, event_id, SCHED_MAX_EVENT_TYPE_NUM);
         return NULL;
     }
 
@@ -933,8 +947,8 @@ STATIC struct sched_thread_ctx *esched_drv_aicpu_get_thread(struct sched_proc_ct
     }
 
     if (grp_ctx->cpuid_to_tid[cpuid] == grp_ctx->cfg_thread_num) {
-        sched_err("It has no threads. (cpuid=%u; pid=%d; gid=%u; cfg_thread_num=%u)\n",
-            cpuid, proc_ctx->pid, gid, grp_ctx->cfg_thread_num);
+        sched_err("It has no threads. (cpuid=%u; pid=%d; gid=%u; cfg_thread_num=%u)\n", cpuid, proc_ctx->pid, gid,
+                  grp_ctx->cfg_thread_num);
         return NULL;
     }
 
@@ -950,8 +964,8 @@ STATIC struct sched_thread_ctx *esched_drv_aicpu_get_thread(struct sched_proc_ct
     }
 
     if ((thread_ctx->subscribe_event_bitmap & (0x1ULL << event_id)) == 0) {
-        sched_err("The thread is not subscribed. (cpuid=%u; pid=%d; gid=%u; event_id=%u)\n",
-            cpuid, proc_ctx->pid, gid, event_id);
+        sched_err("The thread is not subscribed. (cpuid=%u; pid=%d; gid=%u; event_id=%u)\n", cpuid, proc_ctx->pid, gid,
+                  event_id);
         return NULL;
     }
 
@@ -964,8 +978,8 @@ STATIC struct sched_thread_ctx *esched_drv_get_valid_thread_ctx(struct sched_grp
 
     if (tid >= grp_ctx->cfg_thread_num) {
 #ifndef EMU_ST
-        sched_err("The tid out of group thread range. (gid=%u; pid=%d; tid=%u; max=%u)\n",
-            grp_ctx->gid, grp_ctx->pid, tid, grp_ctx->cfg_thread_num);
+        sched_err("The tid out of group thread range. (gid=%u; pid=%d; tid=%u; max=%u)\n", grp_ctx->gid, grp_ctx->pid,
+                  tid, grp_ctx->cfg_thread_num);
 #endif
         return NULL;
     }
@@ -973,8 +987,7 @@ STATIC struct sched_thread_ctx *esched_drv_get_valid_thread_ctx(struct sched_grp
     thread_ctx = sched_get_thread_ctx(grp_ctx, tid);
     if (thread_ctx->valid == SCHED_INVALID) {
 #ifndef EMU_ST
-        sched_err("The thread is invalid. (gid=%u; pid=%d; tid=%u)\n",
-            grp_ctx->gid, grp_ctx->pid, tid);
+        sched_err("The thread is invalid. (gid=%u; pid=%d; tid=%u)\n", grp_ctx->gid, grp_ctx->pid, tid);
 #endif
         return NULL;
     }
@@ -1021,7 +1034,8 @@ static inline bool esched_drv_event_need_finish(u32 event_id, u32 cur_event_num)
 {
     /* caution: some event id is net-model-perf-sensitive, do not finish by esched self */
     if ((event_id != EVENT_QUEUE_FULL_TO_NOT_FULL) && (event_id != EVENT_QUEUE_EMPTY_TO_NOT_EMPTY) &&
-        (event_id != EVENT_DRV_MSG) && (event_id != EVENT_DRV_MSG_EX) && !((event_id >= EVENT_USR_START) && (event_id <= EVENT_USR_END))) {
+        (event_id != EVENT_DRV_MSG) && (event_id != EVENT_DRV_MSG_EX) &&
+        !((event_id >= EVENT_USR_START) && (event_id <= EVENT_USR_END))) {
         return false;
     }
 
@@ -1037,21 +1051,23 @@ static inline bool esched_drv_event_need_finish(u32 event_id, u32 cur_event_num)
    1. Device aicpu(aicpu num != 0) : SCHED;     cpu_ctx != NULL.
    2. Device aicpu(aicpu num == 0) : NON-SCHED; cpu_ctx == NULL.
    3. Host   aicpu(aicpu num != 0) : NON-SCHED; cpu_ctx == NULL. */
-static int esched_drv_publish_event_from_topic_aicpu_chan(struct topic_data_chan *topic_chan,
-    struct sched_event *event, struct sched_proc_ctx *proc_ctx, struct sched_grp_ctx *grp_ctx)
+static int esched_drv_publish_event_from_topic_aicpu_chan(struct topic_data_chan *topic_chan, struct sched_event *event,
+                                                          struct sched_proc_ctx *proc_ctx,
+                                                          struct sched_grp_ctx *grp_ctx)
 {
     struct sched_cpu_ctx *cpu_ctx = topic_chan->cpu_ctx;
     struct sched_thread_ctx *thread_ctx = NULL;
 
     sched_debug("Publish event from TOPIC. (event_id=%u; mb_id=%u; report_flag=%u; cpu_type=%u; sched_mode=%u)\n",
-        event->event_id, topic_chan->mb_id, topic_chan->report_flag, topic_chan->mb_type, topic_chan->sched_mode);
+                event->event_id, topic_chan->mb_id, topic_chan->report_flag, topic_chan->mb_type,
+                topic_chan->sched_mode);
 
     topic_chan->event = event;
     if (grp_ctx->sched_mode == SCHED_MODE_NON_SCHED_CPU) {
         /* Prevent the aicpu sched task from publishing events to non-sched groups. */
         if (cpu_ctx != NULL) {
             sched_err("Aicpu sched task publishing event to non-sched group. (chan_id=%u; pid=%d; gid=%u)\n",
-                topic_chan->mb_id, proc_ctx->pid, grp_ctx->gid);
+                      topic_chan->mb_id, proc_ctx->pid, grp_ctx->gid);
             return DRV_ERROR_GROUP_NON_SCHED;
         }
         return sched_publish_event_to_non_sched_grp(event, grp_ctx);
@@ -1063,7 +1079,7 @@ static int esched_drv_publish_event_from_topic_aicpu_chan(struct topic_data_chan
             bool finish_flag = false;
             int ret = 0;
             finish_flag = esched_drv_event_need_finish(event->event_id,
-                (u32)ka_base_atomic_read(&proc_ctx->node->cur_event_num));
+                                                       (u32)ka_base_atomic_read(&proc_ctx->node->cur_event_num));
             if (finish_flag == true) {
                 event->event_finish_func = NULL;
                 event->event_ack_func = NULL;
@@ -1088,8 +1104,8 @@ static int esched_drv_publish_event_from_topic_aicpu_chan(struct topic_data_chan
 
     thread_ctx = esched_drv_aicpu_get_thread(proc_ctx, grp_ctx->gid, cpu_ctx->cpuid, event->event_id);
     if (thread_ctx == NULL) {
-        sched_err("Failed to get aicpu thread. (cpuid=%u; pid=%d; gid=%u)\n",
-            cpu_ctx->cpuid, proc_ctx->pid, grp_ctx->gid);
+        sched_err("Failed to get aicpu thread. (cpuid=%u; pid=%d; gid=%u)\n", cpu_ctx->cpuid, proc_ctx->pid,
+                  grp_ctx->gid);
         return DRV_ERROR_INNER_ERR;
     }
 #ifdef CFG_FEATURE_THREAD_SWAPOUT
@@ -1149,7 +1165,7 @@ void esched_aicpu_sched_task(unsigned long data)
 
     /* different vf in vfg use same aicpu */
     devid = esched_get_devid_from_hw_vfid(topic_chan->hard_res->dev_id, mb->vfid, topic_chan->hard_res->sub_dev_num,
-        mb->topic_id);
+                                          mb->topic_id);
     submit_devid = devid;
     tid = SCHED_INVALID_TID;
     pid = SCHED_INVALID_PID;
@@ -1163,9 +1179,9 @@ void esched_aicpu_sched_task(unsigned long data)
 #endif
 
     sched_debug("Tasklet. (devid=%u; submit_devid=%u; tid=%u; pid=%u, "
-        "topic_id=%u, mb_id=%u; mailbox_id=%u; vfid=%u; cpu_type=%u, group_id=%u)\n",
-        devid, submit_devid, tid, pid,
-        mb->topic_id, topic_chan->mb_id, mb->mailbox_id, mb->vfid, topic_chan->mb_type, mb->gid);
+                "topic_id=%u, mb_id=%u; mailbox_id=%u; vfid=%u; cpu_type=%u, group_id=%u)\n",
+                devid, submit_devid, tid, pid, mb->topic_id, topic_chan->mb_id, mb->mailbox_id, mb->vfid,
+                topic_chan->mb_type, mb->gid);
 
     node = esched_dev_get(devid);
     if (node == NULL) {
@@ -1220,26 +1236,24 @@ void esched_aicpu_sched_task(unsigned long data)
 #ifndef EMU_ST
         if (!esched_log_limited(SCHED_LOG_LIMIT_GET_PROC_CTX)) {
             sched_warn("Get proc_ctx not success. (devid=%u; pid=%u; topic_id=%u; topic_type=%u;"
-                "ts_pid_data=%u; tscb_pid_data=%u; esched_pid_data=%u)\n",
-                devid, mb->pid, mb->topic_id, mb->topic_type,
-                mb->user_data[TOPIC_SCHED_TS_PID_INDEX], mb->user_data[TOPIC_SCHED_TS_CALLBACK_PID_INDEX],
-                (u32)mb->stream_id + (((u32)mb->task_id) << TOPIC_SCHED_ESCHED_PID_HIGH_OFFSET));
+                       "ts_pid_data=%u; tscb_pid_data=%u; esched_pid_data=%u)\n",
+                       devid, mb->pid, mb->topic_id, mb->topic_type, mb->user_data[TOPIC_SCHED_TS_PID_INDEX],
+                       mb->user_data[TOPIC_SCHED_TS_CALLBACK_PID_INDEX],
+                       (u32)mb->stream_id + (((u32)mb->task_id) << TOPIC_SCHED_ESCHED_PID_HIGH_OFFSET));
         }
 #endif
         goto dev_put;
     }
 
     if (mb->gid >= (unsigned char)SCHED_MAX_GRP_NUM) {
-        sched_err("Invalid gid. (mb_id=%u; pid=%u; gid=%u)\n",
-            real_topic_chan->mb_id, mb->pid, mb->gid);
+        sched_err("Invalid gid. (mb_id=%u; pid=%u; gid=%u)\n", real_topic_chan->mb_id, mb->pid, mb->gid);
         goto proc_put;
     }
 
     grp_ctx = sched_get_grp_ctx(proc_ctx, mb->gid);
     event = esched_drv_fill_event(real_topic_chan, mb, grp_ctx, tid);
     if (event == NULL) {
-        sched_err("Failed to fill the event. (mb_id=%u; pid=%u; gid=%u)\n",
-                  real_topic_chan->mb_id, mb->pid, mb->gid);
+        sched_err("Failed to fill the event. (mb_id=%u; pid=%u; gid=%u)\n", real_topic_chan->mb_id, mb->pid, mb->gid);
         goto proc_put;
     }
 
@@ -1253,14 +1267,14 @@ void esched_aicpu_sched_task(unsigned long data)
             err_code = 0;
             status = TOPIC_FINISH_STATUS_NORMAL;
         } else {
-            sched_err("Failed to publish event. (mb_id=%u; pid=%u; gid=%u; ret=%d)\n",
-                real_topic_chan->mb_id, mb->pid, mb->gid, ret);
+            sched_err("Failed to publish event. (mb_id=%u; pid=%u; gid=%u; ret=%d)\n", real_topic_chan->mb_id, mb->pid,
+                      mb->gid, ret);
         }
         (void)sched_event_enque_lock(event->que, event);
         goto proc_put;
     }
     esched_publish_trace_update(proc_ctx, event);
-    sched_publish_state_update(node, event, SCHED_SYSFS_PUBLISH_FROM_HW ,ret);
+    sched_publish_state_update(node, event, SCHED_SYSFS_PUBLISH_FROM_HW, ret);
     esched_proc_put(proc_ctx);
     esched_dev_put(node);
     return;
@@ -1300,7 +1314,7 @@ void esched_ccpu_sched_task(unsigned long data)
 
     /* different vf in vfg use same aicpu */
     devid = esched_get_devid_from_hw_vfid(topic_chan->hard_res->dev_id, mb->vfid, topic_chan->hard_res->sub_dev_num,
-        mb->topic_id);
+                                          mb->topic_id);
     submit_devid = devid;
     tid = SCHED_INVALID_TID;
     pid = SCHED_INVALID_PID;
@@ -1313,9 +1327,9 @@ void esched_ccpu_sched_task(unsigned long data)
     }
 #endif
     sched_debug("Tasklet. (devid=%u; submit_devid=%u; tid=%u; pid=%u, "
-        "topic_id=%u, mb_id=%u; mailbox_id=%u; vfid=%u; cpu_type=%u)\n",
-        devid, submit_devid, tid, pid,
-        mb->topic_id, topic_chan->mb_id, mb->mailbox_id, mb->vfid, topic_chan->mb_type);
+                "topic_id=%u, mb_id=%u; mailbox_id=%u; vfid=%u; cpu_type=%u)\n",
+                devid, submit_devid, tid, pid, mb->topic_id, topic_chan->mb_id, mb->mailbox_id, mb->vfid,
+                topic_chan->mb_type);
 
     node = esched_dev_get(submit_devid);
     if (node == NULL) {
@@ -1336,15 +1350,15 @@ void esched_ccpu_sched_task(unsigned long data)
     proc_ctx = esched_proc_get(node, (int32_t)mb->pid);
     if (proc_ctx == NULL) {
         sched_warn("Get proc_ctx not success. (devid=%u; pid=%u; topic_id=%u; topic_type=%u; esched_pid_data=%u)\n",
-            submit_devid, mb->pid, mb->topic_id, mb->topic_type,
-            (u32)mb->stream_id + (((u32)mb->task_id) << TOPIC_SCHED_ESCHED_PID_HIGH_OFFSET));
+                   submit_devid, mb->pid, mb->topic_id, mb->topic_type,
+                   (u32)mb->stream_id + (((u32)mb->task_id) << TOPIC_SCHED_ESCHED_PID_HIGH_OFFSET));
         goto dev_put;
     }
 
     grp_ctx = esched_drv_get_grp(proc_ctx, mb->gid, SCHED_MODE_NON_SCHED_CPU);
     if (grp_ctx == NULL) {
-        sched_err("Get grp_ctx failed. (mb_id=%u; pid=%u; gid=%u; topic_id=%u)\n",
-                  topic_chan->mb_id, mb->pid, mb->gid, mb->topic_id);
+        sched_err("Get grp_ctx failed. (mb_id=%u; pid=%u; gid=%u; topic_id=%u)\n", topic_chan->mb_id, mb->pid, mb->gid,
+                  mb->topic_id);
         goto proc_put;
     }
 
@@ -1357,8 +1371,8 @@ void esched_ccpu_sched_task(unsigned long data)
 
     event = esched_drv_fill_event(real_topic_chan, mb, grp_ctx, tid);
     if (event == NULL) {
-        sched_err("Fill event failed. (mb_id=%u; pid=%u; gid=%u; topic_id=%u)\n",
-            real_topic_chan->mb_id, mb->pid, mb->gid, mb->topic_id);
+        sched_err("Fill event failed. (mb_id=%u; pid=%u; gid=%u; topic_id=%u)\n", real_topic_chan->mb_id, mb->pid,
+                  mb->gid, mb->topic_id);
         goto proc_put;
     }
 
@@ -1422,8 +1436,8 @@ struct sched_thread_ctx *esched_drv_get_cpu_next_thread(u32 chip_id, u32 vfid, s
         esched_drv_try_to_report_wait_status(topic_chan, TOPIC_FINISH_STATUS_NORMAL);
     }
 
-    sched_debug("Get next. (chip_id=%u; mb_id=%u; vfid=%u; get_vfid=%u)\n",
-        chip_id, topic_chan->mb_id, topic_chan->wait_mb->vfid, vfid);
+    sched_debug("Get next. (chip_id=%u; mb_id=%u; vfid=%u; get_vfid=%u)\n", chip_id, topic_chan->mb_id,
+                topic_chan->wait_mb->vfid, vfid);
 
 again:
     if (!esched_drv_is_mb_valid(topic_chan)) {
@@ -1460,9 +1474,9 @@ again:
 
     proc_ctx = esched_proc_get(cpu_ctx->node, (int32_t)mb->pid);
     if (proc_ctx == NULL) {
-        sched_err("Get proc_ctx failed. (devid=%u; pid=%u; topic_id=%u; topic_type=%u; esched_pid_data=%u)\n",
-            chip_id, mb->pid, mb->topic_id, mb->topic_type,
-            (u32)mb->stream_id + (((u32)mb->task_id) << TOPIC_SCHED_ESCHED_PID_HIGH_OFFSET));
+        sched_err("Get proc_ctx failed. (devid=%u; pid=%u; topic_id=%u; topic_type=%u; esched_pid_data=%u)\n", chip_id,
+                  mb->pid, mb->topic_id, mb->topic_type,
+                  (u32)mb->stream_id + (((u32)mb->task_id) << TOPIC_SCHED_ESCHED_PID_HIGH_OFFSET));
 #ifndef EMU_ST
         esched_drv_cpu_report(topic_chan, TOPIC_FINISH_REPORT_ABNORMAL, TOPIC_FINISH_STATUS_EXCEPTION);
 #endif
@@ -1471,8 +1485,8 @@ again:
 
     thread_ctx = esched_drv_aicpu_get_thread(proc_ctx, mb->gid, cpu_ctx->cpuid, mb->topic_id);
     if (thread_ctx == NULL) {
-        sched_err("Failed to get the thread_ctx. (mb_id=%u; pid=%u; gid=%u; cpuid=%u)\n",
-            topic_chan->mb_id, mb->pid, mb->gid, cpu_ctx->cpuid);
+        sched_err("Failed to get the thread_ctx. (mb_id=%u; pid=%u; gid=%u; cpuid=%u)\n", topic_chan->mb_id, mb->pid,
+                  mb->gid, cpu_ctx->cpuid);
         esched_proc_put(proc_ctx);
 #ifndef EMU_ST
         esched_drv_cpu_report(topic_chan, TOPIC_FINISH_REPORT_ABNORMAL, TOPIC_FINISH_STATUS_EXCEPTION);
@@ -1486,7 +1500,8 @@ again:
         esched_drv_cpu_report(topic_chan, 0, TOPIC_FINISH_STATUS_NORMAL);
 #endif
         if (!esched_log_limited(SCHED_LOG_LIMIT_SWAPOUT)) {
-            sched_warn("Discard event because thread is swapout. (pid=%u; gid=%u; topic_id=%u; subtopic_id=%u; tid=%u)\n",
+            sched_warn(
+                "Discard event because thread is swapout. (pid=%u; gid=%u; topic_id=%u; subtopic_id=%u; tid=%u)\n",
                 mb->pid, mb->gid, mb->topic_id, mb->subtopic_id, thread_ctx->kernel_tid);
         }
         goto again;
@@ -1495,8 +1510,8 @@ again:
     event = esched_drv_fill_event(topic_chan, mb, thread_ctx->grp_ctx, SCHED_INVALID_TID);
     if (event == NULL) {
         sched_err("Failed to invoke the esched_drv_fill_event to fill the event. "
-            "(mb_id=%u; pid=%u; gid=%u; cpuid=%u)\n",
-            topic_chan->mb_id, mb->pid, mb->gid, cpu_ctx->cpuid);
+                  "(mb_id=%u; pid=%u; gid=%u; cpuid=%u)\n",
+                  topic_chan->mb_id, mb->pid, mb->gid, cpu_ctx->cpuid);
         esched_proc_put(proc_ctx);
 #ifndef EMU_ST
         esched_drv_cpu_report(topic_chan, TOPIC_FINISH_REPORT_ABNORMAL, TOPIC_FINISH_STATUS_EXCEPTION);
@@ -1516,7 +1531,7 @@ again:
     sched_publish_state_update(cpu_ctx->node, event, SCHED_SYSFS_PUBLISH_FROM_HW, 0);
 
     sched_debug("End of calling esched_drv_get_next_thread. (mb_id=%u; cpu_type=%u; pid=%u; tid=%u)\n",
-        topic_chan->mb_id, topic_chan->mb_type, proc_ctx->pid, thread_ctx->kernel_tid);
+                topic_chan->mb_id, topic_chan->mb_type, proc_ctx->pid, thread_ctx->kernel_tid);
 
     return thread_ctx;
 }
@@ -1558,7 +1573,7 @@ static struct topic_data_chan *esched_drv_get_thread_topic_chan(u32 dev_id, stru
     topic_chan = (struct topic_data_chan *)event->priv;
     if (topic_chan == NULL) {
         sched_warn("Get topic chan not success. (devid=%u; pid=%d; gid=%u; tid=%u; kernel_tid=%u)\n", dev_id,
-            thread_ctx->grp_ctx->pid, thread_ctx->grp_ctx->gid, thread_ctx->tid, thread_ctx->kernel_tid);
+                   thread_ctx->grp_ctx->pid, thread_ctx->grp_ctx->gid, thread_ctx->tid, thread_ctx->kernel_tid);
         return NULL;
     }
 
@@ -1567,7 +1582,7 @@ static struct topic_data_chan *esched_drv_get_thread_topic_chan(u32 dev_id, stru
 #endif
 
 STATIC struct sched_event *_esched_drv_get_event(struct topic_data_chan *topic_chan,
-    struct sched_thread_ctx *thread_ctx, u32 event_id)
+                                                 struct sched_thread_ctx *thread_ctx, u32 event_id)
 {
     struct sched_proc_ctx *proc_ctx = NULL;
     struct sched_event *event = NULL;
@@ -1588,17 +1603,17 @@ STATIC struct sched_event *_esched_drv_get_event(struct topic_data_chan *topic_c
     if ((mb->pid != (u32)thread_ctx->grp_ctx->pid) || (mb->gid != thread_ctx->grp_ctx->gid) ||
         (mb->topic_id != event_id)) {
         sched_err("The variable pid, gid or event_id is invalid. "
-            "(mb_id=%u; target_pid=%u; mb_gid=%u; mb_event_id=%u; topic_type=%u;"
-            "thread_pid=%d; thread_gid=%u; event_id=%u)\n",
-            topic_chan->mb_id, mb->pid, mb->gid, mb->topic_id, mb->topic_type,
-            thread_ctx->grp_ctx->pid, thread_ctx->grp_ctx->gid, event_id);
+                  "(mb_id=%u; target_pid=%u; mb_gid=%u; mb_event_id=%u; topic_type=%u;"
+                  "thread_pid=%d; thread_gid=%u; event_id=%u)\n",
+                  topic_chan->mb_id, mb->pid, mb->gid, mb->topic_id, mb->topic_type, thread_ctx->grp_ctx->pid,
+                  thread_ctx->grp_ctx->gid, event_id);
         return NULL;
     }
 
     event = esched_drv_fill_event(topic_chan, mb, thread_ctx->grp_ctx, SCHED_INVALID_TID);
     if (event == NULL) {
         sched_err("Failed to invoke the esched_drv_fill_event to fill the event. (mb_id=%u; event_id=%u)\n",
-            topic_chan->mb_id, event_id);
+                  topic_chan->mb_id, event_id);
         return NULL;
     }
 
@@ -1613,20 +1628,20 @@ STATIC struct sched_event *_esched_drv_get_event(struct topic_data_chan *topic_c
 
     topic_chan->report_flag = SCHED_DRV_REPORT_GET_EVENT;
 
-    sched_debug("End of calling esched_drv_get_event. (mb_id=%u; pid=%u; gid=%u; event_id=%u)\n",
-        topic_chan->mb_id, mb->pid, mb->gid, mb->topic_id);
+    sched_debug("End of calling esched_drv_get_event. (mb_id=%u; pid=%u; gid=%u; event_id=%u)\n", topic_chan->mb_id,
+                mb->pid, mb->gid, mb->topic_id);
 #endif
     return event;
 }
 
-STATIC struct sched_event *esched_drv_get_event(struct sched_cpu_ctx *cpu_ctx,
-    struct sched_thread_ctx *thread_ctx, u32 event_id)
+STATIC struct sched_event *esched_drv_get_event(struct sched_cpu_ctx *cpu_ctx, struct sched_thread_ctx *thread_ctx,
+                                                u32 event_id)
 {
     return _esched_drv_get_event(cpu_ctx->topic_chan, thread_ctx, event_id);
 }
 #ifdef CFG_FEATURE_HARD_SOFT_SCHED
 static struct sched_event *esched_drv_get_event_curr_chan(struct sched_cpu_ctx *cpu_ctx,
-    struct sched_thread_ctx *thread_ctx, u32 event_id)
+                                                          struct sched_thread_ctx *thread_ctx, u32 event_id)
 {
     struct topic_data_chan *topic_chan = NULL;
 #ifndef EMU_ST
@@ -1641,8 +1656,8 @@ static struct sched_event *esched_drv_get_event_curr_chan(struct sched_cpu_ctx *
 #endif
 #endif
 
-int esched_drv_fill_sqe_qos(u32 chip_id, struct sched_published_event_info *event_info,
-    struct topic_sched_sqe *sqe, bool wait_thread_check)
+int esched_drv_fill_sqe_qos(u32 chip_id, struct sched_published_event_info *event_info, struct topic_sched_sqe *sqe,
+                            bool wait_thread_check)
 {
     struct sched_proc_ctx *proc_ctx = NULL;
     struct sched_grp_ctx *grp_ctx = NULL;
@@ -1692,8 +1707,8 @@ int esched_drv_fill_sqe_qos(u32 chip_id, struct sched_published_event_info *even
     if (wait_thread_check) {
         if (!sched_grp_can_handle_event(grp_ctx, &event) && (hard_res->cpu_work_mode != STARS_WORK_MODE_MSGQ)) {
             esched_chip_proc_put(proc_ctx);
-            sched_err("There is no subscribe thread. (pid=%d; gid=%u; event_id=%u)\n",
-                grp_ctx->pid, grp_ctx->gid, event_info->event_id);
+            sched_err("There is no subscribe thread. (pid=%d; gid=%u; event_id=%u)\n", grp_ctx->pid, grp_ctx->gid,
+                      event_info->event_id);
             return DRV_ERROR_NO_SUBSCRIBE_THREAD;
         }
     }
@@ -1713,11 +1728,11 @@ int esched_drv_fill_sqe_qos(u32 chip_id, struct sched_published_event_info *even
 }
 
 int esched_drv_fill_task_msg(u32 chip_id, u32 event_src, void *task_msg_data,
-    struct sched_published_event_info *event_info)
+                             struct sched_published_event_info *event_info)
 {
     if (event_info->msg_len > TOPIC_SCHED_USER_DATA_PAYLOAD_LEN) {
-        sched_err("Invalid msg_len. (chip_id=%u; msg_len=%u; max=%d)\n",
-            chip_id, event_info->msg_len, TOPIC_SCHED_USER_DATA_PAYLOAD_LEN);
+        sched_err("Invalid msg_len. (chip_id=%u; msg_len=%u; max=%d)\n", chip_id, event_info->msg_len,
+                  TOPIC_SCHED_USER_DATA_PAYLOAD_LEN);
         return DRV_ERROR_PARA_ERROR;
     }
 
@@ -1731,7 +1746,7 @@ int esched_drv_fill_task_msg(u32 chip_id, u32 event_src, void *task_msg_data,
 
 #if !defined(EMU_ST) && !defined(CFG_FEATURE_STARS_V2)
 static int esched_drv_submit_split_event(struct sched_numa_node *node, u32 event_src,
-    struct sched_published_event_info *event_info, u32 timeout)
+                                         struct sched_published_event_info *event_info, u32 timeout)
 {
     struct topic_data_chan *topic_chan = NULL;
 #ifdef CFG_FEATURE_HARD_SOFT_SCHED
@@ -1746,9 +1761,9 @@ static int esched_drv_submit_split_event(struct sched_numa_node *node, u32 event
 #endif
 
     if (!(((event_info->dst_engine == (u32)ACPU_DEVICE) || (event_info->dst_engine == (u32)ACPU_LOCAL)) &&
-        (event_info->policy == (u32)ONLY))) {
-        sched_err("The event not allow to submit. (policy=%u; dst_engine=%u)\n",
-            event_info->policy, event_info->dst_engine);
+          (event_info->policy == (u32)ONLY))) {
+        sched_err("The event not allow to submit. (policy=%u; dst_engine=%u)\n", event_info->policy,
+                  event_info->dst_engine);
         return DRV_ERROR_INVALID_VALUE;
     }
 
@@ -1760,8 +1775,8 @@ static int esched_drv_submit_split_event(struct sched_numa_node *node, u32 event
 
     ret = sched_get_sched_cpuid_in_node(node, &cpuid);
     if (ret != 0) {
-        sched_err("Not sched cpu. (chip_id=%u; cpu_num=%u; cur_processor_id=%u)\n",
-            node->node_id, node->cpu_num, sched_get_cur_processor_id());
+        sched_err("Not sched cpu. (chip_id=%u; cpu_num=%u; cur_processor_id=%u)\n", node->node_id, node->cpu_num,
+                  sched_get_cur_processor_id());
         return ret;
     }
 
@@ -1788,7 +1803,8 @@ static int esched_drv_submit_split_event(struct sched_numa_node *node, u32 event
         cpuid_in_node = esched_get_cpuid_in_node(cpuid);
         ret = esched_drv_convert_cpuid_to_topic_chan(node->node_id, cpuid_in_node, &topic_chan_id);
         if (ret != 0) {
-            sched_err("Failed to convert cpuid to topic chan id. (chip_id=%u; cpuid=%u)\n", node->node_id, cpuid_in_node);
+            sched_err("Failed to convert cpuid to topic chan id. (chip_id=%u; cpuid=%u)\n", node->node_id,
+                      cpuid_in_node);
             return ret;
         }
 
@@ -1800,7 +1816,8 @@ static int esched_drv_submit_split_event(struct sched_numa_node *node, u32 event
 
         if (topic_chan->topic_chan_type == TOPIC_SCHED_CHAN_COMCPU_TYPE) {
             sched_err("com cpu not support split task. (devid=%d, chan_id=%d, com_cpu_num=%d, die_id=%d).\n",
-                topic_chan->hard_res->dev_id, topic_chan->mb_id, topic_chan->hard_res->comcpu_chan_num, topic_chan->hard_res->die_id);
+                      topic_chan->hard_res->dev_id, topic_chan->mb_id, topic_chan->hard_res->comcpu_chan_num,
+                      topic_chan->hard_res->die_id);
             return DRV_ERROR_NOT_SUPPORT;
         }
     }
@@ -1810,9 +1827,8 @@ static int esched_drv_submit_split_event(struct sched_numa_node *node, u32 event
 }
 #endif
 
-int esched_publish_event_to_topic(u32 chip_id, u32 event_src,
-                             struct sched_published_event_info *event_info,
-                             struct sched_published_event_func *event_func)
+int esched_publish_event_to_topic(u32 chip_id, u32 event_src, struct sched_published_event_info *event_info,
+                                  struct sched_published_event_func *event_func)
 {
     struct sched_numa_node *node = NULL;
     int submit_chan_id = -1;
@@ -1821,8 +1837,8 @@ int esched_publish_event_to_topic(u32 chip_id, u32 event_src,
     if ((event_info->dst_engine >= (unsigned int)DST_ENGINE_MAX) || (event_info->policy >= (unsigned int)POLICY_MAX) ||
         (esched_drv_get_topic_type(event_info->policy, event_info->dst_engine) >= TOPIC_TYPE_MAX) ||
         (event_info->subevent_id >= TOPIC_SCHED_MAX_SUBEVENT_ID)) {
-        sched_err("The parameters is invalid. (chip_id=%u; dst_engine=%u; policy=%u; subevent_id=%u)\n",
-            chip_id, event_info->dst_engine, event_info->policy, event_info->subevent_id);
+        sched_err("The parameters is invalid. (chip_id=%u; dst_engine=%u; policy=%u; subevent_id=%u)\n", chip_id,
+                  event_info->dst_engine, event_info->policy, event_info->subevent_id);
         return DRV_ERROR_INVALID_VALUE;
     }
 
@@ -1884,8 +1900,7 @@ STATIC int esched_get_grp_type(u32 chip_id, int pid, u32 gid, bool local_flag, i
     }
     grp_ctx = sched_get_grp_ctx(proc_ctx, gid);
     if (grp_ctx->sched_mode == SCHED_MODE_UNINIT) {
-        sched_err("The group is not added. (chip_id=%u; pid=%d; gid=%u)\n",
-            proc_ctx->node->node_id, pid, gid);
+        sched_err("The group is not added. (chip_id=%u; pid=%d; gid=%u)\n", proc_ctx->node->node_id, pid, gid);
         ret = DRV_ERROR_UNINIT;
     } else {
         *ccpu_flag = (grp_ctx->sched_mode == SCHED_MODE_SCHED_CPU) ? SCHED_INVALID : SCHED_VALID;
@@ -1896,8 +1911,8 @@ STATIC int esched_get_grp_type(u32 chip_id, int pid, u32 gid, bool local_flag, i
 }
 #endif
 
-STATIC int esched_drv_submit_event_distribute(u32 dev_id, u32 event_src,
-    struct sched_published_event_info *event_info, struct sched_published_event_func *event_func)
+STATIC int esched_drv_submit_event_distribute(u32 dev_id, u32 event_src, struct sched_published_event_info *event_info,
+                                              struct sched_published_event_func *event_func)
 {
     int ccpu_flag = SCHED_VALID;
     u32 dst_engine = event_info->dst_engine;
@@ -1915,13 +1930,13 @@ STATIC int esched_drv_submit_event_distribute(u32 dev_id, u32 event_src,
     ret = esched_get_grp_type(dev_id, event_info->pid, event_info->gid, local_flag, &ccpu_flag);
     if ((ret == DRV_ERROR_NO_PROCESS) && (event_info->event_id == EVENT_QUEUE_ENQUEUE)) {
         if (!esched_log_limited(SCHED_LOG_LIMIT_GET_PROC_CTX)) {
-            sched_err("Get group type failed. (dev_id=%u; pid=%d; gid=%u; ccpu_flag=%d)\n",
-                dev_id, event_info->pid, event_info->gid, ccpu_flag);
+            sched_err("Get group type failed. (dev_id=%u; pid=%d; gid=%u; ccpu_flag=%d)\n", dev_id, event_info->pid,
+                      event_info->gid, ccpu_flag);
         }
         return ret;
     } else if (ret != 0) {
-        sched_err("Get group type failed. (dev_id=%u; pid=%d; gid=%u; ccpu_flag=%d)\n",
-            dev_id, event_info->pid, event_info->gid, ccpu_flag);
+        sched_err("Get group type failed. (dev_id=%u; pid=%d; gid=%u; ccpu_flag=%d)\n", dev_id, event_info->pid,
+                  event_info->gid, ccpu_flag);
         return ret;
     }
 #else
@@ -1933,7 +1948,7 @@ STATIC int esched_drv_submit_event_distribute(u32 dev_id, u32 event_src,
         } else {
 #ifdef CFG_FEATURE_REMOTE_PUB_HARD_SCHED
             return esched_publish_event_to_topic(dev_id, event_src, event_info, event_func);
-#elif defined (CFG_FEATURE_REMOTE_SUBMIT)
+#elif defined(CFG_FEATURE_REMOTE_SUBMIT)
             esched_submit_trace_update(dev_id, event_src, event_info);
             return sched_publish_event_to_remote(dev_id, event_src, event_info, event_func);
 #endif
@@ -2043,8 +2058,8 @@ STATIC void sched_check_wait_topic(struct sched_numa_node *node)
             ka_system_usleep_range(TOPIC_SCHED_WAIT_CPU_IDLE_MIN_INTERVAL, TOPIC_SCHED_WAIT_CPU_IDLE_MAX_INTERVAL);
         }
 
-        sched_debug("It's waiting to be checked by the guards. (node_id=%u; mb_id=%u)\n",
-            node->node_id, cpu_ctx->cpuid);
+        sched_debug("It's waiting to be checked by the guards. (node_id=%u; mb_id=%u)\n", node->node_id,
+                    cpu_ctx->cpuid);
         ka_system_tasklet_schedule(&topic_chan->sched_task);
     }
 }
@@ -2054,17 +2069,17 @@ void sched_record_cpu_port_clear_log(struct sched_cpu_port_clear_info *clr_info)
     if (clr_info->position == 0) {
         return;
     } else if (clr_info->position == SCHED_CPU_PORT_CLEAR_ERR_SET_PAUSE) {
-        sched_err("Wait cpu port pause not success. (port_id=%u; status=%u; position=%d)\n",
-            clr_info->port_id, clr_info->status, clr_info->position);
+        sched_err("Wait cpu port pause not success. (port_id=%u; status=%u; position=%d)\n", clr_info->port_id,
+                  clr_info->status, clr_info->position);
     } else if (clr_info->position == SCHED_CPU_PORT_CLEAR_ERR_CLEAR_TAIL) {
-        sched_err("Cpu port still has events. (port_id=%u; head=%u; tail=%u, position=%d)\n",
-            clr_info->port_id, clr_info->head, clr_info->tail, clr_info->position);
+        sched_err("Cpu port still has events. (port_id=%u; head=%u; tail=%u, position=%d)\n", clr_info->port_id,
+                  clr_info->head, clr_info->tail, clr_info->position);
     } else if (clr_info->position == SCHED_CPU_PORT_CLEAR_ERR_CLEAR_MB) {
-        sched_warn("Clear get mailbox warn. (port_id=%u; status=%u; position=%d)\n",
-            clr_info->port_id, clr_info->status, clr_info->position);
+        sched_warn("Clear get mailbox warn. (port_id=%u; status=%u; position=%d)\n", clr_info->port_id,
+                   clr_info->status, clr_info->position);
     } else {
         sched_err("Clear tail and get mailbox err. (port_id=%u; status=%u; head=%u; tail=%u; position=%d)\n",
-            clr_info->port_id, clr_info->status, clr_info->head, clr_info->tail, clr_info->position);
+                  clr_info->port_id, clr_info->status, clr_info->head, clr_info->tail, clr_info->position);
     }
     return;
 }
@@ -2149,8 +2164,8 @@ static void sched_drv_task_exit_check_sched_cpu(struct sched_numa_node *node, st
 #endif
 
     if (node->hard_res.cpu_work_mode == STARS_WORK_MODE_MSGQ) {
-        sched_info("msgq mode check pid. (res_map_pid=%d release_pid=%d)\n",
-            node->hard_res.msgq_res_map_pid, proc_ctx->pid);
+        sched_info("msgq mode check pid. (res_map_pid=%d release_pid=%d)\n", node->hard_res.msgq_res_map_pid,
+                   proc_ctx->pid);
         if (node->hard_res.msgq_res_map_pid == proc_ctx->pid) {
             sched_drv_check_msgq_cpu_task(node);
             node->hard_res.msgq_res_map_pid = -1;
@@ -2213,11 +2228,7 @@ void esched_drv_destroy_topic_chans(u32 devid, u32 start_chan_id, u32 chan_num)
 
 static bool esched_drv_is_com_cpu_chan_type(u32 comcpu_chan_num, u32 chan_id)
 {
-    u32 com_cpu_map[3][2] = {
-        {0xFF, 0xFF},
-        {2, 0xFF},
-        {2, 3}
-    };
+    u32 com_cpu_map[3][2] = {{0xFF, 0xFF}, {2, 0xFF}, {2, 3}};
 
     if (comcpu_chan_num > STARS_TOPIC_MAX_COM_CPU_NUM) {
         sched_warn("com cpu num is too large. (com_cpu_num=%u)\n", comcpu_chan_num);
@@ -2254,8 +2265,8 @@ int esched_drv_create_topic_chans(u32 devid, u32 start_chan_id, u32 chan_num, u3
         sched_info("Config topic chan type. (chan_id=%u, topic_chan_type=%d)", chan_id, topic_chan->topic_chan_type);
     }
 
-    sched_debug("Create topic channels success. (devid=%u; chan_id=[%u, %u))\n",
-        devid, start_chan_id, (start_chan_id + chan_num));
+    sched_debug("Create topic channels success. (devid=%u; chan_id=[%u, %u))\n", devid, start_chan_id,
+                (start_chan_id + chan_num));
 
     return 0;
 }
@@ -2353,8 +2364,8 @@ int esched_drv_get_host_pid(u32 chip_id, int pid, u32 *host_pid, int *cp_type)
     return 0;
 }
 
-struct sched_event *esched_drv_sched_cpu_get_event(struct sched_cpu_ctx *cpu_ctx,
-    struct sched_thread_ctx *thread_ctx, u32 event_id)
+struct sched_event *esched_drv_sched_cpu_get_event(struct sched_cpu_ctx *cpu_ctx, struct sched_thread_ctx *thread_ctx,
+                                                   u32 event_id)
 {
 #ifdef CFG_FEATURE_HARD_SOFT_SCHED
     if (!esched_drv_cpu_is_hw_sched_mode(cpu_ctx->topic_chan)) {
@@ -2421,4 +2432,3 @@ int tmp_sched_check_wait_topic()
     return 0;
 }
 #endif
-

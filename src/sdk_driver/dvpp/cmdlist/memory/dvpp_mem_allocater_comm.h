@@ -18,6 +18,10 @@
 #include "mem_pool_comm.h"
 #include "dvpp_cmdlist.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 init get_init_func(enum mem_node_type node_type);
 struct mem_pool_info* get_mem_pool(enum dvpp_sqe_type mod_type, enum mem_node_type node_type, uint32_t pool_id);
 uint32_t get_node_num(enum dvpp_sqe_type mod_type);
@@ -27,4 +31,8 @@ void free_node(enum dvpp_sqe_type mod_type, enum mem_node_type node_type, uint32
 int32_t check_pool_id(uint32_t pool_id);
 void dvpp_create_mem_pools_by_id(uint32_t pool_id);
 void dvpp_destroy_mem_pools_by_id(uint32_t pool_id);
+
+#ifdef __cplusplus
+}
+#endif
 #endif // #ifndef DVPP_MEM_ALLOCATER_COMM_H

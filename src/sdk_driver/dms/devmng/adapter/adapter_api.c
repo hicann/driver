@@ -125,101 +125,6 @@ int adap_get_p2p_access_status(u32 devid, u32 peer_devid, int *status)
 }
 KA_EXPORT_SYMBOL(adap_get_p2p_access_status);
 
-/* dma */
-void *adap_dma_alloc_coherent(ka_device_t *dev, size_t size, ka_dma_addr_t *dma_addr, ka_gfp_t gfp)
-{
-    void *addr = NULL;
-    struct bus_adpater_stu *adap = get_adapter_by_dev_id(0); /* use device 0 get connect type */
-    if (adap->dma.alloc_coherent != NULL) {
-        addr = adap->dma.alloc_coherent(dev, size, dma_addr, gfp);
-    }
-    put_adapter(adap);
-    return addr;
-}
-KA_EXPORT_SYMBOL(adap_dma_alloc_coherent);
-
-void adap_dma_free_coherent(ka_device_t *dev, size_t size, void *addr, ka_dma_addr_t dma_addr)
-{
-    static bool log_logged = false;
-    struct bus_adpater_stu *adap = get_adapter_by_dev_id(0); /* use device 0 get connect type */
-    if (adap->dma.free_coherent != NULL) {
-        adap->dma.free_coherent(dev, size, addr, dma_addr);
-    } else if (log_logged == false){
-        log_logged = true;
-        dms_err("Dma.free_coherent is NULL.\n");
-    }
-    put_adapter(adap);
-}
-KA_EXPORT_SYMBOL(adap_dma_free_coherent);
-
-ka_dma_addr_t adap_dma_map_single(ka_device_t *dev, void *ptr, size_t size, ka_dma_data_direction_t dir)
-{
-    ka_dma_addr_t ret = 0;
-    static bool log_logged = false;
-    struct bus_adpater_stu *adap = get_adapter_by_dev_id(0); /* use device 0 get connect type */
-    if (adap->dma.map_single != NULL) {
-        ret = adap->dma.map_single(dev, ptr, size, dir);
-    } else if (log_logged == false){
-        log_logged = true;
-        dms_err("Dma.map_single is NULL.\n");
-    }
-    put_adapter(adap);
-    return ret;
-}
-KA_EXPORT_SYMBOL(adap_dma_map_single);
-
-void adap_dma_unmap_single(ka_device_t *dev, ka_dma_addr_t addr, size_t size, ka_dma_data_direction_t dir)
-{
-    static bool log_logged = false;
-    struct bus_adpater_stu *adap = get_adapter_by_dev_id(0); /* use device 0 get connect type */
-    if (adap->dma.unmap_single != NULL) {
-        adap->dma.unmap_single(dev, addr, size, dir);
-    } else if (log_logged == false){
-        log_logged = true;
-        dms_err("Dma.unmap_single is NULL.\n");
-    }
-    put_adapter(adap);
-}
-KA_EXPORT_SYMBOL(adap_dma_unmap_single);
-
-int adap_dma_link_free(struct devdrv_dma_prepare *dma_prepare)
-{
-    int ret = -EOPNOTSUPP;
-    struct bus_adpater_stu *adap = get_adapter_by_dev_id(0); /* use device 0 get connect type */
-    if (adap->dma.link_free != NULL) {
-        ret = adap->dma.link_free(dma_prepare);
-    }
-    put_adapter(adap);
-    return ret;
-}
-KA_EXPORT_SYMBOL(adap_dma_link_free);
-
-struct devdrv_dma_prepare *adap_dma_link_prepare(u32 devid, enum devdrv_dma_data_type type,
-    struct devdrv_dma_node *dma_node, u32 node_cnt, u32 fill_status)
-{
-    struct devdrv_dma_prepare *prepare = NULL;
-    struct bus_adpater_stu *adap = get_adapter_by_dev_id(devid); /* use device 0 get connect type */
-    if (adap->dma.link_prepare != NULL) {
-        prepare = adap->dma.link_prepare(devid, type, dma_node, node_cnt, fill_status);
-    }
-    put_adapter(adap);
-    return prepare;
-}
-KA_EXPORT_SYMBOL(adap_dma_link_prepare);
-
-int adap_dma_sync_copy(u32 dev_id, enum devdrv_dma_data_type type, u64 src, u64 dst, u32 size,
-    enum devdrv_dma_direction direction)
-{
-    int ret = -EOPNOTSUPP;
-    struct bus_adpater_stu *adap = get_adapter_by_dev_id(dev_id); /* use device 0 get connect type */
-    if (adap->dma.sync_copy != NULL) {
-        ret = adap->dma.sync_copy(dev_id, type, src, dst, size, direction);
-    }
-    put_adapter(adap);
-    return ret;
-}
-KA_EXPORT_SYMBOL(adap_dma_sync_copy);
-
 /* pcie */
 int adap_get_pci_dev_info(u32 devid, struct devdrv_pci_dev_info *dev_info)
 {
@@ -249,30 +154,6 @@ int adap_get_pcie_id_info(u32 devid, struct devdrv_pcie_id_info  *pcie_id_info)
 }
 KA_EXPORT_SYMBOL(adap_get_pcie_id_info);
 
-int adap_get_dev_topology(u32 devid, u32 peer_devid, int *topo_type)
-{
-    int ret = -EOPNOTSUPP;
-    struct bus_adpater_stu *adap = get_adapter_by_dev_id(devid);
-    if (adap->pcie.get_dev_topology != NULL) {
-        ret = adap->pcie.get_dev_topology(devid, peer_devid, topo_type);
-    }
-    put_adapter(adap);
-    return ret;
-}
-KA_EXPORT_SYMBOL(adap_get_dev_topology);
-
-int adap_hot_reset_device(u32 dev_id)
-{
-    int ret = -EOPNOTSUPP;
-    struct bus_adpater_stu *adap = get_adapter_by_dev_id(dev_id);
-    if (adap->pcie.hot_reset_device != NULL) {
-        ret = adap->pcie.hot_reset_device(dev_id);
-    }
-    put_adapter(adap);
-    return ret;
-}
-KA_EXPORT_SYMBOL(adap_hot_reset_device);
-
 int adap_pcie_read_proc(u32 dev_id, enum devdrv_addr_type type, u32 offset, unsigned char *value, u32 len)
 {
     int ret = -EOPNOTSUPP;
@@ -284,18 +165,6 @@ int adap_pcie_read_proc(u32 dev_id, enum devdrv_addr_type type, u32 offset, unsi
     return ret;
 }
 KA_EXPORT_SYMBOL(adap_pcie_read_proc);
-
-int adap_pcie_prereset(u32 dev_id)
-{
-    int ret = -EOPNOTSUPP;
-    struct bus_adpater_stu *adap = get_adapter_by_dev_id(dev_id);
-    if (adap->pcie.prereset != NULL) {
-        ret = adap->pcie.prereset(dev_id);
-    }
-    put_adapter(adap);
-    return ret;
-}
-KA_EXPORT_SYMBOL(adap_pcie_prereset);
 
 int adap_pcie_reinit(u32 dev_id)
 {
@@ -410,13 +279,9 @@ KA_EXPORT_SYMBOL(adap_dev_startup_register);
 unsigned int adap_get_host_type(void)
 {
     unsigned int ret = 0;
-    static bool log_logged = false;
     struct bus_adpater_stu *adap = get_adapter_by_dev_id(0); /* use device 0 get connect type */
     if (adap->pcie.get_host_type != NULL) {
         ret = adap->pcie.get_host_type();
-    } else if (log_logged == false){
-        log_logged = true;
-        dms_err("Pcie.get_host_type is NULL.\n");
     }
     put_adapter(adap);
     return ret;

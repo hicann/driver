@@ -14,6 +14,4 @@
 #ifndef SVM_MASTER_VMA_OPS_H
 #define SVM_MASTER_VMA_OPS_H
 
-
 #endif
-

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2025. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -24,9 +24,9 @@
 #include "apm_kernel_ioctl.h"
 #include "apm_slave_meminfo.h"
 
-#define SHAREPOOL_INFO_PATH         "/proc/sharepool/proc_overview"
-#define SHAREPOOL_INFO_MAX_LEN      4096
-#define SHAREPOOL_INFO_MEMBER_NUM   3
+#define SHAREPOOL_INFO_PATH "/proc/sharepool/proc_overview"
+#define SHAREPOOL_INFO_MAX_LEN 4096
+#define SHAREPOOL_INFO_MEMBER_NUM 3
 #define BYTES_PER_KB 1024ul
 
 #ifndef EMU_ST
@@ -56,13 +56,12 @@ static int apm_get_used_mem_by_proc_view(const char *file_string, int slave_tgid
     ptr = strtok_s(p_str, "\n", &temp_ptr);
     while (ptr != NULL) {
         ptr = strtok_s(NULL, "\n", &temp_ptr);
-        if ((ptr != NULL) && (sscanf_s(ptr, "%d %*s %llu %*llu %*llu %llu",
-            &pid, &tmp_sp_size, &tmp_aicpu_size) == SHAREPOOL_INFO_MEMBER_NUM)) {
+        if ((ptr != NULL) && (sscanf_s(ptr, "%d %*s %llu %*llu %*llu %llu", &pid, &tmp_sp_size, &tmp_aicpu_size) ==
+                              SHAREPOOL_INFO_MEMBER_NUM)) {
             if (pid == slave_tgid) {
                 *sp_size = tmp_sp_size * BYTES_PER_KB;
                 *aicpu_size = tmp_aicpu_size * BYTES_PER_KB;
-                apm_debug("slave_tgid=%d; sp_size=%llu; aicpu_size=%llu\n",
-                    slave_tgid, tmp_sp_size, tmp_aicpu_size);
+                apm_debug("slave_tgid=%d; sp_size=%llu; aicpu_size=%llu\n", slave_tgid, tmp_sp_size, tmp_aicpu_size);
                 return 0;
             }
         }
@@ -83,8 +82,7 @@ static int apm_get_slave_malloc_and_sharepool_mem(int slave_tgid, u64 *aicpu_siz
 
     fp = ka_fs_filp_open(file_name, KA_O_RDONLY, 0);
     if (KA_IS_ERR((void const *)fp)) {
-        apm_err("Open sharepool info file failed. (file=\"%s\", ret=%ld)\n",
-            file_name, KA_PTR_ERR((void const *)fp));
+        apm_err("Open sharepool info file failed. (file=\"%s\", ret=%ld)\n", file_name, KA_PTR_ERR((void const *)fp));
         return -ENOENT;
     }
 
@@ -103,8 +101,7 @@ static int apm_get_slave_malloc_and_sharepool_mem(int slave_tgid, u64 *aicpu_siz
 
     ret = apm_get_used_mem_by_proc_view(file_string, slave_tgid, aicpu_size, sp_size);
     if (ret != 0) {
-        apm_err("Can not find sharepool memsize. (file=\"%s\"; slave_tgid=%d; ret=%d)\n",
-            file_name, slave_tgid, ret);
+        apm_err("Can not find sharepool memsize. (file=\"%s\"; slave_tgid=%d; ret=%d)\n", file_name, slave_tgid, ret);
     }
 
 free_mem:
@@ -125,7 +122,7 @@ static int apm_get_slave_used_mem(int slave_tgid, u64 *used_size)
     int ret;
 
     ret = apm_get_slave_malloc_and_sharepool_mem(slave_tgid, &aicpu_size, &sp_size);
-    if(ret != 0) {
+    if (ret != 0) {
         return ret;
     }
 
@@ -162,4 +159,3 @@ int apm_get_slave_meminfo(int slave_tgid, processMemType_t type, u64 *size)
     }
     return ret;
 }
-

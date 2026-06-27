@@ -13,11 +13,18 @@
 #ifndef DVPP_VMNG_VMNG_H
 #define DVPP_VMNG_VMNG_H
 
-#include <linux/types.h>
+#include "ka_type.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #define DVPP_VMNG_DEVICE_NUM_MAX 1124  // dev_id 0~63是物理设备, 100~1123为切分设备
 
 int32_t dvpp_vmng_init(void);
 int32_t dvpp_vmng_uninit(void);
 
+#ifdef __cplusplus
+}
+#endif
 #endif

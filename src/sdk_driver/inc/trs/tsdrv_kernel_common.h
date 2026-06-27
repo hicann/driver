@@ -31,12 +31,12 @@
 #endif
 
 #ifdef CFG_SOC_PLATFORM_CLOUD
-#define DEVDRV_MAX_MODEL_ID  2048
+#define DEVDRV_MAX_MODEL_ID 2048
 #else
-#define DEVDRV_MAX_MODEL_ID  1024
+#define DEVDRV_MAX_MODEL_ID 1024
 #endif
 
-#define DEVDRV_MAX_CMO_ID   (64 * 1024)
+#define DEVDRV_MAX_CMO_ID (64 * 1024)
 
 #define IPC_EVENT_MASK 0x8000
 #define IPC_EVENT_TYPE 1
@@ -49,64 +49,64 @@
 #endif
 
 #ifdef CFG_FEATURE_TS_RES_SPEC_V3
-#define DEVDRV_MAX_HW_EVENT_ID  (512 - 1)
-#define DEVDRV_MAX_SW_EVENT_ID  (512)
+#define DEVDRV_MAX_HW_EVENT_ID (512 - 1)
+#define DEVDRV_MAX_SW_EVENT_ID (512)
 
 #else
-#define DEVDRV_MAX_HW_EVENT_ID  (1024 - 1)
+#define DEVDRV_MAX_HW_EVENT_ID (1024 - 1)
 
 #if defined(CFG_SOC_PLATFORM_CLOUD) || defined(CFG_SOC_PLATFORM_MINIV3)
-#define DEVDRV_MAX_SW_EVENT_ID  (64 * 1024)
+#define DEVDRV_MAX_SW_EVENT_ID (64 * 1024)
 #else
-#define DEVDRV_MAX_SW_EVENT_ID  (1024)
+#define DEVDRV_MAX_SW_EVENT_ID (1024)
 #endif
 #endif
 
-#define DEVDRV_SQ_SLOT_SIZE             (64)
+#define DEVDRV_SQ_SLOT_SIZE (64)
 #if defined(CFG_SOC_PLATFORM_CLOUD_V2) || defined(CFG_SOC_PLATFORM_MINIV3)
-#define DEVDRV_CQ_SLOT_SIZE             (16)
+#define DEVDRV_CQ_SLOT_SIZE (16)
 #else
-#define DEVDRV_CQ_SLOT_SIZE             (12)
+#define DEVDRV_CQ_SLOT_SIZE (12)
 #endif
-#define DEVDRV_MAX_CQE_SIZE             32
+#define DEVDRV_MAX_CQE_SIZE 32
 
-#define DEVDRV_MAX_CQ_SLOT_SIZE         (128)
+#define DEVDRV_MAX_CQ_SLOT_SIZE (128)
 
 #if defined(CFG_SOC_PLATFORM_MINI) && !defined(CFG_SOC_PLATFORM_MINIV2) && !defined(CFG_SOC_PLATFORM_MINIV3)
-#define DEVDRV_MAX_SQ_DEPTH             (1024)
-#define DEVDRV_MAX_CQ_DEPTH             (1024)
-#define DEVDRV_MAX_SQ_NUM               (512 - 1)
-#define DEVDRV_MAX_CQ_NUM               (352 - 1)
-#define DEVDRV_DB_SPACE_SIZE            (1024 * 4096)
+#define DEVDRV_MAX_SQ_DEPTH (1024)
+#define DEVDRV_MAX_CQ_DEPTH (1024)
+#define DEVDRV_MAX_SQ_NUM (512 - 1)
+#define DEVDRV_MAX_CQ_NUM (352 - 1)
+#define DEVDRV_DB_SPACE_SIZE (1024 * 4096)
 #else
 #ifdef CFG_SOC_PLATFORM_CLOUD_V2
 #ifdef CFG_MANAGER_HOST_ENV
-#define DEVDRV_MAX_SQ_DEPTH             (65535ULL)
-#define DEVDRV_MAX_CQ_DEPTH             (65535ULL)
+#define DEVDRV_MAX_SQ_DEPTH (65535ULL)
+#define DEVDRV_MAX_CQ_DEPTH (65535ULL)
 #else
-#define DEVDRV_MAX_SQ_DEPTH             (1024)
-#define DEVDRV_MAX_CQ_DEPTH             (1024)
+#define DEVDRV_MAX_SQ_DEPTH (1024)
+#define DEVDRV_MAX_CQ_DEPTH (1024)
 #endif
-#define DEVDRV_MAX_SQ_NUM               (2048ULL)
-#define DEVDRV_MAX_CQ_NUM               DEVDRV_MAX_SQ_NUM
-#define DEVDRV_DB_SPACE_SIZE            (2048 * 65536)
+#define DEVDRV_MAX_SQ_NUM (2048ULL)
+#define DEVDRV_MAX_CQ_NUM DEVDRV_MAX_SQ_NUM
+#define DEVDRV_DB_SPACE_SIZE (2048 * 65536)
 #elif defined(CFG_SOC_PLATFORM_MINIV3)
-#define DEVDRV_MAX_SQ_DEPTH             (2048)
-#define DEVDRV_MAX_CQ_DEPTH             (1024)
-#define DEVDRV_MAX_SQ_NUM               (512)
-#define DEVDRV_MAX_CQ_NUM               DEVDRV_MAX_SQ_NUM
-#define DEVDRV_DB_SPACE_SIZE            (512 * 65536)
+#define DEVDRV_MAX_SQ_DEPTH (2048)
+#define DEVDRV_MAX_CQ_DEPTH (1024)
+#define DEVDRV_MAX_SQ_NUM (512)
+#define DEVDRV_MAX_CQ_NUM DEVDRV_MAX_SQ_NUM
+#define DEVDRV_DB_SPACE_SIZE (512 * 65536)
 #elif defined(CFG_FEATURE_TS_RES_SPEC_V3)
-#define DEVDRV_MAX_SQ_DEPTH             (1024)
-#define DEVDRV_MAX_CQ_DEPTH             (1024)
-#define DEVDRV_MAX_SQ_NUM               (48)
-#define DEVDRV_MAX_CQ_NUM               (58)
+#define DEVDRV_MAX_SQ_DEPTH (1024)
+#define DEVDRV_MAX_CQ_DEPTH (1024)
+#define DEVDRV_MAX_SQ_NUM (48)
+#define DEVDRV_MAX_CQ_NUM (58)
 #else
-#define DEVDRV_MAX_SQ_DEPTH             (1024)
-#define DEVDRV_MAX_CQ_DEPTH             (1024)
-#define DEVDRV_MAX_SQ_NUM               (512)
-#define DEVDRV_MAX_CQ_NUM               (352)
-#define DEVDRV_DB_SPACE_SIZE            (1024 * 4096)
+#define DEVDRV_MAX_SQ_DEPTH (1024)
+#define DEVDRV_MAX_CQ_DEPTH (1024)
+#define DEVDRV_MAX_SQ_NUM (512)
+#define DEVDRV_MAX_CQ_NUM (352)
+#define DEVDRV_DB_SPACE_SIZE (1024 * 4096)
 #endif
 #endif
 
@@ -128,22 +128,22 @@
 #endif
 
 #ifdef CFG_SOC_PLATFORM_MINIV3
-#define DEVDRV_MIN_SQ_DEPTH             (2048)
+#define DEVDRV_MIN_SQ_DEPTH (2048)
 #else
-#define DEVDRV_MIN_SQ_DEPTH             (1024)
+#define DEVDRV_MIN_SQ_DEPTH (1024)
 #endif
-#define DEVDRV_MIN_CQ_DEPTH             (1024)
+#define DEVDRV_MIN_CQ_DEPTH (1024)
 
-#define DEVDRV_MAX_CQ_NUM_PER_PROCESS   2
+#define DEVDRV_MAX_CQ_NUM_PER_PROCESS 2
 
-#define DEVDRV_FUNCTIONAL_SQ_FIRST_INDEX    (496)
-#define DEVDRV_FUNCTIONAL_CQ_FIRST_INDEX    (500)
-#define DEDVRV_DEV_PROCESS_HANG             (0x0F000FFF)
+#define DEVDRV_FUNCTIONAL_SQ_FIRST_INDEX (496)
+#define DEVDRV_FUNCTIONAL_CQ_FIRST_INDEX (500)
+#define DEDVRV_DEV_PROCESS_HANG (0x0F000FFF)
 
-#define DEVDRV_MAX_FUNCTIONAL_SQ_NUM        (4)
-#define DEVDRV_MAX_FUNCTIONAL_CQ_NUM        (10)
+#define DEVDRV_MAX_FUNCTIONAL_SQ_NUM (4)
+#define DEVDRV_MAX_FUNCTIONAL_CQ_NUM (10)
 
-#define TSDRV_CQ_REPORT_SIZE   64U
+#define TSDRV_CQ_REPORT_SIZE 64U
 
 #define DEVDRV_CB_SQ_SLOT_MAX_NUM 1024
 #define DEVDRV_CB_CQ_SLOT_MAX_NUM 1024
@@ -154,44 +154,44 @@
 #define DEVDRV_CB_SQCQ_MAX_SIZE 64
 #define DEVDRV_CB_SQCQ_MIN_SIZE 32
 
-#define  DEVDRV_CB_MAX_REPORT_NUM   32
+#define DEVDRV_CB_MAX_REPORT_NUM 32
 
-#define TSDRV_MAX_SHM_SQE_SIZE      64U
-#define TSDRV_MIN_SHM_SQE_SIZE      64U
+#define TSDRV_MAX_SHM_SQE_SIZE 64U
+#define TSDRV_MIN_SHM_SQE_SIZE 64U
 
-#define TSDRV_MAX_SHM_SQE_DEPTH     1024U
-#define TSDRV_MIN_SHM_SQE_DEPTH     1024U
+#define TSDRV_MAX_SHM_SQE_DEPTH 1024U
+#define TSDRV_MIN_SHM_SQE_DEPTH 1024U
 
-#define TSDRV_MAX_SHM_CQE_SIZE      16U
-#define TSDRV_MIN_SHM_CQE_SIZE      16U
+#define TSDRV_MAX_SHM_CQE_SIZE 16U
+#define TSDRV_MIN_SHM_CQE_SIZE 16U
 
-#define TSDRV_MAX_SHM_CQE_DEPTH     1024U
-#define TSDRV_MIN_SHM_CQE_DEPTH     1024U
+#define TSDRV_MAX_SHM_CQE_DEPTH 1024U
+#define TSDRV_MIN_SHM_CQE_DEPTH 1024U
 
-#define TSDRV_MIN_LOGIC_CQE_SIZE    16U
-#define TSDRV_MAX_LOGIC_CQE_SIZE    16U
+#define TSDRV_MIN_LOGIC_CQE_SIZE 16U
+#define TSDRV_MAX_LOGIC_CQE_SIZE 16U
 
 #define SQCQ_RTS_INFO_LENGTH 5
 #define SQCQ_RESV_LENGTH 8
 
-#define TSDRV_USERMAP_SQ_REG_SIZE   (4 * 1024)
+#define TSDRV_USERMAP_SQ_REG_SIZE (4 * 1024)
 
 /**
  * When modifying the macro definition,
  * ensure that the value is less than or equal to 4094 (< = 4094).
  */
 #if (defined CFG_SOC_PLATFORM_CLOUD)
-#define TSDRV_MAX_LOGIC_CQ_NUM      4094U
+#define TSDRV_MAX_LOGIC_CQ_NUM 4094U
 #else
-#define TSDRV_MAX_LOGIC_CQ_NUM      2048U
+#define TSDRV_MAX_LOGIC_CQ_NUM 2048U
 #endif
 
-#define TSDRV_MAX_LOGIC_CQ_REPORT_NUM   32U
+#define TSDRV_MAX_LOGIC_CQ_REPORT_NUM 32U
 
 #ifdef CFG_FEATURE_SUPPORT_MAX_TWO_TS
-#define DEVDRV_MAX_TS_NUM                   (2)
+#define DEVDRV_MAX_TS_NUM (2)
 #else
-#define DEVDRV_MAX_TS_NUM                   (1)
+#define DEVDRV_MAX_TS_NUM (1)
 #endif
 enum devdrv_ts_status {
     TS_WORK = 0x0,
@@ -204,17 +204,14 @@ enum devdrv_ts_status {
     TS_MAX_STATUS
 };
 
-#define TSDRV_CQ_REUSE      0x00000001
-#define TSDRV_SQ_REUSE      0x00000002
-#define TSDRV_REMOTE_FLAG   0x00000020
+#define TSDRV_CQ_REUSE 0x00000001
+#define TSDRV_SQ_REUSE 0x00000002
+#define TSDRV_REMOTE_FLAG 0x00000020
 
 #define DEVDRV_PHASE_STATE_0 0
 #define DEVDRV_PHASE_STATE_1 1
 
-typedef enum sqcq_alloc_status {
-    SQCQ_INACTIVE = 0,
-    SQCQ_ACTIVE
-}  drvSqCqAllocType_t;
+typedef enum sqcq_alloc_status { SQCQ_INACTIVE = 0, SQCQ_ACTIVE } drvSqCqAllocType_t;
 
 enum phy_sqcq_type {
     NORMAL_SQCQ_TYPE,
@@ -258,7 +255,7 @@ struct devdrv_ts_cq_info {
     u32 head;
     u32 tail;
     u32 depth;
-    u32 release_head;  /* runtime read cq head value */
+    u32 release_head; /* runtime read cq head value */
     volatile u32 count_report;
     u32 index;
     u32 phase;
@@ -281,17 +278,9 @@ struct tsdrv_sw_rx_reg { /* size <= sqeSize */
     u16 sq_head;
 };
 
-enum tsdrv_host_flag {
-    TSDRV_PHYSICAL_TYPE = 0,
-    TSDRV_VIRTUAL_TYPE,
-    TSDRV_CONTAINER_TYPE,
-    TSDRV_MAX_VM_TYPE
-};
+enum tsdrv_host_flag { TSDRV_PHYSICAL_TYPE = 0, TSDRV_VIRTUAL_TYPE, TSDRV_CONTAINER_TYPE, TSDRV_MAX_VM_TYPE };
 
-typedef enum {
-    QUERY_IDS_CAPACITY = 0,
-    QUERY_ID_CONFIG_INFO
-} id_query_opt;
+typedef enum { QUERY_IDS_CAPACITY = 0, QUERY_ID_CONFIG_INFO } id_query_opt;
 
 struct tsdrv_id_capacity {
     u32 stream_capacity;

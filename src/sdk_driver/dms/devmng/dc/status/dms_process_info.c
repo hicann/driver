@@ -28,6 +28,7 @@
 #define DMS_DEV_MAX_NUM_PER_PHY_DEV      (DMS_VDEV_MAX_NUM_PER_PHY_DEV + 1U)
 #define DMS_PROCESS_MAX_NUM              64
 #define DMS_MASTER_PROC_MAX_NUM          2048U
+#define DMS_DEV_PROCESS_CONTAINER_PID    10
 
 int hal_kernel_apm_query_slave_tgid_by_master(int master_tgid, u32 udevid, processType_t proc_type, int *slave_tgid);
 
@@ -56,23 +57,11 @@ STATIC void dms_get_valid_dev_list(struct urd_cmd_kernel_para *kernel_para,
 #ifndef DMS_UT
 STATIC bool process_is_in_current_container(ka_task_struct_t *tsk)
 {
-    if (!tsk->nsproxy || !current->nsproxy) {
+    if (!tsk->nsproxy || !ka_task_get_current_nsproxy()) {
         return false;
     }
     /* Mount namespace, file system isolation. */
-    if (tsk->nsproxy->mnt_ns != current->nsproxy->mnt_ns) {
-        return false;
-    }
-    /* Network namespace, network isolation. */
-    if (tsk->nsproxy->net_ns != current->nsproxy->net_ns) {
-        return false;
-    }
-    /* UTS namespace, host name isolation. */
-    if (tsk->nsproxy->uts_ns != current->nsproxy->uts_ns) {
-        return false;
-    }
-    /* IPC namespace, semaphore/shared memory isolation. */
-    if (tsk->nsproxy->ipc_ns != current->nsproxy->ipc_ns) {
+    if (tsk->nsproxy->mnt_ns != ka_task_get_current_mnt_ns()) {
         return false;
     }
 
@@ -80,20 +69,24 @@ STATIC bool process_is_in_current_container(ka_task_struct_t *tsk)
 }
 #endif
 
-STATIC int dms_get_normal_docker_process_list(unsigned int udevid, int *master_tgid)
+STATIC int dms_get_normal_docker_process_list(unsigned int udevid, unsigned int resource_type, int *master_tgid)
 {
 #ifndef DMS_UT
     ka_task_struct_t *tsk = NULL;
     int ret;
 
+    ka_task_rcu_read_lock();
     ka_for_each_process(tsk) {
         if ((tsk != NULL) && (tsk->pid == *master_tgid)) {
-            if (process_is_in_current_container(tsk)) {
+            if (process_is_in_current_container(tsk) || ((resource_type == DMS_DEV_PROCESS_CONTAINER_PID) &&
+                (run_in_admin_docker()))) {
                 break;
             }
+            ka_task_rcu_read_unlock();
             return -EINVAL;
         }
     }
+    ka_task_rcu_read_unlock();
 
     ret = dbl_host_pid_to_container_pid(*master_tgid, master_tgid);
     if (ret != 0) {
@@ -105,7 +98,7 @@ STATIC int dms_get_normal_docker_process_list(unsigned int udevid, int *master_t
 }
 
 STATIC int _dms_get_process_list(struct urd_cmd_kernel_para *kernel_para, struct urd_cmd_para *para,
-    int *master_tgids, unsigned int master_num)
+    int *master_tgids, unsigned int master_num, unsigned int resource_type)
 {
     unsigned int dev_list[DMS_DEV_MAX_NUM_PER_PHY_DEV];
     unsigned int dev_num = 0;
@@ -129,8 +122,10 @@ STATIC int _dms_get_process_list(struct urd_cmd_kernel_para *kernel_para, struct
                 continue;
             }
             if (run_in_normal_docker() &&
-                (dms_get_normal_docker_process_list(kernel_para->udevid, &master_tgids[i]) != 0)) {
+                (dms_get_normal_docker_process_list(kernel_para->udevid, resource_type, &master_tgids[i]) != 0)) {
                 continue;
+            } else if (resource_type == DMS_DEV_PROCESS_CONTAINER_PID) {
+                (void)dms_get_normal_docker_process_list(kernel_para->udevid, resource_type, &master_tgids[i]);
             }
             pid_list[pid_num++] = master_tgids[i];
             break;
@@ -154,6 +149,7 @@ int dms_get_process_list(const struct urd_cmd *cmd,
     struct urd_cmd_kernel_para *kernel_para, struct urd_cmd_para *para)
 {
     unsigned int master_num = 0;
+    unsigned int resource_type;
     int *master_tgids;
     int ret = 0;
 
@@ -163,11 +159,17 @@ int dms_get_process_list(const struct urd_cmd *cmd,
         return -EINVAL;
     }
 
+    if ((para->input == NULL) || (para->input_len != sizeof(unsigned int))) {
+        dms_err("Input argument is null, or len is wrong. (input_len=%u)\n", para->input_len);
+        return -EINVAL;
+    }
+
     if ((para->output == NULL) || (para->output_len < sizeof(int) * DMS_PROCESS_MAX_NUM)) {
         dms_err("Output argument is null, or len is wrong. (output_len=%u)\n", para->output_len);
         return -EINVAL;
     }
 
+    resource_type = *(unsigned int *)para->input;
     master_tgids = (int *)dbl_kmalloc(sizeof(int) * DMS_MASTER_PROC_MAX_NUM, KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
     if (master_tgids == NULL) {
         dms_err("kmalloc buf failed.\n");
@@ -183,7 +185,7 @@ int dms_get_process_list(const struct urd_cmd *cmd,
     }
 
     master_num = master_num < DMS_MASTER_PROC_MAX_NUM ? master_num : DMS_MASTER_PROC_MAX_NUM;
-    ret = _dms_get_process_list(kernel_para, para, master_tgids, master_num);
+    ret = _dms_get_process_list(kernel_para, para, master_tgids, master_num, resource_type);
     if (ret != 0) {
         dms_err("Get process list failed. (ret=%d)\n", ret);
     }
@@ -230,6 +232,9 @@ int dms_get_process_memory(const struct urd_cmd *cmd,
 
     ret = apm_query_slave_all_meminfo_by_master(master_tgid, kernel_para->udevid, PROCESS_CP1, &mem_size);
     if (ret != 0) {
+        if (ret == -ESRCH) {
+            return -EOPNOTSUPP;
+        }
         dms_err("Failed to query slave memory through master. (udevid=%u; ret=%d)", kernel_para->udevid, ret);
         return ret;
     }

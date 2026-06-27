@@ -157,7 +157,7 @@ int devmm_register_ops_init(void)
     return 0;
 #ifndef EMU_ST
 register_reboot_fail:
-devmm_host_msg_chan_uninit();
+    devmm_host_msg_chan_uninit();
 #endif
 msg_chan_init_fail:
     (void)uda_notifier_unregister(SVM_HOST_NOTIFIER, &type);

@@ -87,7 +87,7 @@ struct jetty_exchange_data {
 };
 
 struct ubdrv_create_non_trans_cmd {
-    u32 msg_type;   /* enum devdrv_msg_client_type */
+    u32 msg_type; /* enum devdrv_msg_client_type */
     u32 chan_id;
     u32 sq_size;
     u32 cq_size;
@@ -135,19 +135,19 @@ struct ubdrv_msg_chan_stat {
     u64 tx_total;
     u64 tx_post_send_err;
     u64 tx_cqe;
-    u64 tx_cqe_timeout;  // local send cqe timeout
+    u64 tx_cqe_timeout; // local send cqe timeout
     u64 tx_poll_cqe_err;
     u64 tx_cqe_status_err;
     u64 tx_rebuild_jfs;
-    u64 tx_recv_cqe_timeout;  // poll remote replat data cqe timeout
+    u64 tx_recv_cqe_timeout; // poll remote replat data cqe timeout
     u64 tx_recv_cqe;
     u64 tx_recv_poll_cqe_err;
     u64 tx_recv_cqe_status_err;
-    u64 tx_recv_data_err;  // remote reply data content check err
+    u64 tx_recv_data_err; // remote reply data content check err
     u64 tx_rsv[UBDRV_MSG_CHAN_TX_INFO_RSV];
 
     // rx dfx info
-    u64 rx_total;  // recv msg jfce call cnt
+    u64 rx_total; // recv msg jfce call cnt
     u64 rx_work;  // recv msg process work cnt
     u64 rx_poll_cqe_err;
     u64 rx_cqe_status_err;
@@ -196,7 +196,7 @@ struct ubdrv_common_msg_stat {
 #pragma pack(4)
 struct ubdrv_chan_dfx_cmd {
     enum ubdrv_proc_admin_sub_cmd opcode;
-    u32 chan_id;  // msg chan id
+    u32 chan_id; // msg chan id
     u32 reserved[UBDRV_CHAN_DFX_CMD_RSV];
     union {
         struct ubdrv_msg_chan_stat chan;
@@ -220,8 +220,8 @@ struct ubdrv_id_info {
 struct ubdrv_link_exchange_data {
     enum ubdrv_link_request_type opcode;
     u32 dev_id;
-    u32 module_id  : 16;  // bit0~15:module_id
-    u32 slot_id    : 16;  // bit16~31:slot_id
+    u32 module_id : 16; // bit0~15:module_id
+    u32 slot_id : 16;   // bit16~31:slot_id
     u32 host_token;
     char version[UBDRV_VERSION_LEN];
     struct jetty_exchange_data recv_admin_info;
@@ -232,4 +232,3 @@ struct ubdrv_link_exchange_data {
 };
 
 #endif
-

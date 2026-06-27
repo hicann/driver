@@ -36,10 +36,7 @@ void trs_stars_trace_cqe_fill(struct trs_id_inst *inst, struct trs_chan_cq_trace
     cq_trace->sq_head = cqe_->sq_head;
 }
 
-void trs_stars_cqe_get_sqid(struct trs_id_inst *inst, void *cqe, u32 *sqid)
-{
-    *sqid = ((rt_stars_cqe_t *)cqe)->sq_id;
-}
+void trs_stars_cqe_get_sqid(struct trs_id_inst *inst, void *cqe, u32 *sqid) { *sqid = ((rt_stars_cqe_t *)cqe)->sq_id; }
 
 void trs_stars_cqe_get_sq_head(struct trs_id_inst *inst, void *cqe, u32 *sq_head)
 {
@@ -60,17 +57,14 @@ static inline u64 trs_stars_cq_get_timestamp(rt_stars_cqe_t *cqe)
 {
     u64 timestamp;
 
-    timestamp = (u64)(((u64)cqe->cqe_status.sys_cnt.syscnt_high) <<
-        (sizeof(cqe->cqe_status.sys_cnt.syscnt_low) * KA_BITS_PER_BYTE));
+    timestamp = (u64)(((u64)cqe->cqe_status.sys_cnt.syscnt_high)
+                      << (sizeof(cqe->cqe_status.sys_cnt.syscnt_low) * KA_BITS_PER_BYTE));
     timestamp |= (u64)cqe->cqe_status.sys_cnt.syscnt_low;
 
     return timestamp;
 }
 
-static inline u8 trs_stars_cq_get_sqe_type(rt_stars_cqe_t *cqe)
-{
-    return cqe->cqe_status.error_info.sqe_type;
-}
+static inline u8 trs_stars_cq_get_sqe_type(rt_stars_cqe_t *cqe) { return cqe->cqe_status.error_info.sqe_type; }
 
 static inline u8 trs_stars_cq_get_warn_type(rt_stars_cqe_t *cqe)
 {
@@ -82,25 +76,13 @@ static inline u8 trs_stars_cq_get_err_type(rt_stars_cqe_t *cqe)
     return (u8)((cqe->cqe_status.sys_cnt.syscnt_low & 0x3F) | trs_stars_cq_get_warn_type(cqe));
 }
 
-static inline u8 trs_stars_cq_get_drop_flag(rt_stars_cqe_t *cqe)
-{
-    return cqe->cqe_status.error_info.drop_flag;
-}
+static inline u8 trs_stars_cq_get_drop_flag(rt_stars_cqe_t *cqe) { return cqe->cqe_status.error_info.drop_flag; }
 
-static inline u32 trs_stars_cq_get_err_code(rt_stars_cqe_t *cqe)
-{
-    return cqe->cqe_status.sys_cnt.syscnt_high;
-}
+static inline u32 trs_stars_cq_get_err_code(rt_stars_cqe_t *cqe) { return cqe->cqe_status.sys_cnt.syscnt_high; }
 
-static inline u16 trs_stars_cq_get_acc_error(rt_stars_cqe_t *cqe)
-{
-    return cqe->cqe_status.error_info.acc_error;
-}
+static inline u16 trs_stars_cq_get_acc_error(rt_stars_cqe_t *cqe) { return cqe->cqe_status.error_info.acc_error; }
 
-static inline u16 trs_stars_cq_get_sqe_index(rt_stars_cqe_t *cqe)
-{
-    return cqe->cqe_status.error_info.sqe_index;
-}
+static inline u16 trs_stars_cq_get_sqe_index(rt_stars_cqe_t *cqe) { return cqe->cqe_status.error_info.sqe_index; }
 
 static inline bool trs_stars_cq_has_syscnt(rt_stars_cqe_t *cqe)
 {
@@ -142,4 +124,3 @@ void trs_stars_cqe_to_logic_cqe(void *hw_cqe, struct trs_logic_cqe *logic_cqe)
         logic_cqe->enque_timestamp = trs_get_s_timestamp();
     }
 }
-

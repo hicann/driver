@@ -21,7 +21,8 @@
 #include "trs_pub_def.h"
 #include "trs_ts_inst.h"
 
-static inline struct trs_core_ts_inst *trs_core_inst_get_for_res_map(struct trs_id_inst *id_inst, struct trs_proc_ctx *proc_ctx, struct trs_cmd_res_map para)
+static inline struct trs_core_ts_inst *trs_core_inst_get_for_res_map(
+    struct trs_id_inst *id_inst, struct trs_proc_ctx *proc_ctx, struct trs_cmd_res_map para)
 {
     (void)para;
     id_inst->devid = proc_ctx->devid;
@@ -42,4 +43,3 @@ static inline int trs_core_get_stars_die_id(u32 devid, u32 tsid, u32 *die_id)
     return 0;
 }
 #endif
-

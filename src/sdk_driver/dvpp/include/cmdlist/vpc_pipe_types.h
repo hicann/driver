@@ -14,7 +14,11 @@
 #ifndef PIPE_VPC_VPC_TYPES_H
 #define PIPE_VPC_VPC_TYPES_H
 
-#include <linux/types.h>
+#ifdef __KERNEL__
+#include "ka_type.h"
+#else
+#include <stdint.h>
+#endif
 #include "pipeline_top.h"
 
 typedef enum {

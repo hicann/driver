@@ -72,7 +72,7 @@ static drvError_t buff_usr_mp_init(struct mempool_t *mp, struct buff_req_mp_crea
     }
 
     mp->head.status = MP_S_NORMAL;
-    mp->head.type   = UNI_TYPE_MP;
+    mp->head.type = UNI_TYPE_MP;
     mp->head.devid = (uint32_t)info->devid;
     mp->head.ref = 0;
     mp->head.parent = NULL;
@@ -82,7 +82,7 @@ static drvError_t buff_usr_mp_init(struct mempool_t *mp, struct buff_req_mp_crea
     mp->blk_num = info->obj_num;
     mp->free_index = 0;
     mp->curr_index = 0;
-    mp->bit_num = ALIGN_UP(mp->blk_num, BITS_PER_LONG); //lint !e502
+    mp->bit_num = ALIGN_UP(mp->blk_num, BITS_PER_LONG); // lint !e502
     mp->blk_size = info->obj_size;
     mp->scan_in_alloc = 0;
     mp->owner = buff_get_current_pid();
@@ -123,16 +123,16 @@ static void buff_mp_buff_init(struct mempool_t *mp, uint64 blk_uva)
 }
 
 static void buff_usr_mp_block_init(struct mempool_t *mp, struct buff_req_mp_create *info, char *addr,
-    uint64_t blk_align_size, uint32 type)
+                                   uint64_t blk_align_size, uint32 type)
 {
     uint64 *mp_uva_list = (uint64 *)mp_get_valist_start_addr(mp, mp->bit_num);
     struct uni_buff_head_t *head = NULL;
     uintptr_t start;
     uint32 i;
-    uint32 trace_flag = (type == MEMPOOL_MBUF_LIST) ?  0 : 1;
+    uint32 trace_flag = (type == MEMPOOL_MBUF_LIST) ? 0 : 1;
 
     for (i = 0; i < info->obj_num; i++) {
-        start = (uintptr_t)(addr + blk_align_size * i); //lint !e507
+        start = (uintptr_t)(addr + blk_align_size * i); // lint !e507
         head = buff_head_init(start, start + blk_align_size, info->align, 1, trace_flag);
         head->index = i;
         mp_uva_list[i] = (uint64)(uintptr_t)(head + 1);
@@ -189,19 +189,19 @@ drvError_t buff_usr_mp_create(struct buff_req_mp_create *info)
 
     trace_flag = (info->type == MEMPOOL_LIST) ? 1 : 0;
     block_org_size = buff_calc_size(info->obj_size, info->align, trace_flag);
-    block_align_size = ALIGN_UP(block_org_size, info->align); //lint !e502 !e647 !e666
+    block_align_size = ALIGN_UP(block_org_size, info->align); // lint !e502 !e647 !e666
     total_size = info->obj_num * block_align_size;
 
     start = (char *)buff_blk_alloc(info->groupid, total_size, flags, &blk_id);
     if (start == NULL) {
-        buff_err("buff alloc failed, (len=%llx, flag=%#lx)\n", total_size, flags);
+        buff_err("buff alloc failed, (len=%lx, flag=%#lx)\n", total_size, flags);
         ret = DRV_ERROR_OUT_OF_MEMORY;
         goto free_mp;
     }
 
     ret = add_self_buff_to_range(blk_id, info->groupid, start, total_size, (uint64)(uintptr_t)mp);
     if (ret != 0) {
-        buff_err("buff add to range failed, start %p len %llx blk_id=%u ret=%d\n", start, total_size, blk_id, ret);
+        buff_err("buff add to range failed, start %p len %lx blk_id=%u ret=%d\n", start, total_size, blk_id, ret);
         goto free_sp_res;
     }
 
@@ -220,8 +220,9 @@ drvError_t buff_usr_mp_create(struct buff_req_mp_create *info)
     mp->head.parent = block;
     proc_block_add(block);
 
-    buff_debug("Mp create. (start=0x%llx; type=%d; total_size=%llu; block_align_size=%llu; flag=0x%lx; devid=%d; "
-        "blk_id=%u)\n", (uint64)(uintptr_t)start, info->type, total_size, block_align_size, flags, info->devid, blk_id);
+    buff_debug("Mp create. (start=0x%llx; type=%d; total_size=%lu; block_align_size=%lu; flag=0x%lx; devid=%d; "
+               "blk_id=%u)\n",
+               (uint64)(uintptr_t)start, info->type, total_size, block_align_size, flags, info->devid, blk_id);
 
     return DRV_ERROR_NONE;
 free_sp_res:
@@ -239,7 +240,7 @@ drvError_t buff_usr_mp_delete(struct buff_req_mp_destroy *info)
     void *blk = mp->head.parent;
     uint32_t blk_id = mp->blk_id;
 
-    buff_debug("Mp delete .(addr=%p)\n", (uint64)(uintptr_t)start);
+    buff_debug("Mp delete .(addr=%lld)\n", (uint64)(uintptr_t)start);
 
     if (blk == NULL) {
         buff_err("Parent is null. (mp=%p, blk_num=%u)\n", mp, mp->blk_num);

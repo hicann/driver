@@ -24,8 +24,9 @@ static void trs_sec_eh_get_id_range_by_bit(struct trs_sec_eh_id_info *id_info, u
         *start = id_info->start + bit * id_info->num_per_bit;
         *end = *start + id_info->num_per_bit;
     }
-    trs_debug("Get id rang. (bit=%u; type=%d; start=%u; end=%u; num_per_bit=%u)\n",
-        bit, type, *start, *end, id_info->num_per_bit);
+    trs_debug(
+        "Get id rang. (bit=%u; type=%d; start=%u; end=%u; num_per_bit=%u)\n", bit, type, *start, *end,
+        id_info->num_per_bit);
 }
 
 bool trs_sec_eh_id_is_belong_to_vf(struct trs_sec_eh_id_info *id_info, u32 id)
@@ -58,7 +59,7 @@ bool trs_sec_eh_res_is_belong_to_proc(struct trs_id_inst *inst, int pid, int res
     sec_eh_cfg = trs_sec_eh_ts_inst_get(inst);
     if (sec_eh_cfg != NULL) {
         if (trs_sec_eh_id_is_belong_to_vf(&sec_eh_cfg->id_info[res_type], res_id)) {
-            ret =  true;
+            ret = true;
         }
         trs_sec_eh_ts_inst_put(sec_eh_cfg);
     }
@@ -109,10 +110,7 @@ void trs_sec_eh_id_config(struct trs_id_inst *inst)
     trs_res_ops_register(inst->devid, &ops);
 }
 
-void trs_sec_eh_id_deconfig(struct trs_id_inst *inst)
-{
-    trs_res_ops_unregister(inst->devid);
-}
+void trs_sec_eh_id_deconfig(struct trs_id_inst *inst) { trs_res_ops_unregister(inst->devid); }
 
 int _trs_sec_eh_res_ctrl(struct trs_id_inst *inst, u32 id_type, u32 res_id, u32 cmd)
 {
@@ -135,8 +133,7 @@ int _trs_sec_eh_res_ctrl(struct trs_id_inst *inst, u32 id_type, u32 res_id, u32 
         ret = trs_core_ops_stars_soc_res_ctrl(inst, id_type, res_id, cmd);
         if (ret != 0) {
             trs_sec_eh_ts_inst_put(sec_eh_cfg);
-            trs_err("Res ctrl failed. (devid=%u; id_type=%u; id=%u; cmd=%u)\n",
-                inst->devid, id_type, res_id, cmd);
+            trs_err("Res ctrl failed. (devid=%u; id_type=%u; id=%u; cmd=%u)\n", inst->devid, id_type, res_id, cmd);
             return ret;
         }
         trs_sec_eh_ts_inst_put(sec_eh_cfg);
@@ -144,4 +141,3 @@ int _trs_sec_eh_res_ctrl(struct trs_id_inst *inst, u32 id_type, u32 res_id, u32 
 
     return ret;
 }
-

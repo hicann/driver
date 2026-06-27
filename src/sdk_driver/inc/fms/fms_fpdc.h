@@ -13,7 +13,7 @@
 
 #ifndef FMS_FPDC_H
 #define FMS_FPDC_H
-#include <linux/uuid.h>
+#include "ka_driver_pub.h"
 
 #include "dms_device_node_type.h"
 
@@ -156,7 +156,7 @@ typedef struct {
 
 struct notify_data {
     FPDC_SRC_TYPE src_type;
-    const guid_t *section_type;
+    const ka_guid_t *section_type;
     DMS_DEVICE_NODE_TYPE node_type;
     unsigned int chip_id; /* physical device id in device side */
     unsigned long long sub_id; /* optional */

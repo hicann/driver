@@ -63,12 +63,14 @@ drvError_t halSetMemSharing(struct drvMemSharingPara *para)
     ret = rmo_cmd_ioctl(RMO_MEM_SHARING, &arg);
     if (ret != DRV_ERROR_NONE) {
         if (ret != DRV_ERROR_NOT_SUPPORT) {
-            rmo_err("Dispatch memory failed. (ret=%d; id=%u; side=%d; accessor=%u; va=0x%llx; size=%llu)\n",
-                ret, para->id, para->side, para->accessor, (uint64_t)(uintptr_t)para->ptr, para->size);
+            rmo_err(
+                "Dispatch memory failed. (ret=%d; id=%u; side=%d; accessor=%u; va=0x%llx; size=%llu)\n", ret, para->id,
+                para->side, para->accessor, (uint64_t)(uintptr_t)para->ptr, para->size);
         }
         return ret;
     }
-    rmo_debug("Dispatch memory success. (id=%u; side=%d; accessor=%u; va=0x%llx; size=%llu)\n",
-        para->id, para->side, para->accessor, (uint64_t)(uintptr_t)para->ptr, para->size);
+    rmo_debug(
+        "Dispatch memory success. (id=%u; side=%d; accessor=%u; va=0x%llx; size=%llu)\n", para->id, para->side,
+        para->accessor, (uint64_t)(uintptr_t)para->ptr, para->size);
     return DRV_ERROR_NONE;
 }

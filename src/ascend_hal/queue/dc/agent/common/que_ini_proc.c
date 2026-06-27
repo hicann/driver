@@ -22,8 +22,8 @@
 #include "que_jetty.h"
 #include "que_mem_merge.h"
 #include "que_ini_proc.h"
+#include "que_platform_ub.h"
 
-#define US_PER_SECOND 1000000
 #ifndef EMU_ST
 static int g_ini_level = 0;
 static uint64_t ini_base_time[MAX_DEVICE] = {0};
@@ -47,7 +47,9 @@ void que_update_ini_basetime(unsigned int devid)
 void que_ini_time_stamp(struct que_ini_proc *ini_proc, QUE_TRACE_INI_TIMESTAMP type)
 {
     int ini_log_level = que_get_ini_log_level();
-    unsigned int num = TRACE_INI_LEVLE0_BUTT + ini_proc->total_iovec_num * (TRACE_INI_LEVLE1_BUTT - TRACE_INI_LEVLE1_START) * (unsigned int)ini_log_level;
+    unsigned int num = TRACE_INI_LEVLE0_BUTT + ini_proc->total_iovec_num *
+                                                   (TRACE_INI_LEVLE1_BUTT - TRACE_INI_LEVLE1_START) *
+                                                   (unsigned int)ini_log_level;
     if ((unsigned int)type >= num) {
         return;
     }
@@ -58,7 +60,7 @@ void que_ini_time_stamp(struct que_ini_proc *ini_proc, QUE_TRACE_INI_TIMESTAMP t
     ini_proc->timestamp[type] = que_get_cur_time_ns();
 }
 
-struct que_ini_proc *que_ini_proc_create()
+struct que_ini_proc *que_ini_proc_create(void)
 {
     struct que_ini_proc *ini_proc = NULL;
 
@@ -90,29 +92,11 @@ struct que_pkt *que_tx_get_other_pkts(struct que_tx *tx)
 
 static inline QUE_MEM_TYPE que_get_buff_memtype(struct buff_iovec *vector)
 {
-#ifdef DRV_HOST
-    struct DVattribute attr;
-    drvError_t ret;
-    DVdeviceptr vptr = (DVdeviceptr)(uintptr_t)vector->ptr[0].iovec_base;
-    ret = drvMemGetAttribute(vptr, &attr);
-    if (ret != DRV_ERROR_NONE) {
-        return MEM_NOT_SVM;
-    } else {
-        if (attr.memType == DV_MEM_LOCK_DEV) {
-            return MEM_DEVICE_SVM;
-        } else if (attr.memType == DV_MEM_USER_MALLOC) {
-            return MEM_NOT_SVM;
-        } else {
-            return MEM_OTHERS_SVM;
-        }
-    }
-#else
-    return MEM_NOT_SVM;
-#endif
+    return que_get_buff_memtype_platform(vector);
 }
 
 static int que_tx_first_iovec_num_get(QUE_MEM_TYPE mem_type, struct buff_iovec *vector, unsigned int *iovec_num,
-    bool *default_wr_flag)
+                                      bool *default_wr_flag)
 {
     unsigned int i;
     unsigned int max_node_num_in_pkt = _que_get_node_num();
@@ -126,8 +110,8 @@ static int que_tx_first_iovec_num_get(QUE_MEM_TYPE mem_type, struct buff_iovec *
 
     pkt_read_wr_num = que_align_up(max_pkt_size, QUE_URMA_MAX_SIZE) / QUE_URMA_MAX_SIZE;
     if ((pkt_read_wr_num + 1) > QUE_MAX_RW_WR_NUM) { /* 1 for context wr*/
-        QUEUE_LOG_ERR("que tx fill iovec size over limit. (max_pkt_size=%llu; pkt_read_wr_num=%llu)\n",
-            max_pkt_size, pkt_read_wr_num);
+        QUEUE_LOG_ERR("que tx fill iovec size over limit. (max_pkt_size=%llu; pkt_read_wr_num=%llu)\n", max_pkt_size,
+                      pkt_read_wr_num);
         return DRV_ERROR_PARA_ERROR;
     }
 
@@ -158,8 +142,8 @@ static struct que_tx *_que_tx_create(struct que_ini_proc *ini_proc, struct buff_
 
     tx = (struct que_tx *)calloc(1, sizeof(struct que_tx));
     if (que_unlikely(tx == NULL)) {
-        QUEUE_LOG_ERR("que tx alloc fail. (devid=%u; qid=%u; size=%ld)\n",
-            ini_proc->devid, ini_proc->qid, sizeof(struct que_tx));
+        QUEUE_LOG_ERR("que tx alloc fail. (devid=%u; qid=%u; size=%ld)\n", ini_proc->devid, ini_proc->qid,
+                      sizeof(struct que_tx));
         return NULL;
     }
 
@@ -168,7 +152,8 @@ static struct que_tx *_que_tx_create(struct que_ini_proc *ini_proc, struct buff_
         if (total_iovec_size < iovec_size_temp) {
             total_iovec_size = iovec_size_temp;
         } else {
-            QUEUE_LOG_ERR("que tx fill iovec size over limit. (devid=%u; qid=%u; iovec_size_temp=%llu; total_iovec_size=%llu)\n",
+            QUEUE_LOG_ERR(
+                "que tx fill iovec size over limit. (devid=%u; qid=%u; iovec_size_temp=%llu; total_iovec_size=%llu)\n",
                 ini_proc->devid, ini_proc->qid, iovec_size_temp, total_iovec_size);
             free(tx);
             return NULL;
@@ -191,8 +176,8 @@ static struct que_tx *_que_tx_create(struct que_ini_proc *ini_proc, struct buff_
     tx->default_wr_flag = default_wr_flag;
     tx->pkt_timestamp = que_get_cur_time_ns();
 
-    ini_proc->sn = ini_proc->sn + 1;
-    tx->sn = ini_proc->sn;
+    ini_proc->sn = QUE_ACK_PACK_SN((unsigned int)ini_proc->sn + 1u);
+    tx->sn = QUE_ACK_PACK_SN(ini_proc->sn);
     return tx;
 }
 
@@ -213,20 +198,21 @@ static int _que_tx_pkt_init(struct que_ini_proc *ini_proc, struct que_tx *tx)
     ret = que_mem_alloc((void **)(&pkt), tx->pkt_size);
     if (que_unlikely(ret != DRV_ERROR_NONE)) {
         QUEUE_LOG_ERR("que pkt mem alloc fail. (devid=%u; qid=%u; size=%llu)\n", ini_proc->devid, ini_proc->qid,
-            tx->pkt_size);
+                      tx->pkt_size);
         return DRV_ERROR_OUT_OF_MEMORY;
     }
 
     if (que_is_share_mem((unsigned long long)(uintptr_t)pkt) == false) {
-        tseg = que_pin_seg_create(urma_devid, (unsigned long long)(uintptr_t)pkt, tx->pkt_size, access, &ini_proc->token_info, ini_proc->d2d_flag);
+        tseg = que_pin_seg_create(urma_devid, (unsigned long long)(uintptr_t)pkt, tx->pkt_size, access,
+                                  &ini_proc->token_info, ini_proc->d2d_flag);
     } else {
         tseg = que_get_urma_ctx_tseg(urma_devid, ini_proc->d2d_flag);
     }
-    
+
     if (que_unlikely(tseg == NULL)) {
         que_mem_free(pkt);
-        QUEUE_LOG_ERR("que seg create fail. (devid=%u; urma_devid=%u; qid=%u; size=%llu)\n", ini_proc->devid, urma_devid,
-            ini_proc->qid, tx->pkt_size);
+        QUEUE_LOG_ERR("que seg create fail. (devid=%u; urma_devid=%u; qid=%u; size=%llu)\n", ini_proc->devid,
+                      urma_devid, ini_proc->qid, tx->pkt_size);
         return DRV_ERROR_QUEUE_INNER_ERROR;
     }
     que_ini_time_stamp(ini_proc, TRACE_PKT_SEG_CREATE_END);
@@ -252,18 +238,20 @@ static void _que_tx_pkt_uninit(struct que_tx *tx)
     }
 }
 
-static int _que_tx_vector_merge(unsigned int urma_devid, struct que_ini_proc *ini_proc, struct que_tx *tx, struct buff_iovec *vector)
+static int _que_tx_vector_merge(unsigned int urma_devid, struct que_ini_proc *ini_proc, struct que_tx *tx,
+                                struct buff_iovec *vector)
 {
     int ret;
     unsigned int i, j;
     unsigned long long va, size;
 
     if (vector->context_len != 0) {
-        ret = que_mem_merge(&ini_proc->mem_ctx, urma_devid, (unsigned long long)(uintptr_t)vector->context_base, vector->context_len);
+        ret = que_mem_merge(&ini_proc->mem_ctx, urma_devid, (unsigned long long)(uintptr_t)vector->context_base,
+                            vector->context_len);
         if (que_unlikely(ret != DRV_ERROR_NONE)) {
             QUEUE_LOG_ERR("que ctx merge fail. (devid=%u; urma_devid=%u; qid=%u; va=0x%llx; len=%llu)\n",
-                ini_proc->devid, urma_devid, ini_proc->qid, (unsigned long long)(uintptr_t)vector->context_base,
-                vector->context_len);
+                          ini_proc->devid, urma_devid, ini_proc->qid,
+                          (unsigned long long)(uintptr_t)vector->context_base, vector->context_len);
             return ret;
         }
     }
@@ -290,7 +278,8 @@ err_out:
     return ret;
 }
 
-static int _que_tx_ctx_seg_init(unsigned int urma_devid, struct que_ini_proc *ini_proc, struct que_tx *tx, struct buff_iovec *vector)
+static int _que_tx_ctx_seg_init(unsigned int urma_devid, struct que_ini_proc *ini_proc, struct que_tx *tx,
+                                struct buff_iovec *vector)
 {
     urma_target_seg_t *tseg = NULL;
     unsigned int access;
@@ -299,11 +288,11 @@ static int _que_tx_ctx_seg_init(unsigned int urma_devid, struct que_ini_proc *in
         access = (ini_proc->que_type == H2D_SYNC_DEQUE) ? DEQUE_INI_ACCESS : ENQUE_INI_ACCESS;
         que_ini_time_stamp(ini_proc, TRACE_CTX_SEG_CREATE_START);
         tseg = que_mem_seg_register(&ini_proc->mem_ctx, ini_proc->d2d_flag, &ini_proc->token_info, QUE_PIN, urma_devid,
-            (unsigned long long)(uintptr_t)vector->context_base, access);
+                                    (unsigned long long)(uintptr_t)vector->context_base, access);
         if (que_unlikely(tseg == NULL)) {
             QUEUE_LOG_ERR("que ctx seg create fail. (devid=%u; urma_devid=%u; qid=%u; va=0x%llx; len=%llu)\n",
-                ini_proc->devid, urma_devid, ini_proc->qid, (unsigned long long)(uintptr_t)vector->context_base,
-                vector->context_len);
+                          ini_proc->devid, urma_devid, ini_proc->qid,
+                          (unsigned long long)(uintptr_t)vector->context_base, vector->context_len);
             return DRV_ERROR_QUEUE_INNER_ERROR;
         }
         que_ini_time_stamp(ini_proc, TRACE_CTX_SEG_CREATE_END);
@@ -315,12 +304,15 @@ static int _que_tx_ctx_seg_init(unsigned int urma_devid, struct que_ini_proc *in
 
 static void _que_tx_ctx_seg_uninit(unsigned int urma_devid, struct que_tx *tx)
 {
+    (void)urma_devid;
+
     if (que_likely(tx->ctx_tseg != NULL)) {
         tx->ctx_tseg = NULL;
     }
 }
 
-static int _que_tx_iovec_seg_init(unsigned int urma_devid, struct que_ini_proc *ini_proc, struct que_tx *tx, struct buff_iovec *vector)
+static int _que_tx_iovec_seg_init(unsigned int urma_devid, struct que_ini_proc *ini_proc, struct que_tx *tx,
+                                  struct buff_iovec *vector)
 {
     urma_target_seg_t **tseg = NULL;
     unsigned int i, j, access, pin_flg;
@@ -333,8 +325,8 @@ static int _que_tx_iovec_seg_init(unsigned int urma_devid, struct que_ini_proc *
 
     tseg = (urma_target_seg_t **)malloc(sizeof(urma_target_seg_t *) * tx->total_iovec_num);
     if (que_unlikely(tseg == NULL)) {
-        QUEUE_LOG_ERR("que tx iovec tseg alloc fail. (devid=%u; qid=%u; total_iovec_num=%u)\n",
-            ini_proc->devid, ini_proc->qid, tx->total_iovec_num);
+        QUEUE_LOG_ERR("que tx iovec tseg alloc fail. (devid=%u; qid=%u; total_iovec_num=%u)\n", ini_proc->devid,
+                      ini_proc->qid, tx->total_iovec_num);
         return DRV_ERROR_OUT_OF_MEMORY;
     }
 
@@ -343,14 +335,19 @@ static int _que_tx_iovec_seg_init(unsigned int urma_devid, struct que_ini_proc *
     for (i = 0; i < tx->total_iovec_num; i++) {
         va = (unsigned long long)(uintptr_t)vector->ptr[i].iovec_base;
         size = vector->ptr[i].len;
-        que_ini_time_stamp(ini_proc, TRACE_INI_IOVEC_SEG_CREATE_START + i * (TRACE_INI_LEVLE1_BUTT - TRACE_INI_LEVLE1_START));
-        tseg[i] = que_mem_seg_register(&ini_proc->mem_ctx, ini_proc->d2d_flag, &ini_proc->token_info, pin_flg, urma_devid, va, access);
+        que_ini_time_stamp(ini_proc,
+                           TRACE_INI_IOVEC_SEG_CREATE_START + i * (TRACE_INI_LEVLE1_BUTT - TRACE_INI_LEVLE1_START));
+        tseg[i] = que_mem_seg_register(&ini_proc->mem_ctx, ini_proc->d2d_flag, &ini_proc->token_info, pin_flg,
+                                       urma_devid, va, access);
         if (que_unlikely(tseg[i] == NULL)) {
-            QUEUE_LOG_ERR("que seg create fail. (devid=%u; urma_devid=%u; qid=%u; mem_type=%d; va=0x%llx; size=%llu; i=%u; iovec_num=%u)\n",
+            QUEUE_LOG_ERR(
+                "que seg create fail. (devid=%u; urma_devid=%u; qid=%u; mem_type=%d; va=0x%llx; size=%llu; i=%u; "
+                "iovec_num=%u)\n",
                 ini_proc->devid, urma_devid, ini_proc->qid, tx->mem_type, va, size, i, tx->total_iovec_num);
             goto err_out;
         }
-        que_ini_time_stamp(ini_proc, TRACE_INI_IOVEC_SEG_CREATE_END + i * (TRACE_INI_LEVLE1_BUTT - TRACE_INI_LEVLE1_START));
+        que_ini_time_stamp(ini_proc,
+                           TRACE_INI_IOVEC_SEG_CREATE_END + i * (TRACE_INI_LEVLE1_BUTT - TRACE_INI_LEVLE1_START));
     }
 
     tx->iovec_tseg = tseg;
@@ -367,6 +364,8 @@ err_out:
 static void _que_tx_iovec_seg_uninit(unsigned int urma_devid, struct que_tx *tx)
 {
     unsigned int i;
+
+    (void)urma_devid;
 
     if (tx->iovec_tseg == NULL) {
         return;
@@ -454,8 +453,8 @@ static void que_tx_destroy(struct que_tx *tx, struct que_mem_merge_ctx *mem_ctx,
     _que_tx_destroy(tx);
 }
 
-static void que_tx_pkt_node_fill(struct que_tx *tx, struct buff_iovec *vector,
-    unsigned int copied_vec_num, struct que_pkt *pkt)
+static void que_tx_pkt_node_fill(struct que_tx *tx, struct buff_iovec *vector, unsigned int copied_vec_num,
+                                 struct que_pkt *pkt)
 {
     unsigned int node_id, iovec_id;
     for (node_id = 0; node_id < pkt->iovec_node_num; node_id++) {
@@ -469,7 +468,8 @@ static void que_tx_pkt_node_fill(struct que_tx *tx, struct buff_iovec *vector,
 }
 
 static void que_tx_pkt_head_fill(unsigned int qid, unsigned int local_qid, unsigned int devid, struct que_tx *tx,
-    urma_token_t token, struct buff_iovec *vector, urma_jfr_id_t jfr_id, struct que_pkt *pkt)
+                                 urma_token_t token, struct buff_iovec *vector, urma_jfr_id_t jfr_id,
+                                 struct que_pkt *pkt)
 {
     uint64_t ini_basetime = que_get_ini_basetime(devid);
     pkt->head.qid = qid;
@@ -496,11 +496,11 @@ static void que_tx_pkt_head_fill(unsigned int qid, unsigned int local_qid, unsig
     pkt->head.remain_iovec_num = tx->remain_iovec_num;
     pkt->head.pkt_timestamp = tx->pkt_timestamp;
     pkt->head.ini_base_timestamp = ini_basetime;
-    pkt->head.sn = tx->sn;
+    pkt->head.sn = QUE_ACK_PACK_SN(tx->sn);
 }
 
 static void que_tx_pkt_fill(unsigned int peer_qid, unsigned int local_qid, unsigned int devid, struct que_tx *tx,
-    urma_token_t token, struct buff_iovec *vector, urma_jfr_id_t jfr_id)
+                            urma_token_t token, struct buff_iovec *vector, urma_jfr_id_t jfr_id)
 {
     unsigned int copied_vec_num = 0;
 
@@ -530,7 +530,7 @@ static int _que_tx_pkt_post(struct que_ini_proc *ini_proc, struct que_tx *tx)
 
     pkt = que_tx_get_first_pkt(tx);
     sge.addr = (uint64_t)(uintptr_t)pkt;
-    sge.len = _que_get_pkt_size(pkt->iovec_node_num);
+    sge.len = (unsigned int)_que_get_pkt_size(pkt->iovec_node_num);
     sge.tseg = tx->pkt_tseg;
     return que_uma_send_post_and_wait(ini_proc->pkt_send_jetty, &sge, ini_proc->d2d_flag);
 }
@@ -549,14 +549,14 @@ static int _que_tx_send(struct que_ini_proc *ini_proc, struct que_tx *tx)
 static int que_tx_send(struct que_ini_proc *ini_proc, struct que_tx *tx, struct buff_iovec *vector)
 {
     int ret;
-    int virqid = queue_get_virtual_qid(ini_proc->qid, LOCAL_QUEUE);
+    int virqid = (int)queue_get_virtual_qid(ini_proc->qid, LOCAL_QUEUE);
 
     if (ini_proc->que_type != ASYNC_ENQUE) {
-        que_tx_pkt_fill(ini_proc->qid, ini_proc->qid, ini_proc->devid, tx, ini_proc->token_info.token,
-            vector, ini_proc->imm_recv_jetty->jfr->jfr_id);
+        que_tx_pkt_fill(ini_proc->qid, ini_proc->qid, ini_proc->devid, tx, ini_proc->token_info.token, vector,
+                        ini_proc->imm_recv_jetty->jfr->jfr_id);
     } else {
-        que_tx_pkt_fill(ini_proc->peer_qid, virqid, ini_proc->devid, tx, ini_proc->token_info.token,
-            vector, ini_proc->qjfr->jfr->jfr_id);
+        que_tx_pkt_fill(ini_proc->peer_qid, (unsigned int)virqid, ini_proc->devid, tx, ini_proc->token_info.token,
+                        vector, ini_proc->qjfr->jfr->jfr_id);
     }
     que_ini_time_stamp(ini_proc, TRACE_PKT_FILL);
 
@@ -602,21 +602,20 @@ wait:
     que_get_time(&start);
     ret = que_uma_imm_wait(ini_proc->imm_recv_jetty, ini_proc->recv_para, &ack_data.imm_data, timeout_ms_);
     if (que_likely(ret == DRV_ERROR_NONE)) {
-        if ((ack_data.ack_msg.sn != ini_proc->tx->sn) ||
-            (ini_proc->qid != (unsigned int)ack_data.ack_msg.qid)) {
+        if ((ack_data.ack_msg.sn != ini_proc->tx->sn) || (ini_proc->qid != (unsigned int)ack_data.ack_msg.qid)) {
             QUEUE_LOG_ERR("que ack error. (ret=%d; devid=%u; memtype=%d; exp_qid=%u; act_qid=%u,"
-                "exp_sn=%d, act_sn=%u)\n",
-                ret, ini_proc->devid, ini_proc->que_type, ini_proc->qid, ack_data.ack_msg.qid,
-                ini_proc->tx->sn, ack_data.ack_msg.sn);
-           que_get_time(&end);
+                          "exp_sn=%u, act_sn=%u)\n",
+                          ret, ini_proc->devid, ini_proc->que_type, ini_proc->qid, ack_data.ack_msg.qid,
+                          ini_proc->tx->sn, ack_data.ack_msg.sn);
+            que_get_time(&end);
             queue_agent_update_time(start, end, &timeout_ms_);
             goto wait;
         }
     }
 
     if (que_unlikely(ret != DRV_ERROR_NONE)) {
-        QUEUE_LOG_ERR("que wait fail. (ret=%d; devid=%u; qid=%u; que_type=%d, timeout=%d)\n",
-            ret, ini_proc->devid, ini_proc->qid, (int)ini_proc->que_type, timeout);
+        QUEUE_LOG_ERR("que wait fail. (ret=%d; devid=%u; qid=%u; que_type=%d, timeout=%d)\n", ret, ini_proc->devid,
+                      ini_proc->qid, (int)ini_proc->que_type, timeout);
         return ret;
     }
     if (que_unlikely(ack_data.ack_msg.result == DRV_ERROR_TRANS_LINK_ACK_TIMEOUT_ERR)) {
@@ -625,7 +624,7 @@ wait:
     }
 
     que_ini_time_stamp(ini_proc, TRACE_ACK_WAIT_END);
-    ini_proc->tgt_time = ack_data.ack_msg.tgt_time;
+    ini_proc->tgt_time = (unsigned int)ack_data.ack_msg.tgt_time & 0xFFFFFFu;
     return ack_data.ack_msg.result;
 }
 
@@ -639,10 +638,9 @@ void que_ini_proc_done(struct que_ini_proc *ini_proc)
     }
 }
 
-#else   /* EMU_ST */
+#else /* EMU_ST */
 
 void que_ini_proc_emu_test(void)
-{
-}
+{}
 
-#endif  /* EMU_ST */
+#endif /* EMU_ST */

@@ -14,6 +14,7 @@
 #ifndef KA_MEMORY_PUB_H
 #define KA_MEMORY_PUB_H
 
+#include <linux/version.h>
 #include <asm/barrier.h>
 #include <asm/io.h>
 #include <uapi/linux/sysinfo.h>
@@ -32,6 +33,7 @@
 #include <linux/pagemap.h>
 #include <linux/string.h>
 #include <linux/thread_info.h>
+#include <linux/iommu.h>
 
 #include <linux/mmzone.h>
 #include <linux/rwsem.h>
@@ -97,6 +99,7 @@
 #define KA_GFP_HIGHUSER_MOVABLE        GFP_HIGHUSER_MOVABLE
 #define KA_GFP_TRANSHUGE_LIGHT         GFP_TRANSHUGE_LIGHT
 #define KA_GFP_TRANSHUGE               GFP_TRANSHUGE
+#define KA_GFP_KERNEL_ACCOUNT          GFP_KERNEL_ACCOUNT
 
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 13, 0))
 #define __KA_GFP_RETRY_MAYFAIL __GFP_RETRY_MAYFAIL
@@ -107,9 +110,29 @@
 #define __KA_GFP_DIRECT_RECLAIM        __ka_get_mem_gfp_direct_reclaim()
 #define __KA_GFP_KSWAPD_RECLAIM        __ka_get_mem_gfp_kswapd_reclaim()
 #define __KA_GFP_NOLOCKDEP             __ka_get_mem_gfp_nolockdep()
-#define KA_GFP_KERNEL_ACCOUNT           ka_get_mem_gfp_kernel_account()
 #define __KA_GFP_KMEMCG                __ka_get_mem_gfp_kmemcg()
 #define __KA_GFP_NOACCOUNT             __ka_get_mem_gfp_noaccount()
+
+#ifndef HUGETLB_ALLOC_NONE
+#define HUGETLB_ALLOC_NONE             0x00
+#endif
+#ifndef HUGETLB_ALLOC_NORMAL
+#define HUGETLB_ALLOC_NORMAL           0x01
+#endif
+#ifndef HUGETLB_ALLOC_BUDDY
+#define HUGETLB_ALLOC_BUDDY            0x02
+#endif
+#ifndef HUGETLB_ALLOC_NORECLAIM
+#define HUGETLB_ALLOC_NORECLAIM        0x04
+#endif
+#ifndef HUGETLB_ALLOC_GIANT
+#define HUGETLB_ALLOC_GIANT            0x08
+#endif
+#define KA_HUGETLB_ALLOC_NONE          HUGETLB_ALLOC_NONE
+#define KA_HUGETLB_ALLOC_NORMAL        HUGETLB_ALLOC_NORMAL
+#define KA_HUGETLB_ALLOC_BUDDY         HUGETLB_ALLOC_BUDDY
+#define KA_HUGETLB_ALLOC_NORECLAIM     HUGETLB_ALLOC_NORECLAIM
+#define KA_HUGETLB_ALLOC_GIANT         HUGETLB_ALLOC_GIANT
 
 #define __ka_mm_iomem                  __iomem
 
@@ -123,9 +146,7 @@
 #define KA_PROT_READ     PROT_READ        /* page can be read */
 #define KA_PROT_WRITE    PROT_WRITE        /* page can be written */
 #define KA_FOLL_WRITE    FOLL_WRITE
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 2, 0)
 #define KA_FOLL_LONGTERM FOLL_LONGTERM
-#endif
 
 #define KA_VM_PFNMAP     VM_PFNMAP
 #define KA_VM_LOCKED     VM_LOCKED
@@ -148,6 +169,7 @@
 #define KA_MIGRATE_MOVABLE     MIGRATE_MOVABLE
 #define KA_IOMMU_READ          IOMMU_READ
 #define KA_IOMMU_WRITE         IOMMU_WRITE
+#define KA_IOMMU_CACHE         IOMMU_CACHE
 
 /*
  * linux kernel < 3.11 not defined VM_FAULT_SIGSEGV,
@@ -213,6 +235,9 @@ typedef struct vm_operations_struct  ka_vm_operations_struct_t;
 typedef struct vm_area_struct        ka_vm_area_struct_t;
 typedef struct mmu_notifier_range    ka_mmu_notifier_range_t;
 typedef enum dma_data_direction     ka_dma_data_direction_t;
+typedef struct iommu_sva ka_iommu_sva_t;
+typedef struct iommu_group ka_iommu_group_t;
+typedef struct iommu_resv_region ka_iommu_resv_region_t;
 
 static inline unsigned long ka_mm_get_vm_fault_address(ka_vm_fault_struct_t *vmf)
 {
@@ -294,8 +319,8 @@ static inline void ka_mm_mmu_notifier_unregister_no_release(ka_mmu_notifier_t *m
 #define KA_MM_MMU_NOTIFIER_OPS_INIT_FREE_NOTIFIER(free_notifier_fn) \
     .free_notifier = free_notifier_fn,
 #else
-#define KA_MM_MMU_NOTIFIER_OPS_INIT_ALLOC_NOTIFIER(alloc_notifier_fn) 
-#define KA_MM_MMU_NOTIFIER_OPS_INIT_FREE_NOTIFIER(free_notifier_fn) 
+#define KA_MM_MMU_NOTIFIER_OPS_INIT_ALLOC_NOTIFIER(alloc_notifier_fn)
+#define KA_MM_MMU_NOTIFIER_OPS_INIT_FREE_NOTIFIER(free_notifier_fn)
 #endif
 
 
@@ -330,6 +355,10 @@ typedef struct ka_sysinfo {
     unsigned long freeram;
     unsigned long sharedram;
 } ka_sysinfo_t;
+
+#define KA_DMA_ATTR_SKIP_CPU_SYNC       DMA_ATTR_SKIP_CPU_SYNC
+#define KA_DMA_ATTR_WRITE_COMBINE       DMA_ATTR_WRITE_COMBINE
+#define KA_DMA_ATTR_NO_KERNEL_MAPPING   DMA_ATTR_NO_KERNEL_MAPPING
 
 #define ka_dma_addr_t           dma_addr_t
 #define KA_DMA_BIDIRECTIONAL    DMA_BIDIRECTIONAL
@@ -397,8 +426,12 @@ typedef struct ka_sysinfo {
 #define ka_mm_put_page(page)                                    put_page(page)
 #define ka_mm_dma_map_page(d, p, o, s, r)                     dma_map_page(d, p, o, s, r)
 #define ka_mm_dma_unmap_page(d, a, s, r)                      dma_unmap_page(d, a, s, r)
+#define ka_mm_dma_map_page_attrs(d, p, o, s, r, a)            dma_map_page_attrs(d, p, o, s, r, a)
+#define ka_mm_dma_unmap_page_attrs(d, a, s, r, t)             dma_unmap_page_attrs(d, a, s, r, t)
 #define ka_mm_sg_dma_len(sg)                                  sg_dma_len(sg)
 #define ka_mm_sg_dma_address(sg)                              sg_dma_address(sg)
+#define ka_dma_unmap_sg(d, s, n, r)                           dma_unmap_sg(d, s, n, r)
+#define ka_dma_map_sg(d, s, n, r)                             dma_map_sg(d, s, n, r)
 
 #define ka_mm_kmem_cache_create(name, size, align, flags,ctor)  \
             kmem_cache_create(name, size, align, flags,ctor)
@@ -433,6 +466,8 @@ typedef struct ka_sysinfo {
 #define ka_mm_memset_io(dst, c, count)    memset_io(dst, c, count)
 #define ka_mm_ioremap(addr, size)    ioremap(addr, size)
 #define ka_mm_ioremap_nocache(addr, size)    ioremap_nocache(addr, size)
+#define ka_mm_pci_iomap(dev, bar, maxlen)   pci_iomap(dev, bar, maxlen)
+#define ka_mm_pci_iounmap(dev, p)   pci_iounmap(dev, p)
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5,10,0)
 #define ioremap_nocache ioremap
@@ -452,7 +487,13 @@ typedef struct ka_sysinfo {
 #define ka_mm_readl(addr)    readl(addr)
 #define ka_mm_readl_relaxed(addr)    readl_relaxed(addr)
 #define ka_mm_writeq(b, addr)    writeq(b, addr)
+#define ka_mm_writel(b, addr)    writel(b, addr)
+#define ka_mm_writew(b, addr)    writew(b, addr)
+#define ka_mm_writeb(b, addr)    writeb(b, addr)
 #define ka_mm_readq(addr)    readq(addr)
+#define ka_mm_readl(addr)    readl(addr)
+#define ka_mm_readw(addr)    readw(addr)
+#define ka_mm_readb(addr)    readb(addr)
 #define ka_mm_writel_relaxed(value, addr)    writel_relaxed(value, addr)
 #define ka_mm_writeq_relaxed(value, addr)    writeq_relaxed(value, addr)
 
@@ -472,6 +513,8 @@ typedef struct ka_sysinfo {
 #define ka_mm_get_order(size)    get_order(size)
 #define ka_mm_free_page(page)    free_page(page)
 #define ka_mm_mmput(mm)    mmput(mm)
+#define ka_mm_mmgrab(mm)    mmgrab(mm)
+#define ka_mm_mmdrop(mm)    mmdrop(mm)
 #define ka_mm_is_vmalloc_addr(addr)    is_vmalloc_addr(addr)
 #define ka_mm_page_address(page)    page_address(page)
 #define ka_mm_pfn_to_nid(pfn)       pfn_to_nid(pfn)
@@ -480,9 +523,19 @@ typedef struct ka_sysinfo {
 #define ka_mm_page_is_ram(pfn)            page_is_ram(pfn)
 #define ka_mm_next_online_node(nid)       next_online_node(nid)
 #define ka_mm_num_online_nodes()       num_online_nodes()
+#define ka_mm_first_online_node        first_online_node
 #define ka_mm_iommu_map(domain, iova, paddr, size, prot, gfp) iommu_map(domain, iova, paddr, size, prot, gfp)
 #define ka_mm_iommu_unmap(domain, iova, size) iommu_unmap(domain, iova, size)
 #define ka_mm_iommu_get_domain_for_dev(dev) iommu_get_domain_for_dev(dev)
+#define ka_mm_iommu_domain_alloc(bus) iommu_domain_alloc(bus)
+#define ka_mm_iommu_group_get(dev) iommu_group_get(dev)
+#define ka_mm_iommu_detach_group(domain, group) iommu_detach_group(domain, group)
+#define ka_mm_iommu_domain_free(domain) iommu_domain_free(domain)
+#define ka_mm_put_iova_domain(iovad) put_iova_domain(iovad)
+#define ka_mm_iommu_get_group_resv_regions(group, head) iommu_get_group_resv_regions(group, head)
+#define ka_mm_iommu_attach_group(domain, group) iommu_attach_group(domain, group)
+#define ka_mm_iommu_get_msi_cookie(domain, base) iommu_get_msi_cookie(domain, base)
+#define ka_mm_mmget_not_zero(mm) mmget_not_zero(mm)
 
 #define ka_mm_flush_tlb_range(vma, start, end)    flush_tlb_range(vma, start, end)
 
@@ -575,6 +628,10 @@ void ka_si_meminfo(struct ka_sysinfo *val);
 ka_rw_semaphore_t *ka_mm_get_mmap_sem(ka_mm_struct_t *mm);
 long ka_mm_get_user_pages_remote(ka_task_struct_t *tsk, ka_mm_struct_t *mm,
     unsigned long long va, int write, unsigned int num, ka_page_t **pages);
+long ka_mm_pin_user_pages_remote(ka_task_struct_t *tsk, ka_mm_struct_t *mm,
+                                 unsigned long start, unsigned long nr_pages,
+                                 unsigned long gup_flags, ka_page_t **pages,
+                                 int *locked);
 #define ka_mm_put_devmap_managed_page(page) put_devmap_managed_page(page)
 #define ka_mm_dma_set_mask_and_coherent(dev, mask) dma_set_mask_and_coherent(dev, mask)
 #define ka_mm_dma_map_resource(dev, phys_addr, size, dir, attrs) dma_map_resource(dev, phys_addr, size, dir, attrs)
@@ -585,6 +642,9 @@ long ka_mm_get_user_pages_remote(ka_task_struct_t *tsk, ka_mm_struct_t *mm,
 
 int ka_mm_alloc_contig_range(unsigned long start, unsigned long end, unsigned migratetype, gfp_t gfp_mask);
 void ka_mm_free_contig_range(unsigned long pfn, unsigned long nr_pages);
+
+bool ka_mm_mem_is_ram(u64 pa);
+
 void *ka_mm_page_to_virt(ka_page_t *page);
 unsigned long ka_mm_get_vm_flags(ka_vm_area_struct_t *vma);
 void ka_mm_set_vm_flags(ka_vm_area_struct_t *vma, unsigned long flags);
@@ -757,9 +817,51 @@ static inline bool ka_mm_is_support_mmu_notifier_get_put(void)
 #endif
 }
 
-#define ka_mm_node_online(x) node_online(x)
 #define ka_mm_num_possible_nodes() num_possible_nodes()
 #define KA_MM_NODE_DATA(nid) NODE_DATA(nid)
+#define ka_mm_node_online(x) node_online(x)
+
+#ifndef UVM_OPEN
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5,8,0)
+#define ka_mm_mmap_read_lock(x) mmap_read_lock(x)
+#define ka_mm_mmap_read_unlock(x) mmap_read_unlock(x)
+#define ka_mm_mmap_write_lock(x) mmap_write_lock(x)
+#define ka_mm_mmap_write_unlock(x) mmap_write_unlock(x)
+#else
+#define ka_mm_mmap_read_lock(x) down_read(&(x)->mmap_sem)
+#define ka_mm_mmap_read_unlock(x) up_read(&(x)->mmap_sem)
+#define ka_mm_mmap_write_lock(x) down_write(&(x)->mmap_sem)
+#define ka_mm_mmap_write_unlock(x) up_write(&(x)->mmap_sem)
+#endif
+
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 8, 0)
+#define KA_MM_UVM_FAULT_ERROR VM_FAULT_DONE_COW
+#else
+#define KA_MM_UVM_FAULT_ERROR DEVMM_FAULT_OK
+#endif
+
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 8, 0)
+#define KA_MM_UVM_RESET_PTES_OF_HUGEPAGE_HOST(svm_proc, vma, addr, is_read_only, need_lock) \
+    uvm_reset_ptes_of_hugepage_host(svm_proc, vma, addr, is_read_only, need_lock)
+#else
+#define KA_MM_UVM_RESET_PTES_OF_HUGEPAGE_HOST(svm_proc, vma, addr, is_read_only, need_lock)  \
+    (void)0
+#endif
+
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 11, 0)
+#define KA_UVM_DEFINE_VM_OPS_PFN_MKWRITE_FUNC(func_name) \
+static ka_vm_fault_t ka_##func_name(ka_vm_fault_struct_t *vmf) \
+{ \
+   return (ka_vm_fault_t)func_name(vmf->vma, vmf);\
+}
+#else
+#define KA_UVM_DEFINE_VM_OPS_PFN_MKWRITE_FUNC(func_name) \
+static int ka_##func_name(ka_vm_fault_struct_t *vma, ka_vm_fault_struct_t *vmf) \
+{ \
+   return (ka_vm_fault_t)func_name(vma, vmf);\
+}
+#endif
+#endif
 
 void *ka_mm_get_pte(const ka_vm_area_struct_t *vma, u64 va, u64 *kpg_size);
 int ka_mm_va_to_pa_pgd_range(ka_pgd_t *pgd, u64 start, u64 end, u64 *pas, u64 *num);
@@ -810,5 +912,8 @@ static inline u64 ka_pte_level_to_page_size(enum ka_pte_level level)
 
 int ka_walk_page_range(ka_vm_area_struct_t *vma, u64 start, u64 end, struct ka_pgwalk_ops *ops, void *priv);
 int ka_walk_page_range_pte_lock(ka_vm_area_struct_t *vma, u64 start, u64 end, struct ka_pgwalk_ops *ops, void *priv);
+
+#define ka_mm_virt_to_page(kaddr) virt_to_page(kaddr)
+#define ka_mm_offset_in_page(p) offset_in_page(p)
 
 #endif

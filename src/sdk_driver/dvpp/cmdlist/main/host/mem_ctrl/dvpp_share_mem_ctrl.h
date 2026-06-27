@@ -14,10 +14,15 @@
 #ifndef DVPP_SHARE_MEM_CTRL_H
 #define DVPP_SHARE_MEM_CTRL_H
 
-#include <linux/types.h>
+#include "ka_type.h"
 
 #include "ka_task_pub.h"
 #include "dvpp_cmdlist.h"
+#include "dvpp_vmng.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /*
 消息通道个数限制了最大并发数，当前是8个
@@ -66,8 +71,8 @@ typedef struct {
     uint8_t init_flag;
 } dvpp_share_mem_pool; // 结构体大约4K大小
 
-extern ka_spinlock_t g_share_mem_pool_lock;
-extern dvpp_share_mem_pool *g_share_mem_pool;
+extern ka_spinlock_t g_share_mem_pool_lock[DVPP_VMNG_DEVICE_NUM_MAX];
+extern dvpp_share_mem_pool *g_share_mem_pool[DVPP_VMNG_DEVICE_NUM_MAX];
 
 dvpp_share_mem_pool* dvpp_init_share_mem_pool(uint32_t devid, dvpp_sqe_args *sqe_args);
 void dvpp_uninit_share_mem_pool(void);
@@ -88,4 +93,7 @@ static inline dvpp_share_blk_type trans_ptr_mode_to_blk_type(uint32_t ptr_mode)
     return ptr_mode == 1 ? DVPP_SHARE_BLK_TYPE_SUPER : DVPP_SHARE_BLK_TYPE_NORMAL;
 }
 
+#ifdef __cplusplus
+}
+#endif
 #endif // #ifndef DVPP_SHARE_MEM_CTRL_H

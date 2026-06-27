@@ -37,28 +37,28 @@
 #define HDCDRV_ASYNC_RELEASE_WORK_NAME "hdcdrv-async-release-work"
 #define HDCDRV_RX_MSG_NORIFY_WORK_NAME "hdcdrv-rx-msg-notify-work"
 
-#define HDCDRV_STR_NAME(n)      (#n)
-#define HDCDRV_STR_NAME_LEN     32
+#define HDCDRV_STR_NAME(n) (#n)
+#define HDCDRV_STR_NAME_LEN 32
 
 #define HDCDRV_SESSION_FD_INVALID (-2)
 #define HDCDRV_INVALID_SQ_HEAD 17
 
 #define HDCDRV_MODE_KERNEL 0
-#define HDCDRV_MODE_USER   1
+#define HDCDRV_MODE_USER 1
 
 #define HDCDRV_SERVICE_HIGH_LEVEL 0
-#define HDCDRV_SERVICE_LOW_LEVEL  1
+#define HDCDRV_SERVICE_LOW_LEVEL 1
 
-#define HDCDRV_SERVICE_SHORT_CONN	0
-#define HDCDRV_SERVICE_LONG_CONN	1
+#define HDCDRV_SERVICE_SHORT_CONN 0
+#define HDCDRV_SERVICE_LONG_CONN 1
 
-#define HDCDRV_SERVICE_SCOPE_GLOBAL    0
-#define HDCDRV_SERVICE_SCOPE_PROCESS   1
+#define HDCDRV_SERVICE_SCOPE_GLOBAL 0
+#define HDCDRV_SERVICE_SCOPE_PROCESS 1
 
-#define HDCDRV_SERVICE_LOG_LIMIT    1
+#define HDCDRV_SERVICE_LOG_LIMIT 1
 #define HDCDRV_SERVICE_NO_LOG_LIMIT 0
 
-#define HDCDRV_DESC_QUEUE_DEPTH	       16
+#define HDCDRV_DESC_QUEUE_DEPTH 16
 
 #define HDCDRV_RX_BUDGET 16
 #define HDCDRV_TX_BUDGET 16
@@ -69,16 +69,16 @@
 #define HDCDRV_SESSION_STATUS_CLOSING 3
 #define HDCDRV_SESSION_STATUS_MAX 4
 
-#define HDCDRV_MSG_TX_STATUS_FULL  1
+#define HDCDRV_MSG_TX_STATUS_FULL 1
 #define HDCDRV_MSG_TX_STATUS_EMPTY 0
 
 #define HDCDRV_MSG_CHAN_TYPE_NORMAL 0
-#define HDCDRV_MSG_CHAN_TYPE_FAST   1
+#define HDCDRV_MSG_CHAN_TYPE_FAST 1
 
 #define HDCDRV_MANAGE_SERVICE_CHAN_NUM 2U
 
 #define HDCDRV_MSG_CHAN_FLAG_NOT_ALLOCED 0
-#define HDCDRV_MSG_CHAN_FLAG_ALLOCED     1
+#define HDCDRV_MSG_CHAN_FLAG_ALLOCED 1
 
 #define HDCDRV_INVALID_CHAN_ID 0XFFFFFFFF
 
@@ -97,16 +97,16 @@
 #define HDCDRV_SET_PID_TIMEOUT 10
 #define HDCDRV_KERNEL_UNKNOW_PID (-3)
 
-#define HDCDRV_DELAY_REMOTE_CLOSE_BIT    0
+#define HDCDRV_DELAY_REMOTE_CLOSE_BIT 0
 #define HDCDRV_DELAY_UNKNOWN_SESSION_BIT 1
 
-#define HDCDRV_DEBUG_MODE_TIMEOUT  (600 * KA_HZ)
+#define HDCDRV_DEBUG_MODE_TIMEOUT (600 * KA_HZ)
 #define HDCDRV_DFX_PRINT_LIMIT_CNT 100U
 
 #define HDCDRV_RX 0
 #define HDCDRV_TX 1
 
-#define HDCDRV_RX_SCHED_WORK    1
+#define HDCDRV_RX_SCHED_WORK 1
 #define HDCDRV_RX_SCHED_TASKLET 0
 
 #define HDCDRV_MEM_DFX_LOCAL 0
@@ -126,7 +126,7 @@
 #define HDCDRV_MEMPOOL_FREE_IN_PM 0
 #define HDCDRV_MEMPOOL_FREE_IN_VM 1
 
-#if defined (CFG_FEATURE_VFIO) || defined (CFG_FEATURE_VFIO_DEVICE) || defined (CFG_FEATURE_SRIOV)
+#if defined(CFG_FEATURE_VFIO) || defined(CFG_FEATURE_VFIO_DEVICE) || defined(CFG_FEATURE_SRIOV)
 #define HDCDRV_SERVER_PROCESS_MAX_NUM (32 * HDCDRV_DEV_MAX_VDEV_PER_DEVICE)
 #else
 #ifdef CFG_FEATURE_PROCESS_NUM_LITE
@@ -135,12 +135,13 @@
 #define HDCDRV_SERVER_PROCESS_MAX_NUM 64
 #endif
 #endif
+#define HDCDRV_DFX_MAX_PROCESS_NUM 64 // only for dfx, max support 64 process
 
 #define HDCDRV_SESSION_UNIQUE_VALUE_MASK 0x3FFFFFFFU
 #define HDCDRV_SESSION_UNIQUE_VALUE_HOST_FLAG 0x80000000U
 #define HDCDRV_SESSION_UNIQUE_VALUE_DEVICE_FLAG 0xC0000000U
 
-#define DEVDRV_STATUS_HDC_CLOSE_FLAG  0xEEEEDDDDU
+#define DEVDRV_STATUS_HDC_CLOSE_FLAG 0xEEEEDDDDU
 
 #define HDCDRV_DEVID_MASK 0x3FULL
 #define HDCDRV_FID_MASK 0x1FULL
@@ -194,19 +195,19 @@ struct hdcdrv_fast_mem_info {
 };
 
 struct hdcdrv_latency_info {
-	u64 send_timestamp;
-	u64 wait_sq_timestamp;
-	u64 dma_copy_timestamp;
-	u64 rx_task_timestamp;
+    u64 send_timestamp;
+    u64 wait_sq_timestamp;
+    u64 dma_copy_timestamp;
+    u64 rx_task_timestamp;
     u64 sq_dma_timestamp;
     u64 cq_dma_timestamp;
 };
 
 struct hdcdrv_buf_desc {
     void *buf;
-    u64 addr;  // src_data_addr
+    u64 addr;   // src_data_addr
     u32 offset; // src data addr seque offset
-    int len;   // data_len
+    int len;    // data_len
     int ctrl_len;
 
     u64 src_data_addr_va; // primal src_data_addr
@@ -221,7 +222,7 @@ struct hdcdrv_buf_desc {
     int remote_session;
 
     u32 inner_checker;
-	struct hdcdrv_latency_info latency_info;
+    struct hdcdrv_latency_info latency_info;
 
     struct hdcdrv_fast_mem *src_data;
     struct hdcdrv_fast_mem *dst_data;
@@ -302,7 +303,7 @@ struct hdcdrv_dbg_stats {
     unsigned long long hdcdrv_msg_chan_send2;
 };
 
-enum dbg_time_op{
+enum dbg_time_op {
     DBG_TIME_OP_SEND = 0,
     DBG_TIME_OP_RECV,
     DBG_TIME_OP_CONN,
@@ -645,9 +646,9 @@ struct hdcdrv_ctx {
     struct hdcdrv_session *session;
     struct hdcdrv_service *service;
     struct hdcdrv_epoll_fd *epfd;
-    struct hdcdrv_ctx_fmem ctx_fmem;            // record fast_mem used for normal service
-    struct hdcdrv_ctx_fmem abnormal_ctx_fmem;   // record fast_mem unmap va failed when alloc abnormal
-    struct hdcdrv_ctx_fmem async_ctx;           // record async release fast node
+    struct hdcdrv_ctx_fmem ctx_fmem;          // record fast_mem used for normal service
+    struct hdcdrv_ctx_fmem abnormal_ctx_fmem; // record fast_mem unmap va failed when alloc abnormal
+    struct hdcdrv_ctx_fmem async_ctx;         // record async release fast node
     ka_work_struct_t async_release_work;
 };
 
@@ -760,19 +761,19 @@ extern int hdcdrv_init_session_release_mem_event(struct hdcdrv_session *session)
 extern void hdcdrv_free_session_release_mem_event(struct hdcdrv_session *session);
 extern void hdcdrv_update_session_release_mem_event(struct hdcdrv_session *session,
                                                     const struct hdcdrv_wait_mem_fin_msg *in_msg);
-extern int hdcdrv_wait_session_release_mem_event(struct hdcdrv_session *session,
-    int time_out, unsigned int result_type, struct hdcdrv_wait_mem_fin_msg *out_msg);
+extern int hdcdrv_wait_session_release_mem_event(struct hdcdrv_session *session, int time_out, unsigned int result_type,
+                                                 struct hdcdrv_wait_mem_fin_msg *out_msg);
 extern void hdcdrv_destroy_session_del_mem_release_event(struct hdcdrv_session *session);
 extern void hdcdrv_peer_fault_del_mem_release_event(struct hdcdrv_session *session);
 extern long hdcdrv_fast_wait_mem(struct hdcdrv_cmd_wait_mem *cmd);
 
 extern long hdcdrv_dev_para_check(int dev_id, int service_type);
-struct hdcdrv_fast_node *hdcdrv_fast_node_search_timeout(ka_task_spinlock_t *lock, ka_rb_root_t *root,
-    u64 hash_va, int timeout);
-extern int hdcdrv_fast_node_insert_new_tree(int devid,
-    u64 pid, u32 fid, u32 rb_side, struct hdcdrv_fast_node *new_node);
-int hdcdrv_fast_node_insert(ka_task_spinlock_t *lock,
-    ka_rb_root_t *root, struct hdcdrv_fast_node *fast_node, u64 search_type);
+struct hdcdrv_fast_node *hdcdrv_fast_node_search_timeout(ka_task_spinlock_t *lock, ka_rb_root_t *root, u64 hash_va,
+                                                         int timeout);
+extern int hdcdrv_fast_node_insert_new_tree(int devid, u64 pid, u32 fid, u32 rb_side,
+                                            struct hdcdrv_fast_node *new_node);
+int hdcdrv_fast_node_insert(ka_task_spinlock_t *lock, ka_rb_root_t *root, struct hdcdrv_fast_node *fast_node,
+                            u64 search_type);
 void hdcdrv_fast_node_erase(ka_task_spinlock_t *lock, ka_rb_root_t *root, struct hdcdrv_fast_node *fast_node);
 extern void hdcdrv_set_device_status(int devid, u32 valid);
 extern u32 hdcdrv_get_device_status(int devid);
@@ -786,7 +787,7 @@ extern struct hdcdrv_msg_chan *hdcdrv_get_msg_chan_priv(void *msg_chan);
 extern struct hdcdrv_sq_desc *hdcdrv_get_w_sq_desc(void *msg_chan, u32 *tail);
 extern void hdcdrv_set_w_sq_desc_head(void *msg_chan, u32 head);
 extern int hdcdrv_copy_sq_desc_to_remote(struct hdcdrv_msg_chan *msg_dev, const struct hdcdrv_sq_desc *sq_desc,
-                                          enum devdrv_dma_data_type data_type);
+                                         enum devdrv_dma_data_type data_type);
 extern bool hdcdrv_w_sq_full_check(void *msg_chan);
 extern struct hdcdrv_sq_desc *hdcdrv_get_r_sq_desc(void *msg_chan, u32 *head);
 extern void hdcdrv_move_r_sq_desc(void *msg_chan);
@@ -814,7 +815,7 @@ extern void hdcdrv_set_peer_dev_id(int dev_id, int peer_dev_id);
 extern int hdcdrv_get_peer_dev_id(int dev_id);
 
 extern long hdcdrv_epoll_operation(struct hdcdrv_ctx *ctx, u32 drv_cmd, union hdcdrv_cmd *cmd_data,
-    bool *copy_to_user_flag, u32 fid);
+                                   bool *copy_to_user_flag, u32 fid);
 
 extern int hdcdrv_init(void);
 extern void hdcdrv_uninit(void);
@@ -828,7 +829,8 @@ extern int hdcdrv_get_session_run_env(u32 dev_id, u32 fid);
 extern long hdcdrv_close(const struct hdcdrv_cmd_close *cmd, int close_state);
 extern int hdcdrv_set_mem_info(int devid, u32 fid, u32 rb_side, struct hdcdrv_ctrl_msg_sync_mem_info *msg);
 extern int hdcdrv_mem_adapter(const struct hdcdrv_fast_addr_info *src_info,
-    const struct hdcdrv_fast_addr_info *dst_info, struct devdrv_dma_node *node, int *node_idx, int len);
+                              const struct hdcdrv_fast_addr_info *dst_info, struct devdrv_dma_node *node, int *node_idx,
+                              int len);
 extern int hdcdrv_check_session_owner(const struct hdcdrv_session *session, u64 check_pid);
 extern int hdcdrv_session_task_start_time_compare(const u64 proc_start_time, const u64 session_start_time);
 
@@ -841,7 +843,7 @@ extern u32 hdcdrv_get_container_id(void);
 extern u32 hdcdrv_get_fid(u64 pid);
 extern int hdcdrv_get_localpid(u32 hostpid, u32 chip_id, int cp_type, u32 vfid, int *pid);
 extern u64 hdcdrv_get_peer_pid(u32 devid, u64 host_pid, u32 fid, u64 peer_pid, int service_type);
-extern u32 hdcdrv_get_vmid_from_pid(u64        pid);
+extern u32 hdcdrv_get_vmid_from_pid(u64 pid);
 extern int hdcdrv_service_scope_init(int service_type);
 extern u32 hdcdrv_alloc_fast_msg_chan(int dev_id, int service_type, u32 chan_start, u32 chan_end);
 extern void hdcdrv_alloc_msg_chan(int dev_id, int service_type, u32 *normal_chan_id, u32 *fast_chan_id);
@@ -880,15 +882,15 @@ void vhdch_session_free(u32 dev_id, u32 fid, int service_type);
 u32 vdhch_alloc_normal_msg_chan(u32 dev_id, u32 fid, int service_type);
 u32 vdhch_alloc_fast_msg_chan(u32 dev_id, u32 fid, int service_type);
 void hdcdrv_session_work_free(struct hdcdrv_session_work *s_work);
-int hdcdrv_dma_map_guest_page(u32 dev_id, u32 fid, unsigned long in_addr,
-    unsigned long size, struct hdcdrv_buf_desc *desc);
+int hdcdrv_dma_map_guest_page(u32 dev_id, u32 fid, unsigned long in_addr, unsigned long size,
+                              struct hdcdrv_buf_desc *desc);
 void hdcdrv_dma_unmap_guest_page(u32 dev_id, u32 fid, ka_sg_table_t *dma_sgt);
 struct hdcdrv_service *vhdch_alloc_service(u32 devid, u32 fid, int service_type, u64 host_pid);
 struct hdcdrv_service *vhdch_search_service(u32 devid, u32 fid, int service_type, u64 host_pid);
 #endif
 
-void hdcdrv_iova_fmem_unmap(u32 dev_id, u32 fid, struct hdcdrv_fast_mem* f_mem, u32 num);
-int hdcdrv_iova_fmem_map(u32 dev_id, u32 fid, struct hdcdrv_fast_mem* f_mem);
+void hdcdrv_iova_fmem_unmap(u32 dev_id, u32 fid, struct hdcdrv_fast_mem *f_mem, u32 num);
+int hdcdrv_iova_fmem_map(u32 dev_id, u32 fid, struct hdcdrv_fast_mem *f_mem);
 void hdcdrv_kvfree(void **addr, int level);
 struct hdcdrv_dev_fmem *hdcdrv_get_dev_fmem_sep(int devid);
 struct hdcdrv_service *hdcdrv_search_service(u32 dev_id, u32 fid, int service_type, u64 host_pid);
@@ -918,6 +920,7 @@ int hdcdrv_get_link_status(struct devdrv_pcie_link_info_para *link_info);
 int hdcdrv_get_p2p_com_status(void *out, unsigned int out_len, unsigned int *real_out);
 int hdcdrv_force_link_down(void);
 long hdcdrv_get_spec_devid(struct hdcdrv_cmd_get_spec_devid *cmd);
+long hdcdrv_hal_get_p2p_com_status(struct hdcdrv_cmd_get_com_status *cmd);
 /*
  * hdcdrv_session_free_check : Check whether all sessions are released
  *
@@ -932,4 +935,4 @@ int hdcdrv_get_peer_id_by_devid(u32 devid, u32 *peer_id);
 int hdcdrv_get_devid_by_peer_id(u32 peer_id, u32 *devid);
 struct hdcdrv_node_tree_ctrl *hdcdrv_new_tree_init(void);
 
-#endif  // _DEVDRV_MAIN_H_
+#endif // _DEVDRV_MAIN_H_

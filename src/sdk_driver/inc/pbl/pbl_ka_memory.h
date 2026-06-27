@@ -13,7 +13,6 @@
 #ifndef PBL_KA_MEMORY_H
 #define PBL_KA_MEMORY_H
 
-#include <linux/types.h>
 #include "ka_base_pub.h"
 #include "ka_memory_pub.h"
 #include "ka_common_pub.h"

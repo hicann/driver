@@ -94,7 +94,7 @@ struct ubdrv_loader {
     struct ascend_ub_dev *udev;
     void __ka_mm_iomem *mem_sram_base;
     ka_device_t *ummu_tdev;
-    struct iommu_sva *sva;
+    ka_iommu_sva_t *sva;
     struct ubdrv_load_blocks *blocks;
     u64 translated_size;
     loff_t remain_size;

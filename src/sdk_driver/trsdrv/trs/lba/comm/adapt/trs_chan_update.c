@@ -20,8 +20,7 @@
 #include "trs_chan_update.h"
 
 static struct trs_sqcq_agent_ops sqcq_agent_ops = {
-    .device_init = NULL, .device_uninit = NULL, .sqe_update = NULL, .cqe_update = NULL, .sqe_update_src_check = NULL
-};
+    .device_init = NULL, .device_uninit = NULL, .sqe_update = NULL, .cqe_update = NULL, .sqe_update_src_check = NULL};
 static struct trs_res_ops res_ops[TRS_DEV_MAX_NUM] = {{{NULL}}};
 
 void trs_res_ops_register(u32 devid, struct trs_res_ops *ops)
@@ -64,7 +63,6 @@ void trs_sqcq_agent_ops_unregister(void)
 }
 KA_EXPORT_SYMBOL_GPL(trs_sqcq_agent_ops_unregister);
 
-
 int trs_chan_get_ts_sram_addr(struct trs_id_inst *inst, phys_addr_t *paddr, size_t *size)
 {
     int ret;
@@ -79,11 +77,10 @@ int trs_chan_get_ts_sram_addr(struct trs_id_inst *inst, phys_addr_t *paddr, size
     }
 
     *paddr = rsv_mem.rsv_mem;
-    *size  = rsv_mem.rsv_mem_size;
+    *size = rsv_mem.rsv_mem_size;
 
     return 0;
 }
-
 
 int trs_chan_ops_agent_init(struct trs_id_inst *inst)
 {
@@ -172,8 +169,8 @@ bool trs_is_proc_has_res(u32 devid, u32 tsid, int pid, int res_type, int res_id)
     struct trs_id_inst inst = {.devid = devid, .tsid = tsid};
 
     if ((res_type < (int)TRS_STREAM) || (res_type >= (int)TRS_MAX_ID_TYPE) || (devid >= TRS_DEV_MAX_NUM)) {
-        trs_err("Invalid para. (devid=%u; tsid=%u; pid=%u; res_type=%d; res_id=%d)\n",
-            devid, tsid, pid, res_type, res_id);
+        trs_err(
+            "Invalid para. (devid=%u; tsid=%u; pid=%u; res_type=%d; res_id=%d)\n", devid, tsid, pid, res_type, res_id);
         return false;
     }
 
@@ -200,8 +197,8 @@ int trs_get_res_info(struct trs_id_inst *inst, int res_type, u32 res_id, void *i
 
 int trs_res_trans_v2p(u32 devid, u32 tsid, int res_type, int res_id, int *trans_res_id)
 {
-    if ((res_type < (int)TRS_STREAM) || (res_type >= (int)TRS_MAX_ID_TYPE)
-        || (devid >= TRS_DEV_MAX_NUM) || (trans_res_id == NULL)) {
+    if ((res_type < (int)TRS_STREAM) || (res_type >= (int)TRS_MAX_ID_TYPE) || (devid >= TRS_DEV_MAX_NUM) ||
+        (trans_res_id == NULL)) {
         trs_err("Invalid para. (res_type=%d; devid=%u)", res_type, devid);
         return -EINVAL;
     }
@@ -213,8 +210,8 @@ KA_EXPORT_SYMBOL_GPL(trs_res_trans_v2p);
 
 int trs_res_trans_p2v(u32 devid, u32 tsid, int res_type, int res_id, int *trans_res_id)
 {
-    if ((res_type < (int)TRS_STREAM) || (res_type >= (int)TRS_MAX_ID_TYPE)
-        || (devid >= TRS_DEV_MAX_NUM) || (trans_res_id == NULL)) {
+    if ((res_type < (int)TRS_STREAM) || (res_type >= (int)TRS_MAX_ID_TYPE) || (devid >= TRS_DEV_MAX_NUM) ||
+        (trans_res_id == NULL)) {
         trs_err("Invalid para. (res_type=%d; devid=%u)", res_type, devid);
         return -EINVAL;
     }
@@ -231,4 +228,3 @@ int hal_kernel_trs_get_ssid(u32 devid, u32 tsid, int pid, u32 *passid)
     return trs_core_get_ssid(&inst, pid, passid);
 }
 KA_EXPORT_SYMBOL_GPL(hal_kernel_trs_get_ssid);
-

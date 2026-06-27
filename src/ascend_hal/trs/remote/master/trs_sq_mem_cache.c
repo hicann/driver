@@ -18,8 +18,8 @@
 #include "trs_sq_mem_raw.h"
 #include "trs_sq_mem_cache.h"
 
-#define TRS_SQ_MEM_CACHE_MAX_SIZE       (2ULL * TRS_BYTES_PER_MB)
-#define TRS_SQ_MEM_CACHE_ALLOC_THRES    TRS_SQ_MEM_CACHE_MAX_SIZE
+#define TRS_SQ_MEM_CACHE_MAX_SIZE (2ULL * TRS_BYTES_PER_MB)
+#define TRS_SQ_MEM_CACHE_ALLOC_THRES TRS_SQ_MEM_CACHE_MAX_SIZE
 
 /* ca: cache allocator */
 struct trs_sq_mem_ca {
@@ -38,10 +38,7 @@ struct trs_sq_mem_ca {
 static pthread_rwlock_t g_rwlock = PTHREAD_RWLOCK_INITIALIZER;
 struct trs_sq_mem_ca *g_ca[TRS_DEV_NUM];
 
-static uint64_t trs_sq_mem_ca_get_align(void)
-{
-    return (uint64_t)getpagesize();
-}
+static uint64_t trs_sq_mem_ca_get_align(void) { return (uint64_t)getpagesize(); }
 
 static int trs_sq_mem_ca_va_to_bit(struct trs_sq_mem_ca *ca, uint64_t va)
 {
@@ -133,10 +130,7 @@ static void trs_sq_mem_ca_destroy(uint32_t devid)
     (void)pthread_rwlock_unlock(&g_rwlock);
 }
 
-static struct trs_sq_mem_ca *trs_sq_mem_get_ca(uint32_t devid)
-{
-    return g_ca[devid];   
-}
+static struct trs_sq_mem_ca *trs_sq_mem_get_ca(uint32_t devid) { return g_ca[devid]; }
 
 static int _trs_sq_mem_cache_alloc(struct trs_sq_mem_ca *ca, uint64_t *va, uint64_t size)
 {
@@ -165,7 +159,8 @@ static void _trs_sq_mem_cache_free(struct trs_sq_mem_ca *ca, uint64_t va, uint64
 
 static bool trs_sq_mem_cache_is_support(uint32_t devid, uint64_t size)
 {
-    return ((devid < TRS_DEV_NUM) && (size <= TRS_SQ_MEM_CACHE_ALLOC_THRES) &&
+    return (
+        (devid < TRS_DEV_NUM) && (size <= TRS_SQ_MEM_CACHE_ALLOC_THRES) &&
         TRS_IS_ALIGNED(size, trs_sq_mem_ca_get_align()));
 }
 
@@ -205,8 +200,7 @@ int trs_sq_mem_cache_free(uint32_t devid, uint64_t va, uint64_t size)
     }
 
     if (!TRS_IS_ALIGNED(va, ca->align) || !TRS_IS_ALIGNED(size, ca->align)) {
-        trs_err("Va & size should be aligned. (va=0x%llx; size=0x%llx; align=0x%llx)\n",
-            va, size, ca->align);
+        trs_err("Va & size should be aligned. (va=0x%llx; size=0x%llx; align=0x%llx)\n", va, size, ca->align);
         return DRV_ERROR_INVALID_VALUE;
     }
 
@@ -227,8 +221,8 @@ int trs_sq_mem_cache_check_exists(uint32_t devid, uint64_t va, uint64_t size)
         return DRV_ERROR_INVALID_VALUE;
     }
 
-    return ((va >= ca->start) && (size <= ca->size) && ((va + size) <= (ca->start + ca->size))) ?
-        DRV_ERROR_NONE : DRV_ERROR_NOT_EXIST;
+    return ((va >= ca->start) && (size <= ca->size) && ((va + size) <= (ca->start + ca->size))) ? DRV_ERROR_NONE :
+                                                                                                  DRV_ERROR_NOT_EXIST;
 }
 
 static int trs_sq_mem_cache_dev_init(uint32_t devid)
@@ -237,17 +231,12 @@ static int trs_sq_mem_cache_dev_init(uint32_t devid)
     return DRV_ERROR_NONE;
 }
 
-static void trs_sq_mem_cache_dev_uninit(uint32_t devid)
-{
-    trs_sq_mem_ca_destroy(devid);
-}
+static void trs_sq_mem_cache_dev_uninit(uint32_t devid) { trs_sq_mem_ca_destroy(devid); }
 
 static struct trs_dev_init_ops trs_sq_mem_cache_dev_ops = {
-    .dev_init = trs_sq_mem_cache_dev_init,
-    .dev_uninit = trs_sq_mem_cache_dev_uninit
-};
+    .dev_init = trs_sq_mem_cache_dev_init, .dev_uninit = trs_sq_mem_cache_dev_uninit};
 
-static void __attribute__ ((constructor)) trs_sq_mem_cache_set_up(void)
+static void __attribute__((constructor)) trs_sq_mem_cache_set_up(void)
 {
     int ret = trs_register_dev_init_ops(&trs_sq_mem_cache_dev_ops);
     if (ret != DRV_ERROR_NONE) {

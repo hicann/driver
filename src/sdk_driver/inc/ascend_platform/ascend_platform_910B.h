@@ -214,4 +214,13 @@ typedef struct soc_chip_ver_reg {
 #define HW_BASE_VERSION_ADDR_PRIMARY    0x1940000
 #define HW_BASE_VERSION_ADDR_SECONDARY  0x1980000
 
+#define CONTROLLER_GUID_GROUP_ADDR 0
+
+/* crack */
+#define DMS_CRACK_SRAM_ADDR 0
+/* mbist */
+#define DMS_MBIST_SRAM_ADDR 0
+/* heartbeat */
+#define IMU_SHAREMEM_HEARTBEAT_ADDR 0
+
 #endif

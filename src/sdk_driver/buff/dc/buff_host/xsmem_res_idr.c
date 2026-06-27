@@ -53,9 +53,7 @@ static int xsmem_idr_id_for_each(int (*fn)(int id, void *p, void *data), void *d
     return ka_base_idr_for_each(&xsmem_idr, fn, data);
 }
 
-struct xsm_id_to_xp xsm_idr_swith = {
-    .alloc = xsmem_idr_alloc_id,
-    .del = xsmem_idr_delete_id,
-    .get = xsmem_idr_get_xp_by_id,
-    .loop = xsmem_idr_id_for_each
-};
+struct xsm_id_to_xp xsm_idr_swith = {.alloc = xsmem_idr_alloc_id,
+                                     .del = xsmem_idr_delete_id,
+                                     .get = xsmem_idr_get_xp_by_id,
+                                     .loop = xsmem_idr_id_for_each};

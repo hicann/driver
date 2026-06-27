@@ -47,9 +47,9 @@ STATIC int __ka_init vmng_stub_init_module(void)
         vmng_err("Register UDA notifier function failed. (ret=%d)\n", ret);
         return ret;
     }
-    
+
     ret = module_feature_auto_init();
-    if(ret != 0) {
+    if (ret != 0) {
         vmng_err("Feature auto init failed. (ret=%d)\n", ret);
         (void)uda_notifier_unregister(MIA_MNG_HOST_NOTIFIER, &type);
         return ret;
@@ -68,7 +68,7 @@ STATIC void __ka_exit vmng_stub_exit_module(void)
 
     uda_davinci_near_real_entity_type_pack(&type);
     ret = uda_notifier_unregister(MIA_MNG_HOST_NOTIFIER, &type);
-    if(ret != 0) {
+    if (ret != 0) {
         vmng_err("Unregister UDA notifier function failed. (ret=%d)\n", ret);
     }
     vmng_info("Exit module finish.\n");

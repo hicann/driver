@@ -11,6 +11,7 @@
  * GNU General Public License for more details.
  */
 
+#include <linux/types.h>
 #ifdef CFG_SOC_PLATFORM_CLOUD
 #include "trs_chan.h"
 #endif
@@ -18,6 +19,7 @@
 #include "devdrv_functional_cqsq.h"
 #include "debug_dma.h"
 #include "securec.h"
+#include "ascend_kernel_hal.h"
 #include "ascend_kernel_hal.h"
 
 #include "ka_task_pub.h"
@@ -41,7 +43,7 @@
 #define DEBUG_DISABLE 0
 #define REQ_ENABLE_ID 0
 #define REQ_DISABLE_ID 1
-#define DEVICE_NUM_MAX 16
+#define DEVICE_NUM_MAX 64
 #define PARTITION_CQ_DST_OFFSET 8
 
 #define CQ_QUEUE_DEPTH 10
@@ -279,6 +281,7 @@ static void set_chan_create_para(struct trs_chan_para *para)
     para->flag |= (0x1 << CHAN_FLAG_ALLOC_SQ_BIT);
     para->flag |= (0x1 << CHAN_FLAG_AUTO_UPDATE_SQ_HEAD_BIT);
     para->flag |= (0x1 << CHAN_FLAG_NOTICE_TS_BIT);
+    para->flag |= (0x1 << CHAN_FLAG_RECV_BLOCK_BIT);
     para->sq_para.sq_depth = DEBUG_SQCQ_DEPTH;
     para->sq_para.sqe_size = DEBUG_SQ_BUF_LEN;
     para->cq_para.cqe_size = DEBUG_SQ_BUF_LEN;
@@ -963,6 +966,7 @@ static const struct pci_device_id g_ts_debug_tbl[] = {
     {KA_PCI_VDEVICE(HUAWEI, 0xd802), 0},
     {KA_PCI_VDEVICE(HUAWEI, 0xd803), 0},
     {KA_PCI_VDEVICE(HUAWEI, 0xd500), 0},
+    {KA_PCI_VDEVICE(HUAWEI, 0xd806), 0},
     {}
 };
 KA_MODULE_DEVICE_TABLE(pci, g_ts_debug_tbl);

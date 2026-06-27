@@ -14,10 +14,14 @@
 #ifndef DVPP_CMDLIST_CONTEXT_H
 #define DVPP_CMDLIST_CONTEXT_H
 
-#include <linux/types.h>
+#include "ka_type.h"
 #include "ka_task_pub.h"
 #include "ka_list_pub.h"
 #include "dvpp_cmdlist_util.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #define MAX_TIME_COST_NODE_LEN (1024)
 
@@ -71,4 +75,7 @@ void add_time_cost_node_to_ctx(time_cost_node* node);
 time_cost_node* get_time_cost_node_from_ctx(uint16_t streamid, uint16_t taskid);
 dvpp_cmdlist_context* get_dvpp_cmdlist_ctx(void);
 
+#ifdef __cplusplus
+}
+#endif
 #endif // #ifndef DVPP_CMDLIST_CONTEXT_H

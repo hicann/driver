@@ -14,18 +14,12 @@ target_sources(drvdsmi_host PRIVATE
     dsmi_product_ext.c
     dsmi_device_info.c
     dsmi_device_pcie_domain.c
-    $<$<STREQUAL:${PRODUCT},ascend310>:${CMAKE_CURRENT_LIST_DIR}/devdrv_alarm.c>
-    $<$<STREQUAL:${PRODUCT},ascend310>:${CMAKE_CURRENT_LIST_DIR}/dsmi_device_share.c>
-    $<$<STREQUAL:${PRODUCT},ascend310p>:${CMAKE_CURRENT_LIST_DIR}/devdrv_alarm.c>
-    $<$<STREQUAL:${PRODUCT},ascend310p>:${CMAKE_CURRENT_LIST_DIR}/dsmi_device_share.c>
-    $<$<STREQUAL:${PRODUCT},ascend310B>:${CMAKE_CURRENT_LIST_DIR}/devdrv_alarm.c>
-    $<$<STREQUAL:${PRODUCT},ascend310B>:${CMAKE_CURRENT_LIST_DIR}/dsmi_device_share.c>
     $<$<STREQUAL:${PRODUCT},ascend910B>:${CMAKE_CURRENT_LIST_DIR}/devdrv_alarm.c>
     $<$<STREQUAL:${PRODUCT},ascend910B>:${CMAKE_CURRENT_LIST_DIR}/dsmi_device_share.c>
-
-    ${DRIVER_CUST_DIR}/network/dsmi/ds_net.c
-    ${DRIVER_CUST_DIR}/network/dsmi/ds_net_ext.c
-    ${DRIVER_CUST_DIR}/network/common/hccn_comm.c
+    # $<$<STREQUAL:${PRODUCT},ascend910B>:${DRIVER_CUST_DIR}/network/dsmi/ds_net.c>
+    # $<$<STREQUAL:${PRODUCT},ascend910B>:${DRIVER_CUST_DIR}/network/dsmi/ds_net_ext.c>
+    # $<$<STREQUAL:${PRODUCT},ascend910B>:${DRIVER_CUST_DIR}/network/hccn/common/hccn_comm.c>
+    $<$<STREQUAL:${PRODUCT},ascend950>:${CMAKE_CURRENT_LIST_DIR}/dsmi_device_share.c>
 )
 
 target_include_directories(drvdsmi_host PRIVATE
@@ -47,11 +41,15 @@ target_include_directories(drvdsmi_host PRIVATE
     $<$<STREQUAL:${PRODUCT},ascend310p>:${DRIVER_USER_DIR}/dms/drv_devmng/ascend910>
     $<$<STREQUAL:${PRODUCT},ascend910>:${DRIVER_USER_DIR}/dms/drv_devmng/ascend910>
     $<$<STREQUAL:${PRODUCT},ascend910B>:${DRIVER_USER_DIR}/dms/drv_devmng/ascend910>
+    $<$<STREQUAL:${PRODUCT},ascend950>:${DRIVER_USER_DIR}/dms/drv_devmng/ascend910>
 
     ${DRIVER_CUST_DIR}/network/dsmi
     ${DRIVER_CUST_DIR}/network/inc
     ${DRIVER_CUST_DIR}/network/common
+    ${DRIVER_CUST_DIR}/network/hccn/common
     ${DRIVER_KERNEL_DIR}/dms/command/ioctl
+    $<$<STREQUAL:${PRODUCT},ascend910B>:${DRIVER_CUST_DIR}/network/inc/ascend910B>
+    $<$<STREQUAL:${PRODUCT},ascend950>:${DRIVER_CUST_DIR}/network/inc/ascend950>
 )
 
 target_compile_definitions(drvdsmi_host PRIVATE
@@ -73,8 +71,8 @@ target_compile_definitions(drvdsmi_host PRIVATE
     $<$<STREQUAL:${PRODUCT},ascend910B>:CFG_SOC_PLATFORM_CLOUD_V2>
     $<$<STREQUAL:${PRODUCT},ascend310p>:CFG_FEATURE_DEVICE_SHARE>
     $<$<STREQUAL:${PRODUCT},ascend310B>:CFG_FEATURE_DEVICE_SHARE>
-    $<$<STREQUAL:${PRODUCT},ascend910B>:CFG_FEATURE_PCIE_HCCS_BANDWIDTH>
-    $<$<STREQUAL:${PRODUCT},ascend910B>:CFG_FEATURE_HBM_MANUFACTURER_ID>
+    $<$<OR:$<STREQUAL:${PRODUCT},ascend910B>,$<STREQUAL:${PRODUCT},ascend950>>:CFG_FEATURE_PCIE_HCCS_BANDWIDTH>
+    $<$<OR:$<STREQUAL:${PRODUCT},ascend910B>,$<STREQUAL:${PRODUCT},ascend950>>:CFG_FEATURE_HBM_MANUFACTURER_ID>
     $<$<STREQUAL:${PRODUCT},ascend910B>:CFG_FEATURE_ROOTKEY_STATUS>
     $<$<STREQUAL:${PRODUCT},ascend910B>:CFG_FEATURE_SERDES_INFO>
     $<$<STREQUAL:${PRODUCT},ascend910B>:CFG_FEATURE_INIT_MCU_BOARD_ID>
@@ -82,4 +80,10 @@ target_compile_definitions(drvdsmi_host PRIVATE
     $<$<STREQUAL:${PRODUCT},ascend910B>:CFG_FEATURE_DEVICE_SHARE>
     $<$<STREQUAL:${PRODUCT},ascend910B>:CFG_FEATURE_AICPU_CUSTOM_CERT>
     $<$<AND:$<STREQUAL:${ASCEND910_93_EX},true>,$<STREQUAL:${PRODUCT},ascend910B>>:CFG_SOC_PLATFORM_CLOUD_V3>
+    $<$<STREQUAL:${PRODUCT},ascend950>:CFG_SOC_PLATFORM_CLOUD_V4>
+    $<$<STREQUAL:${PRODUCT},ascend950>:CFG_FEATURE_URMA_INFO>
+    $<$<STREQUAL:${PRODUCT},ascend950>:CFG_FEATURE_UB_INFO>
+    $<$<AND:$<STREQUAL:${ASCEND910_93_EX},true>,$<STREQUAL:${PRODUCT},ascend910B>>:CFG_ATTEST_EVIDENCE>
+    $<$<STREQUAL:${PRODUCT},ascend950>:CFG_ATTEST_EVIDENCE>
+    $<$<STREQUAL:${PRODUCT},ascend950>:CFG_FEATURE_SERDES_INFO_A5>
 )

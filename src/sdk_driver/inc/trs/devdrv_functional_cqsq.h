@@ -34,10 +34,10 @@
 #define DEVDRV_FUNCTIONAL_DETAILED_CQ_LENGTH 128
 
 #define devdrv_functional_sq_doorbell_index(index) ((index) + DEVDRV_FUNCTIONAL_SQ_FIRST_INDEX)
-#define devdrv_functional_sq_array_index(index) ((index)-DEVDRV_FUNCTIONAL_SQ_FIRST_INDEX)
+#define devdrv_functional_sq_array_index(index) ((index) - DEVDRV_FUNCTIONAL_SQ_FIRST_INDEX)
 
 #define devdrv_functional_cq_doorbell_index(index) ((index) + DEVDRV_FUNCTIONAL_CQ_FIRST_INDEX)
-#define devdrv_functional_cq_array_index(index) ((index)-DEVDRV_FUNCTIONAL_CQ_FIRST_INDEX)
+#define devdrv_functional_cq_array_index(index) ((index) - DEVDRV_FUNCTIONAL_CQ_FIRST_INDEX)
 
 #define FUNCTIONAL_SQ_DFX_SUPPORT 1
 #define SQ_DFX_RECORD_COUNT 10
@@ -56,9 +56,9 @@ struct devdrv_functional_sq_info {
     u32 depth;
     u32 slot_len;
 
-    u8 *addr;   /* va: device map device pa; host map bar pa */
+    u8 *addr; /* va: device map device pa; host map bar pa */
     phys_addr_t bar_addr;
-    phys_addr_t phy_addr;    /* device pa, ts view */
+    phys_addr_t phy_addr; /* device pa, ts view */
     dma_addr_t host_dma_addr;
     void *host_dma_buffer; /* online use, alloc 128 bytes as a buffer for dma */
     u32 head;

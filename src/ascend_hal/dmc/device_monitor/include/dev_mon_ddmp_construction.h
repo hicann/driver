@@ -66,6 +66,7 @@ int ddmp_get_config_aging_test_res(DM_INTF_S *intf, DM_RECV_ST *data, unsigned i
 int ddmp_get_aging_test_config(DM_INTF_S *intf, DM_RECV_ST *data, const unsigned char *buff, unsigned int total_length);
 int ddmp_get_aging_test_res(DM_INTF_S *intf, DM_RECV_ST *data, const unsigned char *buff, unsigned int total_length);
 int ddmp_send_failed_response(DM_INTF_S *intf, DM_RECV_ST *data, int errorcode);
+int ddmp_get_freq_info(DM_INTF_S *intf, DM_RECV_ST *data, unsigned int freq);
 int ddmp_get_chip_info(DM_INTF_S *intf, DM_RECV_ST *data, unsigned int chip_info);
 int ddmp_get_chip_version(DM_INTF_S *intf, DM_RECV_ST *data, unsigned char chip_info);
 int ddmp_get_device_cgroup_info(DM_INTF_S* intf, DM_RECV_ST* data, const void *buff, unsigned int len);

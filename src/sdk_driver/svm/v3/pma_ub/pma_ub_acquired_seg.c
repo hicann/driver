@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2025. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -21,7 +21,7 @@
 #include "svm_slab.h"
 #include "pma_ub_acquired_seg.h"
 
-#define ACQUIRED_SEG_DESTROY_WITH_INVALIDATE  (1U << 0U)
+#define ACQUIRED_SEG_DESTROY_WITH_INVALIDATE (1U << 0U)
 
 struct pma_ub_acquired_seg {
     ka_list_head_t node;
@@ -39,7 +39,8 @@ static struct pma_ub_acquired_seg *_pma_ub_acquired_seg_search(struct pma_ub_acq
     struct pma_ub_acquired_seg *acquired_seg = NULL;
     struct pma_ub_acquired_seg *n = NULL;
 
-    ka_list_for_each_entry_safe(acquired_seg, n, &mng->head, node) {
+    ka_list_for_each_entry_safe(acquired_seg, n, &mng->head, node)
+    {
         if ((acquired_seg->va == va) && (acquired_seg->size == size)) {
             return acquired_seg;
         }
@@ -109,8 +110,8 @@ static struct pma_ub_acquired_seg *pma_ub_acquired_seg_erase_one(struct pma_ub_a
     return acquired_seg;
 }
 
-static struct pma_ub_acquired_seg *pma_ub_acquired_seg_create(u64 va, u64 size,
-    int (*invalidate)(u64 invalidate_tag), u64 invalidate_tag)
+static struct pma_ub_acquired_seg *pma_ub_acquired_seg_create(
+    u64 va, u64 size, int (*invalidate)(u64 invalidate_tag), u64 invalidate_tag)
 {
     struct pma_ub_acquired_seg *acquired_seg = NULL;
 
@@ -137,8 +138,8 @@ static void pma_ub_acquired_seg_destroy(struct pma_ub_acquired_seg *acquired_seg
     svm_kvfree(acquired_seg);
 }
 
-int pma_ub_add_acquired_seg(struct pma_ub_acquired_segs_mng *mng, u64 va, u64 size,
-    int (*invalidate)(u64 invalidate_tag), u64 invalidate_tag)
+int pma_ub_add_acquired_seg(
+    struct pma_ub_acquired_segs_mng *mng, u64 va, u64 size, int (*invalidate)(u64 invalidate_tag), u64 invalidate_tag)
 {
     struct pma_ub_acquired_seg *acquired_seg = NULL;
     int ret;
@@ -215,7 +216,8 @@ void pma_ub_acquired_segs_mng_show(struct pma_ub_acquired_segs_mng *mng, ka_seq_
 
     ka_fs_seq_printf(seq, "    acquired_segs: udevid %u tgid %d num %llu\n", mng->udevid, mng->tgid, mng->num);
 
-    ka_list_for_each_entry_safe(acquired_seg, n, &mng->head, node) {
+    ka_list_for_each_entry_safe(acquired_seg, n, &mng->head, node)
+    {
         if (i == 0) {
             ka_fs_seq_printf(seq, "        %-5s %-17s %-15s\n", "id", "va", "size(Bytes)");
         }
@@ -225,4 +227,3 @@ void pma_ub_acquired_segs_mng_show(struct pma_ub_acquired_segs_mng *mng, ka_seq_
 
     ka_task_up_read(&mng->rw_sem);
 }
-

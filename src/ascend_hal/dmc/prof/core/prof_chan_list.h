@@ -11,12 +11,13 @@
 #define PROF_CHAN_LIST_H
 #include "ascend_hal.h"
 
-drvError_t prof_add_local_channel(uint32_t dev_id, uint32_t chan_id);
-void prof_del_local_channel(uint32_t dev_id, uint32_t chan_id);
+drvError_t prof_add_local_channel(uint32_t dev_id, uint32_t chan_id, bool support_host_sample);
+void prof_del_local_channel(uint32_t dev_id, uint32_t chan_id, bool support_host_sample);
 
 drvError_t prof_update_chan_list(uint32_t dev_id);
 void prof_get_chan_list(uint32_t dev_id, struct channel_list *channels);
 
 drvError_t prof_get_chan_attr(uint32_t dev_id, uint32_t chan_id, uint32_t *mode, uint32_t *remote_pid);
+bool prof_support_host_sample(uint32_t dev_id, uint32_t chan_id);
 
 #endif

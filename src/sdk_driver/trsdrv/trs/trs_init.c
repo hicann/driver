@@ -27,7 +27,7 @@
 #include "trs_sec_eh_agent.h"
 
 struct submodule_ops {
-    int (*init) (void);
+    int (*init)(void);
     void (*uninit)(void);
 };
 
@@ -71,15 +71,15 @@ static int __ka_init init_trs(void)
 {
     int index, ret;
     int table_size = sizeof(g_sub_table) / sizeof(struct submodule_ops);
- 
+
     for (index = 0; index < table_size; index++) {
         ret = g_sub_table[index].init();
-        if  (ret != 0) {
+        if (ret != 0) {
             goto out;
         }
     }
     return 0;
- out:
+out:
     for (; index > 0; index--) {
         g_sub_table[index - 1].uninit();
     }
@@ -90,7 +90,7 @@ static void __ka_exit exit_trs(void)
 {
     int index;
     int table_size = sizeof(g_sub_table) / sizeof(struct submodule_ops);
- 
+
     for (index = table_size; index > 0; index--) {
         g_sub_table[index - 1].uninit();
     }

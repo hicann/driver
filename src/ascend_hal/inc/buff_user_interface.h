@@ -13,5 +13,8 @@
 #define BUFF_GRP_INVALID_NUM (-1)
 
 int buff_get_default_pool_id(void);
-
+int buff_get_svm_private_pool_id(void);
+drvError_t buff_private_grp_create_add_attach(const char *name, GroupCfg *cfg, int pid, GroupShareAttr attr,
+                                              int attach_timeout);
+int drv_buff_init_inner(BuffCfg *cfg, int flag);
 #endif

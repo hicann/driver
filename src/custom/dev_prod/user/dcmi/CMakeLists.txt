@@ -52,14 +52,16 @@ target_compile_options(dcmi_obj PRIVATE
     -Werror
     -fPIC
 )
-target_include_directories(dcmi_obj PUBLIC ${C_SEC_INCLUDE}
-                                PUBLIC ${DRIVER_HAL_INC_DIR}
-                                PUBLIC ${BASE_DIR}/dcmi_inner/inc
-                                PUBLIC ${BASE_DIR}/dcmi_init/inc
-                                PUBLIC ${BASE_DIR}/dcmi_interface/inc
-                                PUBLIC ${DRIVER_CUST_INC_DIR})
+target_include_directories(dcmi_obj PRIVATE
+    ${C_SEC_INCLUDE}
+    ${DRIVER_HAL_INC_DIR}
+    ${BASE_DIR}/dcmi_inner/inc
+    ${BASE_DIR}/dcmi_init/inc
+    ${BASE_DIR}/dcmi_interface/inc
+    ${DRIVER_CUST_INC_DIR}
+)
 
 target_compile_definitions(dcmi_obj PRIVATE DCMI_VERSION=\"${PROJECT_VERSION}\")
 
-install(TARGETS  dcmi
+install(TARGETS dcmi
     LIBRARY DESTINATION ${INSTALL_LIBRARY_DIR}  OPTIONAL)

@@ -10,7 +10,17 @@
 target_sources(devdrv_obj PRIVATE
     devdrv_hccl.c
     devdrv_pcie.c
-    devdrv_manager.c
+    devdrv_manager_ai_core.c
+    devdrv_manager_dev_info_api.c
+    devdrv_manager_fd.c
+    devdrv_manager_bbox.c
+    devdrv_manager_chip.c
+    devdrv_manager_host_pid.c
+    devdrv_manager_lp.c
+    devdrv_manager_resource.c
+    devdrv_manager_system_info.c
+    devdrv_manager_topology.c
+    devdrv_manager_run_info.c
     devdrv_container.c
     devdrv_common.c
     devdrv_vdev.c
@@ -43,6 +53,7 @@ target_include_directories(devdrv_obj PRIVATE
     ${DRIVER_KERNEL_DIR}/inc/ascend_platform
     ${DRIVER_KERNEL_DIR}/dpa/apm/command/ioctl
     ${DRIVER_KERNEL_DIR}/dms/command/ioctl
+    $<$<STREQUAL:${ENABLE_UBE},true>:/usr/include/ub/umdk/urma>
 )
 
 target_link_libraries(devdrv_obj PRIVATE
@@ -51,6 +62,8 @@ target_link_libraries(devdrv_obj PRIVATE
 
 target_compile_options(devdrv_obj PRIVATE
     -fno-common
+    -Wfloat-equal
+    -Wextra
 )
 
 add_subdirectory(devdrv_dsmi)

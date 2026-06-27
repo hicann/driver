@@ -16,8 +16,7 @@
 #include "msg_chan_main.h"
 
 #ifndef CFG_FEATURE_VPBL
-void *hal_kernel_devdrv_dma_alloc_coherent(ka_device_t *dev, size_t size,
-                                           ka_dma_addr_t *dma_addr, ka_gfp_t gfp)
+void *hal_kernel_devdrv_dma_alloc_coherent(ka_device_t *dev, size_t size, ka_dma_addr_t *dma_addr, ka_gfp_t gfp)
 {
     struct devdrv_comm_dev_ops *dev_ops = NULL;
     void *addr = NULL;
@@ -29,7 +28,7 @@ void *hal_kernel_devdrv_dma_alloc_coherent(ka_device_t *dev, size_t size,
     }
 
     if (dev_ops->ops.devdrv_dma_alloc_coherent != NULL) {
-        addr = dev_ops->ops.devdrv_dma_alloc_coherent(dev, size, dma_addr,gfp);
+        addr = dev_ops->ops.devdrv_dma_alloc_coherent(dev, size, dma_addr, gfp);
     }
     devdrv_sub_ops_ref(dev_ops);
 
@@ -37,8 +36,7 @@ void *hal_kernel_devdrv_dma_alloc_coherent(ka_device_t *dev, size_t size,
 }
 KA_EXPORT_SYMBOL(hal_kernel_devdrv_dma_alloc_coherent);
 
-void *hal_kernel_devdrv_dma_zalloc_coherent(ka_device_t *dev, size_t size,
-                                            ka_dma_addr_t *dma_addr, ka_gfp_t gfp)
+void *hal_kernel_devdrv_dma_zalloc_coherent(ka_device_t *dev, size_t size, ka_dma_addr_t *dma_addr, ka_gfp_t gfp)
 {
     struct devdrv_comm_dev_ops *dev_ops = NULL;
     void *addr = NULL;
@@ -50,7 +48,7 @@ void *hal_kernel_devdrv_dma_zalloc_coherent(ka_device_t *dev, size_t size,
     }
 
     if (dev_ops->ops.devdrv_dma_zalloc_coherent != NULL) {
-        addr = dev_ops->ops.devdrv_dma_zalloc_coherent(dev, size, dma_addr,gfp);
+        addr = dev_ops->ops.devdrv_dma_zalloc_coherent(dev, size, dma_addr, gfp);
     }
     devdrv_sub_ops_ref(dev_ops);
 
@@ -77,8 +75,7 @@ void hal_kernel_devdrv_dma_free_coherent(ka_device_t *dev, size_t size, void *ad
 }
 KA_EXPORT_SYMBOL(hal_kernel_devdrv_dma_free_coherent);
 
-ka_dma_addr_t hal_kernel_devdrv_dma_map_single(ka_device_t *dev, void *ptr, size_t size,
-                                               ka_dma_data_direction_t dir)
+ka_dma_addr_t hal_kernel_devdrv_dma_map_single(ka_device_t *dev, void *ptr, size_t size, ka_dma_data_direction_t dir)
 {
     struct devdrv_comm_dev_ops *dev_ops = NULL;
     ka_dma_addr_t dma_addr = (~(ka_dma_addr_t)0);
@@ -98,8 +95,7 @@ ka_dma_addr_t hal_kernel_devdrv_dma_map_single(ka_device_t *dev, void *ptr, size
 }
 KA_EXPORT_SYMBOL(hal_kernel_devdrv_dma_map_single);
 
-void hal_kernel_devdrv_dma_unmap_single(ka_device_t *dev, ka_dma_addr_t addr, size_t size,
-                                        ka_dma_data_direction_t dir)
+void hal_kernel_devdrv_dma_unmap_single(ka_device_t *dev, ka_dma_addr_t addr, size_t size, ka_dma_data_direction_t dir)
 {
     struct devdrv_comm_dev_ops *dev_ops = NULL;
 
@@ -118,8 +114,49 @@ void hal_kernel_devdrv_dma_unmap_single(ka_device_t *dev, ka_dma_addr_t addr, si
 }
 KA_EXPORT_SYMBOL(hal_kernel_devdrv_dma_unmap_single);
 
-ka_dma_addr_t hal_kernel_devdrv_dma_map_page(ka_device_t *dev, ka_page_t *page,
-                                             size_t offset, size_t size, ka_dma_data_direction_t dir)
+ka_dma_addr_t hal_kernel_devdrv_dma_map_page_attrs(ka_device_t *dev, ka_page_t *page, size_t offset, size_t size,
+                                                   ka_dma_data_direction_t dir, u64 attrs)
+{
+    struct devdrv_comm_dev_ops *dev_ops = NULL;
+    ka_dma_addr_t dma_addr = (~(ka_dma_addr_t)0);
+
+    dev_ops = devdrv_add_ops_ref();
+    if (dev_ops == NULL) {
+        devdrv_err("Get dev_ops fail.\n");
+        return dma_addr;
+    }
+
+    if (dev_ops->ops.devdrv_dma_map_page_attrs != NULL) {
+        dma_addr = dev_ops->ops.devdrv_dma_map_page_attrs(dev, page, offset, size, dir, attrs);
+    }
+    devdrv_sub_ops_ref(dev_ops);
+
+    return dma_addr;
+}
+KA_EXPORT_SYMBOL(hal_kernel_devdrv_dma_map_page_attrs);
+
+void hal_kernel_devdrv_dma_unmap_page_attrs(ka_device_t *dev, ka_dma_addr_t addr, size_t size,
+                                            ka_dma_data_direction_t dir, u64 attrs)
+{
+    struct devdrv_comm_dev_ops *dev_ops = NULL;
+
+    dev_ops = devdrv_add_ops_ref();
+    if (dev_ops == NULL) {
+        devdrv_err("Get dev_ops fail.\n");
+        return;
+    }
+
+    if (dev_ops->ops.devdrv_dma_unmap_page_attrs != NULL) {
+        dev_ops->ops.devdrv_dma_unmap_page_attrs(dev, addr, size, dir, attrs);
+    }
+    devdrv_sub_ops_ref(dev_ops);
+
+    return;
+}
+KA_EXPORT_SYMBOL(hal_kernel_devdrv_dma_unmap_page_attrs);
+
+ka_dma_addr_t hal_kernel_devdrv_dma_map_page(ka_device_t *dev, ka_page_t *page, size_t offset, size_t size,
+                                             ka_dma_data_direction_t dir)
 {
     struct devdrv_comm_dev_ops *dev_ops = NULL;
     ka_dma_addr_t dma_addr = (~(ka_dma_addr_t)0);
@@ -139,8 +176,7 @@ ka_dma_addr_t hal_kernel_devdrv_dma_map_page(ka_device_t *dev, ka_page_t *page,
 }
 KA_EXPORT_SYMBOL(hal_kernel_devdrv_dma_map_page);
 
-void hal_kernel_devdrv_dma_unmap_page(ka_device_t *dev, ka_dma_addr_t addr, size_t size,
-                                      ka_dma_data_direction_t dir)
+void hal_kernel_devdrv_dma_unmap_page(ka_device_t *dev, ka_dma_addr_t addr, size_t size, ka_dma_data_direction_t dir)
 {
     struct devdrv_comm_dev_ops *dev_ops = NULL;
 
@@ -159,8 +195,8 @@ void hal_kernel_devdrv_dma_unmap_page(ka_device_t *dev, ka_dma_addr_t addr, size
 }
 KA_EXPORT_SYMBOL(hal_kernel_devdrv_dma_unmap_page);
 
-ka_dma_addr_t devdrv_dma_map_resource(ka_device_t *dev, phys_addr_t phys_addr, size_t size,
-                                      ka_dma_data_direction_t dir, unsigned long attrs)
+ka_dma_addr_t devdrv_dma_map_resource(ka_device_t *dev, phys_addr_t phys_addr, size_t size, ka_dma_data_direction_t dir,
+                                      unsigned long attrs)
 {
     struct devdrv_comm_dev_ops *dev_ops = NULL;
     ka_dma_addr_t dma_addr = (~(ka_dma_addr_t)0);
@@ -180,8 +216,8 @@ ka_dma_addr_t devdrv_dma_map_resource(ka_device_t *dev, phys_addr_t phys_addr, s
 }
 KA_EXPORT_SYMBOL(devdrv_dma_map_resource);
 
-void devdrv_dma_unmap_resource(ka_device_t *dev, ka_dma_addr_t addr, size_t size,
-                               ka_dma_data_direction_t dir, unsigned long attrs)
+void devdrv_dma_unmap_resource(ka_device_t *dev, ka_dma_addr_t addr, size_t size, ka_dma_data_direction_t dir,
+                               unsigned long attrs)
 {
     struct devdrv_comm_dev_ops *dev_ops = NULL;
 
@@ -201,8 +237,8 @@ void devdrv_dma_unmap_resource(ka_device_t *dev, ka_dma_addr_t addr, size_t size
 KA_EXPORT_SYMBOL(devdrv_dma_unmap_resource);
 #endif
 
-int hal_kernel_devdrv_dma_sync_copy_plus(u32 udevid, enum devdrv_dma_data_type type, int instance, u64 src, u64 dst, u32 size,
-                                         enum devdrv_dma_direction direction)
+int hal_kernel_devdrv_dma_sync_copy_plus(u32 udevid, enum devdrv_dma_data_type type, int instance, u64 src, u64 dst,
+                                         u32 size, enum devdrv_dma_direction direction)
 {
     struct devdrv_comm_dev_ops *dev_ops = NULL;
     int ret = -EOPNOTSUPP;
@@ -243,8 +279,9 @@ int hal_kernel_devdrv_dma_sync_copy(u32 udevid, enum devdrv_dma_data_type type, 
 }
 KA_EXPORT_SYMBOL(hal_kernel_devdrv_dma_sync_copy);
 
-int hal_kernel_devdrv_dma_async_copy_plus(u32 udevid, enum devdrv_dma_data_type type, int instance, u64 src, u64 dst, u32 size,
-                                          enum devdrv_dma_direction direction, struct devdrv_asyn_dma_para_info *para_info)
+int hal_kernel_devdrv_dma_async_copy_plus(u32 udevid, enum devdrv_dma_data_type type, int instance, u64 src, u64 dst,
+                                          u32 size, enum devdrv_dma_direction direction,
+                                          struct devdrv_asyn_dma_para_info *para_info)
 {
     struct devdrv_comm_dev_ops *dev_ops = NULL;
     int ret = -EOPNOTSUPP;
@@ -370,8 +407,8 @@ int hal_kernel_devdrv_dma_async_link_copy(u32 udevid, enum devdrv_dma_data_type 
 }
 KA_EXPORT_SYMBOL(hal_kernel_devdrv_dma_async_link_copy);
 
-int hal_kernel_devdrv_dma_sync_link_copy_plus_extend(u32 udevid, enum devdrv_dma_data_type type, int wait_type, int instance,
-                                                     struct devdrv_dma_node *dma_node, u32 node_cnt)
+int hal_kernel_devdrv_dma_sync_link_copy_plus_extend(u32 udevid, enum devdrv_dma_data_type type, int wait_type,
+                                                     int instance, struct devdrv_dma_node *dma_node, u32 node_cnt)
 {
     struct devdrv_comm_dev_ops *dev_ops = NULL;
     int ret = -EOPNOTSUPP;
@@ -452,8 +489,8 @@ int devdrv_dma_get_sq_cq_desc_size(u32 devid, u32 *sq_desc_size, u32 *cq_desc_si
 }
 KA_EXPORT_SYMBOL(devdrv_dma_get_sq_cq_desc_size);
 
-int devdrv_dma_fill_desc_of_sq(u32 udevid, struct devdrv_dma_prepare *dma_prepare,
-                               struct devdrv_dma_node *dma_node, u32 node_cnt, u32 fill_status)
+int devdrv_dma_fill_desc_of_sq(u32 udevid, struct devdrv_dma_prepare *dma_prepare, struct devdrv_dma_node *dma_node,
+                               u32 node_cnt, u32 fill_status)
 {
     struct devdrv_comm_dev_ops *dev_ops = NULL;
     int ret = -EOPNOTSUPP;
@@ -473,8 +510,8 @@ int devdrv_dma_fill_desc_of_sq(u32 udevid, struct devdrv_dma_prepare *dma_prepar
 }
 KA_EXPORT_SYMBOL(devdrv_dma_fill_desc_of_sq);
 
-int devdrv_dma_fill_desc_of_sq_ext(u32 udevid, void *sq_base, struct devdrv_dma_node *dma_node,
-                                   u32 node_cnt, u32 fill_status)
+int devdrv_dma_fill_desc_of_sq_ext(u32 udevid, void *sq_base, struct devdrv_dma_node *dma_node, u32 node_cnt,
+                                   u32 fill_status)
 {
     struct devdrv_comm_dev_ops *dev_ops = NULL;
     int ret = -EOPNOTSUPP;
@@ -495,7 +532,7 @@ int devdrv_dma_fill_desc_of_sq_ext(u32 udevid, void *sq_base, struct devdrv_dma_
 KA_EXPORT_SYMBOL(devdrv_dma_fill_desc_of_sq_ext);
 
 struct devdrv_dma_prepare *devdrv_dma_link_prepare(u32 udevid, enum devdrv_dma_data_type type,
-    struct devdrv_dma_node *dma_node, u32 node_cnt, u32 fill_status)
+                                                   struct devdrv_dma_node *dma_node, u32 node_cnt, u32 fill_status)
 {
     struct devdrv_comm_dev_ops *dev_ops = NULL;
     struct devdrv_dma_prepare *dma_prepare = NULL;

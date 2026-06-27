@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * Copyright (c) 2026 Huawei Technologies Co., Ltd.
  * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -16,12 +16,12 @@
 #include "va_reserve.h"
 #include "va_non_dev_default_allocator.h"
 
-#define VA_NON_DEV_DEFAULT_VA_START         (0x300000000000ULL + (16ULL * SVM_BYTES_PER_TB))
+#define VA_NON_DEV_DEFAULT_VA_START (0x300000000000ULL + (16ULL * SVM_BYTES_PER_TB))
 
-#define VA_NON_DEV_DEFAULT_RESERVE_SIZE     (1ULL * SVM_BYTES_PER_TB)
+#define VA_NON_DEV_DEFAULT_RESERVE_SIZE (1ULL * SVM_BYTES_PER_TB)
 
-#define VA_NON_DEV_DEFAULT_EXPAND_FACTOR    16
-#define VA_NON_DEV_DEFAULT_SHRINK_FACTOR    8
+#define VA_NON_DEV_DEFAULT_EXPAND_FACTOR 128
+#define VA_NON_DEV_DEFAULT_SHRINK_FACTOR 8
 
 static void *g_non_dev_default_mga_inst = NULL;
 
@@ -128,4 +128,3 @@ int va_non_dev_default_free(u64 va, u64 size, u64 align)
 
     return mga_va_free(g_non_dev_default_mga_inst, va, size, align);
 }
-

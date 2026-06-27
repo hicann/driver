@@ -14,7 +14,7 @@
 #ifndef DVPP_TRS_OPS_H
 #define DVPP_TRS_OPS_H
 
-#include <linux/types.h>
+#include "ka_type.h"
 typedef struct {
     uint64_t addr;
     uint64_t size;

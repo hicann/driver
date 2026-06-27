@@ -24,10 +24,7 @@ void devmm_phy_addr_blk_mng_init(struct devmm_phy_addr_blk_mng *mng)
     ka_task_init_rwsem(&mng->rw_sem);
 }
 
-static void _devmm_phy_addr_blk_get(struct devmm_phy_addr_blk *blk)
-{
-    ka_base_kref_get(&blk->ref);
-}
+static void _devmm_phy_addr_blk_get(struct devmm_phy_addr_blk *blk) { ka_base_kref_get(&blk->ref); }
 
 static void devmm_phy_addr_blk_release(ka_kref_t *kref)
 {
@@ -39,31 +36,28 @@ static void devmm_phy_addr_blk_release(ka_kref_t *kref)
     devmm_kvfree_ex(blk);
 }
 
-bool __attribute__((weak)) devmm_support_host_giant_page(void)
-{
-    return false;
-}
+bool __attribute__((weak)) devmm_support_host_giant_page(void) { return false; }
 
 void __attribute__((weak)) devmm_master_free_huge_pages(struct devmm_phy_addr_attr *attr, ka_page_t **pages, u64 pg_num)
-{
-}
+{}
 
 int __attribute__((weak)) devmm_master_alloc_huge_pages(struct devmm_phy_addr_attr *attr, ka_page_t **pages, u64 pg_num)
 {
     return -ENOMEM;
 }
 
-void __attribute__((weak)) devmm_master_free_giant_pages(struct devmm_phy_addr_attr *attr, ka_page_t **pages, u64 pg_num)
-{
-}
+void __attribute__((weak)) devmm_master_free_giant_pages(
+    struct devmm_phy_addr_attr *attr, ka_page_t **pages, u64 pg_num)
+{}
 
-int __attribute__((weak)) devmm_master_alloc_giant_pages(struct devmm_phy_addr_attr *attr, ka_page_t **pages, u64 pg_num)
+int __attribute__((weak)) devmm_master_alloc_giant_pages(
+    struct devmm_phy_addr_attr *attr, ka_page_t **pages, u64 pg_num)
 {
     return -ENOMEM;
 }
 
-static int devmm_phy_addr_blk_alloc_pages(struct devmm_svm_process *svm_proc,
-        struct devmm_phy_addr_attr *attr, ka_page_t **pages, u64 pg_num)
+static int devmm_phy_addr_blk_alloc_pages(
+    struct devmm_svm_process *svm_proc, struct devmm_phy_addr_attr *attr, ka_page_t **pages, u64 pg_num)
 {
     if ((attr->side == DEVMM_SIDE_MASTER) && (attr->pg_type != MEM_NORMAL_PAGE_TYPE)) {
         if (attr->pg_type == MEM_GIANT_PAGE_TYPE) {
@@ -76,8 +70,8 @@ static int devmm_phy_addr_blk_alloc_pages(struct devmm_svm_process *svm_proc,
     }
 }
 
-static void devmm_phy_addr_blk_free_pages(struct devmm_svm_process *svm_proc,
-    struct devmm_phy_addr_attr *attr, ka_page_t **pages, u64 pg_num)
+static void devmm_phy_addr_blk_free_pages(
+    struct devmm_svm_process *svm_proc, struct devmm_phy_addr_attr *attr, ka_page_t **pages, u64 pg_num)
 {
     if ((attr->side == DEVMM_SIDE_MASTER) && (attr->pg_type != MEM_NORMAL_PAGE_TYPE)) {
         if (attr->pg_type == MEM_GIANT_PAGE_TYPE) {
@@ -104,13 +98,11 @@ struct devmm_phy_addr_blk *devmm_phy_addr_blk_get(struct devmm_phy_addr_blk_mng 
     return blk;
 }
 
-void devmm_phy_addr_blk_put(struct devmm_phy_addr_blk *blk)
-{
-    ka_base_kref_put(&blk->ref, devmm_phy_addr_blk_release);
-}
+void devmm_phy_addr_blk_put(struct devmm_phy_addr_blk *blk) { ka_base_kref_put(&blk->ref, devmm_phy_addr_blk_release); }
 
-static void devmm_phy_addr_blk_info_init(struct devmm_phy_addr_blk *blk,
-    struct devmm_phy_addr_attr *attr, u64 pg_num, ka_page_t **pages, struct devmm_dma_blk *dma_blks)
+static void devmm_phy_addr_blk_info_init(
+    struct devmm_phy_addr_blk *blk, struct devmm_phy_addr_attr *attr, u64 pg_num, ka_page_t **pages,
+    struct devmm_dma_blk *dma_blks)
 {
     u64 pg_size = (attr->pg_type == DEVMM_HUGE_PAGE_TYPE) ? KA_HPAGE_SIZE : KA_MM_PAGE_SIZE;
     if (attr->pg_type == DEVMM_GIANT_PAGE_TYPE) {
@@ -140,8 +132,8 @@ static void devmm_blk_target_addr_info_init(struct devmm_phy_addr_blk *blk, u64 
     blk->addr_info.target_addr = target_addr;
 }
 
-struct devmm_phy_addr_blk *devmm_phy_addr_blk_create(struct devmm_phy_addr_blk_mng *mng,
-    struct devmm_phy_addr_attr *attr, u64 pg_num, int *id)
+struct devmm_phy_addr_blk *devmm_phy_addr_blk_create(
+    struct devmm_phy_addr_blk_mng *mng, struct devmm_phy_addr_attr *attr, u64 pg_num, int *id)
 {
     struct devmm_phy_addr_blk *blk = NULL;
     struct devmm_dma_blk *dma_blks = NULL;
@@ -176,8 +168,10 @@ struct devmm_phy_addr_blk *devmm_phy_addr_blk_create(struct devmm_phy_addr_blk_m
     devmm_blk_target_addr_info_init(blk, pg_num, target_addr);
 
     ka_task_down_write(&mng->rw_sem);
-    blk->id = ka_base_idr_alloc_cyclic(&mng->idr, (void *)blk, mng->id_start, mng->id_end, KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
+    blk->id =
+        ka_base_idr_alloc_cyclic(&mng->idr, (void *)blk, mng->id_start, mng->id_end, KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
     *id = blk->id;
+    blk->attr.mem_map_route = MEM_MAP_INBUS;
     ka_task_up_write(&mng->rw_sem);
     if (blk->id < 0) {
         devmm_drv_err("Idr alloc failed. (ret=%d)\n", blk->id);
@@ -206,46 +200,81 @@ void devmm_phy_addr_blk_destroy(struct devmm_phy_addr_blk_mng *mng, struct devmm
     devmm_phy_addr_blk_put(blk);
 }
 
-static void _devmm_phy_addr_blk_uninit(struct devmm_svm_process *svm_proc,	 
- 	      struct devmm_phy_addr_blk *blk, u64 to_free_pg_num, bool *is_finish)	 
-{	 
-    struct devmm_dma_blk_info *dma_blk_info = &blk->dma_blk_info;	 
- 	struct devmm_page_info *pg_info = &blk->pg_info;	 
- 	struct devmm_dma_blk *dma_blks = NULL; 
- 	ka_page_t **pages = NULL; 
- 	u32 devid = blk->attr.devid;	 
- 	 u64 freed_dma_blk_num, freed_pg_num;	 
- 	  
- 	  
- 	/* dma_blk_info->save_num must <= pg_info->saved_num */ 
- 	freed_pg_num = ka_base_min(to_free_pg_num, pg_info->saved_num); 
- 	freed_dma_blk_num = ka_base_min(to_free_pg_num, dma_blk_info->saved_num); 
- 	  
- 	  
- 	pages = &pg_info->pages[pg_info->saved_num - freed_pg_num]; 
- 	dma_blks = &dma_blk_info->dma_blks[dma_blk_info->saved_num - freed_dma_blk_num]; 
- 	  
- 	  
- 	devmm_phy_addr_blk_free_pages(svm_proc, &blk->attr, pages, freed_pg_num); 
- 	pg_info->saved_num -= freed_pg_num; 
- 	  
- 	  
- 	if (blk->attr.side == DEVMM_SIDE_DEVICE_AGENT) {	 
- 	    devmm_dma_unmap_pages(devid, dma_blks, freed_dma_blk_num);	 
- 	    dma_blk_info->saved_num -= freed_dma_blk_num;	 
- 	}	 
+static void _devmm_free_pages_contiguous(
+    struct devmm_svm_process *svm_proc, struct devmm_phy_addr_blk *blk, u64 page_off, u64 freed_pg_num, u64 dma_off,
+    u64 freed_dma_blk_num)
+{
+    struct devmm_dma_blk_info *dma_blk_info = &blk->dma_blk_info;
+    struct devmm_page_info *pg_info = &blk->pg_info;
+    u32 devid = blk->attr.devid;
+    devmm_phy_addr_blk_free_pages(svm_proc, &blk->attr, &pg_info->pages[page_off], freed_pg_num);
 
- 	*is_finish = (pg_info->saved_num == 0) ? true : false;	 
+    if (blk->attr.side == DEVMM_SIDE_DEVICE_AGENT) {
+        devmm_dma_unmap_pages(devid, &dma_blk_info->dma_blks[dma_off], freed_dma_blk_num);
+        dma_blk_info->saved_num -= freed_dma_blk_num;
+    }
+
+    pg_info->saved_num -= freed_pg_num;
+}
+
+static void _devmm_free_pages_sparse(
+    struct devmm_svm_process *svm_proc, struct devmm_phy_addr_blk *blk, u64 page_off, u64 freed_pg_num, u64 dma_off)
+{
+    struct devmm_page_info *pg_info = &blk->pg_info;
+    u32 stamp = (u32)ka_jiffies;
+
+    u64 i = 0;
+    u64 len = 0;
+    while (i < freed_pg_num) {
+        u64 start = i;
+        while (i < freed_pg_num && pg_info->pages[page_off + i])
+            i++;
+        len = i - start;
+
+        if (len > 0) {
+            _devmm_free_pages_contiguous(svm_proc, blk, page_off + start, len, dma_off + start, len);
+        }
+        i++;
+
+        devmm_try_cond_resched(&stamp);
+    }
+}
+
+static void _devmm_phy_addr_blk_uninit(
+    struct devmm_svm_process *svm_proc, struct devmm_phy_addr_blk *blk, struct devmm_blk_pg_range *range,
+    bool *is_finish)
+{
+    struct devmm_dma_blk_info *dma_blk_info = &blk->dma_blk_info;
+    struct devmm_page_info *pg_info = &blk->pg_info;
+    u64 freed_dma_blk_num, freed_pg_num;
+    u64 page_off, dma_off;
+    /* dma_blk_info->save_num must <= pg_info->saved_num */
+    freed_pg_num = ka_base_min(range->pg_num, pg_info->saved_num);
+    freed_dma_blk_num = ka_base_min(range->pg_num, dma_blk_info->saved_num);
+    page_off = (range->page_off == DEVMM_PG_OFF_TAIL) ? (pg_info->saved_num - freed_pg_num) : range->page_off;
+    dma_off = (range->dma_off == DEVMM_PG_OFF_TAIL) ? (dma_blk_info->saved_num - freed_dma_blk_num) : range->dma_off;
+    devmm_drv_info(
+        "freed_pg_num=%llu, freed_dma_blk_num  =%llu, page_off=%llu,dma_off = %llu, pg_info ->saved_num=%llu,pg_info "
+        "->total_num=%llu\n",
+        freed_pg_num, freed_dma_blk_num, page_off, dma_off, pg_info->saved_num, pg_info->total_num);
+    if (range->page_off == DEVMM_PG_OFF_TAIL) {
+        _devmm_free_pages_contiguous(svm_proc, blk, page_off, freed_pg_num, dma_off, freed_dma_blk_num);
+    } else {
+        _devmm_free_pages_sparse(svm_proc, blk, page_off, freed_pg_num, dma_off);
+    }
+
+    *is_finish = (pg_info->saved_num == 0);
 }
 
 /* If not so much to_free_pg_num, return actual freed_pg_num. */
-int devmm_phy_addr_blk_uninit(struct devmm_svm_process *svm_proc,	 
- 	      struct devmm_phy_addr_blk *blk, u64 to_free_pg_num, u32 free_type, bool *is_finish)
+int devmm_phy_addr_blk_uninit(
+    struct devmm_svm_process *svm_proc, struct devmm_phy_addr_blk *blk, struct devmm_blk_pg_range *range, u32 free_type,
+    bool *is_finish)
 {
     ka_task_down_write(&blk->rw_sem);
-    if (ka_base_atomic64_read(&blk->occupied_num) != 0) {
-        devmm_drv_err("Is mapped. (occupied_num=%llu; blk_id=%d)\n",
-            (u64)ka_base_atomic64_read(&blk->occupied_num), blk->id);
+    if (range->dma_off == DEVMM_PG_OFF_TAIL && ka_base_atomic64_read(&blk->occupied_num) != 0) {
+        devmm_drv_err(
+            "Is mapped. (occupied_num=%llu; blk_id=%d)\n", (u64)ka_base_atomic64_read(&blk->occupied_num), blk->id);
         ka_task_up_write(&blk->rw_sem);
         return -EBUSY;
     }
@@ -258,7 +287,7 @@ int devmm_phy_addr_blk_uninit(struct devmm_svm_process *svm_proc,
 
     devmm_drv_debug("Blk uninit. (blk_type=%u; free_type=%u; id=%d)\n", blk->type, free_type, blk->id);
     if ((blk->type == SVM_PYH_ADDR_BLK_NORMAL_TYPE) || (free_type == SVM_PYH_ADDR_BLK_NORMAL_FREE)) {
-        _devmm_phy_addr_blk_uninit(svm_proc, blk, to_free_pg_num, is_finish);
+        _devmm_phy_addr_blk_uninit(svm_proc, blk, range, is_finish);
     } else {
         if ((blk->type == SVM_PYH_ADDR_BLK_EXPORT_TYPE) && (svm_proc != NULL)) {
             devmm_used_page_cnt_sub(&svm_proc->pg_cnt_stats, blk->attr.pg_type, blk->pg_info.pages, blk->pg_num);
@@ -271,30 +300,36 @@ int devmm_phy_addr_blk_uninit(struct devmm_svm_process *svm_proc,
     return 0;
 }
 
-static int _devmm_phy_addr_blk_init(struct devmm_svm_process *svm_proc,	 
- 	      struct devmm_phy_addr_blk *blk, u64 pg_num, bool *is_finish)
+static int _devmm_phy_addr_blk_init(
+    struct devmm_svm_process *svm_proc, struct devmm_phy_addr_blk *blk, struct devmm_blk_pg_range *range,
+    bool *is_finish)
 {
     struct devmm_dma_blk_info *dma_blk_info = &blk->dma_blk_info;
-    
+
     struct devmm_page_info *pg_info = &blk->pg_info;
-    struct devmm_dma_blk *dma_blks = &dma_blk_info->dma_blks[dma_blk_info->saved_num];	 
- 	ka_page_t **pages = &pg_info->pages[pg_info->saved_num];
+    struct devmm_dma_blk *dma_blks = (range->dma_off == DEVMM_PG_OFF_TAIL) ?
+                                         &dma_blk_info->dma_blks[dma_blk_info->saved_num] :
+                                         &dma_blk_info->dma_blks[range->dma_off];
+    ka_page_t **pages =
+        (range->page_off == DEVMM_PG_OFF_TAIL) ? &pg_info->pages[pg_info->saved_num] : &pg_info->pages[range->page_off];
     u32 pg_type = blk->attr.pg_type;
     u32 devid = blk->attr.devid;
+    u64 pg_num = range->pg_num;
     u64 mapped_dma_blk_num;
     int ret;
 
     /* dma_blk_info->saved_num must <= pg_info->saved_num, so just check pg_info->saved_num */
     if (pg_num > (pg_info->total_num - pg_info->saved_num)) {
-        devmm_drv_err("Not enough idle pg space to save. (to_save_num=%llu; idle_num=%llu)\n",
-            pg_num, (pg_info->total_num - pg_info->saved_num));
+        devmm_drv_err(
+            "Not enough idle pg space to save. (to_save_num=%llu; idle_num=%llu)\n", pg_num,
+            (pg_info->total_num - pg_info->saved_num));
         return -ENOSPC;
     }
 
     ret = devmm_phy_addr_blk_alloc_pages(svm_proc, &blk->attr, pages, pg_num);
     if (ret != 0) {
-        devmm_drv_no_err_if((ret == -ENOMEM), "Alloc pages failed. (ret=%d; pg_type=%u; pg_num=%llu)\n",
-            ret, pg_type, pg_num);
+        devmm_drv_no_err_if(
+            (ret == -ENOMEM), "Alloc pages failed. (ret=%d; pg_type=%u; pg_num=%llu)\n", ret, pg_type, pg_num);
         return ret;
     }
 
@@ -317,21 +352,22 @@ static int _devmm_phy_addr_blk_init(struct devmm_svm_process *svm_proc,
     return 0;
 }
 
-int devmm_phy_addr_blk_init(struct devmm_svm_process *svm_proc,	 
- 	      struct devmm_phy_addr_blk *blk, u64 pg_num)
+int devmm_phy_addr_blk_init(
+    struct devmm_svm_process *svm_proc, struct devmm_phy_addr_blk *blk, struct devmm_blk_pg_range *range)
 {
     bool is_finish = false;
     int ret;
 
     ka_task_down_write(&blk->rw_sem);
-    if (blk->init_state != SVM_PHY_ADDR_BLK_IS_INITING) {
+    if (range->page_off == DEVMM_PG_OFF_TAIL && blk->init_state != SVM_PHY_ADDR_BLK_IS_INITING) {
         devmm_drv_err("Err state. (state=%u; blk_id=%d)\n", blk->init_state, blk->id);
         ka_task_up_write(&blk->rw_sem);
         return -EBUSY;
     }
 
-    ret = _devmm_phy_addr_blk_init(svm_proc, blk, pg_num, &is_finish);	 
- 	blk->init_state = ((ret == 0) && is_finish) ? SVM_PHY_ADDR_BLK_IS_INITED : SVM_PHY_ADDR_BLK_IS_INITING;
+    ret = _devmm_phy_addr_blk_init(svm_proc, blk, range, &is_finish);
+    blk->init_state = ((ret == 0) && (range->page_off != DEVMM_PG_OFF_TAIL || is_finish)) ? SVM_PHY_ADDR_BLK_IS_INITED :
+                                                                                            SVM_PHY_ADDR_BLK_IS_INITING;
     ka_task_up_write(&blk->rw_sem);
     return ret;
 }
@@ -342,13 +378,20 @@ void _devmm_phy_addr_blks_destroy(struct devmm_svm_process *svm_proc, struct dev
     u32 stamp = (u32)ka_jiffies;
     bool is_finish;
     int id;
+    struct devmm_blk_pg_range range;
+    bool tail;
 
     ka_task_down_write(&mng->rw_sem);
-    ka_base_idr_for_each_entry(&mng->idr, blk, id) {
+    ka_base_idr_for_each_entry(&mng->idr, blk, id)
+    {
         ka_base_idr_remove(&mng->idr, (unsigned long)id);
         if ((blk->type == SVM_PYH_ADDR_BLK_NORMAL_TYPE) || (blk->type == SVM_PYH_ADDR_BLK_SHARE_TYPE)) {
             /* pg_info determines the release policy. */
-            _devmm_phy_addr_blk_uninit(svm_proc, blk, blk->pg_num, &is_finish);
+            tail = (blk->pg_info.total_num == blk->pg_info.saved_num);
+            range.pg_num = blk->pg_num;
+            range.page_off = tail ? DEVMM_PG_OFF_TAIL : 0;
+            range.dma_off = tail ? DEVMM_PG_OFF_TAIL : 0;
+            _devmm_phy_addr_blk_uninit(svm_proc, blk, &range, &is_finish);
         }
         devmm_phy_addr_blk_put(blk);
         devmm_try_cond_resched(&stamp);
@@ -363,21 +406,49 @@ void devmm_phy_addr_blks_destroy(struct devmm_svm_process *svm_proc)
     _devmm_phy_addr_blks_destroy(svm_proc, mng);
 }
 
+STATIC bool devmm_phy_addr_blk_not_holes(struct devmm_page_info *pg_info, u64 offset, u64 pg_num)
+{
+    u64 i;
+    u64 idx;
+    u32 stamp = (u32)ka_jiffies;
+    for (i = 0; i < pg_num; ++i) {
+        idx = offset + i;
+        if (idx >= pg_info->total_num) {
+            devmm_drv_err(
+                "Not enough pages. Requested offset+pg_num exceeds saved_num "
+                "(offset=%llu; to_pg_num=%llu; save_pg_num=%llu)\n",
+                offset, pg_num, pg_info->saved_num);
+            return false;
+        }
 
+        if (!pg_info->pages[idx]) {
+            devmm_drv_err(
+                "Hollow exists. (offset=%llu; to_pg_num=%llu; save_pg_num=%llu)\n", offset, pg_num, pg_info->saved_num);
+            return false;
+        }
+
+        devmm_try_cond_resched(&stamp);
+    }
+
+    return true;
+}
 
 ka_page_t **devmm_phy_addr_blk_get_pages(struct devmm_phy_addr_blk *blk, u64 offset, u64 pg_num)
 {
     struct devmm_page_info *pg_info = &blk->pg_info;
 
     if (offset >= pg_info->saved_num) {
-        devmm_drv_err("Not so much pages. (offset=%llu; to_pg_num=%llu; save_pg_num=%llu)\n",
-            offset, pg_num, pg_info->saved_num);
+        if (devmm_phy_addr_blk_not_holes(pg_info, offset, pg_num)) {
+            return &pg_info->pages[offset];
+        }
+        devmm_drv_err(
+            "Not so much pages. (offset=%llu; to_pg_num=%llu; save_pg_num=%llu)\n", offset, pg_num, pg_info->saved_num);
         return NULL;
     }
 
     if (pg_num > (pg_info->saved_num - offset)) {
-        devmm_drv_err("Not so much pages. (offset=%llu; to_pg_num=%llu; save_pg_num=%llu)\n",
-            offset, pg_num, pg_info->saved_num);
+        devmm_drv_err(
+            "Not so much pages. (offset=%llu; to_pg_num=%llu; save_pg_num=%llu)\n", offset, pg_num, pg_info->saved_num);
         return NULL;
     }
 
@@ -389,14 +460,16 @@ u64 *devmm_phy_addr_blk_get_target_addr(struct devmm_phy_addr_blk *blk, u64 offs
     struct devmm_target_addr_info *addr_info = &blk->addr_info;
 
     if (offset >= addr_info->saved_num) {
-        devmm_drv_err("Not so much pages. (offset=%llu; to_pg_num=%llu; save_pg_num=%llu)\n",
-            offset, pg_num, addr_info->saved_num);
+        devmm_drv_err(
+            "Not so much pages. (offset=%llu; to_pg_num=%llu; save_pg_num=%llu)\n", offset, pg_num,
+            addr_info->saved_num);
         return NULL;
     }
 
     if (pg_num > (addr_info->saved_num - offset)) {
-        devmm_drv_err("Not so much pages. (offset=%llu; to_pg_num=%llu; save_pg_num=%llu)\n",
-            offset, pg_num, addr_info->saved_num);
+        devmm_drv_err(
+            "Not so much pages. (offset=%llu; to_pg_num=%llu; save_pg_num=%llu)\n", offset, pg_num,
+            addr_info->saved_num);
         return NULL;
     }
 
@@ -417,8 +490,4 @@ int devmm_phy_addr_blk_occupy_inc(struct devmm_phy_addr_blk *blk)
     return 0;
 }
 
-void devmm_phy_addr_blk_occupy_dec(struct devmm_phy_addr_blk *blk)
-{
-    ka_base_atomic64_dec(&blk->occupied_num);
-}
-
+void devmm_phy_addr_blk_occupy_dec(struct devmm_phy_addr_blk *blk) { ka_base_atomic64_dec(&blk->occupied_num); }

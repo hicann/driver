@@ -24,6 +24,7 @@
 #define UBDRV_MSG_MAGIC 0x5a6b
 #define UBDRV_NON_TRANS_CLIENT_ENABLE 1
 #define UBDRV_NON_TRANS_CLIENT_DISABLE 0
+#define UBVDRV_NON_TRANS_MSG_DEFAULT_DESC_SIZE 0x1000
 
 typedef union {
     /* Define the struct bits */

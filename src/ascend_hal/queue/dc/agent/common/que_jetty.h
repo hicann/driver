@@ -11,11 +11,10 @@
 #define QUE_JETTY_H
 
 #include "urma_api.h"
+#include "comm_user_interface.h"
 #include "queue_h2d_user_ub_msg.h"
 
-#define QUE_DATA_RW_JETTY_POOL_DEPTH   8 /* Enque jetty number for each process */
-#define QUE_JFS_HIGH_PRIORITY   10
-#define QUE_JFS_MEDIUM_PRIORITY   3
+#define QUE_DATA_RW_JETTY_POOL_DEPTH 8 /* Enque jetty number for each process */
 
 struct que_jfr_pool_info {
     struct que_jfr *qjfr;

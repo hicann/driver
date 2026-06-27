@@ -12,6 +12,5 @@ target_sources(dms_obj PRIVATE
     dms_ub_info.c
 )
 target_include_directories(dms_obj PRIVATE
-    # ${TOP_DIR}/ubengine/ssapi/kernelspace/urma/code/include
-    # ${TOP_DIR}/ubengine/ssapi/kernelspace/urma/code/lib/urma/include
+    $<$<STREQUAL:${ENABLE_UBE},true>:/usr/include/ub/umdk/urma>
 )

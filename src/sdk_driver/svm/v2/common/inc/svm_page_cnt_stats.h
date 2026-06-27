@@ -13,7 +13,7 @@
 
 #ifndef SVM_PAGE_CNT_STATS_H
 #define SVM_PAGE_CNT_STATS_H
-#include <linux/types.h>
+#include "ka_type.h"
 
 #include "ka_common_pub.h"
 #include "ka_base_pub.h"

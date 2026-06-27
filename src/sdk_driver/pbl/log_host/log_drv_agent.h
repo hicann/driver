@@ -16,14 +16,14 @@
 #include "log_drv_agent_alloc_interface.h"
 #include "dmc_kernel_interface.h"
 
-#define LOG_LEVEL_OFFSET      2U
-#define DATATIME_MAXLEN       50U
-#define TWENTY_CENTURY        1900
-#define JANUARY               1U
-#define KILO                  1000U
-#define LOG_RINGBUF_SIZE      0x1400000  // 20M
-#define LOG_PRINT_LEN         0x400     // 1024 Bytes
-#define MODULE_HOST_LOG       "ascend_logdrv"
+#define LOG_LEVEL_OFFSET 2U
+#define DATATIME_MAXLEN 50U
+#define TWENTY_CENTURY 1900
+#define JANUARY 1U
+#define KILO 1000U
+#define LOG_RINGBUF_SIZE 0x1400000 // 20M
+#define LOG_PRINT_LEN 0x400        // 1024 Bytes
+#define MODULE_HOST_LOG "ascend_logdrv"
 
 #define slog_err_printk(level, module, fmt, ...) \
     (void)printk(level "[ascend] [ERROR] [%s] [%s %d] " fmt, module, __func__, __LINE__, ##__VA_ARGS__)
@@ -34,13 +34,15 @@
 #define slog_info(module, fmt...) slog_printk(KA_KERN_INFO, module, fmt)
 
 #ifndef LOG_UNIT_TEST
-#define slog_drv_err(fmt, ...)   \
-    slog_err(MODULE_HOST_LOG, "<%s:%d,%d> " fmt, ka_task_get_current()->comm, ka_task_get_current()->tgid, ka_task_get_current()->pid, ##__VA_ARGS__)
-#define slog_drv_info(fmt, ...)  \
-    slog_info(MODULE_HOST_LOG, "<%s:%d,%d> " fmt, ka_task_get_current()->comm, ka_task_get_current()->tgid, ka_task_get_current()->pid, ##__VA_ARGS__)
+#define slog_drv_err(fmt, ...)                                                                             \
+    slog_err(MODULE_HOST_LOG, "<%s:%d,%d> " fmt, ka_task_get_current()->comm, ka_task_get_current()->tgid, \
+             ka_task_get_current()->pid, ##__VA_ARGS__)
+#define slog_drv_info(fmt, ...)                                                                             \
+    slog_info(MODULE_HOST_LOG, "<%s:%d,%d> " fmt, ka_task_get_current()->comm, ka_task_get_current()->tgid, \
+              ka_task_get_current()->pid, ##__VA_ARGS__)
 #else
-#define slog_drv_err(fmt, ...)   printf(fmt, ##__VA_ARGS__)
-#define slog_drv_info(fmt, ...)  printf(fmt, ##__VA_ARGS__)
+#define slog_drv_err(fmt, ...) printf(fmt, ##__VA_ARGS__)
+#define slog_drv_info(fmt, ...) printf(fmt, ##__VA_ARGS__)
 #endif
 
 #ifdef LOG_UNIT_TEST
@@ -54,7 +56,7 @@ typedef struct {
     u32 point;
     u32 size;
     ka_task_spinlock_t logbuf_lock;
-    char printk_buf[LOG_PRINT_LEN];  /* temporary log_buf */
+    char printk_buf[LOG_PRINT_LEN]; /* temporary log_buf */
 } log_ring_buf_t;
 
 int log_get_ringbuffer(char *buff, u32 buf_len, u32 *out_len);

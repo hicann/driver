@@ -13,12 +13,12 @@
 #include "user_log.h"
 #include <arpa/inet.h>
 #include <unistd.h>
-#include "dms_devdrv_info_comm.h"
+#include "dms_user_interface.h"
 #include "ascend_hal.h"
-#include "ascend_inpackage_hal.h"
 #include "hccn_comm.h"
-#include "hccn_tool.h"
-#include "dsmi_device_info.h"
+#include "tool.h"
+
+int dsmi_get_mainboard_id(unsigned int device_id, unsigned int *mainboard_id);
 
 int dsmi_inet_ntop_ipv4_address(const unsigned int *address)
 {
@@ -96,7 +96,7 @@ int dsmi_set_net_detect_ip_address(int logic_id, struct ipv_addr *ip_address)
     return trans_data.result;
 }
 
-int dsmi_get_net_detect_ip_address(int logic_id, int port_id __attribute__((unused)), struct ipv_addr *ip_address)
+int dsmi_get_net_detect_ip_address(int logic_id, int port_id, struct ipv_addr *ip_address)
 {
     int ret;
     struct ds_trans_data trans_data = {0};
@@ -296,28 +296,28 @@ int dsmi_lldp_get_local_info(int logic_id)
     struct ds_trans_data trans_data = {0};
     char lldp_info[MAX_CMD_PAYLOAD_LEN] = {0};
     unsigned int size;
- 
+
     if ((logic_id > DS_MAX_LOGIC_ID) || (logic_id < 0)) {
         roce_err("Logic id is invalid. (logic_id=%d)", logic_id);
         return -EINVAL;
     }
- 
+
     size = sizeof(lldp_info);
     DSMI_SET_TRANS_DATA(trans_data, DS_GET_NET_LLDP_LOCAL_INFO, NULL, 0, lldp_info, &size);
- 
+
     ret = dsmi_network_transmission_channel(logic_id, &trans_data);
     if (ret) {
         roce_err("Dsmi get lldp local info fail. (ret=%d, logic_id=%d)", ret, logic_id);
         return ret;
     }
- 
+
     if (trans_data.result != 0) {
         roce_err("Dsmi get lldp local info. (result=%d, logic_id=%d)", trans_data.result, logic_id);
     } else {
         lldp_info[MAX_CMD_PAYLOAD_LEN - 1] = '\0';
         DSMI_PRINT_INFO("%s", lldp_info);
     }
- 
+
     return trans_data.result;
 }
 
@@ -326,7 +326,7 @@ int dsmi_set_lldp_port_id(int logic_id, int port_id_type)
     int ret;
     struct ds_trans_data trans_data = {0};
     unsigned int size;
- 
+
     if ((logic_id > DS_MAX_LOGIC_ID) || (logic_id < 0)) {
         roce_err("Logic id is invalid. (logic_id=%d)", logic_id);
         return -EINVAL;
@@ -340,23 +340,23 @@ int dsmi_set_lldp_port_id(int logic_id, int port_id_type)
         roce_err("Check usr identify failed. (ret=%d; logic_id=%d)", ret, logic_id);
         return ret;
     }
- 
+
     roce_info("dsmi set lldp port id config info. (logic id=%d; port id cfg=%d)",
               logic_id, port_id_type);
- 
+
     size = 0;
     DSMI_SET_TRANS_DATA(trans_data, DS_SET_LLDP_PORT_TYPE, (char*)&port_id_type, sizeof(port_id_type), NULL, &size);
- 
+
     ret = dsmi_network_transmission_channel(logic_id, &trans_data);
     if (ret) {
         roce_err("dsmi set lldp port id fail. (ret=%d; logic_id=%d)", ret, logic_id);
         return ret;
     }
- 
+
     if (trans_data.result != 0) {
         roce_err("dsmi set netdev down. (result=%d; logic_id=%d)", trans_data.result, logic_id);
     }
- 
+
     return trans_data.result;
 }
 
@@ -635,7 +635,7 @@ int dsmi_set_dscp_map(int logic_id, unsigned int port_id, unsigned char dscp_val
         roce_err("Logic id is invalid. (logic_id=%d)", logic_id);
         return -EINVAL;
     }
-    if ((port_id) > MAX_PORT_ID) {
+    if ((port_id) < 0 ||  (port_id) > MAX_PORT_ID) {
         roce_err("port id:%d is invalid! expect [0 - 7]", port_id);
         return (-EINVAL);
     }
@@ -680,7 +680,7 @@ int dsmi_get_dscp_map(int logic_id, unsigned int port_id, unsigned char dscp_val
         roce_err("Logic id is invalid. (logic_id=%d)", logic_id);
         return -EINVAL;
     }
-    if ((port_id) > MAX_PORT_ID) {
+    if ((port_id) < 0 ||  (port_id) > MAX_PORT_ID) {
         roce_err("port id:%d is invalid! expect [0 - 7]", port_id);
         return (-EINVAL);
     }
@@ -713,7 +713,7 @@ int dsmi_set_port_shaping(int logic_id, unsigned int port_id, int bw_limit)
     unsigned int size;
     int ret;
 
-    if ((logic_id > DS_MAX_LOGIC_ID) || (logic_id < 0) || (port_id > MAX_PORT_ID)) {
+    if ((logic_id > DS_MAX_LOGIC_ID) || (logic_id < 0) || (port_id > MAX_PORT_ID) || (port_id < 0)) {
         roce_err("Logic id or port id is invalid. (logic_id:%d; port_id:%d)", logic_id, port_id);
         return -EINVAL;
     }
@@ -2154,37 +2154,32 @@ int dsmi_set_dcqcn_info(int logic_id, struct ds_dcqcn_info *info)
     return trans_data.result;
 }
 
-int dsmi_get_bandwidth(int logic_id, int port, struct bandwidth_t *bandwidth_info) 
-{ 
-    int ret; 
-    struct ds_trans_data trans_data = {0}; 
-    unsigned int size; 
+int dsmi_get_bandwidth(int logic_id, int port, struct bandwidth_t *bandwidth_info)
+{
+    int ret;
+    struct ds_trans_data trans_data = {0};
+    unsigned int size;
 
+    if ((logic_id > DS_MAX_LOGIC_ID) || (logic_id < 0) || (port > MAX_PORT_ID) || (port < 0)) {
+        roce_err("Logic id or port id is invalid. (logic_id:%d; port_id:%d)", logic_id, port);
+        return -EINVAL;
+    }
+    DSMI_CHECK_PTR_VALID_RETURN_VAL(bandwidth_info, -EINVAL);
 
-    if ((logic_id > DS_MAX_LOGIC_ID) || (logic_id < 0) || (port > MAX_PORT_ID) || (port < 0)) { 
-        roce_err("Logic id or port id is invalid. (logic_id:%d; port_id:%d)", logic_id, port); 
-        return -EINVAL; 
-    } 
-    DSMI_CHECK_PTR_VALID_RETURN_VAL(bandwidth_info, -EINVAL); 
+    size = sizeof(struct bandwidth_t);
+    DSMI_SET_TRANS_DATA(trans_data, DS_GET_BANDWIDTH, (char *)bandwidth_info, size, (char *)bandwidth_info, &size);
 
+    ret = dsmi_network_transmission_channel(logic_id, &trans_data);
+    if (ret) {
+        roce_err("dsmi get bandwidth fail ret[%d] logic_id[%d] port[%d]", ret, logic_id, port);
+        return ret;
+    }
 
-    size = sizeof(struct bandwidth_t); 
-    DSMI_SET_TRANS_DATA(trans_data, DS_GET_BANDWIDTH, (char *)bandwidth_info, size, (char *)bandwidth_info, &size); 
+    if (trans_data.result != 0) {
+        roce_err("dsmi get bandwidth fail result[%d] logic_id[%d] port[%d]", trans_data.result, logic_id, port);
+    }
 
-
-    ret = dsmi_network_transmission_channel(logic_id, &trans_data); 
-    if (ret) { 
-        roce_err("dsmi get bandwidth fail ret[%d] logic_id[%d] port[%d]", ret, logic_id, port); 
-        return ret; 
-    } 
-
-
-    if (trans_data.result != 0) { 
-        roce_err("dsmi get bandwidth fail result[%d] logic_id[%d] port[%d]", trans_data.result, logic_id, port); 
-    } 
-
-
-    return trans_data.result; 
+    return trans_data.result;
 }
 
 int dsmi_get_link_cnt(int logic_id, int port_id, unsigned int *link_cnt)

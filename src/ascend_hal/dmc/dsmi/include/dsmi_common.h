@@ -372,6 +372,58 @@ typedef enum {
 #define WARN_COST_TIME 500 /* warn time between DM_COMMAND_BIGIN to DM_COMMAND_END 500 ms */
 #endif
 
+struct dsmi_udis_ecc_count_info {
+    DSMI_ECC_STATICS_RESULT ecc_result;
+    unsigned int is_vaild;
+};
+struct ecc_double_data_info{
+    unsigned long int physical_addr;
+    unsigned char resv[4];  /* 4 is resv length */
+    unsigned short rank;
+    unsigned short module_id;
+    unsigned char type;
+    unsigned char module;
+    unsigned short bank;
+    unsigned short row;
+    unsigned short column;
+    int timer_stamp;
+};
+struct ecc_single_data_info{
+    unsigned int hbmc_id;
+    unsigned int single_bit_count;
+    unsigned int single_bit_low_addr;
+    unsigned int single_bit_high_addr;
+    unsigned int last_appear_time_stamp;
+};
+#pragma pack(1)
+struct ecc_common_data {
+    unsigned long long physical_addr;
+    unsigned int stack_pc_id;
+    unsigned int reg_addr_h;
+    unsigned int reg_addr_l;
+    unsigned int ecc_count;
+    int timestamp;
+};
+#pragma pack()
+#define SINGLE_ECC_INFO_BLOCK_NUMS               8
+#define SINGLE_ECC_INFO_BLOCK_SIZE               8
+#define DOUBLE_ECC_INFO_BLOCK_NUMS               16
+#define DOUBLE_ECC_INFO_BLOCK_SIZE               4
+#define DOUBLE_ECC_TIME_INFO_BLOCK_NUMS          2
+#define DOUBLE_ECC_TIME_INFO_BLOCK_SIZE          32
+#define HBM_ECC_RECORD_MAX_NUMS                  64
+struct udis_multi_ecc_time_data {
+    unsigned int multi_record_count;
+    unsigned int multi_ecc_times[HBM_ECC_RECORD_MAX_NUMS];
+};
+#if defined CFG_FEATURE_HBM_FLASH || defined CFG_FEATURE_DDR_FLASH
+#define HIGH_ADDR_SID_BITS_COUNT        4
+#define LOW_ADDR_ROW_BITS_OFFSET        8
+#else
+#define HIGH_ADDR_COLUMN_BITS_COUNT     14
+#define LOW_ADDR_RANK_BITS_OFFSET       4
+#endif
+
 #define DM_COMMAND_BIGIN(cmd_name, device_index, input_len, out_len)                              \
     DSMI_DMP_COMMAND_ST *dm_dmp = NULL;                                                           \
     DSMI_CMD_CODE *dm_request = NULL;                                                             \
@@ -527,7 +579,8 @@ int split_by_char(const char *src, char *path, unsigned int path_len_max,
 
 int local_copy_file(int device_id, const char *src_file, const char *dst_file);
 int local_copy_file_to_mem(int device_id, const char *src_file, char *dest_addr, long length);
-int find_file_name(int device_id, const char *path_name, char *dst_name);
+/* DLLEXPORT is for custom compilation */
+DLLEXPORT int find_file_name(int device_id, const char *path_name, char *dst_name);
 
 int get_pcie_mode(void);
 int dsmi_mutex_p(key_t sem_tag, int *sem_id, unsigned int timeout);
@@ -538,8 +591,9 @@ int user_prop_check(void);
 
 int drv_get_phy_mach_flag(int device_id);
 
-int dsmi_config_enable(int device_id, CONFIG_ITEM config_item, DSMI_DEVICE_TYPE device_type, int enable_flag);
-int dsmi_get_enable(int device_id, CONFIG_ITEM config_item, DSMI_DEVICE_TYPE device_type, int *enable_flag);
+/* DLLEXPORT is for testcase compilation */
+DLLEXPORT int dsmi_config_enable(int device_id, CONFIG_ITEM config_item, DSMI_DEVICE_TYPE device_type, int enable_flag);
+DLLEXPORT int dsmi_get_enable(int device_id, CONFIG_ITEM config_item, DSMI_DEVICE_TYPE device_type, int *enable_flag);
 int check_upgrade_component_type_and_state(int device_id, unsigned char *upgrade_schedule,
     unsigned char *upgrade_status, DSMI_COMPONENT_TYPE component_type);
 void dsmi_cmd_req_free(const void *item);
@@ -561,8 +615,6 @@ int dsmi_cmd_set_device_info_method(unsigned int dev_id, DSMI_MAIN_CMD main_cmd,
     const void *buf, unsigned int buf_size);
 int dsmi_get_muti_device_info(unsigned int device_id, DSMI_MAIN_CMD main_cmd, unsigned int sub_cmd,
     void *buf, unsigned int *size);
-int dsmi_udis_get_cpu_rate(int dev_id, int device_type, unsigned int *result_data);
-
 int dsmi_udis_get_hbm_isolated_pages_info(int dev_id, unsigned char module_type,
     struct dsmi_ecc_pages_stru *pdevice_ecc_pages_statistics);
 int dsmi_cmd_get_sec_info(unsigned int device_id, DSMI_MAIN_CMD main_cmd, unsigned int sub_cmd, 
@@ -575,4 +627,7 @@ drvError_t dsmi_cmd_set_custom_sign_cert(
     unsigned int device_id, DSMI_MAIN_CMD main_cmd, unsigned int sub_cmd, const void *buf, unsigned int size);
 int dsmi_cmd_get_sign_cert(unsigned int device_id, DSMI_MAIN_CMD main_cmd, unsigned int sub_cmd,
     void *buf, unsigned int *size);
+int dsmi_udis_get_multi_ecc_info(int dev_id, struct ecc_common_data *dsmi_ecc_common_data_s);
+int dsmi_udis_get_single_ecc_info(int dev_id, struct ecc_common_data *dsmi_ecc_common_data_s);
+int dsmi_udis_multi_ecc_time_info(int dev_id, struct udis_multi_ecc_time_data *multi_ecc_time_data);
 #endif

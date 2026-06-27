@@ -37,8 +37,7 @@ int trs_stars_func_event_id_check_and_reset(struct trs_id_inst *inst, u32 id)
 
     status = trs_stars_get_event_tbl_flag(inst, id);
     if (status != 0) { /* 0: id status is idle */
-        trs_warn("Id status abnormal. (devid=%u; tsid=%u; id=%u; status=%u)\n",
-            inst->devid, inst->tsid, id, status);
+        trs_warn("Id status abnormal. (devid=%u; tsid=%u; id=%u; status=%u)\n", inst->devid, inst->tsid, id, status);
         return trs_stars_func_event_id_reset(inst, id);
     }
 
@@ -47,8 +46,7 @@ int trs_stars_func_event_id_check_and_reset(struct trs_id_inst *inst, u32 id)
 
 int trs_stars_func_notify_id_record(struct trs_id_inst *inst, u32 id)
 {
-    if ((trs_stars_get_notify_tbl_flag(inst, id) != 1) &&
-        (trs_stars_get_notify_tbl_flag(inst, id) != KA_INT_MAX)) {
+    if ((trs_stars_get_notify_tbl_flag(inst, id) != 1) && (trs_stars_get_notify_tbl_flag(inst, id) != KA_INT_MAX)) {
         trs_stars_set_notify_tbl_flag(inst, id, 1);
         trs_debug("Notify record success. (id=%u)\n", id);
         return 0;

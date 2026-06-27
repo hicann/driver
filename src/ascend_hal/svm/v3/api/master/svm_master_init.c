@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * Copyright (c) 2026 Huawei Technologies Co., Ltd.
  * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -18,7 +18,9 @@
 #include "svm_register.h"
 #include "svm_register_pcie_th.h"
 #include "svm_prefetch.h"
+#include "svm_criu.h"
 #include "svm_vmm.h"
+#include "madvise.h"
 #include "malloc_mng.h"
 #include "svm_dbi.h"
 #include "va_allocator.h"
@@ -52,6 +54,7 @@ static int svm_device_open_locked(u32 devid)
 
 static void svm_device_res_recycle(u32 devid)
 {
+    svm_madvise_recycle(devid);
     svm_register_recycle(devid);
     svm_register_pcie_th_recycle(devid);
     svm_prefetch_recycle(devid);
@@ -134,10 +137,7 @@ static int svm_master_init_locked(void)
     return DRV_ERROR_NONE;
 }
 
-static void svm_master_uninit_locked(void)
-{
-    (void)svm_device_close_locked(svm_get_host_devid());
-}
+static void svm_master_uninit_locked(void) { (void)svm_device_close_locked(svm_get_host_devid()); }
 
 int svm_master_init(void)
 {
@@ -180,15 +180,9 @@ int svm_dev_open(uint32_t devid, int devfd)
     return svm_device_open(devid);
 }
 
-int svm_dev_close(uint32_t devid)
-{
-    return svm_device_close(devid);
-}
+int svm_dev_close(uint32_t devid) { return svm_device_close(devid); }
 
-static bool devmm_agent_open_close_flag_is_valid(uint32_t flag)
-{
-    return (flag <= SVM_AGENT_DEVICE);
-}
+static bool devmm_agent_open_close_flag_is_valid(uint32_t flag) { return (flag <= SVM_AGENT_DEVICE); }
 
 int drvMemDeviceOpen(uint32_t devid, int devfd)
 {
@@ -215,6 +209,8 @@ drvError_t halMemAgentOpen(uint32_t devid, uint32_t flag)
 {
     int ret;
 
+    svm_debug("MemAgentOpen enter. (devid=%u; flag=0x%x)\n", devid, flag);
+
     if (devmm_agent_open_close_flag_is_valid(flag) == false) {
         return DRV_ERROR_NOT_SUPPORT;
     }
@@ -231,6 +227,8 @@ drvError_t halMemAgentOpen(uint32_t devid, uint32_t flag)
     }
 
     ret = svm_dev_open(devid, 0);
+    svm_debug("MemAgentOpen exit. (ret=%d; devid=%u; flag=0x%x)\n", ret, devid, flag);
+
     return (drvError_t)((ret == DRV_ERROR_REPEATED_USERD) ? DRV_ERROR_NONE : ret);
 }
 
@@ -238,16 +236,22 @@ drvError_t halMemAgentClose(uint32_t devid, uint32_t flag)
 {
     int ret;
 
+    svm_debug("MemAgentClose enter. (devid=%u; flag=0x%x)\n", devid, flag);
+
     if (devmm_agent_open_close_flag_is_valid(flag) == false) {
         return DRV_ERROR_NOT_SUPPORT;
     }
 
     ret = svm_dev_close(devid);
     if (ret != DRV_ERROR_NONE) {
+        svm_debug("MemAgentClose exit. (ret=%d; devid=%u; flag=0x%x)\n", ret, devid, flag);
         return (drvError_t)((ret == DRV_ERROR_REPEATED_USERD) ? DRV_ERROR_NONE : ret);
     }
 
-    return halDrvEventThreadUninit(devid);
+    ret = halDrvEventThreadUninit(devid);
+    svm_debug("MemAgentClose exit. (ret=%d; devid=%u; flag=0x%x)\n", ret, devid, flag);
+
+    return ret;
 }
 
 drvError_t drvMemDeviceOpenInner(uint32_t devid, halDevOpenIn *in, halDevOpenOut *out)
@@ -265,26 +269,127 @@ drvError_t drvMemDeviceCloseInner(uint32_t devid, halDevCloseIn *in)
     return halMemAgentClose(devid, SVM_AGENT_DEVICE);
 }
 
-drvError_t drvMemDeviceCloseUserRes(uint32_t devid, halDevCloseIn *in)
+static int dev_reset_status[SVM_MAX_DEV_NUM] = {0};
+static int svm_proc_res_backup(void)
 {
-    SVM_UNUSED(devid);
-    SVM_UNUSED(in);
+    u32 devid;
+    int ret = 0;
 
-    return DRV_ERROR_NOT_SUPPORT;
+    for (devid = 0; devid < SVM_MAX_DEV_NUM; devid++) {
+        if (dev_status[devid] != 0) {
+            ret = svm_criu_backup(devid);
+            if (ret != 0) {
+                return ret;
+            }
+        }
+        dev_reset_status[devid] = 0;
+    }
+
+    return 0;
+}
+
+static int svm_close_user_dev_res(u32 devid)
+{
+    if (dev_reset_status[devid] == 1) {
+        return 0;
+    }
+
+    if (dev_status[devid] != 0) {
+        int ret = svm_criu_reset(devid);
+        if (ret != 0) {
+            svm_err("Failed to reset device. (ret=%d; devid=%u)\n", ret, devid);
+            return ret;
+        }
+
+        dev_status[devid] = 0;
+        if (devid == svm_get_host_devid()) {
+            g_master_init_flag = 0;
+        }
+    }
+
+    dev_reset_status[devid] = 1;
+    return 0;
+}
+
+static int svm_close_user_res(void)
+{
+    u32 host_devid = svm_get_host_devid();
+    u32 devid;
+
+    for (devid = 0; devid < SVM_MAX_DEV_NUM; devid++) {
+        if (devid != host_devid) {
+            int ret = svm_close_user_dev_res(devid);
+            if (ret != 0) {
+                return ret;
+            }
+        }
+    }
+
+    return svm_close_user_dev_res(host_devid);
+}
+
+static int svm_proc_res_restore(void)
+{
+    u32 host_devid = svm_get_host_devid();
+    u32 i;
+
+    int ret;
+
+    for (i = 0; i < SVM_MAX_DEV_NUM; i++) {
+        u32 devid = (host_devid + i) % SVM_MAX_DEV_NUM;
+        if (dev_status[devid] != 0) {
+            ret = svm_criu_restore(devid);
+            if (ret != 0) {
+                return ret;
+            }
+        }
+    }
+
+    return 0;
 }
 
 drvError_t drvMemProcResBackup(halProcResBackupInfo *info)
 {
+    int ret;
+
     SVM_UNUSED(info);
 
-    return DRV_ERROR_NOT_SUPPORT;
+    svm_occupy_pipeline();
+    ret = svm_proc_res_backup();
+    svm_release_pipeline();
+
+    return (drvError_t)ret;
+}
+
+drvError_t drvMemDeviceCloseUserRes(uint32_t devid, halDevCloseIn *in)
+{
+    int ret;
+
+    SVM_UNUSED(in);
+
+    if (devid >= SVM_MAX_DEV_NUM) {
+        svm_err("Invalid devid. (devid=%u)\n", devid);
+        return DRV_ERROR_INVALID_VALUE;
+    }
+
+    svm_occupy_pipeline();
+    ret = svm_close_user_res();
+    svm_release_pipeline();
+
+    return (drvError_t)ret;
 }
 
 drvError_t drvMemProcResRestore(halProcResRestoreInfo *info)
 {
+    int ret;
+
     SVM_UNUSED(info);
 
-    return DRV_ERROR_NOT_SUPPORT;
+    svm_occupy_pipeline();
+    ret = svm_proc_res_restore();
+    svm_release_pipeline();
+
+    return (drvError_t)ret;
 }
 
 /* to-do: adapt later */

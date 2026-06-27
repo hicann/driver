@@ -14,7 +14,9 @@
 #ifndef _DMA_ADAPT_H_
 #define _DMA_ADAPT_H_
 
-#include <asm/io.h>
+#include "ka_memory_pub.h"
+#include "comm_kernel_interface.h"
+#include "devdrv_feature.h"
 
 #define DEVDRV_EACH_DMA_IRQ_NUM 2
 
@@ -51,6 +53,16 @@ enum devdrv_dma_opcode {
 #define DEVDRV_DMA_DES_FLOW_ID_LOC_L_MASK  0x1F
 #define DEVDRV_DMA_DES_FLOW_ID_LOC_H_SHIFT 13
 #define DEVDRV_DMA_DES_FLOW_ID_LOC_H_MASK  0x7
+
+#define DMA_QUEUE_SQ_TAIL 0xc
+#define DMA_QUEUE_CQ_HEAD 0x1c
+#define DMA_QUEUE_CQ_TAIL 0x3c
+#define DMA_QUEUE_SQ_READ_ERR_PTR 0x68
+#define DMA_QUEUE_INT_MASK 0x44
+#define DMA_QUEUE_CQ_HEAD_VALID_BIT 0xFFFF
+#define DMA_QUEUE_CQ_TAIL_VALID_BIT 0xFFFF
+#define DMA_QUEUE_SQ_HEAD_VALID_BIT 0xFFFF0000
+#define DMA_QUEUE_SQ_HEAD_OFFSET 16
 
 struct devdrv_dma_sq_node {
     u32 opcode : 4;
@@ -108,10 +120,6 @@ struct devdrv_dma_cq_node {
     u32 status : 15;
 };
 
-struct devdrv_dma_channel;
-struct devdrv_dma_dev;
-
-void devdrv_dma_chan_ptr_show(struct devdrv_dma_channel *dma_chan, int wait_status);
 u32 devdrv_get_sq_err_ptr(const void __ka_mm_iomem *io_base);
 
 void devdrv_set_dma_sq_tail(void __ka_mm_iomem *io_base, u32 val);
@@ -120,15 +128,14 @@ u32 devdrv_get_dma_cq_head(void __ka_mm_iomem *io_base);
 u32 devdrv_get_dma_cq_tail(void __ka_mm_iomem *io_base);
 
 void devdrv_dma_set_sq_addr_info(struct devdrv_dma_sq_node *sq_desc, u64 src_addr, u64 dst_addr, u32 length);
-void devdrv_dma_set_sq_attr(struct devdrv_dma_sq_node *sq_desc, u32 opcode, u32 attr,
-    struct devdrv_dma_dev *dma_dev, u32 wd_barrier, u32 rd_barrier);
+void devdrv_dma_set_sq_attr(struct devdrv_dma_sq_node *sq_desc, struct devdrv_dma_sq_node sq_desc_info);
 void devdrv_dma_set_sq_irq(struct devdrv_dma_sq_node *sq_desc, u32 rdie, u32 ldie, u32 msi);
 void devdrv_dma_set_passid(struct devdrv_dma_sq_node *sq_desc, u32 loc_passid, int direction,
                            int pava_flag, int connect_type);
 u32 devdrv_dma_get_cq_sqhd(struct devdrv_dma_cq_node *cq_desc);
 u32 devdrv_dma_get_cq_status(struct devdrv_dma_cq_node *cq_desc);
-void devdrv_set_pf_dma_queue_pause(struct devdrv_dma_dev *dma_dev, bool pause_flag);
-void devdrv_dma_set_interrupt_mask(struct devdrv_dma_channel *dma_chan);
-void devdrv_dma_set_interrupt_unmask(struct devdrv_dma_channel *dma_chan);
+void devdrv_set_pf_dma_queue_pause(void __ka_mm_iomem *dma_chan_base, bool pause_flag);
+void devdrv_dma_set_interrupt_mask(void __ka_mm_iomem *io_base);
+void devdrv_dma_set_interrupt_unmask(void __ka_mm_iomem *io_base);
 
 #endif

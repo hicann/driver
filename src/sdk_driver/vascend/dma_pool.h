@@ -19,7 +19,7 @@
 /* VDAVINCI_PAGES_OF_SCHEDULE = 1G
  * CONFIG_PREEMPT is not set and the time of
  * dealing pin/map pages MEM is less than watchdog_thresh(10s) */
-#define VDAVINCI_PAGES_OF_SCHEDULE          (((unsigned long)1 * (1 << 30)) / PAGE_SIZE)
+#define VDAVINCI_PAGES_OF_SCHEDULE          (((unsigned long)1 * (1 << 30)) / KA_MM_PAGE_SIZE)
 #define VDAVINCI_PIN_PAGES_OF_SCHEDULE      (VDAVINCI_PAGES_OF_SCHEDULE * 4)
 #define VDAVINCI_MAP_PAGES_OF_SCHEDULE      (VDAVINCI_PAGES_OF_SCHEDULE * 16)
 
@@ -30,7 +30,7 @@
 struct vdavinci_iova_info {
     /* sg table */
     unsigned long gfn;
-    struct sg_table **dma_sgt;
+    ka_sg_table_t **dma_sgt;
     /* dma array */
     unsigned long *gfn_array;
     unsigned long *dma_addr;
@@ -44,17 +44,17 @@ void hw_vdavinci_dma_pool_uninit(struct hw_vdavinci *vdavinci);
 int hw_vdavinci_dma_pool_init(struct hw_vdavinci *vdavinci);
 void hw_vdavinci_unplug_ram(struct hw_vdavinci *vdavinci,
                             unsigned long start_gfn, unsigned long size);
-void hw_vdavinci_put_iova(struct sg_table *dma_sgt);
+void hw_vdavinci_put_iova(ka_sg_table_t *dma_sgt);
 int hw_vdavinci_get_iova(struct hw_vdavinci *vdavinci,
                          unsigned long gfn, unsigned long size,
-                         struct sg_table **dma_sgt);
+                         ka_sg_table_t **dma_sgt);
 int hw_vdavinci_get_iova_batch(struct hw_vdavinci *vdavinci,
                                unsigned long *gfn, unsigned long *dma_addr,
                                unsigned long count);
 int hw_vdavinci_get_iova_sg(struct hw_vdavinci *vdavinci,
                             struct vm_dom_info *vm_dom,
                             unsigned long gfn, unsigned long size,
-                            struct sg_table **dma_sgt);
+                            ka_sg_table_t **dma_sgt);
 int hw_vdavinci_get_iova_array(struct hw_vdavinci *vdavinci,
                                struct vm_dom_info *vm_dom,
                                unsigned long *gfn,
@@ -63,7 +63,7 @@ int hw_vdavinci_get_iova_array(struct hw_vdavinci *vdavinci,
 int vf_get_iova_sg(struct hw_vdavinci *vdavinci,
                    struct vm_dom_info *vm_dom,
                    unsigned long gfn, unsigned long size,
-                   struct sg_table **dma_sgt);
+                   ka_sg_table_t **dma_sgt);
 int vf_get_iova_array(struct hw_vdavinci *vdavinci,
                       struct vm_dom_info *vm_dom,
                       unsigned long *gfn,
@@ -75,5 +75,10 @@ bool hw_vdavinci_scheduled(struct hw_vdavinci *vdavinci,
                            unsigned long current_pages,
                            unsigned long max_pages,
                            unsigned int timeout,
-                           struct page *page);
+                           ka_page_t *page);
+bool is_vm_pfn_valid(ka_device_t *dev,
+                     unsigned long pfn, unsigned long size);
+struct ram_range_info *get_ram_range_by_gfn(struct vm_dom_info *vm_dom,
+                                            unsigned long gfn,
+                                            unsigned long size);
 #endif

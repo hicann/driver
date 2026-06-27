@@ -34,25 +34,26 @@
 STATIC struct hdc_hotreset_task_info g_hdc_hotreset_task_info[HDCDRV_SUPPORT_MAX_DEV] = {{0}};
 
 static const ka_pci_device_id_t hdcdrv_tbl[] = {
-    { KA_PCI_VDEVICE(HUAWEI, 0xd100U), 0 },
-    { KA_PCI_VDEVICE(HUAWEI, 0xd105U), 0 },
-    { KA_PCI_VDEVICE(HUAWEI, PCI_DEVICE_CLOUD), 0 },
-    { KA_PCI_VDEVICE(HUAWEI, 0xd801U), 0 },
-    { KA_PCI_VDEVICE(HUAWEI, 0xd500U), 0 },
-    { KA_PCI_VDEVICE(HUAWEI, 0xd501U), 0 },
-    { KA_PCI_VDEVICE(HUAWEI, 0xd802U), 0 },
-    { KA_PCI_VDEVICE(HUAWEI, 0xd803U), 0 },
-    { KA_PCI_VDEVICE(HUAWEI, 0xd804U), 0 },
-    { KA_PCI_VDEVICE(HUAWEI, 0xd805U), 0 },
-    { KA_PCI_VDEVICE(HUAWEI, 0xd806U), 0 },
-    { KA_PCI_VDEVICE(HUAWEI, 0xd807U), 0 },
-    { DEVDRV_DIVERSITY_PCIE_VENDOR_ID, 0xd500, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0 },
-    { 0x20C6, 0xd500, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0 },
-    { 0x203F, 0xd500, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0 },
-    { 0x20C6, 0xd802, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0 },
-    { 0x203F, 0xd802, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0 },
-    { 0x20E9, 0xd802, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0 },
-    { 0x20E9, 0xd500, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0 },
+    {KA_PCI_VDEVICE(HUAWEI, 0xd100U), 0},
+    {KA_PCI_VDEVICE(HUAWEI, 0xd105U), 0},
+    {KA_PCI_VDEVICE(HUAWEI, PCI_DEVICE_CLOUD), 0},
+    {KA_PCI_VDEVICE(HUAWEI, 0xd801U), 0},
+    {KA_PCI_VDEVICE(HUAWEI, 0xd500U), 0},
+    {KA_PCI_VDEVICE(HUAWEI, 0xd501U), 0},
+    {KA_PCI_VDEVICE(HUAWEI, 0xd802U), 0},
+    {KA_PCI_VDEVICE(HUAWEI, 0xd803U), 0},
+    {KA_PCI_VDEVICE(HUAWEI, 0xd804U), 0},
+    {KA_PCI_VDEVICE(HUAWEI, 0xd805U), 0},
+    {KA_PCI_VDEVICE(HUAWEI, 0xd806U), 0},
+    {KA_PCI_VDEVICE(HUAWEI, 0xd807U), 0},
+    {KA_PCI_VDEVICE(HUAWEI, 0xd808U), 0},
+    {DEVDRV_DIVERSITY_PCIE_VENDOR_ID, 0xd500, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0},
+    {0x20C6, 0xd500, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0},
+    {0x203F, 0xd500, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0},
+    {0x20C6, 0xd802, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0},
+    {0x203F, 0xd802, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0},
+    {0x20E9, 0xd802, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0},
+    {0x20E9, 0xd500, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0},
     {}};
 KA_MODULE_DEVICE_TABLE(pci, hdcdrv_tbl);
 
@@ -79,8 +80,8 @@ int hdcdrv_get_link_status(struct devdrv_pcie_link_info_para *link_info)
 
     ret = devdrv_get_pcie_link_info((u32)dev_id, link_info);
     if (ret != 0) {
-        hdcdrv_err("when query link status, get pcie status fail.(ret=%d, link_status=%d)\n",
-            ret, link_info->link_status);
+        hdcdrv_err("when query link status, get pcie status fail.(ret=%d, link_status=%d)\n", ret,
+                   link_info->link_status);
         return ret;
     }
     if (link_info->link_status != HDCDRV_LINK_NORMAL) {
@@ -176,7 +177,7 @@ STATIC void hdcdrv_sq_msg_callback(void *data, u32 trans_id, u32 status)
     struct hdcdrv_msg_chan *msg_chan = (struct hdcdrv_msg_chan *)data;
 #ifdef CFG_FEATURE_PFSTAT
     hdcdrv_pfstat_update_latency(msg_chan->chan_id, TX_SQ_DMA_LATENCY,
-        msg_chan->tx[trans_id].latency_info.sq_dma_timestamp);
+                                 msg_chan->tx[trans_id].latency_info.sq_dma_timestamp);
 #endif
     if (status != 0) {
         hdcdrv_err("hdc trans send sq status fail. (dev_id=%u, status=%u)\n", msg_chan->chan_id, status);
@@ -193,7 +194,7 @@ STATIC void hdcdrv_cq_msg_callback(void *data, u32 trans_id, u32 status)
     struct hdcdrv_msg_chan *msg_chan = (struct hdcdrv_msg_chan *)data;
 #ifdef CFG_FEATURE_PFSTAT
     hdcdrv_pfstat_update_latency(msg_chan->chan_id, TX_CQ_DMA_LATENCY,
-        msg_chan->rx[trans_id].latency_info.cq_dma_timestamp);
+                                 msg_chan->rx[trans_id].latency_info.cq_dma_timestamp);
 #endif
     if (status != 0) {
         hdcdrv_err("hdc trans send cq status fail. (dev_id=%u, status=%u)\n", msg_chan->chan_id, status);
@@ -206,7 +207,7 @@ STATIC void hdcdrv_cq_msg_callback(void *data, u32 trans_id, u32 status)
 }
 
 int hdcdrv_copy_sq_desc_to_remote(struct hdcdrv_msg_chan *msg_dev, const struct hdcdrv_sq_desc *sq_desc,
-    enum devdrv_dma_data_type data_type)
+                                  enum devdrv_dma_data_type data_type)
 {
     struct devdrv_asyn_dma_para_info para = {0};
     void *msg_chan = msg_dev->chan;
@@ -233,7 +234,7 @@ int hdcdrv_copy_sq_desc_to_remote(struct hdcdrv_msg_chan *msg_dev, const struct 
 }
 #else
 int hdcdrv_copy_sq_desc_to_remote(struct hdcdrv_msg_chan *msg_dev, const struct hdcdrv_sq_desc *sq_desc,
-    enum devdrv_dma_data_type data_type)
+                                  enum devdrv_dma_data_type data_type)
 {
     void *msg_chan = msg_dev->chan;
 
@@ -276,7 +277,7 @@ struct hdcdrv_cq_desc *hdcdrv_get_w_cq_desc(void *msg_chan)
 }
 
 void hdcdrv_copy_cq_desc_to_remote(struct hdcdrv_msg_chan *msg_dev, const struct hdcdrv_cq_desc *cq_desc,
-    enum devdrv_dma_data_type data_type)
+                                   enum devdrv_dma_data_type data_type)
 {
 #ifdef CFG_FEATURE_SEC_COMM_L3
     struct devdrv_asyn_dma_para_info para = {0};
@@ -355,8 +356,8 @@ long hdcdrv_non_trans_ctrl_msg_send(u32 devid, void *data, u32 in_data_len, u32 
 }
 EXPORT_SYMBOL_UNRELEASE(hdcdrv_non_trans_ctrl_msg_send);
 
-STATIC int hdcdrv_non_trans_ctrl_msg_recv(void *msg_chan, void *data, u32 in_data_len,
-    u32 out_data_len, u32 *real_out_len)
+STATIC int hdcdrv_non_trans_ctrl_msg_recv(void *msg_chan, void *data, u32 in_data_len, u32 out_data_len,
+                                          u32 *real_out_len)
 {
     u32 devid = (u32)devdrv_get_msg_chan_devid(msg_chan);
 
@@ -477,21 +478,20 @@ STATIC void hdcdrv_normal_chan_num_adapter(u32 dev_id, u32 msg_chan_cnt)
     if (msg_chan_cnt <= HDCDRV_SUPPORT_MAX_SERVICE) {
         normal_chan_cnt[dev_id] = msg_chan_cnt / DEVDRV_TRANS_CHAN_TYPE;
     }
-    hdcdrv_info("Record vfio msg_chan_cnt. (dev_id=%d; msg_chan=%d; normal_chan_cnt=%u)\n",
-        dev_id, msg_chan_cnt, normal_chan_cnt[dev_id]);
+    hdcdrv_info("Record vfio msg_chan_cnt. (dev_id=%d; msg_chan=%d; normal_chan_cnt=%u)\n", dev_id, msg_chan_cnt,
+                normal_chan_cnt[dev_id]);
 #else
     /* Alloc suitable num for same fast and normal channel num */
     if ((msg_chan_cnt / DEVDRV_TRANS_CHAN_TYPE) <= normal_chan_cnt[dev_id]) {
         normal_chan_cnt[dev_id] = msg_chan_cnt / DEVDRV_TRANS_CHAN_TYPE;
     }
 
-    if ((normal_chan_cnt[dev_id] < HDCDRV_SERVICE_TYPE_APPLY_MAX) &&
-        (msg_chan_cnt > HDCDRV_SERVICE_TYPE_APPLY_MAX)) {
+    if ((normal_chan_cnt[dev_id] < HDCDRV_SERVICE_TYPE_APPLY_MAX) && (msg_chan_cnt > HDCDRV_SERVICE_TYPE_APPLY_MAX)) {
         normal_chan_cnt[dev_id] = HDCDRV_SERVICE_TYPE_APPLY_MAX;
     }
 
-    hdcdrv_info("Record msg_chan_cnt. (dev_id=%d; msg_chan=%d; normal_chan_cnt=%u)\n",
-        dev_id, msg_chan_cnt, normal_chan_cnt[dev_id]);
+    hdcdrv_info("Record msg_chan_cnt. (dev_id=%d; msg_chan=%d; normal_chan_cnt=%u)\n", dev_id, msg_chan_cnt,
+                normal_chan_cnt[dev_id]);
 #endif
 }
 
@@ -526,8 +526,8 @@ int hdcdrv_init_msg_chan(u32 dev_id)
 #endif
     ret = hdcdrv_alloc_trans_queue(dev_id, (u32)msg_chan_cnt, msgChanTmp, &alloc_num);
     if (ret != HDCDRV_OK) {
-        hdcdrv_err("Alloc_trans_queue failed. (dev_id=%d; alloc_msg_chan_cnt=%d; alloc_num=%d)\n", dev_id,
-            msg_chan_cnt, alloc_num);
+        hdcdrv_err("Alloc_trans_queue failed. (dev_id=%d; alloc_msg_chan_cnt=%d; alloc_num=%d)\n", dev_id, msg_chan_cnt,
+                   alloc_num);
         goto alloc_err;
     }
 
@@ -603,8 +603,7 @@ STATIC bool hdcdrv_is_in_phy_machine(u32 dev_id)
 #if defined(CFG_FEATURE_VFIO) || defined(CFG_FEATURE_SRIOV)
     split_mode = vmng_get_device_split_mode(dev_id);
 #endif
-    if ((hdc_dev->host_pm_or_vm_flag == DEVDRV_HOST_PHY_MACH_FLAG) &&
-        (split_mode == VMNG_NORMAL_NONE_SPLIT_MODE)) {
+    if ((hdc_dev->host_pm_or_vm_flag == DEVDRV_HOST_PHY_MACH_FLAG) && (split_mode == VMNG_NORMAL_NONE_SPLIT_MODE)) {
         is_in = true;
     }
 
@@ -681,16 +680,16 @@ void hdcdrv_alloc_session_chan(int dev_id, int fid, int service_type, u32 *norma
 #ifdef CFG_FEATURE_VFIO
     if (fid == HDCDRV_DEFAULT_PM_FID) {
         *normal_chan_id = (u32)service_type % hdc_ctrl->devices[dev_id].normal_chan_num;
-        *fast_chan_id = hdcdrv_alloc_fast_msg_chan(dev_id, service_type,
-            hdc_ctrl->devices[dev_id].normal_chan_num, hdc_ctrl->devices[dev_id].msg_chan_cnt);
+        *fast_chan_id = hdcdrv_alloc_fast_msg_chan(dev_id, service_type, hdc_ctrl->devices[dev_id].normal_chan_num,
+                                                   hdc_ctrl->devices[dev_id].msg_chan_cnt);
     } else {
         *fast_chan_id = vdhch_alloc_fast_msg_chan((u32)dev_id, (u32)fid, service_type);
         *normal_chan_id = vdhch_alloc_normal_msg_chan((u32)dev_id, (u32)fid, service_type);
     }
 #else
     *normal_chan_id = (u32)service_type % hdc_ctrl->devices[dev_id].normal_chan_num;
-    *fast_chan_id = hdcdrv_alloc_fast_msg_chan(dev_id, service_type,
-        hdc_ctrl->devices[dev_id].normal_chan_num, (u32)hdc_ctrl->devices[dev_id].msg_chan_cnt);
+    *fast_chan_id = hdcdrv_alloc_fast_msg_chan(dev_id, service_type, hdc_ctrl->devices[dev_id].normal_chan_num,
+                                               (u32)hdc_ctrl->devices[dev_id].msg_chan_cnt);
 #endif
 }
 
@@ -700,13 +699,13 @@ u64 hdcdrv_rebuild_pid(u32 devid, u32 fid, u64 pid)
     u64 vm_id;
 
 #ifdef CFG_FEATURE_VFIO
-        if (fid == HDCDRV_DEFAULT_PM_FID) {
-            vm_id = HDCDRV_DEFAULT_VM_ID;
-        } else {
-            vm_id = (u64)vmngh_ctrl_get_vm_id(devid, fid) + 1;
-        }
-#else
+    if (fid == HDCDRV_DEFAULT_PM_FID) {
         vm_id = HDCDRV_DEFAULT_VM_ID;
+    } else {
+        vm_id = (u64)vmngh_ctrl_get_vm_id(devid, fid) + 1;
+    }
+#else
+    vm_id = HDCDRV_DEFAULT_VM_ID;
 #endif
 
     pid_new = (vm_id << HDCDRV_VMID_OFFSET) | (pid & HDCDRV_RAW_PID_MASK);

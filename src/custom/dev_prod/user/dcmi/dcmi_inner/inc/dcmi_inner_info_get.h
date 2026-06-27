@@ -95,22 +95,31 @@ extern "C"{
 #define DIGITAL_NUM_TO_PER      100
 
 #define DCMI_DEVELOP_BOARD_ID_I2C_ADDR    0x21
-#define DCMI_310B_BOARD_ID_I2C_ADDR       0x20 // I2C地址是0x40，7bit的地址模式，地址是0x20
+#define DCMI_1911_BOARD_ID_I2C_ADDR       0x20 // I2C地址是0x40，7bit的地址模式，地址是0x20
 
 #define DCMI_USAGE_MAX          100
 #define DCMI_AICORE_NUM_MAX         32
 
 #define DCMI_SEC_SUB_CMD_CUST_SIGN_FLAG 2
 
+#define DCMI_UB_INFO_SUB_CMD_URMA_DEV_NAME 3
+
+#define URMA_MAX_NAME 64
+
 /* 单bit错误隔离页数量 */
 #define SINGLE_BIT_ERROR 0
+
+#define DCMI_QOS_MAIN_INDEX_OFFSET	8U
+#define DCMI_QOS_SUB_INDEX_OFFSET	16U
+#define DCMI_QOS_THIRD_INDEX_OFFSET 24U
+#define	DCMI_QOS_INDEX_LEN	        8U
 
 enum dcmi_tops_type {
     IS_310B_8TOPS_TYPE = 0,
     IS_310B_20TOPS_TYPE,
 };
 
-struct dcmi_hbm_info_910_95 {
+struct dcmi_hbm_info_950 {
     unsigned int total_size;
     unsigned int used_size;
     char reserve[56];                      /* the size of dcmi_memory_info is 64 */
@@ -171,6 +180,21 @@ struct dcmi_product_computing_template_for_910B {
     int bin_type_910b;
     unsigned int template_num;
     struct dcmi_computing_template *split_template;
+};
+
+typedef struct dcmi_urma_eid_list_req {
+    unsigned int urma_dev_index;
+    dcmi_urma_eid_info_t urma_dev_eid_list[DCMI_URMA_EID_MAX_COUNT];
+    unsigned int eid_count;
+} dcmi_urma_eid_list_req_t;
+
+struct dcmi_multi_utilization_rate {
+    unsigned char aic_avg_util;
+    unsigned char aiv_avg_util;
+    unsigned char aicore_util;
+    unsigned char aic_max_util;
+    unsigned char aiv_max_util;
+    unsigned char npu_util;
 };
 
 extern struct dcmi_board_details_info g_board_details;
@@ -285,6 +309,8 @@ int dcmi_clear_npu_ecc_statistics_info(int card_id, int device_id);
 
 int dcmi_get_npu_device_frequency(int card_id, int device_id, int device_type, unsigned int *frequency);
 
+int dcmi_get_npu_hbm_info_for_950(int card_id, int device_id, int device_logic_id, struct dcmi_hbm_info *hbm_info);
+
 int dcmi_get_npu_hbm_info(int card_id, int device_id, struct dcmi_hbm_info *hbm_info);
 
 int dcmi_get_npu_device_memory_info_v2(int card_id, int device_id, struct dcmi_memory_info *memory_info);
@@ -292,6 +318,8 @@ int dcmi_get_npu_device_memory_info_v2(int card_id, int device_id, struct dcmi_m
 int dcmi_get_npu_device_memory_info_v3(int card_id, int device_id, struct dcmi_get_memory_info_stru *memory_info);
 
 int dcmi_get_npu_device_utilization_rate(int card_id, int device_id, int input_type, unsigned int *utilization_rate);
+
+int dcmi_get_npu_device_utilization_rate_v2(int card_id, int device_id, struct dcmi_multi_utilization_info *util_info);
 
 int dcmi_get_npu_soc_sensor_info(
     int card_id, int device_id, enum dcmi_manager_sensor_id sensor_id, union dcmi_sensor_info *sensor_info);
@@ -311,6 +339,9 @@ int dcmi_get_npu_device_cgroup_info(int card_id, int device_id, struct dcmi_cgro
 int dcmi_get_npu_device_llc_perf_para(int card_id, int device_id, struct dcmi_llc_perf *perf_para);
 
 int dcmi_get_npu_device_info(
+    int card_id, int device_id, enum dcmi_main_cmd main_cmd, unsigned int sub_cmd, void *buf, unsigned int *size);
+
+int dcmiv2_get_npu_device_info(
     int card_id, int device_id, enum dcmi_main_cmd main_cmd, unsigned int sub_cmd, void *buf, unsigned int *size);
 
 int dcmi_get_npu_device_mac_count(int card_id, int device_id, int *count);
@@ -349,6 +380,9 @@ int dcmi_get_npu_device_list(int *device_list, int list_size, int *device_count)
 int dcmi_get_npu_fault_event(int card_id, int device_id, int timeout, struct dcmi_event_filter filter,
     struct dcmi_event *event);
 
+int dcmi_get_npu_current_fault_event(int card_id, int device_id, struct dcmi_event *event_buf,
+    int input_event_buf_length, int *output_event_cnt);
+
 int dcmi_get_npu_device_dvpp_ratio_info(int card_id, int device_id, struct dcmi_dvpp_ratio *usage);
 
 int dcmi_get_npu_proc_mem_info(int card_id, int device_id, struct dcmi_proc_mem_info *proc_info, int *proc_num);
@@ -366,9 +400,45 @@ int dcmi_get_custom_op_secverify_enable(int card_id, int device_id, unsigned cha
 
 int dcmi_get_custom_op_secverify_mode(int card_id, int device_id, unsigned int *model);
 
-int dcmi_get_npu_ub_port_link_status_info(int card_id, int device_id, struct dcmi_ub_port_link_status *ub_status);
+int dcmi_get_custom_op_secverify_cert(int card_id, int device_id, void *buf, unsigned int *size);
+
+int dcmi_get_npu_urma_device_cnt(int card_id, int device_id, unsigned int *dev_cnt);
+
+int dcmi_get_npu_eid_list_by_urma_dev_index(int card_id, int device_id, unsigned int dev_index,
+    dcmi_urma_eid_info_t *eid_list, unsigned int *eid_cnt);
 
 int dcmi_ao_get_npu_device_elabel_info(int card_id, int device_id, struct dcmi_elabel_info *elabel_info);
+
+int dcmi_get_npu_ub_port_link_status_info(int card_id, int device_id, struct dcmi_ub_port_link_status *ub_status);
+
+int dcmi_get_npu_mainboard_id(int card_id, int device_id, unsigned int *mainboard_id);
+
+int dcmi_get_npu_rdma_bandwidth_info(int card_id, int device_id, int port_id, unsigned int prof_time,
+    struct dcmi_network_rdma_bandwidth_info *network_rdma_bandwidth_info);
+
+int dcmi_check_port_id_valid(int port_id);
+
+int dcmi_get_npu_serdes_quality_info(int card_id, int device_id, unsigned int macro_id,
+    struct dcmi_serdes_quality_info *serdes_quality_info);
+
+int dcmi_get_device_health_950(int card_id, int device_id, unsigned int *health);
+
+int dcmi_get_npu_pcie_link_bandwidth_info(int card_id, int device_id,
+    struct dcmi_pcie_link_bandwidth_info *pcie_link_bandwidth_info);
+
+int dcmi_get_device_npu_outband_channel_state(int card_id, int device_id, int *channel_state);
+
+int dcmiv2_query_topo_type(int dev_id1, int dev_id2, int *topo_type);
+
+int dcmiv2_get_firmware_version(int dev_id, unsigned char *firmware_version, int len_firmware_version);
+
+int dcmiv2_get_device_chip_slot(int dev_id, int *chip_pos_id);
+
+int dcmiv2_get_fault_device_num_in_card(int dev_id, int *device_num);
+
+int dcmi_get_device_port_list_info_inner(unsigned int *main_board_id, struct dcmi_port_list_info *port_list_info);
+
+int dcmi_get_ub_cpu_affinity_by_device_id(int dev_id, char *affinity_cpu, int *length);
 
 #ifndef _WIN32
 /* 新增的内部dsmi接口（未对外暴露），临时定义使用 */
@@ -378,7 +448,7 @@ inline int dsmi_get_hccs_status(unsigned int device_id1, unsigned int device_id2
 {
     return NPU_ERR_CODE_NOT_SUPPORT;
 }
-else
+#else
 int dsmi_get_hccs_status(unsigned int device_id1, unsigned int device_id2, int *hccs_status);
 #endif  /* SOC */
 

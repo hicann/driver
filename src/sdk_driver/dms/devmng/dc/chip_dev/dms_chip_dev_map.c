@@ -344,7 +344,7 @@ int dms_get_chip_list(struct devdrv_chip_list *chip_info)
         int num = 0;
         ka_list_for_each_safe(pos, n, &chip_dev_map->chip_head) {
             chip_node = ka_list_entry(pos, dms_chip_node_t, chip_node_list);
-            if (num >= DEVDRV_MAX_CHIP_NUM) {
+            if (num >= VDAVINCI_VDEV_OFFSET) {
                 dms_err("chip node num invalid. (num=%d)\n", num);
                 dms_chip_dev_map_resource_free(&chip_dev_map);
                 return -EINVAL;
@@ -372,7 +372,7 @@ int dms_get_device_from_chip(struct devdrv_chip_dev_list *chip_dev_list)
     dms_chip_dev_map_t *chip_dev_map = NULL;
 
     /* 0 check input parameter */
-    if (chip_dev_list->chip_id >= DEVDRV_MAX_CHIP_NUM) {
+    if (chip_dev_list->chip_id >= DEVDRV_MAX_CHIP_NUM || chip_dev_list->chip_id < 0) {
         dms_err("Chip id invalid. (chip_id=%d)\n", chip_dev_list->chip_id);
         return -EINVAL;
     }
@@ -402,6 +402,11 @@ int dms_get_device_from_chip(struct devdrv_chip_dev_list *chip_dev_list)
             }
 
             ka_list_for_each_safe(pos_dev, n_dev, &chip_node->dev_head) {
+                if (num >= DEVDRV_MAX_DAVINCI_NUM) {
+                    dms_err("chip node num invalid. (num=%d)\n", num);
+                    goto ERROR_OUT;
+                }
+
                 dev_node = ka_list_entry(pos_dev, dms_chip_dev_node_t, dev_node_list);
                 chip_dev_list->dev_list[num] = dev_node->dev_id;
                 num++;

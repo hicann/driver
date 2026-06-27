@@ -22,6 +22,7 @@
 
 int ubdrv_rx_msg_common_msg_process(void *msg_chan, void *data, u32 in_data_len, u32 out_data_len, u32 *real_out_len)
 {
+    char dfx_info[UBDRV_DFX_INFO_LEN] = {0};
     struct ubdrv_common_msg_stat *stat;
     struct ascend_ub_msg_desc *desc;
     u64 pre_stamp;
@@ -40,10 +41,11 @@ int ubdrv_rx_msg_common_msg_process(void *msg_chan, void *data, u32 in_data_len,
     }
     stat = ubdrv_get_common_stat_dfx(dev_id, desc->client_type);
     stat->rx_total++;
-
+    (void)sprintf_s(dfx_info, UBDRV_DFX_INFO_LEN, "device-%u common type-%u call process stamp",
+        dev_id, desc->client_type);
     pre_stamp = ka_jiffies;
     ret = ubdrv_rx_msg_common_msg_process_proc(desc, stat, dev_id, data, in_data_len, out_data_len, real_out_len);
-    (void)ubdrv_record_resq_time(pre_stamp, "rx common msg call back process stamp", UBDRV_SCEH_RESP_TIME);
+    (void)ubdrv_record_resq_time(pre_stamp, dfx_info, UBDRV_SCEH_RESP_TIME);
     if (ret != 0) {
         ubdrv_err("Common rx_process error. (dev_id=%u;msg_type=%u;ret=%d)\n",
             dev_id, desc->client_type, ret);

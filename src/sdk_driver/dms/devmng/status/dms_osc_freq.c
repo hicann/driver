@@ -20,7 +20,6 @@
 #include "dms_template.h"
 #include "urd_acc_ctrl.h"
 #include "dms/dms_notifier.h"
-#include "dms_kernel_version_adapt.h"
 
 #ifndef CFG_FEATURE_RC_MODE
 #include "devdrv_manager.h"

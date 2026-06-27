@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * Copyright (c) 2026 Huawei Technologies Co., Ltd.
  * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -10,6 +10,7 @@
 #include "ascend_hal.h"
 
 #include "svm_init_pri.h"
+#include "svm_criu.h"
 #include "svm_sys_cmd.h"
 #include "svm_ioctl_ex.h"
 #include "svm_pub.h"
@@ -21,6 +22,7 @@
 #include "va_dev_cp_only_allocator.h"
 #include "va_dev_dcache_allocator.h"
 #include "va_dev_linear_mem_allocator.h"
+#include "va_dev_without_populate_allocator.h"
 #include "va_gap.h"
 #include "va_reserve.h"
 #include "va_allocator.h"
@@ -32,6 +34,7 @@
 #define VA_ALLOCATOR_TYPE_PCIE_TH 4
 #define VA_ALLOCATOR_TYPE_DEFAULT 5
 #define VA_ALLOCATOR_TYPE_UNKNOWN 6
+#define VA_ALLOCATOR_TYPE_VA_ONLY_WITHOUT_POPULATE 7
 
 bool svm_va_is_in_range(u64 va, u64 size)
 {
@@ -84,7 +87,7 @@ u32 svm_get_spacified_va_allocator_type(u64 va, u64 size, u32 devid, u32 flag)
         return VA_ALLOCATOR_TYPE_DEV_DCACHE;
     }
 
-    return VA_ALLOCATOR_TYPE_DEFAULT;
+    return (devid == SVM_INVALID_DEVID) ? VA_ALLOCATOR_TYPE_DEFAULT : VA_ALLOCATOR_TYPE_DEV_DEFAULT;
 }
 
 u32 svm_get_non_spacified_va_allocator_type(u64 va, u64 size, u32 devid, u32 flag)
@@ -111,8 +114,7 @@ u32 svm_get_non_spacified_va_allocator_type(u64 va, u64 size, u32 devid, u32 fla
     }
 
     if (devid == SVM_INVALID_DEVID) {
-        return (size > NON_DEV_DEFAULT_ALLOC_MAX_SIZE) ?
-            VA_ALLOCATOR_TYPE_DEFAULT : VA_ALLOCATOR_TYPE_NON_DEV_DEFAULT;
+        return (size > NON_DEV_DEFAULT_ALLOC_MAX_SIZE) ? VA_ALLOCATOR_TYPE_DEFAULT : VA_ALLOCATOR_TYPE_NON_DEV_DEFAULT;
     }
 
     return VA_ALLOCATOR_TYPE_DEV_DEFAULT;
@@ -125,6 +127,10 @@ u32 svm_get_va_allocator_type(u64 va, u64 size, u32 devid, u32 flag, int op)
             svm_err("Master uva must with master. (va=0x%llx; flag=%x)\n", va, flag);
             return VA_ALLOCATOR_TYPE_UNKNOWN;
         }
+    }
+
+    if ((flag & SVM_VA_ALLOCATOR_FLAG_WITHOUT_POPULATE) != 0) {
+        return VA_ALLOCATOR_TYPE_VA_ONLY_WITHOUT_POPULATE;
     }
 
     if ((flag & SVM_VA_ALLOCATOR_FLAG_SPACIFIED_ADDR) != 0) {
@@ -180,6 +186,8 @@ int svm_alloc_va(u64 va, u64 size, u64 align, u32 devid, u32 flag, u64 *start)
             }
 
             return svm_reserve_va(va, size + svm_align_up(svm_va_get_gap(), SVM_VA_RESERVE_ALIGN), reserve_flag, start);
+        case VA_ALLOCATOR_TYPE_VA_ONLY_WITHOUT_POPULATE:
+            return va_only_without_populate_alloc(devid, align, size, start);
         default:
             svm_err("Invalid para. (va=0x%llx size=0x%llx; devid=%u; flag=%x)\n", va, size, devid, flag);
             return DRV_ERROR_INVALID_VALUE;
@@ -208,6 +216,8 @@ int svm_free_va(u64 va, u64 size, u64 align, u32 devid, u32 flag)
             return va_pcie_th_free(devid, va, size, align);
         case VA_ALLOCATOR_TYPE_DEFAULT:
             return svm_release_va(va);
+        case VA_ALLOCATOR_TYPE_VA_ONLY_WITHOUT_POPULATE:
+            return va_only_without_populate_free(devid, va, size);
         default:
             svm_err("Invalid para. (va=0x%llx size=0x%llx; devid=%u; flag=%x)\n", va, size, devid, flag);
             return DRV_ERROR_INVALID_VALUE;
@@ -223,14 +233,14 @@ static int svm_va_allocator_dev_init(u32 devid)
         return ret;
     }
 
-    if (devid == svm_get_host_devid()) {
-        return DRV_ERROR_NONE;
-    }
-
     ret = va_reserve_add_dev(devid);
     if (ret != DRV_ERROR_NONE) {
         va_dev_default_allocator_dev_uninit(devid);
         return ret;
+    }
+
+    if (devid == svm_get_host_devid()) {
+        return DRV_ERROR_NONE;
     }
 
     ret = va_dev_dcache_allocator_init();
@@ -263,6 +273,18 @@ static int svm_va_allocator_dev_uninit(u32 devid)
     return DRV_ERROR_NONE;
 }
 
+static int svm_va_allocator_criu_reset_dev(u32 devid, void *data)
+{
+    SVM_UNUSED(data);
+    va_reserve_del_dev(devid);
+    return 0;
+}
+
+static const struct svm_criu_ops g_va_allocator_criu_ops = {
+    .name = "va_allocator",
+    .reset = svm_va_allocator_criu_reset_dev,
+};
+
 void __attribute__((constructor(SVM_INIT_PRI_HIGH))) svm_va_allocator_init(void)
 {
     int ret;
@@ -276,6 +298,11 @@ void __attribute__((constructor(SVM_INIT_PRI_HIGH))) svm_va_allocator_init(void)
     if (ret != DRV_ERROR_NONE) {
         svm_err("Register ioctl dev uninit post handle failed.\n");
     }
+
+    ret = svm_criu_register_ops(&g_va_allocator_criu_ops);
+    if (ret != DRV_ERROR_NONE) {
+        svm_err("Register CRIU ops failed.\n");
+    }
 }
 
 void svm_va_allocator_uninit(void)
@@ -285,5 +312,5 @@ void svm_va_allocator_uninit(void)
     va_dev_cp_only_allocator_uninit();
     va_dev_linear_mem_disable();
     va_dev_dcache_allocator_uninit();
+    va_only_without_populate_allocator_uninit();
 }
-

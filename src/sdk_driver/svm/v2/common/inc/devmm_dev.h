@@ -15,14 +15,11 @@
 #define DEVMM_DEV_H
 
 #include "ka_base_pub.h"
-#include "ka_base_pub.h"
 #include "ka_common_pub.h"
 #include "ka_memory_pub.h"
 #include "ka_task_pub.h"
 #include "ka_net_pub.h"
-#include "ka_common_pub.h"
 #include "ka_list_pub.h"
-#include "ka_base_pub.h"
 #include "ka_fs_pub.h"
 #include "ka_driver_pub.h"
 #include "svm_ioctl.h"

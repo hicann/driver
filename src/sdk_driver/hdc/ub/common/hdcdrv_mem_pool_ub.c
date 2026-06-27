@@ -63,7 +63,7 @@ void hdcdrv_uninit_dev_mem_pool(struct hdcdrv_dev *hdc_dev)
             ret = hdcdrv_unmap_mem_pool_va(mem_pool->ctx, &mem_pool->pool, hdc_dev->dev_id);
             if (ret != HDCDRV_OK) {
                 hdcdrv_err("Calling hdcdrv_unmap_mem_pool_va for tx_pool failed. (dev_id=%d; ret=%d)\n",
-                    hdc_dev->dev_id, ret);
+                           hdc_dev->dev_id, ret);
                 // unmap failed, this page will not free until process release
                 continue;
             }
@@ -84,7 +84,7 @@ void hdcdrv_uninit_dev_mem_pool(struct hdcdrv_dev *hdc_dev)
 }
 
 int hdcdrv_alloc_mem_pool_for_session(struct hdcdrv_session *session, struct hdcdrv_dev *hdc_dev,
-    struct hdcdrv_ctx *ctx, u64 user_va)
+                                      struct hdcdrv_ctx *ctx, u64 user_va)
 {
     int i, ret, idx;
     struct hdcdrv_mem_pool_list_node *mem_pool = NULL;
@@ -218,7 +218,7 @@ void hdcdrv_clear_mem_pool_by_ctx(struct hdcdrv_ctx *ctx)
         return;
     }
 
-    // All page tables are cleared during release. Therefore, the demapping function does not need to be invoked in release.
+    /* All page tables are cleared during release. Therefore, the demapping function does not need to be invoked in release. */
     ka_task_mutex_lock(&g_hdc_ctrl.dev_lock[ctx->dev_id]);
     if ((u32)ctx->pool_info.idx != g_hdc_ctrl.dev_ref[ctx->dev_id]) {
         ka_task_mutex_unlock(&g_hdc_ctrl.dev_lock[ctx->dev_id]);
@@ -231,7 +231,8 @@ void hdcdrv_clear_mem_pool_by_ctx(struct hdcdrv_ctx *ctx)
         mem_pool = &hdc_dev->mem_pool_list[i];
         if (mem_pool->ctx == ctx) {
             hdcdrv_info("process release but mem_pool not release, force release mem_pool."
-                " (dev_id=%d; idx=%d; session=%u)\n",hdc_dev->dev_id, i, hdc_dev->mem_pool_list[i].session_id);
+                        " (dev_id=%d; idx=%d; session=%u)\n",
+                        hdc_dev->dev_id, i, hdc_dev->mem_pool_list[i].session_id);
             mem_pool->ctx = NULL;
             mem_pool->session_id = 0;
             mem_pool->pool.pid = 0;

@@ -152,9 +152,9 @@ static int32_t dvpp_tlv_decode_args(void *decoder)
         (uint64_t)(uintptr_t)dec->version + sizeof(dvpp_tlv_version_param) - 1, dec->pbuf + dec->size);
     // 打印版本号
 #ifdef BUILD_DEBUG
-    DVPP_CMDLIST_LOG_DEBUG("major_num=%d\n", dec->version->major_num);
-    DVPP_CMDLIST_LOG_DEBUG("minor_num=%d\n", dec->version->minor_num);
-    DVPP_CMDLIST_LOG_DEBUG("revision_num=%d\n", dec->version->revision_num);
+    DVPP_CMDLIST_LOG_DEBUG("major_num=%u\n", dec->version->major_num);
+    DVPP_CMDLIST_LOG_DEBUG("minor_num=%u\n", dec->version->minor_num);
+    DVPP_CMDLIST_LOG_DEBUG("revision_num=%u\n", dec->version->revision_num);
 #endif
     // 解析头
     ret = tlv_pop_data(dec, &data);
@@ -208,8 +208,8 @@ static int32_t dvpp_tlv_decode_args(void *decoder)
     }
 
 #ifdef BUILD_DEBUG
-    DVPP_CMDLIST_LOG_DEBUG("batch_cnt=%d\n", dec->head->batch_cnt);
-    DVPP_CMDLIST_LOG_DEBUG("node_cnt=%d\n", dec->head->node_cnt);
+    DVPP_CMDLIST_LOG_DEBUG("batch_cnt=%u\n", dec->head->batch_cnt);
+    DVPP_CMDLIST_LOG_DEBUG("node_cnt=%u\n", dec->head->node_cnt);
 #endif
 
     for (i = 0; i < dec->head->node_cnt; i++) {

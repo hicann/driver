@@ -146,6 +146,21 @@ static inline int ka_dfx_profile_event_unregister(ka_profile_type_t type, ka_not
 }
 #endif
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 5, 0)
+struct kernel_symbol {
+#ifdef CONFIG_HAVE_ARCH_PREL32_RELOCATIONS
+    int value_offset;
+    int name_offset;
+    int namespace_offset;
+#else
+    unsigned long value;
+    const char *name;
+    const char *namespace;
+#endif
+};
+#endif
+typedef struct kernel_symbol ka_kernel_symbol_t;
+
 #define KA_DFX_TRACE_EVENT TRACE_EVENT
 #define KA_DFX_TP_PROTO TP_PROTO
 #define KA_DFX_TP_ARGS TP_ARGS
@@ -160,4 +175,14 @@ static inline int ka_dfx_profile_event_unregister(ka_profile_type_t type, ka_not
 
 #define ka_dfx_notifier_from_errno(err) notifier_from_errno(err)
 #define ka_dfx_notifier_to_errno(ret) notifier_to_errno(ret)
+#define ka_dfx_offset_to_ptr(off) offset_to_ptr(off)
+
+#define KA_WARN_ON(x)       WARN_ON(x)
+#define ka_maybe_unused     __maybe_unused
+#define ka_dev_err          dev_err
+#define ka_dev_info         dev_info
+#define ka_dev_warn         dev_warn
+#define ka_hweight8         hweight8
+#define ka_offsetofend      offsetofend
+
 #endif

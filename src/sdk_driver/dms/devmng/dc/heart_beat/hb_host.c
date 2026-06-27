@@ -442,9 +442,9 @@ int heart_beat_register_urgent_timer(unsigned int dev_id)
         dms_err("Dms timer task register failed. (dev_id=%u; ret=%d) \n", dev_id, ret);
         return ret;
     }
+
     heartbeat_info->urgent_task_id = timer_urgent_task_id;
     heartbeat_info->timer_urgent_registered = 1;
-
     return 0;
 }
 #endif
@@ -459,7 +459,7 @@ void heart_beat_unregister_urgent_timer(u32 dev_id)
         return;
     }
 
-    (void)dms_timer_task_unregister(heartbeat_info[dev_id].urgent_task_id);
+    (void)dms_timer_task_unregister(heartbeat_info->urgent_task_id);
     heartbeat_info->timer_urgent_registered = 0;
     return;
 }

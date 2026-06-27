@@ -33,7 +33,7 @@ ka_delayed_work_t *hdcdrv_get_recycle_mem(void)
     return &(hdc_ctrl->recycle_mem);
 }
 
-ka_device_t* hdcdrv_get_pdev_dev(int dev_id)
+ka_device_t *hdcdrv_get_pdev_dev(int dev_id)
 {
     if (hdc_ctrl->devices[dev_id].valid != HDCDRV_VALID) {
         hdcdrv_err("Device is not ready. (dev_id=%d)\n", dev_id);
@@ -43,10 +43,10 @@ ka_device_t* hdcdrv_get_pdev_dev(int dev_id)
 }
 
 /* 1 fast alloc/free/map        -> uni -> ctrl.lo
-*  2 add/del                    -> sep -> ctrl.dev[id].lo/re
-*  3 send/rx src & pm(fid == 0) -> uni -> ctrl.lo
-*  4 send/rx/dma-dst            -> sep -> ctrl.dev[id].lo/re
-*/
+ *  2 add/del                    -> sep -> ctrl.dev[id].lo/re
+ *  3 send/rx src & pm(fid == 0) -> uni -> ctrl.lo
+ *  4 send/rx/dma-dst            -> sep -> ctrl.dev[id].lo/re
+ */
 struct hdcdrv_dev_fmem *hdcdrv_get_dev_fmem_uni(void)
 {
     return &(hdc_ctrl->fmem);
@@ -57,7 +57,7 @@ struct hdcdrv_dev_fmem *hdcdrv_get_dev_fmem_sep(int devid)
     return &(hdc_ctrl->devices[devid].fmem);
 }
 
-void hdcdrv_iova_fmem_unmap(u32 dev_id, u32 fid, struct hdcdrv_fast_mem* f_mem, u32 num)
+void hdcdrv_iova_fmem_unmap(u32 dev_id, u32 fid, struct hdcdrv_fast_mem *f_mem, u32 num)
 {
 #ifdef CFG_FEATURE_VFIO
     u32 i;
@@ -72,7 +72,7 @@ void hdcdrv_iova_fmem_unmap(u32 dev_id, u32 fid, struct hdcdrv_fast_mem* f_mem, 
 
 #ifdef CFG_FEATURE_VFIO
 static void hdcdrv_iova_new_mem(u32 dev_id, u32 fid, u32 old_num, struct hdcdrv_mem_f old_mem[],
-    struct hdcdrv_mem_f new_mem[])
+                                struct hdcdrv_mem_f new_mem[])
 {
     u32 i, j;
     u32 num_new = 0;
@@ -100,14 +100,14 @@ static void hdcdrv_iova_new_mem(u32 dev_id, u32 fid, u32 old_num, struct hdcdrv_
         num_new = num_new + old_mem[i].dma_sgt->nents;
 
         if (len_per_sgt != old_mem[i].len) {
-            hdcdrv_warn("sgt_len not match. (dev_id=%u; fid=%u; mem=%u; len=%u; sgt=%u)\n",
-                dev_id, fid, i, old_mem[i].len, len_per_sgt);
+            hdcdrv_warn("sgt_len not match. (dev_id=%u; fid=%u; mem=%u; len=%u; sgt=%u)\n", dev_id, fid, i,
+                        old_mem[i].len, len_per_sgt);
         }
     }
 }
 #endif
 
-int hdcdrv_iova_fmem_map(u32 dev_id, u32 fid, struct hdcdrv_fast_mem* f_mem)
+int hdcdrv_iova_fmem_map(u32 dev_id, u32 fid, struct hdcdrv_fast_mem *f_mem)
 {
 #ifdef CFG_FEATURE_VFIO
     ka_dma_addr_t dma_addr;
@@ -280,15 +280,15 @@ void free_mem(void *buf)
 
     ret = hdccom_free_mem(pool, buf);
     if (ret != HDCDRV_OK) {
-        hdcdrv_err_spinlock("Calling free_mem failed. (pool_type=%d; device=%d; ret=%d)\n",
-            block_head->type, block_head->devid, ret);
+        hdcdrv_err_spinlock("Calling free_mem failed. (pool_type=%d; device=%d; ret=%d)\n", block_head->type,
+                            block_head->devid, ret);
         return;
     }
 
     free_mem_notify(pool, block_head->type);
     return;
 }
- 
+
 int hdcdrv_map_reserve_mem(struct hdccom_mem_init *init_mem, int pool_type, u32 segment, u32 num)
 {
     u32 peer_id;
@@ -299,7 +299,8 @@ int hdcdrv_map_reserve_mem(struct hdccom_mem_init *init_mem, int pool_type, u32 
         hdcdrv_err("devid adapt fail. (devid=%d)\n", init_mem->dev_id);
         return HDCDRV_ERR;
     }
-    ret = devdrv_get_reserve_mem_info(peer_id, &init_mem->reserve_mem_pa, &init_mem->reserve_mem_size);
+    ret = devdrv_get_reserve_mem_info(peer_id, devdrv_msg_client_hdc, &init_mem->reserve_mem_pa,
+                                      &init_mem->reserve_mem_size);
     if (ret != 0) {
         hdcdrv_err("devdrv_get_reserve_mem_info failed. (pool_type=%d, devid=%d)\n", pool_type, init_mem->dev_id);
         return HDCDRV_ERR;
@@ -312,11 +313,11 @@ int hdcdrv_map_reserve_mem(struct hdccom_mem_init *init_mem, int pool_type, u32 
         init_mem->reserve_mem_size /= HDCDRV_RESERVE_MEM_POOL_TYPE_NUM;
     }
     if (init_mem->reserve_mem_size < (segment * num)) {
-        hdcdrv_err("Init reserve mem failed. (pool_type=%d; segment=%u; num=%u; size=0x%lx)\n", pool_type,
-            segment, num, init_mem->reserve_mem_size);
+        hdcdrv_err("Init reserve mem failed. (pool_type=%d; segment=%u; num=%u; size=0x%lx)\n", pool_type, segment, num,
+                   init_mem->reserve_mem_size);
         return HDCDRV_ERR;
     }
- 
+
     init_mem->reserve_mem_va = ka_mm_ioremap_cache(init_mem->reserve_mem_pa, init_mem->reserve_mem_size);
     if (init_mem->reserve_mem_va == NULL) {
         hdcdrv_err("Calling ka_mm_ioremap failed. (pool_type=%d)\n", pool_type);
@@ -324,23 +325,21 @@ int hdcdrv_map_reserve_mem(struct hdccom_mem_init *init_mem, int pool_type, u32 
     }
 
     init_mem->reserve_mem_dma_addr = devdrv_dma_map_resource(init_mem->dev, init_mem->reserve_mem_pa, segment * num,
-        KA_DMA_BIDIRECTIONAL, 0);
+                                                             KA_DMA_BIDIRECTIONAL, 0);
     if (ka_mm_dma_mapping_error(init_mem->dev, init_mem->reserve_mem_dma_addr) != 0) {
-        hdcdrv_err("devdrv_dma_map_resource failed. (dev_id=%d; segment=%u)\n",
-            init_mem->dev_id, segment);
+        hdcdrv_err("devdrv_dma_map_resource failed. (dev_id=%d; segment=%u)\n", init_mem->dev_id, segment);
         return HDCDRV_ERR;
     }
     return HDCDRV_OK;
 }
- 
+
 void hdcdrv_unmap_reserve_mem(struct hdcdrv_mem_pool *pool, ka_device_t *dev)
 {
     if (pool->reserve_mem_dma_addr != (~(ka_dma_addr_t)0)) {
-        devdrv_dma_unmap_resource(dev, pool->reserve_mem_dma_addr, pool->reserve_mem_size,
-            KA_DMA_BIDIRECTIONAL, 0);
+        devdrv_dma_unmap_resource(dev, pool->reserve_mem_dma_addr, pool->reserve_mem_size, KA_DMA_BIDIRECTIONAL, 0);
         pool->reserve_mem_dma_addr = ~(ka_dma_addr_t)0;
     }
- 
+
     if (pool->reserve_mem_va != NULL) {
         ka_mm_iounmap(pool->reserve_mem_va);
         pool->reserve_mem_va = NULL;
@@ -397,12 +396,10 @@ void free_mem_pool(int pool_type, int dev_id, u32 segment)
 
     ret = hdccom_free_mem_pool(pool, hdc_dev->dev, segment);
     if (ret != HDCDRV_OK) {
-        hdcdrv_err("Calling hdccom_free_mem_pool failed. (dev_id=%d; pool_type=%d; ret=%d)\n",
-            dev_id, pool_type, ret);
+        hdcdrv_err("Calling hdccom_free_mem_pool failed. (dev_id=%d; pool_type=%d; ret=%d)\n", dev_id, pool_type, ret);
     }
 
-    if ((pool_type == HDCDRV_RESERVE_MEM_POOL_TYPE_TX) ||
-        (pool_type == HDCDRV_RESERVE_MEM_POOL_TYPE_RX)) {
+    if ((pool_type == HDCDRV_RESERVE_MEM_POOL_TYPE_TX) || (pool_type == HDCDRV_RESERVE_MEM_POOL_TYPE_RX)) {
         hdcdrv_unmap_reserve_mem(pool, hdc_dev->dev);
     }
 
@@ -538,7 +535,7 @@ int hdcdrv_list_node_mem_alloc(struct hdcdrv_ctx *ctx, struct hdcdrv_mem_fd_list
 {
     if ((ctx != NULL) && (ctx != HDCDRV_KERNEL_WITHOUT_CTX)) {
         *new_node = (struct hdcdrv_mem_fd_list *)hdcdrv_kzalloc(sizeof(struct hdcdrv_mem_fd_list),
-            KA_GFP_KERNEL | __KA_GFP_ACCOUNT, KA_SUB_MODULE_TYPE_1);
+                                                                KA_GFP_KERNEL | __KA_GFP_ACCOUNT, KA_SUB_MODULE_TYPE_1);
         if (*new_node == NULL) {
             hdcdrv_err("Calling ka_mm_kzalloc failed.\n");
             return HDCDRV_MEM_ALLOC_FAIL;
@@ -579,7 +576,7 @@ long hdcdrv_fast_alloc_mem(struct hdcdrv_ctx *ctx, struct hdcdrv_cmd_alloc_mem *
     }
 
     if ((ctx != NULL) && (ctx != HDCDRV_KERNEL_WITHOUT_CTX)) {
-       hdcdrv_bind_mem_ctx(&ctx->ctx_fmem, f_node, new_node);
+        hdcdrv_bind_mem_ctx(&ctx->ctx_fmem, f_node, new_node);
     }
 
     f_node->ctx = (void *)ctx;

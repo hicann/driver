@@ -14,9 +14,7 @@
 #include <fcntl.h>
 #include <pthread.h>
 
-#ifdef CFG_FEATURE_EXTERNAL_CDEV
 #include "davinci_interface.h"
-#endif
 
 #include "securec.h"
 #include "dmc_user_interface.h"
@@ -24,6 +22,8 @@
 #include "buff_manage_base.h"
 #include "buff_manage_kernel_api.h"
 #include "buff_ioctl.h"
+#include "buff_feature.h"
+#include "drv_buff_adp.h"
 #include "drv_buff_log.h"
 
 #define BUFF_POOL_ID_MAX_BASE 0x7FFFFFFF
@@ -31,7 +31,7 @@
 #ifdef EMU_ST
 #define STATIC
 #else
-#define STATIC                     static
+#define STATIC static
 #endif
 
 #ifdef EMU_ST
@@ -47,14 +47,12 @@ static inline int buff_get_current_pid_base(void)
 }
 #endif
 
-
-#define XSMEM_BLK_ALIGN	16
-#ifndef CFG_FEATURE_EXTERNAL_CDEV
-#define XSMEM_DRV_NAME  "/dev/xsmem_dev"
+#define XSMEM_BLK_ALIGN 16
+#ifdef EMU_ST
+#define XSMEM_DRV_NAME "/dev/xsmem_dev"
 #else
-#define XSMEM_DRV_NAME  davinci_intf_get_dev_path()
+#define XSMEM_DRV_NAME davinci_intf_get_dev_path()
 #endif
-
 #ifdef EMU_ST
 int pool_file_open(const char *pathname, int flags);
 int pool_ioctl(int fd, unsigned long cmd, void *para);
@@ -80,8 +78,7 @@ int buff_api_getpid_base(void)
 STATIC int THREAD pool_fd = -1;
 STATIC int THREAD pool_fd_open_pid = -1;
 
-
-#ifdef CFG_FEATURE_EXTERNAL_CDEV
+#ifndef EMU_ST
 STATIC int buff_pool_dev_open(void)
 {
     struct davinci_intf_open_arg arg = {0};
@@ -130,7 +127,6 @@ STATIC void buff_pool_dev_close(void)
 
     (void)close(pool_fd);
 }
-
 #else
 STATIC int buff_pool_dev_open(void)
 {
@@ -218,8 +214,8 @@ static drvError_t buff_pool_ioctrl(int cmd, void *para)
     return DRV_ERROR_NONE;
 }
 
-STATIC drvError_t buff_pool_register(const char *name, unsigned long pool_size, int algo,
-    unsigned int priv_mbuf_flag, int *pool_id)
+STATIC drvError_t buff_pool_register(const char *name, unsigned long pool_size, int algo, unsigned int priv_mbuf_flag,
+                                     int *pool_id)
 {
     struct xsm_reg_arg arg;
     int fd = buff_pool_get_fd();
@@ -245,26 +241,26 @@ STATIC drvError_t buff_pool_register(const char *name, unsigned long pool_size, 
     return DRV_ERROR_NONE;
 }
 
-drvError_t buff_pool_algo_vma_register(const char *name, unsigned long pool_size,
-    unsigned int priv_mbuf_flag, int *pool_id)
+drvError_t buff_pool_algo_vma_register(const char *name, unsigned long pool_size, unsigned int priv_mbuf_flag,
+                                       int *pool_id)
 {
     return buff_pool_register(name, pool_size, XSMEM_ALGO_VMA, priv_mbuf_flag, pool_id);
 }
 
-drvError_t buff_pool_algo_cache_vma_register(const char *name, unsigned long pool_size,
-    unsigned int priv_mbuf_flag, int *pool_id)
+drvError_t buff_pool_algo_cache_vma_register(const char *name, unsigned long pool_size, unsigned int priv_mbuf_flag,
+                                             int *pool_id)
 {
     return buff_pool_register(name, pool_size, XSMEM_ALGO_CACHE_VMA, priv_mbuf_flag, pool_id);
 }
 
-drvError_t buff_pool_algo_sp_register(const char *name, unsigned long pool_size,
-    unsigned int priv_mbuf_flag, int *pool_id)
+drvError_t buff_pool_algo_sp_register(const char *name, unsigned long pool_size, unsigned int priv_mbuf_flag,
+                                      int *pool_id)
 {
     return buff_pool_register(name, pool_size, XSMEM_ALGO_SP, priv_mbuf_flag, pool_id);
 }
 
-drvError_t buff_pool_algo_cache_sp_register(const char *name, unsigned long pool_size,
-    unsigned int priv_mbuf_flag, int *pool_id)
+drvError_t buff_pool_algo_cache_sp_register(const char *name, unsigned long pool_size, unsigned int priv_mbuf_flag,
+                                            int *pool_id)
 {
     return buff_pool_register(name, pool_size, XSMEM_ALGO_CACHE_SP, priv_mbuf_flag, pool_id);
 }
@@ -275,8 +271,8 @@ drvError_t buff_pool_unregister(int pool_id)
     return buff_pool_ioctrl(XSMEM_POOL_UNREGISTER, (void *)(uintptr_t)arg);
 }
 
-drvError_t buff_pool_cache_create(int pool_id, unsigned int dev_id, unsigned int mem_flag,
-    unsigned long long mem_size, unsigned long long alloc_max_size)
+drvError_t buff_pool_cache_create(int pool_id, unsigned int dev_id, unsigned int mem_flag, unsigned long long mem_size,
+                                  unsigned long long alloc_max_size)
 {
     struct xsm_cache_create_arg arg;
 
@@ -351,8 +347,8 @@ drvError_t buff_pool_attach_ex(int pool_id, int timeout, unsigned long long *pro
 
     *proc_uid = arg.uid;
     *cache_type = arg.cache_type;
-    buff_info("Pool attach. (pool=%d; fd=%d; attach_pid=%d; uid=%llu; cache_type=%u)\n",
-        pool_id, fd, buff_get_current_pid_base(), *proc_uid, *cache_type);
+    buff_info("Pool attach. (pool=%d; fd=%d; attach_pid=%d; uid=%llu; cache_type=%u)\n", pool_id, fd,
+              buff_get_current_pid_base(), *proc_uid, *cache_type);
 
     return DRV_ERROR_NONE;
 }
@@ -371,7 +367,8 @@ drvError_t buff_pool_detach(int pool_id)
     return buff_pool_ioctrl(XSMEM_POOL_DETACH, (void *)(uintptr_t)arg);
 }
 
-drvError_t buff_pool_blk_alloc(int pool_id, unsigned long size, unsigned long flag, unsigned long *ptr, uint32_t *blk_id)
+drvError_t buff_pool_blk_alloc(int pool_id, unsigned long size, unsigned long flag, unsigned long *ptr,
+                               uint32_t *blk_id)
 {
     struct xsm_block_arg arg;
     drvError_t ret;
@@ -401,8 +398,8 @@ drvError_t buff_pool_blk_free(int pool_id, unsigned long ptr)
     return buff_pool_ioctrl(XSMEM_BLOCK_FREE, (void *)&arg);
 }
 
-drvError_t buff_pool_blk_get(unsigned long ptr, int *pool_id, unsigned long *alloc_ptr,
-    unsigned long *alloc_size, uint32_t *blk_id)
+drvError_t buff_pool_blk_get(unsigned long ptr, int *pool_id, unsigned long *alloc_ptr, unsigned long *alloc_size,
+                             uint32_t *blk_id)
 {
     struct xsm_block_arg arg;
     drvError_t ret;
@@ -489,7 +486,7 @@ drvError_t buff_pool_va_check(int pool_id, unsigned long va, int *result)
 }
 
 drvError_t buff_cache_info_query(int pool_id, unsigned int dev_id, GrpQueryGroupAddrInfo *cache_buff,
-    unsigned int cache_cnt, unsigned int *query_cnt)
+                                 unsigned int cache_cnt, unsigned int *query_cnt)
 {
     struct xsm_query_cache_arg arg;
     drvError_t ret;
@@ -704,4 +701,14 @@ int buff_pool_poll_exit_task(int pool_id, unsigned long long *proc_uid)
     *proc_uid = arg.uid;
 
     return DRV_ERROR_NONE;
+}
+
+drvError_t buff_pool_feature_get_all(struct xsm_feature_get_arg *all_features)
+{
+    drvError_t ret;
+    ret = buff_pool_ioctrl((int)XSMEM_FEATURE_GET, (void *)all_features);
+    if (ret != DRV_ERROR_NONE) {
+        buff_err("buff_pool_feature_get_all: ioctl XSMEM_FEATURE_GET failed. (ret=%d)\n", ret);
+    }
+    return ret;
 }

@@ -77,7 +77,7 @@ STATIC int DmsGetEmmcManufacturerInfo(unsigned int dev_id, unsigned int vfid, un
 {
     int ret;
     struct dms_ioctl_arg ioarg = {0};
-    char emmc_info[EMMC_MANUFACTORY_INFO_LEN];
+    char emmc_info[EMMC_MANUFACTORY_INFO_LEN] = {0};
 
     (void)vfid;
 

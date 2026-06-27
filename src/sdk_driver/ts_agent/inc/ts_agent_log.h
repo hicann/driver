@@ -18,20 +18,26 @@
 #ifndef TS_AGENT_UT
 
 #include "dmc_kernel_interface.h"
+#include "ka_task_pub.h"
+#include "ka_dfx_pub.h"
 
 #define ts_agent_err(fmt, ...) \
-    drv_err(module_ts_agent, "<%s:%d,%d> " fmt, current->comm, current->tgid, current->pid, ##__VA_ARGS__)
+    drv_err(module_ts_agent, "<%s:%d,%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), \
+        ka_task_get_current_pid(), ##__VA_ARGS__)
 #define ts_agent_warn(fmt, ...) \
-    drv_warn(module_ts_agent, "<%s:%d,%d> " fmt, current->comm, current->tgid, current->pid, ##__VA_ARGS__)
+    drv_warn(module_ts_agent, "<%s:%d,%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), \
+        ka_task_get_current_pid(), ##__VA_ARGS__)
 #define ts_agent_info(fmt, ...) \
-    drv_info(module_ts_agent, "<%s:%d,%d> " fmt, current->comm, current->tgid, current->pid, ##__VA_ARGS__)
+    drv_info(module_ts_agent, "<%s:%d,%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), \
+        ka_task_get_current_pid(), ##__VA_ARGS__)
 
 #ifdef TS_AGENT_DEBUG
 #define ts_agent_debug(fmt, ...) \
-    drv_pr_debug(module_ts_agent, "<%s:%d,%d> " fmt, current->comm, current->tgid, current->pid, ##__VA_ARGS__)
+    drv_pr_debug(module_ts_agent, "<%s:%d,%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), \
+        ka_task_get_current_pid(), ##__VA_ARGS__)
 #else
 #define ts_agent_debug(fmt, ...) \
-    pr_debug("[%s] [%s %d] " fmt, module_ts_agent, __func__, __LINE__, ##__VA_ARGS__)
+    ka_dfx_pr_debug("[%s] [%s %d] " fmt, module_ts_agent, __func__, __LINE__, ##__VA_ARGS__)
 #endif
 
 #else

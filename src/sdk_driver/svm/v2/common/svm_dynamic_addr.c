@@ -10,7 +10,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#include <linux/types.h>
+#include "ka_type.h"
 
 #include "devmm_proc_info.h"
 #include "devmm_common.h"
@@ -90,10 +90,11 @@ void svm_da_recycle(struct devmm_svm_process *svm_proc)
     struct svm_da_info *da_info = &svm_proc->da_info;
     struct svm_da_node_info *node = NULL, *tmp = NULL;
 
-	ka_base_rbtree_postorder_for_each_entry_safe(node, tmp, &da_info->rbtree, rbnode) {
+    ka_base_rbtree_postorder_for_each_entry_safe(node, tmp, &da_info->rbtree, rbnode)
+    {
         (void)devmm_rb_erase(&da_info->rbtree, &node->rbnode);
         devmm_kvfree(node);
-	}
+    }
 }
 
 static void svm_da_rb_range_handle(ka_rb_node_t *rbnode, struct rb_range_handle *range_handle)
@@ -315,16 +316,15 @@ u32 svm_da_query_addr_num(struct devmm_svm_process *svm_proc)
 
     svm_da_info_rbtree_lock(da_info, false);
 
-    ka_base_rbtree_postorder_for_each_entry_safe(node, tmp, &da_info->rbtree, rbnode) {
-        addr_num++;
-    }
+    ka_base_rbtree_postorder_for_each_entry_safe(node, tmp, &da_info->rbtree, rbnode) { addr_num++; }
 
     svm_da_info_rbtree_unlock(da_info, false);
 
     return addr_num;
 }
 
-int svm_da_for_each_addr(struct devmm_svm_process *svm_proc, bool is_occupy,
+int svm_da_for_each_addr(
+    struct devmm_svm_process *svm_proc, bool is_occupy,
     int (*func)(struct devmm_svm_process *svm_proc, u64 va, u64 size, void *priv), void *priv)
 {
     struct svm_da_info *da_info = &svm_proc->da_info;
@@ -332,7 +332,8 @@ int svm_da_for_each_addr(struct devmm_svm_process *svm_proc, bool is_occupy,
 
     svm_da_info_rbtree_lock(da_info, is_occupy);
 
-    ka_base_rbtree_postorder_for_each_entry_safe(node, tmp, &da_info->rbtree, rbnode) {
+    ka_base_rbtree_postorder_for_each_entry_safe(node, tmp, &da_info->rbtree, rbnode)
+    {
         int ret = func(svm_proc, node->va, node->size, priv);
         if (ret != 0) {
             svm_da_info_rbtree_unlock(da_info, is_occupy);
@@ -349,12 +350,13 @@ static void _svm_set_da_heap(struct svm_da_info *da_info, u32 heap_idx, struct d
 {
     struct svm_da_node_info *node = NULL, *tmp = NULL;
 
-	ka_base_rbtree_postorder_for_each_entry_safe(node, tmp, &da_info->rbtree, rbnode) {
+    ka_base_rbtree_postorder_for_each_entry_safe(node, tmp, &da_info->rbtree, rbnode)
+    {
         if (heap_idx == node->first_heap_idx) {
             node->heap = heap;
             return;
         }
-	}
+    }
 
     devmm_drv_err("Invalid heap index. (heap_idx=%u)\n", heap_idx);
 }
@@ -372,11 +374,12 @@ static struct devmm_svm_heap *_svm_get_da_heap_by_idx(struct svm_da_info *da_inf
 {
     struct svm_da_node_info *node = NULL, *tmp = NULL;
 
-	ka_base_rbtree_postorder_for_each_entry_safe(node, tmp, &da_info->rbtree, rbnode) {
+    ka_base_rbtree_postorder_for_each_entry_safe(node, tmp, &da_info->rbtree, rbnode)
+    {
         if ((heap_idx >= node->first_heap_idx) && (heap_idx <= node->last_heap_idx)) {
             return node->heap;
         }
-	}
+    }
 
     return NULL;
 }

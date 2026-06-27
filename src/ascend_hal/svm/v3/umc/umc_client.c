@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * Copyright (c) 2026 Huawei Technologies Co., Ltd.
  * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -17,17 +17,18 @@
 #include "esched_user_interface.h"
 
 #include "svm_pub.h"
+#include "svm_criu.h"
 #include "svm_log.h"
 #include "svm_user_adapt.h"
-#include "svm_sub_event_type.h"
+#include "svm_sub_event_type_uk_msg.h"
 #include "svm_umc_client.h"
 
-#define UMC_MAX_CONCURRENCY_NUM       (3u)
-#define UMC_TIMEOUT_MS                (30u * 60u * 1000u)
+#define UMC_MAX_CONCURRENCY_NUM (3u)
+#define UMC_TIMEOUT_MS (30u * 60u * 1000u)
 
 static sem_t g_event_sem[SVM_MAX_DEV_AGENT_NUM][SVM_SUB_EVNET_H2D_TYPE_NUM];
 
-static void __attribute__ ((constructor)) umc_client_init(void)
+static void __attribute__((constructor)) umc_client_init(void)
 {
     u32 i, j;
 
@@ -43,24 +44,17 @@ static sem_t *umc_get_sem(u32 devid, u32 subevent_id)
     return &g_event_sem[devid][subevent_id - SVM_SUB_EVNET_H2D_TYPE_BASE];
 }
 
-static bool umc_is_submit_to_local(u32 flag)
-{
-    return ((flag & UMC_TO_LOCAL) != 0);
-}
+static bool umc_is_submit_to_local(u32 flag) { return ((flag & UMC_TO_LOCAL) != 0); }
 
-static bool umc_is_submit_from_device(u32 flag)
-{
-    return ((flag & UMC_DEVICE_SUBMIT) != 0);
-}
+static bool umc_is_submit_from_device(u32 flag) { return ((flag & UMC_DEVICE_SUBMIT) != 0); }
 
 static u32 umc_flag_to_dst_engine(u32 flag)
 {
-    return umc_is_submit_to_local(flag) ?
-        CCPU_LOCAL : (umc_is_submit_from_device(flag) ? CCPU_HOST : CCPU_DEVICE);
+    return umc_is_submit_to_local(flag) ? CCPU_LOCAL : (umc_is_submit_from_device(flag) ? CCPU_HOST : CCPU_DEVICE);
 }
 
-static int umc_fill_event_summary(struct svm_umc_msg_head *head, u32 flag, struct svm_umc_msg *msg,
-    struct event_summary *event_info)
+static int umc_fill_event_summary(
+    struct svm_umc_msg_head *head, u32 flag, struct svm_umc_msg *msg, struct event_summary *event_info)
 {
     int ret;
 
@@ -154,16 +148,22 @@ int svm_umc_send(struct svm_umc_msg_head *head, u32 flag, struct svm_umc_msg *ms
         goto clear_summary;
     }
 
-    ret = halEschedSubmitEventSync(head->devid, &event_info, UMC_TIMEOUT_MS, &reply);
+    if (umc_submit_sync_event(flag)) {
+        ret = halEschedSubmitEventSync(head->devid, &event_info, UMC_TIMEOUT_MS, &reply);
+    } else {
+        ret = halEschedSubmitEvent(head->devid, &event_info);
+    }
+
     if (ret != DRV_ERROR_NONE) {
-        svm_err_if((ret != DRV_ERROR_NO_PROCESS), "Event sched interface failed. (esched_ret=%d)\n", ret);
         ret = (ret < 0) ? DRV_ERROR_INNER_ERR : ret; /* esched sometimes will return -ret. */
         goto clear_reply;
     }
 
-    ret = umc_parse_reply(&reply, msg, &reply_ret);
-    if (ret == DRV_ERROR_NONE) {
-        ret = reply_ret;
+    if (umc_submit_sync_event(flag)) {
+        ret = umc_parse_reply(&reply, msg, &reply_ret);
+        if (ret == DRV_ERROR_NONE) {
+            ret = reply_ret;
+        }
     }
 
 clear_reply:
@@ -173,9 +173,16 @@ clear_summary:
     return ret;
 }
 
-int svm_umc_h2d_send(struct svm_umc_msg_head *head, struct svm_umc_msg *msg)
+static int _svm_umc_h2d_send(struct svm_umc_msg_head *head, struct svm_umc_msg *msg, u32 flag)
 {
     int ret;
+
+    if (svm_criu_is_resetting(head->devid)) {
+        if ((msg->msg_out != NULL) && (msg->msg_out_len != 0)) {
+            (void)memset_s(msg->msg_out, msg->msg_out_len, 0, msg->msg_out_len);
+        }
+        return DRV_ERROR_NONE;
+    }
 
     ret = sem_wait(umc_get_sem(head->devid, head->subevent_id));
     if (ret != 0) {
@@ -183,7 +190,17 @@ int svm_umc_h2d_send(struct svm_umc_msg_head *head, struct svm_umc_msg *msg)
         return DRV_ERROR_INNER_ERR;
     }
 
-    ret = svm_umc_send(head, 0, msg);
+    ret = svm_umc_send(head, flag, msg);
     (void)sem_post(umc_get_sem(head->devid, head->subevent_id));
     return ret;
+}
+
+int svm_umc_h2d_send(struct svm_umc_msg_head *head, struct svm_umc_msg *msg)
+{
+    return _svm_umc_h2d_send(head, msg, 0);
+}
+
+int svm_umc_h2d_send_async(struct svm_umc_msg_head *head, struct svm_umc_msg *msg)
+{
+    return _svm_umc_h2d_send(head, msg, UMC_USE_ASYNC);
 }

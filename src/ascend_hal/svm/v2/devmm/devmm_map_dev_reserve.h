@@ -31,4 +31,3 @@ DVresult devmm_ctrl_unmap_addr(void *param_value, size_t param_value_size, void 
 DVresult devmm_ctrl_map_mem_restore(void);
 
 #endif /* DEVMM_MAP_DEV_RESERVE_H */
-

@@ -19,16 +19,15 @@
 
 struct vmngh_vpc_unit {
     void *vdavinci;
-    ka_pci_dev_t *pdev;                       /* pci dev */
-    void __ka_mm_iomem *db_base;                      /* doorbell base address VA , bar0 */
-    void __ka_mm_iomem *msg_base;                     /* msg base address VA ; part of bar2 */
-    void __ka_mm_iomem *ts_msg_base;                  /* ts msg base address VA, bar4 */
-    struct vmng_msg_dev *msg_dev;               /* msg dev total, alloc and store point. */
+    ka_pci_dev_t *pdev;              /* pci dev */
+    void __ka_mm_iomem *db_base;     /* doorbell base address VA , bar0 */
+    void __ka_mm_iomem *msg_base;    /* msg base address VA ; part of bar2 */
+    void __ka_mm_iomem *ts_msg_base; /* ts msg base address VA, bar4 */
+    struct vmng_msg_dev *msg_dev;    /* msg dev total, alloc and store point. */
     struct vmng_shr_para *shr_para;
-    u32 dev_id;                                 /* device id alloced for davinci chip */
+    u32 dev_id; /* device id alloced for davinci chip */
     u32 fid;
 };
 int vmngh_dev_id_check(u32 dev_id, u32 fid);
-
 
 #endif

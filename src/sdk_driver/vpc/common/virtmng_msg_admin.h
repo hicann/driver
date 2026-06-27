@@ -65,5 +65,5 @@ struct vmng_agent_rm_pdev_cmd_reply {
 };
 
 int vmng_admin_msg_send(struct vmng_msg_chan_tx *msg_chan, struct vmng_tx_msg_proc_info *tx_info, u32 opcode_d1,
-    u32 opcode_d2);
+                        u32 opcode_d2);
 #endif

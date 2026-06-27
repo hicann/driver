@@ -13,9 +13,9 @@
 
 typedef unsigned long bitmap_t;
 
-void   bitmap_set(bitmap_t *map, int start, int nr);
-void   bitmap_clear(bitmap_t *map, int start, int nr);
-unsigned long bitmap_find_next_zero_area(bitmap_t *map, unsigned long size, unsigned long start,
-    unsigned int  nr, unsigned long align_mask);
+void bitmap_set(bitmap_t *map, int start, int nr);
+void bitmap_clear(bitmap_t *map, int start, int nr);
+unsigned long bitmap_find_next_zero_area(bitmap_t *map, unsigned long size, unsigned long start, unsigned int nr,
+                                         unsigned long align_mask);
 unsigned long bitmap_find_next_bit(const bitmap_t *map, unsigned long size, unsigned long offset);
 #endif

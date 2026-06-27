@@ -38,8 +38,8 @@ STATIC drvError_t drv_hdc_pcie_epoll_create(struct hdc_epoll_head *epoll_head, s
     return DRV_ERROR_NONE;
 }
 
-STATIC drvError_t drv_hdc_pcie_epoll_ctl(struct hdc_epoll_head *epoll_head,
-    signed int op, void *target, const struct drvHdcEvent *event)
+STATIC drvError_t drv_hdc_pcie_epoll_ctl(struct hdc_epoll_head *epoll_head, signed int op, void *target,
+                                         const struct drvHdcEvent *event)
 {
     signed int para1, para2 = 0;
     struct hdc_server_head *server_head = (struct hdc_server_head *)target;
@@ -50,7 +50,7 @@ STATIC drvError_t drv_hdc_pcie_epoll_ctl(struct hdc_epoll_head *epoll_head,
         para1 = server_head->deviceId;
         para2 = server_head->serviceType;
     } else {
-        para1 = session_head->sockfd;  /* hdc connect session */
+        para1 = session_head->sockfd; /* hdc connect session */
     }
 
     epollctl.epfd = epoll_head->epfd;
@@ -62,8 +62,8 @@ STATIC drvError_t drv_hdc_pcie_epoll_ctl(struct hdc_epoll_head *epoll_head,
     return (drvError_t)hdc_pcie_epoll_ctl(epoll_head->bind_fd, &epollctl, event);
 }
 
-STATIC drvError_t drv_hdc_pcie_epoll_wait(const struct hdc_epoll_head *epoll_head,
-    struct drvHdcEvent *events, signed int maxevents, signed int timeout, signed int *eventnum)
+STATIC drvError_t drv_hdc_pcie_epoll_wait(const struct hdc_epoll_head *epoll_head, struct drvHdcEvent *events,
+                                          signed int maxevents, signed int timeout, signed int *eventnum)
 {
     struct hdcdrv_event *epoll_events = NULL;
     struct hdcdrv_cmd_epoll_wait epollwait;

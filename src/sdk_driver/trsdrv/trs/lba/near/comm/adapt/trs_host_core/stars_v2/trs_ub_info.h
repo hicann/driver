@@ -13,7 +13,7 @@
 #ifndef TRS_UB_INFO_H
 #define TRS_UB_INFO_H
 
-#include <linux/types.h>
+#include "ka_type.h"
 
 struct trs_ub_info {
     u32 die_id;
@@ -24,4 +24,3 @@ int trs_ub_info_query(struct trs_id_inst *inst, u32 *die_id, u32 *func_id);
 void trs_ub_info_set(u32 devid, struct trs_ub_info *ub_info);
 
 #endif /* TRS_UB_INFO_H */
-

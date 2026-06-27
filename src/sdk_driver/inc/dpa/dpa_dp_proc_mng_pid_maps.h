@@ -16,14 +16,15 @@
 
 #include "dpa_pids_map.h"
 
-typedef int (*query_process_by_host_pid_kernel_func)(unsigned int host_pid,
-    unsigned int chip_id, enum devdrv_process_type cp_type, unsigned int vfid, int *pid);
-typedef int (*query_process_by_host_pid_func)(unsigned int host_pid,
-    unsigned int chip_id, enum devdrv_process_type cp_type, unsigned int vfid, int *pid);
-typedef int (*query_process_host_pid_func)(int pid, unsigned int *chip_id, unsigned int *vfid, unsigned int *host_pid,
-    enum devdrv_process_type *cp_type);
+typedef int (*query_process_by_host_pid_kernel_func)(
+    unsigned int host_pid, unsigned int chip_id, enum devdrv_process_type cp_type, unsigned int vfid, int *pid);
+typedef int (*query_process_by_host_pid_func)(
+    unsigned int host_pid, unsigned int chip_id, enum devdrv_process_type cp_type, unsigned int vfid, int *pid);
+typedef int (*query_process_host_pid_func)(
+    int pid, unsigned int *chip_id, unsigned int *vfid, unsigned int *host_pid, enum devdrv_process_type *cp_type);
 typedef int (*query_master_location_func)(const devdrv_pid_map_info_t *q_info, unsigned int *location);
-typedef int (*query_master_info_by_slave_func)(int slave_tgid, int *master_tgid, u32 *udevid, int *mode, u32 *proc_type_bitmap);
+typedef int (*query_master_info_by_slave_func)(
+    int slave_tgid, int *master_tgid, u32 *udevid, int *mode, u32 *proc_type_bitmap);
 typedef int (*query_slave_tgid_by_master_func)(int master_tgid, u32 udevid, processType_t proc_type, int *slave_tgid);
 typedef int (*query_master_pid_by_device_slave_func)(u32 udevid, int slave_pid, u32 *master_pid);
 typedef int (*query_master_pid_by_host_slave_func)(int slave_pid, u32 *master_pid);
@@ -51,8 +52,8 @@ struct pid_maps_ops {
 
 void dp_pid_maps_ops_regester(struct pid_maps_ops *maps_ops);
 void dp_pid_maps_ops_unregester(void);
-int hal_kernel_devdrv_query_process_by_host_pid_kernel(unsigned int host_pid,
-    unsigned int chip_id, enum devdrv_process_type cp_type, unsigned int vfid, int *pid);
+int hal_kernel_devdrv_query_process_by_host_pid_kernel(
+    unsigned int host_pid, unsigned int chip_id, enum devdrv_process_type cp_type, unsigned int vfid, int *pid);
 int apm_query_master_info_by_slave(int slave_tgid, int *master_tgid, u32 *udevid, int *mode, u32 *proc_type_bitmap);
 int hal_kernel_apm_query_slave_tgid_by_master(int master_tgid, u32 udevid, processType_t proc_type, int *slave_tgid);
 int devdrv_get_dev_process(pid_t devpid);

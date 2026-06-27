@@ -14,7 +14,7 @@
 #ifndef TRS_SEC_EH_AGENT_INIT_H
 #define TRS_SEC_EH_AGENT_INIT_H
 
-#include <linux/types.h>
+#include "ka_type.h"
 #include "trs_pub_def.h"
 
 void trs_sec_get_cq_update_irq_num(u32 devid, u32 *irq_num);

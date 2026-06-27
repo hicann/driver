@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2025. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -20,6 +20,7 @@
 
 #include "pbl_range_rbtree.h"
 #include "pbl_kref_safe.h"
+#include "svm_addr_desc.h"
 
 struct smp_ctx {
     u32 udevid;
@@ -32,8 +33,11 @@ struct smp_ctx {
 struct smp_mem_node {
     struct range_rbtree_node range_node;
     ka_atomic_t refcnt;
+    ka_atomic_t cross_app_refcnt;
     u32 flag;
     int status;
+    u64 seg_num;
+    struct svm_pa_seg *pa_seg;
 };
 
 struct smp_ctx *smp_ctx_get(u32 udevid, int tgid);
@@ -46,4 +50,3 @@ int svm_smp_init(void);
 void svm_smp_uninit(void);
 
 #endif
-

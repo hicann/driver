@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * Copyright (c) 2026 Huawei Technologies Co., Ltd.
  * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -25,10 +25,7 @@ static inline u32 svm_get_register_map_type(uint32_t flag)
     return (flag & mask);
 }
 
-static inline u32 svm_get_register_proc_type(uint32_t flag)
-{
-    return (flag >> MEM_PROC_TYPE_BIT);
-}
+static inline u32 svm_get_register_proc_type(uint32_t flag) { return (flag >> MEM_PROC_TYPE_BIT); }
 
 static int svm_register_dev_flag_check(u32 devid, u32 flag)
 {
@@ -57,6 +54,8 @@ drvError_t halHostRegister(void *src_ptr, UINT64 size, UINT32 flag, UINT32 devid
     u64 va = (u64)(uintptr_t)(src_ptr);
     u32 map_type = svm_get_register_map_type(flag);
     int ret;
+
+    svm_debug("HostRegister enter. (src_ptr=0x%llx; size=%llu; flag=0x%x; devid=%u)\n", va, size, flag, devid);
 
     if (dst_ptr == NULL) {
         svm_err("dst_ptr is null.\n");
@@ -88,11 +87,12 @@ drvError_t halHostRegister(void *src_ptr, UINT64 size, UINT32 flag, UINT32 devid
             ret = DRV_ERROR_NOT_SUPPORT;
             break;
         case DEV_SVM_MAP_HOST:
-            ret = svm_register_to_peer(va, size, svm_get_host_devid());
-            dst_va = va;
+            ret = svm_register_to_peer(va, size, svm_get_host_devid(), &dst_va);
             break;
-        case HOST_MEM_MAP_DEV_PCIE_TH:
-            ret = svm_register_pcie_th(va, size, 0, devid, &dst_va);
+        case HOST_MEM_MAP_DEV_V2:
+            ret = (svm_get_device_connect_type(devid) == HOST_DEVICE_CONNECT_TYPE_UB) ?
+                      svm_register_to_peer(va, size, devid, &dst_va) :
+                      svm_register_pcie_th(va, size, 0, devid, &dst_va);
             break;
         case HOST_IO_MAP_DEV:
             ret = svm_register_pcie_th(va, size, SVM_REGISTER_PCIE_TH_FLAG_VA_IO_MAP, devid, &dst_va);
@@ -102,6 +102,9 @@ drvError_t halHostRegister(void *src_ptr, UINT64 size, UINT32 flag, UINT32 devid
     }
 
     *dst_ptr = (ret == 0) ? (void *)(uintptr_t)dst_va : *dst_ptr;
+    svm_debug(
+        "HostRegister exit. (ret=%d; src_ptr=0x%llx; dst_ptr=0x%llx; size=%llu; flag=0x%x; devid=%u)\n", ret, va,
+        (u64)(uintptr_t)(*dst_ptr), size, flag, devid);
 
     return (drvError_t)ret;
 }
@@ -111,6 +114,8 @@ drvError_t halHostUnregisterEx(void *src_ptr, UINT32 devid, UINT32 flag)
     u64 va = (u64)(uintptr_t)(src_ptr);
     u32 map_type = svm_get_register_map_type(flag);
     int ret;
+
+    svm_debug("HostUnregisterEx enter. (src_ptr=0x%llx; flag=0x%x; devid=%u)\n", va, flag, devid);
 
     if (src_ptr == NULL) {
         svm_err("Ptr is null.\n");
@@ -134,8 +139,10 @@ drvError_t halHostUnregisterEx(void *src_ptr, UINT32 devid, UINT32 flag)
         case DEV_SVM_MAP_HOST:
             ret = svm_unregister_to_peer(va, svm_get_host_devid());
             break;
-        case HOST_MEM_MAP_DEV_PCIE_TH:
-            ret = svm_unregister_pcie_th(va, devid);
+        case HOST_MEM_MAP_DEV_V2:
+            ret = (svm_get_device_connect_type(devid) == HOST_DEVICE_CONNECT_TYPE_UB) ?
+                      svm_unregister_to_peer(va, devid) :
+                      svm_unregister_pcie_th(va, devid);
             break;
         case HOST_IO_MAP_DEV:
             ret = svm_unregister_pcie_th(va, devid);
@@ -144,6 +151,7 @@ drvError_t halHostUnregisterEx(void *src_ptr, UINT32 devid, UINT32 flag)
             return DRV_ERROR_NOT_SUPPORT;
     }
 
+    svm_debug("HostUnregisterEx exit. (ret=%d; src_ptr=0x%llx; flag=0x%x; devid=%u)\n", ret, va, flag, devid);
     return (drvError_t)ret;
 }
 
@@ -152,20 +160,29 @@ static int svm_get_unregister_map_type(u64 src_va, u32 devid, u32 *flag)
     struct svm_prop prop;
     int ret;
 
-    if (svm_va_is_pcie_th_register(src_va, devid)) {
-        *flag = HOST_MEM_MAP_DEV_PCIE_TH;
-    } else {
-        if (svm_va_is_in_range(src_va, 1ULL)) {
-            ret = svm_get_prop(src_va, &prop);
-            if (ret != DRV_ERROR_NONE) {
-                svm_err("Invalid addr. (ret=%d; src_va=0x%llx)\n", ret, src_va);
-                return DRV_ERROR_PARA_ERROR;
-            }
-
-            *flag = (prop.devid == svm_get_host_devid()) ? HOST_SVM_MAP_DEV : DEV_SVM_MAP_HOST;
-        } else {
-            *flag = HOST_MEM_MAP_DEV;
+    if (svm_get_device_connect_type(devid) == HOST_DEVICE_CONNECT_TYPE_UB) {
+        if (svm_is_register_to_peer_src_range(src_va, 1, devid)) {
+            *flag = HOST_MEM_MAP_DEV_V2;
+            return DRV_ERROR_NONE;
         }
+    } else {
+        if (svm_va_is_pcie_th_register(src_va, devid)) {
+            *flag = HOST_MEM_MAP_DEV_V2;
+            return DRV_ERROR_NONE;
+        }
+    }
+
+    if (svm_va_is_in_range(src_va, 1ULL)) {
+        ret = svm_get_prop(src_va, &prop);
+        if (ret != DRV_ERROR_NONE) {
+            svm_err("Invalid addr. (ret=%d; src_va=0x%llx)\n", ret, src_va);
+            svm_report_addr_not_allocated("halHostUnregister", "src_ptr", src_va);
+            return DRV_ERROR_PARA_ERROR;
+        }
+
+        *flag = (prop.devid == svm_get_host_devid()) ? HOST_SVM_MAP_DEV : DEV_SVM_MAP_HOST;
+    } else {
+        *flag = HOST_MEM_MAP_DEV;
     }
 
     return DRV_ERROR_NONE;
@@ -182,6 +199,45 @@ drvError_t halHostUnregister(void *src_ptr, UINT32 devid)
     }
 
     return halHostUnregisterEx(src_ptr, devid, flag);
+}
+
+/* Query device capabilities without depending on SVM device open */
+static int svm_get_register_d2h_acc_mask(u32 devid, u64 *acc_mask)
+{
+    int64_t hd_connect_type;
+    int ret;
+
+    if (devid == svm_get_host_devid()) {
+        *acc_mask = 0;
+        return 0;
+    }
+
+    ret = halGetDeviceInfo(devid, MODULE_TYPE_SYSTEM, INFO_TYPE_HD_CONNECT_TYPE, &hd_connect_type);
+    if (ret != DRV_ERROR_NONE) {
+        svm_err("halGetDeviceInfo failed. (devid=%u; ret=%d)\n", devid, ret);
+        return DRV_ERROR_INVALID_DEVICE;
+    }
+
+    switch (hd_connect_type) {
+        case HOST_DEVICE_CONNECT_TYPE_PCIE:
+            *acc_mask = (1ULL << DRV_ACC_MODULE_TYPE_STARS) | (1ULL << DRV_ACC_MODULE_TYPE_AIV);
+            break;
+        case HOST_DEVICE_CONNECT_TYPE_HCCS:
+            *acc_mask = (1ULL << DRV_ACC_MODULE_TYPE_STARS) | (1ULL << DRV_ACC_MODULE_TYPE_AIC) |
+                        (1ULL << DRV_ACC_MODULE_TYPE_AIV) | (1ULL << DRV_ACC_MODULE_TYPE_PCIEDMA) |
+                        (1ULL << DRV_ACC_MODULE_TYPE_RDMA) | (1ULL << DRV_ACC_MODULE_TYPE_SDMA) |
+                        (1ULL << DRV_ACC_MODULE_TYPE_DVPP);
+            break;
+        case HOST_DEVICE_CONNECT_TYPE_UB:
+            *acc_mask = (1ULL << DRV_ACC_MODULE_TYPE_STARS) | (1ULL << DRV_ACC_MODULE_TYPE_AICPU) |
+                        (1ULL << DRV_ACC_MODULE_TYPE_AIC) | (1ULL << DRV_ACC_MODULE_TYPE_AIV);
+            break;
+        default:
+            *acc_mask = 0;
+            break;
+    }
+
+    return DRV_ERROR_NONE;
 }
 
 drvError_t halHostRegisterCapabilities(uint32_t devid, uint32_t acc_module_type, uint32_t *mem_map_cap)
@@ -203,15 +259,16 @@ drvError_t halHostRegisterCapabilities(uint32_t devid, uint32_t acc_module_type,
         return DRV_ERROR_NOT_SUPPORT;
     }
 
-    ret = svm_dbi_query_d2h_acc_mask(devid, &d2h_acc_mask);
+    ret = svm_get_register_d2h_acc_mask(devid, &d2h_acc_mask);
     if (ret != 0) {
         return (drvError_t)ret;
     }
 
-    *mem_map_cap = ((d2h_acc_mask & (1ULL << acc_module_type)) != 0) ?
-        HOST_MEM_MAP_SUPPORTED : HOST_MEM_MAP_NOT_SUPPORTED;
+    *mem_map_cap =
+        ((d2h_acc_mask & (1ULL << acc_module_type)) != 0) ? HOST_MEM_MAP_SUPPORTED : HOST_MEM_MAP_NOT_SUPPORTED;
 
-    svm_debug("Host register cap. (Devid=%u; acc_module_type=%u; d2h_acc_mask=0x%llx; mem_map_cap=%u)\n",
-        devid, acc_module_type, d2h_acc_mask, *mem_map_cap);
+    svm_debug(
+        "Host register cap. (Devid=%u; acc_module_type=%u; d2h_acc_mask=0x%llx; mem_map_cap=%u)\n", devid,
+        acc_module_type, d2h_acc_mask, *mem_map_cap);
     return DRV_ERROR_NONE;
 }

@@ -7,14 +7,22 @@
 # INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
 # See LICENSE in the root of the software repository for the full text of the License.
 # ------------------------------------------------------------------------------------------------------------
-add_library(queue_obj OBJECT)
-
 if (${PRODUCT} STREQUAL ascend950)
     if (${CMAKE_HOST_SYSTEM_PROCESSOR} STREQUAL aarch64)
         if(${ENABLE_UBE})
             set(support_ub "ascend950")
         endif ()
     endif ()
+endif ()
+
+add_library(queue_obj OBJECT)
+target_sources(queue_obj PRIVATE
+    que_host_adapt.c
+)
+if (${PRODUCT} IN_LIST support_ub)
+target_sources(queue_obj PRIVATE
+    que_host_ub_adapt.c
+)
 endif ()
 
 target_include_directories(queue_obj PRIVATE
@@ -25,6 +33,7 @@ target_include_directories(queue_obj PRIVATE
     ${DRIVER_USER_DIR}/queue/command
     ${DRIVER_USER_DIR}/queue/dc/core
     ${DRIVER_USER_DIR}/queue/dc/interface
+    ${DRIVER_USER_DIR}/queue/dc/
     ${C_SEC_INCLUDE}
     ${DRIVER_HAL_INC_DIR}
     ${DRIVER_USER_DIR}/inc
@@ -34,6 +43,7 @@ target_include_directories(queue_obj PRIVATE
     ${DRIVER_KERNEL_DIR}/queue/command/msg
     ${DRIVER_KERNEL_DIR}/esched/command/msg
     ${DRIVER_USER_DIR}/buff/dc/share_fd_adp
+    ${DRIVER_USER_DIR}/esched
     ${DRIVER_USER_DIR}/esched/comm
     ${DRIVER_USER_DIR}/esched/dc
     ${DRIVER_USER_DIR}/esched/command

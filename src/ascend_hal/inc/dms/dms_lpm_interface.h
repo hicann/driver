@@ -44,6 +44,7 @@ struct dms_lp_state_in {
 };
 
 drvError_t DmsGetLpmInfo(struct dms_lpm_info_in *in, void *result, unsigned int result_size);
+drvError_t dms_get_lpm_freq_v2(struct dms_lpm_info_in_v2 *in, unsigned int *frequency);
 int DmsLpmPassThroughMcu(unsigned char rw_flag, unsigned char *buf, unsigned char buf_len,
     unsigned char *resp_buff, unsigned char *recv_len);
 

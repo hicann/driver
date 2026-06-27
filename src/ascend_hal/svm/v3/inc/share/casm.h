@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * Copyright (c) 2026 Huawei Technologies Co., Ltd.
  * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -22,8 +22,10 @@
  *  map/unmap: find src info by key, check memory white list mem and pin/unpin smp mem, store src info in map ctx
  */
 
-#define SVM_CASM_FLAG_PG_NC             (1U << 0U)
-#define SVM_CASM_FLAG_PG_RDONLY         (1U << 1U)
+#define SVM_CASM_FLAG_PG_NC                     (1U << 0U)
+#define SVM_CASM_FLAG_PG_RDONLY                 (1U << 1U)
+#define SVM_CASM_FLAG_MAP_UB_ONE_PORT_PATH      (1U << 2U)
+#define SVM_CASM_FLAG_MAP_UB_MULTI_PORT_PATH    (1U << 3U)
 
 /* owner app call */
 int svm_casm_create_key(struct svm_dst_va *dst_va, u64 *key);
@@ -50,11 +52,11 @@ static inline int svm_casm_check_local_task(u64 key, int tgid[], u32 num)
 }
 
 /* shared app call */
-int svm_casm_get_src_va_ex(u32 devid, u64 key, struct svm_global_va *src_va, u64 *ex_info);
+int svm_casm_get_src_va_ex(u32 devid, u64 key, struct svm_global_va *src_va, u64 *update_va, u64 *ex_info);
 static inline int svm_casm_get_src_va(u32 devid, u64 key, struct svm_global_va *src_va)
 {
-    u64 tmp;
-    return svm_casm_get_src_va_ex(devid, key, src_va, &tmp);
+    u64 tmp, update_va;
+    return svm_casm_get_src_va_ex(devid, key, src_va, &update_va, &tmp);
 }
 
 int svm_casm_mem_map(u32 devid, u64 va, u64 size, u64 key, u32 flag);
@@ -65,4 +67,3 @@ int svm_casm_mem_pin(u32 devid, u64 va, u64 size, u64 key);
 int svm_casm_mem_unpin(u32 devid, u64 va, u64 size);
 
 #endif
-

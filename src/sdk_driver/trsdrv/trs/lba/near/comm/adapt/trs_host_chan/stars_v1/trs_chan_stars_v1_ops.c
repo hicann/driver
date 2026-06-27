@@ -32,8 +32,9 @@
 #include "trs_host_comm.h"
 #include "trs_chan_stars_v1_ops.h"
 
-int trs_chan_ops_request_irq(struct trs_id_inst *inst, u32 irq_type, int irq_index,
-    void *para, int (*handler)(int irq_type, int irq_index, void *para, u32 cqid[], u32 cq_num))
+int trs_chan_ops_request_irq(
+    struct trs_id_inst *inst, u32 irq_type, int irq_index, void *para,
+    int (*handler)(int irq_type, int irq_index, void *para, u32 cqid[], u32 cq_num))
 {
     struct trs_chan_irq_attr attr;
     u32 group_index = irq_index;
@@ -199,21 +200,10 @@ static struct trs_chan_adapt_ops g_trs_chan_stars_v1_ops = {
     .sq_mem_unmap = trs_chan_ops_sq_rsvmem_unmap,
     .cq_need_resched = trs_chan_ops_cq_need_resched,
     .sqcq_speified_id_alloc = trs_chan_ops_sqcq_speified_id_alloc,
-    .sqcq_speified_id_free = trs_chan_ops_sqcq_speified_id_free
-};
+    .sqcq_speified_id_free = trs_chan_ops_sqcq_speified_id_free};
 
-struct trs_chan_adapt_ops *trs_chan_get_stars_v1_adapt_ops(void)
-{
-    return &g_trs_chan_stars_v1_ops;
-}
+struct trs_chan_adapt_ops *trs_chan_get_stars_v1_adapt_ops(void) { return &g_trs_chan_stars_v1_ops; }
 
-int trs_chan_stars_v1_ops_init(struct trs_id_inst *inst)
-{
-    return trs_chan_stars_v1_ops_stars_init(inst);
-}
+int trs_chan_stars_v1_ops_init(struct trs_id_inst *inst) { return trs_chan_stars_v1_ops_stars_init(inst); }
 
-void trs_chan_stars_v1_ops_uninit(struct trs_id_inst *inst)
-{
-    trs_chan_stars_v1_ops_stars_uninit(inst);
-}
-
+void trs_chan_stars_v1_ops_uninit(struct trs_id_inst *inst) { trs_chan_stars_v1_ops_stars_uninit(inst); }

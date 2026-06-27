@@ -45,8 +45,8 @@ int vmnga_msg_cluster_recv_vpc(void *msg_chan_in, struct vmng_msg_chan_rx_proc_i
         return -EINVAL;
     }
     if (vpc_type >= VMNG_VPC_TYPE_MAX) {
-        vmng_err("vpc_type is invalid. (dev_id=%u; chan_type=%u; vpc_type=%u)\n",
-                 dev_id, msg_cluster->chan_type, vpc_type);
+        vmng_err("vpc_type is invalid. (dev_id=%u; chan_type=%u; vpc_type=%u)\n", dev_id, msg_cluster->chan_type,
+                 vpc_type);
         return -EINVAL;
     }
     if (msg_dev->vpc_clients[vpc_type].msg_recv == NULL) {
@@ -74,8 +74,7 @@ STATIC int vmnga_vpc_msg_send_para_check(u32 dev_id, enum vmng_vpc_type vpc_type
     return 0;
 }
 
-int vmnga_vpc_msg_send(u32 dev_id, enum vmng_vpc_type vpc_type, struct vmng_tx_msg_proc_info *tx_info,
-    u32 timeout)
+int vmnga_vpc_msg_send(u32 dev_id, enum vmng_vpc_type vpc_type, struct vmng_tx_msg_proc_info *tx_info, u32 timeout)
 {
     struct vmng_msg_cluster *msg_cluster = NULL;
     struct vmng_msg_dev *msg_dev = NULL;

@@ -42,6 +42,7 @@ target_compile_options(ascend_rdma_lite PRIVATE
     -fno-common
     -std=gnu11
     -Wno-unused-parameter
+    -fvisibility=hidden
 )
 
 target_link_options(ascend_rdma_lite PRIVATE

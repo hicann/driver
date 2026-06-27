@@ -10,7 +10,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
- 
+
 #ifndef VMNG_MEM_ALLOC_INTERFACE_H
 #define VMNG_MEM_ALLOC_INTERFACE_H
 
@@ -23,7 +23,7 @@
 #define vmng_kcalloc(size, flags) ka_kcalloc(size, flags, ka_get_module_id(HAL_MODULE_TYPE_VMNG, KA_SUB_MODULE_TYPE_0))
 #define vmng_kfree(addr) ka_kfree(addr, ka_get_module_id(HAL_MODULE_TYPE_VMNG, KA_SUB_MODULE_TYPE_0))
 
-#define vmng_vzalloc(size)  ka_vzalloc(size, ka_get_module_id(HAL_MODULE_TYPE_VMNG, KA_SUB_MODULE_TYPE_0))
+#define vmng_vzalloc(size) ka_vzalloc(size, ka_get_module_id(HAL_MODULE_TYPE_VMNG, KA_SUB_MODULE_TYPE_0))
 #define __vmng_vmalloc(size, gfp_mask, prot) \
     __ka_vmalloc(size, gfp_mask, prot, ka_get_module_id(HAL_MODULE_TYPE_VMNG, KA_SUB_MODULE_TYPE_0))
 #define vmng_vfree(addr) ka_vfree(addr, ka_get_module_id(HAL_MODULE_TYPE_VMNG, KA_SUB_MODULE_TYPE_0))
@@ -36,7 +36,8 @@
     ka_free_pages(addr, order, ka_get_module_id(HAL_MODULE_TYPE_VMNG, KA_SUB_MODULE_TYPE_0))
 
 #define vmng_mg_sp_alloc_nodemask(size, sp_flags, spg_id, nodemask) \
-    ka_mg_sp_alloc_nodemask(size, sp_flags, spg_id, nodemask, ka_get_module_id(HAL_MODULE_TYPE_VMNG, KA_SUB_MODULE_TYPE_0))
+    ka_mg_sp_alloc_nodemask(size, sp_flags, spg_id, nodemask,       \
+                            ka_get_module_id(HAL_MODULE_TYPE_VMNG, KA_SUB_MODULE_TYPE_0))
 #define vmng_mg_sp_alloc(size, sp_flags, spg_id) \
     ka_mg_sp_alloc(size, sp_flags, spg_id, ka_get_module_id(HAL_MODULE_TYPE_VMNG, KA_SUB_MODULE_TYPE_0))
 #define ka_mg_sp_free(addr, id) ka_mg_sp_free(addr, id, module_id)
@@ -51,11 +52,13 @@
 #define __vmng_free_pages(page, order) \
     __ka_free_pages(page, order, ka_get_module_id(HAL_MODULE_TYPE_VMNG, KA_SUB_MODULE_TYPE_0))
 
-#define vmng_kvzalloc(size, flags) ka_kvzalloc(size, flags, ka_get_module_id(HAL_MODULE_TYPE_VMNG, KA_SUB_MODULE_TYPE_0))
+#define vmng_kvzalloc(size, flags) \
+    ka_kvzalloc(size, flags, ka_get_module_id(HAL_MODULE_TYPE_VMNG, KA_SUB_MODULE_TYPE_0))
 #define vmng_kvmalloc_node(size, flags, node) \
     ka_kvmalloc_node(size, flags, node, ka_get_module_id(HAL_MODULE_TYPE_VMNG, KA_SUB_MODULE_TYPE_0))
-#define vmng_kvmalloc(size, flags) ka_kvmalloc(size, flags, ka_get_module_id(HAL_MODULE_TYPE_VMNG, KA_SUB_MODULE_TYPE_0))
-#define vmng_kvfree(addr)  ka_kvfree(addr, ka_get_module_id(HAL_MODULE_TYPE_VMNG, KA_SUB_MODULE_TYPE_0))
+#define vmng_kvmalloc(size, flags) \
+    ka_kvmalloc(size, flags, ka_get_module_id(HAL_MODULE_TYPE_VMNG, KA_SUB_MODULE_TYPE_0))
+#define vmng_kvfree(addr) ka_kvfree(addr, ka_get_module_id(HAL_MODULE_TYPE_VMNG, KA_SUB_MODULE_TYPE_0))
 
 #define vmng_ka_dma_alloc_coherent(dev, size, dma_handle, gfp) \
     ka_dma_alloc_coherent(dev, size, dma_handle, gfp, ka_get_module_id(HAL_MODULE_TYPE_VMNG, KA_SUB_MODULE_TYPE_0))

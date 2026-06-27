@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2025. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -63,4 +63,3 @@ int svm_compound_large_pgtbl_init(void)
     return 0;
 }
 DECLAER_FEATURE_AUTO_INIT(svm_compound_large_pgtbl_init, FEATURE_LOADER_STAGE_0);
-

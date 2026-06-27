@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2025. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -15,23 +15,27 @@
 #include "ka_kernel_def_pub.h"
 
 #include "pbl_feature_loader.h"
+#include "pbl/pbl_runenv_config.h"
 
 #include "securec.h"
 #include "svm_task.h"
 #include "svm_proc_fs.h"
 
-#define SVM_PROC_TOP_NAME    "svm"
-#define SVM_PROC_FS_MODE     0444
-#define SVM_PROC_NAME_LEN   64
+#define SVM_PROC_TOP_NAME "svm"
+#define SVM_PROC_FS_MODE 0444
+#define SVM_PROC_NAME_LEN 64
 
 static ka_proc_dir_entry_t *svm_top_entry = NULL;
-
 static int svm_task_feature_show(ka_seq_file_t *seq, void *offset)
 {
     u64 priv = (u64)(uintptr_t)(ka_fs_get_seq_file_private(seq));
     u32 udevid = (u32)(priv >> 32) & 0xffff; /* 0xffff udevid bit 32-47 */
-    u32 feature_id = (u32)(priv >> 48); /* feature_id bit 48-63 */
+    u32 feature_id = (u32)(priv >> 48);      /* feature_id bit 48-63 */
     int tgid = (int)priv;
+
+    if (run_in_normal_docker()) {
+        return 0;
+    }
 
     module_feature_auto_show_task(udevid, tgid, feature_id, seq);
     return 0;
@@ -48,6 +52,10 @@ static int svm_dev_feature_show(ka_seq_file_t *seq, void *offset)
     u32 udevid = (u32)(priv >> 32); /* udevid high 32 bit */
     u32 feature_id = (u32)priv;
 
+    if (run_in_normal_docker()) {
+        return 0;
+    }
+
     module_feature_auto_show_dev(udevid, feature_id, seq);
     return 0;
 }
@@ -58,20 +66,12 @@ int svm_dev_feature_open(ka_inode_t *inode, ka_file_t *file)
 }
 
 static const ka_procfs_ops_t svm_task_feature = {
-    ka_fs_init_pf_owner(KA_THIS_MODULE) \
-    ka_fs_init_pf_open(svm_task_feature_open) \
-    ka_fs_init_pf_read(ka_fs_seq_read) \
-    ka_fs_init_pf_lseek(ka_fs_seq_lseek) \
-    ka_fs_init_pf_release(ka_fs_single_release) \
-};
+    ka_fs_init_pf_owner(KA_THIS_MODULE) ka_fs_init_pf_open(svm_task_feature_open) ka_fs_init_pf_read(ka_fs_seq_read)
+        ka_fs_init_pf_lseek(ka_fs_seq_lseek) ka_fs_init_pf_release(ka_fs_single_release)};
 
 static const ka_procfs_ops_t svm_dev_feature = {
-    ka_fs_init_pf_owner(KA_THIS_MODULE) \
-    ka_fs_init_pf_open(svm_dev_feature_open) \
-    ka_fs_init_pf_read(ka_fs_seq_read) \
-    ka_fs_init_pf_lseek(ka_fs_seq_lseek) \
-    ka_fs_init_pf_release(ka_fs_single_release) \
-};
+    ka_fs_init_pf_owner(KA_THIS_MODULE) ka_fs_init_pf_open(svm_dev_feature_open) ka_fs_init_pf_read(ka_fs_seq_read)
+        ka_fs_init_pf_lseek(ka_fs_seq_lseek) ka_fs_init_pf_release(ka_fs_single_release)};
 
 ka_proc_dir_entry_t *svm_proc_fs_add_task(u32 udevid, ka_proc_dir_entry_t *dev_entry, int tgid, u32 task_id)
 {
@@ -88,11 +88,12 @@ void svm_proc_fs_del_task(ka_proc_dir_entry_t *task_entry)
     }
 }
 
-void svm_proc_task_add_feature(u32 udevid, int tgid, ka_proc_dir_entry_t *task_entry,
-    u32 feature_id, const char *feature_name)
+void svm_proc_task_add_feature(
+    u32 udevid, int tgid, ka_proc_dir_entry_t *task_entry, u32 feature_id, const char *feature_name)
 {
     u64 priv = (u32)tgid | ((u64)(udevid) << 32) | ((u64)(feature_id) << 48); /* udevid 32-47, feature_id 48-63 */
-    (void)ka_fs_proc_create_data(feature_name, SVM_PROC_FS_MODE, task_entry, &svm_task_feature, (void *)(uintptr_t)priv);
+    (void)ka_fs_proc_create_data(
+        feature_name, SVM_PROC_FS_MODE, task_entry, &svm_task_feature, (void *)(uintptr_t)priv);
 }
 
 ka_proc_dir_entry_t *svm_proc_fs_add_dev(u32 udevid, u32 inst)
@@ -133,4 +134,3 @@ void svm_proc_fs_uninit(void)
         svm_top_entry = NULL;
     }
 }
-

@@ -21,9 +21,9 @@
 struct devmm_dev_page_node {
     ka_list_head_t list;
     u64 va;
-    u32 node_sz;  /* pa sizes save this node */
-    u32 blk_sz;   /* pa page size */
-    u32 blk_num;  /* pa blk nums save this node */
+    u32 node_sz; /* pa sizes save this node */
+    u32 blk_sz;  /* pa page size */
+    u32 blk_num; /* pa blk nums save this node */
     struct devmm_addr_block blks[];
 };
 
@@ -62,10 +62,7 @@ void devmm_init_dev_pages_cache_inner(struct devmm_svm_process *svm_pro)
     return;
 }
 
-void devmm_init_dev_pages_cache(struct devmm_svm_process *svm_proc)
-{
-    devmm_init_dev_pages_cache_inner(svm_proc);
-}
+void devmm_init_dev_pages_cache(struct devmm_svm_process *svm_proc) { devmm_init_dev_pages_cache_inner(svm_proc); }
 
 STATIC struct devmm_dev_pages_cache *devmm_get_dev_pages_head(struct devmm_svm_process *svm_pro, u32 devid)
 {
@@ -128,7 +125,8 @@ void devmm_destroy_dev_pages_cache_inner(struct devmm_svm_process *svm_pro, u32 
     }
     ka_task_down_write(&dev_pages_head->lock);
     for (j = 0; j < DEVMM_PAGE_CACHE_LIST_NUM; j++) {
-        ka_list_for_each_safe(pos, n, &dev_pages_head->head[j]) {
+        ka_list_for_each_safe(pos, n, &dev_pages_head->head[j])
+        {
             node = ka_list_entry(pos, struct devmm_dev_page_node, list);
             ka_list_del(&node->list);
             devmm_kfree_ex(node);
@@ -137,7 +135,8 @@ void devmm_destroy_dev_pages_cache_inner(struct devmm_svm_process *svm_pro, u32 
         }
     }
     for (j = 0; j < DEVMM_HUGE_PAGE_CACHE_LIST_NUM; j++) {
-        ka_list_for_each_safe(pos, n, &dev_pages_head->huge_head[j]) {
+        ka_list_for_each_safe(pos, n, &dev_pages_head->huge_head[j])
+        {
             node = ka_list_entry(pos, struct devmm_dev_page_node, list);
             ka_list_del(&node->list);
             devmm_kfree_ex(node);
@@ -167,17 +166,14 @@ void devmm_destroy_pages_cache_inner(struct devmm_svm_process *svm_proc)
     }
 }
 
-void devmm_destroy_pages_cache(struct devmm_svm_process *svm_proc)
-{
-    devmm_destroy_pages_cache_inner(svm_proc);
-}
+void devmm_destroy_pages_cache(struct devmm_svm_process *svm_proc) { devmm_destroy_pages_cache_inner(svm_proc); }
 
 STATIC u32 devmm_get_dev_pages_head_idx(u32 page_size, u64 va)
 {
-    u32 cache_node_shift = (page_size == devmm_svm->device_hpage_size) ?
-            DEVMM_HUGE_PAGE_CACHE_NODE_SHIFT : DEVMM_PAGE_CACHE_NODE_SHIFT;
-    u32 cache_node_list_num = (page_size == devmm_svm->device_hpage_size) ?
-            DEVMM_HUGE_PAGE_CACHE_LIST_NUM : DEVMM_PAGE_CACHE_LIST_NUM;
+    u32 cache_node_shift =
+        (page_size == devmm_svm->device_hpage_size) ? DEVMM_HUGE_PAGE_CACHE_NODE_SHIFT : DEVMM_PAGE_CACHE_NODE_SHIFT;
+    u32 cache_node_list_num =
+        (page_size == devmm_svm->device_hpage_size) ? DEVMM_HUGE_PAGE_CACHE_LIST_NUM : DEVMM_PAGE_CACHE_LIST_NUM;
 
     return (u32)((va >> cache_node_shift) & (cache_node_list_num - 1));
 }
@@ -186,7 +182,6 @@ STATIC u32 devmm_get_dev_pages_idx(struct devmm_dev_page_node *node, u64 va)
 {
     return (u32)((va & (node->node_sz - 1)) / node->blk_sz);
 }
-
 
 STATIC struct devmm_dev_page_node *devmm_create_page_node(
     u32 page_size, struct devmm_dev_pages_cache *dev_pages_head, u64 va)
@@ -198,14 +193,15 @@ STATIC struct devmm_dev_page_node *devmm_create_page_node(
     blk_sz = page_size;
     blk_num = DEVMM_PAGE_CACHE_BLK_NUM;
     head = (page_size == devmm_svm->device_hpage_size) ? dev_pages_head->huge_head : dev_pages_head->head;
-    node = devmm_kzalloc_ex(sizeof(struct devmm_dev_page_node) + sizeof(struct devmm_addr_block) * blk_num,
+    node = devmm_kzalloc_ex(
+        sizeof(struct devmm_dev_page_node) + sizeof(struct devmm_addr_block) * blk_num,
         KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
     if (node) {
         KA_INIT_LIST_HEAD(&node->list);
         node->node_sz = blk_num * blk_sz;
         node->va = ka_base_round_down(va, node->node_sz);
         node->blk_num = blk_num;
-        node->blk_sz  = blk_sz;  /* page size */
+        node->blk_sz = blk_sz; /* page size */
         idx = devmm_get_dev_pages_head_idx(page_size, va);
         devmm_drv_debug("Enter. (va=0x%llx; idx=%u)\n", va, idx);
         ka_list_add(&node->list, &head[idx]);
@@ -236,8 +232,8 @@ STATIC u32 devmm_free_page_node(u64 va, u32 page_num, struct devmm_dev_page_node
     return free_num;
 }
 
-STATIC struct devmm_dev_page_node *devmm_get_page_node_by_va(u32 page_size,
-    struct devmm_dev_pages_cache *dev_pages_head, u64 va)
+STATIC struct devmm_dev_page_node *devmm_get_page_node_by_va(
+    u32 page_size, struct devmm_dev_pages_cache *dev_pages_head, u64 va)
 {
     u32 idx = devmm_get_dev_pages_head_idx(page_size, va);
     struct devmm_dev_page_node *node = NULL;
@@ -246,7 +242,8 @@ STATIC struct devmm_dev_page_node *devmm_get_page_node_by_va(u32 page_size,
     ka_list_head_t *n = NULL;
 
     head = (page_size == devmm_svm->device_hpage_size) ? dev_pages_head->huge_head : dev_pages_head->head;
-    ka_list_for_each_safe(pos, n, &head[idx]) {
+    ka_list_for_each_safe(pos, n, &head[idx])
+    {
         node = ka_list_entry(pos, struct devmm_dev_page_node, list);
         if ((va >= node->va) && (va < (node->va + node->node_sz))) {
             return node;
@@ -256,8 +253,8 @@ STATIC struct devmm_dev_page_node *devmm_get_page_node_by_va(u32 page_size,
     return NULL;
 }
 
-void devmm_free_pages_cache_inner(struct devmm_svm_process *svm_process,
-    u32 devid, u32 page_num, u32 page_size, u64 va, bool reuse)
+void devmm_free_pages_cache_inner(
+    struct devmm_svm_process *svm_process, u32 devid, u32 page_num, u32 page_size, u64 va, bool reuse)
 {
     struct devmm_dev_pages_cache *dev_pages_head = NULL;
     struct devmm_dev_page_node *node = NULL;
@@ -275,7 +272,7 @@ void devmm_free_pages_cache_inner(struct devmm_svm_process *svm_process,
     aligned_va = ka_base_round_down(va, page_size);
     ka_task_down_write(&dev_pages_head->lock);
     for (offset = 0, freed_num = 0, freed_size = 0; offset < size;
-        offset += freed_size, aligned_va += freed_size, blk_num -= freed_num) {
+         offset += freed_size, aligned_va += freed_size, blk_num -= freed_num) {
         node = devmm_get_page_node_by_va(page_size, dev_pages_head, aligned_va);
         if (node) {
             freed_num = devmm_free_page_node(aligned_va, blk_num, node, reuse);
@@ -296,8 +293,8 @@ void devmm_free_pages_cache_inner(struct devmm_svm_process *svm_process,
     return;
 }
 
-void devmm_free_pages_cache(struct devmm_svm_process *svm_proc,
-    u32 devid, u32 page_num, u32 page_size, u64 va, bool reuse)
+void devmm_free_pages_cache(
+    struct devmm_svm_process *svm_proc, u32 devid, u32 page_num, u32 page_size, u64 va, bool reuse)
 {
     devmm_free_pages_cache_inner(svm_proc, devid, page_num, page_size, va, reuse);
 }
@@ -321,15 +318,16 @@ STATIC void devmm_set_pa_first(struct devmm_dev_pages_cache *dev_pages_head, u64
     node->blks[page_idx].phy_addr |= DEVMM_PA_FIRST;
 }
 
-STATIC void devmm_set_dma_phy_addr_to_node(struct devmm_pages_cache_info *info,
-    u64 query_pages_blk_index, struct devmm_dev_page_node *node, u64 node_blk_index)
+STATIC void devmm_set_dma_phy_addr_to_node(
+    struct devmm_pages_cache_info *info, u64 query_pages_blk_index, struct devmm_dev_page_node *node,
+    u64 node_blk_index)
 {
     node->blks[node_blk_index].dma_addr = info->blks[query_pages_blk_index].dma_addr | DEVMM_PA_VALID;
     node->blks[node_blk_index].phy_addr = info->blks[query_pages_blk_index].phy_addr | DEVMM_PA_VALID;
 }
 
-STATIC void devmm_insert_pa_info_to_node(struct devmm_dev_pages_cache *dev_pages_head,
-    struct devmm_pages_cache_info *info)
+STATIC void devmm_insert_pa_info_to_node(
+    struct devmm_dev_pages_cache *dev_pages_head, struct devmm_pages_cache_info *info)
 {
     struct devmm_dev_page_node *node = NULL;
     u32 stamp = (u32)ka_jiffies;
@@ -348,7 +346,8 @@ STATIC void devmm_insert_pa_info_to_node(struct devmm_dev_pages_cache *dev_pages
             insert_num = ka_base_min((info->pg_num - i), (u64)(node->blk_num - page_idx));
             for (j = 0; j < insert_num; j++) {
                 devmm_set_dma_phy_addr_to_node(info, i + j, node, page_idx + j);
-                devmm_drv_debug("Enter. (va=0x%llx; num=%llu; i=%llu; j=%llu; page_idx=%u; psize=%llu; blk_sz=%u)\n",
+                devmm_drv_debug(
+                    "Enter. (va=0x%llx; num=%llu; i=%llu; j=%llu; page_idx=%u; psize=%llu; blk_sz=%u)\n",
                     va + j * node->blk_sz, info->pg_num, i, j, page_idx, info->pg_size, node->blk_sz);
             }
             va += j * node->blk_sz;
@@ -359,11 +358,14 @@ STATIC void devmm_insert_pa_info_to_node(struct devmm_dev_pages_cache *dev_pages
     }
 }
 
-void devmm_insert_pages_cache(struct devmm_svm_process *svm_process,
-    struct devmm_chan_page_query_ack *query_pages, u32 devid)
+void devmm_insert_pages_cache(
+    struct devmm_svm_process *svm_process, struct devmm_chan_page_query_ack *query_pages, u32 devid)
 {
-    struct devmm_pages_cache_info info = {.va = query_pages->va, .pg_num = query_pages->num,
-        .pg_size = query_pages->page_size, .blks = query_pages->blks};
+    struct devmm_pages_cache_info info = {
+        .va = query_pages->va,
+        .pg_num = query_pages->num,
+        .pg_size = query_pages->page_size,
+        .blks = query_pages->blks};
 
     devmm_pages_cache_set(svm_process, devid, &info);
 }
@@ -397,8 +399,8 @@ STATIC u64 devmm_fill_dma_node(struct devmm_dev_page_node *node, struct devmm_se
 
     for (i = 0; (page_idx < node->blk_num) && (i < search_para->blks_num) && (va < end_va); i++, page_idx++) {
         if ((node->blks[page_idx].phy_addr & DEVMM_PA_VALID) != 0) {
-            blks[i].pa = (search_para->addr_type == DEVMM_ADDR_TYPE_DMA) ?
-               node->blks[page_idx].dma_addr : node->blks[page_idx].phy_addr;
+            blks[i].pa = (search_para->addr_type == DEVMM_ADDR_TYPE_DMA) ? node->blks[page_idx].dma_addr :
+                                                                           node->blks[page_idx].phy_addr;
             blks[i].pa = blks[i].pa & (~DEVMM_PA_MASK);
             blks[i].sz = node->blk_sz;
             blks[i].ssid = 0;
@@ -415,8 +417,9 @@ STATIC u64 devmm_fill_dma_node(struct devmm_dev_page_node *node, struct devmm_se
     return fill_size;
 }
 
-bool devmm_find_pages_cache(struct devmm_svm_process *svm_process, struct devmm_page_query_arg query_arg,
-    struct devmm_dma_block *blks, u32 *num)
+bool devmm_find_pages_cache(
+    struct devmm_svm_process *svm_process, struct devmm_page_query_arg query_arg, struct devmm_dma_block *blks,
+    u32 *num)
 {
     struct devmm_dev_pages_cache *dev_pages_head = NULL;
     struct devmm_dev_page_node *node = NULL;
@@ -428,8 +431,9 @@ bool devmm_find_pages_cache(struct devmm_svm_process *svm_process, struct devmm_
     if (blks == NULL) {
         return false;
     }
-    devmm_drv_debug("Enter. (va=0x%llx; size=%llu; page_insert_dev_id=%u addr_type=%u)\n",
-        query_arg.va, query_arg.size, query_arg.page_insert_dev_id, query_arg.addr_type);
+    devmm_drv_debug(
+        "Enter. (va=0x%llx; size=%llu; page_insert_dev_id=%u addr_type=%u)\n", query_arg.va, query_arg.size,
+        query_arg.page_insert_dev_id, query_arg.addr_type);
 
     dev_pages_head = devmm_get_dev_pages_head(svm_process, query_arg.page_insert_dev_id);
     if (dev_pages_head == NULL) {
@@ -466,14 +470,15 @@ bool devmm_find_pages_cache(struct devmm_svm_process *svm_process, struct devmm_
         }
     }
     devmm_put_dev_pages_head(svm_process, query_arg.page_insert_dev_id);
-    devmm_drv_debug("Enter. (va=0x%llx; size=%llu; page_insert_dev_id=%u; blks_start=%d; num=%d; success=%d).\n",
-        query_arg.va, query_arg.size, query_arg.page_insert_dev_id, blks_start, *num, success);
+    devmm_drv_debug(
+        "Enter. (va=0x%llx; size=%llu; page_insert_dev_id=%u; blks_start=%d; num=%d; success=%d).\n", query_arg.va,
+        query_arg.size, query_arg.page_insert_dev_id, blks_start, *num, success);
     return success;
 }
 
 #ifndef EMU_ST
-static int devmm_find_dma_addr_cache(struct devmm_svm_process *svm_process,
-    u32 logic_id, u64 va, u32 page_size, u64 *dma_addr)
+static int devmm_find_dma_addr_cache(
+    struct devmm_svm_process *svm_process, u32 logic_id, u64 va, u32 page_size, u64 *dma_addr)
 {
     struct devmm_dev_pages_cache *dev_pages_head = NULL;
     struct devmm_dev_page_node *node = NULL;
@@ -500,8 +505,8 @@ static int devmm_find_dma_addr_cache(struct devmm_svm_process *svm_process,
         goto OUT;
     }
 
-    *dma_addr = (node->blks[page_idx].dma_addr & (~DEVMM_PA_MASK)) +
-        (va - (node->va + (u64)node->blk_sz * (u64)page_idx));
+    *dma_addr =
+        (node->blks[page_idx].dma_addr & (~DEVMM_PA_MASK)) + (va - (node->va + (u64)node->blk_sz * (u64)page_idx));
 
 OUT:
     ka_task_up_read(&dev_pages_head->lock);
@@ -567,8 +572,7 @@ int devmm_find_pa_cache(struct devmm_svm_process *svm_process, u32 logic_id, u64
         goto OUT;
     }
 
-    *pa = (node->blks[page_idx].phy_addr & (~DEVMM_PA_MASK)) +
-        (va - (node->va + (u64)node->blk_sz * (u64)page_idx));
+    *pa = (node->blks[page_idx].phy_addr & (~DEVMM_PA_MASK)) + (va - (node->va + (u64)node->blk_sz * (u64)page_idx));
 
 OUT:
     ka_task_up_read(&dev_pages_head->lock);
@@ -577,8 +581,7 @@ OUT:
     return ret;
 }
 
-u64 devmm_get_continuty_len_after_dev_va(struct devmm_svm_process *svm_proc,
-    u32 logic_id, u64 va, u32 page_size)
+u64 devmm_get_continuty_len_after_dev_va(struct devmm_svm_process *svm_proc, u32 logic_id, u64 va, u32 page_size)
 {
 #ifndef DEVMM_UT
     struct devmm_dev_pages_cache *dev_pages_head = NULL;
@@ -627,4 +630,3 @@ u64 devmm_get_continuty_len_after_dev_va(struct devmm_svm_process *svm_proc,
     return page_size;
 #endif
 }
-

@@ -11,7 +11,7 @@
 #include <stdbool.h>
 #include <errno.h>
 #include "securec.h"
-#include "dsmi_common_interface_custom.h"
+#include "dsmi_common_interface.h"
 #include "dcmi_fault_manage_intf.h"
 #include "dcmi_log.h"
 #include "dcmi_product_judge.h"
@@ -139,7 +139,7 @@ int dcmi_check_910b_template_name_inner(const char *template_name, struct dcmi_b
             break;
         }
     }
-
+    
     if (type_map->supported_template == NULL) {
         return DCMI_ERR_CODE_INNER_ERR;
     }
@@ -465,8 +465,13 @@ bool dcmi_check_card_is_split_phy(int card_id)
         }
     } else {
         resource_len = sizeof(soc_total_resource);
-        ret = dcmi_get_device_info(card_id, 0, DCMI_MAIN_CMD_VDEV_MNG,
-            DCMI_VMNG_SUB_CMD_GET_TOTAL_RESOURCE, &soc_total_resource, &resource_len);
+        if (dcmi_board_chip_type_is_ascend_950() == TRUE) {
+            ret = dcmiv2_get_device_info(card_id, DCMI_MAIN_CMD_VDEV_MNG,
+                DCMI_VMNG_SUB_CMD_GET_TOTAL_RESOURCE, &soc_total_resource, &resource_len);
+        } else {
+            ret = dcmi_get_device_info(card_id, 0, DCMI_MAIN_CMD_VDEV_MNG,
+                DCMI_VMNG_SUB_CMD_GET_TOTAL_RESOURCE, &soc_total_resource, &resource_len);
+        }
         if (ret != DCMI_OK) {
             gplog(LOG_ERR, "get total resource failed. card_id=%d ret is %d", card_id, ret);
         }
@@ -859,6 +864,103 @@ int dcmi_check_chip_is_in_split_mode(int card_id, int device_id)
     }
 }
 
+int dcmiv2_check_vnpu_chip_is_vir(int dev_id, int *vir_flag)
+{
+    struct dcmi_chip_info_v2 chip_info = { { 0 } };
+
+    int ret = dcmiv2_get_device_chip_info(dev_id, &chip_info);
+    if (ret != DCMI_OK) {
+        return ret;
+    }
+
+    if (strstr((char *)chip_info.chip_name, "vir") != NULL) {
+        *vir_flag = 1;
+    }
+    return DCMI_OK;
+}
+
+int dcmiv2_all_vnpu_is_vir(int *all_vir_flag)
+{
+    int ret;
+    int vir_flag = 0;
+    int device_list[MAX_CARD_NUM] = {0};
+    int device_count = 0;
+    int index;
+
+    ret = dcmiv2_get_device_list(device_list, &device_count, MAX_CARD_NUM);
+    if (ret != DCMI_OK) {
+        gplog(LOG_ERR, "dcmiv2_get_device_list failed. (ret=%d)", ret);
+        return ret;
+    }
+
+    for (index = 0; index < device_count; index++) {
+        ret = dcmiv2_check_vnpu_chip_is_vir(device_list[index], &vir_flag);
+        if (ret != DCMI_OK) {
+            gplog(LOG_ERR, "check vnpu vir failed. (dev_id=%d, ret=%d)", device_list[index], ret);
+            return ret;
+        }
+
+        if (vir_flag == 0) {
+            gplog(LOG_INFO, "find non-vir npu. (dev_id=%d)", device_list[index]);
+            *all_vir_flag = 0;
+            break;
+        }
+    }
+
+    return DCMI_OK;
+}
+
+int dcmiv2_check_chip_is_in_split_mode(int dev_id)
+{
+    /* 覆盖各场景是否为切分判断通用函数 */
+    int vir_flag = 1;
+    unsigned int env_flag = 0;
+    int ret = 0;
+    struct dcmi_soc_total_resource soc_total_resource = { 0 };
+    unsigned int resource_len;
+    ret = dcmi_get_environment_flag(&env_flag);
+    if (ret != DCMI_OK) {
+        gplog(LOG_ERR, "Failed to get dcmi_get_environment_flag.");
+        return DCMI_ERR_CODE_INNER_ERR;
+    }
+    if (env_flag == ENV_PHYSICAL_PRIVILEGED_CONTAINER || env_flag == ENV_PHYSICAL) {
+        resource_len = sizeof(soc_total_resource);
+        ret = dsmi_get_device_info(dev_id, (DSMI_MAIN_CMD)DCMI_MAIN_CMD_VDEV_MNG,
+            DCMI_VMNG_SUB_CMD_GET_TOTAL_RESOURCE, &soc_total_resource, &resource_len);
+        if (dcmi_convert_error_code(ret) != DCMI_OK) {
+            gplog(LOG_ERR, "get total resource failed. (dev_id=%d, ret=%d)", dev_id, ret);
+        }
+        if (soc_total_resource.vdev_num > 0) {
+            return DCMI_ERR_CODE_OPER_NOT_PERMITTED;
+        } else {
+            return DCMI_OK;
+        }
+    } else {
+        ret = dcmiv2_all_vnpu_is_vir(&vir_flag);
+        if (ret != DCMI_OK) {
+            gplog(LOG_ERR, "Failed to get dcmi_all_vnpu_is_vir.");
+            return DCMI_ERR_CODE_INNER_ERR;
+        }
+        if (vir_flag == 1) {
+            return DCMI_ERR_CODE_OPER_NOT_PERMITTED;
+        }
+        return DCMI_OK;
+    }
+}
+
+int dcmi_disable_sriov_proc(int card_id, int device_id, int create_err)
+{
+    // 非910B产品，需要返回创建vdevice失败的原因
+    // 910B产品则先返回去使能sriov失败的原因，再返回创建vdevice失败的原因
+    int disable_err = set_disable_sriov(card_id, device_id, create_err);
+    if (disable_err != DCMI_OK && dcmi_board_chip_type_is_ascend_910b()) {
+        gplog(LOG_ERR, "set_disable_sriov failed. ret is %d", disable_err);
+        return disable_err;
+    }
+
+    return create_err;
+}
+
 int dcmi_create_vdevice(int card_id, int device_id, struct dcmi_create_vdev_res_stru *vdev,
     struct dcmi_create_vdev_out *out)
 {
@@ -897,7 +999,7 @@ int dcmi_create_vdevice(int card_id, int device_id, struct dcmi_create_vdev_res_
             gplog(LOG_OP, "create vnpu failed. card_id = %d, device_id = %d, vdev_id = %u, vfg_id = %u,"
                 " template_name = %s. err is %d", card_id, device_id, vdev->vdev_id, vdev->vfg_id,
                 vdev->template_name, err);
-            return err;
+            goto out;
         }
     } else {
         gplog(LOG_OP, "device_type %d is not support.", device_type);
@@ -907,11 +1009,8 @@ int dcmi_create_vdevice(int card_id, int device_id, struct dcmi_create_vdev_res_
         card_id, device_id, out->vdev_id, out->vfg_id, vdev->template_name);
     return DCMI_OK;
 
-    err = set_disable_sriov(card_id, device_id, err);
-    if (err != DCMI_OK && dcmi_board_chip_type_is_ascend_910b()) {
-        gplog(LOG_ERR, "set_disable_sriov failed. ret is %d", err);
-    }
-    return err;
+out:
+    return dcmi_disable_sriov_proc(card_id, device_id, err);
 }
 
 int dcmi_set_destroy_vdevice(int card_id, int device_id, unsigned int vdevid)

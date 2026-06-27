@@ -67,7 +67,7 @@ STATIC void dms_get_iterval_seconds(struct dms_time_sync *interval_time)
     long interval;
     time_t local;
     time_t utc;
-    struct tm tmp_ptr;
+    struct tm tmp_ptr = {0};
 
     (void)time(&local);
     (void)gmtime_r(&local, &tmp_ptr);

@@ -24,15 +24,15 @@ void trs_chan_stars_v2_ops_uninit(struct trs_id_inst *inst);
 int trs_chan_ops_agent_init(struct trs_id_inst *inst);
 void trs_chan_ops_agent_uninit(struct trs_id_inst *inst);
 
-int trs_stars_v2_chan_ops_request_irq(struct trs_id_inst *inst, u32 irq_type, int irq_index, void *para,
-                                      int (*handler)(int irq_type, int irq_index, void *para, u32 cqid[], u32 cq_num));
+int trs_stars_v2_chan_ops_request_irq(
+    struct trs_id_inst *inst, u32 irq_type, int irq_index, void *para,
+    int (*handler)(int irq_type, int irq_index, void *para, u32 cqid[], u32 cq_num));
 int trs_stars_v2_chan_ops_free_irq(struct trs_id_inst *inst, int irq_type, int irq_index, void *para);
 int trs_chan_stars_v2_ops_ctrl_sqcq(struct trs_id_inst *inst, struct trs_chan_type *types, u32 id, u32 cmd, u32 para);
-int trs_chan_stars_v2_ops_query_sqcq(struct trs_id_inst *inst, struct trs_chan_type *types, u32 id, u32 cmd,
-                                     u64 *value);
+int trs_chan_stars_v2_ops_query_sqcq(
+    struct trs_id_inst *inst, struct trs_chan_type *types, u32 id, u32 cmd, u64 *value);
 void trs_chan_stars_v2_update_ssid(struct trs_id_inst *inst, struct trs_chan_info *chan_info);
 struct trs_chan_adapt_ops *trs_chan_get_stars_v2_adapt_ops(void);
 int trs_chan_stars_v2_ops_init(struct trs_id_inst *inst);
 void trs_chan_stars_v2_ops_uninit(struct trs_id_inst *inst);
 #endif /* TRS_CHAN_STARS_V2_OPS_H */
-

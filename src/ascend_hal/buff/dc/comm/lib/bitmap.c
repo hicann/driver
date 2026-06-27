@@ -13,10 +13,7 @@
 
 #define BITMAP_ALIGN_MASK(x, mask) (((x) + (mask)) & ~(mask))
 #define BITMAP_LAST_WORD_MASK(nbits) \
-(                                    \
-    (((nbits) % BITS_PER_LONG) != 0) ?      \
-        ((1UL<<((nbits) % BITS_PER_LONG)) - 1) : ~0UL  \
-)
+    ((((nbits) % BITS_PER_LONG) != 0) ? ((1UL << ((nbits) % BITS_PER_LONG)) - 1) : ~0UL)
 
 static unsigned int bitmap_ffs(bitmap_t word, unsigned int start, unsigned int end)
 {
@@ -129,8 +126,8 @@ static unsigned long bitmap_find_next_zero_bit(const bitmap_t *map, unsigned lon
     bitmap_t tmp;
     unsigned long result;
     const bitmap_t *p = map + start_map_line;
-    unsigned int end = (unsigned int)(((size & (BITS_PER_LONG - 1)) != 0) ?
-                       (size & (BITS_PER_LONG - 1)) : BITS_PER_LONG);
+    unsigned int end = (unsigned int)(((size & (BITS_PER_LONG - 1)) != 0) ? (size & (BITS_PER_LONG - 1)) :
+                                                                            BITS_PER_LONG);
 
     if (offset >= size) {
         return size;
@@ -179,8 +176,8 @@ unsigned long bitmap_find_next_bit(const bitmap_t *map, unsigned long size, unsi
     const bitmap_t *p = map + start_map_line;
     bitmap_t tmp;
     unsigned long result;
-    unsigned int end = (unsigned int)(((size & (BITS_PER_LONG - 1)) != 0) ?
-                       (size & (BITS_PER_LONG - 1)) : BITS_PER_LONG);
+    unsigned int end = (unsigned int)(((size & (BITS_PER_LONG - 1)) != 0) ? (size & (BITS_PER_LONG - 1)) :
+                                                                            BITS_PER_LONG);
 
     if (offset >= size) {
         return size;
@@ -222,8 +219,8 @@ unsigned long bitmap_find_next_bit(const bitmap_t *map, unsigned long size, unsi
     return size;
 }
 
-unsigned long bitmap_find_next_zero_area(bitmap_t *map, unsigned long size, unsigned long start,
-    unsigned int nr, unsigned long align_mask)
+unsigned long bitmap_find_next_zero_area(bitmap_t *map, unsigned long size, unsigned long start, unsigned int nr,
+                                         unsigned long align_mask)
 {
     unsigned long index_zero, end, index_one, start_tmp;
 

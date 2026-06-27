@@ -13,19 +13,18 @@
 #ifndef PBL_KERNEL_ADPAT_H
 #define PBL_KERNEL_ADPAT_H
 #ifndef EMU_ST
-#include <trace/events/sched.h>
-#include <linux/notifier.h>
+#include "ka_dfx_pub.h"
 
-int task_exit_notify_register(struct notifier_block *n);
-int task_exit_notify_unregister(struct notifier_block *n);
+int task_exit_notify_register(ka_notifier_block_t *n);
+int task_exit_notify_unregister(ka_notifier_block_t *n);
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 17, 0)
 enum profile_type {
     PROFILE_TASK_EXIT,
     PROFILE_MUNMAP
 };
 
-int profile_event_register(enum profile_type type, struct notifier_block *n);
-int profile_event_unregister(enum profile_type type, struct notifier_block *n);
+int profile_event_register(enum profile_type type, ka_notifier_block_t *n);
+int profile_event_unregister(enum profile_type type, ka_notifier_block_t *n);
 #endif
 #endif
 #endif

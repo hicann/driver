@@ -156,9 +156,8 @@ STATIC void hdcdrv_info_proc_show(ka_seq_file_t *m, void *v, struct hdcdrv_dev *
     ka_fs_seq_printf(m, "\tHDC device %u statistics:\n", hdc_dev->dev_id);
     ka_fs_seq_printf(m, "\n\tmem_pool \t\t status \t\t session_id \t\t pid\n");
     for (i = 0; i < HDCDRV_MEM_POOL_NUM; i++) {
-        ka_fs_seq_printf(m, "\tmem_pool[%d]: \t\t %d \t\t %d \t\t %llu\n",
-            i, hdc_dev->mem_pool_list[i].valid, hdc_dev->mem_pool_list[i].session_id,
-            hdc_dev->mem_pool_list[i].pool.pid);
+        ka_fs_seq_printf(m, "\tmem_pool[%d]: \t\t %d \t\t %d \t\t %llu\n", i, hdc_dev->mem_pool_list[i].valid,
+                         hdc_dev->mem_pool_list[i].session_id, hdc_dev->mem_pool_list[i].pool.pid);
     }
 
     ret = hdcdrv_list_stat_init(&s_brief);
@@ -214,7 +213,8 @@ STATIC_PROCFS_FILE_FUNC_OPS(hdcdrv_dev_stat, hdcdrv_dev_stat_proc_open, NULL);
 
 STATIC int hdcdrv_dev_id_proc_fs(void)
 {
-    g_procfs_entry.dev_id = ka_fs_proc_create_data("dev_id", KA_S_IRUSR | KA_S_IWUSR, ascend_hdc_entry, &hdcdrv_dev_id, NULL);
+    g_procfs_entry.dev_id = ka_fs_proc_create_data("dev_id", KA_S_IRUSR | KA_S_IWUSR, ascend_hdc_entry, &hdcdrv_dev_id,
+                                                   NULL);
 
     if (g_procfs_entry.dev_id == NULL) {
         hdcdrv_err("Create dev_id_entry dir failed.\n");
@@ -226,8 +226,8 @@ STATIC int hdcdrv_dev_id_proc_fs(void)
 
 STATIC int hdcdrv_dev_stat_info_proc_fs(void)
 {
-    g_procfs_entry.hdcdrv_dev_stat = ka_fs_proc_create_data("dev_stat", KA_S_IRUSR,
-        ascend_hdc_entry, &hdcdrv_dev_stat, NULL);
+    g_procfs_entry.hdcdrv_dev_stat = ka_fs_proc_create_data("dev_stat", KA_S_IRUSR, ascend_hdc_entry, &hdcdrv_dev_stat,
+                                                            NULL);
 
     if (g_procfs_entry.hdcdrv_dev_stat == NULL) {
         hdcdrv_err("Create hdcdrv_dev_stat_entry dir failed.\n");
@@ -246,8 +246,7 @@ int hdcdrv_proc_fs_init(void)
         return HDCDRV_OK;
     }
 
-    if ((hdcdrv_dev_id_proc_fs() != 0) ||
-        (hdcdrv_dev_stat_info_proc_fs() != 0)) {
+    if ((hdcdrv_dev_id_proc_fs() != 0) || (hdcdrv_dev_stat_info_proc_fs() != 0)) {
         (void)ka_fs_remove_proc_subtree("asdrv_hdc", NULL);
         hdcdrv_err("asdrv_hdc proc fs init failed.\n");
         proc_fs_valid_flag = false;

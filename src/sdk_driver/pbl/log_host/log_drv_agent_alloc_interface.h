@@ -10,7 +10,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
- 
+
 #ifndef LOG_DRV_AGENT_MEM_ALLOC_INTERFACE_H
 #define LOG_DRV_AGENT_MEM_ALLOC_INTERFACE_H
 
@@ -18,10 +18,10 @@
 #include "pbl_ka_memory.h"
 #include "ascend_hal_define.h"
 
-#define log_drv_vzalloc(size)  ka_vzalloc(size, ka_get_module_id(HAL_MODULE_TYPE_LOG, KA_SUB_MODULE_TYPE_0))
+#define log_drv_vzalloc(size) ka_vzalloc(size, ka_get_module_id(HAL_MODULE_TYPE_LOG, KA_SUB_MODULE_TYPE_0))
 #define log_drv_vfree(addr) ka_vfree(addr, ka_get_module_id(HAL_MODULE_TYPE_LOG, KA_SUB_MODULE_TYPE_0))
 #else
-#define log_drv_vzalloc(size)  ka_vzalloc(size)
+#define log_drv_vzalloc(size) ka_vzalloc(size)
 #define log_drv_vfree(addr) ka_vfree(addr)
 #endif
 

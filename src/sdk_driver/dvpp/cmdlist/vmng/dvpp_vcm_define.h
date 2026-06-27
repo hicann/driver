@@ -12,7 +12,7 @@
  */
 #ifndef DVPP_VMNG_VCM_DEFINE_H
 #define DVPP_VMNG_VCM_DEFINE_H
-#include <linux/types.h>
+#include "ka_type.h"
 
 enum dvpp_vcm_cmd {
     DVPP_VCM_GEN_CMDLIST = 0,

@@ -40,25 +40,16 @@ uint32_t trs_get_res_id_num(uint32_t dev_id, uint32_t ts_id, drvIdType_t type)
 }
 
 static int trs_res_type_trans[DRV_INVALID_ID] = {
-    [DRV_STREAM_ID] = TRS_STREAM,
-    [DRV_EVENT_ID] = TRS_EVENT,
-    [DRV_MODEL_ID] = TRS_MODEL,
-    [DRV_NOTIFY_ID] = TRS_NOTIFY,
-    [DRV_CMO_ID] = TRS_CMO,
-    [DRV_CNT_NOTIFY_ID] = TRS_CNT_NOTIFY,
-    [DRV_SQ_ID] = TRS_HW_SQ,
-    [DRV_CQ_ID] = TRS_HW_CQ,    
+    [DRV_STREAM_ID] = TRS_STREAM, [DRV_EVENT_ID] = TRS_EVENT, [DRV_MODEL_ID] = TRS_MODEL,
+    [DRV_NOTIFY_ID] = TRS_NOTIFY, [DRV_CMO_ID] = TRS_CMO,     [DRV_CNT_NOTIFY_ID] = TRS_CNT_NOTIFY,
+    [DRV_SQ_ID] = TRS_HW_SQ,      [DRV_CQ_ID] = TRS_HW_CQ,
 };
 
 static drvIdType_t trs_res_query_type_trans[DRV_RESOURCE_INVALID_ID] = {
-    [DRV_RESOURCE_STREAM_ID] = (int)TRS_STREAM,
-    [DRV_RESOURCE_EVENT_ID] = (int)TRS_EVENT,
-    [DRV_RESOURCE_MODEL_ID] = (int)TRS_MODEL,
-    [DRV_RESOURCE_NOTIFY_ID] = (int)TRS_NOTIFY,
-    [DRV_RESOURCE_CMO_ID] = (int)TRS_CMO,
-    [DRV_RESOURCE_SQ_ID] = (int)TRS_HW_SQ,
-    [DRV_RESOURCE_CQ_ID] = (int)TRS_HW_CQ,
-    [DRV_RESOURCE_CNT_NOTIFY_ID] = (int)TRS_CNT_NOTIFY,
+    [DRV_RESOURCE_STREAM_ID] = (int)TRS_STREAM, [DRV_RESOURCE_EVENT_ID] = (int)TRS_EVENT,
+    [DRV_RESOURCE_MODEL_ID] = (int)TRS_MODEL,   [DRV_RESOURCE_NOTIFY_ID] = (int)TRS_NOTIFY,
+    [DRV_RESOURCE_CMO_ID] = (int)TRS_CMO,       [DRV_RESOURCE_SQ_ID] = (int)TRS_HW_SQ,
+    [DRV_RESOURCE_CQ_ID] = (int)TRS_HW_CQ,      [DRV_RESOURCE_CNT_NOTIFY_ID] = (int)TRS_CNT_NOTIFY,
 };
 
 static int trs_get_res_id_type(drvIdType_t type)
@@ -117,8 +108,8 @@ void __attribute__((weak)) trs_unregister_reg(uint32_t dev_id, uint64_t va, uint
     (void)size;
 }
 
-drvError_t __attribute__((weak)) halResAddrMap(unsigned int devId, struct res_addr_info *res_info, unsigned long *va,
-    unsigned int *len)
+drvError_t __attribute__((weak)) halResAddrMap(
+    unsigned int devId, struct res_addr_info *res_info, unsigned long *va, unsigned int *len)
 {
     (void)devId;
     (void)res_info;
@@ -135,7 +126,8 @@ drvError_t __attribute__((weak)) halResAddrUnmap(unsigned int devId, struct res_
 }
 #endif
 
-int trs_res_map_reg_init(uint32_t dev_id, uint32_t ts_id, uint32_t res_id, drvIdType_t type, struct res_id_usr_info *id_info)
+int trs_res_map_reg_init(
+    uint32_t dev_id, uint32_t ts_id, uint32_t res_id, drvIdType_t type, struct res_id_usr_info *id_info)
 {
     struct res_addr_info res_info = {0};
     unsigned long notify_va;
@@ -148,8 +140,8 @@ int trs_res_map_reg_init(uint32_t dev_id, uint32_t ts_id, uint32_t res_id, drvId
     res_info.id = ts_id;
     res_info.res_id = res_id;
     res_info.target_proc_type = PROCESS_CP1;
-    res_info.res_type = (type == DRV_NOTIFY_ID) ?
-        RES_ADDR_TYPE_STARS_NOTIFY_RECORD : RES_ADDR_TYPE_STARS_CNT_NOTIFY_RECORD;
+    res_info.res_type =
+        (type == DRV_NOTIFY_ID) ? RES_ADDR_TYPE_STARS_NOTIFY_RECORD : RES_ADDR_TYPE_STARS_CNT_NOTIFY_RECORD;
     ret = halResAddrMap(dev_id, &res_info, &notify_va, &notify_len);
     if (ret != DRV_ERROR_NONE) {
 #ifndef EMU_ST /* Don't delete for UT compile */
@@ -162,17 +154,19 @@ int trs_res_map_reg_init(uint32_t dev_id, uint32_t ts_id, uint32_t res_id, drvId
     id_info->res_len = notify_len;
     ret = trs_register_reg(dev_id, id_info->res_addr, id_info->res_len);
     if (ret != 0) {
-        trs_err("Register addr failed. (dev_id=%u; type=%d; addr=0x%llx; len=%u; id=%u; ret=%d)\n", dev_id, type,
-            id_info->res_addr, id_info->res_len, res_id, ret);
+        trs_err(
+            "Register addr failed. (dev_id=%u; type=%d; addr=0x%llx; len=%u; id=%u; ret=%d)\n", dev_id, type,
+            (unsigned long long)id_info->res_addr, id_info->res_len, res_id, ret);
         return ret;
     }
-    trs_debug("Id map reg init. (dev_id=%u; type=%d; id=%u; addr=0x%llx; len=%u)\n", dev_id, type, res_id,
-        id_info->res_addr, id_info->res_len);
+    trs_debug(
+        "Id map reg init. (dev_id=%u; type=%d; id=%u; addr=0x%llx; len=%u)\n", dev_id, type, res_id,
+        (unsigned long long)id_info->res_addr, id_info->res_len);
     return DRV_ERROR_NONE;
 }
 
-void trs_res_map_reg_un_init(uint32_t dev_id, uint32_t tsid, uint32_t res_id, drvIdType_t type,
-    struct res_id_usr_info *id_info)
+void trs_res_map_reg_un_init(
+    uint32_t dev_id, uint32_t tsid, uint32_t res_id, drvIdType_t type, struct res_id_usr_info *id_info)
 {
     struct res_addr_info res_info = {0};
     int ret;
@@ -186,8 +180,8 @@ void trs_res_map_reg_un_init(uint32_t dev_id, uint32_t tsid, uint32_t res_id, dr
     res_info.id = tsid;
     res_info.target_proc_type = PROCESS_CP1;
     res_info.res_id = res_id;
-    res_info.res_type = (type == DRV_NOTIFY_ID) ?
-        RES_ADDR_TYPE_STARS_NOTIFY_RECORD : RES_ADDR_TYPE_STARS_CNT_NOTIFY_RECORD;
+    res_info.res_type =
+        (type == DRV_NOTIFY_ID) ? RES_ADDR_TYPE_STARS_NOTIFY_RECORD : RES_ADDR_TYPE_STARS_CNT_NOTIFY_RECORD;
     ret = halResAddrUnmap(dev_id, &res_info);
     if (ret != DRV_ERROR_NONE) {
         trs_warn("Unmap failed. (dev_id=%u; ts_id=%u; notify_id=%u; ret=%d)\n", dev_id, tsid, res_id, ret);
@@ -213,8 +207,8 @@ static void trs_res_id_info_un_init(uint32_t dev_id, uint32_t ts_id, uint32_t re
     id_info->priv = 0;
 }
 
-static int _trs_res_id_info_init(uint32_t dev_id, uint32_t ts_id, uint32_t res_id, drvIdType_t type,
-    struct res_id_info_val *id_info_val)
+static int _trs_res_id_info_init(
+    uint32_t dev_id, uint32_t ts_id, uint32_t res_id, drvIdType_t type, struct res_id_info_val *id_info_val)
 {
     struct res_id_usr_info *id_info = NULL;
 
@@ -229,8 +223,8 @@ static int _trs_res_id_info_init(uint32_t dev_id, uint32_t ts_id, uint32_t res_i
     return DRV_ERROR_NONE;
 }
 
-int trs_res_id_info_init(uint32_t dev_id, uint32_t ts_id, uint32_t res_id, drvIdType_t type,
-    struct res_id_info_val *id_info_val)
+int trs_res_id_info_init(
+    uint32_t dev_id, uint32_t ts_id, uint32_t res_id, drvIdType_t type, struct res_id_info_val *id_info_val)
 {
     struct trs_res_id_ctx *ctx = NULL;
     int ret = 0;
@@ -246,7 +240,8 @@ int trs_res_id_info_init(uint32_t dev_id, uint32_t ts_id, uint32_t res_id, drvId
     return _trs_res_id_info_init(dev_id, ts_id, res_id, type, id_info_val);
 }
 
-static int trs_res_type_init(uint32_t dev_id, uint32_t ts_id, int id_type, struct res_id_usr_info **id_info, uint32_t *id_num)
+static int trs_res_type_init(
+    uint32_t dev_id, uint32_t ts_id, int id_type, struct res_id_usr_info **id_info, uint32_t *id_num)
 {
     struct trs_res_id_para para = {.tsid = ts_id, .res_type = id_type};
     struct res_id_usr_info *info = NULL;
@@ -281,8 +276,8 @@ static int trs_res_type_init(uint32_t dev_id, uint32_t ts_id, int id_type, struc
     return DRV_ERROR_NONE;
 }
 
-static void trs_res_type_un_init(uint32_t dev_id, uint32_t ts_id, drvIdType_t id_type, struct res_id_usr_info **id_info,
-    uint32_t *id_num)
+static void trs_res_type_un_init(
+    uint32_t dev_id, uint32_t ts_id, drvIdType_t id_type, struct res_id_usr_info **id_info, uint32_t *id_num)
 {
     struct res_id_usr_info *info = *id_info;
     uint32_t i = 0;
@@ -398,15 +393,9 @@ void trs_dev_res_id_uninit(uint32_t dev_id)
 }
 
 struct trs_res_remote_ops g_res_remote_ops;
-void trs_register_res_remote_ops(struct trs_res_remote_ops *ops)
-{
-    g_res_remote_ops = *ops;
-}
+void trs_register_res_remote_ops(struct trs_res_remote_ops *ops) { g_res_remote_ops = *ops; }
 
-static struct trs_res_remote_ops *trs_get_res_remote_ops(void)
-{
-    return &g_res_remote_ops;
-}
+static struct trs_res_remote_ops *trs_get_res_remote_ops(void) { return &g_res_remote_ops; }
 
 static void trs_res_fill_ioctrl_para(struct halResourceIdInputInfo *in, struct trs_res_id_para *para)
 {
@@ -421,8 +410,8 @@ static void trs_res_fill_ioctrl_para(struct halResourceIdInputInfo *in, struct t
     }
 }
 
-static drvError_t trs_res_alloc_para_check(uint32_t dev_id, struct halResourceIdInputInfo *in,
-    struct halResourceIdOutputInfo *out)
+static drvError_t trs_res_alloc_para_check(
+    uint32_t dev_id, struct halResourceIdInputInfo *in, struct halResourceIdOutputInfo *out)
 {
     if ((in == NULL) || (out == NULL)) {
         trs_err("Null ptr.\n");
@@ -448,8 +437,8 @@ static bool trs_is_remote_res_ops(uint32_t flag)
     return false;
 }
 
-static drvError_t trs_remote_res_alloc(uint32_t dev_id, struct halResourceIdInputInfo *in,
-    struct halResourceIdOutputInfo *out)
+static drvError_t trs_remote_res_alloc(
+    uint32_t dev_id, struct halResourceIdInputInfo *in, struct halResourceIdOutputInfo *out)
 {
     if (trs_get_res_remote_ops()->resid_alloc != NULL) {
         return trs_get_res_remote_ops()->resid_alloc(dev_id, in, out);
@@ -459,18 +448,15 @@ static drvError_t trs_remote_res_alloc(uint32_t dev_id, struct halResourceIdInpu
     }
 }
 
-static drvError_t trs_local_res_alloc(uint32_t dev_id, struct halResourceIdInputInfo *in,
-    struct halResourceIdOutputInfo *out)
+static drvError_t trs_local_res_alloc(
+    uint32_t dev_id, struct halResourceIdInputInfo *in, struct halResourceIdOutputInfo *out)
 {
     static int trs_res_errcode[DRV_INVALID_ID] = {
-        [DRV_STREAM_ID] = DRV_ERROR_NO_STREAM_RESOURCES,
-        [DRV_EVENT_ID] = DRV_ERROR_NO_EVENT_RESOURCES,
-        [DRV_MODEL_ID] = DRV_ERROR_NO_MODEL_RESOURCES,
-        [DRV_NOTIFY_ID] = DRV_ERROR_NO_NOTIFY_RESOURCES,
-        [DRV_CMO_ID] = DRV_ERROR_NO_RESOURCES,
-        [DRV_CNT_NOTIFY_ID] = DRV_ERROR_NO_RESOURCES,
+        [DRV_STREAM_ID] = DRV_ERROR_NO_STREAM_RESOURCES, [DRV_EVENT_ID] = DRV_ERROR_NO_EVENT_RESOURCES,
+        [DRV_MODEL_ID] = DRV_ERROR_NO_MODEL_RESOURCES,   [DRV_NOTIFY_ID] = DRV_ERROR_NO_NOTIFY_RESOURCES,
+        [DRV_CMO_ID] = DRV_ERROR_NO_RESOURCES,           [DRV_CNT_NOTIFY_ID] = DRV_ERROR_NO_RESOURCES,
     };
-    struct trs_res_id_para para = { 0 };
+    struct trs_res_id_para para = {0};
     int ret;
 
     trs_res_fill_ioctrl_para(in, &para);
@@ -499,15 +485,15 @@ static drvError_t trs_local_res_alloc(uint32_t dev_id, struct halResourceIdInput
 
 #ifdef CFG_FEATURE_SUPPORT_STREAM_TASK
 #define TRS_MAX_STREAM_NUM 2048U
-#define TRS_MAX_MODEL_NUM  2048U
+#define TRS_MAX_MODEL_NUM 2048U
 #endif
 static drvError_t trs_res_alloc_post_proc(uint32_t devId, struct halResourceIdInputInfo *in, uint32_t id)
 {
 #ifdef CFG_FEATURE_SUPPORT_STREAM_TASK
-/*
- * stream extend feature: stream num 2K -> 32K; model num 2K -> 32K, just for cloudv2/cloudv3
- * Before runtime with old version still uses 2K to judge, here adapts for version compatibility.
- */
+    /*
+     * stream extend feature: stream num 2K -> 32K; model num 2K -> 32K, just for cloudv2/cloudv3
+     * Before runtime with old version still uses 2K to judge, here adapts for version compatibility.
+     */
     if (drvGetRuntimeApiVer() < TRS_STREAM_EXPEND_FEATURE) {
         if ((in->type == DRV_STREAM_ID) && (id >= TRS_MAX_STREAM_NUM)) {
             in->resourceId = id;
@@ -593,7 +579,8 @@ static drvError_t trs_local_res_free(uint32_t dev_id, struct halResourceIdInputI
     trs_res_fill_ioctrl_para(in, &para);
 
     if (((trs_get_connection_type(dev_id) == TRS_CONNECT_PROTOCOL_UB) &&
-        ((in->type == DRV_NOTIFY_ID) || (in->type == DRV_CNT_NOTIFY_ID))) || (in->type == DRV_STREAM_ID)) {
+         ((in->type == DRV_NOTIFY_ID) || (in->type == DRV_CNT_NOTIFY_ID))) ||
+        (in->type == DRV_STREAM_ID)) {
         trs_res_id_info_un_init(dev_id, in->tsId, in->resourceId, in->type);
     }
 
@@ -660,8 +647,8 @@ drvError_t halResourceDisable(uint32_t devId, struct halResourceIdInputInfo *in)
     return halResourceIdComm(devId, TRS_RES_ID_DISABLE, in);
 }
 
-drvError_t trs_res_config_para_check(uint32_t dev_id, struct halResourceIdInputInfo *in,
-    struct halResourceConfigInfo *para)
+drvError_t trs_res_config_para_check(
+    uint32_t dev_id, struct halResourceIdInputInfo *in, struct halResourceConfigInfo *para)
 {
     if ((in == NULL) || (para == NULL)) {
         trs_err("Null ptr.\n");
@@ -675,8 +662,7 @@ drvError_t trs_res_config_para_check(uint32_t dev_id, struct halResourceIdInputI
     return DRV_ERROR_NONE;
 }
 
-drvError_t trs_remote_res_config(uint32_t dev_id, struct halResourceIdInputInfo *in,
-    struct halResourceConfigInfo *para)
+drvError_t trs_remote_res_config(uint32_t dev_id, struct halResourceIdInputInfo *in, struct halResourceConfigInfo *para)
 {
     if (trs_get_res_remote_ops()->resid_config != NULL) {
         return trs_get_res_remote_ops()->resid_config(dev_id, in, para);
@@ -686,8 +672,7 @@ drvError_t trs_remote_res_config(uint32_t dev_id, struct halResourceIdInputInfo 
     }
 }
 
-drvError_t trs_local_res_config(uint32_t dev_id, struct halResourceIdInputInfo *in,
-    struct halResourceConfigInfo *para)
+drvError_t trs_local_res_config(uint32_t dev_id, struct halResourceIdInputInfo *in, struct halResourceConfigInfo *para)
 {
     struct trs_res_id_para cfg;
 
@@ -758,11 +743,11 @@ int trs_res_num_query(uint32_t dev_id, uint32_t ts_id, int res_type, uint32_t *v
     struct trs_res_id_para para = {.tsid = ts_id, .res_type = res_type};
     int ret = trs_res_id_query(dev_id, TRS_RES_ID_NUM_QUERY, &para, value);
 #ifdef CFG_FEATURE_SUPPORT_STREAM_TASK
-/*
- * stream extend feature: stream num 2K -> 32K; model num 2K -> 32K, just for cloudv2/cloudv3
- * Because runtime with old version still uses 2K to judge, here adapts for version compatibility.
- * If num < 2048, it means in vf, vf not support stream extend, just return num.
- */
+    /*
+     * stream extend feature: stream num 2K -> 32K; model num 2K -> 32K, just for cloudv2/cloudv3
+     * Because runtime with old version still uses 2K to judge, here adapts for version compatibility.
+     * If num < 2048, it means in vf, vf not support stream extend, just return num.
+     */
     if (drvGetRuntimeApiVer() < TRS_STREAM_EXPEND_FEATURE) {
         if (res_type == TRS_STREAM) {
             *value = (*value < TRS_MAX_STREAM_NUM) ? *value : TRS_MAX_STREAM_NUM;
@@ -800,7 +785,8 @@ drvError_t halResourceInfoQuery(uint32_t devId, uint32_t tsId, drvResourceType_t
     return ret;
 }
 
-static int trs_get_res_id_by_stream(uint32_t dev_id, struct halResourceIdInputInfo *in, struct halResourceDetailInfo *info)
+static int trs_get_res_id_by_stream(
+    uint32_t dev_id, struct halResourceIdInputInfo *in, struct halResourceDetailInfo *info)
 {
     struct halSqCqInputInfo input_info = {0};
     int ret;
@@ -818,7 +804,8 @@ static int trs_get_res_id_by_stream(uint32_t dev_id, struct halResourceIdInputIn
     }
     input_info.tsId = in->tsId;
     input_info.info[0] = in->resourceId;
-    ret = trs_dev_io_ctrl(dev_id, TRS_ID_SQCQ_GET, &input_info);;
+    ret = trs_dev_io_ctrl(dev_id, TRS_ID_SQCQ_GET, &input_info);
+    ;
     if (ret != 0) {
         return ret;
     }
@@ -873,8 +860,9 @@ drvError_t halResourceDetailQuery(uint32_t devId, struct halResourceIdInputInfo 
             return halNotifyGetInfo(devId, in->tsId, DRV_NOTIFY_TYPE_NUM, &(info->value0));
         }
         default:
-            trs_err("Invalid para. (devid=%u; tsid=%u; id_type=%d; query_type=%d)\n",
-                devId, in->tsId, in->type, info->type);
+            trs_err(
+                "Invalid para. (devid=%u; tsid=%u; id_type=%d; query_type=%d)\n", devId, in->tsId, in->type,
+                info->type);
             return DRV_ERROR_INVALID_VALUE;
     }
 }

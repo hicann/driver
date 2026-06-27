@@ -13,21 +13,21 @@
 #ifndef TRS_SHR_ID_NODE_H
 #define TRS_SHR_ID_NODE_H
 
-#include <linux/types.h>
+#include "ka_type.h"
 
 #include "trs_shr_id_ioctl.h"
 #include "trs_id.h"
 
 struct shr_id_node_op_attr {
     struct trs_id_inst inst;
-    int res_type;   /* trs id type */
-    int type;       /* shr id type */
+    int res_type; /* trs id type */
+    int type;     /* shr id type */
     u32 id;
-    ka_pid_t pid;  /* create pid */
+    ka_pid_t pid; /* create pid */
     u64 start_time;
     char name[SHR_ID_NSM_NAME_SIZE];
-    u32 flag;   /* remote flag */
-    u32 stars_die_id;  /* die id of stars in this ts inst */
+    u32 flag;         /* remote flag */
+    u32 stars_die_id; /* die id of stars in this ts inst */
 
     int (*res_get)(struct trs_id_inst *inst, int res_type, u32 res_id);
     int (*res_put)(struct trs_id_inst *inst, int res_type, u32 res_id);
@@ -36,8 +36,7 @@ struct shr_id_node_op_attr {
 void shr_id_node_init(void);
 int shr_id_node_create(struct shr_id_node_op_attr *attr);
 int shr_id_node_destroy(const char *name, int type, ka_pid_t pid, u32 mode);
-int shr_id_node_open(const char *name, ka_pid_t pid, unsigned long start_time,
-    struct shr_id_node_op_attr *attr);
+int shr_id_node_open(const char *name, ka_pid_t pid, unsigned long start_time, struct shr_id_node_op_attr *attr);
 int shr_id_node_close(const char *name, int type, ka_pid_t pid);
 int shr_id_node_set_pids(const char *name, int type, ka_pid_t create_pid, ka_pid_t pid[], u32 pid_num);
 int shr_id_node_record(const char *name, int type, ka_pid_t pid);

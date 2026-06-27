@@ -77,3 +77,27 @@ ssize_t ka_fs_read_file(ka_file_t *file, loff_t *pos, char *addr, size_t count)
     return len;
 }
 EXPORT_SYMBOL_GPL(ka_fs_read_file);
+
+int ka_fs_get_file_kstat(ka_kstat_t *src_stat, const char *path)
+{
+    int ret = 0;
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 20, 0)
+    ka_path_t kernel_path;
+
+    ret = ka_fs_kern_path(path, KA_LOOKUP_FOLLOW, &kernel_path);
+    if (ret != 0) {
+        return ret;
+    }
+    ret = ka_fs_vfs_getattr(&kernel_path, src_stat, KA_STATX_BASIC_STATS, KA_AT_NO_AUTOMOUNT);
+    ka_fs_path_put(&kernel_path);
+#else
+    ka_mm_segment_t old_fs;
+
+    old_fs = ka_fs_get_fs();
+    ka_fs_set_fs(KERNEL_DS);
+    ret = vfs_stat(path, src_stat);
+    ka_fs_set_fs(old_fs);
+#endif
+    return ret;
+}
+EXPORT_SYMBOL_GPL(ka_fs_get_file_kstat);

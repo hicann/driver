@@ -8,8 +8,8 @@
 
 #define DAVINCI_INTF_MODULE_TRS_SHR_ID "TRS_SHR_ID"
 
-#define SHR_ID_NSM_NAME_SIZE    65
-#define SHR_ID_PID_MAX_NUM  16
+#define SHR_ID_NSM_NAME_SIZE 65
+#define SHR_ID_PID_MAX_NUM 16
 struct shr_id_ioctl_info {
     u32 opened_devid; /* out:logic devid */
     u32 devid;
@@ -46,7 +46,6 @@ struct shr_id_pod_pid_ioctl_info {
 #define SHR_ID_GET_ATTR _IOWR(SHR_ID_NOTIFY_MAGIC, 9, struct shr_id_ioctl_info)
 #define SHR_ID_GET_INFO _IOWR(SHR_ID_NOTIFY_MAGIC, 10, struct shr_id_ioctl_info)
 
-#define SHR_ID_MAX_CMD   11
+#define SHR_ID_MAX_CMD 11
 
 #endif
-

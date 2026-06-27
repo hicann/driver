@@ -14,24 +14,24 @@
 #ifndef DRV_TSDRV_INTERFACE_H
 #define DRV_TSDRV_INTERFACE_H
 
-#include <linux/types.h>
-#include <linux/uio_driver.h>
+#include "ka_type.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif /* __cplusplus */
 
-#if defined (CFG_SOC_PLATFORM_CLOUD_V2)
+#if defined(CFG_SOC_PLATFORM_CLOUD_V2)
 #define TASKID_SHARE_MEM_START_ADDR 0x104D5FDC00 /* 0x104D500000 …… task shm(1k) + aicpu config(8k) */
-#define TASKID_SHARE_MEM_BLOCK_NUM    16
-#elif defined (CFG_SOC_PLATFORM_MINIV3)
+#define TASKID_SHARE_MEM_BLOCK_NUM 16
+#elif defined(CFG_SOC_PLATFORM_MINIV3)
 #define TASKID_SHARE_MEM_START_ADDR 0x2223dc00 // (0x22240000(base) - 9k
-#define TASKID_SHARE_MEM_BLOCK_NUM    15
+#define TASKID_SHARE_MEM_BLOCK_NUM 15
 #else
 #define TASKID_SHARE_MEM_START_ADDR 0x9fcc00
-#define TASKID_SHARE_MEM_BLOCK_NUM    15
+#define TASKID_SHARE_MEM_BLOCK_NUM 15
 #endif
-#define TASKID_SHARE_MEM_SIZE         1024  // 1k
-#define TASKID_SHARE_MEM_MAGIC        0xABCD
+#define TASKID_SHARE_MEM_SIZE 1024 // 1k
+#define TASKID_SHARE_MEM_MAGIC 0xABCD
 
 enum tsdrv_id_type {
     TSDRV_STREAM_ID,
@@ -62,7 +62,7 @@ struct devdrv_mailbox_message_header {
 
 struct tsdrv_mbox_data {
     const void *msg;
-    u32 msg_len;    /* max len is 64 byte */
+    u32 msg_len; /* max len is 64 byte */
     void *out_data;
     u32 out_len;
 };
@@ -85,14 +85,12 @@ int hal_kernel_tsdrv_mailbox_send_sync(u32 devid, u32 tsid, struct tsdrv_mbox_da
 #define TSDRV_MAX_SQ_DEPTH (64 * 1024)
 #define TSDRV_MAX_CQ_DEPTH (64 * 1024)
 
-void tsdrv_set_chan_complete_handle(void *handle,
-    void(*cq_report_handle)(void *report, u32 report_count));
+void tsdrv_set_chan_complete_handle(void *handle, void (*cq_report_handle)(void *report, u32 report_count));
 
 int tsdrv_submit_task(void *handle, const void *sqe, u32 timeout);
-void *tsdrv_task_submit_chan_create(u32 devid, u32 vfid, u32 tsid, int type,
-    u32 sq_depth, u32 cq_depth);
-void *tsdrv_create_task_topic_sched_submit_chan(u32 devid, u32 vfid, u32 tsid,
-    int type, u32 sq_depth, u32 cq_depth, u32 pool_id, u32 pri);
+void *tsdrv_task_submit_chan_create(u32 devid, u32 vfid, u32 tsid, int type, u32 sq_depth, u32 cq_depth);
+void *tsdrv_create_task_topic_sched_submit_chan(
+    u32 devid, u32 vfid, u32 tsid, int type, u32 sq_depth, u32 cq_depth, u32 pool_id, u32 pri);
 
 void tsdrv_destroy_task_submit_chan(void *handle, int type);
 

@@ -13,7 +13,6 @@
 
 #ifndef __DMS_EVENT_ADAPT_H__
 #define __DMS_EVENT_ADAPT_H__
-#include "dms_kernel_version_adapt.h"
 #include "kernel_version_adapt.h"
 #include "dms/dms_shm_info.h"
 #include "dms/dms_cmd_def.h"

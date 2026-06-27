@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2025. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -84,4 +84,3 @@ ka_module_exit(svm_exit_module);
 KA_MODULE_LICENSE("GPL");
 KA_MODULE_AUTHOR("Huawei Tech. Co., Ltd.");
 KA_MODULE_DESCRIPTION("SVM");
-

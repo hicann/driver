@@ -29,6 +29,8 @@ static drvError_t prof_urma_chan_init(uint32_t dev_id, uint32_t chan_id, bool ev
     struct prof_urma_chan_priv *chan_priv = NULL;
     drvError_t ret;
 
+    (void)event_flag;
+
     chan_priv = (struct prof_urma_chan_priv *)malloc(sizeof(struct prof_urma_chan_priv));
     if (chan_priv == NULL) {
         PROF_ERR("Failed to alloc chan_priv. (dev_id=%u, chan_id=%u)\n", dev_id, chan_id);
@@ -124,7 +126,7 @@ static drvError_t prof_urma_chan_flush(uint32_t dev_id, uint32_t chan_id, uint32
     if (ret != DRV_ERROR_NONE) {
         return ret;
     }
- 
+
     *data_len = prof_buff_get_data_len(chan_priv->buff);
     return DRV_ERROR_NONE;
 }
@@ -156,6 +158,10 @@ static int prof_urma_chan_read(uint32_t dev_id, uint32_t chan_id, prof_user_read
 
 static drvError_t prof_urma_chan_query(uint32_t dev_id, uint32_t chan_id, uint32_t *avail_len, char *priv)
 {
+    (void)dev_id;
+    (void)chan_id;
+    (void)avail_len;
+    (void)priv;
     return DRV_ERROR_NOT_SUPPORT;
 }
 
@@ -166,6 +172,8 @@ static drvError_t prof_urma_chan_report(uint32_t dev_id, uint32_t chan_id, void 
     struct prof_urma_chan_info *urma_chan_info = NULL;
     uint32_t new_wptr = *((uint32_t *)data);
     uint32_t old_wptr;
+
+    (void)data_len;
 
     old_wptr = prof_buff_get_writeptr(chan_priv->buff);
     if (new_wptr != old_wptr) {

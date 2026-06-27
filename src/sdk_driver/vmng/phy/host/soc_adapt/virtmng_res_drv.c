@@ -42,6 +42,7 @@ STATIC int (*vmngh_res_init_func[HISI_CHIP_NUM])(u32 devid, struct vmngh_ctrl_op
     [HISI_MINI_V3] = NULL,
     [HISI_CLOUD_V4] = vmngh_res_init_cloud_v4,
     [HISI_CLOUD_V5] = vmngh_res_init_cloud_v4,
+    [HISI_MINI_V4] = vmngh_res_init_cloud_v4,
 };
 
 int vmngh_res_drv_init(u32 dev_id, struct vmngh_ctrl_ops *ops)

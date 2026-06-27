@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2025. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -23,8 +23,8 @@ static inline void apm_msg_fill_header(struct apm_msg_header *header, enum apm_m
     header->result = 0;
 }
 
-void apm_register_msg_handle(enum apm_msg_type msg_type, u32 msg_len,
-    int (*fn)(u32 udevid, struct apm_msg_header *header));
+void apm_register_msg_handle(
+    enum apm_msg_type msg_type, u32 msg_len, int (*fn)(u32 udevid, struct apm_msg_header *header));
 int apm_msg_send(u32 udevid, struct apm_msg_header *header, u32 size);
 int apm_msg_recv(u32 udevid, void *data, u32 in_data_len, u32 out_data_len, u32 *real_out_len);
 

@@ -7,7 +7,7 @@
  * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
  */
-
+ 
 #include <stdio.h>
 #include <stdlib.h>
 #include <limits.h>
@@ -24,6 +24,7 @@
 #include "dcmi_log.h"
 #include "dcmi_product_judge.h"
 #include "dcmi_inner_info_get.h"
+#include "dcmi_basic_info_intf.h"
 #include "dcmi_environment_judge.h"
 
 struct dcmi_run_env g_run_env = {0};
@@ -35,35 +36,41 @@ int dcmi_get_environment_flag(unsigned int *env_flag)
 {
     unsigned int host_flag;
     unsigned int plain_container_flag;
-    int i;
-    int ret;
-    int device_logic_id = 0;
+    int i, ret, device_logic_id = 0;
     int card_count = 0;
     int card_id_list[NPU_MAX_COUNT] = {0};
 
     if (env_flag == NULL) {
-        gplog(LOG_ERR, "env_flag is NULL.\n");
+        gplog(LOG_ERR, "env_flag is NULL.");
         return DCMI_ERR_CODE_INVALID_PARAMETER;
     }
 
-    ret = dcmi_get_card_num_list(&card_count, card_id_list, NPU_MAX_COUNT);
+    if (dcmi_board_chip_type_is_ascend_950()) {
+        ret = dcmiv2_get_device_list(card_id_list, &card_count, NPU_MAX_COUNT);
+    } else {
+        ret = dcmi_get_card_num_list(&card_count, card_id_list, NPU_MAX_COUNT);
+    }
     if (ret != DCMI_OK) {
-        gplog(LOG_ERR, "get card num list fail. ret is %d\n", ret);
+        gplog(LOG_ERR, "get device list fail. (ret=%d)", ret);
         return ret;
     }
 
     for (i = 0; i < card_count; i++) {
-        ret = dcmi_get_device_logic_id(&device_logic_id, card_id_list[i], 0);
-        if (ret != DCMI_OK) {
-            gplog(LOG_ERR, "get device logic id fail. ret is %d\n", ret);
-            continue;
+        if (dcmi_board_chip_type_is_ascend_950()) {
+            device_logic_id = card_id_list[i];
+        } else {
+            ret = dcmi_get_device_logic_id(&device_logic_id, card_id_list[i], 0);
+            if (ret != DCMI_OK) {
+                gplog(LOG_ERR, "get device logic id fail. (ret=%d)", ret);
+                continue;
+            }
         }
 
         ret = devdrv_get_host_phy_mach_flag(device_logic_id, &host_flag);
         if (ret == DCMI_OK) {
             break;
         }
-        gplog(LOG_INFO, "get host phy mach flag fail. ret is %d\n", ret);
+        gplog(LOG_INFO, "get host phy mach flag fail. (ret=%d)", ret);
     }
     if (ret != DCMI_OK) {
         return DCMI_ERR_CODE_INNER_ERR;
@@ -71,13 +78,13 @@ int dcmi_get_environment_flag(unsigned int *env_flag)
 
     ret = dmanage_get_container_flag(&plain_container_flag);
     if (ret != 0) {
-        gplog(LOG_ERR, "dmanage_get_container_flag call error. err is %d\n", ret);
+        gplog(LOG_ERR, "dmanage_get_container_flag call error. (ret=%d)", ret);
         return DCMI_ERR_CODE_INNER_ERR;
     }
 
     ret = dcmi_determine_environment_flag(host_flag, plain_container_flag, dcmi_check_run_in_docker(), env_flag);
     if (ret != 0) {
-        gplog(LOG_ERR, "dcmi_determine_environment_flag call error. err is %d\n", ret);
+        gplog(LOG_ERR, "dcmi_determine_environment_flag call error. (ret=%d)", ret);
         return ret;
     }
 
@@ -292,7 +299,6 @@ bool dcmi_check_run_in_privileged_docker(void)
         gplog(LOG_ERR, "Failed to get environment flag. ret is %d.", ret);
         return FALSE;
     }
-
     if ((env_flag != ENV_PHYSICAL_PRIVILEGED_CONTAINER) && (env_flag != ENV_VIRTUAL_PRIVILEGED_CONTAINER)) {
         return FALSE;
     }
@@ -376,4 +382,43 @@ bool dcmi_is_x86(void)
     return true;
 #endif
     return false;
+}
+
+bool dcmi_is_in_root_group(void)
+{
+    int is_root_group = 0;
+    int ngroups = getgroups(0, NULL);
+    gid_t *groups = NULL;
+
+    if (ngroups <= 0) {
+        gplog(LOG_ERR, "get groups num failed.");
+        return false;
+    }
+
+    groups = (gid_t *)malloc(ngroups * sizeof(gid_t));
+    if (groups == NULL) {
+        gplog(LOG_ERR, "groups malloc failed.");
+        return false;
+    }
+
+    if (getgroups(ngroups, groups) < ngroups) {
+        free(groups);
+        gplog(LOG_ERR, "get groups list failed.");
+        return false;
+    }
+
+    for (int i = 0; i < ngroups; i++) {
+        if (groups[i] == 0) {
+            is_root_group = 1;
+            break;
+        }
+    }
+    free(groups);
+
+    if (is_root_group == 0) {
+        gplog(LOG_OP, "User is not in root group.");
+        return false;
+    }
+
+    return true;
 }

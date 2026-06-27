@@ -10,9 +10,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#include <linux/dmi.h>
-#include <linux/cred.h>
-#include <linux/types.h>
+#include "ka_kernel_def_pub.h"
+#include "ka_driver_pub.h"
 
 #include "runenv_config_module.h"
 #include "vm_query.h"
@@ -22,10 +21,10 @@
 
 bool run_in_virtual_mach(void)
 {
-    if (dmi_match(DMI_SYS_VENDOR, DMI_VIRTUAL_SYSVENDOR)) {
+    if (ka_driver_dmi_match(DMI_SYS_VENDOR, DMI_VIRTUAL_SYSVENDOR)) {
         recfg_debug("In virtual_mach.\n");
         return true;
     }
     return false;
 }
-EXPORT_SYMBOL_GPL(run_in_virtual_mach);
+KA_EXPORT_SYMBOL_GPL(run_in_virtual_mach);

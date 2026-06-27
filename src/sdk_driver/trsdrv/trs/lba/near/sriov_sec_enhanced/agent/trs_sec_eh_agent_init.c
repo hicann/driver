@@ -27,21 +27,19 @@
 #include "trs_sec_eh_cfg.h"
 #include "trs_sec_eh_id.h"
 #include "trs_sec_eh_sq.h"
-#include "comm_kernel_interface.h"
 #include "trs_sec_eh_agent_init.h"
 
 static const ka_pci_device_id_t sec_eh_agent_tbl[] = {
     {KA_PCI_VDEVICE(HUAWEI, 0xd802), 0},
     {KA_PCI_VDEVICE(HUAWEI, 0xd803), 0},
     {KA_PCI_VDEVICE(HUAWEI, 0xd804), 0},
-    { 0x20C6, 0xd500, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0 },
-    { 0x203F, 0xd500, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0 },
-    { 0x20E9, 0xd500, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0 },
-    { 0x20C6, 0xd802, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0 },
-    { 0x203F, 0xd802, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0 },
-    { 0x20E9, 0xd802, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0 },
-    {}
-};
+    {0x20C6, 0xd500, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0},
+    {0x203F, 0xd500, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0},
+    {0x20E9, 0xd500, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0},
+    {0x20C6, 0xd802, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0},
+    {0x203F, 0xd802, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0},
+    {0x20E9, 0xd802, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0},
+    {}};
 KA_MODULE_DEVICE_TABLE(pci, sec_eh_agent_tbl);
 
 static ka_mutex_t sec_eh_cfg_mutex;
@@ -54,7 +52,8 @@ static int trx_sec_eh_msg_para_check(u32 dev_id, u32 fid, struct vmng_rx_msg_pro
     }
 
     if (proc_info->in_data_len < sizeof(struct trs_sec_eh_msg_head)) {
-        trs_err("Check failed. (in_data_len=%u; expected_len=%u\n", proc_info->in_data_len,
+        trs_err(
+            "Check failed. (in_data_len=%u; expected_len=%u\n", proc_info->in_data_len,
             (u32)sizeof(struct trs_sec_eh_msg_head));
         return -EINVAL;
     }
@@ -109,7 +108,7 @@ static ka_irqreturn_t trs_sec_eh_irq_inject_proc(int irq, void *para)
 {
     struct trs_irq_inject *inject = (struct trs_irq_inject *)para;
 
-    (void)vmngh_hypervisor_inject_msix(inject->devid, inject->vector_id);
+    (void)vmngh_hypervisor_inject_msix(inject->devid, inject->vector_id, inject->irq);
     trs_debug("Irq proc. (devid=%u; vector=%u; irq=%u)\n", inject->devid, inject->vector_id, inject->irq);
     return KA_IRQ_HANDLED;
 }
@@ -125,11 +124,13 @@ static void trs_sec_eh_irq_unrequest(u32 devid)
     }
 
     for (i = 0; i < inject->sq_trigger_irq_cnt; i++) {
-        (void)devdrv_unregister_irq_by_vector_index(devid, inject->sq_trigger[i].vector_id, (void *)&inject->sq_trigger[i]);
+        (void)devdrv_unregister_irq_by_vector_index(
+            devid, inject->sq_trigger[i].vector_id, (void *)&inject->sq_trigger[i]);
     }
 
     for (i = 0; i < inject->cq_update_irq_cnt; i++) {
-        (void)devdrv_unregister_irq_by_vector_index(devid, inject->cq_update[i].vector_id, (void *)&inject->cq_update[i]);
+        (void)devdrv_unregister_irq_by_vector_index(
+            devid, inject->cq_update[i].vector_id, (void *)&inject->cq_update[i]);
     }
 
     trs_inject_irq[devid] = NULL;
@@ -154,10 +155,10 @@ static int trs_sec_eh_trigger_irq_request(u32 devid, struct trs_inject_irq_info 
     }
 
     inject->sq_trigger[0].devid = devid;
-    inject->sq_trigger[0].vector_id = irq;  // hw irq
+    inject->sq_trigger[0].vector_id = irq; // hw irq
     inject->sq_trigger[0].irq = irq_request;
-    ret = devdrv_register_irq_by_vector_index(devid, irq, trs_sec_eh_irq_inject_proc,
-        (void *)&inject->sq_trigger[0], "sq_trigger_inject");
+    ret = devdrv_register_irq_by_vector_index(
+        devid, irq, trs_sec_eh_irq_inject_proc, (void *)&inject->sq_trigger[0], "sq_trigger_inject");
     if (ret != 0) {
         trs_err("Request irq failed. (irq=%u; ret=%d)\n", irq, ret);
         return ret;
@@ -171,7 +172,7 @@ static int trs_sec_eh_trigger_irq_request(u32 devid, struct trs_inject_irq_info 
 void trs_sec_get_cq_update_irq_num(u32 devid, u32 *irq_num)
 {
     if (devdrv_get_connect_protocol(devid) == CONNECT_PROTOCOL_HCCS) {
-        *irq_num = TRS_VDEV_MAX_CQ_UPDATE_IRQ_NUM / 4;  /* num is two, 4 is a divisor */
+        *irq_num = TRS_VDEV_MAX_CQ_UPDATE_IRQ_NUM / 4; /* num is two, 4 is a divisor */
     } else {
         *irq_num = TRS_VDEV_MAX_CQ_UPDATE_IRQ_NUM;
     }
@@ -202,26 +203,26 @@ static int trs_sec_eh_irq_request(u32 devid)
 
     idx = 2; /* cq update start from 2 */
     for (i = 0; i < irq_num; i++, idx++) {
-        ret = devdrv_get_ts_drv_irq_vector_id(devid, idx, &irq);  // hw irq
+        ret = devdrv_get_ts_drv_irq_vector_id(devid, idx, &irq); // hw irq
         if (ret != 0) {
             trs_err("Get mb irq vector failed. (devid=%u)\n", devid);
-            goto  free_irq;
+            goto free_irq;
         }
 
         ret = devdrv_get_irq_vector(devid, irq, &irq_request);
         if (ret != 0) {
             trs_err("Get mb req_irq failed. (devid=%u)\n", devid);
-            goto  free_irq;
+            goto free_irq;
         }
 
         inject->cq_update[i].devid = devid;
         inject->cq_update[i].vector_id = irq; // hw irq
         inject->cq_update[i].irq = irq_request;
-        ret = devdrv_register_irq_by_vector_index(devid, irq, trs_sec_eh_irq_inject_proc,
-            (void *)&inject->cq_update[i], "cqe_done_inject");
+        ret = devdrv_register_irq_by_vector_index(
+            devid, irq, trs_sec_eh_irq_inject_proc, (void *)&inject->cq_update[i], "cqe_done_inject");
         if (ret != 0) {
             trs_err("Request irq failed. (irq=%u)\n", irq);
-            goto  free_irq;
+            goto free_irq;
         }
         inject->cq_update_irq_cnt++;
     }
@@ -338,7 +339,7 @@ int init_sec_eh_trs_agent(void)
     ka_task_mutex_init(&sec_eh_cfg_mutex);
 
     trs_info("Sec eh agent init success\n");
-    return 0 ;
+    return 0;
 }
 
 void exit_sec_eh_trs_agent(void)

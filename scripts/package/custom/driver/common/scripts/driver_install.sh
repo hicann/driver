@@ -457,14 +457,13 @@ remove_white_proc_cfg_uninstall() {
     local is_a2_driver
     local is_a3_driver
 
-    if [[ "${uninstall}" = "n" ]]; then
+    if [[ "${uninstall}" = "n" ]];then
         log "[INFO]Only uninstall need remove white_proc_config"
         return
     fi
 
     is_a2_driver=$(echo $device_bdf | grep d802)
     is_a3_driver=$(echo $device_bdf | grep d803)
-
     if [[ -z "$is_a2_driver" && -z "$is_a3_driver" ]]; then
         log "[INFO]This type driver need not remove white process config"
         return

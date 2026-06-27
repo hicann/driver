@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * Copyright (c) 2026 Huawei Technologies Co., Ltd.
  * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -13,17 +13,27 @@
 #include "dpa/dpa_apm.h"
 #include "apm_ioctl.h"
 
+#define APM_GET_SIGN_RETRY_COUNT 2000
+#define APM_GET_SIGN_RETRY_DELAY 100000
 drvError_t drvGetProcessSign(struct process_sign *sign)
 {
     struct apm_cmd_get_sign para;
-    int ret;
+    int ret, cnt = 0;
+    bool retry = false;
 
     if (sign == NULL) {
         apm_err("Sign is NULL.\n");
         return DRV_ERROR_PARA_ERROR;
     }
 
-    ret = apm_cmd_ioctl(APM_GET_SIGN, &para);
+    do {
+        ret = apm_cmd_ioctl(APM_GET_SIGN, &para);
+        cnt++;
+        retry = ((ret != 0) && (errno == EAGAIN) && (cnt < APM_GET_SIGN_RETRY_COUNT));
+        if (retry) {
+            usleep(APM_GET_SIGN_RETRY_DELAY);
+        }
+    } while (retry);
     if (ret != 0) {
         apm_err("Get proc sign fail. (ret=%d)\n", ret);
         return ret;
@@ -35,8 +45,8 @@ drvError_t drvGetProcessSign(struct process_sign *sign)
     return DRV_ERROR_NONE;
 }
 
-int apm_query_slave_pid(unsigned long cmd, int master_pid, unsigned int devid, enum devdrv_process_type proc_type,
-    int *slave_pid)
+int apm_query_slave_pid(
+    unsigned long cmd, int master_pid, unsigned int devid, enum devdrv_process_type proc_type, int *slave_pid)
 {
     struct apm_cmd_query_slave_pid para;
     int ret;
@@ -51,8 +61,9 @@ int apm_query_slave_pid(unsigned long cmd, int master_pid, unsigned int devid, e
     para.proc_type = proc_type;
     ret = apm_cmd_ioctl(cmd, &para);
     if (ret != 0) {
-        apm_warn("Query pid warn. (ret=%d; cmd=%u; devid=%u; master_pid=%d; proc_type=%d)\n",
-            ret, _IOC_NR(cmd), para.devid, para.master_pid, para.proc_type);
+        apm_warn(
+            "Query pid warn. (ret=%d; cmd=%lu; devid=%u; master_pid=%d; proc_type=%d)\n", ret, _IOC_NR(cmd), para.devid,
+            para.master_pid, para.proc_type);
         return ret;
     }
 
@@ -61,14 +72,13 @@ int apm_query_slave_pid(unsigned long cmd, int master_pid, unsigned int devid, e
     return DRV_ERROR_NONE;
 }
 
-drvError_t halQuerySlavePid(int master_pid, unsigned int devid, enum devdrv_process_type proc_type,
-    int *slave_pid)
+drvError_t halQuerySlavePid(int master_pid, unsigned int devid, enum devdrv_process_type proc_type, int *slave_pid)
 {
     return apm_query_slave_pid(APM_QUERY_SLAVE_PID, master_pid, devid, proc_type, slave_pid);
 }
 
-drvError_t halQuerySlavePidByLocalMaster(int master_pid, unsigned int devid, enum devdrv_process_type proc_type,
-    int *slave_pid)
+drvError_t halQuerySlavePidByLocalMaster(
+    int master_pid, unsigned int devid, enum devdrv_process_type proc_type, int *slave_pid)
 {
     return apm_query_slave_pid(APM_QUERY_SLAVE_PID_BY_LOCAL_MASTER, master_pid, devid, proc_type, slave_pid);
 }
@@ -83,8 +93,8 @@ drvError_t halQueryDevpid(struct halQueryDevpidInfo info, pid_t *dev_pid)
     return halQuerySlavePid(info.hostpid, info.devid, info.proc_type, dev_pid);
 }
 
-drvError_t halQuerySlaveProcMeminfo(int master_pid, unsigned int devid, processType_t processType,
-    processMemType_t memType, unsigned long long *size)
+drvError_t halQuerySlaveProcMeminfo(
+    int master_pid, unsigned int devid, processType_t processType, processMemType_t memType, unsigned long long *size)
 {
     struct apm_cmd_slave_meminfo para;
     drvError_t ret;
@@ -106,4 +116,3 @@ drvError_t halQuerySlaveProcMeminfo(int master_pid, unsigned int devid, processT
     *size = para.size;
     return DRV_ERROR_NONE;
 }
-

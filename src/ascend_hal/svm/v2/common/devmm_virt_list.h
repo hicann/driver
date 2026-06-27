@@ -19,11 +19,7 @@ struct devmm_virt_list_head {
     struct devmm_virt_list_head *next, *prev;
 };
 
-
-#define SVM_LIST_HEAD_INIT(name) \
-    {                            \
-        &(name), &(name)         \
-    }
+#define SVM_LIST_HEAD_INIT(name) {&(name), &(name)}
 
 #define SVM_LIST_HEAD(name) (struct devmm_virt_list_head name = SVM_LIST_HEAD_INIT(name))
 
@@ -33,8 +29,8 @@ static inline void SVM_INIT_LIST_HEAD(struct devmm_virt_list_head *list)
     list->prev = list;
 }
 
-static inline void _devmm_virt_list_add(struct devmm_virt_list_head *new_, struct devmm_virt_list_head *prev,
-                                        struct devmm_virt_list_head *next)
+static inline void _devmm_virt_list_add(
+    struct devmm_virt_list_head *new_, struct devmm_virt_list_head *prev, struct devmm_virt_list_head *next)
 {
     next->prev = new_;
     new_->next = next;
@@ -79,16 +75,13 @@ static inline void devmm_virt_list_del_init(struct devmm_virt_list_head *entry)
     SVM_INIT_LIST_HEAD(entry);
 }
 
-static inline int devmm_virt_list_is_last(const struct devmm_virt_list_head *list,
-                                          const struct devmm_virt_list_head *head)
+static inline int devmm_virt_list_is_last(
+    const struct devmm_virt_list_head *list, const struct devmm_virt_list_head *head)
 {
     return list->next == head;
 }
 
-static inline int devmm_virt_list_empty(const struct devmm_virt_list_head *head)
-{
-    return head->next == head;
-}
+static inline int devmm_virt_list_empty(const struct devmm_virt_list_head *head) { return head->next == head; }
 
 static inline int devmm_virt_list_empty_careful(const struct devmm_virt_list_head *head)
 {
@@ -112,8 +105,7 @@ static inline int devmm_virt_list_empty_careful(const struct devmm_virt_list_hea
 
 #define devmm_virt_list_for_each(pos, head) for ((pos) = (head)->next; (pos) != (head); (pos) = (pos)->next)
 
-#define devmm_virt_list_for_each_prev(pos, head) \
-    for ((pos) = (head)->prev; (pos) != (head); (pos) = (pos)->prev)
+#define devmm_virt_list_for_each_prev(pos, head) for ((pos) = (head)->prev; (pos) != (head); (pos) = (pos)->prev)
 
 #define devmm_virt_list_for_each_safe(pos, n, head) \
     for ((pos) = (head)->next, (n) = (pos)->next; (pos) != (head); (pos) = (n), (n) = (pos)->next)

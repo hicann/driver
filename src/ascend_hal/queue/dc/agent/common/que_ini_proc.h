@@ -19,7 +19,7 @@ int que_get_tgt_log_level(void);
 uint64_t que_get_ini_basetime(unsigned int devid);
 void que_update_ini_basetime(unsigned int devid);
 void que_ini_time_stamp(struct que_ini_proc *ini_proc, QUE_TRACE_INI_TIMESTAMP type);
-struct que_ini_proc *que_ini_proc_create();
+struct que_ini_proc *que_ini_proc_create(void);
 void que_ini_proc_destroy(struct que_ini_proc *ini_proc);
 struct que_pkt *que_tx_get_first_pkt(struct que_tx *tx);
 struct que_pkt *que_tx_get_other_pkts(struct que_tx *tx);

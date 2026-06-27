@@ -55,6 +55,8 @@ set(DRIVER_CUSTOM_TARGETS
     dcmi
     lingqu-dcmi
     dsmi_network
+    # npu-smi
+    # hccn_tool
 )
 
 set(DRIVER_COMPAT_TARGETS

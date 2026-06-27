@@ -29,7 +29,7 @@ typedef union {
          *    Only the case that during TS FW initialziation,
          *    we would allow using write to to notify table entry with flag == 1
          */
-        unsigned int notifyTableFlagSlice       : 1;    /* [0] */
+        unsigned int notifyTableFlagSlice : 1; /* [0] */
         /*
          * 1: notify pending  will be clear.
          * 0: notify pending  will not be clear.
@@ -37,8 +37,8 @@ typedef union {
          *    the corresponding pending will be set 1.when SLICE is reset or destroys.
          *    the pending need to be clear.
          */
-        unsigned int notifyTablePendingClrSlice : 1;    /* [1] */
-        unsigned int reserved                   : 30;   /* [31:2] */
+        unsigned int notifyTablePendingClrSlice : 1; /* [1] */
+        unsigned int reserved : 30;                  /* [31:2] */
     } bits;
 
     /* Define an unsigned member */
@@ -50,7 +50,7 @@ typedef union {
  */
 typedef struct {
     StarsNotifyTableSlice starsNotifyTableSlice[STARS_TABLE_NOTIFY_NUM];
-    unsigned int          reserved[16256];
+    unsigned int reserved[16256];
 } StarsNotifyTableSliceInfo;
 
 /*

@@ -36,7 +36,7 @@ struct trs_chan_sq_ctx {
     u64 db_addr;
     struct trs_chan_sq_para para;
     ka_wait_queue_head_t wait_queue;
-    ka_task_spinlock_t lock;    /* submit task in tasklet */
+    ka_task_spinlock_t lock; /* submit task in tasklet */
     u32 long_sqe_cnt;
 };
 
@@ -88,7 +88,7 @@ struct trs_chan {
     struct trs_chan_stat stat;
     ka_work_struct_t work;
     ka_proc_dir_entry_t *entry;
-    ka_task_spinlock_t lock;    /* for cq dispatch */
+    ka_task_spinlock_t lock; /* for cq dispatch */
     int work_running;
     int tasklet_running;
     u32 retry_times;
@@ -169,10 +169,15 @@ static inline bool trs_chan_rts_rsv_sq_id(struct trs_chan *chan)
 {
     return ((chan->flag & (0x1 << CHAN_FLAG_RTS_RSV_SQ_ID_BIT)) != 0);
 }
- 
+
 static inline bool trs_chan_rts_rsv_cq_id(struct trs_chan *chan)
 {
     return ((chan->flag & (0x1 << CHAN_FLAG_RTS_RSV_CQ_ID_BIT)) != 0);
+}
+
+static inline bool trs_chan_sqcq_is_agent(struct trs_chan *chan)
+{
+    return ((chan->flag & (0x1 << CHAN_FLAG_AGENT_ID_BIT)) != 0);
 }
 
 struct trs_chan *trs_chan_get(struct trs_id_inst *inst, u32 chan_id);
@@ -180,4 +185,3 @@ void trs_chan_put(struct trs_chan *chan);
 void trs_all_chan_cq_work_cancel(struct trs_chan_ts_inst *ts_inst);
 
 #endif
-

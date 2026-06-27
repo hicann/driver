@@ -72,8 +72,8 @@ STATIC int vmngh_admin_rx_msg_proc(void *msg_chan, struct vmng_msg_chan_rx_proc_
     }
 
     if (g_vmngh_msg_admin_func_ops[opcode] == NULL) {
-        vmng_err("Got an admin opcode, but no process function. (devid=%u; fid=%u; opcode=%u)\n",
-            msg_dev->dev_id, msg_dev->fid, opcode);
+        vmng_err("Got an admin opcode, but no process function. (devid=%u; fid=%u; opcode=%u)\n", msg_dev->dev_id,
+                 msg_dev->fid, opcode);
         return -EINVAL;
     }
     ret = g_vmngh_msg_admin_func_ops[opcode](msg_dev, proc_info);
@@ -121,7 +121,7 @@ void vmngh_init_admin_msg(struct vmng_msg_dev *msg_dev)
     msg_dev->admin_db_id = msg_chan_rx->rx_recv_irq;
 
     vmng_info("Admin init OK. (dev_id=%u; fid=%u; tx_irq=%u; rx_irq=%u)\n", msg_dev->dev_id, msg_dev->fid,
-        msg_chan_tx->tx_send_irq, msg_chan_rx->rx_recv_irq);
+              msg_chan_tx->tx_send_irq, msg_chan_rx->rx_recv_irq);
 }
 
 void vmngh_uninit_admin_msg(struct vmng_msg_dev *msg_dev)

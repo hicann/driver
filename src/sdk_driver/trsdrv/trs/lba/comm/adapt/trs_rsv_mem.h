@@ -13,10 +13,10 @@
 #ifndef TRS_RCV_MEM_H
 #define TRS_RCV_MEM_H
 
-#include <linux/types.h>
+#include "ka_type.h"
 
 #include "trs_pub_def.h"
-#define TRS_RSV_MEM_OP_ZERO     (1 << 0)
+#define TRS_RSV_MEM_OP_ZERO (1 << 0)
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -28,18 +28,12 @@ struct trs_rsv_mem_attr {
     u32 flag;
 };
 
-enum {
-    RSV_MEM_HW_SQCQ = 0,
-    RSV_MEM_MAINT_SQCQ,
-    RSV_MEM_MAX
-};
+enum { RSV_MEM_HW_SQCQ = 0, RSV_MEM_MAINT_SQCQ, RSV_MEM_MAX };
 
 void *trs_rsv_mem_alloc(struct trs_id_inst *inst, int type, size_t size, u32 flag);
 void trs_rsv_mem_free(struct trs_id_inst *inst, int type, void *vaddr, size_t size);
-int trs_rsv_mem_v2p(struct trs_id_inst *inst, int type,
-    void *vaddr, phys_addr_t *phy_addr);
-int trs_rsv_mem_init(struct trs_id_inst *inst, int type,
-    struct trs_rsv_mem_attr *attr);
+int trs_rsv_mem_v2p(struct trs_id_inst *inst, int type, void *vaddr, phys_addr_t *phy_addr);
+int trs_rsv_mem_init(struct trs_id_inst *inst, int type, struct trs_rsv_mem_attr *attr);
 void trs_rsv_mem_uninit(struct trs_id_inst *inst, int type);
 
 bool trs_rsv_mem_is_in_range(struct trs_id_inst *inst, int type, void *vaddr);

@@ -11,20 +11,20 @@
 #define RMO_LOGIC_DEV_MAX_NUM 64
 
 struct rmo_cmd_res_map {
-    unsigned int devid;             /* input */
-    struct res_map_info res_info;   /* input */
-    unsigned long va;               /* input */
-    unsigned int len;               /* input */
-    bool repeat_map_flag;           /* output */
-    unsigned int rsv[4];            /* reserve */
+    unsigned int devid;           /* input */
+    struct res_map_info res_info; /* input */
+    unsigned long va;             /* input */
+    unsigned int len;             /* input */
+    bool repeat_map_flag;         /* output */
+    unsigned int rsv[4];          /* reserve */
 };
 
 struct rmo_cmd_res_io {
-    unsigned int devid;     /* input */
+    unsigned int devid;           /* input */
     struct res_map_info res_info; /* input */
-    unsigned int len; /* input */
-    void *data;       /* output or input*/
-    unsigned int rsv[4];    /* reserve */
+    unsigned int len;             /* input */
+    void *data;                   /* output or input*/
+    unsigned int rsv[4];          /* reserve */
 };
 
 struct rmo_cmd_mem_sharing {
@@ -39,16 +39,16 @@ struct rmo_cmd_mem_sharing {
 };
 
 /* resource map cmd */
-#define RMO_RES_MAP        _IOWR('U', 0, struct rmo_cmd_res_map)
-#define RMO_RES_UNMAP      _IOWR('U', 1, struct rmo_cmd_res_map)
-#define RMO_GET_RES_LEN    _IOWR('U', 2, struct rmo_cmd_res_map)
+#define RMO_RES_MAP _IOWR('U', 0, struct rmo_cmd_res_map)
+#define RMO_RES_UNMAP _IOWR('U', 1, struct rmo_cmd_res_map)
+#define RMO_GET_RES_LEN _IOWR('U', 2, struct rmo_cmd_res_map)
 
 /* resource read write cmd */
-#define RMO_RES_READ       _IOWR('U', 3, struct rmo_cmd_res_io)
-#define RMO_RES_WRITE      _IOW('U', 4, struct rmo_cmd_res_io)
+#define RMO_RES_READ _IOWR('U', 3, struct rmo_cmd_res_io)
+#define RMO_RES_WRITE _IOW('U', 4, struct rmo_cmd_res_io)
 
-#define RMO_MEM_SHARING    _IOR('U', 5, struct rmo_cmd_mem_sharing)
+#define RMO_MEM_SHARING _IOR('U', 5, struct rmo_cmd_mem_sharing)
 
-#define RMO_MAX_CMD             6
+#define RMO_MAX_CMD 6
 
 #endif

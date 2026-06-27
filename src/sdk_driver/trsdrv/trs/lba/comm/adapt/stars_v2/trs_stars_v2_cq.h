@@ -13,14 +13,14 @@
 #ifndef TRS_STARS_V2_CQ_H
 #define TRS_STARS_V2_CQ_H
 
-#include <linux/types.h>
+#include "ka_type.h"
 
 #include "trs_pub_def.h"
 #include "trs_core.h"
 #include "trs_chan.h"
 
-#define TRS_STARS_CQE_HOLDER    3
-#define TRS_STARS_CQE_RECORED   4
+#define TRS_STARS_CQE_HOLDER 3
+#define TRS_STARS_CQE_RECORED 4
 
 typedef struct {
     uint16_t task_id;
@@ -44,9 +44,9 @@ typedef struct tag_stars_cqe_error_info {
 } rt_stars_cqe_error_info_t;
 
 /**
-* @ingroup
-* @brief the struct define of cqe when task is completed
-*/
+ * @ingroup
+ * @brief the struct define of cqe when task is completed
+ */
 typedef struct tag_stars_cqe_sys_cnt {
     uint32_t syscnt_low;
     uint32_t syscnt_high;
@@ -84,8 +84,8 @@ typedef union tag_stars_cqe_status {
 
 typedef struct tag_stars_cqe {
     uint16_t phase : 1;
-    uint16_t warn : 1;          /* process warning */
-    uint16_t evt : 1;           /* event record flag */
+    uint16_t warn : 1; /* process warning */
+    uint16_t evt : 1;  /* event record flag */
     uint16_t place_hold : 1;
     uint16_t sq_id : 11;
     uint16_t error_bit : 1;
@@ -106,4 +106,3 @@ void trs_stars_v2_cqe_to_logic_cqe(void *hw_cqe, struct trs_logic_cqe *logic_cqe
 void trs_stars_v2_trace_cqe_fill(struct trs_id_inst *inst, struct trs_chan_cq_trace *cq_trace, void *cqe);
 u16 trs_stars_v2_cqe_get_match_flag(rt_stars_cqe_t *cqe);
 #endif /* TRS_STARS_V2_CQ_H */
-

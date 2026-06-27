@@ -15,4 +15,3 @@
 drvError_t shrid_ioctl(uint32_t cmd, void *para);
 void shrid_set_fd(int fd);
 #endif
-

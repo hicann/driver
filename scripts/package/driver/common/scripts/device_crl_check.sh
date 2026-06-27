@@ -86,7 +86,7 @@ device_images_nvcnt_check() {
         return 0
     fi
 
-    # use crltool get nvcnt ,input param :$1:input type(0:get crl file, 1:compare crl newer, 2:check valid,3:verification signature,4:get nvcnt), 
+    # use crltool get nvcnt, input param :$1:input type(0:get crl file, 1:compare crl newer, 2:check valid,3:verification signature,4:get nvcnt), 
     # $2:image type(0:cms type,1:soc type),$3:image, $4:nvcnt file
     # return value: 0-success, 1-cannot get nvcnt, 2-get nvcnt failed
     "$crltool" 4 0 "$sourcedir"/device/$source_tee $nvcntFile > /dev/null 2>&1
@@ -114,7 +114,7 @@ device_images_nvcnt_check() {
                 if [ $image_nvcnt_get_flag -ne 1 ];then
                     log "[ERROR]$image_nvcnt_get_flag not equal 1 ,stop upgrade"
                     return 1
-                fi 
+                fi
             else
                 log "[ERROR]get nvcnt failed,ret =$ret ,stop upgrade"
                 return 1

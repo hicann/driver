@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * Copyright (c) 2026 Huawei Technologies Co., Ltd.
  * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@
 
 int svm_mpl_populate(u32 devid, u64 va, u64 size, u32 flag)
 {
-    struct svm_mpl_populate_para para;
+    struct svm_mpl_populate_para para = {0};
     int ret;
 
     para.flag = flag;
@@ -29,8 +29,9 @@ int svm_mpl_populate(u32 devid, u64 va, u64 size, u32 flag)
 
     ret = svm_cmd_ioctl(devid, SVM_MPL_POPULATE, (void *)&para);
     if (ret != 0) {
-        svm_err_if((ret != DRV_ERROR_OUT_OF_MEMORY), "Svm ioctl mem populate failed. (ret=%d; va=0x%llx; size=%llu; flag=%u)\n",
-            ret, va, size, flag);
+        svm_err_if(
+            (ret != DRV_ERROR_OUT_OF_MEMORY),
+            "Svm ioctl mem populate failed. (ret=%d; va=0x%llx; size=%llu; flag=%u)\n", ret, va, size, flag);
     }
 
     return ret;
@@ -38,7 +39,7 @@ int svm_mpl_populate(u32 devid, u64 va, u64 size, u32 flag)
 
 int svm_mpl_depopulate(u32 devid, u64 va, u64 size)
 {
-    struct svm_mpl_depopulate_para para;
+    struct svm_mpl_depopulate_para para = {0};
     int ret;
 
     para.va = va;
@@ -51,4 +52,3 @@ int svm_mpl_depopulate(u32 devid, u64 va, u64 size)
 
     return ret;
 }
-

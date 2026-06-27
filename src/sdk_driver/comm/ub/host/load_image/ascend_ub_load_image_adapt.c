@@ -86,7 +86,7 @@ STATIC int ubdrv_uvb_msg_process_part_load(struct ascend_dev *asd_dev, u32 offse
 
     blocks = asd_dev->loader.blocks;
     file_len = ubdrv_uvb_get_file_trans_size(asd_dev->loader.remain_size, offset);
-    len = kernel_read(p_file, blocks->blocks_addr[0].addr, file_len, &pos);
+    len = ka_fs_kernel_read(p_file, blocks->blocks_addr[0].addr, file_len, &pos);
     if ((len < 0) || (len != (ssize_t)file_len)) {
         ubdrv_err("Read file failed. (dev_id=%u; file_id=%u; data_size=%llu; read len=%llu)\n",
             asd_dev->dev_id, file_id, (u64)file_len, (u64)len);
@@ -121,7 +121,7 @@ STATIC int ubdrv_uvb_msg_get_final_state(struct cis_message *msg)
     }
 
     load_input = (struct ubdrv_uvb_get_final_state_input *)msg->input;
-    dev_id = ((load_input->slot_id * UBDRV_DEVNUM_PER_SLOT) + load_input->module_id);
+    dev_id = load_input->module_id;
     if (dev_id >= ASCEND_UB_PF_DEV_MAX_NUM) {
         ubdrv_err("Get devid by slotid failed. (dev_id=%u; ret=%d)\n", dev_id, ret);
         return -EINVAL;
@@ -162,7 +162,7 @@ STATIC int ubdrv_uvb_msg_get_loading_state(struct cis_message *msg)
     }
 
     load_input = (struct ubdrv_uvb_get_loading_state_input *)msg->input;
-    dev_id = ((load_input->slot_id * UBDRV_DEVNUM_PER_SLOT) + load_input->module_id);
+    dev_id = load_input->module_id;
     if (dev_id >= ASCEND_UB_PF_DEV_MAX_NUM) {
         ubdrv_err("Get devid by slotid failed. (dev_id=%u; ret=%d)\n", dev_id, ret);
         return -EINVAL;
@@ -224,7 +224,7 @@ STATIC int ubdrv_uvb_msg_get_file_info(struct cis_message *msg)
 
     load_output = (struct ubdrv_uvb_get_file_info_output *)msg->output;
     load_input = (struct ubdrv_uvb_get_file_info_input *)msg->input;
-    dev_id = ((load_input->slot_id * UBDRV_DEVNUM_PER_SLOT) + load_input->module_id);
+    dev_id = load_input->module_id;
     ubdrv_info("UVB recv msg info. (dev_id=%u;type=%u;slot_id=%u;module_id=%u;server_eid=%u)\n",
         dev_id, load_input->type, load_input->slot_id, load_input->module_id, load_input->server_eid);
 

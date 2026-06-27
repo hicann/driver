@@ -141,6 +141,12 @@ typedef enum hrtimer_mode        ka_hrtimer_mode_t;
 #define KA_HRTIMER_MODE_ABS_PINNED_HARD       HRTIMER_MODE_ABS_PINNED_HARD
 #define KA_HRTIMER_MODE_REL_PINNED_HARD       HRTIMER_MODE_REL_PINNED_HARD
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 4, 1)
+#define KA_HRTIMER_MODE_REL_TYPE KA_HRTIMER_MODE_REL_HARD
+#else
+#define KA_HRTIMER_MODE_REL_TYPE KA_HRTIMER_MODE_REL
+#endif
+
 typedef struct rtc_time ka_rtc_time_t;
 typedef struct irq_desc ka_irq_desc_t;
 typedef struct kernel_param_ops ka_kernel_param_ops_t;
@@ -169,7 +175,20 @@ typedef struct timespec      ka_timespec_t;
 typedef struct hrtimer       ka_hrtimer_t;
 typedef struct timezone      ka_timezone_t;
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 1, 0)
+#define ka_system_timespec u64
+#else
+#define ka_system_timespec ka_timespec_t
+#endif
+
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 3, 0)
+#define ka_system_const const
+#else
+#define ka_system_const
+#endif
+
 #define ka_kernel_cap_t                 kernel_cap_t
+#define KA_CAP_AUDIT_READ               CAP_AUDIT_READ
 #define KA_SYSTEM_CAP_TO_MASK(x)        CAP_TO_MASK(x)
 
 #define ka_time64_t             time64_t
@@ -179,6 +198,12 @@ typedef struct timer_list       ka_timer_list_t;
 typedef struct tm               ka_tm_t;
 typedef struct subprocess_info  ka_ka_subprocess_info_t;
 typedef struct kernel_param_ops ka_kernel_param_ops_t;
+
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 15, 0)
+#define ka_system_timer_list unsigned long
+#else
+#define ka_system_timer_list ka_timer_list_t*
+#endif
 
 #define KA_MAX_NUMNODES       MAX_NUMNODES
 #define ka_jiffies            jiffies
@@ -208,6 +233,7 @@ typedef struct kernel_param_ops ka_kernel_param_ops_t;
 #define  __ka_system_module_get(module)     __module_get(module)
 #define  __ka_system_symbol_put(symbol)     __symbol_put(symbol)
 #define ka_system_symbol_put(symbol)     symbol_put(symbol)
+#define ka_system_symbol_put_addr(addr)     symbol_put_addr(addr)
 #define ka_system_module_refcount(mod)    module_refcount(mod)
 #define ka_system_try_module_get(module)    try_module_get(module)
 #define ka_system_module_put(module)     module_put(module)
@@ -265,6 +291,14 @@ static inline void ka_system_set_hrtimer_func(ka_hrtimer_t *timer, ka_hrtimer_re
 {
     timer->function = func;
 }
+static inline bool ka_system_timespec_equal(TASK_TIME_TYPE a, TASK_TIME_TYPE b)
+{
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 1, 0)
+    return a == b;
+#else
+    return (bool)timespec_equal(&a, &b);
+#endif
+}
 #define ka_system_hrtimer_start(timer, tim, mode)    hrtimer_start(timer, tim, mode)
 #define ka_system_hrtimer_cancel(timer)    hrtimer_cancel(timer)
 #define ka_system_in_interrupt()    in_interrupt()
@@ -296,7 +330,7 @@ const ka_kernel_param_ops_t *ka_system_get_param_array_ops(void);
 const ka_kernel_param_ops_t *ka_system_get_param_ops_bool(void);
 const ka_kernel_param_ops_t *ka_system_get_param_ops_charp(void);
 #define __ka_system_local_bh_enable_ip(ip, cnt) __local_bh_enable_ip(ip, cnt)
-#define ka_system_jiffies_to_timespec64(jiffies, value) jiffies_to_timespec64(jiffies, value)
+void ka_system_jiffies_to_timespec64(const unsigned long jiffies, struct timespec64 *value);
 #define ka_system_jiffies64_to_nsecs(j) jiffies64_to_nsecs(j)
 int ka_system_timespec_compare(const ka_timespec_t *lhs, const ka_timespec_t *rhs);
 ka_timespec_t ka_system_current_kernel_time(void);
@@ -311,8 +345,9 @@ long ka_system_get_timeval_nsec(ka_timeval_t *tv);
 #ifndef from_timer
 #define from_timer(var, callback_timer, timer_fieldname) container_of(callback_timer, typeof(*var), timer_fieldname)
 #endif
-#define ka_system_from_timer(var, callback_timer, timer_fieldname) from_timer(var, callback_timer, timer_fieldname) 
+#define ka_system_from_timer(var, callback_timer, timer_fieldname) from_timer(var, callback_timer, timer_fieldname)
 void ka_system_timer_setup(ka_timer_list_t *timer, void (*fn)(ka_timer_list_t *), unsigned int flags);
+void ka_system_timer_setup_extra(ka_timer_list_t *timer, void (*fn)(ka_system_timer_list), unsigned int flags);
 
 #define ka_system_call_usermodehelper(path, argv, envp, wait) call_usermodehelper(path, argv, envp, wait)
 int ka_system_security_ib_endport_manage_subnet(void *sec, const char *dev_name, u8 port_num);

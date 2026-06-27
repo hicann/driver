@@ -27,15 +27,21 @@
 #include "trs_user_interface.h"
 
 #if defined(__arm__) || defined(__aarch64__)
-#define dsb(opt)    { asm volatile("dsb " #opt : : : "memory"); }
-#define dmb(opt)    { asm volatile("dmb " #opt : : : "memory"); }
+#define dsb(opt)                                  \
+    {                                             \
+        asm volatile("dsb " #opt : : : "memory"); \
+    }
+#define dmb(opt)                                  \
+    {                                             \
+        asm volatile("dmb " #opt : : : "memory"); \
+    }
 #else
 #define dsb(opt)
 #define dmb(opt)
 #endif
-#define mb()        dsb(sy)
-#define wmb()       dsb(st) /* write fence */
-#define smp_wmb()   dmb(ishst)
+#define mb() dsb(sy)
+#define wmb() dsb(st) /* write fence */
+#define smp_wmb() dmb(ishst)
 
 #define ALIGN_UP(len, pagesize) ((uint32_t)((((len) + (pagesize) - 1) & (~((pagesize) - 1)))))
 
@@ -63,6 +69,7 @@ struct trs_dev_ctx {
     int hw_type;
     int connection_type;
     trs_mode_type_t sq_send_mode;
+    bool dev_open;
     void *d2d_dev_ctx;
     pthread_mutex_t dev_mutex;
     pthread_mutex_t stream_mutex;
@@ -73,90 +80,45 @@ static struct trs_dev_ctx dev_ctx[TRS_DEV_NUM];
 static struct trs_sqcq_ctx cqcq_ctxs[TRS_DEV_NUM][TRS_TS_NUM][DRV_INVALID_TYPE];
 static struct trs_sq_bp_ctx g_bp_sq_info[TRS_DEV_NUM];
 
-void trs_dev_ctx_mutex_lock(uint32_t dev_id)
-{
-    (void)pthread_mutex_lock(&dev_ctx[dev_id].dev_mutex);
-}
+void trs_dev_ctx_mutex_lock(uint32_t dev_id) { (void)pthread_mutex_lock(&dev_ctx[dev_id].dev_mutex); }
 
-void trs_dev_ctx_mutex_un_lock(uint32_t dev_id)
-{
-    (void)pthread_mutex_unlock(&dev_ctx[dev_id].dev_mutex);
-}
+void trs_dev_ctx_mutex_un_lock(uint32_t dev_id) { (void)pthread_mutex_unlock(&dev_ctx[dev_id].dev_mutex); }
 
-void trs_dev_ctx_stream_mutex_lock(uint32_t dev_id)
-{
-    (void)pthread_mutex_lock(&dev_ctx[dev_id].stream_mutex);
-}
+void trs_dev_ctx_stream_mutex_lock(uint32_t dev_id) { (void)pthread_mutex_lock(&dev_ctx[dev_id].stream_mutex); }
 
-void trs_dev_ctx_stream_mutex_unlock(uint32_t dev_id)
-{
-    (void)pthread_mutex_unlock(&dev_ctx[dev_id].stream_mutex);
-}
+void trs_dev_ctx_stream_mutex_unlock(uint32_t dev_id) { (void)pthread_mutex_unlock(&dev_ctx[dev_id].stream_mutex); }
 
-void *trs_get_d2d_dev_ctx(uint32_t recv_dev_id)
-{
-    return dev_ctx[recv_dev_id].d2d_dev_ctx;
-}
+void *trs_get_d2d_dev_ctx(uint32_t recv_dev_id) { return dev_ctx[recv_dev_id].d2d_dev_ctx; }
 
-void trs_set_d2d_dev_ctx(uint32_t recv_dev_id, void *ctx)
-{
-    dev_ctx[recv_dev_id].d2d_dev_ctx = ctx;
-}
+void trs_set_d2d_dev_ctx(uint32_t recv_dev_id, void *ctx) { dev_ctx[recv_dev_id].d2d_dev_ctx = ctx; }
 
-int trs_get_connection_type(uint32_t dev_id)
-{
-    return dev_ctx[dev_id].connection_type;
-}
+void trs_set_dev_open_status(uint32_t dev_id, bool dev_open) { dev_ctx[dev_id].dev_open = dev_open; }
 
-int trs_get_sq_send_mode(uint32_t dev_id)
-{
-    return dev_ctx[dev_id].sq_send_mode;
-}
+bool trs_is_dev_open(uint32_t dev_id) { return dev_ctx[dev_id].dev_open; }
 
-uint32_t trs_get_ts_num(uint32_t dev_id)
-{
-    return dev_ctx[dev_id].ts_num;
-}
+int trs_get_connection_type(uint32_t dev_id) { return dev_ctx[dev_id].connection_type; }
+
+int trs_get_sq_send_mode(uint32_t dev_id) { return dev_ctx[dev_id].sq_send_mode; }
+
+uint32_t trs_get_ts_num(uint32_t dev_id) { return dev_ctx[dev_id].ts_num; }
 
 static int trs_sq_type_trans[DRV_INVALID_TYPE] = {
-    [DRV_NORMAL_TYPE] = TRS_HW_SQ,
-    [DRV_CALLBACK_TYPE] = TRS_CB_SQ,
-    [DRV_LOGIC_TYPE] = TRS_MAX_ID_TYPE,
-    [DRV_SHM_TYPE] = TRS_MAX_ID_TYPE,
-    [DRV_CTRL_TYPE] = TRS_SW_SQ,
-    [DRV_GDB_TYPE] = TRS_MAINT_SQ
-};
+    [DRV_NORMAL_TYPE] = TRS_HW_SQ,    [DRV_CALLBACK_TYPE] = TRS_CB_SQ, [DRV_LOGIC_TYPE] = TRS_MAX_ID_TYPE,
+    [DRV_SHM_TYPE] = TRS_MAX_ID_TYPE, [DRV_CTRL_TYPE] = TRS_SW_SQ,     [DRV_GDB_TYPE] = TRS_MAINT_SQ};
 
 static int trs_cq_type_trans[DRV_INVALID_TYPE] = {
-    [DRV_NORMAL_TYPE] = TRS_HW_CQ,
-    [DRV_CALLBACK_TYPE] = TRS_CB_CQ,
-    [DRV_LOGIC_TYPE] = TRS_LOGIC_CQ,
-    [DRV_SHM_TYPE] = TRS_MAX_ID_TYPE,
-    [DRV_CTRL_TYPE] = TRS_SW_CQ,
-    [DRV_GDB_TYPE] = TRS_MAINT_CQ
-};
+    [DRV_NORMAL_TYPE] = TRS_HW_CQ,    [DRV_CALLBACK_TYPE] = TRS_CB_CQ, [DRV_LOGIC_TYPE] = TRS_LOGIC_CQ,
+    [DRV_SHM_TYPE] = TRS_MAX_ID_TYPE, [DRV_CTRL_TYPE] = TRS_SW_CQ,     [DRV_GDB_TYPE] = TRS_MAINT_CQ};
 
 struct trs_sqcq_remote_ops g_sqcq_remote_ops;
-void trs_register_sqcq_remote_ops(struct trs_sqcq_remote_ops *ops)
-{
-    g_sqcq_remote_ops = *ops;
-}
+void trs_register_sqcq_remote_ops(struct trs_sqcq_remote_ops *ops) { g_sqcq_remote_ops = *ops; }
 
-static struct trs_sqcq_remote_ops *trs_get_sqcq_remote_ops(void)
-{
-    return &g_sqcq_remote_ops;
-}
+static struct trs_sqcq_remote_ops *trs_get_sqcq_remote_ops(void) { return &g_sqcq_remote_ops; }
 
 static struct trs_sqcq_mem_ops g_sqcq_mem_ops = {NULL};
-void trs_register_sqcq_mem_ops(struct trs_sqcq_mem_ops *ops)
-{
-    g_sqcq_mem_ops = *ops;
-}
+void trs_register_sqcq_mem_ops(struct trs_sqcq_mem_ops *ops) { g_sqcq_mem_ops = *ops; }
 
-static struct trs_sqcq_mem_ops *trs_get_sqcq_mem_ops(void)
-{
-    return &g_sqcq_mem_ops;
-}
+static struct trs_sqcq_mem_ops *trs_get_sqcq_mem_ops(void) { return &g_sqcq_mem_ops; }
 
 void devdrv_flush_cache(uint64_t base, uint32_t len);
 
@@ -168,8 +130,10 @@ static bool trs_is_stars_inst(uint32_t dev_id, uint32_t ts_id)
 
 static bool trs_is_mmap_sq(struct halSqCqInputInfo *in)
 {
-    return (((in->type == DRV_NORMAL_TYPE) && ((in->flag & TSDRV_FLAG_REUSE_SQ) == 0) &&
-        ((in->flag & TSDRV_FLAG_ONLY_SQCQ_ID) == 0)) || (in->type == DRV_SHM_TYPE) || (in->type == DRV_CTRL_TYPE));
+    return (
+        ((in->type == DRV_NORMAL_TYPE) && ((in->flag & TSDRV_FLAG_REUSE_SQ) == 0) &&
+         ((in->flag & TSDRV_FLAG_ONLY_SQCQ_ID) == 0)) ||
+        (in->type == DRV_SHM_TYPE) || (in->type == DRV_CTRL_TYPE));
 }
 
 static uint32_t trs_get_sq_que_len(uint32_t sqe_depth, uint32_t sqe_size)
@@ -228,7 +192,7 @@ int trs_sq_mmap(uint32_t dev_id, struct halSqCqInputInfo *in, struct trs_sq_map 
         return 0;
     }
 
-    //mmap reg addr
+    // mmap reg addr
     sq_map->reg_addr.len = (size_t)((TRS_UIO_ADDR_MAX - TRS_UIO_HEAD_REG) * page_size);
     sq_map->reg_addr.addr = trs_dev_mmap(dev_id, NULL, sq_map->reg_addr.len, PROT_READ, MAP_SHARED);
     if (sq_map->reg_addr.addr == MAP_FAILED) {
@@ -240,24 +204,26 @@ int trs_sq_mmap(uint32_t dev_id, struct halSqCqInputInfo *in, struct trs_sq_map 
     // set ctrl
     for (i = 0; i < TRS_UIO_ADDR_MAX; i++) {
         if (i < TRS_UIO_HEAD_REG) {
-            sq_map->ctrl[i].addr = (void *)((uintptr_t)sq_map->non_reg_addr.addr + que_mmap_len + (size_t)(i * page_size));
+            sq_map->ctrl[i].addr =
+                (void *)((uintptr_t)sq_map->non_reg_addr.addr + que_mmap_len + (size_t)(i * page_size));
         } else {
-            sq_map->ctrl[i].addr = (void *)((uintptr_t)sq_map->reg_addr.addr + (size_t)((i - TRS_UIO_HEAD_REG) * page_size));
+            sq_map->ctrl[i].addr =
+                (void *)((uintptr_t)sq_map->reg_addr.addr + (size_t)((i - TRS_UIO_HEAD_REG) * page_size));
         }
     }
 
     return 0;
 }
 
-static void trs_fill_sq_alloc_info(struct halSqCqInputInfo *in, struct trs_uio_info *uio_info, struct trs_sq_map *sq_map,
-    void *sq_que_va)
+static void trs_fill_sq_alloc_info(
+    struct halSqCqInputInfo *in, struct trs_uio_info *uio_info, struct trs_sq_map *sq_map, void *sq_que_va)
 {
     struct trs_alloc_para *para = get_alloc_para_addr(in);
     int i;
 
     para->uio_info = uio_info;
-    uio_info->sq_que_addr = ((sq_que_va != NULL) ? (unsigned long)(uintptr_t)sq_que_va :
-        (unsigned long)(uintptr_t)sq_map->que.addr);
+    uio_info->sq_que_addr =
+        ((sq_que_va != NULL) ? (unsigned long)(uintptr_t)sq_que_va : (unsigned long)(uintptr_t)sq_map->que.addr);
     for (i = 0; i < TRS_UIO_ADDR_MAX; i++) {
         uio_info->sq_ctrl_addr[i] = (unsigned long)(uintptr_t)sq_map->ctrl[i].addr;
     }
@@ -307,7 +273,9 @@ struct sqcq_usr_info *_trs_get_sq_info(uint32_t dev_id, uint32_t ts_id, drvSqCqT
     struct trs_sqcq_ctx *sqcq_ctx = trs_get_sqcq_ctx(dev_id, ts_id, type);
 
     if (id >= sqcq_ctx->sq_num) {
-        trs_err("Invalid id. (dev_id=%u; ts_id=%u; type=%d; id=%u; sq_num=%u)\n", dev_id, ts_id, type, id, sqcq_ctx->sq_num);
+        trs_err(
+            "Invalid id. (dev_id=%u; ts_id=%u; type=%d; id=%u; sq_num=%u)\n", dev_id, ts_id, type, id,
+            sqcq_ctx->sq_num);
         return NULL;
     }
 
@@ -376,7 +344,48 @@ struct sqcq_usr_info *trs_get_cq_info(uint32_t dev_id, uint32_t ts_id, int type,
     return cq_info;
 }
 
-static int trs_id_type_init(uint32_t dev_id, uint32_t ts_id, int id_type, struct sqcq_usr_info **sqcq_info, uint32_t *sqcq_num)
+static int trs_sqcq_info_locks_init(struct sqcq_usr_info *info, uint32_t num)
+{
+    uint32_t i;
+    int ret;
+
+    for (i = 0; i < num; i++) {
+        ret = pthread_mutex_init(&info[i].sq_send_mutex, NULL);
+        if (ret != 0) {
+            goto destroy_inited_locks;
+        }
+
+        ret = pthread_rwlock_init(&info[i].mutex, NULL);
+        if (ret != 0) {
+            (void)pthread_mutex_destroy(&info[i].sq_send_mutex);
+            goto destroy_inited_locks;
+        }
+    }
+
+    return DRV_ERROR_NONE;
+
+destroy_inited_locks:
+    while (i > 0) {
+        i--;
+        (void)pthread_rwlock_destroy(&info[i].mutex);
+        (void)pthread_mutex_destroy(&info[i].sq_send_mutex);
+    }
+
+    return ret;
+}
+
+static void trs_sqcq_info_locks_destroy(struct sqcq_usr_info *info, uint32_t num)
+{
+    uint32_t i;
+
+    for (i = 0; i < num; i++) {
+        (void)pthread_rwlock_destroy(&info[i].mutex);
+        (void)pthread_mutex_destroy(&info[i].sq_send_mutex);
+    }
+}
+
+static int trs_id_type_init(
+    uint32_t dev_id, uint32_t ts_id, int id_type, struct sqcq_usr_info **sqcq_info, uint32_t *sqcq_num)
 {
     struct trs_res_id_para para = {.tsid = ts_id, .res_type = id_type};
     struct sqcq_usr_info *info = NULL;
@@ -396,6 +405,8 @@ static int trs_id_type_init(uint32_t dev_id, uint32_t ts_id, int id_type, struct
     }
 
     if (num == 0) {
+        *sqcq_info = NULL;
+        *sqcq_num = 0;
         trs_info("No resource. (dev_id=%u; ts_id=%u; id_type=%d)\n", dev_id, ts_id, id_type);
         return DRV_ERROR_NONE;
     }
@@ -406,25 +417,18 @@ static int trs_id_type_init(uint32_t dev_id, uint32_t ts_id, int id_type, struct
         return DRV_ERROR_OUT_OF_MEMORY;
     }
 
-    ret = memset_s((void *)info, sizeof(*info) * num, 0, sizeof(*info) * num);
+    ret = memset_s(info, sizeof(*info) * num, 0, sizeof(*info) * num);
     if (ret != 0) {
         free(info);
         trs_err("Memset failed. (dev_id=%u; ts_id=%u; id_type=%d; num=%u)\n", dev_id, ts_id, id_type, num);
         return ret;
     }
 
-    ret = pthread_mutex_init(&info->sq_send_mutex, NULL);
-    if (ret != 0) {
+    ret = trs_sqcq_info_locks_init(info, num);
+    if (ret != DRV_ERROR_NONE) {
         free(info);
-        trs_err("Mutex init failed. (dev_id=%u; ts_id=%u; id_type=%d; num=%u)\n", dev_id, ts_id, id_type, num);
-        return ret;
-    }
-
-    ret = pthread_rwlock_init(&info->mutex, NULL);
-    if (ret != 0) {
-        (void)pthread_mutex_destroy(&info->sq_send_mutex);
-        free(info);
-        trs_err("Mutex init failed. (dev_id=%u; ts_id=%u; id_type=%d; num=%u)\n", dev_id, ts_id, id_type, num);
+        trs_err(
+            "Mutex init failed. (dev_id=%u; ts_id=%u; id_type=%d; num=%u; ret=%d)\n", dev_id, ts_id, id_type, num, ret);
         return ret;
     }
 
@@ -438,6 +442,14 @@ static int trs_id_type_init(uint32_t dev_id, uint32_t ts_id, int id_type, struct
 static void trs_id_type_un_init(struct sqcq_usr_info **sqcq_info, uint32_t *sqcq_num)
 {
     struct sqcq_usr_info *info = *sqcq_info;
+
+    if (info == NULL) {
+        *sqcq_num = 0;
+        return;
+    }
+
+    trs_sqcq_info_locks_destroy(info, *sqcq_num);
+
     free(info);
     *sqcq_info = NULL;
     *sqcq_num = 0;
@@ -467,7 +479,7 @@ static int trs_ts_sq_cq_init(uint32_t dev_id, uint32_t ts_id)
 
 error:
     for (j = 0; j < i; j++) {
-        sqcq_ctx = trs_get_sqcq_ctx(dev_id, ts_id, i);
+        sqcq_ctx = trs_get_sqcq_ctx(dev_id, ts_id, j);
         trs_id_type_un_init(&sqcq_ctx->sq_info, &sqcq_ctx->sq_num);
         trs_id_type_un_init(&sqcq_ctx->cq_info, &sqcq_ctx->cq_num);
     }
@@ -475,8 +487,8 @@ error:
     return ret;
 }
 
-int __attribute__((weak)) trs_recycle_sq_cq_with_urma(uint32_t dev_id, uint32_t ts_id, uint32_t sq_id, uint32_t cq_id,
-    bool remote_free_flag)
+int __attribute__((weak)) trs_recycle_sq_cq_with_urma(
+    uint32_t dev_id, uint32_t ts_id, uint32_t sq_id, uint32_t cq_id, bool remote_free_flag)
 {
     (void)dev_id;
     (void)ts_id;
@@ -538,15 +550,9 @@ void trs_dev_sq_cq_uninit(uint32_t dev_id, uint32_t close_type)
     }
 }
 
-static bool trs_is_sq_surport_uio(struct sqcq_usr_info *info)
-{
-    return (info->sq_ctrl.que_addr != NULL);
-}
+static bool trs_is_sq_surport_uio(struct sqcq_usr_info *info) { return (info->sq_ctrl.que_addr != NULL); }
 
-static UINT64 trs_get_sq_que_addr(struct sqcq_usr_info *info)
-{
-    return (uintptr_t)info->sq_ctrl.que_addr;
-}
+static UINT64 trs_get_sq_que_addr(struct sqcq_usr_info *info) { return (uintptr_t)info->sq_ctrl.que_addr; }
 
 static UINT64 trs_get_sq_bind_que_addr(uint32_t dev_id, uint32_t ts_id, struct sqcq_usr_info *sq_info)
 {
@@ -564,20 +570,11 @@ static UINT64 trs_get_sq_bind_que_addr(uint32_t dev_id, uint32_t ts_id, struct s
     return (uintptr_t)NULL;
 }
 
-static uint32_t trs_get_sq_mem_attr(struct sqcq_usr_info *info)
-{
-    return info->sq_ctrl.mem_local_flag;
-}
+static uint32_t trs_get_sq_mem_attr(struct sqcq_usr_info *info) { return info->sq_ctrl.mem_local_flag; }
 
-static bool trs_is_cq_support_recv(struct sqcq_usr_info *info)
-{
-    return ((info->flag & TSDRV_FLAG_ONLY_SQCQ_ID) == 0);
-}
+static bool trs_is_cq_support_recv(struct sqcq_usr_info *info) { return ((info->flag & TSDRV_FLAG_ONLY_SQCQ_ID) == 0); }
 
-static inline uint32_t trs_get_sq_head(struct sqcq_usr_info *sq_info)
-{
-    return *((UINT16 *)sq_info->sq_ctrl.head);
-}
+static inline uint32_t trs_get_sq_head(struct sqcq_usr_info *sq_info) { return *((UINT16 *)sq_info->sq_ctrl.head); }
 
 static inline void trs_set_sq_head(struct sqcq_usr_info *sq_info, uint32_t head)
 {
@@ -596,10 +593,7 @@ static inline void trs_set_sq_tail(struct sqcq_usr_info *sq_info, uint32_t tail)
     *((UINT16 *)sq_info->sq_ctrl.tail) = (UINT16)tail;
 }
 
-static inline uint32_t trs_get_sqtail(struct sqcq_usr_info *sq_info)
-{
-    return *((UINT16 *)sq_info->sq_ctrl.tail);
-}
+static inline uint32_t trs_get_sqtail(struct sqcq_usr_info *sq_info) { return *((UINT16 *)sq_info->sq_ctrl.tail); }
 
 static inline uint32_t trs_get_sq_tail_reg(struct sqcq_usr_info *sq_info)
 {
@@ -612,10 +606,7 @@ static inline void trs_set_sq_db(struct sqcq_usr_info *sq_info, uint32_t value)
     *((uint32_t *)sq_info->sq_ctrl.db) = value;
 }
 
-static inline uint32_t trs_get_sq_db(struct sqcq_usr_info *sq_info)
-{
-    return *((UINT16 *)sq_info->sq_ctrl.db);
-}
+static inline uint32_t trs_get_sq_db(struct sqcq_usr_info *sq_info) { return *((UINT16 *)sq_info->sq_ctrl.db); }
 
 static inline bool trs_is_sq_use_soft_que(struct sqcq_usr_info *sq_info)
 {
@@ -649,9 +640,8 @@ int trs_set_sq_info_tail(uint32_t dev_id, uint32_t ts_id, int type, uint32_t sq_
 static inline bool trs_is_support_sq_mem_ops(uint32_t dev_id, struct halSqCqInputInfo *in)
 {
     if (in->type == DRV_NORMAL_TYPE) {
-        if ((trs_get_connection_type(dev_id) == TRS_CONNECT_PROTOCOL_PCIE) &&
-            ((in->flag & TSDRV_FLAG_REUSE_SQ) == 0) && ((in->flag & TSDRV_FLAG_ONLY_SQCQ_ID) == 0) &&
-            ((in->flag & TSDRV_FLAG_NO_SQ_MEM) == 0)) {
+        if ((trs_get_connection_type(dev_id) == TRS_CONNECT_PROTOCOL_PCIE) && ((in->flag & TSDRV_FLAG_REUSE_SQ) == 0) &&
+            ((in->flag & TSDRV_FLAG_ONLY_SQCQ_ID) == 0) && ((in->flag & TSDRV_FLAG_NO_SQ_MEM) == 0)) {
             return true;
         }
     }
@@ -659,8 +649,8 @@ static inline bool trs_is_support_sq_mem_ops(uint32_t dev_id, struct halSqCqInpu
     return false;
 }
 
-static void trs_sq_usr_info_init(uint32_t dev_id, struct sqcq_usr_info *info, struct halSqCqInputInfo *in,
-    struct trs_sq_map *sq_map)
+static void trs_sq_usr_info_init(
+    uint32_t dev_id, struct sqcq_usr_info *info, struct halSqCqInputInfo *in, struct trs_sq_map *sq_map)
 {
     (void)dev_id;
     struct trs_alloc_para *para = get_alloc_para_addr(in);
@@ -675,8 +665,9 @@ static void trs_sq_usr_info_init(uint32_t dev_id, struct sqcq_usr_info *info, st
 
     info->sq_ctrl.mem_local_flag = uio_info->sq_mem_local_flag;
     info->sq_que_spec_addr = (sq_map->que.addr != (void *)(uintptr_t)uio_info->sq_que_addr) ?
-        (void *)(uintptr_t)uio_info->sq_que_addr : NULL; /* set specified alloced mem */
-    if (uio_info->uio_flag == 0) { /* sq not support user op */
+                                 (void *)(uintptr_t)uio_info->sq_que_addr :
+                                 NULL; /* set specified alloced mem */
+    if (uio_info->uio_flag == 0) {     /* sq not support user op */
         trs_sq_munmap(sq_map);
         info->sq_ctrl.que_addr = NULL;
     } else {
@@ -717,7 +708,8 @@ static void trs_sq_usr_info_init(uint32_t dev_id, struct sqcq_usr_info *info, st
 static void trs_sq_usr_info_un_init(uint32_t dev_id, struct sqcq_usr_info *info)
 {
     if ((info->sq_que_spec_addr != NULL) && (trs_get_sqcq_mem_ops()->mem_free != NULL)) {
-        trs_get_sqcq_mem_ops()->mem_free(dev_id, (uint64_t)info->sq_que_spec_addr, trs_get_sq_que_len(info->depth, info->e_size));
+        trs_get_sqcq_mem_ops()->mem_free(
+            dev_id, (uint64_t)info->sq_que_spec_addr, trs_get_sq_que_len(info->depth, info->e_size));
         info->sq_que_spec_addr = NULL;
     }
 
@@ -746,8 +738,7 @@ static void trs_cq_usr_info_init(struct sqcq_usr_info *info, struct halSqCqInput
     info->flag = in->flag;
     info->valid = 1;
 
-    trs_debug("cq info. (type=%u; cqid=%u; depth=%u; size=%u)\n", in->type, in->cqId,
-        in->cqeDepth, in->cqeSize);
+    trs_debug("cq info. (type=%u; cqid=%u; depth=%u; size=%u)\n", in->type, in->cqId, in->cqeDepth, in->cqeSize);
 }
 
 static void trs_cq_usr_info_un_init(struct sqcq_usr_info *info)
@@ -871,16 +862,23 @@ static void trs_cq_info_uninit(uint32_t dev_id, struct halSqCqFreeInfo *in)
     }
 }
 
+static struct sqcq_usr_info *trs_get_sq_bp_ctx(uint32_t dev_id, uint32_t sq_id)
+{
+    if ((sq_id >= g_bp_sq_info[dev_id].sq_num) || (g_bp_sq_info[dev_id].sq_info == NULL)) {
+        return NULL;
+    }
+    return &g_bp_sq_info[dev_id].sq_info[sq_id];
+}
+
 static bool trs_is_alloc_sq(drvSqCqType_t type)
 {
-    return ((type == DRV_NORMAL_TYPE) || (type == DRV_CALLBACK_TYPE) ||
-        (type == DRV_SHM_TYPE) || (type == DRV_CTRL_TYPE));
+    return (
+        (type == DRV_NORMAL_TYPE) || (type == DRV_CALLBACK_TYPE) || (type == DRV_SHM_TYPE) || (type == DRV_CTRL_TYPE));
 }
 
 bool trs_is_remote_sqcq_ops(drvSqCqType_t type, uint32_t flag)
 {
-    return (((type == DRV_NORMAL_TYPE) || (type == DRV_LOGIC_TYPE)) &&
-        ((flag & TSDRV_FLAG_REMOTE_ID) != 0));
+    return (((type == DRV_NORMAL_TYPE) || (type == DRV_LOGIC_TYPE)) && ((flag & TSDRV_FLAG_REMOTE_ID) != 0));
 }
 
 drvError_t trs_sqcq_alloc_para_check(uint32_t dev_id, struct halSqCqInputInfo *in, struct halSqCqOutputInfo *out)
@@ -895,10 +893,11 @@ drvError_t trs_sqcq_alloc_para_check(uint32_t dev_id, struct halSqCqInputInfo *i
         return DRV_ERROR_INVALID_VALUE;
     }
 
-    if  ((trs_is_alloc_sq(in->type) && (in->sqeSize > TRS_SQCQ_BUFF_LEN))||
-        (in->cqeSize > TRS_SQCQ_BUFF_LEN) || (in->type >= DRV_INVALID_TYPE)) {
-        trs_err("Invalid para. (dev_id=%u; type=%u; sqe_depth=%u; sqe_size=%u; cqe_depth=%u; cqe_size=%u)\n",
-            dev_id, in->type, in->sqeDepth, in->sqeSize, in->cqeDepth, in->cqeSize);
+    if ((trs_is_alloc_sq(in->type) && (in->sqeSize > TRS_SQCQ_BUFF_LEN)) || (in->cqeSize > TRS_SQCQ_BUFF_LEN) ||
+        (in->type >= DRV_INVALID_TYPE)) {
+        trs_err(
+            "Invalid para. (dev_id=%u; type=%u; sqe_depth=%u; sqe_size=%u; cqe_depth=%u; cqe_size=%u)\n", dev_id,
+            in->type, in->sqeDepth, in->sqeSize, in->cqeDepth, in->cqeSize);
         return DRV_ERROR_INVALID_VALUE;
     }
     return DRV_ERROR_NONE;
@@ -926,9 +925,21 @@ drvError_t trs_local_sqcq_alloc(uint32_t dev_id, struct halSqCqInputInfo *in, st
     in->flag &= (~TSDRV_FLAG_SPECIFIED_SQ_MEM);
     if ((trs_is_support_sq_mem_ops(dev_id, in)) && (trs_get_sqcq_mem_ops()->mem_alloc != NULL)) {
         in->flag |= TSDRV_FLAG_SPECIFIED_SQ_MEM;
-        ret = trs_get_sqcq_mem_ops()->mem_alloc(dev_id, (uint64_t *)&sq_que_va, trs_get_sq_que_len(in->sqeDepth, in->sqeSize));
-        if (ret != DRV_ERROR_NONE) {
-            return ret;
+        if ((in->flag & TSDRV_FLAG_SPECIFIED_SQ_ID) != 0) {
+            struct sqcq_usr_info *sq_info = trs_get_sq_bp_ctx(dev_id, in->sqId);
+            if ((sq_info != NULL) && (sq_info->valid == 1)) {
+                sq_que_va = sq_info->sq_ctrl.que_addr;
+                trs_debug(
+                    "Use svm restored memory. (dev_id=%u; sq_id=%u; sq_que_va=0x%llx)\n", dev_id, in->sqId,
+                    (unsigned long long)(uintptr_t)sq_que_va);
+            }
+        }
+        if (sq_que_va == NULL) {
+            ret = trs_get_sqcq_mem_ops()->mem_alloc(
+                dev_id, (uint64_t *)&sq_que_va, trs_get_sq_que_len(in->sqeDepth, in->sqeSize));
+            if (ret != DRV_ERROR_NONE) {
+                return ret;
+            }
         }
     }
 
@@ -943,9 +954,7 @@ drvError_t trs_local_sqcq_alloc(uint32_t dev_id, struct halSqCqInputInfo *in, st
     ret = trs_dev_io_ctrl(dev_id, TRS_SQCQ_ALLOC, in);
     if (ret != DRV_ERROR_NONE) {
         (void)pthread_mutex_unlock(&dev_ctx[dev_id].ts_ctx[in->tsId].trs_sqcq_mutex);
-        if (ret != DRV_ERROR_NO_RESOURCES) {
-            trs_err("Ioctl failed. (ret=%d; dev_id=%u)\n", ret, dev_id);
-        }
+        trs_err_if((ret != DRV_ERROR_NO_RESOURCES), "Ioctl ret. (ret=%d; dev_id=%u)\n", ret, dev_id);
         goto sq_munmap;
     }
 
@@ -1106,8 +1115,9 @@ static drvError_t trs_sq_cq_config_uio(uint32_t dev_id, struct halSqCqConfigInfo
     (void)pthread_rwlock_rdlock(&sq_info->mutex);
     if ((!sq_info->valid) || (!sq_info->status)) {
         (void)pthread_rwlock_unlock(&sq_info->mutex);
-        trs_err("Invalid status. (dev_id=%u; ts_id=%u; type=%d; sq_id=%u; status=%u; prop=%d)\n",
-            dev_id, info->tsId, info->type, info->sqId, sq_info->status, info->prop);
+        trs_err(
+            "Invalid status. (dev_id=%u; ts_id=%u; type=%d; sq_id=%u; status=%u; prop=%d)\n", dev_id, info->tsId,
+            info->type, info->sqId, sq_info->status, info->prop);
         return DRV_ERROR_STATUS_FAIL;
     }
 
@@ -1139,16 +1149,18 @@ static drvError_t trs_sq_info_reset(uint32_t dev_id, struct halSqCqConfigInfo *i
 
     (void)pthread_rwlock_rdlock(&sq_info->mutex);
     if (sq_info->status == 1) {
-        trs_warn("Invalid status. (dev_id=%u; ts_id=%u; type=%d; sq_id=%u; status=%u)\n",
-            dev_id, info->tsId, info->type, info->sqId, sq_info->status);
+        trs_warn(
+            "Invalid status. (dev_id=%u; ts_id=%u; type=%d; sq_id=%u; status=%u)\n", dev_id, info->tsId, info->type,
+            info->sqId, sq_info->status);
         /* unlock and return DRV_ERROR_STATUS_FAIL after runtime done */
     }
     sq_info->head = 0;
     sq_info->tail = 0;
     sq_info->pos = 0;
     (void)pthread_rwlock_unlock(&sq_info->mutex);
-    trs_debug("Reset success. (dev_id=%u; ts_id=%u; type=%d; sq_id=%u; cq_id=%u)\n",
-        dev_id, info->tsId, info->type, info->sqId, info->cqId);
+    trs_debug(
+        "Reset success. (dev_id=%u; ts_id=%u; type=%d; sq_id=%u; cq_id=%u)\n", dev_id, info->tsId, info->type,
+        info->sqId, info->cqId);
 
     return DRV_ERROR_NONE;
 }
@@ -1193,8 +1205,9 @@ static drvError_t trs_sq_ctrl(uint32_t dev_id, struct halSqCqConfigInfo *info)
     }
     ret = trs_single_sq_ctrl(dev_id, info->tsId, info->sqId, info->prop);
     if (ret != DRV_ERROR_NONE) {
-        trs_err("Pause failed. (dev_id=%u; ts_id=%u; sq_id=%u; prop=%d; ret=%d)\n",
-            dev_id, info->tsId, info->sqId, info->prop, ret);
+        trs_err(
+            "Pause failed. (dev_id=%u; ts_id=%u; sq_id=%u; prop=%d; ret=%d)\n", dev_id, info->tsId, info->sqId,
+            info->prop, ret);
     }
     return ret;
 }
@@ -1218,8 +1231,9 @@ static drvError_t trs_sq_cq_config_para_check(uint32_t dev_id, struct halSqCqCon
         }
         if (((sq_info->flag & TSDRV_FLAG_REMOTE_ID) == 0) &&
             ((info->value[SQCQ_CONFIG_INFO_FLAG] & TSDRV_FLAG_REMOTE_ID) != 0)) {
-            trs_err("Local sqcq but config remote flag. (dev_id=%u; sq_id=%u; sq_flag=0x%x; config_flag=0x%x)\n",
-                dev_id, info->sqId, sq_info->flag, info->value[SQCQ_CONFIG_INFO_FLAG]);
+            trs_err(
+                "Local sqcq but config remote flag. (dev_id=%u; sq_id=%u; sq_flag=0x%x; config_flag=0x%x)\n", dev_id,
+                info->sqId, sq_info->flag, info->value[SQCQ_CONFIG_INFO_FLAG]);
             return DRV_ERROR_INVALID_VALUE;
         }
     }
@@ -1248,8 +1262,9 @@ drvError_t trs_sq_cq_config(uint32_t dev_id, struct halSqCqConfigInfo *info)
     if ((info->type == DRV_NORMAL_TYPE) && (info->prop == DRV_SQCQ_PROP_SQCQ_RESET)) {
         ret = trs_sq_info_reset(dev_id, info);
         if (ret != DRV_ERROR_NONE) {
-            trs_err("Sq_info reset failed. (ret=%d; dev_id=%u; ts_id=%u; type=%d; sq_id=%u)\n",
-                ret, dev_id, info->tsId, info->type, info->sqId);
+            trs_err(
+                "Sq_info reset failed. (ret=%d; dev_id=%u; ts_id=%u; type=%d; sq_id=%u)\n", ret, dev_id, info->tsId,
+                info->type, info->sqId);
             return ret;
         }
     }
@@ -1332,13 +1347,14 @@ drvError_t trs_sq_cq_query_uio(uint32_t dev_id, struct halSqCqQueryInfo *info)
     (void)pthread_rwlock_rdlock(&sq_info->mutex);
     if (!sq_info->valid) {
         (void)pthread_rwlock_unlock(&sq_info->mutex);
-        trs_err("Invalid sq_info. (dev_id=%u; ts_id=%u; type=%d; sq_id=%u)\n", dev_id, info->tsId, info->type, info->sqId);
+        trs_err(
+            "Invalid sq_info. (dev_id=%u; ts_id=%u; type=%d; sq_id=%u)\n", dev_id, info->tsId, info->type, info->sqId);
         return DRV_ERROR_INVALID_VALUE;
     }
 
     if ((info->prop == DRV_SQCQ_PROP_SQ_BASE) && trs_is_sq_surport_uio(sq_info)) {
-        info->value[0] = (uint32_t)(trs_get_sq_que_addr(sq_info) & 0xffffffff);   	/* low 32 bit */
-        info->value[1] = (uint32_t)(trs_get_sq_que_addr(sq_info) >> 32);    			/* 0xffffffff for high 32bit */
+        info->value[0] = (uint32_t)(trs_get_sq_que_addr(sq_info) & 0xffffffff); /* low 32 bit */
+        info->value[1] = (uint32_t)(trs_get_sq_que_addr(sq_info) >> 32);        /* 0xffffffff for high 32bit */
         (void)pthread_rwlock_unlock(&sq_info->mutex);
         return DRV_ERROR_NONE;
     }
@@ -1370,7 +1386,8 @@ static drvError_t trs_cq_info_query(uint32_t dev_id, struct halSqCqQueryInfo *in
 
     if (cq_info->valid == 0) {
 #ifndef EMU_ST
-        trs_err("Invalid cq_info. (dev_id=%u; ts_id=%u; type=%d; cq_id=%u)\n", dev_id, info->tsId, info->type, info->cqId);
+        trs_err(
+            "Invalid cq_info. (dev_id=%u; ts_id=%u; type=%d; cq_id=%u)\n", dev_id, info->tsId, info->type, info->cqId);
         return DRV_ERROR_INVALID_VALUE;
 #endif
     }
@@ -1383,8 +1400,8 @@ static drvError_t trs_cq_info_query(uint32_t dev_id, struct halSqCqQueryInfo *in
             info->value[0] = cq_info->e_size;
             break;
         default:
-           trs_err("Invalid type. (type=%u\n)", info->prop);
-           return DRV_ERROR_INVALID_VALUE;
+            trs_err("Invalid type. (type=%u\n)", info->prop);
+            return DRV_ERROR_INVALID_VALUE;
     }
 
     return DRV_ERROR_NONE;
@@ -1406,8 +1423,9 @@ drvError_t trs_sq_cq_query(uint32_t dev_id, struct halSqCqQueryInfo *info)
 
     if ((info->type == DRV_NORMAL_TYPE) &&
         ((info->prop == DRV_SQCQ_PROP_SQ_HEAD) || (info->prop == DRV_SQCQ_PROP_SQ_TAIL) ||
-        (info->prop == DRV_SQCQ_PROP_SQ_CQE_STATUS) || (info->prop == DRV_SQCQ_PROP_SQ_BASE) ||
-        (info->prop == DRV_SQCQ_PROP_SQ_DEPTH) || (info->prop == DRV_SQCQ_PROP_SQE_SIZE) || (info->prop == DRV_SQCQ_PROP_SQ_MEM_ATTR))) {
+         (info->prop == DRV_SQCQ_PROP_SQ_CQE_STATUS) || (info->prop == DRV_SQCQ_PROP_SQ_BASE) ||
+         (info->prop == DRV_SQCQ_PROP_SQ_DEPTH) || (info->prop == DRV_SQCQ_PROP_SQE_SIZE) ||
+         (info->prop == DRV_SQCQ_PROP_SQ_MEM_ATTR))) {
         ret = trs_sq_cq_query_uio(dev_id, info);
         if ((ret != DRV_ERROR_NOT_SUPPORT) || (info->prop == DRV_SQCQ_PROP_SQ_BASE)) {
             return ret;
@@ -1501,6 +1519,9 @@ static drvError_t trs_sq_credit_check(uint32_t dev_id, struct halTaskSendInfo *i
     }
 
     if (credit < info->sqe_num) {
+        trs_run_info_limit(
+            "No idle credit. (credit=%u; sqe_num=%u; devid=%u; sq_id=%u; head=%u; tail=%u; depth=%u)\n", credit,
+            info->sqe_num, dev_id, info->sqId, sq_info->head, sq_info->tail, sq_info->depth);
         trs_sq_send_full_inc(sq_info);
         return DRV_ERROR_NO_RESOURCES;
     }
@@ -1518,10 +1539,12 @@ drvError_t trs_sq_task_send_check(uint32_t dev_id, struct halTaskSendInfo *info,
             return DRV_ERROR_INVALID_VALUE;
         }
 
-        user_ctrl_sq_tail = (uint32_t)(((uintptr_t)info->sqe_addr - (uintptr_t)sq_info->sq_ctrl.que_addr) / sq_info->e_size);
+        user_ctrl_sq_tail =
+            (uint32_t)(((uintptr_t)info->sqe_addr - (uintptr_t)sq_info->sq_ctrl.que_addr) / sq_info->e_size);
         if (user_ctrl_sq_tail != sq_info->tail) {
-            trs_err("Sqe addr not at sq tail. (dev_id=%u; ts_id=%u; sq_id=%u; user_ctrl_tail=%u; tail=%u)\n",
-                dev_id, info->tsId, info->sqId, user_ctrl_sq_tail, sq_info->tail);
+            trs_err(
+                "Sqe addr not at sq tail. (dev_id=%u; ts_id=%u; sq_id=%u; user_ctrl_tail=%u; tail=%u)\n", dev_id,
+                info->tsId, info->sqId, user_ctrl_sq_tail, sq_info->tail);
             return DRV_ERROR_INVALID_VALUE;
         }
     }
@@ -1545,6 +1568,24 @@ void trs_sq_task_fill(struct halTaskSendInfo *info, struct sqcq_usr_info *sq_inf
         (void)memcpy_s(dst, sq_info->e_size, src, sq_info->e_size);
 #endif
     }
+}
+
+static void trs_sq_task_send_set_db(struct sqcq_usr_info *sq_info, uint32_t sq_id, uint32_t sqe_num)
+{
+    if (sq_info->sq_ctrl.tail != NULL) {
+        trs_set_sq_tail(sq_info, sq_info->tail);
+    }
+
+    if (trs_is_sq_use_soft_que(sq_info)) {
+        if (trs_sq_has_specified_num_task(sq_info, sqe_num)) {
+            /* set sqid to db for fast send in kernel(no which sq need send), it may be rewrite by other thread */
+            trs_set_sq_db(sq_info, sq_id);
+        }
+    } else {
+        trs_set_sq_db(sq_info, sq_info->tail);
+    }
+
+    trs_sq_send_ok_stat(sq_info, sqe_num);
 }
 
 static drvError_t trs_sq_task_send_uio(uint32_t dev_id, struct halTaskSendInfo *info, struct sqcq_usr_info *sq_info)
@@ -1577,30 +1618,17 @@ static drvError_t trs_sq_task_send_uio(uint32_t dev_id, struct halTaskSendInfo *
     }
 
     info->pos = sq_info->tail;
-
     sq_info->tail = (sq_info->tail + info->sqe_num) % sq_info->depth;
-    if (sq_info->sq_ctrl.tail != NULL) {
-        trs_set_sq_tail(sq_info, sq_info->tail);
-    }
 
-    if (trs_is_sq_use_soft_que(sq_info)) {
-        if (trs_sq_has_specified_num_task(sq_info, info->sqe_num)) {
-            /* set sqid to db for fast send in kernel(no which sq need send), it may be rewrite by other thread */
-            trs_set_sq_db(sq_info, info->sqId);
-        }
-    } else {
-        trs_set_sq_db(sq_info, sq_info->tail);
-    }
-
-    trs_sq_send_ok_stat(sq_info, info->sqe_num);
+    trs_sq_task_send_set_db(sq_info, info->sqId, info->sqe_num);
 
     return 0;
 }
 
 drvError_t trs_sq_task_send(uint32_t dev_id, struct halTaskSendInfo *info, struct sqcq_usr_info *sq_info)
 {
+    drvError_t ret;
     if (trs_is_sq_surport_uio(sq_info)) {
-        drvError_t ret;
 #ifdef CFG_FEATURE_SQ_SEND_LOCK
         (void)pthread_mutex_lock(&sq_info->sq_send_mutex);
 #endif
@@ -1667,35 +1695,37 @@ drvError_t trs_sq_switch_stream_batch(uint32_t dev_id, struct sq_switch_stream_i
     return DRV_ERROR_NONE;
 }
 
-drvError_t trs_stream_task_fill(uint32_t dev_id, uint32_t stream_id, void *stream_mem, void *task_info, uint32_t task_cnt)
+drvError_t trs_stream_task_fill(
+    uint32_t dev_id, uint32_t stream_id, void *stream_mem, void *task_info, uint32_t task_cnt)
 {
     drvError_t ret = 0;
 
     if (trs_get_sq_send_mode(dev_id) == TRS_MODE_TYPE_SQ_SEND_HIGH_PERFORMANCE) {
         struct res_id_usr_info *stream_usr_info = NULL;
-        uint64_t stream_task_addr = 0;
 
         stream_usr_info = trs_get_res_id_info(dev_id, 0, DRV_STREAM_ID, stream_id);
-        if ((stream_usr_info == NULL) || (stream_usr_info->valid == 0) ||
-            ((stream_mem != NULL) && (stream_usr_info->res_addr != (uint64_t)(uintptr_t)stream_mem))) {
-            trs_err("Stream not inited or stream_mem not match. (devid=%u; stream_id=%u)\n", dev_id, stream_id);
+        if ((stream_usr_info == NULL) || (stream_usr_info->valid == 0)) {
+            trs_err(
+                "Not init or null addr. (devid=%u; id=%u; addr_is_null=%d)\n", dev_id, stream_id,
+                (stream_usr_info == NULL) ? 1 : 0);
             return DRV_ERROR_INVALID_VALUE;
         }
 
-        stream_task_addr = (stream_usr_info->res_addr + stream_usr_info->priv * TRS_HW_SQE_SIZE);
-        if ((stream_task_addr + task_cnt * TRS_HW_SQE_SIZE) > (stream_usr_info->res_addr + stream_usr_info->res_len)) {
-            trs_err("Fill task exceed stream queue. (devid=%u; streamid=%u; queue_len=0x%x; tail=%u; task_cnt=%u)\n",
-            dev_id, stream_id, stream_usr_info->res_len, stream_usr_info->priv, task_cnt);
+        if (((uintptr_t)stream_mem < stream_usr_info->res_addr) ||
+            ((uintptr_t)stream_mem + task_cnt * TRS_HW_SQE_SIZE) >
+                (stream_usr_info->res_addr + stream_usr_info->res_len)) {
+            trs_err(
+                "Fill task exceed stream queue. (devid=%u; streamid=%u; queue_len=0x%x; addr=%p; task_cnt=%u)\n",
+                dev_id, stream_id, stream_usr_info->res_len, stream_mem, task_cnt);
             return DRV_ERROR_NO_RESOURCES;
         }
 
-        ret = drvMemcpy(stream_task_addr, task_cnt * TRS_HW_SQE_SIZE, (uintptr_t)task_info, task_cnt * TRS_HW_SQE_SIZE);
+        ret = drvMemcpy(
+            (uintptr_t)stream_mem, task_cnt * TRS_HW_SQE_SIZE, (uintptr_t)task_info, task_cnt * TRS_HW_SQE_SIZE);
         if (ret != DRV_ERROR_NONE) {
             trs_err("Memcpy failed. (ret=%d).\n", ret);
             return DRV_ERROR_INNER_ERR;
         }
-
-        stream_usr_info->priv += task_cnt;
     } else {
         struct trs_stream_task_para para = {0};
 
@@ -1723,13 +1753,15 @@ drvError_t trs_cq_report_recv(uint32_t dev_id, struct halReportRecvInfo *info)
     } else {
         cq_info = trs_get_cq_info(dev_id, info->tsId, info->type, info->cqId);
         if (cq_info == NULL) {
-            trs_err("Invalid para. (dev_id=%u; ts_id=%u; type=%d; cq_id=%u)\n", dev_id, info->tsId, info->type, info->cqId);
+            trs_err(
+                "Invalid para. (dev_id=%u; ts_id=%u; type=%d; cq_id=%u)\n", dev_id, info->tsId, info->type, info->cqId);
             return DRV_ERROR_INVALID_VALUE;
         }
 
         if (!trs_is_cq_support_recv(cq_info)) {
-            trs_warn("Cq is only id type, not support recv. (dev_id=%u; ts_id=%u; cq_id=%u; flag=%u)\n",
-                dev_id, info->tsId, info->cqId, cq_info->flag);
+            trs_warn(
+                "Cq is only id type, not support recv. (dev_id=%u; ts_id=%u; cq_id=%u; flag=%u)\n", dev_id, info->tsId,
+                info->cqId, cq_info->flag);
             return DRV_ERROR_NOT_SUPPORT;
         }
 
@@ -1777,8 +1809,9 @@ drvError_t halSqMemGet(uint32_t devId, struct halSqMemGetInput *in, struct halSq
     }
 
     if (!trs_is_sq_support_send(sq_info)) {
-        trs_warn("Sq is only id type, not support mem get. (dev_id=%u; ts_id=%u; sq_id=%u; flag=%u)\n",
-            devId, in->tsId, in->sqId, sq_info->flag);
+        trs_warn(
+            "Sq is only id type, not support mem get. (dev_id=%u; ts_id=%u; sq_id=%u; flag=%u)\n", devId, in->tsId,
+            in->sqId, sq_info->flag);
         return DRV_ERROR_NOT_SUPPORT;
     }
 
@@ -1796,7 +1829,7 @@ drvError_t halSqMemGet(uint32_t devId, struct halSqMemGetInput *in, struct halSq
     }
 
     out->cmdPtr = (volatile void *)sq_info->buf;
-    out->cmdCount = (in->cmdCount < sq_info->max_num) ? in->cmdCount: sq_info->max_num;
+    out->cmdCount = (in->cmdCount < sq_info->max_num) ? in->cmdCount : sq_info->max_num;
     out->pos = sq_info->pos;
 
     sq_info->cur_num = out->cmdCount;
@@ -1827,14 +1860,16 @@ drvError_t halSqMsgSend(uint32_t devId, struct halSqMsgInfo *info)
     }
 
     if ((!trs_is_sq_support_send(sq_info)) || (trs_is_sq_init_without_sq_mem(sq_info->flag))) {
-        trs_warn("Sq is only id type, not support send. (dev_id=%u; ts_id=%u; sq_id=%u; flag=%u)\n",
-            devId, info->tsId, info->sqId, sq_info->flag);
+        trs_warn(
+            "Sq is only id type, not support send. (dev_id=%u; ts_id=%u; sq_id=%u; flag=%u)\n", devId, info->tsId,
+            info->sqId, sq_info->flag);
         return DRV_ERROR_NOT_SUPPORT;
     }
 
     if (info->cmdCount != sq_info->cur_num) {
-        trs_err("Invalid para. (dev_id=%u; sq_id=%u; cmd_count=%u; cur_num=%u)\n",
-            devId, info->sqId, info->cmdCount, sq_info->cur_num);
+        trs_err(
+            "Invalid para. (dev_id=%u; sq_id=%u; cmd_count=%u; cur_num=%u)\n", devId, info->sqId, info->cmdCount,
+            sq_info->cur_num);
         return DRV_ERROR_INVALID_VALUE;
     }
 
@@ -1916,8 +1951,9 @@ static int trs_cb_cq_recv(uint32_t dev_id, struct halReportInfoInput *in, struct
     }
 
     if ((cqe.cq_id / 64) >= out->cqIdBitmapSize) { /* u64 has 64 bit, echo bit one cq */
-        trs_err("Invalid para. (dev_id=%u; ts_id=%u; type=%d; cq_id=%u; cq_id_bitmap_size=%u)\n",
-            dev_id, in->tsId, in->type, cqe.cq_id, out->cqIdBitmapSize);
+        trs_err(
+            "Invalid para. (dev_id=%u; ts_id=%u; type=%d; cq_id=%u; cq_id_bitmap_size=%u)\n", dev_id, in->tsId,
+            in->type, cqe.cq_id, out->cqIdBitmapSize);
         return DRV_ERROR_INVALID_VALUE;
     }
 
@@ -1978,8 +2014,9 @@ drvError_t halCqReportGet(uint32_t devId, struct halReportGetInput *in, struct h
     }
 
     if (!trs_is_cq_support_recv(cq_info)) {
-        trs_warn("Cq is only id type, not support report get. (dev_id=%u; ts_id=%u; cq_id=%u; flag=%u)\n",
-            devId, in->tsId, in->cqId, cq_info->flag);
+        trs_warn(
+            "Cq is only id type, not support report get. (dev_id=%u; ts_id=%u; cq_id=%u; flag=%u)\n", devId, in->tsId,
+            in->cqId, cq_info->flag);
         return DRV_ERROR_NOT_SUPPORT;
     }
 
@@ -2009,14 +2046,16 @@ drvError_t halReportRelease(uint32_t devId, struct halReportReleaseInfo *info)
     }
 
     if (!trs_is_cq_support_recv(cq_info)) {
-        trs_warn("Cq is only id type, not support release. (dev_id=%u; ts_id=%u; cq_id=%u; flag=%u)\n",
-            devId, info->tsId, info->cqId, cq_info->flag);
+        trs_warn(
+            "Cq is only id type, not support release. (dev_id=%u; ts_id=%u; cq_id=%u; flag=%u)\n", devId, info->tsId,
+            info->cqId, cq_info->flag);
         return DRV_ERROR_NOT_SUPPORT;
     }
 
     if ((info->count == 0) || (info->count != cq_info->cur_num)) {
-        trs_err("Invalid para. (dev_id=%u; ts_id=%u; type=%d; cq_id=%u; count=%u; cur_num=%u)\n",
-            devId, info->tsId, info->type, info->cqId, info->count, cq_info->cur_num);
+        trs_err(
+            "Invalid para. (dev_id=%u; ts_id=%u; type=%d; cq_id=%u; count=%u; cur_num=%u)\n", devId, info->tsId,
+            info->type, info->cqId, info->count, cq_info->cur_num);
         return DRV_ERROR_INVALID_VALUE;
     }
 
@@ -2025,7 +2064,8 @@ drvError_t halReportRelease(uint32_t devId, struct halReportReleaseInfo *info)
     return DRV_ERROR_NONE;
 }
 
-drvError_t trs_async_dma_desc_create(uint32_t dev_id, struct halAsyncDmaInputPara *in, struct halAsyncDmaOutputPara *out)
+drvError_t trs_async_dma_desc_create(
+    uint32_t dev_id, struct halAsyncDmaInputPara *in, struct halAsyncDmaOutputPara *out)
 {
     int ret;
 
@@ -2039,15 +2079,16 @@ drvError_t trs_async_dma_desc_create(uint32_t dev_id, struct halAsyncDmaInputPar
 
         sq_info = trs_get_sq_info(dev_id, in->tsId, in->type, in->info.sq_id);
         if (sq_info == NULL) {
-            trs_err("Invalid para. (dev_id=%u; ts_id=%u; type=%d; sq_id=%u)\n",
-                dev_id, in->tsId, in->type, in->info.sq_id);
+            trs_err(
+                "Invalid para. (dev_id=%u; ts_id=%u; type=%d; sq_id=%u)\n", dev_id, in->tsId, in->type, in->info.sq_id);
             return DRV_ERROR_INVALID_VALUE;
         }
 
         sq_base_addr = trs_get_sq_bind_que_addr(dev_id, in->tsId, sq_info);
         if (sq_base_addr == 0) {
-            trs_err("Get sq addr failed. (dev_id=%u; ts_id=%u; type=%d; sq_id=%u)\n",
-                dev_id, in->tsId, in->type, in->info.sq_id);
+            trs_err(
+                "Get sq addr failed. (dev_id=%u; ts_id=%u; type=%d; sq_id=%u)\n", dev_id, in->tsId, in->type,
+                in->info.sq_id);
             return DRV_ERROR_INVALID_VALUE;
         }
 
@@ -2055,8 +2096,9 @@ drvError_t trs_async_dma_desc_create(uint32_t dev_id, struct halAsyncDmaInputPar
         out->dma_addr.offsetAddr.devid = dev_id; /* sqe update h2d only, use dev addr devid */
         ret = drvMemConvertAddr((uintptr_t)in->src, dst_addr, in->len, &out->dma_addr);
         if (ret != 0) {
-            trs_err("Convert dma failed. (dev_id=%u; ts_id=%u; type=%d; sq_id=%u)\n",
-                dev_id, in->tsId, in->type, in->info.sq_id);
+            trs_err(
+                "Convert dma failed. (dev_id=%u; ts_id=%u; type=%d; sq_id=%u)\n", dev_id, in->tsId, in->type,
+                in->info.sq_id);
             return ret;
         }
     } else { /* check and convert dma desc in kernel when high security mode */
@@ -2103,33 +2145,46 @@ drvError_t trs_async_dma_destory(uint32_t dev_id, struct halAsyncDmaDestoryPara 
     return DRV_ERROR_NONE;
 }
 
-void drvDfxShowReport(uint32_t devId)
-{
-    (void)devId;
-}
+void drvDfxShowReport(uint32_t devId) { (void)devId; }
 
-static void *g_backup_sq_mem = NULL;
+static void *g_backup_sq_mem[TRS_DEV_NUM] = {NULL};
 static int trs_sq_info_back_up(u32 dev_id)
 {
     size_t sq_info_size;
 
     sq_info_size = sizeof(struct sqcq_usr_info) * cqcq_ctxs[dev_id][0][0].sq_num;
-    g_bp_sq_info[dev_id].sq_info = malloc(sq_info_size);
     if (g_bp_sq_info[dev_id].sq_info == NULL) {
-        trs_err("Fail to malloc sq_info.(dev_id=%u)\n", dev_id);
-        return DRV_ERROR_OUT_OF_MEMORY;
+        g_bp_sq_info[dev_id].sq_info = malloc(sq_info_size);
+        if (g_bp_sq_info[dev_id].sq_info == NULL) {
+            trs_err("Fail to malloc sq_info.(dev_id=%u)\n", dev_id);
+            return DRV_ERROR_OUT_OF_MEMORY;
+        }
     }
-    memcpy_s(g_bp_sq_info[dev_id].sq_info, sq_info_size, cqcq_ctxs[dev_id][0][0].sq_info, sq_info_size);
+
+    (void)memcpy_s(g_bp_sq_info[dev_id].sq_info, sq_info_size, cqcq_ctxs[dev_id][0][0].sq_info, sq_info_size);
     g_bp_sq_info[dev_id].sq_num = cqcq_ctxs[dev_id][0][0].sq_num;
-    return 0;
+    return DRV_ERROR_NONE;
 }
 
-static struct sqcq_usr_info *trs_get_sq_bp_ctx(uint32_t dev_id, uint32_t sq_id)
+drvError_t trsMemProcResBackup(halProcResBackupInfo *info)
 {
-    if (sq_id >= g_bp_sq_info[dev_id].sq_num) {
-        return NULL;
+    drvError_t ret;
+    uint32_t dev_num, dev_id;
+
+    (void)info;
+    ret = drvGetDevNum(&dev_num);
+    if (ret != 0) {
+        trs_err("Failed to get device num. (ret=%d)\n", ret);
+        return ret;
     }
-    return &g_bp_sq_info[dev_id].sq_info[sq_id];
+
+    for (dev_id = 0; dev_id < dev_num; dev_id++) {
+        ret = trs_sq_info_back_up(dev_id);
+        if (ret != 0) {
+            return ret;
+        }
+    }
+    return DRV_ERROR_NONE;
 }
 
 static int trs_flush_user_sq(uint32_t dev_id, uint32_t sq_id, struct sqcq_usr_info *info)
@@ -2141,7 +2196,75 @@ static int trs_flush_user_sq(uint32_t dev_id, uint32_t sq_id, struct sqcq_usr_in
         return DRV_ERROR_NO_RESOURCES;
     }
     info->tail = bp_info->tail;
-    info->cur_num = bp_info->cur_num; 
+    info->cur_num = bp_info->cur_num;
+    return DRV_ERROR_NONE;
+}
+
+static int trs_sq_backup_uio(uint32_t dev_id, struct stream_backup_info *in)
+{
+    struct sqcq_usr_info *sq_info = NULL;
+    void *que_va;
+    u32 sq_id;
+    int ret, i;
+
+    for (i = 0; i < (int)in->id_num; i++) {
+        sq_id = in->id_list[i];
+        sq_info = trs_get_sq_info(dev_id, 0, DRV_NORMAL_TYPE, sq_id);
+        if (sq_info == NULL) {
+            trs_err("Invalid sq id. (dev_id=%u; sq_id=%u)\n", dev_id, sq_id);
+            return DRV_ERROR_NO_RESOURCES;
+        }
+        if (sq_info->tail == 0) {
+            continue;
+        }
+        que_va = (char *)g_backup_sq_mem[dev_id] + sq_id * sq_info->e_size * sq_info->depth;
+        if (sq_info->sq_que_spec_addr == sq_info->sq_ctrl.que_addr) {
+            ret = drvMemcpy(
+                (DVdeviceptr)(uintptr_t)que_va, sq_info->e_size * sq_info->depth,
+                (DVdeviceptr)(uintptr_t)sq_info->sq_ctrl.que_addr, sq_info->e_size * sq_info->tail);
+        } else {
+            ret = memcpy_s(
+                que_va, sq_info->e_size * sq_info->depth, sq_info->sq_ctrl.que_addr, sq_info->e_size * sq_info->tail);
+        }
+        if (ret != 0) {
+            trs_err("Memcpy fail. (ret=%d; dev_id=%u; sq_id=%u)\n", ret, dev_id, sq_id);
+            return DRV_ERROR_INNER_ERR;
+        }
+    }
+    ret = trs_sq_info_back_up(dev_id);
+    if (ret != DRV_ERROR_NONE) {
+        return ret;
+    }
+    trs_debug("Sq backup success with uio. (dev_id=%u; id_num=%u)\n", dev_id, in->id_num);
+    return DRV_ERROR_NONE;
+}
+
+static int trs_get_common_sq_info(uint32_t dev_id, struct stream_backup_info *in, struct sqcq_usr_info **sq_info)
+{
+    uint32_t sq_id, i, sqe_size = 0, sq_depth = 0;
+
+    for (i = 0; i < in->id_num; i++) {
+        sq_id = in->id_list[i];
+        *sq_info = trs_get_sq_info(dev_id, 0, DRV_NORMAL_TYPE, sq_id);
+        if ((*sq_info) == NULL) {
+            trs_err("Invalid sq type or id. (dev_id=%u; sq_id=%u)\n", dev_id, sq_id);
+            return DRV_ERROR_INVALID_VALUE;
+        }
+        if (!trs_is_sq_surport_uio((*sq_info))) {
+            return DRV_ERROR_NOT_SUPPORT;
+        }
+        if (i == 0) {
+            sqe_size = (*sq_info)->e_size;
+            sq_depth = (*sq_info)->depth;
+        } else {
+            if (((*sq_info)->e_size != sqe_size) || ((*sq_info)->depth != sq_depth)) {
+                trs_err(
+                    "Invalid sq info. (sqid=%u; sqe_size=%u; sq_depth=%u)\n", sq_id, (*sq_info)->e_size,
+                    (*sq_info)->depth);
+                return DRV_ERROR_INVALID_VALUE;
+            }
+        }
+    }
     return DRV_ERROR_NONE;
 }
 
@@ -2149,60 +2272,48 @@ static int trs_sq_backup(uint32_t dev_id, struct stream_backup_info *in)
 {
     struct sqcq_usr_info *sq_info = NULL;
     uint64_t sq_mem_size;
-    uint32_t sq_id;
-    int ret, i;
-    void *que_va;
+    uint32_t sq_num;
+    int ret;
 
-    if (g_backup_sq_mem == NULL) {
-        sq_mem_size = trs_get_sq_num(dev_id, 0, 0);
-        sq_info = trs_get_sq_info(dev_id, 0, DRV_NORMAL_TYPE, in->id_list[0]);
-        if (sq_info == NULL) {
-            trs_err("Invalid sq type or id.(dev_id=%u; sq_id=%u)\n", dev_id, in->id_list[0]);
-            return DRV_ERROR_INVALID_VALUE;
-        }
-        sq_mem_size *= sq_info->e_size * sq_info->depth;
-        g_backup_sq_mem = malloc(sq_mem_size);
-        if (g_backup_sq_mem == NULL) {
-            trs_err("Fail to malloc va.(dev_id=%u)\n", dev_id);
+    sq_num = trs_get_sq_num(dev_id, 0, DRV_NORMAL_TYPE);
+    if (in->id_num > sq_num) {
+        trs_err("Invalid id_num. (id_num=%u; sq_num=%u)\n", in->id_num, sq_num);
+        return DRV_ERROR_INVALID_VALUE;
+    }
+
+    ret = trs_get_common_sq_info(dev_id, in, &sq_info);
+    if (ret != DRV_ERROR_NONE) {
+        return ret;
+    }
+
+    if (g_backup_sq_mem[dev_id] == NULL) {
+        sq_mem_size = sq_num * sq_info->e_size * sq_info->depth;
+        g_backup_sq_mem[dev_id] = malloc(sq_mem_size);
+        if (g_backup_sq_mem[dev_id] == NULL) {
+            trs_err("Fail to malloc va. (dev_id=%u)\n", dev_id);
             return DRV_ERROR_OUT_OF_MEMORY;
         }
-    } 
- 
-    for (i = 0; i < (int)in->id_num; i++) {
-        sq_id = in->id_list[i];
-        sq_info = trs_get_sq_info(dev_id, 0, DRV_NORMAL_TYPE, sq_id);
-        if ((sq_info == NULL) || (!trs_is_sq_use_soft_que(sq_info))) {
-            trs_err("Invalid type sq. (dev_id=%u; sq_id=%u)\n", dev_id, sq_id);
-            ret = DRV_ERROR_NO_RESOURCES;
-            goto free_g_backup_mem;
-        }
-        if (sq_info->tail == 0) continue;
-        que_va = (char *)g_backup_sq_mem + sq_id * sq_info->e_size * sq_info->depth;
-        ret = memcpy_s(que_va, sq_info->e_size * sq_info->depth, sq_info->sq_map.que.addr, sq_info->e_size * sq_info->tail);
-        if (ret != 0) {
-            trs_err("Memcpy fail(dev_id=%u; sq_id=%u)\n", dev_id, sq_id);
-            ret = DRV_ERROR_INNER_ERR;
-            goto free_g_backup_mem;
-        }
     }
-    trs_sq_info_back_up(dev_id);
-    return 0;
-free_g_backup_mem:
-    free(g_backup_sq_mem);
-    g_backup_sq_mem = NULL;
+
+    ret = trs_sq_backup_uio(dev_id, in);
+    if (ret != 0) {
+        trs_err("Failed to backup sq. (ret=%d; dev_id=%u\n", ret, dev_id);
+        free(g_backup_sq_mem[dev_id]);
+        g_backup_sq_mem[dev_id] = NULL;
+    }
     return ret;
 }
 
 drvError_t halStreamBackup(uint32_t dev_id, struct stream_backup_info *in)
 {
     int ret;
- 
+
     if ((in == NULL) || (in->id_num == 0) || (in->id_list == NULL)) {
         trs_err("Invalid para.(dev_id=%u)\n", dev_id);
         return DRV_ERROR_INVALID_VALUE;
     }
 
-    switch(in->type){
+    switch (in->type) {
         case DRV_RESOURCE_SQ_ID:
             ret = trs_sq_backup(dev_id, in);
             break;
@@ -2212,60 +2323,116 @@ drvError_t halStreamBackup(uint32_t dev_id, struct stream_backup_info *in)
     }
     return ret;
 }
- 
-static int trs_sq_restore(uint32_t dev_id, struct stream_backup_info *in)
+
+drvError_t __attribute__((weak)) trs_sq_task_send_with_urma(
+    uint32_t dev_id, uint32_t sqe_num, struct sqcq_usr_info *sq_info)
+{
+    (void)dev_id;
+    (void)sqe_num;
+    (void)sq_info;
+    return DRV_ERROR_NOT_SUPPORT;
+}
+
+static int trs_sq_restore_uio(uint32_t dev_id, struct stream_backup_info *in)
 {
     struct sqcq_usr_info *sq_info = NULL;
+    int ret, i, connection_type;
     uint32_t sq_id;
-    int ret, i;
-    void *que_va;
+    void *que_va = NULL;
 
-    if (g_backup_sq_mem == NULL) {
-        trs_err("Backup fail.(dev_id=%u)\n", dev_id);
-        return DRV_ERROR_INVALID_VALUE;
-    }
- 
+    connection_type = trs_get_connection_type(dev_id);
     for (i = 0; i < (int)in->id_num; i++) {
         sq_id = in->id_list[i];
         sq_info = trs_get_sq_info(dev_id, 0, DRV_NORMAL_TYPE, sq_id);
-        if ((sq_info == NULL) || (!trs_is_sq_use_soft_que(sq_info))) {
+        if (sq_info == NULL) {
             trs_err("Fail to get sq info.(dev_id=%u; sq_id=%u)\n", dev_id, sq_id);
             return DRV_ERROR_NO_RESOURCES;
         }
         ret = trs_flush_user_sq(dev_id, sq_id, sq_info);
-        if (ret != 0) {
+        if (ret != DRV_ERROR_NONE) {
             return ret;
         }
-        if (sq_info->tail == 0) continue;
-        que_va = (char *)g_backup_sq_mem + sq_id * sq_info->e_size * sq_info->depth;
-        ret = memcpy_s(sq_info->sq_map.que.addr, sq_info->e_size * sq_info->depth, que_va, sq_info->tail * sq_info->e_size);
+        if (sq_info->tail == 0) {
+            continue;
+        }
+        que_va = (char *)g_backup_sq_mem[dev_id] + sq_id * sq_info->e_size * sq_info->depth;
+        if (sq_info->sq_que_spec_addr == sq_info->sq_ctrl.que_addr) {
+            ret = drvMemcpy(
+                (DVdeviceptr)(uintptr_t)sq_info->sq_ctrl.que_addr, sq_info->e_size * sq_info->depth,
+                (DVdeviceptr)(uintptr_t)que_va, sq_info->tail * sq_info->e_size);
+        } else {
+            ret = memcpy_s(
+                sq_info->sq_ctrl.que_addr, sq_info->e_size * sq_info->depth, que_va, sq_info->tail * sq_info->e_size);
+        }
         if (ret != 0) {
-            trs_err("Memcpy fail.(dev_id=%u; sq_id=%u)\n", dev_id, sq_id);
+            trs_err("Memcpy fail. (dev_id=%u; sq_id=%u)\n", dev_id, sq_id);
             return DRV_ERROR_INNER_ERR;
         }
-        trs_set_sq_tail(sq_info, sq_info->tail);
-        if (trs_sq_has_specified_num_task(sq_info, sq_info->tail)) {
-            trs_set_sq_db(sq_info, sq_id);
+        if (connection_type == TRS_CONNECT_PROTOCOL_UB) {
+            uint32_t sq_tail = sq_info->tail;
+            sq_info->tail = 0;
+            ret = trs_sq_task_send_with_urma(dev_id, sq_tail, sq_info);
+            if (ret != 0) {
+                sq_info->tail = sq_tail;
+                trs_err("Failed to send task with urma. (ret=%d; dev_id=%u; sq_id=%u)\n", ret, dev_id, sq_id);
+                return ret;
+            }
+            sq_info->tail = sq_tail;
+            trs_sq_send_ok_stat(sq_info, sq_info->tail);
+        } else {
+            trs_sq_task_send_set_db(sq_info, sq_id, sq_info->tail);
         }
     }
-    return 0;
+    trs_debug(
+        "Sq restore success with uio. (dev_id=%u; id_num=%u; connection_type=%d)\n", dev_id, in->id_num,
+        connection_type);
+    return DRV_ERROR_NONE;
+}
+
+static int trs_sq_restore(uint32_t dev_id, struct stream_backup_info *in)
+{
+    struct sqcq_usr_info *sq_info = NULL;
+    uint32_t sq_num;
+    int ret;
+
+    if (g_backup_sq_mem[dev_id] == NULL) {
+        trs_err("Backup fail. (dev_id=%u)\n", dev_id);
+        return DRV_ERROR_INVALID_VALUE;
+    }
+
+    sq_num = trs_get_sq_num(dev_id, 0, DRV_NORMAL_TYPE);
+    if (in->id_num > sq_num) {
+        trs_err("Invalid id_num. (id_num=%u; sq_num=%u)\n", in->id_num, sq_num);
+        return DRV_ERROR_INVALID_VALUE;
+    }
+
+    ret = trs_get_common_sq_info(dev_id, in, &sq_info);
+    if (ret != DRV_ERROR_NONE) {
+        return ret;
+    }
+
+    ret = trs_sq_restore_uio(dev_id, in);
+    if (ret != DRV_ERROR_NONE) {
+        trs_err("Failed to restore sq. (ret=%d; dev_id=%u)\n", ret, dev_id);
+    }
+    return ret;
 }
 
 drvError_t halStreamRestore(uint32_t dev_id, struct stream_backup_info *in)
 {
     int ret;
- 
+
     if ((in == NULL) || (in->id_num == 0) || (in->id_list == NULL)) {
         trs_err("Invalid para.(dev_id=%u)\n", dev_id);
         return DRV_ERROR_INVALID_VALUE;
     }
- 
-    switch(in->type){
+
+    switch (in->type) {
         case DRV_RESOURCE_SQ_ID:
             ret = trs_sq_restore(dev_id, in);
             break;
         default:
-            trs_err("Invalid type.(dev_id=%u; type=%d)\n", dev_id, in->type);
+            trs_err("Invalid type. (dev_id=%u; type=%d)\n", dev_id, in->type);
             return DRV_ERROR_INVALID_VALUE;
     }
     return ret;

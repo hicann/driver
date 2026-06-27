@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2025. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -30,8 +30,8 @@
 #include "pmm_ctx.h"
 #include "pmm_core.h"
 
-#define PMM_SEG_BIT_STATS_OP_ADD   0U
-#define PMM_SEG_BIT_STATS_OP_SUB   1U
+#define PMM_SEG_BIT_STATS_OP_ADD 0U
+#define PMM_SEG_BIT_STATS_OP_SUB 1U
 
 struct pmm_recycle_priv {
     struct pmm_ctx *pmm_ctx;
@@ -83,7 +83,8 @@ static u64 pmm_seg_bit_stats_op(struct pmm_ctx *pmm_ctx, u64 va, u64 size, u32 o
 
         ret = _pmm_seg_bit_stats_op(pmm_ctx, i, sz, op);
         if (ret != 0) {
-            svm_err("Ops bit stats failed. (va=0x%llx; size=%llu; "
+            svm_err(
+                "Ops bit stats failed. (va=0x%llx; size=%llu; "
                 "nbits=%llu; start_bit=%llu; end_bit=%llu; i=%llu; op=%u; sz=%llu)\n",
                 va, size, nbits, start_bit, end_bit, i, op, sz);
             break;
@@ -121,8 +122,9 @@ static int _pmm_add_seg(struct pmm_ctx *pmm_ctx, u64 va, u64 size, u32 flag)
     int ret;
 
     if (svm_check_va_range(va, size, pmm_ctx->base_va, pmm_ctx->base_va + pmm_ctx->total_size) != 0) {
-        svm_err("Not in range. (udevid=%u; va=0x%llx; size=0x%llx; pmm va=0x%llx; size=0x%llx)\n",
-            pmm_ctx->udevid, va, size, pmm_ctx->base_va, pmm_ctx->total_size);
+        svm_err(
+            "Not in range. (udevid=%u; va=0x%llx; size=0x%llx; pmm va=0x%llx; size=0x%llx)\n", pmm_ctx->udevid, va,
+            size, pmm_ctx->base_va, pmm_ctx->total_size);
         return -EINVAL;
     }
 
@@ -145,8 +147,9 @@ static int _pmm_del_seg(struct pmm_ctx *pmm_ctx, u64 va, u64 size, u32 flag)
     int ret;
 
     if (svm_check_va_range(va, size, pmm_ctx->base_va, pmm_ctx->base_va + pmm_ctx->total_size) != 0) {
-        svm_err("Not in range. (udevid=%u; va=0x%llx; size=0x%llx; pmm va=0x%llx; size=0x%llx)\n",
-            pmm_ctx->udevid, va, size, pmm_ctx->base_va, pmm_ctx->total_size);
+        svm_err(
+            "Not in range. (udevid=%u; va=0x%llx; size=0x%llx; pmm va=0x%llx; size=0x%llx)\n", pmm_ctx->udevid, va,
+            size, pmm_ctx->base_va, pmm_ctx->total_size);
         return -EINVAL;
     }
 
@@ -198,8 +201,8 @@ int pmm_del_seg(u32 udevid, u64 va, u64 size, u32 flag)
     return ret;
 }
 
-static int _pmm_for_each_seg(struct pmm_ctx *pmm_ctx, u64 start, u64 size,
-    int (*func)(void *priv, u64 va, u64 size), void *priv)
+static int _pmm_for_each_seg(
+    struct pmm_ctx *pmm_ctx, u64 start, u64 size, int (*func)(void *priv, u64 va, u64 size), void *priv)
 {
     unsigned long stamp = (unsigned long)ka_jiffies;
     u64 start_bit = (start - pmm_ctx->base_va) / pmm_ctx->size_per_bit;
@@ -238,8 +241,8 @@ int pmm_for_each_seg(u32 udevid, int tgid, int (*func)(void *priv, u64 va, u64 s
     return ret;
 }
 
-static void pmm_mem_recycle_single_addr(ka_vm_area_struct_t *vma,
-    u64 va, u64 size, struct svm_pa_seg *pa_seg, u64 seg_num)
+static void pmm_mem_recycle_single_addr(
+    ka_vm_area_struct_t *vma, u64 va, u64 size, struct svm_pa_seg *pa_seg, u64 seg_num)
 {
     bool is_local_mem = svm_pa_is_local_mem(pa_seg[0].pa);
     u32 free_page_flag = 0;
@@ -265,8 +268,8 @@ static void pmm_mem_recycle_single_addr(ka_vm_area_struct_t *vma,
         }
         ret = svm_unmap_addr(vma, va + unmap_size, unmap_size, page_size);
         if (ret != 0) {
-            svm_warn("Unmap failed. (va=0x%llx; size=0x%llx; page_size=0x%llx)\n",
-                va + unmap_size, unmap_size, page_size);
+            svm_warn(
+                "Unmap failed. (va=0x%llx; size=0x%llx; page_size=0x%llx)\n", va + unmap_size, unmap_size, page_size);
         }
     } else {
         ret = svm_unmap_addr(vma, va, size, page_size);
@@ -308,8 +311,9 @@ static int pmm_mem_recycle_singe_seg(void *priv, u64 va, u64 size)
         }
 
         if (svm_check_vma(vma, va, size) != 0) {
-            svm_warn("Check vma failed. (vm_start=0x%lx; vm_end=0x%lx; va=0x%llx; size=0x%llx)\n",
-                ka_mm_get_vm_start(vma), ka_mm_get_vm_end(vma), va, size);
+            svm_warn(
+                "Check vma failed. (vm_start=0x%lx; vm_end=0x%lx; va=0x%llx; size=0x%llx)\n", ka_mm_get_vm_start(vma),
+                ka_mm_get_vm_end(vma), va, size);
             return 0;
         }
     }
@@ -317,8 +321,8 @@ static int pmm_mem_recycle_singe_seg(void *priv, u64 va, u64 size)
     pmm_ctx->recycling_vma = vma;
 
     seg_num = svm_get_align_up_num(va, size, KA_MM_PAGE_SIZE);
-    pa_seg = (struct svm_pa_seg *)svm_kvmalloc(sizeof(struct svm_pa_seg) * seg_num,
-        KA_GFP_ATOMIC | __KA_GFP_NOWARN | __KA_GFP_ACCOUNT);
+    pa_seg = (struct svm_pa_seg *)svm_kvmalloc(
+        sizeof(struct svm_pa_seg) * seg_num, KA_GFP_ATOMIC | __KA_GFP_NOWARN | __KA_GFP_ACCOUNT);
     if (pa_seg == NULL) {
         /* use small resource to recycle */
         seg_num = PMM_RECYCLE_DEFAULT_PA_SEG_NUM;
@@ -378,9 +382,8 @@ u64 pmm_mem_recycle_by_vma(ka_vm_area_struct_t *vma, u32 udevid, int tgid)
     if (pmm_ctx != NULL) {
         /* if recycling_vma is not null, Indicating that we are in the recycling process
            call trace: pmm_mem_recycle-->_svm_notifier_invalid_start--->pmm_mem_recycle_by_vma */
-        if ((pmm_ctx->recycling_vma == NULL)
-            && (ka_mm_get_vm_start(vma) >= pmm_ctx->base_va)
-            && (ka_mm_get_vm_end(vma) <= (pmm_ctx->base_va + pmm_ctx->nbits * pmm_ctx->size_per_bit))) {
+        if ((pmm_ctx->recycling_vma == NULL) && (ka_mm_get_vm_start(vma) >= pmm_ctx->base_va) &&
+            (ka_mm_get_vm_end(vma) <= (pmm_ctx->base_va + pmm_ctx->nbits * pmm_ctx->size_per_bit))) {
             recycle_size = _pmm_mem_recycle(vma, pmm_ctx);
         }
         pmm_ctx_put(pmm_ctx);
@@ -404,16 +407,17 @@ void pmm_mem_show(struct pmm_ctx *pmm_ctx, ka_seq_file_t *seq)
 
     ka_task_down_read(&pmm_ctx->rwsem);
 
-    ka_fs_seq_printf(seq, "udevid %u tgid %d nbits %llu pa_size %llu\n",
-        pmm_ctx->udevid, pmm_ctx->tgid, pmm_ctx->nbits, (u64)ka_base_atomic64_read(&pmm_ctx->pa_size));
+    ka_fs_seq_printf(
+        seq, "udevid %u tgid %d nbits %llu pa_size %llu\n", pmm_ctx->udevid, pmm_ctx->tgid, pmm_ctx->nbits,
+        (u64)ka_base_atomic64_read(&pmm_ctx->pa_size));
 
     for (i = 0; i < pmm_ctx->nbits; i++) {
         if (pmm_ctx->bit_size_stats[i] != 0) {
             va = pmm_ctx->base_va + i * pmm_ctx->size_per_bit;
             size = pmm_ctx->size_per_bit;
 
-            ka_fs_seq_printf(seq, "   bit %llu va %llx size %llx size_stats %u Bytes\n",
-                i, va, size, pmm_ctx->bit_size_stats[i]);
+            ka_fs_seq_printf(
+                seq, "   bit %llu va %llx size %llx size_stats %u Bytes\n", i, va, size, pmm_ctx->bit_size_stats[i]);
         }
     }
 
@@ -426,8 +430,8 @@ int pmm_mem_query(u32 udevid, int tgid, u64 *out_size)
 
     pmm_ctx = pmm_ctx_get(udevid, tgid);
     if (pmm_ctx == NULL) {
-        svm_err("Pmm ctx is null. (udevid=%u; tgid=%d)\n", udevid, tgid);
-        return -EINVAL;
+        *out_size = 0ULL;
+        return 0;
     }
 
     *out_size = (u64)ka_base_atomic64_read(&pmm_ctx->pa_size);
@@ -435,4 +439,3 @@ int pmm_mem_query(u32 udevid, int tgid, u64 *out_size)
 
     return 0;
 }
-

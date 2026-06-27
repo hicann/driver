@@ -402,6 +402,14 @@ livepatch_audit_log_record() {
     return 0
 }
 
+unload_ub_mgmt() {
+    local drv_root_dir="$1"
+    local ube_mgmt_path="${drv_root_dir}/driver/ube_mgmt"
+
+    [ -f /usr/bin/load_ube_mgmt_pack.sh ] && chattr -i /usr/bin/load_ube_mgmt_pack.sh >& /dev/null && rm -f /usr/bin/load_ube_mgmt_pack.sh
+    [ -d "${ube_mgmt_path}" ] && rm -rf "${ube_mgmt_path}"
+}
+
 uninstall_livepatch() {
     local drv_root_dir="$1"
     local livepatch_install_conf="${drv_root_dir}/driver/livepatch/livepatch_install.info"
@@ -475,6 +483,7 @@ do
         fi
         uninstall_livepatch "${targetdir}"
         remove_modules_load_conf
+        unload_ub_mgmt "${targetdir}"
         if [ $feature_dkms_compile = y ]; then
             if [ -f "${targetdir}"/driver/script/run_driver_dkms_uninstall.sh ]; then
                 "${targetdir}"/driver/script/run_driver_dkms_uninstall.sh

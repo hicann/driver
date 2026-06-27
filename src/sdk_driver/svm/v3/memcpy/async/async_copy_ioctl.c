@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2025-2025. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -27,8 +27,8 @@
 #include "async_copy_ctx.h"
 #include "async_copy_core.h"
 
-static int async_copy_extract_va_info_from_ioctl_para(struct svm_async_copy_submit_para *para,
-    struct copy_va_info *info)
+static int async_copy_extract_va_info_from_ioctl_para(
+    struct svm_async_copy_submit_para *para, struct copy_va_info *info)
 {
     int ret;
 
@@ -49,6 +49,7 @@ static int async_copy_extract_va_info_from_ioctl_para(struct svm_async_copy_subm
     info->size = para->size;
     info->src_host_tgid = para->src_host_tgid;
     info->dst_host_tgid = para->dst_host_tgid;
+    info->flag = para->flag;
 
     return 0;
 }
@@ -56,10 +57,11 @@ static int async_copy_extract_va_info_from_ioctl_para(struct svm_async_copy_subm
 static int _async_copy_ioctl_submit(struct async_copy_ctx *ctx, unsigned long __ka_user arg)
 {
     struct svm_async_copy_submit_para para;
-    struct copy_va_info info;
+    struct copy_va_info info = {0};
     int ret;
 
-    ret = (int)ka_base_copy_from_user(&para, (void __ka_user *)(uintptr_t)arg, sizeof(struct svm_async_copy_submit_para));
+    ret =
+        (int)ka_base_copy_from_user(&para, (void __ka_user *)(uintptr_t)arg, sizeof(struct svm_async_copy_submit_para));
     if (ret != 0) {
         svm_err("Copy_from_user fail.\n");
         return -EINVAL;
@@ -137,8 +139,8 @@ static int async_copy_ioctl_wait(u32 udevid, u32 cmd, unsigned long arg)
 
 int async_copy_ioctl_init(void)
 {
-    svm_register_ioctl_cmd_handle(_IOC_NR(SVM_ASYNC_COPY_SUBMIT), async_copy_ioctl_submit);
-    svm_register_ioctl_cmd_handle(_IOC_NR(SVM_ASYNC_COPY_WAIT), async_copy_ioctl_wait);
+    svm_register_ioctl_cmd_handle(_KA_IOC_NR(SVM_ASYNC_COPY_SUBMIT), async_copy_ioctl_submit);
+    svm_register_ioctl_cmd_handle(_KA_IOC_NR(SVM_ASYNC_COPY_WAIT), async_copy_ioctl_wait);
 
     return 0;
 }

@@ -50,13 +50,14 @@ int trs_chan_unregister_abnormal_handle(u32 task_type)
 }
 KA_EXPORT_SYMBOL_GPL(trs_chan_unregister_abnormal_handle);
 
-static int trs_task_abnormal_proc(struct trs_id_inst *inst, int chan_id, u32 sqid, u8 task_type, void* info)
+static int trs_task_abnormal_proc(struct trs_id_inst *inst, int chan_id, u32 sqid, u8 task_type, void *info)
 {
     int ret = 0;
 
     if (trs_chan_sq_abnormal_handle[task_type] != NULL) {
-        trs_info("Process chan abnormal task. (devid=%u; tsid=%u; chan_id=%d; sqid=%u; task_type=%u)\n",
-            inst->devid, inst->tsid, chan_id, sqid, task_type);
+        trs_info(
+            "Process chan abnormal task. (devid=%u; tsid=%u; chan_id=%d; sqid=%u; task_type=%u)\n", inst->devid,
+            inst->tsid, chan_id, sqid, task_type);
         ret = trs_chan_sq_abnormal_handle[task_type](inst, sqid, NULL, info);
         if (ret != 0) {
             trs_err("Failed to handle aicpu sq abnormal task. (chan_id=%d, task_type=%d)\n", chan_id, task_type);
@@ -73,8 +74,9 @@ static int _trs_chan_abnormal_proc(struct trs_id_inst *inst, struct trs_chan *ch
     if (chan->ops.abnormal_proc != NULL) {
         ret = chan->ops.abnormal_proc(inst, chan->id, err_type);
         if (ret != 0) {
-            trs_err("Chan abnormal proc failed. (devid=%u; tsid=%u; chan_id=%d; sqid=%u; err_type=%u)\n",
-                inst->devid, inst->tsid, chan->id, chan->sq.sqid, err_type);
+            trs_err(
+                "Chan abnormal proc failed. (devid=%u; tsid=%u; chan_id=%d; sqid=%u; err_type=%u)\n", inst->devid,
+                inst->tsid, chan->id, chan->sq.sqid, err_type);
         }
     }
 
@@ -101,10 +103,11 @@ int trs_chan_abnormal_proc(struct trs_id_inst *inst, struct stars_abnormal_info 
     }
 
     chan_id = trs_chan_sq_to_chan_id(ts_inst, abnormal_info->sqid);
-    trs_info("Abnormal info. (devid=%u; tsid=%u; chan_id=%d; task_type=%u; err_type=%u)\n",
-        inst->devid, inst->tsid, chan_id, task_type, err_type);
+    trs_info(
+        "Abnormal info. (devid=%u; tsid=%u; chan_id=%d; task_type=%u; err_type=%u)\n", inst->devid, inst->tsid, chan_id,
+        task_type, err_type);
 
-    (void)trs_task_abnormal_proc(inst, chan_id, abnormal_info->sqid, task_type, (void*)abnormal_info->abnormal_data);
+    (void)trs_task_abnormal_proc(inst, chan_id, abnormal_info->sqid, task_type, (void *)abnormal_info->abnormal_data);
 
     if (chan_id == -1) {
         trs_chan_ts_inst_put(ts_inst);

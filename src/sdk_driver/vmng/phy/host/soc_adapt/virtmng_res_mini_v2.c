@@ -215,7 +215,7 @@ STATIC int vmngh_enquire_soc_resource_mini_v2(u32 dev_id, u32 vfid, struct vmng_
     }
 
     ret = memcpy_s(info, sizeof(struct vmng_soc_resource_enquire), &info_msg.enquire,
-        sizeof(struct vmng_soc_resource_enquire));
+                   sizeof(struct vmng_soc_resource_enquire));
     if (ret != EOK) {
         vmng_err("Call memcpy_s err.(dev_id=%u; vfid=%u)\n", dev_id, vfid);
         return VMNG_ERR;

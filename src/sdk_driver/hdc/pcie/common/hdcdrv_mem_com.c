@@ -93,7 +93,7 @@ STATIC u32 hdcdrv_calc_time_cost(u64 end, u64 start)
 STATIC void hdcdrv_alloc_pool_stamp_record(void)
 {
     if (hdcdrv_calc_time_cost(g_alloc_pool_stamp.end, g_alloc_pool_stamp.ring_alloc_start) >
-            HDCDRV_ALLOC_POOL_MAX_TIME) {
+        HDCDRV_ALLOC_POOL_MAX_TIME) {
         hdcdrv_warn("alloc pool time. (total=%ums, alloc_ring=%ums, list_init=%ums, dma_total=%ums, "
                     "head_total=%ums, dma_max=%ums, head_max=%ums)\n",
                     hdcdrv_calc_time_cost(g_alloc_pool_stamp.end, g_alloc_pool_stamp.ring_alloc_start),
@@ -108,7 +108,7 @@ STATIC void hdcdrv_alloc_pool_stamp_record(void)
 void hdcdrv_init_stamp_record()
 {
     if (hdcdrv_calc_time_cost(g_hdcdrv_init_stamp.end, g_hdcdrv_init_stamp.wait_mutex_start) >
-            HDCDRV_INIT_TRANS_MAX_TIME) {
+        HDCDRV_INIT_TRANS_MAX_TIME) {
         hdcdrv_warn("init time. (total=%ums, wait_mutex=%ums, alloc_chan=%ums, memset=%ums, start_init_pool=%ums, "
                     "alloc_pool0=%ums ,alloc_pool1=%ums, alloc_pool2=%ums, alloc_pool3=%ums, total_alloc_pool=%ums, "
                     "tasklet_start=%ums, ka_system_tasklet_init=%ums, end=%ums)\n",
@@ -162,6 +162,7 @@ void hdcdrv_kvfree(void **addr, int level)
     if ((addr == NULL) || (*addr == NULL)) {
         return;
     }
+
     if (ka_mm_is_vmalloc_addr(*addr)) {
         hdcdrv_vfree(*addr, level);
     } else {
@@ -175,12 +176,13 @@ static inline u32 hdcdrv_mem_block_head_crc32(const struct hdcdrv_mem_block_head
     return ka_base_crc32_le(~0u, (unsigned char *)block_head, HDCDRV_BLOCK_CRC_LEN);
 }
 
-STATIC void hdcdrv_mem_block_head_init(void *buf, ka_dma_addr_t addr, u32 offset, struct hdccom_mem_init *init_mem, u32 segment)
+STATIC void hdcdrv_mem_block_head_init(void *buf, ka_dma_addr_t addr, u32 offset, struct hdccom_mem_init *init_mem,
+                                       u32 segment)
 {
     struct hdcdrv_mem_block_head *block_head = (struct hdcdrv_mem_block_head *)buf;
 
     block_head->magic = HDCDRV_MEM_BLOCK_MAGIC;
-    block_head->devid  = (u32)init_mem->dev_id;
+    block_head->devid = (u32)init_mem->dev_id;
     block_head->type = (u32)init_mem->pool_type;
     block_head->size = segment;
     block_head->offset = offset;
@@ -200,9 +202,8 @@ STATIC void hdcdrv_mem_block_head_dump(struct hdcdrv_mem_block_head *block_head)
                         "head_crc=%x; "
                         "ref_count=%x; "
                         "current crc=%x)\n",
-                        block_head->magic, block_head->devid, block_head->type,
-                        block_head->size, block_head->head_crc, block_head->ref_count,
-                        hdcdrv_mem_block_head_crc32(block_head));
+                        block_head->magic, block_head->devid, block_head->type, block_head->size, block_head->head_crc,
+                        block_head->ref_count, hdcdrv_mem_block_head_crc32(block_head));
 #ifdef CFG_BUILD_DEBUG
     ka_base_dump_stack();
 #endif
@@ -276,7 +277,6 @@ void free_mem_pool_single(ka_device_t *dev, u32 segment, struct hdcdrv_mem_block
     }
     buf->dma_buf = NULL;
     hdcdrv_kvfree((void **)&buf, KA_SUB_MODULE_TYPE_0);
-    buf = NULL;
 }
 
 static inline u32 hdccom_calc_ring_id(u64 ring_cnt, u32 mask, u32 size)
@@ -314,8 +314,8 @@ int hdccom_alloc_mem(struct hdcdrv_mem_pool *pool, void **buf, ka_dma_addr_t *ad
         ka_task_spin_unlock_bh(&pool->mem_lock);
         if (block_head != NULL) {
             hdcdrv_err("Block head is corrupted. (magic=%u; devid=%u; type=%u; size=%u; head_crc=%u; current crc=%u)\n",
-                block_head->magic, block_head->devid, block_head->type, block_head->size, block_head->head_crc,
-                hdcdrv_mem_block_head_crc32(block_head));
+                       block_head->magic, block_head->devid, block_head->type, block_head->size, block_head->head_crc,
+                       hdcdrv_mem_block_head_crc32(block_head));
         }
         hdcdrv_err("Block head check failed. (devid=%u; ring_id=%d)\n", pool->dev_id, ring_id);
         return HDCDRV_MEM_NOT_MATCH;
@@ -368,8 +368,8 @@ int hdccom_free_mem(struct hdcdrv_mem_pool *pool, void *buf)
 }
 
 #ifdef CFG_FEATURE_MIRROR
-void hdcdrv_page_head_init(struct hdcdrv_huge_page *page_head, ka_page_t * page_addr, void *buf, int valid_flag,
-    int alloc_flag)
+void hdcdrv_page_head_init(struct hdcdrv_huge_page *page_head, ka_page_t *page_addr, void *buf, int valid_flag,
+                           int alloc_flag)
 {
     int i = 0;
     page_head->page_addr = page_addr;
@@ -407,9 +407,9 @@ int hdcdrv_alloc_huge_page(struct hdcdrv_mem_pool *pool, int page_index)
     int i;
     int nids[HDC_NID_ID_MAX_NUM] = {0};
     int node_num;
-    void* buf;
+    void *buf;
     ka_dma_addr_t addr;
-    ka_device_t* pdev_dev = hdcdrv_get_pdev_dev(pool->dev_id);
+    ka_device_t *pdev_dev = hdcdrv_get_pdev_dev(pool->dev_id);
     int alloc_flag;
 
     if (pdev_dev == NULL) {
@@ -420,7 +420,7 @@ int hdcdrv_alloc_huge_page(struct hdcdrv_mem_pool *pool, int page_index)
 
     if (pool->page_list[page_index].valid != HDCDRV_PAGE_PRE_STATUS) {
         HDC_LOG_ERR_LIMIT(&g_alloc_huge_page_print_cnt, &g_alloc_huge_page_jiffies,
-            "page status is not correct, now page_statu is %d.\n", pool->page_list[page_index].valid);
+                          "page status is not correct, now page_statu is %d.\n", pool->page_list[page_index].valid);
         pool->page_list[page_index].valid = HDCDRV_PAGE_NOT_ALLOC;
         return HDCDRV_PARA_ERR;
     }
@@ -429,14 +429,14 @@ int hdcdrv_alloc_huge_page(struct hdcdrv_mem_pool *pool, int page_index)
     node_num = hal_kernel_dbl_get_ai_nid(pool->dev_id, nids, HDC_NID_ID_MAX_NUM);
     if (node_num <= 0) {
         HDC_LOG_ERR_LIMIT(&g_alloc_huge_page_print_cnt, &g_alloc_huge_page_jiffies,
-            "Failed to get node_num. (device_id=%u;node_num=%d)\n", pool->dev_id, node_num);
+                          "Failed to get node_num. (device_id=%u;node_num=%d)\n", pool->dev_id, node_num);
         pool->page_list[page_index].valid = HDCDRV_PAGE_NOT_ALLOC;
         return HDCDRV_GET_NUMA_ID_FAILED;
     }
     // use NORECLAIM flag for the first memory request, which has better performance
     for (i = 0; i < node_num; i++) {
-        page = ka_alloc_hugetlb(nids[i], HDCDRV_HUGETLB_FOLIO_SIZE, HUGETLB_ALLOC_NORECLAIM,
-                                HAL_MODULE_TYPE_HDC, KA_SUB_MODULE_TYPE_1);
+        page = ka_alloc_hugetlb(nids[i], HDCDRV_HUGETLB_FOLIO_SIZE, HUGETLB_ALLOC_NORECLAIM, HAL_MODULE_TYPE_HDC,
+                                KA_SUB_MODULE_TYPE_1);
         if (page != NULL) {
             alloc_flag = HDCDRV_ALLOC_MEM_BY_HUGE_PAGE;
             break;
@@ -444,7 +444,7 @@ int hdcdrv_alloc_huge_page(struct hdcdrv_mem_pool *pool, int page_index)
     }
 
     if (page == NULL) {
-    // use NONE flag for the second memory request, if page == NULL means the memory is exhausted
+        // use NONE flag for the second memory request, if page == NULL means the memory is exhausted
         for (i = 0; i < node_num; i++) {
             page = ka_alloc_hugepage(nids[i], (KA_GFP_KERNEL) | (__KA_GFP_COMP) | (__KA_GFP_ACCOUNT & ~__KA_GFP_RECLAIM) |
                                     (__KA_GFP_THISNODE) | (KA_GFP_HIGHUSER_MOVABLE), HDCDRV_HUGEPAGE_2M_ORDER,
@@ -456,7 +456,7 @@ int hdcdrv_alloc_huge_page(struct hdcdrv_mem_pool *pool, int page_index)
 
         if (page == NULL) {
             HDC_LOG_ERR_LIMIT(&g_alloc_huge_page_print_cnt, &g_alloc_huge_page_jiffies,
-                "No enough huge page memory.\n");
+                              "No enough huge page memory.\n");
             pool->page_list[page_index].valid = HDCDRV_PAGE_NOT_ALLOC;
             return HDCDRV_MEM_ALLOC_FAIL;
         }
@@ -502,13 +502,13 @@ int hdccom_get_free_block_id(struct hdcdrv_mem_pool *pool, int page_index)
     return b_id;
 }
 
-int hdccom_get_page_mem(struct hdcdrv_mem_pool *pool, int *page_index, int *block_id, void** alloc_buf)
+int hdccom_get_page_mem(struct hdcdrv_mem_pool *pool, int *page_index, int *block_id, void **alloc_buf)
 {
     int i, p_index = -1, b_id = -1, pre_id = -1, idle_id = -1;
-    void* buf = NULL;
+    void *buf = NULL;
     int ret;
 
-    for (i = 0; i < HDCDRV_HUGE_PAGE_NUM ; i++) {
+    for (i = 0; i < HDCDRV_HUGE_PAGE_NUM; i++) {
         if ((pool->page_list[i].valid == HDCDRV_PAGE_HAS_ALLOC) &&
             (pool->page_list[i].used_block_num < HDCDRV_PAGE_BLOCK_NUM)) {
             p_index = i;
@@ -542,8 +542,8 @@ int hdccom_get_page_mem(struct hdcdrv_mem_pool *pool, int *page_index, int *bloc
     return ret;
 }
 
-void free_mem_pool_single_page(ka_device_t *dev, struct hdcdrv_mem_block_head *buf,
-    ka_dma_addr_t addr, ka_page_t *page_addr, int alloc_flag)
+void free_mem_pool_single_page(ka_device_t *dev, struct hdcdrv_mem_block_head *buf, ka_dma_addr_t addr,
+                               ka_page_t *page_addr, int alloc_flag)
 {
     if ((buf != NULL) && (addr != KA_DMA_MAPPING_ERROR) && (page_addr != NULL) && (dev != NULL)) {
         hal_kernel_devdrv_dma_unmap_page(dev, addr, KA_HPAGE_SIZE, KA_DMA_BIDIRECTIONAL);
@@ -556,9 +556,9 @@ STATIC u64 g_alloc_mem_jiffies = 0;
 int hdccom_alloc_mem_page(struct hdcdrv_mem_pool *pool, void **buf, ka_dma_addr_t *addr, int *mem_id)
 {
     struct hdcdrv_mem_block_head *block_head = NULL;
-    ka_page_t* page_addr = NULL;
+    ka_page_t *page_addr = NULL;
     int page_index = -1, block_id = -1, alloc_flag;
-    void* alloc_buf = NULL;
+    void *alloc_buf = NULL;
     int ret;
 
     ka_task_spin_lock_bh(&pool->mem_lock);
@@ -586,9 +586,9 @@ int hdccom_alloc_mem_page(struct hdcdrv_mem_pool *pool, void **buf, ka_dma_addr_
                 page_addr = pool->page_list[page_index].page_addr;
                 alloc_flag = pool->page_list[page_index].alloc_flag;
                 hdcdrv_page_head_init(&pool->page_list[page_index], NULL, NULL, HDCDRV_PAGE_NOT_ALLOC,
-                    HDCDRV_ALLOC_MEM_BY_HUGE_PAGE);
+                                      HDCDRV_ALLOC_MEM_BY_HUGE_PAGE);
                 free_mem_pool_single_page(hdcdrv_get_pdev_dev(pool->dev_id), block_head,
-                    HDCDRV_BLOCK_DMA_HEAD(block_head->dma_addr), page_addr, alloc_flag);
+                                          HDCDRV_BLOCK_DMA_HEAD(block_head->dma_addr), page_addr, alloc_flag);
                 ret = HDCDRV_ERR;
             }
         }
@@ -600,8 +600,8 @@ int hdccom_alloc_mem_page(struct hdcdrv_mem_pool *pool, void **buf, ka_dma_addr_
     if (hdcdrv_mem_block_head_check(alloc_buf) != HDCDRV_OK) {
         hdccom_page_status_change(pool, page_index, block_id, HDCDRV_PAGE_BLOCK_FREE);
         ka_task_spin_unlock_bh(&pool->mem_lock);
-        HDC_LOG_ERR_LIMIT(&g_alloc_mem_print_cnt, &g_alloc_mem_jiffies,
-            "Block head check failed. (mem_id=%d)\n", *mem_id);
+        HDC_LOG_ERR_LIMIT(&g_alloc_mem_print_cnt, &g_alloc_mem_jiffies, "Block head check failed. (mem_id=%d)\n",
+                          *mem_id);
         *mem_id = -1;
         return HDCDRV_MEM_NOT_MATCH;
     }
@@ -628,10 +628,10 @@ int hdccom_alloc_mem_page(struct hdcdrv_mem_pool *pool, void **buf, ka_dma_addr_
 int hdccom_free_mem_page(struct hdcdrv_mem_pool *pool, void *buf, int mem_id)
 {
     struct hdcdrv_mem_block_head *block_head = NULL;
-    ka_device_t* pdev_dev = hdcdrv_get_pdev_dev(pool->dev_id);
+    ka_device_t *pdev_dev = hdcdrv_get_pdev_dev(pool->dev_id);
     int page_index, block_id;
-    void* free_buf = NULL;
-    ka_page_t* free_page = NULL;
+    void *free_buf = NULL;
+    ka_page_t *free_page = NULL;
     int alloc_flag;
 
     if (pdev_dev == NULL) {
@@ -654,21 +654,21 @@ int hdccom_free_mem_page(struct hdcdrv_mem_pool *pool, void *buf, int mem_id)
 
     hdccom_page_status_change(pool, page_index, block_id, HDCDRV_PAGE_BLOCK_FREE);
 
-    if (pool->page_list[page_index].used_block_num == 0) {  // this page need to free
-        free_buf = pool->page_list[page_index].buf; // get buf addr, this addr contains block head
+    if (pool->page_list[page_index].used_block_num == 0) { // this page need to free
+        free_buf = pool->page_list[page_index].buf;        // get buf addr, this addr contains block head
         free_page = pool->page_list[page_index].page_addr;
         alloc_flag = pool->page_list[page_index].alloc_flag;
         pool->page_list[page_index].buf = NULL; // avoid to be overwrite by other process
         pool->page_list[page_index].page_addr = NULL;
-        pool->page_list[page_index].valid = HDCDRV_PAGE_NOT_ALLOC;  // change page_index status
+        pool->page_list[page_index].valid = HDCDRV_PAGE_NOT_ALLOC; // change page_index status
     }
 
     ka_task_spin_unlock_bh(&pool->mem_lock);
 
     if ((free_buf != NULL) && (free_page != NULL)) {
         block_head = free_buf;
-        free_mem_pool_single_page(pdev_dev, block_head, HDCDRV_BLOCK_DMA_HEAD(block_head->dma_addr),
-            free_page, alloc_flag);
+        free_mem_pool_single_page(pdev_dev, block_head, HDCDRV_BLOCK_DMA_HEAD(block_head->dma_addr), free_page,
+                                  alloc_flag);
     }
     return HDCDRV_OK;
 }
@@ -699,7 +699,7 @@ int hdccom_free_page_pool(struct hdcdrv_mem_pool *pool)
     pool->valid = HDCDRV_INVALID;
     for (i = 0; i < HDCDRV_HUGE_PAGE_NUM; i++) {
         retry_time = 0;
-free_pool_retry:
+    free_pool_retry:
         if (pool->page_list[i].valid == HDCDRV_PAGE_PRE_STATUS) {
             retry_time++;
             ka_system_msleep(HDCDRV_RETRY_SLEEP_TIME);
@@ -709,11 +709,11 @@ free_pool_retry:
                 hdcdrv_info("Wait alloc mem finish too long, exit.\n");
             }
         }
-        if ((pool->page_list[i].used_block_num != 0) || (pool->page_list[i].buf != NULL)
-            || (pool->page_list[i].page_addr != NULL)) {
+        if ((pool->page_list[i].used_block_num != 0) || (pool->page_list[i].buf != NULL) ||
+            (pool->page_list[i].page_addr != NULL)) {
             /* Entering this branch means HDC memory is overwritten, will not directly release. Only show the log */
-            hdcdrv_info("page_pool has memory abnormal. type=%d, block_num=%d, page_index=%d\n",
-                pool->type, pool->page_list[i].used_block_num, i);
+            hdcdrv_info("page_pool has memory abnormal. type=%d, block_num=%d, page_index=%d\n", pool->type,
+                        pool->page_list[i].used_block_num, i);
         }
     }
 
@@ -723,8 +723,8 @@ free_pool_retry:
 }
 #endif
 
-STATIC void *hdccom_alloc_mem_pool(struct hdccom_mem_init *init_mem, u32 segment,
-                                   ka_dma_addr_t *addr, u32 *offset, ka_gfp_t gfp)
+STATIC void *hdccom_alloc_mem_pool(struct hdccom_mem_init *init_mem, u32 segment, ka_dma_addr_t *addr, u32 *offset,
+                                   ka_gfp_t gfp)
 {
     struct hdcdrv_mem_block_head *block_head = NULL;
     ka_page_t *page = NULL;
@@ -766,9 +766,10 @@ STATIC void *hdccom_alloc_mem_pool(struct hdccom_mem_init *init_mem, u32 segment
     }
     hdcdrv_set_time_stamp(&g_alloc_pool_stamp.dma_alloc_end);
     /* alloc management structure addr */
-    block_head = (struct hdcdrv_mem_block_head *)hdcdrv_kvmalloc(sizeof(struct hdcdrv_mem_block_head), KA_SUB_MODULE_TYPE_0);
+    block_head = (struct hdcdrv_mem_block_head *)hdcdrv_kvmalloc(sizeof(struct hdcdrv_mem_block_head),
+                                                                 KA_SUB_MODULE_TYPE_0);
     if (ka_unlikely(block_head == NULL)) {
-        #ifndef DRV_UT
+#ifndef DRV_UT
         if ((init_mem->pool_type == HDCDRV_RESERVE_MEM_POOL_TYPE_TX) ||
             (init_mem->pool_type == HDCDRV_RESERVE_MEM_POOL_TYPE_RX)) {
             dma_buf = NULL;
@@ -785,7 +786,7 @@ STATIC void *hdccom_alloc_mem_pool(struct hdccom_mem_init *init_mem, u32 segment
             hal_kernel_devdrv_dma_free_coherent(init_mem->dev, segment, dma_buf, *addr);
 #endif
         }
-        #endif
+#endif
         return NULL;
     }
     hdcdrv_set_time_stamp(&g_alloc_pool_stamp.head_alloc_end);
@@ -811,7 +812,7 @@ int hdccom_init_mem_pool(struct hdcdrv_mem_pool *pool, struct hdccom_mem_init *i
     pool->size = 0;
     hdcdrv_set_time_stamp(&g_alloc_pool_stamp.ring_alloc_start);
     pool->ring = (struct hdcdrv_mem *)hdcdrv_kzalloc(sizeof(struct hdcdrv_mem) * init_mem->num, KA_GFP_KERNEL,
-        KA_SUB_MODULE_TYPE_0);
+                                                     KA_SUB_MODULE_TYPE_0);
     if (pool->ring == NULL) {
         pool->tail = 0;
         return HDCDRV_DMA_MEM_ALLOC_FAIL;
@@ -842,7 +843,8 @@ int hdccom_init_mem_pool(struct hdcdrv_mem_pool *pool, struct hdccom_mem_init *i
     return HDCDRV_OK;
 
 mem_alloc_fail:
-    hdcdrv_err("Calling alloc failed. (dev_id=%d; mem_pool=%x; num=%u; i=%u)\n", init_mem->dev_id, pool->segment, init_mem->num, i);
+    hdcdrv_err("Calling alloc failed. (dev_id=%d; mem_pool=%x; num=%u; i=%u)\n", init_mem->dev_id, pool->segment,
+               init_mem->num, i);
     pool->tail = pool->size;
     return HDCDRV_DMA_MEM_ALLOC_FAIL;
 }
@@ -860,7 +862,7 @@ int hdccom_free_mem_pool(struct hdcdrv_mem_pool *pool, ka_device_t *dev, u32 seg
 
     if ((pool->tail - pool->head) != pool->size) {
         hdcdrv_info("Get pool value. (pool_segment=%d; alloc_size=%d; head=%lld; tail=%lld)\n", pool->segment,
-            pool->size, pool->head, pool->tail);
+                    pool->size, pool->head, pool->tail);
     }
 
     for (i = 0; i < (pool->tail - pool->head); i++) {
@@ -908,7 +910,7 @@ STATIC u32 hdcdrv_get_node_status(struct hdcdrv_fast_node *fast_node, struct hdc
 #endif
 }
 
-ka_rb_root_t* hdcdrv_get_rbtree(struct hdcdrv_dev_fmem *dev_fmem, u32 side)
+ka_rb_root_t *hdcdrv_get_rbtree(struct hdcdrv_dev_fmem *dev_fmem, u32 side)
 {
     if (side == HDCDRV_RBTREE_SIDE_LOCAL) {
         return &(dev_fmem->rbtree);
@@ -926,8 +928,9 @@ STATIC u64 hdcdrv_get_hash_va(struct hdcdrv_fast_node *fast_node, u64 search_typ
     }
 }
 
-struct hdcdrv_fast_node *hdcdrv_fast_node_search(ka_task_spinlock_t *lock, ka_rb_root_t *root,
-    u64 new_node_hash, struct hdcdrv_node_status *node_status, struct hdcdrv_node_search_info *node_search_info)
+struct hdcdrv_fast_node *hdcdrv_fast_node_search(ka_task_spinlock_t *lock, ka_rb_root_t *root, u64 new_node_hash,
+                                                 struct hdcdrv_node_status *node_status,
+                                                 struct hdcdrv_node_search_info *node_search_info)
 {
     u64 tree_hash;
     ka_rb_node_t *node = NULL;
@@ -960,8 +963,8 @@ struct hdcdrv_fast_node *hdcdrv_fast_node_search(ka_task_spinlock_t *lock, ka_rb
     return NULL;
 }
 
-struct hdcdrv_fast_node *hdcdrv_fast_node_search_timeout(ka_task_spinlock_t *lock,
-    ka_rb_root_t *root, u64 hash_va, int timeout)
+struct hdcdrv_fast_node *hdcdrv_fast_node_search_timeout(ka_task_spinlock_t *lock, ka_rb_root_t *root, u64 hash_va,
+                                                         int timeout)
 {
     int loop_cnt = timeout;
     struct hdcdrv_fast_node *fast_node = NULL;
@@ -982,7 +985,7 @@ struct hdcdrv_fast_node *hdcdrv_fast_node_search_timeout(ka_task_spinlock_t *loc
         /* node busy */
         if (hdcdrv_node_is_timeout(node_status.stamp)) {
             hdcdrv_err_limit("Fast node timeout. (time=%dms, loop_cnt=%d)\n",
-                (u32)ka_system_jiffies_to_msecs(ka_jiffies - node_status.stamp), loop_cnt);
+                             (u32)ka_system_jiffies_to_msecs(ka_jiffies - node_status.stamp), loop_cnt);
             return NULL;
         }
 
@@ -995,7 +998,8 @@ struct hdcdrv_fast_node *hdcdrv_fast_node_search_timeout(ka_task_spinlock_t *loc
     return NULL;
 }
 
-int hdcdrv_fast_node_insert(ka_task_spinlock_t *lock, ka_rb_root_t *root, struct hdcdrv_fast_node *fast_node, u64 search_type)
+int hdcdrv_fast_node_insert(ka_task_spinlock_t *lock, ka_rb_root_t *root, struct hdcdrv_fast_node *fast_node,
+                            u64 search_type)
 {
     u64 new_node_hash, tree_hash;
     ka_rb_node_t *parent = NULL;
@@ -1046,24 +1050,23 @@ void hdcdrv_fast_node_erase(ka_task_spinlock_t *lock, ka_rb_root_t *root, struct
 void hdcdrv_fast_node_free(const struct hdcdrv_fast_node *fast_node)
 {
     hdcdrv_kvfree((void **)&fast_node, KA_SUB_MODULE_TYPE_2);
-    fast_node = NULL;
 }
 
-struct hdcdrv_fast_node* __attribute__((weak)) hdcdrv_fast_node_search_from_new_tree(u32 rb_side,
-    int timeout, struct hdcdrv_fast_node_msg_info *node_info)
+struct hdcdrv_fast_node *__attribute__((weak)) hdcdrv_fast_node_search_from_new_tree(
+    u32 rb_side, int timeout, struct hdcdrv_fast_node_msg_info *node_info)
 {
     return NULL;
 }
 
 int __attribute__((weak)) hdcdrv_fast_node_insert_new_tree(int devid, u64 pid, u32 fid, u32 rb_side,
-    struct hdcdrv_fast_node *new_node)
+                                                           struct hdcdrv_fast_node *new_node)
 {
     hdcdrv_err("hdcdrv_fast_node_insert_arry not support\n");
     return HDCDRV_OK;
 }
 
 void __attribute__((weak)) hdcdrv_fast_node_erase_from_new_tree(u64 pid, u32 fid, int devid, u32 rb_side,
-    struct hdcdrv_fast_node *fast_node)
+                                                                struct hdcdrv_fast_node *fast_node)
 {
     hdcdrv_err("hdcdrv_fast_node_erase_from_arry not support\n");
     return;
@@ -1094,14 +1097,14 @@ STATIC u32 hdcdrv_get_rb_side(int type)
     }
 }
 
-int __attribute__((weak)) hdcdrv_save_fast_mem_info(struct hdcdrv_fast_mem *fast_mem,
-    u64 send_addr_va, struct hdcdrv_fast_addr_info *addr_info)
+int __attribute__((weak)) hdcdrv_save_fast_mem_info(struct hdcdrv_fast_mem *fast_mem, u64 send_addr_va,
+                                                    struct hdcdrv_fast_addr_info *addr_info)
 {
     return HDCDRV_OK;
 }
 
-void hdcdrv_get_fast_mem(struct hdcdrv_dev_fmem *dev_fmem, int type,
-    struct hdcdrv_fast_node_msg_info *node_msg, struct hdcdrv_fast_addr_info *addr_info)
+void hdcdrv_get_fast_mem(struct hdcdrv_dev_fmem *dev_fmem, int type, struct hdcdrv_fast_node_msg_info *node_msg,
+                         struct hdcdrv_fast_addr_info *addr_info)
 {
     int ret;
     u32 rb_side;
@@ -1134,7 +1137,7 @@ void hdcdrv_get_fast_mem(struct hdcdrv_dev_fmem *dev_fmem, int type,
     if (ret != HDCDRV_OK) {
         hdcdrv_node_status_idle(f_node);
         hdcdrv_err("Calling hdcdrv_get_fast_mem_check failed.(f_type=%d, msg type=%d, f_pid=%lld, msg pid=%lld)\n",
-            f_node->fast_mem.mem_type, type, f_node->pid, node_msg->pid);
+                   f_node->fast_mem.mem_type, type, f_node->pid, node_msg->pid);
         return;
     }
 
@@ -1148,13 +1151,12 @@ void hdcdrv_get_fast_mem(struct hdcdrv_dev_fmem *dev_fmem, int type,
     return;
 }
 
-struct hdcdrv_fast_mem *hdcdrv_get_fast_mem_timeout(int dev_id, int type,
-    int len, u64 hash_va, u64 user_va)
+struct hdcdrv_fast_mem *hdcdrv_get_fast_mem_timeout(int dev_id, int type, int len, u64 hash_va, u64 user_va)
 {
     int ret;
     u32 fid, pid;
     struct hdcdrv_dev_fmem *dev_fmem = NULL;
-    ka_task_spinlock_t *lock  = NULL;
+    ka_task_spinlock_t *lock = NULL;
     ka_rb_root_t *root = NULL;
     struct hdcdrv_fast_node *f_node = NULL;
     struct hdcdrv_fast_node_msg_info node_msg;
@@ -1163,8 +1165,7 @@ struct hdcdrv_fast_mem *hdcdrv_get_fast_mem_timeout(int dev_id, int type,
     node_msg.dev_id = (u32)dev_id;
     pid = (u32)(hash_va & HDCDRV_FRBTREE_PID_MASK);
     hdcdrv_node_msg_info_fill(pid, fid, len, user_va, HDCDRV_SEARCH_NODE_SENDRECV, &node_msg);
-    f_node = hdcdrv_fast_node_search_from_new_tree(HDCDRV_RBTREE_SIDE_LOCAL, HDCDRV_NODE_WAIT_TIME_MAX,
-                                                   &node_msg);
+    f_node = hdcdrv_fast_node_search_from_new_tree(HDCDRV_RBTREE_SIDE_LOCAL, HDCDRV_NODE_WAIT_TIME_MAX, &node_msg);
     if (f_node == NULL) {
         dev_fmem = hdcdrv_get_dev_fmem_ex(dev_id, fid, HDCDRV_RBTREE_SIDE_LOCAL);
         lock = &dev_fmem->rb_lock;
@@ -1209,7 +1210,7 @@ STATIC unsigned int hdcdrv_fast_get_alloc_pages_segment(unsigned int len, unsign
 
 int __attribute__((weak)) hdcdrv_dma_map(struct hdcdrv_fast_mem *f_mem, int devid, int flag)
 {
-    ka_device_t* pdev_dev = hdcdrv_get_pdev_dev(devid);
+    ka_device_t *pdev_dev = hdcdrv_get_pdev_dev(devid);
     u32 stamp, cost_time;
     int ret, i, j;
 
@@ -1278,13 +1279,13 @@ STATIC void hdcdrv_mem_stat_info_show(void)
     free_len = dev_fmem->mem_dfx_stat.free_size;
 
     hdcdrv_info("HDC memory stat information. (alloc_cnt=%llu; alloc_size=0x%llx; alloc_normal_len=0x%llx;"
-        "alloc_dma_len=0x%llx; free_cnt=%llu; free_size=0x%llx)\n",
-        alloc_cnt, alloc_len, alloc_normal_len, alloc_dma_len, free_cnt, free_len);
+                "alloc_dma_len=0x%llx; free_cnt=%llu; free_size=0x%llx)\n",
+                alloc_cnt, alloc_len, alloc_normal_len, alloc_dma_len, free_cnt, free_len);
 }
 
 int __attribute__((weak)) hdcdrv_dma_unmap(struct hdcdrv_fast_mem *f_mem, u32 devid, int sync, int flag)
 {
-    ka_device_t* pdev_dev = NULL;
+    ka_device_t *pdev_dev = NULL;
     u32 stamp, cost_time;
     int ret = HDCDRV_OK;
     int i;
@@ -1365,7 +1366,7 @@ void hdcdrv_fast_mem_continuity_check(u32 alloc_len, u32 addr_num, const int seg
     for (i = 0; i < segment_num; i++) {
         if (segment_mem_num[i] > 0) {
             ret = snprintf_s(buf + offset, (size_t)(HDCDRV_BUF_LEN - offset), (size_t)(HDCDRV_BUF_LEN - offset - 1),
-                ",%u:%d", i, segment_mem_num[i]);
+                             ",%u:%d", i, segment_mem_num[i]);
             if (ret >= 0) {
                 offset += ret;
             }
@@ -1374,7 +1375,7 @@ void hdcdrv_fast_mem_continuity_check(u32 alloc_len, u32 addr_num, const int seg
 
     if (score < HDCDRV_MEM_SCORE_SCALE) {
         hdcdrv_warn_limit("score is invalid. (alloc_len=0x%x; expect_num=%u; actual=%u; score=%d; addr_info=\"%s\")\n",
-            alloc_len, expect_num, addr_num, score, buf);
+                          alloc_len, expect_num, addr_num, score, buf);
     }
 }
 
@@ -1433,7 +1434,6 @@ void hdcdrv_huge_put_page(struct hdcdrv_fast_mem *f_mem)
 void hdcdrv_fast_free_mem_node(struct hdcdrv_fast_mem *f_mem)
 {
     hdcdrv_kvfree((void **)&f_mem->mem, KA_SUB_MODULE_TYPE_2);
-    f_mem->mem = NULL;
 }
 
 void hdcdrv_fast_free_huge_page_mem(struct hdcdrv_fast_mem *f_mem)
@@ -1539,14 +1539,15 @@ void hdcdrv_recycle_mem_work(ka_work_struct_t *p_work)
     int i;
     u32 stamp;
     u32 cost_time;
-    struct hdcdrv_mem_f *mem =  NULL;
+    struct hdcdrv_mem_f *mem = NULL;
     ka_gfp_t gfp_mask;
     u64 work_cnt = g_mem_work_cnt;
 
     stamp = (u32)ka_jiffies;
     gfp_mask = hdcdrv_get_mem_work_mask(g_mem_type);
 
-    mem = (struct hdcdrv_mem_f *)hdcdrv_kvmalloc((u64)HDCDRV_LIST_MEM_NUM * sizeof(struct hdcdrv_mem_f), KA_SUB_MODULE_TYPE_2);
+    mem = (struct hdcdrv_mem_f *)hdcdrv_kvmalloc((u64)HDCDRV_LIST_MEM_NUM * sizeof(struct hdcdrv_mem_f),
+                                                 KA_SUB_MODULE_TYPE_2);
     if (mem == NULL) {
         hdcdrv_warn("Calling ka_mm_kmalloc no success. (mem_type=%u; work_cnt=%llu)\n", g_mem_type, work_cnt);
         return;
@@ -1560,24 +1561,23 @@ void hdcdrv_recycle_mem_work(ka_work_struct_t *p_work)
         }
         mem[i].page = hdcdrv_alloc_pages(gfp_mask, HDCDRV_MEM_ORDER_1MB, KA_SUB_MODULE_TYPE_2);
         if (mem[i].page == NULL) {
-            hdcdrv_warn("Calling ka_mm_alloc_pages no success. (i=%d; gfp_mask=0x%x; mem_type=%d; work_cnt=%lld)\n",
-                i, gfp_mask, g_mem_type, work_cnt);
+            hdcdrv_warn("Calling ka_mm_alloc_pages no success. (i=%d; gfp_mask=0x%x; mem_type=%d; work_cnt=%lld)\n", i,
+                        gfp_mask, g_mem_type, work_cnt);
             goto out;
         }
         mem[i].power = HDCDRV_MEM_ORDER_1MB;
     }
 
     cost_time = ka_system_jiffies_to_msecs(ka_jiffies - stamp);
-    hdcdrv_info("Get memory work cost_time. (cost_time=%d; mask=0x%x; mem_type=%d; work_cnt=%lld)\n",
-        cost_time, gfp_mask, g_mem_type, work_cnt);
+    hdcdrv_info("Get memory work cost_time. (cost_time=%d; mask=0x%x; mem_type=%d; work_cnt=%lld)\n", cost_time,
+                gfp_mask, g_mem_type, work_cnt);
 
 out:
     hdcdrv_fast_free_pages(mem, i);
     hdcdrv_kvfree((void **)&mem, KA_SUB_MODULE_TYPE_2);
-    mem = NULL;
     cost_time = ka_system_jiffies_to_msecs(ka_jiffies - stamp);
-    hdcdrv_info("Get memory work cost_time. (cost_time=%d; i=%d; mem_type=%d; work_cnt=%lld)\n",
-        cost_time, i, g_mem_type, work_cnt);
+    hdcdrv_info("Get memory work cost_time. (cost_time=%d; i=%d; mem_type=%d; work_cnt=%lld)\n", cost_time, i,
+                g_mem_type, work_cnt);
     hdcdrv_mem_stat_info_show();
 }
 
@@ -1595,7 +1595,7 @@ STATIC void hdcdrv_alloc_pages_switch(u32 *max_len_bit)
     g_mem_work_flag = 0;
     (void)ka_task_schedule_delayed_work(rec_work, 0);
     *max_len_bit = HDCDRV_MEM_MAX_LEN_BIT;
-    g_mem_type = ((g_mem_type == HDCDRV_DMA_MEM) ?  HDCDRV_NORMAL_MEM : HDCDRV_DMA_MEM);
+    g_mem_type = ((g_mem_type == HDCDRV_DMA_MEM) ? HDCDRV_NORMAL_MEM : HDCDRV_DMA_MEM);
     g_mem_work_cnt++;
     hdcdrv_info("Schedule mem work. (mem_type=%u; cnt=%llu)\n", g_mem_type, g_mem_work_cnt);
 }
@@ -1642,9 +1642,9 @@ STATIC int hdcdrv_fast_alloc_pages(struct hdcdrv_mem_f *mem, u64 va, u32 len, u3
         if (mem[i].page == NULL) {
             max_len_bit -= 1;
             hdcdrv_info_limit("Get memory length. (total_len=0x%x; remain_alloc_len=0x%x; max_len_bit=%u;"
-                "mem_work_cnt=%llu; mem_type=%u; gfp_mask=0x%x; alloc_cnt=%llu; alloc_size=%llu)\n",
-                len, alloc_len, max_len_bit, g_mem_work_cnt, g_mem_type, gfp_mask,
-                dev_fmem->mem_dfx_stat.alloc_cnt, dev_fmem->mem_dfx_stat.alloc_size);
+                              "mem_work_cnt=%llu; mem_type=%u; gfp_mask=0x%x; alloc_cnt=%llu; alloc_size=%llu)\n",
+                              len, alloc_len, max_len_bit, g_mem_work_cnt, g_mem_type, gfp_mask,
+                              dev_fmem->mem_dfx_stat.alloc_cnt, dev_fmem->mem_dfx_stat.alloc_size);
             if ((max_len_bit == HDCDRV_MEM_64KB_LEN_BIT) && (switch_time == 0)) {
                 hdcdrv_info("ka_task_cond_resched for system task and switch alloc_mem_type.\n");
                 ka_task_cond_resched();
@@ -1702,12 +1702,13 @@ STATIC int hdcdrv_fast_alloc_normal_page_mem(struct hdcdrv_fast_mem *f_mem, u64 
     if (cost_time > HDCDRV_MAX_COST_TIME) {
         ka_task_cond_resched();
         hdcdrv_warn_limit("cost_time is longer than expected. (devid=%d; type=%d; phy_num=%d; va=0x%pK; "
-            "len=0x%x; cost_time=%dms)\n", devid, type, f_mem->phy_addr_num, (void *)(uintptr_t)va, len, cost_time);
+                          "len=0x%x; cost_time=%dms)\n",
+                          devid, type, f_mem->phy_addr_num, (void *)(uintptr_t)va, len, cost_time);
     }
 
     if (f_mem->phy_addr_num > HDCDRV_MEM_MAX_PHY_NUM) {
-        hdcdrv_err("phy_addr_num is bigger than expected. (dev=%d; phy_addr_num=%d; max_addr_num=%d)\n",
-            devid, f_mem->phy_addr_num, HDCDRV_MEM_MAX_PHY_NUM);
+        hdcdrv_err("phy_addr_num is bigger than expected. (dev=%d; phy_addr_num=%d; max_addr_num=%d)\n", devid,
+                   f_mem->phy_addr_num, HDCDRV_MEM_MAX_PHY_NUM);
         goto fail;
     }
 
@@ -1723,15 +1724,12 @@ STATIC int hdcdrv_fast_alloc_normal_page_mem(struct hdcdrv_fast_mem *f_mem, u64 
     }
 
     hdcdrv_kvfree((void **)&mem, KA_SUB_MODULE_TYPE_2);
-    mem = NULL;
-
     hdcdrv_fast_normal_mem_alloc_dfx(f_mem->mem, f_mem->phy_addr_num, len, devid);
     return HDCDRV_OK;
 
 fail:
     hdcdrv_fast_free_pages(mem, f_mem->phy_addr_num);
     hdcdrv_kvfree((void **)&mem, KA_SUB_MODULE_TYPE_2);
-    mem = NULL;
     hdcdrv_err("Memory alloc failed. (dev=%u; type=%d; total_len=0x%x)\n", devid, type, len);
     hdcdrv_mem_stat_info_show();
     return HDCDRV_DMA_MEM_ALLOC_FAIL;
@@ -1789,8 +1787,8 @@ STATIC int hdcdrv_check_va(const void *ctx, ka_vm_area_struct_t *vma, const stru
     }
 
     if (ka_mm_get_vm_private_data(vma) != ctx) {
-        hdcdrv_err("addr %pK ka_mm_get_vm_private_data() %pK ctx %pK\n",
-            (void *)(uintptr_t)f_mem->user_va, ka_mm_get_vm_private_data(vma), ctx);
+        hdcdrv_err("addr %pK ka_mm_get_vm_private_data() %pK ctx %pK\n", (void *)(uintptr_t)f_mem->user_va,
+                   ka_mm_get_vm_private_data(vma), ctx);
         return HDCDRV_PARA_ERR;
     }
 
@@ -1799,9 +1797,10 @@ STATIC int hdcdrv_check_va(const void *ctx, ka_vm_area_struct_t *vma, const stru
         return HDCDRV_PARA_ERR;
     }
 
-    if ((addr < ka_mm_get_vm_start(vma)) || (addr > ka_mm_get_vm_end(vma)) || (end > ka_mm_get_vm_end(vma)) || (addr >= end)) {
-        hdcdrv_err("Input parameter is error. (vma_user_addr=%pK; len=%x)\n",
-            (void *)(uintptr_t)f_mem->user_va, f_mem->alloc_len);
+    if ((addr < ka_mm_get_vm_start(vma)) || (addr > ka_mm_get_vm_end(vma)) || (end > ka_mm_get_vm_end(vma)) ||
+        (addr >= end)) {
+        hdcdrv_err("Input parameter is error. (vma_user_addr=%pK; len=%x)\n", (void *)(uintptr_t)f_mem->user_va,
+                   f_mem->alloc_len);
         return HDCDRV_PARA_ERR;
     }
 
@@ -1835,8 +1834,8 @@ STATIC int hdcdrv_follow_pfn_check(ka_vm_area_struct_t *vma, const struct hdcdrv
 
     for (va_check = addr; va_check < end; va_check += KA_MM_PAGE_SIZE) {
         if (ka_mm_follow_pfn(vma, va_check, &pfn) == 0) {
-            hdcdrv_err("va_check is invalid. (ddr=%pK; size=%lu; va_check=%lx)\n",
-                (void *)(uintptr_t)f_mem->user_va, size, va_check);
+            hdcdrv_err("va_check is invalid. (ddr=%pK; size=%lu; va_check=%lx)\n", (void *)(uintptr_t)f_mem->user_va,
+                       size, va_check);
             return HDCDRV_PARA_ERR;
         }
     }
@@ -1888,7 +1887,7 @@ STATIC int hdcdrv_remap_va(void *ctx, struct hdcdrv_fast_mem *f_mem)
         if (len > 0) {
             /*lint -e648 */
             ret = ka_mm_remap_pfn_range(vma, f_mem->user_va + offset, ka_mm_page_to_pfn(f_mem->mem[i].page), len,
-                *(ka_mm_get_vm_pgprot(vma)));
+                                        *(ka_mm_get_vm_pgprot(vma)));
             /*lint +e648 */
         }
         offset += len;
@@ -1904,8 +1903,8 @@ STATIC int hdcdrv_remap_va(void *ctx, struct hdcdrv_fast_mem *f_mem)
     hdcdrv_zap_vma_ptes(f_mem, vma, i);
 
     hdcdrv_err("Remap va failed. (dev=%d; vma_start=%pK; end=%pK; addr=%pK; len=%x)\n", f_mem->devid,
-        (void *)(uintptr_t)ka_mm_get_vm_start(vma), (void *)(uintptr_t)ka_mm_get_vm_end(vma),
-        (void *)(uintptr_t)f_mem->user_va, f_mem->alloc_len);
+               (void *)(uintptr_t)ka_mm_get_vm_start(vma), (void *)(uintptr_t)ka_mm_get_vm_end(vma),
+               (void *)(uintptr_t)f_mem->user_va, f_mem->alloc_len);
 
     ka_task_up_write(get_mmap_sem(ka_task_get_current_mm()));
 
@@ -1958,8 +1957,8 @@ u64 hdcdrv_get_hash(u64 user_va, u64 pid, u32 fid)
     tfid = hdcdrv_get_hash_fid(fid);
 
     hash_va = ((tfid & HDCDRV_FRBTREE_FID_MASK) << HDCDRV_FRBTREE_FID_BEG) |
-        ((user_va & HDCDRV_FRBTREE_ADDR_MASK) << (HDCDRV_FRBTREE_ADDR_BEG - HDCDRV_FRBTREE_ADDR_DEL)) |
-        (tpid & HDCDRV_FRBTREE_PID_MASK);
+              ((user_va & HDCDRV_FRBTREE_ADDR_MASK) << (HDCDRV_FRBTREE_ADDR_BEG - HDCDRV_FRBTREE_ADDR_DEL)) |
+              (tpid & HDCDRV_FRBTREE_PID_MASK);
 
     return hash_va;
 }
@@ -2041,8 +2040,7 @@ void hdcdrv_fast_mem_uninit(ka_task_spinlock_t *lock, ka_rb_root_t *root, int re
                 continue;
             }
             hdcdrv_fast_node_erase(lock, root, fast_node);
-            ret = hdcdrv_dma_unmap(&fast_node->fast_mem, (u32)fast_node->fast_mem.devid,
-                HDCDRV_SYNC_NO_CHECK, flag);
+            ret = hdcdrv_dma_unmap(&fast_node->fast_mem, (u32)fast_node->fast_mem.devid, HDCDRV_SYNC_NO_CHECK, flag);
             if (ret != HDCDRV_OK) {
                 hdcdrv_err("Dma unmap failed. (dev=%d; pid=%lld)\n", fast_node->fast_mem.devid, fast_node->pid);
             }
@@ -2074,11 +2072,11 @@ void hdcdrv_fast_mem_free_abnormal(const struct hdcdrv_mem_node_info *f_info)
     int flag = HDCDRV_DEL_FLAG;
     struct hdcdrv_fast_node *fast_node = NULL;
     struct hdcdrv_dev_fmem *dev_fmem = NULL;
-    struct hdcdrv_fast_node_msg_info node_msg = { 0 };
+    struct hdcdrv_fast_node_msg_info node_msg = {0};
 
     dev_fmem = hdcdrv_get_dev_fmem_uni();
-    fast_node = hdcdrv_fast_node_search_timeout(&dev_fmem->rb_lock,
-        &dev_fmem->rbtree, f_info->hash_va, HDCDRV_NODE_WAIT_TIME_MAX);
+    fast_node = hdcdrv_fast_node_search_timeout(&dev_fmem->rb_lock, &dev_fmem->rbtree, f_info->hash_va,
+                                                HDCDRV_NODE_WAIT_TIME_MAX);
     fid = (f_info->hash_va >> HDCDRV_FRBTREE_FID_BEG) & HDCDRV_FRBTREE_FID_MASK;
     if (fast_node == NULL) {
         hdcdrv_node_msg_info_fill((u32)f_info->pid, fid, (int)f_info->alloc_len, f_info->user_va,
@@ -2107,7 +2105,8 @@ void hdcdrv_fast_mem_free_abnormal(const struct hdcdrv_mem_node_info *f_info)
     fast_node = NULL;
 }
 
-void __attribute__((weak)) hdcdrv_fast_mem_quick_proc(const struct hdcdrv_mem_node_info *f_info) {}
+void __attribute__((weak)) hdcdrv_fast_mem_quick_proc(const struct hdcdrv_mem_node_info *f_info)
+{}
 
 void hdcdrv_release_unmap_failed_fast_mem(struct hdcdrv_ctx_fmem *ctx_fmem)
 {
@@ -2146,7 +2145,7 @@ void hdcdrv_release_unmap_failed_fast_mem(struct hdcdrv_ctx_fmem *ctx_fmem)
 STATIC long hdcdrv_fast_alloc_addr_check(struct hdcdrv_cmd_alloc_mem *cmd)
 {
     if (((cmd->type == HDCDRV_FAST_MEM_TYPE_TX_DATA) || (cmd->type == HDCDRV_FAST_MEM_TYPE_RX_DATA) ||
-        (cmd->type == HDCDRV_FAST_MEM_TYPE_DVPP) || (cmd->type == HDCDRV_FAST_MEM_TYPE_ANY)) &&
+         (cmd->type == HDCDRV_FAST_MEM_TYPE_DVPP) || (cmd->type == HDCDRV_FAST_MEM_TYPE_ANY)) &&
         (cmd->len > HDCDRV_MEM_MAX_LEN)) {
         hdcdrv_err("Fast alloc address check error. (cmd_type=%d; cmd_len=0x%x)\n", cmd->type, cmd->len);
         return HDCDRV_PARA_ERR;
@@ -2165,13 +2164,14 @@ STATIC long hdcdrv_fast_alloc_addr_check(struct hdcdrv_cmd_alloc_mem *cmd)
 
     if ((cmd->page_type == HDCDRV_PAGE_TYPE_HUGE) &&
         ((cmd->va != ka_base_round_down(cmd->va, KA_HPAGE_SIZE)) || (cmd->len % KA_HPAGE_SIZE != 0))) {
-        hdcdrv_err("Fast alloc address check error. (page_type=%d; cmd_len=0x%x; KA_HPAGE_SIZE=%ld)\n",
-            cmd->page_type, cmd->len, KA_HPAGE_SIZE);
+        hdcdrv_err("Fast alloc address check error. (page_type=%d; cmd_len=0x%x; KA_HPAGE_SIZE=%ld)\n", cmd->page_type,
+                   cmd->len, KA_HPAGE_SIZE);
         return HDCDRV_PARA_ERR;
     }
 
     if (cmd->len < KA_MM_PAGE_SIZE) {
-        hdcdrv_info("cmd_len is smaller than KA_MM_PAGE_SIZE. (cmd_len=0x%x; KA_MM_PAGE_SIZE=%ld)\n", cmd->len, KA_MM_PAGE_SIZE);
+        hdcdrv_info("cmd_len is smaller than KA_MM_PAGE_SIZE. (cmd_len=0x%x; KA_MM_PAGE_SIZE=%ld)\n", cmd->len,
+                    KA_MM_PAGE_SIZE);
         cmd->len = KA_MM_PAGE_SIZE;
     }
 
@@ -2198,8 +2198,7 @@ STATIC int hdcdrv_alloc_mem_param_check(int map, int devid, unsigned int type, u
     return HDCDRV_OK;
 }
 
-long hdccom_fast_alloc_mem(void *ctx, struct hdcdrv_cmd_alloc_mem *cmd,
-    struct hdcdrv_fast_node **f_node_ret)
+long hdccom_fast_alloc_mem(void *ctx, struct hdcdrv_cmd_alloc_mem *cmd, struct hdcdrv_fast_node **f_node_ret)
 {
     struct hdcdrv_fast_node *f_node = NULL;
     long ret;
@@ -2214,8 +2213,9 @@ long hdccom_fast_alloc_mem(void *ctx, struct hdcdrv_cmd_alloc_mem *cmd,
 
     if (hdcdrv_fast_alloc_addr_check(cmd) != HDCDRV_OK) {
         hdcdrv_err("Check fast alloc addr failed. (devid=%d; addr=%pK; len=0x%x; type=%u; data_max_len=0x%x; "
-            "ctrl_max_len=0x%x; page_type=%u)\n", cmd->dev_id, (void *)(uintptr_t)cmd->va, cmd->len, cmd->type,
-            HDCDRV_MEM_MAX_LEN, HDCDRV_CTRL_MEM_MAX_LEN, cmd->page_type);
+                   "ctrl_max_len=0x%x; page_type=%u)\n",
+                   cmd->dev_id, (void *)(uintptr_t)cmd->va, cmd->len, cmd->type, HDCDRV_MEM_MAX_LEN,
+                   HDCDRV_CTRL_MEM_MAX_LEN, cmd->page_type);
         return HDCDRV_PARA_ERR;
     }
 
@@ -2317,8 +2317,8 @@ long hdcdrv_fast_free_mem(const void *ctx, struct hdcdrv_cmd_free_mem *cmd)
     }
 
     if (cmd->type != f_node->fast_mem.mem_type) {
-        hdcdrv_err("cmd_type is invalid. (fast_mem_devid=%d; cmd_type=%u; mem_type=%d)\n",
-            f_node->fast_mem.devid, cmd->type, f_node->fast_mem.mem_type);
+        hdcdrv_err("cmd_type is invalid. (fast_mem_devid=%d; cmd_type=%u; mem_type=%d)\n", f_node->fast_mem.devid,
+                   cmd->type, f_node->fast_mem.mem_type);
         hdcdrv_node_status_idle(f_node);
         return HDCDRV_PARA_ERR;
     }
@@ -2366,8 +2366,8 @@ long hdcdrv_fast_dma_map(const struct hdcdrv_cmd_dma_map *cmd)
     }
 
     if ((cmd->type >= HDCDRV_FAST_MEM_TYPE_MAX)) {
-        hdcdrv_err("Input parameter cmd type is error. (devid=%d; type=%u; va=0x%pK)\n",
-            cmd->dev_id, cmd->type, (void *)(uintptr_t)cmd->va);
+        hdcdrv_err("Input parameter cmd type is error. (devid=%d; type=%u; va=0x%pK)\n", cmd->dev_id, cmd->type,
+                   (void *)(uintptr_t)cmd->va);
         return HDCDRV_PARA_ERR;
     }
 
@@ -2409,8 +2409,8 @@ long hdcdrv_fast_dma_unmap(const struct hdcdrv_cmd_dma_unmap *cmd)
     }
 
     if (cmd->type >= HDCDRV_FAST_MEM_TYPE_MAX) {
-        hdcdrv_err("Input parameter is error. (type=%d; va=0x%pK; dev=%d)\n", cmd->type,
-            (void *)(uintptr_t)cmd->va, cmd->dev_id);
+        hdcdrv_err("Input parameter is error. (type=%d; va=0x%pK; dev=%d)\n", cmd->type, (void *)(uintptr_t)cmd->va,
+                   cmd->dev_id);
         return HDCDRV_PARA_ERR;
     }
 
@@ -2454,8 +2454,8 @@ long hdcdrv_fast_dma_remap(const struct hdcdrv_cmd_dma_remap *cmd)
     }
 
     if ((cmd->type >= HDCDRV_FAST_MEM_TYPE_MAX)) {
-        hdcdrv_err("Input parameter is error. (devid=%d; type=%u; va=0x%pK)\n",
-            cmd->dev_id, cmd->type, (void *)(uintptr_t)cmd->va);
+        hdcdrv_err("Input parameter is error. (devid=%d; type=%u; va=0x%pK)\n", cmd->dev_id, cmd->type,
+                   (void *)(uintptr_t)cmd->va);
         return HDCDRV_PARA_ERR;
     }
 

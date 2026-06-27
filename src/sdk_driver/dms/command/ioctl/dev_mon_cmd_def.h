@@ -155,10 +155,15 @@
 #define DEV_MON_CMD_GET_NETWORK_HEALTH        0x62
 #define DEV_MON_CMD_GET_CUST_BOARD_INFO       0x63
 #define DEV_MON_CMD_ABL_MAMI_PATCH_OPERATION  0x64
-#define DEV_MON_CMD_D_GET_DIE_ID_V2 0x65
+#define DEV_MON_CMD_D_GET_DIE_ID_V2           0x65
 #define DEV_MON_CMD_HOTRESET_INFORM_AO        0x66
+#define DEV_MON_CMD_D_GET_FREQUENCY_V2        0x67
+
+#define DEV_MON_CMD_QUERY_ECC_INFO_V2         0x69
 
 #define DEV_MON_CMD_D_GET_EMMC_INFO           0x50
+
+#define DEV_MON_CMD_LOOPBACK_TEST             0x79
 
 /*
  * Commands with values greater than or equal to 0x80 are maintained by the product.

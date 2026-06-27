@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * Copyright (c) 2026 Huawei Technologies Co., Ltd.
  * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -22,10 +22,16 @@
 
 #define NON_DEV_DEFAULT_ALLOC_MAX_SIZE (128ULL * SVM_BYTES_PER_GB)
 
-#define SVM_VA_ALLOCATOR_FLAG_WITH_MASTER       (1U << 0U)
-#define SVM_VA_ALLOCATOR_FLAG_DEV_CP_ONLY       (1U << 8U)
-#define SVM_VA_ALLOCATOR_FLAG_SPACIFIED_ADDR    (1U << 9U)
-#define SVM_VA_ALLOCATOR_FLAG_MASTER_UVA        (1U << 10U)
+#define SVM_VA_ALLOCATOR_FLAG_WITH_MASTER (1U << 0U)
+#define SVM_VA_ALLOCATOR_FLAG_DEV_CP_ONLY (1U << 8U)
+#define SVM_VA_ALLOCATOR_FLAG_SPACIFIED_ADDR (1U << 9U)
+#define SVM_VA_ALLOCATOR_FLAG_MASTER_UVA (1U << 10U)
+#define SVM_VA_ALLOCATOR_FLAG_WITHOUT_POPULATE (1U << 11U)
+
+static inline u64 svm_get_non_dev_align_size(u64 size)
+{
+    return (size > NON_DEV_DEFAULT_ALLOC_MAX_SIZE) ? svm_align_up(size, SVM_VA_RESERVE_ALIGN) : size;
+}
 
 int svm_alloc_va(u64 va, u64 size, u64 align, u32 devid, u32 flag, u64 *start);
 int svm_free_va(u64 va, u64 size, u64 align, u32 devid, u32 flag);

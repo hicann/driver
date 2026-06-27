@@ -1,36 +1,39 @@
 # driver
+
 ## 🔥Latest News
-- **[2026/03] 增加昇腾A5芯片（PCIE形态）支持**；
 
-- [2025/12] driver项目首次上线；
+- [2025/12] driver 项目首次上线。
+
 ## 🚀概述
-Driver仓的代码是CANN（Compute Architecture for Neural Networks）的驱动模块，提供基础驱动和资源管理及调度等功能，使能昇腾芯片。当前开源仓内主要包含了如图所示三部分内容：DCMI层（DaVinci Card Management Interface，达芬奇卡管理接口层）、HAL层（Hardware Abstraction Layer，硬件抽象层）和SDK-driver层（Driver Software Development Kit，驱动软件开发套件层）。
 
-Driver在CANN软件栈的位置参考[昇腾社区](https://www.hiascend.com/cann)的描述。
+Driver 仓的代码是 CANN（Compute Architecture for Neural Networks）的驱动模块，提供基础驱动和资源管理及调度等功能，使能昇腾芯片。当前开源仓内主要包含了如图所示三部分内容：DCMI 层（DaVinci Card Management Interface，达芬奇卡管理接口层）、HAL 层（Hardware Abstraction Layer，硬件抽象层）和 SDK-driver 层（Driver Software Development Kit，驱动软件开发套件层）。
+
+Driver 在 CANN 软件栈的位置参考[昇腾社区](https://www.hiascend.com/cann)的描述。
 
 <center>
     <img src="./docs/zh/figures/Driver_architecture.png" alt="Driver架构分层图" />
 </center>
 
 ## 📖模块介绍
-- [RoCE（RDMA over Converged Ethernet）](./src/ascend_hal/roce/README.md)：昇腾 AI 处理器平台中的RoCE模块，用于减少延迟和提高数据传输效率。
-- [SVM (Shared Virtual Memory) ](./src/ascend_hal/svm/README.md)：昇腾 AI 处理器平台中的内存管理模块，用于高效管理设备侧内存。
+
+- [RoCE（RDMA over Converged Ethernet）](./src/ascend_hal/roce/README.md)：昇腾 AI 处理器平台中的 RoCE 模块，用于减少延迟和提高数据传输效率。
+- [SVM (Shared Virtual Memory)](./src/ascend_hal/svm/README.md)：昇腾 AI 处理器平台中的内存管理模块，用于高效管理设备侧内存。
 
 ## ⚡️快速入门
-若您希望快速体验driver的调用和开发过程，请访问如下文档获取简易教程。
+
+若您希望快速体验 driver 的调用和开发过程，请访问如下文档获取简易教程。
+
 - [QUICKSTART](./docs/zh/QUICKSTART.md)：端到端快速上手指南，包括搭建环境、编译部署、源码开发、调试、贡献等过程。
 - [参考用例](./examples/README.md)：介绍设备管理等模块基础用例。
 
-## 🔍FAQ
-- [FAQ](./docs/zh/FAQ.md)：汇总了源码编译、安装部署等问题(持续)。
-
 ## 📝目录结构
+
 关键目录结构如下：
 
-```
+```bash
 ├── build.sh                                       # 项目工程编译脚本
 ├── cmake                                          # 工程编译目录
-├── CMakeLists.txt                                 # 项目工程CMakeList入口
+├── CMakeLists.txt                                 # 项目工程CMakeLists入口
 ├── CONTRIBUTING.md                                # 社区贡献指导
 ├── docs                                           # 说明文档
 ├── examples                                       # 接口使用样例
@@ -40,7 +43,7 @@ Driver在CANN软件栈的位置参考[昇腾社区](https://www.hiascend.com/can
 ├── README.md
 ├── scripts                                        # 本仓脚本目录
 │   ├── package                                    # 构建打包相关脚本
-│   ├── ut                                         # ut生成cpp覆盖率脚本
+│   ├── ut                                         # UT生成cpp覆盖率脚本
 ├── SECURITY.md                                    # 项目安全声明文件
 ├── Third_Party_Open_Source_Software_Notice        # 本仓引用的第三方开源软件声明
 ├── src                                            # Driver包源码
@@ -51,13 +54,13 @@ Driver在CANN软件栈的位置参考[昇腾社区](https://www.hiascend.com/can
 │   │   ├── comm                                   # Communication 主机侧<->设备侧通信层
 │   │   ├── dmc                                    # DMC（Device Maintenance Components）设备维护组件
 │   │   │   ├── device_monitor                     # DSMI消息通路
-│   │   │   ├── dsmi                               # DSMI（Device System Manage Interface）设备系统管理接口
+│   │   │   ├── dsmi                               # DSMI（Device System Management Interface）设备系统管理接口
 │   │   │   ├── logdrv                             # Log日志
 │   │   │   ├── prof                               # Profiling性能采集
+|   |   |   ├── prof_sample                        # Profiling Host侧采集注册
 │   │   │   └── verify_tool                        # 设备侧镜像校验工具
-│   │   ├── dms                                    # DMS（Device Manage System）设备管理系统
+│   │   ├── dms                                    # DMS（Device Management System）设备管理系统
 │   │   ├── dpa                                    # DPA（Device Public Adapter）设备公共适配层
-│   │   ├── dvpp                                   # DVPP（Digital Vision Pre-Processing）数字视觉预处理模块
 │   │   ├── esched                                 # 事件调度（Event Schedule）
 │   │   ├── hdc                                    # 主机-设备通信（Host-Device Communication）
 │   │   ├── inc                                    # HAL层内部公共头文件目录
@@ -67,7 +70,8 @@ Driver在CANN软件栈的位置参考[昇腾社区](https://www.hiascend.com/can
 │   │   │   ├── uda                                # UDA（Unified Device Access）统一设备接入
 │   │   │   ├── urd                                # URD（User Request Distribute）用户请求转发
 │   │   │   ├── commlib                            # 公共函数库
-│   │   │   └── queryfeature                       # 用于兼容性适配的软件特性查询
+│   │   │   ├── queryfeature                       # 用于兼容性适配的软件特性查询
+|   |   |   └── ubmm                               # UB Memory Adapter
 │   │   ├── queue                                  # 消息队列信息管理
 │   │   ├── roce                                   # RoCE（RDMA over Converged Ethernet）
 │   │   ├── svm                                    # 共享虚拟内存（Shared Virtual Memory）
@@ -76,7 +80,7 @@ Driver在CANN软件栈的位置参考[昇腾社区](https://www.hiascend.com/can
 │   │   ├── cmake                                  # CMake编译配置目录
 │   │   ├── dev_prod                               # 设备定制管理目录
 │   │   ├── include                                # 公共头文件导出目录
-│   │   ├── lqdrv                                  # 灵渠PCIE故障检测
+│   │   ├── lqdrv                                  # 灵渠PCIe故障检测
 │   │   ├── ndr                                    # NPU RDMA直通特性
 │   │   ├── network                                # DCMI网络接口实现
 │   │   └── ops_debug                              # 算子诊断目录
@@ -84,13 +88,14 @@ Driver在CANN软件栈的位置参考[昇腾社区](https://www.hiascend.com/can
 │       ├── buff                                   # 进程间共享内存管理
 │       ├── comm                                   # Communication 主机侧<->设备侧通信层
 │       ├── dmc                                    # DMC（Device Maintenance Components）设备维护组件
-│       ├── dms                                    # DMS（Device Manage System）设备管理系统
+│       ├── dms                                    # DMS（Device Management System）设备管理系统
 │       ├── dpa                                    # DPA（Device Public Adapter）设备公共适配层
+│       ├── dvpp                                   # DVPP（Digital Vision Pre-Processing）数字视觉预处理模块
 │       ├── esched                                 # 事件调度（Event Schedule）
-│       ├── fms                                    # FMS（Fault Manage System）故障管理系统
+│       ├── fms                                    # FMS（Fault Management System）故障管理系统
 │       ├── hdc                                    # 主机-设备通信（Host-Device Communication）
 │       ├── inc                                    # SDK层内部公共头文件目录
-│       ├── kernel_adapt                           # sdk驱动代码与内核源码适配层
+│       ├── kernel_adapt                           # SDK驱动代码与内核源码适配层
 │       ├── pbl                                    # PBL（Public Base Lib）基础公共库
 │       ├── platform                               # 芯片资源（中断、预留内存等）存储库
 │       ├── queue                                  # 消息队列信息管理
@@ -107,8 +112,12 @@ Driver在CANN软件栈的位置参考[昇腾社区](https://www.hiascend.com/can
 └── test                                           # UT用例文件目录
 ```
 
+## 🔍FAQ
+
+- [FAQ](./docs/zh/FAQ.md)：汇总了源码编译、安装部署等问题。
 
 ## 相关信息
+
 - [贡献指南](./CONTRIBUTING.md)
 - [安全声明](./SECURITY.md)
 - 许可证
@@ -116,6 +125,3 @@ Driver在CANN软件栈的位置参考[昇腾社区](https://www.hiascend.com/can
 &emsp;&emsp;&emsp;[CANN Open Software License Agreement Version 2.0](./LICENSES/CANN-V2.0)
 
 &emsp;&emsp;&emsp;[GNU GENERAL PUBLIC LICENSE Version 2](./LICENSES/GPL-V2.0)
-
-
-## 相关测试

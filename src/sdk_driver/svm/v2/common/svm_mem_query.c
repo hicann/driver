@@ -30,7 +30,8 @@ static int devmm_get_addr_type(struct devmm_svm_process_id *process_id, u64 addr
         } else {
             *addr_flag = DEVMM_SHM_ADDR;
         }
-    } else if ((addr >= DEVMM_SVM_MEM_START) && (addr < (DEVMM_SVM_MEM_START + DEVMM_SVM_MEM_SIZE)) &&
+    } else if (
+        (addr >= DEVMM_SVM_MEM_START) && (addr < (DEVMM_SVM_MEM_START + DEVMM_SVM_MEM_SIZE)) &&
         ((addr + size) <= (DEVMM_SVM_MEM_START + DEVMM_SVM_MEM_SIZE))) {
         *addr_flag = DEVMM_SVM_ADDR;
     } else {
@@ -67,8 +68,9 @@ bool devmm_check_addr_valid(struct devmm_svm_process_id *process_id, u64 addr, u
     }
     if (ret != 0) {
         /* Error case handled as not svm */
-        devmm_drv_err("Acquire error. (hostpid=%d; devid=%d; vfid=%d; addr=0x%llx; size=%llu)\n",
-            process_id->hostpid, process_id->devid, process_id->vfid, addr, size);
+        devmm_drv_err(
+            "Acquire error. (hostpid=%d; devid=%d; vfid=%d; addr=0x%llx; size=%llu)\n", process_id->hostpid,
+            process_id->devid, process_id->vfid, addr, size);
         return false;
     }
 
@@ -76,8 +78,7 @@ bool devmm_check_addr_valid(struct devmm_svm_process_id *process_id, u64 addr, u
 }
 KA_EXPORT_SYMBOL_GPL(devmm_check_addr_valid);
 
-int devmm_get_mem_pa_list(struct devmm_svm_process_id *process_id, u64 addr, u64 size,
-    u64 *pa_list, u32 pa_num)
+int devmm_get_mem_pa_list(struct devmm_svm_process_id *process_id, u64 addr, u64 size, u64 *pa_list, u32 pa_num)
 {
     u32 addr_flag = 0;
     int ret;
@@ -102,13 +103,14 @@ int devmm_get_mem_pa_list(struct devmm_svm_process_id *process_id, u64 addr, u64
 }
 KA_EXPORT_SYMBOL_GPL(devmm_get_mem_pa_list);
 
-void devmm_put_mem_pa_list(struct devmm_svm_process_id *process_id, u64 addr, u64 size,
-    u64 *pa_list, u32 pa_num)
+void devmm_put_mem_pa_list(struct devmm_svm_process_id *process_id, u64 addr, u64 size, u64 *pa_list, u32 pa_num)
 {
     u32 addr_flag = 0;
 
-    if (process_id == NULL || pa_list == NULL) {
-        devmm_drv_err("Process_id or pa_list is NULL. (addr=0x%llx; size=%llu)\n", addr, size);
+    if ((process_id == NULL) || (pa_list == NULL) || (pa_num == 0)) {
+#ifndef EMU_ST
+        devmm_drv_err("Process_id or pa_list is NULL. (addr=0x%llx; size=%llu; pa_num=%u)\n", addr, size, pa_num);
+#endif
         return;
     }
 
@@ -116,6 +118,14 @@ void devmm_put_mem_pa_list(struct devmm_svm_process_id *process_id, u64 addr, u6
         devmm_drv_err("Address error. (addr=0x%llx; size=%llu; addr_flag=%u)\n", addr, size, addr_flag);
         return;
     }
+
+    /* The PA of type DEVMM_SHM_ADDR must be non-RAM.
+     * After a dynamically mapped address is destroyed, retrieving
+     * its type may incorrectly identify it as DEVMM_SHM_ADDR.
+     * This needs to be corrected by additionally
+     * checking whether the PA belongs to RAM & not svsp & in da range.
+     */
+    devmm_update_addr_flag(addr, pa_list[0], &addr_flag);
 
     if (addr_flag == DEVMM_SVM_ADDR) {
         devmm_svm_put_pa_list(process_id, addr, pa_list, pa_num);
@@ -133,15 +143,17 @@ STATIC u32 devmm_svm_get_dev_mem_page_size(struct devmm_svm_process_id *process_
 
     svm_process = devmm_svm_proc_get_by_process_id_ex(process_id);
     if (svm_process == NULL) {
-        devmm_drv_err("Get svm process fail. (va=0x%llx; hostpid=%d; devid=%d; vfid=%d)\n",
-            addr, process_id->hostpid, process_id->devid, process_id->vfid);
+        devmm_drv_err(
+            "Get svm process fail. (va=0x%llx; hostpid=%d; devid=%d; vfid=%d)\n", addr, process_id->hostpid,
+            process_id->devid, process_id->vfid);
         return 0;
     }
     heap = devmm_svm_heap_get(svm_process, addr);
     if (heap == NULL) {
         devmm_svm_proc_put(svm_process);
-        devmm_drv_err("Get heap fail. (va=0x%llx; hostpid=%d; devid=%d; vfid=%d)\n",
-            addr, process_id->hostpid, process_id->devid, process_id->vfid);
+        devmm_drv_err(
+            "Get heap fail. (va=0x%llx; hostpid=%d; devid=%d; vfid=%d)\n", addr, process_id->hostpid, process_id->devid,
+            process_id->vfid);
         return 0;
     }
     page_size = (heap->heap_type == DEVMM_HEAP_HUGE_PAGE) ? devmm_svm->device_hpage_size : devmm_svm->device_page_size;
@@ -172,8 +184,8 @@ u32 devmm_get_mem_page_size(struct devmm_svm_process_id *process_id, u64 addr, u
 }
 KA_EXPORT_SYMBOL_GPL(devmm_get_mem_page_size);
 
-STATIC int devmm_get_svm_mem_pa_list_proc(u32 devid, int tgid, struct ka_mem_attr *mem, u64 *pa_num,
-    struct ka_pa_wraper *pa_list)
+STATIC int devmm_get_svm_mem_pa_list_proc(
+    u32 devid, int tgid, struct ka_mem_attr *mem, u64 *pa_num, struct ka_pa_wraper *pa_list)
 {
     struct devmm_svm_process_id process_id = {.hostpid = tgid, .devid = 0, .vfid = 0};
     u64 *tmp_pa_list = NULL;
@@ -205,15 +217,15 @@ STATIC int devmm_get_svm_mem_pa_list_proc(u32 devid, int tgid, struct ka_mem_att
 
     for (i = 0; i < *pa_num; i++) {
         pa_list[i].pa = tmp_pa_list[i];
-        pa_list[i].size = (tmp_pa_list[i] != 0) ? page_size: 0;
+        pa_list[i].size = (tmp_pa_list[i] != 0) ? page_size : 0;
     }
 
     ka_mm_vfree(tmp_pa_list);
     return 0;
 }
 
-STATIC int devmm_put_svm_mem_pa_list_proc(u32 devid, int tgid, struct ka_mem_attr *mem, u64 pa_num,
-    struct ka_pa_wraper *pa_list)
+STATIC int devmm_put_svm_mem_pa_list_proc(
+    u32 devid, int tgid, struct ka_mem_attr *mem, u64 pa_num, struct ka_pa_wraper *pa_list)
 {
     struct devmm_svm_process_id process_id = {.hostpid = tgid, .devid = 0, .vfid = 0};
     u64 *tmp_pa_list = NULL;
@@ -253,13 +265,9 @@ int devmm_svm_mem_query_ops_register(void)
     struct svm_mem_query_ops ops = {
         .get_svm_mem_pa = devmm_get_svm_mem_pa_list_proc,
         .put_svm_mem_pa = devmm_put_svm_mem_pa_list_proc,
-        .get_svm_mem_page_size = devmm_get_svm_mem_page_size_proc
-    };
+        .get_svm_mem_page_size = devmm_get_svm_mem_page_size_proc};
 
     return hal_kernel_register_mem_query_ops(&ops);
 }
 
-void devmm_svm_mem_query_ops_unregister(void)
-{
-    hal_kernel_unregister_mem_query_ops();
-}
+void devmm_svm_mem_query_ops_unregister(void) { hal_kernel_unregister_mem_query_ops(); }

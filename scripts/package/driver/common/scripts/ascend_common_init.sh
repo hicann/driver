@@ -186,20 +186,27 @@ set_cgroup_cpuset() {
         if [ $? -eq 0 ];then
             set_dev_cpuset $flash_ctrl_cpu_num $flash_data_cpu_num $flash_aicpu_num $flash_comcpu_num $num $actual_cpu_num $flash_ctrl_cpu_offset $flash_data_cpu_offset $flash_aicpu_offset $flash_comcpu_offset
         else
-            check_cpu_cfg_validity $dts_ctrl_cpu_num $dts_data_cpu_num $dts_aicpu_num $flash_comcpu_num $actual_cpu_num $actual_cpu_num $cpu_cfg_limit_type
-            if [ $? -eq 0 ];then
-                set_dev_cpuset $dts_ctrl_cpu_num $dts_data_cpu_num $dts_aicpu_num 0 $num $actual_cpu_num 0 0 0 0
-            else
-                if [ "$default_cpu_adapt_way" == "ctrl_cpu_static" ];then
-                    dts_ctrl_cpu_num=1
-                    dts_data_cpu_num=0
-                    dts_aicpu_num=`expr $actual_cpu_num - $dts_ctrl_cpu_num - $dts_data_cpu_num`
-                else
-                    dts_aicpu_num=1
-                    dts_data_cpu_num=0
-                    dts_ctrl_cpu_num=`expr $actual_cpu_num - $dts_aicpu_num - $dts_data_cpu_num`
-                fi
+            if [ "$default_cpu_adapt_way" == "ctrl_cpu_data_cpu_static" ];then
+                dts_ctrl_cpu_num=1
+                dts_data_cpu_num=2
+                dts_aicpu_num=`expr $actual_cpu_num - $dts_ctrl_cpu_num - $dts_data_cpu_num`
                 set_dev_cpuset $dts_ctrl_cpu_num $dts_data_cpu_num $dts_aicpu_num $num 0 $actual_cpu_num 0 0 0 0
+            else
+                check_cpu_cfg_validity $dts_ctrl_cpu_num $dts_data_cpu_num $dts_aicpu_num $flash_comcpu_num $actual_cpu_num $cpu_cfg_limit_type
+                if [ $? -eq 0 ];then
+                    set_dev_cpuset $dts_ctrl_cpu_num $dts_data_cpu_num $dts_aicpu_num 0 $num $actual_cpu_num 0 0 0 0
+                else
+                    if [ "$default_cpu_adapt_way" == "ctrl_cpu_static" ];then
+                        dts_ctrl_cpu_num=1
+                        dts_data_cpu_num=0
+                        dts_aicpu_num=`expr $actual_cpu_num - $dts_ctrl_cpu_num - $dts_data_cpu_num`
+                    else
+                        dts_aicpu_num=1
+                        dts_data_cpu_num=0
+                        dts_ctrl_cpu_num=`expr $actual_cpu_num - $dts_aicpu_num - $dts_data_cpu_num`
+                    fi
+                    set_dev_cpuset $dts_ctrl_cpu_num $dts_data_cpu_num $dts_aicpu_num $num 0 $actual_cpu_num 0 0 0 0
+                fi
             fi
         fi
         num=`expr $num + 1`

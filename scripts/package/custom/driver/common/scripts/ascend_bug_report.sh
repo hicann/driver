@@ -26,7 +26,7 @@ PCIE_BDF_310P="19e5:d500"
 PCIE_BDF_910="19e5:d801"
 PCIE_BDF_910B="19e5:d802"
 PCIE_BDF_910_93="19e5:d803"
-PCIE_BDF_910_95="19e5:d806"
+PCIE_BDF_950="19e5:d806"
 DEVICE_LIST="0"
 MAX_NETWORK_ID=7
 
@@ -47,7 +47,7 @@ NETWORK_INFO_MODE=1
 CHIP_NUM_910=$(lspci | grep -E "d801" | wc -l)
 CHIP_NUM_910B=$(lspci | grep -E "d802" | wc -l)
 CHIP_NUM_910_93=$(lspci | grep -E "d803" | wc -l)
-CHIP_NUM_910_95=$(lspci | grep -E "d806" | wc -l)
+CHIP_NUM_950=$(lspci | grep -E "d806" | wc -l)
 
 #additional functions in this list
 g_func_list=(
@@ -207,8 +207,8 @@ get_chip_type() {
         return 0
     fi
 
-    CHIP_NUM_910_95=$(lspci | grep d806 | wc -l)
-    if [ $CHIP_NUM_910_95 -ne 0 ]; then
+    CHIP_NUM_950=$(lspci | grep d806 | wc -l)
+    if [ $CHIP_NUM_950 -ne 0 ]; then
         let "CHIP_TYPE=$CHIP_TYPE|32"
         return 0
     fi
@@ -222,7 +222,7 @@ get_install_variable() {
     DEVICE_BDFS_910=$(lspci -D -d $PCIE_BDF_910 | awk '{print $1}')
     DEVICE_BDFS_910B=$(lspci -D -d $PCIE_BDF_910B | awk '{print $1}')
     DEVICE_BDFS_910_93=$(lspci -D -d $PCIE_BDF_910_93 | awk '{print $1}')
-    DEVICE_BDFS_910_95=$(lspci -D -d $PCIE_BDF_910_95 | awk '{print $1}')
+    DEVICE_BDFS_950=$(lspci -D -d $PCIE_BDF_950 | awk '{print $1}')
 }
 
 show_title() {
@@ -316,7 +316,7 @@ get_pcie_info() {
 
     let "tmp=$CHIP_TYPE&32"
     if [ $tmp -ne 0 ]; then
-        echo "Asecnd910_95 nums: $CHIP_NUM_910_95"
+        echo "Asecnd950 nums: $CHIP_NUM_950"
         lspci | grep d806
     fi
 
@@ -459,7 +459,7 @@ get_path_dir() {
 
 get_sysfs_info() {
     echo "[toc]"
-    DEVICE_BDFS=${DEVICE_BDFS_310}${DEVICE_BDFS_310P}${DEVICE_BDFS_910}${DEVICE_BDFS_910B}${DEVICE_BDFS_910_93}${DEVICE_BDFS_910_95}
+    DEVICE_BDFS=${DEVICE_BDFS_310}${DEVICE_BDFS_310P}${DEVICE_BDFS_910}${DEVICE_BDFS_910B}${DEVICE_BDFS_910_93}${DEVICE_BDFS_950}
     for i in $DEVICE_BDFS
     do
         show_title 1 "pci_bdf --> $i"
@@ -511,7 +511,7 @@ get_device_network_info() {
     echo [toc]
     show_title 1 "network link info"
     echo "\`\`\`"
-    for i in $(seq 0 $MAX_NETWORK_ID)
+    for i in $(seq 0 $npu_nums)
     do
         echo "hccn_tool -i $i -link -g"
         hccn_tool -i $i -link -g >> network.md 2>&1
@@ -519,7 +519,7 @@ get_device_network_info() {
     done
     echo "\`\`\`"
 
-    for i in $(seq 0 $MAX_NETWORK_ID)
+    for i in $(seq 0 $npu_nums)
     do
         hccn_tool -i $i -link -g 2> /dev/null > /dev/null 2>&1
         
@@ -549,9 +549,23 @@ get_build_os_info() {
 }
 
 get_A2A3_network_info() {
-    if [ $NETWORK_INFO_MODE -eq 0 ]; then
+    if [ $NETWORK_INFO_MODE -eq 0 ] ; then
         return 0
     fi
+
+    local product_d801=$CHIP_NUM_910
+    local product_d802=$CHIP_NUM_910B
+    local product_d803=$CHIP_NUM_910_93
+    if [ $product_d801 -ne 0 ];then
+        npu_nums=8
+    elif [ $product_d802 -ne 0 ]; then
+        npu_nums=$((8+$( uname -a | grep x86 | wc -l )*8));
+    elif [ $product_d803 -ne 0 ];then
+        npu_nums=16
+    else
+        return 0
+    fi
+    npu_nums=$((npu_nums - 1))
 
     which hccn_tool > /dev/null 2>&1
     if [ $? -eq 0 ]; then
@@ -564,18 +578,6 @@ get_A2A3_network_info() {
     if [ $CHIP_NUM_910 -ne 0 ]; then
         return 0
     fi
-
-    product=$CHIP_NUM_910B
-    product_803=$CHIP_NUM_910_93
-    #查询NPU卡的数量， 默认A+X 16张卡，A+K 8张卡
-    if [ $product -ne 0 ];then
-        npu_nums=$((8+$( uname -a | grep x86 | wc -l )*8));
-    elif [ $product_803 -ne 0 ];then
-        npu_nums=16
-    else
-        return 0
-    fi
-    npu_nums=$((npu_nums - 1))
 
     #创建文件夹并进入
     current_time=$(date +%Y%m%d%H%M%S)

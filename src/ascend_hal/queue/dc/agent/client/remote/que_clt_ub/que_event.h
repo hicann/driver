@@ -14,9 +14,10 @@
 #include "que_comm_event.h"
 
 int que_event_send(struct que_event_attr *attr, struct que_event_msg *msg, int timeout_ms);
-int que_event_send_ex(unsigned int devid, unsigned int retry_flg, unsigned int sub_event, struct que_event_msg *msg, int timeout_ms);
+int que_event_send_ex(unsigned int devid, unsigned int retry_flg, unsigned int sub_event, struct que_event_msg *msg,
+                      int timeout_ms);
 int que_clt_send_event_with_wait(unsigned int devid, unsigned int qid, unsigned int sub_event,
-    struct que_event_msg *msg, int timeout_ms);
+                                 struct que_event_msg *msg, int timeout_ms);
 int que_event_sum_init(struct que_event_attr *attr, struct que_event_msg *msg, struct event_summary *event_sum);
 void que_event_sum_uninit(struct event_summary *event);
 void que_init_grpid(void);

@@ -21,8 +21,8 @@
 extern "C" {
 #endif
 
-#define DRV_EVENT_REPLY_BUFFER_RET(ptr)         (*((int *)(ptr)))
-#define DRV_EVENT_REPLY_BUFFER_DATA_PTR(ptr)    (((char *)(ptr)) + sizeof(int))
+#define DRV_EVENT_REPLY_BUFFER_RET(ptr) (*((int *)(ptr)))
+#define DRV_EVENT_REPLY_BUFFER_DATA_PTR(ptr) (((char *)(ptr)) + sizeof(int))
 
 struct drv_event_proc_rsp {
     void *rsp_data_buf;
@@ -65,7 +65,7 @@ enum sync_event_type {
     F2NF_EVENT,
     E2NE_EVENT,
     COMM_EVENT_TYPE_MAX,
-    QUEUE_ACPU_EVENT = COMM_EVENT_TYPE_MAX,// only device support
+    QUEUE_ACPU_EVENT = COMM_EVENT_TYPE_MAX, // only device support
     DRV_INNER_EVENT,
     EVENT_TYPE_BUTT
 };
@@ -99,11 +99,6 @@ static inline unsigned long long esched_get_cur_cpu_tick(void)
 #endif
 }
 
-static inline unsigned long long esched_get_cur_cpu_timestamp(void)
-{
-    return esched_get_cur_cpu_tick();
-}
-
 static inline unsigned long long esched_get_sys_freq(void)
 {
 #if defined(__arm__) || defined(__aarch64__) || defined(EVENT_SCHED_UT)
@@ -126,9 +121,9 @@ static inline unsigned long long tickToMicrosecond(unsigned long long tick)
     return 0;
 }
 drvError_t halEschedQueryInfoEx(unsigned int devId, unsigned int dstDevId, ESCHED_QUERY_TYPE type,
-    struct esched_input_info *inPut, struct esched_output_info *outPut);
-drvError_t esched_wait_event_ex(uint32_t dev_id, uint32_t grp_id,
-    uint32_t thread_id, int32_t timeout, struct event_info *event);
+                                struct esched_input_info *inPut, struct esched_output_info *outPut);
+drvError_t esched_wait_event_ex(uint32_t dev_id, uint32_t grp_id, uint32_t thread_id, int32_t timeout,
+                                struct event_info *event);
 drvError_t esched_device_open(uint32_t devid, halDevOpenIn *in, halDevOpenOut *out);
 drvError_t esched_device_close(uint32_t devid, halDevCloseIn *in);
 drvError_t esched_device_close_user(uint32_t devid, halDevCloseIn *in);
@@ -137,9 +132,13 @@ int esched_alloc_event_res(uint32_t dev_id, int32_t event_type, struct event_res
 void esched_free_event_res(uint32_t dev_id, int32_t event_type, const struct event_res *e_res);
 drvError_t esched_query_grp_type(uint32_t dev_id, uint32_t grp_id, GROUP_TYPE *type);
 void esched_fill_sync_msg(struct event_summary *event, const struct event_res *res);
-void esched_fill_sync_msg_for_peer_que(uint32_t dev_id, uint32_t phy_dev_id, struct event_summary *event, const struct event_res *res);
+void esched_fill_sync_msg_for_peer_que(uint32_t dev_id, uint32_t phy_dev_id, struct event_summary *event,
+                                       const struct event_res *res);
 drvError_t esched_register_finish_func_ex(unsigned int grp_id, unsigned int event_id,
-    void (*finish_func)(unsigned int dev_id, unsigned int grp_id, esched_event_info event_info));
+                                          void (*finish_func)(unsigned int dev_id, unsigned int grp_id,
+                                                              esched_event_info event_info));
 drvError_t esched_create_extend_grp(uint32_t dev_id, unsigned int grp_id, struct esched_grp_para *grp_para);
 unsigned int esched_get_cpu_mode(uint32_t devid);
+unsigned long long sched_adapt_curr_time(unsigned long long curr_tick);
+unsigned long long esched_get_cur_cpu_timestamp(void);
 #endif

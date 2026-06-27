@@ -59,14 +59,14 @@ struct ascend_ub_ctrl* get_global_ub_ctrl(void)
 int ubdrv_get_local_token(u32 dev_id, u32 *token_value)
 {
     if (dev_id >= ASCEND_UB_DEV_MAX_NUM) {
-        ubdrv_err("Check dev_id fail, when get token. (dev_id=%u)\n", dev_id);
+        ubdrv_err("Check dev_id fail, when get token value. (dev_id=%u)\n", dev_id);
         return -EINVAL;
     }
 
     ka_task_down_read(&g_ub_ctrl->asd_dev[dev_id].rw_sem);
     if (g_ub_ctrl->asd_dev[dev_id].token.token_valid != ASCEND_VALID) {
         ka_task_up_read(&g_ub_ctrl->asd_dev[dev_id].rw_sem);
-        ubdrv_err("Token is invalid. (dev_id=%u)\n", dev_id);
+        ubdrv_err("Token value is invalid. (dev_id=%u)\n", dev_id);
         return -EAGAIN;
     }
     *token_value = g_ub_ctrl->asd_dev[dev_id].token.local_token;
@@ -85,11 +85,11 @@ void ubdrv_set_local_token(u32 dev_id, u32 token_value, u32 token_valid)
 int ubdrv_get_dev_id_info(u32 dev_id, struct devdrv_dev_id_info *id_info)
 {
     if (dev_id >= ASCEND_UB_DEV_MAX_NUM) {
-        ubdrv_err("Check dev_id fail, when get id_info. (dev_id=%u)\n", dev_id);
+        ubdrv_err("Check dev_id fail, when get device id_info. (dev_id=%u)\n", dev_id);
         return -EINVAL;
     }
     if (id_info == NULL) {
-        ubdrv_err("Input parameter is NULL, when get id_info. (dev_id=%u)\n", dev_id);
+        ubdrv_err("Input parameter is NULL, when get device id_info. (dev_id=%u)\n", dev_id);
         return -EINVAL;
     }
     ka_task_down_read(&g_ub_ctrl->asd_dev[dev_id].rw_sem);
@@ -157,7 +157,6 @@ void ubdrv_set_device_status(u32 dev_id, u32 status)
     }
     status_mng->device_status = status;
     ka_task_up_write(&status_mng->rw_sem);
-    return;
 }
 
 int ubdrv_add_device_status_ref(u32 dev_id)
@@ -190,7 +189,6 @@ void ubdrv_sub_device_status_ref(u32 dev_id)
 
     status_mng = ubdrv_get_dev_status_mng(dev_id);
     ka_base_atomic_sub(1, &status_mng->ref_cnt);
-    return;
 }
 
 struct dev_eid_info *ubdrv_get_eid_info_by_devid(u32 devid)
@@ -200,7 +198,7 @@ struct dev_eid_info *ubdrv_get_eid_info_by_devid(u32 devid)
 
 struct ubcore_device *ubdrv_get_default_user_ctrl_urma_dev(void)
 {
-    return g_ub_ctrl->idev[USER_CTRL_DEFAULT_DEV_ID][USER_CTRL_DEFAULT_FE_IDX].ubc_dev;
+    return g_ub_ctrl->idev[USER_CTRL_DEFAULT_DEV_ID].ubc_dev;
 }
 
 enum ubdrv_eid_cmp_ret ubdrv_cmp_eid(union ubcore_eid *src_eid, union ubcore_eid *dst_eid)
@@ -308,7 +306,7 @@ struct ub_idev *ubdrv_get_idev_by_eid_and_feidx(struct ubcore_eid_info *eid, u32
         return NULL;
     }
     for (i = 0; i < ASCEND_UDMA_DEV_MAX_NUM; i++) {
-        idev = &g_ub_ctrl->idev[i][ue_idx];
+        idev = &g_ub_ctrl->idev[i];
         ka_task_down_read(&idev->rw_sem);
         if (idev->ubc_dev == NULL) {
             ka_task_up_read(&idev->rw_sem);
@@ -343,18 +341,15 @@ STATIC struct ub_idev *ubdrv_get_idev_by_ubc_dev(struct ubcore_device *ubc_dev)
 {
     struct ub_idev *idev = NULL;
     u32 i;
-    u32 j;
 
     for (i = 0; i < ASCEND_UDMA_DEV_MAX_NUM; i++) {
-        for (j = 0; j < ASCEND_UDMA_MAX_FE_NUM; j++) {
-            idev = &g_ub_ctrl->idev[i][j];
-            ka_task_down_read(&idev->rw_sem);
-            if ((idev != NULL) && (idev->ubc_dev == ubc_dev)) {
-                ka_task_up_read(&idev->rw_sem);
-                return idev;
-            }
+        idev = &g_ub_ctrl->idev[i];
+        ka_task_down_read(&idev->rw_sem);
+        if (idev->ubc_dev == ubc_dev) {
             ka_task_up_read(&idev->rw_sem);
+            return idev;
         }
+        ka_task_up_read(&idev->rw_sem);
     }
     ubdrv_err("Idev match fail. (name=%s)\n", ubc_dev->dev_name);
     return NULL;
@@ -368,6 +363,27 @@ void ubdrv_set_startup_flag(u32 dev_id, enum ubdrv_dev_startup_flag_type startup
 enum ubdrv_dev_startup_flag_type ubdrv_get_startup_flag(u32 dev_id)
 {
     return g_ub_ctrl->asd_dev[dev_id].startup_flag;
+}
+
+void ubdrv_set_msg_retry_cnt(u32 dev_id, u32 cnt)
+{
+    g_ub_ctrl->asd_dev[dev_id].msg_retry_cnt = cnt;
+}
+
+u32 ubdrv_get_msg_retry_cnt(u32 dev_id)
+{
+    return g_ub_ctrl->asd_dev[dev_id].msg_retry_cnt;
+}
+
+void ubdrv_mutex_lock_polling(u32 dev_id, ka_mutex_t *lock)
+{
+    if (ubdrv_get_msg_retry_cnt(dev_id) == ASCEND_MSG_NORMAL_RETRY_CNT) {
+        ka_task_mutex_lock(lock);
+    } else {
+        while (!ka_task_mutex_trylock(lock)) {
+            ka_system_usleep_range(1, 2);  // wait 1~2 us
+        }
+    }
 }
 
 struct ascend_ub_msg_dev *ubdrv_get_msg_dev_by_devid(u32 dev_id)
@@ -454,15 +470,17 @@ STATIC int ubdrv_admin_msg_chan_init(u32 dev_id, struct ascend_ub_msg_dev *msg_d
     msg_chan->chan_stat.chan_id = 0;
     ka_task_mutex_init(&msg_chan->mutex_lock);
 
-    ret = ubdrv_create_admin_msg_chan(dev_id, msg_dev);
-    if (ret != 0) {
-        goto destroy_mutex;
-    }
     ret = ubdrv_admin_chan_import_jfr(msg_dev->idev, msg_chan, data, dev_id, UBDRV_ERR_LEVEL);
     if (ret != 0) {
         ubdrv_err("Admin chan import jetty failed. (ret=%d;dev_id=%u)\n", ret, dev_id);
+        goto destroy_mutex;
+    }
+
+    ret = ubdrv_create_admin_msg_chan(dev_id, msg_dev);
+    if (ret != 0) {
         goto create_err;
     }
+
     ret = ubdrv_rearm_sync_jfc(admin_jetty);
     if (ret != 0) {
         ubdrv_err("Admin chan rearm jfc failed. (ret=%d;dev_id=%u)\n", ret, dev_id);
@@ -472,9 +490,9 @@ STATIC int ubdrv_admin_msg_chan_init(u32 dev_id, struct ascend_ub_msg_dev *msg_d
     return 0;
 
 rearm_err:
-    ubdrv_admin_chan_unimport_jfr(msg_chan, dev_id);
-create_err:
     ubdrv_del_admin_msg_chan(msg_dev, dev_id);
+create_err:
+    ubdrv_admin_chan_unimport_jfr(msg_chan, dev_id);
 destroy_mutex:
     ka_task_mutex_destroy(&msg_chan->mutex_lock);
     msg_chan->msg_dev = NULL;
@@ -490,8 +508,8 @@ void ubdrv_admin_msg_chan_uninit(u32 dev_id, struct ascend_ub_msg_dev *msg_dev)
 
     msg_chan = &(msg_dev->admin_msg_chan);
     admin_jetty = msg_chan->admin_jetty;
-    ubdrv_admin_chan_unimport_jfr(msg_chan, dev_id);
     ubdrv_del_admin_msg_chan(msg_dev, dev_id);
+    ubdrv_admin_chan_unimport_jfr(msg_chan, dev_id);
     ka_task_mutex_destroy(&msg_chan->mutex_lock);
     msg_chan->dev_id = 0;
     msg_chan->msg_dev = NULL;
@@ -499,23 +517,12 @@ void ubdrv_admin_msg_chan_uninit(u32 dev_id, struct ascend_ub_msg_dev *msg_dev)
     ka_base_atomic_sub(1, &(admin_jetty->user_cnt));
 }
 
-struct ub_idev *ubdrv_get_idev(u32 idev_id, u32 ue_idx)
+struct ub_idev *ubdrv_get_idev(u32 idev_id)
 {
-    if ((idev_id >= ASCEND_UDMA_DEV_MAX_NUM) || (ue_idx >= ASCEND_UDMA_MAX_FE_NUM)) {
+    if (idev_id >= ASCEND_UDMA_DEV_MAX_NUM) {
         return NULL;
     }
-    return &g_ub_ctrl->idev[idev_id][ue_idx];
-}
-
-static bool ubdrv_is_sub_ubdev(struct ub_idev *p_idev, struct ubcore_device *ubc_dev)
-{
-    ka_device_t *pdev = p_idev->ubc_dev->dma_dev;
-    ka_device_t *dev = ubc_dev->dma_dev;
-    if (pdev == NULL || dev == NULL) {
-        return false;
-    }
-
-    return (dev->parent == pdev);
+    return &g_ub_ctrl->idev[idev_id];
 }
 
 STATIC struct ub_idev* ubdrv_alloc_idev_id(struct ubcore_device *ubc_dev)
@@ -526,51 +533,38 @@ STATIC struct ub_idev* ubdrv_alloc_idev_id(struct ubcore_device *ubc_dev)
     u32 i;
 
     if (ue_idx >= ASCEND_UDMA_MAX_FE_NUM) {
-        ubdrv_err("Invalid ue_idx. (idx=%d)", ue_idx);
+        ubdrv_err("Invalid ue_idx. (idx=%d)\n", ue_idx);
         return NULL;
     }
 
     for (i = 0; i < ASCEND_UDMA_DEV_MAX_NUM; ++i) {
-        idev = &g_ub_ctrl->idev[i][ue_idx];
+        idev = &g_ub_ctrl->idev[i];
         ka_task_down_write(&idev->rw_sem);
         if (idev->ubc_dev != NULL) {
             ka_task_up_write(&idev->rw_sem);
             continue;
         }
-        if (ue_idx == 0) {
-            goto alloc_succ;
-        }
-        ka_task_down_write(&g_ub_ctrl->idev[i][0].rw_sem);
-        if ((g_ub_ctrl->idev[i][0].ubc_dev != NULL) &&
-            ubdrv_is_sub_ubdev(&g_ub_ctrl->idev[i][0], ubc_dev)) {
-            ka_task_up_write(&g_ub_ctrl->idev[i][0].rw_sem);
-            goto alloc_succ;
-        }
-        ka_task_up_write(&g_ub_ctrl->idev[i][0].rw_sem);
+        idev->ubc_dev = ubc_dev;
+        idev->ue_idx = ue_idx;
+        stat = &idev->link_chan.chan_stat;
+        stat->dev_id = idev->idev_id;
+        stat->chan_id = idev->ue_idx;
+        ka_base_atomic_set(&idev->link_chan.msg_num, 0);  // It can be initialized only once.
         ka_task_up_write(&idev->rw_sem);
+        ubdrv_info("Alloc idev success. (idev_id=%u;ue_idx=%u;name=%s)\n",
+            idev->idev_id, idev->ue_idx, ubc_dev->dev_name);
+        return idev;
     }
-    ubdrv_err("Fe num is over. (name=%s)", ubc_dev->dev_name);
+    ubdrv_err("Fe num is over. (name=%s)\n", ubc_dev->dev_name);
     return NULL;
-
-alloc_succ:
-    g_ub_ctrl->idev_num += 1;
-    idev = &g_ub_ctrl->idev[i][ue_idx];
-    idev->ubc_dev = ubc_dev;
-    stat = &idev->link_chan.chan_stat;
-    stat->dev_id = idev->idev_id;
-    stat->chan_id = idev->ue_idx;
-    ka_task_up_write(&idev->rw_sem);
-    ubdrv_info("alloc idev success, idev_id=%u, ue_idx=%u", idev->idev_id, idev->ue_idx);
-    return idev;
 }
 
-STATIC void ubdrv_free_idev_id(u32 idev_id, u32 ue_idx)
+STATIC void ubdrv_free_idev_id(u32 idev_id)
 {
-    ka_task_down_write(&g_ub_ctrl->idev[idev_id][ue_idx].rw_sem);
-    g_ub_ctrl->idev[idev_id][ue_idx].valid = ASCEND_UB_INVALID;
-    g_ub_ctrl->idev[idev_id][ue_idx].ubc_dev = NULL;
-    g_ub_ctrl->idev_num -= 1;
-    ka_task_up_write(&g_ub_ctrl->idev[idev_id][ue_idx].rw_sem);
+    ka_task_down_write(&g_ub_ctrl->idev[idev_id].rw_sem);
+    g_ub_ctrl->idev[idev_id].valid = ASCEND_UB_INVALID;
+    g_ub_ctrl->idev[idev_id].ubc_dev = NULL;
+    ka_task_up_write(&g_ub_ctrl->idev[idev_id].rw_sem);
 }
 
 int ubdrv_ub_enable_funcs(u32 devid, u32 boot_mode)
@@ -718,7 +712,7 @@ STATIC void ubdrv_print_udma_device_info(struct ubcore_device *ubc_dev)
         ubc_dev->dev_name, ubc_dev->attr.ue_idx, ubc_dev->cfg.ue_idx,
         ubc_dev->attr.virtualization, ubc_dev->attr.port_cnt);
     if (ubc_dev->dma_dev != NULL) {
-        ubdrv_debug("ubc_dev->dma_dev=%pK, dma_dev->parent=%pK\n",
+        ubdrv_info("ubc_dev->dma_dev=%pK, dma_dev->parent=%pK\n",
             ubc_dev->dma_dev, ubc_dev->dma_dev->parent);
     }
 
@@ -821,7 +815,7 @@ void ubdrv_remove_udma_device(struct ubcore_device *ubc_dev, void *client_ctx)
     }
     idev_id = idev->idev_id;
     ue_idx = idev->ue_idx;
-    ubdrv_info("Start remove udma device. (idev_id=%u)\n", idev_id);
+    ubdrv_info("Start remove udma device. (idev_id=%u;ue_idx=%u)\n", idev_id, ue_idx);
 
     if ((idev_id >= ASCEND_UDMA_DEV_MAX_NUM) || (ue_idx >= ASCEND_UDMA_MAX_FE_NUM)) {
         ubdrv_err("Invalid idev_id. (idev_id=%u;ue_idx=%u)\n", idev_id, ue_idx);
@@ -834,7 +828,7 @@ void ubdrv_remove_udma_device(struct ubcore_device *ubc_dev, void *client_ctx)
         ubdrv_pair_info_uninit_work(idev);
     }
     ubcore_set_client_ctx_data(ubc_dev, &g_ascend_client, NULL);
-    ubdrv_free_idev_id(idev_id, ue_idx);
+    ubdrv_free_idev_id(idev_id);
     ubdrv_info("Ascend remove udma device success. (idev_id=%u)\n", idev_id);
     return;
 }
@@ -843,6 +837,8 @@ STATIC u32 ubdrv_get_chip_type(u32 dev_id)
 {
 #ifdef CFG_SOC_PLATFORM_CLOUD_V5
     return HISI_CLOUD_V5;
+#elif defined(CFG_SOC_PLATFORM_MINI_V4)
+    return HISI_MINI_V4;
 #else
     struct ascend_dev *asd_dev = NULL;
 
@@ -922,7 +918,6 @@ void ubdrv_remove_davinci_dev(u32 dev_id, u32 dev_type)
         return;
     }
     ubdrv_info("Remove davinci_dev success. (dev_id=%u)\n", msg_dev->dev_id);
-    return;
 }
 
 STATIC void ubdrv_chan_ctrl_init(struct ascend_ub_msg_dev *msg_dev)
@@ -930,7 +925,6 @@ STATIC void ubdrv_chan_ctrl_init(struct ascend_ub_msg_dev *msg_dev)
     ubdrv_non_trans_msg_chan_init(msg_dev);
     ubdrv_rao_msg_chan_init(msg_dev);
     ubdrv_urma_chan_init(msg_dev);
-    return;
 }
 
 STATIC void ubdrv_chan_ctrl_uninit(struct ascend_ub_msg_dev *msg_dev)
@@ -938,14 +932,13 @@ STATIC void ubdrv_chan_ctrl_uninit(struct ascend_ub_msg_dev *msg_dev)
     ubdrv_urma_chan_uninit(msg_dev);
     ubdrv_rao_msg_chan_uninit(msg_dev);
     ubdrv_non_trans_msg_chan_uninit(msg_dev);
-    return;
 }
 
 int ubdrv_add_msg_device(u32 dev_id, u32 remote_id, u32 idev_id, u32 ue_idx,
     struct jetty_exchange_data *data)
 {
     struct ascend_ub_msg_dev *msg_dev = NULL;
-    struct ub_idev *idev = ubdrv_get_idev(idev_id, ue_idx);
+    struct ub_idev *idev = ubdrv_get_idev(idev_id);
     int ret;
 
     if ((dev_id >= ASCEND_UB_DEV_MAX_NUM) || (idev == NULL) || (data == NULL)) {
@@ -989,10 +982,8 @@ msg_chan_uninit:
     return ret;
 }
 
-/* Release all channel resources */
 STATIC void ubdrv_exit_release_msg_chan(u32 dev_id)
 {
-    /* Host common free need set global chan is null, device is by unint call back set null */
     ubdrv_exit_release_msg_chan_proc(dev_id);
     ubdrv_free_all_non_trans_chan(dev_id);
     ubdrv_free_all_rao_chan(dev_id);
@@ -1027,6 +1018,7 @@ void ubdrv_del_msg_device(u32 dev_id, enum ubdrv_dev_status final_state)
     ubdrv_delete_admin_jetty(dev_id);
     ubdrv_msg_dev_uninit(msg_dev, final_state);
     ka_task_up_write(&asd_dev->rw_sem);
+    ubdrv_set_msg_retry_cnt(dev_id, ASCEND_MSG_MAX_RETRY_CNT);
     ubdrv_info("Del msg device success. (dev_id=%u)\n", dev_id);
     return;
 }
@@ -1042,6 +1034,7 @@ STATIC void ubdrv_asd_dev_init(void)
         asd_dev->dev_id = i;
         asd_dev->token.token_valid = ASCEND_INVALID;
         asd_dev->phy_flag = true;
+        asd_dev->msg_retry_cnt = ASCEND_MSG_MAX_RETRY_CNT;
         dev_status = &(g_ub_ctrl->dev_status[i]);
         dev_status->device_status = UBDRV_DEVICE_UNINIT;
         ka_base_atomic_set(&dev_status->ref_cnt, 0);
@@ -1064,6 +1057,7 @@ STATIC void ubdrv_asd_dev_uninit(void)
         asd_dev->token.token_valid = ASCEND_INVALID;
         asd_dev->dev_id = 0;
         asd_dev->phy_flag = true;
+        asd_dev->msg_retry_cnt = ASCEND_MSG_MAX_RETRY_CNT;
     }
 }
 
@@ -1113,37 +1107,24 @@ int ubdrv_mia_dev_notifier_func(u32 udevid, enum uda_notified_action action)
     return ret;
 }
 
-void ubdrv_unregister_uda_notifier(void)
-{
-    struct uda_dev_type type;
-
-    uda_davinci_local_real_entity_type_pack(&type);
-    (void)uda_notifier_unregister(ASCEND_UB_REAL_NOTIFIER, &type);
-    ubdrv_unregister_uda_notifier_proc(&type);
-    (void)uda_notifier_unregister(ASCEND_UB_MIA_NOTIFIER, &type);
-}
-
 int ubdrv_init_ub_ctrl(void)
 {
-    u32 i, j, k;
     size_t len = sizeof(struct ascend_ub_ctrl);
+    u32 i, k;
 
     g_ub_ctrl = ubdrv_kzalloc(len, KA_GFP_KERNEL);
     if (g_ub_ctrl == NULL) {
         ubdrv_err("Failed to ubdrv_kzalloc ub_ctrl. (len=%zu)\n", len);
         return -ENOMEM;
     }
-    g_ub_ctrl->idev_num = 0;
+
     for (i = 0; i < ASCEND_UDMA_DEV_MAX_NUM; i++) {
-        for (j = 0; j < ASCEND_UDMA_MAX_FE_NUM; j++) {
-            ka_task_init_rwsem(&g_ub_ctrl->idev[i][j].rw_sem);
-            ka_base_atomic_set(&g_ub_ctrl->idev[i][j].ref_cnt, 0);
-            g_ub_ctrl->idev[i][j].idev_id = i;
-            g_ub_ctrl->idev[i][j].ue_idx = j;
-            g_ub_ctrl->idev[i][j].valid = ASCEND_UB_INVALID;
-            for (k = 0; k < ASCEND_UB_DEV_NUM_PER_FE; k++) {
-                g_ub_ctrl->idev[i][j].dev_id[k] = KA_U32_MAX;
-            }
+        ka_task_init_rwsem(&g_ub_ctrl->idev[i].rw_sem);
+        ka_base_atomic_set(&g_ub_ctrl->idev[i].ref_cnt, 0);
+        g_ub_ctrl->idev[i].idev_id = i;
+        g_ub_ctrl->idev[i].valid = ASCEND_UB_INVALID;
+        for (k = 0; k < ASCEND_UB_DEV_NUM_PER_FE; k++) {
+            g_ub_ctrl->idev[i].dev_id[k] = KA_U32_MAX;
         }
     }
     ka_task_mutex_init(&g_ub_ctrl->mutex_lock);
@@ -1157,7 +1138,6 @@ void ubdrv_uninit_ub_ctrl(void)
     ka_task_mutex_destroy(&g_ub_ctrl->mutex_lock);
     ubdrv_kfree(g_ub_ctrl);
     g_ub_ctrl = NULL;
-    return;
 }
 
 STATIC int __ka_init ubdrv_module_init(void)

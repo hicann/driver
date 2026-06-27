@@ -77,7 +77,7 @@ void hdcdrv_init_dev(struct hdcdrv_dev *hdc_dev)
     if ((ret != HDCDRV_OK) || (len != sizeof(msg)) || (msg.error_code != HDCDRV_OK)) {
 #ifndef DRV_UT
         hdcdrv_info_limit("Wait for device startup. (dev_id=%d; ret=%d; code=%d; msg_len=%d; sizeof_msg=%ld)\n",
-            hdc_dev->dev_id, ret, msg.error_code, len, sizeof(msg));
+                          hdc_dev->dev_id, ret, msg.error_code, len, sizeof(msg));
         ka_task_schedule_delayed_work(&hdc_dev->init, 1 * KA_HZ);
         return;
 #endif
@@ -114,7 +114,7 @@ void hdcdrv_init_dev(struct hdcdrv_dev *hdc_dev)
     ka_task_up(&hdc_dev->hdc_instance_sem);
 
     hdcdrv_info("Device enable work. (dev_id=%u; peer_dev_id=%d; msg_chan_count=%d; normal_chan_cnt=%u)\n",
-        hdc_dev->dev_id, hdc_dev->peer_dev_id, hdc_dev->msg_chan_cnt, hdc_dev->normal_chan_num);
+                hdc_dev->dev_id, hdc_dev->peer_dev_id, hdc_dev->msg_chan_cnt, hdc_dev->normal_chan_num);
     return;
 }
 
@@ -197,7 +197,7 @@ void hdcdrv_pcie_exit_module(void)
 {
     struct uda_dev_type type;
 #ifdef CFG_FEATURE_PFSTAT
-	hdcdrv_pfstat_exit();
+    hdcdrv_pfstat_exit();
 #endif
     uda_davinci_near_real_entity_type_pack(&type);
 

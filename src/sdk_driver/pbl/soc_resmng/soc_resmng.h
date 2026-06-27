@@ -20,7 +20,7 @@
 #include "pbl/pbl_soc_res.h"
 
 #define SOC_IRQ_INVALID_VALUE 0xffffffffU
-#define SOC_MAX_DAVINCI_NUM   2048
+#define SOC_MAX_DAVINCI_NUM 2048
 
 struct soc_reg_base {
     char name[SOC_RESMNG_MAX_NAME_LEN];
@@ -50,7 +50,6 @@ struct soc_attr_data {
     void *attr;
     u32 size;
 };
-
 
 struct irq_info {
     u32 irq;
@@ -88,14 +87,15 @@ int soc_resmng_get_irq(struct res_inst_info *inst, u32 irq_type, u32 *irq);
 int dev_set_key_value(ka_list_head_t *head, const char *name, u64 value);
 int dev_get_key_value(ka_list_head_t *head, const char *name, u64 *value);
 
-int soc_resmng_for_each_res_addr(struct res_inst_info *inst, u32 type,
-    int (*func)(char *name, u64 addr, u64 len, void *priv), void *priv);
-int soc_resmng_dev_for_each_res_addr(u32 devid, u32 type,
-    int (*func)(char *name, u64 addr, u64 len, void *priv), void *priv);
-int soc_resmng_for_each_key_value(struct res_inst_info *inst,
-    int (*func)(char *key, u64 value, void *priv), void *priv);
+int soc_resmng_for_each_res_addr(
+    struct res_inst_info *inst, u32 type, int (*func)(char *name, u64 addr, u64 len, void *priv), void *priv);
+int soc_resmng_dev_for_each_res_addr(
+    u32 devid, u32 type, int (*func)(char *name, u64 addr, u64 len, void *priv), void *priv);
+int soc_resmng_for_each_key_value(
+    struct res_inst_info *inst, int (*func)(char *key, u64 value, void *priv), void *priv);
 int soc_resmng_dev_for_each_key_value(u32 devid, int (*func)(char *key, u64 value, void *priv), void *priv);
-int soc_resmng_dev_for_each_attr(u32 devid, int (*func)(const char *name, void *attr, u32 size, void *priv), void *priv);
+int soc_resmng_dev_for_each_attr(
+    u32 devid, int (*func)(const char *name, void *attr, u32 size, void *priv), void *priv);
 
 int resmng_init_module(void);
 void resmng_exit_module(void);

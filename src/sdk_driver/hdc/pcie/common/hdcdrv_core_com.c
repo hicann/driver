@@ -160,8 +160,8 @@ int hdccom_rx_comm_msg_para_check(u32 dev_id, u32 fid, const struct vmng_rx_msg_
     }
 
     if ((proc_info->in_data_len < ctrl_msg_head) || (proc_info->out_data_len < ctrl_msg_head)) {
-        hdcdrv_err("Input parameter is error. (in_data_len=%u; out_data_len=%u)\n",
-            proc_info->in_data_len, proc_info->out_data_len);
+        hdcdrv_err("Input parameter is error. (in_data_len=%u; out_data_len=%u)\n", proc_info->in_data_len,
+                   proc_info->out_data_len);
         return HDCDRV_PARA_ERR;
     }
 
@@ -178,8 +178,8 @@ int hdccom_rx_vpc_msg_para_check(u32 dev_id, u32 fid, const struct vmng_rx_msg_p
 
     if ((proc_info->in_data_len < (sizeof(struct vhdc_ioctl_msg) - sizeof(union hdcdrv_cmd))) ||
         (proc_info->out_data_len < (sizeof(struct vhdc_ioctl_msg) - sizeof(union hdcdrv_cmd)))) {
-        hdcdrv_err("Input parameter is error. (in_data_len=%u; out_data_len=%u)\n",
-            proc_info->in_data_len, proc_info->out_data_len);
+        hdcdrv_err("Input parameter is error. (in_data_len=%u; out_data_len=%u)\n", proc_info->in_data_len,
+                   proc_info->out_data_len);
         return HDCDRV_PARA_ERR;
     }
 
@@ -193,8 +193,8 @@ int hdccom_rx_comm_msg_type_check(unsigned int cmd_min_len, const struct vmng_rx
 
     if (((cmd_min_len + ctrl_msg_head) > proc_info->in_data_len) ||
         ((cmd_min_len + ctrl_msg_head) > proc_info->out_data_len)) {
-        hdcdrv_err("Input parameter is error. (in_data_len=%u; out_data_len=%u)\n",
-            proc_info->in_data_len, proc_info->out_data_len);
+        hdcdrv_err("Input parameter is error. (in_data_len=%u; out_data_len=%u)\n", proc_info->in_data_len,
+                   proc_info->out_data_len);
         return HDCDRV_PARA_ERR;
     }
 
@@ -311,10 +311,11 @@ int hdcdrv_send_mem_info(struct hdcdrv_fast_mem *mem, int devid, int flag)
     hdcdrv_pfstat_get_timestamp(&time_stamp);
 #endif
     ret = (int)hdcdrv_non_trans_ctrl_msg_send((u32)devid, (void *)msg, msg_size, msg_size, &len);
-    if ((ret != HDCDRV_OK) || (len != sizeof(struct hdcdrv_ctrl_msg_sync_mem_info)) ||
-        (msg->error_code != HDCDRV_OK)) {
-        hdcdrv_limit_exclusive(err, HDCDRV_LIMIT_LOG_0x0B, "Memory infotmation message send failed. (dev_id=%d; "
-            "ret=%d; len=%d; error_code=%d)\n", devid, ret, len, msg->error_code);
+    if ((ret != HDCDRV_OK) || (len != sizeof(struct hdcdrv_ctrl_msg_sync_mem_info)) || (msg->error_code != HDCDRV_OK)) {
+        hdcdrv_limit_exclusive(err, HDCDRV_LIMIT_LOG_0x0B,
+                               "Memory infotmation message send failed. (dev_id=%d; "
+                               "ret=%d; len=%d; error_code=%d)\n",
+                               devid, ret, len, msg->error_code);
         ret = HDCDRV_SEND_CTRL_MSG_FAIL;
     }
 #ifdef CFG_FEATURE_PFSTAT
@@ -342,8 +343,8 @@ void hdcdrv_node_status_idle(struct hdcdrv_fast_node *node)
         }
 
         if (cost_time > HDCDRV_NODE_BUSY_WARNING) {
-            hdcdrv_info_limit_spinlock("cost_time is invalid. (cost_time=%ums; max_cost=%ums)\n",
-                cost_time, node->max_cost);
+            hdcdrv_info_limit_spinlock("cost_time is invalid. (cost_time=%ums; max_cost=%ums)\n", cost_time,
+                                       node->max_cost);
         }
     }
 
@@ -406,7 +407,7 @@ STATIC void hdcdrv_fill_fast_node_info(struct hdcdrv_mem_node_info *f_info, stru
 }
 
 void hdcdrv_bind_mem_ctx(struct hdcdrv_ctx_fmem *ctx_fmem, struct hdcdrv_fast_node *f_node,
-    struct hdcdrv_mem_fd_list *new_node)
+                         struct hdcdrv_mem_fd_list *new_node)
 {
     new_node->f_node = f_node;
     new_node->ctx_fmem = ctx_fmem;
@@ -529,7 +530,7 @@ int hdcdrv_mmap_param_check(ka_file_t *filep, ka_vm_area_struct_t *vma)
 
     if ((vma == NULL) || (ka_mm_get_vm_end(vma) <= ka_mm_get_vm_start(vma))) {
         hdcdrv_err("vm range check failed, ka_mm_get_vm_end() = 0x%lx, ka_mm_get_vm_start() = 0x%lx.\n",
-            (vma == NULL ? 0x0 : ka_mm_get_vm_end(vma)), (vma == NULL ? 0x0 : ka_mm_get_vm_start(vma)));
+                   (vma == NULL ? 0x0 : ka_mm_get_vm_end(vma)), (vma == NULL ? 0x0 : ka_mm_get_vm_start(vma)));
         return -EINVAL;
     }
 

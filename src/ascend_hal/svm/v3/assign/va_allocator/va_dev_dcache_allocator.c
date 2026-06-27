@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * Copyright (c) 2026 Huawei Technologies Co., Ltd.
  * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
 #include "va_gap.h"
 #include "va_reserve.h"
 
-#define VA_DEV_DCACHE_RESERVE_SIZE         (5ULL * SVM_BYTES_PER_GB)
+#define VA_DEV_DCACHE_RESERVE_SIZE (5ULL * SVM_BYTES_PER_GB)
 
 static u64 g_dache_start;
 static u64 g_dache_size;
@@ -29,7 +29,7 @@ int va_dev_dcache_allocator_init(void)
         g_dache_size = VA_DEV_DCACHE_RESERVE_SIZE;
         ret = svm_reserve_va(0, g_dache_size, flag, &g_dache_start);
         if (ret != DRV_ERROR_NONE) {
-            svm_err("Reserve va failed. (ret=%d; size=0x%llx)\n", ret,  g_dache_size);
+            svm_err("Reserve va failed. (ret=%d; size=0x%llx)\n", ret, g_dache_size);
             return ret;
         }
 
@@ -44,7 +44,7 @@ void va_dev_dcache_allocator_uninit(void)
     if (g_dache_start != 0) {
         int ret = svm_release_va(g_dache_start);
         if (ret != DRV_ERROR_NONE) {
-            svm_warn("Release va failed. (ret=%d; va=0x%llx)\n", ret,  g_dache_start);
+            svm_warn("Release va failed. (ret=%d; va=0x%llx)\n", ret, g_dache_start);
         }
         g_dache_start = 0;
     }
@@ -80,4 +80,3 @@ int va_dev_dcache_free(u64 va, u64 size)
 
     return DRV_ERROR_NONE;
 }
-

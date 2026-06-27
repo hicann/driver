@@ -47,8 +47,8 @@ int vmnga_common_msg_send(u32 dev_id, enum vmng_msg_common_type cmn_type, struct
 
     msg_cluster = &(msg_dev->msg_cluster[chan_type]);
     if (msg_cluster->status != VMNG_MSG_CLUSTER_STATUS_ENABLE) {
-        vmng_err("Cluster_status is invalid. (dev_id=%u; cmn=%u; cluster_status=%u)\n",
-                 dev_id, cmn_type, msg_cluster->status);
+        vmng_err("Cluster_status is invalid. (dev_id=%u; cmn=%u; cluster_status=%u)\n", dev_id, cmn_type,
+                 msg_cluster->status);
         return -EINVAL;
     }
 
@@ -61,7 +61,7 @@ int vmnga_common_msg_send(u32 dev_id, enum vmng_msg_common_type cmn_type, struct
 }
 KA_EXPORT_SYMBOL(vmnga_common_msg_send);
 
-int vmnga_msg_cluster_recv_common(void *msg_chan_in,struct vmng_msg_chan_rx_proc_info *proc_info)
+int vmnga_msg_cluster_recv_common(void *msg_chan_in, struct vmng_msg_chan_rx_proc_info *proc_info)
 {
     struct vmng_msg_chan_rx *msg_chan = (struct vmng_msg_chan_rx *)msg_chan_in;
     struct vmng_msg_cluster *msg_cluster_in = (struct vmng_msg_cluster *)msg_chan->msg_cluster;

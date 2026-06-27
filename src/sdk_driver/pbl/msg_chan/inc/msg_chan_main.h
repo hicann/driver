@@ -25,56 +25,63 @@
 
 #define module_devdrv "msg_chan"
 #ifndef EMU_ST
-#define devdrv_err(fmt, ...) do { \
-    drv_err(module_devdrv, "<%s:%d:%d:%d> " fmt, \
-        ka_task_get_current_comm(), ka_task_get_current_tgid(), ka_task_get_current_pid(), ka_system_raw_smp_processor_id(), ##__VA_ARGS__); \
-} while (0)
-#define devdrv_warn(fmt, ...) do { \
-    drv_warn(module_devdrv, "<%s:%d:%d:%d> " fmt, \
-        ka_task_get_current_comm(), ka_task_get_current_tgid(), ka_task_get_current_pid(), ka_system_raw_smp_processor_id(), ##__VA_ARGS__); \
-} while (0)
-#define devdrv_info(fmt, ...) do { \
-    drv_info(module_devdrv, "<%s:%d:%d:%d> " fmt, \
-        ka_task_get_current_comm(), ka_task_get_current_tgid(), ka_task_get_current_pid(), ka_system_raw_smp_processor_id(), ##__VA_ARGS__); \
-} while (0)
-#define devdrv_debug(fmt, ...) do { \
-    drv_pr_debug(module_devdrv, "<%s:%d:%d:%d> " fmt, \
-        ka_task_get_current_comm(), ka_task_get_current_tgid(), ka_task_get_current_pid(), ka_system_raw_smp_processor_id(), ##__VA_ARGS__); \
-} while (0)
-#else  // EMU_ST
-#define devdrv_info(fmt, ...) do {                                      \
-    ka_dfx_printk(KA_KERN_INFO "[ascend] [%s] [%s %d]" fmt,       \
-    module_devdrv, __func__, __LINE__,                                \
-    ##__VA_ARGS__);     \
-} while (0)
-#define devdrv_warn(fmt, ...) do {                                      \
-    ka_dfx_printk(KA_KERN_WARNING "[ascend] [%s] [%s %d]" fmt,    \
-    module_devdrv, __func__, __LINE__,                                \
-    ##__VA_ARGS__);     \
-} while (0)
-#define devdrv_err(fmt, ...) do {                                       \
-    ka_dfx_printk(KA_KERN_ERR "[ascend] [%s] [%s %d]" fmt,        \
-    module_devdrv, __func__, __LINE__,                                \
-    ##__VA_ARGS__);     \
-} while (0)
-#define devdrv_debug(fmt, ...) do {                                     \
-    ka_dfx_printk(KA_KERN_DEBUG "[ascend] [%s] [%s %d]" fmt,      \
-    module_devdrv, __func__, __LINE__,                                \
-    ##__VA_ARGS__);     \
-} while (0)
-#endif  // EMU_ST
+#define devdrv_err(fmt, ...)                                                                                 \
+    do {                                                                                                     \
+        drv_err(module_devdrv, "<%s:%d:%d:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), \
+                ka_task_get_current_pid(), ka_system_raw_smp_processor_id(), ##__VA_ARGS__);                 \
+    } while (0)
+#define devdrv_warn(fmt, ...)                                                                                 \
+    do {                                                                                                      \
+        drv_warn(module_devdrv, "<%s:%d:%d:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), \
+                 ka_task_get_current_pid(), ka_system_raw_smp_processor_id(), ##__VA_ARGS__);                 \
+    } while (0)
+#define devdrv_info(fmt, ...)                                                                                 \
+    do {                                                                                                      \
+        drv_info(module_devdrv, "<%s:%d:%d:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), \
+                 ka_task_get_current_pid(), ka_system_raw_smp_processor_id(), ##__VA_ARGS__);                 \
+    } while (0)
+#define devdrv_debug(fmt, ...)                                                                                    \
+    do {                                                                                                          \
+        drv_pr_debug(module_devdrv, "<%s:%d:%d:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), \
+                     ka_task_get_current_pid(), ka_system_raw_smp_processor_id(), ##__VA_ARGS__);                 \
+    } while (0)
+#else // EMU_ST
+#define devdrv_info(fmt, ...)                                                                                      \
+    do {                                                                                                           \
+        ka_dfx_printk(KA_KERN_INFO "[ascend] [%s] [%s %d]" fmt, module_devdrv, __func__, __LINE__, ##__VA_ARGS__); \
+    } while (0)
+#define devdrv_warn(fmt, ...)                                                                                         \
+    do {                                                                                                              \
+        ka_dfx_printk(KA_KERN_WARNING "[ascend] [%s] [%s %d]" fmt, module_devdrv, __func__, __LINE__, ##__VA_ARGS__); \
+    } while (0)
+#define devdrv_err(fmt, ...)                                                                                      \
+    do {                                                                                                          \
+        ka_dfx_printk(KA_KERN_ERR "[ascend] [%s] [%s %d]" fmt, module_devdrv, __func__, __LINE__, ##__VA_ARGS__); \
+    } while (0)
+#define devdrv_debug(fmt, ...)                                                                                      \
+    do {                                                                                                            \
+        ka_dfx_printk(KA_KERN_DEBUG "[ascend] [%s] [%s %d]" fmt, module_devdrv, __func__, __LINE__, ##__VA_ARGS__); \
+    } while (0)
+#endif // EMU_ST
 #ifdef STATIC_SKIP
 #define STATIC
 #else
 #define STATIC static
 #endif
 
-#define COMMU_WAIT_MAX_CNT 10000  // 10s
-#define COMMU_WAIT_PER_TIME 1000  // 1ms=1000us
+#define COMMU_WAIT_MAX_CNT 10000 // 10s
+#define COMMU_WAIT_PER_TIME 1000 // 1ms=1000us
 
 struct devdrv_comm_dev_ops {
     enum devdrv_ops_status status;
     struct devdrv_comm_ops ops;
+    ka_rwlock_t rwlock;
+    ka_atomic_t dev_cnt;
+};
+
+struct devdrv_faultmgr_dev_ops {
+    enum devdrv_ops_status status;
+    struct devdrv_faultmgr_ops ops;
     ka_rwlock_t rwlock;
     ka_atomic_t dev_cnt;
 };
@@ -113,4 +120,8 @@ void devdrv_register_save_client_info_proc(struct devdrv_comm_dev_ops *dev_ops);
 bool devdrv_is_mdev_vm_boot_mode_inner(u32 index_id);
 bool devdrv_is_sriov_support_inner(u32 index_id);
 int devdrv_get_connect_protocol_inner(u32 index_id);
+
+struct devdrv_faultmgr_dev_ops *devdrv_get_faultmgr_ops(void);
+struct devdrv_faultmgr_dev_ops *devdrv_add_faultmgr_ops_ref(void);
+void devdrv_sub_faultmgr_ops_ref(struct devdrv_faultmgr_dev_ops *dev_ops);
 #endif

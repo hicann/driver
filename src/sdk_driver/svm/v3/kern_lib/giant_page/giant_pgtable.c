@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2025. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -21,8 +21,8 @@
 #include "svm_kern_log.h"
 #include "svm_pgtable.h"
 
-int hugetlb_insert_hugepage_pte_size(ka_mm_struct_t *mm, unsigned long addr,
-    ka_mm_pgprot_t prot, ka_page_t *hpage, unsigned long page_size);
+int hugetlb_insert_hugepage_pte_size(
+    ka_mm_struct_t *mm, unsigned long addr, ka_mm_pgprot_t prot, ka_page_t *hpage, unsigned long page_size);
 void svm_unmap_giant_pages(ka_vm_area_struct_t *vma, u64 va, u64 page_num);
 
 #ifndef EMU_ST /* Simulation ST ignore pte */
@@ -38,7 +38,7 @@ static int svm_pmd_entry_of_free_pmds(ka_pmd_t *pmd, u64 addr, u64 next, struct 
     ka_mm_pmd_clear(pmd);
     ka_mm_flush_tlb_range(vma, start, end);
 #ifndef CFG_FEATURE_ENABLE_ASAN
-    ka_mm_pte_free(vma->vm_mm, pte);   /* asan do not find ptlock_free api */
+    ka_mm_pte_free(vma->vm_mm, pte); /* asan do not find ptlock_free api */
     ka_mm_dec_nr_ptes(vma->vm_mm);
 #endif
     return 0;
@@ -56,7 +56,7 @@ static int svm_pud_entry_of_free_pmds(ka_pud_t *pud, u64 addr, u64 next, struct 
     ka_mm_pud_clear(pud);
     ka_mm_flush_tlb_range(vma, start, end);
 #ifndef CFG_FEATURE_ENABLE_ASAN
-    ka_mm_pmd_free(vma->vm_mm, pmd);   /* asan do not find ptlock_free api */
+    ka_mm_pmd_free(vma->vm_mm, pmd); /* asan do not find ptlock_free api */
     ka_mm_dec_nr_ptes(vma->vm_mm);
 #endif
     return 0;
@@ -71,8 +71,8 @@ static void svm_free_pmds(ka_vm_area_struct_t *vma, u64 start, u64 end)
     (void)ka_walk_page_range(vma, start, end, &ops, NULL);
 }
 
-static int svm_pte_entry_of_unmap_giant_pages(ka_pte_t *pte, u64 addr, u64 next,
-    enum ka_pte_level level, struct ka_pgwalk *walk)
+static int svm_pte_entry_of_unmap_giant_pages(
+    ka_pte_t *pte, u64 addr, u64 next, enum ka_pte_level level, struct ka_pgwalk *walk)
 {
     ka_pud_t *pud = NULL;
 

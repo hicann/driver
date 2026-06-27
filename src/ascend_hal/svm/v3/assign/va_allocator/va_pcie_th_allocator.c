@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * Copyright (c) 2026 Huawei Technologies Co., Ltd.
  * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -24,18 +24,15 @@ struct va_pcie_th_allocator {
     void *mga_inst;
 };
 
-#define VA_PCIE_TH_RESERVE_GRAN_SIZE     (512ULL * SVM_BYTES_PER_GB)
+#define VA_PCIE_TH_RESERVE_GRAN_SIZE (512ULL * SVM_BYTES_PER_GB)
 
 /* not dynamic expand and shrink */
-#define VA_PCIE_TH_EXPAND_FACTOR    1
-#define VA_PCIE_TH_SHRINK_FACTOR    1
+#define VA_PCIE_TH_EXPAND_FACTOR 1
+#define VA_PCIE_TH_SHRINK_FACTOR 1
 
 static struct va_pcie_th_allocator g_pcie_th_allocator = {0};
 
-static struct va_pcie_th_allocator *va_get_pcie_th_allocator(void)
-{
-    return &g_pcie_th_allocator;
-}
+static struct va_pcie_th_allocator *va_get_pcie_th_allocator(void) { return &g_pcie_th_allocator; }
 
 void svm_enable_pcie_th(void)
 {

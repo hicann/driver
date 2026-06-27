@@ -30,7 +30,8 @@ int vmngh_alloc_external_db_entries(struct vmngh_vd_dev *vd_dev)
 
     db_mng = &(vd_dev->db_mng);
     db_mng->db_num = VMNG_DB_NUM_EXTERNAL;
-    db_mng->db_entries = (struct vmngh_db_entry *)vmng_kzalloc(sizeof(struct vmngh_db_entry) * db_mng->db_num, KA_GFP_KERNEL);
+    db_mng->db_entries = (struct vmngh_db_entry *)vmng_kzalloc(sizeof(struct vmngh_db_entry) * db_mng->db_num,
+                                                               KA_GFP_KERNEL);
     if (db_mng->db_entries == NULL) {
         vmng_err("Alloc db entries failed. (dev_id=%u; fid=%u)\n", vd_dev->dev_id, vd_dev->fid);
         return -ENOMEM;
@@ -103,8 +104,8 @@ int vmngh_register_local_db(u32 dev_id, u32 fid, u32 db_index, db_handler_t hand
     }
     db_mng = &(vd_dev->db_mng);
     if (db_index >= db_mng->db_num) {
-        vmng_err("db_index is error. (dev_id=%u; fid=%u; db_index=%u)\n",
-                 dev_id, fid, db_index + VMNG_DB_BASE_EXTERNAL_MIN);
+        vmng_err("db_index is error. (dev_id=%u; fid=%u; db_index=%u)\n", dev_id, fid,
+                 db_index + VMNG_DB_BASE_EXTERNAL_MIN);
         return -EINVAL;
     }
     db_mng->db_entries[db_index].handler = handler;
@@ -212,7 +213,7 @@ int vmngh_trigger_remote_msix(u32 dev_id, u32 fid, u32 msix_index)
     }
 
     msix_offset = vd_dev->shr_para->msix_offset;
-    ret = hw_dvt_hypervisor_inject_msix(vd_dev->vdavinci, msix_index + msix_offset);
+    ret = hw_dvt_hypervisor_inject_msix(vd_dev->vdavinci, msix_index + msix_offset, -1);
     if (ret != 0) {
         vmng_err("Send msix to remote failed. (dev_id=%u; mdev_id=%u; msix=%u)\n", dev_id, fid, msix_index);
         return -ENODEV;

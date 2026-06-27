@@ -13,7 +13,7 @@
 #ifndef DEVDRV_FUNCTIONAL_CQSQ_API_H
 #define DEVDRV_FUNCTIONAL_CQSQ_API_H
 
-#include <linux/types.h>
+#include "drv_type.h"
 
 #include "tsdrv_interface.h"
 
@@ -46,24 +46,24 @@
 #define DEVDRV_MAILBOX_CREATE_LOGIC_CBCQ 0x001a
 #define DEVDRV_MAILBOX_RELEASE_LOGIC_CBCQ 0x001b
 #define DEVDRV_MAILBOX_RESET_EVENT_ID 0x0020
-#define TSDRV_MBOX_SHM_SQCQ_ALLOC            33U
-#define TSDRV_MBOX_SHM_SQCQ_FREE             34U
-#define TSDRV_MBOX_LOGIC_CQ_ALLOC            35U
-#define TSDRV_MBOX_LOGIC_CQ_FREE             36U
-#define TSDRV_MBOX_NOTICE_KERNER_SQCQ        37U
-#define TSDRV_MBOX_RELEASE_TOPIC_SQCQ        38U
-#define TSDRV_MBOX_RESOURCE_MAPPING_NOTICE   39U
-#define DEVDRV_MAILBOX_RECYCLE_CHECK         40U
-#define TSDRV_MBOX_ALLOC_RUNTIME_STREAM_ID   41U  /* 40 alloc runtime stream id */
-#define TSDRV_MBOX_FREE_RUNTIME_STREAM_ID    42U  /* 41 free runtime stream id */
-#define TSDRV_MBOX_CREATE_KERNEL_SQCQ        43U
-#define TSDRV_MBOX_RELEASE_KERNEL_SQCQ       44U
-#define TSDRV_MBOX_NOTICE_SSID               45U
-#define TSDRV_MBOX_QUERY_SSID                46U
-#define TSDRV_MBOX_NOTICE_TS_SQCQ_CREATE     47U
-#define TSDRV_MBOX_NOTICE_TS_SQCQ_FREE       48U
-#define DEVDRV_MAILBOX_CREATE_CTRL_CQSQ      49U
-#define DEVDRV_MAILBOX_RELEASE_CTRL_CQSQ     50U
+#define TSDRV_MBOX_SHM_SQCQ_ALLOC 33U
+#define TSDRV_MBOX_SHM_SQCQ_FREE 34U
+#define TSDRV_MBOX_LOGIC_CQ_ALLOC 35U
+#define TSDRV_MBOX_LOGIC_CQ_FREE 36U
+#define TSDRV_MBOX_NOTICE_KERNER_SQCQ 37U
+#define TSDRV_MBOX_RELEASE_TOPIC_SQCQ 38U
+#define TSDRV_MBOX_RESOURCE_MAPPING_NOTICE 39U
+#define DEVDRV_MAILBOX_RECYCLE_CHECK 40U
+#define TSDRV_MBOX_ALLOC_RUNTIME_STREAM_ID 41U /* 40 alloc runtime stream id */
+#define TSDRV_MBOX_FREE_RUNTIME_STREAM_ID 42U  /* 41 free runtime stream id */
+#define TSDRV_MBOX_CREATE_KERNEL_SQCQ 43U
+#define TSDRV_MBOX_RELEASE_KERNEL_SQCQ 44U
+#define TSDRV_MBOX_NOTICE_SSID 45U
+#define TSDRV_MBOX_QUERY_SSID 46U
+#define TSDRV_MBOX_NOTICE_TS_SQCQ_CREATE 47U
+#define TSDRV_MBOX_NOTICE_TS_SQCQ_FREE 48U
+#define DEVDRV_MAILBOX_CREATE_CTRL_CQSQ 49U
+#define DEVDRV_MAILBOX_RELEASE_CTRL_CQSQ 50U
 
 #define DEVDRV_FUNCTIONAL_BRIEF_CQ 0
 #define DEVDRV_FUNCTIONAL_DETAILED_CQ 1
@@ -109,17 +109,17 @@ struct devdrv_normal_cqsq_mailbox {
 #if (defined(CFG_SOC_PLATFORM_MINI) && (!defined(CFG_SOC_PLATFORM_MINIV2)) && (!defined(CFG_SOC_PLATFORM_MINIV3)))
     u8 app_flag; /* inform TS, msg is sent from host or device, device: 0 host: 1 */
 #else
-    u8 app_type : 1;  /* inform TS, msg is sent from host or device, device: 0 host: 1 */
+    u8 app_type : 1;    /* inform TS, msg is sent from host or device, device: 0 host: 1 */
     u8 sw_reg_flag : 1; /* 1: sq saves head and tail (and other dfx info in future) in share memory at the last 2 sqe
                            0: not save */
-    u8 fid : 6;       /* 0:hsot, 1~16:virt machine */
+    u8 fid : 6;         /* 0:hsot, 1~16:virt machine */
 #endif
-    u8 sq_cq_side : 2;    /* bit 0 sq side, bit 1 cq side. device: 0 host: 1  */
+    u8 sq_cq_side : 2; /* bit 0 sq side, bit 1 cq side. device: 0 host: 1  */
     u8 master_pid_flag : 1;
     u8 rsv : 5;
 
     u8 sqesize;
-    u8 cqesize;  /* calculation cq's slot size, default: 12 bytes */
+    u8 cqesize; /* calculation cq's slot size, default: 12 bytes */
     u16 cqdepth;
     u16 sqdepth;
     pid_t pid;
@@ -143,8 +143,8 @@ struct devdrv_notice_ts_sqcq_mailbox {
 struct resource_mapping_notice_mailbox_t {
     struct devdrv_mailbox_message_header head;
     volatile u8 vf_id;
-    volatile u8 resource_type;   // 0:notify id, 1:event id
-    volatile u8 operation_type;  // 0:map, 1:unmap
+    volatile u8 resource_type;  // 0:notify id, 1:event id
+    volatile u8 operation_type; // 0:map, 1:unmap
     volatile u8 reserve0;
     volatile u16 vir_id;
     volatile u16 phy_id;
@@ -152,14 +152,12 @@ struct resource_mapping_notice_mailbox_t {
     volatile u8 reserve[44];
 };
 
-enum devdrv_cqsq_func {
-    DEVDRV_CQSQ_HEART_BEAT = 0x0,
-    DEVDRV_MAX_CQSQ_FUNC
-};
+enum devdrv_cqsq_func { DEVDRV_CQSQ_HEART_BEAT = 0x0, DEVDRV_MAX_CQSQ_FUNC };
 
 int devdrv_create_functional_sq(u32 devid, u32 tsid, u32 slot_len, u32 *sq_index, u64 *addr);
 void devdrv_destroy_functional_sq(u32 devid, u32 tsid, u32 sq_index);
-int devdrv_create_functional_cq(u32 devid, u32 tsid, u32 slot_len, u32 cq_type,
+int devdrv_create_functional_cq(
+    u32 devid, u32 tsid, u32 slot_len, u32 cq_type,
     void (*callback)(u32 device_id, u32 tsid, const u8 *cq_slot, u8 *sq_slot), u32 *cq_index, u64 *addr);
 void devdrv_destroy_functional_cq(u32 devid, u32 tsid, u32 cq_index);
 int devdrv_functional_send_sq(u32 devid, u32 tsid, u32 sq_index, const u8 *buffer, u32 buf_len);

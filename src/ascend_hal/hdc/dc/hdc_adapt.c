@@ -67,8 +67,8 @@ signed int drv_hdc_get_max_session_num_by_type(signed int serviceType)
 }
 
 #if !defined(HDC_UT) && !defined(DRV_UT)
-hdcError_t halHdcRegisterMem(signed int devid, enum drvHdcMemType mem_type, void *va,
-                             unsigned int len, unsigned int flag)
+hdcError_t halHdcRegisterMem(signed int devid, enum drvHdcMemType mem_type, void *va, unsigned int len,
+                             unsigned int flag)
 {
     (void)devid;
     (void)mem_type;
@@ -106,7 +106,7 @@ hdcError_t halHdcWaitMemRelease(HDC_SESSION session, int time_out, struct drvHdc
 }
 
 hdcError_t halHdcWaitMemReleaseEx(HDC_SESSION session, struct drvHdcWaitMsgInput *input,
-    struct drvHdcFastSendFinishMsg *msg)
+                                  struct drvHdcFastSendFinishMsg *msg)
 {
     (void)session;
     (void)input;
@@ -139,26 +139,25 @@ hdcError_t halHdcServerWakeUp(HDC_SERVER server)
 #endif
 
 #ifndef DRV_UT
-hdcError_t drvHdcGetTrustedBasePath(signed int peer_node, signed int peer_devid, char *base_path,
-    unsigned int path_len)
+hdcError_t drvHdcGetTrustedBasePath(signed int peer_node, signed int peer_devid, char *base_path, unsigned int path_len)
 {
     return drvHdcGetTrustedBasePathEx(0, peer_node, peer_devid, base_path, path_len);
 }
 
-hdcError_t drvHdcSendFile(signed int peer_node, signed int peer_devid, const char *file,
-    const char *dst_path, void (*progress_notifier)(struct drvHdcProgInfo *))
+hdcError_t drvHdcSendFile(signed int peer_node, signed int peer_devid, const char *file, const char *dst_path,
+                          void (*progress_notifier)(struct drvHdcProgInfo *))
 {
     return drvHdcSendFileEx(0, peer_node, peer_devid, file, dst_path, progress_notifier);
 }
 
 hdcError_t drvHdcGetTrustedBasePathV2(signed int peer_node, signed int peer_devid, char *base_path,
-    unsigned int path_len)
+                                      unsigned int path_len)
 {
     return drvHdcGetTrustedBasePathEx(HDC_FILE_TRANS_MODE_CANN, peer_node, peer_devid, base_path, path_len);
 }
 
-hdcError_t drvHdcSendFileV2(signed int peer_node, signed int peer_devid, const char *file,
-    const char *dst_path, void (*progress_notifier)(struct drvHdcProgInfo *))
+hdcError_t drvHdcSendFileV2(signed int peer_node, signed int peer_devid, const char *file, const char *dst_path,
+                            void (*progress_notifier)(struct drvHdcProgInfo *))
 {
     return drvHdcSendFileEx(HDC_FILE_TRANS_MODE_CANN, peer_node, peer_devid, file, dst_path, progress_notifier);
 }

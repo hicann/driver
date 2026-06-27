@@ -53,17 +53,22 @@ struct devmm_addr_mng {
 };
 
 struct devmm_mem_node *devmm_search_mem_node(struct devmm_addr_mng *addr_mng, u64 va, u64 len);
-struct devmm_mem_node *devmm_get_mem_node(struct devmm_addr_mng *addr_mng, ka_pid_t devpid, u64 va,
-    u64 len, u32 page_size);
+struct devmm_mem_node *devmm_get_mem_node(
+    struct devmm_addr_mng *addr_mng, ka_pid_t devpid, u64 va, u64 len, u32 page_size);
 int devmm_try_free_mem_node(struct devmm_addr_mng *addr_mng, struct devmm_mem_node *mem_node);
 struct devmm_addr_info *devmm_get_addr_info(struct devmm_mem_node *mem_node, u64 va);
-int devmm_dma_map_page(u32 dev_id, ka_page_t *page, u32 len,
-    struct devmm_mem_node *mem_node, struct devmm_addr_info *addr_info);
+int devmm_dma_map_page(
+    u32 dev_id, ka_page_t *page, u32 len, struct devmm_mem_node *mem_node, struct devmm_addr_info *addr_info);
+#ifndef UVM_OPEN
+int devmm_dma_map_page_partial(
+    u32 dev_id, ka_page_t *page, u32 offset, u32 len, struct devmm_mem_node *mem_node,
+    struct devmm_addr_info *addr_info);
+#endif
 void devmm_dma_unmap_page(struct devmm_mem_node *mem_node, struct devmm_addr_info *addr_info);
 void devmm_addr_mng_free_res(struct devmm_addr_mng *addr_mng);
 void devmm_addr_mng_free_res_by_addr(struct devmm_addr_mng *addr_mng, u64 start, u64 end);
-void devmm_set_ka_dma_addr_to_addr_info(const struct devmm_addr_info *in_addr_info,
-    struct devmm_mem_node *mem_node, struct devmm_addr_info *addr_info);
+void devmm_set_ka_dma_addr_to_addr_info(
+    const struct devmm_addr_info *in_addr_info, struct devmm_mem_node *mem_node, struct devmm_addr_info *addr_info);
 struct devmm_mem_node *devmm_get_addr_mem_node(struct devmm_addr_mng *addr_mng, u64 va, u64 len);
 void devmm_put_addr_mem_node(struct devmm_addr_mng *addr_mng, u64 va, u64 len);
 bool devmm_mem_node_is_in_use(struct devmm_mem_node *mem_node);

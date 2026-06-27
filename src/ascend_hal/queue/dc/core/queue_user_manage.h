@@ -15,11 +15,11 @@
 #include "drv_user_common.h"
 #include "atomic_lock.h"
 #include "atomic_ref.h"
-#ifdef CFG_FEATURE_QUE_SUPPORT_UB 
+#ifdef CFG_FEATURE_QUE_SUPPORT_UB
 #include "urma_types.h"
 #endif
 
-#define MIN_VALID_QUEUE_DEPTH 2  /* min depth of queue */
+#define MIN_VALID_QUEUE_DEPTH 2 /* min depth of queue */
 #define MAX_QUEUE_DEPTH 8192
 
 #if (defined CFG_PLATFORM_FPGA)
@@ -30,13 +30,13 @@
 #define MAX_SURPORT_QUEUE_NUM 4096 /* kernel space should to be modified synchronously. */
 #endif
 
-#define MAX_SHARE_GRP  4  /* surport max sp-group in queue_manage, "zone" means same */
+#define MAX_SHARE_GRP 4 /* surport max sp-group in queue_manage, "zone" means same */
 
 #ifndef MAX_STR_LEN
 #define MAX_STR_LEN 128
 #endif
 
-#define INVALID_QUEUE_MERGE_IDX   (-1)
+#define INVALID_QUEUE_MERGE_IDX (-1)
 #define QUEUE_INVALID_VALUE 0xFFFFFFFFU
 
 #define QUEUE_INNER_SUB_FLAG (1U)
@@ -49,18 +49,18 @@ struct queue_merge_node {
 };
 
 struct event_stat {
-    unsigned long long user_event_fail;         /* count of event callback times */
+    unsigned long long user_event_fail; /* count of event callback times */
     unsigned long long user_event_succ;
     unsigned long long call_back;
 };
 
 struct group_merge {
     int idx;
-    int pid;                        /* Process of subscribed to the queue */
-    unsigned int groupid;           /* Group subscribed to the queue */
-    volatile int atomic_flag;       /* Event merge flag */
-    unsigned int ref_cnt;           /* Reference count, indicating how many queues a group is subscribed to */
-    volatile int pause_flag;        /* ctrl a group queue do not publish event for a moment */
+    int pid;                  /* Process of subscribed to the queue */
+    unsigned int groupid;     /* Group subscribed to the queue */
+    volatile int atomic_flag; /* Event merge flag */
+    unsigned int ref_cnt;     /* Reference count, indicating how many queues a group is subscribed to */
+    volatile int pause_flag;  /* ctrl a group queue do not publish event for a moment */
     unsigned int enque_event_ret;
     int rsv;
     struct event_stat event_stat;
@@ -83,15 +83,15 @@ typedef struct {
 } queue_entity_node;
 
 struct queue_stats {
-    unsigned long long enque_ok;               /* enqueue success */
-    unsigned long long deque_num;              /* dequeue num */
-    unsigned long long deque_ok;               /* dequeue success */
-    unsigned long long enque_full;              /* enqueue failed */
-    unsigned long long deque_empty;             /* dequeue failed */
-    unsigned long long enque_event_ok;         /* enqueue event submit success */
-    unsigned long long enque_event_fail;       /* enqueue event submit fail */
-    unsigned long long f2nf_event_ok;          /* full to not full event submit success */
-    unsigned long long f2nf_event_fail;        /* full to not full event submit fail */
+    unsigned long long enque_ok;         /* enqueue success */
+    unsigned long long deque_num;        /* dequeue num */
+    unsigned long long deque_ok;         /* dequeue success */
+    unsigned long long enque_full;       /* enqueue failed */
+    unsigned long long deque_empty;      /* dequeue failed */
+    unsigned long long enque_event_ok;   /* enqueue event submit success */
+    unsigned long long enque_event_fail; /* enqueue event submit fail */
+    unsigned long long f2nf_event_ok;    /* full to not full event submit success */
+    unsigned long long f2nf_event_fail;  /* full to not full event submit fail */
     unsigned long long deque_drop;
     unsigned long long call_back;
     unsigned long enque_drop;
@@ -111,7 +111,7 @@ struct queue_permission {
 
 struct sub_info {
     unsigned int src_location; /* 0: device; 1: host */
-    unsigned int src_udevid; /* set in msg when submit event */
+    unsigned int src_udevid;   /* set in msg when submit event */
     unsigned int dst_engine;
     int pid;
     unsigned int groupid;
@@ -119,15 +119,15 @@ struct sub_info {
     unsigned int tid;
     unsigned int eventid;
     unsigned int dst_devid; /* when sub event to local, this is local devid; else this is remote udevid */
-    int sub_send;              /* Indicates whether to send events during subscription: 1 send, other not send */
+    int sub_send;           /* Indicates whether to send events during subscription: 1 send, other not send */
     unsigned int inner_sub_flag;
 };
 
 struct atomic_queue_head_info {
     unsigned long long index : 32;
-    unsigned long long head  : 32;
+    unsigned long long head : 32;
 };
- 
+
 union atomic_queue_head {
     struct atomic_queue_head_info head_info;
     unsigned long long head_value;
@@ -135,37 +135,38 @@ union atomic_queue_head {
 
 struct queue_manages {
     unsigned int dev_id;
-    unsigned int id;                     /* queue id */
-    char name[MAX_STR_LEN];           /* queue's name */
+    unsigned int id;        /* queue id */
+    char name[MAX_STR_LEN]; /* queue's name */
     unsigned long create_time;
     int creator_pid;
-    int valid;                  /* Whether the queue is valid, 1 is valid, 0 is invalid */
+    int valid; /* Whether the queue is valid, 1 is valid, 0 is invalid */
     union atomic_queue_head queue_head;
     union atomic_status tail_status;
     int full_flag;
-    int empty_flag;            /* value 1 indicates a failure to dequeue because the queue is empty */
-    int event_flag;            /* Single queue sends enqueue event flags */
-    int work_mode;             /* Queue work mode, push or pull, default push */
-    int bind_type;             /* Supports group and single methods, send events as a group or a single queue */
-    struct sub_info consumer;  /* Consumer event info */
-    struct sub_info producer;  /* Producer event info */
+    int empty_flag;           /* value 1 indicates a failure to dequeue because the queue is empty */
+    int event_flag;           /* Single queue sends enqueue event flags */
+    int work_mode;            /* Queue work mode, push or pull, default push */
+    int bind_type;            /* Supports group and single methods, send events as a group or a single queue */
+    struct sub_info consumer; /* Consumer event info */
+    struct sub_info producer; /* Producer event info */
     int enque_cas;
     int deque_cas;
-    int fctl_flag;            /* flow control flag, */
+    int fctl_flag; /* flow control flag, */
     unsigned drop_time;
     int over_write;
     struct atomic_lock merge_atomic_lock;
     struct queue_stats stat;
     int merge_idx;
-    int inter_dev_state;              /* 0: disabled; 1: exported; 2: imported; 3: unexported; 4: unimported */
-    unsigned int remote_devid;        /* dev_id from inter dev */
+    int inter_dev_state;           /* 0: disabled; 1: exported; 2: imported; 3: unexported; 4: unimported */
+    unsigned int remote_devid;     /* dev_id from inter dev */
+    unsigned int phy_remote_devid; /* phy_dev_id from inter dev */
     int remote_grpid;
-    unsigned int remote_qid;          /* queue id from inter dev */
-    int remote_devpid;                /* pid from inter dev mng proc */
-    char share_queue_name[SHARE_QUEUE_NAME_MAX_LEN];     /* share queue's name */
-#ifdef CFG_FEATURE_QUE_SUPPORT_UB 
+    unsigned int remote_qid;                         /* queue id from inter dev */
+    int remote_devpid;                               /* pid from inter dev mng proc */
+    char share_queue_name[SHARE_QUEUE_NAME_MAX_LEN]; /* share queue's name */
+#ifdef CFG_FEATURE_QUE_SUPPORT_UB
     urma_jfr_id_t tjfr_id;
-    unsigned int tjfr_valid_flag;  /* 0: invalid; 1: valid */
+    unsigned int tjfr_valid_flag; /* 0: invalid; 1: valid */
     urma_token_t token;
 #endif
 };

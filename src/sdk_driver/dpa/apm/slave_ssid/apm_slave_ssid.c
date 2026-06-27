@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2025. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -42,8 +42,8 @@ int hal_kernel_apm_query_slave_ssid_by_master(u32 udevid, int master_tgid, proce
         }
     }
 
-    apm_warn("Query slave ssid. (master_tgid=%d; udevid=%u; proc_type=%u; ret=%d)\n",
-        master_tgid, udevid, proc_type, ret);
+    apm_warn(
+        "Query slave ssid. (master_tgid=%d; udevid=%u; proc_type=%u; ret=%d)\n", master_tgid, udevid, proc_type, ret);
     return ret;
 
 query_success:
@@ -81,4 +81,3 @@ query_success:
     return 0;
 }
 KA_EXPORT_SYMBOL_GPL(apm_query_slave_ssid);
-

@@ -30,7 +30,7 @@ int rmo_res_info_check(struct res_map_info *res_info)
         return DRV_ERROR_NOT_SUPPORT;
     }
 
-    for (i = 0;  i < RES_MAP_INFO_RSV_LEN; i++) {
+    for (i = 0; i < RES_MAP_INFO_RSV_LEN; i++) {
         if (res_info->rsv[i] != 0) {
             return DRV_ERROR_NOT_SUPPORT;
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2025. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -14,8 +14,8 @@
 #ifndef MWL_H
 #define MWL_H
 
-#include <linux/types.h>
-#include <stdbool.h>
+#include "ka_base_pub.h"
+#include "ka_type.h"
 
 /*
     MWL: memory white list
@@ -26,11 +26,13 @@
         mem shared task: use task_is_trusted to check
 */
 
+#define MWL_ID_NO_USE KA_U64_MAX
+
 int svm_mwl_add_mem(u32 udevid, int tgid, u64 id, u64 va, u64 size);
-int svm_mwl_del_mem(u32 udevid, int tgid, u64 id);
+int svm_mwl_del_mem(u32 udevid, int tgid, u64 id, u64 va, u64 size);
+int svm_mwl_check_mem(u32 udevid, int tgid, u64 id, u64 va, u64 size);
 int svm_mwl_add_trusted_task(u32 udevid, int tgid, u64 id, u32 trusted_server_id, int trusted_tgid);
 int svm_mwl_del_trusted_task(u32 udevid, int tgid, u64 id, u32 trusted_server_id, int trusted_tgid);
 bool svm_mwl_task_is_trusted(u32 udevid, int tgid, u64 id, u32 checked_server_id, int checked_tgid);
 
 #endif
-

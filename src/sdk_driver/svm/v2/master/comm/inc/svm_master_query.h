@@ -13,7 +13,7 @@
 
 #ifndef SVM_MASTER_QUERY_H
 #define SVM_MASTER_QUERY_H
-#include <linux/types.h>
+#include "ka_type.h"
 
 void devmm_mem_free_preprocess_by_dev_and_va(struct devmm_svm_process *svm_proc, u32 devid, u64 free_va, u64 free_len);
 void devmm_mem_free_preprocess_by_dev(struct devmm_svm_process *svm_proc, u32 devid);

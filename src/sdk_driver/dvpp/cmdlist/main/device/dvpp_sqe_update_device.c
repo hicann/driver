@@ -11,11 +11,7 @@
  * GNU General Public License for more details.
  */
 #include "dvpp_sqe_update.h"
-
-#include <asm/current.h>
-#include <linux/uaccess.h>
-#include <linux/share_pool.h>
-
+#include "ka_share_pool.h"
 #include "securec.h"
 #include "ts_agent_dvpp.h"
 #include "dvpp_tlv_decoder.h"
@@ -32,9 +28,9 @@
 static inline int32_t check_addr_read_only(uint64_t addr, uint64_t len)
 {
     // 对cmdbuf地址判断是否在只读地址段内
-    return (int32_t)((addr >= MMAP_SHARE_POOL_RO_START) && (addr <= MMAP_SHARE_POOL_RO_END) &&
-        ((addr + len) <= MMAP_SHARE_POOL_RO_END) &&
-        (len <= (MMAP_SHARE_POOL_RO_END - MMAP_SHARE_POOL_RO_START)));
+    return (int32_t)((addr >= KA_MMAP_SHARE_POOL_RO_START) && (addr <= KA_MMAP_SHARE_POOL_RO_END) &&
+        ((addr + len) <= KA_MMAP_SHARE_POOL_RO_END) &&
+        (len <= (KA_MMAP_SHARE_POOL_RO_END - KA_MMAP_SHARE_POOL_RO_START)));
 }
 
 static int32_t map_cmdbuf_to_kva(dvpp_comm_para *para, dvpp_sqe_args* sqe_args, dvpp_save_para *save_para,
@@ -54,7 +50,7 @@ static int32_t map_cmdbuf_to_kva(dvpp_comm_para *para, dvpp_sqe_args* sqe_args, 
         }
     }
 
-    sqe_args->cmdbuf_kva = (uint64_t)(uintptr_t)mg_sp_make_share_u2k(
+    sqe_args->cmdbuf_kva = (uint64_t)(uintptr_t)ka_mg_sp_make_share_u2k(
         sqe_args->cmdbuf_uva, sqe_args->cmdbuf_size, para->pid);
     if (IS_ERR_VALUE(sqe_args->cmdbuf_kva)) {
         DVPP_CMDLIST_LOG_ERROR("cmdbuf addr k2u fail. ret:%ld, len:%u, pid:%d\n", \
@@ -69,7 +65,7 @@ static int32_t map_cmdbuf_to_kva(dvpp_comm_para *para, dvpp_sqe_args* sqe_args, 
         cmdbuf_ctx.kva = sqe_args->cmdbuf_kva;
         cmdbuf_ctx.size = sqe_args->cmdbuf_size;
         ret = add_cmdbuf_hlist(&cmdbuf_ctx, data);
-        save_para->is_cmdbuf_pool = ((ret == 0) ? 1 : 0); // add failed, kva need to mg_sp_unshare
+        save_para->is_cmdbuf_pool = ((ret == 0) ? 1 : 0); // add failed, kva need to ka_mg_sp_unshare
     }
 
     CALC_TIME_COST(ctx, sqe_args->streamid, sqe_args->taskid, time_cost_u2k_map);

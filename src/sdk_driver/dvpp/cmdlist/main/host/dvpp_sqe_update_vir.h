@@ -13,7 +13,15 @@
 
 #ifndef DVPP_SQE_UPDATE_VIR_H
 #define DVPP_SQE_UPDATE_VIR_H
-#include <linux/types.h>
+#include "ka_type.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 int32_t dvpp_sqe_update_vir_mach(uint32_t devid, int pid, void* sqe);
 
+#ifdef __cplusplus
+}
+#endif
 #endif // #ifndef DVPP_SQE_UPDATE_VIR_H

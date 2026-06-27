@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2025. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -42,8 +42,8 @@ static void svm_free_compound_large_pages(ka_page_t **pages, u64 page_num, u64 c
     }
 }
 
-static int svm_alloc_compound_large_pages(int nids[], u32 nid_num, ka_page_t **pages, u64 page_num,
-    u64 compound_size, u32 flag)
+static int svm_alloc_compound_large_pages(
+    int nids[], u32 nid_num, ka_page_t **pages, u64 page_num, u64 compound_size, u32 flag)
 {
     u64 normal_page_num = 0x1ULL << ka_mm_get_order(compound_size);
     unsigned long stamp = ka_jiffies;
@@ -52,7 +52,8 @@ static int svm_alloc_compound_large_pages(int nids[], u32 nid_num, ka_page_t **p
     for (i = 0; i < page_num; i++) {
         ka_page_t *comp_page_head = NULL;
 
-        comp_page_head = _svm_alloc_pages_node(nids[0], svm_get_alloc_page_mask(true), ka_mm_get_order(compound_size));
+        comp_page_head =
+            _svm_alloc_pages_node(nids[0], svm_get_alloc_page_mask(true, false), ka_mm_get_order(compound_size));
         if (comp_page_head == NULL) {
             svm_free_compound_large_pages(pages, i, compound_size);
             return -ENOMEM;
@@ -108,4 +109,3 @@ int svm_compound_large_page_init(void)
     return 0;
 }
 DECLAER_FEATURE_AUTO_INIT(svm_compound_large_page_init, FEATURE_LOADER_STAGE_0);
-

@@ -42,8 +42,8 @@ STATIC int esched_host_msg_send(u32 dev_id, struct esched_ctrl_msg *msg, u32 msg
     ret = devdrv_common_msg_send(dev_id, (void *)msg, msg_len, msg_len, &out_len, DEVDRV_COMMON_MSG_ESCHED);
     if ((ret != 0) || (msg->head.error_code != 0)) {
         if ((ret != 0) && (!esched_log_limited(SCHED_LOG_LIMIT_MSG_SEND))) {
-            sched_err("Send message to device failed. (dev_id=%d; deal_code=%d; ret=%d)\n",
-                dev_id, msg->head.error_code, ret);
+            sched_err("Send message to device failed. (dev_id=%d; deal_code=%d; ret=%d)\n", dev_id,
+                      msg->head.error_code, ret);
         }
         return ret != 0 ? ret : msg->head.error_code;
     }
@@ -51,7 +51,8 @@ STATIC int esched_host_msg_send(u32 dev_id, struct esched_ctrl_msg *msg, u32 msg
     return 0;
 }
 
-int sched_query_remote_trace_msg_send(u32 chip_id, struct sched_trace_input *para, struct sched_sync_event_trace *sched_trace)
+int sched_query_remote_trace_msg_send(u32 chip_id, struct sched_trace_input *para,
+                                      struct sched_sync_event_trace *sched_trace)
 {
     struct esched_ctrl_msg msg = {0};
     int ret;
@@ -68,8 +69,8 @@ int sched_query_remote_trace_msg_send(u32 chip_id, struct sched_trace_input *par
     return ret;
 }
 
-int sched_publish_event_to_remote(u32 chip_id, u32 event_src,
-    const struct sched_published_event_info *event_info, struct sched_published_event_func *event_func)
+int sched_publish_event_to_remote(u32 chip_id, u32 event_src, const struct sched_published_event_info *event_info,
+                                  struct sched_published_event_func *event_func)
 {
     struct esched_publish_msg msg;
     int ret, real_devid;
@@ -87,8 +88,8 @@ int sched_publish_event_to_remote(u32 chip_id, u32 event_src,
     if (event_info->msg_len > 0) {
         ret = memcpy_s(msg.submit_msg.msg, SCHED_MAX_EVENT_MSG_LEN_EX, event_info->msg, event_info->msg_len);
         if (ret != 0) {
-            sched_err("Failed to copy variable msg. (pid=%d; gid=%u; event_id=%u)\n",
-                event_info->pid, event_info->gid, event_info->event_id);
+            sched_err("Failed to copy variable msg. (pid=%d; gid=%u; event_id=%u)\n", event_info->pid, event_info->gid,
+                      event_info->event_id);
             return ret;
         }
         total_len += event_info->msg_len;
@@ -167,7 +168,8 @@ int sched_query_remote_task_gid_msg_send(u32 chip_id, u32 dst_chip_id, int pid, 
     return ret;
 }
 
-STATIC int32_t sched_dispatch_param_check(u32 src_devid, u32 dst_devid, u32 src_pid, struct esched_remote_submit_msg *submit_msg)
+STATIC int32_t sched_dispatch_param_check(u32 src_devid, u32 dst_devid, u32 src_pid,
+                                          struct esched_remote_submit_msg *submit_msg)
 {
     int32_t ret;
     u32 dst_pid, src_device_master_pid, dst_device_master_pid;
@@ -179,22 +181,21 @@ STATIC int32_t sched_dispatch_param_check(u32 src_devid, u32 dst_devid, u32 src_
 
     ret = devdrv_query_master_pid_by_device_slave(src_devid, src_pid, &src_device_master_pid);
     if (ret != 0) {
-        sched_err("Query master pid by src_pid failed. (src_devid=%u; src_pid=%u; ret=%d)\n",
-            src_devid, src_pid, ret);
+        sched_err("Query master pid by src_pid failed. (src_devid=%u; src_pid=%u; ret=%d)\n", src_devid, src_pid, ret);
         return DRV_ERROR_NO_PROCESS;
     }
 
     dst_pid = submit_msg->event_info.pid;
     ret = devdrv_query_master_pid_by_device_slave(dst_devid, dst_pid, &dst_device_master_pid);
     if (ret != 0) {
-        sched_err("Query master pid by dst_pid failed. (dst_devid=%u; dest_pid=%u; ret=%d)\n",
-            dst_devid, dst_pid, ret);
+        sched_err("Query master pid by dst_pid failed. (dst_devid=%u; dest_pid=%u; ret=%d)\n", dst_devid, dst_pid, ret);
         return DRV_ERROR_NO_PROCESS;
     }
 
     if (src_device_master_pid != dst_device_master_pid) {
-        sched_err("Pid not match. (src_devid=%u; dst_devid=%u; src_pid=%u; dst_pid=%u; src_master_pid=%u; dst_master_pid=%u)\n",
-            src_devid, dst_devid, src_pid, dst_pid, src_device_master_pid, dst_device_master_pid);
+        sched_err("Pid not match. (src_devid=%u; dst_devid=%u; src_pid=%u; dst_pid=%u; src_master_pid=%u; "
+                  "dst_master_pid=%u)\n",
+                  src_devid, dst_devid, src_pid, dst_pid, src_device_master_pid, dst_device_master_pid);
         return DRV_ERROR_INNER_ERR;
     }
 
@@ -215,7 +216,8 @@ STATIC int sched_dispatch_event_to_remote(u32 devid, struct esched_publish_msg *
         return ret;
     }
 
-    ret = memcpy_s(&msg_local.submit_msg, sizeof(struct esched_remote_submit_msg), submit_msg, sizeof(struct esched_remote_submit_msg));
+    ret = memcpy_s(&msg_local.submit_msg, sizeof(struct esched_remote_submit_msg), submit_msg,
+                   sizeof(struct esched_remote_submit_msg));
     if (ret != 0) {
         sched_err("Failed to copy msg. (devid=%u; dst_devid=%u)\n", devid, dst_devid);
         return ret;
@@ -226,7 +228,7 @@ STATIC int sched_dispatch_event_to_remote(u32 devid, struct esched_publish_msg *
     total_len += submit_msg->event_info.msg_len;
     return esched_host_msg_send(dst_devid, (void *)&msg_local, total_len);
 }
- 
+
 #ifdef CFG_FEATURE_HARDWARE_SCHED
 STATIC int esched_drv_remote_config_pid(u32 dev_id, u32 msg_type, u32 host_ctrl_pid, u32 pid_type, u32 pid)
 {
@@ -242,8 +244,8 @@ STATIC int esched_drv_remote_config_pid(u32 dev_id, u32 msg_type, u32 host_ctrl_
 
     ret = esched_host_msg_send(dev_id, (void *)&msg, sizeof(msg));
     if (ret != 0) {
-        sched_err("Failed to invoke the esched_host_msg_send. (dev_id=%u; pid=%u; error_code=%d; ret=%d)\n",
-                  dev_id, pid, msg.head.error_code, ret);
+        sched_err("Failed to invoke the esched_host_msg_send. (dev_id=%u; pid=%u; error_code=%d; ret=%d)\n", dev_id,
+                  pid, msg.head.error_code, ret);
         return -EFAULT;
     }
 
@@ -287,8 +289,7 @@ int esched_drv_remote_get_cpu_mbid(u32 dev_id, u32 cpu_type, u32 *mb_id, u32 *wa
     msg.mbid_msg.cpu_type = cpu_type;
     ret = esched_host_msg_send(dev_id, (void *)&msg, sizeof(msg));
     if (ret != 0) {
-        sched_err("Failed to send msg. (dev_id=%u; error_code=%x; ret=%d)\n",
-            dev_id, msg.head.error_code, ret);
+        sched_err("Failed to send msg. (dev_id=%u; error_code=%x; ret=%d)\n", dev_id, msg.head.error_code, ret);
         return -EFAULT;
     }
 
@@ -309,7 +310,8 @@ int esched_drv_remote_config_intr(u32 dev_id, u32 irq)
     ret = esched_host_msg_send(dev_id, (void *)&msg, sizeof(msg));
     if (ret != 0) {
         sched_debug("Invoke the esched_host_msg_send not success. "
-            "(dev_id=%u; irq=%u; deal_code=%d; ret=%d)\n", dev_id, irq, msg.head.error_code, ret);
+                    "(dev_id=%u; irq=%u; deal_code=%d; ret=%d)\n",
+                    dev_id, irq, msg.head.error_code, ret);
         return -EFAULT;
     }
 
@@ -327,7 +329,8 @@ int esched_drv_remote_add_mb(u32 dev_id, u32 vf_id)
     ret = esched_host_msg_send(dev_id, (void *)&msg, sizeof(msg));
     if (ret != 0) {
         sched_err("Failed to invoke the esched_host_msg_send. "
-                  "(dev_id=%u; vf_id=%u; error_code=%d; ret=%d)\n", dev_id, vf_id, msg.head.error_code, ret);
+                  "(dev_id=%u; vf_id=%u; error_code=%d; ret=%d)\n",
+                  dev_id, vf_id, msg.head.error_code, ret);
         return -EFAULT;
     }
 
@@ -344,8 +347,7 @@ int esched_drv_remote_get_pool_id(u32 dev_id, u32 *pool_id)
 
     ret = esched_host_msg_send(dev_id, (void *)&msg, sizeof(msg));
     if (ret != 0) {
-        sched_err("Failed to send msg. (dev_id=%u; error_code=%x; ret=%d)\n",
-            dev_id, msg.head.error_code, ret);
+        sched_err("Failed to send msg. (dev_id=%u; error_code=%x; ret=%d)\n", dev_id, msg.head.error_code, ret);
         return -EFAULT;
     }
 
@@ -362,20 +364,22 @@ STATIC int esched_ctrl_msg_para_check(u32 devid, void *data, u32 in_data_len, u3
     u32 ctrl_len = sizeof(struct esched_publish_msg) - SCHED_MAX_EVENT_MSG_LEN_EX * sizeof(char);
 
     if ((data == NULL) || (real_out_len == NULL)) {
-        sched_err("The variable devid, data or real_out_len is invalid. (devid=%u; in_data_len=%u)\n", devid, in_data_len);
+        sched_err("The variable devid, data or real_out_len is invalid. (devid=%u; in_data_len=%u)\n", devid,
+                  in_data_len);
         return -EINVAL;
     }
 
     if ((msg_head->type == ESCHED_MSG_TYPE_REMOTE_SUBMIT) || (msg_head->type == ESCHED_MSG_TYPE_D2D_EVENT_DISPATCH)) {
         if (in_data_len < ctrl_len) {
-            sched_err("In_data_len is invalid. (devid=%u; in_data_len=%u; ctrl_len=%u)\n", devid, in_data_len, ctrl_len);
+            sched_err("In_data_len is invalid. (devid=%u; in_data_len=%u; ctrl_len=%u)\n", devid, in_data_len,
+                      ctrl_len);
             return -EINVAL;
         }
 
         msg = (struct esched_publish_msg *)data;
         if (in_data_len < (ctrl_len + msg->submit_msg.event_info.msg_len)) {
-            sched_err("In_data_len is invalid. (devid=%u; in_data_len=%u; msg_len=%u; ctrl_len=%u)\n",
-                devid, in_data_len,  msg->submit_msg.event_info.msg_len, ctrl_len);
+            sched_err("In_data_len is invalid. (devid=%u; in_data_len=%u; msg_len=%u; ctrl_len=%u)\n", devid,
+                      in_data_len, msg->submit_msg.event_info.msg_len, ctrl_len);
             return -EINVAL;
         }
     } else {
@@ -393,7 +397,7 @@ STATIC int esched_ctrl_msg_recv(u32 devid, void *data, u32 in_data_len, u32 out_
     int ret;
     struct sched_numa_node *node = NULL;
 
-    ret =esched_ctrl_msg_para_check(devid, data, in_data_len, real_out_len);
+    ret = esched_ctrl_msg_para_check(devid, data, in_data_len, real_out_len);
     if (ret != 0) {
         return -EINVAL;
     }
@@ -423,8 +427,8 @@ STATIC int esched_ctrl_msg_recv(u32 devid, void *data, u32 in_data_len, u32 out_
     }
 
     if ((ret != 0) && !((msg->type == ESCHED_MSG_TYPE_REMOTE_QUERY_GID) && (ret == DRV_ERROR_UNINIT))) {
-        sched_warn("invoke the sched_publish_event_proxy not success. (devid=%u; type=%d; ret=%d)\n",
-            devid, msg->type, ret);
+        sched_warn("invoke the sched_publish_event_proxy not success. (devid=%u; type=%d; ret=%d)\n", devid, msg->type,
+                   ret);
     }
     node->curr_msg.msg_type = ESCHED_MSG_TYPE_MAX_NUM;
     msg->error_code = ret;

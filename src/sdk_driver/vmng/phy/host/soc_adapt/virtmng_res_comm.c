@@ -81,8 +81,8 @@ STATIC int vmngh_alloc_vdev_ctrl_comm(u32 dev_id, u32 vfid, struct vmng_ctrl_msg
         vmng_err("Get vf info failed. (dev_id=%u;vfid=%u;ret=%d)\n", dev_id, vfid, ret);
         return ret;
     }
-    ret = memcpy_s(&ctrl->memory, sizeof(struct vmng_vf_memory_info),
-                   &info->enquire.each.memory, sizeof(struct vmng_vf_memory_info));
+    ret = memcpy_s(&ctrl->memory, sizeof(struct vmng_vf_memory_info), &info->enquire.each.memory,
+                   sizeof(struct vmng_vf_memory_info));
     if (ret != 0) {
         vmng_err("Memcpy failed. (ret=%d;dev_id=%u;vfid=%u)\n", ret, dev_id, vfid);
         return ret;
@@ -233,6 +233,7 @@ int vmngh_container_client_offline_comm(u32 dev_id, u32 vfid)
 int vmngh_res_disable_sriov_comm(u32 dev_id, u32 boot_mode)
 {
     struct vmng_ctrl_msg_info info;
+    struct vmngh_pci_dev *pdev = NULL;
     int ret;
 
     if (dev_id >= ASCEND_PDEV_MAX_NUM) {
@@ -254,9 +255,11 @@ int vmngh_res_disable_sriov_comm(u32 dev_id, u32 boot_mode)
         }
     }
 
+    pdev = vmngh_get_pdev_from_unit(dev_id);
     info.dev_id = dev_id;
     info.vfid = 0;
-    info.sriov_status = VMNGH_PF_SRIOV_DISABLE;
+    info.sriov_msg_info.sriov_status = VMNGH_PF_SRIOV_DISABLE;
+    info.sriov_msg_info.vm_full_spec_enable = pdev->vm_full_spec_enable;
     ret = vmngh_vdev_msg_send(&info, VMNG_CTRL_MSG_TYPE_SRIOV_INFO);
     if (ret != 0) {
         vmng_err("Send vdev msg failed, (dev_id=%u,ret=%d).\n", dev_id, ret);
@@ -269,6 +272,7 @@ int vmngh_res_disable_sriov_comm(u32 dev_id, u32 boot_mode)
 int vmngh_res_enable_sriov_comm(u32 dev_id, u32 boot_mode)
 {
     struct vmng_ctrl_msg_info info;
+    struct vmngh_pci_dev *pdev = NULL;
     int ret;
 
     if (dev_id >= ASCEND_PDEV_MAX_NUM) {
@@ -276,7 +280,7 @@ int vmngh_res_enable_sriov_comm(u32 dev_id, u32 boot_mode)
         return VMNG_ERR;
     }
 
-    if (devdrv_get_connect_protocol(dev_id) == CONNECT_PROTOCOL_UB){
+    if (devdrv_get_connect_protocol(dev_id) == CONNECT_PROTOCOL_UB) {
         vmng_info("Connect protocol is UB, no need to enable sriov. (dev_id=%u)\n", dev_id);
     } else {
         if (devdrv_sriov_enable(dev_id, boot_mode) != VMNG_OK) {
@@ -286,9 +290,11 @@ int vmngh_res_enable_sriov_comm(u32 dev_id, u32 boot_mode)
         ka_system_ssleep(1);
     }
 
+    pdev = vmngh_get_pdev_from_unit(dev_id);
     info.dev_id = dev_id;
     info.vfid = 0;
-    info.sriov_status = VMNGH_PF_SRIOV_ENABLE;
+    info.sriov_msg_info.sriov_status = VMNGH_PF_SRIOV_ENABLE;
+    info.sriov_msg_info.vm_full_spec_enable = pdev->vm_full_spec_enable;
     ret = vmngh_vdev_msg_send(&info, VMNG_CTRL_MSG_TYPE_SRIOV_INFO);
     if (ret != 0) {
         vmng_err("Send vdev msg failed, (dev_id=%u, ret=%d).\n", dev_id, ret);
@@ -323,7 +329,7 @@ int vmngh_enquire_soc_resource_comm(u32 dev_id, u32 vfid, struct vmng_soc_resour
     }
 
     ret = memcpy_s(info, sizeof(struct vmng_soc_resource_enquire), &info_msg.enquire,
-        sizeof(struct vmng_soc_resource_enquire));
+                   sizeof(struct vmng_soc_resource_enquire));
     if (ret != EOK) {
         vmng_err("Call memcpy_s err.(dev_id=%u; vfid=%u)\n", info_msg.dev_id, info_msg.vfid);
         return VMNG_ERR;
@@ -358,7 +364,7 @@ int vmngh_refresh_vdev_resource_comm(u32 dev_id, u32 vfid, struct vmng_soc_resou
     }
 
     ret = memcpy_s(&info_msg.refresh, sizeof(struct vmng_soc_resource_refresh), info,
-        sizeof(struct vmng_soc_resource_refresh));
+                   sizeof(struct vmng_soc_resource_refresh));
     if (ret != EOK) {
         vmng_err("Call memcpy_s err.(dev_id=%u; vfid=%u; vdev_id=%u)\n", dev_id, vfid, dev_id);
         return VMNG_ERR;
@@ -374,4 +380,3 @@ int vmngh_refresh_vdev_resource_comm(u32 dev_id, u32 vfid, struct vmng_soc_resou
 
     return VMNG_OK;
 }
-

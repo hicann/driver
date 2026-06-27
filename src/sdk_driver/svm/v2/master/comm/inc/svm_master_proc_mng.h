@@ -13,7 +13,7 @@
 #ifndef SVM_MASTER_PROC_MNG_H
 #define SVM_MASTER_PROC_MNG_H
 
-#include <linux/types.h>
+#include "ka_type.h"
 
 #include "svm_res_idr.h"
 #include "svm_task_dev_res_mng.h"
@@ -26,7 +26,7 @@ struct devmm_proc_async_copy_record {
     bool is_async_allow[SVM_MAX_AGENT_NUM];
 };
 
-#define DEVMM_CONVERT_TREE_NUM   128ul
+#define DEVMM_CONVERT_TREE_NUM 128ul
 struct devmm_convert_dma {
     ka_rb_root_t dma_rbtree;
     ka_spinlock_t rbtree_lock;
@@ -89,4 +89,3 @@ void devmm_proc_dev_set_async_allow(struct devmm_svm_process *svm_proc, u32 devi
 bool devmm_proc_dev_is_async_allow(struct devmm_svm_process *svm_proc, u32 devid);
 
 #endif /* SVM_MASTER_PROC_MNG_H */
-

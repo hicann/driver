@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2025. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -29,23 +29,11 @@
 #include "async_copy_task.h"
 #include "async_copy_ctx.h"
 
-#ifndef EMU_ST /* Simulation ST is required and cannot be deleted. */
-#define SVM_ASYNC_TASK_MAX_ID       KA_UINT_MAX
-#else
-#define SVM_ASYNC_TASK_MAX_ID       8ULL
-#endif
-
 static u32 async_copy_feature_id;
 
-void async_copy_set_feature_id(u32 id)
-{
-    async_copy_feature_id = id;
-}
+void async_copy_set_feature_id(u32 id) { async_copy_feature_id = id; }
 
-u32 async_copy_get_feature_id(void)
-{
-    return async_copy_feature_id;
-}
+u32 async_copy_get_feature_id(void) { return async_copy_feature_id; }
 
 struct async_copy_ctx *async_copy_ctx_get(u32 udevid, int tgid)
 {
@@ -65,10 +53,7 @@ struct async_copy_ctx *async_copy_ctx_get(u32 udevid, int tgid)
     return ctx;
 }
 
-void async_copy_ctx_put(struct async_copy_ctx *ctx)
-{
-    svm_task_ctx_put(ctx->task_ctx);
-}
+void async_copy_ctx_put(struct async_copy_ctx *ctx) { svm_task_ctx_put(ctx->task_ctx); }
 
 static void async_copy_ctx_init(struct async_copy_ctx *ctx)
 {
@@ -119,8 +104,7 @@ int async_copy_ctx_create(u32 udevid, int tgid)
         return -EINVAL;
     }
 
-    ret = svm_task_set_feature_priv(task_ctx, async_copy_feature_id, "async_copy",
-        (void *)ctx, async_copy_ctx_release);
+    ret = svm_task_set_feature_priv(task_ctx, async_copy_feature_id, "async_copy", (void *)ctx, async_copy_ctx_release);
     if (ret != 0) {
         svm_task_ctx_put(task_ctx);
         svm_kvfree(ctx);
@@ -139,9 +123,7 @@ void async_copy_ctx_destroy(struct async_copy_ctx *ctx)
     svm_task_ctx_put(ctx->task_ctx); /* with init pair */
 }
 
-void async_copy_ctx_show(struct async_copy_ctx *ctx, ka_seq_file_t *seq)
-{
-}
+void async_copy_ctx_show(struct async_copy_ctx *ctx, ka_seq_file_t *seq) {}
 
 int async_copy_init_task(u32 udevid, int tgid, void *start_time)
 {
@@ -199,8 +181,5 @@ int async_copy_init(void)
 }
 DECLAER_FEATURE_AUTO_INIT(async_copy_init, FEATURE_LOADER_STAGE_6);
 
-void async_copy_uninit(void)
-{
-}
+void async_copy_uninit(void) {}
 DECLAER_FEATURE_AUTO_UNINIT(async_copy_uninit, FEATURE_LOADER_STAGE_6);
-

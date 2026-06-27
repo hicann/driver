@@ -16,63 +16,34 @@
 
 #include "dvt.h"
 #include "kvmdt.h"
+#include "ka_memory_pub.h"
 
-struct vdavinci_pin_info {
-    unsigned long gfn;
-    int npage;
-    struct page **pages;
-};
-
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4,18,0))
-#define IS_VDAVINCI_KERNEL_VERSION_SUPPORT      1
-#else
-#define IS_VDAVINCI_KERNEL_VERSION_SUPPORT      0
-#endif
-
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5,17,0))
-#define vdavinci_for_each_memslot(slot, slots, iter)  \
-    kvm_for_each_memslot(slot, iter, slots)
-#else
-#define vdavinci_for_each_memslot(slot, slots, iter)  \
-    for ((iter) = 0; (iter) < (slots)->used_slots && ((slot) = &(slots)->memslots[(iter)]); (iter)++)
-#endif
-
-#if (LINUX_VERSION_CODE < KERNEL_VERSION(5,0,0))
-#define DMA_MAPPING_ERROR       (~(dma_addr_t)0)
-#endif
-
-extern struct mdev_driver hw_vdavinci_mdev_driver;
-
-struct device *get_mdev_parent(struct mdev_device *mdev);
-bool device_is_mdev(struct device *dev);
-struct mdev_device *get_mdev_device(struct device *dev);
-void *get_mdev_drvdata(struct device *dev);
-void set_mdev_drvdata(struct device *dev, void *data);
-void vdavinci_iommu_unmap(struct device *dev, unsigned long iova, size_t size);
-int vdavinci_iommu_map(struct device *dev, unsigned long iova,
+void vdavinci_iommu_unmap(ka_device_t *dev, unsigned long iova, size_t size);
+int vdavinci_iommu_map(ka_device_t *dev, unsigned long iova,
                        phys_addr_t paddr, size_t size, int prot);
-void vdavinci_unpin_pages(struct hw_vdavinci *vdavinci, struct vdavinci_pin_info *pin_info);
-int vdavinci_pin_pages(struct hw_vdavinci *vdavinci, struct vdavinci_pin_info *pin_info);
-int vdavinci_register_device(struct device *dev,
-                             struct hw_dvt *dvt,
+void vdavinci_unpin_pages(struct hw_vdavinci *vdavinci, ka_pin_info *pin_info);
+int vdavinci_pin_pages(struct hw_vdavinci *vdavinci, ka_pin_info *pin_info);
+int vdavinci_register_device(ka_device_t *dev,
+                             ka_dvt_dev *dvt,
                              const char *name);
-void vdavinci_unregister_device(struct device *dev, struct hw_dvt *dvt);
-int vdavinci_register_driver(struct mdev_driver *drv);
-void vdavinci_unregister_driver(struct mdev_driver *drv);
-void vdavinci_init_iova_domain(struct iova_domain *iovad);
-bool is_dev_dma_coherent(struct device *dev);
-uuid_le vdavinci_get_uuid(struct mdev_device *mdev);
-void vdavinci_use_mm(struct mm_struct *mm);
-void vdavinci_unuse_mm(struct mm_struct *mm);
+void vdavinci_unregister_device(ka_device_t *dev, ka_dvt_dev *dvt);
 int vdavinci_register_vfio_group(struct hw_vdavinci *vdavinci);
 void vdavinci_unregister_vfio_group(struct hw_vdavinci *vdavinci);
-__u64 vdavinci_eventfd_signal(struct eventfd_ctx *ctx, __u64 n);
-bool vdavinci_refcount_mutex_lock(struct kref *ref, struct mutex *lock);
-struct cpumask *vdavinci_get_cpumask(struct task_struct *task);
 int vdavinci_rw_gpa(struct kvmdt_guest_info *info, unsigned long gpa,
                     void *buf, unsigned long len, bool write);
-void vdavinci_copy_reserved_iova(struct iova_domain *from, struct iova_domain *to);
-struct dentry *vdavinci_debugfs_create_dir(const char *name,
-                                           struct dentry *parent);
-void vdavinci_debugfs_remove(struct dentry *dentry);
+ka_dentry_t *vdavinci_debugfs_create_dir(const char *name,
+                                           ka_dentry_t *parent);
+void vdavinci_debugfs_remove(ka_dentry_t *dentry);
+void vdavinci_put_vfio_device(struct hw_vdavinci *vdavinci);
+int vdavinci_get_vfio_device(struct hw_vdavinci *vdavinci);
+int vdavinci_iommu_notify(void *data, unsigned long iova, unsigned long size);
+int vdavinci_group_notify(void *data, void *group_data);
+void vdavinci_vfio_dma_unmap(void *data, u64 iova, u64 length);
+struct hw_vdavinci *get_vdavinci_from_dev(ka_device_t *dev);
+struct hw_vdavinci *get_vdavinci_from_mdev(ka_mdev_device_t *mdev);
+void vdavinci_check(struct hw_vdavinci *vdavinci);
+bool vdavinci_pfn_is_vpmem(unsigned long pfn);
+bool vdavinci_gfn_is_vpmem(struct hw_vdavinci *vdavinci, unsigned long gfn);
+void vfio_ops_module_exit(void);
+int vfio_ops_module_init(void);
 #endif

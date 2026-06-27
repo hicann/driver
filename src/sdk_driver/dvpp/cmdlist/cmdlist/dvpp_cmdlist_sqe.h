@@ -3,7 +3,7 @@
 #ifndef CMDLIST_DVPP_CMDLIST_SQE_H
 #define CMDLIST_DVPP_CMDLIST_SQE_H
 
-#include "drv_type.h"
+#include "ka_type.h"
 
 struct dvpp_sqe {
     uint32_t filed[16];

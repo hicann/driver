@@ -116,7 +116,7 @@ STATIC int devdrv_manager_get_container_devids(unsigned long arg)
     struct devdrv_manager_devids *hccl_devinfo = NULL;
     int ret;
 
-    if ((current->nsproxy == NULL) || (!devdrv_manager_container_is_host_system(ka_task_get_current_mnt_ns()))) {
+    if ((ka_task_get_current_nsproxy() == NULL) || (!devdrv_manager_container_is_host_system(ka_task_get_current_mnt_ns()))) {
         devdrv_drv_err("Do not have permission in container or virtual machine.\n");
         return -EPERM;
     }
@@ -229,6 +229,8 @@ STATIC int devdrv_manager_get_devinfo(unsigned long arg)
     hccl_devinfo->ai_cpu_core_id = dev_info->ai_cpu_core_id;
     hccl_devinfo->ai_cpu_bitmap = (vfid == 0) ? dev_info->aicpu_occupy_bitmap : aicpu_occupy_bitmap;
     hccl_devinfo->aicore_bitmap[0] = dev_info->aicore_bitmap;
+    hccl_devinfo->vector_core_bitmap[0] = dev_info->vector_core_bitmap;
+    hccl_devinfo->vector_core_bitmap[1] = dev_info->vector_core_bitmap_h;
     hccl_devinfo->hardware_version = dev_info->hardware_version;
 #ifndef CFG_FEATURE_REFACTOR
     pdata = dev_info->pdata;
@@ -268,8 +270,7 @@ STATIC int devdrv_manager_get_devinfo(unsigned long arg)
     ret = strncpy_s(hccl_devinfo->soc_version, SOC_VERSION_LENGTH,
                     dev_info->pg_info.spePgInfo.socVersion, SOC_VERSION_LEN - 1);
 #else
-    ret = strncpy_s(hccl_devinfo->soc_version, SOC_VERSION_LENGTH,
-                    dev_info->soc_version, SOC_VERSION_LEN - 1);
+    ret = strncpy_s(hccl_devinfo->soc_version, SOC_VERSION_LENGTH, dev_info->soc_version, SOC_VERSION_LEN - 1);
 #endif
     if (ret != 0) {
         devdrv_drv_err("Strncpy_s soc_version failed. (ret=%d)\n", ret);
@@ -411,8 +412,10 @@ STATIC int devdrv_fop_bind_host_pid(ka_file_t *filep, unsigned int cmd, unsigned
         }
     }
 
-    ret = devdrv_bind_hostpid(para_info, cost_stat);
+    ret = devdrv_bind_hostpid(para_info, &cost_stat);
     if (ret) {
+        cost_stat.bind_end = ka_system_ktime_get();
+        bind_cost_print(&cost_stat);
         devdrv_drv_err("bind_hostpid error. dev_id:%u, ret:%d, host_pid:%d, cp_type:%d, current_pid:%d\n",
             node_id, ret, para_info.host_pid, para_info.cp_type, ka_task_get_current_tgid());
         return ret;

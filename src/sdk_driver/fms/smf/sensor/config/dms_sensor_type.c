@@ -399,6 +399,7 @@ DMS_DECLARE_SEN_TYPE_END;
         {0x0d, 0x00, "link error"},
         {0x0e, 0x01, "multi bit ecc error can be corrected"},
         {0x0f, 0x00, "dq parity error"},
+        {0x10, 0x01, "data poison"},
 DMS_DECLARE_SEN_TYPE_END;
 
     /* Authorization Expiration Sensor,type:C1,offset:00h-01h,all:2 */
@@ -470,6 +471,9 @@ DMS_DECLARE_SEN_TYPE_END;
         { 0x01, 2,  "TX/RX events are lost" },
         { 0x02, 1,  "bus overload" },
         { 0x03, 2,  "bus bus-off state" },
+        { 0x04, 2,  "spmi bus error" },
+        { 0x05, 2,  "buffer overflow" },
+        { 0x06, 2,  "invalid packet" },
 DMS_DECLARE_SEN_TYPE_END;
 
     /* Check Sensor,type:C6 */
@@ -552,6 +556,17 @@ DMS_DECLARE_SEN_TYPE_END;
         { 0x07, 2,  "Pmc event or data upload error" },
 DMS_DECLARE_SEN_TYPE_END;
 
+    /* UB,type:D5 */
+    DMS_DECLARE_SEN_TYPE_START(0xD5)
+        { 0x00, 0,  "remote data exception occurs during remote memory synchronous access" },
+        { 0x01, 2,  "port exception occurs during remote memory synchronous access" },
+        { 0x02, 2,  "network timeout occurs during remote memory synchronous access" },
+        { 0x03, 2,  "remote configuration error occurs during remote memory synchronous access" },
+        { 0x04, 2,  "local configuration error occurs during remote memory synchronous access" },
+        { 0x05, 2,  "abnormal remote resource space synchronization access" },
+        { 0x06, 2,  "network exception occurred during remote memory synchronous access" },
+DMS_DECLARE_SEN_TYPE_END;
+
     /* Note: that the sensor type name must be less than 20 bytes */
 static struct tag_dms_sensor_type g_dms_sensor_type[] = {
     DMS_ADD_SENSOR_TYPE(0x01, "Temperature"),
@@ -598,7 +613,8 @@ static struct tag_dms_sensor_type g_dms_sensor_type[] = {
     DMS_ADD_SENSOR_TYPE(0xCA, "Dispatch Sensor"),
     DMS_ADD_SENSOR_TYPE(0xCB, "SMMU Sensor"),
     DMS_ADD_SENSOR_TYPE(0xD0, "General Software"),
-    DMS_ADD_SENSOR_TYPE(0xD1, "Chip Hardware")
+    DMS_ADD_SENSOR_TYPE(0xD1, "Chip Hardware"),
+    DMS_ADD_SENSOR_TYPE(0xD5, "UB Sensor"),
 };
 
 int dms_get_sensor_type_count(void)

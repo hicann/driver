@@ -27,7 +27,6 @@
 #define STATIC static
 #endif
 
-
 struct hdcdrv_epoll *hdc_epoll = NULL;
 
 STATIC int hdcdrv_epoll_vm_resource_check(u32 vm_id)
@@ -76,8 +75,8 @@ STATIC long hdcdrv_epoll_fd_check(int fd, u32 docker_id, u64 check_pid)
     return HDCDRV_OK;
 }
 
-STATIC void hdcdrv_epoll_alloc_fd_init(struct hdcdrv_ctx *ctx, struct hdcdrv_epoll_fd *epfd,
-    struct hdcdrv_event *event, const struct hdcdrv_cmd_epoll_alloc_fd *cmd)
+STATIC void hdcdrv_epoll_alloc_fd_init(struct hdcdrv_ctx *ctx, struct hdcdrv_epoll_fd *epfd, struct hdcdrv_event *event,
+                                       const struct hdcdrv_cmd_epoll_alloc_fd *cmd)
 {
     if (epfd != NULL) { /* just for clear fortify warning */
         epfd->pid = cmd->pid;
@@ -164,7 +163,6 @@ STATIC long hdcdrv_epoll_alloc_fd(struct hdcdrv_ctx *ctx, struct hdcdrv_cmd_epol
 
 free_event:
     hdcdrv_kvfree((void **)&event, KA_SUB_MODULE_TYPE_3);
-    event = NULL;
     hdcdrv_err_limit("VM no more epfd. (vm_id=%u)\n", vm_id);
     return HDCDRV_NO_EPOLL_FD;
 }
@@ -182,7 +180,6 @@ STATIC void hdcdrv_epoll_clear_service(struct hdcdrv_epoll_fd *epfd)
             service->epfd = NULL;
             ka_list_del(&node->list);
             hdcdrv_kvfree((void **)&node, KA_SUB_MODULE_TYPE_3);
-            node = NULL;
         }
     }
 }
@@ -201,7 +198,6 @@ STATIC void hdcdrv_epoll_clear_session(struct hdcdrv_epoll_fd *epfd)
             session->epfd = NULL;
             ka_list_del(&node->list);
             hdcdrv_kvfree((void **)&node, KA_SUB_MODULE_TYPE_3);
-            node = NULL;
         }
     }
 }
@@ -218,7 +214,6 @@ STATIC void hdcdrv_epoll_free_fd_handle(struct hdcdrv_epoll_fd *epfd)
         ka_task_mutex_lock(&epfd->mutex);
         epfd->valid = HDCDRV_INVALID;
         hdcdrv_kvfree((void **)&epfd->events, KA_SUB_MODULE_TYPE_3);
-        epfd->events = NULL;
         hdc_epoll->vm_alloc_cnt[epfd->vm_id]--;
         ka_wmb();
         ka_task_wake_up_interruptible(&epfd->wq);
@@ -263,16 +258,16 @@ void hdcdrv_epoll_recycle_fd(struct hdcdrv_ctx *ctx)
     }
 }
 
-STATIC long hdcdrv_epoll_add_service(struct hdcdrv_epoll_fd *epfd, struct hdcdrv_epoll_list_node *node,
-    int dev_id, int service_type, u32 fid)
+STATIC long hdcdrv_epoll_add_service(struct hdcdrv_epoll_fd *epfd, struct hdcdrv_epoll_list_node *node, int dev_id,
+                                     int service_type, u32 fid)
 {
     struct hdcdrv_service *service = NULL;
     long ret;
 
     ret = hdcdrv_dev_para_check(dev_id, service_type);
     if (ret != 0) {
-        hdcdrv_err("Calling hdcdrv_dev_para_check failed. (epfd=%d; dev_id=%d; service_type=%d)\n",
-                   epfd->fd, dev_id, service_type);
+        hdcdrv_err("Calling hdcdrv_dev_para_check failed. (epfd=%d; dev_id=%d; service_type=%d)\n", epfd->fd, dev_id,
+                   service_type);
         return ret;
     }
 
@@ -284,21 +279,21 @@ STATIC long hdcdrv_epoll_add_service(struct hdcdrv_epoll_fd *epfd, struct hdcdrv
 
     service = hdcdrv_search_service((u32)dev_id, fid, service_type, epfd->pid);
     if (service->listen_status == HDCDRV_INVALID) {
-        hdcdrv_err("listen_status is invalid. (epfd=%d; dev_id=%d; fid=%u; service_type=%d)\n",
-            epfd->fd, dev_id, fid, service_type);
+        hdcdrv_err("listen_status is invalid. (epfd=%d; dev_id=%d; fid=%u; service_type=%d)\n", epfd->fd, dev_id, fid,
+                   service_type);
         return HDCDRV_ERR;
     }
 
     if (service->listen_pid != epfd->pid) {
         hdcdrv_err("Current pid is invalid. (pid=%llu; epfd=%d; dev_id=%d; service_type=%d; "
-            "epfd_pid=%llu; listen_pid=%llu)\n",
-            hdcdrv_get_pid(), epfd->fd, dev_id, service_type, epfd->pid, service->listen_pid);
+                   "epfd_pid=%llu; listen_pid=%llu)\n",
+                   hdcdrv_get_pid(), epfd->fd, dev_id, service_type, epfd->pid, service->listen_pid);
         return HDCDRV_NO_PERMISSION;
     }
 
     if (service->epfd != NULL) {
-        hdcdrv_err("Service has been polled. (epfd=%d; dev_id=%d; fid=%u; service_type=%d; pid=%llu)\n",
-            epfd->fd, dev_id, fid, service_type, epfd->pid);
+        hdcdrv_err("Service has been polled. (epfd=%d; dev_id=%d; fid=%u; service_type=%d; pid=%llu)\n", epfd->fd,
+                   dev_id, fid, service_type, epfd->pid);
         return HDCDRV_ERR;
     }
 
@@ -309,8 +304,7 @@ STATIC long hdcdrv_epoll_add_service(struct hdcdrv_epoll_fd *epfd, struct hdcdrv
     return HDCDRV_OK;
 }
 
-STATIC long hdcdrv_epoll_add_session(struct hdcdrv_epoll_fd *epfd, struct hdcdrv_epoll_list_node *node,
-    int session_fd)
+STATIC long hdcdrv_epoll_add_session(struct hdcdrv_epoll_fd *epfd, struct hdcdrv_epoll_list_node *node, int session_fd)
 {
     struct hdcdrv_session *session = NULL;
     long ret;
@@ -322,14 +316,14 @@ STATIC long hdcdrv_epoll_add_session(struct hdcdrv_epoll_fd *epfd, struct hdcdrv
 
     session = &hdc_ctrl->sessions[session_fd];
     if (hdcdrv_get_session_status(session) == HDCDRV_SESSION_STATUS_IDLE) {
-        hdcdrv_warn("Session has already closed. (epfd=%d; session=%d)\n",  epfd->fd, session_fd);
+        hdcdrv_warn("Session has already closed. (epfd=%d; session=%d)\n", epfd->fd, session_fd);
         return HDCDRV_SESSION_HAS_CLOSED;
     }
 
     ret = hdcdrv_check_session_owner(session, epfd->pid);
     if (ret != 0) {
-        hdcdrv_err("Current pid is invalid. (pid=%llu; epfd=%d; session_fd=%d)\n",
-            hdcdrv_get_pid(), epfd->fd, session_fd);
+        hdcdrv_err("Current pid is invalid. (pid=%llu; epfd=%d; session_fd=%d)\n", hdcdrv_get_pid(), epfd->fd,
+                   session_fd);
         return ret;
     }
 
@@ -345,13 +339,14 @@ STATIC long hdcdrv_epoll_add_session(struct hdcdrv_epoll_fd *epfd, struct hdcdrv
     return HDCDRV_OK;
 }
 
-STATIC long hdcdrv_epoll_add_event(struct hdcdrv_epoll_fd *epfd,
-    const struct hdcdrv_event *event, int para1, int para2, u32 fid)
+STATIC long hdcdrv_epoll_add_event(struct hdcdrv_epoll_fd *epfd, const struct hdcdrv_event *event, int para1, int para2,
+                                   u32 fid)
 {
     struct hdcdrv_epoll_list_node *node = NULL;
     long ret;
 
-    node = (struct hdcdrv_epoll_list_node *)hdcdrv_kvmalloc(sizeof(struct hdcdrv_epoll_list_node), KA_SUB_MODULE_TYPE_3);
+    node = (struct hdcdrv_epoll_list_node *)hdcdrv_kvmalloc(sizeof(struct hdcdrv_epoll_list_node),
+                                                            KA_SUB_MODULE_TYPE_3);
     if (node == NULL) {
         hdcdrv_err("Calling malloc failed.\n");
         return HDCDRV_ERR;
@@ -388,7 +383,6 @@ STATIC long hdcdrv_epoll_add_event(struct hdcdrv_epoll_fd *epfd,
 error:
     ka_task_mutex_unlock(&epfd->mutex);
     hdcdrv_kvfree((void **)&node, KA_SUB_MODULE_TYPE_3);
-    node = NULL;
     return ret;
 }
 
@@ -424,7 +418,6 @@ STATIC long hdcdrv_epoll_del_service(struct hdcdrv_epoll_fd *epfd, int dev_id, u
                 service->epfd = NULL;
                 ka_list_del(&node->list);
                 hdcdrv_kvfree((void **)&node, KA_SUB_MODULE_TYPE_3);
-                node = NULL;
                 ret = HDCDRV_OK;
                 break;
             }
@@ -455,7 +448,6 @@ STATIC long hdcdrv_epoll_del_session(struct hdcdrv_epoll_fd *epfd, int session_f
                 session->epfd = NULL;
                 ka_list_del(&node->list);
                 hdcdrv_kvfree((void **)&node, KA_SUB_MODULE_TYPE_3);
-                node = NULL;
                 ret = HDCDRV_OK;
                 break;
             }
@@ -465,8 +457,8 @@ STATIC long hdcdrv_epoll_del_session(struct hdcdrv_epoll_fd *epfd, int session_f
     return ret;
 }
 
-STATIC long hdcdrv_epoll_del_event(struct hdcdrv_epoll_fd *epfd,
-    const struct hdcdrv_event *event, int para1, int para2, u32 fid)
+STATIC long hdcdrv_epoll_del_event(struct hdcdrv_epoll_fd *epfd, const struct hdcdrv_event *event, int para1, int para2,
+                                   u32 fid)
 {
     long ret;
 
@@ -613,7 +605,7 @@ STATIC int hdcdrv_epoll_event_num(struct hdcdrv_epoll_fd *epfd)
 }
 
 STATIC int hdcdrv_copy_event_to_user(const struct hdcdrv_epoll_fd *epfd, int event_num,
-    struct hdcdrv_cmd_epoll_wait *cmd, int mode)
+                                     struct hdcdrv_cmd_epoll_wait *cmd, int mode)
 {
     u64 copy_size;
 
@@ -630,14 +622,15 @@ STATIC int hdcdrv_copy_event_to_user(const struct hdcdrv_epoll_fd *epfd, int eve
 
     copy_size = (u64)sizeof(struct hdcdrv_event) * (unsigned int)cmd->ready_event;
     if (copy_size > ((u64)sizeof(struct hdcdrv_event) * (unsigned int)epfd->size)) {
-        hdcdrv_err("ka_base_copy_to_user is invalid. (ready_event=%d; size=%d; mode=%d)\n", cmd->ready_event, epfd->size, mode);
+        hdcdrv_err("ka_base_copy_to_user is invalid. (ready_event=%d; size=%d; mode=%d)\n", cmd->ready_event,
+                   epfd->size, mode);
         return HDCDRV_PARA_ERR;
     }
 
 #ifdef CFG_FEATURE_VFIO
     if (epfd->vm_id != HDCDRV_DEFAULT_VM_ID) {
-        if (memcpy_s(cmd->vevent, HDCDRV_VEPOLL_EVENT_MAX * sizeof(struct hdcdrv_event), epfd->events,
-            copy_size) != EOK) {
+        if (memcpy_s(cmd->vevent, HDCDRV_VEPOLL_EVENT_MAX * sizeof(struct hdcdrv_event), epfd->events, copy_size) !=
+            EOK) {
             hdcdrv_err("Calling memcpy_s failed. (epfd=%d)\n", epfd->fd);
             return HDCDRV_ERR;
         }
@@ -646,13 +639,14 @@ STATIC int hdcdrv_copy_event_to_user(const struct hdcdrv_epoll_fd *epfd, int eve
 #endif
 
     if (mode == HDCDRV_MODE_USER) {
-        if ((cmd->event != NULL) && ka_base_copy_to_user((void __ka_user *)cmd->event, epfd->events, (unsigned long)copy_size)) {
+        if ((cmd->event != NULL) &&
+            ka_base_copy_to_user((void __ka_user *)cmd->event, epfd->events, (unsigned long)copy_size)) {
             hdcdrv_err("Calling ka_base_copy_to_user failed. (epfd=%d)\n", epfd->fd);
             return HDCDRV_COPY_FROM_USER_FAIL;
         }
     } else {
-        if (memcpy_s(cmd->event, (unsigned long)cmd->maxevents * sizeof(struct hdcdrv_event),
-            epfd->events, copy_size) != EOK) {
+        if (memcpy_s(cmd->event, (unsigned long)cmd->maxevents * sizeof(struct hdcdrv_event), epfd->events,
+                     copy_size) != EOK) {
             hdcdrv_err("Calling memcpy_s failed. (epfd=%d)\n", epfd->fd);
             return HDCDRV_ERR;
         }
@@ -709,7 +703,7 @@ retry:
         if (ret < 0) {
 #ifndef DRV_UT
             HDC_LOG_WARN_LIMIT(&g_epoll_wait_print_cnt, &g_epoll_wait_jiffies,
-                "Calling ka_task_wait_event_interruptible_timeout.(epfd %d; ret=%ld)\n", fd, ret);
+                               "Calling ka_task_wait_event_interruptible_timeout.(epfd %d; ret=%ld)\n", fd, ret);
 #endif
             return ret;
         }
@@ -745,8 +739,8 @@ int *hdcdrv_epoll_get_dev_id_ptr(union hdcdrv_cmd *cmd_data)
         return NULL;
     }
 }
-long hdcdrv_epoll_operation(struct hdcdrv_ctx *ctx, u32 drv_cmd, union hdcdrv_cmd *cmd_data,
-    bool *copy_to_user_flag, u32 fid)
+long hdcdrv_epoll_operation(struct hdcdrv_ctx *ctx, u32 drv_cmd, union hdcdrv_cmd *cmd_data, bool *copy_to_user_flag,
+                            u32 fid)
 {
     long ret = HDCDRV_OK;
 
@@ -814,8 +808,8 @@ KA_EXPORT_SYMBOL_GPL(hdcdrv_kernel_epoll_free_fd);
 para1; input, service:dev_id, session:session_fd
 para2; input, service:service_type, session:magic_num
 */
-long hdcdrv_kernel_epoll_ctl(int epfd, int magic_num, int op,
-    unsigned int event, int para1, const char *para2, unsigned int para2_len)
+long hdcdrv_kernel_epoll_ctl(int epfd, int magic_num, int op, unsigned int event, int para1, const char *para2,
+                             unsigned int para2_len)
 {
     struct hdcdrv_cmd_epoll_ctl cmd;
 
@@ -830,7 +824,7 @@ long hdcdrv_kernel_epoll_ctl(int epfd, int magic_num, int op,
     cmd.pid = hdcdrv_get_pid();
     cmd.op = op;
     cmd.para1 = para1;
-    cmd.para2 = *(int*)para2;
+    cmd.para2 = *(int *)para2;
     cmd.event.events = event;
     /*lint -e571 */
     cmd.event.data = (u64)para1;
@@ -841,9 +835,9 @@ long hdcdrv_kernel_epoll_ctl(int epfd, int magic_num, int op,
 }
 KA_EXPORT_SYMBOL_GPL(hdcdrv_kernel_epoll_ctl);
 
-long hdcdrv_kernel_epoll_wait(int epfd, int magic_num, int timeout, int *event_num,
-    unsigned int event[], unsigned int event_len, int para1[],
-    unsigned int para1_len, int para2[], unsigned int para2_len)
+long hdcdrv_kernel_epoll_wait(int epfd, int magic_num, int timeout, int *event_num, unsigned int event[],
+                              unsigned int event_len, int para1[], unsigned int para1_len, int para2[],
+                              unsigned int para2_len)
 {
     struct hdcdrv_cmd_epoll_wait cmd;
     long ret;
@@ -864,7 +858,7 @@ long hdcdrv_kernel_epoll_wait(int epfd, int magic_num, int timeout, int *event_n
     cmd.timeout = timeout;
     cmd.maxevents = *event_num;
     cmd.event = hdcdrv_kzalloc((u64)(sizeof(struct hdcdrv_event) * (u64)(unsigned int)cmd.maxevents),
-        KA_GFP_KERNEL | __KA_GFP_ACCOUNT, KA_SUB_MODULE_TYPE_3);
+                               KA_GFP_KERNEL | __KA_GFP_ACCOUNT, KA_SUB_MODULE_TYPE_3);
     if (cmd.event == NULL) {
         hdcdrv_err("Calling malloc failed.\n");
         return HDCDRV_ERR;
@@ -875,8 +869,7 @@ long hdcdrv_kernel_epoll_wait(int epfd, int magic_num, int timeout, int *event_n
         *event_num = cmd.ready_event;
         events = (struct hdcdrv_event *)cmd.event;
         for (i = 0; i < cmd.ready_event; i++) {
-            if ((unsigned int)i >= event_len || (unsigned int)i >= para1_len ||
-                (unsigned int)i >= para2_len) {
+            if ((unsigned int)i >= event_len || (unsigned int)i >= para1_len || (unsigned int)i >= para2_len) {
                 hdcdrv_kfree(cmd.event, KA_SUB_MODULE_TYPE_3);
                 cmd.event = NULL;
                 hdcdrv_err("ready_event length is invalid.\n");
@@ -903,9 +896,8 @@ int hdcdrv_epoll_init(struct hdcdrv_epoll *epolls)
     hdc_epoll = epolls;
 
     for (i = 0; i < (int)HDCDRV_DOCKER_MAX_NUM; i++) {
-        hdc_epoll->epoll_docks[i].epfds =
-            (struct hdcdrv_epoll_fd *)hdcdrv_vzalloc(sizeof(struct hdcdrv_epoll_fd) * HDCDRV_EPOLL_FD_NUM,
-                KA_SUB_MODULE_TYPE_0);
+        hdc_epoll->epoll_docks[i].epfds = (struct hdcdrv_epoll_fd *)hdcdrv_vzalloc(
+            sizeof(struct hdcdrv_epoll_fd) * HDCDRV_EPOLL_FD_NUM, KA_SUB_MODULE_TYPE_0);
         if (hdc_epoll->epoll_docks[i].epfds == NULL) {
             hdcdrv_err("Calling alloc epfds failed. (dock num=%d)\n", i);
             goto epoll_fd_alloc_fail;

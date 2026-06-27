@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2025. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -36,18 +36,16 @@ static struct svm_mmu_notifier_ctx *svm_mmu_notifier_ctx_alloc(void)
     return mn_ctx;
 }
 
-static void svm_mmu_notifier_ctx_free(struct svm_mmu_notifier_ctx *mn_ctx)
-{
-    svm_kfree(mn_ctx);
-}
+static void svm_mmu_notifier_ctx_free(struct svm_mmu_notifier_ctx *mn_ctx) { svm_kfree(mn_ctx); }
 
 static void svm_mmu_notifier_mem_recycle(ka_vm_area_struct_t *vma, int tgid)
 {
     /*  munmap full range, but not depopulate all mem. */
     u64 recycle_size = svm_mem_recycle(vma, tgid);
     if (recycle_size > 0) {
-        svm_warn("Unnormal munmap, recycle. (vm_start=0x%lx; vm_end=0x%lx; recycle_size=0x%llx)\n",
-            ka_mm_get_vm_start(vma), ka_mm_get_vm_end(vma), recycle_size);
+        svm_warn(
+            "Unnormal munmap, recycle. (vm_start=0x%lx; vm_end=0x%lx; recycle_size=0x%llx)\n", ka_mm_get_vm_start(vma),
+            ka_mm_get_vm_end(vma), recycle_size);
     }
 }
 
@@ -61,8 +59,8 @@ static void svm_mmu_notifier_mem_recycle(ka_vm_area_struct_t *vma, int tgid)
    we only recycle mem when user not depopulate all mem before munmap full range,
       munmap partly range will recycle in svm_vma_open
 */
-static int _svm_notifier_invalid_start(ka_mmu_notifier_t *mn, ka_mm_struct_t *mm,
-    unsigned long start, unsigned long end, bool blockable)
+static int _svm_notifier_invalid_start(
+    ka_mmu_notifier_t *mn, ka_mm_struct_t *mm, unsigned long start, unsigned long end, bool blockable)
 {
     struct svm_mmu_notifier_ctx *mn_ctx = ka_container_of(mn, struct svm_mmu_notifier_ctx, mn);
     ka_vm_area_struct_t *vma = mn_ctx->vma;
@@ -102,7 +100,7 @@ KA_DEFINE_MMU_NOTIFIER_INVALIDATE_RANGE_START_FN(_svm_notifier_invalid_start)
 
 ka_mmu_notifier_ops_t svm_mmu_notifier = {
     KA_MM_MMU_NOTIFIER_OPS_INIT_INVALIDATE_RANGE_START(_svm_notifier_invalid_start) /* For user munmap. */
-    .release = svm_notifier_release, /* For task exit. */
+        .release = svm_notifier_release,                                            /* For task exit. */
 };
 
 int svm_mmu_notifier_register(ka_mm_struct_t *mm, ka_vm_area_struct_t *vma, struct svm_mmu_notifier_ctx **mn_ctx)
@@ -134,4 +132,3 @@ void svm_mmu_notifier_unregister(struct svm_mmu_notifier_ctx *mn_ctx)
     ka_mm_mmu_notifier_unregister(&mn_ctx->mn, mn_ctx->vma->vm_mm);
     svm_mmu_notifier_ctx_free(mn_ctx);
 }
-

@@ -13,6 +13,7 @@
 
 #include "ts_agent_vsq_worker.h"
 #include "securec.h"
+#include "ka_common_pub.h"
 #include "ts_agent_common.h"
 #include "ts_agent_log.h"
 #include "ts_agent_vsq_proc.h"
@@ -99,7 +100,7 @@ void destroy_all_vf_work_ctx(void)
 STATIC void proc_vsq_work(ka_work_struct_t *work)
 {
     vsq_work_ctx_t *work_ctx = NULL;
-    work_ctx = container_of(work, vsq_work_ctx_t, proc_work);
+    work_ctx = ka_container_of(work, vsq_work_ctx_t, proc_work);
     proc_vsq(&work_ctx->vsq_base_info);
 }
 #endif

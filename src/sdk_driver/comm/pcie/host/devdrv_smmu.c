@@ -20,7 +20,6 @@
 #include "devdrv_smmu.h"
 #include "pbl/pbl_uda.h"
 
-#ifdef CFG_FEATURE_AGENT_SMMU
 STATIC inline int devdrv_smmu_host_pa_range_check(phys_addr_t pa)
 {
     /* host valid phy address segment */
@@ -34,15 +33,17 @@ STATIC inline int devdrv_smmu_host_pa_range_check(phys_addr_t pa)
         return -ENOMEM;
     }
 }
-#endif
 
 int devdrv_smmu_iova_to_phys_proc(struct devdrv_pci_ctrl *pci_ctrl, ka_dma_addr_t *va, u32 va_cnt, phys_addr_t *pa)
 {
-#ifdef CFG_FEATURE_AGENT_SMMU
     struct devdrv_host_dma_addr_to_pa_cmd *cmd_data = NULL;
     u32 data_len;
     int ret;
     int i;
+
+    if (!devdrv_feature_is_support(pci_ctrl->features, DEVDRV_FEATURE_AGENT_SMMU)) {
+        return 0;
+    }
 
     if (pci_ctrl->connect_protocol != CONNECT_PROTOCOL_HCCS) {
         for (i = 0; i < va_cnt; i++) {
@@ -80,16 +81,26 @@ int devdrv_smmu_iova_to_phys_proc(struct devdrv_pci_ctrl *pci_ctrl, ka_dma_addr_
         }
     }
     devdrv_kfree(cmd_data);
-#endif
+
     return 0;
 }
 
 int devdrv_smmu_iova_to_phys(u32 dev_id, ka_dma_addr_t *va, u32 va_cnt, phys_addr_t *pa)
 {
-#ifdef CFG_FEATURE_AGENT_SMMU
     struct devdrv_pci_ctrl *pci_ctrl = NULL;
     int ret;
     u32 index_id;
+
+    (void)uda_udevid_to_add_id(dev_id, &index_id);
+    pci_ctrl = devdrv_get_bottom_half_pci_ctrl_by_id(index_id);
+    if (pci_ctrl == NULL) {
+        devdrv_err("Get pci_ctrl failed. (dev_id=%d)\n", dev_id);
+        return -EINVAL;
+    }
+
+    if (!devdrv_feature_is_support(pci_ctrl->features, DEVDRV_FEATURE_AGENT_SMMU)) {
+        return 0;
+    }
 
     if ((va == NULL) || (pa == NULL)) {
         devdrv_err("va or pa is null. (dev_id=%d)\n", dev_id);
@@ -99,28 +110,25 @@ int devdrv_smmu_iova_to_phys(u32 dev_id, ka_dma_addr_t *va, u32 va_cnt, phys_add
         devdrv_err("va_cnt is invalid. (dev_id=%d, va_cnt=%u)\n", dev_id, va_cnt);
         return -EINVAL;
     }
-    (void)uda_udevid_to_add_id(dev_id, &index_id);
-    pci_ctrl = devdrv_get_bottom_half_pci_ctrl_by_id(index_id);
-    if (pci_ctrl == NULL) {
-        devdrv_err("Get pci_ctrl failed. (dev_id=%d)\n", dev_id);
-        return -EINVAL;
-    }
 
     ret = devdrv_smmu_iova_to_phys_proc(pci_ctrl, va, va_cnt, pa);
     if (ret != 0) {
         devdrv_err("devdrv_smmu_iova_to_phys_proc failed. (dev_id=%d, ret=%d)\n", dev_id, ret);
         return ret;
     }
-#endif
+
     return 0;
 }
 KA_EXPORT_SYMBOL(devdrv_smmu_iova_to_phys);
 
 void devdrv_pdev_sid_init(struct devdrv_pci_ctrl *pci_ctrl)
 {
-#ifdef CFG_FEATURE_AGENT_SMMU
     struct devdrv_pci_ctrl *pci_ctrl_pf = NULL;
     int pf_dev_id, ret;
+
+    if (!devdrv_feature_is_support(pci_ctrl->features, DEVDRV_FEATURE_AGENT_SMMU)) {
+        return;
+    }
 
     if (pci_ctrl->connect_protocol != CONNECT_PROTOCOL_HCCS) {
         pci_ctrl->shr_para->sid = 0;
@@ -179,13 +187,14 @@ void devdrv_pdev_sid_init(struct devdrv_pci_ctrl *pci_ctrl)
     }
 
     devdrv_info("Get host pdev sid=0x%x, devid=%u.\n", pci_ctrl->shr_para->sid, pci_ctrl->dev_id);
-#endif
-    return;
 }
 
 void devdrv_pdev_sid_uninit(struct devdrv_pci_ctrl *pci_ctrl)
 {
-#ifdef CFG_FEATURE_AGENT_SMMU
+    if (!devdrv_feature_is_support(pci_ctrl->features, DEVDRV_FEATURE_AGENT_SMMU)) {
+        return;
+    }
+
     if (pci_ctrl->connect_protocol != CONNECT_PROTOCOL_HCCS) {
         return;
     }
@@ -196,5 +205,4 @@ void devdrv_pdev_sid_uninit(struct devdrv_pci_ctrl *pci_ctrl)
     }
 
     pci_ctrl->shr_para->sid = 0;
-#endif
 }

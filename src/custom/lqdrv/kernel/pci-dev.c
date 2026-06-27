@@ -63,7 +63,7 @@
 #define EXIST_FAULT_OFFSET 3145728
 #define CPU_BAR_BASE_OFFSET 36864
 #define EXIST_FAULT_FLAG_OFFSET 7340784
-#define HCCS_BASE_ADDR 0x400020412000
+#define HCCS_BASE_ADDR 0x600020412000
 #define HCCS_HEAD_OFFSET 30
 #define HCCS_START_TIME_OFFSET 31
 #define HCCS_OVERFLOW_FLAG_OFFSET 32
@@ -418,7 +418,7 @@ STATIC void copy_fault_from_mem(void)
     totalSize = CAPACITY * sizeof(FaultEventNodeTable);
     ret = memcpy_s(g_kernel_event_table, totalSize, g_exist_fault_mem.pmap_addr, totalSize);
     if (ret != 0) {
-        printk(KERN_ERR "[lqdcmi]copy_fault_from_mem memset_s fail\n");
+        printk(KA_KERN_ERR "[lqdcmi]copy_fault_from_mem memset_s fail\n");
     }
 }
 
@@ -487,7 +487,7 @@ STATIC int show_bar_map(struct pci_dev *pdev)
     data = ka_mm_readl(tc_pci_dev->bar_mem_addr);
     printk(KA_KERN_INFO "[lqdcmi]data = 0x%x\n", data);
     printk(KA_KERN_INFO "[lqdcmi]bar buf =  \n");
-    for (i = 0; i < 64; i++) { // 64 表示，dfx故障检测时用于分析前 256位信息是否正确
+    for (i = 0; i < 64; i++) { // 64 表示，dfx用于分析前 256位信息是否正确
         data = ka_mm_readl(tc_pci_dev->bar_mem_addr + sizeof(unsigned int) * i);
         printk(KA_KERN_INFO "[lqdcmi]0x%x\t", data);
     }
@@ -495,6 +495,7 @@ STATIC int show_bar_map(struct pci_dev *pdev)
     g_tcpci_info = tc_pci_dev;
     bar_flag = ka_mm_readl(g_tcpci_info->bar_mem_addr + sizeof(unsigned int));
     printk(KA_KERN_INFO "[lqdcmi]bar_flag:0x%x\n", bar_flag);
+    printk(KA_KERN_INFO "[lqdcmi]bar_mem_addr=%p\n", g_tcpci_info->bar_mem_addr + sizeof(unsigned int));
 
     if (bar_flag != 0x00000100) {
         printk(KA_KERN_ERR "[lqdcmi]bar_flag is not 0x00000100\n");
@@ -614,7 +615,6 @@ STATIC int tc_pci_map(void)
 
     base_addr = pci_resource_start(dev, 0); /* 获取的地址 cpu不能直接访问，需要映射为虚拟地址 */
     base_addr_len = pci_resource_len(dev, 0);
-
     if (base_addr_len < TOTAL_LEN || base_addr_len < CAPACITY * sizeof(FaultEventNodeTable) ||
         base_addr_len < sizeof(unsigned long)) {
         printk(KA_KERN_ERR "[lqdcmi]pci have no enough space, abort!\n");
@@ -645,14 +645,14 @@ STATIC int tc_pci_map(void)
     g_bmc_pci_mem.pmap_addr = (unsigned long *)ka_mm_ioremap(bar_cpu_base_add, bar_cpu_add_len);
     g_bmc_pci_mem.map_len = TOTAL_LEN;
     if (g_bmc_pci_mem.pmap_addr == NULL) {
-        printk(KA_KERN_ERR "[lqdcmi]ioremap BAR[4] reg base[0x%ux], size[0x%ux] failed\n", bar_reg_base, bar_cpu_add_len);
+        printk(KA_KERN_ERR "[lqdcmi]ka_mm_ioremap BAR[4] reg base[0x%ux], size[0x%ux] failed\n", bar_reg_base, bar_cpu_add_len);
         return -ENOMEM;
     }
 
     g_exist_fault_mem.pmap_addr = (unsigned long *)ka_mm_ioremap(bar_exist_fault_add, bar_exist_fault_add_len);
     g_exist_fault_mem.map_len = bar_exist_fault_add_len;
     if (g_exist_fault_mem.pmap_addr == NULL) {
-        printk(KA_KERN_ERR "[lqdcmi]ioremap BAR[4] reg base[0x%ux], size[0x%ux] failed\n",
+        printk(KA_KERN_ERR "[lqdcmi]ka_mm_ioremap BAR[4] reg base[0x%ux], size[0x%ux] failed\n",
                bar_reg_base, bar_exist_fault_add_len);
         goto fault_err;
     }
@@ -660,7 +660,7 @@ STATIC int tc_pci_map(void)
     g_bar_flag_mem.pmap_addr = (unsigned long *)ka_mm_ioremap(bar_flag_add, bar_flag_add_len);
     g_bar_flag_mem.map_len = bar_flag_add_len;
     if (g_bar_flag_mem.pmap_addr == NULL) {
-        printk(KA_KERN_ERR "[lqdcmi]ioremap BAR[4] reg base[0x%ux], size[0x%ux] failed\n", bar_reg_base, bar_flag_add_len);
+        printk(KA_KERN_ERR "[lqdcmi]ka_mm_ioremap BAR[4] reg base[0x%ux], size[0x%ux] failed\n", bar_reg_base, bar_flag_add_len);
         goto bar_err;
     }
 
@@ -672,10 +672,10 @@ STATIC int tc_pci_map(void)
     }
     return 0;
 bar_err:
-    iounmap((void *)(g_exist_fault_mem.pmap_addr));
+    ka_mm_iounmap((void *)(g_exist_fault_mem.pmap_addr));
     g_exist_fault_mem.pmap_addr = NULL;
 fault_err:
-    iounmap((void *)(g_bmc_pci_mem.pmap_addr));
+    ka_mm_iounmap((void *)(g_bmc_pci_mem.pmap_addr));
     g_bmc_pci_mem.pmap_addr = NULL;
 
     return -ENOMEM;
@@ -710,12 +710,12 @@ STATIC int tc_pci_enable(void)
 */
 STATIC int pci_init(void)
 {
-    int res  = tc_pci_enable();
+    int res = tc_pci_enable();
     if (res != 0) {
         printk(KA_KERN_ERR "[lqdcmi]pci init fail\n");
         return res;
     }
-    /* 这里不返回结果是由于故障检测过程中需要反复插入，存在已注册的情况，不影响后续功能的故障检测 */
+
     res = ka_pci_register_driver(&g_pci_driver);
     if (res) {
         printk(KA_KERN_ERR "[lqdcmi]pci init register driver fail.\n");
@@ -1426,9 +1426,9 @@ STATIC void initialize_locks(void)
 
 STATIC void destroy_locks(void)
 {
-    mutex_destroy(&shared_mem_mutex);
-    mutex_destroy(&kernel_fault_mem_lock);
-    mutex_destroy(&g_kernel_table_mutex);
+    ka_task_mutex_destroy(&shared_mem_mutex);
+    ka_task_mutex_destroy(&kernel_fault_mem_lock);
+    ka_task_mutex_destroy(&g_kernel_table_mutex);
 }
 
 STATIC int prepare_for_read_mem(void)
@@ -1477,7 +1477,7 @@ STATIC void cleanup_resources_common(void)
         }
         ka_mm_kfree(shm);
     }
-    mutex_unlock(&shared_mem_mutex);
+    ka_task_mutex_unlock(&shared_mem_mutex);
     destroy_locks();
 }
 
@@ -1524,7 +1524,7 @@ STATIC int tc_comm_cdev_init(void)
     if (pdev == NULL) {
         printk(KA_KERN_ERR "[lqdcmi]device create %s fail! \n", PCIE_DEV_NAME);
         cdev_del(&g_pcidev->cdev);
-        class_destroy(g_common_class);
+        ka_driver_class_destroy(g_common_class);
         g_common_class = NULL;
         return -1;
     }

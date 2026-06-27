@@ -18,6 +18,7 @@ target_sources(${OBJ_TOOL_COMMON}
         ${PROJ_DIR}/${BBOX_HOST_DIR}/utils/bbox_common.c
         ${PROJ_DIR}/${BBOX_HOST_DIR}/utils/bbox_system_api.c
         ${PROJ_DIR}/${BBOX_HOST_DIR}/utils/bbox_utils.c
+        ${PROJ_DIR}/${BBOX_HOST_DIR}/utils/bbox_feature.c
 )
 
 target_include_directories(${OBJ_TOOL_COMMON}
@@ -29,6 +30,12 @@ target_include_directories(${OBJ_TOOL_COMMON}
         ${DRIVER_USER_DIR}/inc/mmpa
         ${C_SEC_INCLUDE}
         ${DRIVER_USER_DIR}/msnpureport/inc/slog
+        ${DRIVER_KERNEL_DIR}/pbl/dev_urd/command/ioctl/
+        ${DRIVER_KERNEL_DIR}/dms/command/ioctl/
+        ${DRIVER_KERNEL_DIR}/pbl/uda/command/ioctl/
+        ${DRIVER_USER_DIR}/inc
+        ${DRIVER_USER_DIR}/inc/pbl
+        ${PROJ_DIR}/${BBOX_HOST_DIR}/../../../../pkg_inc/
 )
 
 target_compile_definitions(${OBJ_TOOL_COMMON} PUBLIC CFG_FEATURE_BBOX_HOST_LOG)

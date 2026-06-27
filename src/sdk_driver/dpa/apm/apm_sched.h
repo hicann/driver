@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2025. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -34,6 +34,6 @@ static inline void apm_try_cond_resched_by_time(unsigned long *pre_stamp, unsign
 
 static inline void apm_try_cond_resched(unsigned long *pre_stamp)
 {
-    apm_try_cond_resched_by_time(pre_stamp, 500);   /* 500ms */
+    apm_try_cond_resched_by_time(pre_stamp, 500); /* 500ms */
 }
 #endif /* APM_SCHED_H */

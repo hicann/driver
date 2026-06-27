@@ -73,6 +73,7 @@ int chown(const char *path, int owner, int group);
 #define FILE_PERMISSION_755 (S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH)
 #define MCU_LOG_PATH "/run/mcu_log/"
 #define MCU_UPDATE_TEMP_PATH "/run/mcu_update"
+#define VRD_UPGRADE_TEMP_PATH "/run/vrd_upgrade"
 #define CRL_PATH "/etc/hwsipcrl/ascendsip.crl"
 #define CRL_PATH_PSS "/etc/hwsipcrl/ascendsip_new.crl"
 #define CRL_SAVE_PATH "/etc/hwsipcrl/"

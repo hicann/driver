@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2025. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -24,7 +24,7 @@ static int casm_ubmem_add_src(u32 udevid, struct svm_global_va *src_va, struct c
     int ret;
 
     /* ub map src va to ubmmu with a spectial tid, so here we should pin src va */
-    ret = svm_smp_pin_mem(udevid, ka_task_get_current_tgid(), src_va->va, src_va->size);
+    ret = svm_smp_pin_mem(udevid, ka_task_get_current_tgid(), src_va->va, src_va->size, false);
     if (ret != 0) {
         svm_err("Smm pin failed. (udevid=%u; va=0x%llx; size=%llu)\n", udevid, src_va->va, src_va->size);
         return ret;
@@ -32,7 +32,7 @@ static int casm_ubmem_add_src(u32 udevid, struct svm_global_va *src_va, struct c
 
     ret = ubmem_map_client(udevid, src_va, &src_ex->updated_va);
     if ((ret != 0) || (src_ex->updated_va == 0)) { /* no ubmm map */
-        svm_smp_unpin_mem(udevid, ka_task_get_current_tgid(), src_va->va, src_va->size);
+        svm_smp_unpin_mem(udevid, ka_task_get_current_tgid(), src_va->va, src_va->size, false);
         if (ret != 0) {
             svm_err("Ubmm map failed. (udevid=%u; va=0x%llx; size=%llu)\n", udevid, src_va->va, src_va->size);
         }
@@ -53,14 +53,11 @@ static void casm_ubmem_del_src(u32 udevid, int tgid, struct svm_global_va *src_v
         }
 
         src_ex->updated_va = 0;
-        svm_smp_unpin_mem(udevid, tgid, src_va->va, src_va->size);
+        svm_smp_unpin_mem(udevid, tgid, src_va->va, src_va->size, false);
     }
 }
 
-static const struct svm_casm_src_ops casm_ubmem_ops = {
-    .add_src = casm_ubmem_add_src,
-    .del_src = casm_ubmem_del_src
-};
+static const struct svm_casm_src_ops casm_ubmem_ops = {.add_src = casm_ubmem_add_src, .del_src = casm_ubmem_del_src};
 
 int casm_ubmem_init(void)
 {
@@ -68,4 +65,3 @@ int casm_ubmem_init(void)
     return 0;
 }
 DECLAER_FEATURE_AUTO_INIT(casm_ubmem_init, FEATURE_LOADER_STAGE_6);
-

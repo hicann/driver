@@ -15,6 +15,7 @@
 #define __COMM_MSG_CHAN_H__
 
 #include "ka_memory_pub.h"
+#include "ka_base_pub.h"
 #include "comm_msg_chan_cmd.h"
 #include "pbl/pbl_soc_res_attr.h"
 #include "addr_trans.h"
@@ -188,15 +189,16 @@ void *agentdrv_get_msg_chan_priv(void *msg_chan);
 int devdrv_set_msg_chan_priv(void *msg_chan, void *priv);
 void *devdrv_get_msg_chan_priv(void *msg_chan);
 
-#define DEVDRV_VIRT_MACH_SIGN               0x503250
-#define DEVDRV_VIRT_PASS_THROUGH_MACH_FLAG  0x0           /* virtual machine passthrough flag */
-#define DEVDRV_HOST_PHY_MACH_FLAG           0x5a6b7c8d    /* host physical mathine flag */
-#define DEVDRV_HOST_VM_MACH_FLAG            0x1a2b3c4d    /* vm mathine flag */
-#define DEVDRV_HOST_CONTAINER_MACH_FLAG     0xa4b3c2d1    /* container mathine flag */
+#define DEVDRV_VIRT_MACH_SIGN 0x503250
+#define DEVDRV_VIRT_PASS_THROUGH_MACH_FLAG 0x0     /* virtual machine passthrough flag */
+#define DEVDRV_HOST_PHY_MACH_FLAG 0x5a6b7c8d       /* host physical mathine flag */
+#define DEVDRV_HOST_VM_MACH_FLAG 0x1a2b3c4d        /* vm mathine flag */
+#define DEVDRV_HOST_CONTAINER_MACH_FLAG 0xa4b3c2d1 /* container mathine flag */
 int devdrv_get_host_phy_mach_flag(u32 devid, u32 *host_flag);
 int devdrv_get_env_boot_type(u32 dev_id);
 int devdrv_get_env_boot_type_inner(u32 index_id);
 int devdrv_get_device_info(u32 devid, struct devdrv_base_device_info *device_info);
+int soc_get_dev_topology(unsigned int dev_id1, unsigned int dev_id2, int *topology_type);
 int devdrv_p2p_attr_op(struct devdrv_base_comm_p2p_attr *attr);
 int devdrv_get_pfvf_type_by_devid_inner(u32 index_id);
 int devdrv_get_pfvf_type_by_devid(u32 dev_id);
@@ -232,7 +234,7 @@ enum devdrv_rao_permission_type {
 };
 
 int devdrv_register_rao_client(u32 dev_id, enum devdrv_rao_client_type type, u64 va, u64 len,
-    enum devdrv_rao_permission_type perm);
+                               enum devdrv_rao_permission_type perm);
 int devdrv_unregister_rao_client(u32 dev_id, enum devdrv_rao_client_type type);
 int devdrv_rao_read(u32 dev_id, enum devdrv_rao_client_type type, u64 offset, u64 len);
 int devdrv_rao_write(u32 dev_id, enum devdrv_rao_client_type type, u64 offset, u64 len);
@@ -260,15 +262,13 @@ struct devdrv_ub_dev_info {
 };
 
 /* ********************* URMA_COPY API ********************** */
-enum devdrv_urma_copy_dir
-{
+enum devdrv_urma_copy_dir {
     LOCAL_TO_PEER = 0,
     PEER_TO_LOCAL,
     DIR_MAX
 };
 
-enum devdrv_urma_chan_type
-{
+enum devdrv_urma_chan_type {
     URMA_CHAN_TSDRV = 0,
     URMA_CHAN_COMMON,
     URMA_CHAN_BBOX,
@@ -278,7 +278,7 @@ enum devdrv_urma_chan_type
 struct devdrv_urma_copy {
     u64 len;
     u64 offset;
-    void *seg;  //struct ubcore_target_seg*
+    void *seg; // struct ubcore_target_seg*
 };
 
 struct devdrv_seg_info {
@@ -287,13 +287,13 @@ struct devdrv_seg_info {
     u32 mem_len;
     u64 va;
 };
-#define DEVDRV_ACCESS_LOCAL_ONLY    0x1
-#define DEVDRV_ACCESS_READ          (0x1 << 1)
-#define DEVDRV_ACCESS_WRITE         (0x1 << 2)
-#define DEVDRV_ACCESS_ATOMIC        (0x1 << 3)
+#define DEVDRV_ACCESS_LOCAL_ONLY 0x1
+#define DEVDRV_ACCESS_READ (0x1 << 1)
+#define DEVDRV_ACCESS_WRITE (0x1 << 2)
+#define DEVDRV_ACCESS_ATOMIC (0x1 << 3)
 
 /* UB urma copy */
-int devdrv_urma_copy(u32 dev_id, enum devdrv_urma_chan_type type, enum devdrv_urma_copy_dir dir, 
+int devdrv_urma_copy(u32 dev_id, enum devdrv_urma_chan_type type, enum devdrv_urma_copy_dir dir,
                      struct devdrv_urma_copy *local, struct devdrv_urma_copy *peer);
 
 /* register seg */
@@ -301,10 +301,11 @@ int devdrv_register_seg(u32 dev_id, struct devdrv_seg_info *info, void **tseg, s
 /* unregister seg */
 int devdrv_unregister_seg(u32 dev_id, void *tseg, size_t in_len);
 /* import seg */
-void* devdrv_import_seg(u32 dev_id, u32 peer_token, void *peer_seg, size_t in_len, size_t *out_len);
+void *devdrv_import_seg(u32 dev_id, u32 peer_token, void *peer_seg, size_t in_len, size_t *out_len);
 /* unimport seg */
 int devdrv_unimport_seg(u32 dev_id, void *peer_tseg, size_t in_len);
 
+int devdrv_send_vdm_msg(u32 dev_id);
 /* **************************** DMA_COPY API ******************************* */
 #define DEVDRV_DMA_DESC_FILL_CONTINUE 0
 #define DEVDRV_DMA_DESC_FILL_FINISH 1
@@ -366,37 +367,38 @@ struct devdrv_dma_node {
 
 /* sync DMA copy */
 int hal_kernel_devdrv_dma_sync_copy(u32 udevid, enum devdrv_dma_data_type type, u64 src, u64 dst, u32 size,
-                         enum devdrv_dma_direction direction);
+                                    enum devdrv_dma_direction direction);
 /* async DMA copy */
 int hal_kernel_devdrv_dma_async_copy(u32 udevid, enum devdrv_dma_data_type type, u64 src, u64 dst, u32 size,
-                          enum devdrv_dma_direction direction, struct devdrv_asyn_dma_para_info *para_info);
+                                     enum devdrv_dma_direction direction, struct devdrv_asyn_dma_para_info *para_info);
 /* sync DMA link copy */
 int hal_kernel_devdrv_dma_sync_link_copy(u32 udevid, enum devdrv_dma_data_type type, int wait_type,
-                              struct devdrv_dma_node *dma_node, u32 node_cnt);
+                                         struct devdrv_dma_node *dma_node, u32 node_cnt);
 /* async DMA link copy */
 int hal_kernel_devdrv_dma_async_link_copy(u32 udevid, enum devdrv_dma_data_type type, struct devdrv_dma_node *dma_node,
-                               u32 node_cnt, struct devdrv_asyn_dma_para_info *para_info);
+                                          u32 node_cnt, struct devdrv_asyn_dma_para_info *para_info);
 
 /* sync DMA copy assign dma chan */
-int hal_kernel_devdrv_dma_sync_copy_plus(u32 udevid, enum devdrv_dma_data_type type, int instance, u64 src, u64 dst, u32 size,
-                              enum devdrv_dma_direction direction);
+int hal_kernel_devdrv_dma_sync_copy_plus(u32 udevid, enum devdrv_dma_data_type type, int instance, u64 src, u64 dst,
+                                         u32 size, enum devdrv_dma_direction direction);
 /* async DMA copy assign dma chan */
-int hal_kernel_devdrv_dma_async_copy_plus(u32 udevid, enum devdrv_dma_data_type type, int instance, u64 src, u64 dst, u32 size,
-                               enum devdrv_dma_direction direction, struct devdrv_asyn_dma_para_info *para_info);
+int hal_kernel_devdrv_dma_async_copy_plus(u32 udevid, enum devdrv_dma_data_type type, int instance, u64 src, u64 dst,
+                                          u32 size, enum devdrv_dma_direction direction,
+                                          struct devdrv_asyn_dma_para_info *para_info);
 /* sync DMA link copy assign dma chan */
 int hal_kernel_devdrv_dma_sync_link_copy_plus(u32 udevid, enum devdrv_dma_data_type type, int wait_type, int instance,
-                                   struct devdrv_dma_node *dma_node, u32 node_cnt);
+                                              struct devdrv_dma_node *dma_node, u32 node_cnt);
 /* async DMA link copy assign dma chan */
 int hal_kernel_devdrv_dma_async_link_copy_plus(u32 udevid, enum devdrv_dma_data_type type, int instance,
-                                    struct devdrv_dma_node *dma_node, u32 node_cnt,
-                                    struct devdrv_asyn_dma_para_info *para_info);
+                                               struct devdrv_dma_node *dma_node, u32 node_cnt,
+                                               struct devdrv_asyn_dma_para_info *para_info);
 
 /* sync DMA link copy, pa copy */
 int hal_kernel_devdrv_dma_sync_link_copy_extend(u32 udevid, enum devdrv_dma_data_type type, int wait_type,
-    struct devdrv_dma_node *dma_node, u32 node_cnt);
+                                                struct devdrv_dma_node *dma_node, u32 node_cnt);
 /* sync DMA link copy assign dma chan, pa copy */
-int hal_kernel_devdrv_dma_sync_link_copy_plus_extend(u32 udevid, enum devdrv_dma_data_type type, int wait_type, int instance,
-    struct devdrv_dma_node *dma_node, u32 node_cnt);
+int hal_kernel_devdrv_dma_sync_link_copy_plus_extend(u32 udevid, enum devdrv_dma_data_type type, int wait_type,
+                                                     int instance, struct devdrv_dma_node *dma_node, u32 node_cnt);
 
 int devdrv_dma_done_schedule(u32 udevid, enum devdrv_dma_data_type type, int instance);
 
@@ -422,20 +424,24 @@ void *hal_kernel_devdrv_dma_zalloc_coherent(ka_device_t *dev, size_t size, ka_dm
 void hal_kernel_devdrv_dma_free_coherent(ka_device_t *dev, size_t size, void *addr, ka_dma_addr_t dma_addr);
 ka_dma_addr_t hal_kernel_devdrv_dma_map_single(ka_device_t *dev, void *ptr, size_t size, ka_dma_data_direction_t dir);
 void hal_kernel_devdrv_dma_unmap_single(ka_device_t *dev, ka_dma_addr_t addr, size_t size, ka_dma_data_direction_t dir);
-ka_dma_addr_t hal_kernel_devdrv_dma_map_page(ka_device_t *dev, ka_page_t *page,
-                                          size_t offset, size_t size, ka_dma_data_direction_t dir);
+ka_dma_addr_t hal_kernel_devdrv_dma_map_page(ka_device_t *dev, ka_page_t *page, size_t offset, size_t size,
+                                             ka_dma_data_direction_t dir);
 void hal_kernel_devdrv_dma_unmap_page(ka_device_t *dev, ka_dma_addr_t addr, size_t size, ka_dma_data_direction_t dir);
-ka_dma_addr_t devdrv_dma_map_resource(ka_device_t *dev, phys_addr_t phys_addr,
-                                   size_t size, ka_dma_data_direction_t dir, unsigned long attrs);
-void devdrv_dma_unmap_resource(ka_device_t *dev, ka_dma_addr_t addr, size_t size,
-                               ka_dma_data_direction_t dir, unsigned long attrs);
+ka_dma_addr_t hal_kernel_devdrv_dma_map_page_attrs(ka_device_t *dev, ka_page_t *page, size_t offset, size_t size,
+                                                   ka_dma_data_direction_t dir, u64 attrs);
+void hal_kernel_devdrv_dma_unmap_page_attrs(ka_device_t *dev, ka_dma_addr_t addr, size_t size,
+                                            ka_dma_data_direction_t dir, u64 attrs);
+ka_dma_addr_t devdrv_dma_map_resource(ka_device_t *dev, phys_addr_t phys_addr, size_t size, ka_dma_data_direction_t dir,
+                                      unsigned long attrs);
+void devdrv_dma_unmap_resource(ka_device_t *dev, ka_dma_addr_t addr, size_t size, ka_dma_data_direction_t dir,
+                               unsigned long attrs);
 
 int devdrv_dma_get_sq_cq_desc_size(u32 devid, u32 *sq_desc_size, u32 *cq_desc_size);
 int devdrv_dma_fill_desc_of_sq(u32 udevid, struct devdrv_dma_prepare *dma_prepare, struct devdrv_dma_node *dma_node,
                                u32 node_cnt, u32 fill_status);
 
-int devdrv_dma_fill_desc_of_sq_ext(u32 udevid, void *sq_base, struct devdrv_dma_node *dma_node,
-                                   u32 node_cnt, u32 fill_status);
+int devdrv_dma_fill_desc_of_sq_ext(u32 udevid, void *sq_base, struct devdrv_dma_node *dma_node, u32 node_cnt,
+                                   u32 fill_status);
 /* async DAM link prepare */
 struct devdrv_dma_prepare *devdrv_dma_link_prepare(u32 udevid, enum devdrv_dma_data_type type,
                                                    struct devdrv_dma_node *dma_node, u32 node_cnt, u32 fill_status);
@@ -444,13 +450,13 @@ int devdrv_dma_link_free(struct devdrv_dma_prepare *dma_prepare);
 int devdrv_dma_sqcq_desc_check(u32 devid, struct devdrv_dma_desc_info *dma_desc_info);
 int devdrv_dma_prepare_alloc_sq_addr(u32 udevid, u32 node_cnt, struct devdrv_dma_prepare *dma_prepare);
 void devdrv_dma_prepare_free_sq_addr(u32 udevid, struct devdrv_dma_prepare *dma_prepare);
-int hal_kernel_devdrv_dma_map_sg_cache(struct scatterlist *sg, int nents, dma_addr_t *dma_handle,
+int hal_kernel_devdrv_dma_map_sg_cache(ka_scatterlist_t *sg, int nents, dma_addr_t *dma_handle,
                                        enum dma_data_direction dir);
-void hal_kernel_devdrv_dma_unmap_sg_cache(struct scatterlist *sg, int nents, dma_addr_t dma_handle,
+void hal_kernel_devdrv_dma_unmap_sg_cache(ka_scatterlist_t *sg, int nents, dma_addr_t dma_handle,
                                           enum dma_data_direction dir);
-int hal_kernel_devdrv_dma_map_sg_no_cache(struct scatterlist *sg, int nents, dma_addr_t *dma_handle,
+int hal_kernel_devdrv_dma_map_sg_no_cache(ka_scatterlist_t *sg, int nents, dma_addr_t *dma_handle,
                                           enum dma_data_direction dir);
-void hal_kernel_devdrv_dma_unmap_sg_no_cache(struct scatterlist *sg, int nents, dma_addr_t dma_handle,
+void hal_kernel_devdrv_dma_unmap_sg_no_cache(ka_scatterlist_t *sg, int nents, dma_addr_t dma_handle,
                                              enum dma_data_direction dir);
 /* **************************** DMA_COPY API END ******************************* */
 
@@ -466,7 +472,7 @@ int agentdrv_register_p2p_msg_proc_func(enum agentdrv_p2p_msg_type msg_type, p2p
 
 /* local_devid:device devid, devid: host devid */
 int agentdrv_p2p_msg_send(u32 local_devid, u32 dst_host_udevid, enum agentdrv_p2p_msg_type msg_type, void *data,
-    u32 data_len, u32 in_len, u32 *out_len);
+                          u32 data_len, u32 in_len, u32 *out_len);
 
 /* devid: device devid, online_devid: host online devid, status: DEVDRV_DEV_* */
 typedef int (*devdrv_notify_func)(u32 devid, u32 notify_type, u32 online_devid, u32 status);
@@ -510,16 +516,17 @@ int agentdrv_unregister_s2s_msg_proc_func(enum agentdrv_s2s_msg_type msg_type);
 
 /* local_devid:recv_side devid, sdid: send_side sdid */
 int agentdrv_s2s_msg_send(u32 local_devid, u32 sdid, enum agentdrv_s2s_msg_type msg_type, u32 direction,
-    struct data_input_info *data_info);
+                          struct data_input_info *data_info);
 int agentdrv_s2s_async_msg_recv(u32 local_devid, u32 sdid, enum agentdrv_s2s_msg_type msg_type,
-    struct data_recv_info *data_info);
+                                struct data_recv_info *data_info);
 int devdrv_register_s2s_msg_proc_func(enum devdrv_s2s_msg_type msg_type, s2s_msg_recv func);
 int devdrv_unregister_s2s_msg_proc_func(enum devdrv_s2s_msg_type msg_type);
 int devdrv_s2s_msg_send(u32 devid, u32 sdid, enum devdrv_s2s_msg_type msg_type, u32 direction,
-    struct data_input_info *data_info);
+                        struct data_input_info *data_info);
 int devdrv_s2s_npu_link_check(u32 dev_id, u32 sdid);
 int devdrv_s2s_async_msg_recv(u32 devid, u32 sdid, enum devdrv_s2s_msg_type msg_type, struct data_recv_info *data_info);
 
+struct devdrv_trans_msg_chan_info;
 struct devdrv_comm_ops {
     ka_atomic_t ref_cnt;
     enum devdrv_communication_type comm_type;
@@ -529,7 +536,7 @@ struct devdrv_comm_ops {
     int (*register_common_msg_client)(const struct devdrv_common_msg_client *msg_client);
     int (*unregister_common_msg_client)(u32 devid, const struct devdrv_common_msg_client *msg_client);
     int (*common_msg_send)(u32 devid, void *data, u32 in_data_len, u32 out_data_len, u32 *real_out_len,
-        enum devdrv_common_msg_type msg_type);
+                           enum devdrv_common_msg_type msg_type);
     int (*get_boot_status)(u32 dev_id, u32 *boot_status);
     int (*get_com_status)(u32 devid, struct devdrv_comm_status_info *status);
     int (*get_host_phy_mach_flag)(u32 devid, u32 *host_flag);
@@ -542,62 +549,56 @@ struct devdrv_comm_ops {
     int (*prereset_assemble)(u32 dev_id);
     int (*rescan_atomic)(u32 dev_id);
     int (*unbind_atomic)(u32 dev_id);
-    int (*reset_atomic)(u32 dev_id);    
+    int (*reset_atomic)(u32 dev_id);
     int (*remove_atomic)(u32 dev_id);
     int (*rao_read)(u32 dev_id, enum devdrv_rao_client_type type, u64 offset, u64 len);
     int (*rao_write)(u32 dev_id, enum devdrv_rao_client_type type, u64 offset, u64 len);
     int (*register_s2s_msg)(enum devdrv_s2s_msg_type msg_type, s2s_msg_recv func);
     int (*unregister_s2s_msg)(enum devdrv_s2s_msg_type msg_type);
     int (*send_s2s_msg)(u32 devid, u32 sdid, enum devdrv_s2s_msg_type msg_type, u32 direction,
-        struct data_input_info *data_info);
-    int (*recv_s2s_async_msg)(u32 devid, u32 sdid, enum devdrv_s2s_msg_type msg_type,
-        struct data_recv_info *data_info);
+                        struct data_input_info *data_info);
+    int (*recv_s2s_async_msg)(u32 devid, u32 sdid, enum devdrv_s2s_msg_type msg_type, struct data_recv_info *data_info);
+    void *(*alloc_trans_queue)(u32 udevid, struct devdrv_trans_msg_chan_info *chan_info);
+    int (*realease_trans_queue)(void *msg_chan);
+    void (*ring_doorbell)(void *msg_chan);
+    void (*ring_cq_doorbell)(void *msg_chan);
 #else
     int (*register_non_trans_client)(const struct agentdrv_non_trans_msg_client *msg_client);
     int (*unregister_non_trans_client)(const struct agentdrv_non_trans_msg_client *msg_client);
     int (*register_common_msg_client)(const struct agentdrv_common_msg_client *msg_client);
     int (*unregister_common_msg_client)(const struct agentdrv_common_msg_client *msg_client);
     int (*common_msg_send)(u32 devid, void *data, u32 in_data_len, u32 out_data_len, u32 *real_out_len,
-        enum devdrv_common_msg_type msg_type);
+                           enum devdrv_common_msg_type msg_type);
     int (*get_remote_rx_msg_notify_irq)(void *msg_chan);
     int (*get_remote_tx_finish_notify_irq)(void *msg_chan);
-    void (*set_msg_chan_local_sq_head)(void *msg_chan, u32 head);
-    void* (*get_msg_chan_local_sq_tail)(void *msg_chan, u32 *tail);
     ka_dma_addr_t (*get_msg_chan_local_sq_tail_dma_addr)(void *msg_chan);
-    void (*move_msg_chan_local_sq_tail)(void *msg_chan);
-    bool (*msg_chan_local_sq_full_check)(void *msg_chan);
     ka_dma_addr_t (*get_msg_chan_host_sq_tail_dma_addr)(void *msg_chan);
-    void* (*get_msg_chan_local_cq_tail)(void *msg_chan);
     ka_dma_addr_t (*get_msg_chan_local_cq_tail_dma_addr)(void *msg_chan);
-    void (*move_msg_chan_local_cq_tail)(void *msg_chan);
     ka_dma_addr_t (*get_msg_chan_host_cq_tail_dma_addr)(void *msg_chan);
-    void* (*get_msg_chan_reserve_sq_head)(void *msg_chan, u32 *head);
-    void (*move_msg_chan_reserve_sq_head)(void *msg_chan);
-    void* (*get_msg_chan_reserve_cq_head)(void *msg_chan);
-    void (*move_msg_chan_reserve_cq_head)(void *msg_chan);
-    int (*send_p2p_msg)(u32 local_devid, u32 dst_host_udevid, enum agentdrv_p2p_msg_type type, void *data,
-                        u32 data_len, u32 in_len, u32 *out_len);
+    int (*send_p2p_msg)(u32 local_devid, u32 dst_host_udevid, enum agentdrv_p2p_msg_type type, void *data, u32 data_len,
+                        u32 in_len, u32 *out_len);
     int (*register_p2p_msg)(enum agentdrv_p2p_msg_type msg_type, p2p_msg_recv func);
     int (*register_dev_online)(devdrv_notify_func func);
     int (*register_s2s_msg)(enum agentdrv_s2s_msg_type msg_type, s2s_msg_recv func);
     int (*unregister_s2s_msg)(enum agentdrv_s2s_msg_type msg_type);
     int (*send_s2s_msg)(u32 local_devid, u32 sdid, enum agentdrv_s2s_msg_type msg_type, u32 direction,
-        struct data_input_info *data_info);
+                        struct data_input_info *data_info);
     int (*recv_s2s_async_msg)(u32 local_devid, u32 sdid, enum agentdrv_s2s_msg_type msg_type,
-        struct data_recv_info *data_info);
+                              struct data_recv_info *data_info);
 #endif
+    int (*send_vdm_msg)(u32 dev_id);
     int (*sync_msg_send)(void *msg_chan, void *data, u32 in_data_len, u32 out_data_len, u32 *real_out_len);
     int (*set_msg_chan_priv)(void *msg_chan, void *priv);
-    void* (*get_msg_chan_priv)(void* msg_chan);
+    void *(*get_msg_chan_priv)(void *msg_chan);
     int (*get_msg_chan_devid)(void *msg_chan);
     int (*get_connect_type)(u32 dev_id);
     int (*get_pfvf_type_by_devid)(u32 dev_id);
     bool (*mdev_vm_boot_mode)(u32 dev_id);
     bool (*sriov_support)(u32 dev_id);
-    int (*sriov_enable)(u32 dev_id, u32 boot_mode);     /* not must */
-    int (*sriov_disable)(u32 dev_id, u32 boot_mode);    /* not must */
+    int (*sriov_enable)(u32 dev_id, u32 boot_mode);  /* not must */
+    int (*sriov_disable)(u32 dev_id, u32 boot_mode); /* not must */
     int (*register_rao_client)(u32 dev_id, enum devdrv_rao_client_type type, u64 va, u64 len,
-        enum devdrv_rao_permission_type perm);
+                               enum devdrv_rao_permission_type perm);
     int (*unregister_rao_client)(u32 dev_id, enum devdrv_rao_client_type type);
     int (*get_all_device_count)(u32 *count);
     int (*get_device_probe_list)(u32 *devids, u32 *count);
@@ -611,13 +612,15 @@ struct devdrv_comm_ops {
     int (*get_bus_instance_eid)(u32 udevid, struct devdrv_pair_info_eid *eid);
     int (*get_ub_dev_id_info)(u32 dev_id, struct devdrv_dev_id_info *id_info);
     int (*addr_trans_cs_p2p)(u32 udevid, u32 peer_udevid, struct devdrv_addr_desc *addr_desc, u64 *trans_addr);
-    int (*urma_copy)(u32 dev_id, enum devdrv_urma_chan_type type, enum devdrv_urma_copy_dir dir, 
-        struct devdrv_urma_copy *local, struct devdrv_urma_copy *peer);
+    int (*addr_trans_p2l)(u32 udevid, struct devdrv_addr_desc *addr_desc, u64 *trans_addr);
+    int (*urma_copy)(u32 dev_id, enum devdrv_urma_chan_type type, enum devdrv_urma_copy_dir dir,
+                     struct devdrv_urma_copy *local, struct devdrv_urma_copy *peer);
     int (*register_seg)(u32 dev_id, struct devdrv_seg_info *info, void **tseg, size_t *out_len);
     int (*unregister_seg)(u32 dev_id, void *tseg, size_t in_len);
-    void* (*import_seg)(u32 dev_id, u32 peer_token, void *peer_seg, size_t in_len, size_t *out_len);
+    void *(*import_seg)(u32 dev_id, u32 peer_token, void *peer_seg, size_t in_len, size_t *out_len);
     int (*unimport_seg)(u32 dev_id, void *peer_tseg, size_t in_len);
-    int (*dma_sync_copy)(u32 udevid, enum devdrv_dma_data_type type, u64 src, u64 dst, u32 size, enum devdrv_dma_direction direction);
+    int (*dma_sync_copy)(u32 udevid, enum devdrv_dma_data_type type, u64 src, u64 dst, u32 size,
+                         enum devdrv_dma_direction direction);
     int (*dma_async_copy)(u32 udevid, enum devdrv_dma_data_type type, u64 src, u64 dst, u32 size,
                           enum devdrv_dma_direction direction, struct devdrv_asyn_dma_para_info *para_info);
     int (*dma_sync_link_copy)(u32 udevid, enum devdrv_dma_data_type type, int wait_type,
@@ -630,8 +633,9 @@ struct devdrv_comm_ops {
                                enum devdrv_dma_direction direction, struct devdrv_asyn_dma_para_info *para_info);
     int (*dma_sync_link_copy_plus)(u32 udevid, enum devdrv_dma_data_type type, int wait_type, int instance,
                                    struct devdrv_dma_node *dma_node, u32 node_cnt);
-    int (*dma_async_link_copy_plus)(u32 udevid, enum devdrv_dma_data_type type, int instance, struct devdrv_dma_node *dma_node,
-                                    u32 node_cnt, struct devdrv_asyn_dma_para_info *para_info);
+    int (*dma_async_link_copy_plus)(u32 udevid, enum devdrv_dma_data_type type, int instance,
+                                    struct devdrv_dma_node *dma_node, u32 node_cnt,
+                                    struct devdrv_asyn_dma_para_info *para_info);
     int (*dma_sync_link_copy_extend)(u32 udevid, enum devdrv_dma_data_type type, int wait_type,
                                      struct devdrv_dma_node *dma_node, u32 node_cnt);
     int (*dma_sync_link_copy_plus_extend)(u32 udevid, enum devdrv_dma_data_type type, int wait_type, int instance,
@@ -640,8 +644,8 @@ struct devdrv_comm_ops {
     int (*dma_get_sq_cq_desc_size)(u32 devid, u32 *sq_desc_size, u32 *cq_desc_size);
     int (*dma_fill_desc_of_sq)(u32 udevid, struct devdrv_dma_prepare *dma_prepare, struct devdrv_dma_node *dma_node,
                                u32 node_cnt, u32 fill_status);
-    int (*dma_fill_desc_of_sq_ext)(u32 udevid, void *sq_base, struct devdrv_dma_node *dma_node,
-                                   u32 node_cnt, u32 fill_status);
+    int (*dma_fill_desc_of_sq_ext)(u32 udevid, void *sq_base, struct devdrv_dma_node *dma_node, u32 node_cnt,
+                                   u32 fill_status);
     struct devdrv_dma_prepare *(*dma_link_prepare)(u32 udevid, enum devdrv_dma_data_type type,
                                                    struct devdrv_dma_node *dma_node, u32 node_cnt, u32 fill_status);
     int (*dma_link_free)(struct devdrv_dma_prepare *dma_prepare);
@@ -653,13 +657,17 @@ struct devdrv_comm_ops {
     void (*devdrv_dma_free_coherent)(ka_device_t *dev, size_t size, void *addr, ka_dma_addr_t dma_addr);
     ka_dma_addr_t (*devdrv_dma_map_single)(ka_device_t *dev, void *ptr, size_t size, ka_dma_data_direction_t dir);
     void (*devdrv_dma_unmap_single)(ka_device_t *dev, ka_dma_addr_t addr, size_t size, ka_dma_data_direction_t dir);
-    ka_dma_addr_t (*devdrv_dma_map_page)(ka_device_t *dev, ka_page_t *page,
-                                      size_t offset, size_t size, ka_dma_data_direction_t dir);
+    ka_dma_addr_t (*devdrv_dma_map_page)(ka_device_t *dev, ka_page_t *page, size_t offset, size_t size,
+                                         ka_dma_data_direction_t dir);
     void (*devdrv_dma_unmap_page)(ka_device_t *dev, ka_dma_addr_t addr, size_t size, ka_dma_data_direction_t dir);
-    ka_dma_addr_t (*devdrv_dma_map_resource)(ka_device_t *dev, phys_addr_t phys_addr,
-                                          size_t size, ka_dma_data_direction_t dir, unsigned long attrs);
-    void (*devdrv_dma_unmap_resource)(ka_device_t *dev, ka_dma_addr_t addr, size_t size,
-                                      ka_dma_data_direction_t dir, unsigned long attrs);
+    ka_dma_addr_t (*devdrv_dma_map_page_attrs)(ka_device_t *dev, ka_page_t *page, size_t offset, size_t size,
+                                               ka_dma_data_direction_t dir, u64 attrs);
+    void (*devdrv_dma_unmap_page_attrs)(ka_device_t *dev, ka_dma_addr_t addr, size_t size, ka_dma_data_direction_t dir,
+                                        u64 attrs);
+    ka_dma_addr_t (*devdrv_dma_map_resource)(ka_device_t *dev, phys_addr_t phys_addr, size_t size,
+                                             ka_dma_data_direction_t dir, unsigned long attrs);
+    void (*devdrv_dma_unmap_resource)(ka_device_t *dev, ka_dma_addr_t addr, size_t size, ka_dma_data_direction_t dir,
+                                      unsigned long attrs);
     int (*devdrv_dma_map_sg_cache)(ka_scatterlist_t *sg, int nents, ka_dma_addr_t *dma_handle,
                                    ka_dma_data_direction_t dir);
     void (*devdrv_dma_unmap_sg_cache)(ka_scatterlist_t *sg, int nents, ka_dma_addr_t dma_handle,
@@ -668,6 +676,21 @@ struct devdrv_comm_ops {
                                       ka_dma_data_direction_t dir);
     void (*devdrv_dma_unmap_sg_no_cache)(ka_scatterlist_t *sg, int nents, ka_dma_addr_t dma_handle,
                                          ka_dma_data_direction_t dir);
+    void (*set_sq_head)(void *msg_chan, u32 head);
+    void *(*get_sq_head)(void *msg_chan, u32 *head);
+    void (*move_sq_head)(void *msg_chan);
+    void *(*get_sq_tail)(void *msg_chan, u32 *tail);
+    void (*move_sq_tail)(void *msg_chan);
+    bool (*sq_full_check)(void *msg_chan);
+    void *(*get_cq_head)(void *msg_chan);
+    void (*move_cq_head)(void *msg_chan);
+    void *(*get_cq_tail)(void *msg_chan);
+    void (*move_cq_tail)(void *msg_chan);
+};
+
+struct devdrv_faultmgr_ops {
+    ka_atomic_t ref_cnt;
+    int (*devdrv_ubmem_fault_submit)(u32 dev_id, u32 event_type);
 };
 
 int devdrv_register_communication_ops(struct devdrv_comm_ops *ops);
@@ -688,4 +711,24 @@ int devdrv_get_token_val(u32 dev_id, u32 *token_val);
 
 int devdrv_process_pasid_add(u32 dev_id, u64 pasid);
 int devdrv_process_pasid_del(u32 dev_id, u64 pasid);
+
+void *devdrv_pcimsg_alloc_trans_queue(u32 udevid, struct devdrv_trans_msg_chan_info *chan_info);
+int devdrv_pcimsg_realease_trans_queue(void *msg_chan);
+void devdrv_msg_ring_doorbell(void *msg_chan);
+void devdrv_msg_ring_cq_doorbell(void *msg_chan);
+void *devdrv_get_msg_chan_host_sq_head(void *msg_chan, u32 *head);
+void devdrv_move_msg_chan_host_sq_head(void *msg_chan);
+void *devdrv_get_msg_chan_host_cq_head(void *msg_chan);
+/* msg chan operate */
+void devdrv_move_msg_chan_host_cq_head(void *msg_chan);
+void devdrv_set_msg_chan_slave_sq_head(void *msg_chan, u32 head);
+void *devdrv_get_msg_chan_slave_sq_tail(void *msg_chan, u32 *tail);
+void devdrv_move_msg_chan_slave_sq_tail(void *msg_chan);
+bool devdrv_msg_chan_slave_sq_full_check(void *msg_chan);
+void *devdrv_get_msg_chan_slave_cq_tail(void *msg_chan);
+void devdrv_move_msg_chan_slave_cq_tail(void *msg_chan);
+
+int devdrv_register_faultmgr_ops(struct devdrv_faultmgr_ops *ops);
+void devdrv_unregister_faultmgr_ops(void);
+int devdrv_soc_misc_submit_ubmem_event(u32 dev_id, u32 event_type);
 #endif /* __COMM_MSG_CHAN_H__ */

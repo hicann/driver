@@ -12,6 +12,6 @@
  */
 #ifndef TRS_TS_HB_H
 #define TRS_TS_HB_H
-#include <linux/types.h>
+#include "ka_type.h"
 int trs_set_ts_hb_status(u32 devid, u32 tsid, u32 status);
 #endif

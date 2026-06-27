@@ -22,6 +22,14 @@
 #define START_MSG 0
 #define END_MSG 1
 #define NPU_CORE_NUM 5
+#define COPY_TO_USER 1
+#define NOT_COPY_TO_USER 0
+
+struct ts_info_data {
+    u32 core_num;
+    u8 core_data[128]; // max support 128 core
+};
+
 
 int dms_ts_init(void);
 void dms_ts_uninit(void);

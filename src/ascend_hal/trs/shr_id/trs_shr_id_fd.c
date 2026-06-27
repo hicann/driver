@@ -19,7 +19,7 @@
 #include "trs_user_pub_def.h"
 
 #ifdef EMU_ST
-#define THREAD__  __thread
+#define THREAD__ __thread
 #else
 #define THREAD__
 #endif
@@ -30,40 +30,22 @@ static THREAD__ int shrid_fd = -1;
 static THREAD__ pid_t shrid_pid = -1;
 
 #ifndef EMU_ST
-static int _shrid_open(const char *pathname, int flags)
-{
-    return open(pathname, flags);
-}
+static int _shrid_open(const char *pathname, int flags) { return open(pathname, flags); }
 
-static int _shrid_close(int fd)
-{
-    return close(fd);
-}
+static int _shrid_close(int fd) { return close(fd); }
 
-static int _shrid_ioctl(int fd, unsigned int cmd, void *para)
-{
-    return ioctl(fd, cmd, para);
-}
+static int _shrid_ioctl(int fd, unsigned int cmd, void *para) { return ioctl(fd, cmd, para); }
 #else
 int _shrid_open(const char *pathname, int flags);
 int _shrid_close(int fd);
 int _shrid_ioctl(int fd, unsigned int cmd, void *para);
 #endif /* EMU_ST */
 
-static void shrid_set_pid(pid_t pid)
-{
-    shrid_pid = pid;
-}
+static void shrid_set_pid(pid_t pid) { shrid_pid = pid; }
 
-static int shrid_get_pid(void)
-{
-    return shrid_pid;
-}
+static int shrid_get_pid(void) { return shrid_pid; }
 
-void shrid_set_fd(int fd)
-{
-    shrid_fd = fd;
-}
+void shrid_set_fd(int fd) { shrid_fd = fd; }
 
 static int _shrid_get_fd(void)
 {
@@ -139,9 +121,35 @@ static int shrid_get_fd(void)
     return fd;
 }
 
+static int get_type_by_name(const char *name, int *id_type)
+{
+    u32 tgid, devid, tsid, tmp_type;
+    size_t name_len;
+    int ret;
+
+    name_len = strnlen(name, SHR_ID_NSM_NAME_SIZE);
+    if ((name_len == 0) || (name_len >= SHR_ID_NSM_NAME_SIZE)) {
+        trs_err("Length out of range. (name_len=%lu)\n", name_len);
+        return -EINVAL;
+    }
+
+    ret = sscanf_s(name, "%08x %08x %08x %08x", &tgid, &devid, &tsid, &tmp_type);
+    if (ret != 4) { /* 4 for parse nums */
+        trs_err("sscanf failed. (ret=%d)\n", ret);
+        return -EINVAL;
+    }
+
+    *id_type = (int)tmp_type;
+    if ((*id_type >= SHR_ID_TYPE_MAX) || (*id_type < 0)) {
+        trs_err("Para invalid. (id_type=%u)\n", *id_type);
+        return -EINVAL;
+    }
+    return 0;
+}
+
 drvError_t shrid_ioctl(u32 cmd, void *para)
 {
-    int fd, ret;
+    int fd, ret, type;
 
     fd = shrid_get_fd();
     if (fd < 0) {
@@ -156,6 +164,18 @@ drvError_t shrid_ioctl(u32 cmd, void *para)
         } else if (errno == EPERM) {
             return DRV_ERROR_OPER_NOT_PERMITTED;
         } else {
+            if ((errno == EACCES) && (cmd == SHR_ID_OPEN)){
+                ret = get_type_by_name(((struct shr_id_ioctl_info *)para)->name, &type);
+                if (ret != 0) {
+                    trs_err("get type by name failed. (ret=%d)\n", ret);
+                    return DRV_ERROR_IOCRL_FAIL;
+                }
+                if (type == SHR_ID_EVENT_TYPE) {
+                    trs_operation_not_supported_err_msg("halShrIdOpen", "event");
+                } else if (type == SHR_ID_NOTIFY_TYPE) {
+                    trs_operation_not_supported_err_msg("halShrIdOpen", "notify");
+                }
+            }
             trs_err("Ioctl failed. (ret=%d; cmd=%u).\n", errno, _IOC_NR(cmd));
             return DRV_ERROR_IOCRL_FAIL;
         }

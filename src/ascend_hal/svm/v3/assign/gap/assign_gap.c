@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * Copyright (c) 2026 Huawei Technologies Co., Ltd.
  * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -21,15 +21,18 @@
 #include "svm_apbi.h"
 #include "va_allocator.h"
 #include "normal_malloc.h"
-#include "svm_sub_event_type.h"
+#include "svm_sub_event_type_uk_msg.h"
 #include "svm_umc_client.h"
-#include "notice_gap_msg.h"
+#include "notice_gap_uk_msg.h"
+#include "svm_criu.h"
 
 #define DEFAULT_ASSIGN_GAP_SIZE (2ULL * SVM_BYTES_PER_MB)
 
 static u64 g_svm_host_gap_va = 0ULL;
 static u64 g_svm_host_gap_size = 0ULL;
-static int g_svm_host_gap_init_flag[SVM_MAX_DEV_NUM] = {0, };
+static int g_svm_host_gap_init_flag[SVM_MAX_DEV_NUM] = {
+    0,
+};
 
 static int assign_alloc_host_gap_va(u64 size, u64 *host_gap_va)
 {
@@ -101,8 +104,7 @@ static int assign_notice_host_gap_va(u32 devid, u64 host_gap_va, u64 size, u32 o
         .msg_in = (char *)(uintptr_t)&notice_gap_msg_msg,
         .msg_in_len = sizeof(struct svm_notice_gap_msg),
         .msg_out = NULL,
-        .msg_out_len = 0
-    };
+        .msg_out_len = 0};
 
     struct svm_apbi apbi;
     int ret;
@@ -227,6 +229,18 @@ static int assign_gap_dev_uninit(u32 devid)
     return 0;
 }
 
+static int svm_assign_gap_criu_reset(u32 devid, void *data)
+{
+    SVM_UNUSED(data);
+    assign_uninit_host_gap_va(devid);
+    return 0;
+}
+
+static const struct svm_criu_ops g_assign_gap_criu_ops = {
+    .name = "assign_gap",
+    .reset = svm_assign_gap_criu_reset,
+};
+
 void __attribute__((constructor)) assign_gap_init(void)
 {
     int ret;
@@ -239,5 +253,10 @@ void __attribute__((constructor)) assign_gap_init(void)
     ret = svm_register_ioctl_dev_uninit_pre_handle(assign_gap_dev_uninit);
     if (ret != DRV_ERROR_NONE) {
         svm_err("Register ioctl dev uninit post handle failed.\n");
+    }
+
+    ret = svm_criu_register_ops(&g_assign_gap_criu_ops);
+    if (ret != DRV_ERROR_NONE) {
+        svm_err("Register CRIU ops failed. (ret=%d)\n", ret);
     }
 }

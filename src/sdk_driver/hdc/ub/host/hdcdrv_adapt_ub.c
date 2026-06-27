@@ -95,6 +95,10 @@ long hdcdrv_ub_convert_id_from_vir_to_phy(u32 drv_cmd, union hdcdrv_cmd *cmd_dat
         case HDCDRV_CMD_CLOSE:
         case HDCDRV_CMD_GET_SESSION_UID:
         case HDCDRV_CMD_GET_SESSION_ATTR:
+        case HDCDRV_CMD_WAIT_CTRL_MSG:
+        case HDCDRV_CMD_SEND_CTRL_MSG:
+        case HDCDRV_CMD_INIT_CTRL_NODE:
+        case HDCDRV_CMD_UNINIT_CTRL_NODE:
             p_devid = &cmd_data->cmd_com.dev_id;
             break;
         default:
@@ -103,16 +107,6 @@ long hdcdrv_ub_convert_id_from_vir_to_phy(u32 drv_cmd, union hdcdrv_cmd *cmd_dat
     ret = hdcdrv_container_vir_to_phs_devid((u32)(*p_devid), (u32 *)p_devid, vfid);
 
     return ret;
-}
-
-void hdcdrv_close_remote_session_set_dst_engine(struct sched_published_event *event)
-{
-    event->event_info.dst_engine = CCPU_DEVICE;
-}
-
-void hdcdrv_notify_msg_release_set_dst_engine(struct sched_published_event *event)
-{
-    event->event_info.dst_engine = CCPU_HOST;
 }
 
 ka_page_t *hdcdrv_ub_alloc_pages_node(u32 dev_id, gfp_t gfp_mask, u32 order)
@@ -157,4 +151,66 @@ void hdcdrv_set_session_run_env_ub(struct hdcdrv_session *session, int run_env)
 {
     (void)session;
     (void)run_env;
+}
+
+int hdcdrv_ub_non_trans_ctrl_msg_send(u32 devid, void *data, u32 in_data_len, u32 out_data_len, u32 *real_out_len)
+{
+    int ret = 0;
+    struct hdcdrv_dev *hdc_dev = hdcdrv_ub_get_dev(devid);
+
+    if (hdc_dev == NULL) {
+        hdcdrv_err("hdc dev has been invalid. (dev_id=%u)\n", devid);
+        return HDCDRV_ERR;
+    }
+
+    ret = devdrv_sync_msg_send(hdc_dev->ctrl_msg_chan, data, in_data_len, out_data_len, real_out_len);
+
+    hdcdrv_put_dev(devid);
+    return ret;
+}
+
+STATIC int hdcdrv_non_trans_ctrl_msg_recv(void *msg_chan, void *data, u32 in_data_len, u32 out_data_len,
+                                          u32 *real_out_len)
+{
+    u32 devid = (u32)devdrv_get_msg_chan_devid(msg_chan);
+
+    return hdcdrv_ub_ctrl_msg_recv(devid, data, in_data_len, out_data_len, real_out_len);
+}
+
+STATIC struct devdrv_non_trans_msg_chan_info hdcdrv_ub_non_trans_msg_chan_info = {
+    .msg_type = devdrv_msg_client_hdc,
+    .flag = 0,
+    .level = DEVDRV_MSG_CHAN_LEVEL_HIGH,
+    .s_desc_size = HDCDRV_UB_NON_TRANS_MSG_S_DESC_SIZE,
+    .c_desc_size = HDCDRV_UB_NON_TRANS_MSG_C_DESC_SIZE,
+    .rx_msg_process = hdcdrv_non_trans_ctrl_msg_recv,
+};
+
+int hdcdrv_ub_init_msg_chan(struct hdcdrv_dev *hdc_dev)
+{
+    hdc_dev->ctrl_msg_chan = devdrv_pcimsg_alloc_non_trans_queue(hdc_dev->dev_id, &hdcdrv_ub_non_trans_msg_chan_info);
+    if (hdc_dev->ctrl_msg_chan == NULL) {
+        hdcdrv_err("Calling devdrv_pcimsg_alloc_non_trans_queue failed. (dev_id=%d)\n", hdc_dev->dev_id);
+        return HDCDRV_ERR;
+    }
+
+    return 0;
+}
+
+void hdcdrv_ub_uninit_msg_chan(struct hdcdrv_dev *hdc_dev)
+{
+    if (hdc_dev->ctrl_msg_chan != NULL) {
+        (void)devdrv_pcimsg_free_non_trans_queue(hdc_dev->ctrl_msg_chan);
+        hdc_dev->ctrl_msg_chan = NULL;
+    }
+}
+
+int hdcdrv_register_non_trans_msg_chan(void)
+{
+    return 0;
+}
+
+void hdcdrv_unregister_non_trans_msg_chan(void)
+{
+    return;
 }

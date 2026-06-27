@@ -17,6 +17,7 @@ target_sources(${LIB_BBOX_PROC}
     PRIVATE
         utils/bbox_common.c
         utils/bbox_system_api.c
+        utils/bbox_feature.c
 )
 
 target_include_directories(${LIB_BBOX_PROC}
@@ -30,6 +31,12 @@ target_include_directories(${LIB_BBOX_PROC}
         ${DRIVER_USER_DIR}/msnpureport/inc/slog
         ${C_SEC_INCLUDE}
         ${DRIVER_USER_DIR}/inc/mmpa
+        ${DRIVER_KERNEL_DIR}/pbl/dev_urd/command/ioctl/
+        ${DRIVER_USER_DIR}/inc
+        ${DRIVER_USER_DIR}/inc/pbl
+        ${BASE_DIR}/../../../../pkg_inc
+        ${DRIVER_KERNEL_DIR}/dms/command/ioctl/
+        ${DRIVER_KERNEL_DIR}/pbl/uda/command/ioctl/
 )
 
 target_link_libraries(${LIB_BBOX_PROC} PRIVATE

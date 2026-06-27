@@ -13,7 +13,7 @@
 #ifndef TRS_SEC_EH_INIT_H
 #define TRS_SEC_EH_INIT_H
 
-#include <linux/types.h>
+#include "ka_type.h"
 #include "trs_pub_def.h"
 
 int trs_ts_hw_init(struct trs_id_inst *inst);

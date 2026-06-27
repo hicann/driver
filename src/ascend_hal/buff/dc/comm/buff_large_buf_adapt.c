@@ -55,7 +55,7 @@ drvError_t buff_usr_alloc_large_buf(struct buff_req_mz_alloc_huge_buf *info)
     total_size = buff_calc_size(info->size, UNI_ALIGN_MIN, 0);
     start = buff_blk_alloc(info->grp_id, total_size, info->sp_flag, &blk_id); /* align 4k in kernel malloc */
     if (start == NULL) {
-        buff_event("Can not alloc. (len=%llx; sp_flag=%#llx)\n", total_size, info->sp_flag);
+        buff_event("Can not alloc. (len=%lx; sp_flag=%#llx)\n", total_size, info->sp_flag);
         ret = DRV_ERROR_OUT_OF_MEMORY;
         goto free_huge_mz;
     }
@@ -65,7 +65,7 @@ drvError_t buff_usr_alloc_large_buf(struct buff_req_mz_alloc_huge_buf *info)
 
     ret = add_self_buff_to_range(blk_id, info->grp_id, start, total_size, (uint64)(uintptr_t)huge_mz);
     if (ret != 0) {
-        buff_err("buff add to range failed, start %p len %llx\n", start, total_size);
+        buff_err("buff add to range failed, start %p len %lx\n", start, total_size);
         goto free_sp_res;
     }
 
@@ -83,8 +83,8 @@ drvError_t buff_usr_alloc_large_buf(struct buff_req_mz_alloc_huge_buf *info)
     proc_block_add(block);
     buff_scale_out(start, total_size);
 
-    buff_debug("Alloc. (large_size=%llu; flag=0x%llx; uva=0x%llx; start=0x%llx; blk_id=%u; devid=%d)\n",
-        info->size, info->sp_flag, info->buf_uva, (uint64)(uintptr_t)start, blk_id, info->devid);
+    buff_debug("Alloc. (large_size=%lu; flag=0x%llx; uva=0x%lx; start=0x%llx; blk_id=%u; devid=%d)\n", info->size,
+               info->sp_flag, info->buf_uva, (uint64)(uintptr_t)start, blk_id, info->devid);
 
     return DRV_ERROR_NONE;
 
@@ -111,8 +111,8 @@ drvError_t buff_usr_free_large_buf(void *huge_mng, struct buff_req_mz_free_huge_
     }
 
     buff_debug("Free. (large_size=%llu; start=0x%llx; blk_id=%u)\n",
-        (unsigned long long)huge_mz->area.mz_mem_total_size,
-        (unsigned long long)(uintptr_t)huge_mz->area.mz_mem_uva, blk_id);
+               (unsigned long long)huge_mz->area.mz_mem_total_size,
+               (unsigned long long)(uintptr_t)huge_mz->area.mz_mem_uva, blk_id);
 
     buff_scale_in(huge_mz->area.mz_mem_uva, huge_mz->area.mz_mem_total_size);
     proc_set_buff_invalid(blk);

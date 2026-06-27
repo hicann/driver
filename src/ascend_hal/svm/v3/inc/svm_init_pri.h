@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * Copyright (c) 2026 Huawei Technologies Co., Ltd.
  * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -24,16 +24,19 @@
         Because there is no priority when registering handles, the framework calls them back in the order
         they are registered. Generally, lower-level modules need to be initialized first, so they should
         have a higher constructor priority and be registered with the framework earlier.
-        first: dbi, apbi
+        first: dbi, apbi, urma_seg_mng
+            urma_seg_mng needs to register the dev uninit pre-handle before
+   urma_adapt, so remote segs
+            are recycled after urma_adapt unregisters reserved segments during device
+   close.
         hign: va allocator
-        medium: handle register: pcie/ub share/op/query
-        low: cache malloc, urma_seg_local
-        final: others: mms, host/pcie_th register, urma adapt chan/seg init, mem show, task group
+        medium: handle register: pcie/ub share/op/query low: cache malloc,
+   urma_seg_local final: others: mms, host/pcie_th register, urma adapt chan/seg init, mem show, task group
     2. submodule global variables init/uninit
         device init is after constructor, so global variables can be initialized independently using default priority.
     3. registration of hook functions for other functionalities between submodules
         a. Use the default priority if there is no impact
-           for example: svm_set_agent_init_ops, drv_registert_event_proc
+           for example: svm_set_agent_init_ops, drv_register_event_proc
         b. Use the default priority if there is only one register
            for example: svm_normal_set_ops, svm_mng_set_ops, svm_vmm_set_ops, svm_mem_repair_set_ops
         c. ...

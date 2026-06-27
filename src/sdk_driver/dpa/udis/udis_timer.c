@@ -92,7 +92,8 @@ STATIC ka_hrtimer_restart_t udis_hrtimer_irq_handle(ka_hrtimer_t *htimer)
     ka_workqueue_struct_t *wq = NULL;
 
     ka_task_rcu_read_lock();
-    ka_list_for_each_entry_rcu(task_node, &g_udis_timer.period_task_list, node) {
+    ka_list_for_each_entry_rcu(task_node, &g_udis_timer.period_task_list, node)
+    {
         task_node->cur_cnt++;
         if (task_node->cur_cnt < (unsigned int)ka_base_atomic_read(&task_node->expired_cnt)) {
             continue;
@@ -107,8 +108,8 @@ STATIC ka_hrtimer_restart_t udis_hrtimer_irq_handle(ka_hrtimer_t *htimer)
     return KA_HRTIMER_RESTART;
 }
 
-STATIC int udis_period_task_node_init(unsigned int udevid, const struct udis_timer_task *timer_task,
-    struct udis_period_task_node *task_node)
+STATIC int udis_period_task_node_init(
+    unsigned int udevid, const struct udis_timer_task *timer_task, struct udis_period_task_node *task_node)
 {
     int ret;
 
@@ -157,19 +158,22 @@ STATIC int udis_timer_check_task_para(const struct udis_timer_task *timer_task)
     }
 
     if (timer_task->work_type >= UDIS_WORK_TYPE_MAX) {
-        udis_err("Invalid timer_task work type. (work_type=%u; task_name=%s)\n",
-            timer_task->work_type, timer_task->task_name);
+        udis_err(
+            "Invalid timer_task work type. (work_type=%u; task_name=%s)\n", timer_task->work_type,
+            timer_task->task_name);
         return -EINVAL;
     }
 
     if (timer_task->period_ms < UDIS_TIMER_STEP_MS) {
-        udis_err("Task's period is less then timer step. (period=%ums; timer_step=%ums; task_name=%s)\n",
+        udis_err(
+            "Task's period is less then timer step. (period=%ums; timer_step=%ums; task_name=%s)\n",
             timer_task->period_ms, UDIS_TIMER_STEP_MS, timer_task->task_name);
         return -EINVAL;
     }
 
     if (timer_task->period_ms % UDIS_TIMER_STEP_MS != 0) {
-        udis_err("Task's period cannot be divided by the timer step. (period=%ums; timer_step=%ums; task_name=%s)\n",
+        udis_err(
+            "Task's period cannot be divided by the timer step. (period=%ums; timer_step=%ums; task_name=%s)\n",
             timer_task->period_ms, UDIS_TIMER_STEP_MS, timer_task->task_name);
         return -EINVAL;
     }
@@ -180,7 +184,8 @@ STATIC int udis_timer_check_task_para(const struct udis_timer_task *timer_task)
 STATIC struct udis_period_task_node *udis_timer_find_task_node(const char *task_name)
 {
     struct udis_period_task_node *task_node = NULL;
-    ka_list_for_each_entry(task_node, &g_udis_timer.period_task_list, node) {
+    ka_list_for_each_entry(task_node, &g_udis_timer.period_task_list, node)
+    {
         if (ka_base_strcmp(task_node->task_name, task_name) != 0) {
             continue;
         }
@@ -226,8 +231,9 @@ int hal_kernel_register_period_task(unsigned int udevid, const struct udis_timer
         ka_task_mutex_unlock(&g_udis_timer.task_list_lock);
         dbl_kfree(task_node);
         task_node = NULL;
-        udis_err("Udis timer init task_node failed. (udevid=%u; task_name=%s; ret=%d)\n",
-            udevid, timer_task->task_name, ret);
+        udis_err(
+            "Udis timer init task_node failed. (udevid=%u; task_name=%s; ret=%d)\n", udevid, timer_task->task_name,
+            ret);
         return ret;
     }
 
@@ -298,7 +304,8 @@ void udis_timer_uninit(void)
     ka_system_synchronize_rcu();
     ka_task_flush_workqueue(g_udis_timer.common_wq);
     ka_task_destroy_workqueue(g_udis_timer.common_wq);
-    ka_list_for_each_entry_safe(task_node, next, &g_udis_timer.period_task_list, node) {
+    ka_list_for_each_entry_safe(task_node, next, &g_udis_timer.period_task_list, node)
+    {
         if (task_node->workqueue != NULL) {
             ka_task_flush_workqueue(task_node->workqueue);
             ka_task_destroy_workqueue(task_node->workqueue);

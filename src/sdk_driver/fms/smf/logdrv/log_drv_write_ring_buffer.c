@@ -21,11 +21,11 @@
 #ifndef DRVFAULT_UT
 #define MODULE_LOG             "drv_log_fault_mng" 
 #define slog_drv_err(fmt, ...)   \
-    drv_err(MODULE_LOG, "<%s:%d,%d> " fmt, current->comm, current->tgid, current->pid, ##__VA_ARGS__)
+    drv_err(MODULE_LOG, "<%s:%d,%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), ka_task_get_current_pid(), ##__VA_ARGS__)
 #define slog_drv_info(fmt, ...)  \
-    drv_info(MODULE_LOG, "<%s:%d,%d> " fmt, current->comm, current->tgid, current->pid, ##__VA_ARGS__)
+    drv_info(MODULE_LOG, "<%s:%d,%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), ka_task_get_current_pid(), ##__VA_ARGS__)
 #define slog_drv_warn(fmt, ...)  \
-    drv_warn(MODULE_LOG, "<%s:%d,%d> " fmt, current->comm, current->tgid, current->pid, ##__VA_ARGS__)
+    drv_warn(MODULE_LOG, "<%s:%d,%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), ka_task_get_current_pid(), ##__VA_ARGS__)
 #define STATIC static
 #else
 #define slog_drv_err(fmt, ...)   printf(fmt, ##__VA_ARGS__)

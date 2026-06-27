@@ -15,23 +15,21 @@
 #include "devmm_svm_init.h"
 #include "devmm_virt_read_only_heap.h"
 
-STATIC struct devmm_com_heap_ops g_read_only_heap_op = {
-    devmm_virt_heap_alloc_device,
-    devmm_virt_heap_free_pages
-};
+STATIC struct devmm_com_heap_ops g_read_only_heap_op = {devmm_virt_heap_alloc_device, devmm_virt_heap_free_pages};
 
-static void devmm_fill_read_only_heap_info(struct devmm_virt_heap_mgmt *mgmt,
-    struct devmm_virt_heap_type *heap_type, uint32_t device, struct devmm_virt_heap_para *heap_info)
+static void devmm_fill_read_only_heap_info(
+    struct devmm_virt_heap_mgmt *mgmt, struct devmm_virt_heap_type *heap_type, uint32_t device,
+    struct devmm_virt_heap_para *heap_info)
 {
-    heap_info->start = (heap_type->heap_sub_type == SUB_READ_ONLY_TYPE) ?
-        (mgmt->read_only_start + DEVMM_READ_ONLY_HEAP_SIZE * device) :
-        (mgmt->read_only_start + DEVMM_READ_ONLY_HEAP_TOTAL_SIZE +
-            DEVMM_DEV_READ_ONLY_HEAP_SIZE * device);
-    heap_info->heap_size = (heap_type->heap_sub_type == SUB_READ_ONLY_TYPE) ?
-        DEVMM_READ_ONLY_HEAP_SIZE : DEVMM_DEV_READ_ONLY_HEAP_SIZE;
+    heap_info->start =
+        (heap_type->heap_sub_type == SUB_READ_ONLY_TYPE) ?
+            (mgmt->read_only_start + DEVMM_READ_ONLY_HEAP_SIZE * device) :
+            (mgmt->read_only_start + DEVMM_READ_ONLY_HEAP_TOTAL_SIZE + DEVMM_DEV_READ_ONLY_HEAP_SIZE * device);
+    heap_info->heap_size =
+        (heap_type->heap_sub_type == SUB_READ_ONLY_TYPE) ? DEVMM_READ_ONLY_HEAP_SIZE : DEVMM_DEV_READ_ONLY_HEAP_SIZE;
     heap_info->page_size = DEVMM_4K_PAGE_SIZE;
-    heap_info->kernel_page_size = devmm_virt_get_kernel_page_size_by_heap_type(mgmt,
-        heap_type->heap_type, heap_type->heap_sub_type);
+    heap_info->kernel_page_size =
+        devmm_virt_get_kernel_page_size_by_heap_type(mgmt, heap_type->heap_type, heap_type->heap_sub_type);
     heap_info->map_size = DEVMM_HUGE_READONLY_CACHE_NODE_SIZE_THRES;
     heap_info->need_cache_thres[DEVMM_MEM_NORMAL] = DEVMM_HUGE_READONLY_CACHE_NODE_SIZE_THRES;
     heap_info->need_cache_thres[DEVMM_MEM_RDONLY] = DEVMM_HUGE_READONLY_CACHE_NODE_SIZE_THRES;
@@ -39,8 +37,7 @@ static void devmm_fill_read_only_heap_info(struct devmm_virt_heap_mgmt *mgmt,
     heap_info->is_base_heap = false;
 }
 
-void devmm_fill_read_only_heap_type(uint32_t device, uint32_t heap_sub_type,
-    struct devmm_virt_heap_type *heap_type)
+void devmm_fill_read_only_heap_type(uint32_t device, uint32_t heap_sub_type, struct devmm_virt_heap_type *heap_type)
 {
     /* read only just has one heap, arrangement attribute hbm mem_type/huge heap type */
     heap_type->heap_type = DEVMM_HEAP_HUGE_PAGE;
@@ -70,4 +67,3 @@ DVresult devmm_init_read_only_heap_by_devid(uint32_t device, uint32_t heap_sub_t
     }
     return ret;
 }
-

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2025. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,8 +23,8 @@
 #include "apm_task_group_def.h"
 #include "apm_msg.h"
 
-#define APM_SEC_EH_AGENT_DEV_MAX_NUM    1124U
-#define APM_SEC_EH_AGENT_NOTIFIER       "apm_sec_eh_agent"
+#define APM_SEC_EH_AGENT_DEV_MAX_NUM 1124U
+#define APM_SEC_EH_AGENT_NOTIFIER "apm_sec_eh_agent"
 
 static int apm_sec_eh_notice_device_vmid(u32 chip_id, struct uda_mia_dev_para *mia_para, int vm_id)
 {

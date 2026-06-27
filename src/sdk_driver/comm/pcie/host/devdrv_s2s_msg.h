@@ -19,7 +19,6 @@
 #include "devdrv_common_msg.h"
 #include "comm_kernel_interface.h"
 #include "devdrv_msg_def.h"
-#include "res_drv_cloud_v2.h"
 
 #define DEVDRV_S2S_MAX_SERVER_NUM 48
 #define DEVDRV_S2S_DIE_NUM 2
@@ -79,6 +78,10 @@
 #define DEVDRV_S2S_MSG_VERSION_1 0x5A5D3C23 /* 0x5A5D3 is magic, C23 is version */
 
 #define DEVDRV_S2S_MSG_HEAD_LEN sizeof(struct devdrv_s2s_msg)
+
+#define DEVDRV_S2S_MAX_CHIP_NUM 8
+#define DEVDRV_S2S_MAX_UDEVID_NUM 16
+#define DEVDRV_S2S_NON_TRANS_MSG_CHAN_NUM 8 /* host/device must be the same */
 
 struct devdrv_msg_s2s_queue_info {
     struct devdrv_s2s_msg *desc;        // map from union address each host for 16 devices, used for cq

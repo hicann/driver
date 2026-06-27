@@ -39,6 +39,11 @@ int buff_get_default_pool_id(void)
     return buffpool_id;
 }
 
+int buff_get_svm_private_pool_id(void)
+{
+    return BUFF_POOL_ID_MAX;
+}
+
 unsigned long long buff_get_base_addr(void)
 {
     return (unsigned long long)(uintptr_t)buff_base_addr;
@@ -46,8 +51,7 @@ unsigned long long buff_get_base_addr(void)
 
 bool is_buff_addr(unsigned long va)
 {
-    return (va >= (unsigned long)(uintptr_t)buff_base_addr) &&
-        (va < (unsigned long)(uintptr_t)buff_end_addr);
+    return (va >= (unsigned long)(uintptr_t)buff_base_addr) && (va < (unsigned long)(uintptr_t)buff_end_addr);
 }
 
 void *buff_blk_alloc(int pool_id, unsigned long size, unsigned long flag, uint32_t *blk_id)
@@ -87,8 +91,7 @@ void buff_blk_free(int pool_id, void *addr)
     }
 }
 
-drvError_t buff_blk_get(void *addr, int *pool_id, void **alloc_addr,
-    unsigned long *alloc_size, uint32_t *blk_id)
+drvError_t buff_blk_get(void *addr, int *pool_id, void **alloc_addr, unsigned long *alloc_size, uint32_t *blk_id)
 {
     unsigned long offset, alloc_offset;
     drvError_t ret;
@@ -185,4 +188,3 @@ drvError_t buff_pool_init(int pool_id, int mem_fd, unsigned long long max_mem_si
 
     return DRV_ERROR_NONE;
 }
-

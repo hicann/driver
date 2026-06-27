@@ -10,4 +10,11 @@ struct dms_lpm_info_in {
     unsigned int sub_cmd;
 };
 
+struct dms_lpm_info_in_v2 {
+    unsigned int dev_id;
+    unsigned int part_id; // die_id
+    unsigned int vfid;
+    unsigned int core_id;
+};
+
 #endif

@@ -19,6 +19,7 @@
 #include "ka_kernel_def_pub.h"
 #include "ka_system_pub.h"
 #include "ka_compiler_pub.h"
+#include "ka_ioctl_pub.h"
 
 #include "ascend_hal_define.h"
 
@@ -39,24 +40,24 @@
 
 TRS_INIT_REBOOT_NOTIFY;
 
-static int (*const trs_res_id_handles[TRS_MAX_CMD])(struct trs_proc_ctx *proc_ctx,
-    struct trs_core_ts_inst *ts_inst, struct trs_res_id_para *para) = {
-    [_IOC_NR(TRS_RES_ID_ALLOC)] = trs_res_id_alloc,
-    [_IOC_NR(TRS_RES_ID_FREE)] = trs_res_id_free,
-    [_IOC_NR(TRS_RES_ID_ENABLE)] = trs_res_id_enable,
-    [_IOC_NR(TRS_RES_ID_DISABLE)] = trs_res_id_disable,
-    [_IOC_NR(TRS_RES_ID_NUM_QUERY)] = trs_res_id_num_query,
-    [_IOC_NR(TRS_RES_ID_MAX_QUERY)] = trs_res_id_max_query,
-    [_IOC_NR(TRS_RES_ID_USED_NUM_QUERY)] = trs_res_id_used_query,
-    [_IOC_NR(TRS_RES_ID_AVAIL_NUM_QUERY)] = trs_res_id_avail_query,
-    [_IOC_NR(TRS_RES_ID_REG_OFFSET_QUERY)] = trs_res_id_reg_offset_query,
-    [_IOC_NR(TRS_RES_ID_REG_SIZE_QUERY)] = trs_res_id_reg_size_query,
-    [_IOC_NR(TRS_RES_ID_CFG)] = trs_res_id_cfg
-};
+static int (*const trs_res_id_handles[TRS_MAX_CMD])(
+    struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst, struct trs_res_id_para *para) = {
+    [_KA_IOC_NR(TRS_RES_ID_ALLOC)] = trs_res_id_alloc,
+    [_KA_IOC_NR(TRS_RES_ID_FREE)] = trs_res_id_free,
+    [_KA_IOC_NR(TRS_RES_ID_ENABLE)] = trs_res_id_enable,
+    [_KA_IOC_NR(TRS_RES_ID_DISABLE)] = trs_res_id_disable,
+    [_KA_IOC_NR(TRS_RES_ID_NUM_QUERY)] = trs_res_id_num_query,
+    [_KA_IOC_NR(TRS_RES_ID_MAX_QUERY)] = trs_res_id_max_query,
+    [_KA_IOC_NR(TRS_RES_ID_USED_NUM_QUERY)] = trs_res_id_used_query,
+    [_KA_IOC_NR(TRS_RES_ID_AVAIL_NUM_QUERY)] = trs_res_id_avail_query,
+    [_KA_IOC_NR(TRS_RES_ID_REG_OFFSET_QUERY)] = trs_res_id_reg_offset_query,
+    [_KA_IOC_NR(TRS_RES_ID_REG_SIZE_QUERY)] = trs_res_id_reg_size_query,
+    [_KA_IOC_NR(TRS_RES_ID_CFG)] = trs_res_id_cfg};
 
 static bool trs_is_id_query_cmd(unsigned int cmd)
 {
-    return ((cmd == TRS_RES_ID_NUM_QUERY) || (cmd == TRS_RES_ID_MAX_QUERY) || (cmd == TRS_RES_ID_USED_NUM_QUERY) ||
+    return (
+        (cmd == TRS_RES_ID_NUM_QUERY) || (cmd == TRS_RES_ID_MAX_QUERY) || (cmd == TRS_RES_ID_USED_NUM_QUERY) ||
         (cmd == TRS_RES_ID_REG_OFFSET_QUERY) || (cmd == TRS_RES_ID_REG_SIZE_QUERY) ||
         (cmd == TRS_RES_ID_AVAIL_NUM_QUERY));
 }
@@ -71,14 +72,14 @@ static int ioctl_trs_res_id_comm(struct trs_proc_ctx *proc_ctx, unsigned int cmd
     ret = (int)ka_base_copy_from_user(&para, usr_para, sizeof(para));
     if (ret != 0) {
 #ifndef EMU_ST
-        trs_err("Copy from user failed. (cmd=%d, ret=%d)\n", _IOC_NR(cmd), ret);
+        trs_err("Copy from user failed. (cmd=%d, ret=%d)\n", _KA_IOC_NR(cmd), ret);
         return -EFAULT;
 #endif
     }
 
     if ((para.res_type < 0) || (trs_is_id_query_cmd(cmd) && (para.res_type >= TRS_CORE_MAX_ID_TYPE)) ||
         (!trs_is_id_query_cmd(cmd) && (para.res_type >= TRS_HW_SQ))) {
-        trs_err("Invalid para. (cmd=%d; res_type=%d)\n", _IOC_NR(cmd), para.res_type);
+        trs_err("Invalid para. (cmd=%d; res_type=%d)\n", _KA_IOC_NR(cmd), para.res_type);
         return -EINVAL;
     }
 
@@ -88,7 +89,7 @@ static int ioctl_trs_res_id_comm(struct trs_proc_ctx *proc_ctx, unsigned int cmd
         return -EINVAL;
     }
 
-    ret = trs_res_id_handles[_IOC_NR(cmd)](proc_ctx, ts_inst, &para);
+    ret = trs_res_id_handles[_KA_IOC_NR(cmd)](proc_ctx, ts_inst, &para);
     trs_core_inst_put(ts_inst);
 
     if (ret == 0) {
@@ -119,9 +120,10 @@ static int ioctl_trs_res_id_comm(struct trs_proc_ctx *proc_ctx, unsigned int cmd
     }
 
 Exit:
-    if ((ret != 0) && (cmd != TRS_RES_ID_ALLOC)) {
-        trs_err("Fail. (devid=%u; tsid=%u; cmd=%d; res_type=%d; id=%u; ret=%d)\n",
-            proc_ctx->devid, para.tsid, _IOC_NR(cmd), para.res_type, para.id, ret);
+    if ((ret != 0) && (ret != -EOPNOTSUPP) && (cmd != TRS_RES_ID_ALLOC)) {
+        trs_err(
+            "Fail. (devid=%u; tsid=%u; cmd=%d; res_type=%d; id=%u; ret=%d)\n", proc_ctx->devid, para.tsid,
+            _KA_IOC_NR(cmd), para.res_type, para.id, ret);
     }
 
     return ret;
@@ -205,15 +207,11 @@ static int ioctl_trs_hw_info_query(struct trs_proc_ctx *proc_ctx, unsigned int c
     return ret;
 }
 
-static int (*const trs_sqcq_alloc_handles[DRV_INVALID_TYPE])(struct trs_proc_ctx *proc_ctx,
-    struct trs_core_ts_inst *ts_inst, struct halSqCqInputInfo *para) = {
-    [DRV_NORMAL_TYPE] = trs_hw_sqcq_alloc,
-    [DRV_CALLBACK_TYPE] = trs_cb_sqcq_alloc,
-    [DRV_LOGIC_TYPE] = trs_logic_cq_alloc,
-    [DRV_SHM_TYPE] = trs_shm_sqcq_alloc,
-    [DRV_CTRL_TYPE] = trs_sw_sqcq_alloc,
-    [DRV_GDB_TYPE] = trs_gdb_sqcq_alloc
-};
+static int (*const trs_sqcq_alloc_handles[DRV_INVALID_TYPE])(
+    struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst, struct halSqCqInputInfo *para) = {
+    [DRV_NORMAL_TYPE] = trs_hw_sqcq_alloc, [DRV_CALLBACK_TYPE] = trs_cb_sqcq_alloc,
+    [DRV_LOGIC_TYPE] = trs_logic_cq_alloc, [DRV_SHM_TYPE] = trs_shm_sqcq_alloc,
+    [DRV_CTRL_TYPE] = trs_sw_sqcq_alloc,   [DRV_GDB_TYPE] = trs_gdb_sqcq_alloc};
 
 #define TRS_SQCQ_EXT_INFO_MAX_LEN 256
 static int ioctl_trs_sqcq_alloc(struct trs_proc_ctx *proc_ctx, unsigned int cmd, unsigned long arg)
@@ -273,15 +271,10 @@ static int ioctl_trs_sqcq_alloc(struct trs_proc_ctx *proc_ctx, unsigned int cmd,
     return ret;
 }
 
-static int (*const trs_sqcq_free_handles[DRV_INVALID_TYPE])(struct trs_proc_ctx *proc_ctx,
-    struct trs_core_ts_inst *ts_inst, struct halSqCqFreeInfo *para) = {
-    [DRV_NORMAL_TYPE] = trs_hw_sqcq_free,
-    [DRV_CALLBACK_TYPE] = trs_cb_sqcq_free,
-    [DRV_LOGIC_TYPE] = trs_logic_cq_free,
-    [DRV_SHM_TYPE] = trs_shm_sqcq_free,
-    [DRV_CTRL_TYPE] = trs_sw_sqcq_free,
-    [DRV_GDB_TYPE] = trs_gdb_sqcq_free
-};
+static int (*const trs_sqcq_free_handles[DRV_INVALID_TYPE])(
+    struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst, struct halSqCqFreeInfo *para) = {
+    [DRV_NORMAL_TYPE] = trs_hw_sqcq_free, [DRV_CALLBACK_TYPE] = trs_cb_sqcq_free, [DRV_LOGIC_TYPE] = trs_logic_cq_free,
+    [DRV_SHM_TYPE] = trs_shm_sqcq_free,   [DRV_CTRL_TYPE] = trs_sw_sqcq_free,     [DRV_GDB_TYPE] = trs_gdb_sqcq_free};
 
 static int ioctl_trs_sqcq_free(struct trs_proc_ctx *proc_ctx, unsigned int cmd, unsigned long arg)
 {
@@ -316,8 +309,8 @@ static int ioctl_trs_sqcq_free(struct trs_proc_ctx *proc_ctx, unsigned int cmd, 
     return ret;
 }
 
-static int (*const trs_sqcq_config_handles[DRV_INVALID_TYPE])(struct trs_proc_ctx *proc_ctx,
-    struct trs_core_ts_inst *ts_inst, struct halSqCqConfigInfo *para) = {
+static int (*const trs_sqcq_config_handles[DRV_INVALID_TYPE])(
+    struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst, struct halSqCqConfigInfo *para) = {
     [DRV_NORMAL_TYPE] = trs_hw_sqcq_config,
     [DRV_LOGIC_TYPE] = trs_logic_cq_config,
 };
@@ -392,8 +385,8 @@ static int ioctl_trs_sqcq_query(struct trs_proc_ctx *proc_ctx, unsigned int cmd,
     return ret;
 }
 
-static int (*const trs_sqcq_send_handles[DRV_INVALID_TYPE])(struct trs_proc_ctx *proc_ctx,
-    struct trs_core_ts_inst *ts_inst, struct halTaskSendInfo *para) = {
+static int (*const trs_sqcq_send_handles[DRV_INVALID_TYPE])(
+    struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst, struct halTaskSendInfo *para) = {
     [DRV_NORMAL_TYPE] = trs_hw_sqcq_send,
     [DRV_CALLBACK_TYPE] = trs_cb_sqcq_send,
     [DRV_GDB_TYPE] = trs_gdb_sqcq_send,
@@ -440,8 +433,8 @@ static int ioctl_trs_sqcq_send(struct trs_proc_ctx *proc_ctx, unsigned int cmd, 
     return ret;
 }
 
-static int (*const trs_sqcq_recv_handles[DRV_INVALID_TYPE])(struct trs_proc_ctx *proc_ctx,
-    struct trs_core_ts_inst *ts_inst, struct halReportRecvInfo *para) = {
+static int (*const trs_sqcq_recv_handles[DRV_INVALID_TYPE])(
+    struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst, struct halReportRecvInfo *para) = {
     [DRV_NORMAL_TYPE] = trs_hw_sqcq_recv,
     [DRV_LOGIC_TYPE] = trs_logic_cq_recv,
     [DRV_GDB_TYPE] = trs_gdb_sqcq_recv,
@@ -532,7 +525,7 @@ int ioctl_trs_stl_launch(struct trs_proc_ctx *proc_ctx, unsigned int cmd, unsign
     ret = ka_base_copy_from_user(&para, usr_para, sizeof(para));
     if (ret != 0) {
 #ifndef EMU_ST
-        trs_err("Copy from user failed. (cmd=%d; ret=%d)\n", _IOC_NR(cmd), ret);
+        trs_err("Copy from user failed. (cmd=%d; ret=%d)\n", _KA_IOC_NR(cmd), ret);
         return -EFAULT;
 #endif
     }
@@ -564,7 +557,7 @@ int ioctl_trs_stl_query(struct trs_proc_ctx *proc_ctx, unsigned int cmd, unsigne
     ret = ka_base_copy_from_user(&para, usr_para, sizeof(para));
     if (ret != 0) {
 #ifndef EMU_ST
-        trs_err("Copy from user failed. (cmd=%d; ret=%d)\n", _IOC_NR(cmd), ret);
+        trs_err("Copy from user failed. (cmd=%d; ret=%d)\n", _KA_IOC_NR(cmd), ret);
         return -EFAULT;
 #endif
     }
@@ -625,7 +618,7 @@ int ioctl_trs_ub_info_query(struct trs_proc_ctx *proc_ctx, unsigned int cmd, uns
     ret = ka_base_copy_from_user(&para, usr_para, sizeof(para));
     if (ret != 0) {
 #ifndef EMU_ST
-        trs_err("Copy from user failed. (cmd=%d; ret=%d)\n", _IOC_NR(cmd), ret);
+        trs_err("Copy from user failed. (cmd=%d; ret=%d)\n", _KA_IOC_NR(cmd), ret);
         return ret;
 #endif
     }
@@ -689,8 +682,9 @@ int trs_rpc_msg_ctrl(struct trs_id_inst *inst, int pid, void *msg, u32 msg_len, 
     if ((ret != 0) || (rpc_call_msg->header.result != 0)) {
         trs_core_inst_put(ts_inst);
         if (ret != -EOPNOTSUPP) {
-            trs_err("Notice ts and write back failed. (devid=%u; result=%u; ret=%d)\n",
-                inst->devid, rpc_call_msg->header.result, ret);
+            trs_err(
+                "Notice ts and write back failed. (devid=%u; result=%u; ret=%d)\n", inst->devid,
+                rpc_call_msg->header.result, ret);
         }
         return (ret != 0) ? ret : -EINVAL;
     }
@@ -711,7 +705,7 @@ int ioctl_trs_msg_ctrl(struct trs_proc_ctx *proc_ctx, unsigned int cmd, unsigned
     ret = ka_base_copy_from_user(&para, usr_para, sizeof(para));
     if (ret != 0) {
 #ifndef EMU_ST
-        trs_err("Copy from user failed. (cmd=%d; ret=%d)\n", _IOC_NR(cmd), ret);
+        trs_err("Copy from user failed. (cmd=%d; ret=%d)\n", _KA_IOC_NR(cmd), ret);
         return -EFAULT;
 #endif
     }
@@ -729,7 +723,8 @@ int ioctl_trs_msg_ctrl(struct trs_proc_ctx *proc_ctx, unsigned int cmd, unsigned
     }
 
     ret = ka_base_put_user(rpc_call_msg.rpc_call_header.len, &usr_para->msg_len);
-    ret |= ka_base_copy_to_user((void __ka_user *)usr_para->msg, (void *)rpc_call_msg.data, rpc_call_msg.rpc_call_header.len);
+    ret |= ka_base_copy_to_user(
+        (void __ka_user *)usr_para->msg, (void *)rpc_call_msg.data, rpc_call_msg.rpc_call_header.len);
     if (ret != 0) {
         trs_err("Copy to user err. (len=%u; ret=%d)\n", rpc_call_msg.rpc_call_header.len, ret);
     }
@@ -746,7 +741,7 @@ static int ioctl_trs_set_close_type(struct trs_proc_ctx *proc_ctx, unsigned int 
 
     ret = ka_base_copy_from_user(&para, usr_para, sizeof(para));
     if (ret != 0) {
-        trs_err("Copy from user failed. (cmd=%d; ret=%d)\n", _IOC_NR(cmd), ret);
+        trs_err("Copy from user failed. (cmd=%d; ret=%d)\n", _KA_IOC_NR(cmd), ret);
         return ret;
     }
 
@@ -784,7 +779,7 @@ static int ioctl_trs_id_res_map(struct trs_proc_ctx *proc_ctx, unsigned int cmd,
     ret = ka_base_copy_from_user(&para, usr_para, sizeof(para));
     if (ret != 0) {
 #ifndef EMU_ST
-        trs_err("Copy from user failed. (cmd=%d; ret=%d)\n", _IOC_NR(cmd), ret);
+        trs_err("Copy from user failed. (cmd=%d; ret=%d)\n", _KA_IOC_NR(cmd), ret);
         return -EFAULT;
 #endif
     }
@@ -831,11 +826,9 @@ static int ioctl_trs_id_res_map(struct trs_proc_ctx *proc_ctx, unsigned int cmd,
     return 0;
 }
 
-static int (*const trs_sqcq_get_handles[DRV_INVALID_TYPE])(struct trs_proc_ctx *proc_ctx,
-    struct trs_core_ts_inst *ts_inst, struct halSqCqInputInfo *para) = {
-    [DRV_NORMAL_TYPE] = trs_hw_sqcq_get,
-    [DRV_LOGIC_TYPE] = trs_logic_cq_get
-};
+static int (*const trs_sqcq_get_handles[DRV_INVALID_TYPE])(
+    struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst, struct halSqCqInputInfo *para) = {
+    [DRV_NORMAL_TYPE] = trs_hw_sqcq_get, [DRV_LOGIC_TYPE] = trs_logic_cq_get};
 
 int ioctl_trs_sqcq_get(struct trs_proc_ctx *proc_ctx, unsigned int cmd, unsigned long arg)
 {
@@ -847,7 +840,7 @@ int ioctl_trs_sqcq_get(struct trs_proc_ctx *proc_ctx, unsigned int cmd, unsigned
     ret = ka_base_copy_from_user(&para, usr_para, sizeof(para));
     if (ret != 0) {
 #ifndef EMU_ST
-        trs_err("Copy from user failed. (cmd=%d; ret=%d)\n", _IOC_NR(cmd), ret);
+        trs_err("Copy from user failed. (cmd=%d; ret=%d)\n", _KA_IOC_NR(cmd), ret);
         return -EFAULT;
 #endif
     }
@@ -881,8 +874,7 @@ int ioctl_trs_sqcq_get(struct trs_proc_ctx *proc_ctx, unsigned int cmd, unsigned
     return ret;
 }
 
-int ioctl_trs_sqcq_restore(struct trs_proc_ctx *proc_ctx, unsigned int cmd,
-    unsigned long arg)
+int ioctl_trs_sqcq_restore(struct trs_proc_ctx *proc_ctx, unsigned int cmd, unsigned long arg)
 {
     struct trs_core_ts_inst *ts_inst = NULL;
     struct trs_alloc_para *alloc_para = NULL;
@@ -1069,6 +1061,15 @@ static int ioctl_trs_stream_task_fill(struct trs_proc_ctx *proc_ctx, unsigned in
         return -EINVAL;
     }
 
+    // UB is not supported, and there will be an issue with stream_kva = 0
+    if ((ts_inst->ops.get_connect_protocol != NULL) &&
+        (ts_inst->ops.get_connect_protocol(&ts_inst->inst) == TRS_CONNECT_PROTOCOL_UB)) {
+        trs_core_inst_put(ts_inst);
+        trs_vfree(para.task_info);
+        para.task_info = usr_task_info;
+        return -ENOTSUPP;
+    }
+
     ka_task_mutex_lock(&proc_ctx->ts_ctx[0].mutex);
     ret = trs_stream_task_fill_proc(proc_ctx, ts_inst, &para);
     if (ret != 0) {
@@ -1150,39 +1151,39 @@ static int ioctl_trs_sq_switch_stream_batch(struct trs_proc_ctx *proc_ctx, unsig
 #endif
 
 static int (*const trs_ioctl_handles[TRS_MAX_CMD])(struct trs_proc_ctx *ctx, unsigned int cmd, unsigned long arg) = {
-    [_IOC_NR(TRS_RES_ID_ALLOC)] = ioctl_trs_res_id_comm,
-    [_IOC_NR(TRS_RES_ID_FREE)] = ioctl_trs_res_id_comm,
-    [_IOC_NR(TRS_RES_ID_ENABLE)] = ioctl_trs_res_id_comm,
-    [_IOC_NR(TRS_RES_ID_DISABLE)] = ioctl_trs_res_id_comm,
-    [_IOC_NR(TRS_RES_ID_NUM_QUERY)] = ioctl_trs_res_id_comm,
-    [_IOC_NR(TRS_RES_ID_MAX_QUERY)] = ioctl_trs_res_id_comm,
-    [_IOC_NR(TRS_RES_ID_USED_NUM_QUERY)] = ioctl_trs_res_id_comm,
-    [_IOC_NR(TRS_RES_ID_AVAIL_NUM_QUERY)] = ioctl_trs_res_id_comm,
-    [_IOC_NR(TRS_RES_ID_REG_OFFSET_QUERY)] = ioctl_trs_res_id_comm,
-    [_IOC_NR(TRS_RES_ID_REG_SIZE_QUERY)] = ioctl_trs_res_id_comm,
-    [_IOC_NR(TRS_RES_ID_CFG)] = ioctl_trs_res_id_comm,
-    [_IOC_NR(TRS_SSID_QUERY)] = ioctl_trs_ssid_query,
-    [_IOC_NR(TRS_HW_INFO_QUERY)] = ioctl_trs_hw_info_query,
-    [_IOC_NR(TRS_SQCQ_ALLOC)] = ioctl_trs_sqcq_alloc,
-    [_IOC_NR(TRS_SQCQ_FREE)] = ioctl_trs_sqcq_free,
-    [_IOC_NR(TRS_SQCQ_CONFIG)] = ioctl_trs_sqcq_config,
-    [_IOC_NR(TRS_SQCQ_QUERY)] = ioctl_trs_sqcq_query,
-    [_IOC_NR(TRS_SQCQ_SEND)] = ioctl_trs_sqcq_send,
-    [_IOC_NR(TRS_SQCQ_RECV)] = ioctl_trs_sqcq_recv,
-    [_IOC_NR(TRS_STL_BIND)] = ioctl_trs_stl_bind,
-    [_IOC_NR(TRS_STL_LAUNCH)] = ioctl_trs_stl_launch,
-    [_IOC_NR(TRS_STL_QUERY)] = ioctl_trs_stl_query,
-    [_IOC_NR(TRS_MSG_CTRL)] = ioctl_trs_msg_ctrl,
-    [_IOC_NR(TRS_ID_RES_MAP)] = ioctl_trs_id_res_map,
-    [_IOC_NR(TRS_UB_INFO_QUERY)] = ioctl_trs_ub_info_query,
-    [_IOC_NR(TRS_SET_CLOSE_TYPE)] = ioctl_trs_set_close_type,
-    [_IOC_NR(TRS_ID_SQCQ_GET)] = ioctl_trs_sqcq_get,
-    [_IOC_NR(TRS_ID_SQCQ_RESTORE)] = ioctl_trs_sqcq_restore,
-    [_IOC_NR(TRS_DMA_DESC_CREATE)] = ioctl_trs_dma_desc_create,
-    [_IOC_NR(TRS_TS_CMDLIST_MAP_UNMAP)] = ioctl_trs_ts_cmdlist_map_unmap,
+    [_KA_IOC_NR(TRS_RES_ID_ALLOC)] = ioctl_trs_res_id_comm,
+    [_KA_IOC_NR(TRS_RES_ID_FREE)] = ioctl_trs_res_id_comm,
+    [_KA_IOC_NR(TRS_RES_ID_ENABLE)] = ioctl_trs_res_id_comm,
+    [_KA_IOC_NR(TRS_RES_ID_DISABLE)] = ioctl_trs_res_id_comm,
+    [_KA_IOC_NR(TRS_RES_ID_NUM_QUERY)] = ioctl_trs_res_id_comm,
+    [_KA_IOC_NR(TRS_RES_ID_MAX_QUERY)] = ioctl_trs_res_id_comm,
+    [_KA_IOC_NR(TRS_RES_ID_USED_NUM_QUERY)] = ioctl_trs_res_id_comm,
+    [_KA_IOC_NR(TRS_RES_ID_AVAIL_NUM_QUERY)] = ioctl_trs_res_id_comm,
+    [_KA_IOC_NR(TRS_RES_ID_REG_OFFSET_QUERY)] = ioctl_trs_res_id_comm,
+    [_KA_IOC_NR(TRS_RES_ID_REG_SIZE_QUERY)] = ioctl_trs_res_id_comm,
+    [_KA_IOC_NR(TRS_RES_ID_CFG)] = ioctl_trs_res_id_comm,
+    [_KA_IOC_NR(TRS_SSID_QUERY)] = ioctl_trs_ssid_query,
+    [_KA_IOC_NR(TRS_HW_INFO_QUERY)] = ioctl_trs_hw_info_query,
+    [_KA_IOC_NR(TRS_SQCQ_ALLOC)] = ioctl_trs_sqcq_alloc,
+    [_KA_IOC_NR(TRS_SQCQ_FREE)] = ioctl_trs_sqcq_free,
+    [_KA_IOC_NR(TRS_SQCQ_CONFIG)] = ioctl_trs_sqcq_config,
+    [_KA_IOC_NR(TRS_SQCQ_QUERY)] = ioctl_trs_sqcq_query,
+    [_KA_IOC_NR(TRS_SQCQ_SEND)] = ioctl_trs_sqcq_send,
+    [_KA_IOC_NR(TRS_SQCQ_RECV)] = ioctl_trs_sqcq_recv,
+    [_KA_IOC_NR(TRS_STL_BIND)] = ioctl_trs_stl_bind,
+    [_KA_IOC_NR(TRS_STL_LAUNCH)] = ioctl_trs_stl_launch,
+    [_KA_IOC_NR(TRS_STL_QUERY)] = ioctl_trs_stl_query,
+    [_KA_IOC_NR(TRS_MSG_CTRL)] = ioctl_trs_msg_ctrl,
+    [_KA_IOC_NR(TRS_ID_RES_MAP)] = ioctl_trs_id_res_map,
+    [_KA_IOC_NR(TRS_UB_INFO_QUERY)] = ioctl_trs_ub_info_query,
+    [_KA_IOC_NR(TRS_SET_CLOSE_TYPE)] = ioctl_trs_set_close_type,
+    [_KA_IOC_NR(TRS_ID_SQCQ_GET)] = ioctl_trs_sqcq_get,
+    [_KA_IOC_NR(TRS_ID_SQCQ_RESTORE)] = ioctl_trs_sqcq_restore,
+    [_KA_IOC_NR(TRS_DMA_DESC_CREATE)] = ioctl_trs_dma_desc_create,
+    [_KA_IOC_NR(TRS_TS_CMDLIST_MAP_UNMAP)] = ioctl_trs_ts_cmdlist_map_unmap,
 #ifdef CFG_FEATURE_SUPPORT_STREAM_TASK
-    [_IOC_NR(TRS_STREAM_TASK_FILL)] = ioctl_trs_stream_task_fill,
-    [_IOC_NR(TRS_SQ_SWITCH_STREAM)] = ioctl_trs_sq_switch_stream_batch,
+    [_KA_IOC_NR(TRS_STREAM_TASK_FILL)] = ioctl_trs_stream_task_fill,
+    [_KA_IOC_NR(TRS_SQ_SWITCH_STREAM)] = ioctl_trs_sq_switch_stream_batch,
 #endif
 };
 
@@ -1200,7 +1201,7 @@ static int trs_ioctl_cmd_is_support(u32 devid, int cmd)
 
     if ((ts_inst->featur_mode == TRS_INST_PART_FEATUR_MODE) && (!trs_is_id_query_cmd(cmd))) {
         trs_core_inst_put(ts_inst);
-        trs_debug("Unsupported command. (devid=%u; cmd=%u)\n", devid, _IOC_NR(cmd));
+        trs_debug("Unsupported command. (devid=%u; cmd=%u)\n", devid, _KA_IOC_NR(cmd));
         return -EPERM;
     }
 
@@ -1212,7 +1213,7 @@ static long trs_ioctl(ka_file_t *file, unsigned int cmd, unsigned long arg)
 {
     struct trs_task_info_struct *task_info = ka_fs_get_file_private_data(file);
     struct trs_proc_ctx *proc_ctx = NULL;
-    int cmd_nr = _IOC_NR(cmd);
+    int cmd_nr = _KA_IOC_NR(cmd);
     int ret;
 
     if ((cmd_nr < 0) || (cmd_nr >= TRS_MAX_CMD) || (trs_ioctl_handles[cmd_nr] == NULL)) {
@@ -1360,6 +1361,7 @@ static int trs_open(ka_inode_t *inode, ka_file_t *file)
     task_info = trs_kzalloc(sizeof(struct trs_task_info_struct), KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
     if (task_info == NULL) {
         trs_err("Mem alloc failed. (size=%lx)\n", sizeof(struct trs_task_info_struct));
+        ret = -ENOMEM;
         goto exit;
     }
 
@@ -1416,8 +1418,9 @@ static int trs_open(ka_inode_t *inode, ka_file_t *file)
     ka_fs_set_file_private_data(file, task_info);
     ka_task_up_write(&ts_inst->ctrl_sem);
 
-    trs_debug("Proc open success. (devid=%u; task_info_unique_id=%lld; proc_ctx_taskid=%lld; cp2_taskid=%lld)\n",
-        devid, task_info->unique_id, proc_ctx->task_id, proc_ctx->cp2_task_id);
+    trs_debug(
+        "Proc open success. (devid=%u; task_info_unique_id=%lld; proc_ctx_taskid=%lld; cp2_taskid=%lld)\n", devid,
+        task_info->unique_id, proc_ctx->task_id, proc_ctx->cp2_task_id);
     return 0;
 
 ctx_destroy:
@@ -1429,7 +1432,7 @@ task_info_destroy:
     trs_kfree(task_info);
 exit:
     for (tsid = 0; tsid < TRS_TS_MAX_NUM; tsid++) {
-        if (all_ts_inst[tsid] != NULL) {  /* only ts0 is valid */
+        if (all_ts_inst[tsid] != NULL) { /* only ts0 is valid */
             trs_core_inst_put(all_ts_inst[tsid]);
         }
     }
@@ -1468,27 +1471,19 @@ static void trs_core_dev_inst_put(struct trs_proc_ctx *proc_ctx)
     }
 }
 
-static int trs_mmap_not_support(ka_file_t *file, ka_vm_area_struct_t *vma)
-{
-    return -ENOTSUPP;
-}
+static int trs_mmap_not_support(ka_file_t *file, ka_vm_area_struct_t *vma) { return -ENOTSUPP; }
 
-static int trs_mremap(ka_vm_area_struct_t * area)
-{
-    return -ENOTSUPP;
-}
+static int trs_mremap(ka_vm_area_struct_t *area) { return -ENOTSUPP; }
 
-static ka_vm_operations_struct_t trs_vm_ops = {
-    ka_vm_ops_init_mremap(trs_mremap)
-};
+static ka_vm_operations_struct_t trs_vm_ops = {ka_vm_ops_init_mremap(trs_mremap)};
 
 static int trs_mmap(ka_file_t *file, ka_vm_area_struct_t *vma)
 {
     ka_mm_set_vm_ops(vma, &trs_vm_ops);
-    ka_mm_set_vm_flags(vma, ka_mm_get_vm_flags(vma) | KA_VM_LOCKED | KA_VM_DONTEXPAND |
-                                KA_VM_DONTDUMP | KA_VM_DONTCOPY | KA_VM_IO | KA_VM_PFNMAP);
-    if (!(ka_mm_get_vm_flags(vma) & KA_VM_WRITE))
-    {
+    ka_mm_set_vm_flags(
+        vma, ka_mm_get_vm_flags(vma) | KA_VM_LOCKED | KA_VM_DONTEXPAND | KA_VM_DONTDUMP | KA_VM_DONTCOPY | KA_VM_IO |
+                 KA_VM_PFNMAP);
+    if (!(ka_mm_get_vm_flags(vma) & KA_VM_WRITE)) {
         ka_mm_vm_flags_clear(vma, KA_VM_MAYWRITE);
     }
     ka_mm_set_vm_private_data(vma, ka_fs_get_file_private_data(file));
@@ -1496,10 +1491,7 @@ static int trs_mmap(ka_file_t *file, ka_vm_area_struct_t *vma)
     return 0;
 }
 
-static int trs_release(ka_inode_t *inode, ka_file_t *file)
-{
-    return 0;
-}
+static int trs_release(ka_inode_t *inode, ka_file_t *file) { return 0; }
 
 static ka_file_operations_t trs_fops = {
     .owner = KA_THIS_MODULE,
@@ -1574,8 +1566,8 @@ static ka_file_operations_t trs_mmap_fops = {
     .mmap = trs_mmap,
 };
 
-void trs_handle_proc_release_result(struct trs_core_ts_inst *ts_inst, struct trs_proc_ctx *proc_ctx,
-    int exit_stage, bool is_success)
+void trs_handle_proc_release_result(
+    struct trs_core_ts_inst *ts_inst, struct trs_proc_ctx *proc_ctx, int exit_stage, bool is_success)
 {
     if (is_success) {
         if (exit_stage == APM_STAGE_RECYCLE_RES) {
@@ -1587,13 +1579,14 @@ void trs_handle_proc_release_result(struct trs_core_ts_inst *ts_inst, struct trs
             }
             ka_task_up_write(&ts_inst->sem);
             trs_core_dev_inst_put(proc_ctx);
-            trs_debug("Proc destroy. (devid=%u; pid=%d; task_id=%lld)\n",
-                proc_ctx->devid, proc_ctx->pid, proc_ctx->task_id);
+            trs_debug(
+                "Proc destroy. (devid=%u; pid=%d; task_id=%lld)\n", proc_ctx->devid, proc_ctx->pid, proc_ctx->task_id);
             trs_proc_ctx_put(proc_ctx);
         }
     } else {
-        trs_warn("Release warn, add to exit_list. (devid=%u; pid=%d; task_id=%lld; stage=%u)\n",
-            proc_ctx->devid, proc_ctx->pid, proc_ctx->task_id, exit_stage);
+        trs_warn(
+            "Release warn, add to exit_list. (devid=%u; pid=%d; task_id=%lld; stage=%u)\n", proc_ctx->devid,
+            proc_ctx->pid, proc_ctx->task_id, exit_stage);
         ka_task_down_write(&ts_inst->sem);
         ka_list_move(&proc_ctx->node, &ts_inst->exit_proc_list_head);
         ka_base_atomic_dec(&ts_inst->ctx_num);
@@ -1633,14 +1626,16 @@ static int _trs_release_by_exit_stage(struct trs_proc_ctx *proc_ctx, int stage)
 
             ret = trs_proc_release_check_ts(proc_ctx, ts_inst->inst.tsid);
             if (ret != 0) {
-                trs_warn("Recycle warn. (devid=%u; tsid=%u; name=%s; pid=%d; task_id=%lld; ret=%d)\n",
-                    ts_inst->inst.devid, ts_inst->inst.tsid, proc_ctx->name, proc_ctx->pid, proc_ctx->task_id, ret);
+                trs_warn(
+                    "Recycle warn. (devid=%u; tsid=%u; name=%s; pid=%d; task_id=%lld; ret=%d)\n", ts_inst->inst.devid,
+                    ts_inst->inst.tsid, proc_ctx->name, proc_ctx->pid, proc_ctx->task_id, ret);
                 trs_proc_leak_res_show(proc_ctx, ts_inst);
                 trs_proc_release_ras_report(proc_ctx, ts_inst);
                 ret = -EBUSY;
             }
-        } else if (((stage == APM_STAGE_PRE_RECYCLE_RES) && (ts_inst->location != UDA_LOCAL)) ||
-                   ((stage == APM_STAGE_RECYCLE_RES) && (ts_inst->location == UDA_LOCAL))) {
+        } else if (
+            ((stage == APM_STAGE_PRE_RECYCLE_RES) && (ts_inst->location != UDA_LOCAL)) ||
+            ((stage == APM_STAGE_RECYCLE_RES) && (ts_inst->location == UDA_LOCAL))) {
             if ((ts_inst->location == UDA_NEAR) && (proc_ctx->release_type == TRS_PROC_RELEASE_LOCAL)) {
                 return 0;
             }
@@ -1650,6 +1645,8 @@ static int _trs_release_by_exit_stage(struct trs_proc_ctx *proc_ctx, int stage)
             if (ts_inst->ops.notice_proc_release != NULL) {
                 (void)ts_inst->ops.notice_proc_release(&ts_inst->inst, proc_ctx->pid);
             }
+
+            (void)trs_proc_recycle_post(ts_inst, proc_ctx);
         }
 
         result |= ret;
@@ -1676,7 +1673,8 @@ static bool trs_notify_apm_release_task(struct trs_proc_ctx *proc_ctx)
     }
 
     /* mutex tsdrv fd release and apm release */
-    release_flag = ka_base_atomic_cmpxchg(&proc_ctx->release_flag, TRS_PROC_RELEASE_FLAG_NONE, TRS_PROC_RELEASE_BY_TSDRV_FD);
+    release_flag =
+        ka_base_atomic_cmpxchg(&proc_ctx->release_flag, TRS_PROC_RELEASE_FLAG_NONE, TRS_PROC_RELEASE_BY_TSDRV_FD);
     if ((release_flag == TRS_PROC_RELEASE_BY_APM_MASTER) || (release_flag == TRS_PROC_RELEASE_BY_APM_SLAVE)) {
         return true;
     }
@@ -1684,8 +1682,8 @@ static bool trs_notify_apm_release_task(struct trs_proc_ctx *proc_ctx)
     return false;
 }
 
-static int trs_release_by_exit_stage(ka_notifier_block_t *self, unsigned long val, void *data,
-    TRS_PROC_RELEASE_FLAG flag)
+static int trs_release_by_exit_stage(
+    ka_notifier_block_t *self, unsigned long val, void *data, TRS_PROC_RELEASE_FLAG flag)
 {
     int tgid = apm_get_exit_tgid(val);
     int stage = apm_get_exit_stage(val);
@@ -1709,7 +1707,8 @@ static int trs_release_by_exit_stage(ka_notifier_block_t *self, unsigned long va
         }
 
         if (task_is_exit(proc_ctx->pid, &proc_ctx->start_time) == false) {
-            (void)ka_base_atomic_cmpxchg(&proc_ctx->release_flag, TRS_PROC_RELEASE_FLAG_NONE, TRS_PROC_RELEASE_BY_TSDRV_FD);
+            (void)ka_base_atomic_cmpxchg(
+                &proc_ctx->release_flag, TRS_PROC_RELEASE_FLAG_NONE, TRS_PROC_RELEASE_BY_TSDRV_FD);
             goto release_next;
         }
 
@@ -1730,7 +1729,7 @@ static int trs_release_by_exit_stage(ka_notifier_block_t *self, unsigned long va
         trs_info("Stage release. (devid=%d; stage=%d; pid=%d)\n", i, stage, tgid);
         continue;
 
-release_next:
+    release_next:
         ka_task_up_write(&ts_inst->sem);
         trs_core_ts_inst_put(ts_inst);
     }
@@ -1802,7 +1801,8 @@ static int trs_release_prepare(ka_file_t *file, unsigned long mode)
         return 0;
     }
 
-    ka_fs_set_file_private_data(file, NULL);;
+    ka_fs_set_file_private_data(file, NULL);
+    ;
 
     proc_ctx = task_info->proc_ctx;
     if (proc_ctx == NULL) { /* ioctl open fail */
@@ -1810,8 +1810,9 @@ static int trs_release_prepare(ka_file_t *file, unsigned long mode)
         return 0;
     }
 
-    trs_debug("Task info. (devid=%u; task_info_unique_id=%lld; proc_ctx_taskid=%lld; cp2_taskid=%lld)\n",
-        proc_ctx->devid, task_info->unique_id, proc_ctx->task_id, proc_ctx->cp2_task_id);
+    trs_debug(
+        "Task info. (devid=%u; task_info_unique_id=%lld; proc_ctx_taskid=%lld; cp2_taskid=%lld)\n", proc_ctx->devid,
+        task_info->unique_id, proc_ctx->task_id, proc_ctx->cp2_task_id);
     if (trs_shr_proc_check(task_info) == true) {
         trs_debug("Shr proc exit. (cur_pid=%u; proc_ctx_pid=%u)\n", ka_task_get_current_tgid(), proc_ctx->pid);
         trs_shr_proc_close(task_info);
@@ -1832,13 +1833,14 @@ static int trs_release_prepare(ka_file_t *file, unsigned long mode)
     }
 #endif
 
-    trs_debug("Proc release. (devid=%u; pid=%d; task_id=%lld; close_type=%d)\n",
-        proc_ctx->devid, proc_ctx->pid, proc_ctx->task_id, proc_ctx->release_type);
+    trs_debug(
+        "Proc release. (devid=%u; pid=%d; task_id=%lld; close_type=%d)\n", proc_ctx->devid, proc_ctx->pid,
+        proc_ctx->task_id, proc_ctx->release_type);
     return trs_ts_inst_release(proc_ctx);
 }
 
 const struct notifier_operations trs_notifier_ops = {
-    .notifier_call =  trs_release_prepare,
+    .notifier_call = trs_release_prepare,
 };
 
 int trs_core_init_module(void)
@@ -1869,7 +1871,7 @@ int trs_core_init_module(void)
 #ifdef CFG_FEATURE_SUPPORT_APM
     ret = apm_task_exit_register(&trs_master_task_exit_nb, &trs_slave_task_exit_nb);
     if (ret != 0) {
-	    (void)drv_ascend_unregister_sub_module(DAVINCI_INTF_MODULE_TSDRV_MMAP_NAME);
+        (void)drv_ascend_unregister_sub_module(DAVINCI_INTF_MODULE_TSDRV_MMAP_NAME);
         (void)drv_ascend_unregister_notify(TRS_MODULE_NAME);
         (void)drv_ascend_unregister_sub_module(TRS_MODULE_NAME);
         trs_err("Register apm task release notify fail. (ret=%d)\n", ret);

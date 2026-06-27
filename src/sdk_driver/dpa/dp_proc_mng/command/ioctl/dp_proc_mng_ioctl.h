@@ -34,7 +34,6 @@
 
 #define DP_PROC_MNG_HOST_AGENT_ID DP_PROC_MNG_DEVICE_SIDE_AGENT_NUM
 
-
 /*
  * user mode: devid means logic_id
  * kernel mode: devid means phyid
@@ -68,13 +67,13 @@ struct dp_proc_mng_process_id {
     pid_t hostpid;
     uint32_t devid;
     uint32_t vm_id; // 虚拟机
-    uint32_t vfid; // 算力分组容器
+    uint32_t vfid;  // 算力分组容器
 };
 
-#define DP_PROC_MNG_BIND_CGROUP            _IOW(DP_PROC_MNG_MAGIC, 1, struct dp_proc_mng_ioctl_arg)
-#define DP_PROC_MNG_GET_MEM_STATS          _IOWR(DP_PROC_MNG_MAGIC, 2, struct dp_proc_mng_ioctl_arg)
-#define DP_PROC_MNG_CMD_MAX_CMD            3
+#define DP_PROC_MNG_BIND_CGROUP _IOW(DP_PROC_MNG_MAGIC, 1, struct dp_proc_mng_ioctl_arg)
+#define DP_PROC_MNG_GET_MEM_STATS _IOWR(DP_PROC_MNG_MAGIC, 2, struct dp_proc_mng_ioctl_arg)
+#define DP_PROC_MNG_CMD_MAX_CMD 3
 
-#define DP_PROC_MNG_MAGIC                  'G'
+#define DP_PROC_MNG_MAGIC 'G'
 
 #endif

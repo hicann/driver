@@ -14,8 +14,9 @@ endif
 ifneq ($(NOT_SUPPORT_SP), y)
 	EXTRA_CFLAGS += -fstack-protector-all
 endif
-
+EXTRA_CFLAGS += -Werror=frame-larger-than=2048
 $(MODULE_NAME)-objs += soc_resmng/soc_resmng.o soc_resmng/soc_subsys_ts.o soc_resmng/soc_res_sync.o soc_resmng/soc_cgroup_parse.o soc_resmng/soc_interface.o
+$(MODULE_NAME)-objs += soc_resmng/dc/soc_interface_adapt.o
 
 ifeq ($(TARGET_BUILD_TYPE),debug)
 	$(MODULE_NAME)-objs += soc_resmng/soc_proc_fs.o
@@ -27,6 +28,7 @@ EXTRA_CFLAGS += $(CONFIG_DEFINES)
 ifeq ($(DAVINCI_HIAI_DKMS),y)
 	DRIVER_SRC_BASE_DIR := $(HIAI_DKMS_DIR)
 	EXTRA_CFLAGS += -DCFG_HOST_ENV
+	EXTRA_CFLAGS += -DCFG_EDGE_HOST
 	EXTRA_CFLAGS += -DCFG_FEATURE_HOST_LOG
 
 	EXTRA_CFLAGS += -DCFG_FEATURE_TOPOLOGY_BY_HCCS_LINK_STATUS
@@ -38,6 +40,8 @@ ifeq ($(DAVINCI_HIAI_DKMS),y)
 	EXTRA_CFLAGS += -I$(HIAI_DKMS_DIR)/dev_inc/inc/ascend_platform
 	EXTRA_CFLAGS += -I$(HIAI_DKMS_DIR)/inc/driver
 	EXTRA_CFLAGS += -I$(HIAI_DKMS_DIR)/pbl/soc_resmng/command/ioctl
+	EXTRA_CFLAGS += -I$(HIAI_DKMS_DIR)/pbl/soc_resmng/dc
+	EXTRA_CFLAGS += -I$(HIAI_DKMS_DIR)/pbl/soc_resmng
 	EXTRA_CFLAGS += -I$(HIAI_DKMS_DIR)/kernel_adapt/include
 else
 	DRIVER_SRC_BASE_DIR := $(DRIVER_KERNEL_DIR)/src
@@ -45,6 +49,7 @@ else
 
 	EXTRA_CFLAGS += -DCFG_FEATURE_HOST_LOG
 	EXTRA_CFLAGS += -DCFG_HOST_ENV
+	EXTRA_CFLAGS += -DCFG_EDGE_HOST
 	ifeq ($(PRODUCT), ascend910B)
 		EXTRA_CFLAGS += -DCFG_FEATURE_TOPOLOGY_BY_HCCS_LINK_STATUS
 		EXTRA_CFLAGS += -DCFG_FEATURE_CHIP_DIE
@@ -56,6 +61,8 @@ else
 	EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/inc/ascend_platform
 	EXTRA_CFLAGS += -I${C_SEC_INCLUDE}
 	EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/pbl/soc_resmng/command/ioctl
+	EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/pbl/soc_resmng/dc
+	EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/pbl/soc_resmng
 	EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/kernel_adapt/include
 	EXTRA_CFLAGS += -I$(DRIVER_HAL_INC_DIR)
 

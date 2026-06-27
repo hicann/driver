@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * Copyright (c) 2026 Huawei Technologies Co., Ltd.
  * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -33,15 +33,12 @@
          3. host malloc addr: pined user page and dma map
 */
 
-#define REGISTER_TO_MASTER_FLAG_APM_MAPED_REG     (1U << 0U)
-#define REGISTER_TO_MASTER_FLAG_ACCESS_WRITE      (1U << 1U)
-#define REGISTER_TO_MASTER_FLAG_PIN               (1U << 2U)
-#define REGISTER_TO_MASTER_FLAG_VA_IO_MAP         (1U << 3U)
+#define REGISTER_TO_MASTER_FLAG_APM_MAPED_REG (1U << 0U)
+#define REGISTER_TO_MASTER_FLAG_ACCESS_WRITE (1U << 1U)
+#define REGISTER_TO_MASTER_FLAG_PIN (1U << 2U)
+#define REGISTER_TO_MASTER_FLAG_VA_IO_MAP (1U << 3U)
 
-static inline bool register_to_master_flag_bit_is_set(u32 flag, u32 bit_mask)
-{
-    return ((flag & bit_mask) != 0);
-}
+static inline bool register_to_master_flag_bit_is_set(u32 flag, u32 bit_mask) { return ((flag & bit_mask) != 0); }
 
 static inline bool register_to_master_flag_is_apm_maped_reg(u32 flag)
 {

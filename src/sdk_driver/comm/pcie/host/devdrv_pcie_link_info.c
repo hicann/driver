@@ -13,9 +13,12 @@
 
 #include "ka_kernel_def_pub.h"
 #include "ka_driver_pub.h"
+#include "ka_pci_pub.h"
 #include "devdrv_util.h"
 #include "devdrv_pci.h"
 #include "devdrv_ctrl.h"
+#include "devdrv_common_msg.h"
+#include "dms/dms_cmd_def.h"
 #include "devdrv_pcie_link_info.h"
 #include "pbl/pbl_uda.h"
 
@@ -29,7 +32,7 @@ __attribute__((unused)) STATIC pcie_dump_ltssm_tracer_fn g_pcie_dump_ltssm_trace
 void devdrv_get_pcie_dump_ltssm_tracer_symbol(void)
 {
 #ifdef CFG_FEATURE_PCIE_LINK_INFO
-    g_pcie_dump_ltssm_tracer_fn = 
+    g_pcie_dump_ltssm_tracer_fn =
         (pcie_dump_ltssm_tracer_fn)(uintptr_t)__ka_system_symbol_get(PCIE_DUMP_LTSSM_TRACER_FN_NAME);
     if (g_pcie_dump_ltssm_tracer_fn == NULL) {
         devdrv_warn("pcie_dump_ltssm_tracer symbol not find.\n");
@@ -247,3 +250,92 @@ int devdrv_force_linkdown(u32 udevid)
     return devdrv_force_linkdown_inner(index_id);
 }
 KA_EXPORT_SYMBOL(devdrv_force_linkdown);
+
+STATIC int devdrv_check_get_bandwidth_para(struct dms_get_device_info_in *input, u32 in_len,
+    struct dms_get_device_info_out *output, u32 out_len)
+{
+    if ((input == NULL) || (in_len != sizeof(struct dms_get_device_info_in))) {
+        devdrv_err("Input argument is null, or in_len is wrong. (in_len=%u)\n", in_len);
+        return -EINVAL;
+    }
+    
+    if ((input->buff == NULL) || (input->buff_size < (sizeof(struct devdrv_pcie_link_info_para)))) {
+        devdrv_err("Input argument buff is null, or buff_size is wrong. (buff_size=%u)\n", input->buff_size);
+        return -EINVAL;
+    }
+    
+    if ((output == NULL) || (out_len != sizeof(struct dms_get_device_info_out))) {
+        devdrv_err("Output argument is null, or out_len is wrong. (out_len=%u)\n", out_len);
+        return -EINVAL;
+    }
+    return 0;
+}
+
+STATIC int devdrv_logic_id_to_index_id(u32 logic_id, u32 *index_id)
+{
+    u32 udevid;
+    int ret;
+
+    ret = uda_devid_to_udevid(logic_id, &udevid);
+    if (ret != 0) {
+        devdrv_err("Failed to convert dev_id to udevid. (logic_id=%u;ret=%d)\n", logic_id, ret);
+        return ret;
+    }
+    (void)uda_udevid_to_add_id(udevid, index_id);
+    if (*index_id >= MAX_DEV_CNT) {
+        devdrv_err("Invalid dev_id. (logic_id=%u;dev_id=%u)\n", logic_id, *index_id);
+        return -EINVAL;
+    }
+    return 0;
+}
+
+int devdrv_get_pcie_link_bandwidth(void *feature, char *in, u32 in_len, char *out, u32 out_len)
+{
+    struct devdrv_pcie_link_info_para pcie_link_info = {0};
+    struct dms_get_device_info_in *input = NULL;
+    struct dms_get_device_info_out *output = NULL;
+    struct devdrv_pci_ctrl *pci_ctrl = NULL;
+    u32 index_id;
+    u16 lnksta;
+    int ret;
+
+    input = (struct dms_get_device_info_in *)in;
+    output = (struct dms_get_device_info_out *)out;
+    ret = devdrv_check_get_bandwidth_para(input, in_len, output, out_len);
+    if (ret != 0) {
+        return ret;
+    }
+    if (devdrv_get_global_connect_protocol() != DEVDRV_COMMNS_PCIE) {
+        return -EOPNOTSUPP;
+    }
+    ret = devdrv_logic_id_to_index_id(input->dev_id, &index_id);
+    if (ret != 0) {
+        devdrv_err("Failed to convert dev_id to udevid. (dev_id=%u;ret=%d)\n", input->dev_id, ret);
+        return ret;
+    }
+
+    pci_ctrl = devdrv_pci_ctrl_get(index_id);
+    if (pci_ctrl == NULL) {
+        devdrv_err("Can not get dev_ctrl. (dev_id=%u)\n", index_id);
+        return -EINVAL;
+    }
+
+    ret = ka_pci_capability_read_word(pci_ctrl->pdev, KA_PCI_EXP_LNKSTA, &lnksta);
+    if (ret != 0) {
+        devdrv_err("Failed to read link status. (dev_id=%u;ret=%d)\n", index_id, ret);
+        devdrv_pci_ctrl_put(pci_ctrl);
+        return ret;
+    }
+    /* link rate_mode: bit 3:0, 1=Gen1, 2=Gen2, etc. */
+    pcie_link_info.rate_mode = (lnksta & KA_PCI_EXP_LNKSTA_CLS);
+    /* link lane_num: bit 9:4, 1=x1, 2=x2, 4=x4, 8=x8, 16=x16, 32=x32 */
+    pcie_link_info.lane_num = (lnksta & KA_PCI_EXP_LNKSTA_NLW) >> KA_PCI_EXP_LNKSTA_NLW_SHIFT;
+    devdrv_pci_ctrl_put(pci_ctrl);
+    ret = ka_base_copy_to_user(input->buff, &pcie_link_info, sizeof(struct devdrv_pcie_link_info_para));
+    if (ret != 0) {
+        devdrv_err("Failed to copy to user. (dev_id=%u;ret=%d)\n", index_id, ret);
+        return ret;
+    }
+    output->out_size = sizeof(struct devdrv_pcie_link_info_para);
+    return 0;
+}

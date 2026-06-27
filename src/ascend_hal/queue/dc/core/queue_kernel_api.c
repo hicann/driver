@@ -10,8 +10,8 @@
 
 #include "queue_kernel_api.h"
 
-#define MAX_PRINT_CNT   5U        /* 10min max print 5 time */
-#define QUEUE_OVERTIME_PRINT_CHECK_PERIOD   6000    // 10min
+#define MAX_PRINT_CNT 5U                       /* 10min max print 5 time */
+#define QUEUE_OVERTIME_PRINT_CHECK_PERIOD 6000 // 10min
 
 #ifdef EMU_ST
 #include <sys/syscall.h>
@@ -23,7 +23,6 @@
 #define THREAD
 #endif
 #endif
-
 
 static THREAD unsigned int g_recycle_proc_count = 0;
 static THREAD unsigned long g_run_info_flow = 0;

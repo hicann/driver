@@ -15,11 +15,13 @@
 #include "svm_phy_addr_blk_mng.h"
 #include "svm_mem_create.h"
 
-int devmm_mem_create_to_new_blk(struct devmm_svm_process *svm_proc,
-    struct devmm_phy_addr_attr *attr, u64 total_pg_num, u64 to_create_pg_num, int *id)
+int devmm_mem_create_to_new_blk(
+    struct devmm_svm_process *svm_proc, struct devmm_phy_addr_attr *attr, u64 total_pg_num, u64 to_create_pg_num,
+    int *id)
 {
     struct devmm_phy_addr_blk_mng *mng = &svm_proc->phy_addr_blk_mng;
     struct devmm_phy_addr_blk *blk = NULL;
+    struct devmm_blk_pg_range range;
     int tmp_id, ret;
 
     blk = devmm_phy_addr_blk_create(mng, attr, total_pg_num, &tmp_id);
@@ -31,7 +33,10 @@ int devmm_mem_create_to_new_blk(struct devmm_svm_process *svm_proc,
      * Attention, the blk can be destroyed in security scenarios, when blk_state is set inited.
      * So call blk before blk_init.
      */
-    ret = devmm_phy_addr_blk_init(svm_proc, blk, to_create_pg_num);
+    range.pg_num = to_create_pg_num;
+    range.page_off = DEVMM_PG_OFF_TAIL;
+    range.dma_off = DEVMM_PG_OFF_TAIL;
+    ret = devmm_phy_addr_blk_init(svm_proc, blk, &range);
     if (ret != 0) {
         devmm_phy_addr_blk_destroy(mng, blk);
     } else {
@@ -40,11 +45,13 @@ int devmm_mem_create_to_new_blk(struct devmm_svm_process *svm_proc,
     return ret;
 }
 
-int devmm_mem_create_to_old_blk(struct devmm_svm_process *svm_proc,
-    struct devmm_phy_addr_attr *attr, u64 to_create_pg_num, int id)
+int devmm_mem_create_to_old_blk(
+    struct devmm_svm_process *svm_proc, struct devmm_phy_addr_attr *attr, u64 to_create_pg_num, int id)
 {
     struct devmm_phy_addr_blk_mng *mng = &svm_proc->phy_addr_blk_mng;
     struct devmm_phy_addr_blk *blk = NULL;
+    struct devmm_blk_pg_range range;
+
     int ret;
 
     blk = devmm_phy_addr_blk_get(mng, id);
@@ -52,16 +59,20 @@ int devmm_mem_create_to_old_blk(struct devmm_svm_process *svm_proc,
         devmm_drv_err("Is destroyed. (id=%d)\n", id);
         return -EINVAL;
     }
-    ret = devmm_phy_addr_blk_init(svm_proc, blk, to_create_pg_num);
+    range.pg_num = to_create_pg_num;
+    range.page_off = DEVMM_PG_OFF_TAIL;
+    range.dma_off = DEVMM_PG_OFF_TAIL;
+    ret = devmm_phy_addr_blk_init(svm_proc, blk, &range);
     devmm_phy_addr_blk_put(blk);
     return ret;
 }
 
-int _devmm_mem_release(struct devmm_svm_process *svm_proc, struct devmm_phy_addr_blk_mng *mng, int id,
-    u64 to_free_pg_num, u32 free_type)
+int _devmm_mem_release(
+    struct devmm_svm_process *svm_proc, struct devmm_phy_addr_blk_mng *mng, int id, u64 to_free_pg_num, u32 free_type)
 {
     struct devmm_phy_addr_blk *blk = NULL;
     bool is_finish = false;
+    struct devmm_blk_pg_range range;
     int ret;
 
     blk = devmm_phy_addr_blk_get(mng, id);
@@ -70,7 +81,10 @@ int _devmm_mem_release(struct devmm_svm_process *svm_proc, struct devmm_phy_addr
         return -EINVAL;
     }
 
-    ret = devmm_phy_addr_blk_uninit(svm_proc, blk, to_free_pg_num, free_type, &is_finish);
+    range.pg_num = to_free_pg_num;
+    range.page_off = DEVMM_PG_OFF_TAIL;
+    range.dma_off = DEVMM_PG_OFF_TAIL;
+    ret = devmm_phy_addr_blk_uninit(svm_proc, blk, &range, free_type, &is_finish);
     if ((ret == 0) && is_finish) {
         devmm_phy_addr_blk_destroy(mng, blk);
     }
@@ -85,4 +99,3 @@ int devmm_mem_release(struct devmm_svm_process *svm_proc, int id, u64 to_free_pg
 
     return _devmm_mem_release(svm_proc, mng, id, to_free_pg_num, free_type);
 }
-

@@ -16,6 +16,7 @@
 #include "devdrv_ctrl.h"
 #include "nvme_adapt.h"
 #include "res_drv_mini_v2.h"
+#include "devdrv_feature.h"
 
 #define DEVDRV_DRIVER_VERSION 0xa5a50001 /* 0xa5a5: magic; 0x0001: driver version code */
 #define DEVDRV_MINI_V2_P2P_SUPPORT_MAX_DEVICE 40
@@ -259,7 +260,7 @@ STATIC struct devdrv_irq_gear_info mini_v2_normal_host_irq_info[DEVDRV_RES_GEAR_
     },
 };
 
-STATIC void devdrv_mini_v2_init_bar_addr_info(struct devdrv_pci_ctrl *pci_ctrl)
+void devdrv_mini_v2_init_bar_addr_info(struct devdrv_pci_ctrl *pci_ctrl)
 {
     struct devdrv_pci_ctrl *pci_ctrl_main = NULL;
 
@@ -342,7 +343,7 @@ STATIC void devdrv_mini_v2_init_bar_addr_info(struct devdrv_pci_ctrl *pci_ctrl)
     pci_ctrl->res.devmng_info_mem.size = 0;
 }
 
-STATIC void devdrv_mini_v2_init_intr_info(struct devdrv_pci_ctrl *pci_ctrl)
+void devdrv_mini_v2_init_intr_info(struct devdrv_pci_ctrl *pci_ctrl)
 {
     struct devdrv_intr_info *intr = &pci_ctrl->res.intr;
     u32 irq_res_gear;
@@ -359,7 +360,7 @@ STATIC void devdrv_mini_v2_init_intr_info(struct devdrv_pci_ctrl *pci_ctrl)
     intr->msg_irq_vector2_num = intr->max_vector - intr->msg_irq_vector2_base;
 }
 
-STATIC void devdrv_mini_v2_init_dma_info(struct devdrv_pci_ctrl *pci_ctrl)
+void devdrv_mini_v2_init_dma_info(struct devdrv_pci_ctrl *pci_ctrl)
 {
     int total_func_num = pci_ctrl->shr_para->total_func_num;
     int davinci_dev_num = devdrv_get_davinci_dev_num_by_pdev(pci_ctrl->pdev);
@@ -403,19 +404,19 @@ STATIC void devdrv_mini_v2_init_dma_info(struct devdrv_pci_ctrl *pci_ctrl)
     pci_ctrl->res.dma_res.cq_depth = DEVDRV_MAX_DMA_CH_CQ_DEPTH;
 }
 
-STATIC void devdrv_mini_v2_init_load_file_info(struct devdrv_pci_ctrl *pci_ctrl)
+void devdrv_mini_v2_init_load_file_info(struct devdrv_pci_ctrl *pci_ctrl)
 {
     pci_ctrl->res.load_file.load_file_num = MINI_V2_BLOCKS_NUM;
     pci_ctrl->res.load_file.load_file_cfg = mini_v2_file;
 }
 
-STATIC void devdrv_mini_v2_init_depend_module_info(struct devdrv_pci_ctrl *pci_ctrl)
+void devdrv_mini_v2_init_depend_module_info(struct devdrv_pci_ctrl *pci_ctrl)
 {
     pci_ctrl->res.depend_info.module_num = MINI_V2_MODULE_NUM;
     pci_ctrl->res.depend_info.module_list = mini_v2_module;
 }
 
-STATIC void devdrv_mini_v2_init_link_info(struct devdrv_pci_ctrl *pci_ctrl)
+void devdrv_mini_v2_init_link_info(struct devdrv_pci_ctrl *pci_ctrl)
 {
     int davinci_dev_num = devdrv_get_davinci_dev_num_by_pdev(pci_ctrl->pdev);
     if (davinci_dev_num <= 0) {
@@ -428,188 +429,25 @@ STATIC void devdrv_mini_v2_init_link_info(struct devdrv_pci_ctrl *pci_ctrl)
     pci_ctrl->res.link_info.bandwidth_ratio = DEVDRV_BANDWIDTH_REAL_RATIO;
     pci_ctrl->res.link_info.packspeed_ratio = DEVDRV_PACKSPEED_REAL_RATIO;
 }
-#endif
 
-STATIC unsigned int devdrv_msg_chan_cnt_mini_v2[devdrv_msg_client_max] = {
-    DEVDRV_PCIVNIC_DEV_MSG_CHAN_CNT_MAX,    /* used for pcivnic */
-    DEVDRV_SMMU_DEV_MSG_CHAN_CNT_MAX,       /* used for test */
-    DEVDRV_DEVMM_DEV_MSG_CHAN_CNT_MAX,      /* used for svm */
-    DEVDRV_COMMON_DEV_MSG_CHAN_CNT_MAX,     /* used for common */
-    DEVDRV_DEV_MAMAGER_MSG_CHAN_CNT_MAX,    /* used for device manager */
-    DEVDRV_TSDRV_MSG_CHAN_CNT_MAX,          /* used for tsdrv */
-    DEVDRV_DEV_HDC_MSG_CHAN_CNT_MAX,        /* used for hdc */
-    DEVDRV_QUEUE_MSG_CHAN_CNT_MAX,          /* used for queue */
-};
-
-STATIC void devdrv_shr_para_rebuild(struct devdrv_pci_ctrl *pci_ctrl)
+int devdrv_mini_v2_init_bar_info(struct devdrv_pci_ctrl *pci_ctrl)
 {
-    /* miniv2 should rebuild shr_para addr, because 2P card can't access the slave's l3 sram */
-    pci_ctrl->shr_para = pci_ctrl->mem_base + DEVDRV_SHR_PARA_ADDR_OFFSET;
-}
-
-STATIC enum devdrv_load_wait_mode devdrv_mini_v2_get_load_wait_mode(struct devdrv_pci_ctrl *pci_ctrl)
-{
-    if (pci_ctrl->ops.pre_cfg != NULL) {
-        pci_ctrl->ops.pre_cfg(pci_ctrl);
-    }
-
-    return DEVDRV_LOAD_WAIT_INTERVAL;
-}
-
-STATIC int devdrv_mini_v2_get_pf_msg_chan_cnt(void)
-{
-    return DEVDRV_MAX_MSG_PF_CHAN_CNT;
-}
-
-STATIC int devdrv_mini_v2_get_vf_msg_chan_cnt(void)
-{
-    return DEVDRV_MAX_MSG_VF_CHAN_CNT;
-}
-
-STATIC u32 devdrv_mini_v2_get_p2p_support_max_devnum(void)
-{
-    return DEVDRV_MINI_V2_P2P_SUPPORT_MAX_DEVICE;
-}
-
-STATIC int devdrv_mini_v2_is_p2p_access_cap(struct devdrv_pci_ctrl *pci_ctrl, struct devdrv_pci_ctrl *peer_pci_ctrl)
-{
-    if (devdrv_p2p_para_check(0, pci_ctrl->dev_id, peer_pci_ctrl->dev_id) != 0) {
-        devdrv_info("devid and peer_devid is 1pf2die's die1, not support p2p. (dev_id=%u; peer_devid=%u)\n",
-            pci_ctrl->dev_id, peer_pci_ctrl->dev_id);
-        return DEVDRV_P2P_ACCESS_DISABLE;
-    }
-
-    return DEVDRV_P2P_ACCESS_ENABLE;
-}
-
-STATIC void devdrv_mini_v2_set_dev_shr_info(struct devdrv_pci_ctrl *pci_ctrl)
-{
-    pci_ctrl->shr_para->host_dev_id = (int)pci_ctrl->dev_id;
-    pci_ctrl->shr_para->driver_version = DEVDRV_DRIVER_VERSION;
-    /* chip1 use chip0 bar base */
-    pci_ctrl->shr_para->host_mem_bar_base = (u64)ka_pci_resource_start(pci_ctrl->pdev, PCI_BAR_MEM);
-    pci_ctrl->shr_para->host_io_bar_base = (u64)ka_pci_resource_start(pci_ctrl->pdev, PCI_BAR_IO);
-}
-
-STATIC int devdrv_mini_v2_get_p2p_addr(struct devdrv_pci_ctrl *pci_ctrl, u32 remote_dev_id,
-    enum devdrv_p2p_addr_type type, phys_addr_t *phy_addr, size_t *size)
-{
-    u32 dev_id = pci_ctrl->dev_id;
-    u64 io_txatu_base;
-
-    io_txatu_base = pci_ctrl->target_bar[remote_dev_id].io_txatu_base;
-    if (io_txatu_base == 0) {
-        devdrv_err("Invalid io tx atu base. (dev_id=%u; remote_dev_id=%u; type=%u)\n",
-            dev_id, remote_dev_id, (u32)type);
-        return -EINVAL;
-    }
-
-    switch (type) {
-        case DEVDRV_P2P_IO_TS_DB:
-            *phy_addr = (phys_addr_t)(io_txatu_base + DEVDRV_IO_TS_DB_OFFSET);
-            *size = DEVDRV_IO_TS_DB_SIZE;
-            break;
-        case DEVDRV_P2P_IO_TS_SRAM:
-            *phy_addr = (phys_addr_t)(io_txatu_base + DEVDRV_IO_TS_SRAM_OFFSET);
-            *size = DEVDRV_IO_TS_SRAM_SIZE;
-            break;
-        case DEVDRV_P2P_IO_HWTS:
-            *phy_addr = (phys_addr_t)(io_txatu_base + DEVDRV_IO_HWTS_OFFSET);
-            *size = DEVDRV_IO_HWTS_SIZE;
-            break;
-        default:
-            devdrv_err("P2P address type not support. (dev_id=%u; remote_dev_id=%u; type=%u)\n",
-                dev_id, remote_dev_id, (u32)type);
-            return -EINVAL;
-    }
-
-    return 0;
-}
-
-STATIC u32 devdrv_mini_v2_get_nvme_low_level_db_irq_num(void)
-{
-    return MINI_V2_NVME_LOW_LEVEL_DB_IRQ_NUM;
-}
-
-STATIC u32 devdrv_mini_v2_get_nvme_db_irq_strde(void)
-{
-    return MINI_V2_NVME_DB_IRQ_STRDE;
-}
-
-STATIC void devdrv_mini_v2_ops_init(struct devdrv_pci_ctrl *pci_ctrl)
-{
-    pci_ctrl->ops.shr_para_rebuild = devdrv_shr_para_rebuild;
-    pci_ctrl->ops.alloc_devid = devdrv_alloc_devid_stride_2;
-    pci_ctrl->ops.is_p2p_access_cap = devdrv_mini_v2_is_p2p_access_cap;
-    pci_ctrl->ops.probe_wait = devdrv_probe_wait;
-    pci_ctrl->ops.bind_irq = devdrv_bind_irq;
-    pci_ctrl->ops.unbind_irq = devdrv_unbind_irq;
-    pci_ctrl->ops.get_load_wait_mode = devdrv_mini_v2_get_load_wait_mode;
-    pci_ctrl->ops.get_pf_max_msg_chan_cnt = devdrv_mini_v2_get_pf_msg_chan_cnt;
-    pci_ctrl->ops.get_vf_max_msg_chan_cnt = devdrv_mini_v2_get_vf_msg_chan_cnt;
-    pci_ctrl->ops.get_p2p_support_max_devnum = devdrv_mini_v2_get_p2p_support_max_devnum;
-    pci_ctrl->ops.get_hccs_link_info = NULL;
-    pci_ctrl->ops.is_mdev_vm_full_spec = NULL;
-    pci_ctrl->ops.devdrv_deal_suspend_handshake = NULL;
-    pci_ctrl->ops.is_all_dev_unified_addr = NULL;
-    pci_ctrl->ops.flush_cache = NULL;
-    pci_ctrl->ops.get_peh_link_info = NULL;
-    pci_ctrl->ops.set_dev_shr_info = devdrv_mini_v2_set_dev_shr_info;
-    pci_ctrl->ops.link_speed_slow_to_normal = NULL;
-    pci_ctrl->ops.get_p2p_addr = devdrv_mini_v2_get_p2p_addr;
-    pci_ctrl->ops.get_server_id = NULL;
-    pci_ctrl->ops.get_max_server_num = NULL;
-    pci_ctrl->ops.check_ep_suspend_status = NULL;
-    pci_ctrl->ops.get_nvme_low_level_db_irq_num = devdrv_mini_v2_get_nvme_low_level_db_irq_num;
-    pci_ctrl->ops.get_nvme_db_irq_strde = devdrv_mini_v2_get_nvme_db_irq_strde;
-    pci_ctrl->ops.pre_cfg = NULL;
-}
-
-STATIC void devdrv_mini_v2_init_msg_cnt(struct devdrv_pci_ctrl *pci_ctrl)
-{
-    int i;
-    u32 irq_res_gear = devdrv_get_irq_res_gear();
-
-    for (i = 0; i < devdrv_msg_client_max; i++) {
-        pci_ctrl->res.msg_chan_cnt[i] = (int)devdrv_msg_chan_cnt_mini_v2[i];
-    }
-
-    switch (irq_res_gear) {
-        case 4: /* irq resource gear is 4 */
-            pci_ctrl->res.msg_chan_cnt[devdrv_msg_client_hdc] = DEVDRV_DEV_HDC_MSG_CHAN_CNT_GEAR_4;
-            break;
-        default:
-            pci_ctrl->res.msg_chan_cnt[devdrv_msg_client_hdc] = DEVDRV_DEV_HDC_MSG_CHAN_CNT_MAX;
-    }
-}
-
-/*
- * 1PF2P bar map to single pf bar space:
- * bar      offset  len     use for
- * bar0     0       8MB     P0 bar0
- *          8MB     8MB     P1 bar0
- * bar2     0       128MB   P0 bar2
- *          128MB   128MB   P1 bar2
- * bar4     0       2GB     P0 bar4
- *          2GB     2GB     P1 bar4
- */
-int devdrv_mini_v2_res_init(struct devdrv_pci_ctrl *pci_ctrl)
-{
-#ifndef DRV_UT
-    resource_size_t offset;
+    int count = 0;
+    u64 flag_r = 0;
     unsigned long size;
+    resource_size_t offset;
+    struct devdrv_pci_ctrl *pci_ctrl_main = NULL;
+
     phys_addr_t davinci_dev_mem_bar_len = 0;
     phys_addr_t davinci_dev_rsv_mem_bar_len = 0;
     phys_addr_t davinci_dev_io_bar_len = 0;
-    struct devdrv_pci_ctrl *pci_ctrl_main = NULL;
-    int davinci_dev_num = devdrv_get_davinci_dev_num_by_pdev(pci_ctrl->pdev);
-    u64 flag_r = 0;
-    int count = 0;
 
+    int davinci_dev_num = devdrv_get_davinci_dev_num_by_pdev(pci_ctrl->pdev);
     if (davinci_dev_num <= 0) {
         devdrv_err("davinci_dev_num is invalid.\n");
         return -ENODEV;
     }
+
     davinci_dev_mem_bar_len = ka_pci_resource_len(pci_ctrl->pdev, PCI_BAR_MEM) / (u64)davinci_dev_num;
     davinci_dev_rsv_mem_bar_len = ka_pci_resource_len(pci_ctrl->pdev, PCI_BAR_RSV_MEM) / (u64)davinci_dev_num;
     davinci_dev_io_bar_len = ka_pci_resource_len(pci_ctrl->pdev, PCI_BAR_IO) / (u64)davinci_dev_num;
@@ -693,23 +531,233 @@ int devdrv_mini_v2_res_init(struct devdrv_pci_ctrl *pci_ctrl)
             ka_system_msleep(DEVDRV_WAIT_BOOT_MODE_SLEEP_TIME);
         }
     }
+    return 0;
+}
 
-    devdrv_parse_res_gear();
-    devdrv_mini_v2_init_bar_addr_info(pci_ctrl);
-    devdrv_mini_v2_init_intr_info(pci_ctrl);
-    devdrv_mini_v2_init_dma_info(pci_ctrl);
-    devdrv_mini_v2_init_msg_cnt(pci_ctrl);
-    devdrv_mini_v2_init_link_info(pci_ctrl);
+u32 devdrv_mini_v2_get_nvme_low_level_db_irq_num(void)
+{
+    return MINI_V2_NVME_LOW_LEVEL_DB_IRQ_NUM;
+}
 
+u32 devdrv_mini_v2_get_nvme_db_irq_strde(void)
+{
+    return MINI_V2_NVME_DB_IRQ_STRDE;
+}
+
+void devdrv_mini_v2_init_setup_runtime_info(struct devdrv_pci_ctrl *pci_ctrl)
+{
     pci_ctrl->remote_dev_id = pci_ctrl->dev_id_in_pdev;
     pci_ctrl->os_load_flag = (pci_ctrl->remote_dev_id == 0) ? 1 : 0;
     pci_ctrl->shr_para->chip_id = (int)pci_ctrl->remote_dev_id;
-
-    devdrv_mini_v2_init_load_file_info(pci_ctrl);
-    devdrv_mini_v2_init_depend_module_info(pci_ctrl);
-    devdrv_mini_v2_ops_init(pci_ctrl);
-
     pci_ctrl->local_reserve_mem_base = NULL;
+}
+#endif
+
+STATIC unsigned int devdrv_msg_chan_cnt_mini_v2[devdrv_msg_client_max] = {
+    DEVDRV_PCIVNIC_DEV_MSG_CHAN_CNT_MAX,    /* used for pcivnic */
+    DEVDRV_SMMU_DEV_MSG_CHAN_CNT_MAX,       /* used for test */
+    DEVDRV_DEVMM_DEV_MSG_CHAN_CNT_MAX,      /* used for svm */
+    DEVDRV_COMMON_DEV_MSG_CHAN_CNT_MAX,     /* used for common */
+    DEVDRV_DEV_MAMAGER_MSG_CHAN_CNT_MAX,    /* used for device manager */
+    DEVDRV_TSDRV_MSG_CHAN_CNT_MAX,          /* used for tsdrv */
+    DEVDRV_DEV_HDC_MSG_CHAN_CNT_MAX,        /* used for hdc */
+    DEVDRV_QUEUE_MSG_CHAN_CNT_MAX,          /* used for queue */
+};
+
+enum devdrv_load_wait_mode devdrv_mini_v2_get_load_wait_mode(struct devdrv_pci_ctrl *pci_ctrl)
+{
+    if (devdrv_feature_is_support(pci_ctrl->features, DEVDRV_FEATURE_PRE_CFG)) {
+        devdrv_pre_cfg(pci_ctrl);
+    }
+
+    return DEVDRV_LOAD_WAIT_INTERVAL;
+}
+
+int devdrv_mini_v2_get_pf_msg_chan_cnt(void)
+{
+    return DEVDRV_MAX_MSG_PF_CHAN_CNT;
+}
+
+int devdrv_mini_v2_get_vf_msg_chan_cnt(void)
+{
+    return DEVDRV_MAX_MSG_VF_CHAN_CNT;
+}
+
+void devdrv_mini_v2_set_dev_shr_info(struct devdrv_pci_ctrl *pci_ctrl)
+{
+    pci_ctrl->shr_para->host_dev_id = (int)pci_ctrl->dev_id;
+    pci_ctrl->shr_para->driver_version = DEVDRV_DRIVER_VERSION;
+    /* chip1 use chip0 bar base */
+    pci_ctrl->shr_para->host_mem_bar_base = (u64)ka_pci_resource_start(pci_ctrl->pdev, PCI_BAR_MEM);
+    pci_ctrl->shr_para->host_io_bar_base = (u64)ka_pci_resource_start(pci_ctrl->pdev, PCI_BAR_IO);
+}
+
+u32 devdrv_mini_v2_get_p2p_support_max_devnum(void)
+{
+    return DEVDRV_MINI_V2_P2P_SUPPORT_MAX_DEVICE;
+}
+
+int devdrv_mini_v2_is_p2p_access_cap(struct devdrv_pci_ctrl *pci_ctrl, struct devdrv_pci_ctrl *peer_pci_ctrl)
+{
+    if (devdrv_p2p_para_check(0, pci_ctrl->dev_id, peer_pci_ctrl->dev_id) != 0) {
+        devdrv_info("devid and peer_devid is 1pf2die's die1, not support p2p. (dev_id=%u; peer_devid=%u)\n",
+            pci_ctrl->dev_id, peer_pci_ctrl->dev_id);
+        return DEVDRV_P2P_ACCESS_DISABLE;
+    }
+
+    return DEVDRV_P2P_ACCESS_ENABLE;
+}
+
+int devdrv_mini_v2_get_p2p_addr(struct devdrv_pci_ctrl *pci_ctrl, u32 remote_dev_id, enum devdrv_p2p_addr_type type, phys_addr_t *phy_addr, size_t *size)
+{
+    u32 dev_id = pci_ctrl->dev_id;
+    u64 io_txatu_base;
+
+    io_txatu_base = pci_ctrl->target_bar[remote_dev_id].io_txatu_base;
+    if (io_txatu_base == 0) {
+        devdrv_err("Invalid io tx atu base. (dev_id=%u; remote_dev_id=%u; type=%u)\n",
+            dev_id, remote_dev_id, (u32)type);
+        return -EINVAL;
+    }
+
+    switch (type) {
+        case DEVDRV_P2P_IO_TS_DB:
+            *phy_addr = (phys_addr_t)(io_txatu_base + DEVDRV_IO_TS_DB_OFFSET);
+            *size = DEVDRV_IO_TS_DB_SIZE;
+            break;
+        case DEVDRV_P2P_IO_TS_SRAM:
+            *phy_addr = (phys_addr_t)(io_txatu_base + DEVDRV_IO_TS_SRAM_OFFSET);
+            *size = DEVDRV_IO_TS_SRAM_SIZE;
+            break;
+        case DEVDRV_P2P_IO_HWTS:
+            *phy_addr = (phys_addr_t)(io_txatu_base + DEVDRV_IO_HWTS_OFFSET);
+            *size = DEVDRV_IO_HWTS_SIZE;
+            break;
+        default:
+            devdrv_err("P2P address type not support. (dev_id=%u; remote_dev_id=%u; type=%u)\n",
+                dev_id, remote_dev_id, (u32)type);
+            return -EINVAL;
+    }
+
+    return 0;
+}
+
+void devdrv_mini_v2_init_msg_cnt(struct devdrv_pci_ctrl *pci_ctrl)
+{
+    int i;
+    u32 irq_res_gear = devdrv_get_irq_res_gear();
+
+    for (i = 0; i < devdrv_msg_client_max; i++) {
+        pci_ctrl->res.msg_chan_cnt[i] = (int)devdrv_msg_chan_cnt_mini_v2[i];
+    }
+
+    switch (irq_res_gear) {
+        case 4: /* irq resource gear is 4 */
+            pci_ctrl->res.msg_chan_cnt[devdrv_msg_client_hdc] = DEVDRV_DEV_HDC_MSG_CHAN_CNT_GEAR_4;
+            break;
+        default:
+            pci_ctrl->res.msg_chan_cnt[devdrv_msg_client_hdc] = DEVDRV_DEV_HDC_MSG_CHAN_CNT_MAX;
+    }
+}
+
+static const devdrv_feature_bitmap_t mini_v2_features =
+    (1ULL << DEVDRV_FEATURE_SHR_PARA_REBUILD);
+
+#define DEVDRV_MINI_V2_OPS \
+    .init_load_file_info = devdrv_mini_v2_init_load_file_info, \
+    .init_depend_module_info = devdrv_mini_v2_init_depend_module_info, \
+    .alloc_devid = devdrv_alloc_devid_stride_2, \
+    .is_p2p_access_cap = devdrv_mini_v2_is_p2p_access_cap, \
+    .get_load_wait_mode = devdrv_mini_v2_get_load_wait_mode, \
+    .get_pf_max_msg_chan_cnt = devdrv_mini_v2_get_pf_msg_chan_cnt, \
+    .get_vf_max_msg_chan_cnt = devdrv_mini_v2_get_vf_msg_chan_cnt, \
+    .get_p2p_support_max_devnum = devdrv_mini_v2_get_p2p_support_max_devnum, \
+    .set_dev_shr_info = devdrv_mini_v2_set_dev_shr_info, \
+    .get_nvme_low_level_db_irq_num = devdrv_mini_v2_get_nvme_low_level_db_irq_num, \
+    .get_nvme_db_irq_strde = devdrv_mini_v2_get_nvme_db_irq_strde, \
+    .get_vf_dma_info = NULL, \
+    .is_mdev_vm_full_spec = NULL, \
+    .get_p2p_addr = devdrv_mini_v2_get_p2p_addr, \
+    .get_server_id = NULL, \
+    .get_max_server_num = NULL, \
+    .init_virt_info = NULL, \
+    .init_link_info = devdrv_mini_v2_init_link_info, \
+    .set_udevid_reorder_para = NULL, \
+    .devdrv_deal_suspend_handshake = NULL, \
+    .check_ep_suspend_status = NULL, \
+    .single_fault_init = NULL, \
+    .single_fault_uninit = NULL,
+
+#define DEVDRV_MINI_V2_PF_OPS \
+    .init_bar_info = devdrv_mini_v2_init_bar_info, \
+    .init_bar_addr_info = devdrv_mini_v2_init_bar_addr_info, \
+    .init_msg_cnt = devdrv_mini_v2_init_msg_cnt, \
+    .boot_mode_rebuild = NULL, \
+    .init_dma_info = devdrv_mini_v2_init_dma_info, \
+    .init_setup_runtime_info = devdrv_mini_v2_init_setup_runtime_info,
+
+#define DEVDRV_MINI_V2_PCIE_OPS \
+    .flush_cache = NULL, \
+    .get_peh_link_info = NULL, \
+    .link_speed_slow_to_normal = NULL,
+
+#define DEVDRV_MINI_V2_PF_INIT_INTR_OPS \
+    .init_intr_info = devdrv_mini_v2_init_intr_info,
+
+struct res_config mini_v2_res_cfg[] = {
+    {
+        .mode = (1U << (DEVDRV_SRIOV_TYPE_PF + DEVDRV_FEATURE_PFVF_BIT_OFFSET)) |
+                (1U << (CONNECT_PROTOCOL_PCIE + DEVDRV_FEATURE_CONNECT_PROTO_BIT_OFFSET)),
+        .ops = {
+            DEVDRV_MINI_V2_OPS
+            DEVDRV_MINI_V2_PF_OPS
+            DEVDRV_MINI_V2_PCIE_OPS
+            DEVDRV_MINI_V2_PF_INIT_INTR_OPS
+        },
+    },
+};
+
+/*
+ * 1PF2P bar map to single pf bar space:
+ * bar      offset  len     use for
+ * bar0     0       8MB     P0 bar0
+ *          8MB     8MB     P1 bar0
+ * bar2     0       128MB   P0 bar2
+ *          128MB   128MB   P1 bar2
+ * bar4     0       2GB     P0 bar4
+ *          2GB     2GB     P1 bar4
+ */
+int devdrv_mini_v2_res_init(struct devdrv_pci_ctrl *pci_ctrl)
+{
+#ifndef DRV_UT
+    struct res_config *res_cfg = NULL;
+    size_t res_cfg_size;
+    int ret;
+
+    pci_ctrl->features = mini_v2_features;
+
+    res_cfg_size = KA_BASE_ARRAY_SIZE(mini_v2_res_cfg);
+    res_cfg = devdrv_feature_get_res_cfg(pci_ctrl, mini_v2_res_cfg, res_cfg_size);
+    if (res_cfg == NULL) {
+        return -EINVAL;
+    }
+
+    (void)memcpy_s(&pci_ctrl->ops, sizeof(struct devdrv_dev_ops), &res_cfg->ops, sizeof(struct devdrv_dev_ops));
+    devdrv_parse_res_gear();
+    ret = res_cfg->ops.init_bar_info(pci_ctrl);
+    if (ret != 0) {
+        devdrv_err("Init bar info failed.\n");
+        return ret;
+    }
+
+    res_cfg->ops.init_bar_addr_info(pci_ctrl);
+    res_cfg->ops.init_intr_info(pci_ctrl);
+    res_cfg->ops.init_dma_info(pci_ctrl);
+    res_cfg->ops.init_msg_cnt(pci_ctrl);
+    res_cfg->ops.init_link_info(pci_ctrl);
+    res_cfg->ops.init_setup_runtime_info(pci_ctrl);
+    res_cfg->ops.init_load_file_info(pci_ctrl);
+    res_cfg->ops.init_depend_module_info(pci_ctrl);
 #endif
 
     return 0;

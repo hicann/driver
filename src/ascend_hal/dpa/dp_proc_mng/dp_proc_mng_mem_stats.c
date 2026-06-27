@@ -19,7 +19,7 @@
 #include "dpa/dpa_dp_proc_mng.h"
 #include "dp_adapt.h"
 
-#define NSEC_PER_SEC                                1000000000
+#define NSEC_PER_SEC 1000000000
 
 static THREAD uint32_t g_timestamp_mode = 1; /* Default is cpu_cycle_count */
 
@@ -31,7 +31,7 @@ static uint64_t get_rdtsc(void)
     uint32_t lo = 0;
     const int uint32Bits = 32; // 32 is uint bit count
 
-    __asm__ __volatile__ ("rdtsc" : "=a"(lo), "=d"(hi));
+    __asm__ __volatile__("rdtsc" : "=a"(lo), "=d"(hi));
     cycles = ((uint64_t)lo) | ((uint64_t)hi << uint32Bits);
 
     return cycles;
@@ -43,7 +43,7 @@ static uint64_t get_cpu_cycle_count(void)
     uint64_t cycles;
 
 #if defined(__aarch64__)
-    asm volatile("mrs %0, cntvct_el0" : "=r" (cycles));
+    asm volatile("mrs %0, cntvct_el0" : "=r"(cycles));
 #elif defined(__x86_64__)
     cycles = get_rdtsc();
 #else
@@ -79,8 +79,9 @@ static drvError_t dp_proc_mng_prof_para_check(struct prof_sample_para *para)
     }
 
     if (para->buff_len < sizeof(struct module_mem_info) * MEM_STATS_MAX_MODULE_ID) {
-        DP_PROC_MNG_ERR("Invalid prof sample para buff_len. (buff_len=%u, report_len=%u)\n",
-            para->buff_len, sizeof(struct module_mem_info) * MEM_STATS_MAX_MODULE_ID);
+        DP_PROC_MNG_ERR(
+            "Invalid prof sample para buff_len. (buff_len=%u, report_len=%u)\n", para->buff_len,
+            (unsigned int)(sizeof(struct module_mem_info) * MEM_STATS_MAX_MODULE_ID));
         return DRV_ERROR_INVALID_VALUE;
     }
     return DRV_ERROR_NONE;
@@ -127,8 +128,9 @@ int dp_proc_mng_prof_sample_fun(struct prof_sample_para *para)
 
     dev_id = para->dev_id;
     mem_info = (struct module_mem_info *)(para->buff);
-    memset_s(mem_info, sizeof(struct module_mem_info) * MEM_STATS_MAX_MODULE_ID,
-        0, sizeof(struct module_mem_info) * MEM_STATS_MAX_MODULE_ID);
+    memset_s(
+        mem_info, sizeof(struct module_mem_info) * MEM_STATS_MAX_MODULE_ID, 0,
+        sizeof(struct module_mem_info) * MEM_STATS_MAX_MODULE_ID);
     for (mem_module_id = 0; mem_module_id < MEM_STATS_MAX_MODULE_ID; ++mem_module_id) {
         mem_info[mem_module_id].module_id = mem_module_id;
         mem_info[mem_module_id].timestamp = timestamp;
@@ -187,7 +189,7 @@ __attribute__((constructor)) static void dp_proc_mng_prof_init(void)
         return;
     }
 
-    prof_ops.sub_chan_num  = 1;
+    prof_ops.sub_chan_num = 1;
     prof_ops.ops.start_func = dp_proc_mng_prof_start_fun;
     prof_ops.ops.stop_func = dp_proc_mng_prof_stop_fun;
     prof_ops.ops.sample_func = dp_proc_mng_prof_sample_fun;
@@ -202,4 +204,3 @@ __attribute__((constructor)) static void dp_proc_mng_prof_init(void)
     }
 #endif
 }
-

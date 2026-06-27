@@ -26,8 +26,7 @@ enum trs_chan_mem_type {
 
 void *trs_chan_mem_alloc_ddr(struct trs_id_inst *inst, int nid, size_t size, phys_addr_t *paddr);
 void trs_chan_mem_free_ddr(struct trs_id_inst *inst, void *vaddr, size_t size);
-void *trs_chan_mem_alloc_rsv(struct trs_id_inst *inst, int type,
-    size_t size, phys_addr_t *paddr, u32 flag);
+void *trs_chan_mem_alloc_rsv(struct trs_id_inst *inst, int type, size_t size, phys_addr_t *paddr, u32 flag);
 
 void trs_chan_mem_free_rsv(struct trs_id_inst *inst, int type, void *sq_addr, size_t size);
 int trs_chan_rsv_mem_init(struct trs_id_inst *inst, int type, bool cacheable);

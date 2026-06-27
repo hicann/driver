@@ -54,8 +54,7 @@ bool devmm_proc_async_task_is_empty(struct devmm_svm_process *svm_proc)
     u32 i;
 
     for (i = 0; i < DEVMM_MAX_DEVICE_NUM; i++) {
-        if ((devmm_is_dma_link_abnormal(i) == false) &&
-            (devmm_proc_dev_async_task_is_empty(svm_proc, i) == false)) {
+        if ((devmm_is_dma_link_abnormal(i) == false) && (devmm_proc_dev_async_task_is_empty(svm_proc, i) == false)) {
             return false;
         }
     }
@@ -207,9 +206,7 @@ int devmm_svm_proc_init_private(struct devmm_svm_process *svm_proc)
     return 0;
 }
 
-void devmm_svm_proc_uninit_private(struct devmm_svm_process *svm_proc)
-{
-}
+void devmm_svm_proc_uninit_private(struct devmm_svm_process *svm_proc) {}
 
 bool devmm_svm_can_release_private(struct devmm_svm_process *svm_proc)
 {
@@ -224,8 +221,8 @@ bool devmm_svm_can_release_private(struct devmm_svm_process *svm_proc)
 
 void devmm_svm_release_private_proc(struct devmm_svm_process *svm_proc)
 {
-    devmm_drv_run_info("Device process exited. (hostpid=%d; times=%d)\n", svm_proc->process_id.hostpid,
-        svm_proc->release_work_cnt);
+    devmm_drv_run_info(
+        "Device process exited. (hostpid=%d; times=%d)\n", svm_proc->process_id.hostpid, svm_proc->release_work_cnt);
 
     devmm_destory_register_dma_mng(svm_proc);
     devmm_share_id_map_node_destroy_all(svm_proc);
@@ -247,4 +244,3 @@ void devmm_proc_debug_info_print(struct devmm_svm_process *svm_proc)
     devmm_srcu_work_stats_print(&svm_proc->srcu_work);
     devmm_dma_desc_stats_info_print(svm_proc);
 }
-

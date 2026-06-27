@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * Copyright (c) 2026 Huawei Technologies Co., Ltd.
  * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -11,6 +11,13 @@
 #ifndef SVM_LOG_H
 #define SVM_LOG_H
 
+#include <time.h>
+
+#include "securec.h"
+#include "drv_type.h"
+#include "svm_dbi.h"
+#include "svm_pub.h"
+
 #ifndef EMU_ST /* Simulation ST is required and cannot be deleted. */
 #include "dmc_user_interface.h"
 #else
@@ -19,21 +26,21 @@
 #include "ut_log.h"
 #endif
 
-#define svm_err(fmt, ...)         DRV_ERR(HAL_MODULE_TYPE_DEVMM, "<errno:%d, %d> " fmt, errno, \
-    errno_to_user_errno(errno), ##__VA_ARGS__)
+#define svm_err(fmt, ...) \
+    DRV_ERR(HAL_MODULE_TYPE_DEVMM, "<errno:%d, %d> " fmt, errno, errno_to_user_errno(errno), ##__VA_ARGS__)
 
-#define svm_warn(fmt, ...)        DRV_WARN(HAL_MODULE_TYPE_DEVMM, fmt, ##__VA_ARGS__)
-#define svm_info(fmt, ...)        DRV_INFO(HAL_MODULE_TYPE_DEVMM, fmt, ##__VA_ARGS__)
-#define svm_debug(fmt, ...)       DRV_DEBUG(HAL_MODULE_TYPE_DEVMM, fmt, ##__VA_ARGS__)
+#define svm_warn(fmt, ...) DRV_WARN(HAL_MODULE_TYPE_DEVMM, fmt, ##__VA_ARGS__)
+#define svm_info(fmt, ...) DRV_INFO(HAL_MODULE_TYPE_DEVMM, fmt, ##__VA_ARGS__)
+#define svm_debug(fmt, ...) DRV_DEBUG(HAL_MODULE_TYPE_DEVMM, fmt, ##__VA_ARGS__)
 /* alarm event log, non-alarm events use debug or run log */
-#define svm_event(fmt, ...)       DRV_EVENT(HAL_MODULE_TYPE_DEVMM, fmt, ##__VA_ARGS__)
+#define svm_event(fmt, ...) DRV_EVENT(HAL_MODULE_TYPE_DEVMM, fmt, ##__VA_ARGS__)
 /* infrequent log level */
-#define svm_notice(fmt, ...)      DRV_NOTICE(HAL_MODULE_TYPE_DEVMM, fmt, ##__VA_ARGS__)
-#define svm_run_info(fmt, ...)    DRV_RUN_INFO(HAL_MODULE_TYPE_DEVMM, fmt, ##__VA_ARGS__)
+#define svm_notice(fmt, ...) DRV_NOTICE(HAL_MODULE_TYPE_DEVMM, fmt, ##__VA_ARGS__)
+#define svm_run_info(fmt, ...) DRV_RUN_INFO(HAL_MODULE_TYPE_DEVMM, fmt, ##__VA_ARGS__)
 
-#define svm_err_if(cond, fmt, ...)  \
-    if (cond)                       \
-        svm_err(fmt, ##__VA_ARGS__)
+#define svm_err_if(cond, fmt, ...) \
+    if (cond)                      \
+    svm_err(fmt, ##__VA_ARGS__)
 
 #define svm_no_err_if(cond, fmt, ...) \
     if (cond) {                       \
@@ -42,5 +49,206 @@
         svm_err(fmt, ##__VA_ARGS__);  \
     }
 
+/* errmsg */
+#define svm_err_hex_dump(buf, len, fmt) DRV_ERR_HEX_DUMP(HAL_MODULE_TYPE_DEVMM, buf, len, fmt)
+
+#define svm_report_err(error_code, key, value, arg_num) REPORT_PREDEFINED_ERR_MSG(error_code, key, value, arg_num)
+
+#define SVM_REPORT_ERR_MSG_STR_LEN 32
+#define SVM_REPORT_REASON_STR_LEN 256
+#define SVM_INVALID_ARG_ERR_MSG_ARG_NUM 4
+#define SVM_NOT_SUPPORT_ERR_MSG_ARG_NUM 2
+#define SVM_OUT_OF_MEM_ERR_MSG_ARG_NUM 2
+#define SVM_REPORT_BYTES_PER_KB 1024ULL
+#define SVM_INVALID_ADDR_REASON \
+    "The address is not correctly allocated or has been released"
+#define SVM_PROCESS_NOT_IN_TRUSTLIST_REASON                                     \
+    "The process where the share memory resides is not added to the trustist. " \
+    "Add the process to the trustist or disable trustist verification"
+
+static inline void svm_report_out_of_range(
+    const char *func_name, const char *para_name, u64 para_value, u32 min_value, u32 max_value)
+{
+    const char *key[] = {"func_name", "para_value", "para_name", "reason"};
+    char value[SVM_REPORT_ERR_MSG_STR_LEN] = {0};
+    char reason[SVM_REPORT_REASON_STR_LEN] = {0};
+    const char *report_value[] = {func_name, value, para_name, reason};
+    int ret;
+
+    ret = snprintf_s(
+        reason, sizeof(reason), sizeof(reason) - 1, "The parameter value is out of range. The valid range is [%u,%u]",
+        min_value, max_value);
+    if (ret < 0) {
+        return;
+    }
+    ret = snprintf_s(value, sizeof(value), sizeof(value) - 1, "%llu", para_value);
+    if (ret < 0) {
+        return;
+    }
+    svm_report_err("EL0016", key, report_value, SVM_INVALID_ARG_ERR_MSG_ARG_NUM);
+}
+
+static inline void svm_report_para_zero(const char *func_name, const char *para_name, u64 para_value)
+{
+    const char *key[] = {"func_name", "para_value", "para_name", "reason"};
+    const char *reason = "The input parameter must be greater than 0";
+    char value[SVM_REPORT_ERR_MSG_STR_LEN] = {0};
+    const char *report_value[] = {func_name, value, para_name, reason};
+    int ret;
+
+    ret = snprintf_s(value, sizeof(value), sizeof(value) - 1, "%llu", para_value);
+    if (ret < 0) {
+        return;
+    }
+    svm_report_err("EL0016", key, report_value, SVM_INVALID_ARG_ERR_MSG_ARG_NUM);
+}
+
+static inline void svm_report_para_only_zero(const char *func_name, const char *para_name, u64 para_value)
+{
+    const char *key[] = {"func_name", "para_value", "para_name", "reason"};
+    const char *reason = "The input parameter must be 0";
+    char value[SVM_REPORT_ERR_MSG_STR_LEN] = {0};
+    const char *report_value[] = {func_name, value, para_name, reason};
+    int ret;
+
+    ret = snprintf_s(value, sizeof(value), sizeof(value) - 1, "%llu", para_value);
+    if (ret < 0) {
+        return;
+    }
+    svm_report_err("EL0016", key, report_value, SVM_INVALID_ARG_ERR_MSG_ARG_NUM);
+}
+
+static inline void svm_report_no_permission(const char *func_name)
+{
+    const char *key[] = {"func_name", "reason"};
+    const char *value[] = {func_name, SVM_PROCESS_NOT_IN_TRUSTLIST_REASON};
+
+    svm_report_err("EL0021", key, value, SVM_NOT_SUPPORT_ERR_MSG_ARG_NUM);
+}
+
+static inline void svm_report_addr_not_allocated(const char *func_name, const char *para_name, u64 para_value)
+{
+    const char *key[] = {"func_name", "para_value", "para_name", "reason"};
+    char value[SVM_REPORT_ERR_MSG_STR_LEN] = {0};
+    const char *report_value[] = {func_name, value, para_name, SVM_INVALID_ADDR_REASON};
+    int ret;
+
+    ret = snprintf_s(value, sizeof(value), sizeof(value) - 1, "0x%llx", para_value);
+    if (ret < 0) {
+        return;
+    }
+    svm_report_err("EL0016", key, report_value, SVM_INVALID_ARG_ERR_MSG_ARG_NUM);
+}
+
+static inline const char *svm_format_align_size(u64 align_size, char *buf, size_t buf_len)
+{
+    const u64 align_4k = 4ULL * SVM_REPORT_BYTES_PER_KB;
+    const u64 align_2m = 2ULL * SVM_REPORT_BYTES_PER_KB * SVM_REPORT_BYTES_PER_KB;
+    const u64 align_1g = SVM_REPORT_BYTES_PER_KB * SVM_REPORT_BYTES_PER_KB * SVM_REPORT_BYTES_PER_KB;
+    int ret;
+
+    if (align_size == align_4k) {
+        ret = snprintf_s(buf, buf_len, buf_len - 1, "4 KB");
+    } else if (align_size == align_2m) {
+        ret = snprintf_s(buf, buf_len, buf_len - 1, "2 MB");
+    } else if (align_size == align_1g) {
+        ret = snprintf_s(buf, buf_len, buf_len - 1, "1 GB");
+    } else {
+        ret = snprintf_s(buf, buf_len, buf_len - 1, "NA");
+    }
+    return (ret < 0) ? "" : buf;
+}
+
+static inline void svm_report_addr_not_aligned(
+    const char *func_name, const char *para_name, u64 para_value, u64 align_size)
+{
+    const char *key[] = {"func_name", "para_value", "para_name", "reason"};
+    char value[SVM_REPORT_ERR_MSG_STR_LEN] = {0};
+    char reason[SVM_REPORT_REASON_STR_LEN] = {0};
+    char align_size_str[SVM_REPORT_ERR_MSG_STR_LEN] = {0};
+    const char *report_value[] = {func_name, value, para_name, reason};
+    int ret;
+
+    (void)svm_format_align_size(align_size, align_size_str, sizeof(align_size_str));
+    ret = snprintf_s(
+        reason, sizeof(reason), sizeof(reason) - 1, "The input address does not meet the %s alignment requirement",
+        align_size_str);
+    if (ret < 0) {
+        return;
+    }
+    ret = snprintf_s(value, sizeof(value), sizeof(value) - 1, "0x%llx", para_value);
+    if (ret < 0) {
+        return;
+    }
+
+    svm_report_err("EL0016", key, report_value, SVM_INVALID_ARG_ERR_MSG_ARG_NUM);
+}
+
+static inline void svm_report_size_not_aligned(
+    const char *func_name, const char *para_name, u64 para_value, u64 align_size)
+{
+    const char *key[] = {"func_name", "para_value", "para_name", "reason"};
+    char value[SVM_REPORT_ERR_MSG_STR_LEN] = {0};
+    char align_size_str[SVM_REPORT_ERR_MSG_STR_LEN] = {0};
+    char reason[SVM_REPORT_REASON_STR_LEN] = {0};
+    const char *report_value[] = {func_name, value, para_name, reason};
+    int ret;
+
+    (void)svm_format_align_size(align_size, align_size_str, sizeof(align_size_str));
+    ret = snprintf_s(
+        reason, sizeof(reason), sizeof(reason) - 1,
+        "The input size does not meet the memory allocation granularity requirement. "
+        "It must be a multiple of %s. For details about the memory allocation granularity of a specified memory "
+        "attribute, see the official document",
+        align_size_str);
+    if (ret < 0) {
+        return;
+    }
+    ret = snprintf_s(value, sizeof(value), sizeof(value) - 1, "0x%llx", para_value);
+    if (ret < 0) {
+        return;
+    }
+
+    svm_report_err("EL0016", key, report_value, SVM_INVALID_ARG_ERR_MSG_ARG_NUM);
+}
+
+static inline void svm_report_oom(u64 size, const char *module_name, u32 devid)
+{
+    char size_str[SVM_REPORT_ERR_MSG_STR_LEN] = {0};
+    const char *error_code = (devid == svm_get_host_devid()) ? "EL0018" : "EL0019";
+    const char *key[] = {"size", "moduleName"};
+    const char *value[] = {size_str, (module_name == NULL) ? "UNKNOWN" : module_name};
+    int ret;
+
+    ret = snprintf_s(size_str, sizeof(size_str), sizeof(size_str) - 1, "%llu bytes", size);
+    if (ret < 0) {
+        return;
+    }
+    svm_report_err(error_code, key, value, SVM_OUT_OF_MEM_ERR_MSG_ARG_NUM);
+}
+
 #endif
 
+#define _svm_log_ratelimited(period_sec, max_cnt, log_fn, fmt, ...) \
+do { \
+    static time_t _begin; \
+    static unsigned int _cnt; \
+    time_t _now = time(NULL); \
+    unsigned int _period = (period_sec); \
+    u32 _max_cnt = (max_cnt); \
+\
+    if ((_begin == 0) || ((_now - _begin) >= _period)) { \
+        _begin = _now; \
+        _cnt = 0; \
+    } \
+\
+    if (_cnt++ < _max_cnt) { \
+        log_fn(fmt, ##__VA_ARGS__); \
+    } \
+} while (0)
+
+#define svm_log_ratelimited(log_fn, fmt, ...) \
+    _svm_log_ratelimited(1, 2, log_fn, fmt, __VA_ARGS__)
+
+#define svm_run_info_ratelimited(fmt, ...) \
+    svm_log_ratelimited(svm_run_info, fmt, __VA_ARGS__)

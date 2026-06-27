@@ -10,13 +10,13 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
- 
+
 #ifndef TRS_SEC_EH_AUTO_INIT_H
 #define TRS_SEC_EH_AUTO_INIT_H
- 
-#define AUTO_INIT_MODULE_NAME      TRS_SEC_EH
+
+#define AUTO_INIT_MODULE_NAME TRS_SEC_EH
 #define AUTO_INIT_MODULE_NAME_STR "TRS_SEC_EH"
- 
+
 #include "pbl/pbl_feature_loader.h"
- 
+
 #endif

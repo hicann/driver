@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2025. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -14,11 +14,10 @@
 #ifndef PMA_H
 #define PMA_H
 
-#include <linux/types.h>
+#include "ka_type.h"
 
 /* pma: peer memory adapt */
 
 void pma_mem_recycle_notify(u32 udevid, int tgid, u64 va, u64 size);
 
 #endif
-

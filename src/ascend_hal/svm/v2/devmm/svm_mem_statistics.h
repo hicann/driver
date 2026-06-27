@@ -25,7 +25,7 @@
 #define THREAD
 #endif
 
-#define MEM_STATS_DEV_TS_DDR_TYPE           2
+#define MEM_STATS_DEV_TS_DDR_TYPE 2
 
 uint64_t svm_get_mem_stats_va(uint32_t devid);
 void svm_init_mem_stats_mng(uint32_t devid);
@@ -41,4 +41,3 @@ void svm_mapped_size_inc(struct svm_mem_stats_type *type, uint32_t devid, uint64
 void svm_mapped_size_dec(struct svm_mem_stats_type *type, uint32_t devid, uint64_t size);
 
 #endif /* SVM_MEM_STATISTICS_H */
-

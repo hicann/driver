@@ -43,7 +43,7 @@ static drvError_t buff_mz_usr_mng_init(struct memzone_user_mng_t *mz, struct buf
         return DRV_ERROR_INNER_ERR;
     }
 
-    mz->head.type   = UNI_TYPE_ZONE;
+    mz->head.type = UNI_TYPE_ZONE;
     mz->head.status = 1;
     mz->head.devid = (uint32_t)info->devid;
     mz->head.parent = NULL;
@@ -66,7 +66,7 @@ static drvError_t buff_mz_usr_mng_init(struct memzone_user_mng_t *mz, struct buf
 
     mz->bitnum = blk_num;
 
-    bitnum_mask = ALIGN_UP(blk_num, BITS_PER_LONG); //lint !e502
+    bitnum_mask = ALIGN_UP(blk_num, BITS_PER_LONG); // lint !e502
     bitmap_clear(mz->bitmap, 0, (int)(mz->bitnum));
     bitmap_set(mz->bitmap, (int)(mz->bitnum), (int)(bitnum_mask));
 
@@ -110,15 +110,15 @@ drvError_t buff_usr_mz_create(struct buff_req_mz_create *info)
 
     start = buff_blk_alloc(info->grp_id, info->total_size, flags, &blk_id);
     if (start == NULL) {
-        buff_event("Can not alloc. (len=%llx; flag=%#lx)\n", info->total_size, flags);
+        buff_event("Can not alloc. (len=%lx; flag=%#lx)\n", info->total_size, flags);
         ret = DRV_ERROR_OUT_OF_MEMORY;
         goto free_mz;
     }
 
     ret = add_self_buff_to_range(blk_id, info->grp_id, start, info->total_size, (uint64)(uintptr_t)mz);
     if (ret != 0) {
-        buff_err("buff add to range failed, start %p len %llx; ret=%d; blk_id=%u\n",
-            start, info->total_size, ret, blk_id);
+        buff_err("buff add to range failed, start %p len %lx; ret=%d; blk_id=%u\n", start, info->total_size, ret,
+                 blk_id);
         goto free_sp_res;
     }
 
@@ -134,9 +134,10 @@ drvError_t buff_usr_mz_create(struct buff_req_mz_create *info)
     mz->head.parent = block;
     proc_block_add(block);
 
-    buff_debug("Mz create. (cfg_id=%u; blk_size=%u; blk_num=%d; total_size=0x%llx; sp_flag=%#lx; page_type=%u; mz=%llx; "
-        "start=0x%llx; devid=%d)\n", info->cfg_id, info->blk_size, blk_num, info->total_size, flags, info->page_type,
-        info->mz_uva, (uint64)(uintptr_t)start, info->devid);
+    buff_debug("Mz create. (cfg_id=%u; blk_size=%u; blk_num=%d; total_size=0x%lx; sp_flag=%#lx; page_type=%u; mz=%lx; "
+               "start=0x%llx; devid=%d)\n",
+               info->cfg_id, info->blk_size, blk_num, info->total_size, flags, info->page_type, info->mz_uva,
+               (uint64)(uintptr_t)start, info->devid);
 
     return DRV_ERROR_NONE;
 free_sp_res:
@@ -166,4 +167,3 @@ drvError_t buff_usr_mz_delete(struct buff_req_mz_delete *info)
 
     return DRV_ERROR_NONE;
 }
-

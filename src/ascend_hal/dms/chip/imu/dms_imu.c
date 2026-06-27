@@ -13,7 +13,11 @@
 #include "dms_device_info.h"
 #include "dms/dms_devdrv_info_comm.h"
 
+#ifdef CFG_FEATURE_MULTI_FRAME_IPC
+#define IMU_DMP_MSG_RECV 220
+#else
 #define IMU_DMP_MSG_RECV 32
+#endif
 
 int dms_imu_dmp_msg_recv(int fd, unsigned int dev_id, unsigned char *buf,
     unsigned char buf_len, unsigned char *recv_len)

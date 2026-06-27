@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2025. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -62,6 +62,7 @@ KA_EXPORT_SYMBOL_GPL(hal_kernel_svm_query_devpid_by_pfn);
 static int svm_add_matched_va_to_list(int tgid, u64 va, ka_list_head_t *head)
 {
     struct devmm_pfn_owner_info *entry = NULL;
+    u64 page_size = svm_va_to_page_size(tgid, va);
 
     entry = svm_kvmalloc(sizeof(struct devmm_pfn_owner_info), KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
     if (entry == NULL) {
@@ -70,11 +71,10 @@ static int svm_add_matched_va_to_list(int tgid, u64 va, ka_list_head_t *head)
     }
 
     entry->dev_pid = tgid;
-    entry->va = va;
-    entry->size_shift = svm_page_size_to_page_shift(svm_va_to_page_size(tgid, va));
+    entry->va = ka_base_round_down(va, page_size);
+    entry->size_shift = svm_page_size_to_page_shift(page_size);
 
-    svm_debug("search succ. (devpid=%d; va=0x%llx; size_shift=0x%u)\n",
-        entry->dev_pid, entry->va, entry->size_shift);
+    svm_debug("search succ. (devpid=%d; va=0x%llx; size_shift=0x%u)\n", entry->dev_pid, entry->va, entry->size_shift);
 
     ka_list_add_tail(&entry->list, head);
 
@@ -125,20 +125,9 @@ static int svm_search_va_match_with_pfn_per_proc(u32 udevid, int tgid, u64 pfn, 
     return ret;
 }
 
-static u64 svm_get_align_pfn(u64 pfn)
-{
-    ka_page_t *page = ka_mm_pfn_to_online_page(pfn);
-    if ((page == NULL) || (ka_mm_PageHuge(page) == false)) {
-        return pfn;
-    } else {
-        return ka_mm_page_to_pfn(ka_mm_compound_head(page));
-    }
-}
-
 int hal_kernel_svm_query_pfn_owner_info(u32 devid, u64 pfn, ka_list_head_t *head)
 {
     unsigned long stamp = (unsigned long)ka_jiffies;
-    u64 align_pfn = svm_get_align_pfn(pfn);
     u32 dev_num = uda_get_udev_max_num();
     u32 udevid, i;
     int ret;
@@ -168,7 +157,7 @@ int hal_kernel_svm_query_pfn_owner_info(u32 devid, u64 pfn, ka_list_head_t *head
                 continue;
             }
 
-            ret = svm_search_va_match_with_pfn_per_proc(udevid, tgids[i], align_pfn, head);
+            ret = svm_search_va_match_with_pfn_per_proc(udevid, tgids[i], pfn, head);
             if (ret != 0) {
                 continue;
             }
@@ -189,7 +178,8 @@ void hal_kernel_svm_clear_pfn_owner_info_list(ka_list_head_t *head)
     }
 
     ka_task_might_sleep();
-    ka_list_for_each_safe(pos, n, head) {
+    ka_list_for_each_safe(pos, n, head)
+    {
         struct devmm_pfn_owner_info *node = ka_list_entry(pos, struct devmm_pfn_owner_info, list);
         ka_list_del(&node->list);
         svm_kvfree(node);

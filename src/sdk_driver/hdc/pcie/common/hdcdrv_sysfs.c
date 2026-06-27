@@ -154,45 +154,44 @@ STATIC void hdcdrv_fill_dev_stat(const struct hdcdrv_cmd_get_stat *cmd, struct h
     }
 }
 
-STATIC struct hdcdrv_cmd_stat_dev_service* hdcdrv_alloc_stat_list(void)
+STATIC struct hdcdrv_cmd_stat_dev_service *hdcdrv_alloc_stat_list(void)
 {
     struct hdcdrv_cmd_stat_dev_service *stat = NULL;
     stat = (struct hdcdrv_cmd_stat_dev_service *)hdcdrv_kzalloc(sizeof(struct hdcdrv_cmd_stat_dev_service),
-        KA_GFP_KERNEL | __KA_GFP_ACCOUNT, KA_SUB_MODULE_TYPE_4);
+                                                                KA_GFP_KERNEL | __KA_GFP_ACCOUNT, KA_SUB_MODULE_TYPE_4);
     if (stat == NULL) {
         goto stat_alloc_fail;
     }
 
-    stat->s_brief.active_list = (int*)hdcdrv_kvmalloc(sizeof(int) * (u64)HDCDRV_REAL_MAX_SESSION, KA_SUB_MODULE_TYPE_4);
+    stat->s_brief.active_list = (int *)hdcdrv_kvmalloc(sizeof(int) * (u64)HDCDRV_REAL_MAX_SESSION,
+                                                       KA_SUB_MODULE_TYPE_4);
     if (stat->s_brief.active_list == NULL) {
         goto active_alloc_fail;
     }
     (void)memset_s(stat->s_brief.active_list, sizeof(int) * (u64)HDCDRV_REAL_MAX_SESSION, 0,
-        sizeof(int) * (u64)HDCDRV_REAL_MAX_SESSION);
+                   sizeof(int) * (u64)HDCDRV_REAL_MAX_SESSION);
 
-    stat->s_brief.remote_close_list = (int*)hdcdrv_kvmalloc(sizeof(int) * (u64)HDCDRV_REAL_MAX_SESSION,
-        KA_SUB_MODULE_TYPE_4);
+    stat->s_brief.remote_close_list = (int *)hdcdrv_kvmalloc(sizeof(int) * (u64)HDCDRV_REAL_MAX_SESSION,
+                                                             KA_SUB_MODULE_TYPE_4);
     if (stat->s_brief.remote_close_list == NULL) {
         goto remote_alloc_fail;
     }
     (void)memset_s(stat->s_brief.remote_close_list, sizeof(int) * (u64)HDCDRV_REAL_MAX_SESSION, 0,
-        sizeof(int) * (u64)HDCDRV_REAL_MAX_SESSION);
+                   sizeof(int) * (u64)HDCDRV_REAL_MAX_SESSION);
 
-    stat->s_brief.idle_list = (int*)hdcdrv_kvmalloc(sizeof(int) * (u64)HDCDRV_REAL_MAX_SESSION, KA_SUB_MODULE_TYPE_4);
+    stat->s_brief.idle_list = (int *)hdcdrv_kvmalloc(sizeof(int) * (u64)HDCDRV_REAL_MAX_SESSION, KA_SUB_MODULE_TYPE_4);
     if (stat->s_brief.idle_list == NULL) {
         goto idle_alloc_fail;
     }
     (void)memset_s(stat->s_brief.idle_list, sizeof(int) * (u64)HDCDRV_REAL_MAX_SESSION, 0,
-        sizeof(int) * (u64)HDCDRV_REAL_MAX_SESSION);
+                   sizeof(int) * (u64)HDCDRV_REAL_MAX_SESSION);
 
     return stat;
 
 idle_alloc_fail:
     hdcdrv_kvfree((void **)&stat->s_brief.remote_close_list, KA_SUB_MODULE_TYPE_4);
-    stat->s_brief.remote_close_list = NULL;
 remote_alloc_fail:
     hdcdrv_kvfree((void **)&stat->s_brief.active_list, KA_SUB_MODULE_TYPE_4);
-    stat->s_brief.active_list = NULL;
 active_alloc_fail:
     hdcdrv_kfree(stat, KA_SUB_MODULE_TYPE_4);
     stat = NULL;
@@ -203,11 +202,8 @@ stat_alloc_fail:
 STATIC void hdcdrv_free_stat_list(struct hdcdrv_cmd_stat_dev_service *stat)
 {
     hdcdrv_kvfree((void **)&stat->s_brief.idle_list, KA_SUB_MODULE_TYPE_4);
-    stat->s_brief.idle_list = NULL;
     hdcdrv_kvfree((void **)&stat->s_brief.remote_close_list, KA_SUB_MODULE_TYPE_4);
-    stat->s_brief.remote_close_list = NULL;
     hdcdrv_kvfree((void **)&stat->s_brief.active_list, KA_SUB_MODULE_TYPE_4);
-    stat->s_brief.active_list = NULL;
     hdcdrv_kfree(stat, KA_SUB_MODULE_TYPE_4);
 }
 
@@ -275,8 +271,7 @@ STATIC long hdcdrv_get_service_stat(const struct hdcdrv_cmd_get_stat *cmd)
 {
     struct hdcdrv_cmd_stat_dev_service *stat = NULL;
 
-    if ((cmd->service_type >= HDCDRV_SUPPORT_MAX_SERVICE) || (cmd->service_type < 0) ||
-        (cmd->outbuf == NULL)) {
+    if ((cmd->service_type >= HDCDRV_SUPPORT_MAX_SERVICE) || (cmd->service_type < 0) || (cmd->outbuf == NULL)) {
         hdcdrv_err("Input parameter is error. (service_type=%d)\n", cmd->service_type);
         return HDCDRV_PARA_ERR;
     }
@@ -307,8 +302,8 @@ STATIC long hdcdrv_get_chan_stat(struct hdcdrv_cmd_get_stat *cmd)
     hdc_dev = &hdc_ctrl->devices[dev_id];
 
     if ((chan_id >= hdc_dev->msg_chan_cnt) || (chan_id < 0)) {
-        hdcdrv_err("chan_id is illegal. (dev=%u; chan_id=%d; msg_chan_num=%d)\n",
-            hdc_dev->dev_id, chan_id, hdc_dev->msg_chan_cnt);
+        hdcdrv_err("chan_id is illegal. (dev=%u; chan_id=%d; msg_chan_num=%d)\n", hdc_dev->dev_id, chan_id,
+                   hdc_dev->msg_chan_cnt);
         return HDCDRV_PARA_ERR;
     }
 
@@ -332,8 +327,7 @@ STATIC long hdcdrv_get_chan_stat(struct hdcdrv_cmd_get_stat *cmd)
     (void)hdcdrv_get_w_sq_desc(msg_chan->chan, (u32 *)(&stat.w_sq_tail));
     (void)hdcdrv_get_r_sq_desc(msg_chan->chan, (u32 *)(&stat.r_sq_head));
 
-    if (memcpy_s(cmd->outbuf, sizeof(struct hdcdrv_cmd_stat_chan), &stat,
-        sizeof(struct hdcdrv_cmd_stat_chan)) != EOK) {
+    if (memcpy_s(cmd->outbuf, sizeof(struct hdcdrv_cmd_stat_chan), &stat, sizeof(struct hdcdrv_cmd_stat_chan)) != EOK) {
         hdcdrv_err("Calling memcpy_s failed.\n");
         return HDCDRV_ERR;
     }
@@ -371,7 +365,7 @@ STATIC long hdcdrv_get_session_stat(const struct hdcdrv_cmd_get_stat *cmd)
     }
 
     stat.pkts_in_list = (session->normal_rx.tail + HDCDRV_SESSION_RX_LIST_MAX_PKT - session->normal_rx.head) %
-        HDCDRV_SESSION_RX_LIST_MAX_PKT;
+                        HDCDRV_SESSION_RX_LIST_MAX_PKT;
     stat.stat = session->stat;
     stat.remote_close_state = session->remote_close_state;
     stat.local_close_state = session->local_close_state;
@@ -384,8 +378,8 @@ STATIC long hdcdrv_get_session_stat(const struct hdcdrv_cmd_get_stat *cmd)
     stat.timeout.fast_send_timeout = ka_system_jiffies_to_msecs(session->timeout_jiffies.fast_send_timeout);
     stat.dbg_stat = session->dbg_stat;
 
-    if (memcpy_s(cmd->outbuf, sizeof(struct hdcdrv_cmd_stat_session), &stat,
-        sizeof(struct hdcdrv_cmd_stat_session)) != EOK) {
+    if (memcpy_s(cmd->outbuf, sizeof(struct hdcdrv_cmd_stat_session), &stat, sizeof(struct hdcdrv_cmd_stat_session)) !=
+        EOK) {
         hdcdrv_err("Calling memcpy_s failed.\n");
         return HDCDRV_ERR;
     }
@@ -393,15 +387,16 @@ STATIC long hdcdrv_get_session_stat(const struct hdcdrv_cmd_get_stat *cmd)
     return HDCDRV_OK;
 }
 
-STATIC ssize_t hdcdrv_fill_buf_mem_info(char *buf, u32 buf_len, const struct hdcdrv_mem_info* mem_info)
+STATIC ssize_t hdcdrv_fill_buf_mem_info(char *buf, u32 buf_len, const struct hdcdrv_mem_info *mem_info)
 {
     int ret;
     ssize_t offset = 0;
 
     ret = snprintf_s(buf + offset, (size_t)(buf_len - offset), (size_t)(buf_len - offset - 1),
-        "\tHuge mem pool's total num: %u, remain num: %u\n"
-        "\tSmall mem pool's total num: %u, remain num: %u\n\n", mem_info->huge_pool_size,
-        mem_info->huge_pool_remain_size, mem_info->small_pool_size, mem_info->small_pool_remain_size);
+                     "\tHuge mem pool's total num: %u, remain num: %u\n"
+                     "\tSmall mem pool's total num: %u, remain num: %u\n\n",
+                     mem_info->huge_pool_size, mem_info->huge_pool_remain_size, mem_info->small_pool_size,
+                     mem_info->small_pool_remain_size);
     if (ret >= 0) {
         offset += ret;
     }
@@ -410,42 +405,42 @@ STATIC ssize_t hdcdrv_fill_buf_mem_info(char *buf, u32 buf_len, const struct hdc
 }
 
 STATIC ssize_t hdcdrv_fill_buf_session_brief(char *buf, u32 buf_len,
-    const struct hdcdrv_cmd_stat_session_brief *s_brief, int list_session_flag)
+                                             const struct hdcdrv_cmd_stat_session_brief *s_brief, int list_session_flag)
 {
     int ret, i;
     ssize_t offset = 0;
 
     ret = snprintf_s(buf + offset, (size_t)(buf_len - offset), (size_t)(buf_len - offset - 1),
-        "\tTotal session number: %d\t shared device num: %d\t total_idle_session_num: %d\n"
-        "\tTotal active session number: %d\n",
-        (int)HDCDRV_REAL_MAX_SESSION, (int)hdcdrv_dev_num,
-        s_brief->total_idle_session_num, s_brief->active_num);
+                     "\tTotal session number: %d\t shared device num: %d\t total_idle_session_num: %d\n"
+                     "\tTotal active session number: %d\n",
+                     (int)HDCDRV_REAL_MAX_SESSION, (int)hdcdrv_dev_num, s_brief->total_idle_session_num,
+                     s_brief->active_num);
     if (ret >= 0) {
         offset += ret;
     }
 
     ret = snprintf_s(buf + offset, (size_t)(buf_len - offset), (size_t)(buf_len - offset - 1),
-        "\n\tTotal remote closed session number: %d\n", s_brief->remote_close_num);
+                     "\n\tTotal remote closed session number: %d\n", s_brief->remote_close_num);
     if (ret >= 0) {
         offset += ret;
     }
 
     ret = snprintf_s(buf + offset, (size_t)(buf_len - offset), (size_t)(buf_len - offset - 1),
-        "\n\tTotal idle session number: %d\n", s_brief->idle_num);
+                     "\n\tTotal idle session number: %d\n", s_brief->idle_num);
     if (ret >= 0) {
         offset += ret;
     }
 
     ret = snprintf_s(buf + offset, (size_t)(buf_len - offset), (size_t)(buf_len - offset - 1),
-        "\n\tAccept session: %d, Connect session: %d, Close session: %d\n",
-        s_brief->accept_num, s_brief->connect_num, s_brief->close_num);
+                     "\n\tAccept session: %d, Connect session: %d, Close session: %d\n", s_brief->accept_num,
+                     s_brief->connect_num, s_brief->close_num);
     if (ret >= 0) {
         offset += ret;
     }
 
     ret = snprintf_s(buf + offset, (size_t)(buf_len - offset), (size_t)(buf_len - offset - 1),
-        "\tcurrent_alloc_long_session: %d, current_alloc_short_session: %d\n\n",
-        s_brief->cur_alloc_long_session, s_brief->cur_alloc_short_session);
+                     "\tcurrent_alloc_long_session: %d, current_alloc_short_session: %d\n\n",
+                     s_brief->cur_alloc_long_session, s_brief->cur_alloc_short_session);
     if (ret >= 0) {
         offset += ret;
     }
@@ -455,35 +450,34 @@ STATIC ssize_t hdcdrv_fill_buf_session_brief(char *buf, u32 buf_len,
     }
 
     ret = snprintf_s(buf + offset, (size_t)(buf_len - offset), (size_t)(buf_len - offset - 1),
-        "\n\tactive session list: ");
+                     "\n\tactive session list: ");
     if (ret >= 0) {
         offset += ret;
     }
 
     for (i = 0; i < s_brief->active_num; i++) {
-        ret = snprintf_s(buf + offset, (size_t)(buf_len - offset), (size_t)(buf_len - offset - 1),
-            "%d ", s_brief->active_list[i]);
+        ret = snprintf_s(buf + offset, (size_t)(buf_len - offset), (size_t)(buf_len - offset - 1), "%d ",
+                         s_brief->active_list[i]);
         if (ret >= 0) {
             offset += ret;
         }
     }
 
     ret = snprintf_s(buf + offset, (size_t)(buf_len - offset), (size_t)(buf_len - offset - 1),
-        "\n\tremote closed session list: ");
+                     "\n\tremote closed session list: ");
     if (ret >= 0) {
         offset += ret;
     }
 
     for (i = 0; i < s_brief->remote_close_num; i++) {
-        ret = snprintf_s(buf + offset, (size_t)(buf_len - offset), (size_t)(buf_len - offset - 1),
-            "%d ", s_brief->remote_close_list[i]);
+        ret = snprintf_s(buf + offset, (size_t)(buf_len - offset), (size_t)(buf_len - offset - 1), "%d ",
+                         s_brief->remote_close_list[i]);
         if (ret >= 0) {
             offset += ret;
         }
     }
 
-    ret = snprintf_s(buf + offset, (size_t)(buf_len - offset), (size_t)(buf_len - offset - 1),
-        "\n");
+    ret = snprintf_s(buf + offset, (size_t)(buf_len - offset), (size_t)(buf_len - offset - 1), "\n");
     if (ret >= 0) {
         offset += ret;
     }
@@ -492,30 +486,30 @@ STATIC ssize_t hdcdrv_fill_buf_session_brief(char *buf, u32 buf_len,
 }
 
 STATIC ssize_t hdcdrv_fill_buf_tx_rx(char *buf, u32 buf_len, const struct hdcdrv_stats *stat,
-    enum hdc_dfx_print_type type)
+                                     enum hdc_dfx_print_type type)
 {
     int ret = 0;
     ssize_t offset = 0;
 
     if (type == HDC_DFX_PRINT_IN_SYSFS) {
         ret = snprintf_s(buf + offset, (size_t)(buf_len - offset), (size_t)(buf_len - offset - 1),
-            "\tTx  packets: %llu  Bytes: %llu\n"
-            "\tTx  finish: %llu\n"
-            "\tTx  full: %llu\n"
-            "\tTx  fail: %llu\n"
-            "\tTx alloc mem err: %llu\n\n"
-            "\tRx  packets: %llu  Bytes: %llu\n"
-            "\tRx  finish: %llu\n"
-            "\tRx  full: %llu\n"
-            "\tRx  fail: %llu\n"
-            "\tRx  user recv cnt: %llu\n\n",
-            stat->tx, stat->tx_bytes, stat->tx_finish, stat->tx_full, stat->tx_fail, stat->alloc_mem_err,
-            stat->rx, stat->rx_bytes, stat->rx_finish, stat->rx_full, stat->rx_fail, stat->rx_total);
+                         "\tTx  packets: %llu  Bytes: %llu\n"
+                         "\tTx  finish: %llu\n"
+                         "\tTx  full: %llu\n"
+                         "\tTx  fail: %llu\n"
+                         "\tTx alloc mem err: %llu\n\n"
+                         "\tRx  packets: %llu  Bytes: %llu\n"
+                         "\tRx  finish: %llu\n"
+                         "\tRx  full: %llu\n"
+                         "\tRx  fail: %llu\n"
+                         "\tRx  user recv cnt: %llu\n\n",
+                         stat->tx, stat->tx_bytes, stat->tx_finish, stat->tx_full, stat->tx_fail, stat->alloc_mem_err,
+                         stat->rx, stat->rx_bytes, stat->rx_finish, stat->rx_full, stat->rx_fail, stat->rx_total);
     } else {
-        hdcdrv_event("Tx packets:%llu; Bytes:%llu; finish:%llu; full:%llu; fail:%llu; alloc mem err:%llu\n",
-            stat->tx, stat->tx_bytes, stat->tx_finish, stat->tx_full, stat->tx_fail, stat->alloc_mem_err);
-        hdcdrv_event("Rx packets:%llu; Bytes:%llu; finish:%llu; full:%llu; fail:%llu; user recv cnt:%llu\n",
-            stat->rx, stat->rx_bytes, stat->rx_finish, stat->rx_full, stat->rx_fail, stat->rx_total);
+        hdcdrv_event("Tx packets:%llu; Bytes:%llu; finish:%llu; full:%llu; fail:%llu; alloc mem err:%llu\n", stat->tx,
+                     stat->tx_bytes, stat->tx_finish, stat->tx_full, stat->tx_fail, stat->alloc_mem_err);
+        hdcdrv_event("Rx packets:%llu; Bytes:%llu; finish:%llu; full:%llu; fail:%llu; user recv cnt:%llu\n", stat->rx,
+                     stat->rx_bytes, stat->rx_finish, stat->rx_full, stat->rx_fail, stat->rx_total);
     }
 
     if (ret >= 0) {
@@ -526,21 +520,21 @@ STATIC ssize_t hdcdrv_fill_buf_tx_rx(char *buf, u32 buf_len, const struct hdcdrv
 }
 
 STATIC ssize_t hdcdrv_fill_buf_chan_head_info(char *buf, u32 buf_len, u32 dev_id, u32 chan_id,
-    const struct hdcdrv_cmd_stat_chan *chan_stat)
+                                              const struct hdcdrv_cmd_stat_chan *chan_stat)
 {
     int ret;
     ssize_t offset = 0;
 
     ret = snprintf_s(buf + offset, (size_t)(buf_len - offset), (size_t)(buf_len - offset - 1),
-        "HDC dev %u chan %u statistics:\n"
-        "\tTx      w_sq head : %d (send sq, remote read)\n"
-        "\t        w_sq tail : %d (send sq, local write)\n"
-        "\t        r_sq head : %d (recv sq, local read)\n"
-        "\tRx       dma_head : %d (dma completed index)\n"
-        "\t          rx_head : %d (dispatch task received index)\n"
-        "\t  submit_dma_head : %d (dma request_index)\n\n",
-        dev_id, chan_id, chan_stat->w_sq_head, chan_stat->w_sq_tail,
-        chan_stat->r_sq_head, chan_stat->dma_head, chan_stat->rx_head, chan_stat->submit_dma_head);
+                     "HDC dev %u chan %u statistics:\n"
+                     "\tTx      w_sq head : %d (send sq, remote read)\n"
+                     "\t        w_sq tail : %d (send sq, local write)\n"
+                     "\t        r_sq head : %d (recv sq, local read)\n"
+                     "\tRx       dma_head : %d (dma completed index)\n"
+                     "\t          rx_head : %d (dispatch task received index)\n"
+                     "\t  submit_dma_head : %d (dma request_index)\n\n",
+                     dev_id, chan_id, chan_stat->w_sq_head, chan_stat->w_sq_tail, chan_stat->r_sq_head,
+                     chan_stat->dma_head, chan_stat->rx_head, chan_stat->submit_dma_head);
     if (ret >= 0) {
         offset += ret;
     }
@@ -549,34 +543,35 @@ STATIC ssize_t hdcdrv_fill_buf_chan_head_info(char *buf, u32 buf_len, u32 dev_id
 }
 
 STATIC ssize_t hdcdrv_fill_buf_session_head_info(char *buf, u32 buf_len, const struct hdcdrv_cmd_stat_session *stat,
-    enum hdc_dfx_print_type type)
+                                                 enum hdc_dfx_print_type type)
 {
     int ret = 0;
     ssize_t offset = 0;
 
     if (type == HDC_DFX_PRINT_IN_SYSFS) {
         ret = snprintf_s(buf + offset, (size_t)(buf_len - offset), (size_t)(buf_len - offset - 1),
-            "HDC session %d statistics:\n"
-            "Device id: %d\n"
-            "Service type: %d \n"
-            "Trans chan: %d, Fast chan: %d\n"
-            "Session status: %d\n"
-            "Local close state: %d, remote close state: %d\n"
-            "local_fid: %u, container_id:%u, create_pid:%llu, peer_create_pid:%llu, owner_pid:%llu\n"
-            "Remote session: %d\n\n"
-            "Session rx_list cnt: %d, fast rx_list cnt: %d, work_cancel_cnt: %d\n\n",
-            stat->local_session, stat->dev_id, stat->service_type, stat->chan_id, stat->fast_chan_id,
-            stat->status, stat->local_close_state, stat->remote_close_state,
-            stat->local_fid, stat->container_id, stat->create_pid, stat->peer_create_pid, stat->owner_pid,
-            stat->remote_session, stat->pkts_in_list, stat->pkts_in_fast_list, stat->work_cancel_cnt);
+                         "HDC session %d statistics:\n"
+                         "Device id: %d\n"
+                         "Service type: %d \n"
+                         "Trans chan: %d, Fast chan: %d\n"
+                         "Session status: %d\n"
+                         "Local close state: %d, remote close state: %d\n"
+                         "local_fid: %u, container_id:%u, create_pid:%llu, peer_create_pid:%llu, owner_pid:%llu\n"
+                         "Remote session: %d\n\n"
+                         "Session rx_list cnt: %d, fast rx_list cnt: %d, work_cancel_cnt: %d\n\n",
+                         stat->local_session, stat->dev_id, stat->service_type, stat->chan_id, stat->fast_chan_id,
+                         stat->status, stat->local_close_state, stat->remote_close_state, stat->local_fid,
+                         stat->container_id, stat->create_pid, stat->peer_create_pid, stat->owner_pid,
+                         stat->remote_session, stat->pkts_in_list, stat->pkts_in_fast_list, stat->work_cancel_cnt);
     } else {
         hdcdrv_event("HDC session:%d; devid:%d; server:%d; trans chan:%d; fast chan:%d; status:%d\n",
-            stat->local_session, stat->dev_id, stat->service_type, stat->chan_id, stat->fast_chan_id, stat->status);
+                     stat->local_session, stat->dev_id, stat->service_type, stat->chan_id, stat->fast_chan_id,
+                     stat->status);
         hdcdrv_event("l_close:%d; r_close:%d; l_fid:%u; container_id:%u; c_pid:%llu; p_pid:%llu; o_pid:%llu\n",
-            stat->local_close_state, stat->remote_close_state, stat->local_fid, stat->container_id,
-            stat->create_pid, stat->peer_create_pid, stat->owner_pid);
+                     stat->local_close_state, stat->remote_close_state, stat->local_fid, stat->container_id,
+                     stat->create_pid, stat->peer_create_pid, stat->owner_pid);
         hdcdrv_event("remote session:%d; rx_list cnt:%d; fast rx_list cnt:%d; work_cancel_cnt:%d\n",
-            stat->remote_session, stat->pkts_in_list, stat->pkts_in_fast_list, stat->work_cancel_cnt);
+                     stat->remote_session, stat->pkts_in_list, stat->pkts_in_fast_list, stat->work_cancel_cnt);
     }
 
     if (ret >= 0) {
@@ -587,7 +582,7 @@ STATIC ssize_t hdcdrv_fill_buf_session_head_info(char *buf, u32 buf_len, const s
 }
 
 STATIC ssize_t hdcdrv_fill_buf_session_chan_info(char *buf, u32 buf_len, const struct hdcdrv_dbg_stats *stat,
-    enum hdc_dfx_print_type type)
+                                                 enum hdc_dfx_print_type type)
 {
     int ret = 0;
     ssize_t offset = 0;
@@ -604,15 +599,12 @@ STATIC ssize_t hdcdrv_fill_buf_session_chan_info(char *buf, u32 buf_len, const s
             "tx_finish_notify_task5: %llu  \tx_finish_notify_task7: %llu\n"
             "tx_finish_notify_task8: %llu  \trecv_data_times: %llu\n"
             "hdcdrv_wait_mem_normal: %llu  \thdcdrv_wait_mem_fifo_full: %llu\n",
-            stat->hdcdrv_msg_chan_send1, stat->hdcdrv_rx_msg_notify_task2,
-            stat->hdcdrv_rx_msg_notify_task4, stat->hdcdrv_rx_msg_notify_task5,
-            stat->hdcdrv_rx_msg_notify_task6, stat->hdcdrv_rx_msg_notify_task7,
-            stat->hdcdrv_rx_msg_notify_task8, stat->hdcdrv_rx_msg_notify_task9,
-            stat->hdcdrv_normal_dma_copy1, stat->hdcdrv_rx_msg_callback1,
-            stat->hdcdrv_rx_msg_callback3, stat->hdcdrv_msg_chan_recv_task5,
-            stat->hdcdrv_msg_chan_recv_task6, stat->hdcdrv_msg_chan_recv_task7,
-            stat->hdcdrv_tx_finish_notify_task5, stat->hdcdrv_tx_finish_notify_task7,
-            stat->hdcdrv_tx_finish_notify_task8, stat->hdcdrv_recv_data_times,
+            stat->hdcdrv_msg_chan_send1, stat->hdcdrv_rx_msg_notify_task2, stat->hdcdrv_rx_msg_notify_task4,
+            stat->hdcdrv_rx_msg_notify_task5, stat->hdcdrv_rx_msg_notify_task6, stat->hdcdrv_rx_msg_notify_task7,
+            stat->hdcdrv_rx_msg_notify_task8, stat->hdcdrv_rx_msg_notify_task9, stat->hdcdrv_normal_dma_copy1,
+            stat->hdcdrv_rx_msg_callback1, stat->hdcdrv_rx_msg_callback3, stat->hdcdrv_msg_chan_recv_task5,
+            stat->hdcdrv_msg_chan_recv_task6, stat->hdcdrv_msg_chan_recv_task7, stat->hdcdrv_tx_finish_notify_task5,
+            stat->hdcdrv_tx_finish_notify_task7, stat->hdcdrv_tx_finish_notify_task8, stat->hdcdrv_recv_data_times,
             stat->hdcdrv_wait_mem_normal, stat->hdcdrv_wait_mem_fifo_full);
     } else {
         hdcdrv_event("send:%llu; RX task2:%llu; task4:%llu; task5:%llu; task6:%llu; task7:%llu; task8:%llu; task9:%llu\n",
@@ -620,11 +612,13 @@ STATIC ssize_t hdcdrv_fill_buf_session_chan_info(char *buf, u32 buf_len, const s
             stat->hdcdrv_rx_msg_notify_task5, stat->hdcdrv_rx_msg_notify_task6, stat->hdcdrv_rx_msg_notify_task7,
             stat->hdcdrv_rx_msg_notify_task8, stat->hdcdrv_rx_msg_notify_task9);
         hdcdrv_event("dma_copy:%llu; rx_cb1:%llu; rx_cb3:%llu; recv_task5:%llu; recv_task6:%llu; recv_task7:%llu\n",
-            stat->hdcdrv_normal_dma_copy1, stat->hdcdrv_rx_msg_callback1, stat->hdcdrv_rx_msg_callback3,
-            stat->hdcdrv_msg_chan_recv_task5, stat->hdcdrv_msg_chan_recv_task6, stat->hdcdrv_msg_chan_recv_task7);
+                     stat->hdcdrv_normal_dma_copy1, stat->hdcdrv_rx_msg_callback1, stat->hdcdrv_rx_msg_callback3,
+                     stat->hdcdrv_msg_chan_recv_task5, stat->hdcdrv_msg_chan_recv_task6,
+                     stat->hdcdrv_msg_chan_recv_task7);
         hdcdrv_event("tx_task5:%llu; tx_task7:%llu; tx_task8:%llu; recv_times:%llu; wait_normal:%llu; fifo_full:%llu\n",
-            stat->hdcdrv_tx_finish_notify_task5, stat->hdcdrv_tx_finish_notify_task7, stat->hdcdrv_tx_finish_notify_task8,
-            stat->hdcdrv_recv_data_times, stat->hdcdrv_wait_mem_normal, stat->hdcdrv_wait_mem_fifo_full);
+                     stat->hdcdrv_tx_finish_notify_task5, stat->hdcdrv_tx_finish_notify_task7,
+                     stat->hdcdrv_tx_finish_notify_task8, stat->hdcdrv_recv_data_times, stat->hdcdrv_wait_mem_normal,
+                     stat->hdcdrv_wait_mem_fifo_full);
     }
 
     if (ret >= 0) {
@@ -691,26 +685,26 @@ ssize_t hdcdrv_fill_buf_chan_info(char *buf, u32 buf_len, const struct hdcdrv_db
         "tx_finish_notify_sq_head :%llu\n"
         "mem_avail1               :%llu\n"
         "recv_data_times          :%llu\n",
-        stat->hdcdrv_msg_chan_send1, stat->hdcdrv_msg_chan_send2,
-        stat->hdcdrv_rx_msg_notify1, stat->hdcdrv_rx_msg_notify_task_check1,
-        stat->hdcdrv_rx_msg_notify_task_check2, stat->hdcdrv_rx_msg_notify_task_delay_over2ms,
-        stat->hdcdrv_rx_msg_notify_task_delay_over4ms, stat->hdcdrv_rx_msg_notify_task_delay_new,
-        stat->hdcdrv_rx_msg_notify_task_delay_max, stat->hdcdrv_rx_msg_notify_task1, stat->hdcdrv_rx_msg_notify_task2,
-        stat->hdcdrv_rx_msg_notify_task3, stat->hdcdrv_rx_msg_notify_task4, stat->hdcdrv_rx_msg_notify_task5,
-        stat->hdcdrv_rx_msg_notify_task6, stat->hdcdrv_rx_msg_notify_task7, stat->hdcdrv_rx_msg_notify_task8,
-        stat->hdcdrv_rx_msg_notify_task9, stat->hdcdrv_normal_dma_copy1, stat->hdcdrv_rx_msg_callback1,
-        stat->hdcdrv_rx_msg_callback2, stat->hdcdrv_rx_msg_callback3, stat->hdcdrv_rx_msg_task_check1,
-        stat->hdcdrv_rx_msg_task_check2, stat->hdcdrv_msg_chan_recv_task1, stat->hdcdrv_msg_chan_recv_task2,
-        stat->hdcdrv_msg_chan_recv_task3, stat->hdcdrv_msg_chan_recv_task4, stat->hdcdrv_msg_chan_recv_task5,
-        stat->hdcdrv_msg_chan_recv_task6, stat->hdcdrv_msg_chan_recv_task7, stat->hdcdrv_msg_chan_recv_task8,
-        stat->hdcdrv_tx_finish_notify1, stat->hdcdrv_tx_finish_task_check1,
-        stat->hdcdrv_tx_finish_task_check2, stat->hdcdrv_tx_finish_notify_task_delay_over2ms,
-        stat->hdcdrv_tx_finish_notify_task_delay_over4ms, stat->hdcdrv_tx_finish_notify_task_delay_new,
-        stat->hdcdrv_tx_finish_notify_task_delay_max, stat->hdcdrv_tx_finish_notify_task1,
-        stat->hdcdrv_tx_finish_notify_task2, stat->hdcdrv_tx_finish_notify_task3, stat->hdcdrv_tx_finish_notify_task4,
-        stat->hdcdrv_tx_finish_notify_task5, stat->hdcdrv_tx_finish_notify_task6, stat->hdcdrv_tx_finish_notify_task7,
-        stat->hdcdrv_tx_finish_notify_task8, stat->hdcdrv_tx_finish_notify_session_no_update,
-        stat->hdcdrv_tx_finish_notify_sq_head_no_update, stat->hdcdrv_mem_avail1, stat->hdcdrv_recv_data_times);
+        stat->hdcdrv_msg_chan_send1, stat->hdcdrv_msg_chan_send2, stat->hdcdrv_rx_msg_notify1,
+        stat->hdcdrv_rx_msg_notify_task_check1, stat->hdcdrv_rx_msg_notify_task_check2,
+        stat->hdcdrv_rx_msg_notify_task_delay_over2ms, stat->hdcdrv_rx_msg_notify_task_delay_over4ms,
+        stat->hdcdrv_rx_msg_notify_task_delay_new, stat->hdcdrv_rx_msg_notify_task_delay_max,
+        stat->hdcdrv_rx_msg_notify_task1, stat->hdcdrv_rx_msg_notify_task2, stat->hdcdrv_rx_msg_notify_task3,
+        stat->hdcdrv_rx_msg_notify_task4, stat->hdcdrv_rx_msg_notify_task5, stat->hdcdrv_rx_msg_notify_task6,
+        stat->hdcdrv_rx_msg_notify_task7, stat->hdcdrv_rx_msg_notify_task8, stat->hdcdrv_rx_msg_notify_task9,
+        stat->hdcdrv_normal_dma_copy1, stat->hdcdrv_rx_msg_callback1, stat->hdcdrv_rx_msg_callback2,
+        stat->hdcdrv_rx_msg_callback3, stat->hdcdrv_rx_msg_task_check1, stat->hdcdrv_rx_msg_task_check2,
+        stat->hdcdrv_msg_chan_recv_task1, stat->hdcdrv_msg_chan_recv_task2, stat->hdcdrv_msg_chan_recv_task3,
+        stat->hdcdrv_msg_chan_recv_task4, stat->hdcdrv_msg_chan_recv_task5, stat->hdcdrv_msg_chan_recv_task6,
+        stat->hdcdrv_msg_chan_recv_task7, stat->hdcdrv_msg_chan_recv_task8, stat->hdcdrv_tx_finish_notify1,
+        stat->hdcdrv_tx_finish_task_check1, stat->hdcdrv_tx_finish_task_check2,
+        stat->hdcdrv_tx_finish_notify_task_delay_over2ms, stat->hdcdrv_tx_finish_notify_task_delay_over4ms,
+        stat->hdcdrv_tx_finish_notify_task_delay_new, stat->hdcdrv_tx_finish_notify_task_delay_max,
+        stat->hdcdrv_tx_finish_notify_task1, stat->hdcdrv_tx_finish_notify_task2, stat->hdcdrv_tx_finish_notify_task3,
+        stat->hdcdrv_tx_finish_notify_task4, stat->hdcdrv_tx_finish_notify_task5, stat->hdcdrv_tx_finish_notify_task6,
+        stat->hdcdrv_tx_finish_notify_task7, stat->hdcdrv_tx_finish_notify_task8,
+        stat->hdcdrv_tx_finish_notify_session_no_update, stat->hdcdrv_tx_finish_notify_sq_head_no_update,
+        stat->hdcdrv_mem_avail1, stat->hdcdrv_recv_data_times);
     if (ret >= 0) {
         offset += ret;
     }
@@ -740,7 +734,8 @@ STATIC ssize_t hdcdrv_sysfs_get_session_fd(ka_device_t *dev, ka_device_attribute
 
     (void)attr;
 
-    ret = snprintf_s(buf + offset, KA_MM_PAGE_SIZE - offset, KA_MM_PAGE_SIZE - offset - 1, "session id %u\n", g_session_fd);
+    ret = snprintf_s(buf + offset, KA_MM_PAGE_SIZE - offset, KA_MM_PAGE_SIZE - offset - 1, "session id %u\n",
+                     g_session_fd);
     if (ret >= 0) {
         offset += ret;
     }
@@ -756,7 +751,7 @@ STATIC ssize_t hdcdrv_sysfs_get_server_type(ka_device_t *dev, ka_device_attribut
     (void)attr;
 
     ret = snprintf_s(buf + offset, KA_MM_PAGE_SIZE - offset, KA_MM_PAGE_SIZE - offset - 1, "server type %u\n",
-        g_server_type);
+                     g_server_type);
     if (ret >= 0) {
         offset += ret;
     }
@@ -779,8 +774,7 @@ STATIC ssize_t hdcdrv_sysfs_get_dev_id(ka_device_t *dev, ka_device_attribute_t *
     return offset;
 }
 
-STATIC ssize_t hdcdrv_sysfs_set_chan_id(ka_device_t *dev, ka_device_attribute_t *attr,
-    const char *buf, size_t count)
+STATIC ssize_t hdcdrv_sysfs_set_chan_id(ka_device_t *dev, ka_device_attribute_t *attr, const char *buf, size_t count)
 {
     u32 val = 0;
 
@@ -799,8 +793,7 @@ STATIC ssize_t hdcdrv_sysfs_set_chan_id(ka_device_t *dev, ka_device_attribute_t 
     return (ssize_t)count;
 }
 
-STATIC ssize_t hdcdrv_sysfs_set_session_fd(ka_device_t *dev, ka_device_attribute_t *attr,
-    const char *buf, size_t count)
+STATIC ssize_t hdcdrv_sysfs_set_session_fd(ka_device_t *dev, ka_device_attribute_t *attr, const char *buf, size_t count)
 {
     u32 val = 0;
 
@@ -819,8 +812,8 @@ STATIC ssize_t hdcdrv_sysfs_set_session_fd(ka_device_t *dev, ka_device_attribute
     return (ssize_t)count;
 }
 
-STATIC ssize_t hdcdrv_sysfs_set_server_type(ka_device_t *dev, ka_device_attribute_t *attr,
-    const char *buf, size_t count)
+STATIC ssize_t hdcdrv_sysfs_set_server_type(ka_device_t *dev, ka_device_attribute_t *attr, const char *buf,
+                                            size_t count)
 {
     u32 val = 0;
 
@@ -839,8 +832,7 @@ STATIC ssize_t hdcdrv_sysfs_set_server_type(ka_device_t *dev, ka_device_attribut
     return (ssize_t)count;
 }
 
-STATIC ssize_t hdcdrv_sysfs_set_dev_id(ka_device_t *dev, ka_device_attribute_t *attr,
-    const char *buf, size_t count)
+STATIC ssize_t hdcdrv_sysfs_set_dev_id(ka_device_t *dev, ka_device_attribute_t *attr, const char *buf, size_t count)
 {
     u32 val = 0;
 
@@ -867,7 +859,8 @@ STATIC int hdcdrv_sysfs_get_chan_inner(char *buf, u32 buf_len, u32 dev_id, u32 c
 
     cmd.chan_id = (int)chan_id;
     cmd.dev_id = (int)dev_id;
-    cmd.outbuf = hdcdrv_kzalloc(sizeof(struct hdcdrv_cmd_stat_chan), KA_GFP_KERNEL | __KA_GFP_ACCOUNT, KA_SUB_MODULE_TYPE_4);
+    cmd.outbuf = hdcdrv_kzalloc(sizeof(struct hdcdrv_cmd_stat_chan), KA_GFP_KERNEL | __KA_GFP_ACCOUNT,
+                                KA_SUB_MODULE_TYPE_4);
     if (cmd.outbuf == NULL) {
         hdcdrv_err("Calling ka_mm_kzalloc failed. (chan_id=%u)\n", chan_id);
         return HDCDRV_MEM_ALLOC_FAIL;
@@ -923,7 +916,6 @@ STATIC ssize_t hdcdrv_sysfs_get_remote_chan_stat(char *buf, u32 buf_len, u32 dev
     }
 
     hdcdrv_kvfree((void **)&msg, KA_SUB_MODULE_TYPE_4);
-    msg = NULL;
 
     return offset;
 }
@@ -957,7 +949,7 @@ int hdcdrv_sysfs_get_session_inner(char *buf, u32 buf_len, u32 session_fd, ssize
 
     cmd.session = (int)session_fd;
     cmd.outbuf = hdcdrv_kzalloc(sizeof(struct hdcdrv_cmd_stat_session), KA_GFP_KERNEL | __KA_GFP_ACCOUNT,
-        KA_SUB_MODULE_TYPE_4);
+                                KA_SUB_MODULE_TYPE_4);
     if (cmd.outbuf == NULL) {
         hdcdrv_err("Calling ka_mm_kzalloc failed. (g_session_fd=%u)\n", session_fd);
         return HDCDRV_MEM_ALLOC_FAIL;
@@ -1029,7 +1021,7 @@ STATIC ssize_t hdcdrv_sysfs_get_session_stat(ka_device_t *dev, ka_device_attribu
     }
 
     hdcdrv_kvfree((void **)&msg, KA_SUB_MODULE_TYPE_4);
-    msg = NULL;
+
     return offset;
 }
 
@@ -1062,20 +1054,20 @@ STATIC ssize_t hdcdrv_sysfs_get_server_stat(ka_device_t *dev, ka_device_attribut
     server_stat = (struct hdcdrv_cmd_stat_dev_service *)cmd.outbuf;
 
     ret = snprintf_s(buf + offset, KA_MM_PAGE_SIZE - offset, KA_MM_PAGE_SIZE - offset - 1,
-        "HDC service %u statistics:\n", g_server_type);
+                     "HDC service %u statistics:\n", g_server_type);
     if (ret >= 0) {
         offset += ret;
     }
 
     offset += hdcdrv_fill_buf_tx_rx(buf + offset, KA_MM_PAGE_SIZE - offset, &server_stat->stat, HDC_DFX_PRINT_IN_SYSFS);
-    offset += hdcdrv_fill_buf_session_brief(buf + offset, KA_MM_PAGE_SIZE - offset, &server_stat->s_brief, HDC_DFX_LIST_SESSION);
+    offset += hdcdrv_fill_buf_session_brief(buf + offset, KA_MM_PAGE_SIZE - offset, &server_stat->s_brief,
+                                            HDC_DFX_LIST_SESSION);
 
     hdcdrv_free_stat_list((struct hdcdrv_cmd_stat_dev_service *)cmd.outbuf);
     cmd.outbuf = NULL;
 
     return offset;
 }
-
 
 STATIC ssize_t hdcdrv_sysfs_print_dev_stat(struct hdcdrv_cmd_get_stat cmd, char *buf)
 {
@@ -1100,12 +1092,13 @@ STATIC ssize_t hdcdrv_sysfs_print_dev_stat(struct hdcdrv_cmd_get_stat cmd, char 
     dev_stat = (struct hdcdrv_cmd_stat_dev_service *)cmd.outbuf;
 
     ret = snprintf_s(buf + offset, KA_MM_PAGE_SIZE - offset, KA_MM_PAGE_SIZE - offset - 1,
-        "HDC device %u fid %u statistics:\n", g_dev_id, g_fid);
+                     "HDC device %u fid %u statistics:\n", g_dev_id, g_fid);
     if (ret >= 0) {
         offset += ret;
     }
 
-    offset += hdcdrv_fill_buf_session_brief(buf + offset, KA_MM_PAGE_SIZE - offset, &dev_stat->s_brief, HDC_DFX_NOT_LIST_SESSION);
+    offset += hdcdrv_fill_buf_session_brief(buf + offset, KA_MM_PAGE_SIZE - offset, &dev_stat->s_brief,
+                                            HDC_DFX_NOT_LIST_SESSION);
     offset += hdcdrv_fill_buf_tx_rx(buf + offset, KA_MM_PAGE_SIZE - offset, &dev_stat->stat, HDC_DFX_PRINT_IN_SYSFS);
 
     ret = snprintf_s(buf + offset, KA_MM_PAGE_SIZE - offset, KA_MM_PAGE_SIZE - offset - 1, "\ttx mem pool:\n");
@@ -1145,7 +1138,7 @@ int hdcdrv_sysfs_ctrl_msg_get_session_stat(u32 dev_id, void *data, u32 *real_out
     int ret;
 
     ret = hdcdrv_sysfs_get_session_inner(msg->data, HDCDRV_SYSFS_DATA_MAX_LEN, msg->head.para, &offset,
-        msg->head.print_type);
+                                         msg->head.print_type);
 
     if (msg->head.print_type == HDC_DFX_PRINT_IN_SYSFS) {
         *real_out_len = (u32)(offset + sizeof(struct hdcdrv_sysfs_ctrl_msg));
@@ -1188,36 +1181,33 @@ STATIC int hdcdrv_sysfs_get_link_inner(char *buf, u32 buf_len, u32 dev_id, u32 s
     close_msg_stat = &dev->service[server_type].service_stat.close_msg_stat;
 
     ret = snprintf_s(buf + offset, (size_t)(buf_len - offset), (size_t)(buf_len - offset - 1),
-        "Msg type\tMsg status\tlast_err\tcount\n");
+                     "Msg type\tMsg status\tlast_err\tcount\n");
     if (ret >= 0) {
         offset += ret;
     }
 
-    for (status_type = HDCDRV_LINK_CTRL_MSG_SEND_SUCC; status_type < HDCDRV_LINK_CTRL_MSG_STATUS_MAX;
-        status_type++) {
+    for (status_type = HDCDRV_LINK_CTRL_MSG_SEND_SUCC; status_type < HDCDRV_LINK_CTRL_MSG_STATUS_MAX; status_type++) {
         ret = snprintf_s(buf + offset, (size_t)(buf_len - offset), (size_t)(buf_len - offset - 1),
-            "connect       \t%s\t%d\t\t%u\n", g_hdc_ctrl_msg_status_str[status_type],
-            connect_msg_stat->last_err[status_type], connect_msg_stat->count[status_type]);
+                         "connect       \t%s\t%d\t\t%u\n", g_hdc_ctrl_msg_status_str[status_type],
+                         connect_msg_stat->last_err[status_type], connect_msg_stat->count[status_type]);
         if (ret >= 0) {
             offset += ret;
         }
     }
 
-    for (status_type = HDCDRV_LINK_CTRL_MSG_SEND_SUCC; status_type < HDCDRV_LINK_CTRL_MSG_STATUS_MAX;
-        status_type++) {
+    for (status_type = HDCDRV_LINK_CTRL_MSG_SEND_SUCC; status_type < HDCDRV_LINK_CTRL_MSG_STATUS_MAX; status_type++) {
         ret = snprintf_s(buf + offset, (size_t)(buf_len - offset), (size_t)(buf_len - offset - 1),
-            "connect_reply \t%s\t%d\t\t%u\n", g_hdc_ctrl_msg_status_str[status_type],
-            reply_msg_stat->last_err[status_type], reply_msg_stat->count[status_type]);
+                         "connect_reply \t%s\t%d\t\t%u\n", g_hdc_ctrl_msg_status_str[status_type],
+                         reply_msg_stat->last_err[status_type], reply_msg_stat->count[status_type]);
         if (ret >= 0) {
             offset += ret;
         }
     }
 
-    for (status_type = HDCDRV_LINK_CTRL_MSG_SEND_SUCC; status_type < HDCDRV_LINK_CTRL_MSG_STATUS_MAX;
-        status_type++) {
+    for (status_type = HDCDRV_LINK_CTRL_MSG_SEND_SUCC; status_type < HDCDRV_LINK_CTRL_MSG_STATUS_MAX; status_type++) {
         ret = snprintf_s(buf + offset, (size_t)(buf_len - offset), (size_t)(buf_len - offset - 1),
-            "close         \t%s\t%d\t\t%u\n", g_hdc_ctrl_msg_status_str[status_type],
-            close_msg_stat->last_err[status_type], close_msg_stat->count[status_type]);
+                         "close         \t%s\t%d\t\t%u\n", g_hdc_ctrl_msg_status_str[status_type],
+                         close_msg_stat->last_err[status_type], close_msg_stat->count[status_type]);
         if (ret >= 0) {
             offset += ret;
         }
@@ -1277,7 +1267,6 @@ STATIC ssize_t hdcdrv_sysfs_get_remote_link_stat(char *buf, u32 buf_len, u32 dev
     }
 
     hdcdrv_kvfree((void **)&msg, KA_SUB_MODULE_TYPE_4);
-    msg = NULL;
 
     return offset;
 }
@@ -1291,8 +1280,8 @@ STATIC ssize_t hdcdrv_sysfs_get_link_stat(ka_device_t *dev, ka_device_attribute_
 
     (void)attr;
 
-    ret = snprintf_s(buf, (size_t)buf_size, (size_t)(buf_size - 1),
-                     "HDC device %u server_type %u local statistics:\n", g_dev_id, g_server_type);
+    ret = snprintf_s(buf, (size_t)buf_size, (size_t)(buf_size - 1), "HDC device %u server_type %u local statistics:\n",
+                     g_dev_id, g_server_type);
     if (ret >= 0) {
         offset += ret;
     }
@@ -1323,8 +1312,7 @@ STATIC ssize_t hdcdrv_sysfs_get_fid(ka_device_t *dev, ka_device_attribute_t *att
     return offset;
 }
 
-STATIC ssize_t hdcdrv_sysfs_set_fid(ka_device_t *dev, ka_device_attribute_t *attr,
-    const char *buf, size_t count)
+STATIC ssize_t hdcdrv_sysfs_set_fid(ka_device_t *dev, ka_device_attribute_t *attr, const char *buf, size_t count)
 {
     u32 val = 0;
 
@@ -1354,8 +1342,8 @@ STATIC ssize_t hdcdrv_sysfs_get_vdev_stat(ka_device_t *dev, ka_device_attribute_
     cmd.fid = (int)g_fid;
     cmd.vf_flag = 1;
 
-    if ((cmd.dev_id >= hdcdrv_get_max_support_dev()) || (cmd.dev_id < 0) ||
-        (cmd.dev_id >= VMNG_PDEV_MAX) || (cmd.fid < 0) || (cmd.fid >= VMNG_VDEV_MAX_PER_PDEV)) {
+    if ((cmd.dev_id >= hdcdrv_get_max_support_dev()) || (cmd.dev_id < 0) || (cmd.dev_id >= VMNG_PDEV_MAX) ||
+        (cmd.fid < 0) || (cmd.fid >= VMNG_VDEV_MAX_PER_PDEV)) {
         hdcdrv_err("Input parameter is error. (dev_id=%d; fid=%d)\n", cmd.dev_id, cmd.fid);
         return offset;
     }
@@ -1372,19 +1360,11 @@ STATIC int hdcdrv_sysfs_get_timetaken_inner(char *buf, u32 buf_len, u32 session_
     int ret, i;
     const char *conn_title[CONN_TIME_TAKEN_MAX] = {"alloc session", "recv connect reply", "wake up wq conn"};
     const char *accept_title[ACCEPT_TIME_TAKEN_MAX] = {"alloc session", "wake up wq conn avail"};
-    const char *tx_title[TX_TIME_TAKEN_MAX] = {
-        "alloc tx mem",
-        "copy tx data from user",
-        "wait SQ not full",
-        "copy sq desc",
-        "peer recv data",
-        "update sq head",
-        "wake up send wait"};
-    const char *rx_title[RX_TIME_TAKEN_MAX] = {
-        "copy rx data",
-        "insert into session list",
-        "user get data",
-        "copy rx data to user"};
+    const char *tx_title[TX_TIME_TAKEN_MAX] = {"alloc tx mem",     "copy tx data from user", "wait SQ not full",
+                                               "copy sq desc",     "peer recv data",         "update sq head",
+                                               "wake up send wait"};
+    const char *rx_title[RX_TIME_TAKEN_MAX] = {"copy rx data", "insert into session list", "user get data",
+                                               "copy rx data to user"};
 
     if (session_fd >= (u32)HDCDRV_REAL_MAX_SESSION) {
         hdcdrv_err("Input parameter is error. (session_fd=%u)\n", session_fd);
@@ -1392,34 +1372,34 @@ STATIC int hdcdrv_sysfs_get_timetaken_inner(char *buf, u32 buf_len, u32 session_
     }
     dbg_time = &hdc_ctrl->sessions[session_fd].dbg_time;
 
-    ret = snprintf_s(buf + offset, (size_t)(buf_len - offset), (size_t)(buf_len - offset - 1),
-        "session fd: %u\n", session_fd);
+    ret = snprintf_s(buf + offset, (size_t)(buf_len - offset), (size_t)(buf_len - offset - 1), "session fd: %u\n",
+                     session_fd);
     if (ret >= 0) {
         offset += ret;
     }
 
     if (dbg_time->conn_type == DBG_TIME_OP_CONN) {
         ret = snprintf_s(buf + offset, (size_t)(buf_len - offset), (size_t)(buf_len - offset - 1),
-            "\nconnection timetaken(us):\n");
+                         "\nconnection timetaken(us):\n");
         if (ret >= 0) {
             offset += ret;
         }
         for (i = 0; i < CONN_TIME_TAKEN_MAX; i++) {
-            ret = snprintf_s(buf + offset, (size_t)(buf_len - offset), (size_t)(buf_len - offset - 1),
-                "%-24s: %llu\n", conn_title[i], dbg_time->conn_time_taken[i]);
+            ret = snprintf_s(buf + offset, (size_t)(buf_len - offset), (size_t)(buf_len - offset - 1), "%-24s: %llu\n",
+                             conn_title[i], dbg_time->conn_time_taken[i]);
             if (ret >= 0) {
                 offset += ret;
             }
         }
     } else if (dbg_time->conn_type == DBG_TIME_OP_ACCEPT) {
         ret = snprintf_s(buf + offset, (size_t)(buf_len - offset), (size_t)(buf_len - offset - 1),
-            "\nacceptance timetaken(us):\n");
+                         "\nacceptance timetaken(us):\n");
         if (ret >= 0) {
             offset += ret;
         }
         for (i = 0; i < ACCEPT_TIME_TAKEN_MAX; i++) {
-            ret = snprintf_s(buf + offset, (size_t)(buf_len - offset), (size_t)(buf_len - offset - 1),
-                "%-24s: %llu\n", accept_title[i], dbg_time->accept_time_taken[i]);
+            ret = snprintf_s(buf + offset, (size_t)(buf_len - offset), (size_t)(buf_len - offset - 1), "%-24s: %llu\n",
+                             accept_title[i], dbg_time->accept_time_taken[i]);
             if (ret >= 0) {
                 offset += ret;
             }
@@ -1427,32 +1407,32 @@ STATIC int hdcdrv_sysfs_get_timetaken_inner(char *buf, u32 buf_len, u32 session_
     }
 
     ret = snprintf_s(buf + offset, (size_t)(buf_len - offset), (size_t)(buf_len - offset - 1),
-        "\ntx timetaken(last/max(us) [timeout 1ms/10ms/100ms/1s]):\n");
+                     "\ntx timetaken(last/max(us) [timeout 1ms/10ms/100ms/1s]):\n");
     if (ret >= 0) {
         offset += ret;
     }
     for (i = 0; i < TX_TIME_TAKEN_MAX; i++) {
         ret = snprintf_s(buf + offset, (size_t)(buf_len - offset), (size_t)(buf_len - offset - 1),
-            "%-24s: %llu/%llu [%u/%u/%u/%u]\n", tx_title[i],
-            dbg_time->tx_last_time_taken[i], dbg_time->tx_max_time_taken[i],
-            dbg_time->tx_timeout_cnt[i].timeout_1ms_cnt, dbg_time->tx_timeout_cnt[i].timeout_10ms_cnt,
-            dbg_time->tx_timeout_cnt[i].timeout_100ms_cnt, dbg_time->tx_timeout_cnt[i].timeout_1s_cnt);
+                         "%-24s: %llu/%llu [%u/%u/%u/%u]\n", tx_title[i], dbg_time->tx_last_time_taken[i],
+                         dbg_time->tx_max_time_taken[i], dbg_time->tx_timeout_cnt[i].timeout_1ms_cnt,
+                         dbg_time->tx_timeout_cnt[i].timeout_10ms_cnt, dbg_time->tx_timeout_cnt[i].timeout_100ms_cnt,
+                         dbg_time->tx_timeout_cnt[i].timeout_1s_cnt);
         if (ret >= 0) {
             offset += ret;
         }
     }
 
     ret = snprintf_s(buf + offset, (size_t)(buf_len - offset), (size_t)(buf_len - offset - 1),
-        "\nrx timetaken(last/max(us) [timeout 1ms/10ms/100ms/1s]):\n");
+                     "\nrx timetaken(last/max(us) [timeout 1ms/10ms/100ms/1s]):\n");
     if (ret >= 0) {
         offset += ret;
     }
     for (i = 0; i < RX_TIME_TAKEN_MAX; i++) {
         ret = snprintf_s(buf + offset, (size_t)(buf_len - offset), (size_t)(buf_len - offset - 1),
-            "%-24s: %llu/%llu [%u/%u/%u/%u]\n", rx_title[i],
-            dbg_time->rx_last_time_taken[i], dbg_time->rx_max_time_taken[i],
-            dbg_time->rx_timeout_cnt[i].timeout_1ms_cnt, dbg_time->rx_timeout_cnt[i].timeout_10ms_cnt,
-            dbg_time->rx_timeout_cnt[i].timeout_100ms_cnt, dbg_time->rx_timeout_cnt[i].timeout_1s_cnt);
+                         "%-24s: %llu/%llu [%u/%u/%u/%u]\n", rx_title[i], dbg_time->rx_last_time_taken[i],
+                         dbg_time->rx_max_time_taken[i], dbg_time->rx_timeout_cnt[i].timeout_1ms_cnt,
+                         dbg_time->rx_timeout_cnt[i].timeout_10ms_cnt, dbg_time->rx_timeout_cnt[i].timeout_100ms_cnt,
+                         dbg_time->rx_timeout_cnt[i].timeout_1s_cnt);
         if (ret >= 0) {
             offset += ret;
         }
@@ -1515,14 +1495,15 @@ STATIC ssize_t hdcdrv_sysfs_get_session_timetaken(ka_device_t *dev, ka_device_at
         msg->data[HDCDRV_SYSFS_DATA_MAX_LEN - 1] = '\0';
         ret = snprintf_s(buf + offset, KA_MM_PAGE_SIZE - offset, KA_MM_PAGE_SIZE - offset - 1, "%s\n", msg->data);
     } else {
-        ret = snprintf_s(buf + offset, KA_MM_PAGE_SIZE - offset, KA_MM_PAGE_SIZE - offset - 1, "ctrl msg send failed: ret = %d\n", ret);
+        ret = snprintf_s(buf + offset, KA_MM_PAGE_SIZE - offset, KA_MM_PAGE_SIZE - offset - 1,
+                         "ctrl msg send failed: ret = %d\n", ret);
     }
     if (ret >= 0) {
         offset += ret;
     }
 
     hdcdrv_kvfree((void **)&msg, KA_SUB_MODULE_TYPE_4);
-    msg = NULL;
+
     return offset;
 }
 

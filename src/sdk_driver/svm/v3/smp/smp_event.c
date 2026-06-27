@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2025. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -11,10 +11,12 @@
  * GNU General Public License for more details.
  */
 
+#include <linux/types.h>
+
 #include "ascend_hal_define.h"
 #include "esched_kernel_interface.h"
-#include "svm_sub_event_type.h"
-#include "smp_msg.h"
+#include "svm_sub_event_type_uk_msg.h"
+#include "smp_uk_msg.h"
 #include "svm_kern_log.h"
 #include "smp_event.h"
 
@@ -52,4 +54,3 @@ void smp_trigger_event(u32 udevid, int tgid, u64 start, u64 size)
 
     (void)hal_kernel_sched_submit_event(udevid, &publish_event); /* CP may exited, do not print. */
 }
-

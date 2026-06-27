@@ -31,6 +31,7 @@ struct prof_chan_mng {
     uint32_t mode;
     uint32_t remote_pid;
     bool event_flag;
+    bool support_host_sample;
     struct prof_chan_ops *ops;
     char *priv;
 };
@@ -97,13 +98,32 @@ STATIC drvError_t prof_chan_init(struct prof_chan_mng *chan_mng, uint32_t dev_id
         }
     }
 
+#ifdef DRV_HOST
+    if (prof_support_host_sample(dev_id, chan_id)) {
+        PROF_INFO("support host sample. (dev_id=%u, chan_id=%u)\n", dev_id, chan_id);
+        chan_mng->support_host_sample = true;
+    }
+#endif
+    /* host sample mode device handle */
+    if (event_flag && chan_mng->support_host_sample) {
+        if (!prof_support_host_sample(dev_id, chan_id)) {
+            PROF_ERR("Device not support host sample. (dev_id=%u, chan_id=%u)\n", dev_id, chan_id);
+            return DRV_ERROR_INNER_ERR;
+        }
+    }
+
     chan_mng->mode = chan_mode;
     chan_mng->remote_pid = remote_pid;
     chan_mng->event_flag = event_flag;
 
-    ret = prof_adapt_get_chan_ops(dev_id, chan_mode, &chan_mng->ops);
+    ret = prof_adapt_get_chan_ops(dev_id, chan_mode, &chan_mng->ops, chan_mng->support_host_sample);
     if (ret != DRV_ERROR_NONE) {
         return ret;
+    }
+
+    if (chan_mng->ops == NULL) {
+        PROF_ERR("Ops is NULL. (dev_id=%u, chan_id=%u, support_host_sample=%d)\n", dev_id, chan_id, (int)chan_mng->support_host_sample);
+        return DRV_ERROR_INNER_ERR;
     }
 
     ret = chan_mng->ops->init(dev_id, chan_id, event_flag, &chan_mng->priv);
@@ -139,6 +159,7 @@ drvError_t prof_chan_start(uint32_t dev_id, uint32_t chan_id, struct prof_user_s
         return DRV_ERROR_STATUS_FAIL;
     }
 
+    chan_mng->support_host_sample = (bool)para->support_host_sample;
     ret = prof_chan_init(chan_mng, dev_id, chan_id, event_flag);
     if (ret != DRV_ERROR_NONE) {
         (void)pthread_mutex_unlock(&chan_mng->state_mutex);
@@ -179,7 +200,16 @@ drvError_t prof_chan_stop(uint32_t dev_id, uint32_t chan_id, struct prof_user_st
     }
 
     (void)pthread_mutex_lock(&chan_mng->state_mutex);
-    if (chan_mng->channel_state != (uint32_t)CHANNEL_ENABLE) {
+    if (((para->host_sample_release_flag == PROF_STOP_STAGE_DEFAULT) || (para->host_sample_release_flag == PROF_STOP_STAGE_PAUSE) ||
+        (para->host_sample_release_flag == PROF_STOP_STAGE_PAUSE_AND_RELEASE)) &&
+        (chan_mng->channel_state != (uint32_t)CHANNEL_ENABLE)) {
+        (void)pthread_mutex_unlock(&chan_mng->state_mutex);
+        PROF_WARN("The channel is disabled or busy. (dev_id=%u, chan_id=%u, state=%u)\n",
+            dev_id, chan_id, chan_mng->channel_state);
+        return DRV_ERROR_STATUS_FAIL;
+    }
+
+    if ((para->host_sample_release_flag == PROF_STOP_STAGE_RELEASE) && (chan_mng->channel_state != (uint32_t)CHANNEL_STOPPING)) {
         (void)pthread_mutex_unlock(&chan_mng->state_mutex);
         PROF_WARN("The channel is disabled or busy. (dev_id=%u, chan_id=%u, state=%u)\n",
             dev_id, chan_id, chan_mng->channel_state);
@@ -201,10 +231,13 @@ drvError_t prof_chan_stop(uint32_t dev_id, uint32_t chan_id, struct prof_user_st
         PROF_RUN_INFO("Stop the channel unsuccessfully. (dev_id=%u, chan_id=%u, ret=%d)\n", dev_id, chan_id, (int)ret);
     }
 
-    (void)pthread_mutex_lock(&chan_mng->state_mutex);
-    prof_chan_uninit(chan_mng);
-    chan_mng->channel_state = (uint32_t)CHANNEL_DISABLE;
-    (void)pthread_mutex_unlock(&chan_mng->state_mutex);
+    if (!para->support_host_sample || (para->host_sample_release_flag == PROF_STOP_STAGE_RELEASE) ||
+        (para->host_sample_release_flag == PROF_STOP_STAGE_PAUSE_AND_RELEASE)) {
+        (void)pthread_mutex_lock(&chan_mng->state_mutex);
+        prof_chan_uninit(chan_mng);
+        chan_mng->channel_state = (uint32_t)CHANNEL_DISABLE;
+        (void)pthread_mutex_unlock(&chan_mng->state_mutex);
+    }
 
     return DRV_ERROR_NONE;
 }
@@ -340,6 +373,11 @@ drvError_t prof_chan_report(uint32_t dev_id, uint32_t chan_id, void *data, uint3
     }
 
     if (hal_flag && (chan_mng->mode != PROF_CHAN_MODE_USER)) {
+        (void)pthread_mutex_unlock(&chan_mng->state_mutex);
+        return DRV_ERROR_NOT_SUPPORT;
+    }
+
+    if (chan_mng->support_host_sample && hal_flag) {
         (void)pthread_mutex_unlock(&chan_mng->state_mutex);
         return DRV_ERROR_NOT_SUPPORT;
     }

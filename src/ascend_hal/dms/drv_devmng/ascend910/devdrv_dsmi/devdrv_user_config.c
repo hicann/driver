@@ -21,6 +21,7 @@
 #include "dms/dms_devdrv_info_comm.h"
 #include "config.h"
 #include "dms/dms_devdrv_user_config.h"
+#include "devdrv_manager_run_info.h"
 
 #ifdef STATIC_SKIP
 #define STATIC
@@ -150,6 +151,23 @@ STATIC int devdrv_p2p_mem_check_env(u32 dev_id)
 /*lint +e527*/
 #endif
 
+#ifndef DRV_HOST
+static int halUserConfigNameCheck(const char *name)
+{
+#ifndef CFG_FEATURE_SUPPORT_AUTH_ENABLE_SIGN
+    if (strcmp(name, AUTH_CONFIG_ENABLE_NAME) == 0) {
+        return DRV_ERROR_NOT_SUPPORT;
+    }
+#endif
+#ifndef CFG_FEATURE_SUPPORT_UBMEM_RETRY_FLAG
+    if (strcmp(name, UBMEM_RETRY_FLAG_NAME) == 0) {
+        return DRV_ERROR_NOT_SUPPORT;
+    }
+#endif
+    return DRV_ERROR_NONE;
+}
+#endif
+
 int halGetUserConfig(unsigned int devId, const char *name, unsigned char *buf, unsigned int *bufSize)
 {
 #ifdef DRV_HOST
@@ -180,11 +198,10 @@ int halGetUserConfig(unsigned int devId, const char *name, unsigned char *buf, u
         return -EINVAL;
     }
 
-#ifndef CFG_FEATURE_SUPPORT_AUTH_ENABLE_SIGN
-    if (strcmp(name, AUTH_CONFIG_ENABLE_NAME) == 0) {
-        return DRV_ERROR_NOT_SUPPORT;
+    ret = halUserConfigNameCheck(name);
+    if (ret != 0) {
+        return ret;
     }
-#endif
 
     ret = memcpy_s(drv_flash_cmd_para.name, DEVDRV_USER_CONFIG_NAME_MAX, name, name_len);
     if (ret != 0) {
@@ -254,11 +271,10 @@ int halSetUserConfig(unsigned int devId, const char *name, unsigned char *buf, u
         return -EINVAL;
     }
 
-#ifndef CFG_FEATURE_SUPPORT_AUTH_ENABLE_SIGN
-    if (strcmp(name, AUTH_CONFIG_ENABLE_NAME) == 0) {
-        return DRV_ERROR_NOT_SUPPORT;
+    ret = halUserConfigNameCheck(name);
+    if (ret != 0) {
+        return ret;
     }
-#endif
 
     ret = memcpy_s(drv_flash_cmd_para.name, DEVDRV_USER_CONFIG_NAME_MAX, name, name_len);
     if (ret != 0) {
@@ -310,11 +326,10 @@ int halClearUserConfig(unsigned int devId, const char *name)
         return -EINVAL;
     }
 
-#ifndef CFG_FEATURE_SUPPORT_AUTH_ENABLE_SIGN
-    if (strcmp(name, AUTH_CONFIG_ENABLE_NAME) == 0) {
-        return DRV_ERROR_NOT_SUPPORT;
+    ret = halUserConfigNameCheck(name);
+    if (ret != 0) {
+        return ret;
     }
-#endif
 
     ret = memcpy_s(drv_flash_cmd_para.name, DEVDRV_USER_CONFIG_NAME_MAX, name, name_len);
     if (ret != 0) {
@@ -414,14 +429,54 @@ int devdrv_get_boot_cfg(unsigned char *chip_info)
     return 0;
 }
 
-STATIC int devdrv_cpu_nums_check_para(unsigned char *buf, unsigned int buf_size)
+STATIC int devdrv_check_cpu_nums(uc_cpu_cfg_t *cpu_cfg, unsigned int cpu_nums_sum)
 {
     int ret;
     unsigned int dev_num;
-    unsigned int cpu_nums_sum;
     unsigned int total_cpu_cores;
-    uc_cpu_cfg_t *cpu_cfg = (uc_cpu_cfg_t *)buf;
     unsigned char chip_info = CHIP_INFO_SOLO;
+    struct devdrv_device_info dev_info = {0};
+    ret = drv_get_h2d_dev_info(0, &dev_info);
+    if (ret != 0) {
+        DEVDRV_DRV_ERR("drv_get_h2d_dev_info failed. (ret=%d)\n", ret);
+        return ret;
+    }
+    if ((PLAT_GET_CHIP(dev_info.hardware_version) == CHIP_CLOUD_V4 || PLAT_GET_CHIP(dev_info.hardware_version) == CHIP_CLOUD_V5) && cpu_cfg->data_cpu_num < DATA_CPU_NUM_MIN) {
+        DEVDRV_DRV_ERR("data cpu number is not valid. (data_cpu_num=%u, data_cpu_num_min=%u)\n", cpu_cfg->data_cpu_num, DATA_CPU_NUM_MIN);
+        return DRV_ERROR_INVALID_VALUE;
+    }
+    ret = devdrv_get_total_cpu_cores(&total_cpu_cores);
+    if (ret != 0) {
+        DEVDRV_DRV_ERR("devdrv_get_total_cpu_cores failed, ret=%d.\n", ret);
+        return ret;
+    }
+
+    ret = devdrv_get_boot_cfg(&chip_info);
+    if (ret != 0) {
+        DEVDRV_DRV_ERR("devdrv_get_boot_cfg failed, ret=%d.\n", ret);
+        return ret;
+    }
+
+    if (chip_info == CHIP_INFO_SOLO) {
+        dev_num = 1; /* 1P */
+    } else {
+        dev_num = 2; /* 2P */
+    }
+
+    DEVDRV_DRV_INFO("dev_num: %u.\n", dev_num);
+    if (cpu_nums_sum != (total_cpu_cores / dev_num)) {
+        DEVDRV_DRV_ERR("total cpu number[%u] is invalid.\n", cpu_nums_sum);
+        return DRV_ERROR_INVALID_VALUE;
+    }
+
+    return DRV_ERROR_NONE;
+}
+
+STATIC int devdrv_cpu_nums_check_para(unsigned char *buf, unsigned int buf_size)
+{
+    int ret;
+    unsigned int cpu_nums_sum;
+    uc_cpu_cfg_t *cpu_cfg = (uc_cpu_cfg_t *)buf;
 #ifdef CFG_FEATURE_COM_CPU_CONFIG
     uc_cpu_cfg_t cpu_check = {0};
 #endif
@@ -454,28 +509,10 @@ STATIC int devdrv_cpu_nums_check_para(unsigned char *buf, unsigned int buf_size)
         return DRV_ERROR_INVALID_VALUE;
     }
 #endif
-    ret = devdrv_get_total_cpu_cores(&total_cpu_cores);
+    ret = devdrv_check_cpu_nums(cpu_cfg, cpu_nums_sum);
     if (ret != 0) {
-        DEVDRV_DRV_ERR("devdrv_get_total_cpu_cores failed, ret=%d.\n", ret);
+        DEVDRV_DRV_ERR("devdrv_check_cpu_nums failed. (ret=%d)\n", ret);
         return ret;
-    }
-
-    ret = devdrv_get_boot_cfg(&chip_info);
-    if (ret != 0) {
-        DEVDRV_DRV_ERR("devdrv_get_boot_cfg failed, ret=%d.\n", ret);
-        return ret;
-    }
-
-    if (chip_info == CHIP_INFO_SOLO) {
-        dev_num = 1; /* 1P */
-    } else {
-        dev_num = 2; /* 2P */
-    }
-
-    DEVDRV_DRV_INFO("dev_num: %u.\n", dev_num);
-    if (cpu_nums_sum != (total_cpu_cores / dev_num)) {
-        DEVDRV_DRV_ERR("total cpu number[%u] is invalid.\n", cpu_nums_sum);
-        return DRV_ERROR_INVALID_VALUE;
     }
 
     return DRV_ERROR_NONE;

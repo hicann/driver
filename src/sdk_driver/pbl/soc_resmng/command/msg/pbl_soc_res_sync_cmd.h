@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2025. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -14,18 +14,9 @@
 #ifndef PBL_SOC_RES_SYNC_CMD_H
 #define PBL_SOC_RES_SYNC_CMD_H
 
-enum soc_res_sync_dir {
-    SOC_DIR_P2V,
-    SOC_DIR_D2H,
-    SOC_DIR_MAX
-};
+enum soc_res_sync_dir { SOC_DIR_P2V, SOC_DIR_D2H, SOC_DIR_MAX };
 
-enum soc_res_sync_scope {
-    SOC_DEV,
-    SOC_TS_SUBSYS,
-    SOC_DEV_DIE,
-    SOC_SCOPE_MAX
-};
+enum soc_res_sync_scope { SOC_DEV, SOC_TS_SUBSYS, SOC_DEV_DIE, SOC_SCOPE_MAX };
 
 enum soc_res_sync_type {
     SOC_MISC_RES,

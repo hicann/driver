@@ -15,8 +15,12 @@
 #ifndef DVPP_SVM_MEM_CTRL_H
 #define DVPP_SVM_MEM_CTRL_H
 
-#include <linux/types.h>
+#include "ka_type.h"
 #include "ka_task_pub.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 typedef struct {
     uint64_t *pa_list;
@@ -30,4 +34,7 @@ uint64_t dvpp_get_pa_num(uint64_t addr, uint64_t size, uint64_t page_size);
 int32_t dvpp_get_pa_list_from_svm_addr(ka_pid_t pid, uint64_t addr, uint64_t size, dvpp_svm_pa_info *pa_info);
 void dvpp_put_pa_list(ka_pid_t pid, uint64_t addr, uint64_t size, dvpp_svm_pa_info *pa_info);
 
+#ifdef __cplusplus
+}
+#endif
 #endif  // #ifndef DVPP_SVM_MEM_CTRL_H

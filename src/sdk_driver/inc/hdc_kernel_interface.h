@@ -28,8 +28,7 @@ struct hdcdrv_data_info {
 
 typedef int (*hdcdrv_sessoin_connect_notify)(int dev_id, int vfid, int peer_pid, int local_pid);
 typedef int (*hdcdrv_sessoin_close_notify)(int dev_id, int vfid, int peer_pid, int local_pid);
-typedef int (*hdcdrv_sessoin_data_in_notify)(int dev_id, int vfid, int local_pid,
-    struct hdcdrv_data_info data);
+typedef int (*hdcdrv_sessoin_data_in_notify)(int dev_id, int vfid, int local_pid, struct hdcdrv_data_info data);
 
 struct hdcdrv_session_notify {
     hdcdrv_sessoin_connect_notify connect_notify;
@@ -44,11 +43,11 @@ int hdcdrv_get_session_rx_list_status(int session_fd, int *value);
 
 long hdcdrv_kernel_epoll_alloc_fd(int size, int *epfd, const int *magic_num);
 long hdcdrv_kernel_epoll_free_fd(int epfd, int magic_num);
-long hdcdrv_kernel_epoll_ctl(int epfd, int magic_num, int op,
-    unsigned int event, int para1, const char *para2, unsigned int para2_len);
-long hdcdrv_kernel_epoll_wait(int epfd, int magic_num, int timeout, int *event_num,
-    unsigned int event[], unsigned int event_len, int para1[],
-    unsigned int para1_len, int para2[], unsigned int para2_len);
+long hdcdrv_kernel_epoll_ctl(int epfd, int magic_num, int op, unsigned int event, int para1, const char *para2,
+                             unsigned int para2_len);
+long hdcdrv_kernel_epoll_wait(int epfd, int magic_num, int timeout, int *event_num, unsigned int event[],
+                              unsigned int event_len, int para1[], unsigned int para1_len, int para2[],
+                              unsigned int para2_len);
 long hdcdrv_kernel_server_create(int dev_id, int service_type);
 long hdcdrv_kernel_accept(int dev_id, int service_type, int *session, const char *session_id);
 long hdcdrv_kernel_send_timeout(int session, const char *session_id, void *buf, int len, int timeout);

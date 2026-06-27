@@ -22,13 +22,10 @@
 #include "soc_adapt.h"
 
 static const int trs_soc_chip_type[HISI_CHIP_UNKNOWN] = {
-    [HISI_MINI_V1] = TRS_CHIP_TYPE_MINI_V1,
-    [HISI_CLOUD_V1] = TRS_CHIP_TYPE_CLOUD_V1,
-    [HISI_MINI_V2] = TRS_CHIP_TYPE_MINI_V2,
-    [HISI_CLOUD_V2] = TRS_CHIP_TYPE_CLOUD_V2,
-    [HISI_MINI_V3] = TRS_CHIP_TYPE_MINI_V3,
-    [HISI_CLOUD_V4] = TRS_CHIP_TYPE_CLOUD_V4,
-    [HISI_CLOUD_V5] = TRS_CHIP_TYPE_CLOUD_V5,
+    [HISI_MINI_V1] = TRS_CHIP_TYPE_MINI_V1,   [HISI_CLOUD_V1] = TRS_CHIP_TYPE_CLOUD_V1,
+    [HISI_MINI_V2] = TRS_CHIP_TYPE_MINI_V2,   [HISI_CLOUD_V2] = TRS_CHIP_TYPE_CLOUD_V2,
+    [HISI_MINI_V3] = TRS_CHIP_TYPE_MINI_V3,   [HISI_CLOUD_V4] = TRS_CHIP_TYPE_CLOUD_V4,
+    [HISI_CLOUD_V5] = TRS_CHIP_TYPE_CLOUD_V5, [HISI_MINI_V4] = TRS_CHIP_TYPE_CLOUD_V4,
 };
 
 int trs_soc_get_chip_type(u32 phy_devid)
@@ -42,12 +39,9 @@ int trs_soc_get_chip_type(u32 phy_devid)
 }
 KA_EXPORT_SYMBOL_GPL(trs_soc_get_chip_type);
 
-int trs_soc_get_hw_type(u32 phy_devid)
-{
-    return trs_get_hw_type_by_chip_type(trs_soc_get_chip_type(phy_devid));
-}
+int trs_soc_get_hw_type(u32 phy_devid) { return trs_get_hw_type_by_chip_type(trs_soc_get_chip_type(phy_devid)); }
 
-static size_t(*const soc_get_db_stride[TRS_CHIP_TYPE_MAX])(void) = {
+static size_t (*const soc_get_db_stride[TRS_CHIP_TYPE_MAX])(void) = {
     [TRS_CHIP_TYPE_MINI_V3] = trs_soc_get_mini_v3_db_stride,
     [TRS_CHIP_TYPE_CLOUD_V2] = trs_soc_get_cloud_v2_db_stride,
     [TRS_CHIP_TYPE_MINI_V2] = trs_soc_get_mini_v2_db_stride,
@@ -67,11 +61,9 @@ int trs_soc_get_db_stride(struct trs_id_inst *inst, size_t *size)
     return -EINVAL;
 }
 
-static int(*const soc_get_db_cfg[TRS_CHIP_TYPE_MAX])(int db_type, u32 *start, u32 *end) = {
-    [TRS_CHIP_TYPE_MINI_V3] = trs_soc_get_mini_v3_db_cfg,
-    [TRS_CHIP_TYPE_CLOUD_V2] = trs_soc_get_cloud_v2_db_cfg,
-    [TRS_CHIP_TYPE_MINI_V2] = trs_soc_get_mini_v2_db_cfg,
-    [TRS_CHIP_TYPE_CLOUD_V4] = trs_soc_get_cloud_v4_db_cfg,
+static int (*const soc_get_db_cfg[TRS_CHIP_TYPE_MAX])(int db_type, u32 *start, u32 *end) = {
+    [TRS_CHIP_TYPE_MINI_V3] = trs_soc_get_mini_v3_db_cfg,   [TRS_CHIP_TYPE_CLOUD_V2] = trs_soc_get_cloud_v2_db_cfg,
+    [TRS_CHIP_TYPE_MINI_V2] = trs_soc_get_mini_v2_db_cfg,   [TRS_CHIP_TYPE_CLOUD_V4] = trs_soc_get_cloud_v4_db_cfg,
     [TRS_CHIP_TYPE_CLOUD_V5] = trs_soc_get_cloud_v5_db_cfg,
 };
 int trs_soc_get_db_cfg(struct trs_id_inst *inst, int db_type, u32 *start, u32 *end)
@@ -90,7 +82,7 @@ int trs_soc_get_db_cfg(struct trs_id_inst *inst, int db_type, u32 *start, u32 *e
     return ret;
 }
 
-static size_t(*const soc_get_notify_size[TRS_CHIP_TYPE_MAX])(void) = {
+static size_t (*const soc_get_notify_size[TRS_CHIP_TYPE_MAX])(void) = {
     [TRS_CHIP_TYPE_MINI_V3] = trs_soc_get_mini_v3_notify_size,
     [TRS_CHIP_TYPE_CLOUD_V2] = trs_soc_get_cloud_v2_notify_size,
     [TRS_CHIP_TYPE_MINI_V2] = trs_soc_get_mini_v2_notify_size,
@@ -112,7 +104,7 @@ int trs_soc_get_notify_size(struct trs_id_inst *inst, size_t *notify_size)
     return -EINVAL;
 }
 
-static u32(*const soc_get_notify_offset[TRS_CHIP_TYPE_MAX])(u32 notify_id) = {
+static u32 (*const soc_get_notify_offset[TRS_CHIP_TYPE_MAX])(u32 notify_id) = {
     [TRS_CHIP_TYPE_MINI_V3] = trs_soc_get_mini_v3_notify_offset,
     [TRS_CHIP_TYPE_CLOUD_V2] = trs_soc_get_cloud_v2_notify_offset,
     [TRS_CHIP_TYPE_MINI_V2] = trs_soc_get_mini_v2_notify_offset,
@@ -135,7 +127,7 @@ int trs_soc_get_notify_offset(struct trs_id_inst *inst, u32 notify_id, u32 *offs
     return -EINVAL;
 }
 
-static size_t(*const soc_get_cnt_notify_size[TRS_CHIP_TYPE_MAX])(void) = {
+static size_t (*const soc_get_cnt_notify_size[TRS_CHIP_TYPE_MAX])(void) = {
     [TRS_CHIP_TYPE_CLOUD_V4] = trs_soc_get_cloud_v4_cnt_notify_size,
     [TRS_CHIP_TYPE_CLOUD_V5] = trs_soc_get_cloud_v5_cnt_notify_size,
 };
@@ -154,7 +146,7 @@ int trs_soc_get_cnt_notify_size(struct trs_id_inst *inst, size_t *cnt_notify_siz
     return -EINVAL;
 }
 
-static u32(*const soc_get_cnt_notify_offset[TRS_CHIP_TYPE_MAX])(u32 cnt_notify_id) = {
+static u32 (*const soc_get_cnt_notify_offset[TRS_CHIP_TYPE_MAX])(u32 cnt_notify_id) = {
     [TRS_CHIP_TYPE_CLOUD_V4] = trs_soc_get_cloud_v4_cnt_notify_offset,
     [TRS_CHIP_TYPE_CLOUD_V5] = trs_soc_get_cloud_v5_cnt_notify_offset,
 };
@@ -174,7 +166,7 @@ int trs_soc_get_cnt_notify_offset(struct trs_id_inst *inst, u32 cnt_notify_id, u
     return -EINVAL;
 }
 
-static u32(*const soc_get_event_offset[TRS_CHIP_TYPE_MAX])(u32 event_id) = {
+static u32 (*const soc_get_event_offset[TRS_CHIP_TYPE_MAX])(u32 event_id) = {
     [TRS_CHIP_TYPE_MINI_V3] = trs_soc_get_mini_v3_event_offset,
     [TRS_CHIP_TYPE_CLOUD_V2] = trs_soc_get_cloud_v2_event_offset,
 #ifndef EMU_ST
@@ -200,7 +192,7 @@ int trs_soc_get_event_offset(struct trs_id_inst *inst, u32 event_id, u32 *offset
 #endif
 }
 
-static u32(*const soc_get_sq_mem_side[TRS_CHIP_TYPE_MAX])(u32 devid, struct trs_chan_type *types) = {
+static u32 (*const soc_get_sq_mem_side[TRS_CHIP_TYPE_MAX])(u32 devid, struct trs_chan_type *types) = {
     [TRS_CHIP_TYPE_MINI_V3] = trs_soc_get_mini_v3_sq_mem_side,
     [TRS_CHIP_TYPE_CLOUD_V2] = trs_soc_get_cloud_v2_sq_mem_side,
     [TRS_CHIP_TYPE_MINI_V2] = trs_soc_get_mini_v2_sq_mem_side,
@@ -219,12 +211,13 @@ u32 trs_soc_get_sq_mem_side(struct trs_id_inst *inst, struct trs_chan_type *type
     if (soc_get_sq_mem_side[chip_type] != NULL) {
         sq_mem_side = soc_get_sq_mem_side[chip_type](inst->devid, types);
     }
-    trs_debug("Get sq mem side. (devid=%d; sq mem side=%d; type=%u; sub_type=%u)\n",
-        inst->devid, sq_mem_side, types->type, types->sub_type);
+    trs_debug(
+        "Get sq mem side. (devid=%d; sq mem side=%d; type=%u; sub_type=%u)\n", inst->devid, sq_mem_side, types->type,
+        types->sub_type);
     return sq_mem_side;
 }
 
-static u32(*const soc_get_cq_mem_side[TRS_CHIP_TYPE_MAX])(u32 devid) = {
+static u32 (*const soc_get_cq_mem_side[TRS_CHIP_TYPE_MAX])(u32 devid) = {
     [TRS_CHIP_TYPE_MINI_V3] = trs_soc_get_mini_v3_cq_mem_side,
     [TRS_CHIP_TYPE_CLOUD_V2] = trs_soc_get_cloud_v2_cq_mem_side,
     [TRS_CHIP_TYPE_MINI_V2] = trs_soc_get_mini_v2_cq_mem_side,
@@ -247,7 +240,7 @@ u32 trs_soc_get_cq_mem_side(struct trs_id_inst *inst)
     return cq_mem_side;
 }
 
-static size_t(*const soc_get_stars_sched_stride[TRS_CHIP_TYPE_MAX])(void) = {
+static size_t (*const soc_get_stars_sched_stride[TRS_CHIP_TYPE_MAX])(void) = {
     [TRS_CHIP_TYPE_MINI_V3] = trs_soc_get_mini_v3_stars_sched_stride,
     [TRS_CHIP_TYPE_CLOUD_V2] = trs_soc_get_cloud_v2_stars_sched_stride,
     [TRS_CHIP_TYPE_CLOUD_V4] = trs_soc_get_cloud_v4_stars_sched_stride,
@@ -268,7 +261,7 @@ int trs_soc_get_stars_sched_stride(struct trs_id_inst *inst, size_t *stride)
     return -EINVAL;
 }
 
-static int(*const soc_get_hwcq_rsv_mem_type[TRS_CHIP_TYPE_MAX])(void) = {
+static int (*const soc_get_hwcq_rsv_mem_type[TRS_CHIP_TYPE_MAX])(void) = {
     [TRS_CHIP_TYPE_MINI_V3] = trs_soc_get_mini_v3_hwcq_rsv_mem_type,
     [TRS_CHIP_TYPE_CLOUD_V2] = trs_soc_get_cloud_v2_hwcq_rsv_mem_type,
     [TRS_CHIP_TYPE_MINI_V2] = trs_soc_get_mini_v2_hwcq_rsv_mem_type,
@@ -288,7 +281,14 @@ int trs_soc_get_hwcq_rsv_mem_type(struct trs_id_inst *inst, int *rsv_mem_type)
     return -EINVAL;
 }
 
-static int(*const soc_get_sq_head_reg_offset[TRS_CHIP_TYPE_MAX])(void) = {
+#define TRS_SQ_HEAD_TAIL_REG_SIZE 4
+int trs_soc_get_sq_head_tail_reg_size(struct trs_id_inst *inst, size_t *reg_size)
+{
+    *reg_size = TRS_SQ_HEAD_TAIL_REG_SIZE;
+    return 0;
+}
+
+static int (*const soc_get_sq_head_reg_offset[TRS_CHIP_TYPE_MAX])(void) = {
     [TRS_CHIP_TYPE_MINI_V3] = trs_soc_get_mini_v3_sq_head_reg_offset,
     [TRS_CHIP_TYPE_CLOUD_V2] = trs_soc_get_cloud_v2_sq_head_reg_offset,
     [TRS_CHIP_TYPE_CLOUD_V4] = trs_soc_get_cloud_v4_sq_head_reg_offset,
@@ -309,7 +309,7 @@ int trs_soc_get_sq_head_reg_offset(struct trs_id_inst *inst, u32 *offset)
     return -EINVAL;
 }
 
-static int(*const soc_get_sq_tail_reg_offset[TRS_CHIP_TYPE_MAX])(void) = {
+static int (*const soc_get_sq_tail_reg_offset[TRS_CHIP_TYPE_MAX])(void) = {
     [TRS_CHIP_TYPE_MINI_V3] = trs_soc_get_mini_v3_sq_tail_reg_offset,
     [TRS_CHIP_TYPE_CLOUD_V2] = trs_soc_get_cloud_v2_sq_tail_reg_offset,
     [TRS_CHIP_TYPE_CLOUD_V4] = trs_soc_get_cloud_v4_sq_tail_reg_offset,
@@ -330,7 +330,7 @@ int trs_soc_get_sq_tail_reg_offset(struct trs_id_inst *inst, u32 *offset)
     return -EINVAL;
 }
 
-static int(*const soc_get_sq_status_reg_offset[TRS_CHIP_TYPE_MAX])(void) = {
+static int (*const soc_get_sq_status_reg_offset[TRS_CHIP_TYPE_MAX])(void) = {
     [TRS_CHIP_TYPE_MINI_V3] = trs_soc_get_mini_v3_sq_status_reg_offset,
     [TRS_CHIP_TYPE_CLOUD_V2] = trs_soc_get_cloud_v2_sq_status_reg_offset,
     [TRS_CHIP_TYPE_CLOUD_V4] = trs_soc_get_cloud_v4_sq_status_reg_offset,
@@ -351,7 +351,7 @@ int trs_soc_get_sq_status_reg_offset(struct trs_id_inst *inst, u32 *offset)
     return -EINVAL;
 }
 
-static int(*const soc_get_cq_head_reg_offset[TRS_CHIP_TYPE_MAX])(void) = {
+static int (*const soc_get_cq_head_reg_offset[TRS_CHIP_TYPE_MAX])(void) = {
     [TRS_CHIP_TYPE_MINI_V3] = trs_soc_get_mini_v3_cq_head_reg_offset,
     [TRS_CHIP_TYPE_CLOUD_V2] = trs_soc_get_cloud_v2_cq_head_reg_offset,
     [TRS_CHIP_TYPE_CLOUD_V4] = trs_soc_get_cloud_v4_cq_head_reg_offset,
@@ -372,7 +372,7 @@ int trs_soc_get_cq_head_reg_offset(struct trs_id_inst *inst, u32 *offset)
     return -EINVAL;
 }
 
-static int(*const soc_get_cq_tail_reg_offset[TRS_CHIP_TYPE_MAX])(void) = {
+static int (*const soc_get_cq_tail_reg_offset[TRS_CHIP_TYPE_MAX])(void) = {
     [TRS_CHIP_TYPE_MINI_V3] = trs_soc_get_mini_v3_cq_tail_reg_offset,
     [TRS_CHIP_TYPE_CLOUD_V2] = trs_soc_get_cloud_v2_cq_tail_reg_offset,
     [TRS_CHIP_TYPE_CLOUD_V4] = trs_soc_get_cloud_v4_cq_tail_reg_offset,
@@ -393,7 +393,7 @@ int trs_soc_get_cq_tail_reg_offset(struct trs_id_inst *inst, u32 *offset)
     return -EINVAL;
 }
 
-static int(*const soc_chan_stars_init[TRS_CHIP_TYPE_MAX])(struct trs_id_inst *inst) = {
+static int (*const soc_chan_stars_init[TRS_CHIP_TYPE_MAX])(struct trs_id_inst *inst) = {
     [TRS_CHIP_TYPE_MINI_V3] = trs_soc_mini_v3_chan_stars_init,
     [TRS_CHIP_TYPE_CLOUD_V2] = trs_soc_cloud_v2_chan_stars_init,
     [TRS_CHIP_TYPE_CLOUD_V4] = trs_soc_cloud_v4_chan_stars_init,
@@ -413,7 +413,7 @@ int trs_soc_chan_stars_init(struct trs_id_inst *inst)
     return -EINVAL;
 }
 
-static void(*const soc_chan_stars_uninit[TRS_CHIP_TYPE_MAX])(struct trs_id_inst *inst) = {
+static void (*const soc_chan_stars_uninit[TRS_CHIP_TYPE_MAX])(struct trs_id_inst *inst) = {
     [TRS_CHIP_TYPE_MINI_V3] = trs_soc_mini_v3_chan_stars_uninit,
     [TRS_CHIP_TYPE_CLOUD_V2] = trs_soc_cloud_v2_chan_stars_uninit,
     [TRS_CHIP_TYPE_CLOUD_V4] = trs_soc_cloud_v4_chan_stars_uninit,
@@ -431,7 +431,7 @@ void trs_soc_chan_stars_uninit(struct trs_id_inst *inst)
     }
 }
 
-static int(*const soc_chan_stars_ops_init[TRS_CHIP_TYPE_MAX])(struct trs_id_inst *inst) = {
+static int (*const soc_chan_stars_ops_init[TRS_CHIP_TYPE_MAX])(struct trs_id_inst *inst) = {
     [TRS_CHIP_TYPE_CLOUD_V2] = trs_soc_cloud_v2_chan_stars_ops_init,
 #ifndef EMU_ST
     [TRS_CHIP_TYPE_MINI_V3] = trs_soc_mini_v3_chan_stars_ops_init,
@@ -452,7 +452,7 @@ int trs_soc_chan_stars_ops_init(struct trs_id_inst *inst)
     return -EINVAL;
 }
 
-static void(*const soc_chan_stars_ops_uninit[TRS_CHIP_TYPE_MAX])(struct trs_id_inst *inst) = {
+static void (*const soc_chan_stars_ops_uninit[TRS_CHIP_TYPE_MAX])(struct trs_id_inst *inst) = {
     [TRS_CHIP_TYPE_CLOUD_V2] = trs_soc_cloud_v2_chan_stars_ops_uninit,
 #ifndef EMU_ST
     [TRS_CHIP_TYPE_MINI_V3] = trs_soc_mini_v3_chan_stars_ops_uninit,
@@ -514,7 +514,7 @@ struct trs_core_adapt_ops *trs_soc_core_get_stars_adapt_ops(struct trs_id_inst *
     return NULL;
 }
 
-static bool(*const soc_is_support_soft_mbox_ops[TRS_CHIP_TYPE_MAX])(void) = {
+static bool (*const soc_is_support_soft_mbox_ops[TRS_CHIP_TYPE_MAX])(void) = {
     [TRS_CHIP_TYPE_MINI_V2] = trs_mini_v2_is_support_soft_mbox,
     [TRS_CHIP_TYPE_MINI_V3] = trs_mini_v3_is_support_soft_mbox,
     [TRS_CHIP_TYPE_CLOUD_V2] = trs_cloud_v2_is_support_soft_mbox,
@@ -535,7 +535,7 @@ bool trs_soc_is_support_soft_mbox(struct trs_id_inst *inst)
     return false;
 }
 
-static int(*const soc_sq_send_trigger_db_init_ops[TRS_CHIP_TYPE_MAX])(struct trs_id_inst *inst) = {
+static int (*const soc_sq_send_trigger_db_init_ops[TRS_CHIP_TYPE_MAX])(struct trs_id_inst *inst) = {
     [TRS_CHIP_TYPE_MINI_V3] = trs_soc_mini_v3_sq_send_trigger_db_init,
     [TRS_CHIP_TYPE_CLOUD_V2] = trs_soc_cloud_v2_sq_send_trigger_db_init,
     [TRS_CHIP_TYPE_CLOUD_V4] = trs_soc_cloud_v4_sq_send_trigger_db_init,
@@ -555,7 +555,7 @@ int trs_soc_sq_send_trigger_db_init(struct trs_id_inst *inst)
     return -EINVAL;
 }
 
-static void(*const soc_sq_send_trigger_db_uninit_ops[TRS_CHIP_TYPE_MAX])(struct trs_id_inst *inst) = {
+static void (*const soc_sq_send_trigger_db_uninit_ops[TRS_CHIP_TYPE_MAX])(struct trs_id_inst *inst) = {
     [TRS_CHIP_TYPE_MINI_V3] = trs_soc_mini_v3_sq_send_trigger_db_uninit,
     [TRS_CHIP_TYPE_CLOUD_V2] = trs_soc_cloud_v2_sq_send_trigger_db_uninit,
     [TRS_CHIP_TYPE_CLOUD_V4] = trs_soc_cloud_v4_sq_send_trigger_db_uninit,

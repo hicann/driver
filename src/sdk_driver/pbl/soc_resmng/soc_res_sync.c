@@ -72,15 +72,9 @@ static bool soc_is_pura_key(char *key)
     return true;
 }
 
-static bool soc_is_vf_addr(char *name)
-{
-    return (ka_base_strstr(name, HOST_VF_ADDR_NAME_PRIFIX) != NULL);
-}
+static bool soc_is_vf_addr(char *name) { return (ka_base_strstr(name, HOST_VF_ADDR_NAME_PRIFIX) != NULL); }
 
-static bool soc_is_host_addr(char *name)
-{
-    return (ka_base_strstr(name, HOST_ADDR_NAME_PRIFIX) != NULL);
-}
+static bool soc_is_host_addr(char *name) { return (ka_base_strstr(name, HOST_ADDR_NAME_PRIFIX) != NULL); }
 
 static char *soc_remove_addr_name_prifix(char *name)
 {
@@ -172,8 +166,9 @@ static int soc_res_addr_extract(char *name, u64 addr, u64 len, void *priv)
     u64 encode_addr = addr;
     char *extract_name = NULL;
 
-    bool addr_match = (((soc_is_vf_addr(name)) && (info->dir == SOC_DIR_P2V)) ||
-        ((!soc_is_vf_addr(name)) && (info->dir != SOC_DIR_P2V)));
+    bool addr_match =
+        (((soc_is_vf_addr(name)) && (info->dir == SOC_DIR_P2V)) ||
+         ((!soc_is_vf_addr(name)) && (info->dir != SOC_DIR_P2V)));
     if (!addr_match) {
         return 0;
     }
@@ -186,8 +181,8 @@ static int soc_res_addr_extract(char *name, u64 addr, u64 len, void *priv)
         soc_info("Addr encoder. (name=%s; addr=%llx; encode_addr=%llx)\n", name, addr, encode_addr);
     }
 
-    extract_name = (soc_is_vf_addr(name)) ?
-        (name + ka_base_strlen(HOST_VF_ADDR_NAME_PRIFIX)) : soc_remove_addr_name_prifix(name);
+    extract_name =
+        (soc_is_vf_addr(name)) ? (name + ka_base_strlen(HOST_VF_ADDR_NAME_PRIFIX)) : soc_remove_addr_name_prifix(name);
 
     /* The reserved memory addresses of the host and device may be different.
        For example:
@@ -236,8 +231,9 @@ static int soc_res_irq_extract(enum soc_res_sync_scope scope, char *key, u64 val
         return -ENOMEM;
     }
 
-    sync->irq_type = (scope == SOC_DEV) ? soc_resmng_get_dev_irq_type_by_name(key + ka_base_strlen(HOST_IRQ_NAME_PRIFIX)) :
-        soc_resmng_get_ts_irq_type_by_name(key + ka_base_strlen(HOST_IRQ_NAME_PRIFIX));
+    sync->irq_type = (scope == SOC_DEV) ?
+                         soc_resmng_get_dev_irq_type_by_name(key + ka_base_strlen(HOST_IRQ_NAME_PRIFIX)) :
+                         soc_resmng_get_ts_irq_type_by_name(key + ka_base_strlen(HOST_IRQ_NAME_PRIFIX));
     sync->num = (u32)value;
     info->out_len += sizeof(*sync);
 
@@ -275,7 +271,8 @@ static int soc_res_mia_extract(enum soc_mia_res_type type, struct soc_mia_res_in
     return 0;
 }
 
-static int soc_resmng_for_each_mia_res(struct res_inst_info *inst,
+static int soc_resmng_for_each_mia_res(
+    struct res_inst_info *inst,
     int (*func)(enum soc_mia_res_type type, struct soc_mia_res_info_ex *mia_res, void *priv), void *priv)
 {
     enum soc_mia_res_type type;
@@ -297,8 +294,8 @@ static int soc_resmng_for_each_mia_res(struct res_inst_info *inst,
     return 0;
 }
 
-static int soc_resmng_dev_for_each_mia_res(u32 udevid,
-    int (*func)(enum soc_mia_res_type type, struct soc_mia_res_info_ex *mia_res, void *priv), void *priv)
+static int soc_resmng_dev_for_each_mia_res(
+    u32 udevid, int (*func)(enum soc_mia_res_type type, struct soc_mia_res_info_ex *mia_res, void *priv), void *priv)
 {
     enum soc_mia_res_type type;
 
@@ -319,8 +316,9 @@ static int soc_resmng_dev_for_each_mia_res(u32 udevid,
     return 0;
 }
 
-static int soc_resmng_dev_die_for_each_mia_res(u32 udevid, u32 die_id,
-    int (*func)(enum soc_mia_res_type type, struct soc_mia_res_info_ex *mia_res, void *priv), void *priv)
+static int soc_resmng_dev_die_for_each_mia_res(
+    u32 udevid, u32 die_id, int (*func)(enum soc_mia_res_type type, struct soc_mia_res_info_ex *mia_res, void *priv),
+    void *priv)
 {
     enum soc_mia_res_type type;
 
@@ -341,8 +339,8 @@ static int soc_resmng_dev_die_for_each_mia_res(u32 udevid, u32 die_id,
     return 0;
 }
 
-static int soc_subsys_res_extract(struct res_inst_info *inst, struct res_sync_target *target,
-    char *buf, u32 *len, soc_res_addr_encode func)
+static int soc_subsys_res_extract(
+    struct res_inst_info *inst, struct res_sync_target *target, char *buf, u32 *len, soc_res_addr_encode func)
 {
     struct res_sync_info info;
     u32 buf_len = *len;
@@ -357,8 +355,7 @@ static int soc_subsys_res_extract(struct res_inst_info *inst, struct res_sync_ta
             ret = soc_resmng_for_each_key_value(inst, soc_key_value_extract, (void *)&info);
             break;
         case SOC_REG_ADDR:
-        case SOC_RSV_MEM_ADDR:
-        {
+        case SOC_RSV_MEM_ADDR: {
             u32 addr_type = (target->type == SOC_REG_ADDR) ? 0 : 1;
             ret = soc_resmng_for_each_res_addr(inst, addr_type, soc_res_addr_extract, (void *)&info);
             break;
@@ -403,8 +400,8 @@ static int soc_key_value_inject(struct res_inst_info *inst, char *buf, u32 buf_l
     return 0;
 }
 
-static int soc_res_addr_inject(struct res_inst_info *inst, enum soc_res_sync_type type, char *buf, u32 buf_len,
-    soc_res_addr_decode func)
+static int soc_res_addr_inject(
+    struct res_inst_info *inst, enum soc_res_sync_type type, char *buf, u32 buf_len, soc_res_addr_decode func)
 {
     u32 pos = 0;
 
@@ -416,13 +413,14 @@ static int soc_res_addr_inject(struct res_inst_info *inst, enum soc_res_sync_typ
     while (pos < buf_len) {
         struct res_addr_sync *sync = (struct res_addr_sync *)(buf + pos);
         u64 decode_addr = sync->encode_addr;
-        int ret ;
+        int ret;
 
         if (func != NULL) {
             ret = func(inst->devid, sync->encode_addr, sync->len, &decode_addr);
             if (ret != 0) {
-                soc_err("Decode addr failed. (name=%s; encode_addr=0x%llx; len=0x%llx; ret=%d)\n",
-                    sync->name, sync->encode_addr, sync->len, ret);
+                soc_err(
+                    "Decode addr failed. (name=%s; encode_addr=0x%llx; len=0x%llx; ret=%d)\n", sync->name,
+                    sync->encode_addr, sync->len, ret);
                 return ret;
             }
         }
@@ -436,8 +434,8 @@ static int soc_res_addr_inject(struct res_inst_info *inst, enum soc_res_sync_typ
         }
 
         if (ret != 0) {
-            soc_err("Set failed. (name=%s; addr=0x%llx; len=0x%llx; ret=%d)\n",
-                sync->name, decode_addr, sync->len, ret);
+            soc_err(
+                "Set failed. (name=%s; addr=0x%llx; len=0x%llx; ret=%d)\n", sync->name, decode_addr, sync->len, ret);
             return ret;
         }
 
@@ -470,8 +468,8 @@ static int soc_res_mia_inject(struct res_inst_info *inst, char *buf, u32 buf_len
     return 0;
 }
 
-static int soc_subsys_res_inject(struct res_inst_info *inst, enum soc_res_sync_type type, char *buf, u32 buf_len,
-    soc_res_addr_decode func)
+static int soc_subsys_res_inject(
+    struct res_inst_info *inst, enum soc_res_sync_type type, char *buf, u32 buf_len, soc_res_addr_decode func)
 {
     int ret;
 
@@ -509,8 +507,8 @@ static int soc_dev_res_misc_extract(u32 udevid, char *buf, u32 buf_len, u32 *out
     return ret;
 }
 
-static int soc_dev_res_extract(u32 udevid, struct res_sync_target *target, char *buf, u32 *len,
-    soc_res_addr_encode func)
+static int soc_dev_res_extract(
+    u32 udevid, struct res_sync_target *target, char *buf, u32 *len, soc_res_addr_encode func)
 {
     struct res_sync_info info;
     u32 buf_len = *len;
@@ -532,8 +530,7 @@ static int soc_dev_res_extract(u32 udevid, struct res_sync_target *target, char 
             ret = soc_resmng_dev_for_each_attr(udevid, soc_attr_value_extract, (void *)&info);
             break;
         case SOC_REG_ADDR:
-        case SOC_RSV_MEM_ADDR:
-        {
+        case SOC_RSV_MEM_ADDR: {
             u32 addr_type = (target->type == SOC_REG_ADDR) ? 0 : 1;
             ret = soc_resmng_dev_for_each_res_addr(udevid, addr_type, soc_res_addr_extract, (void *)&info);
             break;
@@ -555,8 +552,8 @@ static int soc_dev_res_extract(u32 udevid, struct res_sync_target *target, char 
     return ret;
 }
 
-static int soc_dev_res_addr_inject(u32 udevid, enum soc_res_sync_type type, char *buf, u32 buf_len,
-    soc_res_addr_decode func)
+static int soc_dev_res_addr_inject(
+    u32 udevid, enum soc_res_sync_type type, char *buf, u32 buf_len, soc_res_addr_decode func)
 {
     u32 pos = 0;
 
@@ -568,13 +565,14 @@ static int soc_dev_res_addr_inject(u32 udevid, enum soc_res_sync_type type, char
     while (pos < buf_len) {
         struct res_addr_sync *sync = (struct res_addr_sync *)(buf + pos);
         u64 decode_addr = sync->encode_addr;
-        int ret ;
+        int ret;
 
         if (func != NULL) {
             ret = func(udevid, sync->encode_addr, sync->len, &decode_addr);
             if (ret != 0) {
-                soc_err("Decode addr failed. (name=%s; encode_addr=0x%llx; len=0x%llx; ret=%d)\n",
-                    sync->name, sync->encode_addr, sync->len, ret);
+                soc_err(
+                    "Decode addr failed. (name=%s; encode_addr=0x%llx; len=0x%llx; ret=%d)\n", sync->name,
+                    sync->encode_addr, sync->len, ret);
                 return ret;
             }
         }
@@ -588,8 +586,8 @@ static int soc_dev_res_addr_inject(u32 udevid, enum soc_res_sync_type type, char
         }
 
         if (ret != 0) {
-            soc_err("Set failed. (name=%s; addr=0x%llx; len=0x%llx; ret=%d)\n",
-                sync->name, decode_addr, sync->len, ret);
+            soc_err(
+                "Set failed. (name=%s; addr=0x%llx; len=0x%llx; ret=%d)\n", sync->name, decode_addr, sync->len, ret);
             return ret;
         }
 

@@ -20,7 +20,7 @@
 #include "ut_log.h"
 #endif
 
-#define MEM_STATS_MAX_MODULE_ID       MAX_MODULE_ID
+#define MEM_STATS_MAX_MODULE_ID MAX_MODULE_ID
 
 struct module_mem_info {
     uint32_t module_id;
@@ -34,4 +34,3 @@ void dp_proc_mng_module_used_size_update(uint32_t devid, uint32_t module_id, uin
 bool dp_proc_mng_get_prof_start_sample_flag(void);
 
 #endif
-

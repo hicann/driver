@@ -131,9 +131,15 @@ int dcmi_save_custom_op_cfg(int card_id, int device_id, int enable_value);
 
 int dcmi_save_device_share_cfg(int card_id, int device_id, int enable_value);
 
+int dcmi_save_qos_master_cfg(int card_id, int device_id, struct dcmi_qos_master_config qos_cfg);
+
+int dcmi_save_multi_die_policy_cfg(int enable_value);
+
 int dcmi_check_custom_op_config_recover_mode_is_permitted(const char *operate_mode);
 
 int dcmi_check_device_share_config_recover_mode_is_permitted(const char *operate_mode);
+
+int dcmi_check_multi_die_policy_config_recover_mode_is_permitted(const char *operate_mode);
 
 int dcmi_set_npu_device_info(int card_id, int device_id, enum dcmi_main_cmd main_cmd, unsigned int sub_cmd,
     const void *buf, unsigned int buf_size);
@@ -148,6 +154,13 @@ int dcmi_set_device_share_for_910_93(int card_id, enum dcmi_unit_type device_typ
 
 int handle_device_share_cfg(int card_id, int device_id, const void *buf);
 
+int handle_qos_master_cfg(int card_id, int device_id, const void *buf);
+
+int dcmi_set_custom_op_secverify_cert(int card_id, int device_id, char *cert_chain_data, unsigned int cert_chain_size);
+
+int dcmi_set_custom_cert_info(int logic_device_id, const void *cert_chain_data, unsigned int size);
+
+int dcmi_set_device_offline_nic_down_flag(int card_id, int device_id, int enable_flag);
 #ifdef __cplusplus
 #if __cplusplus
 }

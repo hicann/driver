@@ -33,7 +33,7 @@ static inline void que_fill_sqcq_free_info(struct que_sqcq_info *sqcq_info, stru
 }
 
 static inline void que_fill_sqcq_info(struct halSqCqInputInfo *in, struct halSqCqOutputInfo *out,
-    struct que_sqcq_info *sqcq_info)
+                                      struct que_sqcq_info *sqcq_info)
 {
     sqcq_info->type = in->type;
     sqcq_info->ts_id = in->tsId;
@@ -83,15 +83,16 @@ void que_topic_rtsq_uninit(unsigned int devid, struct que_sqcq_info *sqcq_info)
     que_fill_sqcq_free_info(sqcq_info, &free_info);
     ret = halSqCqFree(devid, &free_info);
     if (que_unlikely(ret != DRV_ERROR_NONE)) {
-        QUEUE_LOG_ERR("que sqcq free fail. (ret=%d; devid=%u; ts_id=%u; type=%u; sq_id=%u)\n",
-            ret, devid, sqcq_info->ts_id, sqcq_info->type, sqcq_info->sq_id);
+        QUEUE_LOG_ERR("que sqcq free fail. (ret=%d; devid=%u; ts_id=%u; type=%u; sq_id=%u)\n", ret, devid,
+                      sqcq_info->ts_id, sqcq_info->type, sqcq_info->sq_id);
+        return;
     }
     sqcq_info->sq_id = UINT_MAX;
     sqcq_info->cq_id = UINT_MAX;
 }
 
 static inline void que_fill_task_send_info(struct que_sqcq_info *sqcq_info, void *sqe, int time_out,
-    struct halTaskSendInfo *sendinfo)
+                                           struct halTaskSendInfo *sendinfo)
 {
     sendinfo->type = sqcq_info->type;
     sendinfo->tsId = sqcq_info->ts_id;
@@ -111,15 +112,14 @@ static int event_fill_topic_sqe(unsigned int devid, unsigned int sub_event, stru
 
     ret = que_ctx_get_pids(devid, &attr.hostpid, &attr.devpid);
     if (que_unlikely(ret != DRV_ERROR_NONE)) {
-        QUEUE_LOG_ERR("que ctx get pids fail. (ret=%d; devid=%u; sub_event=%u)\n",
-            ret, devid, attr.sub_event);
+        QUEUE_LOG_ERR("que ctx get pids fail. (ret=%d; devid=%u; sub_event=%u)\n", ret, devid, attr.sub_event);
         return ret;
     }
 
     ret = que_event_sum_init(&attr, event_msg, &event_sum);
     if (que_unlikely(ret != DRV_ERROR_NONE)) {
-        QUEUE_LOG_ERR("event summary init fail. (ret=%d; devid=%u; hostpid=%d; devpid=%d; sub_event=%u)\n",
-            ret, attr.devid, attr.hostpid, attr.devpid, attr.sub_event);
+        QUEUE_LOG_ERR("event summary init fail. (ret=%d; devid=%u; hostpid=%d; devpid=%d; sub_event=%u)\n", ret,
+                      attr.devid, attr.hostpid, attr.devpid, attr.sub_event);
         return ret;
     }
 
@@ -133,7 +133,7 @@ static int event_fill_topic_sqe(unsigned int devid, unsigned int sub_event, stru
 }
 
 static int que_send_topic_sqe(unsigned int devid, unsigned int sub_event, struct que_event_msg *event_msg,
-    struct que_sqcq_info *sqcq_info)
+                              struct que_sqcq_info *sqcq_info)
 {
     int ret;
     void *sqe_addr = NULL;
@@ -152,7 +152,7 @@ static int que_send_topic_sqe(unsigned int devid, unsigned int sub_event, struct
     }
 
     que_fill_task_send_info(sqcq_info, sqe_addr, QUE_EVENT_TIMEOUT_MS, &sendinfo);
-    ret = halSqTaskSend(devid,  &sendinfo);
+    ret = halSqTaskSend(devid, &sendinfo);
     if (que_unlikely(ret != DRV_ERROR_NONE)) {
         QUEUE_LOG_ERR("que sqe task send fail. (ret=%d; devid=%u; sq_id=%u)\n", ret, devid, sqcq_info->sq_id);
         goto free_proc;
@@ -166,8 +166,8 @@ free_proc:
 int que_enque_notify_proc(unsigned int devid, unsigned int qid, struct que_sqcq_info *sqcq_info)
 {
     struct que_enque_in_msg in = {.qid = qid};
-    struct que_event_msg event_msg = {.in = (char *)&in, .in_len = sizeof(struct que_enque_in_msg),
-            .out = NULL, .out_len = 0};
+    struct que_event_msg event_msg = {
+        .in = (char *)&in, .in_len = sizeof(struct que_enque_in_msg), .out = NULL, .out_len = 0};
 
     int ret;
     ret = que_send_topic_sqe(devid, DRV_SUBEVENT_ENQUEUE_MSG, &event_msg, sqcq_info);

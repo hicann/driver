@@ -28,6 +28,13 @@ list(APPEND TRS_SRC_FILES
     $<$<STREQUAL:${PRODUCT},ascend950>:${BASE_DIR}/remote/master/trs_sqcq_mem.c>
 )
 
+if (${ENABLE_UBE})
+    list(APPEND TRS_SRC_FILES
+        $<$<STREQUAL:${PRODUCT},ascend950>:${BASE_DIR}/core/urma/trs_urma.c>
+        $<$<STREQUAL:${PRODUCT},ascend950>:${BASE_DIR}/core/urma/master/trs_master_urma.c>
+        $<$<STREQUAL:${PRODUCT},ascend950>:${BASE_DIR}/core/urma/master/trs_master_async.c>
+    )
+endif()
 
 target_sources(trs_drv_obj PRIVATE
     ${TRS_SRC_FILES}
@@ -57,8 +64,10 @@ target_include_directories(trs_drv_obj PRIVATE
     ${DRIVER_USER_DIR}/inc/dms
     ${DRIVER_USER_DIR}/trs/core/command/msg
     ${DRIVER_USER_DIR}/buff/dc/comm/lib
+    ${DRIVER_USER_DIR}/dmc/device_monitor/lib/include
 
-    $<$<STREQUAL:${PRODUCT},ascend950>:${DRIVER_USER_DIR}/../../../../ubengine/ssapi/kernelspace/urma/code/include>
+    $<$<STREQUAL:${ENABLE_UBE},true>:/usr/include/ub/umdk/urma>
+    $<$<STREQUAL:${ENABLE_UBE},true>:/usr/include/ub/umdk/urma/udma>
 )
 
 target_link_libraries(trs_drv_obj PRIVATE

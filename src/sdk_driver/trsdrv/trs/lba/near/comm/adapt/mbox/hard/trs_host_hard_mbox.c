@@ -26,32 +26,31 @@
 #include "trs_mbox.h"
 #include "trs_hard_mbox.h"
 #include "trs_ts_db.h"
-#include "soc_adapt.h"
 #include "trs_host_hard_mbox.h"
 #include "trs_sia_adapt_auto_init.h"
 
-#define TRS_MBXO_DEFAULT_TIMEOUT    3000
-#define TRS_HOST_MB_RSV_MEM_OFFSET    64
-#define TRS_MB_SIZE    64
+#define TRS_MBXO_DEFAULT_TIMEOUT 3000
+#define TRS_HOST_MB_RSV_MEM_OFFSET 64
+#define TRS_MB_SIZE 64
 
 struct trs_ts_mbox {
     struct trs_id_inst inst;
 
     ka_atomic_t retry;
 
-    phys_addr_t base;   // shared memory base
-    size_t size;        // shared memory size
+    phys_addr_t base; // shared memory base
+    size_t size;      // shared memory size
 
     u32 db_index;
     int db_type;
 
-    char *name;         // irq name
+    char *name; // irq name
     u32 irq_type;
-    u32 irq;            // ack irq
-    u32 hwirq;          // ack hwirq
+    u32 irq;   // ack irq
+    u32 hwirq; // ack hwirq
     void *chan;
 
-    u32 val;            // value for wring to db
+    u32 val; // value for wring to db
 };
 
 static ka_irqreturn_t trs_ts_mbox_ack_handler(int irq, void *data)
@@ -80,22 +79,25 @@ static int trs_ts_mbox_irq_setup(struct trs_ts_mbox *ts_mbox)
     ret = trs_host_request_irq(&ts_mbox->inst, &attr, (void *)ts_mbox, name, trs_ts_mbox_ack_handler);
     if (ret != 0) {
         trs_kfree(name);
-        trs_err("Request irq fail. (devid=%u; tsid=%u; irq=%u; ret=%d)\n",
-            ts_mbox->inst.devid, ts_mbox->inst.tsid, ts_mbox->irq, ret);
+        trs_err(
+            "Request irq fail. (devid=%u; tsid=%u; irq=%u; ret=%d)\n", ts_mbox->inst.devid, ts_mbox->inst.tsid,
+            ts_mbox->irq, ret);
         return ret;
     }
 
     ts_mbox->name = name;
-    trs_debug("Mbox irq register. (devid=%u; tsid=%u; irq=%u; name=%s)\n",
-        ts_mbox->inst.devid, ts_mbox->inst.tsid, ts_mbox->irq, name);
+    trs_debug(
+        "Mbox irq register. (devid=%u; tsid=%u; irq=%u; name=%s)\n", ts_mbox->inst.devid, ts_mbox->inst.tsid,
+        ts_mbox->irq, name);
     return 0;
 }
 
 static void trs_ts_mbox_irq_cleanup(struct trs_ts_mbox *ts_mbox)
 {
     struct trs_adapt_irq_attr attr;
-    trs_info("Mbox irq unregister. (devid=%u, tsid=%u; irq=%u; name=%s)\n",
-        ts_mbox->inst.devid, ts_mbox->inst.tsid, ts_mbox->irq, ts_mbox->name);
+    trs_info(
+        "Mbox irq unregister. (devid=%u, tsid=%u; irq=%u; name=%s)\n", ts_mbox->inst.devid, ts_mbox->inst.tsid,
+        ts_mbox->irq, ts_mbox->name);
 
     attr.irq_type = ts_mbox->irq_type;
     attr.irq = ts_mbox->irq;
@@ -142,8 +144,9 @@ static int trs_ts_mbox_db_init(struct trs_id_inst *inst)
 
     ret = trs_soc_get_db_cfg(inst, TRS_DB_ONLINE_MBOX, &start, &end);
     if ((ret != 0) || (start >= end)) {
-        trs_err("Trs get db cfg fail. (devid=%u; tsid=%u; ret=%d; start=%u; end=%u)\n",
-            inst->devid, inst->tsid, ret, start, end);
+        trs_err(
+            "Trs get db cfg fail. (devid=%u; tsid=%u; ret=%d; start=%u; end=%u)\n", inst->devid, inst->tsid, ret, start,
+            end);
         return -ENODEV;
     }
 
@@ -155,10 +158,7 @@ static int trs_ts_mbox_db_init(struct trs_id_inst *inst)
     return ret;
 }
 
-static void trs_ts_mbox_db_uninit(struct trs_id_inst *inst)
-{
-    trs_ts_db_uninit(inst, TRS_DB_ONLINE_MBOX);
-}
+static void trs_ts_mbox_db_uninit(struct trs_id_inst *inst) { trs_ts_db_uninit(inst, TRS_DB_ONLINE_MBOX); }
 
 static struct trs_ts_mbox *trs_ts_mbox_create(struct trs_id_inst *inst)
 {
@@ -237,7 +237,7 @@ static enum trs_mbox_mem_type trs_mbox_get_mem_type(struct trs_id_inst *inst)
 
 static int trs_mbox_get_cont_tx_timeout_max(struct trs_id_inst *inst)
 {
-    int timeout = 9000;  /* 9000 ms */
+    int timeout = 9000; /* 9000 ms */
 
     if (devdrv_get_connect_protocol(inst->devid) == CONNECT_PROTOCOL_HCCS) {
         timeout = 45000; /* 45000 ms */
@@ -256,8 +256,9 @@ static void trs_mbox_chan_attr_pack(struct trs_ts_mbox *ts_mbox, struct trs_mbox
     attr->ops.free_irq = trs_ts_mbox_cleanup;
     attr->mem_type = trs_mbox_get_mem_type(&ts_mbox->inst);
     attr->cont_tx_timeout_max = trs_mbox_get_cont_tx_timeout_max(&ts_mbox->inst);
-    trs_info("devid=%u; attr->mem_type=%u; cont_tx_timeout_max=%u(ms)\n",
-        ts_mbox->inst.devid, attr->mem_type, attr->cont_tx_timeout_max);
+    trs_info(
+        "devid=%u; attr->mem_type=%u; cont_tx_timeout_max=%u(ms)\n", ts_mbox->inst.devid, attr->mem_type,
+        attr->cont_tx_timeout_max);
 }
 
 static int trs_ts_mbox_ack_irq_send(struct trs_ts_mbox *ts_mbox)

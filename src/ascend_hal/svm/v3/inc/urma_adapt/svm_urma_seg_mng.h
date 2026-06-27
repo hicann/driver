@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025 Huawei Technologies Co., Ltd.
+ * Copyright (c) 2026 Huawei Technologies Co., Ltd.
  * This program is free software, you can redistribute it and/or modify it under the terms and conditions of
  * CANN Open Software License Agreement Version 2.0 (the "License").
  * Please refer to the License for details. You may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@ int svm_urma_register_seg(u32 user_devid, struct svm_dst_va *dst_va, u32 seg_fla
 int svm_urma_unregister_seg(u32 user_devid, struct svm_dst_va *dst_va, u32 seg_flag);
 int svm_urma_get_tseg(u32 user_devid, struct svm_dst_va *dst_va, urma_target_seg_t **tseg);
 int svm_urma_get_token_info(u32 user_devid, struct svm_dst_va *dst_va, u32 *token_id, u32 *token_val);
-int svm_urma_get_seg_with_token_info(u32 user_devid, struct svm_dst_va *dst_va,
-    urma_seg_t *seg, u32 *token_id, u32 *token_val);
+int svm_urma_get_seg_with_token_info(
+    u32 user_devid, struct svm_dst_va *dst_va, urma_seg_t *seg, u32 *token_id, u32 *token_val);
 
 #endif
