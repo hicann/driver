@@ -3715,7 +3715,8 @@ STATIC void sched_node_event_sample_process(struct sched_numa_node *node)
     publish_event_num = (u64 *)sched_kzalloc(sizeof(u64) * SCHED_MAX_EVENT_TYPE_NUM * SCHED_EVENT_STAT_TYPE_NUM,
                                              KA_GFP_KERNEL);
     if (publish_event_num == NULL) {
-        sched_err("Failed to alloc memory.(size=%lx)\n", sizeof(u64) * SCHED_MAX_EVENT_TYPE_NUM * SCHED_EVENT_STAT_TYPE_NUM);
+        sched_err("Failed to alloc memory.(size=%lx)\n",
+                  sizeof(u64) * SCHED_MAX_EVENT_TYPE_NUM * SCHED_EVENT_STAT_TYPE_NUM);
         return;
     }
     sched_event_num = publish_event_num + SCHED_MAX_EVENT_TYPE_NUM;
@@ -4750,7 +4751,7 @@ int32_t esched_create_dev(u32 devid, struct sched_dev_ops *ops)
     ret = esched_create_dev_lock(devid, ops);
     if (ret != 0) {
         ka_task_mutex_unlock(&sched_dev_mutex);
-        return ret; 
+        return ret;
     }
     ret = sched_sentry_init();
     if (ret != 0) {
