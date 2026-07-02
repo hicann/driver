@@ -41,32 +41,31 @@
 // used for work queue name
 #define TS_AGENT_MAX_WQ_NAME_LEN 64
 
-#define TS_STARS_EVENT_OFFSET      (0x4ULL)
-#define TS_STARS_EVENT_MASK        (0xFFFFULL)
-#define TS_STARS_EVENT_TABLE_OFFSET  (0x10000ULL)
-#define TS_STARS_EVENT_TABLE_MASK  (0xF0000ULL)
+#define TS_STARS_EVENT_OFFSET (0x4ULL)
+#define TS_STARS_EVENT_MASK (0xFFFFULL)
+#define TS_STARS_EVENT_TABLE_OFFSET (0x10000ULL)
+#define TS_STARS_EVENT_TABLE_MASK (0xF0000ULL)
 #define TS_STARS_EVENT_NUM_OF_SINGLE_TABLE (0x1000ULL)
-#define TS_STARS_EVENT_BASE_ADDR   (0x200000ULL)
+#define TS_STARS_EVENT_BASE_ADDR (0x200000ULL)
 
-#define TS_STARS_NOTIFY_OFFSET     (0x4ULL)
-#define TS_STARS_NOTIFY_MASK        (0x7FFFULL)
-#define TS_STARS_NOTIFY_TABLE_OFFSET  (0x10000ULL)
-#define TS_STARS_NOTIFY_TABLE_MASK  (0xF0000ULL)
-#define TS_STARS_NOTIFY_BASE_ADDR   (0x100000ULL)
+#define TS_STARS_NOTIFY_OFFSET (0x4ULL)
+#define TS_STARS_NOTIFY_MASK (0x7FFFULL)
+#define TS_STARS_NOTIFY_TABLE_OFFSET (0x10000ULL)
+#define TS_STARS_NOTIFY_TABLE_MASK (0xF0000ULL)
+#define TS_STARS_NOTIFY_BASE_ADDR (0x100000ULL)
 
 #define TS_STARS_NOTIFY_POD_TABLE_OFFSET (0x0001100000ULL)
 
-#define TS_ROCEE_BASE_ADDR         (0x2000000000ULL)
-#define TS_ROCEE_VF_DB_CFG0_REG    (0x230ULL)
+#define TS_ROCEE_BASE_ADDR (0x2000000000ULL)
+#define TS_ROCEE_VF_DB_CFG0_REG (0x230ULL)
 
 #define TS_STARS_SINGLE_DEV_ADDR_MASK (0xFFFFFFFFFFULL)
 
 #define TS_STARS_PCIE_BASE_ADDR (0x400004008000ULL) // remember runtime
 #define TS_STARS_PCIE_BASE_MASK (0xF0000FFFFFFFULL)
 
-
 #ifdef CFG_SOC_PLATFORM_CLOUD_V2
-#define TS_AGENT_MAX_STREAM_NUM  (32*1024)      //extend to 32K
+#define TS_AGENT_MAX_STREAM_NUM (32 * 1024) // extend to 32K
 #define TS_AGENT_MAX_SQ_NUM 2048
 #define TS_AGENT_VF_ID_MIN 0
 #define TS_AGENT_VF_ID_MAX 16
@@ -99,9 +98,9 @@ typedef struct ts_agent_vsq_base_info {
     u32 ts_id;
     u32 vsq_id;
     const void *vsq_base_addr; // vsq base addr alloc by drv
-    u32 vsq_dep;  // 1024
-    u32 vsq_slot_size; // 64
-    enum vsqcq_type vsq_type; // value range enum vsqcq_type
+    u32 vsq_dep;               // 1024
+    u32 vsq_slot_size;         // 64
+    enum vsqcq_type vsq_type;  // value range enum vsqcq_type
 } vsq_base_info_t;
 
 #endif // TS_AGENT_COMMON_H

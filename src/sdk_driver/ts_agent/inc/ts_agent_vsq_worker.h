@@ -25,7 +25,6 @@ int create_vf_worker(u32 dev_id, u32 vf_id, u32 ts_id, u32 vsq_num);
 
 void destroy_vf_worker(u32 dev_id, u32 vf_id, u32 ts_id);
 
-int schedule_vsq_work(const struct tsdrv_id_inst * const id_inst, u32 vsq_id,
-    enum vsqcq_type vsq_type, u32 cmd_num);
+int schedule_vsq_work(const struct tsdrv_id_inst *const id_inst, u32 vsq_id, enum vsqcq_type vsq_type, u32 cmd_num);
 
 #endif // TS_AGENT_VSQ_WORKER_H

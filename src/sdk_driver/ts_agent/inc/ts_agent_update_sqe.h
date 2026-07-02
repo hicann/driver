@@ -24,7 +24,7 @@
 #else
 struct trs_sqcq_agent_para {
     phys_addr_t rsv_phy_addr;
-    size_t      rsv_size;
+    size_t rsv_size;
 };
 
 struct trs_sqe_update_info {
@@ -50,12 +50,12 @@ struct tsagent_sq_base_info {
     u8 rsv : 7;
 };
 
-#define TSAGENT_WARNING_BIT_SRAM_OFFSET    0x200
-#define TSAGENT_WARNING_BIT_SIZE           512
-#define TSAGENT_WARNING_BIT_UNIT           4
+#define TSAGENT_WARNING_BIT_SRAM_OFFSET 0x200
+#define TSAGENT_WARNING_BIT_SIZE 512
+#define TSAGENT_WARNING_BIT_UNIT 4
 
 #if defined(CFG_HOST_ENV) || defined(TS_AGENT_UT)
-#define TSAGENT_MAX_DEV_ID                 1124 /* devid: 100 + 64*16 */
+#define TSAGENT_MAX_DEV_ID 1124 /* devid: 100 + 64*16 */
 #endif
 
 #ifdef CFG_DEVICE_ENV
@@ -80,6 +80,6 @@ bool tsagent_sq_is_belong_to_stream(u32 devid, u16 stream_id, u32 sqid);
 int tsagent_sqe_update_check_sqe_type(u32 devid, int pid, ts_stars_sqe_t *sqe);
 void init_task_convert_func(void);
 void tsagent_set_sram_overflow_bit(u32 devid, u32 bit_offset, u32 reg_offset, u32 sram_overflow_offset);
-struct tsagent_dev_base_info* tsagent_get_device_base_info(u32 dev_id);
+struct tsagent_dev_base_info *tsagent_get_device_base_info(u32 dev_id);
 
 #endif // TS_AGENT_DVPP_H

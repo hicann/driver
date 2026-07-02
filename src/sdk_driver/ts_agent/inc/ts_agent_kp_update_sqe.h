@@ -18,11 +18,11 @@
 #include "ka_type.h"
 #include "tsch/task_struct.h"
 
-#define STARS_DWORD_SIZE                   32
-#define STARS_RDMA_QP_ADDR_LOW_MASK        0xFFFFFFFF
-#define CHIP_NUM                            4 /* allowing maximum 4 chips interconnected */
-#define CPU_DIE_NUM                         2 /* currently each chip has 2 CPU DIEs */
-#define STARS_DEV_NUM                       (CHIP_NUM * CPU_DIE_NUM)
+#define STARS_DWORD_SIZE 32
+#define STARS_RDMA_QP_ADDR_LOW_MASK 0xFFFFFFFF
+#define CHIP_NUM 4    /* allowing maximum 4 chips interconnected */
+#define CPU_DIE_NUM 2 /* currently each chip has 2 CPU DIEs */
+#define STARS_DEV_NUM (CHIP_NUM * CPU_DIE_NUM)
 #define UNSIGNED_SHORT_LEN 16
 int sqe_proc_rdma(u32 devid, u32 tsid, int pid, u32 sqid, ts_stars_sqe_t *sqe);
 int kp_sqe_proc_sdma(u32 devid, u32 tsid, int pid, u32 sqid, ts_stars_sqe_t *sqe);

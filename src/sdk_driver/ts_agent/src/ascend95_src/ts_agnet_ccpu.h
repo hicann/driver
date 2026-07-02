@@ -46,14 +46,14 @@ typedef struct {
     uint16_t die_id : 1;
     uint16_t res4 : 15;
     /* word7 */
-    uint32_t is_converted : 1;  //use reserved filed
+    uint32_t is_converted : 1; // use reserved filed
     uint32_t res5 : 31;
     /* word8~11 */
-    uint64_t src;  //use reserved filed
-    uint64_t dst;  //use reserved filed
+    uint64_t src; // use reserved filed
+    uint64_t dst; // use reserved filed
     /* word12-15 */
-    uint64_t length;  //use reserved filed
-    uint32_t pass_id;  //use reserved filed
+    uint64_t length;  // use reserved filed
+    uint32_t pass_id; // use reserved filed
     uint32_t res6;
 } ccpu_stars_pcie_dma_sqe;
 

@@ -23,16 +23,16 @@
 extern "C" {
 #endif /* __cplusplus */
 
-#define TS_MAILBOX_SIZE                           (64U)
+#define TS_MAILBOX_SIZE (64U)
 
-#define TS_DRV_MAILBOX_VALID_VALUE                (0x5a5a)
-#define TS_DRV_MAILBOX_RCV_OK_VALUE               (0x5b5b)
-#define TS_DRV_MAILBOX_RCV_NA_VALUE               (0x5c5c)
-#define TS_DRV_MAILBOX_INVALID_VALUE              (0x0)
+#define TS_DRV_MAILBOX_VALID_VALUE (0x5a5a)
+#define TS_DRV_MAILBOX_RCV_OK_VALUE (0x5b5b)
+#define TS_DRV_MAILBOX_RCV_NA_VALUE (0x5c5c)
+#define TS_DRV_MAILBOX_INVALID_VALUE (0x0)
 
-#define RECYCLE_EVENT_COUNT                       (25)
-#define APP_EXIT_COUNT_MAX                        (12)
-#define MB_CTRL_MSG_LENGTH                        (44U)
+#define RECYCLE_EVENT_COUNT (25)
+#define APP_EXIT_COUNT_MAX (12)
+#define MB_CTRL_MSG_LENGTH (44U)
 
 typedef enum {
     TS_DRV_MAILBOX = 0X01,
@@ -129,13 +129,13 @@ enum {
     UNMASK_CTRL_CPU_SUBSCRIBE_DOORBELL,  /* 63 unmask doorbell for ctrl cpu subscriber */
     SQ_SWITCH_STREAM = 64,               /* 64 update stream for sq */
 #ifdef DAVINCI_CLOUD_V2
-    INVALID_CMD = 0xFF,                  /* invalid flag */
+    INVALID_CMD = 0xFF, /* invalid flag */
 #else
-    INVALID_CMD,                         /* invalid flag */
+    INVALID_CMD, /* invalid flag */
 #endif
 };
 
-#define TS_MAX_MAILBOX_FUNC_NUM          (INVALID_CMD)
+#define TS_MAX_MAILBOX_FUNC_NUM (INVALID_CMD)
 
 typedef struct {
     volatile uint32_t ack_irq;
@@ -144,13 +144,13 @@ typedef struct {
 typedef struct {
     volatile uint64_t sq_addr; /* invalid:0x0 */
     volatile uint64_t cq_addr0;
-    volatile uint16_t sq_idx;      /* invalid:0xFFFF */
-    volatile uint16_t cq_idx0;     /* sq's return */
-    volatile uint8_t app_flag : 1; /* 0:offline, 1:online */
+    volatile uint16_t sq_idx;          /* invalid:0xFFFF */
+    volatile uint16_t cq_idx0;         /* sq's return */
+    volatile uint8_t app_flag : 1;     /* 0:offline, 1:online */
     volatile uint8_t sq_ctrl_flag : 1; /* 1: sq has head and tail share memory at last 2 sqe, 0 without */
     volatile uint8_t vf_id : 6;
-    volatile uint8_t sq_cq_side : 2;      /* online: bit 0 sq side, bit 1 cq side. device: 0 host: 1  */
-    volatile uint8_t has_host_pid : 1;    /* 0:no, 1:yes get host_pid from info[4] */
+    volatile uint8_t sq_cq_side : 2;   /* online: bit 0 sq side, bit 1 cq side. device: 0 host: 1  */
+    volatile uint8_t has_host_pid : 1; /* 0:no, 1:yes get host_pid from info[4] */
     volatile uint8_t res : 5;
     volatile uint8_t sqe_size;
     volatile uint8_t cqe_size;
@@ -167,7 +167,7 @@ typedef union {
         uint32_t sq_lock : 1;
         uint32_t wait_lock : 1; // rt set
         uint32_t dqs_inter_chip : 1;
-        uint32_t res0    : 29;
+        uint32_t res0 : 29;
     } bits;
     uint32_t u32;
 } tsStreamFlag_t;
@@ -183,24 +183,24 @@ typedef enum {
     TS_NORMAL_INFO_EXT_FLAG_INVALID
 } ts_normal_info_ext_valid_flag_t;
 
-#pragma pack(4)  // single-byte alignment
+#pragma pack(4) // single-byte alignment
 typedef struct {
-    volatile uint64_t valid_flag;                       // ts_normal_info_ext_valid_flag_t
+    volatile uint64_t valid_flag; // ts_normal_info_ext_valid_flag_t
     volatile tsStreamFlag_t stream_flag;
-    volatile uint32_t kis_simt_stk_base_addr_l;         // set for simt operator
-    volatile uint32_t kis_simt_stk_base_addr_h  : 16;   // set for simt operator
+    volatile uint32_t kis_simt_stk_base_addr_l;      // set for simt operator
+    volatile uint32_t kis_simt_stk_base_addr_h : 16; // set for simt operator
     volatile uint32_t res1 : 16;
-    volatile uint32_t kis_simt_warp_stk_size;           // set for simt operator
-    volatile uint32_t kis_simt_dvg_warp_stk_size;       // set for simt operator
-    volatile uint32_t pool_id;                          // set for vf other resource
-    volatile uint32_t pool_id_max;                      // set for vf aic aiv resource
-    volatile uint32_t stack_phy_base_addr_l;            // set for aix
-    volatile uint32_t stack_phy_base_addr_h;            // set for aix
+    volatile uint32_t kis_simt_warp_stk_size;     // set for simt operator
+    volatile uint32_t kis_simt_dvg_warp_stk_size; // set for simt operator
+    volatile uint32_t pool_id;                    // set for vf other resource
+    volatile uint32_t pool_id_max;                // set for vf aic aiv resource
+    volatile uint32_t stack_phy_base_addr_l;      // set for aix
+    volatile uint32_t stack_phy_base_addr_h;      // set for aix
 } normalInfoExt_t;
 
 typedef struct {
-    volatile uint8_t  mb_spec;
-    volatile uint8_t  mb_specid;
+    volatile uint8_t mb_spec;
+    volatile uint8_t mb_specid;
 } topicInfoExt_t;
 
 #ifdef ENABLE_VERIFICATION_PATCH
@@ -216,7 +216,7 @@ struct trs_ext_info_header {
 #endif
 typedef struct {
 #ifdef STARS_CTRL_CPU
-    struct trs_ext_info_header header;  /* msg type: 0 normal sqcq, 1 topic sqcq */
+    struct trs_ext_info_header header; /* msg type: 0 normal sqcq, 1 topic sqcq */
 #endif
     union {
         normalInfoExt_t normal_info;
@@ -225,25 +225,25 @@ typedef struct {
 } infoExMsg_t;
 
 typedef struct {
-    volatile uint32_t     msg_len;
-    volatile infoExMsg_t  *msg;
-    volatile uint32_t     *info; // SQCQ_INFO_LENGTH: 5
+    volatile uint32_t msg_len;
+    volatile infoExMsg_t *msg;
+    volatile uint32_t *info; // SQCQ_INFO_LENGTH: 5
 } infoExt_t;
-#pragma pack()  // Cancels single-byte alignment
+#pragma pack() // Cancels single-byte alignment
 
 typedef struct {
     volatile uint64_t sq_addr; /* invalid:0x0 */
     volatile uint64_t cq_addr0;
-    volatile uint16_t sq_idx;      /* invalid:0xFFFF */
-    volatile uint16_t cq_idx0;     /* sq's return */
-    volatile uint8_t app_flag : 1; /* 0:offline, 1:online */
+    volatile uint16_t sq_idx;          /* invalid:0xFFFF */
+    volatile uint16_t cq_idx0;         /* sq's return */
+    volatile uint8_t app_flag : 1;     /* 0:offline, 1:online */
     volatile uint8_t sq_ctrl_flag : 1; /* 1: sq has head and tail share memory at last 2 sqe, 0 without */
     volatile uint8_t vf_id : 6;
-    volatile uint8_t sq_cq_side : 2;      /* online: bit 0 sq side, bit 1 cq side. device: 0 host: 1  */
-    volatile uint8_t has_host_pid : 1;    /* 0:no, 1:yes get host_pid from info[4] */
+    volatile uint8_t sq_cq_side : 2;   /* online: bit 0 sq side, bit 1 cq side. device: 0 host: 1  */
+    volatile uint8_t has_host_pid : 1; /* 0:no, 1:yes get host_pid from info[4] */
     volatile uint8_t sq_addr_is_virtual : 1;
     volatile uint8_t cq_addr_is_virtual : 1;
-    volatile uint8_t is_convert_pid  : 1;
+    volatile uint8_t is_convert_pid : 1;
     volatile uint8_t res : 2;
     volatile uint8_t sqe_size;
     volatile uint8_t cqe_size;
@@ -285,29 +285,29 @@ typedef struct {
 #ifndef STARS_CTRL_CPU
 typedef struct {
     volatile uint16_t notify_id;
-    volatile uint16_t operation_type;  // ts_event_operation_type_t
+    volatile uint16_t operation_type; // ts_event_operation_type_t
     volatile uint32_t host_pid;
     volatile uint16_t vir_notify_id;
     volatile uint8_t vf_id;
-    volatile uint8_t notify_type;  // 0 noitfy id, 1 event id
+    volatile uint8_t notify_type; // 0 noitfy id, 1 event id
     volatile uint8_t reserved[44];
 } ts_notify_info_t;
 #else
 typedef struct {
     volatile uint32_t notify_id;
     volatile uint32_t host_pid;
-    volatile uint16_t operation_type;  // ts_event_operation_type_t
+    volatile uint16_t operation_type; // ts_event_operation_type_t
     volatile uint16_t vir_notify_id;
     volatile uint8_t vf_id;
-    volatile uint8_t notify_type;  // 0 noitfy id, 1 event id, 2 count notify
+    volatile uint8_t notify_type; // 0 noitfy id, 1 event id, 2 count notify
     volatile uint8_t reserved[42];
 } ts_notify_info_t;
 #endif
 
 typedef struct {
     volatile uint8_t vf_id;
-    volatile uint8_t resource_type;   // 0:notify id, 1:event id
-    volatile uint8_t operation_type;  // 0:map, 1:unmap
+    volatile uint8_t resource_type;  // 0:notify id, 1:event id
+    volatile uint8_t operation_type; // 0:map, 1:unmap
     volatile uint8_t reserve0;
     volatile uint16_t vir_id;
     volatile uint16_t phy_id;
@@ -338,14 +338,14 @@ typedef struct {
 
 typedef struct {
     volatile uint32_t opcode;
-    volatile uint32_t idx;       // sq info index
-    volatile uint64_t sq_addr;     // sq addr
-    volatile uint64_t temp_addr;   // moulde addr
-    volatile uint64_t db_addr;     // doorbell addr
-    volatile uint64_t dfx_addr;    // dfx addr
-    volatile uint32_t sq_depth;    // sq depth
-    volatile uint32_t temp_depth;  // moulde depth
-    volatile uint64_t db_reg;      // doorbell register addr
+    volatile uint32_t idx;        // sq info index
+    volatile uint64_t sq_addr;    // sq addr
+    volatile uint64_t temp_addr;  // moulde addr
+    volatile uint64_t db_addr;    // doorbell addr
+    volatile uint64_t dfx_addr;   // dfx addr
+    volatile uint32_t sq_depth;   // sq depth
+    volatile uint32_t temp_depth; // moulde depth
+    volatile uint64_t db_reg;     // doorbell register addr
 } ts_rdma_sq_t;
 
 typedef struct {
@@ -404,7 +404,7 @@ typedef struct {
     union {
         ts_dcmi_task_timeout_t set_task_timeout_info;
         ts_dcmi_task_timeout_t get_task_timeout_info;
-    } u; // 40 bytes
+    } u;                   // 40 bytes
 } ts_dcmi_ctrl_msg_body_t; // 44 bytes
 
 typedef struct {
@@ -427,7 +427,7 @@ typedef struct {
 } ts_maint_cq_report_recv_t;
 
 typedef struct {
-    volatile uint64_t sq_addr;    // first 2 bytes mean head, second 2 bytes mean tail
+    volatile uint64_t sq_addr; // first 2 bytes mean head, second 2 bytes mean tail
     volatile uint64_t cq_addr0;
     volatile uint16_t channel_id;
     volatile uint16_t sqe_length;
@@ -490,7 +490,7 @@ typedef struct {
     uint64_t cq_addr;
     uint16_t sqe_size;
     uint16_t cqe_size;
-    uint16_t sq_depth;   /* sq depth */
+    uint16_t sq_depth; /* sq depth */
     uint16_t cq_depth;
 } ts_reserve_sq_cq_info_t;
 #pragma pack()
@@ -534,7 +534,7 @@ typedef struct {
 typedef struct {
     uint32_t db;
     uint32_t irq;
-    uint8_t idx;  // trigger info index, pf: 0, vf: 1-16
+    uint8_t idx; // trigger info index, pf: 0, vf: 1-16
     uint8_t reserved[3];
 } ts_sq_trigger_msg_t;
 
@@ -552,23 +552,23 @@ struct trs_urpc_jetty_config {
     uint32_t jetty_id;
     uint8_t func_id;
     uint8_t die_id;
-    
+
     uint32_t trans_obj_id : 24;
     uint32_t rsv : 2;
     uint32_t odr : 3;
     uint32_t token_en : 1;
     uint32_t rmt_jetty_type : 2;
-    
+
     uint32_t rmt_jetty_or_seg_id;
-    
+
     uint64_t rmt_eid_low;
     uint64_t rmt_eid_high;
-    
+
     uint32_t rmt_token_value;
 
     union {
-        uint8_t int_mode;                // cqe
-        uint64_t sq_head_base_addr;      // sq head
+        uint8_t int_mode;           // cqe
+        uint64_t sq_head_base_addr; // sq head
     };
 
     uint32_t urpc_aw_wqe_setting_0;
@@ -584,19 +584,18 @@ typedef struct {
 } ts_config_stars_urpc_info_t;
 
 typedef struct {
-    uint32_t core_type;     // 0 aic, 1 aiv
+    uint32_t core_type; // 0 aic, 1 aiv
     uint32_t vf_id;
 } ts_aic_util_message_t;
 
-
 // dqs used for mc62cm12a
 typedef enum {
-    STARS_QUEUE_SUBSCRIBE_TYPE_INVALID = 0,    // 无效值
-    STARS_QUEUE_SUBSCRIBE_TYPE_ACC = 1,        // 订阅者为加速器（rtsq）
-    STARS_QUEUE_SUBSCRIBE_TYPE_AI_CPU = 2,     // 订阅者为aicpu
-    STARS_QUEUE_SUBSCRIBE_TYPE_CTRL_CPU = 3,   // 订阅者为control cpu
-    STARS_QUEUE_SUBSCRIBE_TYPE_INTER_CHIP = 4  // 队列订阅者为跨片调度
-} stars_queue_subscribe_type_t;          // 队列订阅类型
+    STARS_QUEUE_SUBSCRIBE_TYPE_INVALID = 0,   // 无效值
+    STARS_QUEUE_SUBSCRIBE_TYPE_ACC = 1,       // 订阅者为加速器（rtsq）
+    STARS_QUEUE_SUBSCRIBE_TYPE_AI_CPU = 2,    // 订阅者为aicpu
+    STARS_QUEUE_SUBSCRIBE_TYPE_CTRL_CPU = 3,  // 订阅者为control cpu
+    STARS_QUEUE_SUBSCRIBE_TYPE_INTER_CHIP = 4 // 队列订阅者为跨片调度
+} stars_queue_subscribe_type_t;               // 队列订阅类型
 
 typedef enum {
     STARS_QUEUE_SUBSCRIBE_OP_CREATE = 0,
@@ -609,13 +608,13 @@ typedef struct {
 } stars_queue_subscribe_aicpu_t;
 
 typedef struct {
-    uint64_t gqm_base;  // GQM地址，物理地址
+    uint64_t gqm_base; // GQM地址，物理地址
 } stars_queue_subscribe_ccpu_t;
 
 typedef struct {
-    uint8_t subscriber_type;  // 参考 stars_queue_subscribe_type_t
-    uint8_t op_type;          // 参考 stars_queue_subscribe_mb_op_type_t
-    uint16_t queue_id;        // 消费者队列ID
+    uint8_t subscriber_type; // 参考 stars_queue_subscribe_type_t
+    uint8_t op_type;         // 参考 stars_queue_subscribe_mb_op_type_t
+    uint16_t queue_id;       // 消费者队列ID
     union {
         stars_queue_subscribe_aicpu_t aicpu_subscribe;
         stars_queue_subscribe_ccpu_t ccpu_subscribe;
@@ -623,8 +622,8 @@ typedef struct {
 } stars_queue_subscribe_info_t;
 
 // end for dqs
-#pragma pack(4) 
-#define  MAX_SWITCH_NODE_CNT (3)
+#pragma pack(4)
+#define MAX_SWITCH_NODE_CNT (3)
 typedef struct {
     uint16_t sq_id;
     uint16_t sq_depth;
@@ -636,11 +635,11 @@ typedef struct {
     uint32_t cnt;
     sq_swtich_node_t nodes[MAX_SWITCH_NODE_CNT];
 } stars_switch_sq_for_stream_info_t;
-#pragma pack() 
+#pragma pack()
 typedef struct tag_ts_mailbox {
-    volatile uint16_t valid;  // valid:0x5a5a, invalid:0x0
+    volatile uint16_t valid; // valid:0x5a5a, invalid:0x0
     volatile uint16_t cmd_type;
-    volatile uint32_t result;  // normal:0, unnormal: not 0
+    volatile uint32_t result; // normal:0, unnormal: not 0
     union {
         tsCmdIrqInfo_t notice_irq_info;
         tsCmdSQCQInfo_t cmd_sqcq_info;
@@ -675,15 +674,15 @@ typedef struct tag_ts_mailbox {
         ts_config_stars_urpc_info_t config_stars_urpc_info;
         ts_ctrl_msg_info_t ctrl_msg_info;
         ts_dcmi_ctrl_msg_info_t dcmi_ctrl_msg_info;
-        ts_maint_sq_task_send_t maint_sq_task_send;     /* used for maint sq task send */
-        ts_maint_cq_report_recv_t maint_cq_report;      /* used for maint cq report recv */
+        ts_maint_sq_task_send_t maint_sq_task_send; /* used for maint sq task send */
+        ts_maint_cq_report_recv_t maint_cq_report;  /* used for maint cq report recv */
         ts_aic_util_message_t aic_util_msg;
         ts_reserve_sq_cq_info_t ts_rsv_sq_cq_info;
         ts_dvpp_cmdlist_info_t dvpp_cmdlist_info;
         stars_queue_subscribe_info_t queue_subscribe_info; /* used for dqs */
         ts_create_fast_ringbuffer_t fast_ringbuffer;
         stars_switch_sq_for_stream_info_t sq_switch_info;
-    } u;  // 56 bytes
+    } u; // 56 bytes
 } ts_mailbox_t;
 
 #ifdef __cplusplus

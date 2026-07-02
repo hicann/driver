@@ -22,20 +22,20 @@ extern "C" {
 typedef struct {
     volatile uint64_t sq_addr;
     volatile uint64_t cq_addr;
-    volatile uint32_t sq_index;  // sq id
-    volatile uint32_t cq_index;  // cq id
+    volatile uint32_t sq_index; // sq id
+    volatile uint32_t cq_index; // cq id
     volatile uint16_t sqe_size;
     volatile uint16_t cqe_size;
     volatile uint16_t sq_depth;
     volatile uint16_t cq_depth;
     volatile uint8_t app_flag;
     volatile uint8_t reserved[3];
-    volatile uint32_t cq_irq;  // cq id
+    volatile uint32_t cq_irq; // cq id
 } ts_create_callback_sqcq_t;
 
 typedef struct {
-    volatile uint32_t sq_index;  // sq id
-    volatile uint32_t cq_index;  // cq id
+    volatile uint32_t sq_index; // sq id
+    volatile uint32_t cq_index; // cq id
     volatile uint8_t app_flag;
     volatile uint8_t reserved[3];
 } ts_release_callback_sqcq_t;
