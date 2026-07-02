@@ -90,8 +90,8 @@ static void trs_chan_irq_tasklet(unsigned long data)
 
     while (1) {
         if (chan_irq->attr.get_valid_cq != NULL) {
-            ret = chan_irq->attr.get_valid_cq(
-                &chan_irq->inst, chan_irq->attr.group, chan_irq->cqid_list, MAX_PROC_CQ_NUM, &cq_num);
+            ret = chan_irq->attr.get_valid_cq(&chan_irq->inst, chan_irq->attr.group, chan_irq->cqid_list,
+                                              MAX_PROC_CQ_NUM, &cq_num);
             if (ret == 0) {
                 cqid_list = chan_irq->cqid_list;
             }
@@ -143,8 +143,8 @@ static ka_irqreturn_t trs_adapt_chan_irq_proc(int irq, void *para)
     return KA_IRQ_HANDLED;
 }
 
-static struct trs_chan_irq *trs_create_chan_irq(
-    struct trs_id_inst *inst, u32 irq, int irq_type, struct trs_chan_irq_attr *attr)
+static struct trs_chan_irq *trs_create_chan_irq(struct trs_id_inst *inst, u32 irq, int irq_type,
+                                                struct trs_chan_irq_attr *attr)
 {
     struct trs_chan_irq *chan_irq = trs_vzalloc(sizeof(struct trs_chan_irq));
 

@@ -23,9 +23,8 @@ int trs_tscpu_chan_near_ops_db_init(struct trs_id_inst *inst)
 
     ret = trs_soc_get_db_cfg(inst, TRS_DB_TASK_SQ, &start, &end);
     if ((ret != 0) || (start >= end)) {
-        trs_err(
-            "Trs get db cfg fail. (devid=%u; tsid=%u; ret=%d; start=%u; end=%u)\n", inst->devid, inst->tsid, ret, start,
-            end);
+        trs_err("Trs get db cfg fail. (devid=%u; tsid=%u; ret=%d; start=%u; end=%u)\n", inst->devid, inst->tsid, ret,
+                start, end);
         return -ENODEV;
     }
 
@@ -35,9 +34,8 @@ int trs_tscpu_chan_near_ops_db_init(struct trs_id_inst *inst)
     ret |= trs_soc_get_db_cfg(inst, TRS_DB_TASK_CQ, &start, &end);
     if ((ret != 0) || (start >= end)) {
         trs_tscpu_chan_near_ops_db_uninit(inst);
-        trs_err(
-            "Trs get db cfg fail. (devid=%u; tsid=%u; ret=%d; start=%u; end=%u)\n", inst->devid, inst->tsid, ret, start,
-            end);
+        trs_err("Trs get db cfg fail. (devid=%u; tsid=%u; ret=%d; start=%u; end=%u)\n", inst->devid, inst->tsid, ret,
+                start, end);
         return -ENODEV;
     }
 

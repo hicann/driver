@@ -83,13 +83,13 @@
 
 #endif
 
-#define trs_err_if(cond, fmt, ...)                                                                                 \
-    do {                                                                                                           \
-        if (cond) {                                                                                                \
-            trs_err(fmt, ##__VA_ARGS__);                                                                           \
-        } else {                                                                                                   \
-            trs_debug(fmt, ##__VA_ARGS__);                                                                         \
-        }                                                                                                          \
+#define trs_err_if(cond, fmt, ...)         \
+    do {                                   \
+        if (cond) {                        \
+            trs_err(fmt, ##__VA_ARGS__);   \
+        } else {                           \
+            trs_debug(fmt, ##__VA_ARGS__); \
+        }                                  \
     } while (0)
 
 #ifndef TRS_REPORT_PREDEFINED_ERR_MSG
@@ -100,12 +100,12 @@
 #define TRS_OPERATION_NOT_SUPPORTED_ERR_MSG_ARG_NUM 2
 #define TRS_REPORT_ERR_MSG_STR_LEN 256
 
-static inline void trs_operation_not_supported_err_msg(const char* func_name, const char* type)
+static inline void trs_operation_not_supported_err_msg(const char *func_name, const char *type)
 {
     char func_name_str[TRS_REPORT_ERR_MSG_STR_LEN] = {0};
     char reason_str[TRS_REPORT_ERR_MSG_STR_LEN] = {0};
-    const char* key[] = {"func_name", "reason"};
-    const char* value[] = {func_name_str, reason_str};
+    const char *key[] = {"func_name", "reason"};
+    const char *value[] = {func_name_str, reason_str};
     int ret;
 
     ret = snprintf_s(func_name_str, sizeof(func_name_str), sizeof(func_name_str) - 1, "%s", func_name);
@@ -113,8 +113,9 @@ static inline void trs_operation_not_supported_err_msg(const char* func_name, co
         return;
     }
     ret = snprintf_s(reason_str, sizeof(reason_str), sizeof(reason_str) - 1,
-    "The process where the shared %s resides is not added to the trustlist. "
-    "Add the process to the trustlist or disable trustlist verification", type);
+                     "The process where the shared %s resides is not added to the trustlist. "
+                     "Add the process to the trustlist or disable trustlist verification",
+                     type);
     if (ret < 0) {
         return;
     }
@@ -149,17 +150,15 @@ static inline void trs_print_time_consume_warning_log(int timeout, unsigned long
     int ret, i;
 
     for (i = 1; i < len; i++) {
-        ret = sprintf_s(
-            time_str + index, (TRS_TIMESTAMP_BUFF_LEN - (unsigned int)index), "%lld ",
-            (long long)time_stamp[i] - (long long)time_stamp[i - 1]);
+        ret = sprintf_s(time_str + index, (TRS_TIMESTAMP_BUFF_LEN - (unsigned int)index), "%lld ",
+                        (long long)time_stamp[i] - (long long)time_stamp[i - 1]);
         if (ret > 0) {
             index += ret;
         }
     }
 
-    trs_warn(
-        "Time consume warning. (start_time=%lluns; total_time=%lluns; limit=%uns; time_interval=%s(ns))\n",
-        time_stamp[0], time_stamp[len - 1] - time_stamp[0], timeout, time_str);
+    trs_warn("Time consume warning. (start_time=%lluns; total_time=%lluns; limit=%uns; time_interval=%s(ns))\n",
+             time_stamp[0], time_stamp[len - 1] - time_stamp[0], timeout, time_str);
 }
 
 #define TRS_TRACE_TIME_CONSUME_START(is_tracing_on, time_stamp, len, time_limit) \

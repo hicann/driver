@@ -90,9 +90,8 @@ int trs_sqcq_change_flag_init(struct trs_id_inst *inst, u32 grp_id, u32 vfid)
             trs_err("Failed to get mia group info. (udevid=%u; grp_id=%u)\n", inst->devid, grp_id);
             return ret;
         }
-        trs_info(
-            "Set change flag. (devid=%u; vfid=%u; vnpu_vfid=%u; bitmap=0x%llx)\n", inst->devid, vfid, vnpu_vfid,
-            grp_info.rtsq_info.bitmap);
+        trs_info("Set change flag. (devid=%u; vfid=%u; vnpu_vfid=%u; bitmap=0x%llx)\n", inst->devid, vfid, vnpu_vfid,
+                 grp_info.rtsq_info.bitmap);
         for (bit = 0; bit < TRS_MAX_ID_BIT_NUM; bit++) {
             if (trs_bitmap_bit_is_vaild(grp_info.rtsq_info.bitmap, bit)) {
                 g_trs_sqcq_change_flag[inst->devid][bit] = true;
@@ -229,8 +228,8 @@ int trs_add_group(struct trs_id_inst *inst, u32 grp_id)
         }
         ret = trs_sqcq_change_flag_init(inst, grp_id, vfid);
         if (ret != 0) {
-            trs_err(
-                "Init change flag failed. (ret=%d; udevid=%u; grp_id=%u; vfid=%u)\n", ret, inst->devid, grp_id, vfid);
+            trs_err("Init change flag failed. (ret=%d; udevid=%u; grp_id=%u; vfid=%u)\n", ret, inst->devid, grp_id,
+                    vfid);
         }
     }
     return ret;

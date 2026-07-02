@@ -54,7 +54,10 @@ u32 trs_soc_get_cloud_v2_notify_offset(u32 id)
            (id / TRS_CLOUD_V2_NOTIFY_NUM_PER_SLICE) * TRS_CLOUD_V2_NOTIFY_SLICE_SIZE;
 }
 
-size_t trs_soc_get_cloud_v2_notify_size(void) { return (size_t)TRS_CLOUD_V2_NOTIFY_AVG_SIZE_PER_NOTIFY; }
+size_t trs_soc_get_cloud_v2_notify_size(void)
+{
+    return (size_t)TRS_CLOUD_V2_NOTIFY_AVG_SIZE_PER_NOTIFY;
+}
 
 u32 trs_soc_get_cloud_v2_event_offset(u32 event_id)
 {
@@ -62,9 +65,15 @@ u32 trs_soc_get_cloud_v2_event_offset(u32 event_id)
            (event_id / TRS_CLOUD_V2_EVENT_NUM_PER_SLICE) * TRS_CLOUD_V2_EVENT_SLICE_SIZE;
 }
 
-size_t trs_soc_get_cloud_v2_db_stride(void) { return (size_t)TRS_SOC_CLOUD_V2_DB_STRIDE; }
+size_t trs_soc_get_cloud_v2_db_stride(void)
+{
+    return (size_t)TRS_SOC_CLOUD_V2_DB_STRIDE;
+}
 
-size_t trs_soc_get_cloud_v2_stars_sched_stride(void) { return (u32)TRS_CLOUD_V2_STARS_SCHED_STRIDE; }
+size_t trs_soc_get_cloud_v2_stars_sched_stride(void)
+{
+    return (u32)TRS_CLOUD_V2_STARS_SCHED_STRIDE;
+}
 
 int trs_soc_get_cloud_v2_db_cfg(int db_type, u32 *start, u32 *end)
 {
@@ -151,14 +160,32 @@ void trs_soc_cloud_v2_chan_stars_uninit(struct trs_id_inst *inst)
     trs_chan_stars_v1_ops_uninit(inst);
 }
 
-int trs_soc_cloud_v2_chan_stars_ops_init(struct trs_id_inst *inst) { return trs_chan_stars_v1_ops_init(inst); }
+int trs_soc_cloud_v2_chan_stars_ops_init(struct trs_id_inst *inst)
+{
+    return trs_chan_stars_v1_ops_init(inst);
+}
 
-void trs_soc_cloud_v2_chan_stars_ops_uninit(struct trs_id_inst *inst) { trs_chan_stars_v1_ops_uninit(inst); }
+void trs_soc_cloud_v2_chan_stars_ops_uninit(struct trs_id_inst *inst)
+{
+    trs_chan_stars_v1_ops_uninit(inst);
+}
 
-struct trs_chan_adapt_ops *trs_chan_cloud_v2_get_stars_adapt_ops(void) { return trs_chan_get_stars_v1_adapt_ops(); }
+struct trs_chan_adapt_ops *trs_chan_cloud_v2_get_stars_adapt_ops(void)
+{
+    return trs_chan_get_stars_v1_adapt_ops();
+}
 
-struct trs_core_adapt_ops *trs_core_cloud_v2_get_stars_adapt_ops(void) { return trs_core_get_stars_v1_adapt_ops(); }
+struct trs_core_adapt_ops *trs_core_cloud_v2_get_stars_adapt_ops(void)
+{
+    return trs_core_get_stars_v1_adapt_ops();
+}
 
-int trs_soc_cloud_v2_sq_send_trigger_db_init(struct trs_id_inst *inst) { return trs_sq_send_trigger_db_init(inst); }
+int trs_soc_cloud_v2_sq_send_trigger_db_init(struct trs_id_inst *inst)
+{
+    return trs_sq_send_trigger_db_init(inst);
+}
 
-void trs_soc_cloud_v2_sq_send_trigger_db_uninit(struct trs_id_inst *inst) { trs_sq_send_trigger_db_uninit(inst); }
+void trs_soc_cloud_v2_sq_send_trigger_db_uninit(struct trs_id_inst *inst)
+{
+    trs_sq_send_trigger_db_uninit(inst);
+}

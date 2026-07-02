@@ -265,4 +265,7 @@ void trs_chan_mem_node_proc_fs_init(void)
     (void)ka_fs_proc_create_data("magic_check_enable", PROC_FS_MODE, top_entry, &mem_node_ops, NULL);
 }
 
-void trs_chan_mem_node_proc_fs_uninit(void) { (void)ka_fs_remove_proc_subtree("trs_chan_mem_node", NULL); }
+void trs_chan_mem_node_proc_fs_uninit(void)
+{
+    (void)ka_fs_remove_proc_subtree("trs_chan_mem_node", NULL);
+}

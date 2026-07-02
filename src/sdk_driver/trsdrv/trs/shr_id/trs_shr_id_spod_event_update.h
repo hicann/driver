@@ -13,6 +13,6 @@
 #ifndef TRS_SHR_ID_SPOD_EVENT_UPDATE_H
 #define TRS_SHR_ID_SPOD_EVENT_UPDATE_H
 
-int shr_id_spod_event_update(
-    unsigned int devid, struct sched_published_event_info *event_info, struct sched_published_event_func *event_func);
+int shr_id_spod_event_update(unsigned int devid, struct sched_published_event_info *event_info,
+                             struct sched_published_event_func *event_func);
 #endif

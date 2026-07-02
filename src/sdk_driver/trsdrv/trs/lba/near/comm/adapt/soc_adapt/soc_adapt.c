@@ -39,7 +39,10 @@ int trs_soc_get_chip_type(u32 phy_devid)
 }
 KA_EXPORT_SYMBOL_GPL(trs_soc_get_chip_type);
 
-int trs_soc_get_hw_type(u32 phy_devid) { return trs_get_hw_type_by_chip_type(trs_soc_get_chip_type(phy_devid)); }
+int trs_soc_get_hw_type(u32 phy_devid)
+{
+    return trs_get_hw_type_by_chip_type(trs_soc_get_chip_type(phy_devid));
+}
 
 static size_t (*const soc_get_db_stride[TRS_CHIP_TYPE_MAX])(void) = {
     [TRS_CHIP_TYPE_MINI_V3] = trs_soc_get_mini_v3_db_stride,
@@ -211,9 +214,8 @@ u32 trs_soc_get_sq_mem_side(struct trs_id_inst *inst, struct trs_chan_type *type
     if (soc_get_sq_mem_side[chip_type] != NULL) {
         sq_mem_side = soc_get_sq_mem_side[chip_type](inst->devid, types);
     }
-    trs_debug(
-        "Get sq mem side. (devid=%d; sq mem side=%d; type=%u; sub_type=%u)\n", inst->devid, sq_mem_side, types->type,
-        types->sub_type);
+    trs_debug("Get sq mem side. (devid=%d; sq mem side=%d; type=%u; sub_type=%u)\n", inst->devid, sq_mem_side,
+              types->type, types->sub_type);
     return sq_mem_side;
 }
 

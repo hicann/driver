@@ -56,8 +56,8 @@ static int trs_sec_eh_mb_send(u32 devid, struct vmng_rx_msg_proc_info *proc_info
 
     trs_id_inst_pack(&inst, devid, mb->head.tsid);
     if ((mb_head->cmd_type == TRS_MBOX_RPC_CALL) || (mb_head->cmd_type == TRS_MBOX_DSMI_RPC_CALL)) {
-        return trs_mbox_send_rpc_call_msg(
-            &inst, 0, (void *)mb->data, sizeof(struct trs_normal_cqsq_mailbox), TRS_DEVICE_CHAN_MBOX_TIMEOUT_MS);
+        return trs_mbox_send_rpc_call_msg(&inst, 0, (void *)mb->data, sizeof(struct trs_normal_cqsq_mailbox),
+                                          TRS_DEVICE_CHAN_MBOX_TIMEOUT_MS);
     }
 
     if (trs_sec_eh_mb_not_support(mb_head->cmd_type)) {
@@ -70,8 +70,8 @@ static int trs_sec_eh_mb_send(u32 devid, struct vmng_rx_msg_proc_info *proc_info
         return ret;
     }
 
-    ret = trs_mbox_send(
-        &inst, 0, (void *)mb->data, sizeof(struct trs_normal_cqsq_mailbox), TRS_DEVICE_CHAN_MBOX_TIMEOUT_MS);
+    ret = trs_mbox_send(&inst, 0, (void *)mb->data, sizeof(struct trs_normal_cqsq_mailbox),
+                        TRS_DEVICE_CHAN_MBOX_TIMEOUT_MS);
     if (ret != 0) {
         trs_err("Mbox send fail. (devid=%u; tsid=%u; cmd=%u; ret=%d)\n", inst.devid, inst.tsid, mb_head->cmd_type, ret);
     }
@@ -94,9 +94,8 @@ static int trs_sec_eh_sqe_update(u32 devid, struct vmng_rx_msg_proc_info *proc_i
     *(proc_info->real_out_len) = data_len;
 
     if ((proc_info->in_data_len != data_len) || (proc_info->out_data_len != data_len)) {
-        trs_err(
-            "Check failed. (in_len=%u; out_len=%u; data_len=%u)\n", proc_info->in_data_len, proc_info->out_data_len,
-            data_len);
+        trs_err("Check failed. (in_len=%u; out_len=%u; data_len=%u)\n", proc_info->in_data_len, proc_info->out_data_len,
+                data_len);
         return -EINVAL;
     }
 
@@ -125,8 +124,8 @@ static int trs_sec_eh_res_ctrl(u32 devid, struct vmng_rx_msg_proc_info *proc_inf
     trs_id_inst_pack(&inst, devid, info->head.tsid);
     ret = _trs_sec_eh_res_ctrl(&inst, info->id_type, info->id, info->cmd);
     if (ret != 0) {
-        trs_err(
-            "Failed to res ctrl. (devid=%u; id_type=%u; id=%u; cmd=%u)\n", devid, info->id_type, info->id, info->cmd);
+        trs_err("Failed to res ctrl. (devid=%u; id_type=%u; id=%u; cmd=%u)\n", devid, info->id_type, info->id,
+                info->cmd);
     }
 
     return ret;
@@ -139,4 +138,7 @@ static const sec_eh_vpc_func sec_eh_vpc_handlers[TRS_SEC_EH_MAX] = {
     [TRS_SEC_EH_RES_CTRL] = trs_sec_eh_res_ctrl,
 };
 
-sec_eh_vpc_func trs_sec_eh_get_vpc_func(u32 cmd) { return sec_eh_vpc_handlers[cmd]; }
+sec_eh_vpc_func trs_sec_eh_get_vpc_func(u32 cmd)
+{
+    return sec_eh_vpc_handlers[cmd];
+}

@@ -57,9 +57,8 @@ static struct trs_rsv_mem *trs_rsv_mem_create(struct trs_id_inst *inst, int type
     if (ret != 0) {
         ka_base_gen_pool_destroy(pool);
         trs_kfree(rsv_mem);
-        trs_err(
-            "Get pool add virt fail. (devid=%u; tsid=%u; type=%d; total_size=0x%lx)\n", inst->devid, inst->tsid, type,
-            attr->total_size);
+        trs_err("Get pool add virt fail. (devid=%u; tsid=%u; type=%d; total_size=0x%lx)\n", inst->devid, inst->tsid,
+                type, attr->total_size);
         return NULL;
     }
 
@@ -109,9 +108,8 @@ static void trs_rsv_mem_release(struct kref_safe *kref)
     g_rsv_mem[ts_inst][rsv_mem->type] = NULL;
     ka_task_write_unlock_bh(&rsv_mem_lock);
 
-    trs_info(
-        "Trs rsv mem uninit. (devid=%u; tsid=%u; type=%d; total_size=0x%lx)\n", rsv_mem->inst.devid, rsv_mem->inst.tsid,
-        rsv_mem->type, rsv_mem->attr.total_size);
+    trs_info("Trs rsv mem uninit. (devid=%u; tsid=%u; type=%d; total_size=0x%lx)\n", rsv_mem->inst.devid,
+             rsv_mem->inst.tsid, rsv_mem->type, rsv_mem->attr.total_size);
     ka_mm_iounmap(rsv_mem->attr.vaddr);
     trs_rsv_mem_destroy(rsv_mem);
 }
@@ -138,7 +136,10 @@ static struct trs_rsv_mem *trs_rsv_mem_get(struct trs_id_inst *inst, int type)
     return rsv_mem;
 }
 
-static void trs_rsv_mem_put(struct trs_rsv_mem *rsv_mem) { kref_safe_put(&rsv_mem->ref, trs_rsv_mem_release); }
+static void trs_rsv_mem_put(struct trs_rsv_mem *rsv_mem)
+{
+    kref_safe_put(&rsv_mem->ref, trs_rsv_mem_release);
+}
 
 static void trs_rsv_mem_clear(struct trs_rsv_mem *rsv_mem, void *vaddr, size_t size)
 {
@@ -195,9 +196,8 @@ void *trs_rsv_mem_alloc(struct trs_id_inst *inst, int type, size_t size, u32 fla
         vaddr = (void *)ka_base_gen_pool_alloc(rsv_mem->pool, size);
         if (vaddr == NULL) {
 #ifndef EMU_ST
-            trs_debug(
-                "No rsv mem resource. (devid=%u; tsid=%u; type=%d; total=0x%lx; avail=0x%lx)\n", inst->devid,
-                inst->tsid, type, rsv_mem->attr.total_size, ka_base_gen_pool_avail(rsv_mem->pool));
+            trs_debug("No rsv mem resource. (devid=%u; tsid=%u; type=%d; total=0x%lx; avail=0x%lx)\n", inst->devid,
+                      inst->tsid, type, rsv_mem->attr.total_size, ka_base_gen_pool_avail(rsv_mem->pool));
 #endif
             trs_rsv_mem_put(rsv_mem);
             return NULL;
@@ -265,10 +265,12 @@ int trs_rsv_mem_init(struct trs_id_inst *inst, int type, struct trs_rsv_mem_attr
         return -ENODEV;
     }
 
-    trs_debug(
-        "Trs rsv mem init. (devid=%u; tsid=%u; type=%d; total_size=0x%lx)\n", inst->devid, inst->tsid, type,
-        attr->total_size);
+    trs_debug("Trs rsv mem init. (devid=%u; tsid=%u; type=%d; total_size=0x%lx)\n", inst->devid, inst->tsid, type,
+              attr->total_size);
     return 0;
 }
 
-void trs_rsv_mem_uninit(struct trs_id_inst *inst, int type) { trs_rsv_mem_del(inst, type); }
+void trs_rsv_mem_uninit(struct trs_id_inst *inst, int type)
+{
+    trs_rsv_mem_del(inst, type);
+}

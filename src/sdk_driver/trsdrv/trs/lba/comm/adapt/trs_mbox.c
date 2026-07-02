@@ -23,14 +23,20 @@ void trs_register_soft_mbox_send_ops(u32 devid, struct trs_mbox_send_ops *ops)
     g_trs_soft_mbox_send_ops[devid] = ops;
 }
 
-void trs_unregister_soft_mbox_send_ops(u32 devid) { g_trs_soft_mbox_send_ops[devid] = NULL; }
+void trs_unregister_soft_mbox_send_ops(u32 devid)
+{
+    g_trs_soft_mbox_send_ops[devid] = NULL;
+}
 
 void trs_register_hard_mbox_send_ops(u32 devid, struct trs_mbox_send_ops *ops)
 {
     g_trs_hard_mbox_send_ops[devid] = ops;
 }
 
-void trs_unregister_hard_mbox_send_ops(u32 devid) { g_trs_hard_mbox_send_ops[devid] = NULL; }
+void trs_unregister_hard_mbox_send_ops(u32 devid)
+{
+    g_trs_hard_mbox_send_ops[devid] = NULL;
+}
 
 int trs_mbox_send(struct trs_id_inst *inst, u32 chan_id, void *data, size_t size, int timeout)
 {

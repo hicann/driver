@@ -49,9 +49,8 @@ int trs_core_ops_stars_soc_res_ctrl(struct trs_id_inst *inst, u32 id_type, u32 i
             return ret;
         }
     }
-    trs_debug(
-        "devid=%u; phy_devid=%u; tsid=%u; id=%u; id_type=%u; cmd=%u\n", inst->devid, dev_para.phy_devid, inst->tsid, id,
-        id_type, cmd);
+    trs_debug("devid=%u; phy_devid=%u; tsid=%u; id=%u; id_type=%u; cmd=%u\n", inst->devid, dev_para.phy_devid,
+              inst->tsid, id, id_type, cmd);
     trs_id_inst_pack(&pm_inst, dev_para.phy_devid, inst->tsid);
     return trs_stars_soc_res_ctrl(&pm_inst, id_type, id, trs_res_cmd_trans[cmd]);
 }

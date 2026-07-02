@@ -66,8 +66,8 @@ void trs_uninit_cnt_notify_tbl_ns_base_addr(struct trs_id_inst *inst)
 
 static stars_cnt_notify_table_slice *trs_get_cnt_notify_table(struct trs_id_inst *inst, u32 id)
 {
-    stars_cnt_notify_tbl_regs_type *tbl_info =
-        (stars_cnt_notify_tbl_regs_type *)stars_cnt_notify_table_ns_all_reg[inst->devid][inst->tsid];
+    stars_cnt_notify_tbl_regs_type *tbl_info = (stars_cnt_notify_tbl_regs_type *)
+        stars_cnt_notify_table_ns_all_reg[inst->devid][inst->tsid];
 
     if (tbl_info != NULL) {
         return trs_get_stars_cnt_notify_tab_slice(tbl_info, id);

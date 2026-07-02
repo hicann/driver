@@ -21,9 +21,15 @@ int trs_res_reg_offset_query(uint32_t dev_id, uint32_t ts_id, drvIdType_t type, 
 int trs_res_reg_total_size_query(uint32_t dev_id, uint32_t ts_id, drvIdType_t type, uint32_t *value);
 
 struct trs_shrid_remote_ops g_shrid_remote_ops;
-void trs_register_shrid_remote_ops(struct trs_shrid_remote_ops *ops) { g_shrid_remote_ops = *ops; }
+void trs_register_shrid_remote_ops(struct trs_shrid_remote_ops *ops)
+{
+    g_shrid_remote_ops = *ops;
+}
 
-static struct trs_shrid_remote_ops *trs_get_shrid_remote_ops(void) { return &g_shrid_remote_ops; }
+static struct trs_shrid_remote_ops *trs_get_shrid_remote_ops(void)
+{
+    return &g_shrid_remote_ops;
+}
 
 static drvError_t shrid_proc(uint32_t cmd, const char *name, struct shr_id_ioctl_info *ioctl_info)
 {
@@ -254,9 +260,8 @@ drvError_t halShrIdOpen(const char *name, struct drvShrIdInfo *info)
                 trs_err("Param invalid. (devid=%u)\n", dev_id);
                 return DRV_ERROR_INVALID_VALUE;
             }
-            trs_debug(
-                "Shr Info. (devid=%u; tsid=%u; shrid=%u; type=%d; flag=0x%x)\n", info->devid, info->tsid, info->shrid,
-                info->id_type, info->flag);
+            trs_debug("Shr Info. (devid=%u; tsid=%u; shrid=%u; type=%d; flag=0x%x)\n", info->devid, info->tsid,
+                      info->shrid, info->id_type, info->flag);
             err = trs_shrid_remote_config(dev_id, info);
             if (err != DRV_ERROR_NONE) {
                 (void)halShrIdClose(name);
@@ -282,9 +287,8 @@ drvError_t halShrIdClose(const char *name)
             info.shrid = ioctl_info.shr_id;
             info.id_type = ioctl_info.id_type;
             info.flag = ioctl_info.flag; /* for spod */
-            trs_debug(
-                "Shr Info. (devid=%u; tsid=%u; shrid=%u; type=%d; flag=0x%x)\n", info.devid, info.tsid, info.shrid,
-                info.id_type, info.flag);
+            trs_debug("Shr Info. (devid=%u; tsid=%u; shrid=%u; type=%d; flag=0x%x)\n", info.devid, info.tsid,
+                      info.shrid, info.id_type, info.flag);
             return trs_shrid_remote_deconfig(ioctl_info.opened_devid, &info);
         }
     }
@@ -301,8 +305,8 @@ drvError_t halShrIdSetPid(const char *name, pid_t pid[], uint32_t pid_num)
 
     /* pass in only one parameter at a time in the current scene */
     if ((name == NULL) || (pid == NULL) || (pid_num != 1)) {
-        trs_err(
-            "invalid parameter. (name_is_null=%d, pid_is_null=%d, num=%d)\n", (name == NULL), (pid == NULL), pid_num);
+        trs_err("invalid parameter. (name_is_null=%d, pid_is_null=%d, num=%d)\n", (name == NULL), (pid == NULL),
+                pid_num);
         return DRV_ERROR_INVALID_VALUE;
     }
 
@@ -427,7 +431,10 @@ drvError_t drvSetIpcNotifyPid(const char *name, pid_t pid[], int num)
 }
 
 /* Sunset interface: external statement has been removed from ascend_hal.h. */
-drvError_t drvRecordIpcNotify(const char *name) { return halShrIdRecord(name); }
+drvError_t drvRecordIpcNotify(const char *name)
+{
+    return halShrIdRecord(name);
+}
 
 /* Sunset interface: external statement has been removed from ascend_hal.h. */
 drvError_t drvNotifyIdAddrOffset(uint32_t devId, struct drvNotifyInfo *info)

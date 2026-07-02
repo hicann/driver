@@ -83,8 +83,8 @@ int trs_stars_v2_chan_ops_sqcq_speicified_id_free(struct trs_id_inst *inst, int 
     return 0;
 }
 
-int _trs_sqcq_event_update(
-    u32 devid, struct sched_published_event_info *event_info, struct sched_published_event_func *event_func)
+int _trs_sqcq_event_update(u32 devid, struct sched_published_event_info *event_info,
+                           struct sched_published_event_func *event_func)
 {
     struct halSqCqOutputInfo *info = NULL;
     struct trs_id_inst inst;
@@ -118,8 +118,8 @@ int _trs_sqcq_event_update(
     return 0;
 }
 
-int trs_sqcq_event_update(
-    u32 devid, struct sched_published_event_info *event_info, struct sched_published_event_func *event_func)
+int trs_sqcq_event_update(u32 devid, struct sched_published_event_info *event_info,
+                          struct sched_published_event_func *event_func)
 {
     int ret = _trs_sqcq_event_update(devid, event_info, event_func);
     return trs_event_kerror_to_uerror(ret);
@@ -199,8 +199,8 @@ int trs_sqcq_event_init(void)
         return -ENOMEM;
     }
 
-    return hal_kernel_sched_register_event_pre_proc_handle(
-        EVENT_DRV_MSG, SCHED_PRE_PROC_POS_REMOTE, trs_sqcq_event_update);
+    return hal_kernel_sched_register_event_pre_proc_handle(EVENT_DRV_MSG, SCHED_PRE_PROC_POS_REMOTE,
+                                                           trs_sqcq_event_update);
 }
 DECLAER_FEATURE_AUTO_INIT(trs_sqcq_event_init, FEATURE_LOADER_STAGE_2);
 
@@ -220,7 +220,13 @@ void trs_sqcq_event_uninit(void)
 }
 DECLAER_FEATURE_AUTO_UNINIT(trs_sqcq_event_uninit, FEATURE_LOADER_STAGE_2);
 #else
-int trs_stars_v2_chan_ops_sqcq_speicified_id_alloc(struct trs_id_inst *inst, int type, u32 *id) { return 0; }
+int trs_stars_v2_chan_ops_sqcq_speicified_id_alloc(struct trs_id_inst *inst, int type, u32 *id)
+{
+    return 0;
+}
 
-int trs_stars_v2_chan_ops_sqcq_speicified_id_free(struct trs_id_inst *inst, int type, u32 id) { return 0; }
+int trs_stars_v2_chan_ops_sqcq_speicified_id_free(struct trs_id_inst *inst, int type, u32 id)
+{
+    return 0;
+}
 #endif

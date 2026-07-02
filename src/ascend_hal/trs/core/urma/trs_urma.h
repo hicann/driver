@@ -202,15 +202,20 @@ static inline uint32_t trs_get_async_pi_ci_max(bool is_wqe_sink)
     return (is_wqe_sink == false) ? TRS_UB_PI_CI_DEPTH : TRS_STARS_NORMAL_JETTY_DEPTH;
 }
 
-static inline bool trs_is_async_jetty_wqe_sink(uint32_t flag) { return ((flag & TSDRV_FLAG_TASK_SINK_SQ) != 0); }
+static inline bool trs_is_async_jetty_wqe_sink(uint32_t flag)
+{
+    return ((flag & TSDRV_FLAG_TASK_SINK_SQ) != 0);
+}
 
-static inline bool trs_is_async_jetty_pre_alloc(uint32_t flag) { return ((flag & TSDRV_FLAG_PRE_ASYNC_SQ) != 0); }
+static inline bool trs_is_async_jetty_pre_alloc(uint32_t flag)
+{
+    return ((flag & TSDRV_FLAG_PRE_ASYNC_SQ) != 0);
+}
 
 static inline bool trs_is_async_direct_wqe(uint32_t flag, enum trs_async_dma_type async_type)
 {
-    return (
-        ((flag & TSDRV_FLAG_TASK_SINK_SQ) == 0) && (async_type != TRS_ASYNC_DMA_TYPE_2D) &&
-        (async_type != TRS_ASYNC_DMA_TYPE_BATCH));
+    return (((flag & TSDRV_FLAG_TASK_SINK_SQ) == 0) && (async_type != TRS_ASYNC_DMA_TYPE_2D) &&
+            (async_type != TRS_ASYNC_DMA_TYPE_BATCH));
 }
 
 static inline urma_import_seg_flag_t trs_get_seg_import_flag(void)
@@ -236,9 +241,8 @@ static inline uint32_t trs_jetty_get_credit(uint32_t pi, uint32_t ci, uint32_t d
 
 int trs_create_jfs(urma_context_t *urma_ctx, urma_jfce_t *jfce, struct trs_urma_jfs *trs_jfs, void *priv);
 void trs_destroy_jfs(struct trs_urma_jfs *trs_jfs);
-int trs_create_stars_jetty(
-    urma_context_t *urma_ctx, urma_jfce_t *jfce, struct trs_urma_jfr *trs_jfr, uint32_t depth,
-    struct trs_urma_stars_jetty *trs_jetty);
+int trs_create_stars_jetty(urma_context_t *urma_ctx, urma_jfce_t *jfce, struct trs_urma_jfr *trs_jfr, uint32_t depth,
+                           struct trs_urma_stars_jetty *trs_jetty);
 void trs_destroy_stars_jetty(urma_context_t *urma_ctx, struct trs_urma_stars_jetty *trs_jetty);
 int trs_create_jfr(urma_context_t *urma_ctx, urma_jfce_t *jfce, urma_token_t token, struct trs_urma_jfr *trs_jfr);
 void trs_destroy_jfr(struct trs_urma_jfr *trs_jfr);

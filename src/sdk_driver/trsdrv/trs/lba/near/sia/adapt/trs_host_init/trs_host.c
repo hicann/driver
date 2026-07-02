@@ -106,7 +106,10 @@ static struct devdrv_non_trans_msg_chan_info trs_host_msg_chan_info = {
     .rx_msg_process = trs_host_msg_chan_recv,
 };
 
-struct devdrv_non_trans_msg_chan_info *trs_get_msg_chan_info(void) { return &trs_host_msg_chan_info; }
+struct devdrv_non_trans_msg_chan_info *trs_get_msg_chan_info(void)
+{
+    return &trs_host_msg_chan_info;
+}
 
 /*
  module_feature_auto_init_dev adds features as follows:

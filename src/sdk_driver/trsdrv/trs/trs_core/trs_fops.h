@@ -26,6 +26,6 @@ int ioctl_trs_ub_info_query(struct trs_proc_ctx *proc_ctx, unsigned int cmd, uns
 int ioctl_trs_msg_ctrl(struct trs_proc_ctx *proc_ctx, unsigned int cmd, unsigned long arg);
 int ioctl_trs_sqcq_get(struct trs_proc_ctx *proc_ctx, unsigned int cmd, unsigned long arg);
 int ioctl_trs_sqcq_restore(struct trs_proc_ctx *proc_ctx, unsigned int cmd, unsigned long arg);
-void trs_handle_proc_release_result(
-    struct trs_core_ts_inst *ts_inst, struct trs_proc_ctx *proc_ctx, int exit_stage, bool is_success);
+void trs_handle_proc_release_result(struct trs_core_ts_inst *ts_inst, struct trs_proc_ctx *proc_ctx, int exit_stage,
+                                    bool is_success);
 #endif

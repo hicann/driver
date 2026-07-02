@@ -53,8 +53,10 @@ struct trs_async_dma_destroy_para {
     };
 };
 
-static inline struct trs_async_dma_input_para trs_pack_async_dma_input_para(
-    void *input_para, enum trs_async_dma_type async_dma_type, drvSqCqType_t type, uint32_t tsId, uint32_t sqId)
+static inline struct trs_async_dma_input_para trs_pack_async_dma_input_para(void *input_para,
+                                                                            enum trs_async_dma_type async_dma_type,
+                                                                            drvSqCqType_t type, uint32_t tsId,
+                                                                            uint32_t sqId)
 {
     struct trs_async_dma_input_para async_input = {0};
     async_input.async_dma_type = async_dma_type;
@@ -88,8 +90,10 @@ static inline struct trs_async_dma_input_para trs_pack_async_dma_input_para(
     return async_input;
 }
 
-static inline struct trs_async_dma_destroy_para trs_pack_async_dma_destroy_para(
-    void *in, enum trs_async_dma_type async_dma_type, drvSqCqType_t type, uint32_t tsId, uint32_t sqId)
+static inline struct trs_async_dma_destroy_para trs_pack_async_dma_destroy_para(void *in,
+                                                                                enum trs_async_dma_type async_dma_type,
+                                                                                drvSqCqType_t type, uint32_t tsId,
+                                                                                uint32_t sqId)
 {
     struct trs_async_dma_destroy_para destroy_para = {0};
     destroy_para.async_dma_type = async_dma_type;

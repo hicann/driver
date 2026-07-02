@@ -48,9 +48,8 @@ static int trs_host_update_res_info(u32 udevid, struct res_map_info_in *res_info
                 trs_err("Fail to get remote add id. (ret=%d; remote_udevid=%u)\n", ret, priv->remote_devid);
                 return ret;
             }
-            trs_debug(
-                "Update priv. (udevid=%u; local_add_id=%u; remote_udevid=%u; remote_add_id=%u)\n", udevid, local_add_id,
-                priv->remote_devid, remote_add_id);
+            trs_debug("Update priv. (udevid=%u; local_add_id=%u; remote_udevid=%u; remote_add_id=%u)\n", udevid,
+                      local_add_id, priv->remote_devid, remote_add_id);
             priv->local_devid = local_add_id;
             priv->remote_devid = remote_add_id;
             res_info->res_id = (remote_add_id << 20) | res_info->res_id; /* first 20 bits for res id */

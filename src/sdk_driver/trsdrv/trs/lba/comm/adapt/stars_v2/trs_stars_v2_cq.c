@@ -68,7 +68,10 @@ static inline u64 trs_stars_cq_get_timestamp(rt_stars_cqe_t *cqe)
     return timestamp;
 }
 
-static inline u8 trs_stars_cq_get_sqe_type(rt_stars_cqe_t *cqe) { return cqe->cqe_status.error_info.sqe_type; }
+static inline u8 trs_stars_cq_get_sqe_type(rt_stars_cqe_t *cqe)
+{
+    return cqe->cqe_status.error_info.sqe_type;
+}
 
 static inline bool trs_stars_cq_is_dvpp_type(rt_stars_cqe_t *cqe)
 {
@@ -95,10 +98,16 @@ static inline u8 trs_stars_cq_get_next_task_vld(rt_stars_cqe_t *cqe)
     return cqe->cqe_status.error_info.next_task_vld;
 }
 
-static inline u32 trs_stars_cq_get_err_code(rt_stars_cqe_t *cqe) { return cqe->cqe_status.sys_cnt.syscnt_high; }
+static inline u32 trs_stars_cq_get_err_code(rt_stars_cqe_t *cqe)
+{
+    return cqe->cqe_status.sys_cnt.syscnt_high;
+}
 
 #ifndef EMU_ST
-static inline u32 trs_stars_cq_get_int_err(rt_stars_cqe_t *cqe) { return cqe->cqe_status.dvpp_info.int_err; }
+static inline u32 trs_stars_cq_get_int_err(rt_stars_cqe_t *cqe)
+{
+    return cqe->cqe_status.dvpp_info.int_err;
+}
 #endif
 
 static inline u16 trs_stars_cq_get_notify_attached(rt_stars_cqe_t *cqe)
@@ -106,14 +115,20 @@ static inline u16 trs_stars_cq_get_notify_attached(rt_stars_cqe_t *cqe)
     return cqe->cqe_status.error_info.notify_attached;
 }
 
-static inline u16 trs_stars_cq_get_sqe_index(rt_stars_cqe_t *cqe) { return cqe->cqe_status.error_info.sqe_index; }
+static inline u16 trs_stars_cq_get_sqe_index(rt_stars_cqe_t *cqe)
+{
+    return cqe->cqe_status.error_info.sqe_index;
+}
 
 static inline bool trs_stars_cq_has_syscnt(rt_stars_cqe_t *cqe)
 {
     return (((cqe->evt == 1) || (cqe->place_hold == 1)) && (cqe->error_bit == 0));
 }
 
-u16 trs_stars_v2_cqe_get_match_flag(rt_stars_cqe_t *cqe) { return 0; }
+u16 trs_stars_v2_cqe_get_match_flag(rt_stars_cqe_t *cqe)
+{
+    return 0;
+}
 
 /* need to adapt stars_v2 */
 void trs_stars_v2_cqe_to_logic_cqe(void *hw_cqe, struct trs_logic_cqe *logic_cqe)

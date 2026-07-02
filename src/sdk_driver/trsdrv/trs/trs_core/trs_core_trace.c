@@ -34,8 +34,8 @@ struct trs_logic_cqe_v1_st {
     u32 reserved1;
 };
 
-static inline void trs_logic_cqe_trace_fill(
-    struct trs_logic_cq *logic_cq, void *logic_cqe, struct trs_logic_cqe_trace *trace)
+static inline void trs_logic_cqe_trace_fill(struct trs_logic_cq *logic_cq, void *logic_cqe,
+                                            struct trs_logic_cqe_trace *trace)
 {
     if (logic_cq->cqe_verion == LOGIC_CQE_VERSION_V1) {
         struct trs_logic_cqe_v1_st *logic_cqe_ = (struct trs_logic_cqe_v1_st *)logic_cqe;
@@ -63,8 +63,8 @@ static inline void trs_logic_cqe_trace_fill(
     trace->tail = logic_cq->tail;
 }
 
-void trs_logic_cq_copy_trace(
-    const char *str, struct trs_core_ts_inst *ts_inst, struct trs_logic_cq *logic_cq, u32 start, u32 num)
+void trs_logic_cq_copy_trace(const char *str, struct trs_core_ts_inst *ts_inst, struct trs_logic_cq *logic_cq,
+                             u32 start, u32 num)
 {
     if (trs_core_trace_is_enabled(ts_inst)) {
         u32 i;
@@ -86,8 +86,8 @@ void trs_logic_cq_recv_trace(const char *str, struct trs_core_ts_inst *ts_inst, 
     }
 }
 
-void trs_logic_cq_enque_trace(
-    struct trs_core_ts_inst *ts_inst, struct trs_logic_cq *logic_cq, u32 stream_id, u32 task_id, void *cqe)
+void trs_logic_cq_enque_trace(struct trs_core_ts_inst *ts_inst, struct trs_logic_cq *logic_cq, u32 stream_id,
+                              u32 task_id, void *cqe)
 {
     if (trs_core_trace_is_enabled(ts_inst)) {
         struct trs_logic_cqe_trace trace = {0};

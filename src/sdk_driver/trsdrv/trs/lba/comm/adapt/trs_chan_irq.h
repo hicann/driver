@@ -30,8 +30,8 @@ struct trs_chan_irq_attr {
     int (*handler)(int irq_type, int irq_index, void *para, u32 cqid[], u32 cq_num);
     int (*get_valid_cq)(struct trs_id_inst *inst, u32 group, u32 cqid[], u32 cq_id_num, u32 *valid_cq_num);
     void (*intr_mask_config)(struct trs_id_inst *inst, u32 group, u32 irq, int val);
-    int (*request_chan_irq)(
-        struct trs_id_inst *inst, u32 irq_type, u32 irq, void *para, ka_irqreturn_t (*handler)(int irq, void *para));
+    int (*request_chan_irq)(struct trs_id_inst *inst, u32 irq_type, u32 irq, void *para,
+                            ka_irqreturn_t (*handler)(int irq, void *para));
     void (*free_chan_irq)(struct trs_id_inst *inst, u32 irq_type, u32 irq, void *para);
 };
 

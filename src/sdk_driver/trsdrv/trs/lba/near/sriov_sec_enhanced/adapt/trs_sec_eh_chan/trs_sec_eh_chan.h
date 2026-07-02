@@ -21,6 +21,6 @@ int trs_chan_init(u32 ts_inst_id);
 void trs_chan_uninit(u32 ts_inst_id);
 
 int trs_sec_eh_chan_sqe_update(struct trs_id_inst *inst, struct trs_sqe_update_info *update_info);
-int trs_sec_eh_chan_stars_ops_query_sqcq(
-    struct trs_id_inst *inst, struct trs_chan_type *types, u32 id, u32 cmd, u64 *value);
+int trs_sec_eh_chan_stars_ops_query_sqcq(struct trs_id_inst *inst, struct trs_chan_type *types, u32 id, u32 cmd,
+                                         u64 *value);
 #endif

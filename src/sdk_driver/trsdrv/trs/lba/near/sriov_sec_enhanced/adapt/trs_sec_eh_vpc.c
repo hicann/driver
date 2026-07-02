@@ -20,7 +20,10 @@
 #include "trs_mailbox_def.h"
 #include "trs_sec_eh_auto_init.h"
 
-static int trs_vpc_msg_recv(u32 devid, u32 fid, struct vmng_rx_msg_proc_info *proc_info) { return -EPERM; }
+static int trs_vpc_msg_recv(u32 devid, u32 fid, struct vmng_rx_msg_proc_info *proc_info)
+{
+    return -EPERM;
+}
 
 static struct vmng_vpc_client trs_vpc_client = {
     .vpc_type = VMNG_VPC_TYPE_TSDRV,

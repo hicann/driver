@@ -49,8 +49,8 @@ static int trs_stars_v2_maint_sq_cpy(struct trs_id_inst *inst, u32 sqid, u32 tai
         return -EINVAL;
     }
 
-    ret = memcpy_s(
-        sqe, TRS_MAINT_MAX_SQE_SIZE, sq_info.sq_vaddr + sq_info.sq_para.sqe_size * sq_pos, sq_info.sq_para.sqe_size);
+    ret = memcpy_s(sqe, TRS_MAINT_MAX_SQE_SIZE, sq_info.sq_vaddr + sq_info.sq_para.sqe_size * sq_pos,
+                   sq_info.sq_para.sqe_size);
     if (ret != 0) {
         trs_err("Memcpy failed. (ret=%d; sqe_size=%u)\n", ret, sq_info.sq_para.sqe_size);
         return -EFAULT;
@@ -79,9 +79,8 @@ static int trs_stars_v2_maint_set_sq_tail(struct trs_id_inst *inst, u32 sqid, u3
 
     ret = trs_mbox_send(inst, 0, &mbox_data, sizeof(struct trs_sq_task_send_mailbox), TRS_MAINT_MBOX_TIMEOUT_MS);
     if ((ret != 0) || (mbox_data.header.result != 0)) {
-        trs_err(
-            "Mbox send fail. (devid=%u; tsid=%u; result=%u; ret=%d)\n", inst->devid, inst->tsid,
-            mbox_data.header.result, ret);
+        trs_err("Mbox send fail. (devid=%u; tsid=%u; result=%u; ret=%d)\n", inst->devid, inst->tsid,
+                mbox_data.header.result, ret);
         ret = -EFAULT;
     }
     trs_debug("Maint set sq tail. (devid=%u; sqid=%u; sq_type=%u; sq_tail=%u)\n", inst->devid, sqid, type, tail);
@@ -100,9 +99,8 @@ static int trs_stars_v2_maint_cq_update_head(struct trs_id_inst *inst, u32 cqid,
 
     ret = trs_mbox_send(inst, 0, &mbox_data, sizeof(struct trs_cq_report_recv_mailbox), TRS_MAINT_MBOX_TIMEOUT_MS);
     if ((ret != 0) || (mbox_data.header.result != 0)) {
-        trs_err(
-            "Mbox send fail. (devid=%u; tsid=%u; result=%u; ret=%d)\n", inst->devid, inst->tsid,
-            mbox_data.header.result, ret);
+        trs_err("Mbox send fail. (devid=%u; tsid=%u; result=%u; ret=%d)\n", inst->devid, inst->tsid,
+                mbox_data.header.result, ret);
         ret = -EFAULT;
     }
     trs_debug("Maint cq update head. (devid=%u; cqid=%u; cq_type=%u; cq_head=%u)\n", inst->devid, cqid, type, head);

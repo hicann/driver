@@ -42,6 +42,6 @@ static inline int shr_id_type_trans_res_type(u32 shr_id_type)
     return shr_id_type_trans[shr_id_type];
 }
 
-int shr_id_event_update(
-    unsigned int devid, struct sched_published_event_info *event_info, struct sched_published_event_func *event_func);
+int shr_id_event_update(unsigned int devid, struct sched_published_event_info *event_info,
+                        struct sched_published_event_func *event_func);
 #endif /* TRS_SHR_ID_EVENT_UPDATE_H */

@@ -68,9 +68,8 @@ static int trs_id_get_res_bitmap(struct trs_id_inst *inst, int type, u32 vfid, u
         }
         if ((grp_info.valid == 1) && (vfid == grp_info.vfid)) {
             *bitmap = trs_get_id_bitmap_in_grp_with_type(&grp_info, type);
-            trs_debug(
-                "Get bitmap in group. (udevid=%u; vfid=%u; grp_id=%u; type=%u; bitmap=%u)\n", inst->devid, vfid, grp_id,
-                type, *bitmap);
+            trs_debug("Get bitmap in group. (udevid=%u; vfid=%u; grp_id=%u; type=%u; bitmap=%u)\n", inst->devid, vfid,
+                      grp_id, type, *bitmap);
             return 0;
         }
     }
@@ -86,16 +85,15 @@ int trs_id_alloc_in_range(struct trs_id_inst *inst, int type, u32 *id, u32 vfid)
 
     ret = trs_id_get_res_bitmap(inst, type, vfid, &bitmap);
     if (ret != 0) {
-        trs_err(
-            "Failed to get res range. (devid=%u; vfid=%u; type=%s; ret=%d)\n", inst->devid, vfid,
-            trs_id_type_to_name(type), ret);
+        trs_err("Failed to get res range. (devid=%u; vfid=%u; type=%s; ret=%d)\n", inst->devid, vfid,
+                trs_id_type_to_name(type), ret);
         return ret;
     }
 
     ret = trs_id_get_num_per_bit(inst, type, &num_per_bit);
     if (ret != 0) {
-        trs_err(
-            "Failed to get num_per_bit. (devid=%u; type=%s; ret=%d)\n", inst->devid, trs_id_type_to_name(type), ret);
+        trs_err("Failed to get num_per_bit. (devid=%u; type=%s; ret=%d)\n", inst->devid, trs_id_type_to_name(type),
+                ret);
         return ret;
     }
 
@@ -105,15 +103,13 @@ int trs_id_alloc_in_range(struct trs_id_inst *inst, int type, u32 *id, u32 vfid)
             *id = ((u32)bit) * num_per_bit;
             ret = trs_id_alloc_ex(inst, type, flag, id, num_per_bit);
             if (ret == 0) {
-                trs_debug(
-                    "Alloc id in range success. (devid=%u; vfid=%u; type=%s; bitmap=0x%x; bit=%d; id=%u)\n",
-                    inst->devid, vfid, trs_id_type_to_name(type), bitmap, bit, *id);
+                trs_debug("Alloc id in range success. (devid=%u; vfid=%u; type=%s; bitmap=0x%x; bit=%d; id=%u)\n",
+                          inst->devid, vfid, trs_id_type_to_name(type), bitmap, bit, *id);
                 return 0;
             }
         }
     }
-    trs_err(
-        "Failed to allloc id in range. (devid=%u; vfid=%u; type=%s; bitmap=0x%x; bit=%d; ret=%d)\n", inst->devid, vfid,
-        trs_id_type_to_name(type), bitmap, bit, ret);
+    trs_err("Failed to allloc id in range. (devid=%u; vfid=%u; type=%s; bitmap=0x%x; bit=%d; ret=%d)\n", inst->devid,
+            vfid, trs_id_type_to_name(type), bitmap, bit, ret);
     return ret;
 }

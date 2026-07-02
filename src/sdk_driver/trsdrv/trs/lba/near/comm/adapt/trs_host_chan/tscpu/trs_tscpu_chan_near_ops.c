@@ -22,9 +22,9 @@
 #include "trs_host_comm.h"
 #include "trs_tscpu_chan_near_ops.h"
 
-static int trs_tscpu_chan_ops_request_irq(
-    struct trs_id_inst *inst, u32 irq_type, int irq_index, void *para,
-    int (*handler)(int irq_type, int irq_index, void *para, u32 cqid[], u32 cq_num))
+static int trs_tscpu_chan_ops_request_irq(struct trs_id_inst *inst, u32 irq_type, int irq_index, void *para,
+                                          int (*handler)(int irq_type, int irq_index, void *para, u32 cqid[],
+                                                         u32 cq_num))
 {
     struct trs_chan_irq_attr attr;
 
@@ -124,8 +124,17 @@ static struct trs_chan_adapt_ops g_trs_tscpu_chan_ops = {
     .free_irq = trs_chan_free_irq,
 };
 
-struct trs_chan_adapt_ops *trs_chan_get_tscpu_adapt_ops(void) { return &g_trs_tscpu_chan_ops; }
+struct trs_chan_adapt_ops *trs_chan_get_tscpu_adapt_ops(void)
+{
+    return &g_trs_tscpu_chan_ops;
+}
 
-int trs_tscpu_chan_ops_init(struct trs_id_inst *inst) { return trs_tscpu_chan_near_ops_db_init(inst); }
+int trs_tscpu_chan_ops_init(struct trs_id_inst *inst)
+{
+    return trs_tscpu_chan_near_ops_db_init(inst);
+}
 
-void trs_tscpu_chan_ops_uninit(struct trs_id_inst *inst) { trs_tscpu_chan_near_ops_db_uninit(inst); }
+void trs_tscpu_chan_ops_uninit(struct trs_id_inst *inst)
+{
+    trs_tscpu_chan_near_ops_db_uninit(inst);
+}

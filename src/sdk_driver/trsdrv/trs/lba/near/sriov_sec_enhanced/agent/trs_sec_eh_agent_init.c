@@ -29,17 +29,16 @@
 #include "trs_sec_eh_sq.h"
 #include "trs_sec_eh_agent_init.h"
 
-static const ka_pci_device_id_t sec_eh_agent_tbl[] = {
-    {KA_PCI_VDEVICE(HUAWEI, 0xd802), 0},
-    {KA_PCI_VDEVICE(HUAWEI, 0xd803), 0},
-    {KA_PCI_VDEVICE(HUAWEI, 0xd804), 0},
-    {0x20C6, 0xd500, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0},
-    {0x203F, 0xd500, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0},
-    {0x20E9, 0xd500, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0},
-    {0x20C6, 0xd802, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0},
-    {0x203F, 0xd802, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0},
-    {0x20E9, 0xd802, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0},
-    {}};
+static const ka_pci_device_id_t sec_eh_agent_tbl[] = {{KA_PCI_VDEVICE(HUAWEI, 0xd802), 0},
+                                                      {KA_PCI_VDEVICE(HUAWEI, 0xd803), 0},
+                                                      {KA_PCI_VDEVICE(HUAWEI, 0xd804), 0},
+                                                      {0x20C6, 0xd500, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0},
+                                                      {0x203F, 0xd500, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0},
+                                                      {0x20E9, 0xd500, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0},
+                                                      {0x20C6, 0xd802, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0},
+                                                      {0x203F, 0xd802, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0},
+                                                      {0x20E9, 0xd802, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0},
+                                                      {}};
 KA_MODULE_DEVICE_TABLE(pci, sec_eh_agent_tbl);
 
 static ka_mutex_t sec_eh_cfg_mutex;
@@ -52,9 +51,8 @@ static int trx_sec_eh_msg_para_check(u32 dev_id, u32 fid, struct vmng_rx_msg_pro
     }
 
     if (proc_info->in_data_len < sizeof(struct trs_sec_eh_msg_head)) {
-        trs_err(
-            "Check failed. (in_data_len=%u; expected_len=%u\n", proc_info->in_data_len,
-            (u32)sizeof(struct trs_sec_eh_msg_head));
+        trs_err("Check failed. (in_data_len=%u; expected_len=%u\n", proc_info->in_data_len,
+                (u32)sizeof(struct trs_sec_eh_msg_head));
         return -EINVAL;
     }
 
@@ -124,13 +122,13 @@ static void trs_sec_eh_irq_unrequest(u32 devid)
     }
 
     for (i = 0; i < inject->sq_trigger_irq_cnt; i++) {
-        (void)devdrv_unregister_irq_by_vector_index(
-            devid, inject->sq_trigger[i].vector_id, (void *)&inject->sq_trigger[i]);
+        (void)devdrv_unregister_irq_by_vector_index(devid, inject->sq_trigger[i].vector_id,
+                                                    (void *)&inject->sq_trigger[i]);
     }
 
     for (i = 0; i < inject->cq_update_irq_cnt; i++) {
-        (void)devdrv_unregister_irq_by_vector_index(
-            devid, inject->cq_update[i].vector_id, (void *)&inject->cq_update[i]);
+        (void)devdrv_unregister_irq_by_vector_index(devid, inject->cq_update[i].vector_id,
+                                                    (void *)&inject->cq_update[i]);
     }
 
     trs_inject_irq[devid] = NULL;
@@ -157,8 +155,8 @@ static int trs_sec_eh_trigger_irq_request(u32 devid, struct trs_inject_irq_info 
     inject->sq_trigger[0].devid = devid;
     inject->sq_trigger[0].vector_id = irq; // hw irq
     inject->sq_trigger[0].irq = irq_request;
-    ret = devdrv_register_irq_by_vector_index(
-        devid, irq, trs_sec_eh_irq_inject_proc, (void *)&inject->sq_trigger[0], "sq_trigger_inject");
+    ret = devdrv_register_irq_by_vector_index(devid, irq, trs_sec_eh_irq_inject_proc, (void *)&inject->sq_trigger[0],
+                                              "sq_trigger_inject");
     if (ret != 0) {
         trs_err("Request irq failed. (irq=%u; ret=%d)\n", irq, ret);
         return ret;
@@ -218,8 +216,8 @@ static int trs_sec_eh_irq_request(u32 devid)
         inject->cq_update[i].devid = devid;
         inject->cq_update[i].vector_id = irq; // hw irq
         inject->cq_update[i].irq = irq_request;
-        ret = devdrv_register_irq_by_vector_index(
-            devid, irq, trs_sec_eh_irq_inject_proc, (void *)&inject->cq_update[i], "cqe_done_inject");
+        ret = devdrv_register_irq_by_vector_index(devid, irq, trs_sec_eh_irq_inject_proc, (void *)&inject->cq_update[i],
+                                                  "cqe_done_inject");
         if (ret != 0) {
             trs_err("Request irq failed. (irq=%u)\n", irq);
             goto free_irq;

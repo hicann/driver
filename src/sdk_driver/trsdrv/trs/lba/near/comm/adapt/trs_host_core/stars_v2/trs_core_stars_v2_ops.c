@@ -137,4 +137,7 @@ static struct trs_core_adapt_ops trs_core_stars_v2_ops = {
     .res_num_query = trs_host_res_num_query,
 };
 
-struct trs_core_adapt_ops *trs_core_get_stars_v2_adapt_ops(void) { return &trs_core_stars_v2_ops; }
+struct trs_core_adapt_ops *trs_core_get_stars_v2_adapt_ops(void)
+{
+    return &trs_core_stars_v2_ops;
+}

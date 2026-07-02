@@ -89,7 +89,10 @@ static inline struct trs_core_ts_inst *trs_core_inst_get(u32 devid, u32 tsid)
     return trs_core_ts_inst_get(&inst);
 }
 
-static inline void trs_core_inst_put(struct trs_core_ts_inst *ts_inst) { trs_core_ts_inst_put(ts_inst); }
+static inline void trs_core_inst_put(struct trs_core_ts_inst *ts_inst)
+{
+    trs_core_ts_inst_put(ts_inst);
+}
 
 #define TSFW_ERR_QUEUE_FULL 0x80
 static inline int trs_core_notice_ts(struct trs_core_ts_inst *ts_inst, u8 *msg, u32 len)
@@ -102,9 +105,8 @@ static inline int trs_core_notice_ts(struct trs_core_ts_inst *ts_inst, u8 *msg, 
 
     if (((ret != 0) || (header->result != 0)) && (header->cmd_type != TRS_MBOX_RECYCLE_CHECK) &&
         (header->cmd_type != TRS_MBOX_RECYCLE_PID)) {
-        trs_err(
-            "Ts resp failed. (devid=%u; tsid=%u; cmd_type=%u; ret=%d; result=%u)\n", ts_inst->inst.devid,
-            ts_inst->inst.tsid, header->cmd_type, ret, header->result);
+        trs_err("Ts resp failed. (devid=%u; tsid=%u; cmd_type=%u; ret=%d; result=%u)\n", ts_inst->inst.devid,
+                ts_inst->inst.tsid, header->cmd_type, ret, header->result);
     }
 
     if (((ret == 0) && (header->result == TSFW_ERR_QUEUE_FULL) && (header->cmd_type == TRS_MBOX_RECYCLE_PID)) ||
@@ -115,7 +117,10 @@ static inline int trs_core_notice_ts(struct trs_core_ts_inst *ts_inst, u8 *msg, 
     return ((ret == 0) && (header->result == 0)) ? 0 : -EFAULT;
 }
 
-static inline bool trs_core_trace_is_enabled(struct trs_core_ts_inst *ts_inst) { return ts_inst->trace_enable; }
+static inline bool trs_core_trace_is_enabled(struct trs_core_ts_inst *ts_inst)
+{
+    return ts_inst->trace_enable;
+}
 
 bool trs_still_has_proc(struct trs_core_ts_inst *ts_inst, u32 check_level);
 

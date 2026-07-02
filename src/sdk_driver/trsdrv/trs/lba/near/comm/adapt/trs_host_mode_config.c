@@ -98,9 +98,8 @@ static int trs_sq_send_mode_config_by_urd(struct trsModeInfo *info)
     int ret = 0;
 
     if ((info->mode < 0) || (info->mode >= TRS_MODE_TYPE_SQ_SEND_MAX) || (info->devId >= TRS_HOST_PHY_DEV_MAX)) {
-        trs_err(
-            "The sq send mode or devid is invalid. (mode=%d; max=%d; devid=%u; max=%u)\n", info->mode,
-            TRS_MODE_TYPE_SQ_SEND_MAX, info->devId, TRS_HOST_PHY_DEV_MAX);
+        trs_err("The sq send mode or devid is invalid. (mode=%d; max=%d; devid=%u; max=%u)\n", info->mode,
+                TRS_MODE_TYPE_SQ_SEND_MAX, info->devId, TRS_HOST_PHY_DEV_MAX);
         return -EINVAL;
     }
 
@@ -190,9 +189,8 @@ int trs_mode_query_by_urd(void *feature, char *in, u32 in_len, char *out, u32 ou
 
     if ((feature == NULL) || (in == NULL) || (in_len != sizeof(struct trsModeInfo)) || (out == NULL) ||
         (out_len != sizeof(int))) {
-        trs_err(
-            "Param invalid. (feature=%d; in=%d; in_len=%u; out=%d; out_len=%u)\n", feature != NULL, in != NULL, in_len,
-            out != NULL, out_len);
+        trs_err("Param invalid. (feature=%d; in=%d; in_len=%u; out=%d; out_len=%u)\n", feature != NULL, in != NULL,
+                in_len, out != NULL, out_len);
         return -EINVAL;
     }
 
@@ -212,12 +210,12 @@ int trs_mode_query_by_urd(void *feature, char *in, u32 in_len, char *out, u32 ou
 BEGIN_DMS_MODULE_DECLARATION(TRS_URD_CMD_NAME)
 BEGIN_FEATURE_COMMAND()
 
-ADD_FEATURE_COMMAND(
-    TRS_URD_CMD_NAME, URD_TRS_MODE_CONFIG_CMD, ZERO_CMD, NULL, NULL,
-    DMS_ACC_ROOT | DMS_ENV_PHYSICAL | DMS_ENV_ADMIN_DOCKER | DMS_VDEV_NOTSUPPORT, trs_mode_config_by_urd)
+ADD_FEATURE_COMMAND(TRS_URD_CMD_NAME, URD_TRS_MODE_CONFIG_CMD, ZERO_CMD, NULL, NULL,
+                    DMS_ACC_ROOT | DMS_ENV_PHYSICAL | DMS_ENV_ADMIN_DOCKER | DMS_VDEV_NOTSUPPORT,
+                    trs_mode_config_by_urd)
 
-ADD_FEATURE_COMMAND(
-    TRS_URD_CMD_NAME, URD_TRS_MODE_QUERY_CMD, ZERO_CMD, NULL, NULL, DMS_SUPPORT_ALL, trs_mode_query_by_urd)
+ADD_FEATURE_COMMAND(TRS_URD_CMD_NAME, URD_TRS_MODE_QUERY_CMD, ZERO_CMD, NULL, NULL, DMS_SUPPORT_ALL,
+                    trs_mode_query_by_urd)
 
 END_FEATURE_COMMAND()
 END_MODULE_DECLARATION()
@@ -275,5 +273,8 @@ int trs_host_mode_config_init(void)
 }
 DECLAER_FEATURE_AUTO_INIT(trs_host_mode_config_init, FEATURE_LOADER_STAGE_2);
 
-void trs_host_mode_config_uninit(void) { CALL_EXIT_MODULE(TRS_URD_CMD_NAME); }
+void trs_host_mode_config_uninit(void)
+{
+    CALL_EXIT_MODULE(TRS_URD_CMD_NAME);
+}
 DECLAER_FEATURE_AUTO_UNINIT(trs_host_mode_config_uninit, FEATURE_LOADER_STAGE_2);

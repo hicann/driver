@@ -18,8 +18,8 @@
 #include "trs_host_soft_mbox.h"
 #include "trs_sia_adapt_auto_init.h"
 
-static int trs_soft_mbox_sqcq_ext_info_copy(
-    struct trs_id_inst *inst, void *data, size_t size, struct trs_msg_data *msg_data)
+static int trs_soft_mbox_sqcq_ext_info_copy(struct trs_id_inst *inst, void *data, size_t size,
+                                            struct trs_msg_data *msg_data)
 {
     struct trs_normal_cqsq_mailbox *mbox_data = (struct trs_normal_cqsq_mailbox *)data;
     u32 info_len = sizeof(u32) * SQCQ_INFO_LENGTH;
@@ -31,30 +31,27 @@ static int trs_soft_mbox_sqcq_ext_info_copy(
         return ret;
     }
     msg_data->data_len += info_len;
-    trs_debug(
-        "Copy info success. (devid=%u; info[0]=%u; data_len=%llu)\n", inst->devid, mbox_data->ts_info.info[0],
-        msg_data->data_len);
+    trs_debug("Copy info success. (devid=%u; info[0]=%u; data_len=%llu)\n", inst->devid, mbox_data->ts_info.info[0],
+              msg_data->data_len);
 
     if ((mbox_data->ts_info.ext_msg != NULL) && (mbox_data->ts_info.ext_msg_len > 0)) {
-        ret = memcpy_s(
-            msg_data->payload + size + info_len, TRS_MSG_DATA_LEN - size - info_len, mbox_data->ts_info.ext_msg,
-            mbox_data->ts_info.ext_msg_len);
+        ret = memcpy_s(msg_data->payload + size + info_len, TRS_MSG_DATA_LEN - size - info_len,
+                       mbox_data->ts_info.ext_msg, mbox_data->ts_info.ext_msg_len);
         if (ret != 0) {
-            trs_err(
-                "Failed to memcpy ext_msg. (devid=%u; ext_msg_len=%u)\n", inst->devid, mbox_data->ts_info.ext_msg_len);
+            trs_err("Failed to memcpy ext_msg. (devid=%u; ext_msg_len=%u)\n", inst->devid,
+                    mbox_data->ts_info.ext_msg_len);
             return ret;
         }
         msg_data->data_len += mbox_data->ts_info.ext_msg_len;
-        trs_debug(
-            "Copy ext_msg success. (devid=%u; ext_msg_len=%u; data_len=%llu)\n", inst->devid,
-            mbox_data->ts_info.ext_msg_len, msg_data->data_len);
+        trs_debug("Copy ext_msg success. (devid=%u; ext_msg_len=%u; data_len=%llu)\n", inst->devid,
+                  mbox_data->ts_info.ext_msg_len, msg_data->data_len);
     }
 
     return 0;
 }
 
-static int trs_soft_mbox_mem_dispatch_ext_info_copy(
-    struct trs_id_inst *inst, void *data, size_t size, struct trs_msg_data *msg_data)
+static int trs_soft_mbox_mem_dispatch_ext_info_copy(struct trs_id_inst *inst, void *data, size_t size,
+                                                    struct trs_msg_data *msg_data)
 {
     struct trs_mem_dispatch_msg *mbox_data = (struct trs_mem_dispatch_msg *)data;
     if (mbox_data->is_addr_ext) {
@@ -119,11 +116,10 @@ int trs_soft_mbox_send(struct trs_id_inst *inst, u32 chan_id, void *data, size_t
         if (ret == -ENODEV) {
             return -ENXIO;
         }
-        trs_warn(
-            "Mbox send warn. (ret=%d; devid=%u; tsid=%u; msg_result=%d; cmd_type=%d; mbox_result=%d; "
-            "data_len=%llu; msg_len=%u)\n",
-            ret, inst->devid, inst->tsid, msg_data.header.result, header->cmd_type, header->result, msg_data.data_len,
-            (u32)msg_len);
+        trs_warn("Mbox send warn. (ret=%d; devid=%u; tsid=%u; msg_result=%d; cmd_type=%d; mbox_result=%d; "
+                 "data_len=%llu; msg_len=%u)\n",
+                 ret, inst->devid, inst->tsid, msg_data.header.result, header->cmd_type, header->result,
+                 msg_data.data_len, (u32)msg_len);
         return ((ret != 0) ? ret : msg_data.header.result);
     }
 
@@ -132,9 +128,8 @@ int trs_soft_mbox_send(struct trs_id_inst *inst, u32 chan_id, void *data, size_t
         rpc_call_msg = (struct trs_rpc_call_msg *)msg_data.payload;
         ret = memcpy_s(data, size, rpc_call_msg, msg_data.data_len);
         if (ret != 0) {
-            trs_err(
-                "Failed to memcpy. (devid=%u; dest_size=0x%x; src_size=0x%x)\n", inst->devid, (u32)size,
-                (u32)msg_data.data_len);
+            trs_err("Failed to memcpy. (devid=%u; dest_size=0x%x; src_size=0x%x)\n", inst->devid, (u32)size,
+                    (u32)msg_data.data_len);
             return ret;
         }
         ((struct trs_rpc_call_msg *)data)->rpc_call_header.len = TRS_RPC_MAX_DATA_LEN;

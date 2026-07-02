@@ -35,8 +35,8 @@ static struct trs_chan_ts_inst *chan_ts_inst[TRS_TS_INST_MAX_NUM] = {
     NULL,
 };
 
-static void trs_chan_ts_inst_irq_hw_res_uninit(
-    struct trs_chan_ts_inst *ts_inst, struct trs_chan_irq_ctx *irq_ctx, u32 irq_num)
+static void trs_chan_ts_inst_irq_hw_res_uninit(struct trs_chan_ts_inst *ts_inst, struct trs_chan_irq_ctx *irq_ctx,
+                                               u32 irq_num)
 {
     struct trs_id_inst *inst = &ts_inst->inst;
     int ret;
@@ -66,8 +66,8 @@ static void trs_chan_ts_inst_irq_uninit(struct trs_chan_ts_inst *ts_inst, struct
     trs_chan_ts_inst_irq_sw_res_uninit(irq_ctx);
 }
 
-static int trs_chan_ts_inst_irq_init(
-    struct trs_chan_ts_inst *ts_inst, u32 irq_type, struct trs_chan_irq_ctx **irq, u32 *num)
+static int trs_chan_ts_inst_irq_init(struct trs_chan_ts_inst *ts_inst, u32 irq_type, struct trs_chan_irq_ctx **irq,
+                                     u32 *num)
 {
     struct trs_id_inst *inst = &ts_inst->inst;
     struct trs_chan_irq_ctx *irq_ctx = NULL;
@@ -313,8 +313,8 @@ static void trs_chan_cq_guard_work_sched(ka_work_struct_t *p_work)
     trs_debug("Sched cq guard work. (devid=%u; cq_max_id=%u)\n", ts_inst->inst.devid, ts_inst->cq_max_id);
     trs_chan_cq_guard_work_proc(ts_inst);
     if (ts_inst->guard_work.work_magic == TRS_CHAN_GUARD_WORK_MAGIC) {
-        ka_task_schedule_delayed_work(
-            &ts_inst->guard_work.cq_guard_work, ka_system_msecs_to_jiffies(TRS_CHAN_GUARD_WORK_DELAY_MS));
+        ka_task_schedule_delayed_work(&ts_inst->guard_work.cq_guard_work,
+                                      ka_system_msecs_to_jiffies(TRS_CHAN_GUARD_WORK_DELAY_MS));
     }
 }
 

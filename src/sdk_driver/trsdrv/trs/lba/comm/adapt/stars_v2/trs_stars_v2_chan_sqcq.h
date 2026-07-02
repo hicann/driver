@@ -23,8 +23,8 @@ int trs_stars_v2_chan_ops_ctrl_sqcq(struct trs_id_inst *inst, u32 id, u32 cmd, u
 int trs_stars_v2_chan_ops_query_sqcq(struct trs_id_inst *inst, u32 id, u32 cmd, u64 *value);
 int trs_stars_chan_ops_ctrl_sqcq(struct trs_id_inst *inst, u32 id, u32 cmd, u32 para);
 int trs_stars_chan_ops_query_sqcq(struct trs_id_inst *inst, u32 id, u32 cmd, u64 *value);
-int trs_stars_v2_chan_ops_get_valid_cq_list(
-    struct trs_id_inst *inst, u32 group, u32 cqid[], u32 cq_id_num, u32 *valid_cq_num);
+int trs_stars_v2_chan_ops_get_valid_cq_list(struct trs_id_inst *inst, u32 group, u32 cqid[], u32 cq_id_num,
+                                            u32 *valid_cq_num);
 void trs_stars_v2_chan_ops_intr_mask_config(struct trs_id_inst *inst, u32 group, u32 irq, int val);
 int trs_stars_v2_chan_ops_get_sq_head_paddr(struct trs_id_inst *inst, u32 sqid, u64 *paddr);
 int trs_stars_v2_chan_ops_get_sq_tail_paddr(struct trs_id_inst *inst, u32 sqid, u64 *paddr);

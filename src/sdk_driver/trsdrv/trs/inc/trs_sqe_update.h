@@ -53,8 +53,8 @@ struct trs_dma_desc {
 };
 
 /* sqid sqeid --key */
-int hal_kernel_sqe_update_desc_create(
-    u32 devid, u32 tsid, struct trs_dma_desc_addr_info *addr_info, struct trs_dma_desc *dma_desc);
+int hal_kernel_sqe_update_desc_create(u32 devid, u32 tsid, struct trs_dma_desc_addr_info *addr_info,
+                                      struct trs_dma_desc *dma_desc);
 void hal_kernel_sqe_update_desc_destroy(u32 devid, u32 tsid, u32 sqid);
 
 int hal_kernel_trs_get_ssid(u32 devid, u32 tsid, int pid, u32 *passid);
@@ -62,6 +62,6 @@ int hal_kernel_trs_get_ssid(u32 devid, u32 tsid, int pid, u32 *passid);
 int trs_sqe_update_init(u32 devid);
 void trs_sqe_update_uninit(u32 devid);
 
-int trs_sqe_update_desc_create(
-    u32 devid, u32 tsid, struct trs_dma_desc_addr_info *addr_info, struct trs_dma_desc *dma_desc, bool is_src_secure);
+int trs_sqe_update_desc_create(u32 devid, u32 tsid, struct trs_dma_desc_addr_info *addr_info,
+                               struct trs_dma_desc *dma_desc, bool is_src_secure);
 #endif

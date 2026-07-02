@@ -47,7 +47,12 @@
 
 #define TRS_INVALID_PHYS_ADDR (~(phys_addr_t)0)
 
-enum { TRS_INST_STATUS_UNINIT = 0, TRS_INST_STATUS_NORMAL, TRS_INST_STATUS_ABNORMAL, TRS_INST_STATUS_MAX };
+enum {
+    TRS_INST_STATUS_UNINIT = 0,
+    TRS_INST_STATUS_NORMAL,
+    TRS_INST_STATUS_ABNORMAL,
+    TRS_INST_STATUS_MAX
+};
 
 enum trsSqSendMode {
     TRS_MODE_TYPE_SQ_SEND_HIGH_SECURITY = 0x0, /* sq use uik mode */
@@ -55,7 +60,10 @@ enum trsSqSendMode {
     TRS_MODE_TYPE_SQ_SEND_MAX
 };
 
-typedef enum tagTrsModeType { TRS_MODE_TYPE_SQ_SEND = 0, TRS_MODE_TYPE_MAX } trsModeType_t;
+typedef enum tagTrsModeType {
+    TRS_MODE_TYPE_SQ_SEND = 0,
+    TRS_MODE_TYPE_MAX
+} trsModeType_t;
 
 struct trsModeInfo {
     uint32_t devId;
@@ -66,43 +74,38 @@ struct trsModeInfo {
 
 #define module_trs "trs_drv"
 #ifndef EMU_ST
-#define trs_err(fmt, ...)                                                                             \
-    do {                                                                                              \
-        drv_err(                                                                                      \
-            module_trs, "<%s:%d:%d:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), \
-            ka_task_get_current_pid(), ka_system_raw_smp_processor_id(), ##__VA_ARGS__);              \
-        share_log_err(TSDRV_SHARE_LOG_START, fmt, ##__VA_ARGS__);                                     \
+#define trs_err(fmt, ...)                                                                                 \
+    do {                                                                                                  \
+        drv_err(module_trs, "<%s:%d:%d:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), \
+                ka_task_get_current_pid(), ka_system_raw_smp_processor_id(), ##__VA_ARGS__);              \
+        share_log_err(TSDRV_SHARE_LOG_START, fmt, ##__VA_ARGS__);                                         \
     } while (0)
-#define trs_warn(fmt, ...)                                                                            \
-    do {                                                                                              \
-        drv_warn(                                                                                     \
-            module_trs, "<%s:%d:%d:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), \
-            ka_task_get_current_pid(), ka_system_raw_smp_processor_id(), ##__VA_ARGS__);              \
+#define trs_warn(fmt, ...)                                                                                 \
+    do {                                                                                                   \
+        drv_warn(module_trs, "<%s:%d:%d:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), \
+                 ka_task_get_current_pid(), ka_system_raw_smp_processor_id(), ##__VA_ARGS__);              \
     } while (0)
 #else
 #define trs_err(fmt, ...)
 #define trs_warn(fmt, ...)
 #endif
-#define trs_info(fmt, ...)                                                                            \
-    do {                                                                                              \
-        drv_info(                                                                                     \
-            module_trs, "<%s:%d:%d:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), \
-            ka_task_get_current_pid(), ka_system_raw_smp_processor_id(), ##__VA_ARGS__);              \
+#define trs_info(fmt, ...)                                                                                 \
+    do {                                                                                                   \
+        drv_info(module_trs, "<%s:%d:%d:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), \
+                 ka_task_get_current_pid(), ka_system_raw_smp_processor_id(), ##__VA_ARGS__);              \
     } while (0)
-#define trs_debug(fmt, ...)                                                                           \
-    do {                                                                                              \
-        drv_pr_debug(                                                                                 \
-            module_trs, "<%s:%d:%d:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), \
-            ka_task_get_current_pid(), ka_system_raw_smp_processor_id(), ##__VA_ARGS__);              \
+#define trs_debug(fmt, ...)                                                                                    \
+    do {                                                                                                       \
+        drv_pr_debug(module_trs, "<%s:%d:%d:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), \
+                     ka_task_get_current_pid(), ka_system_raw_smp_processor_id(), ##__VA_ARGS__);              \
     } while (0)
 
 #define trs_err_hex_dump(buf, len, fmt) drv_err_hex_dump(module_trs, buf, len, fmt)
 
-#define trs_info_ratelimited(fmt, ...)                                                                \
-    do {                                                                                              \
-        drv_info_ratelimited(                                                                         \
-            module_trs, "<%s:%d:%d:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), \
-            ka_task_get_current_pid(), ka_system_raw_smp_processor_id(), ##__VA_ARGS__);              \
+#define trs_info_ratelimited(fmt, ...)                                                                                 \
+    do {                                                                                                               \
+        drv_info_ratelimited(module_trs, "<%s:%d:%d:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), \
+                             ka_task_get_current_pid(), ka_system_raw_smp_processor_id(), ##__VA_ARGS__);              \
     } while (0)
 
 #define PCI_VENDOR_ID_HUAWEI 0x19e5
@@ -184,7 +187,11 @@ static const char *trs_id_type_name[TRS_ID_TYPE_MAX] = {
     [TRS_CB_SQ_ID] = "CbSqId",        [TRS_CB_CQ_ID] = "CbCqId",        [TRS_CDQM_ID] = "CdqmId",
     [TRS_CNT_NOTIFY_ID] = "CntNotify"};
 
-enum { TRS_ID_NODE_DEFAULT_LEVEL = 0, TRS_ID_NODE_SECOND_LEVEL, TRS_ID_NODE_LEVEL_MAX };
+enum {
+    TRS_ID_NODE_DEFAULT_LEVEL = 0,
+    TRS_ID_NODE_SECOND_LEVEL,
+    TRS_ID_NODE_LEVEL_MAX
+};
 
 static inline bool trs_id_is_local_type(int type)
 {
@@ -198,10 +205,9 @@ static inline bool trs_id_need_divide_type(int type)
 
 static inline bool trs_id_is_hw_divide_type(int type)
 {
-    return (
-        (type == TRS_EVENT_ID) || (type == TRS_NOTIFY_ID) || (type == TRS_CNT_NOTIFY_ID) || (type == TRS_CMO_ID) ||
-        (type == TRS_HW_SQ_ID) || (type == TRS_HW_CQ_ID) || (type == TRS_RSV_HW_SQ_ID) || (type == TRS_RSV_HW_CQ_ID) ||
-        (type == TRS_CDQM_ID));
+    return ((type == TRS_EVENT_ID) || (type == TRS_NOTIFY_ID) || (type == TRS_CNT_NOTIFY_ID) || (type == TRS_CMO_ID) ||
+            (type == TRS_HW_SQ_ID) || (type == TRS_HW_CQ_ID) || (type == TRS_RSV_HW_SQ_ID) ||
+            (type == TRS_RSV_HW_CQ_ID) || (type == TRS_CDQM_ID));
 }
 
 static inline int trs_id_type_replace(int type)
@@ -233,7 +239,10 @@ static inline void trs_id_inst_pack(struct trs_id_inst *inst, u32 devid, u32 tsi
     inst->tsid = tsid;
 }
 
-static inline u32 trs_id_inst_to_ts_inst(struct trs_id_inst *inst) { return inst->devid * TRS_TS_MAX_NUM + inst->tsid; }
+static inline u32 trs_id_inst_to_ts_inst(struct trs_id_inst *inst)
+{
+    return inst->devid * TRS_TS_MAX_NUM + inst->tsid;
+}
 
 static inline void trs_ts_inst_to_id_inst(u32 ts_inst_id, struct trs_id_inst *inst)
 {
@@ -256,7 +265,10 @@ static inline int trs_id_inst_check(struct trs_id_inst *inst)
     return 0;
 }
 
-static inline bool trs_bitmap_bit_is_vaild(u32 bitmap, u32 bit) { return (bitmap & (1ul << bit)); }
+static inline bool trs_bitmap_bit_is_vaild(u32 bitmap, u32 bit)
+{
+    return (bitmap & (1ul << bit));
+}
 
 static inline void trs_try_resched(unsigned long *cur_jiffies, unsigned long timeout_ms)
 {
@@ -288,7 +300,10 @@ bool trs_is_reboot_active(void);
         .priority = 1,                                                                                  \
     };                                                                                                  \
                                                                                                         \
-    bool trs_is_reboot_active(void) { return (g_trs_active_reboot == true); }
+    bool trs_is_reboot_active(void)                                                                     \
+    {                                                                                                   \
+        return (g_trs_active_reboot == true);                                                           \
+    }
 
 #define TRS_REGISTER_REBOOT_NOTIFY (void)ka_dfx_register_reboot_notifier(&trs_reboot_notifier)
 #define TRS_UNREGISTER_REBOOT_NOTIFY (void)ka_dfx_unregister_reboot_notifier(&trs_reboot_notifier)

@@ -31,7 +31,10 @@
 #define TRS_URMA_POLL_THREAD_IDLE_US 8000
 
 #if defined(__arm__) || defined(__aarch64__)
-#define trs_smp_wmb { asm volatile("dmb st" ::: "memory"); }
+#define trs_smp_wmb                          \
+    {                                        \
+        asm volatile("dmb st" ::: "memory"); \
+    }
 #else
 #define trs_smp_wmb
 #endif
@@ -56,8 +59,8 @@ static urma_jfc_t **g_wait_jfc_buffer = NULL;
 static uint32_t g_wait_jfc_buffer_num = 0;
 static urma_cr_t *g_poll_jfc_cr = NULL;
 
-drvError_t __attribute__((weak)) halSvmAccessRegister(
-    uint32_t dev_id, uint64_t va, uint64_t size, uint64_t flag, uint64_t *access_va)
+drvError_t __attribute__((weak)) halSvmAccessRegister(uint32_t dev_id, uint64_t va, uint64_t size, uint64_t flag,
+                                                      uint64_t *access_va)
 {
     (void)dev_id;
     (void)size;
@@ -96,8 +99,8 @@ drvError_t trs_register_reg(uint32_t dev_id, uint64_t va, uint32_t size)
 
         ret = halSvmAccessRegister(dev_id, align_va, align_len, SVM_REGISTER_FLAG_ACCESS_BY_DMA, &addr);
         if (ret != DRV_ERROR_NONE) {
-            trs_err(
-                "Failed to register SVM. (dev_id=%u; va=0x%llx; len=%u; ret=%d)\n", dev_id, align_va, align_len, ret);
+            trs_err("Failed to register SVM. (dev_id=%u; va=0x%llx; len=%u; ret=%d)\n", dev_id, align_va, align_len,
+                    ret);
             return DRV_ERROR_INNER_ERR;
         }
 
@@ -116,8 +119,8 @@ void trs_unregister_reg(uint32_t dev_id, uint64_t va, uint32_t size)
     }
 }
 
-static drvError_t trs_urma_res_id_config(
-    uint32_t dev_id, uint32_t ts_id, drvIdType_t type, uint32_t resource_id, uint32_t value)
+static drvError_t trs_urma_res_id_config(uint32_t dev_id, uint32_t ts_id, drvIdType_t type, uint32_t resource_id,
+                                         uint32_t value)
 {
     struct res_id_usr_info *info = NULL;
     int ret;
@@ -134,12 +137,11 @@ static drvError_t trs_urma_res_id_config(
             return ret;
         }
     }
-    ret = halSvmAccess(
-        dev_id, (uint64_t)info->res_addr, (uint64_t)(uintptr_t)&value, info->res_len, SVM_MEM_ACCESS_WRITE);
+    ret = halSvmAccess(dev_id, (uint64_t)info->res_addr, (uint64_t)(uintptr_t)&value, info->res_len,
+                       SVM_MEM_ACCESS_WRITE);
     if (ret != DRV_ERROR_NONE) {
-        trs_err(
-            "Failed to config res. (dev_id=%u; ts_id=%u; res_type=%d; res_id=%u; va=0x%llx; len=%u; ret=%d)\n", dev_id,
-            ts_id, type, resource_id, info->res_addr, info->res_len, ret);
+        trs_err("Failed to config res. (dev_id=%u; ts_id=%u; res_type=%d; res_id=%u; va=0x%llx; len=%u; ret=%d)\n",
+                dev_id, ts_id, type, resource_id, info->res_addr, info->res_len, ret);
     }
     return ret;
 }
@@ -168,9 +170,15 @@ uint32_t trs_get_jfs_depth(void)
     return 8192U; /* 8192U: max jetty depth, which * (max_sge * 16 / 64 + 1) equal to 32k */
 }
 
-uint32_t trs_get_jfc_depth(void) { return 5000U; /* 64: minimum jfc depth in urma */ }
+uint32_t trs_get_jfc_depth(void)
+{
+    return 5000U; /* 64: minimum jfc depth in urma */
+}
 
-uint32_t trs_get_jfr_depth(void) { return 64U; /* 64: minimum jfr depth in urma */ }
+uint32_t trs_get_jfr_depth(void)
+{
+    return 64U; /* 64: minimum jfr depth in urma */
+}
 
 extern int halMemGetSeg(uint32_t dev_id, uint64_t va, uint64_t size, urma_seg_t *seg, urma_token_t *token);
 drvError_t trs_master_register_segment(uint32_t dev_id, struct sqcq_usr_info *sq_info, uint32_t sq_id)
@@ -181,13 +189,12 @@ drvError_t trs_master_register_segment(uint32_t dev_id, struct sqcq_usr_info *sq
     void *notify_buffer = NULL;
     urma_seg_cfg_t seg_cfg = {0};
     int ret = 0;
-    urma_reg_seg_flag_t flag = {
-        .bs.token_policy = URMA_TOKEN_PLAIN_TEXT,
-        .bs.cacheable = URMA_NON_CACHEABLE,
-        .bs.access = URMA_ACCESS_READ | URMA_ACCESS_WRITE | URMA_ACCESS_ATOMIC,
-        .bs.non_pin = 1, /* alloc_pages memory need non pin, malloc need pin */
-        .bs.token_id_valid = 1,
-        .bs.reserved = 0};
+    urma_reg_seg_flag_t flag = {.bs.token_policy = URMA_TOKEN_PLAIN_TEXT,
+                                .bs.cacheable = URMA_NON_CACHEABLE,
+                                .bs.access = URMA_ACCESS_READ | URMA_ACCESS_WRITE | URMA_ACCESS_ATOMIC,
+                                .bs.non_pin = 1, /* alloc_pages memory need non pin, malloc need pin */
+                                .bs.token_id_valid = 1,
+                                .bs.reserved = 0};
 
     if (trs_is_sq_init_without_sq_mem(sq_info->flag)) {
         return 0;
@@ -206,9 +213,8 @@ drvError_t trs_master_register_segment(uint32_t dev_id, struct sqcq_usr_info *sq
         return DRV_ERROR_INNER_ERR;
     }
 
-    ret = halMemAlloc(
-        &notify_buffer, (sq_info->depth * 8),
-        MEM_HOST | MEM_TYPE_DDR | ((uint64_t)TSDRV_MODULE_ID << MEM_MODULE_ID_BIT));
+    ret = halMemAlloc(&notify_buffer, (sq_info->depth * 8),
+                      MEM_HOST | MEM_TYPE_DDR | ((uint64_t)TSDRV_MODULE_ID << MEM_MODULE_ID_BIT));
     if (ret != DRV_ERROR_NONE) {
         (void)urma_unregister_seg(urma_ctx->local_tseg);
         trs_err("Alloc host notify buffer mem fail. (devid=%u; ret=%d)\n", dev_id, ret);
@@ -219,9 +225,8 @@ drvError_t trs_master_register_segment(uint32_t dev_id, struct sqcq_usr_info *sq
     if (ret != 0) {
         (void)halMemFree(notify_buffer);
         (void)urma_unregister_seg(urma_ctx->local_tseg);
-        trs_err(
-            "Failed to get src segment. (ret=%d; va=0x%llx; depth=%u)\n", ret, (uint64_t)(uintptr_t)notify_buffer,
-            sq_info->depth);
+        trs_err("Failed to get src segment. (ret=%d; va=0x%llx; depth=%u)\n", ret, (uint64_t)(uintptr_t)notify_buffer,
+                sq_info->depth);
         return ret;
     }
 
@@ -244,8 +249,8 @@ static void trs_master_unregister_segment(struct trs_urma_ctx *urma_ctx)
     }
 }
 
-int trs_remote_urma_info_init(
-    struct trs_urma_ctx *urma_ctx, struct halSqCqInputInfo *in, struct trs_remote_sync_info *sync_info)
+int trs_remote_urma_info_init(struct trs_urma_ctx *urma_ctx, struct halSqCqInputInfo *in,
+                              struct trs_remote_sync_info *sync_info)
 {
     urma_import_seg_flag_t flag = trs_get_seg_import_flag();
     struct trs_urma_proc_ctx *proc_ctx = trs_get_urma_proc_ctx(urma_ctx->devid);
@@ -291,8 +296,8 @@ int trs_remote_urma_info_init(
             trs_err("Failed to import remote sq queue segment.\n");
             return DRV_ERROR_INNER_ERR;
         }
-        urma_ctx->sq_tail_tseg =
-            urma_import_seg(urma_ctx->urma_ctx, &sync_info->sq_tail_seg, &sync_info->token, 0, flag);
+        urma_ctx->sq_tail_tseg = urma_import_seg(urma_ctx->urma_ctx, &sync_info->sq_tail_seg, &sync_info->token, 0,
+                                                 flag);
         if (urma_ctx->sq_tail_tseg == NULL) {
             trs_err("Failed to import remote sq tail segment.\n");
             (void)urma_unimport_seg(urma_ctx->sq_que_tseg);
@@ -394,8 +399,8 @@ static inline void trs_master_urma_ctx_jfs_uninit(struct trs_urma_ctx *master_ct
     trs_destroy_jfs(&master_ctx->trs_jfs);
 }
 
-static int trs_sqcq_remote_alloc_with_urma(
-    uint32_t dev_id, struct halSqCqInputInfo *in, struct trs_urma_ctx *urma_ctx, struct trs_remote_sync_info *sync_info)
+static int trs_sqcq_remote_alloc_with_urma(uint32_t dev_id, struct halSqCqInputInfo *in, struct trs_urma_ctx *urma_ctx,
+                                           struct trs_remote_sync_info *sync_info)
 {
     struct event_reply reply;
     void *sync_msg = NULL;
@@ -417,18 +422,17 @@ static int trs_sqcq_remote_alloc_with_urma(
         return DRV_ERROR_OUT_OF_MEMORY;
     }
     ret = memcpy_s(sync_msg, sync_msg_len, in, sizeof(struct halSqCqInputInfo));
-    ret |= memcpy_s(
-        (void *)((uintptr_t)sync_msg + sizeof(struct halSqCqInputInfo)), sync_msg_len - sizeof(struct halSqCqInputInfo),
-        &urma_ctx->trs_jfr.jfr->jfr_id, sizeof(urma_jfr_id_t));
-    ret |= memcpy_s(
-        (void *)((uintptr_t)sync_msg + sizeof(struct halSqCqInputInfo) + sizeof(urma_jfr_id_t)),
-        sync_msg_len - sizeof(struct halSqCqInputInfo) - sizeof(urma_jfr_id_t), &urma_ctx->token, sizeof(urma_token_t));
+    ret |= memcpy_s((void *)((uintptr_t)sync_msg + sizeof(struct halSqCqInputInfo)),
+                    sync_msg_len - sizeof(struct halSqCqInputInfo), &urma_ctx->trs_jfr.jfr->jfr_id,
+                    sizeof(urma_jfr_id_t));
+    ret |= memcpy_s((void *)((uintptr_t)sync_msg + sizeof(struct halSqCqInputInfo) + sizeof(urma_jfr_id_t)),
+                    sync_msg_len - sizeof(struct halSqCqInputInfo) - sizeof(urma_jfr_id_t), &urma_ctx->token,
+                    sizeof(urma_token_t));
     if ((in->ext_info != NULL) && (in->ext_info_len != 0)) {
-        ret |= memcpy_s(
-            (void *)((uintptr_t)sync_msg + sizeof(struct halSqCqInputInfo) + sizeof(urma_jfr_id_t) +
-                     sizeof(urma_token_t)),
-            sync_msg_len - sizeof(struct halSqCqInputInfo) - sizeof(urma_jfr_id_t) - sizeof(urma_token_t), in->ext_info,
-            in->ext_info_len);
+        ret |= memcpy_s((void *)((uintptr_t)sync_msg + sizeof(struct halSqCqInputInfo) + sizeof(urma_jfr_id_t) +
+                                 sizeof(urma_token_t)),
+                        sync_msg_len - sizeof(struct halSqCqInputInfo) - sizeof(urma_jfr_id_t) - sizeof(urma_token_t),
+                        in->ext_info, in->ext_info_len);
     }
     if (ret != 0) {
         free(reply.buf);
@@ -440,16 +444,15 @@ static int trs_sqcq_remote_alloc_with_urma(
     result = DRV_EVENT_REPLY_BUFFER_RET(reply.buf);
     if ((ret != DRV_ERROR_NONE) || (result != 0)) {
         trs_err_if(((ret != DRV_ERROR_NONE) || (result != DRV_ERROR_NO_RESOURCES)),
-            "Sync event. (dev_id=%u; ret=%d; result=%d)\n", dev_id, ret, result);
+                   "Sync event. (dev_id=%u; ret=%d; result=%d)\n", dev_id, ret, result);
         ret = (ret != DRV_ERROR_NONE) ? ret : result;
         free(reply.buf);
         free(sync_msg);
         return ret;
     }
 
-    (void)memcpy_s(
-        sync_info, sizeof(struct trs_remote_sync_info), DRV_EVENT_REPLY_BUFFER_DATA_PTR(reply.buf),
-        sizeof(struct trs_remote_sync_info));
+    (void)memcpy_s(sync_info, sizeof(struct trs_remote_sync_info), DRV_EVENT_REPLY_BUFFER_DATA_PTR(reply.buf),
+                   sizeof(struct trs_remote_sync_info));
 
     free(reply.buf);
     free(sync_msg);
@@ -464,8 +467,8 @@ static int trs_sqcq_remote_free_with_urma(uint32_t dev_id, struct halSqCqFreeInf
 
     reply.buf_len = sizeof(result);
     reply.buf = (char *)&result;
-    ret = trs_local_mem_event_sync(
-        dev_id, in, sizeof(struct halSqCqFreeInfo), DRV_SUBEVENT_TRS_FREE_SQCQ_WITH_URMA_MSG, &reply);
+    ret = trs_local_mem_event_sync(dev_id, in, sizeof(struct halSqCqFreeInfo), DRV_SUBEVENT_TRS_FREE_SQCQ_WITH_URMA_MSG,
+                                   &reply);
     if ((ret != 0) || (result != 0)) {
         trs_err("Failed to sync sqcq free event. (ret=%d; result=%d)\n", ret, result);
         return (ret != 0) ? ret : result;
@@ -474,8 +477,8 @@ static int trs_sqcq_remote_free_with_urma(uint32_t dev_id, struct halSqCqFreeInf
     return 0;
 }
 
-static drvError_t trs_remote_sqcq_alloc_with_urma(
-    uint32_t dev_id, struct trs_urma_ctx *master_ctx, struct halSqCqInputInfo *in, struct halSqCqOutputInfo *out)
+static drvError_t trs_remote_sqcq_alloc_with_urma(uint32_t dev_id, struct trs_urma_ctx *master_ctx,
+                                                  struct halSqCqInputInfo *in, struct halSqCqOutputInfo *out)
 {
     struct trs_remote_sync_info sync_info = {0};
     struct halSqCqFreeInfo free_in;
@@ -506,8 +509,8 @@ static drvError_t trs_remote_sqcq_alloc_with_urma(
     return DRV_ERROR_NONE;
 }
 
-drvError_t trs_remote_sq_cq_free_with_urma(
-    uint32_t dev_id, struct halSqCqFreeInfo *in, struct trs_urma_ctx *urma_ctx, bool remote_free_flag)
+drvError_t trs_remote_sq_cq_free_with_urma(uint32_t dev_id, struct halSqCqFreeInfo *in, struct trs_urma_ctx *urma_ctx,
+                                           bool remote_free_flag)
 {
     drvError_t ret;
 
@@ -515,8 +518,8 @@ drvError_t trs_remote_sq_cq_free_with_urma(
     if (remote_free_flag) {
         ret = trs_sqcq_remote_free_with_urma(dev_id, in);
         if (ret != 0) {
-            trs_err(
-                "Failed free sqcq with urma. (ret=%d; dev_id=%u; sqid=%u; cqid=%u)\n", ret, dev_id, in->sqId, in->cqId);
+            trs_err("Failed free sqcq with urma. (ret=%d; dev_id=%u; sqid=%u; cqid=%u)\n", ret, dev_id, in->sqId,
+                    in->cqId);
             return ret;
         }
     }
@@ -526,8 +529,8 @@ drvError_t trs_remote_sq_cq_free_with_urma(
     return DRV_ERROR_NONE;
 }
 
-static drvError_t trs_local_sq_cq_alloc_with_urma(
-    uint32_t dev_id, struct trs_urma_ctx *master_ctx, struct halSqCqInputInfo *in, struct halSqCqOutputInfo *out)
+static drvError_t trs_local_sq_cq_alloc_with_urma(uint32_t dev_id, struct trs_urma_ctx *master_ctx,
+                                                  struct halSqCqInputInfo *in, struct halSqCqOutputInfo *out)
 {
     struct sqcq_usr_info *sq_info = NULL;
     struct halSqCqFreeInfo free_in;
@@ -538,8 +541,8 @@ static drvError_t trs_local_sq_cq_alloc_with_urma(
     in->flag &= (uint32_t)(~TSDRV_FLAG_RANGE_ID);
     ret = trs_local_sqcq_alloc(dev_id, in, out);
     if (ret != DRV_ERROR_NONE) {
-        trs_err(
-            "Failed to alloc sqcq with specified id. (dev_id=%u; sq_id=%u; cq_id=%u)\n", dev_id, in->sqId, in->cqId);
+        trs_err("Failed to alloc sqcq with specified id. (dev_id=%u; sq_id=%u; cq_id=%u)\n", dev_id, in->sqId,
+                in->cqId);
         return ret;
     }
 
@@ -564,8 +567,8 @@ static drvError_t trs_local_sq_cq_alloc_with_urma(
     return ret;
 }
 
-static drvError_t trs_local_sq_cq_free_with_urma(
-    uint32_t dev_id, struct halSqCqFreeInfo *info, struct trs_urma_ctx *urma_ctx)
+static drvError_t trs_local_sq_cq_free_with_urma(uint32_t dev_id, struct halSqCqFreeInfo *info,
+                                                 struct trs_urma_ctx *urma_ctx)
 {
     uint32_t flag = info->flag;
     drvError_t ret;
@@ -620,13 +623,13 @@ drvError_t trs_sqcq_urma_alloc(uint32_t dev_id, struct halSqCqInputInfo *in, str
     in->cqId = remote_out.cqId;
     ret = trs_local_sq_cq_alloc_with_urma(dev_id, master_ctx, in, out);
     if (ret != 0) {
-        trs_err("Failed to alloc sqcq with specified id. (ret=%d; dev_id=%u; sq_id=%u; cq_id=%u)\n",
-            ret, dev_id, remote_out.sqId, remote_out.cqId);
+        trs_err("Failed to alloc sqcq with specified id. (ret=%d; dev_id=%u; sq_id=%u; cq_id=%u)\n", ret, dev_id,
+                remote_out.sqId, remote_out.cqId);
         goto local_sqcq_alloc_fail;
     }
 
-    trs_debug("Alloc sqcq success. (dev_id=%u; sqid=%u; cqid=%u; jfs_id=%u; jfc_id=%u)\n",
-        dev_id, in->sqId, in->cqId, master_ctx->trs_jfs.jfs->jfs_id.id , master_ctx->trs_jfs.trs_jfc.jfc->jfc_id.id);
+    trs_debug("Alloc sqcq success. (dev_id=%u; sqid=%u; cqid=%u; jfs_id=%u; jfc_id=%u)\n", dev_id, in->sqId, in->cqId,
+              master_ctx->trs_jfs.jfs->jfs_id.id, master_ctx->trs_jfs.trs_jfc.jfc->jfc_id.id);
     return DRV_ERROR_NONE;
 
 local_sqcq_alloc_fail:
@@ -722,8 +725,8 @@ static int trs_jfs_wqe_credit_poll(uint32_t dev_id, struct trs_urma_jfs *trs_jfs
         if (g_poll_jfc_cr[i].status != URMA_CR_SUCCESS) {
             poll_failed = true;
             trs_err("Cr status abnormal. (index=%d, cr_status=%d; cnt=%u; jfs_id=%u; jfc_id=%u; sq_id=%u; dev_id=%u)",
-                i, g_poll_jfc_cr[i].status, cnt, trs_jfs->jfs->jfs_id.id , trs_jfs->trs_jfc.jfc->jfc_id.id,
-                trs_jfs->trs_jfc.jfc->jfc_cfg.user_ctx, dev_id);
+                    i, g_poll_jfc_cr[i].status, cnt, trs_jfs->jfs->jfs_id.id, trs_jfs->trs_jfc.jfc->jfc_id.id,
+                    trs_jfs->trs_jfc.jfc->jfc_cfg.user_ctx, dev_id);
         }
     }
 
@@ -731,8 +734,8 @@ static int trs_jfs_wqe_credit_poll(uint32_t dev_id, struct trs_urma_jfs *trs_jfs
         trs_urma_get_jfc_opt(trs_jfs->trs_jfc.jfc);
     }
 
-    trs_debug("Polled jfc cqe. (jfs_id=%u; jfc_id=%u; sq_id=%u; dev_id=%u; cnt=%d)\n",
-        trs_jfs->jfs->jfs_id.id , trs_jfs->trs_jfc.jfc->jfc_id.id, trs_jfs->trs_jfc.jfc->jfc_cfg.user_ctx, dev_id, cnt);
+    trs_debug("Polled jfc cqe. (jfs_id=%u; jfc_id=%u; sq_id=%u; dev_id=%u; cnt=%d)\n", trs_jfs->jfs->jfs_id.id,
+              trs_jfs->trs_jfc.jfc->jfc_id.id, trs_jfs->trs_jfc.jfc->jfc_cfg.user_ctx, dev_id, cnt);
     return DRV_ERROR_NONE;
 }
 
@@ -796,8 +799,7 @@ static void trs_urma_poll_waited_jfc(uint32_t dev_id, urma_jfc_t *wait_jfc)
     trs_debug("Start to poll. (dev_id=%u; sq_id=%u)\n", dev_id, (uint32_t)wait_jfc->jfc_cfg.user_ctx);
     ret = trs_jfs_wqe_credit_poll(dev_id, trs_jfs);
     if (ret != 0) {
-        trs_warn_limit("Thread poll jfc credit update failed. (ret=%d; jfc_id=%u)\n",
-            ret, wait_jfc->jfc_id.id);
+        trs_warn_limit("Thread poll jfc credit update failed. (ret=%d; jfc_id=%u)\n", ret, wait_jfc->jfc_id.id);
     }
 
     (void)trs_urma_jfc_ack_rearm(wait_jfc);
@@ -853,8 +855,8 @@ static void trs_jfs_write_src_notify_sge_init(struct sqcq_usr_info *sq_info, urm
 #endif
 }
 
-static void trs_jfs_write_src_sge_init(
-    struct sqcq_usr_info *sq_info, urma_sge_t *src_sge_buf, uint32_t tail, uint32_t sqe_num)
+static void trs_jfs_write_src_sge_init(struct sqcq_usr_info *sq_info, urma_sge_t *src_sge_buf, uint32_t tail,
+                                       uint32_t sqe_num)
 {
 #ifndef EMU_ST
     struct trs_urma_ctx *urma_ctx = (struct trs_urma_ctx *)sq_info->urma_ctx;
@@ -864,8 +866,8 @@ static void trs_jfs_write_src_sge_init(
 #endif
 }
 
-static void trs_jfs_write_dst_sge_init(
-    struct sqcq_usr_info *sq_info, urma_sge_t *dst_sge_sqe, uint32_t tail, uint32_t sqe_num)
+static void trs_jfs_write_dst_sge_init(struct sqcq_usr_info *sq_info, urma_sge_t *dst_sge_sqe, uint32_t tail,
+                                       uint32_t sqe_num)
 {
 #ifndef EMU_ST
     struct trs_urma_ctx *urma_ctx = (struct trs_urma_ctx *)sq_info->urma_ctx;
@@ -875,8 +877,8 @@ static void trs_jfs_write_dst_sge_init(
 #endif
 }
 
-static void trs_jfs_write_with_notify_dst_sge_init(
-    struct sqcq_usr_info *sq_info, urma_sge_t *dst_sge_sqe, urma_sge_t *dst_sge_notify, uint32_t tail, uint32_t sqe_num)
+static void trs_jfs_write_with_notify_dst_sge_init(struct sqcq_usr_info *sq_info, urma_sge_t *dst_sge_sqe,
+                                                   urma_sge_t *dst_sge_notify, uint32_t tail, uint32_t sqe_num)
 {
 #ifndef EMU_ST
     struct trs_urma_ctx *urma_ctx = (struct trs_urma_ctx *)sq_info->urma_ctx;
@@ -1033,9 +1035,8 @@ drvError_t trs_sq_task_send_urma(uint32_t dev_id, struct halTaskSendInfo *info, 
 
     sq_info->tail = (sq_info->tail + info->sqe_num) % sq_info->depth;
     trs_sq_send_ok_stat(sq_info, info->sqe_num);
-    trs_debug(
-        "Send sqe success. (dev_id=%u; sq_id=%u; jfs=%u; jfc=%u; sqe_num=%u; sq_tail=%u)\n", dev_id, info->sqId,
-        urma_ctx->trs_jfs.jfs->jfs_id.id, urma_ctx->trs_jfs.trs_jfc.jfc->jfc_id.id, info->sqe_num, sq_info->tail);
+    trs_debug("Send sqe success. (dev_id=%u; sq_id=%u; jfs=%u; jfc=%u; sqe_num=%u; sq_tail=%u)\n", dev_id, info->sqId,
+              urma_ctx->trs_jfs.jfs->jfs_id.id, urma_ctx->trs_jfs.trs_jfc.jfc->jfc_id.id, info->sqe_num, sq_info->tail);
     return ret;
 }
 
@@ -1059,9 +1060,8 @@ static int trs_args_async_copy_info_check(struct halSqTaskArgsInfo *info)
     }
 
     if ((srcTsegInfo->tseg_ptr == NULL) || (dstTsegInfo->tseg_ptr == NULL)) {
-        trs_err(
-            "Invalid NULL TsegInfo tseg_ptr. (src_tseg_ptr=%p; dst_tseg_ptr=%p)\n", srcTsegInfo->tseg_ptr,
-            dstTsegInfo->tseg_ptr);
+        trs_err("Invalid NULL TsegInfo tseg_ptr. (src_tseg_ptr=%p; dst_tseg_ptr=%p)\n", srcTsegInfo->tseg_ptr,
+                dstTsegInfo->tseg_ptr);
         return DRV_ERROR_INVALID_VALUE;
     }
 
@@ -1088,8 +1088,8 @@ drvError_t trs_sq_task_args_async_copy(uint32_t dev_id, struct halSqTaskArgsInfo
 
     for (i = 0; i < wr_num; i++) {
         urma_jfs_wr_t *wr = &urma_ctx->trs_jfs.wr_sge_array[i].wr;
-        u32 size =
-            (i == (wr_num - 1)) ? (info->size - i * (u32)TRS_URMA_WR_CPY_MAX_SIZE) : (u32)TRS_URMA_WR_CPY_MAX_SIZE;
+        u32 size = (i == (wr_num - 1)) ? (info->size - i * (u32)TRS_URMA_WR_CPY_MAX_SIZE) :
+                                         (u32)TRS_URMA_WR_CPY_MAX_SIZE;
 
         (void)memset_s(wr, sizeof(urma_jfs_wr_t), 0, sizeof(urma_jfs_wr_t));
         wr->opcode = URMA_OPC_WRITE;
@@ -1101,10 +1101,10 @@ drvError_t trs_sq_task_args_async_copy(uint32_t dev_id, struct halSqTaskArgsInfo
         wr->rw.dst.sge = &urma_ctx->trs_jfs.wr_sge_array[i].dst_sge;
         wr->rw.dst.num_sge = 1;
         trs_set_urma_resp_cqe(wr);
-        trs_jfs_write_sge_init(
-            info->src + i * TRS_URMA_WR_CPY_MAX_SIZE, (uint64_t)size, info->srcTsegInfo->tseg_ptr, wr->rw.src.sge);
-        trs_jfs_write_sge_init(
-            info->dst + i * TRS_URMA_WR_CPY_MAX_SIZE, (uint64_t)size, info->dstTsegInfo->tseg_ptr, wr->rw.dst.sge);
+        trs_jfs_write_sge_init(info->src + i * TRS_URMA_WR_CPY_MAX_SIZE, (uint64_t)size, info->srcTsegInfo->tseg_ptr,
+                               wr->rw.src.sge);
+        trs_jfs_write_sge_init(info->dst + i * TRS_URMA_WR_CPY_MAX_SIZE, (uint64_t)size, info->dstTsegInfo->tseg_ptr,
+                               wr->rw.dst.sge);
         wr->next = (i == (wr_num - 1)) ? NULL : &urma_ctx->trs_jfs.wr_sge_array[i + 1].wr;
     }
 
@@ -1120,8 +1120,8 @@ drvError_t trs_sq_task_args_async_copy(uint32_t dev_id, struct halSqTaskArgsInfo
 #endif
 }
 
-drvError_t trs_get_urma_tseg_info_by_va(
-    uint32_t devid, uint64_t va, uint64_t size, uint32_t flag, struct halTsegInfo *tsegInfo)
+drvError_t trs_get_urma_tseg_info_by_va(uint32_t devid, uint64_t va, uint64_t size, uint32_t flag,
+                                        struct halTsegInfo *tsegInfo)
 {
     urma_target_seg_t *tseg = NULL;
     urma_seg_t seg;
@@ -1186,8 +1186,8 @@ static void *trs_urma_poll_thread_func(void *arg)
         } while ((event_num == -1) && (errno == EINTR));
 
         if ((event_num < 0) || (event_num > TRS_DEV_NUM)) {
-            trs_warn("Call epoll_wait error. (epfd=%d; strerror=\"%s\"; errno=%d)\n",
-                g_trs_urma_epoll.epfd, strerror(errno), errno);
+            trs_warn("Call epoll_wait error. (epfd=%d; strerror=\"%s\"; errno=%d)\n", g_trs_urma_epoll.epfd,
+                     strerror(errno), errno);
             continue;
         }
 

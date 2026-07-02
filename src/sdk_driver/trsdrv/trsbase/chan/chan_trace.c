@@ -17,8 +17,8 @@
 #include "chan_trace_event.h"
 #include "chan_trace.h"
 
-static inline void trs_chan_sq_to_trace(
-    struct trs_chan *chan, struct trs_chan_sq_ctx *sq, struct trs_chan_sq_trace *sq_trace)
+static inline void trs_chan_sq_to_trace(struct trs_chan *chan, struct trs_chan_sq_ctx *sq,
+                                        struct trs_chan_sq_trace *sq_trace)
 {
     sq_trace->sqid = sq->sqid;
     sq_trace->sq_head = sq->sq_head;
@@ -27,8 +27,8 @@ static inline void trs_chan_sq_to_trace(
     sq_trace->types = chan->types;
 }
 
-static inline void tra_chan_cq_to_trace(
-    struct trs_chan *chan, struct trs_chan_cq_ctx *cq, struct trs_chan_cq_trace *cq_trace)
+static inline void tra_chan_cq_to_trace(struct trs_chan *chan, struct trs_chan_cq_ctx *cq,
+                                        struct trs_chan_cq_trace *cq_trace)
 {
     cq_trace->cqid = cq->cqid;
     cq_trace->cq_head = cq->cq_head;
@@ -60,14 +60,13 @@ void trs_chan_trace_sqe(const char *str, struct trs_chan *chan, struct trs_chan_
 void trace_chan_trace_recv(const char *str, struct trs_chan *chan, struct trs_chan_recv_para *para)
 {
     if (trs_chan_trace_is_enabled(chan->ts_inst) && (chan->ops.trace_cqe_fill != NULL)) {
-        struct trs_chan_recv_trace recv_trace = {
-            .chan_id = chan->id,
-            .types = chan->types,
-            .cqid = chan->cq.cqid,
-            .cq_head = chan->cq.cq_head,
-            .cqe_num = para->cqe_num,
-            .recv_cqe_num = para->recv_cqe_num,
-            .timeout = para->timeout};
+        struct trs_chan_recv_trace recv_trace = {.chan_id = chan->id,
+                                                 .types = chan->types,
+                                                 .cqid = chan->cq.cqid,
+                                                 .cq_head = chan->cq.cq_head,
+                                                 .cqe_num = para->cqe_num,
+                                                 .recv_cqe_num = para->recv_cqe_num,
+                                                 .timeout = para->timeout};
         trace_recv(str, &chan->inst, &recv_trace);
     }
 }

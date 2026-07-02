@@ -23,7 +23,10 @@ struct trs_mbox_ops {
     void (*free_irq)(void *priv);
 };
 
-enum trs_mbox_mem_type { TRS_MBOX_MEM_TYPE_DEVICE, TRS_MBOX_MEM_TYPE_NORMAL };
+enum trs_mbox_mem_type {
+    TRS_MBOX_MEM_TYPE_DEVICE,
+    TRS_MBOX_MEM_TYPE_NORMAL
+};
 
 struct trs_mbox_chan_attr {
     phys_addr_t base;

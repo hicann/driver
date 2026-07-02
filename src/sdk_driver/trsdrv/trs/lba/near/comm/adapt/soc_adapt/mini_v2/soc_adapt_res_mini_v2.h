@@ -26,9 +26,18 @@ static inline u32 trs_soc_get_mini_v2_sq_mem_side(u32 devid, struct trs_chan_typ
     return TRS_CHAN_DEV_RSV_MEM;
 }
 
-static inline u32 trs_soc_get_mini_v2_cq_mem_side(u32 devid) { return TRS_CHAN_HOST_MEM; }
+static inline u32 trs_soc_get_mini_v2_cq_mem_side(u32 devid)
+{
+    return TRS_CHAN_HOST_MEM;
+}
 
-static inline int trs_soc_get_mini_v2_hwcq_rsv_mem_type(void) { return RSV_MEM_HW_SQCQ; }
+static inline int trs_soc_get_mini_v2_hwcq_rsv_mem_type(void)
+{
+    return RSV_MEM_HW_SQCQ;
+}
 
-static inline bool trs_mini_v2_is_support_soft_mbox(void) { return false; }
+static inline bool trs_mini_v2_is_support_soft_mbox(void)
+{
+    return false;
+}
 #endif /* SOC_ADAPT_RES_MINI_V2_H__ */

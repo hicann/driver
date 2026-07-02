@@ -101,8 +101,8 @@ int trs_host_get_ssid(struct trs_id_inst *inst, int *user_visible_flag, int *ssi
 
     ret = trs_host_msg_send(inst->devid, &msg, sizeof(struct trs_msg_data));
     if ((ret != 0) || (msg.header.result != 0)) {
-        trs_err(
-            "Msg send fail. (devid=%u; tsid=%u; ret=%d; result=%d)\n", inst->devid, inst->tsid, ret, msg.header.result);
+        trs_err("Msg send fail. (devid=%u; tsid=%u; ret=%d; result=%d)\n", inst->devid, inst->tsid, ret,
+                msg.header.result);
         return -ENODEV;
     }
     *user_visible_flag = 0;
@@ -161,15 +161,13 @@ int trs_host_res_is_check_msg_proc(u32 devid, struct trs_msg_data *data)
 
     trs_id_inst_pack(&inst, devid, data->header.tsid);
     if (trs_res_is_belong_to_proc(&inst, id_msg->hpid, id_msg->id_type, id_msg->res_id)) {
-        trs_debug(
-            "Res id belong to master process. (master_tgid=%u; type=%s; id=%d)\n", id_msg->hpid,
-            trs_id_type_to_name(id_msg->id_type), id_msg->res_id);
+        trs_debug("Res id belong to master process. (master_tgid=%u; type=%s; id=%d)\n", id_msg->hpid,
+                  trs_id_type_to_name(id_msg->id_type), id_msg->res_id);
         return 0;
     }
 #ifndef ENU_ST
-    trs_err(
-        "Res id not belong to master process. (master_tgid=%u; type=%s; id=%d)\n", id_msg->hpid,
-        trs_id_type_to_name(id_msg->id_type), id_msg->res_id);
+    trs_err("Res id not belong to master process. (master_tgid=%u; type=%s; id=%d)\n", id_msg->hpid,
+            trs_id_type_to_name(id_msg->id_type), id_msg->res_id);
     return -1;
 #endif
 }
@@ -193,8 +191,8 @@ int trs_host_res_id_check(struct trs_id_inst *inst, int id_type, u32 res_id)
 
     ret = trs_host_msg_send(inst->devid, &msg, sizeof(struct trs_msg_data));
     if ((ret != 0) || (msg.header.result != 0)) {
-        trs_err(
-            "Msg send fail. (devid=%u; tsid=%u; ret=%d; result=%d)\n", inst->devid, inst->tsid, ret, msg.header.result);
+        trs_err("Msg send fail. (devid=%u; tsid=%u; ret=%d; result=%d)\n", inst->devid, inst->tsid, ret,
+                msg.header.result);
         return -ENODEV;
     }
 #endif
@@ -213,8 +211,8 @@ int trs_host_ras_report(struct trs_id_inst *inst)
 
     ret = trs_host_msg_send(inst->devid, &msg, sizeof(struct trs_msg_data));
     if ((ret != 0) || (msg.header.result != 0)) {
-        trs_err(
-            "Msg send fail. (devid=%u; tsid=%u; ret=%d; result=%d)\n", inst->devid, inst->tsid, ret, msg.header.result);
+        trs_err("Msg send fail. (devid=%u; tsid=%u; ret=%d; result=%d)\n", inst->devid, inst->tsid, ret,
+                msg.header.result);
         return ret;
     }
     return 0;
@@ -236,9 +234,8 @@ int trs_host_res_num_query(struct trs_id_inst *inst, struct trs_res_query_para *
     ret = trs_host_msg_send(inst->devid, &msg, sizeof(struct trs_msg_data));
     if (ret != 0) {
         if (ret != -EOPNOTSUPP) {
-            trs_err(
-                "Msg send fail. (devid=%u; tsid=%u; ret=%d; result=%d)\n", inst->devid, inst->tsid, ret,
-                msg.header.result);
+            trs_err("Msg send fail. (devid=%u; tsid=%u; ret=%d; result=%d)\n", inst->devid, inst->tsid, ret,
+                    msg.header.result);
         }
         return ret;
     }
@@ -302,9 +299,8 @@ int trs_get_host_mach_flag(struct trs_id_inst *inst, u32 *host_flag)
     return 0;
 }
 
-int trs_host_request_irq(
-    struct trs_id_inst *inst, struct trs_adapt_irq_attr *attr, void *para, const char *name,
-    ka_irqreturn_t (*handler)(int irq, void *para))
+int trs_host_request_irq(struct trs_id_inst *inst, struct trs_adapt_irq_attr *attr, void *para, const char *name,
+                         ka_irqreturn_t (*handler)(int irq, void *para))
 {
     int ret;
     struct res_inst_info res_inst;
@@ -312,8 +308,8 @@ int trs_host_request_irq(
     soc_resmng_inst_pack(&res_inst, inst->devid, TS_SUBSYS, inst->tsid);
     ret = soc_resmng_get_hwirq(&res_inst, attr->irq_type, attr->irq, &hwirq);
     if (ret != 0) {
-        trs_err(
-            "Get hw irq failed. (devid=%u; irqtype=%u; irq=%u; ret=%d)\n", inst->devid, attr->irq_type, attr->irq, ret);
+        trs_err("Get hw irq failed. (devid=%u; irqtype=%u; irq=%u; ret=%d)\n", inst->devid, attr->irq_type, attr->irq,
+                ret);
         return ret;
     }
 
@@ -323,9 +319,8 @@ int trs_host_request_irq(
     ret = ka_system_request_irq(attr->irq, handler, 0, name, para);
 #endif
     if (ret != 0) {
-        trs_err(
-            "Request irq failed. (devid=%u; irq_type=%u; irq=%u; hwirq=%u; name=%s; ret=%d)\n", inst->devid,
-            attr->irq_type, attr->irq, hwirq, name, ret);
+        trs_err("Request irq failed. (devid=%u; irq_type=%u; irq=%u; hwirq=%u; name=%s; ret=%d)\n", inst->devid,
+                attr->irq_type, attr->irq, hwirq, name, ret);
     }
     return ret;
 }
@@ -338,8 +333,8 @@ void trs_host_free_irq(struct trs_id_inst *inst, struct trs_adapt_irq_attr *attr
     soc_resmng_inst_pack(&res_inst, inst->devid, TS_SUBSYS, inst->tsid);
     ret = soc_resmng_get_hwirq(&res_inst, attr->irq_type, attr->irq, &hwirq);
     if (ret != 0) {
-        trs_warn(
-            "Get hw irq warn. (devid=%u; irqtype=%u; irq=%u; ret=%d)\n", inst->devid, attr->irq_type, attr->irq, ret);
+        trs_warn("Get hw irq warn. (devid=%u; irqtype=%u; irq=%u; ret=%d)\n", inst->devid, attr->irq_type, attr->irq,
+                 ret);
         return;
     }
 #ifndef EMU_ST
@@ -348,15 +343,14 @@ void trs_host_free_irq(struct trs_id_inst *inst, struct trs_adapt_irq_attr *attr
     ret = ka_system_free_irq(attr->irq, para);
 #endif
     if (ret != 0) {
-        trs_warn(
-            "Free irq warn. (devid=%u; irqtype=%u; irq=%u; hwirq=%u; ret=%d)\n", inst->devid, attr->irq_type, attr->irq,
-            hwirq, ret);
+        trs_warn("Free irq warn. (devid=%u; irqtype=%u; irq=%u; hwirq=%u; ret=%d)\n", inst->devid, attr->irq_type,
+                 attr->irq, hwirq, ret);
         return;
     }
 }
 
-int trs_adapt_ops_request_irq(
-    struct trs_id_inst *inst, u32 irq_type, u32 irq, void *para, ka_irqreturn_t (*handler)(int irq, void *para))
+int trs_adapt_ops_request_irq(struct trs_id_inst *inst, u32 irq_type, u32 irq, void *para,
+                              ka_irqreturn_t (*handler)(int irq, void *para))
 {
     struct trs_adapt_irq_attr attr;
     const char *name = NULL;

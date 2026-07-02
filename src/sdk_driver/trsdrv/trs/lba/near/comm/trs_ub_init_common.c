@@ -46,9 +46,8 @@ static int trs_ub_get_eid_info(struct trs_ub_dev *ub_dev, struct ubcore_eid_info
     ka_task_spin_lock(&dev->eid_table.lock);
     if ((dev->eid_table.eid_entries == NULL) || (dev_info.eid_index[0] >= dev->eid_table.eid_cnt)) {
         ka_task_spin_unlock(&dev->eid_table.lock);
-        trs_err(
-            "Invalid eid_table or eid_index. (devid=%u; eid_cnt=%u; eid_index=%u)\n", ub_dev->devid,
-            dev->eid_table.eid_cnt, dev_info.eid_index[0]);
+        trs_err("Invalid eid_table or eid_index. (devid=%u; eid_cnt=%u; eid_index=%u)\n", ub_dev->devid,
+                dev->eid_table.eid_cnt, dev_info.eid_index[0]);
         return -EINVAL;
     }
 
@@ -136,7 +135,10 @@ static struct trs_ub_dev *trs_ub_create_dev(u32 devid, u32 vfid)
     return ub_dev;
 }
 
-static void trs_ub_destroy_dev(struct trs_ub_dev *ub_dev) { ka_mm_vfree(ub_dev); }
+static void trs_ub_destroy_dev(struct trs_ub_dev *ub_dev)
+{
+    ka_mm_vfree(ub_dev);
+}
 
 static void trs_ub_dev_release(struct kref_safe *ref)
 {
@@ -144,7 +146,10 @@ static void trs_ub_dev_release(struct kref_safe *ref)
     trs_ub_destroy_dev(ub_dev);
 }
 
-void trs_put_ub_dev(struct trs_ub_dev *ub_dev) { kref_safe_put(&ub_dev->ref, trs_ub_dev_release); }
+void trs_put_ub_dev(struct trs_ub_dev *ub_dev)
+{
+    kref_safe_put(&ub_dev->ref, trs_ub_dev_release);
+}
 
 struct trs_ub_dev *trs_get_ub_dev(u32 devid)
 {
@@ -267,5 +272,6 @@ void trs_ub_dev_uninit(u32 ts_inst_id)
 }
 DECLAER_FEATURE_AUTO_UNINIT_DEV(trs_ub_dev_uninit, FEATURE_LOADER_STAGE_3);
 #else
-void trs_ub_comm_stub(void) {}
+void trs_ub_comm_stub(void)
+{}
 #endif

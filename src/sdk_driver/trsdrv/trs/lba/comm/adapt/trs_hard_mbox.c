@@ -162,7 +162,10 @@ static struct trs_mbox_chan *trs_mbox_chan_get(struct trs_id_inst *inst)
     return chan;
 }
 
-static void trs_mbox_chan_put(struct trs_mbox_chan *chan) { kref_safe_put(&chan->ref, trs_mbox_chan_release); }
+static void trs_mbox_chan_put(struct trs_mbox_chan *chan)
+{
+    kref_safe_put(&chan->ref, trs_mbox_chan_release);
+}
 
 void *trs_mbox_chan_init(struct trs_id_inst *inst, struct trs_mbox_chan_attr *attr)
 {
@@ -183,7 +186,10 @@ void *trs_mbox_chan_init(struct trs_id_inst *inst, struct trs_mbox_chan_attr *at
     return chan;
 }
 
-void trs_mbox_chan_uninit(struct trs_id_inst *inst) { trs_mbox_chan_del(inst); }
+void trs_mbox_chan_uninit(struct trs_id_inst *inst)
+{
+    trs_mbox_chan_del(inst);
+}
 
 static void trs_mbox_chan_write(struct trs_mbox_chan *chan, void *data, size_t size)
 {
@@ -211,9 +217,8 @@ static void trs_mbox_chan_get_result(struct trs_mbox_chan *chan, void *data)
 
     ka_rmb();
     if ((header->result != 0) && (header->cmd_type != TRS_MBOX_RECYCLE_CHECK)) {
-        trs_warn(
-            "Pay attention to result. (result=%u; tx_time_us=%llu; txdone_time_us=%llu; wakeup_time_us=%llu)\n",
-            header->result, chan->tx_time_us, chan->txdone_time_us, chan->wakeup_time_us);
+        trs_warn("Pay attention to result. (result=%u; tx_time_us=%llu; txdone_time_us=%llu; wakeup_time_us=%llu)\n",
+                 header->result, chan->tx_time_us, chan->txdone_time_us, chan->wakeup_time_us);
     }
 }
 
@@ -272,10 +277,9 @@ static bool trs_mbox_chan_is_available(struct trs_mbox_chan *chan)
     }
 
     if (ka_system_jiffies_to_msecs(ka_jiffies - chan->fault.broken_timestamp) < chan->fault.retry_duration) {
-        trs_err(
-            "Mbox chan not available. (devid=%u; tsid=%u; cur_jiffies=%lu; broken_timestamp=%lu; interval=%u(ms)\n",
-            chan->inst.devid, chan->inst.tsid, ka_jiffies, chan->fault.broken_timestamp,
-            ka_system_jiffies_to_msecs(ka_jiffies - chan->fault.broken_timestamp));
+        trs_err("Mbox chan not available. (devid=%u; tsid=%u; cur_jiffies=%lu; broken_timestamp=%lu; interval=%u(ms)\n",
+                chan->inst.devid, chan->inst.tsid, ka_jiffies, chan->fault.broken_timestamp,
+                ka_system_jiffies_to_msecs(ka_jiffies - chan->fault.broken_timestamp));
         return false;
     }
 
@@ -293,7 +297,10 @@ static void trs_mbox_chan_fault_record(struct trs_mbox_chan_fault *fault, int ti
     }
 }
 
-static void trs_mbox_chan_fault_clear(struct trs_mbox_chan_fault *fault) { fault->cont_tx_timeout = 0; }
+static void trs_mbox_chan_fault_clear(struct trs_mbox_chan_fault *fault)
+{
+    fault->cont_tx_timeout = 0;
+}
 
 static int trs_mbox_chan_send(struct trs_mbox_chan *chan, void *data, size_t size, int timeout)
 {
@@ -327,9 +334,8 @@ static int trs_mbox_chan_send(struct trs_mbox_chan *chan, void *data, size_t siz
             (void)trs_set_ts_status(&chan->inst, TRS_INST_STATUS_ABNORMAL);
         }
         trs_mbox_chan_fault_record(&chan->fault, timeout);
-        trs_err(
-            "Mbox wait fail. (ret=%d; valid=0x%x; tx_time_us=%llu; txdone_time_us=%llu; wakeup_time_us=%llu)\n", ret,
-            trs_mbox_chan_get_valid(chan), chan->tx_time_us, chan->txdone_time_us, chan->wakeup_time_us);
+        trs_err("Mbox wait fail. (ret=%d; valid=0x%x; tx_time_us=%llu; txdone_time_us=%llu; wakeup_time_us=%llu)\n",
+                ret, trs_mbox_chan_get_valid(chan), chan->tx_time_us, chan->txdone_time_us, chan->wakeup_time_us);
         return ret;
     }
 }

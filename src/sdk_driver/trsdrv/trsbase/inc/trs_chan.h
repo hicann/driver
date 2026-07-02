@@ -158,7 +158,10 @@ struct trs_chan_mem_attr {
     void *specified_uva;
 };
 
-static inline bool trs_chan_mem_is_local_mem(u32 mem_type) { return ((mem_type & TRS_CHAN_MEM_TYPE_LOCAL_MASK) != 0); }
+static inline bool trs_chan_mem_is_local_mem(u32 mem_type)
+{
+    return ((mem_type & TRS_CHAN_MEM_TYPE_LOCAL_MASK) != 0);
+}
 
 static inline bool trs_chan_mem_is_dev_mem(u32 mem_type)
 {
@@ -180,16 +183,14 @@ struct trs_chan_dma_desc {
 
 struct trs_chan_adapt_ops {
     ka_module_t *owner;
-    void *(*sq_mem_alloc)(
-        struct trs_id_inst *inst, struct trs_chan_type *types, struct trs_chan_sq_para *sq_para,
-        struct trs_chan_mem_attr *mem_attr);
-    void (*sq_mem_free)(
-        struct trs_id_inst *inst, struct trs_chan_type *types, void *sq_addr, struct trs_chan_mem_attr *mem_attr);
-    void *(*cq_mem_alloc)(
-        struct trs_id_inst *inst, struct trs_chan_type *types, struct trs_chan_cq_para *cq_para,
-        struct trs_chan_mem_attr *mem_attr);
-    void (*cq_mem_free)(
-        struct trs_id_inst *inst, struct trs_chan_type *types, void *cq_addr, struct trs_chan_mem_attr *mem_attr);
+    void *(*sq_mem_alloc)(struct trs_id_inst *inst, struct trs_chan_type *types, struct trs_chan_sq_para *sq_para,
+                          struct trs_chan_mem_attr *mem_attr);
+    void (*sq_mem_free)(struct trs_id_inst *inst, struct trs_chan_type *types, void *sq_addr,
+                        struct trs_chan_mem_attr *mem_attr);
+    void *(*cq_mem_alloc)(struct trs_id_inst *inst, struct trs_chan_type *types, struct trs_chan_cq_para *cq_para,
+                          struct trs_chan_mem_attr *mem_attr);
+    void (*cq_mem_free)(struct trs_id_inst *inst, struct trs_chan_type *types, void *cq_addr,
+                        struct trs_chan_mem_attr *mem_attr);
 
     bool (*is_current_proc_sq)(struct trs_id_inst *inst, u32 sqid); /* not must */
     bool (*is_current_proc_cq)(struct trs_id_inst *inst, u32 cqid); /* not must */
@@ -210,9 +211,8 @@ struct trs_chan_adapt_ops {
 
     int (*get_irq)(struct trs_id_inst *inst, u32 irq_type, u32 irq[], u32 irq_num, u32 *valid_irq_num);
     int (*get_cq_affinity_irq)(struct trs_id_inst *inst, u32 cq_id, u32 *irq_index);
-    int (*request_irq)(
-        struct trs_id_inst *inst, u32 irq_type, int irq_index, void *para,
-        int (*handler)(int irq_type, int irq_index, void *para, u32 cqid[], u32 cq_num));
+    int (*request_irq)(struct trs_id_inst *inst, u32 irq_type, int irq_index, void *para,
+                       int (*handler)(int irq_type, int irq_index, void *para, u32 cqid[], u32 cq_num));
     int (*free_irq)(struct trs_id_inst *inst, int irq_type, int irq_index, void *para);
     int (*sq_mem_map)(struct trs_id_inst *inst, struct trs_sq_mem_map_para *para, void **sq_dev_vaddr);
     int (*sq_mem_unmap)(struct trs_id_inst *inst, struct trs_sq_mem_map_para *para, void *sq_dev_vaddr);

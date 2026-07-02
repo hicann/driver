@@ -77,7 +77,10 @@ static struct trs_stars_ops trs_stars_func_ops = {
     .res_id_ctrl = trs_stars_ops_func_res_id_ctrl,
 };
 
-struct trs_stars_ops *trs_stars_func_op_get(void) { return &trs_stars_func_ops; }
+struct trs_stars_ops *trs_stars_func_op_get(void)
+{
+    return &trs_stars_func_ops;
+}
 
 int trs_stars_func_init(struct trs_id_inst *inst)
 {

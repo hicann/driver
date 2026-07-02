@@ -239,14 +239,16 @@ int trs_ts_db_cfg(struct trs_id_inst *inst, phys_addr_t paddr, size_t size, u32 
         trs_db_cfg_destroy(db_cfg);
         return ret;
     }
-    trs_debug(
-        "Ts doorbell config. (devid=%u; tsid=%u; db_size=0x%lx(B); db_stride=0x%x(B); db_num=%u)\n", inst->devid,
-        inst->tsid, size, stride, (u32)(size / stride));
+    trs_debug("Ts doorbell config. (devid=%u; tsid=%u; db_size=0x%lx(B); db_stride=0x%x(B); db_num=%u)\n", inst->devid,
+              inst->tsid, size, stride, (u32)(size / stride));
     return 0;
 }
 KA_EXPORT_SYMBOL_GPL(trs_ts_db_cfg);
 
-void trs_ts_db_decfg(struct trs_id_inst *inst) { trs_ts_db_del(inst); }
+void trs_ts_db_decfg(struct trs_id_inst *inst)
+{
+    trs_ts_db_del(inst);
+}
 KA_EXPORT_SYMBOL_GPL(trs_ts_db_decfg);
 
 static struct trs_db_cfg *trs_ts_db_cfg_get(struct trs_id_inst *inst)
@@ -264,7 +266,10 @@ static struct trs_db_cfg *trs_ts_db_cfg_get(struct trs_id_inst *inst)
     return db_cfg;
 }
 
-static void trs_ts_db_cfg_put(struct trs_db_cfg *db_cfg) { ka_base_kref_put(&db_cfg->ref, trs_db_cfg_release); }
+static void trs_ts_db_cfg_put(struct trs_db_cfg *db_cfg)
+{
+    ka_base_kref_put(&db_cfg->ref, trs_db_cfg_release);
+}
 
 int trs_ring_ts_db(struct trs_id_inst *inst, int type, u32 offset, u32 val)
 {

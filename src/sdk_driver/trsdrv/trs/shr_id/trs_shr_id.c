@@ -281,13 +281,15 @@ struct shr_id_proc_ctx *shr_id_proc_ctx_find(ka_pid_t pid)
     return proc_ctx;
 }
 
-static void shr_id_proc_put(struct shr_id_proc_ctx *proc_ctx) { kref_safe_put(&proc_ctx->ref, shr_id_proc_release); }
+static void shr_id_proc_put(struct shr_id_proc_ctx *proc_ctx)
+{
+    kref_safe_put(&proc_ctx->ref, shr_id_proc_release);
+}
 
 static int shr_id_name_generate(struct trs_id_inst *inst, int pid, int id_type, u32 shr_id, char *name)
 {
-    int offset = snprintf_s(
-        name, SHR_ID_NSM_NAME_SIZE, SHR_ID_NSM_NAME_SIZE - 1, "%08x%08x%08x%08x%08x", pid, inst->devid, inst->tsid,
-        id_type, shr_id);
+    int offset = snprintf_s(name, SHR_ID_NSM_NAME_SIZE, SHR_ID_NSM_NAME_SIZE - 1, "%08x%08x%08x%08x%08x", pid,
+                            inst->devid, inst->tsid, id_type, shr_id);
     if (offset < 0) {
         trs_err("Snprintf failed. (offset=%d)\n", offset);
         return -EINVAL;
@@ -321,8 +323,8 @@ static struct shr_id_proc_node *shr_id_find_proc_node(struct shr_id_proc_ctx *pr
     return NULL;
 }
 
-static int shr_id_add_to_proc(
-    struct shr_id_proc_ctx *proc_ctx, struct shr_id_ioctl_info *ioctl_info, struct shr_id_node_op_attr *attr, int op)
+static int shr_id_add_to_proc(struct shr_id_proc_ctx *proc_ctx, struct shr_id_ioctl_info *ioctl_info,
+                              struct shr_id_node_op_attr *attr, int op)
 {
     struct shr_id_proc_node *proc_node = NULL;
 
@@ -358,9 +360,8 @@ static int shr_id_add_to_proc(
         ioctl_info->flag |= TSDRV_FLAG_SHR_ID_SHADOW;
     }
 
-    trs_debug(
-        "Add info. (devid=%u; tsid=%u; type=%d; id=%u; flag=%u; node_flag=0x%x; op=%d)\n", attr->inst.devid,
-        attr->inst.tsid, attr->res_type, attr->id, ioctl_info->flag, proc_node->flag, op);
+    trs_debug("Add info. (devid=%u; tsid=%u; type=%d; id=%u; flag=%u; node_flag=0x%x; op=%d)\n", attr->inst.devid,
+              attr->inst.tsid, attr->res_type, attr->id, ioctl_info->flag, proc_node->flag, op);
 
     ka_task_write_lock(&proc_ctx->lock);
     ka_list_add_tail(&proc_node->list, shr_id_get_list_head(proc_ctx, op));
@@ -382,9 +383,8 @@ static void shr_id_del_from_proc(struct shr_id_proc_ctx *proc_ctx, struct shr_id
         return;
     }
 
-    trs_debug(
-        "Del info. (devid=%u; tsid=%u; type=%d; id=%u; flag=%u; node_flag=%u; op=%d)\n", proc_node->inst.devid,
-        proc_node->inst.devid, proc_node->type, proc_node->id, ioctl_info->flag, proc_node->flag, op);
+    trs_debug("Del info. (devid=%u; tsid=%u; type=%d; id=%u; flag=%u; node_flag=%u; op=%d)\n", proc_node->inst.devid,
+              proc_node->inst.devid, proc_node->type, proc_node->id, ioctl_info->flag, proc_node->flag, op);
 
     shr_id_proc_num_dec(proc_ctx, op, 1);
     proc_node->ref--;
@@ -452,7 +452,10 @@ int shr_id_proc_add(struct shr_id_proc_ctx *proc_ctx)
     return 0;
 }
 
-void shr_id_proc_del(struct shr_id_proc_ctx *proc_ctx) { shr_id_proc_put(proc_ctx); }
+void shr_id_proc_del(struct shr_id_proc_ctx *proc_ctx)
+{
+    shr_id_proc_put(proc_ctx);
+}
 
 bool shr_id_is_belong_to_proc(struct trs_id_inst *inst, int pid, int res_type, u32 res_id)
 {
@@ -490,9 +493,8 @@ bool shr_id_is_belong_to_proc(struct trs_id_inst *inst, int pid, int res_type, u
     ka_task_read_unlock(&proc_ctx->lock);
     shr_id_proc_put(proc_ctx);
 
-    trs_debug(
-        "Id info. (devid=%u; tsid=%u; pid=%d; type=%d; shrid=%u; is=%u)\n", inst->devid, inst->tsid,
-        ka_task_get_current_tgid(), res_type, res_id, is_belong);
+    trs_debug("Id info. (devid=%u; tsid=%u; pid=%d; type=%d; shrid=%u; is=%u)\n", inst->devid, inst->tsid,
+              ka_task_get_current_tgid(), res_type, res_id, is_belong);
 
     return is_belong;
 }
@@ -525,8 +527,8 @@ static int shr_id_set_stars_die_id(u32 devid, u32 tsid, struct shr_id_node_op_at
     return 0;
 }
 
-static int shr_id_node_attr_pack(
-    struct shr_id_node_op_attr *attr, ka_pid_t pid, u64 start_time, struct shr_id_ioctl_info *ioctl_info)
+static int shr_id_node_attr_pack(struct shr_id_node_op_attr *attr, ka_pid_t pid, u64 start_time,
+                                 struct shr_id_ioctl_info *ioctl_info)
 {
     u32 type = ioctl_info->id_type;
     int ret, i;
@@ -584,8 +586,8 @@ int shr_id_create(struct shr_id_proc_ctx *proc_ctx, unsigned long arg)
     }
 
     if (ioctl_info.id_type >= SHR_ID_TYPE_MAX) {
-        trs_err(
-            "Para invalid. (devid=%u; tsid=%u; idtype=%u)\n", ioctl_info.devid, ioctl_info.tsid, ioctl_info.id_type);
+        trs_err("Para invalid. (devid=%u; tsid=%u; idtype=%u)\n", ioctl_info.devid, ioctl_info.tsid,
+                ioctl_info.id_type);
         return -EINVAL;
     }
 

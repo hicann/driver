@@ -18,9 +18,15 @@
 #include "trs_stars_com.h"
 #include "trs_stars_comm.h"
 
-int trs_init_cnt_notify_tbl(struct trs_id_inst *inst) { return trs_init_cnt_notify_tbl_ns_base_addr(inst); }
+int trs_init_cnt_notify_tbl(struct trs_id_inst *inst)
+{
+    return trs_init_cnt_notify_tbl_ns_base_addr(inst);
+}
 
-void trs_uninit_cnt_notify_tbl(struct trs_id_inst *inst) { trs_uninit_cnt_notify_tbl_ns_base_addr(inst); }
+void trs_uninit_cnt_notify_tbl(struct trs_id_inst *inst)
+{
+    trs_uninit_cnt_notify_tbl_ns_base_addr(inst);
+}
 
 int trs_stars_func_cnt_notify_id_ctrl(struct trs_id_inst *inst, u32 id, u32 cmd)
 {

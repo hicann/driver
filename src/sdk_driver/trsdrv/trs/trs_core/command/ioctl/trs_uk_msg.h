@@ -78,5 +78,8 @@ struct trs_cb_stars_event {
     unsigned int fn_data_high;
 };
 
-static inline void trs_get_cb_group_num(unsigned int *group_num) { *group_num = TRS_CB_GROUP_NUM; }
+static inline void trs_get_cb_group_num(unsigned int *group_num)
+{
+    *group_num = TRS_CB_GROUP_NUM;
+}
 #endif

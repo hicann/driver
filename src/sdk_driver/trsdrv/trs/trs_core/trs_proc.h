@@ -121,8 +121,8 @@ static inline int trs_get_proc_id_dfx_times(struct trs_proc_ctx *proc_ctx, u32 t
 bool trs_proc_has_res(struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst, int res_type, u32 res_id);
 bool trs_proc_has_res_with_pid(struct trs_core_ts_inst *ts_inst, int pid, int res_type, u32 res_id);
 int trs_proc_add_res(struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst, int res_type, u32 res_id);
-int trs_proc_add_res_ex(
-    struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst, int res_type, u32 res_id, bool is_agent_res);
+int trs_proc_add_res_ex(struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst, int res_type, u32 res_id,
+                        bool is_agent_res);
 int trs_proc_del_res(struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst, int res_type, u32 res_id);
 int trs_res_get(struct trs_core_ts_inst *ts_inst, int pid, int res_type, u32 res_id);
 int trs_res_put(struct trs_core_ts_inst *ts_inst, int res_type, u32 res_id);
@@ -163,8 +163,8 @@ struct trs_mem_unmap_para {
     unsigned long len;
 };
 
-static inline void trs_remap_fill_para(
-    struct trs_mem_map_para *para, int type, unsigned long va, unsigned long pa, unsigned long len)
+static inline void trs_remap_fill_para(struct trs_mem_map_para *para, int type, unsigned long va, unsigned long pa,
+                                       unsigned long len)
 {
     para->type = type;
     para->va = va;

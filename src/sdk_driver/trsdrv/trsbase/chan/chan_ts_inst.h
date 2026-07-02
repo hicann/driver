@@ -113,6 +113,9 @@ static inline int trs_chan_maint_cq_to_chan_id(struct trs_chan_ts_inst *ts_inst,
     return (cqid < ts_inst->maint_cq_max_id) ? ts_inst->maint_cq_ctx[cqid].chan_id : -1;
 }
 
-static inline bool trs_chan_trace_is_enabled(struct trs_chan_ts_inst *ts_inst) { return ts_inst->trace_enable; }
+static inline bool trs_chan_trace_is_enabled(struct trs_chan_ts_inst *ts_inst)
+{
+    return ts_inst->trace_enable;
+}
 
 #endif

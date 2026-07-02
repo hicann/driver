@@ -84,9 +84,8 @@ void *trs_chan_mem_alloc_rsv(struct trs_id_inst *inst, int type, size_t size, ph
     if (ret != 0) {
         trs_rsv_mem_free(inst, type, vaddr, size);
 #ifndef EMU_ST
-        trs_err(
-            "Rcv mem v2p fail. (devid=%u; tsid=%u; type=%d; size=%lu; ret=%d)\n", inst->devid, inst->tsid, type, size,
-            ret);
+        trs_err("Rcv mem v2p fail. (devid=%u; tsid=%u; type=%d; size=%lu; ret=%d)\n", inst->devid, inst->tsid, type,
+                size, ret);
 #endif
         return NULL;
     }

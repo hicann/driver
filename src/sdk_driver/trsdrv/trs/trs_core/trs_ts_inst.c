@@ -123,8 +123,8 @@ static void trs_core_ts_inst_uninit(struct trs_core_ts_inst *ts_inst)
     trs_res_mng_uninit(ts_inst);
 }
 
-static int trs_core_ts_inst_create(
-    struct trs_id_inst *inst, int hw_type, int location, u32 ts_inst_flag, struct trs_core_adapt_ops *ops)
+static int trs_core_ts_inst_create(struct trs_id_inst *inst, int hw_type, int location, u32 ts_inst_flag,
+                                   struct trs_core_adapt_ops *ops)
 {
     u32 ts_inst_id = trs_id_inst_to_ts_inst(inst);
     struct trs_core_ts_inst *ts_inst = NULL;
@@ -137,9 +137,8 @@ static int trs_core_ts_inst_create(
 
     ts_inst = trs_vzalloc(sizeof(struct trs_core_ts_inst));
     if (ts_inst == NULL) {
-        trs_err(
-            "Mem alloc failed. (devid=%u; tsid=%u; size=%lx)\n", inst->devid, inst->tsid,
-            sizeof(struct trs_core_ts_inst));
+        trs_err("Mem alloc failed. (devid=%u; tsid=%u; size=%lx)\n", inst->devid, inst->tsid,
+                sizeof(struct trs_core_ts_inst));
         return -ENOMEM;
     }
 
@@ -211,8 +210,8 @@ static int trs_core_check_ts_inst_ops(struct trs_core_adapt_ops *ops)
     return 0;
 }
 
-int trs_core_ts_inst_register(
-    struct trs_id_inst *inst, int hw_type, int location, u32 ts_inst_flag, struct trs_core_adapt_ops *ops)
+int trs_core_ts_inst_register(struct trs_id_inst *inst, int hw_type, int location, u32 ts_inst_flag,
+                              struct trs_core_adapt_ops *ops)
 {
     int ret;
 
@@ -267,7 +266,10 @@ struct trs_core_ts_inst *trs_core_ts_inst_get(struct trs_id_inst *inst)
     return ts_inst;
 }
 
-void trs_core_ts_inst_put(struct trs_core_ts_inst *ts_inst) { kref_safe_put(&ts_inst->ref, trs_core_ts_inst_release); }
+void trs_core_ts_inst_put(struct trs_core_ts_inst *ts_inst)
+{
+    kref_safe_put(&ts_inst->ref, trs_core_ts_inst_release);
+}
 
 static void trs_core_destroy_all_proc(struct trs_core_ts_inst *ts_inst)
 {

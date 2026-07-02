@@ -49,9 +49,15 @@ static u32 get_elfhash_key(const char *name)
 }
 
 struct shr_id_node_ops g_shrid_node_ops;
-void shr_id_register_node_ops(struct shr_id_node_ops *ops) { g_shrid_node_ops = *ops; }
+void shr_id_register_node_ops(struct shr_id_node_ops *ops)
+{
+    g_shrid_node_ops = *ops;
+}
 
-static struct shr_id_node_ops *shr_id_get_node_ops(void) { return &g_shrid_node_ops; }
+static struct shr_id_node_ops *shr_id_get_node_ops(void)
+{
+    return &g_shrid_node_ops;
+}
 struct shr_id_node_wlist {
     ka_pid_t pid;
     u64 set_time;
@@ -114,9 +120,8 @@ static struct shr_id_node *_shr_id_node_create(struct shr_id_node_op_attr *attr)
 
 static void _shr_id_node_destroy(struct shr_id_node *node)
 {
-    trs_debug(
-        "Destroy. (devid=%u; tsid=%u; name=%s; type=%d; id=%u; flag=%d)\n", node->attr.inst.devid, node->attr.inst.tsid,
-        node->attr.name, node->attr.type, node->attr.id, node->attr.flag);
+    trs_debug("Destroy. (devid=%u; tsid=%u; name=%s; type=%d; id=%u; flag=%d)\n", node->attr.inst.devid,
+              node->attr.inst.tsid, node->attr.name, node->attr.type, node->attr.id, node->attr.flag);
 
     if (node->attr.res_put != NULL) {
         node->attr.res_put(&node->attr.inst, node->attr.res_type, node->attr.id);
@@ -168,10 +173,9 @@ static int shr_id_node_add(struct shr_id_node *node)
         int wlist_num = 1;
         shr_id_get_opened_wlist_info(tmp_node, &tmp_wlist, &wlist_num);
         ka_task_write_unlock(&htable[node->attr.type].lock);
-        trs_err(
-            "Add shr id node fail. (devid=%u; tsid=%u; name=%s; type=%d; id=%u; procs_num=%d; opened_pid=%d)\n",
-            node->attr.inst.devid, node->attr.inst.tsid, node->attr.name, node->attr.type, node->attr.id, wlist_num,
-            tmp_wlist.pid);
+        trs_err("Add shr id node fail. (devid=%u; tsid=%u; name=%s; type=%d; id=%u; procs_num=%d; opened_pid=%d)\n",
+                node->attr.inst.devid, node->attr.inst.tsid, node->attr.name, node->attr.type, node->attr.id, wlist_num,
+                tmp_wlist.pid);
         return -EACCES;
     }
     _shr_id_node_add(node);
@@ -180,7 +184,10 @@ static int shr_id_node_add(struct shr_id_node *node)
     return 0;
 }
 
-static void _shr_id_node_del(struct shr_id_node *node) { ka_hash_del(&node->link); }
+static void _shr_id_node_del(struct shr_id_node *node)
+{
+    ka_hash_del(&node->link);
+}
 
 static void shr_id_node_del(struct shr_id_node *node)
 {
@@ -228,9 +235,8 @@ int shr_id_node_create(struct shr_id_node_op_attr *attr)
     if (ret != 0) {
         _shr_id_node_destroy(node);
     } else {
-        trs_debug(
-            "Create succeed. (devid=%u; tsid=%u; name=%s; type=%d; id=%u; size=%ld; flag=%u)\n", attr->inst.devid,
-            attr->inst.tsid, node->attr.name, attr->type, attr->id, sizeof(*node), attr->flag);
+        trs_debug("Create succeed. (devid=%u; tsid=%u; name=%s; type=%d; id=%u; size=%ld; flag=%u)\n", attr->inst.devid,
+                  attr->inst.tsid, node->attr.name, attr->type, attr->id, sizeof(*node), attr->flag);
     }
     return ret;
 }
@@ -239,9 +245,8 @@ static void shr_id_node_release(struct kref_safe *kref)
 {
     struct shr_id_node *node = ka_container_of(kref, struct shr_id_node, ref);
 
-    trs_debug(
-        "Release succeed. (devid=%u; tsid=%u; name=%s; type=%d; id=%u)\n", node->attr.inst.devid, node->attr.inst.tsid,
-        node->attr.name, node->attr.type, node->attr.id);
+    trs_debug("Release succeed. (devid=%u; tsid=%u; name=%s; type=%d; id=%u)\n", node->attr.inst.devid,
+              node->attr.inst.tsid, node->attr.name, node->attr.type, node->attr.id);
     shr_id_node_del(node);
     _shr_id_node_destroy(node);
 }
@@ -275,7 +280,10 @@ static struct shr_id_node *_shr_id_node_get(const char *name, int type)
     return node;
 }
 
-static void _shr_id_node_put(struct shr_id_node *node) { kref_safe_put(&node->ref, shr_id_node_release); }
+static void _shr_id_node_put(struct shr_id_node *node)
+{
+    kref_safe_put(&node->ref, shr_id_node_release);
+}
 
 int shr_id_node_get_attr(const char *name, struct shr_id_node_op_attr *attr)
 {
@@ -339,7 +347,10 @@ bool shr_id_node_need_wlist(void *node)
     return tmp_node->need_wlist;
 }
 
-void *shr_id_node_get(const char *name, int type) { return (void *)_shr_id_node_get(name, type); }
+void *shr_id_node_get(const char *name, int type)
+{
+    return (void *)_shr_id_node_get(name, type);
+}
 
 void shr_id_node_put(void *node)
 {
@@ -439,9 +450,8 @@ int shr_id_node_set_pids(const char *name, int type, ka_pid_t create_pid, ka_pid
     ka_task_spin_unlock(&node->lock);
 
     if (ret != 0) {
-        trs_err(
-            "Shr node can't set pid.(need_wlist=%d; create_pid=%d; current_pid=%d; ret=%d)\n", node->need_wlist,
-            node->attr.pid, create_pid, ret);
+        trs_err("Shr node can't set pid.(need_wlist=%d; create_pid=%d; current_pid=%d; ret=%d)\n", node->need_wlist,
+                node->attr.pid, create_pid, ret);
     }
     _shr_id_node_put(node);
 
@@ -506,9 +516,8 @@ static int shr_id_destroy_node_handle(struct shr_id_node *node, u32 mode)
         return shr_id_get_node_ops()->destory_node(node, mode);
     }
 
-    trs_debug(
-        "Not support destroy handle. (devid=%u; tsid=%u; name=%s; type=%d)\n", node->attr.inst.devid,
-        node->attr.inst.tsid, node->attr.name, node->attr.type);
+    trs_debug("Not support destroy handle. (devid=%u; tsid=%u; name=%s; type=%d)\n", node->attr.inst.devid,
+              node->attr.inst.tsid, node->attr.name, node->attr.type);
     return 0;
 }
 
@@ -528,9 +537,8 @@ int shr_id_node_set_attr(const char *name, int type, ka_pid_t pid)
     if (ret == 0) {
         trs_info("Set attribute success.(name=%s)\n", name);
     } else {
-        trs_err(
-            "Shr node can't set attr.(need_wlist=%d; create_pid=%d; current_pid=%d; ret=%d)\n", node->need_wlist,
-            node->attr.pid, pid, ret);
+        trs_err("Shr node can't set attr.(need_wlist=%d; create_pid=%d; current_pid=%d; ret=%d)\n", node->need_wlist,
+                node->attr.pid, pid, ret);
     }
     _shr_id_node_put(node);
     return ret;
@@ -586,9 +594,9 @@ int shr_id_node_destroy(const char *name, int type, ka_pid_t pid, u32 mode)
         if (ret == 0) {
             /* Decrease ref when shr_id_node created. */
             _shr_id_node_put(node);
-            trs_debug(
-                "Destroy succeed. (devid=%u; tsid=%u; name=%s; type=%d; id=%u; ref=%u)\n", node->attr.inst.devid,
-                node->attr.inst.tsid, node->attr.name, node->attr.type, node->attr.id, kref_safe_read(&node->ref));
+            trs_debug("Destroy succeed. (devid=%u; tsid=%u; name=%s; type=%d; id=%u; ref=%u)\n", node->attr.inst.devid,
+                      node->attr.inst.tsid, node->attr.name, node->attr.type, node->attr.id,
+                      kref_safe_read(&node->ref));
         } else {
 #ifndef EMU_ST
             ka_task_spin_lock(&node->lock);
@@ -601,8 +609,8 @@ int shr_id_node_destroy(const char *name, int type, ka_pid_t pid, u32 mode)
     return ret;
 }
 
-static int _shr_id_node_open(
-    struct shr_id_node *node, ka_pid_t pid, unsigned long start_time, struct shr_id_node_op_attr *attr)
+static int _shr_id_node_open(struct shr_id_node *node, ka_pid_t pid, unsigned long start_time,
+                             struct shr_id_node_op_attr *attr)
 {
     int idx;
 
@@ -653,13 +661,12 @@ int shr_id_node_open(const char *name, ka_pid_t pid, unsigned long start_time, s
     ret = _shr_id_node_open(node, pid, start_time, attr);
     ka_task_spin_unlock(&node->lock);
     if (ret != 0) {
-        trs_err(
-            "Open fail. (name=%s; type=%d; pid=%d; ret=%d; attr=%d)\n", name, attr->type, pid, ret, node->need_wlist);
+        trs_err("Open fail. (name=%s; type=%d; pid=%d; ret=%d; attr=%d)\n", name, attr->type, pid, ret,
+                node->need_wlist);
         _shr_id_node_put(node);
     } else {
-        trs_debug(
-            "Open succeed. (devid=%u; tsid=%u; name=%s; type=%d; id=%u)\n", attr->inst.devid, attr->inst.tsid, name,
-            attr->type, attr->id);
+        trs_debug("Open succeed. (devid=%u; tsid=%u; name=%s; type=%d; id=%u)\n", attr->inst.devid, attr->inst.tsid,
+                  name, attr->type, attr->id);
     }
 
     return ret;
@@ -696,9 +703,8 @@ int shr_id_node_close(const char *name, int type, ka_pid_t pid)
         if (ret == 0) {
             /* Decrease ref when shr_id_node opened. */
             _shr_id_node_put(node);
-            trs_debug(
-                "Close succeed. (devid=%u; tsid=%u; name=%s; type=%d; id=%u)\n", node->attr.inst.devid,
-                node->attr.inst.tsid, name, type, node->attr.id);
+            trs_debug("Close succeed. (devid=%u; tsid=%u; name=%s; type=%d; id=%u)\n", node->attr.inst.devid,
+                      node->attr.inst.tsid, name, type, node->attr.id);
         }
         _shr_id_node_put(node);
     }

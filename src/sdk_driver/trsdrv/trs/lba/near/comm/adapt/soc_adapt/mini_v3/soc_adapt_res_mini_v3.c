@@ -37,9 +37,15 @@
 #define TRS_MINI_V3_EVENT_SLICE_SIZE (64 * 1024)
 #define TRS_MINI_V3_EVENT_NUM_PER_SLICE 4096 /* total silce num is 16 */
 
-u32 trs_soc_get_mini_v3_notify_offset(u32 notify_id) { return notify_id * TRS_MINI_V3_NOTIFY_SIZE; }
+u32 trs_soc_get_mini_v3_notify_offset(u32 notify_id)
+{
+    return notify_id * TRS_MINI_V3_NOTIFY_SIZE;
+}
 
-size_t trs_soc_get_mini_v3_notify_size(void) { return (size_t)TRS_MINI_V3_NOTIFY_SIZE; }
+size_t trs_soc_get_mini_v3_notify_size(void)
+{
+    return (size_t)TRS_MINI_V3_NOTIFY_SIZE;
+}
 
 u32 trs_soc_get_mini_v3_event_offset(u32 event_id)
 {
@@ -49,9 +55,15 @@ u32 trs_soc_get_mini_v3_event_offset(u32 event_id)
 #endif
 }
 
-size_t trs_soc_get_mini_v3_db_stride(void) { return (size_t)TRS_SOC_MINI_V3_DB_STRIDE; }
+size_t trs_soc_get_mini_v3_db_stride(void)
+{
+    return (size_t)TRS_SOC_MINI_V3_DB_STRIDE;
+}
 
-size_t trs_soc_get_mini_v3_stars_sched_stride(void) { return (u32)TRS_MINI_V3_STARS_SCHED_STRIDE; }
+size_t trs_soc_get_mini_v3_stars_sched_stride(void)
+{
+    return (u32)TRS_MINI_V3_STARS_SCHED_STRIDE;
+}
 
 int trs_soc_get_mini_v3_db_cfg(int db_type, u32 *start, u32 *end)
 {
@@ -98,15 +110,33 @@ void trs_soc_mini_v3_chan_stars_uninit(struct trs_id_inst *inst)
 }
 
 #ifndef EMU_ST
-int trs_soc_mini_v3_chan_stars_ops_init(struct trs_id_inst *inst) { return trs_chan_stars_v1_ops_init(inst); }
+int trs_soc_mini_v3_chan_stars_ops_init(struct trs_id_inst *inst)
+{
+    return trs_chan_stars_v1_ops_init(inst);
+}
 
-void trs_soc_mini_v3_chan_stars_ops_uninit(struct trs_id_inst *inst) { trs_chan_stars_v1_ops_uninit(inst); }
+void trs_soc_mini_v3_chan_stars_ops_uninit(struct trs_id_inst *inst)
+{
+    trs_chan_stars_v1_ops_uninit(inst);
+}
 
-struct trs_chan_adapt_ops *trs_chan_mini_v3_get_stars_adapt_ops(void) { return trs_chan_get_stars_v1_adapt_ops(); }
+struct trs_chan_adapt_ops *trs_chan_mini_v3_get_stars_adapt_ops(void)
+{
+    return trs_chan_get_stars_v1_adapt_ops();
+}
 #endif
 
-struct trs_core_adapt_ops *trs_core_mini_v3_get_stars_adapt_ops(void) { return trs_core_get_stars_v1_adapt_ops(); }
+struct trs_core_adapt_ops *trs_core_mini_v3_get_stars_adapt_ops(void)
+{
+    return trs_core_get_stars_v1_adapt_ops();
+}
 
-int trs_soc_mini_v3_sq_send_trigger_db_init(struct trs_id_inst *inst) { return trs_sq_send_trigger_db_init(inst); }
+int trs_soc_mini_v3_sq_send_trigger_db_init(struct trs_id_inst *inst)
+{
+    return trs_sq_send_trigger_db_init(inst);
+}
 
-void trs_soc_mini_v3_sq_send_trigger_db_uninit(struct trs_id_inst *inst) { trs_sq_send_trigger_db_uninit(inst); }
+void trs_soc_mini_v3_sq_send_trigger_db_uninit(struct trs_id_inst *inst)
+{
+    trs_sq_send_trigger_db_uninit(inst);
+}

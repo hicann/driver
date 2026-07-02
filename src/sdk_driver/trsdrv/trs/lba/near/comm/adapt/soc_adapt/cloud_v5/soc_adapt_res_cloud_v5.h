@@ -46,7 +46,10 @@ static inline u32 trs_soc_get_cloud_v5_notify_offset(u32 id)
            (id / TRS_CLOUD_V5_NOTIFY_NUM_PER_SLICE) * TRS_CLOUD_V5_NOTIFY_SLICE_SIZE;
 }
 
-static inline size_t trs_soc_get_cloud_v5_notify_size(void) { return (size_t)TRS_CLOUD_V5_NOTIFY_SIZE; }
+static inline size_t trs_soc_get_cloud_v5_notify_size(void)
+{
+    return (size_t)TRS_CLOUD_V5_NOTIFY_SIZE;
+}
 
 /* Cnt notify */
 #define TRS_CLOUD_V5_CNT_NOTIFY_SIZE 4
@@ -65,10 +68,16 @@ static inline u32 trs_soc_get_cloud_v5_cnt_notify_offset(u32 id)
            (id / TRS_CLOUD_V5_CNT_NOTIFY_NUM_PER_SLICE) * TRS_CLOUD_V5_CNT_NOTIFY_SLICE_SIZE;
 }
 
-static inline size_t trs_soc_get_cloud_v5_cnt_notify_size(void) { return (size_t)TRS_CLOUD_V5_CNT_NOTIFY_SIZE; }
+static inline size_t trs_soc_get_cloud_v5_cnt_notify_size(void)
+{
+    return (size_t)TRS_CLOUD_V5_CNT_NOTIFY_SIZE;
+}
 
 #define TRS_cloud_v5_STARS_SCHED_STRIDE (4 * 1024)
-static inline size_t trs_soc_get_cloud_v5_stars_sched_stride(void) { return (u32)TRS_cloud_v5_STARS_SCHED_STRIDE; }
+static inline size_t trs_soc_get_cloud_v5_stars_sched_stride(void)
+{
+    return (u32)TRS_cloud_v5_STARS_SCHED_STRIDE;
+}
 
 static inline u32 trs_soc_get_cloud_v5_sq_mem_side(u32 devid, struct trs_chan_type *types)
 {
@@ -92,17 +101,38 @@ static inline u32 trs_soc_get_cloud_v5_cq_mem_side(u32 devid)
     }
 }
 
-static inline int trs_soc_get_cloud_v5_sq_head_reg_offset(void) { return TRS_STARS_V2_SCHED_SQ_HEAD_OFFSET; }
+static inline int trs_soc_get_cloud_v5_sq_head_reg_offset(void)
+{
+    return TRS_STARS_V2_SCHED_SQ_HEAD_OFFSET;
+}
 
-static inline int trs_soc_get_cloud_v5_sq_tail_reg_offset(void) { return TRS_STARS_V2_SCHED_SQ_TAIL_OFFSET; }
+static inline int trs_soc_get_cloud_v5_sq_tail_reg_offset(void)
+{
+    return TRS_STARS_V2_SCHED_SQ_TAIL_OFFSET;
+}
 
-static inline int trs_soc_get_cloud_v5_sq_status_reg_offset(void) { return TRS_STARS_V2_SCHED_SQ_STATUS_OFFSET; }
+static inline int trs_soc_get_cloud_v5_sq_status_reg_offset(void)
+{
+    return TRS_STARS_V2_SCHED_SQ_STATUS_OFFSET;
+}
 
-static inline int trs_soc_get_cloud_v5_cq_head_reg_offset(void) { return TRS_STARS_V2_SCHED_CQ_HEAD_OFFSET; }
+static inline int trs_soc_get_cloud_v5_cq_head_reg_offset(void)
+{
+    return TRS_STARS_V2_SCHED_CQ_HEAD_OFFSET;
+}
 
-static inline int trs_soc_get_cloud_v5_cq_tail_reg_offset(void) { return TRS_STARS_V2_SCHED_CQ_TAIL_OFFSET; }
+static inline int trs_soc_get_cloud_v5_cq_tail_reg_offset(void)
+{
+    return TRS_STARS_V2_SCHED_CQ_TAIL_OFFSET;
+}
 
-static inline int trs_soc_get_cloud_v5_db_cfg(int db_type, u32 *start, u32 *end) { return -EOPNOTSUPP; }
+static inline int trs_soc_get_cloud_v5_db_cfg(int db_type, u32 *start, u32 *end)
+{
+    return -EOPNOTSUPP;
+}
 
-static inline bool trs_cloud_v5_is_support_soft_mbox(void) { return true; }
+static inline bool trs_cloud_v5_is_support_soft_mbox(void)
+{
+    return true;
+}
 #endif /* SOC_ADAPT_RES_CLOUD_V5_H__ */

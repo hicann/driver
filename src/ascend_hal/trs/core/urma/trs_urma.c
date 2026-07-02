@@ -298,8 +298,8 @@ static int _trs_destroy_stars_jetty(urma_context_t *urma_ctx, struct trs_urma_st
     return 0;
 }
 
-static int _trs_create_stars_jetty(
-    urma_context_t *urma_ctx, struct trs_urma_jfr *trs_jfr, uint32_t depth, struct trs_urma_stars_jetty *trs_jetty)
+static int _trs_create_stars_jetty(urma_context_t *urma_ctx, struct trs_urma_jfr *trs_jfr, uint32_t depth,
+                                   struct trs_urma_stars_jetty *trs_jetty)
 {
     struct udma_u_jetty_cfg_ex jetty_ex_cfg = {0};
     urma_jetty_cfg_t jetty_cfg = {0};
@@ -345,9 +345,8 @@ static int _trs_create_stars_jetty(
     return 0;
 }
 
-int trs_create_stars_jetty(
-    urma_context_t *urma_ctx, urma_jfce_t *jfce, struct trs_urma_jfr *trs_jfr, uint32_t depth,
-    struct trs_urma_stars_jetty *trs_jetty)
+int trs_create_stars_jetty(urma_context_t *urma_ctx, urma_jfce_t *jfce, struct trs_urma_jfr *trs_jfr, uint32_t depth,
+                           struct trs_urma_stars_jetty *trs_jetty)
 {
     int ret = 0;
 
@@ -372,9 +371,8 @@ int trs_create_stars_jetty(
     }
 
     trs_jetty->init_flag = true;
-    trs_debug(
-        "Create stars jetty success. (jetty_id=%u; jfr_id=%u; jfc_id=%u)\n", trs_jetty->jetty->jetty_id.id,
-        trs_jfr->jfr->jfr_id.id, trs_jetty->trs_jfc.jfc->jfc_id.id);
+    trs_debug("Create stars jetty success. (jetty_id=%u; jfr_id=%u; jfc_id=%u)\n", trs_jetty->jetty->jetty_id.id,
+              trs_jfr->jfr->jfr_id.id, trs_jetty->trs_jfc.jfc->jfc_id.id);
 
     return 0;
 }
@@ -523,9 +521,8 @@ drvError_t trs_urma_proc_ctx_init(struct trs_urma_proc_ctx *proc_ctx)
         return DRV_ERROR_INNER_ERR;
     }
     proc_ctx->eid = proc_ctx->urma_ctx->eid;
-    trs_debug(
-        "Get eid list. (dev_name=%s; eid_index=%d; " EID_FMT ").\n", proc_ctx->urma_dev->name, proc_ctx->eid_index,
-        EID_ARGS(proc_ctx->eid));
+    trs_debug("Get eid list. (dev_name=%s; eid_index=%d; " EID_FMT ").\n", proc_ctx->urma_dev->name,
+              proc_ctx->eid_index, EID_ARGS(proc_ctx->eid));
 
     proc_ctx->jfce = urma_create_jfce(proc_ctx->urma_ctx);
     if (proc_ctx->jfce == NULL) {

@@ -82,7 +82,10 @@ static void trs_get_core_info(u8 *base, enum accelerator_core_type type, u32 *co
     }
 }
 
-static inline bool trs_util_status_is_valid(u8 *status) { return (*status == 0); }
+static inline bool trs_util_status_is_valid(u8 *status)
+{
+    return (*status == 0);
+}
 
 static int trs_calculate_util(u8 *base, enum accelerator_core_type type, u32 *utilization)
 {
@@ -112,8 +115,8 @@ static int trs_calculate_util(u8 *base, enum accelerator_core_type type, u32 *ut
 
     *utilization = (unuse_num == core_num) ? 0 : (core_ans / (core_num - unuse_num));
 
-    trs_debug(
-        "Core util info. (util=%u; core_num=%u; unuse_num=%u; type=%d)\n", *utilization, core_num, unuse_num, type);
+    trs_debug("Core util info. (util=%u; core_num=%u; unuse_num=%u; type=%d)\n", *utilization, core_num, unuse_num,
+              type);
 
     return 0;
 }
@@ -127,9 +130,15 @@ static void trs_util_result_fill(struct udis_dev_info *core_res, u32 utilization
     core_res->last_update_time = ktime_get_raw_ns() / KA_NSEC_PER_MSEC;
 }
 
-static inline void trs_init_util_status(u8 *status) { *status = TRS_CORE_UTIL_INVALID_STATUS; }
+static inline void trs_init_util_status(u8 *status)
+{
+    *status = TRS_CORE_UTIL_INVALID_STATUS;
+}
 
-static inline bool trs_util_status_is_conflict(u8 *status) { return (*status == TRS_CORE_UTIL_IPC_CONFILCT_RET); }
+static inline bool trs_util_status_is_conflict(u8 *status)
+{
+    return (*status == TRS_CORE_UTIL_IPC_CONFILCT_RET);
+}
 
 static int trs_notice_tsfw_get_util_start(struct trs_id_inst *inst, enum accelerator_core_type type, u8 *base)
 {
@@ -144,8 +153,8 @@ static int trs_notice_tsfw_get_util_start(struct trs_id_inst *inst, enum acceler
     return ret;
 }
 
-static int _trs_get_accelerator_util(
-    u32 devid, enum accelerator_core_type type, u8 *base, struct udis_dev_info *udis_info)
+static int _trs_get_accelerator_util(u32 devid, enum accelerator_core_type type, u8 *base,
+                                     struct udis_dev_info *udis_info)
 {
     struct trs_id_inst inst = {.devid = devid, .tsid = 0};
     u32 utilization;
@@ -270,7 +279,9 @@ void trs_accelerator_util_uninit(void)
     trs_info("Trs accelerator util uninit succeed.\n");
 }
 #else
-void trs_accelerator_util_init(void) {}
+void trs_accelerator_util_init(void)
+{}
 
-void trs_accelerator_util_uninit(void) {}
+void trs_accelerator_util_uninit(void)
+{}
 #endif

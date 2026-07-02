@@ -132,8 +132,8 @@ drvError_t trs_sq_cq_config(uint32_t dev_id, struct halSqCqConfigInfo *info);
 int trs_set_sq_info_head(uint32_t dev_id, uint32_t ts_id, int type, uint32_t sq_id, uint32_t head);
 int trs_set_sq_info_tail(uint32_t dev_id, uint32_t ts_id, int type, uint32_t sq_id, uint32_t tail);
 int trs_recycle_sq_cq_with_urma(uint32_t dev_id, uint32_t ts_id, uint32_t sq_id, uint32_t cq_id, bool remote_free_flag);
-drvError_t trs_async_dma_desc_create(
-    uint32_t dev_id, struct halAsyncDmaInputPara *in, struct halAsyncDmaOutputPara *out);
+drvError_t trs_async_dma_desc_create(uint32_t dev_id, struct halAsyncDmaInputPara *in,
+                                     struct halAsyncDmaOutputPara *out);
 drvError_t trs_async_dma_destory(uint32_t dev_id, struct halAsyncDmaDestoryPara *para);
 struct trs_sqcq_remote_ops {
     drvError_t (*sqcq_alloc)(uint32_t dev_id, struct halSqCqInputInfo *in, struct halSqCqOutputInfo *out);
@@ -149,7 +149,10 @@ struct trs_sqcq_mem_ops {
 
 void trs_register_sqcq_mem_ops(struct trs_sqcq_mem_ops *ops);
 
-static inline bool trs_is_sq_init_without_sq_mem(uint32_t flag) { return ((flag & TSDRV_FLAG_NO_SQ_MEM) != 0); }
+static inline bool trs_is_sq_init_without_sq_mem(uint32_t flag)
+{
+    return ((flag & TSDRV_FLAG_NO_SQ_MEM) != 0);
+}
 
 static inline bool trs_is_sq_support_send(struct sqcq_usr_info *info)
 {

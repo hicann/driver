@@ -18,7 +18,7 @@ drvError_t trs_sqcq_urma_alloc(uint32_t dev_id, struct halSqCqInputInfo *in, str
 drvError_t trs_sqcq_urma_free(uint32_t dev_id, struct halSqCqFreeInfo *info, bool remote_free_flag);
 drvError_t trs_sq_task_send_urma(uint32_t dev_id, struct halTaskSendInfo *info, struct sqcq_usr_info *sq_info);
 drvError_t trs_sq_task_srgs_async_copy(uint32_t dev_id, struct halSqTaskArgsInfo *info, struct sqcq_usr_info *sq_info);
-drvError_t trs_get_urma_tseg_info_by_va(
-    uint32_t devid, uint64_t va, uint64_t size, uint32_t flag, struct halTsegInfo *tsegInfo);
+drvError_t trs_get_urma_tseg_info_by_va(uint32_t devid, uint64_t va, uint64_t size, uint32_t flag,
+                                        struct halTsegInfo *tsegInfo);
 drvError_t trs_put_urma_tseg_info(uint32_t devid, struct halTsegInfo *tsegInfo);
 #endif

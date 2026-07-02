@@ -40,7 +40,7 @@ void trs_ub_info_set(u32 devid, struct trs_ub_info *ub_info)
     g_trs_ub_info[ts_inst_id].die_id = ub_info->die_id;
     g_trs_ub_info[ts_inst_id].func_id = ub_info->func_id;
 
-    trs_info(
-        "devid=%u, dieid=%u, funcid=%u\n", devid, g_trs_ub_info[ts_inst_id].die_id, g_trs_ub_info[ts_inst_id].func_id);
+    trs_info("devid=%u, dieid=%u, funcid=%u\n", devid, g_trs_ub_info[ts_inst_id].die_id,
+             g_trs_ub_info[ts_inst_id].func_id);
 }
 #endif

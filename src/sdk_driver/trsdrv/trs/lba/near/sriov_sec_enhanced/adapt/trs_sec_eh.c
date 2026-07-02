@@ -29,20 +29,19 @@
 #include "trs_sec_eh.h"
 #include "trs_sec_eh_auto_init.h"
 
-static const ka_pci_device_id_t sec_eh_adapt_tbl[] = {
-    {KA_PCI_VDEVICE(HUAWEI, 0xd802), 0},
-    {KA_PCI_VDEVICE(HUAWEI, 0xd803), 0},
-    {KA_PCI_VDEVICE(HUAWEI, 0xd804), 0},
-    {KA_PCI_VDEVICE(HUAWEI, 0xd806), 0},
-    {KA_PCI_VDEVICE(HUAWEI, 0xd807), 0},
-    {KA_PCI_VDEVICE(HUAWEI, 0xd808), 0},
-    {0x20C6, 0xd500, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0},
-    {0x203F, 0xd500, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0},
-    {0x20E9, 0xd500, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0},
-    {0x20C6, 0xd802, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0},
-    {0x203F, 0xd802, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0},
-    {0x20E9, 0xd802, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0},
-    {}};
+static const ka_pci_device_id_t sec_eh_adapt_tbl[] = {{KA_PCI_VDEVICE(HUAWEI, 0xd802), 0},
+                                                      {KA_PCI_VDEVICE(HUAWEI, 0xd803), 0},
+                                                      {KA_PCI_VDEVICE(HUAWEI, 0xd804), 0},
+                                                      {KA_PCI_VDEVICE(HUAWEI, 0xd806), 0},
+                                                      {KA_PCI_VDEVICE(HUAWEI, 0xd807), 0},
+                                                      {KA_PCI_VDEVICE(HUAWEI, 0xd808), 0},
+                                                      {0x20C6, 0xd500, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0},
+                                                      {0x203F, 0xd500, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0},
+                                                      {0x20E9, 0xd500, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0},
+                                                      {0x20C6, 0xd802, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0},
+                                                      {0x203F, 0xd802, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0},
+                                                      {0x20E9, 0xd802, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, 0},
+                                                      {}};
 KA_MODULE_DEVICE_TABLE(pci, sec_eh_adapt_tbl);
 
 static const trs_msg_rdv_func_t rcv_ops[TRS_MSG_MAX] = {
@@ -83,7 +82,10 @@ static struct devdrv_non_trans_msg_chan_info trs_sec_eh_msg_chan_info = {
     .rx_msg_process = trs_sec_eh_msg_chan_recv,
 };
 
-struct devdrv_non_trans_msg_chan_info *trs_get_msg_chan_info(void) { return &trs_sec_eh_msg_chan_info; }
+struct devdrv_non_trans_msg_chan_info *trs_get_msg_chan_info(void)
+{
+    return &trs_sec_eh_msg_chan_info;
+}
 
 /*
  * module_feature_auto_init_dev adds features as follows:

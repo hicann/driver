@@ -169,8 +169,8 @@ bool trs_is_proc_has_res(u32 devid, u32 tsid, int pid, int res_type, int res_id)
     struct trs_id_inst inst = {.devid = devid, .tsid = tsid};
 
     if ((res_type < (int)TRS_STREAM) || (res_type >= (int)TRS_MAX_ID_TYPE) || (devid >= TRS_DEV_MAX_NUM)) {
-        trs_err(
-            "Invalid para. (devid=%u; tsid=%u; pid=%u; res_type=%d; res_id=%d)\n", devid, tsid, pid, res_type, res_id);
+        trs_err("Invalid para. (devid=%u; tsid=%u; pid=%u; res_type=%d; res_id=%d)\n", devid, tsid, pid, res_type,
+                res_id);
         return false;
     }
 

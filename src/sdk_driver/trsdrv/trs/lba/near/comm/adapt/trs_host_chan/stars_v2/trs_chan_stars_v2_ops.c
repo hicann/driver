@@ -44,9 +44,8 @@
 #include "dpa_kernel_interface.h"
 #include "trs_chan_stars_v2_ops.h"
 
-int trs_stars_v2_chan_ops_request_irq(
-    struct trs_id_inst *inst, u32 irq_type, int irq_index, void *para,
-    int (*handler)(int irq_type, int irq_index, void *para, u32 cqid[], u32 cq_num))
+int trs_stars_v2_chan_ops_request_irq(struct trs_id_inst *inst, u32 irq_type, int irq_index, void *para,
+                                      int (*handler)(int irq_type, int irq_index, void *para, u32 cqid[], u32 cq_num))
 {
     struct trs_chan_irq_attr attr;
     u32 group_index = irq_index;
@@ -104,8 +103,8 @@ int trs_stars_v2_chan_ops_free_irq(struct trs_id_inst *inst, int irq_type, int i
     return ret;
 }
 
-static int trs_stars_v2_chan_ops_get_irq(
-    struct trs_id_inst *inst, u32 irq_type, u32 irq[], u32 irq_num, u32 *valid_irq_num)
+static int trs_stars_v2_chan_ops_get_irq(struct trs_id_inst *inst, u32 irq_type, u32 irq[], u32 irq_num,
+                                         u32 *valid_irq_num)
 {
     int ret;
 
@@ -183,9 +182,8 @@ int trs_chan_stars_v2_ops_query_sqcq(struct trs_id_inst *inst, struct trs_chan_t
                     *value = 0;
                     ret = 0;
                 }
-            } else if (
-                (cmd == QUERY_CMD_SQ_TAIL_PADDR) &&
-                (trs_get_sq_send_mode(inst->devid) == TRS_MODE_TYPE_SQ_SEND_HIGH_PERFORMANCE)) {
+            } else if ((cmd == QUERY_CMD_SQ_TAIL_PADDR) &&
+                       (trs_get_sq_send_mode(inst->devid) == TRS_MODE_TYPE_SQ_SEND_HIGH_PERFORMANCE)) {
                 *value = 0;
                 ret = 0;
             } else {
@@ -281,8 +279,8 @@ static int trs_stars_v2_chan_ops_sqcq_free(struct trs_id_inst *inst, int type, u
     }
 }
 
-extern int trs_sqe_update_desc_create(
-    u32 devid, u32 tsid, struct trs_dma_desc_addr_info *addr_info, struct trs_dma_desc *dma_desc, bool is_src_secure);
+extern int trs_sqe_update_desc_create(u32 devid, u32 tsid, struct trs_dma_desc_addr_info *addr_info,
+                                      struct trs_dma_desc *dma_desc, bool is_src_secure);
 static int trs_chan_stars_v2_ops_sq_dma_desc_create(struct trs_id_inst *inst, struct trs_chan_dma_desc *para)
 {
 #ifndef CFG_FEATURE_VM_ADAPT
@@ -291,8 +289,8 @@ static int trs_chan_stars_v2_ops_sq_dma_desc_create(struct trs_id_inst *inst, st
     int ret;
 
 #ifdef CFG_FEATURE_SUPPORT_APM
-    ret = hal_kernel_apm_query_slave_ssid_by_master(
-        inst->devid, ka_task_get_current_tgid(), PROCESS_CP1, &addr_info.passid);
+    ret = hal_kernel_apm_query_slave_ssid_by_master(inst->devid, ka_task_get_current_tgid(), PROCESS_CP1,
+                                                    &addr_info.passid);
     if (ret != 0) {
         trs_err("Get ssid failed. (devid=%u; ret=%d)\n", inst->devid, ret);
         return ret;
@@ -305,9 +303,8 @@ static int trs_chan_stars_v2_ops_sq_dma_desc_create(struct trs_id_inst *inst, st
     addr_info.src_va = (u64)(uintptr_t)para->src;
     ret = trs_sqe_update_desc_create(inst->devid, inst->tsid, &addr_info, &dma_desc, false);
     if (ret != 0) {
-        trs_err(
-            "Create sqe update dma desc failed. (devid=%u; tsid=%u; sqid=%u; sqeid=%u; ret=%d)\n", inst->devid,
-            inst->tsid, para->sq_id, para->sqe_pos, ret);
+        trs_err("Create sqe update dma desc failed. (devid=%u; tsid=%u; sqid=%u; sqeid=%u; ret=%d)\n", inst->devid,
+                inst->tsid, para->sq_id, para->sqe_pos, ret);
         return ret;
     }
 
@@ -356,8 +353,17 @@ static struct trs_chan_adapt_ops g_trs_chan_stars_v2_ops = {
     .sq_dma_desc_destroy = trs_chan_stars_v2_ops_sq_dma_desc_destroy,
 };
 
-struct trs_chan_adapt_ops *trs_chan_get_stars_v2_adapt_ops(void) { return &g_trs_chan_stars_v2_ops; }
+struct trs_chan_adapt_ops *trs_chan_get_stars_v2_adapt_ops(void)
+{
+    return &g_trs_chan_stars_v2_ops;
+}
 
-int trs_chan_stars_v2_ops_init(struct trs_id_inst *inst) { return trs_chan_stars_v2_ops_stars_init(inst); }
+int trs_chan_stars_v2_ops_init(struct trs_id_inst *inst)
+{
+    return trs_chan_stars_v2_ops_stars_init(inst);
+}
 
-void trs_chan_stars_v2_ops_uninit(struct trs_id_inst *inst) { trs_chan_stars_v2_ops_stars_uninit(inst); }
+void trs_chan_stars_v2_ops_uninit(struct trs_id_inst *inst)
+{
+    trs_chan_stars_v2_ops_stars_uninit(inst);
+}

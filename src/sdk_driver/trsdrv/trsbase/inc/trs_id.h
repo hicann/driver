@@ -91,19 +91,40 @@ struct trs_id_stat {
     u32 rsv_num;
 };
 
-static inline bool trs_id_is_specified(u32 flag) { return ((flag & (0x1 << TRS_ID_SPECIFIED_BIT)) != 0); }
+static inline bool trs_id_is_specified(u32 flag)
+{
+    return ((flag & (0x1 << TRS_ID_SPECIFIED_BIT)) != 0);
+}
 
-static inline bool trs_id_is_reserved(u32 flag) { return ((flag & (0x1 << TRS_ID_RESERVED_BIT)) != 0); }
+static inline bool trs_id_is_reserved(u32 flag)
+{
+    return ((flag & (0x1 << TRS_ID_RESERVED_BIT)) != 0);
+}
 
-static inline bool trs_id_is_ranged(u32 flag) { return ((flag & (0x1 << TRS_ID_RANGE_BIT)) != 0); }
+static inline bool trs_id_is_ranged(u32 flag)
+{
+    return ((flag & (0x1 << TRS_ID_RANGE_BIT)) != 0);
+}
 
-static inline void trs_id_set_specified_flag(u32 *flag) { *flag |= (0x1 << TRS_ID_SPECIFIED_BIT); }
+static inline void trs_id_set_specified_flag(u32 *flag)
+{
+    *flag |= (0x1 << TRS_ID_SPECIFIED_BIT);
+}
 
-static inline void trs_id_set_reserved_flag(u32 *flag) { *flag |= (0x1 << TRS_ID_RESERVED_BIT); }
+static inline void trs_id_set_reserved_flag(u32 *flag)
+{
+    *flag |= (0x1 << TRS_ID_RESERVED_BIT);
+}
 
-static inline void trs_id_set_range_flag(u32 *flag) { *flag |= (0x1 << TRS_ID_RANGE_BIT); }
+static inline void trs_id_set_range_flag(u32 *flag)
+{
+    *flag |= (0x1 << TRS_ID_RANGE_BIT);
+}
 
-static inline bool trs_id_is_rts_rsv_flag(u32 flag) { return ((flag & (0x1U << TRS_ID_RTS_RSV_BIT)) != 0); }
+static inline bool trs_id_is_rts_rsv_flag(u32 flag)
+{
+    return ((flag & (0x1U << TRS_ID_RTS_RSV_BIT)) != 0);
+}
 
 /* Stream Id, Event id, etc., initialized by adapt */
 int trs_id_register(struct trs_id_inst *inst, int type, struct trs_id_attr *attr, struct trs_id_ops *ops);
@@ -126,7 +147,10 @@ static inline int trs_id_alloc(struct trs_id_inst *inst, int type, u32 *id)
     return trs_id_alloc_ex(inst, type, 0, id, 1);
 }
 
-static inline int trs_id_free(struct trs_id_inst *inst, int type, u32 id) { return trs_id_free_ex(inst, type, 0, id); }
+static inline int trs_id_free(struct trs_id_inst *inst, int type, u32 id)
+{
+    return trs_id_free_ex(inst, type, 0, id);
+}
 
 int trs_id_free_batch_by_type(struct trs_id_inst *inst, int type);
 int trs_id_flush_to_pool(struct trs_id_inst *inst);

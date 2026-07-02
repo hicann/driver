@@ -21,13 +21,23 @@ void trs_cb_event_uninit(uint32_t dev_id);
 int trs_cb_event_submit(uint32_t dev_id, char *sqe, uint32_t e_size);
 int trs_cb_event_wait(uint32_t dev_id, uint32_t tid, int32_t timeout, uint8_t *buff);
 #else
-static inline int trs_cb_event_init(uint32_t dev_id) { return 0; }
+static inline int trs_cb_event_init(uint32_t dev_id)
+{
+    return 0;
+}
 
-static inline void trs_cb_event_uninit(uint32_t dev_id) {}
+static inline void trs_cb_event_uninit(uint32_t dev_id)
+{}
 
-static inline int trs_cb_event_submit(uint32_t dev_id, char *sqe, uint32_t e_size) { return 0; }
+static inline int trs_cb_event_submit(uint32_t dev_id, char *sqe, uint32_t e_size)
+{
+    return 0;
+}
 
-static inline int trs_cb_event_wait(uint32_t dev_id, uint32_t tid, int32_t timeout, uint8_t *buff) { return 0; }
+static inline int trs_cb_event_wait(uint32_t dev_id, uint32_t tid, int32_t timeout, uint8_t *buff)
+{
+    return 0;
+}
 #endif
 
 #endif

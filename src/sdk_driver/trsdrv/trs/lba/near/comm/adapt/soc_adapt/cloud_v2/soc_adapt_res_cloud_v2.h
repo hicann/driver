@@ -37,17 +37,38 @@ struct trs_chan_adapt_ops *trs_chan_cloud_v2_get_stars_adapt_ops(void);
 int trs_soc_cloud_v2_sq_send_trigger_db_init(struct trs_id_inst *inst);
 void trs_soc_cloud_v2_sq_send_trigger_db_uninit(struct trs_id_inst *inst);
 
-static inline int trs_soc_get_cloud_v2_hwcq_rsv_mem_type(void) { return RSV_MEM_HW_SQCQ; }
+static inline int trs_soc_get_cloud_v2_hwcq_rsv_mem_type(void)
+{
+    return RSV_MEM_HW_SQCQ;
+}
 
-static inline int trs_soc_get_cloud_v2_sq_head_reg_offset(void) { return TRS_STARS_SCHED_SQ_HEAD_OFFSET; }
+static inline int trs_soc_get_cloud_v2_sq_head_reg_offset(void)
+{
+    return TRS_STARS_SCHED_SQ_HEAD_OFFSET;
+}
 
-static inline int trs_soc_get_cloud_v2_sq_tail_reg_offset(void) { return TRS_STARS_SCHED_SQ_TAIL_OFFSET; }
+static inline int trs_soc_get_cloud_v2_sq_tail_reg_offset(void)
+{
+    return TRS_STARS_SCHED_SQ_TAIL_OFFSET;
+}
 
-static inline int trs_soc_get_cloud_v2_sq_status_reg_offset(void) { return TRS_STARS_SCHED_SQ_STATUS_OFFSET; }
+static inline int trs_soc_get_cloud_v2_sq_status_reg_offset(void)
+{
+    return TRS_STARS_SCHED_SQ_STATUS_OFFSET;
+}
 
-static inline int trs_soc_get_cloud_v2_cq_head_reg_offset(void) { return TRS_STARS_SCHED_CQ_HEAD_OFFSET; }
+static inline int trs_soc_get_cloud_v2_cq_head_reg_offset(void)
+{
+    return TRS_STARS_SCHED_CQ_HEAD_OFFSET;
+}
 
-static inline int trs_soc_get_cloud_v2_cq_tail_reg_offset(void) { return TRS_STARS_SCHED_CQ_TAIL_OFFSET; }
+static inline int trs_soc_get_cloud_v2_cq_tail_reg_offset(void)
+{
+    return TRS_STARS_SCHED_CQ_TAIL_OFFSET;
+}
 
-static inline bool trs_cloud_v2_is_support_soft_mbox(void) { return false; }
+static inline bool trs_cloud_v2_is_support_soft_mbox(void)
+{
+    return false;
+}
 #endif /* SOC_ADAPT_RES_CLOUD_V2_H__ */

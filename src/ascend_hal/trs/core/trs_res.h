@@ -34,14 +34,14 @@ void trs_dev_res_id_uninit(uint32_t dev_id);
 struct res_id_usr_info *trs_get_res_id_info(uint32_t dev_id, uint32_t ts_id, drvIdType_t type, uint32_t id);
 uint32_t trs_get_res_id_num(uint32_t dev_id, uint32_t ts_id, drvIdType_t type);
 int trs_id_query(uint32_t dev_id, uint32_t cmd, struct trs_res_id_para *para, uint32_t *value);
-int trs_res_id_info_init(
-    uint32_t dev_id, uint32_t ts_id, uint32_t res_id, drvIdType_t type, struct res_id_info_val *id_info_val);
+int trs_res_id_info_init(uint32_t dev_id, uint32_t ts_id, uint32_t res_id, drvIdType_t type,
+                         struct res_id_info_val *id_info_val);
 
 drvError_t _halResourceIdAlloc(uint32_t dev_id, struct halResourceIdInputInfo *in, struct halResourceIdOutputInfo *out);
 drvError_t _halResourceIdFree(uint32_t dev_id, struct halResourceIdInputInfo *in);
 drvError_t _halResourceConfig(uint32_t dev_id, struct halResourceIdInputInfo *in, struct halResourceConfigInfo *para);
-drvError_t trs_res_config_para_check(
-    uint32_t dev_id, struct halResourceIdInputInfo *in, struct halResourceConfigInfo *para);
+drvError_t trs_res_config_para_check(uint32_t dev_id, struct halResourceIdInputInfo *in,
+                                     struct halResourceConfigInfo *para);
 drvError_t trs_local_res_config(uint32_t dev_id, struct halResourceIdInputInfo *in, struct halResourceConfigInfo *para);
 
 struct trs_res_remote_ops {
@@ -49,13 +49,13 @@ struct trs_res_remote_ops {
     drvError_t (*resid_free)(uint32_t dev_id, struct halResourceIdInputInfo *in);
     drvError_t (*resid_config)(uint32_t dev_id, struct halResourceIdInputInfo *in, struct halResourceConfigInfo *para);
 };
-drvError_t trs_remote_res_config(
-    uint32_t dev_id, struct halResourceIdInputInfo *in, struct halResourceConfigInfo *para);
+drvError_t trs_remote_res_config(uint32_t dev_id, struct halResourceIdInputInfo *in,
+                                 struct halResourceConfigInfo *para);
 
 void trs_register_res_remote_ops(struct trs_res_remote_ops *ops);
 
-int trs_res_map_reg_init(
-    uint32_t dev_id, uint32_t ts_id, uint32_t res_id, drvIdType_t type, struct res_id_usr_info *id_info);
-void trs_res_map_reg_un_init(
-    uint32_t dev_id, uint32_t tsid, uint32_t res_id, drvIdType_t type, struct res_id_usr_info *id_info);
+int trs_res_map_reg_init(uint32_t dev_id, uint32_t ts_id, uint32_t res_id, drvIdType_t type,
+                         struct res_id_usr_info *id_info);
+void trs_res_map_reg_un_init(uint32_t dev_id, uint32_t tsid, uint32_t res_id, drvIdType_t type,
+                             struct res_id_usr_info *id_info);
 #endif

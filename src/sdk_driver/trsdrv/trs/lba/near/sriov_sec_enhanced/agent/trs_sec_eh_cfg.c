@@ -69,9 +69,8 @@ static int trs_sec_eh_cfg_init(struct trs_sec_eh_ts_inst *sec_eh_cfg)
     for (type = 0; type < TRS_CORE_MAX_ID_TYPE; type++) {
         ret = trs_host_get_id_cap(&sec_eh_cfg->pm_inst, type, &id_cap);
         if (ret != 0) {
-            trs_warn(
-                "Id not support. (devid=%u; tsid=%u; type=%d)\n", sec_eh_cfg->pm_inst.devid, sec_eh_cfg->pm_inst.tsid,
-                type);
+            trs_warn("Id not support. (devid=%u; tsid=%u; type=%d)\n", sec_eh_cfg->pm_inst.devid,
+                     sec_eh_cfg->pm_inst.tsid, type);
             continue;
         }
 
@@ -92,14 +91,13 @@ static int trs_sec_eh_cfg_init(struct trs_sec_eh_ts_inst *sec_eh_cfg)
             id_info->num_per_bit = (id_cap.id_end - id_cap.id_start) / id_info->bitnum;
         }
 
-        trs_info(
-            "Id cap. (devid=%u; tsid=%u; type=%d; maxid=%u; bitmap=%u; num_per_bit=%u; start=%u; end=%u)\n",
-            sec_eh_cfg->pm_inst.devid, sec_eh_cfg->pm_inst.tsid, type, id_cap.id_end, id_info->bitmap,
-            id_info->num_per_bit, id_cap.id_start, id_cap.id_end);
+        trs_info("Id cap. (devid=%u; tsid=%u; type=%d; maxid=%u; bitmap=%u; num_per_bit=%u; start=%u; end=%u)\n",
+                 sec_eh_cfg->pm_inst.devid, sec_eh_cfg->pm_inst.tsid, type, id_cap.id_end, id_info->bitmap,
+                 id_info->num_per_bit, id_cap.id_start, id_cap.id_end);
 
         if (type == TRS_HW_SQ) {
-            sec_eh_cfg->sq_ctx =
-                (struct trs_sec_eh_sq_ctx *)trs_vzalloc(sizeof(struct trs_sec_eh_sq_ctx) * id_cap.id_end);
+            sec_eh_cfg->sq_ctx = (struct trs_sec_eh_sq_ctx *)trs_vzalloc(sizeof(struct trs_sec_eh_sq_ctx) *
+                                                                         id_cap.id_end);
             if (sec_eh_cfg->sq_ctx == NULL) {
                 goto free_mem;
             }
@@ -155,9 +153,8 @@ static int trs_sec_eh_init_mia_res(struct trs_id_inst *inst, struct trs_sec_eh_t
     }
     sec_eh_cfg->notify_bitmap = (u32)bitmap;
 
-    trs_info(
-        "Res. (devid=%u; rtsq_bitmap=%x; event_bitmap=%x; notify_bitmap=%x)\n", inst->devid, sec_eh_cfg->rtsq_bitmap,
-        sec_eh_cfg->event_bitmap, sec_eh_cfg->notify_bitmap);
+    trs_info("Res. (devid=%u; rtsq_bitmap=%x; event_bitmap=%x; notify_bitmap=%x)\n", inst->devid,
+             sec_eh_cfg->rtsq_bitmap, sec_eh_cfg->event_bitmap, sec_eh_cfg->notify_bitmap);
 
     return 0;
 }

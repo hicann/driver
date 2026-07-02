@@ -25,8 +25,8 @@
 #include "comm_kernel_interface.h"
 #include "trs_stars_v2_chan_sqcq.h"
 
-int trs_stars_v2_chan_ops_get_valid_cq_list(
-    struct trs_id_inst *inst, u32 group, u32 cqid[], u32 cq_id_num, u32 *valid_cq_num)
+int trs_stars_v2_chan_ops_get_valid_cq_list(struct trs_id_inst *inst, u32 group, u32 cqid[], u32 cq_id_num,
+                                            u32 *valid_cq_num)
 {
 #ifndef EMU_ST
     return trs_stars_v2_cq_get_valid_list(inst, group, cqid, cq_id_num, valid_cq_num);

@@ -24,9 +24,8 @@ static void trs_sec_eh_get_id_range_by_bit(struct trs_sec_eh_id_info *id_info, u
         *start = id_info->start + bit * id_info->num_per_bit;
         *end = *start + id_info->num_per_bit;
     }
-    trs_debug(
-        "Get id rang. (bit=%u; type=%d; start=%u; end=%u; num_per_bit=%u)\n", bit, type, *start, *end,
-        id_info->num_per_bit);
+    trs_debug("Get id rang. (bit=%u; type=%d; start=%u; end=%u; num_per_bit=%u)\n", bit, type, *start, *end,
+              id_info->num_per_bit);
 }
 
 bool trs_sec_eh_id_is_belong_to_vf(struct trs_sec_eh_id_info *id_info, u32 id)
@@ -110,7 +109,10 @@ void trs_sec_eh_id_config(struct trs_id_inst *inst)
     trs_res_ops_register(inst->devid, &ops);
 }
 
-void trs_sec_eh_id_deconfig(struct trs_id_inst *inst) { trs_res_ops_unregister(inst->devid); }
+void trs_sec_eh_id_deconfig(struct trs_id_inst *inst)
+{
+    trs_res_ops_unregister(inst->devid);
+}
 
 int _trs_sec_eh_res_ctrl(struct trs_id_inst *inst, u32 id_type, u32 res_id, u32 cmd)
 {

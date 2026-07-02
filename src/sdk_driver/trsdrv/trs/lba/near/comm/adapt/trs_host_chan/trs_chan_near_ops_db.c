@@ -30,9 +30,8 @@ int trs_chan_maint_db_init(struct trs_id_inst *inst)
         if (ret == -EOPNOTSUPP) {
             return 0;
         }
-        trs_err(
-            "Trs get db cfg fail. (devid=%u; tsid=%u; ret=%d; start=%u; end=%u)\n", inst->devid, inst->tsid, ret, start,
-            end);
+        trs_err("Trs get db cfg fail. (devid=%u; tsid=%u; ret=%d; start=%u; end=%u)\n", inst->devid, inst->tsid, ret,
+                start, end);
         return -ENODEV;
     }
     ret = trs_ts_db_init(inst, TRS_DB_MAINT_SQ, start, end);
@@ -48,9 +47,8 @@ int trs_chan_maint_db_init(struct trs_id_inst *inst)
             return 0;
         }
 
-        trs_err(
-            "Trs get db cfg fail. (devid=%u; tsid=%u; ret=%d; start=%u; end=%u)\n", inst->devid, inst->tsid, ret, start,
-            end);
+        trs_err("Trs get db cfg fail. (devid=%u; tsid=%u; ret=%d; start=%u; end=%u)\n", inst->devid, inst->tsid, ret,
+                start, end);
         return -ENODEV;
     }
     ret = trs_ts_db_init(inst, TRS_DB_MAINT_CQ, start, end);

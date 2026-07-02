@@ -77,7 +77,10 @@ int trs_cb_event_init(uint32_t dev_id)
     return DRV_ERROR_NONE;
 }
 
-void trs_cb_event_uninit(uint32_t dev_id) { (void)halEschedDettachDevice(dev_id); }
+void trs_cb_event_uninit(uint32_t dev_id)
+{
+    (void)halEschedDettachDevice(dev_id);
+}
 
 static void trs_cb_event_to_cqe(struct trs_cb_stars_event *event, struct trs_cb_cqe *cqe)
 {

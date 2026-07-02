@@ -28,7 +28,11 @@ struct trs_rsv_mem_attr {
     u32 flag;
 };
 
-enum { RSV_MEM_HW_SQCQ = 0, RSV_MEM_MAINT_SQCQ, RSV_MEM_MAX };
+enum {
+    RSV_MEM_HW_SQCQ = 0,
+    RSV_MEM_MAINT_SQCQ,
+    RSV_MEM_MAX
+};
 
 void *trs_rsv_mem_alloc(struct trs_id_inst *inst, int type, size_t size, u32 flag);
 void trs_rsv_mem_free(struct trs_id_inst *inst, int type, void *vaddr, size_t size);

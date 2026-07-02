@@ -115,8 +115,8 @@ typedef int (*devdrv_register_p2p_msg_proc_ops)(enum devdrv_msg_client_type msg_
 #define DEVDRV_REGISTER_P2P_MSG_PROC_OPS "devdrv_register_p2p_msg_proc_func"
 typedef int (*devdrv_unregister_p2p_msg_proc_ops)(enum devdrv_msg_client_type msg_type);
 #define DEVDRV_UNREGISTER_P2P_MSG_PROC_OPS "devdrv_unregister_p2p_msg_proc_func"
-typedef int (*devdrv_p2p_msg_send_ops)(
-    u32 local_devid, u32 sdid, enum devdrv_msg_client_type msg_type, struct data_input_info *data_info);
+typedef int (*devdrv_p2p_msg_send_ops)(u32 local_devid, u32 sdid, enum devdrv_msg_client_type msg_type,
+                                       struct data_input_info *data_info);
 #define DEVDRV_P2P_MSG_SEND_OPS "devdrv_p2p_msg_send"
 static devdrv_p2p_msg_send_ops devdrv_p2p_msg_send_func = NULL;
 #endif
@@ -216,8 +216,8 @@ STATIC int shr_id_create_shadow_node_msg_send(struct shr_id_node_op_attr *attr, 
 
     ret = trs_pod_msg_send(attr->inst.devid, sdid, &msg, sizeof(struct trs_pod_msg_data));
     if (ret != 0) {
-        trs_err(
-            "Send fail. (devid=%u; sdid=0x%x; ret=%d; result=%d)\n", attr->inst.devid, sdid, ret, msg.header.result);
+        trs_err("Send fail. (devid=%u; sdid=0x%x; ret=%d; result=%d)\n", attr->inst.devid, sdid, ret,
+                msg.header.result);
         return ret;
     }
 
@@ -248,8 +248,8 @@ STATIC int shr_id_pod_set_pid_msg_send(struct shr_id_node_op_attr *attr, u32 sdi
     return 0;
 }
 
-STATIC int shr_id_destory_shadow_node_msg_send(
-    struct shr_id_node_op_attr *attr, u32 sdid, int pid, int *cmd_result, u32 mode)
+STATIC int shr_id_destory_shadow_node_msg_send(struct shr_id_node_op_attr *attr, u32 sdid, int pid, int *cmd_result,
+                                               u32 mode)
 {
     struct shr_id_pod_destroy_msg *destory_msg = NULL;
     struct trs_pod_msg_data msg;
@@ -275,17 +275,16 @@ STATIC int shr_id_destory_shadow_node_msg_send(
 
     ret = _trs_pod_msg_send(attr->inst.devid, sdid, &msg, sizeof(struct trs_pod_msg_data), cmd_result, mode);
     if ((ret != 0) || ((*cmd_result) != 0)) {
-        trs_debug(
-            "Should send again. (devid=%u; sdid=%u; ret=%d; cmd_result=%d)\n", attr->inst.devid, sdid, ret,
-            *cmd_result);
+        trs_debug("Should send again. (devid=%u; sdid=%u; ret=%d; cmd_result=%d)\n", attr->inst.devid, sdid, ret,
+                  *cmd_result);
         return ret;
     }
     return 0;
 }
 
 #ifdef CFG_FEATURE_SUPPORT_XCOM
-STATIC int devdrv_s2s_async_msg_recv_stub(
-    u32 devid, u32 sdid, enum devdrv_s2s_msg_type msg_type, struct data_recv_info *data_info)
+STATIC int devdrv_s2s_async_msg_recv_stub(u32 devid, u32 sdid, enum devdrv_s2s_msg_type msg_type,
+                                          struct data_recv_info *data_info)
 {
     (void)devid;
     (void)sdid;
@@ -330,16 +329,15 @@ int trs_pod_msg_recv_async(u32 devid, u32 sdid, void *msg, size_t size, int *cmd
 #endif
     *cmd_result = (int)tmp_msg->header.result;
     if (mode == DEVDRV_S2S_END_RECV) {
-        trs_warn(
-            "Current node loop timeout, release s2s channel."
-            "(mode=%u; devid=%u; sdid=%u; ret=%d)\n",
-            mode, devid, sdid, ret);
+        trs_warn("Current node loop timeout, release s2s channel."
+                 "(mode=%u; devid=%u; sdid=%u; ret=%d)\n",
+                 mode, devid, sdid, ret);
     }
     return ret;
 }
 
-STATIC int shr_id_destory_shadow_node_msg_recv(
-    struct shr_id_node_op_attr *attr, u32 sdid, int pid, int *cmd_result, u32 mode)
+STATIC int shr_id_destory_shadow_node_msg_recv(struct shr_id_node_op_attr *attr, u32 sdid, int pid, int *cmd_result,
+                                               u32 mode)
 {
     struct shr_id_pod_destroy_msg *destory_msg = NULL;
     struct trs_pod_msg_data msg;
@@ -374,12 +372,11 @@ STATIC int shr_id_query_shadow_node_msg_send(struct shr_id_node_op_attr *attr, u
         query_msg->name[i] = attr->name[i];
     }
 
-    ret = _trs_pod_msg_send(
-        attr->inst.devid, sdid, &msg, sizeof(struct trs_pod_msg_data), cmd_result, DEVDRV_S2S_SYNC_MODE);
+    ret = _trs_pod_msg_send(attr->inst.devid, sdid, &msg, sizeof(struct trs_pod_msg_data), cmd_result,
+                            DEVDRV_S2S_SYNC_MODE);
     if ((ret != 0) || ((*cmd_result) != 0)) {
-        trs_debug(
-            "Should send again. (devid=%u; sdid=%u; ret=%d; cmd_result=%d)\n", attr->inst.devid, sdid, ret,
-            *cmd_result);
+        trs_debug("Should send again. (devid=%u; sdid=%u; ret=%d; cmd_result=%d)\n", attr->inst.devid, sdid, ret,
+                  *cmd_result);
         return ret;
     }
     return 0;
@@ -388,8 +385,8 @@ STATIC int shr_id_query_shadow_node_msg_send(struct shr_id_node_op_attr *attr, u
 void shr_id_recycle_work(ka_work_struct_t *p_work);
 STATIC struct shr_id_spod_info *shr_id_spod_info_create(void *node, struct shr_id_node_op_attr *attr)
 {
-    struct shr_id_spod_info *spod_info =
-        trs_kvzalloc(sizeof(struct shr_id_spod_info), KA_GFP_ATOMIC | __KA_GFP_ACCOUNT);
+    struct shr_id_spod_info *spod_info = trs_kvzalloc(sizeof(struct shr_id_spod_info),
+                                                      KA_GFP_ATOMIC | __KA_GFP_ACCOUNT);
     if (spod_info == NULL) {
         return spod_info;
     }
@@ -460,9 +457,9 @@ void shr_id_recycle_work(ka_work_struct_t *p_work)
                 continue;
             }
             ret = shr_id_query_shadow_node_msg_send(&attr, spod_info->create_info[i].sdid, &cmd_result);
-            trs_debug(
-                "Query shadow. (devid=%u; serverid=%u; sdid=%u; name=%s; type=%d; id=%u; ret=%d; result=%d)\n",
-                attr.inst.devid, i, spod_info->create_info[i].sdid, attr.name, attr.type, attr.id, ret, cmd_result);
+            trs_debug("Query shadow. (devid=%u; serverid=%u; sdid=%u; name=%s; type=%d; id=%u; ret=%d; result=%d)\n",
+                      attr.inst.devid, i, spod_info->create_info[i].sdid, attr.name, attr.type, attr.id, ret,
+                      cmd_result);
 
             spod_info->create_info[i].server_abnormal = ret;
             if ((ret == 0) && (cmd_result == 0)) {
@@ -480,8 +477,8 @@ void shr_id_recycle_work(ka_work_struct_t *p_work)
 
     ret = shr_id_get_recycle_strategy(&attr, spod_server_abnormal, shadow_node_exist);
     if (ret == TRS_SHADOW_NODE_RETRY) {
-        (void)ka_task_schedule_delayed_work(
-            &spod_info->shrid_recycle_work, ka_system_msecs_to_jiffies(300)); /* 300 ms */
+        (void)ka_task_schedule_delayed_work(&spod_info->shrid_recycle_work,
+                                            ka_system_msecs_to_jiffies(300)); /* 300 ms */
     } else if (ret == TRS_SHADOW_NODE_DESTORY) {
         shr_id_node_priv_mutex_lock(shrid_node);
         ka_base_atomic_set(&spod_info->in_recycling, 0);
@@ -489,11 +486,10 @@ void shr_id_recycle_work(ka_work_struct_t *p_work)
         shr_id_node_priv_mutex_unlock(shrid_node);
     } else {
         ka_base_atomic_set(&spod_info->in_recycling, 0);
-        trs_debug(
-            "NOT destroy shadow. (devid=%u; sdid=%u; name=%s; type=%d; id=%u; server_abnormal=%u;"
-            " shadow_exist=%u; ret=%d)\n",
-            attr.inst.devid, spod_info->wlist[0].sdid, attr.name, attr.type, attr.id, spod_server_abnormal,
-            shadow_node_exist, ret);
+        trs_debug("NOT destroy shadow. (devid=%u; sdid=%u; name=%s; type=%d; id=%u; server_abnormal=%u;"
+                  " shadow_exist=%u; ret=%d)\n",
+                  attr.inst.devid, spod_info->wlist[0].sdid, attr.name, attr.type, attr.id, spod_server_abnormal,
+                  shadow_node_exist, ret);
     }
     shr_id_node_put(shrid_node);
 }
@@ -549,9 +545,8 @@ static void shr_id_spod_server_abnormal(struct shr_id_spod_info *spod_info, int 
     spod_info->shadow_node_num--;
 }
 
-static void shr_id_spod_async_msg_send(
-    struct shr_id_proc_ctx *proc_ctx, struct shr_id_spod_info *spod_info, bool *spod_server_abnormal,
-    bool *shadow_node_exist, bool is_timeout)
+static void shr_id_spod_async_msg_send(struct shr_id_proc_ctx *proc_ctx, struct shr_id_spod_info *spod_info,
+                                       bool *spod_server_abnormal, bool *shadow_node_exist, bool is_timeout)
 {
     int i, ret, cmd_result;
 
@@ -568,56 +563,50 @@ static void shr_id_spod_async_msg_send(
                 continue;
 #endif
             }
-            ret = shr_id_destory_shadow_node_msg_send(
-                &spod_info->attr, spod_info->create_info[i].sdid, spod_info->create_info[i].pid, &cmd_result,
-                DEVDRV_S2S_ASYNC_MODE);
+            ret = shr_id_destory_shadow_node_msg_send(&spod_info->attr, spod_info->create_info[i].sdid,
+                                                      spod_info->create_info[i].pid, &cmd_result,
+                                                      DEVDRV_S2S_ASYNC_MODE);
             if (ret == 0) {
 #ifndef EMU_ST
                 spod_info->create_info[i].status = TRS_S2S_MSG_STATUS_SEND;
-                trs_debug(
-                    "Async send success. (devid=%u; sdid=%u; name=%s; id=%u; status=%d; ret=%d;)\n",
-                    spod_info->attr.inst.devid, spod_info->create_info[i].sdid, spod_info->attr.name,
-                    spod_info->attr.id, spod_info->create_info[i].status, ret);
+                trs_debug("Async send success. (devid=%u; sdid=%u; name=%s; id=%u; status=%d; ret=%d;)\n",
+                          spod_info->attr.inst.devid, spod_info->create_info[i].sdid, spod_info->attr.name,
+                          spod_info->attr.id, spod_info->create_info[i].status, ret);
 #endif
             } else if (ret == -EBUSY) {
-                trs_debug(
-                    "Async send busy. Need send again.(devid=%u; sdid=%u; name=%s; id=%u; status=%d; ret=%d;)\n",
-                    spod_info->attr.inst.devid, spod_info->create_info[i].sdid, spod_info->attr.name,
-                    spod_info->attr.id, spod_info->create_info[i].status, ret);
+                trs_debug("Async send busy. Need send again.(devid=%u; sdid=%u; name=%s; id=%u; status=%d; ret=%d;)\n",
+                          spod_info->attr.inst.devid, spod_info->create_info[i].sdid, spod_info->attr.name,
+                          spod_info->attr.id, spod_info->create_info[i].status, ret);
             } else {
 #ifndef EMU_ST
                 shr_id_hash_add(proc_ctx, spod_info->create_info[i].sdid);
                 shr_id_spod_server_abnormal(spod_info, i, spod_server_abnormal);
-                trs_warn(
-                    "Send spod server is abnormal. (devid=%u; sdid=%u; name=%s; id=%u; status=%d; ret=%d;)\n",
-                    spod_info->attr.inst.devid, spod_info->wlist[0].sdid, spod_info->attr.name, spod_info->attr.id,
-                    spod_info->create_info[i].status, ret);
+                trs_warn("Send spod server is abnormal. (devid=%u; sdid=%u; name=%s; id=%u; status=%d; ret=%d;)\n",
+                         spod_info->attr.inst.devid, spod_info->wlist[0].sdid, spod_info->attr.name, spod_info->attr.id,
+                         spod_info->create_info[i].status, ret);
 #endif
             }
         }
     }
 }
 
-static void shr_id_spod_async_msg_recv(
-    struct shr_id_proc_ctx *proc_ctx, struct shr_id_spod_info *spod_info, bool *spod_server_abnormal,
-    bool *shadow_node_exist, u32 recv_mode)
+static void shr_id_spod_async_msg_recv(struct shr_id_proc_ctx *proc_ctx, struct shr_id_spod_info *spod_info,
+                                       bool *spod_server_abnormal, bool *shadow_node_exist, u32 recv_mode)
 {
     int i, ret, cmd_result;
 
     for (i = 0; i < SHR_ID_PID_SERVER_ID_MAX_NUM; i++) {
         if (spod_info->create_info[i].pid != 0 && spod_info->create_info[i].status == TRS_S2S_MSG_STATUS_SEND) {
-            ret = shr_id_destory_shadow_node_msg_recv(
-                &spod_info->attr, spod_info->create_info[i].sdid, spod_info->create_info[i].pid, &cmd_result,
-                recv_mode);
+            ret = shr_id_destory_shadow_node_msg_recv(&spod_info->attr, spod_info->create_info[i].sdid,
+                                                      spod_info->create_info[i].pid, &cmd_result, recv_mode);
             spod_info->create_info[i].server_abnormal = ret;
             if ((ret == 0) && (cmd_result == 0)) {
                 spod_info->shadow_node_num--;
                 spod_info->create_info[i].status = TRS_S2S_MSG_STATUS_RECV;
                 shr_id_spod_set_sdid_pid_zero(spod_info, i);
-                trs_debug(
-                    "Async recv success. (devid=%u; sdid=%u; name=%s; id=%u; status=%d; ret=%d; result=%d)\n",
-                    spod_info->attr.inst.devid, spod_info->create_info[i].sdid, spod_info->attr.name,
-                    spod_info->attr.id, spod_info->create_info[i].status, ret, cmd_result);
+                trs_debug("Async recv success. (devid=%u; sdid=%u; name=%s; id=%u; status=%d; ret=%d; result=%d)\n",
+                          spod_info->attr.inst.devid, spod_info->create_info[i].sdid, spod_info->attr.name,
+                          spod_info->attr.id, spod_info->create_info[i].status, ret, cmd_result);
             } else if ((ret == 0) && (cmd_result == -EEXIST)) {
                 spod_info->shadow_node_num--;
                 spod_info->create_info[i].status = TRS_S2S_MSG_STATUS_RECV;
@@ -630,26 +619,24 @@ static void shr_id_spod_async_msg_recv(
 #endif
             } else if (ret == -EAGAIN) {
 #ifndef EMU_ST
-                trs_debug(
-                    "Async recv busy. (devid=%u; sdid=%u; name=%s; id=%u; status=%d; ret=%d;)\n",
-                    spod_info->attr.inst.devid, spod_info->create_info[i].sdid, spod_info->attr.name,
-                    spod_info->attr.id, spod_info->create_info[i].status, ret);
+                trs_debug("Async recv busy. (devid=%u; sdid=%u; name=%s; id=%u; status=%d; ret=%d;)\n",
+                          spod_info->attr.inst.devid, spod_info->create_info[i].sdid, spod_info->attr.name,
+                          spod_info->attr.id, spod_info->create_info[i].status, ret);
 #endif
             } else {
                 shr_id_hash_add(proc_ctx, spod_info->create_info[i].sdid);
                 shr_id_spod_server_abnormal(spod_info, i, spod_server_abnormal);
-                trs_warn(
-                    "Recv spod server is abnormal. (devid=%u; sdid=%u; name=%s; type=%d; id=%u; ret=%d; "
-                    "in_recycle=%d)\n",
-                    spod_info->attr.inst.devid, spod_info->wlist[0].sdid, spod_info->attr.name, spod_info->attr.type,
-                    spod_info->attr.id, ret, ka_base_atomic_read(&spod_info->in_recycling));
+                trs_warn("Recv spod server is abnormal. (devid=%u; sdid=%u; name=%s; type=%d; id=%u; ret=%d; "
+                         "in_recycle=%d)\n",
+                         spod_info->attr.inst.devid, spod_info->wlist[0].sdid, spod_info->attr.name,
+                         spod_info->attr.type, spod_info->attr.id, ret, ka_base_atomic_read(&spod_info->in_recycling));
             }
         }
     }
 }
 
-static int shr_id_async_send_and_recv(
-    struct shr_id_spod_info *spod_info, bool *spod_server_abnormal, bool *shadow_node_exist, bool is_timeout)
+static int shr_id_async_send_and_recv(struct shr_id_spod_info *spod_info, bool *spod_server_abnormal,
+                                      bool *shadow_node_exist, bool is_timeout)
 {
     struct shr_id_proc_ctx *proc_ctx;
     u32 recv_mode;
@@ -667,8 +654,8 @@ static int shr_id_async_send_and_recv(
     return (spod_info->shadow_node_num == 0) ? 0 : -1;
 }
 
-static void shadow_node_loop_for_async_send_recv(
-    struct shr_id_spod_info *spod_info, bool *spod_server_abnormal, bool *shadow_node_exist)
+static void shadow_node_loop_for_async_send_recv(struct shr_id_spod_info *spod_info, bool *spod_server_abnormal,
+                                                 bool *shadow_node_exist)
 {
     u64 start_time, current_time, time_cost;
     bool is_timeout = false;
@@ -684,9 +671,8 @@ static void shadow_node_loop_for_async_send_recv(
         current_time = ka_system_ktime_get_ns();
         time_cost = current_time - start_time;
         if (time_cost >= MAX_LOOP_TIME) {
-            trs_debug(
-                "The async collection loop has timed out.(devid=%u, pid=%u, name=%s, time_cost=%llu)\n",
-                spod_info->attr.inst.devid, spod_info->attr.pid, spod_info->attr.name, time_cost);
+            trs_debug("The async collection loop has timed out.(devid=%u, pid=%u, name=%s, time_cost=%llu)\n",
+                      spod_info->attr.inst.devid, spod_info->attr.pid, spod_info->attr.name, time_cost);
             is_timeout = true;
         }
     }
@@ -695,16 +681,15 @@ static void shadow_node_loop_for_async_send_recv(
     }
 }
 
-static void shadow_node_loop_for_sync_send(
-    struct shr_id_spod_info *spod_info, bool *spod_server_abnormal, bool *shadow_node_exist)
+static void shadow_node_loop_for_sync_send(struct shr_id_spod_info *spod_info, bool *spod_server_abnormal,
+                                           bool *shadow_node_exist)
 {
     int i, ret, cmd_result;
 
     for (i = 0; i < SHR_ID_PID_SERVER_ID_MAX_NUM; i++) {
         if (spod_info->create_info[i].pid != 0) {
-            ret = shr_id_destory_shadow_node_msg_send(
-                &spod_info->attr, spod_info->create_info[i].sdid, spod_info->create_info[i].pid, &cmd_result,
-                DEVDRV_S2S_SYNC_MODE);
+            ret = shr_id_destory_shadow_node_msg_send(&spod_info->attr, spod_info->create_info[i].sdid,
+                                                      spod_info->create_info[i].pid, &cmd_result, DEVDRV_S2S_SYNC_MODE);
             if ((ret == 0) && (cmd_result == 0)) {
                 spod_info->create_info[i].sdid = 0;
                 spod_info->create_info[i].pid = 0;
@@ -757,17 +742,15 @@ STATIC int shr_id_destroy_shadow_node_async(void *node, u32 mode)
         (void)ka_task_schedule_delayed_work(&spod_info->shrid_recycle_work, 0);
         ret = 0;
     } else if ((ret == TRS_SHADOW_NODE_DESTORY) && (ka_base_atomic_read(&spod_info->in_recycling) == 0)) {
-        trs_debug(
-            "Destroy shadow. (devid=%u; sdid=%u; name=%s; type=%d; id=%u;)\n", attr.inst.devid,
-            spod_info->wlist[0].sdid, attr.name, attr.type, attr.id);
+        trs_debug("Destroy shadow. (devid=%u; sdid=%u; name=%s; type=%d; id=%u;)\n", attr.inst.devid,
+                  spod_info->wlist[0].sdid, attr.name, attr.type, attr.id);
         shr_id_spod_info_destroy(spod_info);
         ret = 0;
     } else {
-        trs_warn(
-            "NOT destroy shadow. (devid=%u; sdid=%u; name=%s; type=%d; id=%u; server_abnormal=%u;"
-            " shadow_exist=%u; ret=%d; in_recycle=%d)\n",
-            attr.inst.devid, spod_info->wlist[0].sdid, attr.name, attr.type, attr.id, spod_server_abnormal,
-            shadow_node_exist, ret, ka_base_atomic_read(&spod_info->in_recycling));
+        trs_warn("NOT destroy shadow. (devid=%u; sdid=%u; name=%s; type=%d; id=%u; server_abnormal=%u;"
+                 " shadow_exist=%u; ret=%d; in_recycle=%d)\n",
+                 attr.inst.devid, spod_info->wlist[0].sdid, attr.name, attr.type, attr.id, spod_server_abnormal,
+                 shadow_node_exist, ret, ka_base_atomic_read(&spod_info->in_recycling));
         ret = -EPIPE;
     }
 
@@ -872,9 +855,8 @@ STATIC int shr_id_pod_set_pid(struct shr_id_node_op_attr *attr, u32 serverid, u3
         return ret;
     }
 
-    trs_debug(
-        "Set pod pid. (devid=%u; serverid=%u; sdid=%u; name=%s; type=%d; id=%u; pid=%d)\n", attr->inst.devid, serverid,
-        sdid, attr->name, attr->type, attr->id, pid);
+    trs_debug("Set pod pid. (devid=%u; serverid=%u; sdid=%u; name=%s; type=%d; id=%u; pid=%d)\n", attr->inst.devid,
+              serverid, sdid, attr->name, attr->type, attr->id, pid);
 
     if (spod_info->create_info[serverid].pid == 0) {
         ret = shr_id_create_shadow_node_msg_send(attr, sdid, pid);
@@ -987,9 +969,8 @@ STATIC int shr_id_set_pod_pid(struct shr_id_proc_ctx *proc_ctx, unsigned long ar
     ret = dbl_parse_sdid(ioctl_info.sdid, &parse);
 #endif
     if ((ret != 0) || (parse.server_id >= SHR_ID_PID_SERVER_ID_MAX_NUM)) {
-        trs_err(
-            "Parse fail. (ret=%d; server_id=%u; server id range is [0, %u].)\n", ret, parse.server_id,
-            (SHR_ID_PID_SERVER_ID_MAX_NUM - 1));
+        trs_err("Parse fail. (ret=%d; server_id=%u; server id range is [0, %u].)\n", ret, parse.server_id,
+                (SHR_ID_PID_SERVER_ID_MAX_NUM - 1));
         return -EINVAL;
     }
 
@@ -1030,8 +1011,8 @@ STATIC int shr_id_pod_name_update(u32 devid, char *name)
     return 0;
 }
 
-bool hal_kernel_trs_is_belong_to_pod_proc(
-    unsigned int sdid, unsigned int tsid, int pid, int res_type, unsigned int res_id)
+bool hal_kernel_trs_is_belong_to_pod_proc(unsigned int sdid, unsigned int tsid, int pid, int res_type,
+                                          unsigned int res_id)
 {
     struct trs_id_inst inst = {.devid = sdid, .tsid = tsid};
     return shr_id_is_belong_to_proc(&inst, pid, res_type, res_id);
@@ -1053,8 +1034,8 @@ STATIC int shr_id_spod_init(void)
         trs_warn("Lookup symbol: %s not found.\n", DEVDRV_P2P_MSG_SEND_OPS);
         return DRV_ERROR_NONE;
     }
-    devdrv_register_p2p_msg_proc_ops_func =
-        (devdrv_register_p2p_msg_proc_ops)(uintptr_t)__ka_system_symbol_get(DEVDRV_REGISTER_P2P_MSG_PROC_OPS);
+    devdrv_register_p2p_msg_proc_ops_func = (devdrv_register_p2p_msg_proc_ops)(uintptr_t)__ka_system_symbol_get(
+        DEVDRV_REGISTER_P2P_MSG_PROC_OPS);
     if (devdrv_register_p2p_msg_proc_ops_func == NULL) {
         trs_warn("Lookup symbol: %s not found.\n", DEVDRV_REGISTER_P2P_MSG_PROC_OPS);
         return DRV_ERROR_NONE;
@@ -1082,8 +1063,8 @@ STATIC void shr_id_spod_uninit(void)
 #ifdef CFG_FEATURE_SUPPORT_XCOM
     devdrv_unregister_p2p_msg_proc_ops devdrv_unregister_p2p_msg_proc_ops_func = NULL;
 
-    devdrv_unregister_p2p_msg_proc_ops_func =
-        (devdrv_unregister_p2p_msg_proc_ops)(uintptr_t)__ka_system_symbol_get(DEVDRV_UNREGISTER_P2P_MSG_PROC_OPS);
+    devdrv_unregister_p2p_msg_proc_ops_func = (devdrv_unregister_p2p_msg_proc_ops)(uintptr_t)__ka_system_symbol_get(
+        DEVDRV_UNREGISTER_P2P_MSG_PROC_OPS);
     if (devdrv_unregister_p2p_msg_proc_ops_func != NULL) {
         (void)devdrv_unregister_p2p_msg_proc_ops_func(devdrv_msg_client_tsdrv);
         __ka_system_symbol_put(DEVDRV_UNREGISTER_P2P_MSG_PROC_OPS);

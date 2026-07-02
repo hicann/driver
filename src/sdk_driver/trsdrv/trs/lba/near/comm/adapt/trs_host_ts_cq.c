@@ -86,16 +86,15 @@ int trs_ts_cq_cpy(struct trs_id_inst *inst, u32 cqid, u32 cq_type, u8 *cqe)
     }
 
 #ifndef EMU_ST
-    ret = memcpy_s(
-        cq_info.cq_vaddr + cq_info.cq_para.cqe_size * cq_head, cq_info.cq_para.cqe_size, cqe, TRS_MAINT_MAX_CQE_SIZE);
+    ret = memcpy_s(cq_info.cq_vaddr + cq_info.cq_para.cqe_size * cq_head, cq_info.cq_para.cqe_size, cqe,
+                   TRS_MAINT_MAX_CQE_SIZE);
     if (ret != 0) {
         trs_err("Memcpy failed. (ret=%d; cqe_size=%u)\n", ret, cq_info.cq_para.cqe_size);
         return -EFAULT;
     }
 #endif
 
-    trs_debug(
-        "Cq copy success. (devid=%u; tsid=%u; cqid=%u; chan_id=%u; cq_head=%u)\n", inst->devid, inst->tsid, cqid,
-        chan_id, cq_head);
+    trs_debug("Cq copy success. (devid=%u; tsid=%u; cqid=%u; chan_id=%u; cq_head=%u)\n", inst->devid, inst->tsid, cqid,
+              chan_id, cq_head);
     return 0;
 }

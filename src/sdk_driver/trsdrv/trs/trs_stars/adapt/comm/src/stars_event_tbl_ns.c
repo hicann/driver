@@ -69,8 +69,8 @@ static StarsEventTable *trs_get_event_table(struct trs_id_inst *inst, u32 id)
     u32 group_id = id / STARS_TABLE_EVENT_NUM;
     u32 offset = id % STARS_TABLE_EVENT_NUM;
     StarsEventGroupTableInfo *group_info = NULL;
-    StarsEventTableNsRegsType *tbl_info =
-        (StarsEventTableNsRegsType *)stars_event_table_ns_all_reg[inst->devid][inst->tsid];
+    StarsEventTableNsRegsType *tbl_info = (StarsEventTableNsRegsType *)
+        stars_event_table_ns_all_reg[inst->devid][inst->tsid];
     if (tbl_info == NULL) {
         return NULL;
     }

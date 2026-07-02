@@ -19,9 +19,8 @@
 int trs_shr_ctx_mng_init(struct trs_id_inst *inst);
 void trs_shr_ctx_mng_uninit(struct trs_id_inst *inst);
 
-int trs_shr_sq_remap(
-    struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst, struct halSqCqInputInfo *para,
-    struct trs_sq_ctx *sq_ctx, struct trs_chan_sq_info *sq_info);
+int trs_shr_sq_remap(struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst, struct halSqCqInputInfo *para,
+                     struct trs_sq_ctx *sq_ctx, struct trs_chan_sq_info *sq_info);
 void trs_shr_sq_unmap(struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *ts_inst, struct trs_sq_ctx *sq_ctx);
 
 struct trs_shr_ctx_mng *trs_get_shr_ctx(struct trs_id_inst *inst);

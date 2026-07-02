@@ -64,17 +64,16 @@ KA_EXPORT_SYMBOL_GPL(trs_get_ts_status);
 int trs_get_ts_status_ioctl(void *feature, char *in, u32 in_len, char *out, u32 out_len)
 {
     enum devdrv_device_status { /* Keep consistent with the ascend_hal.h */
-                                DRV_STATUS_INITING = 0x0,
-                                DRV_STATUS_WORK,
-                                DRV_STATUS_EXCEPTION,
-                                DRV_STATUS_SLEEP,
-                                DRV_STATUS_COMMUNICATION_LOST,
-                                DRV_STATUS_RESERVED
+        DRV_STATUS_INITING = 0x0,
+        DRV_STATUS_WORK,
+        DRV_STATUS_EXCEPTION,
+        DRV_STATUS_SLEEP,
+        DRV_STATUS_COMMUNICATION_LOST,
+        DRV_STATUS_RESERVED
     };
-    u32 trs_ts_status_tansfrom[TRS_INST_STATUS_MAX] = {
-        [TRS_INST_STATUS_UNINIT] = DRV_STATUS_INITING,
-        [TRS_INST_STATUS_NORMAL] = DRV_STATUS_WORK,
-        [TRS_INST_STATUS_ABNORMAL] = DRV_STATUS_EXCEPTION};
+    u32 trs_ts_status_tansfrom[TRS_INST_STATUS_MAX] = {[TRS_INST_STATUS_UNINIT] = DRV_STATUS_INITING,
+                                                       [TRS_INST_STATUS_NORMAL] = DRV_STATUS_WORK,
+                                                       [TRS_INST_STATUS_ABNORMAL] = DRV_STATUS_EXCEPTION};
     struct tsdrv_id_inst tsdrv_inst;
     struct trs_id_inst inst;
     u32 phys_id = DEVDRV_MAX_DAVINCI_NUM;
@@ -117,9 +116,8 @@ int trs_get_ts_status_ioctl(void *feature, char *in, u32 in_len, char *out, u32 
 #define DMS_MODULE_TRS_ADAPT "trs_adapt"
 BEGIN_DMS_MODULE_DECLARATION(DMS_MODULE_TRS_ADAPT)
 BEGIN_FEATURE_COMMAND()
-ADD_FEATURE_COMMAND(
-    DMS_MODULE_TRS_ADAPT, DMS_MAIN_CMD_TRS, DMS_SUBCMD_GET_TS_HB_STATUS, NULL, NULL, DMS_SUPPORT_ALL_USER,
-    trs_get_ts_status_ioctl)
+ADD_FEATURE_COMMAND(DMS_MODULE_TRS_ADAPT, DMS_MAIN_CMD_TRS, DMS_SUBCMD_GET_TS_HB_STATUS, NULL, NULL,
+                    DMS_SUPPORT_ALL_USER, trs_get_ts_status_ioctl)
 END_FEATURE_COMMAND()
 END_MODULE_DECLARATION()
 

@@ -147,8 +147,8 @@ struct trs_core_adapt_ops {
     int (*get_sq_trigger_irq)(struct trs_id_inst *inst, u32 *irq, u32 *irq_type); /* not must */
     int (*get_trigger_sqid)(struct trs_id_inst *inst, u32 *sqid);                 /* not must */
     void (*set_trigger_irq_affinity)(struct trs_id_inst *inst, u32 irq, u32 op);  /* not must */
-    int (*request_irq)(
-        struct trs_id_inst *inst, u32 irq_type, u32 irq, void *para, ka_irqreturn_t (*handler)(int irq, void *para));
+    int (*request_irq)(struct trs_id_inst *inst, u32 irq_type, u32 irq, void *para,
+                       ka_irqreturn_t (*handler)(int irq, void *para));
     void (*free_irq)(struct trs_id_inst *inst, u32 irq_type, u32 irq, void *para);
     void (*set_thread_affinity)(struct trs_id_inst *inst, ka_task_struct_t *thread);
     int (*ts_rpc_call)(struct trs_id_inst *inst, u8 *msg, u32 len);
@@ -183,8 +183,8 @@ enum {
 
 #define TRS_CORE_SQ_TRIGGER_WQ_UNBIND_FLAG (1U << TRS_CORE_SQ_TRIGGER_WQ_UNBIND_FLAG_BIT)
 
-int trs_core_ts_inst_register(
-    struct trs_id_inst *inst, int hw_type, int location, u32 ts_inst_flag, struct trs_core_adapt_ops *ops);
+int trs_core_ts_inst_register(struct trs_id_inst *inst, int hw_type, int location, u32 ts_inst_flag,
+                              struct trs_core_adapt_ops *ops);
 void trs_core_ts_inst_unregister(struct trs_id_inst *inst);
 
 int trs_stream_bind_remote_sqcq(struct trs_id_inst *inst, u32 stream_id, u32 sqid, u32 cqid, int host_pid);

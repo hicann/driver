@@ -25,5 +25,8 @@ static inline u64 trs_get_us_timestamp(void)
 #endif
 }
 
-static inline u64 trs_get_s_timestamp(void) { return (ka_jiffies / KA_HZ); }
+static inline u64 trs_get_s_timestamp(void)
+{
+    return (ka_jiffies / KA_HZ);
+}
 #endif

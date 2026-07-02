@@ -41,19 +41,43 @@ static inline u32 trs_soc_get_mini_v3_sq_mem_side(u32 devid, struct trs_chan_typ
     return TRS_CHAN_DEV_RSV_MEM;
 }
 
-static inline u32 trs_soc_get_mini_v3_cq_mem_side(u32 devid) { return TRS_CHAN_DEV_RSV_MEM; }
+static inline u32 trs_soc_get_mini_v3_cq_mem_side(u32 devid)
+{
+    return TRS_CHAN_DEV_RSV_MEM;
+}
 
-static inline int trs_soc_get_mini_v3_hwcq_rsv_mem_type(void) { return RSV_MEM_HW_SQCQ; }
+static inline int trs_soc_get_mini_v3_hwcq_rsv_mem_type(void)
+{
+    return RSV_MEM_HW_SQCQ;
+}
 
-static inline int trs_soc_get_mini_v3_sq_head_reg_offset(void) { return TRS_STARS_SCHED_SQ_HEAD_OFFSET; }
+static inline int trs_soc_get_mini_v3_sq_head_reg_offset(void)
+{
+    return TRS_STARS_SCHED_SQ_HEAD_OFFSET;
+}
 
-static inline int trs_soc_get_mini_v3_sq_tail_reg_offset(void) { return TRS_STARS_SCHED_SQ_TAIL_OFFSET; }
+static inline int trs_soc_get_mini_v3_sq_tail_reg_offset(void)
+{
+    return TRS_STARS_SCHED_SQ_TAIL_OFFSET;
+}
 
-static inline int trs_soc_get_mini_v3_sq_status_reg_offset(void) { return TRS_STARS_SCHED_SQ_STATUS_OFFSET; }
+static inline int trs_soc_get_mini_v3_sq_status_reg_offset(void)
+{
+    return TRS_STARS_SCHED_SQ_STATUS_OFFSET;
+}
 
-static inline int trs_soc_get_mini_v3_cq_head_reg_offset(void) { return TRS_STARS_SCHED_CQ_HEAD_OFFSET; }
+static inline int trs_soc_get_mini_v3_cq_head_reg_offset(void)
+{
+    return TRS_STARS_SCHED_CQ_HEAD_OFFSET;
+}
 
-static inline int trs_soc_get_mini_v3_cq_tail_reg_offset(void) { return TRS_STARS_SCHED_CQ_TAIL_OFFSET; }
+static inline int trs_soc_get_mini_v3_cq_tail_reg_offset(void)
+{
+    return TRS_STARS_SCHED_CQ_TAIL_OFFSET;
+}
 
-static inline bool trs_mini_v3_is_support_soft_mbox(void) { return false; }
+static inline bool trs_mini_v3_is_support_soft_mbox(void)
+{
+    return false;
+}
 #endif /* SOC_ADAPT_RES_MINI_V3_H__ */

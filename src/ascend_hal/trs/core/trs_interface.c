@@ -20,8 +20,8 @@
 #include "trs_urma_async.h"
 
 #ifndef EMU_ST
-drvError_t __attribute__((weak)) trs_urma_res_config(
-    uint32_t dev_id, struct halResourceIdInputInfo *in, struct halResourceConfigInfo *para)
+drvError_t __attribute__((weak)) trs_urma_res_config(uint32_t dev_id, struct halResourceIdInputInfo *in,
+                                                     struct halResourceConfigInfo *para)
 {
     (void)dev_id;
     (void)in;
@@ -29,8 +29,8 @@ drvError_t __attribute__((weak)) trs_urma_res_config(
     return DRV_ERROR_NOT_SUPPORT;
 }
 
-drvError_t __attribute__((weak)) trs_sqcq_urma_alloc(
-    uint32_t dev_id, struct halSqCqInputInfo *in, struct halSqCqOutputInfo *out)
+drvError_t __attribute__((weak)) trs_sqcq_urma_alloc(uint32_t dev_id, struct halSqCqInputInfo *in,
+                                                     struct halSqCqOutputInfo *out)
 {
     (void)dev_id;
     (void)in;
@@ -38,8 +38,8 @@ drvError_t __attribute__((weak)) trs_sqcq_urma_alloc(
     return DRV_ERROR_NOT_SUPPORT;
 }
 
-drvError_t __attribute__((weak)) trs_sqcq_urma_free(
-    uint32_t dev_id, struct halSqCqFreeInfo *info, bool remote_free_flag)
+drvError_t __attribute__((weak)) trs_sqcq_urma_free(uint32_t dev_id, struct halSqCqFreeInfo *info,
+                                                    bool remote_free_flag)
 {
     (void)dev_id;
     (void)info;
@@ -61,8 +61,8 @@ drvError_t __attribute__((weak)) trs_sq_cq_config_sync(uint32_t dev_id, struct h
     return DRV_ERROR_NOT_SUPPORT;
 }
 
-drvError_t __attribute__((weak)) trs_sq_task_args_async_copy(
-    uint32_t dev_id, struct halSqTaskArgsInfo *info, struct sqcq_usr_info *sq_info)
+drvError_t __attribute__((weak)) trs_sq_task_args_async_copy(uint32_t dev_id, struct halSqTaskArgsInfo *info,
+                                                             struct sqcq_usr_info *sq_info)
 {
     (void)dev_id;
     (void)info;
@@ -70,8 +70,8 @@ drvError_t __attribute__((weak)) trs_sq_task_args_async_copy(
     return DRV_ERROR_NOT_SUPPORT;
 }
 
-drvError_t __attribute__((weak)) trs_async_dma_wqe_create(
-    uint32_t dev_id, struct trs_async_dma_input_para *in, struct halAsyncDmaOutputPara *out)
+drvError_t __attribute__((weak)) trs_async_dma_wqe_create(uint32_t dev_id, struct trs_async_dma_input_para *in,
+                                                          struct halAsyncDmaOutputPara *out)
 {
     (void)dev_id;
     (void)in;
@@ -86,8 +86,8 @@ drvError_t __attribute__((weak)) trs_async_dma_wqe_destory(uint32_t dev_id, stru
     return DRV_ERROR_NOT_SUPPORT;
 }
 
-drvError_t __attribute__((weak)) trs_sq_task_send_urma(
-    uint32_t dev_id, struct halTaskSendInfo *info, struct sqcq_usr_info *sq_info)
+drvError_t __attribute__((weak)) trs_sq_task_send_urma(uint32_t dev_id, struct halTaskSendInfo *info,
+                                                       struct sqcq_usr_info *sq_info)
 {
     (void)dev_id;
     (void)info;
@@ -95,8 +95,8 @@ drvError_t __attribute__((weak)) trs_sq_task_send_urma(
     return DRV_ERROR_NOT_SUPPORT;
 }
 
-drvError_t __attribute__((weak)) trs_get_urma_tseg_info_by_va(
-    uint32_t devid, uint64_t va, uint64_t size, uint32_t flag, struct halTsegInfo *tsegInfo)
+drvError_t __attribute__((weak)) trs_get_urma_tseg_info_by_va(uint32_t devid, uint64_t va, uint64_t size, uint32_t flag,
+                                                              struct halTsegInfo *tsegInfo)
 {
     (void)devid;
     (void)va;
@@ -120,8 +120,8 @@ drvError_t __attribute__((weak)) trs_sq_jetty_info_query(uint32_t devid, struct 
     return DRV_ERROR_NOT_SUPPORT;
 }
 
-drvError_t __attribute__((weak)) trs_async_dma_jetty_create(
-    uint32_t dev_id, struct halAsyncDmaJettyCreateIn *in, struct halAsyncDmaJettyCreateOut *out)
+drvError_t __attribute__((weak)) trs_async_dma_jetty_create(uint32_t dev_id, struct halAsyncDmaJettyCreateIn *in,
+                                                            struct halAsyncDmaJettyCreateOut *out)
 {
     (void)dev_id;
     (void)in;
@@ -136,8 +136,8 @@ drvError_t __attribute__((weak)) trs_async_dma_jetty_destroy(uint32_t dev_id, st
     return DRV_ERROR_NOT_SUPPORT;
 }
 
-drvError_t __attribute__((weak)) trs_async_dma_jetty_query(
-    uint32_t dev_id, struct halAsyncDmaJettyQueryIn *in, struct halAsyncDmaJettyQueryOut *out)
+drvError_t __attribute__((weak)) trs_async_dma_jetty_query(uint32_t dev_id, struct halAsyncDmaJettyQueryIn *in,
+                                                           struct halAsyncDmaJettyQueryOut *out)
 {
     (void)dev_id;
     (void)in;
@@ -145,8 +145,8 @@ drvError_t __attribute__((weak)) trs_async_dma_jetty_query(
     return DRV_ERROR_NOT_SUPPORT;
 }
 
-drvError_t __attribute__((weak)) trs_async_dma_wqe_convert(
-    uint32_t dev_id, struct halAsyncDmaWqeInputPara *in, struct halAsyncDmaWqeOutputPara *out)
+drvError_t __attribute__((weak)) trs_async_dma_wqe_convert(uint32_t dev_id, struct halAsyncDmaWqeInputPara *in,
+                                                           struct halAsyncDmaWqeOutputPara *out)
 {
     (void)dev_id;
     (void)in;
@@ -411,9 +411,8 @@ static drvError_t trs_sq_cq_urma_config(uint32_t devId, struct halSqCqConfigInfo
         if (info->type == DRV_NORMAL_TYPE) {
             struct sqcq_usr_info *sq_info = trs_get_sq_info(devId, info->tsId, info->type, info->sqId);
             if (sq_info == NULL) {
-                trs_err(
-                    "Invalid para. (dev_id=%u; ts_id=%u; type=%d; sq_id=%u)\n", devId, info->tsId, info->type,
-                    info->sqId);
+                trs_err("Invalid para. (dev_id=%u; ts_id=%u; type=%d; sq_id=%u)\n", devId, info->tsId, info->type,
+                        info->sqId);
                 return DRV_ERROR_INVALID_VALUE;
             }
 
@@ -483,9 +482,8 @@ drvError_t halSqTaskArgsAsyncCopy(uint32_t devId, struct halSqTaskArgsInfo *info
 
     if ((devId >= TRS_DEV_NUM) || (info->tsId >= TRS_TS_NUM) || (info->src == 0) || (info->dst == 0) ||
         (info->size == 0) || (info->type != DRV_NORMAL_TYPE)) {
-        trs_err(
-            "Invalid para. (dev_id=%u; ts_id=%u; src=0x%llx; dst=0x%llx; size=%u; type=%d)\n", devId, info->tsId,
-            info->src, info->dst, info->size, info->type);
+        trs_err("Invalid para. (dev_id=%u; ts_id=%u; src=0x%llx; dst=0x%llx; size=%u; type=%d)\n", devId, info->tsId,
+                info->src, info->dst, info->size, info->type);
         return DRV_ERROR_INVALID_VALUE;
     }
 
@@ -508,8 +506,8 @@ drvError_t halSqTaskArgsAsyncCopy(uint32_t devId, struct halSqTaskArgsInfo *info
 #endif
 }
 
-static drvError_t trs_async_para_check(
-    uint32_t dev_id, struct halAsyncDmaInputPara *in, struct halAsyncDmaOutputPara *out)
+static drvError_t trs_async_para_check(uint32_t dev_id, struct halAsyncDmaInputPara *in,
+                                       struct halAsyncDmaOutputPara *out)
 {
     if ((in == NULL) || (out == NULL)) {
         trs_err("Invalid para.\n");
@@ -551,8 +549,8 @@ drvError_t halAsyncDmaCreate(uint32_t devId, struct halAsyncDmaInputPara *in, st
         case TRS_CONNECT_PROTOCOL_PCIE:
             return trs_async_dma_desc_create(devId, in, out);
         case TRS_CONNECT_PROTOCOL_UB:
-            input_para = trs_pack_async_dma_input_para(
-                in, (enum trs_async_dma_type)in->async_dma_type, in->type, in->tsId, in->sqId);
+            input_para = trs_pack_async_dma_input_para(in, (enum trs_async_dma_type)in->async_dma_type, in->type,
+                                                       in->tsId, in->sqId);
             return trs_async_dma_wqe_create(devId, &input_para, out);
         default:
             return DRV_ERROR_NOT_SUPPORT;
@@ -589,8 +587,8 @@ drvError_t halAsyncDmaDestory(uint32_t devId, struct halAsyncDmaDestoryPara *par
         case TRS_CONNECT_PROTOCOL_PCIE:
             return trs_async_dma_destory(devId, para);
         case TRS_CONNECT_PROTOCOL_UB:
-            destroy_para =
-                trs_pack_async_dma_destroy_para(para, TRS_ASYNC_DMA_TYPE_NORMAL, para->type, para->tsId, para->sqId);
+            destroy_para = trs_pack_async_dma_destroy_para(para, TRS_ASYNC_DMA_TYPE_NORMAL, para->type, para->tsId,
+                                                           para->sqId);
             return trs_async_dma_wqe_destory(devId, &destroy_para);
         default:
             return DRV_ERROR_NOT_SUPPORT;
@@ -607,24 +605,21 @@ static int _trs_async_2d_para_check(struct drv2dWqeInputPara *para)
 {
     if ((para->src == NULL) || (para->dst == NULL) || (para->width == 0) || (para->height == 0) ||
         (para->dpitch < para->width) || (para->spitch < para->width) || (para->height > TRS_2D_HEIGHT_MAX)) {
-        trs_err(
-            "Invalid para. (src_null=%d; dst_null=%d; width=%llu; height=%llu; dpitch=%llu; spitch=%llu)\n",
-            (para->src == NULL), (para->dst == NULL), para->width, para->height, para->dpitch, para->spitch);
+        trs_err("Invalid para. (src_null=%d; dst_null=%d; width=%llu; height=%llu; dpitch=%llu; spitch=%llu)\n",
+                (para->src == NULL), (para->dst == NULL), para->width, para->height, para->dpitch, para->spitch);
         return DRV_ERROR_INVALID_VALUE;
     }
 
     if (para->fixedSize >= (para->height * para->width)) {
-        trs_err(
-            "Invalid fixedSize. (fixedSize=0x%llx; height=%llu; width=%llu)\n", para->fixedSize, para->height,
-            para->width);
+        trs_err("Invalid fixedSize. (fixedSize=0x%llx; height=%llu; width=%llu)\n", para->fixedSize, para->height,
+                para->width);
         return DRV_ERROR_INVALID_VALUE;
     }
 
     if ((para->height != 1) && (((uintptr_t)((char *)para->src + para->spitch) < (uintptr_t)para->src) ||
                                 ((uintptr_t)((char *)para->dst + para->dpitch) < (uintptr_t)para->dst))) {
-        trs_err(
-            "Invalid para. (src=%p; dst=%p; spitch=%llu; dpitch=%llu)\n", para->src, para->dst, para->spitch,
-            para->dpitch);
+        trs_err("Invalid para. (src=%p; dst=%p; spitch=%llu; dpitch=%llu)\n", para->src, para->dst, para->spitch,
+                para->dpitch);
         return DRV_ERROR_INVALID_VALUE;
     }
 
@@ -704,8 +699,8 @@ drvError_t halAsyncDmaDestroy2D(uint32_t devId, struct halAsyncDmaDestroy2DPara 
         case TRS_CONNECT_PROTOCOL_PCIE:
             return DRV_ERROR_NOT_SUPPORT;
         case TRS_CONNECT_PROTOCOL_UB:
-            destroy_para =
-                trs_pack_async_dma_destroy_para(para, TRS_ASYNC_DMA_TYPE_2D, para->type, para->tsId, para->sqId);
+            destroy_para = trs_pack_async_dma_destroy_para(para, TRS_ASYNC_DMA_TYPE_2D, para->type, para->tsId,
+                                                           para->sqId);
             return trs_async_dma_wqe_destory(devId, &destroy_para);
         default:
             return DRV_ERROR_NOT_SUPPORT;
@@ -713,13 +708,12 @@ drvError_t halAsyncDmaDestroy2D(uint32_t devId, struct halAsyncDmaDestroy2DPara 
 }
 
 #define TRS_CPY_BATCH_MAX_COUNT 2048ULL
-static int _trs_async_batch_para_check(
-    unsigned long long *src, unsigned long long *dst, unsigned long long *len, unsigned long long count)
+static int _trs_async_batch_para_check(unsigned long long *src, unsigned long long *dst, unsigned long long *len,
+                                       unsigned long long count)
 {
     if ((src == NULL) || (dst == NULL) || (len == NULL)) {
-        trs_err(
-            "Invalid para. (src_is_null=%d; dst_is_null=%d; size_is_null=%d)\n", (src == NULL), (dst == NULL),
-            (len == NULL));
+        trs_err("Invalid para. (src_is_null=%d; dst_is_null=%d; size_is_null=%d)\n", (src == NULL), (dst == NULL),
+                (len == NULL));
         return DRV_ERROR_INVALID_VALUE;
     }
 
@@ -731,8 +725,8 @@ static int _trs_async_batch_para_check(
     return 0;
 }
 
-static int trs_async_batch_para_check(
-    uint32_t devId, struct halAsyncDmaInputBatchPara *in, struct halAsyncDmaOutputPara *out)
+static int trs_async_batch_para_check(uint32_t devId, struct halAsyncDmaInputBatchPara *in,
+                                      struct halAsyncDmaOutputPara *out)
 {
     if ((in == NULL) || (out == NULL)) {
         trs_err("Invalid para.\n");
@@ -751,8 +745,8 @@ static int trs_async_batch_para_check(
     return _trs_async_batch_para_check(in->src, in->dst, in->len, in->count);
 }
 
-drvError_t halAsyncDmaCreateBatch(
-    uint32_t devId, struct halAsyncDmaInputBatchPara *in, struct halAsyncDmaOutputPara *out)
+drvError_t halAsyncDmaCreateBatch(uint32_t devId, struct halAsyncDmaInputBatchPara *in,
+                                  struct halAsyncDmaOutputPara *out)
 {
     struct trs_async_dma_input_para input_para = {0};
     int connection_type;
@@ -797,8 +791,8 @@ drvError_t halAsyncDmaDestroyBatch(uint32_t devId, struct halAsyncDmaDestroyBatc
         case TRS_CONNECT_PROTOCOL_PCIE:
             return DRV_ERROR_NOT_SUPPORT;
         case TRS_CONNECT_PROTOCOL_UB:
-            destroy_para =
-                trs_pack_async_dma_destroy_para(para, TRS_ASYNC_DMA_TYPE_BATCH, para->type, para->tsId, para->sqId);
+            destroy_para = trs_pack_async_dma_destroy_para(para, TRS_ASYNC_DMA_TYPE_BATCH, para->type, para->tsId,
+                                                           para->sqId);
             return trs_async_dma_wqe_destory(devId, &destroy_para);
         default:
             return DRV_ERROR_NOT_SUPPORT;
@@ -817,8 +811,8 @@ static inline int trs_interface_para_rsv_check(uint32_t *rsv, int rsv_cnt)
     return 0;
 }
 
-static int trs_async_jetty_create_para_check(
-    uint32_t devId, struct halAsyncDmaJettyCreateIn *in, struct halAsyncDmaJettyCreateOut *out)
+static int trs_async_jetty_create_para_check(uint32_t devId, struct halAsyncDmaJettyCreateIn *in,
+                                             struct halAsyncDmaJettyCreateOut *out)
 {
     if ((in == NULL) || (out == NULL)) {
         trs_err("Invalid null para.\n");
@@ -827,9 +821,8 @@ static int trs_async_jetty_create_para_check(
 
     if ((devId >= TRS_DEV_NUM) || (in->jettyType >= DRV_ASYNC_DMA_JETTY_TYPE_MAX) ||
         (in->piMode >= DRV_ASYNC_DMA_JETTY_PI_MODE_MAX) || (in->depth == 0)) {
-        trs_err(
-            "Invalid para. (dev_id=%u; jetty_type=%d; pi_mode=%d; dir=%d; depth=%u)\n", devId, in->jettyType,
-            in->piMode, in->dir, in->depth);
+        trs_err("Invalid para. (dev_id=%u; jetty_type=%d; pi_mode=%d; dir=%d; depth=%u)\n", devId, in->jettyType,
+                in->piMode, in->dir, in->depth);
         return DRV_ERROR_INVALID_VALUE;
     }
 
@@ -845,8 +838,8 @@ static int trs_async_jetty_create_para_check(
     return 0;
 }
 
-drvError_t halAsyncDmaJettyCreate(
-    uint32_t devId, struct halAsyncDmaJettyCreateIn *in, struct halAsyncDmaJettyCreateOut *out)
+drvError_t halAsyncDmaJettyCreate(uint32_t devId, struct halAsyncDmaJettyCreateIn *in,
+                                  struct halAsyncDmaJettyCreateOut *out)
 {
     int connection_type;
     drvError_t ret = 0;
@@ -901,8 +894,8 @@ drvError_t halAsyncDmaJettyDestroy(uint32_t devId, struct halAsyncJettyDestroyPa
     return trs_async_dma_jetty_destroy(devId, para);
 }
 
-drvError_t halAsyncDmaJettyQuery(
-    uint32_t devId, struct halAsyncDmaJettyQueryIn *in, struct halAsyncDmaJettyQueryOut *out)
+drvError_t halAsyncDmaJettyQuery(uint32_t devId, struct halAsyncDmaJettyQueryIn *in,
+                                 struct halAsyncDmaJettyQueryOut *out)
 {
     int connection_type;
 
@@ -929,8 +922,8 @@ drvError_t halAsyncDmaJettyQuery(
     return trs_async_dma_jetty_query(devId, in, out);
 }
 
-static int trs_async_wqe_convert_para_check(
-    uint32_t devId, struct halAsyncDmaWqeInputPara *in, struct halAsyncDmaWqeOutputPara *out)
+static int trs_async_wqe_convert_para_check(uint32_t devId, struct halAsyncDmaWqeInputPara *in,
+                                            struct halAsyncDmaWqeOutputPara *out)
 {
     if ((in == NULL) || (out == NULL)) {
         trs_err("Invalid null para.\n");
@@ -942,9 +935,8 @@ static int trs_async_wqe_convert_para_check(
     }
 
     if ((devId >= TRS_DEV_NUM) || (in->wqeBuffer == NULL) || (in->wqeBufferLen == 0)) {
-        trs_err(
-            "Invalid para. (dev_id=%u; wqe_buffer_null=%d; wqe_buffer_len=0x%llx)\n", devId, (in->wqeBuffer == NULL),
-            in->wqeBufferLen);
+        trs_err("Invalid para. (dev_id=%u; wqe_buffer_null=%d; wqe_buffer_len=0x%llx)\n", devId,
+                (in->wqeBuffer == NULL), in->wqeBufferLen);
         return DRV_ERROR_INVALID_VALUE;
     }
 
@@ -957,9 +949,8 @@ static int trs_async_wqe_convert_para_check(
         case DRV_ASYNC_DMA_TYPE_NORMAL:
             if ((in->normal.src == NULL) || (in->normal.dst == NULL) || (in->normal.len == 0) ||
                 (in->normal.asyncDmaType != DRV_ASYNC_DMA_TYPE_NORMAL)) {
-                trs_err(
-                    "Invalid para. (src_is_null=%d; dst_is_null=%d; len=0x%llx)\n", (in->normal.src == NULL),
-                    (in->normal.dst == NULL), in->normal.len);
+                trs_err("Invalid para. (src_is_null=%d; dst_is_null=%d; len=0x%llx)\n", (in->normal.src == NULL),
+                        (in->normal.dst == NULL), in->normal.len);
                 return DRV_ERROR_INVALID_VALUE;
             }
             break;
@@ -980,8 +971,8 @@ static int trs_async_wqe_convert_para_check(
     return 0;
 }
 
-drvError_t halAsyncDmaWqeConvert(
-    uint32_t devId, struct halAsyncDmaWqeInputPara *in, struct halAsyncDmaWqeOutputPara *out)
+drvError_t halAsyncDmaWqeConvert(uint32_t devId, struct halAsyncDmaWqeInputPara *in,
+                                 struct halAsyncDmaWqeOutputPara *out)
 {
     int connection_type;
     drvError_t ret = 0;
@@ -1047,9 +1038,8 @@ drvError_t halSqTaskSend(uint32_t devId, struct halTaskSendInfo *info)
     }
 
     if ((!trs_is_sq_support_send(sq_info)) || (trs_is_sq_init_without_sq_mem(sq_info->flag))) {
-        trs_warn(
-            "Sq is only id type, not support task send. (dev_id=%u; ts_id=%u; sq_id=%u; flag=%u)\n", devId, info->tsId,
-            info->sqId, sq_info->flag);
+        trs_warn("Sq is only id type, not support task send. (dev_id=%u; ts_id=%u; sq_id=%u; flag=%u)\n", devId,
+                 info->tsId, info->sqId, sq_info->flag);
         return DRV_ERROR_NOT_SUPPORT;
     }
 

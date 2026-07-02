@@ -74,7 +74,10 @@ static void trs_stars_destroy(struct trs_stars *stars)
     trs_kfree(stars);
 }
 
-int trs_stars_test_bit(u32 nr, u32 val) { return val & (1U << nr); }
+int trs_stars_test_bit(u32 nr, u32 val)
+{
+    return val & (1U << nr);
+}
 
 static int trs_stars_add(struct trs_stars *stars)
 {
@@ -690,4 +693,7 @@ int trs_stars_init(struct trs_id_inst *inst, int type, struct trs_stars_attr *at
     return ret;
 }
 
-void trs_stars_uninit(struct trs_id_inst *inst, int type) { trs_stars_del(inst, type); }
+void trs_stars_uninit(struct trs_id_inst *inst, int type)
+{
+    trs_stars_del(inst, type);
+}

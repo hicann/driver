@@ -20,7 +20,7 @@
 #define MAX_LOOP_TIME 30000000000
 #endif
 
-bool hal_kernel_trs_is_belong_to_pod_proc(
-    unsigned int sdid, unsigned int tsid, int pid, int res_type, unsigned int res_id);
+bool hal_kernel_trs_is_belong_to_pod_proc(unsigned int sdid, unsigned int tsid, int pid, int res_type,
+                                          unsigned int res_id);
 int trs_pod_msg_recv_async(u32 devid, u32 sdid, void *msg, size_t size, int *cmd_result, u32 mode);
 #endif

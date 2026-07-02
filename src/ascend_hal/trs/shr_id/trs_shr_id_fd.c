@@ -30,22 +30,40 @@ static THREAD__ int shrid_fd = -1;
 static THREAD__ pid_t shrid_pid = -1;
 
 #ifndef EMU_ST
-static int _shrid_open(const char *pathname, int flags) { return open(pathname, flags); }
+static int _shrid_open(const char *pathname, int flags)
+{
+    return open(pathname, flags);
+}
 
-static int _shrid_close(int fd) { return close(fd); }
+static int _shrid_close(int fd)
+{
+    return close(fd);
+}
 
-static int _shrid_ioctl(int fd, unsigned int cmd, void *para) { return ioctl(fd, cmd, para); }
+static int _shrid_ioctl(int fd, unsigned int cmd, void *para)
+{
+    return ioctl(fd, cmd, para);
+}
 #else
 int _shrid_open(const char *pathname, int flags);
 int _shrid_close(int fd);
 int _shrid_ioctl(int fd, unsigned int cmd, void *para);
 #endif /* EMU_ST */
 
-static void shrid_set_pid(pid_t pid) { shrid_pid = pid; }
+static void shrid_set_pid(pid_t pid)
+{
+    shrid_pid = pid;
+}
 
-static int shrid_get_pid(void) { return shrid_pid; }
+static int shrid_get_pid(void)
+{
+    return shrid_pid;
+}
 
-void shrid_set_fd(int fd) { shrid_fd = fd; }
+void shrid_set_fd(int fd)
+{
+    shrid_fd = fd;
+}
 
 static int _shrid_get_fd(void)
 {
@@ -164,7 +182,7 @@ drvError_t shrid_ioctl(u32 cmd, void *para)
         } else if (errno == EPERM) {
             return DRV_ERROR_OPER_NOT_PERMITTED;
         } else {
-            if ((errno == EACCES) && (cmd == SHR_ID_OPEN)){
+            if ((errno == EACCES) && (cmd == SHR_ID_OPEN)) {
                 ret = get_type_by_name(((struct shr_id_ioctl_info *)para)->name, &type);
                 if (ret != 0) {
                     trs_err("get type by name failed. (ret=%d)\n", ret);

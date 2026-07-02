@@ -41,20 +41,20 @@ struct trs_logic_cq_recv_trace_t {
 };
 
 #ifdef CFG_FEATURE_TRACE_EVENT_FUNC
-void trs_logic_cq_copy_trace(
-    const char *str, struct trs_core_ts_inst *ts_inst, struct trs_logic_cq *logic_cq, u32 start, u32 num);
+void trs_logic_cq_copy_trace(const char *str, struct trs_core_ts_inst *ts_inst, struct trs_logic_cq *logic_cq,
+                             u32 start, u32 num);
 void trs_logic_cq_recv_trace(const char *str, struct trs_core_ts_inst *ts_inst, struct halReportRecvInfo *para);
-void trs_logic_cq_enque_trace(
-    struct trs_core_ts_inst *ts_inst, struct trs_logic_cq *logic_cq, u32 stream_id, u32 task_id, void *cqe);
+void trs_logic_cq_enque_trace(struct trs_core_ts_inst *ts_inst, struct trs_logic_cq *logic_cq, u32 stream_id,
+                              u32 task_id, void *cqe);
 #else
-static inline void trs_logic_cq_copy_trace(
-    const char *str, struct trs_core_ts_inst *ts_inst, struct trs_logic_cq *logic_cq, u32 start, u32 num)
+static inline void trs_logic_cq_copy_trace(const char *str, struct trs_core_ts_inst *ts_inst,
+                                           struct trs_logic_cq *logic_cq, u32 start, u32 num)
 {}
-static inline void trs_logic_cq_recv_trace(
-    const char *str, struct trs_core_ts_inst *ts_inst, struct halReportRecvInfo *para)
+static inline void trs_logic_cq_recv_trace(const char *str, struct trs_core_ts_inst *ts_inst,
+                                           struct halReportRecvInfo *para)
 {}
-static inline void trs_logic_cq_enque_trace(
-    struct trs_core_ts_inst *ts_inst, struct trs_logic_cq *logic_cq, u32 stream_id, u32 task_id, void *cqe)
+static inline void trs_logic_cq_enque_trace(struct trs_core_ts_inst *ts_inst, struct trs_logic_cq *logic_cq,
+                                            u32 stream_id, u32 task_id, void *cqe)
 {}
 #endif
 

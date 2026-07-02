@@ -92,8 +92,8 @@ static void trs_chan_ops_hw_create_mbox_pack_host_streamid(struct trs_id_inst *i
     *host_ssid = pcie_vfid; /* see swapbuffer host streamid */
 }
 
-static void trs_chan_ops_hw_create_mbox_fill_ext_info(
-    struct trs_id_inst *inst, struct trs_chan_info *chan_info, struct trs_normal_cqsq_mailbox *mbox_data)
+static void trs_chan_ops_hw_create_mbox_fill_ext_info(struct trs_id_inst *inst, struct trs_chan_info *chan_info,
+                                                      struct trs_normal_cqsq_mailbox *mbox_data)
 {
     struct trs_ext_info_header *header = NULL;
 #if defined(CFG_FEATURE_SUPPORT_APM) || defined(CFG_FEATURE_SUPPORT_CP_PID_BY_DEVMNG)
@@ -118,31 +118,31 @@ static void trs_chan_ops_hw_create_mbox_fill_ext_info(
                 header->hccp_pid = (ret == 0) ? hccp_tgid : 0;
             }
 #endif
-            trs_debug(
-                "(device_pid=%d; host_pid=%d; hccp_pid=%d)\n", ka_task_get_current_tgid(), master_tgid, hccp_tgid);
+            trs_debug("(device_pid=%d; host_pid=%d; hccp_pid=%d)\n", ka_task_get_current_tgid(), master_tgid,
+                      hccp_tgid);
 #endif
         } else {
 #ifdef CFG_FEATURE_SUPPORT_APM
-            ret = hal_kernel_apm_query_slave_tgid_by_master(
-                ka_task_get_current_tgid(), inst->devid, PROCESS_CP1, &slave_tgid);
+            ret = hal_kernel_apm_query_slave_tgid_by_master(ka_task_get_current_tgid(), inst->devid, PROCESS_CP1,
+                                                            &slave_tgid);
             if (ret == 0) {
                 header->cp_pid = slave_tgid;
             }
-            ret = hal_kernel_apm_query_slave_tgid_by_master(
-                ka_task_get_current_tgid(), inst->devid, PROCESS_HCCP, &slave_tgid);
+            ret = hal_kernel_apm_query_slave_tgid_by_master(ka_task_get_current_tgid(), inst->devid, PROCESS_HCCP,
+                                                            &slave_tgid);
             if (ret == 0) {
                 header->hccp_pid = slave_tgid;
             }
 #endif
 #ifdef CFG_FEATURE_SUPPORT_CP_PID_BY_DEVMNG
-            ret = devdrv_query_process_by_host_pid(
-                ka_task_get_current_tgid(), inst->devid, DEVDRV_PROCESS_CP1, 0, &slave_tgid);
+            ret = devdrv_query_process_by_host_pid(ka_task_get_current_tgid(), inst->devid, DEVDRV_PROCESS_CP1, 0,
+                                                   &slave_tgid);
             if (ret == 0) {
                 header->cp_pid = slave_tgid;
             }
 #endif
-            trs_debug(
-                "(current=%d; cp_pid=%d; hccp_pid=%d)\n", ka_task_get_current_tgid(), header->cp_pid, header->hccp_pid);
+            trs_debug("(current=%d; cp_pid=%d; hccp_pid=%d)\n", ka_task_get_current_tgid(), header->cp_pid,
+                      header->hccp_pid);
         }
 
         trs_chan_ops_hw_create_mbox_pack_host_streamid(inst, &header->host_ssid);
@@ -159,14 +159,14 @@ static void trs_chan_ops_hw_create_mbox_fill_ext_info(
                 mbox_data->cq_irq, mbox_data->ssid, mbox_data->ts_info.info[0], mbox_data->ts_info.ext_msg_len);
         }
 
-        trs_debug(
-            "Mailbox msg. (pid=%d; device_pid=%u; is_convert_pid=%u; host_ssid=%u; ext_msg_len=%u)\n", mbox_data->pid,
-            header->cp_pid, mbox_data->is_convert_pid, header->host_ssid, mbox_data->ts_info.ext_msg_len);
+        trs_debug("Mailbox msg. (pid=%d; device_pid=%u; is_convert_pid=%u; host_ssid=%u; ext_msg_len=%u)\n",
+                  mbox_data->pid, header->cp_pid, mbox_data->is_convert_pid, header->host_ssid,
+                  mbox_data->ts_info.ext_msg_len);
     }
 }
 
-static int trs_chan_ops_hw_create_mbox_send(
-    struct trs_id_inst *inst, struct trs_chan_info *chan_info, struct trs_chan_adapt_info *adapt)
+static int trs_chan_ops_hw_create_mbox_send(struct trs_id_inst *inst, struct trs_chan_info *chan_info,
+                                            struct trs_chan_adapt_info *adapt)
 {
     struct trs_normal_cqsq_mailbox mbox_data;
     u32 cq_irq;
@@ -219,16 +219,15 @@ static int trs_chan_ops_hw_create_mbox_send(
 
     ret = trs_mbox_send(inst, 0, &mbox_data, sizeof(struct trs_normal_cqsq_mailbox), TRS_DEVICE_CHAN_MBOX_TIMEOUT_MS);
     if ((ret != 0) || (mbox_data.header.result != 0)) {
-        trs_err(
-            "Mbox send fail. (devid=%u; tsid=%u; cmd=%u; result=%u; ret=%d)\n", inst->devid, inst->tsid, cmd,
-            mbox_data.header.result, ret);
+        trs_err("Mbox send fail. (devid=%u; tsid=%u; cmd=%u; result=%u; ret=%d)\n", inst->devid, inst->tsid, cmd,
+                mbox_data.header.result, ret);
         ret = -EFAULT;
     }
     return ret;
 }
 
-static int trs_chan_ops_hw_release_mbox_send(
-    struct trs_id_inst *inst, struct trs_chan_info *chan_info, struct trs_chan_adapt_info *adapt)
+static int trs_chan_ops_hw_release_mbox_send(struct trs_id_inst *inst, struct trs_chan_info *chan_info,
+                                             struct trs_chan_adapt_info *adapt)
 {
     struct trs_normal_cqsq_mailbox mbox_data;
     u16 cmd;
@@ -262,17 +261,16 @@ static int trs_chan_ops_hw_release_mbox_send(
         if (ret == -ENXIO) {
             trs_warn("Mb chan is not exist. (devid=%u; tsid=%u; cmd=%u; ret=%d)\n", inst->devid, inst->tsid, cmd, ret);
         } else {
-            trs_err(
-                "Mbos send fail. (devid=%u; tsid=%u; cmd=%u; result=%u; ret=%d)\n", inst->devid, inst->tsid, cmd,
-                mbox_data.header.result, ret);
+            trs_err("Mbos send fail. (devid=%u; tsid=%u; cmd=%u; result=%u; ret=%d)\n", inst->devid, inst->tsid, cmd,
+                    mbox_data.header.result, ret);
             ret = -EFAULT;
         }
     }
     return ret;
 }
 
-static int trs_chan_ops_maint_create_mbox_send(
-    struct trs_id_inst *inst, struct trs_chan_info *chan_info, struct trs_chan_adapt_info *adapt)
+static int trs_chan_ops_maint_create_mbox_send(struct trs_id_inst *inst, struct trs_chan_info *chan_info,
+                                               struct trs_chan_adapt_info *adapt)
 {
     struct trs_maint_sqcq_mbox mbox_data;
     u32 cq_irq;
@@ -303,16 +301,15 @@ static int trs_chan_ops_maint_create_mbox_send(
 
     ret = trs_mbox_send(inst, 0, &mbox_data, sizeof(struct trs_maint_sqcq_mbox), TRS_DEVICE_CHAN_MBOX_TIMEOUT_MS);
     if ((ret != 0) || (mbox_data.header.result != 0)) {
-        trs_err(
-            "Mbos send fail. (devid=%u; tsid=%u; cmd=%u; result=%u; ret=%d)\n", inst->devid, inst->tsid, cmd,
-            mbox_data.header.result, ret);
+        trs_err("Mbos send fail. (devid=%u; tsid=%u; cmd=%u; result=%u; ret=%d)\n", inst->devid, inst->tsid, cmd,
+                mbox_data.header.result, ret);
         ret = -EFAULT;
     }
     return ret;
 }
 
-static int trs_chan_ops_maint_release_mbox_send(
-    struct trs_id_inst *inst, struct trs_chan_info *chan_info, struct trs_chan_adapt_info *adapt)
+static int trs_chan_ops_maint_release_mbox_send(struct trs_id_inst *inst, struct trs_chan_info *chan_info,
+                                                struct trs_chan_adapt_info *adapt)
 {
     struct trs_maint_sqcq_mbox mbox_data;
     int ret;
@@ -330,16 +327,15 @@ static int trs_chan_ops_maint_release_mbox_send(
 
     ret = trs_mbox_send(inst, 0, &mbox_data, sizeof(struct trs_maint_sqcq_mbox), TRS_DEVICE_CHAN_MBOX_TIMEOUT_MS);
     if ((ret != 0) || (mbox_data.header.result != 0)) {
-        trs_err(
-            "Mbos send fail. (devid=%u; tsid=%u; cmd=%u; result=%u; ret=%d)\n", inst->devid, inst->tsid, cmd,
-            mbox_data.header.result, ret);
+        trs_err("Mbos send fail. (devid=%u; tsid=%u; cmd=%u; result=%u; ret=%d)\n", inst->devid, inst->tsid, cmd,
+                mbox_data.header.result, ret);
         ret = -EFAULT;
     }
     return ret;
 }
 
-static int trs_chan_ops_hw_ts_mbox_send(
-    struct trs_id_inst *inst, struct trs_chan_info *chan_info, struct trs_chan_adapt_info *adapt)
+static int trs_chan_ops_hw_ts_mbox_send(struct trs_id_inst *inst, struct trs_chan_info *chan_info,
+                                        struct trs_chan_adapt_info *adapt)
 {
     u32 chip_type = uda_get_chip_type(inst->devid);
     struct trs_ts_sqcq_mbox mbox_data;
@@ -381,16 +377,15 @@ static int trs_chan_ops_hw_ts_mbox_send(
     }
 
     if (ret != 0 || mbox_data.header.result != 0) {
-        trs_err(
-            "Mbox send fail. (devid=%u; tsid=%u; cmd=%u; result=%u; ret=%d)\n", inst->devid, inst->tsid, cmd,
-            mbox_data.header.result, ret);
+        trs_err("Mbox send fail. (devid=%u; tsid=%u; cmd=%u; result=%u; ret=%d)\n", inst->devid, inst->tsid, cmd,
+                mbox_data.header.result, ret);
         ret = -EFAULT;
     }
     return ret;
 }
 
-static int trs_chan_ops_task_sched_create_mbox_send(
-    struct trs_id_inst *inst, struct trs_chan_info *chan_info, struct trs_chan_adapt_info *adapt)
+static int trs_chan_ops_task_sched_create_mbox_send(struct trs_id_inst *inst, struct trs_chan_info *chan_info,
+                                                    struct trs_chan_adapt_info *adapt)
 {
     struct trs_task_sched_sqcq_alloc_mbox mbox_data;
     u16 cmd;
@@ -419,17 +414,16 @@ static int trs_chan_ops_task_sched_create_mbox_send(
 
     ret = trs_mbox_send(inst, 0, &mbox_data, sizeof(mbox_data), TRS_DEVICE_CHAN_MBOX_TIMEOUT_MS);
     if (ret != 0 || mbox_data.header.result != 0) {
-        trs_err(
-            "Mbox send fail. (devid=%u; tsid=%u; cmd=%u; result=%u; ret=%d)\n", inst->devid, inst->tsid, cmd,
-            mbox_data.header.result, ret);
+        trs_err("Mbox send fail. (devid=%u; tsid=%u; cmd=%u; result=%u; ret=%d)\n", inst->devid, inst->tsid, cmd,
+                mbox_data.header.result, ret);
         ret = -EFAULT;
     }
 
     return ret;
 }
 
-static int trs_chan_ops_task_sched_release_mbox_send(
-    struct trs_id_inst *inst, struct trs_chan_info *chan_info, struct trs_chan_adapt_info *adapt)
+static int trs_chan_ops_task_sched_release_mbox_send(struct trs_id_inst *inst, struct trs_chan_info *chan_info,
+                                                     struct trs_chan_adapt_info *adapt)
 {
     struct trs_task_sched_sqcq_free_mbox mbox_data;
     u16 cmd;
@@ -444,9 +438,8 @@ static int trs_chan_ops_task_sched_release_mbox_send(
 
     ret = trs_mbox_send(inst, 0, &mbox_data, sizeof(mbox_data), TRS_DEVICE_CHAN_MBOX_TIMEOUT_MS);
     if (ret != 0 || mbox_data.header.result != 0) {
-        trs_err(
-            "Mbos send fail. (devid=%u; tsid=%u; cmd=%u; result=%u; ret=%d)\n", inst->devid, inst->tsid, cmd,
-            mbox_data.header.result, ret);
+        trs_err("Mbos send fail. (devid=%u; tsid=%u; cmd=%u; result=%u; ret=%d)\n", inst->devid, inst->tsid, cmd,
+                mbox_data.header.result, ret);
         ret = -EFAULT;
     }
 

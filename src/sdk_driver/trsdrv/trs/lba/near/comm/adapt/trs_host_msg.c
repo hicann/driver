@@ -128,10 +128,13 @@ static struct trs_host_msg *trs_host_msg_get(u32 devid)
     return host_msg;
 }
 
-static void trs_host_msg_put(struct trs_host_msg *host_msg) { kref_safe_put(&host_msg->ref, trs_host_msg_release); }
+static void trs_host_msg_put(struct trs_host_msg *host_msg)
+{
+    kref_safe_put(&host_msg->ref, trs_host_msg_release);
+}
 
-int trs_host_msg_chan_recv_check(
-    u32 devid, struct trs_msg_data *data, u32 in_data_len, u32 out_data_len, u32 *real_out_len)
+int trs_host_msg_chan_recv_check(u32 devid, struct trs_msg_data *data, u32 in_data_len, u32 out_data_len,
+                                 u32 *real_out_len)
 {
     if (devid >= TRS_DEV_MAX_NUM) {
         trs_err("Invalid devid. (devid=%u)\n", devid);
@@ -179,8 +182,8 @@ int trs_host_msg_send(u32 devid, void *msg, size_t size)
     if (host_msg == NULL) {
         return -ENODEV;
     }
-    ret = devdrv_sync_msg_send(
-        host_msg->chan, tmp_msg, sizeof(struct trs_msg_data), sizeof(struct trs_msg_data), &out_len);
+    ret = devdrv_sync_msg_send(host_msg->chan, tmp_msg, sizeof(struct trs_msg_data), sizeof(struct trs_msg_data),
+                               &out_len);
     trs_host_msg_put(host_msg);
 
     return (ret == 0) ? (int)tmp_msg->header.result : ret;

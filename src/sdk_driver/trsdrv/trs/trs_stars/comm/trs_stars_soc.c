@@ -204,4 +204,7 @@ int init_trs_stars(void)
     return 0;
 }
 
-void exit_trs_stars(void) { trs_stars_notifier_unregister(); }
+void exit_trs_stars(void)
+{
+    trs_stars_notifier_unregister();
+}

@@ -40,29 +40,26 @@ int trs_device_get_id_range(struct trs_id_inst *inst, int type, u32 *start, u32 
 int trs_device_get_id_total_num(struct trs_id_inst *inst, int type, u32 *total_num);
 int trs_device_get_id_split(struct trs_id_inst *inst, int type, u32 *split);
 int trs_device_get_id_isolate_num(int type, u32 *isolate_num);
-int trs_device_get_id_range_by_isolate_num(
-    struct id_pool_inst *inst, int type, u32 start, u32 end, u32 req_num, u32 *alloc_num, u32 *id);
+int trs_device_get_id_range_by_isolate_num(struct id_pool_inst *inst, int type, u32 start, u32 end, u32 req_num,
+                                           u32 *alloc_num, u32 *id);
 int trs_device_get_id_by_isolate_num(struct id_pool_inst *inst, int type, int req_num, u32 *alloc_num, u32 *id);
 void trs_device_put_id_by_isolate_num(struct id_pool_inst *inst, int type, int batch_num, u32 *free_num, u32 *id);
 
 /* chan ops */
 void trs_chan_update_ssid(struct trs_id_inst *inst, struct trs_chan_info *chan_info);
-void *trs_chan_ops_sq_mem_alloc(
-    struct trs_id_inst *inst, struct trs_chan_type *types, struct trs_chan_sq_para *sq_para,
-    struct trs_chan_mem_attr *mem_attr);
-void trs_chan_ops_sq_mem_free(
-    struct trs_id_inst *inst, struct trs_chan_type *types, void *sq_addr, struct trs_chan_mem_attr *mem_attr);
-void *trs_chan_ops_cq_mem_alloc(
-    struct trs_id_inst *inst, struct trs_chan_type *types, struct trs_chan_cq_para *cq_para,
-    struct trs_chan_mem_attr *mem_attr);
-void trs_chan_ops_cq_mem_free(
-    struct trs_id_inst *inst, struct trs_chan_type *types, void *cq_addr, struct trs_chan_mem_attr *mem_attr);
+void *trs_chan_ops_sq_mem_alloc(struct trs_id_inst *inst, struct trs_chan_type *types, struct trs_chan_sq_para *sq_para,
+                                struct trs_chan_mem_attr *mem_attr);
+void trs_chan_ops_sq_mem_free(struct trs_id_inst *inst, struct trs_chan_type *types, void *sq_addr,
+                              struct trs_chan_mem_attr *mem_attr);
+void *trs_chan_ops_cq_mem_alloc(struct trs_id_inst *inst, struct trs_chan_type *types, struct trs_chan_cq_para *cq_para,
+                                struct trs_chan_mem_attr *mem_attr);
+void trs_chan_ops_cq_mem_free(struct trs_id_inst *inst, struct trs_chan_type *types, void *cq_addr,
+                              struct trs_chan_mem_attr *mem_attr);
 void trs_chan_ops_flush_sqe_cache(struct trs_id_inst *inst, u32 mem_type, void *addr, u64 pa, u32 len);
 void trs_chan_ops_invalid_cqe_cache(struct trs_id_inst *inst, u32 mem_type, void *addr, u64 pa, u32 len);
 int trs_chan_get_irq(struct trs_id_inst *inst, u32 irq_type, u32 irq[], u32 irq_num, u32 *valid_irq_num);
-int trs_chan_ops_request_irq(
-    struct trs_id_inst *inst, u32 irq_type, int irq_index, void *para,
-    int (*handler)(int irq_type, int irq_index, void *para, u32 cqid[], u32 cq_num));
+int trs_chan_ops_request_irq(struct trs_id_inst *inst, u32 irq_type, int irq_index, void *para,
+                             int (*handler)(int irq_type, int irq_index, void *para, u32 cqid[], u32 cq_num));
 int trs_chan_free_irq(struct trs_id_inst *inst, int irq_type, int irq_index, void *para);
 
 int trs_chan_ops_get_valid_cq_list(struct trs_id_inst *inst, u32 group, u32 cqid[], u32 cq_id_num, u32 *valid_cq_num);

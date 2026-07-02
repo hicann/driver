@@ -93,9 +93,8 @@ static int chan_sum_show(ka_seq_file_t *seq, void *offset)
     struct trs_chan *chan = (struct trs_chan *)ka_fs_get_seq_file_private(seq);
     char buff[BUFF_LEN];
 
-    ka_fs_seq_printf(
-        seq, "id %d ref %u flag 0x%x irq %u type %u subtype %u\n", chan->id, kref_safe_read(&chan->ref), chan->flag,
-        chan->irq, chan->types.type, chan->types.sub_type);
+    ka_fs_seq_printf(seq, "id %d ref %u flag 0x%x irq %u type %u subtype %u\n", chan->id, kref_safe_read(&chan->ref),
+                     chan->flag, chan->irq, chan->types.type, chan->types.sub_type);
 
     if (_trs_chan_to_string(chan, buff, BUFF_LEN) > 0) {
         ka_fs_seq_printf(seq, "%s\n", buff);
@@ -152,7 +151,10 @@ void chan_proc_fs_add_ts_inst(struct trs_chan_ts_inst *ts_inst)
 #endif
 }
 
-void chan_proc_fs_del_ts_inst(struct trs_chan_ts_inst *ts_inst) { proc_fs_rm_ts_inst_dir(ts_inst, chan_top_entry); }
+void chan_proc_fs_del_ts_inst(struct trs_chan_ts_inst *ts_inst)
+{
+    proc_fs_rm_ts_inst_dir(ts_inst, chan_top_entry);
+}
 
 static void proc_fs_format_chan_file_name(struct trs_chan *chan, char *name, int len)
 {
@@ -171,7 +173,10 @@ void chan_proc_fs_add_chan(struct trs_chan *chan)
     chan->entry = ka_fs_proc_create_data(name, PROC_FS_MODE, chan->ts_inst->entry, &chan_sum_ops, chan);
 }
 
-void chan_proc_fs_del_chan(struct trs_chan *chan) { ka_fs_proc_remove(chan->entry); }
+void chan_proc_fs_del_chan(struct trs_chan *chan)
+{
+    ka_fs_proc_remove(chan->entry);
+}
 
 void chan_proc_fs_init(void)
 {
@@ -181,4 +186,7 @@ void chan_proc_fs_init(void)
     }
 }
 
-void chan_proc_fs_uninit(void) { (void)ka_fs_remove_proc_subtree("trs_chan", NULL); }
+void chan_proc_fs_uninit(void)
+{
+    (void)ka_fs_remove_proc_subtree("trs_chan", NULL);
+}

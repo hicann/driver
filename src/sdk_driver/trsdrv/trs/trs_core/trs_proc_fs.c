@@ -92,9 +92,8 @@ static const ka_procfs_ops_t proc_trace_ops = {
 
 static void trs_proc_show(struct trs_proc_ctx *proc_ctx, ka_seq_file_t *seq)
 {
-    ka_fs_seq_printf(
-        seq, "pid %d(%s) task_id %lld devid %d status %d(0:normal, 1:exit) ssid %u\n", proc_ctx->pid, proc_ctx->name,
-        proc_ctx->task_id, proc_ctx->devid, proc_ctx->status, proc_ctx->cp_ssid);
+    ka_fs_seq_printf(seq, "pid %d(%s) task_id %lld devid %d status %d(0:normal, 1:exit) ssid %u\n", proc_ctx->pid,
+                     proc_ctx->name, proc_ctx->task_id, proc_ctx->devid, proc_ctx->status, proc_ctx->cp_ssid);
 }
 
 static void ts_inst_proc_show(struct trs_core_ts_inst *ts_inst, ka_seq_file_t *seq)
@@ -103,10 +102,16 @@ static void ts_inst_proc_show(struct trs_core_ts_inst *ts_inst, ka_seq_file_t *s
 
     ka_task_down_read(&ts_inst->sem);
     ka_fs_seq_printf(seq, "\nproc list:\n");
-    ka_list_for_each_entry(proc_ctx, &ts_inst->proc_list_head, node) { trs_proc_show(proc_ctx, seq); }
+    ka_list_for_each_entry(proc_ctx, &ts_inst->proc_list_head, node)
+    {
+        trs_proc_show(proc_ctx, seq);
+    }
 
     ka_fs_seq_printf(seq, "\nexit proc list:\n");
-    ka_list_for_each_entry(proc_ctx, &ts_inst->exit_proc_list_head, node) { trs_proc_show(proc_ctx, seq); }
+    ka_list_for_each_entry(proc_ctx, &ts_inst->exit_proc_list_head, node)
+    {
+        trs_proc_show(proc_ctx, seq);
+    }
     ka_task_up_read(&ts_inst->sem);
 }
 
@@ -118,9 +123,8 @@ static void ts_inst_res_show(struct trs_core_ts_inst *ts_inst, ka_seq_file_t *se
 
     for (i = 0; i < TRS_CORE_MAX_ID_TYPE; i++) {
         struct trs_res_mng *res_mng = &ts_inst->res_mng[i];
-        ka_fs_seq_printf(
-            seq, "idx %d res %s id_num %u max_id %u use_num %u\n", i, res_name[i], res_mng->id_num, res_mng->max_id,
-            res_mng->use_num);
+        ka_fs_seq_printf(seq, "idx %d res %s id_num %u max_id %u use_num %u\n", i, res_name[i], res_mng->id_num,
+                         res_mng->max_id, res_mng->use_num);
     }
 
     ka_fs_seq_printf(seq, "\nid_allocator res list:\n");
@@ -130,9 +134,8 @@ static void ts_inst_res_show(struct trs_core_ts_inst *ts_inst, ka_seq_file_t *se
 
         ret = trs_id_get_stat(&ts_inst->inst, i, &stat);
         if (ret == 0) {
-            ka_fs_seq_printf(
-                seq, "idx %d res %s use_num %u allocatable %u rsv_num %u\n", i, trs_id_type_to_name(i), stat.alloc,
-                stat.allocatable, stat.rsv_num);
+            ka_fs_seq_printf(seq, "idx %d res %s use_num %u allocatable %u rsv_num %u\n", i, trs_id_type_to_name(i),
+                             stat.alloc, stat.allocatable, stat.rsv_num);
         }
     }
 
@@ -152,10 +155,9 @@ static int ts_inst_info_show(ka_seq_file_t *seq, void *offset)
 {
     struct trs_core_ts_inst *ts_inst = (struct trs_core_ts_inst *)ka_fs_get_seq_file_private(seq);
 
-    ka_fs_seq_printf(
-        seq, "devid %d tsid %d hw_type %d(0:tscpu, 1:stars) support_proc_num %u(0:no_limit) ref %u\n",
-        ts_inst->inst.devid, ts_inst->inst.tsid, ts_inst->hw_type, ts_inst->support_proc_num,
-        kref_safe_read(&ts_inst->ref));
+    ka_fs_seq_printf(seq, "devid %d tsid %d hw_type %d(0:tscpu, 1:stars) support_proc_num %u(0:no_limit) ref %u\n",
+                     ts_inst->inst.devid, ts_inst->inst.tsid, ts_inst->hw_type, ts_inst->support_proc_num,
+                     kref_safe_read(&ts_inst->ref));
     if (ts_inst->inst.tsid == 0) {
         ts_inst_proc_show(ts_inst, seq);
     }
@@ -189,9 +191,8 @@ static void ts_inst_cb_phy_sqcq_show(struct trs_core_ts_inst *ts_inst, ka_seq_fi
 {
     struct trs_cb_ctx *cb_ctx = &ts_inst->cb_ctx;
     if (cb_ctx->phy_sqcq.chan_id >= 0) {
-        ka_fs_seq_printf(
-            seq, "cb cq_num %u phy sqid %u cqid %u chan %d\n", cb_ctx->cq_num, cb_ctx->phy_sqcq.sqid,
-            cb_ctx->phy_sqcq.cqid, cb_ctx->phy_sqcq.chan_id);
+        ka_fs_seq_printf(seq, "cb cq_num %u phy sqid %u cqid %u chan %d\n", cb_ctx->cq_num, cb_ctx->phy_sqcq.sqid,
+                         cb_ctx->phy_sqcq.cqid, cb_ctx->phy_sqcq.chan_id);
         trs_id_show(ts_inst, seq, TRS_SW_SQ_ID, cb_ctx->phy_sqcq.sqid);
         trs_id_show(ts_inst, seq, TRS_SW_CQ_ID, cb_ctx->phy_sqcq.cqid);
         trs_chan_show(ts_inst, seq, cb_ctx->phy_sqcq.chan_id);
@@ -202,9 +203,8 @@ static void ts_inst_logic_phy_sqcq_show(struct trs_core_ts_inst *ts_inst, ka_seq
 {
     struct trs_logic_cq_ctx *logic_cq_ctx = &ts_inst->logic_cq_ctx;
     if (logic_cq_ctx->phy_cq.chan_id >= 0) {
-        ka_fs_seq_printf(
-            seq, "logic cq_num %u phy cqid %u chan %d\n", logic_cq_ctx->cq_num, logic_cq_ctx->phy_cq.cqid,
-            logic_cq_ctx->phy_cq.chan_id);
+        ka_fs_seq_printf(seq, "logic cq_num %u phy cqid %u chan %d\n", logic_cq_ctx->cq_num, logic_cq_ctx->phy_cq.cqid,
+                         logic_cq_ctx->phy_cq.chan_id);
         trs_id_show(ts_inst, seq, TRS_SW_CQ_ID, logic_cq_ctx->phy_cq.cqid);
         trs_chan_show(ts_inst, seq, logic_cq_ctx->phy_cq.chan_id);
     }
@@ -213,28 +213,26 @@ static void ts_inst_logic_phy_sqcq_show(struct trs_core_ts_inst *ts_inst, ka_seq
 static void res_stream_detail_show(struct trs_core_ts_inst *ts_inst, u32 id, ka_seq_file_t *seq)
 {
     struct trs_stream_ctx *stream_ctx = &ts_inst->stream_ctx[id];
-    ka_fs_seq_printf(
-        seq, "    host_pid %d sq %d cq %d logic_cq %d\n", stream_ctx->host_pid, stream_ctx->sq, stream_ctx->cq,
-        stream_ctx->logic_cq);
+    ka_fs_seq_printf(seq, "    host_pid %d sq %d cq %d logic_cq %d\n", stream_ctx->host_pid, stream_ctx->sq,
+                     stream_ctx->cq, stream_ctx->logic_cq);
 }
 
 static int trs_hw_sq_to_string(struct trs_core_ts_inst *ts_inst, u32 id, char *buff, u32 buff_len)
 {
     struct trs_sq_ctx *sq_ctx = &ts_inst->sq_ctx[id];
     int ret, len = 0;
-    ret = sprintf_s(
-        buff, buff_len, "    mode %s type %u flag %u cqid %u stream_id %u chan %d cp_proc %s\n",
-        (sq_ctx->mode == 0) ? "kio" : ((sq_ctx->mode == 1) ? "uio_t" : "uio_d"), sq_ctx->type, sq_ctx->flag,
-        sq_ctx->cqid, sq_ctx->stream_id, sq_ctx->chan_id, (sq_ctx->reg_mem.cp_proc_state == 0) ? "exist" : "not exist");
+    ret = sprintf_s(buff, buff_len, "    mode %s type %u flag %u cqid %u stream_id %u chan %d cp_proc %s\n",
+                    (sq_ctx->mode == 0) ? "kio" : ((sq_ctx->mode == 1) ? "uio_t" : "uio_d"), sq_ctx->type, sq_ctx->flag,
+                    sq_ctx->cqid, sq_ctx->stream_id, sq_ctx->chan_id,
+                    (sq_ctx->reg_mem.cp_proc_state == 0) ? "exist" : "not exist");
 
     ka_task_spin_lock_bh(&sq_ctx->shr_info_lock);
     if ((ret > 0) && ((sq_ctx->mode == (u32)SEND_MODE_UIO_T) || (sq_ctx->mode == (u32)SEND_MODE_UIO_D)) &&
         (sq_ctx->shr_info.kva != NULL)) {
         struct trs_sq_shr_info *shr_info = (struct trs_sq_shr_info *)sq_ctx->shr_info.kva;
         len += ret;
-        ret = sprintf_s(
-            buff + len, buff_len - len, "    uio send ok %llu send full %llu send invalid in kernel %llu\n",
-            shr_info->send_ok, shr_info->send_full, sq_ctx->send_fail);
+        ret = sprintf_s(buff + len, buff_len - len, "    uio send ok %llu send full %llu send invalid in kernel %llu\n",
+                        shr_info->send_ok, shr_info->send_full, sq_ctx->send_fail);
     }
     ka_task_spin_unlock_bh(&sq_ctx->shr_info_lock);
 
@@ -267,9 +265,8 @@ static int trs_hw_cq_stat_to_string(struct trs_cq_ctx *cq_ctx, char *buff, u32 b
     int len = 0;
 
     len = sprintf_s(buff, buff_len, "    chan %d, logic_cqid %d\n", cq_ctx->chan_id, cq_ctx->logic_cqid);
-    len += sprintf_s(
-        buff + len, buff_len - len, "    stat: rx %llu rx_enque %llu drop %llu logic_enque_invalid %llu\n",
-        cq_ctx->stat.rx, cq_ctx->stat.rx_enque, cq_ctx->stat.rx_drop, cq_ctx->stat.rx_enque_fail);
+    len += sprintf_s(buff + len, buff_len - len, "    stat: rx %llu rx_enque %llu drop %llu logic_enque_invalid %llu\n",
+                     cq_ctx->stat.rx, cq_ctx->stat.rx_enque, cq_ctx->stat.rx_drop, cq_ctx->stat.rx_enque_fail);
     return len;
 }
 
@@ -318,9 +315,8 @@ static void res_sw_cq_detail_show(struct trs_core_ts_inst *ts_inst, u32 id, ka_s
 static void res_cb_cq_detail_show(struct trs_core_ts_inst *ts_inst, u32 id, ka_seq_file_t *seq)
 {
     struct trs_cb_cq *cb_cq = &ts_inst->cb_ctx.cq[id];
-    ka_fs_seq_printf(
-        seq, "    valid %u pid %d cq_depth %u cqe_size %u grpid %u\n", cb_cq->valid, cb_cq->pid, cb_cq->cq_depth,
-        cb_cq->cqe_size, cb_cq->grpid);
+    ka_fs_seq_printf(seq, "    valid %u pid %d cq_depth %u cqe_size %u grpid %u\n", cb_cq->valid, cb_cq->pid,
+                     cb_cq->cq_depth, cb_cq->cqe_size, cb_cq->grpid);
 }
 
 static int trs_logic_cq_to_string(struct trs_logic_cq *cq, char *buff, u32 buff_len)
@@ -361,9 +357,8 @@ void trs_logic_cq_show(struct trs_core_ts_inst *ts_inst, u32 cqid)
     char buff[BUFF_LEN];
 
     if (trs_logic_cq_to_string(cq, buff, BUFF_LEN) > 0) {
-        trs_info_ratelimited(
-            "Logic cq stat show. (devid=%u; tsid=%u; id=%u; flag=%u)\n%s", inst->devid, inst->tsid, cqid, cq->flag,
-            buff);
+        trs_info_ratelimited("Logic cq stat show. (devid=%u; tsid=%u; id=%u; flag=%u)\n%s", inst->devid, inst->tsid,
+                             cqid, cq->flag, buff);
     }
 }
 
@@ -376,8 +371,8 @@ static void res_logic_cq_detail_show(struct trs_core_ts_inst *ts_inst, u32 id, k
     }
 }
 
-static void (*const res_detail_handles[TRS_CORE_MAX_ID_TYPE])(
-    struct trs_core_ts_inst *ts_inst, u32 id, ka_seq_file_t *seq) = {
+static void (*const res_detail_handles[TRS_CORE_MAX_ID_TYPE])(struct trs_core_ts_inst *ts_inst, u32 id,
+                                                              ka_seq_file_t *seq) = {
     [TRS_STREAM] = res_stream_detail_show,    [TRS_HW_SQ] = res_hw_sq_detail_show, [TRS_HW_CQ] = res_hw_cq_detail_show,
     [TRS_SW_SQ] = res_sw_sq_detail_show,      [TRS_SW_CQ] = res_sw_cq_detail_show, [TRS_CB_CQ] = res_cb_cq_detail_show,
     [TRS_LOGIC_CQ] = res_logic_cq_detail_show};
@@ -539,7 +534,10 @@ void proc_fs_add_ts_inst(struct trs_core_ts_inst *ts_inst)
     }
 }
 
-void proc_fs_del_ts_inst(struct trs_core_ts_inst *ts_inst) { proc_fs_rm_ts_inst_dir(ts_inst, ts_inst_entry); }
+void proc_fs_del_ts_inst(struct trs_core_ts_inst *ts_inst)
+{
+    proc_fs_rm_ts_inst_dir(ts_inst, ts_inst_entry);
+}
 
 static void proc_fs_format_pid_dir_name(struct trs_proc_ctx *proc_ctx, char *name, int len)
 {
@@ -579,7 +577,10 @@ void proc_fs_add_pid(struct trs_proc_ctx *proc_ctx)
     (void)ka_fs_proc_create_data("summary", PROC_FS_MODE, proc_ctx->entry, &proc_sum_ops, proc_ctx);
 }
 
-void proc_fs_del_pid(struct trs_proc_ctx *proc_ctx) { proc_fs_rm_pid_dir(proc_ctx, proc_entry); }
+void proc_fs_del_pid(struct trs_proc_ctx *proc_ctx)
+{
+    proc_fs_rm_pid_dir(proc_ctx, proc_entry);
+}
 
 void trs_proc_fs_init(void)
 {
@@ -604,4 +605,7 @@ void trs_proc_fs_init(void)
     return;
 }
 
-void trs_proc_fs_uninit(void) { (void)ka_fs_remove_proc_subtree("trs_core", NULL); }
+void trs_proc_fs_uninit(void)
+{
+    (void)ka_fs_remove_proc_subtree("trs_core", NULL);
+}

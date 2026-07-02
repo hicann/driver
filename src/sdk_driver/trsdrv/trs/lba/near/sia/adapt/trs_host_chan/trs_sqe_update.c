@@ -29,21 +29,25 @@
 /* stub for david ub scene start */
 #ifndef EMU_ST
 #ifdef CFG_FEATURE_SUPPORT_UB_CONNECTION
-struct devdrv_dma_prepare *devdrv_dma_link_prepare(
-    u32 devid, enum devdrv_dma_data_type type, struct devdrv_dma_node *dma_node, u32 node_cnt, u32 fill_status)
+struct devdrv_dma_prepare *devdrv_dma_link_prepare(u32 devid, enum devdrv_dma_data_type type,
+                                                   struct devdrv_dma_node *dma_node, u32 node_cnt, u32 fill_status)
 {
     return NULL;
 }
 
-int devdrv_dma_link_free(struct devdrv_dma_prepare *dma_prepare) { return -1; }
+int devdrv_dma_link_free(struct devdrv_dma_prepare *dma_prepare)
+{
+    return -1;
+}
 
-ka_dma_addr_t hal_kernel_devdrv_dma_map_page(
-    ka_device_t *dev, ka_page_t *page, size_t offset, size_t size, ka_dma_data_direction_t dir)
+ka_dma_addr_t hal_kernel_devdrv_dma_map_page(ka_device_t *dev, ka_page_t *page, size_t offset, size_t size,
+                                             ka_dma_data_direction_t dir)
 {
     return (ka_dma_addr_t)NULL;
 }
 
-void hal_kernel_devdrv_dma_unmap_page(ka_device_t *dev, ka_dma_addr_t addr, size_t size, ka_dma_data_direction_t dir) {}
+void hal_kernel_devdrv_dma_unmap_page(ka_device_t *dev, ka_dma_addr_t addr, size_t size, ka_dma_data_direction_t dir)
+{}
 #endif
 #endif
 /* stub for david ub scene end */
@@ -84,7 +88,10 @@ struct trs_dma_desc_node {
 static struct trs_dma_desc_node *trs_dma_desc_node_del_one_from_root(struct trs_rb_info *rb_info, u32 root_index);
 static void trs_sqe_update_desc_destroy_all(struct trs_rb_info *rb_info);
 
-static inline void trs_rb_get_root_index(u32 sqid, u32 *root_index) { *root_index = sqid % TRS_DMA_NODE_RB_ROOT_NUM; }
+static inline void trs_rb_get_root_index(u32 sqid, u32 *root_index)
+{
+    *root_index = sqid % TRS_DMA_NODE_RB_ROOT_NUM;
+}
 
 static struct trs_rb_info *trs_rb_info_get(u32 devid)
 {
@@ -111,9 +118,15 @@ static void trs_rb_info_release(struct kref_safe *kref)
     trs_vfree(rb_info);
 }
 
-static void trs_rb_info_put(struct trs_rb_info *rb_info) { kref_safe_put(&rb_info->ref, trs_rb_info_release); }
+static void trs_rb_info_put(struct trs_rb_info *rb_info)
+{
+    kref_safe_put(&rb_info->ref, trs_rb_info_release);
+}
 
-static bool trs_rb_root_is_empty(ka_rb_root_t *root) { return KA_BASE_RB_EMPTY_ROOT(root); }
+static bool trs_rb_root_is_empty(ka_rb_root_t *root)
+{
+    return KA_BASE_RB_EMPTY_ROOT(root);
+}
 
 typedef u64 (*rb_handle_func)(ka_rb_node_t *node);
 static int trs_rb_insert(ka_rb_root_t *root, ka_rb_node_t *node, rb_handle_func get_handle)
@@ -209,9 +222,9 @@ static int trs_dma_desc_node_find(u32 devid, u32 sqid, u64 rb_handle, struct trs
     return ret;
 }
 
-static int trs_dma_desc_node_create(
-    u32 devid, struct trs_dma_desc_addr_info *addr_info, struct devdrv_dma_prepare *dma_prepare,
-    struct trs_dma_desc *dma_desc, struct trs_security_src_info *src_info)
+static int trs_dma_desc_node_create(u32 devid, struct trs_dma_desc_addr_info *addr_info,
+                                    struct devdrv_dma_prepare *dma_prepare, struct trs_dma_desc *dma_desc,
+                                    struct trs_security_src_info *src_info)
 {
     struct trs_rb_info *rb_info = NULL;
     struct trs_dma_desc_node *node = NULL;
@@ -266,14 +279,13 @@ static int trs_dma_desc_node_create(
     return ret;
 }
 
-static void trs_dma_node_pack(
-    struct trs_dma_desc_addr_info *addr_info, struct trs_security_src_info *src_info, struct trs_chan_sq_info *sq_info,
-    u32 sq_mem_side, struct devdrv_dma_node *dma_node)
+static void trs_dma_node_pack(struct trs_dma_desc_addr_info *addr_info, struct trs_security_src_info *src_info,
+                              struct trs_chan_sq_info *sq_info, u32 sq_mem_side, struct devdrv_dma_node *dma_node)
 {
     if (sq_mem_side == TRS_CHAN_DEV_SVM_MEM) {
         dma_node->src_addr = (u64)src_info->dma_addr;
-        dma_node->dst_addr =
-            (uintptr_t)sq_info->sq_para.sq_que_uva + addr_info->sqeid * sq_info->sq_para.sqe_size + addr_info->offset;
+        dma_node->dst_addr = (uintptr_t)sq_info->sq_para.sq_que_uva + addr_info->sqeid * sq_info->sq_para.sqe_size +
+                             addr_info->offset;
         dma_node->direction = DEVDRV_DMA_HOST_TO_DEVICE;
     } else {
         dma_node->src_addr = addr_info->src_va;
@@ -309,9 +321,9 @@ static bool trs_is_rb_node_limited(u32 devid)
     return false;
 }
 
-static int trs_check_alloc_src_security_dma_addr(
-    u32 devid, struct trs_dma_desc_addr_info *addr_info, struct trs_chan_sq_info *sq_info, bool is_src_secure,
-    struct trs_security_src_info *src_info)
+static int trs_check_alloc_src_security_dma_addr(u32 devid, struct trs_dma_desc_addr_info *addr_info,
+                                                 struct trs_chan_sq_info *sq_info, bool is_src_secure,
+                                                 struct trs_security_src_info *src_info)
 {
     struct trs_id_inst inst = {0};
     ka_device_t *dev = NULL;
@@ -390,8 +402,8 @@ static void trs_check_free_src_security_dma_addr(u32 devid, struct trs_security_
 }
 
 /* sqid sqeid --key */
-int trs_sqe_update_desc_create(
-    u32 devid, u32 tsid, struct trs_dma_desc_addr_info *addr_info, struct trs_dma_desc *dma_desc, bool is_src_secure)
+int trs_sqe_update_desc_create(u32 devid, u32 tsid, struct trs_dma_desc_addr_info *addr_info,
+                               struct trs_dma_desc *dma_desc, bool is_src_secure)
 {
     struct devdrv_dma_prepare *dma_prepare = NULL;
     struct devdrv_dma_node dma_node;
@@ -414,9 +426,8 @@ int trs_sqe_update_desc_create(
     }
 
     if (addr_info->sqeid >= sq_info.sq_para.sq_depth) {
-        trs_err(
-            "Addr info invalid. (devid=%u; tsid=%u; sqeid=%u; depth=%u)\n", devid, tsid, addr_info->sqeid,
-            sq_info.sq_para.sq_depth);
+        trs_err("Addr info invalid. (devid=%u; tsid=%u; sqeid=%u; depth=%u)\n", devid, tsid, addr_info->sqeid,
+                sq_info.sq_para.sq_depth);
         return -EINVAL;
     }
 
@@ -441,8 +452,8 @@ int trs_sqe_update_desc_create(
         }
 
         trs_dma_node_pack(addr_info, &src_info, &sq_info, sq_mem_side, &dma_node);
-        dma_prepare = devdrv_dma_link_prepare(
-            devid, DEVDRV_DMA_DATA_TRAFFIC, &dma_node, dma_node_num, DEVDRV_DMA_DESC_FILL_FINISH);
+        dma_prepare = devdrv_dma_link_prepare(devid, DEVDRV_DMA_DATA_TRAFFIC, &dma_node, dma_node_num,
+                                              DEVDRV_DMA_DESC_FILL_FINISH);
         if (dma_prepare == NULL) {
             trs_check_free_src_security_dma_addr(devid, &src_info);
             trs_err("Dma_link_prepare alloc failed. (devid=%u)\n", devid);
@@ -459,15 +470,14 @@ int trs_sqe_update_desc_create(
             return ret;
         }
     }
-    trs_debug(
-        "Dma desc create. (devid=%u; sqid=%u; sqeid=%u; ssid=%u; offset=%u; size=%u; sq_mem_side=%u)\n", devid,
-        addr_info->sqid, addr_info->sqeid, addr_info->passid, addr_info->offset, addr_info->size, sq_mem_side);
+    trs_debug("Dma desc create. (devid=%u; sqid=%u; sqeid=%u; ssid=%u; offset=%u; size=%u; sq_mem_side=%u)\n", devid,
+              addr_info->sqid, addr_info->sqeid, addr_info->passid, addr_info->offset, addr_info->size, sq_mem_side);
     return ret;
 }
 
 /* for chips before cloudv4 */
-int hal_kernel_sqe_update_desc_create(
-    u32 devid, u32 tsid, struct trs_dma_desc_addr_info *addr_info, struct trs_dma_desc *dma_desc)
+int hal_kernel_sqe_update_desc_create(u32 devid, u32 tsid, struct trs_dma_desc_addr_info *addr_info,
+                                      struct trs_dma_desc *dma_desc)
 {
     u64 rb_handle = 0;
     int ret = 0;

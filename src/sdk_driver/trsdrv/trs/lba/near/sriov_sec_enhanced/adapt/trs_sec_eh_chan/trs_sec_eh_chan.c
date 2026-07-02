@@ -50,8 +50,8 @@ int trs_sec_eh_chan_sqe_update(struct trs_id_inst *inst, struct trs_sqe_update_i
         trs_err("Sqe copy fail. (ret=%d; max_size=0x%ld; sqe_size=0x%d)\n", ret, data_size, TRS_HW_SQE_SIZE);
         return ret;
     }
-    ret = trs_sec_eh_vpc_msg_send(
-        inst->devid, (void *)&sqe_update, sizeof(struct trs_sec_eh_sq_update_info) - (data_size - TRS_HW_SQE_SIZE));
+    ret = trs_sec_eh_vpc_msg_send(inst->devid, (void *)&sqe_update,
+                                  sizeof(struct trs_sec_eh_sq_update_info) - (data_size - TRS_HW_SQE_SIZE));
     if ((ret != 0) || (sqe_update.head.result != 0)) {
         trs_err("Vpc send fail. (devid=%u; ret=%d; result=%d)\n", inst->devid, ret, sqe_update.head.result);
         return -EFAULT;
@@ -59,8 +59,8 @@ int trs_sec_eh_chan_sqe_update(struct trs_id_inst *inst, struct trs_sqe_update_i
     return 0;
 }
 
-int trs_sec_eh_chan_stars_ops_query_sqcq(
-    struct trs_id_inst *inst, struct trs_chan_type *types, u32 id, u32 cmd, u64 *value)
+int trs_sec_eh_chan_stars_ops_query_sqcq(struct trs_id_inst *inst, struct trs_chan_type *types, u32 id, u32 cmd,
+                                         u64 *value)
 {
     return trs_chan_ops_query_sqcq(inst, types, id, cmd, value);
 }

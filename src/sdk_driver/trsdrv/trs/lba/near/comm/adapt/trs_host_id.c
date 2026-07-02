@@ -91,8 +91,8 @@ int trs_host_get_id_cap(struct trs_id_inst *inst, int type, struct trs_msg_id_ca
     if (ret == 0) {
         *id_cap = *_id_cap;
     } else {
-        trs_debug(
-            "Get id. (devid=%u; tsid=%u; type=%s; ret=%d)\n", inst->devid, inst->tsid, trs_id_type_to_name(type), ret);
+        trs_debug("Get id. (devid=%u; tsid=%u; type=%s; ret=%d)\n", inst->devid, inst->tsid, trs_id_type_to_name(type),
+                  ret);
     }
 
     return ret;
@@ -114,8 +114,8 @@ static int trs_host_res_avail_query(struct trs_id_inst *inst, int type, u32 *num
     res_num_msg->type = type;
     ret = trs_host_msg_send(inst->devid, &msg, sizeof(struct trs_msg_data));
     if ((ret != 0) || (msg.header.result != 0)) {
-        trs_warn(
-            "Not support. (devid=%u; tsid=%u; ret=%d; result=%d)\n", inst->devid, inst->tsid, ret, msg.header.result);
+        trs_warn("Not support. (devid=%u; tsid=%u; ret=%d; result=%d)\n", inst->devid, inst->tsid, ret,
+                 msg.header.result);
         return -ENODEV;
     }
     *num = res_num_msg->avail_num;
@@ -124,19 +124,17 @@ static int trs_host_res_avail_query(struct trs_id_inst *inst, int type, u32 *num
 
 static bool trs_host_id_is_non_cache_type(int type)
 {
-    return (
-        (type == TRS_RSV_HW_SQ_ID) || (type == TRS_RSV_HW_CQ_ID) || (type == TRS_TASK_SCHED_CQ_ID) ||
-        (type == TRS_CDQM_ID));
+    return ((type == TRS_RSV_HW_SQ_ID) || (type == TRS_RSV_HW_CQ_ID) || (type == TRS_TASK_SCHED_CQ_ID) ||
+            (type == TRS_CDQM_ID));
 }
 
 static int trs_host_id_init(struct trs_id_inst *inst, int type)
 {
-    struct trs_id_ops ops = {
-        .owner = KA_THIS_MODULE,
-        .alloc_batch = trs_host_alloc_id_batch,
-        .free_batch = trs_host_free_id_batch,
-        .avail_query = trs_host_res_avail_query,
-        .is_non_cache_type = trs_host_id_is_non_cache_type};
+    struct trs_id_ops ops = {.owner = KA_THIS_MODULE,
+                             .alloc_batch = trs_host_alloc_id_batch,
+                             .free_batch = trs_host_free_id_batch,
+                             .avail_query = trs_host_res_avail_query,
+                             .is_non_cache_type = trs_host_id_is_non_cache_type};
     struct trs_msg_id_cap id_cap;
     struct trs_id_attr attr;
     int ret;
@@ -147,9 +145,8 @@ static int trs_host_id_init(struct trs_id_inst *inst, int type)
     }
 
     if ((id_cap.isolate_num <= 0) || ((id_cap.total_num > 0) && (id_cap.isolate_num > id_cap.total_num))) {
-        trs_err(
-            "Invalid isolate_num. (devid=%u; tsid=%u; type=%s; isolate_num=%u; total_num=%u)\n", inst->devid,
-            inst->tsid, trs_id_type_to_name(type), id_cap.isolate_num, id_cap.total_num);
+        trs_err("Invalid isolate_num. (devid=%u; tsid=%u; type=%s; isolate_num=%u; total_num=%u)\n", inst->devid,
+                inst->tsid, trs_id_type_to_name(type), id_cap.isolate_num, id_cap.total_num);
         return -EINVAL;
     }
 
@@ -167,15 +164,17 @@ static int trs_host_id_init(struct trs_id_inst *inst, int type)
     }
 
     if (ret == 0) {
-        trs_debug(
-            "Id init. (devid=%u; tsid=%u; type=%s; start=%u; end=%u; total_num=%u; split=%u; batch_num=%u)\n",
-            inst->devid, inst->tsid, trs_id_type_to_name(type), attr.id_start, attr.id_end, attr.id_num, attr.split,
-            attr.batch_num);
+        trs_debug("Id init. (devid=%u; tsid=%u; type=%s; start=%u; end=%u; total_num=%u; split=%u; batch_num=%u)\n",
+                  inst->devid, inst->tsid, trs_id_type_to_name(type), attr.id_start, attr.id_end, attr.id_num,
+                  attr.split, attr.batch_num);
     }
     return ret;
 }
 
-static void trs_host_id_uninit(struct trs_id_inst *inst, int type) { trs_id_unregister(inst, type); }
+static void trs_host_id_uninit(struct trs_id_inst *inst, int type)
+{
+    trs_id_unregister(inst, type);
+}
 
 int trs_id_config(struct trs_id_inst *inst)
 {
@@ -184,8 +183,8 @@ int trs_id_config(struct trs_id_inst *inst)
     for (type = TRS_STREAM_ID; type < TRS_ID_TYPE_MAX; type++) {
         ret = trs_host_id_init(inst, type);
         if (ret == 0) {
-            trs_debug(
-                "Init id succeed. (devid=%u; tsid=%u; type=%s)\n", inst->devid, inst->tsid, trs_id_type_to_name(type));
+            trs_debug("Init id succeed. (devid=%u; tsid=%u; type=%s)\n", inst->devid, inst->tsid,
+                      trs_id_type_to_name(type));
         } else if ((ret == -ENODEV) || (ret == -ENOSYS)) {
             trs_id_deconfig(inst);
             return ret;
