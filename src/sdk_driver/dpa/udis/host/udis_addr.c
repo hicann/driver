@@ -25,9 +25,8 @@ int udis_addr_list_add_node(unsigned int udevid, struct udis_ctrl_block *udis_cb
 
     new_node = dbl_kzalloc(sizeof(struct udis_node), KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
     if (new_node == NULL) {
-        udis_err(
-            "Failed to malloc for udis_node. (udevid=%u; module_type=%u; name=%s)\n", udevid, addr_node->module_type,
-            addr_node->name);
+        udis_err("Failed to malloc for udis_node. (udevid=%u; module_type=%u; name=%s)\n", udevid,
+                 addr_node->module_type, addr_node->name);
         return -ENOMEM;
     }
 
@@ -73,9 +72,8 @@ void udis_addr_list_remove_node(unsigned int udevid, struct udis_ctrl_block *udi
 
     node = udis_addr_list_find_node(udis_cb, addr_node->module_type, addr_node->name);
     if (node == NULL) {
-        udis_err(
-            "No matched node found. (udevid=%u; module_type=%u; name=%s)\n", udevid, addr_node->module_type,
-            addr_node->name);
+        udis_err("No matched node found. (udevid=%u; module_type=%u; name=%s)\n", udevid, addr_node->module_type,
+                 addr_node->name);
         return;
     }
 

@@ -59,11 +59,11 @@ struct udis_link_nodes *udis_get_link_nodes(unsigned int udevid);
 int udis_link_nodes_init(unsigned int udevid);
 void udis_link_nodes_uninit(unsigned int udevid);
 int udis_link_nodes_scale_up(unsigned int udevid);
-struct udis_node *udis_addr_list_find_node(
-    const struct udis_ctrl_block *udis_cb, UDIS_MODULE_TYPE module_type, const char *name);
+struct udis_node *udis_addr_list_find_node(const struct udis_ctrl_block *udis_cb, UDIS_MODULE_TYPE module_type,
+                                           const char *name);
 int udis_addr_list_add_node(unsigned int udevid, struct udis_ctrl_block *udis_cb, const struct udis_node *addr_node);
-void udis_addr_list_remove_node(
-    unsigned int udevid, struct udis_ctrl_block *udis_cb, const struct udis_node *addr_node);
+void udis_addr_list_remove_node(unsigned int udevid, struct udis_ctrl_block *udis_cb,
+                                const struct udis_node *addr_node);
 void udis_cmd_init(void);
 void udis_cmd_exit(void);
 #endif

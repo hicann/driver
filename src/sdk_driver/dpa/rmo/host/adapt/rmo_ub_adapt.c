@@ -74,9 +74,8 @@ int rmo_mem_addr_map(u32 devid, u64 paddr, u64 size, struct rmo_mem_map_addr *ma
     }
 
     ret = memcpy_s(mapped_addr->raw_addr.raw_addr, RMO_MEM_RAW_ADDR_MAX_LEN, &tseg->seg, sizeof(tseg->seg));
-    ret_tmp = memcpy_s(
-        mapped_addr->raw_addr.raw_addr + sizeof(tseg->seg), RMO_MEM_RAW_ADDR_MAX_LEN - sizeof(tseg->seg), &token_val,
-        sizeof(token_val));
+    ret_tmp = memcpy_s(mapped_addr->raw_addr.raw_addr + sizeof(tseg->seg), RMO_MEM_RAW_ADDR_MAX_LEN - sizeof(tseg->seg),
+                       &token_val, sizeof(token_val));
     if ((ret != 0) || (ret_tmp != 0)) {
         (void)ubcore_unregister_seg(tseg);
         rmo_err("Memcpy seg failed. (len=0x%lx)\n", sizeof(tseg->seg));

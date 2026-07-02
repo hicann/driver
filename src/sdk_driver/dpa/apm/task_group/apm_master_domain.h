@@ -42,8 +42,8 @@ int apm_master_domain_tgid_to_pid(int tgid, int *master_pid);
 bool apm_is_cur_task_trusted(void);
 void apm_master_set_query_domain_ops(struct apm_master_query_domain_ops ops);
 int apm_master_domain_set_slave_status(int master_tgid, u32 udevid, int slave_tgid, int type, int status);
-int apm_master_domain_get_tast_group_exit_stage(
-    int master_tgid, int slave_tgid, u32 udevid, u32 proc_type_bitmap, int *exit_stage);
+int apm_master_domain_get_tast_group_exit_stage(int master_tgid, int slave_tgid, u32 udevid, u32 proc_type_bitmap,
+                                                int *exit_stage);
 int apm_master_query_domain_get_slave_ssid(int master_tgid, struct apm_cmd_slave_ssid *para);
 int apm_master_query_domain_set_slave_ssid(int master_tgid, struct apm_cmd_slave_ssid *para);
 int apm_master_domain_get_slave_status(int master_tgid, u32 udevid, int proc_type, int type, int *status);

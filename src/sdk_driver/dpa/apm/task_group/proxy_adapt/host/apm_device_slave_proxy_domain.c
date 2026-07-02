@@ -244,16 +244,15 @@ int apm_device_slave_proxy_domain_init(void)
 
     device_slave_proxy_domain = apm_vzalloc(sizeof(struct task_ctx_domain *) * max_dev_num);
     if (device_slave_proxy_domain == NULL) {
-        apm_err(
-            "Malloc proxy domain failed. (max_dev_num=%u; size=%ld)\n", max_dev_num,
-            sizeof(struct task_ctx_domain *) * max_dev_num);
+        apm_err("Malloc proxy domain failed. (max_dev_num=%u; size=%ld)\n", max_dev_num,
+                sizeof(struct task_ctx_domain *) * max_dev_num);
         return -ENOMEM;
     }
 
     ka_task_mutex_init(&proxy_domain_mutex);
 
-    apm_register_ioctl_cmd_func(
-        _KA_IOC_NR(APM_QUERY_MASTER_INFO_BY_DEVICE_SLAVE), apm_device_slave_proxy_domain_fops_query_master_pid);
+    apm_register_ioctl_cmd_func(_KA_IOC_NR(APM_QUERY_MASTER_INFO_BY_DEVICE_SLAVE),
+                                apm_device_slave_proxy_domain_fops_query_master_pid);
 
     return 0;
 }

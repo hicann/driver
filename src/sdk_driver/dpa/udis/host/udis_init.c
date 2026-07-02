@@ -87,8 +87,8 @@ STATIC int udis_cb_constructor(unsigned int udevid, struct udis_ctrl_block *udis
     int ret, i;
 
     if ((devdrv_get_connect_protocol(udevid) == CONNECT_PROTOCOL_UB)) {
-        udis_cb->udis_info_buf =
-            (struct udis_info_stu *)dbl_kzalloc(UDIS_MODULE_OFFSET * UDIS_MODULE_MAX, KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
+        udis_cb->udis_info_buf = (struct udis_info_stu *)dbl_kzalloc(UDIS_MODULE_OFFSET * UDIS_MODULE_MAX,
+                                                                     KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
         if (udis_cb->udis_info_buf == NULL) {
             udis_err("Failed to call dbl_kzalloc. (udevid=%u)\n", udevid);
             return -ENOMEM;
@@ -103,8 +103,8 @@ STATIC int udis_cb_constructor(unsigned int udevid, struct udis_ctrl_block *udis
         }
     }
 
-    ret =
-        memset_s(udis_cb->udis_info_buf, UDIS_MODULE_OFFSET * UDIS_MODULE_MAX, 0, UDIS_MODULE_OFFSET * UDIS_MODULE_MAX);
+    ret = memset_s(udis_cb->udis_info_buf, UDIS_MODULE_OFFSET * UDIS_MODULE_MAX, 0,
+                   UDIS_MODULE_OFFSET * UDIS_MODULE_MAX);
     if (ret != 0) {
         udis_err("Call memset_s failed. (udevid=%u; ret=%d)\n", udevid, ret);
         ret = -EIO;
@@ -123,9 +123,8 @@ free_dma_buf:
     if ((devdrv_get_connect_protocol(udevid) == CONNECT_PROTOCOL_UB)) {
         dbl_kfree(udis_cb->udis_info_buf);
     } else {
-        hal_kernel_devdrv_dma_free_coherent(
-            uda_get_device(udevid), UDIS_MODULE_OFFSET * UDIS_MODULE_MAX, udis_cb->udis_info_buf,
-            udis_cb->udis_info_buf_dma);
+        hal_kernel_devdrv_dma_free_coherent(uda_get_device(udevid), UDIS_MODULE_OFFSET * UDIS_MODULE_MAX,
+                                            udis_cb->udis_info_buf, udis_cb->udis_info_buf_dma);
     }
     udis_cb->udis_info_buf = NULL;
     udis_cb->udis_info_buf_dma = 0;
@@ -149,9 +148,8 @@ STATIC void udis_cb_destructor(unsigned int udevid, struct udis_ctrl_block *udis
     if ((devdrv_get_connect_protocol(udevid) == CONNECT_PROTOCOL_UB)) {
         dbl_kfree(udis_cb->udis_info_buf);
     } else {
-        hal_kernel_devdrv_dma_free_coherent(
-            uda_get_device(udevid), UDIS_MODULE_OFFSET * UDIS_MODULE_MAX, udis_cb->udis_info_buf,
-            udis_cb->udis_info_buf_dma);
+        hal_kernel_devdrv_dma_free_coherent(uda_get_device(udevid), UDIS_MODULE_OFFSET * UDIS_MODULE_MAX,
+                                            udis_cb->udis_info_buf, udis_cb->udis_info_buf_dma);
     }
     udis_cb->udis_info_buf = NULL;
     udis_cb->udis_info_buf_dma = 0;

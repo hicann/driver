@@ -50,9 +50,17 @@ struct udis_msg_info {
     unsigned char payload[UDIS_MSG_PAYLOAD_LEN];
 };
 
-enum udis_d2h_chan_type { UDIS_CHAN_D2H_REGIST = 0, UDIS_CHAN_D2H_UNREGIST, UDIS_CHAN_D2H_MAX_ID };
+enum udis_d2h_chan_type {
+    UDIS_CHAN_D2H_REGIST = 0,
+    UDIS_CHAN_D2H_UNREGIST,
+    UDIS_CHAN_D2H_MAX_ID
+};
 
-enum udis_h2d_chan_type { UDIS_CHAN_H2D_READY = 0, UDIS_CHAN_H2D_UNINIT, UDIS_CHAN_H2D_MAX_ID };
+enum udis_h2d_chan_type {
+    UDIS_CHAN_H2D_READY = 0,
+    UDIS_CHAN_H2D_UNINIT,
+    UDIS_CHAN_H2D_MAX_ID
+};
 
 struct udis_msg_notify_work {
     ka_work_struct_t work;

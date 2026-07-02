@@ -92,9 +92,17 @@ enum udis_dev_state {
     UDIS_DEV_STATE_MAX
 };
 
-enum udis_data_status { UDIS_DATA_VALID = 0, UDIS_DATA_NEEDS_UPDATE, UDIS_DATA_UPDATE_IMMEDIATELY, UDIS_DATA_INVALID };
+enum udis_data_status {
+    UDIS_DATA_VALID = 0,
+    UDIS_DATA_NEEDS_UPDATE,
+    UDIS_DATA_UPDATE_IMMEDIATELY,
+    UDIS_DATA_INVALID
+};
 
-enum udis_search_scope { UDIS_INFO_ALL_SPACE = 0, UDIS_INFO_DISCRE_SPACE = 1 };
+enum udis_search_scope {
+    UDIS_INFO_ALL_SPACE = 0,
+    UDIS_INFO_DISCRE_SPACE = 1
+};
 
 struct udis_ctrl_block {
     ka_list_head_t addr_list[UPDATE_TYPE_MAX];

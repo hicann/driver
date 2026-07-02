@@ -67,16 +67,15 @@ STATIC int dp_proc_mng_host_msg_recv(u32 devid, void *data, u32 in_data_len, u32
 
     if (devid >= DP_PROC_MNG_MAX_DEVICE_NUM) {
 #ifndef EMU_ST
-        dp_proc_mng_drv_err(
-            "Device_id must less than DP_PROC_MNG_MAX_DEVICE_NUM. "
-            "(devid=%u; DP_PROC_MNG_MAX_AGENT_DEVICE_NUM=%d)\n",
-            devid, DP_PROC_MNG_MAX_DEVICE_NUM);
+        dp_proc_mng_drv_err("Device_id must less than DP_PROC_MNG_MAX_DEVICE_NUM. "
+                            "(devid=%u; DP_PROC_MNG_MAX_AGENT_DEVICE_NUM=%d)\n",
+                            devid, DP_PROC_MNG_MAX_DEVICE_NUM);
         return -ENODEV;
 #endif
     }
 
-    ret = dp_proc_mng_chan_msg_dispatch(
-        data, in_data_len, out_data_len, real_out_len, &dp_proc_mng_master_msg_processes[0]);
+    ret = dp_proc_mng_chan_msg_dispatch(data, in_data_len, out_data_len, real_out_len,
+                                        &dp_proc_mng_master_msg_processes[0]);
     if (ret != 0) {
         dp_proc_mng_drv_err("Host msg recv process failed. (devid=%u)\n", devid);
     }

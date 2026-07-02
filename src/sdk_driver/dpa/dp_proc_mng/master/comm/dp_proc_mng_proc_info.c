@@ -29,7 +29,10 @@
  */
 STATIC struct dp_proc_mng_info *dp_proc_mng = NULL;
 
-struct dp_proc_mng_info *dp_proc_get_manager_info(void) { return dp_proc_mng; }
+struct dp_proc_mng_info *dp_proc_get_manager_info(void)
+{
+    return dp_proc_mng;
+}
 
 int dp_proc_mng_info_init(void)
 {
@@ -72,8 +75,8 @@ void dp_proc_mng_davinci_module_uninit(void)
     return;
 }
 
-static void dp_proc_mng_mem_stats_info_pack(
-    struct dp_proc_mng_get_mem_stats *para, struct dp_proc_mng_chan_mem_stats *msg)
+static void dp_proc_mng_mem_stats_info_pack(struct dp_proc_mng_get_mem_stats *para,
+                                            struct dp_proc_mng_chan_mem_stats *msg)
 {
     para->mbuff_used_size = msg->mbuff_used_size;
     para->aicpu_used_size = msg->aicpu_used_size;
@@ -90,8 +93,8 @@ static int dp_proc_mng_ioctl_get_mem_stats(ka_file_t *file, struct dp_proc_mng_i
     mem_stats_msg.head.process_id.devid = arg->head.devid;
     mem_stats_msg.head.process_id.vfid = arg->head.vfid;
     mem_stats_msg.head.msg_id = DP_PROC_MNG_CHAN_QUERY_MEM_STATS_H2D_ID;
-    ret = dp_proc_mng_common_msg_send(
-        &mem_stats_msg, sizeof(struct dp_proc_mng_chan_mem_stats), sizeof(struct dp_proc_mng_chan_mem_stats));
+    ret = dp_proc_mng_common_msg_send(&mem_stats_msg, sizeof(struct dp_proc_mng_chan_mem_stats),
+                                      sizeof(struct dp_proc_mng_chan_mem_stats));
     if (ret != 0) {
         dp_proc_mng_drv_err("Dp_proc_mng_query_mem_stats msg failed! (ret=%d)\n", ret);
         return ret;
@@ -105,6 +108,10 @@ int (*const dp_proc_mng_ioctl_handlers[DP_PROC_MNG_CMD_MAX_CMD])(ka_file_t *file
     [_KA_IOC_NR(DP_PROC_MNG_GET_MEM_STATS)] = dp_proc_mng_ioctl_get_mem_stats,
 };
 
-int dp_proc_mng_create_work(void) { return 0; }
+int dp_proc_mng_create_work(void)
+{
+    return 0;
+}
 
-void dp_proc_mng_destroy_work(void) {}
+void dp_proc_mng_destroy_work(void)
+{}

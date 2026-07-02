@@ -45,8 +45,8 @@ drvError_t drvGetProcessSign(struct process_sign *sign)
     return DRV_ERROR_NONE;
 }
 
-int apm_query_slave_pid(
-    unsigned long cmd, int master_pid, unsigned int devid, enum devdrv_process_type proc_type, int *slave_pid)
+int apm_query_slave_pid(unsigned long cmd, int master_pid, unsigned int devid, enum devdrv_process_type proc_type,
+                        int *slave_pid)
 {
     struct apm_cmd_query_slave_pid para;
     int ret;
@@ -61,9 +61,8 @@ int apm_query_slave_pid(
     para.proc_type = proc_type;
     ret = apm_cmd_ioctl(cmd, &para);
     if (ret != 0) {
-        apm_warn(
-            "Query pid warn. (ret=%d; cmd=%lu; devid=%u; master_pid=%d; proc_type=%d)\n", ret, _IOC_NR(cmd), para.devid,
-            para.master_pid, para.proc_type);
+        apm_warn("Query pid warn. (ret=%d; cmd=%lu; devid=%u; master_pid=%d; proc_type=%d)\n", ret, _IOC_NR(cmd),
+                 para.devid, para.master_pid, para.proc_type);
         return ret;
     }
 
@@ -77,8 +76,8 @@ drvError_t halQuerySlavePid(int master_pid, unsigned int devid, enum devdrv_proc
     return apm_query_slave_pid(APM_QUERY_SLAVE_PID, master_pid, devid, proc_type, slave_pid);
 }
 
-drvError_t halQuerySlavePidByLocalMaster(
-    int master_pid, unsigned int devid, enum devdrv_process_type proc_type, int *slave_pid)
+drvError_t halQuerySlavePidByLocalMaster(int master_pid, unsigned int devid, enum devdrv_process_type proc_type,
+                                         int *slave_pid)
 {
     return apm_query_slave_pid(APM_QUERY_SLAVE_PID_BY_LOCAL_MASTER, master_pid, devid, proc_type, slave_pid);
 }
@@ -93,8 +92,8 @@ drvError_t halQueryDevpid(struct halQueryDevpidInfo info, pid_t *dev_pid)
     return halQuerySlavePid(info.hostpid, info.devid, info.proc_type, dev_pid);
 }
 
-drvError_t halQuerySlaveProcMeminfo(
-    int master_pid, unsigned int devid, processType_t processType, processMemType_t memType, unsigned long long *size)
+drvError_t halQuerySlaveProcMeminfo(int master_pid, unsigned int devid, processType_t processType,
+                                    processMemType_t memType, unsigned long long *size)
 {
     struct apm_cmd_slave_meminfo para;
     drvError_t ret;

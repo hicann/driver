@@ -38,15 +38,22 @@ struct apm_get_master_tgids_para {
     u32 cnt;
 };
 
-static struct task_ctx_domain *apm_master_domain_query_domain_get(u32 udevid) { return master_domain; }
+static struct task_ctx_domain *apm_master_domain_query_domain_get(u32 udevid)
+{
+    return master_domain;
+}
 
-static void apm_master_domain_query_domain_put(struct task_ctx_domain *domain) {}
+static void apm_master_domain_query_domain_put(struct task_ctx_domain *domain)
+{}
 
 static struct apm_master_query_domain_ops g_master_query_domain_ops = {
     .apm_master_query_domain_get = apm_master_domain_query_domain_get,
     .apm_master_query_domain_put = apm_master_domain_query_domain_put};
 
-void apm_master_set_query_domain_ops(struct apm_master_query_domain_ops ops) { g_master_query_domain_ops = ops; }
+void apm_master_set_query_domain_ops(struct apm_master_query_domain_ops ops)
+{
+    g_master_query_domain_ops = ops;
+}
 
 static struct task_ctx_domain *apm_master_query_domain_get(u32 udevid)
 {
@@ -73,9 +80,15 @@ bool apm_is_cur_task_trusted(void)
 #endif
 }
 
-void apm_master_domain_ops_register(struct apm_master_domain_ops *ops) { master_ops = ops; }
+void apm_master_domain_ops_register(struct apm_master_domain_ops *ops)
+{
+    master_ops = ops;
+}
 
-void apm_master_domain_cmd_ops_register(struct apm_master_domain_cmd_ops *ops) { master_cmd_ops = ops; }
+void apm_master_domain_cmd_ops_register(struct apm_master_domain_cmd_ops *ops)
+{
+    master_cmd_ops = ops;
+}
 
 static void apm_master_domain_ops_destroy(int tgid)
 {
@@ -120,9 +133,8 @@ static int _apm_master_domain_add_slave(struct apm_cmd_bind *para, int master_tg
 
     ret = apm_master_add_slave(master_domain, tgid, slave_tgid, local_flag, para);
     if (ret != 0) {
-        apm_err(
-            "Add failed. (ret=%d; devid=%u; proc_type=%d; mode=%d; slave_pid=%d; master_pid=%d)\n", ret, para->devid,
-            para->proc_type, para->mode, para->slave_pid, para->master_pid);
+        apm_err("Add failed. (ret=%d; devid=%u; proc_type=%d; mode=%d; slave_pid=%d; master_pid=%d)\n", ret,
+                para->devid, para->proc_type, para->mode, para->slave_pid, para->master_pid);
         return ret;
     }
 
@@ -130,9 +142,8 @@ static int _apm_master_domain_add_slave(struct apm_cmd_bind *para, int master_tg
         ret = apm_master_domain_ops_bind_unbind(APM_OP_BIND, tgid, slave_tgid, para);
         if (ret != 0) {
             (void)apm_master_del_slave(master_domain, tgid, slave_tgid, para);
-            apm_err(
-                "Ops failed. (ret=%d; devid=%u; proc_type=%d; mode=%d; slave_pid=%d; master_pid=%d)\n", ret,
-                para->devid, para->proc_type, para->mode, para->slave_pid, para->master_pid);
+            apm_err("Ops failed. (ret=%d; devid=%u; proc_type=%d; mode=%d; slave_pid=%d; master_pid=%d)\n", ret,
+                    para->devid, para->proc_type, para->mode, para->slave_pid, para->master_pid);
             return ret;
         }
     }
@@ -146,17 +157,15 @@ static int _apm_master_domain_del_slave(struct apm_cmd_bind *para, int master_tg
 
     ret = apm_master_del_slave(master_domain, tgid, slave_tgid, para);
     if (ret != 0) {
-        apm_warn(
-            "Del warn. (ret=%d; devid=%u; proc_type=%d; mode=%d; slave_pid=%d; master_pid=%d)\n", ret, para->devid,
-            para->proc_type, para->mode, para->slave_pid, para->master_pid);
+        apm_warn("Del warn. (ret=%d; devid=%u; proc_type=%d; mode=%d; slave_pid=%d; master_pid=%d)\n", ret, para->devid,
+                 para->proc_type, para->mode, para->slave_pid, para->master_pid);
     }
 
     if (local_flag == 1) {
         ret = apm_master_domain_ops_bind_unbind(APM_OP_UNBIND, tgid, slave_tgid, para);
         if (ret != 0) {
-            apm_err(
-                "Ops failed. (ret=%d; devid=%u; proc_type=%d; mode=%d; slave_pid=%d; master_pid=%d)\n", ret,
-                para->devid, para->proc_type, para->mode, para->slave_pid, para->master_pid);
+            apm_err("Ops failed. (ret=%d; devid=%u; proc_type=%d; mode=%d; slave_pid=%d; master_pid=%d)\n", ret,
+                    para->devid, para->proc_type, para->mode, para->slave_pid, para->master_pid);
         }
     }
 
@@ -285,8 +294,8 @@ int apm_master_query_domain_set_slave_ssid(int master_tgid, struct apm_cmd_slave
     return ret;
 }
 
-static bool apm_master_domain_check_slave_in_task_group(
-    int master_tgid, int slave_tgid, u32 udevid, u32 proc_type_bitmap)
+static bool apm_master_domain_check_slave_in_task_group(int master_tgid, int slave_tgid, u32 udevid,
+                                                        u32 proc_type_bitmap)
 {
     struct apm_cmd_query_slave_pid para;
     int ret;
@@ -312,8 +321,8 @@ static bool apm_master_domain_check_slave_in_task_group(
     return true;
 }
 
-int apm_master_domain_get_tast_group_exit_stage(
-    int master_tgid, int slave_tgid, u32 udevid, u32 proc_type_bitmap, int *exit_stage)
+int apm_master_domain_get_tast_group_exit_stage(int master_tgid, int slave_tgid, u32 udevid, u32 proc_type_bitmap,
+                                                int *exit_stage)
 {
     int ret, master_stage, slave_stage;
 
@@ -424,9 +433,8 @@ static int apm_fops_query_slave_pid(u32 cmd, unsigned long arg)
     para.query_in_all_stage = 0;
     ret = apm_master_query_slave_pid(master_domain, tgid, &para);
     if (ret != 0) {
-        apm_warn(
-            "Query slave pid warn. (ret=%d; master_pid=%d; tgid=%d; proc_type=%d)\n", ret, para.master_pid, tgid,
-            para.proc_type);
+        apm_warn("Query slave pid warn. (ret=%d; master_pid=%d; tgid=%d; proc_type=%d)\n", ret, para.master_pid, tgid,
+                 para.proc_type);
         return ret;
     }
 
@@ -459,8 +467,8 @@ static int apm_fops_query_slave_status(u32 cmd, unsigned long arg)
         return ret;
     }
 
-    ret = apm_master_domain_get_slave_status(
-        ka_task_get_current_tgid(), para.devid, para.proc_type, status_cmd_to_type[para.type], &para.status);
+    ret = apm_master_domain_get_slave_status(ka_task_get_current_tgid(), para.devid, para.proc_type,
+                                             status_cmd_to_type[para.type], &para.status);
     if (ret != 0) {
 #ifndef EMU_ST
         apm_err_ratelimited("Query status failed. (ret=%d; type=%d)\n", ret, para.type);
@@ -471,8 +479,8 @@ static int apm_fops_query_slave_status(u32 cmd, unsigned long arg)
     return (int)ka_base_copy_to_user(usr_arg, &para, sizeof(para));
 }
 
-static int apm_master_query_slave_meminfo(
-    u32 udevid, int slave_tgid, processType_t process_type, processMemType_t type, u64 *size)
+static int apm_master_query_slave_meminfo(u32 udevid, int slave_tgid, processType_t process_type, processMemType_t type,
+                                          u64 *size)
 {
     if (master_cmd_ops != NULL) {
         return master_cmd_ops->query_meminfo(udevid, slave_tgid, process_type, type, size);
@@ -480,9 +488,8 @@ static int apm_master_query_slave_meminfo(
     return 0;
 }
 
-static int apm_query_slave_meminfo_by_master(
-    int master_tgid, unsigned int udevid, processType_t process_type, processMemType_t mem_type,
-    unsigned long long *size)
+static int apm_query_slave_meminfo_by_master(int master_tgid, unsigned int udevid, processType_t process_type,
+                                             processMemType_t mem_type, unsigned long long *size)
 {
     u32 slave_tgid;
     int ret;
@@ -499,8 +506,8 @@ static int apm_query_slave_meminfo_by_master(
 
     ret = hal_kernel_apm_query_slave_tgid_by_master(master_tgid, udevid, process_type, &slave_tgid);
     if (ret != 0) {
-        apm_debug("Query slave pid failed. (ret=%d; master_tgid=%d; udevid=%u; proc_type=%d)\n",
-            ret, master_tgid, udevid, process_type);
+        apm_debug("Query slave pid failed. (ret=%d; master_tgid=%d; udevid=%u; proc_type=%d)\n", ret, master_tgid,
+                  udevid, process_type);
         return ret;
     }
 
@@ -518,16 +525,16 @@ static int apm_query_slave_meminfo_by_master(
 
     ret = apm_master_query_slave_meminfo(udevid, slave_tgid, process_type, mem_type, size);
     if (ret != 0) {
-        apm_debug("Query slave meminfo failed. (ret=%d; udevid=%u; slave_tgid=%d; type=%u)\n",
-            ret, udevid, slave_tgid, mem_type);
+        apm_debug("Query slave meminfo failed. (ret=%d; udevid=%u; slave_tgid=%d; type=%u)\n", ret, udevid, slave_tgid,
+                  mem_type);
         return ret;
     }
 
     return 0;
 }
 
-int apm_query_slave_all_meminfo_by_master(
-    int master_tgid, unsigned int udevid, processType_t process_type, unsigned long long *size)
+int apm_query_slave_all_meminfo_by_master(int master_tgid, unsigned int udevid, processType_t process_type,
+                                          unsigned long long *size)
 {
     return apm_query_slave_meminfo_by_master(master_tgid, udevid, process_type, PROC_MEM_TYPE_ALL, size);
 }
@@ -598,8 +605,8 @@ int hal_kernel_apm_query_slave_tgid_by_master(int master_tgid, u32 udevid, proce
 
     ret = apm_master_query_slave_pid(query_master_domain, master_tgid, &para);
     if (ret != 0) {
-        apm_debug_if(
-            (proc_type == PROCESS_CP1), "Query slave pid failed. (master_tgid=%d; udevid=%u)\n", master_tgid, udevid);
+        apm_debug_if((proc_type == PROCESS_CP1), "Query slave pid failed. (master_tgid=%d; udevid=%u)\n", master_tgid,
+                     udevid);
         apm_master_query_domain_put(query_master_domain);
         return ret;
     }
@@ -625,9 +632,8 @@ int apm_get_all_master_tgids(int *tgids, unsigned int len, unsigned int *cnt)
     struct apm_get_master_tgids_para para = {0};
 
     if ((tgids == NULL) || (cnt == NULL) || (len == 0)) {
-        apm_err(
-            "Tgids buffer or cnt is NULL or len is zero. (tgids_is_null=%d; cnt_is_null=%d; len=%u)\n", (tgids == NULL),
-            (cnt == NULL), len);
+        apm_err("Tgids buffer or cnt is NULL or len is zero. (tgids_is_null=%d; cnt_is_null=%d; len=%u)\n",
+                (tgids == NULL), (cnt == NULL), len);
         return -EINVAL;
     }
 
@@ -641,8 +647,8 @@ int apm_get_all_master_tgids(int *tgids, unsigned int len, unsigned int *cnt)
 KA_EXPORT_SYMBOL_GPL(apm_get_all_master_tgids);
 
 /* stub */
-int devdrv_query_process_by_host_pid(
-    unsigned int host_pid, unsigned int udevid, enum devdrv_process_type proc_type, unsigned int vfid, int *slave_pid)
+int devdrv_query_process_by_host_pid(unsigned int host_pid, unsigned int udevid, enum devdrv_process_type proc_type,
+                                     unsigned int vfid, int *slave_pid)
 {
     if (vfid != 0) {
         apm_err("Invalid para. (host_pid=%d; udevid=%u; vfid=%u)\n", host_pid, udevid, vfid);
@@ -653,9 +659,9 @@ int devdrv_query_process_by_host_pid(
 }
 KA_EXPORT_SYMBOL_GPL(devdrv_query_process_by_host_pid);
 
-int hal_kernel_devdrv_query_process_by_host_pid_kernel(
-    unsigned int host_pid, /* esched use, delete later */
-    unsigned int chip_id, enum devdrv_process_type cp_type, unsigned int vfid, int *pid)
+int hal_kernel_devdrv_query_process_by_host_pid_kernel(unsigned int host_pid, /* esched use, delete later */
+                                                       unsigned int chip_id, enum devdrv_process_type cp_type,
+                                                       unsigned int vfid, int *pid)
 {
     return devdrv_query_process_by_host_pid(host_pid, chip_id, cp_type, vfid, pid);
 }

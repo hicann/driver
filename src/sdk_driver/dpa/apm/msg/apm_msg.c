@@ -20,8 +20,8 @@ static u32 apm_msg_len[APM_MSG_TYPE_MAX] = {
     0,
 };
 
-void apm_register_msg_handle(
-    enum apm_msg_type msg_type, u32 msg_len, int (*fn)(u32 udevid, struct apm_msg_header *header))
+void apm_register_msg_handle(enum apm_msg_type msg_type, u32 msg_len,
+                             int (*fn)(u32 udevid, struct apm_msg_header *header))
 {
     apm_msg_handler[msg_type] = fn;
     apm_msg_len[msg_type] = msg_len;
@@ -51,9 +51,8 @@ int apm_msg_recv(u32 udevid, void *data, u32 in_data_len, u32 out_data_len, u32 
     }
 
     if ((in_data_len != apm_msg_len[header->msg_type]) || (out_data_len != apm_msg_len[header->msg_type])) {
-        apm_err(
-            "Invalid len. (udevid=%d; msg_type=%d; in_data_len=%d; out_data_len=%d; msg_len=%d)\n", udevid,
-            header->msg_type, in_data_len, out_data_len, apm_msg_len[header->msg_type]);
+        apm_err("Invalid len. (udevid=%d; msg_type=%d; in_data_len=%d; out_data_len=%d; msg_len=%d)\n", udevid,
+                header->msg_type, in_data_len, out_data_len, apm_msg_len[header->msg_type]);
         return -EINVAL;
     }
 

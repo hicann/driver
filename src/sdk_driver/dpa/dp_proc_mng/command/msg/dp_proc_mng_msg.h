@@ -24,7 +24,10 @@ struct dp_proc_mng_chan_msg_head {
     u32 res;
 };
 
-enum dp_proc_mng_h2d_cmd { DP_PROC_MNG_CHAN_QUERY_MEM_STATS_H2D_ID = 0, DP_PROC_MNG_CHAN_H2D_MAX_ID };
+enum dp_proc_mng_h2d_cmd {
+    DP_PROC_MNG_CHAN_QUERY_MEM_STATS_H2D_ID = 0,
+    DP_PROC_MNG_CHAN_H2D_MAX_ID
+};
 
 struct dp_proc_mng_chan_mem_stats {
     struct dp_proc_mng_chan_msg_head head;
@@ -34,7 +37,10 @@ struct dp_proc_mng_chan_mem_stats {
     u64 hccp_used_size;
 };
 
-enum dp_proc_mng_d2h_cmd { DP_PROC_MNG_CHAN_CHECK_PROCESS_SIGN_D2H = 0, DP_PROC_MNG_CHAN_D2H_MAX_ID };
+enum dp_proc_mng_d2h_cmd {
+    DP_PROC_MNG_CHAN_CHECK_PROCESS_SIGN_D2H = 0,
+    DP_PROC_MNG_CHAN_D2H_MAX_ID
+};
 
 struct dp_proc_mng_chan_handlers_st {
     int (*const chan_msg_processes)(void *msg, u32 *ack_len);
@@ -42,8 +48,8 @@ struct dp_proc_mng_chan_handlers_st {
     u32 msg_bitmap;
 };
 
-int dp_proc_mng_chan_msg_dispatch(
-    void *msg, u32 in_data_len, u32 out_data_len, u32 *ack_len, const struct dp_proc_mng_chan_handlers_st *msg_process);
+int dp_proc_mng_chan_msg_dispatch(void *msg, u32 in_data_len, u32 out_data_len, u32 *ack_len,
+                                  const struct dp_proc_mng_chan_handlers_st *msg_process);
 
 extern struct dp_proc_mng_chan_handlers_st dp_proc_mng_agent_msg_processes[DP_PROC_MNG_CHAN_H2D_MAX_ID];
 extern struct dp_proc_mng_chan_handlers_st dp_proc_mng_master_msg_processes[DP_PROC_MNG_CHAN_D2H_MAX_ID];

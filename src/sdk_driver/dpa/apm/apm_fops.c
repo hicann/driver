@@ -43,7 +43,10 @@ static int apm_open(ka_inode_t *inode, ka_file_t *file)
     return 0;
 }
 
-static int apm_release(ka_inode_t *inode, ka_file_t *file) { return 0; }
+static int apm_release(ka_inode_t *inode, ka_file_t *file)
+{
+    return 0;
+}
 
 static int apm_pre_release(ka_file_t *file, unsigned long mode)
 {
@@ -63,7 +66,10 @@ static int (*apm_ioctl_handler[APM_MAX_CMD])(u32 cmd, unsigned long arg) = {
     NULL,
 };
 
-void apm_register_ioctl_cmd_func(int nr, int (*fn)(u32 cmd, unsigned long arg)) { apm_ioctl_handler[nr] = fn; }
+void apm_register_ioctl_cmd_func(int nr, int (*fn)(u32 cmd, unsigned long arg))
+{
+    apm_ioctl_handler[nr] = fn;
+}
 
 static long apm_ioctl(ka_file_t *file, u32 cmd, unsigned long arg)
 {

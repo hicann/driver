@@ -42,8 +42,8 @@ int hal_kernel_apm_query_slave_ssid_by_master(u32 udevid, int master_tgid, proce
         }
     }
 
-    apm_warn(
-        "Query slave ssid. (master_tgid=%d; udevid=%u; proc_type=%u; ret=%d)\n", master_tgid, udevid, proc_type, ret);
+    apm_warn("Query slave ssid. (master_tgid=%d; udevid=%u; proc_type=%u; ret=%d)\n", master_tgid, udevid, proc_type,
+             ret);
     return ret;
 
 query_success:

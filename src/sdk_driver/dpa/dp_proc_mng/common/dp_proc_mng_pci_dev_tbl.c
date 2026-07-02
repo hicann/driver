@@ -38,5 +38,6 @@ static const ka_pci_device_id_t g_dp_proc_mng_driver_tbl[] = {
 KA_MODULE_DEVICE_TABLE(pci, g_dp_proc_mng_driver_tbl);
 
 #else
-void dp_proc_mng_pci_dev_tbl_test(void) {}
+void dp_proc_mng_pci_dev_tbl_test(void)
+{}
 #endif

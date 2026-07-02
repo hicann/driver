@@ -80,7 +80,10 @@ struct apm_cmd_res_unmap {
     unsigned int rsv[8];             /* reserve */
 };
 
-enum apm_cmd_slave_status_type { CMD_SLAVE_STATUS_TYPE_OOM, CMD_SLAVE_STATUS_TYPE_MAX };
+enum apm_cmd_slave_status_type {
+    CMD_SLAVE_STATUS_TYPE_OOM,
+    CMD_SLAVE_STATUS_TYPE_MAX
+};
 
 struct apm_cmd_slave_status {
     unsigned int devid;                  /* input */

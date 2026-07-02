@@ -17,25 +17,21 @@
 #include "dmc_kernel_interface.h"
 
 #define module_dp_proc_mng "dp_proc_mng"
-#define dp_proc_mng_drv_err(fmt, ...)                                                                      \
-    do {                                                                                                   \
-        drv_err(                                                                                           \
-            module_dp_proc_mng, "<%s:%d,%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), \
-            ka_task_get_current_pid(), ##__VA_ARGS__);                                                     \
+#define dp_proc_mng_drv_err(fmt, ...)                                                                          \
+    do {                                                                                                       \
+        drv_err(module_dp_proc_mng, "<%s:%d,%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), \
+                ka_task_get_current_pid(), ##__VA_ARGS__);                                                     \
     } while (0)
 
-#define dp_proc_mng_drv_warn(fmt, ...)                                                                 \
-    drv_warn(                                                                                          \
-        module_dp_proc_mng, "<%s:%d,%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), \
-        ka_task_get_current_pid(), ##__VA_ARGS__)
-#define dp_proc_mng_drv_info(fmt, ...)                                                                 \
-    drv_info(                                                                                          \
-        module_dp_proc_mng, "<%s:%d,%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), \
-        ka_task_get_current_pid(), ##__VA_ARGS__)
-#define dp_proc_mng_drv_debug(fmt, ...)                                                                \
-    drv_pr_debug(                                                                                      \
-        module_dp_proc_mng, "<%s:%d,%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), \
-        ka_task_get_current_pid(), ##__VA_ARGS__)
+#define dp_proc_mng_drv_warn(fmt, ...)                                                                      \
+    drv_warn(module_dp_proc_mng, "<%s:%d,%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), \
+             ka_task_get_current_pid(), ##__VA_ARGS__)
+#define dp_proc_mng_drv_info(fmt, ...)                                                                      \
+    drv_info(module_dp_proc_mng, "<%s:%d,%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), \
+             ka_task_get_current_pid(), ##__VA_ARGS__)
+#define dp_proc_mng_drv_debug(fmt, ...)                                                                         \
+    drv_pr_debug(module_dp_proc_mng, "<%s:%d,%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), \
+                 ka_task_get_current_pid(), ##__VA_ARGS__)
 #else
 #include "ut_log.h"
 

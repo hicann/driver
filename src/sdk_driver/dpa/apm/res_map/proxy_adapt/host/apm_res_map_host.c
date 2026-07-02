@@ -56,12 +56,11 @@ int apm_res_map_host_res_unmap(struct apm_res_map_info *para)
     if (para->slave_tgid == 0) {
         struct res_map_info_in *res_info = &para->res_info;
         int tgid = ka_task_get_current_tgid();
-        int ret = hal_kernel_apm_query_slave_tgid_by_master(
-            tgid, para->udevid, res_info->target_proc_type, &para->slave_tgid);
+        int ret = hal_kernel_apm_query_slave_tgid_by_master(tgid, para->udevid, res_info->target_proc_type,
+                                                            &para->slave_tgid);
         if (ret != 0) {
-            apm_err(
-                "Query slave tgid failed. (udevid=%u; res_type=%u; res_id=%u; proc_type=%d)\n", para->udevid,
-                res_info->res_type, res_info->res_id, res_info->target_proc_type);
+            apm_err("Query slave tgid failed. (udevid=%u; res_type=%u; res_id=%u; proc_type=%d)\n", para->udevid,
+                    res_info->res_type, res_info->res_id, res_info->target_proc_type);
             return ret;
         }
     }
@@ -73,12 +72,11 @@ static int apm_res_map_host_res_map_query(struct apm_res_map_info *para)
 {
     struct res_map_info_in *res_info = &para->res_info;
     int tgid = ka_task_get_current_tgid();
-    int ret =
-        hal_kernel_apm_query_slave_tgid_by_master(tgid, para->udevid, res_info->target_proc_type, &para->slave_tgid);
+    int ret = hal_kernel_apm_query_slave_tgid_by_master(tgid, para->udevid, res_info->target_proc_type,
+                                                        &para->slave_tgid);
     if (ret != 0) {
-        apm_debug(
-            "Query slave tgid failed. (udevid=%u; res_type=%u; res_id=%u; proc_type=%d)\n", para->udevid,
-            res_info->res_type, res_info->res_id, res_info->target_proc_type);
+        apm_debug("Query slave tgid failed. (udevid=%u; res_type=%u; res_id=%u; proc_type=%d)\n", para->udevid,
+                  res_info->res_type, res_info->res_id, res_info->target_proc_type);
         return ret;
     }
 
@@ -99,5 +97,6 @@ int apm_res_map_host_init(void)
 }
 DECLAER_FEATURE_AUTO_INIT(apm_res_map_host_init, FEATURE_LOADER_STAGE_7);
 
-void apm_res_map_host_uninit(void) {}
+void apm_res_map_host_uninit(void)
+{}
 DECLAER_FEATURE_AUTO_UNINIT(apm_res_map_host_uninit, FEATURE_LOADER_STAGE_7);

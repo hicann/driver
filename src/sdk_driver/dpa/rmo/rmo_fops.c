@@ -58,7 +58,10 @@ static int (*rmo_ioctl_handler[RMO_MAX_CMD])(u32 cmd, unsigned long arg) = {
     NULL,
 };
 
-void rmo_register_ioctl_cmd_func(int nr, int (*fn)(u32 cmd, unsigned long arg)) { rmo_ioctl_handler[nr] = fn; }
+void rmo_register_ioctl_cmd_func(int nr, int (*fn)(u32 cmd, unsigned long arg))
+{
+    rmo_ioctl_handler[nr] = fn;
+}
 
 static long rmo_ioctl(ka_file_t *file, u32 cmd, unsigned long arg)
 {
@@ -78,16 +81,18 @@ static long rmo_ioctl(ka_file_t *file, u32 cmd, unsigned long arg)
     return rmo_ioctl_handler[_KA_IOC_NR(cmd)](cmd, arg);
 }
 
-static int rmo_mremap(ka_vm_area_struct_t *area) { return -ENOTSUPP; }
+static int rmo_mremap(ka_vm_area_struct_t *area)
+{
+    return -ENOTSUPP;
+}
 
 static ka_vm_operations_struct_t rmo_vm_ops = {ka_vm_ops_init_mremap(rmo_mremap)};
 
 static int rmo_mmap(ka_file_t *file, ka_vm_area_struct_t *vma)
 {
     ka_mm_set_vm_ops(vma, &rmo_vm_ops);
-    ka_mm_set_vm_flags(
-        vma, ka_mm_get_vm_flags(vma) | KA_VM_LOCKED | KA_VM_DONTEXPAND | KA_VM_DONTDUMP | KA_VM_DONTCOPY | KA_VM_IO |
-                 KA_VM_PFNMAP);
+    ka_mm_set_vm_flags(vma, ka_mm_get_vm_flags(vma) | KA_VM_LOCKED | KA_VM_DONTEXPAND | KA_VM_DONTDUMP |
+                                KA_VM_DONTCOPY | KA_VM_IO | KA_VM_PFNMAP);
     if (!(ka_mm_get_vm_flags(vma) & KA_VM_WRITE)) {
         ka_mm_vm_flags_clear(vma, KA_VM_MAYWRITE);
     }
@@ -117,4 +122,7 @@ int rmo_fops_init(void)
     return 0;
 }
 
-void rmo_fops_uninit(void) { (void)drv_ascend_unregister_sub_module(RMO_CHAR_DEV_NAME); }
+void rmo_fops_uninit(void)
+{
+    (void)drv_ascend_unregister_sub_module(RMO_CHAR_DEV_NAME);
+}

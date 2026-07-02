@@ -38,18 +38,33 @@ int udis_set_ctrl_block(unsigned int udevid, struct udis_ctrl_block *ctrl_block)
     return 0;
 }
 
-void udis_cb_rwlock_init(unsigned int udevid) { ka_task_init_rwsem(&g_udis_cb_lock[udevid]); }
+void udis_cb_rwlock_init(unsigned int udevid)
+{
+    ka_task_init_rwsem(&g_udis_cb_lock[udevid]);
+}
 
-void udis_cb_write_lock(unsigned int udevid) { ka_task_down_write(&g_udis_cb_lock[udevid]); }
+void udis_cb_write_lock(unsigned int udevid)
+{
+    ka_task_down_write(&g_udis_cb_lock[udevid]);
+}
 
-void udis_cb_write_unlock(unsigned int udevid) { ka_task_up_write(&g_udis_cb_lock[udevid]); }
+void udis_cb_write_unlock(unsigned int udevid)
+{
+    ka_task_up_write(&g_udis_cb_lock[udevid]);
+}
 
-void udis_cb_read_lock(unsigned int udevid) { ka_task_down_read(&g_udis_cb_lock[udevid]); }
+void udis_cb_read_lock(unsigned int udevid)
+{
+    ka_task_down_read(&g_udis_cb_lock[udevid]);
+}
 
-void udis_cb_read_unlock(unsigned int udevid) { ka_task_up_read(&g_udis_cb_lock[udevid]); }
+void udis_cb_read_unlock(unsigned int udevid)
+{
+    ka_task_up_read(&g_udis_cb_lock[udevid]);
+}
 
-struct udis_node *udis_addr_list_find_node(
-    const struct udis_ctrl_block *udis_cb, UDIS_MODULE_TYPE module_type, const char *name)
+struct udis_node *udis_addr_list_find_node(const struct udis_ctrl_block *udis_cb, UDIS_MODULE_TYPE module_type,
+                                           const char *name)
 {
     int i;
     struct udis_node *addr_node, *next = NULL;

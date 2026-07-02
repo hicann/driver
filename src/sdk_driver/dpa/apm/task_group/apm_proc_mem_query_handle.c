@@ -28,7 +28,10 @@ int apm_proc_mem_query_handle_register(int (*proc_mem_query)(u32 udevid, int tgi
 }
 KA_EXPORT_SYMBOL_GPL(apm_proc_mem_query_handle_register);
 
-void apm_proc_mem_query_handle_unregister(void) { g_proc_mem_query = NULL; }
+void apm_proc_mem_query_handle_unregister(void)
+{
+    g_proc_mem_query = NULL;
+}
 KA_EXPORT_SYMBOL_GPL(apm_proc_mem_query_handle_unregister);
 
 static int _apm_proc_mem_query(int tgid, u64 *out_size)

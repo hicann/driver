@@ -85,9 +85,8 @@ int apm_get_res_addr(u32 udevid, struct res_map_info_in *res_info, u64 pa[], u32
         u32 i, query_num;
         ret = ops->get_res_addr_array(udevid, res_info, pa, num, len);
         if (ret != 0) {
-            apm_err(
-                "Get res addr array failed. (udevid=%u; res_type=%d; num=%u; ret=%d)\n", udevid, res_info->res_type,
-                num, ret);
+            apm_err("Get res addr array failed. (udevid=%u; res_type=%d; num=%u; ret=%d)\n", udevid, res_info->res_type,
+                    num, ret);
             return -EFAULT;
         }
 

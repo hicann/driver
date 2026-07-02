@@ -37,20 +37,21 @@ struct slave_ctx {
     int valid[APM_PROC_TYPE_NUM];
 };
 
-int apm_slave_ctx_create(struct task_ctx_domain *domain, int slave_tgid, int slave_pid, struct task_start_time *start_time);
+int apm_slave_ctx_create(struct task_ctx_domain *domain, int slave_tgid, int slave_pid,
+                         struct task_start_time *start_time);
 void apm_slave_ctx_destroy(struct task_ctx_domain *domain, int slave_tgid);
 int apm_slave_add_master(struct task_ctx_domain *domain, int slave_tgid, int master_tgid, struct apm_cmd_bind *para);
 int apm_slave_del_master(struct task_ctx_domain *domain, int slave_tgid, struct apm_cmd_bind *para);
 int apm_slave_query_master(struct task_ctx_domain *domain, int slave_tgid, struct apm_cmd_query_master_info *para);
-int apm_slave_query_master_self_exit_check(
-    struct task_ctx_domain *domain, int slave_tgid, struct apm_cmd_query_master_info *para);
+int apm_slave_query_master_self_exit_check(struct task_ctx_domain *domain, int slave_tgid,
+                                           struct apm_cmd_query_master_info *para);
 int apm_slave_tgid_to_pid(struct task_ctx_domain *domain, int slave_tgid, int *slave_pid);
 int apm_slave_get_ssid(struct task_ctx_domain *domain, int slave_tgid, struct apm_cmd_slave_ssid *para);
 int apm_slave_set_ssid(struct task_ctx_domain *domain, int slave_tgid, struct apm_cmd_slave_ssid *para);
 void apm_slave_ctx_destroy_by_master_tgid(struct task_ctx_domain *domain, int master_tgid);
 void apm_slave_ctx_show(struct task_ctx_domain *domain, int slave_tgid, ka_seq_file_t *seq);
-int apm_slave_check_set_exit_status(
-    struct task_ctx_domain *domain, int slave_tgid, struct task_start_time *time, u32 check_src);
+int apm_slave_check_set_exit_status(struct task_ctx_domain *domain, int slave_tgid, struct task_start_time *time,
+                                    u32 check_src);
 int apm_slave_ctx_need_fast_exit(struct task_ctx_domain *domain, int slave_tgid);
 
 #endif

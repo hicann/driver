@@ -11,8 +11,8 @@
 #include "dpa/dpa_apm.h"
 #include "apm_ioctl.h"
 
-drvError_t apm_query_slave_status(
-    unsigned int devid, processType_t process_type, enum apm_cmd_slave_status_type type, int *status)
+drvError_t apm_query_slave_status(unsigned int devid, processType_t process_type, enum apm_cmd_slave_status_type type,
+                                  int *status)
 {
     struct apm_cmd_slave_status para;
     int ret;
@@ -44,8 +44,8 @@ drvError_t halCheckProcessStatus(DVdevice device, processType_t processType, pro
 
     if ((processType < PROCESS_CP1) || (processType >= PROCESS_USER) || (status != STATUS_NOMEM) ||
         (isMatched == NULL)) {
-        apm_err(
-            "Invalid para. (devId=%u; procType=%d; status=%d; isMatched=%p)\n", device, processType, status, isMatched);
+        apm_err("Invalid para. (devId=%u; procType=%d; status=%d; isMatched=%p)\n", device, processType, status,
+                isMatched);
         return DRV_ERROR_INVALID_VALUE;
     }
 

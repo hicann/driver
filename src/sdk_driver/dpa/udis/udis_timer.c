@@ -108,8 +108,8 @@ STATIC ka_hrtimer_restart_t udis_hrtimer_irq_handle(ka_hrtimer_t *htimer)
     return KA_HRTIMER_RESTART;
 }
 
-STATIC int udis_period_task_node_init(
-    unsigned int udevid, const struct udis_timer_task *timer_task, struct udis_period_task_node *task_node)
+STATIC int udis_period_task_node_init(unsigned int udevid, const struct udis_timer_task *timer_task,
+                                      struct udis_period_task_node *task_node)
 {
     int ret;
 
@@ -158,23 +158,20 @@ STATIC int udis_timer_check_task_para(const struct udis_timer_task *timer_task)
     }
 
     if (timer_task->work_type >= UDIS_WORK_TYPE_MAX) {
-        udis_err(
-            "Invalid timer_task work type. (work_type=%u; task_name=%s)\n", timer_task->work_type,
-            timer_task->task_name);
+        udis_err("Invalid timer_task work type. (work_type=%u; task_name=%s)\n", timer_task->work_type,
+                 timer_task->task_name);
         return -EINVAL;
     }
 
     if (timer_task->period_ms < UDIS_TIMER_STEP_MS) {
-        udis_err(
-            "Task's period is less then timer step. (period=%ums; timer_step=%ums; task_name=%s)\n",
-            timer_task->period_ms, UDIS_TIMER_STEP_MS, timer_task->task_name);
+        udis_err("Task's period is less then timer step. (period=%ums; timer_step=%ums; task_name=%s)\n",
+                 timer_task->period_ms, UDIS_TIMER_STEP_MS, timer_task->task_name);
         return -EINVAL;
     }
 
     if (timer_task->period_ms % UDIS_TIMER_STEP_MS != 0) {
-        udis_err(
-            "Task's period cannot be divided by the timer step. (period=%ums; timer_step=%ums; task_name=%s)\n",
-            timer_task->period_ms, UDIS_TIMER_STEP_MS, timer_task->task_name);
+        udis_err("Task's period cannot be divided by the timer step. (period=%ums; timer_step=%ums; task_name=%s)\n",
+                 timer_task->period_ms, UDIS_TIMER_STEP_MS, timer_task->task_name);
         return -EINVAL;
     }
 
@@ -231,9 +228,8 @@ int hal_kernel_register_period_task(unsigned int udevid, const struct udis_timer
         ka_task_mutex_unlock(&g_udis_timer.task_list_lock);
         dbl_kfree(task_node);
         task_node = NULL;
-        udis_err(
-            "Udis timer init task_node failed. (udevid=%u; task_name=%s; ret=%d)\n", udevid, timer_task->task_name,
-            ret);
+        udis_err("Udis timer init task_node failed. (udevid=%u; task_name=%s; ret=%d)\n", udevid, timer_task->task_name,
+                 ret);
         return ret;
     }
 

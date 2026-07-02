@@ -69,8 +69,8 @@ static int apm_res_info_out_check(struct res_map_info_out *res_info_out)
 }
 
 #define NOTIFY_MEM_ADDR_LEN 4096ULL
-static int apm_try_to_get_va(
-    unsigned int dev_id, unsigned int flag, unsigned long long *va, struct apm_cmd_res_map *para)
+static int apm_try_to_get_va(unsigned int dev_id, unsigned int flag, unsigned long long *va,
+                             struct apm_cmd_res_map *para)
 {
     int ret;
 
@@ -99,8 +99,8 @@ static void apm_try_to_put_va(unsigned int flag, unsigned long long va)
     }
 }
 
-static int apm_user_res_addr_map(
-    unsigned int devId, struct res_map_info_in *res_info_in, struct res_map_info_out *res_info_out)
+static int apm_user_res_addr_map(unsigned int devId, struct res_map_info_in *res_info_in,
+                                 struct res_map_info_out *res_info_out)
 {
     struct apm_cmd_res_map para = {0};
     unsigned long long tmp_svm_va;
@@ -125,10 +125,9 @@ static int apm_user_res_addr_map(
     para.res_info = *res_info_in;
     ret = apm_cmd_ioctl(APM_RES_ADDR_MAP, &para);
     if (ret != 0) {
-        apm_err(
-            "Res addr map fail. (ret=%d; devid=%u; id=%u; proc_type=%d; res_type=%d; res_id=%u; flag=0x%x)\n", ret,
-            devId, res_info_in->id, res_info_in->target_proc_type, res_info_in->res_type, res_info_in->res_id,
-            res_info_in->flag);
+        apm_err("Res addr map fail. (ret=%d; devid=%u; id=%u; proc_type=%d; res_type=%d; res_id=%u; flag=0x%x)\n", ret,
+                devId, res_info_in->id, res_info_in->target_proc_type, res_info_in->res_type, res_info_in->res_id,
+                res_info_in->flag);
         apm_try_to_put_va(res_info_in->flag, tmp_svm_va);
         return ret;
     }
@@ -158,10 +157,9 @@ static int apm_user_res_addr_unmap(unsigned int devId, struct res_map_info_in *r
     para.res_info = *res_info_in;
     ret = apm_cmd_ioctl(APM_RES_ADDR_UNMAP, &para);
     if (ret != 0) {
-        apm_warn(
-            "Res addr unmap warn. (ret=%d; devid=%u; id=%u; proc_type=%d; res_type=%d; res_id=%u; flag=0x%x)\n", ret,
-            devId, res_info_in->id, res_info_in->target_proc_type, res_info_in->res_type, res_info_in->res_id,
-            res_info_in->flag);
+        apm_warn("Res addr unmap warn. (ret=%d; devid=%u; id=%u; proc_type=%d; res_type=%d; res_id=%u; flag=0x%x)\n",
+                 ret, devId, res_info_in->id, res_info_in->target_proc_type, res_info_in->res_type, res_info_in->res_id,
+                 res_info_in->flag);
         return ret;
     }
 
@@ -214,8 +212,8 @@ drvError_t halResAddrUnmap(unsigned int devId, struct res_addr_info *res_info)
     return apm_user_res_addr_unmap(devId, &res_info_in);
 }
 
-drvError_t halResAddrMapV2(
-    unsigned int devId, struct res_map_info_in *res_info_in, struct res_map_info_out *res_info_out)
+drvError_t halResAddrMapV2(unsigned int devId, struct res_map_info_in *res_info_in,
+                           struct res_map_info_out *res_info_out)
 {
     return apm_user_res_addr_map(devId, res_info_in, res_info_out);
 }
@@ -225,4 +223,7 @@ drvError_t halResAddrUnmapV2(unsigned int devId, struct res_map_info_in *res_inf
     return apm_user_res_addr_unmap(devId, res_info_in);
 }
 
-unsigned int halGetMaxResMapType(void) { return (unsigned int)RES_MAP_TYPE_MAX; }
+unsigned int halGetMaxResMapType(void)
+{
+    return (unsigned int)RES_MAP_TYPE_MAX;
+}

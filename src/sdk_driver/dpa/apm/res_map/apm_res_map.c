@@ -29,7 +29,10 @@
 static struct task_ctx_domain *res_map_domain = NULL;
 static struct apm_task_res_map_ops *task_res_ops = NULL;
 
-void apm_task_res_map_ops_register(struct apm_task_res_map_ops *ops) { task_res_ops = ops; }
+void apm_task_res_map_ops_register(struct apm_task_res_map_ops *ops)
+{
+    task_res_ops = ops;
+}
 
 int apm_fops_res_info_check(struct res_map_info_in *res_info)
 {
@@ -77,20 +80,18 @@ static int apm_res_map_get_map_tgid(u32 udevid, struct res_map_info_in *res_info
         *slave_tgid = current_tgid;
         ret = apm_query_master_info_by_slave(*slave_tgid, master_tgid, &query_udevid, &mode, &proc_type_bitmap);
         if ((ret != 0) || (query_udevid != udevid)) {
-            apm_err(
-                "Current is not apm task. (udevid=%u; q_udevid=%u; res_type=%u; res_id=%u; proc_type=%d)\n", udevid,
-                query_udevid, res_info->res_type, res_info->res_id, res_info->target_proc_type);
+            apm_err("Current is not apm task. (udevid=%u; q_udevid=%u; res_type=%u; res_id=%u; proc_type=%d)\n", udevid,
+                    query_udevid, res_info->res_type, res_info->res_id, res_info->target_proc_type);
             return -ESRCH;
         }
 
         /* check whether the map is called by another slave. */
         if ((proc_type_bitmap & (0x1 << res_info->target_proc_type)) == 0) {
-            ret =
-                hal_kernel_apm_query_slave_tgid_by_master(*master_tgid, udevid, res_info->target_proc_type, slave_tgid);
+            ret = hal_kernel_apm_query_slave_tgid_by_master(*master_tgid, udevid, res_info->target_proc_type,
+                                                            slave_tgid);
             if (ret != 0) {
-                apm_err(
-                    "Get slave tgid failed. (master_tgid=%d; udevid=%u; res_type=%u; res_id=%u; proc_type=%d)\n",
-                    *master_tgid, udevid, res_info->res_type, res_info->res_id, res_info->target_proc_type);
+                apm_err("Get slave tgid failed. (master_tgid=%d; udevid=%u; res_type=%u; res_id=%u; proc_type=%d)\n",
+                        *master_tgid, udevid, res_info->res_type, res_info->res_id, res_info->target_proc_type);
                 return -ESRCH;
             }
         }
@@ -112,17 +113,15 @@ int apm_res_addr_map(u32 udevid, struct res_map_info_in *res_info, u64 *va, u32 
 
     ret = apm_res_map_get_map_tgid(udevid, res_info, &master_tgid, &slave_tgid);
     if (ret != 0) {
-        apm_err(
-            "Get map tgids failed. (ret=%d; udevid=%u; res_type=%u; res_id=%u; proc_type=%d)\n", ret, udevid,
-            res_info->res_type, res_info->res_id, res_info->target_proc_type);
+        apm_err("Get map tgids failed. (ret=%d; udevid=%u; res_type=%u; res_id=%u; proc_type=%d)\n", ret, udevid,
+                res_info->res_type, res_info->res_id, res_info->target_proc_type);
         return ret;
     }
 
     /* check res perm */
     if (!apm_res_is_belong_to_proc(master_tgid, slave_tgid, udevid, res_info)) {
-        apm_err(
-            "Current not has res. (udevid=%u; res_type=%u; res_id=%u; proc_type=%d)\n", udevid, res_info->res_type,
-            res_info->res_id, res_info->target_proc_type);
+        apm_err("Current not has res. (udevid=%u; res_type=%u; res_id=%u; proc_type=%d)\n", udevid, res_info->res_type,
+                res_info->res_id, res_info->target_proc_type);
         return -EPERM;
     }
 
@@ -136,18 +135,16 @@ int apm_res_addr_map(u32 udevid, struct res_map_info_in *res_info, u64 *va, u32 
     para.va = *va;
     ret = task_res_ops->res_map(&para);
     if (ret != 0) {
-        apm_err(
-            "Res map failed. (ret=%d; udevid=%u; res_type=%u; res_id=%u; proc_type=%d)\n", ret, udevid,
-            res_info->res_type, res_info->res_id, res_info->target_proc_type);
+        apm_err("Res map failed. (ret=%d; udevid=%u; res_type=%u; res_id=%u; proc_type=%d)\n", ret, udevid,
+                res_info->res_type, res_info->res_id, res_info->target_proc_type);
         return ret;
     }
 
     ret = apm_res_map_add_node(res_map_domain, tgid, &para);
     if (ret != 0) {
         (void)task_res_ops->res_unmap(&para);
-        apm_err(
-            "Add node failed. (ret=%d; udevid=%u; res_type=%u; res_id=%u; proc_type=%d)\n", ret, udevid,
-            res_info->res_type, res_info->res_id, res_info->target_proc_type);
+        apm_err("Add node failed. (ret=%d; udevid=%u; res_type=%u; res_id=%u; proc_type=%d)\n", ret, udevid,
+                res_info->res_type, res_info->res_id, res_info->target_proc_type);
         return ret;
     }
 
@@ -179,9 +176,8 @@ int apm_res_addr_unmap(u32 udevid, struct res_map_info_in *res_info, unsigned lo
     ret = task_res_ops->res_unmap(&para);
     if (ret != 0) {
 #ifndef EMU_ST
-        apm_info_ratelimited(
-            "Res unmap. (ret=%d; udevid=%u; res_type=%u; res_id=%u; proc_type=%d)\n", ret, udevid, res_info->res_type,
-            res_info->res_id, res_info->target_proc_type);
+        apm_info_ratelimited("Res unmap. (ret=%d; udevid=%u; res_type=%u; res_id=%u; proc_type=%d)\n", ret, udevid,
+                             res_info->res_type, res_info->res_id, res_info->target_proc_type);
 #endif
     }
     *user_va = para.va;
@@ -201,9 +197,8 @@ static int _apm_res_addr_query(u32 udevid, struct res_map_info_in *res_info, u64
     if (ret != 0) {
         ret = task_res_ops->res_map_query(&para);
         if (ret != 0) {
-            apm_debug(
-                "Res not map. (ret=%d; tgid=%d; udevid=%u; res_type=%u; res_id=%u; proc_type=%d)\n", ret, tgid, udevid,
-                res_info->res_type, res_info->res_id, res_info->target_proc_type);
+            apm_debug("Res not map. (ret=%d; tgid=%d; udevid=%u; res_type=%u; res_id=%u; proc_type=%d)\n", ret, tgid,
+                      udevid, res_info->res_type, res_info->res_id, res_info->target_proc_type);
             return ret;
         }
     }

@@ -34,9 +34,15 @@ static struct apm_slave_mem_stats_ops *mem_stats_ops[APM_MODE_NUM] = {
 static KA_DFX_BLOCKING_NOTIFIER_HEAD(slave_exit_notifier);
 static ka_rw_semaphore_t apm_bind_query_sem;
 
-void apm_slave_domain_ops_register(int mode, struct apm_slave_domain_ops *ops) { slave_ops[mode] = ops; }
+void apm_slave_domain_ops_register(int mode, struct apm_slave_domain_ops *ops)
+{
+    slave_ops[mode] = ops;
+}
 
-void apm_slave_mem_stats_ops_register(int mode, struct apm_slave_mem_stats_ops *ops) { mem_stats_ops[mode] = ops; }
+void apm_slave_mem_stats_ops_register(int mode, struct apm_slave_mem_stats_ops *ops)
+{
+    mem_stats_ops[mode] = ops;
+}
 
 static int apm_bind(int tgid, int master_tgid, struct apm_cmd_bind *para)
 {
@@ -141,9 +147,8 @@ static int _apm_fops_bind_unbind(u32 cmd, struct apm_cmd_bind *para)
     /* Security Verification */
     ret = slave_ops[para->mode]->perm_check(para);
     if (ret != 0) {
-        apm_err(
-            "No bind or unbind permission. (cmd=%d; master_pid=%d; slave_pid=%d)\n", _KA_IOC_NR(cmd), para->master_pid,
-            para->slave_pid);
+        apm_err("No bind or unbind permission. (cmd=%d; master_pid=%d; slave_pid=%d)\n", _KA_IOC_NR(cmd),
+                para->master_pid, para->slave_pid);
         return ret;
     }
 
@@ -180,9 +185,8 @@ static int apm_fops_bind_unbind(u32 cmd, unsigned long arg)
     }
 
     ka_task_up_write(&apm_bind_query_sem);
-    apm_info(
-        "success. (cmd=%d; devid=%u; proc_type=%d; mode=%d; slave_pid=%d; master_pid=%d)\n", _KA_IOC_NR(cmd),
-        para.devid, para.proc_type, para.mode, para.slave_pid, para.master_pid);
+    apm_info("success. (cmd=%d; devid=%u; proc_type=%d; mode=%d; slave_pid=%d; master_pid=%d)\n", _KA_IOC_NR(cmd),
+             para.devid, para.proc_type, para.mode, para.slave_pid, para.master_pid);
 
     return 0;
 }
@@ -264,9 +268,8 @@ int apm_query_master_info_by_slave(int slave_tgid, int *master_tgid, u32 *udevid
 }
 KA_EXPORT_SYMBOL_GPL(apm_query_master_info_by_slave);
 
-int hal_kernel_devdrv_query_process_host_pid(
-    int slave_pid, unsigned int *udevid, unsigned int *vfid, unsigned int *host_pid,
-    enum devdrv_process_type *proc_type)
+int hal_kernel_devdrv_query_process_host_pid(int slave_pid, unsigned int *udevid, unsigned int *vfid,
+                                             unsigned int *host_pid, enum devdrv_process_type *proc_type)
 {
     u32 proc_type_bitmap;
     int ret, mode;
@@ -338,9 +341,8 @@ static void apm_try_unbind_all(int tgid)
         if ((para.proc_type_bitmap & (0x1 << proc_type)) != 0) {
             unbind.proc_type = proc_type;
             ret = apm_unbind(tgid, para.master_tgid, &unbind);
-            apm_info(
-                "Recycle. (ret=%d; tgid=%d; devid=%u; proc_type=%d; mode=%d; slave_pid=%d; master_pid=%d)\n", ret, tgid,
-                unbind.devid, unbind.proc_type, unbind.mode, unbind.slave_pid, unbind.master_pid);
+            apm_info("Recycle. (ret=%d; tgid=%d; devid=%u; proc_type=%d; mode=%d; slave_pid=%d; master_pid=%d)\n", ret,
+                     tgid, unbind.devid, unbind.proc_type, unbind.mode, unbind.slave_pid, unbind.master_pid);
         }
     }
 }
@@ -438,14 +440,14 @@ static bool apm_slave_domain_is_exit_synchronized(int tgid, enum apm_exit_stage 
         return true; /* no sync needed if none bind relation exist */
 #endif
     }
-    ret =
-        slave_ops[mode]->get_tast_group_exit_stage(master_tgid, tgid, udevid, proc_type_bitmap, &task_group_exit_stage);
+    ret = slave_ops[mode]->get_tast_group_exit_stage(master_tgid, tgid, udevid, proc_type_bitmap,
+                                                     &task_group_exit_stage);
     if (ret != 0) {
         return false;
     }
 
     return (task_group_exit_stage >= stage) ||
-        (apm_slave_ctx_need_fast_exit(slave_domain, tgid) && (task_group_exit_stage == 0));
+           (apm_slave_ctx_need_fast_exit(slave_domain, tgid) && (task_group_exit_stage == 0));
 }
 
 bool apm_slave_domain_check_set_pre_exit(int tgid, struct task_start_time *time)
@@ -498,8 +500,8 @@ void apm_slave_domain_task_show(u32 udevid, int tgid, int feature_id, ka_seq_fil
     }
 }
 
-static int apm_slave_domain_get_meminfo(
-    u32 udevid, int slave_tgid, processType_t process_type, processMemType_t type, u64 *size)
+static int apm_slave_domain_get_meminfo(u32 udevid, int slave_tgid, processType_t process_type, processMemType_t type,
+                                        u64 *size)
 {
     (void)process_type;
     return apm_get_slave_meminfo(slave_tgid, type, size);

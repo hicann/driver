@@ -24,21 +24,45 @@ struct submodule_ops {
     void (*uninit)(void);
 };
 
-int __attribute__((weak)) apm_init_module(void) { return 0; }
+int __attribute__((weak)) apm_init_module(void)
+{
+    return 0;
+}
 
-int __attribute__((weak)) dp_proc_mng_init(void) { return 0; }
+int __attribute__((weak)) dp_proc_mng_init(void)
+{
+    return 0;
+}
 
-void __attribute__((weak)) apm_exit_module(void) { return; }
+void __attribute__((weak)) apm_exit_module(void)
+{
+    return;
+}
 
-void __attribute__((weak)) dp_proc_mng_exit(void) { return; }
+void __attribute__((weak)) dp_proc_mng_exit(void)
+{
+    return;
+}
 
-void __attribute__((weak)) rmo_exit_module(void) { return; }
+void __attribute__((weak)) rmo_exit_module(void)
+{
+    return;
+}
 
-int __attribute__((weak)) rmo_init_module(void) { return 0; }
+int __attribute__((weak)) rmo_init_module(void)
+{
+    return 0;
+}
 
-void __attribute__((weak)) udis_exit(void) { return; }
+void __attribute__((weak)) udis_exit(void)
+{
+    return;
+}
 
-int __attribute__((weak)) udis_init(void) { return 0; }
+int __attribute__((weak)) udis_init(void)
+{
+    return 0;
+}
 
 static struct submodule_ops g_sub_table[] = {
     {apm_init_module, apm_exit_module},

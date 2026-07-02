@@ -103,8 +103,8 @@ void rmo_mem_sharing_ctx_destroy(struct task_ctx_domain *domain, int tgid)
     ka_task_mutex_unlock(&domain->mutex);
 }
 
-static struct rmo_mem_sharing_node *rmo_mem_sharing_ctx_find_node(
-    struct rmo_mem_sharing_ctx *mem_ctx, struct rmo_mem_sharing_info *para)
+static struct rmo_mem_sharing_node *rmo_mem_sharing_ctx_find_node(struct rmo_mem_sharing_ctx *mem_ctx,
+                                                                  struct rmo_mem_sharing_info *para)
 {
     struct rmo_mem_sharing_node *node = NULL;
     unsigned long stamp = ka_jiffies;
@@ -128,24 +128,22 @@ static int rmo_mem_sharing_ctx_add_node(struct task_ctx *ctx, void *priv)
     struct rmo_mem_sharing_ctx *mem_ctx = ctx->priv;
     struct rmo_mem_sharing_node *node = rmo_mem_sharing_ctx_find_node(mem_ctx, para);
     if (node != NULL) {
-        rmo_err(
-            "Already added. (devid=%u; accessor=%d; tgid=%d)\n", para->mem_shr.devid, para->mem_shr.accessor,
-            ctx->tgid);
+        rmo_err("Already added. (devid=%u; accessor=%d; tgid=%d)\n", para->mem_shr.devid, para->mem_shr.accessor,
+                ctx->tgid);
         return -EAGAIN;
     }
 
     node = rmo_vzalloc(sizeof(struct rmo_mem_sharing_node));
     if (node == NULL) {
-        rmo_err(
-            "Failed to alloc node. (devid=%u; accessor=%d; tgid=%d)\n", para->mem_shr.devid, para->mem_shr.accessor,
-            ctx->tgid);
+        rmo_err("Failed to alloc node. (devid=%u; accessor=%d; tgid=%d)\n", para->mem_shr.devid, para->mem_shr.accessor,
+                ctx->tgid);
         return -ENOMEM;
     }
 
     node->ctx = *para;
     ka_list_add_tail(&node->node, &mem_ctx->head);
-    rmo_debug(
-        "Add node success. (devid=%u; accessor=%d; tgid=%d)\n", para->mem_shr.devid, para->mem_shr.accessor, ctx->tgid);
+    rmo_debug("Add node success. (devid=%u; accessor=%d; tgid=%d)\n", para->mem_shr.devid, para->mem_shr.accessor,
+              ctx->tgid);
     return 0;
 }
 
@@ -175,8 +173,8 @@ static int rmo_mem_sharing_ctx_del_node(struct task_ctx *ctx, void *priv)
         return -EFAULT;
     }
 
-    rmo_debug(
-        "Del node success. (devid=%u; accessor=%d; tgid=%d)\n", para->mem_shr.devid, para->mem_shr.accessor, ctx->tgid);
+    rmo_debug("Del node success. (devid=%u; accessor=%d; tgid=%d)\n", para->mem_shr.devid, para->mem_shr.accessor,
+              ctx->tgid);
     ka_list_del(&node->node);
     rmo_vfree(node);
     return 0;

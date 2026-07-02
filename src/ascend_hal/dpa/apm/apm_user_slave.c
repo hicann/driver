@@ -47,9 +47,8 @@ drvError_t drvBindHostPid(struct drvBindHostpidInfo info)
         }
     } while (retry);
     if (ret != 0) {
-        apm_err(
-            "Bind pid failed. (ret=%d; devid=%u; master_pid=%d; proc_type=%d; mode=%d)\n", ret, para.devid,
-            para.master_pid, para.proc_type, para.mode);
+        apm_err("Bind pid failed. (ret=%d; devid=%u; master_pid=%d; proc_type=%d; mode=%d)\n", ret, para.devid,
+                para.master_pid, para.proc_type, para.mode);
         return ret;
     }
 
@@ -70,9 +69,8 @@ drvError_t drvUnbindHostPid(struct drvBindHostpidInfo info)
 
     ret = apm_cmd_ioctl(APM_UNBIND, &para);
     if (ret != 0) {
-        apm_err(
-            "Unbind pid failed. (ret=%d; devid=%u; master_pid=%d; proc_type=%d)\n", ret, para.devid, para.master_pid,
-            para.proc_type);
+        apm_err("Unbind pid failed. (ret=%d; devid=%u; master_pid=%d; proc_type=%d)\n", ret, para.devid,
+                para.master_pid, para.proc_type);
         return ret;
     }
 
@@ -92,8 +90,8 @@ static inline int apm_trans_first_proc_type_from_bitmap(unsigned int proc_type_b
     return proc_type;
 }
 
-int apm_query_master_pid(
-    unsigned int cmd, int slave_pid, unsigned int *udevid, unsigned int *master_pid, unsigned int *proc_type)
+int apm_query_master_pid(unsigned int cmd, int slave_pid, unsigned int *udevid, unsigned int *master_pid,
+                         unsigned int *proc_type)
 {
     struct apm_cmd_query_master_info para = {.slave_pid = (unsigned int)slave_pid};
     int ret;
@@ -123,8 +121,8 @@ int apm_query_master_pid(
     return DRV_ERROR_NONE;
 }
 
-drvError_t drvQueryProcessHostPid(
-    int pid, unsigned int *chip_id, unsigned int *vfid, unsigned int *host_pid, unsigned int *cp_type)
+drvError_t drvQueryProcessHostPid(int pid, unsigned int *chip_id, unsigned int *vfid, unsigned int *host_pid,
+                                  unsigned int *cp_type)
 {
     if (vfid != NULL) {
         *vfid = 0;

@@ -90,10 +90,9 @@ static void apm_res_map_ctx_try_recycle_node(struct apm_res_map_ctx *map_ctx)
     {
         int proc_type = node->ctx.res_info.target_proc_type;
 
-        apm_debug(
-            "Recycle map node. (udevid=%u; proc_type=%d(%s); res_type=%d; res_id=%u; va=0x%lx; len=%u\n",
-            node->ctx.udevid, proc_type, apm_proc_type_to_name(proc_type), node->ctx.res_info.res_type,
-            node->ctx.res_info.res_id, node->ctx.va, node->ctx.len);
+        apm_debug("Recycle map node. (udevid=%u; proc_type=%d(%s); res_type=%d; res_id=%u; va=0x%lx; len=%u\n",
+                  node->ctx.udevid, proc_type, apm_proc_type_to_name(proc_type), node->ctx.res_info.res_type,
+                  node->ctx.res_info.res_id, node->ctx.va, node->ctx.len);
         (void)pbl_rb_erase(&map_ctx->rb_root, &node->rb_node); /* Won't fail. */
         apm_res_map_free_node_pa_array(&node->ctx);
         apm_vfree(node);
@@ -175,8 +174,8 @@ void apm_res_map_ctx_destroy(struct task_ctx_domain *domain, int tgid)
     ka_task_mutex_unlock(&domain->mutex);
 }
 
-static struct apm_res_map_node *apm_res_map_ctx_find_node(
-    struct apm_res_map_ctx *map_ctx, struct apm_res_map_info *para)
+static struct apm_res_map_node *apm_res_map_ctx_find_node(struct apm_res_map_ctx *map_ctx,
+                                                          struct apm_res_map_info *para)
 {
     ka_rb_node_t *rb_node = pbl_rb_search(&map_ctx->rb_root, (void *)para, apm_res_map_node_rb_compare_of_search);
     if (rb_node != NULL) {
@@ -195,9 +194,8 @@ static int apm_res_map_ctx_add_node(struct task_ctx *ctx, void *priv)
 
     if (node != NULL) {
         ka_base_atomic_inc(&node->ctx.ref);
-        apm_debug(
-            "Already mapped. (res_type=%d; res_id=%u; va=0x%lx; ref=%d)\n", para->res_info.res_type,
-            para->res_info.res_id, node->ctx.va, ka_base_atomic_read(&node->ctx.ref));
+        apm_debug("Already mapped. (res_type=%d; res_id=%u; va=0x%lx; ref=%d)\n", para->res_info.res_type,
+                  para->res_info.res_id, node->ctx.va, ka_base_atomic_read(&node->ctx.ref));
         return 0;
     }
 
@@ -215,9 +213,8 @@ static int apm_res_map_ctx_add_node(struct task_ctx *ctx, void *priv)
         return ret;
     }
 
-    apm_debug(
-        "Add map node success. (res_type=%d; res_id=%u; va=0x%lx; ref=%d)\n", para->res_info.res_type,
-        para->res_info.res_id, node->ctx.va, ka_base_atomic_read(&node->ctx.ref));
+    apm_debug("Add map node success. (res_type=%d; res_id=%u; va=0x%lx; ref=%d)\n", para->res_info.res_type,
+              para->res_info.res_id, node->ctx.va, ka_base_atomic_read(&node->ctx.ref));
 
     return 0;
 }
@@ -247,18 +244,16 @@ static int apm_res_map_ctx_del_node(struct task_ctx *ctx, void *priv)
     }
 
     if (ka_base_atomic_dec_and_test(&node->ctx.ref)) {
-        apm_debug(
-            "Del success. (res_type=%d; res_id=%u; va=0x%lx; ref=%d)\n", para->res_info.res_type, para->res_info.res_id,
-            node->ctx.va, ka_base_atomic_read(&node->ctx.ref));
+        apm_debug("Del success. (res_type=%d; res_id=%u; va=0x%lx; ref=%d)\n", para->res_info.res_type,
+                  para->res_info.res_id, node->ctx.va, ka_base_atomic_read(&node->ctx.ref));
         ref = (int)ka_base_atomic_read(&node->ctx.ref);
         (void)pbl_rb_erase(&map_ctx->rb_root, &node->rb_node); /* Won't fail. */
         apm_res_map_free_node_pa_array(&node->ctx);
         apm_vfree(node);
     } else {
         ref = (int)ka_base_atomic_read(&node->ctx.ref);
-        apm_debug(
-            "Not del for ref. (res_type=%d; res_id=%u; va=0x%lx; ref=%d)\n", para->res_info.res_type,
-            para->res_info.res_id, node->ctx.va, ka_base_atomic_read(&node->ctx.ref));
+        apm_debug("Not del for ref. (res_type=%d; res_id=%u; va=0x%lx; ref=%d)\n", para->res_info.res_type,
+                  para->res_info.res_id, node->ctx.va, ka_base_atomic_read(&node->ctx.ref));
     }
     return (ref == 0) ? 0 : -EBUSY;
 }
@@ -305,10 +300,9 @@ static int apm_res_map_ctx_show_details(struct task_ctx *ctx, void *priv)
     {
         int proc_type = node->ctx.res_info.target_proc_type;
 
-        ka_fs_seq_printf(
-            seq, "    udevid %u proc_type %d(%s) res_type %d res_id %u va 0x%lx pa 0x%llx len %u\n", node->ctx.udevid,
-            proc_type, apm_proc_type_to_name(proc_type), node->ctx.res_info.res_type, node->ctx.res_info.res_id,
-            node->ctx.va, node->ctx.pa, node->ctx.len);
+        ka_fs_seq_printf(seq, "    udevid %u proc_type %d(%s) res_type %d res_id %u va 0x%lx pa 0x%llx len %u\n",
+                         node->ctx.udevid, proc_type, apm_proc_type_to_name(proc_type), node->ctx.res_info.res_type,
+                         node->ctx.res_info.res_id, node->ctx.va, node->ctx.pa, node->ctx.len);
 
         apm_try_cond_resched(&stamp);
     }

@@ -15,8 +15,8 @@
 
 struct dp_proc_mng_chan_handlers_st dp_proc_mng_master_msg_processes[DP_PROC_MNG_CHAN_D2H_MAX_ID] = {};
 
-int dp_proc_mng_chan_msg_dispatch(
-    void *msg, u32 in_data_len, u32 out_data_len, u32 *ack_len, const struct dp_proc_mng_chan_handlers_st *msg_process)
+int dp_proc_mng_chan_msg_dispatch(void *msg, u32 in_data_len, u32 out_data_len, u32 *ack_len,
+                                  const struct dp_proc_mng_chan_handlers_st *msg_process)
 {
     struct dp_proc_mng_chan_msg_head *head_msg = (struct dp_proc_mng_chan_msg_head *)msg;
     u32 data_len = in_data_len > out_data_len ? in_data_len : out_data_len;
@@ -35,8 +35,8 @@ int dp_proc_mng_chan_msg_dispatch(
 
     if (data_len < msg_process[msg_id].msg_size) {
 #ifndef EMU_ST
-        dp_proc_mng_drv_err(
-            "Invalid process_len. (data_len=%u; in_len=%u; out_len=%u)\n", data_len, in_data_len, out_data_len);
+        dp_proc_mng_drv_err("Invalid process_len. (data_len=%u; in_len=%u; out_len=%u)\n", data_len, in_data_len,
+                            out_data_len);
         ret = -EMSGSIZE;
 #endif
         goto save_msg_ret;

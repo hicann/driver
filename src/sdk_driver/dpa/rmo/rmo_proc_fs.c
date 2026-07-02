@@ -51,8 +51,8 @@ ka_proc_dir_entry_t *rmo_proc_fs_add_task(const char *domain, int tgid)
     }
 
     (void)sprintf_s(name, RMO_PROC_NAME_LEN, "%s-%d", domain, tgid);
-    return ka_fs_proc_create_data(
-        (const char *)name, RMO_PROC_FS_MODE, rmo_top_entry, &rmo_proc, (void *)(uintptr_t)tgid);
+    return ka_fs_proc_create_data((const char *)name, RMO_PROC_FS_MODE, rmo_top_entry, &rmo_proc,
+                                  (void *)(uintptr_t)tgid);
 }
 
 void rmo_proc_fs_del_task(ka_proc_dir_entry_t *task_entry)
@@ -84,4 +84,7 @@ void rmo_proc_fs_uninit(void)
     }
 }
 
-ka_proc_dir_entry_t *rmo_get_top_entry(void) { return rmo_top_entry; }
+ka_proc_dir_entry_t *rmo_get_top_entry(void)
+{
+    return rmo_top_entry;
+}

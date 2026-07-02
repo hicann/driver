@@ -30,8 +30,8 @@ struct dp_proc_mng_info {
     ka_workqueue_struct_t *bind_cgroup_wq;
 };
 
-extern int (*const dp_proc_mng_ioctl_handlers[DP_PROC_MNG_CMD_MAX_CMD])(
-    ka_file_t *file, struct dp_proc_mng_ioctl_arg *arg);
+extern int (*const dp_proc_mng_ioctl_handlers[DP_PROC_MNG_CMD_MAX_CMD])(ka_file_t *file,
+                                                                        struct dp_proc_mng_ioctl_arg *arg);
 
 int dp_proc_mng_davinci_module_init(const ka_file_operations_t *ops);
 void dp_proc_mng_davinci_module_uninit(void);

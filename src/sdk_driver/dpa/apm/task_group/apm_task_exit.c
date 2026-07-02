@@ -135,9 +135,8 @@ static void apm_task_exit_work(ka_work_struct_t *p_work)
         if (exit_ctrl->stage < APM_STAGE_MAX) {
             /* Ensure that the process exit process is complete. */
             int start_stage = (exit_ctrl->sync_flag == 1) ? exit_ctrl->stage + 1 : exit_ctrl->stage;
-            apm_warn(
-                "Exit timeout. (tgid=%d; stage=%d; sync_flag=%d)\n", exit_ctrl->tgid, exit_ctrl->stage,
-                exit_ctrl->sync_flag);
+            apm_warn("Exit timeout. (tgid=%d; stage=%d; sync_flag=%d)\n", exit_ctrl->tgid, exit_ctrl->stage,
+                     exit_ctrl->sync_flag);
             apm_task_exit_notify_all_stage(exit_ctrl->nh, exit_ctrl->tgid, start_stage);
         }
         apm_task_exit_finish(exit_ctrl);
@@ -145,13 +144,12 @@ static void apm_task_exit_work(ka_work_struct_t *p_work)
     }
 
 resched:
-    (void)ka_task_schedule_delayed_work(
-        &exit_ctrl->dwork, ka_system_msecs_to_jiffies(apm_task_exit_work_get_delay_time(exit_ctrl)));
+    (void)ka_task_schedule_delayed_work(&exit_ctrl->dwork,
+                                        ka_system_msecs_to_jiffies(apm_task_exit_work_get_delay_time(exit_ctrl)));
 }
 
-void apm_task_exit(
-    int tgid, ka_blocking_notifier_head_t *nh,
-    bool (*is_tasks_in_group_exit_synchronized)(int tgid, enum apm_exit_stage stage))
+void apm_task_exit(int tgid, ka_blocking_notifier_head_t *nh,
+                   bool (*is_tasks_in_group_exit_synchronized)(int tgid, enum apm_exit_stage stage))
 {
     struct apm_task_exit_ctrl *exit_ctrl = NULL;
 
@@ -178,7 +176,10 @@ void apm_task_exit(
     (void)ka_task_schedule_delayed_work(&exit_ctrl->dwork, 0);
 }
 
-bool apm_is_all_task_exit_finish(void) { return ka_list_empty(&exit_ctrl_head); }
+bool apm_is_all_task_exit_finish(void)
+{
+    return ka_list_empty(&exit_ctrl_head);
+}
 
 void apm_task_exit_check_work(ka_work_struct_t *p_work)
 {

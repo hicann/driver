@@ -28,34 +28,30 @@
 void apm_share_log_err(const char *fmt, ...);
 void apm_share_log_run_info(const char *fmt, ...);
 
-#define apm_err(fmt, ...)                                                                             \
-    do {                                                                                              \
-        drv_err(                                                                                      \
-            MODULE_APM, "<%s:%d:%d:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), \
-            ka_task_get_current_pid(), ka_system_raw_smp_processor_id(), ##__VA_ARGS__);              \
-        apm_share_log_err(fmt, ##__VA_ARGS__);                                                        \
+#define apm_err(fmt, ...)                                                                                 \
+    do {                                                                                                  \
+        drv_err(MODULE_APM, "<%s:%d:%d:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), \
+                ka_task_get_current_pid(), ka_system_raw_smp_processor_id(), ##__VA_ARGS__);              \
+        apm_share_log_err(fmt, ##__VA_ARGS__);                                                            \
     } while (0)
 
-#define apm_warn(fmt, ...)                                                                            \
-    do {                                                                                              \
-        drv_warn(                                                                                     \
-            MODULE_APM, "<%s:%d:%d:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), \
-            ka_task_get_current_pid(), ka_system_raw_smp_processor_id(), ##__VA_ARGS__);              \
+#define apm_warn(fmt, ...)                                                                                 \
+    do {                                                                                                   \
+        drv_warn(MODULE_APM, "<%s:%d:%d:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), \
+                 ka_task_get_current_pid(), ka_system_raw_smp_processor_id(), ##__VA_ARGS__);              \
     } while (0)
 
-#define apm_info(fmt, ...)                                                                            \
-    do {                                                                                              \
-        drv_info(                                                                                     \
-            MODULE_APM, "<%s:%d:%d:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), \
-            ka_task_get_current_pid(), ka_system_raw_smp_processor_id(), ##__VA_ARGS__);              \
-        apm_share_log_run_info(fmt, ##__VA_ARGS__);                                                   \
+#define apm_info(fmt, ...)                                                                                 \
+    do {                                                                                                   \
+        drv_info(MODULE_APM, "<%s:%d:%d:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), \
+                 ka_task_get_current_pid(), ka_system_raw_smp_processor_id(), ##__VA_ARGS__);              \
+        apm_share_log_run_info(fmt, ##__VA_ARGS__);                                                        \
     } while (0)
 
-#define apm_debug(fmt, ...)                                                                           \
-    do {                                                                                              \
-        drv_pr_debug(                                                                                 \
-            MODULE_APM, "<%s:%d:%d:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), \
-            ka_task_get_current_pid(), ka_system_raw_smp_processor_id(), ##__VA_ARGS__);              \
+#define apm_debug(fmt, ...)                                                                                    \
+    do {                                                                                                       \
+        drv_pr_debug(MODULE_APM, "<%s:%d:%d:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), \
+                     ka_task_get_current_pid(), ka_system_raw_smp_processor_id(), ##__VA_ARGS__);              \
     } while (0)
 
 #define apm_err_if(cond, fmt, ...)       \
@@ -70,25 +66,22 @@ void apm_share_log_run_info(const char *fmt, ...);
             apm_debug(fmt, ##__VA_ARGS__); \
     } while (0)
 
-#define apm_warn_ratelimited(fmt, ...)                                                                \
-    do {                                                                                              \
-        drv_warn_ratelimited(                                                                         \
-            MODULE_APM, "<%s:%d:%d:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), \
-            ka_task_get_current_pid(), ka_system_raw_smp_processor_id(), ##__VA_ARGS__);              \
+#define apm_warn_ratelimited(fmt, ...)                                                                                 \
+    do {                                                                                                               \
+        drv_warn_ratelimited(MODULE_APM, "<%s:%d:%d:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), \
+                             ka_task_get_current_pid(), ka_system_raw_smp_processor_id(), ##__VA_ARGS__);              \
     } while (0)
 
-#define apm_info_ratelimited(fmt, ...)                                                                \
-    do {                                                                                              \
-        drv_info_ratelimited(                                                                         \
-            MODULE_APM, "<%s:%d:%d:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), \
-            ka_task_get_current_pid(), ka_system_raw_smp_processor_id(), ##__VA_ARGS__);              \
+#define apm_info_ratelimited(fmt, ...)                                                                                 \
+    do {                                                                                                               \
+        drv_info_ratelimited(MODULE_APM, "<%s:%d:%d:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), \
+                             ka_task_get_current_pid(), ka_system_raw_smp_processor_id(), ##__VA_ARGS__);              \
     } while (0)
 
-#define apm_err_ratelimited(fmt, ...)                                                                 \
-    do {                                                                                              \
-        drv_err_ratelimited(                                                                          \
-            MODULE_APM, "<%s:%d:%d:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), \
-            ka_task_get_current_pid(), ka_system_raw_smp_processor_id(), ##__VA_ARGS__);              \
+#define apm_err_ratelimited(fmt, ...)                                                                                 \
+    do {                                                                                                              \
+        drv_err_ratelimited(MODULE_APM, "<%s:%d:%d:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), \
+                            ka_task_get_current_pid(), ka_system_raw_smp_processor_id(), ##__VA_ARGS__);              \
     } while (0)
 
 #endif

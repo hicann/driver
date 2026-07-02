@@ -79,9 +79,8 @@ static drvError_t dp_proc_mng_prof_para_check(struct prof_sample_para *para)
     }
 
     if (para->buff_len < sizeof(struct module_mem_info) * MEM_STATS_MAX_MODULE_ID) {
-        DP_PROC_MNG_ERR(
-            "Invalid prof sample para buff_len. (buff_len=%u, report_len=%u)\n", para->buff_len,
-            (unsigned int)(sizeof(struct module_mem_info) * MEM_STATS_MAX_MODULE_ID));
+        DP_PROC_MNG_ERR("Invalid prof sample para buff_len. (buff_len=%u, report_len=%u)\n", para->buff_len,
+                        (unsigned int)(sizeof(struct module_mem_info) * MEM_STATS_MAX_MODULE_ID));
         return DRV_ERROR_INVALID_VALUE;
     }
     return DRV_ERROR_NONE;
@@ -128,9 +127,8 @@ int dp_proc_mng_prof_sample_fun(struct prof_sample_para *para)
 
     dev_id = para->dev_id;
     mem_info = (struct module_mem_info *)(para->buff);
-    memset_s(
-        mem_info, sizeof(struct module_mem_info) * MEM_STATS_MAX_MODULE_ID, 0,
-        sizeof(struct module_mem_info) * MEM_STATS_MAX_MODULE_ID);
+    memset_s(mem_info, sizeof(struct module_mem_info) * MEM_STATS_MAX_MODULE_ID, 0,
+             sizeof(struct module_mem_info) * MEM_STATS_MAX_MODULE_ID);
     for (mem_module_id = 0; mem_module_id < MEM_STATS_MAX_MODULE_ID; ++mem_module_id) {
         mem_info[mem_module_id].module_id = mem_module_id;
         mem_info[mem_module_id].timestamp = timestamp;

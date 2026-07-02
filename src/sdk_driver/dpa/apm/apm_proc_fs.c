@@ -54,8 +54,8 @@ ka_proc_dir_entry_t *apm_proc_fs_add_task(const char *domain, int tgid)
 
     seq = (u64)ka_base_atomic64_inc_return(&g_apm_proc_seq);
     (void)sprintf_s(name, APM_PROC_NAME_LEN, "%s-%d-%llu", domain, tgid, seq);
-    return ka_fs_proc_create_data(
-        (const char *)name, APM_PROC_FS_MODE, apm_top_entry, &apm_proc, (void *)(uintptr_t)tgid);
+    return ka_fs_proc_create_data((const char *)name, APM_PROC_FS_MODE, apm_top_entry, &apm_proc,
+                                  (void *)(uintptr_t)tgid);
 }
 
 void apm_proc_fs_del_task(ka_proc_dir_entry_t *task_entry)
