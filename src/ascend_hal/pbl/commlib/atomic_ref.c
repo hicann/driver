@@ -11,9 +11,9 @@
 #include "ascend_hal.h"
 #include "atomic_ref.h"
 
-#define ATOMIC_REF_STATUS_IDLE    { .info.valid = ATOMIC_INVALID, .info.value = 0 }
-#define ATOMIC_REF_STATUS_REF     { .info.valid = ATOMIC_VALID, .info.value = 1 }
-#define ATOMIC_REF_STATUS_NO_REF   { .info.valid = ATOMIC_VALID, .info.value = 0 }
+#define ATOMIC_REF_STATUS_IDLE {.info.valid = ATOMIC_INVALID, .info.value = 0}
+#define ATOMIC_REF_STATUS_REF {.info.valid = ATOMIC_VALID, .info.value = 1}
+#define ATOMIC_REF_STATUS_NO_REF {.info.valid = ATOMIC_VALID, .info.value = 0}
 
 void atomic_ref_init(union atomic_status *status)
 {
@@ -102,7 +102,7 @@ void atomic_value_init(union atomic_status *status)
 
 void atomic_value_set_invalid(union atomic_status *status)
 {
-    union atomic_status mask = { .info.valid = 0, .info.value = 0x7FFFFFFF }; // 0x7FFFFFFF is value mask
+    union atomic_status mask = {.info.valid = 0, .info.value = 0x7FFFFFFF}; // 0x7FFFFFFF is value mask
     (void)__sync_fetch_and_and((volatile int *)&status->status, mask.status);
 }
 

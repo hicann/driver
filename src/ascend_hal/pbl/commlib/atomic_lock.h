@@ -13,52 +13,52 @@
 /**
  * @atomic lock error numbers.
  */
-#define ATOMIC_LOCK_TIME_DEFAULT   384000000    /* 10s */
+#define ATOMIC_LOCK_TIME_DEFAULT 384000000 /* 10s */
 
 typedef enum lock_status {
-    LOCK_RELEASED = 0,        /* not occupied */
-    LOCK_OCCUPIED = 1,        /* occupied */
+    LOCK_RELEASED = 0, /* not occupied */
+    LOCK_OCCUPIED = 1, /* occupied */
 } LOCK_STATUS;
 
 typedef enum atomic_lock_error {
-    ATOMIC_LOCK_ERROR_NONE = 0,              /**< success */
-    ATOMIC_LOCK_ERROR_PARA_ERR = 1,          /**wrong parameter */
-    ATOMIC_LOCKDRV_ERROR_WAIT_TIMEOUT = 2,   /**wait timeout */
-}ATOMIC_LOCK_ERROR;
+    ATOMIC_LOCK_ERROR_NONE = 0,            /**< success */
+    ATOMIC_LOCK_ERROR_PARA_ERR = 1,        /**wrong parameter */
+    ATOMIC_LOCKDRV_ERROR_WAIT_TIMEOUT = 2, /**wait timeout */
+} ATOMIC_LOCK_ERROR;
 
 struct atomic_lock {
-    int lock_status;                     // lock status
-    unsigned long long lock_get_time;    // get lock time
+    int lock_status;                  // lock status
+    unsigned long long lock_get_time; // get lock time
 };
 
 struct drv_pthread_atomic {
-    int lock_status;                     // lock status
+    int lock_status; // lock status
 };
 
-#define ATOMIC_LOCK_THREAD_INITIALIZER  {LOCK_RELEASED}
+#define ATOMIC_LOCK_THREAD_INITIALIZER {LOCK_RELEASED}
 
 /**
-* @brief init atomic lock
-* @attention null
-* @param [in] atomic_lock: struct atomic_lock
-* @return 0 for success, others for fail
-*/
+ * @brief init atomic lock
+ * @attention null
+ * @param [in] atomic_lock: struct atomic_lock
+ * @return 0 for success, others for fail
+ */
 void init_atomic_lock(struct atomic_lock *atomic_lock);
 
 /**
-* @brief get atomic lock
-* @attention null
-* @param [in] lock: point of struct atomic_lock
-* @param [in] timeout: time
-* @return 0 for success, others for fail
-*/
+ * @brief get atomic lock
+ * @attention null
+ * @param [in] lock: point of struct atomic_lock
+ * @param [in] timeout: time
+ * @return 0 for success, others for fail
+ */
 int get_atomic_lock(struct atomic_lock *lock, unsigned long long timeout);
 
 /**
-* @brief release atomic lock
-* @attention null
-* @param [in] lock: point of struct atomic_lock
-*/
+ * @brief release atomic lock
+ * @attention null
+ * @param [in] lock: point of struct atomic_lock
+ */
 void release_atomic_lock(struct atomic_lock *lock);
 
 void drv_pthread_atomic_init(struct drv_pthread_atomic *lock);

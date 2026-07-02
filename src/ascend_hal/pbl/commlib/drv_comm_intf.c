@@ -38,7 +38,7 @@ STATIC int drvDevCloseHostUserComponent(uint32_t devid, halDevCloseIn *in, int i
         }
 
         ret = drv_close_host_user_handlers[i](devid, in);
-        if(ret != 0) {
+        if (ret != 0) {
             DRV_COMM_EX_NOTSUPPORT_ERR(ret, "Close failed. (devid=%u; func_id=%d; ret=%d)\n", devid, i, ret);
             err_ret = ret;
         }
@@ -52,15 +52,15 @@ STATIC int drvDevCloseComponent(uint32_t devid, halDevCloseIn *in, int index)
     int i;
     int ret;
     int err_ret = 0;
-    for(i = index - 1; i >= 0; i --) {
+    for (i = index - 1; i >= 0; i--) {
         if (drv_close_handlers[i] == NULL) {
             continue;
         }
 
         ret = drv_close_handlers[i](devid, in);
-        if(ret != 0) {
-            DRV_COMM_EX_NOTSUPPORT_ERR(ret,
-                "drvDevCloseComponent failed. (devid=%u; func_id=%d; ret=%d)\n", devid, i, ret);
+        if (ret != 0) {
+            DRV_COMM_EX_NOTSUPPORT_ERR(ret, "drvDevCloseComponent failed. (devid=%u; func_id=%d; ret=%d)\n", devid, i,
+                                       ret);
             err_ret = ret;
         }
     }
@@ -104,18 +104,17 @@ drvError_t halDeviceOpen(uint32_t devid, halDevOpenIn *in, halDevOpenOut *out)
         return DRV_ERROR_REPEATED_INIT;
     }
 
-    for(i = 0; i < MAX_DEV_OPERATION; i ++) {
+    for (i = 0; i < MAX_DEV_OPERATION; i++) {
         if (drv_open_handlers[i] == NULL) {
             continue;
         }
 
         ret = drv_open_handlers[i](devid, in, out);
-        if(ret != 0) {
+        if (ret != 0) {
             /* set the flag(NULL) to close all resources on the host and device sides. */
             (void)drvDevCloseComponent(devid, NULL, i);
             (void)pthread_mutex_unlock(&drv_open_dev_mutex);
-            DRV_COMM_EX_NOTSUPPORT_ERR(ret,
-                "halDeviceOpen failed. (devid=%u; func_id=%d; ret=%d)\n", devid, i, ret);
+            DRV_COMM_EX_NOTSUPPORT_ERR(ret, "halDeviceOpen failed. (devid=%u; func_id=%d; ret=%d)\n", devid, i, ret);
             return ret;
         }
     }
@@ -131,7 +130,7 @@ drvError_t halDeviceClose(uint32_t devid, halDevCloseIn *in)
     int ret;
 
     ret = drvdev_check_input_para(in);
-    if(ret != 0) {
+    if (ret != 0) {
         DRV_COMM_EX_NOTSUPPORT_ERR(ret, "Parameter input check failed. (ret=%d)\n", ret);
         return ret;
     }
@@ -150,12 +149,12 @@ drvError_t halDeviceClose(uint32_t devid, halDevCloseIn *in)
 
     if ((in != NULL) && (in->close_type == DEV_CLOSE_HOST_USER)) {
         ret = drvDevCloseHostUserComponent(devid, in, MAX_DEV_OPERATION);
-        if(ret != 0) {
+        if (ret != 0) {
             DRV_COMM_EX_NOTSUPPORT_ERR(ret, "Close host user failed. (devid=%u; ret=%d)\n", devid, ret);
         }
     } else {
         ret = drvDevCloseComponent(devid, in, MAX_DEV_OPERATION);
-        if(ret != 0) {
+        if (ret != 0) {
             DRV_COMM_EX_NOTSUPPORT_ERR(ret, "halDeviceClose failed. (devid=%u; ret=%d)\n", devid, ret);
         }
     }
@@ -189,7 +188,7 @@ drvError_t halProcessResBackup(halProcResBackupInfo *info)
         }
 
         ret = drv_proc_res_backup_handlers[i](info);
-        if(ret != DRV_ERROR_NONE) {
+        if (ret != DRV_ERROR_NONE) {
             (void)pthread_mutex_unlock(&drv_proc_res_mutex);
             DRV_COMM_ERR("Process resource backup failed. (func_id=%d; ret=%d)\n", i, ret);
             return ret;
@@ -223,13 +222,13 @@ drvError_t halProcessResRestore(halProcResRestoreInfo *info)
         return DRV_ERROR_OPER_NOT_PERMITTED;
     }
 
-    for(i = 0; i < MAX_DEV_OPERATION; i++) {
+    for (i = 0; i < MAX_DEV_OPERATION; i++) {
         if (drv_proc_res_restore_handlers[i] == NULL) {
             continue;
         }
 
         ret = drv_proc_res_restore_handlers[i](info);
-        if(ret != DRV_ERROR_NONE) {
+        if (ret != DRV_ERROR_NONE) {
             (void)pthread_mutex_unlock(&drv_proc_res_mutex);
             DRV_COMM_ERR("Process resource restore failed. (func_id=%d; ret=%d)\n", i, ret);
             return ret;
@@ -271,7 +270,7 @@ u32 soc_res_get_ver(u32 udevid, enum soc_ver_type type, u32 *ver)
         goto davinci_close;
     }
 
-    if(type == VER_TYPE_DEV) {
+    if (type == VER_TYPE_DEV) {
         ret = ioctl(fd, SOC_RESMNG_GET_DEV_VER, ver);
         if (ret < 0) {
             DRV_COMM_ERR("get device version fail, (udevid=%u)\n", udevid);

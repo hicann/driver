@@ -14,6 +14,6 @@
 #include "ascend_hal.h"
 #include "ascend_hal_base.h"
 
-typedef drvError_t(*drvRepairFaultHandler)(uint32_t devid, halRepairFaultInfo *info);
+typedef drvError_t (*drvRepairFaultHandler)(uint32_t devid, halRepairFaultInfo *info);
 
 #endif

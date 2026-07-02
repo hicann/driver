@@ -31,14 +31,16 @@
 #define DRV_COMM_DEBUG(fmt, ...) DRV_DEBUG(HAL_MODULE_TYPE_DEV_MANAGER, fmt, ##__VA_ARGS__)
 #define DRV_COMM_EVENT(fmt, ...) DRV_RUN_INFO(HAL_MODULE_TYPE_DEV_MANAGER, fmt, ##__VA_ARGS__)
 
-#define DRV_COMM_EX_NOTSUPPORT_ERR(ret, fmt, ...) do {   \
-    if (((ret) != (int)DRV_ERROR_NOT_SUPPORT) && ((ret) != (int)EOPNOTSUPP)) {           \
-        DRV_COMM_ERR(fmt, ##__VA_ARGS__);                \
-    }                                               \
-} while (0)
+#define DRV_COMM_EX_NOTSUPPORT_ERR(ret, fmt, ...)                                  \
+    do {                                                                           \
+        if (((ret) != (int)DRV_ERROR_NOT_SUPPORT) && ((ret) != (int)EOPNOTSUPP)) { \
+            DRV_COMM_ERR(fmt, ##__VA_ARGS__);                                      \
+        }                                                                          \
+    } while (0)
 
-#define DRV_COMM_KERNEL_ERR(err) ((DVresult)(((err) == 0) ? DRV_ERROR_IOCRL_FAIL : \
-    (((err) != ESRCH) ? errno_to_user_errno(err) : DRV_ERROR_PROCESS_EXIT)))
+#define DRV_COMM_KERNEL_ERR(err)                      \
+    ((DVresult)(((err) == 0) ? DRV_ERROR_IOCRL_FAIL : \
+                               (((err) != ESRCH) ? errno_to_user_errno(err) : DRV_ERROR_PROCESS_EXIT)))
 
 typedef enum {
     ESCHED_DEV_OPERATION,
@@ -52,49 +54,41 @@ typedef enum {
     MAX_DEV_OPERATION,
 } DRV_DEV_OPERATION;
 
-static drvError_t(*drv_open_handlers[MAX_DEV_OPERATION])(uint32_t devid, halDevOpenIn *in, halDevOpenOut *out) = {
-        [ESCHED_DEV_OPERATION] = esched_device_open,
-        [MEM_DEV_OPERATION] = drvMemDeviceOpenInner,
-        [TSDRV_DEV_OPERATION] = drvDeviceOpenInner,
-        [BUFF_DEV_OPERATION] = NULL,
-        [QUEUE_DEV_OPERATION] = queue_device_open,
+static drvError_t (*drv_open_handlers[MAX_DEV_OPERATION])(uint32_t devid, halDevOpenIn *in, halDevOpenOut *out) = {
+    [ESCHED_DEV_OPERATION] = esched_device_open, [MEM_DEV_OPERATION] = drvMemDeviceOpenInner,
+    [TSDRV_DEV_OPERATION] = drvDeviceOpenInner,  [BUFF_DEV_OPERATION] = NULL,
+    [QUEUE_DEV_OPERATION] = queue_device_open,
 };
 
-static drvError_t(*drv_close_handlers[MAX_DEV_OPERATION])(uint32_t devid, halDevCloseIn *in) = {
-        [ESCHED_DEV_OPERATION] = esched_device_close,
-        [MEM_DEV_OPERATION] = drvMemDeviceCloseInner,
-        [TSDRV_DEV_OPERATION] = drvDeviceCloseInner,
-        [BUFF_DEV_OPERATION] = NULL,
-        [QUEUE_DEV_OPERATION] = queue_device_close,
+static drvError_t (*drv_close_handlers[MAX_DEV_OPERATION])(uint32_t devid, halDevCloseIn *in) = {
+    [ESCHED_DEV_OPERATION] = esched_device_close, [MEM_DEV_OPERATION] = drvMemDeviceCloseInner,
+    [TSDRV_DEV_OPERATION] = drvDeviceCloseInner,  [BUFF_DEV_OPERATION] = NULL,
+    [QUEUE_DEV_OPERATION] = queue_device_close,
 };
 
-static drvError_t(*drv_close_host_user_handlers[MAX_DEV_OPERATION])(uint32_t devid, halDevCloseIn *in) = {
-        [ESCHED_DEV_OPERATION] = esched_device_close_user,
-        [MEM_DEV_OPERATION] = drvMemDeviceCloseUserRes,
-        [TSDRV_DEV_OPERATION] = drvTrsDeviceCloseUserResInner,
-        [BUFF_DEV_OPERATION] = NULL,
-        [QUEUE_DEV_OPERATION] = queue_device_close_user,
-        [URD_DEV_OPERATION] = urdCloseRestoreHandler,
-        [DMS_DEV_OPERATION] = dmsCloseRestoreHandler,
-        [APM_DEV_OPERATION] = apm_device_close_user,
+static drvError_t (*drv_close_host_user_handlers[MAX_DEV_OPERATION])(uint32_t devid, halDevCloseIn *in) = {
+    [ESCHED_DEV_OPERATION] = esched_device_close_user,     [MEM_DEV_OPERATION] = drvMemDeviceCloseUserRes,
+    [TSDRV_DEV_OPERATION] = drvTrsDeviceCloseUserResInner, [BUFF_DEV_OPERATION] = NULL,
+    [QUEUE_DEV_OPERATION] = queue_device_close_user,       [URD_DEV_OPERATION] = urdCloseRestoreHandler,
+    [DMS_DEV_OPERATION] = dmsCloseRestoreHandler,          [APM_DEV_OPERATION] = apm_device_close_user,
 };
 
-static drvError_t(*drv_proc_res_backup_handlers[MAX_DEV_OPERATION])(halProcResBackupInfo *info) = {
-        [ESCHED_DEV_OPERATION] = NULL,
-        [MEM_DEV_OPERATION] = drvMemProcResBackup,
-        [TSDRV_DEV_OPERATION] = trsMemProcResBackup,
-        [BUFF_DEV_OPERATION] = NULL,
-        [QUEUE_DEV_OPERATION] = NULL,
+static drvError_t (*drv_proc_res_backup_handlers[MAX_DEV_OPERATION])(halProcResBackupInfo *info) = {
+    [ESCHED_DEV_OPERATION] = NULL,
+    [MEM_DEV_OPERATION] = drvMemProcResBackup,
+    [TSDRV_DEV_OPERATION] = trsMemProcResBackup,
+    [BUFF_DEV_OPERATION] = NULL,
+    [QUEUE_DEV_OPERATION] = NULL,
 };
 
-static drvError_t(*drv_proc_res_restore_handlers[MAX_DEV_OPERATION])(halProcResRestoreInfo *info) = {
-        [ESCHED_DEV_OPERATION] = NULL,
-        [MEM_DEV_OPERATION] = drvMemProcResRestore,
-        [TSDRV_DEV_OPERATION] = NULL,
-        [BUFF_DEV_OPERATION] = NULL,
-        [QUEUE_DEV_OPERATION] = NULL,
-        [URD_DEV_OPERATION] = NULL,
-        [DMS_DEV_OPERATION] = dmsProcResRestoreHandler,
+static drvError_t (*drv_proc_res_restore_handlers[MAX_DEV_OPERATION])(halProcResRestoreInfo *info) = {
+    [ESCHED_DEV_OPERATION] = NULL,
+    [MEM_DEV_OPERATION] = drvMemProcResRestore,
+    [TSDRV_DEV_OPERATION] = NULL,
+    [BUFF_DEV_OPERATION] = NULL,
+    [QUEUE_DEV_OPERATION] = NULL,
+    [URD_DEV_OPERATION] = NULL,
+    [DMS_DEV_OPERATION] = dmsProcResRestoreHandler,
 };
 
 u32 soc_res_get_ver(u32 udevid, enum soc_ver_type type, u32 *ver);

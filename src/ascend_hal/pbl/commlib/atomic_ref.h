@@ -20,9 +20,8 @@ union atomic_status {
     unsigned int status;
 };
 
-#define ATOMIC_VALID    1
-#define ATOMIC_INVALID  0
-
+#define ATOMIC_VALID 1
+#define ATOMIC_INVALID 0
 
 void atomic_ref_self_healing(union atomic_status *status);
 void atomic_ref_init(union atomic_status *status);

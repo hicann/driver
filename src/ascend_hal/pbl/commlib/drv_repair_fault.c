@@ -14,7 +14,7 @@
 #include "pbl/pbl_ubmm.h"
 
 static drvRepairFaultHandler g_drv_repair_fault_handlers[HAL_REPAIR_FAULT_TYPE_MAX] = {
-        [HAL_REPAIR_FAULT_TYPE_UBMEM] = ubmemRepairFault,
+    [HAL_REPAIR_FAULT_TYPE_UBMEM] = ubmemRepairFault,
 };
 
 drvError_t halRepairFault(uint32_t devid, halRepairFaultInfo *info)

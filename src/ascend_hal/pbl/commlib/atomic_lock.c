@@ -16,26 +16,29 @@
 
 #define ATOMIC_SET(x, y) __sync_lock_test_and_set((x), (y))
 #define CAS(ptr, oldval, newval) __sync_bool_compare_and_swap(ptr, oldval, newval)
-#define ATOMIC_LOCK_INTERVAL_TIME    (3840)   // 100us : TICK
-#define ATOMIC_LOCK_SLEEP_TIME    (1000)   // 1ms : us
-#define DRV_PTHREAD_ATOMIC_SLEEP_TIME (100)   // 100us
+#define ATOMIC_LOCK_INTERVAL_TIME (3840)    // 100us : TICK
+#define ATOMIC_LOCK_SLEEP_TIME (1000)       // 1ms : us
+#define DRV_PTHREAD_ATOMIC_SLEEP_TIME (100) // 100us
 
 #if defined(ATOMIC_LOCK_UT) || defined(USER_BUFF_MANAGE_UT)
 #define ATOMIC_LOCK_GET_CUR_SYSTEM_COUNTER(cnt) (cnt = 1000000)
 #define ATOMIC_LOCK_MODULE "ATOMIC_LOCK"
-#define ATOMIC_LOCK_LOG_ERR(format, ...) printf("[%s] [%s %d] " format, ATOMIC_LOCK_MODULE, __func__, __LINE__, ## __VA_ARGS__)
-#define ATOMIC_LOCK_LOG_EVENT(format, ...) printf("[%s] [%s %d] " format, ATOMIC_LOCK_MODULE, __func__, __LINE__, ## __VA_ARGS__)
+#define ATOMIC_LOCK_LOG_ERR(format, ...) \
+    printf("[%s] [%s %d] " format, ATOMIC_LOCK_MODULE, __func__, __LINE__, ##__VA_ARGS__)
+#define ATOMIC_LOCK_LOG_EVENT(format, ...) \
+    printf("[%s] [%s %d] " format, ATOMIC_LOCK_MODULE, __func__, __LINE__, ##__VA_ARGS__)
 
 #elif defined CFG_FEATURE_SYSLOG
 #include <syslog.h>
 #if defined(__arm__) || defined(__aarch64__)
 #define ATOMIC_LOCK_GET_CUR_SYSTEM_COUNTER(cnt) asm volatile("mrs %0, CNTVCT_EL0" : "=r"(cnt) :)
 #else
-#define ATOMIC_LOCK_GET_CUR_SYSTEM_COUNTER(cnt) do { \
-    unsigned int high, low; \
-    asm volatile("rdtsc" : "=a" (low), "=d" (high)); \
-    cnt = ((unsigned long long)high << 32) | ((unsigned long long)low); \
-} while (0)
+#define ATOMIC_LOCK_GET_CUR_SYSTEM_COUNTER(cnt)                             \
+    do {                                                                    \
+        unsigned int high, low;                                             \
+        asm volatile("rdtsc" : "=a"(low), "=d"(high));                      \
+        cnt = ((unsigned long long)high << 32) | ((unsigned long long)low); \
+    } while (0)
 #endif
 #define ATOMIC_LOCK_LOG_ERR(fmt, ...) syslog(LOG_ERR, "[%s %d] " fmt, __func__, __LINE__, ##__VA_ARGS__)
 #define ATOMIC_LOCK_LOG_EVENT(fmt, ...) syslog(LOG_NOTICE, "[%s %d] " fmt, __func__, __LINE__, ##__VA_ARGS__)
@@ -50,18 +53,21 @@
 #if defined(__arm__) || defined(__aarch64__)
 #define ATOMIC_LOCK_GET_CUR_SYSTEM_COUNTER(cnt) asm volatile("mrs %0, CNTVCT_EL0" : "=r"(cnt) :)
 #else
-#define ATOMIC_LOCK_GET_CUR_SYSTEM_COUNTER(cnt) do { \
-    unsigned int high, low; \
-    asm volatile("rdtsc" : "=a" (low), "=d" (high)); \
-    cnt = ((unsigned long long)high << 32) | ((unsigned long long)low); \
-} while (0)
+#define ATOMIC_LOCK_GET_CUR_SYSTEM_COUNTER(cnt)                             \
+    do {                                                                    \
+        unsigned int high, low;                                             \
+        asm volatile("rdtsc" : "=a"(low), "=d"(high));                      \
+        cnt = ((unsigned long long)high << 32) | ((unsigned long long)low); \
+    } while (0)
 #endif
-#define ATOMIC_LOCK_LOG_ERR(format, ...) do { \
-    DRV_ERR(HAL_MODULE_TYPE_COMMON, format "\n", ##__VA_ARGS__); \
-} while (0)
-#define ATOMIC_LOCK_LOG_EVENT(format, ...) do { \
-    DRV_NOTICE(HAL_MODULE_TYPE_COMMON, format "\n", ##__VA_ARGS__); \
-} while (0)
+#define ATOMIC_LOCK_LOG_ERR(format, ...)                             \
+    do {                                                             \
+        DRV_ERR(HAL_MODULE_TYPE_COMMON, format "\n", ##__VA_ARGS__); \
+    } while (0)
+#define ATOMIC_LOCK_LOG_EVENT(format, ...)                              \
+    do {                                                                \
+        DRV_NOTICE(HAL_MODULE_TYPE_COMMON, format "\n", ##__VA_ARGS__); \
+    } while (0)
 #endif
 
 #ifdef ATOMIC_LOCK_UT
@@ -84,7 +90,7 @@ void init_atomic_lock(struct atomic_lock *atomic_lock)
 
 STATIC void do_get_atomic_lock(struct atomic_lock *lock)
 {
-    ATOMIC_LOCK_GET_CUR_SYSTEM_COUNTER(lock->lock_get_time);      // Record the time when the lock is obtained.
+    ATOMIC_LOCK_GET_CUR_SYSTEM_COUNTER(lock->lock_get_time); // Record the time when the lock is obtained.
 }
 
 /***********************************************************************************************************
@@ -108,7 +114,8 @@ int get_atomic_lock(struct atomic_lock *lock, unsigned long long timeout)
 
 #ifndef ATOMIC_LOCK_UT
     if (timeout == 0) {
-        while (!CAS(&lock->lock_status, LOCK_RELEASED, LOCK_OCCUPIED)) {}
+        while (!CAS(&lock->lock_status, LOCK_RELEASED, LOCK_OCCUPIED)) {
+        }
     } else {
         ATOMIC_LOCK_GET_CUR_SYSTEM_COUNTER(start_time);
         sleep_time = start_time;
@@ -166,7 +173,8 @@ int drv_pthread_atomic_lock(struct drv_pthread_atomic *lock, unsigned long long 
     }
 #ifndef ATOMIC_LOCK_UT
     if (timeout == 0) {
-        while (!CAS(&lock->lock_status, LOCK_RELEASED, LOCK_OCCUPIED)) {}
+        while (!CAS(&lock->lock_status, LOCK_RELEASED, LOCK_OCCUPIED)) {
+        }
     } else {
         ATOMIC_LOCK_GET_CUR_SYSTEM_COUNTER(start_time);
         sleep_time = start_time;
@@ -193,4 +201,3 @@ void drv_pthread_atomic_unlock(struct drv_pthread_atomic *lock)
     CAS(&lock->lock_status, LOCK_OCCUPIED, LOCK_RELEASED);
 #endif
 }
-

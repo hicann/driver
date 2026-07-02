@@ -155,8 +155,7 @@ int error_code_filter(unsigned int *errorcode, int *errorcount)
     bool isDuplicate;
     int i, j;
 
-    if (errorcode == NULL || errorcount == NULL || *errorcount < 0
-        || *errorcount > ERROR_CODE_MAX_NUM) {
+    if (errorcode == NULL || errorcount == NULL || *errorcount < 0 || *errorcount > ERROR_CODE_MAX_NUM) {
         return DRV_ERRCOED_INVALID_ARGUMENT;
     }
 

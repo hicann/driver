@@ -47,7 +47,8 @@ void drv_user_list_for_each(struct list_head *head, drv_list_handle_func func)
 {
     struct list_head *pos = NULL, *n = NULL;
 
-    list_for_each_safe(pos, n, head) {
+    list_for_each_safe(pos, n, head)
+    {
         func(pos);
     }
 }
