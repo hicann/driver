@@ -21,7 +21,7 @@ ssize_t ka_fs_kernel_read(ka_file_t *file, void *buf, size_t count, loff_t *pos)
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 14, 0)
     return kernel_read(file, buf, count, pos);
 #else
-    return kernel_read(file, *pos, (char*)buf, count);
+    return kernel_read(file, *pos, (char *)buf, count);
 #endif
 }
 EXPORT_SYMBOL_GPL(ka_fs_kernel_read);
@@ -31,7 +31,7 @@ ssize_t ka_fs_kernel_write(ka_file_t *file, const void *buf, size_t count, loff_
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 14, 0)
     return kernel_write(file, buf, count, pos);
 #else
-    return kernel_write(file, (char*)buf, count, *pos);
+    return kernel_write(file, (char *)buf, count, *pos);
 #endif
 }
 EXPORT_SYMBOL_GPL(ka_fs_kernel_write);

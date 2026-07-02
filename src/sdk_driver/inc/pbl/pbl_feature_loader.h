@@ -21,7 +21,7 @@
 #include "securec.h"
 
 #ifndef AUTO_INIT_MODULE_NAME
-#define AUTO_INIT_MODULE_NAME      DEFAULT
+#define AUTO_INIT_MODULE_NAME DEFAULT
 #endif
 
 #ifndef AUTO_INIT_MODULE_NAME_STR
@@ -97,29 +97,26 @@ typedef void (*_fearture_uninit_task_func)(u32 udevid, int pid, void *start_time
 typedef int (*_fearture_init_selfdef_scope_func)(void *priv);
 typedef void (*_fearture_uninit_selfdef_scope_func)(void *priv);
 
-
 /* the function declared will be auto call in module insert
    init_fn : should like "int _fearture_init_func(void)" */
 #define __DECLAER_FEATURE_AUTO_INIT(module_name, init_fn, stage) \
-    int module_name##_##stage##_init_##init_fn(void); \
-    int module_name##_##stage##_init_##init_fn(void) \
-    { \
-        return init_fn(); \
-    } \
+    int module_name##_##stage##_init_##init_fn(void);            \
+    int module_name##_##stage##_init_##init_fn(void)             \
+    {                                                            \
+        return init_fn();                                        \
+    }                                                            \
     EXPORT_SYMBOL(module_name##_##stage##_init_##init_fn)
-#define _DECLAER_FEATURE_AUTO_INIT(module_name, init_fn, stage) \
-    __DECLAER_FEATURE_AUTO_INIT(module_name, init_fn, stage)
-#define DECLAER_FEATURE_AUTO_INIT(init_fn, stage) \
-    _DECLAER_FEATURE_AUTO_INIT(AUTO_INIT_MODULE_NAME, init_fn, stage)
+#define _DECLAER_FEATURE_AUTO_INIT(module_name, init_fn, stage) __DECLAER_FEATURE_AUTO_INIT(module_name, init_fn, stage)
+#define DECLAER_FEATURE_AUTO_INIT(init_fn, stage) _DECLAER_FEATURE_AUTO_INIT(AUTO_INIT_MODULE_NAME, init_fn, stage)
 
 /* the function declared will be auto call in module remove
    init_fn : should like "void _fearture_uninit_func(void)" */
 #define __DECLAER_FEATURE_AUTO_UNINIT(module_name, uninit_fn, stage) \
-    void module_name##_##stage##_uninit_##uninit_fn(void); \
-    void module_name##_##stage##_uninit_##uninit_fn(void) \
-    { \
-        uninit_fn(); \
-    } \
+    void module_name##_##stage##_uninit_##uninit_fn(void);           \
+    void module_name##_##stage##_uninit_##uninit_fn(void)            \
+    {                                                                \
+        uninit_fn();                                                 \
+    }                                                                \
     EXPORT_SYMBOL(module_name##_##stage##_uninit_##uninit_fn)
 #define _DECLAER_FEATURE_AUTO_UNINIT(module_name, uninit_fn, stage) \
     __DECLAER_FEATURE_AUTO_UNINIT(module_name, uninit_fn, stage)
@@ -129,11 +126,11 @@ typedef void (*_fearture_uninit_selfdef_scope_func)(void *priv);
 /* the function declared will be auto call when dev online
    init_fn : should like "int _fearture_init_dev_func(u32 udevid)" */
 #define __DECLAER_FEATURE_AUTO_INIT_DEV(module_name, init_fn, stage) \
-    int module_name##_##stage##_dev_init_##init_fn(u32 udevid); \
-    int module_name##_##stage##_dev_init_##init_fn(u32 udevid) \
-    { \
-        return init_fn(udevid); \
-    } \
+    int module_name##_##stage##_dev_init_##init_fn(u32 udevid);      \
+    int module_name##_##stage##_dev_init_##init_fn(u32 udevid)       \
+    {                                                                \
+        return init_fn(udevid);                                      \
+    }                                                                \
     EXPORT_SYMBOL(module_name##_##stage##_dev_init_##init_fn)
 #define _DECLAER_FEATURE_AUTO_INIT_DEV(module_name, init_fn, stage) \
     __DECLAER_FEATURE_AUTO_INIT_DEV(module_name, init_fn, stage)
@@ -143,11 +140,11 @@ typedef void (*_fearture_uninit_selfdef_scope_func)(void *priv);
 /* the function declared will be auto call when dev offline
    init_fn : should like "void _fearture_uninit_dev_func(u32 udevid)" */
 #define __DECLAER_FEATURE_AUTO_UNINIT_DEV(module_name, uninit_fn, stage) \
-    void module_name##_##stage##_dev_uninit_##uninit_fn(u32 udevid); \
-    void module_name##_##stage##_dev_uninit_##uninit_fn(u32 udevid) \
-    { \
-        uninit_fn(udevid); \
-    } \
+    void module_name##_##stage##_dev_uninit_##uninit_fn(u32 udevid);     \
+    void module_name##_##stage##_dev_uninit_##uninit_fn(u32 udevid)      \
+    {                                                                    \
+        uninit_fn(udevid);                                               \
+    }                                                                    \
     EXPORT_SYMBOL(module_name##_##stage##_dev_uninit_##uninit_fn)
 #define _DECLAER_FEATURE_AUTO_UNINIT_DEV(module_name, uninit_fn, stage) \
     __DECLAER_FEATURE_AUTO_UNINIT_DEV(module_name, uninit_fn, stage)
@@ -156,12 +153,12 @@ typedef void (*_fearture_uninit_selfdef_scope_func)(void *priv);
 
 /* the function declared will be auto call when task init
    init_fn : should like "int _fearture_init_task_func(u32 udevid, int pid)" */
-#define __DECLAER_FEATURE_AUTO_INIT_TASK(module_name, init_fn, stage) \
+#define __DECLAER_FEATURE_AUTO_INIT_TASK(module_name, init_fn, stage)                       \
     int module_name##_##stage##_task_init_##init_fn(u32 udevid, int pid, void *start_time); \
-    int module_name##_##stage##_task_init_##init_fn(u32 udevid, int pid, void *start_time) \
-    { \
-        return init_fn(udevid, pid, start_time); \
-    } \
+    int module_name##_##stage##_task_init_##init_fn(u32 udevid, int pid, void *start_time)  \
+    {                                                                                       \
+        return init_fn(udevid, pid, start_time);                                            \
+    }                                                                                       \
     EXPORT_SYMBOL(module_name##_##stage##_task_init_##init_fn)
 #define _DECLAER_FEATURE_AUTO_INIT_TASK(module_name, init_fn, stage) \
     __DECLAER_FEATURE_AUTO_INIT_TASK(module_name, init_fn, stage)
@@ -170,12 +167,12 @@ typedef void (*_fearture_uninit_selfdef_scope_func)(void *priv);
 
 /* the function declared will be auto call when task uninit
    init_fn : should like "void _fearture_uninit_task_func(u32 udevid, int pid)" */
-#define __DECLAER_FEATURE_AUTO_UNINIT_TASK(module_name, uninit_fn, stage) \
+#define __DECLAER_FEATURE_AUTO_UNINIT_TASK(module_name, uninit_fn, stage)                        \
     void module_name##_##stage##_task_uninit_##uninit_fn(u32 udevid, int pid, void *start_time); \
-    void module_name##_##stage##_task_uninit_##uninit_fn(u32 udevid, int pid, void *start_time) \
-    { \
-        uninit_fn(udevid, pid, start_time); \
-    } \
+    void module_name##_##stage##_task_uninit_##uninit_fn(u32 udevid, int pid, void *start_time)  \
+    {                                                                                            \
+        uninit_fn(udevid, pid, start_time);                                                      \
+    }                                                                                            \
     EXPORT_SYMBOL(module_name##_##stage##_task_uninit_##uninit_fn)
 #define _DECLAER_FEATURE_AUTO_UNINIT_TASK(module_name, uninit_fn, stage) \
     __DECLAER_FEATURE_AUTO_UNINIT_TASK(module_name, uninit_fn, stage)
@@ -185,11 +182,11 @@ typedef void (*_fearture_uninit_selfdef_scope_func)(void *priv);
 /* the function declared will be auto call when module_feature_auto_init_selfdef called
    init_fn : should like "int _fearture_init_selfdef_func(void *priv)" */
 #define __DECLAER_FEATURE_AUTO_INIT_BY_SCOPE(module_name, scope, init_fn, stage) \
-    int module_name##_##stage##_##scope##_init_##init_fn(void *priv); \
-    int module_name##_##stage##_##scope##_init_##init_fn(void *priv) \
-    { \
-        return init_fn(priv); \
-    } \
+    int module_name##_##stage##_##scope##_init_##init_fn(void *priv);            \
+    int module_name##_##stage##_##scope##_init_##init_fn(void *priv)             \
+    {                                                                            \
+        return init_fn(priv);                                                    \
+    }                                                                            \
     EXPORT_SYMBOL(module_name##_##stage##_##scope##_init_##init_fn)
 #define _DECLAER_FEATURE_AUTO_INIT_BY_SCOPE(module_name, scope, init_fn, stage) \
     __DECLAER_FEATURE_AUTO_INIT_BY_SCOPE(module_name, scope, init_fn, stage)
@@ -199,11 +196,11 @@ typedef void (*_fearture_uninit_selfdef_scope_func)(void *priv);
 /* the function declared will be auto call when module_feature_auto_uninit_selfdef called
    init_fn : should like "void _fearture_uninit_selfdef_func(void *priv)" */
 #define __DECLAER_FEATURE_AUTO_UNINIT_BY_SCOPE(module_name, scope, uninit_fn, stage) \
-    void module_name##_##stage##_##scope##_uninit_##uninit_fn(void *priv); \
-    void module_name##_##stage##_##scope##_uninit_##uninit_fn(void *priv) \
-    { \
-        uninit_fn(priv); \
-    } \
+    void module_name##_##stage##_##scope##_uninit_##uninit_fn(void *priv);           \
+    void module_name##_##stage##_##scope##_uninit_##uninit_fn(void *priv)            \
+    {                                                                                \
+        uninit_fn(priv);                                                             \
+    }                                                                                \
     EXPORT_SYMBOL(module_name##_##stage##_##scope##_uninit_##uninit_fn)
 #define _DECLAER_FEATURE_AUTO_UNINIT_BY_SCOPE(module_name, scope, uninit_fn, stage) \
     __DECLAER_FEATURE_AUTO_UNINIT_BY_SCOPE(module_name, scope, uninit_fn, stage)
@@ -254,8 +251,8 @@ static inline int module_feature_init_call(int feature_scope, void *fn, void *pa
     return 0;
 }
 
-static inline int module_feature_try_to_init(int feature_scope, void *param,
-    const ka_kernel_symbol_t *sym, char *prefix)
+static inline int module_feature_try_to_init(int feature_scope, void *param, const ka_kernel_symbol_t *sym,
+                                             char *prefix)
 {
     void *fn = get_symbol_prefix_func(sym, prefix);
     return (fn != NULL) ? module_feature_init_call(feature_scope, fn, param) : 0;
@@ -276,8 +273,8 @@ static inline void module_feature_uninit_call(int feature_scope, void *fn, void 
     }
 }
 
-static inline void module_feature_try_to_uninit(int feature_scope, void *param,
-    const ka_kernel_symbol_t *sym, char *prefix)
+static inline void module_feature_try_to_uninit(int feature_scope, void *param, const ka_kernel_symbol_t *sym,
+                                                char *prefix)
 {
     void *fn = get_symbol_prefix_func(sym, prefix);
     if (fn != NULL) {
@@ -285,8 +282,8 @@ static inline void module_feature_try_to_uninit(int feature_scope, void *param,
     }
 }
 
-static inline void _module_feature_uninit_by_full_name(int feature_scope, void *param,
-    struct module *module, char *full_name)
+static inline void _module_feature_uninit_by_full_name(int feature_scope, void *param, struct module *module,
+                                                       char *full_name)
 {
     u32 i;
 
@@ -300,8 +297,8 @@ static inline void _module_feature_uninit_by_full_name(int feature_scope, void *
     }
 }
 
-static inline void module_feature_rollback_format_uninit_func_name(const char *init_fn_name,
-    const char *init_label, char *uninit_func_name, int len)
+static inline void module_feature_rollback_format_uninit_func_name(const char *init_fn_name, const char *init_label,
+                                                                   char *uninit_func_name, int len)
 {
     char *init_label_start = ka_base_strstr(init_fn_name, init_label);
     if (strncpy_s(uninit_func_name, len, init_fn_name, init_label_start - init_fn_name) == 0) {
@@ -315,7 +312,8 @@ static inline void module_feature_rollback_format_uninit_func_name(const char *i
 }
 
 static inline void module_feature_rollback_format_uninit_full_func_name(const ka_kernel_symbol_t *sym,
-    char *init_prefix, char *uninit_prefix, char *uninit_full_func_name, int len)
+                                                                        char *init_prefix, char *uninit_prefix,
+                                                                        char *uninit_full_func_name, int len)
 {
     const char *init_fn_name = get_symbol_name(sym) + ka_base_strlen(init_prefix);
     const char *init_label = "init";
@@ -325,27 +323,29 @@ static inline void module_feature_rollback_format_uninit_full_func_name(const ka
         /* rollback regular: xxx_init, xxx_uninit, xxx_init_dev, xxx_uninit_dev, xxx_init_task, xxx_uninit_task */
         if (ka_base_strstr(init_fn_name, init_label) != NULL) {
             if (strcpy_s(uninit_full_func_name, len, uninit_prefix) == 0) {
-                module_feature_rollback_format_uninit_func_name(init_fn_name, init_label, 
-                    uninit_full_func_name + ka_base_strlen(uninit_prefix), len -= ka_base_strlen(uninit_prefix));
+                module_feature_rollback_format_uninit_func_name(init_fn_name, init_label,
+                                                                uninit_full_func_name + ka_base_strlen(uninit_prefix),
+                                                                len -= ka_base_strlen(uninit_prefix));
             }
         }
     }
 }
 
-static inline void module_feature_init_prefix_rollback_one_fn(int feature_scope, void *param,
-    struct module *module, const ka_kernel_symbol_t *sym, char *init_prefix, char *uninit_prefix)
+static inline void module_feature_init_prefix_rollback_one_fn(int feature_scope, void *param, struct module *module,
+                                                              const ka_kernel_symbol_t *sym, char *init_prefix,
+                                                              char *uninit_prefix)
 {
     char uninit_full_func_name[PREFIX_MAX_LEN];
 
-    module_feature_rollback_format_uninit_full_func_name(sym, init_prefix, uninit_prefix, 
-        uninit_full_func_name, PREFIX_MAX_LEN);
+    module_feature_rollback_format_uninit_full_func_name(sym, init_prefix, uninit_prefix, uninit_full_func_name,
+                                                         PREFIX_MAX_LEN);
     if (ka_base_strlen(uninit_full_func_name) > 0) {
         _module_feature_uninit_by_full_name(feature_scope, param, module, uninit_full_func_name);
     }
 }
 
-static inline void module_feature_init_prefix_rollback(int feature_scope, void *param,
-    char *init_prefix, char *uninit_prefix, u32 rollback_num)
+static inline void module_feature_init_prefix_rollback(int feature_scope, void *param, char *init_prefix,
+                                                       char *uninit_prefix, u32 rollback_num)
 {
     struct module *module = KA_THIS_MODULE;
     u32 i;
@@ -353,8 +353,8 @@ static inline void module_feature_init_prefix_rollback(int feature_scope, void *
     for (i = 0; i < rollback_num; i++) {
         void *fn = get_symbol_prefix_func(&module->syms[i], init_prefix);
         if (fn != NULL) {
-            module_feature_init_prefix_rollback_one_fn(feature_scope, param, module,
-                &module->syms[i], init_prefix, uninit_prefix);
+            module_feature_init_prefix_rollback_one_fn(feature_scope, param, module, &module->syms[i], init_prefix,
+                                                       uninit_prefix);
         }
     }
 }
@@ -390,12 +390,14 @@ static inline void module_feature_format_init_prefix(int feature_scope, void *pa
     if (feature_scope == FEATURE_SCOPE_GLOBAL) {
         (void)sprintf_s(prefix, PREFIX_MAX_LEN, "%s_FEATURE_LOADER_STAGE_%d_init_", AUTO_INIT_MODULE_NAME_STR, stage);
     } else if (feature_scope == FEATURE_SCOPE_DEV) {
-        (void)sprintf_s(prefix, PREFIX_MAX_LEN, "%s_FEATURE_LOADER_STAGE_%d_dev_init_", AUTO_INIT_MODULE_NAME_STR, stage);
+        (void)sprintf_s(prefix, PREFIX_MAX_LEN, "%s_FEATURE_LOADER_STAGE_%d_dev_init_", AUTO_INIT_MODULE_NAME_STR,
+                        stage);
     } else if (feature_scope == FEATURE_SCOPE_TASK) {
-        (void)sprintf_s(prefix, PREFIX_MAX_LEN, "%s_FEATURE_LOADER_STAGE_%d_task_init_", AUTO_INIT_MODULE_NAME_STR, stage);
+        (void)sprintf_s(prefix, PREFIX_MAX_LEN, "%s_FEATURE_LOADER_STAGE_%d_task_init_", AUTO_INIT_MODULE_NAME_STR,
+                        stage);
     } else if (feature_scope == FEATURE_SCOPE_SELFDEF) {
         (void)sprintf_s(prefix, PREFIX_MAX_LEN, "%s_FEATURE_LOADER_STAGE_%d_%s_init_", AUTO_INIT_MODULE_NAME_STR, stage,
-            ((struct feature_selfdef_para*)param)->scope);
+                        ((struct feature_selfdef_para *)param)->scope);
     }
 }
 
@@ -404,12 +406,14 @@ static inline void module_feature_format_uninit_prefix(int feature_scope, void *
     if (feature_scope == FEATURE_SCOPE_GLOBAL) {
         (void)sprintf_s(prefix, PREFIX_MAX_LEN, "%s_FEATURE_LOADER_STAGE_%d_uninit_", AUTO_INIT_MODULE_NAME_STR, stage);
     } else if (feature_scope == FEATURE_SCOPE_DEV) {
-        (void)sprintf_s(prefix, PREFIX_MAX_LEN, "%s_FEATURE_LOADER_STAGE_%d_dev_uninit_", AUTO_INIT_MODULE_NAME_STR, stage);
+        (void)sprintf_s(prefix, PREFIX_MAX_LEN, "%s_FEATURE_LOADER_STAGE_%d_dev_uninit_", AUTO_INIT_MODULE_NAME_STR,
+                        stage);
     } else if (feature_scope == FEATURE_SCOPE_TASK) {
-        (void)sprintf_s(prefix, PREFIX_MAX_LEN, "%s_FEATURE_LOADER_STAGE_%d_task_uninit_", AUTO_INIT_MODULE_NAME_STR, stage);
+        (void)sprintf_s(prefix, PREFIX_MAX_LEN, "%s_FEATURE_LOADER_STAGE_%d_task_uninit_", AUTO_INIT_MODULE_NAME_STR,
+                        stage);
     } else if (feature_scope == FEATURE_SCOPE_SELFDEF) {
-        (void)sprintf_s(prefix, PREFIX_MAX_LEN, "%s_FEATURE_LOADER_STAGE_%d_%s_uninit_", AUTO_INIT_MODULE_NAME_STR, stage,
-            ((struct feature_selfdef_para*)param)->scope);
+        (void)sprintf_s(prefix, PREFIX_MAX_LEN, "%s_FEATURE_LOADER_STAGE_%d_%s_uninit_", AUTO_INIT_MODULE_NAME_STR,
+                        stage, ((struct feature_selfdef_para *)param)->scope);
     }
 }
 
@@ -517,12 +521,12 @@ static inline void module_feature_auto_uninit_by_scope(const char *scope, void *
 typedef void (*_fearture_show_task_func)(u32 udevid, int pid, int feature_id, struct seq_file *seq);
 
 /* the function declared will be auto call when show task */
-#define __DECLAER_FEATURE_AUTO_SHOW_TASK(module_name, show_task_fn, stage) \
+#define __DECLAER_FEATURE_AUTO_SHOW_TASK(module_name, show_task_fn, stage)                                            \
     void module_name##_##stage##_task_show_##show_task_fn(u32 udevid, int pid, int feature_id, struct seq_file *seq); \
     void module_name##_##stage##_task_show_##show_task_fn(u32 udevid, int pid, int feature_id, struct seq_file *seq)  \
-    { \
-        show_task_fn(udevid, pid, feature_id, seq); \
-    } \
+    {                                                                                                                 \
+        show_task_fn(udevid, pid, feature_id, seq);                                                                   \
+    }                                                                                                                 \
     EXPORT_SYMBOL(module_name##_##stage##_task_show_##show_task_fn)
 #define _DECLAER_FEATURE_AUTO_SHOW_TASK(module_name, show_task_fn, stage) \
     __DECLAER_FEATURE_AUTO_SHOW_TASK(module_name, show_task_fn, stage)
@@ -530,7 +534,7 @@ typedef void (*_fearture_show_task_func)(u32 udevid, int pid, int feature_id, st
     _DECLAER_FEATURE_AUTO_SHOW_TASK(AUTO_INIT_MODULE_NAME, show_task_fn, stage)
 
 static inline void module_feature_show_task_prefix(char *prefix, u32 udevid, int pid, int feature_id,
-    struct seq_file *seq)
+                                                   struct seq_file *seq)
 {
     struct module *module = KA_THIS_MODULE;
     u32 i;
@@ -569,12 +573,12 @@ static inline void module_feature_auto_show_task(u32 udevid, int pid, int featur
 typedef void (*_fearture_show_dev_func)(u32 udevid, int feature_id, struct seq_file *seq);
 
 /* the function declared will be auto call when show dev */
-#define __DECLAER_FEATURE_AUTO_SHOW_DEV(module_name, show_dev_fn, stage) \
+#define __DECLAER_FEATURE_AUTO_SHOW_DEV(module_name, show_dev_fn, stage)                                   \
     void module_name##_##stage##_dev_show_##show_dev_fn(u32 udevid, int feature_id, struct seq_file *seq); \
     void module_name##_##stage##_dev_show_##show_dev_fn(u32 udevid, int feature_id, struct seq_file *seq)  \
-    { \
-        show_dev_fn(udevid, feature_id, seq); \
-    } \
+    {                                                                                                      \
+        show_dev_fn(udevid, feature_id, seq);                                                              \
+    }                                                                                                      \
     EXPORT_SYMBOL(module_name##_##stage##_dev_show_##show_dev_fn)
 #define _DECLAER_FEATURE_AUTO_SHOW_DEV(module_name, show_dev_fn, stage) \
     __DECLAER_FEATURE_AUTO_SHOW_DEV(module_name, show_dev_fn, stage)
@@ -617,4 +621,3 @@ static inline void module_feature_auto_show_dev(u32 udevid, int feature_id, stru
 }
 
 #endif
-

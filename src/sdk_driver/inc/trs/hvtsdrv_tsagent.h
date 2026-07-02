@@ -16,7 +16,10 @@
 
 #include "tsdrv_interface.h"
 
-enum vsqcq_type { NORMAL_VSQCQ_TYPE = 0, CALLBACK_VSQCQ_TYPE };
+enum vsqcq_type {
+    NORMAL_VSQCQ_TYPE = 0,
+    CALLBACK_VSQCQ_TYPE
+};
 
 struct hvtsdrv_vsq_info {
     const void *vsq_base_addr; // vsq base addr alloced by drv
@@ -65,16 +68,16 @@ int hal_kernel_hvtsdrv_sq_write(u32 devid, u32 fid, u32 tsid, struct hvtsdrv_vsq
 void hal_kernel_hvtsdrv_sq_irq_trigger(u32 devid, u32 fid, u32 tsid, u32 vsq_id);
 int hal_kernel_hvtsdrv_resid_v2p(u32 devid, u32 fid, u32 tsid, struct hvtsdrv_id_v2p *data);
 int hal_kernel_hvtsdrv_get_res_num(u32 devid, u32 fid, u32 tsid, enum tsdrv_id_type id_type, u32 *num);
-int hal_kernel_hvtsdrv_get_vsq_head_and_tail(
-    u32 devid, u32 fid, u32 tsid, u32 vsq_id, struct hvtsdrv_vsq_head_tail *out);
+int hal_kernel_hvtsdrv_get_vsq_head_and_tail(u32 devid, u32 fid, u32 tsid, u32 vsq_id,
+                                             struct hvtsdrv_vsq_head_tail *out);
 int hal_kernel_hvtsdrv_get_vsq_info(u32 devid, u32 fid, u32 tsid, u32 vsq_id, struct hvtsdrv_vsq_info *vsq_info);
 int hvtsdrv_event_id_v2p(u32 devid, u32 tsid, u32 fid, u32 virt, u32 *phy);
 int hvdevmng_get_aicore_num(u32 devid, u32 fid, u32 *aicore_num);
 int hvdevmng_get_aicpu_num(u32 devid, u32 fid, u32 *aicpu_num, u32 *aicpu_bitmap);
 int hvdevmng_get_chip_type(u32 devid, u32 *chip_type);
 void hvdevmng_set_dev_ts_resource(u32 devid, u32 fid, u32 tsid, void *data);
-void hvtsdrv_fill_trans_info_mbox(
-    u32 devid, u32 fid, u32 tsid, u32 disable_thread, struct hvtsdrv_trans_mailbox_ctx *trans_mbox);
+void hvtsdrv_fill_trans_info_mbox(u32 devid, u32 fid, u32 tsid, u32 disable_thread,
+                                  struct hvtsdrv_trans_mailbox_ctx *trans_mbox);
 int hvtsdrv_trans_info_msg(struct hvtsdrv_trans_mailbox_ctx *trans_mbox, void *info, size_t msg_len);
 int tsdrv_cdqid_is_belong_to_proc(struct tsdrv_id_inst *id_inst, pid_t tgid, u32 id);
 int tsdrv_id_is_belong_to_proc(struct tsdrv_id_inst *id_inst, pid_t tgid, u32 id, enum tsdrv_id_type id_type);

@@ -53,4 +53,3 @@ void tsdrv_parse_exit(u32 devid, struct devdrv_info *dev_info)
     tsdrv_addr_parse_exit(devid, tsid, dev_info);
     tsdrv_irq_parse_exit(devid, tsid, dev_info);
 }
-

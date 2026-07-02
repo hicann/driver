@@ -62,10 +62,10 @@ struct drvHdcEvent {
 /**< The HDC interface is dead and blocked by default. Set HDC_FLAG_NOWAIT to be non-blocked */
 /**< Set HDC_FLAG_WAIT_TIMEOUT to timeout after blocking for a period of time. HDC_FLAG_WAIT_TIMEOUT */
 /**< takes precedence over HDC_FLAG_NOWAIT */
-#define HDC_FLAG_NOWAIT (0x1 << 0)        /**< Occupy bit0 */
-#define HDC_FLAG_WAIT_TIMEOUT (0x1 << 1)  /**< Occupy bit1 */
-#define HDC_FLAG_MAP_VA32BIT (0x1 << 1)   /**< Use low 32bit memory */
-#define HDC_FLAG_MAP_HUGE (0x1 << 2)      /**< Using large pages */
+#define HDC_FLAG_NOWAIT (0x1 << 0)       /**< Occupy bit0 */
+#define HDC_FLAG_WAIT_TIMEOUT (0x1 << 1) /**< Occupy bit1 */
+#define HDC_FLAG_MAP_VA32BIT (0x1 << 1)  /**< Use low 32bit memory */
+#define HDC_FLAG_MAP_HUGE (0x1 << 2)     /**< Using large pages */
 
 enum halHdcTransType {
     HDC_TRANS_USE_SOCKET = 0,
@@ -89,11 +89,11 @@ enum drvHdcServiceType {
     HDC_SERVICE_TYPE_IDE_FILE_TRANS = 12,
     HDC_SERVICE_TYPE_DUMP = 13,
     HDC_SERVICE_TYPE_USER3 = 14, /* used by user */
-    HDC_SERVICE_TYPE_DVPP = 15, /* support multiple processes */
+    HDC_SERVICE_TYPE_DVPP = 15,  /* support multiple processes */
     HDC_SERVICE_TYPE_QUEUE = 16, /* support multiple processes */
     HDC_SERVICE_TYPE_UPGRADE = 17,
     HDC_SERVICE_TYPE_RDMA_V2 = 18, /* support multiple processes */
-    HDC_SERVICE_TYPE_TEST = 19, /* support multiple processes */
+    HDC_SERVICE_TYPE_TEST = 19,    /* support multiple processes */
     HDC_SERVICE_TYPE_KMS = 20,
     HDC_SERVICE_TYPE_USER_START = 64,
     HDC_SERVICE_TYPE_USER_END = 127,
@@ -134,8 +134,8 @@ enum drvHdcMemType {
 };
 
 enum drvHdcSessionCloseType {
-    HDC_SESSION_CLOSE_FLAG_NORMAL = 0,  /* close session with notify remote */
-    HDC_SESSION_CLOSE_FLAG_LOCAL = 1,   /* close session without notify remote */
+    HDC_SESSION_CLOSE_FLAG_NORMAL = 0, /* close session with notify remote */
+    HDC_SESSION_CLOSE_FLAG_LOCAL = 1,  /* close session without notify remote */
     HDC_SESSION_CLOSE_FLAG_MAX
 };
 
@@ -261,7 +261,7 @@ struct HdcSessionNotify {
  * @brief driver unified error numbers.
  * @brief new code must return error numbers based on unified error numbers.
  */
-#define HAL_ERROR_CODE_BASE  0x90020000
+#define HAL_ERROR_CODE_BASE 0x90020000
 
 /**
  * @ingroup driver
@@ -340,23 +340,23 @@ typedef enum tagDrvStatus {
 } drvStatus_t;
 
 typedef enum {
-    MODULE_TYPE_SYSTEM = 0,         /**< system info */
-    MODULE_TYPE_AICPU,              /**< aicpu info */
-    MODULE_TYPE_CCPU,               /**< ccpu_info */
-    MODULE_TYPE_DCPU,               /**< dcpu info */
-    MODULE_TYPE_AICORE,             /**< AI CORE info */
-    MODULE_TYPE_TSCPU = 5,          /**< tscpu info */
-    MODULE_TYPE_PCIE,               /**< PCIE info */
-    MODULE_TYPE_VECTOR_CORE,        /**< VECTOR CORE info */
-    MODULE_TYPE_HOST_AICPU,         /**< Host Aicpu info */
-    MODULE_TYPE_QOS,                /**< qos info */
-    MODULE_TYPE_MEMORY = 10,        /**< memory info */
-    MODULE_TYPE_LOG,                /**< log info */
-    MODULE_TYPE_LP,                 /**< lp info */
-    MODULE_TYPE_L2BUFF,             /**< l2buff info */
-    MODULE_TYPE_CC,                 /**< confidential computing info */
-    MODULE_TYPE_UB = 15,            /**< ub info */
-    MODULE_TYPE_HCOM_CPU,           /**< hcom cpu info */
+    MODULE_TYPE_SYSTEM = 0,  /**< system info */
+    MODULE_TYPE_AICPU,       /**< aicpu info */
+    MODULE_TYPE_CCPU,        /**< ccpu_info */
+    MODULE_TYPE_DCPU,        /**< dcpu info */
+    MODULE_TYPE_AICORE,      /**< AI CORE info */
+    MODULE_TYPE_TSCPU = 5,   /**< tscpu info */
+    MODULE_TYPE_PCIE,        /**< PCIE info */
+    MODULE_TYPE_VECTOR_CORE, /**< VECTOR CORE info */
+    MODULE_TYPE_HOST_AICPU,  /**< Host Aicpu info */
+    MODULE_TYPE_QOS,         /**< qos info */
+    MODULE_TYPE_MEMORY = 10, /**< memory info */
+    MODULE_TYPE_LOG,         /**< log info */
+    MODULE_TYPE_LP,          /**< lp info */
+    MODULE_TYPE_L2BUFF,      /**< l2buff info */
+    MODULE_TYPE_CC,          /**< confidential computing info */
+    MODULE_TYPE_UB = 15,     /**< ub info */
+    MODULE_TYPE_HCOM_CPU,    /**< hcom cpu info */
 
     /* The following types are used by the product */
     MODULE_TYPE_COMPUTING = 0x8000, /**< computing power info */
@@ -433,9 +433,9 @@ typedef enum {
  * @ingroup driver
  * @brief return value for host-device connect type in halGetDeviceInfo.
  */
-#define HOST_DEVICE_CONNECT_TYPE_PCIE        0
-#define HOST_DEVICE_CONNECT_TYPE_HCCS        1
-#define HOST_DEVICE_CONNECT_TYPE_UB          2
+#define HOST_DEVICE_CONNECT_TYPE_PCIE 0
+#define HOST_DEVICE_CONNECT_TYPE_HCCS 1
+#define HOST_DEVICE_CONNECT_TYPE_UB 2
 #define HOST_DEVICE_CONNECT_PROTOCOL_UNKNOWN 3
 
 /**
@@ -458,14 +458,14 @@ typedef enum {
     DEVS_INFO_TYPE_TOPOLOGY = 0,
 } PAIR_DEVS_INFO_TYPE;
 
-#define TOPOLOGY_HCCS       0
-#define TOPOLOGY_PIX        1
-#define TOPOLOGY_PIB        2
-#define TOPOLOGY_PHB        3
-#define TOPOLOGY_SYS        4
-#define TOPOLOGY_SIO        5
-#define TOPOLOGY_HCCS_SW    6
-#define TOPOLOGY_UB         7
+#define TOPOLOGY_HCCS 0
+#define TOPOLOGY_PIX 1
+#define TOPOLOGY_PIB 2
+#define TOPOLOGY_PHB 3
+#define TOPOLOGY_SYS 4
+#define TOPOLOGY_SIO 5
+#define TOPOLOGY_HCCS_SW 6
+#define TOPOLOGY_UB 7
 
 typedef enum {
     ADDR_MODE_INDEPENDENT = 0,
@@ -477,14 +477,14 @@ typedef enum {
     RUN_MACHINE_VIRTUAL,
 } RUN_MACHINE_TYPE;
 
-#define PROCESS_SIGN_LENGTH  49
-#define PROCESS_RESV_LENGTH  4
+#define PROCESS_SIGN_LENGTH 49
+#define PROCESS_RESV_LENGTH 4
 
 #define COMPUTING_TOKEN_TYPE_INVALID 0xFF
 #define COMPUTING_TOKEN_LAD0TKEN01 1
 #define COMPUTING_TOKEN_LAD0TKEN02 2
-#define COMPUTING_POWER_MAX_VALUE  65535
-#define COMPUTING_POWER_MIN_VALUE  0
+#define COMPUTING_POWER_MAX_VALUE 65535
+#define COMPUTING_POWER_MIN_VALUE 0
 
 struct computing_token {
     float value;
@@ -595,13 +595,13 @@ struct drvNotifyInfo {
 };
 
 struct drvIpcNotifyInfo {
-    uint32_t tsId;      /* default is 0 */
+    uint32_t tsId; /* default is 0 */
     uint32_t devId;
     uint32_t notifyId;
 };
 
 struct drvTsExceptionInfo {
-    uint32_t tsId;     /* default is 0 */
+    uint32_t tsId; /* default is 0 */
     uint64_t exception_code;
 };
 
@@ -609,10 +609,10 @@ struct drvTsExceptionInfo {
 #define HAL_MAX_EVENT_DATA_LENGTH 32
 #define HAL_MAX_EVENT_RESV_LENGTH 32
 
-#define HAL_EVENT_FILTER_FLAG_EVENT_ID  (1UL << 0)
+#define HAL_EVENT_FILTER_FLAG_EVENT_ID (1UL << 0)
 #define HAL_EVENT_FILTER_FLAG_SERVERITY (1UL << 1)
 #define HAL_EVENT_FILTER_FLAG_NODE_TYPE (1UL << 2)
-#define HAL_EVENT_FILTER_FLAG_HOST_PID  (1UL << 3)
+#define HAL_EVENT_FILTER_FLAG_HOST_PID (1UL << 3)
 
 struct halEventFilter {
     unsigned long long filter_flag; /* bit0: event_id; bit1: severity; bit2: node_type; bit3: current tgid */
@@ -646,59 +646,59 @@ typedef void (*halfaulteventcb)(struct halFaultEventInfo *halFaultEvent);
 
 #define CAP_RESERVE_SIZE 30
 
-#define CAP_MEM_SUPPORT_HBM      (1)          /**< mem support  for HBM */
-#define CAP_MEM_SUPPORT_L2BUFFER (1 << 1)     /**< mem support  for L2BUFFER */
-#define CAP_MEM_SUPPORT_HiBAILUV100 (1 << 2)     /**< mem support  for HiBailuV100 */
+#define CAP_MEM_SUPPORT_HBM (1)              /**< mem support  for HBM */
+#define CAP_MEM_SUPPORT_L2BUFFER (1 << 1)    /**< mem support  for L2BUFFER */
+#define CAP_MEM_SUPPORT_HiBAILUV100 (1 << 2) /**< mem support  for HiBailuV100 */
 
-#define CAP_SDMA_REDUCE_FP32   (1)         /**< sdma_reduce support for FP32 */
-#define CAP_SDMA_REDUCE_FP16   (1 << 1)    /**< sdma_reduce support for FP16 */
-#define CAP_SDMA_REDUCE_INT16  (1 << 2)    /**< sdma_reduce support for INT16 */
+#define CAP_SDMA_REDUCE_FP32 (1)       /**< sdma_reduce support for FP32 */
+#define CAP_SDMA_REDUCE_FP16 (1 << 1)  /**< sdma_reduce support for FP16 */
+#define CAP_SDMA_REDUCE_INT16 (1 << 2) /**< sdma_reduce support for INT16 */
 
-#define CAP_SDMA_REDUCE_INT4   (1 << 3)    /**< sdma_reduce support for INT4 */
-#define CAP_SDMA_REDUCE_INT8   (1 << 4)    /**< sdma_reduce support for INT8 */
-#define CAP_SDMA_REDUCE_INT32  (1 << 5)    /**< sdma_reduce support for INT32 */
-#define CAP_SDMA_REDUCE_BFP16  (1 << 6)    /**< sdma_reduce support for BFP16 */
-#define CAP_SDMA_REDUCE_BFP32  (1 << 7)    /**< sdma_reduce support for BFP32 */
-#define CAP_SDMA_REDUCE_UINT8  (1 << 8)    /**< sdma_reduce support for UINT8 */
-#define CAP_SDMA_REDUCE_UINT16 (1 << 9)    /**< sdma_reduce support for UINT16 */
-#define CAP_SDMA_REDUCE_UINT32 (1 << 10)   /**< sdma_reduce support for UINT32 */
+#define CAP_SDMA_REDUCE_INT4 (1 << 3)    /**< sdma_reduce support for INT4 */
+#define CAP_SDMA_REDUCE_INT8 (1 << 4)    /**< sdma_reduce support for INT8 */
+#define CAP_SDMA_REDUCE_INT32 (1 << 5)   /**< sdma_reduce support for INT32 */
+#define CAP_SDMA_REDUCE_BFP16 (1 << 6)   /**< sdma_reduce support for BFP16 */
+#define CAP_SDMA_REDUCE_BFP32 (1 << 7)   /**< sdma_reduce support for BFP32 */
+#define CAP_SDMA_REDUCE_UINT8 (1 << 8)   /**< sdma_reduce support for UINT8 */
+#define CAP_SDMA_REDUCE_UINT16 (1 << 9)  /**< sdma_reduce support for UINT16 */
+#define CAP_SDMA_REDUCE_UINT32 (1 << 10) /**< sdma_reduce support for UINT32 */
 
-#define CAP_SDMA_REDUCE_KIND_ADD   (1)           /**< sdma_reduce support for ADD */
-#define CAP_SDMA_REDUCE_KIND_MAX   (1 << 1)      /**< sdma_reduce support for MAX */
-#define CAP_SDMA_REDUCE_KIND_MIN   (1 << 2)      /**< sdma_reduce support for MIN */
-#define CAP_SDMA_REDUCE_KIND_EQUAL (1 << 3)      /**< sdma_reduce support for EQUAL */
+#define CAP_SDMA_REDUCE_KIND_ADD (1)        /**< sdma_reduce support for ADD */
+#define CAP_SDMA_REDUCE_KIND_MAX (1 << 1)   /**< sdma_reduce support for MAX */
+#define CAP_SDMA_REDUCE_KIND_MIN (1 << 2)   /**< sdma_reduce support for MIN */
+#define CAP_SDMA_REDUCE_KIND_EQUAL (1 << 3) /**< sdma_reduce support for EQUAL */
 
 struct halCapabilityInfo {
     uint32_t sdma_reduce_support; /**< bit for CAP_SDMA_REDUCE_* */
     uint32_t memory_support;      /**< bit for CAP_MEM_SUPPORT_* */
     uint32_t ts_group_number;
-    uint32_t sdma_reduce_kind;    /**< bit for CAP_SDMA_REDUCE_KIND_* */
+    uint32_t sdma_reduce_kind; /**< bit for CAP_SDMA_REDUCE_KIND_* */
     uint32_t res[CAP_RESERVE_SIZE];
 };
 
 #define COMPUTE_GROUP_INFO_RES_NUM 5
-#define AICORE_MASK_NUM            2
+#define AICORE_MASK_NUM 2
 
 /* devdrv ts identifier for get ts group info */
 typedef enum {
     TS_AICORE = 0,
     TS_AIVECTOR,
-}DRV_TS_ID;
+} DRV_TS_ID;
 
 struct capability_group_info {
-    unsigned int  group_id;
-    unsigned int  state; // 0: not create, 1: created
-    unsigned int  extend_attribute; // 0: default group attribute
-    unsigned int  aicore_number; // 0~9
-    unsigned int  aivector_number; // 0~7
-    unsigned int  sdma_number; // 0~15
-    unsigned int  aicpu_number; // 0~15
-    unsigned int  active_sq_number; // 0~31
-    unsigned int  aicore_mask[AICORE_MASK_NUM]; // as output in dsmi_get_capability_group_info/halGetCapabilityGroupInfo
-    unsigned int  vfid;
-    unsigned int  poolid;
-    unsigned int  poolid_max;
-    unsigned int  res[COMPUTE_GROUP_INFO_RES_NUM - AICORE_MASK_NUM];
+    unsigned int group_id;
+    unsigned int state;                        // 0: not create, 1: created
+    unsigned int extend_attribute;             // 0: default group attribute
+    unsigned int aicore_number;                // 0~9
+    unsigned int aivector_number;              // 0~7
+    unsigned int sdma_number;                  // 0~15
+    unsigned int aicpu_number;                 // 0~15
+    unsigned int active_sq_number;             // 0~31
+    unsigned int aicore_mask[AICORE_MASK_NUM]; // as output in dsmi_get_capability_group_info/halGetCapabilityGroupInfo
+    unsigned int vfid;
+    unsigned int poolid;
+    unsigned int poolid_max;
+    unsigned int res[COMPUTE_GROUP_INFO_RES_NUM - AICORE_MASK_NUM];
 };
 
 #define MAX_CHIP_NAME 32
@@ -714,17 +714,17 @@ typedef int (*drvDeviceExceptionReporFunc)(uint32_t devId, uint32_t exceptionId,
 typedef int (*drvDeviceStartupNotify)(uint32_t num, uint32_t *devId);
 
 typedef struct hal_dev_open_in {
-    uint64_t reserve[8];   // reserved parameter
+    uint64_t reserve[8]; // reserved parameter
 } halDevOpenIn;
 
 typedef struct hal_dev_open_out {
-    uint64_t reserve[8];   // reserved parameter
+    uint64_t reserve[8]; // reserved parameter
 } halDevOpenOut;
 
 typedef struct hal_dev_close_in {
-    uint32_t close_type;   /* reference DEV_CLOSE_TYPE */
+    uint32_t close_type; /* reference DEV_CLOSE_TYPE */
     uint32_t reserve0;
-    uint64_t reserve[7];   // reserved parameter
+    uint64_t reserve[7]; // reserved parameter
 } halDevCloseIn;
 
 typedef enum {
@@ -759,136 +759,136 @@ typedef struct hal_repair_fault_info {
 } halRepairFaultInfo;
 
 /**
-* @ingroup driver
-* @brief This interface is used to invoke the unified device open interfaces of driver components.
-* @attention
-*   1) This interface cannot be invoked repeatedly.
-*   2) This interface cannot be used together with the open or close interface of an independent module.
-* @param [in]  devId device id
-* @param [in]  in reserved parameter, user must set 0
-* @param [out]  out reserved parameter
-* @return 0 success, others for fail
-*/
+ * @ingroup driver
+ * @brief This interface is used to invoke the unified device open interfaces of driver components.
+ * @attention
+ *   1) This interface cannot be invoked repeatedly.
+ *   2) This interface cannot be used together with the open or close interface of an independent module.
+ * @param [in]  devId device id
+ * @param [in]  in reserved parameter, user must set 0
+ * @param [out]  out reserved parameter
+ * @return 0 success, others for fail
+ */
 DLLEXPORT drvError_t halDeviceOpen(uint32_t devid, halDevOpenIn *in, halDevOpenOut *out);
 /**
-* @ingroup driver
-* @brief This interface is used to invoke the unified device close interfaces of driver components.
-* @attention
-*   1) This interface cannot be invoked repeatedly.
-*   2) This interface cannot be used together with the open or close interface of an independent module.
-*   3) The halDeviceOpen interface must be invoked before this interface is used.
-* @param [in]  devId device id
-* @param [in]  in reserved parameter, user must set 0
-* @return 0 success, others for fail
-*/
+ * @ingroup driver
+ * @brief This interface is used to invoke the unified device close interfaces of driver components.
+ * @attention
+ *   1) This interface cannot be invoked repeatedly.
+ *   2) This interface cannot be used together with the open or close interface of an independent module.
+ *   3) The halDeviceOpen interface must be invoked before this interface is used.
+ * @param [in]  devId device id
+ * @param [in]  in reserved parameter, user must set 0
+ * @return 0 success, others for fail
+ */
 DLLEXPORT drvError_t halDeviceClose(uint32_t devid, halDevCloseIn *in);
 
 /**
-* @ingroup driver
-* @brief This interface is used to invoke unified fault-repair hooks based on fault type.
-* @attention
-*   1) payload and payload_size are reserved for fault specific extension.
-*   2) If there is no ubmem fault, or no process is using ubmem, this interface returns directly.
-*   3) This interface supports physical-machine scenario only; split scenario is not supported.
-*   4) This interface supports Ascend 950 only; other chips are not supported.
-* @param [in] devId device id
-* @param [in] info fault repair info
-* @return 0 success, others for fail
-*/
+ * @ingroup driver
+ * @brief This interface is used to invoke unified fault-repair hooks based on fault type.
+ * @attention
+ *   1) payload and payload_size are reserved for fault specific extension.
+ *   2) If there is no ubmem fault, or no process is using ubmem, this interface returns directly.
+ *   3) This interface supports physical-machine scenario only; split scenario is not supported.
+ *   4) This interface supports Ascend 950 only; other chips are not supported.
+ * @param [in] devId device id
+ * @param [in] info fault repair info
+ * @return 0 success, others for fail
+ */
 DLLEXPORT drvError_t halRepairFault(uint32_t devid, halRepairFaultInfo *info);
 
 typedef struct hal_proc_res_backup_info {
-    uint64_t reserve[8];   // reserved parameter
+    uint64_t reserve[8]; // reserved parameter
 } halProcResBackupInfo;
 
 typedef struct hal_proc_res_restore_info {
-    uint64_t reserve[8];   // reserved parameter
+    uint64_t reserve[8]; // reserved parameter
 } halProcResRestoreInfo;
 
 /**
-* @ingroup driver
-* @brief Back up the resources requested by the process
-* @attention  Support repeated calls
-* @param [in] halProcResBackupInfo info
-* @return 0 success, others for fail
-*/
+ * @ingroup driver
+ * @brief Back up the resources requested by the process
+ * @attention  Support repeated calls
+ * @param [in] halProcResBackupInfo info
+ * @return 0 success, others for fail
+ */
 DLLEXPORT drvError_t halProcessResBackup(halProcResBackupInfo *info);
 
 /**
-* @ingroup driver
-* @brief Restore the resources requested by the process
-* @attention null
-* @param [in] halProcResRestoreInfo info
-* @return 0 success, others for fail
-*/
+ * @ingroup driver
+ * @brief Restore the resources requested by the process
+ * @attention null
+ * @param [in] halProcResRestoreInfo info
+ * @return 0 success, others for fail
+ */
 DLLEXPORT drvError_t halProcessResRestore(halProcResRestoreInfo *info);
 
 /**
-* @ingroup driver
-* @brief Black box status notification callback function registration Interface
-* @attention null
-* @param [in] drvDeviceStateNotify state_callback
-* @return 0 success, others for fail
-*/
+ * @ingroup driver
+ * @brief Black box status notification callback function registration Interface
+ * @attention null
+ * @param [in] drvDeviceStateNotify state_callback
+ * @return 0 success, others for fail
+ */
 DLLEXPORT drvError_t drvDeviceStateNotifierRegister(drvDeviceStateNotify state_callback);
 /**
-* @ingroup driver
-* @brief Black box status Start up callback function registration
-* @attention null
-* @param [in] startup_callback  callback function poiniter
-* @return  0 for success, others for fail
-*/
+ * @ingroup driver
+ * @brief Black box status Start up callback function registration
+ * @attention null
+ * @param [in] startup_callback  callback function poiniter
+ * @return  0 for success, others for fail
+ */
 DLLEXPORT drvError_t drvDeviceStartupRegister(drvDeviceStartupNotify startup_callback);
 /**
-* @ingroup driver
-* @brief get chip capbility information
-* @attention null
-* @param [in]  devId device id
-* @param [out]  info chip capbility information
-* @return  0 for success, others for fail
-*/
+ * @ingroup driver
+ * @brief get chip capbility information
+ * @attention null
+ * @param [in]  devId device id
+ * @param [out]  info chip capbility information
+ * @return  0 for success, others for fail
+ */
 DLLEXPORT drvError_t halGetChipCapability(uint32_t devId, struct halCapabilityInfo *info);
 
 /**
-* @ingroup driver
-* @brief get ts group info
-* @attention null
-* @param [in]  devId device id
-* @param [in]  ts_id ts id 0 : TS_AICORE, 1 : TS_AIVECTOR
-* @param [in]  group_id group id
-* @param [in]  group_count group count
-* @param [out]  info ts group info
-* @return  0 for success, others for fail
-*/
+ * @ingroup driver
+ * @brief get ts group info
+ * @attention null
+ * @param [in]  devId device id
+ * @param [in]  ts_id ts id 0 : TS_AICORE, 1 : TS_AIVECTOR
+ * @param [in]  group_id group id
+ * @param [in]  group_count group count
+ * @param [out]  info ts group info
+ * @return  0 for success, others for fail
+ */
 DLLEXPORT drvError_t halGetCapabilityGroupInfo(int device_id, int ts_id, int group_id,
-    struct capability_group_info *group_info, int group_count);
+                                               struct capability_group_info *group_info, int group_count);
 
 /**
-* @ingroup driver
-* @brief get hal API Version
-* @attention null
-* @param [out]  halAPIVersion version of hal API
-* @return  0 for success, others for fail
-*/
+ * @ingroup driver
+ * @brief get hal API Version
+ * @attention null
+ * @param [out]  halAPIVersion version of hal API
+ * @return  0 for success, others for fail
+ */
 DLLEXPORT drvError_t halGetAPIVersion(int *halAPIVersion);
 
 /**
-* @ingroup driver
-* @brief set runtime API Version
-* @attention null
-* @param [in] must just be __HAL_API_VERSION
-* @return
-*/
+ * @ingroup driver
+ * @brief set runtime API Version
+ * @attention null
+ * @param [in] must just be __HAL_API_VERSION
+ * @return
+ */
 DLLEXPORT void halSetRuntimeApiVer(int Version);
 
 /**
-* @ingroup driver
-* @brief get device availability information
-* @attention null
-* @param [in] devId  device id
-* @param [out] status  device status
-* @return   0 for success, others for fail
-*/
+ * @ingroup driver
+ * @brief get device availability information
+ * @attention null
+ * @param [in] devId  device id
+ * @param [out] status  device status
+ * @return   0 for success, others for fail
+ */
 DLLEXPORT drvError_t drvDeviceStatus(uint32_t devId, drvStatus_t *status);
 
 /**
@@ -929,66 +929,66 @@ DLLEXPORT drvError_t drvDeviceClose(uint32_t devId);
 DLLEXPORT drvError_t drvDeviceGetTransWay(void *src, void *dest, uint8_t *trans_type);
 
 /**
-* @ingroup driver
-* @brief Get current platform information
-* @attention null
-* @param [out] *info  0 Means currently on the Device side, 1/Means currently on the host side
-* @return   0 for success, others for fail
-*/
+ * @ingroup driver
+ * @brief Get current platform information
+ * @attention null
+ * @param [out] *info  0 Means currently on the Device side, 1/Means currently on the host side
+ * @return   0 for success, others for fail
+ */
 DLLEXPORT drvError_t drvGetPlatformInfo(uint32_t *info);
 /**
-* @ingroup driver
-* @brief Get the current number of devices
-* @attention null
-* @param [out] num_dev  Number of current devices
-* @return   0 for success, others for fail
-*/
+ * @ingroup driver
+ * @brief Get the current number of devices
+ * @attention null
+ * @param [out] num_dev  Number of current devices
+ * @return   0 for success, others for fail
+ */
 DLLEXPORT drvError_t drvGetDevNum(uint32_t *num_dev);
 /**
-* @ingroup driver
-* @brief Convert device-side devId to host-side devId
-* @attention null
-* @param [in] localDevId  chip ID
-* @param [out] devId  host side devId
-* @return   0 for success, others for fail
-*/
+ * @ingroup driver
+ * @brief Convert device-side devId to host-side devId
+ * @attention null
+ * @param [in] localDevId  chip ID
+ * @param [out] devId  host side devId
+ * @return   0 for success, others for fail
+ */
 DLLEXPORT drvError_t drvGetDevIDByLocalDevID(uint32_t localDevId, uint32_t *devId);
 /**
-* @ingroup driver
-* @brief Get the probe device list
-* @attention null
-* @param [in] len  device list length
-* @param [out] *devices  device phyical id
-* @return   0 for success, others for fail
-*/
+ * @ingroup driver
+ * @brief Get the probe device list
+ * @attention null
+ * @param [in] len  device list length
+ * @param [out] *devices  device phyical id
+ * @return   0 for success, others for fail
+ */
 DLLEXPORT drvError_t halGetDevProbeList(uint32_t *devices, uint32_t len);
 /**
-* @ingroup driver
-* @brief The device side and the host side both obtain the host IDs of all the current devices.
-* If called in a container, get the host IDs of all devices in the current container.
-* @attention null
-* @param [in]  len  Array length
-* @param [out] devices  device id Array
-* @return   0 for success, others for fail
-*/
+ * @ingroup driver
+ * @brief The device side and the host side both obtain the host IDs of all the current devices.
+ * If called in a container, get the host IDs of all devices in the current container.
+ * @attention null
+ * @param [in]  len  Array length
+ * @param [out] devices  device id Array
+ * @return   0 for success, others for fail
+ */
 DLLEXPORT drvError_t drvGetDevIDs(uint32_t *devices, uint32_t len);
 /**
-* @ingroup driver
-* @brief Get the chip IDs of all current devices
-* @attention null
-* @param [in]  len  Array length
-* @param [out] devices  device id Array
-* @return   0 for success, others for fail
-*/
+ * @ingroup driver
+ * @brief Get the chip IDs of all current devices
+ * @attention null
+ * @param [in]  len  Array length
+ * @param [out] devices  device id Array
+ * @return   0 for success, others for fail
+ */
 DLLEXPORT drvError_t drvGetDeviceLocalIDs(uint32_t *devices, uint32_t len);
 /**
-* @ingroup driver
-* @brief Get device id via host-side device physical id , only called in device side.
-* @attention null
-* @param [in]  host_dev_id  host-side device physical id
-* @param [out] local_dev_id  device id
-* @return   0 for success, others for fail
-*/
+ * @ingroup driver
+ * @brief Get device id via host-side device physical id , only called in device side.
+ * @attention null
+ * @param [in]  host_dev_id  host-side device physical id
+ * @param [out] local_dev_id  device id
+ * @return   0 for success, others for fail
+ */
 DLLEXPORT drvError_t drvGetLocalDevIDByHostDevID(uint32_t host_dev_id, uint32_t *local_dev_id);
 
 typedef enum {
@@ -1040,65 +1040,65 @@ typedef enum {
 } HAL_GENERAL_SOFTWARE_FAULT_ERR_TYPE_T;
 
 struct halSensorNodeCfg {
-    char name[20]; /* 20: max name len */
+    char name[20];           /* 20: max name len */
     unsigned short NodeType; /* HAL_DMS_DEVICE_NODE_TYPE */
     unsigned char SensorType;
-    unsigned char Resv; /* used for byte alignment */
-    unsigned int AssertEventMask;    /* bit position is 1:event enable; bit position is 0:event disable */
-    unsigned int DeassertEventMask;  /* bit position is 1:fault event;  bit position is 0:notify event(one time) */
-    unsigned char Reserve[32]; /* 32: reserve bytes */
+    unsigned char Resv;             /* used for byte alignment */
+    unsigned int AssertEventMask;   /* bit position is 1:event enable; bit position is 0:event disable */
+    unsigned int DeassertEventMask; /* bit position is 1:fault event;  bit position is 0:notify event(one time) */
+    unsigned char Reserve[32];      /* 32: reserve bytes */
 };
 
 typedef enum {
-    GENERAL_EVENT_TYPE_RESUME   = 0,
-    GENERAL_EVENT_TYPE_OCCUR    = 1,
+    GENERAL_EVENT_TYPE_RESUME = 0,
+    GENERAL_EVENT_TYPE_OCCUR = 1,
     GENERAL_EVENT_TYPE_ONE_TIME = 2,
     GENERAL_EVENT_TYPE_MAX
 } halGeneralEventType_t;
 
 /**
-* @ingroup driver
-* @brief Register device and sensor node by device id and user node cfg.
-* @attention null
-* @param [in]  devId  Device ID
-* @param [in]  cfg    user cfg
-* @param [out] handle return user handle
-* @return   0 for success, others for fail
-*/
+ * @ingroup driver
+ * @brief Register device and sensor node by device id and user node cfg.
+ * @attention null
+ * @param [in]  devId  Device ID
+ * @param [in]  cfg    user cfg
+ * @param [out] handle return user handle
+ * @return   0 for success, others for fail
+ */
 DLLEXPORT drvError_t halSensorNodeRegister(uint32_t devId, struct halSensorNodeCfg *cfg, uint64_t *handle);
 
 /**
-* @ingroup driver
-* @brief Unregister device and sensor node by device id and user Handle.
-* @attention null
-* @param [in] devId  Device ID
-* @param [in] handle user sensor handle
-* @return   0 for success, others for fail
-*/
+ * @ingroup driver
+ * @brief Unregister device and sensor node by device id and user Handle.
+ * @attention null
+ * @param [in] devId  Device ID
+ * @param [in] handle user sensor handle
+ * @return   0 for success, others for fail
+ */
 DLLEXPORT drvError_t halSensorNodeUnregister(uint32_t devId, uint64_t handle);
 
 /**
-* @ingroup driver
-* @brief Set sensor val by device id and user Handle.
-* @attention null
-* @param [in] devId          Device ID
-* @param [in] handle         user sensor handle
-* @param [in] val            user event value
-* @param [in] assertion      user event type
-* @return   0 for success, others for fail
-*/
+ * @ingroup driver
+ * @brief Set sensor val by device id and user Handle.
+ * @attention null
+ * @param [in] devId          Device ID
+ * @param [in] handle         user sensor handle
+ * @param [in] val            user event value
+ * @param [in] assertion      user event type
+ * @return   0 for success, others for fail
+ */
 DLLEXPORT drvError_t halSensorNodeUpdateState(uint32_t devId, uint64_t handle, int val,
-    halGeneralEventType_t assertion);
+                                              halGeneralEventType_t assertion);
 
 /**
-* @ingroup driver
-* @brief Get Soc Version
-* @attention null
-* @param [in] devId          Device ID
-* @param [out] socVersion    soc version
-* @param [in] len            soc version length
-* @return   0 for success, others for fail
-*/
+ * @ingroup driver
+ * @brief Get Soc Version
+ * @attention null
+ * @param [in] devId          Device ID
+ * @param [out] socVersion    soc version
+ * @param [in] len            soc version length
+ * @return   0 for success, others for fail
+ */
 drvError_t halGetSocVersion(uint32_t devId, char *socVersion, uint32_t len);
 
 enum hal_product_type {
@@ -1110,103 +1110,103 @@ enum hal_product_type {
     HAL_PRODUCT_TYPE_MAX
 };
 /**
-* @ingroup driver
-* @brief Get device information, CPU information and PCIe bus information.
-* @attention each  moduleType  and infoType will get a different info value.
-* if the type you input is not compatitable with the table below, then will return fail
-* aicpu/ctrlcpu bitmap: the value indicates the total number of CPUs on device side,
-*                       and which bit in the map corresponds to which kind of CPU.
-* --------------------------------------------------------------------------------------------------------
-* moduleType                |        infoType             |    value                    |   attention    |
-* --------------------------------------------------------------------------------------------------------
-* MODULE_TYPE_SYSTEM        |  INFO_TYPE_ENV              |   env type                  |                |
-* MODULE_TYPE_SYSTEM        |  INFO_TYPE_VERSION          |   hardware_version          |                |
-* MODULE_TYPE_SYSTEM        |  INFO_TYPE_MASTERID         |   masterId                  | used in host   |
-* MODULE_TYPE_SYSTEM        |  INFO_TYPE_CORE_NUM         |   ts_num                    |                |
-* MODULE_TYPE_SYSTEM        |  INFO_TYPE_SYS_COUNT        |   system count              |                |
-* MODULE_TYPE_SYSTEM        |  INFO_TYPE_MONOTONIC_RAW    |   MONOTONIC_RAW time        |                |
-* MODULE_TYPE_SYSTEM        |  INFO_TYPE_PHY_CHIP_ID      |   physical chip id          |                |
-* MODULE_TYPE_SYSTEM        |  INFO_TYPE_PHY_DIE_ID       |   physical die id           |                |
-* MODULE_TYPE_SYSTEM        |  INFO_TYPE_HOST_OSC_FREQUE  |   host OSC Frequency        |                |
-* MODULE_TYPE_SYSTEM        |  INFO_TYPE_DEV_OSC_FREQUE   |   device OSC Frequency      |                |
-* MODULE_TYPE_SYSTEM        |  INFO_TYPE_SDID             |   super pod SDID            |                |
-* MODULE_TYPE_SYSTEM        |  INFO_TYPE_SERVER_ID        |   super pod server ID       |                |
-* MODULE_TYPE_SYSTEM        |  INFO_TYPE_SCALE_TYPE       |   super pod scale type      |                |
-* MODULE_TYPE_SYSTEM        |  INFO_TYPE_SUPER_POD_ID     |   super pod ID              |                |
-* MODULE_TYPE_SYSTEM        |  INFO_TYPE_ADDR_MODE        |   address mode              |                |
-* MODULE_TYPE_SYSTEM        |  INFO_TYPE_RUN_MACH         |   phycical or virtul machine|                |
-* MODULE_TYPE_SYSTEM        |  INFO_TYPE_MAINBOARD_ID     |   mainboard id              |                |
-* MODULE_TYPE_SYSTEM        |  INFO_TYPE_CUST_OP_ENHANCE  |   customer get OP enhance   |                |
-* MODULE_TYPE_SYSTEM        |  INFO_TYPE_HD_CONNECT_TYPE  |   host-device connect type  |                |
-* MODULE_TYPE_SYSTEM        |  INFO_TYPE_PRODUCT_TYPE     |   enum hal_product_type     |                |
-* MODULE_TYPE_SYSTEM        |  INFO_TYPE_CHASSIS_ID       |   super pod chassis id      |                |
-* MODULE_TYPE_SYSTEM        |  INFO_TYPE_SUPER_POD_TYPE   |   super pod type            |                |
-* MODULE_TYPE_SYSTEM        |  INFO_TYPE_BOARD_ID         |   board id                  | used in device |
-* MODULE_TYPE_SYSTEM        |  INFO_TYPE_VNIC_IP          |   device vnic ip            | used in device |
-* MODULE_TYPE_SYSTEM        |  INFO_TYPE_SPOD_VNIC_IP     |   device vnic ip by sdid    | used in device |
-* MODULE_TYPE_SYSTEM        |  INFO_TYPE_SLOT_ID          |   slot id                   |                |
-* MODULE_TYPE_SYSTEM        |  INFO_TYPE_SWPLUGIN_UPGRADE_POLICY |   swplugin upgrade   |                |
-* MODULE_TYPE_SYSTEM        |  INFO_TYPE_SUPER_POD_INTERCON_TYPE |   super pod inter connect type |      |
-* -------------------------------------------------------------------------------------------------------|
-* MODULE_TYPE_AICPU         |  INFO_TYPE_CORE_NUM         |   ai cpu number(vcpu in vf) |                |
-* MODULE_TYPE_AICPU         |  INFO_TYPE_OS_SCHED         |   ai cpu in os sched        | used in device |
-* MODULE_TYPE_AICPU         |  INFO_TYPE_IN_USED          |   ai cpu in used            |                |
-* MODULE_TYPE_AICPU         |  INFO_TYPE_ERROR_MAP        |   ai cpu error map          |                |
-* MODULE_TYPE_AICPU         |  INFO_TYPE_ID               |   ai cpu id                 |                |
-* MODULE_TYPE_AICPU         |  INFO_TYPE_OCCUPY           |   ai cpu occupy bitmap      |                |
-* MODULE_TYPE_AICPU         |  INFO_TYPE_PF_CORE_NUM      |   PF ai cpu core num        | used in device |
-* MODULE_TYPE_AICPU         |  INFO_TYPE_PF_OCCUPY        |   PF ai cpu occupy bitmap   | used in device |
-* MODULE_TYPE_AICPU         |  INFO_TYPE_UTILIZATION      |   ai cpu utilization        |                |
-* MODULE_TYPE_AICPU         |  INFO_TYPE_WORK_MODE        |   ai cpu work mode          |                |
-* --------------------------------------------------------------------------------------------------------
-* MODULE_TYPE_CCPU          |  INFO_TYPE_CORE_NUM         |   ctrl cpu number           |                |
-* MODULE_TYPE_CCPU          |  INFO_TYPE_ID               |   ctrl cpu id               |                |
-* MODULE_TYPE_CCPU          |  INFO_TYPE_OCCUPY           |   ctrl cpu occupy bitmap    |                |
-* MODULE_TYPE_CCPU          |  INFO_TYPE_IP               |   ctrl cpu ip               |                |
-* MODULE_TYPE_CCPU          |  INFO_TYPE_ENDIAN           |   ctrl cpu ENDIAN           |                |
-* MODULE_TYPE_CCPU          |  INFO_TYPE_OS_SCHED         |   ctrl cpu in os sched      | used in device |
-* --------------------------------------------------------------------------------------------------------
-* MODULE_TYPE_DCPU          |  INFO_TYPE_CORE_NUM         |   data cpu number           | used in device |
-* MODULE_TYPE_DCPU          |  INFO_TYPE_OS_SCHED         |   data cpu in os sched      | used in device |
-* --------------------------------------------------------------------------------------------------------
-* MODULE_TYPE_AICORE        |  INFO_TYPE_CORE_NUM         |   ai core number            |                |
-* MODULE_TYPE_AICORE        |  INFO_TYPE_CORE_NUM_LEVEL   |   ai core number level      |                |
-* MODULE_TYPE_AICORE        |  INFO_TYPE_IN_USED          |   ai core in used           |                |
-* MODULE_TYPE_AICORE        |  INFO_TYPE_ERROR_MAP        |   ai core error map         |                |
-* MODULE_TYPE_AICORE        |  INFO_TYPE_ID               |   ai core id                |                |
-* MODULE_TYPE_AICORE        |  INFO_TYPE_FREQUE           |   ai core rated frequency   |                |
-* MODULE_TYPE_AICORE        |  INFO_TYPE_FREQUE_LEVEL     |   ai core frequency level   |                |
-* MODULE_TYPE_AICORE        |  INFO_TYPE_UTILIZATION      |   ai core utilization       |                |
-* MODULE_TYPE_AICORE        |  INFO_TYPE_DIE_NUM          |   ai core die num(Ddie num) |                |
-* --------------------------------------------------------------------------------------------------------
-* MODULE_TYPE_VECTOR_CORE   |   INFO_TYPE_CORE_NUM        |   vector core number        |                |
-* MODULE_TYPE_VECTOR_CORE   |   INFO_TYPE_FREQUE          |   vector core frequency     |                |
-* MODULE_TYPE_VECTOR_CORE   |   INFO_TYPE_UTILIZATION     |   vector core utilization   |                |
-* --------------------------------------------------------------------------------------------------------
-* MODULE_TYPE_TSCPU         |  INFO_TYPE_CORE_NUM         |   ts cpu number             |                |
-* MODULE_TYPE_TSCPU         |  INFO_TYPE_OS_SCHED         |   ts cpu in os sched        | used in device |
-* MODULE_TYPE_TSCPU         |  INFO_TYPE_FFTS_TYPE        |   ts cpu ffts type          |                |
-* --------------------------------------------------------------------------------------------------------
-* MODULE_TYPE_PCIE          |  INFO_TYPE_ID               |   pcie bdf                  | used in host   |
-* --------------------------------------------------------------------------------------------------------
-* MODULE_TYPE_HOST_AICPU    |  INFO_TYPE_CORE_NUM         |   host aicpu num            | used in host   |
-* MODULE_TYPE_HOST_AICPU    |  INFO_TYPE_OCCUPY           |   host aicpu bitmap(64byte) | used in host   |
-* MODULE_TYPE_HOST_AICPU    |  INFO_TYPE_WORK_MODE        |   host aicpu work mode      | used in host   |
-* MODULE_TYPE_HOST_AICPU    |  INFO_TYPE_FREQUE           |   host aicpu frequency      | used in host   |
-* --------------------------------------------------------------------------------------------------------
-* MODULE_TYPE_HCOM_CPU      |  INFO_TYPE_CORE_NUM         |   hcom cpu num              |                |
-* --------------------------------------------------------------------------------------------------------
-* @param [in] devId  Device ID, when parameter infoType is set to INFO_TYPE_MASTERID, need to use physical device ID.
-*             Device ID, when parameter infoType is set to INFO_TYPE_VNIC_IP, need to use host physical device ID.
-*             Device ID, when parameter infoType is set to INFO_TYPE_SPOD_VNIC_IP, need to use SDID.
-*             In other cases, need to use logical device ID.
-*             Note: The physical ID used by INFO_TYPE_MASTERID is a known issue.
-*                   Currently, the log and black box modules use this function.
-* @param [in] moduleType  See enum DEV_MODULE_TYPE
-* @param [in] infoType  See enum DEV_INFO_TYPE
-* @param [out] value  device info
-* @return   0 for success, others for fail
-*/
+ * @ingroup driver
+ * @brief Get device information, CPU information and PCIe bus information.
+ * @attention each  moduleType  and infoType will get a different info value.
+ * if the type you input is not compatitable with the table below, then will return fail
+ * aicpu/ctrlcpu bitmap: the value indicates the total number of CPUs on device side,
+ *                       and which bit in the map corresponds to which kind of CPU.
+ * --------------------------------------------------------------------------------------------------------
+ * moduleType                |        infoType             |    value                    |   attention    |
+ * --------------------------------------------------------------------------------------------------------
+ * MODULE_TYPE_SYSTEM        |  INFO_TYPE_ENV              |   env type                  |                |
+ * MODULE_TYPE_SYSTEM        |  INFO_TYPE_VERSION          |   hardware_version          |                |
+ * MODULE_TYPE_SYSTEM        |  INFO_TYPE_MASTERID         |   masterId                  | used in host   |
+ * MODULE_TYPE_SYSTEM        |  INFO_TYPE_CORE_NUM         |   ts_num                    |                |
+ * MODULE_TYPE_SYSTEM        |  INFO_TYPE_SYS_COUNT        |   system count              |                |
+ * MODULE_TYPE_SYSTEM        |  INFO_TYPE_MONOTONIC_RAW    |   MONOTONIC_RAW time        |                |
+ * MODULE_TYPE_SYSTEM        |  INFO_TYPE_PHY_CHIP_ID      |   physical chip id          |                |
+ * MODULE_TYPE_SYSTEM        |  INFO_TYPE_PHY_DIE_ID       |   physical die id           |                |
+ * MODULE_TYPE_SYSTEM        |  INFO_TYPE_HOST_OSC_FREQUE  |   host OSC Frequency        |                |
+ * MODULE_TYPE_SYSTEM        |  INFO_TYPE_DEV_OSC_FREQUE   |   device OSC Frequency      |                |
+ * MODULE_TYPE_SYSTEM        |  INFO_TYPE_SDID             |   super pod SDID            |                |
+ * MODULE_TYPE_SYSTEM        |  INFO_TYPE_SERVER_ID        |   super pod server ID       |                |
+ * MODULE_TYPE_SYSTEM        |  INFO_TYPE_SCALE_TYPE       |   super pod scale type      |                |
+ * MODULE_TYPE_SYSTEM        |  INFO_TYPE_SUPER_POD_ID     |   super pod ID              |                |
+ * MODULE_TYPE_SYSTEM        |  INFO_TYPE_ADDR_MODE        |   address mode              |                |
+ * MODULE_TYPE_SYSTEM        |  INFO_TYPE_RUN_MACH         |   phycical or virtul machine|                |
+ * MODULE_TYPE_SYSTEM        |  INFO_TYPE_MAINBOARD_ID     |   mainboard id              |                |
+ * MODULE_TYPE_SYSTEM        |  INFO_TYPE_CUST_OP_ENHANCE  |   customer get OP enhance   |                |
+ * MODULE_TYPE_SYSTEM        |  INFO_TYPE_HD_CONNECT_TYPE  |   host-device connect type  |                |
+ * MODULE_TYPE_SYSTEM        |  INFO_TYPE_PRODUCT_TYPE     |   enum hal_product_type     |                |
+ * MODULE_TYPE_SYSTEM        |  INFO_TYPE_CHASSIS_ID       |   super pod chassis id      |                |
+ * MODULE_TYPE_SYSTEM        |  INFO_TYPE_SUPER_POD_TYPE   |   super pod type            |                |
+ * MODULE_TYPE_SYSTEM        |  INFO_TYPE_BOARD_ID         |   board id                  | used in device |
+ * MODULE_TYPE_SYSTEM        |  INFO_TYPE_VNIC_IP          |   device vnic ip            | used in device |
+ * MODULE_TYPE_SYSTEM        |  INFO_TYPE_SPOD_VNIC_IP     |   device vnic ip by sdid    | used in device |
+ * MODULE_TYPE_SYSTEM        |  INFO_TYPE_SLOT_ID          |   slot id                   |                |
+ * MODULE_TYPE_SYSTEM        |  INFO_TYPE_SWPLUGIN_UPGRADE_POLICY |   swplugin upgrade   |                |
+ * MODULE_TYPE_SYSTEM        |  INFO_TYPE_SUPER_POD_INTERCON_TYPE |   super pod inter connect type |      |
+ * -------------------------------------------------------------------------------------------------------|
+ * MODULE_TYPE_AICPU         |  INFO_TYPE_CORE_NUM         |   ai cpu number(vcpu in vf) |                |
+ * MODULE_TYPE_AICPU         |  INFO_TYPE_OS_SCHED         |   ai cpu in os sched        | used in device |
+ * MODULE_TYPE_AICPU         |  INFO_TYPE_IN_USED          |   ai cpu in used            |                |
+ * MODULE_TYPE_AICPU         |  INFO_TYPE_ERROR_MAP        |   ai cpu error map          |                |
+ * MODULE_TYPE_AICPU         |  INFO_TYPE_ID               |   ai cpu id                 |                |
+ * MODULE_TYPE_AICPU         |  INFO_TYPE_OCCUPY           |   ai cpu occupy bitmap      |                |
+ * MODULE_TYPE_AICPU         |  INFO_TYPE_PF_CORE_NUM      |   PF ai cpu core num        | used in device |
+ * MODULE_TYPE_AICPU         |  INFO_TYPE_PF_OCCUPY        |   PF ai cpu occupy bitmap   | used in device |
+ * MODULE_TYPE_AICPU         |  INFO_TYPE_UTILIZATION      |   ai cpu utilization        |                |
+ * MODULE_TYPE_AICPU         |  INFO_TYPE_WORK_MODE        |   ai cpu work mode          |                |
+ * --------------------------------------------------------------------------------------------------------
+ * MODULE_TYPE_CCPU          |  INFO_TYPE_CORE_NUM         |   ctrl cpu number           |                |
+ * MODULE_TYPE_CCPU          |  INFO_TYPE_ID               |   ctrl cpu id               |                |
+ * MODULE_TYPE_CCPU          |  INFO_TYPE_OCCUPY           |   ctrl cpu occupy bitmap    |                |
+ * MODULE_TYPE_CCPU          |  INFO_TYPE_IP               |   ctrl cpu ip               |                |
+ * MODULE_TYPE_CCPU          |  INFO_TYPE_ENDIAN           |   ctrl cpu ENDIAN           |                |
+ * MODULE_TYPE_CCPU          |  INFO_TYPE_OS_SCHED         |   ctrl cpu in os sched      | used in device |
+ * --------------------------------------------------------------------------------------------------------
+ * MODULE_TYPE_DCPU          |  INFO_TYPE_CORE_NUM         |   data cpu number           | used in device |
+ * MODULE_TYPE_DCPU          |  INFO_TYPE_OS_SCHED         |   data cpu in os sched      | used in device |
+ * --------------------------------------------------------------------------------------------------------
+ * MODULE_TYPE_AICORE        |  INFO_TYPE_CORE_NUM         |   ai core number            |                |
+ * MODULE_TYPE_AICORE        |  INFO_TYPE_CORE_NUM_LEVEL   |   ai core number level      |                |
+ * MODULE_TYPE_AICORE        |  INFO_TYPE_IN_USED          |   ai core in used           |                |
+ * MODULE_TYPE_AICORE        |  INFO_TYPE_ERROR_MAP        |   ai core error map         |                |
+ * MODULE_TYPE_AICORE        |  INFO_TYPE_ID               |   ai core id                |                |
+ * MODULE_TYPE_AICORE        |  INFO_TYPE_FREQUE           |   ai core rated frequency   |                |
+ * MODULE_TYPE_AICORE        |  INFO_TYPE_FREQUE_LEVEL     |   ai core frequency level   |                |
+ * MODULE_TYPE_AICORE        |  INFO_TYPE_UTILIZATION      |   ai core utilization       |                |
+ * MODULE_TYPE_AICORE        |  INFO_TYPE_DIE_NUM          |   ai core die num(Ddie num) |                |
+ * --------------------------------------------------------------------------------------------------------
+ * MODULE_TYPE_VECTOR_CORE   |   INFO_TYPE_CORE_NUM        |   vector core number        |                |
+ * MODULE_TYPE_VECTOR_CORE   |   INFO_TYPE_FREQUE          |   vector core frequency     |                |
+ * MODULE_TYPE_VECTOR_CORE   |   INFO_TYPE_UTILIZATION     |   vector core utilization   |                |
+ * --------------------------------------------------------------------------------------------------------
+ * MODULE_TYPE_TSCPU         |  INFO_TYPE_CORE_NUM         |   ts cpu number             |                |
+ * MODULE_TYPE_TSCPU         |  INFO_TYPE_OS_SCHED         |   ts cpu in os sched        | used in device |
+ * MODULE_TYPE_TSCPU         |  INFO_TYPE_FFTS_TYPE        |   ts cpu ffts type          |                |
+ * --------------------------------------------------------------------------------------------------------
+ * MODULE_TYPE_PCIE          |  INFO_TYPE_ID               |   pcie bdf                  | used in host   |
+ * --------------------------------------------------------------------------------------------------------
+ * MODULE_TYPE_HOST_AICPU    |  INFO_TYPE_CORE_NUM         |   host aicpu num            | used in host   |
+ * MODULE_TYPE_HOST_AICPU    |  INFO_TYPE_OCCUPY           |   host aicpu bitmap(64byte) | used in host   |
+ * MODULE_TYPE_HOST_AICPU    |  INFO_TYPE_WORK_MODE        |   host aicpu work mode      | used in host   |
+ * MODULE_TYPE_HOST_AICPU    |  INFO_TYPE_FREQUE           |   host aicpu frequency      | used in host   |
+ * --------------------------------------------------------------------------------------------------------
+ * MODULE_TYPE_HCOM_CPU      |  INFO_TYPE_CORE_NUM         |   hcom cpu num              |                |
+ * --------------------------------------------------------------------------------------------------------
+ * @param [in] devId  Device ID, when parameter infoType is set to INFO_TYPE_MASTERID, need to use physical device ID.
+ *             Device ID, when parameter infoType is set to INFO_TYPE_VNIC_IP, need to use host physical device ID.
+ *             Device ID, when parameter infoType is set to INFO_TYPE_SPOD_VNIC_IP, need to use SDID.
+ *             In other cases, need to use logical device ID.
+ *             Note: The physical ID used by INFO_TYPE_MASTERID is a known issue.
+ *                   Currently, the log and black box modules use this function.
+ * @param [in] moduleType  See enum DEV_MODULE_TYPE
+ * @param [in] infoType  See enum DEV_INFO_TYPE
+ * @param [out] value  device info
+ * @return   0 for success, others for fail
+ */
 DLLEXPORT drvError_t halGetDeviceInfo(uint32_t devId, int32_t moduleType, int32_t infoType, int64_t *value);
 
 #define HAL_CPM_DATA_SIZE 256
@@ -1253,7 +1253,7 @@ struct hal_soc_stress_cfg {
 };
 
 #define HAL_LPM_SOC_STRESS_RESV_LEN 24
-#define COMPONENT_CFG_MAGIC   0x636F6D70U  /* comp */
+#define COMPONENT_CFG_MAGIC 0x636F6D70U /* comp */
 struct hal_component_id_cfg {
     unsigned int magic;
     unsigned int component_id;
@@ -1286,7 +1286,7 @@ enum hal_crypto_mode_type {
 
 #define HAL_CC_RESV_LEN 8
 typedef struct {
-    enum hal_cc_mode_type cc_mode; /* 0:cc off  1:cc normal  2:cc additional */
+    enum hal_cc_mode_type cc_mode;         /* 0:cc off  1:cc normal  2:cc additional */
     enum hal_crypto_mode_type crypto_mode; /* 0:crypto off  1:crypto on */
     unsigned int resv[HAL_CC_RESV_LEN];
 } HAL_CC_MODE;
@@ -1297,7 +1297,7 @@ typedef struct {
 } HAL_CC_INFO;
 
 typedef enum {
-    HAL_NORMAL_MODE = 0, /* mailbox */
+    HAL_NORMAL_MODE = 0,       /* mailbox */
     HAL_HIGH_PERFORMANCE_MODE, /* msgq */
     HAL_CPU_WORK_MODE_MAX
 } HAL_CPU_WORK_MODE;
@@ -1350,8 +1350,8 @@ typedef enum {
 * @param [in/out] size input buffer size and output data size
 * @return   0 for success, others for fail
 */
-DLLEXPORT drvError_t halGetDeviceInfoByBuff(uint32_t devId, int32_t moduleType,
-                                            int32_t infoType, void *buf, int32_t *size);
+DLLEXPORT drvError_t halGetDeviceInfoByBuff(uint32_t devId, int32_t moduleType, int32_t infoType, void *buf,
+                                            int32_t *size);
 
 #define HAL_UB_PORT_NUM 36
 typedef enum {
@@ -1359,7 +1359,7 @@ typedef enum {
     HAL_UB_ALL_PORT_LINK,
     HAL_UB_PARTIAL_PORT_LINK,
     HAL_UB_NO_NEED_LINK,
-} hal_entire_ub_status;     /* 0-2: actual link status, 3: link requirement */
+} hal_entire_ub_status; /* 0-2: actual link status, 3: link requirement */
 
 typedef enum {
     HAL_UB_PORT_STATUS_NONE_LANE = 0,
@@ -1374,33 +1374,33 @@ struct hal_ub_status {
 };
 
 /**
-* @ingroup driver
-* @brief Setting the device configuration
-* @attention Each moduleType and infoType will have a different configuration.
-* if the type you input is not compatitable with the table below, then will return fail
-* --------------------------------------------------------------------------------------------------------
-* moduleType                |        infoType             |             buf             |   attention    |
-* --------------------------------------------------------------------------------------------------------
-* MODULE_TYPE_LP            |  INFO_TYPE_LP_FREQ_VOLT     | HAL_LP_SET_STRESS_TEST_STRU |                |
-* --------------------------------------------------------------------------------------------------------
-* MODULE_TYPE_L2BUFF        |  INFO_TYPE_L2BUFF_RESUME    |   L2buff fault resume       |                |
-* --------------------------------------------------------------------------------------------------------
-* MODULE_TYPE_SYSTEM        |  INFO_TYPE_SDK_EX_VERSION   |    SDK extend version       | used in device |
-* --------------------------------------------------------------------------------------------------------
-* MODULE_TYPE_SYSTEM        |  INFO_TYPE_EVENT_RESUME     |    Fault event resume       | used in host   |
-* --------------------------------------------------------------------------------------------------------
-* @param [in] devId  Device ID, when parameter infoType is set to INFO_TYPE_MASTERID, need to use physical device ID.
-*             In other cases, need to use logical device ID.
-*             Note: The physical ID used by INFO_TYPE_MASTERID is a known issue.
-*                   Currently, the log and black box modules use this function.
-* @param [in] moduleType  See enum DEV_MODULE_TYPE
-* @param [in] infoType  See enum DEV_INFO_TYPE
-* @param [in] buf input buffer
-* @param [in] size input buffer size
-* @return   0 for success, others for fail
-*/
-DLLEXPORT drvError_t halSetDeviceInfoByBuff(uint32_t devId, int32_t moduleType,
-                                            int32_t infoType, void *buf, int32_t size);
+ * @ingroup driver
+ * @brief Setting the device configuration
+ * @attention Each moduleType and infoType will have a different configuration.
+ * if the type you input is not compatitable with the table below, then will return fail
+ * --------------------------------------------------------------------------------------------------------
+ * moduleType                |        infoType             |             buf             |   attention    |
+ * --------------------------------------------------------------------------------------------------------
+ * MODULE_TYPE_LP            |  INFO_TYPE_LP_FREQ_VOLT     | HAL_LP_SET_STRESS_TEST_STRU |                |
+ * --------------------------------------------------------------------------------------------------------
+ * MODULE_TYPE_L2BUFF        |  INFO_TYPE_L2BUFF_RESUME    |   L2buff fault resume       |                |
+ * --------------------------------------------------------------------------------------------------------
+ * MODULE_TYPE_SYSTEM        |  INFO_TYPE_SDK_EX_VERSION   |    SDK extend version       | used in device |
+ * --------------------------------------------------------------------------------------------------------
+ * MODULE_TYPE_SYSTEM        |  INFO_TYPE_EVENT_RESUME     |    Fault event resume       | used in host   |
+ * --------------------------------------------------------------------------------------------------------
+ * @param [in] devId  Device ID, when parameter infoType is set to INFO_TYPE_MASTERID, need to use physical device ID.
+ *             In other cases, need to use logical device ID.
+ *             Note: The physical ID used by INFO_TYPE_MASTERID is a known issue.
+ *                   Currently, the log and black box modules use this function.
+ * @param [in] moduleType  See enum DEV_MODULE_TYPE
+ * @param [in] infoType  See enum DEV_INFO_TYPE
+ * @param [in] buf input buffer
+ * @param [in] size input buffer size
+ * @return   0 for success, others for fail
+ */
+DLLEXPORT drvError_t halSetDeviceInfoByBuff(uint32_t devId, int32_t moduleType, int32_t infoType, void *buf,
+                                            int32_t size);
 
 struct hal_fault_event_resume {
     unsigned int event_id;
@@ -1410,97 +1410,97 @@ struct hal_fault_event_resume {
 };
 
 /**
-* @ingroup driver
-* @brief Get device info using physical device id
-* @attention each  moduleType  and infoType will get a different
-* if the type you input is not compatitable with the table below, then will return fail
-* moduleType            |        infoType           |    value                |   attention    |
-* ------------------------------------------------------------------------------------------
-* MODULE_TYPE_SYSTEM    | PHY_INFO_TYPE_CHIPTYPE    |   chip type             | used in host   |
-* MODULE_TYPE_SYSTEM    | PHY_INFO_TYPE_MASTER_ID   |   master id             | used in host   |
-* MODULE_TYPE_SYSTEM    | PHY_INFO_TYPE_PHY_CHIP_ID |   physical chip id      |                |
-* MODULE_TYPE_SYSTEM    | PHY_INFO_TYPE_PHY_DIE_ID  |   physical die id       |                |
-* ------------------------------------------------------------------------------------------
-* @param [in] phyId  Device physical ID
-* @param [in] moduleType  See enum DEV_MODULE_TYPE
-* @param [in] infoType  See enum PHY_DEV_INFO_TYPE
-* @param [out] value  device info
-* @return   0 for success, others for fail
-*/
+ * @ingroup driver
+ * @brief Get device info using physical device id
+ * @attention each  moduleType  and infoType will get a different
+ * if the type you input is not compatitable with the table below, then will return fail
+ * moduleType            |        infoType           |    value                |   attention    |
+ * ------------------------------------------------------------------------------------------
+ * MODULE_TYPE_SYSTEM    | PHY_INFO_TYPE_CHIPTYPE    |   chip type             | used in host   |
+ * MODULE_TYPE_SYSTEM    | PHY_INFO_TYPE_MASTER_ID   |   master id             | used in host   |
+ * MODULE_TYPE_SYSTEM    | PHY_INFO_TYPE_PHY_CHIP_ID |   physical chip id      |                |
+ * MODULE_TYPE_SYSTEM    | PHY_INFO_TYPE_PHY_DIE_ID  |   physical die id       |                |
+ * ------------------------------------------------------------------------------------------
+ * @param [in] phyId  Device physical ID
+ * @param [in] moduleType  See enum DEV_MODULE_TYPE
+ * @param [in] infoType  See enum PHY_DEV_INFO_TYPE
+ * @param [out] value  device info
+ * @return   0 for success, others for fail
+ */
 DLLEXPORT drvError_t halGetPhyDeviceInfo(uint32_t phyId, int32_t moduleType, int32_t infoType, int64_t *value);
 
 /**
-* @ingroup driver
-* @brief Get devices relationship, etc
-* @attention This interface can be invoked only on the host side.
-* @param [in] devId  Device ID
-* @param [in] otherDevId  other device id compared
-* @param [in] infoType  See enum PAIR_DEVS_INFO_TYPE
-* @param [out] value   type of relationship
-* *value == TOPOLOGY_HCCS, means relationship is hccs
-* *value == TOPOLOGY_PIX,  means relationship is pix
-* *value == TOPOLOGY_SIO,  means relationship is sio
-* *value == TOPOLOGY_HCCS_SW,  means relationship is hccs_sw
-* *value == TOPOLOGY_UB,  means relationship is ub
-* @return   0 for success, others for fail
-*/
+ * @ingroup driver
+ * @brief Get devices relationship, etc
+ * @attention This interface can be invoked only on the host side.
+ * @param [in] devId  Device ID
+ * @param [in] otherDevId  other device id compared
+ * @param [in] infoType  See enum PAIR_DEVS_INFO_TYPE
+ * @param [out] value   type of relationship
+ * *value == TOPOLOGY_HCCS, means relationship is hccs
+ * *value == TOPOLOGY_PIX,  means relationship is pix
+ * *value == TOPOLOGY_SIO,  means relationship is sio
+ * *value == TOPOLOGY_HCCS_SW,  means relationship is hccs_sw
+ * *value == TOPOLOGY_UB,  means relationship is ub
+ * @return   0 for success, others for fail
+ */
 DLLEXPORT drvError_t halGetPairDevicesInfo(uint32_t devId, uint32_t otherDevId, int32_t infoType, int64_t *value);
 
 /**
-* @ingroup driver
-* @brief Get devices relationship, etc
-* @attention This interface can be invoked only on the host side.
-* @param [in] devId  Physical Device ID
-* @param [in] otherDevId  other physical device id compared
-* @param [in] infoType  See enum PAIR_DEVS_INFO_TYPE
-* @param [out] value   relationship type between the devices
-* *value == TOPOLOGY_HCCS, means relationship is hccs
-* *value == TOPOLOGY_PIX,  means relationship is pix
-* *value == TOPOLOGY_PIB, means relationship is pib
-* *value == TOPOLOGY_PHB,  means relationship is phb
-* *value == TOPOLOGY_SYS, means relationship is sys
-* *value == TOPOLOGY_SIO,  means relationship is sio
-* *value == TOPOLOGY_HCCS_SW,  means relationship is hccs_sw
-* *value == TOPOLOGY_UB,  means relationship is ub
-* @return   0 for success, others for fail
-*/
+ * @ingroup driver
+ * @brief Get devices relationship, etc
+ * @attention This interface can be invoked only on the host side.
+ * @param [in] devId  Physical Device ID
+ * @param [in] otherDevId  other physical device id compared
+ * @param [in] infoType  See enum PAIR_DEVS_INFO_TYPE
+ * @param [out] value   relationship type between the devices
+ * *value == TOPOLOGY_HCCS, means relationship is hccs
+ * *value == TOPOLOGY_PIX,  means relationship is pix
+ * *value == TOPOLOGY_PIB, means relationship is pib
+ * *value == TOPOLOGY_PHB,  means relationship is phb
+ * *value == TOPOLOGY_SYS, means relationship is sys
+ * *value == TOPOLOGY_SIO,  means relationship is sio
+ * *value == TOPOLOGY_HCCS_SW,  means relationship is hccs_sw
+ * *value == TOPOLOGY_UB,  means relationship is ub
+ * @return   0 for success, others for fail
+ */
 DLLEXPORT drvError_t halGetPairPhyDevicesInfo(uint32_t devId, uint32_t otherDevId, int32_t infoType, int64_t *value);
 
 /**
-* @ingroup driver
-* @brief The black box daemon on the host side calls the interface registration exception reporting function
-* @attention null
-* @param [in] exception_callback_func  Exception reporting function
-* @return   0 for success, others for fail
-*/
+ * @ingroup driver
+ * @brief The black box daemon on the host side calls the interface registration exception reporting function
+ * @attention null
+ * @param [in] exception_callback_func  Exception reporting function
+ * @return   0 for success, others for fail
+ */
 DLLEXPORT drvError_t drvDeviceExceptionHookRegister(drvDeviceExceptionReporFunc exception_callback_func);
 /**
-* @ingroup driver
-* @brief Flash cache interface
-* @attention
-* 1.Virtual address is the virtual address of this process; 2.Note whether the length passed in meets the requirements
-* @param [in] base  Virtual address base address
-* @param [in] len  cache length
-* @return   0 for success, others for fail
-*/
+ * @ingroup driver
+ * @brief Flash cache interface
+ * @attention
+ * 1.Virtual address is the virtual address of this process; 2.Note whether the length passed in meets the requirements
+ * @param [in] base  Virtual address base address
+ * @param [in] len  cache length
+ * @return   0 for success, others for fail
+ */
 DLLEXPORT void drvFlushCache(uint64_t base, uint32_t len);
 /**
-* @ingroup driver
-* @brief Get physical ID (phyId) using logical ID (devIndex)
-* @attention null
-* @param [in] devIndex  Logical ID
-* @param [out] phyId  Physical ID
-* @return  0 for success, others for fail
-*/
+ * @ingroup driver
+ * @brief Get physical ID (phyId) using logical ID (devIndex)
+ * @attention null
+ * @param [in] devIndex  Logical ID
+ * @param [out] phyId  Physical ID
+ * @return  0 for success, others for fail
+ */
 DLLEXPORT drvError_t drvDeviceGetPhyIdByIndex(uint32_t devIndex, uint32_t *phyId);
 /**
-* @ingroup driver
-* @brief Get logical ID (devIndex) using physical ID (phyId)
-* @attention null
-* @param [in] phyId   Physical ID
-* @param [out] devIndex  Logical ID
-* @return   0 for success, others for fail
-*/
+ * @ingroup driver
+ * @brief Get logical ID (devIndex) using physical ID (phyId)
+ * @attention null
+ * @param [in] phyId   Physical ID
+ * @param [out] devIndex  Logical ID
+ * @return   0 for success, others for fail
+ */
 DLLEXPORT drvError_t drvDeviceGetIndexByPhyId(uint32_t phyId, uint32_t *devIndex);
 
 /**
@@ -1513,23 +1513,23 @@ DLLEXPORT drvError_t drvDeviceGetIndexByPhyId(uint32_t phyId, uint32_t *devIndex
 DLLEXPORT drvError_t drvGetProcessSign(struct process_sign *sign);
 
 /**
-* @ingroup driver
-* @brief query devpid by info
-* @attention null
-* @param [in] info: See struct halQueryDevpidInfo
-* @param [out] dev_pid: device pid correspond to info
-* @return   0 for success, others for fail
-*/
+ * @ingroup driver
+ * @brief query devpid by info
+ * @attention null
+ * @param [in] info: See struct halQueryDevpidInfo
+ * @param [out] dev_pid: device pid correspond to info
+ * @return   0 for success, others for fail
+ */
 DLLEXPORT drvError_t halQueryDevpid(struct halQueryDevpidInfo info, pid_t *dev_pid) ASCEND_HAL_WEAK;
 
 struct drvBindHostpidInfo {
     pid_t host_pid;
     uint32_t vfid;
     uint32_t chip_id;
-    int32_t mode;                      /* online:0, offline:1 */
+    int32_t mode; /* online:0, offline:1 */
     enum devdrv_process_type cp_type;
-    uint32_t len;                      /* length of sign */
-    char sign[PROCESS_SIGN_LENGTH];    /* sign of hostpid */
+    uint32_t len;                   /* length of sign */
+    char sign[PROCESS_SIGN_LENGTH]; /* sign of hostpid */
 };
 
 /**
@@ -1565,8 +1565,8 @@ DLLEXPORT drvError_t drvUnbindHostPid(struct drvBindHostpidInfo info);
  * @return DRV_ERROR_NONE : success
  * @return DRV_ERROR_XXX : query fail
  */
-DLLEXPORT drvError_t drvQueryProcessHostPid(
-    int pid, unsigned int *chip_id, unsigned int *vfid, unsigned int *host_pid, unsigned int *cp_type);
+DLLEXPORT drvError_t drvQueryProcessHostPid(int pid, unsigned int *chip_id, unsigned int *vfid, unsigned int *host_pid,
+                                            unsigned int *cp_type);
 
 /**
  * @ingroup driver
@@ -1578,8 +1578,8 @@ DLLEXPORT drvError_t drvQueryProcessHostPid(
  * @param [out] len: resouse addr len
  * @return   0 for success, others for fail
  */
-DLLEXPORT drvError_t halResAddrMap(
-    unsigned int devId, struct res_addr_info *res_info, unsigned long *va, unsigned int *len);
+DLLEXPORT drvError_t halResAddrMap(unsigned int devId, struct res_addr_info *res_info, unsigned long *va,
+                                   unsigned int *len);
 
 /**
  * @ingroup driver
@@ -1601,7 +1601,7 @@ DLLEXPORT drvError_t halResAddrUnmap(unsigned int devId, struct res_addr_info *r
  * @return   0 for success, others for fail
  */
 DLLEXPORT drvError_t halResAddrMapV2(unsigned int devId, struct res_map_info_in *res_info_in,
-    struct res_map_info_out *res_info_out);
+                                     struct res_map_info_out *res_info_out);
 
 /**
  * @ingroup driver
@@ -1623,73 +1623,70 @@ DLLEXPORT drvError_t halResAddrUnmapV2(unsigned int devId, struct res_map_info_i
 DLLEXPORT drvError_t halBindCgroup(BIND_CGROUP_TYPE bindType);
 
 /**
-* @ingroup driver
-* @brief Sharing memory to specific object
-* @attention null
-* @param [in] para: see struct drvMemSharingPara
-* @return   0 for success, others for fail
-*/
+ * @ingroup driver
+ * @brief Sharing memory to specific object
+ * @attention null
+ * @param [in] para: see struct drvMemSharingPara
+ * @return   0 for success, others for fail
+ */
 DLLEXPORT drvError_t halSetMemSharing(struct drvMemSharingPara *para);
 
 /**
-* @ingroup driver
-* @brief Get non-container internal Tgid number
-* @attention null
-* @return Tgid number (non-container Tgid)
-*/
+ * @ingroup driver
+ * @brief Get non-container internal Tgid number
+ * @attention null
+ * @return Tgid number (non-container Tgid)
+ */
 DLLEXPORT pid_t drvDeviceGetBareTgid(void);
 
 /**
-* @ingroup driver
-* @brief read value from bbox hdr addr
-* @attention offset + len <= bbox hdr len(512KB)
-* @param [in]  devId  : device physical id
-* @param [in]  memType: MEM_CTRL_TYPE
-* @param [in]  offset : bbox hdr offset
-* @param [in]  len : length of read content
-* @param [out] value : read value
-* @return   0 for success, others for fail
-* ---------------------------------------------------------------------------------------------------------------------
-*     MEM_CTRL_TYPE           | log dump mode |     log location        |                   attention                  |
-* ---------------------------------------------------------------------------------------------------------------------
-* MEM_TYPE_PCIE_SRAM          | PCIe bar dump | /mntn/hbm.txt           | IMU startup log                              |
-*                             |               | /mntn/snapshot.txt      | Startup Snapshot Log Before DDR Init Success |
-*                             |               | /mntn/bios_hiss-r52.txt | Checkpoint logs before BIOS startup Success  |
-* MEM_TYPE_PCIE_DDR           | PCIe bar dump | /log/kernel.log         | OS kernel log                                |
-* MEM_TYPE_IMU_DDR            |    DMA dump   | /log/imu_boot.log       | IMU startup log                              |
-*                             |               | /log/imu_run.log        | IMU run logs                                 |
-* MEM_TYPE_BBOX_DDR           |    DMA dump   | /bbox/                  | Bbox reserved space maintenance and test log |
-* MEM_TYPE_BBOX_HDR           | PCIe bar dump | /snapshot/hdr.log       | snapshot info log                            |
-* MEM_TYPE_REG_SRAM           | PCIe bar dump | /mntn/chip_dfx_min.txt  | Log of Minimal Set of Chip DFX Registers     |
-* MEM_TYPE_REG_DDR            |    DMA dump   | /mntn/chip_dfx_full.txt | Full Set of Chip DFX Registers               |
-* MEM_TYPE_TS_LOG             |    DMA dump   | /log/ts.log             | TS info log                                  |
-* MEM_TYPE_HBOOT_SRAM         | PCIe bar dump | /mntn/hboot.txt         | Hboot Log Before HBM Init Success            |
-* MEM_TYPE_DEBUG_OS_LOG       |    DMA dump   | /slog/debug/device-os   | device ccpu system process debug log         |
-* MEM_TYPE_SEC_LOG            |    DMA dump   | /slog/security          | device ccpu system process security log      |
-* MEM_TYPE_RUN_OS_LOG         |    DMA dump   | /slog/run/device-os     | device ccpu system process run log           |
-* MEM_TYPE_RUN_EVENT_LOG      |    DMA dump   | /slog/run/event         | device ccpu system process event log         |
-* MEM_TYPE_DEBUG_DEV_LOG      |    DMA dump   | /slog/debug/device-id   | device other than ccpu sys process debug log |
-* MEM_TYPE_KDUMP_MAGIC        |               |                         |                                              |
-* MEM_TYPE_VMCORE_FILE        |               |                         |                                              |
-* MEM_TYPE_VMCORE_STAT        |               |                         |                                              |
-* MEM_TYPE_CHIP_LOG_PCIE_BAR  | PCIe bar dump | /mntn/chip_dfx_full.txt | Full Set of Chip DFX Registers               |
-* MEM_TYPE_TS_LOG_PCIE_BAR    | PCIe bar dump | /log/ts.log             | TS info log                                  |
-* MEM_TYPE_BBOX_PCIE_BAR      | PCIe bar dump | /bbox/                  | Bbox reserved space maintenance and test log |
-* ---------------------------------------------------------------------------------------------------------------------
-* In SMP scenario, devId can transfer only master id when drvMemRead is invoked to obtain OS-level log information.
-*/
+ * @ingroup driver
+ * @brief read value from bbox hdr addr
+ * @attention offset + len <= bbox hdr len(512KB)
+ * @param [in]  devId  : device physical id
+ * @param [in]  memType: MEM_CTRL_TYPE
+ * @param [in]  offset : bbox hdr offset
+ * @param [in]  len : length of read content
+ * @param [out] value : read value
+ * @return   0 for success, others for fail
+ * ---------------------------------------------------------------------------------------------------------------------
+ *     MEM_CTRL_TYPE           | log dump mode |     log location        |                   attention |
+ * ---------------------------------------------------------------------------------------------------------------------
+ * MEM_TYPE_PCIE_SRAM          | PCIe bar dump | /mntn/hbm.txt           | IMU startup log | |               |
+ * /mntn/snapshot.txt      | Startup Snapshot Log Before DDR Init Success | |               | /mntn/bios_hiss-r52.txt |
+ * Checkpoint logs before BIOS startup Success  | MEM_TYPE_PCIE_DDR           | PCIe bar dump | /log/kernel.log | OS
+ * kernel log                                | MEM_TYPE_IMU_DDR            |    DMA dump   | /log/imu_boot.log       |
+ * IMU startup log                              | |               | /log/imu_run.log        | IMU run logs |
+ * MEM_TYPE_BBOX_DDR           |    DMA dump   | /bbox/                  | Bbox reserved space maintenance and test log
+ * | MEM_TYPE_BBOX_HDR           | PCIe bar dump | /snapshot/hdr.log       | snapshot info log | MEM_TYPE_REG_SRAM |
+ * PCIe bar dump | /mntn/chip_dfx_min.txt  | Log of Minimal Set of Chip DFX Registers     | MEM_TYPE_REG_DDR |    DMA
+ * dump   | /mntn/chip_dfx_full.txt | Full Set of Chip DFX Registers               | MEM_TYPE_TS_LOG             | DMA
+ * dump   | /log/ts.log             | TS info log                                  | MEM_TYPE_HBOOT_SRAM         | PCIe
+ * bar dump | /mntn/hboot.txt         | Hboot Log Before HBM Init Success            | MEM_TYPE_DEBUG_OS_LOG       | DMA
+ * dump   | /slog/debug/device-os   | device ccpu system process debug log         | MEM_TYPE_SEC_LOG            | DMA
+ * dump   | /slog/security          | device ccpu system process security log      | MEM_TYPE_RUN_OS_LOG         | DMA
+ * dump   | /slog/run/device-os     | device ccpu system process run log           | MEM_TYPE_RUN_EVENT_LOG      | DMA
+ * dump   | /slog/run/event         | device ccpu system process event log         | MEM_TYPE_DEBUG_DEV_LOG      | DMA
+ * dump   | /slog/debug/device-id   | device other than ccpu sys process debug log | MEM_TYPE_KDUMP_MAGIC        | | | |
+ * MEM_TYPE_VMCORE_FILE        |               |                         | | MEM_TYPE_VMCORE_STAT        | | | |
+ * MEM_TYPE_CHIP_LOG_PCIE_BAR  | PCIe bar dump | /mntn/chip_dfx_full.txt | Full Set of Chip DFX Registers |
+ * MEM_TYPE_TS_LOG_PCIE_BAR    | PCIe bar dump | /log/ts.log             | TS info log | MEM_TYPE_BBOX_PCIE_BAR      |
+ * PCIe bar dump | /bbox/                  | Bbox reserved space maintenance and test log |
+ * ---------------------------------------------------------------------------------------------------------------------
+ * In SMP scenario, devId can transfer only master id when drvMemRead is invoked to obtain OS-level log information.
+ */
 DLLEXPORT drvError_t drvMemRead(uint32_t devId, MEM_CTRL_TYPE memType, uint32_t offset, uint8_t *value, uint32_t len);
 /**
-* @ingroup driver
-* @brief write value to bbox address
-* @attention null
-* @param [in]  devId  : device physical id
-* @param [in]  memType: MEM_CTRL_TYPE
-* @param [in]  offset : bbox offset
-* @param [in]  len : length of write content
-* @param [out] value : write value
-* @return   0 for success, others for fail
-*/
+ * @ingroup driver
+ * @brief write value to bbox address
+ * @attention null
+ * @param [in]  devId  : device physical id
+ * @param [in]  memType: MEM_CTRL_TYPE
+ * @param [in]  offset : bbox offset
+ * @param [in]  len : length of write content
+ * @param [out] value : write value
+ * @return   0 for success, others for fail
+ */
 DLLEXPORT drvError_t drvMemWrite(uint32_t devId, MEM_CTRL_TYPE memType, uint32_t offset, uint8_t *value, uint32_t len);
 
 #define DRV_P2P_STATUS_ENABLE 1
@@ -1750,14 +1747,14 @@ DLLEXPORT drvError_t halDeviceEnableP2P(uint32_t dev, uint32_t peer_dev, uint32_
 DLLEXPORT drvError_t halDeviceDisableP2P(uint32_t dev, uint32_t peer_dev, uint32_t flag);
 
 /**
-* @ingroup driver
-* @brief enable when both dev and peer_dev successfully call the halDeviceEnableP2P interface, otherwise disable
-* @attention Both directions must be set to take effect, and support sdma and vnic interworking
-* @param [in]  dev : logical device id
-* @param [in]  peer_dev : physical device id
-* @param [out]  0 for disable, 1 for enable
-* @return   0 for success, others for fail
-*/
+ * @ingroup driver
+ * @brief enable when both dev and peer_dev successfully call the halDeviceEnableP2P interface, otherwise disable
+ * @attention Both directions must be set to take effect, and support sdma and vnic interworking
+ * @param [in]  dev : logical device id
+ * @param [in]  peer_dev : physical device id
+ * @param [out]  0 for disable, 1 for enable
+ * @return   0 for success, others for fail
+ */
 DLLEXPORT drvError_t drvGetP2PStatus(uint32_t dev, uint32_t peer_dev, uint32_t *status);
 
 /**
@@ -1826,13 +1823,13 @@ DLLEXPORT drvError_t halDeviceEnableP2PNotify(uint32_t phy_dev, uint32_t peer_ph
 DLLEXPORT drvError_t halDeviceDisableP2PNotify(uint32_t phy_dev, uint32_t peer_phy_dev, uint32_t flag);
 
 /**
-* @ingroup driver
-* @brief host get device boot status
-* @attention null
-* @param [in]  phy_id : physical device id
-* @param [out] boot_status : see dsmi_boot_status definition
-* @return   0 for success, others for fail
-*/
+ * @ingroup driver
+ * @brief host get device boot status
+ * @attention null
+ * @param [in]  phy_id : physical device id
+ * @param [out] boot_status : see dsmi_boot_status definition
+ * @return   0 for success, others for fail
+ */
 DLLEXPORT drvError_t drvGetDeviceBootStatus(int phy_id, uint32_t *boot_status);
 
 /**
@@ -1979,24 +1976,24 @@ DLLEXPORT void drvDfxShowReport(uint32_t devId);
 typedef struct drv_mem_handle drv_mem_handle_t;
 
 struct drv_mem_prop {
-    uint32_t side;       /* enum drv_mem_side */
-    uint32_t devid;      /* devid is numa id, if side == MEM_HOST_NUMA_SIDE; otherwise devid is device id */
-    uint32_t module_id;  /* module id defines in ascend_hal_define.h */
+    uint32_t side;      /* enum drv_mem_side */
+    uint32_t devid;     /* devid is numa id, if side == MEM_HOST_NUMA_SIDE; otherwise devid is device id */
+    uint32_t module_id; /* module id defines in ascend_hal_define.h */
 
-    uint32_t pg_type;    /* enum drv_mem_pg_type */
-    uint32_t mem_type;   /* enum drv_mem_type */
+    uint32_t pg_type;  /* enum drv_mem_pg_type */
+    uint32_t mem_type; /* enum drv_mem_type */
     uint64_t reserve;
 };
 
 struct memcpy_info {
     drvMemcpyKind_t dir;
     uint32_t devid;
-    uint64_t reserve[2];   // should be zero
+    uint64_t reserve[2]; // should be zero
 };
 
 struct drv_process_status_output {
     uint32_t result;
-    uint32_t reserve[8];   // should be zero
+    uint32_t reserve[8]; // should be zero
 };
 
 typedef enum {
@@ -2015,15 +2012,15 @@ typedef UINT32 DVdevice;
 typedef UINT64 DVdeviceptr;
 typedef drvError_t DVresult;
 
-#define DV_MEM_LOCK_HOST        0x0008
-#define DV_MEM_LOCK_DEV         0x0010
-#define DV_MEM_LOCK_DEV_DVPP    0x0020
-#define DV_MEM_LOCK_HOST_AGENT  0x0040
-#define DV_MEM_USER_MALLOC      0x0080
-#define DV_MEM_USER_REGISTER    0x0100
-#define DV_MEM_UVM              0x0200
+#define DV_MEM_LOCK_HOST 0x0008
+#define DV_MEM_LOCK_DEV 0x0010
+#define DV_MEM_LOCK_DEV_DVPP 0x0020
+#define DV_MEM_LOCK_HOST_AGENT 0x0040
+#define DV_MEM_USER_MALLOC 0x0080
+#define DV_MEM_USER_REGISTER 0x0100
+#define DV_MEM_UVM 0x0200
 
-#define DV_MEM_SOMA             0x0400
+#define DV_MEM_SOMA 0x0400
 
 #define DV_MEM_RESV 8
 struct DVattribute {
@@ -2161,8 +2158,8 @@ DLLEXPORT drvError_t halMemcpy(void *dst, size_t dst_size, void *src, size_t cou
  * @return DRV_ERROR_NONE : success
  * @return DRV_ERROR_INVALID_HANDLE : Internal error, copy failed
  */
-DLLEXPORT DV_OFF_ONLINE DVresult halMemCpyAsync(
-    DVdeviceptr dst, size_t dest_max, DVdeviceptr src, size_t byte_count, uint64_t *copy_fd) ASCEND_HAL_WEAK;
+DLLEXPORT DV_OFF_ONLINE DVresult halMemCpyAsync(DVdeviceptr dst, size_t dest_max, DVdeviceptr src, size_t byte_count,
+                                                uint64_t *copy_fd) ASCEND_HAL_WEAK;
 
 /**
  * @ingroup driver
@@ -2221,8 +2218,8 @@ DLLEXPORT DV_ONLINE DVresult halMemcpyBatch(uint64_t dst[], uint64_t src[], size
  * @param [in] len: size of the buffer to be copy
  * @return zero on success otherwise -errno
  */
-DLLEXPORT DV_OFFLINE drvError_t halSdmaCopy(
-    DVdeviceptr dst, size_t dst_size, DVdeviceptr src, size_t len) ASCEND_HAL_WEAK;
+DLLEXPORT DV_OFFLINE drvError_t halSdmaCopy(DVdeviceptr dst, size_t dst_size, DVdeviceptr src,
+                                            size_t len) ASCEND_HAL_WEAK;
 
 /**
  * @halSdmaBatchCopy
@@ -2235,8 +2232,7 @@ DLLEXPORT DV_OFFLINE drvError_t halSdmaCopy(
  * @param [in] count: the length of size[], dst[] and src[]
  * @return zero on success otherwise -errno
  */
-DLLEXPORT DV_OFFLINE drvError_t halSdmaBatchCopy(
-    void *dst[], void *src[], size_t size[], int count) ASCEND_HAL_WEAK;
+DLLEXPORT DV_OFFLINE drvError_t halSdmaBatchCopy(void *dst[], void *src[], size_t size[], int count) ASCEND_HAL_WEAK;
 
 /**
  * @ingroup driver
@@ -2255,8 +2251,8 @@ DLLEXPORT DV_OFFLINE drvError_t halSdmaBatchCopy(
  * @return DRV_ERROR_NONE : success
  * @return DV_ERROR_XXX : convert fail
  */
-DLLEXPORT DV_ONLINE DVresult drvMemConvertAddr(
-    DVdeviceptr p_src, DVdeviceptr p_dst, UINT32 len, struct DMA_ADDR *dma_addr);
+DLLEXPORT DV_ONLINE DVresult drvMemConvertAddr(DVdeviceptr p_src, DVdeviceptr p_dst, UINT32 len,
+                                               struct DMA_ADDR *dma_addr);
 
 /**
  * @ingroup driver
@@ -2325,17 +2321,20 @@ DLLEXPORT DV_ONLINE DVresult drvMemPrefetchToDevice(DVdeviceptr dev_ptr, size_t 
 
 #ifndef UVM_OPEN
 DLLEXPORT int halGetCurrentThreadNumaNode(void);
- 
-DLLEXPORT DVresult halMemManagedPrefetch(DVdeviceptr ptr, size_t size, struct drv_uvm_location location, unsigned int flags);
 
-DLLEXPORT DVresult halMemManagedPrefetchBatch(DVdeviceptr* ptrs, size_t* sizes, size_t count, struct drv_uvm_location* prefetchLocs,
-    size_t* prefetchLocIdxs, size_t numPrefetchLocs, unsigned long long flags);
-#endif       
+DLLEXPORT DVresult halMemManagedPrefetch(DVdeviceptr ptr, size_t size, struct drv_uvm_location location,
+                                         unsigned int flags);
+
+DLLEXPORT DVresult halMemManagedPrefetchBatch(DVdeviceptr *ptrs, size_t *sizes, size_t count,
+                                              struct drv_uvm_location *prefetchLocs, size_t *prefetchLocIdxs,
+                                              size_t numPrefetchLocs, unsigned long long flags);
+#endif
 /**
  * @ingroup driver
  * @brief Create a share corresponding to vptr based on name
  * @attention Available online, not offline.
- * 1. Vptr must be device memory, and must be directly allocated for calling the memory management interface, without offset.
+ * 1. Vptr must be device memory, and must be directly allocated for calling the memory management interface, without
+ * offset.
  * 2. The length of the name array and name_len must be greater than 64.
  * 3. Not support vmm va, use may result in unexpected behavior.
  * 4. For Ascend950, Ascend910_96, should config ubmem firstly.
@@ -2574,7 +2573,8 @@ DLLEXPORT DV_ONLINE int drvMemDeviceClose(uint32_t devid);
  * support in Linux versions below 5.19.
  * 6. HOST_SVM_MAP_DEV don't support in virt machine.
  * 7. Not support vmm va, use may result in unexpected behavior.
- * 8. If multiple registrations are successful for overlapping addresses, halMemHostGetDevPointer will only retrieve the first successful registration.
+ * 8. If multiple registrations are successful for overlapping addresses, halMemHostGetDevPointer will only retrieve the
+ * first successful registration.
  * @param [in] src_ptr: requested the src share memory pointer, srcPtr must be page aligned.
  * @param [in] size: requested byte size.
  * @param [in] flag:  requested memory parameter, the flag is made by map type and proc type.
@@ -2602,8 +2602,8 @@ DLLEXPORT drvError_t halHostUnregister(void *src_ptr, UINT32 devid);
  * @attention null
  * @param [in] src_ptr: requested the src share memory pointer.
  * @param [in] devid:  requested input device id when srcPtr isn't in svm range.
- * @param [in] flag:   made by map_type and proc_type. Only DEV_MEM_MAP_HOST request map_type input, others judge type by
- * va_attr.
+ * @param [in] flag:   made by map_type and proc_type. Only DEV_MEM_MAP_HOST request map_type input, others judge type
+ * by va_attr.
  * @return DRV_ERROR_NONE : success
  * @return DV_ERROR_XXX : unregister fail
  */
@@ -2612,9 +2612,9 @@ DLLEXPORT drvError_t halHostUnregisterEx(void *src_ptr, UINT32 devid, UINT32 fla
 /**
  * @ingroup driver
  * @brief This command is used to get device pointer that had been registered.
- * @attention 
- * 1. Need to call halSupportFeature(devid, FEATURE_SVM_MEM_REGISTER_QUERY_AND_GET_ATTR) firstly, then call halHostRegister.
- *    Only in this way can get device pointer.
+ * @attention
+ * 1. Need to call halSupportFeature(devid, FEATURE_SVM_MEM_REGISTER_QUERY_AND_GET_ATTR) firstly, then call
+ * halHostRegister. Only in this way can get device pointer.
  * @param [in] src_ptr: requested the src share memory pointer.
  * @param [in] devid:  requested input device id when srcPtr isn't in svm range.
  * @param [out] dst_ptr: level-2 pointer that stores the address of the allocated dst memory pointer.
@@ -2624,7 +2624,7 @@ DLLEXPORT drvError_t halHostUnregisterEx(void *src_ptr, UINT32 devid, UINT32 fla
 DLLEXPORT drvError_t halMemHostGetDevPointer(void *src_ptr, uint32_t devid, void **dst_ptr);
 /**
  * @ingroup driver
- * @brief This command is used to query accelerators to access host memory 
+ * @brief This command is used to query accelerators to access host memory
  * @attention null
  * @param [in] devid:  device id.
  * @param [in] acc_module_type: the accelerators type. The value only supports enum drvAccModuleType.
@@ -2694,7 +2694,8 @@ DLLEXPORT drvError_t halMemAdvise(DVdeviceptr ptr, size_t count, unsigned int ty
  * @return DRV_ERROR_NONE : success
  * @return DV_ERROR_XXX : set fail
  */
-DLLEXPORT drvError_t halMemManagedAdvise(DVdeviceptr ptr, size_t size, uint32_t advise, struct drv_uvm_location location);
+DLLEXPORT drvError_t halMemManagedAdvise(DVdeviceptr ptr, size_t size, uint32_t advise,
+                                         struct drv_uvm_location location);
 
 /**
  * @ingroup driver
@@ -2708,8 +2709,8 @@ DLLEXPORT drvError_t halMemManagedAdvise(DVdeviceptr ptr, size_t size, uint32_t 
  * @return DRV_ERROR_NONE : success
  * @return DV_ERROR_XXX : set fail
  */
-DLLEXPORT drvError_t halMemManagedRangeGetAttributes(void** data, size_t* data_sizes, uint32_t *attributes,
-    size_t attribute_num, DVdeviceptr ptr, size_t size);
+DLLEXPORT drvError_t halMemManagedRangeGetAttributes(void **data, size_t *data_sizes, uint32_t *attributes,
+                                                     size_t attribute_num, DVdeviceptr ptr, size_t size);
 #endif
 
 /**
@@ -2723,8 +2724,8 @@ DLLEXPORT drvError_t halMemManagedRangeGetAttributes(void** data, size_t* data_s
  * @return DRV_ERROR_NONE : success
  * @return DV_ERROR_XXX : fail
  */
-DLLEXPORT DV_ONLINE drvError_t halCheckProcessStatus(
-    DVdevice device, processType_t process_type, processStatus_t status, bool *is_matched);
+DLLEXPORT DV_ONLINE drvError_t halCheckProcessStatus(DVdevice device, processType_t process_type,
+                                                     processStatus_t status, bool *is_matched);
 
 /**
  * @ingroup driver
@@ -2737,8 +2738,8 @@ DLLEXPORT DV_ONLINE drvError_t halCheckProcessStatus(
  * @return DRV_ERROR_NONE : success
  * @return DV_ERROR_XXX : fail
  */
-DLLEXPORT DV_ONLINE drvError_t halCheckProcessStatusEx(
-    DVdevice device, processType_t process_type, processStatus_t status, struct drv_process_status_output *out);
+DLLEXPORT DV_ONLINE drvError_t halCheckProcessStatusEx(DVdevice device, processType_t process_type,
+                                                       processStatus_t status, struct drv_process_status_output *out);
 
 /**
  * @ingroup driver
@@ -2753,8 +2754,8 @@ DLLEXPORT DV_ONLINE drvError_t halCheckProcessStatusEx(
  * @return DRV_ERROR_NONE : success
  * @return DV_ERROR_XXX : fail
  */
-DLLEXPORT DV_ONLINE drvError_t halMemGetAddressReserveRange(
-    void **ptr, size_t *size, drv_mem_addr_reserve_type type, uint64_t flag);
+DLLEXPORT DV_ONLINE drvError_t halMemGetAddressReserveRange(void **ptr, size_t *size, drv_mem_addr_reserve_type type,
+                                                            uint64_t flag);
 
 /**
  * @ingroup driver
@@ -2804,17 +2805,17 @@ DLLEXPORT drvError_t halMemAddressFree(void *ptr);
  * @return DRV_ERROR_NONE : success
  * @return DV_ERROR_XXX : fail
  */
-DLLEXPORT drvError_t halMemCreate(
-    drv_mem_handle_t **handle, size_t size, const struct drv_mem_prop *prop, uint64_t flag);
+DLLEXPORT drvError_t halMemCreate(drv_mem_handle_t **handle, size_t size, const struct drv_mem_prop *prop,
+                                  uint64_t flag);
 
 /**
-* @ingroup driver
-* @brief This command is used to free physical memory.
-* @attention Only support ONLINE scene.
-* @param [in] handle: value of handle which was returned previously by halMemCreate.
-* @return DRV_ERROR_NONE : success
-* @return DV_ERROR_XXX : fail
-*/
+ * @ingroup driver
+ * @brief This command is used to free physical memory.
+ * @attention Only support ONLINE scene.
+ * @param [in] handle: value of handle which was returned previously by halMemCreate.
+ * @return DRV_ERROR_NONE : success
+ * @return DV_ERROR_XXX : fail
+ */
 DLLEXPORT drvError_t halMemRelease(drv_mem_handle_t *handle);
 
 /**
@@ -2903,8 +2904,8 @@ DLLEXPORT drvError_t halMemGetAccess(void *ptr, struct drv_mem_location *locatio
  * @return DRV_ERROR_NONE : success
  * @return DV_ERROR_XXX : fail
  */
-DLLEXPORT drvError_t halMemExportToShareableHandle(
-    drv_mem_handle_t *handle, drv_mem_handle_type handle_type, uint64_t flags, uint64_t *shareable_handle);
+DLLEXPORT drvError_t halMemExportToShareableHandle(drv_mem_handle_t *handle, drv_mem_handle_type handle_type,
+                                                   uint64_t flags, uint64_t *shareable_handle);
 
 /**
  * @ingroup driver
@@ -2917,8 +2918,8 @@ DLLEXPORT drvError_t halMemExportToShareableHandle(
  * @return DRV_ERROR_NONE : success
  * @return DV_ERROR_XXX : fail
  */
-DLLEXPORT drvError_t halMemExportToShareableHandleV2(
-    drv_mem_handle_t *handle, drv_mem_handle_type handle_type, uint64_t flags, struct MemShareHandle *share_handle);
+DLLEXPORT drvError_t halMemExportToShareableHandleV2(drv_mem_handle_t *handle, drv_mem_handle_type handle_type,
+                                                     uint64_t flags, struct MemShareHandle *share_handle);
 
 /**
  * @ingroup driver
@@ -2931,8 +2932,8 @@ DLLEXPORT drvError_t halMemExportToShareableHandleV2(
  * @return DRV_ERROR_NONE : success
  * @return DV_ERROR_XXX : fail
  */
-DLLEXPORT drvError_t halMemImportFromShareableHandle(
-    uint64_t shareable_handle, uint32_t devid, drv_mem_handle_t **handle);
+DLLEXPORT drvError_t halMemImportFromShareableHandle(uint64_t shareable_handle, uint32_t devid,
+                                                     drv_mem_handle_t **handle);
 
 /**
  * @ingroup driver
@@ -2942,12 +2943,14 @@ DLLEXPORT drvError_t halMemImportFromShareableHandle(
  * @param [in] share_handle: Import a shareable handle.
  * @param [in] devid: Device id. Since server-to-server communication requires the capabilities of the devices,
               the device ID is retained in the halMemImportFromShareableHandleEx interface.
- * @param [out] handle: Value of handle returned, all operations on this allocation are to be performed using this handle
+ * @param [out] handle: Value of handle returned, all operations on this allocation are to be performed using this
+ handle
  * @return DRV_ERROR_NONE : success
  * @return DV_ERROR_XXX : fail
  */
-DLLEXPORT drvError_t halMemImportFromShareableHandleV2(
-    drv_mem_handle_type handle_type, struct MemShareHandle *share_handle, uint32_t devid, drv_mem_handle_t **handle);
+DLLEXPORT drvError_t halMemImportFromShareableHandleV2(drv_mem_handle_type handle_type,
+                                                       struct MemShareHandle *share_handle, uint32_t devid,
+                                                       drv_mem_handle_t **handle);
 
 /**
  * @ingroup driver
@@ -2962,7 +2965,7 @@ DLLEXPORT drvError_t halMemImportFromShareableHandleV2(
  * @return DV_ERROR_XXX : fail
  */
 DLLEXPORT drvError_t halMemTransShareableHandle(drv_mem_handle_type handle_type, struct MemShareHandle *share_handle,
-    uint32_t *server_id, uint64_t *shareable_handle);
+                                                uint32_t *server_id, uint64_t *shareable_handle);
 
 /**
  * @ingroup driver
@@ -2994,8 +2997,8 @@ DLLEXPORT drvError_t halMemSetPidToShareableHandle(uint64_t shareable_handle, in
  * @return DRV_ERROR_NONE : success
  * @return DV_ERROR_XXX : set fail
  */
-DLLEXPORT drvError_t halMemShareHandleSetAttribute(
-    uint64_t shareable_handle, enum ShareHandleAttrType type, struct ShareHandleAttr attr);
+DLLEXPORT drvError_t halMemShareHandleSetAttribute(uint64_t shareable_handle, enum ShareHandleAttrType type,
+                                                   struct ShareHandleAttr attr);
 
 /**
  * @ingroup driver
@@ -3007,16 +3010,16 @@ DLLEXPORT drvError_t halMemShareHandleSetAttribute(
  * @return DRV_ERROR_NONE : success
  * @return DV_ERROR_XXX : set fail
  */
-DLLEXPORT drvError_t halMemShareHandleGetAttribute(
-    uint64_t shareable_handle, enum ShareHandleAttrType type, struct ShareHandleAttr *attr);
+DLLEXPORT drvError_t halMemShareHandleGetAttribute(uint64_t shareable_handle, enum ShareHandleAttrType type,
+                                                   struct ShareHandleAttr *attr);
 
 /**
 * @ingroup driver
 * @brief Set the attribute of memory by handle
 * @attention Available online, not offline. Not support compute group.
     Type is HANDLE_ATTR_MEM_MAP_ROUTE:
-    1.Only supports setting properties for shared memory between different devices on the same dev OS in the Ascend910_93.
-    2.The successfully set attributes will only take effect on subsequent mem map operations.
+    1.Only supports setting properties for shared memory between different devices on the same dev OS in the
+Ascend910_93. 2.The successfully set attributes will only take effect on subsequent mem map operations.
 * @param [in] handle Value of handle which was returned previously by halMemImportFromShareableHandle\
     halMemImportFromShareableHandleV2\halMemCreate, etc.
 * @param [in] type value of enum HandleAttrType
@@ -3024,15 +3027,16 @@ DLLEXPORT drvError_t halMemShareHandleGetAttribute(
 * @return DRV_ERROR_NONE : success
 * @return DV_ERROR_XXX : set fail
 */
-DLLEXPORT drvError_t halMemHandleSetAttribute(
-    drv_mem_handle_t *handle, enum HandleAttrType type, struct HandleAttr attr);
- 
+DLLEXPORT drvError_t halMemHandleSetAttribute(drv_mem_handle_t *handle, enum HandleAttrType type,
+                                              struct HandleAttr attr);
+
 /**
 * @ingroup driver
 * @brief Get the attribute of memory by handle
 * @attention Available online, not offline. Not support compute group.
     Type is HANDLE_ATTR_MEM_MAP_ROUTE:
-    1.Only supports setting properties for shared memory between different devices on the same dev OS in the Ascend910_93.
+    1.Only supports setting properties for shared memory between different devices on the same dev OS in the
+Ascend910_93.
 * @param [in] handle Value of handle which was returned previously by halMemImportFromShareableHandle\
     halMemImportFromShareableHandleV2\halMemCreate, etc.
 * @param [in] type value of enum HandleAttrType
@@ -3040,8 +3044,8 @@ DLLEXPORT drvError_t halMemHandleSetAttribute(
 * @return DRV_ERROR_NONE : success
 * @return DV_ERROR_XXX : set fail
 */
-DLLEXPORT drvError_t halMemHandleGetAttribute(
-    drv_mem_handle_t *handle, enum HandleAttrType type, struct HandleAttr *attr);
+DLLEXPORT drvError_t halMemHandleGetAttribute(drv_mem_handle_t *handle, enum HandleAttrType type,
+                                              struct HandleAttr *attr);
 /**
  * @ingroup driver
  * @brief get the info of shared memory by shareable_handle
@@ -3063,20 +3067,20 @@ DLLEXPORT drvError_t halMemShareHandleInfoGet(uint64_t shareable_handle, struct 
  * @return DRV_ERROR_NONE : success
  * @return DV_ERROR_XXX : fail
  */
-DLLEXPORT drvError_t halMemGetAllocationGranularity(
-    const struct drv_mem_prop *prop, drv_mem_granularity_options option, size_t *granularity);
+DLLEXPORT drvError_t halMemGetAllocationGranularity(const struct drv_mem_prop *prop, drv_mem_granularity_options option,
+                                                    size_t *granularity);
 
 /**
 * @ingroup driver
-* @brief Return the base address in *pbase and size in *psize of the allocation by halMemAlloc or 
-   halMemAddressReserve(should be mapped by halMemMap) that contains the input pointer ptr. Both 
+* @brief Return the base address in *pbase and size in *psize of the allocation by halMemAlloc or
+   halMemAddressReserve(should be mapped by halMemMap) that contains the input pointer ptr. Both
    parameters pbase and psize are optional.if one of them is NULL, it is ignored.
 * @attention Only support ONLINE scene.
 * @param [in] ptr -Device pointer to query.
 * @param [out] pbase -Return base address.
 * @param [out] psize -Return size of device memory allocation.
-   Note: The returned size is the actual allocated memory after aligning to the page size, which 
-   is larger than the user's initial requested memory size. For example, if the user wishes to 
+   Note: The returned size is the actual allocated memory after aligning to the page size, which
+   is larger than the user's initial requested memory size. For example, if the user wishes to
    allocate 1024 bytes, the actual allocated size aligned to a 4K page size is 4K.
 * @return DRV_ERROR_NONE : success
 * @return DV_ERROR_XXX : fail
@@ -3084,13 +3088,13 @@ DLLEXPORT drvError_t halMemGetAllocationGranularity(
 DLLEXPORT drvError_t halMemGetAddressRange(DVdeviceptr ptr, DVdeviceptr *pbase, size_t *psize);
 
 /**
-* @ingroup driver
-* @brief Get memory allocation properties from handle.
-* @param [in] handle - memory handle.
-* @param [out] prop - memory allocation properties.
-* @return DRV_ERROR_NONE : success
-* @return DV_ERROR_XXX : fail
-*/
+ * @ingroup driver
+ * @brief Get memory allocation properties from handle.
+ * @param [in] handle - memory handle.
+ * @param [out] prop - memory allocation properties.
+ * @return DRV_ERROR_NONE : success
+ * @return DV_ERROR_XXX : fail
+ */
 DLLEXPORT drvError_t halMemGetAllocationPropertiesFromHandle(struct drv_mem_prop *prop, drv_mem_handle_t *handle);
 
 /**
@@ -3131,17 +3135,17 @@ struct MemPhyInfo {
     unsigned long long giant_total;
     unsigned long long giant_free;
 #else
-    unsigned long total;        /* normal page total size, only 4K pages */
-    unsigned long free;         /* normal page free size */
-    unsigned long huge_total;   /* huge page total size, 2M pages + 1G pages */
-    unsigned long huge_free;    /* huge page free size */
-    unsigned long giant_total;  /* giant page total size, only 1G pages */
-    unsigned long giant_free;   /* giant page free size */
+    unsigned long total;       /* normal page total size, only 4K pages */
+    unsigned long free;        /* normal page free size */
+    unsigned long huge_total;  /* huge page total size, 2M pages + 1G pages */
+    unsigned long huge_free;   /* huge page free size */
+    unsigned long giant_total; /* giant page total size, only 1G pages */
+    unsigned long giant_free;  /* giant page free size */
 #endif
 };
 
 struct MemAddrInfo {
-    DVdeviceptr** addr;
+    DVdeviceptr **addr;
     unsigned int cnt;
     unsigned int mem_type;
     unsigned int flag;
@@ -3153,18 +3157,17 @@ struct MemNumaInfo {
     int node_id[MAX_NUMA_NUM_OF_PER_DEV];
 };
 
-
-#define SVM_GRP_NAME_LEN    BUFF_GRP_NAME_LEN
+#define SVM_GRP_NAME_LEN BUFF_GRP_NAME_LEN
 struct MemSvmGrpInfo {
     char name[SVM_GRP_NAME_LEN];
 };
 
 struct MemUbTokenInfo {
-    uint64_t va;                /* Input para */
-    uint64_t size;              /* Input para */
+    uint64_t va;   /* Input para */
+    uint64_t size; /* Input para */
 
-    uint32_t token_id;          /* Output para */
-    uint32_t token_value;       /* Output para */
+    uint32_t token_id;    /* Output para */
+    uint32_t token_value; /* Output para */
 };
 
 struct MemInfo {
@@ -3215,34 +3218,35 @@ DLLEXPORT DVresult halMemGetInfo(DVdevice device, unsigned int type, struct MemI
  * @return DRV_ERROR_NONE : success
  * @return DV_ERROR_XXX : set fail
  */
-DLLEXPORT drvError_t halMemCtl(
-    int type, void *param_value, size_t param_value_size, void *out_value, size_t *out_size_ret) ASCEND_HAL_WEAK;
+DLLEXPORT drvError_t halMemCtl(int type, void *param_value, size_t param_value_size, void *out_value,
+                               size_t *out_size_ret) ASCEND_HAL_WEAK;
 
 struct mem_module_usage {
-    char name[32]; /* module name Length 32 */
-    uint64_t cur_mem_size;   /* Current memory size occupied by the module */
-    uint64_t mem_peak_size;   /* Peak memory size occupied by the module */
-    size_t reserved[8];  /* reserved field 8 */
+    char name[32];          /* module name Length 32 */
+    uint64_t cur_mem_size;  /* Current memory size occupied by the module */
+    uint64_t mem_peak_size; /* Peak memory size occupied by the module */
+    size_t reserved[8];     /* reserved field 8 */
 };
 /**
  * @ingroup driver
  * @brief This command is used to query the memory usage of each module.
  * @attention Only memory allocated through halMemAlloc and halMemCreate can be queried
- * @param [in] dev_id:  calls the aclrtGetDeviceCount API to obtain the number of available devices, 
+ * @param [in] dev_id:  calls the aclrtGetDeviceCount API to obtain the number of available devices,
  * the value range of the device ID is [0, (number of available devices - 1)].
  * Host pin memory information is queried using devid halGetHostId() (ASAN version all return zero).
  * @param [out] mem_usage: An array used to store the memory size information occupied by each module.
- * It is user-defined, and the number of modules to be passed must be 128 (a macro definition is provided). 
+ * It is user-defined, and the number of modules to be passed must be 128 (a macro definition is provided).
  * The specific size of the array is passed through in_num..
  * @param [in] in_num: Actual length of the array.
- * @param [out] out_num: The number of modules that occupy non-zero memory size, 
+ * @param [out] out_num: The number of modules that occupy non-zero memory size,
  * consistent with the valid data length of memUsageInfo.
  * @return DRV_ERROR_NONE : success
  * @return DV_ERROR_XXX : fail
  */
-DLLEXPORT drvError_t halGetMemUsageInfo(uint32_t dev_id, struct mem_module_usage *mem_usage, size_t in_num, size_t *out_num);
+DLLEXPORT drvError_t halGetMemUsageInfo(uint32_t dev_id, struct mem_module_usage *mem_usage, size_t in_num,
+                                        size_t *out_num);
 
- /**
+/**
  * @ingroup driver
  * @brief This command is used to get the name of memory module by module id.
  * @attention If the module id is greater than or equal to the maximum value, will return UNKNOWN.
@@ -3252,314 +3256,314 @@ DLLEXPORT drvError_t halGetMemUsageInfo(uint32_t dev_id, struct mem_module_usage
 DLLEXPORT const char *halGetMemModuleName(uint32_t module_id);
 
 /**
-* @ingroup driver
-* @brief Before the HDC sends messages, you need to know the size of the sent packet and
-* the channel type through this API.
-* @attention null
-* @param [out] capacity : get the packet size and channel type currently supported by HDC
-* @return   0 for success, others for fail
-*/
+ * @ingroup driver
+ * @brief Before the HDC sends messages, you need to know the size of the sent packet and
+ * the channel type through this API.
+ * @attention null
+ * @param [out] capacity : get the packet size and channel type currently supported by HDC
+ * @return   0 for success, others for fail
+ */
 DLLEXPORT drvError_t drvHdcGetCapacity(struct drvHdcCapacity *capacity);
 /**
-* @ingroup driver
-* @brief Create an HDC client and initialize it based on the maximum number of sessions and service type.
-* @attention null
-* @param [in]  maxSessionNum : The maximum number of sessions currently required by Client
-* @param [in]  serviceType : select service type
-* @param [in]  flag : Reserved parameters, [bit0 - bit7] session connect timeout, other fixed to 0
-* @param [out] HDC_CLIENT *client : Created a good HDC Client pointer
-* @return   DRV_ERROR_NONE, DRV_ERROR_INVALID_VALUE
-*/
+ * @ingroup driver
+ * @brief Create an HDC client and initialize it based on the maximum number of sessions and service type.
+ * @attention null
+ * @param [in]  maxSessionNum : The maximum number of sessions currently required by Client
+ * @param [in]  serviceType : select service type
+ * @param [in]  flag : Reserved parameters, [bit0 - bit7] session connect timeout, other fixed to 0
+ * @param [out] HDC_CLIENT *client : Created a good HDC Client pointer
+ * @return   DRV_ERROR_NONE, DRV_ERROR_INVALID_VALUE
+ */
 DLLEXPORT drvError_t drvHdcClientCreate(HDC_CLIENT *client, int maxSessionNum, int serviceType, int flag);
 /**
-* @ingroup driver
-* @brief Release HDC Client
-* @attention null
-* @param [in]  client : HDC Client to be released
-* @return   DRV_ERROR_NONE, DRV_ERROR_INVALID_VALUE
-*/
+ * @ingroup driver
+ * @brief Release HDC Client
+ * @attention null
+ * @param [in]  client : HDC Client to be released
+ * @return   DRV_ERROR_NONE, DRV_ERROR_INVALID_VALUE
+ */
 DLLEXPORT drvError_t drvHdcClientDestroy(HDC_CLIENT client);
 /**
-* @ingroup driver
-* @brief Create HDC Session for Host and Device communication
-* @attention null
-* @param [in]  peer_node : The node number of the node where the Device is located. Currently only 1 node is supported.
-* Remote nodes are not supported. You need to pass a fixed value of 0
-* @param [in]  peer_devid : Device's uniform ID in the host (number in each node)
-* @param [in]  client : HDC Client handle corresponding to the newly created Session
-* @param [out] session : Created session
-* @return   DRV_ERROR_NONE, DRV_ERROR_INVALID_VALUE
-*/
+ * @ingroup driver
+ * @brief Create HDC Session for Host and Device communication
+ * @attention null
+ * @param [in]  peer_node : The node number of the node where the Device is located. Currently only 1 node is supported.
+ * Remote nodes are not supported. You need to pass a fixed value of 0
+ * @param [in]  peer_devid : Device's uniform ID in the host (number in each node)
+ * @param [in]  client : HDC Client handle corresponding to the newly created Session
+ * @param [out] session : Created session
+ * @return   DRV_ERROR_NONE, DRV_ERROR_INVALID_VALUE
+ */
 DLLEXPORT drvError_t drvHdcSessionConnect(int peer_node, int peer_devid, HDC_CLIENT client, HDC_SESSION *session);
 /**
-* @ingroup driver
-* @brief Create HDC Session for Host and Device communication
-* @attention null
-* @param [in]  peer_node : The node number of the node where the Device is located. Currently only 1 node is supported.
-* Remote nodes are not supported. You need to pass a fixed value of 0
-* @param [in]  peer_devid : Device's uniform ID in the host (number in each node)
-* @param [in]  peer_pid : server's pid which you want to connect
-* @param [in]  client : HDC Client handle corresponding to the newly created Session
-* @param [out] session : Created session
-* @return   DRV_ERROR_NONE, DRV_ERROR_INVALID_VALUE
-*/
+ * @ingroup driver
+ * @brief Create HDC Session for Host and Device communication
+ * @attention null
+ * @param [in]  peer_node : The node number of the node where the Device is located. Currently only 1 node is supported.
+ * Remote nodes are not supported. You need to pass a fixed value of 0
+ * @param [in]  peer_devid : Device's uniform ID in the host (number in each node)
+ * @param [in]  peer_pid : server's pid which you want to connect
+ * @param [in]  client : HDC Client handle corresponding to the newly created Session
+ * @param [out] session : Created session
+ * @return   DRV_ERROR_NONE, DRV_ERROR_INVALID_VALUE
+ */
 DLLEXPORT hdcError_t halHdcSessionConnectEx(int peer_node, int peer_devid, int peer_pid, HDC_CLIENT client,
-    HDC_SESSION *pSession);
+                                            HDC_SESSION *pSession);
 
 /**
-* @ingroup driver
-* @brief Create and initialize HDC Server
-* @attention null
-* @param [in]  devid : only support [0, 64)
-* @param [in]  serviceType : select server type
-* @param [out] server : Created HDC server
-* @return   DRV_ERROR_NONE, DRV_ERROR_INVALID_VALUE
-*/
+ * @ingroup driver
+ * @brief Create and initialize HDC Server
+ * @attention null
+ * @param [in]  devid : only support [0, 64)
+ * @param [in]  serviceType : select server type
+ * @param [out] server : Created HDC server
+ * @return   DRV_ERROR_NONE, DRV_ERROR_INVALID_VALUE
+ */
 DLLEXPORT drvError_t drvHdcServerCreate(int devid, int serviceType, HDC_SERVER *pServer);
 /**
-* @ingroup driver
-* @brief Release HDC Server
-* @attention null
-* @param [in]  server : HDC server to be released
-* @return   DRV_ERROR_NONE, DRV_ERROR_INVALID_VALUE
-*/
+ * @ingroup driver
+ * @brief Release HDC Server
+ * @attention null
+ * @param [in]  server : HDC server to be released
+ * @return   DRV_ERROR_NONE, DRV_ERROR_INVALID_VALUE
+ */
 DLLEXPORT drvError_t drvHdcServerDestroy(HDC_SERVER server);
 /**
-* @ingroup driver
-* @brief Open HDC Session for communication between Host and Device
-* @attention null
-* @param [in]  server     : HDC server to which the newly created session belongs
-* @param [out] session  : Created session
-* @return   DRV_ERROR_NONE, DRV_ERROR_INVALID_VALUE
-*/
+ * @ingroup driver
+ * @brief Open HDC Session for communication between Host and Device
+ * @attention null
+ * @param [in]  server     : HDC server to which the newly created session belongs
+ * @param [out] session  : Created session
+ * @return   DRV_ERROR_NONE, DRV_ERROR_INVALID_VALUE
+ */
 DLLEXPORT drvError_t drvHdcSessionAccept(HDC_SERVER server, HDC_SESSION *session);
 /**
-* @ingroup driver
-* @brief Close HDC Session for communication between Host and Device
-* @attention null
-* @param [in]  session : Specify in which session to receive data
-* @return   DRV_ERROR_NONE, DRV_ERROR_INVALID_VALUE
-*/
+ * @ingroup driver
+ * @brief Close HDC Session for communication between Host and Device
+ * @attention null
+ * @param [in]  session : Specify in which session to receive data
+ * @return   DRV_ERROR_NONE, DRV_ERROR_INVALID_VALUE
+ */
 DLLEXPORT drvError_t drvHdcSessionClose(HDC_SESSION session);
 /**
-* @ingroup driver
-* @brief Apply for MSG descriptor for sending and receiving
-* @attention The user applies for a message descriptor before sending and receiving data, and then releases the
-* message descriptor after using it.
-* @param [in]  session : Specify in which session to receive data
-* @param [in]  count : Number of buffers in the message descriptor. Currently only one is supported
-* @param [out] ppMsg : Message descriptor pointer, used to store the send and receive buffer
-* address and length
-* @return   DRV_ERROR_NONE, DRV_ERROR_INVALID_VALUE
-*/
+ * @ingroup driver
+ * @brief Apply for MSG descriptor for sending and receiving
+ * @attention The user applies for a message descriptor before sending and receiving data, and then releases the
+ * message descriptor after using it.
+ * @param [in]  session : Specify in which session to receive data
+ * @param [in]  count : Number of buffers in the message descriptor. Currently only one is supported
+ * @param [out] ppMsg : Message descriptor pointer, used to store the send and receive buffer
+ * address and length
+ * @return   DRV_ERROR_NONE, DRV_ERROR_INVALID_VALUE
+ */
 DLLEXPORT drvError_t drvHdcAllocMsg(HDC_SESSION session, struct drvHdcMsg **ppMsg, int count);
 /**
-* @ingroup driver
-* @brief Release MSG descriptor for sending and receiving
-* @attention The user applies for a message descriptor before sending and receiving data, and then releases
-* the message descriptor after using it.
-* @param [in]  pMsg   :  Pointer to message descriptor to be released
-* @return   DRV_ERROR_NONE, DRV_ERROR_INVALID_VALUE
-*/
+ * @ingroup driver
+ * @brief Release MSG descriptor for sending and receiving
+ * @attention The user applies for a message descriptor before sending and receiving data, and then releases
+ * the message descriptor after using it.
+ * @param [in]  pMsg   :  Pointer to message descriptor to be released
+ * @return   DRV_ERROR_NONE, DRV_ERROR_INVALID_VALUE
+ */
 DLLEXPORT drvError_t drvHdcFreeMsg(struct drvHdcMsg *msg);
 /**
-* @ingroup driver
-* @brief Reuse MSG descriptor
-* @attention This interface will clear the Buffer pointer in the message descriptor. For offline scenarios, Reuse
-* will release the original Buffer. For online scenarios, Reuse will not release the original Buffer (the upper
-* layer calls the device memory management interface on the Host to release it).
-* @param [in]  pMsg : The pointer of message need to Reuse
-* @return   DRV_ERROR_NONE, DRV_ERROR_INVALID_VALUE
-*/
+ * @ingroup driver
+ * @brief Reuse MSG descriptor
+ * @attention This interface will clear the Buffer pointer in the message descriptor. For offline scenarios, Reuse
+ * will release the original Buffer. For online scenarios, Reuse will not release the original Buffer (the upper
+ * layer calls the device memory management interface on the Host to release it).
+ * @param [in]  pMsg : The pointer of message need to Reuse
+ * @return   DRV_ERROR_NONE, DRV_ERROR_INVALID_VALUE
+ */
 DLLEXPORT drvError_t drvHdcReuseMsg(struct drvHdcMsg *msg);
 /**
-* @ingroup driver
-* @brief Add the receiving and sending buffer to the MSG descriptor
-* @attention User applies for a message descriptor before sending and receiving data, and then releases the
-* message descriptor after using it.
-* @param [in]  pMsg : The pointer of the message need to be operated
-* @param [in]  pBuf : Buffer pointer to be added
-* @param [in]  len : The length of the effective data to be added
-* @return   DRV_ERROR_NONE, DRV_ERROR_INVALID_VALUE
-*/
+ * @ingroup driver
+ * @brief Add the receiving and sending buffer to the MSG descriptor
+ * @attention User applies for a message descriptor before sending and receiving data, and then releases the
+ * message descriptor after using it.
+ * @param [in]  pMsg : The pointer of the message need to be operated
+ * @param [in]  pBuf : Buffer pointer to be added
+ * @param [in]  len : The length of the effective data to be added
+ * @return   DRV_ERROR_NONE, DRV_ERROR_INVALID_VALUE
+ */
 DLLEXPORT drvError_t drvHdcAddMsgBuffer(struct drvHdcMsg *msg, char *pBuf, int len);
 /**
-* @ingroup driver
-* @brief Add MSG descriptor to send buffer
-* @attention null
-* @param [in]  pMsg : Pointer to the message descriptor to be manipulated
-* @param [in]  index              : The first several buffers need to be obtained, but currently only supports one,
-* be fixed to 0
-* @param [out] ppBuf           : Obtained Buffer pointer
-* @param [out] pLen              : Length of valid data that can be obtained from the Buffer
-* @return   DRV_ERROR_NONE, DRV_ERROR_INVALID_VALUE
-*/
+ * @ingroup driver
+ * @brief Add MSG descriptor to send buffer
+ * @attention null
+ * @param [in]  pMsg : Pointer to the message descriptor to be manipulated
+ * @param [in]  index              : The first several buffers need to be obtained, but currently only supports one,
+ * be fixed to 0
+ * @param [out] ppBuf           : Obtained Buffer pointer
+ * @param [out] pLen              : Length of valid data that can be obtained from the Buffer
+ * @return   DRV_ERROR_NONE, DRV_ERROR_INVALID_VALUE
+ */
 DLLEXPORT drvError_t drvHdcGetMsgBuffer(struct drvHdcMsg *msg, int index, char **pBuf, int *pLen);
 /**
-* @ingroup driver
-* @brief Block and wait before sending data from the peer end and receive the length of the sent packet
-* @attention null
-* @param [in]  session : session
-* @param [in]  msgLen         : Data length
-* @param [in]  flag            : Flag, 0 wait always, HDC_FLAG_NOWAIT non-blocking, HDC_FLAG_WAIT_TIMEOUT
-* blocking timeout
-* @return   DRV_ERROR_NONE, DRV_ERROR_INVALID_VALUE
-*/
+ * @ingroup driver
+ * @brief Block and wait before sending data from the peer end and receive the length of the sent packet
+ * @attention null
+ * @param [in]  session : session
+ * @param [in]  msgLen         : Data length
+ * @param [in]  flag            : Flag, 0 wait always, HDC_FLAG_NOWAIT non-blocking, HDC_FLAG_WAIT_TIMEOUT
+ * blocking timeout
+ * @return   DRV_ERROR_NONE, DRV_ERROR_INVALID_VALUE
+ */
 DLLEXPORT drvError_t drvHdcRecvPeek(HDC_SESSION session, int *msgLen, int flag);
 /**
-* @ingroup driver
-* @brief Receive data over normal channel, Save the received data to the upper layer buffer pBuf
-* @attention null
-* @param [in]  session : session
-* @param [in]  pBuf     : Receive data buf
-* @param [in]  bufLen     : Received data buf length
-* @param [out] msgLen    : Received data buf length
-* @return   DRV_ERROR_NONE, DRV_ERROR_INVALID_VALUE
-*/
+ * @ingroup driver
+ * @brief Receive data over normal channel, Save the received data to the upper layer buffer pBuf
+ * @attention null
+ * @param [in]  session : session
+ * @param [in]  pBuf     : Receive data buf
+ * @param [in]  bufLen     : Received data buf length
+ * @param [out] msgLen    : Received data buf length
+ * @return   DRV_ERROR_NONE, DRV_ERROR_INVALID_VALUE
+ */
 DLLEXPORT drvError_t drvHdcRecvBuf(HDC_SESSION session, char *pBuf, int bufLen, int *msgLen);
 /**
-* @ingroup driver
-* @brief Set session and process affinity
-* @attention If the interface is not called after the session is created, and an exception occurs in the process,
-* HDC will not detect and release the corresponding
-* session resources.
-* @param [in]  session    :    Specified session
-* @return   DRV_ERROR_NONE, DRV_ERROR_INVALID_VALUE
-*/
+ * @ingroup driver
+ * @brief Set session and process affinity
+ * @attention If the interface is not called after the session is created, and an exception occurs in the process,
+ * HDC will not detect and release the corresponding
+ * session resources.
+ * @param [in]  session    :    Specified session
+ * @return   DRV_ERROR_NONE, DRV_ERROR_INVALID_VALUE
+ */
 DLLEXPORT drvError_t drvHdcSetSessionReference(HDC_SESSION session);
 /**
-* @ingroup driver
-* @brief Get the base trusted path sent to the specified node device, get trusted path, used to combine dst_path
-* parameters of drvHdcSendFile
-* @attention host call is valid, used to obtain the basic trusted path sent to the device side using
-* the drvHdcSendFile interface
-* @param [in]  peer_node         	:	Node number of the node where the Device is located
-* @param [in]  peer_devid         :	Device's unified ID in the host
-* @param [in]  path_len	:	base_path space size
-* @param [out] base_path		:	Obtained trusted path
-* @return   DRV_ERROR_NONE, DRV_ERROR_INVALID_VALUE
-*/
+ * @ingroup driver
+ * @brief Get the base trusted path sent to the specified node device, get trusted path, used to combine dst_path
+ * parameters of drvHdcSendFile
+ * @attention host call is valid, used to obtain the basic trusted path sent to the device side using
+ * the drvHdcSendFile interface
+ * @param [in]  peer_node         	:	Node number of the node where the Device is located
+ * @param [in]  peer_devid         :	Device's unified ID in the host
+ * @param [in]  path_len	:	base_path space size
+ * @param [out] base_path		:	Obtained trusted path
+ * @return   DRV_ERROR_NONE, DRV_ERROR_INVALID_VALUE
+ */
 DLLEXPORT drvError_t drvHdcGetTrustedBasePath(int peer_node, int peer_devid, char *base_path, unsigned int path_len);
 /**
-* @ingroup driver
-* @brief Send file to the specified path on the specified device
-* @attention Only files in the trustlist can be sent using this interface.
-* @param [in]  peer_node        :	Node number of the node where the Device is located
-* @param [in]  peer_devid       :	Device's unified ID in the host
-* @param [in]  file		:	Specify the file name of the sent file
-* @param [in]  dst_path	:	Specifies the path to send the file to the receiver. If the path is directory,
-* the file name remains unchanged after it is sent to the peer; otherwise, the file name is changed to the part of the
-* path after the file is sent to the receiver.
-* @param [out] (*progress_notifier)(struct drvHdcProgInfo *) :	  Specify the user's callback handler function;
-* when progress of the file transfer increases by at least one percent,file transfer protocol will call this interface.
-* @return   DRV_ERROR_NONE, DRV_ERROR_INVALID_VALUE
-*/
+ * @ingroup driver
+ * @brief Send file to the specified path on the specified device
+ * @attention Only files in the trustlist can be sent using this interface.
+ * @param [in]  peer_node        :	Node number of the node where the Device is located
+ * @param [in]  peer_devid       :	Device's unified ID in the host
+ * @param [in]  file		:	Specify the file name of the sent file
+ * @param [in]  dst_path	:	Specifies the path to send the file to the receiver. If the path is directory,
+ * the file name remains unchanged after it is sent to the peer; otherwise, the file name is changed to the part of the
+ * path after the file is sent to the receiver.
+ * @param [out] (*progress_notifier)(struct drvHdcProgInfo *) :	  Specify the user's callback handler function;
+ * when progress of the file transfer increases by at least one percent,file transfer protocol will call this interface.
+ * @return   DRV_ERROR_NONE, DRV_ERROR_INVALID_VALUE
+ */
 DLLEXPORT drvError_t drvHdcSendFile(int peer_node, int peer_devid, const char *file, const char *dst_path,
-    void (*progress_notifier)(struct drvHdcProgInfo *));
+                                    void (*progress_notifier)(struct drvHdcProgInfo *));
 /**
-* @ingroup driver
-* @brief New interfaces provided based on compatibility do not perform whitelist validation for file names,
-* Get the base trusted path sent to the specified node device, get trusted path, used to combine dst_path parameters
-* of drvHdcSendFileV2
-* @attention host call is valid, used to obtain the basic trusted path sent to the device side using
-* the drvHdcSendFileV2 interface
-* @param [in]  peer_node         	:	Node number of the node where the Device is located
-* @param [in]  peer_devid         :	Device's unified ID in the host
-* @param [in]  path_len	:	base_path space size
-* @param [out] base_path		:	Obtained trusted path
-* @return   DRV_ERROR_NONE, DRV_ERROR_INVALID_VALUE
-*/
+ * @ingroup driver
+ * @brief New interfaces provided based on compatibility do not perform whitelist validation for file names,
+ * Get the base trusted path sent to the specified node device, get trusted path, used to combine dst_path parameters
+ * of drvHdcSendFileV2
+ * @attention host call is valid, used to obtain the basic trusted path sent to the device side using
+ * the drvHdcSendFileV2 interface
+ * @param [in]  peer_node         	:	Node number of the node where the Device is located
+ * @param [in]  peer_devid         :	Device's unified ID in the host
+ * @param [in]  path_len	:	base_path space size
+ * @param [out] base_path		:	Obtained trusted path
+ * @return   DRV_ERROR_NONE, DRV_ERROR_INVALID_VALUE
+ */
 DLLEXPORT drvError_t drvHdcGetTrustedBasePathV2(int peer_node, int peer_devid, char *base_path, unsigned int path_len);
 /**
-* @ingroup driver
-* @brief New interfaces provided based on compatibility do not perform whitelist validation for file names,
-* Send file to the specified path on the specified device
-* @attention Only files in the trustlist can be sent using this interface.
-* @param [in]  peer_node        :	Node number of the node where the Device is located
-* @param [in]  peer_devid       :	Device's unified ID in the host
-* @param [in]  file		:	Specify the file name of the sent file
-* @param [in]  dst_path	:	Specifies the path to send the file to the receiver. If the path is directory,
-* the file name remains unchanged after it is sent to the peer; otherwise, the file name is changed to the part of the
-* path after the file is sent to the receiver.
-* @param [out] (*progress_notifier)(struct drvHdcProgInfo *) :	  Specify the user's callback handler function;
-* when progress of the file transfer increases by at least one percent,file transfer protocol will call this interface.
-* @return   DRV_ERROR_NONE, DRV_ERROR_INVALID_VALUE
-*/
+ * @ingroup driver
+ * @brief New interfaces provided based on compatibility do not perform whitelist validation for file names,
+ * Send file to the specified path on the specified device
+ * @attention Only files in the trustlist can be sent using this interface.
+ * @param [in]  peer_node        :	Node number of the node where the Device is located
+ * @param [in]  peer_devid       :	Device's unified ID in the host
+ * @param [in]  file		:	Specify the file name of the sent file
+ * @param [in]  dst_path	:	Specifies the path to send the file to the receiver. If the path is directory,
+ * the file name remains unchanged after it is sent to the peer; otherwise, the file name is changed to the part of the
+ * path after the file is sent to the receiver.
+ * @param [out] (*progress_notifier)(struct drvHdcProgInfo *) :	  Specify the user's callback handler function;
+ * when progress of the file transfer increases by at least one percent,file transfer protocol will call this interface.
+ * @return   DRV_ERROR_NONE, DRV_ERROR_INVALID_VALUE
+ */
 DLLEXPORT drvError_t drvHdcSendFileV2(int peer_node, int peer_devid, const char *file, const char *dst_path,
-    void (*progress_notifier)(struct drvHdcProgInfo *));
+                                      void (*progress_notifier)(struct drvHdcProgInfo *));
 /**
-* @ingroup driver
-* @brief Request to allocate memory
-* @attention Call the kernel function to apply for physical memory. If the continuous physical memory is insufficient,
-* it will fail. when HDC is used by DVPP, it can only use low 32-bit memory.
-* @param [in]  mem_type  : Memory type, default is 0
-* @param [in]  addr : Specifies the start address of the application, default is NULL
-* @param [in]  len : length
-* @param [in]  align  : The address returned by the application is aligned by align. Currently,
-* only 4k is a common multiple
-* @param [in]  flag : Memory application flag. low 32-bit memory / hugepage / normal, only valid on the
-* device side
-* @param [in]  devid : Device id
-* @return   DRV_ERROR_NONE, DRV_ERROR_INVALID_VALUE
-*/
+ * @ingroup driver
+ * @brief Request to allocate memory
+ * @attention Call the kernel function to apply for physical memory. If the continuous physical memory is insufficient,
+ * it will fail. when HDC is used by DVPP, it can only use low 32-bit memory.
+ * @param [in]  mem_type  : Memory type, default is 0
+ * @param [in]  addr : Specifies the start address of the application, default is NULL
+ * @param [in]  len : length
+ * @param [in]  align  : The address returned by the application is aligned by align. Currently,
+ * only 4k is a common multiple
+ * @param [in]  flag : Memory application flag. low 32-bit memory / hugepage / normal, only valid on the
+ * device side
+ * @param [in]  devid : Device id
+ * @return   DRV_ERROR_NONE, DRV_ERROR_INVALID_VALUE
+ */
 DLLEXPORT void *drvHdcMallocEx(enum drvHdcMemType mem_type, void *addr, unsigned int align, unsigned int len, int devid,
-    unsigned int flag);
+                               unsigned int flag);
 /**
-* @ingroup driver
-* @brief Release memory
-* @attention null
-* @param [in]  mem_type  : Memory type
-* @param [in]  buf : Applied memory address
-* @return   DRV_ERROR_NONE, DRV_ERROR_INVALID_VALUE
-*/
+ * @ingroup driver
+ * @brief Release memory
+ * @attention null
+ * @param [in]  mem_type  : Memory type
+ * @param [in]  buf : Applied memory address
+ * @return   DRV_ERROR_NONE, DRV_ERROR_INVALID_VALUE
+ */
 DLLEXPORT drvError_t drvHdcFreeEx(enum drvHdcMemType mem_type, void *buf);
 /**
-* @ingroup driver
-* @brief Map DMA address
-* @attention null
-* @param [in]  mem_type   : Memory type
-* @param [in]  buf : Applied memory address
-* @param [in]  devid : Device id
-* @return   DRV_ERROR_NONE, DRV_ERROR_INVALID_VALUE
-*/
+ * @ingroup driver
+ * @brief Map DMA address
+ * @attention null
+ * @param [in]  mem_type   : Memory type
+ * @param [in]  buf : Applied memory address
+ * @param [in]  devid : Device id
+ * @return   DRV_ERROR_NONE, DRV_ERROR_INVALID_VALUE
+ */
 DLLEXPORT drvError_t drvHdcDmaMap(enum drvHdcMemType mem_type, void *buf, int devid);
 /**
-* @ingroup driver
-* @brief UnMap DMA address
-* @attention null
-* @param [in]  mem_type   : Memory type
-* @param [in]  buf : Applied memory address
-* @return   DRV_ERROR_NONE, DRV_ERROR_INVALID_VALUE
-*/
+ * @ingroup driver
+ * @brief UnMap DMA address
+ * @attention null
+ * @param [in]  mem_type   : Memory type
+ * @param [in]  buf : Applied memory address
+ * @return   DRV_ERROR_NONE, DRV_ERROR_INVALID_VALUE
+ */
 DLLEXPORT drvError_t drvHdcDmaUnMap(enum drvHdcMemType mem_type, void *buf);
 /**
-* @ingroup driver
-* @brief ReMap DMA address
-* @attention null
-* @param [in]  mem_type   : Memory type
-* @param [in]  buf : Applied memory address
-* @param [in]  devid : Device id
-* @return   DRV_ERROR_NONE, DRV_ERROR_INVALID_VALUE
-*/
+ * @ingroup driver
+ * @brief ReMap DMA address
+ * @attention null
+ * @param [in]  mem_type   : Memory type
+ * @param [in]  buf : Applied memory address
+ * @param [in]  devid : Device id
+ * @return   DRV_ERROR_NONE, DRV_ERROR_INVALID_VALUE
+ */
 DLLEXPORT drvError_t drvHdcDmaReMap(enum drvHdcMemType mem_type, void *buf, int devid);
 
 /* hdc epoll func */
 /**
-* @ingroup driver
-* @brief HDC epoll create interface
-* @attention null
-* @param [in]  size    : Specify the number of file handles to listen on
-* @param [out]  epoll : Returns the supervised epoll handle
-* @return   DRV_ERROR_NONE, DRV_ERROR_INVALID_VALUE
-*/
+ * @ingroup driver
+ * @brief HDC epoll create interface
+ * @attention null
+ * @param [in]  size    : Specify the number of file handles to listen on
+ * @param [out]  epoll : Returns the supervised epoll handle
+ * @return   DRV_ERROR_NONE, DRV_ERROR_INVALID_VALUE
+ */
 DLLEXPORT drvError_t drvHdcEpollCreate(int size, HDC_EPOLL *epoll);
 /**
-* @ingroup driver
-* @brief close HDC epoll interface
-* @attention null
-* @param [in]  epoll : Returns the supervised epoll handle
-* @return   DRV_ERROR_NONE, DRV_ERROR_INVALID_VALUE
-*/
+ * @ingroup driver
+ * @brief close HDC epoll interface
+ * @attention null
+ * @param [in]  epoll : Returns the supervised epoll handle
+ * @return   DRV_ERROR_NONE, DRV_ERROR_INVALID_VALUE
+ */
 DLLEXPORT drvError_t drvHdcEpollClose(HDC_EPOLL epoll);
 /**
 * @ingroup driver
@@ -3575,142 +3579,142 @@ DLLEXPORT drvError_t drvHdcEpollClose(HDC_EPOLL epoll);
 */
 DLLEXPORT drvError_t drvHdcEpollCtl(HDC_EPOLL epoll, int op, void *target, struct drvHdcEvent *event);
 /**
-* @ingroup driver
-* @brief wait HDC epoll interface
-* @attention null
-* @param [in]  epoll : Specify the created epoll handle
-* @param [in]  maxevents : Specify the maximum number of events returned
-* @param [in]  timeout : Set timeout
-* @param [out]  events : Returns the triggered event
-* @param [out]  eventnum : Returns the number of valid events
-* @return   DRV_ERROR_NONE, DRV_ERROR_INVALID_VALUE
-*/
+ * @ingroup driver
+ * @brief wait HDC epoll interface
+ * @attention null
+ * @param [in]  epoll : Specify the created epoll handle
+ * @param [in]  maxevents : Specify the maximum number of events returned
+ * @param [in]  timeout : Set timeout
+ * @param [out]  events : Returns the triggered event
+ * @param [out]  eventnum : Returns the number of valid events
+ * @return   DRV_ERROR_NONE, DRV_ERROR_INVALID_VALUE
+ */
 DLLEXPORT drvError_t drvHdcEpollWait(HDC_EPOLL epoll, struct drvHdcEvent *events, int maxevents, int timeout,
                                      int *eventnum);
 /**
-* @ingroup driver
-* @brief Get the information of the session.
-* @attention null
-* @param [in]  session : Specify in which session
-* @param [out] info  : session info
-* @param [out] info->devid  : session devid
-* @param [out] info->fid  : session fid
-* @param [out] info->res  : reserved
-* @return DRV_ERROR_NONE, DRV_ERROR_INVALID_VALUE
-*/
+ * @ingroup driver
+ * @brief Get the information of the session.
+ * @attention null
+ * @param [in]  session : Specify in which session
+ * @param [out] info  : session info
+ * @param [out] info->devid  : session devid
+ * @param [out] info->fid  : session fid
+ * @param [out] info->res  : reserved
+ * @return DRV_ERROR_NONE, DRV_ERROR_INVALID_VALUE
+ */
 DLLEXPORT drvError_t halHdcGetSessionInfo(HDC_SESSION session, struct drvHdcSessionInfo *info);
 /**
-* @ingroup driver
-* @brief Send data based on HDC Session
-* @attention This interface sends the message encapsulated with the buffer address and length to the peer end.
-* @param [in]  session    : Specify in which session to send data
-* @param [in]  msg : Descriptor pointer for sending messages. The maximum sending length
-* must be obtained through the drvHdcGetCapacity function
-* @param [in]  flag               : Reserved parameter, currently fixed 0
-* @param [in]  timeout   : Allow time for send timeout determined by user mode
-* @return   DRV_ERROR_NONE, DRV_ERROR_INVALID_VALUE
-*/
+ * @ingroup driver
+ * @brief Send data based on HDC Session
+ * @attention This interface sends the message encapsulated with the buffer address and length to the peer end.
+ * @param [in]  session    : Specify in which session to send data
+ * @param [in]  msg : Descriptor pointer for sending messages. The maximum sending length
+ * must be obtained through the drvHdcGetCapacity function
+ * @param [in]  flag               : Reserved parameter, currently fixed 0
+ * @param [in]  timeout   : Allow time for send timeout determined by user mode
+ * @return   DRV_ERROR_NONE, DRV_ERROR_INVALID_VALUE
+ */
 DLLEXPORT hdcError_t halHdcSend(HDC_SESSION session, struct drvHdcMsg *pMsg, UINT64 flag, UINT32 timeout);
 /**
-* @ingroup driver
-* @brief Session zero-copy fast sending interface, applications need to apply for memory through "drvHdcMallocEx"
-* in advance
-* @attention After send function returns,src address cannot be reused directly. It must wait for peer to receive it.
-* @param [in]  HDC_SESSION session    : Specify in which session
-* @param [in]  msg : Send and receive information
-* @param [in]  int flag : Fill in 0 default blocking, HDC_FLAG_NOWAIT set non-blocking
-* @param [in]  unsigned int timeout   : Allow time for sending timeout determined by user mode
-* @return   DRV_ERROR_NONE, DRV_ERROR_INVALID_VALUE
-*/
+ * @ingroup driver
+ * @brief Session zero-copy fast sending interface, applications need to apply for memory through "drvHdcMallocEx"
+ * in advance
+ * @attention After send function returns,src address cannot be reused directly. It must wait for peer to receive it.
+ * @param [in]  HDC_SESSION session    : Specify in which session
+ * @param [in]  msg : Send and receive information
+ * @param [in]  int flag : Fill in 0 default blocking, HDC_FLAG_NOWAIT set non-blocking
+ * @param [in]  unsigned int timeout   : Allow time for sending timeout determined by user mode
+ * @return   DRV_ERROR_NONE, DRV_ERROR_INVALID_VALUE
+ */
 DLLEXPORT hdcError_t halHdcFastSend(HDC_SESSION session, struct drvHdcFastSendMsg msg, UINT64 flag, UINT32 timeout);
 /**
-* @ingroup driver
-* @brief Receive data based on HDC Session
-* @attention The interface will parse the message sent by the peer, obtain the data buffer address and length,
-* save it in the message descriptor, and return it to the upper layer.
-* @param [in]  HDC_SESSION session   : Specify in which session to receive data
-* @param [in]  int bufLen            : The length of each receive buffer in bytes
-* @param [in]  u64 flag              : Fixed 0
-* @param [in]  unsigned int timeout   : Allow time for sending timeout determined by user mode
-* @param [out] struct drvHdcMsg *msg : Descriptor pointer for receiving messages
-* @param [out] int *recvBufCount      : The number of buffers that actually received the data
-* @return   DRV_ERROR_NONE, DRV_ERROR_INVALID_VALUE
-*/
-DLLEXPORT hdcError_t halHdcRecv(HDC_SESSION session, struct drvHdcMsg *pMsg, int bufLen,
-    UINT64 flag, int *recvBufCount, UINT32 timeout);
+ * @ingroup driver
+ * @brief Receive data based on HDC Session
+ * @attention The interface will parse the message sent by the peer, obtain the data buffer address and length,
+ * save it in the message descriptor, and return it to the upper layer.
+ * @param [in]  HDC_SESSION session   : Specify in which session to receive data
+ * @param [in]  int bufLen            : The length of each receive buffer in bytes
+ * @param [in]  u64 flag              : Fixed 0
+ * @param [in]  unsigned int timeout   : Allow time for sending timeout determined by user mode
+ * @param [out] struct drvHdcMsg *msg : Descriptor pointer for receiving messages
+ * @param [out] int *recvBufCount      : The number of buffers that actually received the data
+ * @return   DRV_ERROR_NONE, DRV_ERROR_INVALID_VALUE
+ */
+DLLEXPORT hdcError_t halHdcRecv(HDC_SESSION session, struct drvHdcMsg *pMsg, int bufLen, UINT64 flag, int *recvBufCount,
+                                UINT32 timeout);
 /**
-* @ingroup driver
-* @brief Receive data based on HDC Session
-* @attention The interface will parse the message sent by the peer, obtain the data buffer address and length,
-* save it in the message descriptor, and return it to the upper layer.
-* @param [in]  session   : Specify in which session to receive data
-* @param [in]  bufLen            : The length of each receive buffer in bytes
-* @param [in]  userConfig : Record the parameters set by the user
-* @param [out] msg : Descriptor pointer for receiving messages
-* @param [out] recvBufCount      : The number of buffers that actually received the data
-* @return   DRV_ERROR_NONE, DRV_ERROR_INVALID_VALUE
-*/
-DLLEXPORT hdcError_t halHdcRecvEx(HDC_SESSION session, struct drvHdcMsg *pMsg, int bufLen,
-    int *recvBufCount, struct drvHdcRecvConfig *userConfig);
+ * @ingroup driver
+ * @brief Receive data based on HDC Session
+ * @attention The interface will parse the message sent by the peer, obtain the data buffer address and length,
+ * save it in the message descriptor, and return it to the upper layer.
+ * @param [in]  session   : Specify in which session to receive data
+ * @param [in]  bufLen            : The length of each receive buffer in bytes
+ * @param [in]  userConfig : Record the parameters set by the user
+ * @param [out] msg : Descriptor pointer for receiving messages
+ * @param [out] recvBufCount      : The number of buffers that actually received the data
+ * @return   DRV_ERROR_NONE, DRV_ERROR_INVALID_VALUE
+ */
+DLLEXPORT hdcError_t halHdcRecvEx(HDC_SESSION session, struct drvHdcMsg *pMsg, int bufLen, int *recvBufCount,
+                                  struct drvHdcRecvConfig *userConfig);
 /**
-* @ingroup driver
-* @brief Session copy-free fast sending interface, applications need to apply for memory through hdc in advance
-* @attention Need to apply for memory through hdc in advance. And after the send function returns, the src address
-* cannot be reused directly. It must wait for the peer to receive it.
-* @param [in]  session    : Specify in which session
-* @param [in]  msg : Send and receive information
-* @param [in]  flag : Fill in 0 default blocking, HDC_FLAG_NOWAIT set non-blocking
-* @param [in]  timeout   : Allow time for sending timeout determined by user mode
-* @return   DRV_ERROR_NONE, DRV_ERROR_INVALID_VALUE
-*/
+ * @ingroup driver
+ * @brief Session copy-free fast sending interface, applications need to apply for memory through hdc in advance
+ * @attention Need to apply for memory through hdc in advance. And after the send function returns, the src address
+ * cannot be reused directly. It must wait for the peer to receive it.
+ * @param [in]  session    : Specify in which session
+ * @param [in]  msg : Send and receive information
+ * @param [in]  flag : Fill in 0 default blocking, HDC_FLAG_NOWAIT set non-blocking
+ * @param [in]  timeout   : Allow time for sending timeout determined by user mode
+ * @return   DRV_ERROR_NONE, DRV_ERROR_INVALID_VALUE
+ */
 DLLEXPORT hdcError_t halHdcFastRecv(HDC_SESSION session, struct drvHdcFastRecvMsg *msg, UINT64 flag, UINT32 timeout);
 /**
-* @ingroup driver
-* @brief Get the information of session
-* @attention null
-* @param [in]  session : Specify the session need to query
-* @param [in]  attr : Fill in information type
-* @param [out] value : Returns information
-* @return   DRV_ERROR_NONE, DRV_ERROR_INVALID_VALUE
-*/
+ * @ingroup driver
+ * @brief Get the information of session
+ * @attention null
+ * @param [in]  session : Specify the session need to query
+ * @param [in]  attr : Fill in information type
+ * @param [out] value : Returns information
+ * @return   DRV_ERROR_NONE, DRV_ERROR_INVALID_VALUE
+ */
 DLLEXPORT drvError_t halHdcGetSessionAttr(HDC_SESSION session, int attr, int *value);
 /**
-* @ingroup driver
-* @brief Get the information of server
-* @attention null
-* @param [in]  server : Specify the server need to query
-* @param [in]  attr : Fill in information type
-* @param [out] value : Returns information
-* @return   DRV_ERROR_NONE, DRV_ERROR_INVALID_VALUE
-*/
+ * @ingroup driver
+ * @brief Get the information of server
+ * @attention null
+ * @param [in]  server : Specify the server need to query
+ * @param [in]  attr : Fill in information type
+ * @param [out] value : Returns information
+ * @return   DRV_ERROR_NONE, DRV_ERROR_INVALID_VALUE
+ */
 DLLEXPORT hdcError_t halHdcGetServerAttr(HDC_SERVER server, int attr, int *value);
 
 /**
-* @ingroup driver
-* @brief Register connect/data_in/close notify for service
-* @attention Only support in UB
-* @param [in]  int service_type : select server type
-* @param [in]  struct HdcSessionNotify :
-* @return   DRV_ERROR_NONE, DRV_ERROR_INVALID_VALUE
-*/
+ * @ingroup driver
+ * @brief Register connect/data_in/close notify for service
+ * @attention Only support in UB
+ * @param [in]  int service_type : select server type
+ * @param [in]  struct HdcSessionNotify :
+ * @return   DRV_ERROR_NONE, DRV_ERROR_INVALID_VALUE
+ */
 DLLEXPORT hdcError_t halHdcNotifyRegister(int service_type, struct HdcSessionNotify *notify);
 /**
-* @ingroup driver
-* @brief Unregister all notify for service
-* @attention Only support in UB
-* @param [in]  int service_type : select server type
-* @return null
-*/
+ * @ingroup driver
+ * @brief Unregister all notify for service
+ * @attention Only support in UB
+ * @param [in]  int service_type : select server type
+ * @return null
+ */
 DLLEXPORT void halHdcNotifyUnregister(int service_type);
 
 /**
-* @ingroup driver
-* @brief Closes the HDC session. Distinguish the disabling mode based on the flag.
-* @attention null
-* @param [in]  HDC_SESSION session : Specify in which session to close
-* @param [in]  int type : hdc session close type set by the user
-* @return   DRV_ERROR_NONE, DRV_ERROR_INVALID_VALUE, DRV_ERROR_NOT_SUPPORT
-*/
+ * @ingroup driver
+ * @brief Closes the HDC session. Distinguish the disabling mode based on the flag.
+ * @attention null
+ * @param [in]  HDC_SESSION session : Specify in which session to close
+ * @param [in]  int type : hdc session close type set by the user
+ * @return   DRV_ERROR_NONE, DRV_ERROR_INVALID_VALUE, DRV_ERROR_NOT_SUPPORT
+ */
 DLLEXPORT hdcError_t halHdcSessionCloseEx(HDC_SESSION session, int type);
 
 enum log_error_code {
@@ -3765,69 +3769,69 @@ enum log_cmd_type {
 };
 
 /**
-* @ingroup driver
-* @brief get log information by device id and channel type.
-* @attention null
-* @param [in] device_id   device ID
-* @param [out] buf Store log information
-* @param [out] size size of log information store in buf,As a input parameter means max size of buf.
-* @param [in] timeout   timeout to read log information
-* @param [in] channel_type   which channel to read(LOG_CHANNEL_TYPE_TS_PROC/LOG_CHANNEL_TYPE_EVENT/LOG_CHANNEL_TYPE_MAX)
-*             LOG_CHANNEL_TYPE_TS_PROC : reads logs that need to be sent back to host;
-*             LOG_CHANNEL_TYPE_EVENT : reads fault event logs;
-*             LOG_CHANNEL_TYPE_MAX : reads lite-core logs.
-* @return  0 for success, others for fail
-*/
+ * @ingroup driver
+ * @brief get log information by device id and channel type.
+ * @attention null
+ * @param [in] device_id   device ID
+ * @param [out] buf Store log information
+ * @param [out] size size of log information store in buf,As a input parameter means max size of buf.
+ * @param [in] timeout   timeout to read log information
+ * @param [in] channel_type   which channel to
+ * read(LOG_CHANNEL_TYPE_TS_PROC/LOG_CHANNEL_TYPE_EVENT/LOG_CHANNEL_TYPE_MAX) LOG_CHANNEL_TYPE_TS_PROC : reads logs that
+ * need to be sent back to host; LOG_CHANNEL_TYPE_EVENT : reads fault event logs; LOG_CHANNEL_TYPE_MAX : reads lite-core
+ * logs.
+ * @return  0 for success, others for fail
+ */
 int log_read_by_type(int device_id, char *buf, unsigned int *size, int timeout, enum log_channel_type channel_type);
 
 /**
-* @ingroup driver
-* @brief get channel type from device
-* @attention null
-* @param [in] device_id   device ID
-* @param [out] channel_type_set   set of channel_type
-* @param [out] channel_type_num   number of channel_type
-* @param [in] set_size   total number of channel_type_set
-* @return  0 for success, others for fail
-*/
+ * @ingroup driver
+ * @brief get channel type from device
+ * @attention null
+ * @param [in] device_id   device ID
+ * @param [out] channel_type_set   set of channel_type
+ * @param [out] channel_type_num   number of channel_type
+ * @param [in] set_size   total number of channel_type_set
+ * @return  0 for success, others for fail
+ */
 int log_get_channel_type(int device_id, int *channel_type_set, int *channel_type_num, int set_size);
 
 /**
-* @ingroup driver
-* @brief set parameters to channel type
-* @attention null
-* @param [in] devid : device id
-* @param [in] chan_type : which channel to set
-* @param [in] cmd_type : which cmd to trig
-* @param [in] data : parameters to be delivered to the ts
-* @param [in] data_len : size of data
-* @return  0 for success, others for fail
-*/
+ * @ingroup driver
+ * @brief set parameters to channel type
+ * @attention null
+ * @param [in] devid : device id
+ * @param [in] chan_type : which channel to set
+ * @param [in] cmd_type : which cmd to trig
+ * @param [in] data : parameters to be delivered to the ts
+ * @param [in] data_len : size of data
+ * @return  0 for success, others for fail
+ */
 int log_set_dfx_param(uint32_t devid, uint32_t chan_type, uint32_t cmd_type, void *data, uint32_t data_len);
 
 /**
-* @ingroup driver
-* @brief get parameters from channel type
-* @attention null
-* @param [in] devid : device id
-* @param [in] chan_type : which channel to set
-* @param [in] cmd_type : which cmd to trig
-* @param [in/out] data : parameters to be delivered to the ts and information obtained from the ts
-* @param [in] data_len : size of data
-* @return  0 for success, others for fail
-*/
+ * @ingroup driver
+ * @brief get parameters from channel type
+ * @attention null
+ * @param [in] devid : device id
+ * @param [in] chan_type : which channel to set
+ * @param [in] cmd_type : which cmd to trig
+ * @param [in/out] data : parameters to be delivered to the ts and information obtained from the ts
+ * @param [in] data_len : size of data
+ * @return  0 for success, others for fail
+ */
 int log_get_dfx_param(uint32_t devid, uint32_t chan_type, uint32_t cmd_type, void *data, uint32_t data_len);
 
 /**
-* @ingroup driver
-* @brief alloc mem from kernel and map to user for slogd by type
-* @attention null
-* @param [in] devid   device ID
-* @param [in] type   the type of mem
-* @param [in/out] size   the size of mem firstly allocated
-* @return void *buff  buff mapped for user space
-*/
-void* log_type_alloc_mem(uint32_t device_id, uint32_t type, uint32_t *size);
+ * @ingroup driver
+ * @brief alloc mem from kernel and map to user for slogd by type
+ * @attention null
+ * @param [in] devid   device ID
+ * @param [in] type   the type of mem
+ * @param [in/out] size   the size of mem firstly allocated
+ * @return void *buff  buff mapped for user space
+ */
+void *log_type_alloc_mem(uint32_t device_id, uint32_t type, uint32_t *size);
 
 #ifndef dma_addr_t
 typedef unsigned long long dma_addr_t;
@@ -3889,8 +3893,8 @@ typedef unsigned long long dma_addr_t;
 
 #define CHANNEL_AICORE (43)
 
-#define CHANNEL_TSFW (44)      // add for ts0 as tsfw channel
-#define CHANNEL_HWTS_LOG (45)  // add for ts0 as hwts channel
+#define CHANNEL_TSFW (44)     // add for ts0 as tsfw channel
+#define CHANNEL_HWTS_LOG (45) // add for ts0 as hwts channel
 #define CHANNEL_KEY_POINT (46)
 #define CHANNEL_TSFW_L2 (47)   /* add for ascend910  */
 #define CHANNEL_HWTS_LOG1 (48) // add for ts1 as hwts channel
@@ -3948,15 +3952,15 @@ typedef unsigned long long dma_addr_t;
 #define CHANNEL_BIU_GROUP24_AIV0 (97)
 #define CHANNEL_BIU_GROUP24_AIV1 (98)
 
-#define CHANNEL_STARS1_STREAM_LOG (126)  // IO die
-#define CHANNEL_STARS0_STREAM_LOG (127)  // AI die
+#define CHANNEL_STARS1_STREAM_LOG (126) // IO die
+#define CHANNEL_STARS0_STREAM_LOG (127) // AI die
 #define CHANNEL_TSCPU_MAX (128)
 #define CHANNEL_ROCE (129)
 #define CHANNEL_NPU_APP_MEM (130) /* HBM and DDR used on app level */
 #define CHANNEL_NPU_MEM (131)     /* HBM and DDR used on device level */
-#define CHANNEL_LP        (132)
-#define CHANNEL_QOS       (133)
-#define CHANNEL_SOC_PMU   (134)
+#define CHANNEL_LP (132)
+#define CHANNEL_QOS (133)
+#define CHANNEL_SOC_PMU (134)
 #define CHANNEL_DVPP_VENC (135)
 #define CHANNEL_DVPP_JPEGE (136)
 #define CHANNEL_DVPP_VDEC (137)
@@ -3969,11 +3973,11 @@ typedef unsigned long long dma_addr_t;
 #define CHANNEL_CUS_AICPU (144)
 #define CHANNEL_ADPROF (145)
 #define CHANNEL_UB (146)
-#define CHANNEL_CCU0_INSTRUCT (147)         /* die0 ccu */
-#define CHANNEL_CCU0_CHAN_INSTRUCT (148)    /* die0 chan delay */
-#define CHANNEL_CCU1_INSTRUCT (149)         /* die1 ccu */
-#define CHANNEL_STARS_NANO_PROFILE (150)    /* add for ascend035 */
-#define CHANNEL_CCU1_CHAN_INSTRUCT   (151)  /* die1 chan delay */
+#define CHANNEL_CCU0_INSTRUCT (147)      /* die0 ccu */
+#define CHANNEL_CCU0_CHAN_INSTRUCT (148) /* die0 chan delay */
+#define CHANNEL_CCU1_INSTRUCT (149)      /* die1 ccu */
+#define CHANNEL_STARS_NANO_PROFILE (150) /* add for ascend035 */
+#define CHANNEL_CCU1_CHAN_INSTRUCT (151) /* die1 chan delay */
 #define CHANNEL_NTS_TASK (152)
 #define CHANNEL_NTS_PMU (153)
 #define CHANNEL_IDS_MAX CHANNEL_NUM
@@ -4004,13 +4008,13 @@ typedef struct channel_list {
 } channel_list_t;
 
 /**
-* @ingroup driver
-* @brief Trigger to get enable channels
-* @attention null
-* @param [in] device_id : Device ID
-* @param [in/out] channels : Channels list
-* @return  0 for success, others for fail
-*/
+ * @ingroup driver
+ * @brief Trigger to get enable channels
+ * @attention null
+ * @param [in] device_id : Device ID
+ * @param [in/out] channels : Channels list
+ * @return  0 for success, others for fail
+ */
 DLLEXPORT int prof_drv_get_channels(unsigned int device_id, channel_list_t *channels);
 
 typedef enum prof_channel_type {
@@ -4020,156 +4024,156 @@ typedef enum prof_channel_type {
 } PROF_CHANNEL_TYPE;
 
 typedef struct prof_start_para {
-    PROF_CHANNEL_TYPE channel_type;     /* for ts and other device */
+    PROF_CHANNEL_TYPE channel_type; /* for ts and other device */
     unsigned int sample_period;
-    unsigned int real_time;             /* real mode */
-    void *user_data;                    /* ts data's pointer */
-    unsigned int user_data_size;        /* user data's size */
+    unsigned int real_time;      /* real mode */
+    void *user_data;             /* ts data's pointer */
+    unsigned int user_data_size; /* user data's size */
 } prof_start_para_t;
 
 /**
-* @ingroup driver
-* @brief Trigger prof sampling start
-* @attention null
-* @param [in] device_id : Device ID
-* @param [in] channel_id : Channel ID(1--(CHANNEL_NUM - 1))
-* @param [in] channel_type : Sampling channel type
-* @param [in] sample_period : Sampling period
-* @param [in] real_time : Real-time mode or non-real-time mode
-* @param [in] *user_data : Sampling private configuration
-* @param [in] user_data_size : Sampling private configuration length
-* @return  0 for success, others for fail
-*/
+ * @ingroup driver
+ * @brief Trigger prof sampling start
+ * @attention null
+ * @param [in] device_id : Device ID
+ * @param [in] channel_id : Channel ID(1--(CHANNEL_NUM - 1))
+ * @param [in] channel_type : Sampling channel type
+ * @param [in] sample_period : Sampling period
+ * @param [in] real_time : Real-time mode or non-real-time mode
+ * @param [in] *user_data : Sampling private configuration
+ * @param [in] user_data_size : Sampling private configuration length
+ * @return  0 for success, others for fail
+ */
 DLLEXPORT int prof_drv_start(unsigned int device_id, unsigned int channel_id, struct prof_start_para *start_para);
 /**
-* @ingroup driver
-* @brief Trigger prof sampling end
-* @attention nul
-* @param [in] device_id : Device ID
-* @param [in] channel_id : Channel ID(1--(CHANNEL_NUM - 1))
-* @return   0 for success, others for fail
-*/
+ * @ingroup driver
+ * @brief Trigger prof sampling end
+ * @attention nul
+ * @param [in] device_id : Device ID
+ * @param [in] channel_id : Channel ID(1--(CHANNEL_NUM - 1))
+ * @return   0 for success, others for fail
+ */
 DLLEXPORT int prof_stop(unsigned int device_id, unsigned int channel_id);
 /**
-* @ingroup driver
-* @brief Read and collect profile information
-* @attention null
-* @param [in] device_id : Device ID
-* @param [in] channel_id : Channel ID(1--(CHANNEL_NUM - 1))
-* @param [in/out] *out_buf : Store read profile information
-* @param [in] buf_size : Store the length of the profile to be read
-* @return   >= 0   success
-* @return positive number for readable buffer length
-* @return  < 0 for fail
-*/
+ * @ingroup driver
+ * @brief Read and collect profile information
+ * @attention null
+ * @param [in] device_id : Device ID
+ * @param [in] channel_id : Channel ID(1--(CHANNEL_NUM - 1))
+ * @param [in/out] *out_buf : Store read profile information
+ * @param [in] buf_size : Store the length of the profile to be read
+ * @return   >= 0   success
+ * @return positive number for readable buffer length
+ * @return  < 0 for fail
+ */
 DLLEXPORT int prof_channel_read(unsigned int device_id, unsigned int channel_id, char *out_buf, unsigned int buf_size);
 /**
-* @ingroup driver
-* @brief Querying valid channel information
-* @attention null
-* @param [in/out] *out_buf : Readable channel list
-* @param [in] num : Number of channels to monitor
-* @param [in] timeout : Timeout in seconds
-* @return 0  No channels available
-* @return positive number for channels Number
-* @return < 0 for fail
-*/
+ * @ingroup driver
+ * @brief Querying valid channel information
+ * @attention null
+ * @param [in/out] *out_buf : Readable channel list
+ * @param [in] num : Number of channels to monitor
+ * @param [in] timeout : Timeout in seconds
+ * @return 0  No channels available
+ * @return positive number for channels Number
+ * @return < 0 for fail
+ */
 DLLEXPORT int prof_channel_poll(struct prof_poll_info *out_buf, int num, int timeout);
 
 /**
-* @ingroup driver
-* @brief flush data of a specified channel
-* @attention null
-* @param [in] device_id : Device ID
-* @param [in] channel_id : Channel ID(1--(CHANNEL_NUM - 1))
-* @param [in/out] *data_len : Store the length of the profile to be read
-* @return PROF_OK flush ok
-* @return PROF_STOPPED_ALREADY means channel is stopped
-* @return DRV_ERROR_NOT_SUPPORT for not support
-*/
+ * @ingroup driver
+ * @brief flush data of a specified channel
+ * @attention null
+ * @param [in] device_id : Device ID
+ * @param [in] channel_id : Channel ID(1--(CHANNEL_NUM - 1))
+ * @param [in/out] *data_len : Store the length of the profile to be read
+ * @return PROF_OK flush ok
+ * @return PROF_STOPPED_ALREADY means channel is stopped
+ * @return DRV_ERROR_NOT_SUPPORT for not support
+ */
 DLLEXPORT int halProfDataFlush(unsigned int device_id, unsigned int channel_id, unsigned int *data_len);
 
 /**
-* @ingroup driver
-* @brief alloc buff
-* @attention null
-* @param [in] unsigned int size: The amount of memory space requested
-* @param [out] void **buff: buff addr alloced
-* @return   0 for success, others for fail
-*/
+ * @ingroup driver
+ * @brief alloc buff
+ * @attention null
+ * @param [in] unsigned int size: The amount of memory space requested
+ * @param [out] void **buff: buff addr alloced
+ * @return   0 for success, others for fail
+ */
 DLLEXPORT int halBuffAlloc(uint64_t size, void **buff);
 /**
-* @ingroup driver
-* @brief alloc buff from pool
-* @attention null
-* @param [in] poolHandle pHandle: pool handle
-* @param [out] void **buff: buff addr alloced
-* @return   0 for success, others for fail
-*/
+ * @ingroup driver
+ * @brief alloc buff from pool
+ * @attention null
+ * @param [in] poolHandle pHandle: pool handle
+ * @param [out] void **buff: buff addr alloced
+ * @return   0 for success, others for fail
+ */
 DLLEXPORT int halBuffAllocByPool(poolHandle pHandle, void **buff);
 /**
-* @ingroup driver
-* @brief buff alloc interface
-* @attention null
-* @param [in] unsigned int size: size of buff to alloc
-* @param [in] unsigned long flag: flag of buff to alloc(bit0~31: mem type, bit32~bit39: devid, bit40~63: resv)
-* @param [in] int grp_id: group id num
-* @param [out] buff **buff: buff alloced
-* @return   0 for success, others for fail
-*/
+ * @ingroup driver
+ * @brief buff alloc interface
+ * @attention null
+ * @param [in] unsigned int size: size of buff to alloc
+ * @param [in] unsigned long flag: flag of buff to alloc(bit0~31: mem type, bit32~bit39: devid, bit40~63: resv)
+ * @param [in] int grp_id: group id num
+ * @param [out] buff **buff: buff alloced
+ * @return   0 for success, others for fail
+ */
 DLLEXPORT int halBuffAllocEx(uint64_t size, unsigned long flag, int grp_id, void **buff);
 
 /**
-* @ingroup driver
-* @brief buff alloc interface
-* @attention null
-* @param [in] unsigned int size: size of buff to alloc
-* @param [in] unsigned int align: align of buff to alloc
-* @param [in] unsigned long flag: flag of buff to alloc(bit0~31: mem type, bit32~bit39: devid, bit40~63: resv)
-* @param [in] int grp_id: group id
-* @param [out] buff **buff: buff alloced
-* @return   0 for success, others for fail
-*/
+ * @ingroup driver
+ * @brief buff alloc interface
+ * @attention null
+ * @param [in] unsigned int size: size of buff to alloc
+ * @param [in] unsigned int align: align of buff to alloc
+ * @param [in] unsigned long flag: flag of buff to alloc(bit0~31: mem type, bit32~bit39: devid, bit40~63: resv)
+ * @param [in] int grp_id: group id
+ * @param [out] buff **buff: buff alloced
+ * @return   0 for success, others for fail
+ */
 DLLEXPORT int halBuffAllocAlignEx(uint64_t size, unsigned int align, unsigned long flag, int grp_id, void **buff);
 
 /**
-* @ingroup driver
-* @brief buff memory get interface
-* @attention only take effect in the process which is not the memory alloced process
-* @param [in] Mbuf *mbuf : the mbuf addr that data is buf
-* @param [in] void *buf: start addr of buff that need to check
-* @param [in] unsigned int size: size of buff that need to check
-* @return   0 for success, others for fail
-*/
+ * @ingroup driver
+ * @brief buff memory get interface
+ * @attention only take effect in the process which is not the memory alloced process
+ * @param [in] Mbuf *mbuf : the mbuf addr that data is buf
+ * @param [in] void *buf: start addr of buff that need to check
+ * @param [in] unsigned int size: size of buff that need to check
+ * @return   0 for success, others for fail
+ */
 DLLEXPORT drvError_t halBuffGet(Mbuf *mbuf, void *buf, unsigned long size);
 
 /**
-* @ingroup driver
-* @brief buff memory put interface
-* @attention null
-* @param [in] Mbuf *mbuf: the mbuf addr that data is buf
-* @param [in] void *buf: start addr of buff that has been get
-* @return null
-*/
+ * @ingroup driver
+ * @brief buff memory put interface
+ * @attention null
+ * @param [in] Mbuf *mbuf: the mbuf addr that data is buf
+ * @param [in] void *buf: start addr of buff that has been get
+ * @return null
+ */
 DLLEXPORT void halBuffPut(Mbuf *mbuf, void *buf);
 
 /**
-* @ingroup driver
-* @brief buff memory pool get interface
-* @attention only take effect in the process which is not the memory alloced process
-* @param [in] void* poolStart : start addr of pool
-* @return   0 for success, others for fail
-*/
-DLLEXPORT int halBuffPoolGet(void* poolStart);
+ * @ingroup driver
+ * @brief buff memory pool get interface
+ * @attention only take effect in the process which is not the memory alloced process
+ * @param [in] void* poolStart : start addr of pool
+ * @return   0 for success, others for fail
+ */
+DLLEXPORT int halBuffPoolGet(void *poolStart);
 
 /**
-* @ingroup driver
-* @brief buff memory pool put interface
-* @attention must call after buff memory pool get interface
-* @param [in] void* poolStart : start addr of pool
-* @return  0 for success, others for fail
-*/
-DLLEXPORT int halBuffPoolPut(void* poolStart);
+ * @ingroup driver
+ * @brief buff memory pool put interface
+ * @attention must call after buff memory pool get interface
+ * @param [in] void* poolStart : start addr of pool
+ * @return  0 for success, others for fail
+ */
+DLLEXPORT int halBuffPoolPut(void *poolStart);
 
 /**
  * @ingroup driver
@@ -4186,172 +4190,172 @@ DLLEXPORT int halBuffPoolPut(void* poolStart);
 DLLEXPORT int halMbufAllocEx(uint64_t size, unsigned int align, unsigned long flag, int grp_id, Mbuf **mbuf);
 
 /**
-* @ingroup driver
-* @brief verify mbuf is valid
-* @attention null
-* @param [in]  Mbuf *mbuf: mbuf need to verify
-* @param [in]  int type: value 0 check single mbuf, value 1 check mbuf chain
-* @return   0 for success, others for fail
-*/
+ * @ingroup driver
+ * @brief verify mbuf is valid
+ * @attention null
+ * @param [in]  Mbuf *mbuf: mbuf need to verify
+ * @param [in]  int type: value 0 check single mbuf, value 1 check mbuf chain
+ * @return   0 for success, others for fail
+ */
 DLLEXPORT int halMbufVerify(Mbuf *mbuf, unsigned int type);
 /**
-* @ingroup driver
-* @brief create a Mbuf using a normal buff
-* @attention null
-* @param [in] void *buff: buff addr
-* @param [in] unsigned int len: buff len
-* @param [out] Mbuf **mbuf: new Mbuf addr
-* @return   0 for success, others for fail
-*/
+ * @ingroup driver
+ * @brief create a Mbuf using a normal buff
+ * @attention null
+ * @param [in] void *buff: buff addr
+ * @param [in] unsigned int len: buff len
+ * @param [out] Mbuf **mbuf: new Mbuf addr
+ * @return   0 for success, others for fail
+ */
 DLLEXPORT int halMbufBuild(void *buff, uint64_t len, Mbuf **mbuf);
 
 /**
-* @ingroup driver
-* @brief release mbuf head and return the normal buff
-* @attention buff must be referenced only by this mbuf
-* @param [in] Mbuf *mbuf: mbuf handle
-* @param [out] void **buff: buff addr
-* @param [out] uint64_t *len: buff len that decided by halBuffAlloc
-* @return   0 for success, others for fail
-*/
+ * @ingroup driver
+ * @brief release mbuf head and return the normal buff
+ * @attention buff must be referenced only by this mbuf
+ * @param [in] Mbuf *mbuf: mbuf handle
+ * @param [out] void **buff: buff addr
+ * @param [out] uint64_t *len: buff len that decided by halBuffAlloc
+ * @return   0 for success, others for fail
+ */
 DLLEXPORT int halMbufUnBuild(Mbuf *mbuf, void **buff, uint64_t *len);
 
 /**
-* @ingroup driver
-* @brief Subscribe event for memory pool size changes
-* @attention the maximum subscription amount supported is 4
-* @param [in] grpName, the share grp name of buff
-* @param [in] threadGrpId, the subscription group to which the event belongs
-* @param [in] event_id, 0~EVENT_MAX_NUM
-* @param [in] devid, device id
-* @return   0 for success, others for fail
-*/
-DLLEXPORT drvError_t halBufEventSubscribe(
-    const char *grpName, unsigned int threadGrpId, unsigned int event_id, unsigned int devid) ASCEND_HAL_WEAK;
+ * @ingroup driver
+ * @brief Subscribe event for memory pool size changes
+ * @attention the maximum subscription amount supported is 4
+ * @param [in] grpName, the share grp name of buff
+ * @param [in] threadGrpId, the subscription group to which the event belongs
+ * @param [in] event_id, 0~EVENT_MAX_NUM
+ * @param [in] devid, device id
+ * @return   0 for success, others for fail
+ */
+DLLEXPORT drvError_t halBufEventSubscribe(const char *grpName, unsigned int threadGrpId, unsigned int event_id,
+                                          unsigned int devid) ASCEND_HAL_WEAK;
 
 /**
-* @ingroup driver
-* @brief Event notification when memory pool size changes
-* @attention null
-* @param [in] grpName, the share grp name of buff
-* @return   0 for success, others for fail
-*/
+ * @ingroup driver
+ * @brief Event notification when memory pool size changes
+ * @attention null
+ * @param [in] grpName, the share grp name of buff
+ * @return   0 for success, others for fail
+ */
 DLLEXPORT drvError_t halBufEventReport(const char *grpName);
 
 /**
-* @ingroup driver
-* @brief cache memory alloc
-* @attention halGrpCreate must enable cacheAllocFlag first
-* @param [in] name, grp name
-* @param [in] devId, device id
-* @param [in] para, cache alloc parameter
-* @return   0 for success, others for fail
-*/
+ * @ingroup driver
+ * @brief cache memory alloc
+ * @attention halGrpCreate must enable cacheAllocFlag first
+ * @param [in] name, grp name
+ * @param [in] devId, device id
+ * @param [in] para, cache alloc parameter
+ * @return   0 for success, others for fail
+ */
 DLLEXPORT drvError_t halGrpCacheAlloc(const char *name, unsigned int devId, GrpCacheAllocPara *para);
 
 /**
-* @ingroup driver
-* @brief cache memory free
-* @attention all process in the buff group must call halBuffProcCacheFree first
-* @param [in] name, grp name
-* @param [in] devId, device id
-* @return   0 for success, others for fail
-*/
+ * @ingroup driver
+ * @brief cache memory free
+ * @attention all process in the buff group must call halBuffProcCacheFree first
+ * @param [in] name, grp name
+ * @param [in] devId, device id
+ * @return   0 for success, others for fail
+ */
 DLLEXPORT drvError_t halGrpCacheFree(const char *name, unsigned int devId);
 
 /**
-* @ingroup driver
-* @brief buff grp query
-* @attention null
-* @param [in] cmd, cmd type
-* @param [in] inBuff, query input buff
-* @param [in] inLen, query input buff len
-* @param [out] outBuff, query output buff
-* @param [out] outLen, query output buff len
-* @return   0 for success, others for fail
-*/
-DLLEXPORT int halGrpQuery(GroupQueryCmdType cmd,
-    void *inBuff, unsigned int inLen, void *outBuff, unsigned int *outLen) ASCEND_HAL_WEAK;
+ * @ingroup driver
+ * @brief buff grp query
+ * @attention null
+ * @param [in] cmd, cmd type
+ * @param [in] inBuff, query input buff
+ * @param [in] inLen, query input buff len
+ * @param [out] outBuff, query output buff
+ * @param [out] outLen, query output buff len
+ * @return   0 for success, others for fail
+ */
+DLLEXPORT int halGrpQuery(GroupQueryCmdType cmd, void *inBuff, unsigned int inLen, void *outBuff,
+                          unsigned int *outLen) ASCEND_HAL_WEAK;
 
 /**
-* @ingroup driver
-* @brief buff cache free in current process
-* @attention ensure to free buff memory first
-* @param [in] flag, (bit0~30: resv, bit31: free all dev, bit32~bit39: devid, bit40~63: resv)
-* @return   0 for success, others for fail
-*/
+ * @ingroup driver
+ * @brief buff cache free in current process
+ * @attention ensure to free buff memory first
+ * @param [in] flag, (bit0~30: resv, bit31: free all dev, bit32~bit39: devid, bit40~63: resv)
+ * @return   0 for success, others for fail
+ */
 DLLEXPORT drvError_t halBuffProcCacheFree(unsigned long flag);
 
 /**
-* @ingroup driver
-* @brief Get dqs mbuf pool operation(alloc/free/copyref) addr and mbuf pool memory info by mempool handle.
-* @attention This function is only can be called on platform supporting dqs mbuf.Furthermore, this function
-*  can only be called if the mempool type is dqs mbuf pool, and must called by owner process.
-* @param [in] struct mempool_t **mp: mempool handle
-* @param [out] DqsPoolInfo *poolInfo: dqs mbuf pool info
-* @return   0 for success, others for fail
-*/
+ * @ingroup driver
+ * @brief Get dqs mbuf pool operation(alloc/free/copyref) addr and mbuf pool memory info by mempool handle.
+ * @attention This function is only can be called on platform supporting dqs mbuf.Furthermore, this function
+ *  can only be called if the mempool type is dqs mbuf pool, and must called by owner process.
+ * @param [in] struct mempool_t **mp: mempool handle
+ * @param [out] DqsPoolInfo *poolInfo: dqs mbuf pool info
+ * @return   0 for success, others for fail
+ */
 DLLEXPORT drvError_t halBuffGetDQSPoolInfo(struct mempool_t *mp, DqsPoolInfo *poolInfo);
 
 /**
-* @ingroup driver
-* @brief Get dqs mbuf pool operation(alloc/free/copyref) addr and mbuf pool memory info by dqs pool id.
-* @attention This function is only can be called on platform supporting dqs mbuf.Furthermore, this function
-*  can only be called if the mempool type is dqs mbuf pool.
-* @param [in] poolId: dqs mempool id
-* @param [out] DqsPoolInfo *poolInfo: dqs mbuf pool info
-* @return   0 for success, others for fail
-*/
+ * @ingroup driver
+ * @brief Get dqs mbuf pool operation(alloc/free/copyref) addr and mbuf pool memory info by dqs pool id.
+ * @attention This function is only can be called on platform supporting dqs mbuf.Furthermore, this function
+ *  can only be called if the mempool type is dqs mbuf pool.
+ * @param [in] poolId: dqs mempool id
+ * @param [out] DqsPoolInfo *poolInfo: dqs mbuf pool info
+ * @return   0 for success, others for fail
+ */
 DLLEXPORT drvError_t halBuffGetDQSPoolInfoById(unsigned int poolId, DqsPoolInfo *poolInfo);
 
 /**
-* @ingroup driver
-* @brief Get dqs mbuf pool operation(alloc/free/copyref) addr and mbuf pool memory info by Mbuf.
-* @attention This function is only can be called on platform supporting dqs mbuf.Furthermore, this function
-*  can only be called if the mempool type is dqs mbuf pool.
-* @param [in] mbuf: Mbuf Identity
-* @param [out] DqsPoolInfo *poolInfo: dqs mbuf pool info
-* @return   0 for success, others for fail
-*/
+ * @ingroup driver
+ * @brief Get dqs mbuf pool operation(alloc/free/copyref) addr and mbuf pool memory info by Mbuf.
+ * @attention This function is only can be called on platform supporting dqs mbuf.Furthermore, this function
+ *  can only be called if the mempool type is dqs mbuf pool.
+ * @param [in] mbuf: Mbuf Identity
+ * @param [out] DqsPoolInfo *poolInfo: dqs mbuf pool info
+ * @return   0 for success, others for fail
+ */
 DLLEXPORT drvError_t halMbufGetDQSPoolInfo(Mbuf *mbuf, DqsPoolInfo *poolInfo);
 
 /**
-* @ingroup driver
-* @brief create inter cross server grp
-* @attention null
-* @param [in] grpId, grp id 1~8
-* @param [in] name, grp name
-* @param [in] len, grp name len
-* @return   0 for success, others for fail
-*/
+ * @ingroup driver
+ * @brief create inter cross server grp
+ * @attention null
+ * @param [in] grpId, grp id 1~8
+ * @param [in] name, grp name
+ * @param [in] len, grp name len
+ * @return   0 for success, others for fail
+ */
 DLLEXPORT drvError_t halBuffCreateInterGrp(unsigned int grpId, const char *name, unsigned int len) ASCEND_HAL_WEAK;
 
 /**
-* @ingroup driver
-* @brief destroy inter cross server grp
-* @attention null
-* @param [in] grpId, grp id
-* @return   0 for success, others for fail
-*/
+ * @ingroup driver
+ * @brief destroy inter cross server grp
+ * @attention null
+ * @param [in] grpId, grp id
+ * @return   0 for success, others for fail
+ */
 DLLEXPORT drvError_t halBuffDestoryInterGrp(unsigned int grpId) ASCEND_HAL_WEAK;
 
 /**
-* @ingroup driver
-* @brief Get DQS mbuf handle by Mbuf addr
-* @attention null
-* @param [in] Mbuf *mbuf: Mbuf addr
-* @param [out] uint64_t *handle: DQS mbuf handle
-* @return   0 for success, others for fail
-*/
-DLLEXPORT drvError_t halMbufGetDqsHandle(Mbuf *mbuf,  uint64_t *handle);
+ * @ingroup driver
+ * @brief Get DQS mbuf handle by Mbuf addr
+ * @attention null
+ * @param [in] Mbuf *mbuf: Mbuf addr
+ * @param [out] uint64_t *handle: DQS mbuf handle
+ * @return   0 for success, others for fail
+ */
+DLLEXPORT drvError_t halMbufGetDqsHandle(Mbuf *mbuf, uint64_t *handle);
 
 /**
-* @ingroup driver
-* @brief Print DQS Mbuf Trace
-* @attention null
-* @param [in] poolHandle pHandle: pool handle
-* @return   0 for success, others for fail
-*/
+ * @ingroup driver
+ * @brief Print DQS Mbuf Trace
+ * @attention null
+ * @param [in] poolHandle pHandle: pool handle
+ * @return   0 for success, others for fail
+ */
 DLLEXPORT drvError_t halMbufDqsTracePrint(poolHandle pHandle);
 
 /*=========================== Tsdrv ===========================*/
@@ -4375,7 +4379,7 @@ struct hwts_ts_kernel {
     unsigned long long taskID;
 };
 
-#define RESERVED_ARRAY_SIZE         11
+#define RESERVED_ARRAY_SIZE 11
 typedef struct drv_hwts_task_response {
     volatile unsigned int valid;
     volatile unsigned int state;
@@ -4398,21 +4402,20 @@ typedef enum hwts_task_status {
     TASK_STATUS_MAX,
 } HWTS_TASK_STATUS;
 
-
-#define HWTS_RESPONSE_RSV   3
+#define HWTS_RESPONSE_RSV 3
 typedef struct hwts_response {
-    unsigned int result;        /* RESPONSE_RESULE_E */
+    unsigned int result; /* RESPONSE_RESULE_E */
     unsigned int mailbox_id;
     unsigned long long serial_no;
     unsigned int status;
     int rsv[HWTS_RESPONSE_RSV];
-    char* msg;
+    char *msg;
     int len;
 } hwts_response_t;
 
 #define RESOURCEID_RESV_STREAM_PRIORITY 0
-#define RESOURCEID_RESV_FLAG            1
-#define RESOURCEID_RESV_RANGE           2
+#define RESOURCEID_RESV_FLAG 1
+#define RESOURCEID_RESV_RANGE 2
 
 /**
  * @ingroup driver
@@ -4423,8 +4426,8 @@ typedef struct hwts_response {
  * @param [out] out:  see struct halResourceIdOutputInfo
  * @return   0 for success, others for fail
  */
-DLLEXPORT drvError_t halResourceIdAlloc(
-    uint32_t devId, struct halResourceIdInputInfo *in, struct halResourceIdOutputInfo *out);
+DLLEXPORT drvError_t halResourceIdAlloc(uint32_t devId, struct halResourceIdInputInfo *in,
+                                        struct halResourceIdOutputInfo *out);
 
 /**
  * @ingroup driver
@@ -4466,8 +4469,8 @@ DLLEXPORT drvError_t halResourceDisable(uint32_t devId, struct halResourceIdInpu
  * @param [in] para: config parameter
  * @return   0 for success, others for fail
  */
-DLLEXPORT drvError_t halResourceConfig(
-    uint32_t devId, struct halResourceIdInputInfo *in, struct halResourceConfigInfo *para);
+DLLEXPORT drvError_t halResourceConfig(uint32_t devId, struct halResourceIdInputInfo *in,
+                                       struct halResourceConfigInfo *para);
 
 /**
  * @ingroup driver
@@ -4479,8 +4482,8 @@ DLLEXPORT drvError_t halResourceConfig(
  * @param [out] info: see struct halResourceDetailInfo
  * @return   0 for success, others for fail
  */
-DLLEXPORT drvError_t halResourceDetailQuery(
-    uint32_t devId, struct halResourceIdInputInfo *in, struct halResourceDetailInfo *info);
+DLLEXPORT drvError_t halResourceDetailQuery(uint32_t devId, struct halResourceIdInputInfo *in,
+                                            struct halResourceDetailInfo *info);
 
 typedef enum tagDrvResourceType {
     DRV_RESOURCE_STREAM_ID = 0,
@@ -4490,7 +4493,7 @@ typedef enum tagDrvResourceType {
     DRV_RESOURCE_CMO_ID,
     DRV_RESOURCE_SQ_ID,
     DRV_RESOURCE_CQ_ID,
-    DRV_RESOURCE_CNT_NOTIFY_ID,    /* add start ascend950 */
+    DRV_RESOURCE_CNT_NOTIFY_ID, /* add start ascend950 */
     DRV_RESOURCE_INVALID_ID,
 } drvResourceType_t;
 
@@ -4510,8 +4513,8 @@ struct halResourceInfo {
  * @param [out] info: see struct halResourceInfo
  * @return   0 for success, others for fail
  */
-DLLEXPORT drvError_t halResourceInfoQuery(
-    uint32_t devId, uint32_t tsId, drvResourceType_t type, struct halResourceInfo *info);
+DLLEXPORT drvError_t halResourceInfoQuery(uint32_t devId, uint32_t tsId, drvResourceType_t type,
+                                          struct halResourceInfo *info);
 
 typedef enum tagDrvResIdType {
     TRS_RES_ID_ADDR,
@@ -4519,11 +4522,11 @@ typedef enum tagDrvResIdType {
 } drvResIdProcType;
 
 struct drvResIdKey {
-    uint32_t ruDevId;   /* ruDevId is viewed from host. */
+    uint32_t ruDevId; /* ruDevId is viewed from host. */
     uint32_t tsId;
     drvIdType_t resType;
     uint32_t resId;
-    uint32_t flag;  /* flag is used for distinguish whether ruDevid is sdid. */
+    uint32_t flag;   /* flag is used for distinguish whether ruDevid is sdid. */
     uint32_t rsv[3]; /* 4 is rsv */
 };
 
@@ -4603,20 +4606,20 @@ DLLEXPORT drvError_t halSqCqFree(uint32_t devId, struct halSqCqFreeInfo *info);
 DLLEXPORT drvError_t halSqCqQuery(uint32_t devId, struct halSqCqQueryInfo *info);
 
 /**
-* @ingroup driver
-* @brief  SqCq config interface
-* @attention null
-* @param [in] devId: logic devid
-* @param [in] info:   see struct halSqCqConfigInfo
-* @return   0 for success, others for fail
-*/
+ * @ingroup driver
+ * @brief  SqCq config interface
+ * @attention null
+ * @param [in] devId: logic devid
+ * @param [in] info:   see struct halSqCqConfigInfo
+ * @return   0 for success, others for fail
+ */
 DLLEXPORT drvError_t halSqCqConfig(uint32_t devId, struct halSqCqConfigInfo *info) ASCEND_HAL_WEAK;
 
 struct halSqMemGetInput {
     drvSqCqType_t type;
-    uint32_t tsId;        /* default is 0 */
+    uint32_t tsId; /* default is 0 */
     uint32_t sqId;
-    uint32_t cmdCount;    /* number of slot[1,1023] which will be alloced */
+    uint32_t cmdCount; /* number of slot[1,1023] which will be alloced */
     uint32_t res[SQCQ_RESV_LENGTH];
 };
 
@@ -4629,18 +4632,18 @@ struct halSqMemGetOutput {
 
 struct halSqMsgInfo {
     drvSqCqType_t type;
-    uint32_t tsId;         /* default is 0 */
+    uint32_t tsId; /* default is 0 */
     uint32_t sqId;
-    uint32_t cmdCount;     /* sq cmd slot number alloced actually */
-    uint32_t reportCount;  /* cq report count */
+    uint32_t cmdCount;    /* sq cmd slot number alloced actually */
+    uint32_t reportCount; /* cq report count */
     uint32_t res[SQCQ_RESV_LENGTH];
 };
 
 struct halReportInfoInput {
     drvSqCqType_t type;
-    uint32_t grpId;       /* runtime thread identifier, normal : 0 */
+    uint32_t grpId; /* runtime thread identifier, normal : 0 */
     uint32_t tsId;
-    int32_t timeout;      /* report irq wait time */
+    int32_t timeout; /* report irq wait time */
     uint32_t res[SQCQ_RESV_LENGTH];
 };
 
@@ -4652,22 +4655,22 @@ struct halReportInfoOutput {
 
 struct halReportGetInput {
     drvSqCqType_t type;
-    uint32_t tsId;  /* default is 0 */
+    uint32_t tsId; /* default is 0 */
     uint32_t cqId;
     uint32_t res[SQCQ_RESV_LENGTH];
 };
 
 struct halReportGetOutput {
-    uint32_t count;     /* cq report count */
-    void *reportPtr;    /* the first available report slot address */
+    uint32_t count;  /* cq report count */
+    void *reportPtr; /* the first available report slot address */
     uint32_t res[SQCQ_RESV_LENGTH];
 };
 
 struct halReportReleaseInfo {
     drvSqCqType_t type;
-    uint32_t tsId;   /* default is 0 */
+    uint32_t tsId; /* default is 0 */
     uint32_t cqId;
-    uint32_t count;  /* cq report count */
+    uint32_t count; /* cq report count */
     uint32_t res[SQCQ_RESV_LENGTH];
 };
 
@@ -4787,8 +4790,8 @@ DLLEXPORT drvError_t halSqTaskArgsAsyncCopy(uint32_t devId, struct halSqTaskArgs
  * @param [out] out:  see struct halAsyncDmaOutputPara
  * @return   0 for success, others for fail
  */
-DLLEXPORT drvError_t halAsyncDmaWqeCreate(
-    uint32_t devId, struct halAsyncDmaInputPara *in, struct halAsyncDmaOutputPara *out);
+DLLEXPORT drvError_t halAsyncDmaWqeCreate(uint32_t devId, struct halAsyncDmaInputPara *in,
+                                          struct halAsyncDmaOutputPara *out);
 
 /**
  * @ingroup driver
@@ -4809,8 +4812,8 @@ DLLEXPORT drvError_t halAsyncDmaWqeDestory(uint32_t devId, struct halAsyncDmaDes
  * @param [out] out:  see struct halAsyncDmaOutputPara
  * @return   0 for success, others for fail
  */
-DLLEXPORT drvError_t halAsyncDmaCreate(
-    uint32_t devId, struct halAsyncDmaInputPara *in, struct halAsyncDmaOutputPara *out);
+DLLEXPORT drvError_t halAsyncDmaCreate(uint32_t devId, struct halAsyncDmaInputPara *in,
+                                       struct halAsyncDmaOutputPara *out);
 
 /**
  * @ingroup driver
@@ -4853,7 +4856,7 @@ drvError_t halAsyncDmaDestroy2D(uint32_t devId, struct halAsyncDmaDestroy2DPara 
  * @return   0 for success, others for fail
  */
 drvError_t halAsyncDmaCreateBatch(uint32_t devId, struct halAsyncDmaInputBatchPara *in,
-    struct halAsyncDmaOutputPara *out);
+                                  struct halAsyncDmaOutputPara *out);
 
 /**
  * @ingroup driver
@@ -4875,7 +4878,7 @@ drvError_t halAsyncDmaDestroyBatch(uint32_t devId, struct halAsyncDmaDestroyBatc
  * @return   0 for success, others for fail
  */
 drvError_t halAsyncDmaJettyCreate(uint32_t devId, struct halAsyncDmaJettyCreateIn *in,
-    struct halAsyncDmaJettyCreateOut *out);
+                                  struct halAsyncDmaJettyCreateOut *out);
 
 /**
  * @ingroup driver
@@ -4897,7 +4900,7 @@ drvError_t halAsyncDmaJettyDestroy(uint32_t devId, struct halAsyncJettyDestroyPa
  * @return   0 for success, others for fail
  */
 drvError_t halAsyncDmaJettyQuery(uint32_t devId, struct halAsyncDmaJettyQueryIn *in,
-    struct halAsyncDmaJettyQueryOut *out);
+                                 struct halAsyncDmaJettyQueryOut *out);
 
 /**
  * @ingroup driver
@@ -4909,7 +4912,7 @@ drvError_t halAsyncDmaJettyQuery(uint32_t devId, struct halAsyncDmaJettyQueryIn 
  * @return   0 for success, others for fail
  */
 drvError_t halAsyncDmaWqeConvert(uint32_t devId, struct halAsyncDmaWqeInputPara *in,
-    struct halAsyncDmaWqeOutputPara *out);
+                                 struct halAsyncDmaWqeOutputPara *out);
 
 /**
  * @ingroup driver
@@ -4922,16 +4925,16 @@ drvError_t halAsyncDmaWqeConvert(uint32_t devId, struct halAsyncDmaWqeInputPara 
 drvError_t halAsyncDmaJettyWqeFill(uint32_t devId, struct halAsyncDmaJettyFillInfo *para);
 
 /**
-* @ingroup driver
-* @brief  ACL IO control interface
-* @attention null
-* @param [in] cmd: command
-* @param [in]  param_value   param_value addr
-* @param [in]  param_value_size   param_value size
-* @param [out]  out_value   out_value addr
-* @param [out]  out_value_size   out_value size
-* @return   0 for success, others for fail
-*/
+ * @ingroup driver
+ * @brief  ACL IO control interface
+ * @attention null
+ * @param [in] cmd: command
+ * @param [in]  param_value   param_value addr
+ * @param [in]  param_value_size   param_value size
+ * @param [out]  out_value   out_value addr
+ * @param [out]  out_value_size   out_value size
+ * @return   0 for success, others for fail
+ */
 DLLEXPORT drvError_t halCtl(int cmd, void *param_value, size_t param_value_size, void *out_value, size_t *out_size_ret);
 
 /**
@@ -4946,7 +4949,7 @@ DLLEXPORT drvError_t halCtl(int cmd, void *param_value, size_t param_value_size,
  * @return DV_ERROR_XXX : fail
  */
 DLLEXPORT drvError_t halGetTsegInfoByVa(uint32_t devid, uint64_t va, uint64_t size, uint32_t flag,
-    struct halTsegInfo *tsegInfo);
+                                        struct halTsegInfo *tsegInfo);
 
 /**
  * @ingroup driver
@@ -4958,452 +4961,454 @@ DLLEXPORT drvError_t halGetTsegInfoByVa(uint32_t devid, uint64_t va, uint64_t si
  */
 DLLEXPORT drvError_t halPutTsegInfo(uint32_t devid, struct halTsegInfo *tsegInfo);
 
-#define CDQ_NAME_LEN  64
+#define CDQ_NAME_LEN 64
 #define CDQ_RESV_LEN 4
 struct halCdqPara {
-    char queName[CDQ_NAME_LEN];    /* name of cdq, length 32 */
-    unsigned int batchNum;              /* number of batch in one CDQ */
-    unsigned int batchSize;             /* number of CDE in each batch */
-    DVdeviceptr queMemAddr;            /* Memory for create cdq */
+    char queName[CDQ_NAME_LEN]; /* name of cdq, length 32 */
+    unsigned int batchNum;      /* number of batch in one CDQ */
+    unsigned int batchSize;     /* number of CDE in each batch */
+    DVdeviceptr queMemAddr;     /* Memory for create cdq */
     int resv[CDQ_RESV_LEN];
 };
 
 /*=========================== Event Sched ===========================*/
 /**
-* @ingroup driver
-* @brief  detach one process from a device
-* @attention null
-* @param [in] devId: logic devid
-* @return   0 for success, others for fail
-*/
+ * @ingroup driver
+ * @brief  detach one process from a device
+ * @attention null
+ * @param [in] devId: logic devid
+ * @return   0 for success, others for fail
+ */
 DLLEXPORT drvError_t halEschedDettachDevice(unsigned int devId) ASCEND_HAL_WEAK;
 
 /**
-* @ingroup driver
-* @brief  create a group for process with specific thread num, and allocate a gid to user.
-* @attention A process can create up to 32 groups
-* @param [in] devId: logic devid
-* @param [in] grpPara: group para info
-* @param [out] grpId: group id [32, 63]
-* @return   0 for success, others for fail
-*/
+ * @ingroup driver
+ * @brief  create a group for process with specific thread num, and allocate a gid to user.
+ * @attention A process can create up to 32 groups
+ * @param [in] devId: logic devid
+ * @param [in] grpPara: group para info
+ * @param [out] grpId: group id [32, 63]
+ * @return   0 for success, others for fail
+ */
 DLLEXPORT drvError_t halEschedCreateGrpEx(uint32_t devId, struct esched_grp_para *grpPara, unsigned int *grpId);
 
 /**
-* @ingroup driver
-* @brief  query esched info, such as grpid.
-* @attention null
-* @param [in] devId: logic devid
-* @param [in] type: query info type
-* @param [in] inPut: Input the corresponding data structure based on the type.
-* @param [out] outPut: OutPut the corresponding data structure based on the type.
-* @return   0 for success, others for fail
-*/
-DLLEXPORT drvError_t halEschedQueryInfo(unsigned int devId, ESCHED_QUERY_TYPE type,
-    struct esched_input_info *inPut, struct esched_output_info *outPut);
+ * @ingroup driver
+ * @brief  query esched info, such as grpid.
+ * @attention null
+ * @param [in] devId: logic devid
+ * @param [in] type: query info type
+ * @param [in] inPut: Input the corresponding data structure based on the type.
+ * @param [out] outPut: OutPut the corresponding data structure based on the type.
+ * @return   0 for success, others for fail
+ */
+DLLEXPORT drvError_t halEschedQueryInfo(unsigned int devId, ESCHED_QUERY_TYPE type, struct esched_input_info *inPut,
+                                        struct esched_output_info *outPut);
 
 /**
-* @ingroup driver
-* @brief  Sets the maximum number of events in a group, essentially setting the queue depth of events in a group.
-* @attention null
-* @param [in] devId: logic devid
-* @param [in] grpId: group id
-* @param [in] eventId: event id
-* @param [in] maxNum: max event num
-* @return   0 for success, others for fail
-*/
-DLLEXPORT drvError_t halEschedSetGrpEventQos(unsigned int devId, unsigned int grpId,
-    EVENT_ID eventId, struct event_sched_grp_qos *qos);
+ * @ingroup driver
+ * @brief  Sets the maximum number of events in a group, essentially setting the queue depth of events in a group.
+ * @attention null
+ * @param [in] devId: logic devid
+ * @param [in] grpId: group id
+ * @param [in] eventId: event id
+ * @param [in] maxNum: max event num
+ * @return   0 for success, others for fail
+ */
+DLLEXPORT drvError_t halEschedSetGrpEventQos(unsigned int devId, unsigned int grpId, EVENT_ID eventId,
+                                             struct event_sched_grp_qos *qos);
 
 /**
-* @ingroup driver
-* @brief  set the priority of event
-* @attention null
-* @param [in] devId: logic devid
-* @param [in] priority: event priority
-* @return   0 for success, others for fail
-*/
+ * @ingroup driver
+ * @brief  set the priority of event
+ * @attention null
+ * @param [in] devId: logic devid
+ * @param [in] priority: event priority
+ * @return   0 for success, others for fail
+ */
 DLLEXPORT drvError_t halEschedSetEventPriority(unsigned int devId, EVENT_ID eventId, SCHEDULE_PRIORITY priority);
 
 /**
-* @ingroup driver
-* @brief  set the event finish callback func
-* @attention null
-* @param [in] grpId: group id
-* @param [in] eventId: event id
-* @param [in] finishFunc: finish callback func
-* @return   0 for success, others for fail
-*/
+ * @ingroup driver
+ * @brief  set the event finish callback func
+ * @attention null
+ * @param [in] grpId: group id
+ * @param [in] eventId: event id
+ * @param [in] finishFunc: finish callback func
+ * @return   0 for success, others for fail
+ */
 DLLEXPORT drvError_t halEschedRegisterFinishFunc(unsigned int grpId, unsigned int event_id,
-    void (*finishFunc)(unsigned int devId, unsigned int grpId, unsigned int event_id, unsigned int subevent_id));
+                                                 void (*finishFunc)(unsigned int devId, unsigned int grpId,
+                                                                    unsigned int event_id, unsigned int subevent_id));
 
 /**
-* @ingroup driver
-* @brief  Export the latest scheduling trace
-* @attention null
-* @param [in] devId: logic devid
-* @param [in] buff: input buff to store scheduling trace
-* @param [in] buffLen: len of the input buff
-* @param [out] *dataLen: real length of the scheduling trace
-* @return   0 for success, others for fail
-*/
-DLLEXPORT drvError_t halEschedDumpEventTrace(unsigned int devId, char *buff,
-    unsigned int buffLen, unsigned int *dataLen);
+ * @ingroup driver
+ * @brief  Export the latest scheduling trace
+ * @attention null
+ * @param [in] devId: logic devid
+ * @param [in] buff: input buff to store scheduling trace
+ * @param [in] buffLen: len of the input buff
+ * @param [out] *dataLen: real length of the scheduling trace
+ * @return   0 for success, others for fail
+ */
+DLLEXPORT drvError_t halEschedDumpEventTrace(unsigned int devId, char *buff, unsigned int buffLen,
+                                             unsigned int *dataLen);
 
 /**
-* @ingroup driver
-* @brief  trigger to record the latest scheduling trace
-* @attention null
-* @param [in] devId: logic devid
-* @param [in] recordReason: reason to recore the event trace
-* @param [in] key: Identifies the uniqueness of the track file
-* @return   0 for success, others for fail
-*/
+ * @ingroup driver
+ * @brief  trigger to record the latest scheduling trace
+ * @attention null
+ * @param [in] devId: logic devid
+ * @param [in] recordReason: reason to recore the event trace
+ * @param [in] key: Identifies the uniqueness of the track file
+ * @return   0 for success, others for fail
+ */
 DLLEXPORT drvError_t halEschedTraceRecord(unsigned int devId, const char *recordReason, const char *key);
 
 /**
-* @ingroup driver
-* @brief  Commit the event to a specific process
-* @attention null
-* @param [in] devId: logic devid
-* @param [in] event: event summary info
-* @return   0 for success, others for fail
-*/
+ * @ingroup driver
+ * @brief  Commit the event to a specific process
+ * @attention null
+ * @param [in] devId: logic devid
+ * @param [in] event: event summary info
+ * @return   0 for success, others for fail
+ */
 DLLEXPORT drvError_t halEschedSubmitEvent(unsigned int devId, struct event_summary *event) ASCEND_HAL_WEAK;
 
 /**
-* @ingroup driver
-* @brief  Commit the event to a spcecific thread of a specific process
-* @attention null
-* @param [in] devId: logic devid
-* @param [in] event: event summary info
-* @return   0 for success, others for fail
-*/
+ * @ingroup driver
+ * @brief  Commit the event to a spcecific thread of a specific process
+ * @attention null
+ * @param [in] devId: logic devid
+ * @param [in] event: event summary info
+ * @return   0 for success, others for fail
+ */
 DLLEXPORT drvError_t halEschedSubmitEventToThread(uint32_t devId, struct event_summary *event);
 
 /**
-* @ingroup driver
-* @brief  Commit the event to a specific process
-* @attention null
-* @param [in] devId: logic devid
-* @param [in] flag: submit flag
-* @param [in] events: event summary info
-* @param [in] event_num: num of events, max 128 * 1024
-* @param [out] succ_event_num: succ num of events
-* @return   0 for success with succ event num, others for fail
-*/
-DLLEXPORT drvError_t halEschedSubmitEventBatch(unsigned int devId, SUBMIT_FLAG flag,
-    struct event_summary *events, unsigned int event_num, unsigned int *succ_event_num);
+ * @ingroup driver
+ * @brief  Commit the event to a specific process
+ * @attention null
+ * @param [in] devId: logic devid
+ * @param [in] flag: submit flag
+ * @param [in] events: event summary info
+ * @param [in] event_num: num of events, max 128 * 1024
+ * @param [out] succ_event_num: succ num of events
+ * @return   0 for success with succ event num, others for fail
+ */
+DLLEXPORT drvError_t halEschedSubmitEventBatch(unsigned int devId, SUBMIT_FLAG flag, struct event_summary *events,
+                                               unsigned int event_num, unsigned int *succ_event_num);
 
 /**
-* @ingroup driver
-* @brief  Commit and wait the event to a specific process
-* @attention null
-* @param [in] devId: logic devid
-* @param [in] event: event summary info
-* @param [in] timeout: timeout value
-* @param [out] reply: event reply info
-* @return   0 for success, others for fail
-*/
-DLLEXPORT drvError_t halEschedSubmitEventSync(unsigned int devId,
-    struct event_summary *event, int timeout, struct event_reply *reply) ASCEND_HAL_WEAK;
+ * @ingroup driver
+ * @brief  Commit and wait the event to a specific process
+ * @attention null
+ * @param [in] devId: logic devid
+ * @param [in] event: event summary info
+ * @param [in] timeout: timeout value
+ * @param [out] reply: event reply info
+ * @return   0 for success, others for fail
+ */
+DLLEXPORT drvError_t halEschedSubmitEventSync(unsigned int devId, struct event_summary *event, int timeout,
+                                              struct event_reply *reply) ASCEND_HAL_WEAK;
 
 /**
-* @ingroup driver
-* @brief  Swap the thread out from running cpu
-* @attention null
-* @param [in] devId: logic devid
-* @param [in] grpId: group id
-* @param [in] threadId: thread id
-* @return   0 for success, others for fail
-*/
+ * @ingroup driver
+ * @brief  Swap the thread out from running cpu
+ * @attention null
+ * @param [in] devId: logic devid
+ * @param [in] grpId: group id
+ * @param [in] threadId: thread id
+ * @return   0 for success, others for fail
+ */
 DLLEXPORT drvError_t halEschedThreadSwapout(unsigned int devId, unsigned int grpId, unsigned int threadId);
 
 /**
-* @ingroup driver
-* @brief  sched thread give up possession of AICPU
-* @attention null
-* @param [in] devId: logic devid
-* @param [in] grpId: group id
-* @param [in] threadId: thread id
-* @return   0 for success, others for fail
-*/
+ * @ingroup driver
+ * @brief  sched thread give up possession of AICPU
+ * @attention null
+ * @param [in] devId: logic devid
+ * @param [in] grpId: group id
+ * @param [in] threadId: thread id
+ * @return   0 for success, others for fail
+ */
 DLLEXPORT drvError_t halEschedThreadGiveup(unsigned int devId, unsigned int grpId, unsigned int threadId);
 
 /**
-* @ingroup driver
-* @brief  Actively retrieve an event
-* @attention null
-* @param [in] devId: logic devid
-* @param [in] grpId: group id
-* @param [in] threadId: thread id
-* @param [in] eventId: event id
-* @param [out] event: The event that is scheduled
-* @return   0 for success, others for fail
-*/
-DLLEXPORT drvError_t halEschedGetEvent(unsigned int devId, unsigned int grpId, unsigned int threadId,
-    EVENT_ID eventId, struct event_info *event);
+ * @ingroup driver
+ * @brief  Actively retrieve an event
+ * @attention null
+ * @param [in] devId: logic devid
+ * @param [in] grpId: group id
+ * @param [in] threadId: thread id
+ * @param [in] eventId: event id
+ * @param [out] event: The event that is scheduled
+ * @return   0 for success, others for fail
+ */
+DLLEXPORT drvError_t halEschedGetEvent(unsigned int devId, unsigned int grpId, unsigned int threadId, EVENT_ID eventId,
+                                       struct event_info *event);
 
 /**
-* @ingroup driver
-* @brief  Respond to events
-* @attention null
-* @param [in] devId: logic devid
-* @param [in] eventId: event id
-* @param [in] subeventId: sub event id
-* @param [in] msg: message info, it has a specific data format in ascend910B version, please refer to
-* the structure hwts_response
-* @param [in] msgLen: len of message
-* @return   0 for success, others for fail
-*/
-DLLEXPORT drvError_t halEschedAckEvent(unsigned int devId, EVENT_ID eventId, unsigned int subeventId,
-    char *msg, unsigned int msgLen) ASCEND_HAL_WEAK;
+ * @ingroup driver
+ * @brief  Respond to events
+ * @attention null
+ * @param [in] devId: logic devid
+ * @param [in] eventId: event id
+ * @param [in] subeventId: sub event id
+ * @param [in] msg: message info, it has a specific data format in ascend910B version, please refer to
+ * the structure hwts_response
+ * @param [in] msgLen: len of message
+ * @return   0 for success, others for fail
+ */
+DLLEXPORT drvError_t halEschedAckEvent(unsigned int devId, EVENT_ID eventId, unsigned int subeventId, char *msg,
+                                       unsigned int msgLen) ASCEND_HAL_WEAK;
 
 /**
-* @ingroup driver
-* @brief  set the ack event callback func
-* @attention null
-* @param [in] grpId: group id
-* @param [in] eventId: event id
-* @param [in] ackFunc: ack event callback func
-* @return   0 for success, others for fail
-*/
+ * @ingroup driver
+ * @brief  set the ack event callback func
+ * @attention null
+ * @param [in] grpId: group id
+ * @param [in] eventId: event id
+ * @param [in] ackFunc: ack event callback func
+ * @return   0 for success, others for fail
+ */
 DLLEXPORT drvError_t halEschedRegisterAckFunc(unsigned int grpId, EVENT_ID eventId,
-    void (*ackFunc)(unsigned int devId, unsigned int subevent_id, char *msg, unsigned int msgLen));
+                                              void (*ackFunc)(unsigned int devId, unsigned int subevent_id, char *msg,
+                                                              unsigned int msgLen));
 
 /**
-* @ingroup driver
-* @brief  add a table entry
-* @attention null
-* @param [in] devId: logic devid
-* @param [in] tableId: table id
-* @param [in] key: entry key
-* @param [in] entry: entry item
-* @return   0 for success, others for fail
-*/
-DLLEXPORT drvError_t halEschedTableAddEntry(unsigned int devId, unsigned int tableId,
-    struct esched_table_key *key, struct esched_table_entry *entry);
+ * @ingroup driver
+ * @brief  add a table entry
+ * @attention null
+ * @param [in] devId: logic devid
+ * @param [in] tableId: table id
+ * @param [in] key: entry key
+ * @param [in] entry: entry item
+ * @return   0 for success, others for fail
+ */
+DLLEXPORT drvError_t halEschedTableAddEntry(unsigned int devId, unsigned int tableId, struct esched_table_key *key,
+                                            struct esched_table_entry *entry);
 
 /**
-* @ingroup driver
-* @brief  del a table entry
-* @attention null
-* @param [in] devId: logic devid
-* @param [in] tableId: table id
-* @param [in] key: entry key
-* @return   0 for success, others for fail
-*/
+ * @ingroup driver
+ * @brief  del a table entry
+ * @attention null
+ * @param [in] devId: logic devid
+ * @param [in] tableId: table id
+ * @param [in] key: entry key
+ * @return   0 for success, others for fail
+ */
 DLLEXPORT drvError_t halEschedTableDelEntry(unsigned int devId, unsigned int tableId, struct esched_table_key *key);
 
 /**
-* @ingroup driver
-* @brief  query table entry stat
-* @attention null
-* @param [in] devId: logic devid
-* @param [in] tableId: table id
-* @param [in] key: entry key
-* @param [out] stat: entry key stat
-* @return   0 for success, others for fail
-*/
+ * @ingroup driver
+ * @brief  query table entry stat
+ * @attention null
+ * @param [in] devId: logic devid
+ * @param [in] tableId: table id
+ * @param [in] key: entry key
+ * @param [out] stat: entry key stat
+ * @return   0 for success, others for fail
+ */
 DLLEXPORT drvError_t halEschedTableQueryEntryStat(unsigned int devId, unsigned int tableId,
-    struct esched_table_key *key, struct esched_table_key_entry_stat *stat);
+                                                  struct esched_table_key *key,
+                                                  struct esched_table_key_entry_stat *stat);
 
 /*=========================== Queue Manage ===========================*/
 /**
-* @ingroup driver
-* @brief  queue subscribe event
-* @attention null
-* @param [in] subPara: subscribe event structure
-* @return   0 for success, DRV_ERROR_REPEATED_SUBSCRIBED for Repeating subscription, others for fail
-*/
+ * @ingroup driver
+ * @brief  queue subscribe event
+ * @attention null
+ * @param [in] subPara: subscribe event structure
+ * @return   0 for success, DRV_ERROR_REPEATED_SUBSCRIBED for Repeating subscription, others for fail
+ */
 drvError_t halQueueSubEvent(struct QueueSubPara *subPara);
 
 /**
-* @ingroup driver
-* @brief  queue unsubscribe event
-* @attention null
-* @param [in] unsubPara: unsubscribe event structure
-* @return   0 for success, others for fail
-*/
+ * @ingroup driver
+ * @brief  queue unsubscribe event
+ * @attention null
+ * @param [in] unsubPara: unsubscribe event structure
+ * @return   0 for success, others for fail
+ */
 drvError_t halQueueUnsubEvent(struct QueueUnsubPara *unsubPara);
 
 /**
-* @ingroup driver
-* @brief  create queue
-* @attention For a queue, the producer (enqueue) or consumer (dequeue) only supports single-threaded operations.
-* @param [in] devId: logic devid
-* @param [in] queAttr: queue attribute
-* @param [out] qid: queue id
-* @return   0 for success, others for fail
-*/
+ * @ingroup driver
+ * @brief  create queue
+ * @attention For a queue, the producer (enqueue) or consumer (dequeue) only supports single-threaded operations.
+ * @param [in] devId: logic devid
+ * @param [in] queAttr: queue attribute
+ * @param [out] qid: queue id
+ * @return   0 for success, others for fail
+ */
 DLLEXPORT drvError_t halQueueCreate(unsigned int devId, const QueueAttr *queAttr, unsigned int *qid) ASCEND_HAL_WEAK;
 
 /**
-* @ingroup driver
-* @brief  grant queue
-* @attention null
-* @param [in] devId: logic devid
-* @param [in] qid: queue id
-* @param [in] pid: pid
-* @param [in] attr: queue share attr
-* @return   0 for success, others for fail
-*/
+ * @ingroup driver
+ * @brief  grant queue
+ * @attention null
+ * @param [in] devId: logic devid
+ * @param [in] qid: queue id
+ * @param [in] pid: pid
+ * @param [in] attr: queue share attr
+ * @return   0 for success, others for fail
+ */
 DLLEXPORT drvError_t halQueueGrant(unsigned int devId, int qid, int pid, QueueShareAttr attr) ASCEND_HAL_WEAK;
 
 /**
-* @ingroup driver
-* @brief  attach queue
-* @attention For inter_dev queue, return DRV_ERROR_RESUME if the que has not been imported.
-* @param [in] devId: logic devid
-* @param [in] qid: queue id
-* @param [in] timeOut: timeOut
-* @return   0 for success, others for fail
-*/
+ * @ingroup driver
+ * @brief  attach queue
+ * @attention For inter_dev queue, return DRV_ERROR_RESUME if the que has not been imported.
+ * @param [in] devId: logic devid
+ * @param [in] qid: queue id
+ * @param [in] timeOut: timeOut
+ * @return   0 for success, others for fail
+ */
 DLLEXPORT drvError_t halQueueAttach(unsigned int devId, unsigned int qid, int timeOut) ASCEND_HAL_WEAK;
 
 /**
-* @ingroup driver
-* @brief  enqueue
-* @attention
-* For inter_dev queue, need to subscribe the F2NF event before use.
-* For inter_dev queue, return DRV_ERROR_RESUME if the peer UB resource has not been obtained.
-* For inter_dev queue, return DRV_ERROR_TRANS_LINK_ABNORMAL if the transmission link status is abnormal.
-* @param [in] devId: logic devid
-* @param [in] qid: queue id
-* @param [in] mbuf: enqueue mbuf
-* @return   0 for success, others for fail
-*/
+ * @ingroup driver
+ * @brief  enqueue
+ * @attention
+ * For inter_dev queue, need to subscribe the F2NF event before use.
+ * For inter_dev queue, return DRV_ERROR_RESUME if the peer UB resource has not been obtained.
+ * For inter_dev queue, return DRV_ERROR_TRANS_LINK_ABNORMAL if the transmission link status is abnormal.
+ * @param [in] devId: logic devid
+ * @param [in] qid: queue id
+ * @param [in] mbuf: enqueue mbuf
+ * @return   0 for success, others for fail
+ */
 DLLEXPORT drvError_t halQueueEnQueue(unsigned int devId, unsigned int qid, void *mbuf) ASCEND_HAL_WEAK;
 
 /**
-* @ingroup driver
-* @brief  dequeue
-* @attention null
-* @param [in] devId: logic devid
-* @param [in] qid: queue id
-* @param [out] mbuf: dequeue to mbuf
-* @return   0 for success, others for fail
-*/
+ * @ingroup driver
+ * @brief  dequeue
+ * @attention null
+ * @param [in] devId: logic devid
+ * @param [in] qid: queue id
+ * @param [out] mbuf: dequeue to mbuf
+ * @return   0 for success, others for fail
+ */
 DLLEXPORT drvError_t halQueueDeQueue(unsigned int devId, unsigned int qid, void **mbuf) ASCEND_HAL_WEAK;
 
 /**
-* @ingroup driver
-* @brief  subscribe queue
-* @attention null
-* @param [in] devId: logic devid
-* @param [in] qid: queue id
-* @param [in] groupId: queue group id
-* @param [in] type: single or group
-* @return   0 for success, others for fail
-*/
-DLLEXPORT drvError_t halQueueSubscribe(
-    unsigned int devId, unsigned int qid, unsigned int groupId, int type) ASCEND_HAL_WEAK;
+ * @ingroup driver
+ * @brief  subscribe queue
+ * @attention null
+ * @param [in] devId: logic devid
+ * @param [in] qid: queue id
+ * @param [in] groupId: queue group id
+ * @param [in] type: single or group
+ * @return   0 for success, others for fail
+ */
+DLLEXPORT drvError_t halQueueSubscribe(unsigned int devId, unsigned int qid, unsigned int groupId,
+                                       int type) ASCEND_HAL_WEAK;
 
 /**
-* @ingroup driver
-* @brief  unsubscribe queue
-* @attention null
-* @param [in] devId: logic devid
-* @param [in] qid: queue id
-* @return   0 for success, others for fail
-*/
+ * @ingroup driver
+ * @brief  unsubscribe queue
+ * @attention null
+ * @param [in] devId: logic devid
+ * @param [in] qid: queue id
+ * @return   0 for success, others for fail
+ */
 DLLEXPORT drvError_t halQueueUnsubscribe(unsigned int devId, unsigned int qid) ASCEND_HAL_WEAK;
 
 /**
-* @ingroup driver
-* @brief  sub full to not full event
-* @attention null
-* @param [in] devId: logic devid
-* @param [in] qid: queue id
-* @param [in] groupId: queue group id
-* @return   0 for success, others for fail
-*/
+ * @ingroup driver
+ * @brief  sub full to not full event
+ * @attention null
+ * @param [in] devId: logic devid
+ * @param [in] qid: queue id
+ * @param [in] groupId: queue group id
+ * @return   0 for success, others for fail
+ */
 DLLEXPORT drvError_t halQueueSubF2NFEvent(unsigned int devId, unsigned int qid, unsigned int groupId) ASCEND_HAL_WEAK;
 
 /**
-* @ingroup driver
-* @brief  unsub full to not full event
-* @attention null
-* @param [in] devId: logic devid
-* @param [in] qid: queue id
-* @return   0 for success, others for fail
-*/
+ * @ingroup driver
+ * @brief  unsub full to not full event
+ * @attention null
+ * @param [in] devId: logic devid
+ * @param [in] qid: queue id
+ * @return   0 for success, others for fail
+ */
 DLLEXPORT drvError_t halQueueUnsubF2NFEvent(unsigned int devId, unsigned int qid) ASCEND_HAL_WEAK;
 
 /**
-* @ingroup driver
-* @brief  get qid by name
-* @attention null
-* @param [in] devId: logic devid
-* @param [in] name: queue name
-* @param [out] qid: queue id
-* @return   0 for success, others for fail
-*/
+ * @ingroup driver
+ * @brief  get qid by name
+ * @attention null
+ * @param [in] devId: logic devid
+ * @param [in] name: queue name
+ * @param [out] qid: queue id
+ * @return   0 for success, others for fail
+ */
 DLLEXPORT drvError_t halQueueGetQidbyName(unsigned int devId, const char *name, unsigned int *qid) ASCEND_HAL_WEAK;
 
 /**
-* @ingroup driver
-* @Pause or recover Enqueue event in same queue-group
-* @param [in] struct QueueSubscriber subscriber: info of pause event subscriber
-* @return   0 for success, others for fail
-*/
+ * @ingroup driver
+ * @Pause or recover Enqueue event in same queue-group
+ * @param [in] struct QueueSubscriber subscriber: info of pause event subscriber
+ * @return   0 for success, others for fail
+ */
 DLLEXPORT drvError_t halQueueCtrlEvent(struct QueueSubscriber *subscriber, QUE_EVENT_CMD cmdType) ASCEND_HAL_WEAK;
 /**
-* @ingroup driver
-* @brief get len of queue tail data
-* @attention null
-* @param [in] devId: logic devid
-* @param [in] qid: queue id
-* @param [in] timeout: timeout value
-* @param [out] buf_len: len of queue tail data
-* @return   0 for success, others for fail
-*/
-DLLEXPORT drvError_t halQueuePeek(
-    unsigned int devId, unsigned int qid, uint64_t *buf_len, int timeout) ASCEND_HAL_WEAK;
+ * @ingroup driver
+ * @brief get len of queue tail data
+ * @attention null
+ * @param [in] devId: logic devid
+ * @param [in] qid: queue id
+ * @param [in] timeout: timeout value
+ * @param [out] buf_len: len of queue tail data
+ * @return   0 for success, others for fail
+ */
+DLLEXPORT drvError_t halQueuePeek(unsigned int devId, unsigned int qid, uint64_t *buf_len, int timeout) ASCEND_HAL_WEAK;
 /**
-* @ingroup driver
-* @brief get a mbuf that has the same data as the index mbuf in the queue
-* @attention null
-* @param [in] devId: logic devid
-* @param [in] qid: queue id
-* @param [in] flag: reserved parameters, user must set 0
-* @param [in] type: the type of queue peek data, if type is QUEUE_PEEK_DATA_COPY_REF, user should actively free mbuf
-* @param [out] mbuf: output mbuf has the same data as the index mbuf in the queue
-* @return   0 for success, others for fail
-*/
-DLLEXPORT drvError_t halQueuePeekData(unsigned int devId, unsigned int qid, unsigned int flag,
-    QueuePeekDataType type, void **mbuf);
+ * @ingroup driver
+ * @brief get a mbuf that has the same data as the index mbuf in the queue
+ * @attention null
+ * @param [in] devId: logic devid
+ * @param [in] qid: queue id
+ * @param [in] flag: reserved parameters, user must set 0
+ * @param [in] type: the type of queue peek data, if type is QUEUE_PEEK_DATA_COPY_REF, user should actively free mbuf
+ * @param [out] mbuf: output mbuf has the same data as the index mbuf in the queue
+ * @return   0 for success, others for fail
+ */
+DLLEXPORT drvError_t halQueuePeekData(unsigned int devId, unsigned int qid, unsigned int flag, QueuePeekDataType type,
+                                      void **mbuf);
 /**
-* @ingroup driver
-* @brief  enqueue buff vector
-* @attention null
-* @param [in] devId: logic devid
-* @param [in] qid: queue id
-* @param [in] vector: see struct buff_iovec
-* @param [in] timeout: timeout value
-* @return   0 for success, others for fail
-*/
-DLLEXPORT drvError_t halQueueEnQueueBuff(unsigned int devId, unsigned int qid,
-    struct buff_iovec *vector, int timeout) ASCEND_HAL_WEAK;
+ * @ingroup driver
+ * @brief  enqueue buff vector
+ * @attention null
+ * @param [in] devId: logic devid
+ * @param [in] qid: queue id
+ * @param [in] vector: see struct buff_iovec
+ * @param [in] timeout: timeout value
+ * @return   0 for success, others for fail
+ */
+DLLEXPORT drvError_t halQueueEnQueueBuff(unsigned int devId, unsigned int qid, struct buff_iovec *vector,
+                                         int timeout) ASCEND_HAL_WEAK;
 /**
-* @ingroup driver
-* @brief  dequeue buff vector
-* @attention null
-* @param [in] devId: logic devid
-* @param [in] qid: queue id
-* @param [in] timeout: timeout value
-* @param [out] vector: see struct buff_iovec
-* @return   0 for success, others for fail
-*/
-DLLEXPORT drvError_t halQueueDeQueueBuff(unsigned int devId, unsigned int qid,
-    struct buff_iovec *vector, int timeout) ASCEND_HAL_WEAK;
+ * @ingroup driver
+ * @brief  dequeue buff vector
+ * @attention null
+ * @param [in] devId: logic devid
+ * @param [in] qid: queue id
+ * @param [in] timeout: timeout value
+ * @param [out] vector: see struct buff_iovec
+ * @return   0 for success, others for fail
+ */
+DLLEXPORT drvError_t halQueueDeQueueBuff(unsigned int devId, unsigned int qid, struct buff_iovec *vector,
+                                         int timeout) ASCEND_HAL_WEAK;
 /**
-* @ingroup driver
-* @brief  event handle api, aicpu get the EVENT_DRV_MSG event call this function.
-* @param [in] devId: logic devid
-* @param [in] event: see struct event_info
-* @return   0 for success, others for fail
-*/
+ * @ingroup driver
+ * @brief  event handle api, aicpu get the EVENT_DRV_MSG event call this function.
+ * @param [in] devId: logic devid
+ * @param [in] event: see struct event_info
+ * @return   0 for success, others for fail
+ */
 DLLEXPORT drvError_t halEventProc(unsigned int devId, struct event_info *event) ASCEND_HAL_WEAK;
 /**
 * @ingroup driver
@@ -5415,33 +5420,33 @@ DLLEXPORT drvError_t halEventProc(unsigned int devId, struct event_info *event) 
 DLLEXPORT drvError_t halDrvEventThreadInit(unsigned int devId);
 
 /**
-* @ingroup driver
-* @brief  drv event thread uninit api, see halDrvEventThreadInit.
-* @param [in] devId: logic devid
-* @return   0 for success, others for fail
-*/
+ * @ingroup driver
+ * @brief  drv event thread uninit api, see halDrvEventThreadInit.
+ * @param [in] devId: logic devid
+ * @return   0 for success, others for fail
+ */
 DLLEXPORT drvError_t halDrvEventThreadUninit(unsigned int devId);
 /**
-* @ingroup driver
-* @brief  query queue status
-* @Pause or recover Enqueue event in same queue-group
-* @param [in] devId: logic devid
-* @param [in] cmd: query cmd
-* @param [in] inBuff: query cmd
-* @return   0 for success, others for fail
-*/
-DLLEXPORT drvError_t halQueueQuery(unsigned int devId, QueueQueryCmdType cmd,
-    QueueQueryInputPara *inPut, QueueQueryOutputPara *outPut) ASCEND_HAL_WEAK;
+ * @ingroup driver
+ * @brief  query queue status
+ * @Pause or recover Enqueue event in same queue-group
+ * @param [in] devId: logic devid
+ * @param [in] cmd: query cmd
+ * @param [in] inBuff: query cmd
+ * @return   0 for success, others for fail
+ */
+DLLEXPORT drvError_t halQueueQuery(unsigned int devId, QueueQueryCmdType cmd, QueueQueryInputPara *inPut,
+                                   QueueQueryOutputPara *outPut) ASCEND_HAL_WEAK;
 
 /**
-* @ingroup driver
-* @brief  set queue workmode
-* @attention null
-* @param [in] devId: logic devid
-* @param [in] cmd: set cmd type
-* @param [in] ipPut: cmd related parameters
-* @return   0 for success, others for fail
-*/
+ * @ingroup driver
+ * @brief  set queue workmode
+ * @attention null
+ * @param [in] devId: logic devid
+ * @param [in] cmd: set cmd type
+ * @param [in] ipPut: cmd related parameters
+ * @return   0 for success, others for fail
+ */
 DLLEXPORT drvError_t halQueueSet(unsigned int devId, QueueSetCmdType cmd, QueueSetInputPara *input);
 
 /**
@@ -5467,70 +5472,73 @@ DLLEXPORT drvError_t halBufferModeNotify(PSM_STATUS status, void *rsv) ASCEND_HA
 DLLEXPORT drvError_t halQueueModeNotify(PSM_STATUS status, void *rsv) ASCEND_HAL_WEAK;
 
 /**
-* @ingroup driver
-* @brief  export queue information
-* @attention
-* ensure to export after queue is created.
-* not support to export repeatedly.
-* not support to export after local queue enqueue or dequeue.
-* @param [in] devId: logic devid
-* @param [in] qid: queue id
-* @param [in] queInfo: share queue info
-* @return   0 for success, others for fail
-*/
+ * @ingroup driver
+ * @brief  export queue information
+ * @attention
+ * ensure to export after queue is created.
+ * not support to export repeatedly.
+ * not support to export after local queue enqueue or dequeue.
+ * @param [in] devId: logic devid
+ * @param [in] qid: queue id
+ * @param [in] queInfo: share queue info
+ * @return   0 for success, others for fail
+ */
 DLLEXPORT drvError_t halQueueExport(unsigned int devId, unsigned int qid, struct shareQueInfo *queInfo) ASCEND_HAL_WEAK;
 
 /**
-* @ingroup driver
-* @brief  unexport queue information
-* @attention
-* ensure to unexport after export.
-* not support to unexport repeatedly.
-* not support to export or operate queue after unexport.
-* @param [in] devId: logic devid
-* @param [in] qid: queue id
-* @param [in] queInfo: share queue info
-* @return   0 for success, others for fail
-*/
-DLLEXPORT drvError_t halQueueUnexport(unsigned int devId, unsigned int qid, struct shareQueInfo *queInfo) ASCEND_HAL_WEAK;
+ * @ingroup driver
+ * @brief  unexport queue information
+ * @attention
+ * ensure to unexport after export.
+ * not support to unexport repeatedly.
+ * not support to export or operate queue after unexport.
+ * @param [in] devId: logic devid
+ * @param [in] qid: queue id
+ * @param [in] queInfo: share queue info
+ * @return   0 for success, others for fail
+ */
+DLLEXPORT drvError_t halQueueUnexport(unsigned int devId, unsigned int qid,
+                                      struct shareQueInfo *queInfo) ASCEND_HAL_WEAK;
 
 /**
-* @ingroup driver
-* @brief  import queue information
-* @attention
-* not support to import repeatedly.
-* import and export sequences are asynchronous, if the peer end has not exported, DRV_ERROR_RESUME is returned,
-* the user needs to retry.
-* @param [in] devId: logic devid
-* @param [in] qid: queue id
-* @param [in] queInfo: share queue info
-* @return   0 for success, others for fail
-*/
-DLLEXPORT drvError_t halQueueImport(unsigned int devId, struct shareQueInfo *queInfo, unsigned int* qid) ASCEND_HAL_WEAK;
+ * @ingroup driver
+ * @brief  import queue information
+ * @attention
+ * not support to import repeatedly.
+ * import and export sequences are asynchronous, if the peer end has not exported, DRV_ERROR_RESUME is returned,
+ * the user needs to retry.
+ * @param [in] devId: logic devid
+ * @param [in] qid: queue id
+ * @param [in] queInfo: share queue info
+ * @return   0 for success, others for fail
+ */
+DLLEXPORT drvError_t halQueueImport(unsigned int devId, struct shareQueInfo *queInfo,
+                                    unsigned int *qid) ASCEND_HAL_WEAK;
 
 /**
-* @ingroup driver
-* @brief  unimport queue information
-* @attention
-* not support to unimport repeatedly.
-* ensure to unimport after import.
-* @param [in] devId: logic devid
-* @param [in] qid: queue id
-* @param [in] queInfo: share queue info
-* @return   0 for success, others for fail
-*/
-DLLEXPORT drvError_t halQueueUnimport(unsigned int devId, unsigned int qid, struct shareQueInfo *queInfo) ASCEND_HAL_WEAK;
+ * @ingroup driver
+ * @brief  unimport queue information
+ * @attention
+ * not support to unimport repeatedly.
+ * ensure to unimport after import.
+ * @param [in] devId: logic devid
+ * @param [in] qid: queue id
+ * @param [in] queInfo: share queue info
+ * @return   0 for success, others for fail
+ */
+DLLEXPORT drvError_t halQueueUnimport(unsigned int devId, unsigned int qid,
+                                      struct shareQueInfo *queInfo) ASCEND_HAL_WEAK;
 
 /**
-* @ingroup driver
-* @brief  get dqs queue operation(enqueue/deque etc.) address
-* @attention This function is only can be called on platform supporting dqs queue.Furthermore, this function
-*  can only be called if the queue type is dqs queue.
-* @param [in] devId: logic devid
-* @param [in] qid: queue id
-* @param [out] info: the dqs queue operation address(virtual)
-* @return   0 for success, others for fail
-*/
+ * @ingroup driver
+ * @brief  get dqs queue operation(enqueue/deque etc.) address
+ * @attention This function is only can be called on platform supporting dqs queue.Furthermore, this function
+ *  can only be called if the queue type is dqs queue.
+ * @param [in] devId: logic devid
+ * @param [in] qid: queue id
+ * @param [out] info: the dqs queue operation address(virtual)
+ * @return   0 for success, others for fail
+ */
 DLLEXPORT drvError_t halQueueGetDqsQueInfo(unsigned int devId, unsigned int qid, DqsQueueInfo *info);
 
 #define DRV_NOTIFY_TYPE_TOTAL_SIZE 1
@@ -5551,156 +5559,155 @@ DLLEXPORT drvError_t halQueueGetDqsQueInfo(unsigned int devId, unsigned int qid,
 drvError_t halNotifyGetInfo(uint32_t devId, uint32_t tsId, uint32_t type, uint32_t *val);
 
 /**
-* @ingroup driver
-* @brief Get the number of chips
-* @attention NULL
-* @param [out] chip_count  The space requested by the user is used to store the number of returned chips
-* @return  0 for success, others for fail
-*/
+ * @ingroup driver
+ * @brief Get the number of chips
+ * @attention NULL
+ * @param [out] chip_count  The space requested by the user is used to store the number of returned chips
+ * @return  0 for success, others for fail
+ */
 DLLEXPORT drvError_t halGetChipCount(int *chip_count) ASCEND_HAL_WEAK;
 
 /**
-* @ingroup driver
-* @brief Get the id of all chips
-* @attention NULL
-* @param [out] count The space requested by the user is used to store the id of all returned chips
-* @param [in] count Number of chip equipment
-* @return  0 for success, others for fail
-*/
-DLLEXPORT drvError_t  halGetChipList(int chip_list[], int count) ASCEND_HAL_WEAK;
+ * @ingroup driver
+ * @brief Get the id of all chips
+ * @attention NULL
+ * @param [out] count The space requested by the user is used to store the id of all returned chips
+ * @param [in] count Number of chip equipment
+ * @return  0 for success, others for fail
+ */
+DLLEXPORT drvError_t halGetChipList(int chip_list[], int count) ASCEND_HAL_WEAK;
 
 /**
-* @ingroup driver
-* @brief Get the device number of one chip
-* @attention NULL
-* @param [in] chip_id  The chip id
-* @param [out] device_count  The space requested by the user is used to store the number of returned devices
-* @return  0 for success, others for fail
-*/
-DLLEXPORT drvError_t  halGetDeviceCountFromChip(int chip_id, int *device_count) ASCEND_HAL_WEAK;
+ * @ingroup driver
+ * @brief Get the device number of one chip
+ * @attention NULL
+ * @param [in] chip_id  The chip id
+ * @param [out] device_count  The space requested by the user is used to store the number of returned devices
+ * @return  0 for success, others for fail
+ */
+DLLEXPORT drvError_t halGetDeviceCountFromChip(int chip_id, int *device_count) ASCEND_HAL_WEAK;
 
 /**
-* @ingroup driver
-* @brief Get the id of all devices of one chip
-* @attention NULL
-* @param [in] chip_id  The chip id
-* @param [out] count The space requested by the user is used to store the id of all returned devices of one chip
-* @param [in] count Number of equipment
-* @return  0 for success, others for fail
-*/
-DLLEXPORT drvError_t  halGetDeviceFromChip(int chip_id, int device_list[], int count) ASCEND_HAL_WEAK;
+ * @ingroup driver
+ * @brief Get the id of all devices of one chip
+ * @attention NULL
+ * @param [in] chip_id  The chip id
+ * @param [out] count The space requested by the user is used to store the id of all returned devices of one chip
+ * @param [in] count Number of equipment
+ * @return  0 for success, others for fail
+ */
+DLLEXPORT drvError_t halGetDeviceFromChip(int chip_id, int device_list[], int count) ASCEND_HAL_WEAK;
 
 /**
-* @ingroup driver
-* @brief Get the id of chip of one device
-* @attention NULL
-* @param [in] device_id  the device id
-* @param [out] the chip id
-* @return  0 for success, others for fail
-*/
-DLLEXPORT drvError_t  halGetChipFromDevice(int device_id, int *chip_id) ASCEND_HAL_WEAK;
+ * @ingroup driver
+ * @brief Get the id of chip of one device
+ * @attention NULL
+ * @param [in] device_id  the device id
+ * @param [out] the chip id
+ * @return  0 for success, others for fail
+ */
+DLLEXPORT drvError_t halGetChipFromDevice(int device_id, int *chip_id) ASCEND_HAL_WEAK;
 
 /**
-* @ingroup driver
-* @brief Get the id of chip of one device
-* @attention NULL
-* @param [in] devID  the device id
-* @param [out] chipInfo chip name/type/version information
-* @return  0 for success, others for fail
-*/
+ * @ingroup driver
+ * @brief Get the id of chip of one device
+ * @attention NULL
+ * @param [in] devID  the device id
+ * @param [out] chipInfo chip name/type/version information
+ * @return  0 for success, others for fail
+ */
 DLLEXPORT drvError_t halGetChipInfo(unsigned int devId, halChipInfo *chipInfo);
 
 /**
-* @ingroup driver
-* @brief Converting error code to error message
-* @attention NULL
-* @param [in] code
-* @return 1-8999 user error message
-* @return 9000-9999 Undefine error message or inner error message
-*/
+ * @ingroup driver
+ * @brief Converting error code to error message
+ * @attention NULL
+ * @param [in] code
+ * @return 1-8999 user error message
+ * @return 9000-9999 Undefine error message or inner error message
+ */
 DLLEXPORT int32_t halMapErrorCode(drvError_t code);
 
 /**
-* @ingroup driver
-* @brief Get the current number of VF
-* @attention null
-* @param [out] *num_dev  Number of current VF devices
-* @return   0 for success, others for fail
-*/
+ * @ingroup driver
+ * @brief Get the current number of VF
+ * @attention null
+ * @param [out] *num_dev  Number of current VF devices
+ * @return   0 for success, others for fail
+ */
 DLLEXPORT drvError_t halGetVdevNum(uint32_t *num_dev);
 
 /**
-* @ingroup driver
-* @brief Get the current number of devices of assigned type
-* @attention null
-* @param [in]  hw_type 0: davinci, 1: kunpeng
-* @param [out] *num_dev  Number of current devices
-* @return   0 for success, others for fail
-*/
+ * @ingroup driver
+ * @brief Get the current number of devices of assigned type
+ * @attention null
+ * @param [in]  hw_type 0: davinci, 1: kunpeng
+ * @param [out] *num_dev  Number of current devices
+ * @return   0 for success, others for fail
+ */
 DLLEXPORT drvError_t halGetDevNumEx(uint32_t hw_type, uint32_t *devNum);
 
 /**
-* @ingroup driver
-* @brief The device side and the host side both obtain the host IDs of all the VF.
-* @attention null
-* @param [in]  len  Array length
-* @param [out] devices  device id Array
-* @return   0 for success, others for fail
-*/
+ * @ingroup driver
+ * @brief The device side and the host side both obtain the host IDs of all the VF.
+ * @attention null
+ * @param [in]  len  Array length
+ * @param [out] devices  device id Array
+ * @return   0 for success, others for fail
+ */
 DLLEXPORT drvError_t halGetVdevIDs(uint32_t *devices, uint32_t len);
 
 /**
-* @ingroup driver
-* @brief The device side and the host side both obtain the host IDs of all the current devices.
-* If called in a container, get the host IDs of all devices in the current container.
-* @attention null
-* @param [in]  hw_type 0: davinci, 1: kunpeng
-* @param [in]  len  Array length
-* @param [out] devices  device id Array
-* @return   0 for success, others for fail
-*/
+ * @ingroup driver
+ * @brief The device side and the host side both obtain the host IDs of all the current devices.
+ * If called in a container, get the host IDs of all devices in the current container.
+ * @attention null
+ * @param [in]  hw_type 0: davinci, 1: kunpeng
+ * @param [in]  len  Array length
+ * @param [out] devices  device id Array
+ * @return   0 for success, others for fail
+ */
 DLLEXPORT drvError_t halGetDevIDsEx(uint32_t hw_type, uint32_t *devices, uint32_t len);
 
 /**
-* @ingroup driver
-* @brief Support calling on device and host sides. Currently, not supported called in split mode.
-* If filter->filter_flag set to 0, it means do not filter events and get all events.
-* @attention If len equal to eventCount, some events may have been abandoned.
-* @param [in]  devId the device id
-* @param [in]  filter  Filter conditions
-* filter->filter_flag; bit0: event_id; bit1: severity; bit2: node_type; bit3: current tgid
-* @param [in]  len  the number of eventInfo
-* @param [out] eventInfo  Event information
-* @param [out] eventCount  Number of events obtained. Max 128
-* @return   0 for success, others for fail
-*/
-DLLEXPORT drvError_t halGetFaultEvent(uint32_t devId, struct halEventFilter* filter,
-    struct halFaultEventInfo* eventInfo, uint32_t len, uint32_t *eventCount);
+ * @ingroup driver
+ * @brief Support calling on device and host sides. Currently, not supported called in split mode.
+ * If filter->filter_flag set to 0, it means do not filter events and get all events.
+ * @attention If len equal to eventCount, some events may have been abandoned.
+ * @param [in]  devId the device id
+ * @param [in]  filter  Filter conditions
+ * filter->filter_flag; bit0: event_id; bit1: severity; bit2: node_type; bit3: current tgid
+ * @param [in]  len  the number of eventInfo
+ * @param [out] eventInfo  Event information
+ * @param [out] eventCount  Number of events obtained. Max 128
+ * @return   0 for success, others for fail
+ */
+DLLEXPORT drvError_t halGetFaultEvent(uint32_t devId, struct halEventFilter *filter,
+                                      struct halFaultEventInfo *eventInfo, uint32_t len, uint32_t *eventCount);
 
 /**
-* @ingroup driver
-* @brief Support calling host sides. Currently, not supported called in split mode.
-* If filter->filter_flag set to 0, it means do not filter events and get all events.
-* @attention A maximum of 64 processes can be invoked. Invoked by multiple threads under a process is not supported.
-* @param [in]  devId The logical device id
-* @param [in]  timeout Waiting time, unit:ms. Value Range: 0-30000, 0 means no waiting, -1 means never time out
-* @param [in]  filter  Filter conditions
-* @param [out] eventInfo  Event information
-* @return   0 for success, 73 for no event occurred, 0xfffe for not support, others for fail
-*/
-DLLEXPORT drvError_t halReadFaultEvent(int32_t devId, int timeout,
-    struct halEventFilter* filter, struct halFaultEventInfo* eventInfo);
-
+ * @ingroup driver
+ * @brief Support calling host sides. Currently, not supported called in split mode.
+ * If filter->filter_flag set to 0, it means do not filter events and get all events.
+ * @attention A maximum of 64 processes can be invoked. Invoked by multiple threads under a process is not supported.
+ * @param [in]  devId The logical device id
+ * @param [in]  timeout Waiting time, unit:ms. Value Range: 0-30000, 0 means no waiting, -1 means never time out
+ * @param [in]  filter  Filter conditions
+ * @param [out] eventInfo  Event information
+ * @return   0 for success, 73 for no event occurred, 0xfffe for not support, others for fail
+ */
+DLLEXPORT drvError_t halReadFaultEvent(int32_t devId, int timeout, struct halEventFilter *filter,
+                                       struct halFaultEventInfo *eventInfo);
 
 /**
-* @ingroup driver
-* @brief Subscribe the fault event of device
-* @attention NULL
-* @param [in]  device_id The logical device id
-* @param [in]  filter  Filter conditions
-* @param [out] handler  fault event callback func.
-* @return   0 for success, 0xfffe for not support, others for fail
-*/
+ * @ingroup driver
+ * @brief Subscribe the fault event of device
+ * @attention NULL
+ * @param [in]  device_id The logical device id
+ * @param [in]  filter  Filter conditions
+ * @param [out] handler  fault event callback func.
+ * @return   0 for success, 0xfffe for not support, others for fail
+ */
 DLLEXPORT drvError_t halSubscribeFaultEvent(int device_id, struct halEventFilter filter, halfaulteventcb handler);
 
 struct halSDIDParseInfo {
@@ -5712,24 +5719,24 @@ struct halSDIDParseInfo {
 };
 
 /**
-* @ingroup driver
-* @brief get the parsed SDID information
-* @attention Not supported called in split mode, do not check validity for sdid;
-* @param [in]  sdid SDID
-* @param [out] sdid_parse  Parsed SDID information
-* @return   0 for success, others for fail
-*/
+ * @ingroup driver
+ * @brief get the parsed SDID information
+ * @attention Not supported called in split mode, do not check validity for sdid;
+ * @param [in]  sdid SDID
+ * @param [out] sdid_parse  Parsed SDID information
+ * @return   0 for success, others for fail
+ */
 DLLEXPORT drvError_t halParseSDID(uint32_t sdid, struct halSDIDParseInfo *sdid_parse);
 
 /**
-* @ingroup driver
-* @brief This command is used to get a feature is support or not.
-* @attention null
-* @param [in] devId Requested input device id.
-* @param [in] type  feature type
-* @return true : support this feature
-* @return false : Don't support this feature
-*/
+ * @ingroup driver
+ * @brief This command is used to get a feature is support or not.
+ * @attention null
+ * @param [in] devId Requested input device id.
+ * @param [in] type  feature type
+ * @return true : support this feature
+ * @return false : Don't support this feature
+ */
 DLLEXPORT bool halSupportFeature(uint32_t devId, drvFeature_t type);
 
 /**
@@ -5743,69 +5750,69 @@ DLLEXPORT bool halSupportFeature(uint32_t devId, drvFeature_t type);
 DLLEXPORT drvError_t halGetHostID(uint32_t *host_id);
 
 /**
-* @ingroup driver
-* @brief   interface for obtaining the information about the user configuration area
-* @param [in] devId Device ID
-* @param [in] name configuration item name
-* @param [out] buf Buffer for storing information
-* @param [out] bufSize Obtain the information length
-* @return   0 for success, others for fail
-*/
+ * @ingroup driver
+ * @brief   interface for obtaining the information about the user configuration area
+ * @param [in] devId Device ID
+ * @param [in] name configuration item name
+ * @param [out] buf Buffer for storing information
+ * @param [out] bufSize Obtain the information length
+ * @return   0 for success, others for fail
+ */
 DLLEXPORT int halGetUserConfig(unsigned int devId, const char *name, unsigned char *buf, unsigned int *bufSize);
 
 /**
-* @ingroup driver
-* @brief   This interface is used to set the information about the user configuration area.
-*          Currently, this interface can be invoked only by the DMP process. In other cases,
-*          the permission fails to be returned
-* @param [in] devId Device ID
-* @param [in] name configuration item name
-* @param [in] buf Buffer for storing information
-* @param [in] bufSize Obtain the information length
-*              Due to the storage space limit, when the configuration area information is set,
-*              The length of the setting information needs to be limited.
-*              The current length range is as follows: For cloud-related forms,
-*              the maximum value of bufSize is 0x8000, that is, 32 KB.
-*              For mini-related forms, the maximum value of bufSize is 0x800, that is, 2 KB.
-*              If the length is greater than the value of this parameter, a message is displayed,
-*              indicating that the setting fails.
-* @return   0 for success, others for fail
-*/
+ * @ingroup driver
+ * @brief   This interface is used to set the information about the user configuration area.
+ *          Currently, this interface can be invoked only by the DMP process. In other cases,
+ *          the permission fails to be returned
+ * @param [in] devId Device ID
+ * @param [in] name configuration item name
+ * @param [in] buf Buffer for storing information
+ * @param [in] bufSize Obtain the information length
+ *              Due to the storage space limit, when the configuration area information is set,
+ *              The length of the setting information needs to be limited.
+ *              The current length range is as follows: For cloud-related forms,
+ *              the maximum value of bufSize is 0x8000, that is, 32 KB.
+ *              For mini-related forms, the maximum value of bufSize is 0x800, that is, 2 KB.
+ *              If the length is greater than the value of this parameter, a message is displayed,
+ *              indicating that the setting fails.
+ * @return   0 for success, others for fail
+ */
 DLLEXPORT int halSetUserConfig(unsigned int devId, const char *name, unsigned char *buf, unsigned int bufSize);
 
 /**
-* @ingroup driver
-* @brief   This interface is used to clear the configuration items in the user configuration area.
-*          Currently, this interface can be invoked only by the DMP process.
-*          In other cases, a permission failure is returned.
-* @param [in] devId Device ID
-* @param [in] name configuration item name
-* @return   0 Success, others for fail
-*/
+ * @ingroup driver
+ * @brief   This interface is used to clear the configuration items in the user configuration area.
+ *          Currently, this interface can be invoked only by the DMP process.
+ *          In other cases, a permission failure is returned.
+ * @param [in] devId Device ID
+ * @param [in] name configuration item name
+ * @return   0 Success, others for fail
+ */
 DLLEXPORT int halClearUserConfig(unsigned int devId, const char *name);
 
 /**
-* @ingroup driver
-* @brief Get the max number of virtual device
-* @attention null
-* @param [in] devId device id
-* @param [out] vf_max_num maximum number of segmentation
-* @return 0  success, return others fail
-*/
+ * @ingroup driver
+ * @brief Get the max number of virtual device
+ * @attention null
+ * @param [in] devId device id
+ * @param [out] vf_max_num maximum number of segmentation
+ * @return 0  success, return others fail
+ */
 DLLEXPORT int halGetDeviceVfMax(unsigned int devId, unsigned int *vf_max_num);
 
 /**
-* @ingroup driver
-* @brief Get the list of virtual device IDs
-* @attention null
-* @param [in] devId device id
-* @param [out] vf_list list of vfid
-* @param [in] list_len length of vf_list
-* @param [out] vf_num number of vf
-* @return 0  success, return others fail
-*/
-DLLEXPORT int halGetDeviceVfList(unsigned int devId, unsigned int *vf_list,
-    unsigned int list_len, unsigned int *vf_num);
+ * @ingroup driver
+ * @brief Get the list of virtual device IDs
+ * @attention null
+ * @param [in] devId device id
+ * @param [out] vf_list list of vfid
+ * @param [in] list_len length of vf_list
+ * @param [out] vf_num number of vf
+ * @return 0  success, return others fail
+ */
+DLLEXPORT int halGetDeviceVfList(unsigned int devId, unsigned int *vf_list, unsigned int list_len,
+                                 unsigned int *vf_num);
 
 /**
  * @ingroup driver
@@ -5831,9 +5838,9 @@ DLLEXPORT int halTsDevRecord(unsigned int devId, unsigned int tsId, unsigned int
  */
 DLLEXPORT DV_ONLINE DVresult halMemInitSvmDevice(int hostpid, unsigned int vfid, unsigned int dev_id);
 
-#define SVM_MEM_BIND_SVM_GRP           (1U << 0) /* sync svm mem page table */
-#define SVM_MEM_BIND_SP_GRP            (1U << 1) /* add to aicpu process share pool group, default with alloc attr */
-#define SVM_MEM_BIND_SP_GRP_NO_ALLOC   (1U << 2) /* add to aicpu process share pool group, without alloc attr */
+#define SVM_MEM_BIND_SVM_GRP (1U << 0)         /* sync svm mem page table */
+#define SVM_MEM_BIND_SP_GRP (1U << 1)          /* add to aicpu process share pool group, default with alloc attr */
+#define SVM_MEM_BIND_SP_GRP_NO_ALLOC (1U << 2) /* add to aicpu process share pool group, without alloc attr */
 
 /**
  * @ingroup driver
@@ -5847,8 +5854,8 @@ DLLEXPORT DV_ONLINE DVresult halMemInitSvmDevice(int hostpid, unsigned int vfid,
  * @return DRV_ERROR_NONE : success
  * @return DRV_ERROR_XXX : bind fail
  */
-DLLEXPORT DV_ONLINE DVresult halMemBindSibling(
-    int hostPid, int aicpuPid, unsigned int vfid, unsigned int dev_id, unsigned int flag);
+DLLEXPORT DV_ONLINE DVresult halMemBindSibling(int hostPid, int aicpuPid, unsigned int vfid, unsigned int dev_id,
+                                               unsigned int flag);
 
 /**
  * @ingroup driver
@@ -5860,8 +5867,8 @@ DLLEXPORT DV_ONLINE DVresult halMemBindSibling(
  * @param [out] len: resource addr len
  * @return   0 for success, others for fail
  */
-DLLEXPORT DV_ONLINE drvError_t halResMap(
-    unsigned int devId, struct res_map_info *res_info, unsigned long *va, unsigned int *len);
+DLLEXPORT DV_ONLINE drvError_t halResMap(unsigned int devId, struct res_map_info *res_info, unsigned long *va,
+                                         unsigned int *len);
 
 /**
  * @ingroup driver
@@ -5883,8 +5890,8 @@ DLLEXPORT DV_ONLINE drvError_t halResUnmap(unsigned int devId, struct res_map_in
  * @param [in]  len : length of read content
  * @return   0 for success, others for fail
  */
-DLLEXPORT DV_ONLINE drvError_t halResRead(
-    unsigned int dev_id, struct res_map_info *res_info, void *data, unsigned int len);
+DLLEXPORT DV_ONLINE drvError_t halResRead(unsigned int dev_id, struct res_map_info *res_info, void *data,
+                                          unsigned int len);
 
 /**
  * @ingroup driver
@@ -5896,8 +5903,8 @@ DLLEXPORT DV_ONLINE drvError_t halResRead(
  * @param [in]  len : length of write content
  * @return   0 for success, others for fail
  */
-DLLEXPORT DV_ONLINE drvError_t halResWrite(
-    unsigned int dev_id, struct res_map_info *res_info, void *data, unsigned int len);
+DLLEXPORT DV_ONLINE drvError_t halResWrite(unsigned int dev_id, struct res_map_info *res_info, void *data,
+                                           unsigned int len);
 
 /**
  * @ingroup driver
@@ -5949,7 +5956,7 @@ typedef struct {
     uint64_t poolId;
     uint32_t devId;
 } soma_mem_pool_t;
- 
+
 typedef struct {
     drv_mem_handle_type handle_type;
     struct drv_mem_prop mem_prop;
@@ -5959,7 +5966,7 @@ typedef struct {
 
 enum soma_mem_pool_attr {
     SOMA_MEM_POOL_ATTR_RELEASE_THRESHOLD = 0x1,
- 
+
     SOMA_MEM_POOL_ATTR_RESERVED_MEM_CURRENT = 0x2,
     SOMA_MEM_POOL_ATTR_RESERVED_MEM_HIGH = 0x3,
     SOMA_MEM_POOL_ATTR_USED_MEM_CURRENT = 0x4,
@@ -5967,93 +5974,93 @@ enum soma_mem_pool_attr {
 };
 
 /**
-* @ingroup driver
-* @brief create memory pool
-* @attention null
-* @param [in]  pool: pool info
-* @param [in]  prop: pool prop
-* @return   0 for success, others for fail
-*/
+ * @ingroup driver
+ * @brief create memory pool
+ * @attention null
+ * @param [in]  pool: pool info
+ * @param [in]  prop: pool prop
+ * @return   0 for success, others for fail
+ */
 DLLEXPORT drvError_t halMemPoolCreate(soma_mem_pool_t pool, soma_mem_pool_prop prop);
-           
+
 /**
-* @ingroup driver
-* @brief destroy memory pool
-* @attention null
-* @param [in]  pool: pool info
-* @return   0 for success, others for fail
-*/
+ * @ingroup driver
+ * @brief destroy memory pool
+ * @attention null
+ * @param [in]  pool: pool info
+ * @return   0 for success, others for fail
+ */
 DLLEXPORT drvError_t halMemPoolDestroy(soma_mem_pool_t pool);
-                  
+
 /**
-* @ingroup driver
-* @brief apply for memory from the device memory pool
-* @attention null
-* @param [in]  pool: pool info
-* @param [in]  va: virtual memory address
-* @param [in]  size: memory size
-* @param [in]  policy: memory request policy
-* @return   0 for success, others for fail
-*/
+ * @ingroup driver
+ * @brief apply for memory from the device memory pool
+ * @attention null
+ * @param [in]  pool: pool info
+ * @param [in]  va: virtual memory address
+ * @param [in]  size: memory size
+ * @param [in]  policy: memory request policy
+ * @return   0 for success, others for fail
+ */
 DLLEXPORT DV_ONLINE drvError_t halMemPoolMalloc(soma_mem_pool_t pool, uint64_t va, uint64_t size, int32_t policy);
-                            
+
 /**
-* @ingroup driver
-* @brief release memory to the device memory pool
-* @attention null
-* @param [in]  pool: pool info
-* @param [in]  va: virtual memory address
-* @param [in]  size: memory size
-* @param [in]  policy: memory release policy
-* @return   0 for success, others for fail
-*/
+ * @ingroup driver
+ * @brief release memory to the device memory pool
+ * @attention null
+ * @param [in]  pool: pool info
+ * @param [in]  va: virtual memory address
+ * @param [in]  size: memory size
+ * @param [in]  policy: memory release policy
+ * @return   0 for success, others for fail
+ */
 DLLEXPORT DV_ONLINE drvError_t halMemPoolFree(soma_mem_pool_t pool, uint64_t va, uint64_t size, int32_t policy);
-                                     
+
 /**
-* @ingroup driver
-* @brief trigger the memory pool shrinking
-* @attention null
-* @param [in]  pool: pool info
-* @param [in/out]  reservedSize: reserved memory size after shrinking
-* @param [in]  usedSize: busy memory size in memory pool
-* @param [in]  freeSize: free memory size in memory pool
-* @return   0 for success, others for fail
-*/
+ * @ingroup driver
+ * @brief trigger the memory pool shrinking
+ * @attention null
+ * @param [in]  pool: pool info
+ * @param [in/out]  reservedSize: reserved memory size after shrinking
+ * @param [in]  usedSize: busy memory size in memory pool
+ * @param [in]  freeSize: free memory size in memory pool
+ * @return   0 for success, others for fail
+ */
 DLLEXPORT drvError_t halMemPoolTrim(soma_mem_pool_t pool, uint64_t *reservedSize, uint64_t usedSize, uint64_t freeSize);
 
 /**
-* @ingroup driver
-* @brief malloc and free pre-process before operator dispatch
-* @attention null
-* @param [in]  pool: pool info
-* @param [in]  va: virtual memory address
-* @param [in]  size: memory size
-* @param [in]  flag: 0:malloc flag; 1:free flag
-* @return   0 for success, others for fail
-*/
+ * @ingroup driver
+ * @brief malloc and free pre-process before operator dispatch
+ * @attention null
+ * @param [in]  pool: pool info
+ * @param [in]  va: virtual memory address
+ * @param [in]  size: memory size
+ * @param [in]  flag: 0:malloc flag; 1:free flag
+ * @return   0 for success, others for fail
+ */
 DLLEXPORT drvError_t halMemPoolAsyncConfig(soma_mem_pool_t pool, uint64_t va, uint64_t size, uint32_t flag);
 
 /**
-* @ingroup driver
-* @brief set memory pool attribute
-* @attention null
-* @param [in]  pool: pool info
-* @param [in]  attr: attribute type
-* @param [in]  value: attribute value
-* @return   0 for success, others for fail
-*/
-DLLEXPORT drvError_t halMemPoolSetAttr(soma_mem_pool_t pool, enum soma_mem_pool_attr attr, void* value);
- 
+ * @ingroup driver
+ * @brief set memory pool attribute
+ * @attention null
+ * @param [in]  pool: pool info
+ * @param [in]  attr: attribute type
+ * @param [in]  value: attribute value
+ * @return   0 for success, others for fail
+ */
+DLLEXPORT drvError_t halMemPoolSetAttr(soma_mem_pool_t pool, enum soma_mem_pool_attr attr, void *value);
+
 /**
-* @ingroup driver
-* @brief get memory pool attribute
-* @attention null
-* @param [in]  pool: pool info
-* @param [in]  attr: attribute type
-* @param [out] value: attribute value
-* @return   0 for success, others for fail
-*/
-DLLEXPORT drvError_t halMemPoolGetAttr(soma_mem_pool_t pool, enum soma_mem_pool_attr attr, void* value);
+ * @ingroup driver
+ * @brief get memory pool attribute
+ * @attention null
+ * @param [in]  pool: pool info
+ * @param [in]  attr: attribute type
+ * @param [out] value: attribute value
+ * @return   0 for success, others for fail
+ */
+DLLEXPORT drvError_t halMemPoolGetAttr(soma_mem_pool_t pool, enum soma_mem_pool_attr attr, void *value);
 #ifdef __cplusplus
 }
 #endif

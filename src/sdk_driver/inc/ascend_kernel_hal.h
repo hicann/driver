@@ -16,24 +16,25 @@
 #include "ascend_hal_define.h"
 
 #define LPM3_IDLE_CMD 9
-#define IPC_CMD_DVPP_MIN    241
-#define IPC_CMD_DVPP_MAX    249
-#define IPC_CMD_RETR_MIN    250
-#define IPC_CMD_RETR_MAX    255
+#define IPC_CMD_DVPP_MIN 241
+#define IPC_CMD_DVPP_MAX 249
+#define IPC_CMD_RETR_MIN 250
+#define IPC_CMD_RETR_MAX 255
 
-#define CHAN_TYPE_HW 0 /* Both SQ and CQ interact with hardware. (normal sqcq) */
-#define CHAN_TYPE_SW 1 /* Both SQ and CQ interact with software(TSCPU). (the physical sqcq used by logic/shm sqcq) */
+#define CHAN_TYPE_HW 0    /* Both SQ and CQ interact with hardware. (normal sqcq) */
+#define CHAN_TYPE_SW 1    /* Both SQ and CQ interact with software(TSCPU). (the physical sqcq used by logic/shm sqcq) */
 #define CHAN_TYPE_MAINT 2 /* Both SQ and CQ interact with the TSCPU for maintenance and test (functional sqcq) */
-#define CHAN_TYPE_TASK_SCHED 3 /* SQ and CQ for the task initiated by the TSCPU for the user process
-                             (the physical sqcq used by callback sqcq) */
+#define CHAN_TYPE_TASK_SCHED                                                \
+    3 /* SQ and CQ for the task initiated by the TSCPU for the user process \
+    (the physical sqcq used by callback sqcq) */
 #define CHAN_TYPE_MAX 4
 
 /* CHAN_TYPE_HW subtype */
-#define CHAN_SUB_TYPE_HW_RTS            0
-#define CHAN_SUB_TYPE_HW_TOPIC_SCHED    1
-#define CHAN_SUB_TYPE_HW_DVPP           2
-#define CHAN_SUB_TYPE_HW_TS             3
-#define CHAN_SUB_TYPE_HW_RSV_TS         4
+#define CHAN_SUB_TYPE_HW_RTS 0
+#define CHAN_SUB_TYPE_HW_TOPIC_SCHED 1
+#define CHAN_SUB_TYPE_HW_DVPP 2
+#define CHAN_SUB_TYPE_HW_TS 3
+#define CHAN_SUB_TYPE_HW_RSV_TS 4
 
 /* CHAN_TYPE_SW subtype */
 #define CHAN_SUB_TYPE_SW_CTRL 0
@@ -66,12 +67,12 @@
 #define CHAN_FLAG_RESERVED_CQ_ID_BIT 12
 #define CHAN_FLAG_RSV_SQ_ID_PRIOR_BIT 13
 #define CHAN_FLAG_RSV_CQ_ID_PRIOR_BIT 14
-#define CHAN_FLAG_REMOTE_ID_BIT       15
+#define CHAN_FLAG_REMOTE_ID_BIT 15
 #define CHAN_FLAG_RANGE_SQ_ID_BIT 16
 #define CHAN_FLAG_RANGE_CQ_ID_BIT 17
-#define CHAN_FLAG_AGENT_ID_BIT    18
-#define CHAN_FLAG_RTS_RSV_SQ_ID_BIT    19
-#define CHAN_FLAG_RTS_RSV_CQ_ID_BIT    20
+#define CHAN_FLAG_AGENT_ID_BIT 18
+#define CHAN_FLAG_RTS_RSV_SQ_ID_BIT 19
+#define CHAN_FLAG_RTS_RSV_CQ_ID_BIT 20
 
 #define CHAN_FLAG_SPECIFIED_SQ_MEM_BIT 31 /* used for internel */
 
@@ -98,110 +99,108 @@ typedef unsigned char u8;
 #endif
 
 /**
-* @ingroup driver-stub
-* @brief interface for dvpp notify LP to adjust ddr frequency
-* @param [in]  unsigned int dev_id: device ID
-* @param [in]  unsigned char cmd_type0: message target
-* @param [in]  unsigned char cmd_type1: module target
-* @param [in]  unsigned char *data: message
-* @param [in]  unsigned int data_len: message length
-* @return   0 for success, others for fail
-*/
-int hal_kernel_send_ipc_to_lp_async(unsigned int devid, unsigned char cmd_type0,
-    unsigned char cmd_type1, unsigned char *data, unsigned int data_len);
+ * @ingroup driver-stub
+ * @brief interface for dvpp notify LP to adjust ddr frequency
+ * @param [in]  unsigned int dev_id: device ID
+ * @param [in]  unsigned char cmd_type0: message target
+ * @param [in]  unsigned char cmd_type1: module target
+ * @param [in]  unsigned char *data: message
+ * @param [in]  unsigned int data_len: message length
+ * @return   0 for success, others for fail
+ */
+int hal_kernel_send_ipc_to_lp_async(unsigned int devid, unsigned char cmd_type0, unsigned char cmd_type1,
+                                    unsigned char *data, unsigned int data_len);
 
 /**
-* @ingroup driver-stub
-* @brief  interface for reporting the in-position information of the optical module
-* @param [in]  unsigned int qsfp_index Optical port index
-* @param [out] unsigned int *val presence information
-* @return   0 for success, others for fail
-*/
+ * @ingroup driver-stub
+ * @brief  interface for reporting the in-position information of the optical module
+ * @param [in]  unsigned int qsfp_index Optical port index
+ * @param [out] unsigned int *val presence information
+ * @return   0 for success, others for fail
+ */
 int drv_cpld_qsfp_present_query(unsigned int qsfp_index, unsigned int *val);
 /**
-* @ingroup driver-stub
-* @brief  obtain the MAC address of the user configuration area.
-* @param [in]  unsigned int dev_id Device ID
-* @param [in]  unsigned char *buf Buffer for storing information
-* @param [in]  unsigned int buf_size Size of the buffer for storing information
-* @param [out] unsigned int *info_size Data length of the returned MAC information
-* @return   0 for success, others for fail
-* @note Support:Ascend910,Ascend910B
-*/
-int devdrv_config_get_mac_info(unsigned int dev_id,
-                               unsigned char *buf,
-                               unsigned int buf_size,
-                               unsigned int *info_size);
+ * @ingroup driver-stub
+ * @brief  obtain the MAC address of the user configuration area.
+ * @param [in]  unsigned int dev_id Device ID
+ * @param [in]  unsigned char *buf Buffer for storing information
+ * @param [in]  unsigned int buf_size Size of the buffer for storing information
+ * @param [out] unsigned int *info_size Data length of the returned MAC information
+ * @return   0 for success, others for fail
+ * @note Support:Ascend910,Ascend910B
+ */
+int devdrv_config_get_mac_info(unsigned int dev_id, unsigned char *buf, unsigned int buf_size, unsigned int *info_size);
 /**
-* @ingroup driver-stub
-* @brief   interface for obtaining the information about the user configuration area
-* @param [in]  unsigned int dev_id Device ID
-* @param [in]  const char *name: configuration item name
-* @param [in]  unsigned char *buf Buffer for storing information
-* @param [out] unsigned int *buf_size Obtain the information length
-* @return   0 for success, others for fail
-* @note Support:Ascend310,Ascend910,Ascend310P,Ascend910B,Ascend310B
-*/
+ * @ingroup driver-stub
+ * @brief   interface for obtaining the information about the user configuration area
+ * @param [in]  unsigned int dev_id Device ID
+ * @param [in]  const char *name: configuration item name
+ * @param [in]  unsigned char *buf Buffer for storing information
+ * @param [out] unsigned int *buf_size Obtain the information length
+ * @return   0 for success, others for fail
+ * @note Support:Ascend310,Ascend910,Ascend310P,Ascend910B,Ascend310B
+ */
 
 int devdrv_get_user_config(unsigned int dev_id, const char *name, unsigned char *buf, unsigned int *buf_size);
 /**
-* @ingroup driver-stub
-* @brief   This interface is used to set the information about the user configuration area.
-*          Currently, this interface can be invoked only by the DMP process. In other cases, the permission fails to be returned
-* @param [in]  unsigned int dev_id Device ID
-* @param [in]  const char *name: configuration item name
-* @param [in]  unsigned char *buf Buffer for storing information
-* @param [out] unsigned int *buf_size Obtain the information length
-*              Due to the storage space limit, when the configuration area information is set,
-*              The length of the setting information needs to be limited.
-*              The current length range is as follows: For cloud-related forms,
-*              the maximum value of buf_size is 0x8000, that is, 32 KB.
-*              For mini-related forms, the maximum value of buf_size is 0x800, that is, 2 KB.
-*              If the length is greater than the value of this parameter, a message is displayed,
-*              indicating that the setting fails.
-* @return   0 for success, others for fail
-* @note Support:Ascend310,Ascend910,Ascend310P,Ascend910B,Ascend310B
-*/
+ * @ingroup driver-stub
+ * @brief   This interface is used to set the information about the user configuration area.
+ *          Currently, this interface can be invoked only by the DMP process. In other cases, the permission fails to be
+ * returned
+ * @param [in]  unsigned int dev_id Device ID
+ * @param [in]  const char *name: configuration item name
+ * @param [in]  unsigned char *buf Buffer for storing information
+ * @param [out] unsigned int *buf_size Obtain the information length
+ *              Due to the storage space limit, when the configuration area information is set,
+ *              The length of the setting information needs to be limited.
+ *              The current length range is as follows: For cloud-related forms,
+ *              the maximum value of buf_size is 0x8000, that is, 32 KB.
+ *              For mini-related forms, the maximum value of buf_size is 0x800, that is, 2 KB.
+ *              If the length is greater than the value of this parameter, a message is displayed,
+ *              indicating that the setting fails.
+ * @return   0 for success, others for fail
+ * @note Support:Ascend310,Ascend910,Ascend310P,Ascend910B,Ascend310B
+ */
 int devdrv_set_user_config(unsigned int dev_id, const char *name, unsigned char *buf, unsigned int buf_size);
 /**
-* @ingroup driver-stub
-* @brief   This interface is used to clear the configuration items in the user configuration area.
-*          Currently, this interface can be invoked only by the DMP process.
-*          In other cases, a permission failure is returned.
-* @param [in]  unsigned int dev_id Device ID
-* @param [in]  const char *name: configuration item name
-* @param [in]  unsigned char *buf Buffer for storing information
-* @return   0 Success, others for fail
-* @note Support:Ascend310,Ascend910,Ascend310P,Ascend910B,Ascend310B
-*/
+ * @ingroup driver-stub
+ * @brief   This interface is used to clear the configuration items in the user configuration area.
+ *          Currently, this interface can be invoked only by the DMP process.
+ *          In other cases, a permission failure is returned.
+ * @param [in]  unsigned int dev_id Device ID
+ * @param [in]  const char *name: configuration item name
+ * @param [in]  unsigned char *buf Buffer for storing information
+ * @return   0 Success, others for fail
+ * @note Support:Ascend310,Ascend910,Ascend310P,Ascend910B,Ascend310B
+ */
 int devdrv_clear_user_config(unsigned int devid, const char *name);
 
 /**
-* @ingroup driver-stub
-* @brief   This interface is used to get flash item in the user configuration area.
-* @param [in]  unsigned int: dev_id Device ID
-* @param [in]  const char *: configuration name
-* @param [in]  unsigned char *:data buffer for storing information
-* @param [in]  unsigned int: data buffer length
-* @param [out] unsigned int: data buffer out length
-* @return   0 Success, others for fail
-* @        -2 item not set
-* @note Support:Ascend910,Ascend310P,Ascend910B,Ascend310B
-*/
-int hal_kernel_get_user_config(unsigned int dev_id, const char *name, unsigned char *data,
-    unsigned int in_len, unsigned int *out_len);
+ * @ingroup driver-stub
+ * @brief   This interface is used to get flash item in the user configuration area.
+ * @param [in]  unsigned int: dev_id Device ID
+ * @param [in]  const char *: configuration name
+ * @param [in]  unsigned char *:data buffer for storing information
+ * @param [in]  unsigned int: data buffer length
+ * @param [out] unsigned int: data buffer out length
+ * @return   0 Success, others for fail
+ * @        -2 item not set
+ * @note Support:Ascend910,Ascend310P,Ascend910B,Ascend310B
+ */
+int hal_kernel_get_user_config(unsigned int dev_id, const char *name, unsigned char *data, unsigned int in_len,
+                               unsigned int *out_len);
 
 /**
-* @ingroup driver-stub
-* @brief   This interface is used to set flash item in the user configuration area.
-* @param [in]  unsigned int: dev_id Device ID
-* @param [in]  const char *: configuration name
-* @param [in]  unsigned char *:data buffer for storing information
-* @param [in]  unsigned int: data buffer length
-* @return   0 Success, others for fail
-* @        -2 item not set
-* @note Support:Ascend910,Ascend310P,Ascend910B,Ascend310B
-*/
+ * @ingroup driver-stub
+ * @brief   This interface is used to set flash item in the user configuration area.
+ * @param [in]  unsigned int: dev_id Device ID
+ * @param [in]  const char *: configuration name
+ * @param [in]  unsigned char *:data buffer for storing information
+ * @param [in]  unsigned int: data buffer length
+ * @return   0 Success, others for fail
+ * @        -2 item not set
+ * @note Support:Ascend910,Ascend310P,Ascend910B,Ascend310B
+ */
 int hal_kernel_set_user_config(unsigned int dev_id, const char *name, u8 *data, u32 in_len);
 
 typedef enum dms_pg_info_type {
@@ -210,43 +209,43 @@ typedef enum dms_pg_info_type {
     PG_INFO_TYPE_HBM,
     PG_INFO_TYPE_MATA,
     PG_INFO_TYPE_AIV,
- 	PG_INFO_TYPE_DVPP,
- 	PG_INFO_TYPE_GPU,
- 	PG_INFO_TYPE_CHIP_TYPE,
- 	PG_INFO_TYPE_L3D,
- 	PG_INFO_TYPE_L2,
- 	PG_INFO_TYPE_SDMA,
- 	PG_INFO_TYPE_STARS,
- 	PG_INFO_TYPE_HVCV,
+    PG_INFO_TYPE_DVPP,
+    PG_INFO_TYPE_GPU,
+    PG_INFO_TYPE_CHIP_TYPE,
+    PG_INFO_TYPE_L3D,
+    PG_INFO_TYPE_L2,
+    PG_INFO_TYPE_SDMA,
+    PG_INFO_TYPE_STARS,
+    PG_INFO_TYPE_HVCV,
     PG_INFO_TYPE_MAX,
 } HAL_DMS_PG_INFO_TYPE, HAL_PG_INFO_TYPE;
 
 typedef struct {
     u32 num;
-    u32 freq;       /* core working frequency */
-    u64 bitmap;     /* 1:good, 0:bad */
+    u32 freq;   /* core working frequency */
+    u64 bitmap; /* 1:good, 0:bad */
     u64 reserved;
 } hal_dms_common_pg_info_t;
 
 typedef struct {
     u32 num;
-    u32 freq;       /* core working frequency */
-    u64 bitmap;     /* 1:good, 0:bad */
+    u32 freq;   /* core working frequency */
+    u64 bitmap; /* 1:good, 0:bad */
     u64 reserved;
 } hal_pg_info_t;
 
 /**
-* @ingroup driver-stub
-* @brief   This interface is used to get pg info from dms module.
-* @param [in]  unsigned int: dev_id Device ID
-* @param [in]  HAL_DMS_PG_INFO_TYPE: pg info type
-* @param [out]  unsigned char *: pg info data pointer
-* @param [in]  unsigned int : input data size
-* @param [out]  unsigned int *: return info size
-* @return   0 Success, others for fail
-*/
-int hal_kernel_dms_get_pg_info(unsigned int dev_id, HAL_DMS_PG_INFO_TYPE info_type,
-    char* data, unsigned int size, unsigned int *ret_size);
+ * @ingroup driver-stub
+ * @brief   This interface is used to get pg info from dms module.
+ * @param [in]  unsigned int: dev_id Device ID
+ * @param [in]  HAL_DMS_PG_INFO_TYPE: pg info type
+ * @param [out]  unsigned char *: pg info data pointer
+ * @param [in]  unsigned int : input data size
+ * @param [out]  unsigned int *: return info size
+ * @return   0 Success, others for fail
+ */
+int hal_kernel_dms_get_pg_info(unsigned int dev_id, HAL_DMS_PG_INFO_TYPE info_type, char *data, unsigned int size,
+                               unsigned int *ret_size);
 
 #define BUFF_SP_NORMAL 0
 #define BUFF_SP_HUGEPAGE_PRIOR (1 << 0)
@@ -254,67 +253,67 @@ int hal_kernel_dms_get_pg_info(unsigned int dev_id, HAL_DMS_PG_INFO_TYPE info_ty
 #define BUFF_SP_DVPP (1 << 2)
 
 /**
-* @ingroup driver-stub
-* @brief   This interface is used to switch chip id to numa id.
-* @attention mc62cm12a is not supported
-* @param [in]  unsigned int device_id: device id
-* @param [in]  unsigned int type: memory type
-* @return   success return numa id, fail return fail code
-*/
+ * @ingroup driver-stub
+ * @brief   This interface is used to switch chip id to numa id.
+ * @attention mc62cm12a is not supported
+ * @param [in]  unsigned int device_id: device id
+ * @param [in]  unsigned int type: memory type
+ * @return   success return numa id, fail return fail code
+ */
 int hal_kernel_numa_get_nid(unsigned int device_id, unsigned int type);
 
 struct buff_proc_free {
     int pid;
-} ;
+};
 
 typedef void (*buff_free_ops)(struct buff_proc_free *arg);
 
 /**
-* @ingroup driver
-* @brief   This interface is used to register func, which call before buff drv free share pool mem
-* @param [in]  func: need to call before recycle
-* @param [out]  module_idx: to unreg func module idx
-* @return   0 Success, others for fail
-*/
+ * @ingroup driver
+ * @brief   This interface is used to register func, which call before buff drv free share pool mem
+ * @param [in]  func: need to call before recycle
+ * @param [out]  module_idx: to unreg func module idx
+ * @return   0 Success, others for fail
+ */
 int hal_kernel_buff_register_proc_free_notifier(buff_free_ops func, unsigned int *module_idx);
 
 /**
-* @ingroup driver-stub
-* @brief   This interface is used to unregister the func reg by hal_kernel_buff_register_proc_free_notifier
-* @param [in] module_idx: module idx, which is returned in reg func
-* @return   0 Success, others for fail
-*/
+ * @ingroup driver-stub
+ * @brief   This interface is used to unregister the func reg by hal_kernel_buff_register_proc_free_notifier
+ * @param [in] module_idx: module idx, which is returned in reg func
+ * @return   0 Success, others for fail
+ */
 int hal_kernel_buff_unregister_proc_free_notifier(unsigned int module_idx);
 
 enum sensorhub_pps_source_type {
     PPS_FROM_XGMAC = 0x0,
-    PPS_FROM_CHIP  = 0x1
+    PPS_FROM_CHIP = 0x1
 };
 
 enum sensorhub_ssu_ctrl_type {
-    SSU_SW      = 0x0,
-    PATH_SW     = 0x1,
+    SSU_SW = 0x0,
+    PATH_SW = 0x1,
     SSU_BUT
 };
 
 enum sensorhub_intr_ctrl_type {
     NORMAL1_MASK_CFG = 0x0,
     NORMAL2_MASK_CFG = 0x1,
-    ERROR1_MASK_CFG  = 0x2,
-    ERROR2_MASK_CFG  = 0x3,
-    NORMAL_INT_CLR   = 0x4,
+    ERROR1_MASK_CFG = 0x2,
+    ERROR2_MASK_CFG = 0x3,
+    NORMAL_INT_CLR = 0x4,
     INT_CTR_BUT
 };
 
 enum sensorhub_fsin_cfg_type {
-    PPS_THRESHOLD       = 0x0,
-    PPS_PW              = 0x1,
-    PPS_BIAS_THRESH     = 0x2,
-    EXPO_INIT_PRE       = 0x3,
-    FSIN_FRAME_RATE     = 0x4,
-    FSIN_CLR_TS         = 0x5,
-    FSIN_CAM_MAP        = 0x6,
-    FSIN_COMP_NUM       = 0x7,
+    PPS_THRESHOLD = 0x0,
+    PPS_PW = 0x1,
+    PPS_BIAS_THRESH = 0x2,
+    EXPO_INIT_PRE = 0x3,
+    FSIN_FRAME_RATE = 0x4,
+    FSIN_CLR_TS = 0x5,
+    FSIN_CAM_MAP = 0x6,
+    FSIN_COMP_NUM = 0x7,
     FSIN_CTRL_BUT
 };
 
@@ -324,22 +323,22 @@ enum sensorhub_polarity_cfg_type {
 };
 
 enum sensorhub_module_type {
-    SSU_CTRL_MODULE         = 0x0,
-    INTERRUPT_CTRL_MODULE   = 0x1,
-    FSIN_CTRL_MODULE        = 0x2,
-    IMU_CTRL_MODULE         = 0x3,
-    PERI_SUBCTRL_MODULE     = 0x4,
-    GPIO_CTRL_MODULE        = 0x5,
-    FAULT_CHECK_CFG         = 0x6,
-    SSU_STROBE_SET_CFG      = 0x7,
-    SSU_CAMERA_CHECK_READ   = 0x8,
-    POLARITY_CONFIG_MODULE  = 0x9,
+    SSU_CTRL_MODULE = 0x0,
+    INTERRUPT_CTRL_MODULE = 0x1,
+    FSIN_CTRL_MODULE = 0x2,
+    IMU_CTRL_MODULE = 0x3,
+    PERI_SUBCTRL_MODULE = 0x4,
+    GPIO_CTRL_MODULE = 0x5,
+    FAULT_CHECK_CFG = 0x6,
+    SSU_STROBE_SET_CFG = 0x7,
+    SSU_CAMERA_CHECK_READ = 0x8,
+    POLARITY_CONFIG_MODULE = 0x9,
     MODULE_BUT
 };
 
 enum sensorhub_fault_check_type {
-    EXPO_CHECK_PRE_THRESHOLD    = 0x0,
-    EXPO_CHECK_POST_THRESHOLD   = 0x1
+    EXPO_CHECK_PRE_THRESHOLD = 0x0,
+    EXPO_CHECK_POST_THRESHOLD = 0x1
 };
 
 struct sensorhub_sub_cmd_value_stru {
@@ -358,17 +357,17 @@ struct sensorhub_sub_cmd_info_stru {
 
 struct sensorhub_msg_head_stru {
     enum sensorhub_module_type cmd;
-    unsigned int sub_cmd;  /* fsin_cfg_type or ssu_ctrl_type or intr_ctrl_type */
+    unsigned int sub_cmd; /* fsin_cfg_type or ssu_ctrl_type or intr_ctrl_type */
     unsigned int len;
     void *param; /* sub_cmd_value or fsync_info or sub_cmd_info */
 };
 
 /**
-* @ingroup driver-stub
-* @brief   This interface is used to configure sensorhub module..
-* @param [in]  hal_kernel_buff_notify_handle handle: notify handle
-* @return   0 Success, others for fail
-*/
+ * @ingroup driver-stub
+ * @brief   This interface is used to configure sensorhub module..
+ * @param [in]  hal_kernel_buff_notify_handle handle: notify handle
+ * @return   0 Success, others for fail
+ */
 int hal_kernel_sensorhub_set_module(struct sensorhub_msg_head_stru *para_cfg);
 
 #define QOS_CFG_RESERVED_LEN 8
@@ -376,57 +375,57 @@ int hal_kernel_sensorhub_set_module(struct sensorhub_msg_head_stru *para_cfg);
 #define MAX_QOS_MASTER_NODE_NAME_LEN 256
 
 enum qos_master_type {
-    MASTER_DVPP_VENC           = 0,
-    MASTER_DVPP_VDEC           = 1,
-    MASTER_DVPP_VPC            = 2,
-    MASTER_DVPP_JPEGE          = 3,
-    MASTER_DVPP_JPEGD          = 4,
-    MASTER_ROCE                = 5,
-    MASTER_NIC                 = 6,
-    MASTER_PCIE                = 7,
-    MASTER_AICPU               = 8,
-    MASTER_AIC_DAT             = 9,
-    MASTER_AIC_INS             = 10,
-    MASTER_AIV_DAT             = 11,
-    MASTER_AIV_INS             = 12,
-    MASTER_SDMA                = 13,
-    MASTER_STARS               = 14,
-    MASTER_ISP_VICAP           = 15,
-    MASTER_ISP_VIPROC          = 16,
-    MASTER_ISP_VIPE            = 17,
-    MASTER_ISP_GDC             = 18,
-    MASTER_ISP_VGS             = 19,
-    MASTER_USB                 = 20,
-    MASTER_MATA                = 21,
-    MASTER_DMC                 = 22,
-    MASTER_VDP                 = 23,
-    MASTER_GPU                 = 24,
-    MASTER_AUDIO               = 26,
-    MASTER_SATA                = 27,
-    MASTER_TPU                 = 28,
-    MASTER_RPU                 = 29,
-    MASTER_XGMAC               = 30,
-    MASTER_ISP_R8              = 31,
-    MASTER_ISP_RT              = 32,
-    MASTER_UB_MEM              = 33,
-    MASTER_UB_IO               = 34,
-    MASTER_UB_CCUA             = 35,
-    MASTER_UB_CCUM             = 36,
-    MASTER_UB_SKYQ             = 37,
-    MASTER_SIO_D2D             = 38,
-    MASTER_SIO_D2U             = 39,
-    MASTER_PCIE_IBR            = 40,  /* inbound pcie read */
-    MASTER_PCIE_IBW            = 41,  /* inbound pcie write */
+    MASTER_DVPP_VENC = 0,
+    MASTER_DVPP_VDEC = 1,
+    MASTER_DVPP_VPC = 2,
+    MASTER_DVPP_JPEGE = 3,
+    MASTER_DVPP_JPEGD = 4,
+    MASTER_ROCE = 5,
+    MASTER_NIC = 6,
+    MASTER_PCIE = 7,
+    MASTER_AICPU = 8,
+    MASTER_AIC_DAT = 9,
+    MASTER_AIC_INS = 10,
+    MASTER_AIV_DAT = 11,
+    MASTER_AIV_INS = 12,
+    MASTER_SDMA = 13,
+    MASTER_STARS = 14,
+    MASTER_ISP_VICAP = 15,
+    MASTER_ISP_VIPROC = 16,
+    MASTER_ISP_VIPE = 17,
+    MASTER_ISP_GDC = 18,
+    MASTER_ISP_VGS = 19,
+    MASTER_USB = 20,
+    MASTER_MATA = 21,
+    MASTER_DMC = 22,
+    MASTER_VDP = 23,
+    MASTER_GPU = 24,
+    MASTER_AUDIO = 26,
+    MASTER_SATA = 27,
+    MASTER_TPU = 28,
+    MASTER_RPU = 29,
+    MASTER_XGMAC = 30,
+    MASTER_ISP_R8 = 31,
+    MASTER_ISP_RT = 32,
+    MASTER_UB_MEM = 33,
+    MASTER_UB_IO = 34,
+    MASTER_UB_CCUA = 35,
+    MASTER_UB_CCUM = 36,
+    MASTER_UB_SKYQ = 37,
+    MASTER_SIO_D2D = 38,
+    MASTER_SIO_D2U = 39,
+    MASTER_PCIE_IBR = 40, /* inbound pcie read */
+    MASTER_PCIE_IBW = 41, /* inbound pcie write */
     MASTER_INVALID
 };
 
 struct qos_master_config_type {
-    enum qos_master_type type; /* master type */
-    unsigned int mpamid; /* mpam id */
-    unsigned int qos; /* qos */
-    unsigned int pmg; /* pmg */
+    enum qos_master_type type;                        /* master type */
+    unsigned int mpamid;                              /* mpam id */
+    unsigned int qos;                                 /* qos */
+    unsigned int pmg;                                 /* pmg */
     unsigned long long bitmap[QOS_MASTER_BITMAP_LEN]; /* max support 64 * 4  */
-    unsigned int mode; /* 0 -- regs vaild, 1 -- smmu vaild, 2 -- sqe vaild */
+    unsigned int mode;                                /* 0 -- regs vaild, 1 -- smmu vaild, 2 -- sqe vaild */
     unsigned int reserved[QOS_CFG_RESERVED_LEN - 1];
 };
 
@@ -442,14 +441,14 @@ struct qos_otsd_config_type {
 #define MAX_QOS_ALLOW_LEVEL 3
 struct qos_allow_config_type {
     enum qos_master_type master;
-    unsigned int qos_allow_mode;        /* 0 -- disable bp, 1 -- produce bp, 2 -- response bp */
-    unsigned int qos_allow_ctrl;        /* 0 -- all, 1 -- read, 2 -- write */
-    unsigned int qos_allow_threshold;   /* for media, threshold for generating a count(unit: ns) */
-    unsigned int qos_allow_windows;     /* width of the statistics window, (unit: ns) */
-    unsigned int qos_allow_saturation;  /* allowable error value of bandwidth limit, (unit: GB/s) */
+    unsigned int qos_allow_mode;                     /* 0 -- disable bp, 1 -- produce bp, 2 -- response bp */
+    unsigned int qos_allow_ctrl;                     /* 0 -- all, 1 -- read, 2 -- write */
+    unsigned int qos_allow_threshold;                /* for media, threshold for generating a count(unit: ns) */
+    unsigned int qos_allow_windows;                  /* width of the statistics window, (unit: ns) */
+    unsigned int qos_allow_saturation;               /* allowable error value of bandwidth limit, (unit: GB/s) */
     unsigned int qos_allow_lvl[MAX_QOS_ALLOW_LEVEL]; /* qos allow level */
     int reserved[QOS_CFG_RESERVED_LEN];
-    unsigned long long bitmap[4];       /* max support 64 * 4 */
+    unsigned long long bitmap[4]; /* max support 64 * 4 */
 };
 
 struct qos_latency_config_type {
@@ -472,18 +471,18 @@ typedef int (*set_latency_cfg)(int dev_id, const struct qos_latency_config_type 
 
 struct qos_master_node {
     char name[MAX_QOS_MASTER_NODE_NAME_LEN]; /* master name */
-    struct qos_master_config_type cfg; /* master qos config */
-    set_qos_cfg set;            /* set qos config handler */
-    get_qos_cfg get;            /* get qos config handler */
-    set_allow_cfg set_allow;    /* if support cfg qos allow, can't be null */
-    get_allow_cfg get_allow;    /* if support cfg qos allow, can't be null */
-    set_otsd_cfg set_otsd;      /* if support cfg otsd, can't be null */
-    get_otsd_cfg get_otsd;      /* if support cfg otsd, can't be null */
-    set_latency_cfg set_latency;/* if support cfg ddr latency, can't be null */
+    struct qos_master_config_type cfg;       /* master qos config */
+    set_qos_cfg set;                         /* set qos config handler */
+    get_qos_cfg get;                         /* get qos config handler */
+    set_allow_cfg set_allow;                 /* if support cfg qos allow, can't be null */
+    get_allow_cfg get_allow;                 /* if support cfg qos allow, can't be null */
+    set_otsd_cfg set_otsd;                   /* if support cfg otsd, can't be null */
+    get_otsd_cfg get_otsd;                   /* if support cfg otsd, can't be null */
+    set_latency_cfg set_latency;             /* if support cfg ddr latency, can't be null */
 };
 
 #define MAX_QOS_MASTER_NAME_LEN 256
-#define MAX_PROFILE_INFO_NUM    20
+#define MAX_PROFILE_INFO_NUM 20
 /*
 streamNum:index of mpamId
 mode: 0-get list of mpamid with streamName 1-get streamName of given mpamid 2-get mpamid of given streamName
@@ -497,62 +496,62 @@ struct QosProfileInfo {
 };
 
 struct qos_bw_result_t {
-    uint32_t mpamid;                    /* target mpamid */
-    uint32_t bw_data_new;               /* newest bandwidth */
-    uint32_t bw_data_max;               /* max bandwidth in history */
-    uint32_t bw_data_min;               /* min bandwidth in history */
-    uint32_t bw_data_mean;              /* mean bandwidth */
-    int32_t curr_method;                /* bandwidth data source:   0--DHA/MATA monitoring mpamid bandwidth */
-                                        /*                          1--DDRC monitoring master id bandwidth */
-                                        /*                         -1--bandwidth monitoring is disabled. */
+    uint32_t mpamid;       /* target mpamid */
+    uint32_t bw_data_new;  /* newest bandwidth */
+    uint32_t bw_data_max;  /* max bandwidth in history */
+    uint32_t bw_data_min;  /* min bandwidth in history */
+    uint32_t bw_data_mean; /* mean bandwidth */
+    int32_t curr_method;   /* bandwidth data source:   0--DHA/MATA monitoring mpamid bandwidth */
+                           /*                          1--DDRC monitoring master id bandwidth */
+                           /*                         -1--bandwidth monitoring is disabled. */
     uint32_t reserved[QOS_CFG_RESERVED_LEN - 1];
 };
 
 /**
-* @brief register qos master node to ascend qos hal
-* @param [in] const struct qos_master_node *master: qos master node info
-* @return 0: success, else: fail
-*/
+ * @brief register qos master node to ascend qos hal
+ * @param [in] const struct qos_master_node *master: qos master node info
+ * @return 0: success, else: fail
+ */
 int hal_kernel_qos_node_register(const struct qos_master_node *master);
 
 /**
-* @brief unregister qos master node from ascend qos hal
-* @param [in] const struct qos_master_node *master: qos master node info
-* @return 0: success, else: fail
-*/
+ * @brief unregister qos master node from ascend qos hal
+ * @param [in] const struct qos_master_node *master: qos master node info
+ * @return 0: success, else: fail
+ */
 int hal_kernel_qos_node_unregister(const struct qos_master_node *master);
 
 /**
-* @brief notify QoS driver that module has gone online
-* @param [in] master: master type
-* @return 0: success, else: fail
-*/
+ * @brief notify QoS driver that module has gone online
+ * @param [in] master: master type
+ * @return 0: success, else: fail
+ */
 int hal_kernel_qos_notify_module_online(int dev_id, enum qos_master_type master);
 
 /**
-* @brief notify QoS driver that module has gone offline
-* @param [in] master: master type
-* @return 0: success, else: fail
-*/
+ * @brief notify QoS driver that module has gone offline
+ * @param [in] master: master type
+ * @return 0: success, else: fail
+ */
 int hal_kernel_qos_notify_module_offline(int dev_id, enum qos_master_type master);
 
 /**
-* @brief get all bandwidth infomation
-* @param [in] uint32_t devid: device id
-* @param [out] struct qos_bw_result_t *res: bandwidth info of each master
-* @param [in] uint32_t in_size: size of res
-* @param [out] uint32_t *out_size: num of monitoring mpamid
-* @return 0: success, else: fail
-*/
-int32_t hal_kernel_qos_get_all_bandwidth(uint32_t devid, struct qos_bw_result_t *res, \
-                                         uint32_t in_size, uint32_t *out_size);
+ * @brief get all bandwidth infomation
+ * @param [in] uint32_t devid: device id
+ * @param [out] struct qos_bw_result_t *res: bandwidth info of each master
+ * @param [in] uint32_t in_size: size of res
+ * @param [out] uint32_t *out_size: num of monitoring mpamid
+ * @return 0: success, else: fail
+ */
+int32_t hal_kernel_qos_get_all_bandwidth(uint32_t devid, struct qos_bw_result_t *res, uint32_t in_size,
+                                         uint32_t *out_size);
 
 /**
-* @brief get master name of specific mpamid
-* @param [in] uint32_t devid: device id
-* @param [out] struct QosProfileInfo *res: names of masters which use specific mpamid
-* @return 0: success, else: fail
-*/
+ * @brief get master name of specific mpamid
+ * @param [in] uint32_t devid: device id
+ * @param [out] struct QosProfileInfo *res: names of masters which use specific mpamid
+ * @return 0: success, else: fail
+ */
 int32_t hal_kernel_qos_get_master_name(uint32_t devid, struct QosProfileInfo *res);
 
 /**************************** event sched table intf start ***********************************/
@@ -570,7 +569,6 @@ int32_t hal_kernel_qos_get_master_name(uint32_t devid, struct QosProfileInfo *re
 #define ESCHED_ADDR_LITTLE_ENDIAN_TYPE 0
 #define ESCHED_ADDR_BIG_ENDIAN_TYPE 1
 
-
 enum esched_cq_type {
     ESCHED_CQ_TYPE_PHASE,
     ESCHED_CQ_TYPE_PTR,
@@ -587,9 +585,9 @@ struct esched_cq_phase_head {
     u32 addr_width; /* 0: 32 bit, 1: 64 bit */
     struct esched_addr_desc head;
     u64 overlay_value; /* when a register is written, the value must be superimposed. */
-    u64 phase_mask; /* when the software notifies the hardware, the value of bits in the mask needs to be
-                       incremented to notify the hardware when the queue flips. surport 1bit */
-    u8 init_value; /* phase value of the first round when the software notifies the hardware */
+    u64 phase_mask;    /* when the software notifies the hardware, the value of bits in the mask needs to be
+                          incremented to notify the hardware when the queue flips. surport 1bit */
+    u8 init_value;     /* phase value of the first round when the software notifies the hardware */
     u8 ring_step;
 };
 
@@ -607,7 +605,7 @@ struct esched_cq_ptr {
 };
 
 struct esched_raw_data_cq {
-    u32 type; /* ESCHED_CQ_TYPE_: phase bit check, tail reg check */
+    u32 type;      /* ESCHED_CQ_TYPE_: phase bit check, tail reg check */
     u32 addr_type; /* 0: phy, 1: vir(stream id, substream id) */
     u16 stream_id;
     u16 substream_id;
@@ -628,7 +626,7 @@ enum esched_raw_data_type {
 struct esched_table_raw_data {
     u32 raw_data_type;
     u32 max_entry_num;
-    char *name; /* for debug, table name */
+    char *name;            /* for debug, table name */
     u8 *raw_data_key_mask; /* len is cqe_size */
     u32 raw_data_key_mask_len;
     u32 endian_type; /* 0: little endian, 1: big endian */
@@ -640,8 +638,8 @@ struct esched_table_raw_data {
 struct esched_hw_info {
     char *name; /* for debug, hw name */
     int irq;
-    u32 addr_type; /* 0: phy, 1: vir(stream id, substream id) */
-    u32 addr_width; /* 0: 32 bit, 1: 64 bit */
+    u32 addr_type;   /* 0: phy, 1: vir(stream id, substream id) */
+    u32 addr_width;  /* 0: 32 bit, 1: 64 bit */
     u32 endian_type; /* 0: little endian, 1: big endian */
     u64 irq_clr_reg; /* If this function is unavailable, set this parameter to 0. */
     u64 val;
@@ -667,7 +665,7 @@ struct svm_dma_desc_handle {
 
 struct svm_dma_desc {
     void *sq_addr;
-    u32 sq_tail;    /* means the cnt of sq_addr */
+    u32 sq_tail; /* means the cnt of sq_addr */
 };
 
 /* if subkey==SVM_DMA_DESC_INVALID_SUB_KEY, means destroy all nodes related to key */
@@ -683,8 +681,8 @@ struct svm_dma_desc {
  * @note create might sleep, do not call in irq or spinlock
  * @return   0 Success, others for fail
  */
-int hal_kernel_svm_dma_desc_create(struct svm_dma_desc_addr_info *addr_info,
-    struct svm_dma_desc_handle *handle, struct svm_dma_desc *dma_desc);
+int hal_kernel_svm_dma_desc_create(struct svm_dma_desc_addr_info *addr_info, struct svm_dma_desc_handle *handle,
+                                   struct svm_dma_desc *dma_desc);
 
 /**
  * @ingroup driver
@@ -708,27 +706,27 @@ void hal_kernel_svm_dma_desc_destroy(struct svm_dma_desc_handle *handle);
 static inline int hal_kernel_svm_addr_is_read_only(u64 addr, u64 len)
 {
     return (int)((addr >= SVM_READ_ONLY_ADDR_START) && (addr <= SVM_READ_ONLY_ADDR_END) &&
-        ((addr + len) <= SVM_READ_ONLY_ADDR_END) &&
-        (len <= (SVM_READ_ONLY_ADDR_END - SVM_READ_ONLY_ADDR_START)));
+                 ((addr + len) <= SVM_READ_ONLY_ADDR_END) &&
+                 (len <= (SVM_READ_ONLY_ADDR_END - SVM_READ_ONLY_ADDR_START)));
 }
 
 #define DEVMM_MEM_ATTR_READONLY 0U
-#define DEVMM_MEM_ATTR_DVPP     1U
-#define DEVMM_MEM_ATTR_DEV      2U
+#define DEVMM_MEM_ATTR_DVPP 1U
+#define DEVMM_MEM_ATTR_DEV 2U
 #define DEVMM_MEM_ATTR_TYPE_MAX 3U
 
 struct p2p_page_info {
-    u64 pa;  /* physical page */
+    u64 pa; /* physical page */
     u64 reserved[4];
 };
 
 #define P2P_GET_PAGE_VERSION 0x1
 struct p2p_page_table {
-    u32 version;                        /* page version */
+    u32 version; /* page version */
     u64 page_size;
-    struct p2p_page_info *pages_info;   /* physical page information */
-    u64 page_num;                       /* num of physical page */
-    u64 reserved[4];                    /* reserved field */
+    struct p2p_page_info *pages_info; /* physical page information */
+    u64 page_num;                     /* num of physical page */
+    u64 reserved[4];                  /* reserved field */
 };
 
 /**
@@ -753,8 +751,8 @@ struct p2p_page_table {
  * @return   0 Success, others for fail
  * @note Support: ascend310P/ascend910 computing power grouping scenarios is not guaranteed to be supported.
  */
-int hal_kernel_p2p_get_pages(
-    u64 va, u64 len, void (*free_callback)(void *data), void *data, struct p2p_page_table **page_table);
+int hal_kernel_p2p_get_pages(u64 va, u64 len, void (*free_callback)(void *data), void *data,
+                             struct p2p_page_table **page_table);
 
 /**
  * @ingroup driver
@@ -829,49 +827,51 @@ int hal_kernel_svm_access_whitelist_cfg(u32 udevid, int devpid, u64 va, u64 size
 /********************************* svm kernel_api end ***********************************************/
 
 /**
-* @ingroup driver
-* @brief   This interface is used to init bootdot block
-* @param [in]  block_id: block id
-* @param [in]  magic: magic
-* @param [in]  execption_id: execption id
-* @param [in]  expect_status: expect status
-* @return   0 Success, others for fail
-* @note Support: Ascend310Brc
-*/
+ * @ingroup driver
+ * @brief   This interface is used to init bootdot block
+ * @param [in]  block_id: block id
+ * @param [in]  magic: magic
+ * @param [in]  execption_id: execption id
+ * @param [in]  expect_status: expect status
+ * @return   0 Success, others for fail
+ * @note Support: Ascend310Brc
+ */
 int hal_kernel_bbox_bootdot_init_blk(u32 block_id, u32 magic, u32 execption_id, u32 expect_status);
 
 /**
-* @ingroup driver
-* @brief   This interface is used to set bootdot block
-* @param [in]  block_id: block id
-* @param [in]  magic: magic
-* @param [in]  current_status: current status
-* @return   0 Success, others for fail
-* @note Support: Ascend310Brc
-*/
+ * @ingroup driver
+ * @brief   This interface is used to set bootdot block
+ * @param [in]  block_id: block id
+ * @param [in]  magic: magic
+ * @param [in]  current_status: current status
+ * @return   0 Success, others for fail
+ * @note Support: Ascend310Brc
+ */
 int hal_kernel_bbox_bootdot_set_blk(u32 block_id, u32 magic, u32 current_status);
 
-/* This model indicates the the relationship between hosts and devices is fixed by hardware and cannot be reconfigured. */
-#define FIX_MODEL     0
-/* This model indicates that the relationship between hosts and devices is a pooling relationship, which can be configured as required. */
-#define POLL_MODEL    1
+/* This model indicates the the relationship between hosts and devices is fixed by hardware and cannot be reconfigured.
+ */
+#define FIX_MODEL 0
+/* This model indicates that the relationship between hosts and devices is a pooling relationship, which can be
+ * configured as required. */
+#define POLL_MODEL 1
 #define DRV_HW_INFO_RESERVED_LEN 3
 
 typedef struct devdrv_base_hw_info {
     u8 chip_id;
-    u8 multi_chip;  /* multi-chip or single-chip */
-    u8 multi_die;   /* multi-die or single-die */
+    u8 multi_chip; /* multi-chip or single-chip */
+    u8 multi_die;  /* multi-die or single-die */
     u8 mainboard_id;
-    u16 addr_mode;  /* host and device addressing mode. 0: independent, 1: unified */
+    u16 addr_mode; /* host and device addressing mode. 0: independent, 1: unified */
     u16 board_id;
 
-    u8 version; /* data version */
-    u8 inter_connect_type;  /* connect mode. 0: pcie, 1: hccs */
-    u16 hccs_hpcs_bitmap;   /* hccs lane info */
+    u8 version;            /* data version */
+    u8 inter_connect_type; /* connect mode. 0: pcie, 1: hccs */
+    u16 hccs_hpcs_bitmap;  /* hccs lane info */
 
-    u16 server_id;  /* super pod server ID */
-    u16 scale_type; /* super pod scale type */
-    u32 super_pod_id;   /* super pod ID */
+    u16 server_id;    /* super pod server ID */
+    u16 scale_type;   /* super pod scale type */
+    u32 super_pod_id; /* super pod ID */
     /* this value is used as the architectural model of the server or POD, including Pool Model and Fixed Model. */
     u8 arch_model;
 
@@ -884,51 +884,51 @@ typedef struct devdrv_hardware_info {
 } devdrv_hardware_info_t;
 
 /**
-* @ingroup driver
-* @brief   This interface is used to get hardware information, only called in device side.
-* @param [in]  phy_id : Physical device id
-* @param [out]  hardware_info: Hardware information
-* @return   0 Success, others for fail
-*/
+ * @ingroup driver
+ * @brief   This interface is used to get hardware information, only called in device side.
+ * @param [in]  phy_id : Physical device id
+ * @param [out]  hardware_info: Hardware information
+ * @return   0 Success, others for fail
+ */
 int hal_kernel_get_hardware_info(unsigned int phy_id, devdrv_hardware_info_t *hardware_info);
 
 /**
-* @ingroup driver
-* @brief   This interface is used to get physical base address, only called in device side.
-* @param [in]  phy_id : Physical device id
-* @param [in]  offset : address
-* @return   address containing the offset of the physical base address, ULLONG_MAX if fail
-*/
+ * @ingroup driver
+ * @brief   This interface is used to get physical base address, only called in device side.
+ * @param [in]  phy_id : Physical device id
+ * @param [in]  offset : address
+ * @return   address containing the offset of the physical base address, ULLONG_MAX if fail
+ */
 unsigned long long hal_kernel_get_dev_phy_base_addr(unsigned int phy_id, unsigned long long offset);
 
 /**
-* @ingroup driver
-* @brief   This interface is used to get soc type
-* @param [in]  dev_id : device id
-* @param [out]  soc_type: soc type, use value in enum HAL_KERNEL_SOC_TYPE
-* @return   0 Success, others for fail
-*/
+ * @ingroup driver
+ * @brief   This interface is used to get soc type
+ * @param [in]  dev_id : device id
+ * @param [out]  soc_type: soc type, use value in enum HAL_KERNEL_SOC_TYPE
+ * @return   0 Success, others for fail
+ */
 typedef enum {
-    SOC_TYPE_MINI = 0,          /* Ascend310 */
-    SOC_TYPE_CLOUD,             /* Ascend910 */
-    SOC_TYPE_RSVD_1,            /* Reserved */
-    SOC_TYPE_LHISI,             /* Hi3796CV300ES & TsnsE, Hi3796CV300CS & OPTG & SD3403 &TsnsC */
-    SOC_TYPE_DC,                /* Ascend310P */
-    SOC_TYPE_CLOUD_V2,          /* Ascend910A2 & Ascend910A3 */
-    SOC_TYPE_RSVD_2,            /* Reserved */
-    SOC_TYPE_MINI_V3,           /* Ascend310B */
-    SOC_TYPE_TINY_V1,           /* Tiny */
-    SOC_TYPE_NANO_V1,           /* Nano */
-    SOC_TYPE_KUNPENG_V1,        /* KUNPENG */
-    SOC_TYPE_RSVD_3,            /* Reserved */
-    SOC_TYPE_RSVD_4,            /* Reserved */
-    SOC_TYPE_CLOUD_V3,          /* Ascend910A3 */
-    SOC_TYPE_RSVD_5,            /* Reserved */
-    SOC_TYPE_CLOUD_V4,          /* Ascend950 */
-    SOC_TYPE_CLOUD_V5,          /* Ascend910_96 */
-    SOC_TYPE_RSVD_6,            /* Reserved */
-    SOC_TYPE_RSVD_7,            /* Reserved */
-    SOC_TYPE_MINI_V4,           /* Ascend350 */
+    SOC_TYPE_MINI = 0,   /* Ascend310 */
+    SOC_TYPE_CLOUD,      /* Ascend910 */
+    SOC_TYPE_RSVD_1,     /* Reserved */
+    SOC_TYPE_LHISI,      /* Hi3796CV300ES & TsnsE, Hi3796CV300CS & OPTG & SD3403 &TsnsC */
+    SOC_TYPE_DC,         /* Ascend310P */
+    SOC_TYPE_CLOUD_V2,   /* Ascend910A2 & Ascend910A3 */
+    SOC_TYPE_RSVD_2,     /* Reserved */
+    SOC_TYPE_MINI_V3,    /* Ascend310B */
+    SOC_TYPE_TINY_V1,    /* Tiny */
+    SOC_TYPE_NANO_V1,    /* Nano */
+    SOC_TYPE_KUNPENG_V1, /* KUNPENG */
+    SOC_TYPE_RSVD_3,     /* Reserved */
+    SOC_TYPE_RSVD_4,     /* Reserved */
+    SOC_TYPE_CLOUD_V3,   /* Ascend910A3 */
+    SOC_TYPE_RSVD_5,     /* Reserved */
+    SOC_TYPE_CLOUD_V4,   /* Ascend950 */
+    SOC_TYPE_CLOUD_V5,   /* Ascend910_96 */
+    SOC_TYPE_RSVD_6,     /* Reserved */
+    SOC_TYPE_RSVD_7,     /* Reserved */
+    SOC_TYPE_MINI_V4,    /* Ascend350 */
     SOC_TYPE_MAX
 } HAL_KERNEL_SOC_TYPE;
 int hal_kernel_get_soc_type(unsigned int dev_id, unsigned int *soc_type);
@@ -938,8 +938,8 @@ struct prof_kernel_sample_start_para {
     unsigned int chan_id;
     unsigned int sub_chan_id;
     int target_pid;
-    void *user_data;                /* sample 配置信息 */
-    unsigned int user_data_len;     /* sample 配置信息数据长度 */
+    void *user_data;            /* sample 配置信息 */
+    unsigned int user_data_len; /* sample 配置信息数据长度 */
     bool is_support_host_move;
     void *out_data;
     unsigned int out_data_len;
@@ -948,8 +948,8 @@ struct prof_kernel_sample_start_para {
 };
 
 enum prof_kernel_sample_data_mode {
-    SAMPLE_PURE_DATA_MODE,            /* 非首次采集，只需上报数据 */
-    SAMPLE_DATA_WITH_HEADER_MODE      /* 首次采集，部分通道需要装填数据描述头 */
+    SAMPLE_PURE_DATA_MODE,       /* 非首次采集，只需上报数据 */
+    SAMPLE_DATA_WITH_HEADER_MODE /* 首次采集，部分通道需要装填数据描述头 */
 };
 
 struct prof_kernel_sample_para {
@@ -957,9 +957,9 @@ struct prof_kernel_sample_para {
     unsigned int chan_id;
     unsigned int sub_chan_id;
     enum prof_kernel_sample_data_mode sample_mode;
-    void *buff;                     /* sample buff地址 */
-    unsigned int buff_len;          /* sample buff总长度 */
-    unsigned int report_len;        /* 返回值：实际上报数据量 */
+    void *buff;              /* sample buff地址 */
+    unsigned int buff_len;   /* sample buff总长度 */
+    unsigned int report_len; /* 返回值：实际上报数据量 */
 };
 
 struct prof_kernel_sample_flush_para {
@@ -977,16 +977,16 @@ struct prof_kernel_sample_stop_para {
 
 struct prof_kernel_sample_ops {
     int (*start_func)(struct prof_kernel_sample_start_para *para);
-    int (*sample_func)(struct prof_kernel_sample_para *para);            /* NULL: sampler_period must equals to 0 */
-    int (*flush_func)(struct prof_kernel_sample_flush_para *para);       /* not must */
+    int (*sample_func)(struct prof_kernel_sample_para *para);      /* NULL: sampler_period must equals to 0 */
+    int (*flush_func)(struct prof_kernel_sample_flush_para *para); /* not must */
     int (*stop_func)(struct prof_kernel_sample_stop_para *para);
 };
 
 struct prof_kernel_sample_register_para {
-    struct module *owner;                   /* THIS_MODULE */
-    unsigned int sub_chan_num;              /* 多实例 */
+    struct module *owner;      /* THIS_MODULE */
+    unsigned int sub_chan_num; /* 多实例 */
     struct prof_kernel_sample_ops ops;
-    int host_pid;                         /* host采集进程pid, 0：表示内核模块采集；非0：表示AICPU进程采集 */
+    int host_pid; /* host采集进程pid, 0：表示内核模块采集；非0：表示AICPU进程采集 */
     int rsv[4];
 };
 
@@ -999,7 +999,7 @@ struct prof_kernel_sample_register_para {
  * @return   other  fail
  */
 int hal_kernel_prof_sample_register(unsigned int dev_id, unsigned int chan_id,
-    struct prof_kernel_sample_register_para *para);
+                                    struct prof_kernel_sample_register_para *para);
 
 /**
  * @ingroup driver
@@ -1010,8 +1010,7 @@ int hal_kernel_prof_sample_register(unsigned int dev_id, unsigned int chan_id,
  * @return   other  fail
  */
 int hal_kernel_prof_sample_register_ex(unsigned int dev_id, unsigned int chan_id,
-    struct prof_kernel_sample_register_para *para);
-
+                                       struct prof_kernel_sample_register_para *para);
 
 /**
  * @ingroup driver
@@ -1037,7 +1036,7 @@ struct prof_kernel_data_report_para {
 };
 
 int hal_kernel_prof_sample_data_report(unsigned int dev_id, unsigned int chan_id, unsigned int sub_chan_id,
-    struct prof_kernel_data_report_para *para);
+                                       struct prof_kernel_data_report_para *para);
 
 enum devdrv_func_mbox_cmd_type {
     CALC_CQSQ_CREATE = 0x1,
@@ -1070,60 +1069,60 @@ struct devdrv_func_sqcq_free_para {
 };
 
 /**
-* @devdrv create functional sqcq
-* @param [in]     devid: device id
-* @param [in]      tsid: tsid
-* @param [in]   para_in: See struct devdrv_func_sqcq_alloc_para_in
-* @param [out] para_out: See struct devdrv_func_sqcq_alloc_para_out
-* @return 0: success, else: fail
-*/
+ * @devdrv create functional sqcq
+ * @param [in]     devid: device id
+ * @param [in]      tsid: tsid
+ * @param [in]   para_in: See struct devdrv_func_sqcq_alloc_para_in
+ * @param [out] para_out: See struct devdrv_func_sqcq_alloc_para_out
+ * @return 0: success, else: fail
+ */
 int devdrv_create_functional_sqcq(u32 devid, u32 tsid, struct devdrv_func_sqcq_alloc_para_in *para_in,
-    struct devdrv_func_sqcq_alloc_para_out *para_out);
+                                  struct devdrv_func_sqcq_alloc_para_out *para_out);
 /**
-* @devdrv destroy functional sqcq
-* @param [in] devid: device id
-* @param [in]  tsid: tsid
-* @param [in]  para: See struct devdrv_func_sqcq_free_para
-* @return 0: success, else: fail
-*/
+ * @devdrv destroy functional sqcq
+ * @param [in] devid: device id
+ * @param [in]  tsid: tsid
+ * @param [in]  para: See struct devdrv_func_sqcq_free_para
+ * @return 0: success, else: fail
+ */
 int devdrv_destroy_functional_sqcq(u32 devid, u32 tsid, struct devdrv_func_sqcq_free_para *para);
 /**
-* @devdrv functional sq send
-* @param [in]    devid: device id
-* @param [in]     tsid: tsid
-* @param [in]     sqid: sqid
-* @param [in]      sqe: the ptr of sqe
-* @param [in] sqe_size: the size of sqe
-* @return 0: success, else: fail
-*/
+ * @devdrv functional sq send
+ * @param [in]    devid: device id
+ * @param [in]     tsid: tsid
+ * @param [in]     sqid: sqid
+ * @param [in]      sqe: the ptr of sqe
+ * @param [in] sqe_size: the size of sqe
+ * @return 0: success, else: fail
+ */
 int devdrv_functional_sq_send(u32 devid, u32 tsid, u32 sqid, const u8 *sqe, u32 sqe_size);
 
 /**
-* @devdrv get ssid
-* @param [in] devid: device id
-* @param [in]  tsid: tsid
-* @param [in]   pid: the pid of process
-* @param [out] ssid: the ptr of ssid
-* @return 0: success, else: fail
-*/
+ * @devdrv get ssid
+ * @param [in] devid: device id
+ * @param [in]  tsid: tsid
+ * @param [in]   pid: the pid of process
+ * @param [out] ssid: the ptr of ssid
+ * @return 0: success, else: fail
+ */
 int devdrv_get_ssid(u32 devid, u32 tsid, int pid, u32 *ssid);
 
 /**
-* @devdrv Get device chip id and die id
-* @param [in] dev_id: device id
-* @param [out] chip_id: device chip id
-* @param [out] die_id: device die id
-* @return 0: success, else: fail
-*/
+ * @devdrv Get device chip id and die id
+ * @param [in] dev_id: device id
+ * @param [out] chip_id: device chip id
+ * @param [out] die_id: device die id
+ * @return 0: success, else: fail
+ */
 int hal_kernel_get_device_chip_die_id(u32 dev_id, u32 *chip_id, u32 *die_id);
 
 /**
-* @devdrv Get device memory address mode, unified or ununified
-*  Indicates whether the physical addresses of devices are orchestrated in a unified manner.
-* @param [in] dev_id: device id
-* @param [out] addr_mode: device memory address mode
-* @return 0: success, else: fail
-*/
+ * @devdrv Get device memory address mode, unified or ununified
+ *  Indicates whether the physical addresses of devices are orchestrated in a unified manner.
+ * @param [in] dev_id: device id
+ * @param [out] addr_mode: device memory address mode
+ * @return 0: success, else: fail
+ */
 typedef enum {
     ADDR_INDEPENDENT = 0,
     ADDR_UNIFIED,
@@ -1132,15 +1131,15 @@ typedef enum {
 int hal_kernel_get_device_addr_mode(u32 dev_id, HAL_KERNEL_ADDR_MODE *addr_mode);
 
 /**
-* @devdrv Get device to device topology type
-* @param [in] dev_id1: device id 1 for get topology
-* @param [in] dev_id2: device id 2 for get topology
-* @param [out] topology_type: topology_type
-* @return 0: success, else: fail
-* @note 1. dev_id1 and dev_id2 not support to input virtual device id
-* @note 2. if dev_id1 and dev_id2 are valid and the same, return TOPOLOGY_TYPE_HCCS_SW for Ascend910A3,
-*          others return TOPOLOGY_TYPE_HCCS.
-*/
+ * @devdrv Get device to device topology type
+ * @param [in] dev_id1: device id 1 for get topology
+ * @param [in] dev_id2: device id 2 for get topology
+ * @param [out] topology_type: topology_type
+ * @return 0: success, else: fail
+ * @note 1. dev_id1 and dev_id2 not support to input virtual device id
+ * @note 2. if dev_id1 and dev_id2 are valid and the same, return TOPOLOGY_TYPE_HCCS_SW for Ascend910A3,
+ *          others return TOPOLOGY_TYPE_HCCS.
+ */
 typedef enum {
     TOPOLOGY_TYPE_HCCS = 0,
     TOPOLOGY_TYPE_PIX,
@@ -1159,40 +1158,40 @@ enum txatu_user_module_type {
 };
 
 /**
-* @ingroup driver
-* @brief   This interface is used to add TXATU in device
-* @param [in]  udevid: unified device id in device
-* @param [in]  type: txatu_user_module_type
-* @param [in]  host_phy_addr: host physical address
-* @param [in]  host_addr_size: host physical address size
-* @param [out]  device_phy_addr: device physical address
-* @return   0 Success, others for fail
-* @note Support: Ascend950/Ascend910_96
-*/
-int hal_kernel_agentdrv_add_tx_atu(u32 udevid, enum txatu_user_module_type type, u64 host_phy_addr,
-    u64 host_addr_size, u64 *device_phy_addr);
+ * @ingroup driver
+ * @brief   This interface is used to add TXATU in device
+ * @param [in]  udevid: unified device id in device
+ * @param [in]  type: txatu_user_module_type
+ * @param [in]  host_phy_addr: host physical address
+ * @param [in]  host_addr_size: host physical address size
+ * @param [out]  device_phy_addr: device physical address
+ * @return   0 Success, others for fail
+ * @note Support: Ascend950/Ascend910_96
+ */
+int hal_kernel_agentdrv_add_tx_atu(u32 udevid, enum txatu_user_module_type type, u64 host_phy_addr, u64 host_addr_size,
+                                   u64 *device_phy_addr);
 
 /**
-* @ingroup driver
-* @brief   This interface is used to update TXATU in device
-* @param [in]  udevid: unified device id in device
-* @param [in]  type: txatu_user_module_type
-* @param [in]  host_phy_addr: host physical address to update
-* @param [in]  host_addr_size: host physical address size
-* @return   0 Success, others for fail
-* @note Support: Ascend950/Ascend910_96
-*/
+ * @ingroup driver
+ * @brief   This interface is used to update TXATU in device
+ * @param [in]  udevid: unified device id in device
+ * @param [in]  type: txatu_user_module_type
+ * @param [in]  host_phy_addr: host physical address to update
+ * @param [in]  host_addr_size: host physical address size
+ * @return   0 Success, others for fail
+ * @note Support: Ascend950/Ascend910_96
+ */
 
 int hal_kernel_agentdrv_update_tx_atu(u32 udevid, enum txatu_user_module_type type, u64 host_phy_addr,
-    u64 host_addr_size);
+                                      u64 host_addr_size);
 /**
-* @ingroup driver
-* @brief   This interface is used to del TXATU in device
-* @param [in]  udevid: unified device id in device
-* @param [in]  type: txatu_user_module_type
-* @return   0 Success, others for fail
-* @note Support: Ascend950/Ascend910_96
-*/
+ * @ingroup driver
+ * @brief   This interface is used to del TXATU in device
+ * @param [in]  udevid: unified device id in device
+ * @param [in]  type: txatu_user_module_type
+ * @return   0 Success, others for fail
+ * @note Support: Ascend950/Ascend910_96
+ */
 int hal_kernel_agentdrv_del_tx_atu(u32 udevid, enum txatu_user_module_type type);
 
 typedef struct log_kernel_trace_msg {
@@ -1241,20 +1240,22 @@ void hal_kernel_log_cmd_func_unregister(unsigned int chan_type);
 int hal_kernel_log_data_report(unsigned int dev_id, unsigned int chan_type);
 
 /**
-* @devdrv Get the state of the remote device as seen by the local device
-* @param [in] dev_id: local device id
-* @param [in] sdid: remote device's sdid
-* @param [out] status: status of remote device
-* @return 0: success
-* @return -EINVAL: devid is invalid
-* @return -EFAULT: status is NULL
-* @return -ERANGE: sdid is invalid
-* @return -ENODEV: get local device's soc type failed
-* @return -EOPNOTSUPP: local device's soc type is 1971 or local device is virtual device
-* @return -ENODATA: remote device status array is not initialized
-* @note 1. Regardless of whether the remote device exists, as long as the sdid is valid, its status can be gotten. The status defaults to NORMAL.
-* @note 2. After the local device is reset, the status information of the remote device will be lost and revert to the default value NORMAL.
-*/
+ * @devdrv Get the state of the remote device as seen by the local device
+ * @param [in] dev_id: local device id
+ * @param [in] sdid: remote device's sdid
+ * @param [out] status: status of remote device
+ * @return 0: success
+ * @return -EINVAL: devid is invalid
+ * @return -EFAULT: status is NULL
+ * @return -ERANGE: sdid is invalid
+ * @return -ENODEV: get local device's soc type failed
+ * @return -EOPNOTSUPP: local device's soc type is 1971 or local device is virtual device
+ * @return -ENODATA: remote device status array is not initialized
+ * @note 1. Regardless of whether the remote device exists, as long as the sdid is valid, its status can be gotten. The
+ * status defaults to NORMAL.
+ * @note 2. After the local device is reset, the status information of the remote device will be lost and revert to the
+ * default value NORMAL.
+ */
 typedef enum {
     DMS_SPOD_NODE_STATUS_NORMAL = 0,
     DMS_SPOD_NODE_STATUS_ABNORMAL,
@@ -1265,7 +1266,8 @@ int hal_kernel_get_spod_node_status(u32 dev_id, u32 sdid, u32 *status);
 /**
  * @ingroup driver
  * @brief report driver kernel software failure.
- * @attention This interface will report important alarms, please call it with caution and confirm clearly before calling.
+ * @attention This interface will report important alarms, please call it with caution and confirm clearly before
+ * calling.
  * @param [in] dev_id
  * @return   no ret_val
  */
@@ -1292,8 +1294,8 @@ int hal_kernel_get_chip_die_id(unsigned int phy_id, unsigned int *chip_id, unsig
  * @param [out]  ret_size: return info size
  * @return   0 Success, others for fail
  */
-int hal_kernel_get_pg_info(
-    unsigned int dev_id, HAL_PG_INFO_TYPE info_type, char *data, unsigned int size, unsigned int *ret_size);
+int hal_kernel_get_pg_info(unsigned int dev_id, HAL_PG_INFO_TYPE info_type, char *data, unsigned int size,
+                           unsigned int *ret_size);
 
 struct dqs_kernel_que_info {
     QUEUE_ENTITY_TYPE queType;
@@ -1305,14 +1307,14 @@ struct dqs_kernel_que_info {
 };
 
 /**
-* @ingroup driver
-* @brief   This interface is used to get dqs que info
-* @param [in]  devid: unified device id in device
-* @param [in]  qid: que id (0~2047)
-* @param [out]  que_info: que info
-* @return   0 Success, others for fail
-* @note Support: 
-*/
+ * @ingroup driver
+ * @brief   This interface is used to get dqs que info
+ * @param [in]  devid: unified device id in device
+ * @param [in]  qid: que id (0~2047)
+ * @param [out]  que_info: que info
+ * @return   0 Success, others for fail
+ * @note Support:
+ */
 int hal_kernel_get_que_info(unsigned int devid, unsigned int qid, struct dqs_kernel_que_info *que_info);
 
 struct trs_id_inst {
@@ -1366,7 +1368,7 @@ struct trs_chan_cq_trace {
 };
 
 struct trs_chan_ops {
-    bool (*cqe_is_valid)(void *cqe, u32 round); /* not must */
+    bool (*cqe_is_valid)(void *cqe, u32 round);          /* not must */
     void (*get_sq_head_in_cqe)(void *cqe, u32 *sq_head); /* not must */
     /* should only return CQ_RECV_CONTINUE or CQ_RECV_FINISH */
     int (*cq_recv)(struct trs_id_inst *inst, u32 cqid, void *cqe); /* not must */
@@ -1378,8 +1380,8 @@ struct trs_chan_ops {
 struct trs_chan_para {
     u32 flag;
     int ssid;
-    u32 sqid; /* Applying for a Specified ID */
-    u32 cqid; /* Applying for a Specified ID */
+    u32 sqid;                  /* Applying for a Specified ID */
+    u32 cqid;                  /* Applying for a Specified ID */
     u32 msg[SQCQ_INFO_LENGTH]; /* send to ts */
     u32 ext_msg_len;
     void *ext_msg;
@@ -1393,47 +1395,47 @@ struct trs_chan_send_para {
     u8 *sqe;
     u32 sqe_num;
     u32 first_pos; /* output */
-    int timeout; /* ms */
+    int timeout;   /* ms */
 };
 
 struct trs_chan_recv_para {
     u8 *cqe;
     u32 cqe_num;
     u32 recv_cqe_num; /* output */
-    int timeout; /* ms */
+    int timeout;      /* ms */
 };
 
 /**
-* @trs channel create
-* @param [in]  inst: channel inst
-* @param [in]  para: channel arg, user should ensure the para is valid
-* @param [out] chan_id: channel id
-* @return 0: success, else: fail
-*/
+ * @trs channel create
+ * @param [in]  inst: channel inst
+ * @param [in]  para: channel arg, user should ensure the para is valid
+ * @param [out] chan_id: channel id
+ * @return 0: success, else: fail
+ */
 int hal_kernel_trs_chan_create(struct trs_id_inst *inst, struct trs_chan_para *para, int *chan_id);
 
 /**
-* @trs channel destroy
-* @param [in]  inst: channel inst
-* @param [in] chan_id: channel id
-*/
+ * @trs channel destroy
+ * @param [in]  inst: channel inst
+ * @param [in] chan_id: channel id
+ */
 void hal_kernel_trs_chan_destroy(struct trs_id_inst *inst, int chan_id);
 
 /**
-* @trs channel send
-* @param [in]  inst: channel inst
-* @param [in] chan_id: channel id
-* @param [in] para: send para, user should ensure the para is valid
-* @return 0: success, else: fail
-*/
+ * @trs channel send
+ * @param [in]  inst: channel inst
+ * @param [in] chan_id: channel id
+ * @param [in] para: send para, user should ensure the para is valid
+ * @return 0: success, else: fail
+ */
 int hal_kernel_trs_chan_send(struct trs_id_inst *inst, int chan_id, struct trs_chan_send_para *para);
 /**
-* @trs channel recv
-* @param [in]  inst: channel inst
-* @param [in] chan_id: channel id
-* @param [inout] para: recv para, user should ensure the para is valid
-* @return 0: success, else: fail
-*/
+ * @trs channel recv
+ * @param [in]  inst: channel inst
+ * @param [in] chan_id: channel id
+ * @param [inout] para: recv para, user should ensure the para is valid
+ * @return 0: success, else: fail
+ */
 
 enum uda_dev_hw {
     UDA_DAVINCI,
@@ -1443,20 +1445,20 @@ enum uda_dev_hw {
 
 enum uda_dev_object {
     UDA_ENTITY, /* Entity of the device */
-    UDA_AGENT, /* Agent of the entity device */
+    UDA_AGENT,  /* Agent of the entity device */
     UDA_OBJECT_MAX
 };
 
 enum uda_dev_location {
     UDA_LOCAL, /* Local device, with all control capabilities of the SOC */
-    UDA_NEAR, /* Near devices connected through buses such as PCIe and Ub, with partial control capabilities of SOC. */
+    UDA_NEAR,  /* Near devices connected through buses such as PCIe and Ub, with partial control capabilities of SOC. */
     UDA_REMOTE, /* Remote device connected through the network cannot directly control the SOC. */
     UDA_LOCATION_MAX
 };
 
 enum uda_dev_prop {
     UDA_REAL, /* Indicates the device that is directly reported by the hardware, include phy device and sriov device */
-    UDA_VIRTUAL, /* Indicates the virtual devices split from real device, use methods such as mdev. */
+    UDA_VIRTUAL,     /* Indicates the virtual devices split from real device, use methods such as mdev. */
     UDA_REAL_SEC_EH, /* Indicates sriov device which need host do security Hardening */
     UDA_PROP_MAX
 };
@@ -1469,7 +1471,7 @@ struct uda_dev_type {
 };
 
 enum uda_priority { /* high Priority to be notified first */
-    UDA_PRI0 = 0, /* hign */
+    UDA_PRI0 = 0,   /* hign */
     UDA_PRI1 = 1,
     UDA_PRI2 = 2,
     UDA_PRI3 = 3,
@@ -1478,19 +1480,19 @@ enum uda_priority { /* high Priority to be notified first */
     UDA_PRI_MAX
 };
 enum uda_notified_action {
-    UDA_INIT, /* phy dev, mia dev */
-    UDA_UNINIT, /* phy dev, mia dev */
-    UDA_SUSPEND, /* phy dev */
-    UDA_RESUME, /* phy dev */
-    UDA_TO_MIA, /* phy dev */
-    UDA_TO_SIA, /* phy dev */
-    UDA_MIA_CHANGE = 6, /* The computing power changes. mia dev */
-    UDA_REMOVE, /* sriov mia dev */
-    UDA_HOTRESET, /* phy dev, sriov mia dev */
+    UDA_INIT,            /* phy dev, mia dev */
+    UDA_UNINIT,          /* phy dev, mia dev */
+    UDA_SUSPEND,         /* phy dev */
+    UDA_RESUME,          /* phy dev */
+    UDA_TO_MIA,          /* phy dev */
+    UDA_TO_SIA,          /* phy dev */
+    UDA_MIA_CHANGE = 6,  /* The computing power changes. mia dev */
+    UDA_REMOVE,          /* sriov mia dev */
+    UDA_HOTRESET,        /* phy dev, sriov mia dev */
     UDA_HOTRESET_CANCEL, /* phy dev, sriov mia dev */
-    UDA_SHUTDOWN = 10, /* phy dev */
-    UDA_OCCUPY, /* phy dev, mia dev. call when user occpy /dev/davinci* in docker */
-    UDA_UNOCCUPY, /* phy dev, mia dev. call when docker exit */
+    UDA_SHUTDOWN = 10,   /* phy dev */
+    UDA_OCCUPY,          /* phy dev, mia dev. call when user occpy /dev/davinci* in docker */
+    UDA_UNOCCUPY,        /* phy dev, mia dev. call when docker exit */
     UDA_PRE_HOTRESET,
     UDA_PRE_HOTRESET_CANCEL,
     UDA_ADD_GROUP = 15, /* phy dev, mia dev. call when mia grouped in the same device */
@@ -1505,7 +1507,8 @@ typedef int (*uda_notify)(u32 udevid, enum uda_notified_action action);
 int hal_kernel_trs_chan_recv(struct trs_id_inst *inst, int chan_id, struct trs_chan_recv_para *para);
 
 int hal_kernel_uda_notifier_unregister(const char *notifier, struct uda_dev_type *type);
-int hal_kernel_uda_notifier_register(const char *notifier, struct uda_dev_type *type, enum uda_priority pri, uda_notify func);
+int hal_kernel_uda_notifier_register(const char *notifier, struct uda_dev_type *type, enum uda_priority pri,
+                                     uda_notify func);
 bool hal_kernel_uda_is_phy_dev(u32 udevid);
 struct device *hal_kernel_uda_get_device(u32 udevid);
 
@@ -1523,11 +1526,11 @@ struct cpu_topology_info {
 };
 
 /**
-* @brief get cpu topology
-* @param [in]  uint32_t dev_id: device id
-* @param [out] struct cpu_topology_info *res: cpu topology
-* @return 0: success, else: fail
-*/
+ * @brief get cpu topology
+ * @param [in]  uint32_t dev_id: device id
+ * @param [out] struct cpu_topology_info *res: cpu topology
+ * @return 0: success, else: fail
+ */
 int32_t hal_kernel_get_cpu_topo(uint32_t dev_id, struct cpu_topology_info *res);
 
 #endif

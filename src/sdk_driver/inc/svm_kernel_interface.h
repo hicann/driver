@@ -41,7 +41,6 @@ int svm_get_pages_list(ka_mm_struct_t *mm, u64 va, u64 num, ka_page_t **pages);
 int svm_smp_pin_mem(u32 udevid, int tgid, u64 va, u64 size, bool is_cross_app);
 int svm_smp_unpin_mem(u32 udevid, int tgid, u64 va, u64 size, bool is_cross_app);
 
-
 /* pin device cp only mem */
 int svm_smp_pin_dev_cp_only_mem(u32 udevid, int tgid, u64 va, u64 size);
 int svm_smp_unpin_dev_cp_only_mem(u32 udevid, int tgid, u64 va, u64 size);

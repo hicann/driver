@@ -321,8 +321,8 @@ static int soc_platform_set_reg_base(u32 devid, u32 tsid)
         return ret;
     }
 
-    ret = devdrv_get_addr_info(
-        devid, DEVDRV_ADDR_STARS_SQCQ_INTR_BASE, 0, (u64 *)&io_base.io_base, &io_base.io_base_size);
+    ret = devdrv_get_addr_info(devid, DEVDRV_ADDR_STARS_SQCQ_INTR_BASE, 0, (u64 *)&io_base.io_base,
+                               &io_base.io_base_size);
     if (ret != 0) {
         soc_err("Get stars sqcq int addr failed. (devid=%u; tsid=%u)\n", devid, tsid);
         return ret;
@@ -357,8 +357,8 @@ static int soc_platform_set_reg_base(u32 devid, u32 tsid)
         }
     }
 
-    ret =
-        devdrv_get_addr_info(devid, DEVDRV_ADDR_TS_NOTIFY_TBL_BASE, 0, (u64 *)&io_base.io_base, &io_base.io_base_size);
+    ret = devdrv_get_addr_info(devid, DEVDRV_ADDR_TS_NOTIFY_TBL_BASE, 0, (u64 *)&io_base.io_base,
+                               &io_base.io_base_size);
     if (ret != 0) {
         soc_warn("Without notify table addr. (devid=%u; ret=%d)\n", devid, ret);
     } else {
@@ -369,8 +369,8 @@ static int soc_platform_set_reg_base(u32 devid, u32 tsid)
         }
     }
 
-    ret = devdrv_get_addr_info(
-        devid, DEVDRV_ADDR_TS_EVENT_TBL_NS_BASE, 0, (u64 *)&io_base.io_base, &io_base.io_base_size);
+    ret = devdrv_get_addr_info(devid, DEVDRV_ADDR_TS_EVENT_TBL_NS_BASE, 0, (u64 *)&io_base.io_base,
+                               &io_base.io_base_size);
     if (ret != 0) {
         soc_warn("Without event table addr. (devid=%u; ret=%d)\n", devid, ret);
     } else {
@@ -482,5 +482,6 @@ KA_MODULE_LICENSE("GPL");
 KA_MODULE_AUTHOR("Huawei Tech. Co., Ltd.");
 KA_MODULE_DESCRIPTION("soc platform driver");
 #else
-void soc_platform_stub_test(void) {}
+void soc_platform_stub_test(void)
+{}
 #endif

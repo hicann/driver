@@ -16,9 +16,9 @@
 
 #include <linux/share_pool.h>
 
-#define KA_MMAP_SHARE_POOL_RO_START     MMAP_SHARE_POOL_RO_START
-#define KA_MMAP_SHARE_POOL_RO_END       MMAP_SHARE_POOL_RO_END
+#define KA_MMAP_SHARE_POOL_RO_START MMAP_SHARE_POOL_RO_START
+#define KA_MMAP_SHARE_POOL_RO_END MMAP_SHARE_POOL_RO_END
 
-#define ka_mg_sp_make_share_u2k(uva, size, pid)  mg_sp_make_share_u2k(uva, size, pid)
-#define ka_mg_sp_unshare(va, size, id)  mg_sp_unshare(va, size, id)
+#define ka_mg_sp_make_share_u2k(uva, size, pid) mg_sp_make_share_u2k(uva, size, pid)
+#define ka_mg_sp_unshare(va, size, id) mg_sp_unshare(va, size, id)
 #endif

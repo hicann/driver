@@ -10,21 +10,21 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
- 
+
 #ifndef PBL_KA_TIMER_PUB_H
 #define PBL_KA_TIMER_PUB_H
 
-#define WORKQUEUE_NAME_LENGTH  32
-#define S_TO_US_M           1000000
-#define TIMER_STEP_MS       100
-#define MAX_TASK_NUMS       1024
+#define WORKQUEUE_NAME_LENGTH 32
+#define S_TO_US_M 1000000
+#define TIMER_STEP_MS 100
+#define MAX_TASK_NUMS 1024
 
 typedef enum {
     TIMER_IRQ = 0,
     COMMON_WORK,
     INDEPENDENCE_WORK,
     HIGH_PRI_WORK,
-}timer_task_handler_mode;
+} timer_task_handler_mode;
 
 struct ka_timer_task {
     u32 expire_ms;

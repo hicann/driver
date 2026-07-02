@@ -51,13 +51,11 @@ unsigned long ka_dfx_kallsyms_lookup_name(const char *name)
 }
 EXPORT_SYMBOL(ka_dfx_kallsyms_lookup_name);
 
-
 int ka_dfx_atomic_notifier_panic_chain_register(ka_notifier_block_t *nb)
 {
     return atomic_notifier_chain_register(&panic_notifier_list, nb);
 }
 EXPORT_SYMBOL(ka_dfx_atomic_notifier_panic_chain_register);
-
 
 void ka_dfx_atomic_notifier_panic_chain_unregister(ka_notifier_block_t *nb)
 {

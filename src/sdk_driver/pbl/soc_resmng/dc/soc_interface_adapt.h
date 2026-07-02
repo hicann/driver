@@ -16,6 +16,6 @@
 
 #include "ascend_kernel_hal.h"
 
-int hal_kernel_get_pg_info_adapt(
-    unsigned int dev_id, HAL_PG_INFO_TYPE info_type, char *data, unsigned int size, unsigned int *ret_size);
+int hal_kernel_get_pg_info_adapt(unsigned int dev_id, HAL_PG_INFO_TYPE info_type, char *data, unsigned int size,
+                                 unsigned int *ret_size);
 #endif

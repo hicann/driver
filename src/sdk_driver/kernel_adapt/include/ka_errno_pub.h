@@ -14,7 +14,6 @@
 #ifndef _KA_PUB_ERR_H
 #define _KA_PUB_ERR_H
 
-
 #define KA_IS_ERR_VALUE(x) IS_ERR_VALUE(x)
 
 #define KA_ERR_PTR(error) ERR_PTR(error)

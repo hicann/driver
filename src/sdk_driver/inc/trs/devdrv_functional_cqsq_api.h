@@ -152,13 +152,16 @@ struct resource_mapping_notice_mailbox_t {
     volatile u8 reserve[44];
 };
 
-enum devdrv_cqsq_func { DEVDRV_CQSQ_HEART_BEAT = 0x0, DEVDRV_MAX_CQSQ_FUNC };
+enum devdrv_cqsq_func {
+    DEVDRV_CQSQ_HEART_BEAT = 0x0,
+    DEVDRV_MAX_CQSQ_FUNC
+};
 
 int devdrv_create_functional_sq(u32 devid, u32 tsid, u32 slot_len, u32 *sq_index, u64 *addr);
 void devdrv_destroy_functional_sq(u32 devid, u32 tsid, u32 sq_index);
-int devdrv_create_functional_cq(
-    u32 devid, u32 tsid, u32 slot_len, u32 cq_type,
-    void (*callback)(u32 device_id, u32 tsid, const u8 *cq_slot, u8 *sq_slot), u32 *cq_index, u64 *addr);
+int devdrv_create_functional_cq(u32 devid, u32 tsid, u32 slot_len, u32 cq_type,
+                                void (*callback)(u32 device_id, u32 tsid, const u8 *cq_slot, u8 *sq_slot),
+                                u32 *cq_index, u64 *addr);
 void devdrv_destroy_functional_cq(u32 devid, u32 tsid, u32 cq_index);
 int devdrv_functional_send_sq(u32 devid, u32 tsid, u32 sq_index, const u8 *buffer, u32 buf_len);
 int devdrv_mailbox_send_cqsq(u32 devid, u32 tsid, struct devdrv_mailbox_cqsq *cqsq);

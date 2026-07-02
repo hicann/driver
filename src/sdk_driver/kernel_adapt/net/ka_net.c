@@ -26,7 +26,8 @@ ka_net_device_t *ka_net_alloc_netdev(int sizeof_priv, const char *ndev_name)
 }
 EXPORT_SYMBOL_GPL(ka_net_alloc_netdev);
 
-void ka_net_netif_napi_add(ka_net_device_t *ndev, ka_napi_struct_t *napi, int (*poll)(ka_napi_struct_t *, int), int weight)
+void ka_net_netif_napi_add(ka_net_device_t *ndev, ka_napi_struct_t *napi, int (*poll)(ka_napi_struct_t *, int),
+                           int weight)
 {
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 0, 0)
     netif_napi_add_weight(ndev, napi, poll, weight);

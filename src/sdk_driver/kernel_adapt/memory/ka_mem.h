@@ -13,8 +13,8 @@
 #ifndef KA_MEM_H
 #define KA_MEM_H
 
-#define PRINT_MACRO_HELPER(x)   #x
-#define PRINT_MACRO(x)          #x "=" PRINT_MACRO_HELPER(x)
+#define PRINT_MACRO_HELPER(x) #x
+#define PRINT_MACRO(x) #x "=" PRINT_MACRO_HELPER(x)
 
 int ka_mm_ram_record_init(void);
 void ka_mm_ram_record_uninit(void);

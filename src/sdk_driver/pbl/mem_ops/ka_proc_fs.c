@@ -64,29 +64,22 @@ STATIC int ka_get_alloc_mem_desc_open(ka_inode_t *inode, ka_file_t *file)
 }
 
 static const ka_procfs_ops_t ka_enable_mem_desc_ops = {
-    ka_fs_init_pf_owner(KA_THIS_MODULE) \
-    ka_fs_init_pf_open(ka_enable_mem_record_ops_open) \
-    ka_fs_init_pf_read(ka_fs_seq_read) \
-    ka_fs_init_pf_write(ka_enable_record_ops_write) \
-    ka_fs_init_pf_lseek(ka_fs_seq_lseek) \
-    ka_fs_init_pf_release(ka_fs_single_release) \
-};
+    ka_fs_init_pf_owner(KA_THIS_MODULE) ka_fs_init_pf_open(ka_enable_mem_record_ops_open)
+        ka_fs_init_pf_read(ka_fs_seq_read) ka_fs_init_pf_write(ka_enable_record_ops_write)
+            ka_fs_init_pf_lseek(ka_fs_seq_lseek) ka_fs_init_pf_release(ka_fs_single_release)};
 
-static const ka_procfs_ops_t ka_mem_ops = {
-    ka_fs_init_pf_owner(KA_THIS_MODULE) \
-    ka_fs_init_pf_open(ka_get_alloc_mem_desc_open) \
-    ka_fs_init_pf_read(ka_fs_seq_read) \
-    ka_fs_init_pf_lseek(ka_fs_seq_lseek) \
-    ka_fs_init_pf_release(ka_fs_single_release) \
-};
+static const ka_procfs_ops_t ka_mem_ops = {ka_fs_init_pf_owner(KA_THIS_MODULE) ka_fs_init_pf_open(
+    ka_get_alloc_mem_desc_open) ka_fs_init_pf_read(ka_fs_seq_read) ka_fs_init_pf_lseek(ka_fs_seq_lseek)
+                                               ka_fs_init_pf_release(ka_fs_single_release)};
 
 void ka_proc_fs_init(void)
 {
     ka_task_entry = ka_fs_proc_mkdir("ka", NULL);
     if (ka_task_entry != NULL) {
         ka_fs_proc_create_data("ka_enable_mem_record", KA_PROC_FS_MODE, ka_task_entry, &ka_enable_mem_desc_ops,
-            (void *)(uintptr_t)ka_is_enable_mem_record());
-        ka_fs_proc_create_data("ka_mem_stats", KA_PROC_FS_MODE, ka_task_entry, &ka_mem_ops, (void *)(uintptr_t)ka_is_enable_mem_record());
+                               (void *)(uintptr_t)ka_is_enable_mem_record());
+        ka_fs_proc_create_data("ka_mem_stats", KA_PROC_FS_MODE, ka_task_entry, &ka_mem_ops,
+                               (void *)(uintptr_t)ka_is_enable_mem_record());
     }
 }
 

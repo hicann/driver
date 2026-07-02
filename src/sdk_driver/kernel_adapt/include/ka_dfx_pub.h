@@ -43,48 +43,48 @@ typedef struct notifier_block ka_notifier_block_t;
 
 typedef enum con_flush_mode ka_con_flush_mode_t;
 #define KA_CONSOLE_FLUSH_PENDING CONSOLE_FLUSH_PENDING
-#define KA_CONSOLE_REPLAY_ALL    CONSOLE_REPLAY_ALL
+#define KA_CONSOLE_REPLAY_ALL CONSOLE_REPLAY_ALL
 
 typedef struct raw_notifier_head ka_raw_notifier_head_t;
 
-#define KA_SYS_RESTART          SYS_RESTART
-#define KA_SYS_HALT             SYS_HALT
-#define KA_SYS_POWER_OFF        SYS_POWER_OFF
+#define KA_SYS_RESTART SYS_RESTART
+#define KA_SYS_HALT SYS_HALT
+#define KA_SYS_POWER_OFF SYS_POWER_OFF
 
-#define KA_KERN_SOH             KERN_SOH       /* ASCII Start Of Header */
-#define KA_KERN_SOH_ASCII       KERN_SOH_ASCII
-#define KA_KERN_EMERG           KERN_EMERG     /* system is unusable */
-#define KA_KERN_ALERT           KERN_ALERT     /* action must be taken immediately */
-#define KA_KERN_CRIT            KERN_CRIT     /* critical conditions */
-#define KA_KERN_ERR             KERN_ERR     /* error conditions */
-#define KA_KERN_WARNING         KERN_WARNING     /* warning conditions */
-#define KA_KERN_NOTICE          KERN_NOTICE     /* normal but significant condition */
-#define KA_KERN_INFO            KERN_INFO     /* informational */
-#define KA_KERN_DEBUG           KERN_DEBUG     /* debug-level messages */
+#define KA_KERN_SOH KERN_SOH /* ASCII Start Of Header */
+#define KA_KERN_SOH_ASCII KERN_SOH_ASCII
+#define KA_KERN_EMERG KERN_EMERG     /* system is unusable */
+#define KA_KERN_ALERT KERN_ALERT     /* action must be taken immediately */
+#define KA_KERN_CRIT KERN_CRIT       /* critical conditions */
+#define KA_KERN_ERR KERN_ERR         /* error conditions */
+#define KA_KERN_WARNING KERN_WARNING /* warning conditions */
+#define KA_KERN_NOTICE KERN_NOTICE   /* normal but significant condition */
+#define KA_KERN_INFO KERN_INFO       /* informational */
+#define KA_KERN_DEBUG KERN_DEBUG     /* debug-level messages */
 
-#define KA_KERN_DEFAULT         KERN_DEFAULT            /* the default kernel loglevel */
+#define KA_KERN_DEFAULT KERN_DEFAULT /* the default kernel loglevel */
 
 /* integer equivalents of KERN_<LEVEL> */
-#define KA_LOGLEVEL_SCHED       LOGLEVEL_SCHED      /* Deferred messages from sched code are set to this special level */
-#define KA_LOGLEVEL_DEFAULT     LOGLEVEL_DEFAULT    /* default (or last) loglevel */
-#define KA_LOGLEVEL_EMERG       LOGLEVEL_EMERG      /* system is unusable */
-#define KA_LOGLEVEL_ALERT       LOGLEVEL_ALERT       /* action must be taken immediately */
-#define KA_LOGLEVEL_CRIT        LOGLEVEL_CRIT       /* critical conditions */
-#define KA_LOGLEVEL_ERR         LOGLEVEL_ERR        /* error conditions */
-#define KA_LOGLEVEL_WARNING     LOGLEVEL_WARNING    /* warning conditions */
-#define KA_LOGLEVEL_NOTICE      LOGLEVEL_NOTICE     /* normal but significant condition */
-#define KA_LOGLEVEL_INFO        LOGLEVEL_INFO       /* informational */
-#define KA_LOGLEVEL_DEBUG       LOGLEVEL_DEBUG      /* debug-level messages */
+#define KA_LOGLEVEL_SCHED LOGLEVEL_SCHED     /* Deferred messages from sched code are set to this special level */
+#define KA_LOGLEVEL_DEFAULT LOGLEVEL_DEFAULT /* default (or last) loglevel */
+#define KA_LOGLEVEL_EMERG LOGLEVEL_EMERG     /* system is unusable */
+#define KA_LOGLEVEL_ALERT LOGLEVEL_ALERT     /* action must be taken immediately */
+#define KA_LOGLEVEL_CRIT LOGLEVEL_CRIT       /* critical conditions */
+#define KA_LOGLEVEL_ERR LOGLEVEL_ERR         /* error conditions */
+#define KA_LOGLEVEL_WARNING LOGLEVEL_WARNING /* warning conditions */
+#define KA_LOGLEVEL_NOTICE LOGLEVEL_NOTICE   /* normal but significant condition */
+#define KA_LOGLEVEL_INFO LOGLEVEL_INFO       /* informational */
+#define KA_LOGLEVEL_DEBUG LOGLEVEL_DEBUG     /* debug-level messages */
 
 #define ka_dfx_pr_notice pr_notice
-#define ka_dfx_pr_err    pr_err
-#define ka_dfx_pr_info   pr_info
-#define ka_dfx_pr_warn   pr_warn
-#define ka_dfx_pr_debug  pr_debug
+#define ka_dfx_pr_err pr_err
+#define ka_dfx_pr_info pr_info
+#define ka_dfx_pr_warn pr_warn
+#define ka_dfx_pr_debug pr_debug
 
-#define KA_NOTIFY_BAD           NOTIFY_BAD
-#define KA_NOTIFY_DONE          NOTIFY_DONE
-#define KA_NOTIFY_OK            NOTIFY_OK
+#define KA_NOTIFY_BAD NOTIFY_BAD
+#define KA_NOTIFY_DONE NOTIFY_DONE
+#define KA_NOTIFY_OK NOTIFY_OK
 
 #define KA_DFX_ATOMIC_INIT_NOTIFIER_HEAD(nb_head) ATOMIC_INIT_NOTIFIER_HEAD(nb_head)
 
@@ -108,7 +108,7 @@ unsigned long ka_dfx_kallsyms_lookup_name(const char *name);
 #define ka_dfx_raw_notifier_call_chain(nh, val, v) raw_notifier_call_chain(nh, val, v)
 #define ka_dfx_raw_notifier_chain_register(nh, nb) raw_notifier_chain_register(nh, nb)
 #define ka_dfx_raw_notifier_chain_unregister(nh, nb) raw_notifier_chain_unregister(nh, nb)
-#define ka_dfx_atomic_notifier_call_chain(nh, val,v) atomic_notifier_call_chain(nh, val,v)
+#define ka_dfx_atomic_notifier_call_chain(nh, val, v) atomic_notifier_call_chain(nh, val, v)
 #define ka_dfx_atomic_notifier_chain_register(nh, nb) atomic_notifier_chain_register(nh, nb)
 #define ka_dfx_atomic_notifier_chain_unregister(nh, nb) atomic_notifier_chain_unregister(nh, nb)
 #define ka_dfx_register_module_notifier(nb) register_module_notifier(nb)
@@ -177,12 +177,12 @@ typedef struct kernel_symbol ka_kernel_symbol_t;
 #define ka_dfx_notifier_to_errno(ret) notifier_to_errno(ret)
 #define ka_dfx_offset_to_ptr(off) offset_to_ptr(off)
 
-#define KA_WARN_ON(x)       WARN_ON(x)
-#define ka_maybe_unused     __maybe_unused
-#define ka_dev_err          dev_err
-#define ka_dev_info         dev_info
-#define ka_dev_warn         dev_warn
-#define ka_hweight8         hweight8
-#define ka_offsetofend      offsetofend
+#define KA_WARN_ON(x) WARN_ON(x)
+#define ka_maybe_unused __maybe_unused
+#define ka_dev_err dev_err
+#define ka_dev_info dev_info
+#define ka_dev_warn dev_warn
+#define ka_hweight8 hweight8
+#define ka_offsetofend offsetofend
 
 #endif

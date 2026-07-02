@@ -18,11 +18,11 @@
 #include "ascend_hal.h"
 
 #define REMOTE_REQUEST 0x5a
-#define LOCAL_REQUEST  0xa5
+#define LOCAL_REQUEST 0xa5
 
-#define SVM_MEM_ACCESS_READ  (0x1U << 0)
+#define SVM_MEM_ACCESS_READ (0x1U << 0)
 #define SVM_MEM_ACCESS_WRITE (0x1U << 1)
-#define SVM_REGISTER_FLAG_ACCESS_BY_DMA    (1ULL << 0ULL)
+#define SVM_REGISTER_FLAG_ACCESS_BY_DMA (1ULL << 0ULL)
 
 bool svm_support_get_user_malloc_attr(uint32_t dev_id);
 bool svm_support_vmm_normal_granularity(uint32_t dev_id);
@@ -84,7 +84,8 @@ DLLEXPORT drvError_t halSvmAccessWhitelistCfg(uint32_t devid, uint64_t va, uint6
  * @return DRV_ERROR_NONE : success
  * @return DV_ERROR_XXX : register fail
  */
-DLLEXPORT drvError_t halSvmAccessRegister(uint32_t devid, uint64_t va, uint64_t size, uint64_t flag, uint64_t *access_va);
+DLLEXPORT drvError_t halSvmAccessRegister(uint32_t devid, uint64_t va, uint64_t size, uint64_t flag,
+                                          uint64_t *access_va);
 
 /**
  * @ingroup driver

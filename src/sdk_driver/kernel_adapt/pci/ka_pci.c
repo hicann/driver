@@ -278,8 +278,7 @@ EXPORT_SYMBOL_GPL(ka_pci_get_bridge_reset_func);
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 6, 0)
 MODULE_IMPORT_NS(CXL);
-#define KA_PCI_EXP_AER_FLAGS (PCI_EXP_DEVCTL_CERE | PCI_EXP_DEVCTL_NFERE | \
-    PCI_EXP_DEVCTL_FERE | PCI_EXP_DEVCTL_URRE)
+#define KA_PCI_EXP_AER_FLAGS (PCI_EXP_DEVCTL_CERE | PCI_EXP_DEVCTL_NFERE | PCI_EXP_DEVCTL_FERE | PCI_EXP_DEVCTL_URRE)
 #endif
 
 int ka_pci_enable_pcie_error_reporting(ka_pci_dev_t *dev)
@@ -340,7 +339,7 @@ int ka_pci_configure_extended_capability(ka_pci_dev_t *dev)
     }
 #endif
 
-return 0;
+    return 0;
 }
 EXPORT_SYMBOL_GPL(ka_pci_configure_extended_capability);
 

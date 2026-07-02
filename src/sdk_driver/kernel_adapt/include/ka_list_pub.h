@@ -298,7 +298,8 @@ typedef struct hlist_head ka_hlist_head_t;
  * @member: the name of the list_head within the struct.
  * Start to iterate over list of given type backwards, continuing after the current position.
  */
-#define ka_list_for_each_entry_continue_reverse(pos, head, member) list_for_each_entry_continue_reverse(pos, head, member)
+#define ka_list_for_each_entry_continue_reverse(pos, head, member) \
+    list_for_each_entry_continue_reverse(pos, head, member)
 
 /**
  * iterate over list of given type from the current point
@@ -335,7 +336,8 @@ typedef struct hlist_head ka_hlist_head_t;
  * @member: the name of the list_head within the struct
  * Iterate over list of given type, continuing after current point, safe against removal of list entry.
  */
-#define ka_list_for_each_entry_safe_continue(pos, n, head, member) list_for_each_entry_safe_continue(pos, n, head, member)
+#define ka_list_for_each_entry_safe_continue(pos, n, head, member) \
+    list_for_each_entry_safe_continue(pos, n, head, member)
 
 /**
  * iterate over list from current point safe against removal
@@ -370,11 +372,10 @@ typedef struct hlist_head ka_hlist_head_t;
  */
 #define ka_list_safe_reset_next(pos, n, member) list_safe_reset_next(pos, n, member)
 
-
-#define KA_HLIST_HEAD_INIT      HLIST_HEAD_INIT
-#define KA_HLIST_HEAD(name)     HLIST_HEAD(name)
+#define KA_HLIST_HEAD_INIT HLIST_HEAD_INIT
+#define KA_HLIST_HEAD(name) HLIST_HEAD(name)
 #define KA_INIT_HLIST_HEAD(ptr) INIT_HLIST_HEAD(ptr)
-#define KA_INIT_HLIST_NODE(h)   INIT_HLIST_NODE(h)
+#define KA_INIT_HLIST_NODE(h) INIT_HLIST_NODE(h)
 
 /**
  * Check whether the node has been removed from list and reinitialized
@@ -507,7 +508,7 @@ typedef struct rcu_head ka_rcu_head_t;
 #define ka_list_for_each_entry_rcu list_for_each_entry_rcu
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 20, 0)
-#define KA_IS_DAVINCI_XARRAY_SUPPORT                        1
+#define KA_IS_DAVINCI_XARRAY_SUPPORT 1
 extern void *xa_load(struct xarray *xa, unsigned long index);
 extern int xa_err(void *entry);
 extern void *xa_erase(struct xarray *xa, unsigned long index);
@@ -525,10 +526,10 @@ extern void xa_destroy(struct xarray *xa);
 #define ka_xa_err xa_err
 #define ka_xa_destroy xa_destroy
 #else
-#define KA_IS_DAVINCI_XARRAY_SUPPORT                        0
+#define KA_IS_DAVINCI_XARRAY_SUPPORT 0
 #endif
 
-#define KA_INTERVAL_TREE_DEFINE     INTERVAL_TREE_DEFINE
-#define KA_RB_ROOT_CACHED           RB_ROOT_CACHED
+#define KA_INTERVAL_TREE_DEFINE INTERVAL_TREE_DEFINE
+#define KA_RB_ROOT_CACHED RB_ROOT_CACHED
 
 #endif

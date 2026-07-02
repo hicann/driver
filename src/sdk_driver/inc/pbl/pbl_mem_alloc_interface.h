@@ -47,27 +47,21 @@
         KA_SUB_MODULE_TYPE_4: NULL
 */
 #if defined(CFG_FEATURE_MEMALLOC_MODULE_TYPE) && defined(CFG_FEATURE_MEMALLOC_SUBMODULE_TYPE)
-    #define DMS_MODULE_TYPE CFG_FEATURE_MEMALLOC_MODULE_TYPE
-    #define DMS_KA_SUB_MODULE_TYPE CFG_FEATURE_MEMALLOC_SUBMODULE_TYPE
+#define DMS_MODULE_TYPE CFG_FEATURE_MEMALLOC_MODULE_TYPE
+#define DMS_KA_SUB_MODULE_TYPE CFG_FEATURE_MEMALLOC_SUBMODULE_TYPE
 #endif
 
-#define dbl_kmalloc(size, flags) \
-    ka_kmalloc(size, flags, ka_get_module_id(DMS_MODULE_TYPE, DMS_KA_SUB_MODULE_TYPE))
-#define dbl_kzalloc(size, flags) \
-    ka_kzalloc(size, flags, ka_get_module_id(DMS_MODULE_TYPE, DMS_KA_SUB_MODULE_TYPE))
-#define dbl_kcalloc(size, flags) \
-    ka_kcalloc(size, flags, ka_get_module_id(DMS_MODULE_TYPE, DMS_KA_SUB_MODULE_TYPE))
+#define dbl_kmalloc(size, flags) ka_kmalloc(size, flags, ka_get_module_id(DMS_MODULE_TYPE, DMS_KA_SUB_MODULE_TYPE))
+#define dbl_kzalloc(size, flags) ka_kzalloc(size, flags, ka_get_module_id(DMS_MODULE_TYPE, DMS_KA_SUB_MODULE_TYPE))
+#define dbl_kcalloc(size, flags) ka_kcalloc(size, flags, ka_get_module_id(DMS_MODULE_TYPE, DMS_KA_SUB_MODULE_TYPE))
 
-#define dbl_kfree(addr) \
-    ka_kfree(addr, ka_get_module_id(DMS_MODULE_TYPE, DMS_KA_SUB_MODULE_TYPE))
+#define dbl_kfree(addr) ka_kfree(addr, ka_get_module_id(DMS_MODULE_TYPE, DMS_KA_SUB_MODULE_TYPE))
 
-#define dbl_vzalloc(size)  \
-    ka_vzalloc(size, ka_get_module_id(DMS_MODULE_TYPE, DMS_KA_SUB_MODULE_TYPE))
+#define dbl_vzalloc(size) ka_vzalloc(size, ka_get_module_id(DMS_MODULE_TYPE, DMS_KA_SUB_MODULE_TYPE))
 #define dbl_vmalloc(size, gfp_mask, prot) \
     __ka_vmalloc(size, gfp_mask, prot, ka_get_module_id(DMS_MODULE_TYPE, DMS_KA_SUB_MODULE_TYPE))
 
-#define dbl_vfree(addr) \
-    ka_vfree(addr, ka_get_module_id(DMS_MODULE_TYPE, DMS_KA_SUB_MODULE_TYPE))
+#define dbl_vfree(addr) ka_vfree(addr, ka_get_module_id(DMS_MODULE_TYPE, DMS_KA_SUB_MODULE_TYPE))
 
 #define dbl_get_free_pages(gfp_mask, order) \
     ka_get_free_pages(gfp_mask, order, ka_get_module_id(DMS_MODULE_TYPE, DMS_KA_SUB_MODULE_TYPE))
@@ -80,8 +74,7 @@
     ka_mg_sp_alloc_nodemask(size, sp_flags, spg_id, nodemask, ka_get_module_id(DMS_MODULE_TYPE, DMS_KA_SUB_MODULE_TYPE))
 #define dbl_mg_sp_alloc(size, sp_flags, spg_id) \
     ka_mg_sp_alloc(size, sp_flags, spg_id, ka_get_module_id(DMS_MODULE_TYPE, DMS_KA_SUB_MODULE_TYPE))
-#define dbl_mg_sp_free(addr, id) \
-    ka_mg_sp_free(addr, id, module_id)
+#define dbl_mg_sp_free(addr, id) ka_mg_sp_free(addr, id, module_id)
 
 #define dbl_alloc_pages_exact(size, gfp_mask) \
     ka_alloc_pages_exact(size, gfp_mask, ka_get_module_id(DMS_MODULE_TYPE, DMS_KA_SUB_MODULE_TYPE))
@@ -93,12 +86,9 @@
 #define dbl_free_pages_ex(page, order) \
     __ka_free_pages(page, order, ka_get_module_id(DMS_MODULE_TYPE, DMS_KA_SUB_MODULE_TYPE))
 
-#define dbl_kvzalloc(size, flags) \
-    ka_kvzalloc(size, flags, ka_get_module_id(DMS_MODULE_TYPE, DMS_KA_SUB_MODULE_TYPE))
+#define dbl_kvzalloc(size, flags) ka_kvzalloc(size, flags, ka_get_module_id(DMS_MODULE_TYPE, DMS_KA_SUB_MODULE_TYPE))
 #define dbl_kvmalloc_node(size, flags, node) \
     ka_kvmalloc_node(size, flags, node, ka_get_module_id(DMS_MODULE_TYPE, DMS_KA_SUB_MODULE_TYPE))
-#define dbl_kvmalloc(size, flags) \
-    ka_kvmalloc(size, flags, ka_get_module_id(DMS_MODULE_TYPE, DMS_KA_SUB_MODULE_TYPE))
-#define dbl_kvfree(addr)  \
-    ka_kvfree(addr, ka_get_module_id(DMS_MODULE_TYPE, DMS_KA_SUB_MODULE_TYPE))
+#define dbl_kvmalloc(size, flags) ka_kvmalloc(size, flags, ka_get_module_id(DMS_MODULE_TYPE, DMS_KA_SUB_MODULE_TYPE))
+#define dbl_kvfree(addr) ka_kvfree(addr, ka_get_module_id(DMS_MODULE_TYPE, DMS_KA_SUB_MODULE_TYPE))
 #endif

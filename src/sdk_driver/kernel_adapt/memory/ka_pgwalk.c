@@ -27,8 +27,7 @@ static unsigned long pmdp_get_lockless_start(void)
 }
 
 static void pmdp_get_lockless_end(unsigned long irqflags)
-{
-}
+{}
 
 static ka_pte_t *_ka_pte_offset_map(ka_pmd_t *pmd, u64 addr, ka_pmd_t *pmdvalp)
 {
@@ -341,12 +340,7 @@ static int ka_walk_pgd_range(u64 start, u64 end, struct ka_pgwalk *walk)
 
 int ka_walk_page_range(ka_vm_area_struct_t *vma, u64 start, u64 end, struct ka_pgwalk_ops *ops, void *priv)
 {
-    struct ka_pgwalk walk = {
-        .vma = vma,
-        .ops = ops,
-        .pte_lock_flag = 0,
-        .priv = priv
-    };
+    struct ka_pgwalk walk = {.vma = vma, .ops = ops, .pte_lock_flag = 0, .priv = priv};
 
     if (start >= end) {
         return -EFAULT;
@@ -358,12 +352,7 @@ EXPORT_SYMBOL_GPL(ka_walk_page_range);
 
 int ka_walk_page_range_pte_lock(ka_vm_area_struct_t *vma, u64 start, u64 end, struct ka_pgwalk_ops *ops, void *priv)
 {
-    struct ka_pgwalk walk = {
-        .vma = vma,
-        .ops = ops,
-        .pte_lock_flag = 1,
-        .priv = priv
-    };
+    struct ka_pgwalk walk = {.vma = vma, .ops = ops, .pte_lock_flag = 1, .priv = priv};
 
     if (start >= end) {
         return -EFAULT;

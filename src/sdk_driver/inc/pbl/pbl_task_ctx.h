@@ -35,9 +35,9 @@
         7. call task_ctx_domain_destroy destroy domain when module_exit
 */
 
-#define TASK_CTX_HASH_BIT    6
-#define TASK_CTX_HASH_MAX    (1 << TASK_CTX_HASH_BIT)
-#define TASK_CTX_DOMAIN_FLAG_ACTIVE  (1ULL << 0ULL)
+#define TASK_CTX_HASH_BIT 6
+#define TASK_CTX_HASH_MAX (1 << TASK_CTX_HASH_BIT)
+#define TASK_CTX_DOMAIN_FLAG_ACTIVE (1ULL << 0ULL)
 
 struct task_ctx_domain {
     struct kref_safe ref;
@@ -157,7 +157,8 @@ static inline struct task_ctx *_task_ctx_find(struct task_ctx_domain *domain, in
     u32 bkt = task_get_bkt_from_tgid(tgid);
     struct task_ctx *ctx = NULL;
 
-    ka_hlist_for_each_entry(ctx, &domain->ctx_htable[bkt], link) {
+    ka_hlist_for_each_entry(ctx, &domain->ctx_htable[bkt], link)
+    {
         if (ctx->tgid == tgid) {
             return ctx;
         }
@@ -197,7 +198,8 @@ static inline void task_ctx_release(struct kref_safe *ref)
     _task_ctx_release(ctx->domain, ctx);
 }
 
-static inline struct task_ctx *_task_ctx_get_inner(struct task_ctx_domain *domain, int tgid, struct task_start_time *time)
+static inline struct task_ctx *_task_ctx_get_inner(struct task_ctx_domain *domain, int tgid,
+                                                   struct task_start_time *time)
 {
     struct task_ctx *ctx = _task_ctx_find(domain, tgid);
     if (ctx != NULL) {
@@ -232,7 +234,7 @@ static inline struct task_ctx *task_ctx_get(struct task_ctx_domain *domain, int 
 }
 
 static inline struct task_ctx *task_ctx_time_check_get(struct task_ctx_domain *domain, int tgid,
-    struct task_start_time *time)
+                                                       struct task_start_time *time)
 {
     return _task_ctx_get(domain, tgid, time);
 }
@@ -288,11 +290,11 @@ static inline int task_get_start_time_by_tgid(int tgid, struct task_start_time *
     return -ESRCH;
 }
 
-static inline int _task_ctx_init(struct task_ctx_domain *domain, struct task_ctx *ctx,
-    int tgid, void *priv, void (*release)(struct task_ctx *ctx))
+static inline int _task_ctx_init(struct task_ctx_domain *domain, struct task_ctx *ctx, int tgid, void *priv,
+                                 void (*release)(struct task_ctx *ctx))
 {
     (void)strncpy_s(ctx->name, TASK_COMM_LEN, ka_task_get_current_comm(), TASK_COMM_LEN);
-    (void)task_get_start_time_by_tgid(tgid, &ctx->start_time);  // caution: tgid may belong to a remote process
+    (void)task_get_start_time_by_tgid(tgid, &ctx->start_time); // caution: tgid may belong to a remote process
     ctx->tgid = tgid;
     ctx->priv = priv;
     ka_task_mutex_init(&ctx->mutex);
@@ -303,8 +305,8 @@ static inline int _task_ctx_init(struct task_ctx_domain *domain, struct task_ctx
     return task_ctx_add_to_domain(domain, ctx);
 }
 
-static inline int task_ctx_init(struct task_ctx_domain *domain, struct task_ctx *ctx,
-    int tgid, void *priv, void (*release)(struct task_ctx *ctx))
+static inline int task_ctx_init(struct task_ctx_domain *domain, struct task_ctx *ctx, int tgid, void *priv,
+                                void (*release)(struct task_ctx *ctx))
 {
     if ((domain->task_max_num > 0) && (ka_base_atomic_read(&domain->task_num) >= (int)domain->task_max_num)) {
         return -EFAULT;
@@ -314,8 +316,8 @@ static inline int task_ctx_init(struct task_ctx_domain *domain, struct task_ctx 
 }
 
 /* interface */
-static inline int task_ctx_create(struct task_ctx_domain *domain,
-    int tgid, void *priv, void (*release)(struct task_ctx *ctx))
+static inline int task_ctx_create(struct task_ctx_domain *domain, int tgid, void *priv,
+                                  void (*release)(struct task_ctx *ctx))
 {
     struct task_ctx *ctx = NULL;
     int ret;
@@ -338,8 +340,8 @@ static inline int task_ctx_create(struct task_ctx_domain *domain,
 }
 
 /* interface */
-static inline int task_ctx_create_ex(struct task_ctx_domain *domain,
-    int tgid, void *priv, void (*release)(struct task_ctx *ctx), struct task_ctx **ctx)
+static inline int task_ctx_create_ex(struct task_ctx_domain *domain, int tgid, void *priv,
+                                     void (*release)(struct task_ctx *ctx), struct task_ctx **ctx)
 {
     int ret = -ENOMEM;
 
@@ -404,8 +406,8 @@ static inline struct task_ctx *task_ctx_get_next(struct task_ctx *ctx_from, ka_r
     return ctx;
 }
 
-static inline void _task_ctx_for_each_safe(ka_hlist_head_t *head, ka_rwlock_t *lock,
-    void *priv, void (*func)(struct task_ctx *ctx, void *priv))
+static inline void _task_ctx_for_each_safe(ka_hlist_head_t *head, ka_rwlock_t *lock, void *priv,
+                                           void (*func)(struct task_ctx *ctx, void *priv))
 {
     struct task_ctx *ctx = NULL;
 
@@ -421,8 +423,8 @@ static inline void _task_ctx_for_each_safe(ka_hlist_head_t *head, ka_rwlock_t *l
 }
 
 /* interface */
-static inline void task_ctx_for_each_safe(struct task_ctx_domain *domain,
-    void *priv, void (*func)(struct task_ctx *ctx, void *priv))
+static inline void task_ctx_for_each_safe(struct task_ctx_domain *domain, void *priv,
+                                          void (*func)(struct task_ctx *ctx, void *priv))
 {
     u32 bkt;
 
@@ -440,16 +442,15 @@ static inline void task_ctx_item_show(struct task_ctx *ctx, void *priv)
 /* interface */
 static inline void task_ctx_domain_show(struct task_ctx_domain *domain, struct seq_file *seq)
 {
-    ka_fs_seq_printf(seq, "domain: %s task_num %d task_max_num %u\n",
-        domain->name, ka_base_atomic_read(&domain->task_num), domain->task_max_num);
+    ka_fs_seq_printf(seq, "domain: %s task_num %d task_max_num %u\n", domain->name,
+                     ka_base_atomic_read(&domain->task_num), domain->task_max_num);
 
     task_ctx_for_each_safe(domain, seq, task_ctx_item_show);
     ka_fs_seq_printf(seq, "\n");
 }
 
-
-static inline int _task_ctx_lock_call_func(struct task_ctx_domain *domain, int tgid,
-    struct task_start_time *time, int (*func)(struct task_ctx *ctx, void *para), void *para)
+static inline int _task_ctx_lock_call_func(struct task_ctx_domain *domain, int tgid, struct task_start_time *time,
+                                           int (*func)(struct task_ctx *ctx, void *para), void *para)
 {
     int ret = -ESRCH;
     struct task_ctx *ctx = _task_ctx_get(domain, tgid, time);
@@ -465,19 +466,21 @@ static inline int _task_ctx_lock_call_func(struct task_ctx_domain *domain, int t
 
 /* interface */
 static inline int task_ctx_lock_call_func(struct task_ctx_domain *domain, int tgid,
-    int (*func)(struct task_ctx *ctx, void *para), void *para)
+                                          int (*func)(struct task_ctx *ctx, void *para), void *para)
 {
     return _task_ctx_lock_call_func(domain, tgid, NULL, func, para);
 }
 
 static inline int task_ctx_time_check_lock_call_func(struct task_ctx_domain *domain, int tgid,
-    struct task_start_time *time, int (*func)(struct task_ctx *ctx, void *para), void *para)
+                                                     struct task_start_time *time,
+                                                     int (*func)(struct task_ctx *ctx, void *para), void *para)
 {
     return _task_ctx_lock_call_func(domain, tgid, time, func, para);
 }
 
 static inline int _task_ctx_lock_call_func_non_block(struct task_ctx_domain *domain, int tgid,
-    struct task_start_time *time, int (*func)(struct task_ctx *ctx, void *para), void *para)
+                                                     struct task_start_time *time,
+                                                     int (*func)(struct task_ctx *ctx, void *para), void *para)
 {
     int ret = -ESRCH;
     struct task_ctx *ctx = _task_ctx_get(domain, tgid, time);
@@ -493,13 +496,15 @@ static inline int _task_ctx_lock_call_func_non_block(struct task_ctx_domain *dom
 
 /* interface */
 static inline int task_ctx_lock_call_func_non_block(struct task_ctx_domain *domain, int tgid,
-    int (*func)(struct task_ctx *ctx, void *para), void *para)
+                                                    int (*func)(struct task_ctx *ctx, void *para), void *para)
 {
     return _task_ctx_lock_call_func_non_block(domain, tgid, NULL, func, para);
 }
 
 static inline int task_ctx_time_check_lock_call_func_non_block(struct task_ctx_domain *domain, int tgid,
-    struct task_start_time *time, int (*func)(struct task_ctx *ctx, void *para), void *para)
+                                                               struct task_start_time *time,
+                                                               int (*func)(struct task_ctx *ctx, void *para),
+                                                               void *para)
 {
     return _task_ctx_lock_call_func_non_block(domain, tgid, time, func, para);
 }
@@ -510,7 +515,8 @@ static inline bool task_is_exit(int tgid, struct task_start_time *start_time)
     bool is_exit = true;
     struct task_struct *task = task_get_by_tgid(tgid);
     if (task != NULL) {
-        if ((ka_system_timespec_equal(task->group_leader->start_time, start_time->time)) && !(task->flags & KA_TASK_PF_EXITING)) {
+        if ((ka_system_timespec_equal(task->group_leader->start_time, start_time->time)) &&
+            !(task->flags & KA_TASK_PF_EXITING)) {
             is_exit = false;
         }
         ka_task_put_task_struct(task);

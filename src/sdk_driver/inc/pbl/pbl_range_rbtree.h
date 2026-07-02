@@ -57,7 +57,8 @@ static inline int _range_rbtree_insert(struct range_rbtree *range_tree, struct r
             cur_node = ka_base_get_rb_node_right_addr(*cur_node);
         } else {
             return ((cur_range_node->start == range_node->start) && (cur_range_node->size == range_node->size)) ?
-                -EEXIST : -EINVAL;
+                       -EEXIST :
+                       -EINVAL;
         }
     }
 
@@ -157,4 +158,3 @@ static inline bool range_rbtree_check_exist(struct range_rbtree *range_tree, u64
 }
 
 #endif
-

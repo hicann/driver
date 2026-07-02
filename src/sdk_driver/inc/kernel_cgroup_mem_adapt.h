@@ -183,5 +183,4 @@ static inline void ka_free_pages_ex(unsigned long addr, unsigned int order)
     free_pages(addr, order);
 }
 #endif
-#endif  /* __KERNEL_CGROUP_MEM_ADAPT_H */
-
+#endif /* __KERNEL_CGROUP_MEM_ADAPT_H */

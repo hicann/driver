@@ -18,4 +18,3 @@ int ka_timer_init(void);
 void ka_timer_uninit(void);
 
 #endif
-

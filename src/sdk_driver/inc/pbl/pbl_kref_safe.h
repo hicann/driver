@@ -35,17 +35,17 @@ static void kref_safe_release_work(ka_work_struct_t *work)
 static inline void kref_safe_init(struct kref_safe *kref_s)
 {
     KA_TASK_INIT_WORK(&kref_s->work, kref_safe_release_work);
-	ka_base_kref_init(&kref_s->kref);
+    ka_base_kref_init(&kref_s->kref);
 }
 
 static inline unsigned int kref_safe_read(const struct kref_safe *kref_s)
 {
-	return ka_base_kref_read((const ka_kref_t *)&kref_s->kref);
+    return ka_base_kref_read((const ka_kref_t *)&kref_s->kref);
 }
 
 static inline void kref_safe_get(struct kref_safe *kref_s)
 {
-	ka_base_kref_get(&kref_s->kref);
+    ka_base_kref_get(&kref_s->kref);
 }
 
 static inline int kref_safe_put(struct kref_safe *kref_s, void (*release)(struct kref_safe *kref_s))
@@ -63,15 +63,14 @@ static inline int kref_safe_put(struct kref_safe *kref_s, void (*release)(struct
         } else {
             release(kref_s);
         }
-		return 1;
-	}
-	return 0;
+        return 1;
+    }
+    return 0;
 }
 
 static inline int __ka_must_check kref_safe_get_unless_zero(struct kref_safe *kref_s)
 {
-	return ka_base_kref_get_unless_zero(&kref_s->kref);
+    return ka_base_kref_get_unless_zero(&kref_s->kref);
 }
 
 #endif
-

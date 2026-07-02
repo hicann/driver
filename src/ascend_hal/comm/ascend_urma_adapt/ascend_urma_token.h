@@ -15,7 +15,7 @@
 
 #include "ascend_urma_pub.h"
 
-#define ASCEND_URMA_TOKEN_FLAG_UNIQUE               (1U << 0U)
+#define ASCEND_URMA_TOKEN_FLAG_UNIQUE (1U << 0U)
 
 struct ascend_urma_token_pool_attr {
     u32 token_num_default;

@@ -100,9 +100,8 @@ STATIC int topo_check_sio(unsigned int dev_id1, unsigned int dev_id2, bool *resu
 
     ret = topo_check_in_the_same_os(dev_id1, dev_id2, result);
     if (ret != 0) {
-        soc_err(
-            "Failed to check whether they are in the same OS. (dev_id1=%u; dev_id2=%u; ret=%d)\n", dev_id1, dev_id2,
-            ret);
+        soc_err("Failed to check whether they are in the same OS. (dev_id1=%u; dev_id2=%u; ret=%d)\n", dev_id1, dev_id2,
+                ret);
         return ret;
     }
 
@@ -176,8 +175,8 @@ static int topo_get_id_info(struct topo_id_info *id_info, unsigned int *hccs_lin
 
     /* hccs_group_id: Check whether they are in the same group. */
     /* hccs_link_status: The bit corresponding to chipid is 1, which is HCCS. */
-    ret = soc_resmng_get_hccs_link_status_and_group_id(
-        id_info->dev_id, hccs_link_status, id_info->hccs_group_id, SOC_HCCS_GROUP_SUPPORT_MAX_CHIPNUM);
+    ret = soc_resmng_get_hccs_link_status_and_group_id(id_info->dev_id, hccs_link_status, id_info->hccs_group_id,
+                                                       SOC_HCCS_GROUP_SUPPORT_MAX_CHIPNUM);
     if (ret != 0) {
         soc_err("Get hccs link status and group id failed. (dev_id=%u; ret=%d)\n", id_info->dev_id, ret);
         return ret;
@@ -221,8 +220,8 @@ STATIC void topo_evb_check_hccs(struct topo_id_info *id_info, unsigned int hccs_
     *result = true;
 }
 
-STATIC void topo_module_check_hccs(
-    struct topo_id_info *id_info1, struct topo_id_info *id_info2, unsigned int hccs_link_status, bool *result)
+STATIC void topo_module_check_hccs(struct topo_id_info *id_info1, struct topo_id_info *id_info2,
+                                   unsigned int hccs_link_status, bool *result)
 {
     if (((id_info1->host_devid < SOC_MODULE_DEVICE_NUM) && (id_info2->host_devid < SOC_MODULE_DEVICE_NUM)) ||
         ((id_info1->host_devid >= SOC_MODULE_DEVICE_NUM) && (id_info2->host_devid >= SOC_MODULE_DEVICE_NUM))) {
@@ -247,9 +246,8 @@ STATIC int topo_check_hccs(unsigned int dev_id1, unsigned int dev_id2, bool *res
     int ret;
 
     if (dev_id1 >= SOC_HCCS_GROUP_SUPPORT_MAX_CHIPNUM || dev_id2 >= SOC_HCCS_GROUP_SUPPORT_MAX_CHIPNUM) {
-        soc_err(
-            "Invalid parameter. (dev_id1=%u; dev_id2=%u; max_dev_id=%u)\n", dev_id1, dev_id2,
-            SOC_HCCS_GROUP_SUPPORT_MAX_CHIPNUM - 1);
+        soc_err("Invalid parameter. (dev_id1=%u; dev_id2=%u; max_dev_id=%u)\n", dev_id1, dev_id2,
+                SOC_HCCS_GROUP_SUPPORT_MAX_CHIPNUM - 1);
         return -EINVAL;
     }
 
@@ -284,9 +282,8 @@ STATIC int topo_check_hccs(unsigned int dev_id1, unsigned int dev_id2, bool *res
 
     ret = topo_check_in_the_same_os(dev_id1, dev_id2, result);
     if (ret != 0) {
-        soc_err(
-            "Failed to check whether they are in the same OS. (dev_id1=%u; dev_id2=%u; ret=%d)\n", dev_id1, dev_id2,
-            ret);
+        soc_err("Failed to check whether they are in the same OS. (dev_id1=%u; dev_id2=%u; ret=%d)\n", dev_id1, dev_id2,
+                ret);
         return ret;
     }
 
@@ -336,8 +333,8 @@ STATIC int topo_check_ub_for_pcie_card(u32 dev_id1, u32 host_dev_id1, u32 host_d
 #endif
 
     if (info.group_dev_num == 0 || info.group_dev_num > DEV_NUM_IN_GROUP) {
-        soc_err("The number of devices in group is invalid. (dev_id=%u; group_dev_num=%u)\n",
-            dev_id1, info.group_dev_num);
+        soc_err("The number of devices in group is invalid. (dev_id=%u; group_dev_num=%u)\n", dev_id1,
+                info.group_dev_num);
         return -EINVAL;
     }
 
@@ -424,9 +421,8 @@ int soc_get_dev_topology(unsigned int dev_id1, unsigned int dev_id2, int *topolo
     int ret, i;
 
     if ((dev_id1 >= ASCEND_PDEV_MAX_NUM) || (dev_id2 >= ASCEND_HOST_PDEV_MAX_NUM) || (topology_type == NULL)) {
-        soc_err(
-            "Invalid parameter. (dev_id1=%u; dev_id2=%u; topology_type=%d)\n", dev_id1, dev_id2,
-            (topology_type != NULL));
+        soc_err("Invalid parameter. (dev_id1=%u; dev_id2=%u; topology_type=%d)\n", dev_id1, dev_id2,
+                (topology_type != NULL));
         return -EINVAL;
     }
 
@@ -452,8 +448,8 @@ int soc_get_dev_topology(unsigned int dev_id1, unsigned int dev_id2, int *topolo
         return ret;
     }
 #endif
-    soc_debug(
-        "Get topology type success. (dev_id1=%u; dev_id2=%u; topology_type=%d)\n", dev_id1, dev_id2, *topology_type);
+    soc_debug("Get topology type success. (dev_id1=%u; dev_id2=%u; topology_type=%d)\n", dev_id1, dev_id2,
+              *topology_type);
     return 0;
 }
 KA_EXPORT_SYMBOL_GPL(soc_get_dev_topology);

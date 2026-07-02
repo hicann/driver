@@ -25,4 +25,3 @@ void ka_mem_alloc_stat_add(unsigned int module_id, size_t size, unsigned long va
 void ka_mem_alloc_stat_del(unsigned long va, unsigned int module_id);
 
 #endif
-

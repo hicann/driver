@@ -11,16 +11,16 @@
 #define BUFF_PKG_H
 
 typedef struct {
-    unsigned int admin : 1;     /* admin permission, can add other proc to grp */
-    unsigned int read : 1;     /* rsv, not support */
-    unsigned int write : 1;    /* read and write permission */
-    unsigned int alloc : 1;    /* alloc permission (have read and write permission) */
+    unsigned int admin : 1; /* admin permission, can add other proc to grp */
+    unsigned int read : 1;  /* rsv, not support */
+    unsigned int write : 1; /* read and write permission */
+    unsigned int alloc : 1; /* alloc permission (have read and write permission) */
     unsigned int rsv : 28;
-}GroupShareAttr;
+} GroupShareAttr;
 
 typedef struct {
     unsigned long long addr; /* cache memory addr */
     unsigned long long size; /* cache memory size */
-} GrpQueryGroupAddrInfo; /* cmd: GRP_QUERY_GROUP_ADDR_INFO */
+} GrpQueryGroupAddrInfo;     /* cmd: GRP_QUERY_GROUP_ADDR_INFO */
 
 #endif

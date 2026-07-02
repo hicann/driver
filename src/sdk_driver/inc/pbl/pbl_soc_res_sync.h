@@ -22,7 +22,6 @@ struct res_sync_irq {
     u32 num;
 };
 
-
 /* res type is addr, need encode and decode func
    pcie connect:
         device: encode addr is device address, output encode_addr is 'bar << 32 + rxatu base addr'
@@ -42,7 +41,7 @@ int soc_res_extract(u32 udevid, struct res_sync_target *target, char *buf, u32 *
 int soc_res_inject(u32 udevid, struct res_sync_target *target, char *buf, u32 buf_len, soc_res_addr_decode func);
 
 static inline int _soc_res_sync_type(u32 udevid, struct res_sync_target *target, char *buf, u32 buf_len,
-    int (*sync)(u32 udevid, struct res_sync_target *target, char *buf, u32 buf_len))
+                                     int (*sync)(u32 udevid, struct res_sync_target *target, char *buf, u32 buf_len))
 {
     for (target->type = 0; target->type < SOC_RES_TYPE_MAX; target->type++) {
         int ret = sync(udevid, target, buf, buf_len);
@@ -55,7 +54,7 @@ static inline int _soc_res_sync_type(u32 udevid, struct res_sync_target *target,
 }
 
 static inline int _soc_res_sync_scope(u32 udevid, struct res_sync_target *target, char *buf, u32 buf_len,
-    int (*sync)(u32 udevid, struct res_sync_target *target, char *buf, u32 buf_len))
+                                      int (*sync)(u32 udevid, struct res_sync_target *target, char *buf, u32 buf_len))
 {
     u32 sub_num = soc_res_sync_get_sub_num(udevid, target->scope);
     for (target->id = 0; target->id < sub_num; target->id++) {
@@ -69,7 +68,7 @@ static inline int _soc_res_sync_scope(u32 udevid, struct res_sync_target *target
 }
 
 static inline int _soc_res_sync(u32 udevid, struct res_sync_target *target, char *buf, u32 buf_len,
-    int (*sync)(u32 udevid, struct res_sync_target *target, char *buf, u32 buf_len))
+                                int (*sync)(u32 udevid, struct res_sync_target *target, char *buf, u32 buf_len))
 {
     for (target->scope = 0; target->scope < SOC_SCOPE_MAX; target->scope++) {
         int ret = _soc_res_sync_scope(udevid, target, buf, buf_len, sync);
@@ -83,7 +82,7 @@ static inline int _soc_res_sync(u32 udevid, struct res_sync_target *target, char
 
 #define RES_SYNC_BUF_LEN 1024
 static inline int soc_res_sync(u32 udevid, u32 dst_udevid, enum soc_res_sync_dir dir,
-    int (*sync)(u32 udevid, struct res_sync_target *target, char *buf, u32 buf_len))
+                               int (*sync)(u32 udevid, struct res_sync_target *target, char *buf, u32 buf_len))
 {
     int ret = -ENOMEM;
     char *buf = ka_mm_kzalloc(RES_SYNC_BUF_LEN, KA_GFP_KERNEL);
@@ -99,7 +98,7 @@ static inline int soc_res_sync(u32 udevid, u32 dst_udevid, enum soc_res_sync_dir
 }
 
 static inline int soc_res_sync_d2h(u32 udevid,
-    int (*sync)(u32 udevid, struct res_sync_target *target, char *buf, u32 buf_len))
+                                   int (*sync)(u32 udevid, struct res_sync_target *target, char *buf, u32 buf_len))
 {
     return soc_res_sync(udevid, udevid, SOC_DIR_D2H, sync);
 }

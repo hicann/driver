@@ -69,7 +69,7 @@ static void _ascend_urma_ctx_release(struct ascend_urma_ctx *ctx)
 {
     (void)urma_delete_context(ctx->urma_ctx);
     free(ctx);
-} 
+}
 
 static void ascend_urma_ctx_release(struct uref *uref)
 {
@@ -134,4 +134,3 @@ void ascend_urma_ctxs_release(void)
     }
     (void)pthread_rwlock_unlock(&g_rwlock);
 }
-

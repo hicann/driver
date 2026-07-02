@@ -13,17 +13,17 @@
 #ifndef KA_BARRIER_PUB_H
 #define KA_BARRIER_PUB_H
 
-#define ka_barrier()    barrier()
-#define ka_mb()         mb()
-#define ka_rmb()        rmb()
-#define ka_wmb()        wmb()
+#define ka_barrier() barrier()
+#define ka_mb() mb()
+#define ka_rmb() rmb()
+#define ka_wmb() wmb()
 
-#define ka_dma_mb()     dma_mb()
-#define ka_dma_rmb()    dma_rmb()
-#define ka_dma_wmb()    dma_wmb()
+#define ka_dma_mb() dma_mb()
+#define ka_dma_rmb() dma_rmb()
+#define ka_dma_wmb() dma_wmb()
 
-#define ka_smp_mb()     smp_mb()
-#define ka_smp_wmb()    smp_wmb()
+#define ka_smp_mb() smp_mb()
+#define ka_smp_wmb() smp_wmb()
 
 #define ka_isb() isb()
 

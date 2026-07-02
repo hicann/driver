@@ -51,4 +51,7 @@ void soc_proc_fs_init(void)
     }
 }
 
-void soc_proc_fs_uninit(void) { (void)ka_fs_remove_proc_subtree("soc_res", NULL); }
+void soc_proc_fs_uninit(void)
+{
+    (void)ka_fs_remove_proc_subtree("soc_res", NULL);
+}

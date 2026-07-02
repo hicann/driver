@@ -74,8 +74,7 @@ static void rb_range_handle_of_ascend_urma_seg(struct rbtree_node *node, struct 
     range_handle->end = seg->start + seg->size - 1;
 }
 
-static urma_target_seg_t *_ascend_urma_register_segment(void *urma_ctx,
-    u64 start, u64 size, u32 seg_flag, void *token)
+static urma_target_seg_t *_ascend_urma_register_segment(void *urma_ctx, u64 start, u64 size, u32 seg_flag, void *token)
 {
     urma_target_seg_t *tseg = NULL;
     urma_seg_cfg_t seg_cfg = {0};
@@ -85,8 +84,8 @@ static urma_target_seg_t *_ascend_urma_register_segment(void *urma_ctx,
     seg_cfg.token_id = ascend_urma_token_to_id(token);
     seg_cfg.token_value = ascend_urma_token_to_val(token);
 
-    seg_cfg.flag.bs.token_policy = ascend_urma_seg_flag_is_without_token_val(seg_flag) ?
-        URMA_TOKEN_NONE : URMA_TOKEN_PLAIN_TEXT;
+    seg_cfg.flag.bs.token_policy = ascend_urma_seg_flag_is_without_token_val(seg_flag) ? URMA_TOKEN_NONE :
+                                                                                         URMA_TOKEN_PLAIN_TEXT;
     seg_cfg.flag.bs.cacheable = URMA_CACHEABLE;
     seg_cfg.flag.bs.dsva = 0;
 
@@ -130,8 +129,7 @@ static void ascend_urma_unregister_segment(urma_target_seg_t *tseg)
     (void)urma_unregister_seg(tseg);
 }
 
-static struct ascend_urma_seg *ascend_urma_seg_alloc(u32 devid, u64 start, u64 size, u32 seg_flag,
-    void *token)
+static struct ascend_urma_seg *ascend_urma_seg_alloc(u32 devid, u64 start, u64 size, u32 seg_flag, void *token)
 {
     struct ascend_urma_seg *seg = NULL;
     urma_target_seg_t *tseg = NULL;
@@ -198,8 +196,7 @@ static bool ascend_urma_exist_registered_seg_in_range(struct ascend_urma_seg_mng
     return (rbtree_can_insert_range(&seg_mng->rb_root, &range_handle, rb_range_handle_of_ascend_urma_seg) == false);
 }
 
-static int ascend_urma_seg_register(struct ascend_urma_seg_mng *seg_mng,
-    u64 start, u64 size, u32 seg_flag)
+static int ascend_urma_seg_register(struct ascend_urma_seg_mng *seg_mng, u64 start, u64 size, u32 seg_flag)
 {
     struct ascend_urma_seg *seg = NULL, *tmp_seg = NULL;
     void *token = NULL;
@@ -213,7 +210,7 @@ static int ascend_urma_seg_register(struct ascend_urma_seg_mng *seg_mng,
     if (tmp_seg != NULL) {
         if ((tmp_seg->start != start) || (tmp_seg->size != size)) {
             ascend_urma_debug("Urma seg info is overlap. (start=0x%llx; size=%llu; seg_start=0x%llx; seg_size=%llu)\n",
-                start, size, tmp_seg->start, tmp_seg->size);
+                              start, size, tmp_seg->start, tmp_seg->size);
             return DRV_ERROR_BUSY;
         }
         atomic_fetch_add(&tmp_seg->ref, 1);
@@ -221,7 +218,8 @@ static int ascend_urma_seg_register(struct ascend_urma_seg_mng *seg_mng,
     }
 
     token_flag |= ascend_urma_exist_registered_seg_in_range(seg_mng, aligned_va, aligned_size) ?
-        ASCEND_URMA_TOKEN_FLAG_UNIQUE : 0;
+                      ASCEND_URMA_TOKEN_FLAG_UNIQUE :
+                      0;
 
     token = ascend_urma_token_acquire(seg_mng->token_pool, token_flag);
     if (token == NULL) {
@@ -231,16 +229,16 @@ static int ascend_urma_seg_register(struct ascend_urma_seg_mng *seg_mng,
 
     seg = ascend_urma_seg_alloc(devid, start, size, seg_flag, token);
     if (seg == NULL) {
-        ascend_urma_err("Alloc seg failed. (devid=%u; start=0x%llx; size=%llu; flag=0x%x)\n",
-            devid, start, size, seg_flag);
+        ascend_urma_err("Alloc seg failed. (devid=%u; start=0x%llx; size=%llu; flag=0x%x)\n", devid, start, size,
+                        seg_flag);
         ascend_urma_token_release(token);
         return DRV_ERROR_PARA_ERROR;
     }
 
     ret = ascend_urma_seg_insert(seg_mng, seg);
     if (ret != DRV_ERROR_NONE) {
-        ascend_urma_debug("Insert seg check. (devid=%u; start=0x%llx; size=%llu; flag=0x%x)\n",
-            devid, start, size, seg_flag);
+        ascend_urma_debug("Insert seg check. (devid=%u; start=0x%llx; size=%llu; flag=0x%x)\n", devid, start, size,
+                          seg_flag);
         ascend_urma_seg_free(seg);
         ascend_urma_token_release(token);
         return ret;
@@ -269,8 +267,8 @@ static int ascend_urma_seg_unregister(struct ascend_urma_seg_mng *seg_mng, u64 s
         return DRV_ERROR_INVALID_VALUE;
     }
     if ((start != seg->start) || (size != seg->size)) {
-        ascend_urma_err("Addr not match. (start=0x%llx; size=0x%llx; seg.start=0x%llx; seg.size=0x%llx)\n",
-            start, size, seg->start, seg->size);
+        ascend_urma_err("Addr not match. (start=0x%llx; size=0x%llx; seg.start=0x%llx; seg.size=0x%llx)\n", start, size,
+                        seg->start, seg->size);
         return DRV_ERROR_INVALID_VALUE;
     }
 
@@ -320,7 +318,8 @@ static void ascend_urma_seg_mng_uninit(struct ascend_urma_seg_mng *seg_mng)
     struct rbtree_node *n = NULL;
 
     (void)pthread_rwlock_wrlock(&seg_mng->rwlock);
-    rbtree_node_for_each_prev_safe(cur, n, &seg_mng->rb_root) {
+    rbtree_node_for_each_prev_safe(cur, n, &seg_mng->rb_root)
+    {
         seg = rb_entry(cur, struct ascend_urma_seg, node);
         _ascend_urma_seg_unregister(seg_mng, seg);
     }
@@ -328,7 +327,7 @@ static void ascend_urma_seg_mng_uninit(struct ascend_urma_seg_mng *seg_mng)
 }
 
 static struct ascend_urma_seg_mng *_ascend_urma_seg_mng_create(u32 devid, void *token_pool,
-    struct ascend_urma_seg_mng_attr *attr)
+                                                               struct ascend_urma_seg_mng_attr *attr)
 {
     struct ascend_urma_seg_mng *seg_mng = NULL;
 
@@ -350,8 +349,8 @@ static void _ascend_urma_seg_mng_destroy(struct ascend_urma_seg_mng *seg_mng)
     free(seg_mng);
 }
 
-static void ascend_urma_seg_mng_to_token_pool_attr(
-    struct ascend_urma_seg_mng_attr *seg_mng_attr, struct ascend_urma_token_pool_attr *token_pool_attr)
+static void ascend_urma_seg_mng_to_token_pool_attr(struct ascend_urma_seg_mng_attr *seg_mng_attr,
+                                                   struct ascend_urma_token_pool_attr *token_pool_attr)
 {
     token_pool_attr->token_num_default = seg_mng_attr->token_num_default;
     token_pool_attr->token_num_cache_up_thres = seg_mng_attr->token_num_cache_up_thres;

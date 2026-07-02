@@ -177,10 +177,10 @@ EXPORT_SYMBOL_GPL(ka_system_timer_setup_extra);
 ka_kernel_cap_t ka_system_get_privileged_kernel_cap(void)
 {
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 3, 0)
-    kernel_cap_t privileged =
-        (kernel_cap_t) {((uint64_t)(CAP_TO_MASK(CAP_AUDIT_READ + 1) -1) << 32) | (((uint64_t)~0) >> 32)};
+    kernel_cap_t privileged = (kernel_cap_t){((uint64_t)(CAP_TO_MASK(CAP_AUDIT_READ + 1) - 1) << 32) |
+                                             (((uint64_t)~0) >> 32)};
 #elif LINUX_VERSION_CODE >= KERNEL_VERSION(3, 16, 0)
-    kernel_cap_t privileged = (kernel_cap_t){{ ~0, (CAP_TO_MASK(CAP_AUDIT_READ + 1) -1)}};
+    kernel_cap_t privileged = (kernel_cap_t){{~0, (CAP_TO_MASK(CAP_AUDIT_READ + 1) - 1)}};
 #else
     kernel_cap_t privileged = CAP_FULL_SET;
 #endif
@@ -202,7 +202,8 @@ bool ka_system_kernel_cap_compare(ka_kernel_cap_t cap1, ka_kernel_cap_t cap2)
     }
 #else
     unsigned int i;
-    CAP_FOR_EACH_U32(i) {
+    CAP_FOR_EACH_U32(i)
+    {
         if ((cap1.cap[i] & cap2.cap[i]) != cap2.cap[i]) {
             return false;
         }
@@ -315,11 +316,10 @@ bool ka_system_log_limited(u32 type)
 
 EXPORT_SYMBOL_GPL(ka_system_log_limited);
 
-
 int ka_system_xsm_proc_start_time_compare(TASK_TIME_TYPE *proc_start_time, TASK_TIME_TYPE *start_time)
 {
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 1, 0)	
-    if (*proc_start_time == *start_time)  {
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 1, 0)
+    if (*proc_start_time == *start_time) {
         return 0;
     }
     return (*proc_start_time - *start_time > 0) ? 1 : -1;
@@ -331,9 +331,9 @@ EXPORT_SYMBOL_GPL(ka_system_xsm_proc_start_time_compare);
 
 #ifdef DRV_HOST
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 6, 0)
-#define ka_system_rtc_ktime_to_tm(kt)    rtc_ktime_to_tm(kt)
+#define ka_system_rtc_ktime_to_tm(kt) rtc_ktime_to_tm(kt)
 #else
-#define ka_system_rtc_time_to_tm(time, tm)   rtc_time_to_tm(time, tm)
+#define ka_system_rtc_time_to_tm(time, tm) rtc_time_to_tm(time, tm)
 #endif
 void ka_system_rtc_time_convert(ka_rtc_time_t *tm, ka_timespec64_t sys_time)
 {
@@ -364,7 +364,7 @@ u64 ka_system_get_real_ustime()
 }
 EXPORT_SYMBOL_GPL(ka_system_get_real_ustime);
 
-void ka_system_jiffies_to_timespec64(const unsigned long jiffies , struct timespec64 *value)
+void ka_system_jiffies_to_timespec64(const unsigned long jiffies, struct timespec64 *value)
 {
 #if LINUX_VERSION_CODE < KERNEL_VERSION(5, 6, 0)
     ka_timespec_t tmp_current_time;

@@ -25,9 +25,9 @@
 #define __KA_LITTLE_ENDIAN __LITTLE_ENDIAN
 #endif
 
-#define ka_likely(x)    likely(x)
-#define ka_unlikely(x)  unlikely(x)
-#define KA_READ_ONCE(x)       READ_ONCE(x)
+#define ka_likely(x) likely(x)
+#define ka_unlikely(x) unlikely(x)
+#define KA_READ_ONCE(x) READ_ONCE(x)
 #define KA_WRITE_ONCE(x, val) WRITE_ONCE(x, val)
 
 #endif

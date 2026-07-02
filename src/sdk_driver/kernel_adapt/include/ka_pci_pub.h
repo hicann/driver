@@ -24,14 +24,14 @@
 #include "ka_common_pub.h"
 #include "ka_task_pub.h"
 
-#define ka_pci_power_t      pci_power_t
-#define KA_PCI_D0            PCI_D0
-#define KA_PCI_D1            PCI_D1
-#define KA_PCI_D2            PCI_D2
-#define KA_PCI_D3hot         PCI_D3hot
-#define KA_PCI_D3cold        PCI_D3cold
-#define KA_PCI_UNKNOWN       PCI_UNKNOWN
-#define KA_PCI_POWER_ERROR   PCI_POWER_ERROR
+#define ka_pci_power_t pci_power_t
+#define KA_PCI_D0 PCI_D0
+#define KA_PCI_D1 PCI_D1
+#define KA_PCI_D2 PCI_D2
+#define KA_PCI_D3hot PCI_D3hot
+#define KA_PCI_D3cold PCI_D3cold
+#define KA_PCI_UNKNOWN PCI_UNKNOWN
+#define KA_PCI_POWER_ERROR PCI_POWER_ERROR
 #define KA_PCI_SET_RUNTIME_PM_OPS SET_RUNTIME_PM_OPS
 #define KA_PCI_SET_SYSTEM_SLEEP_PM_OPS SET_SYSTEM_SLEEP_PM_OPS
 
@@ -49,101 +49,101 @@ typedef struct dev_pm_ops ka_dev_pm_ops_t;
 #define KA_IOMMU_DOMAIN_IDENTITY IOMMU_DOMAIN_IDENTITY
 #define ka_pci_domain_nr pci_domain_nr
 #define KA_PCI_DEVFN PCI_DEVFN
-#define KA_PCI_ERS_RESULT_CAN_RECOVER   PCI_ERS_RESULT_CAN_RECOVER
-#define KA_PCI_ERS_RESULT_NEED_RESET    PCI_ERS_RESULT_NEED_RESET
-#define KA_PCI_ERS_RESULT_RECOVERED     PCI_ERS_RESULT_RECOVERED
-#define KA_PCI_ERS_RESULT_DISCONNECT    PCI_ERS_RESULT_DISCONNECT
-#define KA_PCI_EXP_LNKSTA_CLS           PCI_EXP_LNKSTA_CLS
-#define KA_PCI_EXP_LNKSTA_NLW           PCI_EXP_LNKSTA_NLW
-#define KA_PCI_EXP_LNKSTA_NLW_SHIFT     PCI_EXP_LNKSTA_NLW_SHIFT
-#define KA_PCI_CAP_ID_EXP               PCI_CAP_ID_EXP
-#define KA_PCI_EXP_LNKSTA               PCI_EXP_LNKSTA
-#define KA_PCI_EXP_LNKCTL               PCI_EXP_LNKCTL
-#define KA_PCI_EXP_LNKCTL_LD            PCI_EXP_LNKCTL_LD
-#define KA_PCI_CAP_ID_VNDR              PCI_CAP_ID_VNDR
-#define KA_PCI_EXP_LNKSTA_DLLLA         PCI_EXP_LNKSTA_DLLLA
-#define KA_PCI_BASE_ADDRESS_0           PCI_BASE_ADDRESS_0
-#define KA_PCI_BASE_ADDRESS_1           PCI_BASE_ADDRESS_1
-#define KA_PCI_BASE_ADDRESS_2           PCI_BASE_ADDRESS_2
-#define KA_PCI_BASE_ADDRESS_3           PCI_BASE_ADDRESS_3
-#define KA_PCI_BASE_ADDRESS_4           PCI_BASE_ADDRESS_4
-#define KA_PCI_BASE_ADDRESS_5           PCI_BASE_ADDRESS_5
-#define KA_PCI_BASE_ADDRESS_MEM_MASK    PCI_BASE_ADDRESS_MEM_MASK
-#define KA_PCI_CACHE_LINE_SIZE          PCI_CACHE_LINE_SIZE
-#define KA_PCI_CAPABILITY_LIST          PCI_CAPABILITY_LIST
-#define KA_PCI_CAP_ID_MSIX              PCI_CAP_ID_MSIX
-#define KA_PCI_CAP_ID_PM                PCI_CAP_ID_PM
-#define KA_PCI_CARDBUS_CIS              PCI_CARDBUS_CIS
-#define KA_PCI_CFG_SPACE_EXP_SIZE       PCI_CFG_SPACE_EXP_SIZE
-#define KA_PCI_COMMAND                  PCI_COMMAND
-#define KA_PCI_COMMAND_INTX_DISABLE     PCI_COMMAND_INTX_DISABLE
-#define KA_PCI_VENDOR_ID                PCI_VENDOR_ID
-#define KA_PCI_EXP_DEVCAP_FLR           PCI_EXP_DEVCAP_FLR
-#define KA_PCI_EXP_DEVCTL_BCR_FLR       PCI_EXP_DEVCTL_BCR_FLR
-#define KA_PCI_INTERRUPT_LINE           PCI_INTERRUPT_LINE
-#define KA_PCI_INTERRUPT_PIN            PCI_INTERRUPT_PIN
-#define KA_PCI_MSIX_FLAGS_ENABLE        PCI_MSIX_FLAGS_ENABLE
-#define KA_PCI_MSIX_FLAGS_MASKALL       PCI_MSIX_FLAGS_MASKALL
-#define KA_PCI_MSIX_FLAGS_QSIZE         PCI_MSIX_FLAGS_QSIZE
-#define KA_PCI_REVISION_ID              PCI_REVISION_ID
-#define KA_PCI_STATUS                   PCI_STATUS
-#define KA_PCI_SUBSYSTEM_ID             PCI_SUBSYSTEM_ID
-#define KA_PCI_SUBSYSTEM_VENDOR_ID      PCI_SUBSYSTEM_VENDOR_ID
-#define KA_PCI_ANY_ID                   PCI_ANY_ID
-#define KA_PCI_DEVICE_ID                PCI_DEVICE_ID
+#define KA_PCI_ERS_RESULT_CAN_RECOVER PCI_ERS_RESULT_CAN_RECOVER
+#define KA_PCI_ERS_RESULT_NEED_RESET PCI_ERS_RESULT_NEED_RESET
+#define KA_PCI_ERS_RESULT_RECOVERED PCI_ERS_RESULT_RECOVERED
+#define KA_PCI_ERS_RESULT_DISCONNECT PCI_ERS_RESULT_DISCONNECT
+#define KA_PCI_EXP_LNKSTA_CLS PCI_EXP_LNKSTA_CLS
+#define KA_PCI_EXP_LNKSTA_NLW PCI_EXP_LNKSTA_NLW
+#define KA_PCI_EXP_LNKSTA_NLW_SHIFT PCI_EXP_LNKSTA_NLW_SHIFT
+#define KA_PCI_CAP_ID_EXP PCI_CAP_ID_EXP
+#define KA_PCI_EXP_LNKSTA PCI_EXP_LNKSTA
+#define KA_PCI_EXP_LNKCTL PCI_EXP_LNKCTL
+#define KA_PCI_EXP_LNKCTL_LD PCI_EXP_LNKCTL_LD
+#define KA_PCI_CAP_ID_VNDR PCI_CAP_ID_VNDR
+#define KA_PCI_EXP_LNKSTA_DLLLA PCI_EXP_LNKSTA_DLLLA
+#define KA_PCI_BASE_ADDRESS_0 PCI_BASE_ADDRESS_0
+#define KA_PCI_BASE_ADDRESS_1 PCI_BASE_ADDRESS_1
+#define KA_PCI_BASE_ADDRESS_2 PCI_BASE_ADDRESS_2
+#define KA_PCI_BASE_ADDRESS_3 PCI_BASE_ADDRESS_3
+#define KA_PCI_BASE_ADDRESS_4 PCI_BASE_ADDRESS_4
+#define KA_PCI_BASE_ADDRESS_5 PCI_BASE_ADDRESS_5
+#define KA_PCI_BASE_ADDRESS_MEM_MASK PCI_BASE_ADDRESS_MEM_MASK
+#define KA_PCI_CACHE_LINE_SIZE PCI_CACHE_LINE_SIZE
+#define KA_PCI_CAPABILITY_LIST PCI_CAPABILITY_LIST
+#define KA_PCI_CAP_ID_MSIX PCI_CAP_ID_MSIX
+#define KA_PCI_CAP_ID_PM PCI_CAP_ID_PM
+#define KA_PCI_CARDBUS_CIS PCI_CARDBUS_CIS
+#define KA_PCI_CFG_SPACE_EXP_SIZE PCI_CFG_SPACE_EXP_SIZE
+#define KA_PCI_COMMAND PCI_COMMAND
+#define KA_PCI_COMMAND_INTX_DISABLE PCI_COMMAND_INTX_DISABLE
+#define KA_PCI_VENDOR_ID PCI_VENDOR_ID
+#define KA_PCI_EXP_DEVCAP_FLR PCI_EXP_DEVCAP_FLR
+#define KA_PCI_EXP_DEVCTL_BCR_FLR PCI_EXP_DEVCTL_BCR_FLR
+#define KA_PCI_INTERRUPT_LINE PCI_INTERRUPT_LINE
+#define KA_PCI_INTERRUPT_PIN PCI_INTERRUPT_PIN
+#define KA_PCI_MSIX_FLAGS_ENABLE PCI_MSIX_FLAGS_ENABLE
+#define KA_PCI_MSIX_FLAGS_MASKALL PCI_MSIX_FLAGS_MASKALL
+#define KA_PCI_MSIX_FLAGS_QSIZE PCI_MSIX_FLAGS_QSIZE
+#define KA_PCI_REVISION_ID PCI_REVISION_ID
+#define KA_PCI_STATUS PCI_STATUS
+#define KA_PCI_SUBSYSTEM_ID PCI_SUBSYSTEM_ID
+#define KA_PCI_SUBSYSTEM_VENDOR_ID PCI_SUBSYSTEM_VENDOR_ID
+#define KA_PCI_ANY_ID PCI_ANY_ID
+#define KA_PCI_DEVICE_ID PCI_DEVICE_ID
 
-#define ka_pci_channel_io_normal        pci_channel_io_normal
-#define ka_pci_channel_io_frozen        pci_channel_io_frozen
-#define ka_pci_channel_io_perm_failure  pci_channel_io_perm_failure
-#define ka_pci_channel_state_t          pci_channel_state_t
-#define ka_pci_ers_result_t             pci_ers_result_t
+#define ka_pci_channel_io_normal pci_channel_io_normal
+#define ka_pci_channel_io_frozen pci_channel_io_frozen
+#define ka_pci_channel_io_perm_failure pci_channel_io_perm_failure
+#define ka_pci_channel_state_t pci_channel_state_t
+#define ka_pci_ers_result_t pci_ers_result_t
 
-#define ka_pci_disable_msi(dev)    pci_disable_msi(dev)
-#define ka_pci_disable_msix(dev)    pci_disable_msix(dev)
-#define ka_pci_get_domain_bus_and_slot(domain, bus, devfn)    pci_get_domain_bus_and_slot(domain, bus, devfn)
-#define ka_pci_get_device(vendor, device, from)    pci_get_device(vendor, device, from)
-#define ka_pci_find_capability(dev, cap)    pci_find_capability(dev, cap)
-#define ka_pci_bus_find_capability(bus, devfn, cap)    pci_bus_find_capability(bus, devfn, cap)
-#define ka_pci_set_power_state(dev, state)    pci_set_power_state(dev, state)
-#define ka_pci_save_state(dev)    pci_save_state(dev)
-#define ka_pci_restore_state(dev)    pci_restore_state(dev)
-#define ka_pci_enable_device_io(dev)    pci_enable_device_io(dev)
-#define ka_pci_enable_device_mem(dev)    pci_enable_device_mem(dev)
-#define ka_pci_enable_device(dev)    pci_enable_device(dev)
-#define ka_pci_disable_device(dev)    pci_disable_device(dev)
-#define ka_pci_request_region(pdev, bar, res_name)    pci_request_region(pdev, bar, res_name)
-#define ka_pci_request_selected_regions(pdev, bars, res_name)    pci_request_selected_regions(pdev, bars, res_name)
-#define ka_pci_release_selected_regions(pdev, bars)    pci_release_selected_regions(pdev, bars)
-#define ka_pci_request_selected_regions_exclusive(pdev, bars, res_name)   \
-            pci_request_selected_regions_exclusive(pdev, bars, res_name)
-#define ka_pci_release_regions(pdev)    pci_release_regions(pdev)
-#define ka_pci_request_regions(pdev, res_name)    pci_request_regions(pdev, res_name)
-#define ka_pci_request_regions_exclusive(pdev, res_name)    pci_request_regions_exclusive(pdev, res_name)
-#define ka_pci_set_master(dev)    pci_set_master(dev)
-#define ka_pci_clear_master(dev)    pci_clear_master(dev)
-#define ka_pci_select_bars(dev, flags)    pci_select_bars(dev, flags)
-#define ka_pci_match_id(ids, dev)    pci_match_id(ids, dev)
-#define ka_pci_register_driver(drv)    pci_register_driver(drv)
-#define ka_pci_unregister_driver(drv)    pci_unregister_driver(drv)
-#define ka_pci_dev_put(dev)    pci_dev_put(dev)
-#define ka_pci_bus_read_config_word(bus, devfn, where, val)    pci_bus_read_config_word(bus, devfn, where, val)
-#define ka_pci_bus_read_config_dword(bus, devfn, where, val)    pci_bus_read_config_dword(bus, devfn, where, val)
-#define ka_pci_read_config_byte(dev, where, val)    pci_read_config_byte(dev, where, val)
-#define ka_pci_read_config_word(dev, where, val)    pci_read_config_word(dev, where, val)
-#define ka_pci_read_config_dword(dev, where, val)    pci_read_config_dword(dev, where, val)
-#define ka_pci_write_config_word(dev, where, val)    pci_write_config_word(dev, where, val)
-#define ka_pci_write_config_dword(dev, where, val)    pci_write_config_dword(dev, where, val)
-#define ka_pci_set_drvdata(pdev, data)    pci_set_drvdata(pdev, data)
-#define ka_pci_get_drvdata(pdev)    pci_get_drvdata(pdev)
-#define ka_pci_sriov_get_totalvfs(pdev)    pci_sriov_get_totalvfs(pdev)
-#define ka_pci_to_pci_dev(dev)    to_pci_dev(dev)
-#define ka_pci_alloc_irq_vectors_affinity(dev, min_vecs, max_vecs, flags, affd)  \
-            pci_alloc_irq_vectors_affinity(dev, min_vecs, max_vecs, flags, affd)
-#define ka_pci_free_irq_vectors(dev)    pci_free_irq_vectors(dev)
-#define ka_pci_enable_msix_range(dev, entries, minvec, maxvec)    pci_enable_msix_range(dev, entries, minvec, maxvec)
-#define ka_pci_resource_flags(dev, bar)    pci_resource_flags(dev, bar)
-#define ka_pci_resource_len(dev,bar)    pci_resource_len(dev, bar)
-#define ka_pci_resource_start(dev, bar)    pci_resource_start(dev, bar)
+#define ka_pci_disable_msi(dev) pci_disable_msi(dev)
+#define ka_pci_disable_msix(dev) pci_disable_msix(dev)
+#define ka_pci_get_domain_bus_and_slot(domain, bus, devfn) pci_get_domain_bus_and_slot(domain, bus, devfn)
+#define ka_pci_get_device(vendor, device, from) pci_get_device(vendor, device, from)
+#define ka_pci_find_capability(dev, cap) pci_find_capability(dev, cap)
+#define ka_pci_bus_find_capability(bus, devfn, cap) pci_bus_find_capability(bus, devfn, cap)
+#define ka_pci_set_power_state(dev, state) pci_set_power_state(dev, state)
+#define ka_pci_save_state(dev) pci_save_state(dev)
+#define ka_pci_restore_state(dev) pci_restore_state(dev)
+#define ka_pci_enable_device_io(dev) pci_enable_device_io(dev)
+#define ka_pci_enable_device_mem(dev) pci_enable_device_mem(dev)
+#define ka_pci_enable_device(dev) pci_enable_device(dev)
+#define ka_pci_disable_device(dev) pci_disable_device(dev)
+#define ka_pci_request_region(pdev, bar, res_name) pci_request_region(pdev, bar, res_name)
+#define ka_pci_request_selected_regions(pdev, bars, res_name) pci_request_selected_regions(pdev, bars, res_name)
+#define ka_pci_release_selected_regions(pdev, bars) pci_release_selected_regions(pdev, bars)
+#define ka_pci_request_selected_regions_exclusive(pdev, bars, res_name) \
+    pci_request_selected_regions_exclusive(pdev, bars, res_name)
+#define ka_pci_release_regions(pdev) pci_release_regions(pdev)
+#define ka_pci_request_regions(pdev, res_name) pci_request_regions(pdev, res_name)
+#define ka_pci_request_regions_exclusive(pdev, res_name) pci_request_regions_exclusive(pdev, res_name)
+#define ka_pci_set_master(dev) pci_set_master(dev)
+#define ka_pci_clear_master(dev) pci_clear_master(dev)
+#define ka_pci_select_bars(dev, flags) pci_select_bars(dev, flags)
+#define ka_pci_match_id(ids, dev) pci_match_id(ids, dev)
+#define ka_pci_register_driver(drv) pci_register_driver(drv)
+#define ka_pci_unregister_driver(drv) pci_unregister_driver(drv)
+#define ka_pci_dev_put(dev) pci_dev_put(dev)
+#define ka_pci_bus_read_config_word(bus, devfn, where, val) pci_bus_read_config_word(bus, devfn, where, val)
+#define ka_pci_bus_read_config_dword(bus, devfn, where, val) pci_bus_read_config_dword(bus, devfn, where, val)
+#define ka_pci_read_config_byte(dev, where, val) pci_read_config_byte(dev, where, val)
+#define ka_pci_read_config_word(dev, where, val) pci_read_config_word(dev, where, val)
+#define ka_pci_read_config_dword(dev, where, val) pci_read_config_dword(dev, where, val)
+#define ka_pci_write_config_word(dev, where, val) pci_write_config_word(dev, where, val)
+#define ka_pci_write_config_dword(dev, where, val) pci_write_config_dword(dev, where, val)
+#define ka_pci_set_drvdata(pdev, data) pci_set_drvdata(pdev, data)
+#define ka_pci_get_drvdata(pdev) pci_get_drvdata(pdev)
+#define ka_pci_sriov_get_totalvfs(pdev) pci_sriov_get_totalvfs(pdev)
+#define ka_pci_to_pci_dev(dev) to_pci_dev(dev)
+#define ka_pci_alloc_irq_vectors_affinity(dev, min_vecs, max_vecs, flags, affd) \
+    pci_alloc_irq_vectors_affinity(dev, min_vecs, max_vecs, flags, affd)
+#define ka_pci_free_irq_vectors(dev) pci_free_irq_vectors(dev)
+#define ka_pci_enable_msix_range(dev, entries, minvec, maxvec) pci_enable_msix_range(dev, entries, minvec, maxvec)
+#define ka_pci_resource_flags(dev, bar) pci_resource_flags(dev, bar)
+#define ka_pci_resource_len(dev, bar) pci_resource_len(dev, bar)
+#define ka_pci_resource_start(dev, bar) pci_resource_start(dev, bar)
 #define ka_pci_pm_runtime_get_sync(dev) pm_runtime_get_sync(dev)
 #define ka_pci_pm_runtime_put(dev) pm_runtime_put(dev)
 #define ka_pci_reset_function(dev) pci_reset_function(dev)
@@ -157,12 +157,9 @@ typedef struct dev_pm_ops ka_dev_pm_ops_t;
 #define ka_pci_vfs_assigned(dev) pci_vfs_assigned(dev)
 #define ka_pci_upstream_bridge(pdev) pci_upstream_bridge(pdev)
 
-#define ka_pci_error_detected(pci_error_detected) \
-    .error_detected = pci_error_detected,
-#define ka_pci_slot_reset(pci_slot_reset) \
-    .slot_reset = pci_slot_reset,
-#define ka_pci_resume(pci_error_resume) \
-    .resume = pci_error_resume,
+#define ka_pci_error_detected(pci_error_detected) .error_detected = pci_error_detected,
+#define ka_pci_slot_reset(pci_slot_reset) .slot_reset = pci_slot_reset,
+#define ka_pci_resume(pci_error_resume) .resume = pci_error_resume,
 
 ka_bus_type_t *ka_pci_get_bus_type(void);
 unsigned char ka_pci_get_bus_number(ka_pci_dev_t *pdev);

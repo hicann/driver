@@ -97,7 +97,8 @@ static void ascend_urma_token_free(struct ascend_urma_token *token)
 
 static struct ascend_urma_token *_ascend_urma_get_first_token(struct ascend_urma_token_pool *pool)
 {
-    return ((drv_user_list_empty(&pool->head) == 1) ? NULL : container_of(pool->head.next, struct ascend_urma_token, node));
+    return ((drv_user_list_empty(&pool->head) == 1) ? NULL :
+                                                      container_of(pool->head.next, struct ascend_urma_token, node));
 }
 
 static void _ascend_urma_token_insert(struct ascend_urma_token_pool *pool, struct ascend_urma_token *token)
@@ -116,8 +117,7 @@ static void _ascend_urma_token_erase(struct ascend_urma_token_pool *pool, struct
     }
 }
 
-static struct ascend_urma_token_pool *ascend_urma_token_pool_alloc(u32 devid,
-    struct ascend_urma_token_pool_attr *attr)
+static struct ascend_urma_token_pool *ascend_urma_token_pool_alloc(u32 devid, struct ascend_urma_token_pool_attr *attr)
 {
     struct ascend_urma_token_pool *pool = NULL;
 
@@ -147,7 +147,8 @@ static void ascend_urma_token_pool_uninit(struct ascend_urma_token_pool *pool)
     struct ascend_urma_token *token = NULL;
     struct list_head *pos = NULL, *n = NULL;
 
-    list_for_each_safe(pos, n, &pool->head) {
+    list_for_each_safe(pos, n, &pool->head)
+    {
         token = container_of(pos, struct ascend_urma_token, node);
         _ascend_urma_token_erase(pool, token);
         ascend_urma_token_free(token);
@@ -227,7 +228,8 @@ static struct ascend_urma_token *ascend_urma_token_acquire_old(struct ascend_urm
         return pool->cur_token;
     }
 
-    list_for_each_safe(pos, n, &pool->head) {
+    list_for_each_safe(pos, n, &pool->head)
+    {
         token = container_of(pos, struct ascend_urma_token, node);
         if (token->acquired_num < pool->attr.max_acquired_num_per_token) {
             ascend_urma_token_acquired_num_inc(token);
@@ -326,4 +328,3 @@ urma_token_t ascend_urma_token_to_val(void *token)
     struct ascend_urma_token *ascend_urma_token = (struct ascend_urma_token *)token;
     return ascend_urma_token->token_val;
 }
-

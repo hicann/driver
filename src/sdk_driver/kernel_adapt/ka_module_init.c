@@ -29,7 +29,6 @@ STATIC int ka_module_init(void)
     return 0;
 }
 
-
 #if LINUX_VERSION_CODE > KERNEL_VERSION(4, 19, 25)
 STATIC void __exit ka_module_exit(void)
 #else

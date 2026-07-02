@@ -107,6 +107,7 @@
  * @member: the name of the ka_hlist_node within the struct
  * @key: the key of the objects to iterate over
  */
-#define ka_hash_for_each_possible_safe(name, obj, tmp, member, key) hash_for_each_possible_safe(name, obj, tmp, member, key)
+#define ka_hash_for_each_possible_safe(name, obj, tmp, member, key) \
+    hash_for_each_possible_safe(name, obj, tmp, member, key)
 
 #endif

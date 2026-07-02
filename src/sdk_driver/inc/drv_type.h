@@ -33,5 +33,5 @@ typedef unsigned char uint8_t;
 typedef signed char int8_t;
 typedef unsigned int uint32_t;
 
-typedef unsigned long size_t;//lint !e410 !e452
+typedef unsigned long size_t; // lint !e410 !e452
 #endif

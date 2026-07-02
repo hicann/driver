@@ -10,7 +10,7 @@
 #ifndef ESCHED_PKG_H
 #define ESCHED_PKG_H
 
-#define EVENT_MAX_GRP_NAME_LEN   16
+#define EVENT_MAX_GRP_NAME_LEN 16
 #define ESCHED_USR_CFG_DATA_MAX_LEN 32
 
 struct event_sync_msg {
@@ -56,7 +56,7 @@ struct esched_output_info {
 enum esched_table_op_type {
     ESCHED_TABLE_OP_SEND_EVENT, /* send a event */
     ESCHED_TABLE_OP_NEXT_TABLE, /* continue query next table */
-    ESCHED_TABLE_OP_DROP, /* drop */
+    ESCHED_TABLE_OP_DROP,       /* drop */
     ESCHED_TABLE_OP_MAX
 };
 

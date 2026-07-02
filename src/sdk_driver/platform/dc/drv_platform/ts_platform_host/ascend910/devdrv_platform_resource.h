@@ -58,29 +58,29 @@
 
 #define CONFIG_CLUSTER_PER_TOTEM ((FW_CPU_NUM + 1) / CONFIG_CORE_PER_CLUSTER)
 
-#define DEVDRV_MAILBOX_SEND_OFFLINE_IRQ     1
+#define DEVDRV_MAILBOX_SEND_OFFLINE_IRQ 1
 
 #ifndef CFG_SOC_PLATFORM_CLOUD_V2
 #define DEVDRV_LPI_INT_NUM 37
-#define DEVDRV_CQ_IRQ_NUM                   32
-#define DEVDRV_CQ_PER_IRQ                   16
+#define DEVDRV_CQ_IRQ_NUM 32
+#define DEVDRV_CQ_PER_IRQ 16
 #define DEVDRV_TS_MEMORY_SIZE (160 * 1024 * 1024)
 #else
 #define DEVDRV_LPI_INT_NUM 26
 
 #ifdef CFG_MANAGER_HOST_ENV
 #define DEVDRV_CQ_IRQ_NUM 16
-#define DEVDRV_CQ_PER_IRQ                   16
+#define DEVDRV_CQ_PER_IRQ 16
 #else
 #define DEVDRV_CQ_IRQ_NUM 1
-#define DEVDRV_CQ_PER_IRQ                   DEVDRV_MAX_CQ_NUM
+#define DEVDRV_CQ_PER_IRQ DEVDRV_MAX_CQ_NUM
 #endif
 
 #define DEVDRV_TS_MEMORY_SIZE (50 * 1024 * 1024)
 #endif
 
 #ifdef CFG_SOC_PLATFORM_CLOUD_V2
-#define DEVDRV_TOPIC_MB_IRQ_NUM             8
+#define DEVDRV_TOPIC_MB_IRQ_NUM 8
 #endif
 
 #define DEVDRV_TS_DOORBELL_SIZE (DEVDRV_TS_DOORBELL_NUM * DEVDRV_TS_DOORBELL_STRIDE)
@@ -103,7 +103,7 @@ enum devdrv_dts_addr_index {
     DEVDRV_DTS_MAX_RESOURCE_NODE = 12
 };
 
-#define DEVDRV_MAX_TS_CORE_NUM      4
+#define DEVDRV_MAX_TS_CORE_NUM 4
 
 struct devdrv_ts_pdata {
     u32 tsid;
@@ -196,7 +196,7 @@ struct devdrv_platform_data {
     };
     u32 ts_num; /* ts number for this platform */
     struct devdrv_ts_pdata ts_pdata[DEVDRV_MAX_TS_NUM];
-    u8 ai_core_num_level; /* 0 invalid */
+    u8 ai_core_num_level;  /* 0 invalid */
     u8 ai_core_freq_level; /* 0 invalid */
 };
 

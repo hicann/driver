@@ -329,18 +329,16 @@ static int inst_param_check(struct res_inst_info *inst)
         return -EINVAL;
     }
     if (inst->subid >= (u32)subtype_maxid_trans[inst->sub_type]) {
-        soc_err(
-            "Param is illegal. (devid=%u; subtype=%d; subid=%u; max=%d)\n", inst->devid, (int)inst->sub_type,
-            inst->subid, subtype_maxid_trans[inst->sub_type]);
+        soc_err("Param is illegal. (devid=%u; subtype=%d; subid=%u; max=%d)\n", inst->devid, (int)inst->sub_type,
+                inst->subid, subtype_maxid_trans[inst->sub_type]);
         return -EINVAL;
     }
 
     return 0;
 }
 
-static int soc_for_each_res_addr(
-    ka_list_head_t *reg_head, ka_list_head_t *rsv_mem_head, u32 type,
-    int (*func)(char *name, u64 addr, u64 len, void *priv), void *priv)
+static int soc_for_each_res_addr(ka_list_head_t *reg_head, ka_list_head_t *rsv_mem_head, u32 type,
+                                 int (*func)(char *name, u64 addr, u64 len, void *priv), void *priv)
 {
     int ret = 0;
 
@@ -369,8 +367,8 @@ static int soc_for_each_res_addr(
     return ret;
 }
 
-static int subsys_ts_for_each_res_addr(
-    struct soc_resmng_ts *ts_resmng, u32 type, int (*func)(char *name, u64 addr, u64 len, void *priv), void *priv)
+static int subsys_ts_for_each_res_addr(struct soc_resmng_ts *ts_resmng, u32 type,
+                                       int (*func)(char *name, u64 addr, u64 len, void *priv), void *priv)
 {
     int ret = 0;
 
@@ -381,8 +379,8 @@ static int subsys_ts_for_each_res_addr(
     return ret;
 }
 
-int soc_resmng_for_each_res_addr(
-    struct res_inst_info *inst, u32 type, int (*func)(char *name, u64 addr, u64 len, void *priv), void *priv)
+int soc_resmng_for_each_res_addr(struct res_inst_info *inst, u32 type,
+                                 int (*func)(char *name, u64 addr, u64 len, void *priv), void *priv)
 {
     struct soc_dev_resmng *resmng = NULL;
     int ret;
@@ -405,8 +403,8 @@ int soc_resmng_for_each_res_addr(
     return ret;
 }
 
-int soc_resmng_dev_for_each_res_addr(
-    u32 devid, u32 type, int (*func)(char *name, u64 addr, u64 len, void *priv), void *priv)
+int soc_resmng_dev_for_each_res_addr(u32 devid, u32 type, int (*func)(char *name, u64 addr, u64 len, void *priv),
+                                     void *priv)
 {
     struct soc_dev_resmng *resmng = NULL;
     int ret;
@@ -444,8 +442,8 @@ static int soc_for_each_key_value(ka_list_head_t *head, int (*func)(char *key, u
     return ret;
 }
 
-static int soc_for_each_attr_value(
-    ka_list_head_t *head, int (*func)(const char *name, void *attr, u32 size, void *priv), void *priv)
+static int soc_for_each_attr_value(ka_list_head_t *head,
+                                   int (*func)(const char *name, void *attr, u32 size, void *priv), void *priv)
 {
     struct soc_attr_data *attr_node = NULL;
     int ret = 0;
@@ -698,9 +696,8 @@ int soc_resmng_set_irq_num(struct res_inst_info *inst, u32 irq_type, u32 irq_num
     if (inst->sub_type == TS_SUBSYS) {
         ret = subsys_ts_set_irq_num(&resmng->ts_resmng[inst->subid], irq_type, irq_num);
         if (ret != 0) {
-            soc_err(
-                "Fail check. (devid=%u; tsid=%u; type=%u; num=%u; ret=%d)\n", inst->devid, inst->subid, irq_type,
-                irq_num, ret);
+            soc_err("Fail check. (devid=%u; tsid=%u; type=%u; num=%u; ret=%d)\n", inst->devid, inst->subid, irq_type,
+                    irq_num, ret);
             return ret;
         }
     }
@@ -759,9 +756,8 @@ int soc_resmng_set_irq_by_index(struct res_inst_info *inst, u32 irq_type, u32 in
     if (inst->sub_type == TS_SUBSYS) {
         ret = subsys_ts_set_irq_by_index(&resmng->ts_resmng[inst->subid], irq_type, index, irq);
         if (ret != 0) {
-            soc_err(
-                "Fail check. (devid=%u; tsid=%u; type=%u; index=%u; ret=%d)\n", resmng->devid, inst->subid, irq_type,
-                index, ret);
+            soc_err("Fail check. (devid=%u; tsid=%u; type=%u; index=%u; ret=%d)\n", resmng->devid, inst->subid,
+                    irq_type, index, ret);
         }
     }
 
@@ -792,9 +788,8 @@ int soc_resmng_get_irq_by_index(struct res_inst_info *inst, u32 irq_type, u32 in
     if (inst->sub_type == TS_SUBSYS) {
         ret = subsys_ts_get_irq_by_index(&resmng->ts_resmng[inst->subid], irq_type, index, irq);
         if ((ret != 0) && (ret != -ENOENT)) {
-            soc_err(
-                "Fail check. (devid=%u; tsid=%u; type=%u; index=%u; ret=%d)\n", resmng->devid, inst->subid, irq_type,
-                index, ret);
+            soc_err("Fail check. (devid=%u; tsid=%u; type=%u; index=%u; ret=%d)\n", resmng->devid, inst->subid,
+                    irq_type, index, ret);
         }
     }
 
@@ -820,8 +815,8 @@ int soc_resmng_set_irq(struct res_inst_info *inst, u32 irq_type, u32 irq)
     if (inst->sub_type == TS_SUBSYS) {
         ret = subsys_ts_set_irq(&resmng->ts_resmng[inst->subid], irq_type, irq);
         if (ret != 0) {
-            soc_err(
-                "Need set first. (devid=%u; tsid=%u; type=%u; ret=%d)\n", resmng->devid, inst->subid, irq_type, ret);
+            soc_err("Need set first. (devid=%u; tsid=%u; type=%u; ret=%d)\n", resmng->devid, inst->subid, irq_type,
+                    ret);
         }
     }
 
@@ -1288,9 +1283,8 @@ static int dev_repeat_set_attr(struct soc_attr_data *attr_node, const void *attr
     int ret;
 
     if (attr_node->size != size) {
-        soc_err(
-            "Not support repeat set differ size attr. (name=%s; old_attr_size=0x%x, new_attr_size=0x%x)\n",
-            attr_node->name, attr_node->size, size);
+        soc_err("Not support repeat set differ size attr. (name=%s; old_attr_size=0x%x, new_attr_size=0x%x)\n",
+                attr_node->name, attr_node->size, size);
         return -EEXIST;
     }
 
@@ -2400,9 +2394,8 @@ int soc_resmng_dev_die_set_res(u32 devid, u32 die_id, enum soc_mia_res_type type
     resmng->res_die_info[die_id][type] = *info;
     ka_task_mutex_unlock(&resmng->mutex);
 
-    soc_info(
-        "set res ok. (devid=%u; die_id=%u, type=%u; bitmap=0x%llx; unit=%u; start=%u; total_num=%u)\n", devid, die_id,
-        type, info->bitmap, info->unit_per_bit, info->start, info->total_num);
+    soc_info("set res ok. (devid=%u; die_id=%u, type=%u; bitmap=0x%llx; unit=%u; start=%u; total_num=%u)\n", devid,
+             die_id, type, info->bitmap, info->unit_per_bit, info->start, info->total_num);
 
     return 0;
 }
@@ -2533,9 +2526,8 @@ static void soc_res_mia_show(ka_seq_file_t *seq, struct soc_mia_res_info_ex *mia
     for (i = 0; i < num; i++) {
         struct soc_mia_res_info_ex *mia = mias + i;
         if (mia->unit_per_bit != 0) {
-            ka_fs_seq_printf(
-                seq, "        %s       %llx      %u      %u      %u        %u      %u\n", mia_res_name[i], mia->bitmap,
-                mia->unit_per_bit, mia->start, mia->total_num, mia->min_num, mia->freq);
+            ka_fs_seq_printf(seq, "        %s       %llx      %u      %u      %u        %u      %u\n", mia_res_name[i],
+                             mia->bitmap, mia->unit_per_bit, mia->start, mia->total_num, mia->min_num, mia->freq);
         }
     }
 }
@@ -2650,9 +2642,15 @@ static long soc_resnmg_get_version_ioctl(ka_file_t *filp, unsigned int cmd, unsi
     return 0;
 }
 
-static int get_version_ioctl_open(ka_inode_t *inode, ka_file_t *file) { return 0; }
+static int get_version_ioctl_open(ka_inode_t *inode, ka_file_t *file)
+{
+    return 0;
+}
 
-static int get_version_ioctl_release(ka_inode_t *inode, ka_file_t *file) { return 0; }
+static int get_version_ioctl_release(ka_inode_t *inode, ka_file_t *file)
+{
+    return 0;
+}
 
 STATIC ka_file_operations_t soc_resmng_fops = {
     .owner = KA_THIS_MODULE,

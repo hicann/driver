@@ -82,33 +82,33 @@ STATIC void ka_mem_size_record_clear(void)
 STATIC char *ka_module_type_to_str(uint32_t module_type)
 {
     STATIC char *module_str[HAL_MODULE_TYPE_MAX] = {
-            [HAL_MODULE_TYPE_VNIC] = "VNIC",
-            [HAL_MODULE_TYPE_HDC] = "HDC",
-            [HAL_MODULE_TYPE_DEVMM] = "DEVMM",
-            [HAL_MODULE_TYPE_DEV_MANAGER] = "DEV_MANAGER",
-            [HAL_MODULE_TYPE_DMP] = "DMP",
-            [HAL_MODULE_TYPE_FAULT] = "FAULT",
-            [HAL_MODULE_TYPE_UPGRADE] = "UPGRADE",
-            [HAL_MODULE_TYPE_PROCESS_MON] = "PROCESS_MON",
-            [HAL_MODULE_TYPE_LOG] = "LOG",
-            [HAL_MODULE_TYPE_PROF] = "PROF",
-            [HAL_MODULE_TYPE_DVPP] = "DVPP",
-            [HAL_MODULE_TYPE_PCIE] = "PCIE",
-            [HAL_MODULE_TYPE_IPC] = "IPC",
-            [HAL_MODULE_TYPE_TS_DRIVER] = "TS_DRIVER",
-            [HAL_MODULE_TYPE_SAFETY_ISLAND] = "SAFETY_ISLAND",
-            [HAL_MODULE_TYPE_BSP] = "BSP",
-            [HAL_MODULE_TYPE_USB] = "USB",
-            [HAL_MODULE_TYPE_NET] = "NET",
-            [HAL_MODULE_TYPE_EVENT_SCHEDULE] = "EVENT_SCHEDULE",
-            [HAL_MODULE_TYPE_BUF_MANAGER] = "BUF_MANAGER",
-            [HAL_MODULE_TYPE_QUEUE_MANAGER] = "QUEUE_MANAGER",
-            [HAL_MODULE_TYPE_DP_PROC_MNG] = "DP_PROC_MNG",
-            [HAL_MODULE_TYPE_BBOX] = "BBOX",
-            [HAL_MODULE_TYPE_VMNG] = "VMNG",
-            [HAL_MODULE_TYPE_COMMON] = "COMMON",
-            [HAL_MODULE_TYPE_APM] = "APM",
-            [HAL_MODULE_TYPE_ASDRV_UB] = "ASDRV_UB",
+        [HAL_MODULE_TYPE_VNIC] = "VNIC",
+        [HAL_MODULE_TYPE_HDC] = "HDC",
+        [HAL_MODULE_TYPE_DEVMM] = "DEVMM",
+        [HAL_MODULE_TYPE_DEV_MANAGER] = "DEV_MANAGER",
+        [HAL_MODULE_TYPE_DMP] = "DMP",
+        [HAL_MODULE_TYPE_FAULT] = "FAULT",
+        [HAL_MODULE_TYPE_UPGRADE] = "UPGRADE",
+        [HAL_MODULE_TYPE_PROCESS_MON] = "PROCESS_MON",
+        [HAL_MODULE_TYPE_LOG] = "LOG",
+        [HAL_MODULE_TYPE_PROF] = "PROF",
+        [HAL_MODULE_TYPE_DVPP] = "DVPP",
+        [HAL_MODULE_TYPE_PCIE] = "PCIE",
+        [HAL_MODULE_TYPE_IPC] = "IPC",
+        [HAL_MODULE_TYPE_TS_DRIVER] = "TS_DRIVER",
+        [HAL_MODULE_TYPE_SAFETY_ISLAND] = "SAFETY_ISLAND",
+        [HAL_MODULE_TYPE_BSP] = "BSP",
+        [HAL_MODULE_TYPE_USB] = "USB",
+        [HAL_MODULE_TYPE_NET] = "NET",
+        [HAL_MODULE_TYPE_EVENT_SCHEDULE] = "EVENT_SCHEDULE",
+        [HAL_MODULE_TYPE_BUF_MANAGER] = "BUF_MANAGER",
+        [HAL_MODULE_TYPE_QUEUE_MANAGER] = "QUEUE_MANAGER",
+        [HAL_MODULE_TYPE_DP_PROC_MNG] = "DP_PROC_MNG",
+        [HAL_MODULE_TYPE_BBOX] = "BBOX",
+        [HAL_MODULE_TYPE_VMNG] = "VMNG",
+        [HAL_MODULE_TYPE_COMMON] = "COMMON",
+        [HAL_MODULE_TYPE_APM] = "APM",
+        [HAL_MODULE_TYPE_ASDRV_UB] = "ASDRV_UB",
     };
 
     return module_str[module_type];
@@ -126,7 +126,7 @@ STATIC void ka_mem_node_release(ka_rb_node_t *node)
     ka_mem_node_free(mem_node);
 }
 
-#define KA_WAKEUP_TIMEINTERVAL 500  /* 0.5S */
+#define KA_WAKEUP_TIMEINTERVAL 500 /* 0.5S */
 STATIC void ka_try_cond_resched(unsigned long *pre_stamp)
 {
     unsigned int timeinterval;
@@ -184,16 +184,20 @@ int ka_mem_stats_show(ka_seq_file_t *seq, void *offset)
     for (i = 0; i < HAL_MODULE_TYPE_MAX; i++) {
         struct ka_mem_stats *mem_stats = ka_get_mem_stats(i);
         if (ka_base_atomic64_read(&mem_stats->cur_alloc_times) != 0) {
-            ka_fs_seq_printf(seq, "Ka_mem_alloc_times_stats. (module_name=%s; cur_alloc_times=%lu; cur_free_times=%lu)\n",
+            ka_fs_seq_printf(
+                seq, "Ka_mem_alloc_times_stats. (module_name=%s; cur_alloc_times=%lu; cur_free_times=%lu)\n",
                 ka_module_type_to_str(i), (unsigned long)ka_base_atomic64_read(&mem_stats->cur_alloc_times),
                 (unsigned long)ka_base_atomic64_read(&mem_stats->cur_free_times));
         }
         if (g_ka_mem_mng.is_enable_mem_record) {
             for (j = 0; j < KA_SUB_MODULE_TYPE_MAX; j++) {
                 if (ka_base_atomic64_read(&mem_stats->peak_alloc_size[j]) != 0) {
-                    ka_fs_seq_printf(seq, "Ka_mem_alloc_size_stats(bytes). (module_name=%s; sub_module_type=%u; cur_size=%lu; peak_size=%lu)\n",
-                        ka_module_type_to_str(i), j, (unsigned long)ka_base_atomic64_read(&mem_stats->cur_alloc_size[j]),
-                        (unsigned long)ka_base_atomic64_read(&mem_stats->peak_alloc_size[j]));
+                    ka_fs_seq_printf(seq,
+                                     "Ka_mem_alloc_size_stats(bytes). (module_name=%s; sub_module_type=%u; "
+                                     "cur_size=%lu; peak_size=%lu)\n",
+                                     ka_module_type_to_str(i), j,
+                                     (unsigned long)ka_base_atomic64_read(&mem_stats->cur_alloc_size[j]),
+                                     (unsigned long)ka_base_atomic64_read(&mem_stats->peak_alloc_size[j]));
                 }
             }
         }
@@ -251,17 +255,19 @@ STATIC void ka_mem_alloc_size_inc(unsigned int module_id, size_t size, unsigned 
         if (tmp <= peak_size) {
             break;
         }
-        if ((unsigned long)ka_base_atomic64_cmpxchg(&mem_stats->peak_alloc_size[sub_type], peak_size, tmp) == peak_size) {
+        if ((unsigned long)ka_base_atomic64_cmpxchg(&mem_stats->peak_alloc_size[sub_type], peak_size, tmp) ==
+            peak_size) {
             break;
         }
         retry++;
     }
 
-    ka_debug("Size_inc_record. (va=0x%lx; sub_type=%u; cur_size=%lu bytes; peak_size=%lu bytes; cur_alloc_times=%lu; cur_free_times=%lu)\n",
-        va, sub_type, (unsigned long)ka_base_atomic64_read(&mem_stats->cur_alloc_size[sub_type]),
-        (unsigned long)ka_base_atomic64_read(&mem_stats->peak_alloc_size[sub_type]),
-        (unsigned long)ka_base_atomic64_read(&mem_stats->cur_alloc_times),
-        (unsigned long)ka_base_atomic64_read(&mem_stats->cur_free_times));
+    ka_debug("Size_inc_record. (va=0x%lx; sub_type=%u; cur_size=%lu bytes; peak_size=%lu bytes; cur_alloc_times=%lu; "
+             "cur_free_times=%lu)\n",
+             va, sub_type, (unsigned long)ka_base_atomic64_read(&mem_stats->cur_alloc_size[sub_type]),
+             (unsigned long)ka_base_atomic64_read(&mem_stats->peak_alloc_size[sub_type]),
+             (unsigned long)ka_base_atomic64_read(&mem_stats->cur_alloc_times),
+             (unsigned long)ka_base_atomic64_read(&mem_stats->cur_free_times));
 }
 
 STATIC unsigned long rb_handle_of_mem_stats_node(ka_rb_node_t *node)
@@ -308,11 +314,12 @@ STATIC void ka_mem_alloc_size_dec(unsigned int module_id, size_t size, unsigned 
 
     ka_base_atomic64_sub(size, &mem_stats->cur_alloc_size[sub_type]);
 
-    ka_debug("Size_dec_record. (va=0x%lx; sub_type=%u; cur_size=%lu bytes; peak_size=%lu bytes; cur_alloc_times=%lu; cur_free_times=%lu)\n",
-        va, sub_type, (unsigned long)ka_base_atomic64_read(&mem_stats->cur_alloc_size[sub_type]),
-        (unsigned long)ka_base_atomic64_read(&mem_stats->peak_alloc_size[sub_type]),
-        (unsigned long)ka_base_atomic64_read(&mem_stats->cur_alloc_times),
-        (unsigned long)ka_base_atomic64_read(&mem_stats->cur_free_times));
+    ka_debug("Size_dec_record. (va=0x%lx; sub_type=%u; cur_size=%lu bytes; peak_size=%lu bytes; cur_alloc_times=%lu; "
+             "cur_free_times=%lu)\n",
+             va, sub_type, (unsigned long)ka_base_atomic64_read(&mem_stats->cur_alloc_size[sub_type]),
+             (unsigned long)ka_base_atomic64_read(&mem_stats->peak_alloc_size[sub_type]),
+             (unsigned long)ka_base_atomic64_read(&mem_stats->cur_alloc_times),
+             (unsigned long)ka_base_atomic64_read(&mem_stats->cur_free_times));
 }
 
 STATIC void ka_mem_node_destroy(unsigned int module_id, struct ka_mem_node *mem_node, unsigned long va)
@@ -370,4 +377,3 @@ void ka_mem_alloc_stat_del(unsigned long va, unsigned int module_id)
     }
     ka_mem_free_times_inc(module_id);
 }
-

@@ -14,26 +14,26 @@
 #define KA_DEFINE_H
 
 #ifndef __user
-    #define __user
+#define __user
 #endif
 
 #ifndef __iomem
-    #define __iomem
+#define __iomem
 #endif
 
 #ifndef NULL
-    #define NULL 0
+#define NULL 0
 #endif
 
 #ifndef __must_check
-    #define __must_check
+#define __must_check
 #endif
 
 #ifndef likely
-    # define likely(x)		__builtin_expect(!!(x), 1)
+#define likely(x) __builtin_expect(!!(x), 1)
 #endif
 #ifndef unlikely
-    # define unlikely(x)		__builtin_expect(!!(x), 0)
+#define unlikely(x) __builtin_expect(!!(x), 0)
 #endif
 
 #endif

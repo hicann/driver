@@ -65,7 +65,7 @@ ka_module_t *ka_base_find_module(const char *name)
 EXPORT_SYMBOL_GPL(ka_base_find_module);
 
 func_by_string ka_base_register_func_by_string(bool (*func_high_v)(const char *name),
-    bool (*func_low_v)(const char *name))
+                                               bool (*func_low_v)(const char *name))
 {
 #if LINUX_VERSION_CODE > KERNEL_VERSION(4, 0, 0)
     return func_high_v;
@@ -76,7 +76,7 @@ func_by_string ka_base_register_func_by_string(bool (*func_high_v)(const char *n
 EXPORT_SYMBOL_GPL(ka_base_register_func_by_string);
 
 func_by_pdev ka_base_register_func_by_pdev(bool (*func_high_v)(ka_pci_dev_t *pdev),
-    bool (*func_low_v)(ka_pci_dev_t *pdev))
+                                           bool (*func_low_v)(ka_pci_dev_t *pdev))
 {
 #if LINUX_VERSION_CODE > KERNEL_VERSION(4, 2, 8)
     return func_high_v;

@@ -185,8 +185,8 @@ static inline void *array_ctx_priv(struct array_ctx *ctx)
     return ctx->priv;
 }
 
-static inline int array_ctx_init(struct array_ctx_domain *domain, struct array_ctx *ctx,
-    u32 id, void *priv, void (*release)(struct array_ctx *ctx))
+static inline int array_ctx_init(struct array_ctx_domain *domain, struct array_ctx *ctx, u32 id, void *priv,
+                                 void (*release)(struct array_ctx *ctx))
 {
     ctx->id = id;
     ctx->priv = priv;
@@ -197,8 +197,8 @@ static inline int array_ctx_init(struct array_ctx_domain *domain, struct array_c
     return array_ctx_add_to_domain(domain, ctx);
 }
 
-static inline int _array_ctx_create(struct array_ctx_domain *domain,
-    u32 id, void *priv, void (*release)(struct array_ctx *ctx))
+static inline int _array_ctx_create(struct array_ctx_domain *domain, u32 id, void *priv,
+                                    void (*release)(struct array_ctx *ctx))
 {
     int ret;
     struct array_ctx *ctx = ka_mm_vzalloc(sizeof(*ctx));
@@ -215,8 +215,8 @@ static inline int _array_ctx_create(struct array_ctx_domain *domain,
 }
 
 /* interface */
-static inline int array_ctx_create(struct array_ctx_domain *domain,
-    u32 id, void *priv, void (*release)(struct array_ctx *ctx))
+static inline int array_ctx_create(struct array_ctx_domain *domain, u32 id, void *priv,
+                                   void (*release)(struct array_ctx *ctx))
 {
     if (id >= domain->array_size) {
         return -EINVAL;
@@ -237,8 +237,8 @@ static inline void array_ctx_destroy(struct array_ctx *ctx)
 }
 
 /* interface */
-static inline void array_ctx_for_each_safe(struct array_ctx_domain *domain,
-    void *priv, void (*func)(struct array_ctx *ctx, void *priv))
+static inline void array_ctx_for_each_safe(struct array_ctx_domain *domain, void *priv,
+                                           void (*func)(struct array_ctx *ctx, void *priv))
 {
     u32 id;
 
@@ -268,7 +268,7 @@ static inline void array_ctx_domain_show(struct array_ctx_domain *domain, ka_seq
 
 /* interface */
 static inline int array_ctx_lock_call_func(struct array_ctx_domain *domain, u32 id,
-    int (*func)(struct array_ctx *ctx, void *para), void *para)
+                                           int (*func)(struct array_ctx *ctx, void *para), void *para)
 {
     int ret = -ESRCH;
     struct array_ctx *ctx = array_ctx_get(domain, id);

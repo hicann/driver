@@ -348,8 +348,8 @@ int subsys_ts_set_tscpu_to_taishan_irq(struct soc_resmng_ts *ts_resmng, u32 irq_
     return 0;
 }
 
-int subsys_ts_get_tscpu_to_taishan_irq(
-    struct soc_resmng_ts *ts_resmng, u32 irq_type, u32 irq, u32 *tscpu_to_taishan_irq)
+int subsys_ts_get_tscpu_to_taishan_irq(struct soc_resmng_ts *ts_resmng, u32 irq_type, u32 irq,
+                                       u32 *tscpu_to_taishan_irq)
 {
     struct soc_irq_info *info = NULL;
     int index;

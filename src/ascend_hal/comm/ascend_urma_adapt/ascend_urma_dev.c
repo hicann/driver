@@ -100,12 +100,12 @@ int ascend_urma_get_urma_dev_name(uint32_t devid, char *name, uint32_t *size)
     urma_dev_name_size = (u32)strnlen(urma_dev->name, URMA_MAX_NAME);
     if ((name == NULL) || (size == NULL) || (*size < urma_dev_name_size + 1)) {
         ascend_urma_err("Input params is invalid. (devid=%u; name_is_null=%d; size_is_null=%d; size=%u; name_len=%u)\n",
-            devid, name == NULL, size == NULL, size == NULL ? 0 : *size, urma_dev_name_size);
+                        devid, name == NULL, size == NULL, size == NULL ? 0 : *size, urma_dev_name_size);
         return DRV_ERROR_INVALID_VALUE;
     }
 
     ret = strncpy_s(name, *size, urma_dev->name, urma_dev_name_size);
-    if(ret != 0) {
+    if (ret != 0) {
         ascend_urma_err("strncpy_s failed. (devid=%u; ret=%d)\n", devid, ret);
         return ret;
     }

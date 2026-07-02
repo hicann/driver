@@ -53,93 +53,93 @@
 #include "ka_task_pub.h"
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(5, 5, 0)
-#define STATIC_PROCFS_FILE_FUNC_OPS_OPEN(ops, open_func)             \
+#define STATIC_PROCFS_FILE_FUNC_OPS_OPEN(ops, open_func) \
     const struct file_operations ops = {                 \
-        .owner   = THIS_MODULE,                                 \
-        .open    = (open_func),                                   \
-        .read    = seq_read,                                    \
-        .llseek  = seq_lseek,                                   \
-        .release = single_release,                              \
+        .owner = THIS_MODULE,                            \
+        .open = (open_func),                             \
+        .read = seq_read,                                \
+        .llseek = seq_lseek,                             \
+        .release = single_release,                       \
     }
 
 #define STATIC_PROCFS_FILE_FUNC_OPS_WRITE(ops, open_func, write_func) \
-    const struct file_operations ops = {                       \
-        .owner   = THIS_MODULE,                                       \
-        .open    = (open_func),                                         \
-        .read    = seq_read,                                          \
-        .llseek  = seq_lseek,                                         \
+    const struct file_operations ops = {                              \
+        .owner = THIS_MODULE,                                         \
+        .open = (open_func),                                          \
+        .read = seq_read,                                             \
+        .llseek = seq_lseek,                                          \
         .release = single_release,                                    \
-        .write   = (write_func),                                        \
+        .write = (write_func),                                        \
     }
 #else
-#define STATIC_PROCFS_FILE_FUNC_OPS_OPEN(ops, open_func)             \
+#define STATIC_PROCFS_FILE_FUNC_OPS_OPEN(ops, open_func) \
     const struct proc_ops ops = {                        \
-        .proc_open    = (open_func),                              \
-        .proc_read    = seq_read,                               \
-        .proc_lseek   = seq_lseek,                              \
-        .proc_release = single_release,                         \
+        .proc_open = (open_func),                        \
+        .proc_read = seq_read,                           \
+        .proc_lseek = seq_lseek,                         \
+        .proc_release = single_release,                  \
     }
 #define STATIC_PROCFS_FILE_FUNC_OPS_WRITE(ops, open_func, write_func) \
-    const struct proc_ops ops = {                              \
-        .proc_open    = (open_func),                                    \
-        .proc_read    = seq_read,                                     \
-        .proc_lseek   = seq_lseek,                                    \
+    const struct proc_ops ops = {                                     \
+        .proc_open = (open_func),                                     \
+        .proc_read = seq_read,                                        \
+        .proc_lseek = seq_lseek,                                      \
         .proc_release = single_release,                               \
-        .proc_write   = (write_func),                                   \
+        .proc_write = (write_func),                                   \
     }
 #endif
 
-#define KA_NSEC_PER_SEC         NSEC_PER_SEC
-#define KA_NSEC_PER_MSEC        NSEC_PER_MSEC
+#define KA_NSEC_PER_SEC NSEC_PER_SEC
+#define KA_NSEC_PER_MSEC NSEC_PER_MSEC
 
 #ifndef NSEC_PER_USEC
-#define KA_NSEC_PER_USEC        1000L
+#define KA_NSEC_PER_USEC 1000L
 #else
-#define KA_NSEC_PER_USEC        NSEC_PER_USEC
+#define KA_NSEC_PER_USEC NSEC_PER_USEC
 #endif
 
-#define KA_MSEC_PER_SEC         MSEC_PER_SEC
-#define KA_USEC_PER_MSEC        USEC_PER_MSEC
+#define KA_MSEC_PER_SEC MSEC_PER_SEC
+#define KA_USEC_PER_MSEC USEC_PER_MSEC
 
-#define	KA_NUMA_NO_NODE	        NUMA_NO_NODE
+#define KA_NUMA_NO_NODE NUMA_NO_NODE
 
-#define KA_CLOCK_MONOTONIC      CLOCK_MONOTONIC
-#define KA_USEC_PER_SEC         USEC_PER_SEC
-#define KA_DEFAULT_RATELIMIT_BURST  DEFAULT_RATELIMIT_BURST
+#define KA_CLOCK_MONOTONIC CLOCK_MONOTONIC
+#define KA_USEC_PER_SEC USEC_PER_SEC
+#define KA_DEFAULT_RATELIMIT_BURST DEFAULT_RATELIMIT_BURST
 #define KA_DEFAULT_RATELIMIT_INTERVAL DEFAULT_RATELIMIT_INTERVAL
 /*
  * Values used for system_state. Ordering of the states must not be changed
  * as code checks for <, <=, >, >= STATE.
  */
 typedef enum system_states ka_system_states_t;
-#define KA_SYSTEM_BOOTING       SYSTEM_BOOTING
-#define KA_SYSTEM_SCHEDULING    SYSTEM_SCHEDULING
-#define KA_SYSTEM_RUNNING       SYSTEM_RUNNING
-#define KA_SYSTEM_HALT          SYSTEM_HALT
-#define KA_SYSTEM_POWER_OFF     SYSTEM_POWER_OFF
-#define KA_SYSTEM_RESTART       SYSTEM_RESTART
-#define KA_SYSTEM_SUSPEND       SYSTEM_SUSPEND
+#define KA_SYSTEM_BOOTING SYSTEM_BOOTING
+#define KA_SYSTEM_SCHEDULING SYSTEM_SCHEDULING
+#define KA_SYSTEM_RUNNING SYSTEM_RUNNING
+#define KA_SYSTEM_HALT SYSTEM_HALT
+#define KA_SYSTEM_POWER_OFF SYSTEM_POWER_OFF
+#define KA_SYSTEM_RESTART SYSTEM_RESTART
+#define KA_SYSTEM_SUSPEND SYSTEM_SUSPEND
 
-typedef enum hrtimer_restart    ka_hrtimer_restart_t;
-#define KA_HRTIMER_NORESTART    HRTIMER_NORESTART
-#define KA_HRTIMER_RESTART      HRTIMER_RESTART
+typedef enum hrtimer_restart ka_hrtimer_restart_t;
+#define KA_HRTIMER_NORESTART HRTIMER_NORESTART
+#define KA_HRTIMER_RESTART HRTIMER_RESTART
 
-typedef enum hrtimer_mode        ka_hrtimer_mode_t;
-#define KA_HRTIMER_MODE_ABS                   HRTIMER_MODE_ABS
-#define KA_HRTIMER_MODE_REL                   HRTIMER_MODE_REL
-#define KA_HRTIMER_MODE_PINNED                HRTIMER_MODE_PINNED
-#define KA_HRTIMER_MODE_SOFT                  HRTIMER_MODE_SOFT
-#define KA_HRTIMER_MODE_HARD                  HRTIMER_MODE_HARD
-#define KA_HRTIMER_MODE_ABS_PINNED            HRTIMER_MODE_ABS_PINNED
-#define KA_HRTIMER_MODE_REL_PINNED            HRTIMER_MODE_REL_PINNED
-#define KA_HRTIMER_MODE_ABS_SOFT              HRTIMER_MODE_ABS_SOFT
-#define KA_HRTIMER_MODE_REL_SOFT              HRTIMER_MODE_REL_SOFT
-#define KA_HRTIMER_MODE_ABS_PINNED_SOFT       HRTIMER_MODE_ABS_PINNED_SOFT
-#define KA_HRTIMER_MODE_REL_PINNED_SOFT       HRTIMER_MODE_REL_PINNED_SOFT
-#define KA_HRTIMER_MODE_ABS_HARD              HRTIMER_MODE_ABS_HARD
-#define KA_HRTIMER_MODE_REL_HARD              HRTIMER_MODE_REL_HARD
-#define KA_HRTIMER_MODE_ABS_PINNED_HARD       HRTIMER_MODE_ABS_PINNED_HARD
-#define KA_HRTIMER_MODE_REL_PINNED_HARD       HRTIMER_MODE_REL_PINNED_HARD
+typedef enum hrtimer_mode ka_hrtimer_mode_t;
+#define KA_HRTIMER_MODE_ABS HRTIMER_MODE_ABS
+#define KA_HRTIMER_MODE_REL HRTIMER_MODE_REL
+#define KA_HRTIMER_MODE_PINNED HRTIMER_MODE_PINNED
+#define KA_HRTIMER_MODE_SOFT HRTIMER_MODE_SOFT
+#define KA_HRTIMER_MODE_HARD HRTIMER_MODE_HARD
+#define KA_HRTIMER_MODE_ABS_PINNED HRTIMER_MODE_ABS_PINNED
+#define KA_HRTIMER_MODE_REL_PINNED HRTIMER_MODE_REL_PINNED
+#define KA_HRTIMER_MODE_ABS_SOFT HRTIMER_MODE_ABS_SOFT
+#define KA_HRTIMER_MODE_REL_SOFT HRTIMER_MODE_REL_SOFT
+#define KA_HRTIMER_MODE_ABS_PINNED_SOFT HRTIMER_MODE_ABS_PINNED_SOFT
+#define KA_HRTIMER_MODE_REL_PINNED_SOFT HRTIMER_MODE_REL_PINNED_SOFT
+#define KA_HRTIMER_MODE_ABS_HARD HRTIMER_MODE_ABS_HARD
+#define KA_HRTIMER_MODE_REL_HARD HRTIMER_MODE_REL_HARD
+#define KA_HRTIMER_MODE_ABS_PINNED_HARD HRTIMER_MODE_ABS_PINNED_HARD
+#define KA_HRTIMER_MODE_REL_PINNED_HARD HRTIMER_MODE_REL_PINNED_HARD
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 4, 1)
 #define KA_HRTIMER_MODE_REL_TYPE KA_HRTIMER_MODE_REL_HARD
@@ -157,23 +157,23 @@ typedef struct tasklet_struct ka_tasklet_struct_t;
 #ifndef STRUCT_TIMEVAL_SPEC
 #define STRUCT_TIMEVAL_SPEC
 struct timespec {
-    __kernel_old_time_t tv_sec;     /* seconds */
-    long tv_nsec;                   /* nanoseconds */
+    __kernel_old_time_t tv_sec; /* seconds */
+    long tv_nsec;               /* nanoseconds */
 };
 
 struct timeval {
-    __kernel_old_time_t tv_sec;     /* seconds */
-    __kernel_suseconds_t tv_usec;   /* microseconds */
+    __kernel_old_time_t tv_sec;   /* seconds */
+    __kernel_suseconds_t tv_usec; /* microseconds */
 };
 #endif
 #endif
 #endif /* ifndef EMUST */
 
-#define ka_ktime_t           ktime_t
-typedef struct timespec64    ka_timespec64_t;
-typedef struct timespec      ka_timespec_t;
-typedef struct hrtimer       ka_hrtimer_t;
-typedef struct timezone      ka_timezone_t;
+#define ka_ktime_t ktime_t
+typedef struct timespec64 ka_timespec64_t;
+typedef struct timespec ka_timespec_t;
+typedef struct hrtimer ka_hrtimer_t;
+typedef struct timezone ka_timezone_t;
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 1, 0)
 #define ka_system_timespec u64
@@ -187,86 +187,86 @@ typedef struct timezone      ka_timezone_t;
 #define ka_system_const
 #endif
 
-#define ka_kernel_cap_t                 kernel_cap_t
-#define KA_CAP_AUDIT_READ               CAP_AUDIT_READ
-#define KA_SYSTEM_CAP_TO_MASK(x)        CAP_TO_MASK(x)
+#define ka_kernel_cap_t kernel_cap_t
+#define KA_CAP_AUDIT_READ CAP_AUDIT_READ
+#define KA_SYSTEM_CAP_TO_MASK(x) CAP_TO_MASK(x)
 
-#define ka_time64_t             time64_t
-typedef struct timezone         ka_timezone_t;
-typedef struct timeval          ka_timeval_t;
-typedef struct timer_list       ka_timer_list_t;
-typedef struct tm               ka_tm_t;
-typedef struct subprocess_info  ka_ka_subprocess_info_t;
+#define ka_time64_t time64_t
+typedef struct timezone ka_timezone_t;
+typedef struct timeval ka_timeval_t;
+typedef struct timer_list ka_timer_list_t;
+typedef struct tm ka_tm_t;
+typedef struct subprocess_info ka_ka_subprocess_info_t;
 typedef struct kernel_param_ops ka_kernel_param_ops_t;
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(4, 15, 0)
 #define ka_system_timer_list unsigned long
 #else
-#define ka_system_timer_list ka_timer_list_t*
+#define ka_system_timer_list ka_timer_list_t *
 #endif
 
-#define KA_MAX_NUMNODES       MAX_NUMNODES
-#define ka_jiffies            jiffies
-#define ka_jiffies_64         jiffies_64
-#define ka_nr_cpu_ids         nr_cpu_ids
+#define KA_MAX_NUMNODES MAX_NUMNODES
+#define ka_jiffies jiffies
+#define ka_jiffies_64 jiffies_64
+#define ka_nr_cpu_ids nr_cpu_ids
 
 #define ka_nr_cpus_node(node) nr_cpus_node(node)
-#define ka_system_irq_of_parse_and_map(node, index)    irq_of_parse_and_map(node, index)
-#define ka_system_put_cred(cred)     put_cred(cred)
-#define ka_system_in_group_p(grp)    in_group_p(grp)
-#define  ka_system_devm_free_irq(dev, irq, dev_id)     devm_free_irq(dev, irq, dev_id)
-#define ka_system_devm_request_threaded_irq(dev, irq, handler, thread_fn, irqflags, devname, dev_id)    \
-            devm_request_threaded_irq(dev, irq, handler, thread_fn, irqflags, devname, dev_id)
-#define ka_system_devm_request_irq(dev, irq, handler, irqflags, devname, dev_id)    \
-            devm_request_irq(dev, irq, handler, irqflags, devname, dev_id)
-#define ka_system_disable_irq(irq)    disable_irq(irq)
-#define ka_system_disable_irq_nosync(irq)    disable_irq_nosync(irq)
-#define ka_system_enable_irq(irq)    enable_irq(irq)
-#define ka_system_request_irq(irq, handler, irqflags, devname, dev_id)   \
-            request_irq(irq, handler, irqflags, devname, dev_id)
-#define ka_system_request_threaded_irq(irq, handler, thread_fn, irqflags, devname, dev_id)    \
-            request_threaded_irq(irq, handler, thread_fn, irqflags, devname, dev_id)
-#define  ka_system_synchronize_rcu()     synchronize_rcu()
-#define  ka_system_synchronize_irq(irq)     synchronize_irq(irq)
-#define __ka_system_symbol_get(symbol)    __symbol_get(symbol)
-#define __ka_system_request_module    __request_module
-#define  __ka_system_module_get(module)     __module_get(module)
-#define  __ka_system_symbol_put(symbol)     __symbol_put(symbol)
-#define ka_system_symbol_put(symbol)     symbol_put(symbol)
-#define ka_system_symbol_put_addr(addr)     symbol_put_addr(addr)
-#define ka_system_module_refcount(mod)    module_refcount(mod)
-#define ka_system_try_module_get(module)    try_module_get(module)
-#define ka_system_module_put(module)     module_put(module)
-#define ka_system_tasklet_schedule(t)     tasklet_schedule(t)
-#define ka_system_tasklet_kill(t)     tasklet_kill(t)
-#define ka_system_msecs_to_jiffies(m)    msecs_to_jiffies(m)
-#define ka_system_jiffies_64_to_clock_t(x)    jiffies_64_to_clock_t(x)
-#define ka_system_jiffies_to_clock_t(x)    jiffies_to_clock_t(x)
-#define ka_system_jiffies_to_msecs(j)    jiffies_to_msecs(j)
-#define ka_system_jiffies_to_usecs(j)    jiffies_to_usecs(j)
-#define ka_system_time_before(a, b)    time_before(a, b)
-#define ka_system_time_after(a, b)     time_after(a,b)
-#define ka_system_time_before_eq(a, b)    time_before_eq(a, b)
-#define ka_system_ktime_get()    ktime_get()
-#define ka_system_ktime_set(secs, nsecs)    ktime_set(secs, nsecs)
-#define ka_system_ktime_to_ns(kt)    ktime_to_ns(kt)
-#define ka_system_ktime_get_ns()    ktime_get_ns()
-#define ka_system_ktime_get_raw()    ktime_get_raw()
-#define ka_system_ktime_to_ms(kt)    ktime_to_ms(kt)
-#define ka_system_ktime_get_boottime()    ktime_get_boottime()
-#define ka_system_ktime_to_us(kt)    ktime_to_us(kt)
-#define ka_system_add_timer(timer)     add_timer(timer)
-#define ka_system_del_timer(timer)    del_timer(timer)
-#define ka_system_del_timer_sync(timer)    del_timer_sync(timer)
-#define ka_system_add_timer_on(timer, cpu)     add_timer_on(timer, cpu)
-#define ka_system_mod_timer(timer, expires)    mod_timer(timer, expires)
-#define ka_system_mod_timer_pending(timer, expires)    mod_timer_pending(timer, expires)
-#define ka_system_msleep(msecs)    msleep(msecs)
-#define ka_system_msleep_interruptible(msecs)    msleep_interruptible(msecs)
-#define ka_system_schedule_timeout(timeout)    schedule_timeout(timeout)
-#define ka_system_schedule_timeout_killable(timeout)    schedule_timeout_killable(timeout)
-#define ka_system_schedule_timeout_uninterruptible(timeout)   schedule_timeout_uninterruptible(timeout)
-#define ka_system_usleep_range(min, max)     usleep_range(min, max)
+#define ka_system_irq_of_parse_and_map(node, index) irq_of_parse_and_map(node, index)
+#define ka_system_put_cred(cred) put_cred(cred)
+#define ka_system_in_group_p(grp) in_group_p(grp)
+#define ka_system_devm_free_irq(dev, irq, dev_id) devm_free_irq(dev, irq, dev_id)
+#define ka_system_devm_request_threaded_irq(dev, irq, handler, thread_fn, irqflags, devname, dev_id) \
+    devm_request_threaded_irq(dev, irq, handler, thread_fn, irqflags, devname, dev_id)
+#define ka_system_devm_request_irq(dev, irq, handler, irqflags, devname, dev_id) \
+    devm_request_irq(dev, irq, handler, irqflags, devname, dev_id)
+#define ka_system_disable_irq(irq) disable_irq(irq)
+#define ka_system_disable_irq_nosync(irq) disable_irq_nosync(irq)
+#define ka_system_enable_irq(irq) enable_irq(irq)
+#define ka_system_request_irq(irq, handler, irqflags, devname, dev_id) \
+    request_irq(irq, handler, irqflags, devname, dev_id)
+#define ka_system_request_threaded_irq(irq, handler, thread_fn, irqflags, devname, dev_id) \
+    request_threaded_irq(irq, handler, thread_fn, irqflags, devname, dev_id)
+#define ka_system_synchronize_rcu() synchronize_rcu()
+#define ka_system_synchronize_irq(irq) synchronize_irq(irq)
+#define __ka_system_symbol_get(symbol) __symbol_get(symbol)
+#define __ka_system_request_module __request_module
+#define __ka_system_module_get(module) __module_get(module)
+#define __ka_system_symbol_put(symbol) __symbol_put(symbol)
+#define ka_system_symbol_put(symbol) symbol_put(symbol)
+#define ka_system_symbol_put_addr(addr) symbol_put_addr(addr)
+#define ka_system_module_refcount(mod) module_refcount(mod)
+#define ka_system_try_module_get(module) try_module_get(module)
+#define ka_system_module_put(module) module_put(module)
+#define ka_system_tasklet_schedule(t) tasklet_schedule(t)
+#define ka_system_tasklet_kill(t) tasklet_kill(t)
+#define ka_system_msecs_to_jiffies(m) msecs_to_jiffies(m)
+#define ka_system_jiffies_64_to_clock_t(x) jiffies_64_to_clock_t(x)
+#define ka_system_jiffies_to_clock_t(x) jiffies_to_clock_t(x)
+#define ka_system_jiffies_to_msecs(j) jiffies_to_msecs(j)
+#define ka_system_jiffies_to_usecs(j) jiffies_to_usecs(j)
+#define ka_system_time_before(a, b) time_before(a, b)
+#define ka_system_time_after(a, b) time_after(a, b)
+#define ka_system_time_before_eq(a, b) time_before_eq(a, b)
+#define ka_system_ktime_get() ktime_get()
+#define ka_system_ktime_set(secs, nsecs) ktime_set(secs, nsecs)
+#define ka_system_ktime_to_ns(kt) ktime_to_ns(kt)
+#define ka_system_ktime_get_ns() ktime_get_ns()
+#define ka_system_ktime_get_raw() ktime_get_raw()
+#define ka_system_ktime_to_ms(kt) ktime_to_ms(kt)
+#define ka_system_ktime_get_boottime() ktime_get_boottime()
+#define ka_system_ktime_to_us(kt) ktime_to_us(kt)
+#define ka_system_add_timer(timer) add_timer(timer)
+#define ka_system_del_timer(timer) del_timer(timer)
+#define ka_system_del_timer_sync(timer) del_timer_sync(timer)
+#define ka_system_add_timer_on(timer, cpu) add_timer_on(timer, cpu)
+#define ka_system_mod_timer(timer, expires) mod_timer(timer, expires)
+#define ka_system_mod_timer_pending(timer, expires) mod_timer_pending(timer, expires)
+#define ka_system_msleep(msecs) msleep(msecs)
+#define ka_system_msleep_interruptible(msecs) msleep_interruptible(msecs)
+#define ka_system_schedule_timeout(timeout) schedule_timeout(timeout)
+#define ka_system_schedule_timeout_killable(timeout) schedule_timeout_killable(timeout)
+#define ka_system_schedule_timeout_uninterruptible(timeout) schedule_timeout_uninterruptible(timeout)
+#define ka_system_usleep_range(min, max) usleep_range(min, max)
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 0, 0)
 #define ka_system_usleep_range_state(min, max, state) usleep_range_state(min, max, state)
@@ -274,19 +274,19 @@ typedef struct kernel_param_ops ka_kernel_param_ops_t;
 #define ka_system_usleep_range_state(min, max, state) usleep_range(min, max)
 #endif
 
-#define ka_system_call_usermodehelper_exec(sub_info, wait)    call_usermodehelper_exec(sub_info, wait)
-#define ka_system_get_cpu_mask(cpu)    get_cpu_mask(cpu)
-#define ka_system_raw_smp_processor_id()    raw_smp_processor_id()
+#define ka_system_call_usermodehelper_exec(sub_info, wait) call_usermodehelper_exec(sub_info, wait)
+#define ka_system_get_cpu_mask(cpu) get_cpu_mask(cpu)
+#define ka_system_raw_smp_processor_id() raw_smp_processor_id()
 #define ka_system_smp_processor_id() smp_processor_id()
-#define ka_system_numa_node_id()    numa_node_id()
-#define ka_system_cpu_to_node(cpu)    cpu_to_node(cpu)
-#define ka_system_num_online_cpus()    num_online_cpus()
-#define ka_system_cpu_to_be32(x)    cpu_to_be32(x)
-#define ka_system_cpu_to_le32(x)    cpu_to_le32(x)
-#define ka_system_cpu_to_be64(x)    cpu_to_be64(x)
-#define ka_system_cpu_to_le64(x)    cpu_to_le64(x)
-#define ka_system_cpu_relax()       cpu_relax()
-#define ka_system_local_clock()     local_clock()
+#define ka_system_numa_node_id() numa_node_id()
+#define ka_system_cpu_to_node(cpu) cpu_to_node(cpu)
+#define ka_system_num_online_cpus() num_online_cpus()
+#define ka_system_cpu_to_be32(x) cpu_to_be32(x)
+#define ka_system_cpu_to_le32(x) cpu_to_le32(x)
+#define ka_system_cpu_to_be64(x) cpu_to_be64(x)
+#define ka_system_cpu_to_le64(x) cpu_to_le64(x)
+#define ka_system_cpu_relax() cpu_relax()
+#define ka_system_local_clock() local_clock()
 static inline void ka_system_set_hrtimer_func(ka_hrtimer_t *timer, ka_hrtimer_restart_t (*func)(ka_hrtimer_t *))
 {
     timer->function = func;
@@ -299,28 +299,28 @@ static inline bool ka_system_timespec_equal(TASK_TIME_TYPE a, TASK_TIME_TYPE b)
     return (bool)timespec_equal(&a, &b);
 #endif
 }
-#define ka_system_hrtimer_start(timer, tim, mode)    hrtimer_start(timer, tim, mode)
-#define ka_system_hrtimer_cancel(timer)    hrtimer_cancel(timer)
-#define ka_system_in_interrupt()    in_interrupt()
-#define ka_system_ktime_get_ts64(ka_ts)    ktime_get_ts64(ka_ts)
-#define ka_system_capable(cap)    capable(cap)
-#define ka_system_tasklet_init(t, func, data)      tasklet_init(t, func, data)
-#define ka_system_ktime_get_coarse_real_ts64(ts)    ktime_get_coarse_real_ts64(ts)
-#define ka_system_ktime_get_coarse_ts64(ts)    ktime_get_coarse_ts64(ts)
-#define ka_system_ktime_get_raw_ts64(ts)    ktime_get_raw_ts64(ts)
-#define ka_system_ktime_get_real_ts64(ts)    ktime_get_real_ts64(ts)
-#define ka_system_ktime_get_virtual_ts64(ts)    ktime_get_virtual_ts64(ts)
-#define ka_system_ktime_get_raw_ns()    ktime_get_raw_ns()
-#define ka_system_ms_to_ktime(ms)    ms_to_ktime(ms)
-#define ka_system_timespec64_to_ktime(ts)    timespec64_to_ktime(ts)
-#define ka_system_schedule_timeout_idle(timeout)   schedule_timeout_idle(timeout)
-#define ka_system_jiffies_to_timeval(jiffies, value)  jiffies_to_timeval(jiffies, value)
-#define ka_system_hrtimer_forward_now(timer, interval)    hrtimer_forward_now(timer, interval)
-#define ka_system_time_is_before_jiffies(a)              ka_system_time_after(ka_jiffies, a)
-#define ka_system_hrtimer_init(timer, clock_id, mode)    hrtimer_init(timer, clock_id, mode)
+#define ka_system_hrtimer_start(timer, tim, mode) hrtimer_start(timer, tim, mode)
+#define ka_system_hrtimer_cancel(timer) hrtimer_cancel(timer)
+#define ka_system_in_interrupt() in_interrupt()
+#define ka_system_ktime_get_ts64(ka_ts) ktime_get_ts64(ka_ts)
+#define ka_system_capable(cap) capable(cap)
+#define ka_system_tasklet_init(t, func, data) tasklet_init(t, func, data)
+#define ka_system_ktime_get_coarse_real_ts64(ts) ktime_get_coarse_real_ts64(ts)
+#define ka_system_ktime_get_coarse_ts64(ts) ktime_get_coarse_ts64(ts)
+#define ka_system_ktime_get_raw_ts64(ts) ktime_get_raw_ts64(ts)
+#define ka_system_ktime_get_real_ts64(ts) ktime_get_real_ts64(ts)
+#define ka_system_ktime_get_virtual_ts64(ts) ktime_get_virtual_ts64(ts)
+#define ka_system_ktime_get_raw_ns() ktime_get_raw_ns()
+#define ka_system_ms_to_ktime(ms) ms_to_ktime(ms)
+#define ka_system_timespec64_to_ktime(ts) timespec64_to_ktime(ts)
+#define ka_system_schedule_timeout_idle(timeout) schedule_timeout_idle(timeout)
+#define ka_system_jiffies_to_timeval(jiffies, value) jiffies_to_timeval(jiffies, value)
+#define ka_system_hrtimer_forward_now(timer, interval) hrtimer_forward_now(timer, interval)
+#define ka_system_time_is_before_jiffies(a) ka_system_time_after(ka_jiffies, a)
+#define ka_system_hrtimer_init(timer, clock_id, mode) hrtimer_init(timer, clock_id, mode)
 #define ka_system_ssleep(seconds) ssleep(seconds)
 #define LOG_TIME_INTERVAL (10)
-#define SCHED_LOG_LIMIT_MAX_NUM       6
+#define SCHED_LOG_LIMIT_MAX_NUM 6
 
 ka_system_states_t ka_system_get_system_state(void);
 const ka_cpumask_t *ka_system_get_cpu_online_mask(void);

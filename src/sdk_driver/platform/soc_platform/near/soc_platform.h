@@ -26,29 +26,25 @@
 
 #define module_log_name "soc_platform"
 
-#define soc_err(fmt, ...)                                                                                  \
-    do {                                                                                                   \
-        drv_err(                                                                                           \
-            module_log_name, "<%s:%d:%d:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), \
-            ka_task_get_current_pid(), ka_system_raw_smp_processor_id(), ##__VA_ARGS__);                   \
+#define soc_err(fmt, ...)                                                                                      \
+    do {                                                                                                       \
+        drv_err(module_log_name, "<%s:%d:%d:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), \
+                ka_task_get_current_pid(), ka_system_raw_smp_processor_id(), ##__VA_ARGS__);                   \
     } while (0)
-#define soc_warn(fmt, ...)                                                                                 \
-    do {                                                                                                   \
-        drv_warn(                                                                                          \
-            module_log_name, "<%s:%d:%d:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), \
-            ka_task_get_current_pid(), ka_system_raw_smp_processor_id(), ##__VA_ARGS__);                   \
+#define soc_warn(fmt, ...)                                                                                      \
+    do {                                                                                                        \
+        drv_warn(module_log_name, "<%s:%d:%d:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), \
+                 ka_task_get_current_pid(), ka_system_raw_smp_processor_id(), ##__VA_ARGS__);                   \
     } while (0)
-#define soc_info(fmt, ...)                                                                                 \
-    do {                                                                                                   \
-        drv_info(                                                                                          \
-            module_log_name, "<%s:%d:%d:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), \
-            ka_task_get_current_pid(), ka_system_raw_smp_processor_id(), ##__VA_ARGS__);                   \
+#define soc_info(fmt, ...)                                                                                      \
+    do {                                                                                                        \
+        drv_info(module_log_name, "<%s:%d:%d:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), \
+                 ka_task_get_current_pid(), ka_system_raw_smp_processor_id(), ##__VA_ARGS__);                   \
     } while (0)
-#define soc_debug(fmt, ...)                                                                                \
-    do {                                                                                                   \
-        drv_pr_debug(                                                                                      \
-            module_log_name, "<%s:%d:%d:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), \
-            ka_task_get_current_pid(), ka_system_raw_smp_processor_id(), ##__VA_ARGS__);                   \
+#define soc_debug(fmt, ...)                                                                                         \
+    do {                                                                                                            \
+        drv_pr_debug(module_log_name, "<%s:%d:%d:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), \
+                     ka_task_get_current_pid(), ka_system_raw_smp_processor_id(), ##__VA_ARGS__);                   \
     } while (0)
 
 #endif

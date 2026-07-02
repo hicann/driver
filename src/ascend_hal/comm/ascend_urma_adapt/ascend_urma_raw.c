@@ -67,14 +67,15 @@ int ascend_urma_get_token_val(uint32_t devid, uint32_t *token_val)
     }
 
     (void)pthread_rwlock_wrlock(&g_token_val_rwlock);
-    ret =_ascend_urma_get_token_val(devid, token_val);
+    ret = _ascend_urma_get_token_val(devid, token_val);
     (void)pthread_rwlock_unlock(&g_token_val_rwlock);
 
     return ret;
 }
 
 #ifdef SSAPI_USE_MAMI
-static urma_target_jetty_t *ascend_urma_import_jfr_use_mami(urma_context_t *urma_ctx, urma_rjfr_t *rjfr, urma_token_t *token_value)
+static urma_target_jetty_t *ascend_urma_import_jfr_use_mami(urma_context_t *urma_ctx, urma_rjfr_t *rjfr,
+                                                            urma_token_t *token_value)
 {
     urma_get_tp_cfg_t tpid_cfg = {
         .trans_mode = URMA_TM_RM,
@@ -157,4 +158,3 @@ int ascend_urma_wait_jfc(urma_jfce_t *jfce, uint32_t jfc_cnt, int time_out, urma
 
     return ret;
 }
-

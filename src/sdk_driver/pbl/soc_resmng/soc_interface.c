@@ -29,8 +29,8 @@
 #define STATIC static
 #endif
 
-int hal_kernel_get_pg_info(
-    unsigned int dev_id, HAL_PG_INFO_TYPE info_type, char *data, unsigned int size, unsigned int *ret_size)
+int hal_kernel_get_pg_info(unsigned int dev_id, HAL_PG_INFO_TYPE info_type, char *data, unsigned int size,
+                           unsigned int *ret_size)
 {
     return hal_kernel_get_pg_info_adapt(dev_id, info_type, data, size, ret_size);
 }

@@ -91,31 +91,31 @@
 #include "ka_common_pub.h"
 #include "ka_custom_header_pub.h"
 
-#define KA_INT_MAX          INT_MAX
-#define KA_UINT_MAX         UINT_MAX
+#define KA_INT_MAX INT_MAX
+#define KA_UINT_MAX UINT_MAX
 
 #ifdef U32_MAX
-#define KA_U32_MAX          U32_MAX
+#define KA_U32_MAX U32_MAX
 #else
-#define KA_U32_MAX          0xFFFFFFFFU
+#define KA_U32_MAX 0xFFFFFFFFU
 #endif
 
 #ifdef U16_MAX
-#define KA_U16_MAX          U16_MAX
+#define KA_U16_MAX U16_MAX
 #else
-#define KA_U16_MAX          0xFFFFU
+#define KA_U16_MAX 0xFFFFU
 #endif
 
-#define KA_S32_MAX          S32_MAX
-#define KA_U64_MAX          U64_MAX
-#define KA_LONG_MAX         LONG_MAX
-#define KA_ULLONG_MAX       ULLONG_MAX
+#define KA_S32_MAX S32_MAX
+#define KA_U64_MAX U64_MAX
+#define KA_LONG_MAX LONG_MAX
+#define KA_ULLONG_MAX ULLONG_MAX
 
-#define KA_HZ               HZ
+#define KA_HZ HZ
 
-#define KA_CAP_SYS_ADMIN        CAP_SYS_ADMIN
-#define KA_STATX_BASIC_STATS    STATX_BASIC_STATS
-#define KA_AT_NO_AUTOMOUNT      AT_NO_AUTOMOUNT
+#define KA_CAP_SYS_ADMIN CAP_SYS_ADMIN
+#define KA_STATX_BASIC_STATS STATX_BASIC_STATS
+#define KA_AT_NO_AUTOMOUNT AT_NO_AUTOMOUNT
 
 typedef struct cpu_rmap ka_cpu_rmap_t;
 typedef struct rb_node ka_rb_node_t;
@@ -155,7 +155,7 @@ typedef va_list ka_va_list;
 #define ka_va_end(v) va_end(v)
 #define ka_va_start(v, l) va_start(v, l)
 
-#define KA_BASE_ARRAY_SIZE(x)  ARRAY_SIZE(x)
+#define KA_BASE_ARRAY_SIZE(x) ARRAY_SIZE(x)
 #define KA_BASE_ATOMIC_INIT(i) ATOMIC_INIT(i)
 
 #define ka_atomic_t atomic_t
@@ -163,26 +163,27 @@ typedef va_list ka_va_list;
 
 #define KA_RB_ROOT RB_ROOT
 
-#define ka_base_min(x, y)                   min(x, y)
-#define ka_base_min_t(type, x, y)           min_t(type, x, y)
-#define ka_base_max(x, y)                   max(x, y)
-#define ka_base_max_t(type, x, y)           max_t(type, x, y)
+#define ka_base_min(x, y) min(x, y)
+#define ka_base_min_t(type, x, y) min_t(type, x, y)
+#define ka_base_max(x, y) max(x, y)
+#define ka_base_max_t(type, x, y) max_t(type, x, y)
 
 #ifndef BITS_PER_LONG_LONG
-#define KA_BITS_PER_LONG_LONG               64
+#define KA_BITS_PER_LONG_LONG 64
 #else
-#define KA_BITS_PER_LONG_LONG               BITS_PER_LONG_LONG
+#define KA_BITS_PER_LONG_LONG BITS_PER_LONG_LONG
 #endif
 
-#define KA_BITS_PER_BYTE                    BITS_PER_BYTE
-#define KA_BASE_BITS_PER_TYPE(type)         BITS_PER_TYPE(type)
-#define KA_BASE_BITS_TO_LONGS(nr)           BITS_TO_LONGS(nr)
-#define KA_BASE_DECLARE_BITMAP(name,bits)   DECLARE_BITMAP(name,bits)
+#define KA_BITS_PER_BYTE BITS_PER_BYTE
+#define KA_BASE_BITS_PER_TYPE(type) BITS_PER_TYPE(type)
+#define KA_BASE_BITS_TO_LONGS(nr) BITS_TO_LONGS(nr)
+#define KA_BASE_DECLARE_BITMAP(name, bits) DECLARE_BITMAP(name, bits)
 
-#define KA_BASE_RB_EMPTY_ROOT(root)         RB_EMPTY_ROOT(root)
-#define KA_BASE_RB_EMPTY_NODE(node)         RB_EMPTY_NODE(node)
-#define KA_BASE_RB_CLEAR_NODE(node)         RB_CLEAR_NODE(node)
-#define KA_BASE_DEFINE_RATELIMIT_STATE(name, interval_init, burst_init) DEFINE_RATELIMIT_STATE(name, interval_init, burst_init)
+#define KA_BASE_RB_EMPTY_ROOT(root) RB_EMPTY_ROOT(root)
+#define KA_BASE_RB_EMPTY_NODE(node) RB_EMPTY_NODE(node)
+#define KA_BASE_RB_CLEAR_NODE(node) RB_CLEAR_NODE(node)
+#define KA_BASE_DEFINE_RATELIMIT_STATE(name, interval_init, burst_init) \
+    DEFINE_RATELIMIT_STATE(name, interval_init, burst_init)
 
 #define ka_base_round_up(x, y) round_up(x, y)
 #define ka_base_round_down(x, y) round_down(x, y)
@@ -282,8 +283,10 @@ static inline void *ka_base_idr_remove(ka_idr_t *idp, int id)
 #define ka_base_ida_free(ida, id) ida_free(ida, id)
 #define ka_base_strncpy_from_user(dst, src, count) strncpy_from_user(dst, src, count)
 #define ka_base_strnlen_user(str, count) strnlen_user(str, count)
-#define ka_base_print_hex_dump(level, prefix_str, prefix_type, rowsize, groupsize, buf, len, ascii) print_hex_dump(level, prefix_str, prefix_type, rowsize, groupsize, buf, len, ascii)
-#define ka_base_print_hex_dump_bytes(prefix_str, prefix_type, buf, len) print_hex_dump_bytes(prefix_str, prefix_type, buf, len)
+#define ka_base_print_hex_dump(level, prefix_str, prefix_type, rowsize, groupsize, buf, len, ascii) \
+    print_hex_dump(level, prefix_str, prefix_type, rowsize, groupsize, buf, len, ascii)
+#define ka_base_print_hex_dump_bytes(prefix_str, prefix_type, buf, len) \
+    print_hex_dump_bytes(prefix_str, prefix_type, buf, len)
 
 #define __ka_base_kfifo_alloc(fifo, size, esize, gfp_mask) __kfifo_alloc(fifo, size, esize, gfp_mask)
 #define __ka_base_kfifo_free(fifo) __kfifo_free(fifo)
@@ -314,7 +317,8 @@ static inline void ka_base_set_kobj_parent(ka_kobject_t *kobj, ka_kobject_t *par
 #define ka_base_bitmap_weight(bitmap, nbits) bitmap_weight(bitmap, nbits)
 #define ka_base_bitmap_set(map, start, len) bitmap_set(map, start, len)
 #define ka_base_bitmap_clear(map, start, len) bitmap_clear(map, start, len)
-#define ka_base_bitmap_find_next_zero_area_off(map, size, start, nr, align_mask, align_offset) bitmap_find_next_zero_area_off(map, size, start, nr, align_mask, align_offset)
+#define ka_base_bitmap_find_next_zero_area_off(map, size, start, nr, align_mask, align_offset) \
+    bitmap_find_next_zero_area_off(map, size, start, nr, align_mask, align_offset)
 #define ka_base_bitmap_parselist(buf, maskp, nmaskbits) bitmap_parselist(buf, maskp, nmaskbits)
 #define ka_base_bitmap_parselist_user(ubuf, ulen, dst, nbits) bitmap_parselist_user(ubuf, ulen, dst, nbits)
 #define ka_base_fls64(x) fls64(x)
@@ -322,29 +326,23 @@ static inline void ka_base_set_kobj_parent(ka_kobject_t *kobj, ka_kobject_t *par
 typedef struct gen_pool ka_gen_pool_t;
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 0, 0)
-#define KA_BASE_DEFINE_GEN_POOL_ALGO(genpool_algo_func_name)      \
-static unsigned long ka_##genpool_algo_func_name(unsigned long *map,  \
-			unsigned long size, \
-			unsigned long start, \
-			unsigned int nr, \
-			void *data, ka_gen_pool_t *pool, \
-			unsigned long start_addr) \
-{ \
-    return genpool_algo_func_name(map, size, start, nr, data, pool, start_addr); \
-}
+#define KA_BASE_DEFINE_GEN_POOL_ALGO(genpool_algo_func_name)                                                      \
+    static unsigned long ka_##genpool_algo_func_name(unsigned long *map, unsigned long size, unsigned long start, \
+                                                     unsigned int nr, void *data, ka_gen_pool_t *pool,            \
+                                                     unsigned long start_addr)                                    \
+    {                                                                                                             \
+        return genpool_algo_func_name(map, size, start, nr, data, pool, start_addr);                              \
+    }
 #else
-#define KA_BASE_DEFINE_GEN_POOL_ALGO(genpool_algo_func_name) \
-static unsigned long ka_##genpool_algo_func_name(unsigned long *map, \
-			unsigned long size, \
-			unsigned long start, \
-			unsigned int nr, \
-			void *data, ka_gen_pool_t *pool) \
-{ \
-    return genpool_algo_func_name(map, size, start, nr, data, pool, 0); \
-}
+#define KA_BASE_DEFINE_GEN_POOL_ALGO(genpool_algo_func_name)                                                      \
+    static unsigned long ka_##genpool_algo_func_name(unsigned long *map, unsigned long size, unsigned long start, \
+                                                     unsigned int nr, void *data, ka_gen_pool_t *pool)            \
+    {                                                                                                             \
+        return genpool_algo_func_name(map, size, start, nr, data, pool, 0);                                       \
+    }
 #endif
 
-#define KA_BASE_GEN_POOL_ALGO_NAME(genpool_algo_func_name)    (ka_##genpool_algo_func_name)
+#define KA_BASE_GEN_POOL_ALGO_NAME(genpool_algo_func_name) (ka_##genpool_algo_func_name)
 
 #define ka_base_gen_pool_create(min_alloc_order, nid) gen_pool_create(min_alloc_order, nid)
 #define ka_base_gen_pool_destroy(pool) gen_pool_destroy(pool)
@@ -361,9 +359,9 @@ static unsigned long ka_##genpool_algo_func_name(unsigned long *map, \
 
 #define ka_base_kasprintf kasprintf
 
-#define KA_IRQ_NONE         IRQ_NONE
-#define KA_IRQ_HANDLED      IRQ_HANDLED
-#define KA_IRQ_WAKE_THREAD  IRQ_WAKE_THREAD
+#define KA_IRQ_NONE IRQ_NONE
+#define KA_IRQ_HANDLED IRQ_HANDLED
+#define KA_IRQ_WAKE_THREAD IRQ_WAKE_THREAD
 
 #define ka_irqreturn_t irqreturn_t
 #define ka_irq_handler_t irq_handler_t
@@ -395,9 +393,11 @@ typedef struct scatterlist ka_scatterlist_t;
 #define ka_base_crc32_le(crc, p, len) crc32_le(crc, p, len)
 #define ka_base_crc32_le_shift(crc, len) crc32_le_shift(crc, len)
 #define ka_base_devm_ioremap(dev, resource_offset, resource_size) devm_ioremap(dev, resource_offset, resource_size)
-#define ka_base_devm_ioremap_nocache(dev, resource_offset, resource_size) devm_ioremap_nocache(dev, resource_offset, resource_size)
+#define ka_base_devm_ioremap_nocache(dev, resource_offset, resource_size) \
+    devm_ioremap_nocache(dev, resource_offset, resource_size)
 #define ka_base_devm_ioremap_resource(dev, res) devm_ioremap_resource(dev, res)
-#define ka_base_devm_ioremap_wc(dev, resource_offset, resource_size) devm_ioremap_wc(dev, resource_offset, resource_size)
+#define ka_base_devm_ioremap_wc(dev, resource_offset, resource_size) \
+    devm_ioremap_wc(dev, resource_offset, resource_size)
 #define ka_base_devm_iounmap(dev, addr) devm_iounmap(dev, addr)
 #define ka_base_pcim_iomap(pdev, bar, maxlen) pcim_iomap(pdev, bar, maxlen)
 #define ka_base_pcim_iomap_regions(pdev, mask, name) pcim_iomap_regions(pdev, mask, name)
@@ -446,7 +446,8 @@ typedef struct scatterlist ka_scatterlist_t;
 #define ka_base_radix_tree_lookup_slot(root, index) radix_tree_lookup_slot(root, index)
 #define ka_base_radix_tree_next_chunk(root, iter, flags) radix_tree_next_chunk(root, iter, flags)
 #define ka_base_radix_tree_tagged(root, tag) radix_tree_tagged(root, tag)
-#define ka_base_rbtree_postorder_for_each_entry_safe(node, tmp, rbtree, rbnode) rbtree_postorder_for_each_entry_safe(node, tmp, rbtree, rbnode)
+#define ka_base_rbtree_postorder_for_each_entry_safe(node, tmp, rbtree, rbnode) \
+    rbtree_postorder_for_each_entry_safe(node, tmp, rbtree, rbnode)
 #define KA_BASE_RADIX_TREE(name, mask) RADIX_TREE(name, mask)
 
 #define ka_base_prandom_u32_state(state) prandom_u32_state(state)
@@ -455,7 +456,8 @@ typedef struct scatterlist ka_scatterlist_t;
 
 #define ka_base_sg_set_page(sg, page, len, offset) sg_set_page(sg, page, len, offset)
 #define ka_base_sg_alloc_table(table, nents, gfp_mask) sg_alloc_table(table, nents, gfp_mask)
-#define ka_base_sg_alloc_table_from_pages(sgt, pages, n_pages, offset, size, gfp_mask) sg_alloc_table_from_pages(sgt, pages, n_pages, offset, size, gfp_mask)
+#define ka_base_sg_alloc_table_from_pages(sgt, pages, n_pages, offset, size, gfp_mask) \
+    sg_alloc_table_from_pages(sgt, pages, n_pages, offset, size, gfp_mask)
 #define ka_base_sg_copy_from_buffer(sgl, nents, buf, buflen) sg_copy_from_buffer(sgl, nents, buf, buflen)
 #define ka_base_sg_copy_to_buffer(sgl, nents, buf, buflen) sg_copy_to_buffer(sgl, nents, buf, buflen)
 #define ka_base_sg_free_table(table) sg_free_table(table)
@@ -491,10 +493,10 @@ u32 ka_base_get_random_u32(void);
 ka_module_t *ka_base_find_module(const char *name);
 typedef bool (*func_by_string)(const char *name);
 func_by_string ka_base_register_func_by_string(bool (*func_high_v)(const char *name),
-    bool (*func_low_v)(const char *name));
+                                               bool (*func_low_v)(const char *name));
 typedef bool (*func_by_pdev)(ka_pci_dev_t *pdev);
 func_by_pdev ka_base_register_func_by_pdev(bool (*func_high_v)(ka_pci_dev_t *pdev),
-    bool (*func_low_v)(ka_pci_dev_t *pdev));
+                                           bool (*func_low_v)(ka_pci_dev_t *pdev));
 #define ka_base_device_initialize(dev) device_initialize(dev)
 #define ka_base_kref_init(ka_kref_t) kref_init(ka_kref_t)
 #define ka_base_kref_get(ka_kref_t) kref_get(ka_kref_t)
@@ -609,7 +611,7 @@ static inline ka_kobject_t *ka_base_get_device_kobj(ka_device_t *dev)
 
 #define ka_base_idr_for_each_entry(idr, entry, id) idr_for_each_entry(idr, entry, id)
 #define ka_base_for_each_sg(sglist, sg, nr, __i) for_each_sg(sglist, sg, nr, __i)
-#define ka_base_for_each_online_cpu(cpu)    for_each_online_cpu(cpu)
+#define ka_base_for_each_online_cpu(cpu) for_each_online_cpu(cpu)
 
 static inline void ka_base_atomic_clear_mask(unsigned long mask, unsigned long *addr)
 {

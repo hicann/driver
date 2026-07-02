@@ -98,7 +98,10 @@ void dbl_get_available_cpu(u64 phy_bitmap, u32 *number, u64 *bitmap)
         return;
     }
 
-    ka_base_for_each_cpu(i, available_cpumask) { available_bitmap |= (1U << i); }
+    ka_base_for_each_cpu(i, available_cpumask)
+    {
+        available_bitmap |= (1U << i);
+    }
 #endif
 
     (*bitmap) = phy_bitmap & available_bitmap;

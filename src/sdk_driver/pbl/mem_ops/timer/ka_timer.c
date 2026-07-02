@@ -26,21 +26,21 @@
 
 #ifndef KA_TIMER_ST
 
-#define TIMER_INVALID_ID    0xFFFF
+#define TIMER_INVALID_ID 0xFFFF
 struct ka_sched_task_timer {
     ka_list_head_t node_list;
     ka_mutex_t node_lock;
     ka_hrtimer_t timer;
     ka_workqueue_struct_t *workqueue;
-    u32    task_nums;
-    u16    ids[MAX_TASK_NUMS];
+    u32 task_nums;
+    u16 ids[MAX_TASK_NUMS];
 };
 static struct ka_sched_task_timer g_timer = {{0}};
 
 struct devdrv_sched_task_node {
     ka_list_head_t list;
     ka_rcu_head_t rcu;
-    u32 expire_count;       // time period: ms / TIMER_STEP_MS
+    u32 expire_count; // time period: ms / TIMER_STEP_MS
     u32 cur_count;
     u32 node_id;
     u64 run_time;
@@ -56,7 +56,8 @@ STATIC ka_hrtimer_restart_t ka_timer_irq_handler(ka_hrtimer_t *htr)
     struct devdrv_sched_task_node *node = NULL;
 
     ka_task_rcu_read_lock();
-    ka_list_for_each_entry_rcu(node, &g_timer.node_list, list) {
+    ka_list_for_each_entry_rcu(node, &g_timer.node_list, list)
+    {
         if (node->cur_count > 1) {
             node->cur_count--;
             continue;
@@ -222,14 +223,14 @@ int ka_timer_task_register(const struct ka_timer_task *task, u32 *node_id)
 }
 KA_EXPORT_SYMBOL_GPL(ka_timer_task_register);
 
-
 int ka_timer_task_unregister(u32 node_id)
 {
 #ifndef KA_TIMER_ST
     struct devdrv_sched_task_node *node = NULL;
 
     ka_task_mutex_lock(&g_timer.node_lock);
-    ka_list_for_each_entry(node, &g_timer.node_list, list) {
+    ka_list_for_each_entry(node, &g_timer.node_list, list)
+    {
         if (node->node_id == node_id) {
             g_timer.task_nums--;
             ka_list_del_rcu(&node->list);
@@ -271,7 +272,7 @@ int ka_timer_init(void)
     }
     g_timer.timer.function = ka_timer_irq_handler;
     g_timer.task_nums = 0;
-    g_timer.workqueue =  ka_task_create_workqueue("ka_timer_common");
+    g_timer.workqueue = ka_task_create_workqueue("ka_timer_common");
 
     if (g_timer.workqueue == NULL) {
         ka_err("Timer task work queue is NULL.\n");
@@ -301,7 +302,8 @@ void ka_timer_uninit(void)
         ka_task_destroy_workqueue(g_timer.workqueue);
         g_timer.workqueue = NULL;
     }
-    ka_list_for_each_entry_safe(node, next, &g_timer.node_list, list) {
+    ka_list_for_each_entry_safe(node, next, &g_timer.node_list, list)
+    {
         if (node->workqueue != NULL) {
             ka_task_flush_workqueue(node->workqueue);
             ka_task_destroy_workqueue(node->workqueue);

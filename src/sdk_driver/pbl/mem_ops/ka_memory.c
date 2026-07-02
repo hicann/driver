@@ -171,8 +171,8 @@ void ka_kvfree(const void *addr, unsigned int module_id)
 }
 KA_EXPORT_SYMBOL_GPL(ka_kvfree);
 
-void *ka_dma_alloc_coherent(ka_device_t *dev, size_t size, ka_dma_addr_t *dma_handle,
-    ka_gfp_t gfp, unsigned int module_id)
+void *ka_dma_alloc_coherent(ka_device_t *dev, size_t size, ka_dma_addr_t *dma_handle, ka_gfp_t gfp,
+                            unsigned int module_id)
 {
     void *va = ka_mm_dma_alloc_coherent(dev, size, dma_handle, gfp);
     ka_mem_alloc_stat_add(module_id, size, (unsigned long)(uintptr_t)va);
@@ -181,7 +181,7 @@ void *ka_dma_alloc_coherent(ka_device_t *dev, size_t size, ka_dma_addr_t *dma_ha
 KA_EXPORT_SYMBOL_GPL(ka_dma_alloc_coherent);
 
 void ka_dma_free_coherent(ka_device_t *dev, size_t size, void *cpu_addr, ka_dma_addr_t dma_handle,
-    unsigned int module_id)
+                          unsigned int module_id)
 {
     ka_mem_alloc_stat_del((unsigned long)(uintptr_t)cpu_addr, module_id);
     ka_mm_dma_free_coherent(dev, size, cpu_addr, dma_handle);

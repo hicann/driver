@@ -19,21 +19,26 @@
 #ifdef STATIC_SKIP
 #define STATIC
 #else
-#define STATIC  static
+#define STATIC static
 #endif
 
 #define module_ka "kernel_adapt"
 
-#define ka_err(fmt, ...) drv_err(module_ka, \
-    "<%s:%d:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), ka_task_get_current_pid(), ##__VA_ARGS__)
-#define ka_warn(fmt, ...) drv_warn(module_ka, \
-    "<%s:%d:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), ka_task_get_current_pid(), ##__VA_ARGS__)
-#define ka_info(fmt, ...) drv_info(module_ka, \
-    "<%s:%d:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), ka_task_get_current_pid(), ##__VA_ARGS__)
-#define ka_event(fmt, ...) drv_event(module_ka, \
-    "<%s:%d:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), ka_task_get_current_pid(), ##__VA_ARGS__)
-#define ka_debug(fmt, ...) drv_pr_debug(module_ka, \
-    "<%s:%d:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), ka_task_get_current_pid(), ##__VA_ARGS__)
+#define ka_err(fmt, ...)                                                                          \
+    drv_err(module_ka, "<%s:%d:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), \
+            ka_task_get_current_pid(), ##__VA_ARGS__)
+#define ka_warn(fmt, ...)                                                                          \
+    drv_warn(module_ka, "<%s:%d:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), \
+             ka_task_get_current_pid(), ##__VA_ARGS__)
+#define ka_info(fmt, ...)                                                                          \
+    drv_info(module_ka, "<%s:%d:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), \
+             ka_task_get_current_pid(), ##__VA_ARGS__)
+#define ka_event(fmt, ...)                                                                          \
+    drv_event(module_ka, "<%s:%d:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), \
+              ka_task_get_current_pid(), ##__VA_ARGS__)
+#define ka_debug(fmt, ...)                                                                             \
+    drv_pr_debug(module_ka, "<%s:%d:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), \
+                 ka_task_get_current_pid(), ##__VA_ARGS__)
 
 int ka_mem_ops_module_init(void);
 void ka_mem_ops_module_exit(void);

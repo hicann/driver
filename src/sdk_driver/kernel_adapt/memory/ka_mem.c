@@ -55,10 +55,8 @@ ka_rw_semaphore_t *ka_mm_get_mmap_sem(ka_mm_struct_t *mm)
 }
 EXPORT_SYMBOL(ka_mm_get_mmap_sem);
 
-long ka_mm_pin_user_pages_remote(ka_task_struct_t *tsk, ka_mm_struct_t *mm,
-                                 unsigned long start, unsigned long nr_pages,
-                                 unsigned long gup_flags, ka_page_t **pages,
-                                 int *locked)
+long ka_mm_pin_user_pages_remote(ka_task_struct_t *tsk, ka_mm_struct_t *mm, unsigned long start, unsigned long nr_pages,
+                                 unsigned long gup_flags, ka_page_t **pages, int *locked)
 {
     long got_num;
 
@@ -81,11 +79,10 @@ long ka_mm_pin_user_pages_remote(ka_task_struct_t *tsk, ka_mm_struct_t *mm,
 }
 EXPORT_SYMBOL(ka_mm_pin_user_pages_remote);
 
-long ka_mm_get_user_pages_remote(ka_task_struct_t *tsk, ka_mm_struct_t *mm,
-    unsigned long long va, int write, unsigned int num, ka_page_t **pages)
+long ka_mm_get_user_pages_remote(ka_task_struct_t *tsk, ka_mm_struct_t *mm, unsigned long long va, int write,
+                                 unsigned int num, ka_page_t **pages)
 {
-    return ka_mm_pin_user_pages_remote(tsk, mm, va, num, (write != 0) ? FOLL_WRITE : 0,
-                                       pages, NULL);
+    return ka_mm_pin_user_pages_remote(tsk, mm, va, num, (write != 0) ? FOLL_WRITE : 0, pages, NULL);
 }
 EXPORT_SYMBOL(ka_mm_get_user_pages_remote);
 
@@ -249,7 +246,8 @@ void ka_mm_set_vm_mremap(ka_vm_operations_struct_t *ops_managed, int (*mremap_fu
 EXPORT_SYMBOL_GPL(ka_mm_set_vm_mremap);
 
 #ifndef EMU_ST
-bool ka_mm_is_svm_addr(struct vm_area_struct *vma, u64 addr) {
+bool ka_mm_is_svm_addr(struct vm_area_struct *vma, u64 addr)
+{
 #if LINUX_VERSION_CODE > KERNEL_VERSION(5, 2, 0)
 #ifndef DRV_HOST
     if (mg_is_sharepool_addr(addr)) {
@@ -605,8 +603,8 @@ int ka_mm_ram_record_init(void)
 
     range_rbtree_init(&g_ka_ram_record_tree);
 
-    ret = walk_iomem_res_desc(IORES_DESC_NONE, IORESOURCE_SYSTEM_RAM | IORESOURCE_BUSY,
-        0, ULLONG_MAX, &g_ka_ram_record_tree, ka_ram_record_walk_cb);
+    ret = walk_iomem_res_desc(IORES_DESC_NONE, IORESOURCE_SYSTEM_RAM | IORESOURCE_BUSY, 0, ULLONG_MAX,
+                              &g_ka_ram_record_tree, ka_ram_record_walk_cb);
     if ((ret != 0) && (ret != -ENOMEM)) {
         ka_mm_ram_record_uninit();
         return ret;

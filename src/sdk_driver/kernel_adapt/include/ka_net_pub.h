@@ -35,16 +35,16 @@
 
 #include "ka_common_pub.h"
 
-#define KA_GRO_MERGED      GRO_MERGED
+#define KA_GRO_MERGED GRO_MERGED
 #define KA_GRO_MERGED_FREE GRO_MERGED_FREE
-#define KA_GRO_HELD        GRO_HELD
-#define KA_GRO_NORMAL      GRO_NORMAL
-#define KA_GRO_DROP        GRO_DROP
-#define KA_GRO_CONSUMED    GRO_CONSUMED
+#define KA_GRO_HELD GRO_HELD
+#define KA_GRO_NORMAL GRO_NORMAL
+#define KA_GRO_DROP GRO_DROP
+#define KA_GRO_CONSUMED GRO_CONSUMED
 #define ka_gro_result_t gro_result_t
 
 #define KA_SKB_REASON_CONSUMED SKB_REASON_CONSUMED
-#define KA_SKB_REASON_DROPPED  SKB_REASON_DROPPED
+#define KA_SKB_REASON_DROPPED SKB_REASON_DROPPED
 typedef enum skb_free_reason ka_skb_free_reason_t;
 
 #define KA_ETH_ALEN ETH_ALEN
@@ -87,39 +87,27 @@ typedef struct inet6_dev ka_inet6_dev_t;
 typedef struct ethtool_ops ka_ethtool_ops_t;
 typedef struct ethtool_drvinfo ka_ethtool_drvinfo_t;
 typedef struct ethtool_stats ka_ethtool_stats_t;
-#define ka_ethtool_n_get_drvinfo(n_get_drvinfo) \
-    .get_drvinfo = n_get_drvinfo,
-#define ka_ethtool_n_get_link(n_get_link) \
-    .get_link = n_get_link,
-#define ka_ethtool_n_get_strings(n_get_strings) \
-    .get_strings = n_get_strings,
-#define ka_ethtool_n_get_sset_count(n_get_sset_count) \
-    .get_sset_count = n_get_sset_count,
-#define  ka_ethtool_n_get_ethtool_stats(n_get_ethtool_stats) \
-    .get_ethtool_stats = n_get_ethtool_stats,
+#define ka_ethtool_n_get_drvinfo(n_get_drvinfo) .get_drvinfo = n_get_drvinfo,
+#define ka_ethtool_n_get_link(n_get_link) .get_link = n_get_link,
+#define ka_ethtool_n_get_strings(n_get_strings) .get_strings = n_get_strings,
+#define ka_ethtool_n_get_sset_count(n_get_sset_count) .get_sset_count = n_get_sset_count,
+#define ka_ethtool_n_get_ethtool_stats(n_get_ethtool_stats) .get_ethtool_stats = n_get_ethtool_stats,
 
 typedef struct net_device_ops ka_net_device_ops_t;
-#define ka_net_n_ndo_open(n_ndo_open) \
-    .ndo_open = n_ndo_open,
-#define ka_net_n_ndo_stop(n_ndo_stop) \
-    .ndo_stop = n_ndo_stop,
-#define ka_net_n_ndo_start_xmit(n_ndo_start_xmit) \
-    .ndo_start_xmit = n_ndo_start_xmit,
+#define ka_net_n_ndo_open(n_ndo_open) .ndo_open = n_ndo_open,
+#define ka_net_n_ndo_stop(n_ndo_stop) .ndo_stop = n_ndo_stop,
+#define ka_net_n_ndo_start_xmit(n_ndo_start_xmit) .ndo_start_xmit = n_ndo_start_xmit,
 #ifndef RHEL_RELEASE_CODE
-#define ka_net_n_ndo_change_mtu(n_ndo_change_mtu) \
-    .ndo_change_mtu = n_ndo_change_mtu,
+#define ka_net_n_ndo_change_mtu(n_ndo_change_mtu) .ndo_change_mtu = n_ndo_change_mtu,
 #else
 #define ka_net_n_ndo_change_mtu(n_ndo_change_mtu)
 #endif
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 6, 0)
-#define ka_net_n_ndo_tx_timeout(n_ndo_tx_timeout_new, n_ndo_tx_timeout) \
-    .ndo_tx_timeout = n_ndo_tx_timeout_new,
+#define ka_net_n_ndo_tx_timeout(n_ndo_tx_timeout_new, n_ndo_tx_timeout) .ndo_tx_timeout = n_ndo_tx_timeout_new,
 #else
-#define ka_net_n_ndo_tx_timeout(n_ndo_tx_timeout_new, n_ndo_tx_timeout) \
-    .ndo_tx_timeout = n_ndo_tx_timeout,
+#define ka_net_n_ndo_tx_timeout(n_ndo_tx_timeout_new, n_ndo_tx_timeout) .ndo_tx_timeout = n_ndo_tx_timeout,
 #endif
-#define ka_net_n_ndo_get_stats(n_ndo_get_stats) \
-    .ndo_get_stats = n_ndo_get_stats,
+#define ka_net_n_ndo_get_stats(n_ndo_get_stats) .ndo_get_stats = n_ndo_get_stats,
 
 typedef struct net_device_stats ka_net_device_stats_t;
 static inline void ka_net_netdev_set_stats(ka_net_device_t *ndev, ka_net_device_stats_t *stats)
@@ -371,7 +359,7 @@ static inline size_t ka_net_copy_to_iter(void *addr, size_t bytes, ka_iov_iter_t
 #endif
 }
 
-static inline long long ka_net_get_ki_pos(ka_kiocb_t* iocb)
+static inline long long ka_net_get_ki_pos(ka_kiocb_t *iocb)
 {
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 6, 0)
     return iocb->ki_pos;
@@ -381,7 +369,7 @@ static inline long long ka_net_get_ki_pos(ka_kiocb_t* iocb)
 #endif
 }
 
-static inline void ka_net_set_ki_pos(ka_kiocb_t* iocb, long long ki_pos)
+static inline void ka_net_set_ki_pos(ka_kiocb_t *iocb, long long ki_pos)
 {
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 6, 0)
     iocb->ki_pos = ki_pos;
@@ -463,7 +451,8 @@ static inline void ka_net_set_ki_pos(ka_kiocb_t* iocb, long long ki_pos)
 #define ka_net_skb_copy_header(new_skb, old_skb) skb_copy_header(new_skb, old_skb)
 #define ka_net_skb_copy(skb, gfp_mask) skb_copy(skb, gfp_mask)
 #define ka_net_pskb_expand_head(skb, nhead, ntail, gfp_mask) pskb_expand_head(skb, nhead, ntail, gfp_mask)
-#define ka_net_skb_copy_expand(skb, newheadroom, newtailroom, priority) skb_copy_expand(skb, newheadroom, newtailroom, priority)
+#define ka_net_skb_copy_expand(skb, newheadroom, newtailroom, priority) \
+    skb_copy_expand(skb, newheadroom, newtailroom, priority)
 #define ka_net_skb_put(skb, len) skb_put(skb, len)
 #define ka_net_skb_push(skb, len) skb_push(skb, len)
 #define ka_net_skb_pull(skb, len) skb_pull(skb, len)
@@ -489,13 +478,15 @@ static inline void ka_net_set_ki_pos(ka_kiocb_t* iocb, long long ki_pos)
 #define ka_net_netlink_ns_capable(skb, user_ns, cap) netlink_ns_capable(skb, user_ns, cap)
 #define ka_net_netlink_capable(skb, cap) netlink_capable(skb, cap)
 #define ka_net_netlink_unicast(ssk, skb, portid, nonblock) netlink_unicast(ssk, skb, portid, nonblock)
-#define ka_net_netlink_broadcast(ssk, skb, portid, group, allocation) netlink_broadcast(ssk, skb, portid, group, allocation)
+#define ka_net_netlink_broadcast(ssk, skb, portid, group, allocation) \
+    netlink_broadcast(ssk, skb, portid, group, allocation)
 #define ka_net_netlink_kernel_create(net, unit, cfg) netlink_kernel_create(net, unit, cfg)
 #define ka_net_netlink_kernel_release(sk) netlink_kernel_release(sk)
 #define ka_net_nlmsg_put(skb, portid, seq, type, len, flags) nlmsg_put(skb, portid, seq, type, len, flags)
 #define ka_net_netlink_dump_start(ssk, skb, nlh, control) netlink_dump_start(ssk, skb, nlh, control)
 ka_net_device_t *ka_net_alloc_netdev(int sizeof_priv, const char *ndev_name);
-void ka_net_netif_napi_add(ka_net_device_t *ndev, ka_napi_struct_t *napi, int (*poll)(ka_napi_struct_t *, int), int weight);
+void ka_net_netif_napi_add(ka_net_device_t *ndev, ka_napi_struct_t *napi, int (*poll)(ka_napi_struct_t *, int),
+                           int weight);
 #ifndef EMU_ST
 #define ka_net_napi_gro_receive(napi, skb) napi_gro_receive(napi, skb)
 #define ka_net_netif_start_queue(kdev) netif_start_queue(kdev)
@@ -518,12 +509,11 @@ typedef struct sk_buff ka_sk_buff_t;
 #define ka_net_nla_put_64bit(skb, attrtype, attrlen, data, padattr) nla_put_64bit(skb, attrtype, attrlen, data, padattr)
 #define ka_net_nla_put_nohdr(skb, attrlen, data) nla_put_nohdr(skb, attrlen, data)
 
-#define KA_NETDEV_TX_OK   NETDEV_TX_OK
+#define KA_NETDEV_TX_OK NETDEV_TX_OK
 #define KA_NETDEV_TX_BUSY NETDEV_TX_BUSY
-#define ka_netdev_tx_t    netdev_tx_t
- 
-#define KA_CHECKSUM_NONE  CHECKSUM_NONE
+#define ka_netdev_tx_t netdev_tx_t
+
+#define KA_CHECKSUM_NONE CHECKSUM_NONE
 
 void ka_net_ether_addr_copy(ka_net_device_t *ndev, const unsigned char *mac);
 #endif
-

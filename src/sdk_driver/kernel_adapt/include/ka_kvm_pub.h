@@ -54,17 +54,16 @@ typedef struct kvm_memslots ka_kvm_memslots_t;
 #define ka_kvm_memslots(kvm) kvm_memslots(kvm)
 #define ka_kvm_is_error_hva(addr) kvm_is_error_hva(addr)
 
-#define KA_KVM_MEM_READONLY                 KVM_MEM_READONLY
-#define KA_NR_IOBUS_DEVS                    NR_IOBUS_DEVS
-#define KA_SZ_1G                            SZ_1G
+#define KA_KVM_MEM_READONLY KVM_MEM_READONLY
+#define KA_NR_IOBUS_DEVS NR_IOBUS_DEVS
+#define KA_SZ_1G SZ_1G
 
 ka_kvm_io_bus_t *ka_kvm_get_bus(ka_kvm_t *kvm, ka_kvm_bus_t idx);
 
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5,17,0))
-#define davinci_for_each_memslot(slot, slots, iter)  \
-    kvm_for_each_memslot(slot, iter, slots)
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 17, 0))
+#define davinci_for_each_memslot(slot, slots, iter) kvm_for_each_memslot(slot, iter, slots)
 #else
-#define davinci_for_each_memslot(slot, slots, iter)  \
+#define davinci_for_each_memslot(slot, slots, iter) \
     for ((iter) = 0; (iter) < (slots)->used_slots && ((slot) = &(slots)->memslots[(iter)]); (iter)++)
 #endif
 

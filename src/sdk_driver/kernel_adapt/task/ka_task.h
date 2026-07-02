@@ -14,5 +14,4 @@
 #ifndef KA_TASK_H
 #define KA_TASK_H
 
-
 #endif

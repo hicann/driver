@@ -41,12 +41,12 @@
 #ifndef STRUCT_TIMEVAL_SPEC
 #define STRUCT_TIMEVAL_SPEC
 struct timespec {
-    __kernel_old_time_t          tv_sec;         /* seconds */
-    long                    tv_nsec;        /* nanoseconds */
+    __kernel_old_time_t tv_sec; /* seconds */
+    long tv_nsec;               /* nanoseconds */
 };
 struct timeval {
-    __kernel_old_time_t          tv_sec;         /* seconds */
-    __kernel_suseconds_t    tv_usec;        /* microseconds */
+    __kernel_old_time_t tv_sec;   /* seconds */
+    __kernel_suseconds_t tv_usec; /* microseconds */
 };
 #endif
 #endif
@@ -62,7 +62,7 @@ static inline unsigned long __kallsyms_lookup_name(const char *name)
     if (name == NULL) {
         return 0;
     }
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 7, 0)) 
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 7, 0))
     symbol = (unsigned long)__symbol_get(name);
     if (symbol == 0) {
         return 0;
@@ -82,7 +82,7 @@ static inline unsigned long __kallsyms_get(const char *name)
     if (name == NULL) {
         return 0;
     }
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 7, 0)) 
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 7, 0))
     symbol = (unsigned long)__symbol_get(name);
     if (symbol == 0) {
         return 0;
@@ -129,7 +129,6 @@ static inline struct rw_semaphore *get_mmap_sem(struct mm_struct *mm)
 #endif
 }
 
-
 static inline void *ka_vmalloc(unsigned long size, gfp_t gfp_mask, pgprot_t prot)
 {
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 8, 0))
@@ -159,8 +158,7 @@ static inline struct timespec current_kernel_time(void)
 #define EXPORT_SYMBOL_ADAPT EXPORT_SYMBOL
 #endif
 
-static inline int ka_single_open(struct inode *inode, struct file *file,
-    int (*show)(struct seq_file *, void *))
+static inline int ka_single_open(struct inode *inode, struct file *file, int (*show)(struct seq_file *, void *))
 {
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 17, 0)
     return single_open(file, show, pde_data(inode));
@@ -168,7 +166,7 @@ static inline int ka_single_open(struct inode *inode, struct file *file,
     return single_open(file, show, PDE_DATA(inode));
 #endif
 }
- 
+
 static inline void ka_vm_flags_set(struct vm_area_struct *vma, vm_flags_t flags)
 {
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 3, 0)
@@ -192,4 +190,4 @@ static inline void ka_vm_flags_set(struct vm_area_struct *vma, vm_flags_t flags)
 #endif
 #endif
 
-#endif  /* __KERNEL_VERSION_ADAPT_H */
+#endif /* __KERNEL_VERSION_ADAPT_H */

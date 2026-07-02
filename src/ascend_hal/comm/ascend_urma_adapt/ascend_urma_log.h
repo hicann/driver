@@ -19,19 +19,19 @@
 #endif
 
 #ifndef EMU_ST
-#define ascend_urma_err(fmt, ...)         DRV_ERR(HAL_MODULE_TYPE_ASCEND_URMA_ADAPT, "<errno:%d, %d> " fmt, errno, \
-    errno_to_user_errno(errno), ##__VA_ARGS__)
+#define ascend_urma_err(fmt, ...) \
+    DRV_ERR(HAL_MODULE_TYPE_ASCEND_URMA_ADAPT, "<errno:%d, %d> " fmt, errno, errno_to_user_errno(errno), ##__VA_ARGS__)
 #else
-#define ascend_urma_err(fmt, ...)         DRV_ERR(HAL_MODULE_TYPE_ASCEND_URMA_ADAPT, fmt, ##__VA_ARGS__)
+#define ascend_urma_err(fmt, ...) DRV_ERR(HAL_MODULE_TYPE_ASCEND_URMA_ADAPT, fmt, ##__VA_ARGS__)
 #endif
 
-#define ascend_urma_warn(fmt, ...)        DRV_WARN(HAL_MODULE_TYPE_ASCEND_URMA_ADAPT, fmt, ##__VA_ARGS__)
-#define ascend_urma_info(fmt, ...)        DRV_INFO(HAL_MODULE_TYPE_ASCEND_URMA_ADAPT, fmt, ##__VA_ARGS__)
-#define ascend_urma_debug(fmt, ...)       DRV_DEBUG(HAL_MODULE_TYPE_ASCEND_URMA_ADAPT, fmt, ##__VA_ARGS__)
+#define ascend_urma_warn(fmt, ...) DRV_WARN(HAL_MODULE_TYPE_ASCEND_URMA_ADAPT, fmt, ##__VA_ARGS__)
+#define ascend_urma_info(fmt, ...) DRV_INFO(HAL_MODULE_TYPE_ASCEND_URMA_ADAPT, fmt, ##__VA_ARGS__)
+#define ascend_urma_debug(fmt, ...) DRV_DEBUG(HAL_MODULE_TYPE_ASCEND_URMA_ADAPT, fmt, ##__VA_ARGS__)
 /* alarm event log, non-alarm events use debug or run log */
-#define ascend_urma_event(fmt, ...)       DRV_EVENT(HAL_MODULE_TYPE_ASCEND_URMA_ADAPT, fmt, ##__VA_ARGS__)
+#define ascend_urma_event(fmt, ...) DRV_EVENT(HAL_MODULE_TYPE_ASCEND_URMA_ADAPT, fmt, ##__VA_ARGS__)
 /* infrequent log level */
-#define ascend_urma_notice(fmt, ...)      DRV_NOTICE(HAL_MODULE_TYPE_ASCEND_URMA_ADAPT, fmt, ##__VA_ARGS__)
+#define ascend_urma_notice(fmt, ...) DRV_NOTICE(HAL_MODULE_TYPE_ASCEND_URMA_ADAPT, fmt, ##__VA_ARGS__)
 #define ascend_urma_run_info(fmt, ...)
 
 #endif

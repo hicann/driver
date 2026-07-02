@@ -20,20 +20,25 @@
 #ifdef STATIC_SKIP
 #define STATIC
 #else
-#define STATIC  static
+#define STATIC static
 #endif
 
 #define module_ka "kernel_adapt"
 
-#define ka_err(fmt, ...)    printk(KERN_ERR "[ascend][ERROR][%s][%s %d]<%s:%d>" fmt, module_ka,     \
-        __func__, __LINE__, current->comm, current->tgid, ##__VA_ARGS__)
-#define ka_warn(fmt, ...)   printk(KERN_WARNING "[ascend][WARN][%s][%s %d]<%s:%d>" fmt, module_ka,  \
-        __func__, __LINE__, current->comm, current->tgid, ##__VA_ARGS__)
-#define ka_info(fmt, ...)   printk(KERN_INFO "[ascend][INFO][%s][%s %d]<%s:%d>" fmt, module_ka,     \
-        __func__, __LINE__, current->comm, current->tgid, ##__VA_ARGS__)
-#define ka_event(fmt, ...)  printk(KERN_NOTICE "[ascend][EVENT][%s][%s %d]<%s:%d>" fmt, module_ka,  \
-        __func__, __LINE__, current->comm, current->tgid, ##__VA_ARGS__)
-#define ka_debug(fmt, ...)  printk(KERN_DEBUG "[ascend][DBG][%s][%s %d]<%s:%d>" fmt, module_ka,     \
-        __func__, __LINE__, current->comm, current->tgid, ##__VA_ARGS__)
+#define ka_err(fmt, ...)                                                                                   \
+    printk(KERN_ERR "[ascend][ERROR][%s][%s %d]<%s:%d>" fmt, module_ka, __func__, __LINE__, current->comm, \
+           current->tgid, ##__VA_ARGS__)
+#define ka_warn(fmt, ...)                                                                                     \
+    printk(KERN_WARNING "[ascend][WARN][%s][%s %d]<%s:%d>" fmt, module_ka, __func__, __LINE__, current->comm, \
+           current->tgid, ##__VA_ARGS__)
+#define ka_info(fmt, ...)                                                                                  \
+    printk(KERN_INFO "[ascend][INFO][%s][%s %d]<%s:%d>" fmt, module_ka, __func__, __LINE__, current->comm, \
+           current->tgid, ##__VA_ARGS__)
+#define ka_event(fmt, ...)                                                                                    \
+    printk(KERN_NOTICE "[ascend][EVENT][%s][%s %d]<%s:%d>" fmt, module_ka, __func__, __LINE__, current->comm, \
+           current->tgid, ##__VA_ARGS__)
+#define ka_debug(fmt, ...)                                                                                 \
+    printk(KERN_DEBUG "[ascend][DBG][%s][%s %d]<%s:%d>" fmt, module_ka, __func__, __LINE__, current->comm, \
+           current->tgid, ##__VA_ARGS__)
 
 #endif

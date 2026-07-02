@@ -144,8 +144,8 @@ ka_mm_struct_t *ka_task_get_current_mm(void)
 }
 EXPORT_SYMBOL_GPL(ka_task_get_current_mm);
 
-unsigned long ka_task_get_current_get_unmapped_area(ka_file_t *filep,
-        unsigned long addr, unsigned long len, unsigned long pgoff, unsigned long flags)
+unsigned long ka_task_get_current_get_unmapped_area(ka_file_t *filep, unsigned long addr, unsigned long len,
+                                                    unsigned long pgoff, unsigned long flags)
 {
     return current->mm->get_unmapped_area(filep, addr, len, pgoff, flags);
 }
@@ -316,8 +316,7 @@ static int new_cpuset_read(char *buf, size_t count)
         return -EINVAL;
     }
 
-    retval = ka_task_cgroup_path_ns(css->cgroup, buf,
-        count, ka_task_get_current_cgroup_ns());
+    retval = ka_task_cgroup_path_ns(css->cgroup, buf, count, ka_task_get_current_cgroup_ns());
     ka_task_css_put(css);
     if (retval <= 0) {
         return -EINVAL;
@@ -346,7 +345,7 @@ EXPORT_SYMBOL_GPL(ka_task_kernel_read);
 
 void ka_use_mm(ka_mm_struct_t *mm)
 {
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5,8,0))
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 8, 0))
     kthread_use_mm(mm);
 #else
     use_mm(mm);
@@ -356,7 +355,7 @@ EXPORT_SYMBOL_GPL(ka_use_mm);
 
 void ka_unuse_mm(ka_mm_struct_t *mm)
 {
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5,8,0))
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 8, 0))
     kthread_unuse_mm(mm);
 #else
     unuse_mm(mm);
@@ -366,7 +365,7 @@ EXPORT_SYMBOL_GPL(ka_unuse_mm);
 
 const ka_cpumask_t *ka_get_cpumask(ka_task_struct_t *task)
 {
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5,3,0))
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 3, 0))
     return &(task->cpus_mask);
 #else
     return cpu_possible_mask;

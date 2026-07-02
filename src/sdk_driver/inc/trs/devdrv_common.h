@@ -44,38 +44,32 @@
 #define devdrv_drv_err_extend(fmt, ...) drv_err(module_devdrv, fmt, ##__VA_ARGS__)
 #else
 #ifdef CFG_FEATURE_SHARE_LOG
-#define devdrv_drv_err(fmt, ...)                                                                      \
-    do {                                                                                              \
-        drv_err(                                                                                      \
-            module_devdrv, "<%s:%d,%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), \
-            ka_task_get_current_pid(), ##__VA_ARGS__);                                                \
-        share_log_err(DEVMNG_SHARE_LOG_START, fmt, ##__VA_ARGS__);                                    \
+#define devdrv_drv_err(fmt, ...)                                                                          \
+    do {                                                                                                  \
+        drv_err(module_devdrv, "<%s:%d,%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), \
+                ka_task_get_current_pid(), ##__VA_ARGS__);                                                \
+        share_log_err(DEVMNG_SHARE_LOG_START, fmt, ##__VA_ARGS__);                                        \
     } while (0)
 #else
-#define devdrv_drv_err(fmt, ...)                                                                      \
-    do {                                                                                              \
-        drv_err(                                                                                      \
-            module_devdrv, "<%s:%d,%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), \
-            ka_task_get_current_pid(), ##__VA_ARGS__);                                                \
+#define devdrv_drv_err(fmt, ...)                                                                          \
+    do {                                                                                                  \
+        drv_err(module_devdrv, "<%s:%d,%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), \
+                ka_task_get_current_pid(), ##__VA_ARGS__);                                                \
     } while (0)
 #endif
 
-#define devdrv_drv_warn(fmt, ...)                                                                 \
-    drv_warn(                                                                                     \
-        module_devdrv, "<%s:%d,%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), \
-        ka_task_get_current_pid(), ##__VA_ARGS__)
-#define devdrv_drv_info(fmt, ...)                                                                 \
-    drv_info(                                                                                     \
-        module_devdrv, "<%s:%d,%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), \
-        ka_task_get_current_pid(), ##__VA_ARGS__)
-#define devdrv_drv_event(fmt, ...)                                                                \
-    drv_event(                                                                                    \
-        module_devdrv, "<%s:%d,%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), \
-        ka_task_get_current_pid(), ##__VA_ARGS__)
-#define devdrv_drv_debug(fmt, ...)                                                                \
-    drv_pr_debug(                                                                                 \
-        module_devdrv, "<%s:%d,%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), \
-        ka_task_get_current_pid(), ##__VA_ARGS__)
+#define devdrv_drv_warn(fmt, ...)                                                                      \
+    drv_warn(module_devdrv, "<%s:%d,%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), \
+             ka_task_get_current_pid(), ##__VA_ARGS__)
+#define devdrv_drv_info(fmt, ...)                                                                      \
+    drv_info(module_devdrv, "<%s:%d,%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), \
+             ka_task_get_current_pid(), ##__VA_ARGS__)
+#define devdrv_drv_event(fmt, ...)                                                                      \
+    drv_event(module_devdrv, "<%s:%d,%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), \
+              ka_task_get_current_pid(), ##__VA_ARGS__)
+#define devdrv_drv_debug(fmt, ...)                                                                         \
+    drv_pr_debug(module_devdrv, "<%s:%d,%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), \
+                 ka_task_get_current_pid(), ##__VA_ARGS__)
 
 #define devdrv_drv_err_extend(ret, no_err_code, fmt, ...) \
     do {                                                  \
@@ -93,14 +87,14 @@
 #define devdrv_drv_event_spinlock(fmt, ...)
 #define devdrv_drv_debug_spinlock(fmt, ...)
 
-#define devdrv_log_adust(times, fmt, ...)                                                                              \
-    do {                                                                                                               \
-        if (times >= IPC_RETRY_TIME)                                                                                   \
-            drv_err(                                                                                                   \
-                module_devdrv, "<%s:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), ##__VA_ARGS__); \
-        else                                                                                                           \
-            drv_warn(                                                                                                  \
-                module_devdrv, "<%s:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), ##__VA_ARGS__); \
+#define devdrv_log_adust(times, fmt, ...)                                                                   \
+    do {                                                                                                    \
+        if (times >= IPC_RETRY_TIME)                                                                        \
+            drv_err(module_devdrv, "<%s:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(),  \
+                    ##__VA_ARGS__);                                                                         \
+        else                                                                                                \
+            drv_warn(module_devdrv, "<%s:%d> " fmt, ka_task_get_current_comm(), ka_task_get_current_tgid(), \
+                     ##__VA_ARGS__);                                                                        \
     } while (0)
 
 #define DEVDRV_SQ_VF_FLOOR_MIN 8 // less than or equal to 1/16 computing power 8 proc
@@ -206,7 +200,11 @@
 #define DEVDRV_CBCQ_MAX_GID 1024
 #define ARMv8_Cortex_A55 0x41d05
 
-enum devdrv_power_mode { DEVDRV_LOW_POWER = 0x0, DEVDRV_NORMAL_POWER, DEVDRV_MAX_MODE };
+enum devdrv_power_mode {
+    DEVDRV_LOW_POWER = 0x0,
+    DEVDRV_NORMAL_POWER,
+    DEVDRV_MAX_MODE
+};
 
 enum devdrv_device_status {
     DRV_STATUS_INITING = 0x0,
@@ -217,7 +215,10 @@ enum devdrv_device_status {
     DRV_STATUS_RESERVED
 };
 
-enum hccl_trans_way { DRV_SDMA = 0x0, DRV_PCIE_DMA };
+enum hccl_trans_way {
+    DRV_SDMA = 0x0,
+    DRV_PCIE_DMA
+};
 
 #if defined(CFG_SOC_PLATFORM_CLOUD_V2) || defined(CFG_SOC_PLATFORM_MINIV3)
 struct devdrv_report {
@@ -739,9 +740,9 @@ struct tsdrv_drv_ops {
     int (*functional_send_sq)(u32 devid, u32 tsid, u32 sq_index, const u8 *buffer, u32 buf_len);
     void (*destroy_functional_sq)(u32 devid, u32 tsid, u32 sq_index);
 
-    int (*create_functional_cq)(
-        u32 devid, u32 tsid, u32 slot_len, u32 cq_type,
-        void (*callback)(u32 device_id, u32 tsid, const u8 *cq_slot, u8 *sq_slot), u32 *cq_index, u64 *addr);
+    int (*create_functional_cq)(u32 devid, u32 tsid, u32 slot_len, u32 cq_type,
+                                void (*callback)(u32 device_id, u32 tsid, const u8 *cq_slot, u8 *sq_slot),
+                                u32 *cq_index, u64 *addr);
     int (*functional_set_cq_func)(u32 devid, u32 tsid, u32 cq_index, enum devdrv_cqsq_func function);
     void (*destroy_functional_cq)(u32 devid, u32 tsid, u32 cq_index);
 
@@ -802,10 +803,16 @@ struct tsdrv_msg_info {
 };
 
 /* bit 0 sq side, bit 1 cq side */
-enum tsdrv_sqcq_addr_side_type { TSDRV_SQCQ_SIDE_SQ_BIT = 0, TSDRV_SQCQ_SIDE_CQ_BIT = 1 };
+enum tsdrv_sqcq_addr_side_type {
+    TSDRV_SQCQ_SIDE_SQ_BIT = 0,
+    TSDRV_SQCQ_SIDE_CQ_BIT = 1
+};
 
 /* device: 0 host: 1 */
-enum tsdrv_mem_type { TSDRV_MEM_ON_DEVICE_SIDE = 0, TSDRV_MEM_ON_HOST_SIDE = 1 };
+enum tsdrv_mem_type {
+    TSDRV_MEM_ON_DEVICE_SIDE = 0,
+    TSDRV_MEM_ON_HOST_SIDE = 1
+};
 
 struct devdrv_sq_sub_info {
     u32 index;

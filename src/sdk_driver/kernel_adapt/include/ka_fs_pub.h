@@ -34,99 +34,72 @@
 
 #include "ka_common_pub.h"
 
-#define KA_POLLIN       POLLIN
-#define KA_POLLERR      POLLERR
-#define KA_POLLRDNORM   POLLRDNORM
+#define KA_POLLIN POLLIN
+#define KA_POLLERR POLLERR
+#define KA_POLLRDNORM POLLRDNORM
 
-#define KA_S_IRUGO      S_IRUGO
-#define KA_S_IRUSR      S_IRUSR
-#define KA_S_IRGRP      S_IRGRP
-#define KA_S_IWUSR      S_IWUSR
-#define KA_S_IWGRP      S_IWGRP
-#define KA_S_IROTH      S_IROTH
-#define KA_S_ISDIR      S_ISDIR
+#define KA_S_IRUGO S_IRUGO
+#define KA_S_IRUSR S_IRUSR
+#define KA_S_IRGRP S_IRGRP
+#define KA_S_IWUSR S_IWUSR
+#define KA_S_IWGRP S_IWGRP
+#define KA_S_IROTH S_IROTH
+#define KA_S_ISDIR S_ISDIR
 
-#define KA_O_WRONLY     O_WRONLY
-#define KA_O_RDONLY     O_RDONLY
-#define KA_O_CREAT      O_CREAT
-#define KA_O_RDWR       O_RDWR
-#define KA_O_TRUNC      O_TRUNC
-#define KA_O_LARGEFILE  O_LARGEFILE
+#define KA_O_WRONLY O_WRONLY
+#define KA_O_RDONLY O_RDONLY
+#define KA_O_CREAT O_CREAT
+#define KA_O_RDWR O_RDWR
+#define KA_O_TRUNC O_TRUNC
+#define KA_O_LARGEFILE O_LARGEFILE
 
-#define KA_LOOKUP_FOLLOW    LOOKUP_FOLLOW
+#define KA_LOOKUP_FOLLOW LOOKUP_FOLLOW
 
 typedef struct vfsmount ka_vfsmount_t;
 typedef struct attribute ka_attribute_t;
 typedef struct virqfd ka_virqfd_t;
-#define ka_fs_get_dev_attr(dev_attr) \
-    &dev_attr.attr,
+#define ka_fs_get_dev_attr(dev_attr) &dev_attr.attr,
 
 typedef struct attribute_group ka_attribute_group_t;
-#define ka_fs_init_ag_name(ag_name) \
-    .name = ag_name,
-#define ka_fs_init_ag_attrs(ag_attrs) \
-    .attrs = ag_attrs,
+#define ka_fs_init_ag_name(ag_name) .name = ag_name,
+#define ka_fs_init_ag_attrs(ag_attrs) .attrs = ag_attrs,
 
 typedef struct file_operations ka_file_operations_t;
-#define ka_fs_init_f_owner(f_owner) \
-    .owner = f_owner,
-#define ka_fs_init_f_llseek(f_llseek) \
-    .llseek = f_llseek,
-#define ka_fs_init_f_read(f_read) \
-    .read = f_read,
-#define ka_fs_init_f_write(f_write) \
-    .write = f_write,
-#define ka_fs_init_f_poll(f_poll) \
-    .poll = f_poll,
-#define ka_fs_init_f_unlocked_ioctl(f_unlocked_ioctl) \
-    .unlocked_ioctl = f_unlocked_ioctl,
-#define ka_fs_init_f_compat_ioctl(f_compat_ioctl) \
-    .compat_ioctl = f_compat_ioctl,
-#define ka_fs_init_f_mmap(f_mmap) \
-    .mmap = f_mmap,
-#define ka_fs_init_f_open(f_open) \
-    .open = f_open,
-#define ka_fs_init_f_release(f_release) \
-    .release = f_release,
-#define ka_fs_init_f_get_unmapped_area(f_get_unmapped_area) \
-    .get_unmapped_area = f_get_unmapped_area,
-#define ka_fs_init_f_check_flags(f_check_flags) \
-    .check_flags = f_check_flags,
+#define ka_fs_init_f_owner(f_owner) .owner = f_owner,
+#define ka_fs_init_f_llseek(f_llseek) .llseek = f_llseek,
+#define ka_fs_init_f_read(f_read) .read = f_read,
+#define ka_fs_init_f_write(f_write) .write = f_write,
+#define ka_fs_init_f_poll(f_poll) .poll = f_poll,
+#define ka_fs_init_f_unlocked_ioctl(f_unlocked_ioctl) .unlocked_ioctl = f_unlocked_ioctl,
+#define ka_fs_init_f_compat_ioctl(f_compat_ioctl) .compat_ioctl = f_compat_ioctl,
+#define ka_fs_init_f_mmap(f_mmap) .mmap = f_mmap,
+#define ka_fs_init_f_open(f_open) .open = f_open,
+#define ka_fs_init_f_release(f_release) .release = f_release,
+#define ka_fs_init_f_get_unmapped_area(f_get_unmapped_area) .get_unmapped_area = f_get_unmapped_area,
+#define ka_fs_init_f_check_flags(f_check_flags) .check_flags = f_check_flags,
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 6, 0)
 typedef struct proc_ops ka_procfs_ops_t;
 #define ka_fs_init_pf_owner(pf_owner)
-#define ka_fs_init_pf_open(pf_open) \
-    .proc_open = pf_open,
-#define ka_fs_init_pf_read(pf_read) \
-    .proc_read = pf_read,
+#define ka_fs_init_pf_open(pf_open) .proc_open = pf_open,
+#define ka_fs_init_pf_read(pf_read) .proc_read = pf_read,
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 10, 0)
-#define ka_fs_init_pf_read_iter(pf_read_iter) \
-    .proc_read_iter = pf_read_iter,
+#define ka_fs_init_pf_read_iter(pf_read_iter) .proc_read_iter = pf_read_iter,
 #else
 #define ka_fs_init_pf_read_iter(pf_read_iter)
 #endif
-#define ka_fs_init_pf_write(pf_write) \
-    .proc_write = pf_write,
-#define ka_fs_init_pf_lseek(pf_lseek) \
-    .proc_lseek = pf_lseek,
-#define ka_fs_init_pf_release(pf_release) \
-    .proc_release = pf_release,
+#define ka_fs_init_pf_write(pf_write) .proc_write = pf_write,
+#define ka_fs_init_pf_lseek(pf_lseek) .proc_lseek = pf_lseek,
+#define ka_fs_init_pf_release(pf_release) .proc_release = pf_release,
 #else
 typedef struct file_operations ka_procfs_ops_t;
-#define ka_fs_init_pf_owner(pf_owner) \
-    .owner = pf_owner,
-#define ka_fs_init_pf_open(pf_open) \
-    .open = pf_open,
-#define ka_fs_init_pf_read(pf_read) \
-    .read = pf_read,
+#define ka_fs_init_pf_owner(pf_owner) .owner = pf_owner,
+#define ka_fs_init_pf_open(pf_open) .open = pf_open,
+#define ka_fs_init_pf_read(pf_read) .read = pf_read,
 #define ka_fs_init_pf_read_iter(pf_read_iter)
-#define ka_fs_init_pf_write(pf_write) \
-    .write = pf_write,
-#define ka_fs_init_pf_lseek(pf_lseek) \
-    .llseek = pf_lseek,
-#define ka_fs_init_pf_release(pf_release) \
-    .release = pf_release,
+#define ka_fs_init_pf_write(pf_write) .write = pf_write,
+#define ka_fs_init_pf_lseek(pf_lseek) .llseek = pf_lseek,
+#define ka_fs_init_pf_release(pf_release) .release = pf_release,
 #endif
 
 static inline void *ka_fs_get_file_private_data(ka_file_t *file)
@@ -176,14 +149,14 @@ static inline void *ka_fs_get_seq_file_private(ka_seq_file_t *seq_file)
 #define ka_fs_seq_write seq_write
 #define ka_fs_seq_lseek seq_lseek
 #define ka_fs_seq_printf seq_printf
-#define ka_fs_generic_file_llseek_size(file, offset, whence, maxsize, eof) generic_file_llseek_size(file, offset, whence, maxsize, eof)
+#define ka_fs_generic_file_llseek_size(file, offset, whence, maxsize, eof) \
+    generic_file_llseek_size(file, offset, whence, maxsize, eof)
 #define ka_fs_generic_file_llseek(file, offset, whence) generic_file_llseek(file, offset, whence)
 #define ka_fs_no_llseek(file, offset, whence) no_llseek(file, offset, whence)
 #define ka_fs_vfs_llseek(file, offset, whence) vfs_llseek(file, offset, whence)
 ssize_t ka_fs_kernel_read(ka_file_t *file, void *buf, size_t count, loff_t *pos);
 ssize_t ka_fs_kernel_write(ka_file_t *file, const void *buf, size_t count, loff_t *pos);
 #define ka_fs_vfs_read(file, buf, count, pos) vfs_read(file, buf, count, pos)
-
 
 #define ka_fs_path_get(path) path_get(path)
 #define ka_fs_path_put(path) path_put(path)
@@ -207,13 +180,15 @@ ssize_t ka_fs_kernel_write(ka_file_t *file, const void *buf, size_t count, loff_
 #define ka_fs_proc_create_mount_point(name) proc_create_mount_point(name)
 #define ka_fs_proc_create_data(name, mode, parent, fops, data) proc_create_data(name, mode, parent, fops, data)
 #define ka_fs_proc_create(name, mode, parent, fops) proc_create(name, mode, parent, fops)
-#define ka_fs_proc_create_seq_private(name, mode, parent, ops, state_size, data) proc_create_seq_private(name, mode, parent, ops, state_size, data)
-#define ka_fs_proc_create_single_data(name, mode, parent, show, data) proc_create_single_data(name, mode, parent, show, data)
+#define ka_fs_proc_create_seq_private(name, mode, parent, ops, state_size, data) \
+    proc_create_seq_private(name, mode, parent, ops, state_size, data)
+#define ka_fs_proc_create_single_data(name, mode, parent, show, data) \
+    proc_create_single_data(name, mode, parent, show, data)
 #define ka_fs_remove_proc_entry(name, parent) remove_proc_entry(name, parent)
 #define ka_fs_remove_proc_subtree(name, parent) remove_proc_subtree(name, parent)
 #define ka_fs_proc_remove(de) proc_remove(de)
 
-#define ka_fs_kobject_set_name  kobject_set_name
+#define ka_fs_kobject_set_name kobject_set_name
 #define ka_fs_register_chrdev_region(from, count, name) register_chrdev_region(from, count, name)
 #define ka_fs_unregister_chrdev_region(from, count) unregister_chrdev_region(from, count)
 #define ka_fs_alloc_chrdev_region(dev, baseminor, count, name) alloc_chrdev_region(dev, baseminor, count, name)
@@ -242,8 +217,10 @@ static inline long long ka_fs_get_kstat_size(ka_kstat_t *stat)
 }
 int ka_fs_vfs_getattr(ka_path_t *path, ka_kstat_t *stat, u32 request_mask, unsigned int query_flags);
 ssize_t ka_fs_read_file(ka_file_t *file, loff_t *pos, char *addr, size_t count);
-#define ka_fs_simple_read_from_buffer(to, count, ppos, from, available) simple_read_from_buffer(to, count, ppos, from, available)
-#define ka_fs_simple_write_to_buffer(to, available, ppos, from, count) simple_write_to_buffer(to, available, ppos, from, count)
+#define ka_fs_simple_read_from_buffer(to, count, ppos, from, available) \
+    simple_read_from_buffer(to, count, ppos, from, available)
+#define ka_fs_simple_write_to_buffer(to, available, ppos, from, count) \
+    simple_write_to_buffer(to, available, ppos, from, count)
 #define ka_fs_kfree_link(p) kfree_link(p)
 #define ka_fs_filp_open(filename, flags, mode) filp_open(filename, flags, mode)
 #define ka_fs_filp_close(filp, id) filp_close(filp, id)

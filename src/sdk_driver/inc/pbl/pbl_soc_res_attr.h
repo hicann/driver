@@ -21,30 +21,30 @@
 #define HW_INFO_RESERVED_LEN 2
 typedef struct soc_res_board_hw_info {
     u8 chip_id;
-    u8 multi_chip;  /* multi-chip or single-chip */
-    u8 multi_die;   /* multi-die or single-die */
+    u8 multi_chip; /* multi-chip or single-chip */
+    u8 multi_die;  /* multi-die or single-die */
     u8 mainboard_id;
-    u16 addr_mode;  /* host and device addressing mode. 0: independent, 1: unified */
+    u16 addr_mode; /* host and device addressing mode. 0: independent, 1: unified */
     u16 board_id;
 
-    u8 version; /* data version */
-    u8 inter_connect_type;  /* connect mode. 0: pcie, 1: hccs */
-    u16 hccs_hpcs_bitmap;   /* hccs lane info */
+    u8 version;            /* data version */
+    u8 inter_connect_type; /* connect mode. 0: pcie, 1: hccs */
+    u16 hccs_hpcs_bitmap;  /* hccs lane info */
 
-    u16 server_id;  /* super pod server ID */
-    u16 scale_type; /* super pod scale type */
-    u32 super_pod_id;   /* super pod ID */
+    u16 server_id;    /* super pod server ID */
+    u16 scale_type;   /* super pod scale type */
+    u32 super_pod_id; /* super pod ID */
 
-    u16 chassis_id;  /* supor global frame number */
-    u8  super_pod_type; /* 1D/2D */
+    u16 chassis_id;    /* supor global frame number */
+    u8 super_pod_type; /* 1D/2D */
     u8 slot_id;
     u8 super_pod_intercon_type;
     u8 reserved2[HW_INFO_RESERVED_LEN];
 } soc_res_board_hw_info_t;
 
 /* soc version */
-#define SOC_VERSION    "soc_ver"
-#define SOC_VERSION_LEN  32
+#define SOC_VERSION "soc_ver"
+#define SOC_VERSION_LEN 32
 
 #define EID_SIZE 16
 #define MAX_EID_NUM_PER_VNPU 8
@@ -66,4 +66,3 @@ struct ascend_urma_dev_info {
     u32 die_id;
 };
 #endif /* PBL_SOC_RES_ATTR_H */
-

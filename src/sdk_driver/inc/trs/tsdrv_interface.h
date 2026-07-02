@@ -89,8 +89,8 @@ void tsdrv_set_chan_complete_handle(void *handle, void (*cq_report_handle)(void 
 
 int tsdrv_submit_task(void *handle, const void *sqe, u32 timeout);
 void *tsdrv_task_submit_chan_create(u32 devid, u32 vfid, u32 tsid, int type, u32 sq_depth, u32 cq_depth);
-void *tsdrv_create_task_topic_sched_submit_chan(
-    u32 devid, u32 vfid, u32 tsid, int type, u32 sq_depth, u32 cq_depth, u32 pool_id, u32 pri);
+void *tsdrv_create_task_topic_sched_submit_chan(u32 devid, u32 vfid, u32 tsid, int type, u32 sq_depth, u32 cq_depth,
+                                                u32 pool_id, u32 pri);
 
 void tsdrv_destroy_task_submit_chan(void *handle, int type);
 

@@ -26,8 +26,8 @@
 #endif
 
 #ifdef CFG_FEATURE_PG
-STATIC int soc_get_pg_res_max_num(
-    HAL_PG_INFO_TYPE info_type, enum soc_mia_res_type *soc_res_type, unsigned int *max_num)
+STATIC int soc_get_pg_res_max_num(HAL_PG_INFO_TYPE info_type, enum soc_mia_res_type *soc_res_type,
+                                  unsigned int *max_num)
 {
     switch (info_type) {
         case PG_INFO_TYPE_AIC:
@@ -83,17 +83,16 @@ STATIC int soc_get_pg_res(unsigned int dev_id, HAL_PG_INFO_TYPE info_type, hal_p
 }
 #endif
 
-int hal_kernel_get_pg_info_adapt(
-    unsigned int dev_id, HAL_PG_INFO_TYPE info_type, char *data, unsigned int size, unsigned int *ret_size)
+int hal_kernel_get_pg_info_adapt(unsigned int dev_id, HAL_PG_INFO_TYPE info_type, char *data, unsigned int size,
+                                 unsigned int *ret_size)
 {
 #ifdef CFG_FEATURE_PG
     hal_pg_info_t pg_info = {0};
     int ret;
 
     if ((dev_id >= ASCEND_DEV_MAX_NUM) || (data == NULL) || (ret_size == NULL) || (info_type >= PG_INFO_TYPE_MAX)) {
-        soc_err(
-            "Input para is invalid. (dev_id=%u; data_is_null=%d; ret_size_is_null=%d; info_type=%d)\n", dev_id,
-            (data == NULL), (ret_size == NULL), info_type);
+        soc_err("Input para is invalid. (dev_id=%u; data_is_null=%d; ret_size_is_null=%d; info_type=%d)\n", dev_id,
+                (data == NULL), (ret_size == NULL), info_type);
         return -EINVAL;
     }
 
@@ -105,8 +104,8 @@ int hal_kernel_get_pg_info_adapt(
     *ret_size = sizeof(hal_pg_info_t);
 
     if (*ret_size > size) {
-        soc_err(
-            "Return size is larger than input data size. (dev_id=%u; size=%u; ret_size=%u)\n", dev_id, size, *ret_size);
+        soc_err("Return size is larger than input data size. (dev_id=%u; size=%u; ret_size=%u)\n", dev_id, size,
+                *ret_size);
         return -EINVAL;
     }
 

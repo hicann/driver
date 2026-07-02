@@ -108,9 +108,15 @@ static inline bool apm_get_exit_force_flag(unsigned long val)
     return (((val >> APM_FORCE_EXIT_FLAG_OFFSET) & 0x1ULL) == 1U);
 }
 
-static inline int apm_get_exit_stage(unsigned long val) { return (int)((val >> APM_STAGE_OFFSET) & 0xFFFF); }
+static inline int apm_get_exit_stage(unsigned long val)
+{
+    return (int)((val >> APM_STAGE_OFFSET) & 0xFFFF);
+}
 
-static inline int apm_get_exit_tgid(unsigned long val) { return (int)((val) & 0xFFFFFFFF); }
+static inline int apm_get_exit_tgid(unsigned long val)
+{
+    return (int)((val) & 0xFFFFFFFF);
+}
 
 bool apm_master_domain_check_set_pre_exit(int tgid, struct task_start_time *time);
 bool apm_slave_domain_check_set_pre_exit(int tgid, struct task_start_time *time);

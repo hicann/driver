@@ -70,8 +70,10 @@ static inline void *ka_vmalloc_ex(size_t size, ka_gfp_t gfp_mask, ka_pgprot_t pr
 #define ka_kvmalloc(size, flags, module_id) ka_mm_kvmalloc(size, flags)
 #define ka_kvfree(addr, module_id) ka_mm_kvfree(addr)
 
-#define ka_dma_alloc_coherent(dev, size, dma_handle, gfp, module_id) ka_mm_dma_alloc_coherent(dev, size, dma_handle, gfp)
-#define ka_dma_free_coherent(dev, size, cpu_addr, dma_handle, module_id) ka_mm_dma_free_coherent(dev, size, cpu_addr, dma_handle)
+#define ka_dma_alloc_coherent(dev, size, dma_handle, gfp, module_id) \
+    ka_mm_dma_alloc_coherent(dev, size, dma_handle, gfp)
+#define ka_dma_free_coherent(dev, size, cpu_addr, dma_handle, module_id) \
+    ka_mm_dma_free_coherent(dev, size, cpu_addr, dma_handle)
 
 #define ka_hugetlb_alloc_hugepage(nid, flag, module_id) hugetlb_alloc_hugepage(nid, flag)
 #define ka_hugetlb_free_hugepage(page, module_id) ka_mm_put_page(page)
@@ -137,10 +139,10 @@ void ka_kvfree(const void *addr, unsigned int module_id);
 /*
  * dma_alloc_coherent --      ka_dma_alloc_coherent --      ka_dma_free_coherent
  */
-void *ka_dma_alloc_coherent(struct device *dev, size_t size, dma_addr_t *dma_handle,
-    ka_gfp_t gfp, unsigned int module_id);
+void *ka_dma_alloc_coherent(struct device *dev, size_t size, dma_addr_t *dma_handle, ka_gfp_t gfp,
+                            unsigned int module_id);
 void ka_dma_free_coherent(struct device *dev, size_t size, void *cpu_addr, dma_addr_t dma_handle,
-    unsigned int module_id);
+                          unsigned int module_id);
 
 /*
  * hugetlb_alloc_hugepage --      ka_hugetlb_alloc_hugepage --   ka_hugetlb_free_hugepage
@@ -149,13 +151,11 @@ void ka_dma_free_coherent(struct device *dev, size_t size, void *cpu_addr, dma_a
 ka_page_t *ka_hugetlb_alloc_hugepage(int nid, int flag, unsigned int module_id);
 void ka_hugetlb_free_hugepage(ka_page_t *page, unsigned int module_id);
 
-
 #endif
 
 void ka_free_single_page(ka_page_t *page_addr, unsigned int order, int alloc_flag, unsigned int module_type,
                          unsigned int level);
-ka_page_t *ka_alloc_hugetlb(int nid, unsigned int size, int flag, unsigned int module_type,
-                              unsigned int level);
+ka_page_t *ka_alloc_hugetlb(int nid, unsigned int size, int flag, unsigned int module_type, unsigned int level);
 ka_page_t *ka_alloc_hugepage(int nid, ka_gfp_t gfp_mask, unsigned int order, int *alloc_flag, int flag,
-                               unsigned int module_type, unsigned int level);
+                             unsigned int module_type, unsigned int level);
 #endif

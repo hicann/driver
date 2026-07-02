@@ -196,7 +196,10 @@ enum devdrv_ts_status {
 #define DEVDRV_PHASE_STATE_0 0
 #define DEVDRV_PHASE_STATE_1 1
 
-typedef enum sqcq_alloc_status { SQCQ_INACTIVE = 0, SQCQ_ACTIVE } drvSqCqAllocType_t;
+typedef enum sqcq_alloc_status {
+    SQCQ_INACTIVE = 0,
+    SQCQ_ACTIVE
+} drvSqCqAllocType_t;
 
 enum phy_sqcq_type {
     NORMAL_SQCQ_TYPE = 0,
@@ -265,7 +268,12 @@ struct tsdrv_sw_rx_reg { /* size <= sqeSize */
     u16 sq_head;
 };
 
-enum tsdrv_host_flag { TSDRV_PHYSICAL_TYPE = 0, TSDRV_VIRTUAL_TYPE, TSDRV_CONTAINER_TYPE, TSDRV_MAX_VM_TYPE };
+enum tsdrv_host_flag {
+    TSDRV_PHYSICAL_TYPE = 0,
+    TSDRV_VIRTUAL_TYPE,
+    TSDRV_CONTAINER_TYPE,
+    TSDRV_MAX_VM_TYPE
+};
 
 typedef enum {
     QUERY_IDS_CAPACITY = 0,

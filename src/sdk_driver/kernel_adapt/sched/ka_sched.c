@@ -34,6 +34,6 @@ EXPORT_SYMBOL_GPL(ka_try_cond_resched_by_time);
 
 void ka_try_cond_resched(unsigned long *pre_stamp)
 {
-    ka_try_cond_resched_by_time(pre_stamp, 500);   /* 500ms */
+    ka_try_cond_resched_by_time(pre_stamp, 500); /* 500ms */
 }
 EXPORT_SYMBOL_GPL(ka_try_cond_resched);

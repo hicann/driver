@@ -34,9 +34,9 @@ enum res_map_type {
 struct res_map_info {
     processType_t target_proc_type;
     enum res_map_type res_type;
-    unsigned int res_id;                     /* corresponding resource id if res_type is NOTIFY or CNT_NOTIFY */
-    unsigned int flag;                       /* default is 0 */
-    unsigned int rsv[RES_MAP_INFO_RSV_LEN];  /* default is 0 */
+    unsigned int res_id;                    /* corresponding resource id if res_type is NOTIFY or CNT_NOTIFY */
+    unsigned int flag;                      /* default is 0 */
+    unsigned int rsv[RES_MAP_INFO_RSV_LEN]; /* default is 0 */
 };
 
 enum drv_mem_side {
