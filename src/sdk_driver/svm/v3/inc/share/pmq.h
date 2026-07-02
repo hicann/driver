@@ -33,9 +33,8 @@ static inline void pmq_try_recycle_local_mem(struct svm_global_va *src_info, str
 {
     if (svm_pa_is_local_mem(pa_seg[0].pa)) {
         svm_pmq_pa_put(pa_seg, seg_num);
-        svm_warn(
-            "Recycled local memory. (udevid=%u, va=0x%llx, size=%llx)\n", src_info->udevid, src_info->va,
-            src_info->size);
+        svm_warn("Recycled local memory. (udevid=%u, va=0x%llx, size=%llx)\n", src_info->udevid, src_info->va,
+                 src_info->size);
     }
 }
 

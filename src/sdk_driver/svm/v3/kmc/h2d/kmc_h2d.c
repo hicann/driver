@@ -95,9 +95,8 @@ static int kmc_d2h_recv(u32 udevid, void *msg, u32 in_len, u32 out_len, u32 *rea
     data_len = ka_base_max_t(u32, in_len, out_len);
     actual_len = handle->raw_msg_size + head->extend_num * handle->extend_gran_size;
     if (data_len < actual_len) {
-        svm_err(
-            "Invalid data len. (data_len=%u; actual_len=%u; msg_id=%u; extend_num=%u)\n", data_len, actual_len,
-            head->msg_id, head->extend_num);
+        svm_err("Invalid data len. (data_len=%u; actual_len=%u; msg_id=%u; extend_num=%u)\n", data_len, actual_len,
+                head->msg_id, head->extend_num);
         return -EMSGSIZE;
     }
 
@@ -195,5 +194,6 @@ int kmc_h2d_init(void)
 }
 DECLAER_FEATURE_AUTO_INIT(kmc_h2d_init, FEATURE_LOADER_STAGE_0);
 
-void kmc_h2d_uninit(void) {}
+void kmc_h2d_uninit(void)
+{}
 DECLAER_FEATURE_AUTO_UNINIT(kmc_h2d_uninit, FEATURE_LOADER_STAGE_0);

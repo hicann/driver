@@ -41,7 +41,10 @@ void svm_clear_pages(ka_page_t **pages, u64 page_num, u64 page_size)
 }
 
 static int (*clr_mem_by_uva)(u32 udevid, int tgid, u64 va, u64 size) = NULL;
-void svm_register_mc_handle(int (*mc_handle)(u32 udevid, int tgid, u64 va, u64 size)) { clr_mem_by_uva = mc_handle; }
+void svm_register_mc_handle(int (*mc_handle)(u32 udevid, int tgid, u64 va, u64 size))
+{
+    clr_mem_by_uva = mc_handle;
+}
 
 int svm_clear_mem_by_uva(u32 udevid, int tgid, u64 va, u64 size)
 {

@@ -5,15 +5,20 @@
 
 #include "svm_pub.h"
 
-enum { MMS_TYPE_NPAGE = 0U, MMS_TYPE_HPAGE, MMS_TYPE_P2P_NPAGE, MMS_TYPE_P2P_HPAGE, MMS_TYPE_MAX };
+enum {
+    MMS_TYPE_NPAGE = 0U,
+    MMS_TYPE_HPAGE,
+    MMS_TYPE_P2P_NPAGE,
+    MMS_TYPE_P2P_HPAGE,
+    MMS_TYPE_MAX
+};
 
 static inline const char *get_mms_type_name(u32 type)
 {
-    const char *type_names[] = {
-        [MMS_TYPE_NPAGE] = "MMS_TYPE_NPAGE",
-        [MMS_TYPE_HPAGE] = "MMS_TYPE_HPAGE",
-        [MMS_TYPE_P2P_NPAGE] = "MMS_TYPE_P2P_NPAGE",
-        [MMS_TYPE_P2P_HPAGE] = "MMS_TYPE_P2P_HPAGE"};
+    const char *type_names[] = {[MMS_TYPE_NPAGE] = "MMS_TYPE_NPAGE",
+                                [MMS_TYPE_HPAGE] = "MMS_TYPE_HPAGE",
+                                [MMS_TYPE_P2P_NPAGE] = "MMS_TYPE_P2P_NPAGE",
+                                [MMS_TYPE_P2P_HPAGE] = "MMS_TYPE_P2P_HPAGE"};
 
     if (type >= MMS_TYPE_MAX) {
         return "UNKNOWN";

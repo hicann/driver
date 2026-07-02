@@ -44,9 +44,8 @@ static int uvm_chan_page_fault_process_h2d_dma_copy(struct devmm_chan_uvm_page_f
     ret = devmm_dma_sync_link_copy(fault_msg->head.dev_id, fault_msg->head.process_id.vfid, &dma_nodes, 1);
 #endif
     if (ret != 0) {
-        devmm_drv_err(
-            "Dma sync link copy failed. (va=0x%llx; hostpid=%d; devid=%u; ret=%d)\n", fault_msg->va,
-            fault_msg->head.process_id.hostpid, fault_msg->head.dev_id, ret);
+        devmm_drv_err("Dma sync link copy failed. (va=0x%llx; hostpid=%d; devid=%u; ret=%d)\n", fault_msg->va,
+                      fault_msg->head.process_id.hostpid, fault_msg->head.dev_id, ret);
     }
 
     return ret;
@@ -72,17 +71,15 @@ static int uvm_chan_device_page_fault_host_data_sync(struct devmm_chan_uvm_page_
     src_dma_addr = hal_kernel_devdrv_dma_map_page(dev, pg, 0, DEVMM_UVM_PAGE_SIZE, KA_DMA_BIDIRECTIONAL);
     ret = ka_mm_dma_mapping_error(dev, src_dma_addr);
     if (ret != 0) {
-        devmm_drv_err(
-            "Dma map page failed. (va=0x%llx; hostpid=%d; devid=%u; ret=%d)\n", fault_msg->va,
-            fault_msg->head.process_id.hostpid, fault_msg->head.dev_id, ret);
+        devmm_drv_err("Dma map page failed. (va=0x%llx; hostpid=%d; devid=%u; ret=%d)\n", fault_msg->va,
+                      fault_msg->head.process_id.hostpid, fault_msg->head.dev_id, ret);
         goto unmap_dma;
     }
 
     ret = uvm_chan_page_fault_process_h2d_dma_copy(fault_msg, src_dma_addr);
     if (ret != 0) {
-        devmm_drv_err(
-            "Dma failed. (va=0x%llx; hostpid=%d; devid=%u; ret=%d)\n", fault_msg->va,
-            fault_msg->head.process_id.hostpid, fault_msg->head.dev_id, ret);
+        devmm_drv_err("Dma failed. (va=0x%llx; hostpid=%d; devid=%u; ret=%d)\n", fault_msg->va,
+                      fault_msg->head.process_id.hostpid, fault_msg->head.dev_id, ret);
     }
 
     hal_kernel_devdrv_dma_unmap_page(dev, src_dma_addr, DEVMM_UVM_PAGE_SIZE, KA_DMA_BIDIRECTIONAL);
@@ -110,18 +107,17 @@ static int devmm_addr_phy_to_dma(struct devmm_chan_uvm_page_fault *fault_msg, in
     ret = devdrv_devmem_addr_bar_to_dma(physical_id, fault_msg->head.dev_id, *dst_dma, dst_dma);
     if (ret != 0) {
 #ifndef EMU_ST
-        devmm_drv_err(
-            "Devdrv_devmem_addr_bar_to_dma failed. (src_dev_id=%u, dst_dev_id=%u)\n", fault_msg->head.dev_id,
-            physical_id);
+        devmm_drv_err("Devdrv_devmem_addr_bar_to_dma failed. (src_dev_id=%u, dst_dev_id=%u)\n", fault_msg->head.dev_id,
+                      physical_id);
 #endif
         return ret;
     }
     return ret;
 }
 
-static int uvm_chan_device_page_fault_device_data_sync(
-    struct devmm_svm_process *svm_process, struct uvm_page_mapping *page_map,
-    struct devmm_chan_uvm_page_fault *fault_msg)
+static int uvm_chan_device_page_fault_device_data_sync(struct devmm_svm_process *svm_process,
+                                                       struct uvm_page_mapping *page_map,
+                                                       struct devmm_chan_uvm_page_fault *fault_msg)
 {
     struct devmm_uvm_chan_device_data *device_msg = NULL;
     int ret = 0;
@@ -133,9 +129,8 @@ static int uvm_chan_device_page_fault_device_data_sync(
         ret = devmm_addr_phy_to_dma(fault_msg, physical_id, &dst_dma);
         if (ret != 0) {
 #ifndef EMU_ST
-            devmm_drv_err(
-                "Devdrv_devmem_addr_phy_to_dma failed. (src_dev_id=%u, dst_dev_id=%u)\n", fault_msg->head.dev_id,
-                physical_id);
+            devmm_drv_err("Devdrv_devmem_addr_phy_to_dma failed. (src_dev_id=%u, dst_dev_id=%u)\n",
+                          fault_msg->head.dev_id, physical_id);
 #endif
             return ret;
         }
@@ -143,8 +138,8 @@ static int uvm_chan_device_page_fault_device_data_sync(
         dst_dma = fault_msg->pa;
     }
 
-    device_msg = (struct devmm_uvm_chan_device_data *)ka_mm_kvmalloc(
-        sizeof(struct devmm_uvm_chan_device_data), KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
+    device_msg = (struct devmm_uvm_chan_device_data *)ka_mm_kvmalloc(sizeof(struct devmm_uvm_chan_device_data),
+                                                                     KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
     if (device_msg == NULL) {
         devmm_drv_err("Kzalloc for struct devmm_uvm_chan_device_data failed.\n");
         return -ENOMEM;
@@ -161,17 +156,17 @@ static int uvm_chan_device_page_fault_device_data_sync(
 
     ret = devmm_chan_msg_send(device_msg, sizeof(*device_msg), 0);
     if (ret != 0) {
-        devmm_drv_err(
-            "Device copy data p2p failed. (ret=%d; src_dev_id=%u; dst_dev_id=%u; va=0x%llx)\n", ret, physical_id,
-            fault_msg->head.dev_id, fault_msg->va);
+        devmm_drv_err("Device copy data p2p failed. (ret=%d; src_dev_id=%u; dst_dev_id=%u; va=0x%llx)\n", ret,
+                      physical_id, fault_msg->head.dev_id, fault_msg->va);
     }
 
     ka_mm_kfree(device_msg);
     return ret;
 }
 
-static int uvm_chan_page_fault_device_process_normal(
-    struct devmm_svm_process *svm_process, struct uvm_page_info *page_info, struct devmm_chan_uvm_page_fault *fault_msg)
+static int uvm_chan_page_fault_device_process_normal(struct devmm_svm_process *svm_process,
+                                                     struct uvm_page_info *page_info,
+                                                     struct devmm_chan_uvm_page_fault *fault_msg)
 {
     int ret = 0;
 
@@ -195,9 +190,8 @@ static int uvm_chan_page_fault_device_process_normal(
     if (page_is_mapped_host(page_info->page_bitmap, page_info->page_map)) {
         ret = uvm_chan_device_page_fault_host_data_sync(fault_msg, page_info->page_map->pa_addr);
         if (ret) {
-            devmm_drv_err(
-                "Device page fault copy host data failed. (va=0x%llx; dev_id=%d)\n", fault_msg->va,
-                fault_msg->head.dev_id);
+            devmm_drv_err("Device page fault copy host data failed. (va=0x%llx; dev_id=%d)\n", fault_msg->va,
+                          fault_msg->head.dev_id);
             return ret;
         }
         /* Copy successful */
@@ -210,9 +204,8 @@ static int uvm_chan_page_fault_device_process_normal(
     if (page_is_mapped_other_device(fault_msg->head.logical_devid, page_info->page_bitmap, page_info->page_map)) {
         ret = uvm_chan_device_page_fault_device_data_sync(svm_process, page_info->page_map, fault_msg);
         if (ret) {
-            devmm_drv_err(
-                "Device page fault copy other device data failed. (va=0x%llx; dev_id=%d)\n", fault_msg->va,
-                fault_msg->head.dev_id);
+            devmm_drv_err("Device page fault copy other device data failed. (va=0x%llx; dev_id=%d)\n", fault_msg->va,
+                          fault_msg->head.dev_id);
             return ret;
         }
         /* Copy successful */
@@ -221,11 +214,11 @@ static int uvm_chan_page_fault_device_process_normal(
     }
 
 #ifndef EMU_ST
-    devmm_drv_err(
-        "Page mapping info error. (va=0x%llx; dev_id=%d; page_mapping->dev_id=%d;"
-        "is_host_mapped=%d, is_device_mapped=%d)\n",
-        fault_msg->va, fault_msg->head.dev_id, page_info->page_map->devid,
-        page_bitmap_get_host_mapped(page_info->page_bitmap), page_bitmap_get_device_mapped(page_info->page_bitmap));
+    devmm_drv_err("Page mapping info error. (va=0x%llx; dev_id=%d; page_mapping->dev_id=%d;"
+                  "is_host_mapped=%d, is_device_mapped=%d)\n",
+                  fault_msg->va, fault_msg->head.dev_id, page_info->page_map->devid,
+                  page_bitmap_get_host_mapped(page_info->page_bitmap),
+                  page_bitmap_get_device_mapped(page_info->page_bitmap));
 #endif
     return -EINVAL;
 
@@ -235,8 +228,9 @@ normal_exit:
     return ret;
 }
 
-static int uvm_chan_page_fault_device_process_read_mostly_write(
-    struct devmm_svm_process *svm_process, struct uvm_page_info *page_info, struct devmm_chan_uvm_page_fault *fault_msg)
+static int uvm_chan_page_fault_device_process_read_mostly_write(struct devmm_svm_process *svm_process,
+                                                                struct uvm_page_info *page_info,
+                                                                struct devmm_chan_uvm_page_fault *fault_msg)
 {
     int ret = 0;
     uint16_t i, count;
@@ -274,16 +268,17 @@ free_device_ids:
     return ret;
 }
 
-static int uvm_chan_page_fault_device_process_read_mostly_read(
-    struct uvm_page_info *page_info, struct devmm_chan_uvm_page_fault *fault_msg)
+static int uvm_chan_page_fault_device_process_read_mostly_read(struct uvm_page_info *page_info,
+                                                               struct devmm_chan_uvm_page_fault *fault_msg)
 {
     page_bitmap_set_device_mapped(page_info->page_bitmap);
     set_device_present(page_info->dev_bitmap, fault_msg->head.logical_devid);
     return 0;
 }
 
-static int uvm_chan_page_fault_device_process_read_mostly(
-    struct devmm_svm_process *svm_process, struct uvm_page_info *page_info, struct devmm_chan_uvm_page_fault *fault_msg)
+static int uvm_chan_page_fault_device_process_read_mostly(struct devmm_svm_process *svm_process,
+                                                          struct uvm_page_info *page_info,
+                                                          struct devmm_chan_uvm_page_fault *fault_msg)
 {
     int ret = 0;
 
@@ -293,9 +288,8 @@ static int uvm_chan_page_fault_device_process_read_mostly(
     }
 
     if (!page_is_mapped_host(page_info->page_bitmap, page_info->page_map)) {
-        devmm_drv_err(
-            "Page mapping info error, read mostly page must have a mapping on host. (va=0x%llx; dev_id=%d)\n",
-            fault_msg->va, fault_msg->head.dev_id);
+        devmm_drv_err("Page mapping info error, read mostly page must have a mapping on host. (va=0x%llx; dev_id=%d)\n",
+                      fault_msg->va, fault_msg->head.dev_id);
         return -EINVAL;
     }
 
@@ -307,9 +301,8 @@ static int uvm_chan_page_fault_device_process_read_mostly(
     if (!(fault_msg->fault_flag & UVM_CHAN_MSG_DEVICE_FAULT_MAPPED)) {
         ret = uvm_chan_device_page_fault_host_data_sync(fault_msg, page_info->page_map->pa_addr);
         if (ret) {
-            devmm_drv_err(
-                "Device page fault copy host data failed. (va=0x%llx; dev_id=%d)\n", fault_msg->va,
-                fault_msg->head.dev_id);
+            devmm_drv_err("Device page fault copy host data failed. (va=0x%llx; dev_id=%d)\n", fault_msg->va,
+                          fault_msg->head.dev_id);
             return -EFAULT;
         }
     }
@@ -329,9 +322,8 @@ static int uvm_chan_page_fault_device_process_read_mostly(
 static
 #endif
     int
-    uvm_chan_page_fault_device_process(
-        struct devmm_svm_process *svm_process, struct devmm_uvm_heap *heap, struct devmm_chan_uvm_page_fault *fault_msg,
-        uint32_t *ack_len)
+    uvm_chan_page_fault_device_process(struct devmm_svm_process *svm_process, struct devmm_uvm_heap *heap,
+                                       struct devmm_chan_uvm_page_fault *fault_msg, uint32_t *ack_len)
 {
     int ret = 0;
     struct uvm_page_info page_info;
@@ -361,8 +353,8 @@ static
     return ret;
 }
 
-int devmm_uvm_chan_page_fault_d2h_process(
-    struct devmm_svm_process *svm_process, struct devmm_svm_heap *heap, void *msg, u32 *ack_len)
+int devmm_uvm_chan_page_fault_d2h_process(struct devmm_svm_process *svm_process, struct devmm_svm_heap *heap, void *msg,
+                                          u32 *ack_len)
 {
     struct devmm_chan_uvm_page_fault *fault_msg = (struct devmm_chan_uvm_page_fault *)msg;
     struct devmm_uvm_heap *heap_tmp = NULL;
@@ -370,30 +362,27 @@ int devmm_uvm_chan_page_fault_d2h_process(
 
     heap_tmp = svm_process->uvm_heap;
     if (heap_tmp == NULL) {
-        devmm_drv_err(
-            "Va is not alloced. (hostpid=%d; va=0x%llx; devid=%u)\n", svm_process->process_id.hostpid, fault_msg->va,
-            fault_msg->head.dev_id);
+        devmm_drv_err("Va is not alloced. (hostpid=%d; va=0x%llx; devid=%u)\n", svm_process->process_id.hostpid,
+                      fault_msg->va, fault_msg->head.dev_id);
         return -EFAULT;
     }
 
     if (!devmm_va_is_in_uvm_range(fault_msg->va)) {
-        devmm_drv_err(
-            "Va is not in uvm range. (va=0x%llx; hostpid=%d; devid=%d)\n", fault_msg->va,
-            fault_msg->head.process_id.hostpid, fault_msg->head.dev_id);
+        devmm_drv_err("Va is not in uvm range. (va=0x%llx; hostpid=%d; devid=%d)\n", fault_msg->va,
+                      fault_msg->head.process_id.hostpid, fault_msg->head.dev_id);
         return -EINVAL;
     }
 
     ret = uvm_chan_page_fault_device_process(svm_process, heap_tmp, fault_msg, ack_len);
     if (ret < 0) {
-        devmm_drv_err(
-            "Device page fault process in host failed. (va=0x%llx; hostpid=%d; devid=%d)\n", fault_msg->va,
-            fault_msg->head.process_id.hostpid, fault_msg->head.dev_id);
+        devmm_drv_err("Device page fault process in host failed. (va=0x%llx; hostpid=%d; devid=%d)\n", fault_msg->va,
+                      fault_msg->head.process_id.hostpid, fault_msg->head.dev_id);
     }
     return ret;
 }
 
-int devmm_uvm_chan_prefetch_ack_process(
-    struct devmm_svm_process *svm_process, struct devmm_svm_heap *heap, void *msg, u32 *ack_len)
+int devmm_uvm_chan_prefetch_ack_process(struct devmm_svm_process *svm_process, struct devmm_svm_heap *heap, void *msg,
+                                        u32 *ack_len)
 {
     struct devmm_chan_uvm_ack *prefetch_ack = (struct devmm_chan_uvm_ack *)msg;
     struct prefetching_task *task = NULL;
@@ -418,19 +407,18 @@ int devmm_uvm_chan_prefetch_ack_process(
     return 0;
 }
 
-int devmm_uvm_chan_free_mem_d2h_process(
-    struct devmm_svm_process *svm_process, struct devmm_svm_heap *heap, void *msg, u32 *ack_len)
+int devmm_uvm_chan_free_mem_d2h_process(struct devmm_svm_process *svm_process, struct devmm_svm_heap *heap, void *msg,
+                                        u32 *ack_len)
 {
     struct devmm_chan_msg_head *free_msg = (struct devmm_chan_msg_head *)msg;
-    devmm_drv_debug(
-        "Handle mem free since device process exit. (hostpid=%d;devid=%u)\n", svm_process->process_id.hostpid,
-        free_msg->dev_id);
+    devmm_drv_debug("Handle mem free since device process exit. (hostpid=%d;devid=%u)\n",
+                    svm_process->process_id.hostpid, free_msg->dev_id);
     devmm_destory_all_uvm_mem_by_proc(svm_process);
     return 0;
 }
 
-static int devmm_uvm_chan_swap_d2h_process_dma_copy(
-    struct devmm_chan_uvm_swap *swap_msg, const struct devmm_addr_info *addr_info, uint32_t page_size)
+static int devmm_uvm_chan_swap_d2h_process_dma_copy(struct devmm_chan_uvm_swap *swap_msg,
+                                                    const struct devmm_addr_info *addr_info, uint32_t page_size)
 {
     struct devdrv_dma_node dma_node = {0};
     int ret = 0;
@@ -444,15 +432,14 @@ static int devmm_uvm_chan_swap_d2h_process_dma_copy(
     ret = devmm_dma_sync_link_copy(swap_msg->head.dev_id, swap_msg->head.process_id.vfid, &dma_node, page_num);
 #endif
     if (ret != 0) {
-        devmm_drv_err(
-            "Device process sync copy page fail. (hostpid=%d, devid=%d, va=0x%llx, ret=%d)\n",
-            swap_msg->head.process_id.hostpid, swap_msg->head.dev_id, swap_msg->va, ret);
+        devmm_drv_err("Device process sync copy page fail. (hostpid=%d, devid=%d, va=0x%llx, ret=%d)\n",
+                      swap_msg->head.process_id.hostpid, swap_msg->head.dev_id, swap_msg->va, ret);
     }
     return ret;
 }
 
-static int devmm_uvm_chan_swap_d2h_alloc_pages(
-    struct devmm_svm_process *svm_proc, struct devmm_phy_addr_attr *attr, ka_page_t ***pages)
+static int devmm_uvm_chan_swap_d2h_alloc_pages(struct devmm_svm_process *svm_proc, struct devmm_phy_addr_attr *attr,
+                                               ka_page_t ***pages)
 {
     int ret;
 
@@ -476,8 +463,8 @@ static int devmm_uvm_chan_swap_d2h_data_trans(struct devmm_chan_uvm_swap *swap_m
 
     ret = devmm_dma_map_page(swap_msg->head.dev_id, page, DEVMM_UVM_PAGE_SIZE, NULL, &addr_info);
     if (ret != 0) {
-        devmm_drv_err(
-            "Host page fault dma map page failed. (dev_id=%u; va=0x%llx)\n", swap_msg->head.dev_id, swap_msg->va);
+        devmm_drv_err("Host page fault dma map page failed. (dev_id=%u; va=0x%llx)\n", swap_msg->head.dev_id,
+                      swap_msg->va);
         return ret;
     }
 
@@ -491,8 +478,8 @@ static int devmm_uvm_chan_swap_d2h_data_trans(struct devmm_chan_uvm_swap *swap_m
     return ret;
 }
 
-int devmm_uvm_chan_swap_d2h_process(
-    struct devmm_svm_process *svm_proc, struct devmm_svm_heap *heap, void *msg, u32 *ack_len)
+int devmm_uvm_chan_swap_d2h_process(struct devmm_svm_process *svm_proc, struct devmm_svm_heap *heap, void *msg,
+                                    u32 *ack_len)
 {
     struct devmm_chan_uvm_swap *swap_msg = (struct devmm_chan_uvm_swap *)msg;
     struct devmm_phy_addr_attr attr = {0};
@@ -515,9 +502,8 @@ int devmm_uvm_chan_swap_d2h_process(
     ka_task_down_write(page_info.page_rwlock);
     vma = devmm_find_vma(svm_proc, swap_msg->va);
     if (vma == NULL) {
-        devmm_drv_err(
-            "Can not find vma. (vaddr=0x%llx; hostpid=%d; devid=%d; vfid=%d)\n", swap_msg->va,
-            svm_proc->process_id.hostpid, svm_proc->process_id.devid, svm_proc->process_id.vfid);
+        devmm_drv_err("Can not find vma. (vaddr=0x%llx; hostpid=%d; devid=%d; vfid=%d)\n", swap_msg->va,
+                      svm_proc->process_id.hostpid, svm_proc->process_id.devid, svm_proc->process_id.vfid);
         ret = -EINVAL;
         goto out_unlock;
     }
@@ -555,8 +541,8 @@ free_pa:
     return ret;
 }
 
-int devmm_uvm_chan_release_d2h_process(
-    struct devmm_svm_process *svm_proc, struct devmm_svm_heap *heap, void *msg, u32 *ack_len)
+int devmm_uvm_chan_release_d2h_process(struct devmm_svm_process *svm_proc, struct devmm_svm_heap *heap, void *msg,
+                                       u32 *ack_len)
 {
     struct devmm_chan_uvm_release *release_msg = (struct devmm_chan_uvm_release *)msg;
     struct uvm_page_info page_info = {0};

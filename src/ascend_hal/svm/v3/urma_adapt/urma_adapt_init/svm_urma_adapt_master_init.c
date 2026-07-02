@@ -24,7 +24,10 @@
 
 static int svm_urma_dev_valid[SVM_MAX_DEV_NUM];
 
-bool svm_urma_id_dev_valid(u32 devid) { return (svm_urma_dev_valid[devid] != 0); }
+bool svm_urma_id_dev_valid(u32 devid)
+{
+    return (svm_urma_dev_valid[devid] != 0);
+}
 
 static int svm_urma_seg_sp_init(u32 devid)
 {
@@ -35,9 +38,8 @@ static int svm_urma_seg_sp_init(u32 devid)
 
     ret = svm_urma_register_seg(svm_get_host_devid(), &dst_va, SVM_URMA_SEG_FLAG_ACCESS_WRITE);
     if (ret == DRV_ERROR_NONE) {
-        svm_debug(
-            "Urma seg init. (devid=%u; va=0x%llx; size=0x%llx; user_devid=%u)\n", devid, SP_VA_START, SP_VA_SIZE,
-            svm_get_host_devid());
+        svm_debug("Urma seg init. (devid=%u; va=0x%llx; size=0x%llx; user_devid=%u)\n", devid, SP_VA_START, SP_VA_SIZE,
+                  svm_get_host_devid());
     }
 
     /* may be not support, return ok */
@@ -49,9 +51,8 @@ static void svm_urma_seg_sp_uninit(u32 devid)
     struct svm_dst_va dst_va;
     svm_dst_va_pack(devid, PROCESS_CP1, SP_VA_START, SP_VA_SIZE, &dst_va);
 
-    svm_debug(
-        "Urma seg uninit. (devid=%u; va=0x%llx; size=0x%llx; user_devid=%u)\n", devid, SP_VA_START, SP_VA_SIZE,
-        svm_get_host_devid());
+    svm_debug("Urma seg uninit. (devid=%u; va=0x%llx; size=0x%llx; user_devid=%u)\n", devid, SP_VA_START, SP_VA_SIZE,
+              svm_get_host_devid());
     (void)svm_urma_unregister_seg(svm_get_host_devid(), &dst_va, 0);
 }
 
@@ -134,7 +135,10 @@ static int svm_urma_seg_init_devices(u64 va, u64 size, u32 max_devid)
     return 0;
 }
 
-static int svm_urma_va_reserve(u64 va, u64 size) { return svm_urma_seg_init_devices(va, size, SVM_MAX_AGENT_NUM); }
+static int svm_urma_va_reserve(u64 va, u64 size)
+{
+    return svm_urma_seg_init_devices(va, size, SVM_MAX_AGENT_NUM);
+}
 
 static int svm_urma_va_release(u64 va, u64 size)
 {

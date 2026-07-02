@@ -70,7 +70,10 @@ static inline u64 svm_get_align_up_num(u64 start, u64 size, u64 align)
     return (size == 0ULL) ? 0ULL : (svm_align_up(fixed_size, align) / align);
 }
 
-static inline int svm_check_power_of_2(u64 n) { return (n != 0 && ((n & (n - 1ULL)) == 0)) ? 0 : -1; }
+static inline int svm_check_power_of_2(u64 n)
+{
+    return (n != 0 && ((n & (n - 1ULL)) == 0)) ? 0 : -1;
+}
 
 /* range: [start, end], check [va, va+size] */
 static inline int svm_check_va_range(u64 va, u64 size, u64 start, u64 end)
@@ -78,6 +81,12 @@ static inline int svm_check_va_range(u64 va, u64 size, u64 start, u64 end)
     return ((va >= start) && (va < end) && ((va + size) <= end) && (size <= (end - start)) && (size > 0)) ? 0 : -1;
 }
 
-enum svm_cpy_dir { SVM_H2H_CPY, SVM_H2D_CPY, SVM_D2H_CPY, SVM_D2D_CPY, SVM_MAX_CPY_DIR };
+enum svm_cpy_dir {
+    SVM_H2H_CPY,
+    SVM_H2D_CPY,
+    SVM_D2H_CPY,
+    SVM_D2D_CPY,
+    SVM_MAX_CPY_DIR
+};
 
 #endif

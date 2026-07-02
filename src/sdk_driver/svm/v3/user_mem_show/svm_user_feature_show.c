@@ -88,9 +88,8 @@ int user_feature_init_task(u32 udevid, int tgid, void *start_time)
         struct svm_user_feature *feature = &user_features[i];
         int ret = svm_task_set_feature_priv(task_ctx, feature->task_feature_id, feature->feature_name, NULL, NULL);
         if (ret != 0) {
-            svm_warn(
-                "Set feature priv failed. (udevid=%u; tgid=%d; task_feature_id=%d; feature_name=%s)\n", udevid, tgid,
-                feature->task_feature_id, feature->feature_name);
+            svm_warn("Set feature priv failed. (udevid=%u; tgid=%d; task_feature_id=%d; feature_name=%s)\n", udevid,
+                     tgid, feature->task_feature_id, feature->feature_name);
         }
     }
 
@@ -179,8 +178,8 @@ static void user_feature_show(u32 udevid, int tgid, char *feature_name, u32 show
     buf_head->valid = 0;
     ret = user_feature_trigger_event(udevid, tgid, show_type, feature_name);
     if (ret != 0) {
-        ka_fs_seq_printf(
-            seq, "notice user failed. (ret=%d; udevid=%u; tgid=%d; feature=%s)\n", ret, udevid, tgid, feature_name);
+        ka_fs_seq_printf(seq, "notice user failed. (ret=%d; udevid=%u; tgid=%d; feature=%s)\n", ret, udevid, tgid,
+                         feature_name);
         return;
     }
 

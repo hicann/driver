@@ -91,8 +91,8 @@ static inline int copy_va_info_check(u32 udevid, struct copy_va_info *info)
         svm_err("Invalid d2h addr. (src_va=0x%llx; size=%llu)\n", info->src_va, info->size);
         return -EINVAL;
     } else if ((dir == SVM_D2D_CPY) && (udevid != info->src_udevid) && (udevid != info->dst_udevid)) {
-        svm_err(
-            "Invalid d2d addr. (src_va=0x%llx; dst_va=0x%llx; size=%llu)\n", info->src_va, info->dst_va, info->size);
+        svm_err("Invalid d2d addr. (src_va=0x%llx; dst_va=0x%llx; size=%llu)\n", info->src_va, info->dst_va,
+                info->size);
         return -EINVAL;
     }
 

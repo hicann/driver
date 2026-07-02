@@ -60,14 +60,13 @@
 #define SVM_NOT_SUPPORT_ERR_MSG_ARG_NUM 2
 #define SVM_OUT_OF_MEM_ERR_MSG_ARG_NUM 2
 #define SVM_REPORT_BYTES_PER_KB 1024ULL
-#define SVM_INVALID_ADDR_REASON \
-    "The address is not correctly allocated or has been released"
+#define SVM_INVALID_ADDR_REASON "The address is not correctly allocated or has been released"
 #define SVM_PROCESS_NOT_IN_TRUSTLIST_REASON                                     \
     "The process where the share memory resides is not added to the trustist. " \
     "Add the process to the trustist or disable trustist verification"
 
-static inline void svm_report_out_of_range(
-    const char *func_name, const char *para_name, u64 para_value, u32 min_value, u32 max_value)
+static inline void svm_report_out_of_range(const char *func_name, const char *para_name, u64 para_value, u32 min_value,
+                                           u32 max_value)
 {
     const char *key[] = {"func_name", "para_value", "para_name", "reason"};
     char value[SVM_REPORT_ERR_MSG_STR_LEN] = {0};
@@ -75,9 +74,8 @@ static inline void svm_report_out_of_range(
     const char *report_value[] = {func_name, value, para_name, reason};
     int ret;
 
-    ret = snprintf_s(
-        reason, sizeof(reason), sizeof(reason) - 1, "The parameter value is out of range. The valid range is [%u,%u]",
-        min_value, max_value);
+    ret = snprintf_s(reason, sizeof(reason), sizeof(reason) - 1,
+                     "The parameter value is out of range. The valid range is [%u,%u]", min_value, max_value);
     if (ret < 0) {
         return;
     }
@@ -159,8 +157,8 @@ static inline const char *svm_format_align_size(u64 align_size, char *buf, size_
     return (ret < 0) ? "" : buf;
 }
 
-static inline void svm_report_addr_not_aligned(
-    const char *func_name, const char *para_name, u64 para_value, u64 align_size)
+static inline void svm_report_addr_not_aligned(const char *func_name, const char *para_name, u64 para_value,
+                                               u64 align_size)
 {
     const char *key[] = {"func_name", "para_value", "para_name", "reason"};
     char value[SVM_REPORT_ERR_MSG_STR_LEN] = {0};
@@ -170,9 +168,8 @@ static inline void svm_report_addr_not_aligned(
     int ret;
 
     (void)svm_format_align_size(align_size, align_size_str, sizeof(align_size_str));
-    ret = snprintf_s(
-        reason, sizeof(reason), sizeof(reason) - 1, "The input address does not meet the %s alignment requirement",
-        align_size_str);
+    ret = snprintf_s(reason, sizeof(reason), sizeof(reason) - 1,
+                     "The input address does not meet the %s alignment requirement", align_size_str);
     if (ret < 0) {
         return;
     }
@@ -184,8 +181,8 @@ static inline void svm_report_addr_not_aligned(
     svm_report_err("EL0016", key, report_value, SVM_INVALID_ARG_ERR_MSG_ARG_NUM);
 }
 
-static inline void svm_report_size_not_aligned(
-    const char *func_name, const char *para_name, u64 para_value, u64 align_size)
+static inline void svm_report_size_not_aligned(const char *func_name, const char *para_name, u64 para_value,
+                                               u64 align_size)
 {
     const char *key[] = {"func_name", "para_value", "para_name", "reason"};
     char value[SVM_REPORT_ERR_MSG_STR_LEN] = {0};
@@ -230,25 +227,23 @@ static inline void svm_report_oom(u64 size, const char *module_name, u32 devid)
 #endif
 
 #define _svm_log_ratelimited(period_sec, max_cnt, log_fn, fmt, ...) \
-do { \
-    static time_t _begin; \
-    static unsigned int _cnt; \
-    time_t _now = time(NULL); \
-    unsigned int _period = (period_sec); \
-    u32 _max_cnt = (max_cnt); \
-\
-    if ((_begin == 0) || ((_now - _begin) >= _period)) { \
-        _begin = _now; \
-        _cnt = 0; \
-    } \
-\
-    if (_cnt++ < _max_cnt) { \
-        log_fn(fmt, ##__VA_ARGS__); \
-    } \
-} while (0)
+    do {                                                            \
+        static time_t _begin;                                       \
+        static unsigned int _cnt;                                   \
+        time_t _now = time(NULL);                                   \
+        unsigned int _period = (period_sec);                        \
+        u32 _max_cnt = (max_cnt);                                   \
+                                                                    \
+        if ((_begin == 0) || ((_now - _begin) >= _period)) {        \
+            _begin = _now;                                          \
+            _cnt = 0;                                               \
+        }                                                           \
+                                                                    \
+        if (_cnt++ < _max_cnt) {                                    \
+            log_fn(fmt, ##__VA_ARGS__);                             \
+        }                                                           \
+    } while (0)
 
-#define svm_log_ratelimited(log_fn, fmt, ...) \
-    _svm_log_ratelimited(1, 2, log_fn, fmt, __VA_ARGS__)
+#define svm_log_ratelimited(log_fn, fmt, ...) _svm_log_ratelimited(1, 2, log_fn, fmt, __VA_ARGS__)
 
-#define svm_run_info_ratelimited(fmt, ...) \
-    svm_log_ratelimited(svm_run_info, fmt, __VA_ARGS__)
+#define svm_run_info_ratelimited(fmt, ...) svm_log_ratelimited(svm_run_info, fmt, __VA_ARGS__)

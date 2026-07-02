@@ -28,7 +28,10 @@ static struct svm_casm_src_ops *casm_src_ops = NULL;
 
 #define SHOW_NODE_MAX 100000
 
-void svm_casm_register_src_ops(const struct svm_casm_src_ops *ops) { casm_src_ops = (struct svm_casm_src_ops *)ops; }
+void svm_casm_register_src_ops(const struct svm_casm_src_ops *ops)
+{
+    casm_src_ops = (struct svm_casm_src_ops *)ops;
+}
 
 static int casm_src_add_handle(u32 udevid, struct svm_global_va *src_va, struct casm_src_ex *src_ex)
 {
@@ -132,10 +135,9 @@ void casm_src_ctx_show(struct casm_src_ctx *src_ctx, ka_seq_file_t *seq)
     ka_fs_seq_printf(seq, "casm src info:index    key    owner_tgid  udevid   tgid   va   size    updated_va\n");
     for (i = 0; i < dump_num; i++) {
         struct svm_global_va *src_va = &dump_info[i].src_va;
-        ka_fs_seq_printf(
-            seq, "    %llu   0x%llx    %d   %u  %d  0x%llx   0x%llx   0x%llx\n", i, dump_info[i].key,
-            dump_info[i].src_ex.owner_tgid, src_va->udevid, src_va->tgid, src_va->va, src_va->size,
-            dump_info[i].src_ex.updated_va);
+        ka_fs_seq_printf(seq, "    %llu   0x%llx    %d   %u  %d  0x%llx   0x%llx   0x%llx\n", i, dump_info[i].key,
+                         dump_info[i].src_ex.owner_tgid, src_va->udevid, src_va->tgid, src_va->va, src_va->size,
+                         dump_info[i].src_ex.updated_va);
     }
 
     svm_vfree(dump_info);

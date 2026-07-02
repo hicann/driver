@@ -31,19 +31,18 @@ static int devmm_ipc_procfs_sum_show(ka_seq_file_t *seq, void *offset)
     int i = 0;
 
     ka_fs_seq_printf(seq, "Ipc node detail:\n");
-    ka_fs_seq_printf(
-        seq,
-        "name=%s;sdid=%u;devid=%u;vfid=%u;pid=%d;vptr=0x%llx;len=%ld;page_size=%ld;is_huge=%d;"
-        "is_reserve=%d;need_set_wlist=%d;valid=%d;key=%u;ref=%d;mem_repair=%d\n",
-        node->attr.name, node->attr.sdid, node->attr.inst.devid, node->attr.inst.vfid, node->attr.pid, node->attr.vptr,
-        node->attr.len, node->attr.page_size, node->attr.is_huge, node->attr.is_reserve_addr, node->attr.need_set_wlist,
-        node->valid, node->key, ka_base_kref_read(&node->ref), node->mem_repair_record);
+    ka_fs_seq_printf(seq,
+                     "name=%s;sdid=%u;devid=%u;vfid=%u;pid=%d;vptr=0x%llx;len=%ld;page_size=%ld;is_huge=%d;"
+                     "is_reserve=%d;need_set_wlist=%d;valid=%d;key=%u;ref=%d;mem_repair=%d\n",
+                     node->attr.name, node->attr.sdid, node->attr.inst.devid, node->attr.inst.vfid, node->attr.pid,
+                     node->attr.vptr, node->attr.len, node->attr.page_size, node->attr.is_huge,
+                     node->attr.is_reserve_addr, node->attr.need_set_wlist, node->valid, node->key,
+                     ka_base_kref_read(&node->ref), node->mem_repair_record);
     ka_fs_seq_printf(seq, "White List:\n");
     ka_list_for_each_entry(wlist, &node->wlist_head, list)
     {
-        ka_fs_seq_printf(
-            seq, "   [%d]:sdid=%u;pid=%d;set_time=%lu;vptr=0x%llx\n", i++, wlist->sdid, wlist->pid, wlist->set_time,
-            wlist->vptr);
+        ka_fs_seq_printf(seq, "   [%d]:sdid=%u;pid=%d;set_time=%lu;vptr=0x%llx\n", i++, wlist->sdid, wlist->pid,
+                         wlist->set_time, wlist->vptr);
         devmm_try_cond_resched(&stamp);
     }
 #endif
@@ -62,8 +61,8 @@ static const ka_procfs_ops_t devmm_ipc_procfs_ops = {
 void devmm_ipc_procfs_add_node(struct devmm_ipc_node *node)
 {
     if (g_svm_shmem_top_entry != NULL) {
-        node->entry =
-            ka_fs_proc_create_data(node->attr.name, PROC_FS_MODE, g_svm_shmem_top_entry, &devmm_ipc_procfs_ops, node);
+        node->entry = ka_fs_proc_create_data(node->attr.name, PROC_FS_MODE, g_svm_shmem_top_entry,
+                                             &devmm_ipc_procfs_ops, node);
     }
 }
 

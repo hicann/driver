@@ -21,6 +21,6 @@ void devmm_mem_unmap(struct devmm_svm_process *svm_proc, struct devmm_vmma_info 
 void devmm_access_munmap_all(struct devmm_svm_process *svm_proc, struct devmm_vmma_struct *vmma);
 u64 *devmm_mem_map_adjust_pa_create(u64 dst_pg_num, u64 dst_pg_size, u64 *src_addr, u64 src_pg_num, u64 adjust_num);
 void devmm_mem_map_adjust_pa_destroy(u64 *adjust_pa);
-int devmm_remap_route_for_exbus(
-    struct devmm_svm_process *svm_proc, u32 devid, struct devmm_vmma_info *info, ka_page_t **pages);
+int devmm_remap_route_for_exbus(struct devmm_svm_process *svm_proc, u32 devid, struct devmm_vmma_info *info,
+                                ka_page_t **pages);
 #endif

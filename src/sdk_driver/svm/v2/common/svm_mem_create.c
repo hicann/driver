@@ -15,9 +15,8 @@
 #include "svm_phy_addr_blk_mng.h"
 #include "svm_mem_create.h"
 
-int devmm_mem_create_to_new_blk(
-    struct devmm_svm_process *svm_proc, struct devmm_phy_addr_attr *attr, u64 total_pg_num, u64 to_create_pg_num,
-    int *id)
+int devmm_mem_create_to_new_blk(struct devmm_svm_process *svm_proc, struct devmm_phy_addr_attr *attr, u64 total_pg_num,
+                                u64 to_create_pg_num, int *id)
 {
     struct devmm_phy_addr_blk_mng *mng = &svm_proc->phy_addr_blk_mng;
     struct devmm_phy_addr_blk *blk = NULL;
@@ -45,8 +44,8 @@ int devmm_mem_create_to_new_blk(
     return ret;
 }
 
-int devmm_mem_create_to_old_blk(
-    struct devmm_svm_process *svm_proc, struct devmm_phy_addr_attr *attr, u64 to_create_pg_num, int id)
+int devmm_mem_create_to_old_blk(struct devmm_svm_process *svm_proc, struct devmm_phy_addr_attr *attr,
+                                u64 to_create_pg_num, int id)
 {
     struct devmm_phy_addr_blk_mng *mng = &svm_proc->phy_addr_blk_mng;
     struct devmm_phy_addr_blk *blk = NULL;
@@ -67,8 +66,8 @@ int devmm_mem_create_to_old_blk(
     return ret;
 }
 
-int _devmm_mem_release(
-    struct devmm_svm_process *svm_proc, struct devmm_phy_addr_blk_mng *mng, int id, u64 to_free_pg_num, u32 free_type)
+int _devmm_mem_release(struct devmm_svm_process *svm_proc, struct devmm_phy_addr_blk_mng *mng, int id,
+                       u64 to_free_pg_num, u32 free_type)
 {
     struct devmm_phy_addr_blk *blk = NULL;
     bool is_finish = false;

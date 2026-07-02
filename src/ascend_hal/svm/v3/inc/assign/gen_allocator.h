@@ -31,7 +31,10 @@ struct svm_ga_attr {
     u64 gran_size;
 };
 
-static inline void svm_ga_attr_pack(u64 gran_size, struct svm_ga_attr *attr) { attr->gran_size = gran_size; }
+static inline void svm_ga_attr_pack(u64 gran_size, struct svm_ga_attr *attr)
+{
+    attr->gran_size = gran_size;
+}
 
 /*
     FIXED_ADDR: alloc by fixed addr, if addr is already alloced, return fail

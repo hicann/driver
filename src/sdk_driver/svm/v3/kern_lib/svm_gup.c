@@ -78,9 +78,8 @@ int svm_pin_user_npages_fast(u64 va, u64 total_num, bool write, ka_page_t **page
         tmp_num = ka_mm_pin_user_pages_fast(tmp_va, expected_num, write ? KA_FOLL_WRITE : 0, &pages[got_num]);
         got_num += (tmp_num > 0) ? (u32)tmp_num : 0;
         if (tmp_num != expected_num) {
-            svm_err(
-                "Get_user_pages_fast fail. (va=0x%llx; expected_page_num=%d; real_got_page_num=%d)\n", tmp_va,
-                expected_num, tmp_num);
+            svm_err("Get_user_pages_fast fail. (va=0x%llx; expected_page_num=%d; real_got_page_num=%d)\n", tmp_va,
+                    expected_num, tmp_num);
             goto page_err;
         }
         ka_try_cond_resched(&stamp);
@@ -124,8 +123,8 @@ struct svm_pgwalk_data_of_pin_npages {
     ka_page_t **pages;
 };
 
-static int svm_pte_entry_of_pin_npages(
-    ka_pte_t *pte, u64 addr, u64 next, enum ka_pte_level level, struct ka_pgwalk *walk)
+static int svm_pte_entry_of_pin_npages(ka_pte_t *pte, u64 addr, u64 next, enum ka_pte_level level,
+                                       struct ka_pgwalk *walk)
 {
     struct svm_pgwalk_data_of_pin_npages *data = (struct svm_pgwalk_data_of_pin_npages *)walk->priv;
     ka_page_t *page = NULL;
@@ -259,8 +258,8 @@ void svm_unpin_svm_range_uva_npages(ka_page_t **pages, u64 page_num, u64 unpin_n
     svm_unpin_svm_npages(pages, page_num, unpin_num);
 }
 
-static int _svm_get_user_pages(
-    ka_task_struct_t *tsk, ka_mm_struct_t *mm, u64 va, u64 page_num, void **pages, bool *is_remap_addr)
+static int _svm_get_user_pages(ka_task_struct_t *tsk, ka_mm_struct_t *mm, u64 va, u64 page_num, void **pages,
+                               bool *is_remap_addr)
 {
     ka_vm_area_struct_t *vma = NULL;
     int ret;

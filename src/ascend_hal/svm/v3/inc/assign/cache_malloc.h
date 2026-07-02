@@ -44,7 +44,7 @@ struct svm_cache_ops {
 };
 
 void svm_cache_set_ops(struct svm_cache_ops *ops);
-int svm_cache_for_each_range(
-    u32 devid, int (*handle)(u32 devid, u64 start, u64 size, u32 flag, void *priv), void *priv);
+int svm_cache_for_each_range(u32 devid, int (*handle)(u32 devid, u64 start, u64 size, u32 flag, void *priv),
+                             void *priv);
 
 #endif

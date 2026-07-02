@@ -27,10 +27,13 @@
 #include "dma_desc_core.h"
 
 #define SVM_CONVERT_SUBTASK_GRAIN_SIZE_128MB (128ULL * SVM_BYTES_PER_MB)
-static inline u64 svm_get_convert_subtask_grain_size(void) { return SVM_CONVERT_SUBTASK_GRAIN_SIZE_128MB; }
+static inline u64 svm_get_convert_subtask_grain_size(void)
+{
+    return SVM_CONVERT_SUBTASK_GRAIN_SIZE_128MB;
+}
 
-static void dma_desc_copy_subtask_info_pack(
-    struct copy_va_info *info, u64 finished_size, u64 grain_size, struct copy_va_info *sub_info)
+static void dma_desc_copy_subtask_info_pack(struct copy_va_info *info, u64 finished_size, u64 grain_size,
+                                            struct copy_va_info *sub_info)
 {
     sub_info->size = ka_base_min(info->size - finished_size, grain_size);
     sub_info->src_va = info->src_va + finished_size;
@@ -53,9 +56,8 @@ static int dma_desc_copy_subtask_convert(struct svm_copy_task *copy_task, struct
         dma_desc_copy_subtask_info_pack(info, finished_size, grain_size, &sub_info);
         subtask = svm_copy_subtask_create(copy_task, &sub_info, 0);
         if (subtask == NULL) {
-            svm_err(
-                "Create subtask failed. (sub_dst=0x%llx; sub_src=0x%llx; size=%llu)\n", sub_info.dst_va,
-                sub_info.src_va, sub_info.size);
+            svm_err("Create subtask failed. (sub_dst=0x%llx; sub_src=0x%llx; size=%llu)\n", sub_info.dst_va,
+                    sub_info.src_va, sub_info.size);
             /* no need destroy copy_subtask, later will destroy copy_task */
             return -EINVAL;
         }
@@ -104,7 +106,10 @@ static struct svm_copy_task *dma_desc_copy_task_convert_2d(struct dma_desc_ctx *
     return copy_task;
 }
 
-static void dma_desc_copy_task_destroy_2d(struct svm_copy_task *copy_task) { svm_copy_task_destroy(copy_task); }
+static void dma_desc_copy_task_destroy_2d(struct svm_copy_task *copy_task)
+{
+    svm_copy_task_destroy(copy_task);
+}
 
 int dma_desc_convert_2d(struct dma_desc_ctx *ctx, struct copy_2d_va_info *info, struct DMA_ADDR *dma_desc)
 {
@@ -145,7 +150,10 @@ static struct svm_copy_task *dma_desc_copy_task_convert(struct dma_desc_ctx *ctx
     return copy_task;
 }
 
-static void dma_desc_copy_task_destroy(struct svm_copy_task *copy_task) { svm_copy_task_destroy(copy_task); }
+static void dma_desc_copy_task_destroy(struct svm_copy_task *copy_task)
+{
+    svm_copy_task_destroy(copy_task);
+}
 
 int dma_desc_convert(struct dma_desc_ctx *ctx, struct copy_va_info *info, struct DMA_ADDR *dma_desc)
 {

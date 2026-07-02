@@ -24,7 +24,10 @@ static u32 svm_udev_max_num;
 static struct array_ctx_domain *svm_dev_domain = NULL;
 static u32 dev_feature_num = 0;
 
-u32 svm_dev_obtain_feature_id(void) { return dev_feature_num++; }
+u32 svm_dev_obtain_feature_id(void)
+{
+    return dev_feature_num++;
+}
 
 int svm_dev_set_feature_priv(void *dev_ctx, u32 feature_id, const char *feature_name, void *priv)
 {
@@ -72,11 +75,20 @@ static struct svm_dev_ctx *_svm_dev_ctx_get(u32 udevid)
     return (struct svm_dev_ctx *)array_ctx_priv(ctx);
 }
 
-void *svm_dev_ctx_get(u32 udevid) { return _svm_dev_ctx_get(udevid); }
+void *svm_dev_ctx_get(u32 udevid)
+{
+    return _svm_dev_ctx_get(udevid);
+}
 
-static void _svm_dev_ctx_put(struct svm_dev_ctx *dev_ctx) { array_ctx_put(dev_ctx->ctx); }
+static void _svm_dev_ctx_put(struct svm_dev_ctx *dev_ctx)
+{
+    array_ctx_put(dev_ctx->ctx);
+}
 
-void svm_dev_ctx_put(void *dev_ctx) { _svm_dev_ctx_put((struct svm_dev_ctx *)dev_ctx); }
+void svm_dev_ctx_put(void *dev_ctx)
+{
+    _svm_dev_ctx_put((struct svm_dev_ctx *)dev_ctx);
+}
 
 static void svm_add_dev_feature_fs(struct svm_dev_ctx *d_ctx)
 {
@@ -93,7 +105,10 @@ static void svm_add_dev_feature_fs(struct svm_dev_ctx *d_ctx)
     }
 }
 
-static void svm_del_dev_feature_fs(struct svm_dev_ctx *d_ctx) { svm_proc_fs_del_dev(d_ctx->entry); }
+static void svm_del_dev_feature_fs(struct svm_dev_ctx *d_ctx)
+{
+    svm_proc_fs_del_dev(d_ctx->entry);
+}
 
 static void svm_dev_ctx_release(struct array_ctx *ctx)
 {

@@ -57,24 +57,45 @@ static int (*va_release_pre_handle[VA_RELEASE_HANDLE_MAX_NUM])(u64 va, u64 size)
 
 static struct va_reserve_mng g_va_reserve_mng;
 
-static struct va_reserve_mng *va_reserve_get_mng(void) { return &g_va_reserve_mng; }
+static struct va_reserve_mng *va_reserve_get_mng(void)
+{
+    return &g_va_reserve_mng;
+}
 
-static bool va_reserve_agent_has_master(u32 flag) { return ((flag & SVM_VA_RESERVE_FLAG_WITH_MASTER) != 0); }
+static bool va_reserve_agent_has_master(u32 flag)
+{
+    return ((flag & SVM_VA_RESERVE_FLAG_WITH_MASTER) != 0);
+}
 
-static bool va_reserve_has_custom_cp(u32 flag) { return ((flag & SVM_VA_RESERVE_FLAG_WITH_CUSTOM_CP) != 0); }
+static bool va_reserve_has_custom_cp(u32 flag)
+{
+    return ((flag & SVM_VA_RESERVE_FLAG_WITH_CUSTOM_CP) != 0);
+}
 
-static bool va_reserve_has_hccp(u32 flag) { return ((flag & SVM_VA_RESERVE_FLAG_WITH_HCCP) != 0); }
+static bool va_reserve_has_hccp(u32 flag)
+{
+    return ((flag & SVM_VA_RESERVE_FLAG_WITH_HCCP) != 0);
+}
 
-static bool va_reserve_is_master_only(u32 flag) { return ((flag & SVM_VA_RESERVE_FLAG_MASTER_ONLY) != 0); }
+static bool va_reserve_is_master_only(u32 flag)
+{
+    return ((flag & SVM_VA_RESERVE_FLAG_MASTER_ONLY) != 0);
+}
 
-static bool va_reserve_is_private(u32 flag) { return ((flag & SVM_VA_RESERVE_FLAG_PRIVATE) != 0); }
+static bool va_reserve_is_private(u32 flag)
+{
+    return ((flag & SVM_VA_RESERVE_FLAG_PRIVATE) != 0);
+}
 
 static bool va_reserve_has_master(u32 flag)
 {
     return va_reserve_agent_has_master(flag) || va_reserve_is_master_only(flag);
 }
 
-static bool va_reserve_has_agent(u32 flag) { return !va_reserve_is_master_only(flag); }
+static bool va_reserve_has_agent(u32 flag)
+{
+    return !va_reserve_is_master_only(flag);
+}
 
 int svm_register_va_reserve_post_handle(int (*fn)(u64 va, u64 size))
 {
@@ -273,11 +294,10 @@ static int va_reserve_op_agent_task(u32 devid, u64 *va, u64 size, u32 flag, int 
 {
     struct svm_umc_msg_head head;
     struct svm_va_reserve_msg reserve_msg = {.op = op, .flag = flag, .va = *va, .size = size};
-    struct svm_umc_msg msg = {
-        .msg_in = (char *)(uintptr_t)&reserve_msg,
-        .msg_in_len = sizeof(struct svm_va_reserve_msg),
-        .msg_out = (char *)(uintptr_t)&reserve_msg,
-        .msg_out_len = sizeof(struct svm_va_reserve_msg)};
+    struct svm_umc_msg msg = {.msg_in = (char *)(uintptr_t)&reserve_msg,
+                              .msg_in_len = sizeof(struct svm_va_reserve_msg),
+                              .msg_out = (char *)(uintptr_t)&reserve_msg,
+                              .msg_out_len = sizeof(struct svm_va_reserve_msg)};
     struct svm_apbi apbi;
     int ret;
 
@@ -344,8 +364,8 @@ static void va_release_agent_client(u32 devid, u64 va, u64 size, u32 flag)
     (void)va_reserve_op_agent_task(devid, &release_va, size, mmap_flag, DEVDRV_PROCESS_CP1, 0);
 }
 
-static void va_release_agents(
-    struct va_reserve_mng *reserve_mng, u64 va, u64 size, u32 flag, u32 min_devid, u32 max_devid)
+static void va_release_agents(struct va_reserve_mng *reserve_mng, u64 va, u64 size, u32 flag, u32 min_devid,
+                              u32 max_devid)
 {
     u32 devid;
 
@@ -357,8 +377,8 @@ static void va_release_agents(
     }
 }
 
-static int va_reserve_agents(
-    struct va_reserve_mng *reserve_mng, u64 va, u64 size, u32 flag, u32 min_devid, u32 max_devid)
+static int va_reserve_agents(struct va_reserve_mng *reserve_mng, u64 va, u64 size, u32 flag, u32 min_devid,
+                             u32 max_devid)
 {
     u32 devid;
     int ret;
@@ -423,8 +443,8 @@ static int va_reserve_fixed_va(struct va_reserve_mng *reserve_mng, u64 va, u64 s
     int ret;
 
     fix_bit_start = va_reserve_va_to_bit(reserve_mng, va);
-    index = (int)bitmap_find_next_zero_area(
-        reserve_mng->bitmap, (unsigned long)reserve_mng->bitnum, (unsigned long)fix_bit_start, bit_num, 0);
+    index = (int)bitmap_find_next_zero_area(reserve_mng->bitmap, (unsigned long)reserve_mng->bitnum,
+                                            (unsigned long)fix_bit_start, bit_num, 0);
     if (index != fix_bit_start) {
         svm_debug("Fix va has been reserved. (va=0x%llx; size=0x%llx)\n", va, size);
         return DRV_ERROR_BUSY;
@@ -446,8 +466,8 @@ static int va_reserve_fixed_va(struct va_reserve_mng *reserve_mng, u64 va, u64 s
     return 0;
 }
 
-static int _va_negotiate_master_and_agent(
-    struct va_reserve_mng *reserve_mng, u32 negotiate_devid, u64 size, u32 flag, int step, u64 *negotiate_va)
+static int _va_negotiate_master_and_agent(struct va_reserve_mng *reserve_mng, u32 negotiate_devid, u64 size, u32 flag,
+                                          int step, u64 *negotiate_va)
 {
     int bit_num = (int)(size / SVM_VA_RESERVE_GRAN);
     int cursor = 0;
@@ -479,9 +499,8 @@ static int _va_negotiate_master_and_agent(
             va_release_agent_client(negotiate_devid, tmp_va, size, flag);
         }
 
-        svm_debug(
-            "Negotiate continue. (negotiate_va=0x%llx; size=0x%llx; suggest_va=0x%llx; ret=%d)\n", tmp_va, size,
-            suggest_va, ret);
+        svm_debug("Negotiate continue. (negotiate_va=0x%llx; size=0x%llx; suggest_va=0x%llx; ret=%d)\n", tmp_va, size,
+                  suggest_va, ret);
 
         cursor = negotiate_bit_start + step;
     }
@@ -489,8 +508,8 @@ static int _va_negotiate_master_and_agent(
     return DRV_ERROR_OUT_OF_MEMORY;
 }
 
-static int va_negotiate_master_and_agent(
-    struct va_reserve_mng *reserve_mng, u32 negotiate_devid, u64 size, u32 flag, u64 *negotiate_va)
+static int va_negotiate_master_and_agent(struct va_reserve_mng *reserve_mng, u32 negotiate_devid, u64 size, u32 flag,
+                                         u64 *negotiate_va)
 {
     int step;
     int ret;
@@ -506,8 +525,8 @@ static int va_negotiate_master_and_agent(
     return ret;
 }
 
-static int _va_negotiate_agent(
-    struct va_reserve_mng *reserve_mng, u32 negotiate_devid, u64 size, u32 flag, int step, u64 *negotiate_va)
+static int _va_negotiate_agent(struct va_reserve_mng *reserve_mng, u32 negotiate_devid, u64 size, u32 flag, int step,
+                               u64 *negotiate_va)
 {
     u32 bit_num = (u32)(size / SVM_VA_RESERVE_GRAN);
     int cursor = reserve_mng->bitnum - (int)bit_num;
@@ -519,8 +538,8 @@ static int _va_negotiate_agent(
         u64 tmp_va, suggest_va;
         int negotiate_bit_start, ret;
 
-        negotiate_bit_start = (int)bitmap_find_next_zero_area(
-            reserve_mng->bitmap, (unsigned long)reserve_mng->bitnum, (unsigned long)cursor, bit_num, 0);
+        negotiate_bit_start = (int)bitmap_find_next_zero_area(reserve_mng->bitmap, (unsigned long)reserve_mng->bitnum,
+                                                              (unsigned long)cursor, bit_num, 0);
         /* must same with start cursor, not try again with same negotiate_bit_start */
         if (negotiate_bit_start != cursor) {
             cursor -= step;
@@ -540,9 +559,8 @@ static int _va_negotiate_agent(
             return ret;
         }
 
-        svm_debug(
-            "Negotiate continue. (negotiate_va=0x%llx; size=0x%llx; suggest_va=0x%llx; ret=%d)\n", tmp_va, size,
-            suggest_va, ret);
+        svm_debug("Negotiate continue. (negotiate_va=0x%llx; size=0x%llx; suggest_va=0x%llx; ret=%d)\n", tmp_va, size,
+                  suggest_va, ret);
 
         if (suggest_va != tmp_va) {
             int suggest_cursor = va_reserve_va_to_bit(reserve_mng, suggest_va);
@@ -558,8 +576,8 @@ static int _va_negotiate_agent(
     return DRV_ERROR_OUT_OF_MEMORY;
 }
 
-static int va_negotiate_agent(
-    struct va_reserve_mng *reserve_mng, u32 negotiate_devid, u64 size, u32 flag, u64 *negotiate_va)
+static int va_negotiate_agent(struct va_reserve_mng *reserve_mng, u32 negotiate_devid, u64 size, u32 flag,
+                              u64 *negotiate_va)
 {
     int step;
     int ret;
@@ -575,8 +593,8 @@ static int va_negotiate_agent(
     return ret;
 }
 
-static int va_reserve_negotiate(
-    struct va_reserve_mng *reserve_mng, u32 negotiate_devid, u64 size, u32 flag, u64 *negotiate_va)
+static int va_reserve_negotiate(struct va_reserve_mng *reserve_mng, u32 negotiate_devid, u64 size, u32 flag,
+                                u64 *negotiate_va)
 {
     if (va_reserve_agent_has_master(flag)) {
         return va_negotiate_master_and_agent(reserve_mng, negotiate_devid, size, flag, negotiate_va);
@@ -585,8 +603,8 @@ static int va_reserve_negotiate(
     }
 }
 
-static int va_reserve_get_negotiate_va(struct va_reserve_mng *reserve_mng, u64 size, u32 flag,
-    u32 *negotiate_devid, u64 *negotiate_va)
+static int va_reserve_get_negotiate_va(struct va_reserve_mng *reserve_mng, u64 size, u32 flag, u32 *negotiate_devid,
+                                       u64 *negotiate_va)
 {
     u32 devid;
     int ret;
@@ -1008,9 +1026,8 @@ static int _va_reserve_add_task(u32 devid, int task_type)
             u32 mmap_flag = va_reserve_is_private(reserve_node->flag) ? SVM_MMAP_FLAG_PRIVATE : 0;
             int ret = va_reserve_op_agent_task(devid, &va, reserve_node->size, mmap_flag, task_type, 1);
             if (ret != 0) {
-                svm_err(
-                    "Add dev reserve va failed. (devid=%u; va=0x%llx; size=0x%llx; task_type=%d)\n", devid, va,
-                    reserve_node->size, task_type);
+                svm_err("Add dev reserve va failed. (devid=%u; va=0x%llx; size=0x%llx; task_type=%d)\n", devid, va,
+                        reserve_node->size, task_type);
                 return ret;
             }
         }

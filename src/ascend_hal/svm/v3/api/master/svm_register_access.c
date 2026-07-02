@@ -74,7 +74,10 @@ static struct svm_access_local_mem *access_local_mem_get(void)
     return local_mem;
 }
 
-static void access_local_mem_put(struct svm_access_local_mem *local_mem) { local_mem->status = 0; }
+static void access_local_mem_put(struct svm_access_local_mem *local_mem)
+{
+    local_mem->status = 0;
+}
 
 static void access_local_mem_init_locked(void)
 {
@@ -135,11 +138,20 @@ static void access_local_mem_uninit(void)
     (void)pthread_mutex_unlock(&access_local_mem_mutex);
 }
 
-static bool svm_access_is_write(u32 flag) { return ((flag & SVM_MEM_ACCESS_WRITE) != 0); }
+static bool svm_access_is_write(u32 flag)
+{
+    return ((flag & SVM_MEM_ACCESS_WRITE) != 0);
+}
 
-static bool svm_access_is_read(u32 flag) { return ((flag & SVM_MEM_ACCESS_READ) != 0); }
+static bool svm_access_is_read(u32 flag)
+{
+    return ((flag & SVM_MEM_ACCESS_READ) != 0);
+}
 
-static bool svm_register_flag_is_access_dma(u64 flag) { return ((flag & SVM_REGISTER_FLAG_ACCESS_BY_DMA) != 0); }
+static bool svm_register_flag_is_access_dma(u64 flag)
+{
+    return ((flag & SVM_REGISTER_FLAG_ACCESS_BY_DMA) != 0);
+}
 
 static bool svm_register_flag_is_support(u64 flag)
 {
@@ -421,9 +433,8 @@ static int svm_access_direct(u64 access_va, u64 local_va, u64 size, u32 flag)
 
     ret = svm_memcpy_local((u64)(uintptr_t)dst, size, (u64)(uintptr_t)src, size);
     if (ret != 0) {
-        svm_err(
-            "Memcpy error. (access_va=0x%llx; local_va=0x%llx; size=0x%x; flag=0x%x; ret=%d)\n", access_va, local_va,
-            size, flag, ret);
+        svm_err("Memcpy error. (access_va=0x%llx; local_va=0x%llx; size=0x%x; flag=0x%x; ret=%d)\n", access_va,
+                local_va, size, flag, ret);
         return DRV_ERROR_INVALID_VALUE;
     }
 
@@ -469,9 +480,8 @@ static int svm_access_check_local_svm_va(u64 local_va, u64 size)
             return DRV_ERROR_PARA_ERROR;
         }
         if (prop.devid != host_devid) {
-            svm_err(
-                "Local va is not host svm addr. (local_va=0x%llx; prop.devid=%u; host_devid=%u)\n", local_va,
-                prop.devid, host_devid);
+            svm_err("Local va is not host svm addr. (local_va=0x%llx; prop.devid=%u; host_devid=%u)\n", local_va,
+                    prop.devid, host_devid);
             return DRV_ERROR_INVALID_VALUE;
         }
         va = prop.start + prop.size;
@@ -541,9 +551,8 @@ static int svm_access_by_dma(u32 devid, u64 access_va, u64 local_va, u64 size, u
         if (local_mem != NULL) {
             ret = svm_memcpy_local(local_mem->va, size, local_va, size);
             if (ret != 0) {
-                svm_err(
-                    "Memcpy error. (access_va=0x%llx; local_va=0x%llx; size=%llu; flag=0x%x; ret=%d)\n", access_va,
-                    local_va, size, flag, ret);
+                svm_err("Memcpy error. (access_va=0x%llx; local_va=0x%llx; size=%llu; flag=0x%x; ret=%d)\n", access_va,
+                        local_va, size, flag, ret);
                 ret = DRV_ERROR_INVALID_VALUE;
             } else {
                 ret = _svm_access_by_dma(devid, access_va, local_mem->va, size, flag);
@@ -551,9 +560,8 @@ static int svm_access_by_dma(u32 devid, u64 access_va, u64 local_va, u64 size, u
                     /* If read access, we need to update the local memory */
                     ret = svm_memcpy_local(local_va, size, local_mem->va, size);
                     if (ret != 0) {
-                        svm_err(
-                            "Memcpy err. (access_va=0x%llx; local_va=0x%llx; size=%llu; flag=0x%x; ret=%d)\n",
-                            access_va, local_va, size, flag, ret);
+                        svm_err("Memcpy err. (access_va=0x%llx; local_va=0x%llx; size=%llu; flag=0x%x; ret=%d)\n",
+                                access_va, local_va, size, flag, ret);
                         ret = DRV_ERROR_INVALID_VALUE;
                     }
                 }
@@ -576,9 +584,8 @@ static int svm_access_by_dma(u32 devid, u64 access_va, u64 local_va, u64 size, u
     /* register local va */
     ret = svm_register_to_master(devid, &register_va, register_to_master_flag);
     if (ret != 0) {
-        svm_err(
-            "Local mem register failed. (access_va=0x%llx; local_va=0x%llx; size=0x%x; flag=0x%x; ret=%d)\n", access_va,
-            local_va, size, flag, ret);
+        svm_err("Local mem register failed. (access_va=0x%llx; local_va=0x%llx; size=0x%x; flag=0x%x; ret=%d)\n",
+                access_va, local_va, size, flag, ret);
         return ret;
     }
     ret = _svm_access_by_dma(devid, access_va, local_va, size, flag);
@@ -591,15 +598,13 @@ drvError_t halSvmAccess(uint32_t devid, uint64_t access_va, uint64_t local_va, u
 {
     int ret;
 
-    svm_debug(
-        "Access. (devid=%u; access_va=0x%llx; local_va=0x%llx; size=0x%llx; flag=0x%x)\n", devid, access_va, local_va,
-        size, flag);
+    svm_debug("Access. (devid=%u; access_va=0x%llx; local_va=0x%llx; size=0x%llx; flag=0x%x)\n", devid, access_va,
+              local_va, size, flag);
 
     if ((devid >= SVM_MAX_DEV_AGENT_NUM) || (size == 0) || (size > SVM_MAX_ACCESS_SIZE) || (access_va == 0) ||
         (local_va == 0)) {
-        svm_err(
-            "Invalid para. (devid=%u; access_va=0x%llx; local_va=0x%llx; size=0x%llx)\n", devid, access_va, local_va,
-            size);
+        svm_err("Invalid para. (devid=%u; access_va=0x%llx; local_va=0x%llx; size=0x%llx)\n", devid, access_va,
+                local_va, size);
         return DRV_ERROR_INVALID_VALUE;
     }
 

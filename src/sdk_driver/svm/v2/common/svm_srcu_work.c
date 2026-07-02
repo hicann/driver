@@ -30,9 +30,8 @@ struct devmm_srcu_work default_srcu_work;
 
 void devmm_srcu_work_stats_print(struct devmm_srcu_work *srcu_work)
 {
-    devmm_drv_info(
-        "Srcu work stats info. (subwork_num=%llu; subwork_peak_num=%llu)\n", srcu_work->subwork_num,
-        srcu_work->subwork_peak_num);
+    devmm_drv_info("Srcu work stats info. (subwork_num=%llu; subwork_peak_num=%llu)\n", srcu_work->subwork_num,
+                   srcu_work->subwork_peak_num);
 }
 
 static struct devmm_srcu_node *_devmm_erase_one_srcu_node(struct devmm_srcu_work *work)
@@ -98,8 +97,8 @@ int devmm_srcu_subwork_add(struct devmm_srcu_work *srcu_work, u32 type, srcu_sub
 {
     struct devmm_srcu_work *srcu_work_tmp = srcu_work;
     struct devmm_srcu_node *srcu_node = NULL;
-    ka_gfp_t flags =
-        (ka_base_in_softirq() != 0) ? (KA_GFP_ATOMIC | __KA_GFP_ACCOUNT) : (KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
+    ka_gfp_t flags = (ka_base_in_softirq() != 0) ? (KA_GFP_ATOMIC | __KA_GFP_ACCOUNT) :
+                                                   (KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
     int ret;
 
     if (srcu_work_tmp == NULL) {
@@ -175,4 +174,7 @@ void devmm_srcu_work_uninit(struct devmm_srcu_work *srcu_work)
     devmm_srcu_nodes_destroy(srcu_work);
 }
 
-void devmm_default_srcu_work_init(void) { devmm_srcu_work_init(&default_srcu_work); }
+void devmm_default_srcu_work_init(void)
+{
+    devmm_srcu_work_init(&default_srcu_work);
+}

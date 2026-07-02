@@ -121,8 +121,8 @@ static enum svm_page_granularity mpl_get_page_gran_by_flag(u32 flag)
     }
 }
 
-static int mpl_populate_others(
-    u32 udevid, struct svm_mpl_populate_para *para, ka_page_t **pages, u64 page_num, struct svm_pgtlb_attr *pgtlb_attr)
+static int mpl_populate_others(u32 udevid, struct svm_mpl_populate_para *para, ka_page_t **pages, u64 page_num,
+                               struct svm_pgtlb_attr *pgtlb_attr)
 {
     u32 va_count = para->va_batch.count;
     u64 *va_array = para->va_batch.array;
@@ -191,8 +191,8 @@ static int _mpl_populate(u32 udevid, struct svm_mpl_populate_para *para, ka_page
         return ret;
     }
 
-    svm_pgtlb_attr_packet(
-        &pgtlb_attr, ((flag & SVM_MPL_FLAG_PG_NC) != 0), ((flag & SVM_MPL_FLAG_PG_RDONLY) != 0), false, page_size);
+    svm_pgtlb_attr_packet(&pgtlb_attr, ((flag & SVM_MPL_FLAG_PG_NC) != 0), ((flag & SVM_MPL_FLAG_PG_RDONLY) != 0),
+                          false, page_size);
 
     svm_set_vma_status(vma, VMA_STATUS_NORMAL_OP);
     ret = svm_remap_pages(vma, va, pages, page_num, &pgtlb_attr);
@@ -269,9 +269,8 @@ static int mpl_populate(u32 udevid, struct svm_mpl_populate_para *para, u64 page
     ret = svm_alloc_pages(udevid, gran, pages, page_num, gfp_flag);
     if (ret != 0) {
         svm_kvfree(pages);
-        svm_no_err_if(
-            (ret == -ENOMEM), "Alloc page not success. (ret=%d; page_num=%llu; gfp_flag=0x%x)\n", ret, page_num,
-            gfp_flag);
+        svm_no_err_if((ret == -ENOMEM), "Alloc page not success. (ret=%d; page_num=%llu; gfp_flag=0x%x)\n", ret,
+                      page_num, gfp_flag);
         return ret;
     }
 

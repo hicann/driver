@@ -21,9 +21,15 @@
 
 #define MPL_HUGEPAGE_2M_ORDER 9
 
-static void svm_clear_huge_page(ka_page_t *pg) { svm_clear_single_page(pg, KA_HPAGE_SIZE); }
+static void svm_clear_huge_page(ka_page_t *pg)
+{
+    svm_clear_single_page(pg, KA_HPAGE_SIZE);
+}
 
-static inline void svm_put_page(ka_page_t *pg) { ka_mm_put_page(pg); }
+static inline void svm_put_page(ka_page_t *pg)
+{
+    ka_mm_put_page(pg);
+}
 
 static void svm_free_huge_page(ka_page_t *pg, u32 flag)
 {
@@ -57,15 +63,13 @@ static ka_page_t *svm_alloc_hpage(int nid, u32 flag)
 #endif
     } else if (tmp_flag == (KA_HUGETLB_ALLOC_BUDDY | KA_HUGETLB_ALLOC_NORECLAIM)) {
 #ifdef CFG_FEATURE_SURPORT_HUGETLB_FOLIO
-        gfp_mask =
-            ((KA_GFP_HIGHUSER_MOVABLE | __KA_GFP_THISNODE | KA_GFP_KERNEL | __KA_GFP_COMP | __KA_GFP_ACCOUNT |
-              __KA_GFP_NOWARN | __KA_GFP_RETRY_MAYFAIL) &
-             (~__KA_GFP_RECLAIM));
+        gfp_mask = ((KA_GFP_HIGHUSER_MOVABLE | __KA_GFP_THISNODE | KA_GFP_KERNEL | __KA_GFP_COMP | __KA_GFP_ACCOUNT |
+                     __KA_GFP_NOWARN | __KA_GFP_RETRY_MAYFAIL) &
+                    (~__KA_GFP_RECLAIM));
         return (ka_page_t *)alloc_temporary_hugetlb_folio(nid, gfp_mask);
     } else if (tmp_flag == KA_HUGETLB_ALLOC_BUDDY) {
-        gfp_mask =
-            (KA_GFP_HIGHUSER_MOVABLE | __KA_GFP_THISNODE | KA_GFP_KERNEL | __KA_GFP_COMP | __KA_GFP_ACCOUNT |
-             __KA_GFP_NOWARN | __KA_GFP_RETRY_MAYFAIL);
+        gfp_mask = (KA_GFP_HIGHUSER_MOVABLE | __KA_GFP_THISNODE | KA_GFP_KERNEL | __KA_GFP_COMP | __KA_GFP_ACCOUNT |
+                    __KA_GFP_NOWARN | __KA_GFP_RETRY_MAYFAIL);
         return (ka_page_t *)alloc_temporary_hugetlb_folio(nid, gfp_mask);
 #else
         gfp_mask = ((KA_GFP_KERNEL | __KA_GFP_COMP | __KA_GFP_ACCOUNT) & (~__KA_GFP_RECLAIM));

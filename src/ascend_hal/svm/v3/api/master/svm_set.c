@@ -110,16 +110,15 @@ static u64 svm_get_host_zero_mem(u32 host_devid)
         (void)pthread_rwlock_wrlock(&memset_fast_rwlock);
         if (host_zero_mem == 0) {
 #ifndef EMU_ST /* Simulation ST is required and cannot be deleted. */
-            ret = halMemAlloc(
-                (void **)&host_zero_mem, SVM_MEMSET_FAST_LIMIT_SIZE,
-                (MEM_HOST | ((u64)DEVMM_MODULE_ID << MEM_MODULE_ID_BIT)));
+            ret = halMemAlloc((void **)&host_zero_mem, SVM_MEMSET_FAST_LIMIT_SIZE,
+                              (MEM_HOST | ((u64)DEVMM_MODULE_ID << MEM_MODULE_ID_BIT)));
             if (ret != 0) {
                 (void)pthread_rwlock_unlock(&memset_fast_rwlock);
                 return 0;
             }
 #endif
-            (void)svm_memset_client(
-                host_devid, host_zero_mem, SVM_MEMSET_FAST_LIMIT_SIZE, 0, SVM_MEMSET_FAST_LIMIT_SIZE);
+            (void)svm_memset_client(host_devid, host_zero_mem, SVM_MEMSET_FAST_LIMIT_SIZE, 0,
+                                    SVM_MEMSET_FAST_LIMIT_SIZE);
         }
         (void)pthread_rwlock_unlock(&memset_fast_rwlock);
     }

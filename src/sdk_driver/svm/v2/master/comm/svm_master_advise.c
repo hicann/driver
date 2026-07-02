@@ -43,8 +43,8 @@ STATIC u32 *devmm_get_alloced_page_bitmap(struct devmm_svm_process *svm_process,
     return page_bitmap;
 }
 
-STATIC void devmm_clear_hostmapped_prefetch(
-    struct devmm_svm_process *svm_pro, u64 dev_ptr, size_t count, u32 dev_id, struct devmm_memory_attributes *attr)
+STATIC void devmm_clear_hostmapped_prefetch(struct devmm_svm_process *svm_pro, u64 dev_ptr, size_t count, u32 dev_id,
+                                            struct devmm_memory_attributes *attr)
 {
     u32 adjust_order, page_size, num, i;
     u32 stamp = (u32)ka_jiffies;
@@ -73,8 +73,8 @@ STATIC void devmm_clear_hostmapped_prefetch(
     }
 }
 
-STATIC void devmm_set_device_maped(
-    struct devmm_svm_process *svm_proc, u64 dev_ptr, size_t count, u32 logical_devid, u32 page_size)
+STATIC void devmm_set_device_maped(struct devmm_svm_process *svm_proc, u64 dev_ptr, size_t count, u32 logical_devid,
+                                   u32 page_size)
 {
     u32 stamp = (u32)ka_jiffies;
     u32 *page_bitmap = NULL;
@@ -96,9 +96,9 @@ STATIC void devmm_set_device_maped(
     }
 }
 
-STATIC void devmm_fill_attr_after_prefetch(
-    struct devmm_svm_process *svm_proc, struct devmm_page_query_arg *query_arg,
-    struct devmm_memory_attributes *old_attr, struct devmm_memory_attributes *new_attr)
+STATIC void devmm_fill_attr_after_prefetch(struct devmm_svm_process *svm_proc, struct devmm_page_query_arg *query_arg,
+                                           struct devmm_memory_attributes *old_attr,
+                                           struct devmm_memory_attributes *new_attr)
 {
     new_attr->is_local_host = false;
     new_attr->is_host_pin = false;
@@ -127,9 +127,8 @@ STATIC void devmm_fill_attr_after_prefetch(
     new_attr->vfid = query_arg->process_id.vfid;
 }
 
-STATIC int devmm_prefetch_to_device(
-    struct devmm_svm_process *svm_proc, u64 dev_ptr, u64 byte_cnt, struct devmm_page_query_arg *query_arg,
-    struct devmm_memory_attributes *attr)
+STATIC int devmm_prefetch_to_device(struct devmm_svm_process *svm_proc, u64 dev_ptr, u64 byte_cnt,
+                                    struct devmm_page_query_arg *query_arg, struct devmm_memory_attributes *attr)
 {
     struct devmm_memory_attributes device_attr = {0};
     struct devmm_mem_copy_convrt_para para;
@@ -154,25 +153,23 @@ STATIC int devmm_prefetch_to_device(
 
     ret = devmm_ioctl_memcpy_process_res(svm_proc, &para, attr, &device_attr);
     if (ret != 0) {
-        devmm_drv_err_if(
-            (ret != -EOPNOTSUPP),
-            "Memcpy failed. (ret=%d; dev_ptr=0x%llx; byte_count=%llx; "
-            "aligned_down_addr=0x%llx; aligned_count=%llx; dev_id=%u)\n",
-            ret, dev_ptr, byte_cnt, aligned_down_addr, aligned_cnt, dev_id);
+        devmm_drv_err_if((ret != -EOPNOTSUPP),
+                         "Memcpy failed. (ret=%d; dev_ptr=0x%llx; byte_count=%llx; "
+                         "aligned_down_addr=0x%llx; aligned_count=%llx; dev_id=%u)\n",
+                         ret, dev_ptr, byte_cnt, aligned_down_addr, aligned_cnt, dev_id);
         return ret;
     }
 
     devmm_clear_hostmapped_prefetch(svm_proc, aligned_down_addr, aligned_cnt, dev_id, attr);
 
-    devmm_drv_debug(
-        "Prefetch to device succeeded. "
-        "(dev_ptr=0x%llx; byte_count=0x%llx; aligned_down_addr=0x%llx; aligned_count=0x%llx; dev_id=%u)\n",
-        dev_ptr, byte_cnt, aligned_down_addr, aligned_cnt, dev_id);
+    devmm_drv_debug("Prefetch to device succeeded. "
+                    "(dev_ptr=0x%llx; byte_count=0x%llx; aligned_down_addr=0x%llx; aligned_count=0x%llx; dev_id=%u)\n",
+                    dev_ptr, byte_cnt, aligned_down_addr, aligned_cnt, dev_id);
     return 0;
 }
 
-STATIC int devmm_prefetch_to_device_proc(
-    struct devmm_svm_process *svm_pro, u64 dev_ptr, u64 byte_count, struct devmm_page_query_arg *query_arg)
+STATIC int devmm_prefetch_to_device_proc(struct devmm_svm_process *svm_pro, u64 dev_ptr, u64 byte_count,
+                                         struct devmm_page_query_arg *query_arg)
 {
     u64 aligned_down_addr, aligned_count;
     struct devmm_memory_attributes attr;
@@ -198,9 +195,8 @@ STATIC int devmm_prefetch_to_device_proc(
 
         ret = devmm_prefetch_to_device(svm_pro, aligned_down_addr, cnt, query_arg, &attr);
         if (ret != 0) {
-            devmm_drv_err_if(
-                (ret != -EOPNOTSUPP), "Prefetch to device error. (ret=%d; ptr=0x%llx; cnt=%llu)\n", ret,
-                aligned_down_addr, cnt);
+            devmm_drv_err_if((ret != -EOPNOTSUPP), "Prefetch to device error. (ret=%d; ptr=0x%llx; cnt=%llu)\n", ret,
+                             aligned_down_addr, cnt);
             return ret;
         }
         devmm_drv_debug("Prefetch information. (ret=%d; ptr=0x%llx; cnt=%llu)\n", ret, aligned_down_addr, cnt);
@@ -210,8 +206,8 @@ STATIC int devmm_prefetch_to_device_proc(
     return ret;
 }
 
-STATIC int devmm_prefetch_to_device_frame(
-    struct devmm_svm_process *svm_pro, struct devmm_page_query_arg query_arg, u32 *page_bitmap, u64 *num)
+STATIC int devmm_prefetch_to_device_frame(struct devmm_svm_process *svm_pro, struct devmm_page_query_arg query_arg,
+                                          u32 *page_bitmap, u64 *num)
 {
     u64 i, page_cnt, prefetch_cnt, ptr;
     int ret;
@@ -234,21 +230,19 @@ STATIC int devmm_prefetch_to_device_frame(
     ptr = query_arg.va;
     ret = devmm_prefetch_to_device_proc(svm_pro, ptr, prefetch_cnt, &query_arg);
     if (ret != 0) {
-        devmm_drv_err_if(
-            (ret != -EOPNOTSUPP), "Prefetch to device proc error. (ret=%d; ptr=0x%llx; prefetch_cnt=%llu)\n", ret, ptr,
-            prefetch_cnt);
+        devmm_drv_err_if((ret != -EOPNOTSUPP),
+                         "Prefetch to device proc error. (ret=%d; ptr=0x%llx; prefetch_cnt=%llu)\n", ret, ptr,
+                         prefetch_cnt);
         return ret;
     }
     *num = i;
-    devmm_drv_debug(
-        "Prefetch information. (num=%llu; query_arg_va=0x%llx; query_arg_size=%llu; prefetch_cnt=%llu)\n", i,
-        query_arg.va, query_arg.size, prefetch_cnt);
+    devmm_drv_debug("Prefetch information. (num=%llu; query_arg_va=0x%llx; query_arg_size=%llu; prefetch_cnt=%llu)\n",
+                    i, query_arg.va, query_arg.size, prefetch_cnt);
     return 0;
 }
 
-STATIC int devmm_populate_to_device_frame(
-    struct devmm_svm_process *svm_proc, struct devmm_svm_heap *heap, struct devmm_page_query_arg query_arg,
-    u32 *page_bitmap, u64 *num)
+STATIC int devmm_populate_to_device_frame(struct devmm_svm_process *svm_proc, struct devmm_svm_heap *heap,
+                                          struct devmm_page_query_arg query_arg, u32 *page_bitmap, u64 *num)
 {
     u32 page_cnt, i, populate_num;
     u32 stamp = (u32)ka_jiffies;
@@ -266,10 +260,9 @@ STATIC int devmm_populate_to_device_frame(
         populate_num++;
         devmm_try_cond_resched(&stamp);
     }
-    page_cnt =
-        (((heap->heap_type == DEVMM_HEAP_CHUNK_PAGE) && (heap->heap_sub_type == SUB_SVM_TYPE)) ?
-             (populate_num * (1UL << devmm_device_page_adjust_order())) :
-             populate_num);
+    page_cnt = (((heap->heap_type == DEVMM_HEAP_CHUNK_PAGE) && (heap->heap_sub_type == SUB_SVM_TYPE)) ?
+                    (populate_num * (1UL << devmm_device_page_adjust_order())) :
+                    populate_num);
     query_arg.size = query_arg.page_size * (unsigned long)populate_num; /* just create size of page cnt */
     query_arg.msg_id = DEVMM_CHAN_PAGE_CREATE_H2D_ID;
     query_arg.page_insert_dev_id = query_arg.logical_devid;
@@ -277,9 +270,8 @@ STATIC int devmm_populate_to_device_frame(
     /* populate_num will not eq 0 */
     ret = devmm_query_page_by_msg(svm_proc, query_arg, NULL, &page_cnt);
     if (ret != 0) {
-        devmm_drv_debug(
-            "Can not memory populate. (ret=%d; va=0x%llx; size=%llu; page_cnt=%u; num=%llu)\n", ret, query_arg.va,
-            query_arg.size, page_cnt, *num);
+        devmm_drv_debug("Can not memory populate. (ret=%d; va=0x%llx; size=%llu; page_cnt=%u; num=%llu)\n", ret,
+                        query_arg.va, query_arg.size, page_cnt, *num);
         for (i = 0; i < populate_num; i++) {
             devmm_page_bitmap_clear_flag(page_bitmap + i, DEVMM_PAGE_DEV_MAPPED_MASK);
             devmm_page_bitmap_clear_flag(page_bitmap + i, DEVMM_PAGE_ADVISE_POPULATE_MASK);
@@ -291,35 +283,32 @@ STATIC int devmm_populate_to_device_frame(
     return 0;
 }
 
-STATIC int devmm_advise_populate_arg_check(
-    struct devmm_svm_heap *heap, u32 *page_bitmap, struct devmm_ioctl_arg *arg, u64 page_cnt)
+STATIC int devmm_advise_populate_arg_check(struct devmm_svm_heap *heap, u32 *page_bitmap, struct devmm_ioctl_arg *arg,
+                                           u64 page_cnt)
 {
     u64 i;
 
     /* if locked device, device id must eq device get form bitmap */
     if (devmm_page_bitmap_is_locked_device(page_bitmap) &&
         (devmm_page_bitmap_get_devid(page_bitmap) != arg->head.logical_devid)) {
-        devmm_drv_err(
-            "Devid error. (va=0x%llx; locked_did=%u; advise_did=%u)\n", arg->data.advise_para.ptr,
-            devmm_page_bitmap_get_devid(page_bitmap), arg->head.logical_devid);
+        devmm_drv_err("Devid error. (va=0x%llx; locked_did=%u; advise_did=%u)\n", arg->data.advise_para.ptr,
+                      devmm_page_bitmap_get_devid(page_bitmap), arg->head.logical_devid);
         return -EINVAL;
     }
     for (i = 0; i < page_cnt; i++) {
         if (devmm_page_bitmap_is_dev_mapped(page_bitmap + i) &&
             (devmm_page_bitmap_get_devid(page_bitmap + i) != arg->head.logical_devid)) {
             /* mapped by device, but device id is not same */
-            devmm_drv_err(
-                "Mapped by device, but advise devid error. (logical_devid=%u; va=0x%llx; num=%llu)\n",
-                arg->head.logical_devid, arg->data.advise_para.ptr, i);
+            devmm_drv_err("Mapped by device, but advise devid error. (logical_devid=%u; va=0x%llx; num=%llu)\n",
+                          arg->head.logical_devid, arg->data.advise_para.ptr, i);
             return -EINVAL;
         }
     }
     return 0;
 }
 
-STATIC int devmm_advise_populate_process(
-    struct devmm_svm_process *svm_pro, struct devmm_svm_heap *heap, u32 *page_bitmap, struct devmm_ioctl_arg *arg,
-    u64 page_cnt)
+STATIC int devmm_advise_populate_process(struct devmm_svm_process *svm_pro, struct devmm_svm_heap *heap,
+                                         u32 *page_bitmap, struct devmm_ioctl_arg *arg, u64 page_cnt)
 {
     struct devmm_page_query_arg query_arg = {{0}};
     u32 stamp = (u32)ka_jiffies;
@@ -327,8 +316,8 @@ STATIC int devmm_advise_populate_process(
     int ret;
 
     if (devmm_advise_populate_arg_check(heap, page_bitmap, arg, page_cnt) != 0) {
-        devmm_drv_err(
-            "Devmm populate_arg_check error. (va=0x%llx; devid=%u)\n", arg->data.advise_para.ptr, arg->head.devid);
+        devmm_drv_err("Devmm populate_arg_check error. (va=0x%llx; devid=%u)\n", arg->data.advise_para.ptr,
+                      arg->head.devid);
         return -EINVAL;
     }
 
@@ -359,17 +348,15 @@ STATIC int devmm_advise_populate_process(
             return ret;
         }
         devmm_try_cond_resched(&stamp);
-        devmm_drv_debug(
-            "Devmm populated. (va=0x%llx; count=%llu; devid=%u; num=%llu; i=%llu)\n", query_arg.va, query_arg.size,
-            arg->head.devid, num, i);
+        devmm_drv_debug("Devmm populated. (va=0x%llx; count=%llu; devid=%u; num=%llu; i=%llu)\n", query_arg.va,
+                        query_arg.size, arg->head.devid, num, i);
     }
 
     return 0;
 }
 
-int devmm_ipc_page_table_create_process(
-    struct devmm_svm_process *svm_proc, struct devmm_svm_heap *heap, u32 *page_bitmap, struct devmm_ioctl_arg *arg,
-    void *n_attr)
+int devmm_ipc_page_table_create_process(struct devmm_svm_process *svm_proc, struct devmm_svm_heap *heap,
+                                        u32 *page_bitmap, struct devmm_ioctl_arg *arg, void *n_attr)
 {
     struct devmm_page_query_arg query_arg = {{0}};
     struct devmm_ipc_owner_attr owner_attr = {0};
@@ -407,9 +394,8 @@ int devmm_ipc_page_table_create_process(
     query_arg.mem_map_route = owner_attr.mem_map_route;
     ret = devmm_p2p_page_create_msg(svm_proc, query_arg, NULL, &num);
     if ((ret != 0) || (num == 0)) {
-        devmm_drv_err(
-            "Advise_page error. (ret=%d; num=%u; va=0x%llx; count=%lu; page_cnt=%llu; page_size=%u)\n", ret, num,
-            arg->data.advise_para.ptr, arg->data.advise_para.count, page_cnt, heap->chunk_page_size);
+        devmm_drv_err("Advise_page error. (ret=%d; num=%u; va=0x%llx; count=%lu; page_cnt=%llu; page_size=%u)\n", ret,
+                      num, arg->data.advise_para.ptr, arg->data.advise_para.count, page_cnt, heap->chunk_page_size);
 
         return ((ret != 0) ? ret : -EINVAL);
     }
@@ -443,9 +429,8 @@ static bool devmm_page_bitmaps_is_dev_mapped(u32 *page_bitmap, u64 page_bitmap_c
     return true;
 }
 
-STATIC int devmm_advise_d2d_populate_process(
-    struct devmm_svm_process *svm_proc, struct devmm_svm_heap *heap, u32 *page_bitmap, struct devmm_ioctl_arg *arg,
-    u64 page_bitmap_cnt)
+STATIC int devmm_advise_d2d_populate_process(struct devmm_svm_process *svm_proc, struct devmm_svm_heap *heap,
+                                             u32 *page_bitmap, struct devmm_ioctl_arg *arg, u64 page_bitmap_cnt)
 {
     struct devmm_page_query_arg query_arg = {{0}};
     u32 phy_devid = devmm_page_bitmap_get_phy_devid(svm_proc, page_bitmap);
@@ -459,8 +444,8 @@ STATIC int devmm_advise_d2d_populate_process(
     }
 
     if (heap->heap_sub_type == SUB_RESERVE_TYPE) {
-        query_arg.page_size =
-            (heap->heap_type == DEVMM_HEAP_HUGE_PAGE) ? devmm_svm->device_hpage_size : devmm_svm->device_page_size;
+        query_arg.page_size = (heap->heap_type == DEVMM_HEAP_HUGE_PAGE) ? devmm_svm->device_hpage_size :
+                                                                          devmm_svm->device_page_size;
         num = (u32)(page_bitmap_cnt * heap->chunk_page_size / query_arg.page_size);
     } else {
         query_arg.page_size = heap->chunk_page_size;
@@ -494,19 +479,18 @@ STATIC int devmm_advise_d2d_populate_process(
     devmm_page_bitmap_set_value_nolock(&query_arg.bitmap, DEVMM_PAGE_DEVID_SHIT, DEVMM_PAGE_DEVID_WID, phy_devid);
     ret = devmm_p2p_page_create_msg(svm_proc, query_arg, NULL, &num);
     if ((ret != 0) || (num == 0)) {
-        devmm_drv_err(
-            "Advise_page error or num is 0. "
-            "(ret=%d; num=%u; va=0x%llx; count=%lu; page_bitmap_cnt=%llu; page_size=%u)\n",
-            ret, num, arg->data.advise_para.ptr, arg->data.advise_para.count, page_bitmap_cnt, heap->chunk_page_size);
+        devmm_drv_err("Advise_page error or num is 0. "
+                      "(ret=%d; num=%u; va=0x%llx; count=%lu; page_bitmap_cnt=%llu; page_size=%u)\n",
+                      ret, num, arg->data.advise_para.ptr, arg->data.advise_para.count, page_bitmap_cnt,
+                      heap->chunk_page_size);
         return ((ret != 0) ? ret : -EINVAL);
     }
 
     return 0;
 }
 
-STATIC int devmm_prefetch_host_agent_process(
-    struct devmm_svm_process *svm_proc, struct devmm_svm_heap *heap, u32 *page_bitmap, struct devmm_ioctl_arg *arg,
-    u64 page_cnt)
+STATIC int devmm_prefetch_host_agent_process(struct devmm_svm_process *svm_proc, struct devmm_svm_heap *heap,
+                                             u32 *page_bitmap, struct devmm_ioctl_arg *arg, u64 page_cnt)
 {
     struct devmm_mem_advise_para *prefetch_para = &arg->data.prefetch_para;
     struct devmm_mem_remote_map_para map_para = {0};
@@ -550,9 +534,8 @@ STATIC int devmm_prefetch_host_agent_process(
     return 0;
 }
 
-static int devmm_ioctl_advise_populate(
-    struct devmm_svm_process *svm_proc, struct devmm_svm_heap *heap, u32 *page_bitmap, struct devmm_ioctl_arg *arg,
-    u64 page_cnt)
+static int devmm_ioctl_advise_populate(struct devmm_svm_process *svm_proc, struct devmm_svm_heap *heap,
+                                       u32 *page_bitmap, struct devmm_ioctl_arg *arg, u64 page_cnt)
 {
     u32 devid_from_bitmap;
     int ret;
@@ -591,8 +574,8 @@ static int devmm_ioctl_advise_populate(
     return ret;
 }
 
-static int devmm_advise_svm_check(
-    struct devmm_svm_process *svm_proc, struct devmm_mem_advise_para *advise_para, u32 dev_id, u32 logical_devid)
+static int devmm_advise_svm_check(struct devmm_svm_process *svm_proc, struct devmm_mem_advise_para *advise_para,
+                                  u32 dev_id, u32 logical_devid)
 {
     u32 *fst_page_bitmap = NULL;
     u32 devid_from_bitmap;
@@ -615,9 +598,8 @@ static int devmm_advise_svm_check(
     devid_from_bitmap = devmm_page_bitmap_get_phy_devid(svm_proc, fst_page_bitmap);
     if (devmm_dev_is_same_system(dev_id, devid_from_bitmap) == DEVMM_FALSE) {
 #ifndef EMU_ST
-        devmm_drv_run_info(
-            "Don't support advise to diffenent os. (devid=%u; devid_from_first_bitmap=%u)\n", dev_id,
-            devid_from_bitmap);
+        devmm_drv_run_info("Don't support advise to diffenent os. (devid=%u; devid_from_first_bitmap=%u)\n", dev_id,
+                           devid_from_bitmap);
 #endif
         return -EOPNOTSUPP;
     }
@@ -625,9 +607,8 @@ static int devmm_advise_svm_check(
     return 0;
 }
 
-static int devmm_advise_check(
-    struct devmm_svm_heap *heap, struct devmm_svm_process *svm_pro, u32 *page_bitmap, u64 chunk_cnt,
-    struct devmm_ioctl_arg *arg)
+static int devmm_advise_check(struct devmm_svm_heap *heap, struct devmm_svm_process *svm_pro, u32 *page_bitmap,
+                              u64 chunk_cnt, struct devmm_ioctl_arg *arg)
 {
     struct devmm_mem_advise_para *advise_para = &arg->data.advise_para;
     u32 dev_id = arg->head.devid;
@@ -636,25 +617,23 @@ static int devmm_advise_check(
     if (devmm_is_host_agent(dev_id) &&
         ((heap->heap_sub_type != SUB_DEVICE_TYPE) || heap->heap_type != DEVMM_HEAP_CHUNK_PAGE)) {
 #ifndef EMU_ST
-        devmm_drv_run_info(
-            "Host agent only support heap SUB_DEVICE_TYPE DEVMM_HEAP_CHUNK_PAGE."
-            " (heap_sub_type=%u; heap_type=%u)\n",
-            heap->heap_sub_type, heap->heap_type);
+        devmm_drv_run_info("Host agent only support heap SUB_DEVICE_TYPE DEVMM_HEAP_CHUNK_PAGE."
+                           " (heap_sub_type=%u; heap_type=%u)\n",
+                           heap->heap_sub_type, heap->heap_type);
 #endif
         return -EOPNOTSUPP;
     }
 
     if ((heap->heap_sub_type == SUB_READ_ONLY_TYPE) && ((advise_para->advise & DV_ADVISE_READONLY) == 0)) {
-        devmm_drv_err(
-            "Advise input error, need readonly flag. (heap_sub_type=%u; advise=%x)\n", heap->heap_sub_type,
-            advise_para->advise);
+        devmm_drv_err("Advise input error, need readonly flag. (heap_sub_type=%u; advise=%x)\n", heap->heap_sub_type,
+                      advise_para->advise);
         return -EINVAL;
     }
 
     for (i = 0; i < chunk_cnt; i++) {
         if (!devmm_page_bitmap_is_page_available(page_bitmap + i)) {
-            devmm_drv_err(
-                "Advise_populate error, not alloc. (devPtr=0x%llx; count=%lu)\n", advise_para->ptr, advise_para->count);
+            devmm_drv_err("Advise_populate error, not alloc. (devPtr=0x%llx; count=%lu)\n", advise_para->ptr,
+                          advise_para->count);
             return -EINVAL;
         }
     }
@@ -672,9 +651,8 @@ static int devmm_advise_check(
     if (((advise_para->advise & DV_ADVISE_POPULATE) != 0) && (heap->heap_sub_type == SUB_SVM_TYPE)) {
         int ret = devmm_advise_svm_check(svm_pro, advise_para, dev_id, arg->head.logical_devid);
         if (ret != 0) {
-            devmm_drv_err(
-                "Advise svm memory check failed. (devid=%u; locig_id=%u; ret=%d)\n", dev_id, arg->head.logical_devid,
-                ret);
+            devmm_drv_err("Advise svm memory check failed. (devid=%u; locig_id=%u; ret=%d)\n", dev_id,
+                          arg->head.logical_devid, ret);
             return ret;
         }
     }
@@ -730,17 +708,16 @@ STATIC INLINE int devmm_advise_check_type(struct devmm_svm_heap *heap, u64 advis
 {
     if ((heap->heap_type != DEVMM_HEAP_HUGE_PAGE) && (heap->heap_type != DEVMM_HEAP_PINNED_HOST) &&
         ((advise & DV_ADVISE_HUGEPAGE) != 0)) {
-        devmm_drv_err(
-            "Heap type is not huge but advise huge page . "
-            "(heap_type=%x; advise=0x%llx)\n",
-            heap->heap_type, advise);
+        devmm_drv_err("Heap type is not huge but advise huge page . "
+                      "(heap_type=%x; advise=0x%llx)\n",
+                      heap->heap_type, advise);
         return -EINVAL;
     }
     return 0;
 }
 
-static int devmm_ioctl_advise_master(
-    struct devmm_svm_process *svm_pro, struct devmm_svm_heap *heap, u32 *page_bitmap, struct devmm_ioctl_arg *arg)
+static int devmm_ioctl_advise_master(struct devmm_svm_process *svm_pro, struct devmm_svm_heap *heap, u32 *page_bitmap,
+                                     struct devmm_ioctl_arg *arg)
 {
     struct devmm_mem_advise_para *advise_para = &arg->data.advise_para;
     u64 i, set_num, chunk_page_cnt, page_cnt, byte_count, ptr;
@@ -766,8 +743,8 @@ static int devmm_ioctl_advise_master(
     }
 
     for (i = 0; i < chunk_page_cnt; i++) {
-        if (devmm_page_bitmap_check_and_set_flag(
-                page_bitmap + i, DEVMM_PAGE_HOST_MAPPED_MASK | DEVMM_PAGE_LOCKED_HOST_MASK) != 0) {
+        if (devmm_page_bitmap_check_and_set_flag(page_bitmap + i,
+                                                 DEVMM_PAGE_HOST_MAPPED_MASK | DEVMM_PAGE_LOCKED_HOST_MASK) != 0) {
             devmm_drv_err("Already mapped. (already_maped=%llu; va=0x%llx; page_cnt=%llu)\n", i, ptr, chunk_page_cnt);
             ret = -EADDRINUSE;
             goto alloc_fail_handle;
@@ -815,20 +792,19 @@ STATIC int devmm_advise_cache_persist(struct devmm_svm_process *svm_pro, struct 
     channel_set_para.va = advise_para->ptr;
     channel_set_para.count = advise_para->count;
 
-    ret = devmm_chan_msg_send(
-        &channel_set_para, sizeof(struct devmm_chan_advise_cache_persist), sizeof(struct devmm_chan_msg_head));
+    ret = devmm_chan_msg_send(&channel_set_para, sizeof(struct devmm_chan_advise_cache_persist),
+                              sizeof(struct devmm_chan_msg_head));
     if (ret != 0) {
-        devmm_drv_err(
-            "Send cache persist message failed. (ret=%d; va=0x%llx; size=0x%lx; devid=%u; vfid=%u)\n", ret,
-            advise_para->ptr, advise_para->count, arg->head.devid, arg->head.vfid);
+        devmm_drv_err("Send cache persist message failed. (ret=%d; va=0x%llx; size=0x%lx; devid=%u; vfid=%u)\n", ret,
+                      advise_para->ptr, advise_para->count, arg->head.devid, arg->head.vfid);
         return ret;
     }
 
     return 0;
 }
 
-STATIC int devmm_ioctl_advise_agent(
-    struct devmm_svm_process *svm_pro, struct devmm_svm_heap *heap, u32 *page_bitmap, struct devmm_ioctl_arg *arg)
+STATIC int devmm_ioctl_advise_agent(struct devmm_svm_process *svm_pro, struct devmm_svm_heap *heap, u32 *page_bitmap,
+                                    struct devmm_ioctl_arg *arg)
 {
     struct devmm_mem_advise_para *advise_para = &arg->data.advise_para;
     u64 byte_count, page_cnt, ptr;
@@ -839,10 +815,9 @@ STATIC int devmm_ioctl_advise_agent(
     page_cnt = devmm_get_pagecount_by_size(ptr, byte_count, heap->chunk_page_size);
     ret = devmm_advise_check(heap, svm_pro, page_bitmap, page_cnt, arg);
     if (ret != 0) {
-        devmm_drv_err(
-            "Bitmap check error. "
-            "(devPtr=0x%llx; byte_count=%llu; advise=0x%x; devid=%u; page_bitmap=0x%x; ret=%d)\n",
-            ptr, byte_count, advise_para->advise, arg->head.devid, devmm_page_read_bitmap(page_bitmap), ret);
+        devmm_drv_err("Bitmap check error. "
+                      "(devPtr=0x%llx; byte_count=%llu; advise=0x%x; devid=%u; page_bitmap=0x%x; ret=%d)\n",
+                      ptr, byte_count, advise_para->advise, arg->head.devid, devmm_page_read_bitmap(page_bitmap), ret);
         devmm_print_pre_alloced_va(svm_pro, ptr);
         return ret;
     }
@@ -858,8 +833,8 @@ STATIC int devmm_ioctl_advise_agent(
     return 0;
 }
 
-static int devmm_ioctl_advise_reserve(
-    struct devmm_svm_process *svm_pro, struct devmm_svm_heap *heap, u32 *page_bitmap, struct devmm_ioctl_arg *arg)
+static int devmm_ioctl_advise_reserve(struct devmm_svm_process *svm_pro, struct devmm_svm_heap *heap, u32 *page_bitmap,
+                                      struct devmm_ioctl_arg *arg)
 {
     struct devmm_mem_advise_para *advise_para = &arg->data.advise_para;
     u64 byte_count, page_cnt, ptr, i;
@@ -870,8 +845,8 @@ static int devmm_ioctl_advise_reserve(
 
     for (i = 0; i < page_cnt; i++) {
         if (devmm_page_bitmap_is_page_available(page_bitmap + i) == false) {
-            devmm_drv_err(
-                "Advise_populate error, not alloc. (devPtr=0x%llx; count=%lu)\n", advise_para->ptr, advise_para->count);
+            devmm_drv_err("Advise_populate error, not alloc. (devPtr=0x%llx; count=%lu)\n", advise_para->ptr,
+                          advise_para->count);
             return -EINVAL;
         }
     }
@@ -908,9 +883,9 @@ void devmm_get_dev_mem_dfx(struct devmm_svm_process *svm_pro, u32 mem_type, stru
         devmm_kvfree(dfx_msg);
         return;
     }
-    devmm_drv_info(
-        "Can not alloc dev mem. (hostpid=%d; devid=%u; vfid=%u; used_page_cnt=%llu; used_hpage_cnt=%llu)\n",
-        svm_pro->process_id.hostpid, arg->head.devid, arg->head.vfid, dfx_msg->used_page_cnt, dfx_msg->used_hpage_cnt);
+    devmm_drv_info("Can not alloc dev mem. (hostpid=%d; devid=%u; vfid=%u; used_page_cnt=%llu; used_hpage_cnt=%llu)\n",
+                   svm_pro->process_id.hostpid, arg->head.devid, arg->head.vfid, dfx_msg->used_page_cnt,
+                   dfx_msg->used_hpage_cnt);
 
     if (dfx_msg->node_num >= DEVMM_MAX_NUMA_NUM_OF_PER_DEV) {
         devmm_kvfree(dfx_msg);
@@ -918,12 +893,12 @@ void devmm_get_dev_mem_dfx(struct devmm_svm_process *svm_pro, u32 mem_type, stru
     }
 
     for (i = 0; i < dfx_msg->node_num; i++) {
-        devmm_drv_info(
-            "Node info. (node_index=%u; total_normal_size=%lluK; free_normal_size=%lluK; "
-            "total_huge_size=%lluK; free_huge_size=%lluK)\n",
-            dfx_msg->node_index[i], dfx_msg->node_info[i].total_normal_size / BYTES_PER_KB,
-            dfx_msg->node_info[i].free_normal_size / BYTES_PER_KB, dfx_msg->node_info[i].total_huge_size / BYTES_PER_KB,
-            dfx_msg->node_info[i].free_huge_size / BYTES_PER_KB);
+        devmm_drv_info("Node info. (node_index=%u; total_normal_size=%lluK; free_normal_size=%lluK; "
+                       "total_huge_size=%lluK; free_huge_size=%lluK)\n",
+                       dfx_msg->node_index[i], dfx_msg->node_info[i].total_normal_size / BYTES_PER_KB,
+                       dfx_msg->node_info[i].free_normal_size / BYTES_PER_KB,
+                       dfx_msg->node_info[i].total_huge_size / BYTES_PER_KB,
+                       dfx_msg->node_info[i].free_huge_size / BYTES_PER_KB);
     }
 
     devmm_kvfree(dfx_msg);
@@ -951,8 +926,8 @@ static void devmm_get_memtype_str(u32 bitmap, char *str)
     }
 }
 
-static void devmm_advise_error_print(
-    struct devmm_svm_process *svm_pro, struct devmm_ioctl_arg *arg, u32 heap_type, u32 *page_bitmap)
+static void devmm_advise_error_print(struct devmm_svm_process *svm_pro, struct devmm_ioctl_arg *arg, u32 heap_type,
+                                     u32 *page_bitmap)
 {
     struct devmm_mem_advise_para *advise_para = &arg->data.advise_para;
     u32 bitmap = devmm_page_read_bitmap(page_bitmap);
@@ -964,12 +939,11 @@ static void devmm_advise_error_print(
     byte_count = advise_para->count;
     ptr = advise_para->ptr;
     devmm_get_memtype_str(bitmap, p2p_ts);
-    devmm_drv_info(
-        "Can not advise. (ptr=0x%llx; byte_count=%llu; advise=0x%x; devid=%u; bitmap=0x%x; "
-        "host_dev=%s; pagesize=%s; hbm_ddr=%s; p2p_ts=%s)\n",
-        ptr, byte_count, advise_para->advise, arg->head.devid, bitmap,
-        heap_type == DEVMM_HEAP_PINNED_HOST ? "host" : "dev", (alloc_pagesize != 0) ? "huge" : "normal",
-        (hbm_ddr != 0) ? "ddr" : "hbm", p2p_ts);
+    devmm_drv_info("Can not advise. (ptr=0x%llx; byte_count=%llu; advise=0x%x; devid=%u; bitmap=0x%x; "
+                   "host_dev=%s; pagesize=%s; hbm_ddr=%s; p2p_ts=%s)\n",
+                   ptr, byte_count, advise_para->advise, arg->head.devid, bitmap,
+                   heap_type == DEVMM_HEAP_PINNED_HOST ? "host" : "dev", (alloc_pagesize != 0) ? "huge" : "normal",
+                   (hbm_ddr != 0) ? "ddr" : "hbm", p2p_ts);
     if (heap_type != DEVMM_HEAP_PINNED_HOST) {
         u32 mem_type = ((bitmap & DEVMM_PAGE_ADVISE_DDR_MASK) != 0) ? MEM_INFO_TYPE_DDR_SIZE : MEM_INFO_TYPE_HBM_SIZE;
 
@@ -988,14 +962,12 @@ int devmm_ioctl_advise(struct devmm_svm_process *svm_pro, struct devmm_ioctl_arg
 
     byte_count = advise_para->count;
     ptr = advise_para->ptr;
-    devmm_drv_debug(
-        "Advise info. (ptr=0x%llx; count=%llu; advise=0x%x; dev=%u)\n", ptr, byte_count, advise_para->advise,
-        arg->head.devid);
+    devmm_drv_debug("Advise info. (ptr=0x%llx; count=%llu; advise=0x%x; dev=%u)\n", ptr, byte_count,
+                    advise_para->advise, arg->head.devid);
     heap = devmm_svm_get_heap(svm_pro, ptr);
     if ((heap == NULL) || (devmm_advise_check_type(heap, advise_para->advise) != 0)) {
-        devmm_drv_err(
-            "Heap is NULL or error. (heap_is_null=%d; devPtr=0x%llx; device=%u)\n", (heap == NULL), ptr,
-            arg->head.devid);
+        devmm_drv_err("Heap is NULL or error. (heap_is_null=%d; devPtr=0x%llx; device=%u)\n", (heap == NULL), ptr,
+                      arg->head.devid);
         return -EADDRNOTAVAIL;
     }
 
@@ -1019,8 +991,8 @@ int devmm_ioctl_advise(struct devmm_svm_process *svm_pro, struct devmm_ioctl_arg
     return ret;
 }
 
-static int devmm_prefetch_para_check(
-    struct devmm_svm_process *svm_proc, u64 dev_ptr, u32 *page_bitmap, u64 count, u64 page_cnt)
+static int devmm_prefetch_para_check(struct devmm_svm_process *svm_proc, u64 dev_ptr, u32 *page_bitmap, u64 count,
+                                     u64 page_cnt)
 {
     struct devmm_memory_attributes attr;
     int ret;
@@ -1028,18 +1000,16 @@ static int devmm_prefetch_para_check(
 
     /* locked host,lock cmd lock all alloc page ,so just judge first page */
     if (devmm_page_bitmap_is_locked_host(page_bitmap)) {
-        devmm_drv_err(
-            "Locked host, but attempt to prefetch to device. (dev_ptr=0x%llx; count=%llu; "
-            "page_bitmap=0x%x)\n",
-            dev_ptr, count, devmm_page_read_bitmap(page_bitmap));
+        devmm_drv_err("Locked host, but attempt to prefetch to device. (dev_ptr=0x%llx; count=%llu; "
+                      "page_bitmap=0x%x)\n",
+                      dev_ptr, count, devmm_page_read_bitmap(page_bitmap));
         return -EINVAL;
     }
 
     if (devmm_page_bitmap_is_advise_readonly(page_bitmap)) {
-        devmm_drv_err(
-            "Readonly mem, but attempt to prefetch to device. (dev_ptr=0x%llx; count=%llu; "
-            "page_bitmap=0x%x)\n",
-            dev_ptr, count, devmm_page_read_bitmap(page_bitmap));
+        devmm_drv_err("Readonly mem, but attempt to prefetch to device. (dev_ptr=0x%llx; count=%llu; "
+                      "page_bitmap=0x%x)\n",
+                      dev_ptr, count, devmm_page_read_bitmap(page_bitmap));
         return -EINVAL;
     }
 
@@ -1081,10 +1051,9 @@ int devmm_ioctl_prefetch(struct devmm_svm_process *svm_pro, struct devmm_ioctl_a
     }
     page_bitmap = devmm_get_page_bitmap_with_heap(heap, dev_ptr);
     if ((page_bitmap == NULL) || (devmm_check_va_add_size_by_heap(heap, dev_ptr, count) != 0)) {
-        devmm_drv_err(
-            "Page_bitmap is NULL or check_va_add_size_by_heap failed. "
-            "(dev_ptr=0x%llx; count=%llu)\n",
-            dev_ptr, count);
+        devmm_drv_err("Page_bitmap is NULL or check_va_add_size_by_heap failed. "
+                      "(dev_ptr=0x%llx; count=%llu)\n",
+                      dev_ptr, count);
         return -EINVAL;
     }
     page_cnt = devmm_get_pagecount_by_size(dev_ptr, count, heap->chunk_page_size);
@@ -1095,9 +1064,8 @@ int devmm_ioctl_prefetch(struct devmm_svm_process *svm_pro, struct devmm_ioctl_a
 
     ret = devmm_ioctl_advise_populate(svm_pro, heap, page_bitmap, arg, page_cnt);
     if (ret != 0) {
-        devmm_drv_err_if(
-            (ret != -EOPNOTSUPP), "Prefetch failed. (ptr=0x%llx; count=%llu; device=%u)\n", dev_ptr, count,
-            arg->head.devid);
+        devmm_drv_err_if((ret != -EOPNOTSUPP), "Prefetch failed. (ptr=0x%llx; count=%llu; device=%u)\n", dev_ptr, count,
+                         arg->head.devid);
         if (ret != -EOPNOTSUPP) {
             devmm_print_pre_alloced_va(svm_pro, dev_ptr);
         }

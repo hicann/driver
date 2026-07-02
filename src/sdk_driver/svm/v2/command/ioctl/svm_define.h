@@ -223,9 +223,18 @@ uint64_t devmm_get_host_uva_start(void);
 #define DEVMM_GIANT_PAGE_SIZE 0x40000000ULL
 #define DEVMM_GIANT_TO_HUGE_PAGE_NUM 512ULL
 
-enum devmm_endpoint_type { DEVMM_END_HOST = 0x0, DEVMM_END_DEVICE, DEVMM_END_NUM };
+enum devmm_endpoint_type {
+    DEVMM_END_HOST = 0x0,
+    DEVMM_END_DEVICE,
+    DEVMM_END_NUM
+};
 
-enum devmm_side_type { DEVMM_SIDE_MASTER = 0, DEVMM_SIDE_DEVICE_AGENT = 1, DEVMM_SIDE_HOST_AGENT = 2, DEVMM_SIDE_MAX };
+enum devmm_side_type {
+    DEVMM_SIDE_MASTER = 0,
+    DEVMM_SIDE_DEVICE_AGENT = 1,
+    DEVMM_SIDE_HOST_AGENT = 2,
+    DEVMM_SIDE_MAX
+};
 
 enum devmm_mem_type {
     DEVMM_HBM_MEM = 0x0,
@@ -240,7 +249,12 @@ enum devmm_mem_type {
     DEVMM_MEM_TYPE_MAX,
 };
 
-enum devmm_page_type { DEVMM_NORMAL_PAGE_TYPE = 0x0, DEVMM_HUGE_PAGE_TYPE, DEVMM_GIANT_PAGE_TYPE, DEVMM_PAGE_TYPE_MAX };
+enum devmm_page_type {
+    DEVMM_NORMAL_PAGE_TYPE = 0x0,
+    DEVMM_HUGE_PAGE_TYPE,
+    DEVMM_GIANT_PAGE_TYPE,
+    DEVMM_PAGE_TYPE_MAX
+};
 
 enum devmm_copy_direction {
     DEVMM_COPY_HOST_TO_HOST,
@@ -317,9 +331,8 @@ static inline bool devmm_va_is_in_svm_range(unsigned long long va)
 #ifndef UVM_OPEN
 static inline bool devmm_vaddr_and_size_is_in_uvm_range(uint64_t va, uint64_t size)
 {
-    return (
-        (va >= DEVMM_UVM_MEM_START) && (va < DEVMM_UVM_MEM_START + DEVMM_UVM_MEM_SIZE) &&
-        (size <= DEVMM_UVM_MEM_START + DEVMM_UVM_MEM_SIZE - va));
+    return ((va >= DEVMM_UVM_MEM_START) && (va < DEVMM_UVM_MEM_START + DEVMM_UVM_MEM_SIZE) &&
+            (size <= DEVMM_UVM_MEM_START + DEVMM_UVM_MEM_SIZE - va));
 }
 #endif
 
@@ -355,8 +368,8 @@ struct svm_mem_stats_type {
 #define MEM_STATS_MNG_SIZE \
     (sizeof(struct svm_mem_stats) * MEM_STATS_MAX_MEM_VAL * MEM_STATS_MAX_PAGE_TYPE * MEM_STATS_MAX_PHY_MEMTYPE)
 
-static inline void svm_mem_stats_type_pack(
-    struct svm_mem_stats_type *type, uint32_t mem_val, uint32_t page_type, uint32_t phy_memtype)
+static inline void svm_mem_stats_type_pack(struct svm_mem_stats_type *type, uint32_t mem_val, uint32_t page_type,
+                                           uint32_t phy_memtype)
 {
     type->mem_val = mem_val;
     type->page_type = page_type;

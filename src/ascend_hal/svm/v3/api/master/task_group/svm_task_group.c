@@ -176,8 +176,8 @@ static void svm_task_grp_pre_free(void *va_handle, u64 start, struct svm_prop *p
     svm_set_task_bitmap(va_handle, task_bitmap & (0x1U << PROCESS_CP1));
 }
 
-static struct svm_mng_ops task_grp_mng_ops = {
-    .post_malloc = svm_task_grp_post_malloc, .pre_free = svm_task_grp_pre_free};
+static struct svm_mng_ops task_grp_mng_ops = {.post_malloc = svm_task_grp_post_malloc,
+                                              .pre_free = svm_task_grp_pre_free};
 
 static int svm_task_grp_post_expand(u32 devid, u64 start, u64 size)
 {
@@ -231,8 +231,8 @@ static void svm_task_grp_pre_shrink(u32 devid, u64 start, u64 size)
     svm_task_grp_unmap(devid, start, &src_info, svm_task_grp_bitmap[devid]);
 }
 
-static struct svm_cache_ops task_grp_cache_ops = {
-    .post_expand = svm_task_grp_post_expand, .pre_shrink = svm_task_grp_pre_shrink};
+static struct svm_cache_ops task_grp_cache_ops = {.post_expand = svm_task_grp_post_expand,
+                                                  .pre_shrink = svm_task_grp_pre_shrink};
 
 static int svm_task_grp_register_map(struct svm_global_va *src_info, u32 devid, u64 dst_va)
 {
@@ -292,8 +292,8 @@ static void svm_task_grp_register_unmap(struct svm_global_va *src_info, u32 devi
     }
 }
 
-static struct svm_register_ops task_grp_register_ops = {
-    .post_map = svm_task_grp_register_map, .pre_unmap = svm_task_grp_register_unmap};
+static struct svm_register_ops task_grp_register_ops = {.post_map = svm_task_grp_register_map,
+                                                        .pre_unmap = svm_task_grp_register_unmap};
 
 static int svm_task_grp_post_map(void *seg_handle, u32 devid, u64 start, u64 svm_flag, struct svm_global_va *src_info)
 {
@@ -385,11 +385,10 @@ int svm_task_grp_map_vmm_pa(void *seg_handle, u32 devid, u64 va, struct svm_glob
     return ret;
 }
 
-static struct svm_mem_repair_ops task_grp_repair_ops = {
-    .normal_map = svm_task_grp_map_normal_pa,
-    .normal_unmap = svm_task_grp_unmap_normal_pa,
-    .vmm_map = svm_task_grp_map_vmm_pa,
-    .vmm_unmap = svm_task_grp_unmap_vmm_pa};
+static struct svm_mem_repair_ops task_grp_repair_ops = {.normal_map = svm_task_grp_map_normal_pa,
+                                                        .normal_unmap = svm_task_grp_unmap_normal_pa,
+                                                        .vmm_map = svm_task_grp_map_vmm_pa,
+                                                        .vmm_unmap = svm_task_grp_unmap_vmm_pa};
 
 static int svm_sync_normal_addr_to_task(void *va_handle, u64 start, struct svm_prop *prop, u32 task_type)
 {
@@ -606,8 +605,8 @@ static int svm_master_add_task_event_proc_func(u32 devid, const void *msg_in, vo
     return ret;
 }
 
-SVM_EVENT_PROC_REGISTER(
-    SVM_ADD_GRP_EVENT, svm_master_add_task_event_proc_func, (u64)sizeof(struct svm_task_add_grp), 0);
+SVM_EVENT_PROC_REGISTER(SVM_ADD_GRP_EVENT, svm_master_add_task_event_proc_func, (u64)sizeof(struct svm_task_add_grp),
+                        0);
 
 static int svm_task_group_dev_uninit(u32 devid)
 {

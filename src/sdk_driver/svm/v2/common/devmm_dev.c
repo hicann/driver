@@ -56,7 +56,10 @@ bool devmm_device_is_pf(u32 devid)
 }
 #endif
 
-enum devmm_endpoint_type devmm_get_end_type(void) { return DEVMM_END_TYPE; }
+enum devmm_endpoint_type devmm_get_end_type(void)
+{
+    return DEVMM_END_TYPE;
+}
 
 STATIC void devmm_chan_update_msg_process_id(struct devmm_chan_msg_head *msg_head)
 {
@@ -76,9 +79,8 @@ bool devmm_is_static_uvm_reserve_addr(struct devmm_svm_process *svm_proc, u64 va
 #endif
 bool devmm_is_static_reserve_addr(struct devmm_svm_process *svm_proc, u64 va)
 {
-    return (
-        (va >= svm_proc->start_addr && va <= svm_proc->end_addr) ||
-        (va >= svm_proc->host_pin_start_addr && va <= svm_proc->host_pin_end_addr));
+    return ((va >= svm_proc->start_addr && va <= svm_proc->end_addr) ||
+            (va >= svm_proc->host_pin_start_addr && va <= svm_proc->host_pin_end_addr));
 }
 #ifndef UVM_OPEN
 bool devmm_va_is_not_uvm_process_addr(const struct devmm_svm_process *svm_process, unsigned long va)
@@ -310,9 +312,8 @@ void devmm_zap_vma_ptes(ka_vm_area_struct_t *vma, unsigned long vaddr, unsigned 
 
     ret = ka_mm_zap_vma_ptes(vma, vaddr, size);
     if (ret != 0) {
-        devmm_drv_warn(
-            "Zap_vma_ptes fail. (va=0x%lx; ret=%d; flags=0x%lx; start=0x%lx; end=0x%lx)\n", vaddr, ret,
-            ka_mm_get_vm_flags(vma), ka_mm_get_vm_start(vma), ka_mm_get_vm_end(vma));
+        devmm_drv_warn("Zap_vma_ptes fail. (va=0x%lx; ret=%d; flags=0x%lx; start=0x%lx; end=0x%lx)\n", vaddr, ret,
+                       ka_mm_get_vm_flags(vma), ka_mm_get_vm_start(vma), ka_mm_get_vm_end(vma));
     }
 }
 
@@ -332,8 +333,8 @@ static u64 devmm_get_mapped_page_num(ka_vm_area_struct_t *vma, u64 vaddr, u64 *p
     return i;
 }
 
-static void devmm_free_pages_range(
-    struct devmm_svm_process *svm_proc, u64 *paddrs, u64 page_num, struct devmm_phy_addr_attr *attr, bool is_owner)
+static void devmm_free_pages_range(struct devmm_svm_process *svm_proc, u64 *paddrs, u64 page_num,
+                                   struct devmm_phy_addr_attr *attr, bool is_owner)
 {
     ka_page_t *pg = NULL;
     u32 stamp = (u32)ka_jiffies;
@@ -353,9 +354,8 @@ static void devmm_free_pages_range(
     }
 }
 
-static void devmm_cont_unmap_pages(
-    struct devmm_svm_process *svm_proc, ka_vm_area_struct_t *vma, struct devmm_pa_info_para *pa_info_para,
-    bool is_owner)
+static void devmm_cont_unmap_pages(struct devmm_svm_process *svm_proc, ka_vm_area_struct_t *vma,
+                                   struct devmm_pa_info_para *pa_info_para, bool is_owner)
 {
     struct devmm_phy_addr_attr attr = {0};
     u64 i, start_addr, mapped_num;
@@ -396,8 +396,8 @@ static void devmm_cont_unmap_pages(
     }
 }
 
-static bool devmm_try_cont_unmap_page(
-    struct devmm_svm_process *svm_proc, ka_vm_area_struct_t *vma, u64 vaddr, u64 page_num, bool is_owner)
+static bool devmm_try_cont_unmap_page(struct devmm_svm_process *svm_proc, ka_vm_area_struct_t *vma, u64 vaddr,
+                                      u64 page_num, bool is_owner)
 {
     struct devmm_pa_info_para pa_info_para;
     u64 *pa_list = NULL;
@@ -518,9 +518,8 @@ static void _devmm_unmap_pages_owner(struct devmm_svm_process *svm_proc, u64 vad
 
     vma = devmm_find_vma(svm_proc, vaddr);
     if (vma == NULL) {
-        devmm_drv_err(
-            "Can not find vma. (vaddr=0x%llx; hostpid=%d; devid=%d; vfid=%d)\n", vaddr, svm_proc->process_id.hostpid,
-            svm_proc->process_id.devid, svm_proc->process_id.vfid);
+        devmm_drv_err("Can not find vma. (vaddr=0x%llx; hostpid=%d; devid=%d; vfid=%d)\n", vaddr,
+                      svm_proc->process_id.hostpid, svm_proc->process_id.devid, svm_proc->process_id.vfid);
         return;
     }
     devmm_unmap_page_from_vma_owner(svm_proc, vma, vaddr, num);
@@ -633,16 +632,16 @@ static u64 devmm_get_cont_page_num(ka_page_t **inpages, u64 page_num)
     return cont_num;
 }
 #ifndef UVM_OPEN
-static int devmm_insert_uvm_pages_to_vma_owner(
-    ka_vm_area_struct_t *vma, u64 va, u64 page_num, ka_page_t **inpages, ka_pgprot_t vm_page_prot)
+static int devmm_insert_uvm_pages_to_vma_owner(ka_vm_area_struct_t *vma, u64 va, u64 page_num, ka_page_t **inpages,
+                                               ka_pgprot_t vm_page_prot)
 {
     u64 i;
     u32 stamp = (u32)ka_jiffies;
     int ret;
 
     for (i = 0; i < page_num; ++i) {
-        ret = ka_mm_remap_pfn_range(
-            vma, va + DEVMM_UVM_PAGE_SIZE * i, ka_mm_page_to_pfn(inpages[i]), DEVMM_UVM_PAGE_SIZE, vm_page_prot);
+        ret = ka_mm_remap_pfn_range(vma, va + DEVMM_UVM_PAGE_SIZE * i, ka_mm_page_to_pfn(inpages[i]),
+                                    DEVMM_UVM_PAGE_SIZE, vm_page_prot);
         if (ret != 0) {
             devmm_drv_err("Remap_pfn_range failed. (ret=%d, va=0x%llx, i=%llu, page_num=%llu)\n", ret, va, i, page_num);
             devmm_zap_vma_ptes(vma, va, DEVMM_UVM_PAGE_SIZE * i);
@@ -654,8 +653,8 @@ static int devmm_insert_uvm_pages_to_vma_owner(
     return 0;
 }
 #endif
-static int devmm_insert_svm_pages_to_vma_owner(
-    ka_vm_area_struct_t *vma, u64 va, u64 page_num, ka_page_t **inpages, ka_pgprot_t vm_page_prot)
+static int devmm_insert_svm_pages_to_vma_owner(ka_vm_area_struct_t *vma, u64 va, u64 page_num, ka_page_t **inpages,
+                                               ka_pgprot_t vm_page_prot)
 {
     u64 i, cont_num;
     u32 stamp = (u32)ka_jiffies;
@@ -663,12 +662,11 @@ static int devmm_insert_svm_pages_to_vma_owner(
 
     for (i = 0; i < page_num;) {
         cont_num = devmm_get_cont_page_num(&inpages[i], page_num - i);
-        ret = ka_mm_remap_pfn_range(
-            vma, va + KA_MM_PAGE_SIZE * i, ka_mm_page_to_pfn(inpages[i]), KA_MM_PAGE_SIZE * cont_num, vm_page_prot);
+        ret = ka_mm_remap_pfn_range(vma, va + KA_MM_PAGE_SIZE * i, ka_mm_page_to_pfn(inpages[i]),
+                                    KA_MM_PAGE_SIZE * cont_num, vm_page_prot);
         if (ret != 0) {
-            devmm_drv_err(
-                "Vm_insert_page failed. (ret=%d; va=0x%llx; i=%llu; cont_num=%llu; page_num=%llu)\n", ret, va, i,
-                cont_num, page_num);
+            devmm_drv_err("Vm_insert_page failed. (ret=%d; va=0x%llx; i=%llu; cont_num=%llu; page_num=%llu)\n", ret, va,
+                          i, cont_num, page_num);
             devmm_zap_vma_ptes(vma, va, KA_MM_PAGE_SIZE * i);
             return -ENOMEM;
         }
@@ -679,8 +677,8 @@ static int devmm_insert_svm_pages_to_vma_owner(
     return 0;
 }
 
-int devmm_insert_pages_to_vma_owner(
-    ka_vm_area_struct_t *vma, u64 va, u64 page_num, ka_page_t **inpages, ka_pgprot_t vm_page_prot)
+int devmm_insert_pages_to_vma_owner(ka_vm_area_struct_t *vma, u64 va, u64 page_num, ka_page_t **inpages,
+                                    ka_pgprot_t vm_page_prot)
 {
 #ifndef UVM_OPEN
     if (devmm_va_is_in_uvm_range(va)) {
@@ -693,8 +691,8 @@ int devmm_insert_pages_to_vma_owner(
 #endif
 }
 
-static int _devmm_pages_remap_owner(
-    struct devmm_svm_process *svm_proc, u64 va, u64 page_num, ka_page_t **inpages, ka_pgprot_t vm_page_prot)
+static int _devmm_pages_remap_owner(struct devmm_svm_process *svm_proc, u64 va, u64 page_num, ka_page_t **inpages,
+                                    ka_pgprot_t vm_page_prot)
 {
     ka_vm_area_struct_t *vma = NULL;
     int ret;
@@ -713,8 +711,8 @@ static int _devmm_pages_remap_owner(
     return 0;
 }
 
-int devmm_pages_remap_owner(
-    struct devmm_svm_process *svm_proc, u64 va, u64 page_num, ka_page_t **inpages, u32 page_prot)
+int devmm_pages_remap_owner(struct devmm_svm_process *svm_proc, u64 va, u64 page_num, ka_page_t **inpages,
+                            u32 page_prot)
 {
     int ret;
 
@@ -724,8 +722,8 @@ int devmm_pages_remap_owner(
     }
 
     if (devmm_is_support_double_pgtable() && devmm_is_static_reserve_addr(svm_proc, va)) {
-        ret = _devmm_pages_remap_owner(
-            svm_proc, devmm_double_pgtable_get_offset_addr(va), page_num, inpages, devmm_make_pgprot(page_prot, true));
+        ret = _devmm_pages_remap_owner(svm_proc, devmm_double_pgtable_get_offset_addr(va), page_num, inpages,
+                                       devmm_make_pgprot(page_prot, true));
         if (ret != 0) {
             _devmm_zap_owner_ptes_range(svm_proc, va, page_num);
             return ret;
@@ -764,13 +762,11 @@ int devmm_insert_pages_to_vma_custom(ka_vm_area_struct_t *vma, u64 va, u64 page_
         }
 
         cont_num = devmm_get_cont_page_num(&inpages[i], no_mapped_num);
-        ret = ka_mm_remap_pfn_range(
-            vma, va + i * KA_MM_PAGE_SIZE, ka_mm_page_to_pfn(inpages[i]), cont_num * KA_MM_PAGE_SIZE,
-            devmm_make_pgprot(pgprot, false));
+        ret = ka_mm_remap_pfn_range(vma, va + i * KA_MM_PAGE_SIZE, ka_mm_page_to_pfn(inpages[i]),
+                                    cont_num * KA_MM_PAGE_SIZE, devmm_make_pgprot(pgprot, false));
         if (ret != 0) {
-            devmm_drv_err(
-                "Vm_insert_page failed. (ret=%d; va=0x%llx; i=%llu; cont_num=%llu; page_num=%llu)\n", ret, va, i,
-                cont_num, page_num);
+            devmm_drv_err("Vm_insert_page failed. (ret=%d; va=0x%llx; i=%llu; cont_num=%llu; page_num=%llu)\n", ret, va,
+                          i, cont_num, page_num);
             devmm_zap_vma_ptes(vma, va, KA_MM_PAGE_SIZE * i);
             return -ENOMEM;
         }
@@ -781,8 +777,8 @@ int devmm_insert_pages_to_vma_custom(ka_vm_area_struct_t *vma, u64 va, u64 page_
     return 0;
 }
 
-static int devmm_pages_remap_custom(
-    struct devmm_svm_process *svm_proc, u64 va, u64 page_num, ka_page_t **inpages, u32 page_prot)
+static int devmm_pages_remap_custom(struct devmm_svm_process *svm_proc, u64 va, u64 page_num, ka_page_t **inpages,
+                                    u32 page_prot)
 {
     ka_mm_struct_t *custom_mm = NULL;
     ka_vm_area_struct_t *vma = NULL;
@@ -901,12 +897,11 @@ int devmm_insert_normal_pages(struct page_map_info *page_map_info, struct devmm_
         return ret;
     }
 
-    ret = devmm_pages_remap(
-        svm_proc, page_map_info->va, page_map_info->page_num, page_map_info->inpages, page_map_info->page_prot);
+    ret = devmm_pages_remap(svm_proc, page_map_info->va, page_map_info->page_num, page_map_info->inpages,
+                            page_map_info->page_prot);
     if (ret != 0) {
-        devmm_drv_info(
-            "Devmm_insert_pages_to_vma. (page_num=%llu; page_prot=%d; ret=%d)\n", page_map_info->page_num,
-            page_map_info->page_prot, ret);
+        devmm_drv_info("Devmm_insert_pages_to_vma. (page_num=%llu; page_prot=%d; ret=%d)\n", page_map_info->page_num,
+                       page_map_info->page_prot, ret);
         devmm_proc_free_pages(svm_proc, &attr, page_map_info->inpages, page_map_info->page_num);
         return ret;
     }
@@ -1007,14 +1002,13 @@ void devmm_svm_heap_put(struct devmm_svm_heap *heap)
     }
 }
 
-int devmm_svm_proc_and_heap_get(
-    struct devmm_svm_process_id *process_id, u64 va, struct devmm_svm_process **svm_proc, struct devmm_svm_heap **heap)
+int devmm_svm_proc_and_heap_get(struct devmm_svm_process_id *process_id, u64 va, struct devmm_svm_process **svm_proc,
+                                struct devmm_svm_heap **heap)
 {
     *svm_proc = devmm_svm_proc_get_by_process_id_ex(process_id);
     if (*svm_proc == NULL) {
-        devmm_drv_err(
-            "Process is exit. (va=0x%llx; hostpid=%d; devid=%d; vfid=%d)\n", va, process_id->hostpid, process_id->devid,
-            process_id->vfid);
+        devmm_drv_err("Process is exit. (va=0x%llx; hostpid=%d; devid=%d; vfid=%d)\n", va, process_id->hostpid,
+                      process_id->devid, process_id->vfid);
         return -ESRCH;
     }
     if (devmm_is_static_soma_reserve_addr(*svm_proc, va)) {
@@ -1024,9 +1018,8 @@ int devmm_svm_proc_and_heap_get(
     }
     if (*heap == NULL) {
         devmm_svm_proc_put(*svm_proc);
-        devmm_drv_err(
-            "Vaddress is error. (va=0x%llx; hostpid=%d; devid=%d; vfid=%d)\n", va, process_id->hostpid,
-            process_id->devid, process_id->vfid);
+        devmm_drv_err("Vaddress is error. (va=0x%llx; hostpid=%d; devid=%d; vfid=%d)\n", va, process_id->hostpid,
+                      process_id->devid, process_id->vfid);
         return -EADDRNOTAVAIL;
     }
     return 0;
@@ -1050,10 +1043,9 @@ void devmm_chan_set_host_device_page_size(void)
     devmm_svm->svm_page_shift = DEVMM_MAX(devmm_svm->host_page_shift, devmm_svm->device_page_shift);
 
     if (devmm_svm->device_hpage_shift < devmm_svm->host_page_shift) {
-        devmm_drv_err(
-            "Device_huge_page_shfit less than host_page_shfit. (device_hpage_shift=%u; "
-            "host_page_shift=%u)\n",
-            devmm_svm->device_hpage_shift, devmm_svm->host_page_shift);
+        devmm_drv_err("Device_huge_page_shfit less than host_page_shfit. (device_hpage_shift=%u; "
+                      "host_page_shift=%u)\n",
+                      devmm_svm->device_hpage_shift, devmm_svm->host_page_shift);
         return;
     } else {
         /* device huge page size is 2M ,host do not has huge page,just 4k/16k/64k */
@@ -1061,9 +1053,8 @@ void devmm_chan_set_host_device_page_size(void)
     }
 
     if (devmm_svm->host_page_shift < devmm_svm->device_page_shift) {
-        devmm_drv_err(
-            "Host_page_shift less than device_page_shift. (host_page_shift=%u; device_page_shift=%u)\n",
-            devmm_svm->host_page_shift, devmm_svm->device_page_shift);
+        devmm_drv_err("Host_page_shift less than device_page_shift. (host_page_shift=%u; device_page_shift=%u)\n",
+                      devmm_svm->host_page_shift, devmm_svm->device_page_shift);
         return;
     } else {
         /* device page size is 4k ,host will be 4k/16k/64k */
@@ -1071,10 +1062,9 @@ void devmm_chan_set_host_device_page_size(void)
     }
 
     if (devmm_svm->host_hpage_shift < devmm_svm->device_hpage_shift) {
-        devmm_drv_err(
-            "Host_hpage_shift less than device_hpage_shift. (host_hpage_shift=%u; "
-            "device_hpage_shift=%u)\n",
-            devmm_svm->host_hpage_shift, devmm_svm->device_hpage_shift);
+        devmm_drv_err("Host_hpage_shift less than device_hpage_shift. (host_hpage_shift=%u; "
+                      "device_hpage_shift=%u)\n",
+                      devmm_svm->host_hpage_shift, devmm_svm->device_hpage_shift);
         return;
     } else {
         devmm_svm->host_hpage2device_hpage_order = devmm_svm->host_hpage_shift - devmm_svm->device_hpage_shift;
@@ -1082,40 +1072,36 @@ void devmm_chan_set_host_device_page_size(void)
 
     devmm_svm->page_size_inited = 1;
 
-    devmm_drv_info(
-        "Shift info. (host_page_shift=%u; host_hpage_shift=%u; evice_page_shift=%u; "
-        "device_hpage_shift=%u; h2dh_adjustorder=%u; h2d_adjustorder=%u) \n",
-        devmm_svm->host_page_shift, devmm_svm->host_hpage_shift, devmm_svm->device_page_shift,
-        devmm_svm->device_hpage_shift, devmm_svm->host_page2device_hpage_order, devmm_svm->host_page2device_page_order);
+    devmm_drv_info("Shift info. (host_page_shift=%u; host_hpage_shift=%u; evice_page_shift=%u; "
+                   "device_hpage_shift=%u; h2dh_adjustorder=%u; h2d_adjustorder=%u) \n",
+                   devmm_svm->host_page_shift, devmm_svm->host_hpage_shift, devmm_svm->device_page_shift,
+                   devmm_svm->device_hpage_shift, devmm_svm->host_page2device_hpage_order,
+                   devmm_svm->host_page2device_page_order);
 
-    devmm_drv_info(
-        "Size info. (host_page_size=%u; host_hpage_size=%u; "
-        "device_page_size=%u; device_hpage_size=%u; svm_page_size=%u)\n",
-        devmm_svm->host_page_size, devmm_svm->host_hpage_size, devmm_svm->device_page_size,
-        devmm_svm->device_hpage_size, devmm_svm->svm_page_size);
+    devmm_drv_info("Size info. (host_page_size=%u; host_hpage_size=%u; "
+                   "device_page_size=%u; device_hpage_size=%u; svm_page_size=%u)\n",
+                   devmm_svm->host_page_size, devmm_svm->host_hpage_size, devmm_svm->device_page_size,
+                   devmm_svm->device_hpage_size, devmm_svm->svm_page_size);
 }
 
-STATIC int devmm_svm_get_channel_lock(
-    struct devmm_svm_process *svm_proc, const struct devmm_svm_process_id *process_id,
-    const struct devmm_chan_handlers_st *msg_process, u32 msg_id)
+STATIC int devmm_svm_get_channel_lock(struct devmm_svm_process *svm_proc, const struct devmm_svm_process_id *process_id,
+                                      const struct devmm_chan_handlers_st *msg_process, u32 msg_id)
 {
     u32 msg_bitmap = msg_process[msg_id].msg_bitmap;
 
     if (svm_proc == NULL) {
-        devmm_drv_err_if(
-            ((msg_bitmap & DEVMM_MSG_RETURN_OK_MASK) == 0),
-            "Cp is exited, above message. (hostpid=%d; devid=%d; vfid=%d; msg_id=%u)\n", process_id->hostpid,
-            process_id->devid, process_id->vfid, msg_id);
+        devmm_drv_err_if(((msg_bitmap & DEVMM_MSG_RETURN_OK_MASK) == 0),
+                         "Cp is exited, above message. (hostpid=%d; devid=%d; vfid=%d; msg_id=%u)\n",
+                         process_id->hostpid, process_id->devid, process_id->vfid, msg_id);
         /* errcode ESRCH return to user */
         return ((msg_bitmap & DEVMM_MSG_RETURN_OK_MASK) != 0) ? -EOWNERDEAD : -ESRCH;
     }
 
     if (devmm_svm_mem_is_enable(svm_proc) == false) {
 #ifndef EMU_ST
-        devmm_drv_err_if(
-            ((msg_bitmap & DEVMM_MSG_RETURN_OK_MASK) == 0),
-            "Mmap failed, svm is disable.(hostpid=%d; devid=%d; vfid=%d; msg_id=%u).\n", svm_proc->process_id.hostpid,
-            svm_proc->process_id.devid, svm_proc->process_id.vfid, msg_id);
+        devmm_drv_err_if(((msg_bitmap & DEVMM_MSG_RETURN_OK_MASK) == 0),
+                         "Mmap failed, svm is disable.(hostpid=%d; devid=%d; vfid=%d; msg_id=%u).\n",
+                         svm_proc->process_id.hostpid, svm_proc->process_id.devid, svm_proc->process_id.vfid, msg_id);
         /* errcode ESRCH return to user */
         return -ESRCH;
 #endif
@@ -1124,10 +1110,9 @@ STATIC int devmm_svm_get_channel_lock(
     ka_task_mutex_lock(&svm_proc->proc_lock);
     if ((svm_proc->proc_status & DEVMM_SVM_PROC_ABORT_STATE) != 0) {
         ka_task_mutex_unlock(&svm_proc->proc_lock);
-        devmm_drv_err_if(
-            ((msg_bitmap & DEVMM_MSG_RETURN_OK_MASK) == 0),
-            "Cp(aicpu) is exiting, above message. (hostpid=%d; devid=%d; vfid=%d; msg_id=%u).\n",
-            svm_proc->process_id.hostpid, svm_proc->process_id.devid, svm_proc->process_id.vfid, msg_id);
+        devmm_drv_err_if(((msg_bitmap & DEVMM_MSG_RETURN_OK_MASK) == 0),
+                         "Cp(aicpu) is exiting, above message. (hostpid=%d; devid=%d; vfid=%d; msg_id=%u).\n",
+                         svm_proc->process_id.hostpid, svm_proc->process_id.devid, svm_proc->process_id.vfid, msg_id);
         /* errcode ESRCH return to user */
         return ((msg_bitmap & DEVMM_MSG_RETURN_OK_MASK) != 0) ? -EOWNERDEAD : -ESRCH;
     }
@@ -1145,8 +1130,8 @@ STATIC int devmm_svm_get_channel_lock(
     return 0;
 }
 
-STATIC void devmm_svm_put_channel_lock(
-    struct devmm_svm_process *svm_proc, const struct devmm_chan_handlers_st *msg_process, u32 msg_id)
+STATIC void devmm_svm_put_channel_lock(struct devmm_svm_process *svm_proc,
+                                       const struct devmm_chan_handlers_st *msg_process, u32 msg_id)
 {
     if (svm_proc == NULL) {
         return;
@@ -1207,17 +1192,17 @@ void devmm_svm_other_proc_occupy_put_lock(struct devmm_svm_process *svm_proc)
     devmm_svm_other_proc_occupy_num_sub(svm_proc);
 }
 
-static void devmm_chan_put_svm_proc_and_unlock(
-    struct devmm_chan_msg_head *head_msg, const struct devmm_chan_handlers_st *msg_process,
-    struct devmm_svm_process *svm_proc)
+static void devmm_chan_put_svm_proc_and_unlock(struct devmm_chan_msg_head *head_msg,
+                                               const struct devmm_chan_handlers_st *msg_process,
+                                               struct devmm_svm_process *svm_proc)
 {
     devmm_svm_put_channel_lock(svm_proc, msg_process, head_msg->msg_id);
     devmm_svm_proc_put(svm_proc);
 }
 
-STATIC int devmm_chan_get_svm_proc_and_lock(
-    struct devmm_chan_msg_head *head_msg, const struct devmm_chan_handlers_st *msg_process,
-    struct devmm_svm_process **svm_proc)
+STATIC int devmm_chan_get_svm_proc_and_lock(struct devmm_chan_msg_head *head_msg,
+                                            const struct devmm_chan_handlers_st *msg_process,
+                                            struct devmm_svm_process **svm_proc)
 {
     u32 msg_id = head_msg->msg_id;
     int ret;
@@ -1237,9 +1222,8 @@ STATIC int devmm_chan_get_svm_proc_and_lock(
     return ret;
 }
 
-STATIC int devmm_chan_get_heap(
-    struct devmm_chan_addr_head *addr_head, const struct devmm_chan_handlers_st *msg_process,
-    struct devmm_svm_process *svm_proc, struct devmm_svm_heap **heap)
+STATIC int devmm_chan_get_heap(struct devmm_chan_addr_head *addr_head, const struct devmm_chan_handlers_st *msg_process,
+                               struct devmm_svm_process *svm_proc, struct devmm_svm_heap **heap)
 {
     u32 msg_id = addr_head->head.msg_id;
     u32 msg_bitmap = msg_process[msg_id].msg_bitmap;
@@ -1263,9 +1247,9 @@ STATIC int devmm_chan_get_heap(
     return 0;
 }
 
-static int devmm_chan_enable_cgroup(
-    const struct devmm_chan_handlers_st *msg_process, u32 msg_id, struct devmm_svm_process *svm_proc,
-    ka_mem_cgroup_t **old_memcg, ka_mem_cgroup_t **memcg)
+static int devmm_chan_enable_cgroup(const struct devmm_chan_handlers_st *msg_process, u32 msg_id,
+                                    struct devmm_svm_process *svm_proc, ka_mem_cgroup_t **old_memcg,
+                                    ka_mem_cgroup_t **memcg)
 {
     if ((msg_process[msg_id].msg_bitmap & DEVMM_MSG_ADD_CGROUP_MASK) != 0 && svm_proc != NULL) {
         *old_memcg = devmm_enable_cgroup(memcg, svm_proc->devpid);
@@ -1278,17 +1262,17 @@ static int devmm_chan_enable_cgroup(
     return 0;
 }
 
-static void devmm_chan_disable_cgroup(
-    const struct devmm_chan_handlers_st *msg_process, u32 msg_id, struct devmm_svm_process *svm_proc,
-    ka_mem_cgroup_t *old_memcg, ka_mem_cgroup_t *memcg)
+static void devmm_chan_disable_cgroup(const struct devmm_chan_handlers_st *msg_process, u32 msg_id,
+                                      struct devmm_svm_process *svm_proc, ka_mem_cgroup_t *old_memcg,
+                                      ka_mem_cgroup_t *memcg)
 {
     if ((msg_process[msg_id].msg_bitmap & DEVMM_MSG_ADD_CGROUP_MASK) != 0 && svm_proc != NULL) {
         devmm_disable_cgroup(memcg, old_memcg);
     }
 }
 
-int devmm_chan_msg_dispatch(
-    void *msg, u32 in_data_len, u32 out_data_len, u32 *ack_len, const struct devmm_chan_handlers_st *msg_process)
+int devmm_chan_msg_dispatch(void *msg, u32 in_data_len, u32 out_data_len, u32 *ack_len,
+                            const struct devmm_chan_handlers_st *msg_process)
 {
     struct devmm_chan_msg_head *head_msg = (struct devmm_chan_msg_head *)msg;
     u32 data_len = DEVMM_MAX(in_data_len, out_data_len);
@@ -1310,8 +1294,8 @@ int devmm_chan_msg_dispatch(
     }
     proc_len = msg_process[msg_id].msg_size + head_msg->extend_num * msg_process[msg_id].extend_size;
     if (data_len < proc_len) {
-        devmm_drv_err(
-            "Invalid process_len. (proc_len=%u; in_len=%u; out_len=%u)\n", proc_len, in_data_len, out_data_len);
+        devmm_drv_err("Invalid process_len. (proc_len=%u; in_len=%u; out_len=%u)\n", proc_len, in_data_len,
+                      out_data_len);
         ret = -EMSGSIZE;
         goto save_msg_ret;
     }

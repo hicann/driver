@@ -54,8 +54,8 @@ void devmm_destroy_ipc_mem_node_by_proc(struct devmm_svm_process *svm_proc, u32 
     devmm_ipc_proc_node_recycle(svm_proc, devid);
 }
 
-int devmm_ipc_query_owner_attr_by_va(
-    struct devmm_svm_process *svm_proc, u64 va, void *node_attr, struct devmm_ipc_owner_attr *owner_attr)
+int devmm_ipc_query_owner_attr_by_va(struct devmm_svm_process *svm_proc, u64 va, void *node_attr,
+                                     struct devmm_ipc_owner_attr *owner_attr)
 {
     struct devmm_ipc_node_attr attr;
     u64 alloced_va;
@@ -87,8 +87,8 @@ int devmm_ipc_query_owner_attr_by_va(
     return 0;
 }
 
-struct devmm_svm_process *devmm_ipc_query_owner_info(
-    struct devmm_svm_process *svm_proc, u64 va, u64 *owner_va, struct devmm_svm_process_id *id, u32 *sdid)
+struct devmm_svm_process *devmm_ipc_query_owner_info(struct devmm_svm_process *svm_proc, u64 va, u64 *owner_va,
+                                                     struct devmm_svm_process_id *id, u32 *sdid)
 {
     struct devmm_ipc_node_attr attr;
     u64 alloced_va;
@@ -118,9 +118,9 @@ struct devmm_svm_process *devmm_ipc_query_owner_info(
     return attr.svm_proc;
 }
 
-int devmm_ipc_get_owner_proc_attr(
-    struct devmm_svm_process *svm_proc, struct devmm_memory_attributes *attr, struct devmm_svm_process **owner_proc,
-    struct devmm_svm_heap **heap, struct devmm_memory_attributes *owner_attr)
+int devmm_ipc_get_owner_proc_attr(struct devmm_svm_process *svm_proc, struct devmm_memory_attributes *attr,
+                                  struct devmm_svm_process **owner_proc, struct devmm_svm_heap **heap,
+                                  struct devmm_memory_attributes *owner_attr)
 {
     struct devmm_svm_process_id proc_id;
     u64 owner_va;
@@ -149,8 +149,8 @@ int devmm_ipc_get_owner_proc_attr(
     }
     ret = devmm_get_memory_attributes(*owner_proc, owner_va, owner_attr);
     if (ret != 0) {
-        devmm_drv_err(
-            "Query attributes failed. (owner_host_pid=%d; va=%llx)\n", (*owner_proc)->process_id.hostpid, owner_va);
+        devmm_drv_err("Query attributes failed. (owner_host_pid=%d; va=%llx)\n", (*owner_proc)->process_id.hostpid,
+                      owner_va);
 #ifndef EMU_ST
         devmm_svm_heap_put(*heap);
         devmm_svm_other_proc_occupy_num_sub(*owner_proc);
@@ -167,8 +167,8 @@ void devmm_ipc_put_owner_proc_attr(struct devmm_svm_process *owner_proc, struct 
     devmm_svm_other_proc_occupy_num_sub(owner_proc);
 }
 
-static int devmm_ipc_mem_create_para_check(
-    struct devmm_svm_process *svm_proc, u64 vptr, size_t len, struct devmm_memory_attributes *attr)
+static int devmm_ipc_mem_create_para_check(struct devmm_svm_process *svm_proc, u64 vptr, size_t len,
+                                           struct devmm_memory_attributes *attr)
 {
     u32 *bitmap = devmm_get_page_bitmap(svm_proc, vptr);
     u64 page_bitmap_num = devmm_get_pagecount_by_size(vptr, len, (u32)attr->granularity_size);
@@ -177,9 +177,8 @@ static int devmm_ipc_mem_create_para_check(
     if ((attr->is_svm_device == 0) || devmm_is_host_agent(attr->devid) || (attr->page_size == 0) ||
         ((vptr % attr->page_size) != 0) || attr->is_mem_export || attr->is_mem_import) {
         /* The log cannot be modified, because in the failure mode library. */
-        devmm_drv_err(
-            "Invalid para. (va=0x%llx; page_size=%u; devid=%d; export=%u; import=%u)\n", vptr, attr->page_size,
-            attr->devid, attr->is_mem_export, attr->is_mem_import);
+        devmm_drv_err("Invalid para. (va=0x%llx; page_size=%u; devid=%d; export=%u; import=%u)\n", vptr,
+                      attr->page_size, attr->devid, attr->is_mem_export, attr->is_mem_import);
         return -EINVAL;
     }
 
@@ -195,40 +194,35 @@ static int devmm_ipc_mem_create_para_check(
 
     for (i = 0; i < page_bitmap_num; i++) {
         if (!devmm_page_bitmap_is_page_available(bitmap + i)) {
-            devmm_drv_err(
-                "Virtual address is invalid. "
-                "(va=0x%llx; page_id=%lld; bitmap=0x%x)\n",
-                vptr, i, *(bitmap + i));
+            devmm_drv_err("Virtual address is invalid. "
+                          "(va=0x%llx; page_id=%lld; bitmap=0x%x)\n",
+                          vptr, i, *(bitmap + i));
             return -EINVAL;
         }
 
         if (!devmm_page_bitmap_is_locked_device(bitmap + i)) {
-            devmm_drv_err(
-                "Virtual address is not device locked. "
-                "(va=0x%llx; page_id=%lld; bitmap=0x%x)\n",
-                vptr, i, *(bitmap + i));
+            devmm_drv_err("Virtual address is not device locked. "
+                          "(va=0x%llx; page_id=%lld; bitmap=0x%x)\n",
+                          vptr, i, *(bitmap + i));
             return -EINVAL;
         }
 
         if (!devmm_page_bitmap_is_dev_mapped(bitmap + i)) {
-            devmm_drv_err(
-                "Virtual address is not device mapped. "
-                "(va=0x%llx; pageid=%lld; bitmap=0x%x)\n",
-                vptr, i, *(bitmap + i));
+            devmm_drv_err("Virtual address is not device mapped. "
+                          "(va=0x%llx; pageid=%lld; bitmap=0x%x)\n",
+                          vptr, i, *(bitmap + i));
             return -EINVAL;
         }
         if (devmm_page_bitmap_is_advise_readonly(bitmap + i)) {
-            devmm_drv_err(
-                "Readonly mem, not allowed ipc create. "
-                "(va=0x%llx; pageid=%lld; bitmap=0x%x)\n",
-                vptr, i, *(bitmap + i));
+            devmm_drv_err("Readonly mem, not allowed ipc create. "
+                          "(va=0x%llx; pageid=%lld; bitmap=0x%x)\n",
+                          vptr, i, *(bitmap + i));
             return -EINVAL;
         }
         if (devmm_page_bitmap_is_ipc_open_mem(bitmap + i)) {
-            devmm_drv_err(
-                "Virtual address is ipc open memory. "
-                "(va=0x%llx; page_id=%lld; bitmap=0x%x)\n",
-                vptr, i, *(bitmap + i));
+            devmm_drv_err("Virtual address is ipc open memory. "
+                          "(va=0x%llx; page_id=%lld; bitmap=0x%x)\n",
+                          vptr, i, *(bitmap + i));
             return -EINVAL;
         }
     }
@@ -299,9 +293,8 @@ static int _devmm_ipc_mem_name_create(struct svm_id_inst *inst, char *name, size
     static u64 g_ipc_name_ref = KA_BASE_ATOMIC64_INIT(0);
     int offset;
 
-    offset = snprintf_s(
-        name, IPC_NAME_SIZE, IPC_NAME_SIZE - 1, "%08x%016llx%02x%02x", ka_task_get_current_tgid(),
-        (u64)ka_base_atomic64_inc_return((ka_atomic64_t *)&g_ipc_name_ref), inst->devid, inst->vfid);
+    offset = snprintf_s(name, IPC_NAME_SIZE, IPC_NAME_SIZE - 1, "%08x%016llx%02x%02x", ka_task_get_current_tgid(),
+                        (u64)ka_base_atomic64_inc_return((ka_atomic64_t *)&g_ipc_name_ref), inst->devid, inst->vfid);
     if (offset < 0) {
         devmm_drv_err("Snprintf failed. (offset=%d)\n", offset);
         return -EINVAL;
@@ -310,8 +303,8 @@ static int _devmm_ipc_mem_name_create(struct svm_id_inst *inst, char *name, size
     return 0;
 }
 
-static int devmm_ioctl_ipc_node_attr_pack(
-    struct devmm_svm_process *svm_proc, struct devmm_mem_ipc_create_para *karg, struct devmm_ipc_node_attr *node_attr)
+static int devmm_ioctl_ipc_node_attr_pack(struct devmm_svm_process *svm_proc, struct devmm_mem_ipc_create_para *karg,
+                                          struct devmm_ipc_node_attr *node_attr)
 {
     struct devmm_memory_attributes mem_attr;
     int ret;
@@ -542,6 +535,12 @@ int devmm_ioctl_ipc_get_attr(struct devmm_svm_process *svm_proc, struct devmm_io
     return devmm_ipc_get_attr_handlers[karg->type](karg->name, &karg->attr);
 }
 
-void devmm_ipc_mem_init(void) { devmm_ipc_node_init(); }
+void devmm_ipc_mem_init(void)
+{
+    devmm_ipc_node_init();
+}
 
-void devmm_ipc_mem_uninit(void) { devmm_ipc_node_uninit(); }
+void devmm_ipc_mem_uninit(void)
+{
+    devmm_ipc_node_uninit();
+}

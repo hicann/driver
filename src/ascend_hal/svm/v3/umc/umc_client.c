@@ -44,17 +44,23 @@ static sem_t *umc_get_sem(u32 devid, u32 subevent_id)
     return &g_event_sem[devid][subevent_id - SVM_SUB_EVNET_H2D_TYPE_BASE];
 }
 
-static bool umc_is_submit_to_local(u32 flag) { return ((flag & UMC_TO_LOCAL) != 0); }
+static bool umc_is_submit_to_local(u32 flag)
+{
+    return ((flag & UMC_TO_LOCAL) != 0);
+}
 
-static bool umc_is_submit_from_device(u32 flag) { return ((flag & UMC_DEVICE_SUBMIT) != 0); }
+static bool umc_is_submit_from_device(u32 flag)
+{
+    return ((flag & UMC_DEVICE_SUBMIT) != 0);
+}
 
 static u32 umc_flag_to_dst_engine(u32 flag)
 {
     return umc_is_submit_to_local(flag) ? CCPU_LOCAL : (umc_is_submit_from_device(flag) ? CCPU_HOST : CCPU_DEVICE);
 }
 
-static int umc_fill_event_summary(
-    struct svm_umc_msg_head *head, u32 flag, struct svm_umc_msg *msg, struct event_summary *event_info)
+static int umc_fill_event_summary(struct svm_umc_msg_head *head, u32 flag, struct svm_umc_msg *msg,
+                                  struct event_summary *event_info)
 {
     int ret;
 

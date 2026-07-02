@@ -64,8 +64,8 @@ void svm_show_mem(void);
 void svm_show_dev_mem(u32 devid, char *buf, u32 buf_len);
 
 int svm_get_prop(u64 va, struct svm_prop *prop);
-int svm_get_nearby_prop(
-    u64 va, struct svm_prop *left_prop, bool *has_left, struct svm_prop *right_prop, bool *has_right);
+int svm_get_nearby_prop(u64 va, struct svm_prop *left_prop, bool *has_left, struct svm_prop *right_prop,
+                        bool *has_right);
 
 /* It will include memory that has been released by svm_free but is still in a busy state. */
 int svm_for_each_handle(int (*func)(void *handle, u64 start, struct svm_prop *prop, void *priv), void *priv);

@@ -56,8 +56,8 @@ static void svm_get_dma_copy_type(u32 size, enum devdrv_dma_data_type *type, int
     }
 }
 
-static int _svm_dma_sync_cpy(
-    u32 udevid, struct devdrv_dma_node *dma_nodes, u32 cnt, enum devdrv_dma_data_type type, int wait_type, u32 instance)
+static int _svm_dma_sync_cpy(u32 udevid, struct devdrv_dma_node *dma_nodes, u32 cnt, enum devdrv_dma_data_type type,
+                             int wait_type, u32 instance)
 {
     u32 retry_cnt = 0;
     int ret;
@@ -73,8 +73,8 @@ static int _svm_dma_sync_cpy(
         retry_cnt++;
     }
     if (ret != 0) {
-        svm_err(
-            "hal_kernel_devdrv_dma_sync_link_copy_plus failed. (ret=%d; udevid=%u; node_cnt=%u)\n", ret, udevid, cnt);
+        svm_err("hal_kernel_devdrv_dma_sync_link_copy_plus failed. (ret=%d; udevid=%u; node_cnt=%u)\n", ret, udevid,
+                cnt);
     }
 
     return ret;
@@ -104,8 +104,8 @@ int svm_dma_sync_cpy(u32 udevid, struct devdrv_dma_node *dma_nodes, u32 cnt, u32
 
 #define SVM_MAX_UDEV_NUM 1140U /* todo */
 
-int svm_dma_async_cpy(
-    u32 udevid, struct devdrv_dma_node *dma_nodes, u32 cnt, dma_finish_notify call_back, void *priv, u32 instance)
+int svm_dma_async_cpy(u32 udevid, struct devdrv_dma_node *dma_nodes, u32 cnt, dma_finish_notify call_back, void *priv,
+                      u32 instance)
 {
     static bool sync_flag[SVM_MAX_UDEV_NUM] = {0};
     struct devdrv_asyn_dma_para_info para_info;
@@ -124,8 +124,8 @@ int svm_dma_async_cpy(
         para_info.trans_id = (u32)instance;
         para_info.finish_notify = call_back;
         para_info.interrupt_and_attr_flag = DEVDRV_LOCAL_IRQ_FLAG;
-        ret = hal_kernel_devdrv_dma_async_link_copy_plus(
-            udevid, DEVDRV_DMA_DATA_TRAFFIC, (int)instance, dma_nodes, cnt, &para_info);
+        ret = hal_kernel_devdrv_dma_async_link_copy_plus(udevid, DEVDRV_DMA_DATA_TRAFFIC, (int)instance, dma_nodes, cnt,
+                                                         &para_info);
         if (ret == -ENOSPC) {
             sync_flag[udevid] = true;
             ret = _svm_dma_sync_cpy(udevid, dma_nodes, cnt, DEVDRV_DMA_DATA_TRAFFIC, DEVDRV_DMA_WAIT_INTR, instance);

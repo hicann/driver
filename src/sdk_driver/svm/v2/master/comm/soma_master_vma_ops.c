@@ -22,18 +22,26 @@
 #include "svm_define.h"
 
 #ifndef EMU_ST
-static int devmm_mremap(ka_vm_area_struct_t *area) { return -EACCES; }
+static int devmm_mremap(ka_vm_area_struct_t *area)
+{
+    return -EACCES;
+}
 #endif
-STATIC int devmm_soma_vm_fault_host(ka_vm_area_struct_t *vma, ka_vm_fault_struct_t *vmf) { return -EACCES; }
+STATIC int devmm_soma_vm_fault_host(ka_vm_area_struct_t *vma, ka_vm_fault_struct_t *vmf)
+{
+    return -EACCES;
+}
 
 KA_DEFINE_VM_OPS_FAULT_FUNC(devmm_soma_vm_fault_host)
 
-static ka_vm_operations_struct_t soma_master_vma_ops = {
-    .open = NULL,
-    ka_vm_ops_init_fault(devmm_soma_vm_fault_host)
+static ka_vm_operations_struct_t soma_master_vma_ops = {.open = NULL,
+                                                        ka_vm_ops_init_fault(devmm_soma_vm_fault_host)
 #ifndef EMU_ST
-        ka_vm_ops_init_mremap(devmm_mremap)
+                                                            ka_vm_ops_init_mremap(devmm_mremap)
 #endif
 };
 
-void devmm_soma_setup_vma_ops(ka_vm_area_struct_t *vma) { ka_mm_set_vm_ops(vma, &soma_master_vma_ops); }
+void devmm_soma_setup_vma_ops(ka_vm_area_struct_t *vma)
+{
+    ka_mm_set_vm_ops(vma, &soma_master_vma_ops);
+}

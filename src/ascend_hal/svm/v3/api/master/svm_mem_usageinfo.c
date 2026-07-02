@@ -41,8 +41,8 @@ static int svm_mem_stats_get_value(u32 devid, u32 module_id, u64 *alloc_size, u6
     return 0;
 }
 
-static void svm_mem_module_usage_info_pack(
-    u32 module_id, u64 cur_size, u64 peak_size, struct mem_module_usage *usage_info)
+static void svm_mem_module_usage_info_pack(u32 module_id, u64 cur_size, u64 peak_size,
+                                           struct mem_module_usage *usage_info)
 {
     usage_info->cur_mem_size = cur_size;
     usage_info->mem_peak_size = peak_size;
@@ -62,8 +62,8 @@ static u32 svm_mem_usage_find_pos(struct mem_module_usage new_info, struct mem_m
     return i;
 }
 
-static void svm_mem_usage_insert(
-    struct mem_module_usage new_info, struct mem_module_usage *mem_info, u32 pos, u32 max_num)
+static void svm_mem_usage_insert(struct mem_module_usage new_info, struct mem_module_usage *mem_info, u32 pos,
+                                 u32 max_num)
 {
     u32 i;
 
@@ -74,8 +74,8 @@ static void svm_mem_usage_insert(
     return;
 }
 
-static void svm_mem_usage_sort_insert(
-    struct mem_module_usage new_info, struct mem_module_usage *mem_info, u32 cur_num, size_t max_num)
+static void svm_mem_usage_sort_insert(struct mem_module_usage new_info, struct mem_module_usage *mem_info, u32 cur_num,
+                                      size_t max_num)
 {
     u32 pos;
 

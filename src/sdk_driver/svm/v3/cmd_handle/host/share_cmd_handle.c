@@ -38,9 +38,8 @@ static int cmd_smm_mmap_pre_handle(u32 udevid, u32 cmd, void *para)
     if (svm_smm_get_src_valid_flag((u32)map_para->flag) == 0) {
         int ret = svm_casm_get_src_info(udevid, map_para->dst_va, map_para->dst_size, src_info);
         if (ret != 0) {
-            svm_err(
-                "Casm get src info failed in cmd pre handle. (udevid=%u; dst_va=0x%llx; dst_size=%llu)\n", udevid,
-                map_para->dst_va, map_para->dst_size);
+            svm_err("Casm get src info failed in cmd pre handle. (udevid=%u; dst_va=0x%llx; dst_size=%llu)\n", udevid,
+                    map_para->dst_va, map_para->dst_size);
         }
         return ret;
     } else {
@@ -75,9 +74,8 @@ static int cmd_smm_mmap_post_handle(u32 udevid, u32 cmd, void *para)
 
     ret = ksvmm_add_seg(udevid, ka_task_get_current_tgid(), map_para->dst_va, &map_para->src_info);
     if (ret != 0) {
-        svm_err(
-            "Ksvmm add seg failed in smm um post handle. (udevid=%u; dst_va=0x%llx; dst_size=%llu)\n", udevid,
-            map_para->dst_va, map_para->dst_size);
+        svm_err("Ksvmm add seg failed in smm um post handle. (udevid=%u; dst_va=0x%llx; dst_size=%llu)\n", udevid,
+                map_para->dst_va, map_para->dst_size);
     }
 
     return ret;
@@ -98,9 +96,8 @@ static int cmd_smm_munmap_pre_handle(u32 udevid, u32 cmd, void *para)
     if (svm_smm_get_src_valid_flag((u32)unmap_para->flag) == 0) {
         ret = svm_casm_get_src_info(udevid, unmap_para->dst_va, unmap_para->dst_size, src_info);
         if (ret != 0) {
-            svm_err(
-                "Casm get src info failed in cmd pre handle. (udevid=%u; dst_va=0x%llx; dst_size=%llu)\n", udevid,
-                unmap_para->dst_va, unmap_para->dst_size);
+            svm_err("Casm get src info failed in cmd pre handle. (udevid=%u; dst_va=0x%llx; dst_size=%llu)\n", udevid,
+                    unmap_para->dst_va, unmap_para->dst_size);
             return ret;
         }
     }

@@ -47,9 +47,8 @@ int svm_da_set_custom_vma(struct devmm_svm_process *svm_proc, u64 va, ka_vm_area
 ka_vm_area_struct_t *svm_da_query_custom_vma(struct devmm_svm_process *svm_proc, u64 va);
 u32 svm_da_query_addr_num(struct devmm_svm_process *svm_proc);
 /* callback func in spinlock, can not block in func */
-int svm_da_for_each_addr(
-    struct devmm_svm_process *svm_proc, bool is_occupy,
-    int (*func)(struct devmm_svm_process *svm_proc, u64 va, u64 size, void *priv), void *priv);
+int svm_da_for_each_addr(struct devmm_svm_process *svm_proc, bool is_occupy,
+                         int (*func)(struct devmm_svm_process *svm_proc, u64 va, u64 size, void *priv), void *priv);
 
 void svm_set_da_heap(struct devmm_svm_process *svm_proc, u32 heap_idx, struct devmm_svm_heap *heap);
 struct devmm_svm_heap *svm_get_da_heap_by_idx(struct devmm_svm_process *svm_proc, u32 heap_idx);

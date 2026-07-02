@@ -38,9 +38,8 @@ STATIC int devmm_get_device_accounting_pids(u32 docker_id, u32 phy_devid, u32 vf
     }
 
     got_cnt = devmm_get_hostpid_by_docker_id(docker_id, phy_devid, vfid, pids, cnt);
-    devmm_drv_debug(
-        "Get_device_accounting_pids. (docker_id=%u; phy_devid=%u; vfid=%u; cnt=%u; got_cnt=%d)\n", docker_id, phy_devid,
-        vfid, cnt, got_cnt);
+    devmm_drv_debug("Get_device_accounting_pids. (docker_id=%u; phy_devid=%u; vfid=%u; cnt=%u; got_cnt=%d)\n",
+                    docker_id, phy_devid, vfid, cnt, got_cnt);
     return got_cnt;
 }
 
@@ -49,4 +48,7 @@ void devmm_register_query_func(void)
     (void)devdrv_manager_get_process_pids_register(devmm_get_device_accounting_pids);
 }
 
-void devmm_unregister_query_func(void) { devdrv_manager_get_process_pids_unregister(); }
+void devmm_unregister_query_func(void)
+{
+    devdrv_manager_get_process_pids_unregister();
+}

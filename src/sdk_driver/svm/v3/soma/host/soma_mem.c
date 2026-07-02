@@ -42,9 +42,8 @@ static int soma_comm_para_check(u32 cmd, u64 va, u64 size)
     }
 
     if ((SVM_IS_ALIGNED(va, KA_HPAGE_SIZE) == false) || (SVM_IS_ALIGNED(size, KA_HPAGE_SIZE) == false)) {
-        svm_err(
-            SOMA_LOG_TAG "Va or size isn't aligned by page_size. (va=0x%llx; size=%llu; page_size=%llu)\n", va, size,
-            KA_HPAGE_SIZE);
+        svm_err(SOMA_LOG_TAG "Va or size isn't aligned by page_size. (va=0x%llx; size=%llu; page_size=%llu)\n", va,
+                size, KA_HPAGE_SIZE);
         return -EINVAL;
     }
 
@@ -65,9 +64,8 @@ static int svm_soma_mem_free_config(u32 udevid, u32 cmd, struct svm_soma_mem_cfg
 
     ret = ksvmm_del_seg(udevid, ka_task_get_current_tgid(), va);
     if (ret != 0) {
-        svm_err(
-            SOMA_LOG_TAG "mem del seg failed in soma mem free config. (udevid=%u; dst_va=0x%llx; dst_size=%llu)\n",
-            udevid, va, size);
+        svm_err(SOMA_LOG_TAG "mem del seg failed in soma mem free config. (udevid=%u; dst_va=0x%llx; dst_size=%llu)\n",
+                udevid, va, size);
     }
 
     return ret;
@@ -87,9 +85,9 @@ static int svm_soma_mem_malloc_config(u32 udevid, u32 cmd, struct svm_soma_mem_c
 
     ret = ksvmm_add_seg(udevid, ka_task_get_current_tgid(), va, &para->src_info);
     if (ret != 0) {
-        svm_err(
-            SOMA_LOG_TAG "mem add seg failed in soma mem malloc config. (udevid=%u; dst_va=0x%llx; dst_size=%llu)\n",
-            udevid, va, size);
+        svm_err(SOMA_LOG_TAG
+                "mem add seg failed in soma mem malloc config. (udevid=%u; dst_va=0x%llx; dst_size=%llu)\n",
+                udevid, va, size);
     }
 
     return ret;
@@ -109,9 +107,8 @@ static int svm_soma_global_va_malloc_config(u32 udevid, u32 cmd, struct svm_soma
 
     ret = svm_smp_add_mem(udevid, ka_task_get_current_tgid(), va, size, 0);
     if (ret != 0) {
-        svm_err(
-            SOMA_LOG_TAG "Smp add mem failed in soma global va config. (udevid=%u; va=0x%llx; size=%llu)\n", udevid, va,
-            size);
+        svm_err(SOMA_LOG_TAG "Smp add mem failed in soma global va config. (udevid=%u; va=0x%llx; size=%llu)\n", udevid,
+                va, size);
     }
     return ret;
 }
@@ -146,10 +143,9 @@ static int svm_soma_src_info_check(u32 udevid, const struct svm_soma_mem_cfg_par
     int current_tgid = ka_task_get_current_tgid();
 
     if ((para->src_info.va == 0) || (para->src_info.size == 0) || (para->src_info.size != para->size)) {
-        svm_err(
-            SOMA_LOG_TAG "src_info invalid. (src_va=0x%llx; src_size=%llu; size=%llu; src_tgid=%d; "
-                         "current_tgid=%d)\n",
-            para->src_info.va, para->src_info.size, para->size, para->src_info.tgid, current_tgid);
+        svm_err(SOMA_LOG_TAG "src_info invalid. (src_va=0x%llx; src_size=%llu; size=%llu; src_tgid=%d; "
+                             "current_tgid=%d)\n",
+                para->src_info.va, para->src_info.size, para->size, para->src_info.tgid, current_tgid);
         return -EINVAL;
     }
 

@@ -316,16 +316,18 @@ u32 svm_da_query_addr_num(struct devmm_svm_process *svm_proc)
 
     svm_da_info_rbtree_lock(da_info, false);
 
-    ka_base_rbtree_postorder_for_each_entry_safe(node, tmp, &da_info->rbtree, rbnode) { addr_num++; }
+    ka_base_rbtree_postorder_for_each_entry_safe(node, tmp, &da_info->rbtree, rbnode)
+    {
+        addr_num++;
+    }
 
     svm_da_info_rbtree_unlock(da_info, false);
 
     return addr_num;
 }
 
-int svm_da_for_each_addr(
-    struct devmm_svm_process *svm_proc, bool is_occupy,
-    int (*func)(struct devmm_svm_process *svm_proc, u64 va, u64 size, void *priv), void *priv)
+int svm_da_for_each_addr(struct devmm_svm_process *svm_proc, bool is_occupy,
+                         int (*func)(struct devmm_svm_process *svm_proc, u64 va, u64 size, void *priv), void *priv)
 {
     struct svm_da_info *da_info = &svm_proc->da_info;
     struct svm_da_node_info *node = NULL, *tmp = NULL;

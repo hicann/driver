@@ -76,8 +76,8 @@ static void svm_urma_seg_node_erase(struct seg_node_mng *mng, struct svm_urma_se
     _rbtree_erase(&mng->rb_root, &seg_node->node);
 }
 
-static int _svm_urma_insert_client_seg(
-    struct seg_node_mng *mng, u64 va, u64 size, struct svm_urma_client_seg *client_seg, u32 seg_flag, bool is_remote)
+static int _svm_urma_insert_client_seg(struct seg_node_mng *mng, u64 va, u64 size,
+                                       struct svm_urma_client_seg *client_seg, u32 seg_flag, bool is_remote)
 {
     struct svm_urma_seg_node *node = NULL;
     int ret;
@@ -119,8 +119,8 @@ static int _svm_urma_insert_client_seg(
     return ret;
 }
 
-static int _svm_urma_erase_client_seg(
-    struct seg_node_mng *mng, u64 va, u64 size, struct svm_urma_client_seg *client_seg, bool is_remote)
+static int _svm_urma_erase_client_seg(struct seg_node_mng *mng, u64 va, u64 size,
+                                      struct svm_urma_client_seg *client_seg, bool is_remote)
 {
     struct svm_urma_seg_node *node = NULL;
 
@@ -132,9 +132,8 @@ static int _svm_urma_erase_client_seg(
     }
 
     if ((node->va != va) || (node->size != size)) {
-        svm_err(
-            "Seg node is invalid. (va=%llx; size=%llu; node_va=0x%llx; node_size=%llu\n", va, size, node->va,
-            node->size);
+        svm_err("Seg node is invalid. (va=%llx; size=%llu; node_va=0x%llx; node_size=%llu\n", va, size, node->va,
+                node->size);
         (void)pthread_rwlock_unlock(&mng->rwlock);
         return DRV_ERROR_INVALID_VALUE;
     }
@@ -158,8 +157,8 @@ static int _svm_urma_erase_client_seg(
     return DRV_ERROR_NONE;
 }
 
-static int _svm_urma_get_seg_with_token_info(
-    struct seg_node_mng *mng, u64 va, u64 size, urma_seg_t *seg, u32 *token_id, u32 *token_val)
+static int _svm_urma_get_seg_with_token_info(struct seg_node_mng *mng, u64 va, u64 size, urma_seg_t *seg, u32 *token_id,
+                                             u32 *token_val)
 {
     struct svm_urma_seg_node *node = NULL;
 
@@ -232,8 +231,8 @@ static int _svm_urma_get_seg_size(struct seg_node_mng *mng, u64 va, u64 *size)
     return DRV_ERROR_NONE;
 }
 
-static int svm_urma_insert_client_local_seg(
-    u32 devid, u64 va, u64 size, struct svm_urma_client_seg *client_seg, u32 seg_flag)
+static int svm_urma_insert_client_local_seg(u32 devid, u64 va, u64 size, struct svm_urma_client_seg *client_seg,
+                                            u32 seg_flag)
 {
     return _svm_urma_insert_client_seg(&g_local_seg_mng[devid], va, size, client_seg, seg_flag, false);
 }
@@ -243,8 +242,8 @@ static int svm_urma_erase_client_local_seg(u32 devid, u64 va, u64 size, struct s
     return _svm_urma_erase_client_seg(&g_local_seg_mng[devid], va, size, client_seg, false);
 }
 
-static int svm_urma_get_local_seg_with_token_info(
-    u32 devid, u64 va, u64 size, urma_seg_t *seg, u32 *token_id, u32 *token_val)
+static int svm_urma_get_local_seg_with_token_info(u32 devid, u64 va, u64 size, urma_seg_t *seg, u32 *token_id,
+                                                  u32 *token_val)
 {
     return _svm_urma_get_seg_with_token_info(&g_local_seg_mng[devid], va, size, seg, token_id, token_val);
 }
@@ -264,8 +263,8 @@ static int svm_urma_get_local_seg_size(u32 devid, u64 va, u64 *size)
     return _svm_urma_get_seg_size(&g_local_seg_mng[devid], va, size);
 }
 
-static int svm_urma_insert_client_remote_seg(
-    u32 devid, u64 va, u64 size, struct svm_urma_client_seg *client_seg, u32 seg_flag)
+static int svm_urma_insert_client_remote_seg(u32 devid, u64 va, u64 size, struct svm_urma_client_seg *client_seg,
+                                             u32 seg_flag)
 {
     return _svm_urma_insert_client_seg(&g_remote_seg_mng[devid], va, size, client_seg, seg_flag, true);
 }
@@ -275,8 +274,8 @@ static int svm_urma_erase_client_remote_seg(u32 devid, u64 va, u64 size, struct 
     return _svm_urma_erase_client_seg(&g_remote_seg_mng[devid], va, size, client_seg, true);
 }
 
-static int svm_urma_get_remote_seg_with_token_info(
-    u32 devid, u64 va, u64 size, urma_seg_t *seg, u32 *token_id, u32 *token_val)
+static int svm_urma_get_remote_seg_with_token_info(u32 devid, u64 va, u64 size, urma_seg_t *seg, u32 *token_id,
+                                                   u32 *token_val)
 {
     return _svm_urma_get_seg_with_token_info(&g_remote_seg_mng[devid], va, size, seg, token_id, token_val);
 }
@@ -316,9 +315,8 @@ int svm_urma_register_seg(u32 user_devid, struct svm_dst_va *dst_va, u32 seg_fla
 
     ret = svm_urma_register_seg_client(user_devid, dst_va, &client_seg, seg_flag);
     if (ret != DRV_ERROR_NONE) {
-        svm_debug(
-            "Client register urma seg check. (ret=%d; devid=%u; va=0x%llx; size=%llu)\n", ret, dst_va->devid,
-            dst_va->va, dst_va->size);
+        svm_debug("Client register urma seg check. (ret=%d; devid=%u; va=0x%llx; size=%llu)\n", ret, dst_va->devid,
+                  dst_va->va, dst_va->size);
         return ret;
     }
 
@@ -359,22 +357,21 @@ int svm_urma_unregister_seg(u32 user_devid, struct svm_dst_va *dst_va, u32 seg_f
 
     ret = svm_urma_unregister_seg_client(user_devid, dst_va, &client_seg, seg_flag);
     if (ret != DRV_ERROR_NONE) {
-        svm_err(
-            "Client unregister urma seg failed. (ret=%d; devid=%u; va=0x%llx; size=%llu)\n", ret, dst_va->devid,
-            dst_va->va, dst_va->size);
+        svm_err("Client unregister urma seg failed. (ret=%d; devid=%u; va=0x%llx; size=%llu)\n", ret, dst_va->devid,
+                dst_va->va, dst_va->size);
     }
 
     return ret;
 }
 
-int svm_urma_get_seg_with_token_info(
-    u32 user_devid, struct svm_dst_va *dst_va, urma_seg_t *seg, u32 *token_id, u32 *token_val)
+int svm_urma_get_seg_with_token_info(u32 user_devid, struct svm_dst_va *dst_va, urma_seg_t *seg, u32 *token_id,
+                                     u32 *token_val)
 {
     if (dst_va->devid == svm_get_host_devid()) {
         return svm_urma_get_local_seg_with_token_info(user_devid, dst_va->va, dst_va->size, seg, token_id, token_val);
     } else {
-        return svm_urma_get_remote_seg_with_token_info(
-            dst_va->devid, dst_va->va, dst_va->size, seg, token_id, token_val);
+        return svm_urma_get_remote_seg_with_token_info(dst_va->devid, dst_va->va, dst_va->size, seg, token_id,
+                                                       token_val);
     }
 }
 
@@ -431,9 +428,8 @@ static int svm_urma_recycle_remote_seg(u32 devid)
         svm_dst_va_pack(devid, DEVDRV_PROCESS_CP1, node->va, node->size, &dst_va);
         ret = svm_urma_unregister_seg_client(svm_get_host_devid(), &dst_va, &node->client_seg, node->seg_flag);
         if (ret != DRV_ERROR_NONE) {
-            svm_err(
-                "Recycle remote urma seg failed. (ret=%d; devid=%u; va=0x%llx; size=%llu)\n", ret, devid, node->va,
-                node->size);
+            svm_err("Recycle remote urma seg failed. (ret=%d; devid=%u; va=0x%llx; size=%llu)\n", ret, devid, node->va,
+                    node->size);
         }
         free(node);
         recycle_num++;

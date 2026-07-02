@@ -38,7 +38,10 @@
 #define REGISTER_TO_MASTER_FLAG_PIN (1U << 2U)
 #define REGISTER_TO_MASTER_FLAG_VA_IO_MAP (1U << 3U)
 
-static inline bool register_to_master_flag_bit_is_set(u32 flag, u32 bit_mask) { return ((flag & bit_mask) != 0); }
+static inline bool register_to_master_flag_bit_is_set(u32 flag, u32 bit_mask)
+{
+    return ((flag & bit_mask) != 0);
+}
 
 static inline bool register_to_master_flag_is_apm_maped_reg(u32 flag)
 {

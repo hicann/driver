@@ -19,9 +19,8 @@
 #define DEVMM_ONE_HUNDRED 100
 SVM_DECLARE_MODULE_NAME(svm_module_name);
 
-STATIC void devmm_virt_com_heap_update_info(
-    struct devmm_virt_com_heap *heap, struct devmm_virt_heap_type *heap_type, struct devmm_com_heap_ops *ops,
-    struct devmm_virt_heap_para *heap_info)
+STATIC void devmm_virt_com_heap_update_info(struct devmm_virt_com_heap *heap, struct devmm_virt_heap_type *heap_type,
+                                            struct devmm_com_heap_ops *ops, struct devmm_virt_heap_para *heap_info)
 {
     int i;
     heap->ops = ops;
@@ -62,11 +61,10 @@ STATIC void devmm_virt_com_heap_update_info(
         heap->cache_mem_thres[i] = 0;
     }
 
-    DEVMM_DRV_SWITCH(
-        "Heap update info. (heap_type=0x%x; sub_type=0x%x; size=%llu; "
-        "page_size=%u; start_addr=0x%lx; end_addr=0x%lx; cache=%u; map_size=%u; is_limited=%u)\n",
-        heap_type->heap_type, heap_type->heap_sub_type, heap->heap_size, heap->chunk_size, heap->start, heap->end,
-        heap->need_cache_thres[DEVMM_MEM_NORMAL], heap->map_size, heap->is_limited);
+    DEVMM_DRV_SWITCH("Heap update info. (heap_type=0x%x; sub_type=0x%x; size=%llu; "
+                     "page_size=%u; start_addr=0x%lx; end_addr=0x%lx; cache=%u; map_size=%u; is_limited=%u)\n",
+                     heap_type->heap_type, heap_type->heap_sub_type, heap->heap_size, heap->chunk_size, heap->start,
+                     heap->end, heap->need_cache_thres[DEVMM_MEM_NORMAL], heap->map_size, heap->is_limited);
 }
 
 STATIC DVresult devmm_init_rbtree_queue(struct devmm_virt_com_heap *heap, uint32_t cache_numsize)
@@ -103,10 +101,9 @@ STATIC DVresult devmm_init_rbtree_queue(struct devmm_virt_com_heap *heap, uint32
         goto devmm_insert_fail;
     }
 
-    DEVMM_DRV_SWITCH(
-        "Insert node to DEVMM_IDLE_SIZE_TREE and DEVMM_IDLE_VA_TREE. (heap_idx=%u; "
-        "node=0x%llx; size=%llu; va=0x%llx; flag=%u; total=%llu)\n",
-        heap->heap_idx, (uint64_t)node, node->data.size, node->data.va, node->data.flag, node->data.total);
+    DEVMM_DRV_SWITCH("Insert node to DEVMM_IDLE_SIZE_TREE and DEVMM_IDLE_VA_TREE. (heap_idx=%u; "
+                     "node=0x%llx; size=%llu; va=0x%llx; flag=%u; total=%llu)\n",
+                     heap->heap_idx, (uint64_t)node, node->data.size, node->data.va, node->data.flag, node->data.total);
 
     return DRV_ERROR_NONE;
 
@@ -126,9 +123,8 @@ STATIC uint32_t devmm_get_rbtree_nodecache_numsize(struct devmm_virt_heap_type *
     }
 }
 
-DVresult devmm_virt_init_com_heap(
-    struct devmm_virt_com_heap *heap, struct devmm_virt_heap_type *heap_type, struct devmm_com_heap_ops *ops,
-    struct devmm_virt_heap_para *heap_info)
+DVresult devmm_virt_init_com_heap(struct devmm_virt_com_heap *heap, struct devmm_virt_heap_type *heap_type,
+                                  struct devmm_com_heap_ops *ops, struct devmm_virt_heap_para *heap_info)
 {
     DVresult ret;
 
@@ -148,8 +144,8 @@ DVresult devmm_virt_init_com_heap(
     }
 
     /* update heap info to kernel. */
-    ret = devmm_ioctl_enable_heap(
-        heap->heap_idx, heap->heap_type, heap->heap_sub_type, heap->heap_size, heap->heap_list_type);
+    ret = devmm_ioctl_enable_heap(heap->heap_idx, heap->heap_type, heap->heap_sub_type, heap->heap_size,
+                                  heap->heap_list_type);
     if (ret != DRV_ERROR_NONE) {
         DEVMM_DRV_ERR("Devmm_virt_ioctl_update_heap error. (ret_val=%d)\n", ret);
         devmm_rbtree_destory(&heap->rbtree_queue);
@@ -162,9 +158,8 @@ DVresult devmm_virt_init_com_heap(
     return DRV_ERROR_NONE;
 }
 
-DVresult devmm_virt_init_com_base_heap(
-    struct devmm_virt_com_heap *heap, struct devmm_virt_heap_type *heap_type, struct devmm_com_heap_ops *ops,
-    struct devmm_virt_heap_para *heap_info)
+DVresult devmm_virt_init_com_base_heap(struct devmm_virt_com_heap *heap, struct devmm_virt_heap_type *heap_type,
+                                       struct devmm_com_heap_ops *ops, struct devmm_virt_heap_para *heap_info)
 {
     DVresult ret;
 
@@ -250,7 +245,10 @@ STATIC INLINE uint32_t devmm_node_flag_get_module_id(uint32_t flag)
     return devmm_node_flag_get_value(flag, DEVMM_NODE_MODULE_ID_SHIFT, DEVMM_NODE_MODULE_ID_WID);
 }
 
-STATIC INLINE void devmm_node_set_flag(struct devmm_rbtree_node *node, uint32_t flag) { node->data.flag |= flag; }
+STATIC INLINE void devmm_node_set_flag(struct devmm_rbtree_node *node, uint32_t flag)
+{
+    node->data.flag |= flag;
+}
 
 STATIC INLINE void devmm_node_flag_clear_memtype(uint32_t *flag)
 {
@@ -306,7 +304,10 @@ STATIC INLINE bool devmm_node_flag_is_first_va(struct devmm_rbtree_node *node)
     return (bool)devmm_node_flag_get_value(node->data.flag, DEVMM_NODE_FIRST_VA_BIT, 1);
 }
 
-bool devmm_node_is_need_restore(struct devmm_rbtree_node *node) { return devmm_node_flag_is_first_va(node); }
+bool devmm_node_is_need_restore(struct devmm_rbtree_node *node)
+{
+    return devmm_node_flag_is_first_va(node);
+}
 
 STATIC INLINE uint32_t devmm_node_flag_get_memtype(uint32_t flag)
 {
@@ -329,7 +330,10 @@ STATIC INLINE void devmm_add_cur_alloc_cache_mem(struct devmm_virt_com_heap *hea
     heap->cur_alloc_cache_mem[memtype] += (size <= heap->need_cache_thres[memtype]) ? size : 0;
 }
 
-STATIC INLINE void devmm_node_clear_flag(struct devmm_rbtree_node *node, uint32_t flag) { node->data.flag &= (~flag); }
+STATIC INLINE void devmm_node_clear_flag(struct devmm_rbtree_node *node, uint32_t flag)
+{
+    node->data.flag &= (~flag);
+}
 
 STATIC INLINE void devmm_add_cur_cache_mem(struct devmm_virt_com_heap *heap, uint64_t size, uint32_t memtype)
 {
@@ -341,11 +345,11 @@ STATIC INLINE void devmm_sub_cur_alloc_cache_mem(struct devmm_virt_com_heap *hea
     uint64_t sub_size = (size <= heap->need_cache_thres[memtype]) ? size : 0;
 
     if (heap->cur_alloc_cache_mem[memtype] < sub_size) {
-        DEVMM_DRV_ERR(
-            "Cache count abnormal. (memtype=%u; cur_alloc_cache_mem=%llu; sub_size=%llu; heap_idx=%u; "
-            "cur_cache_mem=%llu; cache_mem_thres=%llu; peak_alloc_cache_mem=%llu)\r\n",
-            memtype, heap->cur_alloc_cache_mem[memtype], sub_size, heap->heap_idx, heap->cur_cache_mem[memtype],
-            heap->cache_mem_thres[memtype], heap->peak_alloc_cache_mem[memtype]);
+        DEVMM_DRV_ERR("Cache count abnormal. (memtype=%u; cur_alloc_cache_mem=%llu; sub_size=%llu; heap_idx=%u; "
+                      "cur_cache_mem=%llu; cache_mem_thres=%llu; peak_alloc_cache_mem=%llu)\r\n",
+                      memtype, heap->cur_alloc_cache_mem[memtype], sub_size, heap->heap_idx,
+                      heap->cur_cache_mem[memtype], heap->cache_mem_thres[memtype],
+                      heap->peak_alloc_cache_mem[memtype]);
         return;
     }
 
@@ -355,11 +359,10 @@ STATIC INLINE void devmm_sub_cur_alloc_cache_mem(struct devmm_virt_com_heap *hea
 STATIC INLINE void devmm_sub_cur_cache_mem(struct devmm_virt_com_heap *heap, uint64_t size, uint32_t memtype)
 {
     if (heap->cur_cache_mem[memtype] < size) {
-        DEVMM_DRV_ERR(
-            "Cache pool exhausted. (memtype=%u; cur_cache_mem=%llu; size=%llu; heap_idx=%u; "
-            "cur_alloc_cache_mem=%llu; cache_mem_thres=%llu; peak_alloc_cache_mem=%llu)\r\n",
-            memtype, heap->cur_cache_mem[memtype], size, heap->heap_idx, heap->cur_alloc_cache_mem[memtype],
-            heap->cache_mem_thres[memtype], heap->peak_alloc_cache_mem[memtype]);
+        DEVMM_DRV_ERR("Cache pool exhausted. (memtype=%u; cur_cache_mem=%llu; size=%llu; heap_idx=%u; "
+                      "cur_alloc_cache_mem=%llu; cache_mem_thres=%llu; peak_alloc_cache_mem=%llu)\r\n",
+                      memtype, heap->cur_cache_mem[memtype], size, heap->heap_idx, heap->cur_alloc_cache_mem[memtype],
+                      heap->cache_mem_thres[memtype], heap->peak_alloc_cache_mem[memtype]);
         return;
     }
 
@@ -402,8 +405,8 @@ void devmm_mem_mapped_size_dec(struct devmm_virt_com_heap *heap, uint64_t size)
     }
 }
 
-static void devmm_module_mem_stats_inc(
-    struct devmm_virt_com_heap *heap, uint32_t module_id, struct devmm_rbtree_node *node)
+static void devmm_module_mem_stats_inc(struct devmm_virt_com_heap *heap, uint32_t module_id,
+                                       struct devmm_rbtree_node *node)
 {
     uint32_t mem_val = devmm_heap_sub_type_to_mem_val(heap->heap_sub_type);
     uint32_t page_type = (heap->heap_type == DEVMM_HEAP_HUGE_PAGE) ? DEVMM_HUGE_PAGE_TYPE : DEVMM_NORMAL_PAGE_TYPE;
@@ -441,8 +444,8 @@ void devmm_module_mem_stats_dec(struct devmm_rbtree_node *node)
     }
 }
 
-STATIC void devmm_merge_unmap_free_node_to_va_node(
-    uint64_t va, struct devmm_rbtree_node *node, struct devmm_heap_rbtree *rbtree_queue)
+STATIC void devmm_merge_unmap_free_node_to_va_node(uint64_t va, struct devmm_rbtree_node *node,
+                                                   struct devmm_heap_rbtree *rbtree_queue)
 {
     struct devmm_rbtree_node *node_tmp = NULL;
 
@@ -499,15 +502,14 @@ STATIC DVresult devmm_free_phymem_heap_oper(struct devmm_virt_com_heap *heap, st
     return DRV_ERROR_NONE;
 }
 
-STATIC DVresult
-devmm_free_phymem_to_os(struct devmm_virt_com_heap *heap, struct devmm_rbtree_node *node, uint64_t nocache_size)
+STATIC DVresult devmm_free_phymem_to_os(struct devmm_virt_com_heap *heap, struct devmm_rbtree_node *node,
+                                        uint64_t nocache_size)
 {
     DVresult ret;
     (void)nocache_size;
 
-    DEVMM_DRV_SWITCH(
-        "Free physical memory. (va=0x%llx; size=%llu; total=%llu)\r\n", node->data.va, node->data.size,
-        node->data.total);
+    DEVMM_DRV_SWITCH("Free physical memory. (va=0x%llx; size=%llu; total=%llu)\r\n", node->data.va, node->data.size,
+                     node->data.total);
     ret = devmm_free_phymem_heap_oper(heap, node);
     if (ret != DRV_ERROR_NONE) {
         return ret;
@@ -540,8 +542,8 @@ STATIC void devmm_erase_from_idle_mapped_tree(struct devmm_rbtree_node *node, st
     (void)devmm_rbtree_erase_idle_va_tree(node, &heap->rbtree_queue);
 }
 
-STATIC DVresult
-devmm_shrink_updata_node_to_trees(struct devmm_virt_com_heap *heap, struct devmm_rbtree_node *node, uint32_t memtype)
+STATIC DVresult devmm_shrink_updata_node_to_trees(struct devmm_virt_com_heap *heap, struct devmm_rbtree_node *node,
+                                                  uint32_t memtype)
 {
     /* node in mapped tree may also in free tree */
     devmm_erase_from_idle_mapped_tree(node, heap);
@@ -579,11 +581,11 @@ STATIC void devmm_shrink_cache_force(struct devmm_virt_com_heap *heap)
             if (node_mapped == NULL) {
                 break;
             }
-            DEVMM_DRV_SWITCH(
-                "Map node details. (heap_idx=%u; cur_alloc_cache_mem=%llu; "
-                "cur_cache_mem=%llu; cache_mem_thres=%llu; va=%llx; size=%llu; total=%llu)\r\n",
-                heap->heap_idx, heap->cur_alloc_cache_mem[j], heap->cur_cache_mem[j], heap->cache_mem_thres[j],
-                node_mapped->data.va, node_mapped->data.size, node_mapped->data.total);
+            DEVMM_DRV_SWITCH("Map node details. (heap_idx=%u; cur_alloc_cache_mem=%llu; "
+                             "cur_cache_mem=%llu; cache_mem_thres=%llu; va=%llx; size=%llu; total=%llu)\r\n",
+                             heap->heap_idx, heap->cur_alloc_cache_mem[j], heap->cur_cache_mem[j],
+                             heap->cache_mem_thres[j], node_mapped->data.va, node_mapped->data.size,
+                             node_mapped->data.total);
 
             /* node not all free, can not free */
             if (node_mapped->data.total != node_mapped->data.size) {
@@ -602,15 +604,15 @@ STATIC void devmm_shrink_cache_force(struct devmm_virt_com_heap *heap)
     }
 }
 
-STATIC DVresult
-devmm_check_node_allowed_free(struct devmm_virt_com_heap *heap, uint32_t memtype, struct devmm_rbtree_node *node_mapped)
+STATIC DVresult devmm_check_node_allowed_free(struct devmm_virt_com_heap *heap, uint32_t memtype,
+                                              struct devmm_rbtree_node *node_mapped)
 {
     if (heap->cur_cache_mem[memtype] < node_mapped->data.size) {
-        DEVMM_DRV_ERR(
-            "Cache pool exhausted. (heap_idx=%u; memtype=%u; cur_alloc_cache_mem=%llu; "
-            "cur_cache_mem=%llu; cache_mem_thres=%llu; va=%llx; size=%llu; total=%llu)\r\n",
-            heap->heap_idx, memtype, heap->cur_alloc_cache_mem[memtype], heap->cur_cache_mem[memtype],
-            heap->cache_mem_thres[memtype], node_mapped->data.va, node_mapped->data.size, node_mapped->data.total);
+        DEVMM_DRV_ERR("Cache pool exhausted. (heap_idx=%u; memtype=%u; cur_alloc_cache_mem=%llu; "
+                      "cur_cache_mem=%llu; cache_mem_thres=%llu; va=%llx; size=%llu; total=%llu)\r\n",
+                      heap->heap_idx, memtype, heap->cur_alloc_cache_mem[memtype], heap->cur_cache_mem[memtype],
+                      heap->cache_mem_thres[memtype], node_mapped->data.va, node_mapped->data.size,
+                      node_mapped->data.total);
         return DRV_ERROR_INNER_ERR;
     }
 
@@ -651,11 +653,10 @@ STATIC void devmm_shrink_cache(struct devmm_virt_com_heap *heap, uint32_t memtyp
         if (node_mapped == NULL) {
             goto devmm_shrink_stop;
         }
-        DEVMM_DRV_SWITCH(
-            "Map node details. (heap_idx=%u; cur_alloc_cache_mem=%llu; "
-            "cur_cache_mem=%llu; cache_mem_thres=%llu; va=%llx; size=%llu; total=%llu)\r\n",
-            heap->heap_idx, heap->cur_alloc_cache_mem, heap->cur_cache_mem, heap->cache_mem_thres, node_mapped->data.va,
-            node_mapped->data.size, node_mapped->data.total);
+        DEVMM_DRV_SWITCH("Map node details. (heap_idx=%u; cur_alloc_cache_mem=%llu; "
+                         "cur_cache_mem=%llu; cache_mem_thres=%llu; va=%llx; size=%llu; total=%llu)\r\n",
+                         heap->heap_idx, heap->cur_alloc_cache_mem, heap->cur_cache_mem, heap->cache_mem_thres,
+                         node_mapped->data.va, node_mapped->data.size, node_mapped->data.total);
 
         ret = devmm_check_node_allowed_free(heap, memtype, node_mapped);
         if (ret != DRV_ERROR_NONE) {
@@ -684,9 +685,8 @@ devmm_shrink_stop:
     return;
 }
 
-STATIC void devmm_segment_node(
-    struct devmm_virt_com_heap *heap, struct devmm_rbtree_node *map_node, uint64_t alloc_size, uint64_t remain_size,
-    uint32_t memtype)
+STATIC void devmm_segment_node(struct devmm_virt_com_heap *heap, struct devmm_rbtree_node *map_node,
+                               uint64_t alloc_size, uint64_t remain_size, uint32_t memtype)
 {
     struct devmm_rbtree_node *new_seg_node = NULL;
 
@@ -696,24 +696,22 @@ STATIC void devmm_segment_node(
         return;
     }
 
-    devmm_assign_rbtree_node_data(
-        map_node->data.va + alloc_size, remain_size, map_node->data.total, 0, map_node->data.advise, new_seg_node);
+    devmm_assign_rbtree_node_data(map_node->data.va + alloc_size, remain_size, map_node->data.total, 0,
+                                  map_node->data.advise, new_seg_node);
     devmm_node_set_flag(new_seg_node, map_node->data.flag);
     devmm_node_clear_flag(new_seg_node, DEVMM_NODE_FIRST_VA_FLG);
     devmm_insert_to_idle_mapped_tree(new_seg_node, heap);
-    DEVMM_DRV_SWITCH(
-        "Insert seg node to DEVMM_IDLE_VA_TREE and DEVMM_IDLE_SIZE_TREE. (heap_idx=%u; "
-        "seg_node=0x%llx; (free size key)size=%llu; (free va key)va=0x%llx; flag=%u; total=%llu)\n",
-        heap->heap_idx, (uint64_t)new_seg_node, new_seg_node->data.size, new_seg_node->data.va, new_seg_node->data.flag,
-        new_seg_node->data.total);
+    DEVMM_DRV_SWITCH("Insert seg node to DEVMM_IDLE_VA_TREE and DEVMM_IDLE_SIZE_TREE. (heap_idx=%u; "
+                     "seg_node=0x%llx; (free size key)size=%llu; (free va key)va=0x%llx; flag=%u; total=%llu)\n",
+                     heap->heap_idx, (uint64_t)new_seg_node, new_seg_node->data.size, new_seg_node->data.va,
+                     new_seg_node->data.flag, new_seg_node->data.total);
 
     map_node->data.size -= remain_size;
     devmm_add_cur_cache_mem(heap, remain_size, memtype);
 }
 
-STATIC bool devmm_node_needs_to_seg(
-    struct devmm_virt_com_heap *heap, uint64_t mapped_size, uint64_t remain_size, uint32_t memtype,
-    bool is_nocache_node)
+STATIC bool devmm_node_needs_to_seg(struct devmm_virt_com_heap *heap, uint64_t mapped_size, uint64_t remain_size,
+                                    uint32_t memtype, bool is_nocache_node)
 {
     uint64_t remain_precent;
 
@@ -736,8 +734,8 @@ STATIC bool devmm_node_needs_to_seg(
     return false;
 }
 
-STATIC void devmm_update_idle_mapped_node(
-    struct devmm_rbtree_node *node, struct devmm_virt_com_heap *heap, uint64_t alloc_size)
+STATIC void devmm_update_idle_mapped_node(struct devmm_rbtree_node *node, struct devmm_virt_com_heap *heap,
+                                          uint64_t alloc_size)
 {
     node->data.size -= alloc_size;
     node->data.va += alloc_size;
@@ -747,8 +745,8 @@ STATIC void devmm_update_idle_mapped_node(
     devmm_insert_to_idle_mapped_tree(node, heap);
 }
 #ifndef UVM_OPEN
-STATIC DVresult devmm_alloc_node(
-    struct devmm_virt_com_heap *heap, struct devmm_rbtree_node *node, uint64_t map_size, DVmem_advise advise)
+STATIC DVresult devmm_alloc_node(struct devmm_virt_com_heap *heap, struct devmm_rbtree_node *node, uint64_t map_size,
+                                 DVmem_advise advise)
 {
     virt_addr_t ret_val;
 
@@ -760,14 +758,14 @@ STATIC DVresult devmm_alloc_node(
 
     heap->sys_mem_alloced += node->data.total;
     heap->sys_mem_alloced_num++;
-    DEVMM_DRV_SWITCH(
-        "Ioctl to alloc success. (va=0x%llx; ret_val=0x%lx; heap_idx=%u)\n", node->data.va, ret_val, heap->heap_idx);
+    DEVMM_DRV_SWITCH("Ioctl to alloc success. (va=0x%llx; ret_val=0x%lx; heap_idx=%u)\n", node->data.va, ret_val,
+                     heap->heap_idx);
 
     return DRV_ERROR_NONE;
 }
 #endif
-STATIC DVresult
-devmm_map_node(struct devmm_virt_com_heap *heap, struct devmm_rbtree_node *node, uint64_t map_size, DVmem_advise advise)
+STATIC DVresult devmm_map_node(struct devmm_virt_com_heap *heap, struct devmm_rbtree_node *node, uint64_t map_size,
+                               DVmem_advise advise)
 {
     virt_addr_t ret_val;
 
@@ -779,15 +777,14 @@ devmm_map_node(struct devmm_virt_com_heap *heap, struct devmm_rbtree_node *node,
 
     heap->sys_mem_alloced += node->data.total;
     heap->sys_mem_alloced_num++;
-    DEVMM_DRV_SWITCH(
-        "Ioctl to map success. (va=0x%llx; ret_val=0x%lx; heap_idx=%u)\n", node->data.va, ret_val, heap->heap_idx);
+    DEVMM_DRV_SWITCH("Ioctl to map success. (va=0x%llx; ret_val=0x%lx; heap_idx=%u)\n", node->data.va, ret_val,
+                     heap->heap_idx);
 
     return DRV_ERROR_NONE;
 }
 
-STATIC DVresult devmm_alloc_from_mapped_node(
-    struct devmm_virt_com_heap *heap, struct devmm_rbtree_node *node, uint64_t alloc_size, DVmem_advise advise,
-    uint32_t memtype)
+STATIC DVresult devmm_alloc_from_mapped_node(struct devmm_virt_com_heap *heap, struct devmm_rbtree_node *node,
+                                             uint64_t alloc_size, DVmem_advise advise, uint32_t memtype)
 {
     uint32_t module_id = devmm_get_module_id_by_advise(advise);
     struct devmm_rbtree_node *node_new = NULL;
@@ -815,18 +812,17 @@ STATIC DVresult devmm_alloc_from_mapped_node(
     devmm_sub_cur_cache_mem(heap, alloc_size, memtype);
     devmm_module_mem_stats_inc(heap, module_id, node_new);
     (void)devmm_rbtree_insert_alloced_tree(node_new, &heap->rbtree_queue);
-    DEVMM_DRV_SWITCH(
-        "Insert alloc node to alloc tree. (heap_idx=%u; node=0x%llx; size=%llu; va=0x%llx; "
-        "flag=%u; total=%llu)\n",
-        heap->heap_idx, (uint64_t)node_new, node_new->data.size, node_new->data.va, node_new->data.flag,
-        node_new->data.total);
+    DEVMM_DRV_SWITCH("Insert alloc node to alloc tree. (heap_idx=%u; node=0x%llx; size=%llu; va=0x%llx; "
+                     "flag=%u; total=%llu)\n",
+                     heap->heap_idx, (uint64_t)node_new, node_new->data.size, node_new->data.va, node_new->data.flag,
+                     node_new->data.total);
     devmm_add_cur_alloc_cache_mem(heap, node_new->data.size, memtype);
 
     return DRV_ERROR_NONE;
 }
 
-STATIC uint64_t devmm_alloc_get_map_size(
-    struct devmm_virt_com_heap *heap, struct devmm_rbtree_node *node, uint64_t alloc_size, uint32_t memtype)
+STATIC uint64_t devmm_alloc_get_map_size(struct devmm_virt_com_heap *heap, struct devmm_rbtree_node *node,
+                                         uint64_t alloc_size, uint32_t memtype)
 {
     uint64_t align_size = align_up(alloc_size, heap->kernel_page_size);
     uint64_t map_size;
@@ -848,8 +844,8 @@ STATIC uint64_t devmm_alloc_get_map_size(
     return map_size;
 }
 
-STATIC void devmm_update_unmapped_node(
-    struct devmm_rbtree_node *node, struct devmm_virt_com_heap *heap, uint64_t va, uint64_t size, uint32_t flag)
+STATIC void devmm_update_unmapped_node(struct devmm_rbtree_node *node, struct devmm_virt_com_heap *heap, uint64_t va,
+                                       uint64_t size, uint32_t flag)
 {
     devmm_assign_rbtree_node_data(va, size, size, flag, 0, node);
     (void)devmm_rbtree_insert_idle_size_tree(node, &heap->rbtree_queue);
@@ -868,8 +864,8 @@ STATIC uint32_t devmm_set_node_flag_from_advise(DVmem_advise advise)
     return node_flag;
 }
 #ifndef UVM_OPEN
-STATIC DVresult devmm_alloc_from_unmapped_node_uvm(
-    struct devmm_virt_com_heap *heap, struct devmm_rbtree_node *node, uint64_t alloc_size_usr, DVmem_advise advise)
+STATIC DVresult devmm_alloc_from_unmapped_node_uvm(struct devmm_virt_com_heap *heap, struct devmm_rbtree_node *node,
+                                                   uint64_t alloc_size_usr, DVmem_advise advise)
 {
     struct devmm_rbtree_node *alloc_node = NULL;
     uint64_t va, alloc_size;
@@ -883,8 +879,8 @@ STATIC DVresult devmm_alloc_from_unmapped_node_uvm(
     (void)devmm_rbtree_erase_idle_size_tree(node, &heap->rbtree_queue);
     (void)devmm_rbtree_erase_idle_va_tree(node, &heap->rbtree_queue);
     if (node->data.size > alloc_size) { /* need to update original node */
-        devmm_update_unmapped_node(
-            node, heap, node->data.va + alloc_size, node->data.size - alloc_size, node->data.flag);
+        devmm_update_unmapped_node(node, heap, node->data.va + alloc_size, node->data.size - alloc_size,
+                                   node->data.flag);
     } else if (node->data.size == alloc_size) { /* reuse original node as map node */
         alloc_node = node;
         alloc_node->data.advise = advise;
@@ -912,16 +908,14 @@ STATIC DVresult devmm_alloc_from_unmapped_node_uvm(
     }
     (void)devmm_rbtree_insert_alloced_tree(alloc_node, &heap->rbtree_queue);
 
-    DEVMM_DRV_SWITCH(
-        "Node info. (alloc_size=%llu; va=0x%llx; total=%llu; alloc_num=%llu)\n", alloc_node->data.size,
-        alloc_node->data.va, alloc_node->data.total, heap->sys_mem_alloced_num);
+    DEVMM_DRV_SWITCH("Node info. (alloc_size=%llu; va=0x%llx; total=%llu; alloc_num=%llu)\n", alloc_node->data.size,
+                     alloc_node->data.va, alloc_node->data.total, heap->sys_mem_alloced_num);
     return DRV_ERROR_NONE;
 }
 #endif
 
-STATIC DVresult devmm_alloc_from_unmapped_node(
-    struct devmm_virt_com_heap *heap, struct devmm_rbtree_node *node, uint64_t alloc_size, DVmem_advise advise,
-    uint32_t memtype)
+STATIC DVresult devmm_alloc_from_unmapped_node(struct devmm_virt_com_heap *heap, struct devmm_rbtree_node *node,
+                                               uint64_t alloc_size, DVmem_advise advise, uint32_t memtype)
 {
     uint32_t module_id = devmm_get_module_id_by_advise(advise);
     struct devmm_rbtree_node *map_node = NULL;
@@ -975,12 +969,11 @@ STATIC DVresult devmm_alloc_from_unmapped_node(
         devmm_module_mem_stats_inc(heap, module_id, map_node);
     }
     (void)devmm_rbtree_insert_alloced_tree(map_node, &heap->rbtree_queue);
-    DEVMM_DRV_SWITCH(
-        "Node info. (heap_idx=%u; memtype=%u; buff_size=%llu; cur_cache_mem=%llu; thres=%llu; "
-        "peak_alloc_cache_mem=%llu; alloc_size=%llu; va=0x%llx; flag=%u; total=%llu; alloc_num=%llu)\n",
-        heap->heap_idx, memtype, heap->cur_alloc_cache_mem[memtype], heap->cur_cache_mem[memtype],
-        heap->cache_mem_thres[memtype], heap->peak_alloc_cache_mem[memtype], map_node->data.size, map_node->data.va,
-        map_node->data.flag, map_node->data.total, heap->sys_mem_alloced_num);
+    DEVMM_DRV_SWITCH("Node info. (heap_idx=%u; memtype=%u; buff_size=%llu; cur_cache_mem=%llu; thres=%llu; "
+                     "peak_alloc_cache_mem=%llu; alloc_size=%llu; va=0x%llx; flag=%u; total=%llu; alloc_num=%llu)\n",
+                     heap->heap_idx, memtype, heap->cur_alloc_cache_mem[memtype], heap->cur_cache_mem[memtype],
+                     heap->cache_mem_thres[memtype], heap->peak_alloc_cache_mem[memtype], map_node->data.size,
+                     map_node->data.va, map_node->data.flag, map_node->data.total, heap->sys_mem_alloced_num);
     return DRV_ERROR_NONE;
 }
 
@@ -1006,8 +999,8 @@ static void devmm_separate_node_by_va(struct devmm_virt_com_heap *heap, struct d
     devmm_update_unmapped_node(node, heap, va, node_size, node->data.flag);
 }
 
-static struct devmm_rbtree_node *devmm_get_node_from_idle_va_tree(
-    struct devmm_virt_com_heap *heap, size_t alloc_size, uint64_t va)
+static struct devmm_rbtree_node *devmm_get_node_from_idle_va_tree(struct devmm_virt_com_heap *heap, size_t alloc_size,
+                                                                  uint64_t va)
 {
     struct devmm_rbtree_node *node = NULL;
 
@@ -1019,19 +1012,18 @@ static struct devmm_rbtree_node *devmm_get_node_from_idle_va_tree(
             DEVMM_DRV_INFO("Cannot find va in allocated tree. (va=0x%llx; alloc_size=%lu)\n", va, alloc_size);
 #endif
         } else {
-            DEVMM_DRV_INFO(
-                "Va is allocated. (va=0x%llx; alloc_size=%lu; node_va=0x%llx; node_size=%llu; total=%llu; "
-                "flag=0x%x; is_base_heap=%u)\n",
-                va, alloc_size, node->data.va, node->data.size, node->data.total, node->data.flag, heap->is_base_heap);
+            DEVMM_DRV_INFO("Va is allocated. (va=0x%llx; alloc_size=%lu; node_va=0x%llx; node_size=%llu; total=%llu; "
+                           "flag=0x%x; is_base_heap=%u)\n",
+                           va, alloc_size, node->data.va, node->data.size, node->data.total, node->data.flag,
+                           heap->is_base_heap);
         }
         return NULL;
     }
 
     if ((va + alloc_size) > (node->data.va + node->data.size)) {
-        DEVMM_DRV_INFO(
-            "Alloc size too large. (va=0x%llx; alloc_size=%lu; node_va=0x%llx; node_size=%llu; total=%llu; "
-            "flag=0x%x)\n",
-            va, alloc_size, node->data.va, node->data.size, node->data.total, node->data.flag);
+        DEVMM_DRV_INFO("Alloc size too large. (va=0x%llx; alloc_size=%lu; node_va=0x%llx; node_size=%llu; total=%llu; "
+                       "flag=0x%x)\n",
+                       va, alloc_size, node->data.va, node->data.size, node->data.total, node->data.flag);
         return NULL;
     }
 
@@ -1041,15 +1033,15 @@ static struct devmm_rbtree_node *devmm_get_node_from_idle_va_tree(
     return node;
 }
 
-static struct devmm_rbtree_node *_devmm_alloc_mem_get_node(
-    struct devmm_virt_com_heap *heap, size_t alloc_size, uint64_t va)
+static struct devmm_rbtree_node *_devmm_alloc_mem_get_node(struct devmm_virt_com_heap *heap, size_t alloc_size,
+                                                           uint64_t va)
 {
     return devmm_is_specified_va_alloc(va) ? devmm_get_node_from_idle_va_tree(heap, alloc_size, va) :
                                              devmm_rbtree_get_from_idle_size_tree(alloc_size, &heap->rbtree_queue);
 }
 
-STATIC struct devmm_rbtree_node *devmm_alloc_mem_get_node(
-    struct devmm_virt_com_heap *heap, size_t alloc_size, uint32_t mapped_tree_type, uint32_t memtype, uint64_t va)
+STATIC struct devmm_rbtree_node *devmm_alloc_mem_get_node(struct devmm_virt_com_heap *heap, size_t alloc_size,
+                                                          uint32_t mapped_tree_type, uint32_t memtype, uint64_t va)
 {
     struct devmm_rbtree_node *node = NULL;
 
@@ -1064,12 +1056,11 @@ STATIC struct devmm_rbtree_node *devmm_alloc_mem_get_node(
     if (node == NULL) {
         if (alloc_size <= heap->need_cache_thres[memtype]) {
             if (heap->is_limited == true) { /* record err */
-                DEVMM_DRV_ERR(
-                    "Out of virtual memory, please check memory usage. "
-                    "(size=%lu; memtype=%u; heap_size=%llu; "
-                    "need_cache_thres=%lu; heap_mem_alloced=%llu; freed=%llu; cur_cache=%llu)\n",
-                    alloc_size, memtype, heap->heap_size, heap->need_cache_thres[memtype], heap->sys_mem_alloced,
-                    heap->sys_mem_freed, heap->cur_cache_mem[memtype]);
+                DEVMM_DRV_ERR("Out of virtual memory, please check memory usage. "
+                              "(size=%lu; memtype=%u; heap_size=%llu; "
+                              "need_cache_thres=%lu; heap_mem_alloced=%llu; freed=%llu; cur_cache=%llu)\n",
+                              alloc_size, memtype, heap->heap_size, heap->need_cache_thres[memtype],
+                              heap->sys_mem_alloced, heap->sys_mem_freed, heap->cur_cache_mem[memtype]);
             }
             return NULL;
         }
@@ -1079,12 +1070,11 @@ STATIC struct devmm_rbtree_node *devmm_alloc_mem_get_node(
             node = _devmm_alloc_mem_get_node(heap, alloc_size, va);
             if (node == NULL) {
                 if (devmm_is_specified_va_alloc(va) == false) {
-                    DEVMM_DRV_ERR(
-                        "Out of virtual memory to alloc large memory, please check memory usage. "
-                        "(size=%lu; memtype=%u; heap_size=%llu; "
-                        "need_cache_thres=%lu; heap_mem_alloced=%llu; freed=%llu; cur_cache=%llu)\n",
-                        alloc_size, memtype, heap->heap_size, heap->need_cache_thres[memtype], heap->sys_mem_alloced,
-                        heap->sys_mem_freed, heap->cur_cache_mem[memtype]);
+                    DEVMM_DRV_ERR("Out of virtual memory to alloc large memory, please check memory usage. "
+                                  "(size=%lu; memtype=%u; heap_size=%llu; "
+                                  "need_cache_thres=%lu; heap_mem_alloced=%llu; freed=%llu; cur_cache=%llu)\n",
+                                  alloc_size, memtype, heap->heap_size, heap->need_cache_thres[memtype],
+                                  heap->sys_mem_alloced, heap->sys_mem_freed, heap->cur_cache_mem[memtype]);
                 }
                 return NULL;
             }
@@ -1125,9 +1115,8 @@ DVresult devmm_alloc_mem(uint64_t *pp, size_t bytesize, DVmem_advise advise, str
     }
 
     va = node->data.va;
-    DEVMM_DRV_SWITCH(
-        "Get node. (alloc_size=%llu; node=0x%llx; node_size=%llu; node_va=0x%llx)\n", alloc_size, node, node->data.size,
-        node->data.va);
+    DEVMM_DRV_SWITCH("Get node. (alloc_size=%llu; node=0x%llx; node_size=%llu; node_va=0x%llx)\n", alloc_size, node,
+                     node->data.size, node->data.va);
     if (devmm_node_flag_is_mapped(node)) {
         ret = devmm_alloc_from_mapped_node(heap, node, alloc_size, advise, memtype);
     } else {
@@ -1148,20 +1137,19 @@ alloc_out:
     return ret;
 }
 
-STATIC void devmm_erase_seg_node_from_rbtree(
-    struct devmm_rbtree_node **node_addr, struct devmm_heap_rbtree *rbtree_queue)
+STATIC void devmm_erase_seg_node_from_rbtree(struct devmm_rbtree_node **node_addr,
+                                             struct devmm_heap_rbtree *rbtree_queue)
 {
     (void)devmm_rbtree_erase_idle_va_tree(*node_addr, rbtree_queue);
     (void)devmm_rbtree_erase_idle_mapped_tree(*node_addr, rbtree_queue);
-    DEVMM_DRV_SWITCH(
-        "Erase node from free tree. (size=%llu; va=0x%llx; flag=%u; total=%llu)\n", (*node_addr)->data.size,
-        (*node_addr)->data.va, (*node_addr)->data.flag, (*node_addr)->data.total);
+    DEVMM_DRV_SWITCH("Erase node from free tree. (size=%llu; va=0x%llx; flag=%u; total=%llu)\n",
+                     (*node_addr)->data.size, (*node_addr)->data.va, (*node_addr)->data.flag, (*node_addr)->data.total);
 
     devmm_free_rbtree_node(*node_addr, rbtree_queue);
 }
 
-STATIC void devmm_merge_mapped_free_node(
-    uint64_t va, struct devmm_rbtree_node *node, struct devmm_heap_rbtree *rbtree_queue)
+STATIC void devmm_merge_mapped_free_node(uint64_t va, struct devmm_rbtree_node *node,
+                                         struct devmm_heap_rbtree *rbtree_queue)
 {
     struct devmm_rbtree_node *node_tmp = NULL;
     uint64_t size = node->data.size;
@@ -1210,9 +1198,9 @@ STATIC uint64_t devmm_get_cache_thres(struct devmm_virt_com_heap *heap, uint32_t
     heap_type.heap_mem_type = heap->heap_mem_type;
 
     need_cache_thres = devmm_virt_get_cache_size_by_heap_type(&heap_type);
-    thres_size =
-        (heap->peak_alloc_cache_mem[memtype] + heap->cur_alloc_cache_mem[memtype]) / 2; /* 2 just divided by two */
-    twice_cur_size = heap->cur_alloc_cache_mem[memtype] * 2;                            /* 2 just twice size */
+    thres_size = (heap->peak_alloc_cache_mem[memtype] + heap->cur_alloc_cache_mem[memtype]) /
+                 2;                                          /* 2 just divided by two */
+    twice_cur_size = heap->cur_alloc_cache_mem[memtype] * 2; /* 2 just twice size */
     if ((thres_size > need_cache_thres) && (twice_cur_size > need_cache_thres)) {
         thres_size = (thres_size < twice_cur_size) ? thres_size : twice_cur_size;
     } else {
@@ -1253,8 +1241,8 @@ STATIC void devmm_update_cache_thres(struct devmm_virt_com_heap *heap, uint32_t 
     heap->cache_mem_thres[memtype] = devmm_get_cache_thres(heap, memtype);
 }
 
-STATIC DVresult devmm_free_cache_mem_process(
-    uint64_t va, struct devmm_virt_com_heap *heap, struct devmm_rbtree_node *node, uint32_t memtype)
+STATIC DVresult devmm_free_cache_mem_process(uint64_t va, struct devmm_virt_com_heap *heap,
+                                             struct devmm_rbtree_node *node, uint32_t memtype)
 {
     bool is_merge_full;
     uint64_t free_size;
@@ -1265,10 +1253,9 @@ STATIC DVresult devmm_free_cache_mem_process(
     /* merge node */
     devmm_merge_mapped_free_node(va, node, &heap->rbtree_queue);
 
-    DEVMM_DRV_SWITCH(
-        "Free node to free tree. (heap_idx=%u; node=0x%llx; size=%llu; "
-        "va=0x%llx; flag=%u; total=%llu)\n",
-        heap->heap_idx, (uint64_t)node, node->data.size, node->data.va, node->data.flag, node->data.total);
+    DEVMM_DRV_SWITCH("Free node to free tree. (heap_idx=%u; node=0x%llx; size=%llu; "
+                     "va=0x%llx; flag=%u; total=%llu)\n",
+                     heap->heap_idx, (uint64_t)node, node->data.size, node->data.va, node->data.flag, node->data.total);
 
     devmm_sub_cur_alloc_cache_mem(heap, free_size, memtype);
     devmm_insert_to_idle_mapped_tree(node, heap);
@@ -1313,8 +1300,8 @@ STATIC struct devmm_rbtree_node *devmm_get_and_erase_alloced_mem_node(struct dev
     return node;
 }
 
-STATIC DVresult devmm_free_nocache_mem_process(
-    uint64_t va, struct devmm_virt_com_heap *heap, struct devmm_rbtree_node *node, uint32_t memtype)
+STATIC DVresult devmm_free_nocache_mem_process(uint64_t va, struct devmm_virt_com_heap *heap,
+                                               struct devmm_rbtree_node *node, uint32_t memtype)
 {
     DVresult ret;
 
@@ -1322,8 +1309,8 @@ STATIC DVresult devmm_free_nocache_mem_process(
     /* ioctl to kernel to free pa */
     ret = devmm_free_phymem_to_os(heap, node, node->data.size);
     if (ret != DRV_ERROR_NONE) {
-        DEVMM_DRV_ERR(
-            "Free error. (va=0x%llx; size=%llu; total=%llu; ret=%d)\n", va, node->data.size, node->data.total, ret);
+        DEVMM_DRV_ERR("Free error. (va=0x%llx; size=%llu; total=%llu; ret=%d)\n", va, node->data.size, node->data.total,
+                      ret);
         return ret;
     }
 
@@ -1417,8 +1404,8 @@ bool devmm_is_mem_allocated(uint64_t va, struct devmm_virt_com_heap *heap)
     return (node != NULL);
 }
 
-DVresult devmm_rbtree_insert_idle_mapped_tree(
-    struct devmm_rbtree_node *rbtree_node, struct devmm_heap_rbtree *rbtree_queue)
+DVresult devmm_rbtree_insert_idle_mapped_tree(struct devmm_rbtree_node *rbtree_node,
+                                              struct devmm_heap_rbtree *rbtree_queue)
 {
     if (devmm_node_flag_is_readonly(rbtree_node->data.flag)) {
         return devmm_rbtree_insert_idle_readonly_mapped_tree(rbtree_node, rbtree_queue);
@@ -1427,8 +1414,8 @@ DVresult devmm_rbtree_insert_idle_mapped_tree(
     }
 }
 
-DVresult devmm_rbtree_erase_idle_mapped_tree(
-    struct devmm_rbtree_node *rbtree_node, struct devmm_heap_rbtree *rbtree_queue)
+DVresult devmm_rbtree_erase_idle_mapped_tree(struct devmm_rbtree_node *rbtree_node,
+                                             struct devmm_heap_rbtree *rbtree_queue)
 {
     if (devmm_node_flag_is_readonly(rbtree_node->data.flag)) {
         return devmm_rbtree_erase_idle_readonly_mapped_tree(rbtree_node, rbtree_queue);
@@ -1460,8 +1447,8 @@ uint32_t devmm_virt_get_cache_size_by_heap_type(struct devmm_virt_heap_type *vir
     }
 }
 
-static DVdeviceptr devmm_alloc_from_mapped_tree(
-    struct devmm_virt_com_heap *heap, size_t size, DVmem_advise advise, uint64_t va)
+static DVdeviceptr devmm_alloc_from_mapped_tree(struct devmm_virt_com_heap *heap, size_t size, DVmem_advise advise,
+                                                uint64_t va)
 {
     (void)va;
     struct devmm_rbtree_node *node = NULL;
@@ -1528,14 +1515,14 @@ DVdeviceptr devmm_alloc_from_size_tree(struct devmm_virt_com_heap *heap, size_t 
     return ptr;
 }
 
-static DVdeviceptr (*alloc_from_tree[DEVMM_TREE_TYPE_MAX])(
-    struct devmm_virt_com_heap *heap, size_t size, DVmem_advise advise, uint64_t va) = {
+static DVdeviceptr (*alloc_from_tree[DEVMM_TREE_TYPE_MAX])(struct devmm_virt_com_heap *heap, size_t size,
+                                                           DVmem_advise advise, uint64_t va) = {
     [DEVMM_IDLE_SIZE_TREE] = devmm_alloc_from_size_tree,
     [DEVMM_IDLE_MAPPED_TREE] = devmm_alloc_from_mapped_tree,
 };
 
-DVdeviceptr devmm_alloc_from_tree(
-    struct devmm_virt_com_heap *heap, size_t bytesize, DVmem_advise advise, uint32_t tree_type, uint64_t va)
+DVdeviceptr devmm_alloc_from_tree(struct devmm_virt_com_heap *heap, size_t bytesize, DVmem_advise advise,
+                                  uint32_t tree_type, uint64_t va)
 {
     uint64_t alloc_size = align_up(bytesize, heap->chunk_size);
     DVdeviceptr ptr = DEVMM_ERR_PTR;
@@ -1569,8 +1556,8 @@ static int devmm_get_map_info_from_primary_heap(struct devmm_virt_com_heap *heap
     return 0;
 }
 
-static int devmm_save_map_info_to_alloced_tree_node(
-    struct devmm_virt_com_heap *heap, u64 va, uint32_t side, uint32_t devid)
+static int devmm_save_map_info_to_alloced_tree_node(struct devmm_virt_com_heap *heap, u64 va, uint32_t side,
+                                                    uint32_t devid)
 {
     struct devmm_rbtree_node *node = NULL;
 
@@ -1593,8 +1580,8 @@ static int devmm_save_map_info_to_alloced_tree_node(
     return DRV_ERROR_NONE;
 }
 
-static int devmm_get_map_info_from_alloced_tree_node(
-    struct devmm_virt_com_heap *heap, u64 va, uint32_t *side, uint32_t *devid)
+static int devmm_get_map_info_from_alloced_tree_node(struct devmm_virt_com_heap *heap, u64 va, uint32_t *side,
+                                                     uint32_t *devid)
 {
     struct devmm_rbtree_node *node = NULL;
 
@@ -1751,9 +1738,8 @@ void devmm_print_svm_va_info(uint64_t va, DVresult ret)
     if (mem_info.start == 0) {
         DEVMM_DRV_ERR("Va is not allocated. (va=0x%llx)\n", va);
     } else {
-        DEVMM_DRV_ERR(
-            "Va info. (va=0x%llx; start=0x%llx; end=0x%llx; module_name=%s; devid=%u)\n", va, mem_info.start,
-            mem_info.end, SVM_GET_MODULE_NAME(svm_module_name, mem_info.module_id), mem_info.devid);
+        DEVMM_DRV_ERR("Va info. (va=0x%llx; start=0x%llx; end=0x%llx; module_name=%s; devid=%u)\n", va, mem_info.start,
+                      mem_info.end, SVM_GET_MODULE_NAME(svm_module_name, mem_info.module_id), mem_info.devid);
     }
 }
 
@@ -1766,4 +1752,7 @@ void devmm_rbtree_free_node_resources(struct devmm_rbtree_node *rbtree_node)
     }
 }
 
-void devmm_get_svm_va_info(uint64_t va, struct devmm_mem_info *mem_info) { devmm_get_addr_info(va, mem_info); }
+void devmm_get_svm_va_info(uint64_t va, struct devmm_mem_info *mem_info)
+{
+    devmm_get_addr_info(va, mem_info);
+}

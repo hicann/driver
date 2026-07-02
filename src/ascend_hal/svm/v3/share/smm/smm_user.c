@@ -37,9 +37,9 @@ int svm_smm_mmap(u32 devid, u64 *va, u64 size, u32 flag, struct svm_global_va *s
     ret = svm_cmd_ioctl(devid, SVM_SMM_MAP, (void *)&para);
     if (ret != DRV_ERROR_NONE) {
         ret = (ret == DRV_ERROR_OPER_NOT_PERMITTED) ? DRV_ERROR_NO_PROCESS : ret;
-        svm_err_if(
-            (ret != DRV_ERROR_NO_PROCESS), "Svm smm mmap ioctl failed. (ret=%d; va=0x%llx; flag=%u; size=%llu)\n", ret,
-            *va, flag, para.dst_size);
+        svm_err_if((ret != DRV_ERROR_NO_PROCESS),
+                   "Svm smm mmap ioctl failed. (ret=%d; va=0x%llx; flag=%u; size=%llu)\n", ret, *va, flag,
+                   para.dst_size);
         return ret;
     }
 
@@ -65,9 +65,8 @@ int svm_smm_munmap(u32 devid, u64 va, u64 size, u32 flag, struct svm_global_va *
     ret = svm_cmd_ioctl(devid, SVM_SMM_UNMAP, (void *)&para);
     if (ret != DRV_ERROR_NONE) {
         ret = (ret == DRV_ERROR_OPER_NOT_PERMITTED) ? DRV_ERROR_NO_PROCESS : ret;
-        svm_err_if(
-            (ret != DRV_ERROR_NO_PROCESS), "Svm smm munmap ioctl failed. (ret=%d; va=0x%llx; size=%llu)\n", ret, va,
-            para.dst_size);
+        svm_err_if((ret != DRV_ERROR_NO_PROCESS), "Svm smm munmap ioctl failed. (ret=%d; va=0x%llx; size=%llu)\n", ret,
+                   va, para.dst_size);
     }
 
     return ret;

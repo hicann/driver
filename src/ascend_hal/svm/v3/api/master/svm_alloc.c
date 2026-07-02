@@ -350,7 +350,10 @@ drvError_t halMemFreeInner(void *pp)
     return (drvError_t)ret;
 }
 
-drvError_t halMemFree(void *pp) { return halMemFreeInner(pp); }
+drvError_t halMemFree(void *pp)
+{
+    return halMemFreeInner(pp);
+}
 
 static int svm_smp_del_mem_event_proc(u64 va)
 {
@@ -365,8 +368,8 @@ static int svm_smp_del_mem_event_proc(u64 va)
     return ret;
 }
 
-static drvError_t svm_smp_del_mem_event_proc_func(
-    unsigned int devid, const void *msg, int msg_len, struct drv_event_proc_rsp *rsp)
+static drvError_t svm_smp_del_mem_event_proc_func(unsigned int devid, const void *msg, int msg_len,
+                                                  struct drv_event_proc_rsp *rsp)
 {
     int ret, retry_cnt;
     const struct svm_smp_del_msg *del_msg = (const struct svm_smp_del_msg *)msg;
@@ -391,9 +394,8 @@ static drvError_t svm_smp_del_mem_event_proc_func(
     } while (retry_cnt++ < 10); /* max retry 10 times */
 
     if (ret != 0) {
-        svm_warn(
-            "Free unsuccessful. (ret=%d; devid=%u; va=%llx; size=%llx; retry=%d)\n", ret, devid, del_msg->va,
-            del_msg->size, retry_cnt);
+        svm_warn("Free unsuccessful. (ret=%d; devid=%u; va=%llx; size=%llx; retry=%d)\n", ret, devid, del_msg->va,
+                 del_msg->size, retry_cnt);
     }
 
     rsp->need_rsp = false;

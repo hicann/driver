@@ -38,8 +38,8 @@ static void rb_range_of_svmm_dev_non_overlap_seg(struct rbtree_node *node, struc
     range->end = seg->start + seg->size - 1ULL;
 }
 
-static struct svmm_dev_non_overlap_seg *svmm_dev_non_overlap_seg_search(
-    struct svmm_inst *svmm_inst, u32 devid, u64 va, u64 size)
+static struct svmm_dev_non_overlap_seg *svmm_dev_non_overlap_seg_search(struct svmm_inst *svmm_inst, u32 devid, u64 va,
+                                                                        u64 size)
 {
     struct rb_range_handle rb_range = {.start = va, .end = va + size - 1};
     struct rbtree_node *node = NULL;
@@ -52,8 +52,8 @@ static struct svmm_dev_non_overlap_seg *svmm_dev_non_overlap_seg_search(
     return rb_entry(node, struct svmm_dev_non_overlap_seg, node);
 }
 
-static struct svmm_dev_non_overlap_seg *svmm_dev_non_overlap_upper_bound_seg_search(
-    struct svmm_inst *svmm_inst, u32 devid, u64 va)
+static struct svmm_dev_non_overlap_seg *svmm_dev_non_overlap_upper_bound_seg_search(struct svmm_inst *svmm_inst,
+                                                                                    u32 devid, u64 va)
 {
     struct rbtree_node *node = NULL;
 
@@ -79,8 +79,8 @@ static struct svmm_dev_non_overlap_seg *svmm_dev_non_overlap_seg_next(struct svm
 
 static int svmm_dev_non_overlap_seg_insert(struct svmm_inst *svmm_inst, struct svmm_dev_non_overlap_seg *seg)
 {
-    int ret =
-        rbtree_insert_by_range(&svmm_inst->dev_root[seg->devid], &seg->node, rb_range_of_svmm_dev_non_overlap_seg);
+    int ret = rbtree_insert_by_range(&svmm_inst->dev_root[seg->devid], &seg->node,
+                                     rb_range_of_svmm_dev_non_overlap_seg);
     if (ret == 0) {
         svmm_inst->seg_num++;
     }
@@ -100,22 +100,20 @@ static u32 svmm_dev_non_overlap_seg_show(struct svmm_dev_non_overlap_seg *seg, i
     int tmp_id = id;
 
     if (buf == NULL) {
-        svm_info(
-            "id %d: seg info: ref %d devid %u start 0x%llx size 0x%llx, svm_flag 0x%llx\n"
-            "    seg src: udevid %u tgid %d va 0x%llx size 0x%llx\n",
-            tmp_id++, seg->ref, seg->devid, seg->start, seg->size, seg->svm_flag, src->udevid, src->tgid, src->va,
-            src->size);
+        svm_info("id %d: seg info: ref %d devid %u start 0x%llx size 0x%llx, svm_flag 0x%llx\n"
+                 "    seg src: udevid %u tgid %d va 0x%llx size 0x%llx\n",
+                 tmp_id++, seg->ref, seg->devid, seg->start, seg->size, seg->svm_flag, src->udevid, src->tgid, src->va,
+                 src->size);
         return 0;
     } else {
         if (buf_len == 0) {
             return 0;
         }
-        int len = snprintf_s(
-            buf, buf_len, buf_len - 1,
-            "id %d: seg info: ref %d devid %u start 0x%llx size 0x%llx, svm_flag 0x%llx\n"
-            "    seg src: udevid %u tgid %d va 0x%llx size 0x%llx\n",
-            tmp_id++, seg->ref, seg->devid, seg->start, seg->size, seg->svm_flag, src->udevid, src->tgid, src->va,
-            src->size);
+        int len = snprintf_s(buf, buf_len, buf_len - 1,
+                             "id %d: seg info: ref %d devid %u start 0x%llx size 0x%llx, svm_flag 0x%llx\n"
+                             "    seg src: udevid %u tgid %d va 0x%llx size 0x%llx\n",
+                             tmp_id++, seg->ref, seg->devid, seg->start, seg->size, seg->svm_flag, src->udevid,
+                             src->tgid, src->va, src->size);
         return (len < 0) ? 0 : (u32)len;
     }
 }
@@ -140,8 +138,8 @@ u32 svmm_dev_non_overlap_show(struct svmm_inst *svmm_inst, char *buf, u32 buf_le
     return len;
 }
 
-static struct svmm_dev_non_overlap_seg *svmm_dev_non_overlap_seg_create(
-    u32 devid, u64 start, u64 size, u64 svm_flag, struct svm_global_va *src_info)
+static struct svmm_dev_non_overlap_seg *svmm_dev_non_overlap_seg_create(u32 devid, u64 start, u64 size, u64 svm_flag,
+                                                                        struct svm_global_va *src_info)
 {
     struct svmm_dev_non_overlap_seg *seg = NULL;
 
@@ -164,10 +162,13 @@ static struct svmm_dev_non_overlap_seg *svmm_dev_non_overlap_seg_create(
     return seg;
 }
 
-static void svmm_dev_non_overlap_seg_destroy(struct svmm_dev_non_overlap_seg *seg) { svm_ua_free(seg); }
+static void svmm_dev_non_overlap_seg_destroy(struct svmm_dev_non_overlap_seg *seg)
+{
+    svm_ua_free(seg);
+}
 
-int svmm_dev_non_overlap_add_seg(
-    struct svmm_inst *svmm_inst, u32 devid, u64 start, u64 svm_flag, struct svm_global_va *src_info)
+int svmm_dev_non_overlap_add_seg(struct svmm_inst *svmm_inst, u32 devid, u64 start, u64 svm_flag,
+                                 struct svm_global_va *src_info)
 {
     struct svmm_dev_non_overlap_seg *seg = NULL;
     u64 size = src_info->size;
@@ -204,9 +205,8 @@ int svmm_dev_non_overlap_del_seg(struct svmm_inst *svmm_inst, u32 devid, u64 sta
     }
 
     if ((start != seg->start) || (size != seg->size)) {
-        svm_err(
-            "Invalid para. (devid=%u; start=0x%llx; size=0x%llx; seg: devid=%u; start=0x%llx; size=0x%llx)\n", devid,
-            start, size, seg->devid, seg->start, seg->size);
+        svm_err("Invalid para. (devid=%u; start=0x%llx; size=0x%llx; seg: devid=%u; start=0x%llx; size=0x%llx)\n",
+                devid, start, size, seg->devid, seg->start, seg->size);
         pthread_rwlock_unlock(&svmm_inst->rwlock);
         return DRV_ERROR_PARA_ERROR;
     }
@@ -225,8 +225,8 @@ int svmm_dev_non_overlap_del_seg(struct svmm_inst *svmm_inst, u32 devid, u64 sta
     return 0;
 }
 
-static void svmm_dev_non_overlap_get_seg_info(
-    struct svmm_dev_non_overlap_seg *seg, u32 *devid, u64 *va, u64 *svm_flag, struct svm_global_va *src_info)
+static void svmm_dev_non_overlap_get_seg_info(struct svmm_dev_non_overlap_seg *seg, u32 *devid, u64 *va, u64 *svm_flag,
+                                              struct svm_global_va *src_info)
 {
     *devid = seg->devid;
     *va = seg->start;
@@ -234,8 +234,8 @@ static void svmm_dev_non_overlap_get_seg_info(
     *src_info = seg->src_info;
 }
 
-static int svmm_dev_non_overlap_get_seg_by_va(
-    struct svmm_inst *svmm_inst, u32 *devid, u64 *va, u64 *svm_flag, struct svm_global_va *src_info)
+static int svmm_dev_non_overlap_get_seg_by_va(struct svmm_inst *svmm_inst, u32 *devid, u64 *va, u64 *svm_flag,
+                                              struct svm_global_va *src_info)
 {
     SVM_UNUSED(svmm_inst);
     SVM_UNUSED(devid);
@@ -246,8 +246,8 @@ static int svmm_dev_non_overlap_get_seg_by_va(
     return DRV_ERROR_INNER_ERR;
 }
 
-static int svmm_dev_non_overlap_get_seg_by_devid(
-    struct svmm_inst *svmm_inst, u32 *devid, u64 *va, u64 *svm_flag, struct svm_global_va *src_info)
+static int svmm_dev_non_overlap_get_seg_by_devid(struct svmm_inst *svmm_inst, u32 *devid, u64 *va, u64 *svm_flag,
+                                                 struct svm_global_va *src_info)
 {
     struct rbtree_node *node = NULL;
 
@@ -271,8 +271,8 @@ static int svmm_dev_non_overlap_get_seg_by_devid(
     return DRV_ERROR_NOT_EXIST;
 }
 
-static int svmm_dev_non_overlap_get_first_seg(
-    struct svmm_inst *svmm_inst, u32 *devid, u64 *va, u64 *svm_flag, struct svm_global_va *src_info)
+static int svmm_dev_non_overlap_get_first_seg(struct svmm_inst *svmm_inst, u32 *devid, u64 *va, u64 *svm_flag,
+                                              struct svm_global_va *src_info)
 {
     struct rbtree_node *node = NULL;
     u32 tmp_devid;
@@ -291,8 +291,8 @@ static int svmm_dev_non_overlap_get_first_seg(
     return DRV_ERROR_NOT_EXIST;
 }
 
-int svmm_dev_non_overlap_get_seg(
-    struct svmm_inst *svmm_inst, u32 *devid, u64 *va, u64 *svm_flag, struct svm_global_va *src_info)
+int svmm_dev_non_overlap_get_seg(struct svmm_inst *svmm_inst, u32 *devid, u64 *va, u64 *svm_flag,
+                                 struct svm_global_va *src_info)
 {
     if (*va != 0) {
         return svmm_dev_non_overlap_get_seg_by_va(svmm_inst, devid, va, svm_flag, src_info);
@@ -331,14 +331,13 @@ void svmm_dev_non_overlap_uninit(struct svmm_inst *svmm_inst)
     pthread_rwlock_unlock(&svmm_inst->rwlock);
 
     if (recycle_num > 0) {
-        svm_warn(
-            "Uninit with seg. (svmma_start=0x%llx; svmma_size=0x%llx; recycle_num=%u)\n", svmm_inst->svmma_start,
-            svmm_inst->svmma_size, recycle_num);
+        svm_warn("Uninit with seg. (svmma_start=0x%llx; svmma_size=0x%llx; recycle_num=%u)\n", svmm_inst->svmma_start,
+                 svmm_inst->svmma_size, recycle_num);
     }
 }
 
-static int svmm_dev_non_overlap_get_first_hole_by_upper(
-    struct svmm_inst *svmm_inst, u32 devid, u64 start, u64 size, u64 *hole_start, u64 *hole_size)
+static int svmm_dev_non_overlap_get_first_hole_by_upper(struct svmm_inst *svmm_inst, u32 devid, u64 start, u64 size,
+                                                        u64 *hole_start, u64 *hole_size)
 {
     struct svmm_dev_non_overlap_seg *seg = NULL;
     u64 hole_end;
@@ -351,8 +350,8 @@ static int svmm_dev_non_overlap_get_first_hole_by_upper(
     return DRV_ERROR_NONE;
 }
 
-static int _svmm_dev_non_overlap_get_first_hole(
-    struct svmm_inst *svmm_inst, u32 devid, u64 start, u64 size, u64 *hole_start, u64 *hole_size)
+static int _svmm_dev_non_overlap_get_first_hole(struct svmm_inst *svmm_inst, u32 devid, u64 start, u64 size,
+                                                u64 *hole_start, u64 *hole_size)
 {
     struct svmm_dev_non_overlap_seg *seg = NULL;
     u64 cur_va = start;
@@ -385,8 +384,8 @@ static int _svmm_dev_non_overlap_get_first_hole(
     return DRV_ERROR_NOT_EXIST;
 }
 
-int svmm_dev_non_overlap_get_first_hole(
-    struct svmm_inst *svmm_inst, u32 devid, u64 start, u64 size, u64 *hole_start, u64 *hole_size)
+int svmm_dev_non_overlap_get_first_hole(struct svmm_inst *svmm_inst, u32 devid, u64 start, u64 size, u64 *hole_start,
+                                        u64 *hole_size)
 {
     int ret;
 
@@ -416,9 +415,10 @@ static int svmm_dev_non_overlap_for_each_seg_handle_by_dev_no_locked(
     return 0;
 }
 
-int svmm_dev_non_overlap_for_each_seg_handle(
-    struct svmm_inst *svmm_inst, int (*func)(void *seg_handle, u64 start, struct svm_global_va *src_info, void *priv),
-    void *priv)
+int svmm_dev_non_overlap_for_each_seg_handle(struct svmm_inst *svmm_inst,
+                                             int (*func)(void *seg_handle, u64 start, struct svm_global_va *src_info,
+                                                         void *priv),
+                                             void *priv)
 {
     u32 devid;
     int ret = 0;

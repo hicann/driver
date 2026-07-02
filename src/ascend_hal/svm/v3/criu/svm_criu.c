@@ -36,7 +36,10 @@ static pthread_rwlock_t g_svm_criu_rwlock = PTHREAD_RWLOCK_INITIALIZER;
 static const struct svm_criu_ops *g_svm_criu_ops[SVM_CRIU_OPS_MAX_NUM] = {NULL};
 static enum svm_criu_phase g_svm_criu_phase[SVM_MAX_DEV_NUM] = {SVM_CRIU_PHASE_IDLE};
 
-static bool svm_criu_devid_is_out_of_range(u32 devid) { return (devid >= SVM_MAX_DEV_NUM); }
+static bool svm_criu_devid_is_out_of_range(u32 devid)
+{
+    return (devid >= SVM_MAX_DEV_NUM);
+}
 
 static void svm_criu_set_phase(u32 devid, enum svm_criu_phase phase)
 {
@@ -125,27 +128,23 @@ static int svm_criu_do_action(u32 devid, enum svm_criu_action action, void *data
         for (i = ops_num; i > 0; --i) {
             ret = svm_criu_call_ops(ops_array[i - 1], devid, action, data);
             if (ret != DRV_ERROR_NONE) {
-                svm_err(
-                    "CRIU action failed. (action=%s; devid=%u; module=%s; ret=%d)\n", svm_criu_action_to_str(action),
-                    devid, svm_criu_get_ops_name(ops_array[i - 1]), ret);
+                svm_err("CRIU action failed. (action=%s; devid=%u; module=%s; ret=%d)\n",
+                        svm_criu_action_to_str(action), devid, svm_criu_get_ops_name(ops_array[i - 1]), ret);
                 return ret;
             }
-            svm_info(
-                "CRIU action success. (action=%s; devid=%u; module=%s)\n", svm_criu_action_to_str(action), devid,
-                svm_criu_get_ops_name(ops_array[i - 1]));
+            svm_info("CRIU action success. (action=%s; devid=%u; module=%s)\n", svm_criu_action_to_str(action), devid,
+                     svm_criu_get_ops_name(ops_array[i - 1]));
         }
     } else {
         for (i = 0; i < ops_num; ++i) {
             ret = svm_criu_call_ops(ops_array[i], devid, action, data);
             if (ret != DRV_ERROR_NONE) {
-                svm_err(
-                    "CRIU action failed. (action=%s; devid=%u; module=%s; ret=%d)\n", svm_criu_action_to_str(action),
-                    devid, svm_criu_get_ops_name(ops_array[i]), ret);
+                svm_err("CRIU action failed. (action=%s; devid=%u; module=%s; ret=%d)\n",
+                        svm_criu_action_to_str(action), devid, svm_criu_get_ops_name(ops_array[i]), ret);
                 return ret;
             }
-            svm_info(
-                "CRIU action success. (action=%s; devid=%u; module=%s)\n", svm_criu_action_to_str(action), devid,
-                svm_criu_get_ops_name(ops_array[i]));
+            svm_info("CRIU action success. (action=%s; devid=%u; module=%s)\n", svm_criu_action_to_str(action), devid,
+                     svm_criu_get_ops_name(ops_array[i]));
         }
     }
 
@@ -262,6 +261,12 @@ int svm_criu_restore(u32 devid)
     return ret;
 }
 
-bool svm_criu_is_resetting(u32 devid) { return svm_criu_is_phase(devid, SVM_CRIU_PHASE_RESET); }
+bool svm_criu_is_resetting(u32 devid)
+{
+    return svm_criu_is_phase(devid, SVM_CRIU_PHASE_RESET);
+}
 
-bool svm_criu_is_device_reopen(u32 devid) { return svm_criu_is_phase(devid, SVM_CRIU_PHASE_DEVICE_REOPEN); }
+bool svm_criu_is_device_reopen(u32 devid)
+{
+    return svm_criu_is_phase(devid, SVM_CRIU_PHASE_DEVICE_REOPEN);
+}

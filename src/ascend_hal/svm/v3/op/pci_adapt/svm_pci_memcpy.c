@@ -21,10 +21,13 @@
 
 #define SVM_COPY_SYNC_SIZE (512 * SVM_BYTES_PER_KB)
 
-static inline bool svm_pci_memcpy_judge_sync(u64 size) { return size <= SVM_COPY_SYNC_SIZE; }
+static inline bool svm_pci_memcpy_judge_sync(u64 size)
+{
+    return size <= SVM_COPY_SYNC_SIZE;
+}
 
-static int _svm_pci_copy_submit(
-    u32 devid, struct svm_copy_va_info *src_info, struct svm_copy_va_info *dst_info, u32 flag, int *id)
+static int _svm_pci_copy_submit(u32 devid, struct svm_copy_va_info *src_info, struct svm_copy_va_info *dst_info,
+                                u32 flag, int *id)
 {
     struct svm_async_copy_submit_para para = {0};
     int ret;
@@ -40,10 +43,9 @@ static int _svm_pci_copy_submit(
 
     ret = svm_cmd_ioctl(devid, SVM_ASYNC_COPY_SUBMIT, (void *)&para);
     if (ret != DRV_ERROR_NONE) {
-        svm_err(
-            "Ioctl async copy submit failed. (ret=%d; devid=%u; src_va=0x%llx; dst_va=0x%llx; size=%llu; "
-            "src_devid=%u; dst_devid=%u)\n",
-            ret, devid, src_info->va, dst_info->va, src_info->size, src_info->devid, dst_info->devid);
+        svm_err("Ioctl async copy submit failed. (ret=%d; devid=%u; src_va=0x%llx; dst_va=0x%llx; size=%llu; "
+                "src_devid=%u; dst_devid=%u)\n",
+                ret, devid, src_info->va, dst_info->va, src_info->size, src_info->devid, dst_info->devid);
         return ret;
     }
 
@@ -56,8 +58,8 @@ int svm_pci_async_copy_submit(u32 devid, struct svm_copy_va_info *src_info, stru
     return _svm_pci_copy_submit(devid, src_info, dst_info, 0, id);
 }
 
-static int svm_pci_async_copy_submit_2d(
-    u32 devid, struct svm_copy_va_2d_info *src_info, struct svm_copy_va_2d_info *dst_info, int *id)
+static int svm_pci_async_copy_submit_2d(u32 devid, struct svm_copy_va_2d_info *src_info,
+                                        struct svm_copy_va_2d_info *dst_info, int *id)
 {
     struct svm_async_copy_submit_2d_para para = {0};
     int ret;
@@ -91,9 +93,8 @@ static int svm_pci_async_copy_submit_batch(u32 devid, struct svm_async_copy_subm
 
     ret = svm_cmd_ioctl(devid, SVM_ASYNC_COPY_SUBMIT_BATCH, (void *)submit_para);
     if (ret != DRV_ERROR_NONE) {
-        svm_info(
-            "Submit async copy batch not succ. (ret=%d; src_devid=%u; dst_devid=%u)\n", ret, submit_para->src_devid,
-            submit_para->dst_devid);
+        svm_info("Submit async copy batch not succ. (ret=%d; src_devid=%u; dst_devid=%u)\n", ret,
+                 submit_para->src_devid, submit_para->dst_devid);
         return ret;
     }
 
@@ -158,8 +159,8 @@ int svm_pci_sync_copy_batch(u64 src[], u64 dst[], u64 size[], u64 count, u32 src
     return svm_pci_async_copy_wait(devid, submit_para.id);
 }
 
-int svm_pci_dma_desc_convert(
-    u32 devid, struct svm_copy_va_info *src_info, struct svm_copy_va_info *dst_info, struct DMA_ADDR *dma_desc)
+int svm_pci_dma_desc_convert(u32 devid, struct svm_copy_va_info *src_info, struct svm_copy_va_info *dst_info,
+                             struct DMA_ADDR *dma_desc)
 {
     struct svm_dma_desc_convert_para para = {0};
     int ret;
@@ -174,10 +175,9 @@ int svm_pci_dma_desc_convert(
 
     ret = svm_cmd_ioctl(devid, SVM_DMA_DESC_CONVERT, (void *)&para);
     if (ret != DRV_ERROR_NONE) {
-        svm_err(
-            "Ioctl dma desc convert failed. (ret=%d; devid=%u; src_va=0x%llx; dst_va=0x%llx; size=%llu; "
-            "src_devid=%u; dst_devid=%u)\n",
-            ret, devid, src_info->va, dst_info->va, src_info->size, src_info->devid, dst_info->devid);
+        svm_err("Ioctl dma desc convert failed. (ret=%d; devid=%u; src_va=0x%llx; dst_va=0x%llx; size=%llu; "
+                "src_devid=%u; dst_devid=%u)\n",
+                ret, devid, src_info->va, dst_info->va, src_info->size, src_info->devid, dst_info->devid);
         return ret;
     }
 
@@ -228,9 +228,8 @@ int svm_pci_dma_desc_destroy(u32 devid, struct DMA_ADDR *dma_desc)
     return DRV_ERROR_NONE;
 }
 
-int svm_pci_dma_desc_convert_2d(
-    u32 devid, struct svm_copy_va_2d_info *src_info, struct svm_copy_va_2d_info *dst_info, u64 fixed_size,
-    struct DMA_ADDR *dma_desc)
+int svm_pci_dma_desc_convert_2d(u32 devid, struct svm_copy_va_2d_info *src_info, struct svm_copy_va_2d_info *dst_info,
+                                u64 fixed_size, struct DMA_ADDR *dma_desc)
 {
     struct svm_dma_desc_convert_2d_para para = {0};
     int ret;
@@ -247,11 +246,10 @@ int svm_pci_dma_desc_convert_2d(
 
     ret = svm_cmd_ioctl(devid, SVM_DMA_DESC_CONVERT_2D, (void *)&para);
     if (ret != DRV_ERROR_NONE) {
-        svm_err(
-            "Convert 2d failed. (ret=%d; devid=%u; src_va=0x%llx; dst_va=0x%llx; spitch=%llu; dpitch=%llu; "
-            "width=%llu; height=%llu; src_devid=%u; dst_devid=%u)\n",
-            ret, devid, src_info->va, dst_info->va, src_info->pitch, dst_info->pitch, src_info->width, src_info->height,
-            src_info->devid, dst_info->devid);
+        svm_err("Convert 2d failed. (ret=%d; devid=%u; src_va=0x%llx; dst_va=0x%llx; spitch=%llu; dpitch=%llu; "
+                "width=%llu; height=%llu; src_devid=%u; dst_devid=%u)\n",
+                ret, devid, src_info->va, dst_info->va, src_info->pitch, dst_info->pitch, src_info->width,
+                src_info->height, src_info->devid, dst_info->devid);
         return ret;
     }
 
@@ -260,16 +258,18 @@ int svm_pci_dma_desc_convert_2d(
     return DRV_ERROR_NONE;
 }
 
-static struct svm_copy_ops g_pci_copy_ops = {
-    .sync_copy = svm_pci_sync_copy,
-    .async_copy_submit = svm_pci_async_copy_submit,
-    .async_copy_wait = svm_pci_async_copy_wait,
-    .dma_desc_convert = svm_pci_dma_desc_convert,
-    .dma_desc_submit = svm_pci_dma_desc_submit,
-    .dma_desc_wait = svm_pci_dma_desc_wait,
-    .dma_desc_destroy = svm_pci_dma_desc_destroy,
-    .sync_copy_2d = svm_pci_sync_copy_2d,
-    .dma_desc_convert_2d = svm_pci_dma_desc_convert_2d,
-    .sync_copy_batch = svm_pci_sync_copy_batch};
+static struct svm_copy_ops g_pci_copy_ops = {.sync_copy = svm_pci_sync_copy,
+                                             .async_copy_submit = svm_pci_async_copy_submit,
+                                             .async_copy_wait = svm_pci_async_copy_wait,
+                                             .dma_desc_convert = svm_pci_dma_desc_convert,
+                                             .dma_desc_submit = svm_pci_dma_desc_submit,
+                                             .dma_desc_wait = svm_pci_dma_desc_wait,
+                                             .dma_desc_destroy = svm_pci_dma_desc_destroy,
+                                             .sync_copy_2d = svm_pci_sync_copy_2d,
+                                             .dma_desc_convert_2d = svm_pci_dma_desc_convert_2d,
+                                             .sync_copy_batch = svm_pci_sync_copy_batch};
 
-void svm_pci_memcpy_ops_register(u32 devid) { svm_copy_ops_register(devid, &g_pci_copy_ops); }
+void svm_pci_memcpy_ops_register(u32 devid)
+{
+    svm_copy_ops_register(devid, &g_pci_copy_ops);
+}

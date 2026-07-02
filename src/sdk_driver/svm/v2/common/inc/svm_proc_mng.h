@@ -75,14 +75,14 @@ struct devmm_svm_process *devmm_alloc_svm_proc(void);
 void devmm_free_svm_proc(struct devmm_svm_process *svm_proc);
 
 int devmm_add_svm_proc_pid(struct devmm_svm_process *svm_proc, struct devmm_svm_process_id *process_id, int dev_pid);
-int devmm_add_svm_proc_pid_lock(
-    struct devmm_svm_process *svm_proc, struct devmm_svm_process_id *process_id, int dev_pid);
+int devmm_add_svm_proc_pid_lock(struct devmm_svm_process *svm_proc, struct devmm_svm_process_id *process_id,
+                                int dev_pid);
 void devmm_del_first_svm_proc_pid(struct devmm_svm_process *svm_proc);
 void devmm_del_first_svm_proc_pid_lock(struct devmm_svm_process *svm_proc);
 void devmm_set_svm_proc_state(struct devmm_svm_process *svm_proc, u32 state);
 
-void devmm_modify_process_status(
-    struct devmm_svm_process *svm_proc, u32 devid, u32 vfid, processStatus_t pid_status, bool new_state);
+void devmm_modify_process_status(struct devmm_svm_process *svm_proc, u32 devid, u32 vfid, processStatus_t pid_status,
+                                 bool new_state);
 u32 devmm_get_process_status(struct devmm_svm_process *svm_proc, u32 devid, u32 vfid, processStatus_t status);
 void devmm_oom_ref_inc(struct devmm_svm_process *svm_proc);
 void devmm_set_oom_ref(struct devmm_svm_process *svm_proc, u64 value);

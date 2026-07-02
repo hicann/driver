@@ -30,18 +30,16 @@ static int pcie_th_agent_dma_addr_get(u32 udevid, void *msg, u32 *reply_len)
     int ret;
 
     if (msg_info->head.extend_num == 0) {
-        svm_err(
-            "Invalid extend num. (udevid=%u; tgid=%u; va=0x%llx; size=0x%llx)\n", udevid, msg_info->tgid, msg_info->va,
-            msg_info->size);
+        svm_err("Invalid extend num. (udevid=%u; tgid=%u; va=0x%llx; size=0x%llx)\n", udevid, msg_info->tgid,
+                msg_info->va, msg_info->size);
         return -EINVAL;
     }
 
     svm_global_va_pack(uda_get_host_id(), msg_info->tgid, msg_info->va, msg_info->size, &dst_va);
     ret = svm_dma_addr_get(udevid, msg_info->tgid, &dst_va, &dma_info);
     if (ret != 0) {
-        svm_err(
-            "Get dma addr failed. (udevid=%u; tgid=%u; va=0x%llx; size=0x%llx)\n", udevid, msg_info->tgid, msg_info->va,
-            msg_info->size);
+        svm_err("Get dma addr failed. (udevid=%u; tgid=%u; va=0x%llx; size=0x%llx)\n", udevid, msg_info->tgid,
+                msg_info->va, msg_info->size);
         return ret;
     }
 

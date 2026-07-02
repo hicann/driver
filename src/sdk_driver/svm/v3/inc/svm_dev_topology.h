@@ -40,8 +40,8 @@ static inline bool svm_is_cross_server(u32 local_udevid, u32 peer_server_id)
 
     ret = dbl_get_spod_info(local_udevid, &info);
     if (ret != 0) {
-        svm_warn(
-            "Get local server id failed. (udevid=%u; peer_server_id=%u; ret=%d)\n", local_udevid, peer_server_id, ret);
+        svm_warn("Get local server id failed. (udevid=%u; peer_server_id=%u; ret=%d)\n", local_udevid, peer_server_id,
+                 ret);
     } else {
         local_server_id = info.server_id;
     }
@@ -56,9 +56,8 @@ static inline bool svm_dev_is_ub_connect(u32 local_udevid, u32 peer_server_id, u
 
     if ((local_udevid == uda_get_host_id()) || (peer_udevid == uda_get_host_id())) {
         u32 chip_id = (local_udevid == uda_get_host_id()) ? peer_udevid : local_udevid;
-        return (
-            svm_is_cross_server(chip_id, peer_server_id) ||
-            (devdrv_get_connect_protocol(chip_id) == CONNECT_PROTOCOL_UB));
+        return (svm_is_cross_server(chip_id, peer_server_id) ||
+                (devdrv_get_connect_protocol(chip_id) == CONNECT_PROTOCOL_UB));
     }
 
     if (svm_is_cross_server(local_udevid, peer_server_id)) {

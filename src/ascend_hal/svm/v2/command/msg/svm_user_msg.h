@@ -34,8 +34,8 @@ struct devmm_event_msg_info {
     const char *msg;
 };
 
-drvError_t devmm_process_task_mmap(
-    uint32_t devid, enum devdrv_process_type proc_type, DVdeviceptr *va, size_t size, int fixed_va_flag);
+drvError_t devmm_process_task_mmap(uint32_t devid, enum devdrv_process_type proc_type, DVdeviceptr *va, size_t size,
+                                   int fixed_va_flag);
 drvError_t devmm_process_task_munmap(uint32_t devid, enum devdrv_process_type proc_type, DVdeviceptr va, size_t size);
 drvError_t devmm_process_cp_mmap(uint32_t devid, DVdeviceptr *va, size_t size);
 drvError_t devmm_process_cp_munmap(uint32_t devid, DVdeviceptr va);

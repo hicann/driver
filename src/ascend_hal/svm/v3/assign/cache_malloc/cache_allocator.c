@@ -175,11 +175,10 @@ void cache_allocator_destroy(u32 devid, u32 flag)
 static u32 _cache_allocator_show(struct cache_allocator *ca, char *buf, u32 buf_len)
 {
     if (buf == NULL) {
-        svm_info(
-            "flag 0x%x: shrink_thres_cur=%llu(Bytes) "
-            "stats(total=%llu idle=%llu cur_alloced=%llu peak_alloced=%llu)(Bytes)\n",
-            ca->flag, ca->strategy.shrink_thres_cur, ca->stats.total, ca->stats.idle, ca->stats.cur_alloced,
-            ca->stats.peak_alloced);
+        svm_info("flag 0x%x: shrink_thres_cur=%llu(Bytes) "
+                 "stats(total=%llu idle=%llu cur_alloced=%llu peak_alloced=%llu)(Bytes)\n",
+                 ca->flag, ca->strategy.shrink_thres_cur, ca->stats.total, ca->stats.idle, ca->stats.cur_alloced,
+                 ca->stats.peak_alloced);
         (void)svm_ga_show(ca->ga_inst, buf, buf_len);
         return 0;
     } else {
@@ -189,12 +188,11 @@ static u32 _cache_allocator_show(struct cache_allocator *ca, char *buf, u32 buf_
         int len;
         u32 ga_format_len;
 
-        len = snprintf_s(
-            buf, buf_len, buf_len - 1,
-            "flag 0x%x: shrink_thres_cur=%llu(Bytes) "
-            "stats(total=%llu idle=%llu cur_alloced=%llu peak_alloced=%llu)(Bytes)\n",
-            ca->flag, ca->strategy.shrink_thres_cur, ca->stats.total, ca->stats.idle, ca->stats.cur_alloced,
-            ca->stats.peak_alloced);
+        len = snprintf_s(buf, buf_len, buf_len - 1,
+                         "flag 0x%x: shrink_thres_cur=%llu(Bytes) "
+                         "stats(total=%llu idle=%llu cur_alloced=%llu peak_alloced=%llu)(Bytes)\n",
+                         ca->flag, ca->strategy.shrink_thres_cur, ca->stats.total, ca->stats.idle,
+                         ca->stats.cur_alloced, ca->stats.peak_alloced);
         if (len < 0) {
             return 0;
         }

@@ -108,9 +108,8 @@ static int svm_register_pcie_th_show_node(void *seg_handle, u64 start, struct sv
     char *buf = para->buf;
     u32 buf_len = para->buf_len;
 
-    int len = snprintf_s(
-        buf, buf_len, buf_len - 1, "0x%llx   0x%llx   %u   0x%llx\n", src_info->va, src_info->size,
-        svm_svmm_get_seg_devid(seg_handle), start);
+    int len = snprintf_s(buf, buf_len, buf_len - 1, "0x%llx   0x%llx   %u   0x%llx\n", src_info->va, src_info->size,
+                         svm_svmm_get_seg_devid(seg_handle), start);
     if (len >= 0) {
         para->buf += len;
         para->buf_len -= (u32)len;
@@ -172,8 +171,8 @@ static void svm_init_pcie_th_seg_priv(void *priv, u64 va, u64 size, u64 align, u
 
 static int svm_alloc_pcie_th_seg_priv(void **priv)
 {
-    struct svm_pcie_th_priv *pcie_th_priv =
-        (struct svm_pcie_th_priv *)svm_ua_calloc(1, sizeof(struct svm_pcie_th_priv));
+    struct svm_pcie_th_priv *pcie_th_priv = (struct svm_pcie_th_priv *)svm_ua_calloc(1,
+                                                                                     sizeof(struct svm_pcie_th_priv));
     if (pcie_th_priv == NULL) {
         svm_err("Alloc seg priv failed.\n");
         return DRV_ERROR_OUT_OF_MEMORY;
@@ -183,7 +182,10 @@ static int svm_alloc_pcie_th_seg_priv(void **priv)
     return DRV_ERROR_NONE;
 }
 
-static void svm_free_pcie_th_seg_priv(void *priv) { svm_ua_free(priv); }
+static void svm_free_pcie_th_seg_priv(void *priv)
+{
+    svm_ua_free(priv);
+}
 
 static int svm_alloc_pcie_th_va(u64 size, u64 align, u64 *va)
 {
@@ -216,8 +218,8 @@ static void svm_free_pcie_th_va(u64 va, u64 size, u64 align)
     }
 }
 
-static int svm_query_register_dev_pcie_th_addr(
-    u32 devid, u64 va, u64 size, u64 *pcie_th_addr, void **priv, struct svm_global_va *src_info)
+static int svm_query_register_dev_pcie_th_addr(u32 devid, u64 va, u64 size, u64 *pcie_th_addr, void **priv,
+                                               struct svm_global_va *src_info)
 {
     void *svmm_inst = pcie_th_svmm[devid];
     u64 svm_flag, query_va;
@@ -337,9 +339,8 @@ static int svm_register_pcie_th_check_va(u64 va, u64 size, u32 devid)
     }
 
     if ((va + size) > (prop.start + prop.size)) {
-        svm_err(
-            "Size if out of bounds. (va=0x%llx; size=0x%llx; prop start=0x%llx; size=0x%llx)\n", va, size, prop.start,
-            prop.size);
+        svm_err("Size if out of bounds. (va=0x%llx; size=0x%llx; prop start=0x%llx; size=0x%llx)\n", va, size,
+                prop.start, prop.size);
         return DRV_ERROR_INVALID_VALUE;
     }
 
@@ -351,14 +352,15 @@ static u32 svm_get_register_to_master_flag_by_register_pcie_th_flag(u32 register
     u32 register_to_master_flag = 0;
 
     register_to_master_flag |= REGISTER_TO_MASTER_FLAG_ACCESS_WRITE;
-    register_to_master_flag |=
-        ((register_pcie_th_flag & SVM_REGISTER_PCIE_TH_FLAG_VA_IO_MAP) != 0) ? REGISTER_TO_MASTER_FLAG_VA_IO_MAP : 0;
+    register_to_master_flag |= ((register_pcie_th_flag & SVM_REGISTER_PCIE_TH_FLAG_VA_IO_MAP) != 0) ?
+                                   REGISTER_TO_MASTER_FLAG_VA_IO_MAP :
+                                   0;
 
     return register_to_master_flag;
 }
 
-static int _svm_register_pcie_th_locked(
-    u64 va, u64 size, u32 flag, u32 devid, bool is_malloc_va, u64 dst_va, void *seg_priv)
+static int _svm_register_pcie_th_locked(u64 va, u64 size, u32 flag, u32 devid, bool is_malloc_va, u64 dst_va,
+                                        void *seg_priv)
 {
     u32 register_flag = svm_get_register_to_master_flag_by_register_pcie_th_flag(flag);
     struct svm_dst_va register_va, dst_info;
@@ -695,8 +697,8 @@ static int svm_register_pcie_th_seg_criu_reset(void *seg_handle, u64 start, stru
     return DRV_ERROR_NONE;
 }
 
-static int svm_register_pcie_th_seg_criu_restore(
-    void *seg_handle, u64 start, struct svm_global_va *src_info, void *priv)
+static int svm_register_pcie_th_seg_criu_restore(void *seg_handle, u64 start, struct svm_global_va *src_info,
+                                                 void *priv)
 {
     struct svm_prop src_prop;
     struct svm_dst_va register_va;
@@ -721,18 +723,16 @@ static int svm_register_pcie_th_seg_criu_restore(
     svm_dst_va_pack(svm_get_host_devid(), 0, src_info->va, src_info->size, &register_va);
     ret = svm_register_to_master(devid, &register_va, register_to_master_flag);
     if ((ret != DRV_ERROR_NONE) && (ret != DRV_ERROR_BUSY) && (ret != DRV_ERROR_REPEATED_USERD)) {
-        svm_err(
-            "Restore pcie-th register-to-master failed. (ret=%d; devid=%u; va=0x%llx; size=0x%llx)\n", ret, devid,
-            src_info->va, src_info->size);
+        svm_err("Restore pcie-th register-to-master failed. (ret=%d; devid=%u; va=0x%llx; size=0x%llx)\n", ret, devid,
+                src_info->va, src_info->size);
         return ret;
     }
 
     svm_dst_va_pack(devid, PROCESS_CP1, start, src_info->size, &dst_info);
     ret = svm_smm_client_map(&dst_info, src_info, 0);
     if (ret != DRV_ERROR_NONE) {
-        svm_err(
-            "Restore pcie-th map failed. (ret=%d; devid=%u; src_va=0x%llx; dst_va=0x%llx; size=0x%llx)\n", ret, devid,
-            src_info->va, start, src_info->size);
+        svm_err("Restore pcie-th map failed. (ret=%d; devid=%u; src_va=0x%llx; dst_va=0x%llx; size=0x%llx)\n", ret,
+                devid, src_info->va, start, src_info->size);
     }
 
     return ret;

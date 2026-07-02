@@ -46,12 +46,14 @@ static void svm_show_mem_info(u32 devid, char *buf, u32 buf_len)
         return;
     }
 
-    (void)snprintf_s(
-        buf, buf_len, buf_len - 1, "ddr info: total %lu free %lu huge_total %lu huge_free %lu\n", info.phy_info.total,
-        info.phy_info.free, info.phy_info.huge_total, info.phy_info.huge_free);
+    (void)snprintf_s(buf, buf_len, buf_len - 1, "ddr info: total %lu free %lu huge_total %lu huge_free %lu\n",
+                     info.phy_info.total, info.phy_info.free, info.phy_info.huge_total, info.phy_info.huge_free);
 }
 
-void svm_show_register(u32 devid, char *buf, u32 buf_len) { (void)svm_show_register_pcie_th(devid, buf, buf_len); }
+void svm_show_register(u32 devid, char *buf, u32 buf_len)
+{
+    (void)svm_show_register_pcie_th(devid, buf, buf_len);
+}
 
 static struct svm_mem_show_feature show_features[] = {
     {USER_FEATURE_MALLOC_MNG, svm_show_dev_mem}, {USER_FEATURE_CACHE_MALLOC, svm_show_cache},
@@ -89,8 +91,8 @@ static struct svm_mem_show_feature *svm_show_get_feature(char *feature_name)
     return NULL;
 }
 
-static drvError_t svm_mem_show_event_proc_func(
-    unsigned int devid, const void *msg, int msg_len, struct drv_event_proc_rsp *rsp)
+static drvError_t svm_mem_show_event_proc_func(unsigned int devid, const void *msg, int msg_len,
+                                               struct drv_event_proc_rsp *rsp)
 {
     const struct svm_mem_show_msg *show_msg = (const struct svm_mem_show_msg *)msg;
     struct svm_mem_show_feature *feature = NULL;
@@ -114,8 +116,8 @@ static drvError_t svm_mem_show_event_proc_func(
     return ret;
 }
 
-static struct drv_event_proc svm_mem_show_event_proc = {
-    svm_mem_show_event_proc_func, sizeof(struct svm_mem_show_msg), "svm_mem_show_event"};
+static struct drv_event_proc svm_mem_show_event_proc = {svm_mem_show_event_proc_func, sizeof(struct svm_mem_show_msg),
+                                                        "svm_mem_show_event"};
 
 static int __attribute__((constructor)) svm_mem_show_init(void)
 {

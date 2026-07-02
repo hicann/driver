@@ -67,7 +67,10 @@ find_fail:
     return ptr;
 }
 
-bool devmm_idr_is_empty(struct svm_idr *idr) { return ka_base_idr_is_empty(&idr->idr); }
+bool devmm_idr_is_empty(struct svm_idr *idr)
+{
+    return ka_base_idr_is_empty(&idr->idr);
+}
 
 void devmm_idr_destroy(struct svm_idr *idr, void (*free_ptr)(const void *ptr))
 {

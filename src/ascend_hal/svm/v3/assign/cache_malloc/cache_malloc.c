@@ -27,7 +27,10 @@
 
 struct svm_cache_ops *cache_ops = NULL;
 
-void svm_cache_set_ops(struct svm_cache_ops *ops) { cache_ops = ops; }
+void svm_cache_set_ops(struct svm_cache_ops *ops)
+{
+    cache_ops = ops;
+}
 
 static int cache_ops_post_expand(u32 devid, u64 va, u64 size)
 {
@@ -58,9 +61,8 @@ static void cache_strategy_update(struct cache_allocator *ca)
     shrink_thres_default = ca->strategy.shrink_thres_default;
     cur_alloced = ca->stats.cur_alloced;
     peak_alloced = ca->stats.peak_alloced;
-    ca->strategy.shrink_thres_cur = svm_max(
-        svm_min(2ull * cur_alloced, (peak_alloced + cur_alloced) / 2ull),
-        shrink_thres_default); /* multiple is 2, peak_alloced's weight is 1/2 */
+    ca->strategy.shrink_thres_cur = svm_max(svm_min(2ull * cur_alloced, (peak_alloced + cur_alloced) / 2ull),
+                                            shrink_thres_default); /* multiple is 2, peak_alloced's weight is 1/2 */
     pthread_rwlock_unlock(&ca->rwlock);
 }
 
@@ -76,8 +78,8 @@ static void cache_malloc_stats_update(struct cache_allocator *ca, u64 size)
         ca->stats.peak_alloced_last_update_time = cur_time;
     }
     if ((u64)(cur_time - ca->stats.peak_alloced_last_update_time) >= CACHE_MALLOC_PEAK_ALLOCED_TIME_INTERVAL_S) {
-        u64 tmp_size =
-            ca->stats.peak_alloced - ca->stats.peak_alloced / 8; /* peak bigger than cur 1/8 refresh cache thres */
+        u64 tmp_size = ca->stats.peak_alloced -
+                       ca->stats.peak_alloced / 8; /* peak bigger than cur 1/8 refresh cache thres */
         if (tmp_size > ca->stats.cur_alloced) {
             ca->stats.peak_alloced = tmp_size;
             ca->stats.peak_alloced_last_update_time = cur_time;
@@ -117,8 +119,8 @@ static void cache_shrink_stats_update(struct cache_allocator *ca, u64 size)
 
 static bool cache_should_shrink(struct cache_allocator *ca)
 {
-    u64 shrink_thres =
-        svm_min((ca->strategy.shrink_thres_cur * 2), (ca->strategy.shrink_thres_cur + CACHE_SHRINK_DEFAULT_SIZE));
+    u64 shrink_thres = svm_min((ca->strategy.shrink_thres_cur * 2),
+                               (ca->strategy.shrink_thres_cur + CACHE_SHRINK_DEFAULT_SIZE));
 
     return (ca->stats.idle > shrink_thres) ? true : false;
 }

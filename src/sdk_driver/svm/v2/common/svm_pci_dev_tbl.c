@@ -41,5 +41,6 @@ static const ka_pci_device_id_t g_devmm_driver_tbl[] = {
 KA_MODULE_DEVICE_TABLE(pci, g_devmm_driver_tbl);
 
 #else
-void svm_pci_dev_tbl_test(void) {}
+void svm_pci_dev_tbl_test(void)
+{}
 #endif

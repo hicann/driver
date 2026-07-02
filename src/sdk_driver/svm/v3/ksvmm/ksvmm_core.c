@@ -26,12 +26,11 @@
 
 static struct ksvmm_seg *ksvmm_seg_create(struct ksvmm_ctx *ctx, u64 start, struct svm_global_va *src_info)
 {
-    struct ksvmm_seg *seg =
-        (struct ksvmm_seg *)svm_kvzalloc(sizeof(struct ksvmm_seg), KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
+    struct ksvmm_seg *seg = (struct ksvmm_seg *)svm_kvzalloc(sizeof(struct ksvmm_seg),
+                                                             KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
     if (seg == NULL) {
-        svm_err(
-            "Alloc seg failed. (udevid=%u; tgid=%d; start=%llx; size=%llx)\n", ctx->udevid, ctx->tgid, start,
-            src_info->size);
+        svm_err("Alloc seg failed. (udevid=%u; tgid=%d; start=%llx; size=%llx)\n", ctx->udevid, ctx->tgid, start,
+                src_info->size);
         return NULL;
     }
 
@@ -43,7 +42,10 @@ static struct ksvmm_seg *ksvmm_seg_create(struct ksvmm_ctx *ctx, u64 start, stru
     return seg;
 }
 
-static inline void ksvmm_seg_destroy(struct ksvmm_seg *seg) { svm_kvfree(seg); }
+static inline void ksvmm_seg_destroy(struct ksvmm_seg *seg)
+{
+    svm_kvfree(seg);
+}
 
 static struct ksvmm_seg *ksvmm_seg_search(struct ksvmm_ctx *ctx, u64 va, u64 size)
 {
@@ -72,9 +74,8 @@ static int _ksvmm_add_seg(struct ksvmm_ctx *ctx, u64 start, struct svm_global_va
     ret = range_rbtree_insert(&ctx->range_tree, &seg->range_node);
     ka_task_up_write(&ctx->rw_sem);
     if (ret != 0) {
-        svm_err(
-            "Insert failed. (udevid=%u; tgid=%d; start=%llx; size=%llx)\n", ctx->udevid, ctx->tgid, start,
-            src_info->size);
+        svm_err("Insert failed. (udevid=%u; tgid=%d; start=%llx; size=%llx)\n", ctx->udevid, ctx->tgid, start,
+                src_info->size);
         ksvmm_seg_destroy(seg);
     }
 
@@ -164,9 +165,8 @@ static int _ksvmm_unpin_seg(struct ksvmm_ctx *ctx, u64 va, u64 size)
     if (refcnt < 0) {
         ka_base_atomic64_inc(&seg->refcnt); /* restore refcnt, hold read lock, del can not access refcnt same time */
         ka_task_up_read(&ctx->rw_sem);
-        svm_err(
-            "No pin, can not unpin. (udevid=%u; tgid=%d; va=%llx; size=%llx; refcnt=%lld)\n", ctx->udevid, ctx->tgid,
-            va, size, refcnt);
+        svm_err("No pin, can not unpin. (udevid=%u; tgid=%d; va=%llx; size=%llx; refcnt=%lld)\n", ctx->udevid,
+                ctx->tgid, va, size, refcnt);
         return -EINVAL;
     }
 
@@ -295,9 +295,8 @@ void ksvmm_seg_show(struct ksvmm_ctx *ctx, ka_seq_file_t *seq)
         if (i == 0) {
             ka_fs_seq_printf(seq, "   %-5s %-17s %-15s %-5s\n", "id", "va", "size(Bytes)", "refcnt");
         }
-        ka_fs_seq_printf(
-            seq, "   %-5d 0x%-15llx %-15llu %-5llu\n", i++, range_node->start, range_node->size,
-            (u64)ka_base_atomic64_read(&seg->refcnt));
+        ka_fs_seq_printf(seq, "   %-5d 0x%-15llx %-15llu %-5llu\n", i++, range_node->start, range_node->size,
+                         (u64)ka_base_atomic64_read(&seg->refcnt));
     }
 
     ka_task_up_read(&ctx->rw_sem);

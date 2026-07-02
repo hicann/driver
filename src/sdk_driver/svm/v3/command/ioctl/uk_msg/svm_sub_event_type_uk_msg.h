@@ -32,8 +32,9 @@
 #define SVM_URMA_SEG_REGISTER_EVENT (SVM_SUB_EVNET_H2D_TYPE_BASE + 10)
 #define SVM_URMA_SEG_UNREGISTER_EVENT (SVM_SUB_EVNET_H2D_TYPE_BASE + 11)
 #define SVM_GET_MEMINFO_EVENT (SVM_SUB_EVNET_H2D_TYPE_BASE + 12)
-#define SVM_VA_RESERVE_EVENT (SVM_SUB_EVNET_H2D_TYPE_BASE + 13) /* Esched log process for this ID, do not change it. \
-                                                                 */
+#define SVM_VA_RESERVE_EVENT                                                                \
+    (SVM_SUB_EVNET_H2D_TYPE_BASE + 13) /* Esched log process for this ID, do not change it. \
+                                        */
 #define SVM_MADVISE_EVENT (SVM_SUB_EVNET_H2D_TYPE_BASE + 14)
 #define SVM_NOTICE_GAP_VA_EVENT (SVM_SUB_EVNET_H2D_TYPE_BASE + 15)
 #define SVM_SOMA_POOL_CREATE_EVENT (SVM_SUB_EVNET_H2D_TYPE_BASE + 16)

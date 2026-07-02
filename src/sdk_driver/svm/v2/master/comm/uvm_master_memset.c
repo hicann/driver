@@ -32,8 +32,8 @@ struct uvm_memory_attributes {
     int device_ids[DEVMM_UVM_MAX_DEVICE_NUM];
 };
 
-static int uvm_memset_send_device_msg(
-    struct devmm_svm_process *svm_proc, struct devmm_mem_memset_para *memset_para, uint32_t devid)
+static int uvm_memset_send_device_msg(struct devmm_svm_process *svm_proc, struct devmm_mem_memset_para *memset_para,
+                                      uint32_t devid)
 {
     int ret;
     struct devmm_chan_memset devmm_chan_memset_dev = {0};
@@ -48,16 +48,16 @@ static int uvm_memset_send_device_msg(
     ret = devmm_chan_msg_send(&devmm_chan_memset_dev, sizeof(devmm_chan_memset_dev), sizeof(devmm_chan_memset_dev));
 #ifndef EMU_ST
     if (ret != 0) {
-        devmm_drv_err(
-            "Device memset error. (ret=%d; dst=0x%llx; count=%lu)\n", ret, memset_para->dst, memset_para->count);
+        devmm_drv_err("Device memset error. (ret=%d; dst=0x%llx; count=%lu)\n", ret, memset_para->dst,
+                      memset_para->count);
         return ret;
     }
 #endif
     return ret;
 }
 
-static int uvm_memset_device_process(
-    struct devmm_svm_process *svm_proc, struct devmm_mem_memset_para *memset_para, struct uvm_memory_attributes *attr)
+static int uvm_memset_device_process(struct devmm_svm_process *svm_proc, struct devmm_mem_memset_para *memset_para,
+                                     struct uvm_memory_attributes *attr)
 {
     uint64_t va_start;
     unsigned long size;
@@ -83,8 +83,8 @@ static int uvm_memset_device_process(
         ret = uvm_memset_send_device_msg(svm_proc, memset_para, attr->devid);
 #ifndef EMU_ST
         if (ret != 0) {
-            devmm_drv_err(
-                "Send memset device message failed. (dst=0x%llx; count=%lu)\n", memset_para->dst, memset_para->count);
+            devmm_drv_err("Send memset device message failed. (dst=0x%llx; count=%lu)\n", memset_para->dst,
+                          memset_para->count);
             return ret;
         }
 #endif
@@ -93,9 +93,8 @@ static int uvm_memset_device_process(
     return 0;
 }
 
-static int uvm_memset_host_process(
-    struct devmm_svm_process *svm_proc, struct devmm_mem_memset_para *memset_para, struct uvm_memory_attributes *attr,
-    struct uvm_page_info *page_info)
+static int uvm_memset_host_process(struct devmm_svm_process *svm_proc, struct devmm_mem_memset_para *memset_para,
+                                   struct uvm_memory_attributes *attr, struct uvm_page_info *page_info)
 {
     int ret;
     void *kvaddr;
@@ -125,8 +124,8 @@ static int uvm_memset_host_process(
 
         uvm_set_bitmap_mapped(page_info->page_bitmap, UVM_HOST_ID);
         attr->pa = page_info->page_map->pa_addr;
-        devmm_drv_debug(
-            "Memset alloc host page succeeded. (dst=0x%llx; byte_count=%llu)\n", va_start, memset_para->count);
+        devmm_drv_debug("Memset alloc host page succeeded. (dst=0x%llx; byte_count=%llu)\n", va_start,
+                        memset_para->count);
     }
 
     paddr = attr->pa;
@@ -154,8 +153,8 @@ static int uvm_memset_host_process(
     return 0;
 }
 
-static int uvm_get_memory_attributes(
-    struct devmm_uvm_heap *uvm_heap, uint64_t addr, struct uvm_memory_attributes *attr, struct uvm_page_info *page_info)
+static int uvm_get_memory_attributes(struct devmm_uvm_heap *uvm_heap, uint64_t addr, struct uvm_memory_attributes *attr,
+                                     struct uvm_page_info *page_info)
 {
     page_bitmap_t *page_bitmap;
     struct uvm_page_mapping *page_map;
@@ -189,9 +188,9 @@ static int uvm_get_memory_attributes(
     return 0;
 }
 
-static int devmm_memset_page_processing(
-    struct devmm_svm_process *svm_proc, struct devmm_uvm_heap *uvm_heap, uint64_t vaddr, uint64_t memset_size,
-    uint64_t value, struct uvm_page_info *page_info)
+static int devmm_memset_page_processing(struct devmm_svm_process *svm_proc, struct devmm_uvm_heap *uvm_heap,
+                                        uint64_t vaddr, uint64_t memset_size, uint64_t value,
+                                        struct uvm_page_info *page_info)
 {
     int ret;
     struct uvm_memory_attributes attr = {};
@@ -232,16 +231,15 @@ static int devmm_memset_page_processing(
     return 0;
 }
 
-static int devmm_memset_partial(
-    struct devmm_svm_process *svm_proc, struct devmm_uvm_heap *uvm_heap, struct devmm_mem_memset_para *memset_para)
+static int devmm_memset_partial(struct devmm_svm_process *svm_proc, struct devmm_uvm_heap *uvm_heap,
+                                struct devmm_mem_memset_para *memset_para)
 {
     int ret;
     uint64_t vaddr, left_size, offset_size, page_size, memset_size;
     struct uvm_page_info page_info = {};
 
-    devmm_drv_debug(
-        "Memset parameter. (dst=0x%llx; value=0x%llx; count=%llu)\n", memset_para->dst, memset_para->value,
-        memset_para->count);
+    devmm_drv_debug("Memset parameter. (dst=0x%llx; value=0x%llx; count=%llu)\n", memset_para->dst, memset_para->value,
+                    memset_para->count);
 
     left_size = memset_para->count;
     page_size = DEVMM_UVM_PAGE_SIZE;

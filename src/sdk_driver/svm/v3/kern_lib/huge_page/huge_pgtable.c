@@ -49,8 +49,8 @@ static void svm_free_ptes(ka_vm_area_struct_t *vma, u64 start, u64 end)
     (void)ka_walk_page_range(vma, start, end, &ops, NULL);
 }
 
-static int svm_pte_entry_of_unmap_huge_pages(
-    ka_pte_t *pte, u64 addr, u64 next, enum ka_pte_level level, struct ka_pgwalk *walk)
+static int svm_pte_entry_of_unmap_huge_pages(ka_pte_t *pte, u64 addr, u64 next, enum ka_pte_level level,
+                                             struct ka_pgwalk *walk)
 {
     ka_pmd_t *pmd = NULL;
 

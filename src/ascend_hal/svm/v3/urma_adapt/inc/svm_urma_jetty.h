@@ -77,9 +77,8 @@ struct svm_urma_jetty_post_para {
     urma_target_jetty_t *tjfr;
 };
 
-static inline void svm_urma_jetty_pool_cfg_pack(
-    u32 devid, urma_context_t *urma_ctx, urma_token_t token_val, u32 jetty_num, u32 depth_per_jetty,
-    struct svm_urma_jetty_pool_cfg *cfg)
+static inline void svm_urma_jetty_pool_cfg_pack(u32 devid, urma_context_t *urma_ctx, urma_token_t token_val,
+                                                u32 jetty_num, u32 depth_per_jetty, struct svm_urma_jetty_pool_cfg *cfg)
 {
     cfg->devid = devid;
     cfg->urma_ctx = urma_ctx;

@@ -34,9 +34,18 @@
 STATIC u32 devmm_convert_64m = DEVMM_CONVERT_64M_SIZE;
 STATIC u32 devmm_convert_128m = DEVMM_CONVERT_128M_SIZE;
 STATIC u32 devmm_dma_depth = DEVMM_CONVERT_DMA_DEPTH;
-u32 devmm_get_convert_64m_size(void) { return devmm_convert_64m; }
-u32 devmm_get_convert_128m_size(void) { return devmm_convert_128m; }
-u32 devmm_get_convert_dma_depth(void) { return devmm_dma_depth; }
+u32 devmm_get_convert_64m_size(void)
+{
+    return devmm_convert_64m;
+}
+u32 devmm_get_convert_128m_size(void)
+{
+    return devmm_convert_128m;
+}
+u32 devmm_get_convert_dma_depth(void)
+{
+    return devmm_dma_depth;
+}
 static u32 devmm_get_convert_max_size(u32 devid, u32 vfid)
 {
     if (devmm_is_mdev_vm(devid, vfid)) {
@@ -77,7 +86,10 @@ void devmm_convert_node_put(struct devmm_convert_node *node)
     ka_base_kref_put(&node->ref, devmm_convert_node_release);
 }
 
-static void _devmm_convert_node_get(struct devmm_convert_node *node) { ka_base_kref_get(&node->ref); }
+static void _devmm_convert_node_get(struct devmm_convert_node *node)
+{
+    ka_base_kref_get(&node->ref);
+}
 
 struct devmm_convert_node *devmm_convert_node_get(struct devmm_task_dev_res_node *task_dev_res, u64 handle)
 {
@@ -200,17 +212,15 @@ static bool devmm_convert_node_is_ready_to_destroy(struct devmm_convert_node *no
 
     if (data.image_word == DEVMM_READED_MAGIC_WORD) {
 #ifndef EMU_ST
-        devmm_drv_debug(
-            "Do not finish image word, GE and RUNTIME should call unbind_stream before rtfree. "
-            "(host_pid=%d; index=%d; image_word=%x)\n",
-            host_pid, index, data.image_word);
+        devmm_drv_debug("Do not finish image word, GE and RUNTIME should call unbind_stream before rtfree. "
+                        "(host_pid=%d; index=%d; image_word=%x)\n",
+                        host_pid, index, data.image_word);
 #endif
         return false;
     }
     if (sizeof(struct DMA_ADDR) > DEVMM_DATA_SIZE) {
-        devmm_drv_debug(
-            "Data size less than dma_addr_size. (data_size=%u; dma_addr_size=%lu)\n", DEVMM_DATA_SIZE,
-            sizeof(struct DMA_ADDR));
+        devmm_drv_debug("Data size less than dma_addr_size. (data_size=%u; dma_addr_size=%lu)\n", DEVMM_DATA_SIZE,
+                        sizeof(struct DMA_ADDR));
         return false;
     }
 
@@ -306,8 +316,8 @@ static void _devmm_convert_node_destroy_by_task_release(struct devmm_convert_nod
     return;
 }
 
-static struct devmm_convert_node *devmm_erase_one_convert_node(
-    struct devmm_task_dev_res_node *task_dev_res, rb_erase_condition condition)
+static struct devmm_convert_node *devmm_erase_one_convert_node(struct devmm_task_dev_res_node *task_dev_res,
+                                                               rb_erase_condition condition)
 {
     struct devmm_convert_node_rb_info *rb_info = &task_dev_res->convert_rb_info;
     ka_rb_node_t *node = NULL;
@@ -397,9 +407,8 @@ void devmm_convert_nodes_subres_recycle_by_dev_res_mng(struct devmm_dev_res_mng 
         node = ka_list_entry(pos, struct devmm_task_dev_res_node, dev_res_node);
         devmm_covnert_nodes_subres_recycle_by_task_dev_res(node, num);
         if (*num != 0) {
-            devmm_drv_debug(
-                "Convert nodes destroyed by dev_res_mng. (hostpid=%d; devid=%u; vfid=%u; destroy_num=%u)\n",
-                node->host_pid, node->id_inst.devid, node->id_inst.vfid, *num);
+            devmm_drv_debug("Convert nodes destroyed by dev_res_mng. (hostpid=%d; devid=%u; vfid=%u; destroy_num=%u)\n",
+                            node->host_pid, node->id_inst.devid, node->id_inst.vfid, *num);
             break;
         }
 
@@ -408,8 +417,8 @@ void devmm_convert_nodes_subres_recycle_by_dev_res_mng(struct devmm_dev_res_mng 
     ka_task_up_read(&info->rw_sem);
 }
 
-static int devmm_convert_check_addr_attr(
-    struct devmm_memory_attributes *src_attr, struct devmm_memory_attributes *dst_attr)
+static int devmm_convert_check_addr_attr(struct devmm_memory_attributes *src_attr,
+                                         struct devmm_memory_attributes *dst_attr)
 {
     if (src_attr->is_svm_non_page) {
         devmm_drv_err("Src addr have no data, should access first. (src_va=0x%llx)\n", src_attr->va);
@@ -417,8 +426,8 @@ static int devmm_convert_check_addr_attr(
     }
 
     if ((src_attr->is_svm_device == false) && (dst_attr->is_svm_device == false)) {
-        devmm_drv_err(
-            "Src and dst are both no device addr. (src_va=0x%llx; dst_va=0x%llx)\n", src_attr->va, dst_attr->va);
+        devmm_drv_err("Src and dst are both no device addr. (src_va=0x%llx; dst_va=0x%llx)\n", src_attr->va,
+                      dst_attr->va);
         return -EINVAL;
     }
 
@@ -428,17 +437,16 @@ static int devmm_convert_check_addr_attr(
     }
 
     if (src_attr->is_svm_readonly || dst_attr->is_svm_readonly) {
-        devmm_drv_err(
-            "Va is readonly, not allowed convert. (src_va=0x%llx; dst_va=0x%llx)\n", src_attr->va, dst_attr->va);
+        devmm_drv_err("Va is readonly, not allowed convert. (src_va=0x%llx; dst_va=0x%llx)\n", src_attr->va,
+                      dst_attr->va);
         return -EINVAL;
     }
 
     return 0;
 }
 
-static int devmm_convert_pre_process(
-    struct devmm_svm_process *svm_proc, struct devmm_mem_convrt_addr_para *para,
-    struct devmm_memory_attributes *src_attr, struct devmm_memory_attributes *dst_attr)
+static int devmm_convert_pre_process(struct devmm_svm_process *svm_proc, struct devmm_mem_convrt_addr_para *para,
+                                     struct devmm_memory_attributes *src_attr, struct devmm_memory_attributes *dst_attr)
 {
     enum devmm_copy_direction dir;
     int ret;
@@ -461,8 +469,8 @@ static int devmm_convert_pre_process(
     if (dst_attr->is_svm_non_page) {
         ret = devmm_insert_host_page_range(svm_proc, para->pDst, para->len, dst_attr);
         if (ret != 0) {
-            devmm_drv_err(
-                "Insert host range failed. (src=0x%llx; dst=0x%llx; len=%llu)\n", para->pSrc, para->pDst, para->len);
+            devmm_drv_err("Insert host range failed. (src=0x%llx; dst=0x%llx; len=%llu)\n", para->pSrc, para->pDst,
+                          para->len);
             return ret;
         }
         dst_attr->is_svm_host = 1;
@@ -488,9 +496,8 @@ int devmm_convert_one_addr(struct devmm_svm_process *svm_pro, struct devmm_mem_c
     struct devmm_memory_attributes dst_attr;
     int ret;
 
-    devmm_drv_debug(
-        "Convert one line of addresses. (dst=0x%llx; src=0x%llx; byte_count=%llu; direction=%d)\n", convrt_para->pDst,
-        convrt_para->pSrc, convrt_para->len, convrt_para->direction);
+    devmm_drv_debug("Convert one line of addresses. (dst=0x%llx; src=0x%llx; byte_count=%llu; direction=%d)\n",
+                    convrt_para->pDst, convrt_para->pSrc, convrt_para->len, convrt_para->direction);
 
     ret = devmm_convert_pre_process(svm_pro, convrt_para, &src_attr, &dst_attr);
     if (ret != 0) {
@@ -507,8 +514,8 @@ void devmm_destroy_one_addr(struct devmm_copy_res *res)
     devmm_free_copy_mem(res);
 }
 
-STATIC int devmm_convert2d_fill_convrt_para(
-    struct devmm_svm_process *svm_pro, struct devmm_ioctl_arg *arg, struct devmm_mem_convrt_addr_para *convrt_para)
+STATIC int devmm_convert2d_fill_convrt_para(struct devmm_svm_process *svm_pro, struct devmm_ioctl_arg *arg,
+                                            struct devmm_mem_convrt_addr_para *convrt_para)
 {
     struct devmm_mem_convrt_addr_para *convrt2d_para = &arg->data.convrt_para;
     u32 convert_dma_depth = devmm_get_convert_dma_depth();
@@ -545,12 +552,12 @@ STATIC int devmm_convert2d_fill_convrt_para(
                 convrt_para[0].destroy_flag = 1;
                 devmm_convert2d_proc(svm_pro, arg, convrt_para);
             }
-            devmm_drv_err_if(
-                (ret != -EOPNOTSUPP),
-                "Fill_convrt error. (dst=0x%llx; src=0x%llx; dpitch=%llu; "
-                "spitch=%llu; len=%llu; height=%llu; direction=%u; fixed_size=%llu; current_dst=0x%llx; "
-                "current_src=0x%llx; total_addr=%llu; current_addr=%llu)\n",
-                dst, src, dpitch, spitch, len, height, dir, fixed_size, dst_begin_va, src_begin_va, height, i);
+            devmm_drv_err_if((ret != -EOPNOTSUPP),
+                             "Fill_convrt error. (dst=0x%llx; src=0x%llx; dpitch=%llu; "
+                             "spitch=%llu; len=%llu; height=%llu; direction=%u; fixed_size=%llu; current_dst=0x%llx; "
+                             "current_src=0x%llx; total_addr=%llu; current_addr=%llu)\n",
+                             dst, src, dpitch, spitch, len, height, dir, fixed_size, dst_begin_va, src_begin_va, height,
+                             i);
             break;
         }
         src_begin_va += spitch;
@@ -579,19 +586,17 @@ static int devmm_convert2d_addr(struct devmm_svm_process *svm_pro, struct devmm_
     struct devmm_mem_convrt_addr_para *convrt_para = NULL;
     int ret;
 
-    devmm_drv_debug(
-        "Convert2d address. (dst=0x%llx; src=0x%llx; dpitch=%llu; spitch=%llu; len=%llu; "
-        "height=%llu; fixed_size=%llu; direction=%u)\n",
-        dst, src, dpitch, spitch, len, height, fixed_size, dir);
+    devmm_drv_debug("Convert2d address. (dst=0x%llx; src=0x%llx; dpitch=%llu; spitch=%llu; len=%llu; "
+                    "height=%llu; fixed_size=%llu; direction=%u)\n",
+                    dst, src, dpitch, spitch, len, height, fixed_size, dir);
 
     if (height == 1) {
         convrt_para = &convrt_para_one_height;
     } else {
         convrt_para = devmm_kvzalloc(height * sizeof(struct devmm_mem_convrt_addr_para));
         if (convrt_para == NULL) {
-            devmm_drv_err(
-                "Convrt_para devmm_kvzalloc_ex failed. (address_num=%llu; size=%llu)\n", height,
-                height * sizeof(struct devmm_mem_convrt_addr_para));
+            devmm_drv_err("Convrt_para devmm_kvzalloc_ex failed. (address_num=%llu; size=%llu)\n", height,
+                          height * sizeof(struct devmm_mem_convrt_addr_para));
             return -ENOMEM;
         }
     }
@@ -673,9 +678,8 @@ static int devmm_ioctl_convert_para_check(struct devmm_mem_convrt_addr_para *par
         return -EINVAL;
     }
     if (para->fixed_size >= (para->len * para->height)) {
-        devmm_drv_err(
-            "Fixed_size should smaller than len*height. (fixed_size=%llu; len=%llu; height=%llu)\n", para->fixed_size,
-            para->len, para->height);
+        devmm_drv_err("Fixed_size should smaller than len*height. (fixed_size=%llu; len=%llu; height=%llu)\n",
+                      para->fixed_size, para->len, para->height);
         return -EINVAL;
     }
 
@@ -805,19 +809,19 @@ int devmm_ioctl_convert_addr(struct devmm_svm_process *svm_pro, struct devmm_ioc
 
     /* Actual convert height may smaller than expected height. */
     actual_height = para->height;
-    devmm_convert_vmmas_occupy_dec(
-        svm_pro, para->pSrc + para->spitch * actual_height, para->spitch, para->len, expected_height - actual_height);
-    devmm_convert_vmmas_occupy_dec(
-        svm_pro, para->pDst + para->dpitch * actual_height, para->dpitch, para->len, expected_height - actual_height);
+    devmm_convert_vmmas_occupy_dec(svm_pro, para->pSrc + para->spitch * actual_height, para->spitch, para->len,
+                                   expected_height - actual_height);
+    devmm_convert_vmmas_occupy_dec(svm_pro, para->pDst + para->dpitch * actual_height, para->dpitch, para->len,
+                                   expected_height - actual_height);
 
     devmm_convert_dec_page_ref(svm_pro, para->pSrc, SVM_ADDR_REF_OPS_UNKNOWN_SIZE, true);
     devmm_convert_dec_page_ref(svm_pro, para->pDst, SVM_ADDR_REF_OPS_UNKNOWN_SIZE, true);
 
-    devmm_drv_debug(
-        "Convert address. (devid=%u; vfid=%u; dst=0x%llx; src=0x%llx; dpitch=%llu; spitch=%llu; "
-        "len=%llu; height=%llu; fixed_size=%llu; direction=%u; converted_fixed_size=%u; offset=%llu)\n",
-        arg->head.devid, arg->head.vfid, para->pDst, para->pSrc, para->dpitch, para->spitch, para->len, para->height,
-        para->fixed_size, para->direction, para->dmaAddr.fixed_size, para->dmaAddr.offsetAddr.offset);
+    devmm_drv_debug("Convert address. (devid=%u; vfid=%u; dst=0x%llx; src=0x%llx; dpitch=%llu; spitch=%llu; "
+                    "len=%llu; height=%llu; fixed_size=%llu; direction=%u; converted_fixed_size=%u; offset=%llu)\n",
+                    arg->head.devid, arg->head.vfid, para->pDst, para->pSrc, para->dpitch, para->spitch, para->len,
+                    para->height, para->fixed_size, para->direction, para->dmaAddr.fixed_size,
+                    para->dmaAddr.offsetAddr.offset);
 
     return 0;
 }
@@ -918,17 +922,16 @@ static void devmm_convert_nodes_destroy_srcu_work(u64 *arg, u64 arg_size)
     devmm_drv_debug("Convert nodes destroy work. (total_num=%llu; destroy_num=%u)\n", total_num, destroy_num);
 }
 
-static int devmm_convert_nodes_destroy_async(
-    struct devmm_srcu_work *srcu_work, struct devmm_convert_node **node, u32 num)
+static int devmm_convert_nodes_destroy_async(struct devmm_srcu_work *srcu_work, struct devmm_convert_node **node,
+                                             u32 num)
 {
-    return devmm_srcu_subwork_add(
-        srcu_work, DEVMM_SRCU_SUBWORK_DEFAULT_TYPE, devmm_convert_nodes_destroy_srcu_work, (u64 *)node,
-        sizeof(struct devmm_convert_node *) * num);
+    return devmm_srcu_subwork_add(srcu_work, DEVMM_SRCU_SUBWORK_DEFAULT_TYPE, devmm_convert_nodes_destroy_srcu_work,
+                                  (u64 *)node, sizeof(struct devmm_convert_node *) * num);
 }
 
-static int devmm_convert_nodes_get_by_batch_para(
-    struct devmm_svm_process *svm_proc, struct devmm_destroy_addr_batch_para *batch_para,
-    struct devmm_convert_node **node)
+static int devmm_convert_nodes_get_by_batch_para(struct devmm_svm_process *svm_proc,
+                                                 struct devmm_destroy_addr_batch_para *batch_para,
+                                                 struct devmm_convert_node **node)
 {
     struct DMA_ADDR **dma_addr = batch_para->dmaAddr;
     struct DMA_ADDR tmp;
@@ -1017,8 +1020,8 @@ int devmm_destroy_addr_batch_sync(struct devmm_svm_process *svm_proc, struct dev
     int ret, i;
 
     for (i = 0; i < batch_para->num; i++) {
-        if (ka_base_copy_from_user(
-                &dma_addr, (void __ka_user *)(uintptr_t)batch_para->dmaAddr[i], sizeof(struct DMA_ADDR)) != 0) {
+        if (ka_base_copy_from_user(&dma_addr, (void __ka_user *)(uintptr_t)batch_para->dmaAddr[i],
+                                   sizeof(struct DMA_ADDR)) != 0) {
             devmm_drv_err("Copy_from_user fail. (i=%d)\n", i);
             return -EINVAL;
         }

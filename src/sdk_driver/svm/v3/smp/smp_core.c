@@ -32,9 +32,8 @@ static struct smp_mem_node *smp_mem_node_create(struct smp_ctx *smp_ctx, u64 sta
 {
     struct smp_mem_node *mem_node = svm_vzalloc(sizeof(*mem_node));
     if (mem_node == NULL) {
-        svm_err(
-            "Alloc mem node failed. (udevid=%u; tgid=%d; start=0x%llx; size=%llu)\n", smp_ctx->udevid, smp_ctx->tgid,
-            start, size);
+        svm_err("Alloc mem node failed. (udevid=%u; tgid=%d; start=0x%llx; size=%llu)\n", smp_ctx->udevid,
+                smp_ctx->tgid, start, size);
         return NULL;
     }
 
@@ -89,9 +88,8 @@ static int smp_add_mem(struct smp_ctx *smp_ctx, u64 start, u64 size, u32 flag)
             return 0;
         }
 
-        svm_err(
-            "Insert failed. (udevid=%u; tgid=%d; start=%llx; size=%llx)\n", smp_ctx->udevid, smp_ctx->tgid, start,
-            size);
+        svm_err("Insert failed. (udevid=%u; tgid=%d; start=%llx; size=%llx)\n", smp_ctx->udevid, smp_ctx->tgid, start,
+                size);
     }
 
     return ret;
@@ -245,9 +243,8 @@ static int smp_unpin_mem(struct smp_ctx *smp_ctx, u64 va, u64 size, bool is_dev_
     if (refcnt < 0) {
         ka_base_atomic_inc(&mem_node->refcnt); /* restore refcnt, hold read lock, del can not access refcnt same time */
         ka_task_read_unlock_bh(&smp_ctx->lock);
-        svm_err(
-            "No pin, can not unpin. (udevid=%u; tgid=%d; va=%llx; size=%llx; refcnt=%d)\n", smp_ctx->udevid,
-            smp_ctx->tgid, va, size, refcnt);
+        svm_err("No pin, can not unpin. (udevid=%u; tgid=%d; va=%llx; size=%llx; refcnt=%d)\n", smp_ctx->udevid,
+                smp_ctx->tgid, va, size, refcnt);
         return -EINVAL;
     } else if ((refcnt == 0) && (mem_node->status == 0)) {
         trigger_event = 1;
@@ -382,10 +379,9 @@ void smp_mem_show(struct smp_ctx *smp_ctx, ka_seq_file_t *seq)
     ka_fs_seq_printf(seq, "smp: udevid %u tgid %d mem num %u\n", smp_ctx->udevid, smp_ctx->tgid, node_num);
     ka_fs_seq_printf(seq, "   index   va      size     status   refcnt  cross_app_refcnt  flag\n");
     for (i = 0; i < dump_num; i++) {
-        ka_fs_seq_printf(
-            seq, "   %u       %llx     %llx     %d   %d    %d      %u\n", i, dump_info[i].range_node.start,
-            dump_info[i].range_node.size, dump_info[i].status, ka_base_atomic_read(&dump_info[i].refcnt),
-            ka_base_atomic_read(&dump_info[i].cross_app_refcnt), dump_info[i].flag);
+        ka_fs_seq_printf(seq, "   %u       %llx     %llx     %d   %d    %d      %u\n", i, dump_info[i].range_node.start,
+                         dump_info[i].range_node.size, dump_info[i].status, ka_base_atomic_read(&dump_info[i].refcnt),
+                         ka_base_atomic_read(&dump_info[i].cross_app_refcnt), dump_info[i].flag);
     }
     svm_vfree(dump_info);
 }
@@ -437,9 +433,8 @@ static int smp_set_pa_seg(struct smp_mem_node *mem_node, u64 va, u64 size, struc
     u64 total_size = svm_get_pa_size(pa_seg, seg_num);
     if ((va != mem_node->range_node.start) || (size != mem_node->range_node.size) ||
         (total_size != mem_node->range_node.size)) {
-        svm_err(
-            "Set pa seg failed. (va=0x%llx; size=%llu; total_size=%llu; mem_node va=0x%llx; size=%llu)\n", va, size,
-            total_size, mem_node->range_node.start, mem_node->range_node.size);
+        svm_err("Set pa seg failed. (va=0x%llx; size=%llu; total_size=%llu; mem_node va=0x%llx; size=%llu)\n", va, size,
+                total_size, mem_node->range_node.start, mem_node->range_node.size);
         return -EINVAL;
     }
 
@@ -544,9 +539,8 @@ static int smp_query_mem_pa(struct smp_ctx *smp_ctx, u64 va, u64 size, struct sv
     mem_node = smp_mem_node_search(smp_ctx, va, size);
     if (mem_node == NULL) {
         ka_task_read_unlock_bh(&smp_ctx->lock);
-        svm_warn(
-            "Find mem node not succ. (udevid=%u; tgid=%d; va=0x%llx; size=%llu)\n", smp_ctx->udevid, smp_ctx->tgid, va,
-            size);
+        svm_warn("Find mem node not succ. (udevid=%u; tgid=%d; va=0x%llx; size=%llu)\n", smp_ctx->udevid, smp_ctx->tgid,
+                 va, size);
         return -EINVAL;
     }
     if (mem_node->status == 0) {
@@ -556,9 +550,8 @@ static int smp_query_mem_pa(struct smp_ctx *smp_ctx, u64 va, u64 size, struct sv
     }
 
     *seg_num = smp_query_pa_seg(mem_node, va, size, pa_seg, *seg_num);
-    svm_debug(
-        "Smp node. (udevid=%u; tgid=%d; start=0x%llx; size=%llu; real_seg_num=%llu; need_seg_num=%llu)\n",
-        smp_ctx->udevid, smp_ctx->tgid, va, size, mem_node->seg_num, *seg_num);
+    svm_debug("Smp node. (udevid=%u; tgid=%d; start=0x%llx; size=%llu; real_seg_num=%llu; need_seg_num=%llu)\n",
+              smp_ctx->udevid, smp_ctx->tgid, va, size, mem_node->seg_num, *seg_num);
     ka_task_read_unlock_bh(&smp_ctx->lock);
     return 0;
 }

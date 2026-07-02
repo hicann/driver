@@ -7,10 +7,10 @@
 
 #include "svm_pub.h"
 
-#define SVM_DEV_CAP_SVA                 (0x1U << 0)
-#define SVM_DEV_CAP_UBMEM               (0x1U << 1)
-#define SVM_DEV_CAP_ASSIGN_GAP          (0x1U << 2)
-#define SVM_DEV_CAP_PCI_BAR             (0x1U << 3)
+#define SVM_DEV_CAP_SVA (0x1U << 0)
+#define SVM_DEV_CAP_UBMEM (0x1U << 1)
+#define SVM_DEV_CAP_ASSIGN_GAP (0x1U << 2)
+#define SVM_DEV_CAP_PCI_BAR (0x1U << 3)
 
 typedef struct devdrv_pair_info_eid dbi_bus_inst_eid_t;
 

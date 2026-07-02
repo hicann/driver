@@ -17,7 +17,10 @@
 
 static u64 (*svm_mem_recycle_func)(ka_vm_area_struct_t *vma, int tgid) = NULL;
 
-void svm_mem_recycle_register(u64 (*func)(ka_vm_area_struct_t *vma, int tgid)) { svm_mem_recycle_func = func; }
+void svm_mem_recycle_register(u64 (*func)(ka_vm_area_struct_t *vma, int tgid))
+{
+    svm_mem_recycle_func = func;
+}
 
 u64 svm_mem_recycle(ka_vm_area_struct_t *vma, int tgid)
 {

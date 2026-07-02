@@ -18,19 +18,13 @@
 
 int svm_get_mem_size_info(u32 devid, u32 type, struct MemPhyInfo *phy_info)
 {
-    struct urd_dev_mem_type mem_type = {
-        .dev_id = devid,
-        .type = type};
-    struct urd_cmd_para cmd_para = {
-        .input = (void *)&mem_type,
-        .input_len = sizeof(mem_type),
-        .output = (void *)phy_info,
-        .output_len = sizeof(*phy_info)};
+    struct urd_dev_mem_type mem_type = {.dev_id = devid, .type = type};
+    struct urd_cmd_para cmd_para = {.input = (void *)&mem_type,
+                                    .input_len = sizeof(mem_type),
+                                    .output = (void *)phy_info,
+                                    .output_len = sizeof(*phy_info)};
     struct urd_cmd cmd = {
-        .main_cmd = DMS_MAIN_CMD_MEMORY,
-        .sub_cmd = DMS_SUBCMD_DEV_MEM_INFO,
-        .filter = NULL,
-        .filter_len = 0};
+        .main_cmd = DMS_MAIN_CMD_MEMORY, .sub_cmd = DMS_SUBCMD_DEV_MEM_INFO, .filter = NULL, .filter_len = 0};
     int ret;
 
     ret = urd_dev_usr_cmd(devid, &cmd, &cmd_para);

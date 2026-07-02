@@ -37,9 +37,8 @@ int svm_casm_create_key(struct svm_dst_va *dst_va, u64 *key)
 
     ret = svm_cmd_ioctl(dst_va->devid, SVM_CASM_CREATE_KEY, (void *)&para);
     if (ret != DRV_ERROR_NONE) {
-        svm_err(
-            "Create failed. (devid=%u; task_type=%u; va=0x%llx; size=0x%llx; ret=%d)\n", dst_va->devid,
-            dst_va->task_type, dst_va->va, dst_va->size, ret);
+        svm_err("Create failed. (devid=%u; task_type=%u; va=0x%llx; size=0x%llx; ret=%d)\n", dst_va->devid,
+                dst_va->task_type, dst_va->va, dst_va->size, ret);
         return ret;
     }
 

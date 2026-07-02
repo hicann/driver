@@ -29,9 +29,9 @@ int svm_dma_map(u32 user_devid, struct svm_dst_va *dst_va, u32 flag)
 
     ret = svm_cmd_ioctl(user_devid, SVM_DMA_MAP, (void *)&para);
     if (ret != DRV_ERROR_NONE) {
-        svm_err_if(
-            (ret != DRV_ERROR_BUSY), "Map failed. (user_devid=%u; task_type=%u; va=0x%llx; size=0x%llx; ret=%d)\n",
-            user_devid, dst_va->task_type, dst_va->va, dst_va->size, ret);
+        svm_err_if((ret != DRV_ERROR_BUSY),
+                   "Map failed. (user_devid=%u; task_type=%u; va=0x%llx; size=0x%llx; ret=%d)\n", user_devid,
+                   dst_va->task_type, dst_va->va, dst_va->size, ret);
         return ret;
     }
 
@@ -47,10 +47,9 @@ int svm_dma_unmap(u32 user_devid, struct svm_dst_va *dst_va)
 
     ret = svm_cmd_ioctl(user_devid, SVM_DMA_UNMAP, (void *)&para);
     if (ret != DRV_ERROR_NONE) {
-        svm_err_if(
-            (ret != DRV_ERROR_BUSY) && (ret != DRV_ERROR_PARA_ERROR),
-            "Unmap failed. (user_devid=%u; task_type=%u; va=0x%llx; size=0x%llx; ret=%d)\n", user_devid,
-            dst_va->task_type, dst_va->va, dst_va->size, ret);
+        svm_err_if((ret != DRV_ERROR_BUSY) && (ret != DRV_ERROR_PARA_ERROR),
+                   "Unmap failed. (user_devid=%u; task_type=%u; va=0x%llx; size=0x%llx; ret=%d)\n", user_devid,
+                   dst_va->task_type, dst_va->va, dst_va->size, ret);
         return ret;
     }
 

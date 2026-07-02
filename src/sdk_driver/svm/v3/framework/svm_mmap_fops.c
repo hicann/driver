@@ -80,28 +80,25 @@ static void svm_vma_open(ka_vm_area_struct_t *vma)
 
     old_vma = ka_mm_find_vma(vma->vm_mm, ka_mm_get_vm_start(vma));
     if (old_vma == NULL) {
-        svm_err(
-            "User improperly unmap, need to unmap memory, but not find old vma. (vm_start=0x%lx; vm_end=0x%lx)\n",
-            ka_mm_get_vm_start(vma), ka_mm_get_vm_end(vma));
+        svm_err("User improperly unmap, need to unmap memory, but not find old vma. (vm_start=0x%lx; vm_end=0x%lx)\n",
+                ka_mm_get_vm_start(vma), ka_mm_get_vm_end(vma));
         return;
     }
 
     ret = svm_check_vma(old_vma, ka_mm_get_vm_start(old_vma), ka_mm_get_vm_end(old_vma) - ka_mm_get_vm_start(old_vma));
     if (ret != 0) {
-        svm_err(
-            "User improperly unmap, need to unmap memory, but old vma check failed. "
-            "(vm_start=0x%lx; vm_end=0x%lx; old vma: vm_start=0x%lx; vm_end=0x%lx)\n",
-            ka_mm_get_vm_start(vma), ka_mm_get_vm_end(vma), ka_mm_get_vm_start(old_vma), ka_mm_get_vm_end(old_vma));
+        svm_err("User improperly unmap, need to unmap memory, but old vma check failed. "
+                "(vm_start=0x%lx; vm_end=0x%lx; old vma: vm_start=0x%lx; vm_end=0x%lx)\n",
+                ka_mm_get_vm_start(vma), ka_mm_get_vm_end(vma), ka_mm_get_vm_start(old_vma), ka_mm_get_vm_end(old_vma));
         return;
     }
 
     recycle_size = svm_vma_mem_recycle(old_vma);
 
-    svm_err(
-        "User improperly unmap, recycle. (vm_start=0x%lx; vm_end=0x%lx;"
-        " old vma: vm_start=0x%lx; vm_end=0x%lx; recycle_size=0x%llx)\n",
-        ka_mm_get_vm_start(vma), ka_mm_get_vm_end(vma), ka_mm_get_vm_start(old_vma), ka_mm_get_vm_end(old_vma),
-        recycle_size);
+    svm_err("User improperly unmap, recycle. (vm_start=0x%lx; vm_end=0x%lx;"
+            " old vma: vm_start=0x%lx; vm_end=0x%lx; recycle_size=0x%llx)\n",
+            ka_mm_get_vm_start(vma), ka_mm_get_vm_end(vma), ka_mm_get_vm_start(old_vma), ka_mm_get_vm_end(old_vma),
+            recycle_size);
 
     /* Vma split will open new_vma, new_vma will inherit old_vma->vm_privat_data and vm_ops. */
     ka_mm_set_vm_private_data(vma, NULL);
@@ -121,12 +118,21 @@ static void svm_vma_close(ka_vm_area_struct_t *vma)
     }
 }
 
-int svm_vma_may_split(ka_vm_area_struct_t *area, unsigned long addr) { return -EINVAL; }
+int svm_vma_may_split(ka_vm_area_struct_t *area, unsigned long addr)
+{
+    return -EINVAL;
+}
 
-int svm_vma_split(ka_vm_area_struct_t *area, unsigned long addr) { return -EINVAL; }
+int svm_vma_split(ka_vm_area_struct_t *area, unsigned long addr)
+{
+    return -EINVAL;
+}
 
 /* avoid mremap */
-static int svm_vma_mremap(ka_vm_area_struct_t *area) { return -EINVAL; }
+static int svm_vma_mremap(ka_vm_area_struct_t *area)
+{
+    return -EINVAL;
+}
 
 #define SVM_PRINT_TIME_INTERVAL_MS 1000 /* 1s */
 static void svm_vma_fault_print_err(ka_vm_fault_struct_t *vmf)
@@ -135,9 +141,8 @@ static void svm_vma_fault_print_err(ka_vm_fault_struct_t *vmf)
 
     if (ka_system_jiffies_to_msecs(ka_jiffies - pre_stamp) > SVM_PRINT_TIME_INTERVAL_MS) {
         /* The log cannot be modified, because in the failure mode library. */
-        svm_err(
-            "Svm_vma_fault. (fault_va=0x%llx; flags=0x%x)\n",
-            (u64)(ka_mm_get_vm_start(vmf->vma) + (vmf->pgoff << KA_MM_PAGE_SHIFT)), vmf->flags);
+        svm_err("Svm_vma_fault. (fault_va=0x%llx; flags=0x%x)\n",
+                (u64)(ka_mm_get_vm_start(vmf->vma) + (vmf->pgoff << KA_MM_PAGE_SHIFT)), vmf->flags);
         pre_stamp = ka_jiffies;
     }
 }
@@ -209,7 +214,10 @@ static ka_vm_operations_struct_t _svm_vma_ops = {
         ka_vm_ops_init_mremap(svm_vma_mremap) ka_vm_ops_init_huge_fault(svm_vma_fault_handle)
             ka_vm_ops_init_fault(_svm_vma_fault) ka_vm_ops_init_pfn_mkwrite(_svm_mkwrite)};
 
-bool svm_is_svm_vma(ka_vm_area_struct_t *vma) { return (ka_mm_get_vm_ops(vma) == &_svm_vma_ops); }
+bool svm_is_svm_vma(ka_vm_area_struct_t *vma)
+{
+    return (ka_mm_get_vm_ops(vma) == &_svm_vma_ops);
+}
 
 static int _svm_get_va_type(ka_vm_area_struct_t *vma, u64 va, u64 size, int *va_type)
 {
@@ -271,16 +279,14 @@ static int _svm_mmap(ka_file_t *file, ka_vm_area_struct_t *vma)
     if (svm_check_va_range(vma_start, vma_end - vma_start, start, start + size) != 0) {
         svm_get_pcie_th_va_range(&start, &size);
         if (svm_check_va_range(vma_start, vma_end - vma_start, start, start + size) != 0) {
-            svm_info(
-                "Svm map va not in range. (vm_start=0x%llx; vm_end=0x%llx; vm_pgoff=0x%lx; vm_flags=0x%lx)\n",
-                vma_start, vma_end, vma->vm_pgoff, ka_mm_get_vm_flags(vma));
+            svm_info("Svm map va not in range. (vm_start=0x%llx; vm_end=0x%llx; vm_pgoff=0x%lx; vm_flags=0x%lx)\n",
+                     vma_start, vma_end, vma->vm_pgoff, ka_mm_get_vm_flags(vma));
             return -EINVAL;
         }
     }
 
-    ka_vm_flags_set(
-        vma, ka_mm_get_vm_flags(vma) | KA_VM_DONTEXPAND | KA_VM_DONTDUMP | KA_VM_DONTCOPY | KA_VM_PFNMAP |
-                 KA_VM_LOCKED | KA_VM_WRITE | KA_VM_IO);
+    ka_vm_flags_set(vma, ka_mm_get_vm_flags(vma) | KA_VM_DONTEXPAND | KA_VM_DONTDUMP | KA_VM_DONTCOPY | KA_VM_PFNMAP |
+                             KA_VM_LOCKED | KA_VM_WRITE | KA_VM_IO);
 
     if ((SVM_IS_ALIGNED(vma_start, SVM_VA_RESERVE_ALIGN)) && (SVM_IS_ALIGNED(vma_end, SVM_VA_RESERVE_ALIGN))) {
         struct svm_mmu_notifier_ctx *mn_ctx = NULL;
@@ -300,11 +306,20 @@ static int _svm_mmap(ka_file_t *file, ka_vm_area_struct_t *vma)
     return 0;
 }
 
-static int _svm_open(ka_inode_t *inode, ka_file_t *file) { return 0; }
+static int _svm_open(ka_inode_t *inode, ka_file_t *file)
+{
+    return 0;
+}
 
-static int _svm_release(ka_inode_t *inode, ka_file_t *file) { return 0; }
+static int _svm_release(ka_inode_t *inode, ka_file_t *file)
+{
+    return 0;
+}
 
-static long _svm_ioctl(ka_file_t *file, u32 cmd, unsigned long arg) { return -EOPNOTSUPP; }
+static long _svm_ioctl(ka_file_t *file, u32 cmd, unsigned long arg)
+{
+    return -EOPNOTSUPP;
+}
 
 static ka_file_operations_t svm_mmap_fops = {
     .owner = KA_THIS_MODULE,

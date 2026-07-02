@@ -30,10 +30,9 @@ static int pmq_agent_query_pa(u32 udevid, void *msg, u32 *reply_len)
     return ret;
 }
 
-static struct svm_kmc_d2h_recv_handle g_d2h_query_pa_handle = {
-    .func = pmq_agent_query_pa,
-    .raw_msg_size = sizeof(struct pmq_query_pa_msg),
-    .extend_gran_size = sizeof(struct svm_pa_seg)};
+static struct svm_kmc_d2h_recv_handle g_d2h_query_pa_handle = {.func = pmq_agent_query_pa,
+                                                               .raw_msg_size = sizeof(struct pmq_query_pa_msg),
+                                                               .extend_gran_size = sizeof(struct svm_pa_seg)};
 
 int pmq_agent_init(void)
 {
@@ -42,5 +41,6 @@ int pmq_agent_init(void)
 }
 DECLAER_FEATURE_AUTO_INIT(pmq_agent_init, FEATURE_LOADER_STAGE_3);
 
-void pmq_agent_uninit(void) {}
+void pmq_agent_uninit(void)
+{}
 DECLAER_FEATURE_AUTO_UNINIT(pmq_agent_uninit, FEATURE_LOADER_STAGE_3);

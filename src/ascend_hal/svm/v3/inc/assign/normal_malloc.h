@@ -47,8 +47,8 @@ static inline u32 normal_malloc_flag_get_numa_id(u32 flag)
 }
 
 int svm_normal_malloc(u32 devid, u32 flag, u64 align, u64 *va, u64 size);
-int svm_normal_free(
-    u32 devid, u32 flag, u64 align, u64 va, u64 size); /* return DRV_ERROR_BUSY, means va is pinned by others task. */
+int svm_normal_free(u32 devid, u32 flag, u64 align, u64 va,
+                    u64 size); /* return DRV_ERROR_BUSY, means va is pinned by others task. */
 
 /* malloc free ops */
 struct svm_normal_ops {

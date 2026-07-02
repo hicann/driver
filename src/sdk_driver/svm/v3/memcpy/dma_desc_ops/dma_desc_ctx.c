@@ -49,7 +49,10 @@ struct dma_desc_ctx *dma_desc_ctx_get(u32 udevid, int tgid)
     return ctx;
 }
 
-void dma_desc_ctx_put(struct dma_desc_ctx *ctx) { svm_task_ctx_put(ctx->task_ctx); }
+void dma_desc_ctx_put(struct dma_desc_ctx *ctx)
+{
+    svm_task_ctx_put(ctx->task_ctx);
+}
 
 static void dma_desc_ctx_init(struct dma_desc_ctx *ctx)
 {
@@ -135,7 +138,8 @@ void dma_desc_ctx_destroy(struct dma_desc_ctx *ctx)
     svm_task_ctx_put(ctx->task_ctx); /* with init pair */
 }
 
-void dma_desc_ctx_show(struct dma_desc_ctx *ctx, ka_seq_file_t *seq) {}
+void dma_desc_ctx_show(struct dma_desc_ctx *ctx, ka_seq_file_t *seq)
+{}
 
 int dma_desc_init_task(u32 udevid, int tgid, void *start_time)
 {
@@ -193,5 +197,6 @@ int dma_desc_init(void)
 }
 DECLAER_FEATURE_AUTO_INIT(dma_desc_init, FEATURE_LOADER_STAGE_6);
 
-void dma_desc_uninit(void) {}
+void dma_desc_uninit(void)
+{}
 DECLAER_FEATURE_AUTO_UNINIT(dma_desc_uninit, FEATURE_LOADER_STAGE_6);

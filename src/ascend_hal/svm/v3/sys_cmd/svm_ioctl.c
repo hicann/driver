@@ -74,9 +74,8 @@ static int svm_char_dev_open(u32 udevid, int *fd)
     *fd = svm_file_open(davinci_intf_get_dev_path(), O_RDWR | O_CLOEXEC);
     if (*fd < 0) {
         tmp_errno = errno;
-        svm_err(
-            "Open device failed. (udevid=%u; fd=%d; errno=%d, error=%s)\n", udevid, *fd, tmp_errno,
-            strerror(tmp_errno));
+        svm_err("Open device failed. (udevid=%u; fd=%d; errno=%d, error=%s)\n", udevid, *fd, tmp_errno,
+                strerror(tmp_errno));
         return errno_to_user_errno(tmp_errno);
     }
 

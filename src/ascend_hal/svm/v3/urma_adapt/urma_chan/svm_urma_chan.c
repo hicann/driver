@@ -45,17 +45,19 @@ static int svm_local_chan_init(void *ctx, u32 devid)
     return svm_urma_jetty_pool_init(&g_chan_inst[devid], &cfg);
 }
 
-static void svm_local_chan_uninit(u32 devid) { svm_urma_jetty_pool_uninit(&g_chan_inst[devid]); }
+static void svm_local_chan_uninit(u32 devid)
+{
+    svm_urma_jetty_pool_uninit(&g_chan_inst[devid]);
+}
 
 static int _svm_remote_chan_init(u32 devid, urma_jfr_id_t *rjfr_id, u32 *token_val)
 {
     struct svm_umc_msg_head head;
     struct svm_urma_chan_info_msg chan_info;
-    struct svm_umc_msg msg = {
-        .msg_in = NULL,
-        .msg_in_len = 0,
-        .msg_out = (char *)(uintptr_t)&chan_info,
-        .msg_out_len = sizeof(struct svm_urma_chan_info_msg)};
+    struct svm_umc_msg msg = {.msg_in = NULL,
+                              .msg_in_len = 0,
+                              .msg_out = (char *)(uintptr_t)&chan_info,
+                              .msg_out_len = sizeof(struct svm_urma_chan_info_msg)};
     struct svm_apbi apbi;
     int ret;
 
@@ -200,13 +202,11 @@ int svm_urma_chan_submit(u32 devid, u32 chan_id, struct svm_urma_chan_submit_par
     struct svm_urma_jetty_post_para post_para = {0};
     drvError_t ret;
 
-    svm_debug(
-        "(id=%u; jfs=%u; jfc=%u; remote_jfr_id=%u)\n", jetty->id, jetty->jfs->jfs_id.id, jetty->jfc->jfc_id.id,
-        g_tjfr[devid]->id.id);
+    svm_debug("(id=%u; jfs=%u; jfc=%u; remote_jfr_id=%u)\n", jetty->id, jetty->jfs->jfs_id.id, jetty->jfc->jfc_id.id,
+              g_tjfr[devid]->id.id);
 
-    svm_debug(
-        "src=0x%llx; dst=0x%llx; size=%llu; src_tseg=%p; dst_tseg=%p\n", para->src, para->dst, para->size,
-        para->src_tseg, para->dst_tseg);
+    svm_debug("src=0x%llx; dst=0x%llx; size=%llu; src_tseg=%p; dst_tseg=%p\n", para->src, para->dst, para->size,
+              para->src_tseg, para->dst_tseg);
 
     post_para.src = para->src;
     post_para.dst = para->dst;

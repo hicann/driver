@@ -93,7 +93,10 @@ enum {
     DEVMM_CHAN_MAX_ID
 };
 
-enum { DEVMM_DMA, DEVMM_NON_DMA };
+enum {
+    DEVMM_DMA,
+    DEVMM_NON_DMA
+};
 #ifndef UVM_OPEN
 enum {
     PAGE_PTE_SET_NONE = 0,
@@ -126,7 +129,11 @@ struct devmm_chan_addr_head {
     u64 va;
 };
 
-enum { DEVMM_EXCHANGE_DDR_SIZE, DEVMM_EXCHANGE_HBM_SIZE, DEVMM_EXCHANGE_MAX_MEM_TYPE };
+enum {
+    DEVMM_EXCHANGE_DDR_SIZE,
+    DEVMM_EXCHANGE_HBM_SIZE,
+    DEVMM_EXCHANGE_MAX_MEM_TYPE
+};
 
 struct devmm_device_capability {
     u64 dvpp_memsize;
@@ -190,8 +197,9 @@ struct devmm_chan_page_fault {
 #ifdef CFG_SOC_PLATFORM_ESL_FPGA
 #define DEVMM_PAGE_NUM_PER_MSG 32ULL /* for fpga scene; normal page 512K per msg, huge page 256M per msg */
 #else
-#define DEVMM_PAGE_NUM_PER_MSG 3072ULL /* the size must be align to 64; normal page 12M per msg, huge page 6G per msg \
-                                        */
+#define DEVMM_PAGE_NUM_PER_MSG                                                             \
+    3072ULL /* the size must be align to 64; normal page 12M per msg, huge page 6G per msg \
+             */
 #endif
 #define DEVMM_MEMSET_SIZE_PER_MSG (1ULL << 24) // 16M
 #ifdef CFG_SOC_PLATFORM_ESL_FPGA

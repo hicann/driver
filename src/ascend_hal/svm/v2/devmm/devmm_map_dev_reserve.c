@@ -27,7 +27,10 @@ void devmm_init_dev_reserve_addr(uint32_t devid)
     dev_reserve_addr.inited = 1;
 }
 
-STATIC bool devmm_dev_reserve_addr_is_inited(void) { return dev_reserve_addr.inited == 1; }
+STATIC bool devmm_dev_reserve_addr_is_inited(void)
+{
+    return dev_reserve_addr.inited == 1;
+}
 
 void devmm_get_dev_reserve_addr(uint32_t devid, uint32_t addr_type, uint64_t *addr, uint64_t *size)
 {
@@ -69,8 +72,8 @@ STATIC bool devmm_addr_size_para_is_valid(uint32_t devid, uint32_t addr_type)
     return (devid < DEVMM_MAX_PHY_DEVICE_NUM) && (addr_type < ADDR_MAP_TYPE_MAX);
 }
 
-STATIC DVresult
-devmm_check_map_addr_para(struct AddrMapInPara *in_para, size_t param_value_size, struct AddrMapOutPara *out_para)
+STATIC DVresult devmm_check_map_addr_para(struct AddrMapInPara *in_para, size_t param_value_size,
+                                          struct AddrMapOutPara *out_para)
 {
     (void)param_value_size;
     if ((in_para == NULL) || (out_para == NULL)) {
@@ -106,8 +109,8 @@ static DVresult devmm_ctrl_map_mem(struct AddrMapInPara *in_para, struct AddrMap
 
     /* device reserve addr just alloc once to improved performance, not free */
     if (devmm_dev_reserve_addr_is_mapped(in_para->devid, in_para->addr_type)) {
-        devmm_get_dev_reserve_addr(
-            in_para->devid, in_para->addr_type, (uint64_t *)&out_para->ptr, (uint64_t *)&out_para->len);
+        devmm_get_dev_reserve_addr(in_para->devid, in_para->addr_type, (uint64_t *)&out_para->ptr,
+                                   (uint64_t *)&out_para->len);
         DEVMM_DRV_DEBUG_ARG("Address has been mapped. (map_ptr=0x%llx; len=%lld)\n", out_para->ptr, out_para->len);
         return DRV_ERROR_NONE;
     }
@@ -118,8 +121,8 @@ static DVresult devmm_ctrl_map_mem(struct AddrMapInPara *in_para, struct AddrMap
     ret = devmm_svm_ioctl(g_devmm_mem_dev, DEVMM_SVM_MAP_DEV_RESERVE, &arg);
     if (ret != DRV_ERROR_NONE) {
 #ifndef EMU_ST
-        DEVMM_DRV_ERR_IF(
-            (ret != DRV_ERROR_NOT_SUPPORT), "Map address ioctl error. (devid=%u; ret=%d)\n", in_para->devid, ret);
+        DEVMM_DRV_ERR_IF((ret != DRV_ERROR_NOT_SUPPORT), "Map address ioctl error. (devid=%u; ret=%d)\n",
+                         in_para->devid, ret);
         return ret;
 #endif
     }
@@ -142,25 +145,25 @@ static DVresult devmm_ctrl_map_addr_restore(struct AddrMapInPara *in_para)
         return DRV_ERROR_NONE;
     }
 
-    devmm_get_dev_reserve_addr(
-        in_para->devid, in_para->addr_type, (uint64_t *)&mapped_addr.ptr, (uint64_t *)&mapped_addr.len);
+    devmm_get_dev_reserve_addr(in_para->devid, in_para->addr_type, (uint64_t *)&mapped_addr.ptr,
+                               (uint64_t *)&mapped_addr.len);
 
     arg.head.devid = in_para->devid;
     arg.data.map_dev_reserve_para.addr_type = in_para->addr_type;
     arg.data.map_dev_reserve_para.va = mapped_addr.ptr;
     ret = devmm_svm_ioctl(g_devmm_mem_dev, DEVMM_SVM_MAP_DEV_RESERVE, &arg);
     if (ret != DRV_ERROR_NONE) {
-        DEVMM_DRV_ERR_IF(
-            (ret != DRV_ERROR_NOT_SUPPORT), "Map address ioctl error. (devid=%u; ret=%d)\n", in_para->devid, ret);
+        DEVMM_DRV_ERR_IF((ret != DRV_ERROR_NOT_SUPPORT), "Map address ioctl error. (devid=%u; ret=%d)\n",
+                         in_para->devid, ret);
         return ret;
     }
 #ifdef EMU_ST
-    devmm_set_dev_reserve_addr(
-        in_para->devid, in_para->addr_type, arg.data.map_dev_reserve_para.va, arg.data.map_dev_reserve_para.len);
+    devmm_set_dev_reserve_addr(in_para->devid, in_para->addr_type, arg.data.map_dev_reserve_para.va,
+                               arg.data.map_dev_reserve_para.len);
 #endif
-    DEVMM_RUN_INFO(
-        "Restore ctrl_map_addr succ. (map_ptr=0x%llx; len=%lld; devid=%u; type=%u)\n", arg.data.map_dev_reserve_para.va,
-        arg.data.map_dev_reserve_para.len, in_para->devid, in_para->addr_type);
+    DEVMM_RUN_INFO("Restore ctrl_map_addr succ. (map_ptr=0x%llx; len=%lld; devid=%u; type=%u)\n",
+                   arg.data.map_dev_reserve_para.va, arg.data.map_dev_reserve_para.len, in_para->devid,
+                   in_para->addr_type);
     return DRV_ERROR_NONE;
 }
 
@@ -168,17 +171,16 @@ static DVresult devmm_ctrl_unmap_mem(struct AddrUnmapInPara *in_para)
 {
     /* device reserve addr just alloc once to improved performance, not free */
     if (!devmm_dev_reserve_addr_is_valid(in_para->devid, in_para->addr_type, in_para->ptr, in_para->len)) {
-        DEVMM_DRV_ERR(
-            "Device address or size error. (addr=0x%llx; len=%llu; addr_type=%u; devid=%u)\n", in_para->ptr,
-            in_para->len, in_para->addr_type, in_para->devid);
+        DEVMM_DRV_ERR("Device address or size error. (addr=0x%llx; len=%llu; addr_type=%u; devid=%u)\n", in_para->ptr,
+                      in_para->len, in_para->addr_type, in_para->devid);
         return DRV_ERROR_INVALID_VALUE;
     }
 
     return DRV_ERROR_NONE;
 }
 
-static DVresult (*devmm_ctrl_map_handlers[ADDR_MAP_TYPE_MAX])(
-    struct AddrMapInPara *in_para, struct AddrMapOutPara *out_para) = {
+static DVresult (*devmm_ctrl_map_handlers[ADDR_MAP_TYPE_MAX])(struct AddrMapInPara *in_para,
+                                                              struct AddrMapOutPara *out_para) = {
     [ADDR_MAP_TYPE_L2_BUFF] = devmm_ctrl_map_mem,
     [ADDR_MAP_TYPE_REG_C2C_CTRL] = devmm_ctrl_map_mem,
     [ADDR_MAP_TYPE_REG_AIC_CTRL] = devmm_ctrl_map_mem,
@@ -221,9 +223,8 @@ DVresult devmm_ctrl_map_addr(void *param_value, size_t param_value_size, void *o
     }
     (void)pthread_mutex_unlock(&dev_reserve_addr.map_dev_lock[in_para->devid]);
 
-    DEVMM_DRV_DEBUG_ARG(
-        "Argument. (ret=%d; map_ptr=0x%llx; len=%lld; devid=%u; addr_type=%u)\n", ret, out_para->ptr, out_para->len,
-        in_para->devid, in_para->addr_type);
+    DEVMM_DRV_DEBUG_ARG("Argument. (ret=%d; map_ptr=0x%llx; len=%lld; devid=%u; addr_type=%u)\n", ret, out_para->ptr,
+                        out_para->len, in_para->devid, in_para->addr_type);
 
     return ret;
 }
@@ -248,8 +249,8 @@ DVresult devmm_ctrl_unmap_addr(void *param_value, size_t param_value_size, void 
         ret = devmm_ctrl_unmap_handlers[in_para->addr_type](in_para);
     }
 
-    DEVMM_DRV_DEBUG_ARG(
-        "Argument. (unmap_ptr=0x%llx; len=%lld; devid=%u)\n", in_para->ptr, in_para->len, in_para->devid);
+    DEVMM_DRV_DEBUG_ARG("Argument. (unmap_ptr=0x%llx; len=%lld; devid=%u)\n", in_para->ptr, in_para->len,
+                        in_para->devid);
     return ret;
 }
 

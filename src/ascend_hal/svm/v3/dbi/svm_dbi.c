@@ -28,9 +28,15 @@ static int svm_dbi_valid[SVM_MAX_DEV_NUM];
 static u32 device_connect_type[SVM_MAX_DEV_NUM];
 static u32 g_cur_server_id = SVM_SERVER_ID_UNSET;
 
-static bool svm_dev_cap_is_support_sva(u32 flag) { return ((flag & SVM_DEV_CAP_SVA) != 0); }
+static bool svm_dev_cap_is_support_sva(u32 flag)
+{
+    return ((flag & SVM_DEV_CAP_SVA) != 0);
+}
 
-static bool svm_dev_cap_is_support_assign_gap(u32 flag) { return ((flag & SVM_DEV_CAP_ASSIGN_GAP) != 0); }
+static bool svm_dev_cap_is_support_assign_gap(u32 flag)
+{
+    return ((flag & SVM_DEV_CAP_ASSIGN_GAP) != 0);
+}
 
 static bool svm_dev_cap_is_support_pci_bar(u32 flag)
 {
@@ -45,9 +51,8 @@ int svm_dbi_query_host_align_page_size(u32 devid, u64 *page_size)
         ret = svm_dbi_query_npage_size(svm_get_host_devid(), &host_npage_size);
         if (ret == 0) {
             if (npage_size > host_npage_size) {
-                svm_err(
-                    "Invalid page size. (devid=%u; npage_size=%llu; host_npage_size=%llu)\n", devid, npage_size,
-                    host_npage_size);
+                svm_err("Invalid page size. (devid=%u; npage_size=%llu; host_npage_size=%llu)\n", devid, npage_size,
+                        host_npage_size);
                 return DRV_ERROR_INVALID_VALUE;
             }
 
@@ -144,9 +149,8 @@ static int dbi_user_query(u32 devid, struct svm_device_basic_info *dbi)
     }
 
     if ((para.dbi.npage_size == 0) || (para.dbi.hpage_size == 0) || (para.dbi.gpage_size == 0)) {
-        svm_err(
-            "Invalid page_size. (page_size=0x%llx; hpage_size=0x%llx; gpage_size=0x%llx)\n", para.dbi.npage_size,
-            para.dbi.hpage_size, para.dbi.gpage_size);
+        svm_err("Invalid page_size. (page_size=0x%llx; hpage_size=0x%llx; gpage_size=0x%llx)\n", para.dbi.npage_size,
+                para.dbi.hpage_size, para.dbi.gpage_size);
         return DRV_ERROR_INNER_ERR;
     }
 

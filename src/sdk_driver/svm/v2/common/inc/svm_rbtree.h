@@ -33,8 +33,8 @@ int devmm_rb_erase(ka_rb_root_t *root, ka_rb_node_t *node);
 int devmm_rb_insert(ka_rb_root_t *root, ka_rb_node_t *node, rb_handle_func get_handle);
 int devmm_rb_insert_by_range(ka_rb_root_t *root, ka_rb_node_t *node, rb_range_handle_func get_range);
 ka_rb_node_t *devmm_rb_search(ka_rb_root_t *root, u64 handle, rb_handle_func get_handle);
-ka_rb_node_t *devmm_rb_search_by_range(
-    ka_rb_root_t *root, struct rb_range_handle *range, rb_range_handle_func get_range);
+ka_rb_node_t *devmm_rb_search_by_range(ka_rb_root_t *root, struct rb_range_handle *range,
+                                       rb_range_handle_func get_range);
 
 ka_rb_node_t *devmm_rb_erase_one_node(ka_rb_root_t *root, rb_erase_condition condition);
 void devmm_rb_erase_all_node(ka_rb_root_t *root, rb_release_func release);

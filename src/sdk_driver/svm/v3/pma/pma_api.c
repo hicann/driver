@@ -25,9 +25,8 @@
 #include "pma_ctx.h"
 #include "pma_core.h"
 
-static int pma_p2p_pages_get(
-    int master_tgid, u64 va, u64 size, void (*free_callback)(void *data), void *data,
-    struct p2p_page_table **page_table)
+static int pma_p2p_pages_get(int master_tgid, u64 va, u64 size, void (*free_callback)(void *data), void *data,
+                             struct p2p_page_table **page_table)
 {
     struct pma_mem_node *mem_node = NULL;
     struct pma_ctx *ctx = NULL;
@@ -72,8 +71,8 @@ static void pma_p2p_pages_put(struct p2p_page_table *page_table)
     pma_mem_node_put(mem_node);
 }
 
-static int pma_p2p_pages_get_para_check(
-    u64 va, u64 size, void (*free_callback)(void *data), void *data, struct p2p_page_table **page_table)
+static int pma_p2p_pages_get_para_check(u64 va, u64 size, void (*free_callback)(void *data), void *data,
+                                        struct p2p_page_table **page_table)
 {
     /* does not need to check va, pma_get_va_udevid will check it */
 
@@ -90,8 +89,8 @@ static int pma_p2p_pages_get_para_check(
     return 0;
 }
 
-int hal_kernel_p2p_get_pages(
-    u64 va, u64 len, void (*free_callback)(void *data), void *data, struct p2p_page_table **page_table)
+int hal_kernel_p2p_get_pages(u64 va, u64 len, void (*free_callback)(void *data), void *data,
+                             struct p2p_page_table **page_table)
 {
     u64 size = len;
     int master_tgid = ka_task_get_current_tgid();

@@ -88,7 +88,10 @@ static int svm_open(ka_inode_t *inode, ka_file_t *file)
     return 0;
 }
 
-static int svm_release(ka_inode_t *inode, ka_file_t *file) { return 0; }
+static int svm_release(ka_inode_t *inode, ka_file_t *file)
+{
+    return 0;
+}
 
 static int svm_pre_release(ka_file_t *file, unsigned long mode)
 {
@@ -199,7 +202,10 @@ static long svm_ioctl(ka_file_t *file, u32 cmd, unsigned long arg)
     return (long)svm_ioctl_handler[cmd_nr](udevid, cmd, arg);
 }
 
-static int svm_mmap(ka_file_t *file, ka_vm_area_struct_t *vma) { return -EOPNOTSUPP; }
+static int svm_mmap(ka_file_t *file, ka_vm_area_struct_t *vma)
+{
+    return -EOPNOTSUPP;
+}
 
 static ka_file_operations_t svm_fops = {
     .owner = KA_THIS_MODULE, .open = svm_open, .release = svm_release, .unlocked_ioctl = svm_ioctl, .mmap = svm_mmap};

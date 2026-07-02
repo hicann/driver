@@ -25,11 +25,10 @@ static int svm_memset_remote(u32 devid, u64 dst, u64 dst_max, u8 value, u64 coun
 {
     struct svm_umc_msg_head head;
     struct svm_memset_msg memset_msg = {.va = dst, .size = count, .val = value};
-    struct svm_umc_msg msg = {
-        .msg_in = (char *)(uintptr_t)&memset_msg,
-        .msg_in_len = sizeof(struct svm_memset_msg),
-        .msg_out = NULL,
-        .msg_out_len = 0};
+    struct svm_umc_msg msg = {.msg_in = (char *)(uintptr_t)&memset_msg,
+                              .msg_in_len = sizeof(struct svm_memset_msg),
+                              .msg_out = NULL,
+                              .msg_out_len = 0};
     struct svm_apbi apbi;
     int ret;
     SVM_UNUSED(dst_max);

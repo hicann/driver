@@ -53,10 +53,9 @@ STATIC int devmm_svm_open(ka_inode_t *inode, ka_file_t *file)
 STATIC int _devmm_svm_mmap_config_svm_proc(struct devmm_svm_process *svm_proc, ka_vm_area_struct_t *vma)
 {
     if ((svm_proc->vma_num >= devmm_svm->mmap_para.seg_num) || (svm_proc->inited != DEVMM_SVM_PRE_INITING_FLAG)) {
-        devmm_drv_err(
-            "Svm map get_svm_process error. "
-            "(vm_start=0x%lx; vm_end=0x%lx; vm_pgoff=0x%lx; vm_flags=0x%lx)\n",
-            ka_mm_get_vm_start(vma), ka_mm_get_vm_end(vma), vma->vm_pgoff, ka_mm_get_vm_flags(vma));
+        devmm_drv_err("Svm map get_svm_process error. "
+                      "(vm_start=0x%lx; vm_end=0x%lx; vm_pgoff=0x%lx; vm_flags=0x%lx)\n",
+                      ka_mm_get_vm_start(vma), ka_mm_get_vm_end(vma), vma->vm_pgoff, ka_mm_get_vm_flags(vma));
         return -ESRCH;
     }
     devmm_remove_vma_wirte_flag(vma);
@@ -70,10 +69,9 @@ STATIC int _devmm_svm_mmap_config_svm_proc(struct devmm_svm_process *svm_proc, k
         svm_proc->mm = ka_task_get_current_mm();
         svm_proc->tsk = ka_task_get_current();
         devmm_set_svm_proc_state(svm_proc, DEVMM_SVM_INITING_FLAG);
-        devmm_drv_debug(
-            "Devmm_map success. (hostpid=%d; devid=%d; vfid=%d; devpid=%d; status=%u; proc_idx=%u)\n",
-            svm_proc->process_id.hostpid, svm_proc->process_id.devid, svm_proc->process_id.vfid, svm_proc->devpid,
-            svm_proc->notifier_reg_flag, svm_proc->proc_idx);
+        devmm_drv_debug("Devmm_map success. (hostpid=%d; devid=%d; vfid=%d; devpid=%d; status=%u; proc_idx=%u)\n",
+                        svm_proc->process_id.hostpid, svm_proc->process_id.devid, svm_proc->process_id.vfid,
+                        svm_proc->devpid, svm_proc->notifier_reg_flag, svm_proc->proc_idx);
     }
 
     return 0;
@@ -105,7 +103,10 @@ static int devmm_file_priv_check(struct devmm_private_data *priv)
     return 0;
 }
 
-bool devmm_is_svm_vma_magic(void *check_magic) { return (check_magic == (void *)svm_vma_magic); }
+bool devmm_is_svm_vma_magic(void *check_magic)
+{
+    return (check_magic == (void *)svm_vma_magic);
+}
 
 static int devmm_mmap_vma_check(u32 seg_id, ka_vm_area_struct_t *vma)
 {
@@ -119,9 +120,8 @@ static int devmm_mmap_vma_check(u32 seg_id, ka_vm_area_struct_t *vma)
     mmap_size = devmm_svm->mmap_para.segs[seg_id].size;
 
     if ((ka_mm_get_vm_start(vma) != mmap_va) || (ka_mm_get_vm_end(vma) != (mmap_va + mmap_size))) {
-        devmm_drv_info(
-            "Svm map va not fixed. (vm_start=0x%lx; vm_end=0x%lx; vm_pgoff=0x%lx; vm_flags=0x%lx)\n",
-            ka_mm_get_vm_start(vma), ka_mm_get_vm_end(vma), vma->vm_pgoff, ka_mm_get_vm_flags(vma));
+        devmm_drv_info("Svm map va not fixed. (vm_start=0x%lx; vm_end=0x%lx; vm_pgoff=0x%lx; vm_flags=0x%lx)\n",
+                       ka_mm_get_vm_start(vma), ka_mm_get_vm_end(vma), vma->vm_pgoff, ka_mm_get_vm_flags(vma));
         return -EINVAL;
     }
 
@@ -148,9 +148,8 @@ static int devmm_check_and_get_svm_static_reserve_vma(u32 seg_id, u64 va, ka_vm_
         if (vma == NULL) {
             devmm_drv_info("Vma is NULL. (seg_id=%u; va=0x%llx)\n", seg_id, va);
         } else {
-            devmm_drv_info(
-                "Vma is not svm vma. (is_svm_vma=%u; seg_id=%u; va=0x%llx)\n",
-                devmm_is_svm_vma_magic(ka_mm_get_vm_private_data(vma)), seg_id, va);
+            devmm_drv_info("Vma is not svm vma. (is_svm_vma=%u; seg_id=%u; va=0x%llx)\n",
+                           devmm_is_svm_vma_magic(ka_mm_get_vm_private_data(vma)), seg_id, va);
         }
         return -EINVAL;
     }
@@ -273,15 +272,15 @@ STATIC struct devmm_svm_process *devmm_svm_mmap_get_svm_process(struct devmm_pri
     return (custom_proc != NULL) ? custom_proc->aicpu_proc : NULL;
 }
 
-static int devmm_handle_svm_proc_addr(
-    struct devmm_private_data *priv, struct devmm_svm_process *svm_proc, ka_vm_area_struct_t *vma)
+static int devmm_handle_svm_proc_addr(struct devmm_private_data *priv, struct devmm_svm_process *svm_proc,
+                                      ka_vm_area_struct_t *vma)
 {
     int ret = 0;
     if ((ka_base_atomic_read(&priv->next_seg_id) >= (int)devmm_svm->mmap_para.seg_num) && svm_proc) {
         svm_occupy_da(svm_proc);
         if (!priv->custom_flag) {
-            ret = svm_da_add_addr(
-                svm_proc, ka_mm_get_vm_start(vma), ka_mm_get_vm_end(vma) - ka_mm_get_vm_start(vma), vma);
+            ret = svm_da_add_addr(svm_proc, ka_mm_get_vm_start(vma), ka_mm_get_vm_end(vma) - ka_mm_get_vm_start(vma),
+                                  vma);
         } else {
             ret = svm_da_set_custom_vma(svm_proc, ka_mm_get_vm_start(vma), vma);
         }
@@ -386,10 +385,9 @@ STATIC int devmm_is_svm_process_init(struct devmm_svm_process *svm_proc, u32 cmd
         (devmm_get_end_type() == DEVMM_END_HOST && cmd != DEVMM_SVM_INIT_PROCESS &&
          (svm_proc->inited != DEVMM_SVM_INITED_FLAG || svm_proc->process_id.hostpid != devmm_get_current_pid()))) {
 #ifndef EMU_ST
-        devmm_drv_err(
-            "Invalid svm_proc states. (cmd=%u; end_type=%u; svm_proc_is_null=%d; inited=%u; hostpid=%u)\n", cmd,
-            devmm_get_end_type(), (svm_proc == NULL), ((svm_proc == NULL) ? 0 : svm_proc->inited),
-            ((svm_proc == NULL) ? 0 : svm_proc->process_id.hostpid));
+        devmm_drv_err("Invalid svm_proc states. (cmd=%u; end_type=%u; svm_proc_is_null=%d; inited=%u; hostpid=%u)\n",
+                      cmd, devmm_get_end_type(), (svm_proc == NULL), ((svm_proc == NULL) ? 0 : svm_proc->inited),
+                      ((svm_proc == NULL) ? 0 : svm_proc->process_id.hostpid));
 #endif
         return -EINVAL;
     }
@@ -408,8 +406,8 @@ STATIC int devmm_ioctl_get_svm_proc_from_file(ka_file_t *file, u32 cmd, struct d
     return 0;
 }
 
-static int devmm_dispatch_ioctl_use_svm_proc(
-    struct devmm_svm_process *svm_proc, u32 cmd, struct devmm_ioctl_arg *buffer)
+static int devmm_dispatch_ioctl_use_svm_proc(struct devmm_svm_process *svm_proc, u32 cmd,
+                                             struct devmm_ioctl_arg *buffer)
 {
     u32 cmd_id = _KA_IOC_NR(cmd);
     u32 cmd_flag;
@@ -523,7 +521,10 @@ STATIC ka_file_operations_t devmm_svm_fops = {
 };
 
 #ifndef EMU_ST
-static int devmm_svm_fake_open(ka_inode_t *inode, ka_file_t *file) { return -EACCES; }
+static int devmm_svm_fake_open(ka_inode_t *inode, ka_file_t *file)
+{
+    return -EACCES;
+}
 #endif
 
 static ka_file_operations_t devmm_svm_fake_fops = {

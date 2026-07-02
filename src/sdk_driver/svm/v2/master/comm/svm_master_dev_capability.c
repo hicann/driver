@@ -31,8 +31,8 @@ struct devmm_dev_feature_handlers_st g_devmm_dev_feature[DEVMM_MAX_FEATURE_ID] =
     [DEV_MEM_MAP_HOST_FEATURE] = {"dev_mem_map_host", devmm_dev_capability_support_dev_mem_map_host, NULL, false},
     [PCIE_DMA_SVA_FEATURE] = {"pcie_dma_sva", devmm_dev_capability_support_pcie_dma_sva, NULL, false},
     [DOUBLE_PGTABLE_OFFSET] = {"double_pgtable_offset", NULL, devmm_dev_capability_double_pgtable_offset, false},
-    [HOST_PIN_PRE_REGISTER_FEATURE] =
-        {"host_pin_pre_register", devmm_dev_capability_support_host_pin_pre_register, NULL, false},
+    [HOST_PIN_PRE_REGISTER_FEATURE] = {"host_pin_pre_register", devmm_dev_capability_support_host_pin_pre_register,
+                                       NULL, false},
     [HOST_MEM_POOL_FEATURE] = {"host_mem_pool", devmm_dev_capability_support_host_mem_pool, NULL, false},
     [DMA_PREPARE_POOL_FEATURE] = {"dma_prepare_pool", devmm_dev_capability_support_dma_prepare_pool, NULL, false},
     [AIC_REG_MAP] = {"aic_reg_map", devmm_dev_capability_support_aic_reg_map, NULL, true},
@@ -48,8 +48,10 @@ bool g_dev_feature_capabilty_disable[SVM_MAX_AGENT_NUM][DEVMM_MAX_FEATURE_ID] = 
 #ifndef EMU_ST
 void devmm_dev_feature_capability_disable(u32 devid, u32 feature_id)
 {
-    g_dev_feature_capabilty_disable[devid][feature_id] =
-        (devmm_device_is_pf(devid) && g_devmm_dev_feature[feature_id].is_support_disable) ? true : false;
+    g_dev_feature_capabilty_disable[devid][feature_id] = (devmm_device_is_pf(devid) &&
+                                                          g_devmm_dev_feature[feature_id].is_support_disable) ?
+                                                             true :
+                                                             false;
 }
 
 void devmm_dev_feature_capability_enable(u32 devid, u32 feature_id)
@@ -91,22 +93,21 @@ bool devmm_dev_capability_support_host_rw_dev_ro(u32 devid)
 void devmm_set_dev_mem_size_info(u32 did, struct devmm_chan_exchange_pginfo *info)
 {
     /* ddr_size and hbm_size are used for va distribution, need 2^n size */
-    devmm_svm->device_info.ddr_size[did][0] =
-        (1ul << (u32)ka_mm_get_order(info->dev_mem[DEVMM_EXCHANGE_DDR_SIZE])) * KA_MM_PAGE_SIZE;
+    devmm_svm->device_info.ddr_size[did][0] = (1ul << (u32)ka_mm_get_order(info->dev_mem[DEVMM_EXCHANGE_DDR_SIZE])) *
+                                              KA_MM_PAGE_SIZE;
     devmm_svm->device_info.p2p_ddr_size[did][0] = info->dev_mem_p2p[DEVMM_EXCHANGE_DDR_SIZE];
-    devmm_svm->device_info.hbm_size[did][0] =
-        (1ul << (u32)ka_mm_get_order(info->dev_mem[DEVMM_EXCHANGE_HBM_SIZE])) * KA_MM_PAGE_SIZE;
+    devmm_svm->device_info.hbm_size[did][0] = (1ul << (u32)ka_mm_get_order(info->dev_mem[DEVMM_EXCHANGE_HBM_SIZE])) *
+                                              KA_MM_PAGE_SIZE;
     devmm_svm->device_info.p2p_hbm_size[did][0] = info->dev_mem_p2p[DEVMM_EXCHANGE_HBM_SIZE];
     ka_base_atomic64_add(devmm_svm->device_info.ddr_size[did][0], &devmm_svm->device_info.total_ddr);
     ka_base_atomic64_add(devmm_svm->device_info.hbm_size[did][0], &devmm_svm->device_info.total_hbm);
-    devmm_drv_info(
-        "Memory info. (did=%u; "
-        "ddr_size=%llu; p2p_ddr_size=%llu; hbm_size=%llu; p2p_hbm_size=%llu; "
-        "host_ddr=%llu; total_ddr=%llu; total_hbm=%llu)\n",
-        did, devmm_svm->device_info.ddr_size[did][0], devmm_svm->device_info.p2p_ddr_size[did][0],
-        devmm_svm->device_info.hbm_size[did][0], devmm_svm->device_info.p2p_hbm_size[did][0],
-        devmm_svm->device_info.host_ddr, (u64)ka_base_atomic64_read(&devmm_svm->device_info.total_ddr),
-        (u64)ka_base_atomic64_read(&devmm_svm->device_info.total_hbm));
+    devmm_drv_info("Memory info. (did=%u; "
+                   "ddr_size=%llu; p2p_ddr_size=%llu; hbm_size=%llu; p2p_hbm_size=%llu; "
+                   "host_ddr=%llu; total_ddr=%llu; total_hbm=%llu)\n",
+                   did, devmm_svm->device_info.ddr_size[did][0], devmm_svm->device_info.p2p_ddr_size[did][0],
+                   devmm_svm->device_info.hbm_size[did][0], devmm_svm->device_info.p2p_hbm_size[did][0],
+                   devmm_svm->device_info.host_ddr, (u64)ka_base_atomic64_read(&devmm_svm->device_info.total_ddr),
+                   (u64)ka_base_atomic64_read(&devmm_svm->device_info.total_hbm));
 }
 
 void devmm_clear_dev_mem_size_info(u32 devid)
@@ -144,7 +145,10 @@ static bool devmm_is_support_wc_scene(u32 devid)
     return ((value & DEVMM_BAR4_MASK) == DEVMM_BAR4_MASK) ? true : false;
 }
 #else
-static bool devmm_is_support_wc_scene(u32 devid) { return true; }
+static bool devmm_is_support_wc_scene(u32 devid)
+{
+    return true;
+}
 #endif
 
 int devmm_set_dev_capability(const u32 did, const u32 vfid, struct devmm_chan_exchange_pginfo *info)
@@ -162,16 +166,18 @@ int devmm_set_dev_capability(const u32 did, const u32 vfid, struct devmm_chan_ex
      * if host KA_MM_PAGE_SIZE bigger than device KA_MM_PAGE_SIZE, remap continuously bar to user, will out-of-bounds
      * memory access vm can not use write combine page table properties, otherwise vm will hang
      */
-    devmm_svm->dev_capability[did].feature_bar_mem =
-        ((devmm_svm->device_page_size == devmm_svm->host_page_size) && devmm_is_support_wc_scene(did)) ?
-            info->device_capability.feature_bar_mem :
-            0;
-    devmm_svm->dev_capability[did].feature_bar_huge_mem =
-        devmm_is_support_wc_scene(did) ? info->device_capability.feature_bar_mem : 0;
-    devmm_svm->dev_capability[did].feature_dev_mem_map_host =
-        ((devmm_svm->device_page_size == devmm_svm->host_page_size) && (vfid == 0)) ?
-            info->device_capability.feature_dev_mem_map_host :
-            0;
+    devmm_svm->dev_capability[did].feature_bar_mem = ((devmm_svm->device_page_size == devmm_svm->host_page_size) &&
+                                                      devmm_is_support_wc_scene(did)) ?
+                                                         info->device_capability.feature_bar_mem :
+                                                         0;
+    devmm_svm->dev_capability[did].feature_bar_huge_mem = devmm_is_support_wc_scene(did) ?
+                                                              info->device_capability.feature_bar_mem :
+                                                              0;
+    devmm_svm->dev_capability[did].feature_dev_mem_map_host = ((devmm_svm->device_page_size ==
+                                                                devmm_svm->host_page_size) &&
+                                                               (vfid == 0)) ?
+                                                                  info->device_capability.feature_dev_mem_map_host :
+                                                                  0;
     devmm_svm->dev_capability[did].feature_phycial_address = info->device_capability.feature_phycial_address;
     devmm_svm->dev_capability[did].feature_pcie_th = info->device_capability.feature_pcie_th;
     devmm_svm->dev_capability[did].feature_dev_read_only = info->device_capability.feature_dev_read_only;

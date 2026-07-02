@@ -25,8 +25,8 @@
 #include "pmq_msg.h"
 #include "pmq_client.h"
 
-static int pmq_client_query(
-    u32 udevid, struct svm_global_va *src_info, struct svm_pa_seg pa_seg[], u64 *seg_num, u32 msg_id)
+static int pmq_client_query(u32 udevid, struct svm_global_va *src_info, struct svm_pa_seg pa_seg[], u64 *seg_num,
+                            u32 msg_id)
 {
     struct pmq_query_pa_msg *msg = NULL;
     u64 start = src_info->va;
@@ -59,16 +59,14 @@ static int pmq_client_query(
         ret = pmq_msg_send(udevid, src_info->udevid, (void *)msg, in_len, &real_out_len);
         if ((ret != 0) || (msg->head.extend_num > extend_num) || (msg->head.extend_num == 0ULL) ||
             ((msg->head.extend_num + i) > *seg_num)) {
-            svm_err(
-                "Kmc send query pa failed. (ret=%d; out_num=%llu; in_num=%llu; seg_num=%llu; i=%llu)\n", ret,
-                msg->head.extend_num, extend_num, *seg_num, i);
+            svm_err("Kmc send query pa failed. (ret=%d; out_num=%llu; in_num=%llu; seg_num=%llu; i=%llu)\n", ret,
+                    msg->head.extend_num, extend_num, *seg_num, i);
             svm_kvfree(msg);
             return (ret != 0) ? ret : -EINVAL;
         }
 
-        (void)memcpy_s(
-            (void *)&pa_seg[i], (*seg_num - i) * sizeof(struct svm_pa_seg), msg->seg,
-            msg->head.extend_num * sizeof(struct svm_pa_seg));
+        (void)memcpy_s((void *)&pa_seg[i], (*seg_num - i) * sizeof(struct svm_pa_seg), msg->seg,
+                       msg->head.extend_num * sizeof(struct svm_pa_seg));
         i += msg->head.extend_num;
         size = svm_get_pa_size(msg->seg, msg->head.extend_num);
         total_size += size;
@@ -90,8 +88,8 @@ int svm_pmq_client_pa_query(u32 local_udevid, struct svm_global_va *src_info, st
     return pmq_client_query(local_udevid, src_info, pa_seg, seg_num, SVM_KMC_MSG_QUERY_PA);
 }
 
-int svm_pmq_client_host_bar_query(
-    u32 local_udevid, struct svm_global_va *src_info, struct svm_pa_seg pa_seg[], u64 *seg_num)
+int svm_pmq_client_host_bar_query(u32 local_udevid, struct svm_global_va *src_info, struct svm_pa_seg pa_seg[],
+                                  u64 *seg_num)
 {
     return pmq_client_query(local_udevid, src_info, pa_seg, seg_num, SVM_KMC_MSG_QUERY_HOST_BAR);
 }

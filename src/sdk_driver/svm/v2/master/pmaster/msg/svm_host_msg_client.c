@@ -21,7 +21,10 @@
 
 svm_host_agent_msg_send_handle host_send_handle = NULL;
 
-void devmm_register_host_agent_msg_send_handle(svm_host_agent_msg_send_handle func) { host_send_handle = func; }
+void devmm_register_host_agent_msg_send_handle(svm_host_agent_msg_send_handle func)
+{
+    host_send_handle = func;
+}
 KA_EXPORT_SYMBOL_GPL(devmm_register_host_agent_msg_send_handle);
 
 bool devmm_host_agent_is_ready(u32 agent_id)
@@ -48,6 +51,10 @@ int devmm_host_chan_msg_recv(void *msg, unsigned int len, unsigned int out_len)
 }
 KA_EXPORT_SYMBOL_GPL(devmm_host_chan_msg_recv);
 
-int devmm_host_msg_chan_init(void) { return 0; }
+int devmm_host_msg_chan_init(void)
+{
+    return 0;
+}
 
-void devmm_host_msg_chan_uninit(void) {}
+void devmm_host_msg_chan_uninit(void)
+{}

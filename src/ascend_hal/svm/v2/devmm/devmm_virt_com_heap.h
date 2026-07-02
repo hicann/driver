@@ -110,25 +110,22 @@ static inline uint64_t align_up(uint64_t value, uint64_t align)
     return (value + (align - 1)) & ~(align - 1);
 }
 
-DVresult devmm_virt_init_com_heap(
-    struct devmm_virt_com_heap *heap, struct devmm_virt_heap_type *heap_type, struct devmm_com_heap_ops *ops,
-    struct devmm_virt_heap_para *heap_info);
-DVresult devmm_virt_init_com_base_heap(
-    struct devmm_virt_com_heap *heap, struct devmm_virt_heap_type *heap_type, struct devmm_com_heap_ops *ops,
-    struct devmm_virt_heap_para *heap_info);
+DVresult devmm_virt_init_com_heap(struct devmm_virt_com_heap *heap, struct devmm_virt_heap_type *heap_type,
+                                  struct devmm_com_heap_ops *ops, struct devmm_virt_heap_para *heap_info);
+DVresult devmm_virt_init_com_base_heap(struct devmm_virt_com_heap *heap, struct devmm_virt_heap_type *heap_type,
+                                       struct devmm_com_heap_ops *ops, struct devmm_virt_heap_para *heap_info);
 #ifndef UVM_OPEN
-DVresult devmm_virt_init_com_uvm_heap(
-    struct devmm_virt_com_heap *heap, struct devmm_virt_heap_type *heap_type, struct devmm_com_heap_ops *ops,
-    struct devmm_virt_heap_para *heap_info);
+DVresult devmm_virt_init_com_uvm_heap(struct devmm_virt_com_heap *heap, struct devmm_virt_heap_type *heap_type,
+                                      struct devmm_com_heap_ops *ops, struct devmm_virt_heap_para *heap_info);
 #endif
 DVresult devmm_alloc_mem(uint64_t *pp, size_t bytesize, DVmem_advise advise, struct devmm_virt_com_heap *heap);
 DVresult devmm_free_mem(uint64_t va, struct devmm_virt_com_heap *heap, uint64_t *free_len);
 bool devmm_is_mem_allocated(uint64_t va, struct devmm_virt_com_heap *heap);
 
-DVresult devmm_rbtree_insert_idle_mapped_tree(
-    struct devmm_rbtree_node *rbtree_node, struct devmm_heap_rbtree *rbtree_queue);
-DVresult devmm_rbtree_erase_idle_mapped_tree(
-    struct devmm_rbtree_node *rbtree_node, struct devmm_heap_rbtree *rbtree_queue);
+DVresult devmm_rbtree_insert_idle_mapped_tree(struct devmm_rbtree_node *rbtree_node,
+                                              struct devmm_heap_rbtree *rbtree_queue);
+DVresult devmm_rbtree_erase_idle_mapped_tree(struct devmm_rbtree_node *rbtree_node,
+                                             struct devmm_heap_rbtree *rbtree_queue);
 uint32_t devmm_virt_get_cache_size_by_heap_type(struct devmm_virt_heap_type *virt_heap_type);
 
 uint32_t devmm_get_module_id_by_advise(DVmem_advise advise);
@@ -137,8 +134,8 @@ void devmm_mem_mapped_size_inc(struct devmm_virt_com_heap *heap, uint64_t size);
 void devmm_mem_mapped_size_dec(struct devmm_virt_com_heap *heap, uint64_t size);
 void devmm_module_mem_stats_dec(struct devmm_rbtree_node *node);
 
-DVdeviceptr devmm_alloc_from_tree(
-    struct devmm_virt_com_heap *heap, size_t bytesize, DVmem_advise advise, uint32_t tree_type, uint64_t va);
+DVdeviceptr devmm_alloc_from_tree(struct devmm_virt_com_heap *heap, size_t bytesize, DVmem_advise advise,
+                                  uint32_t tree_type, uint64_t va);
 DVdeviceptr devmm_alloc_from_size_tree(struct devmm_virt_com_heap *heap, size_t size, DVmem_advise advise, uint64_t va);
 
 DVresult devmm_save_map_info(uint64_t va, uint32_t side, uint32_t devid);

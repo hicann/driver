@@ -57,8 +57,8 @@ struct devmm_uvm_copy_loop_param {
     struct devmm_uvm_copy_page_info *copy_info;
 };
 #endif
-void devmm_find_memcpy_dir(
-    enum devmm_copy_direction *dir, struct devmm_memory_attributes *src_attr, struct devmm_memory_attributes *dst_attr)
+void devmm_find_memcpy_dir(enum devmm_copy_direction *dir, struct devmm_memory_attributes *src_attr,
+                           struct devmm_memory_attributes *dst_attr)
 {
     /*
      * copy        directions     checking  list:
@@ -77,10 +77,9 @@ void devmm_find_memcpy_dir(
     } else if (devmm_is_master(src_attr) && devmm_is_master(dst_attr)) {
         *dir = DEVMM_COPY_HOST_TO_HOST;
     } else {
-        devmm_drv_err(
-            "Don't support this type, show config information. "
-            "(src_attr_is_svm_device=%d; dst_attr_is_svm_host=%d)\n",
-            src_attr->is_svm_device, dst_attr->is_svm_host);
+        devmm_drv_err("Don't support this type, show config information. "
+                      "(src_attr_is_svm_device=%d; dst_attr_is_svm_host=%d)\n",
+                      src_attr->is_svm_device, dst_attr->is_svm_host);
         *dir = DEVMM_COPY_INVILED_DIRECTION;
     }
 }
@@ -125,8 +124,8 @@ static int devmm_get_vmma_info(struct devmm_svm_process *svm_proc, u64 va, struc
     return 0;
 }
 
-static bool devmm_va_is_multi_dev_map(
-    struct devmm_svm_process *svm_proc, struct devmm_memory_attributes *attr, u64 byte_count)
+static bool devmm_va_is_multi_dev_map(struct devmm_svm_process *svm_proc, struct devmm_memory_attributes *attr,
+                                      u64 byte_count)
 {
     u64 vmma_left_size, total_size, left_size = byte_count, add_size, tmp_va = attr->va;
     bool first_va_is_local = false, current_is_local = false;
@@ -163,39 +162,36 @@ static bool devmm_va_is_multi_dev_map(
     return false;
 }
 
-STATIC int devmm_memcpy_para_check(
-    struct devmm_svm_process *svm_proc, struct devmm_memory_attributes *src_attr,
-    struct devmm_memory_attributes *dst_attr, u64 byte_count)
+STATIC int devmm_memcpy_para_check(struct devmm_svm_process *svm_proc, struct devmm_memory_attributes *src_attr,
+                                   struct devmm_memory_attributes *dst_attr, u64 byte_count)
 {
     if (src_attr->is_svm_non_page || (byte_count == 0)) {
-        devmm_drv_err(
-            "Src_attr_va has non page or byte_count is 0. "
-            "(src_attr_va=0x%llx; dst_attr_va=0x%llx; byte_count=%llu)\n",
-            src_attr->va, dst_attr->va, byte_count);
+        devmm_drv_err("Src_attr_va has non page or byte_count is 0. "
+                      "(src_attr_va=0x%llx; dst_attr_va=0x%llx; byte_count=%llu)\n",
+                      src_attr->va, dst_attr->va, byte_count);
         return -EINVAL;
     }
 
     if ((src_attr->is_svm_readonly && !src_attr->is_svm_dev_readonly) ||
         (dst_attr->is_svm_readonly && !dst_attr->is_svm_dev_readonly)) {
-        devmm_drv_err(
-            "Va is readonly and is not dev_readonly, not allowed memcpy. "
-            "(src_attr_va=0x%llx; dst_attr_va=0x%llx; byte_count=%llu)\n",
-            src_attr->va, dst_attr->va, byte_count);
+        devmm_drv_err("Va is readonly and is not dev_readonly, not allowed memcpy. "
+                      "(src_attr_va=0x%llx; dst_attr_va=0x%llx; byte_count=%llu)\n",
+                      src_attr->va, dst_attr->va, byte_count);
         return -EINVAL;
     }
 
     if (devmm_is_host_agent(src_attr->devid)) {
         if (!src_attr->is_svm_remote_maped) {
-            devmm_drv_err(
-                "Src_attr_va host is agent address, but not mapped by master. (src_attr_va=0x%llx)\n", src_attr->va);
+            devmm_drv_err("Src_attr_va host is agent address, but not mapped by master. (src_attr_va=0x%llx)\n",
+                          src_attr->va);
             return -EINVAL;
         }
     }
 
     if (devmm_is_host_agent(dst_attr->devid)) {
         if (!dst_attr->is_svm_remote_maped) {
-            devmm_drv_err(
-                "Dst_attr_va va host is agent address, but not mapped by master. (dst_attr_va=0x%llx)\n", dst_attr->va);
+            devmm_drv_err("Dst_attr_va va host is agent address, but not mapped by master. (dst_attr_va=0x%llx)\n",
+                          dst_attr->va);
             return -EINVAL;
         }
     }
@@ -205,21 +201,21 @@ STATIC int devmm_memcpy_para_check(
     }
 
     if (devmm_va_is_multi_dev_map(svm_proc, src_attr, byte_count)) {
-        devmm_drv_err(
-            "Can not use multi dev map va to memcpy. (src_va=0x%llx; byte_count=%llu\n", src_attr->va, byte_count);
+        devmm_drv_err("Can not use multi dev map va to memcpy. (src_va=0x%llx; byte_count=%llu\n", src_attr->va,
+                      byte_count);
         return -EINVAL;
     }
     if (devmm_va_is_multi_dev_map(svm_proc, dst_attr, byte_count)) {
-        devmm_drv_err(
-            "Can not use multi dev map va to memcpy. (dst_va=0x%llx; byte_count=%llu\n", dst_attr->va, byte_count);
+        devmm_drv_err("Can not use multi dev map va to memcpy. (dst_va=0x%llx; byte_count=%llu\n", dst_attr->va,
+                      byte_count);
         return -EINVAL;
     }
     return 0;
 }
 
-STATIC int devmm_memcpy_pre_process(
-    struct devmm_svm_process *svm_process, struct devmm_mem_copy_para *copy_para,
-    struct devmm_memory_attributes *src_attr, struct devmm_memory_attributes *dst_attr, enum devmm_copy_direction *dir)
+STATIC int devmm_memcpy_pre_process(struct devmm_svm_process *svm_process, struct devmm_mem_copy_para *copy_para,
+                                    struct devmm_memory_attributes *src_attr, struct devmm_memory_attributes *dst_attr,
+                                    enum devmm_copy_direction *dir)
 {
     u64 byte_count = copy_para->ByteCount;
     u64 src = copy_para->src;
@@ -240,8 +236,8 @@ STATIC int devmm_memcpy_pre_process(
 
     devmm_find_memcpy_dir(dir, src_attr, dst_attr);
     if (*dir >= DEVMM_COPY_INVILED_DIRECTION) {
-        devmm_drv_err(
-            "Direction error. (dir=%d; dst=0x%llx; src=0x%llx; byte_count=%llu)\n", *dir, dst, src, byte_count);
+        devmm_drv_err("Direction error. (dir=%d; dst=0x%llx; src=0x%llx; byte_count=%llu)\n", *dir, dst, src,
+                      byte_count);
         return -EINVAL;
     }
     copy_para->direction = (copy_para->direction >= DEVMM_COPY_INVILED_DIRECTION) ? *dir : copy_para->direction;
@@ -270,18 +266,17 @@ STATIC u32 devmm_memcpy_get_per_page_num(u64 size)
     }
 }
 
-int devmm_memcpy_d2d_process(
-    struct devmm_svm_process *src_proc, struct devmm_memory_attributes *src_attr, struct devmm_svm_process *dst_proc,
-    struct devmm_memory_attributes *dst_attr, struct devmm_mem_copy_para *para)
+int devmm_memcpy_d2d_process(struct devmm_svm_process *src_proc, struct devmm_memory_attributes *src_attr,
+                             struct devmm_svm_process *dst_proc, struct devmm_memory_attributes *dst_attr,
+                             struct devmm_mem_copy_para *para)
 {
     struct devmm_chan_memcpy_d2d memcpy_msg = {{{0}}};
     int ret;
 
     if (devmm_get_vfid_from_dev_id(src_attr) != devmm_get_vfid_from_dev_id(dst_attr)) {
-        devmm_drv_err(
-            "Don't support memcpy d2d in different vf. "
-            "(vfid_from_dev_id_src_attr=%d; vfid_from_dev_id_dst_attr=%d)\n",
-            devmm_get_vfid_from_dev_id(src_attr), devmm_get_vfid_from_dev_id(dst_attr));
+        devmm_drv_err("Don't support memcpy d2d in different vf. "
+                      "(vfid_from_dev_id_src_attr=%d; vfid_from_dev_id_dst_attr=%d)\n",
+                      devmm_get_vfid_from_dev_id(src_attr), devmm_get_vfid_from_dev_id(dst_attr));
         return -EPERM;
     }
     memcpy_msg.head.msg_id = DEVMM_CHAN_MEMCPY_D2D_ID;
@@ -301,9 +296,10 @@ int devmm_memcpy_d2d_process(
     return ret;
 }
 
-STATIC int devmm_ioctl_memcpy_process_frame(
-    struct devmm_svm_process *svm_pro, struct devmm_mem_copy_para *copy_para, struct devmm_memory_attributes *src_attr,
-    struct devmm_memory_attributes *dst_attr, struct devmm_mem_copy_convrt_para *para)
+STATIC int devmm_ioctl_memcpy_process_frame(struct devmm_svm_process *svm_pro, struct devmm_mem_copy_para *copy_para,
+                                            struct devmm_memory_attributes *src_attr,
+                                            struct devmm_memory_attributes *dst_attr,
+                                            struct devmm_mem_copy_convrt_para *para)
 {
     u32 page_size = ka_base_min((u32)KA_MM_PAGE_SIZE, devmm_svm->device_page_size);
     size_t count = copy_para->ByteCount;
@@ -334,9 +330,9 @@ STATIC int devmm_ioctl_memcpy_process_frame(
         para->dst = dst;
         ret = devmm_ioctl_memcpy_process_res(svm_pro, para, src_attr, dst_attr);
         if (ret != 0) {
-            devmm_drv_err_if(
-                (ret != -EOPNOTSUPP), "Memcpy error. (ret=%d; src=0x%llx; dst=0x%llx; count=%lu; direction=%u)\n", ret,
-                src, dst, para->count, para->direction);
+            devmm_drv_err_if((ret != -EOPNOTSUPP),
+                             "Memcpy error. (ret=%d; src=0x%llx; dst=0x%llx; count=%lu; direction=%u)\n", ret, src, dst,
+                             para->count, para->direction);
             if (ret != -EOPNOTSUPP) {
                 devmm_print_pre_alloced_va(svm_pro, src);
                 devmm_print_pre_alloced_va(svm_pro, dst);
@@ -357,9 +353,10 @@ STATIC int devmm_ioctl_memcpy_process_frame(
     return ret;
 }
 
-STATIC int devmm_ioctl_p2p_memcpy_process(
-    struct devmm_svm_process *svm_proc, struct devmm_mem_copy_para *para, struct devmm_memory_attributes *src_attr,
-    struct devmm_memory_attributes *dst_attr, struct devmm_mem_copy_convrt_para *task_para)
+STATIC int devmm_ioctl_p2p_memcpy_process(struct devmm_svm_process *svm_proc, struct devmm_mem_copy_para *para,
+                                          struct devmm_memory_attributes *src_attr,
+                                          struct devmm_memory_attributes *dst_attr,
+                                          struct devmm_mem_copy_convrt_para *task_para)
 {
     int ret;
     struct devmm_memory_attributes src_owner_attr;
@@ -375,9 +372,8 @@ STATIC int devmm_ioctl_p2p_memcpy_process(
             return ret;
         }
 
-        devmm_drv_debug(
-            "Src va use pid va. (src=0x%llx; hostpid=%d; va=0x%llx)\n", para->src, src_proc->process_id.hostpid,
-            src_owner_attr.va);
+        devmm_drv_debug("Src va use pid va. (src=0x%llx; hostpid=%d; va=0x%llx)\n", para->src,
+                        src_proc->process_id.hostpid, src_owner_attr.va);
     } else {
         src_owner_attr = *src_attr;
     }
@@ -394,9 +390,8 @@ STATIC int devmm_ioctl_p2p_memcpy_process(
             return ret;
         }
 
-        devmm_drv_debug(
-            "Dst va use pid va. (dst=0X%llx; hostpid=%d; va=0x%llx)\n", para->dst, dst_proc->process_id.hostpid,
-            dst_owner_attr.va);
+        devmm_drv_debug("Dst va use pid va. (dst=0X%llx; hostpid=%d; va=0x%llx)\n", para->dst,
+                        dst_proc->process_id.hostpid, dst_owner_attr.va);
     } else {
         dst_owner_attr = *dst_attr;
     }
@@ -441,9 +436,8 @@ STATIC int devmm_ioctl_p2p_memcpy_process(
     return ret;
 }
 
-int devmm_check_va_direction(
-    enum devmm_copy_direction para_dir, enum devmm_copy_direction real_dir, u32 task_mode, bool is_memcpy_batch,
-    struct devmm_memory_attributes *dst_attr)
+int devmm_check_va_direction(enum devmm_copy_direction para_dir, enum devmm_copy_direction real_dir, u32 task_mode,
+                             bool is_memcpy_batch, struct devmm_memory_attributes *dst_attr)
 {
     if (para_dir != real_dir) {
         return -EINVAL;
@@ -459,9 +453,9 @@ int devmm_check_va_direction(
     return 0;
 }
 
-STATIC int devmm_normal_memcpy_proc(
-    struct devmm_svm_process *svm_proc, struct devmm_mem_copy_para *copy_para, struct devmm_memory_attributes *src_attr,
-    struct devmm_memory_attributes *dst_attr, struct devmm_mem_copy_convrt_para *task_para)
+STATIC int devmm_normal_memcpy_proc(struct devmm_svm_process *svm_proc, struct devmm_mem_copy_para *copy_para,
+                                    struct devmm_memory_attributes *src_attr, struct devmm_memory_attributes *dst_attr,
+                                    struct devmm_mem_copy_convrt_para *task_para)
 {
     if ((copy_para->direction == DEVMM_COPY_HOST_TO_DEVICE) || (copy_para->direction == DEVMM_COPY_DEVICE_TO_HOST)) {
         return devmm_ioctl_memcpy_process_frame(svm_proc, copy_para, src_attr, dst_attr, task_para);
@@ -470,9 +464,8 @@ STATIC int devmm_normal_memcpy_proc(
     } else if (copy_para->direction == DEVMM_COPY_HOST_TO_HOST) {
         devmm_svm_stat_copy_inc(DEVMM_COPY_HOST_TO_HOST, copy_para->ByteCount);
     } else {
-        devmm_drv_err(
-            "Direction error. (direction=%d; src=0x%llx; dst=0x%llx)\n", copy_para->direction, copy_para->src,
-            copy_para->dst);
+        devmm_drv_err("Direction error. (direction=%d; src=0x%llx; dst=0x%llx)\n", copy_para->direction, copy_para->src,
+                      copy_para->dst);
         return -EINVAL;
     }
 
@@ -486,8 +479,8 @@ struct devmm_memcpy_addr_info {
     bool local_is_dev;
 };
 
-static void devmm_memcpy_addr_info_pack(
-    u64 va, u64 size, u32 logical_devid, bool local_is_dev, struct devmm_memcpy_addr_info *info)
+static void devmm_memcpy_addr_info_pack(u64 va, u64 size, u32 logical_devid, bool local_is_dev,
+                                        struct devmm_memcpy_addr_info *info)
 {
     info->va = va;
     info->size = size;
@@ -495,8 +488,8 @@ static void devmm_memcpy_addr_info_pack(
     info->local_is_dev = local_is_dev;
 }
 
-static int _devmm_get_memcpy_mem_attrs(
-    struct devmm_svm_process *svm_proc, struct devmm_memcpy_addr_info *info, struct devmm_memory_attributes *attr)
+static int _devmm_get_memcpy_mem_attrs(struct devmm_svm_process *svm_proc, struct devmm_memcpy_addr_info *info,
+                                       struct devmm_memory_attributes *attr)
 {
     if (devmm_is_static_soma_reserve_addr(svm_proc, info->va)) {
         return devmm_get_soma_mem_attrs(svm_proc, info->va, attr);
@@ -513,9 +506,9 @@ static int _devmm_get_memcpy_mem_attrs(
     }
 }
 
-static int devmm_get_memcpy_mem_attrs(
-    struct devmm_svm_process *svm_proc, struct devmm_mem_copy_para *copy_para, u32 logical_devid,
-    struct devmm_memory_attributes *src_attr, struct devmm_memory_attributes *dst_attr)
+static int devmm_get_memcpy_mem_attrs(struct devmm_svm_process *svm_proc, struct devmm_mem_copy_para *copy_para,
+                                      u32 logical_devid, struct devmm_memory_attributes *src_attr,
+                                      struct devmm_memory_attributes *dst_attr)
 {
     struct devmm_memcpy_addr_info addr_info;
     bool local_is_dev;
@@ -540,9 +533,9 @@ static int devmm_get_memcpy_mem_attrs(
     return 0;
 }
 
-static bool devmm_check_memcpy_is_allow(
-    struct devmm_svm_process *svm_proc, enum devmm_copy_direction real_dir, u32 task_mode,
-    struct devmm_memory_attributes *src_attr, struct devmm_memory_attributes *dst_attr)
+static bool devmm_check_memcpy_is_allow(struct devmm_svm_process *svm_proc, enum devmm_copy_direction real_dir,
+                                        u32 task_mode, struct devmm_memory_attributes *src_attr,
+                                        struct devmm_memory_attributes *dst_attr)
 {
     if (task_mode == DEVMM_CPY_ASYNC_API_MODE) {
         u32 phy_devid = (real_dir == DEVMM_COPY_HOST_TO_DEVICE) ? dst_attr->devid : src_attr->devid;
@@ -553,9 +546,9 @@ static bool devmm_check_memcpy_is_allow(
     return true;
 }
 
-static int devmm_memcpy_batch_mem_attr_check(
-    struct devmm_mem_copy_convrt_para *task_para, struct devmm_memory_attributes *src_attr,
-    struct devmm_memory_attributes *dst_attr, enum devmm_copy_direction dir)
+static int devmm_memcpy_batch_mem_attr_check(struct devmm_mem_copy_convrt_para *task_para,
+                                             struct devmm_memory_attributes *src_attr,
+                                             struct devmm_memory_attributes *dst_attr, enum devmm_copy_direction dir)
 {
     if (task_para->is_memcpy_batch) {
         if (((dir == DEVMM_COPY_HOST_TO_DEVICE) && (dst_attr->is_mem_import || dst_attr->is_ipc_open)) ||
@@ -610,9 +603,8 @@ static int devmm_memcpy_batch_mem_attr_check(
          bar dma addr(dma addr mapped by first device).
       c. h2d or d2h copy, both use it`s dma addr.
 */
-STATIC int devmm_memcpy_proc(
-    struct devmm_svm_process *svm_proc, struct devmm_mem_copy_para *copy_para, u32 logical_devid,
-    struct devmm_mem_copy_convrt_para *task_para)
+STATIC int devmm_memcpy_proc(struct devmm_svm_process *svm_proc, struct devmm_mem_copy_para *copy_para,
+                             u32 logical_devid, struct devmm_mem_copy_convrt_para *task_para)
 {
     enum devmm_copy_direction dir = DEVMM_COPY_INVILED_DIRECTION;
     struct devmm_memory_attributes src_attr = {0};
@@ -626,35 +618,32 @@ STATIC int devmm_memcpy_proc(
 
     ret = devmm_memcpy_para_check(svm_proc, &src_attr, &dst_attr, copy_para->ByteCount);
     if (ret != 0) {
-        devmm_drv_err(
-            "Memcpy para check failed. (src_device_id=%d; dst_device_id=%d)\n", src_attr.devid, dst_attr.devid);
+        devmm_drv_err("Memcpy para check failed. (src_device_id=%d; dst_device_id=%d)\n", src_attr.devid,
+                      dst_attr.devid);
         return -EINVAL;
     }
 
     ret = devmm_memcpy_pre_process(svm_proc, copy_para, &src_attr, &dst_attr, &dir);
     if (ret != 0) {
-        devmm_drv_err(
-            "Memcpy pre process fail. (src=0x%llx; dst=0x%llx; count=0x%lx)\n", copy_para->src, copy_para->dst,
-            copy_para->ByteCount);
+        devmm_drv_err("Memcpy pre process fail. (src=0x%llx; dst=0x%llx; count=0x%lx)\n", copy_para->src,
+                      copy_para->dst, copy_para->ByteCount);
         return ret;
     }
 
-    ret = devmm_check_va_direction(
-        copy_para->direction, dir, task_para->task_mode, task_para->is_memcpy_batch, &dst_attr);
+    ret = devmm_check_va_direction(copy_para->direction, dir, task_para->task_mode, task_para->is_memcpy_batch,
+                                   &dst_attr);
     if (ret != 0) {
-        devmm_drv_err(
-            "Copy direction error. (expected_direction=%u; real_direction=%u; src=0x%llx; "
-            "dst=0x%llx; dst_is_dev_readonly=%d; is_memcpy_batch=%d)\n",
-            copy_para->direction, dir, copy_para->src, copy_para->dst, dst_attr.is_svm_dev_readonly,
-            task_para->is_memcpy_batch);
+        devmm_drv_err("Copy direction error. (expected_direction=%u; real_direction=%u; src=0x%llx; "
+                      "dst=0x%llx; dst_is_dev_readonly=%d; is_memcpy_batch=%d)\n",
+                      copy_para->direction, dir, copy_para->src, copy_para->dst, dst_attr.is_svm_dev_readonly,
+                      task_para->is_memcpy_batch);
         return ret;
     }
 
     if (devmm_check_memcpy_is_allow(svm_proc, dir, task_para->task_mode, &src_attr, &dst_attr) == false) {
 #ifndef EMU_ST
-        devmm_drv_err(
-            "Device is reset, memcpy is not allowed. (dir=%u; task_mode=%u; src_dev=%u; dst_dev=%u)\n", dir,
-            task_para->task_mode, src_attr.devid, dst_attr.devid);
+        devmm_drv_err("Device is reset, memcpy is not allowed. (dir=%u; task_mode=%u; src_dev=%u; dst_dev=%u)\n", dir,
+                      task_para->task_mode, src_attr.devid, dst_attr.devid);
         return -ENONET;
 #endif
     }
@@ -675,8 +664,8 @@ struct devmm_uvm_copy_page_info {
     struct devmm_memory_attributes dst_attr;
 };
 
-static int devmm_uvm_memcpy_lock_src_page(
-    struct devmm_svm_process *svm_proc, struct devmm_uvm_copy_page_info *copy_info, uint64_t *src_lock_end)
+static int devmm_uvm_memcpy_lock_src_page(struct devmm_svm_process *svm_proc,
+                                          struct devmm_uvm_copy_page_info *copy_info, uint64_t *src_lock_end)
 {
     ka_rw_semaphore_t *src_lock = NULL;
     src_lock = uvm_get_page_lock_array(svm_proc->uvm_heap, copy_info->src);
@@ -695,8 +684,8 @@ static int devmm_uvm_memcpy_lock_src_page(
     return 0;
 }
 
-static int devmm_uvm_memcpy_lock_dst_page(
-    struct devmm_svm_process *svm_proc, struct devmm_uvm_copy_page_info *copy_info, uint64_t *dst_lock_end)
+static int devmm_uvm_memcpy_lock_dst_page(struct devmm_svm_process *svm_proc,
+                                          struct devmm_uvm_copy_page_info *copy_info, uint64_t *dst_lock_end)
 {
     ka_rw_semaphore_t *dst_lock = NULL;
 
@@ -738,8 +727,8 @@ static int devmm_uvm_memcpy_check_source(struct devmm_svm_process *svm_proc, str
     return 0;
 }
 
-static int devmm_uvm_memcpy_check_destination(
-    struct devmm_svm_process *svm_proc, struct devmm_uvm_copy_page_info *copy_info)
+static int devmm_uvm_memcpy_check_destination(struct devmm_svm_process *svm_proc,
+                                              struct devmm_uvm_copy_page_info *copy_info)
 {
     ka_vm_area_struct_t *vma = NULL;
     struct uvm_page_info page_info = {0};
@@ -796,8 +785,8 @@ static int devmm_uvm_memcpy_check_destination(
     return 0;
 }
 
-static bool devmm_uvm_compare_memcpy_info(
-    struct devmm_uvm_copy_page_info *copy_info, struct devmm_uvm_copy_page_info *copy_info_pre)
+static bool devmm_uvm_compare_memcpy_info(struct devmm_uvm_copy_page_info *copy_info,
+                                          struct devmm_uvm_copy_page_info *copy_info_pre)
 {
     if (copy_info->dir == copy_info_pre->dir) {
         if (copy_info->dir == DEVMM_COPY_HOST_TO_DEVICE) {
@@ -815,9 +804,9 @@ static bool devmm_uvm_compare_memcpy_info(
     return false;
 }
 
-static int devmm_uvm_memcpy_page_pre_process(
-    struct devmm_svm_process *svm_proc, struct devmm_mem_copy_para *copy_para,
-    struct devmm_uvm_copy_page_info *copy_info, uint64_t *src_lock_end, uint64_t *dst_lock_end)
+static int devmm_uvm_memcpy_page_pre_process(struct devmm_svm_process *svm_proc, struct devmm_mem_copy_para *copy_para,
+                                             struct devmm_uvm_copy_page_info *copy_info, uint64_t *src_lock_end,
+                                             uint64_t *dst_lock_end)
 {
     int ret = 0;
 
@@ -858,9 +847,8 @@ static int devmm_uvm_memcpy_page_pre_process(
     return 0;
 }
 
-static int devmm_uvm_memcpy_post_process(
-    struct devmm_svm_process *svm_proc, struct devmm_mem_copy_para *copy_para, uint64_t begin_offset,
-    uint64_t *src_lock_end, uint64_t *dst_lock_end)
+static int devmm_uvm_memcpy_post_process(struct devmm_svm_process *svm_proc, struct devmm_mem_copy_para *copy_para,
+                                         uint64_t begin_offset, uint64_t *src_lock_end, uint64_t *dst_lock_end)
 {
     ka_rw_semaphore_t *src_start = NULL;
     ka_rw_semaphore_t *src_end = NULL;
@@ -919,9 +907,8 @@ static int devmm_uvm_memcpy_post_process(
     return 0;
 }
 
-static int devmm_uvm_memcpy_h2h_process(
-    struct devmm_svm_process *svm_proc, struct devmm_chan_uvm_memcpy *memcpy_msg,
-    struct devmm_uvm_copy_page_info *copy_info)
+static int devmm_uvm_memcpy_h2h_process(struct devmm_svm_process *svm_proc, struct devmm_chan_uvm_memcpy *memcpy_msg,
+                                        struct devmm_uvm_copy_page_info *copy_info)
 {
     struct uvm_page_info page_info = {0};
     void *src_kva = NULL;
@@ -933,17 +920,15 @@ static int devmm_uvm_memcpy_h2h_process(
     for (i = 0; i < memcpy_msg->page_num; ++i) {
         ret = uvm_get_page_info_by_va(svm_proc->uvm_heap, memcpy_msg->src_addr[i], &page_info);
         if (ret != 0) {
-            devmm_drv_err(
-                "uvm_get_page_info_by_va failed in devmm_uvm_memcpy_h2h_process. (va=0x%llx;)\n",
-                memcpy_msg->src_addr[i]);
+            devmm_drv_err("uvm_get_page_info_by_va failed in devmm_uvm_memcpy_h2h_process. (va=0x%llx;)\n",
+                          memcpy_msg->src_addr[i]);
             return ret;
         }
 
         src_pg = devmm_pa_to_page(page_info.page_map->pa_addr);
         if (src_pg == NULL) {
-            devmm_drv_err(
-                "devmm_pa_to_page failed in devmm_uvm_memcpy_h2h_process. (va=0x%llx, pa=0x%llx;)\n",
-                memcpy_msg->src_addr[i], page_info.page_map->pa_addr);
+            devmm_drv_err("devmm_pa_to_page failed in devmm_uvm_memcpy_h2h_process. (va=0x%llx, pa=0x%llx;)\n",
+                          memcpy_msg->src_addr[i], page_info.page_map->pa_addr);
             return -EINVAL;
         }
 
@@ -963,9 +948,8 @@ static int devmm_uvm_memcpy_h2h_process(
         dst_pg = devmm_pa_to_page(page_info.page_map->pa_addr);
         if (dst_pg == NULL) {
 #ifndef EMU_ST
-            devmm_drv_err(
-                "devmm_pa_to_page failed. (va=0x%llx, pa=0x%llx;)\n", memcpy_msg->dst_addr[i],
-                page_info.page_map->pa_addr);
+            devmm_drv_err("devmm_pa_to_page failed. (va=0x%llx, pa=0x%llx;)\n", memcpy_msg->dst_addr[i],
+                          page_info.page_map->pa_addr);
             return -EINVAL;
 #endif
         }
@@ -986,9 +970,8 @@ static int devmm_uvm_memcpy_h2h_process(
     return 0;
 }
 
-static int devmm_uvm_memcpy_h2d_process(
-    struct devmm_svm_process *svm_proc, struct devmm_chan_uvm_memcpy *memcpy_msg,
-    struct devmm_uvm_copy_page_info *copy_info)
+static int devmm_uvm_memcpy_h2d_process(struct devmm_svm_process *svm_proc, struct devmm_chan_uvm_memcpy *memcpy_msg,
+                                        struct devmm_uvm_copy_page_info *copy_info)
 {
     struct devmm_addr_info *addr_info = NULL;
     struct uvm_page_info page_info = {0};
@@ -997,8 +980,8 @@ static int devmm_uvm_memcpy_h2d_process(
     u32 devid, offset;
     u64 src_begin;
 
-    addr_info = (struct devmm_addr_info *)devmm_kvalloc(
-        sizeof(struct devmm_addr_info) * UVM_MEMCPY_MSG_MAX_PAGE_NUM, KA_GFP_KERNEL | __KA_GFP_ACCOUNT | __KA_GFP_ZERO);
+    addr_info = (struct devmm_addr_info *)devmm_kvalloc(sizeof(struct devmm_addr_info) * UVM_MEMCPY_MSG_MAX_PAGE_NUM,
+                                                        KA_GFP_KERNEL | __KA_GFP_ACCOUNT | __KA_GFP_ZERO);
     if (addr_info == NULL) {
         devmm_drv_err("Kzalloc for struct devmm_addr_info failed.\n");
         return -ENOMEM;
@@ -1015,25 +998,22 @@ static int devmm_uvm_memcpy_h2d_process(
     for (i = 0; i < memcpy_msg->page_num; ++i) {
         ret = uvm_get_page_info_by_va(svm_proc->uvm_heap, memcpy_msg->src_addr[i], &page_info);
         if (ret != 0) {
-            devmm_drv_err(
-                "uvm_get_page_info_by_va failed in devmm_uvm_memcpy_h2d_process. (va=0x%llx;)\n",
-                memcpy_msg->src_addr[i]);
+            devmm_drv_err("uvm_get_page_info_by_va failed in devmm_uvm_memcpy_h2d_process. (va=0x%llx;)\n",
+                          memcpy_msg->src_addr[i]);
             return ret;
         }
 
         src_pg = devmm_pa_to_page(page_info.page_map->pa_addr);
         if (src_pg == NULL) {
-            devmm_drv_err(
-                "devmm_pa_to_page failed in devmm_uvm_memcpy_h2d_process. (va=0x%llx, pa=0x%llx;)\n",
-                memcpy_msg->src_addr[i], page_info.page_map->pa_addr);
+            devmm_drv_err("devmm_pa_to_page failed in devmm_uvm_memcpy_h2d_process. (va=0x%llx, pa=0x%llx;)\n",
+                          memcpy_msg->src_addr[i], page_info.page_map->pa_addr);
             return -EINVAL;
         }
         offset = memcpy_msg->src_addr[i] - ka_base_round_down(memcpy_msg->src_addr[i], DEVMM_UVM_PAGE_SIZE);
         ret = devmm_dma_map_page_partial(devid, src_pg, offset, memcpy_msg->copy_size[i], NULL, &addr_info[i]);
         if (ret != 0) {
-            devmm_drv_err(
-                "Host dma map page failed. (dev_id=%u; va=0x%llx; offset=%u)\n", devid, memcpy_msg->src_addr[i],
-                offset);
+            devmm_drv_err("Host dma map page failed. (dev_id=%u; va=0x%llx; offset=%u)\n", devid,
+                          memcpy_msg->src_addr[i], offset);
             ret = -EIO;
             goto unmap_dma;
         }
@@ -1043,9 +1023,8 @@ static int devmm_uvm_memcpy_h2d_process(
 
     ret = devmm_chan_msg_send(memcpy_msg, sizeof(struct devmm_chan_uvm_memcpy), 0);
     if (ret != 0) {
-        devmm_drv_err(
-            "Uvm H2D memcpy failed. (ret=%d; dev_id=%u; src=0x%llx; dst=0x%llx)\n", ret, devid, src_begin,
-            memcpy_msg->dst_addr[0]);
+        devmm_drv_err("Uvm H2D memcpy failed. (ret=%d; dev_id=%u; src=0x%llx; dst=0x%llx)\n", ret, devid, src_begin,
+                      memcpy_msg->dst_addr[0]);
     }
 
 unmap_dma:
@@ -1057,9 +1036,8 @@ unmap_dma:
     return ret;
 }
 
-static int devmm_uvm_memcpy_d2h_process(
-    struct devmm_svm_process *svm_proc, struct devmm_chan_uvm_memcpy *memcpy_msg,
-    struct devmm_uvm_copy_page_info *copy_info)
+static int devmm_uvm_memcpy_d2h_process(struct devmm_svm_process *svm_proc, struct devmm_chan_uvm_memcpy *memcpy_msg,
+                                        struct devmm_uvm_copy_page_info *copy_info)
 {
     struct devmm_addr_info *addr_info = NULL;
     struct uvm_page_info page_info = {0};
@@ -1068,8 +1046,8 @@ static int devmm_uvm_memcpy_d2h_process(
     u32 devid, offset;
     u64 dst_begin;
 
-    addr_info = (struct devmm_addr_info *)devmm_kvalloc(
-        sizeof(struct devmm_addr_info) * UVM_MEMCPY_MSG_MAX_PAGE_NUM, KA_GFP_KERNEL | __KA_GFP_ACCOUNT | __KA_GFP_ZERO);
+    addr_info = (struct devmm_addr_info *)devmm_kvalloc(sizeof(struct devmm_addr_info) * UVM_MEMCPY_MSG_MAX_PAGE_NUM,
+                                                        KA_GFP_KERNEL | __KA_GFP_ACCOUNT | __KA_GFP_ZERO);
     if (addr_info == NULL) {
         devmm_drv_err("Kzalloc for struct devmm_addr_info failed.\n");
         return -ENOMEM;
@@ -1092,18 +1070,16 @@ static int devmm_uvm_memcpy_d2h_process(
 
         dst_pg = devmm_pa_to_page(page_info.page_map->pa_addr);
         if (dst_pg == NULL) {
-            devmm_drv_err(
-                "devmm_pa_to_page failed. (va=0x%llx, pa=0x%llx;)\n", memcpy_msg->dst_addr[i],
-                page_info.page_map->pa_addr);
+            devmm_drv_err("devmm_pa_to_page failed. (va=0x%llx, pa=0x%llx;)\n", memcpy_msg->dst_addr[i],
+                          page_info.page_map->pa_addr);
             return -EINVAL;
         }
 
         offset = memcpy_msg->dst_addr[i] - ka_base_round_down(memcpy_msg->dst_addr[i], DEVMM_UVM_PAGE_SIZE);
         ret = devmm_dma_map_page_partial(devid, dst_pg, offset, memcpy_msg->copy_size[i], NULL, &addr_info[i]);
         if (ret != 0) {
-            devmm_drv_err(
-                "Host dma map page failed. (dev_id=%u; va=0x%llx; offset=%u)\n", devid, memcpy_msg->dst_addr[i],
-                offset);
+            devmm_drv_err("Host dma map page failed. (dev_id=%u; va=0x%llx; offset=%u)\n", devid,
+                          memcpy_msg->dst_addr[i], offset);
             ret = -EIO;
             goto unmap_dma;
         }
@@ -1113,9 +1089,8 @@ static int devmm_uvm_memcpy_d2h_process(
 
     ret = devmm_chan_msg_send(memcpy_msg, sizeof(struct devmm_chan_uvm_memcpy), 0);
     if (ret != 0) {
-        devmm_drv_err(
-            "Uvm D2H memcpy failed. (ret=%d; dev_id=%u; src=0x%llx; dst=0x%llx)\n", ret, devid, memcpy_msg->src_addr[0],
-            dst_begin);
+        devmm_drv_err("Uvm D2H memcpy failed. (ret=%d; dev_id=%u; src=0x%llx; dst=0x%llx)\n", ret, devid,
+                      memcpy_msg->src_addr[0], dst_begin);
     }
 
 unmap_dma:
@@ -1127,9 +1102,8 @@ unmap_dma:
     return ret;
 }
 
-static int devmm_uvm_memcpy_process_frame(
-    struct devmm_svm_process *svm_proc, struct devmm_chan_uvm_memcpy *memcpy_msg,
-    struct devmm_uvm_copy_page_info *copy_info)
+static int devmm_uvm_memcpy_process_frame(struct devmm_svm_process *svm_proc, struct devmm_chan_uvm_memcpy *memcpy_msg,
+                                          struct devmm_uvm_copy_page_info *copy_info)
 {
     if (copy_info->dir == DEVMM_COPY_HOST_TO_DEVICE) {
         return devmm_uvm_memcpy_h2d_process(svm_proc, memcpy_msg, copy_info);
@@ -1138,22 +1112,20 @@ static int devmm_uvm_memcpy_process_frame(
     } else if (copy_info->dir == DEVMM_COPY_HOST_TO_HOST) {
         return devmm_uvm_memcpy_h2h_process(svm_proc, memcpy_msg, copy_info);
     } else if (copy_info->dir == DEVMM_COPY_DEVICE_TO_DEVICE) {
-        devmm_drv_err(
-            "Direction error. (direction=%d; src=0x%llx; dst=0x%llx)\n", copy_info->dir, memcpy_msg->src_addr[0],
-            memcpy_msg->dst_addr[0]);
+        devmm_drv_err("Direction error. (direction=%d; src=0x%llx; dst=0x%llx)\n", copy_info->dir,
+                      memcpy_msg->src_addr[0], memcpy_msg->dst_addr[0]);
         return 0;
     } else {
-        devmm_drv_err(
-            "Direction error. (direction=%d; src=0x%llx; dst=0x%llx)\n", copy_info->dir, memcpy_msg->src_addr[0],
-            memcpy_msg->dst_addr[0]);
+        devmm_drv_err("Direction error. (direction=%d; src=0x%llx; dst=0x%llx)\n", copy_info->dir,
+                      memcpy_msg->src_addr[0], memcpy_msg->dst_addr[0]);
         return -EINVAL;
     }
 
     return 0;
 }
 
-STATIC int devmm_uvm_calc_page_copy(
-    struct devmm_mem_copy_para *copy_para, u64 offset, struct devmm_uvm_copy_page_info *copy_info)
+STATIC int devmm_uvm_calc_page_copy(struct devmm_mem_copy_para *copy_para, u64 offset,
+                                    struct devmm_uvm_copy_page_info *copy_info)
 {
     u64 src_page_remain, dst_page_remain, copy_size;
 
@@ -1175,9 +1147,9 @@ STATIC int devmm_uvm_calc_page_copy(
     return copy_size;
 }
 
-STATIC int devmm_uvm_page_copy(
-    struct devmm_svm_process *svm_proc, struct devmm_chan_uvm_memcpy *memcpy_msg,
-    struct devmm_uvm_copy_page_info *copy_info, struct devmm_mem_copy_para *copy_para, u64 offset)
+STATIC int devmm_uvm_page_copy(struct devmm_svm_process *svm_proc, struct devmm_chan_uvm_memcpy *memcpy_msg,
+                               struct devmm_uvm_copy_page_info *copy_info, struct devmm_mem_copy_para *copy_para,
+                               u64 offset)
 {
     int ret = 0;
 
@@ -1211,8 +1183,8 @@ STATIC int devmm_uvm_overlap_memcpy_proc(struct devmm_svm_process *svm_proc, str
     ka_rw_semaphore_t *src_lock = NULL, *dst_lock = NULL;
     int ret = 0;
 
-    memcpy_msg = (struct devmm_chan_uvm_memcpy *)devmm_kvalloc(
-        sizeof(struct devmm_chan_uvm_memcpy), KA_GFP_KERNEL | __KA_GFP_ACCOUNT | __KA_GFP_ZERO);
+    memcpy_msg = (struct devmm_chan_uvm_memcpy *)devmm_kvalloc(sizeof(struct devmm_chan_uvm_memcpy),
+                                                               KA_GFP_KERNEL | __KA_GFP_ACCOUNT | __KA_GFP_ZERO);
     if (memcpy_msg == NULL) {
         devmm_drv_err("Kzalloc for struct devmm_chan_uvm_memcpy failed.\n");
         return -ENOMEM;
@@ -1264,8 +1236,8 @@ free_memcpy_msg:
     return ret;
 }
 
-STATIC int devmm_uvm_memcpy_normal_proc_inner(
-    struct devmm_svm_process *svm_proc, struct devmm_mem_copy_para *copy_para, struct devmm_chan_uvm_memcpy *memcpy_msg)
+STATIC int devmm_uvm_memcpy_normal_proc_inner(struct devmm_svm_process *svm_proc, struct devmm_mem_copy_para *copy_para,
+                                              struct devmm_chan_uvm_memcpy *memcpy_msg)
 {
     struct devmm_uvm_copy_page_info copy_info_pre = {0}, copy_info_cur = {0};
     u64 offset = 0, committed_size = 0, copy_size = 0;
@@ -1320,8 +1292,8 @@ STATIC int devmm_uvm_memcpy_normal_proc(struct devmm_svm_process *svm_proc, stru
     struct devmm_chan_uvm_memcpy *memcpy_msg = NULL;
     int ret = 0;
 
-    memcpy_msg = (struct devmm_chan_uvm_memcpy *)devmm_kvalloc(
-        sizeof(struct devmm_chan_uvm_memcpy), KA_GFP_KERNEL | __KA_GFP_ACCOUNT | __KA_GFP_ZERO);
+    memcpy_msg = (struct devmm_chan_uvm_memcpy *)devmm_kvalloc(sizeof(struct devmm_chan_uvm_memcpy),
+                                                               KA_GFP_KERNEL | __KA_GFP_ACCOUNT | __KA_GFP_ZERO);
     if (memcpy_msg == NULL) {
         devmm_drv_err("Kzalloc for struct devmm_chan_uvm_memcpy failed.\n");
         return -ENOMEM;
@@ -1349,17 +1321,17 @@ STATIC int devmm_uvm_memcpy_internal_proc(struct devmm_svm_process *svm_proc, st
     return 0;
 }
 
-STATIC int devmm_uvm_check_non_uvm_addr(
-    struct devmm_svm_process *svm_proc, struct devmm_mem_copy_para *copy_para, struct devmm_memory_attributes *src_attr,
-    struct devmm_memory_attributes *dst_attr)
+STATIC int devmm_uvm_check_non_uvm_addr(struct devmm_svm_process *svm_proc, struct devmm_mem_copy_para *copy_para,
+                                        struct devmm_memory_attributes *src_attr,
+                                        struct devmm_memory_attributes *dst_attr)
 {
     int ret;
 
     ret = devmm_memcpy_para_check(svm_proc, src_attr, dst_attr, copy_para->ByteCount);
     if (ret != 0) {
 #ifndef EMU_ST
-        devmm_drv_err(
-            "Memcpy para check failed. (src_device_id=%d; dst_device_id=%d)\n", src_attr->devid, dst_attr->devid);
+        devmm_drv_err("Memcpy para check failed. (src_device_id=%d; dst_device_id=%d)\n", src_attr->devid,
+                      dst_attr->devid);
         return -EINVAL;
 #endif
     }
@@ -1368,8 +1340,8 @@ STATIC int devmm_uvm_check_non_uvm_addr(
         ret = devmm_insert_host_page_range(svm_proc, copy_para->dst, copy_para->ByteCount, dst_attr);
         if (ret != 0) {
 #ifndef EMU_ST
-            devmm_drv_err(
-                "Insert host range failed. (dst=0x%llx; byte_count=%llu)\n", copy_para->dst, copy_para->ByteCount);
+            devmm_drv_err("Insert host range failed. (dst=0x%llx; byte_count=%llu)\n", copy_para->dst,
+                          copy_para->ByteCount);
             return ret;
 #endif
         }
@@ -1383,9 +1355,8 @@ STATIC int devmm_uvm_check_non_uvm_addr(
     return ret;
 }
 
-STATIC int devmm_uvm_copy_prepare(
-    struct devmm_svm_process *svm_proc, struct devmm_mem_copy_para *copy_para, u32 logical_devid,
-    struct devmm_uvm_copy_ctx *ctx, bool src_is_uvm)
+STATIC int devmm_uvm_copy_prepare(struct devmm_svm_process *svm_proc, struct devmm_mem_copy_para *copy_para,
+                                  u32 logical_devid, struct devmm_uvm_copy_ctx *ctx, bool src_is_uvm)
 {
     struct devmm_memcpy_addr_info addr_info;
     bool local_is_dev;
@@ -1414,9 +1385,8 @@ STATIC int devmm_uvm_copy_prepare(
 
     ret = devmm_uvm_check_non_uvm_addr(svm_proc, copy_para, &ctx->src_attr, &ctx->dst_attr);
     if (ret != 0) {
-        devmm_drv_err(
-            "Check non uvm mem failed. (src=0x%llx; dst=0x%llx, src_is_uvm=%d)\n", copy_para->src, copy_para->dst,
-            src_is_uvm);
+        devmm_drv_err("Check non uvm mem failed. (src=0x%llx; dst=0x%llx, src_is_uvm=%d)\n", copy_para->src,
+                      copy_para->dst, src_is_uvm);
         return ret;
     }
 
@@ -1429,9 +1399,8 @@ STATIC int devmm_uvm_copy_prepare(
     return 0;
 }
 
-static int devmm_uvm_copy_loop_iter(
-    struct devmm_svm_process *svm_proc, struct devmm_mem_copy_para *copy_para, struct devmm_uvm_copy_ctx *ctx,
-    struct devmm_uvm_copy_loop_param *loop_param)
+static int devmm_uvm_copy_loop_iter(struct devmm_svm_process *svm_proc, struct devmm_mem_copy_para *copy_para,
+                                    struct devmm_uvm_copy_ctx *ctx, struct devmm_uvm_copy_loop_param *loop_param)
 {
     int ret = 0;
     u32 lock_idx = loop_param->lock_idx;
@@ -1463,12 +1432,12 @@ static int devmm_uvm_copy_loop_iter(
     ctx->task_para->count = copy_size;
     ctx->task_para->last_seq_flag = (offset + copy_size >= copy_para->ByteCount);
 
-    ret = devmm_uvm_memcpy_mixed_process(
-        svm_proc, ctx->task_para, src_is_uvm, &copy_info->src_attr, &copy_info->dst_attr);
+    ret = devmm_uvm_memcpy_mixed_process(svm_proc, ctx->task_para, src_is_uvm, &copy_info->src_attr,
+                                         &copy_info->dst_attr);
     if (ret != 0) {
-        devmm_drv_err_if(
-            (ret != -EOPNOTSUPP), "Memcpy error. (ret=%d; src=0x%llx; dst=0x%llx; count=%lu; direction=%u)\n", ret,
-            ctx->task_para->src, ctx->task_para->dst, ctx->task_para->count, ctx->task_para->direction);
+        devmm_drv_err_if((ret != -EOPNOTSUPP),
+                         "Memcpy error. (ret=%d; src=0x%llx; dst=0x%llx; count=%lu; direction=%u)\n", ret,
+                         ctx->task_para->src, ctx->task_para->dst, ctx->task_para->count, ctx->task_para->direction);
         if (ret != -EOPNOTSUPP) {
             devmm_print_pre_alloced_va(svm_proc, ctx->task_para->src);
             devmm_print_pre_alloced_va(svm_proc, ctx->task_para->dst);
@@ -1485,9 +1454,8 @@ unlock_exit:
     return ret;
 }
 
-STATIC int devmm_uvm_copy_loop(
-    struct devmm_svm_process *svm_proc, struct devmm_mem_copy_para *copy_para, struct devmm_uvm_copy_ctx *ctx,
-    bool src_is_uvm)
+STATIC int devmm_uvm_copy_loop(struct devmm_svm_process *svm_proc, struct devmm_mem_copy_para *copy_para,
+                               struct devmm_uvm_copy_ctx *ctx, bool src_is_uvm)
 {
     u64 offset = 0;
     u64 copy_size = 0;
@@ -1523,9 +1491,8 @@ STATIC int devmm_uvm_copy_loop(
     return 0;
 }
 
-STATIC int devmm_uvm_memcpy_mixed_proc(
-    struct devmm_svm_process *svm_proc, struct devmm_mem_copy_para *copy_para, bool src_is_uvm, u32 logical_devid,
-    struct devmm_mem_copy_convrt_para *task_para)
+STATIC int devmm_uvm_memcpy_mixed_proc(struct devmm_svm_process *svm_proc, struct devmm_mem_copy_para *copy_para,
+                                       bool src_is_uvm, u32 logical_devid, struct devmm_mem_copy_convrt_para *task_para)
 {
     int ret = 0;
     struct devmm_uvm_copy_ctx ctx = {.task_para = task_para};
@@ -1538,8 +1505,8 @@ STATIC int devmm_uvm_memcpy_mixed_proc(
     return devmm_uvm_copy_loop(svm_proc, copy_para, &ctx, src_is_uvm);
 }
 #endif
-void devmm_init_task_para(
-    struct devmm_mem_copy_convrt_para *task_para, bool last_seq_flag, bool create_msg, bool is_2d, u32 task_mode)
+void devmm_init_task_para(struct devmm_mem_copy_convrt_para *task_para, bool last_seq_flag, bool create_msg, bool is_2d,
+                          u32 task_mode)
 {
     task_para->task_id = (u32)ka_base_atomic_inc_return(&devmm_task_id);
     task_para->last_seq_flag = last_seq_flag;
@@ -1559,10 +1526,9 @@ int devmm_ioctl_memcpy_proc(struct devmm_svm_process *svm_proc, struct devmm_ioc
     struct devmm_mem_copy_convrt_para task_para = {0};
     u32 logical_devid = arg->head.devid; // not convert id
 
-    devmm_drv_debug(
-        "Enter devmm_ioctl_memcpy. (dst=0x%llx; src=0x%llx; ByteCount=0x%lx; dir=%d; logical_devid=%u)\n",
-        arg->data.copy_para.dst, arg->data.copy_para.src, arg->data.copy_para.ByteCount, arg->data.copy_para.direction,
-        logical_devid);
+    devmm_drv_debug("Enter devmm_ioctl_memcpy. (dst=0x%llx; src=0x%llx; ByteCount=0x%lx; dir=%d; logical_devid=%u)\n",
+                    arg->data.copy_para.dst, arg->data.copy_para.src, arg->data.copy_para.ByteCount,
+                    arg->data.copy_para.direction, logical_devid);
 
     if (copy_para->is_support_dev_local_addr) {
         if (copy_para->direction != DEVMM_COPY_DEVICE_TO_HOST) {
@@ -1584,9 +1550,9 @@ int devmm_ioctl_uvm_memcpy_proc(struct devmm_svm_process *svm_proc, struct devmm
     u32 logical_devid = arg->head.devid; // not convert id
     bool src_is_uvm, dst_is_uvm;
 
-    devmm_drv_debug(
-        "Enter devmm_ioctl_uvm_memcpy. (dst=0x%llx; src=0x%llx; ByteCount=0x%lx; dir=%d)\n", arg->data.copy_para.dst,
-        arg->data.copy_para.src, arg->data.copy_para.ByteCount, arg->data.copy_para.direction);
+    devmm_drv_debug("Enter devmm_ioctl_uvm_memcpy. (dst=0x%llx; src=0x%llx; ByteCount=0x%lx; dir=%d)\n",
+                    arg->data.copy_para.dst, arg->data.copy_para.src, arg->data.copy_para.ByteCount,
+                    arg->data.copy_para.direction);
 
     src_is_uvm = devmm_va_is_in_uvm_range(copy_para->src);
     if (src_is_uvm && !devmm_vaddr_and_size_is_in_uvm_range(copy_para->src, copy_para->ByteCount)) {
@@ -1632,8 +1598,8 @@ static void devmm_copy_task_handle(struct devmm_mem_copy_convrt_para *task_para,
     }
 }
 
-static int devmm_memcpy_batch_addr_info_init(
-    struct devmm_mem_copy_batch_para *batch_para, u64 **dst_arr, u64 **src_arr, size_t **size_arr)
+static int devmm_memcpy_batch_addr_info_init(struct devmm_mem_copy_batch_para *batch_para, u64 **dst_arr, u64 **src_arr,
+                                             size_t **size_arr)
 {
     u64 arg_size;
 
@@ -1644,8 +1610,8 @@ static int devmm_memcpy_batch_addr_info_init(
         return -ENOMEM;
     }
     if (ka_base_copy_from_user(*dst_arr, (void __ka_user *)(uintptr_t)(batch_para->dst), arg_size) != 0) {
-        devmm_drv_err(
-            "Copy_from_user dst args fail. (copy_size=%llu; dst=0x%llx)\n", arg_size, (u64)(uintptr_t)batch_para->dst);
+        devmm_drv_err("Copy_from_user dst args fail. (copy_size=%llu; dst=0x%llx)\n", arg_size,
+                      (u64)(uintptr_t)batch_para->dst);
         goto free_dst_args;
     }
 
@@ -1655,8 +1621,8 @@ static int devmm_memcpy_batch_addr_info_init(
         goto free_dst_args;
     }
     if (ka_base_copy_from_user(*src_arr, (void __ka_user *)(uintptr_t)(batch_para->src), arg_size) != 0) {
-        devmm_drv_err(
-            "Copy_from_user dst args fail. (copy_size=%llu; src=0x%llx)\n", arg_size, (u64)(uintptr_t)batch_para->src);
+        devmm_drv_err("Copy_from_user dst args fail. (copy_size=%llu; src=0x%llx)\n", arg_size,
+                      (u64)(uintptr_t)batch_para->src);
         goto free_src_args;
     }
 
@@ -1667,9 +1633,8 @@ static int devmm_memcpy_batch_addr_info_init(
         goto free_src_args;
     }
     if (ka_base_copy_from_user(*size_arr, (void __ka_user *)(uintptr_t)(batch_para->size), arg_size) != 0) {
-        devmm_drv_err(
-            "Copy_from_user size args fail. (copy_size=%llu; size_addr=0x%llx)\n", arg_size,
-            (u64)(uintptr_t)batch_para->size);
+        devmm_drv_err("Copy_from_user size args fail. (copy_size=%llu; size_addr=0x%llx)\n", arg_size,
+                      (u64)(uintptr_t)batch_para->size);
         goto free_size_args;
     }
     return 0;
@@ -1700,10 +1665,9 @@ static int devmm_memcpy_batch_para_check(struct devmm_mem_copy_batch_para *copy_
 {
     if ((copy_batch_para->dst == NULL) || (copy_batch_para->src == NULL) || (copy_batch_para->size == NULL) ||
         (copy_batch_para->addr_count == 0)) {
-        devmm_drv_err(
-            "Memcpy batch para check failed. (dst_is_null=%d; src_is_null=%d; size_is_null=%d; count=%llu)\n",
-            (copy_batch_para->dst == NULL), (copy_batch_para->src == NULL), (copy_batch_para->size == NULL),
-            (u64)copy_batch_para->addr_count);
+        devmm_drv_err("Memcpy batch para check failed. (dst_is_null=%d; src_is_null=%d; size_is_null=%d; count=%llu)\n",
+                      (copy_batch_para->dst == NULL), (copy_batch_para->src == NULL), (copy_batch_para->size == NULL),
+                      (u64)copy_batch_para->addr_count);
         return -EINVAL;
     }
     if (copy_batch_para->addr_count > DEVMM_MEMCPY_BATCH_MAX_COUNT) {
@@ -1712,8 +1676,8 @@ static int devmm_memcpy_batch_para_check(struct devmm_mem_copy_batch_para *copy_
     return 0;
 }
 
-static int devmm_memcpy_addr_info_get(
-    struct devmm_svm_process *svm_proc, struct devmm_ioctl_addr_info *info, u64 dst, u64 src, size_t size)
+static int devmm_memcpy_addr_info_get(struct devmm_svm_process *svm_proc, struct devmm_ioctl_addr_info *info, u64 dst,
+                                      u64 src, size_t size)
 {
     u32 cmd_flag = DEVMM_HAS_MUTIL_ADDR | DEVMM_ADD_SUB_REF;
     int ret;
@@ -1728,8 +1692,8 @@ static int devmm_memcpy_addr_info_get(
 
     ret = devmm_set_page_ref_before_ioctl(svm_proc, cmd_flag, info);
     if (ret != 0) {
-        devmm_drv_err(
-            "Memcpy addr info get failed. (dst=0x%llx; src=0x%llx; size=%llu; ret=%d)\n", dst, src, (u64)size, ret);
+        devmm_drv_err("Memcpy addr info get failed. (dst=0x%llx; src=0x%llx; size=%llu; ret=%d)\n", dst, src, (u64)size,
+                      ret);
         return ret;
     }
     return 0;
@@ -1747,8 +1711,8 @@ static void devmm_memcpy_task_wait_and_del(struct devmm_mem_copy_convrt_para *ta
     task_para->copy_task = NULL;
 }
 
-static int devmm_memcpy_batch_proc(
-    struct devmm_svm_process *svm_proc, u64 *dst_arr, u64 *src_arr, size_t *size_arr, uint32_t addr_count)
+static int devmm_memcpy_batch_proc(struct devmm_svm_process *svm_proc, u64 *dst_arr, u64 *src_arr, size_t *size_arr,
+                                   uint32_t addr_count)
 {
     struct devmm_mem_copy_para single_copy_para = {0};
     struct devmm_ioctl_addr_info addr_info = {0};
@@ -1762,8 +1726,8 @@ static int devmm_memcpy_batch_proc(
     for (i = 0; i < addr_count; i++) {
         ret = devmm_memcpy_addr_info_get(svm_proc, &addr_info, dst_arr[i], src_arr[i], size_arr[i]);
         if (ret != 0) {
-            devmm_drv_err(
-                "Memcpy batch get addr failed. (src=0x%llx; dst=0x%llx; ret=%d)\n", src_arr[i], dst_arr[i], ret);
+            devmm_drv_err("Memcpy batch get addr failed. (src=0x%llx; dst=0x%llx; ret=%d)\n", src_arr[i], dst_arr[i],
+                          ret);
             if (task_para.copy_task != NULL) {
                 devmm_memcpy_task_wait_and_del(&task_para);
             }
@@ -1774,9 +1738,9 @@ static int devmm_memcpy_batch_proc(
 
         ret = devmm_memcpy_proc(svm_proc, &single_copy_para, 0, &task_para);
         if (ret != 0) {
-            devmm_drv_no_err_if(
-                (ret == -EOPNOTSUPP), "Single memcpy task. (ret=%d; src=0x%llx; dst=0x%llx; index=%u)\n", ret,
-                src_arr[i], dst_arr[i], i);
+            devmm_drv_no_err_if((ret == -EOPNOTSUPP),
+                                "Single memcpy task. (ret=%d; src=0x%llx; dst=0x%llx; index=%u)\n", ret, src_arr[i],
+                                dst_arr[i], i);
             if (task_para.copy_task != NULL) {
                 devmm_memcpy_task_wait_and_del(&task_para);
             }
@@ -1805,15 +1769,15 @@ int devmm_ioctl_memcpy_batch(struct devmm_svm_process *svm_proc, struct devmm_io
 
     ret = devmm_memcpy_batch_addr_info_init(copy_batch_para, &dst_arr, &src_arr, &size_arr);
     if (ret != 0) {
-        devmm_drv_err(
-            "Memcpy batch info init failed. (ret=%d; addr_num=%u)\n", ret, arg->data.copy_batch_para.addr_count);
+        devmm_drv_err("Memcpy batch info init failed. (ret=%d; addr_num=%u)\n", ret,
+                      arg->data.copy_batch_para.addr_count);
         return ret;
     }
 
     ret = devmm_memcpy_batch_proc(svm_proc, dst_arr, src_arr, size_arr, copy_batch_para->addr_count);
     if (ret != 0) {
-        devmm_drv_no_err_if(
-            (ret == -EOPNOTSUPP), "Memcpy batch. (ret=%d; addr_num=%u)\n", ret, arg->data.copy_batch_para.addr_count);
+        devmm_drv_no_err_if((ret == -EOPNOTSUPP), "Memcpy batch. (ret=%d; addr_num=%u)\n", ret,
+                            arg->data.copy_batch_para.addr_count);
     }
 
     devmm_memcpy_batch_addr_info_uninit(&dst_arr, &src_arr, &size_arr);
@@ -1837,18 +1801,17 @@ int devmm_ioctl_async_memcpy_proc(struct devmm_svm_process *svm_proc, struct dev
 
     ret = devmm_memcpy_proc(svm_proc, &copy_para, arg->head.logical_devid, &task_para);
     if (ret != 0) {
-        devmm_drv_no_err_if(
-            (ret == -EOPNOTSUPP), "Async_memcpy convert. (dst=0x%llx; src=0x%llx; count=%lu)\n",
-            arg->data.async_copy_para.dst, arg->data.async_copy_para.src, arg->data.async_copy_para.byte_count);
+        devmm_drv_no_err_if((ret == -EOPNOTSUPP), "Async_memcpy convert. (dst=0x%llx; src=0x%llx; count=%lu)\n",
+                            arg->data.async_copy_para.dst, arg->data.async_copy_para.src,
+                            arg->data.async_copy_para.byte_count);
         return ret;
     }
     arg->data.async_copy_para.task_id = task_para.task_query_id;
     devmm_async_cpy_inc_addr_ref(svm_proc, copy_para.src, copy_para.dst, copy_para.ByteCount);
 
-    devmm_drv_debug(
-        "Asynchrony memcpy. (dst=0x%llx; src=0x%llx; count=%lu; did=%u; task_id=%d)\n", arg->data.async_copy_para.dst,
-        arg->data.async_copy_para.src, arg->data.async_copy_para.byte_count, task_para.dev_id,
-        arg->data.async_copy_para.task_id);
+    devmm_drv_debug("Asynchrony memcpy. (dst=0x%llx; src=0x%llx; count=%lu; did=%u; task_id=%d)\n",
+                    arg->data.async_copy_para.dst, arg->data.async_copy_para.src, arg->data.async_copy_para.byte_count,
+                    task_para.dev_id, arg->data.async_copy_para.task_id);
 
     return 0;
 }
@@ -1860,8 +1823,8 @@ int devmm_ioctl_cpy_result_refresh(struct devmm_svm_process *svm_proc, struct de
 
 int devmm_ioctl_sumbit_convert_dma(struct devmm_svm_process *svm_proc, struct devmm_ioctl_arg *arg)
 {
-    return devmm_sumbit_convert_dma_proc(
-        svm_proc, &arg->data.convert_copy_para.dmaAddr, arg->data.convert_copy_para.sync_flag);
+    return devmm_sumbit_convert_dma_proc(svm_proc, &arg->data.convert_copy_para.dmaAddr,
+                                         arg->data.convert_copy_para.sync_flag);
 }
 
 int devmm_ioctl_wait_convert_dma_result(struct devmm_svm_process *svm_proc, struct devmm_ioctl_arg *arg)
@@ -1872,10 +1835,9 @@ int devmm_ioctl_wait_convert_dma_result(struct devmm_svm_process *svm_proc, stru
 int devmm_check_memcpy2d_input(enum devmm_copy_direction dir, u64 spitch, u64 dpitch, u64 width, u64 height)
 {
     if ((width > dpitch) || (width > spitch)) {
-        devmm_drv_err(
-            "Dpitch and spitch should both larger than width. (dpitch=%llu; spitch=%llu; "
-            "width=%llu)\n",
-            dpitch, spitch, width);
+        devmm_drv_err("Dpitch and spitch should both larger than width. (dpitch=%llu; spitch=%llu; "
+                      "width=%llu)\n",
+                      dpitch, spitch, width);
         return -EINVAL;
     }
     if ((width == 0) || (height == 0)) {
@@ -1891,8 +1853,8 @@ int devmm_check_memcpy2d_input(enum devmm_copy_direction dir, u64 spitch, u64 dp
     return 0;
 }
 
-static int _devmm_vmmas_occupy_inc_before_memcpy_proc(
-    struct devmm_svm_process *svm_proc, u64 va, u64 size, struct devmm_svm_heap **heap)
+static int _devmm_vmmas_occupy_inc_before_memcpy_proc(struct devmm_svm_process *svm_proc, u64 va, u64 size,
+                                                      struct devmm_svm_heap **heap)
 {
     struct devmm_svm_heap *tmp_heap = NULL;
     int ret;
@@ -1926,9 +1888,9 @@ static void _devmm_vmmas_occupy_dec_after_memcpy_proc(struct devmm_svm_heap *hea
     }
 }
 
-static int devmm_vmmas_occupy_inc_before_memcpy_proc(
-    struct devmm_svm_process *svm_proc, struct devmm_mem_copy_para *copy_para, struct devmm_svm_heap **src_heap,
-    struct devmm_svm_heap **dst_heap)
+static int devmm_vmmas_occupy_inc_before_memcpy_proc(struct devmm_svm_process *svm_proc,
+                                                     struct devmm_mem_copy_para *copy_para,
+                                                     struct devmm_svm_heap **src_heap, struct devmm_svm_heap **dst_heap)
 {
     int ret;
 
@@ -1945,16 +1907,15 @@ static int devmm_vmmas_occupy_inc_before_memcpy_proc(
     return 0;
 }
 
-static void devmm_vmmas_occupy_dec_after_memcpy_proc(
-    struct devmm_mem_copy_para *copy_para, struct devmm_svm_heap *src_heap, struct devmm_svm_heap *dst_heap)
+static void devmm_vmmas_occupy_dec_after_memcpy_proc(struct devmm_mem_copy_para *copy_para,
+                                                     struct devmm_svm_heap *src_heap, struct devmm_svm_heap *dst_heap)
 {
     _devmm_vmmas_occupy_dec_after_memcpy_proc(src_heap, copy_para->src, copy_para->ByteCount);
     _devmm_vmmas_occupy_dec_after_memcpy_proc(dst_heap, copy_para->dst, copy_para->ByteCount);
 }
 
-static int devmm_memcpy2d_proc(
-    struct devmm_svm_process *svm_proc, struct devmm_mem_copy_para *copy_para, u32 logical_devid,
-    struct devmm_mem_copy_convrt_para *task_para)
+static int devmm_memcpy2d_proc(struct devmm_svm_process *svm_proc, struct devmm_mem_copy_para *copy_para,
+                               u32 logical_devid, struct devmm_mem_copy_convrt_para *task_para)
 {
     struct devmm_svm_heap *src_heap = NULL;
     struct devmm_svm_heap *dst_heap = NULL;
@@ -1985,10 +1946,9 @@ int devmm_ioctl_memcpy2d_proc(struct devmm_svm_process *svm_proc, struct devmm_i
     u64 addr_cnt;
     int ret;
 
-    devmm_drv_debug(
-        "Enter devmm_ioctl_memcpy2d. (dst=0x%llx; src=0x%llx; dpitch=%llu; spitch=%llu; "
-        "width=%llu; height=%llu; direction=%u)\n",
-        dst, src, dpitch, spitch, width, height, dir);
+    devmm_drv_debug("Enter devmm_ioctl_memcpy2d. (dst=0x%llx; src=0x%llx; dpitch=%llu; spitch=%llu; "
+                    "width=%llu; height=%llu; direction=%u)\n",
+                    dst, src, dpitch, spitch, width, height, dir);
 
     ret = devmm_check_memcpy2d_input(dir, spitch, dpitch, width, height);
     if (ret != 0) {
@@ -1996,8 +1956,8 @@ int devmm_ioctl_memcpy2d_proc(struct devmm_svm_process *svm_proc, struct devmm_i
     }
 
     if ((height != 1) && (((src + spitch) < src) || ((dst + dpitch) < dst))) {
-        devmm_drv_err(
-            "Pitch is invalid. (src=0x%llx; dst=0x%llx; spitch=%llu; dpitch=%llu)\n", src, dst, spitch, dpitch);
+        devmm_drv_err("Pitch is invalid. (src=0x%llx; dst=0x%llx; spitch=%llu; dpitch=%llu)\n", src, dst, spitch,
+                      dpitch);
         return -EINVAL;
     }
 
@@ -2021,13 +1981,12 @@ int devmm_ioctl_memcpy2d_proc(struct devmm_svm_process *svm_proc, struct devmm_i
 
         ret = devmm_memcpy2d_proc(svm_proc, &copy_para, arg->head.logical_devid, &task_para);
         if (ret != 0) {
-            devmm_drv_no_err_if(
-                (ret == -EOPNOTSUPP),
-                "Memcpy2d proc. (dst=0x%llx; src=0x%llx; dpitch=%llu; spitch=%llu; "
-                "width=%llu; height=%llu; direction=%u; current_dst=0x%llx; current_src=0x%llx; "
-                "current_height=%llu)\n",
-                arg->data.copy2d_para.dst, arg->data.copy2d_para.src, dpitch, spitch, width, height, dir, dst, src,
-                addr_cnt);
+            devmm_drv_no_err_if((ret == -EOPNOTSUPP),
+                                "Memcpy2d proc. (dst=0x%llx; src=0x%llx; dpitch=%llu; spitch=%llu; "
+                                "width=%llu; height=%llu; direction=%u; current_dst=0x%llx; current_src=0x%llx; "
+                                "current_height=%llu)\n",
+                                arg->data.copy2d_para.dst, arg->data.copy2d_para.src, dpitch, spitch, width, height,
+                                dir, dst, src, addr_cnt);
             if (task_para.copy_task != NULL) {
                 devmm_wait_task_finish(task_para.dev_id, &task_para.copy_task->finish_num, (int)task_para.seq);
                 devmm_task_del(task_para.copy_task);

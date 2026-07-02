@@ -40,8 +40,8 @@ static int _mms_stats_mem_cfg(struct mms_ctx *mms_ctx, u64 va)
     mms_ctx->uva = uva;
     mms_ctx->npage_num = ka_base_round_up(sizeof(struct mms_stats), KA_MM_PAGE_SIZE) / KA_MM_PAGE_SIZE;
 
-    mms_ctx->pages =
-        (ka_page_t **)svm_kvmalloc(mms_ctx->npage_num * sizeof(ka_page_t *), KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
+    mms_ctx->pages = (ka_page_t **)svm_kvmalloc(mms_ctx->npage_num * sizeof(ka_page_t *),
+                                                KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
     if (mms_ctx->pages == NULL) {
         svm_err("mms pages array failed. (udevid=%u; va=0x%llx; num=%llu)\n", udevid, uva, mms_ctx->npage_num);
         return -ENOMEM;
@@ -49,9 +49,8 @@ static int _mms_stats_mem_cfg(struct mms_ctx *mms_ctx, u64 va)
 
     ret = svm_pin_uva_npages(uva, mms_ctx->npage_num, gup_flag, mms_ctx->pages, &mms_ctx->is_pfn_map);
     if (ret != 0) {
-        svm_err(
-            "mms pin user pages failed. (ret=%d; udevid=%u; va=0x%llx; num=%llu)\n", ret, udevid, uva,
-            mms_ctx->npage_num);
+        svm_err("mms pin user pages failed. (ret=%d; udevid=%u; va=0x%llx; num=%llu)\n", ret, udevid, uva,
+                mms_ctx->npage_num);
         svm_kvfree(mms_ctx->pages);
         mms_ctx->pages = NULL;
         return ret;
@@ -102,20 +101,18 @@ void mms_stats_mem_decfg(struct mms_ctx *mms_ctx)
     ka_task_up_write(&mms_ctx->rw_sem);
 }
 
-static void mms_print_mem_stats(
-    ka_seq_file_t *seq, u32 udevid, u32 module_id, const char *type_name, const char *module_name,
-    struct mms_type_stats *type_stats)
+static void mms_print_mem_stats(ka_seq_file_t *seq, u32 udevid, u32 module_id, const char *type_name,
+                                const char *module_name, struct mms_type_stats *type_stats)
 {
     if (seq != NULL) {
-        ka_fs_seq_printf(
-            seq, "dev%-5d%-24s%-16s%-16u%-24llu%-24llu%-16llu%-16llu\n", udevid, type_name, module_name, module_id,
-            type_stats->alloced_size, type_stats->alloced_peak_size, type_stats->alloc_cnt, type_stats->free_cnt);
+        ka_fs_seq_printf(seq, "dev%-5d%-24s%-16s%-16u%-24llu%-24llu%-16llu%-16llu\n", udevid, type_name, module_name,
+                         module_id, type_stats->alloced_size, type_stats->alloced_peak_size, type_stats->alloc_cnt,
+                         type_stats->free_cnt);
     } else {
-        svm_info(
-            "udevid=dev%u; type_name=%s; module_name=%s; module_id=%u; alloced_size=%llu; alloc_cnt=%llu; "
-            "free_cnt=%llu;\n",
-            udevid, type_name, module_name, module_id, type_stats->alloced_size, type_stats->alloc_cnt,
-            type_stats->free_cnt);
+        svm_info("udevid=dev%u; type_name=%s; module_name=%s; module_id=%u; alloced_size=%llu; alloc_cnt=%llu; "
+                 "free_cnt=%llu;\n",
+                 udevid, type_name, module_name, module_id, type_stats->alloced_size, type_stats->alloc_cnt,
+                 type_stats->free_cnt);
     }
 }
 
@@ -144,9 +141,8 @@ static void _mms_mem_task_show(u32 udevid, struct mms_stats *mms_stats, ka_seq_f
             if (type_stats->alloc_cnt == 0) {
                 continue;
             }
-            mms_print_mem_stats(
-                seq, udevid, module_id, get_mms_type_name(mms_type), SVM_GET_MODULE_NAME(svm_module_name, module_id),
-                type_stats);
+            mms_print_mem_stats(seq, udevid, module_id, get_mms_type_name(mms_type),
+                                SVM_GET_MODULE_NAME(svm_module_name, module_id), type_stats);
         }
     }
 }

@@ -32,10 +32,9 @@
 static int async_copy_batch_para_check(struct svm_async_copy_submit_batch_para *para)
 {
     if ((para->src_va == NULL) || (para->dst_va == NULL) || (para->size == NULL) || (para->count == 0)) {
-        svm_err(
-            "Ioctl input para invalid. (src_va_is_null=%d; dst_va_is_null=%d; size_is_null=%d; "
-            "count=%llu)\n",
-            (para->src_va == NULL), (para->dst_va == NULL), (para->size == NULL), para->count);
+        svm_err("Ioctl input para invalid. (src_va_is_null=%d; dst_va_is_null=%d; size_is_null=%d; "
+                "count=%llu)\n",
+                (para->src_va == NULL), (para->dst_va == NULL), (para->size == NULL), para->count);
         return -EINVAL;
     }
 
@@ -46,8 +45,8 @@ static int async_copy_batch_para_check(struct svm_async_copy_submit_batch_para *
     return 0;
 }
 
-static int async_cpy_batch_addr_array_alloc(
-    struct svm_async_copy_submit_batch_para *para, struct copy_batch_va_info *info)
+static int async_cpy_batch_addr_array_alloc(struct svm_async_copy_submit_batch_para *para,
+                                            struct copy_batch_va_info *info)
 {
     u64 array_size = para->count * sizeof(u64);
 
@@ -90,36 +89,34 @@ static void async_cpy_batch_addr_array_free(struct copy_batch_va_info *info)
     info->size = NULL;
 }
 
-static int async_cpy_batch_addr_array_cpy(
-    struct svm_async_copy_submit_batch_para *para, struct copy_batch_va_info *info)
+static int async_cpy_batch_addr_array_cpy(struct svm_async_copy_submit_batch_para *para,
+                                          struct copy_batch_va_info *info)
 {
     u64 array_size = para->count * sizeof(u64);
 
     if (ka_base_copy_from_user(info->src_va, (void __ka_user *)(uintptr_t)(para->src_va), array_size) != 0) {
-        svm_err(
-            "Copy from user dst args fail. (array_size=%llu; src_va=0x%llx)\n", array_size,
-            (u64)(uintptr_t)para->src_va);
+        svm_err("Copy from user dst args fail. (array_size=%llu; src_va=0x%llx)\n", array_size,
+                (u64)(uintptr_t)para->src_va);
         return -EINVAL;
     }
 
     if (ka_base_copy_from_user(info->dst_va, (void __ka_user *)(uintptr_t)(para->dst_va), array_size) != 0) {
-        svm_err(
-            "Copy from user dst_va fail. (array_size=%llu; dst_va=0x%llx)\n", array_size, (u64)(uintptr_t)para->dst_va);
+        svm_err("Copy from user dst_va fail. (array_size=%llu; dst_va=0x%llx)\n", array_size,
+                (u64)(uintptr_t)para->dst_va);
         return -EINVAL;
     }
 
     if (ka_base_copy_from_user(info->size, (void __ka_user *)(uintptr_t)(para->size), array_size) != 0) {
-        svm_err(
-            "Copy from user size_addr fail. (array_size=%llu; size_addr=0x%llx)\n", array_size,
-            (u64)(uintptr_t)para->size);
+        svm_err("Copy from user size_addr fail. (array_size=%llu; size_addr=0x%llx)\n", array_size,
+                (u64)(uintptr_t)para->size);
         return -EINVAL;
     }
 
     return 0;
 }
 
-static int _async_cpy_batch_addr_info_init(
-    struct svm_async_copy_submit_batch_para *para, struct copy_batch_va_info *info)
+static int _async_cpy_batch_addr_info_init(struct svm_async_copy_submit_batch_para *para,
+                                           struct copy_batch_va_info *info)
 {
     int ret;
 
@@ -138,8 +135,8 @@ static int _async_cpy_batch_addr_info_init(
     return 0;
 }
 
-static int async_cpy_batch_addr_info_init(
-    struct svm_async_copy_submit_batch_para *para, struct copy_batch_va_info *info)
+static int async_cpy_batch_addr_info_init(struct svm_async_copy_submit_batch_para *para,
+                                          struct copy_batch_va_info *info)
 {
     int ret;
 
@@ -158,10 +155,13 @@ static int async_cpy_batch_addr_info_init(
     return _async_cpy_batch_addr_info_init(para, info);
 }
 
-static void async_cpy_batch_addr_info_uninit(struct copy_batch_va_info *info) { async_cpy_batch_addr_array_free(info); }
+static void async_cpy_batch_addr_info_uninit(struct copy_batch_va_info *info)
+{
+    async_cpy_batch_addr_array_free(info);
+}
 
-static int _async_copy_submit_batch(
-    struct async_copy_ctx *ctx, struct svm_async_copy_submit_batch_para *para, struct copy_batch_va_info *info)
+static int _async_copy_submit_batch(struct async_copy_ctx *ctx, struct svm_async_copy_submit_batch_para *para,
+                                    struct copy_batch_va_info *info)
 {
     int ret;
 
@@ -180,8 +180,8 @@ static int _async_copy_submit_batch(
     return ret;
 }
 
-static int async_copy_submit_batch(
-    struct async_copy_ctx *ctx, struct svm_async_copy_submit_batch_para *para, struct copy_batch_va_info *info)
+static int async_copy_submit_batch(struct async_copy_ctx *ctx, struct svm_async_copy_submit_batch_para *para,
+                                   struct copy_batch_va_info *info)
 {
     int ret;
 
@@ -199,8 +199,8 @@ static int _async_copy_ioctl_submit_batch(struct async_copy_ctx *ctx, unsigned l
     struct copy_batch_va_info info;
     int ret;
 
-    if (ka_base_copy_from_user(
-            &para, (void __ka_user *)(uintptr_t)arg, sizeof(struct svm_async_copy_submit_batch_para)) != 0) {
+    if (ka_base_copy_from_user(&para, (void __ka_user *)(uintptr_t)arg,
+                               sizeof(struct svm_async_copy_submit_batch_para)) != 0) {
         svm_err("Copy from user batch cpy ioctl para fail.\n");
         return -EINVAL;
     }

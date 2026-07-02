@@ -92,7 +92,10 @@ int svm_pmq_client_cp_pa_query(u32 udevid, u64 va, u64 size, svm_pa_seg_wraper_t
 KA_EXPORT_SYMBOL_GPL(svm_pmq_client_cp_pa_query);
 
 /* Needed by operator package development, stubbing is done first, and subsequent adaptation will be required. */
-int hal_kernel_svm_dev_va_to_dma_addr(int pid, u32 udevid, u64 va, u64 *dma_addr) { return -EOPNOTSUPP; }
+int hal_kernel_svm_dev_va_to_dma_addr(int pid, u32 udevid, u64 va, u64 *dma_addr)
+{
+    return -EOPNOTSUPP;
+}
 KA_EXPORT_SYMBOL_GPL(hal_kernel_svm_dev_va_to_dma_addr);
 
 static int pmq_h2d_init_pa_handle(u32 udevid)
@@ -112,8 +115,8 @@ static int pmq_h2d_init_pa_handle(u32 udevid)
     return ret;
 }
 
-static int pmq_local_pa_get(u32 udevid, struct svm_global_va *src_info,
-    struct svm_pa_seg pa_seg[], u64 *seg_num, u64 flag)
+static int pmq_local_pa_get(u32 udevid, struct svm_global_va *src_info, struct svm_pa_seg pa_seg[], u64 *seg_num,
+                            u64 flag)
 {
     SVM_UNUSED(flag);
     return svm_pmq_pa_get(src_info->tgid, src_info->va, src_info->size, pa_seg, seg_num);
@@ -155,8 +158,8 @@ static int pmq_trans_pa_d2h(u32 udevid, struct svm_pa_seg pa_seg[], u64 seg_num)
     return 0;
 }
 
-static int pmq_d2h_pa_get(u32 udevid, struct svm_global_va *src_info,
-    struct svm_pa_seg pa_seg[], u64 *seg_num, u64 flag)
+static int pmq_d2h_pa_get(u32 udevid, struct svm_global_va *src_info, struct svm_pa_seg pa_seg[], u64 *seg_num,
+                          u64 flag)
 {
     int ret;
 
@@ -228,7 +231,8 @@ int pmq_client_host_init_dev(u32 udevid)
 }
 DECLAER_FEATURE_AUTO_INIT_DEV(pmq_client_host_init_dev, FEATURE_LOADER_STAGE_3);
 
-void pmq_client_host_uninit_dev(u32 udevid) {}
+void pmq_client_host_uninit_dev(u32 udevid)
+{}
 DECLAER_FEATURE_AUTO_UNINIT_DEV(pmq_client_host_uninit_dev, FEATURE_LOADER_STAGE_3);
 
 static inline int pmq_client_smp_pin_mem(u32 devid, int tgid, u64 va, u64 size, bool cp_only_flag)
@@ -249,8 +253,8 @@ static inline int pmq_client_smp_unpin_mem(u32 devid, int tgid, u64 va, u64 size
     return svm_smp_unpin_mem(devid, tgid, va, size, false);
 }
 
-static int pmq_client_get_mem_pa_list_proc(
-    u32 devid, int tgid, struct ka_mem_attr *mem, u64 *pa_num, struct ka_pa_wraper *pa_list)
+static int pmq_client_get_mem_pa_list_proc(u32 devid, int tgid, struct ka_mem_attr *mem, u64 *pa_num,
+                                           struct ka_pa_wraper *pa_list)
 {
     int ret = 0;
 
@@ -277,9 +281,8 @@ static int pmq_client_get_mem_pa_list_proc(
     }
     if (mem->size != svm_get_pa_size((struct svm_pa_seg *)pa_list, *pa_num)) {
         (void)pmq_client_smp_unpin_mem(devid, tgid, mem->addr, mem->size, mem->cp_only_flag);
-        svm_err(
-            "Invalid mem size. (devid=%u; tgid=%d; size=%llu; pa_size=%llu)\n", devid, tgid, mem->size,
-            svm_get_pa_size((struct svm_pa_seg *)pa_list, *pa_num));
+        svm_err("Invalid mem size. (devid=%u; tgid=%d; size=%llu; pa_size=%llu)\n", devid, tgid, mem->size,
+                svm_get_pa_size((struct svm_pa_seg *)pa_list, *pa_num));
         return -EINVAL;
     }
 
@@ -298,8 +301,8 @@ static int pmq_client_get_mem_pa_list_proc(
     return 0;
 }
 
-static int pmq_client_put_mem_pa_list_proc(
-    u32 devid, int tgid, struct ka_mem_attr *mem, u64 pa_num, struct ka_pa_wraper *pa_list)
+static int pmq_client_put_mem_pa_list_proc(u32 devid, int tgid, struct ka_mem_attr *mem, u64 pa_num,
+                                           struct ka_pa_wraper *pa_list)
 {
     int ret = 0;
 
@@ -328,5 +331,8 @@ int pmq_client_host_init(void)
 }
 DECLAER_FEATURE_AUTO_INIT(pmq_client_host_init, FEATURE_LOADER_STAGE_9);
 
-void pmq_client_host_uninit(void) { hal_kernel_unregister_mem_query_ops(); }
+void pmq_client_host_uninit(void)
+{
+    hal_kernel_unregister_mem_query_ops();
+}
 DECLAER_FEATURE_AUTO_UNINIT(pmq_client_host_uninit, FEATURE_LOADER_STAGE_9);

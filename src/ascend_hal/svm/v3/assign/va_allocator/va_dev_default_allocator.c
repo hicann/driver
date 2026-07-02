@@ -38,7 +38,10 @@ static u64 va_get_dev_default_reserve_size(u32 devid)
     return (devid < SVM_MAX_AGENT_NUM) ? VA_DEV_DEFAULT_DEV_RESERVE_SIZE : VA_DEV_DEFAULT_HOST_RESERVE_SIZE;
 }
 
-u64 va_get_dev_default_alloc_max_size(u32 devid) { return va_get_dev_default_reserve_size(devid); }
+u64 va_get_dev_default_alloc_max_size(u32 devid)
+{
+    return va_get_dev_default_reserve_size(devid);
+}
 
 static int _va_dev_default_va_expand(void *mga_inst, u64 fixed_va, u64 *size, u64 *va)
 {
@@ -97,9 +100,8 @@ static int va_dev_default_host_va_expand_with_retry(void *mga_inst, u64 *size, u
         }
     }
 
-    svm_err(
-        "Reserve va failed after retries. (start_va=0x%llx; max_va=0x%llx; size=%llu)\n", start_va,
-        VA_DEV_DEFAULT_HOST_VA_MAX, *size);
+    svm_err("Reserve va failed after retries. (start_va=0x%llx; max_va=0x%llx; size=%llu)\n", start_va,
+            VA_DEV_DEFAULT_HOST_VA_MAX, *size);
     return DRV_ERROR_OUT_OF_MEMORY;
 }
 
@@ -147,7 +149,10 @@ static void *va_dev_default_mga_inst_create(u32 devid)
     return mga_inst;
 }
 
-static void va_dev_default_mga_inst_destroy(void *mga_inst) { mga_inst_destroy(mga_inst); }
+static void va_dev_default_mga_inst_destroy(void *mga_inst)
+{
+    mga_inst_destroy(mga_inst);
+}
 
 int va_dev_default_allocator_dev_init(u32 devid)
 {

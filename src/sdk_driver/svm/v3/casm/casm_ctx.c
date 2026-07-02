@@ -47,7 +47,10 @@ struct casm_ctx *casm_ctx_get(u32 udevid, int tgid)
     return ctx;
 }
 
-void casm_ctx_put(struct casm_ctx *ctx) { svm_task_ctx_put(ctx->task_ctx); }
+void casm_ctx_put(struct casm_ctx *ctx)
+{
+    svm_task_ctx_put(ctx->task_ctx);
+}
 
 static void casm_ctx_init(u32 udevid, struct casm_ctx *ctx)
 {
@@ -154,5 +157,6 @@ int svm_casm_init(void)
 }
 DECLAER_FEATURE_AUTO_INIT(svm_casm_init, FEATURE_LOADER_STAGE_5);
 
-void svm_casm_uninit(void) {}
+void svm_casm_uninit(void)
+{}
 DECLAER_FEATURE_AUTO_UNINIT(svm_casm_uninit, FEATURE_LOADER_STAGE_5);

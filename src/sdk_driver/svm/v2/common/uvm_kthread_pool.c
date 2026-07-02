@@ -22,8 +22,8 @@ static int kthread_worker(void *data)
     struct kthread_task *task;
 
     while (!ka_task_kthread_should_stop()) {
-        ka_task_wait_event_interruptible(
-            pool->waitq, !ka_list_empty(&pool->task_list) || ka_task_kthread_should_stop());
+        ka_task_wait_event_interruptible(pool->waitq,
+                                         !ka_list_empty(&pool->task_list) || ka_task_kthread_should_stop());
 
         if (ka_task_kthread_should_stop()) {
             break;

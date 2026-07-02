@@ -24,7 +24,10 @@ struct devmm_host_obmm_info {
 struct devmm_host_obmm_info *g_obmm_info = NULL;
 
 /* This func is time-consuming operation, may cause performance problem. */
-static bool devmm_pa_is_local_mem(u64 pa) { return ka_mm_page_is_ram(KA_MM_PFN_DOWN(pa)); }
+static bool devmm_pa_is_local_mem(u64 pa)
+{
+    return ka_mm_page_is_ram(KA_MM_PFN_DOWN(pa));
+}
 
 int devmm_obmm_init(void)
 {
@@ -79,7 +82,10 @@ static bool devmm_is_support_fabric_page(void)
     return (record_val > 0);
 }
 
-bool devmm_support_host_giant_page(void) { return ((g_obmm_info != NULL) && devmm_is_support_fabric_page()); }
+bool devmm_support_host_giant_page(void)
+{
+    return ((g_obmm_info != NULL) && devmm_is_support_fabric_page());
+}
 
 static ka_mutex_t *devmm_master_get_lock_by_numa(int numa_id)
 {
@@ -146,9 +152,8 @@ static u64 devmm_master_alloc_interleaving_large_pages(ka_page_t **pages, u64 pg
 
                 nlock = devmm_master_get_lock_by_numa(ka_mm_pfn_to_nid(start_pfn));
                 if (ka_unlikely(nlock == NULL)) {
-                    devmm_drv_err(
-                        "invalid numa id. (numa:%d; max:%d)\n", (int)ka_mm_pfn_to_nid(start_pfn),
-                        (int)SVM_MASTER_NUMA_MAX);
+                    devmm_drv_err("invalid numa id. (numa:%d; max:%d)\n", (int)ka_mm_pfn_to_nid(start_pfn),
+                                  (int)SVM_MASTER_NUMA_MAX);
                     return alloced;
                 }
 
@@ -158,8 +163,8 @@ static u64 devmm_master_alloc_interleaving_large_pages(ka_page_t **pages, u64 pg
                 if (ret == 0) {
                     pages[alloced] = ka_mm_pfn_to_page(start_pfn);
                     (void)memset_s(ka_mm_page_address(pages[alloced++]), pg_size, 0, pg_size);
-                    devmm_drv_debug(
-                        "alloc interleaving pages. (cpu_id:%u; pg_size:0x%llx pa:%pk)\n", node_id, pg_size, (void *)pa);
+                    devmm_drv_debug("alloc interleaving pages. (cpu_id:%u; pg_size:0x%llx pa:%pk)\n", node_id, pg_size,
+                                    (void *)pa);
                     // set DEVMM_S2S_HOST_NODE_NUM + 1U, indicates that 'alloced' has changed
                     i = DEVMM_S2S_HOST_NODE_NUM + 1U;
                     break;
@@ -227,8 +232,8 @@ static u64 devmm_master_alloc_numa_large_pages(u32 numa_id, ka_page_t **pages, u
                 if (ka_mm_alloc_contig_range(start_pfn, end_pfn, KA_MIGRATE_MOVABLE, gfp_mask) == 0) {
                     pages[alloced] = ka_mm_pfn_to_page(start_pfn);
                     (void)memset_s(ka_mm_page_address(pages[alloced++]), pg_size, 0, pg_size);
-                    devmm_drv_debug(
-                        "alloc normal pages. (numa:%u; pg_size:0x%llx pa:%pk)\n", cur_numa, pg_size, (void *)pa);
+                    devmm_drv_debug("alloc normal pages. (numa:%u; pg_size:0x%llx pa:%pk)\n", cur_numa, pg_size,
+                                    (void *)pa);
                 }
             }
             ka_task_mutex_unlock(nlock);
@@ -315,7 +320,10 @@ void devmm_master_free_huge_pages(struct devmm_phy_addr_attr *attr, ka_page_t **
     }
 }
 
-static bool devmm_is_specified_numa(u32 numa_id) { return !((numa_id == -1) || (numa_id == 0)); }
+static bool devmm_is_specified_numa(u32 numa_id)
+{
+    return !((numa_id == -1) || (numa_id == 0));
+}
 
 static u64 devmm_master_alloc_normal_large_pages(u32 numa, ka_page_t **pages, u64 pg_num, u64 pg_size, u32 gfp_mask)
 {
@@ -346,8 +354,8 @@ int devmm_master_alloc_huge_pages(struct devmm_phy_addr_attr *attr, ka_page_t **
     if (attr->mem_type == MEM_P2P_DDR_TYPE && devmm_is_support_fabric_page()) {
         alloced = devmm_master_alloc_huge_page_by_cma(attr->numa_id, pages, pg_num, gfp_mask);
     } else {
-        alloced =
-            devmm_master_alloc_normal_large_pages(attr->numa_id, pages, pg_num, SVM_MASTER_HUGE_PAGE_SIZE, gfp_mask);
+        alloced = devmm_master_alloc_normal_large_pages(attr->numa_id, pages, pg_num, SVM_MASTER_HUGE_PAGE_SIZE,
+                                                        gfp_mask);
     }
 #else
     alloced = devmm_master_alloc_normal_large_pages(attr->numa_id, pages, pg_num, SVM_MASTER_HUGE_PAGE_SIZE, gfp_mask);
@@ -396,8 +404,8 @@ int devmm_master_alloc_giant_pages(struct devmm_phy_addr_attr *attr, ka_page_t *
     }
 #else
 #ifdef EMU_ST
-    alloced = devmm_master_alloc_normal_large_pages(
-        attr->numa_id, pages, pg_num, SVM_MASTER_GIANT_PAGE_SIZE, devmm_get_alloc_mask(true, true));
+    alloced = devmm_master_alloc_normal_large_pages(attr->numa_id, pages, pg_num, SVM_MASTER_GIANT_PAGE_SIZE,
+                                                    devmm_get_alloc_mask(true, true));
 #endif
 #endif
     if (alloced != pg_num) {

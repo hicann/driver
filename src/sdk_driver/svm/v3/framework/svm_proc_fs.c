@@ -88,12 +88,12 @@ void svm_proc_fs_del_task(ka_proc_dir_entry_t *task_entry)
     }
 }
 
-void svm_proc_task_add_feature(
-    u32 udevid, int tgid, ka_proc_dir_entry_t *task_entry, u32 feature_id, const char *feature_name)
+void svm_proc_task_add_feature(u32 udevid, int tgid, ka_proc_dir_entry_t *task_entry, u32 feature_id,
+                               const char *feature_name)
 {
     u64 priv = (u32)tgid | ((u64)(udevid) << 32) | ((u64)(feature_id) << 48); /* udevid 32-47, feature_id 48-63 */
-    (void)ka_fs_proc_create_data(
-        feature_name, SVM_PROC_FS_MODE, task_entry, &svm_task_feature, (void *)(uintptr_t)priv);
+    (void)ka_fs_proc_create_data(feature_name, SVM_PROC_FS_MODE, task_entry, &svm_task_feature,
+                                 (void *)(uintptr_t)priv);
 }
 
 ka_proc_dir_entry_t *svm_proc_fs_add_dev(u32 udevid, u32 inst)

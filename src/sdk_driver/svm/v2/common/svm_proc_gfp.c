@@ -17,8 +17,8 @@
 #include "ka_memory_pub.h"
 #include "svm_define.h"
 
-int devmm_proc_alloc_pages(
-    struct devmm_svm_process *svm_proc, struct devmm_phy_addr_attr *attr, ka_page_t **pages, u64 pg_num)
+int devmm_proc_alloc_pages(struct devmm_svm_process *svm_proc, struct devmm_phy_addr_attr *attr, ka_page_t **pages,
+                           u64 pg_num)
 {
     ka_mem_cgroup_t *memcg = NULL;
     ka_mem_cgroup_t *old_memcg = NULL;
@@ -45,8 +45,8 @@ int devmm_proc_alloc_pages(
     return ret;
 }
 
-void devmm_proc_free_pages(
-    struct devmm_svm_process *svm_proc, struct devmm_phy_addr_attr *attr, ka_page_t **pages, u64 pg_num)
+void devmm_proc_free_pages(struct devmm_svm_process *svm_proc, struct devmm_phy_addr_attr *attr, ka_page_t **pages,
+                           u64 pg_num)
 {
     if (svm_proc != NULL) {
         u32 pg_type;

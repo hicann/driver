@@ -64,9 +64,8 @@ drvError_t drvDeviceGetTransWay(void *src, void *dest, uint8_t *trans_type)
     int ret;
 
     if ((src == NULL) || (dest == NULL) || (trans_type == NULL)) {
-        svm_err(
-            "Src or dest or trans_type is NULL. (src_is_null=%d; dest_is_null=%d; trans_type_is_null=%d;)\n",
-            (src == NULL), (dest == NULL), (trans_type == NULL));
+        svm_err("Src or dest or trans_type is NULL. (src_is_null=%d; dest_is_null=%d; trans_type_is_null=%d;)\n",
+                (src == NULL), (dest == NULL), (trans_type == NULL));
         return DRV_ERROR_INVALID_VALUE;
     }
 

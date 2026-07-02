@@ -32,14 +32,14 @@
 
 SVM_DECLARE_MODULE_NAME(svm_module_name);
 
-#define SVM_MEM_STATS_SHOW(mem_val, page_type, phy_memtype, devid, fmt, ...)                                   \
-    do {                                                                                                       \
-        if (mem_val != MEM_DEV_VAL) {                                                                          \
-            DEVMM_RUN_INFO("%s " fmt, svm_get_mem_type_str(mem_val, page_type, phy_memtype), ##__VA_ARGS__);   \
-        } else {                                                                                               \
-            DEVMM_RUN_INFO(                                                                                    \
-                "%s dev%d " fmt, svm_get_mem_type_str(mem_val, page_type, phy_memtype), devid, ##__VA_ARGS__); \
-        }                                                                                                      \
+#define SVM_MEM_STATS_SHOW(mem_val, page_type, phy_memtype, devid, fmt, ...)                                 \
+    do {                                                                                                     \
+        if (mem_val != MEM_DEV_VAL) {                                                                        \
+            DEVMM_RUN_INFO("%s " fmt, svm_get_mem_type_str(mem_val, page_type, phy_memtype), ##__VA_ARGS__); \
+        } else {                                                                                             \
+            DEVMM_RUN_INFO("%s dev%d " fmt, svm_get_mem_type_str(mem_val, page_type, phy_memtype), devid,    \
+                           ##__VA_ARGS__);                                                                   \
+        }                                                                                                    \
     } while (0)
 
 static THREAD struct svm_mem_stats *g_mem_stats[MEM_STATS_DEVICE_CNT] = {NULL};
@@ -64,8 +64,8 @@ void svm_init_mem_stats_mng(uint32_t devid)
 #endif
     (void)pthread_mutex_lock(&g_mem_stats_mutex[devid]);
     if (g_mem_stats[devid] == NULL) {
-        struct svm_mem_stats *mmap_addr = (struct svm_mem_stats *)mmap(
-            NULL, MEM_STATS_MNG_SIZE, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+        struct svm_mem_stats *mmap_addr = (struct svm_mem_stats *)mmap(NULL, MEM_STATS_MNG_SIZE, PROT_READ | PROT_WRITE,
+                                                                       MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
         if (mmap_addr == MAP_FAILED) {
             (void)pthread_mutex_unlock(&g_mem_stats_mutex[devid]);
             err = errno;
@@ -93,7 +93,10 @@ void svm_uninit_mem_stats_mng(uint32_t devid)
     (void)pthread_mutex_unlock(&g_mem_stats_mutex[devid]);
 }
 
-uint64_t svm_get_mem_stats_va(uint32_t devid) { return (uint64_t)(uintptr_t)g_mem_stats[devid]; }
+uint64_t svm_get_mem_stats_va(uint32_t devid)
+{
+    return (uint64_t)(uintptr_t)g_mem_stats[devid];
+}
 
 static struct svm_mem_stats *_svm_get_mem_stats_mng(struct svm_mem_stats_type *type, uint32_t devid)
 {
@@ -148,13 +151,12 @@ static void _svm_mem_stats_show(uint32_t mem_val, uint32_t page_type, uint32_t p
     for (module_id = 0; module_id < SVM_MAX_MODULE_ID; module_id++) {
         if (mem_stats->alloced_peak_size[module_id] != 0) {
             show_stats = true;
-            SVM_MEM_STATS_SHOW(
-                mem_val, page_type, phy_memtype, devid,
-                "Mem stats (Bytes). (module_name=%s; module_id=%u; "
-                "current_alloced_size=%llu; allocated_peak_size=%llu; alloc_cnt=%llu; free_cnt=%llu)\n",
-                SVM_GET_MODULE_NAME(svm_module_name, module_id), module_id, mem_stats->current_alloced_size[module_id],
-                mem_stats->alloced_peak_size[module_id], mem_stats->alloc_cnt[module_id],
-                mem_stats->free_cnt[module_id]);
+            SVM_MEM_STATS_SHOW(mem_val, page_type, phy_memtype, devid,
+                               "Mem stats (Bytes). (module_name=%s; module_id=%u; "
+                               "current_alloced_size=%llu; allocated_peak_size=%llu; alloc_cnt=%llu; free_cnt=%llu)\n",
+                               SVM_GET_MODULE_NAME(svm_module_name, module_id), module_id,
+                               mem_stats->current_alloced_size[module_id], mem_stats->alloced_peak_size[module_id],
+                               mem_stats->alloc_cnt[module_id], mem_stats->free_cnt[module_id]);
         }
         total_alloced_size += mem_stats->current_alloced_size[module_id];
     }
@@ -211,11 +213,11 @@ static void svm_module_used_size_update(uint32_t devid, uint32_t module_id, uint
     }
 
     if (add_or_sub) {
-        (void)__sync_add_and_fetch(
-            (volatile long long *)(uintptr_t)&dppg_sample_size[devid][module_id], (long long)size);
+        (void)__sync_add_and_fetch((volatile long long *)(uintptr_t)&dppg_sample_size[devid][module_id],
+                                   (long long)size);
     } else {
-        (void)__sync_sub_and_fetch(
-            (volatile long long *)(uintptr_t)&dppg_sample_size[devid][module_id], (long long)size);
+        (void)__sync_sub_and_fetch((volatile long long *)(uintptr_t)&dppg_sample_size[devid][module_id],
+                                   (long long)size);
     }
 
     dp_proc_mng_module_used_size_update(devid, module_id, dppg_sample_size[devid][module_id]);
@@ -246,8 +248,8 @@ void svm_module_alloced_size_inc(struct svm_mem_stats_type *type, uint32_t devid
         return;
     }
 
-    tmp = __sync_add_and_fetch(
-        (volatile long long *)(uintptr_t)&mem_stats->current_alloced_size[module_id_tmp], (long long)size);
+    tmp = __sync_add_and_fetch((volatile long long *)(uintptr_t)&mem_stats->current_alloced_size[module_id_tmp],
+                               (long long)size);
     alloced_peak_size = (volatile long long *)(uintptr_t)&mem_stats->alloced_peak_size[module_id_tmp];
 
     while (1) {
@@ -270,12 +272,11 @@ void svm_module_alloced_size_inc(struct svm_mem_stats_type *type, uint32_t devid
         (void)__sync_add_and_fetch((volatile long long *)(uintptr_t)&mem_stats->alloc_cnt[module_id_tmp], 1);
     }
 
-    DEVMM_DRV_DEBUG_ARG(
-        "Alloc. (devid=%u; module_id=%u; allocated_size=%llu; peak_size=%llu; size=%llu; mem_val=%u; "
-        "page_type=%u; phy_memtype=%u; alloc_cnt=%llu; free_cnt=%llu)\n",
-        devid, module_id_tmp, mem_stats->current_alloced_size[module_id_tmp],
-        mem_stats->alloced_peak_size[module_id_tmp], size, type->mem_val, type->page_type, type->phy_memtype,
-        mem_stats->alloc_cnt[module_id_tmp], mem_stats->free_cnt[module_id_tmp]);
+    DEVMM_DRV_DEBUG_ARG("Alloc. (devid=%u; module_id=%u; allocated_size=%llu; peak_size=%llu; size=%llu; mem_val=%u; "
+                        "page_type=%u; phy_memtype=%u; alloc_cnt=%llu; free_cnt=%llu)\n",
+                        devid, module_id_tmp, mem_stats->current_alloced_size[module_id_tmp],
+                        mem_stats->alloced_peak_size[module_id_tmp], size, type->mem_val, type->page_type,
+                        type->phy_memtype, mem_stats->alloc_cnt[module_id_tmp], mem_stats->free_cnt[module_id_tmp]);
 }
 
 void svm_module_alloced_size_dec(struct svm_mem_stats_type *type, uint32_t devid, uint32_t module_id, uint64_t size)
@@ -311,12 +312,11 @@ void svm_module_alloced_size_dec(struct svm_mem_stats_type *type, uint32_t devid
         (void)__sync_add_and_fetch((volatile long long *)(uintptr_t)&mem_stats->free_cnt[module_id_tmp], 1);
     }
 
-    DEVMM_DRV_DEBUG_ARG(
-        "Free. (devid=%u; module_id=%u; allocated_size=%llu; peak_size=%llu; size=%llu; mem_val=%u; "
-        "page_type=%u; phy_memtype=%u; alloc_cnt=%llu; free_cnt=%llu)\n",
-        devid, module_id_tmp, mem_stats->current_alloced_size[module_id_tmp],
-        mem_stats->alloced_peak_size[module_id_tmp], size, type->mem_val, type->page_type, type->phy_memtype,
-        mem_stats->alloc_cnt[module_id_tmp], mem_stats->free_cnt[module_id_tmp]);
+    DEVMM_DRV_DEBUG_ARG("Free. (devid=%u; module_id=%u; allocated_size=%llu; peak_size=%llu; size=%llu; mem_val=%u; "
+                        "page_type=%u; phy_memtype=%u; alloc_cnt=%llu; free_cnt=%llu)\n",
+                        devid, module_id_tmp, mem_stats->current_alloced_size[module_id_tmp],
+                        mem_stats->alloced_peak_size[module_id_tmp], size, type->mem_val, type->page_type,
+                        type->phy_memtype, mem_stats->alloc_cnt[module_id_tmp], mem_stats->free_cnt[module_id_tmp]);
 }
 
 void svm_mapped_size_inc(struct svm_mem_stats_type *type, uint32_t devid, uint64_t size)
@@ -365,8 +365,8 @@ static void svm_mem_stats_show_device_svm_mem(uint32_t devid)
 #define DEVMM_DEV_PROC_MEM_STATS_TYPE_NUM 4
 static void svm_mem_stats_show_device_proc_mem(uint32_t devid)
 {
-    u32 dev_proc_mem_type[DEVMM_DEV_PROC_MEM_STATS_TYPE_NUM] = {
-        AICPU_SCHE_MODULE_ID, CUSTOM_SCHE_MODULE_ID, HCCP_SCHE_MODULE_ID, MBUFF_MODULE_ID};
+    u32 dev_proc_mem_type[DEVMM_DEV_PROC_MEM_STATS_TYPE_NUM] = {AICPU_SCHE_MODULE_ID, CUSTOM_SCHE_MODULE_ID,
+                                                                HCCP_SCHE_MODULE_ID, MBUFF_MODULE_ID};
     struct module_mem_info *mem_info = NULL;
     u32 i;
     int ret;
@@ -386,10 +386,9 @@ static void svm_mem_stats_show_device_proc_mem(uint32_t devid)
         u32 index = dev_proc_mem_type[i];
 
         if (mem_info[index].total_size != 0) {
-            DEVMM_RUN_INFO(
-                "DEV_PROC_MEM dev%u Mem stats (Bytes). (module_name=%s; module_id=%u; total_size=%lu)\n", devid,
-                SVM_GET_MODULE_NAME(svm_module_name, mem_info[index].module_id), mem_info[index].module_id,
-                mem_info[index].total_size);
+            DEVMM_RUN_INFO("DEV_PROC_MEM dev%u Mem stats (Bytes). (module_name=%s; module_id=%u; total_size=%lu)\n",
+                           devid, SVM_GET_MODULE_NAME(svm_module_name, mem_info[index].module_id),
+                           mem_info[index].module_id, mem_info[index].total_size);
         }
     }
 
@@ -408,8 +407,8 @@ void svm_mem_stats_show_device(uint32_t devid)
     svm_mem_stats_show_device_proc_mem(devid);
 }
 
-static void svm_mem_module_stats_get(
-    uint32_t mem_val, uint32_t devid, uint32_t module_id, uint64_t *cur_size, uint64_t *peak_size)
+static void svm_mem_module_stats_get(uint32_t mem_val, uint32_t devid, uint32_t module_id, uint64_t *cur_size,
+                                     uint64_t *peak_size)
 {
     struct svm_mem_stats *mem_stats = NULL;
     struct svm_mem_stats_type type;
@@ -440,16 +439,16 @@ static void svm_mem_module_stats_get(
     *peak_size = total_peak_size;
 }
 
-static void svm_mem_module_usage_info_pack(
-    uint32_t module_id, uint64_t cur_size, uint64_t peak_size, struct mem_module_usage *usage_info)
+static void svm_mem_module_usage_info_pack(uint32_t module_id, uint64_t cur_size, uint64_t peak_size,
+                                           struct mem_module_usage *usage_info)
 {
     usage_info->cur_mem_size = cur_size;
     usage_info->mem_peak_size = peak_size;
     (void)strcpy_s(usage_info->name, sizeof(usage_info->name), SVM_GET_MODULE_NAME(svm_module_name, module_id));
 }
 
-static void svm_mem_usage_info_sort_insert(
-    struct mem_module_usage new_info, struct mem_module_usage *mem_info, size_t cur_num, size_t max_num)
+static void svm_mem_usage_info_sort_insert(struct mem_module_usage new_info, struct mem_module_usage *mem_info,
+                                           size_t cur_num, size_t max_num)
 {
     size_t i, tmp_index;
 

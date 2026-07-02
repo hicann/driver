@@ -97,7 +97,10 @@ bool svm_support_get_user_malloc_attr(uint32_t dev_id)
     return true;
 }
 
-bool svm_support_vmm_normal_granularity(uint32_t dev_id) { return (dev_id < SVM_MAX_DEV_AGENT_NUM); }
+bool svm_support_vmm_normal_granularity(uint32_t dev_id)
+{
+    return (dev_id < SVM_MAX_DEV_AGENT_NUM);
+}
 
 bool svm_support_mem_register_query_and_get_attr(uint32_t dev_id)
 {
@@ -106,4 +109,7 @@ bool svm_support_mem_register_query_and_get_attr(uint32_t dev_id)
     return false;
 }
 
-bool svm_support_mem_host_uva(uint32_t dev_id) { return (dev_id < SVM_MAX_DEV_AGENT_NUM); }
+bool svm_support_mem_host_uva(uint32_t dev_id)
+{
+    return (dev_id < SVM_MAX_DEV_AGENT_NUM);
+}

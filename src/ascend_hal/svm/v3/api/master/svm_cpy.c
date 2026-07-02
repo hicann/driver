@@ -55,9 +55,8 @@ static int svm_mem_sync_copy_h2d_by_pool(struct svm_copy_va_info *src_info, stru
 
     ret = svm_memcpy_s((void *)(uintptr_t)slot.va, src_info->size, (void *)(uintptr_t)src_info->va, src_info->size);
     if (ret != 0) {
-        svm_err(
-            "Memcpy by host svm pool failed. (dst=0x%llx; src=0x%llx; size=%llu; ret=%d)\n", slot.va, src_info->va,
-            src_info->size, ret);
+        svm_err("Memcpy by host svm pool failed. (dst=0x%llx; src=0x%llx; size=%llu; ret=%d)\n", slot.va, src_info->va,
+                src_info->size, ret);
         ret = DRV_ERROR_INVALID_VALUE;
         goto out;
     }
@@ -89,9 +88,8 @@ static int svm_mem_sync_copy_d2h_by_pool(struct svm_copy_va_info *src_info, stru
 
     ret = svm_memcpy_s((void *)(uintptr_t)dst_info->va, dst_info->size, (void *)(uintptr_t)slot.va, dst_info->size);
     if (ret != 0) {
-        svm_err(
-            "Memcpy by host svm pool failed. (dst=0x%llx; src=0x%llx; size=%llu; ret=%d)\n", dst_info->va, slot.va,
-            dst_info->size, ret);
+        svm_err("Memcpy by host svm pool failed. (dst=0x%llx; src=0x%llx; size=%llu; ret=%d)\n", dst_info->va, slot.va,
+                dst_info->size, ret);
         ret = DRV_ERROR_INVALID_VALUE;
     }
 
@@ -202,9 +200,8 @@ static int svm_copy_real_info_pack(const struct svm_global_va *src_info, struct 
     int ret;
 
     if ((src_info->server_id != SVM_INVALID_SERVER_ID) && (src_info->server_id != svm_get_cur_server_id())) {
-        svm_info(
-            "Cross server shared memcpy is not support. (server_id=%u; cur_server_id=%u)\n", src_info->server_id,
-            svm_get_cur_server_id());
+        svm_info("Cross server shared memcpy is not support. (server_id=%u; cur_server_id=%u)\n", src_info->server_id,
+                 svm_get_cur_server_id());
         return DRV_ERROR_NOT_SUPPORT;
     }
 
@@ -216,9 +213,8 @@ static int svm_copy_real_info_pack(const struct svm_global_va *src_info, struct 
 
     ret = halQueryMasterPidByDeviceSlave(info->devid, src_info->tgid, &host_tgid, &proc_type);
     if (ret != 0) {
-        svm_err(
-            "Get master pid by device slave failed. (ret=%d; devid=%u; slave_pid=%d)\n", ret, info->devid,
-            src_info->tgid);
+        svm_err("Get master pid by device slave failed. (ret=%d; devid=%u; slave_pid=%d)\n", ret, info->devid,
+                src_info->tgid);
         return ret;
     }
 
@@ -259,9 +255,9 @@ static int svm_copy_try_query_shared_info(struct svm_copy_va_info *info, struct 
     return DRV_ERROR_NONE;
 }
 
-static int svm_copy_try_resolve_shared_info(
-    struct svm_copy_va_info *src_info, struct svm_copy_va_info *dst_info, struct svm_copy_va_info *real_src,
-    struct svm_copy_va_info *real_dst, bool *resolved)
+static int svm_copy_try_resolve_shared_info(struct svm_copy_va_info *src_info, struct svm_copy_va_info *dst_info,
+                                            struct svm_copy_va_info *real_src, struct svm_copy_va_info *real_dst,
+                                            bool *resolved)
 {
     struct svm_copy_shared_info src_shared, dst_shared;
     bool src_is_shared, dst_is_shared;
@@ -410,9 +406,8 @@ DVresult halMemCpyAsync(DVdeviceptr dst, size_t dest_max, DVdeviceptr src, size_
     }
 
     if (resolved) {
-        svm_info(
-            "Async memcpy does not support shared addr. (src=0x%llx; dst=0x%llx; size=%llu)\n", src_info.va,
-            dst_info.va, src_info.size);
+        svm_info("Async memcpy does not support shared addr. (src=0x%llx; dst=0x%llx; size=%llu)\n", src_info.va,
+                 dst_info.va, src_info.size);
         return DRV_ERROR_NOT_SUPPORT;
     }
 
@@ -450,8 +445,8 @@ static int svm_mem_sync_copy_h2h(struct svm_copy_va_info *src_info, struct svm_c
     return svm_memcpy_local_client(dst_info->devid, dst_info->va, dst_info->size, src_info->va, src_info->size);
 }
 
-static int _svm_mem_sync_copy(
-    enum svm_cpy_dir dir, struct svm_copy_va_info *src_info, struct svm_copy_va_info *dst_info)
+static int _svm_mem_sync_copy(enum svm_cpy_dir dir, struct svm_copy_va_info *src_info,
+                              struct svm_copy_va_info *dst_info)
 {
     struct svm_dst_va register_va;
     u64 host_va = (dir == SVM_H2D_CPY) ? src_info->va : dst_info->va;
@@ -579,11 +574,12 @@ static int svm_mem_sync_copy_d2d(struct svm_copy_va_info *src_info, struct svm_c
     }
 }
 
-static int (*const g_sync_copy[SVM_MAX_CPY_DIR])(struct svm_copy_va_info *src_info, struct svm_copy_va_info *dst_info) =
-    {[SVM_H2H_CPY] = svm_mem_sync_copy_h2h,
-     [SVM_H2D_CPY] = svm_mem_sync_copy_h2d,
-     [SVM_D2H_CPY] = svm_mem_sync_copy_d2h,
-     [SVM_D2D_CPY] = svm_mem_sync_copy_d2d};
+static int (*const g_sync_copy[SVM_MAX_CPY_DIR])(struct svm_copy_va_info *src_info,
+                                                 struct svm_copy_va_info *dst_info) = {
+    [SVM_H2H_CPY] = svm_mem_sync_copy_h2h,
+    [SVM_H2D_CPY] = svm_mem_sync_copy_h2d,
+    [SVM_D2H_CPY] = svm_mem_sync_copy_d2h,
+    [SVM_D2D_CPY] = svm_mem_sync_copy_d2d};
 
 int svm_mem_sync_copy(struct svm_copy_va_info *src_info, struct svm_copy_va_info *dst_info)
 {
@@ -635,9 +631,8 @@ DVresult drvMemcpyInner(DVdeviceptr dst, size_t dest_max, DVdeviceptr src, size_
     int ret;
 
     if ((dst == 0) || (src == 0) || (dest_max == 0) || (dest_max < byte_count)) {
-        svm_err(
-            "Invalid argument. (dst=0x%llx; src=0x%llx; byte_count=%lu; dest_max=%lu)\n", dst, src, byte_count,
-            dest_max);
+        svm_err("Invalid argument. (dst=0x%llx; src=0x%llx; byte_count=%lu; dest_max=%lu)\n", dst, src, byte_count,
+                dest_max);
         return DRV_ERROR_INVALID_VALUE;
     }
 
@@ -868,9 +863,8 @@ static int svm_dma_desc_dir_check(u32 exec_devid, u32 src_devid, u32 dst_devid)
         ret = ((exec_devid != src_devid) && (exec_devid != dst_devid)) ? DRV_ERROR_INVALID_VALUE : 0;
     }
     if (ret != DRV_ERROR_NONE) {
-        svm_err(
-            "Exec_devid does not match the direction. (exec_devid=%u; src_devid=%u; dst_devid=%u; dir=%d)\n",
-            exec_devid, src_devid, dst_devid, dir);
+        svm_err("Exec_devid does not match the direction. (exec_devid=%u; src_devid=%u; dst_devid=%u; dir=%d)\n",
+                exec_devid, src_devid, dst_devid, dir);
         return ret;
     }
 
@@ -918,9 +912,8 @@ DVresult drvMemConvertAddr(DVdeviceptr p_src, DVdeviceptr p_dst, UINT32 len, str
 
     ret = svm_dma_desc_convert(&src_info, &dst_info, dma_addr);
 
-    svm_debug(
-        "Convert. (p_src=0x%llx; p_dst=0x%llx; len=%u; dma_addr=0x%llx)\n", p_src, p_dst, len,
-        (u64)(uintptr_t)dma_addr);
+    svm_debug("Convert. (p_src=0x%llx; p_dst=0x%llx; len=%u; dma_addr=0x%llx)\n", p_src, p_dst, len,
+              (u64)(uintptr_t)dma_addr);
 
     return ret;
 }
@@ -947,9 +940,8 @@ static drvError_t svm_dma_desc_para_check(struct DMA_ADDR *dma_desc[], uint32_t 
 
         /* host agent not support convert */
         if (dma_desc[i]->virt_id >= SVM_MAX_DEV_AGENT_NUM) {
-            svm_err(
-                "Virt_id is out of range. (virt_id=%u; range=0-%u)\n", dma_desc[i]->virt_id,
-                (UINT32)SVM_MAX_DEV_AGENT_NUM);
+            svm_err("Virt_id is out of range. (virt_id=%u; range=0-%u)\n", dma_desc[i]->virt_id,
+                    (UINT32)SVM_MAX_DEV_AGENT_NUM);
             return DRV_ERROR_INVALID_VALUE;
         }
     }
@@ -1041,28 +1033,32 @@ static drvError_t svm_2d_sync_copy(struct drvMem2D *sync_2d)
     enum svm_cpy_dir dir;
     int ret;
 
-    svm_debug("2D sync copy. (src=0x%llx; dst=0x%llx; spitch=%llu; dpitch=%llu; width=%llu; height=%llu; direction=%u)\n",
-        sync_2d->src, sync_2d->dst, sync_2d->spitch, sync_2d->dpitch, sync_2d->width, sync_2d->height, sync_2d->direction);
-    ret = svm_copy_check_addr_prop_cap((u64)(uintptr_t)sync_2d->src, sync_2d->spitch * (sync_2d->height - 1) + sync_2d->width, SVM_FLAG_CAP_SYNC_COPY_2D);
+    svm_debug(
+        "2D sync copy. (src=0x%llx; dst=0x%llx; spitch=%llu; dpitch=%llu; width=%llu; height=%llu; direction=%u)\n",
+        sync_2d->src, sync_2d->dst, sync_2d->spitch, sync_2d->dpitch, sync_2d->width, sync_2d->height,
+        sync_2d->direction);
+    ret = svm_copy_check_addr_prop_cap((u64)(uintptr_t)sync_2d->src,
+                                       sync_2d->spitch * (sync_2d->height - 1) + sync_2d->width,
+                                       SVM_FLAG_CAP_SYNC_COPY_2D);
     if (ret != DRV_ERROR_NONE) {
         return ret;
     }
 
-    ret = svm_copy_check_addr_prop_cap(
-        (u64)(uintptr_t)sync_2d->dst, sync_2d->dpitch * (sync_2d->height - 1) + sync_2d->width,
-        SVM_FLAG_CAP_SYNC_COPY_2D);
+    ret = svm_copy_check_addr_prop_cap((u64)(uintptr_t)sync_2d->dst,
+                                       sync_2d->dpitch * (sync_2d->height - 1) + sync_2d->width,
+                                       SVM_FLAG_CAP_SYNC_COPY_2D);
     if (ret != DRV_ERROR_NONE) {
         return ret;
     }
 
-    ret = svm_set_copy_va_2d_info(
-        (u64)(uintptr_t)sync_2d->src, sync_2d->spitch, sync_2d->width, sync_2d->height, &src_info);
+    ret = svm_set_copy_va_2d_info((u64)(uintptr_t)sync_2d->src, sync_2d->spitch, sync_2d->width, sync_2d->height,
+                                  &src_info);
     if (ret != DRV_ERROR_NONE) {
         return ret;
     }
 
-    ret = svm_set_copy_va_2d_info(
-        (u64)(uintptr_t)sync_2d->dst, sync_2d->dpitch, sync_2d->width, sync_2d->height, &dst_info);
+    ret = svm_set_copy_va_2d_info((u64)(uintptr_t)sync_2d->dst, sync_2d->dpitch, sync_2d->width, sync_2d->height,
+                                  &dst_info);
     if (ret != DRV_ERROR_NONE) {
         return ret;
     }
@@ -1074,9 +1070,8 @@ static drvError_t svm_2d_sync_copy(struct drvMem2D *sync_2d)
     }
 
     if (dir != sync_2d->direction) {
-        svm_err(
-            "Act cpy dir is diff from para dir. (act_dir=%u; para_dir=%u; src=0x%llx; dst=0x%llx)\n", dir,
-            sync_2d->direction, sync_2d->src, sync_2d->dst);
+        svm_err("Act cpy dir is diff from para dir. (act_dir=%u; para_dir=%u; src=0x%llx; dst=0x%llx)\n", dir,
+                sync_2d->direction, sync_2d->src, sync_2d->dst);
         return DRV_ERROR_PARA_ERROR;
     }
 
@@ -1091,48 +1086,47 @@ static drvError_t svm_2d_convert(struct drvMem2DAsync *convert_2d)
     int ret;
 
     svm_debug("2D convert. (src=0x%llx; dst=0x%llx; spitch=%llu; dpitch=%llu; width=%llu; height=%llu; direction=%u)\n",
-        info_2d->src, info_2d->dst, info_2d->spitch, info_2d->dpitch, info_2d->width, info_2d->height, info_2d->direction);
+              info_2d->src, info_2d->dst, info_2d->spitch, info_2d->dpitch, info_2d->width, info_2d->height,
+              info_2d->direction);
     if (convert_2d->dmaAddr == NULL) {
         svm_err("dmaAddr is NULL.\n");
         return DRV_ERROR_INVALID_VALUE;
     }
 
     if (info_2d->fixed_size >= (info_2d->width * info_2d->height)) {
-        svm_err(
-            "Fixed_size should smaller than width*height. (fixed_size=%llu; width=%llu; height=%llu)\n",
-            info_2d->fixed_size, info_2d->width, info_2d->height);
+        svm_err("Fixed_size should smaller than width*height. (fixed_size=%llu; width=%llu; height=%llu)\n",
+                info_2d->fixed_size, info_2d->width, info_2d->height);
         return DRV_ERROR_INVALID_VALUE;
     }
 
     if (convert_2d->dmaAddr->offsetAddr.devid >= SVM_MAX_DEV_AGENT_NUM) {
-        svm_err(
-            "Devid is out of range. (devid=%u; range=0-%u)\n", convert_2d->dmaAddr->offsetAddr.devid,
-            (SVM_MAX_DEV_AGENT_NUM - 1));
+        svm_err("Devid is out of range. (devid=%u; range=0-%u)\n", convert_2d->dmaAddr->offsetAddr.devid,
+                (SVM_MAX_DEV_AGENT_NUM - 1));
         return DRV_ERROR_INVALID_VALUE;
     }
 
-    ret = svm_copy_check_addr_prop_cap(
-        (u64)(uintptr_t)info_2d->src, info_2d->spitch * (info_2d->height - 1) + info_2d->width,
-        SVM_FLAG_CAP_DMA_DESC_CONVERT_2D);
+    ret = svm_copy_check_addr_prop_cap((u64)(uintptr_t)info_2d->src,
+                                       info_2d->spitch * (info_2d->height - 1) + info_2d->width,
+                                       SVM_FLAG_CAP_DMA_DESC_CONVERT_2D);
     if (ret != DRV_ERROR_NONE) {
         return ret;
     }
 
-    ret = svm_copy_check_addr_prop_cap(
-        (u64)(uintptr_t)info_2d->dst, info_2d->dpitch * (info_2d->height - 1) + info_2d->width,
-        SVM_FLAG_CAP_DMA_DESC_CONVERT_2D);
+    ret = svm_copy_check_addr_prop_cap((u64)(uintptr_t)info_2d->dst,
+                                       info_2d->dpitch * (info_2d->height - 1) + info_2d->width,
+                                       SVM_FLAG_CAP_DMA_DESC_CONVERT_2D);
     if (ret != DRV_ERROR_NONE) {
         return ret;
     }
 
-    ret = svm_set_copy_va_2d_info(
-        (u64)(uintptr_t)info_2d->src, info_2d->spitch, info_2d->width, info_2d->height, &src_info);
+    ret = svm_set_copy_va_2d_info((u64)(uintptr_t)info_2d->src, info_2d->spitch, info_2d->width, info_2d->height,
+                                  &src_info);
     if (ret != DRV_ERROR_NONE) {
         return ret;
     }
 
-    ret = svm_set_copy_va_2d_info(
-        (u64)(uintptr_t)info_2d->dst, info_2d->dpitch, info_2d->width, info_2d->height, &dst_info);
+    ret = svm_set_copy_va_2d_info((u64)(uintptr_t)info_2d->dst, info_2d->dpitch, info_2d->width, info_2d->height,
+                                  &dst_info);
     if (ret != DRV_ERROR_NONE) {
         return ret;
     }
@@ -1143,17 +1137,15 @@ static drvError_t svm_2d_convert(struct drvMem2DAsync *convert_2d)
         return DRV_ERROR_NOT_SUPPORT;
     }
     if (dir != info_2d->direction) {
-        svm_err(
-            "Act cpy dir is diff from para dir. (act_dir=%u; para_dir=%u; src=0x%llx; dst=0x%llx)\n", dir,
-            info_2d->direction, info_2d->src, info_2d->dst);
+        svm_err("Act cpy dir is diff from para dir. (act_dir=%u; para_dir=%u; src=0x%llx; dst=0x%llx)\n", dir,
+                info_2d->direction, info_2d->src, info_2d->dst);
         return DRV_ERROR_PARA_ERROR;
     }
 
     if (((dir == SVM_H2D_CPY) && (convert_2d->dmaAddr->offsetAddr.devid != dst_info.devid)) ||
         ((dir == SVM_D2H_CPY) && (convert_2d->dmaAddr->offsetAddr.devid != src_info.devid))) {
-        svm_err(
-            "Invalid devid. (dir=%u; devid=%u; src_devid=%u; dst_devid=%u)\n", dir,
-            convert_2d->dmaAddr->offsetAddr.devid, src_info.devid, dst_info.devid);
+        svm_err("Invalid devid. (dir=%u; devid=%u; src_devid=%u; dst_devid=%u)\n", dir,
+                convert_2d->dmaAddr->offsetAddr.devid, src_info.devid, dst_info.devid);
         return DRV_ERROR_PARA_ERROR;
     }
 
@@ -1223,9 +1215,8 @@ static int svm_memcpy_2d_para_check(struct MEMCPY2D *p_copy)
 
     if ((handle_2d->height != 1) && (((handle_2d->src + handle_2d->spitch) < handle_2d->src) ||
                                      ((handle_2d->dst + handle_2d->dpitch) < handle_2d->dst))) {
-        svm_err(
-            "Pitch is invalid. (src=0x%llx; dst=0x%llx; spitch=%llu; dpitch=%llu)\n", handle_2d->src, handle_2d->dst,
-            handle_2d->spitch, handle_2d->dpitch);
+        svm_err("Pitch is invalid. (src=0x%llx; dst=0x%llx; spitch=%llu; dpitch=%llu)\n", handle_2d->src,
+                handle_2d->dst, handle_2d->spitch, handle_2d->dpitch);
         return DRV_ERROR_INVALID_VALUE;
     }
 
@@ -1256,7 +1247,10 @@ drvError_t halMemcpy2DInner(struct MEMCPY2D *p_copy)
     return ret;
 }
 
-drvError_t halMemcpy2D(struct MEMCPY2D *p_copy) { return halMemcpy2DInner(p_copy); }
+drvError_t halMemcpy2D(struct MEMCPY2D *p_copy)
+{
+    return halMemcpy2DInner(p_copy);
+}
 
 static int svm_cpy_batch_para_prop_check(u64 dst[], u64 src[], u64 size[], u64 count)
 {
@@ -1292,9 +1286,8 @@ static int svm_cpy_batch_para_prop_check(u64 dst[], u64 src[], u64 size[], u64 c
 static int svm_cpy_batch_para_check(u64 dst[], u64 src[], u64 size[], u64 count)
 {
     if ((dst == NULL) || (src == NULL) || (size == NULL) || (count == 0)) {
-        svm_err(
-            "Memcpy batch para check failed. (dst_is_null=%d; src_is_null=%d; size_is_null=%d; count=%lu)\n",
-            (dst == NULL), (src == NULL), (size == NULL), count);
+        svm_err("Memcpy batch para check failed. (dst_is_null=%d; src_is_null=%d; size_is_null=%d; count=%lu)\n",
+                (dst == NULL), (src == NULL), (size == NULL), count);
         return DRV_ERROR_PARA_ERROR;
     }
 

@@ -33,11 +33,10 @@ static int svm_mpl_populate_remote(u32 devid, u64 va, u64 size, u32 flag, bool i
 {
     struct svm_umc_msg_head head;
     struct svm_mpl_populate_msg pop_msg = {.size = size, .flag = flag, .va = va};
-    struct svm_umc_msg msg = {
-        .msg_in = (char *)(uintptr_t)&pop_msg,
-        .msg_in_len = sizeof(struct svm_mpl_populate_msg),
-        .msg_out = (char *)(uintptr_t)&pop_msg,
-        .msg_out_len = sizeof(struct svm_mpl_populate_msg)};
+    struct svm_umc_msg msg = {.msg_in = (char *)(uintptr_t)&pop_msg,
+                              .msg_in_len = sizeof(struct svm_mpl_populate_msg),
+                              .msg_out = (char *)(uintptr_t)&pop_msg,
+                              .msg_out_len = sizeof(struct svm_mpl_populate_msg)};
     struct svm_apbi apbi;
     u32 event_id = is_no_pin ? SVM_MPL_POPULATE_NO_PIN_EVENT : SVM_MPL_POPULATE_EVENT;
     int ret;
@@ -53,9 +52,8 @@ static int svm_mpl_populate_remote(u32 devid, u64 va, u64 size, u32 flag, bool i
         if (ret == DRV_ERROR_NO_PROCESS) {
             (void)svm_apbi_clear(devid, DEVDRV_PROCESS_CP1);
         }
-        svm_err_if(
-            (ret != DRV_ERROR_OUT_OF_MEMORY), "Mpl populate msg failed. (devid=%u; devpid=%d; ret=%d)\n", devid,
-            apbi.tgid, ret);
+        svm_err_if((ret != DRV_ERROR_OUT_OF_MEMORY), "Mpl populate msg failed. (devid=%u; devpid=%d; ret=%d)\n", devid,
+                   apbi.tgid, ret);
         return ret;
     }
 
@@ -66,11 +64,10 @@ static int svm_mpl_depopulate_remote(u32 devid, u64 va, u64 size, u32 flag, bool
 {
     struct svm_umc_msg_head head;
     struct svm_mpl_depopulate_msg depop_msg = {.size = size, .va = va, .is_busy = 0, .flag = flag};
-    struct svm_umc_msg msg = {
-        .msg_in = (char *)(uintptr_t)&depop_msg,
-        .msg_in_len = sizeof(struct svm_mpl_depopulate_msg),
-        .msg_out = (char *)(uintptr_t)&depop_msg,
-        .msg_out_len = sizeof(struct svm_mpl_depopulate_msg)};
+    struct svm_umc_msg msg = {.msg_in = (char *)(uintptr_t)&depop_msg,
+                              .msg_in_len = sizeof(struct svm_mpl_depopulate_msg),
+                              .msg_out = (char *)(uintptr_t)&depop_msg,
+                              .msg_out_len = sizeof(struct svm_mpl_depopulate_msg)};
     struct svm_apbi apbi;
     u32 event_id = is_no_pin ? SVM_MPL_DEPOPULATE_NO_UNPIN_EVENT : SVM_MPL_DEPOPULATE_EVENT;
     int ret;

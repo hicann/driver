@@ -110,8 +110,8 @@ static struct pma_ub_acquired_seg *pma_ub_acquired_seg_erase_one(struct pma_ub_a
     return acquired_seg;
 }
 
-static struct pma_ub_acquired_seg *pma_ub_acquired_seg_create(
-    u64 va, u64 size, int (*invalidate)(u64 invalidate_tag), u64 invalidate_tag)
+static struct pma_ub_acquired_seg *pma_ub_acquired_seg_create(u64 va, u64 size, int (*invalidate)(u64 invalidate_tag),
+                                                              u64 invalidate_tag)
 {
     struct pma_ub_acquired_seg *acquired_seg = NULL;
 
@@ -138,8 +138,8 @@ static void pma_ub_acquired_seg_destroy(struct pma_ub_acquired_seg *acquired_seg
     svm_kvfree(acquired_seg);
 }
 
-int pma_ub_add_acquired_seg(
-    struct pma_ub_acquired_segs_mng *mng, u64 va, u64 size, int (*invalidate)(u64 invalidate_tag), u64 invalidate_tag)
+int pma_ub_add_acquired_seg(struct pma_ub_acquired_segs_mng *mng, u64 va, u64 size,
+                            int (*invalidate)(u64 invalidate_tag), u64 invalidate_tag)
 {
     struct pma_ub_acquired_seg *acquired_seg = NULL;
     int ret;

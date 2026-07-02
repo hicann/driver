@@ -137,7 +137,10 @@ static int svm_master_init_locked(void)
     return DRV_ERROR_NONE;
 }
 
-static void svm_master_uninit_locked(void) { (void)svm_device_close_locked(svm_get_host_devid()); }
+static void svm_master_uninit_locked(void)
+{
+    (void)svm_device_close_locked(svm_get_host_devid());
+}
 
 int svm_master_init(void)
 {
@@ -180,9 +183,15 @@ int svm_dev_open(uint32_t devid, int devfd)
     return svm_device_open(devid);
 }
 
-int svm_dev_close(uint32_t devid) { return svm_device_close(devid); }
+int svm_dev_close(uint32_t devid)
+{
+    return svm_device_close(devid);
+}
 
-static bool devmm_agent_open_close_flag_is_valid(uint32_t flag) { return (flag <= SVM_AGENT_DEVICE); }
+static bool devmm_agent_open_close_flag_is_valid(uint32_t flag)
+{
+    return (flag <= SVM_AGENT_DEVICE);
+}
 
 int drvMemDeviceOpen(uint32_t devid, int devfd)
 {

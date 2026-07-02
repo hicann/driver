@@ -78,6 +78,9 @@ static inline void devmm_hugetlb_free_hugepage_ex(ka_page_t *page)
     ka_hugetlb_free_hugepage(page, ka_get_module_id(HAL_MODULE_TYPE_DEVMM, KA_SUB_MODULE_TYPE_2));
 }
 #else
-static inline void devmm_hugetlb_free_hugepage_ex(ka_page_t *page) { ka_mm_put_page(page); }
+static inline void devmm_hugetlb_free_hugepage_ex(ka_page_t *page)
+{
+    ka_mm_put_page(page);
+}
 #endif
 #endif

@@ -47,7 +47,10 @@ struct dma_map_ctx *dma_map_ctx_get(u32 udevid, int tgid)
     return ctx;
 }
 
-void dma_map_ctx_put(struct dma_map_ctx *ctx) { svm_task_ctx_put(ctx->task_ctx); }
+void dma_map_ctx_put(struct dma_map_ctx *ctx)
+{
+    svm_task_ctx_put(ctx->task_ctx);
+}
 
 static void dma_map_ctx_init(u32 udevid, struct dma_map_ctx *ctx)
 {
@@ -151,5 +154,6 @@ int svm_dma_map_init(void)
 }
 DECLAER_FEATURE_AUTO_INIT(svm_dma_map_init, FEATURE_LOADER_STAGE_5);
 
-void svm_dma_map_uninit(void) {}
+void svm_dma_map_uninit(void)
+{}
 DECLAER_FEATURE_AUTO_UNINIT(svm_dma_map_uninit, FEATURE_LOADER_STAGE_5);

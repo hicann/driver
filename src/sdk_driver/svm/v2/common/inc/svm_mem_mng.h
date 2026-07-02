@@ -79,8 +79,8 @@ void devmm_set_proc_vma(ka_mm_struct_t *mm, ka_vm_area_struct_t *vma[], u32 vma_
 void devmm_init_dev_set_mmap_para(struct devmm_mmap_para *mmap_para);
 void devmm_remove_vma_wirte_flag(ka_vm_area_struct_t *vma);
 u32 devmm_get_normal_vma_num(void);
-int devmm_get_user_pages_remote(
-    ka_task_struct_t *tsk, ka_mm_struct_t *mm, u64 va, int write, u32 num, ka_page_t **pages);
+int devmm_get_user_pages_remote(ka_task_struct_t *tsk, ka_mm_struct_t *mm, u64 va, int write, u32 num,
+                                ka_page_t **pages);
 int devmm_check_and_set_svm_static_reserve_vma(void *svm_proc, ka_vm_area_struct_t **svm_vma);
 int devmm_check_and_set_custom_svm_vma(void *svm_proc, ka_vm_area_struct_t **svm_vma);
 u64 devmm_kernel_pg_size(ka_page_t *pg);

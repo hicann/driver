@@ -72,9 +72,15 @@ static struct casm_cs_dst_ctx *casm_cs_dst_ctx_get(u32 udevid, int tgid)
     return cs_ctx;
 }
 
-static void casm_cs_dst_ctx_put(struct casm_cs_dst_ctx *cs_ctx) { svm_task_ctx_put(cs_ctx->task_ctx); }
+static void casm_cs_dst_ctx_put(struct casm_cs_dst_ctx *cs_ctx)
+{
+    svm_task_ctx_put(cs_ctx->task_ctx);
+}
 
-static inline u32 casm_cs_dst_get_bkt(u64 key) { return ka_hash_min((u32)key, CASM_CS_DST_NODE_HASH_BIT); }
+static inline u32 casm_cs_dst_get_bkt(u64 key)
+{
+    return ka_hash_min((u32)key, CASM_CS_DST_NODE_HASH_BIT);
+}
 
 static inline void casm_cs_dst_node_add(struct casm_cs_dst_ctx *cs_ctx, struct casm_cs_dst_node *node)
 {
@@ -82,7 +88,10 @@ static inline void casm_cs_dst_node_add(struct casm_cs_dst_ctx *cs_ctx, struct c
     ka_hash_add(cs_ctx->key_htable, &node->link, bkt);
 }
 
-static inline void casm_cs_dst_node_del(struct casm_cs_dst_node *node) { ka_hash_del(&node->link); }
+static inline void casm_cs_dst_node_del(struct casm_cs_dst_node *node)
+{
+    ka_hash_del(&node->link);
+}
 
 static inline struct casm_cs_dst_node *casm_cs_dst_node_find(struct casm_cs_dst_ctx *cs_ctx, u64 key)
 {
@@ -133,9 +142,8 @@ static void casm_cs_show_dst_node(struct casm_cs_dst_ctx *cs_ctx, ka_seq_file_t 
             ka_fs_seq_printf(
                 seq, "casm cs:   index     key     owner_tgid    server_id   udevid    tgid     va     size \n");
         }
-        ka_fs_seq_printf(
-            seq, "   %d       %llx      %d      %u      %u      %d      %llx     %llx \n", i++, node->key,
-            node->owner_tgid, src_va->server_id, src_va->udevid, src_va->tgid, src_va->va, src_va->size);
+        ka_fs_seq_printf(seq, "   %d       %llx      %d      %u      %u      %d      %llx     %llx \n", i++, node->key,
+                         node->owner_tgid, src_va->server_id, src_va->udevid, src_va->tgid, src_va->va, src_va->size);
         if (i >= 128) { /* show max 128 item */
             break;
         }
@@ -276,7 +284,9 @@ static int casm_cs_src_info_get(u32 udevid, u64 key, struct svm_global_va *src_v
     return casm_cs_query_src(udevid, ka_task_get_current_tgid(), key, src_va, owner_tgid);
 }
 
-static void casm_cs_src_info_put(u32 udevid, u64 key, struct svm_global_va *src_va, int owner_tgid) { /* do nothing */ }
+static void casm_cs_src_info_put(u32 udevid, u64 key, struct svm_global_va *src_va, int owner_tgid)
+{ /* do nothing */
+}
 
 static const struct svm_casm_dst_ops g_casm_cs_dst_ops = {
     .src_info_query = casm_cs_src_info_query,
@@ -319,8 +329,8 @@ int casm_cs_dst_init_task(u32 udevid, int tgid, void *start_time)
         return -EINVAL;
     }
 
-    ret = svm_task_set_feature_priv(
-        task_ctx, casm_cs_dst_feature_id, "casm_cs_dst", (void *)cs_ctx, casm_cs_dst_ctx_release);
+    ret = svm_task_set_feature_priv(task_ctx, casm_cs_dst_feature_id, "casm_cs_dst", (void *)cs_ctx,
+                                    casm_cs_dst_ctx_release);
     if (ret != 0) {
         svm_task_ctx_put(task_ctx);
         svm_vfree(cs_ctx);
@@ -421,5 +431,6 @@ int casm_cs_dst_init(void)
 }
 DECLAER_FEATURE_AUTO_INIT(casm_cs_dst_init, FEATURE_LOADER_STAGE_7);
 
-void svm_casm_cs_dst_uninit(void) {}
+void svm_casm_cs_dst_uninit(void)
+{}
 DECLAER_FEATURE_AUTO_UNINIT(svm_casm_cs_dst_uninit, FEATURE_LOADER_STAGE_7);

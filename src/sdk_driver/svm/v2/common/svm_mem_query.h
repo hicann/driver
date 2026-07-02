@@ -35,10 +35,10 @@ int devmm_check_thread_valid(int hostpid, const char *sign, u32 len);
 int devmm_svm_check_addr_valid(struct devmm_svm_process_id *process_id, u64 addr, u64 size);
 int devmm_shm_check_addr_valid(struct devmm_svm_process_id *process_id, u64 addr, u64 size);
 
-int devmm_svm_get_pa_list(
-    struct devmm_svm_process_id *process_id, u64 aligned_va, u64 aligned_size, struct devmm_pa_lists_info *info);
-int devmm_svm_get_and_pin_pa_list(
-    struct devmm_svm_process_id *process_id, u64 aligned_va, u64 aligned_size, u64 *pa_list, u32 pa_num);
+int devmm_svm_get_pa_list(struct devmm_svm_process_id *process_id, u64 aligned_va, u64 aligned_size,
+                          struct devmm_pa_lists_info *info);
+int devmm_svm_get_and_pin_pa_list(struct devmm_svm_process_id *process_id, u64 aligned_va, u64 aligned_size,
+                                  u64 *pa_list, u32 pa_num);
 int devmm_shm_get_pa_list(struct devmm_svm_process_id *process_id, u64 addr, u64 size, u64 *pa_list, u32 pa_num);
 void devmm_shm_put_pa_list(struct devmm_svm_process_id *process_id, u64 va, u64 *pa_list, u32 pa_num);
 void devmm_svm_put_pa_list(struct devmm_svm_process_id *process_id, u64 va, u64 *pa_list, u32 pa_num);

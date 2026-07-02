@@ -33,7 +33,11 @@
 #define SVM_CPY_HOST_POOL_BITMAP_NUM(bit_num) \
     (((bit_num) + SVM_CPY_HOST_POOL_BITMAP_BIT_NUM - 1) / SVM_CPY_HOST_POOL_BITMAP_BIT_NUM)
 
-enum svm_cpy_host_pool_state { SVM_CPY_HOST_POOL_UNINIT = 0, SVM_CPY_HOST_POOL_READY, SVM_CPY_HOST_POOL_FAIL };
+enum svm_cpy_host_pool_state {
+    SVM_CPY_HOST_POOL_UNINIT = 0,
+    SVM_CPY_HOST_POOL_READY,
+    SVM_CPY_HOST_POOL_FAIL
+};
 
 struct svm_cpy_host_pool_bucket {
     u64 chunk_size;
@@ -88,8 +92,8 @@ static int svm_cpy_host_pool_bucket_init(struct svm_cpy_host_pool_bucket *bucket
         return DRV_ERROR_NONE;
     }
 
-    ret = svm_mem_malloc(
-        &host_va, bucket->chunk_size * bucket->chunk_num, MEM_HOST | ((u64)DEVMM_MODULE_ID << MEM_MODULE_ID_BIT));
+    ret = svm_mem_malloc(&host_va, bucket->chunk_size * bucket->chunk_num,
+                         MEM_HOST | ((u64)DEVMM_MODULE_ID << MEM_MODULE_ID_BIT));
     if (ret != DRV_ERROR_NONE) {
         return ret;
     }
@@ -126,9 +130,8 @@ static int svm_cpy_host_pool_init(void)
         int ret = svm_cpy_host_pool_bucket_init(&g_svm_cpy_host_pool[i]);
 
         if (ret != DRV_ERROR_NONE) {
-            svm_warn(
-                "Alloc memcpy host svm pool failed. (ret=%d; chunk_size=%llu; chunk_num=%u)\n", ret,
-                g_svm_cpy_host_pool[i].chunk_size, g_svm_cpy_host_pool[i].chunk_num);
+            svm_warn("Alloc memcpy host svm pool failed. (ret=%d; chunk_size=%llu; chunk_num=%u)\n", ret,
+                     g_svm_cpy_host_pool[i].chunk_size, g_svm_cpy_host_pool[i].chunk_num);
             continue;
         }
 
@@ -155,8 +158,8 @@ void svm_cpy_host_pool_uninit(void)
     g_svm_cpy_host_pool_state = SVM_CPY_HOST_POOL_UNINIT;
 }
 
-static int _svm_cpy_host_pool_slot_get(
-    struct svm_cpy_host_pool_bucket *bucket, u32 bucket_idx, struct svm_cpy_host_pool_slot *slot)
+static int _svm_cpy_host_pool_slot_get(struct svm_cpy_host_pool_bucket *bucket, u32 bucket_idx,
+                                       struct svm_cpy_host_pool_slot *slot)
 {
     u32 slot_idx;
 

@@ -206,7 +206,8 @@ int devmm_svm_proc_init_private(struct devmm_svm_process *svm_proc)
     return 0;
 }
 
-void devmm_svm_proc_uninit_private(struct devmm_svm_process *svm_proc) {}
+void devmm_svm_proc_uninit_private(struct devmm_svm_process *svm_proc)
+{}
 
 bool devmm_svm_can_release_private(struct devmm_svm_process *svm_proc)
 {
@@ -221,8 +222,8 @@ bool devmm_svm_can_release_private(struct devmm_svm_process *svm_proc)
 
 void devmm_svm_release_private_proc(struct devmm_svm_process *svm_proc)
 {
-    devmm_drv_run_info(
-        "Device process exited. (hostpid=%d; times=%d)\n", svm_proc->process_id.hostpid, svm_proc->release_work_cnt);
+    devmm_drv_run_info("Device process exited. (hostpid=%d; times=%d)\n", svm_proc->process_id.hostpid,
+                       svm_proc->release_work_cnt);
 
     devmm_destory_register_dma_mng(svm_proc);
     devmm_share_id_map_node_destroy_all(svm_proc);

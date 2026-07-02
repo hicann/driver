@@ -93,10 +93,9 @@ static int devmm_judge_shm_info(u32 dev_id, struct devmm_chan_exchange_pginfo *i
 
     for (i = 0; i < info->ts_shm_block_num; i++) {
         if (info->ts_shm_dma_addr[i] == 0) {
-            devmm_drv_err(
-                "Ts_shm_dma_addr invalid. (dev_id=%u; i=%u; block_num=%u; data_num=%u; "
-                "is_addr_valid=%u)\n",
-                dev_id, i, info->ts_shm_block_num, info->ts_shm_data_num, (info->ts_shm_addr[i] != 0));
+            devmm_drv_err("Ts_shm_dma_addr invalid. (dev_id=%u; i=%u; block_num=%u; data_num=%u; "
+                          "is_addr_valid=%u)\n",
+                          dev_id, i, info->ts_shm_block_num, info->ts_shm_data_num, (info->ts_shm_addr[i] != 0));
             return -EINVAL;
         }
     }
@@ -110,8 +109,8 @@ static inline int devmm_get_bar_addr_info(u32 devid, u64 device_phy_addr, u64 *b
 }
 #endif
 
-static void devmm_mmap_convert_bar_addr(
-    u32 dev_id, struct devmm_share_memory_head *convert_mng, struct devmm_chan_exchange_pginfo *info)
+static void devmm_mmap_convert_bar_addr(u32 dev_id, struct devmm_share_memory_head *convert_mng,
+                                        struct devmm_chan_exchange_pginfo *info)
 {
     u32 data_num_per_block, block_size, i, unmap_num, per_data_len;
     u64 base_addr, size;
@@ -130,9 +129,8 @@ static void devmm_mmap_convert_bar_addr(
     if (info->ts_shm_support_bar_write == DEVMM_SHM_TS_RESERVE_MAP_BAR) {
         ret = devmm_get_bar_addr_info(dev_id, info->ts_shm_addr[0], &base_addr, (size_t *)&size);
         if ((ret != 0) || (base_addr == 0) || (size < (convert_mng->total_data_num * per_data_len))) {
-            devmm_drv_info(
-                "Devdrv_get_addr_info not support, not write by bar. (ret=%d; base=%llx, size=%llu)\n", ret, base_addr,
-                size);
+            devmm_drv_info("Devdrv_get_addr_info not support, not write by bar. (ret=%d; base=%llx, size=%llu)\n", ret,
+                           base_addr, size);
             return;
         }
         for (i = 0; i < convert_mng->total_block_num; i++) {
@@ -221,22 +219,22 @@ void devmm_uninit_convert_addr_mng(u32 dev_id)
     }
 }
 
-static void devmm_get_convert_shm_addr_info(
-    struct devmm_share_memory_head *convert_mng, u32 index, u32 addr_type, u64 *shm_addr, u32 *size)
+static void devmm_get_convert_shm_addr_info(struct devmm_share_memory_head *convert_mng, u32 index, u32 addr_type,
+                                            u64 *shm_addr, u32 *size)
 {
     u32 data_num_per_block = convert_mng->total_data_num / convert_mng->total_block_num;
     u32 data_id = index % data_num_per_block;
     u32 shm_id = index / data_num_per_block;
     u64 shm_base_addr;
 
-    shm_base_addr =
-        (addr_type == CONVERT_COPY_USE_BAR) ? convert_mng->block_addr[shm_id] : convert_mng->block_dma_addr[shm_id];
+    shm_base_addr = (addr_type == CONVERT_COPY_USE_BAR) ? convert_mng->block_addr[shm_id] :
+                                                          convert_mng->block_dma_addr[shm_id];
     *size = sizeof(struct devmm_share_memory_data);
     *shm_addr = shm_base_addr + (u64)data_id * (u64)(*size);
 }
 
-static int devmm_copy_convert_addr_info_by_dma(
-    u32 dev_id, u32 index, u32 dir, struct devmm_share_memory_data *data, u32 num)
+static int devmm_copy_convert_addr_info_by_dma(u32 dev_id, u32 index, u32 dir, struct devmm_share_memory_data *data,
+                                               u32 num)
 {
     struct devmm_share_memory_head *convert_mng = &devmm_svm->pa_info[dev_id];
     struct devdrv_dma_node dma_node = {0};
@@ -373,8 +371,8 @@ static void devmm_free_convert_index(u32 dev_id, u32 vfid, u32 index)
     convert_mng->vdev_free_data_num[vfid]++;
 }
 
-static bool devmm_convert_index_can_recycle(
-    struct devmm_share_memory_head *convert_mng, struct devmm_share_memory_data *data, u32 index)
+static bool devmm_convert_index_can_recycle(struct devmm_share_memory_head *convert_mng,
+                                            struct devmm_share_memory_data *data, u32 index)
 {
     if ((convert_mng->share_memory_mng[index].va != 0) &&
         (convert_mng->share_memory_mng[index].data_type == DEVMM_DMA)) {
@@ -383,9 +381,8 @@ static bool devmm_convert_index_can_recycle(
     }
 
     if ((convert_mng->share_memory_mng[index].id != data->id) && (data->id != 0)) {
-        devmm_drv_debug(
-            "Unexpected, id is mismatch. (index=%u; id=%u; data.id=%u)\n", index,
-            convert_mng->share_memory_mng[index].id, data->id);
+        devmm_drv_debug("Unexpected, id is mismatch. (index=%u; id=%u; data.id=%u)\n", index,
+                        convert_mng->share_memory_mng[index].id, data->id);
         return false;
     }
 #ifndef EMU_ST
@@ -404,9 +401,8 @@ static bool devmm_convert_index_can_recycle(
     return false;
 }
 
-static void devmm_try_free_convert_index(
-    struct devmm_share_memory_head *convert_mng, struct devmm_share_memory_data *data, u32 dev_id, u32 num,
-    u32 *recycle_num)
+static void devmm_try_free_convert_index(struct devmm_share_memory_head *convert_mng,
+                                         struct devmm_share_memory_data *data, u32 dev_id, u32 num, u32 *recycle_num)
 {
     u32 i;
 
@@ -452,8 +448,8 @@ STATIC void devmm_recycle_finish_convert_addr_index(u32 dev_id)
         } else {
             num = convert_mng->total_data_num - convert_mng->recycle_index;
         }
-        ret = devmm_copy_convert_addr_info_by_dma(
-            dev_id, convert_mng->recycle_index, CONVERT_INFO_FROM_DEVICE, data, num);
+        ret = devmm_copy_convert_addr_info_by_dma(dev_id, convert_mng->recycle_index, CONVERT_INFO_FROM_DEVICE, data,
+                                                  num);
         if (ret != 0) {
             devmm_drv_warn("Convert dma address failed. (dev_id=%d; ret=%d)\n", dev_id, ret);
             goto next;
@@ -470,8 +466,8 @@ STATIC void devmm_recycle_finish_convert_addr_index(u32 dev_id)
     devmm_kfree_ex(data);
 }
 
-static int devmm_get_idle_convert_addr_index(
-    struct devmm_share_memory_head *convert_mng, u32 host_pid, u32 vfid, u64 va, u8 data_type)
+static int devmm_get_idle_convert_addr_index(struct devmm_share_memory_head *convert_mng, u32 host_pid, u32 vfid,
+                                             u64 va, u8 data_type)
 {
     u32 i, index;
 
@@ -514,9 +510,8 @@ static int devmm_occupy_idle_convert_addr_index(u32 dev_id, u32 host_pid, u32 vf
         retry_cnt++;
         devmm_try_cond_resched(&stamp);
     };
-    devmm_drv_debug(
-        "Occupy idle address error. (vfid=%d; free_offset=0; total_num=%d)\n", vfid,
-        convert_mng->vdev_total_data_num[vfid]);
+    devmm_drv_debug("Occupy idle address error. (vfid=%d; free_offset=0; total_num=%d)\n", vfid,
+                    convert_mng->vdev_total_data_num[vfid]);
     ka_task_mutex_unlock(&convert_mng->mutex);
     return -1;
 }
@@ -546,8 +541,8 @@ static u64 devmm_convert_index_to_offset(u32 devid, u64 index)
     return ((block_id * data_num_per_block + data_id) * (u64)sizeof(struct devmm_share_memory_data));
 }
 
-static int devmm_set_convert_ka_dma_addr_to_device(
-    struct devmm_svm_process *svm_pro, struct devmm_ioctl_arg *arg, u64 *offset, u32 *index)
+static int devmm_set_convert_ka_dma_addr_to_device(struct devmm_svm_process *svm_pro, struct devmm_ioctl_arg *arg,
+                                                   u64 *offset, u32 *index)
 {
     struct DMA_ADDR *dma_addr = &arg->data.convrt_para.dmaAddr;
     struct devmm_share_memory_head *convert_mng = NULL;
@@ -612,9 +607,8 @@ void devmm_clear_one_convert_dma_addr(u32 dev_id, u32 vfid, u32 index)
     devmm_free_convert_addr_index(dev_id, vfid, index);
 }
 
-static int devmm_fill_translate_offset_data(
-    struct devmm_svm_process *svm_proc, struct devmm_translate_info *trans, u64 pa,
-    struct devmm_share_memory_data *data)
+static int devmm_fill_translate_offset_data(struct devmm_svm_process *svm_proc, struct devmm_translate_info *trans,
+                                            u64 pa, struct devmm_share_memory_data *data)
 {
     struct translate_offset_data translate_data = {0};
     u64 continuty_len;
@@ -625,8 +619,8 @@ static int devmm_fill_translate_offset_data(
          * VM's msg is untrusted, PM don't know how much size should query.
          * So PM should query continuty_len as much as possible within the MAX_CONTINUTY_PHYS_SIZE range limited by OS.
          */
-        continuty_len =
-            devmm_get_continuty_len_after_dev_va(svm_proc, trans->page_insert_dev_id, trans->va, trans->page_size);
+        continuty_len = devmm_get_continuty_len_after_dev_va(svm_proc, trans->page_insert_dev_id, trans->va,
+                                                             trans->page_size);
     } else {
         if (trans->is_svm_continuty) {
             continuty_len = trans->alloced_size - (trans->va - trans->alloced_va);
@@ -645,8 +639,8 @@ static int devmm_fill_translate_offset_data(
     return ret;
 }
 
-int devmm_set_translate_pa_addr_to_device_inner(
-    struct devmm_svm_process *svm_proc, struct devmm_translate_info trans, u64 *pa_offset)
+int devmm_set_translate_pa_addr_to_device_inner(struct devmm_svm_process *svm_proc, struct devmm_translate_info trans,
+                                                u64 *pa_offset)
 {
     struct devmm_share_memory_head *convert_mng = &devmm_svm->pa_info[trans.dev_id];
     struct devmm_share_memory_data data = {0};
@@ -689,14 +683,13 @@ int devmm_set_translate_pa_addr_to_device_inner(
         devmm_drv_err("Convert dma address failed. (dev_id=%d; hostpid=%d; ret=%d)\n", trans.dev_id, host_pid, ret);
     }
 
-    devmm_drv_debug(
-        "Translate info. (index=%d; data.host_pid=%d; data.vfid=%u; data.va=0x%llx; devid=%u)\n", index, data.host_pid,
-        data.vfid, data.va, trans.dev_id);
+    devmm_drv_debug("Translate info. (index=%d; data.host_pid=%d; data.vfid=%u; data.va=0x%llx; devid=%u)\n", index,
+                    data.host_pid, data.vfid, data.va, trans.dev_id);
     return ret;
 }
 
-static int devmm_try_get_idle_translate_mem(
-    struct devmm_svm_process *svm_proc, struct devmm_translate_info trans, u64 *pa_offset)
+static int devmm_try_get_idle_translate_mem(struct devmm_svm_process *svm_proc, struct devmm_translate_info trans,
+                                            u64 *pa_offset)
 {
     struct devmm_dev_res_mng *dev_res_mng = NULL;
     struct svm_id_inst id_inst;
@@ -732,8 +725,8 @@ static int devmm_try_get_idle_translate_mem(
     return ret;
 }
 
-int devmm_set_translate_pa_addr_to_device(
-    struct devmm_svm_process *svm_process, struct devmm_translate_info trans, u64 *pa_offset)
+int devmm_set_translate_pa_addr_to_device(struct devmm_svm_process *svm_process, struct devmm_translate_info trans,
+                                          u64 *pa_offset)
 {
     return devmm_try_get_idle_translate_mem(svm_process, trans, pa_offset);
 }
@@ -771,11 +764,10 @@ int devmm_clear_translate_pa_addr_inner(u32 dev_id, u32 vfid, u64 va, u64 len, u
         if (data.image_word == DEVMM_READED_MAGIC_WORD) {
             /* The log cannot be modified, because in the failure mode library. */
 #ifndef EMU_ST
-            devmm_drv_err(
-                "Vaddress is not finish image word, please GE and RUNTIME call unbind_stream before rtfree. "
-                "(devid=%u; idx=%d; host_pid=%d; va=%llx; image_word=%x; offset=%llu)\n",
-                dev_id, i, host_pid, convert_mng->share_memory_mng[i].va, data.image_word,
-                devmm_convert_index_to_offset(dev_id, i));
+            devmm_drv_err("Vaddress is not finish image word, please GE and RUNTIME call unbind_stream before rtfree. "
+                          "(devid=%u; idx=%d; host_pid=%d; va=%llx; image_word=%x; offset=%llu)\n",
+                          dev_id, i, host_pid, convert_mng->share_memory_mng[i].va, data.image_word,
+                          devmm_convert_index_to_offset(dev_id, i));
 #endif
             return -EBUSY;
         }
@@ -809,8 +801,8 @@ static int devmm_va_to_palist_check(struct devmm_svm_process *svm_proc, u64 va, 
     page_num = devmm_get_pagecount_by_size(va, sz, heap->chunk_page_size);
     for (page_sq = 0; page_sq < page_num; page_sq++) {
         if (!devmm_page_bitmap_is_page_available(bitmap + page_sq)) {
-            devmm_drv_err(
-                "Vaddress not alloced. (va=0x%llx; page_sq=%lu; bitmap=0x%x)\n", va, page_sq, *(bitmap + page_sq));
+            devmm_drv_err("Vaddress not alloced. (va=0x%llx; page_sq=%lu; bitmap=0x%x)\n", va, page_sq,
+                          *(bitmap + page_sq));
             devmm_print_pre_alloced_va(svm_proc, va + page_sq * heap->chunk_page_size);
             return -EINVAL;
         }
@@ -819,8 +811,8 @@ static int devmm_va_to_palist_check(struct devmm_svm_process *svm_proc, u64 va, 
     return 0;
 }
 
-static int devmm_va_to_paka_list_add_pgtable(
-    struct devmm_svm_process *svm_proc, u64 va, u64 sz, struct devmm_copy_side *side)
+static int devmm_va_to_paka_list_add_pgtable(struct devmm_svm_process *svm_proc, u64 va, u64 sz,
+                                             struct devmm_copy_side *side)
 {
     ka_vm_area_struct_t *vma = NULL;
     unsigned long vaddr, va_max_offset;
@@ -857,8 +849,8 @@ static int devmm_va_to_paka_list_add_pgtable(
 
     for (; vaddr < va_max_offset; vaddr += KA_MM_PAGE_SIZE, pg_num++) {
         if (pg_num >= side->num) {
-            devmm_drv_err(
-                "Page num error. (va=0x%lx; size=%lld; num=%u; blk_num=%d)\n", vaddr, sz, side->num, side->blks_num);
+            devmm_drv_err("Page num error. (va=0x%lx; size=%lld; num=%u; blk_num=%d)\n", vaddr, sz, side->num,
+                          side->blks_num);
             devmm_kvfree(pas);
             return -EINVAL;
         }
@@ -907,9 +899,8 @@ int devmm_pa_node_list_dma_map(u32 dev_id, struct devmm_copy_side *side)
             page = devmm_pa_to_page(side->blks[i].pa);
             side->blks[i].dma = hal_kernel_devdrv_dma_map_page(dev, page, 0, side->blks[i].sz, KA_DMA_BIDIRECTIONAL);
             if (ka_mm_dma_mapping_error(dev, side->blks[i].dma) != 0) {
-                devmm_drv_err(
-                    "Dma mapping error. (i=%d; dma_mapping_error=%d)\n", i,
-                    ka_mm_dma_mapping_error(dev, side->blks[i].dma));
+                devmm_drv_err("Dma mapping error. (i=%d; dma_mapping_error=%d)\n", i,
+                              ka_mm_dma_mapping_error(dev, side->blks[i].dma));
                 goto devmm_fill_dma_blklist_err;
             }
         }
@@ -967,9 +958,8 @@ static int devmm_d2d_pa_to_bar_dma(u32 src_dev_id, u32 dst_dev_id, u64 dst_pa, u
 {
     int ret;
 
-    devmm_drv_debug(
-        "Info. (src_dev_id=%u; dst_dev_id=%u; is_pcie_connect=%u)\n", src_dev_id, dst_dev_id,
-        devmm_is_pcie_connect(dst_dev_id));
+    devmm_drv_debug("Info. (src_dev_id=%u; dst_dev_id=%u; is_pcie_connect=%u)\n", src_dev_id, dst_dev_id,
+                    devmm_is_pcie_connect(dst_dev_id));
     if (devmm_is_pcie_connect(dst_dev_id)) {
         ret = devdrv_devmem_addr_d2h(dst_dev_id, dst_pa, dst_dma);
         if (ret != 0) {
@@ -979,8 +969,8 @@ static int devmm_d2d_pa_to_bar_dma(u32 src_dev_id, u32 dst_dev_id, u64 dst_pa, u
 
         ret = devdrv_devmem_addr_bar_to_dma(src_dev_id, dst_dev_id, *dst_dma, dst_dma);
         if (ret != 0) {
-            devmm_drv_err(
-                "Pcie fill bar2dma fail. (src_dev_id=%u; dst_dev_id=%u; ret=%d)\n", src_dev_id, dst_dev_id, ret);
+            devmm_drv_err("Pcie fill bar2dma fail. (src_dev_id=%u; dst_dev_id=%u; ret=%d)\n", src_dev_id, dst_dev_id,
+                          ret);
             return ret;
         }
     } else {
@@ -991,9 +981,8 @@ static int devmm_d2d_pa_to_bar_dma(u32 src_dev_id, u32 dst_dev_id, u64 dst_pa, u
 }
 #endif
 
-static int devmm_fill_dmanode(
-    struct devmm_dma_block *blks, struct devmm_dma_block *dst_blks, struct devdrv_dma_node *dma_node,
-    struct devmm_copy_res *res)
+static int devmm_fill_dmanode(struct devmm_dma_block *blks, struct devmm_dma_block *dst_blks,
+                              struct devdrv_dma_node *dma_node, struct devmm_copy_res *res)
 {
     int copy_direction = res->copy_direction;
     u32 src_dev_id = (u32)res->dev_id;
@@ -1072,29 +1061,27 @@ static int devmm_make_dmanode_list(u64 src, u64 dst, size_t count, struct devmm_
             off_src = 0;
         }
         total_len += res->dma_node[idx_dma].size;
-        devmm_drv_debug(
-            "Make dma nodes info. (src=0x%llx; dst=0x%llx; total_len=0x%lx; count=0x%x; "
-            "idx_src=%u; idx_dst=%u; idx_dma=%u)\n",
-            res->dma_node[idx_dma].src_addr, res->dma_node[idx_dma].dst_addr, total_len, res->dma_node[idx_dma].size,
-            idx_src, idx_dst, idx_dma);
+        devmm_drv_debug("Make dma nodes info. (src=0x%llx; dst=0x%llx; total_len=0x%lx; count=0x%x; "
+                        "idx_src=%u; idx_dst=%u; idx_dma=%u)\n",
+                        res->dma_node[idx_dma].src_addr, res->dma_node[idx_dma].dst_addr, total_len,
+                        res->dma_node[idx_dma].size, idx_src, idx_dst, idx_dma);
         idx_dma++;
         devmm_try_cond_resched(&stamp);
     }
     res->dma_node_num = idx_dma;
 
     if (total_len != count) {
-        devmm_drv_err(
-            "Make dma node-size check fail, please check addr size. "
-            "(total_len=%lu; count=%lu; idx_dma=%u; did=%d; dst_did=%d; "
-            "src=0x%llx; dst=0x%llx; idx_src=%u; from_num=%u; idx_dst=%u; to_num=%u)\n",
-            total_len, count, idx_dma, res->dev_id, res->dst_dev_id, src, dst, idx_src, res->from.num, idx_dst,
-            res->to.num);
+        devmm_drv_err("Make dma node-size check fail, please check addr size. "
+                      "(total_len=%lu; count=%lu; idx_dma=%u; did=%d; dst_did=%d; "
+                      "src=0x%llx; dst=0x%llx; idx_src=%u; from_num=%u; idx_dst=%u; to_num=%u)\n",
+                      total_len, count, idx_dma, res->dev_id, res->dst_dev_id, src, dst, idx_src, res->from.num,
+                      idx_dst, res->to.num);
         ret = -EINVAL;
     }
-    devmm_drv_debug(
-        "Exit make dma nodes. (src=0x%llx; dst=0x%llx; total_len=0x%lx; count=0x%lx; "
-        "idx_src=%u; from_num=%u; idx_dst=%u; to_num=%u; idx_dma=%u; dma_node_num=%u)\n",
-        src, dst, total_len, count, idx_src, res->from.num, idx_dst, res->to.num, idx_dma, res->dma_node_num);
+    devmm_drv_debug("Exit make dma nodes. (src=0x%llx; dst=0x%llx; total_len=0x%lx; count=0x%lx; "
+                    "idx_src=%u; from_num=%u; idx_dst=%u; to_num=%u; idx_dma=%u; dma_node_num=%u)\n",
+                    src, dst, total_len, count, idx_src, res->from.num, idx_dst, res->to.num, idx_dma,
+                    res->dma_node_num);
 
     return ret;
 }
@@ -1152,9 +1139,8 @@ STATIC u32 devmm_get_blk_num(u64 byte_count, struct devmm_memory_attributes *att
     return blk_num;
 }
 #endif
-struct devmm_copy_res *devmm_alloc_copy_res(
-    u64 byte_count, struct devmm_memory_attributes *src_attr, struct devmm_memory_attributes *dst_attr,
-    bool is_need_clear)
+struct devmm_copy_res *devmm_alloc_copy_res(u64 byte_count, struct devmm_memory_attributes *src_attr,
+                                            struct devmm_memory_attributes *dst_attr, bool is_need_clear)
 {
     u64 buf_head_len, src_blks_len, dst_blks_len, buf_dma_node_len, buf_total_len;
     u32 src_blk_num, dst_blk_num, dma_node_num;
@@ -1259,16 +1245,15 @@ int devmm_svm_addr_pa_list_get(struct devmm_svm_process *svm_proc, u64 va, u64 s
     ret = devmm_va_to_paka_list_add_pgtable(svm_proc, va, size, side);
     if (ret != 0) {
         /* The log cannot be modified, because in the failure mode library. */
-        devmm_drv_err(
-            "Vaddress to palist add pgtable fail. "
-            "(va=0x%llx; size=0x%llx; blks_num=%d)\n",
-            va, size, side->blks_num);
+        devmm_drv_err("Vaddress to palist add pgtable fail. "
+                      "(va=0x%llx; size=0x%llx; blks_num=%d)\n",
+                      va, size, side->blks_num);
         return ret;
     }
 
     _devmm_svm_addr_pa_list_get(side);
-    devmm_drv_debug(
-        "Get pages details. (va=0x%llx; size=0x%llx; blks_num=%d; num=%d)\n", va, size, side->blks_num, side->num);
+    devmm_drv_debug("Get pages details. (va=0x%llx; size=0x%llx; blks_num=%d; num=%d)\n", va, size, side->blks_num,
+                    side->num);
     return 0;
 }
 
@@ -1302,8 +1287,8 @@ static int devmm_get_user_pages(struct devmm_svm_process *svm_proc, u64 va, u32 
     }
 }
 
-int devmm_get_non_svm_addr_pa_list(
-    struct devmm_svm_process *svm_proc, u64 va, u64 size, struct devmm_copy_side *side, int write)
+int devmm_get_non_svm_addr_pa_list(struct devmm_svm_process *svm_proc, u64 va, u64 size, struct devmm_copy_side *side,
+                                   int write)
 {
     int ret;
     u32 i;
@@ -1330,8 +1315,8 @@ int devmm_get_non_svm_addr_pa_list(
 
     devmm_kvfree(pages);
 
-    devmm_drv_debug(
-        "Get pages details. (va=%llx; size=0x%llx; blks_num=%d; num=%d)\n", va, size, side->blks_num, side->num);
+    devmm_drv_debug("Get pages details. (va=%llx; size=0x%llx; blks_num=%d; num=%d)\n", va, size, side->blks_num,
+                    side->num);
     return 0;
 }
 
@@ -1403,9 +1388,9 @@ int devmm_vm_pa_blks_to_pm_pa_blks(u32 devid, struct devmm_dma_block *blks, u64 
     return 0;
 }
 
-static int devmm_make_host_pa_node_list_no_merge(
-    struct devmm_mem_copy_convrt_para *para, struct devmm_svm_process *svm_proc, struct devmm_memory_attributes *attr,
-    struct devmm_copy_side *side)
+static int devmm_make_host_pa_node_list_no_merge(struct devmm_mem_copy_convrt_para *para,
+                                                 struct devmm_svm_process *svm_proc,
+                                                 struct devmm_memory_attributes *attr, struct devmm_copy_side *side)
 {
     struct devmm_copy_res *res = para->res;
     u32 host_flag;
@@ -1459,9 +1444,8 @@ static int devmm_make_host_pa_node_list_no_merge(
     return ret;
 }
 
-static int devmm_make_host_pa_node_list(
-    struct devmm_mem_copy_convrt_para *para, struct devmm_svm_process *svm_proc, struct devmm_memory_attributes *attr,
-    struct devmm_copy_side *side)
+static int devmm_make_host_pa_node_list(struct devmm_mem_copy_convrt_para *para, struct devmm_svm_process *svm_proc,
+                                        struct devmm_memory_attributes *attr, struct devmm_copy_side *side)
 {
     u32 i, merg_idx;
     int ret;
@@ -1485,9 +1469,8 @@ void devmm_clear_host_pa_node_list(int pin_flg, struct devmm_copy_side *side)
     }
 }
 #ifndef UVM_OPEN
-static int devmm_make_uvm_host_pa_node_list(
-    struct devmm_mem_copy_convrt_para *para, struct devmm_svm_process *svm_proc, struct devmm_memory_attributes *attr,
-    struct devmm_copy_side *side)
+static int devmm_make_uvm_host_pa_node_list(struct devmm_mem_copy_convrt_para *para, struct devmm_svm_process *svm_proc,
+                                            struct devmm_memory_attributes *attr, struct devmm_copy_side *side)
 {
     struct uvm_page_info page_info = {0};
     ka_page_t *pg = NULL;
@@ -1524,8 +1507,8 @@ static int devmm_make_uvm_host_pa_node_list(
 }
 #endif
 
-static INLINE void devmm_fill_sva_dma_blk_node(
-    u64 va, u64 sz, struct devmm_memory_attributes *attr, struct devmm_copy_side *side)
+static INLINE void devmm_fill_sva_dma_blk_node(u64 va, u64 sz, struct devmm_memory_attributes *attr,
+                                               struct devmm_copy_side *side)
 {
     u64 aligned_va, aligned_size;
 
@@ -1540,9 +1523,8 @@ static INLINE void devmm_fill_sva_dma_blk_node(
     side->blks[0].ssid = attr->ssid;
 }
 
-static int devmm_fill_dma_blk_node(
-    struct devmm_mem_copy_convrt_para *para, struct devmm_svm_process *svm_proc, struct devmm_memory_attributes *attr,
-    struct devmm_copy_side *side)
+static int devmm_fill_dma_blk_node(struct devmm_mem_copy_convrt_para *para, struct devmm_svm_process *svm_proc,
+                                   struct devmm_memory_attributes *attr, struct devmm_copy_side *side)
 {
     struct devmm_memory_attributes *tmp_attr = attr;
     struct devmm_svm_process *owner_proc = svm_proc;
@@ -1561,9 +1543,8 @@ static int devmm_fill_dma_blk_node(
             return ret;
         }
 
-        devmm_drv_debug(
-            "Get ipc owner attributes success. (attr_va=%llx; pid=%d; owner_attr_va=%llx)\n", tmp_attr->va,
-            owner_proc->process_id.hostpid, owner_attr.va);
+        devmm_drv_debug("Get ipc owner attributes success. (attr_va=%llx; pid=%d; owner_attr_va=%llx)\n", tmp_attr->va,
+                        owner_proc->process_id.hostpid, owner_attr.va);
 
         tmp_attr = &owner_attr;
         tmp_addr_type = (tmp_attr->devid == res->dev_id) ? DEVMM_ADDR_TYPE_DMA : DEVMM_ADDR_TYPE_PHY;
@@ -1586,8 +1567,8 @@ static int devmm_fill_dma_blk_node(
     query_arg.msg_id = (para->create_msg) ? DEVMM_CHAN_PAGE_CREATE_QUERY_H2D_ID : DEVMM_CHAN_PAGE_QUERY_H2D_ID;
     query_arg.addr_type = (u32)tmp_addr_type;
     query_arg.logical_devid = tmp_attr->logical_devid;
-    query_arg.page_insert_dev_id = devmm_get_page_insert_dev_id(
-        owner_proc->process_id.vm_id, tmp_attr->devid, tmp_attr->logical_devid, (u32)res->fid);
+    query_arg.page_insert_dev_id = devmm_get_page_insert_dev_id(owner_proc->process_id.vm_id, tmp_attr->devid,
+                                                                tmp_attr->logical_devid, (u32)res->fid);
     if (tmp_attr->copy_use_va == true) {
         ret = devmm_query_page_by_msg(owner_proc, query_arg, NULL, &side->num);
     } else {
@@ -1610,9 +1591,8 @@ static int devmm_fill_dma_blk_node(
     return ret;
 }
 
-static int devmm_make_device_addr_node_list(
-    struct devmm_mem_copy_convrt_para *para, struct devmm_svm_process *svm_proc, struct devmm_memory_attributes *attr,
-    struct devmm_copy_side *side)
+static int devmm_make_device_addr_node_list(struct devmm_mem_copy_convrt_para *para, struct devmm_svm_process *svm_proc,
+                                            struct devmm_memory_attributes *attr, struct devmm_copy_side *side)
 {
     if (attr->copy_use_va) {
         int ret;
@@ -1648,8 +1628,8 @@ static int devmm_make_device_addr_node_list(
 }
 
 /* devdrv_dma_link_prepare may return fail, if dma_node_num is too large */
-static struct devdrv_dma_prepare *devmm_dma_link_prepare(
-    u32 devid, struct devdrv_dma_node *dma_node, u32 dma_node_num, u32 *prepared_num)
+static struct devdrv_dma_prepare *devmm_dma_link_prepare(u32 devid, struct devdrv_dma_node *dma_node, u32 dma_node_num,
+                                                         u32 *prepared_num)
 {
     struct devdrv_dma_prepare *dma_prepare = NULL;
     u32 i;
@@ -1659,8 +1639,8 @@ static struct devdrv_dma_prepare *devmm_dma_link_prepare(
         if (tmp_num == 0) {
             return NULL;
         }
-        dma_prepare =
-            devdrv_dma_link_prepare(devid, DEVDRV_DMA_DATA_TRAFFIC, dma_node, tmp_num, DEVDRV_DMA_DESC_FILL_FINISH);
+        dma_prepare = devdrv_dma_link_prepare(devid, DEVDRV_DMA_DATA_TRAFFIC, dma_node, tmp_num,
+                                              DEVDRV_DMA_DESC_FILL_FINISH);
         if (dma_prepare != NULL) {
             *prepared_num = tmp_num;
             break;
@@ -1683,8 +1663,8 @@ static u32 devmm_get_dma_node_num_by_convrt_para(struct devmm_mem_convrt_addr_pa
     return total_node_num;
 }
 
-static int devmm_fill_dma_node_by_convrt_para(
-    struct devmm_mem_convrt_addr_para *convrt_para, u32 height, struct devdrv_dma_node *dma_node, u32 dma_node_num)
+static int devmm_fill_dma_node_by_convrt_para(struct devmm_mem_convrt_addr_para *convrt_para, u32 height,
+                                              struct devdrv_dma_node *dma_node, u32 dma_node_num)
 {
     u32 stamp = (u32)ka_jiffies;
     u32 copyed_num = 0;
@@ -1694,10 +1674,9 @@ static int devmm_fill_dma_node_by_convrt_para(
     for (i = 0; i < height; i++) {
         struct devmm_copy_res *res = (struct devmm_copy_res *)convrt_para[i].dmaAddr.phyAddr.priv;
 
-        ret = memcpy_s(
-            (void *)dma_node + sizeof(struct devdrv_dma_node) * copyed_num,
-            sizeof(struct devdrv_dma_node) * (dma_node_num - copyed_num), (const void *)res->dma_node,
-            sizeof(struct devdrv_dma_node) * res->dma_node_num);
+        ret = memcpy_s((void *)dma_node + sizeof(struct devdrv_dma_node) * copyed_num,
+                       sizeof(struct devdrv_dma_node) * (dma_node_num - copyed_num), (const void *)res->dma_node,
+                       sizeof(struct devdrv_dma_node) * res->dma_node_num);
         if (ret != 0) {
             return ret;
         }
@@ -1707,8 +1686,8 @@ static int devmm_fill_dma_node_by_convrt_para(
     return 0;
 }
 
-static int devmm_dma_node_prepare(
-    struct devmm_mem_convrt_addr_para *convrt_para, u32 height, struct devdrv_dma_node **dma_node, u32 *dma_node_num)
+static int devmm_dma_node_prepare(struct devmm_mem_convrt_addr_para *convrt_para, u32 height,
+                                  struct devdrv_dma_node **dma_node, u32 *dma_node_num)
 {
     struct devdrv_dma_node *tmp = NULL;
     struct devmm_copy_res *res = NULL;
@@ -1745,8 +1724,8 @@ static void devmm_dma_node_free(u32 height, struct devdrv_dma_node *dma_node)
     }
 }
 
-STATIC int devmm_convert2d_make_sqcq_addr(
-    struct devmm_ioctl_arg *arg, struct devmm_mem_convrt_addr_para *convrt_para, struct devmm_copy_res *res)
+STATIC int devmm_convert2d_make_sqcq_addr(struct devmm_ioctl_arg *arg, struct devmm_mem_convrt_addr_para *convrt_para,
+                                          struct devmm_copy_res *res)
 {
     struct devdrv_dma_node *dma_node = NULL;
     u32 height = (u32)arg->data.convrt_para.height;
@@ -1778,9 +1757,9 @@ STATIC void devmm_convert2d_make_res_list(struct devmm_ioctl_arg *arg, struct de
     }
 }
 
-static void devmm_convert2d_get_fixed_size(
-    struct devmm_mem_convrt_addr_para *convrt2d_para, struct devmm_mem_convrt_addr_para *convrt_para,
-    struct devmm_copy_res *convrt_res)
+static void devmm_convert2d_get_fixed_size(struct devmm_mem_convrt_addr_para *convrt2d_para,
+                                           struct devmm_mem_convrt_addr_para *convrt_para,
+                                           struct devmm_copy_res *convrt_res)
 {
     u64 height = convrt2d_para->height;
     struct devmm_copy_res *res = NULL;
@@ -1854,8 +1833,8 @@ static int devmm_make_convert2d_para(struct devmm_ioctl_arg *arg, struct devmm_m
     return 0;
 }
 
-static int devmm_try_get_idle_convert_mem(
-    struct devmm_svm_process *svm_pro, struct devmm_ioctl_arg *arg, u64 *offset, u32 *index)
+static int devmm_try_get_idle_convert_mem(struct devmm_svm_process *svm_pro, struct devmm_ioctl_arg *arg, u64 *offset,
+                                          u32 *index)
 {
     struct devmm_dev_res_mng *dev_res_mng = NULL;
     struct svm_id_inst id_inst;
@@ -1891,9 +1870,8 @@ static int devmm_try_get_idle_convert_mem(
     return ret;
 }
 
-static void devmm_convert_node_para_pack(
-    struct devmm_svm_process *svm_proc, struct devmm_ioctl_arg *arg, u64 offset, u32 index,
-    struct devmm_convert_node_info *info)
+static void devmm_convert_node_para_pack(struct devmm_svm_process *svm_proc, struct devmm_ioctl_arg *arg, u64 offset,
+                                         u32 index, struct devmm_convert_node_info *info)
 {
     info->dma_addr = arg->data.convrt_para.dmaAddr;
     info->src_va = (u64)arg->data.convrt_para.pSrc;
@@ -1909,8 +1887,8 @@ static void devmm_convert_node_para_pack(
     svm_id_inst_pack(&info->id_inst, arg->head.devid, arg->head.vfid);
 }
 
-int devmm_convert2d_proc_inner(
-    struct devmm_svm_process *svm_pro, struct devmm_ioctl_arg *arg, struct devmm_mem_convrt_addr_para *convrt_para)
+int devmm_convert2d_proc_inner(struct devmm_svm_process *svm_pro, struct devmm_ioctl_arg *arg,
+                               struct devmm_mem_convrt_addr_para *convrt_para)
 {
     struct devmm_convert_node_info info;
     u64 offset = 0;
@@ -1965,8 +1943,8 @@ static void devmm_convert2d_destroy_inner(struct devmm_ioctl_arg *arg, struct de
     }
 }
 
-int devmm_convert2d_proc(
-    struct devmm_svm_process *svm_pro, struct devmm_ioctl_arg *arg, struct devmm_mem_convrt_addr_para *convrt_para)
+int devmm_convert2d_proc(struct devmm_svm_process *svm_pro, struct devmm_ioctl_arg *arg,
+                         struct devmm_mem_convrt_addr_para *convrt_para)
 {
     u32 destroy_flag = convrt_para[0].destroy_flag;
     int ret = 0;
@@ -1993,8 +1971,8 @@ static u64 devmm_get_occupied_blks_num_by_size(struct devmm_dma_block *blks, u64
     return i + 1;
 }
 
-static void devmm_make_single_dma_blk_list_by_cache(
-    struct devmm_copy_side *side, struct devmm_register_dma_node *node, u64 va, u64 size)
+static void devmm_make_single_dma_blk_list_by_cache(struct devmm_copy_side *side, struct devmm_register_dma_node *node,
+                                                    u64 va, u64 size)
 {
     u64 offset, offset_size; /* Offset is within the range of node->num */
     u64 align_va = ka_base_round_down(va, KA_MM_PAGE_SIZE);
@@ -2024,24 +2002,22 @@ static void devmm_make_single_dma_blk_list_by_cache(
         side->blks[0].sz = node->blks[offset].sz - offset_size;
         left_size -= side->blks[0].sz;
         offset++;
-        occupied_blks_num =
-            (u32)devmm_get_occupied_blks_num_by_size(&node->blks[offset], node->num - offset, &left_size);
-        (void)memcpy_s(
-            &side->blks[1], sizeof(struct devmm_dma_block) * occupied_blks_num, &node->blks[offset],
-            sizeof(struct devmm_dma_block) * occupied_blks_num);
+        occupied_blks_num = (u32)devmm_get_occupied_blks_num_by_size(&node->blks[offset], node->num - offset,
+                                                                     &left_size);
+        (void)memcpy_s(&side->blks[1], sizeof(struct devmm_dma_block) * occupied_blks_num, &node->blks[offset],
+                       sizeof(struct devmm_dma_block) * occupied_blks_num);
         side->blks[occupied_blks_num].sz = left_size;
         side->num = occupied_blks_num + 1;
     }
 
-    devmm_drv_debug(
-        "Get host pages cache node. (va=0x%llx; size=%llu; node_va=0x%llx; node_size=%llu;"
-        "blks_num=%u; dev_id=%d)\n",
-        va, size, node->align_va, node->align_size, side->num, node->devid);
+    devmm_drv_debug("Get host pages cache node. (va=0x%llx; size=%llu; node_va=0x%llx; node_size=%llu;"
+                    "blks_num=%u; dev_id=%d)\n",
+                    va, size, node->align_va, node->align_size, side->num, node->devid);
 }
 
-static int devmm_make_single_dma_blk_list_by_dma_map(
-    struct devmm_mem_copy_convrt_para *para, struct devmm_svm_process *svm_proc, struct devmm_copy_res *res,
-    struct devmm_copy_side *side, struct devmm_memory_attributes *attr)
+static int devmm_make_single_dma_blk_list_by_dma_map(struct devmm_mem_copy_convrt_para *para,
+                                                     struct devmm_svm_process *svm_proc, struct devmm_copy_res *res,
+                                                     struct devmm_copy_side *side, struct devmm_memory_attributes *attr)
 {
     int ret;
 
@@ -2060,9 +2036,9 @@ static int devmm_make_single_dma_blk_list_by_dma_map(
     return 0;
 }
 
-static int devmm_make_single_dma_blk_list(
-    struct devmm_mem_copy_convrt_para *para, struct devmm_svm_process *svm_proc, struct devmm_copy_res *res,
-    struct devmm_copy_side *side, struct devmm_memory_attributes *attr)
+static int devmm_make_single_dma_blk_list(struct devmm_mem_copy_convrt_para *para, struct devmm_svm_process *svm_proc,
+                                          struct devmm_copy_res *res, struct devmm_copy_side *side,
+                                          struct devmm_memory_attributes *attr)
 {
     struct devmm_svm_proc_master *master_data = (struct devmm_svm_proc_master *)svm_proc->priv_data;
     struct devmm_register_dma_node *node = NULL;
@@ -2120,9 +2096,9 @@ static void devmm_clear_single_dma_blk_list(struct devmm_copy_res *res, struct d
     }
 }
 #ifndef UVM_OPEN
-static int devmm_make_uvm_single_dma_blk_list(
-    struct devmm_mem_copy_convrt_para *para, struct devmm_svm_process *svm_proc, struct devmm_copy_res *res,
-    struct devmm_copy_side *side, struct devmm_memory_attributes *attr)
+static int devmm_make_uvm_single_dma_blk_list(struct devmm_mem_copy_convrt_para *para,
+                                              struct devmm_svm_process *svm_proc, struct devmm_copy_res *res,
+                                              struct devmm_copy_side *side, struct devmm_memory_attributes *attr)
 {
     struct uvm_page_info page_info = {0};
     struct devmm_addr_info addr_info = {0};
@@ -2186,9 +2162,9 @@ static int devmm_clear_uvm_single_dma_blk_list(struct devmm_copy_res *res, struc
     return 0;
 }
 #endif
-static int devmm_make_raw_dmanode_list(
-    struct devmm_mem_copy_convrt_para *para, struct devmm_svm_process *svm_proc, struct devmm_copy_res *res,
-    struct devmm_memory_attributes *src_attr, struct devmm_memory_attributes *dst_attr)
+static int devmm_make_raw_dmanode_list(struct devmm_mem_copy_convrt_para *para, struct devmm_svm_process *svm_proc,
+                                       struct devmm_copy_res *res, struct devmm_memory_attributes *src_attr,
+                                       struct devmm_memory_attributes *dst_attr)
 {
     int ret;
 
@@ -2220,8 +2196,8 @@ void devmm_free_raw_dmanode_list(struct devmm_copy_res *res)
     devmm_clear_single_dma_blk_list(res, &res->to);
 }
 
-static inline int devmm_async_task_record(
-    struct devmm_svm_process *svm_proc, struct devmm_dma_copy_task *copy_task, int *idr_id)
+static inline int devmm_async_task_record(struct devmm_svm_process *svm_proc, struct devmm_dma_copy_task *copy_task,
+                                          int *idr_id)
 {
     struct devmm_svm_proc_master *master_data = NULL;
     int ret;
@@ -2410,8 +2386,8 @@ static int devmm_dma_wait_task_finish(struct devmm_copy_res *res, struct devmm_m
     return ret;
 }
 
-static int devmm_set_async_cpy_para(
-    struct devmm_svm_process *svm_proc, struct devmm_mem_copy_convrt_para *para, struct devmm_copy_res *res)
+static int devmm_set_async_cpy_para(struct devmm_svm_process *svm_proc, struct devmm_mem_copy_convrt_para *para,
+                                    struct devmm_copy_res *res)
 {
     if (para->seq == 0) {
         int ret;
@@ -2431,7 +2407,10 @@ static int devmm_set_async_cpy_para(
     return 0;
 }
 
-static inline int devmm_copy_get_dma_instance(int task_id) { return (task_id == -1) ? 0 : task_id; }
+static inline int devmm_copy_get_dma_instance(int task_id)
+{
+    return (task_id == -1) ? 0 : task_id;
+}
 
 static int devmm_async_copy_process(struct devmm_copy_res *res, struct devmm_mem_copy_convrt_para *para)
 {
@@ -2441,16 +2420,14 @@ static int devmm_async_copy_process(struct devmm_copy_res *res, struct devmm_mem
     if ((para->last_seq_flag == true) && (para->task_mode == DEVMM_CPY_SYNC_MODE)) {
         ret = devmm_dma_sync_link_copy_limit(res, instance);
         if (ret != 0) {
-            devmm_drv_err(
-                "Dma synchronize copy fail. (ret=%d; src=0x%llx; dst=0x%llx; count=%lu)\n", ret, para->src, para->dst,
-                para->count);
+            devmm_drv_err("Dma synchronize copy fail. (ret=%d; src=0x%llx; dst=0x%llx; count=%lu)\n", ret, para->src,
+                          para->dst, para->count);
             return ret;
         }
         ret = devmm_dma_wait_task_finish(res, para);
         if (ret != 0) {
-            devmm_drv_err(
-                "Dma asynchronous task fail. (ret=%d; src=0x%llx; dst=0x%llx; count=%lu)\n", ret, para->src, para->dst,
-                para->count);
+            devmm_drv_err("Dma asynchronous task fail. (ret=%d; src=0x%llx; dst=0x%llx; count=%lu)\n", ret, para->src,
+                          para->dst, para->count);
             return ret;
         }
         devmm_free_raw_dmanode_list(res);
@@ -2458,9 +2435,8 @@ static int devmm_async_copy_process(struct devmm_copy_res *res, struct devmm_mem
     } else {
         ret = devmm_dma_async_link_copy(res, instance, (void *)res, devmm_dma_async_callback);
         if (ret != 0) {
-            devmm_drv_err(
-                "Dma asynchronous copy fail. (ret=%d; src=0x%llx; dst=0x%llx; count=%lu)\n", ret, para->src, para->dst,
-                para->count);
+            devmm_drv_err("Dma asynchronous copy fail. (ret=%d; src=0x%llx; dst=0x%llx; count=%lu)\n", ret, para->src,
+                          para->dst, para->count);
             return ret;
         }
         if (para->last_seq_flag) {
@@ -2478,8 +2454,8 @@ static inline int devmm_sync_copy_process(struct devmm_copy_res *res, struct dev
 
     ret = devmm_dma_sync_link_copy((u32)res->dev_id, (u32)res->fid, res->dma_node, res->dma_node_num);
     if (ret != 0) {
-        devmm_drv_err(
-            "Dma copy fail. (ret=%d; src=0x%llx; dst=0x%llx; count=%lu)\n", ret, para->src, para->dst, para->count);
+        devmm_drv_err("Dma copy fail. (ret=%d; src=0x%llx; dst=0x%llx; count=%lu)\n", ret, para->src, para->dst,
+                      para->count);
         return ret;
     }
     devmm_free_raw_dmanode_list(res);
@@ -2501,9 +2477,8 @@ static void devmm_memcpy_exception_handle(struct devmm_copy_res *res, struct dev
 static inline int devmm_dma_cpy_mode_is_sync(struct devmm_mem_copy_convrt_para *para, bool vm_copy_flag)
 {
     /* In vm scene, the asynchronous dma mode cannot be used, small packet use synchronous dma */
-    return (
-        ((para->task_mode == DEVMM_CPY_SYNC_MODE) && ((para->last_seq_flag == true) && (para->seq == 0))) ||
-        (vm_copy_flag == true));
+    return (((para->task_mode == DEVMM_CPY_SYNC_MODE) && ((para->last_seq_flag == true) && (para->seq == 0))) ||
+            (vm_copy_flag == true));
 }
 
 static inline int devmm_memcpy_get_cpy_mode(struct devmm_mem_copy_convrt_para *para, bool vm_copy_flag)
@@ -2515,8 +2490,8 @@ static inline int devmm_memcpy_get_cpy_mode(struct devmm_mem_copy_convrt_para *p
     }
 }
 
-static void devmm_get_dma_copy_devid(
-    struct devmm_svm_process *svm_proc, struct devmm_memory_attributes *attr, int *dev_id, int *vfid)
+static void devmm_get_dma_copy_devid(struct devmm_svm_process *svm_proc, struct devmm_memory_attributes *attr,
+                                     int *dev_id, int *vfid)
 {
     struct devmm_svm_process *owner_proc = NULL;
     struct devmm_svm_process_id proc_id;
@@ -2546,9 +2521,9 @@ static void devmm_get_dma_copy_devid(
     }
 }
 
-static void devmm_memcpy_set_buf_info(
-    struct devmm_svm_process *svm_proc, struct devmm_mem_copy_convrt_para *para, struct devmm_copy_res *res,
-    struct devmm_memory_attributes *src_attr, struct devmm_memory_attributes *dst_attr)
+static void devmm_memcpy_set_buf_info(struct devmm_svm_process *svm_proc, struct devmm_mem_copy_convrt_para *para,
+                                      struct devmm_copy_res *res, struct devmm_memory_attributes *src_attr,
+                                      struct devmm_memory_attributes *dst_attr)
 {
     res->cpy_mode = devmm_memcpy_get_cpy_mode(para, res->vm_copy_flag);
     res->svm_pro = svm_proc;
@@ -2598,9 +2573,8 @@ int devmm_mem_dma_cpy_process(struct devmm_svm_process *svm_proc, struct devmm_m
     return ret;
 }
 
-int devmm_ioctl_memcpy_process(
-    struct devmm_svm_process *svm_proc, struct devmm_mem_copy_convrt_para *para,
-    struct devmm_memory_attributes *src_attr, struct devmm_memory_attributes *dst_attr)
+int devmm_ioctl_memcpy_process(struct devmm_svm_process *svm_proc, struct devmm_mem_copy_convrt_para *para,
+                               struct devmm_memory_attributes *src_attr, struct devmm_memory_attributes *dst_attr)
 {
     struct devmm_copy_res *res = para->res;
     int ret;
@@ -2609,16 +2583,14 @@ int devmm_ioctl_memcpy_process(
 
     ret = devmm_make_raw_dmanode_list(para, svm_proc, res, src_attr, dst_attr);
     if (ret != 0) {
-        devmm_drv_err_if(
-            (ret != -EOPNOTSUPP), "Raw dmanode fail. (ret=%d; src=0x%llx; dst=0x%llx; count=%lu)\n", ret, para->src,
-            para->dst, para->count);
+        devmm_drv_err_if((ret != -EOPNOTSUPP), "Raw dmanode fail. (ret=%d; src=0x%llx; dst=0x%llx; count=%lu)\n", ret,
+                         para->src, para->dst, para->count);
         goto free_copy_mem;
     }
     ret = devmm_make_dmanode_list(para->src, para->dst, para->count, res);
     if (ret != 0) {
-        devmm_drv_err(
-            "Cp make dmanode list fail. (num=%d; ret=%d; src=0x%llx; dst=0x%llx; count=%lu)\n", res->to.num, ret,
-            para->src, para->dst, para->count);
+        devmm_drv_err("Cp make dmanode list fail. (num=%d; ret=%d; src=0x%llx; dst=0x%llx; count=%lu)\n", res->to.num,
+                      ret, para->src, para->dst, para->count);
         goto dma_node_unpin_flag;
     }
 
@@ -2650,9 +2622,8 @@ STATIC void devmm_handle_alloc_res_fail(struct devmm_svm_process *svm_proc, stru
     devmm_memcpy_exception_handle(&res, para);
 }
 
-int devmm_ioctl_memcpy_process_res(
-    struct devmm_svm_process *svm_proc, struct devmm_mem_copy_convrt_para *para,
-    struct devmm_memory_attributes *src_attr, struct devmm_memory_attributes *dst_attr)
+int devmm_ioctl_memcpy_process_res(struct devmm_svm_process *svm_proc, struct devmm_mem_copy_convrt_para *para,
+                                   struct devmm_memory_attributes *src_attr, struct devmm_memory_attributes *dst_attr)
 {
     /* update va in attributes */
     dst_attr->va = para->dst;
@@ -2671,9 +2642,9 @@ int devmm_ioctl_memcpy_process_res(
 }
 
 #ifndef UVM_OPEN
-static int devmm_uvm_h2h_make_node_lists(
-    struct devmm_mem_copy_convrt_para *para, struct devmm_svm_process *svm_proc, bool src_is_uvm,
-    struct devmm_memory_attributes *src_attr, struct devmm_memory_attributes *dst_attr)
+static int devmm_uvm_h2h_make_node_lists(struct devmm_mem_copy_convrt_para *para, struct devmm_svm_process *svm_proc,
+                                         bool src_is_uvm, struct devmm_memory_attributes *src_attr,
+                                         struct devmm_memory_attributes *dst_attr)
 {
     int ret;
     struct devmm_copy_res *res = para->res;
@@ -2706,8 +2677,8 @@ static int devmm_uvm_h2h_make_node_lists(
     return 0;
 }
 
-static int devmm_uvm_h2h_copy_loop(
-    struct devmm_mem_copy_convrt_para *para, struct devmm_copy_res *res, size_t off_src, size_t off_dst)
+static int devmm_uvm_h2h_copy_loop(struct devmm_mem_copy_convrt_para *para, struct devmm_copy_res *res, size_t off_src,
+                                   size_t off_dst)
 {
     u32 idx_src = 0, idx_dst = 0, stamp = (u32)ka_jiffies;
     size_t total_len = 0;
@@ -2765,9 +2736,9 @@ static int devmm_uvm_h2h_copy_loop(
     return ret;
 }
 
-STATIC int devmm_uvm_memcpy_mixed_h2h_copy(
-    struct devmm_svm_process *svm_proc, struct devmm_mem_copy_convrt_para *para, bool src_is_uvm,
-    struct devmm_memory_attributes *src_attr, struct devmm_memory_attributes *dst_attr)
+STATIC int devmm_uvm_memcpy_mixed_h2h_copy(struct devmm_svm_process *svm_proc, struct devmm_mem_copy_convrt_para *para,
+                                           bool src_is_uvm, struct devmm_memory_attributes *src_attr,
+                                           struct devmm_memory_attributes *dst_attr)
 {
     struct devmm_copy_res *res = para->res;
     size_t off_src, off_dst;
@@ -2792,9 +2763,9 @@ STATIC int devmm_uvm_memcpy_mixed_h2h_copy(
     return ret;
 }
 
-static int devmm_uvm_memcpy_prepare_res(
-    struct devmm_svm_process *svm_proc, struct devmm_mem_copy_convrt_para *para,
-    struct devmm_memory_attributes *src_attr, struct devmm_memory_attributes *dst_attr)
+static int devmm_uvm_memcpy_prepare_res(struct devmm_svm_process *svm_proc, struct devmm_mem_copy_convrt_para *para,
+                                        struct devmm_memory_attributes *src_attr,
+                                        struct devmm_memory_attributes *dst_attr)
 {
     dst_attr->va = para->dst;
     src_attr->va = para->src;
@@ -2810,9 +2781,9 @@ static int devmm_uvm_memcpy_prepare_res(
     return 0;
 }
 
-static int devmm_uvm_memcpy_build_dma_lists(
-    struct devmm_mem_copy_convrt_para *para, struct devmm_svm_process *svm_proc, bool src_is_uvm,
-    struct devmm_memory_attributes *src_attr, struct devmm_memory_attributes *dst_attr)
+static int devmm_uvm_memcpy_build_dma_lists(struct devmm_mem_copy_convrt_para *para, struct devmm_svm_process *svm_proc,
+                                            bool src_is_uvm, struct devmm_memory_attributes *src_attr,
+                                            struct devmm_memory_attributes *dst_attr)
 {
     int ret;
 
@@ -2843,17 +2814,17 @@ static int devmm_uvm_memcpy_build_dma_lists(
     return 0;
 }
 
-static int devmm_uvm_memcpy_execute_copy(
-    struct devmm_svm_process *svm_proc, struct devmm_mem_copy_convrt_para *para,
-    struct devmm_memory_attributes *src_attr, struct devmm_memory_attributes *dst_attr, u16 msg_id)
+static int devmm_uvm_memcpy_execute_copy(struct devmm_svm_process *svm_proc, struct devmm_mem_copy_convrt_para *para,
+                                         struct devmm_memory_attributes *src_attr,
+                                         struct devmm_memory_attributes *dst_attr, u16 msg_id)
 {
     int ret, i;
     struct devmm_chan_uvm_memcpy memcpy_msg = {0};
 
     if (src_attr->is_svm_device || dst_attr->is_svm_device) {
 #ifndef EMU_ST
-        ret = devmm_dma_sync_link_copy(
-            (u32)para->dev_id, (u32)para->res->fid, para->res->dma_node, para->res->dma_node_num);
+        ret = devmm_dma_sync_link_copy((u32)para->dev_id, (u32)para->res->fid, para->res->dma_node,
+                                       para->res->dma_node_num);
         if (ret != 0) {
             devmm_drv_err("Dma copy failed. (ret=%d)\n", ret);
         }
@@ -2880,9 +2851,9 @@ static int devmm_uvm_memcpy_execute_copy(
     return 0;
 }
 
-int devmm_uvm_memcpy_mixed_process(
-    struct devmm_svm_process *svm_proc, struct devmm_mem_copy_convrt_para *para, bool src_is_uvm,
-    struct devmm_memory_attributes *src_attr, struct devmm_memory_attributes *dst_attr)
+int devmm_uvm_memcpy_mixed_process(struct devmm_svm_process *svm_proc, struct devmm_mem_copy_convrt_para *para,
+                                   bool src_is_uvm, struct devmm_memory_attributes *src_attr,
+                                   struct devmm_memory_attributes *dst_attr)
 {
     int ret;
     u16 msg_id = DEVMM_CHAN_MAX_ID;
@@ -2900,9 +2871,8 @@ int devmm_uvm_memcpy_mixed_process(
     } else if (para->direction == DEVMM_COPY_DEVICE_TO_HOST) {
         msg_id = DEVMM_CHAN_UVM_MEMCPY_D2H_ID;
     } else {
-        devmm_drv_err(
-            "Error direction. (direction=%d; src=0x%llx; dst=0x%llx; count=%lu)\n", para->direction, para->src,
-            para->dst, para->count);
+        devmm_drv_err("Error direction. (direction=%d; src=0x%llx; dst=0x%llx; count=%lu)\n", para->direction,
+                      para->src, para->dst, para->count);
 #ifndef EMU_ST
         return -EINVAL;
 #endif
@@ -2916,9 +2886,8 @@ int devmm_uvm_memcpy_mixed_process(
 
     ret = devmm_make_dmanode_list(para->src, para->dst, para->count, para->res);
     if (ret != 0) {
-        devmm_drv_err(
-            "Cp make dmanode list fail. (num=%d; ret=%d; src=0x%llx; dst=0x%llx; count=%lu)\n", para->res->to.num, ret,
-            para->src, para->dst, para->count);
+        devmm_drv_err("Cp make dmanode list fail. (num=%d; ret=%d; src=0x%llx; dst=0x%llx; count=%lu)\n",
+                      para->res->to.num, ret, para->src, para->dst, para->count);
         goto clear_dma_blk;
     }
 
@@ -2963,8 +2932,8 @@ static struct devmm_dma_copy_task *devmm_copy_task_get_and_remove_by_id(struct d
     struct devmm_dma_copy_task *copy_task = NULL;
 
     master_data = (struct devmm_svm_proc_master *)svm_proc->priv_data;
-    copy_task = (struct devmm_dma_copy_task *)devmm_idr_get_and_remove(
-        &master_data->async_copy_record.task_idr, id, copy_task_remove_condition);
+    copy_task = (struct devmm_dma_copy_task *)devmm_idr_get_and_remove(&master_data->async_copy_record.task_idr, id,
+                                                                       copy_task_remove_condition);
     return copy_task;
 }
 
@@ -2976,8 +2945,8 @@ static int devmm_dma_cpy_result_refresh(u32 dev_id, int task_id)
     return devdrv_dma_done_schedule(dev_id, DEVDRV_DMA_DATA_TRAFFIC, instance);
 }
 
-static int devmm_wait_async_cpy_result(
-    struct devmm_svm_process *svm_proc, struct devmm_dma_copy_task *copy_task, u64 *async_status)
+static int devmm_wait_async_cpy_result(struct devmm_svm_process *svm_proc, struct devmm_dma_copy_task *copy_task,
+                                       u64 *async_status)
 {
     u64 loop_time = 20000000ul; /* 20s */
     u64 i;
@@ -2992,9 +2961,8 @@ static int devmm_wait_async_cpy_result(
 #ifndef EMU_ST
             ret = devmm_dma_cpy_result_refresh(copy_task->dev_id, (int)copy_task->task_id);
             if (ret != 0) {
-                devmm_drv_err(
-                    "Refresh cpy result failed. (ret=%d; devid=%u; task_id=%u)\n", ret, copy_task->dev_id,
-                    copy_task->task_id);
+                devmm_drv_err("Refresh cpy result failed. (ret=%d; devid=%u; task_id=%u)\n", ret, copy_task->dev_id,
+                              copy_task->task_id);
                 return ret;
             }
 #endif
@@ -3016,9 +2984,8 @@ int devmm_cpy_result_refresh(struct devmm_svm_process *svm_proc, struct devmm_me
     if (copy_task == NULL) {
         return -EINVAL;
     }
-    devmm_drv_debug(
-        "Asynchrony memcpy wait. (dst=0x%llx; src=0x%llx; count=%llu; did=%u; task_id=%u)\n", copy_task->dst,
-        copy_task->src, copy_task->size, copy_task->dev_id, async_copy_para->task_id);
+    devmm_drv_debug("Asynchrony memcpy wait. (dst=0x%llx; src=0x%llx; count=%llu; did=%u; task_id=%u)\n",
+                    copy_task->dst, copy_task->src, copy_task->size, copy_task->dev_id, async_copy_para->task_id);
 
     ret = devmm_wait_async_cpy_result(svm_proc, copy_task, (u64 *)&async_copy_para->cpy_state);
     if (ret == 0) {
@@ -3028,9 +2995,9 @@ int devmm_cpy_result_refresh(struct devmm_svm_process *svm_proc, struct devmm_me
     return ret;
 }
 
-int devmm_convert_addr_process(
-    struct devmm_svm_process *svm_process, struct devmm_mem_convrt_addr_para *convrt_para,
-    struct devmm_memory_attributes *src_attr, struct devmm_memory_attributes *dst_attr, struct devmm_copy_res *res)
+int devmm_convert_addr_process(struct devmm_svm_process *svm_process, struct devmm_mem_convrt_addr_para *convrt_para,
+                               struct devmm_memory_attributes *src_attr, struct devmm_memory_attributes *dst_attr,
+                               struct devmm_copy_res *res)
 {
     struct devmm_mem_copy_convrt_para para = {0};
     int ret;
@@ -3049,17 +3016,15 @@ int devmm_convert_addr_process(
 
     ret = devmm_make_raw_dmanode_list(&para, svm_process, res, src_attr, dst_attr);
     if (ret != 0) {
-        devmm_drv_err_if(
-            (ret != -EOPNOTSUPP), "Raw dmanode list fail. (ret=%d; src=0x%llx; dst=0x%llx; count=%lu)\n", ret, para.src,
-            para.dst, para.count);
+        devmm_drv_err_if((ret != -EOPNOTSUPP), "Raw dmanode list fail. (ret=%d; src=0x%llx; dst=0x%llx; count=%lu)\n",
+                         ret, para.src, para.dst, para.count);
         return ret;
     }
 
     ret = devmm_make_dmanode_list(para.src, para.dst, para.count, res);
     if (ret != 0) {
-        devmm_drv_err(
-            "Devmm make dmanode list fail. (ret=%d; src=0x%llx; dst=0x%llx; count=%lu)\n", ret, para.src, para.dst,
-            para.count);
+        devmm_drv_err("Devmm make dmanode list fail. (ret=%d; src=0x%llx; dst=0x%llx; count=%lu)\n", ret, para.src,
+                      para.dst, para.count);
         goto convert_dmalist_free;
     }
     convrt_para->dma_node_num = res->dma_node_num;
@@ -3095,8 +3060,8 @@ int devmm_destroy_dma_addr(struct DMA_ADDR *dma_addr)
         if ((res_delete->vm_copy_flag == true) && (res_delete->height != 0)) {
             devmm_pm_increase_convert_free_id((u32)res_delete->dev_id, (u32)res_delete->fid, res_delete->height);
         }
-        devmm_pm_idle_convert_len_add(
-            res_delete->vm_id, (u32)res_delete->dev_id, (u32)res_delete->fid, res_delete->byte_count);
+        devmm_pm_idle_convert_len_add(res_delete->vm_id, (u32)res_delete->dev_id, (u32)res_delete->fid,
+                                      res_delete->byte_count);
 #endif
         devmm_free_raw_dmanode_list(res_delete);
         devmm_free_copy_mem(res_delete);
@@ -3114,18 +3079,16 @@ static inline struct devmm_convert_dma *devmm_proc_find_convert_dma(struct devmm
     return &master_data->convert_dma[index];
 }
 
-int devmm_ioctl_convert_addr_proc(
-    struct devmm_svm_process *svm_proc, struct devmm_mem_convrt_addr_para *convrt_para,
-    struct devmm_memory_attributes *src_attr, struct devmm_memory_attributes *dst_attr)
+int devmm_ioctl_convert_addr_proc(struct devmm_svm_process *svm_proc, struct devmm_mem_convrt_addr_para *convrt_para,
+                                  struct devmm_memory_attributes *src_attr, struct devmm_memory_attributes *dst_attr)
 {
     struct devmm_copy_res *res = NULL;
     int ret;
 
     res = devmm_alloc_copy_res((u64)convrt_para->len, src_attr, dst_attr, false);
     if (res == NULL) {
-        devmm_drv_err(
-            "Copy buf devmm_kmalloc_ex fail. (src=0x%llx; dst=0x%llx; byte_count=%llu)\n", convrt_para->pSrc,
-            convrt_para->pDst, convrt_para->len);
+        devmm_drv_err("Copy buf devmm_kmalloc_ex fail. (src=0x%llx; dst=0x%llx; byte_count=%llu)\n", convrt_para->pSrc,
+                      convrt_para->pDst, convrt_para->len);
         return -ENOMEM;
     }
     res->vm_copy_flag = false;
@@ -3140,8 +3103,8 @@ int devmm_ioctl_convert_addr_proc(
     return 0;
 }
 
-static int devmm_fill_destroy_addr_arg_by_convert_node(
-    struct devmm_convert_node *node, struct devmm_mem_destroy_addr_para *destroy_para)
+static int devmm_fill_destroy_addr_arg_by_convert_node(struct devmm_convert_node *node,
+                                                       struct devmm_mem_destroy_addr_para *destroy_para)
 {
     destroy_para->pSrc = node->info.src_va;
     destroy_para->pDst = node->info.dst_va;
@@ -3227,8 +3190,8 @@ static int devmm_commit_dma_cpy_process(struct devmm_svm_process *svm_proc, stru
     return ret;
 }
 
-static inline void devmm_fill_commit_copy_convert_para(
-    struct devmm_copy_res *copy_res, u32 seq, bool last_seq_flag, struct devmm_mem_copy_convrt_para *copy_convert_para)
+static inline void devmm_fill_commit_copy_convert_para(struct devmm_copy_res *copy_res, u32 seq, bool last_seq_flag,
+                                                       struct devmm_mem_copy_convrt_para *copy_convert_para)
 {
     copy_convert_para->res = copy_res;
     copy_convert_para->seq = seq;
@@ -3330,7 +3293,8 @@ int devmm_wait_convert_dma_result(struct devmm_svm_process *svm_proc, struct DMA
     return cpy_ret;
 }
 
-void devmm_destroy_all_convert_dma_addr(struct devmm_svm_process *svm_proc) {}
+void devmm_destroy_all_convert_dma_addr(struct devmm_svm_process *svm_proc)
+{}
 
 int devmm_destroy_addr_batch(struct devmm_svm_process *svm_proc, struct devmm_ioctl_arg *arg)
 {

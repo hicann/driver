@@ -14,9 +14,15 @@
 
 #include "svm_pub.h"
 
-static inline void svm_atomic_dec(u32 *val) { __sync_fetch_and_sub(val, 1); }
+static inline void svm_atomic_dec(u32 *val)
+{
+    __sync_fetch_and_sub(val, 1);
+}
 
-static inline void svm_atomic_inc(u32 *val) { __sync_fetch_and_add(val, 1); }
+static inline void svm_atomic_inc(u32 *val)
+{
+    __sync_fetch_and_add(val, 1);
+}
 
 static inline u32 svm_atomic_read(u32 *val)
 {
@@ -31,13 +37,25 @@ static inline u32 svm_atomic_read(u32 *val)
     return cur;
 }
 
-static inline void svm_atomic64_inc(u64 *val) { (void)__sync_add_and_fetch(val, 1ULL); }
+static inline void svm_atomic64_inc(u64 *val)
+{
+    (void)__sync_add_and_fetch(val, 1ULL);
+}
 
-static inline void svm_atomic64_dec(u64 *val) { (void)__sync_sub_and_fetch(val, 1ULL); }
+static inline void svm_atomic64_dec(u64 *val)
+{
+    (void)__sync_sub_and_fetch(val, 1ULL);
+}
 
-static inline u64 svm_atomic64_add(u64 *val, u64 i) { return (u64)__sync_add_and_fetch(val, i); }
+static inline u64 svm_atomic64_add(u64 *val, u64 i)
+{
+    return (u64)__sync_add_and_fetch(val, i);
+}
 
-static inline u64 svm_atomic64_sub(u64 *val, u64 i) { return (u64)__sync_sub_and_fetch(val, i); }
+static inline u64 svm_atomic64_sub(u64 *val, u64 i)
+{
+    return (u64)__sync_sub_and_fetch(val, i);
+}
 
 static inline bool svm_atomic64_compare_and_swap(u64 *val, u64 old, u64 new)
 {

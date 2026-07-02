@@ -48,7 +48,10 @@ static struct svm_register_node *non_svm_register_node[SVM_MAX_DEV_NUM] = {NULL}
 
 struct svm_register_ops *register_ops = NULL;
 
-void svm_register_set_ops(struct svm_register_ops *ops) { register_ops = ops; }
+void svm_register_set_ops(struct svm_register_ops *ops)
+{
+    register_ops = ops;
+}
 
 static int register_ops_post_map(struct svm_global_va *src_info, u32 devid, u64 dst_va)
 {
@@ -90,8 +93,9 @@ static int _svm_register_for_each_seg(
     return 0;
 }
 
-int svm_register_for_each_seg(
-    u32 dst_devid, int (*handle)(void *va_handle, u64 start, struct svm_global_va *src_info, void *priv), void *priv)
+int svm_register_for_each_seg(u32 dst_devid,
+                              int (*handle)(void *va_handle, u64 start, struct svm_global_va *src_info, void *priv),
+                              void *priv)
 {
     int ret;
 
@@ -212,8 +216,8 @@ struct svm_register_priv {
     bool flag;
 };
 
-static int svm_is_register_to_peer_src_range_proc(
-    void *va_handle, u64 start, struct svm_global_va *src_info, void *priv)
+static int svm_is_register_to_peer_src_range_proc(void *va_handle, u64 start, struct svm_global_va *src_info,
+                                                  void *priv)
 {
     struct svm_register_priv *register_priv = (struct svm_register_priv *)priv;
     SVM_UNUSED(va_handle);
@@ -311,9 +315,8 @@ static int svm_register_svmm_inst_release(void *svmm_inst, u32 devid, bool force
     if (recyle_num > 0) {
         u64 svmma_start, svmma_size, svm_flag;
         svm_svmm_parse_inst_info(svmm_inst, &svmma_start, &svmma_size, &svm_flag);
-        svm_info(
-            "Release success. (va=0x%llx; size=0x%llx; devid=%u; recyle_num=%u)\n", svmma_start, svmma_size, devid,
-            recyle_num);
+        svm_info("Release success. (va=0x%llx; size=0x%llx; devid=%u; recyle_num=%u)\n", svmma_start, svmma_size, devid,
+                 recyle_num);
     }
 
     return DRV_ERROR_NONE;
@@ -921,9 +924,8 @@ static int svm_register_svm_to_peer(u64 va, u64 size, u32 devid, u64 *dst_va)
 
     ret = svm_share_get_src_aligned_size(prop.devid, prop.flag, va, size, &aligned_size);
     if (ret != 0) {
-        svm_err(
-            "Get aligned size failed. (src_devid=%u; flag=0x%llx; va=0x%llx; size=0x%llx)\n", prop.devid, prop.flag, va,
-            size);
+        svm_err("Get aligned size failed. (src_devid=%u; flag=0x%llx; va=0x%llx; size=0x%llx)\n", prop.devid, prop.flag,
+                va, size);
         return DRV_ERROR_PARA_ERROR;
     }
 
@@ -934,9 +936,8 @@ static int svm_register_svm_to_peer(u64 va, u64 size, u32 devid, u64 *dst_va)
     }
 
     if ((va + size) > (prop.start + prop.size)) {
-        svm_err(
-            "Size if out of bounds. (va=0x%llx; size=%d; align_size=0x%llx; prop start=0x%llx; prop size=0x%llx)\n", va,
-            size, aligned_size, prop.start, prop.size);
+        svm_err("Size if out of bounds. (va=0x%llx; size=%d; align_size=0x%llx; prop start=0x%llx; prop size=0x%llx)\n",
+                va, size, aligned_size, prop.start, prop.size);
         return DRV_ERROR_PARA_ERROR;
     }
 
@@ -1065,9 +1066,8 @@ static int svm_register_seg_criu_restore(void *seg_handle, u64 start, struct svm
     svm_dst_va_pack(dst_devid, PROCESS_CP1, start, src_info->size, &dst_info);
     ret = svm_smm_client_map(&dst_info, src_info, smm_flag);
     if (ret != DRV_ERROR_NONE) {
-        svm_err(
-            "Restore register map failed. (ret=%d; dst_devid=%u; src_devid=%u; va=0x%llx; size=0x%llx)\n", ret,
-            dst_devid, src_devid, start, src_info->size);
+        svm_err("Restore register map failed. (ret=%d; dst_devid=%u; src_devid=%u; va=0x%llx; size=0x%llx)\n", ret,
+                dst_devid, src_devid, start, src_info->size);
     }
 
     return ret;

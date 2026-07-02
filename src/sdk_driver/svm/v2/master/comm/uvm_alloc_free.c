@@ -34,8 +34,8 @@ page_bitmap_t *devmm_get_page_bitmap_with_uvm_heap(struct devmm_uvm_heap *heap, 
     return &heap->page_bitmaps[pfn];
 }
 
-STATIC page_bitmap_t *devmm_get_fst_alloc_bitmap_by_uvm_heap(
-    struct devmm_svm_process *svm_process, struct devmm_uvm_heap *heap, u64 va)
+STATIC page_bitmap_t *devmm_get_fst_alloc_bitmap_by_uvm_heap(struct devmm_svm_process *svm_process,
+                                                             struct devmm_uvm_heap *heap, u64 va)
 {
     page_bitmap_t *page_bitmap = NULL;
 
@@ -110,8 +110,8 @@ int uvm_free_device_page_by_id(struct devmm_svm_process *svm_pro, device_bitmap 
     return 0;
 }
 
-int uvm_free_device_page(
-    struct devmm_svm_process *svm_pro, struct uvm_page_info *page_info, uint64_t addr_idx, bool no_return)
+int uvm_free_device_page(struct devmm_svm_process *svm_pro, struct uvm_page_info *page_info, uint64_t addr_idx,
+                         bool no_return)
 {
     int ret;
     uint16_t i, count;
@@ -136,22 +136,19 @@ int uvm_free_device_page(
     for (i = 0; i < count; i++) {
         if (is_device_present(&uvm_heap->invalid_devices, device_ids[i])) {
 #ifndef EMU_ST
-            devmm_drv_debug(
-                "Device is invalid. (va=0x%llx, device_id = %d)\n",
-                page_info->va_align + DEVMM_UVM_PAGE_SIZE * addr_idx, device_ids[i]);
+            devmm_drv_debug("Device is invalid. (va=0x%llx, device_id = %d)\n",
+                            page_info->va_align + DEVMM_UVM_PAGE_SIZE * addr_idx, device_ids[i]);
             continue;
 #endif
         }
 
-        ret = uvm_free_device_page_by_id(
-            svm_pro, page_info->dev_bitmap + addr_idx, device_ids[i],
-            page_info->va_align + DEVMM_UVM_PAGE_SIZE * addr_idx);
+        ret = uvm_free_device_page_by_id(svm_pro, page_info->dev_bitmap + addr_idx, device_ids[i],
+                                         page_info->va_align + DEVMM_UVM_PAGE_SIZE * addr_idx);
         if (ret) {
 #ifndef EMU_ST
             if (!no_return) {
-                devmm_drv_err(
-                    "Device failed to free va. (va=0x%llx, device_id = %d)\n",
-                    page_info->va_align + DEVMM_UVM_PAGE_SIZE * addr_idx, device_ids[i]);
+                devmm_drv_err("Device failed to free va. (va=0x%llx, device_id = %d)\n",
+                              page_info->va_align + DEVMM_UVM_PAGE_SIZE * addr_idx, device_ids[i]);
                 devmm_kvfree_ex(device_ids);
                 return ret;
             }
@@ -164,8 +161,8 @@ int uvm_free_device_page(
     return 0;
 }
 
-int uvm_free_one_page(
-    struct devmm_svm_process *svm_pro, struct uvm_page_info *page_info, uint64_t addr_idx, bool no_return)
+int uvm_free_one_page(struct devmm_svm_process *svm_pro, struct uvm_page_info *page_info, uint64_t addr_idx,
+                      bool no_return)
 {
     int ret;
 

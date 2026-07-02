@@ -35,9 +35,8 @@ static int mwl_agent_op(u32 udevid, void *msg, u32 *reply_len)
     }
 
     if ((msg_info->size == 0) || (msg_info->va + msg_info->size < msg_info->va)) {
-        svm_err(
-            "Invalid va or size. (udevid=%u; devpid=%d; va=0x%llx; size=%llu)\n", udevid, msg_info->devpid,
-            msg_info->va, msg_info->size);
+        svm_err("Invalid va or size. (udevid=%u; devpid=%d; va=0x%llx; size=%llu)\n", udevid, msg_info->devpid,
+                msg_info->va, msg_info->size);
         return -EINVAL;
     }
 
@@ -47,9 +46,8 @@ static int mwl_agent_op(u32 udevid, void *msg, u32 *reply_len)
         return svm_mwl_del_mem(udevid, master_tgid, MWL_ID_NO_USE, msg_info->va, msg_info->size);
     }
 
-    svm_err(
-        "Invalid flag. (udevid=%u; devpid=%d; va=0x%llx; size=%llu; flag=%llu)\n", udevid, msg_info->devpid,
-        msg_info->va, msg_info->size, msg_info->flag);
+    svm_err("Invalid flag. (udevid=%u; devpid=%d; va=0x%llx; size=%llu; flag=%llu)\n", udevid, msg_info->devpid,
+            msg_info->va, msg_info->size, msg_info->flag);
     return -EINVAL;
 }
 

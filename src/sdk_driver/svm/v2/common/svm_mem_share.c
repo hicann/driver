@@ -26,7 +26,10 @@
 #include "svm_mem_share.h"
 #include "svm_ioctl.h"
 
-void devmm_share_phy_addr_blk_put(struct devmm_phy_addr_blk *share_blk) { devmm_phy_addr_blk_put(share_blk); }
+void devmm_share_phy_addr_blk_put(struct devmm_phy_addr_blk *share_blk)
+{
+    devmm_phy_addr_blk_put(share_blk);
+}
 
 struct devmm_phy_addr_blk *devmm_share_phy_addr_blk_get(u32 devid, int share_id)
 {
@@ -85,8 +88,8 @@ static int devmm_target_blk_query_pa_vm_pa_convert(u32 devid, struct devmm_targe
     return 0;
 }
 #endif
-static int _devmm_target_blk_query_pa_process(
-    struct devmm_chan_target_blk_query_msg *msg, struct devmm_phy_addr_blk *share_blk, u32 devid, int side)
+static int _devmm_target_blk_query_pa_process(struct devmm_chan_target_blk_query_msg *msg,
+                                              struct devmm_phy_addr_blk *share_blk, u32 devid, int side)
 {
     u64 page_size = (share_blk->attr.pg_type == MEM_NORMAL_PAGE_TYPE) ? KA_MM_PAGE_SIZE : SVM_MASTER_HUGE_PAGE_SIZE;
     u32 stamp = (u32)ka_jiffies;
@@ -98,9 +101,8 @@ static int _devmm_target_blk_query_pa_process(
 
     if ((msg->num == 0) || (msg->offset > share_blk->addr_info.total_num) ||
         (msg->num > (share_blk->addr_info.total_num - msg->offset))) {
-        devmm_drv_err(
-            "Invalid num. (num=%u; offset=%u; total_num=%llu)\n", msg->num, msg->offset,
-            share_blk->addr_info.total_num);
+        devmm_drv_err("Invalid num. (num=%u; offset=%u; total_num=%llu)\n", msg->num, msg->offset,
+                      share_blk->addr_info.total_num);
         return -ERANGE;
     }
 
@@ -154,8 +156,8 @@ int devmm_target_blk_query_pa_process(u32 devid, struct devmm_chan_target_blk_qu
     return ret;
 }
 
-static void devmm_pg_dma_info_init(
-    struct devmm_phy_addr_blk *to_blk, struct devmm_phy_addr_blk *from_blk, u32 to_create_pg_num)
+static void devmm_pg_dma_info_init(struct devmm_phy_addr_blk *to_blk, struct devmm_phy_addr_blk *from_blk,
+                                   u32 to_create_pg_num)
 {
     u32 dma_copy_num, offset;
     u64 size;
@@ -165,8 +167,8 @@ static void devmm_pg_dma_info_init(
     (void)memcpy_s(&to_blk->pg_info.pages[offset], size, &from_blk->pg_info.pages[offset], size);
     to_blk->pg_info.saved_num += to_create_pg_num;
 
-    dma_copy_num =
-        ka_base_min(to_create_pg_num, (u32)(from_blk->dma_blk_info.saved_num - to_blk->dma_blk_info.saved_num));
+    dma_copy_num = ka_base_min(to_create_pg_num,
+                               (u32)(from_blk->dma_blk_info.saved_num - to_blk->dma_blk_info.saved_num));
     if (dma_copy_num == 0) {
         return;
     }
@@ -176,8 +178,8 @@ static void devmm_pg_dma_info_init(
     to_blk->dma_blk_info.saved_num += dma_copy_num;
 }
 
-int devmm_share_phy_addr_blk_init(
-    struct devmm_phy_addr_blk *to_blk, struct devmm_phy_addr_blk *from_blk, u32 to_create_pg_num, u32 blk_type)
+int devmm_share_phy_addr_blk_init(struct devmm_phy_addr_blk *to_blk, struct devmm_phy_addr_blk *from_blk,
+                                  u32 to_create_pg_num, u32 blk_type)
 {
     bool is_finish = false;
 
@@ -231,14 +233,14 @@ void devmm_share_phy_addr_blks_destroy(u32 devid)
     _devmm_phy_addr_blks_destroy(NULL, share_mng);
 }
 
-int devmm_phy_addr_blk_init_in_same_os(
-    struct devmm_phy_addr_blk *blk, u32 share_devid, int share_id, u32 to_create_pg_num)
+int devmm_phy_addr_blk_init_in_same_os(struct devmm_phy_addr_blk *blk, u32 share_devid, int share_id,
+                                       u32 to_create_pg_num)
 {
     struct devmm_phy_addr_blk *share_blk = NULL;
     int ret;
 
-    devmm_drv_debug(
-        "In same os. (share_devid=%u; share_id=%d; to_create_pg_num=%u)\n", share_devid, share_id, to_create_pg_num);
+    devmm_drv_debug("In same os. (share_devid=%u; share_id=%d; to_create_pg_num=%u)\n", share_devid, share_id,
+                    to_create_pg_num);
 
     share_blk = devmm_share_phy_addr_blk_get(share_devid, share_id);
     if (share_blk == NULL) {
@@ -246,8 +248,8 @@ int devmm_phy_addr_blk_init_in_same_os(
         return -EBADR;
     }
     if (share_blk->pg_num != blk->pg_num) {
-        devmm_drv_err(
-            "Page num is invalid. (blk_pg_num=%llu; share_blk_pg_num=%llu)\n", blk->pg_num, share_blk->pg_num);
+        devmm_drv_err("Page num is invalid. (blk_pg_num=%llu; share_blk_pg_num=%llu)\n", blk->pg_num,
+                      share_blk->pg_num);
         devmm_share_phy_addr_blk_put(share_blk);
         return -ERANGE;
     }

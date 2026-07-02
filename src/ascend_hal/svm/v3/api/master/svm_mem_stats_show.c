@@ -33,19 +33,24 @@ static void module_mem_stats_show(u32 devid, u32 mms_type, const char *type_str)
         ret = svm_mms_get(devid, module_id, mms_type, &stats);
         if ((ret == 0) && (stats.alloced_peak_size != 0)) {
 #ifndef EMU_ST /* Too much, not print. */
-            svm_run_info(
-                "%s Mem stats (Bytes). (module_name=%s; module_id=%u; "
-                "current_alloced_size=%llu; allocated_peak_size=%llu; alloc_cnt=%llu; free_cnt=%llu)\n",
-                type_str, SVM_GET_MODULE_NAME(svm_module_name, module_id), module_id, stats.alloced_size,
-                stats.alloced_peak_size, stats.alloc_cnt, stats.free_cnt);
+            svm_run_info("%s Mem stats (Bytes). (module_name=%s; module_id=%u; "
+                         "current_alloced_size=%llu; allocated_peak_size=%llu; alloc_cnt=%llu; free_cnt=%llu)\n",
+                         type_str, SVM_GET_MODULE_NAME(svm_module_name, module_id), module_id, stats.alloced_size,
+                         stats.alloced_peak_size, stats.alloc_cnt, stats.free_cnt);
 #endif
         }
     }
 }
 
-static inline bool mms_type_is_hpage(u32 type) { return ((type == MMS_TYPE_HPAGE) || (type == MMS_TYPE_P2P_HPAGE)); }
+static inline bool mms_type_is_hpage(u32 type)
+{
+    return ((type == MMS_TYPE_HPAGE) || (type == MMS_TYPE_P2P_HPAGE));
+}
 
-static inline bool mms_type_is_p2p(u32 type) { return ((type == MMS_TYPE_P2P_NPAGE) || (type == MMS_TYPE_P2P_HPAGE)); }
+static inline bool mms_type_is_p2p(u32 type)
+{
+    return ((type == MMS_TYPE_P2P_NPAGE) || (type == MMS_TYPE_P2P_HPAGE));
+}
 
 static inline u32 mms_type_to_cache_flag(u64 mms_type)
 {
@@ -79,8 +84,8 @@ static void mem_stats_show_host_svm_mem(u32 devid)
 
 static void mem_stats_show_get_type_str(u32 devid, u32 flag, char *str, u32 str_len)
 {
-    static const char *type_str[MMS_TYPE_MAX] = {
-        "MEM_DEV_SMALL_HBM", "MEM_DEV_HUGE_HBM", "MEM_DEV_SMALL_P2P_HBM", "MEM_DEV_HUGE_P2P_HBM"};
+    static const char *type_str[MMS_TYPE_MAX] = {"MEM_DEV_SMALL_HBM", "MEM_DEV_HUGE_HBM", "MEM_DEV_SMALL_P2P_HBM",
+                                                 "MEM_DEV_HUGE_P2P_HBM"};
 
     (void)sprintf_s(str, str_len, "%s dev%d", type_str[flag], devid);
 }
@@ -110,9 +115,8 @@ static void _mem_stats_show_dev_proc_mem(u32 devid, processType_t processType, p
 
     if (size != 0) {
 #ifndef EMU_ST /* Too much, not print. */
-        svm_run_info(
-            "DEV_PROC_MEM dev%u Mem stats (Bytes). (module_name=%s; module_id=%u; total_size=%lu)\n", devid,
-            SVM_GET_MODULE_NAME(svm_module_name, module_id), module_id, size);
+        svm_run_info("DEV_PROC_MEM dev%u Mem stats (Bytes). (module_name=%s; module_id=%u; total_size=%lu)\n", devid,
+                     SVM_GET_MODULE_NAME(svm_module_name, module_id), module_id, size);
 #endif
     }
 }

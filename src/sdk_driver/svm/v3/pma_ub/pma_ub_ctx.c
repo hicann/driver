@@ -45,7 +45,10 @@ struct pma_ub_ctx *pma_ub_ctx_get(u32 udevid, int tgid)
     return pma_ub_ctx;
 }
 
-void pma_ub_ctx_put(struct pma_ub_ctx *ctx) { svm_task_ctx_put(ctx->task_ctx); }
+void pma_ub_ctx_put(struct pma_ub_ctx *ctx)
+{
+    svm_task_ctx_put(ctx->task_ctx);
+}
 
 static void pma_ub_ctx_release(void *priv)
 {
@@ -155,4 +158,5 @@ int pma_ub_ctx_init(void)
     return 0;
 }
 
-void pma_ub_ctx_uninit(void) {}
+void pma_ub_ctx_uninit(void)
+{}

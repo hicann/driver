@@ -147,7 +147,10 @@ int svm_cmd_munmap(void *addr, size_t length)
     return svm_user_munmap(addr, length);
 }
 
-void svm_mmap_criu_reset(void) { svm_mmap_fd = -1; }
+void svm_mmap_criu_reset(void)
+{
+    svm_mmap_fd = -1;
+}
 
 void __attribute__((destructor)) svm_mmap_uninit(void)
 {

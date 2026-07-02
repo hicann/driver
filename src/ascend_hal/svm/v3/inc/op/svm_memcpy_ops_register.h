@@ -20,14 +20,13 @@ struct svm_copy_ops {
     int (*sync_copy)(u32 devid, struct svm_copy_va_info *src_info, struct svm_copy_va_info *dst_info);
     int (*async_copy_submit)(u32 devid, struct svm_copy_va_info *src_info, struct svm_copy_va_info *dst_info, int *id);
     int (*async_copy_wait)(u32 devid, int id);
-    int (*dma_desc_convert)(
-        u32 devid, struct svm_copy_va_info *src_info, struct svm_copy_va_info *dst_info, struct DMA_ADDR *dma_desc);
+    int (*dma_desc_convert)(u32 devid, struct svm_copy_va_info *src_info, struct svm_copy_va_info *dst_info,
+                            struct DMA_ADDR *dma_desc);
     int (*dma_desc_submit)(u32 devid, struct DMA_ADDR *dma_desc, int flag);
     int (*dma_desc_wait)(u32 devid, struct DMA_ADDR *dma_desc);
     int (*dma_desc_destroy)(u32 devid, struct DMA_ADDR *dma_desc);
-    int (*dma_desc_convert_2d)(
-        u32 devid, struct svm_copy_va_2d_info *src_info, struct svm_copy_va_2d_info *dst_info, u64 fixed_size,
-        struct DMA_ADDR *dma_desc);
+    int (*dma_desc_convert_2d)(u32 devid, struct svm_copy_va_2d_info *src_info, struct svm_copy_va_2d_info *dst_info,
+                               u64 fixed_size, struct DMA_ADDR *dma_desc);
     int (*sync_copy_2d)(u32 devid, struct svm_copy_va_2d_info *src_info, struct svm_copy_va_2d_info *dst_info);
     int (*sync_copy_batch)(u64 src[], u64 dst[], u64 size[], u64 count, u32 src_devid, u32 dst_devid);
 };

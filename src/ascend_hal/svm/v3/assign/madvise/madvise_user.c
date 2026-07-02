@@ -29,9 +29,8 @@ int svm_madvise(u32 devid, u64 va, u64 size, u32 flag)
 
     ret = svm_cmd_ioctl(devid, SVM_MEM_MADVISE, (void *)&para);
     if (ret != 0) {
-        svm_err(
-            "Svm ioctl mem advise failed. (ret=%d; devid=%u; va=0x%llx; size=%llu; flag=0x%x)\n", ret, devid, va, size,
-            flag);
+        svm_err("Svm ioctl mem advise failed. (ret=%d; devid=%u; va=0x%llx; size=%llu; flag=0x%x)\n", ret, devid, va,
+                size, flag);
     }
 
     return ret;

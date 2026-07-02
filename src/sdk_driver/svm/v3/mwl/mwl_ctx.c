@@ -47,7 +47,10 @@ struct mwl_ctx *mwl_ctx_get(u32 udevid, int tgid)
     return mwl_ctx;
 }
 
-void mwl_ctx_put(struct mwl_ctx *mwl_ctx) { svm_task_ctx_put(mwl_ctx->task_ctx); }
+void mwl_ctx_put(struct mwl_ctx *mwl_ctx)
+{
+    svm_task_ctx_put(mwl_ctx->task_ctx);
+}
 
 static void mwl_ctx_init(struct mwl_ctx *mwl_ctx)
 {
@@ -154,5 +157,6 @@ int svm_mwl_init(void)
 }
 DECLAER_FEATURE_AUTO_INIT(svm_mwl_init, FEATURE_LOADER_STAGE_4);
 
-void svm_mwl_uninit(void) {}
+void svm_mwl_uninit(void)
+{}
 DECLAER_FEATURE_AUTO_UNINIT(svm_mwl_uninit, FEATURE_LOADER_STAGE_4);

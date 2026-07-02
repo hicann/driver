@@ -19,8 +19,8 @@
 #include "svm_task_dev_res_mng.h"
 #include "ka_base_pub.h"
 
-struct devmm_task_dev_res_node *devmm_task_dev_res_node_create(
-    struct devmm_svm_process *svm_proc, struct svm_id_inst *id_inst)
+struct devmm_task_dev_res_node *devmm_task_dev_res_node_create(struct devmm_svm_process *svm_proc,
+                                                               struct svm_id_inst *id_inst)
 {
     struct devmm_svm_proc_master *master_data = (struct devmm_svm_proc_master *)svm_proc->priv_data;
     struct devmm_task_dev_res_info *info = &master_data->task_dev_res_info;
@@ -75,8 +75,8 @@ static void devmm_task_dev_res_node_subres_recycle(struct devmm_task_dev_res_nod
 
     devmm_convert_nodes_destroy_by_task_release(node, &convert_node_num);
 
-    devmm_drv_debug(
-        "Proc release destroy info. (host_pid=%d; convert_node_num=%u)\n", node->host_pid, convert_node_num);
+    devmm_drv_debug("Proc release destroy info. (host_pid=%d; convert_node_num=%u)\n", node->host_pid,
+                    convert_node_num);
 }
 
 void devmm_task_dev_res_node_destroy(struct devmm_task_dev_res_node *node)
@@ -113,8 +113,8 @@ void devmm_task_dev_res_node_put(struct devmm_task_dev_res_node *node)
     ka_base_kref_put(&node->ref, devmm_task_dev_res_node_release);
 }
 
-struct devmm_task_dev_res_node *devmm_task_dev_res_node_get_by_task(
-    struct devmm_svm_process *svm_proc, struct svm_id_inst *id_inst)
+struct devmm_task_dev_res_node *devmm_task_dev_res_node_get_by_task(struct devmm_svm_process *svm_proc,
+                                                                    struct svm_id_inst *id_inst)
 {
     struct devmm_svm_proc_master *master_data = (struct devmm_svm_proc_master *)svm_proc->priv_data;
     struct devmm_task_dev_res_info *info = &master_data->task_dev_res_info;

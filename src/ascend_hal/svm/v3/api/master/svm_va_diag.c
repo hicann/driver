@@ -24,9 +24,8 @@
 
 static void svm_diag_dump_prop_item(const char *tag, const char *phase, const struct svm_prop *prop)
 {
-    svm_err(
-        "MemcpyVaDiag %s %s. (start=0x%llx; size=%llu; aligned_size=%llu; devid=%u; tgid=%d; flag=0x%llx)\n", tag,
-        phase, prop->start, prop->size, prop->aligned_size, prop->devid, prop->tgid, prop->flag);
+    svm_err("MemcpyVaDiag %s %s. (start=0x%llx; size=%llu; aligned_size=%llu; devid=%u; tgid=%d; flag=0x%llx)\n", tag,
+            phase, prop->start, prop->size, prop->aligned_size, prop->devid, prop->tgid, prop->flag);
 }
 
 static void svm_diag_dump_svm_range(u64 va, u64 size, const char *tag)
@@ -48,9 +47,8 @@ static void svm_diag_dump_svm_range(u64 va, u64 size, const char *tag)
             return;
         }
 
-        svm_err(
-            "MemcpyVaDiag %s svm no-hit. (va=0x%llx; size=%llu; has_left=%d; has_right=%d)\n", tag, va, size, has_left,
-            has_right);
+        svm_err("MemcpyVaDiag %s svm no-hit. (va=0x%llx; size=%llu; has_left=%d; has_right=%d)\n", tag, va, size,
+                has_left, has_right);
         if (has_left) {
             svm_diag_dump_prop_item(tag, "left-near", &left_prop);
         }
@@ -63,9 +61,8 @@ static void svm_diag_dump_svm_range(u64 va, u64 size, const char *tag)
     while ((cur < end) && (seg_num < SVM_DIAG_MAX_SEG_NUM)) {
         ret = svm_get_prop(cur, &prop);
         if (ret != DRV_ERROR_NONE) {
-            svm_err(
-                "MemcpyVaDiag %s svm seg break. (ret=%d; cur=0x%llx; end=0x%llx; seg_num=%u)\n", tag, ret, cur, end,
-                seg_num);
+            svm_err("MemcpyVaDiag %s svm seg break. (ret=%d; cur=0x%llx; end=0x%llx; seg_num=%u)\n", tag, ret, cur, end,
+                    seg_num);
             break;
         }
 
@@ -80,9 +77,8 @@ static void svm_diag_dump_svm_range(u64 va, u64 size, const char *tag)
     }
 
     if (seg_num >= SVM_DIAG_MAX_SEG_NUM) {
-        svm_err(
-            "MemcpyVaDiag %s svm seg reach limit. (limit=%u; va=0x%llx; size=%llu)\n", tag, SVM_DIAG_MAX_SEG_NUM, va,
-            size);
+        svm_err("MemcpyVaDiag %s svm seg reach limit. (limit=%u; va=0x%llx; size=%llu)\n", tag, SVM_DIAG_MAX_SEG_NUM,
+                va, size);
     }
 }
 
@@ -123,28 +119,24 @@ static void svm_diag_dump_non_svm_range(u64 va, u64 size, const char *tag)
         vec[0] = 0;
         if (mincore(check_va, (size_t)page_size, vec) != 0) {
             (void)strerror_r(errno, errbuf, sizeof(errbuf));
-            svm_err(
-                "MemcpyVaDiag %s non-svm invalid page. (va=0x%llx; page_idx=%llu; errno=%d; errmsg=%s)\n", tag,
-                (u64)(uintptr_t)check_va, i, errno, errbuf);
+            svm_err("MemcpyVaDiag %s non-svm invalid page. (va=0x%llx; page_idx=%llu; errno=%d; errmsg=%s)\n", tag,
+                    (u64)(uintptr_t)check_va, i, errno, errbuf);
             return;
         }
         if ((vec[0] & SVM_DIAG_PAGE_RESIDENT_MASK) == 0) {
-            svm_err(
-                "MemcpyVaDiag %s non-svm page not resident. (va=0x%llx; page_idx=%llu; vec[0]=0x%02x)\n", tag,
-                (u64)(uintptr_t)check_va, i, vec[0]);
+            svm_err("MemcpyVaDiag %s non-svm page not resident. (va=0x%llx; page_idx=%llu; vec[0]=0x%02x)\n", tag,
+                    (u64)(uintptr_t)check_va, i, vec[0]);
             return;
         }
     }
 
     if (step > 1) {
-        svm_err(
-            "MemcpyVaDiag %s non-svm range sampled check. (va=0x%llx; size=%llu; total_page=%llu; check_cnt=%llu; "
-            "step=%llu)\n",
-            tag, va, size, page_num, (page_num + step - 1) / step, step);
+        svm_err("MemcpyVaDiag %s non-svm range sampled check. (va=0x%llx; size=%llu; total_page=%llu; check_cnt=%llu; "
+                "step=%llu)\n",
+                tag, va, size, page_num, (page_num + step - 1) / step, step);
     } else {
-        svm_err(
-            "MemcpyVaDiag %s non-svm range mincore check passed. (va=0x%llx; size=%llu; page_num=%llu)\n", tag, va,
-            size, page_num);
+        svm_err("MemcpyVaDiag %s non-svm range mincore check passed. (va=0x%llx; size=%llu; page_num=%llu)\n", tag, va,
+                size, page_num);
     }
 }
 

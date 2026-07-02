@@ -16,9 +16,9 @@
 #include "svm_addr_desc.h"
 #include "svm_urma_seg_mng.h"
 
-int svm_urma_register_seg_client(
-    u32 user_devid, struct svm_dst_va *dst_va, struct svm_urma_client_seg *client_seg, u32 seg_flag);
-int svm_urma_unregister_seg_client(
-    u32 user_devid, struct svm_dst_va *dst_va, struct svm_urma_client_seg *client_seg, u32 seg_flag);
+int svm_urma_register_seg_client(u32 user_devid, struct svm_dst_va *dst_va, struct svm_urma_client_seg *client_seg,
+                                 u32 seg_flag);
+int svm_urma_unregister_seg_client(u32 user_devid, struct svm_dst_va *dst_va, struct svm_urma_client_seg *client_seg,
+                                   u32 seg_flag);
 
 #endif

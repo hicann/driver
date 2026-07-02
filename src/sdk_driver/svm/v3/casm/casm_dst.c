@@ -49,10 +49,13 @@ struct casm_dst_node {
 };
 
 static struct svm_casm_dst_ops *casm_dst_ops = NULL;
-static int (*casm_get_src_va_ex_info_handle)(
-    u32 udevid, struct svm_global_va *src_va, struct casm_src_ex *src_ex, u64 *ex_info) = NULL;
+static int (*casm_get_src_va_ex_info_handle)(u32 udevid, struct svm_global_va *src_va, struct casm_src_ex *src_ex,
+                                             u64 *ex_info) = NULL;
 
-void svm_casm_register_dst_ops(const struct svm_casm_dst_ops *ops) { casm_dst_ops = (struct svm_casm_dst_ops *)ops; }
+void svm_casm_register_dst_ops(const struct svm_casm_dst_ops *ops)
+{
+    casm_dst_ops = (struct svm_casm_dst_ops *)ops;
+}
 
 static int casm_remote_src_info_query_handle(u32 udevid, u64 key, struct svm_global_va *src_va)
 {
@@ -96,9 +99,8 @@ static int casm_src_info_query(u32 udevid, u64 key, struct svm_global_va *src_va
         }
 
         if (!svm_mwl_task_is_trusted(src_va->udevid, src_ex->owner_tgid, key, SVM_INVALID_SERVER_ID, tgid)) {
-            svm_err(
-                "No permission. (udevid=%u; key=0x%llx; va=0x%llx; owner_tgid=%d; checked_tgid=%d)\n", udevid, key,
-                src_va->va, src_ex->owner_tgid, tgid);
+            svm_err("No permission. (udevid=%u; key=0x%llx; va=0x%llx; owner_tgid=%d; checked_tgid=%d)\n", udevid, key,
+                    src_va->va, src_ex->owner_tgid, tgid);
             return -EINVAL;
         }
     } else {
@@ -127,17 +129,15 @@ static int casm_src_info_get(u32 udevid, u64 key, struct svm_global_va *src_va, 
         }
 
         if (!svm_mwl_task_is_trusted(src_va->udevid, src_ex.owner_tgid, key, SVM_INVALID_SERVER_ID, tgid)) {
-            svm_err(
-                "No permission. (udevid=%u; key=0x%llx; va=0x%llx; owner_tgid=%d; checked_tgid=%d)\n", udevid, key,
-                src_va->va, src_ex.owner_tgid, tgid);
+            svm_err("No permission. (udevid=%u; key=0x%llx; va=0x%llx; owner_tgid=%d; checked_tgid=%d)\n", udevid, key,
+                    src_va->va, src_ex.owner_tgid, tgid);
             return -EPERM;
         }
 
         ret = svm_smp_pin_mem(src_va->udevid, src_ex.owner_tgid, src_va->va, src_va->size, true);
         if (ret != 0) {
-            svm_err(
-                "Mem pin failed. (udevid=%u; va=0x%llx; size=0x%llx; tgid=%d)\n", src_va->udevid, src_va->va,
-                src_va->size, src_ex.owner_tgid);
+            svm_err("Mem pin failed. (udevid=%u; va=0x%llx; size=0x%llx; tgid=%d)\n", src_va->udevid, src_va->va,
+                    src_va->size, src_ex.owner_tgid);
             return ret;
         }
 
@@ -162,9 +162,8 @@ static void casm_src_info_put(u32 udevid, u64 key, struct svm_global_va *src_va,
     if (ex_info->is_local) {
         int ret = svm_smp_unpin_mem(src_va->udevid, ex_info->owner_tgid, src_va->va, src_va->size, true);
         if (ret != 0) {
-            svm_warn(
-                "Mem unpin failed. (udevid=%u; va=0x%llx; size=0x%llx; tgid=%d)\n", src_va->udevid, src_va->va,
-                src_va->size, ex_info->owner_tgid);
+            svm_warn("Mem unpin failed. (udevid=%u; va=0x%llx; size=0x%llx; tgid=%d)\n", src_va->udevid, src_va->va,
+                     src_va->size, ex_info->owner_tgid);
         }
     } else {
         casm_remote_src_info_put_handle(udevid, key, src_va, ex_info->owner_tgid);
@@ -206,9 +205,8 @@ static struct casm_dst_node *casm_dst_node_search(struct casm_dst_ctx *dst_ctx, 
     return node;
 }
 
-static int casm_get_src_info(
-    struct casm_dst_ctx *dst_ctx, struct range_rbtree_node *range_node, u64 *key, struct svm_global_va *src_info,
-    struct casm_src_ex_info *ex_info)
+static int casm_get_src_info(struct casm_dst_ctx *dst_ctx, struct range_rbtree_node *range_node, u64 *key,
+                             struct svm_global_va *src_info, struct casm_src_ex_info *ex_info)
 {
     struct casm_dst_node *node = NULL;
     int ret = -EINVAL;
@@ -259,9 +257,8 @@ int svm_casm_get_src_info(u32 udevid, u64 va, u64 size, struct svm_global_va *sr
     return 0;
 }
 
-static int casm_add_dst_node(
-    struct casm_dst_ctx *dst_ctx, struct range_rbtree_node *range_node, u64 key, struct svm_global_va *src_va,
-    struct casm_src_ex_info *ex_info)
+static int casm_add_dst_node(struct casm_dst_ctx *dst_ctx, struct range_rbtree_node *range_node, u64 key,
+                             struct svm_global_va *src_va, struct casm_src_ex_info *ex_info)
 {
     struct casm_dst_node *node = NULL;
     int ret;
@@ -395,9 +392,8 @@ void casm_dst_ctx_show(struct casm_dst_ctx *dst_ctx, ka_seq_file_t *seq)
 
         if (i == 0) {
             ka_fs_seq_printf(seq, "casm dst info:\n");
-            ka_fs_seq_printf(
-                seq, "   index  va              size     owner_tgid  "
-                     "src_va(udevid    tgid   va      size)     updated_va    key\n");
+            ka_fs_seq_printf(seq, "   index  va              size     owner_tgid  "
+                                  "src_va(udevid    tgid   va      size)     updated_va    key\n");
         }
         ka_fs_seq_printf(
             seq, "   %d     0x%llx     0x%llx      %d     (%u  %d      0x%llx      0x%llx)    0x%llx   0x%llx\n", i++,
@@ -449,8 +445,8 @@ void casm_dst_ctx_uninit(u32 udevid, int tgid, struct casm_dst_ctx *dst_ctx)
     }
 }
 
-void svm_casm_register_get_src_va_ex_info_handle(
-    int (*handle)(u32 udevid, struct svm_global_va *src_va, struct casm_src_ex *src_ex, u64 *ex_info))
+void svm_casm_register_get_src_va_ex_info_handle(int (*handle)(u32 udevid, struct svm_global_va *src_va,
+                                                               struct casm_src_ex *src_ex, u64 *ex_info))
 {
     casm_get_src_va_ex_info_handle = handle;
 }

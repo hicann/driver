@@ -120,9 +120,8 @@ static u32 _cache_recyle_seg_show(struct cache_recycle_seg *seg, int id, char *b
         }
         int len;
 
-        len = snprintf_s(
-            buf, buf_len, buf_len - 1, "recycle seg id %d: flag=0x%x start=0x%llx size=0x%llx\n", id, seg->flag,
-            seg->start, seg->size);
+        len = snprintf_s(buf, buf_len, buf_len - 1, "recycle seg id %d: flag=0x%x start=0x%llx size=0x%llx\n", id,
+                         seg->flag, seg->start, seg->size);
         return (len < 0) ? 0 : (u32)len;
     }
 }
@@ -167,9 +166,8 @@ static void _cache_recycle_seg_clear_by_dev(u32 devid)
         normal_flag = cache_flag_to_normal_flag(seg->flag);
         ret = svm_normal_free(seg->devid, normal_flag, seg->align, seg->start, seg->size);
         if (ret != DRV_ERROR_NONE) {
-            svm_warn(
-                "Normal free failed. (ret=%d; devid=%u; flag=0x%x; start=0x%llx; size=%llu)\n", ret, seg->devid,
-                seg->flag, seg->start, seg->size);
+            svm_warn("Normal free failed. (ret=%d; devid=%u; flag=0x%x; start=0x%llx; size=%llu)\n", ret, seg->devid,
+                     seg->flag, seg->start, seg->size);
         }
 
         free(seg);

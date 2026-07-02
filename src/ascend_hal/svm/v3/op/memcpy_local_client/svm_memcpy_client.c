@@ -31,11 +31,10 @@ static int svm_memcpy_local_event(u32 devid, u64 dst, u64 dst_max, u64 src, u64 
 {
     struct svm_umc_msg_head head;
     struct svm_memcpy_local_msg memcpy_local_msg = {.src = src, .dst = dst, .size = count};
-    struct svm_umc_msg msg = {
-        .msg_in = (char *)(uintptr_t)&memcpy_local_msg,
-        .msg_in_len = sizeof(struct svm_memcpy_local_msg),
-        .msg_out = NULL,
-        .msg_out_len = 0};
+    struct svm_umc_msg msg = {.msg_in = (char *)(uintptr_t)&memcpy_local_msg,
+                              .msg_in_len = sizeof(struct svm_memcpy_local_msg),
+                              .msg_out = NULL,
+                              .msg_out_len = 0};
     struct svm_apbi apbi;
     int ret;
     SVM_UNUSED(dst_max);

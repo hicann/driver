@@ -31,9 +31,15 @@
 
 static u32 async_copy_feature_id;
 
-void async_copy_set_feature_id(u32 id) { async_copy_feature_id = id; }
+void async_copy_set_feature_id(u32 id)
+{
+    async_copy_feature_id = id;
+}
 
-u32 async_copy_get_feature_id(void) { return async_copy_feature_id; }
+u32 async_copy_get_feature_id(void)
+{
+    return async_copy_feature_id;
+}
 
 struct async_copy_ctx *async_copy_ctx_get(u32 udevid, int tgid)
 {
@@ -53,7 +59,10 @@ struct async_copy_ctx *async_copy_ctx_get(u32 udevid, int tgid)
     return ctx;
 }
 
-void async_copy_ctx_put(struct async_copy_ctx *ctx) { svm_task_ctx_put(ctx->task_ctx); }
+void async_copy_ctx_put(struct async_copy_ctx *ctx)
+{
+    svm_task_ctx_put(ctx->task_ctx);
+}
 
 static void async_copy_ctx_init(struct async_copy_ctx *ctx)
 {
@@ -123,7 +132,8 @@ void async_copy_ctx_destroy(struct async_copy_ctx *ctx)
     svm_task_ctx_put(ctx->task_ctx); /* with init pair */
 }
 
-void async_copy_ctx_show(struct async_copy_ctx *ctx, ka_seq_file_t *seq) {}
+void async_copy_ctx_show(struct async_copy_ctx *ctx, ka_seq_file_t *seq)
+{}
 
 int async_copy_init_task(u32 udevid, int tgid, void *start_time)
 {
@@ -181,5 +191,6 @@ int async_copy_init(void)
 }
 DECLAER_FEATURE_AUTO_INIT(async_copy_init, FEATURE_LOADER_STAGE_6);
 
-void async_copy_uninit(void) {}
+void async_copy_uninit(void)
+{}
 DECLAER_FEATURE_AUTO_UNINIT(async_copy_uninit, FEATURE_LOADER_STAGE_6);

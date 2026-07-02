@@ -59,7 +59,10 @@ struct ubmm_ctx *ubmm_ctx_get(u32 udevid, int tgid)
     return ctx;
 }
 
-void ubmm_ctx_put(struct ubmm_ctx *ctx) { svm_task_ctx_put(ctx->task_ctx); }
+void ubmm_ctx_put(struct ubmm_ctx *ctx)
+{
+    svm_task_ctx_put(ctx->task_ctx);
+}
 
 static void ubmm_ctx_init(struct ubmm_ctx *ctx)
 {
@@ -109,8 +112,8 @@ static void ubmm_try_init_dev(u32 udevid)
             u32 udevid_ex = 0;
 
             (void)uda_get_cur_ns_udevids(&udevid_ex, 1);
-            udevid_ex =
-                (udevid == uda_get_host_id()) ? udevid_ex : udevid; /* Not host_id real dev, change to first udevid. */
+            udevid_ex = (udevid == uda_get_host_id()) ? udevid_ex :
+                                                        udevid; /* Not host_id real dev, change to first udevid. */
             /* trigger ub dev adapt to update uba addr */
             ret = uda_dev_ctrl(udevid_ex, UDA_CTRL_UPDATE_P2P_ADDR);
             if (ret == 0) {
@@ -299,5 +302,8 @@ int ubmm_init(void)
 }
 DECLAER_FEATURE_AUTO_INIT(ubmm_init, FEATURE_LOADER_STAGE_2);
 
-void ubmm_uninit(void) { g_ubmm_is_inited = false; }
+void ubmm_uninit(void)
+{
+    g_ubmm_is_inited = false;
+}
 DECLAER_FEATURE_AUTO_UNINIT(ubmm_uninit, FEATURE_LOADER_STAGE_2);

@@ -57,11 +57,11 @@ void devmm_svm_mmu_notifier_unreg(struct devmm_svm_process *svm_proc)
 {
     bool notifier_release_flag = false;
 
-    devmm_drv_info(
-        "Devmm notifier unreg."
-        "(hostpid=%d; devpid=%d; devid=%d; vfid=%d; status=0x%x; proc_idx=0x%x; msg=%u; other_proc=%u)\n",
-        svm_proc->process_id.hostpid, svm_proc->devpid, svm_proc->process_id.devid, svm_proc->process_id.vfid,
-        svm_proc->proc_status, svm_proc->proc_idx, svm_proc->msg_processing, svm_proc->other_proc_occupying);
+    devmm_drv_info("Devmm notifier unreg."
+                   "(hostpid=%d; devpid=%d; devid=%d; vfid=%d; status=0x%x; proc_idx=0x%x; msg=%u; other_proc=%u)\n",
+                   svm_proc->process_id.hostpid, svm_proc->devpid, svm_proc->process_id.devid,
+                   svm_proc->process_id.vfid, svm_proc->proc_status, svm_proc->proc_idx, svm_proc->msg_processing,
+                   svm_proc->other_proc_occupying);
     /*
      * with user unmap, trace: do_munmap->devmm_notifier_start->devmm_svm_mmu_notifier_unreg
      * without user unmap, trace: exit->devmm_notifier_release->devmm_svm_mmu_notifier_unreg
@@ -148,9 +148,8 @@ static bool _devmm_mem_is_in_vma_range(ka_vm_area_struct_t *vma[], u32 vma_num, 
         if (devmm_mem_is_in_readonly_vma_range(start, end)) {
             return true;
         }
-    } else if (
-        size == DEVMM_SVM_MEM_SIZE - DEVMM_DVPP_HEAP_TOTAL_SIZE - DEVMM_READ_ONLY_HEAP_TOTAL_SIZE -
-                    DEVMM_DEV_READ_ONLY_HEAP_TOTAL_SIZE) {
+    } else if (size == DEVMM_SVM_MEM_SIZE - DEVMM_DVPP_HEAP_TOTAL_SIZE - DEVMM_READ_ONLY_HEAP_TOTAL_SIZE -
+                           DEVMM_DEV_READ_ONLY_HEAP_TOTAL_SIZE) {
         if ((start == DEVMM_NON_RESERVATION_HEAP_ADDR_START) && (end == DEVMM_SVM_MEM_START + DEVMM_SVM_MEM_SIZE)) {
             return true;
         }
@@ -200,8 +199,8 @@ bool devmm_mem_is_in_vma_range(ka_vm_area_struct_t *vma[], u32 vma_num, u64 star
    call munmap partial in user illegal, os will call ops devmm_vm_open(vm_operations_struct.open) also,
        use this to check illegal call
 */
-STATIC int _devmm_notifier_start(
-    ka_mmu_notifier_t *mn, ka_mm_struct_t *mm, unsigned long start, unsigned long end, bool blockable)
+STATIC int _devmm_notifier_start(ka_mmu_notifier_t *mn, ka_mm_struct_t *mm, unsigned long start, unsigned long end,
+                                 bool blockable)
 {
 #ifndef EMU_ST
     struct devmm_svm_process *svm_proc = NULL;

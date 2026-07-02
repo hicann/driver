@@ -76,9 +76,8 @@
 
 static inline u64 devmm_get_s2s_host_node_start_addr(u32 server_id, u32 node_id)
 {
-    return (
-        DEVMM_S2S_HOST_GLOBAL_BASE_OFFSET + DEVMM_S2S_HOST_SERVER_MEM_SIZE * server_id +
-        DEVMM_S2S_HOST_NODE_MEM_SIZE * node_id);
+    return (DEVMM_S2S_HOST_GLOBAL_BASE_OFFSET + DEVMM_S2S_HOST_SERVER_MEM_SIZE * server_id +
+            DEVMM_S2S_HOST_NODE_MEM_SIZE * node_id);
 }
 
 static inline u64 devmm_get_host_node_local_addr(u32 node_id)
@@ -118,8 +117,8 @@ static inline int devmm_get_s2s_host_global_addr(u32 server_id, u64 addr, u64 *g
     }
 #endif
 
-    *global_addr =
-        devmm_get_s2s_host_node_start_addr(server_id, node_id) + (addr - devmm_get_host_node_local_addr(node_id));
+    *global_addr = devmm_get_s2s_host_node_start_addr(server_id, node_id) +
+                   (addr - devmm_get_host_node_local_addr(node_id));
 
     return 0;
 }
@@ -150,7 +149,10 @@ static inline bool devmm_pages_is_continue(ka_page_t *pre_page, ka_page_t *post_
     return (ka_mm_page_to_pfn(pre_page) + 1) == ka_mm_page_to_pfn(post_page);
 }
 #else
-static inline bool devmm_pages_is_continue(ka_page_t *pre_page, ka_page_t *post_page) { return false; }
+static inline bool devmm_pages_is_continue(ka_page_t *pre_page, ka_page_t *post_page)
+{
+    return false;
+}
 #endif
 static inline void devmm_isb(void)
 {
@@ -187,8 +189,8 @@ ka_vm_area_struct_t *devmm_find_vma(struct devmm_svm_process *svm_proc, u64 vadd
 ka_vm_area_struct_t *devmm_find_vma_custom(struct devmm_svm_process *svm_proc, u32 idx, u64 vaddr);
 ka_mm_struct_t *devmm_custom_mm_get(ka_pid_t custom_pid);
 void devmm_custom_mm_put(ka_mm_struct_t *custom_mm);
-int devmm_update_heap_info(
-    struct devmm_svm_process *svm_process, struct devmm_update_heap_para *cmd, struct devmm_svm_heap *free_heap);
+int devmm_update_heap_info(struct devmm_svm_process *svm_process, struct devmm_update_heap_para *cmd,
+                           struct devmm_svm_heap *free_heap);
 void devmm_free_heap_struct(struct devmm_svm_process *svm_process, u32 heap_idx, u32 heap_num);
 void devmm_clear_svm_heap_struct(struct devmm_svm_process *svm_process, u32 heap_idx, u32 heap_num);
 bool devmm_wait_svm_heap_unoccupied(struct devmm_svm_process *svm_process, struct devmm_svm_heap *heap);
@@ -211,9 +213,8 @@ void devmm_svm_mem_enable(struct devmm_svm_process *svm_proc);
 void devmm_svm_mem_disable(struct devmm_svm_process *svm_proc);
 bool devmm_svm_mem_is_enable(struct devmm_svm_process *svm_proc);
 
-void devmm_phy_addr_attr_pack(
-    struct devmm_svm_process *svm_proc, u32 pg_type, u32 mem_type, bool is_continuous,
-    struct devmm_phy_addr_attr *attr);
+void devmm_phy_addr_attr_pack(struct devmm_svm_process *svm_proc, u32 pg_type, u32 mem_type, bool is_continuous,
+                              struct devmm_phy_addr_attr *attr);
 u64 devmm_get_tgid_start_time(void);
 #ifdef EMU_ST
 ka_vm_area_struct_t *devmm_find_vma_from_mm(ka_mm_struct_t *mm, u64 vaddr);

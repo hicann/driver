@@ -21,8 +21,8 @@ int pma_ub_unregister_seg(u32 udevid, int tgid, u64 start, u64 size);
 
 int pma_ub_get_register_seg_info(u32 udevid, int tgid, u64 va, u64 *start, u64 *size, u32 *token_id);
 
-int pma_ub_acquire_seg(
-    u32 udevid, int tgid, u64 va, u64 size, int (*invalidate)(u64 invalidate_tag), u64 invalidate_tag, u32 *token_id);
+int pma_ub_acquire_seg(u32 udevid, int tgid, u64 va, u64 size, int (*invalidate)(u64 invalidate_tag),
+                       u64 invalidate_tag, u32 *token_id);
 int pma_ub_release_seg(u32 udevid, int tgid, u64 va, u64 size);
 
 #endif

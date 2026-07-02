@@ -47,7 +47,10 @@ struct smp_ctx *smp_ctx_get(u32 udevid, int tgid)
     return smp_ctx;
 }
 
-void smp_ctx_put(struct smp_ctx *smp_ctx) { svm_task_ctx_put(smp_ctx->task_ctx); }
+void smp_ctx_put(struct smp_ctx *smp_ctx)
+{
+    svm_task_ctx_put(smp_ctx->task_ctx);
+}
 
 static void smp_ctx_init(struct smp_ctx *smp_ctx)
 {
@@ -158,5 +161,6 @@ int svm_smp_init(void)
 }
 DECLAER_FEATURE_AUTO_INIT(svm_smp_init, FEATURE_LOADER_STAGE_4);
 
-void svm_smp_uninit(void) {}
+void svm_smp_uninit(void)
+{}
 DECLAER_FEATURE_AUTO_UNINIT(svm_smp_uninit, FEATURE_LOADER_STAGE_4);

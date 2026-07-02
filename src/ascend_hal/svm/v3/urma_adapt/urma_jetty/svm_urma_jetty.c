@@ -266,17 +266,16 @@ static bool svm_urma_jetty_is_no_enough_idle_wrs(struct svm_urma_jetty *jetty, u
 }
 
 #define SVM_URMA_JETTY_WRITE_READ_MAX_SIZE 0x10000000ULL /* 256MB */
-static int svm_urma_jetty_fill_jfs_wrs(
-    struct svm_urma_jetty *jetty, struct svm_urma_jetty_post_para *para, u32 *out_wr_num)
+static int svm_urma_jetty_fill_jfs_wrs(struct svm_urma_jetty *jetty, struct svm_urma_jetty_post_para *para,
+                                       u32 *out_wr_num)
 {
-    u32 wr_num =
-        (u32)(svm_align_up(para->size, SVM_URMA_JETTY_WRITE_READ_MAX_SIZE) / SVM_URMA_JETTY_WRITE_READ_MAX_SIZE);
+    u32 wr_num = (u32)(svm_align_up(para->size, SVM_URMA_JETTY_WRITE_READ_MAX_SIZE) /
+                       SVM_URMA_JETTY_WRITE_READ_MAX_SIZE);
     u32 start_wrs_id = jetty->post_wr_id;
     u32 i, j, next_wrs_id;
 
-    svm_debug(
-        "Svm_fill_jfs_info. (src=0x%llx; dst=0x%llx; post_id=%u; ack_id=%u; depth=%u)\n", para->src, para->dst,
-        jetty->post_wr_id, jetty->ack_wr_id, jetty->depth);
+    svm_debug("Svm_fill_jfs_info. (src=0x%llx; dst=0x%llx; post_id=%u; ack_id=%u; depth=%u)\n", para->src, para->dst,
+              jetty->post_wr_id, jetty->ack_wr_id, jetty->depth);
 
     if (wr_num > jetty->depth) {
         svm_err("Size out of jetty depth. (depth=%u; size=%llu; wr_num=%u)\n", jetty->depth, para->size, wr_num);
@@ -289,12 +288,12 @@ static int svm_urma_jetty_fill_jfs_wrs(
 
     for (i = 0, j = start_wrs_id; i < wr_num; i++) {
         jetty->src_sges[j].addr = para->src + i * SVM_URMA_JETTY_WRITE_READ_MAX_SIZE;
-        jetty->src_sges[j].len =
-            (u32)svm_min(para->size - i * SVM_URMA_JETTY_WRITE_READ_MAX_SIZE, SVM_URMA_JETTY_WRITE_READ_MAX_SIZE);
+        jetty->src_sges[j].len = (u32)svm_min(para->size - i * SVM_URMA_JETTY_WRITE_READ_MAX_SIZE,
+                                              SVM_URMA_JETTY_WRITE_READ_MAX_SIZE);
         jetty->src_sges[j].tseg = para->src_tseg;
         jetty->dst_sges[j].addr = para->dst + i * SVM_URMA_JETTY_WRITE_READ_MAX_SIZE;
-        jetty->dst_sges[j].len =
-            (u32)svm_min(para->size - i * SVM_URMA_JETTY_WRITE_READ_MAX_SIZE, SVM_URMA_JETTY_WRITE_READ_MAX_SIZE);
+        jetty->dst_sges[j].len = (u32)svm_min(para->size - i * SVM_URMA_JETTY_WRITE_READ_MAX_SIZE,
+                                              SVM_URMA_JETTY_WRITE_READ_MAX_SIZE);
         jetty->dst_sges[j].tseg = para->dst_tseg;
 
         jetty->jfs_wrs[j].tjetty = para->tjfr;
@@ -373,9 +372,8 @@ int svm_urma_jetty_wait(struct svm_urma_jetty *jetty, int wr_num, int timeout_ms
 
         cnt = urma_poll_jfc(jetty->jfc, 1, jetty->crs);
         if ((cnt != (int)1) || (jetty->crs[0].status != URMA_CR_SUCCESS)) {
-            svm_err(
-                "Urma poll jfc failed. (i=%u; ret_cnt=%d; status=%d; jfs=%u; jfc=%u)\n", i, cnt, jetty->crs[0].status,
-                jetty->jfs->jfs_id.id, jetty->jfc->jfc_id.id);
+            svm_err("Urma poll jfc failed. (i=%u; ret_cnt=%d; status=%d; jfs=%u; jfc=%u)\n", i, cnt,
+                    jetty->crs[0].status, jetty->jfs->jfs_id.id, jetty->jfc->jfc_id.id);
             poll_failed = true;
         }
 #endif

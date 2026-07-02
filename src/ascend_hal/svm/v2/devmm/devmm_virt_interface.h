@@ -66,9 +66,15 @@ enum devmm_memtype {
 
 #define DEVMM_ARRAY_NUM(array) (sizeof(array) / sizeof(array[0]))
 
-static inline uint32_t devmm_heap_list_type_by_device(uint32_t device) { return (DEVICE_AGENT0_LIST + device); }
+static inline uint32_t devmm_heap_list_type_by_device(uint32_t device)
+{
+    return (DEVICE_AGENT0_LIST + device);
+}
 
-static inline uint32_t devmm_heap_device_by_list_type(uint32_t sub_type) { return (sub_type - DEVICE_AGENT0_LIST); }
+static inline uint32_t devmm_heap_device_by_list_type(uint32_t sub_type)
+{
+    return (sub_type - DEVICE_AGENT0_LIST);
+}
 
 /* For mem stats. */
 static inline uint32_t devmm_heap_sub_type_to_mem_val(uint32_t heap_sub_type)
@@ -81,11 +87,20 @@ static inline uint32_t devmm_heap_sub_type_to_mem_val(uint32_t heap_sub_type)
     return mem_val[heap_sub_type];
 }
 
-static inline bool ptr_is_err(DVdeviceptr ptr) { return (ptr < (DVdeviceptr)DEVMM_ERR_PTR) ? true : false; }
+static inline bool ptr_is_err(DVdeviceptr ptr)
+{
+    return (ptr < (DVdeviceptr)DEVMM_ERR_PTR) ? true : false;
+}
 
-static inline bool ptr_is_valid(DVdeviceptr ptr) { return (ptr_is_err(ptr) == false); }
+static inline bool ptr_is_valid(DVdeviceptr ptr)
+{
+    return (ptr_is_err(ptr) == false);
+}
 
-static inline uint64_t get_ptr_err(DVdeviceptr ptr) { return ptr; }
+static inline uint64_t get_ptr_err(DVdeviceptr ptr)
+{
+    return ptr;
+}
 
 static inline DVresult ptr_to_errcode(DVdeviceptr ptr)
 {
@@ -121,7 +136,10 @@ static inline uint32_t advise_to_memtype(DVmem_advise advise)
     return ((advise & DV_ADVISE_READONLY) != 0) ? DEVMM_MEM_RDONLY : DEVMM_MEM_NORMAL;
 }
 
-static inline bool advise_is_nocache(DVmem_advise advise) { return ((advise & DV_ADVISE_NOCACHE) != 0) ? true : false; }
+static inline bool advise_is_nocache(DVmem_advise advise)
+{
+    return ((advise & DV_ADVISE_NOCACHE) != 0) ? true : false;
+}
 
 struct devmm_virt_heap_type {
     uint32_t heap_type;
@@ -278,14 +296,14 @@ DVresult devmm_virt_restore_heap_mgmt(void);
 void *devmm_virt_get_heap_mgmt(void);
 bool devmm_dev_is_inited(uint32_t devid);
 struct devmm_virt_com_heap *devmm_virt_get_heap_mgmt_virt_heap(uint32_t heap_idx);
-virt_addr_t devmm_virt_heap_alloc_ops(
-    struct devmm_virt_com_heap *heap, virt_addr_t alloc_ptr, size_t alloc_size, DVmem_advise advise);
+virt_addr_t devmm_virt_heap_alloc_ops(struct devmm_virt_com_heap *heap, virt_addr_t alloc_ptr, size_t alloc_size,
+                                      DVmem_advise advise);
 int devmm_virt_heap_free_ops(struct devmm_virt_com_heap *heap, virt_addr_t ptr);
-DVresult devmm_free_to_normal_heap(
-    struct devmm_virt_heap_mgmt *p_heap_mgmt, struct devmm_virt_com_heap *heap, DVdeviceptr p, uint64_t *free_len);
+DVresult devmm_free_to_normal_heap(struct devmm_virt_heap_mgmt *p_heap_mgmt, struct devmm_virt_com_heap *heap,
+                                   DVdeviceptr p, uint64_t *free_len);
 
-DVresult devmm_virt_destroy_heap(
-    struct devmm_virt_heap_mgmt *mgmt, struct devmm_virt_com_heap *heap, bool need_mem_stats_dec);
+DVresult devmm_virt_destroy_heap(struct devmm_virt_heap_mgmt *mgmt, struct devmm_virt_com_heap *heap,
+                                 bool need_mem_stats_dec);
 DVresult devmm_virt_set_heap_idle(struct devmm_virt_heap_mgmt *mgmt, struct devmm_virt_com_heap *heap);
 
 uint32_t devmm_virt_status_get_free_pgcnt_buddy(uint32_t heap_idx);
@@ -294,47 +312,47 @@ uint32_t devmm_virt_status_get_page_cache_cnt(uint32_t heap_idx);
 bool devmm_virt_check_idle_heap(struct devmm_virt_com_heap *heap);
 uint32_t devmm_va_to_heap_idx(const struct devmm_virt_heap_mgmt *mgmt, virt_addr_t va);
 struct devmm_virt_com_heap *devmm_va_to_heap(virt_addr_t va);
-DVresult devmm_get_heap_list_by_type(
-    struct devmm_virt_heap_mgmt *p_heap_mgmt, struct devmm_virt_heap_type *heap_type,
-    struct devmm_heap_list **heap_list);
-uint32_t devmm_virt_get_page_size_by_heap_type(
-    struct devmm_virt_heap_mgmt *mgmt, uint32_t heap_type, uint32_t heap_sub_type);
-uint32_t devmm_virt_get_kernel_page_size_by_heap_type(
-    struct devmm_virt_heap_mgmt *mgmt, uint32_t heap_type, uint32_t heap_sub_type);
-DVresult devmm_alloc_managed(
-    DVdeviceptr *pp, size_t bytesize, struct devmm_virt_heap_type *heap_type, DVmem_advise advise);
+DVresult devmm_get_heap_list_by_type(struct devmm_virt_heap_mgmt *p_heap_mgmt, struct devmm_virt_heap_type *heap_type,
+                                     struct devmm_heap_list **heap_list);
+uint32_t devmm_virt_get_page_size_by_heap_type(struct devmm_virt_heap_mgmt *mgmt, uint32_t heap_type,
+                                               uint32_t heap_sub_type);
+uint32_t devmm_virt_get_kernel_page_size_by_heap_type(struct devmm_virt_heap_mgmt *mgmt, uint32_t heap_type,
+                                                      uint32_t heap_sub_type);
+DVresult devmm_alloc_managed(DVdeviceptr *pp, size_t bytesize, struct devmm_virt_heap_type *heap_type,
+                             DVmem_advise advise);
 DVresult devmm_free_managed(DVdeviceptr p);
 drvError_t devmm_alloc_proc(uint32_t devid, uint32_t sub_mem_type, DVmem_advise advise, size_t size, DVdeviceptr *pp);
 void devmm_set_module_id_to_advise(uint32_t model_id, DVmem_advise *advise);
 void devmm_virt_status_init(struct devmm_virt_com_heap *heap);
-DVresult devmm_ioctl_enable_heap(
-    uint32_t heap_idx, uint32_t heap_type, uint32_t heap_sub_type, uint64_t heap_size, uint32_t heap_list_type);
+DVresult devmm_ioctl_enable_heap(uint32_t heap_idx, uint32_t heap_type, uint32_t heap_sub_type, uint64_t heap_size,
+                                 uint32_t heap_list_type);
 int devmm_ioctl_disable_heap(uint32_t heap_idx, uint32_t heap_type, uint32_t heap_sub_type, uint64_t heap_size);
-struct devmm_virt_com_heap *devmm_virt_get_heap_from_queue(
-    struct devmm_virt_heap_mgmt *mgmt, uint32_t heap_idx, size_t heap_size);
-virt_addr_t devmm_alloc_from_normal_heap(
-    struct devmm_virt_heap_mgmt *p_heap_mgmt, size_t bytesize, struct devmm_virt_heap_type *heap_type,
-    DVmem_advise advise, DVdeviceptr va);
+struct devmm_virt_com_heap *devmm_virt_get_heap_from_queue(struct devmm_virt_heap_mgmt *mgmt, uint32_t heap_idx,
+                                                           size_t heap_size);
+virt_addr_t devmm_alloc_from_normal_heap(struct devmm_virt_heap_mgmt *p_heap_mgmt, size_t bytesize,
+                                         struct devmm_virt_heap_type *heap_type, DVmem_advise advise, DVdeviceptr va);
 uint32_t devmm_virt_heap_size_to_order(uint64_t step, size_t size);
-void devmm_virt_heap_update_info(
-    struct devmm_virt_heap_mgmt *mgmt, struct devmm_virt_com_heap *heap, struct devmm_virt_heap_type *heap_type,
-    struct devmm_com_heap_ops *ops, struct devmm_virt_heap_para *heap_info);
-void devmm_virt_normal_heap_update_info(
-    struct devmm_virt_heap_mgmt *mgmt, struct devmm_virt_com_heap *heap, struct devmm_virt_heap_type *heap_type,
-    struct devmm_com_heap_ops *ops, uint64_t alloc_size);
+void devmm_virt_heap_update_info(struct devmm_virt_heap_mgmt *mgmt, struct devmm_virt_com_heap *heap,
+                                 struct devmm_virt_heap_type *heap_type, struct devmm_com_heap_ops *ops,
+                                 struct devmm_virt_heap_para *heap_info);
+void devmm_virt_normal_heap_update_info(struct devmm_virt_heap_mgmt *mgmt, struct devmm_virt_com_heap *heap,
+                                        struct devmm_virt_heap_type *heap_type, struct devmm_com_heap_ops *ops,
+                                        uint64_t alloc_size);
 int devmm_ioctl_alloc_dev(DVdeviceptr p, size_t size, uint32_t devid, DVmem_advise advise);
 DVresult devmm_ioctl_free_pages(virt_addr_t ptr);
 bool devmm_virt_heap_is_primary(struct devmm_virt_com_heap *heap);
-DVresult devmm_virt_init_heap_customize(
-    struct devmm_virt_heap_mgmt *mgmt, struct devmm_virt_heap_type *heap_type, struct devmm_virt_heap_para *heap_info,
-    struct devmm_com_heap_ops *ops);
-virt_addr_t devmm_virt_heap_alloc_device(
-    struct devmm_virt_com_heap *heap, virt_addr_t ret_val, size_t alloc_size, DVmem_advise advise);
+DVresult devmm_virt_init_heap_customize(struct devmm_virt_heap_mgmt *mgmt, struct devmm_virt_heap_type *heap_type,
+                                        struct devmm_virt_heap_para *heap_info, struct devmm_com_heap_ops *ops);
+virt_addr_t devmm_virt_heap_alloc_device(struct devmm_virt_com_heap *heap, virt_addr_t ret_val, size_t alloc_size,
+                                         DVmem_advise advise);
 DVresult devmm_virt_heap_free_pages(struct devmm_virt_com_heap *heap, virt_addr_t ptr);
 DVresult devmm_soma_heap_free_pages(virt_addr_t ptr);
 void devmm_print_svm_va_info(uint64_t va, DVresult ret);
 void devmm_host_pin_pre_register_release(virt_addr_t ptr);
 void devmm_host_pin_dma_register_prepare(struct devmm_virt_heap_mgmt *mgmt, uint32_t devid);
 
-static inline bool devmm_is_specified_va_alloc(uint64_t va) { return (va != 0); }
+static inline bool devmm_is_specified_va_alloc(uint64_t va)
+{
+    return (va != 0);
+}
 #endif

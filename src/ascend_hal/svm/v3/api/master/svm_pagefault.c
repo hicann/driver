@@ -38,7 +38,8 @@ static int svm_pagefault_handle(u32 devid, u64 va)
         svm_run_info_ratelimited("Pagefault va is belong to device. (va=0x%llx; devid=%u)\n", va, devid);
         return DRV_ERROR_PARA_ERROR;
     } else if (prop.devid == svm_get_host_devid()) {
-        svm_run_info_ratelimited("Not support device pagefault access host mem. (va=0x%llx; host_devid=%u)\n", va, devid);
+        svm_run_info_ratelimited("Not support device pagefault access host mem. (va=0x%llx; host_devid=%u)\n", va,
+                                 devid);
         return DRV_ERROR_PARA_ERROR;
     } else if (prop.devid >= SVM_MAX_DEV_AGENT_NUM) {
         svm_run_info_ratelimited("Only support device va. (va=0x%llx; invalid_devid=%u)\n", va, prop.devid);
@@ -57,8 +58,8 @@ static int svm_pagefault_handle(u32 devid, u64 va)
 
     ret = drvMemPrefetchToDevice((DVdeviceptr)va, (size_t)size, (DVdevice)devid);
     if (ret != 0) {
-        svm_err("Prefetch to device failed. (va=0x%llx; size=0x%llx; prop.devid=%u; devid=%u; ret=%d)\n",
-            va, size, prop.devid, devid, ret);
+        svm_err("Prefetch to device failed. (va=0x%llx; size=0x%llx; prop.devid=%u; devid=%u; ret=%d)\n", va, size,
+                prop.devid, devid, ret);
     }
 
     return ret;
@@ -75,6 +76,5 @@ static int svm_pagefault_proc_func(u32 devid, const void *msg_in, void *msg_out)
     return 0;
 }
 
-SVM_EVENT_PROC_REGISTER(
-    SVM_PAGEFAULT_EVENT, svm_pagefault_proc_func, (u64)sizeof(struct svm_pagefault_msg),
-    (u64)sizeof(struct svm_pagefault_msg));
+SVM_EVENT_PROC_REGISTER(SVM_PAGEFAULT_EVENT, svm_pagefault_proc_func, (u64)sizeof(struct svm_pagefault_msg),
+                        (u64)sizeof(struct svm_pagefault_msg));

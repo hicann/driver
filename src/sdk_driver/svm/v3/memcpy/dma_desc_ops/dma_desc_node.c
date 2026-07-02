@@ -31,8 +31,8 @@
 
 static char *dma_desc_maigc = "SVM";
 
-static int dma_desc_alloc_sq_cq_addr(
-    struct svm_copy_task *copy_task, struct devdrv_dma_prepare *dma_prepare, u64 *fixed_dma_node_num)
+static int dma_desc_alloc_sq_cq_addr(struct svm_copy_task *copy_task, struct devdrv_dma_prepare *dma_prepare,
+                                     u64 *fixed_dma_node_num)
 {
     u32 node_cnt = svm_copy_task_get_dma_node_num(copy_task);
     u32 i, num;
@@ -72,8 +72,8 @@ static u64 get_dma_nodes_addr_size(struct devdrv_dma_node *dma_nodes, u64 dma_no
     return size;
 }
 
-static int fill_dma_desc_of_sq(
-    struct svm_copy_task *copy_task, struct devdrv_dma_prepare *dma_prepare, u64 fixed_dma_node_num, u64 *fixed_size)
+static int fill_dma_desc_of_sq(struct svm_copy_task *copy_task, struct devdrv_dma_prepare *dma_prepare,
+                               u64 fixed_dma_node_num, u64 *fixed_size)
 {
     struct svm_copy_subtask *subtask = NULL;
     struct svm_copy_subtask *n = NULL;
@@ -111,8 +111,8 @@ static int fill_dma_desc_of_sq(
     return 0;
 }
 
-static int dma_prepare_init(
-    struct svm_copy_task *copy_task, struct devdrv_dma_prepare *dma_prepare, u64 *fixed_dma_node_num, u64 *fixed_size)
+static int dma_prepare_init(struct svm_copy_task *copy_task, struct devdrv_dma_prepare *dma_prepare,
+                            u64 *fixed_dma_node_num, u64 *fixed_size)
 {
     int ret;
 
@@ -213,7 +213,10 @@ void dma_desc_node_destroy(struct dma_desc_ctx *ctx, struct dma_desc_node *node)
     _dma_desc_node_destroy(node);
 }
 
-static void _dma_desc_node_get(struct dma_desc_node *node) { ka_base_kref_get(&node->ref); }
+static void _dma_desc_node_get(struct dma_desc_node *node)
+{
+    ka_base_kref_get(&node->ref);
+}
 
 struct dma_desc_node *dma_desc_node_get(struct dma_desc_ctx *ctx, u64 handle)
 {
@@ -230,7 +233,10 @@ struct dma_desc_node *dma_desc_node_get(struct dma_desc_ctx *ctx, u64 handle)
     return dma_desc_node;
 }
 
-void dma_desc_node_put(struct dma_desc_node *node) { ka_base_kref_put(&node->ref, dma_desc_node_release); }
+void dma_desc_node_put(struct dma_desc_node *node)
+{
+    ka_base_kref_put(&node->ref, dma_desc_node_release);
+}
 
 int dma_desc_node_state_trans(struct dma_desc_node *node, int src_state, int dst_state)
 {

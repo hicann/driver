@@ -20,10 +20,11 @@
 
 #define SVM_INVALID_EVENT_GID 63 /* esched max gid is 64 */
 
-void svm_um_register_handle(
-    u32 subevent_id, int (*pre_handle)(u32 udevid, int master_tgid, int slave_tgid, void *msg, u32 msg_len),
-    void (*pre_cancel_handle)(u32 udevid, int master_tgid, int slave_tgid, void *msg, u32 msg_len),
-    int (*post_handle)(u32 udevid, int master_tgid, int slave_tgid, void *msg, u32 msg_len));
+void svm_um_register_handle(u32 subevent_id,
+                            int (*pre_handle)(u32 udevid, int master_tgid, int slave_tgid, void *msg, u32 msg_len),
+                            void (*pre_cancel_handle)(u32 udevid, int master_tgid, int slave_tgid, void *msg,
+                                                      u32 msg_len),
+                            int (*post_handle)(u32 udevid, int master_tgid, int slave_tgid, void *msg, u32 msg_len));
 
 int svm_um_handle_init(void);
 void svm_um_handle_uninit(void);

@@ -29,6 +29,8 @@ typedef struct urma_target_seg {
     char val[SVM_STUB_URMA_TARGET_SEG_SIZE];
 } urma_target_seg_t;
 
-typedef enum urma_opcode { URMA_OPC_STUB } urma_opcode_t;
+typedef enum urma_opcode {
+    URMA_OPC_STUB
+} urma_opcode_t;
 #endif
 #endif

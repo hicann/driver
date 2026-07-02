@@ -320,8 +320,8 @@ static int svm_prefetch_seg(void *svmm_inst, u64 va, u64 size, u32 devid, struct
     return ret;
 }
 
-static int svm_seek_hole_segs_to_prefetch(
-    void *svmm_inst, u64 start, u64 size, u32 devid, struct svm_global_va *src_info)
+static int svm_seek_hole_segs_to_prefetch(void *svmm_inst, u64 start, u64 size, u32 devid,
+                                          struct svm_global_va *src_info)
 {
     struct svm_global_va sub_src_info;
     u64 hole_start, hole_size;
@@ -335,19 +335,18 @@ static int svm_seek_hole_segs_to_prefetch(
             /* No hole, just return success. */
             return DRV_ERROR_NONE;
         } else if (ret != DRV_ERROR_NONE) {
-            svm_err(
-                "Get first hole failed. (ret=%d; devid=%u; start=0x%llx; size=%llu)\n", ret, devid, cur_va,
-                end - cur_va);
+            svm_err("Get first hole failed. (ret=%d; devid=%u; start=0x%llx; size=%llu)\n", ret, devid, cur_va,
+                    end - cur_va);
             return ret;
         }
 
-        svm_global_va_pack(
-            src_info->udevid, src_info->tgid, src_info->va + (hole_start - start), hole_size, &sub_src_info);
+        svm_global_va_pack(src_info->udevid, src_info->tgid, src_info->va + (hole_start - start), hole_size,
+                           &sub_src_info);
         ret = svm_prefetch_seg(svmm_inst, hole_start, hole_size, devid, &sub_src_info);
         if (ret != DRV_ERROR_NONE) {
             /* No need undo. */
-            svm_err(
-                "Prefetch seg failed. (ret=%d; va=0x%llx; size=%llu; devid=%u)\n", ret, hole_start, hole_size, devid);
+            svm_err("Prefetch seg failed. (ret=%d; va=0x%llx; size=%llu; devid=%u)\n", ret, hole_start, hole_size,
+                    devid);
             return ret;
         }
 
@@ -470,15 +469,14 @@ static int svm_prefetch_to_device(u64 va, u64 size, u32 devid)
 
     ret = svm_share_get_src_aligned_size(devid, prop.flag, va, size, &aligned_size);
     if (ret != 0) {
-        svm_err(
-            "Get aligned size failed. (devid=%u; flag=0x%llx; va=0x%llx; size=0x%llx)\n", devid, prop.flag, va, size);
+        svm_err("Get aligned size failed. (devid=%u; flag=0x%llx; va=0x%llx; size=0x%llx)\n", devid, prop.flag, va,
+                size);
         return DRV_ERROR_PARA_ERROR;
     }
 
     if ((svm_is_valid_range(va, size) == false) || (va + size) > (prop.start + prop.size)) {
-        svm_err(
-            "Size if out of bounds. (va=0x%llx; align_size=0x%llx; prop start=0x%llx; size=0x%llx)\n", va, aligned_size,
-            prop.start, prop.size);
+        svm_err("Size if out of bounds. (va=0x%llx; align_size=0x%llx; prop start=0x%llx; size=0x%llx)\n", va,
+                aligned_size, prop.start, prop.size);
         return DRV_ERROR_PARA_ERROR;
     }
 
@@ -542,9 +540,8 @@ static int svm_prefetch_seg_criu_restore(void *seg_handle, u64 start, struct svm
     svm_dst_va_pack(devid, PROCESS_CP1, start, src_info->size, &dst_info);
     ret = svm_smm_client_map(&dst_info, src_info, smm_flag);
     if (ret != DRV_ERROR_NONE) {
-        svm_err(
-            "Restore prefetch map failed. (ret=%d; devid=%u; va=0x%llx; size=0x%llx)\n", ret, devid, start,
-            src_info->size);
+        svm_err("Restore prefetch map failed. (ret=%d; devid=%u; va=0x%llx; size=0x%llx)\n", ret, devid, start,
+                src_info->size);
     }
 
     return ret;

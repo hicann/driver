@@ -21,7 +21,10 @@
 STATIC struct svm_business_info *g_svm_business_info = NULL;
 STATIC bool g_svm_active_reboot = false;
 
-bool devmm_is_active_reboot_status(void) { return g_svm_active_reboot; }
+bool devmm_is_active_reboot_status(void)
+{
+    return g_svm_active_reboot;
+}
 
 int devmm_alloc_business_info(void)
 {
@@ -158,9 +161,8 @@ void devmm_remove_pid_from_business(u32 devid, ka_pid_t pid)
         if (business_pid_info->pid == pid) {
             ka_list_del(pos);
             g_svm_business_info->business_ref_cnt[devid]--;
-            devmm_drv_debug(
-                "Remove pid info from svm_business_info. (devid=%u; pid=%d; business_refcount=%u)\n", devid, pid,
-                g_svm_business_info->business_ref_cnt[devid]);
+            devmm_drv_debug("Remove pid info from svm_business_info. (devid=%u; pid=%d; business_refcount=%u)\n", devid,
+                            pid, g_svm_business_info->business_ref_cnt[devid]);
             ka_task_up_write(&g_svm_business_info->business_ref_cnt_rw_sema[devid]);
             devmm_kvfree(business_pid_info);
             return;
@@ -284,6 +286,12 @@ STATIC ka_notifier_block_t devmm_reboot_notifier = {
     .priority = 1,
 };
 
-int devmm_register_reboot_notifier(void) { return ka_dfx_register_reboot_notifier(&devmm_reboot_notifier); }
+int devmm_register_reboot_notifier(void)
+{
+    return ka_dfx_register_reboot_notifier(&devmm_reboot_notifier);
+}
 
-void devmm_unregister_reboot_notifier(void) { (void)ka_dfx_unregister_reboot_notifier(&devmm_reboot_notifier); }
+void devmm_unregister_reboot_notifier(void)
+{
+    (void)ka_dfx_unregister_reboot_notifier(&devmm_reboot_notifier);
+}

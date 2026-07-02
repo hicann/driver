@@ -130,8 +130,8 @@ int svm_sync_copy_batch(u64 dst[], u64 src[], u64 size[], u64 count, u64 src_dev
     return g_copy_ops[devid]->sync_copy_batch(src, dst, size, count, (u32)src_devid, (u32)dst_devid);
 }
 
-int svm_dma_desc_convert(
-    struct svm_copy_va_info *src_info, struct svm_copy_va_info *dst_info, struct DMA_ADDR *dma_desc)
+int svm_dma_desc_convert(struct svm_copy_va_info *src_info, struct svm_copy_va_info *dst_info,
+                         struct DMA_ADDR *dma_desc)
 {
     u32 devid = dma_desc->offsetAddr.devid;
 
@@ -175,9 +175,8 @@ int svm_dma_desc_wait(struct DMA_ADDR *dma_desc)
     return g_copy_ops[devid]->dma_desc_wait(devid, dma_desc);
 }
 
-int svm_dma_desc_convert_2d(
-    struct svm_copy_va_2d_info *src_info, struct svm_copy_va_2d_info *dst_info, u64 fixed_size,
-    struct DMA_ADDR *dma_desc)
+int svm_dma_desc_convert_2d(struct svm_copy_va_2d_info *src_info, struct svm_copy_va_2d_info *dst_info, u64 fixed_size,
+                            struct DMA_ADDR *dma_desc)
 {
     enum svm_cpy_dir dir = copy_dir_get_by_devid(src_info->devid, dst_info->devid);
     u32 devid = (dir == SVM_H2D_CPY) ? dst_info->devid : src_info->devid;

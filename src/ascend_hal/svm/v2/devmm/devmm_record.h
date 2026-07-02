@@ -23,7 +23,11 @@ enum devmm_record_feature_type {
     DEVMM_FEATURE_TYPE_MAX
 };
 
-enum devmm_record_key_type { DEVMM_KEY_TYPE1 = 0, DEVMM_KEY_TYPE2, DEVMM_KEY_TYPE_MAX };
+enum devmm_record_key_type {
+    DEVMM_KEY_TYPE1 = 0,
+    DEVMM_KEY_TYPE2,
+    DEVMM_KEY_TYPE_MAX
+};
 
 enum devmm_record_node_status {
     DEVMM_NODE_INITING = 0,
@@ -44,18 +48,16 @@ struct devmm_record_data {
 #define DEVMM_RECORD_INVALID_DEVID UINT32_MAX
 #define DEVMM_RECORD_HOST_DEVID 65U
 
-drvError_t devmm_record_create_and_get(
-    enum devmm_record_feature_type type, uint32_t devid, enum devmm_record_key_type key_type,
-    enum devmm_record_node_status status, struct devmm_record_data *data);
-drvError_t devmm_record_get(
-    enum devmm_record_feature_type type, uint32_t devid, enum devmm_record_key_type key_type,
-    struct devmm_record_data *data);
-drvError_t devmm_record_put(
-    enum devmm_record_feature_type type, uint32_t devid, uint32_t key_type, uint64_t key,
-    enum devmm_record_node_status status);
+drvError_t devmm_record_create_and_get(enum devmm_record_feature_type type, uint32_t devid,
+                                       enum devmm_record_key_type key_type, enum devmm_record_node_status status,
+                                       struct devmm_record_data *data);
+drvError_t devmm_record_get(enum devmm_record_feature_type type, uint32_t devid, enum devmm_record_key_type key_type,
+                            struct devmm_record_data *data);
+drvError_t devmm_record_put(enum devmm_record_feature_type type, uint32_t devid, uint32_t key_type, uint64_t key,
+                            enum devmm_record_node_status status);
 void devmm_record_recycle(uint32_t devid);
-void devmm_record_restore_func_register(
-    enum devmm_record_feature_type type, int (*restore)(uint64_t, uint64_t, uint32_t, void *));
+void devmm_record_restore_func_register(enum devmm_record_feature_type type,
+                                        int (*restore)(uint64_t, uint64_t, uint32_t, void *));
 int devmm_record_restore(void);
 
 #endif

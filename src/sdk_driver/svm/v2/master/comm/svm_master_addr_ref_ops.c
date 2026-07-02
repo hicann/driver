@@ -220,8 +220,8 @@ static void devmm_get_reserve_addr_info(struct devmm_ioctl_arg *arg, struct devm
     info->size[0] = SVM_ADDR_REF_OPS_UNKNOWN_SIZE;
 }
 
-static void (*get_ioctl_addr_info[DEVMM_SVM_CMD_MAX_CMD])(
-    struct devmm_ioctl_arg *arg, struct devmm_ioctl_addr_info *info) = {
+static void (*get_ioctl_addr_info[DEVMM_SVM_CMD_MAX_CMD])(struct devmm_ioctl_arg *arg,
+                                                          struct devmm_ioctl_addr_info *info) = {
     [_KA_IOC_NR(DEVMM_SVM_ALLOC)] = devmm_get_alloc_addr_info,
     [_KA_IOC_NR(DEVMM_SVM_FREE_PAGES)] = devmm_get_free_addr_info,
     [_KA_IOC_NR(DEVMM_SVM_MEMCPY)] = devmm_get_memcpy_addr_info,

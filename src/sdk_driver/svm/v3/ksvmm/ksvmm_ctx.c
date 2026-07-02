@@ -48,7 +48,10 @@ struct ksvmm_ctx *ksvmm_ctx_get(u32 udevid, int tgid)
     return ksvmm_ctx;
 }
 
-void ksvmm_ctx_put(struct ksvmm_ctx *ksvmm_ctx) { svm_task_ctx_put(ksvmm_ctx->task_ctx); }
+void ksvmm_ctx_put(struct ksvmm_ctx *ksvmm_ctx)
+{
+    svm_task_ctx_put(ksvmm_ctx->task_ctx);
+}
 
 static void ksvmm_ctx_init(struct ksvmm_ctx *ksvmm_ctx)
 {
@@ -153,5 +156,6 @@ int ksvmm_init(void)
 }
 DECLAER_FEATURE_AUTO_INIT(ksvmm_init, FEATURE_LOADER_STAGE_4);
 
-void ksvmm_uninit(void) {}
+void ksvmm_uninit(void)
+{}
 DECLAER_FEATURE_AUTO_UNINIT(ksvmm_uninit, FEATURE_LOADER_STAGE_4);

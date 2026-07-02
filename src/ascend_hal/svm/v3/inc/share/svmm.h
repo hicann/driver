@@ -34,7 +34,10 @@ void *svm_svmm_create_inst(u64 svmma_start, u64 svmma_size, enum svmm_overlap_ty
 void svm_svmm_destroy_inst(void *svmm_inst);
 void svm_svmm_parse_inst_info(void *svmm_inst, u64 *svmma_start, u64 *svmma_size, u64 *svm_flag);
 u32 svm_svmm_inst_show_detail(void *svmm_inst, char *buf, u32 buf_len);
-static inline void svm_svmm_inst_show(void *svmm_inst) { (void)svm_svmm_inst_show_detail(svmm_inst, NULL, 0); }
+static inline void svm_svmm_inst_show(void *svmm_inst)
+{
+    (void)svm_svmm_inst_show_detail(svmm_inst, NULL, 0);
+}
 
 /*
     svm_flag is seg's flag,
@@ -49,8 +52,8 @@ int svm_svmm_del_seg(void *svmm_inst, u32 devid, u64 start, u64 size, bool force
 */
 int svm_svmm_get_seg(void *svmm_inst, u32 *devid, u64 *va, u64 *svm_flag, struct svm_global_va *src_info);
 
-static inline int svm_svmm_get_seg_by_va(
-    void *svmm_inst, u32 *devid, u64 *va, u64 *svm_flag, struct svm_global_va *src_info)
+static inline int svm_svmm_get_seg_by_va(void *svmm_inst, u32 *devid, u64 *va, u64 *svm_flag,
+                                         struct svm_global_va *src_info)
 {
     *devid = SVM_INVALID_DEVID;
     src_info->udevid = SVM_INVALID_UDEVID;
@@ -59,8 +62,8 @@ static inline int svm_svmm_get_seg_by_va(
     return svm_svmm_get_seg(svmm_inst, devid, va, svm_flag, src_info);
 }
 
-static inline int svm_svmm_get_seg_by_devid(
-    void *svmm_inst, u32 *devid, u64 *va, u64 *svm_flag, struct svm_global_va *src_info)
+static inline int svm_svmm_get_seg_by_devid(void *svmm_inst, u32 *devid, u64 *va, u64 *svm_flag,
+                                            struct svm_global_va *src_info)
 {
     *va = 0;
     src_info->udevid = SVM_INVALID_UDEVID;
@@ -69,8 +72,8 @@ static inline int svm_svmm_get_seg_by_devid(
     return svm_svmm_get_seg(svmm_inst, devid, va, svm_flag, src_info);
 }
 
-static inline int svm_svmm_get_seg_by_src_udevid(
-    void *svmm_inst, u32 *devid, u64 *va, u64 *svm_flag, struct svm_global_va *src_info)
+static inline int svm_svmm_get_seg_by_src_udevid(void *svmm_inst, u32 *devid, u64 *va, u64 *svm_flag,
+                                                 struct svm_global_va *src_info)
 {
     *va = 0;
     *devid = SVM_INVALID_DEVID;
@@ -79,15 +82,15 @@ static inline int svm_svmm_get_seg_by_src_udevid(
     return svm_svmm_get_seg(svmm_inst, devid, va, svm_flag, src_info);
 }
 
-static inline int svm_svmm_get_seg_by_src_udevid_and_va(
-    void *svmm_inst, u32 *devid, u64 *va, u64 *svm_flag, struct svm_global_va *src_info)
+static inline int svm_svmm_get_seg_by_src_udevid_and_va(void *svmm_inst, u32 *devid, u64 *va, u64 *svm_flag,
+                                                        struct svm_global_va *src_info)
 {
     *va = 0;
     return svm_svmm_get_seg(svmm_inst, devid, va, svm_flag, src_info);
 }
 
-static inline int svm_svmm_get_first_seg(
-    void *svmm_inst, u32 *devid, u64 *va, u64 *svm_flag, struct svm_global_va *src_info)
+static inline int svm_svmm_get_first_seg(void *svmm_inst, u32 *devid, u64 *va, u64 *svm_flag,
+                                         struct svm_global_va *src_info)
 {
     *va = 0;
     *devid = SVM_INVALID_DEVID;
@@ -102,8 +105,9 @@ struct svm_svmm_seg_priv_ops {
     u32 (*show)(void *priv, char *buf, u32 buf_len);
 };
 
-int svm_svmm_for_each_seg_handle(
-    void *svmm_inst, int (*func)(void *seg_handle, u64 start, struct svm_global_va *src_info, void *priv), void *priv);
+int svm_svmm_for_each_seg_handle(void *svmm_inst,
+                                 int (*func)(void *seg_handle, u64 start, struct svm_global_va *src_info, void *priv),
+                                 void *priv);
 void *svm_svmm_seg_handle_get(void *svmm_inst, u64 va);
 void svm_svmm_seg_handle_put(void *seg_handle);
 

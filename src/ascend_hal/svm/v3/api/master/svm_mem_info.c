@@ -73,16 +73,15 @@ int _get_mem_check_info(u32 devid, u32 type, struct MemAddrInfo *para)
         }
 
         if (prop.devid != devid) {
-            svm_err(
-                "Svm check addr prop failed. (va=0x%llx; prop_devid=%u)\n", (u64)(uintptr_t)para->addr[i], prop.devid);
+            svm_err("Svm check addr prop failed. (va=0x%llx; prop_devid=%u)\n", (u64)(uintptr_t)para->addr[i],
+                    prop.devid);
             para->flag = false;
             return DRV_ERROR_INVALID_VALUE;
         }
 
         if ((para->mem_type & svm_prop_to_mem_virt_mask(&prop)) == 0) {
-            svm_err(
-                "Mem type is not match. (va=0x%llx; cnt=%u; expext_mem_type=0x%x; real_mem_type=0x%x)\n",
-                (u64)(uintptr_t)para->addr[i], para->cnt, para->mem_type, svm_prop_to_mem_virt_mask(&prop));
+            svm_err("Mem type is not match. (va=0x%llx; cnt=%u; expext_mem_type=0x%x; real_mem_type=0x%x)\n",
+                    (u64)(uintptr_t)para->addr[i], para->cnt, para->mem_type, svm_prop_to_mem_virt_mask(&prop));
             para->flag = false;
             return DRV_ERROR_INVALID_VALUE;
         }
@@ -141,9 +140,8 @@ static int get_mem_token_info(u32 devid, u32 type, struct MemInfo *info)
 
         ret = svm_get_mem_token_info(devid, prop.start, prop.size, &token_id, &token_value);
         if (ret != 0) {
-            svm_err(
-                "svm_get_mem_token_info failed. (ret=%d; devid=%u; va=0x%llx; size=0x%llx)\n", ret, devid, prop.start,
-                prop.size);
+            svm_err("svm_get_mem_token_info failed. (ret=%d; devid=%u; va=0x%llx; size=0x%llx)\n", ret, devid,
+                    prop.start, prop.size);
             return ret;
         }
 
@@ -233,8 +231,7 @@ drvError_t halMemGetAddressRange(DVdeviceptr ptr, DVdeviceptr *pbase, size_t *ps
         *psize = prop.size;
     }
 
-    svm_debug(
-        "MemGetAddressRange. ( base=0x%llx; size=%llu)\n", (pbase != NULL) ? (u64)(*pbase) : 0ULL,
-        (psize != NULL) ? (u64)(*psize) : 0ULL);
+    svm_debug("MemGetAddressRange. ( base=0x%llx; size=%llu)\n", (pbase != NULL) ? (u64)(*pbase) : 0ULL,
+              (psize != NULL) ? (u64)(*psize) : 0ULL);
     return DRV_ERROR_NONE;
 }

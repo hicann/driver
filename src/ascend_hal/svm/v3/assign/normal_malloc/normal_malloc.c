@@ -20,7 +20,10 @@
 
 struct svm_normal_ops *normal_ops = NULL;
 
-void svm_normal_set_ops(struct svm_normal_ops *ops) { normal_ops = ops; }
+void svm_normal_set_ops(struct svm_normal_ops *ops)
+{
+    normal_ops = ops;
+}
 
 static void normal_ops_post_alloc(u32 devid, u64 va, u64 size, u32 flag)
 {
@@ -44,7 +47,9 @@ static inline u32 normal_malloc_flag_to_va_allocator_flag(u32 flag)
     va_allocator_flag |= ((flag & SVM_NORMAL_MALLOC_FLAG_DEV_CP_ONLY) != 0) ? SVM_VA_ALLOCATOR_FLAG_DEV_CP_ONLY : 0;
     va_allocator_flag |= ((flag & SVM_NORMAL_MALLOC_FLAG_SPACIFIED_VA) != 0) ? SVM_VA_ALLOCATOR_FLAG_SPACIFIED_ADDR : 0;
     va_allocator_flag |= ((flag & SVM_NORMAL_MALLOC_FLAG_MASTER_UVA) != 0) ? SVM_VA_ALLOCATOR_FLAG_MASTER_UVA : 0;
-    va_allocator_flag |= ((flag & SVM_NORMAL_MALLOC_FLAG_VA_WITHOUT_POPULATE) != 0) ? SVM_VA_ALLOCATOR_FLAG_WITHOUT_POPULATE : 0;
+    va_allocator_flag |= ((flag & SVM_NORMAL_MALLOC_FLAG_VA_WITHOUT_POPULATE) != 0) ?
+                             SVM_VA_ALLOCATOR_FLAG_WITHOUT_POPULATE :
+                             0;
 
     return va_allocator_flag;
 }
@@ -56,8 +61,8 @@ static int normal_va_alloc(u32 devid, u32 flag, u64 align, u64 *va, u64 size)
 
     ret = svm_alloc_va(*va, size, align, devid, va_allocator_flag, va);
     if (ret != DRV_ERROR_NONE) {
-        svm_no_err_if(
-            ret == DRV_ERROR_OUT_OF_MEMORY, "Alloc va not success. (ret=%d; flag=%x; size=0x%llx)\n", ret, flag, size);
+        svm_no_err_if(ret == DRV_ERROR_OUT_OF_MEMORY, "Alloc va not success. (ret=%d; flag=%x; size=0x%llx)\n", ret,
+                      flag, size);
     }
 
     return ret;
@@ -98,9 +103,9 @@ static int normal_mem_populate(u32 devid, u32 flag, u64 va, u64 size)
 
     ret = svm_mpl_client_populate(devid, va, size, mpl_flag);
     if (ret != DRV_ERROR_NONE) {
-        svm_no_err_if(
-            (ret == DRV_ERROR_OUT_OF_MEMORY),
-            "Mpl client populate not success. (ret=%d; mpl_flag=%u; va=0x%llx; size=%llu)\n", ret, mpl_flag, va, size);
+        svm_no_err_if((ret == DRV_ERROR_OUT_OF_MEMORY),
+                      "Mpl client populate not success. (ret=%d; mpl_flag=%u; va=0x%llx; size=%llu)\n", ret, mpl_flag,
+                      va, size);
     }
 
     return ret;

@@ -18,7 +18,7 @@
 typedef void (*dma_finish_notify)(void *, u32, u32);
 
 int svm_dma_sync_cpy(u32 udevid, struct devdrv_dma_node *dma_nodes, u32 cnt, u32 instance);
-int svm_dma_async_cpy(
-    u32 udevid, struct devdrv_dma_node *dma_nodes, u32 cnt, dma_finish_notify call_back, void *priv, u32 instance);
+int svm_dma_async_cpy(u32 udevid, struct devdrv_dma_node *dma_nodes, u32 cnt, dma_finish_notify call_back, void *priv,
+                      u32 instance);
 
 #endif

@@ -26,17 +26,23 @@ void devmm_ipc_profs_uninit(void);
 
 #else /* !CONFIG_PROC_FS */
 
-static inline void svm_shmem_profs_init(void) {}
+static inline void svm_shmem_profs_init(void)
+{}
 
-static inline void svm_shmem_profs_uninit(void) {}
+static inline void svm_shmem_profs_uninit(void)
+{}
 
-static inline void devmm_ipc_procfs_add_node(struct devmm_ipc_node *node) {}
+static inline void devmm_ipc_procfs_add_node(struct devmm_ipc_node *node)
+{}
 
-static inline void devmm_ipc_procfs_del_node(struct devmm_ipc_node *node) {}
+static inline void devmm_ipc_procfs_del_node(struct devmm_ipc_node *node)
+{}
 
-static inline void devmm_ipc_profs_init(void) {}
+static inline void devmm_ipc_profs_init(void)
+{}
 
-static inline void devmm_ipc_profs_uninit(void) {}
+static inline void devmm_ipc_profs_uninit(void)
+{}
 
 #endif /* CONFIG_PROC_FS */
 

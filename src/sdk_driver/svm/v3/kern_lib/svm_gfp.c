@@ -92,7 +92,10 @@ void svm_register_page_ops(enum svm_page_granularity gran, const struct svm_page
     page_ops[gran] = (struct svm_page_ops *)ops;
 }
 
-void svm_register_print_nodes_info_ops(svm_print_nodes_info_ops print_ops) { print_nodes_info_ops = print_ops; }
+void svm_register_print_nodes_info_ops(svm_print_nodes_info_ops print_ops)
+{
+    print_nodes_info_ops = print_ops;
+}
 
 static void svm_print_nodes_info(void)
 {
@@ -189,7 +192,10 @@ u64 svm_get_pa_size(struct svm_pa_seg *pa_seg, u64 seg_num)
 }
 
 /* This func is time-consuming operation, may cause performance problem. */
-bool svm_pa_is_local_mem(u64 pa) { return ka_mm_mem_is_ram(pa); }
+bool svm_pa_is_local_mem(u64 pa)
+{
+    return ka_mm_mem_is_ram(pa);
+}
 
 u64 svm_get_page_size_by_pa_seg(u64 va, u64 size, struct svm_pa_seg *pa_seg, u64 seg_num)
 {

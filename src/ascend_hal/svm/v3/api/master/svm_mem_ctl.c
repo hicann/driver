@@ -23,9 +23,8 @@
 int mem_ctrl_mem_repair(void *param_value, size_t param_value_size, void *out_value, size_t *out_size_ret)
 {
     if ((param_value == NULL) || (param_value_size != sizeof(struct MemRepairInPara))) {
-        svm_err(
-            "Param_value is invalid. (param_value=0x%llx; param_value_size=%llu)\n", (u64)(uintptr_t)param_value,
-            param_value_size);
+        svm_err("Param_value is invalid. (param_value=0x%llx; param_value_size=%llu)\n", (u64)(uintptr_t)param_value,
+                param_value_size);
         return DRV_ERROR_INVALID_VALUE;
     }
 
@@ -100,9 +99,8 @@ int mem_ctrl_support_feature(void *param_value, size_t param_value_size, void *o
         }
     }
 
-    svm_info(
-        "RTS note drv support feature. (in_feature=0x%llx; out_feature=0x%llx)\n", in_para->support_feature,
-        out_para->support_feature);
+    svm_info("RTS note drv support feature. (in_feature=0x%llx; out_feature=0x%llx)\n", in_para->support_feature,
+             out_para->support_feature);
     return DRV_ERROR_NONE;
 #else
     struct supportFeaturePara *out_para = (struct supportFeaturePara *)out_value;
@@ -114,8 +112,8 @@ int mem_ctrl_support_feature(void *param_value, size_t param_value_size, void *o
 #endif
 }
 
-static int mem_ctrl_get_addr_module_id(
-    void *param_value, size_t param_value_size, void *out_value, size_t *out_size_ret)
+static int mem_ctrl_get_addr_module_id(void *param_value, size_t param_value_size, void *out_value,
+                                       size_t *out_size_ret)
 {
     u32 *module_id = (u32 *)out_value;
     u64 *va = (u64 *)param_value;
@@ -124,9 +122,8 @@ static int mem_ctrl_get_addr_module_id(
     int ret;
 
     if ((param_value == NULL) || (out_value == NULL) || (out_size_ret == NULL)) {
-        svm_err(
-            "Input is invalid. (param_value=%u; out_value=%u; out_size_ret=%u)\n", (param_value != NULL),
-            (out_value != NULL), (out_size_ret != NULL));
+        svm_err("Input is invalid. (param_value=%u; out_value=%u; out_size_ret=%u)\n", (param_value != NULL),
+                (out_value != NULL), (out_size_ret != NULL));
         return DRV_ERROR_INVALID_VALUE;
     }
 
@@ -144,8 +141,8 @@ static int mem_ctrl_get_addr_module_id(
     return DRV_ERROR_NONE;
 }
 
-static int (*svm_mem_ctrl_handlers[CTRL_TYPE_MAX])(
-    void *param, size_t param_size, void *out_param, size_t *out_size) = {
+static int (*svm_mem_ctrl_handlers[CTRL_TYPE_MAX])(void *param, size_t param_size, void *out_param,
+                                                   size_t *out_size) = {
     [CTRL_TYPE_SUPPORT_FEATURE] = mem_ctrl_support_feature,
     [CTRL_TYPE_MEM_REPAIR] = mem_ctrl_mem_repair,
     [CTRL_TYPE_GET_ADDR_MODULE_ID] = mem_ctrl_get_addr_module_id,

@@ -36,9 +36,8 @@ void devmm_alloc_numa_info_init(u32 devid, u32 vfid, int nids[], u32 *nid_num)
     info->free_size = devmm_get_nid_free_size(nids[0]);
     info->threshold = devmm_get_alloc_threshold(devid, vfid);
     info->enable_threshold = true;
-    devmm_drv_debug(
-        "Alloc_numa_info_init. (devid=%u; vfid=%u; nid=%d; threshold=%llu; free_size=%llu)\n", udevid, vfid, nids[0],
-        info->threshold, info->free_size);
+    devmm_drv_debug("Alloc_numa_info_init. (devid=%u; vfid=%u; nid=%d; threshold=%llu; free_size=%llu)\n", udevid, vfid,
+                    nids[0], info->threshold, info->free_size);
 }
 
 void devmm_alloc_numa_enable_threshold(u32 devid, u32 vfid, int nid)

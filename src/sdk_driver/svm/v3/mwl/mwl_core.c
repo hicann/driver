@@ -59,17 +59,22 @@ static struct range_rbtree_node *mwl_mem_get_key_range_node(struct mwl_mem_node 
     return mem_node->use_id_key ? &mem_node->id_range_node : &mem_node->va_range_node;
 }
 
-static u64 mwl_mem_get_key_start(struct mwl_mem_node *mem_node) { return mwl_mem_get_key_range_node(mem_node)->start; }
+static u64 mwl_mem_get_key_start(struct mwl_mem_node *mem_node)
+{
+    return mwl_mem_get_key_range_node(mem_node)->start;
+}
 
-static u64 mwl_mem_get_key_size(struct mwl_mem_node *mem_node) { return mwl_mem_get_key_range_node(mem_node)->size; }
+static u64 mwl_mem_get_key_size(struct mwl_mem_node *mem_node)
+{
+    return mwl_mem_get_key_range_node(mem_node)->size;
+}
 
 static struct mwl_mem_node *mwl_mem_node_create(struct mwl_ctx *mwl_ctx, u64 id, u64 va, u64 size)
 {
     struct mwl_mem_node *mem_node = svm_kzalloc(sizeof(struct mwl_mem_node), KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
     if (mem_node == NULL) {
-        svm_err(
-            "Alloc mem node failed, (udevid=%u; tgid=%d; va=%llx; size=%llx)\n", mwl_ctx->udevid, mwl_ctx->tgid, va,
-            size);
+        svm_err("Alloc mem node failed, (udevid=%u; tgid=%d; va=%llx; size=%llx)\n", mwl_ctx->udevid, mwl_ctx->tgid, va,
+                size);
         return NULL;
     }
 
@@ -84,7 +89,10 @@ static struct mwl_mem_node *mwl_mem_node_create(struct mwl_ctx *mwl_ctx, u64 id,
     return mem_node;
 }
 
-static void mwl_mem_node_destroy(struct mwl_mem_node *mem_node) { svm_kfree(mem_node); }
+static void mwl_mem_node_destroy(struct mwl_mem_node *mem_node)
+{
+    svm_kfree(mem_node);
+}
 
 static int mwl_add_mem(struct mwl_ctx *mwl_ctx, u64 id, u64 va, u64 size)
 {
@@ -150,17 +158,15 @@ static int mwl_add_task_list(struct mwl_mem_node *mem_node, u32 server_id, int t
     }
 
     if (mem_node->node_num >= MWL_MAX_TASK_NODE_NUM) {
-        svm_err(
-            "Task node num out of range. (tgid=%d; va=%llx; size=%llx)\n", tgid, mwl_mem_get_key_start(mem_node),
-            mwl_mem_get_key_size(mem_node));
+        svm_err("Task node num out of range. (tgid=%d; va=%llx; size=%llx)\n", tgid, mwl_mem_get_key_start(mem_node),
+                mwl_mem_get_key_size(mem_node));
         return -EINVAL;
     }
 
     task_node = svm_kvzalloc(sizeof(struct task_node), KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
     if (task_node == NULL) {
-        svm_err(
-            "Alloc task node failed, ( tgid=%d; va=%llx; size=%llx)\n", tgid, mwl_mem_get_key_start(mem_node),
-            mwl_mem_get_key_size(mem_node));
+        svm_err("Alloc task node failed, ( tgid=%d; va=%llx; size=%llx)\n", tgid, mwl_mem_get_key_start(mem_node),
+                mwl_mem_get_key_size(mem_node));
         return -ENOMEM;
     }
 
@@ -244,10 +250,9 @@ static bool mwl_can_del_mem(struct mwl_ctx *mwl_ctx, struct mwl_mem_node *mem_no
         return true;
     }
 
-    svm_err(
-        "Mem range not match. (udevid=%u; tgid=%d; id=%llu; va=0x%llx; size=%llu; "
-        "mem_va=0x%llx; mem_size=%llu)\n",
-        mwl_ctx->udevid, mwl_ctx->tgid, id, va, size, mem_node->va_range_node.start, mem_node->va_range_node.size);
+    svm_err("Mem range not match. (udevid=%u; tgid=%d; id=%llu; va=0x%llx; size=%llu; "
+            "mem_va=0x%llx; mem_size=%llu)\n",
+            mwl_ctx->udevid, mwl_ctx->tgid, id, va, size, mem_node->va_range_node.start, mem_node->va_range_node.size);
     return false;
 }
 
@@ -277,9 +282,8 @@ static int mwl_del_mem(struct mwl_ctx *mwl_ctx, u64 id, u64 va, u64 size)
     mem_node = mwl_mem_node_search(mwl_ctx, id, va, size);
     if ((mem_node == NULL) || !mwl_can_del_mem(mwl_ctx, mem_node, id, va, size)) {
         ka_task_up_write(&mwl_ctx->rwsem);
-        svm_err(
-            "Search failed. (udevid=%u; tgid=%d; id=%llu; va=%llx; size=%llu)\n", mwl_ctx->udevid, mwl_ctx->tgid, id,
-            va, size);
+        svm_err("Search failed. (udevid=%u; tgid=%d; id=%llu; va=%llx; size=%llu)\n", mwl_ctx->udevid, mwl_ctx->tgid,
+                id, va, size);
         return -EINVAL;
     }
 
@@ -367,7 +371,10 @@ int svm_mwl_del_trusted_task(u32 udevid, int tgid, u64 id, u32 trusted_server_id
     return svm_mwl_op_trusted_task(udevid, tgid, id, trusted_server_id, trusted_tgid, MWL_TASK_DEL);
 }
 
-static unsigned long mwl_get_start_time(void) { return ka_task_get_current_group_starttime(); }
+static unsigned long mwl_get_start_time(void)
+{
+    return ka_task_get_current_group_starttime();
+}
 
 static bool mwl_task_is_trusted(struct mwl_ctx *mwl_ctx, u64 id, u32 checked_server_id, int checked_tgid)
 {
@@ -457,9 +464,8 @@ void mwl_mem_show(struct mwl_ctx *mwl_ctx, ka_seq_file_t *seq)
 
     ka_task_down_read(&mwl_ctx->rwsem);
 
-    ka_fs_seq_printf(
-        seq, "mwl: udevid %u tgid %d mem num %u\n", mwl_ctx->udevid, mwl_ctx->tgid,
-        mwl_ctx->id_range_tree.node_num + mwl_ctx->va_range_tree.node_num);
+    ka_fs_seq_printf(seq, "mwl: udevid %u tgid %d mem num %u\n", mwl_ctx->udevid, mwl_ctx->tgid,
+                     mwl_ctx->id_range_tree.node_num + mwl_ctx->va_range_tree.node_num);
 
     mwl_mem_show_tree(&mwl_ctx->id_range_tree, true, seq, &i);
     mwl_mem_show_tree(&mwl_ctx->va_range_tree, false, seq, &i);
@@ -467,8 +473,8 @@ void mwl_mem_show(struct mwl_ctx *mwl_ctx, ka_seq_file_t *seq)
     ka_task_up_read(&mwl_ctx->rwsem);
 }
 
-static struct mwl_mem_node *mwl_mem_get_recycle_node(
-    struct mwl_ctx *mwl_ctx, struct range_rbtree **range_tree, struct range_rbtree_node **range_node)
+static struct mwl_mem_node *mwl_mem_get_recycle_node(struct mwl_ctx *mwl_ctx, struct range_rbtree **range_tree,
+                                                     struct range_rbtree_node **range_node)
 {
     *range_tree = &mwl_ctx->id_range_tree;
     *range_node = range_rbtree_get_first(*range_tree);

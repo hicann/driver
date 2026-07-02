@@ -223,7 +223,10 @@ static inline void devmm_page_clean_bitmap(u32 *bitmap)
     devmm_page_bitmap_unlock(bitmap);
 }
 
-static inline u32 devmm_page_read_bitmap(u32 *bitmap) { return ((*bitmap) & (~DEVMM_PAGE_BITMAP_LOCKED_MASK)); }
+static inline u32 devmm_page_read_bitmap(u32 *bitmap)
+{
+    return ((*bitmap) & (~DEVMM_PAGE_BITMAP_LOCKED_MASK));
+}
 
 static inline void devmm_page_bitmap_set_devid(u32 *bitmap, u32 devid)
 {
@@ -235,7 +238,10 @@ static inline u32 devmm_page_bitmap_get_devid(u32 *bitmap)
     return devmm_page_bitmap_get_value(bitmap, DEVMM_PAGE_DEVID_SHIT, DEVMM_PAGE_DEVID_WID);
 }
 
-static inline void devmm_page_bitmap_set_flag_without_lock(u32 *bitmap, u32 flag) { (*bitmap) |= flag; }
+static inline void devmm_page_bitmap_set_flag_without_lock(u32 *bitmap, u32 flag)
+{
+    (*bitmap) |= flag;
+}
 
 static inline void devmm_page_bitmap_set_flag(u32 *bitmap, u32 flag)
 {
@@ -368,11 +374,20 @@ static inline bool devmm_page_bitmap_is_translate(u32 *bitmap)
     return (bool)devmm_page_bitmap_get_value(bitmap, DEVMM_PAGE_IS_TRANSLATE_BIT, 1);
 }
 
-static inline void devmm_heap_ref_set_flag(struct devmm_heap_ref *ref, u32 flag) { ref->flag = flag; }
+static inline void devmm_heap_ref_set_flag(struct devmm_heap_ref *ref, u32 flag)
+{
+    ref->flag = flag;
+}
 
-static inline bool devmm_heap_ref_cnt_is_used_as_ref(struct devmm_heap_ref *ref) { return ref->flag == 1; }
+static inline bool devmm_heap_ref_cnt_is_used_as_ref(struct devmm_heap_ref *ref)
+{
+    return ref->flag == 1;
+}
 
-static inline void devmm_heap_ref_set_cnt(struct devmm_heap_ref *ref, u32 cnt) { ref->count = cnt; }
+static inline void devmm_heap_ref_set_cnt(struct devmm_heap_ref *ref, u32 cnt)
+{
+    ref->count = cnt;
+}
 
 static inline void devmm_page_ref_lock(struct devmm_heap_ref *ref)
 {

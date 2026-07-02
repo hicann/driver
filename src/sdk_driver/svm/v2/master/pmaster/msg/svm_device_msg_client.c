@@ -66,10 +66,9 @@ STATIC int devmm_rx_msg_process(void *msg_chan, void *data, u32 in_data_len, u32
 
     devmm_svm_stat_recv_inc();
     if (did >= DEVMM_MAX_DEVICE_NUM) {
-        devmm_drv_err(
-            "Deivice id must less than DEVMM_MAX_DEVICE_NUM. "
-            "(did=%d; DEVMM_MAX_DEVICE_NUM=%d)\n",
-            did, DEVMM_MAX_DEVICE_NUM);
+        devmm_drv_err("Deivice id must less than DEVMM_MAX_DEVICE_NUM. "
+                      "(did=%d; DEVMM_MAX_DEVICE_NUM=%d)\n",
+                      did, DEVMM_MAX_DEVICE_NUM);
         return -ENODEV;
     }
     dev_id = ((struct devmm_chan_msg_head *)data)->dev_id;
@@ -110,7 +109,10 @@ STATIC int devmm_alloc_msg_chan(struct devmm_dev_msg_client *dev_msg_client, u32
 
 static u64 g_devmm_host_uva_start = DEVMM_DEFAULT_HOST_UVA_START;
 KA_TASK_DEFINE_MUTEX(g_devmm_host_uva_lock);
-u64 devmm_get_host_uva_start(void) { return g_devmm_host_uva_start; }
+u64 devmm_get_host_uva_start(void)
+{
+    return g_devmm_host_uva_start;
+}
 
 static void devmm_set_host_uva_range(u32 devid)
 {
@@ -151,9 +153,8 @@ static int devmm_get_dev_info(u32 dev_id, struct devmm_chan_exchange_pginfo *inf
 static int devmm_set_dev_pg_size_info(struct devmm_chan_exchange_pginfo *info)
 {
     if ((info->device_page_shift != DEVMM_DEV_PAGE_SHIIFT) || (info->device_hpage_shift != DEVMM_DEV_HPAGE_SHIIFT)) {
-        devmm_drv_err(
-            "Dev_page_shift or dev_hpage_shift is invalid. (dev_page_shift=%u; dev_hpage_shift=%u)\n",
-            info->device_page_shift, info->device_hpage_shift);
+        devmm_drv_err("Dev_page_shift or dev_hpage_shift is invalid. (dev_page_shift=%u; dev_hpage_shift=%u)\n",
+                      info->device_page_shift, info->device_hpage_shift);
         return -EINVAL;
     }
 
@@ -188,10 +189,9 @@ int devmm_host_dev_init(u32 dev_id, u32 vfid)
         ret = devmm_get_dev_info(dev_id, &info);
         if (ret != 0) {
 #ifndef EMU_ST
-            devmm_drv_warn(
-                "Get dev capability info failed, device may not ka_task_up yet."
-                " (ret=%d; dev_id=%u; vfid=%u; ret=%d)\n",
-                ret, dev_id, vfid, ret);
+            devmm_drv_warn("Get dev capability info failed, device may not ka_task_up yet."
+                           " (ret=%d; dev_id=%u; vfid=%u; ret=%d)\n",
+                           ret, dev_id, vfid, ret);
             continue;
 #endif
         }

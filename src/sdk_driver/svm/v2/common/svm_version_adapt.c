@@ -63,8 +63,8 @@ struct devmm_page_bitmap_format {
         }                                                                                     \
     } while (0)
 
-static inline void msg_field_ver_adapt(
-    void *src_msg, int src_field_offset, void *dst_msg, int dst_field_offset, u64 field_size)
+static inline void msg_field_ver_adapt(void *src_msg, int src_field_offset, void *dst_msg, int dst_field_offset,
+                                       u64 field_size)
 {
     if (((src_field_offset) != MSG_FORMAT_INVALID_OFFSET) && ((dst_field_offset) != MSG_FORMAT_INVALID_OFFSET)) {
         void *src = (void *)((u64)(uintptr_t)src_msg + src_field_offset);
@@ -75,30 +75,29 @@ static inline void msg_field_ver_adapt(
 
 static struct devmm_page_bitmap_format *devmm_get_svm_version_000_page_bitmap_format(void)
 {
-    static struct devmm_page_bitmap_format svm_version_000_page_bitmap_format = {
-        .ipc_mem_open_bit = 0,
-        .ipc_mem_create_bit = 1,
-        .remote_mapped_bit = 2,
-        .dev_mapped_bit = 3,
-        .host_mapped_bit = 4,
-        .is_first_page_bit = 5,
-        .advise_ddr_bit = 6,
-        .advise_populate_bit = 7,
-        .is_translate_bit = 9,
-        .alloced_bit = 10,
-        .locked_host_bit = 11,
-        .locked_device_bit = 12,
-        .advise_memory_shared_bit = 13,
-        .advise_p2p_hbm_bit = 14,
-        .advise_ts_bit = 15,
-        .readonly_bit = 16,
-        .remote_mapped_first_bit = 17,
-        .bitmap_locked_bit = 21,
-        .advise_continuty_bit = 22,
-        .advise_4g_bit = 23,
-        .advise_p2p_ddr_bit = 24,
-        .devid_shift = 25,
-        .devid_wid = 7};
+    static struct devmm_page_bitmap_format svm_version_000_page_bitmap_format = {.ipc_mem_open_bit = 0,
+                                                                                 .ipc_mem_create_bit = 1,
+                                                                                 .remote_mapped_bit = 2,
+                                                                                 .dev_mapped_bit = 3,
+                                                                                 .host_mapped_bit = 4,
+                                                                                 .is_first_page_bit = 5,
+                                                                                 .advise_ddr_bit = 6,
+                                                                                 .advise_populate_bit = 7,
+                                                                                 .is_translate_bit = 9,
+                                                                                 .alloced_bit = 10,
+                                                                                 .locked_host_bit = 11,
+                                                                                 .locked_device_bit = 12,
+                                                                                 .advise_memory_shared_bit = 13,
+                                                                                 .advise_p2p_hbm_bit = 14,
+                                                                                 .advise_ts_bit = 15,
+                                                                                 .readonly_bit = 16,
+                                                                                 .remote_mapped_first_bit = 17,
+                                                                                 .bitmap_locked_bit = 21,
+                                                                                 .advise_continuty_bit = 22,
+                                                                                 .advise_4g_bit = 23,
+                                                                                 .advise_p2p_ddr_bit = 24,
+                                                                                 .devid_shift = 25,
+                                                                                 .devid_wid = 7};
     return &svm_version_000_page_bitmap_format;
 }
 
@@ -195,8 +194,8 @@ static struct devmm_setup_dev_msg_format *devmm_get_svm_version_002_setup_dev_ms
         .ssid_offset = sizeof(struct devmm_chan_msg_head) + sizeof(u32) + sizeof(int),
         .logic_devid_offset = sizeof(struct devmm_chan_msg_head) + sizeof(u32) + sizeof(int) + sizeof(int),
         .heap_cnt_offset = sizeof(struct devmm_chan_msg_head) + sizeof(u32) + sizeof(int) + sizeof(int) + sizeof(u32),
-        .heap_info_offset =
-            sizeof(struct devmm_chan_msg_head) + sizeof(u32) + sizeof(int) + sizeof(int) + sizeof(u32) + sizeof(u32),
+        .heap_info_offset = sizeof(struct devmm_chan_msg_head) + sizeof(u32) + sizeof(int) + sizeof(int) + sizeof(u32) +
+                            sizeof(u32),
     };
     return &svm_version_002_setup_dev_msg_format;
 }

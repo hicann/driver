@@ -18,19 +18,20 @@
 void svmm_dev_non_overlap_init(struct svmm_inst *svmm_inst);
 void svmm_dev_non_overlap_uninit(struct svmm_inst *svmm_inst);
 u32 svmm_dev_non_overlap_show(struct svmm_inst *svmm_inst, char *buf, u32 buf_len);
-int svmm_dev_non_overlap_add_seg(
-    struct svmm_inst *svmm_inst, u32 devid, u64 start, u64 svm_flag, struct svm_global_va *src_info);
+int svmm_dev_non_overlap_add_seg(struct svmm_inst *svmm_inst, u32 devid, u64 start, u64 svm_flag,
+                                 struct svm_global_va *src_info);
 int svmm_dev_non_overlap_del_seg(struct svmm_inst *svmm_inst, u32 devid, u64 start, u64 size, bool force);
-int svmm_dev_non_overlap_get_seg(
-    struct svmm_inst *svmm_inst, u32 *devid, u64 *va, u64 *svm_flag, struct svm_global_va *src_info);
+int svmm_dev_non_overlap_get_seg(struct svmm_inst *svmm_inst, u32 *devid, u64 *va, u64 *svm_flag,
+                                 struct svm_global_va *src_info);
 
 u32 svmm_dev_non_overlap_get_seg_devid(void *seg_handle);
 void svmm_dev_non_overlap_mod_seg_src_tgid(void *seg_handle, int tgid);
 
-int svmm_dev_non_overlap_get_first_hole(
-    struct svmm_inst *svmm_inst, u32 devid, u64 start, u64 size, u64 *hole_start, u64 *hole_size);
+int svmm_dev_non_overlap_get_first_hole(struct svmm_inst *svmm_inst, u32 devid, u64 start, u64 size, u64 *hole_start,
+                                        u64 *hole_size);
 
-int svmm_dev_non_overlap_for_each_seg_handle(
-    struct svmm_inst *svmm_inst, int (*func)(void *seg_handle, u64 start, struct svm_global_va *src_info, void *priv),
-    void *priv);
+int svmm_dev_non_overlap_for_each_seg_handle(struct svmm_inst *svmm_inst,
+                                             int (*func)(void *seg_handle, u64 start, struct svm_global_va *src_info,
+                                                         void *priv),
+                                             void *priv);
 #endif

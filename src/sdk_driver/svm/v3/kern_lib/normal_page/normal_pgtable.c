@@ -21,7 +21,10 @@
 
 static svm_normal_free_ptes_ops_t free_ptes_ops = NULL;
 
-void svm_normal_register_free_ptes_ops(svm_normal_free_ptes_ops_t ops) { free_ptes_ops = ops; }
+void svm_normal_register_free_ptes_ops(svm_normal_free_ptes_ops_t ops)
+{
+    free_ptes_ops = ops;
+}
 
 static int svm_remap_normal_pages(ka_vm_area_struct_t *vma, u64 va, u64 pa, u64 page_num, ka_mm_pgprot_t pg_prot)
 {

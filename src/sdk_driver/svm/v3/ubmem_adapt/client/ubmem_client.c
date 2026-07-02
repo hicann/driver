@@ -59,9 +59,8 @@ static int ubmem_map_local_client(u32 udevid, struct svm_global_va *src_va, u64 
 
     ret = ubmm_do_map(udevid, src_va->tgid, src_va->va, src_va->size, &uba);
     if (ret != 0) {
-        svm_err(
-            "Ub mem map failed. (ret=%d; udevid=%u; tgid=%d; va=0x%llx; size=0x%llx)\n", ret, udevid, src_va->tgid,
-            src_va->va, src_va->size);
+        svm_err("Ub mem map failed. (ret=%d; udevid=%u; tgid=%d; va=0x%llx; size=0x%llx)\n", ret, udevid, src_va->tgid,
+                src_va->va, src_va->size);
         return ret;
     }
 
@@ -87,9 +86,15 @@ static int ubmem_unmap_local_client(u32 udevid, struct svm_global_va *src_va)
     return ubmm_do_unmap(udevid, src_va->tgid, src_va->va, src_va->size);
 }
 #else
-static int ubmem_map_local_client(u32 udevid, struct svm_global_va *src_va, u64 *maped_va) { return -EINVAL; }
+static int ubmem_map_local_client(u32 udevid, struct svm_global_va *src_va, u64 *maped_va)
+{
+    return -EINVAL;
+}
 
-static int ubmem_unmap_local_client(u32 udevid, struct svm_global_va *src_va) { return -EINVAL; }
+static int ubmem_unmap_local_client(u32 udevid, struct svm_global_va *src_va)
+{
+    return -EINVAL;
+}
 #endif
 
 static int ubmem_map_remote_client(u32 udevid, struct svm_global_va *src_va, u64 *maped_va)

@@ -24,7 +24,10 @@
 
 #include "svm_ioctl.h"
 
-static inline bool devmm_is_normal_node(int nid) { return true; }
+static inline bool devmm_is_normal_node(int nid)
+{
+    return true;
+}
 
 static inline u32 devmm_get_alloc_mask(bool is_compound_page, bool no_retry)
 {
@@ -49,21 +52,48 @@ static inline int devmm_get_nids(u32 devid, u32 vfid, u32 mem_type, int nids[], 
     return 0;
 }
 
-static inline u32 devmm_get_hugetlb_alloc_flag(ka_page_t *hpage) { return 0; }
+static inline u32 devmm_get_hugetlb_alloc_flag(ka_page_t *hpage)
+{
+    return 0;
+}
 
-static inline ka_page_t *_devmm_alloc_hpage(int nid, u32 flag) { return NULL; }
+static inline ka_page_t *_devmm_alloc_hpage(int nid, u32 flag)
+{
+    return NULL;
+}
 
-static inline u64 devmm_get_alloc_threshold(u32 devid, u32 vfid) { return 0; }
+static inline u64 devmm_get_alloc_threshold(u32 devid, u32 vfid)
+{
+    return 0;
+}
 
-static inline u64 devmm_get_nid_free_size(int nid) { return 0; }
+static inline u64 devmm_get_nid_free_size(int nid)
+{
+    return 0;
+}
 
-static inline u32 devmm_is_support_update_numa_order(void) { return 0; }
+static inline u32 devmm_is_support_update_numa_order(void)
+{
+    return 0;
+}
 
-static inline u64 devmm_get_double_pgtable_offset(void) { return 0; }
+static inline u64 devmm_get_double_pgtable_offset(void)
+{
+    return 0;
+}
 
-static inline bool devmm_is_support_double_pgtable(void) { return false; }
+static inline bool devmm_is_support_double_pgtable(void)
+{
+    return false;
+}
 
-static inline u64 devmm_double_pgtable_get_offset_addr(u64 normal_va) { return 0; }
+static inline u64 devmm_double_pgtable_get_offset_addr(u64 normal_va)
+{
+    return 0;
+}
 
-static inline bool devmm_is_support_giant_page_feature(void) { return false; }
+static inline bool devmm_is_support_giant_page_feature(void)
+{
+    return false;
+}
 #endif /* SVM_HOST_ADAPT_H */

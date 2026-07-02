@@ -54,9 +54,8 @@ static int _svm_pmq_pa_query(ka_mm_struct_t *mm, u64 va, u64 size, struct svm_pa
     }
 
     if (((va + size) > ka_mm_get_vm_end(vma)) || (svm_check_vma(vma, va, size) != 0)) {
-        svm_err(
-            "Vma is invalid. (va=0x%llx; size=0x%llx; vma_start=0x%lx; vma_end=0x%lx)\n", va, size,
-            ka_mm_get_vm_start(vma), ka_mm_get_vm_end(vma));
+        svm_err("Vma is invalid. (va=0x%llx; size=0x%llx; vma_start=0x%lx; vma_end=0x%lx)\n", va, size,
+                ka_mm_get_vm_start(vma), ka_mm_get_vm_end(vma));
         return -EFAULT;
     }
 
@@ -144,9 +143,8 @@ int hal_kernel_svm_get_user_pages(int pid, u64 va, u32 nr_pages, void **pages, b
 
     ret = svm_pin_svm_range_uva_npages(pid, va, true, (ka_page_t **)pages, nr_pages);
     if (ret != 0) {
-        svm_err(
-            "Svm_pin_svm_range_uva_npages failed. (pid=%d; va=0%llx; size=%llu)\n", pid, va,
-            KA_MM_PAGE_SIZE * (u64)nr_pages);
+        svm_err("Svm_pin_svm_range_uva_npages failed. (pid=%d; va=0%llx; size=%llu)\n", pid, va,
+                KA_MM_PAGE_SIZE * (u64)nr_pages);
         return ret;
     }
     *is_remap_addr = true;
@@ -180,9 +178,8 @@ int hal_kernel_svm_get_user_pages(int pid, u64 va, u32 nr_pages, void **pages, b
 
     ret = svm_get_user_pages(pid, va, (u64)nr_pages, pages, is_remap_addr);
     if (ret != 0) {
-        svm_err(
-            "Get user pages failed. (ret=%d; pid=%d; va=0%llx; size=%llu; is_pfn_map=%u)\n", ret, pid, va,
-            KA_MM_PAGE_SIZE * (u64)nr_pages, (u32)*is_remap_addr);
+        svm_err("Get user pages failed. (ret=%d; pid=%d; va=0%llx; size=%llu; is_pfn_map=%u)\n", ret, pid, va,
+                KA_MM_PAGE_SIZE * (u64)nr_pages, (u32)*is_remap_addr);
     }
 
     return ret;

@@ -34,11 +34,10 @@ struct mga_inst {
 
 static u64 mga_align_type_to_size(u32 align_type)
 {
-    static u64 align_type_to_size[MGA_ALIGN_TYPE_MAX] = {
-        [MGA_ALIGN_TYPE_4K] = 4ULL * SVM_BYTES_PER_KB,
-        [MGA_ALIGN_TYPE_64K] = 64ULL * SVM_BYTES_PER_KB,
-        [MGA_ALIGN_TYPE_2M] = 2ULL * SVM_BYTES_PER_MB,
-        [MGA_ALIGN_TYPE_1G] = 1ULL * SVM_BYTES_PER_GB};
+    static u64 align_type_to_size[MGA_ALIGN_TYPE_MAX] = {[MGA_ALIGN_TYPE_4K] = 4ULL * SVM_BYTES_PER_KB,
+                                                         [MGA_ALIGN_TYPE_64K] = 64ULL * SVM_BYTES_PER_KB,
+                                                         [MGA_ALIGN_TYPE_2M] = 2ULL * SVM_BYTES_PER_MB,
+                                                         [MGA_ALIGN_TYPE_1G] = 1ULL * SVM_BYTES_PER_GB};
 
     return align_type_to_size[align_type];
 }

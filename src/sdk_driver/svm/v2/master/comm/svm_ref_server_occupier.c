@@ -28,8 +28,8 @@ static u64 rb_handle_of_ref_server_occupier(ka_rb_node_t *node)
     return (u64)occupier->sdid;
 }
 
-static struct devmm_ref_server_occupier *devmm_ref_server_occupier_create(
-    struct devmm_ref_server_occupier_mng *mng, u32 sdid)
+static struct devmm_ref_server_occupier *devmm_ref_server_occupier_create(struct devmm_ref_server_occupier_mng *mng,
+                                                                          u32 sdid)
 {
     struct devmm_ref_server_occupier *occupier = NULL;
     int ret;
@@ -53,8 +53,8 @@ static struct devmm_ref_server_occupier *devmm_ref_server_occupier_create(
     return occupier;
 }
 
-static void devmm_ref_server_occupier_destroy(
-    struct devmm_ref_server_occupier_mng *mng, struct devmm_ref_server_occupier *occupier)
+static void devmm_ref_server_occupier_destroy(struct devmm_ref_server_occupier_mng *mng,
+                                              struct devmm_ref_server_occupier *occupier)
 {
     int ret;
 
@@ -64,8 +64,8 @@ static void devmm_ref_server_occupier_destroy(
     }
 }
 
-static struct devmm_ref_server_occupier *devmm_get_ref_server_occupier(
-    struct devmm_ref_server_occupier_mng *mng, u32 sdid)
+static struct devmm_ref_server_occupier *devmm_get_ref_server_occupier(struct devmm_ref_server_occupier_mng *mng,
+                                                                       u32 sdid)
 {
     struct devmm_ref_server_occupier *occupier = NULL;
     ka_rb_node_t *node = NULL;
@@ -119,9 +119,8 @@ int devmm_ref_server_occupier_del(struct devmm_ref_server_occupier_mng *mng, u32
     return 0;
 }
 
-int devmm_for_each_ref_server_occupier(
-    struct devmm_ref_server_occupier_mng *mng, int (*func)(struct devmm_ref_server_occupier *occupier, void *priv),
-    void *priv)
+int devmm_for_each_ref_server_occupier(struct devmm_ref_server_occupier_mng *mng,
+                                       int (*func)(struct devmm_ref_server_occupier *occupier, void *priv), void *priv)
 {
     struct devmm_ref_server_occupier *occupier = NULL;
     struct devmm_ref_server_occupier *tmp = NULL;

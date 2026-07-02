@@ -27,9 +27,8 @@ static int um_memset_pre_handle(u32 udevid, int master_tgid, int slave_tgid, voi
     int ret;
 
     if ((msg_len != sizeof(*msg)) || (udevid == uda_get_host_id())) {
-        svm_err(
-            "Invalid para. (udevid=%u; master_tgid=%d; slave_tgid=%d; msg_len=%u)\n", udevid, master_tgid, slave_tgid,
-            msg_len);
+        svm_err("Invalid para. (udevid=%u; master_tgid=%d; slave_tgid=%d; msg_len=%u)\n", udevid, master_tgid,
+                slave_tgid, msg_len);
         return -EINVAL;
     }
 
@@ -51,9 +50,8 @@ static int um_memcpy_local_pre_handle(u32 udevid, int master_tgid, int slave_tgi
     int ret;
 
     if ((msg_len != sizeof(*msg)) || (udevid == uda_get_host_id())) {
-        svm_err(
-            "Invalid para. (udevid=%u; master_tgid=%d; slave_tgid=%d; msg_len=%u)\n", udevid, master_tgid, slave_tgid,
-            msg_len);
+        svm_err("Invalid para. (udevid=%u; master_tgid=%d; slave_tgid=%d; msg_len=%u)\n", udevid, master_tgid,
+                slave_tgid, msg_len);
         return -EINVAL;
     }
 

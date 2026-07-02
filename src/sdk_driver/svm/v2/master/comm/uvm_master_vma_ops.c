@@ -26,8 +26,8 @@
 #include "uvm_master_common.h"
 #include "svm_phy_addr_blk_mng.h"
 
-int uvm_host_alloc_and_map_page(
-    struct devmm_svm_process *svm_proc, struct uvm_page_info *page_info, uint64_t start, int numa_id, bool is_read_only)
+int uvm_host_alloc_and_map_page(struct devmm_svm_process *svm_proc, struct uvm_page_info *page_info, uint64_t start,
+                                int numa_id, bool is_read_only)
 {
     struct devmm_phy_addr_attr attr = {0};
     ka_page_t **pages = NULL;
@@ -36,8 +36,8 @@ int uvm_host_alloc_and_map_page(
     u32 prot;
 
     prot = is_read_only ? DEVMM_PAGE_READONLY_FLG : 0;
-    pages =
-        (ka_page_t **)devmm_kvalloc(sizeof(ka_page_t *) * page_num, KA_GFP_KERNEL | __KA_GFP_ACCOUNT | __KA_GFP_ZERO);
+    pages = (ka_page_t **)devmm_kvalloc(sizeof(ka_page_t *) * page_num,
+                                        KA_GFP_KERNEL | __KA_GFP_ACCOUNT | __KA_GFP_ZERO);
     if (pages == NULL) {
 #ifndef EMU_ST
         devmm_drv_err("Kmalloc for pages failed. (va=0x%llx, page_num=%llu)\n", start, page_num);
@@ -74,16 +74,15 @@ free_tmp_pages:
     return ret;
 }
 
-static int uvm_page_fault_h2d_sync(
-    struct devmm_svm_process *svm_proc, uint16_t dev_id, ka_page_t **pages, uint64_t va, uint64_t src_addr,
-    struct uvm_page_info *page_info)
+static int uvm_page_fault_h2d_sync(struct devmm_svm_process *svm_proc, uint16_t dev_id, ka_page_t **pages, uint64_t va,
+                                   uint64_t src_addr, struct uvm_page_info *page_info)
 {
     struct devmm_chan_uvm_page_fault *fault_msg = NULL;
     int ret;
     struct devmm_addr_info addr_info = {0};
 
-    fault_msg = (struct devmm_chan_uvm_page_fault *)ka_mm_kvmalloc(
-        sizeof(struct devmm_chan_uvm_page_fault), KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
+    fault_msg = (struct devmm_chan_uvm_page_fault *)ka_mm_kvmalloc(sizeof(struct devmm_chan_uvm_page_fault),
+                                                                   KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
     if (fault_msg == NULL) {
 #ifndef EMU_ST
         devmm_drv_err("Kzalloc for struct devmm_chan_uvm_page_fault failed.\n");
@@ -125,8 +124,8 @@ host_page_fault_msg_free:
     return ret;
 }
 
-int uvm_host_sync_device_data(
-    struct devmm_svm_process *svm_proc, struct uvm_page_info *page_info, uint64_t start, ka_page_t **pages)
+int uvm_host_sync_device_data(struct devmm_svm_process *svm_proc, struct uvm_page_info *page_info, uint64_t start,
+                              ka_page_t **pages)
 {
     uint16_t dev_id;
     uint64_t src_addr;
@@ -147,8 +146,8 @@ int uvm_host_sync_device_data(
     return 0;
 }
 
-static int uvm_vm_fault_host_proc_device_mapped(
-    struct devmm_svm_process *svm_proc, ka_vm_area_struct_t *vma, struct uvm_page_info *page_info)
+static int uvm_vm_fault_host_proc_device_mapped(struct devmm_svm_process *svm_proc, ka_vm_area_struct_t *vma,
+                                                struct uvm_page_info *page_info)
 {
     struct devmm_phy_addr_attr attr = {0};
     ka_page_t **pages = NULL;
@@ -159,8 +158,8 @@ static int uvm_vm_fault_host_proc_device_mapped(
     u64 page_num = 1;
     u32 page_prot = 0;
 
-    pages =
-        (ka_page_t **)ka_mm_kvmalloc(sizeof(ka_page_t *) * page_num, KA_GFP_KERNEL | __KA_GFP_ACCOUNT | __KA_GFP_ZERO);
+    pages = (ka_page_t **)ka_mm_kvmalloc(sizeof(ka_page_t *) * page_num,
+                                         KA_GFP_KERNEL | __KA_GFP_ACCOUNT | __KA_GFP_ZERO);
     if (pages == NULL) {
         devmm_drv_err("Kmalloc for pages failed. (va=0x%llx)\n", start);
         return -ENOMEM;
@@ -170,9 +169,8 @@ static int uvm_vm_fault_host_proc_device_mapped(
     ret = devmm_master_alloc_huge_pages(&attr, pages, page_num);
     if (ret != 0) {
 #ifndef EMU_ST
-        devmm_drv_err(
-            "Uvm_alloc_pages failed. (ka_task_get_current_tgid()=%u, va=0x%llx)\n", svm_proc->process_id.hostpid,
-            start);
+        devmm_drv_err("Uvm_alloc_pages failed. (ka_task_get_current_tgid()=%u, va=0x%llx)\n",
+                      svm_proc->process_id.hostpid, start);
         goto free_tmp_pages;
 #endif
     }
@@ -207,9 +205,8 @@ free_tmp_pages:
     return ret;
 }
 
-static int uvm_vm_fault_host_proc(
-    struct devmm_svm_process *svm_proc, ka_vm_area_struct_t *vma, struct uvm_page_info *page_info,
-    ka_vm_fault_struct_t *vmf)
+static int uvm_vm_fault_host_proc(struct devmm_svm_process *svm_proc, ka_vm_area_struct_t *vma,
+                                  struct uvm_page_info *page_info, ka_vm_fault_struct_t *vmf)
 {
     int ret = 0;
     uint64_t pa_addr;
@@ -238,8 +235,8 @@ static int uvm_vm_fault_host_proc(
         ret = uvm_vm_fault_host_proc_device_mapped(svm_proc, vma, page_info);
         if (ret != 0) {
 #ifndef EMU_ST
-            devmm_drv_err(
-                "Uvm_vm_fault_host_proc_device_mapped failed. (ret=%d, va=0x%llx)\n", ret, page_info->va_align);
+            devmm_drv_err("Uvm_vm_fault_host_proc_device_mapped failed. (ret=%d, va=0x%llx)\n", ret,
+                          page_info->va_align);
             goto UVM_PAGE_UNLOCK;
 #endif
         }
@@ -318,8 +315,8 @@ STATIC int devmm_uvm_vm_fault_host(ka_vm_area_struct_t *vma, ka_vm_fault_struct_
     return (ret == 0) ? DEVMM_FAULT_OK : DEVMM_FAULT_ERROR;
 }
 
-int uvm_reset_ptes_of_hugepage_host(
-    struct devmm_svm_process *svm_proc, ka_vm_area_struct_t *vma, uint64_t addr, bool is_read_only, bool need_lock)
+int uvm_reset_ptes_of_hugepage_host(struct devmm_svm_process *svm_proc, ka_vm_area_struct_t *vma, uint64_t addr,
+                                    bool is_read_only, bool need_lock)
 {
     u64 paddr;
     ka_page_t *page;
@@ -356,8 +353,8 @@ int uvm_reset_ptes_of_hugepage_host(
     return ret;
 }
 
-int set_page_pte_readwrite(
-    struct devmm_svm_process *svm_proc, ka_vm_area_struct_t *vma, struct uvm_page_info *page_info, bool need_lock)
+int set_page_pte_readwrite(struct devmm_svm_process *svm_proc, ka_vm_area_struct_t *vma,
+                           struct uvm_page_info *page_info, bool need_lock)
 {
     int ret = 0;
     u64 start = page_info->va_align;
@@ -422,7 +419,10 @@ STATIC int devmm_uvm_vm_pfn_mkwrite_host(ka_vm_area_struct_t *vma, ka_vm_fault_s
 }
 
 #ifndef EMU_ST
-static int devmm_mremap(ka_vm_area_struct_t *area) { return -EACCES; }
+static int devmm_mremap(ka_vm_area_struct_t *area)
+{
+    return -EACCES;
+}
 #endif
 
 KA_DEFINE_VM_OPS_FAULT_FUNC(devmm_uvm_vm_fault_host)
@@ -435,4 +435,7 @@ static ka_vm_operations_struct_t uvm_master_vma_ops = {ka_vm_ops_init_fault(devm
 #endif
 };
 
-void devmm_uvm_setup_vma_ops(ka_vm_area_struct_t *vma) { ka_mm_set_vm_ops(vma, &uvm_master_vma_ops); }
+void devmm_uvm_setup_vma_ops(ka_vm_area_struct_t *vma)
+{
+    ka_mm_set_vm_ops(vma, &uvm_master_vma_ops);
+}

@@ -159,9 +159,8 @@ int svm_ipc_query_src_info(u64 opened_va, u64 size, struct svm_global_va *src_in
 
     offset = opened_va - prop.start;
     if ((offset >= src_info->size) || (size > (src_info->size - offset))) {
-        svm_err(
-            "Out of range. (va=0x%llx; size=0x%llx; start=0x%llx; opened_size=0x%llx)\n", opened_va, size, prop.start,
-            src_info->size);
+        svm_err("Out of range. (va=0x%llx; size=0x%llx; start=0x%llx; opened_size=0x%llx)\n", opened_va, size,
+                prop.start, src_info->size);
         return DRV_ERROR_INVALID_VALUE;
     }
 
@@ -181,8 +180,8 @@ static void svm_ipc_replace_bitmap_to_info_byte(u32 bitmap_byte, u32 bitmap_bit,
     *info_byte = bitmap_byte * IPC_BTYE_NUM_PER_REPLACE_BITMAP_BYTE + bitmap_bit;
 }
 
-static int svm_ipc_parse_name(
-    const char *name, u8 *version, u64 *key, int *cs_valid, struct svm_global_va *src_va, int *owner_pid)
+static int svm_ipc_parse_name(const char *name, u8 *version, u64 *key, int *cs_valid, struct svm_global_va *src_va,
+                              int *owner_pid)
 {
     struct svm_ipc_info ipc_info;
     const u8 *replace_bitmap = (const u8 *)(const void *)(name + IPC_INFO_LEN);
@@ -312,9 +311,8 @@ static int svm_ipc_create_handle(u64 va, u64 size, u64 *key)
     }
 
     if ((va + size) > (prop.start + prop.size)) {
-        svm_err(
-            "va or size is invalid. (va=0x%llx; align_size=0x%llx; prop start=0x%llx; size=0x%llx)\n", va, aligned_size,
-            prop.start, prop.size);
+        svm_err("va or size is invalid. (va=0x%llx; align_size=0x%llx; prop start=0x%llx; size=0x%llx)\n", va,
+                aligned_size, prop.start, prop.size);
         return DRV_ERROR_PARA_ERROR;
     }
 
@@ -329,7 +327,10 @@ static int svm_ipc_create_handle(u64 va, u64 size, u64 *key)
     return 0;
 }
 
-static int svm_ipc_destroy_handle(u64 key) { return svm_casm_destroy_key(key); }
+static int svm_ipc_destroy_handle(u64 key)
+{
+    return svm_casm_destroy_key(key);
+}
 
 static int svm_ipc_malloc_opened_va(u32 devid, u64 size, u64 align, u64 *opened_va)
 {
@@ -400,25 +401,23 @@ static int svm_ipc_open_handle(u32 devid, u64 key, u64 *opened_va, uint64_t flag
 
     ret = svm_share_get_dst_align(src_va.va, src_va.size, devid, &align);
     if (ret != DRV_ERROR_NONE) {
-        svm_err(
-            "Get dst align failed. (ret=%d; src_va=0x%llx; size=%llu; devid=%u)\n", ret, src_va.va, src_va.size, devid);
+        svm_err("Get dst align failed. (ret=%d; src_va=0x%llx; size=%llu; devid=%u)\n", ret, src_va.va, src_va.size,
+                devid);
         return ret;
     }
 
     ret = svm_ipc_malloc_opened_va(devid, svm_get_non_dev_align_size(src_va.size), align, opened_va);
     if (ret != 0) {
-        svm_err(
-            "Malloc opened va failed. (devid=%u; key=0x%llx; size=0x%llx; align=0x%llx)\n", devid, key, src_va.size,
-            align);
+        svm_err("Malloc opened va failed. (devid=%u; key=0x%llx; size=0x%llx; align=0x%llx)\n", devid, key, src_va.size,
+                align);
         return ret;
     }
 
     ret = svm_casm_mem_map(devid, *opened_va, src_va.size, key, svm_ipc_open_flag_to_casm_flag(flag));
     if (ret != 0) {
         (void)svm_ipc_free_opened_va(*opened_va);
-        svm_err(
-            "Mem map failed. (devid=%u; key=0x%llx; size=0x%llx; opened_va=0x%llx)\n", devid, key, src_va.size,
-            *opened_va);
+        svm_err("Mem map failed. (devid=%u; key=0x%llx; size=0x%llx; opened_va=0x%llx)\n", devid, key, src_va.size,
+                *opened_va);
         return ret;
     }
 
@@ -618,8 +617,7 @@ static int svm_ipc_open_para_check(u32 devid, const char *name, u64 *vptr, u64 f
         return DRV_ERROR_INVALID_VALUE;
     }
 
-    if ((map_route != MEM_MAP_DEFAULT_PATH) &&
-        (map_route != MEM_MAP_UB_ONE_PORT_PATH) &&
+    if ((map_route != MEM_MAP_DEFAULT_PATH) && (map_route != MEM_MAP_UB_ONE_PORT_PATH) &&
         (map_route != MEM_MAP_UB_MULTI_PORT_PATH)) {
         svm_debug("Open flag is not support. (map_route=%u)\n", map_route);
         return DRV_ERROR_NOT_SUPPORT;
@@ -662,8 +660,7 @@ DVresult halShmemOpenHandleV2(DVdevice dev_id, const char *name, DVdeviceptr *vp
     if ((cs_valid != 0) && (svm_get_cur_server_id() != src_va.server_id)) {
         (void)svm_casm_cs_clr_src_info(dev_id, key);
     }
-    svm_debug("halShmemOpenHandleV2. (devid=%u; name=%s; ptr=0x%llx; flag=0x%llx)\n",
-        (u32)dev_id, name, *vptr, flag);
+    svm_debug("halShmemOpenHandleV2. (devid=%u; name=%s; ptr=0x%llx; flag=0x%llx)\n", (u32)dev_id, name, *vptr, flag);
     return (DVresult)ret;
 }
 
@@ -745,8 +742,7 @@ static int ipc_map_route_para_check(const char *name, u32 dst_devid, u32 map_rou
         return DRV_ERROR_INVALID_DEVICE;
     }
 
-    if ((map_route != MEM_MAP_DEFAULT_PATH) &&
-        (map_route != MEM_MAP_UB_ONE_PORT_PATH) &&
+    if ((map_route != MEM_MAP_DEFAULT_PATH) && (map_route != MEM_MAP_UB_ONE_PORT_PATH) &&
         (map_route != MEM_MAP_UB_MULTI_PORT_PATH)) {
         svm_debug("Ipc map route not exist. (map_route=%u)\n", map_route);
         return DRV_ERROR_NOT_EXIST;

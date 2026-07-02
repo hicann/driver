@@ -27,8 +27,8 @@
 #include "async_copy_ctx.h"
 #include "async_copy_core.h"
 
-static int async_copy_extract_va_info_from_ioctl_para(
-    struct svm_async_copy_submit_para *para, struct copy_va_info *info)
+static int async_copy_extract_va_info_from_ioctl_para(struct svm_async_copy_submit_para *para,
+                                                      struct copy_va_info *info)
 {
     int ret;
 
@@ -60,8 +60,8 @@ static int _async_copy_ioctl_submit(struct async_copy_ctx *ctx, unsigned long __
     struct copy_va_info info = {0};
     int ret;
 
-    ret =
-        (int)ka_base_copy_from_user(&para, (void __ka_user *)(uintptr_t)arg, sizeof(struct svm_async_copy_submit_para));
+    ret = (int)ka_base_copy_from_user(&para, (void __ka_user *)(uintptr_t)arg,
+                                      sizeof(struct svm_async_copy_submit_para));
     if (ret != 0) {
         svm_err("Copy_from_user fail.\n");
         return -EINVAL;

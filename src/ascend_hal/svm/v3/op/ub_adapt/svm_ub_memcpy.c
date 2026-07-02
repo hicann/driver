@@ -59,26 +59,24 @@ static int svm_ub_copy_urma_tseg_get(u32 src_devid, u32 dst_devid, struct svm_ur
     svm_dst_va_pack(src_devid, PROCESS_CP1, submit_para->src, submit_para->size, &dst_va);
     ret = svm_urma_get_tseg(user_devid, &dst_va, &submit_para->src_tseg);
     if (ret != DRV_ERROR_NONE) {
-        svm_err(
-            "Get src tseg failed. (ret=%d; src_devid=%u; src_va=0x%llx; size=%llu)\n", ret, src_devid, submit_para->src,
-            submit_para->size);
+        svm_err("Get src tseg failed. (ret=%d; src_devid=%u; src_va=0x%llx; size=%llu)\n", ret, src_devid,
+                submit_para->src, submit_para->size);
         return ret;
     }
 
     svm_dst_va_pack(dst_devid, PROCESS_CP1, submit_para->dst, submit_para->size, &dst_va);
     ret = svm_urma_get_tseg(user_devid, &dst_va, &submit_para->dst_tseg);
     if (ret != DRV_ERROR_NONE) {
-        svm_err(
-            "Get dst tseg failed. (ret=%d; dst_devid=%u; dst_va=0x%llx; dst_size=%llu)\n", ret, dst_devid,
-            submit_para->dst, submit_para->size);
+        svm_err("Get dst tseg failed. (ret=%d; dst_devid=%u; dst_va=0x%llx; dst_size=%llu)\n", ret, dst_devid,
+                submit_para->dst, submit_para->size);
         return ret;
     }
 
     return ret;
 }
 
-static int svm_ub_async_copy_once(
-    u32 devid, struct svm_copy_va_info *src_info, struct svm_copy_va_info *dst_info, u32 chan_id)
+static int svm_ub_async_copy_once(u32 devid, struct svm_copy_va_info *src_info, struct svm_copy_va_info *dst_info,
+                                  u32 chan_id)
 {
     enum svm_cpy_dir dir = copy_dir_get_by_devid(src_info->devid, dst_info->devid);
     struct svm_urma_chan_submit_para submit_para = {
@@ -86,7 +84,8 @@ static int svm_ub_async_copy_once(
     u32 out_wr_num;
     int ret;
 
-    svm_debug("(src_va=0x%llx; src_devid=%u; dst_va=0x%llx; dst_devid=%u)\n", src_info->va, src_info->devid, dst_info->va, dst_info->devid);
+    svm_debug("(src_va=0x%llx; src_devid=%u; dst_va=0x%llx; dst_devid=%u)\n", src_info->va, src_info->devid,
+              dst_info->va, dst_info->devid);
     ret = svm_ub_copy_urma_tseg_get(src_info->devid, dst_info->devid, &submit_para);
     if (ret != DRV_ERROR_NONE) {
         return ret;
@@ -99,8 +98,8 @@ static int svm_ub_async_copy_once(
     return ret;
 }
 
-static int svm_ub_async_copy_slice(
-    u32 devid, struct svm_copy_va_info *src_info, struct svm_copy_va_info *dst_info, u32 chan_id)
+static int svm_ub_async_copy_slice(u32 devid, struct svm_copy_va_info *src_info, struct svm_copy_va_info *dst_info,
+                                   u32 chan_id)
 {
     u32 host_devid = svm_get_host_devid();
     struct svm_copy_va_info *host_info = (src_info->devid == host_devid) ? src_info : dst_info;
@@ -127,9 +126,8 @@ static int svm_ub_async_copy_slice(
         dev_info->size = host_info->size;
         ret = svm_ub_async_copy_once(devid, src_info, dst_info, chan_id);
         if (ret != DRV_ERROR_NONE) {
-            svm_err(
-                "Ub sync failed. (ret=%d; devid=%u; host_va=0x%llx; dst_va=0x%llx; size=%llu; is_h2d=%d)\n", ret, devid,
-                host_info->va, dev_info->size, size, (src_info->devid == host_devid));
+            svm_err("Ub sync failed. (ret=%d; devid=%u; host_va=0x%llx; dst_va=0x%llx; size=%llu; is_h2d=%d)\n", ret,
+                    devid, host_info->va, dev_info->size, size, (src_info->devid == host_devid));
             return ret;
         }
     }
@@ -154,8 +152,8 @@ static bool svm_ub_async_copy_need_slice(u64 va, u64 size)
     return (va + size) > (prop.start + prop.size);
 }
 
-static int svm_ub_async_copy(
-    u32 devid, struct svm_copy_va_info *src_info, struct svm_copy_va_info *dst_info, u32 chan_id)
+static int svm_ub_async_copy(u32 devid, struct svm_copy_va_info *src_info, struct svm_copy_va_info *dst_info,
+                             u32 chan_id)
 {
     struct svm_copy_va_info *host_info = (src_info->devid == svm_get_host_devid()) ? src_info : dst_info;
 
@@ -173,8 +171,9 @@ int svm_ub_sync_copy(u32 devid, struct svm_copy_va_info *src_info, struct svm_co
     start = svm_get_timestamp_ns();
     ret = svm_urma_chan_alloc(devid, &chan_id);
     if (ret != DRV_ERROR_NONE) {
-        svm_err("svm_urma_chan_alloc failed. (ret=%d; src_va=0x%llx; src_size=%llu; src_devid=%u; dst_va=0x%llx; dst_size=%llu; dst_devid=%u)\n",
-            ret, src_info->va, src_info->size, src_info->devid, dst_info->va, dst_info->size, dst_info->devid);
+        svm_err("svm_urma_chan_alloc failed. (ret=%d; src_va=0x%llx; src_size=%llu; src_devid=%u; dst_va=0x%llx; "
+                "dst_size=%llu; dst_devid=%u)\n",
+                ret, src_info->va, src_info->size, src_info->devid, dst_info->va, dst_info->size, dst_info->devid);
         return ret;
     }
 
@@ -182,16 +181,20 @@ int svm_ub_sync_copy(u32 devid, struct svm_copy_va_info *src_info, struct svm_co
     if (ret != DRV_ERROR_NONE) {
         (void)svm_urma_chan_wait(devid, chan_id, -1, SVM_URMA_CHAN_WAIT_TIMEOUT_MS);
         svm_urma_chan_free(devid, chan_id);
-        svm_err("Urma async copy failed. (ret=%d; chan_id=%u; src_va=0x%llx; src_size=%llu; src_devid=%u; dst_va=0x%llx; dst_size=%llu; dst_devid=%u)\n",
-            ret, chan_id, src_info->va, src_info->size, src_info->devid, dst_info->va, dst_info->size, dst_info->devid);
+        svm_err("Urma async copy failed. (ret=%d; chan_id=%u; src_va=0x%llx; src_size=%llu; src_devid=%u; "
+                "dst_va=0x%llx; dst_size=%llu; dst_devid=%u)\n",
+                ret, chan_id, src_info->va, src_info->size, src_info->devid, dst_info->va, dst_info->size,
+                dst_info->devid);
         return ret;
     }
 
     ret = svm_urma_chan_wait(devid, chan_id, -1, SVM_URMA_CHAN_WAIT_TIMEOUT_MS);
     if (ret != DRV_ERROR_NONE) {
         svm_urma_chan_free(devid, chan_id);
-        svm_err("Urma chan wait failed. (ret=%d; chan_id=%u; src_va=0x%llx; src_size=%llu; src_devid=%u; dst_va=0x%llx; dst_size=%llu; dst_devid=%u)\n",
-            ret, chan_id, src_info->va, src_info->size, src_info->devid, dst_info->va, dst_info->size, dst_info->devid);
+        svm_err("Urma chan wait failed. (ret=%d; chan_id=%u; src_va=0x%llx; src_size=%llu; src_devid=%u; "
+                "dst_va=0x%llx; dst_size=%llu; dst_devid=%u)\n",
+                ret, chan_id, src_info->va, src_info->size, src_info->devid, dst_info->va, dst_info->size,
+                dst_info->devid);
         return ret;
     }
 
@@ -203,8 +206,8 @@ int svm_ub_sync_copy(u32 devid, struct svm_copy_va_info *src_info, struct svm_co
     return ret;
 }
 
-static void svm_unregister_to_master_2d(
-    struct svm_copy_va_2d_info *info, u64 user_devid, u64 count, enum svm_cpy_dir dir, bool *is_register)
+static void svm_unregister_to_master_2d(struct svm_copy_va_2d_info *info, u64 user_devid, u64 count,
+                                        enum svm_cpy_dir dir, bool *is_register)
 {
     struct svm_dst_va register_va;
     u32 host_devid = svm_get_host_devid();
@@ -224,8 +227,8 @@ static void svm_unregister_to_master_2d(
     }
 }
 
-static int svm_register_to_master_2d(
-    struct svm_copy_va_2d_info *info, u64 user_devid, enum svm_cpy_dir dir, bool *is_register)
+static int svm_register_to_master_2d(struct svm_copy_va_2d_info *info, u64 user_devid, enum svm_cpy_dir dir,
+                                     bool *is_register)
 {
     struct svm_dst_va register_va;
     u32 host_devid = svm_get_host_devid();
@@ -277,9 +280,8 @@ int _svm_ub_sync_copy_2d(u32 devid, struct svm_copy_va_2d_info *src_info, struct
 
         ret = svm_ub_async_copy(devid, &tmp_src_info, &tmp_dst_info, chan_id);
         if (ret != DRV_ERROR_NONE) {
-            svm_err(
-                "Svm_ub_sync_copy_slice failed. (ret=%d; src_start=0x%llx; dst_start=0x%llx; width=%llu; i=%llu)\n",
-                ret, src_info->va, dst_info->va, src_info->width, i);
+            svm_err("Svm_ub_sync_copy_slice failed. (ret=%d; src_start=0x%llx; dst_start=0x%llx; width=%llu; i=%llu)\n",
+                    ret, src_info->va, dst_info->va, src_info->width, i);
             (void)svm_urma_chan_wait(devid, chan_id, -1, SVM_URMA_CHAN_WAIT_TIMEOUT_MS);
             goto chan_free;
         }
@@ -322,8 +324,8 @@ int svm_ub_sync_copy_2d(u32 devid, struct svm_copy_va_2d_info *src_info, struct 
     return ret;
 }
 
-static void svm_unregister_to_master_batch(
-    u64 batch_va[], u64 batch_size[], u32 user_devid, u64 count, enum svm_cpy_dir dir, bool *is_register)
+static void svm_unregister_to_master_batch(u64 batch_va[], u64 batch_size[], u32 user_devid, u64 count,
+                                           enum svm_cpy_dir dir, bool *is_register)
 {
     struct svm_dst_va register_va;
     u32 host_devid = svm_get_host_devid();
@@ -343,8 +345,8 @@ static void svm_unregister_to_master_batch(
     }
 }
 
-static int svm_register_to_master_batch(
-    u64 batch_va[], u64 batch_size[], u32 user_devid, u64 count, enum svm_cpy_dir dir, bool *is_register)
+static int svm_register_to_master_batch(u64 batch_va[], u64 batch_size[], u32 user_devid, u64 count,
+                                        enum svm_cpy_dir dir, bool *is_register)
 {
     struct svm_dst_va register_va;
     u32 host_devid = svm_get_host_devid();
@@ -396,9 +398,8 @@ int _svm_ub_sync_copy_batch(u64 src[], u64 dst[], u64 size[], u64 count, u32 src
 
         ret = svm_ub_async_copy(user_devid, &tmp_src_info, &tmp_dst_info, chan_id);
         if (ret != DRV_ERROR_NONE) {
-            svm_err(
-                "Svm submit jetty cpy failed. (ret=%d; src=0x%llx; dst=0x%llx; size=%llu; i=%llu)\n", ret, src[i],
-                dst[i], size[i], i);
+            svm_err("Svm submit jetty cpy failed. (ret=%d; src=0x%llx; dst=0x%llx; size=%llu; i=%llu)\n", ret, src[i],
+                    dst[i], size[i], i);
             (void)svm_urma_chan_wait(user_devid, chan_id, -1, SVM_URMA_CHAN_WAIT_TIMEOUT_MS);
             goto chan_free;
         }
@@ -442,16 +443,18 @@ int svm_ub_sync_copy_batch(u64 src[], u64 dst[], u64 size[], u64 count, u32 src_
     return ret;
 }
 
-static struct svm_copy_ops g_ub_copy_ops = {
-    .sync_copy = svm_ub_sync_copy,
-    .async_copy_submit = NULL,
-    .async_copy_wait = NULL,
-    .dma_desc_convert = NULL,
-    .dma_desc_submit = NULL,
-    .dma_desc_wait = NULL,
-    .dma_desc_destroy = NULL,
-    .sync_copy_2d = svm_ub_sync_copy_2d,
-    .dma_desc_convert_2d = NULL,
-    .sync_copy_batch = svm_ub_sync_copy_batch};
+static struct svm_copy_ops g_ub_copy_ops = {.sync_copy = svm_ub_sync_copy,
+                                            .async_copy_submit = NULL,
+                                            .async_copy_wait = NULL,
+                                            .dma_desc_convert = NULL,
+                                            .dma_desc_submit = NULL,
+                                            .dma_desc_wait = NULL,
+                                            .dma_desc_destroy = NULL,
+                                            .sync_copy_2d = svm_ub_sync_copy_2d,
+                                            .dma_desc_convert_2d = NULL,
+                                            .sync_copy_batch = svm_ub_sync_copy_batch};
 
-void svm_ub_memcpy_ops_register(u32 devid) { svm_copy_ops_register(devid, &g_ub_copy_ops); }
+void svm_ub_memcpy_ops_register(u32 devid)
+{
+    svm_copy_ops_register(devid, &g_ub_copy_ops);
+}

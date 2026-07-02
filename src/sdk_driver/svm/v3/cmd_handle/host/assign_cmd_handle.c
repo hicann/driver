@@ -35,9 +35,15 @@ static int cmd_mpl_populate_post_handle(u32 udevid, u32 cmd, void *para)
     return svm_smp_add_mem(udevid, ka_task_get_current_tgid(), populate_para->va, populate_para->size, flag);
 }
 
-static int cmd_mpl_populate_pre_handle(u32 udevid, u32 cmd, void *para) { return 0; }
+static int cmd_mpl_populate_pre_handle(u32 udevid, u32 cmd, void *para)
+{
+    return 0;
+}
 
-static void cmd_mpl_populate_pre_cancle_handle(u32 udevid, u32 cmd, void *para) { svm_mms_dev_show(udevid); }
+static void cmd_mpl_populate_pre_cancle_handle(u32 udevid, u32 cmd, void *para)
+{
+    svm_mms_dev_show(udevid);
+}
 
 static int cmd_mpl_depopulate_pre_handle(u32 udevid, u32 cmd, void *para)
 {

@@ -70,7 +70,10 @@ static void devmm_clear_single_page(ka_page_t *pg, u64 page_size)
     }
 }
 
-static void devmm_clear_normal_single_page(ka_page_t *pg) { devmm_clear_single_page(pg, KA_MM_PAGE_SIZE); }
+static void devmm_clear_normal_single_page(ka_page_t *pg)
+{
+    devmm_clear_single_page(pg, KA_MM_PAGE_SIZE);
+}
 
 static void devmm_clear_compound_page(ka_page_t *pg)
 {
@@ -78,11 +81,13 @@ static void devmm_clear_compound_page(ka_page_t *pg)
     devmm_clear_single_page(head_page, devmm_kernel_pg_size(head_page));
 }
 
-static void devmm_clear_huge_page(ka_page_t *pg) { devmm_clear_compound_page(pg); }
+static void devmm_clear_huge_page(ka_page_t *pg)
+{
+    devmm_clear_compound_page(pg);
+}
 
-static void devmm_page_ref_dec(
-    ka_page_t *pg, void (*clear_func)(ka_page_t *pg), void (*dec_func)(ka_page_t *pg), void (*free_func)(ka_page_t *pg),
-    bool is_already_clear)
+static void devmm_page_ref_dec(ka_page_t *pg, void (*clear_func)(ka_page_t *pg), void (*dec_func)(ka_page_t *pg),
+                               void (*free_func)(ka_page_t *pg), bool is_already_clear)
 {
     int ref;
 
@@ -101,14 +106,20 @@ static void devmm_page_ref_dec(
     }
 }
 
-static void devmm_free_single_page(ka_page_t *pg) { __ka_mm_free_page(pg); }
+static void devmm_free_single_page(ka_page_t *pg)
+{
+    __ka_mm_free_page(pg);
+}
 
-static void devmm_put_page(ka_page_t *pg) { ka_mm_put_page(pg); }
+static void devmm_put_page(ka_page_t *pg)
+{
+    ka_mm_put_page(pg);
+}
 
 static void devmm_normal_single_page_ref_dec(ka_page_t *pg, bool is_already_clear)
 {
-    devmm_page_ref_dec(
-        pg, devmm_clear_normal_single_page, devmm_free_single_page, devmm_free_single_page, is_already_clear);
+    devmm_page_ref_dec(pg, devmm_clear_normal_single_page, devmm_free_single_page, devmm_free_single_page,
+                       is_already_clear);
 }
 
 static void devmm_huge_page_ref_dec(ka_page_t *pg, bool is_already_clear)
@@ -216,8 +227,8 @@ static void devmm_get_sub_pages_from_compound_page(ka_page_t *compound_page, u32
     }
 }
 
-static void devmm_get_sub_pages(
-    struct devmm_phy_addr_attr *attr, ka_page_t *page, u32 order, ka_page_t **out_pages, u64 pg_num)
+static void devmm_get_sub_pages(struct devmm_phy_addr_attr *attr, ka_page_t *page, u32 order, ka_page_t **out_pages,
+                                u64 pg_num)
 {
     if (ka_mm_PageCompound(page) != 0) {
         devmm_get_sub_pages_from_compound_page(page, order, out_pages, pg_num);
@@ -236,9 +247,8 @@ static int _devmm_alloc_pages_node(struct devmm_phy_addr_attr *attr, int nid, ka
 
     ret = devmm_normal_free_mem_size_sub(attr->devid, attr->vfid, nid, pg_num);
     if (ret != 0) {
-        devmm_drv_debug(
-            "Not enough normal free mem. (devid=%u; vfid=%u; nid=%d; pg_num=%llu)\n", attr->devid, attr->vfid, nid,
-            pg_num);
+        devmm_drv_debug("Not enough normal free mem. (devid=%u; vfid=%u; nid=%d; pg_num=%llu)\n", attr->devid,
+                        attr->vfid, nid, pg_num);
         return ret;
     }
 
@@ -280,8 +290,8 @@ static ka_page_t *devmm_alloc_pages_node(struct devmm_phy_addr_attr *attr, int *
     return NULL;
 }
 
-static int _devmm_alloc_normal_pages(
-    struct devmm_phy_addr_attr *attr, int nids[], u32 nid_num, ka_page_t **pages, u64 pg_num)
+static int _devmm_alloc_normal_pages(struct devmm_phy_addr_attr *attr, int nids[], u32 nid_num, ka_page_t **pages,
+                                     u64 pg_num)
 {
     int latest_nid = nids[0];
     u32 stamp = (u32)ka_jiffies;
@@ -299,8 +309,8 @@ static int _devmm_alloc_normal_pages(
     return 0;
 }
 
-static int devmm_alloc_continuous_pages(
-    struct devmm_phy_addr_attr *attr, int nids[], u32 nid_num, ka_page_t **pages, u64 pg_num)
+static int devmm_alloc_continuous_pages(struct devmm_phy_addr_attr *attr, int nids[], u32 nid_num, ka_page_t **pages,
+                                        u64 pg_num)
 {
     int ret, i;
 
@@ -320,8 +330,8 @@ static int devmm_alloc_continuous_pages(
 }
 
 /* Alloc continuous pages every DEVMM_ALLOC_CONT_PAGES_MAX_NUM, and return got_num. */
-static u64 _devmm_try_alloc_continuous_pages(
-    struct devmm_phy_addr_attr *attr, int nids[], u32 nid_num, ka_page_t **pages, u64 pg_num)
+static u64 _devmm_try_alloc_continuous_pages(struct devmm_phy_addr_attr *attr, int nids[], u32 nid_num,
+                                             ka_page_t **pages, u64 pg_num)
 {
     u32 stamp = (u32)ka_jiffies;
     u64 num, i = 0;
@@ -344,8 +354,8 @@ static u64 _devmm_try_alloc_continuous_pages(
 }
 
 /* The returned pages is not necessarily continuous, but is as continuous as possible. */
-static int devmm_try_alloc_continuous_pages(
-    struct devmm_phy_addr_attr *attr, int nids[], u32 nid_num, ka_page_t **pages, u64 pg_num)
+static int devmm_try_alloc_continuous_pages(struct devmm_phy_addr_attr *attr, int nids[], u32 nid_num,
+                                            ka_page_t **pages, u64 pg_num)
 {
     u64 got_num = 0;
     int ret;
@@ -363,8 +373,8 @@ static int devmm_try_alloc_continuous_pages(
     return ret;
 }
 
-static int devmm_alloc_normal_pages(
-    struct devmm_phy_addr_attr *attr, int nids[], u32 nid_num, ka_page_t **pages, u64 pg_num)
+static int devmm_alloc_normal_pages(struct devmm_phy_addr_attr *attr, int nids[], u32 nid_num, ka_page_t **pages,
+                                    u64 pg_num)
 {
     if (attr->is_continuous) {
         return devmm_alloc_continuous_pages(attr, nids, nid_num, pages, pg_num);
@@ -382,9 +392,8 @@ static ka_page_t *devmm_alloc_hpage(struct devmm_phy_addr_attr *attr, int nid, u
     pg_num = attr->is_giant_page ? DEVMM_GIANT_TO_HUGE_PAGE_NUM : 1;
     ret = devmm_huge_free_mem_size_sub(attr->devid, attr->vfid, nid, pg_num, flag);
     if (ret != 0) {
-        devmm_drv_debug(
-            "Not enough huge free mem. (devid=%u; vfid=%u; nid=%d; flag=%u; pg_num=%llu)\n", attr->devid, attr->vfid,
-            nid, flag, pg_num);
+        devmm_drv_debug("Not enough huge free mem. (devid=%u; vfid=%u; nid=%d; flag=%u; pg_num=%llu)\n", attr->devid,
+                        attr->vfid, nid, flag, pg_num);
         return NULL;
     }
 
@@ -396,8 +405,8 @@ static ka_page_t *devmm_alloc_hpage(struct devmm_phy_addr_attr *attr, int nid, u
     return hpage;
 }
 
-static ka_page_t *_devmm_alloc_huge_page(
-    struct devmm_phy_addr_attr *attr, int *latest_nid, int nids[], u32 nid_num, u32 flag)
+static ka_page_t *_devmm_alloc_huge_page(struct devmm_phy_addr_attr *attr, int *latest_nid, int nids[], u32 nid_num,
+                                         u32 flag)
 {
     ka_page_t *hpage = NULL;
     bool try_alloc = false;
@@ -439,8 +448,8 @@ static ka_page_t *devmm_alloc_huge_page(struct devmm_phy_addr_attr *attr, int *l
         return hpage;
     }
 
-    hpage =
-        _devmm_alloc_huge_page(attr, latest_nid, nids, nid_num, KA_HUGETLB_ALLOC_BUDDY | KA_HUGETLB_ALLOC_NORECLAIM);
+    hpage = _devmm_alloc_huge_page(attr, latest_nid, nids, nid_num,
+                                   KA_HUGETLB_ALLOC_BUDDY | KA_HUGETLB_ALLOC_NORECLAIM);
     if (hpage != NULL) {
         return hpage;
     }
@@ -455,8 +464,8 @@ static ka_page_t *devmm_alloc_huge_page(struct devmm_phy_addr_attr *attr, int *l
 #endif
 }
 
-static int devmm_alloc_huge_pages(
-    struct devmm_phy_addr_attr *attr, int nids[], u32 nid_num, ka_page_t **hpages, u64 pg_num)
+static int devmm_alloc_huge_pages(struct devmm_phy_addr_attr *attr, int nids[], u32 nid_num, ka_page_t **hpages,
+                                  u64 pg_num)
 {
     int latest_nid = nids[0]; /* alloc from latest nid to approve performance */
     u32 stamp = (u32)ka_jiffies;
@@ -487,9 +496,8 @@ int devmm_alloc_pages(struct devmm_phy_addr_attr *attr, ka_page_t **pages, u64 p
 
     ret = devmm_get_nids(attr->devid, attr->vfid, attr->mem_type, nids, &nid_num);
     if (ret != 0) {
-        devmm_drv_err(
-            "Get nids failed. (ret=%d; devid=%u; vfid=%u; mem_type=%u)\n", ret, attr->devid, attr->vfid,
-            attr->mem_type);
+        devmm_drv_err("Get nids failed. (ret=%d; devid=%u; vfid=%u; mem_type=%u)\n", ret, attr->devid, attr->vfid,
+                      attr->mem_type);
         return ret;
     }
 

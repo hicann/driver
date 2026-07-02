@@ -66,15 +66,15 @@ static void devmm_task_pg_cnt_stats_show(ka_seq_file_t *seq)
     peak_hpage_cnt = devmm_get_peak_page_cnt(&svm_proc->pg_cnt_stats, DEVMM_HUGE_PAGE_TYPE);
     peak_gpage_cnt = devmm_get_peak_page_cnt(&svm_proc->pg_cnt_stats, DEVMM_GIANT_PAGE_TYPE);
 
-    ka_fs_seq_printf(
-        seq,
-        "Svm page cnt stats:\nhostpid=%u; devpid=%u; devid=%u; vfid=%u; "
-        "cgroup_used_page_cnt=%llu; cgroup_used_hpage_cnt=%llu; cgroup_used_gpage_cnt=%llu; "
-        "cdm_used_page_cnt=%llu; cdm_used_hpage_cnt=%llu; cdm_used_gpage_cnt=%llu; "
-        "peak_page_cnt=%llu; peak_hpage_cnt=%llu; peak_gpage_cnt=%llu\n",
-        svm_proc->process_id.hostpid, svm_proc->devpid, svm_proc->process_id.devid, svm_proc->process_id.vfid,
-        cgroup_used_page_cnt, cgroup_used_hpage_cnt, cgroup_used_gpage_cnt, cdm_used_page_cnt, cdm_used_hpage_cnt,
-        cdm_used_gpage_cnt, peak_page_cnt, peak_hpage_cnt, peak_gpage_cnt);
+    ka_fs_seq_printf(seq,
+                     "Svm page cnt stats:\nhostpid=%u; devpid=%u; devid=%u; vfid=%u; "
+                     "cgroup_used_page_cnt=%llu; cgroup_used_hpage_cnt=%llu; cgroup_used_gpage_cnt=%llu; "
+                     "cdm_used_page_cnt=%llu; cdm_used_hpage_cnt=%llu; cdm_used_gpage_cnt=%llu; "
+                     "peak_page_cnt=%llu; peak_hpage_cnt=%llu; peak_gpage_cnt=%llu\n",
+                     svm_proc->process_id.hostpid, svm_proc->devpid, svm_proc->process_id.devid,
+                     svm_proc->process_id.vfid, cgroup_used_page_cnt, cgroup_used_hpage_cnt, cgroup_used_gpage_cnt,
+                     cdm_used_page_cnt, cdm_used_hpage_cnt, cdm_used_gpage_cnt, peak_page_cnt, peak_hpage_cnt,
+                     peak_gpage_cnt);
 }
 
 static void devmm_task_status_stats_show(ka_seq_file_t *seq)
@@ -85,18 +85,16 @@ static void devmm_task_status_stats_show(ka_seq_file_t *seq)
     ka_fs_seq_printf(seq, "\ntask status stats:\n");
     /* host or aicpu process status show */
     ka_task_mutex_lock(&svm_proc->proc_lock);
-    ka_fs_seq_printf(
-        seq, "notifier_reg_flag=0x%x; status=%u; index=%u; msg_processing=%u; other_proc_occupying=%u\n",
-        svm_proc->notifier_reg_flag, svm_proc->proc_status, svm_proc->proc_idx, svm_proc->msg_processing,
-        svm_proc->other_proc_occupying);
+    ka_fs_seq_printf(seq, "notifier_reg_flag=0x%x; status=%u; index=%u; msg_processing=%u; other_proc_occupying=%u\n",
+                     svm_proc->notifier_reg_flag, svm_proc->proc_status, svm_proc->proc_idx, svm_proc->msg_processing,
+                     svm_proc->other_proc_occupying);
     ka_task_mutex_unlock(&svm_proc->proc_lock);
     /* custom process status show */
     for (i = 0; i < DEVMM_CUSTOM_PROCESS_NUM; i++) {
         ka_task_mutex_lock(&svm_proc->custom[i].proc_lock);
         if (svm_proc->custom[i].status != DEVMM_CUSTOM_IDLE) {
-            ka_fs_seq_printf(
-                seq, "custom_pid=%u; index=%u; status=%u\n", svm_proc->custom[i].custom_pid, svm_proc->custom[i].idx,
-                svm_proc->custom[i].status);
+            ka_fs_seq_printf(seq, "custom_pid=%u; index=%u; status=%u\n", svm_proc->custom[i].custom_pid,
+                             svm_proc->custom[i].idx, svm_proc->custom[i].status);
         }
         ka_task_mutex_unlock(&svm_proc->custom[i].proc_lock);
     }
@@ -194,14 +192,23 @@ void devmm_proc_fs_uninit(void)
     }
 }
 
-ka_proc_dir_entry_t *devmm_get_top_entry(void) { return devmm_top_entry; }
+ka_proc_dir_entry_t *devmm_get_top_entry(void)
+{
+    return devmm_top_entry;
+}
 
 #else
-void devmm_proc_fs_add_task(struct devmm_svm_process *svm_proc) {}
+void devmm_proc_fs_add_task(struct devmm_svm_process *svm_proc)
+{}
 
-void devmm_proc_fs_del_task(struct devmm_svm_process *svm_proc) {}
+void devmm_proc_fs_del_task(struct devmm_svm_process *svm_proc)
+{}
 
-void devmm_proc_fs_init(struct devmm_svm_dev *svm_dev) { return; }
+void devmm_proc_fs_init(struct devmm_svm_dev *svm_dev)
+{
+    return;
+}
 
-void devmm_proc_fs_uninit(void) {}
+void devmm_proc_fs_uninit(void)
+{}
 #endif

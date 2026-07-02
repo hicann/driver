@@ -60,9 +60,8 @@ int devmm_svm_check_addr_valid(struct devmm_svm_process_id *process_id, u64 addr
     devmm_drv_debug("Check address details. (addr=0x%llx; size=%llu)\n", addr, size);
     ret = devmm_svm_proc_and_heap_get(process_id, addr, &svm_process, &heap);
     if (ret != 0) {
-        devmm_drv_err(
-            "Process exit or heap error. (hostpid=%d; devid=%u; vfid=%u; va=0x%llx)\n", process_id->hostpid,
-            process_id->devid, process_id->vfid, addr);
+        devmm_drv_err("Process exit or heap error. (hostpid=%d; devid=%u; vfid=%u; va=0x%llx)\n", process_id->hostpid,
+                      process_id->devid, process_id->vfid, addr);
         return ret;
     }
 
@@ -81,7 +80,10 @@ int devmm_svm_check_addr_valid(struct devmm_svm_process_id *process_id, u64 addr
     return 0;
 }
 
-int devmm_shm_check_addr_valid(struct devmm_svm_process_id *process_id, u64 addr, u64 size) { return -EINVAL; }
+int devmm_shm_check_addr_valid(struct devmm_svm_process_id *process_id, u64 addr, u64 size)
+{
+    return -EINVAL;
+}
 
 static int devmm_get_host_addr_by_dev_pa(u32 dev_id, u64 va, u64 dev_pa, u64 *host_addr)
 {
@@ -96,8 +98,8 @@ static int devmm_get_host_addr_by_dev_pa(u32 dev_id, u64 va, u64 dev_pa, u64 *ho
     return ret;
 }
 
-static int devmm_svm_get_host_pa_list(
-    struct devmm_svm_process *svm_process, u64 addr, u64 size, u64 *pa_list, u32 pa_num)
+static int devmm_svm_get_host_pa_list(struct devmm_svm_process *svm_process, u64 addr, u64 size, u64 *pa_list,
+                                      u32 pa_num)
 {
     ka_vm_area_struct_t *vma = NULL;
     int ret;
@@ -122,9 +124,8 @@ static int devmm_svm_get_host_pa_list(
     return 0;
 }
 
-static int devmem_svm_get_dev_pa_list(
-    struct devmm_svm_process *svm_process, struct devmm_svm_heap *heap, struct svm_mem_info *mem_info, u64 *pa_list,
-    u32 pa_num)
+static int devmem_svm_get_dev_pa_list(struct devmm_svm_process *svm_process, struct devmm_svm_heap *heap,
+                                      struct svm_mem_info *mem_info, u64 *pa_list, u32 pa_num)
 {
     u32 logic_id, dev_id, i, page_num, page_size;
     u32 stamp = (u32)ka_jiffies;
@@ -164,8 +165,8 @@ static int devmem_svm_get_dev_pa_list(
     return 0;
 }
 
-int devmm_svm_get_and_pin_pa_list(
-    struct devmm_svm_process_id *process_id, u64 aligned_va, u64 aligned_size, u64 *pa_list, u32 pa_num)
+int devmm_svm_get_and_pin_pa_list(struct devmm_svm_process_id *process_id, u64 aligned_va, u64 aligned_size,
+                                  u64 *pa_list, u32 pa_num)
 {
     struct devmm_svm_process *svm_process = NULL;
     struct devmm_svm_heap *heap = NULL;
@@ -173,9 +174,8 @@ int devmm_svm_get_and_pin_pa_list(
 
     ret = devmm_svm_proc_and_heap_get(process_id, aligned_va, &svm_process, &heap);
     if (ret != 0) {
-        devmm_drv_err(
-            "Process exit or heap error. (hostpid=%d; devid=%u; vfid=%u; va=0x%llx)\n", process_id->hostpid,
-            process_id->devid, process_id->vfid, aligned_va);
+        devmm_drv_err("Process exit or heap error. (hostpid=%d; devid=%u; vfid=%u; va=0x%llx)\n", process_id->hostpid,
+                      process_id->devid, process_id->vfid, aligned_va);
         return -EINVAL;
     }
 
@@ -187,9 +187,9 @@ int devmm_svm_get_and_pin_pa_list(
     }
     if (ret != 0) {
         devmm_svm_proc_and_heap_put(svm_process, heap);
-        devmm_drv_err(
-            "Fail to get pa list. (hostpid=%d; devid=%u; vfid=%u; va=0x%llx; size=%llx; heap_type=%d)\n",
-            process_id->hostpid, process_id->devid, process_id->vfid, aligned_va, aligned_size, heap->heap_type);
+        devmm_drv_err("Fail to get pa list. (hostpid=%d; devid=%u; vfid=%u; va=0x%llx; size=%llx; heap_type=%d)\n",
+                      process_id->hostpid, process_id->devid, process_id->vfid, aligned_va, aligned_size,
+                      heap->heap_type);
         return ret;
     }
 
@@ -198,9 +198,8 @@ int devmm_svm_get_and_pin_pa_list(
      */
     if (devmm_inc_page_ref(svm_process, aligned_va, aligned_size) != 0) {
         devmm_svm_proc_and_heap_put(svm_process, heap);
-        devmm_drv_err(
-            "Address reference failed. (pid=%u; devid=%u; va=0x%llx)\n", process_id->hostpid, process_id->devid,
-            aligned_va);
+        devmm_drv_err("Address reference failed. (pid=%u; devid=%u; va=0x%llx)\n", process_id->hostpid,
+                      process_id->devid, aligned_va);
         return -EINVAL;
     }
 
@@ -208,8 +207,8 @@ int devmm_svm_get_and_pin_pa_list(
     return 0;
 }
 
-int devmm_shm_get_pa_list(
-    struct devmm_svm_process_id *process_id, u64 aligned_va, u64 aligned_size, u64 *pa_list, u32 pa_num)
+int devmm_shm_get_pa_list(struct devmm_svm_process_id *process_id, u64 aligned_va, u64 aligned_size, u64 *pa_list,
+                          u32 pa_num)
 {
     return -EINVAL;
 }
@@ -221,20 +220,24 @@ void devmm_svm_put_pa_list(struct devmm_svm_process_id *process_id, u64 va, u64 
 
     svm_process = devmm_svm_proc_get_by_process_id_ex(process_id);
     if (svm_process == NULL) {
-        devmm_drv_err(
-            "Process is exit. (va=0x%llx; hostpid=%d; devid=%u; vfid=%u)\n", va, process_id->hostpid, process_id->devid,
-            process_id->vfid);
+        devmm_drv_err("Process is exit. (va=0x%llx; hostpid=%d; devid=%u; vfid=%u)\n", va, process_id->hostpid,
+                      process_id->devid, process_id->vfid);
         return;
     }
     devmm_dec_page_ref(svm_process, va, size);
     devmm_svm_proc_put(svm_process);
 }
 
-void devmm_shm_put_pa_list(struct devmm_svm_process_id *process_id, u64 va, u64 *pa_list, u32 pa_num) {}
+void devmm_shm_put_pa_list(struct devmm_svm_process_id *process_id, u64 va, u64 *pa_list, u32 pa_num)
+{}
 
-void devmm_update_addr_flag(u64 va, u64 pa, u32 *addr_flag) {}
+void devmm_update_addr_flag(u64 va, u64 pa, u32 *addr_flag)
+{}
 
-bool devmm_svm_need_ib_register_peer(void) { return false; }
+bool devmm_svm_need_ib_register_peer(void)
+{
+    return false;
+}
 KA_EXPORT_SYMBOL_GPL(devmm_svm_need_ib_register_peer);
 
 static bool devmm_is_support_p2p_get_pages(struct devmm_svm_process *svm_proc, u64 va, u64 len)
@@ -252,8 +255,8 @@ static bool devmm_is_support_p2p_get_pages(struct devmm_svm_process *svm_proc, u
     }
 
     if ((heap->heap_sub_type == SUB_HOST_TYPE) || (heap->heap_sub_type == SUB_SVM_TYPE)) {
-        devmm_drv_err(
-            "No support heap_sub_type. (va=0x%llx; len=0x%llx; heap_sub_type=%u)\n", va, len, heap->heap_sub_type);
+        devmm_drv_err("No support heap_sub_type. (va=0x%llx; len=0x%llx; heap_sub_type=%u)\n", va, len,
+                      heap->heap_sub_type);
         devmm_svm_heap_put(heap);
         return false;
     }
@@ -280,8 +283,8 @@ static bool devmm_is_support_p2p_get_pages(struct devmm_svm_process *svm_proc, u
     }
 
     if (devmm_page_bitmap_is_ipc_open_mem(bitmap) || devmm_page_bitmap_is_advise_readonly(bitmap)) {
-        devmm_drv_err(
-            "No support attr. (va=%llx; len=0x%llx; bitmap=%u; heap_type=%u)\n", va, len, *bitmap, heap->heap_type);
+        devmm_drv_err("No support attr. (va=%llx; len=0x%llx; bitmap=%u; heap_type=%u)\n", va, len, *bitmap,
+                      heap->heap_type);
         devmm_svm_heap_put(heap);
         return false;
     }
@@ -302,8 +305,8 @@ static bool devmm_is_support_p2p_get_pages(struct devmm_svm_process *svm_proc, u
     return true;
 }
 
-static int devmm_fill_p2p_pages_info(
-    struct devmm_svm_process *svm_proc, struct svm_p2p_mem_info *mem_info, struct p2p_page_info *info)
+static int devmm_fill_p2p_pages_info(struct devmm_svm_process *svm_proc, struct svm_p2p_mem_info *mem_info,
+                                     struct p2p_page_info *info)
 {
     u32 logic_devid = devmm_svm_va_to_devid(svm_proc, mem_info->va);
     u32 page_size = mem_info->page_table.page_size;
@@ -316,16 +319,14 @@ static int devmm_fill_p2p_pages_info(
     for (i = 0, tmp_va = aligned_va; i < page_num; i++, tmp_va += page_size) {
         ret = devmm_find_pa_cache(svm_proc, logic_devid, tmp_va, page_size, &dev_pa);
         if (ret != 0) {
-            devmm_drv_err(
-                "Find pa cache failed. (i=%llu; va=0x%llx; page_size=%u; logic_devid=%u; ret=%d)\n", i, tmp_va,
-                page_size, logic_devid, ret);
+            devmm_drv_err("Find pa cache failed. (i=%llu; va=0x%llx; page_size=%u; logic_devid=%u; ret=%d)\n", i,
+                          tmp_va, page_size, logic_devid, ret);
             return ret;
         }
         ret = devdrv_devmem_addr_d2h(mem_info->udevid, (phys_addr_t)dev_pa, &info[i].pa);
         if (ret != 0) {
-            devmm_drv_err(
-                "Transform addr d2h failed. (i=%llu; va=0x%llx; page_size=%u; devid=%u; ret=%d)\n", i, tmp_va,
-                page_size, mem_info->udevid, ret);
+            devmm_drv_err("Transform addr d2h failed. (i=%llu; va=0x%llx; page_size=%u; devid=%u; ret=%d)\n", i, tmp_va,
+                          page_size, mem_info->udevid, ret);
             return ret;
         }
         devmm_try_cond_resched(&stamp);
@@ -347,14 +348,14 @@ static int devmm_init_p2p_page_table(struct devmm_svm_process *svm_proc, struct 
         return -EINVAL;
     }
     page_table->version = P2P_GET_PAGE_VERSION;
-    page_table->page_size =
-        (heap->heap_type == DEVMM_HEAP_HUGE_PAGE) ? devmm_svm->device_hpage_size : devmm_svm->device_page_size;
+    page_table->page_size = (heap->heap_type == DEVMM_HEAP_HUGE_PAGE) ? devmm_svm->device_hpage_size :
+                                                                        devmm_svm->device_page_size;
     devmm_svm_heap_put(heap);
     aligned_va = ka_base_round_down(mem_info->va, page_table->page_size);
     aligned_len = ka_base_round_up(mem_info->len + (mem_info->va - aligned_va), page_table->page_size);
     page_table->page_num = aligned_len / page_table->page_size;
-    page_table->pages_info =
-        (struct p2p_page_info *)devmm_kvzalloc(page_table->page_num * sizeof(struct p2p_page_info));
+    page_table->pages_info = (struct p2p_page_info *)devmm_kvzalloc(page_table->page_num *
+                                                                    sizeof(struct p2p_page_info));
     if (page_table->pages_info == NULL) {
         devmm_drv_err("Kvzalloc failed. (size=%llu)\n", page_table->page_num * sizeof(struct p2p_page_info));
         return -ENOMEM;
@@ -382,8 +383,8 @@ static void devmm_uninit_p2p_page_table(struct p2p_page_table *page_table)
     }
 }
 
-static struct svm_p2p_mem_info *devmm_create_p2p_mem_info(
-    struct devmm_svm_process *svm_proc, u64 va, u64 len, void (*free_callback)(void *data), void *data)
+static struct svm_p2p_mem_info *devmm_create_p2p_mem_info(struct devmm_svm_process *svm_proc, u64 va, u64 len,
+                                                          void (*free_callback)(void *data), void *data)
 {
     struct svm_p2p_mem_info *mem_info = NULL;
     u32 logic_devid;
@@ -420,7 +421,10 @@ static struct svm_p2p_mem_info *devmm_create_p2p_mem_info(
     return mem_info;
 }
 
-static void devmm_p2p_mem_info_get(struct svm_p2p_mem_info *mem_info) { ka_base_kref_get(&mem_info->ref); }
+static void devmm_p2p_mem_info_get(struct svm_p2p_mem_info *mem_info)
+{
+    ka_base_kref_get(&mem_info->ref);
+}
 
 static void devmm_p2p_mem_info_release(ka_kref_t *kref)
 {
@@ -434,10 +438,13 @@ static void devmm_p2p_mem_info_put(struct svm_p2p_mem_info *mem_info)
     ka_base_kref_put(&mem_info->ref, devmm_p2p_mem_info_release);
 }
 
-static void devmm_destroy_p2p_mem_info(struct svm_p2p_mem_info *mem_info) { devmm_p2p_mem_info_put(mem_info); }
+static void devmm_destroy_p2p_mem_info(struct svm_p2p_mem_info *mem_info)
+{
+    devmm_p2p_mem_info_put(mem_info);
+}
 
-static struct p2p_page_table *devmm_create_p2p_page_table(
-    struct devmm_svm_process *svm_proc, u64 va, u64 len, void (*free_callback)(void *data), void *data)
+static struct p2p_page_table *devmm_create_p2p_page_table(struct devmm_svm_process *svm_proc, u64 va, u64 len,
+                                                          void (*free_callback)(void *data), void *data)
 {
     struct devmm_svm_proc_master *master_data = (struct devmm_svm_proc_master *)svm_proc->priv_data;
     struct svm_p2p_mem_info *mem_info = NULL;
@@ -464,9 +471,8 @@ static void devmm_destroy_p2p_page_table(struct p2p_page_table **page_table)
 
     svm_proc = devmm_svm_proc_get_by_process_id(&process_id);
     if (svm_proc == NULL) {
-        devmm_drv_debug(
-            "Process has exited. (hostpid=%d; va=0x%llx; len=0x%llx)\n", mem_info->hostpid, mem_info->va,
-            mem_info->len);
+        devmm_drv_debug("Process has exited. (hostpid=%d; va=0x%llx; len=0x%llx)\n", mem_info->hostpid, mem_info->va,
+                        mem_info->len);
         goto OUT;
     }
 
@@ -496,13 +502,11 @@ static void devmm_show_p2p_mem_stat(struct devmm_svm_process *svm_proc, u32 devi
         return;
     }
     if ((mem_mng->get_cnt == mem_mng->put_cnt)) {
-        devmm_drv_debug(
-            "Stat show. (devid=%u; get_cnt=%llu; put_cnt=%llu; free_callback_cnt=%llu)\n", devid, mem_mng->get_cnt,
-            mem_mng->put_cnt, mem_mng->free_cb_cnt);
+        devmm_drv_debug("Stat show. (devid=%u; get_cnt=%llu; put_cnt=%llu; free_callback_cnt=%llu)\n", devid,
+                        mem_mng->get_cnt, mem_mng->put_cnt, mem_mng->free_cb_cnt);
     } else {
-        devmm_drv_run_info(
-            "Stat show. (devid=%u; get_cnt=%llu; put_cnt=%llu; free_callback_cnt=%llu)\n", devid, mem_mng->get_cnt,
-            mem_mng->put_cnt, mem_mng->free_cb_cnt);
+        devmm_drv_run_info("Stat show. (devid=%u; get_cnt=%llu; put_cnt=%llu; free_callback_cnt=%llu)\n", devid,
+                           mem_mng->get_cnt, mem_mng->put_cnt, mem_mng->free_cb_cnt);
     }
     ka_task_mutex_unlock(&mem_mng->lock);
 }
@@ -516,8 +520,8 @@ static bool devmm_p2p_mem_info_va_is_overlap(struct svm_p2p_mem_info *mem_info, 
     return true;
 }
 
-static struct svm_p2p_mem_info *_devmm_p2p_mem_info_erase_and_get(
-    struct devmm_master_p2p_mem_mng *mem_mng, preprocess_cmp_fun cmp_fun, u64 free_va, u64 free_len)
+static struct svm_p2p_mem_info *_devmm_p2p_mem_info_erase_and_get(struct devmm_master_p2p_mem_mng *mem_mng,
+                                                                  preprocess_cmp_fun cmp_fun, u64 free_va, u64 free_len)
 {
     u32 stamp = (u32)ka_jiffies;
     ka_list_head_t *pos = NULL;
@@ -535,9 +539,8 @@ static struct svm_p2p_mem_info *_devmm_p2p_mem_info_erase_and_get(
             ka_list_del(&mem_info->node);
             KA_INIT_LIST_HEAD(&mem_info->node);
             mem_mng->free_cb_cnt++;
-            devmm_drv_debug(
-                "Erase info. (devid=%u; va=%llx; len=%llx; free_cb_cnt=%llu)", mem_info->udevid, mem_info->va,
-                mem_info->len, mem_mng->free_cb_cnt);
+            devmm_drv_debug("Erase info. (devid=%u; va=%llx; len=%llx; free_cb_cnt=%llu)", mem_info->udevid,
+                            mem_info->va, mem_info->len, mem_mng->free_cb_cnt);
             devmm_p2p_mem_info_get(mem_info);
             return mem_info;
         }
@@ -547,8 +550,8 @@ static struct svm_p2p_mem_info *_devmm_p2p_mem_info_erase_and_get(
     return NULL;
 }
 
-static struct svm_p2p_mem_info *devmm_p2p_mem_info_erase_and_get(
-    struct devmm_master_p2p_mem_mng *mem_mng, preprocess_cmp_fun cmp_fun, u64 free_va, u64 free_len)
+static struct svm_p2p_mem_info *devmm_p2p_mem_info_erase_and_get(struct devmm_master_p2p_mem_mng *mem_mng,
+                                                                 preprocess_cmp_fun cmp_fun, u64 free_va, u64 free_len)
 {
     struct svm_p2p_mem_info *mem_info = NULL;
 
@@ -559,8 +562,8 @@ static struct svm_p2p_mem_info *devmm_p2p_mem_info_erase_and_get(
     return mem_info;
 }
 
-static void devmm_mem_free_preprocess_inner(
-    struct devmm_svm_process *svm_proc, u32 devid, preprocess_cmp_fun cmp_fun, u64 free_va, u64 free_len)
+static void devmm_mem_free_preprocess_inner(struct devmm_svm_process *svm_proc, u32 devid, preprocess_cmp_fun cmp_fun,
+                                            u64 free_va, u64 free_len)
 {
     struct devmm_svm_proc_master *master_data = (struct devmm_svm_proc_master *)svm_proc->priv_data;
     struct devmm_master_p2p_mem_mng *mem_mng = &master_data->p2p_mem_mng[devid];
@@ -613,8 +616,8 @@ void devmm_mem_free_preprocess_by_dev(struct devmm_svm_process *svm_proc, u32 de
     }
 }
 
-int hal_kernel_p2p_get_pages(
-    u64 va, u64 len, void (*free_callback)(void *data), void *data, struct p2p_page_table **page_table)
+int hal_kernel_p2p_get_pages(u64 va, u64 len, void (*free_callback)(void *data), void *data,
+                             struct p2p_page_table **page_table)
 {
     struct devmm_svm_process_id process_id = {.hostpid = ka_task_get_current_tgid(), .devid = 0, .vfid = 0};
     struct devmm_svm_process *svm_proc = NULL;
@@ -627,9 +630,8 @@ int hal_kernel_p2p_get_pages(
     devmm_drv_debug("Start. (va=0x%llx; len=0x%llx)\n", va, len);
     if ((devmm_va_is_in_svm_range(va) == false) || (len == 0) || (va + len < va) ||
         (devmm_va_is_in_svm_range(va + len - 1) == false) || (free_callback == NULL) || (page_table == NULL)) {
-        devmm_drv_err(
-            "Invalid para. (va=0x%llx; len=0x%llx; page_table_is_null=%u; free_callback_is_null=%u)\n", va, len,
-            free_callback == NULL, page_table == NULL);
+        devmm_drv_err("Invalid para. (va=0x%llx; len=0x%llx; page_table_is_null=%u; free_callback_is_null=%u)\n", va,
+                      len, free_callback == NULL, page_table == NULL);
         ka_system_module_put(KA_THIS_MODULE);
         return -EINVAL;
     }

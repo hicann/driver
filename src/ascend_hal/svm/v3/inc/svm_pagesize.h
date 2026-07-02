@@ -42,7 +42,10 @@ static inline bool svm_is_va_page_align(u32 devid, u64 svm_flag, u64 va)
     return svm_is_page_align(devid, svm_flag, va);
 }
 
-static inline bool svm_is_npage_align(u32 devid, u64 value) { return svm_is_page_align(devid, 0, value); }
+static inline bool svm_is_npage_align(u32 devid, u64 value)
+{
+    return svm_is_page_align(devid, 0, value);
+}
 
 static inline bool svm_is_hpage_align(u32 devid, u64 value)
 {
@@ -54,11 +57,20 @@ static inline bool svm_is_gpage_align(u32 devid, u64 value)
     return svm_is_page_align(devid, SVM_FLAG_ATTR_PA_GPAGE, value);
 }
 
-static inline bool svm_is_va_npage_align(u32 devid, u64 va) { return svm_is_npage_align(devid, va); }
+static inline bool svm_is_va_npage_align(u32 devid, u64 va)
+{
+    return svm_is_npage_align(devid, va);
+}
 
-static inline bool svm_is_va_hpage_align(u32 devid, u64 va) { return svm_is_hpage_align(devid, va); }
+static inline bool svm_is_va_hpage_align(u32 devid, u64 va)
+{
+    return svm_is_hpage_align(devid, va);
+}
 
-static inline bool svm_is_va_gpage_align(u32 devid, u64 va) { return svm_is_gpage_align(devid, va); }
+static inline bool svm_is_va_gpage_align(u32 devid, u64 va)
+{
+    return svm_is_gpage_align(devid, va);
+}
 
 static inline int svm_get_aligned_size(u32 devid, u64 svm_flag, u64 size, u64 *aligned_size)
 {

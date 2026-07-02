@@ -99,7 +99,10 @@ STATIC void devmm_erase_mem_node(struct devmm_addr_mng *addr_mng, struct devmm_m
 }
 
 /* Returning true means that the corresponding add_info is saved, including the page structure and dma address. */
-bool devmm_mem_node_is_store_addr_info(struct devmm_mem_node *mem_node) { return (mem_node->addr_info != NULL); }
+bool devmm_mem_node_is_store_addr_info(struct devmm_mem_node *mem_node)
+{
+    return (mem_node->addr_info != NULL);
+}
 
 static struct devmm_mem_node *devmm_alloc_mem_node(u64 va, u64 len, u32 page_size, bool is_need_dma_map)
 {
@@ -131,9 +134,8 @@ static struct devmm_mem_node *devmm_alloc_mem_node(u64 va, u64 len, u32 page_siz
     mem_node->page_size = page_size;
     mem_node->addr_info = is_need_dma_map ? (struct devmm_addr_info *)(mem_node + 1) : NULL;
 
-    devmm_drv_debug(
-        "Vaddress and len alloc memory node. (is_need_dma_map=%u; va=%llx; len=%llx)\n", is_need_dma_map, tmp_va,
-        tmp_len);
+    devmm_drv_debug("Vaddress and len alloc memory node. (is_need_dma_map=%u; va=%llx; len=%llx)\n", is_need_dma_map,
+                    tmp_va, tmp_len);
 
     return mem_node;
 }
@@ -150,8 +152,8 @@ static inline bool devmm_is_need_dma_map(struct devmm_addr_mng *addr_mng, u64 va
     return (addr_mng->is_need_dma_map || is_dev_readonly);
 }
 
-struct devmm_mem_node *devmm_get_mem_node(
-    struct devmm_addr_mng *addr_mng, ka_pid_t devpid, u64 va, u64 len, u32 page_size)
+struct devmm_mem_node *devmm_get_mem_node(struct devmm_addr_mng *addr_mng, ka_pid_t devpid, u64 va, u64 len,
+                                          u32 page_size)
 {
     struct devmm_mem_node *mem_node = devmm_search_mem_node(addr_mng, va, len);
     if (mem_node != NULL) {
@@ -196,14 +198,14 @@ struct devmm_addr_info *devmm_get_addr_info(struct devmm_mem_node *mem_node, u64
     return &mem_node->addr_info[offset];
 }
 
-void devmm_set_ka_dma_addr_to_addr_info(
-    const struct devmm_addr_info *in_addr_info, struct devmm_mem_node *mem_node, struct devmm_addr_info *addr_info)
+void devmm_set_ka_dma_addr_to_addr_info(const struct devmm_addr_info *in_addr_info, struct devmm_mem_node *mem_node,
+                                        struct devmm_addr_info *addr_info)
 {
     *addr_info = *in_addr_info;
 }
 
-int devmm_dma_map_page(
-    u32 dev_id, ka_page_t *page, u32 len, struct devmm_mem_node *mem_node, struct devmm_addr_info *addr_info)
+int devmm_dma_map_page(u32 dev_id, ka_page_t *page, u32 len, struct devmm_mem_node *mem_node,
+                       struct devmm_addr_info *addr_info)
 {
     ka_device_t *dev = NULL;
     ka_dma_addr_t dma_addr = 0;
@@ -239,9 +241,8 @@ int devmm_dma_map_page(
     return 0;
 }
 #ifndef UVM_OPEN
-int devmm_dma_map_page_partial(
-    u32 dev_id, ka_page_t *uvm_page, u32 offset, u32 len, struct devmm_mem_node *uvm_mem_node,
-    struct devmm_addr_info *uvm_addr_info)
+int devmm_dma_map_page_partial(u32 dev_id, ka_page_t *uvm_page, u32 offset, u32 len,
+                               struct devmm_mem_node *uvm_mem_node, struct devmm_addr_info *uvm_addr_info)
 {
     ka_device_t *dev = NULL;
     ka_dma_addr_t uvm_dma_addr = 0;
@@ -327,9 +328,8 @@ void devmm_addr_mng_free_res(struct devmm_addr_mng *addr_mng)
 
         devmm_dma_unmap_all_page(mem_node);
         if (ka_base_atomic_read(&mem_node->valid_page_num) != 0) {
-            devmm_drv_warn(
-                "Memnode details. (va=0x%llx; len=%llu; valid_page_num=%d)\n", mem_node->va, mem_node->len,
-                ka_base_atomic_read(&mem_node->valid_page_num));
+            devmm_drv_warn("Memnode details. (va=0x%llx; len=%llu; valid_page_num=%d)\n", mem_node->va, mem_node->len,
+                           ka_base_atomic_read(&mem_node->valid_page_num));
         }
 
         devmm_erase_mem_node(addr_mng, mem_node);
@@ -353,9 +353,8 @@ void devmm_addr_mng_free_res_by_addr(struct devmm_addr_mng *addr_mng, u64 start,
         if ((mem_node->va >= start) && (mem_node->va < end)) {
             devmm_dma_unmap_all_page(mem_node);
             if (ka_base_atomic_read(&mem_node->valid_page_num) != 0) {
-                devmm_drv_warn(
-                    "Memnode details. (va=0x%llx; len=%llu; valid_page_num=%d)\n", mem_node->va, mem_node->len,
-                    ka_base_atomic_read(&mem_node->valid_page_num));
+                devmm_drv_warn("Memnode details. (va=0x%llx; len=%llu; valid_page_num=%d)\n", mem_node->va,
+                               mem_node->len, ka_base_atomic_read(&mem_node->valid_page_num));
             }
             devmm_erase_mem_node(addr_mng, mem_node);
             devmm_free_mem_node(mem_node);
@@ -411,11 +410,11 @@ bool devmm_mem_node_is_in_use(struct devmm_mem_node *mem_node)
     return false;
 }
 
-typedef bool (*devmm_mem_attr_check_func)(
-    struct devmm_svm_process *svm_proc, struct devmm_mem_node *mem_node, u64 vaddr, u64 size, u32 page_size);
+typedef bool (*devmm_mem_attr_check_func)(struct devmm_svm_process *svm_proc, struct devmm_mem_node *mem_node,
+                                          u64 vaddr, u64 size, u32 page_size);
 
-static bool devmm_mem_is_alloced(
-    struct devmm_svm_process *svm_proc, struct devmm_mem_node *mem_node, u64 vaddr, u64 size, u32 page_size)
+static bool devmm_mem_is_alloced(struct devmm_svm_process *svm_proc, struct devmm_mem_node *mem_node, u64 vaddr,
+                                 u64 size, u32 page_size)
 {
     struct devmm_addr_info *addr_info = NULL;
     ka_vm_area_struct_t *vma = NULL;
@@ -442,8 +441,8 @@ static bool devmm_mem_is_alloced(
     return true;
 }
 
-static bool devmm_mem_is_readonly(
-    struct devmm_svm_process *svm_proc, struct devmm_mem_node *mem_node, u64 vaddr, u64 size, u32 page_size)
+static bool devmm_mem_is_readonly(struct devmm_svm_process *svm_proc, struct devmm_mem_node *mem_node, u64 vaddr,
+                                  u64 size, u32 page_size)
 {
     if (devmm_is_readonly_mem(mem_node->page_prot) == false) {
         return false;

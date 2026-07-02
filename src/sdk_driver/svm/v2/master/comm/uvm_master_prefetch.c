@@ -39,7 +39,10 @@ KA_TASK_DEFINE_SPINLOCK(prefetching_task_lock);
 
 static ka_atomic64_t uvm_uuid_counter = KA_BASE_ATOMIC64_INIT(0);
 
-static uint64_t uvm_get_uuid(void) { return (uint64_t)ka_base_atomic64_inc_return(&uvm_uuid_counter); }
+static uint64_t uvm_get_uuid(void)
+{
+    return (uint64_t)ka_base_atomic64_inc_return(&uvm_uuid_counter);
+}
 
 void uvm_hnode_add_to_prefetching_task_hashtable(struct prefetching_task *task)
 {
@@ -168,9 +171,10 @@ static bool is_uvm_location_same(struct drv_uvm_location location1, struct drv_u
     return false;
 }
 
-static int uvm_prefetch_h2d_common_data_trans_dma_map(
-    struct devmm_svm_process *svm_proc, struct devmm_uvm_heap *uvm_heap, struct uvm_prefetch_batch_info *batch_info,
-    uint64_t *host_pa, struct devmm_addr_info *addr_info)
+static int uvm_prefetch_h2d_common_data_trans_dma_map(struct devmm_svm_process *svm_proc,
+                                                      struct devmm_uvm_heap *uvm_heap,
+                                                      struct uvm_prefetch_batch_info *batch_info, uint64_t *host_pa,
+                                                      struct devmm_addr_info *addr_info)
 {
     uint64_t pfn = 0;
     ka_page_t *pg = NULL;
@@ -179,14 +183,12 @@ static int uvm_prefetch_h2d_common_data_trans_dma_map(
     for (i = 0; i < batch_info->cnt; i++) {
         pfn = KA_MM_PFN_DOWN(host_pa[i]);
         pg = ka_mm_pfn_to_page(pfn);
-        ret = devmm_dma_map_page(
-            devmm_get_phyid_devid_from_svm_process(svm_proc, batch_info->dst_location.id), pg, DEVMM_UVM_PAGE_SIZE,
-            NULL, &addr_info[i]);
+        ret = devmm_dma_map_page(devmm_get_phyid_devid_from_svm_process(svm_proc, batch_info->dst_location.id), pg,
+                                 DEVMM_UVM_PAGE_SIZE, NULL, &addr_info[i]);
         if (ret != 0) {
 #ifndef EMU_ST
-            devmm_drv_err(
-                "devmm_dma_map_page failed. (dev_id=%u; va=0x%llx)\n", batch_info->dst_location.id,
-                batch_info->va + i * DEVMM_UVM_PAGE_SIZE);
+            devmm_drv_err("devmm_dma_map_page failed. (dev_id=%u; va=0x%llx)\n", batch_info->dst_location.id,
+                          batch_info->va + i * DEVMM_UVM_PAGE_SIZE);
             for (i--; i >= 0; i--) {
                 devmm_dma_unmap_page(NULL, &addr_info[i]);
             }
@@ -198,16 +200,16 @@ static int uvm_prefetch_h2d_common_data_trans_dma_map(
     return ret;
 }
 
-static int uvm_prefetch_h2d_common_data_trans(
-    struct devmm_svm_process *svm_proc, struct devmm_uvm_heap *uvm_heap, struct uvm_prefetch_batch_info *batch_info,
-    uint64_t *host_pa, uint64_t *dev_pa, uint64_t msg_cnt)
+static int uvm_prefetch_h2d_common_data_trans(struct devmm_svm_process *svm_proc, struct devmm_uvm_heap *uvm_heap,
+                                              struct uvm_prefetch_batch_info *batch_info, uint64_t *host_pa,
+                                              uint64_t *dev_pa, uint64_t msg_cnt)
 {
     struct devmm_chan_uvm_prefetch *prefetch_msg = NULL;
     struct devmm_addr_info addr_info[MAX_CONT_NUM] = {0};
     int i = 0, ret = 0;
 
-    prefetch_msg = (struct devmm_chan_uvm_prefetch *)devmm_kzalloc_ex(
-        sizeof(struct devmm_chan_uvm_prefetch), KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
+    prefetch_msg = (struct devmm_chan_uvm_prefetch *)devmm_kzalloc_ex(sizeof(struct devmm_chan_uvm_prefetch),
+                                                                      KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
     if (prefetch_msg == NULL) {
         devmm_drv_err("Kzalloc error. (va=0x%lx)\n", batch_info->va);
         return -ENOMEM;
@@ -220,8 +222,8 @@ static int uvm_prefetch_h2d_common_data_trans(
     }
 
     prefetch_msg->head.dev_id = devmm_get_phyid_devid_from_svm_process(svm_proc, batch_info->dst_location.id);
-    prefetch_msg->head.msg_id =
-        batch_info->is_readmostly ? DEVMM_CHAN_UVM_PREFETCH_H2D_READMOSTLY_ID : DEVMM_CHAN_UVM_PREFETCH_H2D_ID;
+    prefetch_msg->head.msg_id = batch_info->is_readmostly ? DEVMM_CHAN_UVM_PREFETCH_H2D_READMOSTLY_ID :
+                                                            DEVMM_CHAN_UVM_PREFETCH_H2D_ID;
     prefetch_msg->head.process_id.hostpid = svm_proc->process_id.hostpid;
     prefetch_msg->head.process_id.vfid = svm_proc->process_id.vfid;
     prefetch_msg->is_read_mostly = batch_info->is_readmostly;
@@ -236,17 +238,15 @@ static int uvm_prefetch_h2d_common_data_trans(
     if (batch_info->is_readmostly) {
         ret = devmm_chan_msg_send(prefetch_msg, sizeof(*prefetch_msg), 0);
         if (ret != 0) {
-            devmm_drv_err(
-                "Device copy data process failed. (ret=%d; dev_id=%u; va=0x%llx)\n", ret, batch_info->dst_location.id,
-                batch_info->va);
+            devmm_drv_err("Device copy data process failed. (ret=%d; dev_id=%u; va=0x%llx)\n", ret,
+                          batch_info->dst_location.id, batch_info->va);
             goto msg_send_err;
         }
     } else {
         ret = devmm_chan_msg_send(prefetch_msg, sizeof(*prefetch_msg), sizeof(*prefetch_msg));
         if (ret != 0) {
-            devmm_drv_err(
-                "Device copy data process failed. (ret=%d; dev_id=%u; va=0x%llx)\n", ret, batch_info->dst_location.id,
-                batch_info->va);
+            devmm_drv_err("Device copy data process failed. (ret=%d; dev_id=%u; va=0x%llx)\n", ret,
+                          batch_info->dst_location.id, batch_info->va);
             goto msg_send_err;
         }
         memcpy_s(dev_pa, MAX_CONT_NUM * sizeof(uint64_t), prefetch_msg->dst_addr, batch_info->cnt * sizeof(uint64_t));
@@ -261,9 +261,8 @@ msg_send_err:
     return ret;
 }
 
-static int uvm_prefetch_h2d_common(
-    struct devmm_svm_process *svm_proc, struct devmm_uvm_heap *uvm_heap, struct uvm_prefetch_batch_info *batch_info,
-    uint64_t msg_cnt)
+static int uvm_prefetch_h2d_common(struct devmm_svm_process *svm_proc, struct devmm_uvm_heap *uvm_heap,
+                                   struct uvm_prefetch_batch_info *batch_info, uint64_t msg_cnt)
 {
     struct uvm_page_info page_info = {0};
     uint64_t cur_va;
@@ -311,17 +310,18 @@ static int uvm_prefetch_h2d_common(
     return ret;
 }
 
-static int uvm_prefetch_h2d_readmostly(
-    struct devmm_svm_process *svm_proc, struct devmm_uvm_heap *uvm_heap, struct uvm_prefetch_batch_info *batch_info,
-    ka_atomic_t *h2d_readmoslty_msg_send_cnt)
+static int uvm_prefetch_h2d_readmostly(struct devmm_svm_process *svm_proc, struct devmm_uvm_heap *uvm_heap,
+                                       struct uvm_prefetch_batch_info *batch_info,
+                                       ka_atomic_t *h2d_readmoslty_msg_send_cnt)
 {
     uint64_t msg_cnt = 0;
     int ret;
     bool task_created = false;
- 	struct prefetching_task *prefetch_task = NULL;
+    struct prefetching_task *prefetch_task = NULL;
 
     if (uvm_hnode_find_from_prefetching_task_hashtable(batch_info->id) == NULL) {
-        prefetch_task = (struct prefetching_task *)devmm_kzalloc_ex(sizeof(*prefetch_task), KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
+        prefetch_task = (struct prefetching_task *)devmm_kzalloc_ex(sizeof(*prefetch_task),
+                                                                    KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
         if (!prefetch_task) {
 #ifndef EMU_ST
             devmm_drv_err("Kzalloc for prefetching_task failed.\n");
@@ -341,16 +341,15 @@ static int uvm_prefetch_h2d_readmostly(
             uvm_hnode_wait_for_removal(prefetch_task->id);
             devmm_kfree_ex(prefetch_task);
         }
-        devmm_drv_err(
-            "uvm_prefetch_h2d_common failed. (va=0x%llx, src_dev_id=%u, dst_dev_id=%u)\n", batch_info->va,
-            batch_info->src_location.id, batch_info->dst_location.id);
+        devmm_drv_err("uvm_prefetch_h2d_common failed. (va=0x%llx, src_dev_id=%u, dst_dev_id=%u)\n", batch_info->va,
+                      batch_info->src_location.id, batch_info->dst_location.id);
 #endif
     }
     return ret;
 }
 
-static int uvm_prefetch_h2h_batch_pages(
-    struct devmm_uvm_heap *uvm_heap, struct uvm_prefetch_batch_info *batch_info, ka_page_t **dst_pages)
+static int uvm_prefetch_h2h_batch_pages(struct devmm_uvm_heap *uvm_heap, struct uvm_prefetch_batch_info *batch_info,
+                                        ka_page_t **dst_pages)
 {
     struct uvm_page_info page_info = {0};
     ka_page_t *src_page = NULL;
@@ -371,8 +370,8 @@ static int uvm_prefetch_h2h_batch_pages(
 #ifndef EMU_ST
         src_pfn = KA_MM_PFN_DOWN(src_pa);
         src_page = ka_mm_pfn_to_page(src_pfn);
-        ret = memcpy_s(
-            ka_mm_page_address(dst_pages[i]), DEVMM_UVM_PAGE_SIZE, ka_mm_page_address(src_page), DEVMM_UVM_PAGE_SIZE);
+        ret = memcpy_s(ka_mm_page_address(dst_pages[i]), DEVMM_UVM_PAGE_SIZE, ka_mm_page_address(src_page),
+                       DEVMM_UVM_PAGE_SIZE);
         if (ret != 0) {
             devmm_drv_err("memcpy_s failed. (va=0x%llx)\n", batch_info->va + i * DEVMM_UVM_PAGE_SIZE);
             return ret;
@@ -383,9 +382,8 @@ static int uvm_prefetch_h2h_batch_pages(
     return 0;
 }
 
-static int uvm_remap_and_update_mapping(
-    struct devmm_svm_process *svm_proc, struct devmm_uvm_heap *uvm_heap, struct uvm_prefetch_batch_info *batch_info,
-    ka_page_t **dst_pages)
+static int uvm_remap_and_update_mapping(struct devmm_svm_process *svm_proc, struct devmm_uvm_heap *uvm_heap,
+                                        struct uvm_prefetch_batch_info *batch_info, ka_page_t **dst_pages)
 {
     struct uvm_page_info page_info = {0};
     uint32_t prot;
@@ -397,8 +395,8 @@ static int uvm_remap_and_update_mapping(
     ret = devmm_pages_remap(svm_proc, batch_info->va, batch_info->cnt, dst_pages, prot);
     if (ret != 0) {
 #ifndef EMU_ST
-        devmm_drv_err(
-            "Insert pages vma error. (ret=%d, va=0x%llx, page_num=%llu)\n", ret, batch_info->va, batch_info->cnt);
+        devmm_drv_err("Insert pages vma error. (ret=%d, va=0x%llx, page_num=%llu)\n", ret, batch_info->va,
+                      batch_info->cnt);
 #endif
         return ret;
     }
@@ -417,8 +415,8 @@ static int uvm_remap_and_update_mapping(
     return 0;
 }
 
-static int uvm_prefetch_h2h(
-    struct devmm_svm_process *svm_proc, struct devmm_uvm_heap *uvm_heap, struct uvm_prefetch_batch_info *batch_info)
+static int uvm_prefetch_h2h(struct devmm_svm_process *svm_proc, struct devmm_uvm_heap *uvm_heap,
+                            struct uvm_prefetch_batch_info *batch_info)
 {
     struct devmm_phy_addr_attr attr = {0};
     ka_page_t **dst_pages = NULL;
@@ -435,8 +433,8 @@ static int uvm_prefetch_h2h(
     dst_pages = (ka_page_t **)devmm_kzalloc_ex(sizeof(ka_page_t *) * batch_info->cnt, KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
     if (dst_pages == NULL) {
 #ifndef EMU_ST
-        devmm_drv_err(
-            "devmm_kzalloc_ex for dst_pages failed. (va=0x%llx, page_num=%llu)\n", batch_info->va, batch_info->cnt);
+        devmm_drv_err("devmm_kzalloc_ex for dst_pages failed. (va=0x%llx, page_num=%llu)\n", batch_info->va,
+                      batch_info->cnt);
         return -ENOMEM;
 #endif
     }
@@ -473,9 +471,8 @@ free_tmp_pages:
     return ret;
 }
 
-static int uvm_prefetch_d2h_get_page_info(
-    struct devmm_svm_process *svm_proc, struct devmm_uvm_heap *uvm_heap, struct uvm_prefetch_batch_info *batch_info,
-    uint64_t *dev_pa)
+static int uvm_prefetch_d2h_get_page_info(struct devmm_svm_process *svm_proc, struct devmm_uvm_heap *uvm_heap,
+                                          struct uvm_prefetch_batch_info *batch_info, uint64_t *dev_pa)
 {
     uint64_t va = batch_info->va;
     struct uvm_page_info page_info = {0};
@@ -495,9 +492,8 @@ static int uvm_prefetch_d2h_get_page_info(
 
         if (!(page_bitmap_get_device_mapped(page_info.page_bitmap) &&
               (page_info.page_map->devid == batch_info->src_location.id))) {
-            devmm_drv_err(
-                "Va is not mapped in device. (va=0x%llx, src_dev_id=%d, real_dev=%d)\n", va,
-                batch_info->src_location.id, page_info.page_map->devid);
+            devmm_drv_err("Va is not mapped in device. (va=0x%llx, src_dev_id=%d, real_dev=%d)\n", va,
+                          batch_info->src_location.id, page_info.page_map->devid);
             return -EFAULT;
         }
 
@@ -507,9 +503,9 @@ static int uvm_prefetch_d2h_get_page_info(
     return ret;
 }
 
-static int uvm_prefetch_d2h_alloc_pages(
-    struct devmm_svm_process *svm_proc, struct devmm_uvm_heap *uvm_heap, struct uvm_prefetch_batch_info *batch_info,
-    ka_page_t ***pages, struct devmm_phy_addr_attr *attr)
+static int uvm_prefetch_d2h_alloc_pages(struct devmm_svm_process *svm_proc, struct devmm_uvm_heap *uvm_heap,
+                                        struct uvm_prefetch_batch_info *batch_info, ka_page_t ***pages,
+                                        struct devmm_phy_addr_attr *attr)
 {
     uint64_t va = batch_info->va;
     int ret = 0;
@@ -541,9 +537,9 @@ static int uvm_prefetch_d2h_alloc_pages(
     return ret;
 }
 
-static int uvm_prefetch_h2d(
-    struct devmm_svm_process *svm_proc, struct devmm_uvm_heap *uvm_heap, struct uvm_prefetch_batch_info *batch_info,
-    struct uvm_prefetch_type *type, ka_atomic_t *h2d_readmoslty_msg_send_cnt)
+static int uvm_prefetch_h2d(struct devmm_svm_process *svm_proc, struct devmm_uvm_heap *uvm_heap,
+                            struct uvm_prefetch_batch_info *batch_info, struct uvm_prefetch_type *type,
+                            ka_atomic_t *h2d_readmoslty_msg_send_cnt)
 {
     uint64_t msg_cnt = 0;
     int ret = 0;
@@ -556,16 +552,14 @@ static int uvm_prefetch_h2d(
     }
 
     if (ret != 0) {
-        devmm_drv_err(
-            "uvm_prefetch_h2d failed. (va=0x%llx, cnt=%u, dst_location.id=%u, is_readmostly=%d)\n", batch_info->va,
-            batch_info->cnt, batch_info->dst_location.id, batch_info->is_readmostly);
+        devmm_drv_err("uvm_prefetch_h2d failed. (va=0x%llx, cnt=%u, dst_location.id=%u, is_readmostly=%d)\n",
+                      batch_info->va, batch_info->cnt, batch_info->dst_location.id, batch_info->is_readmostly);
     }
     return ret;
 }
 
-static int uvm_prefetch_d2h_sync(
-    struct devmm_svm_process *svm_proc, struct devmm_uvm_heap *uvm_heap, struct uvm_prefetch_batch_info *batch_info,
-    uint64_t *dev_pa, struct page **pages)
+static int uvm_prefetch_d2h_sync(struct devmm_svm_process *svm_proc, struct devmm_uvm_heap *uvm_heap,
+                                 struct uvm_prefetch_batch_info *batch_info, uint64_t *dev_pa, struct page **pages)
 {
     struct devmm_chan_uvm_prefetch *prefetch_msg = NULL;
     struct devmm_addr_info dma_addr[MAX_CONT_NUM] = {0};
@@ -574,8 +568,8 @@ static int uvm_prefetch_d2h_sync(
 
     dev_phyid = devmm_get_phyid_devid_from_svm_process(svm_proc, batch_info->src_location.id);
 
-    prefetch_msg = (struct devmm_chan_uvm_prefetch *)devmm_kzalloc_ex(
-        sizeof(struct devmm_chan_uvm_prefetch), KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
+    prefetch_msg = (struct devmm_chan_uvm_prefetch *)devmm_kzalloc_ex(sizeof(struct devmm_chan_uvm_prefetch),
+                                                                      KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
     if (prefetch_msg == NULL) {
 #ifndef EMU_ST
         devmm_drv_err("Devmm_kvalloc for struct uvm_chan_prefetch failed. (va=0x%llx)\n", batch_info->va);
@@ -587,9 +581,8 @@ static int uvm_prefetch_d2h_sync(
         ret = devmm_dma_map_page(dev_phyid, pages[i], DEVMM_UVM_PAGE_SIZE, NULL, &dma_addr[i]);
         if (ret != 0) {
 #ifndef EMU_ST
-            devmm_drv_err(
-                "devmm_dma_map_page failed. (dev_phyid=%u, current_va=0x%llx)\n", dev_phyid,
-                batch_info->va + i * DEVMM_UVM_PAGE_SIZE);
+            devmm_drv_err("devmm_dma_map_page failed. (dev_phyid=%u, current_va=0x%llx)\n", dev_phyid,
+                          batch_info->va + i * DEVMM_UVM_PAGE_SIZE);
             ret = -EIO;
             goto dma_unmap_page;
 #endif
@@ -611,9 +604,8 @@ static int uvm_prefetch_d2h_sync(
     ret = devmm_chan_msg_send(prefetch_msg, sizeof(*prefetch_msg), 0);
     if (ret != 0) {
 #ifndef EMU_ST
-        devmm_drv_err(
-            "Device copy data process failed. (ret=%d; dst_location.id=%u; va=0x%llx)\n", ret,
-            batch_info->dst_location.id, batch_info->va);
+        devmm_drv_err("Device copy data process failed. (ret=%d; dst_location.id=%u; va=0x%llx)\n", ret,
+                      batch_info->dst_location.id, batch_info->va);
         goto dma_unmap_page;
 #endif
     }
@@ -627,9 +619,8 @@ dma_unmap_page:
     return ret;
 }
 
-static int uvm_prefetch_d2h_set_page_info(
-    struct devmm_svm_process *svm_proc, struct devmm_uvm_heap *uvm_heap, struct uvm_prefetch_batch_info *batch_info,
-    ka_page_t **pages)
+static int uvm_prefetch_d2h_set_page_info(struct devmm_svm_process *svm_proc, struct devmm_uvm_heap *uvm_heap,
+                                          struct uvm_prefetch_batch_info *batch_info, ka_page_t **pages)
 {
     uint64_t va = batch_info->va;
     struct uvm_page_info page_info = {0};
@@ -669,8 +660,8 @@ static int uvm_prefetch_d2h_set_page_info(
     return ret;
 }
 
-static int uvm_prefetch_d2h(
-    struct devmm_svm_process *svm_proc, struct devmm_uvm_heap *uvm_heap, struct uvm_prefetch_batch_info *batch_info)
+static int uvm_prefetch_d2h(struct devmm_svm_process *svm_proc, struct devmm_uvm_heap *uvm_heap,
+                            struct uvm_prefetch_batch_info *batch_info)
 {
     uint64_t va = batch_info->va;        /* Virtual Address */
     uint64_t dev_pa[MAX_CONT_NUM] = {0}; /* DEVice Physical Address */
@@ -731,40 +722,39 @@ free_tmp_pages:
     return ret;
 }
 
-static int uvm_prefetch_d2d(void) { return 0; }
+static int uvm_prefetch_d2d(void)
+{
+    return 0;
+}
 
 static inline bool is_h2h_direction(struct uvm_prefetch_batch_info *batch_info)
 {
-    return (
-        batch_info->src_location.type == DRV_UVM_LOCATION_TYPE_HOST &&
-        batch_info->dst_location.type == DRV_UVM_LOCATION_TYPE_HOST_NUMA);
+    return (batch_info->src_location.type == DRV_UVM_LOCATION_TYPE_HOST &&
+            batch_info->dst_location.type == DRV_UVM_LOCATION_TYPE_HOST_NUMA);
 }
 
 static inline bool is_h2d_direction(struct uvm_prefetch_batch_info *batch_info)
 {
-    return (
-        batch_info->src_location.type == DRV_UVM_LOCATION_TYPE_HOST &&
-        batch_info->dst_location.type == DRV_UVM_LOCATION_TYPE_DEVICE);
+    return (batch_info->src_location.type == DRV_UVM_LOCATION_TYPE_HOST &&
+            batch_info->dst_location.type == DRV_UVM_LOCATION_TYPE_DEVICE);
 }
 
 static inline bool is_d2h_direction(struct uvm_prefetch_batch_info *batch_info)
 {
-    return (
-        batch_info->src_location.type == DRV_UVM_LOCATION_TYPE_DEVICE &&
-        (batch_info->dst_location.type == DRV_UVM_LOCATION_TYPE_HOST ||
-         batch_info->dst_location.type == DRV_UVM_LOCATION_TYPE_HOST_NUMA));
+    return (batch_info->src_location.type == DRV_UVM_LOCATION_TYPE_DEVICE &&
+            (batch_info->dst_location.type == DRV_UVM_LOCATION_TYPE_HOST ||
+             batch_info->dst_location.type == DRV_UVM_LOCATION_TYPE_HOST_NUMA));
 }
 
 static inline bool is_d2d_direction(struct uvm_prefetch_batch_info *batch_info)
 {
-    return (
-        batch_info->src_location.type == DRV_UVM_LOCATION_TYPE_DEVICE &&
-        batch_info->dst_location.type == DRV_UVM_LOCATION_TYPE_DEVICE);
+    return (batch_info->src_location.type == DRV_UVM_LOCATION_TYPE_DEVICE &&
+            batch_info->dst_location.type == DRV_UVM_LOCATION_TYPE_DEVICE);
 }
 
-static int uvm_prefetch_all_direction(
-    struct devmm_svm_process *svm_proc, struct devmm_uvm_heap *uvm_heap, struct uvm_prefetch_batch_info *batch_info,
-    struct uvm_prefetch_type *type, ka_atomic_t *h2d_readmoslty_msg_send_cnt)
+static int uvm_prefetch_all_direction(struct devmm_svm_process *svm_proc, struct devmm_uvm_heap *uvm_heap,
+                                      struct uvm_prefetch_batch_info *batch_info, struct uvm_prefetch_type *type,
+                                      ka_atomic_t *h2d_readmoslty_msg_send_cnt)
 {
     int ret = 0;
 
@@ -790,11 +780,10 @@ static int uvm_prefetch_all_direction(
         }
     } else {
 #ifndef EMU_ST
-        devmm_drv_err(
-            "uvm_prefetch_all_direction failed, invalid direction. \
+        devmm_drv_err("uvm_prefetch_all_direction failed, invalid direction. \
             (src_location.type=%d, src_location.id=%d, dst_location.type=%d, dst_location.id=%d)\n",
-            batch_info->src_location.type, batch_info->src_location.id, batch_info->dst_location.type,
-            batch_info->dst_location.id);
+                      batch_info->src_location.type, batch_info->src_location.id, batch_info->dst_location.type,
+                      batch_info->dst_location.id);
         return -EOPNOTSUPP;
 #endif
     }
@@ -802,15 +791,15 @@ static int uvm_prefetch_all_direction(
     return ret;
 }
 
-static int uvm_prefetch_h2d_readmostly_last_msg(
-    struct devmm_svm_process *svm_proc, struct uvm_prefetch_batch_info *batch_info,
-    ka_atomic_t *h2d_readmoslty_msg_send_cnt)
+static int uvm_prefetch_h2d_readmostly_last_msg(struct devmm_svm_process *svm_proc,
+                                                struct uvm_prefetch_batch_info *batch_info,
+                                                ka_atomic_t *h2d_readmoslty_msg_send_cnt)
 {
     struct devmm_chan_uvm_prefetch *prefetch_msg = NULL;
     int ret;
 
-    prefetch_msg = (struct devmm_chan_uvm_prefetch *)devmm_kzalloc_ex(
-        sizeof(struct devmm_chan_uvm_prefetch), KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
+    prefetch_msg = (struct devmm_chan_uvm_prefetch *)devmm_kzalloc_ex(sizeof(struct devmm_chan_uvm_prefetch),
+                                                                      KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
     if (prefetch_msg == NULL) {
         devmm_drv_err("Kzalloc error. (va=0x%lx)\n", batch_info->va);
         return -ENOMEM;
@@ -829,9 +818,8 @@ static int uvm_prefetch_h2d_readmostly_last_msg(
     /* sync send msg:device todo copy data process */
     ret = devmm_chan_msg_send(prefetch_msg, sizeof(*prefetch_msg), 0);
     if (ret != 0) {
-        devmm_drv_err(
-            "Device copy data process failed. (ret=%d; dev_id=%u; va=0x%llx)\n", ret, batch_info->dst_location.id,
-            prefetch_msg->va);
+        devmm_drv_err("Device copy data process failed. (ret=%d; dev_id=%u; va=0x%llx)\n", ret,
+                      batch_info->dst_location.id, prefetch_msg->va);
     }
 
     devmm_kfree_ex(prefetch_msg);
@@ -839,10 +827,10 @@ static int uvm_prefetch_h2d_readmostly_last_msg(
     return ret;
 }
 
-static int uvm_prefetch_set_batch_info(
-    struct devmm_uvm_heap *uvm_heap, struct uvm_prefetch_batch_info *batch_info, struct uvm_page_info *page_info,
-    struct uvm_mem_range *mem_range, int *i, uint64_t *cur_va, bool *is_readmostly,
-    struct drv_uvm_location *src_location, struct drv_uvm_location *dst_location)
+static int uvm_prefetch_set_batch_info(struct devmm_uvm_heap *uvm_heap, struct uvm_prefetch_batch_info *batch_info,
+                                       struct uvm_page_info *page_info, struct uvm_mem_range *mem_range, int *i,
+                                       uint64_t *cur_va, bool *is_readmostly, struct drv_uvm_location *src_location,
+                                       struct drv_uvm_location *dst_location)
 {
     int ret = 0;
 
@@ -908,7 +896,7 @@ static int uvm_prefetch_lock_and_check_page(struct uvm_page_info *page_info, uin
         ret = -EINVAL;
         *flag = true;
     } else if (!page_bitmap_get_host_mapped(page_info->page_bitmap) &&
-        !page_bitmap_get_device_mapped(page_info->page_bitmap)) {
+               !page_bitmap_get_device_mapped(page_info->page_bitmap)) {
         ka_task_up_read(page_info->page_rwlock);
         page_info->page_rwlock--;
         *flag = true;
@@ -939,9 +927,8 @@ static int uvm_prefetch_process_batch(struct uvm_prefetch_batch_ctx *ctx)
             goto free_lock;
         }
 
-        ret = uvm_prefetch_set_batch_info(
-            ctx->uvm_heap, ctx->batch_info, &page_info, ctx->mem_range, &i, &cur_va, &is_readmostly, ctx->src_location,
-            ctx->dst_location);
+        ret = uvm_prefetch_set_batch_info(ctx->uvm_heap, ctx->batch_info, &page_info, ctx->mem_range, &i, &cur_va,
+                                          &is_readmostly, ctx->src_location, ctx->dst_location);
         if (ret == -ENOMEM) {
             continue;
         } else if (ret != 0) {
@@ -950,8 +937,8 @@ static int uvm_prefetch_process_batch(struct uvm_prefetch_batch_ctx *ctx)
             goto free_lock;
         }
 
-        ret = uvm_prefetch_all_direction(
-            ctx->svm_proc, ctx->uvm_heap, ctx->batch_info, ctx->type, ctx->h2d_readmoslty_msg_send_cnt);
+        ret = uvm_prefetch_all_direction(ctx->svm_proc, ctx->uvm_heap, ctx->batch_info, ctx->type,
+                                         ctx->h2d_readmoslty_msg_send_cnt);
         if (ret != 0) {
             devmm_drv_err("uvm_prefetch_all_direction failed. (va=0x%llx)\n", ctx->batch_info->va);
         }
@@ -975,8 +962,8 @@ static int uvm_prefetch_process_batch(struct uvm_prefetch_batch_ctx *ctx)
     return ret;
 }
 
-static int uvm_prefetch_set_mem_attr(
-    struct devmm_uvm_heap *uvm_heap, struct uvm_mem_range *mem_range, struct drv_uvm_location *dst_location)
+static int uvm_prefetch_set_mem_attr(struct devmm_uvm_heap *uvm_heap, struct uvm_mem_range *mem_range,
+                                     struct drv_uvm_location *dst_location)
 {
     struct uvm_page_info page_info = {0};
     uint64_t cur_va = 0;
@@ -988,23 +975,23 @@ static int uvm_prefetch_set_mem_attr(
             devmm_drv_err("Get page info by va failed. (va=0x%llx)\n", cur_va);
             return -EINVAL;
         }
-        page_bitmap_set_last_prefetch_loc(
-            page_info.page_bitmap, uvm_check_and_get_advise_id(dst_location->type, dst_location->id, true));
+        page_bitmap_set_last_prefetch_loc(page_info.page_bitmap,
+                                          uvm_check_and_get_advise_id(dst_location->type, dst_location->id, true));
         page_bitmap_set_last_prefetch_loc_type(page_info.page_bitmap, dst_location->type);
     }
 
     return ret;
 }
 
-static void uvm_prefetch_set_location(
-    struct drv_uvm_location *dst_location, struct devmm_uvm_prefetch_para *prefetch_para)
+static void uvm_prefetch_set_location(struct drv_uvm_location *dst_location,
+                                      struct devmm_uvm_prefetch_para *prefetch_para)
 {
     dst_location->id = prefetch_para->location.id;
     dst_location->type = prefetch_para->location.type;
 }
 
-static int uvm_prefetch(
-    struct devmm_svm_process *svm_proc, struct devmm_uvm_heap *uvm_heap, struct devmm_uvm_prefetch_para *prefetch_para)
+static int uvm_prefetch(struct devmm_svm_process *svm_proc, struct devmm_uvm_heap *uvm_heap,
+                        struct devmm_uvm_prefetch_para *prefetch_para)
 {
     struct uvm_prefetch_batch_info batch_info = {0};
     struct uvm_mem_range mem_range = {0};
@@ -1022,11 +1009,10 @@ static int uvm_prefetch(
 
     uvm_prefetch_set_location(&dst_location, prefetch_para);
 
-    if (!devmm_acquire_aligned_addr_and_cnt(
-            prefetch_para->va, prefetch_para->size, true, &mem_range.aligned_va, &aligned_size)) {
-        devmm_drv_err(
-            "Acquire aligned addr and cnt failed. (dev_ptr=0x%llx; byte_count=%llx)\n", prefetch_para->va,
-            prefetch_para->size);
+    if (!devmm_acquire_aligned_addr_and_cnt(prefetch_para->va, prefetch_para->size, true, &mem_range.aligned_va,
+                                            &aligned_size)) {
+        devmm_drv_err("Acquire aligned addr and cnt failed. (dev_ptr=0x%llx; byte_count=%llx)\n", prefetch_para->va,
+                      prefetch_para->size);
         return -EINVAL;
     }
     mem_range.aligned_cnt = aligned_size / uvm_heap->chunk_page_size;
@@ -1072,17 +1058,16 @@ int devmm_uvm_ioctl_prefetch(struct devmm_svm_process *svm_proc, struct devmm_io
     uvm_heap = devmm_uvm_get_heap(svm_proc, prefetch_para->va);
     if (uvm_heap == NULL) {
 #ifndef EMU_ST
-        devmm_drv_err(
-            "UVM Heap is NULL or error. (heap_is_null=%d; va=0x%llx)\n", (uvm_heap == NULL), prefetch_para->va);
+        devmm_drv_err("UVM Heap is NULL or error. (heap_is_null=%d; va=0x%llx)\n", (uvm_heap == NULL),
+                      prefetch_para->va);
         return -EADDRNOTAVAIL;
 #endif
     }
 
     if (!devmm_vaddr_and_size_is_in_uvm_range(prefetch_para->va, prefetch_para->size)) {
 #ifndef EMU_ST
-        devmm_drv_err(
-            "Prefetch addr and size is not in uvm range. (va=0x%llx, size=%llu)\n", prefetch_para->va,
-            prefetch_para->size);
+        devmm_drv_err("Prefetch addr and size is not in uvm range. (va=0x%llx, size=%llu)\n", prefetch_para->va,
+                      prefetch_para->size);
         return -EADDRNOTAVAIL;
 #endif
     }
@@ -1098,22 +1083,22 @@ int devmm_uvm_ioctl_prefetch(struct devmm_svm_process *svm_proc, struct devmm_io
     return uvm_prefetch(svm_proc, uvm_heap, prefetch_para);
 }
 
-static int uvm_prefetch_batch_copy_from_user_data(
-    struct devmm_uvm_prefetch_batch_para *para, uint64_t *vas, uint64_t *sizes, struct drv_uvm_location *locs,
-    uint64_t *loc_ids)
+static int uvm_prefetch_batch_copy_from_user_data(struct devmm_uvm_prefetch_batch_para *para, uint64_t *vas,
+                                                  uint64_t *sizes, struct drv_uvm_location *locs, uint64_t *loc_ids)
 {
     int ret = 0;
     ret += ka_base_copy_from_user(vas, (void __ka_user *)para->vas, para->count * sizeof(uint64_t));
     ret += ka_base_copy_from_user(sizes, (void __ka_user *)para->sizes, para->count * sizeof(uint64_t));
-    ret += ka_base_copy_from_user(
-        locs, (void __ka_user *)para->locations, para->num_loc * sizeof(struct drv_uvm_location));
+    ret += ka_base_copy_from_user(locs, (void __ka_user *)para->locations,
+                                  para->num_loc * sizeof(struct drv_uvm_location));
     ret += ka_base_copy_from_user(loc_ids, (void __ka_user *)para->loc_ids, para->num_loc * sizeof(uint64_t));
     return ret;
 }
 
-static int uvm_prefetch_batch_prefetch_for_one(
-    struct devmm_svm_process *svm_proc, struct devmm_uvm_prefetch_batch_para *para, uint64_t *vas, uint64_t *sizes,
-    struct drv_uvm_location *locs, uint64_t *loc_ids, uint64_t i, int *loc_ids_index)
+static int uvm_prefetch_batch_prefetch_for_one(struct devmm_svm_process *svm_proc,
+                                               struct devmm_uvm_prefetch_batch_para *para, uint64_t *vas,
+                                               uint64_t *sizes, struct drv_uvm_location *locs, uint64_t *loc_ids,
+                                               uint64_t i, int *loc_ids_index)
 {
     struct devmm_uvm_prefetch_para prefetch_para = {0};
     struct devmm_uvm_heap *uvm_heap = NULL;
@@ -1129,15 +1114,14 @@ static int uvm_prefetch_batch_prefetch_for_one(
 
     uvm_heap = devmm_uvm_get_heap(svm_proc, prefetch_para.va);
     if (uvm_heap == NULL) {
-        devmm_drv_err(
-            "UVM Heap is NULL or error. (heap_is_null=%d; va=0x%llx)\n", (uvm_heap == NULL), prefetch_para.va);
+        devmm_drv_err("UVM Heap is NULL or error. (heap_is_null=%d; va=0x%llx)\n", (uvm_heap == NULL),
+                      prefetch_para.va);
         return -EADDRNOTAVAIL;
     }
 
     if (!devmm_vaddr_and_size_is_in_uvm_range(prefetch_para.va, prefetch_para.size)) {
-        devmm_drv_err(
-            "Prefetch addr and size is not in uvm range. (va=0x%llx, size=%llu)\n", prefetch_para.va,
-            prefetch_para.size);
+        devmm_drv_err("Prefetch addr and size is not in uvm range. (va=0x%llx, size=%llu)\n", prefetch_para.va,
+                      prefetch_para.size);
         return -EADDRNOTAVAIL;
     }
 

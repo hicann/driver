@@ -33,8 +33,8 @@ void pma_ub_acquired_segs_mng_uninit(struct pma_ub_acquired_segs_mng *mng);
 
 void pma_ub_acquired_segs_mng_show(struct pma_ub_acquired_segs_mng *mng, ka_seq_file_t *seq);
 
-int pma_ub_add_acquired_seg(
-    struct pma_ub_acquired_segs_mng *mng, u64 va, u64 size, int (*invalidate)(u64 invalidate_tag), u64 invalidate_tag);
+int pma_ub_add_acquired_seg(struct pma_ub_acquired_segs_mng *mng, u64 va, u64 size,
+                            int (*invalidate)(u64 invalidate_tag), u64 invalidate_tag);
 int pma_ub_del_acquired_seg(struct pma_ub_acquired_segs_mng *mng, u64 va, u64 size);
 
 #endif

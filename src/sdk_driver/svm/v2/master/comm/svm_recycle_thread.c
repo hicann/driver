@@ -51,9 +51,15 @@ static void svm_call_recycle_handle(void)
     }
 }
 
-void svm_recycle_thread_pause(void) { g_recycle_thread_pause = 1U; }
+void svm_recycle_thread_pause(void)
+{
+    g_recycle_thread_pause = 1U;
+}
 
-void svm_recycle_thread_continue(void) { g_recycle_thread_pause = 0U; }
+void svm_recycle_thread_continue(void)
+{
+    g_recycle_thread_pause = 0U;
+}
 #ifndef EMU_ST
 static void ssleep_interruptible(u32 seconds)
 {

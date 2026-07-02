@@ -23,8 +23,8 @@ void svm_task_ctx_put(void *task_ctx);
 
 u32 svm_task_obtain_feature_id(void); /* return feature_id */
 void svm_task_set_feature_invalid(void *task_ctx, u32 feature_id);
-int svm_task_set_feature_priv(
-    void *task_ctx, u32 feature_id, const char *feature_name, void *priv, void (*release)(void *priv));
+int svm_task_set_feature_priv(void *task_ctx, u32 feature_id, const char *feature_name, void *priv,
+                              void (*release)(void *priv));
 void *svm_task_get_feature_priv(void *task_ctx, u32 feature_id);
 
 void svm_task_ctx_for_each(u32 udevid, void *priv, void (*func)(void *task_ctx, void *priv));

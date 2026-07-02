@@ -55,7 +55,10 @@ struct pmm_ctx *pmm_ctx_get(u32 udevid, int tgid)
     return pmm_ctx;
 }
 
-void pmm_ctx_put(struct pmm_ctx *pmm_ctx) { svm_task_ctx_put(pmm_ctx->task_ctx); }
+void pmm_ctx_put(struct pmm_ctx *pmm_ctx)
+{
+    svm_task_ctx_put(pmm_ctx->task_ctx);
+}
 
 #if (PMM_MEM_SIZE_PER_BIT > KA_UINT_MAX)
 #error "PMM_MEM_SIZE_PER_BIT is out of u32 range.!"
@@ -96,7 +99,10 @@ static int pmm_ctx_init(struct pmm_ctx *pmm_ctx)
     return 0;
 }
 
-static void pmm_ctx_uninit(struct pmm_ctx *pmm_ctx) { svm_vfree(pmm_ctx->bit_size_stats); }
+static void pmm_ctx_uninit(struct pmm_ctx *pmm_ctx)
+{
+    svm_vfree(pmm_ctx->bit_size_stats);
+}
 
 static void pmm_ctx_release(void *priv)
 {
@@ -221,5 +227,8 @@ int pmm_init(void)
 }
 DECLAER_FEATURE_AUTO_INIT(pmm_init, FEATURE_LOADER_STAGE_2);
 
-void pmm_uninit(void) { apm_proc_mem_query_handle_unregister(); }
+void pmm_uninit(void)
+{
+    apm_proc_mem_query_handle_unregister();
+}
 DECLAER_FEATURE_AUTO_UNINIT(pmm_uninit, FEATURE_LOADER_STAGE_2);

@@ -23,11 +23,10 @@ static int svm_madvise_remote(u32 devid, u64 va, u64 size, u32 flag)
 {
     struct svm_umc_msg_head head;
     struct svm_madvise_msg madvise_msg = {.size = size, .flag = flag, .va = va};
-    struct svm_umc_msg msg = {
-        .msg_in = (char *)(uintptr_t)&madvise_msg,
-        .msg_in_len = sizeof(struct svm_madvise_msg),
-        .msg_out = NULL,
-        .msg_out_len = 0};
+    struct svm_umc_msg msg = {.msg_in = (char *)(uintptr_t)&madvise_msg,
+                              .msg_in_len = sizeof(struct svm_madvise_msg),
+                              .msg_out = NULL,
+                              .msg_out_len = 0};
     struct svm_apbi apbi;
     u32 event_id = SVM_MADVISE_EVENT;
     u32 task_type = PROCESS_CP1;
@@ -44,10 +43,9 @@ static int svm_madvise_remote(u32 devid, u64 va, u64 size, u32 flag)
         if (ret == DRV_ERROR_NO_PROCESS) {
             (void)svm_apbi_clear(devid, (int)task_type);
         }
-        svm_err(
-            "Mem advise msg failed. (devid=%u; devpid=%d; ret=%d; va=0x%llx; size=%llu; flag=0x%llx; "
-            "task_type=%u)\n",
-            devid, apbi.tgid, ret, va, size, flag, task_type);
+        svm_err("Mem advise msg failed. (devid=%u; devpid=%d; ret=%d; va=0x%llx; size=%llu; flag=0x%llx; "
+                "task_type=%u)\n",
+                devid, apbi.tgid, ret, va, size, flag, task_type);
         return ret;
     }
 

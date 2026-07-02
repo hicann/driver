@@ -61,7 +61,10 @@ STATIC void devmm_del_process_id_list(ka_list_head_t *head)
     }
 }
 
-STATIC u32 devmm_get_node_hash_tag(int host_pid) { return (u32)host_pid % DEVMM_HOSTPID_LIST_MAX; }
+STATIC u32 devmm_get_node_hash_tag(int host_pid)
+{
+    return (u32)host_pid % DEVMM_HOSTPID_LIST_MAX;
+}
 
 int devmm_add_to_svm_proc_hashtable(struct devmm_svm_process *svm_proc)
 {
@@ -83,8 +86,8 @@ int devmm_add_to_svm_proc_hashtable(struct devmm_svm_process *svm_proc)
                 vfid = node->svm_proc.process_id.vfid;
                 proc_idx = node->svm_proc.proc_idx;
                 ka_task_write_unlock_bh(&svm_proc_hash_spinlock[bucket]);
-                devmm_drv_err(
-                    "Repeat pid info. (hostpid=%d; devid=%u; vfid=%u; proc_idx=%u)\n", hostpid, devid, vfid, proc_idx);
+                devmm_drv_err("Repeat pid info. (hostpid=%d; devid=%u; vfid=%u; proc_idx=%u)\n", hostpid, devid, vfid,
+                              proc_idx);
                 return -EEXIST;
 #endif
             }
@@ -233,20 +236,16 @@ static int devmm_create_svm_proc_uvm_heap(struct devmm_svm_process *svm_proc)
     svm_proc->uvm_heap->chunk_page_size = DEVMM_UVM_PAGE_SIZE;
     svm_proc->uvm_heap->max_used_page = 0;
     ka_task_rwlock_init(&svm_proc->uvm_heap->uvm_heap_lock);
-    memset_s(
-        svm_proc->uvm_heap->invalid_devices, sizeof(svm_proc->uvm_heap->invalid_devices), 0,
-        sizeof(svm_proc->uvm_heap->invalid_devices));
-    memset_s(
-        svm_proc->uvm_heap->page_bitmaps, sizeof(svm_proc->uvm_heap->page_bitmaps), 0,
-        sizeof(svm_proc->uvm_heap->page_bitmaps));
-    memset_s(
-        svm_proc->uvm_heap->page_maps, sizeof(svm_proc->uvm_heap->page_maps), 0, sizeof(svm_proc->uvm_heap->page_maps));
-    memset_s(
-        svm_proc->uvm_heap->device_bitmaps, sizeof(svm_proc->uvm_heap->device_bitmaps), 0,
-        sizeof(svm_proc->uvm_heap->device_bitmaps));
-    memset_s(
-        svm_proc->uvm_heap->access_by_bitmaps, sizeof(svm_proc->uvm_heap->access_by_bitmaps), 0,
-        sizeof(svm_proc->uvm_heap->access_by_bitmaps));
+    memset_s(svm_proc->uvm_heap->invalid_devices, sizeof(svm_proc->uvm_heap->invalid_devices), 0,
+             sizeof(svm_proc->uvm_heap->invalid_devices));
+    memset_s(svm_proc->uvm_heap->page_bitmaps, sizeof(svm_proc->uvm_heap->page_bitmaps), 0,
+             sizeof(svm_proc->uvm_heap->page_bitmaps));
+    memset_s(svm_proc->uvm_heap->page_maps, sizeof(svm_proc->uvm_heap->page_maps), 0,
+             sizeof(svm_proc->uvm_heap->page_maps));
+    memset_s(svm_proc->uvm_heap->device_bitmaps, sizeof(svm_proc->uvm_heap->device_bitmaps), 0,
+             sizeof(svm_proc->uvm_heap->device_bitmaps));
+    memset_s(svm_proc->uvm_heap->access_by_bitmaps, sizeof(svm_proc->uvm_heap->access_by_bitmaps), 0,
+             sizeof(svm_proc->uvm_heap->access_by_bitmaps));
     ka_hash_init(svm_proc->uvm_trans_page_hashtable);
     ka_task_mutex_init(&svm_proc->uvm_ht_lock);
 
@@ -349,9 +348,8 @@ static void devmm_init_svm_proc_state(struct devmm_svm_process *svm_proc)
     svm_proc->vfid[SVM_HOST_AGENT_ID] = 0;
 
     for (i = 0; i < SVM_UAGENT_MAX_NUM; i++) {
-        (void)memset_s(
-            &svm_proc->proc_states_info[i], sizeof(struct devmm_proc_states_info), 0,
-            sizeof(struct devmm_proc_states_info));
+        (void)memset_s(&svm_proc->proc_states_info[i], sizeof(struct devmm_proc_states_info), 0,
+                       sizeof(struct devmm_proc_states_info));
         ka_task_init_rwsem(&svm_proc->proc_states_info[i].rw_sem);
         ka_base_atomic64_set(&svm_proc->proc_states_info[i].oom_ref, 0);
     }
@@ -410,8 +408,8 @@ static int devmm_init_svm_proc_host_pin_heap(struct devmm_svm_process *svm_proc)
     u64 used_mask_size;
     struct devmm_svm_heap *heap;
 
-    used_mask_size =
-        sizeof(unsigned long) * KA_BASE_BITS_TO_LONGS((u64)(DEVMM_HOST_PIN_SIZE / HEAP_USED_PER_MASK_SIZE));
+    used_mask_size = sizeof(unsigned long) *
+                     KA_BASE_BITS_TO_LONGS((u64)(DEVMM_HOST_PIN_SIZE / HEAP_USED_PER_MASK_SIZE));
     heap = devmm_kvzalloc(sizeof(struct devmm_svm_heap) + used_mask_size);
     if (heap == NULL) {
         return -ENOMEM;
@@ -535,10 +533,9 @@ void devmm_free_svm_proc(struct devmm_svm_process *svm_proc)
 {
     struct devmm_proc_node *node = ka_list_entry(svm_proc, struct devmm_proc_node, svm_proc);
 
-    devmm_drv_debug(
-        "Devmm_free_process details. (hostpid=%d; devid=%d; vfid=%d; devpid=%d; status=%u; pro_idx=%u)\n",
-        svm_proc->process_id.hostpid, svm_proc->process_id.devid, svm_proc->process_id.vfid, svm_proc->devpid,
-        svm_proc->notifier_reg_flag, svm_proc->proc_idx);
+    devmm_drv_debug("Devmm_free_process details. (hostpid=%d; devid=%d; vfid=%d; devpid=%d; status=%u; pro_idx=%u)\n",
+                    svm_proc->process_id.hostpid, svm_proc->process_id.devid, svm_proc->process_id.vfid,
+                    svm_proc->devpid, svm_proc->notifier_reg_flag, svm_proc->proc_idx);
 
     devmm_destroy_svm_proc_host_pin_heap(svm_proc);
 #ifndef UVM_OPEN
@@ -549,7 +546,10 @@ void devmm_free_svm_proc(struct devmm_svm_process *svm_proc)
     devmm_kvfree(node);
 }
 
-void devmm_set_svm_proc_state(struct devmm_svm_process *svm_proc, u32 state) { svm_proc->inited = state; }
+void devmm_set_svm_proc_state(struct devmm_svm_process *svm_proc, u32 state)
+{
+    svm_proc->inited = state;
+}
 
 STATIC bool devmm_cmp_list_process_id(ka_list_head_t *head, struct devmm_svm_process_id *process_id)
 {
@@ -604,8 +604,8 @@ int devmm_add_svm_proc_pid(struct devmm_svm_process *svm_proc, struct devmm_svm_
     return 0;
 }
 
-int devmm_add_svm_proc_pid_lock(
-    struct devmm_svm_process *svm_proc, struct devmm_svm_process_id *process_id, int dev_pid)
+int devmm_add_svm_proc_pid_lock(struct devmm_svm_process *svm_proc, struct devmm_svm_process_id *process_id,
+                                int dev_pid)
 {
     int ret;
 
@@ -667,9 +667,8 @@ static int devmm_svm_proc_cmp_phy_devid(struct devmm_svm_process *svm_proc, u32 
     return -ENODEV;
 }
 
-static bool devmm_svm_proc_devid_is_inited(
-    struct devmm_svm_process *svm_proc, u32 docker_id, bool in_normal_docker, u32 phy_devid, u32 vfid,
-    u32 real_phy_devid)
+static bool devmm_svm_proc_devid_is_inited(struct devmm_svm_process *svm_proc, u32 docker_id, bool in_normal_docker,
+                                           u32 phy_devid, u32 vfid, u32 real_phy_devid)
 {
     int ret;
 
@@ -715,8 +714,8 @@ int devmm_get_hostpid_by_docker_id(u32 docker_id, u32 phy_devid, u32 vfid, int *
         {
             svm_proc = &proc_node->svm_proc;
             if ((svm_proc->inited == DEVMM_SVM_INITED_FLAG) &&
-                devmm_svm_proc_devid_is_inited(
-                    svm_proc, docker_id, in_normal_docker, phy_devid, vfid, real_phy_devid)) {
+                devmm_svm_proc_devid_is_inited(svm_proc, docker_id, in_normal_docker, phy_devid, vfid,
+                                               real_phy_devid)) {
                 pids[got_cnt] = svm_proc->process_id.hostpid;
                 got_cnt++;
                 if (got_cnt >= cnt) {
@@ -762,8 +761,8 @@ STATIC struct devmm_svm_process *devmm_sreach_svm_proc_each(proc_mng_cmp_fun cmp
     return NULL;
 }
 
-static struct devmm_svm_process *devmm_svm_proc_get(
-    proc_mng_cmp_fun_by_both_pid cmp_fun, ka_pid_t devpid, ka_pid_t hostpid)
+static struct devmm_svm_process *devmm_svm_proc_get(proc_mng_cmp_fun_by_both_pid cmp_fun, ka_pid_t devpid,
+                                                    ka_pid_t hostpid)
 {
     u32 bucket_occupy[DEVMM_HOSTPID_LIST_MAX] = {0};
     struct devmm_proc_node *proc_node = NULL;
@@ -897,11 +896,10 @@ STATIC bool devmm_cmp_proc_both_pid(struct devmm_svm_process *svm_pro, ka_pid_t 
         if ((hostpid == 0) || (svm_pro->process_id.hostpid == hostpid)) {
             return true;
         } else {
-            devmm_drv_warn(
-                "Devmm cmp proc by hostpid failed, svm proc detail. "
-                "(hostpid=%d; devid=%d; vfid=%d; devpid=%d; status=%u; proc_idx=%u)\n",
-                svm_pro->process_id.hostpid, svm_pro->process_id.devid, svm_pro->process_id.vfid, svm_pro->devpid,
-                svm_pro->notifier_reg_flag, svm_pro->proc_idx);
+            devmm_drv_warn("Devmm cmp proc by hostpid failed, svm proc detail. "
+                           "(hostpid=%d; devid=%d; vfid=%d; devpid=%d; status=%u; proc_idx=%u)\n",
+                           svm_pro->process_id.hostpid, svm_pro->process_id.devid, svm_pro->process_id.vfid,
+                           svm_pro->devpid, svm_pro->notifier_reg_flag, svm_pro->proc_idx);
         }
     }
 
@@ -1104,18 +1102,18 @@ STATIC void devmm_svm_release_work(ka_work_struct_t *work)
         (svm_proc->notifier_reg_flag != DEVMM_SVM_UNINITED_FLAG)) {
         svm_proc->release_work_cnt++;
         if (svm_proc->release_work_cnt < svm_proc->release_work_timeout) {
-            (void)ka_task_schedule_delayed_work(
-                &svm_proc->release_work, ka_system_msecs_to_jiffies(DEVMM_RELEASE_WAITTIME));
+            (void)ka_task_schedule_delayed_work(&svm_proc->release_work,
+                                                ka_system_msecs_to_jiffies(DEVMM_RELEASE_WAITTIME));
             return;
         }
     }
 
     if (svm_proc->release_work_cnt >= svm_proc->release_work_timeout) {
-        devmm_drv_err(
-            "Svm proc in use can not release. "
-            "(hostpid=%d; devid=%d; vfid=%d; devpid=%d; status=%u; proc_idx=%u; timeout=%u)\n",
-            svm_proc->process_id.hostpid, svm_proc->process_id.devid, svm_proc->process_id.vfid, svm_proc->devpid,
-            svm_proc->notifier_reg_flag, svm_proc->proc_idx, svm_proc->release_work_timeout);
+        devmm_drv_err("Svm proc in use can not release. "
+                      "(hostpid=%d; devid=%d; vfid=%d; devpid=%d; status=%u; proc_idx=%u; timeout=%u)\n",
+                      svm_proc->process_id.hostpid, svm_proc->process_id.devid, svm_proc->process_id.vfid,
+                      svm_proc->devpid, svm_proc->notifier_reg_flag, svm_proc->proc_idx,
+                      svm_proc->release_work_timeout);
         return;
     }
     svm_proc->release_work_cnt = 0;
@@ -1129,9 +1127,8 @@ STATIC void devmm_svm_release_work(ka_work_struct_t *work)
 
 void devmm_svm_release_proc(struct devmm_svm_process *svm_proc)
 {
-    devmm_drv_debug(
-        "Devmm release create work. (hostpid=%d; timeout=%u)\n", svm_proc->process_id.hostpid,
-        svm_proc->release_work_timeout);
+    devmm_drv_debug("Devmm release create work. (hostpid=%d; timeout=%u)\n", svm_proc->process_id.hostpid,
+                    svm_proc->release_work_timeout);
     devmm_srcu_work_uninit(&svm_proc->srcu_work);
     KA_TASK_INIT_DELAYED_WORK(&svm_proc->release_work, devmm_svm_release_work);
     svm_proc->release_work_cnt = 0;
@@ -1149,8 +1146,8 @@ struct devmm_svm_process *devmm_get_svm_proc_from_file(ka_file_t *file)
 
 bool devmm_test_and_set_init_flag(ka_file_t *file)
 {
-    int init_flag =
-        ka_base_atomic_inc_return(&((struct devmm_private_data *)ka_fs_get_file_private_data(file))->init_flag);
+    int init_flag = ka_base_atomic_inc_return(
+        &((struct devmm_private_data *)ka_fs_get_file_private_data(file))->init_flag);
     if (init_flag != 1) {
         ka_base_atomic_dec(&((struct devmm_private_data *)ka_fs_get_file_private_data(file))->init_flag);
         return true;
@@ -1179,8 +1176,8 @@ int devmm_alloc_svm_proc_set_to_file(ka_file_t *file)
 
     devmm_set_svm_proc_state(svm_proc, DEVMM_SVM_PRE_INITING_FLAG);
     ((struct devmm_private_data *)ka_fs_get_file_private_data(file))->process = svm_proc;
-    devmm_drv_debug(
-        "Devmm_set_porcess details. (status=%u; proc_idx=%u)\n", svm_proc->notifier_reg_flag, svm_proc->proc_idx);
+    devmm_drv_debug("Devmm_set_porcess details. (status=%u; proc_idx=%u)\n", svm_proc->notifier_reg_flag,
+                    svm_proc->proc_idx);
     return 0;
 }
 
@@ -1240,10 +1237,11 @@ int devmm_svm_proc_mng_init(void)
     return 0;
 }
 
-void devmm_svm_proc_mng_uinit(void) {}
+void devmm_svm_proc_mng_uinit(void)
+{}
 
-static struct devmm_proc_states_info *devmm_get_proc_states_info(
-    struct devmm_svm_process *svm_proc, u32 devid, u32 vfid)
+static struct devmm_proc_states_info *devmm_get_proc_states_info(struct devmm_svm_process *svm_proc, u32 devid,
+                                                                 u32 vfid)
 {
     struct uda_mia_dev_para mia_para;
     u32 udevid;
@@ -1264,8 +1262,8 @@ static struct devmm_proc_states_info *devmm_get_proc_states_info(
     return &svm_proc->proc_states_info[udevid];
 }
 
-void devmm_modify_process_status(
-    struct devmm_svm_process *svm_proc, u32 devid, u32 vfid, processStatus_t pid_status, bool new_state)
+void devmm_modify_process_status(struct devmm_svm_process *svm_proc, u32 devid, u32 vfid, processStatus_t pid_status,
+                                 bool new_state)
 {
     struct devmm_proc_states_info *info = devmm_get_proc_states_info(svm_proc, devid, vfid);
 

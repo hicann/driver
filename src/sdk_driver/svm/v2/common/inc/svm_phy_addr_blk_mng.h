@@ -79,17 +79,16 @@ struct devmm_blk_pg_range {
 #define DEVMM_PG_OFF_TAIL U64_MAX
 
 void devmm_phy_addr_blk_mng_init(struct devmm_phy_addr_blk_mng *mng);
-struct devmm_phy_addr_blk *devmm_phy_addr_blk_create(
-    struct devmm_phy_addr_blk_mng *mng, struct devmm_phy_addr_attr *attr, u64 pg_num, int *id);
+struct devmm_phy_addr_blk *devmm_phy_addr_blk_create(struct devmm_phy_addr_blk_mng *mng,
+                                                     struct devmm_phy_addr_attr *attr, u64 pg_num, int *id);
 void devmm_phy_addr_blk_destroy(struct devmm_phy_addr_blk_mng *mng, struct devmm_phy_addr_blk *blk);
 struct devmm_phy_addr_blk *devmm_phy_addr_blk_get(struct devmm_phy_addr_blk_mng *mng, int id);
 void devmm_phy_addr_blk_put(struct devmm_phy_addr_blk *blk);
 
-int devmm_phy_addr_blk_init(
-    struct devmm_svm_process *svm_proc, struct devmm_phy_addr_blk *blk, struct devmm_blk_pg_range *range);
-int devmm_phy_addr_blk_uninit(
-    struct devmm_svm_process *svm_proc, struct devmm_phy_addr_blk *blk, struct devmm_blk_pg_range *range, u32 free_type,
-    bool *is_finish);
+int devmm_phy_addr_blk_init(struct devmm_svm_process *svm_proc, struct devmm_phy_addr_blk *blk,
+                            struct devmm_blk_pg_range *range);
+int devmm_phy_addr_blk_uninit(struct devmm_svm_process *svm_proc, struct devmm_phy_addr_blk *blk,
+                              struct devmm_blk_pg_range *range, u32 free_type, bool *is_finish);
 void devmm_phy_addr_blks_destroy(struct devmm_svm_process *svm_proc);
 
 int devmm_phy_addr_blk_occupy_inc(struct devmm_phy_addr_blk *blk);

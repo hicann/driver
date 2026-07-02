@@ -45,9 +45,8 @@ static int sdma_clr_mem_by_uva(u32 udevid, int tgid, u64 va, u64 size)
         /* devid need set 0, because devid1 is slave SDMA device. */
         ret = sdma_kernel_memset(0, (unsigned long)(va + offset), real_size, ssid, SVM_SDMA_STREAM_ID, 0);
         if (ret != 0) {
-            svm_warn(
-                "Sdma_kernel_memset invalid, will go to memset_s. (ret=%d; ssid=%d; va=0x%llx; size=%llu)\n", ret, ssid,
-                va + offset, real_size);
+            svm_warn("Sdma_kernel_memset invalid, will go to memset_s. (ret=%d; ssid=%d; va=0x%llx; size=%llu)\n", ret,
+                     ssid, va + offset, real_size);
             return ret;
         }
     }

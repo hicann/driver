@@ -81,11 +81,10 @@ static int soma_mem_ioctl(u32 devid, u64 *va, u64 size, u32 flag, struct svm_glo
     ret = svm_cmd_ioctl(devid, SVM_SOMA_MEM_CFG, (void *)&para);
     if (ret != DRV_ERROR_NONE) {
         ret = (ret == DRV_ERROR_OPER_NOT_PERMITTED) ? DRV_ERROR_NO_PROCESS : ret;
-        svm_err_if(
-            (ret != DRV_ERROR_NO_PROCESS),
-            SOMA_LOG_TAG "Mem record ioctl failed. (ret=%d; va=0x%llx; "
-                         "flag=%u; size=%llu)\n",
-            ret, *va, flag, size);
+        svm_err_if((ret != DRV_ERROR_NO_PROCESS),
+                   SOMA_LOG_TAG "Mem record ioctl failed. (ret=%d; va=0x%llx; "
+                                "flag=%u; size=%llu)\n",
+                   ret, *va, flag, size);
         return ret;
     }
 
@@ -262,7 +261,10 @@ void mem_handle_put(soma_mem_handle *mem_handle)
     }
 }
 
-static void soma_mem_handle_release(soma_mem_handle *mem_handle) { mem_handle_put(mem_handle); }
+static void soma_mem_handle_release(soma_mem_handle *mem_handle)
+{
+    mem_handle_put(mem_handle);
+}
 
 static soma_mem_handle *soma_mem_get_handle(u64 pool_id)
 {
@@ -320,8 +322,8 @@ static int _malloc_global_va(u64 *va, u64 size, u32 devid, u32 module_id)
     return ret;
 }
 
-static int global_va_malloc_post_proc(
-    u64 start, u32 devid, const struct drv_mem_prop *prop, drv_mem_handle_t **out_handle)
+static int global_va_malloc_post_proc(u64 start, u32 devid, const struct drv_mem_prop *prop,
+                                      drv_mem_handle_t **out_handle)
 {
     int ret = 0;
     drv_mem_handle_t *handle = NULL;
@@ -438,9 +440,8 @@ static drvError_t halMemPoolCreateInner(soma_mem_pool_t pool, soma_mem_pool_prop
     ret = mem_pool_client_create(pool.devId, pool.poolId, prop.va, prop.maxSize, global_va);
     if (ret) {
         free_global_va(mem_handle->handle);
-        svm_soma_err(
-            "Pool create remote failed. (devid=%u; poolid=%d; ret=%d, va=0x%llx)\n", pool.devId, pool.poolId, ret,
-            global_va);
+        svm_soma_err("Pool create remote failed. (devid=%u; poolid=%d; ret=%d, va=0x%llx)\n", pool.devId, pool.poolId,
+                     ret, global_va);
         goto free_handle;
     }
 
@@ -508,9 +509,8 @@ static int soma_pool_create_para_check(soma_mem_pool_t pool, soma_mem_pool_prop 
     }
 
     if (prop.mem_prop.pg_type != MEM_HUGE_PAGE_TYPE || prop.mem_prop.mem_type != MEM_HBM_TYPE) {
-        svm_soma_err(
-            "page type or mem type is not supported. (pg_type=%u; mem_type=%u)\n", prop.mem_prop.pg_type,
-            prop.mem_prop.mem_type);
+        svm_soma_err("page type or mem type is not supported. (pg_type=%u; mem_type=%u)\n", prop.mem_prop.pg_type,
+                     prop.mem_prop.mem_type);
         return DRV_ERROR_INVALID_VALUE;
     }
 
@@ -520,9 +520,8 @@ static int soma_pool_create_para_check(soma_mem_pool_t pool, soma_mem_pool_prop 
     }
 
     if (pool.devId != prop.mem_prop.devid) {
-        svm_soma_err(
-            "Pool devid is not equal Prop devid. (pool.devId=0x%u; prop.devIde=0x%u)\n", pool.devId,
-            prop.mem_prop.devid);
+        svm_soma_err("Pool devid is not equal Prop devid. (pool.devId=0x%u; prop.devIde=0x%u)\n", pool.devId,
+                     prop.mem_prop.devid);
         return DRV_ERROR_INVALID_VALUE;
     }
 
@@ -593,15 +592,18 @@ static int somaPoolDestroyInner(soma_mem_pool_t pool)
     return DRV_ERROR_NONE;
 }
 
-drvError_t halMemPoolDestroy(soma_mem_pool_t pool) { return somaPoolDestroyInner(pool); }
+drvError_t halMemPoolDestroy(soma_mem_pool_t pool)
+{
+    return somaPoolDestroyInner(pool);
+}
 
 static int soma_pool_check_attr_val(enum soma_mem_pool_attr attr, int64_t val)
 {
     switch (attr) {
         case SOMA_MEM_POOL_ATTR_RELEASE_THRESHOLD:
             if (val < 0) {
-                svm_soma_err(
-                    "Negative value for release threshold is not allowed. (attr=0x%x; value=%lld)\n", attr, val);
+                svm_soma_err("Negative value for release threshold is not allowed. (attr=0x%x; value=%lld)\n", attr,
+                             val);
                 return DRV_ERROR_INVALID_VALUE;
             }
             if (!SVM_IS_ALIGNED((uint64_t)val, SOMA_POOL_HUGE_PAGE_SIZE)) {
@@ -620,10 +622,9 @@ static int soma_pool_check_attr_val(enum soma_mem_pool_attr attr, int64_t val)
             if (val == 0) {
                 return DRV_ERROR_NONE;
             }
-            svm_soma_err(
-                "Write non-zero value to SOMA_MEM_POOL_ATTR_RESERVED_MEM_HIGH is not allowed. (attr=0x%x; "
-                "value=%llu)\n",
-                attr, val);
+            svm_soma_err("Write non-zero value to SOMA_MEM_POOL_ATTR_RESERVED_MEM_HIGH is not allowed. (attr=0x%x; "
+                         "value=%llu)\n",
+                         attr, val);
             return DRV_ERROR_INVALID_VALUE;
 
         case SOMA_MEM_POOL_ATTR_USED_MEM_CURRENT:
@@ -672,9 +673,8 @@ drvError_t halMemPoolSetAttr(soma_mem_pool_t pool, enum soma_mem_pool_attr attr,
 
     ret = mem_pool_client_set_attr(pool.devId, pool.poolId, (u64)attr, (u64)val);
     if (ret != 0) {
-        svm_soma_err(
-            "SOMA pool client set attr failed. (poolId=%d, attr=%d, val=%d, ret=%d)\n", pool.poolId, (int)attr, val,
-            ret);
+        svm_soma_err("SOMA pool client set attr failed. (poolId=%d, attr=%d, val=%d, ret=%d)\n", pool.poolId, (int)attr,
+                     val, ret);
     }
 
     return ret;
@@ -804,8 +804,8 @@ static int soma_mem_malloc_cfg(u64 va, u64 size, drv_mem_handle_t *handle)
 
     if ((!svm_is_va_page_align(src_prop.devid, src_prop.flag, va)) ||
         (!svm_is_page_align(src_prop.devid, src_prop.flag, size))) {
-        svm_soma_err(
-            "Not align. (devid=%u; flag=0x%llx; va=0x%llx; size=0x%llx)\n", src_prop.devid, src_prop.flag, va, size);
+        svm_soma_err("Not align. (devid=%u; flag=0x%llx; va=0x%llx; size=0x%llx)\n", src_prop.devid, src_prop.flag, va,
+                     size);
         return DRV_ERROR_INVALID_VALUE;
     }
 
@@ -941,9 +941,15 @@ static int soma_pool_free_cfg(u64 va, u64 size, soma_mem_handle *soma_handle)
     return ret;
 }
 
-static bool soma_mem_flag_is_malloc(uint32_t flag) { return flag == SOMA_MEM_ALLOC; }
+static bool soma_mem_flag_is_malloc(uint32_t flag)
+{
+    return flag == SOMA_MEM_ALLOC;
+}
 
-static bool soma_mem_flag_is_free(uint32_t flag) { return flag == SOMA_MEM_FREE; }
+static bool soma_mem_flag_is_free(uint32_t flag)
+{
+    return flag == SOMA_MEM_FREE;
+}
 
 drvError_t halMemPoolAsyncConfig(soma_mem_pool_t pool, uint64_t va, uint64_t size, uint32_t flag)
 {

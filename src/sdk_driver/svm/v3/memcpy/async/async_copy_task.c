@@ -45,8 +45,8 @@ struct svm_copy_task *async_copy_task_remove(struct async_copy_ctx *ctx, int id)
     return copy_task;
 }
 
-static void async_copy_subtask_get_info(
-    struct copy_va_info *info, u64 finished_size, u64 grain_size, struct copy_va_info *sub_info)
+static void async_copy_subtask_get_info(struct copy_va_info *info, u64 finished_size, u64 grain_size,
+                                        struct copy_va_info *sub_info)
 {
     sub_info->size = svm_get_subtask_size(info->size - finished_size, grain_size);
     sub_info->src_va = info->src_va + finished_size;
@@ -74,9 +74,8 @@ static int async_copy_subtask_submit(struct svm_copy_task *copy_task, struct cop
 
         subtask = svm_copy_subtask_create(copy_task, &sub_info, subtask_flag);
         if (subtask == NULL) {
-            svm_err(
-                "Create subtask failed. (sub_dst=0x%llx; sub_src=0x%llx; size=%llu)\n", sub_info.dst_va,
-                sub_info.src_va, sub_info.size);
+            svm_err("Create subtask failed. (sub_dst=0x%llx; sub_src=0x%llx; size=%llu)\n", sub_info.dst_va,
+                    sub_info.src_va, sub_info.size);
             (void)svm_copy_task_wait(copy_task);
             return -EINVAL;
         }
@@ -175,17 +174,15 @@ struct svm_copy_task *async_copy_task_create_batch(struct async_copy_ctx *ctx, s
 
         ret = copy_va_info_check(ctx->udevid, &sub_info);
         if (ret != 0) {
-            svm_err(
-                "Va check failed. (ret=%d; index=%u; src_va=0x%llx; dst_va=0x%llx; size=%llu)\n", ret, i,
-                sub_info.src_va, sub_info.dst_va, sub_info.size);
+            svm_err("Va check failed. (ret=%d; index=%u; src_va=0x%llx; dst_va=0x%llx; size=%llu)\n", ret, i,
+                    sub_info.src_va, sub_info.dst_va, sub_info.size);
             goto recycle_sub_task;
         }
 
         ret = async_copy_subtask_submit(copy_task, &sub_info);
         if (ret != 0) {
-            svm_err(
-                "Batch cpy submit failed. (ret=%d; index=%u; src_va=0x%llx; dst_va=0x%llx; size=%llu)\n", ret, i,
-                sub_info.src_va, sub_info.dst_va, sub_info.size);
+            svm_err("Batch cpy submit failed. (ret=%d; index=%u; src_va=0x%llx; dst_va=0x%llx; size=%llu)\n", ret, i,
+                    sub_info.src_va, sub_info.dst_va, sub_info.size);
             goto recycle_sub_task;
         }
     }

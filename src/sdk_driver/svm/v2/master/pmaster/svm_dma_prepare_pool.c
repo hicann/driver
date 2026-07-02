@@ -214,8 +214,8 @@ void devmm_dma_prepare_pool_init(u32 devid)
     }
 
     ka_task_sema_init(&g_loop_sema[devid], 0);
-    task = ka_task_kthread_create(
-        devmm_dma_prepare_pool_loop_task, (void *)(uintptr_t)devid, "devmm_pool_loop_task_%u", devid);
+    task = ka_task_kthread_create(devmm_dma_prepare_pool_loop_task, (void *)(uintptr_t)devid, "devmm_pool_loop_task_%u",
+                                  devid);
     if (KA_IS_ERR_OR_NULL(task)) {
         devmm_drv_err("ka_task_kthread_create failed. (devid=%u)\n", devid);
     } else {
@@ -263,8 +263,8 @@ void devmm_dma_prepare_pool_uninit(u32 devid)
     }
 
     if (mseconds >= DEVMM_DMA_PREPARE_POOL_UNINIT_WAIT_MSECONDS) {
-        devmm_drv_err(
-            "devmm_dma_prepare_pool_uninit failed. (devid=%u; is_thread_inited=%d)\n", devid, g_thread_inited[devid]);
+        devmm_drv_err("devmm_dma_prepare_pool_uninit failed. (devid=%u; is_thread_inited=%d)\n", devid,
+                      g_thread_inited[devid]);
     }
 
     for (i = 0; i < DEVMM_DMA_PREPARE_POOL_LIST_NUM; ++i) {
@@ -313,9 +313,8 @@ void *devmm_dma_prepare_get_from_pool(u32 devid, u32 dma_node_num, struct devdrv
     }
 
     *dma_prepare = &node->dma_prepare;
-    devmm_drv_debug(
-        "devmm_dma_prepare_pool_get. (devid=%u; dma_node_num=%u; real_dma_node_num=%u)\n", devid,
-        pool->cfg.dma_node_num, dma_node_num);
+    devmm_drv_debug("devmm_dma_prepare_pool_get. (devid=%u; dma_node_num=%u; real_dma_node_num=%u)\n", devid,
+                    pool->cfg.dma_node_num, dma_node_num);
     return (void *)node;
 }
 

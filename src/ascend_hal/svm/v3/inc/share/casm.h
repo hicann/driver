@@ -22,10 +22,10 @@
  *  map/unmap: find src info by key, check memory white list mem and pin/unpin smp mem, store src info in map ctx
  */
 
-#define SVM_CASM_FLAG_PG_NC                     (1U << 0U)
-#define SVM_CASM_FLAG_PG_RDONLY                 (1U << 1U)
-#define SVM_CASM_FLAG_MAP_UB_ONE_PORT_PATH      (1U << 2U)
-#define SVM_CASM_FLAG_MAP_UB_MULTI_PORT_PATH    (1U << 3U)
+#define SVM_CASM_FLAG_PG_NC (1U << 0U)
+#define SVM_CASM_FLAG_PG_RDONLY (1U << 1U)
+#define SVM_CASM_FLAG_MAP_UB_ONE_PORT_PATH (1U << 2U)
+#define SVM_CASM_FLAG_MAP_UB_MULTI_PORT_PATH (1U << 3U)
 
 /* owner app call */
 int svm_casm_create_key(struct svm_dst_va *dst_va, u64 *key);

@@ -25,7 +25,10 @@ static inline u32 svm_get_register_map_type(uint32_t flag)
     return (flag & mask);
 }
 
-static inline u32 svm_get_register_proc_type(uint32_t flag) { return (flag >> MEM_PROC_TYPE_BIT); }
+static inline u32 svm_get_register_proc_type(uint32_t flag)
+{
+    return (flag >> MEM_PROC_TYPE_BIT);
+}
 
 static int svm_register_dev_flag_check(u32 devid, u32 flag)
 {
@@ -102,9 +105,8 @@ drvError_t halHostRegister(void *src_ptr, UINT64 size, UINT32 flag, UINT32 devid
     }
 
     *dst_ptr = (ret == 0) ? (void *)(uintptr_t)dst_va : *dst_ptr;
-    svm_debug(
-        "HostRegister exit. (ret=%d; src_ptr=0x%llx; dst_ptr=0x%llx; size=%llu; flag=0x%x; devid=%u)\n", ret, va,
-        (u64)(uintptr_t)(*dst_ptr), size, flag, devid);
+    svm_debug("HostRegister exit. (ret=%d; src_ptr=0x%llx; dst_ptr=0x%llx; size=%llu; flag=0x%x; devid=%u)\n", ret, va,
+              (u64)(uintptr_t)(*dst_ptr), size, flag, devid);
 
     return (drvError_t)ret;
 }
@@ -264,11 +266,10 @@ drvError_t halHostRegisterCapabilities(uint32_t devid, uint32_t acc_module_type,
         return (drvError_t)ret;
     }
 
-    *mem_map_cap =
-        ((d2h_acc_mask & (1ULL << acc_module_type)) != 0) ? HOST_MEM_MAP_SUPPORTED : HOST_MEM_MAP_NOT_SUPPORTED;
+    *mem_map_cap = ((d2h_acc_mask & (1ULL << acc_module_type)) != 0) ? HOST_MEM_MAP_SUPPORTED :
+                                                                       HOST_MEM_MAP_NOT_SUPPORTED;
 
-    svm_debug(
-        "Host register cap. (Devid=%u; acc_module_type=%u; d2h_acc_mask=0x%llx; mem_map_cap=%u)\n", devid,
-        acc_module_type, d2h_acc_mask, *mem_map_cap);
+    svm_debug("Host register cap. (Devid=%u; acc_module_type=%u; d2h_acc_mask=0x%llx; mem_map_cap=%u)\n", devid,
+              acc_module_type, d2h_acc_mask, *mem_map_cap);
     return DRV_ERROR_NONE;
 }

@@ -55,23 +55,25 @@ struct smm_ctx *smm_ctx_get(u32 udevid)
     return ctx;
 }
 
-void smm_ctx_put(struct smm_ctx *ctx) { svm_dev_ctx_put(ctx->dev_ctx); }
+void smm_ctx_put(struct smm_ctx *ctx)
+{
+    svm_dev_ctx_put(ctx->dev_ctx);
+}
 
 static int smm_ops_para_check(struct svm_global_va *src_info, struct svm_pa_seg pa_seg[], u64 *seg_num)
 {
     u32 src_max_udev_num = smm_get_src_max_udev_num();
     if ((src_info->udevid >= src_max_udev_num) || (pa_seg == NULL) || (seg_num == NULL) || (*seg_num == 0)) {
-        svm_err(
-            "Smm pa handle input check failed. (src_udev=%u; pa_seg_is_null=%u; seg_num_is_null=%u)\n",
-            src_info->udevid, (pa_seg == NULL), (seg_num == NULL));
+        svm_err("Smm pa handle input check failed. (src_udev=%u; pa_seg_is_null=%u; seg_num_is_null=%u)\n",
+                src_info->udevid, (pa_seg == NULL), (seg_num == NULL));
         return -EINVAL;
     }
 
     return 0;
 }
 
-static int smm_cross_server_pa_get(
-    struct smm_ctx *ctx, struct svm_global_va *src_info, struct svm_pa_seg pa_seg[], u64 *seg_num, u64 flag)
+static int smm_cross_server_pa_get(struct smm_ctx *ctx, struct svm_global_va *src_info, struct svm_pa_seg pa_seg[],
+                                   u64 *seg_num, u64 flag)
 {
     struct smm_ops *ops = NULL;
     u32 udevid = ctx->udevid;
@@ -96,8 +98,8 @@ static int smm_cross_server_pa_get(
     return ret;
 }
 
-static int smm_cross_server_pa_put(
-    struct smm_ctx *ctx, struct svm_global_va *src_info, struct svm_pa_seg pa_seg[], u64 seg_num)
+static int smm_cross_server_pa_put(struct smm_ctx *ctx, struct svm_global_va *src_info, struct svm_pa_seg pa_seg[],
+                                   u64 seg_num)
 {
     struct smm_ops *ops = NULL;
     u32 udevid = ctx->udevid;
@@ -122,8 +124,8 @@ static int smm_cross_server_pa_put(
     return ret;
 }
 
-static int smm_in_server_pa_get(
-    struct smm_ctx *ctx, struct svm_global_va *src_info, struct svm_pa_seg pa_seg[], u64 *seg_num, u64 flag)
+static int smm_in_server_pa_get(struct smm_ctx *ctx, struct svm_global_va *src_info, struct svm_pa_seg pa_seg[],
+                                u64 *seg_num, u64 flag)
 {
     struct smm_ops *ops = NULL;
     u32 udevid = ctx->udevid;
@@ -148,8 +150,8 @@ static int smm_in_server_pa_get(
     return ret;
 }
 
-static int smm_in_server_pa_put(
-    struct smm_ctx *ctx, struct svm_global_va *src_info, struct svm_pa_seg pa_seg[], u64 seg_num)
+static int smm_in_server_pa_put(struct smm_ctx *ctx, struct svm_global_va *src_info, struct svm_pa_seg pa_seg[],
+                                u64 seg_num)
 {
     struct smm_ops *ops = NULL;
     u32 udevid = ctx->udevid;
@@ -174,8 +176,7 @@ static int smm_in_server_pa_put(
     return ret;
 }
 
-int smm_pa_get(struct smm_ctx *ctx, struct svm_global_va *src_info, struct svm_pa_seg pa_seg[], u64 *seg_num,
-    u64 flag)
+int smm_pa_get(struct smm_ctx *ctx, struct svm_global_va *src_info, struct svm_pa_seg pa_seg[], u64 *seg_num, u64 flag)
 {
     int ret = smm_ops_para_check(src_info, pa_seg, seg_num);
     if (ret != 0) {
@@ -331,5 +332,6 @@ int smm_ops_feature_init(void)
 }
 DECLAER_FEATURE_AUTO_INIT(smm_ops_feature_init, FEATURE_LOADER_STAGE_2);
 
-void smm_ops_feature_uninit(void) {}
+void smm_ops_feature_uninit(void)
+{}
 DECLAER_FEATURE_AUTO_UNINIT(smm_ops_feature_uninit, FEATURE_LOADER_STAGE_2);

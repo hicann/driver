@@ -40,9 +40,8 @@ static pid_t devmm_get_devpid(uint32_t devid, enum devdrv_process_type proc_type
                 return 0;
             }
             g_svm_devpid[devid][proc_type] = devpid;
-            DEVMM_DRV_INFO(
-                "Query devpid succ. (devId=%u; hostpid=%d; proc_type=%u; devpid=%d).\n", devid, hostpidinfo.hostpid,
-                hostpidinfo.proc_type, devpid);
+            DEVMM_DRV_INFO("Query devpid succ. (devId=%u; hostpid=%d; proc_type=%u; devpid=%d).\n", devid,
+                           hostpidinfo.hostpid, hostpidinfo.proc_type, devpid);
         }
     }
 
@@ -88,9 +87,8 @@ static drvError_t devmm_get_event_grp_id(uint32_t devid, int pid, uint32_t *grp_
     return ret;
 }
 
-static drvError_t devmm_fill_event(
-    struct event_summary *event_info, uint32_t devid, enum devdrv_process_type proc_type, uint32_t subevent_id,
-    const char *msg, uint32_t msg_len)
+static drvError_t devmm_fill_event(struct event_summary *event_info, uint32_t devid, enum devdrv_process_type proc_type,
+                                   uint32_t subevent_id, const char *msg, uint32_t msg_len)
 {
     struct event_sync_msg *msg_head = NULL;
     drvError_t ret;
@@ -145,8 +143,8 @@ static void devmm_clear_event(struct event_summary *event_info)
     }
 }
 
-static drvError_t devmm_send_event_sync(
-    uint32_t devid, enum devdrv_process_type proc_type, struct devmm_event_msg_info *msg_info)
+static drvError_t devmm_send_event_sync(uint32_t devid, enum devdrv_process_type proc_type,
+                                        struct devmm_event_msg_info *msg_info)
 {
     struct event_summary event_info;
     struct event_reply reply;
@@ -181,8 +179,8 @@ static drvError_t devmm_send_event_sync(
     return (drvError_t)msg_info->result.ret;
 }
 
-drvError_t devmm_process_task_mmap(
-    uint32_t devid, enum devdrv_process_type proc_type, DVdeviceptr *va, size_t size, int fixed_va_flag)
+drvError_t devmm_process_task_mmap(uint32_t devid, enum devdrv_process_type proc_type, DVdeviceptr *va, size_t size,
+                                   int fixed_va_flag)
 {
     struct devmm_process_cp_mmap mmap_info;
     struct devmm_event_msg_info msg_info;

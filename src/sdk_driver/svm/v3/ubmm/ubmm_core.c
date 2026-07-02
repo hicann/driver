@@ -38,7 +38,10 @@ static inline void ubmm_node_add(struct ubmm_ctx *ctx, struct ubmm_node *node)
     ka_hash_add(ctx->htable, &node->link, bkt);
 }
 
-static inline void ubmm_node_del(struct ubmm_node *node) { ka_hash_del(&node->link); }
+static inline void ubmm_node_del(struct ubmm_node *node)
+{
+    ka_hash_del(&node->link);
+}
 
 static inline struct ubmm_node *ubmm_node_find(struct ubmm_ctx *ctx, u64 va, u64 size)
 {
@@ -54,8 +57,8 @@ static inline struct ubmm_node *ubmm_node_find(struct ubmm_ctx *ctx, u64 va, u64
     return NULL;
 }
 
-static int ubmm_map_host_pa_get(
-    struct ubmm_node *node, int tgid, u64 va, u64 size, struct svm_pa_seg pa_seg[], u64 *seg_num)
+static int ubmm_map_host_pa_get(struct ubmm_node *node, int tgid, u64 va, u64 size, struct svm_pa_seg pa_seg[],
+                                u64 *seg_num)
 {
     u64 page_num = size / KA_MM_PAGE_SIZE;
     ka_page_t **pages = NULL;
@@ -147,8 +150,8 @@ void ubmm_node_show(struct ubmm_ctx *ctx, ka_seq_file_t *seq)
         if (i == 0) {
             ka_fs_seq_printf(seq, "ubmm:   index     ref     va    size   uba\n");
         }
-        ka_fs_seq_printf(
-            seq, "   %d   %d     %llx     %llx     %llx \n", i++, node->ref, node->va, node->size, node->uba);
+        ka_fs_seq_printf(seq, "   %d   %d     %llx     %llx     %llx \n", i++, node->ref, node->va, node->size,
+                         node->uba);
         if (i >= 128) { /* show max 128 item */
             break;
         }

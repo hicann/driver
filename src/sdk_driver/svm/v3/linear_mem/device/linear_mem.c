@@ -70,9 +70,8 @@ static int um_va_reserve_post_handle(u32 udevid, int master_tgid, int slave_tgid
     int ret = 0;
 
     if (msg_len != sizeof(*reserve_msg)) {
-        svm_err(
-            "Invalid para. (udevid=%u; master_tgid=%d; slave_tgid=%d; msg_len=%u)\n", udevid, master_tgid, slave_tgid,
-            msg_len);
+        svm_err("Invalid para. (udevid=%u; master_tgid=%d; slave_tgid=%d; msg_len=%u)\n", udevid, master_tgid,
+                slave_tgid, msg_len);
         return -EINVAL;
     }
 

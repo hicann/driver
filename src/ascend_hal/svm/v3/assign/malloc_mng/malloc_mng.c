@@ -32,7 +32,11 @@
 
 #define MNG_OPS_NUM 2
 
-enum handle_state { HANDLE_STATE_UNINITED = 0U, HANDLE_STATE_INITED, HANDLE_STATE_MAX };
+enum handle_state {
+    HANDLE_STATE_UNINITED = 0U,
+    HANDLE_STATE_INITED,
+    HANDLE_STATE_MAX
+};
 
 struct handle_mng {
     struct rbtree_root root;
@@ -108,13 +112,25 @@ static void rb_range_of_handle(struct rbtree_node *node, struct rb_range_handle 
     range->end = handle->prop.start + handle->prop.size - 1;
 }
 
-static void handle_set_state(handle_t *handle, enum handle_state state) { handle->state = state; }
+static void handle_set_state(handle_t *handle, enum handle_state state)
+{
+    handle->state = state;
+}
 
-static bool handle_is_match_state(handle_t *handle, enum handle_state state) { return (handle->state == state); }
+static bool handle_is_match_state(handle_t *handle, enum handle_state state)
+{
+    return (handle->state == state);
+}
 
-static void handle_wrlock(handle_t *handle) { (void)pthread_rwlock_wrlock(&handle->rwlock); }
+static void handle_wrlock(handle_t *handle)
+{
+    (void)pthread_rwlock_wrlock(&handle->rwlock);
+}
 
-static void handle_unlock(handle_t *handle) { (void)pthread_rwlock_unlock(&handle->rwlock); }
+static void handle_unlock(handle_t *handle)
+{
+    (void)pthread_rwlock_unlock(&handle->rwlock);
+}
 
 static int handle_set_priv(handle_t *handle, void *priv, struct svm_priv_ops *priv_ops)
 {
@@ -127,7 +143,10 @@ static int handle_set_priv(handle_t *handle, void *priv, struct svm_priv_ops *pr
     return DRV_ERROR_NONE;
 }
 
-static void *handle_get_priv(handle_t *handle) { return handle->priv; }
+static void *handle_get_priv(handle_t *handle)
+{
+    return handle->priv;
+}
 
 static int handle_release_priv(handle_t *handle, bool force)
 {
@@ -136,9 +155,8 @@ static int handle_release_priv(handle_t *handle, bool force)
     if ((handle->priv_ops != NULL) && (handle->priv_ops->release != NULL)) {
         ret = handle->priv_ops->release(handle->priv, force);
         if (ret != DRV_ERROR_NONE) {
-            svm_err(
-                "Handle priv_ops.pre_release failed. (ret=%d; start=0x%llx; size=%llu)\n", ret, handle->prop.start,
-                handle->prop.size);
+            svm_err("Handle priv_ops.pre_release failed. (ret=%d; start=0x%llx; size=%llu)\n", ret, handle->prop.start,
+                    handle->prop.size);
             return ret;
         }
 
@@ -191,7 +209,10 @@ static handle_t *handle_get(u64 va)
     return handle;
 }
 
-static void handle_put(handle_t *handle) { svm_atomic_dec(&handle->ref); }
+static void handle_put(handle_t *handle)
+{
+    svm_atomic_dec(&handle->ref);
+}
 
 static handle_t *handle_alloc(void)
 {
@@ -205,7 +226,10 @@ static handle_t *handle_alloc(void)
     return handle;
 }
 
-static void handle_free(handle_t *handle) { svm_ua_free(handle); }
+static void handle_free(handle_t *handle)
+{
+    svm_ua_free(handle);
+}
 
 static void handle_init(handle_t *handle, struct svm_prop *prop, bool is_from_cache, u64 align)
 {
@@ -370,9 +394,8 @@ static bool svm_flag_is_support_cache(u64 flag)
 static bool go_malloc_cache(u32 devid, u32 numa_id, u64 flag, u64 align, u64 size)
 {
     u32 cache_flag = svm_flag_to_cache_flag(flag);
-    return (
-        (numa_id == SVM_MALLOC_NUMA_NO_NODE) && svm_flag_is_support_cache(flag) &&
-        svm_cache_is_support(devid, cache_flag, align, (u32)size));
+    return ((numa_id == SVM_MALLOC_NUMA_NO_NODE) && svm_flag_is_support_cache(flag) &&
+            svm_cache_is_support(devid, cache_flag, align, (u32)size));
 }
 
 static int malloc_cache(u32 devid, u64 flag, u64 align, u64 size, u64 *start)
@@ -395,9 +418,8 @@ static int free_cache(u32 devid, u64 flag, u64 align, u64 start, u64 size)
 
     ret = svm_cache_free(devid, cache_flag, align, start, size);
     if (ret != DRV_ERROR_NONE) {
-        svm_err(
-            "Cache mem free failed. (devid=%u; cache_flag=0x%x; start=0x%llx; size=%llu)\n", devid, cache_flag, start,
-            size);
+        svm_err("Cache mem free failed. (devid=%u; cache_flag=0x%x; start=0x%llx; size=%llu)\n", devid, cache_flag,
+                start, size);
     }
 
     return ret;
@@ -423,9 +445,8 @@ static int malloc_normal(u32 devid, u32 numa_id, u64 flag, u64 align, u64 size, 
         }
     }
     if (ret != DRV_ERROR_NONE) {
-        svm_info(
-            "Can't normal malloc. (devid=%u; normal_flag=%x; start=0x%llx; size=%llu)\n", devid_ex, normal_flag, *start,
-            size);
+        svm_info("Can't normal malloc. (devid=%u; normal_flag=%x; start=0x%llx; size=%llu)\n", devid_ex, normal_flag,
+                 *start, size);
     }
 
     return ret;
@@ -439,9 +460,8 @@ static int free_normal(u32 devid, u64 flag, u64 align, u64 start, u64 size)
 
     ret = svm_normal_free(devid_ex, normal_flag, align, start, size);
     if ((ret != DRV_ERROR_NONE) && (ret != DRV_ERROR_BUSY)) {
-        svm_err(
-            "Normal mem can not free. (devid=%u; normal_flag=%u; start=0x%llx; size=%llu; ret=%u)\n", devid_ex,
-            normal_flag, start, size, ret);
+        svm_err("Normal mem can not free. (devid=%u; normal_flag=%u; start=0x%llx; size=%llu; ret=%u)\n", devid_ex,
+                normal_flag, start, size, ret);
     }
 
     return ret;
@@ -456,9 +476,8 @@ static int get_aligned_size(u32 devid, u64 flag, u64 align, u64 size, u64 *align
     if (svm_flag_attr_is_contiguous(flag)) {
         ret = svm_get_order_aligned_size(devid, flag, size, &pa_size);
         if (ret != DRV_ERROR_NONE) {
-            svm_err(
-                "Get order aligned size failed. (ret=%d; devid=%u; flag=0x%llx; size=0x%llx)\n", ret, devid, flag,
-                size);
+            svm_err("Get order aligned size failed. (ret=%d; devid=%u; flag=0x%llx; size=0x%llx)\n", ret, devid, flag,
+                    size);
             return ret;
         }
         *aligned_size = svm_align_up(pa_size, align);
@@ -470,8 +489,8 @@ static int get_aligned_size(u32 devid, u64 flag, u64 align, u64 size, u64 *align
 }
 
 /* size: in alloc size, out actual alloced size by page align */
-static int _svm_malloc(
-    u64 *start, u64 *size, u64 align, u64 flag, struct svm_malloc_location *location, bool *is_from_cache)
+static int _svm_malloc(u64 *start, u64 *size, u64 align, u64 flag, struct svm_malloc_location *location,
+                       bool *is_from_cache)
 {
     u32 devid = location->devid;
     u32 numa_id = location->numa_id;
@@ -659,9 +678,8 @@ int svm_free(u64 start)
 
     svm_mng_ops_pre_free(handle, start, &handle->prop);
 
-    ret = _svm_free(
-        handle->prop.devid, handle->prop.flag, handle->align, handle->prop.start, handle->prop.aligned_size,
-        handle->is_from_cache);
+    ret = _svm_free(handle->prop.devid, handle->prop.flag, handle->align, handle->prop.start, handle->prop.aligned_size,
+                    handle->is_from_cache);
     if (ret == DRV_ERROR_BUSY) {
         ret = handle_insert(handle);
         if (ret != DRV_ERROR_NONE) {
@@ -690,9 +708,8 @@ static int _svm_recycle_handle(handle_t *handle)
         return DRV_ERROR_INNER_ERR;
     }
 
-    ret = _svm_free(
-        handle->prop.devid, handle->prop.flag, handle->align, handle->prop.start, handle->prop.aligned_size,
-        handle->is_from_cache);
+    ret = _svm_free(handle->prop.devid, handle->prop.flag, handle->align, handle->prop.start, handle->prop.aligned_size,
+                    handle->is_from_cache);
     if (ret == DRV_ERROR_BUSY) {
         ret = _handle_insert(handle);
     } else {
@@ -745,23 +762,21 @@ static u32 svm_show_handle(handle_t *handle, int id, char *buf, u32 buf_len)
     struct svm_prop *prop = &handle->prop;
 
     if (buf == NULL) {
-        svm_info(
-            "id %d: ref %u task_bitmap 0x%x devid %u start 0x%llx size 0x%llx "
-            "aligned_size 0x%llx, flag 0x%llx tgid %d state %d is_from_cache %d\n",
-            id, handle->ref, handle->task_bitmap, prop->devid, prop->start, prop->size, prop->aligned_size, prop->flag,
-            prop->tgid, handle->state, handle->is_from_cache);
+        svm_info("id %d: ref %u task_bitmap 0x%x devid %u start 0x%llx size 0x%llx "
+                 "aligned_size 0x%llx, flag 0x%llx tgid %d state %d is_from_cache %d\n",
+                 id, handle->ref, handle->task_bitmap, prop->devid, prop->start, prop->size, prop->aligned_size,
+                 prop->flag, prop->tgid, handle->state, handle->is_from_cache);
         (void)svm_show_mem_priv(handle, buf, buf_len);
         return 0;
     } else {
         int len;
         u32 priv_format_len;
 
-        len = snprintf_s(
-            buf, buf_len, buf_len - 1,
-            "id %d: ref %u task_bitmap 0x%x devid %u start 0x%llx size 0x%llx "
-            "aligned_size 0x%llx, flag 0x%llx tgid %d state %d is_from_cache %d\n",
-            id, handle->ref, handle->task_bitmap, prop->devid, prop->start, prop->size, prop->aligned_size, prop->flag,
-            prop->tgid, handle->state, handle->is_from_cache);
+        len = snprintf_s(buf, buf_len, buf_len - 1,
+                         "id %d: ref %u task_bitmap 0x%x devid %u start 0x%llx size 0x%llx "
+                         "aligned_size 0x%llx, flag 0x%llx tgid %d state %d is_from_cache %d\n",
+                         id, handle->ref, handle->task_bitmap, prop->devid, prop->start, prop->size, prop->aligned_size,
+                         prop->flag, prop->tgid, handle->state, handle->is_from_cache);
         if (len < 0) {
             return 0;
         }
@@ -787,10 +802,13 @@ void svm_show_dev_mem(u32 devid, char *buf, u32 buf_len)
     pthread_rwlock_unlock(&mng.rwlock);
 }
 
-void svm_show_mem(void) { svm_show_dev_mem(SVM_INVALID_DEVID, NULL, 0); }
+void svm_show_mem(void)
+{
+    svm_show_dev_mem(SVM_INVALID_DEVID, NULL, 0);
+}
 
-static int _svm_for_each_handle(
-    int (*func)(void *handle, u64 start, struct svm_prop *prop, void *priv), void *priv, bool check_valid)
+static int _svm_for_each_handle(int (*func)(void *handle, u64 start, struct svm_prop *prop, void *priv), void *priv,
+                                bool check_valid)
 {
     struct rbtree_node *cur = NULL;
     int ret = 0;
@@ -836,8 +854,8 @@ int svm_get_prop(u64 va, struct svm_prop *prop)
     return ret;
 }
 
-int svm_get_nearby_prop(
-    u64 va, struct svm_prop *left_prop, bool *has_left, struct svm_prop *right_prop, bool *has_right)
+int svm_get_nearby_prop(u64 va, struct svm_prop *left_prop, bool *has_left, struct svm_prop *right_prop,
+                        bool *has_right)
 {
     struct rbtree_node *left_node = NULL;
     struct rbtree_node *right_node = NULL;
@@ -886,25 +904,55 @@ int svm_get_nearby_prop(
     return DRV_ERROR_NONE;
 }
 
-void svm_mod_prop_flag(void *handle, u64 flag) { ((handle_t *)handle)->prop.flag = flag; }
+void svm_mod_prop_flag(void *handle, u64 flag)
+{
+    ((handle_t *)handle)->prop.flag = flag;
+}
 
-void svm_mod_prop_devid(void *handle, u32 devid) { ((handle_t *)handle)->prop.devid = devid; }
+void svm_mod_prop_devid(void *handle, u32 devid)
+{
+    ((handle_t *)handle)->prop.devid = devid;
+}
 
-static void svm_mod_prop_tgid(void *handle, int tgid) { ((handle_t *)handle)->prop.tgid = tgid; }
+static void svm_mod_prop_tgid(void *handle, int tgid)
+{
+    ((handle_t *)handle)->prop.tgid = tgid;
+}
 
-void svm_set_task_bitmap(void *handle, u32 task_bitmap) { ((handle_t *)handle)->task_bitmap = task_bitmap; }
+void svm_set_task_bitmap(void *handle, u32 task_bitmap)
+{
+    ((handle_t *)handle)->task_bitmap = task_bitmap;
+}
 
-u32 svm_get_task_bitmap(void *handle) { return ((handle_t *)handle)->task_bitmap; }
+u32 svm_get_task_bitmap(void *handle)
+{
+    return ((handle_t *)handle)->task_bitmap;
+}
 
-void svm_set_mem_source(void *handle, u32 source_type) { ((handle_t *)handle)->mem_source = source_type; }
+void svm_set_mem_source(void *handle, u32 source_type)
+{
+    ((handle_t *)handle)->mem_source = source_type;
+}
 
-u32 svm_get_mem_source(void *handle) { return ((handle_t *)handle)->mem_source; }
+u32 svm_get_mem_source(void *handle)
+{
+    return ((handle_t *)handle)->mem_source;
+}
 
-bool svm_handle_mem_is_cache(void *handle) { return ((handle_t *)handle)->is_from_cache; }
+bool svm_handle_mem_is_cache(void *handle)
+{
+    return ((handle_t *)handle)->is_from_cache;
+}
 
-void *svm_handle_get(u64 va) { return (void *)handle_get(va); }
+void *svm_handle_get(u64 va)
+{
+    return (void *)handle_get(va);
+}
 
-void svm_handle_put(void *handle) { handle_put((handle_t *)handle); }
+void svm_handle_put(void *handle)
+{
+    handle_put((handle_t *)handle);
+}
 
 int svm_set_priv(void *handle, void *priv, struct svm_priv_ops *priv_ops)
 {
@@ -925,7 +973,10 @@ void svm_set_priv_ops(void *handle, struct svm_priv_ops *priv_ops)
     handle_unlock(tmp);
 }
 
-void *svm_get_priv(void *handle) { return handle_get_priv((handle_t *)handle); }
+void *svm_get_priv(void *handle)
+{
+    return handle_get_priv((handle_t *)handle);
+}
 
 static int svm_handle_recover_va(void *va_handle, u64 start, struct svm_prop *prop, void *priv)
 {
@@ -970,9 +1021,8 @@ int svm_malloc_mng_criu_reset(u32 devid, void *data)
 
         ret = _svm_recycle_handle(handle);
         if (ret != DRV_ERROR_NONE) {
-            svm_err(
-                "Recycle handle failed during CRIU reset. (ret=%d; devid=%u; start=0x%llx; size=%llu)\n", ret, devid,
-                handle->prop.start, handle->prop.size);
+            svm_err("Recycle handle failed during CRIU reset. (ret=%d; devid=%u; start=0x%llx; size=%llu)\n", ret,
+                    devid, handle->prop.start, handle->prop.size);
             break;
         }
     }
@@ -984,8 +1034,8 @@ int svm_malloc_mng_criu_reset(u32 devid, void *data)
 static int svm_handle_recover_pa(void *va_handle, u64 start, struct svm_prop *prop, void *priv)
 {
     handle_t *handle = va_handle;
-    u32 normal_flag =
-        svm_flag_to_normal_flag(prop->flag, SVM_MALLOC_NUMA_NO_NODE) | SVM_NORMAL_MALLOC_FLAG_POPULATE_ONLY;
+    u32 normal_flag = svm_flag_to_normal_flag(prop->flag, SVM_MALLOC_NUMA_NO_NODE) |
+                      SVM_NORMAL_MALLOC_FLAG_POPULATE_ONLY;
     u32 devid = *(u32 *)priv;
     int tgid, ret;
 
@@ -1002,17 +1052,15 @@ static int svm_handle_recover_pa(void *va_handle, u64 start, struct svm_prop *pr
     if (!prop->is_from_cache) {
         ret = svm_normal_malloc(devid, normal_flag, handle->align, &start, prop->aligned_size);
         if (ret != DRV_ERROR_NONE) {
-            svm_err(
-                "Recover handle pa failed. (ret=%d; devid=%u; flag=0x%llx; start=0x%llx; size=%llu)\n", ret,
-                prop->devid, prop->flag, start, prop->aligned_size);
+            svm_err("Recover handle pa failed. (ret=%d; devid=%u; flag=0x%llx; start=0x%llx; size=%llu)\n", ret,
+                    prop->devid, prop->flag, start, prop->aligned_size);
             return ret;
         }
 
         ret = svm_mng_ops_post_malloc(va_handle, start, &handle->prop);
         if (ret != DRV_ERROR_NONE) {
-            svm_err(
-                "Post malloc operation failed. (ret=%d; devid=%u; start=0x%llx; size=%llu)\n", ret, devid, start,
-                prop->aligned_size);
+            svm_err("Post malloc operation failed. (ret=%d; devid=%u; start=0x%llx; size=%llu)\n", ret, devid, start,
+                    prop->aligned_size);
             (void)svm_normal_free(devid, normal_flag, handle->align, start, prop->aligned_size);
             return ret;
         }
@@ -1049,5 +1097,8 @@ void __attribute__((constructor(SVM_INIT_PRI_FINAL - 2))) svm_mng_init(void)
 }
 
 #ifdef EMU_ST /* Because free mem tasks time, we only destruct in UT for memory leak detect. */
-void __attribute__((destructor)) svm_mng_uninit(void) { (void)svm_recycle_mem_by_dev(SVM_INVALID_DEVID); }
+void __attribute__((destructor)) svm_mng_uninit(void)
+{
+    (void)svm_recycle_mem_by_dev(SVM_INVALID_DEVID);
+}
 #endif

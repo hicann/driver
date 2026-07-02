@@ -34,7 +34,10 @@ void svm_set_vma_status(ka_vm_area_struct_t *vma, int status);
 #define SVM_FAULT_RETRY VM_FAULT_RETRY
 #define SVM_FAULT_OK VM_FAULT_NOPAGE
 
-static inline bool svm_is_write_fault(ka_vm_fault_struct_t *vmf) { return ((vmf->flags & FAULT_FLAG_WRITE) != 0); }
+static inline bool svm_is_write_fault(ka_vm_fault_struct_t *vmf)
+{
+    return ((vmf->flags & FAULT_FLAG_WRITE) != 0);
+}
 
 typedef ka_vm_fault_t (*svm_fault_handle)(ka_vm_area_struct_t *vma, ka_vm_fault_struct_t *vmf, int huge_fault_flag);
 void svm_register_vma_fault_handle(svm_fault_handle handle);

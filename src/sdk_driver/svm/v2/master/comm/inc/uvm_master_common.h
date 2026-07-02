@@ -17,15 +17,14 @@
 #include "uvm_heap_mng.h"
 #include "devmm_proc_info.h"
 
-int uvm_host_sync_device_data(
-    struct devmm_svm_process *svm_proc, struct uvm_page_info *page_info, uint64_t start, ka_page_t **pages);
-int uvm_host_alloc_and_map_page(
-    struct devmm_svm_process *svm_proc, struct uvm_page_info *page_info, uint64_t start, int numa_id,
-    bool is_read_only);
-int uvm_reset_ptes_of_hugepage_host(
-    struct devmm_svm_process *svm_proc, ka_vm_area_struct_t *vma, uint64_t addr, bool is_read_only, bool need_lock);
-int set_page_pte_readwrite(
-    struct devmm_svm_process *svm_proc, ka_vm_area_struct_t *vma, struct uvm_page_info *page_info, bool need_lock);
-int uvm_reset_ptes_of_hugepage(
-    struct devmm_svm_process *svm_proc, ka_vm_area_struct_t *vma, uint64_t addr, bool is_read_only);
+int uvm_host_sync_device_data(struct devmm_svm_process *svm_proc, struct uvm_page_info *page_info, uint64_t start,
+                              ka_page_t **pages);
+int uvm_host_alloc_and_map_page(struct devmm_svm_process *svm_proc, struct uvm_page_info *page_info, uint64_t start,
+                                int numa_id, bool is_read_only);
+int uvm_reset_ptes_of_hugepage_host(struct devmm_svm_process *svm_proc, ka_vm_area_struct_t *vma, uint64_t addr,
+                                    bool is_read_only, bool need_lock);
+int set_page_pte_readwrite(struct devmm_svm_process *svm_proc, ka_vm_area_struct_t *vma,
+                           struct uvm_page_info *page_info, bool need_lock);
+int uvm_reset_ptes_of_hugepage(struct devmm_svm_process *svm_proc, ka_vm_area_struct_t *vma, uint64_t addr,
+                               bool is_read_only);
 #endif

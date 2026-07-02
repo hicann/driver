@@ -125,10 +125,9 @@ bool devmm_is_host_pin_memory_map_failed(void);
 
 static inline bool svm_is_dcache_addr(unsigned long long va, unsigned long long size)
 {
-    return (
-        (va >= DEVMM_DCACHE_ADDR_START) && (size <= DEVMM_DCACHE_OFFSET) &&
-        (va < (DEVMM_DCACHE_ADDR_START + DEVMM_DCACHE_OFFSET)) &&
-        ((va + size) <= (DEVMM_DCACHE_ADDR_START + DEVMM_DCACHE_OFFSET)));
+    return ((va >= DEVMM_DCACHE_ADDR_START) && (size <= DEVMM_DCACHE_OFFSET) &&
+            (va < (DEVMM_DCACHE_ADDR_START + DEVMM_DCACHE_OFFSET)) &&
+            ((va + size) <= (DEVMM_DCACHE_ADDR_START + DEVMM_DCACHE_OFFSET)));
 }
 
 static inline bool devmm_is_host_agent(uint32_t device)
@@ -194,15 +193,14 @@ bool devmm_is_snapshot_state(void);
 #define DEVMM_INVALID_ARG_ERR_MSG_ARG_NUM 4
 #define DEVMM_NOT_SUPPORT_ERR_MSG_ARG_NUM 2
 #define DEVMM_OUT_OF_MEM_ERR_MSG_ARG_NUM 2
-#define DEVMM_INVALID_ADDR_REASON \
-    "The address is not correctly allocated or has been released"
+#define DEVMM_INVALID_ADDR_REASON "The address is not correctly allocated or has been released"
 #define DEVMM_PROCESS_NOT_IN_TRUSTLIST_REASON                                   \
     "The process where the share memory resides is not added to the trustist. " \
     "Add the process to the trustist or disable trustist verification"
 
-static inline void devmm_report_out_of_range(
-    const char *func_name, const char *para_name, unsigned long long para_value, unsigned int min_value,
-    unsigned int max_value)
+static inline void devmm_report_out_of_range(const char *func_name, const char *para_name,
+                                             unsigned long long para_value, unsigned int min_value,
+                                             unsigned int max_value)
 {
     const char *key[] = {"func_name", "para_value", "para_name", "reason"};
     char value[DEVMM_REPORT_ERR_MSG_STR_LEN] = {0};
@@ -214,9 +212,8 @@ static inline void devmm_report_out_of_range(
     if (ret < 0) {
         return;
     }
-    ret = snprintf_s(
-        reason, sizeof(reason), sizeof(reason) - 1, "The parameter value is out of range. The valid range is [%u,%u]",
-        min_value, max_value);
+    ret = snprintf_s(reason, sizeof(reason), sizeof(reason) - 1,
+                     "The parameter value is out of range. The valid range is [%u,%u]", min_value, max_value);
     if (ret < 0) {
         return;
     }
@@ -238,7 +235,8 @@ static inline void devmm_report_para_zero(const char *func_name, const char *par
     devmm_report_err("EL0016", key, report_value, DEVMM_INVALID_ARG_ERR_MSG_ARG_NUM);
 }
 
-static inline void devmm_report_para_only_zero(const char *func_name, const char *para_name, unsigned long long para_value)
+static inline void devmm_report_para_only_zero(const char *func_name, const char *para_name,
+                                               unsigned long long para_value)
 {
     const char *key[] = {"func_name", "para_value", "para_name", "reason"};
     const char *reason = "The input parameter must be 0";
@@ -261,8 +259,8 @@ static inline void devmm_report_no_permission(const char *func_name)
     devmm_report_err("EL0021", key, value, DEVMM_NOT_SUPPORT_ERR_MSG_ARG_NUM);
 }
 
-static inline void devmm_report_addr_not_allocated(
-    const char *func_name, const char *para_name, unsigned long long para_value)
+static inline void devmm_report_addr_not_allocated(const char *func_name, const char *para_name,
+                                                   unsigned long long para_value)
 {
     const char *key[] = {"func_name", "para_value", "para_name", "reason"};
     char value[DEVMM_REPORT_ERR_MSG_STR_LEN] = {0};
@@ -302,8 +300,8 @@ static inline const char *devmm_format_align_size(size_t align_size, char *buf, 
     return (ret < 0) ? "" : buf;
 }
 
-static inline void devmm_report_addr_not_aligned(
-    const char *func_name, const char *para_name, unsigned long long para_value, size_t align_size)
+static inline void devmm_report_addr_not_aligned(const char *func_name, const char *para_name,
+                                                 unsigned long long para_value, size_t align_size)
 {
     const char *key[] = {"func_name", "para_value", "para_name", "reason"};
     char value[DEVMM_REPORT_ERR_MSG_STR_LEN] = {0};
@@ -313,9 +311,8 @@ static inline void devmm_report_addr_not_aligned(
     int ret;
 
     (void)devmm_format_align_size(align_size, align_size_str, sizeof(align_size_str));
-    ret = snprintf_s(
-        reason, sizeof(reason), sizeof(reason) - 1, "The input address does not meet the %s alignment requirement",
-        align_size_str);
+    ret = snprintf_s(reason, sizeof(reason), sizeof(reason) - 1,
+                     "The input address does not meet the %s alignment requirement", align_size_str);
     if (ret < 0) {
         return;
     }
@@ -327,8 +324,8 @@ static inline void devmm_report_addr_not_aligned(
     devmm_report_err("EL0016", key, report_value, DEVMM_INVALID_ARG_ERR_MSG_ARG_NUM);
 }
 
-static inline void devmm_report_size_not_aligned(
-    const char *func_name, const char *para_name, unsigned long long para_value, size_t align_size)
+static inline void devmm_report_size_not_aligned(const char *func_name, const char *para_name,
+                                                 unsigned long long para_value, size_t align_size)
 {
     const char *key[] = {"func_name", "para_value", "para_name", "reason"};
     char value[DEVMM_REPORT_ERR_MSG_STR_LEN] = {0};

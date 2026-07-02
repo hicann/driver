@@ -18,11 +18,11 @@
 void svmm_overlap_init(struct svmm_inst *svmm_inst);
 void svmm_overlap_uninit(struct svmm_inst *svmm_inst);
 u32 svmm_overlap_show(struct svmm_inst *svmm_inst, char *buf, u32 buf_len);
-int svmm_overlap_add_seg(
-    struct svmm_inst *svmm_inst, u32 devid, u64 start, u64 svm_flag, struct svm_global_va *src_info);
+int svmm_overlap_add_seg(struct svmm_inst *svmm_inst, u32 devid, u64 start, u64 svm_flag,
+                         struct svm_global_va *src_info);
 int svmm_overlap_del_seg(struct svmm_inst *svmm_inst, u32 devid, u64 start, u64 size);
-int svmm_overlap_get_seg(
-    struct svmm_inst *svmm_inst, u32 *devid, u64 *va, u64 *svm_flag, struct svm_global_va *src_info);
+int svmm_overlap_get_seg(struct svmm_inst *svmm_inst, u32 *devid, u64 *va, u64 *svm_flag,
+                         struct svm_global_va *src_info);
 
 void svmm_overlap_mod_seg_src_tgid(void *seg_handle, int tgid);
 #endif

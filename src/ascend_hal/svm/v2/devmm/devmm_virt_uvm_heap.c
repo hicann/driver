@@ -36,8 +36,8 @@ STATIC DVresult devmm_uvm_ioctl_alloc(DVdeviceptr p, size_t size)
 
     return DRV_ERROR_NONE;
 }
-STATIC virt_addr_t
-devmm_virt_heap_alloc_uvm(struct devmm_virt_com_heap *heap, virt_addr_t ret_val, size_t alloc_size, DVmem_advise advise)
+STATIC virt_addr_t devmm_virt_heap_alloc_uvm(struct devmm_virt_com_heap *heap, virt_addr_t ret_val, size_t alloc_size,
+                                             DVmem_advise advise)
 {
     (void)advise;
     if (devmm_uvm_ioctl_alloc(ret_val, alloc_size) != DRV_ERROR_NONE) {

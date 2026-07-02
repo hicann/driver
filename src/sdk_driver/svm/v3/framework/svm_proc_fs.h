@@ -25,8 +25,8 @@ void svm_proc_dev_add_feature(u32 udevid, ka_proc_dir_entry_t *dev_entry, u32 fe
 
 ka_proc_dir_entry_t *svm_proc_fs_add_task(u32 udevid, ka_proc_dir_entry_t *dev_entry, int tgid, u32 task_id);
 void svm_proc_fs_del_task(ka_proc_dir_entry_t *task_entry);
-void svm_proc_task_add_feature(
-    u32 udevid, int tgid, ka_proc_dir_entry_t *task_entry, u32 feature_id, const char *feature_name);
+void svm_proc_task_add_feature(u32 udevid, int tgid, ka_proc_dir_entry_t *task_entry, u32 feature_id,
+                               const char *feature_name);
 
 int svm_task_feature_open(ka_inode_t *inode, ka_file_t *file);
 int svm_dev_feature_open(ka_inode_t *inode, ka_file_t *file);

@@ -35,8 +35,8 @@ STATIC void devmm_vm_open(ka_vm_area_struct_t *vma)
     return;
 }
 
-STATIC int devmm_svm_vm_fault_host_sync_device_data(
-    struct devmm_svm_process *svm_proc, struct devmm_svm_heap *heap, u64 start, ka_page_t **pages, u32 adjust_order)
+STATIC int devmm_svm_vm_fault_host_sync_device_data(struct devmm_svm_process *svm_proc, struct devmm_svm_heap *heap,
+                                                    u64 start, ka_page_t **pages, u32 adjust_order)
 {
     struct devmm_devid svm_id = {0};
     u32 dev_id, phy_id, vfid;
@@ -102,8 +102,8 @@ STATIC int devmm_svm_vm_fault_host_proc(struct devmm_svm_process *svm_proc, stru
     }
 
     if (devmm_svm_vm_fault_host_check_bitmap(page_bitmap) != 0) {
-        devmm_drv_err(
-            "Va is error, can not fault. (start=0x%llx, bitmap=0x%x)\n", start, devmm_page_read_bitmap(page_bitmap));
+        devmm_drv_err("Va is error, can not fault. (start=0x%llx, bitmap=0x%x)\n", start,
+                      devmm_page_read_bitmap(page_bitmap));
         devmm_print_pre_alloced_va(svm_proc, start);
         return -EINVAL;
     }
@@ -209,7 +209,10 @@ STATIC int devmm_svm_vm_fault_host(ka_vm_area_struct_t *vma, ka_vm_fault_struct_
 KA_DEFINE_VM_OPS_FAULT_FUNC(devmm_svm_vm_fault_host)
 
 #ifndef EMU_ST
-static int devmm_mremap(ka_vm_area_struct_t *area) { return -EACCES; }
+static int devmm_mremap(ka_vm_area_struct_t *area)
+{
+    return -EACCES;
+}
 #endif
 
 #ifndef EMU_ST
@@ -239,4 +242,7 @@ static ka_vm_operations_struct_t svm_master_vma_ops = {
 #endif
 };
 
-void devmm_svm_setup_vma_ops(ka_vm_area_struct_t *vma) { ka_mm_set_vm_ops(vma, &svm_master_vma_ops); }
+void devmm_svm_setup_vma_ops(ka_vm_area_struct_t *vma)
+{
+    ka_mm_set_vm_ops(vma, &svm_master_vma_ops);
+}

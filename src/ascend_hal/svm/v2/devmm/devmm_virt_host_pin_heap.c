@@ -15,9 +15,8 @@
 #include "devmm_svm_init.h"
 #include "devmm_virt_host_pin_heap.h"
 
-static void devmm_fill_host_pin_heap_info(
-    struct devmm_virt_heap_mgmt *mgmt, struct devmm_virt_heap_type *heap_type, uint32_t device,
-    struct devmm_virt_heap_para *heap_info)
+static void devmm_fill_host_pin_heap_info(struct devmm_virt_heap_mgmt *mgmt, struct devmm_virt_heap_type *heap_type,
+                                          uint32_t device, struct devmm_virt_heap_para *heap_info)
 {
     (void)mgmt;
     (void)heap_type;

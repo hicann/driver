@@ -28,8 +28,7 @@ struct smm_ctx {
 struct smm_ctx *smm_ctx_get(u32 udevid);
 void smm_ctx_put(struct smm_ctx *ctx);
 
-int smm_pa_get(struct smm_ctx *ctx, struct svm_global_va *src_info, struct svm_pa_seg pa_seg[], u64 *seg_num,
-    u64 flag);
+int smm_pa_get(struct smm_ctx *ctx, struct svm_global_va *src_info, struct svm_pa_seg pa_seg[], u64 *seg_num, u64 flag);
 int smm_pa_put(struct smm_ctx *ctx, struct svm_global_va *src_info, struct svm_pa_seg pa_seg[], u64 seg_num);
 
 u32 smm_get_src_max_udev_num(void);

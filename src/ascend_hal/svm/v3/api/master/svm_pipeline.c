@@ -33,7 +33,10 @@ void svm_use_pipeline(void)
     (void)pthread_rwlock_rdlock(&svm_pipeline_rwlock);
 }
 
-void svm_unuse_pipeline(void) { (void)pthread_rwlock_unlock(&svm_pipeline_rwlock); }
+void svm_unuse_pipeline(void)
+{
+    (void)pthread_rwlock_unlock(&svm_pipeline_rwlock);
+}
 
 void svm_occupy_pipeline(void)
 {
@@ -42,4 +45,7 @@ void svm_occupy_pipeline(void)
     svm_atomic_dec(&svm_occupy_req);
 }
 
-void svm_release_pipeline(void) { (void)pthread_rwlock_unlock(&svm_pipeline_rwlock); }
+void svm_release_pipeline(void)
+{
+    (void)pthread_rwlock_unlock(&svm_pipeline_rwlock);
+}

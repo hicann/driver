@@ -50,24 +50,22 @@ int svm_memcpy_local(u64 dst, u64 dst_max, u64 src, u64 count)
     int ret;
 
     if (dst_max < count) {
-        svm_err(
-            "Count bigger than dstMax. (dst=0x%llx; src=0x%llx; count=%llu; dstMax=%llu)\n", tmp_dst, tmp_src, count,
-            dst_max);
+        svm_err("Count bigger than dstMax. (dst=0x%llx; src=0x%llx; count=%llu; dstMax=%llu)\n", tmp_dst, tmp_src,
+                count, dst_max);
         return DRV_ERROR_INVALID_VALUE;
     }
 
     if (is_memcpy_overlap(tmp_dst, tmp_src, count)) {
-        svm_err(
-            "Memcpy overlap. (dst=0x%llx; src=0x%llx; count=%llu; dstMax=%llu)\n", tmp_dst, tmp_src, count, dst_max);
+        svm_err("Memcpy overlap. (dst=0x%llx; src=0x%llx; count=%llu; dstMax=%llu)\n", tmp_dst, tmp_src, count,
+                dst_max);
         return DRV_ERROR_INVALID_VALUE;
     }
 
     if (count <= split_size) {
         ret = _svm_memcpy_local(tmp_dst, count, tmp_src, count);
         if (ret != 0) {
-            svm_err(
-                "Memcpy error. (dst=0x%llx; dstMax=%llu; src=0x%llx; count=%llu; ret=%d)\n", tmp_dst, dst_max, tmp_src,
-                count, ret);
+            svm_err("Memcpy error. (dst=0x%llx; dstMax=%llu; src=0x%llx; count=%llu; ret=%d)\n", tmp_dst, dst_max,
+                    tmp_src, count, ret);
             return DRV_ERROR_INVALID_VALUE;
         }
     } else {
@@ -75,9 +73,8 @@ int svm_memcpy_local(u64 dst, u64 dst_max, u64 src, u64 count)
             per_count = rest_count > split_size ? split_size : rest_count;
             ret = _svm_memcpy_local(tmp_dst, per_count, tmp_src, per_count);
             if (ret != 0) {
-                svm_err(
-                    "Memcpy error. (dst=0x%llx; src=0x%llx; per_count=%lu; ret=%d)\n", tmp_dst, tmp_src, per_count,
-                    ret);
+                svm_err("Memcpy error. (dst=0x%llx; src=0x%llx; per_count=%lu; ret=%d)\n", tmp_dst, tmp_src, per_count,
+                        ret);
                 return DRV_ERROR_INVALID_VALUE;
             }
             tmp_dst = tmp_dst + per_count;

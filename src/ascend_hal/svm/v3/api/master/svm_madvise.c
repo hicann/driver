@@ -40,7 +40,10 @@ struct svm_madvise_record {
 static struct list_head g_madvise_record_head = LIST_HEAD_INIT(g_madvise_record_head);
 static pthread_rwlock_t g_madvise_record_rwlock = PTHREAD_RWLOCK_INITIALIZER;
 
-static u32 svm_madvise_attr_get_access_flag(const struct svm_madvise_attr *attr) { return (u32)attr->access_flag; }
+static u32 svm_madvise_attr_get_access_flag(const struct svm_madvise_attr *attr)
+{
+    return (u32)attr->access_flag;
+}
 
 static bool svm_madvise_record_is_overlap(const struct svm_madvise_record *record, u32 devid, u64 va, u64 size)
 {
@@ -140,9 +143,8 @@ static int mem_advise_check(u32 devid, u64 va, u64 size, u64 *aligned_size)
     }
 
     if (devid != prop.devid) {
-        svm_err(
-            "Devid is invalid. (va=0x%llx; size=%llu; devid=%u; prop start=0x%llx; size=%llu; devid=%u)\n", va, size,
-            devid, prop.start, prop.size, prop.devid);
+        svm_err("Devid is invalid. (va=0x%llx; size=%llu; devid=%u; prop start=0x%llx; size=%llu; devid=%u)\n", va,
+                size, devid, prop.start, prop.size, prop.devid);
         return DRV_ERROR_INVALID_DEVICE;
     }
 
@@ -153,10 +155,9 @@ static int mem_advise_check(u32 devid, u64 va, u64 size, u64 *aligned_size)
     }
 
     if ((va != prop.start) || !svm_is_page_align(devid, prop.flag, va) || (*aligned_size != prop.aligned_size)) {
-        svm_err(
-            "Va or size is invalid. (va=0x%llx; size=%llu; aligned_size=%llu; prop start=0x%llx; "
-            "aligned_size=%llu)\n",
-            va, size, *aligned_size, prop.start, prop.aligned_size);
+        svm_err("Va or size is invalid. (va=0x%llx; size=%llu; aligned_size=%llu; prop start=0x%llx; "
+                "aligned_size=%llu)\n",
+                va, size, *aligned_size, prop.start, prop.aligned_size);
         return DRV_ERROR_INVALID_VALUE;
     }
 
@@ -256,12 +257,11 @@ static int svm_madvise_criu_restore(u32 devid, void *data)
             continue;
         }
 
-        ret = svm_madvise_client(
-            record->devid, record->va, record->size, svm_madvise_attr_get_access_flag(&record->attr));
+        ret = svm_madvise_client(record->devid, record->va, record->size,
+                                 svm_madvise_attr_get_access_flag(&record->attr));
         if (ret != DRV_ERROR_NONE) {
-            svm_err(
-                "Restore madvise failed. (ret=%d; devid=%u; va=0x%llx; size=%llu; flag=0x%x)\n", ret, record->devid,
-                record->va, record->size, svm_madvise_attr_get_access_flag(&record->attr));
+            svm_err("Restore madvise failed. (ret=%d; devid=%u; va=0x%llx; size=%llu; flag=0x%x)\n", ret, record->devid,
+                    record->va, record->size, svm_madvise_attr_get_access_flag(&record->attr));
             break;
         }
     }

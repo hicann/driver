@@ -30,9 +30,15 @@
 
 static u32 local_server_id = SVM_INVALID_SERVER_ID;
 
-static bool casm_cs_is_local_server_id_uninited(void) { return (local_server_id == SVM_INVALID_SERVER_ID); }
+static bool casm_cs_is_local_server_id_uninited(void)
+{
+    return (local_server_id == SVM_INVALID_SERVER_ID);
+}
 
-void casm_cs_set_local_server_id(u32 server_id) /* for emu st, not add static */ { local_server_id = server_id; }
+void casm_cs_set_local_server_id(u32 server_id) /* for emu st, not add static */
+{
+    local_server_id = server_id;
+}
 
 static int casm_init_local_server_id(u32 udevid)
 {

@@ -77,7 +77,10 @@
 #define SVM_FLAG_MODULE_ID_MASK ((1ULL << SVM_FLAG_MODULE_ID_WIDTH) - 1)
 #define SVM_FLAG_INVALID_MODULE_ID 0xFFU
 
-static inline bool svm_flag_bit_is_set(u64 flag, u64 bit_mask) { return ((flag & bit_mask) != 0); }
+static inline bool svm_flag_bit_is_set(u64 flag, u64 bit_mask)
+{
+    return ((flag & bit_mask) != 0);
+}
 
 static inline bool svm_flag_cap_is_support_normal_free(u64 flag)
 {
@@ -179,9 +182,15 @@ static inline bool svm_flag_cap_is_support_get_mem_token_info(u64 flag)
     return svm_flag_bit_is_set(flag, SVM_FLAG_CAP_GET_MEM_TOKEN_INFO);
 }
 
-static inline bool svm_flag_cap_is_support_madvise(u64 flag) { return svm_flag_bit_is_set(flag, SVM_FLAG_CAP_MADVISE); }
+static inline bool svm_flag_cap_is_support_madvise(u64 flag)
+{
+    return svm_flag_bit_is_set(flag, SVM_FLAG_CAP_MADVISE);
+}
 
-static inline bool svm_flag_cap_is_support_vmm_map(u64 flag) { return svm_flag_bit_is_set(flag, SVM_FLAG_CAP_VMM_MAP); }
+static inline bool svm_flag_cap_is_support_vmm_map(u64 flag)
+{
+    return svm_flag_bit_is_set(flag, SVM_FLAG_CAP_VMM_MAP);
+}
 
 static inline bool svm_flag_cap_is_support_vmm_unmap(u64 flag)
 {
@@ -213,16 +222,25 @@ static inline bool svm_flag_cap_is_support_dma_desc_convert_2d(u64 flag)
     return svm_flag_bit_is_set(flag, SVM_FLAG_CAP_DMA_DESC_CONVERT_2D);
 }
 
-static inline bool svm_flag_cap_is_support_memset(u64 flag) { return svm_flag_bit_is_set(flag, SVM_FLAG_CAP_MEMSET); }
+static inline bool svm_flag_cap_is_support_memset(u64 flag)
+{
+    return svm_flag_bit_is_set(flag, SVM_FLAG_CAP_MEMSET);
+}
 
 static inline bool svm_flag_cap_is_support_get_d2d_transway(u64 flag)
 {
     return svm_flag_bit_is_set(flag, SVM_FLAG_CAP_GET_D2D_TRANS_WAY);
 }
 
-static inline bool svm_flag_cap_is_support_ldst(u64 flag) { return svm_flag_bit_is_set(flag, SVM_FLAG_CAP_LDST); }
+static inline bool svm_flag_cap_is_support_ldst(u64 flag)
+{
+    return svm_flag_bit_is_set(flag, SVM_FLAG_CAP_LDST);
+}
 
-static inline bool svm_flag_attr_is_va_only(u64 flag) { return svm_flag_bit_is_set(flag, SVM_FLAG_ATTR_VA_ONLY); }
+static inline bool svm_flag_attr_is_va_only(u64 flag)
+{
+    return svm_flag_bit_is_set(flag, SVM_FLAG_ATTR_VA_ONLY);
+}
 
 static inline bool svm_flag_attr_is_specified_va(u64 flag)
 {
@@ -234,11 +252,20 @@ static inline bool svm_flag_attr_is_va_without_master(u64 flag)
     return svm_flag_bit_is_set(flag, SVM_FLAG_ATTR_VA_WITHOUT_MASTER);
 }
 
-static inline bool svm_flag_attr_is_master_uva(u64 flag) { return svm_flag_bit_is_set(flag, SVM_FLAG_ATTR_MASTER_UVA); }
+static inline bool svm_flag_attr_is_master_uva(u64 flag)
+{
+    return svm_flag_bit_is_set(flag, SVM_FLAG_ATTR_MASTER_UVA);
+}
 
-static inline bool svm_flag_attr_is_hpage(u64 flag) { return svm_flag_bit_is_set(flag, SVM_FLAG_ATTR_PA_HPAGE); }
+static inline bool svm_flag_attr_is_hpage(u64 flag)
+{
+    return svm_flag_bit_is_set(flag, SVM_FLAG_ATTR_PA_HPAGE);
+}
 
-static inline bool svm_flag_attr_is_gpage(u64 flag) { return svm_flag_bit_is_set(flag, SVM_FLAG_ATTR_PA_GPAGE); }
+static inline bool svm_flag_attr_is_gpage(u64 flag)
+{
+    return svm_flag_bit_is_set(flag, SVM_FLAG_ATTR_PA_GPAGE);
+}
 
 static inline bool svm_flag_attr_is_npage(u64 flag)
 {
@@ -250,17 +277,35 @@ static inline bool svm_flag_attr_is_contiguous(u64 flag)
     return svm_flag_bit_is_set(flag, SVM_FLAG_ATTR_PA_CONTIGUOUS);
 }
 
-static inline bool svm_flag_attr_is_p2p(u64 flag) { return svm_flag_bit_is_set(flag, SVM_FLAG_ATTR_PA_P2P); }
+static inline bool svm_flag_attr_is_p2p(u64 flag)
+{
+    return svm_flag_bit_is_set(flag, SVM_FLAG_ATTR_PA_P2P);
+}
 
-static inline bool svm_flag_attr_is_pg_nc(u64 flag) { return svm_flag_bit_is_set(flag, SVM_FLAG_ATTR_PG_NC); }
+static inline bool svm_flag_attr_is_pg_nc(u64 flag)
+{
+    return svm_flag_bit_is_set(flag, SVM_FLAG_ATTR_PG_NC);
+}
 
-static inline bool svm_flag_attr_is_pg_rdonly(u64 flag) { return svm_flag_bit_is_set(flag, SVM_FLAG_ATTR_PG_RDONLY); }
+static inline bool svm_flag_attr_is_pg_rdonly(u64 flag)
+{
+    return svm_flag_bit_is_set(flag, SVM_FLAG_ATTR_PG_RDONLY);
+}
 
-static inline bool svm_flag_is_must_with_priv(u64 flag) { return svm_flag_bit_is_set(flag, SVM_FLAG_MUST_WITH_PRIV); }
+static inline bool svm_flag_is_must_with_priv(u64 flag)
+{
+    return svm_flag_bit_is_set(flag, SVM_FLAG_MUST_WITH_PRIV);
+}
 
-static inline bool svm_flag_is_by_pass_cache(u64 flag) { return svm_flag_bit_is_set(flag, SVM_FLAG_BY_PASS_CACHE); }
+static inline bool svm_flag_is_by_pass_cache(u64 flag)
+{
+    return svm_flag_bit_is_set(flag, SVM_FLAG_BY_PASS_CACHE);
+}
 
-static inline bool svm_flag_is_dev_cp_only(u64 flag) { return svm_flag_bit_is_set(flag, SVM_FLAG_DEV_CP_ONLY); }
+static inline bool svm_flag_is_dev_cp_only(u64 flag)
+{
+    return svm_flag_bit_is_set(flag, SVM_FLAG_DEV_CP_ONLY);
+}
 
 static inline bool svm_flag_is_va_only_without_populate(u64 flag)
 {

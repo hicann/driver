@@ -29,9 +29,8 @@ int svm_mpl_populate(u32 devid, u64 va, u64 size, u32 flag)
 
     ret = svm_cmd_ioctl(devid, SVM_MPL_POPULATE, (void *)&para);
     if (ret != 0) {
-        svm_err_if(
-            (ret != DRV_ERROR_OUT_OF_MEMORY),
-            "Svm ioctl mem populate failed. (ret=%d; va=0x%llx; size=%llu; flag=%u)\n", ret, va, size, flag);
+        svm_err_if((ret != DRV_ERROR_OUT_OF_MEMORY),
+                   "Svm ioctl mem populate failed. (ret=%d; va=0x%llx; size=%llu; flag=%u)\n", ret, va, size, flag);
     }
 
     return ret;

@@ -48,7 +48,7 @@ static u32 dbi_feature_id;
 #define DBI_HOST_IS_UNKNOWN 2
 
 static const ka_pci_device_id_t g_svm_pci_device_id[] = {
-    {KA_PCI_VDEVICE(HUAWEI, 0xd806), 0}, {KA_PCI_VDEVICE(HUAWEI, 0xd807), 0}, { KA_PCI_VDEVICE(HUAWEI, 0xd808), 0 }, {}};
+    {KA_PCI_VDEVICE(HUAWEI, 0xd806), 0}, {KA_PCI_VDEVICE(HUAWEI, 0xd807), 0}, {KA_PCI_VDEVICE(HUAWEI, 0xd808), 0}, {}};
 KA_MODULE_DEVICE_TABLE(pci, g_svm_pci_device_id);
 
 static int dbi_op(u32 udevid, u32 op, struct svm_device_basic_info *dbi)
@@ -71,16 +71,21 @@ static int dbi_op(u32 udevid, u32 op, struct svm_device_basic_info *dbi)
     return -EINVAL;
 }
 
-static int dbi_set(u32 udevid, struct svm_device_basic_info *dbi) { return dbi_op(udevid, DBI_OP_SET, dbi); }
+static int dbi_set(u32 udevid, struct svm_device_basic_info *dbi)
+{
+    return dbi_op(udevid, DBI_OP_SET, dbi);
+}
 
-static int dbi_query(u32 udevid, struct svm_device_basic_info *dbi) { return dbi_op(udevid, DBI_OP_QUERY, dbi); }
+static int dbi_query(u32 udevid, struct svm_device_basic_info *dbi)
+{
+    return dbi_op(udevid, DBI_OP_QUERY, dbi);
+}
 
 static int dbi_msg_check(struct svm_device_basic_info *dbi)
 {
     if ((dbi->npage_size == 0ULL) || (dbi->hpage_size == 0ULL) || (dbi->gpage_size == 0ULL)) {
-        svm_err(
-            "Invalid page_size. (page_size=0x%llx; hpage_size=0x%llx; gpage_size=0x%llx)\n", dbi->npage_size,
-            dbi->hpage_size, dbi->gpage_size);
+        svm_err("Invalid page_size. (page_size=0x%llx; hpage_size=0x%llx; gpage_size=0x%llx)\n", dbi->npage_size,
+                dbi->hpage_size, dbi->gpage_size);
         return -EINVAL;
     }
 

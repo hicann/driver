@@ -105,9 +105,8 @@ void devmm_dev_feature_proc_fs_create(ka_proc_dir_entry_t *dev_entry, u32 logic_
         if (feature_entry != NULL) {
             for (i = 0; i < DEVMM_MAX_FEATURE_ID; ++i) {
                 u64 data = ((u64)devid << DEVMM_SEQ_PRIVATE_DATA_OFFSET) | (u64)i;
-                ka_fs_proc_create_data(
-                    g_devmm_dev_feature[i].feature_name, DEVMM_DEV_FEATURE_PROC_FS_MODE, feature_entry,
-                    &devmm_dev_feature_ops, (void *)(uintptr_t)data);
+                ka_fs_proc_create_data(g_devmm_dev_feature[i].feature_name, DEVMM_DEV_FEATURE_PROC_FS_MODE,
+                                       feature_entry, &devmm_dev_feature_ops, (void *)(uintptr_t)data);
             }
             g_devmm_dev_feature_entry[devid] = feature_entry;
         }

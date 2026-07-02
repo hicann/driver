@@ -72,9 +72,8 @@ static struct pma_ub_seg *pma_ub_seg_erase(struct pma_ub_seg_mng *seg_mng, u64 s
 
     if ((seg->range_node.start != start) || (seg->range_node.size != size)) {
         ka_task_up_write(&seg_mng->rw_sem);
-        svm_err(
-            "Not add addr. (udevid=%u; tgid=%d; start=0x%llx; size=%llu)\n", seg_mng->udevid, seg_mng->tgid, start,
-            size);
+        svm_err("Not add addr. (udevid=%u; tgid=%d; start=0x%llx; size=%llu)\n", seg_mng->udevid, seg_mng->tgid, start,
+                size);
         return NULL;
     }
 
@@ -179,9 +178,8 @@ int pma_ub_seg_query(struct pma_ub_seg_mng *seg_mng, u64 va, u64 *start, u64 *si
     return 0;
 }
 
-int pma_ub_seg_acquire(
-    struct pma_ub_seg_mng *seg_mng, u64 va, u64 size, int (*invalidate)(u64 invalidate_tag), u64 invalidate_tag,
-    u32 *token_id)
+int pma_ub_seg_acquire(struct pma_ub_seg_mng *seg_mng, u64 va, u64 size, int (*invalidate)(u64 invalidate_tag),
+                       u64 invalidate_tag, u32 *token_id)
 {
     struct pma_ub_seg *seg = NULL;
     int ret;
@@ -266,8 +264,8 @@ void pma_ub_seg_mng_show(struct pma_ub_seg_mng *seg_mng, ka_seq_file_t *seq)
 
     ka_task_down_read(&seg_mng->rw_sem);
 
-    ka_fs_seq_printf(
-        seq, "pma_ub segs: udevid %u tgid %d segs_num %llu\n", seg_mng->udevid, seg_mng->tgid, seg_mng->num);
+    ka_fs_seq_printf(seq, "pma_ub segs: udevid %u tgid %d segs_num %llu\n", seg_mng->udevid, seg_mng->tgid,
+                     seg_mng->num);
 
     ka_base_rbtree_postorder_for_each_entry_safe(range_node, next, &seg_mng->range_tree.root, node)
     {

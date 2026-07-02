@@ -34,7 +34,10 @@
 
 u32 mms_feature_id;
 
-u32 mms_get_feature_id(void) { return mms_feature_id; }
+u32 mms_get_feature_id(void)
+{
+    return mms_feature_id;
+}
 
 struct mms_ctx *mms_ctx_get(u32 udevid, int tgid)
 {
@@ -54,7 +57,10 @@ struct mms_ctx *mms_ctx_get(u32 udevid, int tgid)
     return mms_ctx;
 }
 
-void mms_ctx_put(struct mms_ctx *ctx) { svm_task_ctx_put(ctx->task_ctx); }
+void mms_ctx_put(struct mms_ctx *ctx)
+{
+    svm_task_ctx_put(ctx->task_ctx);
+}
 
 static void mms_ctx_init(struct mms_ctx *mms_ctx)
 {
@@ -185,5 +191,6 @@ int mms_kern_init(void)
 }
 DECLAER_FEATURE_AUTO_INIT(mms_kern_init, FEATURE_LOADER_STAGE_0);
 
-void mms_kern_uninit(void) {}
+void mms_kern_uninit(void)
+{}
 DECLAER_FEATURE_AUTO_UNINIT(mms_kern_uninit, FEATURE_LOADER_STAGE_0);

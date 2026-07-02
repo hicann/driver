@@ -26,16 +26,14 @@ static int mwl_op_pre_handle(u32 udevid, int master_tgid, int slave_tgid, void *
     struct svm_mwl_op_msg *op_msg = (struct svm_mwl_op_msg *)msg;
 
     if ((msg_len != sizeof(*op_msg)) || (udevid == uda_get_host_id())) {
-        svm_err(
-            "Invalid para. (udevid=%u; master_tgid=%d; slave_tgid=%d; msg_len=%u)\n", udevid, master_tgid, slave_tgid,
-            msg_len);
+        svm_err("Invalid para. (udevid=%u; master_tgid=%d; slave_tgid=%d; msg_len=%u)\n", udevid, master_tgid,
+                slave_tgid, msg_len);
         return -EINVAL;
     }
 
     if ((op_msg->size == 0) || (op_msg->va + op_msg->size < op_msg->va)) {
-        svm_err(
-            "Invalid va/size. (udevid=%u; master_tgid=%d; va=0x%llx; size=%llu)\n", udevid, master_tgid, op_msg->va,
-            op_msg->size);
+        svm_err("Invalid va/size. (udevid=%u; master_tgid=%d; va=0x%llx; size=%llu)\n", udevid, master_tgid, op_msg->va,
+                op_msg->size);
         return -EINVAL;
     }
 
@@ -45,9 +43,8 @@ static int mwl_op_pre_handle(u32 udevid, int master_tgid, int slave_tgid, void *
         return svm_mwl_del_mem(udevid, master_tgid, MWL_ID_NO_USE, op_msg->va, op_msg->size);
     }
 
-    svm_err(
-        "Invalid flag. (udevid=%u; master_tgid=%d; slave_tgid=%d; msg_len=%u; flag=%llu)\n", udevid, master_tgid,
-        slave_tgid, msg_len, op_msg->flag);
+    svm_err("Invalid flag. (udevid=%u; master_tgid=%d; slave_tgid=%d; msg_len=%u; flag=%llu)\n", udevid, master_tgid,
+            slave_tgid, msg_len, op_msg->flag);
     return -EINVAL;
 }
 

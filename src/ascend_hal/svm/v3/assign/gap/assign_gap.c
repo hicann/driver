@@ -100,11 +100,10 @@ static int assign_notice_host_gap_va(u32 devid, u64 host_gap_va, u64 size, u32 o
 {
     struct svm_umc_msg_head head;
     struct svm_notice_gap_msg notice_gap_msg_msg = {.host_gap_va = host_gap_va, .size = size, .op = op};
-    struct svm_umc_msg msg = {
-        .msg_in = (char *)(uintptr_t)&notice_gap_msg_msg,
-        .msg_in_len = sizeof(struct svm_notice_gap_msg),
-        .msg_out = NULL,
-        .msg_out_len = 0};
+    struct svm_umc_msg msg = {.msg_in = (char *)(uintptr_t)&notice_gap_msg_msg,
+                              .msg_in_len = sizeof(struct svm_notice_gap_msg),
+                              .msg_out = NULL,
+                              .msg_out_len = 0};
 
     struct svm_apbi apbi;
     int ret;

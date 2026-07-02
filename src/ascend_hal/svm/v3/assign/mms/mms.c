@@ -29,8 +29,8 @@ struct mms_stats *mms_stats_create(u32 devid)
     struct mms_stats *mms_stats = NULL;
     int ret;
 
-    mms_stats =
-        svm_user_mmap(NULL, sizeof(struct mms_stats), PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+    mms_stats = svm_user_mmap(NULL, sizeof(struct mms_stats), PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1,
+                              0);
     if (mms_stats == MAP_FAILED) {
         svm_err("mms_stats map failed.\n");
         return NULL;
@@ -109,7 +109,10 @@ int svm_mms_get(u32 devid, u32 module_id, u32 type, struct mms_type_stats *stats
     return 0;
 }
 
-__attribute__((constructor)) void svm_mms_init(void) { svm_register_ioctl_dev_init_post_handle(mms_init); }
+__attribute__((constructor)) void svm_mms_init(void)
+{
+    svm_register_ioctl_dev_init_post_handle(mms_init);
+}
 
 __attribute__((destructor)) void svm_mms_uninit(void)
 {

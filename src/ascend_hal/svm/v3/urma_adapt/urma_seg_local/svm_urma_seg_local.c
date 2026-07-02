@@ -96,10 +96,9 @@ static bool svm_urma_seg_local_is_dev_inited(u32 devid)
 
 static int _svm_urma_seg_local_dev_init(u32 devid)
 {
-    struct ascend_urma_seg_mng_attr attr = {
-        .token_num_default = SVM_URMA_TOKEN_DEFAULT_NUM,
-        .token_num_cache_up_thres = SVM_URMA_TOKEN_CACHE_UP_THRES_NUM,
-        .max_seg_num_per_token = SVM_URMA_MAX_ACQUIRED_NUM_PER_TOKEN};
+    struct ascend_urma_seg_mng_attr attr = {.token_num_default = SVM_URMA_TOKEN_DEFAULT_NUM,
+                                            .token_num_cache_up_thres = SVM_URMA_TOKEN_CACHE_UP_THRES_NUM,
+                                            .max_seg_num_per_token = SVM_URMA_MAX_ACQUIRED_NUM_PER_TOKEN};
     void *seg_mng = NULL;
     void *slef_user_seg_mng = NULL;
 
@@ -143,8 +142,8 @@ int svm_urma_seg_local_register(u32 devid, u64 start, u64 size, u32 seg_flag)
         return DRV_ERROR_INVALID_VALUE;
     }
 
-    return ascend_urma_register_seg(
-        svm_get_urma_seg_mng(user_devid, seg_flag), start, size, svm_urma_to_ascend_seg_flag(seg_flag));
+    return ascend_urma_register_seg(svm_get_urma_seg_mng(user_devid, seg_flag), start, size,
+                                    svm_urma_to_ascend_seg_flag(seg_flag));
 }
 
 int svm_urma_seg_local_unregister(u32 devid, u64 start, u64 size, u32 seg_flag)
@@ -170,8 +169,8 @@ static inline u32 ascend_to_svm_urma_seg_flag(u32 ascend_flag)
 
     svm_urma_seg_flag |= ((ascend_flag & ASCEND_URMA_SEG_FLAG_ACCESS_WRITE) != 0) ? SVM_URMA_SEG_FLAG_ACCESS_WRITE : 0;
     svm_urma_seg_flag |= ((ascend_flag & ASCEND_URMA_SEG_FLAG_PIN) != 0) ? SVM_URMA_SEG_FLAG_PIN : 0;
-    svm_urma_seg_flag |=
-        ((ascend_flag & ASCEND_URMA_SEG_FLAG_WITHOUT_TOKEN_VAL) != 0) ? SVM_URMA_SEG_FLAG_SELF_USER : 0;
+    svm_urma_seg_flag |= ((ascend_flag & ASCEND_URMA_SEG_FLAG_WITHOUT_TOKEN_VAL) != 0) ? SVM_URMA_SEG_FLAG_SELF_USER :
+                                                                                         0;
 
     return svm_urma_seg_flag;
 }

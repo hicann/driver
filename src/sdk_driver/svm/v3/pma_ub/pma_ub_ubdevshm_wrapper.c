@@ -23,9 +23,8 @@
 #include "pma_ub_core.h"
 #include "pma_ub_ubdevshm_wrapper.h"
 
-static int _pma_ub_ubdevshm_acquire(
-    int master_tgid, u64 va, u64 size, int (*invalidate)(u64 invalidate_tag), u64 invalidate_tag, u32 *token_id_out,
-    dbi_bus_inst_eid_t *eid_out)
+static int _pma_ub_ubdevshm_acquire(int master_tgid, u64 va, u64 size, int (*invalidate)(u64 invalidate_tag),
+                                    u64 invalidate_tag, u32 *token_id_out, dbi_bus_inst_eid_t *eid_out)
 {
     dbi_bus_inst_eid_t eid = {0};
     u32 udevid;
@@ -49,9 +48,8 @@ static int _pma_ub_ubdevshm_acquire(
 
     ret = pma_ub_acquire_seg(udevid, master_tgid, va, size, invalidate, invalidate_tag, token_id_out);
     if (ret != 0) {
-        svm_err(
-            "Acquire seg token id failed. (ret=%d; udevid=%u; tgid=%d; va=0x%llx; size=%llu)\n", ret, udevid,
-            master_tgid, va, size);
+        svm_err("Acquire seg token id failed. (ret=%d; udevid=%u; tgid=%d; va=0x%llx; size=%llu)\n", ret, udevid,
+                master_tgid, va, size);
         return ret;
     }
 
@@ -77,8 +75,8 @@ static int _pma_ub_ubdevshm_release(int master_tgid, u64 va, u64 size)
     return pma_ub_release_seg(udevid, master_tgid, va, size);
 }
 
-static int pma_ub_ubdevshm_acquire_para_check(
-    struct mem_uva *uva, union acquire_attr *attr, invalidate func, struct mem_uba *uba)
+static int pma_ub_ubdevshm_acquire_para_check(struct mem_uva *uva, union acquire_attr *attr, invalidate func,
+                                              struct mem_uba *uba)
 {
     if (uva == NULL) {
         svm_err("Uva is NULL.\n");
@@ -101,9 +99,8 @@ static int pma_ub_ubdevshm_acquire_para_check(
     }
 
     if ((attr->bs.require_pin != 0) || (attr->bs.require_invalidate != 1)) {
-        svm_info(
-            "Invalid acquire attr. (require_pin=%llu, require_invalidate=%llu)\n", attr->bs.require_pin,
-            attr->bs.require_invalidate);
+        svm_info("Invalid acquire attr. (require_pin=%llu, require_invalidate=%llu)\n", attr->bs.require_pin,
+                 attr->bs.require_invalidate);
         return -EOPNOTSUPP;
     }
 
@@ -193,12 +190,18 @@ static void pma_ub_ubdevshm_unregister_ops(void)
     }
 }
 
-int pma_ub_ubdevshm_wrapper_init(void) { return pma_ub_ubdevshm_register_ops(); }
+int pma_ub_ubdevshm_wrapper_init(void)
+{
+    return pma_ub_ubdevshm_register_ops();
+}
 
-void pma_ub_ubdevshm_wrapper_uninit(void) { pma_ub_ubdevshm_unregister_ops(); }
+void pma_ub_ubdevshm_wrapper_uninit(void)
+{
+    pma_ub_ubdevshm_unregister_ops();
+}
 
-static void pma_ub_ubdevshm_uva_pack(
-    int tgid, struct task_start_time *start_time, u64 va, u64 size, struct mem_uva *uva)
+static void pma_ub_ubdevshm_uva_pack(int tgid, struct task_start_time *start_time, u64 va, u64 size,
+                                     struct mem_uva *uva)
 {
     uva->va = va;
     uva->size = size;
@@ -213,9 +216,8 @@ static int _pma_ub_ubdevshm_register_segment(int tgid, struct task_start_time *s
     pma_ub_ubdevshm_uva_pack(tgid, start_time, va, size, &uva);
     ret = ubdevshm_register_segment(&g_ubdevshm_handle, &uva);
     if (ret != 0) {
-        svm_err(
-            "ubdevshm_register_segment failed. (ret=%d; va=0x%llx; size=%llu; tgid=%d; start_time=%u)\n", ret, va, size,
-            tgid, (u32)start_time->time);
+        svm_err("ubdevshm_register_segment failed. (ret=%d; va=0x%llx; size=%llu; tgid=%d; start_time=%u)\n", ret, va,
+                size, tgid, (u32)start_time->time);
     }
 
     return ret;

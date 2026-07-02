@@ -70,8 +70,8 @@ void devmm_dev_proc_fs_create(u32 logic_id)
     if (devmm_dev_entry[logic_id].dev_entry == NULL) {
         dev_entry = ka_fs_proc_mkdir((const char *)name, top_entry);
         if (dev_entry != NULL) {
-            ka_fs_proc_create_data(
-                "summary", DEVMM_PROC_FS_MODE, dev_entry, &devmm_dev_sum_ops, (void *)(uintptr_t)logic_id);
+            ka_fs_proc_create_data("summary", DEVMM_PROC_FS_MODE, dev_entry, &devmm_dev_sum_ops,
+                                   (void *)(uintptr_t)logic_id);
             devmm_dev_entry[logic_id].dev_entry = dev_entry;
             devmm_dev_feature_proc_fs_create(dev_entry, logic_id);
         }
@@ -106,12 +106,11 @@ static void devmm_info_show_ts_share_memory(ka_seq_file_t *seq, struct devmm_svm
         if (svm_dev->pa_info[i].total_block_num == 0) {
             continue;
         }
-        ka_fs_seq_printf(
-            seq,
-            "Ts share mem info.(devid=%d, total_block_num=%u, "
-            "total_data_num=%u, free_index=%u, recycle_index=%u)\r\n",
-            i, svm_dev->pa_info[i].total_block_num, svm_dev->pa_info[i].total_data_num, svm_dev->pa_info[i].free_index,
-            svm_dev->pa_info[i].recycle_index);
+        ka_fs_seq_printf(seq,
+                         "Ts share mem info.(devid=%d, total_block_num=%u, "
+                         "total_data_num=%u, free_index=%u, recycle_index=%u)\r\n",
+                         i, svm_dev->pa_info[i].total_block_num, svm_dev->pa_info[i].total_data_num,
+                         svm_dev->pa_info[i].free_index, svm_dev->pa_info[i].recycle_index);
 
         for (j = 0, vf_printf = true; j < DEVMM_MAX_VF_NUM; j++) {
             if (svm_dev->pa_info[i].core_num[j] == 0) {
@@ -119,16 +118,14 @@ static void devmm_info_show_ts_share_memory(ka_seq_file_t *seq, struct devmm_svm
             }
             if (vf_printf == true) {
                 vf_printf = false;
-                ka_fs_seq_printf(
-                    seq, "Vf info:\r\n"
-                         "vf_id       core_num   total_core_num       data_total        "
-                         "data_free    convert_total     convert_free\r\n");
+                ka_fs_seq_printf(seq, "Vf info:\r\n"
+                                      "vf_id       core_num   total_core_num       data_total        "
+                                      "data_free    convert_total     convert_free\r\n");
             }
-            ka_fs_seq_printf(
-                seq, "%03u %16u %16u %16u %16u %16llu %16llu\r\n", j, svm_dev->pa_info[i].core_num[j],
-                svm_dev->pa_info[i].total_core_num[j], svm_dev->pa_info[i].vdev_total_data_num[j],
-                svm_dev->pa_info[i].vdev_free_data_num[j], svm_dev->pa_info[i].vdev_total_convert_len[j],
-                svm_dev->pa_info[i].vdev_free_convert_len[j]);
+            ka_fs_seq_printf(seq, "%03u %16u %16u %16u %16u %16llu %16llu\r\n", j, svm_dev->pa_info[i].core_num[j],
+                             svm_dev->pa_info[i].total_core_num[j], svm_dev->pa_info[i].vdev_total_data_num[j],
+                             svm_dev->pa_info[i].vdev_free_data_num[j], svm_dev->pa_info[i].vdev_total_convert_len[j],
+                             svm_dev->pa_info[i].vdev_free_convert_len[j]);
         }
     }
     ka_fs_seq_printf(seq, "Svm statistics ts share memory end\r\n");

@@ -110,7 +110,10 @@ static struct svm_vmm_access_node *vmm_get_access_node(void *seg_handle);
 static void vmm_access_single_do_unmap(struct svm_vmm_access_node *access_node, u32 devid);
 
 #ifdef EMU_ST /* for emu st, do not delete */
-u64 ut_exp_vmm_get_handle_va(drv_mem_handle_t *handle) { return handle->va; }
+u64 ut_exp_vmm_get_handle_va(drv_mem_handle_t *handle)
+{
+    return handle->va;
+}
 #endif
 
 void svm_vmm_set_ops(struct svm_vmm_ops *ops)
@@ -172,13 +175,12 @@ static int vmm_check_map_route(drv_mem_handle_t *handle, u32 map_route)
     u32 src_mem_id;
     int ret;
 
-    if ((map_route != MEM_MAP_DEFAULT_PATH) &&
-        (map_route != MEM_MAP_UB_ONE_PORT_PATH) &&
+    if ((map_route != MEM_MAP_DEFAULT_PATH) && (map_route != MEM_MAP_UB_ONE_PORT_PATH) &&
         (map_route != MEM_MAP_UB_MULTI_PORT_PATH)) {
         svm_debug("Map route not support. (map_route=%u)\n", map_route);
         return DRV_ERROR_NOT_EXIST;
     }
- 
+
     ret = svm_casm_get_src_va_ex(handle->devid, handle->key, &src_va, &update_va, &ex_info);
     if (ret != DRV_ERROR_NONE) {
         svm_err("Get src va failed. (key=%llu)\n", handle->key);
@@ -260,9 +262,15 @@ drv_mem_handle_t *vmm_normal_handle_create(u32 devid, u64 va, const struct drv_m
     return handle;
 }
 
-u64 vmm_get_mem_handle_va(drv_mem_handle_t *handle) { return handle->va; }
+u64 vmm_get_mem_handle_va(drv_mem_handle_t *handle)
+{
+    return handle->va;
+}
 
-static void vmm_normal_handle_destroy(drv_mem_handle_t *handle) { vmm_handle_free(handle); }
+static void vmm_normal_handle_destroy(drv_mem_handle_t *handle)
+{
+    vmm_handle_free(handle);
+}
 
 static void vmm_normal_handle_no_ref_destroy(drv_mem_handle_t *handle)
 {
@@ -271,8 +279,8 @@ static void vmm_normal_handle_no_ref_destroy(drv_mem_handle_t *handle)
     }
 }
 
-static drv_mem_handle_t *vmm_import_handle_create(
-    u32 devid, u64 key, struct drv_mem_prop *src_prop, struct svm_global_va *src_info)
+static drv_mem_handle_t *vmm_import_handle_create(u32 devid, u64 key, struct drv_mem_prop *src_prop,
+                                                  struct svm_global_va *src_info)
 {
     drv_mem_handle_t *handle = NULL;
 
@@ -376,8 +384,8 @@ static int vmm_prop_check(const struct drv_mem_prop *prop, bool is_from_create)
     return DRV_ERROR_NONE;
 }
 
-static int vmm_get_granularity(
-    drv_mem_granularity_options option, enum drv_mem_pg_type pg_type, u32 module_id, u32 devid, size_t *gran)
+static int vmm_get_granularity(drv_mem_granularity_options option, enum drv_mem_pg_type pg_type, u32 module_id,
+                               u32 devid, size_t *gran)
 {
     size_t granularity = vmm_get_granularity_by_pg_type(pg_type);
     u32 host_devid = svm_get_host_devid();
@@ -397,8 +405,8 @@ static int vmm_get_granularity(
     return DRV_ERROR_NONE;
 }
 
-drvError_t halMemGetAllocationGranularity(
-    const struct drv_mem_prop *prop, drv_mem_granularity_options option, size_t *granularity)
+drvError_t halMemGetAllocationGranularity(const struct drv_mem_prop *prop, drv_mem_granularity_options option,
+                                          size_t *granularity)
 {
     drvError_t ret;
 
@@ -576,8 +584,8 @@ static int vmm_svmm_release(void *priv, bool force)
     if (recyle_num > 0) {
         u64 svmma_start, svmma_size, svm_flag;
         svm_svmm_parse_inst_info(svmm_inst, &svmma_start, &svmma_size, &svm_flag);
-        svm_info(
-            "Force release success. (va=0x%llx; size=0x%llx; recyle_num=%u)\n", svmma_start, svmma_size, recyle_num);
+        svm_info("Force release success. (va=0x%llx; size=0x%llx; recyle_num=%u)\n", svmma_start, svmma_size,
+                 recyle_num);
     }
 
     svm_vmm_svmm_destroy(vmm_node);
@@ -785,9 +793,8 @@ static int vmm_address_reserve_para_check(void **ptr, size_t size, size_t alignm
 
     if ((specify_va != 0) && ((specify_va != svm_align_up(specify_va, VMM_ALLOC_RECOMMENDED_GRANULARITY)) ||
                               (svm_is_valid_range(specify_va, size) == false))) {
-        svm_err(
-            "Specified addr not aligned up with recommended granularity or mix range. (addr=0x%llx; size=0x%lx)\n",
-            specify_va, size);
+        svm_err("Specified addr not aligned up with recommended granularity or mix range. (addr=0x%llx; size=0x%lx)\n",
+                specify_va, size);
         if (specify_va != svm_align_up(specify_va, VMM_ALLOC_RECOMMENDED_GRANULARITY)) {
             svm_report_addr_not_aligned("halMemAddressReserve", "addr", specify_va, VMM_ALLOC_RECOMMENDED_GRANULARITY);
         }
@@ -816,10 +823,9 @@ static int vmm_address_reserve_para_check(void **ptr, size_t size, size_t alignm
 
 static u64 vmm_get_va_align(u32 pg_type)
 {
-    static u64 pg_type_to_align[MEM_MAX_PAGE_TYPE] = {
-        [MEM_NORMAL_PAGE_TYPE] = VMM_ALLOC_GRANULARITY_2M,
-        [MEM_HUGE_PAGE_TYPE] = VMM_ALLOC_GRANULARITY_2M,
-        [MEM_GIANT_PAGE_TYPE] = VMM_ALLOC_GRANULARITY_1G};
+    static u64 pg_type_to_align[MEM_MAX_PAGE_TYPE] = {[MEM_NORMAL_PAGE_TYPE] = VMM_ALLOC_GRANULARITY_2M,
+                                                      [MEM_HUGE_PAGE_TYPE] = VMM_ALLOC_GRANULARITY_2M,
+                                                      [MEM_GIANT_PAGE_TYPE] = VMM_ALLOC_GRANULARITY_1G};
 
     return pg_type_to_align[pg_type];
 }
@@ -854,9 +860,8 @@ drvError_t halMemAddressReserve(void **ptr, size_t size, size_t alignment, void 
     svm_unuse_pipeline();
 
     if (ret == DRV_ERROR_NONE) {
-        svm_debug(
-            "Vmm reserve. (va=0x%llx; size=%llu; flag=0x%llx; pg_type=%u)\n", (u64)(uintptr_t)malloc_va, size, flag,
-            pg_type);
+        svm_debug("Vmm reserve. (va=0x%llx; size=%llu; flag=0x%llx; pg_type=%u)\n", (u64)(uintptr_t)malloc_va, size,
+                  flag, pg_type);
     }
 
     *ptr = (ret == 0) ? malloc_va : *ptr;
@@ -946,9 +951,8 @@ static int vmm_malloc_pa(drv_mem_handle_t **handle, u64 size, const struct drv_m
 
     ret = svm_module_mem_malloc(devid, numa_id, svm_flag, &start, size, module_id);
     if (ret != 0) {
-        svm_no_err_if(
-            (ret == DRV_ERROR_OUT_OF_MEMORY), "Module mem malloc not success. (ret=%d; size=%llu; devid=%u)\n", ret,
-            size, devid);
+        svm_no_err_if((ret == DRV_ERROR_OUT_OF_MEMORY),
+                      "Module mem malloc not success. (ret=%d; size=%llu; devid=%u)\n", ret, size, devid);
         return ret;
     }
 
@@ -1047,9 +1051,8 @@ drvError_t halMemCreateInner(drv_mem_handle_t **handle, size_t size, const struc
     granularity = vmm_get_create_granularity(prop->pg_type, prop->module_id, size);
     if ((size == 0) || ((size % granularity) != 0)) {
         /* The log cannot be modified, because in the failure mode library. */
-        svm_err(
-            "Size is invalid. (size=%llu; granularity=%llu; side=%u; pg_type=%u; module_id=%u)\n", (u64)size,
-            (u64)granularity, prop->side, prop->pg_type, prop->module_id);
+        svm_err("Size is invalid. (size=%llu; granularity=%llu; side=%u; pg_type=%u; module_id=%u)\n", (u64)size,
+                (u64)granularity, prop->side, prop->pg_type, prop->module_id);
         return DRV_ERROR_INVALID_VALUE;
     }
 
@@ -1058,15 +1061,14 @@ drvError_t halMemCreateInner(drv_mem_handle_t **handle, size_t size, const struc
     svm_unuse_pipeline();
     if (ret == DRV_ERROR_OUT_OF_MEMORY) {
         module_id = (prop->module_id >= MAX_MODULE_ID) ? UNKNOWN_MODULE_ID : prop->module_id;
-        devid =
-            ((prop->side == MEM_HOST_SIDE) || (prop->side == MEM_HOST_NUMA_SIDE)) ? svm_get_host_devid() : prop->devid;
+        devid = ((prop->side == MEM_HOST_SIDE) || (prop->side == MEM_HOST_NUMA_SIDE)) ? svm_get_host_devid() :
+                                                                                        prop->devid;
         svm_report_oom(size, halGetMemModuleName(module_id), devid);
     }
     if (ret == 0) {
-        svm_debug(
-            "Vmm create. (size=%llu; side=%d; devid=%u; module_id=%u; pg_type=%u; mem_type=%u; handle_va=0x%llx)"
-            "\n",
-            size, prop->side, prop->devid, prop->module_id, prop->pg_type, prop->mem_type, (*handle)->va);
+        svm_debug("Vmm create. (size=%llu; side=%d; devid=%u; module_id=%u; pg_type=%u; mem_type=%u; handle_va=0x%llx)"
+                  "\n",
+                  size, prop->side, prop->devid, prop->module_id, prop->pg_type, prop->mem_type, (*handle)->va);
     }
 
     return (drvError_t)ret;
@@ -1087,9 +1089,8 @@ drvError_t halMemReleaseInner(drv_mem_handle_t *handle)
         return DRV_ERROR_INVALID_VALUE;
     }
 
-    svm_debug(
-        "Vmm release. (handle_va=0x%llx; type=%d; devid=%u; key=%llu; pg_type=%u)\n", handle->va, handle->type,
-        handle->devid, handle->key, handle->src_prop.pg_type);
+    svm_debug("Vmm release. (handle_va=0x%llx; type=%d; devid=%u; key=%llu; pg_type=%u)\n", handle->va, handle->type,
+              handle->devid, handle->key, handle->src_prop.pg_type);
     if (handle->type == SVM_VMM_HANDLE_IMPORT_TYPE) {
         vmm_import_handle_no_ref_destroy(handle);
         return DRV_ERROR_NONE;
@@ -1112,7 +1113,10 @@ drvError_t halMemReleaseInner(drv_mem_handle_t *handle)
     }
 }
 
-drvError_t halMemRelease(drv_mem_handle_t *handle) { return halMemReleaseInner(handle); }
+drvError_t halMemRelease(drv_mem_handle_t *handle)
+{
+    return halMemReleaseInner(handle);
+}
 
 #define CASM_KEY_UDEVID_OFFSET 32
 #define CASM_KEY_UDEVID_MASK 0xffff
@@ -1219,9 +1223,8 @@ drvError_t halMemRetainAllocationHandle(drv_mem_handle_t **handle, void *ptr)
 
     ret = vmm_retain_alloction_handle(prop.devid, start, handle);
     if (ret == 0) {
-        svm_debug(
-            "RetainAllocationHandle. (ptr=0x%llx; start=%llu; size=%u; devid=%u)\n", (u64)(uintptr_t)ptr, prop.start,
-            prop.size, prop.devid);
+        svm_debug("RetainAllocationHandle. (ptr=0x%llx; start=%llu; size=%u; devid=%u)\n", (u64)(uintptr_t)ptr,
+                  prop.start, prop.size, prop.devid);
     }
 
     return ret;
@@ -1389,9 +1392,8 @@ static int _vmm_query_src_info(void *svmm_inst, u64 va, u64 size, struct svm_glo
 
     offset = va - seg_va;
     if ((offset >= src_info->size) || (size > (src_info->size - offset))) {
-        svm_err(
-            "Is vmm mixed seg. (va=0x%llx; size=0x%llx; seg_va=0x%llx; seg_size=0x%llx)\n", va, size, seg_va,
-            src_info->size);
+        svm_err("Is vmm mixed seg. (va=0x%llx; size=0x%llx; seg_va=0x%llx; seg_size=0x%llx)\n", va, size, seg_va,
+                src_info->size);
         return DRV_ERROR_INVALID_VALUE;
     }
 
@@ -1496,9 +1498,8 @@ static int vmm_single_app_mmap(u64 va, u64 size, drv_mem_handle_t *handle, u64 o
     if ((!svm_is_va_page_align(src_prop.devid, src_prop.flag, va)) ||
         (!svm_is_page_align(src_prop.devid, src_prop.flag, offset)) ||
         (!svm_is_page_align(src_prop.devid, src_prop.flag, size))) {
-        svm_err(
-            "Not align. (devid=%u; flag=0x%llx; va=0x%llx; size=0x%llx; offset=0x%llx)\n", src_prop.devid,
-            src_prop.flag, va, size, offset);
+        svm_err("Not align. (devid=%u; flag=0x%llx; va=0x%llx; size=0x%llx; offset=0x%llx)\n", src_prop.devid,
+                src_prop.flag, va, size, offset);
         return DRV_ERROR_PARA_ERROR;
     }
 
@@ -1793,10 +1794,9 @@ static int vmm_mmap_para_check(void *ptr, size_t size, size_t offset, drv_mem_ha
     if (handle->src_prop_valid == 1) {
         page_size = vmm_get_real_pg_size(handle->src_prop.pg_type, handle->src_prop.module_id, size);
         if (page_size > aligned) {
-            svm_err(
-                "Not aligned. (ptr=0x%llx; pg_type=%u; size=%llu; module_id=%u; page_size=%llu; aligned=%llu)\n",
-                (u64)(uintptr_t)ptr, handle->src_prop.pg_type, (u64)size, handle->src_prop.module_id, page_size,
-                aligned);
+            svm_err("Not aligned. (ptr=0x%llx; pg_type=%u; size=%llu; module_id=%u; page_size=%llu; aligned=%llu)\n",
+                    (u64)(uintptr_t)ptr, handle->src_prop.pg_type, (u64)size, handle->src_prop.module_id, page_size,
+                    aligned);
             if (!SVM_IS_ALIGNED((u64)(uintptr_t)ptr, page_size)) {
                 svm_report_addr_not_aligned("halMemMap", "ptr", (u64)(uintptr_t)ptr, page_size);
             } else if (!SVM_IS_ALIGNED(size, page_size)) {
@@ -1806,9 +1806,8 @@ static int vmm_mmap_para_check(void *ptr, size_t size, size_t offset, drv_mem_ha
         }
     } else {
         if (aligned < VMM_ALLOC_GRANULARITY_4K) {
-            svm_err(
-                "Not aligned. (ptr=0x%llx; pg_type=%u; size=%llu; module_id=%u; aligned=%llu)\n", (u64)(uintptr_t)ptr,
-                handle->src_prop.pg_type, (u64)size, handle->src_prop.module_id, aligned);
+            svm_err("Not aligned. (ptr=0x%llx; pg_type=%u; size=%llu; module_id=%u; aligned=%llu)\n",
+                    (u64)(uintptr_t)ptr, handle->src_prop.pg_type, (u64)size, handle->src_prop.module_id, aligned);
             if (!SVM_IS_ALIGNED((u64)(uintptr_t)ptr, VMM_ALLOC_GRANULARITY_4K)) {
                 svm_report_addr_not_aligned("halMemMap", "ptr", (u64)(uintptr_t)ptr, VMM_ALLOC_GRANULARITY_4K);
             } else if (!SVM_IS_ALIGNED(size, VMM_ALLOC_GRANULARITY_4K)) {
@@ -1833,9 +1832,8 @@ drvError_t halMemMap(void *ptr, size_t size, size_t offset, drv_mem_handle_t *ha
     ret = vmm_mmap(ptr, (u64)size, handle, (u64)offset);
     svm_unuse_pipeline();
     if (ret == 0) {
-        svm_debug(
-            "Vmm Map. (va=0x%llx; size=%llu; handle_va=0x%llx; devid=%u; key=%llu)\n", (u64)(uintptr_t)ptr, size,
-            handle->va, handle->devid, handle->key);
+        svm_debug("Vmm Map. (va=0x%llx; size=%llu; handle_va=0x%llx; devid=%u; key=%llu)\n", (u64)(uintptr_t)ptr, size,
+                  handle->va, handle->devid, handle->key);
     }
 
     return (drvError_t)ret;
@@ -1864,8 +1862,8 @@ drvError_t halMemUnmap(void *ptr)
     return (drvError_t)ret;
 }
 
-static void svm_fill_share_handle(
-    struct svm_share_handle *share_handle, drv_mem_handle_type handle_type, u64 key, struct drv_mem_prop *src_prop)
+static void svm_fill_share_handle(struct svm_share_handle *share_handle, drv_mem_handle_type handle_type, u64 key,
+                                  struct drv_mem_prop *src_prop)
 {
     struct svm_global_va src_va = {0};
     struct svm_global_va tmp_src_va;
@@ -2045,8 +2043,8 @@ static int vmm_import(struct svm_share_handle *share_handle, u32 devid, drv_mem_
     return 0;
 }
 
-drvError_t halMemExportToShareableHandleV2(
-    drv_mem_handle_t *handle, drv_mem_handle_type handle_type, uint64_t flags, struct MemShareHandle *share_handle)
+drvError_t halMemExportToShareableHandleV2(drv_mem_handle_t *handle, drv_mem_handle_type handle_type, uint64_t flags,
+                                           struct MemShareHandle *share_handle)
 {
     struct svm_share_handle *_share_handle = (struct svm_share_handle *)(void *)share_handle;
     int ret;
@@ -2079,17 +2077,16 @@ drvError_t halMemExportToShareableHandleV2(
     ret = vmm_export(handle, handle_type, _share_handle);
     svm_unuse_pipeline();
 
-    svm_debug(
-        "Vmm export. (handle_type=%u; devid=%u; key=%llu; handle_va=0x%llx; cs_valid=%d; "
-        "owner_pid=%d; key=%llu)\n",
-        handle_type, handle->devid, handle->key, handle->va, _share_handle->cs_valid, _share_handle->owner_pid,
-        _share_handle->key);
+    svm_debug("Vmm export. (handle_type=%u; devid=%u; key=%llu; handle_va=0x%llx; cs_valid=%d; "
+              "owner_pid=%d; key=%llu)\n",
+              handle_type, handle->devid, handle->key, handle->va, _share_handle->cs_valid, _share_handle->owner_pid,
+              _share_handle->key);
 
     return (drvError_t)ret;
 }
 
-drvError_t halMemExportToShareableHandle(
-    drv_mem_handle_t *handle, drv_mem_handle_type handle_type, uint64_t flags, uint64_t *shareable_handle)
+drvError_t halMemExportToShareableHandle(drv_mem_handle_t *handle, drv_mem_handle_type handle_type, uint64_t flags,
+                                         uint64_t *shareable_handle)
 {
     struct svm_share_handle _share_handle;
     int ret;
@@ -2134,8 +2131,8 @@ static drvError_t vmm_share_mem_set_pid_para_check(uint64_t shareable_handle, in
     return 0;
 }
 
-drvError_t halMemImportFromShareableHandleV2(
-    drv_mem_handle_type handle_type, struct MemShareHandle *share_handle, uint32_t devid, drv_mem_handle_t **handle)
+drvError_t halMemImportFromShareableHandleV2(drv_mem_handle_type handle_type, struct MemShareHandle *share_handle,
+                                             uint32_t devid, drv_mem_handle_t **handle)
 {
     struct svm_share_handle *_share_handle = (struct svm_share_handle *)(void *)share_handle;
     int ret;
@@ -2158,11 +2155,10 @@ drvError_t halMemImportFromShareableHandleV2(
     svm_use_pipeline();
     ret = vmm_import(_share_handle, devid, handle);
     svm_unuse_pipeline();
-    svm_debug(
-        "Vmm import. (ret=%d; handle_type=%u; devid=%u; cs_valid=%d; owner_pid=%d; key=%llu; "
-        "handle_va=0x%llx)\n",
-        ret, handle_type, devid, _share_handle->cs_valid, _share_handle->owner_pid, _share_handle->key,
-        (ret == 0) ? (*handle)->va : 0);
+    svm_debug("Vmm import. (ret=%d; handle_type=%u; devid=%u; cs_valid=%d; owner_pid=%d; key=%llu; "
+              "handle_va=0x%llx)\n",
+              ret, handle_type, devid, _share_handle->cs_valid, _share_handle->owner_pid, _share_handle->key,
+              (ret == 0) ? (*handle)->va : 0);
 
     return (drvError_t)ret;
 }
@@ -2176,8 +2172,8 @@ drvError_t halMemImportFromShareableHandle(uint64_t shareable_handle, uint32_t d
     _share_handle.cs_valid = 0;
     _share_handle.src_prop_valid = 0;
 
-    return halMemImportFromShareableHandleV2(
-        MEM_HANDLE_TYPE_NONE, (struct MemShareHandle *)(void *)&_share_handle, devid, handle);
+    return halMemImportFromShareableHandleV2(MEM_HANDLE_TYPE_NONE, (struct MemShareHandle *)(void *)&_share_handle,
+                                             devid, handle);
 }
 
 static inline int vmm_set_mwl_attr(u64 shareable_handle, struct ShareHandleAttr *attr)
@@ -2212,8 +2208,8 @@ static inline int vmm_get_mwl_attr(u64 shareable_handle, struct ShareHandleAttr 
     return DRV_ERROR_NONE;
 }
 
-drvError_t halMemShareHandleSetAttribute(
-    uint64_t shareable_handle, enum ShareHandleAttrType type, struct ShareHandleAttr attr)
+drvError_t halMemShareHandleSetAttribute(uint64_t shareable_handle, enum ShareHandleAttrType type,
+                                         struct ShareHandleAttr attr)
 {
     static int (*vmm_set_attr_func[SHR_HANDLE_ATTR_TYPE_MAX])(
         u64 shareable_handle, struct ShareHandleAttr *attr) = {[SHR_HANDLE_ATTR_NO_WLIST_IN_SERVER] = vmm_set_mwl_attr};
@@ -2232,8 +2228,8 @@ drvError_t halMemShareHandleSetAttribute(
     return ret;
 }
 
-drvError_t halMemShareHandleGetAttribute(
-    uint64_t shareable_handle, enum ShareHandleAttrType type, struct ShareHandleAttr *attr)
+drvError_t halMemShareHandleGetAttribute(uint64_t shareable_handle, enum ShareHandleAttrType type,
+                                         struct ShareHandleAttr *attr)
 {
     static int (*vmm_get_attr_func[SHR_HANDLE_ATTR_TYPE_MAX])(
         u64 shareable_handle, struct ShareHandleAttr *attr) = {[SHR_HANDLE_ATTR_NO_WLIST_IN_SERVER] = vmm_get_mwl_attr};
@@ -2276,9 +2272,8 @@ drvError_t halMemShareHandleInfoGet(uint64_t shareable_handle, struct ShareHandl
 
     info->phyDevid = src_va.udevid;
 
-    svm_debug(
-        "Share handle get info successfully. (shareable_handle=0x%llx; phy_devid=%u)\n", shareable_handle,
-        info->phyDevid);
+    svm_debug("Share handle get info successfully. (shareable_handle=0x%llx; phy_devid=%u)\n", shareable_handle,
+              info->phyDevid);
     return DRV_ERROR_NONE;
 }
 
@@ -2349,9 +2344,8 @@ static int vmm_access_desc_check(struct drv_mem_access_desc *desc, size_t count)
         }
 
         access_dev_flag[devid] = 1;
-        svm_debug(
-            "SetAccess. (i=%llu; count=%llu; type=%u; id=%u; side=%u)\n", i, count, desc[i].type, desc[i].location.id,
-            desc[i].location.side);
+        svm_debug("SetAccess. (i=%llu; count=%llu; type=%u; id=%u; side=%u)\n", i, count, desc[i].type,
+                  desc[i].location.id, desc[i].location.side);
     }
 
     return DRV_ERROR_NONE;
@@ -2363,8 +2357,8 @@ static struct svm_vmm_access_node *vmm_get_access_node(void *seg_handle)
     return ((access_node != NULL) && (access_node->head.type == SVM_SHARE_TYPE_VMM_ACCESS)) ? access_node : NULL;
 }
 
-static struct svm_vmm_access_node *vmm_access_node_create(
-    u32 owner_devid, u64 va, u64 size, struct svm_global_va *src_info)
+static struct svm_vmm_access_node *vmm_access_node_create(u32 owner_devid, u64 va, u64 size,
+                                                          struct svm_global_va *src_info)
 {
     struct svm_vmm_access_node *access_node = NULL;
     u32 i;
@@ -2419,9 +2413,8 @@ static int _vmm_access_single_do_mmap(struct svm_vmm_access_node *access_node, u
         ret = svm_smm_client_map(&dst_info, &access_node->src_info, smm_flag);
     }
     if (ret != 0) { /* not need rollback */
-        svm_err(
-            "Mmap failed. (devid=%u; va=%llx; size=%llx; handle type=%u)\n", devid, access_node->va, access_node->size,
-            handle->type);
+        svm_err("Mmap failed. (devid=%u; va=%llx; size=%llx; handle type=%u)\n", devid, access_node->va,
+                access_node->size, handle->type);
         return ret;
     }
 
@@ -2495,17 +2488,16 @@ static u32 vmm_access_node_show(void *priv, char *buf, u32 buf_len)
     svm_info("vmm access node show:\n");
 
     if (buf == NULL) {
-        svm_info(
-            "owner_devid 0x%llx va 0x%llx size 0x%llx\n", access_node->owner_devid, access_node->va, access_node->size);
+        svm_info("owner_devid 0x%llx va 0x%llx size 0x%llx\n", access_node->owner_devid, access_node->va,
+                 access_node->size);
         for (i = 0; i < SVM_MAX_DEV_NUM; i++) {
             if (access_node->access_type[i] != MEM_ACCESS_TYPE_NONE) {
                 svm_info("    devid %u access type %u\n", i, access_node->access_type[i]);
             }
         }
     } else {
-        int len = snprintf_s(
-            buf, buf_len, buf_len - 1, "owner_devid 0x%llx va 0x%llx size 0x%llx\n", access_node->owner_devid,
-            access_node->va, access_node->size);
+        int len = snprintf_s(buf, buf_len, buf_len - 1, "owner_devid 0x%llx va 0x%llx size 0x%llx\n",
+                             access_node->owner_devid, access_node->va, access_node->size);
         if (len < 0) {
             return 0;
         }
@@ -2513,9 +2505,8 @@ static u32 vmm_access_node_show(void *priv, char *buf, u32 buf_len)
 
         for (i = 0; i < SVM_MAX_DEV_NUM; i++) {
             if (access_node->access_type[i] != MEM_ACCESS_TYPE_NONE) {
-                len = snprintf_s(
-                    buf + data_len, buf_len - data_len, buf_len - data_len - 1, "    devid %u access type %u\n", i,
-                    access_node->access_type[i]);
+                len = snprintf_s(buf + data_len, buf_len - data_len, buf_len - data_len - 1,
+                                 "    devid %u access type %u\n", i, access_node->access_type[i]);
                 if (len < 0) {
                     break;
                 }
@@ -2533,8 +2524,8 @@ static struct svm_svmm_seg_priv_ops vmm_access_node_priv_ops = {
     .show = vmm_access_node_show,
 };
 
-static struct svm_vmm_access_node *vmm_create_access_node(
-    void *seg_handle, u32 owner_devid, u64 va, u64 size, struct svm_global_va *src_info)
+static struct svm_vmm_access_node *vmm_create_access_node(void *seg_handle, u32 owner_devid, u64 va, u64 size,
+                                                          struct svm_global_va *src_info)
 {
     struct svm_vmm_access_node *access_node = NULL;
 
@@ -2555,8 +2546,8 @@ static struct svm_vmm_access_node *vmm_create_access_node(
     return access_node;
 }
 
-static int _vmm_access_node_handle(
-    void *va_handle, u64 va, int (*func)(struct svm_vmm_access_node *access_node, void *priv), void *priv)
+static int _vmm_access_node_handle(void *va_handle, u64 va,
+                                   int (*func)(struct svm_vmm_access_node *access_node, void *priv), void *priv)
 {
     struct svm_vmm_access_node *access_node = NULL;
     void *svmm_inst = NULL;
@@ -2604,8 +2595,8 @@ static int _vmm_access_node_handle(
     return ret;
 }
 
-static int vmm_access_node_handle(
-    void *ptr, int (*func)(struct svm_vmm_access_node *access_node, void *priv), void *priv)
+static int vmm_access_node_handle(void *ptr, int (*func)(struct svm_vmm_access_node *access_node, void *priv),
+                                  void *priv)
 {
     u64 va = (u64)(uintptr_t)ptr;
     void *va_handle = NULL;
@@ -2635,15 +2626,14 @@ static int vmm_access_node_handle(
     return ret;
 }
 
-static int vmm_set_access_check(
-    struct svm_vmm_access_node *access_node, u64 va, u64 size, struct drv_mem_access_desc *desc, u32 count)
+static int vmm_set_access_check(struct svm_vmm_access_node *access_node, u64 va, u64 size,
+                                struct drv_mem_access_desc *desc, u32 count)
 {
     u32 i;
 
     if ((va != access_node->va) || (size != access_node->size)) {
-        svm_err(
-            "va and size not same with mmap. (va=0x%llx; size=0x%llx; mmap start=0x%llx; size=0x%llx)\n", va, size,
-            access_node->va, access_node->size);
+        svm_err("va and size not same with mmap. (va=0x%llx; size=0x%llx; mmap start=0x%llx; size=0x%llx)\n", va, size,
+                access_node->va, access_node->size);
         return DRV_ERROR_PARA_ERROR;
     }
 
@@ -2663,9 +2653,8 @@ static int vmm_set_access_check(
 
         if (access_node->access_type[dst_devid] != MEM_ACCESS_TYPE_NONE) {
             if (access_node->access_type[dst_devid] != desc[i].type) {
-                svm_err(
-                    "Repeat set with diff type. (ptr=0x%llx; size=0x%llx; dst_devid=%u; desc.type=%u; type=%u\n", va,
-                    size, dst_devid, desc[i].type, access_node->access_type[dst_devid]);
+                svm_err("Repeat set with diff type. (ptr=0x%llx; size=0x%llx; dst_devid=%u; desc.type=%u; type=%u\n",
+                        va, size, dst_devid, desc[i].type, access_node->access_type[dst_devid]);
                 return DRV_ERROR_BUSY;
             }
         }
@@ -2674,8 +2663,8 @@ static int vmm_set_access_check(
     return 0;
 }
 
-static int vmm_set_access_do_mmap(
-    struct svm_vmm_access_node *access_node, u64 va, u64 size, struct drv_mem_access_desc *desc, u32 count)
+static int vmm_set_access_do_mmap(struct svm_vmm_access_node *access_node, u64 va, u64 size,
+                                  struct drv_mem_access_desc *desc, u32 count)
 {
     u32 i;
 
@@ -2782,16 +2771,14 @@ drvError_t halMemGetAccess(void *ptr, struct drv_mem_location *location, uint64_
     }
 
     *flags = (uint64_t)para.type;
-    svm_debug(
-        "GetAccess. (ptr=0x%llx; side=%u; id=%u; flags=0x%llx)\n", (u64)(uintptr_t)ptr, location->side, location->id,
-        *flags);
+    svm_debug("GetAccess. (ptr=0x%llx; side=%u; id=%u; flags=0x%llx)\n", (u64)(uintptr_t)ptr, location->side,
+              location->id, *flags);
     return 0;
 }
 
 /* trans struct MemShareHandle to u64 shareable_handle(devid + share id), to set/get attribute in local */
-drvError_t halMemTransShareableHandle(
-    drv_mem_handle_type handle_type, struct MemShareHandle *share_handle, uint32_t *server_id,
-    uint64_t *shareable_handle)
+drvError_t halMemTransShareableHandle(drv_mem_handle_type handle_type, struct MemShareHandle *share_handle,
+                                      uint32_t *server_id, uint64_t *shareable_handle)
 {
     struct svm_share_handle *_share_handle = (struct svm_share_handle *)(void *)share_handle;
 
@@ -2801,8 +2788,8 @@ drvError_t halMemTransShareableHandle(
     }
 
     if ((_share_handle->handle_type != handle_type) || (handle_type >= MEM_HANDLE_TYPE_MAX)) {
-        svm_err(
-            "Invalid para. (handle_type=%u; share_handle.handle_type=%u)\n", handle_type, _share_handle->handle_type);
+        svm_err("Invalid para. (handle_type=%u; share_handle.handle_type=%u)\n", handle_type,
+                _share_handle->handle_type);
         return DRV_ERROR_INVALID_VALUE;
     }
 
@@ -2847,8 +2834,8 @@ drvError_t halMemGetAddressReserveRange(void **ptr, size_t *size, drv_mem_addr_r
 
     *ptr = (void *)(uintptr_t)get_va;
     *size = (size_t)get_size;
-    svm_debug(
-        "GetAddressReserveRange. (va=0x%llx; size=%llu; type=%u; flag=0x%llx)\n", get_va, get_size, (u32)type, flag);
+    svm_debug("GetAddressReserveRange. (va=0x%llx; size=%llu; type=%u; flag=0x%llx)\n", get_va, get_size, (u32)type,
+              flag);
     return DRV_ERROR_NONE;
 }
 
@@ -2863,7 +2850,10 @@ static bool vmm_seg_is_cross_app_map(struct svm_global_va *src_info)
     return (handle != NULL) && (handle->type == SVM_VMM_HANDLE_IMPORT_TYPE);
 }
 
-static bool vmm_seg_is_single_app_map(struct svm_global_va *src_info) { return !vmm_seg_is_cross_app_map(src_info); }
+static bool vmm_seg_is_single_app_map(struct svm_global_va *src_info)
+{
+    return !vmm_seg_is_cross_app_map(src_info);
+}
 
 static int vmm_seg_access_criu_restore(struct svm_vmm_access_node *access_node)
 {
@@ -2886,8 +2876,8 @@ static int vmm_seg_access_criu_restore(struct svm_vmm_access_node *access_node)
     return DRV_ERROR_NONE;
 }
 
-static void vmm_seg_cross_app_map_criu_reset(
-    void *svmm_inst, void *seg_handle, u32 devid, u64 start, struct svm_global_va *src_info)
+static void vmm_seg_cross_app_map_criu_reset(void *svmm_inst, void *seg_handle, u32 devid, u64 start,
+                                             struct svm_global_va *src_info)
 {
     drv_mem_handle_t *handle = vmm_get_seg_pa_handle(src_info);
     svm_svmm_del_seg_handle(svmm_inst, seg_handle);
@@ -2916,18 +2906,16 @@ static int vmm_seg_single_app_map_criu_restore(void *seg_handle, u32 devid, u64 
     svm_dst_va_pack(devid, PROCESS_CP1, start, real_src_info.size, &dst_info);
     ret = svm_smm_client_map(&dst_info, &real_src_info, 0);
     if (ret != DRV_ERROR_NONE) {
-        svm_err(
-            "Restore vmm single app map failed. (ret=%d; devid=%u; va=0x%llx; size=0x%llx)\n", ret, devid, start,
-            real_src_info.size);
+        svm_err("Restore vmm single app map failed. (ret=%d; devid=%u; va=0x%llx; size=0x%llx)\n", ret, devid, start,
+                real_src_info.size);
         return ret;
     }
 
     svm_flag = svm_svmm_get_seg_svm_flag(seg_handle);
     ret = vmm_ops_post_map(seg_handle, devid, start, svm_flag, &real_src_info);
     if (ret != DRV_ERROR_NONE) {
-        svm_err(
-            "Restore vmm post map failed. (ret=%d; devid=%u; va=0x%llx; size=0x%llx)\n", ret, devid, start,
-            real_src_info.size);
+        svm_err("Restore vmm post map failed. (ret=%d; devid=%u; va=0x%llx; size=0x%llx)\n", ret, devid, start,
+                real_src_info.size);
         (void)svm_smm_client_unmap(&dst_info, &real_src_info, 0);
         return ret;
     }

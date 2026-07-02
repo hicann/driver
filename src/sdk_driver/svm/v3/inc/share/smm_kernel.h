@@ -24,12 +24,13 @@ enum SMM_PA_LOCATION_TYPE {
 };
 
 struct smm_ops {
-    int (*pa_get)(u32 udevid, struct svm_global_va *src_info, struct svm_pa_seg pa_seg[], u64 *seg_num, u64 flag); /* must */
-    int (*pa_put)(u32 udevid, struct svm_global_va *src_info, struct svm_pa_seg pa_seg[], u64 seg_num);  /* must */
-    int (*alloc_va)(u32 udevid, int tgid, u64 size, u64 *va);                                            /* not must */
-    int (*free_va)(u32 udevid, int tgid, u64 va, u64 size);                                              /* not must */
-    int (*remap)(u32 udevid, int tgid, u64 va, u64 pa, u64 size, u64 flag);                              /* not must */
-    int (*unmap)(u32 udevid, int tgid, u64 va, u64 size);                                                /* not must */
+    int (*pa_get)(u32 udevid, struct svm_global_va *src_info, struct svm_pa_seg pa_seg[], u64 *seg_num,
+                  u64 flag);                                                                            /* must */
+    int (*pa_put)(u32 udevid, struct svm_global_va *src_info, struct svm_pa_seg pa_seg[], u64 seg_num); /* must */
+    int (*alloc_va)(u32 udevid, int tgid, u64 size, u64 *va);                                           /* not must */
+    int (*free_va)(u32 udevid, int tgid, u64 va, u64 size);                                             /* not must */
+    int (*remap)(u32 udevid, int tgid, u64 va, u64 pa, u64 size, u64 flag);                             /* not must */
+    int (*unmap)(u32 udevid, int tgid, u64 va, u64 size);                                               /* not must */
     enum SMM_PA_LOCATION_TYPE pa_location;
 };
 
@@ -45,7 +46,7 @@ enum smm_external_op_type {
     SMM_EXTERNAL_OP_MAX,
 };
 
-void svm_smm_register_external_handle(
-    void (*handle)(enum smm_external_op_type op_type, u32 udevid, int tgid, u64 va, u64 size));
+void svm_smm_register_external_handle(void (*handle)(enum smm_external_op_type op_type, u32 udevid, int tgid, u64 va,
+                                                     u64 size));
 
 #endif

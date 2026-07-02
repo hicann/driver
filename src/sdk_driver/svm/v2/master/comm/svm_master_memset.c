@@ -22,16 +22,15 @@
 #ifndef UVM_OPEN
 #include "uvm_master_memset.h"
 #endif
-STATIC int devmm_memset_fill_pages_process(
-    struct devmm_svm_process *svm_pro, struct devmm_mem_memset_para *memset_para, size_t byte_count,
-    struct devmm_memory_attributes *fst_attr)
+STATIC int devmm_memset_fill_pages_process(struct devmm_svm_process *svm_pro, struct devmm_mem_memset_para *memset_para,
+                                           size_t byte_count, struct devmm_memory_attributes *fst_attr)
 {
     if (fst_attr->is_svm_non_page) {
         int ret;
         ret = devmm_insert_host_page_range(svm_pro, memset_para->dst, byte_count, fst_attr);
         if (ret != 0) {
-            devmm_drv_err(
-                "Insert host range failed. (dst=0x%llx; byte_count=%lu; ret=%d)\n", memset_para->dst, byte_count, ret);
+            devmm_drv_err("Insert host range failed. (dst=0x%llx; byte_count=%lu; ret=%d)\n", memset_para->dst,
+                          byte_count, ret);
             return ret;
         }
     }
@@ -69,9 +68,8 @@ STATIC int devmm_ioctl_memset_device_check(struct devmm_svm_process *svm_process
     return 0;
 }
 
-static int devmm_share_mem_memset(
-    struct devmm_svm_process *svm_proc, struct devmm_mem_memset_para *memset_para, struct devmm_memory_attributes *attr,
-    size_t byte_count)
+static int devmm_share_mem_memset(struct devmm_svm_process *svm_proc, struct devmm_mem_memset_para *memset_para,
+                                  struct devmm_memory_attributes *attr, size_t byte_count)
 {
     struct devmm_chan_share_mem_memset chan_memset = {{{0}}};
     struct devmm_svm_heap *heap = NULL;
@@ -106,21 +104,20 @@ static int devmm_share_mem_memset(
         int ret;
         chan_memset.va_offset = va_offset + add_count;
         chan_memset.count = (u32)ka_base_min(byte_count - add_count, per_cnt);
-        ret = devmm_chan_msg_send(
-            &chan_memset, sizeof(struct devmm_chan_share_mem_memset), sizeof(struct devmm_chan_msg_head));
+        ret = devmm_chan_msg_send(&chan_memset, sizeof(struct devmm_chan_share_mem_memset),
+                                  sizeof(struct devmm_chan_msg_head));
         if (ret != 0) {
-            devmm_drv_err(
-                "Device memset error. (ret=%d; va=0x%llx; value=0x%llx; count=%llu)\n", ret, va, memset_para->value,
-                memset_para->count);
+            devmm_drv_err("Device memset error. (ret=%d; va=0x%llx; value=0x%llx; count=%llu)\n", ret, va,
+                          memset_para->value, memset_para->count);
             return ret;
         }
     }
     return 0;
 }
 
-STATIC int devmm_send_memset_device_msg(
-    struct devmm_svm_process *svm_process, struct devmm_mem_memset_para *memset_para,
-    struct devmm_memory_attributes *attr, size_t byte_count)
+STATIC int devmm_send_memset_device_msg(struct devmm_svm_process *svm_process,
+                                        struct devmm_mem_memset_para *memset_para, struct devmm_memory_attributes *attr,
+                                        size_t byte_count)
 {
     struct devmm_chan_memset chan_memset = {{{0}}};
     struct devmm_svm_process_id proc_id;
@@ -139,10 +136,9 @@ STATIC int devmm_send_memset_device_msg(
         chan_memset.head.process_id.hostpid = owner_proc->process_id.hostpid;
         chan_memset.head.process_id.vfid = proc_id.vfid;
         chan_memset.head.dev_id = proc_id.devid;
-        devmm_drv_debug(
-            "Memset va created by ipc. (attr_devid=%d; dst=0x%llx; va=0x%llx; hostpid=%d; "
-            "devid=%d)\n",
-            attr->devid, memset_para->dst, va, owner_proc->process_id.hostpid, proc_id.devid);
+        devmm_drv_debug("Memset va created by ipc. (attr_devid=%d; dst=0x%llx; va=0x%llx; hostpid=%d; "
+                        "devid=%d)\n",
+                        attr->devid, memset_para->dst, va, owner_proc->process_id.hostpid, proc_id.devid);
     } else {
         chan_memset.head.process_id.hostpid = svm_process->process_id.hostpid;
         chan_memset.head.process_id.vfid = (u16)attr->vfid;
@@ -157,9 +153,8 @@ STATIC int devmm_send_memset_device_msg(
         chan_memset.count = (u32)ka_base_min(byte_count - add_count, per_cnt);
         ret = devmm_chan_msg_send(&chan_memset, sizeof(struct devmm_chan_memset), sizeof(struct devmm_chan_msg_head));
         if (ret != 0) {
-            devmm_drv_err(
-                "Device memset error. (ret=%d; va=0x%llx; value=0x%llx; count=%llu)\n", ret, va, memset_para->value,
-                memset_para->count);
+            devmm_drv_err("Device memset error. (ret=%d; va=0x%llx; value=0x%llx; count=%llu)\n", ret, va,
+                          memset_para->value, memset_para->count);
             return ret;
         }
     }
@@ -167,9 +162,9 @@ STATIC int devmm_send_memset_device_msg(
     return 0;
 }
 
-STATIC int devmm_ioctl_memset_device_process(
-    struct devmm_svm_process *svm_process, struct devmm_mem_memset_para *memset_para,
-    struct devmm_memory_attributes *attr, size_t byte_count)
+STATIC int devmm_ioctl_memset_device_process(struct devmm_svm_process *svm_process,
+                                             struct devmm_mem_memset_para *memset_para,
+                                             struct devmm_memory_attributes *attr, size_t byte_count)
 {
     int ret;
 
@@ -194,8 +189,8 @@ STATIC int devmm_ioctl_memset_device_process(
         ret = devmm_send_memset_device_msg(svm_process, memset_para, attr, byte_count);
     }
     if (ret != 0) {
-        devmm_drv_err(
-            "Send memset device message failed. (dst=0x%llx; byte_count=%lu)\n", memset_para->dst, byte_count);
+        devmm_drv_err("Send memset device message failed. (dst=0x%llx; byte_count=%lu)\n", memset_para->dst,
+                      byte_count);
         return ret;
     }
     devmm_drv_debug("Memset device succeeded. (dst=0x%llx; byte_count=%lu)\n", memset_para->dst, byte_count);
@@ -211,9 +206,8 @@ STATIC int devmm_ioctl_memset_process(struct devmm_svm_process *svm_pro, struct 
     int ret;
 
     memset_para = &arg->data.memset_para;
-    devmm_drv_debug(
-        "Memset parameter. (dst=0x%llx; value=0x%llx; count=%llu)\n", memset_para->dst, memset_para->value,
-        memset_para->count);
+    devmm_drv_debug("Memset parameter. (dst=0x%llx; value=0x%llx; count=%llu)\n", memset_para->dst, memset_para->value,
+                    memset_para->count);
 #ifndef UVM_OPEN
     if (devmm_vaddr_and_size_is_in_uvm_range(memset_para->dst, memset_para->count)) {
         return devmm_uvm_ioctl_memset_process(svm_pro, arg);
@@ -225,9 +219,8 @@ STATIC int devmm_ioctl_memset_process(struct devmm_svm_process *svm_pro, struct 
         return ret;
     }
     if (memset_para->count > attr.heap_size) {
-        devmm_drv_err(
-            "Count is bigger then heap_size. (count=%llu; heap_size=%llu; memset_para_dst=0x%llx)\n",
-            memset_para->count, attr.heap_size, memset_para->dst);
+        devmm_drv_err("Count is bigger then heap_size. (count=%llu; heap_size=%llu; memset_para_dst=0x%llx)\n",
+                      memset_para->count, attr.heap_size, memset_para->dst);
         return -EINVAL;
     }
     byte_count = memset_para->count;
@@ -237,11 +230,10 @@ STATIC int devmm_ioctl_memset_process(struct devmm_svm_process *svm_pro, struct 
     } else if ((attr.is_svm_non_page && attr.is_locked_device) || attr.is_svm_device) {
         return devmm_ioctl_memset_device_process(svm_pro, memset_para, &attr, byte_count);
     } else {
-        devmm_drv_err(
-            "Failed. "
-            "(is_local_host=%d; is_host_pin=%d; is_svm=%d; devid=%u; dst=0x%llx; value=0x%llx; count=%llu)\n",
-            attr.is_local_host, attr.is_host_pin, attr.is_svm, attr.devid, memset_para->dst, memset_para->value,
-            memset_para->count);
+        devmm_drv_err("Failed. "
+                      "(is_local_host=%d; is_host_pin=%d; is_svm=%d; devid=%u; dst=0x%llx; value=0x%llx; count=%llu)\n",
+                      attr.is_local_host, attr.is_host_pin, attr.is_svm, attr.devid, memset_para->dst,
+                      memset_para->value, memset_para->count);
         return -EINVAL;
     }
 }

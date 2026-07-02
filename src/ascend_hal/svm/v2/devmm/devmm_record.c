@@ -46,8 +46,8 @@ struct devmm_record_node {
 #define DEVMM_RECORD_TOTAL_DEVICE_NUM (DEVMM_RECORD_MAX_DEVICE_NUM + 2U) /* 64 + 1, host is 65 */
 static struct devmm_record_mng record_mng[DEVMM_FEATURE_TYPE_MAX][DEVMM_RECORD_TOTAL_DEVICE_NUM] = {0};
 
-static struct devmm_record_node *devmm_get_record_node(
-    enum devmm_record_feature_type type, uint32_t devid, enum devmm_record_key_type key_type, uint64_t key)
+static struct devmm_record_node *devmm_get_record_node(enum devmm_record_feature_type type, uint32_t devid,
+                                                       enum devmm_record_key_type key_type, uint64_t key)
 {
     struct devmm_record_node *record_node = NULL;
     struct rbtree_root *root_tree = NULL;
@@ -63,8 +63,8 @@ static struct devmm_record_node *devmm_get_record_node(
     return NULL;
 }
 
-static int devmm_record_node_insert(
-    enum devmm_record_feature_type type, uint32_t devid, struct devmm_record_data *data, struct devmm_record_node *node)
+static int devmm_record_node_insert(enum devmm_record_feature_type type, uint32_t devid, struct devmm_record_data *data,
+                                    struct devmm_record_node *node)
 {
     int ret;
 
@@ -97,9 +97,9 @@ static void devmm_record_node_erase(struct devmm_record_node *node)
     }
 }
 
-static drvError_t devmm_record_node_init(
-    enum devmm_record_feature_type type, uint32_t devid, enum devmm_record_node_status status,
-    struct devmm_record_data *data, struct devmm_record_node *node)
+static drvError_t devmm_record_node_init(enum devmm_record_feature_type type, uint32_t devid,
+                                         enum devmm_record_node_status status, struct devmm_record_data *data,
+                                         struct devmm_record_node *node)
 {
     uint64_t len = data->data_len;
     int ret;
@@ -124,9 +124,8 @@ static drvError_t devmm_record_node_init(
     return DRV_ERROR_NONE;
 }
 
-static int devmm_record_node_create(
-    enum devmm_record_feature_type type, uint32_t devid, enum devmm_record_node_status status,
-    struct devmm_record_data *data)
+static int devmm_record_node_create(enum devmm_record_feature_type type, uint32_t devid,
+                                    enum devmm_record_node_status status, struct devmm_record_data *data)
 {
     struct devmm_record_node *node = NULL;
     drvError_t ret;
@@ -163,9 +162,9 @@ static void devmm_record_node_get_data(struct devmm_record_node *node, struct de
     }
 }
 
-static drvError_t devmm_record_node_get_process(
-    enum devmm_record_feature_type type, uint32_t devid, enum devmm_record_node_status status,
-    struct devmm_record_data *data, struct devmm_record_node *node)
+static drvError_t devmm_record_node_get_process(enum devmm_record_feature_type type, uint32_t devid,
+                                                enum devmm_record_node_status status, struct devmm_record_data *data,
+                                                struct devmm_record_node *node)
 {
     drvError_t ret = DRV_ERROR_INNER_ERR;
 
@@ -174,9 +173,8 @@ static drvError_t devmm_record_node_get_process(
         if (ret == DRV_ERROR_NONE) {
             devmm_record_node_get_data(node, data);
         }
-    } else if (
-        ((node->status == DEVMM_NODE_INITING) || (node->status == DEVMM_NODE_UNINITING)) &&
-        (status == DEVMM_NODE_INITING)) {
+    } else if (((node->status == DEVMM_NODE_INITING) || (node->status == DEVMM_NODE_UNINITING)) &&
+               (status == DEVMM_NODE_INITING)) {
         ret = DRV_ERROR_WAIT_TIMEOUT;
     } else if ((node->status == DEVMM_NODE_INITING) && (status == DEVMM_NODE_INITED)) {
         ret = devmm_record_node_init(type, devid, status, data, node);
@@ -187,14 +185,13 @@ static drvError_t devmm_record_node_get_process(
     return ret;
 }
 
-drvError_t devmm_record_para_check(
-    enum devmm_record_feature_type type, uint32_t devid, enum devmm_record_key_type key_type,
-    struct devmm_record_data *data)
+drvError_t devmm_record_para_check(enum devmm_record_feature_type type, uint32_t devid,
+                                   enum devmm_record_key_type key_type, struct devmm_record_data *data)
 {
     if ((type >= DEVMM_FEATURE_TYPE_MAX) || (key_type >= DEVMM_KEY_TYPE_MAX) || (data->data_len > UINT32_MAX) ||
         (devid >= DEVMM_RECORD_TOTAL_DEVICE_NUM)) {
-        DEVMM_DRV_ERR(
-            "Invalid para. (type=%u; key_type=%u; len=%llu; devid=%u)\n", type, key_type, data->data_len, devid);
+        DEVMM_DRV_ERR("Invalid para. (type=%u; key_type=%u; len=%llu; devid=%u)\n", type, key_type, data->data_len,
+                      devid);
         return DRV_ERROR_PARA_ERROR;
     }
 
@@ -234,9 +231,9 @@ drvError_t devmm_record_para_check(
  * initialization DRV_ERROR_WAIT_TIMEOUT: Timeout waiting for other threads to complete initialization
  */
 #define DEVMM_RECORD_RETRY_MAX_TIMES 4320000000ULL /* 20us * 4320000000 = 24h */
-drvError_t devmm_record_create_and_get(
-    enum devmm_record_feature_type type, uint32_t devid, enum devmm_record_key_type key_type,
-    enum devmm_record_node_status status, struct devmm_record_data *data)
+drvError_t devmm_record_create_and_get(enum devmm_record_feature_type type, uint32_t devid,
+                                       enum devmm_record_key_type key_type, enum devmm_record_node_status status,
+                                       struct devmm_record_data *data)
 {
     struct devmm_record_node *node = NULL;
     uint64_t retry_times = 0;
@@ -270,9 +267,8 @@ drvError_t devmm_record_create_and_get(
     return ret;
 }
 
-drvError_t devmm_record_get(
-    enum devmm_record_feature_type type, uint32_t devid, enum devmm_record_key_type key_type,
-    struct devmm_record_data *data)
+drvError_t devmm_record_get(enum devmm_record_feature_type type, uint32_t devid, enum devmm_record_key_type key_type,
+                            struct devmm_record_data *data)
 {
     struct devmm_record_node *node = NULL;
     drvError_t ret;
@@ -313,9 +309,8 @@ static drvError_t devmm_record_node_put_process(struct devmm_record_node *node, 
     return DRV_ERROR_INNER_ERR;
 }
 
-static drvError_t _devmm_record_put(
-    enum devmm_record_feature_type type, uint32_t devid, uint32_t key_type, uint64_t key,
-    enum devmm_record_node_status status)
+static drvError_t _devmm_record_put(enum devmm_record_feature_type type, uint32_t devid, uint32_t key_type,
+                                    uint64_t key, enum devmm_record_node_status status)
 {
     struct devmm_record_node *node = NULL;
     drvError_t ret = DRV_ERROR_NOT_EXIST; /* default: need to release */
@@ -329,9 +324,8 @@ static drvError_t _devmm_record_put(
     return ret;
 }
 
-drvError_t devmm_record_put(
-    enum devmm_record_feature_type type, uint32_t devid, uint32_t key_type, uint64_t key,
-    enum devmm_record_node_status status)
+drvError_t devmm_record_put(enum devmm_record_feature_type type, uint32_t devid, uint32_t key_type, uint64_t key,
+                            enum devmm_record_node_status status)
 {
     drvError_t ret;
 
@@ -413,9 +407,8 @@ static void __attribute__((destructor)) devmm_record_uninit(void)
             {
                 node = devmm_get_record_node_from_rb_node(cur);
                 if (node != NULL) {
-                    DEVMM_DRV_SWITCH(
-                        "Record info. (type=%u; devid=%u; key1=%llu; key2=%llu)\n", type, devid, node->key1,
-                        node->key2);
+                    DEVMM_DRV_SWITCH("Record info. (type=%u; devid=%u; key1=%llu; key2=%llu)\n", type, devid,
+                                     node->key1, node->key2);
                     i++;
                 }
             }
@@ -427,8 +420,8 @@ static void __attribute__((destructor)) devmm_record_uninit(void)
     }
 }
 
-void devmm_record_restore_func_register(
-    enum devmm_record_feature_type type, int (*restore)(uint64_t, uint64_t, uint32_t, void *))
+void devmm_record_restore_func_register(enum devmm_record_feature_type type,
+                                        int (*restore)(uint64_t, uint64_t, uint32_t, void *))
 {
     uint32_t devid;
 
@@ -456,9 +449,8 @@ int devmm_record_restore(void)
             {
                 node = devmm_get_record_node_from_rb_node(cur);
                 if (node != NULL) {
-                    DEVMM_DRV_DEBUG_ARG(
-                        "Record restore. (type=%u; devid=%u; key1=%lu; key2=%lu)\n", type, devid, node->key1,
-                        node->key2);
+                    DEVMM_DRV_DEBUG_ARG("Record restore. (type=%u; devid=%u; key1=%lu; key2=%lu)\n", type, devid,
+                                        node->key1, node->key2);
                     ret = record_mng[type][devid].restore(node->key1, node->key2, node->devid, node->data);
                     if (ret != 0) {
                         pthread_mutex_unlock(&record_mng[type][devid].mutex);

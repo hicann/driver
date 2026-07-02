@@ -19,9 +19,15 @@
 
 #include "svm_gfp.h"
 
-static void svm_clear_giant_page(ka_page_t *pg) { svm_clear_single_page(pg, SVM_GPAGE_SIZE); }
+static void svm_clear_giant_page(ka_page_t *pg)
+{
+    svm_clear_single_page(pg, SVM_GPAGE_SIZE);
+}
 
-static inline void svm_put_page(ka_page_t *pg) { ka_mm_put_page(pg); }
+static inline void svm_put_page(ka_page_t *pg)
+{
+    ka_mm_put_page(pg);
+}
 
 static void svm_free_giant_page(ka_page_t *pg, u32 flag)
 {

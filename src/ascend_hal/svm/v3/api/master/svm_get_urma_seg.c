@@ -56,9 +56,8 @@ int halMemGetSeg(uint32_t devid, uint64_t va, uint64_t size, urma_seg_t *seg, ur
         svm_dst_va_pack(prop.devid, PROCESS_CP1, prop.start, prop.size, &dst_va);
         ret = svm_urma_get_seg_with_token_info(user_devid, &dst_va, &tmp_seg, &token_id, &token_val);
         if (ret != DRV_ERROR_NONE) {
-            svm_err(
-                "Get svm_urma_seg failed. (user_devid=%u; devid=%u; va=0x%llx; size=%llu)\n", user_devid, dst_va.devid,
-                dst_va.va, dst_va.size);
+            svm_err("Get svm_urma_seg failed. (user_devid=%u; devid=%u; va=0x%llx; size=%llu)\n", user_devid,
+                    dst_va.devid, dst_va.va, dst_va.size);
             return ret;
         }
 

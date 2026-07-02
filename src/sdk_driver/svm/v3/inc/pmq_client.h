@@ -18,8 +18,8 @@
 #include "svm_addr_desc.h"
 
 int svm_pmq_client_pa_query(u32 local_udevid, struct svm_global_va *src_info, struct svm_pa_seg pa_seg[], u64 *seg_num);
-int svm_pmq_client_host_bar_query(
-    u32 local_udevid, struct svm_global_va *src_info, struct svm_pa_seg pa_seg[], u64 *seg_num);
+int svm_pmq_client_host_bar_query(u32 local_udevid, struct svm_global_va *src_info, struct svm_pa_seg pa_seg[],
+                                  u64 *seg_num);
 int hal_kernel_svm_dev_va_to_dma_addr(int pid, u32 udevid, u64 va, u64 *dma_addr);
 
 int pmq_client_host_init_dev(u32 udevid);

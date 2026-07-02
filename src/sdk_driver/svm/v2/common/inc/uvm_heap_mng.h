@@ -133,9 +133,15 @@ static inline void clear_page_mapping(struct uvm_page_mapping *page_map)
     page_map->devid = 0;
 }
 
-static inline uint64_t get_page_mapping_pa(struct uvm_page_mapping *page_map) { return page_map->pa_addr; }
+static inline uint64_t get_page_mapping_pa(struct uvm_page_mapping *page_map)
+{
+    return page_map->pa_addr;
+}
 
-static inline uint64_t get_page_mapping_devid(struct uvm_page_mapping *page_map) { return page_map->devid; }
+static inline uint64_t get_page_mapping_devid(struct uvm_page_mapping *page_map)
+{
+    return page_map->devid;
+}
 
 /* Map virtual memory to a specific device (atomic operation) */
 static inline void set_device_present(device_bitmap *bitmap, int device_id)
@@ -260,7 +266,10 @@ static inline void uvm_page_bitmap_unlock(page_bitmap_t *bitmap)
     ka_base_atomic_clear_mask(UVM_PAGE_BITMAP_IS_LOCKED_MASK, (unsigned long *)bitmap);
 }
 
-static inline void page_bitmap_set_unlocked(page_bitmap_t *b, uint64_t mask) { (*b) |= mask; }
+static inline void page_bitmap_set_unlocked(page_bitmap_t *b, uint64_t mask)
+{
+    (*b) |= mask;
+}
 
 static inline void page_bitmap_set(page_bitmap_t *b, uint64_t mask)
 {
@@ -277,7 +286,10 @@ static inline void page_bitmap_unset(page_bitmap_t *b, uint64_t mask)
 }
 
 /* If set, returns true */
-static inline bool page_bitmap_get_unlocked(page_bitmap_t *b, uint64_t mask) { return ((*b) & mask) != 0; }
+static inline bool page_bitmap_get_unlocked(page_bitmap_t *b, uint64_t mask)
+{
+    return ((*b) & mask) != 0;
+}
 
 /* If set, returns true */
 static inline bool page_bitmap_get(page_bitmap_t *b, uint64_t mask)
@@ -329,18 +341,30 @@ static inline page_bitmap_t page_bitmap_read(page_bitmap_t *bitmap)
 }
 
 /* alloced op */
-static inline void page_bitmap_set_alloced(page_bitmap_t *b) { page_bitmap_set(b, UVM_PAGE_BITMAP_ALLOCED_MASK); }
+static inline void page_bitmap_set_alloced(page_bitmap_t *b)
+{
+    page_bitmap_set(b, UVM_PAGE_BITMAP_ALLOCED_MASK);
+}
 
-static inline void page_bitmap_unset_alloced(page_bitmap_t *b) { page_bitmap_unset(b, UVM_PAGE_BITMAP_ALLOCED_MASK); }
+static inline void page_bitmap_unset_alloced(page_bitmap_t *b)
+{
+    page_bitmap_unset(b, UVM_PAGE_BITMAP_ALLOCED_MASK);
+}
 
 static inline bool page_bitmap_get_alloced(page_bitmap_t *b)
 {
     return page_bitmap_get(b, UVM_PAGE_BITMAP_ALLOCED_MASK);
 }
 
-static inline void page_bitmap_set_first_page(page_bitmap_t *b) { page_bitmap_set(b, UVM_PAGE_IS_FIRST_PAGE_MASK); }
+static inline void page_bitmap_set_first_page(page_bitmap_t *b)
+{
+    page_bitmap_set(b, UVM_PAGE_IS_FIRST_PAGE_MASK);
+}
 
-static inline void page_bitmap_unset_first_page(page_bitmap_t *b) { page_bitmap_unset(b, UVM_PAGE_IS_FIRST_PAGE_MASK); }
+static inline void page_bitmap_unset_first_page(page_bitmap_t *b)
+{
+    page_bitmap_unset(b, UVM_PAGE_IS_FIRST_PAGE_MASK);
+}
 
 static inline bool page_bitmap_get_first_page(page_bitmap_t *b)
 {
@@ -389,8 +413,8 @@ static inline bool page_bitmap_get_read_mostly(page_bitmap_t *b)
     return page_bitmap_get(b, UVM_PAGE_BITMAP_READ_MOSTLY_MASK);
 }
 
-static inline void page_bitmap_set_field_entry(
-    page_bitmap_t *b, uint64_t entry_mask, uint32_t entry_shift, uint64_t valid_mask, uint16_t id)
+static inline void page_bitmap_set_field_entry(page_bitmap_t *b, uint64_t entry_mask, uint32_t entry_shift,
+                                               uint64_t valid_mask, uint16_t id)
 {
     uvm_page_bitmap_lock(b);
     page_bitmap_set_field_unlocked(b, entry_mask, entry_shift, id);
@@ -398,8 +422,8 @@ static inline void page_bitmap_set_field_entry(
     uvm_page_bitmap_unlock(b);
 }
 
-static inline uint16_t page_bitmap_get_field_entry(
-    page_bitmap_t *b, uint64_t entry_mask, uint32_t entry_shift, uint64_t valid_mask)
+static inline uint16_t page_bitmap_get_field_entry(page_bitmap_t *b, uint64_t entry_mask, uint32_t entry_shift,
+                                                   uint64_t valid_mask)
 {
     uint16_t id;
     if (!page_bitmap_get_unlocked(b, valid_mask)) {
@@ -412,9 +436,8 @@ static inline uint16_t page_bitmap_get_field_entry(
 /* preferred op */
 static inline void page_bitmap_set_preferred_loc(page_bitmap_t *b, uint16_t id)
 {
-    page_bitmap_set_field_entry(
-        b, PAGE_BITMAP_PREFERRED_LOC_DEVICE_ID_FULL_MASK, UVM_PAGE_BITMAP_PREFERRED_LOC_BIT,
-        PAGE_BITMAP_PREFERRED_LOC_VALID_MASK, id);
+    page_bitmap_set_field_entry(b, PAGE_BITMAP_PREFERRED_LOC_DEVICE_ID_FULL_MASK, UVM_PAGE_BITMAP_PREFERRED_LOC_BIT,
+                                PAGE_BITMAP_PREFERRED_LOC_VALID_MASK, id);
 }
 static inline void page_bitmap_unset_preferred_loc(page_bitmap_t *b)
 {
@@ -422,37 +445,35 @@ static inline void page_bitmap_unset_preferred_loc(page_bitmap_t *b)
 }
 static inline uint16_t page_bitmap_get_preferred_loc(page_bitmap_t *b)
 {
-    return page_bitmap_get_field_entry(
-        b, PAGE_BITMAP_PREFERRED_LOC_DEVICE_ID_FULL_MASK, UVM_PAGE_BITMAP_PREFERRED_LOC_BIT,
-        PAGE_BITMAP_PREFERRED_LOC_VALID_MASK);
+    return page_bitmap_get_field_entry(b, PAGE_BITMAP_PREFERRED_LOC_DEVICE_ID_FULL_MASK,
+                                       UVM_PAGE_BITMAP_PREFERRED_LOC_BIT, PAGE_BITMAP_PREFERRED_LOC_VALID_MASK);
 }
 /* preferred_type op */
 static inline void page_bitmap_set_preferred_loc_type(page_bitmap_t *b, uint16_t type)
 {
     uvm_page_bitmap_lock(b);
-    page_bitmap_set_field_unlocked(
-        b, PAGE_BITMAP_PREFERRED_LOC_TYPE_FULL_MASK, UVM_PAGE_BITMAP_PREFERRED_LOC_TYPE_BIT, type);
+    page_bitmap_set_field_unlocked(b, PAGE_BITMAP_PREFERRED_LOC_TYPE_FULL_MASK, UVM_PAGE_BITMAP_PREFERRED_LOC_TYPE_BIT,
+                                   type);
     uvm_page_bitmap_unlock(b);
 }
 static inline void page_bitmap_unset_preferred_loc_type(page_bitmap_t *b)
 {
     uvm_page_bitmap_lock(b);
-    page_bitmap_set_field_unlocked(
-        b, PAGE_BITMAP_PREFERRED_LOC_TYPE_FULL_MASK, UVM_PAGE_BITMAP_PREFERRED_LOC_TYPE_BIT, 0);
+    page_bitmap_set_field_unlocked(b, PAGE_BITMAP_PREFERRED_LOC_TYPE_FULL_MASK, UVM_PAGE_BITMAP_PREFERRED_LOC_TYPE_BIT,
+                                   0);
     uvm_page_bitmap_unlock(b);
 }
 static inline uint16_t page_bitmap_get_preferred_loc_type(page_bitmap_t *b)
 {
-    return (uint16_t)page_bitmap_get_field_unlocked(
-        b, PAGE_BITMAP_PREFERRED_LOC_TYPE_FULL_MASK, UVM_PAGE_BITMAP_PREFERRED_LOC_TYPE_BIT);
+    return (uint16_t)page_bitmap_get_field_unlocked(b, PAGE_BITMAP_PREFERRED_LOC_TYPE_FULL_MASK,
+                                                    UVM_PAGE_BITMAP_PREFERRED_LOC_TYPE_BIT);
 }
 
 /* last prefetch op */
 static inline void page_bitmap_set_last_prefetch_loc(page_bitmap_t *b, uint16_t id)
 {
-    page_bitmap_set_field_entry(
-        b, PAGE_BITMAP_LAST_PREFETCH_DEVICE_ID_FULL_MASK, UVM_PAGE_BITMAP_LAST_PREFETCH_BIT,
-        PAGE_BITMAP_PREFETCH_VALID_MASK, id);
+    page_bitmap_set_field_entry(b, PAGE_BITMAP_LAST_PREFETCH_DEVICE_ID_FULL_MASK, UVM_PAGE_BITMAP_LAST_PREFETCH_BIT,
+                                PAGE_BITMAP_PREFETCH_VALID_MASK, id);
 }
 static inline void page_bitmap_unset_last_prefetch_loc(page_bitmap_t *b)
 {
@@ -460,33 +481,31 @@ static inline void page_bitmap_unset_last_prefetch_loc(page_bitmap_t *b)
 }
 static inline uint16_t page_bitmap_get_last_prefetch_loc(page_bitmap_t *b)
 {
-    return page_bitmap_get_field_entry(
-        b, PAGE_BITMAP_LAST_PREFETCH_DEVICE_ID_FULL_MASK, UVM_PAGE_BITMAP_LAST_PREFETCH_BIT,
-        PAGE_BITMAP_PREFETCH_VALID_MASK);
+    return page_bitmap_get_field_entry(b, PAGE_BITMAP_LAST_PREFETCH_DEVICE_ID_FULL_MASK,
+                                       UVM_PAGE_BITMAP_LAST_PREFETCH_BIT, PAGE_BITMAP_PREFETCH_VALID_MASK);
 }
 
 /* last_prefetch_loc_type op */
 static inline void page_bitmap_set_last_prefetch_loc_type(page_bitmap_t *b, uint16_t type)
 {
     uvm_page_bitmap_lock(b);
-    page_bitmap_set_field_unlocked(
-        b, PAGE_BITMAP_LAST_PREFETCH_TYPE_FULL_MASK, UVM_PAGE_BITMAP_LAST_PREFETCH_TYPE_BIT, type);
+    page_bitmap_set_field_unlocked(b, PAGE_BITMAP_LAST_PREFETCH_TYPE_FULL_MASK, UVM_PAGE_BITMAP_LAST_PREFETCH_TYPE_BIT,
+                                   type);
     uvm_page_bitmap_unlock(b);
 }
 
 static inline void page_bitmap_unset_last_prefetch_loc_type(page_bitmap_t *b)
 {
     uvm_page_bitmap_lock(b);
-    page_bitmap_set_field_unlocked(
-        b, PAGE_BITMAP_LAST_PREFETCH_TYPE_FULL_MASK, UVM_PAGE_BITMAP_LAST_PREFETCH_TYPE_BIT,
-        DRV_UVM_LOCATION_TYPE_INVALID);
+    page_bitmap_set_field_unlocked(b, PAGE_BITMAP_LAST_PREFETCH_TYPE_FULL_MASK, UVM_PAGE_BITMAP_LAST_PREFETCH_TYPE_BIT,
+                                   DRV_UVM_LOCATION_TYPE_INVALID);
     uvm_page_bitmap_unlock(b);
 }
 
 static inline uint16_t page_bitmap_get_last_prefetch_loc_type(page_bitmap_t *b)
 {
-    return (uint16_t)page_bitmap_get_field_unlocked(
-        b, PAGE_BITMAP_LAST_PREFETCH_TYPE_FULL_MASK, UVM_PAGE_BITMAP_LAST_PREFETCH_TYPE_BIT);
+    return (uint16_t)page_bitmap_get_field_unlocked(b, PAGE_BITMAP_LAST_PREFETCH_TYPE_FULL_MASK,
+                                                    UVM_PAGE_BITMAP_LAST_PREFETCH_TYPE_BIT);
 }
 
 /* alloc len op */
@@ -505,8 +524,8 @@ static inline bool page_is_no_mapped(page_bitmap_t *bitmap)
     return (page_bitmap_get_host_mapped(bitmap) == false) && (page_bitmap_get_device_mapped(bitmap) == false);
 }
 
-static inline bool page_is_mapped_other_device(
-    uint16_t dev_id, page_bitmap_t *bitmap, struct uvm_page_mapping *page_map)
+static inline bool page_is_mapped_other_device(uint16_t dev_id, page_bitmap_t *bitmap,
+                                               struct uvm_page_mapping *page_map)
 {
     return (page_bitmap_get_device_mapped(bitmap) == true) && (page_map->devid < UVM_HOST_ID) &&
            (page_map->pa_addr != 0) && (page_map->devid != dev_id);

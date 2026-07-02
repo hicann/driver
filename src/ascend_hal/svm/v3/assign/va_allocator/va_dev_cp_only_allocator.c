@@ -27,7 +27,10 @@ struct va_dev_cp_only_allocator {
 
 static struct va_dev_cp_only_allocator g_dev_cp_only_allocator = {0};
 
-static struct va_dev_cp_only_allocator *va_get_dev_cp_only_allocator(void) { return &g_dev_cp_only_allocator; }
+static struct va_dev_cp_only_allocator *va_get_dev_cp_only_allocator(void)
+{
+    return &g_dev_cp_only_allocator;
+}
 
 static int va_dev_cp_only_allocator_init_ga_inst(struct va_dev_cp_only_allocator *allocator)
 {

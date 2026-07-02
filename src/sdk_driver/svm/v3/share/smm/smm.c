@@ -51,8 +51,8 @@ struct smm_addr {
 };
 
 static void (*smm_exterrnal_handle)(enum smm_external_op_type op_type, u32 udevid, int tgid, u64 va, u64 size) = NULL;
-void svm_smm_register_external_handle(
-    void (*handle)(enum smm_external_op_type op_type, u32 udevid, int tgid, u64 va, u64 size))
+void svm_smm_register_external_handle(void (*handle)(enum smm_external_op_type op_type, u32 udevid, int tgid, u64 va,
+                                                     u64 size))
 {
     smm_exterrnal_handle = handle;
 }
@@ -79,9 +79,8 @@ static int smm_slave_permission_check(u32 udevid, int tgid, struct svm_global_va
 
     ret = apm_query_master_info_by_slave(tgid, &master_tgid, &slave_udevid, &mode, &proc_type_bitmap);
     if (ret != 0) {
-        svm_info(
-            "Not apm bind proc. (udevid=%u; tgid=%d)\n", udevid,
-            tgid); /* May failed in cp2/hccp sync pgtable, do not print err in this scene. */
+        svm_info("Not apm bind proc. (udevid=%u; tgid=%d)\n", udevid,
+                 tgid); /* May failed in cp2/hccp sync pgtable, do not print err in this scene. */
         return -EPERM;
     }
 
@@ -102,9 +101,8 @@ static int smm_slave_permission_check(u32 udevid, int tgid, struct svm_global_va
     }
 
     if (remote_udevid != src_info->udevid) {
-        svm_err(
-            "Remote_udevid not match. (remote_udevid=%u; tgid=%d; src_remote_udevid=%d)\n", remote_udevid, tgid,
-            src_info->udevid);
+        svm_err("Remote_udevid not match. (remote_udevid=%u; tgid=%d; src_remote_udevid=%d)\n", remote_udevid, tgid,
+                src_info->udevid);
         return -EACCES;
     }
 
@@ -116,9 +114,8 @@ static int smm_slave_permission_check(u32 udevid, int tgid, struct svm_global_va
     }
 
     if (slave_tgid != src_info->tgid) {
-        svm_err(
-            "Tgid not match. (udevid=%u; tgid=%d; slave_tgid=%d; src_tgid=%d)\n", udevid, tgid, slave_tgid,
-            src_info->tgid);
+        svm_err("Tgid not match. (udevid=%u; tgid=%d; slave_tgid=%d; src_tgid=%d)\n", udevid, tgid, slave_tgid,
+                src_info->tgid);
         return -EACCES;
     }
 
@@ -181,9 +178,8 @@ static int smm_external_mmap(struct smm_ctx *ctx, ka_task_struct_t *task, u32 sr
         int ret = ops->remap(ctx->udevid, tgid, va, pa_seg[i].pa, pa_seg[i].size, flag);
         if (ret != 0) {
             (void)ops->unmap(ctx->udevid, tgid, dst_va, remap_size);
-            svm_err(
-                "Remap failed. (ret=%d; va=0x%llx; size=0x%llx; seg_num=%llu; remap_size=0x%llx)\n", ret, dst_va,
-                dst_size, seg_num, remap_size);
+            svm_err("Remap failed. (ret=%d; va=0x%llx; size=0x%llx; seg_num=%llu; remap_size=0x%llx)\n", ret, dst_va,
+                    dst_size, seg_num, remap_size);
             return ret;
         }
 
@@ -277,9 +273,8 @@ static int smm_internal_munmap(struct smm_ctx *ctx, ka_task_struct_t *task, u32 
 
     query_size = svm_query_phys(vma, dst_va, dst_size, pa_seg, &seg_num);
     if (query_size != dst_size) {
-        svm_err(
-            "Smm query pa failed. (udevid=%u; dst_va=0x%llx; dst_size=0x%llx; query_size=0x%llx)\n", udevid, dst_va,
-            dst_size, query_size);
+        svm_err("Smm query pa failed. (udevid=%u; dst_va=0x%llx; dst_size=0x%llx; query_size=0x%llx)\n", udevid, dst_va,
+                dst_size, query_size);
         return -EINVAL;
     }
 
@@ -398,8 +393,8 @@ static int _smm_munmap(struct smm_ctx *ctx, ka_task_struct_t *task, struct svm_g
         ret = smm_external_munmap(ctx, task, src_info->udevid, &sa);
     } else {
         seg_num = svm_get_align_up_num(src_info->va, src_info->size, KA_MM_PAGE_SIZE);
-        pa_seg =
-            (struct svm_pa_seg *)svm_kvmalloc(sizeof(struct svm_pa_seg) * seg_num, KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
+        pa_seg = (struct svm_pa_seg *)svm_kvmalloc(sizeof(struct svm_pa_seg) * seg_num,
+                                                   KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
         if (pa_seg == NULL) {
             svm_err("Smm kvmalloc pa_seg failed. (alloc_seg_num=%llu)\n", seg_num);
             return -ENOMEM;
@@ -560,9 +555,8 @@ static int svm_munmap_check_dst(u32 udevid, u32 src_udevid, u64 dst_va, u64 dst_
     smm_ctx_put(ctx);
 
     if ((SVM_IS_ALIGNED(dst_va, page_size) == 0) || (SVM_IS_ALIGNED(dst_size, page_size) == 0)) {
-        svm_err(
-            "Smm va or size isn't aligned by page_size. (va=0x%llx; size=%llu; page_size=%llu)\n", dst_va, dst_size,
-            page_size);
+        svm_err("Smm va or size isn't aligned by page_size. (va=0x%llx; size=%llu; page_size=%llu)\n", dst_va, dst_size,
+                page_size);
         return -EINVAL;
     }
 

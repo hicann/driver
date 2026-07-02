@@ -47,16 +47,31 @@ static THREAD int g_svm_host_mem_alloc_mode = SVM_HOST_MEM_ALLOCED_BY_MMAP;
 static THREAD int g_uvm_host_mem_alloc_mode = UVM_HOST_MEM_ALLOCED_BY_MMAP;
 #endif
 
-void devmm_set_host_mem_alloc_mode(int mode) { g_svm_host_mem_alloc_mode = mode; }
+void devmm_set_host_mem_alloc_mode(int mode)
+{
+    g_svm_host_mem_alloc_mode = mode;
+}
 
-int devmm_get_host_mem_alloc_mode(void) { return g_svm_host_mem_alloc_mode; }
+int devmm_get_host_mem_alloc_mode(void)
+{
+    return g_svm_host_mem_alloc_mode;
+}
 
-bool devmm_is_host_pin_memory_map_failed() { return g_host_pin_memory_map_failed; }
+bool devmm_is_host_pin_memory_map_failed()
+{
+    return g_host_pin_memory_map_failed;
+}
 
 #ifndef UVM_OPEN
-void devmm_set_uvm_host_mem_alloc_mode(int mode) { g_uvm_host_mem_alloc_mode = mode; }
+void devmm_set_uvm_host_mem_alloc_mode(int mode)
+{
+    g_uvm_host_mem_alloc_mode = mode;
+}
 
-int devmm_get_uvm_host_mem_alloc_mode(void) { return g_uvm_host_mem_alloc_mode; }
+int devmm_get_uvm_host_mem_alloc_mode(void)
+{
+    return g_uvm_host_mem_alloc_mode;
+}
 #endif
 
 #ifndef EMU_ST
@@ -153,9 +168,8 @@ void *devmm_svm_map_with_flag(void *mem_map_addr, uint64_t size, uint64_t flags,
     mem_mapped_addr = mmap(mem_map_addr, size, PROT_READ | PROT_WRITE, (int)(MAP_SHARED | flags), g_devmm_mem_dev, 0);
     if (mem_mapped_addr == MAP_FAILED) {
         err = errno;
-        DEVMM_RUN_INFO(
-            "Host mem goto malloc. (mapped=%p; start=%p; errno=%d; errstr=%s)\n", mem_map_addr, mem_mapped_addr, err,
-            strerror(err));
+        DEVMM_RUN_INFO("Host mem goto malloc. (mapped=%p; start=%p; errno=%d; errstr=%s)\n", mem_map_addr,
+                       mem_mapped_addr, err, strerror(err));
         return NULL;
     }
 
@@ -173,7 +187,10 @@ void *devmm_svm_map_with_flag(void *mem_map_addr, uint64_t size, uint64_t flags,
     return mem_mapped_addr;
 }
 
-void devmm_svm_munmap(void *mem_unmap_addr, uint64_t size) { (void)munmap(mem_unmap_addr, size); }
+void devmm_svm_munmap(void *mem_unmap_addr, uint64_t size)
+{
+    (void)munmap(mem_unmap_addr, size);
+}
 #endif
 
 /* DEVMM_MAP_NPTMV is used for distinguish double pgtable by os. */
@@ -181,10 +198,10 @@ void devmm_svm_munmap(void *mem_unmap_addr, uint64_t size) { (void)munmap(mem_un
 void *devmm_svm_map_by_size(void *mem_map_addr, uint64_t size)
 {
     /* MAP_NPTMV is used for distinguish double pgtable by os. */
-    uint64_t flags =
-        (g_is_need_map_nptmv && ((uint64_t)(uintptr_t)mem_map_addr >= (DEVMM_SVM_MEM_START + DEVMM_SVM_MEM_SIZE))) ?
-            DEVMM_MAP_NPTMV :
-            0;
+    uint64_t flags = (g_is_need_map_nptmv &&
+                      ((uint64_t)(uintptr_t)mem_map_addr >= (DEVMM_SVM_MEM_START + DEVMM_SVM_MEM_SIZE))) ?
+                         DEVMM_MAP_NPTMV :
+                         0;
 #ifndef UVM_OPEN
     int fix_va_flag = ((uint64_t)(uintptr_t)mem_map_addr == DEVMM_UVM_MEM_START ||
                        (uint64_t)(uintptr_t)mem_map_addr == DEVMM_SOMA_MEM_START) ?
@@ -265,12 +282,15 @@ bool devmm_is_in_mmap_segs(uint64_t va, uint64_t size)
 }
 
 static uint64_t g_devmm_host_uva_start = DEVMM_DEFAULT_HOST_UVA_START;
-uint64_t devmm_get_host_uva_start(void) { return g_devmm_host_uva_start; }
+uint64_t devmm_get_host_uva_start(void)
+{
+    return g_devmm_host_uva_start;
+}
 
 static bool devmm_is_in_host_uva_range(uint64_t va, uint64_t size)
 {
-    return (
-        ((va == DEVMM_DEFAULT_HOST_UVA_START) || (va == DEVMM_HCCS_HOST_UVA_START)) && (size == DEVMM_HOST_PIN_SIZE));
+    return (((va == DEVMM_DEFAULT_HOST_UVA_START) || (va == DEVMM_HCCS_HOST_UVA_START)) &&
+            (size == DEVMM_HOST_PIN_SIZE));
 }
 
 DVresult devmm_svm_map(int side)
@@ -373,10 +393,22 @@ STATIC void devmm_svm_uninit(void)
     /* davinci chardev will be released in the release process, no need to close */
 }
 
-DVresult devmm_svm_master_init(void) { return devmm_svm_init(DAVINCI_SVM_SUB_MODULE_NAME, SVM_MASTER_SIDE); }
+DVresult devmm_svm_master_init(void)
+{
+    return devmm_svm_init(DAVINCI_SVM_SUB_MODULE_NAME, SVM_MASTER_SIDE);
+}
 
-DVresult devmm_svm_agent_init(void) { return devmm_svm_init(DAVINCI_SVM_AGENT_SUB_MODULE_NAME, SVM_AGENT_SIDE); }
+DVresult devmm_svm_agent_init(void)
+{
+    return devmm_svm_init(DAVINCI_SVM_AGENT_SUB_MODULE_NAME, SVM_AGENT_SIDE);
+}
 
-void devmm_svm_agent_uninit(void) { devmm_svm_uninit(); }
+void devmm_svm_agent_uninit(void)
+{
+    devmm_svm_uninit();
+}
 
-void devmm_svm_master_uninit(void) { devmm_svm_uninit(); }
+void devmm_svm_master_uninit(void)
+{
+    devmm_svm_uninit();
+}

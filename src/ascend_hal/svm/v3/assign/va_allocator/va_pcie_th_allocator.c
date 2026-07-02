@@ -32,7 +32,10 @@ struct va_pcie_th_allocator {
 
 static struct va_pcie_th_allocator g_pcie_th_allocator = {0};
 
-static struct va_pcie_th_allocator *va_get_pcie_th_allocator(void) { return &g_pcie_th_allocator; }
+static struct va_pcie_th_allocator *va_get_pcie_th_allocator(void)
+{
+    return &g_pcie_th_allocator;
+}
 
 void svm_enable_pcie_th(void)
 {

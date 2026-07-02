@@ -12,7 +12,7 @@
 #define SVM_MPL_FLAG_DEV_CP_ONLY (1U << 6U)
 #define SVM_MPL_FLAG_FIXED_NUMA (1U << 7U)
 #define SVM_MPL_FLAG_CONTIGUOUS_PER_2M (1U << 8U)
-#define SVM_MPL_FLAG_NO_REMOTE_OPS     (1U << 9U)
+#define SVM_MPL_FLAG_NO_REMOTE_OPS (1U << 9U)
 
 /* numa id: bit24~31 */
 #define SVM_MPL_FLAG_NUMA_ID_BIT 24U

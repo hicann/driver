@@ -44,18 +44,18 @@ int devmm_ioctl_mem_get_info(struct devmm_svm_process *svm_proc, struct devmm_io
 
 void devmm_share_id_map_node_put(struct devmm_share_id_map_node *map_node);
 struct devmm_share_id_map_node *devmm_share_id_map_node_get(struct devmm_svm_process *svm_proc, u32 devid, int id);
-void devmm_share_id_map_node_destroy(
-    struct devmm_svm_process *svm_proc, u32 devid, struct devmm_share_id_map_node *map_node);
+void devmm_share_id_map_node_destroy(struct devmm_svm_process *svm_proc, u32 devid,
+                                     struct devmm_share_id_map_node *map_node);
 void devmm_share_id_map_node_destroy_by_devid(struct devmm_svm_process *svm_proc, u32 devid, bool need_pid_erase);
 void devmm_share_id_map_node_destroy_all(struct devmm_svm_process *svm_proc);
 
 void devmm_share_agent_blk_destroy_all(struct devmm_share_phy_addr_agent_blk_mng *blk_mng);
-int devmm_share_agent_blk_put_with_share_id(
-    u32 share_devid, int share_id, int hostpid, u32 devid, bool need_pid_erase, u32 dst_sdid);
+int devmm_share_agent_blk_put_with_share_id(u32 share_devid, int share_id, int hostpid, u32 devid, bool need_pid_erase,
+                                            u32 dst_sdid);
 int devmm_put_remote_share_mem_info(u32 devid, u32 share_id, u32 share_sdid, u32 share_devid);
 
-int devmm_chan_target_blk_query_pa_process(
-    struct devmm_svm_process *svm_proc, struct devmm_svm_heap *heap, void *msg, u32 *ack_len);
+int devmm_chan_target_blk_query_pa_process(struct devmm_svm_process *svm_proc, struct devmm_svm_heap *heap, void *msg,
+                                           u32 *ack_len);
 int devmm_ioctl_mem_handle_set_attr(struct devmm_svm_process *svm_proc, struct devmm_ioctl_arg *arg);
 int devmm_ioctl_mem_handle_get_attr(struct devmm_svm_process *svm_proc, struct devmm_ioctl_arg *arg);
 #endif

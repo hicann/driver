@@ -48,8 +48,8 @@ struct devmm_dma_desc_node {
     struct devmm_dma_desc_node_info info;
 };
 
-static inline struct devmm_dma_desc_node_rb_info *devmm_dma_desc_get_rb_info(
-    struct devmm_svm_proc_master *master_data, u32 key)
+static inline struct devmm_dma_desc_node_rb_info *devmm_dma_desc_get_rb_info(struct devmm_svm_proc_master *master_data,
+                                                                             u32 key)
 {
     return &master_data->dma_desc_rb_info[key % DMA_DESC_RB_INFO_CNT];
 }
@@ -68,8 +68,8 @@ void devmm_dma_desc_stats_info_print(struct devmm_svm_process *svm_proc)
     devmm_drv_info("Dma desc stats info. (node_num=%llu; peak_node_num=%llu)\n", node_num, node_peak_num);
 }
 
-static int devmm_dma_desc_res_create(
-    struct devmm_svm_process *svm_proc, struct svm_dma_desc_addr_info *addr_info, struct devmm_copy_res **res)
+static int devmm_dma_desc_res_create(struct devmm_svm_process *svm_proc, struct svm_dma_desc_addr_info *addr_info,
+                                     struct devmm_copy_res **res)
 {
     struct devmm_mem_convrt_addr_para convert_para = {0};
     struct devmm_copy_res *tmp = NULL;
@@ -92,8 +92,8 @@ static int devmm_dma_desc_res_create(
     fd = devmm_dma_prepare_get_from_pool((u32)tmp->dev_id, tmp->dma_node_num, &tmp->dma_prepare);
     if (fd != NULL) {
 #ifndef EMU_ST
-        ret = devdrv_dma_fill_desc_of_sq(
-            (u32)tmp->dev_id, tmp->dma_prepare, tmp->dma_node, tmp->dma_node_num, DEVDRV_DMA_DESC_FILL_FINISH);
+        ret = devdrv_dma_fill_desc_of_sq((u32)tmp->dev_id, tmp->dma_prepare, tmp->dma_node, tmp->dma_node_num,
+                                         DEVDRV_DMA_DESC_FILL_FINISH);
 #endif
         if (ret != 0) {
             devmm_drv_err("Devdrv_dma_fill_desc_of_sq failed. (ret=%d)\n", ret);
@@ -105,8 +105,8 @@ static int devmm_dma_desc_res_create(
         *res = tmp;
         return 0;
     }
-    tmp->dma_prepare = devdrv_dma_link_prepare(
-        (u32)tmp->dev_id, DEVDRV_DMA_DATA_TRAFFIC, tmp->dma_node, tmp->dma_node_num, DEVDRV_DMA_DESC_FILL_FINISH);
+    tmp->dma_prepare = devdrv_dma_link_prepare((u32)tmp->dev_id, DEVDRV_DMA_DATA_TRAFFIC, tmp->dma_node,
+                                               tmp->dma_node_num, DEVDRV_DMA_DESC_FILL_FINISH);
     if (tmp->dma_prepare == NULL) {
         devmm_drv_err("Dma_link_prepare alloc failed.\n");
         devmm_destroy_one_addr(tmp);
@@ -131,9 +131,9 @@ static void devmm_dma_desc_res_destroy(struct devmm_svm_process *svm_proc, struc
         res->dma_prepare_pool_fd = NULL;
     } else {
         if (ka_base_in_softirq()) {
-            devmm_srcu_subwork_add(
-                &svm_proc->srcu_work, DEVMM_SRCU_SUBWORK_ENSURE_EXEC_TYPE, devmm_dma_prepare_destroy_srcu_work,
-                (u64 *)&res->dma_prepare, sizeof(struct devdrv_dma_prepare));
+            devmm_srcu_subwork_add(&svm_proc->srcu_work, DEVMM_SRCU_SUBWORK_ENSURE_EXEC_TYPE,
+                                   devmm_dma_prepare_destroy_srcu_work, (u64 *)&res->dma_prepare,
+                                   sizeof(struct devdrv_dma_prepare));
         } else {
             devdrv_dma_link_free(res->dma_prepare);
         }
@@ -166,8 +166,8 @@ static int devmm_dma_desc_node_insert(struct devmm_dma_desc_node_rb_info *rb_inf
     ret = devmm_rb_insert(&rb_info->root, &node->task_node, rb_handle_of_dma_desc_node);
     if (ret == 0) {
         rb_info->node_num++;
-        rb_info->node_peak_num =
-            (rb_info->node_num > rb_info->node_peak_num) ? rb_info->node_num : rb_info->node_peak_num;
+        rb_info->node_peak_num = (rb_info->node_num > rb_info->node_peak_num) ? rb_info->node_num :
+                                                                                rb_info->node_peak_num;
     }
     return ret;
 }
@@ -216,8 +216,8 @@ static void devmm_dma_desc_node_destroy(struct devmm_dma_desc_node *node)
     ka_base_kref_put(&node->ref, devmm_dma_desc_node_release);
 }
 
-static struct devmm_dma_desc_node *devmm_dma_desc_node_erase_by_handle(
-    struct devmm_svm_process *svm_proc, u32 subkey, u32 key)
+static struct devmm_dma_desc_node *devmm_dma_desc_node_erase_by_handle(struct devmm_svm_process *svm_proc, u32 subkey,
+                                                                       u32 key)
 {
     struct devmm_svm_proc_master *master_info = (struct devmm_svm_proc_master *)svm_proc->priv_data;
     struct devmm_dma_desc_node_rb_info *rb_info = devmm_dma_desc_get_rb_info(master_info, key);
@@ -256,9 +256,8 @@ static struct devmm_dma_desc_node *devmm_dma_desc_node_erase_one_by_key(struct d
     return NULL;
 }
 
-static void devmm_dma_desc_node_info_pack(
-    struct svm_dma_desc_addr_info *addr_info, struct svm_dma_desc_handle *handle, struct devmm_copy_res *res,
-    struct devmm_dma_desc_node_info *info)
+static void devmm_dma_desc_node_info_pack(struct svm_dma_desc_addr_info *addr_info, struct svm_dma_desc_handle *handle,
+                                          struct devmm_copy_res *res, struct devmm_dma_desc_node_info *info)
 {
     svm_id_inst_pack(&info->id_inst, res->dev_id, 0);
 
@@ -278,9 +277,8 @@ static void devmm_dma_desc_node_info_pack(
     info->host_pid = handle->pid;
 }
 
-static int devmm_dma_desc_create(
-    struct devmm_svm_process *svm_proc, struct svm_dma_desc_addr_info *addr_info, struct svm_dma_desc_handle *handle,
-    struct svm_dma_desc *dma_desc)
+static int devmm_dma_desc_create(struct devmm_svm_process *svm_proc, struct svm_dma_desc_addr_info *addr_info,
+                                 struct svm_dma_desc_handle *handle, struct svm_dma_desc *dma_desc)
 {
     struct devmm_dma_desc_node_info info = {{0}};
     struct devmm_copy_res *res = NULL;
@@ -338,16 +336,18 @@ static void devmm_dma_desc_destroy_one(struct devmm_svm_process *svm_proc, u32 k
     if (node == NULL) {
         /* If stream destroy and cq concurrent call, may occur this issue. */
 #ifndef EMU_ST
-        devmm_drv_info(
-            "Key is invalid or node has been destroyed. (pid=%d; key=%u; subkey=%u)\n", svm_proc->process_id.hostpid,
-            key, subkey);
+        devmm_drv_info("Key is invalid or node has been destroyed. (pid=%d; key=%u; subkey=%u)\n",
+                       svm_proc->process_id.hostpid, key, subkey);
 #endif
         return;
     }
     devmm_dma_desc_node_destroy(node);
 }
 
-static bool is_destroy_one_dma_desc(u32 subkey) { return (subkey != SVM_DMA_DESC_INVALID_SUB_KEY); }
+static bool is_destroy_one_dma_desc(u32 subkey)
+{
+    return (subkey != SVM_DMA_DESC_INVALID_SUB_KEY);
+}
 
 static void devmm_dma_desc_destroy(struct devmm_svm_process *svm_proc, u32 key, u32 subkey)
 {
@@ -419,8 +419,8 @@ void devmm_dma_desc_nodes_destroy_by_task_release(struct devmm_svm_process *svm_
 }
 
 /* If return -ESRCH, tsagent will check and not print err. */
-int hal_kernel_svm_dma_desc_create(
-    struct svm_dma_desc_addr_info *addr_info, struct svm_dma_desc_handle *handle, struct svm_dma_desc *dma_desc)
+int hal_kernel_svm_dma_desc_create(struct svm_dma_desc_addr_info *addr_info, struct svm_dma_desc_handle *handle,
+                                   struct svm_dma_desc *dma_desc)
 {
     struct devmm_svm_process_id process_id = {0};
     struct devmm_svm_process *svm_proc = NULL;

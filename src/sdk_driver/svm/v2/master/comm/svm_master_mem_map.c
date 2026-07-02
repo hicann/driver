@@ -39,9 +39,9 @@ static bool devmm_is_h2d_access(u32 owner_udevid, u32 access_udevid)
     return ((owner_udevid != uda_get_host_id()) && (access_udevid == uda_get_host_id()));
 }
 
-static u64 *devmm_h2d_access_mmap_src_pa_list_create(
-    struct devmm_svm_process *svm_proc, struct devmm_devid *devids, struct devmm_mem_remote_map_para *map_para,
-    struct devmm_memory_attributes *attr)
+static u64 *devmm_h2d_access_mmap_src_pa_list_create(struct devmm_svm_process *svm_proc, struct devmm_devid *devids,
+                                                     struct devmm_mem_remote_map_para *map_para,
+                                                     struct devmm_memory_attributes *attr)
 {
     u32 stamp = (u32)ka_jiffies;
     u64 page_num, tmp_va;
@@ -63,9 +63,8 @@ static u64 *devmm_h2d_access_mmap_src_pa_list_create(
     for (i = 0, tmp_va = map_para->src_va; i < page_num; i++, tmp_va += attr->page_size) {
         ret = devmm_find_pa_cache(svm_proc, devids->logical_devid, tmp_va, attr->page_size, &palist[i]);
         if (ret != 0) {
-            devmm_drv_err(
-                "Find agent_pa fail. (agent_va=0x%llx; page_size=%u; logical_devid=%u; ret=%d; i=%llu)\n", tmp_va,
-                attr->page_size, devids->logical_devid, ret, i);
+            devmm_drv_err("Find agent_pa fail. (agent_va=0x%llx; page_size=%u; logical_devid=%u; ret=%d; i=%llu)\n",
+                          tmp_va, attr->page_size, devids->logical_devid, ret, i);
             devmm_kvfree_ex(palist);
             return NULL;
         }
@@ -83,31 +82,28 @@ static void devmm_h2d_access_mmap_src_pa_info_destroy(u64 *palist)
     }
 }
 
-static bool devmm_h2d_access_mmap_check_pa_is_cont(
-    u64 *palist, struct devmm_mem_remote_map_para *map_para, struct devmm_memory_attributes *attr,
-    struct devmm_vmma_struct *vmma)
+static bool devmm_h2d_access_mmap_check_pa_is_cont(u64 *palist, struct devmm_mem_remote_map_para *map_para,
+                                                   struct devmm_memory_attributes *attr, struct devmm_vmma_struct *vmma)
 {
     u64 page_num = map_para->size / attr->page_size;
     bool need_check = true;
     bool is_cont = false;
 
-    need_check =
-        (devmm_svm->device_page_size != devmm_svm->host_page_size) && (vmma->info.pg_type == DEVMM_NORMAL_PAGE_TYPE);
+    need_check = (devmm_svm->device_page_size != devmm_svm->host_page_size) &&
+                 (vmma->info.pg_type == DEVMM_NORMAL_PAGE_TYPE);
     if (need_check == false) {
         return true;
     }
-    is_cont = devmm_palist_is_specify_continuous(
-        palist, devmm_svm->device_page_size, page_num, devmm_device_page_adjust_num());
-    devmm_drv_debug(
-        "Is continuous check. (agent_va=0x%llx; size==0x%llx; page_size=%u; page_num=%llu;is_cont=%d)\n",
-        map_para->src_va, map_para->size, attr->page_size, page_num, is_cont);
+    is_cont = devmm_palist_is_specify_continuous(palist, devmm_svm->device_page_size, page_num,
+                                                 devmm_device_page_adjust_num());
+    devmm_drv_debug("Is continuous check. (agent_va=0x%llx; size==0x%llx; page_size=%u; page_num=%llu;is_cont=%d)\n",
+                    map_para->src_va, map_para->size, attr->page_size, page_num, is_cont);
 
     return is_cont;
 }
 
-static int devmm_access_remap_addrs(
-    struct devmm_svm_process *svm_proc, struct devmm_devid *devids, u64 start_va, u64 *remap_palist, u64 remap_num,
-    u64 per_remap_size)
+static int devmm_access_remap_addrs(struct devmm_svm_process *svm_proc, struct devmm_devid *devids, u64 start_va,
+                                    u64 *remap_palist, u64 remap_num, u64 per_remap_size)
 {
     ka_pgprot_t page_prot = devmm_make_remote_pgprot(0);
     ka_vm_area_struct_t *vma = NULL;
@@ -124,17 +120,15 @@ static int devmm_access_remap_addrs(
     for (i = 0, tmp_va = start_va; i < remap_num; i++, tmp_va += per_remap_size) {
         ret = devmm_remote_pa_to_bar_pa(devids->devid, &remap_palist[i], 1, &tmp_pa);
         if (ret != 0) {
-            devmm_drv_err(
-                "Remote_pa to bar_pa fail. (va=0x%llx; map_size=%llu; devid=%u; ret=%d)\n", tmp_va, per_remap_size,
-                devids->devid, ret);
+            devmm_drv_err("Remote_pa to bar_pa fail. (va=0x%llx; map_size=%llu; devid=%u; ret=%d)\n", tmp_va,
+                          per_remap_size, devids->devid, ret);
             goto clear_pfn_range;
         }
 
         ret = ka_mm_remap_pfn_range(vma, tmp_va, KA_MM_PFN_DOWN(tmp_pa), per_remap_size, page_prot);
         if (ret != 0) {
-            devmm_drv_err(
-                "Remap_pfn_range fail. (i=%llu; va=0x%llx; per_remap_size=%u; ret=%d)\n", i, tmp_va, per_remap_size,
-                ret);
+            devmm_drv_err("Remap_pfn_range fail. (i=%llu; va=0x%llx; per_remap_size=%u; ret=%d)\n", i, tmp_va,
+                          per_remap_size, ret);
             goto clear_pfn_range;
         }
         devmm_try_cond_resched(&stamp);
@@ -149,9 +143,9 @@ clear_pfn_range:
     return ret;
 }
 
-static int _devmm_h2d_access_mmap(
-    struct devmm_svm_process *svm_proc, struct devmm_devid *devids, struct devmm_mem_remote_map_para *map_para,
-    struct devmm_memory_attributes *attr, struct devmm_vmma_struct *vmma)
+static int _devmm_h2d_access_mmap(struct devmm_svm_process *svm_proc, struct devmm_devid *devids,
+                                  struct devmm_mem_remote_map_para *map_para, struct devmm_memory_attributes *attr,
+                                  struct devmm_vmma_struct *vmma)
 {
     u64 *src_palist = NULL, *dst_palist = NULL;
     u64 src_page_num, dst_page_num, adjust_num;
@@ -180,8 +174,8 @@ static int _devmm_h2d_access_mmap(
             return -EFAULT;
         }
 
-        dst_palist =
-            devmm_mem_map_adjust_pa_create(dst_page_num, KA_MM_PAGE_SIZE, src_palist, src_page_num, adjust_num);
+        dst_palist = devmm_mem_map_adjust_pa_create(dst_page_num, KA_MM_PAGE_SIZE, src_palist, src_page_num,
+                                                    adjust_num);
         devmm_h2d_access_mmap_src_pa_info_destroy(src_palist);
         if (dst_palist == NULL) {
             devmm_drv_err("Dst palist create failed.\n");
@@ -195,9 +189,8 @@ static int _devmm_h2d_access_mmap(
     return ret;
 }
 
-static int devmm_h2d_access_mmap(
-    struct devmm_svm_process *svm_proc, struct devmm_vmma_struct *vmma, struct devmm_mem_set_access_para *para,
-    u32 udevid)
+static int devmm_h2d_access_mmap(struct devmm_svm_process *svm_proc, struct devmm_vmma_struct *vmma,
+                                 struct devmm_mem_set_access_para *para, u32 udevid)
 {
     struct devmm_mem_remote_map_para map_para = {0};
     struct devmm_memory_attributes attr = {0};
@@ -237,9 +230,8 @@ static int devmm_h2d_access_mmap(
     return 0;
 }
 
-static int devmm_d2h_access_mmap(
-    struct devmm_svm_process *svm_proc, struct devmm_vmma_struct *vmma, struct devmm_mem_set_access_para *para,
-    u32 udevid)
+static int devmm_d2h_access_mmap(struct devmm_svm_process *svm_proc, struct devmm_vmma_struct *vmma,
+                                 struct devmm_mem_set_access_para *para, u32 udevid)
 {
     struct devmm_memory_attributes attr;
     struct devmm_mem_remote_map_para map_para = {0};
@@ -278,9 +270,8 @@ static int devmm_d2h_access_mmap(
     return 0;
 }
 
-static int devmm_access_mmap(
-    struct devmm_svm_process *svm_proc, struct devmm_vmma_struct *vmma, struct devmm_mem_set_access_para *para,
-    u32 udevid)
+static int devmm_access_mmap(struct devmm_svm_process *svm_proc, struct devmm_vmma_struct *vmma,
+                             struct devmm_mem_set_access_para *para, u32 udevid)
 {
     if (devmm_is_d2h_access(vmma->info.devid, udevid)) {
         return devmm_d2h_access_mmap(svm_proc, vmma, para, udevid);
@@ -366,8 +357,8 @@ static int devmm_page_bitmap_mem_mapped_state_set(u32 *page_bitmap, u32 logic_de
     return 0;
 }
 
-static int devmm_mem_map_pg_bitmap_state_set(
-    struct devmm_svm_heap *heap, struct devmm_mem_map_para *para, u32 logic_devid, bool is_da_addr, bool *is_first_map)
+static int devmm_mem_map_pg_bitmap_state_set(struct devmm_svm_heap *heap, struct devmm_mem_map_para *para,
+                                             u32 logic_devid, bool is_da_addr, bool *is_first_map)
 {
     u32 *first_page_bitmap = NULL;
     u32 *page_bitmap = NULL;
@@ -426,8 +417,8 @@ clear_bitmap:
     return ret;
 }
 
-static int devmm_mem_map_pg_bitmap_state_clear(
-    struct devmm_svm_heap *heap, u64 va, u64 size, u32 side, bool is_da_addr, bool clear_first_bimap_state)
+static int devmm_mem_map_pg_bitmap_state_clear(struct devmm_svm_heap *heap, u64 va, u64 size, u32 side, bool is_da_addr,
+                                               bool clear_first_bimap_state)
 {
     u32 *first_page_bitmap = NULL;
     u32 *page_bitmap = NULL;
@@ -502,8 +493,8 @@ static int _devmm_ioctl_mem_unmap(struct devmm_svm_process *svm_proc, struct dev
     }
 }
 
-static int devmm_mem_unmap_check_bitmap_state(
-    struct devmm_svm_process *svm_proc, struct devmm_svm_heap *heap, u64 va, u64 size)
+static int devmm_mem_unmap_check_bitmap_state(struct devmm_svm_process *svm_proc, struct devmm_svm_heap *heap, u64 va,
+                                              u64 size)
 {
     u64 pg_cnt = size / heap->chunk_page_size;
     u32 *page_bitmap = NULL;
@@ -589,16 +580,16 @@ exclusive_clear:
     return ret;
 }
 
-static int devmm_ioctl_mem_map_para_check(
-    struct devmm_svm_process *svm_proc, struct devmm_svm_heap *heap, struct devmm_mem_map_para *para, u32 devid)
+static int devmm_ioctl_mem_map_para_check(struct devmm_svm_process *svm_proc, struct devmm_svm_heap *heap,
+                                          struct devmm_mem_map_para *para, u32 devid)
 {
     u32 *page_bitmap = NULL;
     u64 alloced_size, pg_cnt, i;
     int ret;
 
     if (heap->heap_sub_type != SUB_RESERVE_TYPE) {
-        devmm_drv_err(
-            "Heap sub type could only be reserve type. (va=0x%llx; heap_sub_type=%u)\n", para->va, heap->heap_sub_type);
+        devmm_drv_err("Heap sub type could only be reserve type. (va=0x%llx; heap_sub_type=%u)\n", para->va,
+                      heap->heap_sub_type);
         return -EINVAL;
     }
 
@@ -613,8 +604,8 @@ static int devmm_ioctl_mem_map_para_check(
     }
 
     if (KA_DRIVER_IS_ALIGNED(para->size, heap->chunk_page_size) == false) {
-        devmm_drv_err(
-            "Size should be aligned by pg_size. (size=%llu; pg_size=%u)\n", para->size, heap->chunk_page_size);
+        devmm_drv_err("Size should be aligned by pg_size. (size=%llu; pg_size=%u)\n", para->size,
+                      heap->chunk_page_size);
         return -EINVAL;
     }
 
@@ -676,9 +667,9 @@ static int _devmm_ioctl_mem_map(struct devmm_svm_process *svm_proc, struct devmm
     }
 }
 
-static void devmm_ioctl_vmma_info_pack(
-    struct devmm_svm_process *svm_proc, struct devmm_svm_heap *heap, struct devmm_devid *devids,
-    struct devmm_mem_map_para *para, struct devmm_vmma_info *info)
+static void devmm_ioctl_vmma_info_pack(struct devmm_svm_process *svm_proc, struct devmm_svm_heap *heap,
+                                       struct devmm_devid *devids, struct devmm_mem_map_para *para,
+                                       struct devmm_vmma_info *info)
 {
     u32 type = SVM_PYH_ADDR_BLK_NORMAL_TYPE;
     struct devmm_phy_addr_blk *blk = NULL;
@@ -831,8 +822,8 @@ void devmm_destroy_all_heap_vmmas_by_devid(struct devmm_svm_process *svm_proc, u
                 continue;
             }
             is_da_addr = svm_is_da_addr(svm_proc, vmma->info.va, vmma->info.size);
-            devmm_mem_map_pg_bitmap_state_clear(
-                heap, vmma->info.va, vmma->info.size, vmma->info.side, is_da_addr, false);
+            devmm_mem_map_pg_bitmap_state_clear(heap, vmma->info.va, vmma->info.size, vmma->info.side, is_da_addr,
+                                                false);
             if (vmma->info.side == DEVMM_SIDE_TYPE) {
                 devmm_mem_unmap(svm_proc, &vmma->info);
             }
@@ -862,9 +853,8 @@ static struct devmm_vmma_struct *devmm_vmma_matched_get(struct devmm_svm_process
     }
 
     if ((va != vmma->info.va) || (size != vmma->info.size)) {
-        devmm_drv_err(
-            "Not match para. (va=0x%llx; vmma->va=0x%llx; size=0x%llx; vmma->size=0x%llx)\n", va, vmma->info.va, size,
-            vmma->info.size);
+        devmm_drv_err("Not match para. (va=0x%llx; vmma->va=0x%llx; size=0x%llx; vmma->size=0x%llx)\n", va,
+                      vmma->info.va, size, vmma->info.size);
         devmm_vmma_put(vmma);
         return NULL;
     }
@@ -975,9 +965,8 @@ int devmm_ioctl_mem_get_access(struct devmm_svm_process *svm_proc, struct devmm_
     }
 
     if ((para->va + para->size) > (vmma->info.va + vmma->info.size)) {
-        devmm_drv_err(
-            "Invalid para. (va=0x%llx; vmma->va=0x%llx; size=0x%llx; vmma->size=0x%llx)\n", para->va, vmma->info.va,
-            para->size, vmma->info.size);
+        devmm_drv_err("Invalid para. (va=0x%llx; vmma->va=0x%llx; size=0x%llx; vmma->size=0x%llx)\n", para->va,
+                      vmma->info.va, para->size, vmma->info.size);
         devmm_vmma_put(vmma);
         return -EINVAL;
     }

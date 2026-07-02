@@ -34,7 +34,8 @@ struct svm_register_ops {
 };
 
 void svm_register_set_ops(struct svm_register_ops *ops);
-int svm_register_for_each_seg(
-    u32 dst_devid, int (*handle)(void *va_handle, u64 start, struct svm_global_va *src_info, void *priv), void *priv);
+int svm_register_for_each_seg(u32 dst_devid,
+                              int (*handle)(void *va_handle, u64 start, struct svm_global_va *src_info, void *priv),
+                              void *priv);
 bool svm_is_register_to_peer_src_range(u64 src_va, u64 size, u32 dst_devid);
 #endif

@@ -31,9 +31,8 @@ static inline ka_gfp_t svm_get_alloc_page_mask(bool is_comp, bool no_retry)
         /* arm host can not use __GFP_THISNODE flag */
         gfp_mask = (KA_GFP_KERNEL | __KA_GFP_NOWARN | __KA_GFP_ACCOUNT);
     } else {
-        gfp_mask =
-            (KA_GFP_KERNEL | __KA_GFP_ZERO | __KA_GFP_THISNODE | KA_GFP_HIGHUSER_MOVABLE | __KA_GFP_NOWARN |
-             __KA_GFP_ACCOUNT);
+        gfp_mask = (KA_GFP_KERNEL | __KA_GFP_ZERO | __KA_GFP_THISNODE | KA_GFP_HIGHUSER_MOVABLE | __KA_GFP_NOWARN |
+                    __KA_GFP_ACCOUNT);
     }
 
     if (no_retry) {
@@ -71,11 +70,20 @@ static inline u32 gfp_flag_get_numa_id(u32 flag)
 #define SVM_GPAGE_SHIFT PUD_SHIFT
 #define SVM_GPAGE_SIZE (1ULL << SVM_GPAGE_SHIFT)
 
-static inline bool svm_page_is_continuous(u32 flag) { return ((flag & SVM_GFP_FLAG_CONTINUOUS) != 0); }
+static inline bool svm_page_is_continuous(u32 flag)
+{
+    return ((flag & SVM_GFP_FLAG_CONTINUOUS) != 0);
+}
 
-static inline bool svm_page_is_continuous_per_2M(u32 flag) { return ((flag & SVM_GFP_FLAG_CONTIGUOUS_PER_2M) != 0); }
+static inline bool svm_page_is_continuous_per_2M(u32 flag)
+{
+    return ((flag & SVM_GFP_FLAG_CONTIGUOUS_PER_2M) != 0);
+}
 
-static inline bool svm_page_is_need_clear(u32 flag) { return ((flag & SVM_GFP_FLAG_CLEAR) != 0); }
+static inline bool svm_page_is_need_clear(u32 flag)
+{
+    return ((flag & SVM_GFP_FLAG_CLEAR) != 0);
+}
 
 enum svm_page_granularity {
     SVM_PAGE_GRAN_NORMAL = 0u,

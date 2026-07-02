@@ -28,7 +28,10 @@
 #define SVM_2M_CONT_PAGE_NUM (2 * SVM_BYTES_PER_MB / KA_MM_PAGE_SIZE)
 #define SVM_64K_CONT_PAGE_NUM (64 * SVM_BYTES_PER_KB / KA_MM_PAGE_SIZE)
 
-static void svm_clear_normal_single_page(ka_page_t *pg) { svm_clear_single_page(pg, KA_MM_PAGE_SIZE); }
+static void svm_clear_normal_single_page(ka_page_t *pg)
+{
+    svm_clear_single_page(pg, KA_MM_PAGE_SIZE);
+}
 
 static void svm_clear_compound_page(ka_page_t *pg)
 {
@@ -44,7 +47,10 @@ static void svm_clear_compound_page(ka_page_t *pg)
     }
 }
 
-static inline void svm_put_page(ka_page_t *pg) { ka_mm_put_page(pg); }
+static inline void svm_put_page(ka_page_t *pg)
+{
+    ka_mm_put_page(pg);
+}
 
 static void svm_free_normal_page(ka_page_t *pg, u32 flag)
 {
@@ -122,8 +128,8 @@ static int svm_alloc_continous_pages(int *latest_nid, int nids[], u32 nid_num, k
 }
 
 /* Alloc continuous cont_num pages, and return got_num. */
-static u64 svm_try_alloc_cont_pages(
-    int *latest_nid, int nids[], u32 nid_num, ka_page_t **pages, u64 pg_num, u64 cont_num, u32 flag)
+static u64 svm_try_alloc_cont_pages(int *latest_nid, int nids[], u32 nid_num, ka_page_t **pages, u64 pg_num,
+                                    u64 cont_num, u32 flag)
 {
     unsigned long stamp = ka_jiffies;
     u64 num, i = 0;
@@ -141,8 +147,8 @@ static u64 svm_try_alloc_cont_pages(
     return pg_num;
 }
 
-static int svm_alloc_normal_pages_one_by_one(
-    int *latest_nid, int nids[], u32 nid_num, ka_page_t **pages, u64 pg_num, u32 flag)
+static int svm_alloc_normal_pages_one_by_one(int *latest_nid, int nids[], u32 nid_num, ka_page_t **pages, u64 pg_num,
+                                             u32 flag)
 {
     unsigned long stamp = ka_jiffies;
     u64 i;
@@ -161,8 +167,8 @@ static int svm_alloc_normal_pages_one_by_one(
 }
 
 /* Try alloc continuous pages every 2MB, then try 64KB. */
-static u64 _svm_try_alloc_continous_pages(
-    int *latest_nid, int nids[], u32 nid_num, ka_page_t **pages, u64 pg_num, u32 flag)
+static u64 _svm_try_alloc_continous_pages(int *latest_nid, int nids[], u32 nid_num, ka_page_t **pages, u64 pg_num,
+                                          u32 flag)
 {
     u64 got_num_2m = 0, got_num_64k = 0;
 
@@ -172,8 +178,8 @@ static u64 _svm_try_alloc_continous_pages(
     }
 
 #if (KA_MM_PAGE_SIZE < (64ULL * SVM_BYTES_PER_KB))
-    got_num_64k = svm_try_alloc_cont_pages(
-        latest_nid, nids, nid_num, &pages[got_num_2m], pg_num - got_num_2m, SVM_64K_CONT_PAGE_NUM, flag);
+    got_num_64k = svm_try_alloc_cont_pages(latest_nid, nids, nid_num, &pages[got_num_2m], pg_num - got_num_2m,
+                                           SVM_64K_CONT_PAGE_NUM, flag);
 #endif
 
     return got_num_2m + got_num_64k;
@@ -199,8 +205,8 @@ static int svm_try_alloc_continous_pages(int nids[], u32 nid_num, ka_page_t **pa
     return ret;
 }
 
-static int svm_alloc_continous_pages_per_2M(
-    int *latest_nid, int nids[], u32 nid_num, ka_page_t **pages, u64 pg_num, u32 flag)
+static int svm_alloc_continous_pages_per_2M(int *latest_nid, int nids[], u32 nid_num, ka_page_t **pages, u64 pg_num,
+                                            u32 flag)
 {
     u64 got_num = 0;
 
