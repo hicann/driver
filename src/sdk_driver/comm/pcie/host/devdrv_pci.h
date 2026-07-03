@@ -35,7 +35,7 @@
 #define MINI_V2_2P_DEVICE 0xd501
 #define CLOUD_V2_DEVICE 0xd802
 #define CLOUD_V2_2P_DEVICE 0xd804
-#define CLOUD_V2_HCCS_IEP_DEVICE 0xd803  /* HCCS connection protocol */
+#define CLOUD_V2_HCCS_IEP_DEVICE 0xd803 /* HCCS connection protocol */
 #define CLOUD_V2_VF_DEVICE 0xd805
 #define MINI_V3_DEVICE 0xd105
 #define CLOUD_V4_DEVICE 0xd806
@@ -51,25 +51,25 @@
 #define DEVDRV_DMA_TEST_SIZE 0x100000
 
 /* devdrv_remove is called from prereset or module_exit */
-#define DEVDRV_REMOVE_CALLED_BY_PRERESET    0
+#define DEVDRV_REMOVE_CALLED_BY_PRERESET 0
 #define DEVDRV_REMOVE_CALLED_BY_MODULE_EXIT 1
 
 /* device is alive or dead */
-#define DEVDRV_DEVICE_DEAD   1  /* heartbeat lost or npu offline */
+#define DEVDRV_DEVICE_DEAD 1    /* heartbeat lost or npu offline */
 #define DEVDRV_DEVICE_REMOVE 2  /* pcie remove, intercept msg and dma */
-#define DEVDRV_DEVICE_ALIVE  3  /* pcie is normal */
+#define DEVDRV_DEVICE_ALIVE 3   /* pcie is normal */
 #define DEVDRV_DEVICE_SUSPEND 4 /* pcie dev suspend */
 #define DEVDRV_DEVICE_RESUME 5  /* pcie dev resume */
 #define DEVDRV_DEVICE_UDA_RM 6  /* uda has remove davinci, intercept dma done irq before uda remove */
 
 /* suspend status */
-#define DEVDRV_NORMAL_STARTUP_STATUS   0
-#define DEVDRV_SUSPEND_STATUS          1
-#define DEVDRV_RESUME_STATUS           2
-#define DEVDRV_SUSPEND_STARTUP_STATUS  3
-#define DEVDRV_REMOVE_STATUS           4
+#define DEVDRV_NORMAL_STARTUP_STATUS 0
+#define DEVDRV_SUSPEND_STATUS 1
+#define DEVDRV_RESUME_STATUS 2
+#define DEVDRV_SUSPEND_STARTUP_STATUS 3
+#define DEVDRV_REMOVE_STATUS 4
 
-#define DEVDRV_WAIT_STATE_STATUS_DELAY   10
+#define DEVDRV_WAIT_STATE_STATUS_DELAY 10
 #define DEVDRV_WAIT_STATE_STATUS_TIMEOUT 100
 
 /* get ram info from device */
@@ -96,22 +96,21 @@
 #define DEVDRV_DMA_BIT_MASK_32 32
 #define DEVDRV_FREE_PAGE_PARA 9
 
-#define DEVDRV_REVISION_TYPE_DEFAULT       0x20
+#define DEVDRV_REVISION_TYPE_DEFAULT 0x20
 #define DEVDRV_REVISION_TYPE_MDEV_SRIOV_VF 0x71
 
-#define DEVDRV_PCI_SUBSYS_DEV              0X0100UL
-#define DEVDRV_1PF2P_PCI_SUBSYS_DEV        0X0110UL
-#define DEVDRV_PCI_SUBSYS_VENDOR           0X0200UL
-#define DEVDRV_PCI_SUBSYS_PRIVATE_VENDOR   0X19E5UL
-#define DEVDRV_PCI_SUBSYS_PRIVATE_VENDOR_HX   0X2092UL
-#define DEVDRV_PCI_SUBSYS_PRIVATE_VENDOR_HK   0X20C6UL
-#define DEVDRV_PCI_SUBSYS_PRIVATE_VENDOR_KL   0X203FUL
-#define DEVDRV_PCI_SUBSYS_PRIVATE_VENDOR_CJ   0X20E9UL
-#define DEVDRV_PCI_SUBSYS_DEV_MASK_BIT     4
+#define DEVDRV_PCI_SUBSYS_DEV 0X0100UL
+#define DEVDRV_1PF2P_PCI_SUBSYS_DEV 0X0110UL
+#define DEVDRV_PCI_SUBSYS_VENDOR 0X0200UL
+#define DEVDRV_PCI_SUBSYS_PRIVATE_VENDOR 0X19E5UL
+#define DEVDRV_PCI_SUBSYS_PRIVATE_VENDOR_HX 0X2092UL
+#define DEVDRV_PCI_SUBSYS_PRIVATE_VENDOR_HK 0X20C6UL
+#define DEVDRV_PCI_SUBSYS_PRIVATE_VENDOR_KL 0X203FUL
+#define DEVDRV_PCI_SUBSYS_PRIVATE_VENDOR_CJ 0X20E9UL
+#define DEVDRV_PCI_SUBSYS_DEV_MASK_BIT 4
 
 #define DEVDRV_DAVINCI_DEV_NUM_1PF1P 1
 #define DEVDRV_DAVINCI_DEV_NUM_1PF2P 2
-
 
 #define DEVDRV_SYSFS_ENABLE 1
 #define DEVDRV_SYSFS_DISABLE 0
@@ -131,10 +130,10 @@ struct devdrv_pgtab_info;
 /* dma guard work */
 #define DEVDRV_DMA_DONE_GUARD_WORK_DELAY 100
 
-#define DEVDRV_CHECK_MODULE_TIMEOUT 1000  /* 1000 * 100ms = 100s */
+#define DEVDRV_CHECK_MODULE_TIMEOUT 1000 /* 1000 * 100ms = 100s */
 
 #define CACHE_INVALID 1 /* Invalid cache before read */
-#define CACHE_CLEAN   2 /* Clean and invalid cache after write */
+#define CACHE_CLEAN 2   /* Clean and invalid cache after write */
 
 #define DEVDRV_INVALID_PHY_ID 0xFFFFFFFFU
 
@@ -159,7 +158,7 @@ struct devdrv_device_mem_info {
 struct devdrv_dma_test {
     u32 flag;
     ka_timer_list_t test_timer; /* device os load time out timer */
-    int timer_remain;             /* timer_remain <= 0 means time out */
+    int timer_remain;           /* timer_remain <= 0 means time out */
     int timer_expires;
 };
 
@@ -228,16 +227,16 @@ struct devdrv_intr_info {
     int tsdrv_irq_vector2_num;
 };
 
-#define DEVDRV_IRQ_GEAR_INFO_INVALID  0
-#define DEVDRV_IRQ_GEAR_INFO_VALID    1
+#define DEVDRV_IRQ_GEAR_INFO_INVALID 0
+#define DEVDRV_IRQ_GEAR_INFO_VALID 1
 
 struct devdrv_irq_gear_info {
     int flag;
     struct devdrv_intr_info intr;
 };
 
-#define DEVDRV_RES_GEAR_MAX_VAL   6
-#define DEVDRV_RES_GEAR_VAL_CNT   (DEVDRV_RES_GEAR_MAX_VAL + 1)
+#define DEVDRV_RES_GEAR_MAX_VAL 6
+#define DEVDRV_RES_GEAR_VAL_CNT (DEVDRV_RES_GEAR_MAX_VAL + 1)
 
 struct devdrv_load_file_info {
     struct devdrv_load_file_cfg *load_file_cfg;
@@ -245,7 +244,7 @@ struct devdrv_load_file_info {
 };
 
 #define DEVDRV_MODULE_UNPROBED 0
-#define DEVDRV_MODULE_ONLINE   1
+#define DEVDRV_MODULE_ONLINE 1
 
 struct devdrv_depend_module {
     char *module_name;
@@ -344,9 +343,9 @@ struct devdrv_pci_ctrl {
     struct devdrv_res_info res;
     struct devdrv_dev_ops ops;
     devdrv_feature_bitmap_t features;
-    void __ka_mm_iomem *io_base; /* pcie io bar base */
-    void __ka_mm_iomem *msi_base; /* pcie msg db base */
-    void __ka_mm_iomem *mem_base; /* pcie msg sqcq base */
+    void __ka_mm_iomem *io_base;                /* pcie io bar base */
+    void __ka_mm_iomem *msi_base;               /* pcie msg db base */
+    void __ka_mm_iomem *mem_base;               /* pcie msg sqcq base */
     void __ka_mm_iomem *local_reserve_mem_base; /* local reserve mem base */
     void __ka_mm_iomem *rc_reg_base;
     phys_addr_t io_phy_base;

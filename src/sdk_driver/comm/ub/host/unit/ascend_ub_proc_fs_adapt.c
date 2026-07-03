@@ -20,21 +20,19 @@
 #include "ascend_ub_proc_fs.h"
 #include "ascend_ub_main.h"
 
-char *g_common_str[UBDRV_COMMON_CLIENT_CNT] = {UBDRV_PCIVNIC, UBDRV_SMMU, UBDRV_DEVMM, UBDRV_VMNG, UBDRV_PROFILE,
-    UBDRV_DEVMAN, UBDRV_TSDRV, UBDRV_HDC, UBDRV_SYSFS, UBDRV_ESCHED, UBDRV_DP_PROC, UBDRV_TEST, UBDRV_UDIS,
-    UBDRV_BBOX};
-char *g_nontrans_str[UBDRV_NONTRANS_TYPE_CNT] = {UBDRV_PCIVNIC, UBDRV_PASID, UBDRV_DEVMM, UBDRV_COMMON,
-    UBDRV_DEVMAN, UBDRV_TSDRV, UBDRV_HDC, UBDRV_QUEUE, UBDRV_S2S, UBDRV_TABLE};
-char *g_rao_str[DEVDRV_RAO_CLIENT_MAX] = {UBDRV_DEVMAN, UBDRV_BBOXDDR, UBDRV_BBOXSRAM, UBDRV_BBOXKLOG,
-        UBDRV_BBOXRUN, UBDRV_BBOXSEC, UBDRV_BBOXDEV, UBDRV_TEST};
-
+char *g_common_str[UBDRV_COMMON_CLIENT_CNT] = {UBDRV_PCIVNIC, UBDRV_SMMU,  UBDRV_DEVMM, UBDRV_VMNG,  UBDRV_PROFILE,
+                                               UBDRV_DEVMAN,  UBDRV_TSDRV, UBDRV_HDC,   UBDRV_SYSFS, UBDRV_ESCHED,
+                                               UBDRV_DP_PROC, UBDRV_TEST,  UBDRV_UDIS,  UBDRV_BBOX};
+char *g_nontrans_str[UBDRV_NONTRANS_TYPE_CNT] = {UBDRV_PCIVNIC, UBDRV_PASID, UBDRV_DEVMM, UBDRV_COMMON, UBDRV_DEVMAN,
+                                                 UBDRV_TSDRV,   UBDRV_HDC,   UBDRV_QUEUE, UBDRV_S2S,    UBDRV_TABLE};
+char *g_rao_str[DEVDRV_RAO_CLIENT_MAX] = {UBDRV_DEVMAN,  UBDRV_BBOXDDR, UBDRV_BBOXSRAM, UBDRV_BBOXKLOG,
+                                          UBDRV_BBOXRUN, UBDRV_BBOXSEC, UBDRV_BBOXDEV,  UBDRV_TEST};
 
 STATIC int ubdrv_procfs_mem_host_cfg_dfx(ka_inode_t *inode, ka_file_t *file)
 {
     return ka_fs_single_open(file, ubdrv_procfs_mem_host_cfg_dfx_show, inode->i_private);
 }
 STATIC_PROCFS_FILE_FUNC_OPS(mem_host_cfg, ubdrv_procfs_mem_host_cfg_dfx, NULL);
-
 
 STATIC bool ubdrv_proc_check_data_valid(struct ubdrv_procfs_entry *entry)
 {
@@ -113,12 +111,13 @@ STATIC ssize_t ubdrv_procfs_devid_write(ka_file_t *filp, const char *ubuf, size_
 
 STATIC void ubdrv_procfs_show_chan_dfx_head(ka_seq_file_t *seq)
 {
-    ka_fs_seq_printf(seq, "|chan_id |chan_type |tx_total |tx_err |tx_cqe |tx_cqe_timeout |tx_poll_cqe_err |"
-        "tx_cqe_err |tx_rebuid |recv_cqe_timeout |recv_cqe |recv_poll_cqe_err |recv_cqe_err |recv_data_err |"
-        "rx_total |rx_work |rx_poll_cqe_err |rx_cqe_err |rx_call_err |rx_null_call |rx_finish |rx_post_jfr_err |"
-        "rx_tx_err |rx_tx_poll_cqe_err |rx_tx_cqe_timeout |rx_tx_cqe |rx_tx_cqe_err |rx_tx_rebuild |"
-        "rx_max_time |rx_work_max_time |"
-        "jfae_err |tx_jfr |tx_jfr_jfc |tx_jfs |tx_jfs_jfc |rx_jfr |rx_jfr_jfc |rx_jfs |rx_jfs_jfc|\n");
+    ka_fs_seq_printf(
+        seq, "|chan_id |chan_type |tx_total |tx_err |tx_cqe |tx_cqe_timeout |tx_poll_cqe_err |"
+             "tx_cqe_err |tx_rebuid |recv_cqe_timeout |recv_cqe |recv_poll_cqe_err |recv_cqe_err |recv_data_err |"
+             "rx_total |rx_work |rx_poll_cqe_err |rx_cqe_err |rx_call_err |rx_null_call |rx_finish |rx_post_jfr_err |"
+             "rx_tx_err |rx_tx_poll_cqe_err |rx_tx_cqe_timeout |rx_tx_cqe |rx_tx_cqe_err |rx_tx_rebuild |"
+             "rx_max_time |rx_work_max_time |"
+             "jfae_err |tx_jfr |tx_jfr_jfc |tx_jfs |tx_jfs_jfc |rx_jfr |rx_jfr_jfc |rx_jfs |rx_jfs_jfc|\n");
     return;
 }
 

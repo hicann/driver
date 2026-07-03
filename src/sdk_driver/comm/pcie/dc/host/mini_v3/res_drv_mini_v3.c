@@ -30,71 +30,71 @@
 /* BAR 0 64MB */
 #define DEVDRV_RESERVE_MEM_MSG_OFFSET 0x20000
 
-#define DEVDRV_RESERVE_MEM_MSG_SIZE (16 * 1024 * 1024)        /* 16MB */
+#define DEVDRV_RESERVE_MEM_MSG_SIZE (16 * 1024 * 1024) /* 16MB */
 
 #define DEVDRV_RESERVE_MEM_TEST_OFFSET 0x1010000
-#define DEVDRV_RESERVE_MEM_TEST_SIZE (64 * 1024)              /* 64KB */
+#define DEVDRV_RESERVE_MEM_TEST_SIZE (64 * 1024) /* 64KB */
 
 #define DEVDRV_RESERVE_MEM_TOPIC_SCHED_OFFSET 0x1070000
-#define DEVDRV_RESERVE_MEM_TOPIC_SCHED_SIZE (960 * 1024)     /* 0.9375MB */
+#define DEVDRV_RESERVE_MEM_TOPIC_SCHED_SIZE (960 * 1024) /* 0.9375MB */
 
 #define DEVDRV_RESERVE_MEM_DEVMNG_OFFSET 0x1160000
-#define DEVDRV_RESERVE_MEM_DEVMNG_SIZE (1 * 1024 * 1024)      /* 1MB */
+#define DEVDRV_RESERVE_MEM_DEVMNG_SIZE (1 * 1024 * 1024) /* 1MB */
 
 #define DEVDRV_RESERVE_MEM_IMU_LOG_OFFSET 0x1260000
-#define DEVDRV_RESERVE_MEM_IMU_LOG_SIZE (5 * 1024 * 1024)     /* 5MB */
+#define DEVDRV_RESERVE_MEM_IMU_LOG_SIZE (5 * 1024 * 1024) /* 5MB */
 
 #define DEVDRV_RESERVE_MEM_KERNEL_LOG_OFFSET 0x1760000
-#define DEVDRV_RESERVE_MEM_KERNEL_LOG_SIZE (2 * 1024 * 1024)  /* 2MB */
+#define DEVDRV_RESERVE_MEM_KERNEL_LOG_SIZE (2 * 1024 * 1024) /* 2MB */
 
 #define DEVDRV_RESERVE_MEM_TSDRV_LOG_OFFSET 0x1960000
-#define DEVDRV_RESERVE_MEM_TSDRV_LOG_SIZE (2 * 1024 * 1024)   /* 2MB */
+#define DEVDRV_RESERVE_MEM_TSDRV_LOG_SIZE (2 * 1024 * 1024) /* 2MB */
 
 #define DEVDRV_RESERVE_MEM_HBOOT_LOG_OFFSET 0x1b60000
-#define DEVDRV_RESERVE_MEM_HBOOT_LOG_SIZE (8 * 1024 * 1024)   /* 8MB */
+#define DEVDRV_RESERVE_MEM_HBOOT_LOG_SIZE (8 * 1024 * 1024) /* 8MB */
 
 #define DEVDRV_RESERVE_MEM_BBOX_OFFSET 0x2360000
-#define DEVDRV_RESERVE_MEM_BBOX_SIZE (15 * 1024 * 1024)       /* 15MB */
+#define DEVDRV_RESERVE_MEM_BBOX_SIZE (15 * 1024 * 1024) /* 15MB */
 
 #define DEVDRV_RESERVE_MEM_HDR_OFFSET 0x2fe0000
-#define DEVDRV_RESERVE_MEM_HDR_SIZE (512 * 1024)              /* 512KB */
+#define DEVDRV_RESERVE_MEM_HDR_SIZE (512 * 1024) /* 512KB */
 
 #define DEVDRV_RESERVE_MEM_TS_SQ_OFFSET 0x3260000
-#define DEVDRV_RESERVE_MEM_TS_SQ_SIZE (72 * 1024 * 1024)      /* 72MB */
+#define DEVDRV_RESERVE_MEM_TS_SQ_SIZE (72 * 1024 * 1024) /* 72MB */
 
 /* BAR 2 128MB */
 #define DEVDRV_IEP_DMA_OFFSET 0x0
-#define DEVDRV_IEP_DMA_SIZE (6 * 0x100)                       /* channel 6~11 for host */
+#define DEVDRV_IEP_DMA_SIZE (6 * 0x100) /* channel 6~11 for host */
 
 #define DEVDRV_IO_LOAD_SRAM_OFFSET 0x4000
-#define DEVDRV_IO_LOAD_SRAM_SIZE (102 * 1024)                 /* 102KB */
+#define DEVDRV_IO_LOAD_SRAM_SIZE (102 * 1024) /* 102KB */
 
 #define DEVDRV_IEP_SDI0_OFFSET 0x24000
-#define DEVDRV_IEP_SDI0_SIZE (64 * 1024)                      /* 64KB */
+#define DEVDRV_IEP_SDI0_SIZE (64 * 1024) /* 64KB */
 
 #define DEVDRV_IO_TS_SRAM_OFFSET 0x34000
-#define DEVDRV_IO_TS_SRAM_SIZE (128 * 1024)                   /* 128KB */
+#define DEVDRV_IO_TS_SRAM_SIZE (128 * 1024) /* 128KB */
 
 #define DEVDRV_IO_TS_DB_OFFSET 0x54000
-#define DEVDRV_IO_TS_DB_SIZE (2 * 1024 * 1024)                /* 2MB */
+#define DEVDRV_IO_TS_DB_SIZE (2 * 1024 * 1024) /* 2MB */
 
 #define DEVDRV_IO_STARS_TOPIC_SCHED_OFFSET 0x254000
-#define DEVDRV_IO_STARS_TOPIC_SCHED_SIZE (8 * 1024 * 1024)    /* 8MB */
+#define DEVDRV_IO_STARS_TOPIC_SCHED_SIZE (8 * 1024 * 1024) /* 8MB */
 
 #define DEVDRV_IO_HWTS_EVENT_OFFSET 0xa54000
-#define DEVDRV_IO_HWTS_EVENT_SIZE (1 * 1024 * 1024)          /* 1MB */
+#define DEVDRV_IO_HWTS_EVENT_SIZE (1 * 1024 * 1024) /* 1MB */
 
 #define DEVDRV_IO_STARS_SQCQ_OFFSET 0xb54000
-#define DEVDRV_IO_STARS_SQCQ_SIZE (2 * 1024 * 1024)           /* 2MB */
+#define DEVDRV_IO_STARS_SQCQ_SIZE (2 * 1024 * 1024) /* 2MB */
 
 #define DEVDRV_IO_STARS_SQCQ_INTR_OFFSET 0xd54000
-#define DEVDRV_IO_STARS_SQCQ_INTR_SIZE (2 * 1024 * 1024)      /* 2MB */
+#define DEVDRV_IO_STARS_SQCQ_INTR_SIZE (2 * 1024 * 1024) /* 2MB */
 
 #define DEVDRV_IO_STARS_CDQM_OFFSET 0x1000000
-#define DEVDRV_IO_STARS_CDQM_SIZE (16 * 1024 * 1024)          /* 16MB */
+#define DEVDRV_IO_STARS_CDQM_SIZE (16 * 1024 * 1024) /* 16MB */
 
 #define DEVDRV_IEP_SDI0_DB_OFFSET 0x1000
-#define DEVDRV_DB_IOMAP_SIZE  0x1000
+#define DEVDRV_DB_IOMAP_SIZE 0x1000
 
 /* ************ interrupt defined for normal host ************* */
 #define DEVDRV_MSI_X_MAX_VECTORS 128
@@ -123,25 +123,25 @@
 #define DEVDRV_CDQM_MSI_X_VECTOR_BASE 126
 #define DEVDRV_CDQM_MSI_X_VECTOR_NUM 2
 
-#define DMA_CHAN_REMOTE_USED_NUM            6
-#define DMA_CHAN_REMOTE_USED_START_INDEX    6
+#define DMA_CHAN_REMOTE_USED_NUM 6
+#define DMA_CHAN_REMOTE_USED_START_INDEX 6
 #define DMA_CHAN_BAR_SPACE_USED_START_INDEX 0
 
 #define DEVDRV_MAX_DMA_CH_SQ_DEPTH 0x10000
 #define DEVDRV_MAX_DMA_CH_CQ_DEPTH 0x10000
-#define DEVDRV_DMA_CH_SQ_DESC_RSV  0x400
+#define DEVDRV_DMA_CH_SQ_DESC_RSV 0x400
 
 #define DEVDRV_MAX_MSG_PF_CHAN_CNT 60
 #define DEVDRV_MAX_MSG_VF_CHAN_CNT 0
 /* msg chan cnt for modules */
-#define DEVDRV_PCIVNIC_DEV_MSG_CHAN_CNT_MAX       1   /* non_trans:1 */
-#define DEVDRV_SMMU_DEV_MSG_CHAN_CNT_MAX          1   /* non_trans:1 */
-#define DEVDRV_DEVMM_DEV_MSG_CHAN_CNT_MAX         1   /* non_trans:1 */
-#define DEVDRV_COMMON_DEV_MSG_CHAN_CNT_MAX        1   /* non_trans:1 */
-#define DEVDRV_DEV_MAMAGER_MSG_CHAN_CNT_MAX       1   /* non_trans:1 */
-#define DEVDRV_TSDRV_MSG_CHAN_CNT_MAX             1   /* non_trans:1 */
-#define DEVDRV_DEV_HDC_MSG_CHAN_CNT_MAX          17   /* trans:16 non_trans:1 */
-#define DEVDRV_QUEUE_MSG_CHAN_CNT_MAX             1   /* non_trans:1 */
+#define DEVDRV_PCIVNIC_DEV_MSG_CHAN_CNT_MAX 1 /* non_trans:1 */
+#define DEVDRV_SMMU_DEV_MSG_CHAN_CNT_MAX 1    /* non_trans:1 */
+#define DEVDRV_DEVMM_DEV_MSG_CHAN_CNT_MAX 1   /* non_trans:1 */
+#define DEVDRV_COMMON_DEV_MSG_CHAN_CNT_MAX 1  /* non_trans:1 */
+#define DEVDRV_DEV_MAMAGER_MSG_CHAN_CNT_MAX 1 /* non_trans:1 */
+#define DEVDRV_TSDRV_MSG_CHAN_CNT_MAX 1       /* non_trans:1 */
+#define DEVDRV_DEV_HDC_MSG_CHAN_CNT_MAX 17    /* trans:16 non_trans:1 */
+#define DEVDRV_QUEUE_MSG_CHAN_CNT_MAX 1       /* non_trans:1 */
 
 #define MINI_V3_BLOCKS_NUM 10
 #define MINI_V3_MODULE_NUM 6
@@ -230,14 +230,14 @@ STATIC struct devdrv_depend_module mini_v3_module[MINI_V3_MODULE_NUM] = {
 };
 
 STATIC unsigned int devdrv_msg_chan_cnt_mini_v3[devdrv_msg_client_max] = {
-    DEVDRV_PCIVNIC_DEV_MSG_CHAN_CNT_MAX,    /* used for pcivnic */
-    DEVDRV_SMMU_DEV_MSG_CHAN_CNT_MAX,       /* used for test */
-    DEVDRV_DEVMM_DEV_MSG_CHAN_CNT_MAX,      /* used for svm */
-    DEVDRV_COMMON_DEV_MSG_CHAN_CNT_MAX,     /* used for common */
-    DEVDRV_DEV_MAMAGER_MSG_CHAN_CNT_MAX,    /* used for device manager */
-    DEVDRV_TSDRV_MSG_CHAN_CNT_MAX,          /* used for tsdrv */
-    DEVDRV_DEV_HDC_MSG_CHAN_CNT_MAX,        /* used for hdc */
-    DEVDRV_QUEUE_MSG_CHAN_CNT_MAX,          /* used for queue */
+    DEVDRV_PCIVNIC_DEV_MSG_CHAN_CNT_MAX, /* used for pcivnic */
+    DEVDRV_SMMU_DEV_MSG_CHAN_CNT_MAX,    /* used for test */
+    DEVDRV_DEVMM_DEV_MSG_CHAN_CNT_MAX,   /* used for svm */
+    DEVDRV_COMMON_DEV_MSG_CHAN_CNT_MAX,  /* used for common */
+    DEVDRV_DEV_MAMAGER_MSG_CHAN_CNT_MAX, /* used for device manager */
+    DEVDRV_TSDRV_MSG_CHAN_CNT_MAX,       /* used for tsdrv */
+    DEVDRV_DEV_HDC_MSG_CHAN_CNT_MAX,     /* used for hdc */
+    DEVDRV_QUEUE_MSG_CHAN_CNT_MAX,       /* used for queue */
 };
 
 int devdrv_mini_v3_init_bar_info(struct devdrv_pci_ctrl *pci_ctrl)
@@ -449,11 +449,10 @@ int devdrv_mini_v3_alloc_devid(struct devdrv_ctrl *ctrl_this)
     return devdrv_alloc_devid_inturn(dev_id_start, DEV_ID_STRIDE);
 }
 
-int devdrv_mini_v3_is_p2p_access_cap(struct devdrv_pci_ctrl *pci_ctrl,
-                                            struct devdrv_pci_ctrl *peer_pci_ctrl)
+int devdrv_mini_v3_is_p2p_access_cap(struct devdrv_pci_ctrl *pci_ctrl, struct devdrv_pci_ctrl *peer_pci_ctrl)
 {
     devdrv_info("This chip_type not support p2p. (dev_id=%u; chip_type=%d)\n", pci_ctrl->dev_id,
-        pci_ctrl->shr_para->chip_type);
+                pci_ctrl->shr_para->chip_type);
     return DEVDRV_P2P_ACCESS_DISABLE;
 }
 
@@ -516,6 +515,7 @@ void devdrv_mini_v3_init_setup_runtime_info(struct devdrv_pci_ctrl *pci_ctrl)
 
 static const devdrv_feature_bitmap_t mini_v3_features = 0;
 
+// clang-format off
 #define DEVDRV_MINI_V3_OPS \
     .init_load_file_info = devdrv_mini_v3_init_load_file_info, \
     .init_depend_module_info = devdrv_mini_v3_init_depend_module_info, \
@@ -569,6 +569,7 @@ struct res_config mini_v3_res_cfg[] = {
         },
     },
 };
+// clang-format on
 
 int devdrv_mini_v3_res_init(struct devdrv_pci_ctrl *pci_ctrl)
 {

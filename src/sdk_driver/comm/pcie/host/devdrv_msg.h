@@ -37,15 +37,15 @@
 
 #define DEVDRV_MSG_MAGIC 0x5a6b
 
-#define DEVDRV_STR_NAME_LEN     32
+#define DEVDRV_STR_NAME_LEN 32
 
 typedef union {
     /* Define the struct bits */
     struct {
-        u32 dev_id : 16;    /* [15..0] */
-        u32 chan_id : 16;   /* [31..16] */
-        u32 magic : 16;     /* [47..32] */
-        u32 reserved : 16;  /* [63..48] */
+        u32 dev_id : 16;   /* [15..0] */
+        u32 chan_id : 16;  /* [31..16] */
+        u32 magic : 16;    /* [47..32] */
+        u32 reserved : 16; /* [63..48] */
     } bits;
 
     /* Define an u64 member */
@@ -59,12 +59,12 @@ struct devdrv_msg_queue_info {
     void *desc_h;
     void *desc_d;
     u32 slave_mem_offset; /* host & slave reserve mem offset */
-    u32 head_h; /* host alloc msg queue head */
+    u32 head_h;           /* host alloc msg queue head */
     u32 tail_h;
     u32 head_d; /* host & slave reserve msg queue head */
     u32 tail_d;
     s32 irq_vector;
-    void *base_reserve_h; /* host reserve msg queue virt addr */
+    void *base_reserve_h;        /* host reserve msg queue virt addr */
     ka_dma_addr_t dma_reserve_h; /* host reserve msg queue dma addr */
     ka_dma_addr_t dma_reserve_d; /* device reserve msg queue dma addr */
 };
@@ -147,7 +147,7 @@ struct devdrv_msg_chan {
     int (*rx_msg_process)(void *msg_chan, void *data, u32 in_data_len, u32 out_data_len, u32 *real_out_len);
     int rx_work_flag;
     ka_work_struct_t rx_work;
-    ka_mutex_t mutex; /* tx mutex */
+    ka_mutex_t mutex;    /* tx mutex */
     ka_mutex_t rx_mutex; /* rx mutex */
     u64 stamp;
     struct devdrv_msg_chan_stat chan_stat;
@@ -176,9 +176,9 @@ struct devdrv_non_trans_msg_send_data_para {
 struct devdrv_msg_dev {
     struct devdrv_pci_ctrl *pci_ctrl;
     ka_device_t *dev;
-    void __ka_mm_iomem *db_io_base;   /* the base addr of doorbell */
-    void __ka_mm_iomem *ctrl_io_base; /* the base addr of nvme ctrl reg */
-    void __ka_mm_iomem *reserve_mem_base; /* device reserve mem base, access by ATU */
+    void __ka_mm_iomem *db_io_base;             /* the base addr of doorbell */
+    void __ka_mm_iomem *ctrl_io_base;           /* the base addr of nvme ctrl reg */
+    void __ka_mm_iomem *reserve_mem_base;       /* device reserve mem base, access by ATU */
     void __ka_mm_iomem *local_reserve_mem_base; /* host reserve mem base */
     u32 chan_cnt;
     u32 func_id;

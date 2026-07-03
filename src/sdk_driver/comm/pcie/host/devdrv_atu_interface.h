@@ -17,11 +17,11 @@
 #include "devdrv_pci.h"
 
 int devdrv_get_atu_info(struct devdrv_pci_ctrl *pci_ctrl, int atu_type, struct devdrv_iob_atu **atu,
-    u64 *host_phy_base);
-int devdrv_atu_base_to_target(struct devdrv_pci_ctrl *pci_ctrl, struct devdrv_iob_atu atu[], int num,
-    u64 base_addr, u64 *target_addr);
-int devdrv_atu_target_to_base(struct devdrv_pci_ctrl *pci_ctrl, struct devdrv_iob_atu atu[], int num,
-    u64 target_addr, u64 *base_addr);
+                        u64 *host_phy_base);
+int devdrv_atu_base_to_target(struct devdrv_pci_ctrl *pci_ctrl, struct devdrv_iob_atu atu[], int num, u64 base_addr,
+                              u64 *target_addr);
+int devdrv_atu_target_to_base(struct devdrv_pci_ctrl *pci_ctrl, struct devdrv_iob_atu atu[], int num, u64 target_addr,
+                              u64 *base_addr);
 int devdrv_devmem_addr_d2h(u32 udevid, phys_addr_t device_phy_addr, phys_addr_t *host_bar_addr);
 int devdrv_devmem_addr_h2d(u32 udevid, phys_addr_t host_bar_addr, phys_addr_t *device_phy_addr);
 #endif

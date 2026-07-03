@@ -22,15 +22,15 @@
 #define DEVDRV_MINI_V2_P2P_SUPPORT_MAX_DEVICE 40
 
 /* msg chan cnt for modules */
-#define DEVDRV_PCIVNIC_DEV_MSG_CHAN_CNT_MAX       1   /* non_trans:1 */
-#define DEVDRV_SMMU_DEV_MSG_CHAN_CNT_MAX          1   /* non_trans:1 */
-#define DEVDRV_DEVMM_DEV_MSG_CHAN_CNT_MAX         1   /* non_trans:1 */
-#define DEVDRV_COMMON_DEV_MSG_CHAN_CNT_MAX        1   /* non_trans:1 */
-#define DEVDRV_DEV_MAMAGER_MSG_CHAN_CNT_MAX       1   /* non_trans:1 */
-#define DEVDRV_TSDRV_MSG_CHAN_CNT_MAX             1   /* non_trans:1 */
-#define DEVDRV_DEV_HDC_MSG_CHAN_CNT_MAX           65  /* trans:64 non_trans:1 */
-#define DEVDRV_DEV_HDC_MSG_CHAN_CNT_GEAR_4        17  /* trans:16 non_trans:1 */
-#define DEVDRV_QUEUE_MSG_CHAN_CNT_MAX             1   /* non_trans:1 */
+#define DEVDRV_PCIVNIC_DEV_MSG_CHAN_CNT_MAX 1 /* non_trans:1 */
+#define DEVDRV_SMMU_DEV_MSG_CHAN_CNT_MAX 1    /* non_trans:1 */
+#define DEVDRV_DEVMM_DEV_MSG_CHAN_CNT_MAX 1   /* non_trans:1 */
+#define DEVDRV_COMMON_DEV_MSG_CHAN_CNT_MAX 1  /* non_trans:1 */
+#define DEVDRV_DEV_MAMAGER_MSG_CHAN_CNT_MAX 1 /* non_trans:1 */
+#define DEVDRV_TSDRV_MSG_CHAN_CNT_MAX 1       /* non_trans:1 */
+#define DEVDRV_DEV_HDC_MSG_CHAN_CNT_MAX 65    /* trans:64 non_trans:1 */
+#define DEVDRV_DEV_HDC_MSG_CHAN_CNT_GEAR_4 17 /* trans:16 non_trans:1 */
+#define DEVDRV_QUEUE_MSG_CHAN_CNT_MAX 1       /* non_trans:1 */
 
 #define DEVDRV_MAX_MSG_PF_CHAN_CNT 80
 #define DEVDRV_MAX_MSG_VF_CHAN_CNT 0
@@ -39,63 +39,63 @@
 #define PCI_BAR_IO 0
 #define PCI_BAR_MEM 4
 
-#define DEVDRV_IO_LOAD_SRAM_OFFSET  0x20000
-#define DEVDRV_IO_LOAD_SRAM_SIZE    0x80000     /* 512K */
-#define DEVDRV_IO_TS_SRAM_OFFSET    0xA0000     /* ts sram */
-#define DEVDRV_IO_TS_SRAM_SIZE      0x1000      /* 4K */
-#define DEVDRV_IO_TS_DB_OFFSET      0x100000    /* ts doorbell */
-#define DEVDRV_IO_TS_DB_SIZE        0x400000    /* 4M */
-#define DEVDRV_IO_HWTS_OFFSET       0x500000    /* hwts aic */
-#define DEVDRV_IO_HWTS_SIZE         0x100000
-#define DEVDRV_IO_HDR_OFFSET        0x600000
-#define DEVDRV_IO_HDR_SIZE          0x80000
+#define DEVDRV_IO_LOAD_SRAM_OFFSET 0x20000
+#define DEVDRV_IO_LOAD_SRAM_SIZE 0x80000 /* 512K */
+#define DEVDRV_IO_TS_SRAM_OFFSET 0xA0000 /* ts sram */
+#define DEVDRV_IO_TS_SRAM_SIZE 0x1000    /* 4K */
+#define DEVDRV_IO_TS_DB_OFFSET 0x100000  /* ts doorbell */
+#define DEVDRV_IO_TS_DB_SIZE 0x400000    /* 4M */
+#define DEVDRV_IO_HWTS_OFFSET 0x500000   /* hwts aic */
+#define DEVDRV_IO_HWTS_SIZE 0x100000
+#define DEVDRV_IO_HDR_OFFSET 0x600000
+#define DEVDRV_IO_HDR_SIZE 0x80000
 
 #define MINI_V2_NVME_LOW_LEVEL_DB_IRQ_NUM 2
 #define MINI_V2_NVME_DB_IRQ_STRDE 8
 
 #ifndef DRV_UT
 
-#define DEVDRV_IEP_SDI0_OFFSET      0x0
-#define DEVDRV_IEP_SDI0_SIZE        0x1000      /* 4K */
-#define DEVDRV_IEP_DMA_OFFSET       0x4000      /* bar0 + 16K, need cfg remap register */
-#define DEVDRV_IEP_DMA_SIZE         0x8000      /* 32K */
+#define DEVDRV_IEP_SDI0_OFFSET 0x0
+#define DEVDRV_IEP_SDI0_SIZE 0x1000  /* 4K */
+#define DEVDRV_IEP_DMA_OFFSET 0x4000 /* bar0 + 16K, need cfg remap register */
+#define DEVDRV_IEP_DMA_SIZE 0x8000   /* 32K */
 
 /* mem base */
 #define DEVDRV_RESERVE_MEM_TS_SQ_OFFSET 0x1000000
-#define DEVDRV_RESERVE_MEM_TS_SQ_SIZE   0x4000000
+#define DEVDRV_RESERVE_MEM_TS_SQ_SIZE 0x4000000
 
-#define DEVDRV_RESERVE_MEM_TEST_OFFSET  0x5000000
-#define DEVDRV_RESERVE_MEM_TEST_SIZE    0x200000
+#define DEVDRV_RESERVE_MEM_TEST_OFFSET 0x5000000
+#define DEVDRV_RESERVE_MEM_TEST_SIZE 0x200000
 
-#define DEVDRV_RESERVE_MEM_MSG_OFFSET   0x100000
-#define DEVDRV_RESERVE_MEM_MSG_SIZE     0x800000
+#define DEVDRV_RESERVE_MEM_MSG_OFFSET 0x100000
+#define DEVDRV_RESERVE_MEM_MSG_SIZE 0x800000
 
-#define DEVDRV_RESERVE_IMU_LOG_OFFSET   0x5200000
-#define DEVDRV_RESERVE_IMU_LOG_SIZE     0x800000
+#define DEVDRV_RESERVE_IMU_LOG_OFFSET 0x5200000
+#define DEVDRV_RESERVE_IMU_LOG_SIZE 0x800000
 
-#define DEVDRV_RESERVE_MEM_DB_BASE      0x0     /*  doorbell base */
-#define DEVDRV_DB_IOMAP_SIZE          0x20000 /* include msi table */
+#define DEVDRV_RESERVE_MEM_DB_BASE 0x0 /*  doorbell base */
+#define DEVDRV_DB_IOMAP_SIZE 0x20000   /* include msi table */
 
 #define DEVDRV_RESERVE_TS_SHARE_MEM_OFFSET 0x6000000
 #define DEVDRV_RESERVE_TS_SHARE_MEM_SIZE 0x2000000
 
-#define DMA_CHAN_REMOTE_USED_NUM            6
-#define DMA_CHAN_REMOTE_USED_START_INDEX    6
+#define DMA_CHAN_REMOTE_USED_NUM 6
+#define DMA_CHAN_REMOTE_USED_START_INDEX 6
 
-#define DMA_CHAN_DOUBLE_PF_REMOTE_USED_NUM            10
-#define DMA_CHAN_DOUBLE_PF_REMOTE_USED_START_INDEX    16
+#define DMA_CHAN_DOUBLE_PF_REMOTE_USED_NUM 10
+#define DMA_CHAN_DOUBLE_PF_REMOTE_USED_START_INDEX 16
 
 #define DEVDRV_RM_DOORBELL_QUEUE_PER_PF 128
 
 #define DEVDRV_MAX_DMA_CH_SQ_DEPTH 0x10000
 #define DEVDRV_MAX_DMA_CH_CQ_DEPTH 0x10000
-#define DEVDRV_DMA_CH_SQ_DESC_RSV  0x400
+#define DEVDRV_DMA_CH_SQ_DESC_RSV 0x400
 
 #define DEVDRV_BANDW_PACKSPEED 1000000 // (1000000 * dma_node)/s
 #define DEVDRV_BANDWIDTH_REAL_RATIO 60
 #define DEVDRV_PACKSPEED_REAL_RATIO 100
 
-#define MINI_V2_BLOCKS_NUM              11
+#define MINI_V2_BLOCKS_NUM 11
 
 STATIC struct devdrv_load_file_cfg mini_v2_file[MINI_V2_BLOCKS_NUM] = {
     {
@@ -155,7 +155,7 @@ STATIC struct devdrv_load_file_cfg mini_v2_file[MINI_V2_BLOCKS_NUM] = {
     },
 };
 
-#define MINI_V2_MODULE_NUM  9
+#define MINI_V2_MODULE_NUM 9
 STATIC struct devdrv_depend_module mini_v2_module[MINI_V2_MODULE_NUM] = {
     {
         .module_name = "asdrv_fms",
@@ -215,23 +215,24 @@ STATIC struct devdrv_irq_gear_info mini_v2_normal_host_irq_info[DEVDRV_RES_GEAR_
     {
         /* irq_gear 4 */
         .flag = DEVDRV_IRQ_GEAR_INFO_VALID,
-        .intr = {
-            .min_vector = 128,
-            .max_vector = 128,
-            .device_os_load_irq = 0,
-            .msg_irq_base = 0,
-            .msg_irq_num = 58,
-            .dma_irq_base = 58,
-            .dma_irq_num = 22,
-            .tsdrv_irq_base = 80,
-            .tsdrv_irq_num = 48,
-            .topic_sched_irq_num = 0,
-            .cdqm_irq_num = 0,
-            .msg_irq_vector2_base = 128,
-            .msg_irq_vector2_num = 0,
-            .tsdrv_irq_vector2_base = 0,
-            .tsdrv_irq_vector2_num = 0,
-        },
+        .intr =
+            {
+                .min_vector = 128,
+                .max_vector = 128,
+                .device_os_load_irq = 0,
+                .msg_irq_base = 0,
+                .msg_irq_num = 58,
+                .dma_irq_base = 58,
+                .dma_irq_num = 22,
+                .tsdrv_irq_base = 80,
+                .tsdrv_irq_num = 48,
+                .topic_sched_irq_num = 0,
+                .cdqm_irq_num = 0,
+                .msg_irq_vector2_base = 128,
+                .msg_irq_vector2_num = 0,
+                .tsdrv_irq_vector2_base = 0,
+                .tsdrv_irq_vector2_num = 0,
+            },
     },
     {
         /* irq_gear 5 */
@@ -240,23 +241,24 @@ STATIC struct devdrv_irq_gear_info mini_v2_normal_host_irq_info[DEVDRV_RES_GEAR_
     {
         /* irq_gear 6 */
         .flag = DEVDRV_IRQ_GEAR_INFO_VALID,
-        .intr = {
-            .min_vector = 128,
-            .max_vector = 256,
-            .device_os_load_irq = 0,
-            .msg_irq_base = 0,
-            .msg_irq_num = 58,
-            .dma_irq_base = 58,
-            .dma_irq_num = 22,
-            .tsdrv_irq_base = 80,
-            .tsdrv_irq_num = 48,
-            .topic_sched_irq_num = 0,
-            .cdqm_irq_num = 0,
-            .msg_irq_vector2_base = 128,
-            .msg_irq_vector2_num = 0,
-            .tsdrv_irq_vector2_base = 0,
-            .tsdrv_irq_vector2_num = 0,
-        },
+        .intr =
+            {
+                .min_vector = 128,
+                .max_vector = 256,
+                .device_os_load_irq = 0,
+                .msg_irq_base = 0,
+                .msg_irq_num = 58,
+                .dma_irq_base = 58,
+                .dma_irq_num = 22,
+                .tsdrv_irq_base = 80,
+                .tsdrv_irq_num = 48,
+                .topic_sched_irq_num = 0,
+                .cdqm_irq_num = 0,
+                .msg_irq_vector2_base = 128,
+                .msg_irq_vector2_num = 0,
+                .tsdrv_irq_vector2_base = 0,
+                .tsdrv_irq_vector2_num = 0,
+            },
     },
 };
 
@@ -272,9 +274,8 @@ void devdrv_mini_v2_init_bar_addr_info(struct devdrv_pci_ctrl *pci_ctrl)
             devdrv_err("Get pci_ctrl_main failed.\n");
             return;
         }
-        pci_ctrl->res.msg_db.addr =
-            pci_ctrl_main->rsv_mem_phy_base + DEVDRV_RESERVE_MEM_DB_BASE +
-            DEVDRV_RM_DOORBELL_QUEUE_PER_PF * DEVDRV_DB_QUEUE_TYPE * DEVDRV_MSG_CHAN_DB_OFFSET;
+        pci_ctrl->res.msg_db.addr = pci_ctrl_main->rsv_mem_phy_base + DEVDRV_RESERVE_MEM_DB_BASE +
+                                    DEVDRV_RM_DOORBELL_QUEUE_PER_PF * DEVDRV_DB_QUEUE_TYPE * DEVDRV_MSG_CHAN_DB_OFFSET;
     }
     pci_ctrl->res.msg_db.size = DEVDRV_DB_IOMAP_SIZE;
 
@@ -372,7 +373,7 @@ void devdrv_mini_v2_init_dma_info(struct devdrv_pci_ctrl *pci_ctrl)
     if (total_func_num > 1) {
         pci_ctrl->res.dma_res.dma_chan_num = (u32)(DMA_CHAN_DOUBLE_PF_REMOTE_USED_NUM / total_func_num);
         pci_ctrl->res.dma_res.dma_chan_start_id = DMA_CHAN_DOUBLE_PF_REMOTE_USED_START_INDEX +
-            pci_ctrl->res.dma_res.dma_chan_num * pci_ctrl->func_id;
+                                                  pci_ctrl->res.dma_res.dma_chan_num * pci_ctrl->func_id;
     } else {
         pci_ctrl->res.dma_res.dma_chan_start_id = DMA_CHAN_REMOTE_USED_START_INDEX;
         pci_ctrl->res.dma_res.dma_chan_num = DMA_CHAN_REMOTE_USED_NUM;
@@ -391,7 +392,7 @@ void devdrv_mini_v2_init_dma_info(struct devdrv_pci_ctrl *pci_ctrl)
         pci_ctrl->res.dma_res.dma_chan_addr = pci_ctrl->res.dma_res.dma_addr;
         pci_ctrl->res.dma_res.dma_chan_num = (u32)(DMA_CHAN_DOUBLE_PF_REMOTE_USED_NUM / davinci_dev_num);
         pci_ctrl->res.dma_res.dma_chan_start_id = DMA_CHAN_DOUBLE_PF_REMOTE_USED_START_INDEX +
-            pci_ctrl->res.dma_res.dma_chan_num * pci_ctrl->dev_id_in_pdev;
+                                                  pci_ctrl->res.dma_res.dma_chan_num * pci_ctrl->dev_id_in_pdev;
     }
     pci_ctrl->res.dma_res.chan_start_id = pci_ctrl->res.dma_res.dma_chan_start_id;
     for (i = 0; i < pci_ctrl->res.dma_res.dma_chan_num; i++) {
@@ -499,8 +500,8 @@ int devdrv_mini_v2_init_bar_info(struct devdrv_pci_ctrl *pci_ctrl)
 
     pci_ctrl->shr_para = pci_ctrl->io_base + DEVDRV_IO_LOAD_SRAM_OFFSET + DEVDRV_SHR_PARA_ADDR_OFFSET;
 
-    pci_ctrl->res.phy_match_flag_addr = (u8 *)pci_ctrl->mem_base +
-        DEVDRV_SHR_PARA_ADDR_OFFSET + PHY_MATCH_FLAG_OFFSET_IN_SHR_MEM;
+    pci_ctrl->res.phy_match_flag_addr = (u8 *)pci_ctrl->mem_base + DEVDRV_SHR_PARA_ADDR_OFFSET +
+                                        PHY_MATCH_FLAG_OFFSET_IN_SHR_MEM;
     pci_ctrl->res.nvme_db_base = pci_ctrl->msi_base;
     pci_ctrl->res.nvme_pf_ctrl_base = pci_ctrl->io_base + DEVDRV_IEP_SDI0_OFFSET;
     pci_ctrl->res.load_sram_base = pci_ctrl->io_base + DEVDRV_IO_LOAD_SRAM_OFFSET;
@@ -512,9 +513,8 @@ int devdrv_mini_v2_init_bar_info(struct devdrv_pci_ctrl *pci_ctrl)
             devdrv_res_uninit(pci_ctrl);
             return -ENODEV;
         }
-        pci_ctrl->res.nvme_db_base =
-            pci_ctrl_main->res.nvme_db_base +
-            DEVDRV_RM_DOORBELL_QUEUE_PER_PF * DEVDRV_DB_QUEUE_TYPE * DEVDRV_MSG_CHAN_DB_OFFSET;
+        pci_ctrl->res.nvme_db_base = pci_ctrl_main->res.nvme_db_base +
+                                     DEVDRV_RM_DOORBELL_QUEUE_PER_PF * DEVDRV_DB_QUEUE_TYPE * DEVDRV_MSG_CHAN_DB_OFFSET;
     } else if (davinci_dev_num > 1) {
         /* P0 wait for hccs link ready, then P1 probe can access P1 resource */
         while (1) {
@@ -554,14 +554,14 @@ void devdrv_mini_v2_init_setup_runtime_info(struct devdrv_pci_ctrl *pci_ctrl)
 #endif
 
 STATIC unsigned int devdrv_msg_chan_cnt_mini_v2[devdrv_msg_client_max] = {
-    DEVDRV_PCIVNIC_DEV_MSG_CHAN_CNT_MAX,    /* used for pcivnic */
-    DEVDRV_SMMU_DEV_MSG_CHAN_CNT_MAX,       /* used for test */
-    DEVDRV_DEVMM_DEV_MSG_CHAN_CNT_MAX,      /* used for svm */
-    DEVDRV_COMMON_DEV_MSG_CHAN_CNT_MAX,     /* used for common */
-    DEVDRV_DEV_MAMAGER_MSG_CHAN_CNT_MAX,    /* used for device manager */
-    DEVDRV_TSDRV_MSG_CHAN_CNT_MAX,          /* used for tsdrv */
-    DEVDRV_DEV_HDC_MSG_CHAN_CNT_MAX,        /* used for hdc */
-    DEVDRV_QUEUE_MSG_CHAN_CNT_MAX,          /* used for queue */
+    DEVDRV_PCIVNIC_DEV_MSG_CHAN_CNT_MAX, /* used for pcivnic */
+    DEVDRV_SMMU_DEV_MSG_CHAN_CNT_MAX,    /* used for test */
+    DEVDRV_DEVMM_DEV_MSG_CHAN_CNT_MAX,   /* used for svm */
+    DEVDRV_COMMON_DEV_MSG_CHAN_CNT_MAX,  /* used for common */
+    DEVDRV_DEV_MAMAGER_MSG_CHAN_CNT_MAX, /* used for device manager */
+    DEVDRV_TSDRV_MSG_CHAN_CNT_MAX,       /* used for tsdrv */
+    DEVDRV_DEV_HDC_MSG_CHAN_CNT_MAX,     /* used for hdc */
+    DEVDRV_QUEUE_MSG_CHAN_CNT_MAX,       /* used for queue */
 };
 
 enum devdrv_load_wait_mode devdrv_mini_v2_get_load_wait_mode(struct devdrv_pci_ctrl *pci_ctrl)
@@ -601,22 +601,23 @@ int devdrv_mini_v2_is_p2p_access_cap(struct devdrv_pci_ctrl *pci_ctrl, struct de
 {
     if (devdrv_p2p_para_check(0, pci_ctrl->dev_id, peer_pci_ctrl->dev_id) != 0) {
         devdrv_info("devid and peer_devid is 1pf2die's die1, not support p2p. (dev_id=%u; peer_devid=%u)\n",
-            pci_ctrl->dev_id, peer_pci_ctrl->dev_id);
+                    pci_ctrl->dev_id, peer_pci_ctrl->dev_id);
         return DEVDRV_P2P_ACCESS_DISABLE;
     }
 
     return DEVDRV_P2P_ACCESS_ENABLE;
 }
 
-int devdrv_mini_v2_get_p2p_addr(struct devdrv_pci_ctrl *pci_ctrl, u32 remote_dev_id, enum devdrv_p2p_addr_type type, phys_addr_t *phy_addr, size_t *size)
+int devdrv_mini_v2_get_p2p_addr(struct devdrv_pci_ctrl *pci_ctrl, u32 remote_dev_id, enum devdrv_p2p_addr_type type,
+                                phys_addr_t *phy_addr, size_t *size)
 {
     u32 dev_id = pci_ctrl->dev_id;
     u64 io_txatu_base;
 
     io_txatu_base = pci_ctrl->target_bar[remote_dev_id].io_txatu_base;
     if (io_txatu_base == 0) {
-        devdrv_err("Invalid io tx atu base. (dev_id=%u; remote_dev_id=%u; type=%u)\n",
-            dev_id, remote_dev_id, (u32)type);
+        devdrv_err("Invalid io tx atu base. (dev_id=%u; remote_dev_id=%u; type=%u)\n", dev_id, remote_dev_id,
+                   (u32)type);
         return -EINVAL;
     }
 
@@ -634,8 +635,8 @@ int devdrv_mini_v2_get_p2p_addr(struct devdrv_pci_ctrl *pci_ctrl, u32 remote_dev
             *size = DEVDRV_IO_HWTS_SIZE;
             break;
         default:
-            devdrv_err("P2P address type not support. (dev_id=%u; remote_dev_id=%u; type=%u)\n",
-                dev_id, remote_dev_id, (u32)type);
+            devdrv_err("P2P address type not support. (dev_id=%u; remote_dev_id=%u; type=%u)\n", dev_id, remote_dev_id,
+                       (u32)type);
             return -EINVAL;
     }
 
@@ -660,9 +661,9 @@ void devdrv_mini_v2_init_msg_cnt(struct devdrv_pci_ctrl *pci_ctrl)
     }
 }
 
-static const devdrv_feature_bitmap_t mini_v2_features =
-    (1ULL << DEVDRV_FEATURE_SHR_PARA_REBUILD);
+static const devdrv_feature_bitmap_t mini_v2_features = (1ULL << DEVDRV_FEATURE_SHR_PARA_REBUILD);
 
+// clang-format off
 #define DEVDRV_MINI_V2_OPS \
     .init_load_file_info = devdrv_mini_v2_init_load_file_info, \
     .init_depend_module_info = devdrv_mini_v2_init_depend_module_info, \
@@ -716,6 +717,7 @@ struct res_config mini_v2_res_cfg[] = {
         },
     },
 };
+// clang-format on
 
 /*
  * 1PF2P bar map to single pf bar space:

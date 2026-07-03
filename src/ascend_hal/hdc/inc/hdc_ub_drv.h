@@ -20,7 +20,7 @@
 #define HDC_SESSION_STATUS_CONN 1
 #define HDC_SESSION_STATUS_REMOTE_CLOSE 2
 
-#define HDCDRV_STR_NAME_LEN     32
+#define HDCDRV_STR_NAME_LEN 32
 
 #define HDCDRV_INVALID_PID 0x7FFFFFFEULL
 
@@ -31,13 +31,13 @@
 #endif
 
 #if defined(CFG_PLATFORM_ESL) || defined(CFG_PLATFORM_FPGA)
-#define HDC_CONN_WAIT_TIMEOUT 100000                   // 100s
-#define HDC_SET_SESSION_OWNER_WAIT_TIMEOUT 600000   // 600s
-#define HDC_SESSION_CLOSE_WAIT_TIMEOUT 15000        // 15s
+#define HDC_CONN_WAIT_TIMEOUT 100000              // 100s
+#define HDC_SET_SESSION_OWNER_WAIT_TIMEOUT 600000 // 600s
+#define HDC_SESSION_CLOSE_WAIT_TIMEOUT 15000      // 15s
 #else
-#define HDC_CONN_WAIT_TIMEOUT 30000                    // 30s
-#define HDC_SET_SESSION_OWNER_WAIT_TIMEOUT 60000    // 60s
-#define HDC_SESSION_CLOSE_WAIT_TIMEOUT 5000         // 5s
+#define HDC_CONN_WAIT_TIMEOUT 30000              // 30s
+#define HDC_SET_SESSION_OWNER_WAIT_TIMEOUT 60000 // 60s
+#define HDC_SESSION_CLOSE_WAIT_TIMEOUT 5000      // 5s
 #endif
 
 #define HDC_UB_VALID 1
@@ -49,7 +49,7 @@
 #define HDC_RETRY_MAX_TIME 5
 
 #ifdef CFG_FEATURE_SUPPORT_UB
-#define SESSION_REMOTE_CLOSED_TIME_US (3 * CONVERT_S_TO_US)   // 3s
+#define SESSION_REMOTE_CLOSED_TIME_US (3 * CONVERT_S_TO_US) // 3s
 #include "urma_api.h"
 
 typedef struct hdc_urma_info {
@@ -76,7 +76,7 @@ typedef struct hdc_urma_jfr {
 // If the value of this macro needs to be changed, the macro with the same name in kernel mode also needs to be changed.
 #define HDCDRV_UB_MEM_POOL_LEN (4 * 1024 * 16 * 2) // 4K(block_size) * 16(block_num) * 2(pool num)
 typedef struct hdc_urma_jfs {
-    urma_jfs_t *jfs;                                        // use urma_post_jfs_wr to send
+    urma_jfs_t *jfs; // use urma_post_jfs_wr to send
     int jfs_tseg_flag[HDC_URMA_MAX_JFS_DEPTH];
     sem_t tseg_sema;
 } hdc_urma_jfs_t;
@@ -85,7 +85,7 @@ struct hdc_ub_rx_buf {
     urma_target_seg_t *tseg;
     uint64_t addr;
     uint32_t len;
-    uint64_t idx;   // record mem idx in tseg; 0-15 used for jfs, 16-31 used for jfr
+    uint64_t idx; // record mem idx in tseg; 0-15 used for jfs, 16-31 used for jfr
     struct hdc_time_record_for_single_recv recv_record;
 };
 
@@ -103,7 +103,7 @@ typedef struct hdc_ub_context {
     // Remote JFRs
     urma_target_jetty_t *tjfr; // use urma_import_jfr to get info,  The input parameter needs remote EID jfr_id uasid
 
-    urma_target_seg_t *tseg;    // used for urma_register_seg
+    urma_target_seg_t *tseg; // used for urma_register_seg
 
     urma_token_t token;
     urma_token_id_t *token_id;
@@ -136,8 +136,8 @@ struct hdc_remote_close_thread_para {
 struct hdc_ub_epoll_node {
     pthread_cond_t cond;
     pthread_mutex_t mutex;
-    int ref;        // record how many ref for node, if ref is not equal to 0, this node can not be free
-    int pkt_num;    // num of cqe waiting for recv
+    int ref;     // record how many ref for node, if ref is not equal to 0, this node can not be free
+    int pkt_num; // num of cqe waiting for recv
     struct hdc_ub_rx_buf rx_list[HDC_RX_LIST_LEN];
     hdc_ub_context_t *ctx;
     uint32_t head;
@@ -146,7 +146,7 @@ struct hdc_ub_epoll_node {
 };
 
 struct hdc_ub_send_info {
-    struct drvHdcMsgBuf* buf_list;
+    struct drvHdcMsgBuf *buf_list;
     uint32_t seg_id;
     urma_sge_t src;
     urma_jfs_wr_t wr;
@@ -196,7 +196,7 @@ static inline bool hdc_service_type_vaild(int service_type)
     return true;
 }
 
-static inline bool hdc_check_session_valid_by_idx(struct hdcConfig* hdcConfig, int idx, struct hdc_ub_session* session)
+static inline bool hdc_check_session_valid_by_idx(struct hdcConfig *hdcConfig, int idx, struct hdc_ub_session *session)
 {
     if (hdcConfig->info_list[idx].status == HDC_SESSION_STATUS_IDLE || hdcConfig->info_list[idx].session != session) {
         return false;
@@ -208,10 +208,10 @@ static inline bool hdc_check_session_valid_by_idx(struct hdcConfig* hdcConfig, i
 #define HDC_UB_RX 1
 
 enum drv_hdc_ub_op {
-    HDC_URMA_WAIT_FAIL = 0,                     // fail by urma_wait_jfc
-    HDC_URMA_POLL_FAIL = 1,                     // fail by urma_poll_jfc
-    HDC_URMA_POLL_FAIL_BY_REM_ACESS_ABORT = 2,  // fail by urma_poll_jfc, with URMA_CR_REM_ACCESS_ABORT_ERR
-    HDC_URMA_REARM_FAIL = 3,                    // fail by urma_rearm_jfc
+    HDC_URMA_WAIT_FAIL = 0,                    // fail by urma_wait_jfc
+    HDC_URMA_POLL_FAIL = 1,                    // fail by urma_poll_jfc
+    HDC_URMA_POLL_FAIL_BY_REM_ACESS_ABORT = 2, // fail by urma_poll_jfc, with URMA_CR_REM_ACCESS_ABORT_ERR
+    HDC_URMA_REARM_FAIL = 3,                   // fail by urma_rearm_jfc
     HDC_URMA_OP_FAIL_MAX
 };
 
@@ -273,24 +273,24 @@ typedef struct hdc_urma_init_info {
 
 typedef struct hdc_ub_close_info {
     unsigned long long timecost_close;
-    unsigned long long del_jfs;  //remote_close
-    unsigned long long del_jfcs; //remote_close
+    unsigned long long del_jfs;  // remote_close
+    unsigned long long del_jfcs; // remote_close
 
     unsigned long long del_recv_epoll;
     unsigned long long sub_close_event;
     unsigned long long del_data_epoll;
     unsigned long long unimport_jetty;
 
-    unsigned long long del_jfr;         //urma_uninit
+    unsigned long long del_jfr; // urma_uninit
     unsigned long long wait_data_fin;
     unsigned long long del_jfcr;
     unsigned long long del_jfs_1;
     unsigned long long del_jfcs_1;
-    unsigned long long own_unreg;   //urma_uninit
+    unsigned long long own_unreg; // urma_uninit
 
     unsigned long long share_unreg;
     unsigned long long free_token_id;
-    unsigned long long del_ctx;//urma_uninit
+    unsigned long long del_ctx; // urma_uninit
 
     unsigned long long del_urma;
     unsigned long long close_kernel;
@@ -298,9 +298,9 @@ typedef struct hdc_ub_close_info {
     unsigned long long wake_recv;
     unsigned long long close_notify;
 
-    unsigned long long write_file;  //remote_close
-    unsigned long long session_free;   //user_close
-    unsigned long long del_close_epoll;//user_close
+    unsigned long long write_file;      // remote_close
+    unsigned long long session_free;    // user_close
+    unsigned long long del_close_epoll; // user_close
 } hdc_ub_close_info_t;
 
 void hdc_ub_fill_dfx_info(hdc_ub_dbg_stat_t *dbg_stat, struct hdc_ub_session *session);
@@ -322,21 +322,21 @@ unsigned long long hdc_get_time_cost(struct timespec *start_tval, struct timespe
 void hdc_get_recv_time_cost(struct hdc_time_record_for_single_recv *recv_record, struct hdc_ub_session *session);
 void hdc_get_send_time_cost(struct hdc_time_record_for_single_send *send_record, struct hdc_ub_session *session);
 void hdc_get_accept_time_cost(struct hdc_time_record_for_accept *accept_record, struct hdc_ub_session *session,
-    bool succ_flag);
+                              bool succ_flag);
 void hdc_get_connect_time_cost(struct hdc_time_record_for_connect *connect_record, struct hdc_ub_session *session);
 void hdc_get_close_time_cost(struct hdc_time_record_for_close *close_record);
 void hdc_get_ub_res_info(hdc_ub_context_t *ctx, hdc_ub_res_info_t *ub_res_info);
 void hdc_update_session_recv_record(struct hdc_ub_rx_buf *buf, struct hdc_time_record_for_single_recv *recv_record);
 
-#define HDC_PERF_LOG_LIMIT_TIME 60000     /* 60s */
+#define HDC_PERF_LOG_LIMIT_TIME 60000    /* 60s */
 #define HDC_PERF_LOG_LIMIT_BRANCH_RATE 1 /* print 1 counts per 60s */
 #define HDC_PERF_LOG_LIMIT_TIME_ENV "ASCEND_HDC_PERF_LOG_LIMIT"
 
-#define HDC_POLL_JFC_LOG_LIMIT_TIME 60000     /* 60s */
-#define HDC_POLL_JFC_LOG_LIMIT_BRANCH_RATE 1  /* print 1 counts per 60s */
+#define HDC_POLL_JFC_LOG_LIMIT_TIME 60000    /* 60s */
+#define HDC_POLL_JFC_LOG_LIMIT_BRANCH_RATE 1 /* print 1 counts per 60s */
 
 #define HDC_PERF_LOG_PRINT_NOT_LIMIT 0
-#define HDC_PERF_LOG_PRINT_LIMIT     1
+#define HDC_PERF_LOG_PRINT_LIMIT 1
 
 #ifdef CFG_BUILD_DEBUG
 #define HDC_PERF_LOG_RUN_INFO_LIMIT(format, ...)                                                          \
@@ -355,24 +355,23 @@ void hdc_update_session_recv_record(struct hdc_ub_rx_buf *buf, struct hdc_time_r
     } while (0)
 #endif
 
-#define HDC_PERF_LOG_RUN_INFO(limit, format, ...)                       \
-    do {                                                                \
-        if (limit)                                                      \
-            HDC_PERF_LOG_RUN_INFO_LIMIT(format, ##__VA_ARGS__);         \
-        else                                                            \
-            DRV_RUN_INFO(HAL_MODULE_TYPE_HDC, format, ##__VA_ARGS__);   \
+#define HDC_PERF_LOG_RUN_INFO(limit, format, ...)                     \
+    do {                                                              \
+        if (limit)                                                    \
+            HDC_PERF_LOG_RUN_INFO_LIMIT(format, ##__VA_ARGS__);       \
+        else                                                          \
+            DRV_RUN_INFO(HAL_MODULE_TYPE_HDC, format, ##__VA_ARGS__); \
     } while (0)
 
-
-#define HDC_POLL_JFC_LOG_ERROR(limit, format, ...)                      \
-    do {                                                                \
-        static int __log_cnt = 0;                                       \
-        if (limit) {                                                    \
+#define HDC_POLL_JFC_LOG_ERROR(limit, format, ...)                                                                \
+    do {                                                                                                          \
+        static int __log_cnt = 0;                                                                                 \
+        if (limit) {                                                                                              \
             if (!drv_log_rate_limit(&__log_cnt, HDC_POLL_JFC_LOG_LIMIT_BRANCH_RATE, HDC_POLL_JFC_LOG_LIMIT_TIME)) \
-                HDC_LOG_ERR(format, ##__VA_ARGS__);                     \
-        } else {                                                        \
-            HDC_LOG_ERR(format, ##__VA_ARGS__);                         \
-        }                                                               \
+                HDC_LOG_ERR(format, ##__VA_ARGS__);                                                               \
+        } else {                                                                                                  \
+            HDC_LOG_ERR(format, ##__VA_ARGS__);                                                                   \
+        }                                                                                                         \
     } while (0)
 
 void hdc_recv_data_in_event_handle(struct hdc_ub_epoll_node *node);
@@ -381,7 +380,7 @@ void hdc_ub_epoll_thread_uninit(void);
 int hdc_ub_add_ctl_to_thread_epoll(struct hdc_ub_session *session);
 void hdc_ub_del_ctl_to_thread_epoll(struct hdc_ub_session *session);
 int hdc_poll_jfc(hdc_urma_jfc_t *hdc_jfc, urma_cr_t *cr, struct hdc_ub_session *session, int tx_rx_flag,
-    int service_type);
+                 int service_type);
 void hdc_ack_jfc(hdc_urma_jfc_t *hdc_jfc);
 uint8_t hdc_ub_get_jfs_priority_by_type(int service_type);
 int hdc_mem_res_init(struct hdc_mem_res_info *mem_info, int service_type);
@@ -395,23 +394,23 @@ int hdc_process_thread_init(unsigned int dev_id);
 void hdc_process_thread_uninit(unsigned int dev_id);
 
 void hdc_ub_get_urma_dfx(struct hdc_ub_session *session, hdc_urma_jfs_t *hdc_jfs, hdc_urma_jfr_t *hdc_jfr,
-    hdc_urma_jfc_t *hdc_jfc);
+                         hdc_urma_jfc_t *hdc_jfc);
 void hdc_ub_get_urma_dfx_by_flag(struct hdc_ub_session *session, hdc_ub_context_t *ctx, int hdc_rx_tx_flag);
 // used for EMU_ST
 #ifdef EMU_ST
 int hdc_mem_res_init_stub(int fd, unsigned long long *user_va, unsigned long size);
 void hdc_mem_res_uninit_stub(int fd, unsigned long long *user_va);
-#define HDC_ERR_HEX_DUMP(buf, len, fmt, ...) \
-    do { \
-        const unsigned char *data_ptr = (const unsigned char *)(buf); \
-        size_t remain = (len); \
-        size_t offset = 0; \
-        char line_buf[129]; \
-        \
-        if ((data_ptr == NULL) || (remain == 0)) { \
-            break; \
-        } \
-        \
+#define HDC_ERR_HEX_DUMP(buf, len, fmt, ...)                           \
+    do {                                                               \
+        const unsigned char *data_ptr = (const unsigned char *)(buf);  \
+        size_t remain = (len);                                         \
+        size_t offset = 0;                                             \
+        char line_buf[129];                                            \
+                                                                       \
+        if ((data_ptr == NULL) || (remain == 0)) {                     \
+            break;                                                     \
+        }                                                              \
+                                                                       \
         DRV_ERR(HAL_MODULE_TYPE_HDC, fmt " %s\n", ##__VA_ARGS__, buf); \
     } while (0)
 #else
@@ -420,30 +419,30 @@ void hdc_mem_res_uninit_stub(int fd, unsigned long long *user_va);
 
 #endif // CFG_FEATURE_SUPPORT_UB
 
-signed int __attribute__((weak)) hdc_ub_get_session_attr(mmProcess handle,
-    const struct hdc_session *p_session, int attr, int *value);
+signed int __attribute__((weak)) hdc_ub_get_session_attr(mmProcess handle, const struct hdc_session *p_session,
+                                                         int attr, int *value);
 signed int __attribute__((weak)) hdc_ub_server_create(mmProcess handle, signed int dev_id, signed int service_type,
-    struct hdc_server_head *p_head);
-hdcError_t __attribute__((weak)) hdc_ub_server_destroy(struct hdc_server_head *p_serv,
-    signed int dev_id, signed int service_type);
+                                                      struct hdc_server_head *p_head);
+hdcError_t __attribute__((weak)) hdc_ub_server_destroy(struct hdc_server_head *p_serv, signed int dev_id,
+                                                       signed int service_type);
 signed int __attribute__((weak)) hdc_ub_client_destroy(mmProcess handle, signed int devId, signed int serviceType);
-signed int __attribute__((weak)) hdc_ub_accept(struct hdc_server_head *p_serv, signed int dev_id, signed int service_type,
-    struct hdc_session *p_session);
+signed int __attribute__((weak)) hdc_ub_accept(struct hdc_server_head *p_serv, signed int dev_id,
+                                               signed int service_type, struct hdc_session *p_session);
 signed int __attribute__((weak)) hdc_ub_connect(signed int dev_id, struct hdc_client_head *p_head, signed int peer_pid,
-    struct hdc_session *p_session);
+                                                struct hdc_session *p_session);
 mmProcess __attribute__((weak)) hdc_ub_open(void);
 void __attribute__((weak)) hdc_ub_close(mmProcess handle);
-signed int __attribute__((weak)) hdc_ub_session_close(unsigned int dev_id, struct hdc_session *p_session, int close_state,
-    int close_flag);
-signed int __attribute__((weak)) hdc_ub_send(const struct hdc_session *p_session,
-    struct drvHdcMsg *p_msg, signed int wait, unsigned int timeout);
+signed int __attribute__((weak)) hdc_ub_session_close(unsigned int dev_id, struct hdc_session *p_session,
+                                                      int close_state, int close_flag);
+signed int __attribute__((weak)) hdc_ub_send(const struct hdc_session *p_session, struct drvHdcMsg *p_msg,
+                                             signed int wait, unsigned int timeout);
 signed int __attribute__((weak)) hdc_ub_recv_peek(const struct hdc_session *p_session, signed int *len,
-    struct hdc_recv_config *recv_config);
-signed int __attribute__((weak)) hdc_ub_recv(const struct hdc_session *p_session,
-    char *buf, signed int len, signed int *out_len, struct hdc_recv_config *recv_config);
+                                                  struct hdc_recv_config *recv_config);
+signed int __attribute__((weak)) hdc_ub_recv(const struct hdc_session *p_session, char *buf, signed int len,
+                                             signed int *out_len, struct hdc_recv_config *recv_config);
 signed int __attribute__((weak)) hdc_ub_set_session_owner(const struct hdc_session *p_session);
-signed int __attribute__((weak)) HdcUbGetSessionUid(mmProcess handle,
-    const struct hdc_session *pSession, int *root_privilege);
+signed int __attribute__((weak)) HdcUbGetSessionUid(mmProcess handle, const struct hdc_session *pSession,
+                                                    int *root_privilege);
 
 void __attribute__((weak)) hdc_ub_init(struct hdcConfig *hdc_config);
 void __attribute__((weak)) hdc_ub_uninit(struct hdcConfig *hdc_config);
@@ -453,10 +452,10 @@ drvError_t __attribute__((weak)) hdc_remote_close_proc(uint32_t dev_id, void *ms
 void __attribute__((weak)) hdc_release_remote_session(void);
 signed int __attribute__((weak)) hdc_link_event_pre_init(unsigned int dev_id);
 void __attribute__((weak)) hdc_link_event_pre_uninit(signed int dev_id);
-const char* __attribute__((weak)) hdc_get_sevice_str(int service_type);
+const char *__attribute__((weak)) hdc_get_sevice_str(int service_type);
 int __attribute__((weak)) hdc_get_lock_index(int dev_id, int session_id);
-struct hdc_ub_session* __attribute__((weak)) hdc_find_session_in_list(unsigned int fd, int dev_id,
-    uint32_t unique_val, int idx);
+struct hdc_ub_session *__attribute__((weak)) hdc_find_session_in_list(unsigned int fd, int dev_id, uint32_t unique_val,
+                                                                      int idx);
 int __attribute__((weak)) hdc_ub_get_session_dfx(unsigned int dev_id, struct hdc_ub_session *session);
 void __attribute__((weak)) hdc_ub_fill_jetty_info(hdcdrv_jetty_info_t *info, struct hdc_ub_session *session);
 hdcError_t __attribute__((weak)) hdc_ub_notify_register(int service_type, struct HdcSessionNotify *notify);
@@ -464,8 +463,8 @@ void __attribute__((weak)) hdc_ub_notify_unregister(int service_type);
 signed int __attribute__((weak)) hdc_ub_get_peer_devId(mmProcess handle, signed int dev_id, signed int *peer_dev_id);
 signed int __attribute__((weak)) hdc_ub_ioctl(mmProcess handle, signed int ioctl_code, union hdcdrv_cmd *hdc_cmd);
 void __attribute__((weak)) hdc_fill_event_msg(struct hdcdrv_event_msg *msg, union hdcdrv_cmd *hdc_cmd,
-    struct hdc_ub_session *session, enum hdcdrv_notify_type notify_type);
+                                              struct hdc_ub_session *session, enum hdcdrv_notify_type notify_type);
 signed int __attribute__((weak)) hdc_send_ctrl_msg(mmProcess fd, int dev_id, void *event_msg, size_t msg_len);
 void __attribute__((weak)) hdc_ub_fill_send_recv_info(hdc_ub_send_recv_info_t *send_recv_info,
-    struct hdc_ub_session *session);
+                                                      struct hdc_ub_session *session);
 #endif

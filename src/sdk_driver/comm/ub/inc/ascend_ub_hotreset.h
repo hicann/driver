@@ -18,9 +18,9 @@
 #include "ascend_ub_dev.h"
 #include "ascend_ub_unit_adapt.h"
 
-#define AO_SUBSYS_SUBCTRL   0x200020E0000
-#define HOTRESET_REG        0x7020
-#define HOTRESET_REG_VALUE  0x5A5B5C5D
+#define AO_SUBSYS_SUBCTRL 0x200020E0000
+#define HOTRESET_REG 0x7020
+#define HOTRESET_REG_VALUE 0x5A5B5C5D
 
 int ubdrv_hot_reset_process(u32 dev_id);
 int ubdrv_proc_host_hot_reset(struct ascend_ub_msg_dev *msg_dev, void *data);

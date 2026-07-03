@@ -79,8 +79,8 @@ static void ubdrv_init_dev_num(void)
             dev_num += 1;
         } while (1);
 
-        ubdrv_info("Find out device. (vendor=%x; device=%x; dev_num=%u)\n",
-                    ascend_ubus_tbl[i].vendor, ascend_ubus_tbl[i].device, dev_num);
+        ubdrv_info("Find out device. (vendor=%x; device=%x; dev_num=%u)\n", ascend_ubus_tbl[i].vendor,
+                   ascend_ubus_tbl[i].device, dev_num);
         dev_num_total += dev_num;
     }
 
@@ -111,25 +111,18 @@ STATIC int ubdrv_init_share_param_info(struct ascend_dev *asd_dev)
         ubdrv_err("Copy share param failed. (devid=%u; ret=%d)\n", dev_id, ret);
         return ret;
     }
-    ubdrv_info("Get share param. (devid=%u; load flag=%u; chip_id=%u; node_id=%u; slot_id=%u; chip_type=%u)\n",
-        dev_id,
-        asd_dev->shr_para.load_flag,
-        asd_dev->shr_para.chip_id,
-        asd_dev->shr_para.node_id,
-        asd_dev->shr_para.slot_id,
-        asd_dev->shr_para.chip_type);
+    ubdrv_info("Get share param. (devid=%u; load flag=%u; chip_id=%u; node_id=%u; slot_id=%u; chip_type=%u)\n", dev_id,
+               asd_dev->shr_para.load_flag, asd_dev->shr_para.chip_id, asd_dev->shr_para.node_id,
+               asd_dev->shr_para.slot_id, asd_dev->shr_para.chip_type);
 
     ret = memcpy_s(&(asd_dev->hw_info), sizeof(ubdrv_hw_info_t), hw_info, sizeof(ubdrv_hw_info_t));
     if (ret != 0) {
         ubdrv_err("Copy hardware info failed. (devid=%u; ret=%d)\n", dev_id, ret);
         return ret;
     }
-    ubdrv_info("Get hardware info. (devid=%u; chip_id=%u; multi_chip=%u; multi_die=%u; mainboard_id=0x%x)\n",
-        dev_id,
-        asd_dev->hw_info.chip_id,
-        asd_dev->hw_info.multi_chip,
-        asd_dev->hw_info.multi_die,
-        asd_dev->hw_info.mainboard_id);
+    ubdrv_info("Get hardware info. (devid=%u; chip_id=%u; multi_chip=%u; multi_die=%u; mainboard_id=0x%x)\n", dev_id,
+               asd_dev->hw_info.chip_id, asd_dev->hw_info.multi_chip, asd_dev->hw_info.multi_die,
+               asd_dev->hw_info.mainboard_id);
 
     return 0;
 }
@@ -245,7 +238,7 @@ STATIC int ubdrv_alloc_devid_inturn(u32 begin, u32 stride)
 
 STATIC int ubdrv_alloc_devid(struct ascend_ub_dev *ub_dev)
 {
-    struct ascend_ub_ctrl* ub_ctrl;
+    struct ascend_ub_ctrl *ub_ctrl;
     int dev_id = -1;
 
     ub_ctrl = get_global_ub_ctrl();
@@ -256,10 +249,9 @@ STATIC int ubdrv_alloc_devid(struct ascend_ub_dev *ub_dev)
     return dev_id;
 }
 
-STATIC void ubdrv_ub_dev_init(struct ascend_ub_dev *ub_dev,
-    struct ub_entity*ubus_dev, u32 dev_id)
+STATIC void ubdrv_ub_dev_init(struct ascend_ub_dev *ub_dev, struct ub_entity *ubus_dev, u32 dev_id)
 {
-    struct ascend_ub_ctrl* ub_ctrl;
+    struct ascend_ub_ctrl *ub_ctrl;
 
     ub_dev->ubus_dev = ubus_dev;
     ub_dev->dev_id = dev_id;
@@ -270,7 +262,7 @@ STATIC void ubdrv_ub_dev_init(struct ascend_ub_dev *ub_dev,
 
 STATIC void ubdrv_ub_dev_uninit(struct ascend_ub_dev *ub_dev)
 {
-    struct ascend_ub_ctrl* ub_ctrl;
+    struct ascend_ub_ctrl *ub_ctrl;
 
     ub_ctrl = get_global_ub_ctrl();
     ub_dev->ubus_dev = NULL;
@@ -279,7 +271,7 @@ STATIC void ubdrv_ub_dev_uninit(struct ascend_ub_dev *ub_dev)
     ub_dev->asd_dev = NULL;
 }
 
-STATIC int ubdrv_register_devctrl(struct ascend_ub_dev *ub_dev, struct ub_entity*ubus_dev)
+STATIC int ubdrv_register_devctrl(struct ascend_ub_dev *ub_dev, struct ub_entity *ubus_dev)
 {
     int dev_id;
 
@@ -305,7 +297,7 @@ STATIC void ubdrv_unregister_devctrl(struct ascend_ub_dev *ub_dev)
     return;
 }
 
-STATIC int ubdrv_ubus_probe(struct ub_entity*ubus_dev, const struct ub_device_id *utbl_entry)
+STATIC int ubdrv_ubus_probe(struct ub_entity *ubus_dev, const struct ub_device_id *utbl_entry)
 {
     int ret;
     struct ascend_ub_dev *ub_dev;
@@ -315,8 +307,8 @@ STATIC int ubdrv_ubus_probe(struct ub_entity*ubus_dev, const struct ub_device_id
         return -EINVAL;
     }
 
-    ubdrv_info("Ascend ubus probe driver IN. (chip_type=%lu; ub dev number=%u)\n",
-        utbl_entry->driver_data, ubus_dev->udev_num);
+    ubdrv_info("Ascend ubus probe driver IN. (chip_type=%lu; ub dev number=%u)\n", utbl_entry->driver_data,
+               ubus_dev->udev_num);
     ub_dev = ubdrv_kzalloc(sizeof(struct ascend_ub_dev), KA_GFP_KERNEL);
     if (ub_dev == NULL) {
         ubdrv_err("Alloc ub_dev mem failed. (ub dev number=%u)\n", ubus_dev->udev_num);
@@ -344,8 +336,8 @@ STATIC int ubdrv_ubus_probe(struct ub_entity*ubus_dev, const struct ub_device_id
     }
 
     ubdrv_set_startup_flag(ub_dev->dev_id, UBDRV_DEV_STARTUP_TOP_HALF_OK);
-    ubdrv_info("Ascend ubus probe driver OUT. (chip_type=%lu; ub dev number=%u; dev_id=%u)\n",
-        utbl_entry->driver_data, ubus_dev->udev_num, ub_dev->dev_id);
+    ubdrv_info("Ascend ubus probe driver OUT. (chip_type=%lu; ub dev number=%u; dev_id=%u)\n", utbl_entry->driver_data,
+               ubus_dev->udev_num, ub_dev->dev_id);
     return 0;
 
 err_region_init:
@@ -358,7 +350,7 @@ err_register_devctrl:
     return ret;
 }
 
-STATIC void ubdrv_ubus_remove(struct ub_entity*ubus_dev)
+STATIC void ubdrv_ubus_remove(struct ub_entity *ubus_dev)
 {
     struct ascend_ub_dev *ub_dev;
     u32 dev_id;
@@ -379,8 +371,7 @@ STATIC void ubdrv_ubus_remove(struct ub_entity*ubus_dev)
         return;
     }
 
-    ubdrv_info("Ascend ubus remove driver start. (dev_id=%u; ub dev number=%u)\n",
-        dev_id, ubus_dev->udev_num);
+    ubdrv_info("Ascend ubus remove driver start. (dev_id=%u; ub dev number=%u)\n", dev_id, ubus_dev->udev_num);
 
     /* load exit */
     ubdrv_prepare_half_free(ub_dev);
@@ -391,22 +382,21 @@ STATIC void ubdrv_ubus_remove(struct ub_entity*ubus_dev)
     ubdrv_unregister_devctrl(ub_dev);
     ubdrv_kfree(ub_dev);
 
-    ubdrv_info("Ascend ubus remove driver exit. (dev_id=%u; ub dev number=%u)\n",
-        dev_id, ubus_dev->udev_num);
+    ubdrv_info("Ascend ubus remove driver exit. (dev_id=%u; ub dev number=%u)\n", dev_id, ubus_dev->udev_num);
     return;
 }
 
-STATIC int ubdrv_ubus_virt_configure(struct ub_entity* ubus_dev, int num, bool is_en)
+STATIC int ubdrv_ubus_virt_configure(struct ub_entity *ubus_dev, int num, bool is_en)
 {
     return num;
 }
 
-STATIC void ubdrv_ubus_reset_prepare(struct ub_entity* ubus_dev)
+STATIC void ubdrv_ubus_reset_prepare(struct ub_entity *ubus_dev)
 {
     ubdrv_info("UBUS ELR start.\n");
 }
 
-STATIC void ubdrv_ubus_reset_done(struct ub_entity*ubus_dev)
+STATIC void ubdrv_ubus_reset_done(struct ub_entity *ubus_dev)
 {
     ubdrv_info("UBUS ELR done.\n");
 }
@@ -416,6 +406,7 @@ STATIC const struct ub_error_handlers ascend_ubus_err_handler = {
     .reset_done = ubdrv_ubus_reset_done,
 };
 
+// clang-format off
 STATIC struct ub_driver ascend_ubus_driver = {
     ka_driver_init_drv_name(ascend_ub_driver_name)
     ka_driver_init_drv_id_table(ascend_ubus_tbl)
@@ -424,13 +415,14 @@ STATIC struct ub_driver ascend_ubus_driver = {
     ka_driver_init_drv_virt_configure(ubdrv_ubus_virt_configure)
     ka_driver_init_drv_err_handler(&ascend_ubus_err_handler)
 };
+// clang-format on
 #endif
 
 STATIC ka_device_t *ubdrv_ub_get_device(u32 devid, u32 vfid, u32 udevid)
 {
     struct ubcore_eid_info remote_eid = {0};
     struct ubcore_eid_info local_eid = {0};
-    struct ub_idev *idev= NULL;
+    struct ub_idev *idev = NULL;
 
     if (ubdrv_query_h2d_pair_chan_info(udevid, &local_eid, &remote_eid) != 0) {
         return NULL;
@@ -448,8 +440,7 @@ int ubdrv_ub_get_dev_topology(u32 devid, u32 peer_devid, int *topo_type)
     struct ascend_ub_msg_dev *msg_dev;
     struct ascend_ub_msg_dev *peer_msg_dev;
 
-    if ((devid >= ASCEND_UB_DEV_MAX_NUM) || (peer_devid >= ASCEND_UB_DEV_MAX_NUM) ||
-        (devid == peer_devid)) {
+    if ((devid >= ASCEND_UB_DEV_MAX_NUM) || (peer_devid >= ASCEND_UB_DEV_MAX_NUM) || (devid == peer_devid)) {
         ubdrv_err("Invalid devid. (devid=%u;peer_id=%u)\n", devid, peer_devid);
         return -EINVAL;
     }
@@ -460,8 +451,8 @@ int ubdrv_ub_get_dev_topology(u32 devid, u32 peer_devid, int *topo_type)
     msg_dev = ubdrv_get_msg_dev_by_devid(devid);
     peer_msg_dev = ubdrv_get_msg_dev_by_devid(peer_devid);
     if ((msg_dev == NULL) || (peer_msg_dev == NULL)) {
-        ubdrv_err("Get msg_dev failed. (%s=NULL;devid=%u;peer_devid=%u)\n",
-            msg_dev == NULL ? "devid" : "peer_devid", devid, peer_devid);
+        ubdrv_err("Get msg_dev failed. (%s=NULL;devid=%u;peer_devid=%u)\n", msg_dev == NULL ? "devid" : "peer_devid",
+                  devid, peer_devid);
         return -EINVAL;
     }
     *topo_type = TOPOLOGY_UB;
@@ -486,8 +477,9 @@ int ubdrv_alloc_attr_info(void)
 {
     ka_task_mutex_init(&g_ubdrv_p2p_mutex);
 
-    g_p2p_attr_info = ubdrv_kzalloc(UBDRV_P2P_SUPPORT_MAX_DEVICE * UBDRV_P2P_SUPPORT_MAX_DEVICE *
-        sizeof(struct ubdrv_p2p_attr_info), KA_GFP_KERNEL);
+    g_p2p_attr_info = ubdrv_kzalloc(
+        UBDRV_P2P_SUPPORT_MAX_DEVICE * UBDRV_P2P_SUPPORT_MAX_DEVICE * sizeof(struct ubdrv_p2p_attr_info),
+        KA_GFP_KERNEL);
     if (g_p2p_attr_info == NULL) {
         ubdrv_err("Alloc p2p_attr_info failed.\n");
         return -ENOMEM;
@@ -588,8 +580,8 @@ int ubdrv_disable_p2p(int pid, u32 dev_id, u32 peer_dev_id)
     }
 
     if ((p2p_attr->proc_ref[index] <= 0) || (p2p_attr->ref <= 0)) {
-        ubdrv_err("p2p_attr is error. (dev_id=%u; peer_dev_id=%u; pid=%d; proc_ref=%d; total_ref=%d)\n",
-            pid, dev_id, peer_dev_id, p2p_attr->proc_ref[index], p2p_attr->ref);
+        ubdrv_err("p2p_attr is error. (dev_id=%u; peer_dev_id=%u; pid=%d; proc_ref=%d; total_ref=%d)\n", pid, dev_id,
+                  peer_dev_id, p2p_attr->proc_ref[index], p2p_attr->ref);
         ret = -ESRCH;
         goto out;
     }
@@ -636,7 +628,8 @@ int ubdrv_get_p2p_capability(u32 dev_id, u64 *capability)
     }
 
     *capability = P2PCAPABILITY_CAPABILITY_ID | P2PCAPABILITY_NEXT_POINTER | P2PCAPABILITY_CAPABILITY_LENGTH |
-        P2PCAPABILITY_SIGNATURE_BITS | P2PCAPABILITY_VERSION | P2PCAPABILITY_GROUP_ID | P2PCAPABILITY_RESERVED;
+                  P2PCAPABILITY_SIGNATURE_BITS | P2PCAPABILITY_VERSION | P2PCAPABILITY_GROUP_ID |
+                  P2PCAPABILITY_RESERVED;
 
     return 0;
 }
@@ -666,8 +659,8 @@ void ubdrv_flush_p2p(int pid)
             }
 
             if (num > 0) {
-                ubdrv_info("Get ubdrv_disable_p2p dev_num. (dev_id=%d; peer_dev_id=%d; pid=%d; recycle=%d)\n", i, j, pid,
-                    num);
+                ubdrv_info("Get ubdrv_disable_p2p dev_num. (dev_id=%d; peer_dev_id=%d; pid=%d; recycle=%d)\n", i, j,
+                           pid, num);
             }
         }
     }
@@ -685,8 +678,8 @@ STATIC int ubdrv_p2p_attr_op(struct devdrv_base_comm_p2p_attr *p2p_attr)
 
     if ((p2p_attr->devid >= ASCEND_UB_DEV_MAX_NUM) || (p2p_attr->peer_dev_id >= ASCEND_UB_DEV_MAX_NUM) ||
         (p2p_attr->devid == p2p_attr->peer_dev_id)) {
-        ubdrv_err("Invalid id. (pid=%d; devid=%u; peer_dev_id=%u)\n",
-            ka_task_get_current_tgid(), p2p_attr->devid, p2p_attr->peer_dev_id);
+        ubdrv_err("Invalid id. (pid=%d; devid=%u; peer_dev_id=%u)\n", ka_task_get_current_tgid(), p2p_attr->devid,
+                  p2p_attr->peer_dev_id);
         return -EINVAL;
     }
     if (p2p_attr->op != DEVDRV_BASE_P2P_CAPABILITY_QUERY) {
@@ -705,7 +698,7 @@ STATIC int ubdrv_p2p_attr_op(struct devdrv_base_comm_p2p_attr *p2p_attr)
             break;
         case DEVDRV_BASE_P2P_QUERY:
             if (ubdrv_is_p2p_enabled(p2p_attr->devid, p2p_attr->peer_dev_id)) {
-                *p2p_attr->status = UBDRV_ENABLE;  // p2p is enable
+                *p2p_attr->status = UBDRV_ENABLE; // p2p is enable
             } else {
                 *p2p_attr->status = UBDRV_DISABLE; // p2p is disable
             }
@@ -725,7 +718,7 @@ STATIC int ubdrv_p2p_attr_op(struct devdrv_base_comm_p2p_attr *p2p_attr)
 
 int ubdrv_get_host_phy_flag(u32 devid, u32 *host_flag)
 {
-   struct ascend_dev *asd_dev = NULL;
+    struct ascend_dev *asd_dev = NULL;
 
     if (host_flag == NULL) {
         ubdrv_err("Check host flag is null. (dev_id=%u)\n", devid);
@@ -791,7 +784,7 @@ struct devdrv_comm_ops g_ubdrv_ops = {
     .get_ub_dev_id_info = ubdrv_get_dev_id_info,
 };
 
-struct devdrv_comm_ops* get_global_ubdrv_ops(void)
+struct devdrv_comm_ops *get_global_ubdrv_ops(void)
 {
     return &g_ubdrv_ops;
 }
@@ -873,9 +866,9 @@ STATIC int ub_pack_master_id_to_uda(u32 devid, struct uda_dev_para *uda_para)
 }
 
 STATIC int ubdrv_prepare_vfe_online_msg(u32 udevid, u32 phy_dev_id, u32 ue_idx, struct ub_idev *idev,
-    struct ascend_ub_user_data *data, struct ubdrv_jetty_exchange_data *cmd)
+                                        struct ascend_ub_user_data *data, struct ubdrv_jetty_exchange_data *cmd)
 {
-    struct ascend_ub_ctrl* ub_ctrl;
+    struct ascend_ub_ctrl *ub_ctrl;
 
     ub_ctrl = get_global_ub_ctrl();
     struct ascend_ub_link_res *link_res = &ub_ctrl->link_res[udevid];
@@ -1152,7 +1145,7 @@ STATIC int ubdrv_host_register_uda_notifier(void)
     }
 
     ret = uda_notifier_register(ASCEND_UB_DAVINCI_NOTIFIER, &near_real_type, UDA_PRI5,
-        ubdrv_near_entity_dev_notifier_func);
+                                ubdrv_near_entity_dev_notifier_func);
     if (ret != 0) {
         ubdrv_err("Register host last real entity type uda failed. (ret=%d)\n", ret);
         goto unregister_host_func;

@@ -230,7 +230,8 @@ STATIC int hdcdrv_bind_server_ctx(struct hdcdrv_ctx *ctx, struct hdcdrv_service 
     ka_task_mutex_lock(&ctx->ctx_lock);
     if (((ctx->service_type != HDCDRV_SERVICE_TYPE_INVALID) || (ctx->session_fd != HDCDRV_SESSION_FD_INVALID))) {
         hdcdrv_err("ctx has been bind by other server or session.(dev_id=%d; session_id=%d; server_type=%d; "
-            "pid=%llu)\n", ctx->dev_id, ctx->session_fd, ctx->service_type, ctx->pid);
+                   "pid=%llu)\n",
+                   ctx->dev_id, ctx->session_fd, ctx->service_type, ctx->pid);
         ka_task_mutex_unlock(&ctx->ctx_lock);
         return HDCDRV_ERR;
     }
@@ -260,7 +261,8 @@ STATIC int hdcdrv_bind_session_ctx(struct hdcdrv_ctx *ctx, struct hdcdrv_session
     ka_task_mutex_lock(&ctx->ctx_lock);
     if (((ctx->service_type != HDCDRV_SERVICE_TYPE_INVALID) || (ctx->session_fd != HDCDRV_SESSION_FD_INVALID))) {
         hdcdrv_err("ctx has been bind by other server or session.(dev_id=%d; session_id=%d; server_type=%d; "
-            "pid=%llu)\n", ctx->dev_id, ctx->session_fd, ctx->service_type, ctx->pid);
+                   "pid=%llu)\n",
+                   ctx->dev_id, ctx->session_fd, ctx->service_type, ctx->pid);
         ka_task_mutex_unlock(&ctx->ctx_lock);
         return HDCDRV_ERR;
     }
@@ -337,7 +339,8 @@ STATIC struct hdcdrv_service *hdcdrv_alloc_service(struct hdcdrv_dev *dev, int s
     }
     ka_task_mutex_lock(&g_hdc_ctrl.dev_lock[dev->dev_id]);
     if (!ka_list_empty_careful(&service->serv_list)) {
-        ka_list_for_each_safe(pos, n, &service->serv_list) {
+        ka_list_for_each_safe(pos, n, &service->serv_list)
+        {
             node = ka_list_entry(pos, struct hdcdrv_serv_list_node, list);
             if (node->service.listen_pid == host_pid) {
                 ka_task_mutex_unlock(&g_hdc_ctrl.dev_lock[dev->dev_id]);
@@ -347,7 +350,8 @@ STATIC struct hdcdrv_service *hdcdrv_alloc_service(struct hdcdrv_dev *dev, int s
     }
 #ifndef DRV_UT
     if (!ka_list_empty_careful(&service->serv_list)) {
-        ka_list_for_each_safe(pos, n, &service->serv_list) {
+        ka_list_for_each_safe(pos, n, &service->serv_list)
+        {
             node = ka_list_entry(pos, struct hdcdrv_serv_list_node, list);
             if (node->service.listen_pid == HDCDRV_INVALID) {
                 node->service.listen_pid = host_pid;
@@ -378,7 +382,8 @@ STATIC struct hdcdrv_service *hdcdrv_search_service(struct hdcdrv_dev *dev, int 
     }
     ka_task_mutex_lock(&g_hdc_ctrl.dev_lock[dev->dev_id]);
     if (!ka_list_empty_careful(&service->serv_list)) {
-        ka_list_for_each_safe(pos, n, &service->serv_list) {
+        ka_list_for_each_safe(pos, n, &service->serv_list)
+        {
             node = ka_list_entry(pos, struct hdcdrv_serv_list_node, list);
             if (node->service.listen_pid == host_pid) {
                 ka_task_mutex_unlock(&g_hdc_ctrl.dev_lock[dev->dev_id]);
@@ -1461,7 +1466,8 @@ STATIC int hdcdrv_init_service_res(u32 dev_id, int service_type, struct hdcdrv_s
 serv_init_failed:
 #ifndef DRV_UT
     if (!ka_list_empty_careful(&service->serv_list)) {
-        ka_list_for_each_safe(pos, n, &service->serv_list) {
+        ka_list_for_each_safe(pos, n, &service->serv_list)
+        {
             node = ka_list_entry(pos, struct hdcdrv_serv_list_node, list);
             ka_list_del(&node->list);
             ka_mm_kfree(node);
@@ -1478,7 +1484,8 @@ STATIC void hdcdrv_uninit_service_res(u32 dev_id, int service_type, struct hdcdr
     ka_list_head_t *n = NULL;
 
     if (!ka_list_empty_careful(&service->serv_list)) {
-        ka_list_for_each_safe(pos, n, &service->serv_list) {
+        ka_list_for_each_safe(pos, n, &service->serv_list)
+        {
             node = ka_list_entry(pos, struct hdcdrv_serv_list_node, list);
             ka_list_del(&node->list);
             ka_task_mutex_lock(&node->service.mutex);
@@ -2289,13 +2296,15 @@ STATIC int hdcdrv_ub_wait_reply(struct hdcdrv_session *session, struct hdcdrv_de
 
     wait_timeout = HDCDRV_CONN_TIMEOUT;
     if (type == HDCDRV_NOTIFY_MSG_CONNECT) {
-        ret = ka_task_wait_event_interruptible_timeout(session->wq_conn,
-            (session->remote_session_fd != HDCDRV_INVALID_VALUE) || (dev->valid != HDCDRV_VALID),
+        ret = ka_task_wait_event_interruptible_timeout(
+            session->wq_conn, (session->remote_session_fd != HDCDRV_INVALID_VALUE) || (dev->valid != HDCDRV_VALID),
             (long)wait_timeout);
     } else {
-        ret = ka_task_wait_event_interruptible_timeout(session->wq_dfx,
+        ret = ka_task_wait_event_interruptible_timeout(
+            session->wq_dfx,
             (hdcdrv_get_session_status(session) != HDCDRV_SESSION_STATUS_CONN) || (dev->valid != HDCDRV_VALID) ||
-            (session->dfx_reply.valid_flag == HDCDRV_VALID), (long)wait_timeout);
+                (session->dfx_reply.valid_flag == HDCDRV_VALID),
+            (long)wait_timeout);
     }
     if (ret <= 0) {
         hdcdrv_warn("%s wait timeout. (dev=%d; ret=%d; l_fd=%u; r_fd=0x%u; pid=%llu)\n", str_name, dev->dev_id,
@@ -2381,7 +2390,8 @@ STATIC int hdcdrv_local_event_process_for_connect(u32 devid, struct hdcdrv_event
     if (ret != HDCDRV_OK) {
         ka_task_spin_unlock_bh(&session->lock);
         hdcdrv_warn("session has been closed or pid has problem.(session_fd=%u; dev_id=%u; status=%d; owner_pid=%llu; "
-            "current_pid=%u; ret=%d)\n", session_id, devid, status, owner_pid, ka_task_get_current_tgid(), ret);
+                    "current_pid=%u; ret=%d)\n",
+                    session_id, devid, status, owner_pid, ka_task_get_current_tgid(), ret);
         goto connect_put_session;
     }
 
@@ -2435,7 +2445,8 @@ STATIC int hdcdrv_local_event_process_for_connect_reply(u32 devid, struct hdcdrv
         ka_task_spin_unlock_bh(&session->lock);
         hdcdrv_put_session(devid);
         hdcdrv_warn("session has been closed or pid has problem.(session_fd=%u; dev_id=%u; status=%d; owner_pid=%llu; "
-            "current_pid=%u; ret=%d)\n", session_id, devid, status, owner_pid, ka_task_get_current_tgid(), ret);
+                    "current_pid=%u; ret=%d)\n",
+                    session_id, devid, status, owner_pid, ka_task_get_current_tgid(), ret);
         return ret;
     }
 
@@ -2474,7 +2485,8 @@ STATIC int hdcdrv_local_event_process_for_close(u32 devid, struct hdcdrv_event_m
         ka_task_spin_unlock_bh(&session->lock);
         hdcdrv_put_session(devid);
         hdcdrv_warn("session has been closed or pid has problem.(session_fd=%u; dev_id=%u; status=%d; owner_pid=%llu; "
-            "current_pid=%u; ret=%d)\n", session_id, devid, status, owner_pid, ka_task_get_current_tgid(), ret);
+                    "current_pid=%u; ret=%d)\n",
+                    session_id, devid, status, owner_pid, ka_task_get_current_tgid(), ret);
         return ret;
     }
 
@@ -2529,7 +2541,8 @@ STATIC int hdcdrv_local_event_process_for_dfx(u32 devid, struct hdcdrv_event_msg
     if (ret != HDCDRV_OK) {
         ka_task_spin_unlock_bh(&session->lock);
         hdcdrv_warn("session has been closed or pid has problem.(session_fd=%u; dev_id=%u; status=%d; owner_pid=%llu; "
-            "current_pid=%u; ret=%d)\n", session_id, devid, status, owner_pid, ka_task_get_current_tgid(), ret);
+                    "current_pid=%u; ret=%d)\n",
+                    session_id, devid, status, owner_pid, ka_task_get_current_tgid(), ret);
         goto dfx_put_session;
     }
 
@@ -2698,8 +2711,9 @@ STATIC long hdcdrv_ub_cmd_wait_ctrl_msg(struct hdcdrv_ctx *ctx, union hdcdrv_cmd
     ctrl_node->ref++;
     if (hdcdrv_is_wait_list_empty(ctrl_node)) {
         ka_task_mutex_unlock(&g_hdc_ctrl.dev_lock[dev_id]);
-        ret = (long)ka_task_wait_event_interruptible(ctrl_node->wq_ctrl_msg, ((!hdcdrv_is_wait_list_empty(ctrl_node)) ||
-            (hdc_dev->valid != HDCDRV_VALID) || (ctrl_node->status != HDCDRV_NODE_BUSY)));
+        ret = (long)ka_task_wait_event_interruptible(
+            ctrl_node->wq_ctrl_msg, ((!hdcdrv_is_wait_list_empty(ctrl_node)) || (hdc_dev->valid != HDCDRV_VALID) ||
+                                     (ctrl_node->status != HDCDRV_NODE_BUSY)));
         ka_task_mutex_lock(&g_hdc_ctrl.dev_lock[dev_id]);
         if (ret != 0) {
             if (ret != -ERESTARTSYS) {
@@ -2821,6 +2835,7 @@ STATIC long hdcdrv_ioctl(ka_file_t *file, unsigned int cmd, unsigned long arg)
     return HDCDRV_OK;
 }
 
+// clang-format off
 STATIC const ka_file_operations_t hdcdrv_fops = {
     ka_fs_init_f_owner(KA_THIS_MODULE)
     ka_fs_init_f_unlocked_ioctl(hdcdrv_ioctl)
@@ -2828,6 +2843,7 @@ STATIC const ka_file_operations_t hdcdrv_fops = {
     ka_fs_init_f_mmap(hdcdrv_mmap)
     ka_fs_init_f_release(hdcdrv_release)
 };
+// clang-format on
 
 STATIC int hdcdrv_register_cdev(void)
 {

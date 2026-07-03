@@ -132,7 +132,8 @@ STATIC void hdc_find_event_info_and_free(signed int fd, struct hdc_epoll_head *e
     }
 
     (void)mmMutexLock(&epoll_head->epoll_lock);
-    list_for_each_safe(pos, n, head) {
+    list_for_each_safe(pos, n, head)
+    {
         node_info = list_entry(pos, struct hdc_epoll_node_info, node);
         if ((node_info != NULL) && (node_info->fd == fd)) {
             drv_user_list_del(&node_info->node);

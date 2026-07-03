@@ -44,13 +44,11 @@ int ubdrv_create_admin_msg_chan(u32 dev_id, struct ascend_ub_msg_dev *msg_dev);
 void ubdrv_del_admin_msg_chan(struct ascend_ub_msg_dev *msg_dev, u32 dev_id);
 int ubdrv_basic_chan_send(u32 dev_id, struct ascend_ub_user_data *data, struct ascend_ub_admin_chan *msg_chan);
 int ubdrv_admin_send_msg(u32 dev_id, struct ascend_ub_user_data *data);
-void ubdrv_admin_recv_prepare_process(struct ascend_ub_jetty_ctrl *cfg,
-    struct ascend_ub_msg_desc *desc, u32 seg_id);
+void ubdrv_admin_recv_prepare_process(struct ascend_ub_jetty_ctrl *cfg, struct ascend_ub_msg_desc *desc, u32 seg_id);
 int ubdrv_admin_chan_import_jfr(struct ub_idev *idev, struct ascend_ub_admin_chan *msg_chan,
-    struct jetty_exchange_data *data, u32 dev_id, enum ubdrv_log_level log_level);
+                                struct jetty_exchange_data *data, u32 dev_id, enum ubdrv_log_level log_level);
 void ubdrv_admin_chan_unimport_jfr(struct ascend_ub_admin_chan *msg_chan, u32 dev_id);
-void ubdrv_admin_recv_finish_process(struct ascend_ub_jetty_ctrl *cfg,
-    struct ascend_ub_msg_desc *desc);
+void ubdrv_admin_recv_finish_process(struct ascend_ub_jetty_ctrl *cfg, struct ascend_ub_msg_desc *desc);
 int ubdrv_create_basic_jetty(struct ascend_ub_sync_jetty *jetty, u32 jfr_id);
 void ubdrv_delete_basic_jetty(struct ascend_ub_sync_jetty *jetty);
 int ubdrv_msg_get_token_val(struct ascend_ub_msg_dev *msg_dev, void *data);

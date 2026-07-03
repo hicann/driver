@@ -218,7 +218,8 @@ void hdcdrv_clear_mem_pool_by_ctx(struct hdcdrv_ctx *ctx)
         return;
     }
 
-    /* All page tables are cleared during release. Therefore, the demapping function does not need to be invoked in release. */
+    /* All page tables are cleared during release. Therefore, the demapping function does not need to be invoked in
+     * release. */
     ka_task_mutex_lock(&g_hdc_ctrl.dev_lock[ctx->dev_id]);
     if ((u32)ctx->pool_info.idx != g_hdc_ctrl.dev_ref[ctx->dev_id]) {
         ka_task_mutex_unlock(&g_hdc_ctrl.dev_lock[ctx->dev_id]);

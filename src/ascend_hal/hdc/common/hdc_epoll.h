@@ -13,14 +13,14 @@
 #include "hdc_cmn.h"
 #include "ascend_hal.h"
 
-#define HDC_EPOLL_FD_INVALID ((mmProcess)-1)
+#define HDC_EPOLL_FD_INVALID ((mmProcess) - 1)
 
 struct hdc_epoll_ops {
     drvError_t (*hdc_epoll_create)(struct hdc_epoll_head *epoll_head, signed int size);
-    drvError_t (*hdc_epoll_ctl)(struct hdc_epoll_head *epoll_head,
-        signed int op, void *target, const struct drvHdcEvent *event);
-    drvError_t (*hdc_epoll_wait)(const struct hdc_epoll_head *epoll_head,
-        struct drvHdcEvent *events, signed int maxevents, signed int timeout, signed int *eventnum);
+    drvError_t (*hdc_epoll_ctl)(struct hdc_epoll_head *epoll_head, signed int op, void *target,
+                                const struct drvHdcEvent *event);
+    drvError_t (*hdc_epoll_wait)(const struct hdc_epoll_head *epoll_head, struct drvHdcEvent *events,
+                                 signed int maxevents, signed int timeout, signed int *eventnum);
     drvError_t (*hdc_epoll_close)(struct hdc_epoll_head *epoll_head);
 };
 
@@ -29,4 +29,3 @@ struct hdc_epoll_ops *drv_get_hdc_sock_epoll_ops(void);
 struct hdc_epoll_ops *drv_get_hdc_ub_epoll_ops(void);
 
 #endif
-

@@ -25,25 +25,24 @@
 #include "devdrv_adapt.h"
 
 const ka_pci_device_id_t g_devdrv_tbl[] = {
-    { KA_PCI_VDEVICE(HUAWEI, CLOUD_V1_DEVICE), HISI_CLOUD_V1 },
-    { KA_PCI_VDEVICE(HUAWEI, MINI_V2_DEVICE), HISI_MINI_V2 },
-    { KA_PCI_VDEVICE(HUAWEI, MINI_V2_2P_DEVICE), HISI_MINI_V2 },
-    { KA_PCI_VDEVICE(HUAWEI, CLOUD_V2_DEVICE), HISI_CLOUD_V2 },
-    { KA_PCI_VDEVICE(HUAWEI, CLOUD_V2_2P_DEVICE), HISI_CLOUD_V2 },
-    { KA_PCI_VDEVICE(HUAWEI, CLOUD_V2_HCCS_IEP_DEVICE), HISI_CLOUD_V2 },
-    { KA_PCI_VDEVICE(HUAWEI, CLOUD_V2_VF_DEVICE), HISI_CLOUD_V2 },
-    { DEVDRV_DIVERSITY_PCIE_VENDOR_ID, MINI_V2_DEVICE, KA_PCI_ANY_ID,
-      KA_PCI_ANY_ID, 0, 0, HISI_MINI_V2 },
-    { KA_PCI_VDEVICE(HUAWEI, MINI_V3_DEVICE), HISI_MINI_V3 },
-    { KA_PCI_VDEVICE(HUAWEI, CLOUD_V4_DEVICE), HISI_CLOUD_V4 },
-    { KA_PCI_VDEVICE(HUAWEI, CLOUD_V5_DEVICE), HISI_CLOUD_V5 },
-    { KA_PCI_VDEVICE(HUAWEI, MINI_V4_DEVICE), HISI_MINI_V4 },
-    { DEVDRV_PCI_SUBSYS_PRIVATE_VENDOR_HK, MINI_V2_DEVICE, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, HISI_MINI_V2 },
-    { DEVDRV_PCI_SUBSYS_PRIVATE_VENDOR_KL, MINI_V2_DEVICE, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, HISI_MINI_V2 },
-    { DEVDRV_PCI_SUBSYS_PRIVATE_VENDOR_HK, CLOUD_V2_DEVICE, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, HISI_CLOUD_V2 },
-    { DEVDRV_PCI_SUBSYS_PRIVATE_VENDOR_KL, CLOUD_V2_DEVICE, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, HISI_CLOUD_V2 },
-    { DEVDRV_PCI_SUBSYS_PRIVATE_VENDOR_CJ, CLOUD_V2_DEVICE, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, HISI_CLOUD_V2 },
-    { DEVDRV_PCI_SUBSYS_PRIVATE_VENDOR_CJ, MINI_V2_DEVICE, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, HISI_MINI_V2 },
+    {KA_PCI_VDEVICE(HUAWEI, CLOUD_V1_DEVICE), HISI_CLOUD_V1},
+    {KA_PCI_VDEVICE(HUAWEI, MINI_V2_DEVICE), HISI_MINI_V2},
+    {KA_PCI_VDEVICE(HUAWEI, MINI_V2_2P_DEVICE), HISI_MINI_V2},
+    {KA_PCI_VDEVICE(HUAWEI, CLOUD_V2_DEVICE), HISI_CLOUD_V2},
+    {KA_PCI_VDEVICE(HUAWEI, CLOUD_V2_2P_DEVICE), HISI_CLOUD_V2},
+    {KA_PCI_VDEVICE(HUAWEI, CLOUD_V2_HCCS_IEP_DEVICE), HISI_CLOUD_V2},
+    {KA_PCI_VDEVICE(HUAWEI, CLOUD_V2_VF_DEVICE), HISI_CLOUD_V2},
+    {DEVDRV_DIVERSITY_PCIE_VENDOR_ID, MINI_V2_DEVICE, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, HISI_MINI_V2},
+    {KA_PCI_VDEVICE(HUAWEI, MINI_V3_DEVICE), HISI_MINI_V3},
+    {KA_PCI_VDEVICE(HUAWEI, CLOUD_V4_DEVICE), HISI_CLOUD_V4},
+    {KA_PCI_VDEVICE(HUAWEI, CLOUD_V5_DEVICE), HISI_CLOUD_V5},
+    {KA_PCI_VDEVICE(HUAWEI, MINI_V4_DEVICE), HISI_MINI_V4},
+    {DEVDRV_PCI_SUBSYS_PRIVATE_VENDOR_HK, MINI_V2_DEVICE, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, HISI_MINI_V2},
+    {DEVDRV_PCI_SUBSYS_PRIVATE_VENDOR_KL, MINI_V2_DEVICE, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, HISI_MINI_V2},
+    {DEVDRV_PCI_SUBSYS_PRIVATE_VENDOR_HK, CLOUD_V2_DEVICE, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, HISI_CLOUD_V2},
+    {DEVDRV_PCI_SUBSYS_PRIVATE_VENDOR_KL, CLOUD_V2_DEVICE, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, HISI_CLOUD_V2},
+    {DEVDRV_PCI_SUBSYS_PRIVATE_VENDOR_CJ, CLOUD_V2_DEVICE, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, HISI_CLOUD_V2},
+    {DEVDRV_PCI_SUBSYS_PRIVATE_VENDOR_CJ, MINI_V2_DEVICE, KA_PCI_ANY_ID, KA_PCI_ANY_ID, 0, 0, HISI_MINI_V2},
     {}};
 KA_MODULE_DEVICE_TABLE(pci, g_devdrv_tbl);
 
@@ -52,6 +51,7 @@ int devdrv_get_device_id_tbl_num(void)
     return (int)(sizeof(g_devdrv_tbl) / sizeof(ka_pci_device_id_t));
 }
 
+// clang-format off
 int (*devdrv_res_init_func[HISI_CHIP_NUM])(struct devdrv_pci_ctrl *pci_ctrl) = {
     [HISI_CLOUD_V1] = devdrv_cloud_v1_res_init,
     [HISI_MINI_V2] = devdrv_mini_v2_res_init,
@@ -61,6 +61,7 @@ int (*devdrv_res_init_func[HISI_CHIP_NUM])(struct devdrv_pci_ctrl *pci_ctrl) = {
     [HISI_CLOUD_V5] = devdrv_cloud_v4_res_init,
     [HISI_MINI_V4] = devdrv_cloud_v4_res_init,
 };
+// clang-format on
 
 void devdrv_peer_ctrl_init(void)
 {
@@ -99,16 +100,16 @@ STATIC ka_pci_ers_result_t devdrv_error_detected(ka_pci_dev_t *pdev, ka_pci_chan
         /* I/O channel is in normal state */
         case ka_pci_channel_io_normal:
             g_aer_noncritical_cnt++;
-            devdrv_err("Channel is in normal state. (dev_id=%d; aer_noncritical_cnt=%llu)\n",
-                       pci_ctrl->dev_id, g_aer_noncritical_cnt);
+            devdrv_err("Channel is in normal state. (dev_id=%d; aer_noncritical_cnt=%llu)\n", pci_ctrl->dev_id,
+                       g_aer_noncritical_cnt);
             ret = KA_PCI_ERS_RESULT_CAN_RECOVER;
             break;
 
         /* I/O to channel is blocked */
         case ka_pci_channel_io_frozen:
             g_aer_critical_cnt++;
-            devdrv_err("Channel is blocked. (dev_id=%u; aer_critical_cnt=%llu)\n",
-                       pci_ctrl->dev_id, g_aer_critical_cnt);
+            devdrv_err("Channel is blocked. (dev_id=%u; aer_critical_cnt=%llu)\n", pci_ctrl->dev_id,
+                       g_aer_critical_cnt);
 
             if (ka_pci_is_enabled(pdev) != 0) {
                 ka_pci_disable_pcie_error_reporting(pdev);
@@ -180,25 +181,27 @@ STATIC void devdrv_error_resume(ka_pci_dev_t *pdev)
     ka_pci_enable_pcie_error_reporting(pdev);
 }
 
+// clang-format off
 const ka_pci_error_handlers_t g_devdrv_err_handler = {
     ka_pci_error_detected(devdrv_error_detected)
     ka_pci_slot_reset(devdrv_slot_reset)
     ka_pci_resume(devdrv_error_resume)
 };
+// clang-format on
 
 /* devdrv_dma.c */
 void devdrv_traffic_and_manage_dma_chan_config(struct devdrv_dma_dev *dma_dev)
 {
-    dma_dev->data_chan[DEVDRV_DMA_DATA_TRAFFIC].chan_start_id =
-        dma_dev->data_chan[DEVDRV_DMA_DATA_PCIE_MSG].chan_start_id +
-        dma_dev->data_chan[DEVDRV_DMA_DATA_PCIE_MSG].chan_num;
+    dma_dev->data_chan[DEVDRV_DMA_DATA_TRAFFIC].chan_start_id = dma_dev->data_chan[DEVDRV_DMA_DATA_PCIE_MSG]
+                                                                    .chan_start_id +
+                                                                dma_dev->data_chan[DEVDRV_DMA_DATA_PCIE_MSG].chan_num;
     if (dma_dev->remote_chan_num <= dma_dev->data_chan[DEVDRV_DMA_DATA_TRAFFIC].chan_start_id) {
         dma_dev->data_chan[DEVDRV_DMA_DATA_TRAFFIC].chan_start_id = 0;
     }
-    dma_dev->data_chan[DEVDRV_DMA_DATA_TRAFFIC].chan_num =
-        dma_dev->remote_chan_num - dma_dev->data_chan[DEVDRV_DMA_DATA_TRAFFIC].chan_start_id;
-    dma_dev->data_chan[DEVDRV_DMA_DATA_TRAFFIC].last_use_chan =
-        dma_dev->data_chan[DEVDRV_DMA_DATA_TRAFFIC].chan_start_id;
+    dma_dev->data_chan[DEVDRV_DMA_DATA_TRAFFIC].chan_num = dma_dev->remote_chan_num -
+                                                           dma_dev->data_chan[DEVDRV_DMA_DATA_TRAFFIC].chan_start_id;
+    dma_dev->data_chan[DEVDRV_DMA_DATA_TRAFFIC].last_use_chan = dma_dev->data_chan[DEVDRV_DMA_DATA_TRAFFIC]
+                                                                    .chan_start_id;
 }
 
 #ifndef CFG_FEATURE_PCIE_SENTRY
@@ -247,8 +250,8 @@ STATIC devdrv_feature_ops_bitmap_t devdrv_feature_get_rescfg_bitmap(struct devdr
     return bitmap;
 }
 
-struct res_config *devdrv_feature_get_res_cfg(struct devdrv_pci_ctrl *pci_ctrl,
-    struct res_config *res_cfg, size_t res_cfg_size)
+struct res_config *devdrv_feature_get_res_cfg(struct devdrv_pci_ctrl *pci_ctrl, struct res_config *res_cfg,
+                                              size_t res_cfg_size)
 {
     u32 i;
     devdrv_feature_ops_bitmap_t mode = devdrv_feature_get_rescfg_bitmap(pci_ctrl);

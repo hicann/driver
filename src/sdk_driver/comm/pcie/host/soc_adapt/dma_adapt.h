@@ -48,11 +48,11 @@ enum devdrv_dma_opcode {
 #define DEVDRV_DMA_DES_AT_LOC_PA 0
 #define DEVDRV_DMA_DES_AT_LOC_VA 2
 
-#define DEVDRV_DMA_DES_FLOW_ID_RMT_MASK    0xFF
+#define DEVDRV_DMA_DES_FLOW_ID_RMT_MASK 0xFF
 #define DEVDRV_DMA_DES_FLOW_ID_LOC_L_SHIFT 8
-#define DEVDRV_DMA_DES_FLOW_ID_LOC_L_MASK  0x1F
+#define DEVDRV_DMA_DES_FLOW_ID_LOC_L_MASK 0x1F
 #define DEVDRV_DMA_DES_FLOW_ID_LOC_H_SHIFT 13
-#define DEVDRV_DMA_DES_FLOW_ID_LOC_H_MASK  0x7
+#define DEVDRV_DMA_DES_FLOW_ID_LOC_H_MASK 0x7
 
 #define DMA_QUEUE_SQ_TAIL 0xc
 #define DMA_QUEUE_CQ_HEAD 0x1c
@@ -130,8 +130,8 @@ u32 devdrv_get_dma_cq_tail(void __ka_mm_iomem *io_base);
 void devdrv_dma_set_sq_addr_info(struct devdrv_dma_sq_node *sq_desc, u64 src_addr, u64 dst_addr, u32 length);
 void devdrv_dma_set_sq_attr(struct devdrv_dma_sq_node *sq_desc, struct devdrv_dma_sq_node sq_desc_info);
 void devdrv_dma_set_sq_irq(struct devdrv_dma_sq_node *sq_desc, u32 rdie, u32 ldie, u32 msi);
-void devdrv_dma_set_passid(struct devdrv_dma_sq_node *sq_desc, u32 loc_passid, int direction,
-                           int pava_flag, int connect_type);
+void devdrv_dma_set_passid(struct devdrv_dma_sq_node *sq_desc, u32 loc_passid, int direction, int pava_flag,
+                           int connect_type);
 u32 devdrv_dma_get_cq_sqhd(struct devdrv_dma_cq_node *cq_desc);
 u32 devdrv_dma_get_cq_status(struct devdrv_dma_cq_node *cq_desc);
 void devdrv_set_pf_dma_queue_pause(void __ka_mm_iomem *dma_chan_base, bool pause_flag);

@@ -147,10 +147,13 @@ STATIC int vmnga_admin_rx_alloc_msg_cluster(struct vmng_msg_dev *msg_dev, struct
     return ret;
 }
 
+// clang-format off
 static vmnga_admin_func g_vmnga_msg_admin_func_ops[] = {
     vmnga_admin_rx_alloc_msg_cluster,
     NULL
 };
+// clang-format on
+
 #define VMNG_ADMIN_PROC_OPCODE_MAX (sizeof(g_vmnga_msg_admin_func_ops) / sizeof(void *))
 
 int vmnga_register_admin_rx_func(int opcode, vmnga_admin_func admin_func)

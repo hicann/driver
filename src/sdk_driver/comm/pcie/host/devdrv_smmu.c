@@ -66,12 +66,12 @@ int devdrv_smmu_iova_to_phys_proc(struct devdrv_pci_ctrl *pci_ctrl, ka_dma_addr_
         cmd_data->dma_addr[i] = va[i];
     }
 
-    ret = devdrv_admin_msg_chan_send(pci_ctrl->msg_dev, DEVDRV_HCCS_HOST_DMA_ADDR_MAP, cmd_data, data_len,
-        cmd_data, data_len);
+    ret = devdrv_admin_msg_chan_send(pci_ctrl->msg_dev, DEVDRV_HCCS_HOST_DMA_ADDR_MAP, cmd_data, data_len, cmd_data,
+                                     data_len);
     if (ret != 0) {
         devdrv_kfree(cmd_data);
-        devdrv_err("Dma addr to pa fail(va_cnt=%u, devid=%u, ret=%d, data_len=%u\n",
-            va_cnt, pci_ctrl->dev_id, ret, data_len);
+        devdrv_err("Dma addr to pa fail(va_cnt=%u, devid=%u, ret=%d, data_len=%u\n", va_cnt, pci_ctrl->dev_id, ret,
+                   data_len);
         return -ENOMEM;
     }
     for (i = 0; i < va_cnt; i++) {
@@ -174,8 +174,8 @@ void devdrv_pdev_sid_init(struct devdrv_pci_ctrl *pci_ctrl)
     if ((pci_ctrl->virtfn_flag == DEVDRV_SRIOV_TYPE_PF) && (pci_ctrl->shr_para->sid == 0) &&
         (ka_pci_get_is_physfn(pci_ctrl->pdev) == 0)) {
         pci_ctrl->shr_para->sid = DEVDRV_NPU_SID_START -
-            DEVDRV_NPU_CHIP_SID_OFFSET * (pci_ctrl->dev_id / DEVDRV_DIE_NUM_OF_ONE_CHIP) +
-            DEVDRV_NPU_DIE_SID_OFFSET * (pci_ctrl->dev_id % DEVDRV_DIE_NUM_OF_ONE_CHIP);
+                                  DEVDRV_NPU_CHIP_SID_OFFSET * (pci_ctrl->dev_id / DEVDRV_DIE_NUM_OF_ONE_CHIP) +
+                                  DEVDRV_NPU_DIE_SID_OFFSET * (pci_ctrl->dev_id % DEVDRV_DIE_NUM_OF_ONE_CHIP);
     }
 
     if (pci_ctrl->virtfn_flag == DEVDRV_SRIOV_TYPE_VF) {

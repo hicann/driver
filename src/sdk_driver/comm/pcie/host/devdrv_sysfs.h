@@ -42,30 +42,31 @@
 
 #define DEVDRV_SYSFS_DMA_CHAN_NUM 16
 
-#define DEVDRV_PCIVNIC  "   vnic"
-#define DEVDRV_SMMU     "   smmu"
-#define DEVDRV_DEVMM    "  devmm"
-#define DEVDRV_VMNG     "   vmng"
-#define DEVDRV_PROFILE  "profile"
-#define DEVDRV_DEVMAN   " devman"
-#define DEVDRV_TSDRV    "  tsdrv"
-#define DEVDRV_HDC      "    hdc"
-#define DEVDRV_SYSFS    "  sysfs"
-#define DEVDRV_ESCHED   " esched"
-#define DEVDRV_COMMON   " common"
-#define DEVDRV_QUEUE    "  queue"
-#define DEVDRV_S2S      "    s2s"
-#define DEVDRV_PROCMNG  "procmng"
-#define DEVDRV_TEST     "   test"
-#define DEVDRV_UDIS     "   udis"
-#define DEVDRV_RESERVE  "reserve"
+#define DEVDRV_PCIVNIC "   vnic"
+#define DEVDRV_SMMU "   smmu"
+#define DEVDRV_DEVMM "  devmm"
+#define DEVDRV_VMNG "   vmng"
+#define DEVDRV_PROFILE "profile"
+#define DEVDRV_DEVMAN " devman"
+#define DEVDRV_TSDRV "  tsdrv"
+#define DEVDRV_HDC "    hdc"
+#define DEVDRV_SYSFS "  sysfs"
+#define DEVDRV_ESCHED " esched"
+#define DEVDRV_COMMON " common"
+#define DEVDRV_QUEUE "  queue"
+#define DEVDRV_S2S "    s2s"
+#define DEVDRV_PROCMNG "procmng"
+#define DEVDRV_TEST "   test"
+#define DEVDRV_UDIS "   udis"
+#define DEVDRV_RESERVE "reserve"
 
-#define PCIE_AER_NODE(reg, bit, msg) { \
-    .regs = reg,                       \
-    .bits = bit,                       \
-    .describe = msg,                   \
-    .count = 0,                        \
-}
+#define PCIE_AER_NODE(reg, bit, msg) \
+    {                                \
+        .regs = reg,                 \
+        .bits = bit,                 \
+        .describe = msg,             \
+        .count = 0,                  \
+    }
 
 #define PCIE_AER_MAX_LENGTH 32
 struct pcie_aer_info_item {
@@ -142,7 +143,6 @@ struct devdrv_device_non_trans_stat {
     u64 rx_work_max_time;
     u64 rx_work_delay_cnt;
 };
-
 
 struct devdrv_sysfs_msg {
     enum devdrv_sysfs_msg_type type;

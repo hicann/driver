@@ -18,7 +18,7 @@
 #include "ascend_hal_define.h"
 
 #define devdrv_kvzalloc(size, flags) \
-        ka_kvzalloc(size, flags, ka_get_module_id(HAL_MODULE_TYPE_PCIE, KA_SUB_MODULE_TYPE_0))
+    ka_kvzalloc(size, flags, ka_get_module_id(HAL_MODULE_TYPE_PCIE, KA_SUB_MODULE_TYPE_0))
 #define devdrv_kvfree(addr) ka_kvfree(addr, ka_get_module_id(HAL_MODULE_TYPE_PCIE, KA_SUB_MODULE_TYPE_0))
 
 #define devdrv_kmalloc(size, flags) \
@@ -31,7 +31,7 @@
     ka_kcalloc(size, flags, ka_get_module_id(HAL_MODULE_TYPE_PCIE, KA_SUB_MODULE_TYPE_0))
 #define devdrv_kfree(addr) ka_kfree(addr, ka_get_module_id(HAL_MODULE_TYPE_PCIE, KA_SUB_MODULE_TYPE_0))
 
-#define devdrv_vzalloc(size)  ka_vzalloc(size, ka_get_module_id(HAL_MODULE_TYPE_PCIE, KA_SUB_MODULE_TYPE_0))
+#define devdrv_vzalloc(size) ka_vzalloc(size, ka_get_module_id(HAL_MODULE_TYPE_PCIE, KA_SUB_MODULE_TYPE_0))
 #define devdrv_vfree(addr) ka_vfree(addr, ka_get_module_id(HAL_MODULE_TYPE_PCIE, KA_SUB_MODULE_TYPE_0))
 
 #define devdrv_alloc_pages(gfp_mask, order) \

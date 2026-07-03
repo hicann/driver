@@ -73,7 +73,7 @@ int ubdrv_procfs_mem_host_cfg_dfx_show(ka_seq_file_t *seq, void *offset)
     ka_fs_seq_printf(seq, "mem_id: %hu\n", cfg_info->mem_id);
     ka_fs_seq_printf(seq, "tid: %u\n", cfg_info->tid);
     ka_fs_seq_printf(seq, "max_share_mem_size: 0x%llx\n", cfg_info->max_share_mem_size);
-    ka_fs_seq_printf(seq, "uba: 0x%pK\n", (void*)(uintptr_t)cfg_info->uba);
+    ka_fs_seq_printf(seq, "uba: 0x%pK\n", (void *)(uintptr_t)cfg_info->uba);
     ka_fs_seq_printf(seq, "rsv: %hu\n", cfg_info->rsv);
     ka_fs_seq_printf(seq, "rsv1: %u\n", cfg_info->rsv1);
     ka_task_up_read(&g_host_cfg_info.rw_sem);

@@ -21,7 +21,7 @@
 #include "ascend_ub_load.h"
 #include "ascend_ub_hotreset.h"
 
-#define ASCEND_UB_LINK_CHAN_SEG_SIZE 4096  // 4k
+#define ASCEND_UB_LINK_CHAN_SEG_SIZE 4096 // 4k
 #define ASCEND_UB_LINK_CHAN_SEND_SEG_COUNT 4
 #define ASCEND_UB_LINK_CHAN_RECV_SEG_COUNT 16
 
@@ -95,8 +95,8 @@ STATIC int ubdrv_link_chan_cfg_init(struct ascend_ub_admin_chan *link_chan, stru
         return -ENOMEM;
     }
     link_chan->admin_jetty = link_jetty;
-    link_jetty->send_jetty.msg_chan = (void*)link_chan;
-    link_jetty->recv_jetty.msg_chan = (void*)link_chan;
+    link_jetty->send_jetty.msg_chan = (void *)link_chan;
+    link_jetty->recv_jetty.msg_chan = (void *)link_chan;
     link_chan->recv_work.jfc = link_jetty->recv_jetty.jfr_jfc;
     link_chan->recv_work.stat = &link_chan->chan_stat;
     ka_task_mutex_init(&link_chan->mutex_lock);
@@ -153,10 +153,9 @@ int ubdrv_create_single_link_chan(struct ub_idev *idev)
     if (ret != 0) {
         goto free_jetty_mem;
     }
-    ret = ubdrv_create_basic_jetty(link_jetty, UBDRV_LINK_CHAN_JETTY_ID);  // only host is fix
+    ret = ubdrv_create_basic_jetty(link_jetty, UBDRV_LINK_CHAN_JETTY_ID); // only host is fix
     if (ret != 0) {
-        ubdrv_err("Ascend link jetty init failed. (ret=%d;idev_id=%u;ue_idx=%u)\n",
-            ret, idev->idev_id, idev->ue_idx);
+        ubdrv_err("Ascend link jetty init failed. (ret=%d;idev_id=%u;ue_idx=%u)\n", ret, idev->idev_id, idev->ue_idx);
         goto link_jetty_cfg_uninit;
     }
 
@@ -170,8 +169,8 @@ int ubdrv_create_single_link_chan(struct ub_idev *idev)
         ubdrv_err("Link chan rearm jfc failed. (ret=%u;idev_id=%u;ue_idx=%u)\n", ret, idev->idev_id, idev->ue_idx);
         goto del_baisc_jetty;
     }
-    ubdrv_info("Create Link jetty success. (idev_id=%u;ue_idx=%u;send_jfr_id=%u; recv_jfr_id=%u)\n",
-        idev->idev_id, idev->ue_idx, link_jetty->send_jetty.jfr->jfr_id.id, link_jetty->recv_jetty.jfr->jfr_id.id);
+    ubdrv_info("Create Link jetty success. (idev_id=%u;ue_idx=%u;send_jfr_id=%u; recv_jfr_id=%u)\n", idev->idev_id,
+               idev->ue_idx, link_jetty->send_jetty.jfr->jfr_id.id, link_jetty->recv_jetty.jfr->jfr_id.id);
     ka_task_up_write(&idev->rw_sem);
     return 0;
 
@@ -240,8 +239,7 @@ void ubdrv_free_link_chan(void)
     return;
 }
 
-int ubdrv_dev_online_process(u32 dev_id, u32 remote_devid, struct ub_idev *idev,
-    struct jetty_exchange_data *data)
+int ubdrv_dev_online_process(u32 dev_id, u32 remote_devid, struct ub_idev *idev, struct jetty_exchange_data *data)
 {
     int ret = 0;
 
@@ -294,8 +292,8 @@ void ubdrv_set_device_uninit_status(u32 dev_id)
 }
 
 /* device interface */
-int ubdrv_import_server(struct ub_idev *idev, struct ascend_ub_admin_chan *chan,
-    struct ubcore_eid_info *eid, u32 dev_id)
+int ubdrv_import_server(struct ub_idev *idev, struct ascend_ub_admin_chan *chan, struct ubcore_eid_info *eid,
+                        u32 dev_id)
 {
     struct jetty_exchange_data data = {0};
     int i;
@@ -305,7 +303,7 @@ int ubdrv_import_server(struct ub_idev *idev, struct ascend_ub_admin_chan *chan,
         data.eid.eid.raw[i] = eid->eid.raw[i];
     }
     data.id = UBDRV_SERVER_JETTY_ID;
-    data.token_value = DEFAULT_TOKEN_VALUE;  // peer token only in link_chan
+    data.token_value = DEFAULT_TOKEN_VALUE; // peer token only in link_chan
     return ubdrv_admin_chan_import_jfr(idev, chan, &data, dev_id, UBDRV_WARN_LEVEL);
 }
 
@@ -374,7 +372,7 @@ STATIC void ubdrv_link_check_status_rollback(u32 dev_id)
 }
 
 STATIC void ubdrv_link_chan_exchange_data_process(u32 dev_id, struct ub_idev *idev,
-    struct ubdrv_link_exchange_data *recv_data, u32 *status)
+                                                  struct ubdrv_link_exchange_data *recv_data, u32 *status)
 {
     char version[UBDRV_VERSION_LEN] = {0};
     struct ascend_ub_link_res *link_res;
@@ -388,13 +386,13 @@ STATIC void ubdrv_link_chan_exchange_data_process(u32 dev_id, struct ub_idev *id
     }
 
     ret = dbl_runenv_get_drv_version(version, UBDRV_VERSION_LEN);
-    if(ret != 0) {
+    if (ret != 0) {
         ubdrv_err("Get drv version fail. (dev_id=%u;ret=%d)\n", dev_id, ret);
         goto set_dev_uninit;
     }
     if (ka_base_strcmp(recv_data->version, version) != 0) {
-        ubdrv_warn("Drv version is not match. (dev_id=%u;local_version=\"%s\";remote_version=\"%s\")\n",
-            dev_id, version, recv_data->version);
+        ubdrv_warn("Drv version is not match. (dev_id=%u;local_version=\"%s\";remote_version=\"%s\")\n", dev_id,
+                   version, recv_data->version);
     }
     ubdrv_set_local_token(dev_id, recv_data->host_token, ASCEND_VALID);
     ubdrv_set_dev_id_info(dev_id, &recv_data->id_info, ASCEND_VALID);
@@ -426,7 +424,7 @@ set_dev_uninit:
 }
 
 STATIC void ubdrv_link_chan_notify_online_process(u32 dev_id, struct ub_idev *idev,
-    struct ubdrv_link_exchange_data *recv_data, u32 *status)
+                                                  struct ubdrv_link_exchange_data *recv_data, u32 *status)
 {
     int dev_status;
 
@@ -440,15 +438,15 @@ STATIC void ubdrv_link_chan_notify_online_process(u32 dev_id, struct ub_idev *id
     *status = UB_MSG_PROCESS_SUCCESS;
 }
 
-STATIC void ubdrv_link_chan_recv_process(u32 dev_id, struct ub_idev *idev,
-    struct ubdrv_link_exchange_data *recv_data, u32 *status)
+STATIC void ubdrv_link_chan_recv_process(u32 dev_id, struct ub_idev *idev, struct ubdrv_link_exchange_data *recv_data,
+                                         u32 *status)
 {
     if (*status == UB_MSG_CHECK_VERSION_FAILED) {
         return;
     }
     if (recv_data->opcode == UBDRV_LINK_EXCHANGE_DATA) {
         ubdrv_link_chan_exchange_data_process(dev_id, idev, recv_data, status);
-    } else if (recv_data->opcode ==  UBDRV_LINK_NOTIFIY_ONLINE) {
+    } else if (recv_data->opcode == UBDRV_LINK_NOTIFIY_ONLINE) {
         ubdrv_link_chan_notify_online_process(dev_id, idev, recv_data, status);
     } else {
         ubdrv_err("Invalid opcode. (dev_id=%u;opcode=%u)\n", dev_id, recv_data->opcode);
@@ -456,8 +454,8 @@ STATIC void ubdrv_link_chan_recv_process(u32 dev_id, struct ub_idev *idev,
     }
 }
 
-STATIC void ubdrv_link_bottom_half_process(u32 dev_id, struct ub_idev *idev,
-    struct ubdrv_link_exchange_data *recv_data, u32 *status)
+STATIC void ubdrv_link_bottom_half_process(u32 dev_id, struct ub_idev *idev, struct ubdrv_link_exchange_data *recv_data,
+                                           u32 *status)
 {
     u32 remote_devid = 0;
     int ret = 0;
@@ -466,7 +464,8 @@ STATIC void ubdrv_link_bottom_half_process(u32 dev_id, struct ub_idev *idev,
         ubdrv_info("Enter bottom half, not support retry. (dev_id=%u)\n", dev_id);
         ret = ubdrv_dev_online_process(dev_id, remote_devid, idev, &recv_data->recv_admin_info);
         if (ret != 0) {
-            ubdrv_err("Host dev online fail in bottom half. (dev_id=%u;idev_id=%u;ret=%d)\n", dev_id, idev->idev_id, ret);
+            ubdrv_err("Host dev online fail in bottom half. (dev_id=%u;idev_id=%u;ret=%d)\n", dev_id, idev->idev_id,
+                      ret);
             ubdrv_link_chan_exchange_data_process_rollback(dev_id);
         }
     }
@@ -528,8 +527,7 @@ STATIC void ubdrv_link_chan_recv_process_rollback(u32 dev_id, enum ubdrv_link_re
     }
 }
 
-STATIC int ubdrv_send_link_reply_msg(u32 dev_id, struct ascend_ub_jetty_ctrl *cfg,
-    struct ascend_ub_msg_desc *src_desc)
+STATIC int ubdrv_send_link_reply_msg(u32 dev_id, struct ascend_ub_jetty_ctrl *cfg, struct ascend_ub_msg_desc *src_desc)
 {
     struct ascend_ub_admin_chan *admin_chan;
     struct ascend_ub_jetty_ctrl *recv_jetty;
@@ -540,15 +538,15 @@ STATIC int ubdrv_send_link_reply_msg(u32 dev_id, struct ascend_ub_jetty_ctrl *cf
     u32 seg_id = 0;
     int ret;
 
-    admin_chan = (struct ascend_ub_admin_chan*)cfg->msg_chan;
+    admin_chan = (struct ascend_ub_admin_chan *)cfg->msg_chan;
     stat = &admin_chan->chan_stat;
     recv_jetty = &admin_chan->admin_jetty->recv_jetty;
-    jfs_desc = ubdrv_get_send_desc(recv_jetty, seg_id);  // jfs seg_id is 0
+    jfs_desc = ubdrv_get_send_desc(recv_jetty, seg_id); // jfs seg_id is 0
     // copy result data to jfs_desc
     ret = memcpy_s(jfs_desc, recv_jetty->send_msg_len, src_desc, recv_jetty->recv_msg_len);
     if (ret != 0) {
-        ubdrv_err("Copy result data to jfs_desc failed. (ret=%d;dst_len=%u;src_len=%u;dev_id=%u)",
-            ret, recv_jetty->send_msg_len, recv_jetty->recv_msg_len, dev_id);
+        ubdrv_err("Copy result data to jfs_desc failed. (ret=%d;dst_len=%u;src_len=%u;dev_id=%u)", ret,
+                  recv_jetty->send_msg_len, recv_jetty->recv_msg_len, dev_id);
         return ret;
     }
 
@@ -563,8 +561,7 @@ STATIC int ubdrv_send_link_reply_msg(u32 dev_id, struct ascend_ub_jetty_ctrl *cf
     return ubdrv_send_reply_msg(dev_id, 0, &wr_cfg, cfg, stat);
 }
 
-void ubdrv_link_chan_recv_prepare_process(struct ascend_ub_jetty_ctrl *cfg,
-    struct ascend_ub_msg_desc *desc, u32 seg_id)
+void ubdrv_link_chan_recv_prepare_process(struct ascend_ub_jetty_ctrl *cfg, struct ascend_ub_msg_desc *desc, u32 seg_id)
 {
     u32 msg_len = sizeof(struct ubdrv_link_exchange_data);
     struct ubdrv_link_exchange_data *recv_data;

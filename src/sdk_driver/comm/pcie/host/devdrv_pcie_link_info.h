@@ -27,13 +27,13 @@ void devdrv_put_pcie_dump_ltssm_tracer_symbol(void);
 int devdrv_get_pcie_link_bandwidth(void *feature, char *in, u32 in_len, char *out, u32 out_len);
 
 typedef enum {
-    DEVDRV_PCIE_LINK_STATUS_OK          = 0,
-    DEVDRV_PCIE_LINK_STATUS_DOWN        = 1,
+    DEVDRV_PCIE_LINK_STATUS_OK = 0,
+    DEVDRV_PCIE_LINK_STATUS_DOWN = 1,
     DEVDRV_PCIE_LINK_STATUS_CHANNEL_ERR = 2,
 } DEVDRV_PCIE_LINK_STATUS;
 
 typedef enum {
-    DEVDRV_PCIE_COMMON_CHANNEL_INIT  = 0,
+    DEVDRV_PCIE_COMMON_CHANNEL_INIT = 0,
     DEVDRV_PCIE_COMMON_CHANNEL_LINKDOWN = 1, /* linkdown must be 1 same as soc_misc */
     DEVDRV_PCIE_COMMON_CHANNEL_SUSPEND = 2,
     DEVDRV_PCIE_COMMON_CHANNEL_RESUME = 3,
@@ -59,11 +59,11 @@ typedef enum {
 #define PCIE_MAC_REG_MAC_INT_MASK_OFFSET 0x58U
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(6, 6, 0)
-#define PCIE_ERR_OUT_GPIO5_00   432
-#define PCIE_ERR_IN_GPIO5_01    433
+#define PCIE_ERR_OUT_GPIO5_00 432
+#define PCIE_ERR_IN_GPIO5_01 433
 #else
-#define PCIE_ERR_OUT_GPIO5_00   572U
-#define PCIE_ERR_IN_GPIO5_01    573U
+#define PCIE_ERR_OUT_GPIO5_00 572U
+#define PCIE_ERR_IN_GPIO5_01 573U
 #endif
 
 #endif

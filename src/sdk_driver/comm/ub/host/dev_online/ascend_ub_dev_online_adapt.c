@@ -16,7 +16,7 @@
 
 STATIC void ubdrv_link_server_work(ka_work_struct_t *p_work)
 {
-    struct ubdrv_link_work_mng* work_mng;
+    struct ubdrv_link_work_mng *work_mng;
     bool is_all_finish;
     (void)p_work;
 
@@ -30,7 +30,8 @@ STATIC void ubdrv_link_server_work(ka_work_struct_t *p_work)
     return;
 }
 
-void ubdrv_link_init_work_proc(struct ubdrv_link_work_mng *work_mng) {
+void ubdrv_link_init_work_proc(struct ubdrv_link_work_mng *work_mng)
+{
     KA_TASK_INIT_DELAYED_WORK(&work_mng->link_work, ubdrv_link_server_work);
 }
 
@@ -41,14 +42,14 @@ STATIC void ubdrv_print_pair_info(struct pair_dev_info *dev_info)
     u32 chan_num = dev_info->chan_num;
     u32 i;
 
-    ubdrv_info("Get pair info. (dev_id=%u;slot_id=%u;module_id=%u;chan_num=%u)\n",
-        dev_info->dev_id, dev_info->slot_id, dev_info->module_id, dev_info->chan_num);
+    ubdrv_info("Get pair info. (dev_id=%u;slot_id=%u;module_id=%u;chan_num=%u)\n", dev_info->dev_id, dev_info->slot_id,
+               dev_info->module_id, dev_info->chan_num);
     for (i = 0; i < chan_num; i++) {
         chan_info = &dev_info->chan_info[i];
-        ubdrv_info("chan_id=%u;flag=%hu;hop=%hu;rsv=%hu\n",
-            i, chan_info->flag, (u16)chan_info->hop, (u16)chan_info->rsv);
-        ubdrv_info("local_eid: "EID_FMT"\n", EID_ARGS(chan_info->local_eid));
-        ubdrv_info("remote_eid: "EID_FMT"\n", EID_ARGS(chan_info->remote_eid));
+        ubdrv_info("chan_id=%u;flag=%hu;hop=%hu;rsv=%hu\n", i, chan_info->flag, (u16)chan_info->hop,
+                   (u16)chan_info->rsv);
+        ubdrv_info("local_eid: " EID_FMT "\n", EID_ARGS(chan_info->local_eid));
+        ubdrv_info("remote_eid: " EID_FMT "\n", EID_ARGS(chan_info->remote_eid));
     }
     return;
 }
@@ -58,7 +59,8 @@ STATIC void ubdrv_set_del_dev_bitmap(u32 devid, u64 *del_device_bitmap)
     SET_BIT_64(del_device_bitmap[devid / BITS_PER_LONG_LONG], devid % BITS_PER_LONG_LONG);
 }
 
-int ubdrv_pair_info_del_process(struct pair_dev_info *dev_info, struct ubdrv_del_dev_work *del_work, u64 *del_device_bitmap)
+int ubdrv_pair_info_del_process(struct pair_dev_info *dev_info, struct ubdrv_del_dev_work *del_work,
+                                u64 *del_device_bitmap)
 {
     struct ubdrv_pair_info_node *pair_node = NULL;
     ka_mutex_t *pair_info_mutex = NULL;

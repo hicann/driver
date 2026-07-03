@@ -148,10 +148,10 @@ void vmngh_free_common_msg_cluster(struct vmng_msg_dev *msg_dev)
     vmng_free_msg_cluster(msg_dev, VMNG_MSG_CHAN_TYPE_COMMON);
 }
 
-static int (*g_vmngh_msg_common_recv_pcie_proc[VMNG_V2P_MSG_COMMON_PCIE_CMD_MAX])(u32 dev_id, u32 fid,
-    struct vmng_rx_msg_proc_info *proc_info) = {
-        vmng_msg_recv_common_verfiy_info,
-    };
+static int (*g_vmngh_msg_common_recv_pcie_proc[VMNG_V2P_MSG_COMMON_PCIE_CMD_MAX])(
+    u32 dev_id, u32 fid, struct vmng_rx_msg_proc_info *proc_info) = {
+    vmng_msg_recv_common_verfiy_info,
+};
 
 STATIC int vmngh_msg_common_recv_extension(u32 dev_id, u32 fid, struct vmng_rx_msg_proc_info *proc_info)
 {

@@ -40,9 +40,9 @@ enum devdrv_feature {
     DEVDRV_FEATURE_MAX,
 };
 
-#define DEVDRV_FEATURE_OPS_BIT_NUM                       4
-#define DEVDRV_FEATURE_PFVF_BIT_OFFSET                   0
-#define DEVDRV_FEATURE_CONNECT_PROTO_BIT_OFFSET          2
+#define DEVDRV_FEATURE_OPS_BIT_NUM 4
+#define DEVDRV_FEATURE_PFVF_BIT_OFFSET 0
+#define DEVDRV_FEATURE_CONNECT_PROTO_BIT_OFFSET 2
 
 struct devdrv_feature_ops_meta {
     const char *name;

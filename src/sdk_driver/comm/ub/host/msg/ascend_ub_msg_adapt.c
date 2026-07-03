@@ -17,7 +17,7 @@
 
 struct ubdrv_common_msg g_common_msg = {0};
 
-struct ubdrv_common_msg_stat* ubdrv_get_common_stat_dfx(u32 dev_id, u32 type)
+struct ubdrv_common_msg_stat *ubdrv_get_common_stat_dfx(u32 dev_id, u32 type)
 {
     return &g_common_msg.com_msg_stat[dev_id][type];
 }
@@ -36,16 +36,16 @@ void ubdrv_init_common_msg_ctrl_rwsem()
     }
 }
 
-int ubdrv_rx_msg_common_msg_process_proc(struct ascend_ub_msg_desc *desc, struct ubdrv_common_msg_stat *stat, u32 dev_id, void *data,
-                                         u32 in_data_len, u32 out_data_len, u32 *real_out_len)
+int ubdrv_rx_msg_common_msg_process_proc(struct ascend_ub_msg_desc *desc, struct ubdrv_common_msg_stat *stat,
+                                         u32 dev_id, void *data, u32 in_data_len, u32 out_data_len, u32 *real_out_len)
 {
     int ret = 0;
 
     ka_task_down_read(&g_common_msg.rwlock[dev_id]);
     if (g_common_msg.common_fun[dev_id][desc->client_type] == NULL) {
         ka_task_up_read(&g_common_msg.rwlock[dev_id]);
-        ubdrv_err("Common client process func is null. (dev_id=%u;msg_type=%u;ret=%d)\n",
-            dev_id, desc->client_type, ret);
+        ubdrv_err("Common client process func is null. (dev_id=%u;msg_type=%u;ret=%d)\n", dev_id, desc->client_type,
+                  ret);
         stat->rx_null_cb_err++;
         return -EUNATCH;
     }
@@ -113,7 +113,7 @@ int devdrv_ub_unregister_common_msg_client(u32 devid, const struct devdrv_common
 }
 
 int devdrv_ub_common_msg_send(u32 devid, void *data, u32 in_data_len, u32 out_data_len, u32 *real_out_len,
-    enum devdrv_common_msg_type msg_type)
+                              enum devdrv_common_msg_type msg_type)
 {
     struct ascend_ub_user_data user_data = {0};
     struct ubdrv_common_msg_stat *stat;

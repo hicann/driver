@@ -51,7 +51,7 @@ u32 get_global_add_davinci_flag(void)
     return g_add_davinci_flag;
 }
 
-struct ascend_ub_ctrl* get_global_ub_ctrl(void)
+struct ascend_ub_ctrl *get_global_ub_ctrl(void)
 {
     return g_ub_ctrl;
 }
@@ -112,13 +112,13 @@ void ubdrv_set_dev_id_info(u32 dev_id, struct ubdrv_id_info *id_info, u32 info_v
     ka_task_down_write(&g_ub_ctrl->asd_dev[dev_id].rw_sem);
     g_ub_ctrl->asd_dev[dev_id].id_info_valid = info_valid;
     if (id_info != NULL) {
-        (void)memcpy_s(&g_ub_ctrl->asd_dev[dev_id].id_info, sizeof(struct ubdrv_id_info),
-                id_info, sizeof(struct ubdrv_id_info));
+        (void)memcpy_s(&g_ub_ctrl->asd_dev[dev_id].id_info, sizeof(struct ubdrv_id_info), id_info,
+                       sizeof(struct ubdrv_id_info));
     }
     ka_task_up_write(&g_ub_ctrl->asd_dev[dev_id].rw_sem);
 }
 
-struct ascend_ub_dev_status* ubdrv_get_dev_status_mng(u32 dev_id)
+struct ascend_ub_dev_status *ubdrv_get_dev_status_mng(u32 dev_id)
 {
     return &g_ub_ctrl->dev_status[dev_id];
 }
@@ -149,11 +149,12 @@ void ubdrv_set_device_status(u32 dev_id, u32 status)
             if (ka_base_atomic_read(&status_mng->ref_cnt) == 0) {
                 break;
             }
-            ka_system_usleep_range(1, 2);  // wait 1~2 us
+            ka_system_usleep_range(1, 2); // wait 1~2 us
         }
     }
     if (i == UBDRV_DEVICE_OFFLINE_WAIT_CNT) {
-        ubdrv_warn("Wait device ref cnt timeout. (dev_id=%u; ref_cnt=%d)\n", dev_id, ka_base_atomic_read(&status_mng->ref_cnt));
+        ubdrv_warn("Wait device ref cnt timeout. (dev_id=%u; ref_cnt=%d)\n", dev_id,
+                   ka_base_atomic_read(&status_mng->ref_cnt));
     }
     status_mng->device_status = status;
     ka_task_up_write(&status_mng->rw_sem);
@@ -252,8 +253,8 @@ int ubdrv_davinci_bind_fe(struct ub_idev *idev, u32 dev_id)
         }
     }
     cnt = ka_base_atomic_read(&idev->ref_cnt);
-    ubdrv_err("The urma device is bound to too many accounts. (idev_id=%u;ue_idx=%u;dev_id=%u;cnt=%d)\n",
-        idev->idev_id, idev->ue_idx, dev_id, cnt);
+    ubdrv_err("The urma device is bound to too many accounts. (idev_id=%u;ue_idx=%u;dev_id=%u;cnt=%d)\n", idev->idev_id,
+              idev->ue_idx, dev_id, cnt);
     ka_task_up_write(&idev->rw_sem);
     return -EINVAL;
 }
@@ -314,8 +315,8 @@ struct ub_idev *ubdrv_get_idev_by_eid_and_feidx(struct ubcore_eid_info *eid, u32
         }
         if (ubdrv_find_eid_index_by_eid(idev, eid, &eid_idx) == 0) {
             ka_task_up_read(&idev->rw_sem);
-            ubdrv_info("Idev match success. (idev_id=%u;ue_idx=%u;dev_name=%s)\n",
-                idev->idev_id, ue_idx, idev->ubc_dev->dev_name);
+            ubdrv_info("Idev match success. (idev_id=%u;ue_idx=%u;dev_name=%s)\n", idev->idev_id, ue_idx,
+                       idev->ubc_dev->dev_name);
             return idev;
         }
         ka_task_up_read(&idev->rw_sem);
@@ -381,7 +382,7 @@ void ubdrv_mutex_lock_polling(u32 dev_id, ka_mutex_t *lock)
         ka_task_mutex_lock(lock);
     } else {
         while (!ka_task_mutex_trylock(lock)) {
-            ka_system_usleep_range(1, 2);  // wait 1~2 us
+            ka_system_usleep_range(1, 2); // wait 1~2 us
         }
     }
 }
@@ -407,7 +408,7 @@ struct ascend_dev *ubdrv_get_asd_dev_by_devid(u32 dev_id)
     return &g_ub_ctrl->asd_dev[dev_id];
 }
 
-STATIC struct ascend_ub_msg_dev* ubdrv_msg_dev_init(u32 dev_id, u32 remote_id, struct ub_idev *idev)
+STATIC struct ascend_ub_msg_dev *ubdrv_msg_dev_init(u32 dev_id, u32 remote_id, struct ub_idev *idev)
 {
     struct ascend_ub_dev_status *dev_status;
     struct ascend_ub_msg_dev *msg_dev;
@@ -449,8 +450,8 @@ STATIC void ubdrv_msg_dev_uninit(struct ascend_ub_msg_dev *msg_dev, enum ubdrv_d
     ubdrv_kfree(msg_dev);
 }
 
-STATIC int ubdrv_admin_msg_chan_init(u32 dev_id, struct ascend_ub_msg_dev *msg_dev,
-    struct jetty_exchange_data *data, struct ub_idev *idev)
+STATIC int ubdrv_admin_msg_chan_init(u32 dev_id, struct ascend_ub_msg_dev *msg_dev, struct jetty_exchange_data *data,
+                                     struct ub_idev *idev)
 {
     struct ascend_ub_admin_chan *msg_chan;
     struct ascend_ub_sync_jetty *admin_jetty;
@@ -525,7 +526,7 @@ struct ub_idev *ubdrv_get_idev(u32 idev_id)
     return &g_ub_ctrl->idev[idev_id];
 }
 
-STATIC struct ub_idev* ubdrv_alloc_idev_id(struct ubcore_device *ubc_dev)
+STATIC struct ub_idev *ubdrv_alloc_idev_id(struct ubcore_device *ubc_dev)
 {
     u32 ue_idx = (u32)ubc_dev->attr.ue_idx;
     struct ubdrv_msg_chan_stat *stat;
@@ -549,10 +550,10 @@ STATIC struct ub_idev* ubdrv_alloc_idev_id(struct ubcore_device *ubc_dev)
         stat = &idev->link_chan.chan_stat;
         stat->dev_id = idev->idev_id;
         stat->chan_id = idev->ue_idx;
-        ka_base_atomic_set(&idev->link_chan.msg_num, 0);  // It can be initialized only once.
+        ka_base_atomic_set(&idev->link_chan.msg_num, 0); // It can be initialized only once.
         ka_task_up_write(&idev->rw_sem);
-        ubdrv_info("Alloc idev success. (idev_id=%u;ue_idx=%u;name=%s)\n",
-            idev->idev_id, idev->ue_idx, ubc_dev->dev_name);
+        ubdrv_info("Alloc idev success. (idev_id=%u;ue_idx=%u;name=%s)\n", idev->idev_id, idev->ue_idx,
+                   ubc_dev->dev_name);
         return idev;
     }
     ubdrv_err("Fe num is over. (name=%s)\n", ubc_dev->dev_name);
@@ -584,7 +585,7 @@ STATIC struct ubcore_client g_ascend_client = {
     .remove = ubdrv_remove_udma_device,
 };
 
-struct ubcore_client* get_global_ascend_client()
+struct ubcore_client *get_global_ascend_client()
 {
     return &g_ascend_client;
 }
@@ -627,7 +628,7 @@ int devdrv_ub_get_env_boot_type(u32 dev_id)
 
 int devdrv_ub_get_pfvf_type_by_devid(u32 dev_id)
 {
-    if (dev_id < ASCEND_UB_PF_DEV_MAX_NUM){
+    if (dev_id < ASCEND_UB_PF_DEV_MAX_NUM) {
         return DEVDRV_SRIOV_TYPE_PF;
     }
     return DEVDRV_SRIOV_TYPE_VF;
@@ -648,7 +649,7 @@ bool devdrv_ub_is_sriov_support(u32 dev_id)
  * Device-side: Use the smallest value from `local_eid`.
  * Host-side: Use the smallest value from `remote_eid`.
  * Output Constraint: Only the selected EID (based on the above rules) is returned to the business logic.
-*/
+ */
 int ubdrv_get_ub_dev_info(u32 dev_id, struct devdrv_ub_dev_info *eid_query_info, int *num)
 {
     struct dev_eid_info *eid_info = NULL;
@@ -669,8 +670,8 @@ int ubdrv_get_ub_dev_info(u32 dev_id, struct devdrv_ub_dev_info *eid_query_info,
     eid_info = &g_ub_ctrl->asd_dev[dev_id].eid_info;
     if ((eid_info->num == 0) || (eid_info->min_idx >= eid_info->num)) {
         *num = 0;
-        ubdrv_err("Invalid eid num, get eid num is 0. (dev_id=%u; num=%u; min_idx=%u)\n", dev_id,
-            eid_info->num, eid_info->min_idx);
+        ubdrv_err("Invalid eid num, get eid num is 0. (dev_id=%u; num=%u; min_idx=%u)\n", dev_id, eid_info->num,
+                  eid_info->min_idx);
         return -EINVAL;
     }
 
@@ -685,8 +686,8 @@ int ubdrv_get_ub_dev_info(u32 dev_id, struct devdrv_ub_dev_info *eid_query_info,
     // find eid_cnt according idev and fe
     ret = ubdrv_find_eid_index_by_eid(idev_tmp, &eid_info->local_eid[min_idx], &eid_query_info->eid_index[0]);
     if (ret != 0) {
-        ubdrv_err("Find eid_idx according eid and fe fail. (ret=%d; dev_id=%u; min_idx=%u; eid="EID_FMT")\n",
-            ret, dev_id, min_idx, EID_ARGS(eid_info->local_eid[min_idx].eid));
+        ubdrv_err("Find eid_idx according eid and fe fail. (ret=%d; dev_id=%u; min_idx=%u; eid=" EID_FMT ")\n", ret,
+                  dev_id, min_idx, EID_ARGS(eid_info->local_eid[min_idx].eid));
         return -EINVAL;
     }
 
@@ -708,12 +709,10 @@ int ubdrv_process_del_pasid(u32 dev_id, u64 pasid)
 
 STATIC void ubdrv_print_udma_device_info(struct ubcore_device *ubc_dev)
 {
-    ubdrv_info("udma device info. (dev_name=%s;attr_fe_id=%d;fe_id=%d;virtual=%d;port_cnt=%d)\n",
-        ubc_dev->dev_name, ubc_dev->attr.ue_idx, ubc_dev->cfg.ue_idx,
-        ubc_dev->attr.virtualization, ubc_dev->attr.port_cnt);
+    ubdrv_info("udma device info. (dev_name=%s;attr_fe_id=%d;fe_id=%d;virtual=%d;port_cnt=%d)\n", ubc_dev->dev_name,
+               ubc_dev->attr.ue_idx, ubc_dev->cfg.ue_idx, ubc_dev->attr.virtualization, ubc_dev->attr.port_cnt);
     if (ubc_dev->dma_dev != NULL) {
-        ubdrv_info("ubc_dev->dma_dev=%pK, dma_dev->parent=%pK\n",
-            ubc_dev->dma_dev, ubc_dev->dma_dev->parent);
+        ubdrv_info("ubc_dev->dma_dev=%pK, dma_dev->parent=%pK\n", ubc_dev->dma_dev, ubc_dev->dma_dev->parent);
     }
 
     ubdrv_info("udma eid info. (eid_cnt=%u)\n", ubc_dev->eid_table.eid_cnt);
@@ -735,8 +734,7 @@ int ubdrv_add_udma_device(struct ubcore_device *ubc_dev)
     ubdrv_print_udma_device_info(ubc_dev);
     idev = ubdrv_alloc_idev_id(ubc_dev);
     if (idev == NULL) {
-        ubdrv_err("Alloc idev id unsuccessful. (dev_name=%s;ue_idx=%d)\n",
-            ubc_dev->dev_name, ubc_dev->attr.ue_idx);
+        ubdrv_err("Alloc idev id unsuccessful. (dev_name=%s;ue_idx=%d)\n", ubc_dev->dev_name, ubc_dev->attr.ue_idx);
         return -EINVAL;
     }
 
@@ -745,8 +743,8 @@ int ubdrv_add_udma_device(struct ubcore_device *ubc_dev)
         devdrv_set_communication_ops_status(DEVDRV_COMMNS_UB, DEVDRV_COMM_OPS_TYPE_ENABLE, idev->idev_id);
         ubdrv_pair_info_init_work(idev);
     }
-    ubdrv_info("Add udma device success. (idev_id=%u;ue_idx=%u;udma_name=%s)\n",
-        idev->idev_id, idev->ue_idx, idev->ubc_dev->dev_name);
+    ubdrv_info("Add udma device success. (idev_id=%u;ue_idx=%u;udma_name=%s)\n", idev->idev_id, idev->ue_idx,
+               idev->ubc_dev->dev_name);
     return 0;
 }
 
@@ -763,7 +761,7 @@ STATIC void ubdrv_remove_device_resource(u32 dev_id, enum ubdrv_dev_status final
         ka_task_up_write(&status_mng->rw_sem);
         return;
     }
-     // remove davinci_dev
+    // remove davinci_dev
     if (dev_id < ASCEND_UB_PF_DEV_MAX_NUM) {
         ubdrv_remove_davinci_dev(dev_id, UDA_REAL);
     } else {
@@ -792,7 +790,7 @@ retry:
         ubdrv_info("Remove davinci return. (ref_cnt=%d;cnt=%u)\n", ka_base_atomic_read(&idev->ref_cnt), j);
         return;
     }
-    ka_system_usleep_range(200, 200);  // wait 200us
+    ka_system_usleep_range(200, 200); // wait 200us
     j++;
     goto retry;
 }
@@ -822,7 +820,7 @@ void ubdrv_remove_udma_device(struct ubcore_device *ubc_dev, void *client_ctx)
         return;
     }
     ubdrv_free_single_link_chan(idev);
-    ubdrv_remove_davinci_bind_fe(idev);  // remove all davinci of bind the fe
+    ubdrv_remove_davinci_bind_fe(idev); // remove all davinci of bind the fe
     if (ubdrv_get_ub_pcie_sel() == UBDRV_UB_SEL) {
         devdrv_set_communication_ops_status(DEVDRV_COMMNS_UB, DEVDRV_COMM_OPS_TYPE_DISABLE, idev_id);
         ubdrv_pair_info_uninit_work(idev);
@@ -850,8 +848,8 @@ STATIC u32 ubdrv_get_chip_type(u32 dev_id)
 
     /* master slave mode */
     if (asd_dev->ub_dev != NULL) {
-        if ((asd_dev->shr_para.chip_type == UBDRV_DEV_DEVICE_A5_1DIE)
-            || (asd_dev->shr_para.chip_type == UBDRV_DEV_DEVICE_A5_2DIE)) {
+        if ((asd_dev->shr_para.chip_type == UBDRV_DEV_DEVICE_A5_1DIE) ||
+            (asd_dev->shr_para.chip_type == UBDRV_DEV_DEVICE_A5_2DIE)) {
             return HISI_CLOUD_V4;
         } else {
             ubdrv_err("Get chip_type failed. (dev_id=%u; chip_type=%u)\n", dev_id, asd_dev->shr_para.chip_type);
@@ -878,11 +876,11 @@ int ubdrv_add_davinci_dev(u32 dev_id, u32 dev_type)
 
     uda_dev_type_pack_proc(&uda_type, dev_type);
     ret = ub_check_pack_master_id_to_uda(msg_dev, &uda_para, dev_id);
-    if (ret != 0){
+    if (ret != 0) {
         return -EINVAL;
     }
-    uda_para.udevid = msg_dev->dev_id;  // host 0 1 2, device 0
-    uda_para.remote_udevid = msg_dev->remote_id;  // host 0, device 0 1 2
+    uda_para.udevid = msg_dev->dev_id;           // host 0 1 2, device 0
+    uda_para.remote_udevid = msg_dev->remote_id; // host 0, device 0 1 2
     uda_para.chip_type = ubdrv_get_chip_type(dev_id);
     uda_para.dev = &msg_dev->ubc_dev->dev;
     uda_para.pf_flag = (dev_type == UDA_VIRTUAL) ? 0 : 1;
@@ -934,16 +932,14 @@ STATIC void ubdrv_chan_ctrl_uninit(struct ascend_ub_msg_dev *msg_dev)
     ubdrv_non_trans_msg_chan_uninit(msg_dev);
 }
 
-int ubdrv_add_msg_device(u32 dev_id, u32 remote_id, u32 idev_id, u32 ue_idx,
-    struct jetty_exchange_data *data)
+int ubdrv_add_msg_device(u32 dev_id, u32 remote_id, u32 idev_id, u32 ue_idx, struct jetty_exchange_data *data)
 {
     struct ascend_ub_msg_dev *msg_dev = NULL;
     struct ub_idev *idev = ubdrv_get_idev(idev_id);
     int ret;
 
     if ((dev_id >= ASCEND_UB_DEV_MAX_NUM) || (idev == NULL) || (data == NULL)) {
-        ubdrv_err("ubdrv_add_msg_device failed. (dev_id=%u;idev_id=%u;fe_id=%u)\n",
-            dev_id, idev_id, ue_idx);
+        ubdrv_err("ubdrv_add_msg_device failed. (dev_id=%u;idev_id=%u;fe_id=%u)\n", dev_id, idev_id, ue_idx);
         return -EINVAL;
     }
     ubdrv_info("Start add msg device. (dev_id=%u;idev_id=%u;fe_id=%u)\n", dev_id, idev_id, ue_idx);
@@ -957,14 +953,13 @@ int ubdrv_add_msg_device(u32 dev_id, u32 remote_id, u32 idev_id, u32 ue_idx,
     ka_task_up_write(&g_ub_ctrl->asd_dev[dev_id].rw_sem);
     ret = ubdrv_admin_msg_chan_init(dev_id, msg_dev, data, idev);
     if (ret != 0) {
-        ubdrv_err("ubdrv_create_admin_msg_chan failed. (ret=%d;dev_id=%u)\n",
-            ret, dev_id);
+        ubdrv_err("ubdrv_create_admin_msg_chan failed. (ret=%d;dev_id=%u)\n", ret, dev_id);
         goto msg_chan_uninit;
     }
     ubdrv_chan_ctrl_init(msg_dev);
 
     ret = ubdrv_add_msg_device_proc(msg_dev, dev_id);
-    if (ret != 0){
+    if (ret != 0) {
         goto chan_ctrl_uninit;
     }
     ubdrv_set_startup_flag(dev_id, UBDRV_DEV_STARTUP_BOTTOM_HALF_OK);
@@ -1063,12 +1058,12 @@ STATIC void ubdrv_asd_dev_uninit(void)
 
 void ubdrv_print_exchange_data(struct ubdrv_jetty_exchange_data *data)
 {
-    ubdrv_info("(eid%d: "EID_FMT").\n",
-            data->admin_jetty_info.eid.eid_index, EID_ARGS(data->admin_jetty_info.eid.eid));
+    ubdrv_info("(eid%d: " EID_FMT ").\n", data->admin_jetty_info.eid.eid_index,
+               EID_ARGS(data->admin_jetty_info.eid.eid));
     ubdrv_info("ue_idx = %u; jetty_id = %u\n", data->ue_idx, data->admin_jetty_info.id);
 }
 
-struct ub_idev* ubdrv_find_idev_by_udevid(u32 dev_id)
+struct ub_idev *ubdrv_find_idev_by_udevid(u32 dev_id)
 {
     struct devdrv_ub_dev_info eid_query_info = {0};
     struct ub_idev *idev = NULL;
@@ -1081,12 +1076,12 @@ struct ub_idev* ubdrv_find_idev_by_udevid(u32 dev_id)
         return NULL;
     }
 
-    udma_dev = (struct ubcore_device*)eid_query_info.udma_dev[0];
+    udma_dev = (struct ubcore_device *)eid_query_info.udma_dev[0];
     if (udma_dev == NULL) {
         ubdrv_err("Check ubc dev is null. (dev_id=%u)\n", dev_id);
         return NULL;
     }
-    idev = ubdrv_get_idev_by_ubc_dev((struct ubcore_device*)udma_dev);
+    idev = ubdrv_get_idev_by_ubc_dev((struct ubcore_device *)udma_dev);
     if (idev == NULL) {
         ubdrv_err("Find idev fail. (dev_id=%u)\n", dev_id);
         return NULL;

@@ -16,6 +16,7 @@
 
 struct devdrv_feature_mgr g_devdrv_feature_mgr;
 
+// clang-format off
 static const struct devdrv_feature_meta g_devdrv_feature_meta[] = {
     [DEVDRV_FEATURE_PCIE_PROTO_DIP] = {
         .name = "PCIE PROTO DIP",
@@ -109,6 +110,7 @@ static const struct devdrv_feature_ops_meta g_devdrv_feature_ops_meta[] = {
         .bit = "3"
     },
 };
+// clang-format on
 
 int devdrv_feature_mgr_init(void)
 {

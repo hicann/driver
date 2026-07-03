@@ -30,8 +30,8 @@ int ubdrv_rao_client_ctrl_init(void)
 {
     int i, j;
 
-    g_rao_client_ctrl = ubdrv_kzalloc(sizeof(struct ubdrv_rao_client_ctrl) *
-        ASCEND_UB_DEV_MAX_NUM * DEVDRV_RAO_CLIENT_MAX, KA_GFP_KERNEL);
+    g_rao_client_ctrl = ubdrv_kzalloc(
+        sizeof(struct ubdrv_rao_client_ctrl) * ASCEND_UB_DEV_MAX_NUM * DEVDRV_RAO_CLIENT_MAX, KA_GFP_KERNEL);
     if (g_rao_client_ctrl == NULL) {
         ubdrv_err("Alloc rao client ctrl failed.\n");
         return -ENOMEM;
@@ -61,7 +61,7 @@ void ubdrv_rao_client_ctrl_uninit(void)
 }
 
 int ubdrv_register_rao_para_check(u32 dev_id, enum devdrv_rao_client_type type, u64 va, u64 len,
-    enum devdrv_rao_permission_type perm)
+                                  enum devdrv_rao_permission_type perm)
 {
     if (dev_id >= ASCEND_UB_DEV_MAX_NUM) {
         ubdrv_err("Invalid dev_id, get msg_dev failed. (dev_id=%u)\n", dev_id);

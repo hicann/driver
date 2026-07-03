@@ -16,11 +16,10 @@
 
 #include "ka_memory_pub.h"
 
-#define DEVDRV_MSG_CHAN_DB_OFFSET 0x4     /* doorbell offset */
+#define DEVDRV_MSG_CHAN_DB_OFFSET 0x4 /* doorbell offset */
 #define DEVDRV_DB_QUEUE_TYPE 2
 
 void devdrv_set_sq_doorbell(void __ka_mm_iomem *io_base, u32 val);
 void devdrv_set_cq_doorbell(void __ka_mm_iomem *io_base, u32 val);
-
 
 #endif

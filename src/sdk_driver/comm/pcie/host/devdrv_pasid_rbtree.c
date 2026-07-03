@@ -21,7 +21,7 @@
 struct devdrv_dma_pasid_rbtree_ctrl g_pasid_rbtree[MAX_DEV_CNT];
 
 STATIC int devdrv_dma_pasid_node_insert(ka_task_spinlock_t *lock, ka_rb_root_t *root,
-    struct devdrv_dma_pasid_rbtree_node *dma_pasid_node)
+                                        struct devdrv_dma_pasid_rbtree_node *dma_pasid_node)
 {
     ka_rb_node_t *parent = NULL;
     ka_rb_node_t **new_node = NULL;
@@ -33,7 +33,8 @@ STATIC int devdrv_dma_pasid_node_insert(ka_task_spinlock_t *lock, ka_rb_root_t *
 
     /* Figure out where to put new node */
     while (*new_node) {
-        struct devdrv_dma_pasid_rbtree_node *this = ka_base_rb_entry(*new_node, struct devdrv_dma_pasid_rbtree_node, node);
+        struct devdrv_dma_pasid_rbtree_node *this = ka_base_rb_entry(*new_node, struct devdrv_dma_pasid_rbtree_node,
+                                                                     node);
 
         parent = *new_node;
         tree_hash = this->hash_va;
@@ -57,7 +58,7 @@ STATIC int devdrv_dma_pasid_node_insert(ka_task_spinlock_t *lock, ka_rb_root_t *
 }
 
 STATIC struct devdrv_dma_pasid_rbtree_node *devdrv_dma_pasid_node_search(ka_task_spinlock_t *lock, ka_rb_root_t *root,
-    u64 hash_va)
+                                                                         u64 hash_va)
 {
     u64 tree_hash;
     ka_rb_node_t *node = NULL;
@@ -66,7 +67,8 @@ STATIC struct devdrv_dma_pasid_rbtree_node *devdrv_dma_pasid_node_search(ka_task
     if (lock != NULL) {
         ka_task_spin_lock_bh(lock);
     }
-    node = ka_base_get_rb_root_node(root);;
+    node = ka_base_get_rb_root_node(root);
+    ;
     while (node != NULL) {
         dma_pasid_node = ka_base_rb_entry(node, struct devdrv_dma_pasid_rbtree_node, node);
         tree_hash = dma_pasid_node->hash_va;
@@ -90,7 +92,7 @@ STATIC struct devdrv_dma_pasid_rbtree_node *devdrv_dma_pasid_node_search(ka_task
 }
 
 STATIC void devdrv_dma_pasid_node_erase(ka_task_spinlock_t *lock, ka_rb_root_t *root,
-    struct devdrv_dma_pasid_rbtree_node *dma_pasid_node)
+                                        struct devdrv_dma_pasid_rbtree_node *dma_pasid_node)
 {
     // Erase may run with other processes under a lock or alone; thus, the lock can be null for easier combination.
     if (lock != NULL) {
@@ -175,15 +177,16 @@ STATIC int devdrv_pasid_msg_edge_check(u32 devid, void *data, u32 in_data_len, u
     recv_msg = (struct devdrv_pasid_msg *)data;
     if ((recv_msg->op_code >= (u32)DEVDRV_PASID_MAX) || (recv_msg->dev_id >= MAX_DEV_CNT)) {
         devdrv_err("Pasid message channel recv message op_code or devid error.(dev_id=%u; msg_type=%u; msg_devid=%u;)"
-            ")\n", devid, recv_msg->op_code, recv_msg->dev_id);
+                   ")\n",
+                   devid, recv_msg->op_code, recv_msg->dev_id);
         return -EINVAL;
     }
 
     return 0;
 }
 
-STATIC int devdrv_pasid_non_trans_msg_recv(void *msg_chan, void *data, u32 in_data_len,
-    u32 out_data_len, u32 *real_out_len)
+STATIC int devdrv_pasid_non_trans_msg_recv(void *msg_chan, void *data, u32 in_data_len, u32 out_data_len,
+                                           u32 *real_out_len)
 {
     u32 devid = (u32)devdrv_get_msg_chan_devid_inner(msg_chan);
     struct devdrv_pasid_msg *recv_msg;
@@ -223,7 +226,7 @@ STATIC void devdrv_pasid_rbtree_clear(u32 dev_id)
     tree = &g_pasid_rbtree[dev_id];
     ka_task_spin_lock_bh(&tree->rb_lock);
 
-    while((node = ka_base_rb_first(&tree->rbtree)) != NULL) {
+    while ((node = ka_base_rb_first(&tree->rbtree)) != NULL) {
         dma_pasid_node = ka_base_rb_entry(node, struct devdrv_dma_pasid_rbtree_node, node);
         devdrv_dma_pasid_node_erase(NULL, &tree->rbtree, dma_pasid_node);
         ka_task_spin_unlock_bh(&tree->rb_lock);

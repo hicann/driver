@@ -27,7 +27,8 @@ struct hdcdrv_ctrl_msg_node *hdcdrv_find_ctrl_msg_node(struct hdcdrv_dev *dev, u
     struct hdcdrv_ctrl_msg_node *ctrl_node = NULL;
     u64 key = hash_pid; /* Search the hash table using dev_id as the key value */
 
-    ka_hash_for_each_possible(dev->event_msg_pool.htable, ctrl_node, hnode, key) {
+    ka_hash_for_each_possible(dev->event_msg_pool.htable, ctrl_node, hnode, key)
+    {
         if (ctrl_node->hash_pid == hash_pid) {
             return ctrl_node;
         }
@@ -108,7 +109,8 @@ void hdcdrv_clear_event_msg_pool(struct hdcdrv_dev *dev)
     ka_hlist_node_t *local_hnode = NULL;
     u32 bkt = 0;
 
-    ka_hash_for_each_safe(dev->event_msg_pool.htable, bkt, local_hnode, ctrl_node, hnode) {
+    ka_hash_for_each_safe(dev->event_msg_pool.htable, bkt, local_hnode, ctrl_node, hnode)
+    {
         hdcdrv_ctrl_msg_node_list_res_clear(ctrl_node, &dev->event_msg_pool);
     }
 }
@@ -119,7 +121,8 @@ STATIC void hdcdrv_clear_dev_all_ctrl_msg_node(struct hdcdrv_dev *dev)
     ka_hlist_node_t *local_hnode = NULL;
     u32 bkt = 0;
 
-    ka_hash_for_each_safe(dev->event_msg_pool.htable, bkt, local_hnode, ctrl_node, hnode) {
+    ka_hash_for_each_safe(dev->event_msg_pool.htable, bkt, local_hnode, ctrl_node, hnode)
+    {
         hdcdrv_ctrl_msg_node_list_res_clear(ctrl_node, &dev->event_msg_pool);
         hdcdrv_del_ctrl_msg_node(dev, ctrl_node);
     }

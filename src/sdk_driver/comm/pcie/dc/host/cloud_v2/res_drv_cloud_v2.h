@@ -45,7 +45,8 @@ bool devdrv_cloud_v2_is_mdev_vm_full_spec(struct devdrv_pci_ctrl *pci_ctrl);
 void devdrv_cloud_v2_hccs_flush_cache(u64 base, size_t len, u32 mode);
 int devdrv_cloud_v2_get_peh_link_info(ka_pci_dev_t *pdev, u32 *link_speed, u32 *link_width, u32 *link_status);
 void devdrv_cloud_v2_set_dev_shr_info(struct devdrv_pci_ctrl *pci_ctrl);
-int devdrv_cloud_v2_get_p2p_addr(struct devdrv_pci_ctrl *pci_ctrl, u32 remote_dev_id, enum devdrv_p2p_addr_type type, phys_addr_t *phy_addr, size_t *size);
+int devdrv_cloud_v2_get_p2p_addr(struct devdrv_pci_ctrl *pci_ctrl, u32 remote_dev_id, enum devdrv_p2p_addr_type type,
+                                 phys_addr_t *phy_addr, size_t *size);
 void devdrv_cloud_v2_init_virt_info(struct devdrv_pci_ctrl *pci_ctrl);
 u32 devdrv_cloud_v2_get_nvme_low_level_db_irq_num(void);
 u32 devdrv_cloud_v2_get_nvme_db_irq_strde(void);

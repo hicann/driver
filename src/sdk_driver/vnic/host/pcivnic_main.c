@@ -1620,7 +1620,8 @@ ssize_t pcivnic_get_dev_stat_inner(ka_device_t *dev, char *buf)
         offset += ret;
     }
 
-    ret = snprintf_s(buf + offset, KA_MM_PAGE_SIZE - offset, KA_MM_PAGE_SIZE - offset - 1,
+    ret = snprintf_s(
+        buf + offset, KA_MM_PAGE_SIZE - offset, KA_MM_PAGE_SIZE - offset - 1,
         "\npci dev stat:\n    tx_full: %llu\n    fwd_pkt: %llu\n    flow_ctrl_drop: %llu\n    rx_dma_err: %llu\n"
         "    rx_dma_fail: %llu\n    tx_pkt: %llu\n    tx_bytes: %llu\n    rx_pkt: %llu\n    rx_bytes: %llu\n",
         pcidev->stat.tx_full, pcidev->stat.fwd_pkt, pcidev->stat.flow_ctrl_drop, pcidev->stat.rx_dma_err,
@@ -1630,7 +1631,8 @@ ssize_t pcivnic_get_dev_stat_inner(ka_device_t *dev, char *buf)
         offset += ret;
     }
 
-    ret = snprintf_s(buf + offset, KA_MM_PAGE_SIZE - offset, KA_MM_PAGE_SIZE - offset - 1,
+    ret = snprintf_s(
+        buf + offset, KA_MM_PAGE_SIZE - offset, KA_MM_PAGE_SIZE - offset - 1,
         "\nnet dev stat:\n    send_pkt: %llu\n    recv_pkt: %llu\n    tx_packets: %llu\n    tx_dropped: %llu\n"
         "    tx_fifo_errors: %llu\n    tx_errors: %llu\n    tx_carrier_errors: %llu\n    rx_dropped: %llu\n"
         "    rx_packets: %llu\n",
@@ -1670,6 +1672,7 @@ static KA_DRIVER_DEVICE_ATTR(get_server_id, KA_S_IRUSR | KA_S_IRGRP, pcivnic_sys
 #endif
 static KA_DRIVER_DEVICE_ATTR(stat, KA_S_IRUSR | KA_S_IRGRP, pcivnic_get_dev_stat, NULL);
 
+// clang-format off
 static ka_attribute_t *g_pcivnic_sysfs_attrs[] = {
     ka_fs_get_dev_attr(dev_attr_stat)
 #ifdef CFG_FEATURE_S2S
@@ -1682,6 +1685,7 @@ static const ka_attribute_group_t g_pcivnic_sysfs_group = {
     ka_fs_init_ag_attrs(g_pcivnic_sysfs_attrs)
     ka_fs_init_ag_name("vnic")
 };
+// clang-format on
 
 STATIC void pcivnic_init_pcidev(struct pcivnic_pcidev *pcidev)
 {

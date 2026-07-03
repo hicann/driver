@@ -75,11 +75,11 @@ STATIC void hdcdrv_calc_alloc_pool_stamp(void)
     u64 dma_alloc_diff = g_alloc_pool_stamp.dma_alloc_end - g_alloc_pool_stamp.dma_alloc_start;
     u64 head_alloc_diff = g_alloc_pool_stamp.head_alloc_end - g_alloc_pool_stamp.dma_alloc_end;
     g_alloc_pool_stamp.dma_alloc_max = (g_alloc_pool_stamp.dma_alloc_max > dma_alloc_diff ?
-                                        g_alloc_pool_stamp.dma_alloc_max :
-                                        dma_alloc_diff);
+                                            g_alloc_pool_stamp.dma_alloc_max :
+                                            dma_alloc_diff);
     g_alloc_pool_stamp.head_alloc_max = (g_alloc_pool_stamp.head_alloc_max > head_alloc_diff ?
-                                         g_alloc_pool_stamp.head_alloc_max :
-                                         head_alloc_diff);
+                                             g_alloc_pool_stamp.head_alloc_max :
+                                             head_alloc_diff);
     g_alloc_pool_stamp.dma_alloc_total += dma_alloc_diff;
     g_alloc_pool_stamp.head_alloc_total += head_alloc_diff;
 }
@@ -446,9 +446,11 @@ int hdcdrv_alloc_huge_page(struct hdcdrv_mem_pool *pool, int page_index)
     if (page == NULL) {
         // use NONE flag for the second memory request, if page == NULL means the memory is exhausted
         for (i = 0; i < node_num; i++) {
-            page = ka_alloc_hugepage(nids[i], (KA_GFP_KERNEL) | (__KA_GFP_COMP) | (__KA_GFP_ACCOUNT & ~__KA_GFP_RECLAIM) |
-                                    (__KA_GFP_THISNODE) | (KA_GFP_HIGHUSER_MOVABLE), HDCDRV_HUGEPAGE_2M_ORDER,
-                                    &alloc_flag, HUGETLB_ALLOC_NONE, HAL_MODULE_TYPE_HDC, KA_SUB_MODULE_TYPE_1);
+            page = ka_alloc_hugepage(nids[i],
+                                     (KA_GFP_KERNEL) | (__KA_GFP_COMP) | (__KA_GFP_ACCOUNT & ~__KA_GFP_RECLAIM) |
+                                         (__KA_GFP_THISNODE) | (KA_GFP_HIGHUSER_MOVABLE),
+                                     HDCDRV_HUGEPAGE_2M_ORDER, &alloc_flag, HUGETLB_ALLOC_NONE, HAL_MODULE_TYPE_HDC,
+                                     KA_SUB_MODULE_TYPE_1);
             if (page != NULL) {
                 break;
             }
@@ -1234,8 +1236,8 @@ int __attribute__((weak)) hdcdrv_dma_map(struct hdcdrv_fast_mem *f_mem, int devi
             stamp = (u32)ka_jiffies;
         }
 
-        f_mem->mem[i].addr = hal_kernel_devdrv_dma_map_page(pdev_dev, f_mem->mem[i].page,
-            f_mem->mem[i].page_inner_offset, f_mem->mem[i].len, KA_DMA_BIDIRECTIONAL);
+        f_mem->mem[i].addr = hal_kernel_devdrv_dma_map_page(
+            pdev_dev, f_mem->mem[i].page, f_mem->mem[i].page_inner_offset, f_mem->mem[i].len, KA_DMA_BIDIRECTIONAL);
         if (ka_mm_dma_mapping_error(pdev_dev, f_mem->mem[i].addr) != 0) {
             hdcdrv_err("Calling ka_mm_dma_mapping_error error.\n");
             goto dma_unmap;
@@ -1335,7 +1337,7 @@ void hdcdrv_fast_mem_continuity_check(u32 alloc_len, u32 addr_num, const int seg
     char buf[HDCDRV_BUF_LEN] = {0};
 
     expect_num = 0;
-    for (i = HDCDRV_MEM_MIN_PAGE_LEN_BIT; ; i++) {
+    for (i = HDCDRV_MEM_MIN_PAGE_LEN_BIT;; i++) {
         segment = (0x1u << i);
         if (alloc_len < segment) {
             break;
@@ -1451,8 +1453,8 @@ STATIC int hdcdrv_fast_alloc_huge_page_mem(struct hdcdrv_fast_mem *f_mem, u64 va
 
     f_mem->phy_addr_num = (int)(len >> HDCDRV_MEM_MIN_HUGE_PAGE_LEN_BIT);
 
-    f_mem->mem = (struct hdcdrv_mem_f *)hdcdrv_kvmalloc((u64)(unsigned int)f_mem->phy_addr_num *
-        sizeof(struct hdcdrv_mem_f), KA_SUB_MODULE_TYPE_2);
+    f_mem->mem = (struct hdcdrv_mem_f *)hdcdrv_kvmalloc(
+        (u64)(unsigned int)f_mem->phy_addr_num * sizeof(struct hdcdrv_mem_f), KA_SUB_MODULE_TYPE_2);
     if (f_mem->mem == NULL) {
         hdcdrv_err("Calling ka_mm_kmalloc error.\n");
         return HDCDRV_MEM_ALLOC_FAIL;

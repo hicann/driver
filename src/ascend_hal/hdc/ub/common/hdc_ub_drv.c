@@ -114,7 +114,8 @@ signed int drv_hdc_ub_session_para_check(const struct hdc_session *p_session)
 
     session = p_session->ub_session;
     if (session->status == HDC_SESSION_STATUS_IDLE) {
-        HDC_LOG_WARN("session has been closed. (session_fd=%u; session_remote_fd=%u; dev_id=%d; service_type=\"%s\";"
+        HDC_LOG_WARN(
+            "session has been closed. (session_fd=%u; session_remote_fd=%u; dev_id=%d; service_type=\"%s\";"
             "local_close_state=\"%s\"; remote_close_state=\"%s\"; local_session_fd=%u; remote_session_fd=%u)\n",
             session->local_id, session->remote_id, session->dev_id, hdc_get_sevice_str(session->service_type),
             hdc_get_close_str(session->local_close_state), hdc_get_close_str(session->remote_close_state),
@@ -474,13 +475,12 @@ void hdc_ub_session_uninit(struct hdc_session *p_session, int dev_id, int sessio
 STATIC int hdc_import_remote_jetty(hdc_ub_context_t *ctx, hdc_jfr_id_info_t *info,
                                    struct hdc_time_record_for_urma_init *record)
 {
-    urma_rjfr_t remote_jfr = {
-        .jfr_id = {
-            .eid = info->eid,
-            .uasid = info->uasid,
-        },
-        .trans_mode = URMA_TM_RM
-    };
+    urma_rjfr_t remote_jfr = {.jfr_id =
+                                  {
+                                      .eid = info->eid,
+                                      .uasid = info->uasid,
+                                  },
+                              .trans_mode = URMA_TM_RM};
 
 #ifdef SSAPI_USE_MAMI
     urma_get_tp_cfg_t tpid_cfg = {
@@ -1819,8 +1819,8 @@ drvError_t hdc_remote_close_proc(uint32_t dev_id, void *msg, uint32_t msg_len)
         return 0;
     }
 
-    if (hdc_session_alive_check((int)dev_id, (int)msg_para->close_msg.remote_session,
-        msg_para->close_msg.unique_val) != 0) {
+    if (hdc_session_alive_check((int)dev_id, (int)msg_para->close_msg.remote_session, msg_para->close_msg.unique_val) !=
+        0) {
         // If session has closed, no need to do other operation
         (void)mmMutexUnLock(&g_hdcConfig.session_lock[idx]);
         return 0;
@@ -2030,14 +2030,18 @@ int hdc_poll_jfc(hdc_urma_jfc_t *hdc_jfc, urma_cr_t *cr, struct hdc_ub_session *
                 rx_empty = true;
                 rx_empty_cnt++;
             }
-            if(hdc_get_urma_attr_token_id(session->dev_id, &token_id)) {
-                HDC_POLL_JFC_LOG_ERROR(rx_empty, "Failed to poll jfc. (type=%d; cnt=%d; jfc_id=%u; l_id=%u; r_id=%u; "
+            if (hdc_get_urma_attr_token_id(session->dev_id, &token_id)) {
+                HDC_POLL_JFC_LOG_ERROR(
+                    rx_empty,
+                    "Failed to poll jfc. (type=%d; cnt=%d; jfc_id=%u; l_id=%u; r_id=%u; "
                     "dev_id=%d; session_status=%d; service_type=\"%s\"; cr_status=%d; rx_empty=%u; token_id=%u)\n",
                     tx_rx_flag, cnt, hdc_get_jfc_id_by_type(&session->jetty_info, tx_rx_flag), session->local_id,
                     session->remote_id, session->dev_id, session->status, hdc_get_sevice_str(service_type), cr->status,
                     rx_empty_cnt, token_id);
             } else {
-                HDC_POLL_JFC_LOG_ERROR(rx_empty, "Failed to poll jfc. (type=%d; cnt=%d; jfc_id=%u; l_id=%u; r_id=%u; "
+                HDC_POLL_JFC_LOG_ERROR(
+                    rx_empty,
+                    "Failed to poll jfc. (type=%d; cnt=%d; jfc_id=%u; l_id=%u; r_id=%u; "
                     "dev_id=%d; session_status=%d; service_type=\"%s\"; cr_status=%d; rx_empty=%u)\n",
                     tx_rx_flag, cnt, hdc_get_jfc_id_by_type(&session->jetty_info, tx_rx_flag), session->local_id,
                     session->remote_id, session->dev_id, session->status, hdc_get_sevice_str(service_type), cr->status,
@@ -2349,8 +2353,10 @@ send_result_process:
         }
     } else {
         if (ret != -HDCDRV_SESSION_HAS_CLOSED) {
-            HDC_LOG_ERR("Failed to get cqe for send.(wait_flag=%d; retry_cnt=%d; l_id=%u; r_id=%u; dev_id=%d; ret=%d)\n",
-                wait_info->wait, wait_info->timeout_retry_cnt, session->local_id, session->remote_id, session->dev_id, ret);
+            HDC_LOG_ERR(
+                "Failed to get cqe for send.(wait_flag=%d; retry_cnt=%d; l_id=%u; r_id=%u; dev_id=%d; ret=%d)\n",
+                wait_info->wait, wait_info->timeout_retry_cnt, session->local_id, session->remote_id, session->dev_id,
+                ret);
         }
     }
 

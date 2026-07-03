@@ -27,8 +27,7 @@ ka_rw_semaphore_t *devdrv_get_common_msg_rw_sem(void)
     return g_common_rw_sem;
 }
 
-STATIC int rx_msg_common_msg_process(void *msg_chan, void *data, u32 in_data_len, u32 out_data_len,
-    u32 *real_out_len)
+STATIC int rx_msg_common_msg_process(void *msg_chan, void *data, u32 in_data_len, u32 out_data_len, u32 *real_out_len)
 {
     struct devdrv_non_trans_msg_desc *msg_desc = NULL;
     struct devdrv_msg_chan *chan = devdrv_find_msg_chan(msg_chan);
@@ -53,7 +52,7 @@ STATIC int rx_msg_common_msg_process(void *msg_chan, void *data, u32 in_data_len
     msg_desc = ka_container_of(data, struct devdrv_non_trans_msg_desc, data);
     if (msg_desc->msg_type >= (u32)DEVDRV_COMMON_MSG_TYPE_MAX) {
         devdrv_err("Msg type is not support yet. (dev_id=%u;msg_type=%u)\n", chan->msg_dev->pci_ctrl->dev_id,
-                    msg_desc->msg_type);
+                   msg_desc->msg_type);
         return -EOPNOTSUPP;
     }
 
@@ -72,8 +71,8 @@ STATIC int rx_msg_common_msg_process(void *msg_chan, void *data, u32 in_data_len
     }
     if (cost_time > DEVDRV_COMMON_WORK_RESQ_TIME) {
         chan->msg_dev->common_msg.com_msg_stat[msg_desc->msg_type].rx_work_delay_cnt++;
-        devdrv_info("(dev_id=%u; msg_type=%d; cost_time=%ums)\n",
-                    chan->msg_dev->pci_ctrl->dev_id, msg_desc->msg_type, cost_time);
+        devdrv_info("(dev_id=%u; msg_type=%d; cost_time=%ums)\n", chan->msg_dev->pci_ctrl->dev_id, msg_desc->msg_type,
+                    cost_time);
     }
 
     chan->msg_dev->common_msg.com_msg_stat[msg_desc->msg_type].rx_total_cnt++;
@@ -94,7 +93,7 @@ STATIC int rx_msg_common_msg_process(void *msg_chan, void *data, u32 in_data_len
 }
 
 int devdrv_pci_common_msg_send(u32 index_id, void *data, u32 in_data_len, u32 out_data_len, u32 *real_out_len,
-                           enum devdrv_common_msg_type msg_type)
+                               enum devdrv_common_msg_type msg_type)
 {
     struct devdrv_msg_chan *msg_chan = NULL;
     struct devdrv_common_msg_stat *com_msg_stat = NULL;
@@ -226,7 +225,7 @@ int devdrv_pci_unregister_common_msg_client(u32 index_id, const struct devdrv_co
 
     if (msg_client->type >= DEVDRV_COMMON_MSG_TYPE_MAX) {
         devdrv_err("Msg client type is not support yet. (index_id=%u;msg_client_type=%d)\n", index_id,
-            (int)msg_client->type);
+                   (int)msg_client->type);
         return -EOPNOTSUPP;
     }
 
@@ -241,7 +240,7 @@ int devdrv_pci_unregister_common_msg_client(u32 index_id, const struct devdrv_co
     global_common_fun[msg_client->type] = NULL;
     ka_task_up_write(&g_common_rw_sem[msg_client->type]);
     devdrv_debug("Unregister common msg_client success. (index_id=%u; msg_client_type=%d)\n", index_id,
-        msg_client->type);
+                 msg_client->type);
 
     return 0;
 }

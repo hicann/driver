@@ -21,7 +21,7 @@
 #include "pbl/pbl_uda.h"
 
 int devdrv_dma_sync_copy_plus_inner(u32 index_id, enum devdrv_dma_data_type type, int instance, u64 src, u64 dst,
-    u32 size, enum devdrv_dma_direction direction)
+                                    u32 size, enum devdrv_dma_direction direction)
 {
     int ret;
     struct devdrv_dma_node dma_node = {0};
@@ -59,7 +59,7 @@ int devdrv_dma_sync_copy_plus_inner(u32 index_id, enum devdrv_dma_data_type type
 }
 
 int devdrv_dma_sync_copy_inner(u32 index_id, enum devdrv_dma_data_type type, u64 src, u64 dst, u32 size,
-                         enum devdrv_dma_direction direction)
+                               enum devdrv_dma_direction direction)
 {
     return devdrv_dma_sync_copy_plus_inner(index_id, type, DEVDRV_INVALID_INSTANCE, src, dst, size, direction);
 }
@@ -97,15 +97,15 @@ int devdrv_dma_sync_link_copy_plus_extend_inner(u32 index_id, enum devdrv_dma_da
 }
 
 int devdrv_dma_sync_link_copy_extend_inner(u32 index_id, enum devdrv_dma_data_type type, int wait_type,
-    struct devdrv_dma_node *dma_node, u32 node_cnt)
+                                           struct devdrv_dma_node *dma_node, u32 node_cnt)
 {
     return devdrv_dma_sync_link_copy_plus_extend_inner(index_id, type, wait_type, DEVDRV_INVALID_INSTANCE, dma_node,
-                                                        node_cnt);
+                                                       node_cnt);
 }
 
 int devdrv_dma_async_copy_plus_inner(u32 index_id, enum devdrv_dma_data_type type, int instance, u64 src, u64 dst,
-                                    u32 size, enum devdrv_dma_direction direction,
-                                    struct devdrv_asyn_dma_para_info *para_info)
+                                     u32 size, enum devdrv_dma_direction direction,
+                                     struct devdrv_asyn_dma_para_info *para_info)
 {
     int ret;
     struct devdrv_dma_node dma_node = {0};
@@ -143,14 +143,14 @@ int devdrv_dma_async_copy_plus_inner(u32 index_id, enum devdrv_dma_data_type typ
 }
 
 int devdrv_dma_async_copy_inner(u32 index_id, enum devdrv_dma_data_type type, u64 src, u64 dst, u32 size,
-                          enum devdrv_dma_direction direction, struct devdrv_asyn_dma_para_info *para_info)
+                                enum devdrv_dma_direction direction, struct devdrv_asyn_dma_para_info *para_info)
 {
     return devdrv_dma_async_copy_plus_inner(index_id, type, DEVDRV_INVALID_INSTANCE, src, dst, size, direction,
                                             para_info);
 }
 
 int devdrv_dma_sync_link_copy_plus_inner(u32 index_id, enum devdrv_dma_data_type type, int wait_type, int instance,
-                                   struct devdrv_dma_node *dma_node, u32 node_cnt)
+                                         struct devdrv_dma_node *dma_node, u32 node_cnt)
 {
     int ret;
     struct devdrv_dma_dev *dma_dev = NULL;
@@ -182,14 +182,14 @@ int devdrv_dma_sync_link_copy_plus_inner(u32 index_id, enum devdrv_dma_data_type
 }
 
 int devdrv_dma_sync_link_copy_inner(u32 index_id, enum devdrv_dma_data_type type, int wait_type,
-                              struct devdrv_dma_node *dma_node, u32 node_cnt)
+                                    struct devdrv_dma_node *dma_node, u32 node_cnt)
 {
     return devdrv_dma_sync_link_copy_plus_inner(index_id, type, wait_type, DEVDRV_INVALID_INSTANCE, dma_node, node_cnt);
 }
 
 int devdrv_dma_async_link_copy_plus_inner(u32 index_id, enum devdrv_dma_data_type type, int instance,
-                                    struct devdrv_dma_node *dma_node, u32 node_cnt,
-                                    struct devdrv_asyn_dma_para_info *para_info)
+                                          struct devdrv_dma_node *dma_node, u32 node_cnt,
+                                          struct devdrv_asyn_dma_para_info *para_info)
 {
     int ret;
     struct devdrv_dma_dev *dma_dev = NULL;
@@ -220,10 +220,10 @@ int devdrv_dma_async_link_copy_plus_inner(u32 index_id, enum devdrv_dma_data_typ
 }
 
 int devdrv_dma_async_link_copy_inner(u32 index_id, enum devdrv_dma_data_type type, struct devdrv_dma_node *dma_node,
-                               u32 node_cnt, struct devdrv_asyn_dma_para_info *para_info)
+                                     u32 node_cnt, struct devdrv_asyn_dma_para_info *para_info)
 {
     return devdrv_dma_async_link_copy_plus_inner(index_id, type, DEVDRV_INVALID_INSTANCE, dma_node, node_cnt,
-                                                para_info);
+                                                 para_info);
 }
 
 int devdrv_dma_done_schedule_inner(u32 index_id, enum devdrv_dma_data_type type, int instance)
@@ -243,7 +243,7 @@ int devdrv_dma_done_schedule_inner(u32 index_id, enum devdrv_dma_data_type type,
     if ((type >= DEVDRV_DMA_DATA_TYPE_MAX) || (type < DEVDRV_DMA_DATA_COMMON) ||
         (instance == DEVDRV_INVALID_INSTANCE)) {
         devdrv_err("Input parameter is invalid. (index_id=%u; type_tmp=%u; instance=%d)\n", index_id, (u32)type,
-            instance);
+                   instance);
         return -EINVAL;
     }
 
@@ -270,7 +270,7 @@ int devdrv_dma_done_schedule_inner(u32 index_id, enum devdrv_dma_data_type type,
 }
 
 int devdrv_pci_dma_sync_copy_plus(u32 udevid, enum devdrv_dma_data_type type, int instance, u64 src, u64 dst, u32 size,
-                              enum devdrv_dma_direction direction)
+                                  enum devdrv_dma_direction direction)
 {
     u32 index_id;
 
@@ -279,7 +279,7 @@ int devdrv_pci_dma_sync_copy_plus(u32 udevid, enum devdrv_dma_data_type type, in
 }
 
 int devdrv_pci_dma_sync_copy(u32 udevid, enum devdrv_dma_data_type type, u64 src, u64 dst, u32 size,
-                         enum devdrv_dma_direction direction)
+                             enum devdrv_dma_direction direction)
 {
     u32 index_id;
 
@@ -288,7 +288,7 @@ int devdrv_pci_dma_sync_copy(u32 udevid, enum devdrv_dma_data_type type, u64 src
 }
 
 int devdrv_pci_dma_sync_link_copy_plus_extend(u32 udevid, enum devdrv_dma_data_type type, int wait_type, int instance,
-    struct devdrv_dma_node *dma_node, u32 node_cnt)
+                                              struct devdrv_dma_node *dma_node, u32 node_cnt)
 {
     u32 index_id;
 
@@ -297,7 +297,7 @@ int devdrv_pci_dma_sync_link_copy_plus_extend(u32 udevid, enum devdrv_dma_data_t
 }
 
 int devdrv_pci_dma_sync_link_copy_extend(u32 udevid, enum devdrv_dma_data_type type, int wait_type,
-    struct devdrv_dma_node *dma_node, u32 node_cnt)
+                                         struct devdrv_dma_node *dma_node, u32 node_cnt)
 {
     u32 index_id;
 
@@ -306,7 +306,7 @@ int devdrv_pci_dma_sync_link_copy_extend(u32 udevid, enum devdrv_dma_data_type t
 }
 
 int devdrv_pci_dma_async_copy_plus(u32 udevid, enum devdrv_dma_data_type type, int instance, u64 src, u64 dst, u32 size,
-                               enum devdrv_dma_direction direction, struct devdrv_asyn_dma_para_info *para_info)
+                                   enum devdrv_dma_direction direction, struct devdrv_asyn_dma_para_info *para_info)
 {
     u32 index_id;
 
@@ -315,7 +315,7 @@ int devdrv_pci_dma_async_copy_plus(u32 udevid, enum devdrv_dma_data_type type, i
 }
 
 int devdrv_pci_dma_async_copy(u32 udevid, enum devdrv_dma_data_type type, u64 src, u64 dst, u32 size,
-                          enum devdrv_dma_direction direction, struct devdrv_asyn_dma_para_info *para_info)
+                              enum devdrv_dma_direction direction, struct devdrv_asyn_dma_para_info *para_info)
 {
     u32 index_id;
 
@@ -324,7 +324,7 @@ int devdrv_pci_dma_async_copy(u32 udevid, enum devdrv_dma_data_type type, u64 sr
 }
 
 int devdrv_pci_dma_sync_link_copy_plus(u32 udevid, enum devdrv_dma_data_type type, int wait_type, int instance,
-                                   struct devdrv_dma_node *dma_node, u32 node_cnt)
+                                       struct devdrv_dma_node *dma_node, u32 node_cnt)
 {
     u32 index_id;
 
@@ -333,7 +333,7 @@ int devdrv_pci_dma_sync_link_copy_plus(u32 udevid, enum devdrv_dma_data_type typ
 }
 
 int devdrv_pci_dma_sync_link_copy(u32 udevid, enum devdrv_dma_data_type type, int wait_type,
-                              struct devdrv_dma_node *dma_node, u32 node_cnt)
+                                  struct devdrv_dma_node *dma_node, u32 node_cnt)
 {
     u32 index_id;
 
@@ -342,8 +342,8 @@ int devdrv_pci_dma_sync_link_copy(u32 udevid, enum devdrv_dma_data_type type, in
 }
 
 int devdrv_pci_dma_async_link_copy_plus(u32 udevid, enum devdrv_dma_data_type type, int instance,
-                                    struct devdrv_dma_node *dma_node, u32 node_cnt,
-                                    struct devdrv_asyn_dma_para_info *para_info)
+                                        struct devdrv_dma_node *dma_node, u32 node_cnt,
+                                        struct devdrv_asyn_dma_para_info *para_info)
 {
     u32 index_id;
 
@@ -352,7 +352,7 @@ int devdrv_pci_dma_async_link_copy_plus(u32 udevid, enum devdrv_dma_data_type ty
 }
 
 int devdrv_pci_dma_async_link_copy(u32 udevid, enum devdrv_dma_data_type type, struct devdrv_dma_node *dma_node,
-                               u32 node_cnt, struct devdrv_asyn_dma_para_info *para_info)
+                                   u32 node_cnt, struct devdrv_asyn_dma_para_info *para_info)
 {
     u32 index_id;
 

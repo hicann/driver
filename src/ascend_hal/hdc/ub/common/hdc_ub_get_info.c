@@ -21,7 +21,8 @@ void hdc_ub_print_dfx_info(hdc_ub_dbg_stat_t *dbg_stat, hdcdrv_jetty_info_t *jet
                            hdc_ub_send_recv_info_t *sr_info, int flag, struct hdc_ub_session *session)
 {
     if (flag == HDC_LOCAL_SIDE_PRINT) {
-        HDC_RUN_LOG_INFO("local side dfx info (l_id=%u; r_id=%u; service_type=\"%s\") jfc_r=%u; jfc_s=%u; "
+        HDC_RUN_LOG_INFO(
+            "local side dfx info (l_id=%u; r_id=%u; service_type=\"%s\") jfc_r=%u; jfc_s=%u; "
             "jfr=%u; jfs=%u; tx=%llu; tx_byte=%llu; tx_full=%llu; tx_fail_hdc=%llu; tx_fail_ub=%llu; rx_epoll=%llu; "
             "rx_full=%llu; rx_add_list=%llu; rx=%llu; rx_byte=%llu; remote_rx_full=%llu; remote_rx_fail=%llu\n",
             session->local_id, session->remote_id, hdc_get_sevice_str(session->service_type),
@@ -29,17 +30,18 @@ void hdc_ub_print_dfx_info(hdc_ub_dbg_stat_t *dbg_stat, hdcdrv_jetty_info_t *jet
             jetty_info->session_jfs_id, dbg_stat->tx, dbg_stat->tx_bytes, dbg_stat->tx_full, dbg_stat->tx_fail_hdc,
             dbg_stat->tx_fail_ub, dbg_stat->rx_epoll, dbg_stat->rx_full, dbg_stat->rx_add_list, dbg_stat->rx,
             dbg_stat->rx_bytes, dbg_stat->remote_rx_full, dbg_stat->remote_rx_fail);
-        HDC_RUN_LOG_INFO("local side recv_send_cost info (l_id=%u; r_id=%u; service_type=\"%s\") "
+        HDC_RUN_LOG_INFO(
+            "local side recv_send_cost info (l_id=%u; r_id=%u; service_type=\"%s\") "
             "s_find_block:%llu; s_memcpy=%llu; s_post_jfs_wr=%llu; s_poll_jfc:%llu; s_ack_rearm_jfc=%llu; s_time=%llu; "
             "r_poll_jfc:%llu; r_ack_rearm_jfc=%llu; r_memcpy=%llu; r_post_jfr_wr=%llu; r_peek_time=%llu; r_time=%llu "
             "send_exceed_times=%llu; recv_exceed_times=%llu\n",
-            session->local_id, session->remote_id, hdc_get_sevice_str(session->service_type),
-            sr_info->timecost1, sr_info->timecost2, sr_info->timecost3, sr_info->timecost4, sr_info->timecost5,
-            sr_info->timecost_send, sr_info->timecost6, sr_info->timecost7, sr_info->timecost8, sr_info->timecost9,
-            sr_info->timecost_recv_peek, sr_info->timecost_recv, sr_info->timecost_exceed_cnt_send,
-            sr_info->timecost_exceed_cnt_recv);
+            session->local_id, session->remote_id, hdc_get_sevice_str(session->service_type), sr_info->timecost1,
+            sr_info->timecost2, sr_info->timecost3, sr_info->timecost4, sr_info->timecost5, sr_info->timecost_send,
+            sr_info->timecost6, sr_info->timecost7, sr_info->timecost8, sr_info->timecost9, sr_info->timecost_recv_peek,
+            sr_info->timecost_recv, sr_info->timecost_exceed_cnt_send, sr_info->timecost_exceed_cnt_recv);
     } else {
-        HDC_RUN_LOG_INFO("remote side dfx info (l_id=%u; r_id=%u; service_type=\"%s\") jfc_r=%u; jfc_s=%u; "
+        HDC_RUN_LOG_INFO(
+            "remote side dfx info (l_id=%u; r_id=%u; service_type=\"%s\") jfc_r=%u; jfc_s=%u; "
             "jfr=%u; jfs=%u; tx=%llu; tx_byte=%llu; tx_full=%llu; tx_fail_hdc=%llu; tx_fail_ub=%llu; rx_epoll=%llu; "
             "rx_full=%llu; rx_add_list=%llu; rx=%llu; rx_byte=%llu; remote_rx_full=%llu; remote_rx_fail=%llu\n",
             session->remote_id, session->local_id, hdc_get_sevice_str(session->service_type),
@@ -48,15 +50,15 @@ void hdc_ub_print_dfx_info(hdc_ub_dbg_stat_t *dbg_stat, hdcdrv_jetty_info_t *jet
             dbg_stat->tx_fail_ub, dbg_stat->rx_epoll, dbg_stat->rx_full, dbg_stat->rx_add_list, dbg_stat->rx,
             dbg_stat->rx_bytes, dbg_stat->remote_rx_full, dbg_stat->remote_rx_fail);
         // RPINT INFO
-        HDC_RUN_LOG_INFO("remote side dfx info (l_id=%u; r_id=%u; service_type=\"%s\") "
+        HDC_RUN_LOG_INFO(
+            "remote side dfx info (l_id=%u; r_id=%u; service_type=\"%s\") "
             "s_find_block:%llu; s_memcpy=%llu; s_post_jfs_wr=%llu; s_poll_jfc:%llu; s_ack_rearm_jfc=%llu; s_time=%llu; "
             "r_poll_jfc:%llu; r_ack_rearm_jfc=%llu; r_memcpy=%llu; r_post_jfr_wr=%llu; r_peek_time=%llu; r_time=%llu "
             "send_exceed_times=%llu; recv_exceed_times=%llu\n",
-            session->remote_id, session->local_id, hdc_get_sevice_str(session->service_type),
-            sr_info->timecost1, sr_info->timecost2, sr_info->timecost3, sr_info->timecost4, sr_info->timecost5,
-            sr_info->timecost_send, sr_info->timecost6, sr_info->timecost7, sr_info->timecost8, sr_info->timecost9,
-            sr_info->timecost_recv_peek, sr_info->timecost_recv, sr_info->timecost_exceed_cnt_send,
-            sr_info->timecost_exceed_cnt_recv);
+            session->remote_id, session->local_id, hdc_get_sevice_str(session->service_type), sr_info->timecost1,
+            sr_info->timecost2, sr_info->timecost3, sr_info->timecost4, sr_info->timecost5, sr_info->timecost_send,
+            sr_info->timecost6, sr_info->timecost7, sr_info->timecost8, sr_info->timecost9, sr_info->timecost_recv_peek,
+            sr_info->timecost_recv, sr_info->timecost_exceed_cnt_send, sr_info->timecost_exceed_cnt_recv);
     }
 
     return;

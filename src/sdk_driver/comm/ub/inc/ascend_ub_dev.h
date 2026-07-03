@@ -25,18 +25,18 @@
 
 #define ASCEND_UDMA_DEV_MAX_NUM 154U
 #define ASCEND_PFE_IDX 0U
-#define ASCEND_UDMA_MAX_FE_NUM 9U        // 8 virtual fe + 1 physical fe
+#define ASCEND_UDMA_MAX_FE_NUM 9U // 8 virtual fe + 1 physical fe
 #define USER_CTRL_DEFAULT_DEV_ID 0U
-#define UBDRV_DEVNUM_PER_SLOT  8u
+#define UBDRV_DEVNUM_PER_SLOT 8u
 
 #define ASCEND_UB_DEV_MAX_NUM ASCEND_DEV_MAX_NUM
 #define ASCEND_UB_PF_DEV_MAX_NUM ASCEND_PDEV_MAX_NUM
 #define ASCEND_UB_VF_DEV_NUM_BASE ASCEND_VDEV_ID_START
 #define ASCEND_INVALID 0
-#define ASCEND_VALID   1
+#define ASCEND_VALID 1
 #define UBDRV_IO_LOAD_SRAM_OFFSET 0
-#define UBDRV_CLOUD_V4_SHR_PARA_SRAM_OFFSET  0x400
-#define UBDRV_CLOUD_V4_HW_INFO_SRAM_OFFSET  0x5800
+#define UBDRV_CLOUD_V4_SHR_PARA_SRAM_OFFSET 0x400
+#define UBDRV_CLOUD_V4_HW_INFO_SRAM_OFFSET 0x5800
 
 #define ASCEND_UB_IO_RESOURCE 2
 #define ASCEND_UB_MEM_RESOURCE 1
@@ -61,7 +61,7 @@ struct ub_idev {
     u32 idev_id;
     u32 ue_idx;
     u32 eid_index;
-    u32 valid;  // 0: invalid, 1: valid for server/client jetty
+    u32 valid; // 0: invalid, 1: valid for server/client jetty
     ka_atomic_t ref_cnt;
     u32 dev_id[ASCEND_UB_DEV_NUM_PER_FE];
     ka_rw_semaphore_t rw_sem;
@@ -75,9 +75,9 @@ struct ubdev_resource_space {
 };
 
 enum ubdrv_device_chip_type {
-    UBDRV_DEV_DEVICE_A5_1DIE = 0, // A5 1die
-    UBDRV_DEV_DEVICE_A5_2DIE, // A5 2die
-    UBDRV_DEV_UNS, // A5 un(ion)s
+    UBDRV_DEV_DEVICE_A5_1DIE = 0,   // A5 1die
+    UBDRV_DEV_DEVICE_A5_2DIE,       // A5 2die
+    UBDRV_DEV_UNS,                  // A5 un(ion)s
     UBDRV_DEV_DEVICE_CHIP_TYPE_RESV // resv
 };
 
@@ -101,14 +101,14 @@ typedef struct ubdrv_hw_info {
     u16 addr_mode; // unify addr mode, fixed to 0
     u16 board_id;
 
-    u8 version; // version of this struct, A3/A4's version is 3, A5's version is 4
-    u8 connect_type; // V4 resv
+    u8 version;           // version of this struct, A3/A4's version is 3, A5's version is 4
+    u8 connect_type;      // V4 resv
     u16 hccs_hpcs_bitmap; // resv
 
-    u16 server_id; // resv
-    u16 scale_type; // resv
+    u16 server_id;    // resv
+    u16 scale_type;   // resv
     u32 super_pod_id; // resv
-    u32 resv; // resv
+    u32 resv;         // resv
 
     u16 chassis_id; // V4 add
     u16 super_pod_type;
@@ -118,10 +118,8 @@ typedef struct ubdrv_hw_info {
     u8 asd_recv[UBDRV_HW_INFO_ASCEND_DRV_RESV_BYTES];
 } ubdrv_hw_info_t;
 
-typedef union
-{
-    struct
-    {
+typedef union {
+    struct {
         u8 master_slave_type : 1; // bit0   : 0: master-slave, 1: master-master
         u8 sub_machine_form : 4;  // bit1-4 : sub type of machine form
         u8 machine_form : 3;      // bit5-7 : EVB/SERVER/POD/CARD
@@ -139,8 +137,8 @@ struct ascend_ub_dev {
     u32 dev_id;
     struct ub_entity *ubus_dev;
     struct ascend_dev *asd_dev;
-    struct ubdev_resource res;  // bar address
-    struct ubdrv_load_work load_work;  // per file load work
+    struct ubdev_resource res;        // bar address
+    struct ubdrv_load_work load_work; // per file load work
     struct ubdrv_loader loader;
     struct ubdrv_timer_work timer_work;
 };
@@ -152,7 +150,7 @@ struct ubdrv_rao {
 struct ascend_ub_msg_dev {
     int dev_valid;
     u32 dev_id;
-    u32 remote_id;  // vf set 0
+    u32 remote_id; // vf set 0
     ka_mutex_t mutex_lock;
     struct ubcore_device *ubc_dev;
     struct ub_idev *idev;
@@ -174,7 +172,7 @@ enum ubdrv_local_device_status {
 struct dev_eid_info {
     struct ubcore_eid_info remote_eid[PAIR_CHAN_MAX_NUM];
     struct ubcore_eid_info local_eid[PAIR_CHAN_MAX_NUM];
-    u32 num;    // max is 8
+    u32 num; // max is 8
     u32 min_idx;
 };
 
@@ -190,7 +188,7 @@ struct ascend_dev {
     ubdrv_shr_para_t shr_para;
     ubdrv_hw_info_t hw_info;
     ka_rw_semaphore_t rw_sem;
-    struct ascend_ub_dev *ub_dev; // ascend ub device
+    struct ascend_ub_dev *ub_dev;      // ascend ub device
     struct ascend_ub_msg_dev *msg_dev; // abstract msg device manage struct
     struct ubdrv_loader loader;
     enum ubdrv_dev_startup_flag_type startup_flag;
@@ -221,7 +219,7 @@ struct ascend_ub_dev_status {
 };
 
 struct ascend_ub_link_res {
-    struct ubcore_tjetty *link_tjetty;  // peer link_chan jfr of send_jetty
+    struct ubcore_tjetty *link_tjetty; // peer link_chan jfr of send_jetty
     struct ascend_ub_sync_jetty *admin_jetty;
 };
 

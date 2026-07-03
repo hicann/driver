@@ -23,7 +23,7 @@ STATIC int g_ub_hot_reset_status[ASCEND_UB_PF_DEV_MAX_NUM] = {0};
 #define UB_HOT_RESET_ALL_DEVICE_MASK (~0x0ULL)
 
 STATIC int ubdrv_device_set_hot_reset_flag(u32 dev_id, enum ubdrv_dev_status expect_flag,
-    enum ubdrv_dev_status new_flag)
+                                           enum ubdrv_dev_status new_flag)
 {
     struct ascend_ub_dev_status *status_mng = NULL;
     int status;
@@ -37,7 +37,7 @@ STATIC int ubdrv_device_set_hot_reset_flag(u32 dev_id, enum ubdrv_dev_status exp
         return 0;
     } else {
         ubdrv_warn("Device not support reset. (dev_id=%u;status=%d;uid=%u)\n", dev_id, status,
-            ka_task_get_current_cred_uid());
+                   ka_task_get_current_cred_uid());
         ka_task_up_write(&status_mng->rw_sem);
     }
     return -ENODEV;
@@ -57,7 +57,7 @@ STATIC int ubdrv_pod_hot_reset_single_device(u32 dev_id)
     ret = ubdrv_device_set_hot_reset_flag(dev_id, UBDRV_DEVICE_ONLINE, UBDRV_DEVICE_BEGIN_OFFLINE);
     if (ret != 0) {
         ubdrv_err("Failed to set hot reset flag. (dev_id=%u;ret=%d;uid=%u)\n", dev_id, ret,
-            ka_task_get_current_cred_uid());
+                  ka_task_get_current_cred_uid());
         return ret;
     }
     devdrv_ub_set_device_boot_status(dev_id, DSMI_BOOT_STATUS_UNINIT);
@@ -67,7 +67,7 @@ STATIC int ubdrv_pod_hot_reset_single_device(u32 dev_id)
     ret = ubdrv_admin_send_msg(dev_id, &user_desc);
     if (ret != 0) {
         ubdrv_err("Send msg to reset device fail. (dev_id=%u;ret=%d;uid=%u)\n", dev_id, ret,
-            ka_task_get_current_cred_uid());
+                  ka_task_get_current_cred_uid());
     }
     ubdrv_set_device_status(dev_id, UBDRV_DEVICE_DEAD);
     ubdrv_del_msg_device(dev_id, UBDRV_DEVICE_UNINIT);
@@ -95,7 +95,7 @@ STATIC int ubdrv_hot_reset_all_device(void)
 
 STATIC int ubdrv_check_reset_status(u32 dev_id)
 {
-    int i =0;
+    int i = 0;
 
     if (dev_id != 0xff) {
         if (g_ub_hot_reset_status[dev_id] != 0) {
@@ -115,14 +115,14 @@ STATIC int ubdrv_check_reset_status(u32 dev_id)
 
 STATIC void ubdrv_set_reset_status(u32 dev_id, int status)
 {
-    int i =0;
+    int i = 0;
 
     if (dev_id != 0xff) {
-        g_ub_hot_reset_status[dev_id] = status;  // 1:reset 0:not reset
+        g_ub_hot_reset_status[dev_id] = status; // 1:reset 0:not reset
         return;
     }
     for (i = 0; i < ASCEND_UB_PF_DEV_MAX_NUM; i++) {
-        g_ub_hot_reset_status[i] = status;  // 1:reset 0:not reset
+        g_ub_hot_reset_status[i] = status; // 1:reset 0:not reset
     }
     return;
 }
@@ -137,7 +137,7 @@ STATIC int ubdrv_set_hot_reset_bitmap(u32 dev_id)
         ka_task_mutex_unlock(&g_ub_hot_mutex);
         return ret;
     }
-    ubdrv_set_reset_status(dev_id, 1);  // 1:being reset
+    ubdrv_set_reset_status(dev_id, 1); // 1:being reset
     ka_task_mutex_unlock(&g_ub_hot_mutex);
     return ret;
 }
@@ -145,7 +145,7 @@ STATIC int ubdrv_set_hot_reset_bitmap(u32 dev_id)
 STATIC void ubdrv_clr_hot_reset_bitmap(u32 dev_id)
 {
     ka_task_mutex_lock(&g_ub_hot_mutex);
-    ubdrv_set_reset_status(dev_id, 0);  // 0:not reset
+    ubdrv_set_reset_status(dev_id, 0); // 0:not reset
     ka_task_mutex_unlock(&g_ub_hot_mutex);
 }
 
@@ -211,8 +211,8 @@ STATIC int ubdrv_fe_reset_preset(u32 dev_id)
     }
     ret = ubdrv_create_single_link_chan(idev);
     if (ret != 0) {
-        ubdrv_err("Create link jetty fail, when pre_reset. (dev_id=%u;idev_id=%u;ue_idx=%u)\n",
-            dev_id, idev->idev_id, idev->ue_idx);
+        ubdrv_err("Create link jetty fail, when pre_reset. (dev_id=%u;idev_id=%u;ue_idx=%u)\n", dev_id, idev->idev_id,
+                  idev->ue_idx);
         return ret;
     }
     ubdrv_set_device_status(dev_id, UBDRV_DEVICE_UNINIT);

@@ -120,8 +120,8 @@ STATIC int devdrv_load_dma_alloc(ka_device_t *dev, struct devdrv_load_addr_pair 
     p_addr->addr = devdrv_load_mem_alloc(dev, size, &p_addr->dma_addr, KA_GFP_KERNEL);
     if (p_addr->addr == NULL) {
         if (depth <= 0) {
-            devdrv_err("Alloc dma coherent failed. (driver_name=\"%s\"; size=%llu)\n",
-                       ka_driver_dev_driver_string(dev), (u64)size);
+            devdrv_err("Alloc dma coherent failed. (driver_name=\"%s\"; size=%llu)\n", ka_driver_dev_driver_string(dev),
+                       (u64)size);
             goto direct_out;
         }
         /* size should be align with cacheline,
@@ -157,8 +157,7 @@ direct_out:
     return -ENOMEM;
 }
 
-STATIC int devdrv_load_contiguous_alloc(ka_device_t *dev, struct devdrv_load_addr_pair *load_addr, int len,
-                                        size_t size)
+STATIC int devdrv_load_contiguous_alloc(ka_device_t *dev, struct devdrv_load_addr_pair *load_addr, int len, size_t size)
 {
     struct devdrv_load_addr_pair *addr_pair = NULL;
     size_t remain_size;
@@ -238,8 +237,8 @@ STATIC void devdrv_load_notice(struct devdrv_agent_load *loader, struct devdrv_l
     ka_mm_writeq(blocks->blocks_valid_num, sram_reg);
     value = ka_mm_readq(sram_reg);
     if (value != blocks->blocks_valid_num) {
-        devdrv_err("block_num read back error. (dev_id=%u; block_num=0x%llx; readback=0x%llx)\n",
-            loader->dev_id, blocks->blocks_valid_num, value);
+        devdrv_err("block_num read back error. (dev_id=%u; block_num=0x%llx; readback=0x%llx)\n", loader->dev_id,
+                   blocks->blocks_valid_num, value);
         return;
     }
     sram_reg = sram_reg + sizeof(u64);
@@ -248,8 +247,8 @@ STATIC void devdrv_load_notice(struct devdrv_agent_load *loader, struct devdrv_l
         ka_mm_writeq(blocks->blocks_addr[j].dma_addr, sram_reg);
         value = ka_mm_readq(sram_reg);
         if (value != blocks->blocks_addr[j].dma_addr) {
-            devdrv_err("dma_addr read back error. (dev_id=%u; dma_addr=0x%llx; readback=0x%llx)\n",
-                loader->dev_id, blocks->blocks_addr[j].dma_addr, value);
+            devdrv_err("dma_addr read back error. (dev_id=%u; dma_addr=0x%llx; readback=0x%llx)\n", loader->dev_id,
+                       blocks->blocks_addr[j].dma_addr, value);
             return;
         }
         sram_reg = sram_reg + sizeof(u64);
@@ -257,8 +256,8 @@ STATIC void devdrv_load_notice(struct devdrv_agent_load *loader, struct devdrv_l
         ka_mm_writeq(blocks->blocks_addr[j].data_size, sram_reg);
         value = ka_mm_readq(sram_reg);
         if (value != blocks->blocks_addr[j].data_size) {
-            devdrv_err("data_size read back error. (dev_id=%u; data_size=0x%llx; readback=0x%llx)\n",
-                loader->dev_id, blocks->blocks_addr[j].data_size, value);
+            devdrv_err("data_size read back error. (dev_id=%u; data_size=0x%llx; readback=0x%llx)\n", loader->dev_id,
+                       blocks->blocks_addr[j].data_size, value);
             return;
         }
         sram_reg = sram_reg + sizeof(u64);
@@ -535,7 +534,7 @@ retry:
         translated_size = devdrv_get_load_block_size(remain_size, blocks);
         for (i = 0; i < blocks->blocks_valid_num; i++) {
             len = ka_fs_read_file(p_file, &offset, blocks->blocks_addr[i].addr,
-                (size_t)blocks->blocks_addr[i].data_size);
+                                  (size_t)blocks->blocks_addr[i].data_size);
             if (len < 0) {
                 ret = -EIO;
                 devdrv_err("File read error. (dev_id=%u; len=%ld)\n", loader->dev_id, (long)len);
@@ -544,16 +543,16 @@ retry:
 
             if ((u64)len != blocks->blocks_addr[i].data_size) {
                 ret = -EIO;
-                devdrv_err("File read error. (dev_id=%u; len=%ld; size=%llu)\n",
-                           loader->dev_id, (long)len, blocks->blocks_addr[i].size);
+                devdrv_err("File read error. (dev_id=%u; len=%ld; size=%llu)\n", loader->dev_id, (long)len,
+                           blocks->blocks_addr[i].size);
                 goto free_out;
             }
         }
         flag_w = devdrv_get_wr_flag(remain_size, translated_size);
 
         devdrv_load_notice(loader, blocks, flag_w);
-        devdrv_info("Notice BIOS to Load file. (dev_id=%u; file_name=\"%s\"; size=%llu; flag=0x%llx)\n",
-            loader->dev_id, name, blocks->blocks_valid_num, flag_w);
+        devdrv_info("Notice BIOS to Load file. (dev_id=%u; file_name=\"%s\"; size=%llu; flag=0x%llx)\n", loader->dev_id,
+                    name, blocks->blocks_valid_num, flag_w);
 
         remain_size -= translated_size;
     }
@@ -616,8 +615,8 @@ STATIC int devdrv_load_blocks_alloc(struct devdrv_agent_load *loader)
 
     ret = devdrv_load_contiguous_alloc(dev, blocks->blocks_addr, DEVDRV_BLOCKS_ADDR_PAIR_NUM,
                                        (size_t)DEVDRV_BLOCKS_STATIC_SIZE);
-    devdrv_info("Get block size. (dev_id=%u; block_num=%d; size=0x%x)\n",
-                loader->dev_id, ret, (u32)DEVDRV_BLOCKS_STATIC_SIZE);
+    devdrv_info("Get block size. (dev_id=%u; block_num=%d; size=0x%x)\n", loader->dev_id, ret,
+                (u32)DEVDRV_BLOCKS_STATIC_SIZE);
     if (ret <= 0) {
         devdrv_err("Load file comm dma alloc failed. (dev_id=%u; ret=%d)\n", loader->dev_id, ret);
         devdrv_kfree(blocks);
@@ -648,8 +647,8 @@ STATIC int devdrv_load_file_trans(struct devdrv_agent_load *loader)
         return ret;
     }
     blocks = loader->blocks;
-    devdrv_info("Alloc block memory. (dev_id=%d; blocks_num=%llu; chip_type=%u)\n",
-                loader->dev_id, blocks->blocks_num, chip_type);
+    devdrv_info("Alloc block memory. (dev_id=%d; blocks_num=%llu; chip_type=%u)\n", loader->dev_id, blocks->blocks_num,
+                chip_type);
     ret = devdrv_get_boot_mode_flag(pci_ctrl);
     if (ret != 0) {
         devdrv_err("Get boot mode flag failed, stop probe. (dev_id=%u)\n", loader->dev_id);
@@ -659,7 +658,7 @@ STATIC int devdrv_load_file_trans(struct devdrv_agent_load *loader)
 
     /* set device boot status:boot bios */
     devdrv_set_device_boot_status(pci_ctrl, DSMI_BOOT_STATUS_BIOS);
-    ka_mm_writeq(DEVDRV_RECV_FINISH, loader->mem_sram_base);  //lint !e144
+    ka_mm_writeq(DEVDRV_RECV_FINISH, loader->mem_sram_base); // lint !e144
     for (i = 0; i < DEVDRV_BLOCKS_NUM; i++) {
         if (ka_base_strcmp(g_load_file[chip_type][i].file_name, "") == 0) {
             continue;
@@ -667,8 +666,8 @@ STATIC int devdrv_load_file_trans(struct devdrv_agent_load *loader)
         ret = devdrv_load_file_copy(loader, g_load_file[chip_type][i].file_name, blocks);
         if (ret < 0) {
             if (g_load_file[chip_type][i].file_type == DEVDRV_CRITICAL_FILE) {
-                devdrv_err("File copy error. (dev_id=%u; file=%d; name=\"%s\"; %d)\n",
-                           loader->dev_id, i, g_load_file[chip_type][i].file_name, ret);
+                devdrv_err("File copy error. (dev_id=%u; file=%d; name=\"%s\"; %d)\n", loader->dev_id, i,
+                           g_load_file[chip_type][i].file_name, ret);
                 devdrv_load_blocks_free(loader);
                 return ret;
             }
@@ -677,8 +676,8 @@ STATIC int devdrv_load_file_trans(struct devdrv_agent_load *loader)
                 devdrv_get_rd_flag(loader, (u64 *)loader->mem_sram_base);
                 blocks->blocks_valid_num = 0;
                 devdrv_load_notice(loader, blocks, DEVDRV_SEND_FINISH);
-                devdrv_info("Skip file. (dev_id=%u; file=%d; name=\"%s\")\n",
-                            loader->dev_id, i, g_load_file[chip_type][i].file_name);
+                devdrv_info("Skip file. (dev_id=%u; file=%d; name=\"%s\")\n", loader->dev_id, i,
+                            g_load_file[chip_type][i].file_name);
             }
         }
     }
@@ -942,8 +941,7 @@ retry:
     return filesize;
 }
 
-STATIC int devdrv_get_env_value_from_buf(char *buf, u32 filesize, const char *env_name,
-    char *env_val, u32 env_val_len)
+STATIC int devdrv_get_env_value_from_buf(char *buf, u32 filesize, const char *env_name, char *env_val, u32 env_val_len)
 {
     u32 ret, len;
     char *tmp_buf = NULL;
@@ -986,7 +984,7 @@ u32 devdrv_get_env_value_from_file(char *file, const char *env_name, char *env_v
     int filesize, ret_val;
     char *buf = NULL;
 
-    buf = (char*)devdrv_vzalloc(DEVDRV_MAX_FILE_SIZE);
+    buf = (char *)devdrv_vzalloc(DEVDRV_MAX_FILE_SIZE);
     if (buf == NULL) {
         devdrv_err("Vzalloc failed\n");
         return DEVDRV_CONFIG_FAIL;
@@ -1038,7 +1036,7 @@ STATIC void devdrv_load_file(ka_work_struct_t *p_work)
     devdrv_load_timer(pci_ctrl);
     devdrv_info("Leave trans file work queue. (dev_id=%u)\n", pci_ctrl->dev_id);
     devdrv_get_rd_flag(loader, loader->mem_sram_base);
-    ka_mm_writeq(0x0, loader->mem_sram_base);  //lint !e144
+    ka_mm_writeq(0x0, loader->mem_sram_base); // lint !e144
 }
 
 STATIC int devdrv_sdk_path_init(struct devdrv_pci_ctrl *pci_ctrl)

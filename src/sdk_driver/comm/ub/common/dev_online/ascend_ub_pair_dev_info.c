@@ -51,10 +51,10 @@ struct ubdrv_pair_info_node *ubdrv_pair_info_hash_find(u32 dev_id)
     struct ubdrv_pair_info_node *pair_node = NULL;
     u32 key = dev_id & PAIR_INFO_HASH_TABLE_MASK; /* Search the hash table using dev_id as the key value */
 
-    ka_hash_for_each_possible(pair_info_table, pair_node, hnode, key)
-        if (pair_node->dev_id == dev_id) {
-            return pair_node;
-        }
+    ka_hash_for_each_possible(pair_info_table, pair_node, hnode, key) if (pair_node->dev_id == dev_id)
+    {
+        return pair_node;
+    }
 
     return NULL;
 }
@@ -77,10 +77,11 @@ STATIC void ubdrv_pair_info_hash_del(struct ubdrv_pair_info_node *pair_node)
 STATIC int ubdrv_pair_info_hash_count(void)
 {
     struct ubdrv_pair_info_node *pair_node = NULL;
-    int count= 0;
+    int count = 0;
     u32 bkt = 0;
 
-    ka_hash_for_each(pair_info_table, bkt, pair_node, hnode) {
+    ka_hash_for_each(pair_info_table, bkt, pair_node, hnode)
+    {
         count++;
     }
     return count;
@@ -99,7 +100,7 @@ STATIC int ubdrv_pair_info_add(struct pair_dev_info *dev_info)
         ubdrv_warn("Add pair info unsuccess, dev_id already exist. (dev_id=%u)\n", dev_id);
         return -EEXIST;
     }
-    pair_node = ubdrv_kzalloc(sizeof(struct ubdrv_pair_info_node ), KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
+    pair_node = ubdrv_kzalloc(sizeof(struct ubdrv_pair_info_node), KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
     if (pair_node == NULL) {
         ubdrv_err("Add pair info fail, alloc node mem fail. (dev_id=%u)\n", dev_id);
         return -ENOMEM;
@@ -116,7 +117,8 @@ STATIC void ubdrv_pair_info_clear(void)
     ka_hlist_node_t *local_hnode = NULL;
     u32 bkt = 0;
 
-    ka_hash_for_each_safe(pair_info_table, bkt, local_hnode, pair_node, hnode) {
+    ka_hash_for_each_safe(pair_info_table, bkt, local_hnode, pair_node, hnode)
+    {
         ubdrv_pair_info_hash_del(pair_node);
     }
     return;
@@ -139,13 +141,14 @@ void ascend_ub_get_min_eid_from_list(u32 *idx, struct ubcore_eid_info *eid_list,
     return;
 }
 
-STATIC void ubdrv_init_h2d_phy_flag(u32 dev_id, bool *phy_flag, struct pair_dev_info *dev_info, struct dev_eid_info *eid_info)
+STATIC void ubdrv_init_h2d_phy_flag(u32 dev_id, bool *phy_flag, struct pair_dev_info *dev_info,
+                                    struct dev_eid_info *eid_info)
 {
     int i;
 
     for (i = 0; i < dev_info->chan_num; i++) {
-        if (ubdrv_cmp_eid(&eid_info->local_eid[eid_info->min_idx].eid,
-            &dev_info->chan_info[i].local_eid) == UBDRV_CMP_EQUAL) {
+        if (ubdrv_cmp_eid(&eid_info->local_eid[eid_info->min_idx].eid, &dev_info->chan_info[i].local_eid) ==
+            UBDRV_CMP_EQUAL) {
             if ((dev_info->chan_info[i].flag & UBDRV_VIRTUAL_FLAG) != 0) {
                 ubdrv_info("Set phy_flag is false.(flag=%hu;dev_id=%u)\n", dev_info->chan_info[i].flag, dev_id);
                 *phy_flag = false;
@@ -161,7 +164,7 @@ STATIC void ubdrv_init_h2d_phy_flag(u32 dev_id, bool *phy_flag, struct pair_dev_
 
 STATIC void ubdrv_uninit_h2d_phy_flag(u32 dev_id, bool *phy_flag)
 {
-    ubdrv_info("Set phy_flag is true.(dev_id=%u)\n",  dev_id);
+    ubdrv_info("Set phy_flag is true.(dev_id=%u)\n", dev_id);
     *phy_flag = true;
     return;
 }
@@ -177,10 +180,10 @@ STATIC void ubdrv_init_h2d_eid_info(struct pair_dev_info *dev_info)
     eid_info = &asd_dev->eid_info;
     for (i = 0; i < dev_info->chan_num; i++) {
         if ((dev_info->chan_info[i].flag & UBDRV_H2D_FE_FLAG) != 0) {
-            (void)memcpy_s(&eid_info->local_eid[num].eid, sizeof(union ubcore_eid),
-                &dev_info->chan_info[i].local_eid, sizeof(union ubcore_eid));
-            (void)memcpy_s(&eid_info->remote_eid[num].eid, sizeof(union ubcore_eid),
-                &dev_info->chan_info[i].remote_eid, sizeof(union ubcore_eid));
+            (void)memcpy_s(&eid_info->local_eid[num].eid, sizeof(union ubcore_eid), &dev_info->chan_info[i].local_eid,
+                           sizeof(union ubcore_eid));
+            (void)memcpy_s(&eid_info->remote_eid[num].eid, sizeof(union ubcore_eid), &dev_info->chan_info[i].remote_eid,
+                           sizeof(union ubcore_eid));
             num++;
         }
     }
@@ -219,8 +222,8 @@ int ubdrv_init_h2d_eid_index(u32 dev_id)
     min_idx = eid_info->min_idx;
     idev = ubdrv_get_idev_by_eid(&eid_info->local_eid[min_idx]);
     if (idev == NULL) {
-        ubdrv_warn("Find fe unsuccessful. (dev_id=%u;eid="EID_FMT")\n",
-            dev_id, EID_ARGS(eid_info->local_eid[min_idx].eid));
+        ubdrv_warn("Find fe unsuccessful. (dev_id=%u;eid=" EID_FMT ")\n", dev_id,
+                   EID_ARGS(eid_info->local_eid[min_idx].eid));
         return -EINVAL;
     }
     ret = ubdrv_get_ub_dev_info(dev_id, &eid_query_info, &num);
@@ -229,7 +232,7 @@ int ubdrv_init_h2d_eid_index(u32 dev_id)
     }
     ka_task_down_write(&idev->rw_sem);
     idev->eid_index = eid_query_info.eid_index[0];
-    idev->valid = ASCEND_UB_VALID;  // set valid after eid_index is set
+    idev->valid = ASCEND_UB_VALID; // set valid after eid_index is set
     ka_task_up_write(&idev->rw_sem);
     return 0;
 }
@@ -260,7 +263,8 @@ bool ubdrv_init_pair_info_h2d_eid_index(void)
     int ret;
 
     ka_task_mutex_lock(&pair_info_mutex);
-    ka_hash_for_each_safe(pair_info_table, bkt, local_hnode, pair_node, hnode) {
+    ka_hash_for_each_safe(pair_info_table, bkt, local_hnode, pair_node, hnode)
+    {
         dev_id = pair_node->dev_info.dev_id;
         if (dev_id < ASCEND_UB_PF_DEV_MAX_NUM) {
             ret = ubdrv_init_h2d_eid_index(dev_id);
@@ -280,7 +284,8 @@ STATIC void ubdrv_set_all_probe_dev_bitmap(void)
     u32 dev_id;
     u32 bkt = 0;
 
-    ka_hash_for_each_safe(pair_info_table, bkt, local_hnode, pair_node, hnode) {
+    ka_hash_for_each_safe(pair_info_table, bkt, local_hnode, pair_node, hnode)
+    {
         dev_id = pair_node->dev_id;
         devdrv_set_probe_dev_bitmap(dev_id);
     }
@@ -309,7 +314,7 @@ int ubdrv_set_detected_phy_dev_num(int dev_num)
 STATIC void ubdrv_uninit_pf_h2d_eid_index(u32 dev_id)
 {
     if (dev_id >= ASCEND_UB_PF_DEV_MAX_NUM) {
-        return;  // vfe does not need to init h2d fe info, when vfe is't init
+        return; // vfe does not need to init h2d fe info, when vfe is't init
     }
     ubdrv_uninit_h2d_eid_index(dev_id);
     return;
@@ -324,7 +329,7 @@ STATIC int ubdrv_get_pair_dev_num(u32 *dev_num)
 
     ubc_dev = ubdrv_get_default_user_ctrl_urma_dev();
     if (ubc_dev == NULL) {
-        return -ETIMEDOUT;  // No mami data, No udma dev, need retry
+        return -ETIMEDOUT; // No mami data, No udma dev, need retry
     }
     user_ctl.in.opcode = UDMA_USER_CTL_QUERY_PAIR_DEVNUM;
     user_ctl.out.addr = (uint64_t)(uintptr_t)(&pair_device_num);
@@ -409,8 +414,8 @@ int ubdrv_get_pair_dev_info(u32 pair_index, struct pair_dev_info *dev_info)
     user_ctl.uctx = NULL;
     ret = ubcore_user_control(ubc_dev, &user_ctl);
     if (ret != 0) {
-        ubdrv_err("User ctrl call failed. (pair_index=%u;ret=%d;in_len=%u;out_len=%u)\n",
-            pair_index, ret, user_ctl.in.len, user_ctl.out.len);
+        ubdrv_err("User ctrl call failed. (pair_index=%u;ret=%d;in_len=%u;out_len=%u)\n", pair_index, ret,
+                  user_ctl.in.len, user_ctl.out.len);
         return ret;
     }
 
@@ -489,7 +494,7 @@ STATIC int ubdrv_set_dynamic_del_device_status(u32 dev_id)
     return -EAGAIN;
 }
 
-u64 g_del_device_bitmap[ASCEND_UB_DEV_MAX_NUM/BITS_PER_LONG_LONG + 1];
+u64 g_del_device_bitmap[ASCEND_UB_DEV_MAX_NUM / BITS_PER_LONG_LONG + 1];
 
 void ubdrv_clr_del_dev_bitmap(u32 devid)
 {
@@ -544,12 +549,12 @@ STATIC void ubdrv_dynamic_del_device(ka_work_struct_t *p_work)
         ubdrv_free_single_link_chan(idev);
         ubdrv_set_device_status(dev_id, UBDRV_DEVICE_UNINIT);
 
-del_pair_info:
+    del_pair_info:
         devdrv_clr_probe_dev_bitmap(dev_id);
         ubdrv_uninit_pf_h2d_eid_index(dev_id);
         ubdrv_uninit_h2d_eid_info(dev_id);
         ubdrv_pair_info_hash_del(pair_node);
-unlock_table_in_del_work:
+    unlock_table_in_del_work:
         ubdrv_clr_del_dev_bitmap(dev_id);
         ka_task_mutex_unlock(&pair_info_mutex);
     }
@@ -566,8 +571,7 @@ STATIC int ubdrv_pair_info_call_process(struct ubcore_device *dev, void *data, u
     (void)dev;
 
     if ((len < expect_data_len) || (new_data == NULL)) {
-        ubdrv_err("Invalid pair info len in notice change data. (len=%u;expect_data_len=%u)\n",
-            len, expect_data_len);
+        ubdrv_err("Invalid pair info len in notice change data. (len=%u;expect_data_len=%u)\n", len, expect_data_len);
         return -EINVAL;
     }
     dev_id = new_data->notice_dev_info.module_id;
@@ -589,8 +593,8 @@ STATIC int ubdrv_pair_info_call_process(struct ubcore_device *dev, void *data, u
             ret = -EINVAL;
             break;
     }
-    ubdrv_info("Dev pair info notice info. (dev_id=%u;op=%u;ret=%d;uid=%u)\n",
-        dev_id, new_data->op, ret, ka_task_get_current_cred_uid());
+    ubdrv_info("Dev pair info notice info. (dev_id=%u;op=%u;ret=%d;uid=%u)\n", dev_id, new_data->op, ret,
+               ka_task_get_current_cred_uid());
     return ret;
 }
 
@@ -649,7 +653,7 @@ int ubdrv_procfs_pair_info_show(ka_seq_file_t *seq, void *offset)
     struct ubdrv_pair_info_node *pair_info = NULL;
     struct pair_dev_info *dev_info = NULL;
     struct pair_chan_info *chan_info = NULL;
-    u32 dev_id = *((u32*)seq->private);
+    u32 dev_id = *((u32 *)seq->private);
     u32 chan_num;
     int ret = 0;
     u32 i;
@@ -664,23 +668,23 @@ int ubdrv_procfs_pair_info_show(ka_seq_file_t *seq, void *offset)
     dev_info = &pair_info->dev_info;
     chan_num = dev_info->chan_num;
     ka_fs_seq_printf(seq, "-------------------show dev pair info-------------------\n");
-    ka_fs_seq_printf(seq, "Dev id info. (dev_id=%u;slot_id=%u;module_id=%u;chan_num=%u)\n",
-        dev_info->dev_id, dev_info->slot_id, dev_info->module_id, dev_info->chan_num);
-    ka_fs_seq_printf(seq, "Eid info. (bus instance eid="EID_FMT"; d2d eid="EID_FMT")\n",
-        EID_ARGS(dev_info->bus_instance_eid),EID_ARGS(dev_info->d2d_eid));
+    ka_fs_seq_printf(seq, "Dev id info. (dev_id=%u;slot_id=%u;module_id=%u;chan_num=%u)\n", dev_info->dev_id,
+                     dev_info->slot_id, dev_info->module_id, dev_info->chan_num);
+    ka_fs_seq_printf(seq, "Eid info. (bus instance eid=" EID_FMT "; d2d eid=" EID_FMT ")\n",
+                     EID_ARGS(dev_info->bus_instance_eid), EID_ARGS(dev_info->d2d_eid));
     for (i = 0; i < chan_num; i++) {
         chan_info = &dev_info->chan_info[i];
-        ka_fs_seq_printf(seq, "chan_id=%u;flag=%u;hop=%hu;rsv=%hu\n", i, chan_info->flag,
-            (u16)chan_info->hop, (u16)chan_info->rsv);
-        ka_fs_seq_printf(seq, "local_eid: "EID_FMT"\n", EID_ARGS(chan_info->local_eid));
-        ka_fs_seq_printf(seq, "remote_eid: "EID_FMT"\n", EID_ARGS(chan_info->remote_eid));
+        ka_fs_seq_printf(seq, "chan_id=%u;flag=%u;hop=%hu;rsv=%hu\n", i, chan_info->flag, (u16)chan_info->hop,
+                         (u16)chan_info->rsv);
+        ka_fs_seq_printf(seq, "local_eid: " EID_FMT "\n", EID_ARGS(chan_info->local_eid));
+        ka_fs_seq_printf(seq, "remote_eid: " EID_FMT "\n", EID_ARGS(chan_info->remote_eid));
     }
     ka_fs_seq_printf(seq, "---------------------------end--------------------------\n");
 unlock_pair_table:
     ka_task_mutex_unlock(&pair_info_mutex);
     return ret;
 }
-#endif  // CFG_FEATURE_SUPPORT_RUN_INSTALL
+#endif // CFG_FEATURE_SUPPORT_RUN_INSTALL
 
 STATIC void ubdrv_h2d_eid_info_clear(u32 *dev_list, u32 dev_num)
 {
@@ -764,13 +768,15 @@ STATIC void ubdrv_pair_info_work_sched(ka_work_struct_t *p_work)
 #ifdef CFG_FEATURE_SUPPORT_RUN_INSTALL
     ret = ubdrv_register_pair_info_call();
     if ((ret != 0) && (g_pair_info_work.work_magic == UBDRV_WORK_MAGIC)) {
-        ka_task_schedule_delayed_work(&g_pair_info_work.pair_info_work, ka_system_msecs_to_jiffies(UBDRV_PAIR_INFO_WORK_DELAY));
+        ka_task_schedule_delayed_work(&g_pair_info_work.pair_info_work,
+                                      ka_system_msecs_to_jiffies(UBDRV_PAIR_INFO_WORK_DELAY));
         return;
     }
 #endif
     ret = ubdrv_get_all_pair_dev_info();
     if ((ret == -ETIMEDOUT) && (g_pair_info_work.work_magic == UBDRV_WORK_MAGIC)) {
-        ka_task_schedule_delayed_work(&g_pair_info_work.pair_info_work, ka_system_msecs_to_jiffies(UBDRV_PAIR_INFO_WORK_DELAY));
+        ka_task_schedule_delayed_work(&g_pair_info_work.pair_info_work,
+                                      ka_system_msecs_to_jiffies(UBDRV_PAIR_INFO_WORK_DELAY));
         return;
     }
     g_pair_info_work.work_magic = 0;
@@ -794,7 +800,8 @@ void ubdrv_pair_info_init_work(struct ub_idev *idev)
 #endif
     KA_TASK_INIT_DELAYED_WORK(&g_pair_info_work.pair_info_work, ubdrv_pair_info_work_sched);
     g_pair_info_work.work_magic = UBDRV_WORK_MAGIC;
-    ka_task_schedule_delayed_work(&g_pair_info_work.pair_info_work, ka_system_msecs_to_jiffies(UBDRV_PAIR_INFO_QUERY_DELAY));
+    ka_task_schedule_delayed_work(&g_pair_info_work.pair_info_work,
+                                  ka_system_msecs_to_jiffies(UBDRV_PAIR_INFO_QUERY_DELAY));
     ubdrv_info("Init pair info work success.\n");
 }
 
@@ -831,7 +838,7 @@ int ubdrv_query_h2d_pair_chan_info(u32 dev_id, struct ubcore_eid_info *local_eid
 
     dev_info = &pair_info_node->dev_info;
     chan_num = dev_info->chan_num;
-    for (j  = 0; j < chan_num; j++) {
+    for (j = 0; j < chan_num; j++) {
         if ((dev_info->chan_info[j].flag & UBDRV_H2D_FE_FLAG) != 0) {
             (void)memcpy_s(&local_eid->eid, len, &dev_info->chan_info[j].local_eid, len);
             (void)memcpy_s(&remote_eid->eid, len, &dev_info->chan_info[j].remote_eid, len);
@@ -846,13 +853,13 @@ unlock_table_in_query:
 }
 
 STATIC int ubdrv_get_urma_info_by_eid(struct ubcore_eid_info *local_eid, u32 udevid,
-    struct ascend_urma_dev_info *urma_info)
+                                      struct ascend_urma_dev_info *urma_info)
 {
     struct uda_mia_dev_para mia_para = {0};
     struct udma_ue_info_ex info = {0};
     struct ubcore_user_ctl user_ctl = {0};
     struct ub_idev *idev = NULL;
-    int ret  = 0;
+    int ret = 0;
     u32 vnpu_id, phy_id;
 
     ret = uda_udevid_to_mia_devid(udevid, &mia_para);
@@ -864,7 +871,7 @@ STATIC int ubdrv_get_urma_info_by_eid(struct ubcore_eid_info *local_eid, u32 ude
     }
 
     idev = ubdrv_get_idev_by_eid(local_eid);
-    if(idev == NULL) {
+    if (idev == NULL) {
         ubdrv_err("Get idev by eid fail. (dev_id=%u;vnpu_id=%u;ret=%d)\n", phy_id, vnpu_id, ret);
         return -EINVAL;
     }
@@ -907,7 +914,7 @@ int ubdrv_get_urma_info(u32 udevid, struct ascend_urma_dev_info *urma_info)
 }
 
 int ubdrv_query_pair_devinfo_by_remote_eid(u32 *dev_id, struct ubcore_eid_info *local_eid,
-    struct ubcore_eid_info *remote_eid)
+                                           struct ubcore_eid_info *remote_eid)
 {
     size_t len = sizeof(union ubcore_eid);
     struct dev_eid_info *eid_info;
@@ -928,8 +935,8 @@ int ubdrv_query_pair_devinfo_by_remote_eid(u32 *dev_id, struct ubcore_eid_info *
             return 0;
         }
     }
-    ubdrv_err("Match eid fail by remote eid info. (remote_eid: "EID_FMT")(dev_id=%u)\n",
-        EID_ARGS(remote_eid->eid), *dev_id);
+    ubdrv_err("Match eid fail by remote eid info. (remote_eid: " EID_FMT ")(dev_id=%u)\n", EID_ARGS(remote_eid->eid),
+              *dev_id);
     return -ENODEV;
 }
 
@@ -945,7 +952,7 @@ bool ubdrv_is_valid_devid(u32 dev_id)
     ka_task_mutex_lock(&pair_info_mutex);
     pair_node = ubdrv_pair_info_hash_find(dev_id);
     if (pair_node == NULL) {
-        ret  = false;
+        ret = false;
     }
     ka_task_mutex_unlock(&pair_info_mutex);
     return ret;

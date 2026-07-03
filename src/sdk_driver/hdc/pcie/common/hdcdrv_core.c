@@ -930,7 +930,8 @@ struct hdcdrv_service *hdcdrv_search_service(u32 dev_id, u32 fid, int service_ty
 #endif
     ka_task_mutex_lock(&hdc_ctrl->devices[dev_id].mutex);
     if (ka_list_empty_careful(&service->serv_list) == 0) {
-        ka_list_for_each_safe(pos, next, &service->serv_list) {
+        ka_list_for_each_safe(pos, next, &service->serv_list)
+        {
             node = ka_list_entry(pos, struct hdcdrv_serv_list_node, list);
             if (node->service.listen_pid == host_pid) {
                 ka_task_mutex_unlock(&hdc_ctrl->devices[dev_id].mutex);
@@ -973,7 +974,8 @@ STATIC struct hdcdrv_service *hdcdrv_alloc_service(u32 dev_id, u32 fid, int serv
 
     /* Checking whether the process server with the Same hostpid exists */
     if (ka_list_empty_careful(&service->serv_list) == 0) {
-        ka_list_for_each_safe(pos, next, &service->serv_list) {
+        ka_list_for_each_safe(pos, next, &service->serv_list)
+        {
             node = ka_list_entry(pos, struct hdcdrv_serv_list_node, list);
             if (node->service.listen_pid == host_pid) {
                 ka_task_mutex_unlock(&dev->mutex);
@@ -984,7 +986,8 @@ STATIC struct hdcdrv_service *hdcdrv_alloc_service(u32 dev_id, u32 fid, int serv
 
     /* Searching for an idle server */
     if (ka_list_empty_careful(&service->serv_list) == 0) {
-        ka_list_for_each_safe(pos, next, &service->serv_list) {
+        ka_list_for_each_safe(pos, next, &service->serv_list)
+        {
             node = ka_list_entry(pos, struct hdcdrv_serv_list_node, list);
             if (node->service.listen_pid == HDCDRV_INVALID) {
                 node->service.listen_pid = host_pid;
@@ -1534,27 +1537,27 @@ STATIC long hdcdrv_msg_chan_send_wait(struct hdcdrv_msg_chan *msg_chan, struct h
         return HDCDRV_NO_BLOCK;
     } else if (wait_flag == HDCDRV_WAIT_ALWAYS) {
         /*lint -e666*/
-        ret = (long)ka_task_wait_event_interruptible_exclusive(msg_chan->send_wait,
-            (!(hdcdrv_w_sq_full_check(msg_chan->chan))) ||
-            (dev->valid != HDCDRV_VALID) ||
-            (hdcdrv_get_session_status(session) == HDCDRV_SESSION_STATUS_CLOSING) ||
-            (hdcdrv_get_session_status(session) == HDCDRV_SESSION_STATUS_IDLE) ||
-            (hdcdrv_get_peer_status() != DEVDRV_PEER_STATUS_NORMAL) ||
-            (session->unique_val != unique_val));
+        ret = (long)ka_task_wait_event_interruptible_exclusive(
+            msg_chan->send_wait, (!(hdcdrv_w_sq_full_check(msg_chan->chan))) || (dev->valid != HDCDRV_VALID) ||
+                                     (hdcdrv_get_session_status(session) == HDCDRV_SESSION_STATUS_CLOSING) ||
+                                     (hdcdrv_get_session_status(session) == HDCDRV_SESSION_STATUS_IDLE) ||
+                                     (hdcdrv_get_peer_status() != DEVDRV_PEER_STATUS_NORMAL) ||
+                                     (session->unique_val != unique_val));
         hdcdrv_record_time_stamp(session, TX_TIME_WAKE_UP_SEND_WAIT, DBG_TIME_OP_SEND, hdcdrv_get_current_time_us());
         /*lint +e666*/
     } else {
         /*lint -e666*/
-        ret = ka_task_wait_event_interruptible_timeout(msg_chan->send_wait,
-            (!(hdcdrv_w_sq_full_check(msg_chan->chan))) ||
-            (dev->valid != HDCDRV_VALID) ||
-            (hdcdrv_get_session_status(session) == HDCDRV_SESSION_STATUS_CLOSING) ||
-            (hdcdrv_get_session_status(session) == HDCDRV_SESSION_STATUS_IDLE) ||
-            (session->unique_val != unique_val),
+        ret = ka_task_wait_event_interruptible_timeout(
+            msg_chan->send_wait,
+            (!(hdcdrv_w_sq_full_check(msg_chan->chan))) || (dev->valid != HDCDRV_VALID) ||
+                (hdcdrv_get_session_status(session) == HDCDRV_SESSION_STATUS_CLOSING) ||
+                (hdcdrv_get_session_status(session) == HDCDRV_SESSION_STATUS_IDLE) ||
+                (session->unique_val != unique_val),
             (long)timeout);
         /*lint +e666*/
         if (ret == 0) {
-            HDC_LOG_WARN_LIMIT(&service->service_stat.send_print_cnt, &service->service_stat.send_jiffies,
+            HDC_LOG_WARN_LIMIT(
+                &service->service_stat.send_print_cnt, &service->service_stat.send_jiffies,
                 "Send timeout, device=%u; session=%d; service=\"%s\";status=%d; timeout=%llu; full_check=%u\n",
                 dev->dev_id, session->local_session_fd, hdcdrv_sevice_str(session->service_type),
                 hdcdrv_get_session_status(session), timeout, hdcdrv_w_sq_full_check(msg_chan->chan));
@@ -1728,13 +1731,11 @@ STATIC void hdcdrv_tx_add_mem_to_wait_fifo(struct hdcdrv_session *session, struc
 {
     u32 result_type = session->result_type;
 
-    struct hdcdrv_wait_mem_fin_msg in_msg = {
-        .dataAddr = tx_desc->src_data_addr_va,
-        .dataLen = (u32)tx_desc->len,
-        .ctrlAddr = tx_desc->src_ctrl_addr_va,
-        .ctrlLen = (u32)tx_desc->ctrl_len,
-        .status = status
-    };
+    struct hdcdrv_wait_mem_fin_msg in_msg = {.dataAddr = tx_desc->src_data_addr_va,
+                                             .dataLen = (u32)tx_desc->len,
+                                             .ctrlAddr = tx_desc->src_ctrl_addr_va,
+                                             .ctrlLen = (u32)tx_desc->ctrl_len,
+                                             .status = status};
 
     if ((result_type == (u32)HDC_WAIT_ALL) || ((in_msg.status != 0) && (result_type == (u32)HDC_WAIT_ONLY_EXCEPTION)) ||
         ((in_msg.status == 0) && (result_type == (u32)HDC_WAIT_ONLY_SUCCESS))) {
@@ -2723,10 +2724,12 @@ int __attribute__((weak)) hdcdrv_mem_adapter(const struct hdcdrv_fast_addr_info 
 #ifdef CFG_FEATURE_HDC_REG_MEM
     u32 i = src_info->page_start_idx;
     u32 j = dst_info->page_start_idx;
-    u32 src_offset = src_info->page_start_idx == 0 ?\
-        (src_info->send_inner_page_offset - src->register_inner_page_offset) : src_info->send_inner_page_offset;
-    u32 dst_offset = dst_info->page_start_idx == 0 ?\
-        (dst_info->send_inner_page_offset - dst->register_inner_page_offset) : dst_info->send_inner_page_offset;
+    u32 src_offset = src_info->page_start_idx == 0 ?
+                         (src_info->send_inner_page_offset - src->register_inner_page_offset) :
+                         src_info->send_inner_page_offset;
+    u32 dst_offset = dst_info->page_start_idx == 0 ?
+                         (dst_info->send_inner_page_offset - dst->register_inner_page_offset) :
+                         dst_info->send_inner_page_offset;
     ka_dma_addr_t src_addr = (ka_dma_addr_t)src->mem[i].addr + src_offset;
     ka_dma_addr_t dst_addr = (ka_dma_addr_t)dst->mem[j].addr + dst_offset;
     u32 src_len = src->mem[i].len - src_offset;
@@ -2876,10 +2879,11 @@ STATIC int hdcdrv_fast_mem_check(struct hdcdrv_sq_desc *sq_desc, struct hdcdrv_f
     const struct hdcdrv_fast_mem *mem_dst_ctrl = fmem_info->dst_ctrl.f_mem;
 
     if ((mem_src_data == NULL) && (mem_dst_data == NULL) && (mem_src_ctrl == NULL) && (mem_dst_ctrl == NULL)) {
-        hdcdrv_err("Input parameter is error. (local_session_id=%d; remote_session_id=%d; "
+        hdcdrv_err(
+            "Input parameter is error. (local_session_id=%d; remote_session_id=%d; "
             "remote_data_addr=0x%llx; remote_ctrl_addr=0x%llx; local_data_addr=0x%llx; local_ctrl_addr=0x%llx)\n",
-            sq_desc->remote_session, sq_desc->local_session, sq_desc->src_data_addr,
-            sq_desc->src_ctrl_addr, sq_desc->dst_data_addr, sq_desc->dst_ctrl_addr);
+            sq_desc->remote_session, sq_desc->local_session, sq_desc->src_data_addr, sq_desc->src_ctrl_addr,
+            sq_desc->dst_data_addr, sq_desc->dst_ctrl_addr);
         return HDCDRV_PARA_ERR;
     }
 
@@ -2922,7 +2926,8 @@ STATIC int hdcdrv_get_fast_mem_info(struct hdcdrv_sq_desc *sq_desc, struct hdcdr
     devid = hdc_ctrl->sessions[sq_desc->remote_session].dev_id;
     pid = (u32)hdc_ctrl->sessions[sq_desc->remote_session].owner_pid;
     fid = (hdc_ctrl->sessions[sq_desc->remote_session].owner == HDCDRV_SESSION_OWNER_VM) ?
-        hdc_ctrl->sessions[sq_desc->remote_session].local_fid : 0;
+              hdc_ctrl->sessions[sq_desc->remote_session].local_fid :
+              0;
 
     dev_fmem_lo = hdcdrv_get_dev_fmem_ex(devid, fid, HDCDRV_RBTREE_SIDE_LOCAL);
     dev_fmem_re = hdcdrv_get_dev_fmem_sep(devid);
@@ -4479,7 +4484,8 @@ STATIC long hdcdrv_accept_wait(const struct hdcdrv_dev *dev, struct hdcdrv_servi
     while (service->conn_list_head == NULL) {
         ka_task_mutex_unlock(&service->mutex);
 
-        ret = (long)ka_task_wait_event_interruptible(service->wq_conn_avail,
+        ret = (long)ka_task_wait_event_interruptible(
+            service->wq_conn_avail,
             ((service->conn_list_head != NULL) || (dev->valid != HDCDRV_VALID) ||
              (service->listen_status == HDCDRV_INVALID) || (service->listen_status == HDCDRV_LISTEN_STATUS_IDLE) ||
              (hdcdrv_get_peer_status() != DEVDRV_PEER_STATUS_NORMAL)));
@@ -4670,13 +4676,15 @@ retry_next:
         ka_wmb();
         hdcdrv_set_session_status(session, HDCDRV_SESSION_STATUS_IDLE);
         if (msg.error_code == HDCDRV_SESSION_HAS_CLOSED) {
-            hdcdrv_limit_exclusive(warn, HDCDRV_LIMIT_LOG_0x00, "Remote session has closed. "
-                                  "(dev=%d; service=\"%s\"; ret=%ld; len=%d; ret_code=%d)\n",
-                                  cmd->dev_id, hdcdrv_sevice_str(cmd->service_type), ret, len, msg.error_code);
+            hdcdrv_limit_exclusive(warn, HDCDRV_LIMIT_LOG_0x00,
+                                   "Remote session has closed. "
+                                   "(dev=%d; service=\"%s\"; ret=%ld; len=%d; ret_code=%d)\n",
+                                   cmd->dev_id, hdcdrv_sevice_str(cmd->service_type), ret, len, msg.error_code);
         } else {
-            hdcdrv_limit_exclusive(err, HDCDRV_LIMIT_LOG_0x00, "Reply message send failed. "
-                                  "(dev=%d; service=\"%s\"; ret=%ld; len=%d; error_code=%d)\n",
-                                  cmd->dev_id, hdcdrv_sevice_str(cmd->service_type), ret, len, msg.error_code);
+            hdcdrv_limit_exclusive(err, HDCDRV_LIMIT_LOG_0x00,
+                                   "Reply message send failed. "
+                                   "(dev=%d; service=\"%s\"; ret=%ld; len=%d; error_code=%d)\n",
+                                   cmd->dev_id, hdcdrv_sevice_str(cmd->service_type), ret, len, msg.error_code);
         }
         if (((ret == 0)) && (len == sizeof(msg)) && (msg.error_code != HDCDRV_OK) &&
             (service->conn_list_head != NULL)) {
@@ -4734,8 +4742,8 @@ STATIC long hdcdrv_connect_wait_reply(const struct hdcdrv_dev *dev, struct hdcdr
 #else
     wait_timeout = HDCDRV_CONN_TIMEOUT;
 #endif
-    ret = ka_task_wait_event_interruptible_timeout(session->wq_conn,
-        (session->remote_session_fd != HDCDRV_INVALID_VALUE) || (dev->valid != HDCDRV_VALID),
+    ret = ka_task_wait_event_interruptible_timeout(
+        session->wq_conn, (session->remote_session_fd != HDCDRV_INVALID_VALUE) || (dev->valid != HDCDRV_VALID),
         (long)wait_timeout);
 
     hdcdrv_record_time_stamp(session, CONN_TIME_AFT_WAKE_UP_WQ_CONN, DBG_TIME_OP_CONN, hdcdrv_get_current_time_us());
@@ -4810,10 +4818,12 @@ STATIC int hdcdrv_close_remote_session(struct hdcdrv_session *session, int close
     ret = hdcdrv_non_trans_ctrl_msg_send((u32)session->dev_id, (void *)&msg, (u32)sizeof(msg), (u32)sizeof(msg), &len);
     if ((ret != HDCDRV_OK) || (len != sizeof(msg)) || (msg.error_code != HDCDRV_OK)) {
         hdcdrv_link_ctrl_msg_stats_add((u32)session->dev_id, session->service_type, HDCDRV_CTRL_MSG_TYPE_CLOSE,
-            HDCDRV_LINK_CTRL_MSG_SEND_FAIL, msg.error_code);
-        hdcdrv_limit_exclusive(warn, HDCDRV_LIMIT_LOG_0x16, "Close msg send unsuccessful. (dev_id=%d; pid=%llu, session=%d; "
-            "service_type=\"%s\"; ret=%ld; len=%d; err_code=%d)\n", session->dev_id, session->owner_pid, session->local_session_fd,
-            hdcdrv_sevice_str(session->service_type), ret, len, msg.error_code);
+                                       HDCDRV_LINK_CTRL_MSG_SEND_FAIL, msg.error_code);
+        hdcdrv_limit_exclusive(warn, HDCDRV_LIMIT_LOG_0x16,
+                               "Close msg send unsuccessful. (dev_id=%d; pid=%llu, session=%d; "
+                               "service_type=\"%s\"; ret=%ld; len=%d; err_code=%d)\n",
+                               session->dev_id, session->owner_pid, session->local_session_fd,
+                               hdcdrv_sevice_str(session->service_type), ret, len, msg.error_code);
     } else {
         hdcdrv_link_ctrl_msg_stats_add((u32)session->dev_id, session->service_type, HDCDRV_CTRL_MSG_TYPE_CLOSE,
                                        HDCDRV_LINK_CTRL_MSG_SEND_SUCC, HDCDRV_OK);
@@ -5042,9 +5052,11 @@ STATIC long hdcdrv_connect(struct hdcdrv_cmd_connect *cmd, u32 fid)
         }
         hdcdrv_set_session_status(session, HDCDRV_SESSION_STATUS_IDLE);
         hdcdrv_session_post_free((u32)cmd->dev_id, fid, cmd->service_type);
-        hdcdrv_limit_exclusive(warn, HDCDRV_LIMIT_LOG_0x02, "Wait_reply unsuccessful. (device=%d; service=\"%s\"; ret=%d; "
-            "l_fd=%d; r_fd=%d; pid=%llu; peer_pid=%d)\n", cmd->dev_id, hdcdrv_sevice_str(cmd->service_type), (int)ret,
-            session->local_session_fd, session->remote_session_fd, cmd->pid, cmd->peer_pid);
+        hdcdrv_limit_exclusive(warn, HDCDRV_LIMIT_LOG_0x02,
+                               "Wait_reply unsuccessful. (device=%d; service=\"%s\"; ret=%d; "
+                               "l_fd=%d; r_fd=%d; pid=%llu; peer_pid=%d)\n",
+                               cmd->dev_id, hdcdrv_sevice_str(cmd->service_type), (int)ret, session->local_session_fd,
+                               session->remote_session_fd, cmd->pid, cmd->peer_pid);
         return ret;
     }
 
@@ -5754,7 +5766,9 @@ STATIC long hdcdrv_fast_send(const struct hdcdrv_cmd_fast_send *cmd)
     session = &hdc_ctrl->sessions[cmd->session];
 
     if (hdcdrv_get_session_status(session) == HDCDRV_SESSION_STATUS_REMOTE_CLOSED) {
-        hdcdrv_limit_exclusive(warn, HDCDRV_LIMIT_LOG_0x04, "Session remote closed. (dev=%d; session_fd=%d; "
+        hdcdrv_limit_exclusive(
+            warn, HDCDRV_LIMIT_LOG_0x04,
+            "Session remote closed. (dev=%d; session_fd=%d; "
             "service_type=\"%s\"; l_close_state=\"%s\"; r_close_state=\"%s\"; l_session_fd=%d; r_session_fd=%d)\n",
             session->dev_id, cmd->session, hdcdrv_sevice_str(session->service_type),
             hdcdrv_close_str(session->local_close_state), hdcdrv_close_str(session->remote_close_state),
@@ -5852,20 +5866,21 @@ STATIC long hdcdrv_fast_recv(struct hdcdrv_cmd_fast_recv *cmd)
             return HDCDRV_NO_BLOCK;
         } else if (cmd->wait_flag == HDCDRV_WAIT_ALWAYS) {
             /*lint -e666*/
-            ret = (long)ka_task_wait_event_interruptible(session->wq_rx,
-                (fast_rx->head != fast_rx->tail) ||
-                (hdcdrv_get_session_status(session) == HDCDRV_SESSION_STATUS_CLOSING) ||
-                (hdcdrv_get_session_status(session) == HDCDRV_SESSION_STATUS_IDLE) ||
-                (hdcdrv_get_peer_status() != DEVDRV_PEER_STATUS_NORMAL) ||
-                (session->unique_val != unique_val));
+            ret = (long)ka_task_wait_event_interruptible(
+                session->wq_rx, (fast_rx->head != fast_rx->tail) ||
+                                    (hdcdrv_get_session_status(session) == HDCDRV_SESSION_STATUS_CLOSING) ||
+                                    (hdcdrv_get_session_status(session) == HDCDRV_SESSION_STATUS_IDLE) ||
+                                    (hdcdrv_get_peer_status() != DEVDRV_PEER_STATUS_NORMAL) ||
+                                    (session->unique_val != unique_val));
             /*lint +e666*/
         } else {
             /*lint -e666*/
-            ret = ka_task_wait_event_interruptible_timeout(session->wq_rx,
+            ret = ka_task_wait_event_interruptible_timeout(
+                session->wq_rx,
                 (fast_rx->head != fast_rx->tail) ||
-                (hdcdrv_get_session_status(session) == HDCDRV_SESSION_STATUS_CLOSING) ||
-                (hdcdrv_get_session_status(session) == HDCDRV_SESSION_STATUS_IDLE) ||
-                (session->unique_val != unique_val),
+                    (hdcdrv_get_session_status(session) == HDCDRV_SESSION_STATUS_CLOSING) ||
+                    (hdcdrv_get_session_status(session) == HDCDRV_SESSION_STATUS_IDLE) ||
+                    (session->unique_val != unique_val),
                 (long)timeout);
             /*lint +e666*/
             if (ret == 0) {
@@ -5876,7 +5891,8 @@ STATIC long hdcdrv_fast_recv(struct hdcdrv_cmd_fast_recv *cmd)
         }
 
         if (ret != 0) {
-            hdcdrv_warn("Get session. (dev=%d; session=%d; service_type=\"%s\"; fast_recv_wait_head=%d; "
+            hdcdrv_warn(
+                "Get session. (dev=%d; session=%d; service_type=\"%s\"; fast_recv_wait_head=%d; "
                 "tail=%d; ret=%d; l_close_state=\"%s\"; r_close_state=\"%s\"; l_session_fd=%d; r_session_fd=%d)\n",
                 session->dev_id, cmd->session, hdcdrv_sevice_str(session->service_type), fast_rx->head, fast_rx->tail,
                 (int)ret, hdcdrv_close_str(session->local_close_state), hdcdrv_close_str(session->remote_close_state),
@@ -5885,9 +5901,11 @@ STATIC long hdcdrv_fast_recv(struct hdcdrv_cmd_fast_recv *cmd)
         }
 
         if (session->unique_val != unique_val) {
-            hdcdrv_limit_exclusive(warn, HDCDRV_LIMIT_LOG_0x03, "Unique val not match.(dev=%d; service=\"%s\"; "
-                "l_state=\"%s\"; r_state=\"%s\"; l_fd=%d; r_fd=%d)\n", session->dev_id,
-                hdcdrv_sevice_str(session->service_type), hdcdrv_close_str(session->local_close_state),
+            hdcdrv_limit_exclusive(
+                warn, HDCDRV_LIMIT_LOG_0x03,
+                "Unique val not match.(dev=%d; service=\"%s\"; "
+                "l_state=\"%s\"; r_state=\"%s\"; l_fd=%d; r_fd=%d)\n",
+                session->dev_id, hdcdrv_sevice_str(session->service_type), hdcdrv_close_str(session->local_close_state),
                 hdcdrv_close_str(session->remote_close_state), session->local_session_fd, session->remote_session_fd);
             return HDCDRV_SESSION_HAS_CLOSED;
         }
@@ -7096,9 +7114,10 @@ STATIC void hdcdrv_close_unknow_session_work(ka_work_struct_t *p_work)
 
     hdcdrv_delay_work_flag_clear(session, HDCDRV_DELAY_UNKNOWN_SESSION_BIT);
     if (hdcdrv_get_session_status(session) == HDCDRV_SESSION_STATUS_CONN) {
-        hdcdrv_info_limit("Close unknown session. (dev=%d; service=\"%s\"; l_fd=%d; r_fd=%d; pid=%llu; peer_pid=%llu; owner_flag=%d)\n",
-            session->dev_id, hdcdrv_sevice_str(session->service_type), session->local_session_fd, session->remote_session_fd,
-            session->owner_pid, session->peer_create_pid, session->pid_flag);
+        hdcdrv_info_limit("Close unknown session. (dev=%d; service=\"%s\"; l_fd=%d; r_fd=%d; pid=%llu; peer_pid=%llu; "
+                          "owner_flag=%d)\n",
+                          session->dev_id, hdcdrv_sevice_str(session->service_type), session->local_session_fd,
+                          session->remote_session_fd, session->owner_pid, session->peer_create_pid, session->pid_flag);
 
         close_cmd.session = session->local_session_fd;
         close_cmd.pid = session->owner_pid;
@@ -7126,7 +7145,8 @@ STATIC void hdcdrv_session_work_list_free(struct hdcdrv_session_work *s_work)
     while (!ka_list_empty_careful(&s_work->root_list)) {
         count = 0;
         ka_task_spin_lock_bh(&s_work->lock);
-        ka_list_for_each_safe(pos, n, &s_work->root_list) {
+        ka_list_for_each_safe(pos, n, &s_work->root_list)
+        {
             entry[count] = ka_list_entry(pos, struct hdcdrv_session_work_node, list);
             ka_list_del(&entry[count]->list);
             count++;
@@ -7310,7 +7330,8 @@ void hdcdrv_service_res_uninit(struct hdcdrv_service *service, int server_type)
     }
 
     if (!ka_list_empty_careful(&service->serv_list)) {
-        ka_list_for_each_safe(pos, n, &service->serv_list) {
+        ka_list_for_each_safe(pos, n, &service->serv_list)
+        {
             node = ka_list_entry(pos, struct hdcdrv_serv_list_node, list);
             ka_list_del(&node->list);
             hdcdrv_kvfree((void **)&node, KA_SUB_MODULE_TYPE_0);
@@ -7444,7 +7465,8 @@ STATIC void hdcdrv_reset_process_server(struct hdcdrv_dev *dev, int service_type
 
     ka_task_mutex_lock(&dev->mutex);
     if (!ka_list_empty_careful(&service->serv_list)) {
-        ka_list_for_each_safe(pos, n, &service->serv_list) {
+        ka_list_for_each_safe(pos, n, &service->serv_list)
+        {
             node = ka_list_entry(pos, struct hdcdrv_serv_list_node, list);
             if (node->service.listen_status == HDCDRV_VALID) {
                 (void)hdcdrv_server_free(&node->service, (int)dev->dev_id, service_type);
@@ -7652,6 +7674,7 @@ STATIC unsigned long hdcdrv_get_unmapped_area(ka_file_t *filp, unsigned long add
     return ka_task_get_current_get_unmapped_area(filp, addr, len, pgoff, flags);
 }
 
+// clang-format off
 const ka_file_operations_t hdcdrv_fops = {
     ka_fs_init_f_owner(KA_THIS_MODULE)
     ka_fs_init_f_unlocked_ioctl(hdcdrv_ioctl)
@@ -7660,6 +7683,7 @@ const ka_file_operations_t hdcdrv_fops = {
     ka_fs_init_f_release(hdcdrv_release)
     ka_fs_init_f_get_unmapped_area(hdcdrv_get_unmapped_area)
 };
+// clang-format on
 
 STATIC int hdcdrv_register_cdev(void)
 {

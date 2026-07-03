@@ -36,11 +36,11 @@ typedef struct ubdrv_rao_client_ctrl (*rao_client_ctrl_arr_ptr)[DEVDRV_RAO_CLIEN
 int ubdrv_rao_client_ctrl_init(void);
 void ubdrv_rao_client_ctrl_uninit(void);
 int ubdrv_register_rao_client(u32 dev_id, enum devdrv_rao_client_type type, u64 va, u64 len,
-    enum devdrv_rao_permission_type perm);
+                              enum devdrv_rao_permission_type perm);
 int ubdrv_unregister_rao_client(u32 dev_id, enum devdrv_rao_client_type type);
 void ubdrv_free_all_rao_chan(u32 dev_id);
 rao_client_ctrl_arr_ptr get_global_rao_client_ctrl(void);
 int ubdrv_register_rao_para_check(u32 dev_id, enum devdrv_rao_client_type type, u64 va, u64 len,
-    enum devdrv_rao_permission_type perm);
+                                  enum devdrv_rao_permission_type perm);
 
 #endif // ASCEND_UB_RAO_H

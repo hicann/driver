@@ -167,8 +167,8 @@ STATIC int vpc_top_half_init_finish(struct vmnga_vpc_unit *vpc_unit)
     }
     vmng_info("Start wait begin. (dev_id=%u; size=%llu)\n", vpc_unit->dev_id, mem_size);
     time = (u32)ka_system_msecs_to_jiffies((unsigned int)(VMNGA_START_FB_TIMEOUT_MS * mem_size));
-    ret = (int)ka_task_wait_event_interruptible_timeout(start_dev->wq,
-        (ka_base_atomic_read(&start_dev->start_flag) == VMNG_TASK_SUCCESS), time);
+    ret = (int)ka_task_wait_event_interruptible_timeout(
+        start_dev->wq, (ka_base_atomic_read(&start_dev->start_flag) == VMNG_TASK_SUCCESS), time);
     if (ret <= 0) {
         vmng_err("Wait host time out. (dev_id=%u;ret=%d)\n", vpc_unit->dev_id, ret);
         vmnga_unregister_extended_common_msg_client(vpc_unit->msg_dev);

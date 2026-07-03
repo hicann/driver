@@ -38,7 +38,7 @@ u32 devdrv_cloud_v4_get_p2p_support_max_devnum(void);
 int devdrv_cloud_v4_is_p2p_access_cap(struct devdrv_pci_ctrl *pci_ctrl, struct devdrv_pci_ctrl *peer_pci_ctrl);
 bool devdrv_cloud_v4_is_mdev_vm_full_spec(struct devdrv_pci_ctrl *pci_ctrl);
 void devdrv_cloud_v4_set_dev_shr_info(struct devdrv_pci_ctrl *pci_ctrl);
-bool devdrv_cloud_v4_is_need_reorder(struct devdrv_pci_ctrl *pci_ctrl, void __ka_mm_iomem * para_addr);
+bool devdrv_cloud_v4_is_need_reorder(struct devdrv_pci_ctrl *pci_ctrl, void __ka_mm_iomem *para_addr);
 int devdrv_cloud_v4_set_udevid_reorder_para(struct devdrv_pci_ctrl *pci_ctrl);
 u32 devdrv_cloud_v4_get_nvme_low_level_db_irq_num(void);
 u32 devdrv_cloud_v4_get_nvme_db_irq_strde(void);

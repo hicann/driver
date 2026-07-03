@@ -41,25 +41,25 @@ enum msg_queue_type {
 #define DEVDRV_MSG_QUEUE_MEM_ALIGN 0x400U /* 1KB */
 
 #if defined(CFG_PLATFORM_ESL) || defined(CFG_PLATFORM_FPGA)
-#define DEVDRV_MAX_MSG_TIMEOUT 200000000   /* 200s for fpga  */
-#define DEVDRV_S2S_MSG_TMOUT       200000000 /* 200s for fpga  */
-#define DEVDRV_S2S_MSG_TMOUT_SHORT 20000000  /* 20s for fpga */
-#define DEVDRV_S2S_MSG_TIMEOUT 200000000   /* 200s */
-#define DEVDRV_MSG_TIMEOUT_LOG 30000000    /* 30s */
-#define DEVDRV_MSG_IRQ_TIMEOUT 50000000    /* 50s */
-#define DEVDRV_MSG_IRQ_TIMEOUT_LOG 30000000 /* 30s */
+#define DEVDRV_MAX_MSG_TIMEOUT 200000000      /* 200s for fpga  */
+#define DEVDRV_S2S_MSG_TMOUT 200000000        /* 200s for fpga  */
+#define DEVDRV_S2S_MSG_TMOUT_SHORT 20000000   /* 20s for fpga */
+#define DEVDRV_S2S_MSG_TIMEOUT 200000000      /* 200s */
+#define DEVDRV_MSG_TIMEOUT_LOG 30000000       /* 30s */
+#define DEVDRV_MSG_IRQ_TIMEOUT 50000000       /* 50s */
+#define DEVDRV_MSG_IRQ_TIMEOUT_LOG 30000000   /* 30s */
 #define DEVDRV_MSG_SCHED_STATUS_CHECK_TIME 10 /* 10s for fpga */
 #else
 #ifdef CFG_BUILD_ASAN
 #define DEVDRV_MAX_MSG_TIMEOUT 60000000    /* 60s for asan */
-#define DEVDRV_S2S_MSG_TMOUT       100000000 /* 100s for asan */
-#define DEVDRV_S2S_MSG_TIMEOUT 100000000  /* 100s */
-#define DEVDRV_S2S_MSG_TMOUT_SHORT 3000000  /* 3s for asan */
+#define DEVDRV_S2S_MSG_TMOUT 100000000     /* 100s for asan */
+#define DEVDRV_S2S_MSG_TIMEOUT 100000000   /* 100s */
+#define DEVDRV_S2S_MSG_TMOUT_SHORT 3000000 /* 3s for asan */
 #else
-#define DEVDRV_MAX_MSG_TIMEOUT 35000000   /* 35s */
-#define DEVDRV_S2S_MSG_TMOUT       30000000 /* 30s */
-#define DEVDRV_S2S_MSG_TMOUT_SHORT 1000000  /* 1s */
-#define DEVDRV_S2S_MSG_TIMEOUT 30000000   /* 30s */
+#define DEVDRV_MAX_MSG_TIMEOUT 35000000    /* 35s */
+#define DEVDRV_S2S_MSG_TMOUT 30000000      /* 30s */
+#define DEVDRV_S2S_MSG_TMOUT_SHORT 1000000 /* 1s */
+#define DEVDRV_S2S_MSG_TIMEOUT 30000000    /* 30s */
 #endif
 
 #define DEVDRV_MSG_TIMEOUT_LOG 1000000    /* 1s */
@@ -70,12 +70,12 @@ enum msg_queue_type {
 #define DEVDRV_MSG_WAIT_DMA_FINISH_TIMEOUT 100 /* 100ms */
 #define DEVDRV_MSG_TIME_VOERFLOW 5000          /* 5s */
 
-#define DEVDRV_NON_TRANS_CB_TIME 1000          /* 1s */
+#define DEVDRV_NON_TRANS_CB_TIME 1000 /* 1s */
 
 #define DEVDRV_DMA_READ_RESPONSE_ERROR 0x20
 #define DEVDRV_DMA_WRITE_RESPONSE_ERROR 0x40
 #define DEVDRV_DMA_DATA_POISON_RECEIVED 0x80
-#define DEVDRV_DMA_COPY_RETRY_DELAY 3000000          /* 3s */
+#define DEVDRV_DMA_COPY_RETRY_DELAY 3000000 /* 3s */
 #define DEVDRV_S2S_MSG_RETRY_LIMIT 3
 
 /*
@@ -107,7 +107,7 @@ enum msg_queue_type {
 #define DEVDRV_RESERVE_HBM_ECC_OFFSET (DEVDRV_RESERVE_DEVMNG_RESV_OFFSET + DEVDRV_RESERVE_DEVMNG_RESV_SIZE)
 #define DEVDRV_RESERVE_HBM_ECC_SIZE 0x3000
 #define DEVDRV_VF_BANDWIDTH_OFFSET 0x400 /* TS SRAM 1k~3k resv for bandwidth ctrl */
-#define DEVDRV_VF_BANDWIDTH_SIZE 0x800 /* 2K */
+#define DEVDRV_VF_BANDWIDTH_SIZE 0x800   /* 2K */
 
 /* cmd operation code, first 8 bits is module name, later 8 bits is op type */
 enum devdrv_admin_msg_opcode {
@@ -129,17 +129,17 @@ enum devdrv_admin_msg_opcode {
     DEVDRV_ADMIN_MSG_MAX
 };
 
-#define DEVDRV_MSG_CMD_BEGIN             1
-#define DEVDRV_MSG_CMD_FINISH_SUCCESS    2
-#define DEVDRV_MSG_CMD_FINISH_FAILED     3
-#define DEVDRV_MSG_CMD_INVALID_PARA      4
-#define DEVDRV_MSG_CMD_NULL_PROCESS_CB   5
-#define DEVDRV_MSG_CMD_SEND_HOST_FAILED  6
+#define DEVDRV_MSG_CMD_BEGIN 1
+#define DEVDRV_MSG_CMD_FINISH_SUCCESS 2
+#define DEVDRV_MSG_CMD_FINISH_FAILED 3
+#define DEVDRV_MSG_CMD_INVALID_PARA 4
+#define DEVDRV_MSG_CMD_NULL_PROCESS_CB 5
+#define DEVDRV_MSG_CMD_SEND_HOST_FAILED 6
 #define DEVDRV_MSG_CMD_CB_PROCESS_FAILED 7
-#define DEVDRV_MSG_CMD_COPY_FAILED       8
-#define DEVDRV_MSG_CMD_IRQ_BEGIN  0x69727173U   /* irq handle begin, schedule work */
-#define DEVDRV_MSG_CMD_IRQ_FINISH 0x8F7D6C5BU   /* irq notify success, return */
-#define DEVDRV_MSG_CMD_IRQ_BUSY   0x1A3B7C9DU   /* irq notify busy, return for host retry */
+#define DEVDRV_MSG_CMD_COPY_FAILED 8
+#define DEVDRV_MSG_CMD_IRQ_BEGIN 0x69727173U  /* irq handle begin, schedule work */
+#define DEVDRV_MSG_CMD_IRQ_FINISH 0x8F7D6C5BU /* irq notify success, return */
+#define DEVDRV_MSG_CMD_IRQ_BUSY 0x1A3B7C9DU   /* irq notify busy, return for host retry */
 
 #define DEVDRV_MSG_HANDLE_STATE_INIT 1
 #define DEVDRV_MSG_HANDLE_STATE_SCHEDING 2
@@ -155,12 +155,12 @@ enum devdrv_admin_msg_opcode {
 #define AGENTDRV_S2S_MAX_CHIP_NUM 8
 #define AGENTDRV_S2S_MAX_DEV_NUM 2
 #define AGENTDRV_S2S_MAX_UDEVID_NUM 16
-#define AGENTDRV_S2S_SUPPORT_MAX_CHAN_NUM_DEVICE (AGENTDRV_S2S_MAX_DEV_NUM * AGENTDRV_S2S_MAX_CHIP_NUM * \
-    AGENTDRV_S2S_MAX_SERVER_NUM)
-#define AGENTDRV_S2S_SUPPORT_MAX_CHAN_NUM_HOST (AGENTDRV_S2S_MAX_DEV_NUM * AGENTDRV_S2S_MAX_CHIP_NUM * \
-    AGENTDRV_S2S_MAX_SERVER_NUM * 2)
-#define AGENTDRV_S2S_SUPPORT_MAX_CHAN_NUM (AGENTDRV_S2S_SUPPORT_MAX_CHAN_NUM_DEVICE + \
-    AGENTDRV_S2S_SUPPORT_MAX_CHAN_NUM_HOST)
+#define AGENTDRV_S2S_SUPPORT_MAX_CHAN_NUM_DEVICE \
+    (AGENTDRV_S2S_MAX_DEV_NUM * AGENTDRV_S2S_MAX_CHIP_NUM * AGENTDRV_S2S_MAX_SERVER_NUM)
+#define AGENTDRV_S2S_SUPPORT_MAX_CHAN_NUM_HOST \
+    (AGENTDRV_S2S_MAX_DEV_NUM * AGENTDRV_S2S_MAX_CHIP_NUM * AGENTDRV_S2S_MAX_SERVER_NUM * 2)
+#define AGENTDRV_S2S_SUPPORT_MAX_CHAN_NUM \
+    (AGENTDRV_S2S_SUPPORT_MAX_CHAN_NUM_DEVICE + AGENTDRV_S2S_SUPPORT_MAX_CHAN_NUM_HOST)
 
 struct devdrv_general_interrupt_db_info {
     u32 db_start;
@@ -203,7 +203,7 @@ struct devdrv_dma_chain_command {
 };
 
 struct devdrv_admin_msg_reply {
-    u32 len;  // contain 'len' own occupied space
+    u32 len; // contain 'len' own occupied space
     char data[];
 };
 
@@ -233,13 +233,13 @@ struct devdrv_shr_para {
     int dev_num;        /* D2H: device bios notice host: only cloud v2 set, other chip device driver set */
     int hot_reset_flag; /* CCPU set, bios read */
     int hot_reset_pcie_flag; /* H2D: make sure pcie report hotreset */
-    int total_func_num; /* D2H: device driver set */
+    int total_func_num;      /* D2H: device driver set */
     /*
      * D2H: device bios capability flag: bit0: imu export reg, other reserved,
      * make sure phy_match_flag offset=0x30
      */
     u32 capability;
-    u32 phy_match_flag;      /* HOST set, phy machine flag */
+    u32 phy_match_flag; /* HOST set, phy machine flag */
     /* H2D: bios set actual hccs link status, bit[x]=1 means the hccs between this chip and chip[x] is linked
      * D2H: bios set hccs link status, bit[x]=1 means the hccs between this chip and chip[x] is linked
      */
@@ -260,23 +260,23 @@ struct devdrv_shr_para {
     u64 tx_atu_base_size1;   /* D2H: cloud only, high 256GB space size */
     u64 tx_atu_base_addr2;   /* D2H: cloud only, low 128MB address space */
     u64 tx_atu_base_size2;   /* D2H: cloud only, low 128MB space size */
-    u32 pre_cfg[DEVDRV_SHR_PARA_PRE_CFG_LEN];          /* H2D: resv 8 */
-    u64 resv[DEVDRV_SHR_PARA_RESV]; /* Keep offset constant and reserve for new flags */
-    struct udevid_reorder_para reorder_para; /* GUID info for cloud v4 pcie card */
-    volatile u64 host_heartbeat_count; /* devmng set in host, get in device */
-    volatile u64 heartbeat_count; /* devmng set in device, get in host */
+    u32 pre_cfg[DEVDRV_SHR_PARA_PRE_CFG_LEN]; /* H2D: resv 8 */
+    u64 resv[DEVDRV_SHR_PARA_RESV];           /* Keep offset constant and reserve for new flags */
+    struct udevid_reorder_para reorder_para;  /* GUID info for cloud v4 pcie card */
+    volatile u64 host_heartbeat_count;        /* devmng set in host, get in device */
+    volatile u64 heartbeat_count;             /* devmng set in device, get in host */
     volatile u64 runtime_runningplat; /* runtime running in device(0xdece) or host(0xa5a5), runtime stop:0xABCD */
-    u32 msix_offset;         /* H2D: 1pf2p drv notice msix offset of p1 to device drv and ts */
-    u32 vf_id;               /* D2H: device driver set */
-    u64 sq_desc_dma;         /* H2D: host set, mdev pm dma desc addr */
-    u64 dma_bitmap;          /* D2H: dma channel bitmap for vf, 0-irrelevant, 1-allocated */
-    u32 rc_msix_ready_flag;  /* H2D: rc has registered MSI interrupt */
-    u32 sid;                 /* H2D: host pdev's sid, agent smmu use it for iova to pa */
-    u32 bar_wc_flag;         /* OS set, bit0~5:bar0~bar5, 1 is wc attribute, 0 is not attribute */
-    int addr_mode;           /* HOST set, only vf user */
+    u32 msix_offset;                  /* H2D: 1pf2p drv notice msix offset of p1 to device drv and ts */
+    u32 vf_id;                        /* D2H: device driver set */
+    u64 sq_desc_dma;                  /* H2D: host set, mdev pm dma desc addr */
+    u64 dma_bitmap;                   /* D2H: dma channel bitmap for vf, 0-irrelevant, 1-allocated */
+    u32 rc_msix_ready_flag;           /* H2D: rc has registered MSI interrupt */
+    u32 sid;                          /* H2D: host pdev's sid, agent smmu use it for iova to pa */
+    u32 bar_wc_flag;                  /* OS set, bit0~5:bar0~bar5, 1 is wc attribute, 0 is not attribute */
+    int addr_mode;                    /* HOST set, only vf user */
     u64 p2p_msg_base_addr[DEVDRV_P2P_SUPPORT_MAX_DEVNUM]; /* H2D: cloud only, p2p msg base for dma */
     u64 p2p_db_base_addr[DEVDRV_P2P_SUPPORT_MAX_DEVNUM];  /* H2D: cloud only, p2p doorbell base for dma */
-    u32 vm_full_spec_flag;   /* D2H: mdev only, is 1:1 vf mdev */
+    u32 vm_full_spec_flag;                                /* D2H: mdev only, is 1:1 vf mdev */
 };
 
 #endif

@@ -17,15 +17,10 @@
 
 #define VMNG_MSG_NUM_TX_ADMIN 1
 #define VMNG_MSG_NUM_TX_COMMON 8
-#define VMNG_MSG_NUM_TX_VPC (VMNG_MSG_VPC_NUM_TX_TEST + \
-                             VMNG_MSG_VPC_NUM_TX_HDC + \
-                             VMNG_MSG_VPC_NUM_TX_DEVMM + \
-                             VMNG_MSG_VPC_NUM_TX_DEVMM_MNG + \
-                             VMNG_MSG_VPC_NUM_TX_TSDRV + \
-                             VMNG_MSG_VPC_NUM_TX_DEVMNG + \
-                             VMNG_MSG_VPC_NUM_TX_HDC_CTRL + \
-                             VMNG_MSG_VPC_NUM_TX_PCIE + \
-                             VMNG_MSG_VPC_NUM_TX_DVPP)
+#define VMNG_MSG_NUM_TX_VPC                                                                                           \
+    (VMNG_MSG_VPC_NUM_TX_TEST + VMNG_MSG_VPC_NUM_TX_HDC + VMNG_MSG_VPC_NUM_TX_DEVMM + VMNG_MSG_VPC_NUM_TX_DEVMM_MNG + \
+     VMNG_MSG_VPC_NUM_TX_TSDRV + VMNG_MSG_VPC_NUM_TX_DEVMNG + VMNG_MSG_VPC_NUM_TX_HDC_CTRL +                          \
+     VMNG_MSG_VPC_NUM_TX_PCIE + VMNG_MSG_VPC_NUM_TX_DVPP)
 #define VMNG_MSG_NUM_TX_BLOCK (VMNG_MSG_BLOCK_NUM_TX_HDC)
 
 /* tx msg */
@@ -54,14 +49,9 @@
 
 #define VMNG_MSG_NUM_RX_ADMIN 1
 #define VMNG_MSG_NUM_RX_COMMON 8
-#define VMNG_MSG_NUM_RX_VPC (VMNG_MSG_VPC_NUM_RX_TEST + \
-                             VMNG_MSG_VPC_NUM_RX_HDC + \
-                             VMNG_MSG_VPC_NUM_RX_DEVMM + \
-                             VMNG_MSG_VPC_NUM_RX_DEVMM_MNG + \
-                             VMNG_MSG_VPC_NUM_RX_TSDRV + \
-                             VMNG_MSG_VPC_NUM_RX_DEVMNG + \
-                             VMNG_MSG_VPC_NUM_RX_HDC_CTRL + \
-                             VMNG_MSG_VPC_NUM_RX_PCIE)
+#define VMNG_MSG_NUM_RX_VPC                                                                                           \
+    (VMNG_MSG_VPC_NUM_RX_TEST + VMNG_MSG_VPC_NUM_RX_HDC + VMNG_MSG_VPC_NUM_RX_DEVMM + VMNG_MSG_VPC_NUM_RX_DEVMM_MNG + \
+     VMNG_MSG_VPC_NUM_RX_TSDRV + VMNG_MSG_VPC_NUM_RX_DEVMNG + VMNG_MSG_VPC_NUM_RX_HDC_CTRL + VMNG_MSG_VPC_NUM_RX_PCIE)
 #define VMNG_MSG_NUM_RX_BLOCK (VMNG_MSG_BLOCK_NUM_RX_HDC)
 
 /* rx msg */

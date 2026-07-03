@@ -174,7 +174,8 @@ STATIC void hdcdrv_epoll_clear_service(struct hdcdrv_epoll_fd *epfd)
     struct hdcdrv_service *service = NULL;
 
     if (!ka_list_empty_careful(&epfd->service_list)) {
-        ka_list_for_each_safe(pos, n, &epfd->service_list) {
+        ka_list_for_each_safe(pos, n, &epfd->service_list)
+        {
             node = ka_list_entry(pos, struct hdcdrv_epoll_list_node, list);
             service = (struct hdcdrv_service *)node->instance;
             service->epfd = NULL;
@@ -696,10 +697,10 @@ long hdcdrv_epoll_wait(struct hdcdrv_cmd_epoll_wait *cmd, int mode)
     event_num = hdcdrv_epoll_event_num(epfd);
     if (event_num == 0) {
         timeout = ka_system_msecs_to_jiffies((unsigned int)cmd->timeout);
-retry:
+    retry:
         ka_task_mutex_unlock(&epfd->mutex);
-        ret = ka_task_wait_event_interruptible_timeout(epfd->wq, ((epfd->wait_flag != 0) || (epfd->valid != HDCDRV_VALID)),
-            (long)timeout);
+        ret = ka_task_wait_event_interruptible_timeout(
+            epfd->wq, ((epfd->wait_flag != 0) || (epfd->valid != HDCDRV_VALID)), (long)timeout);
         if (ret < 0) {
 #ifndef DRV_UT
             HDC_LOG_WARN_LIMIT(&g_epoll_wait_print_cnt, &g_epoll_wait_jiffies,

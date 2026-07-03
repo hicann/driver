@@ -30,7 +30,7 @@
 
 struct ubdrv_non_trans_msg_client_ctrl g_non_trans_msg_client_ctrl[agentdrv_msg_client_max] = {0};
 
-struct ubdrv_non_trans_msg_client_ctrl* get_global_non_trans_msg_client_ctrl(void)
+struct ubdrv_non_trans_msg_client_ctrl *get_global_non_trans_msg_client_ctrl(void)
 {
     return g_non_trans_msg_client_ctrl;
 }
@@ -49,7 +49,7 @@ void *ubdrv_get_non_trans_chan_handle(const struct ubdrv_non_trans_chan *chan)
 
 u32 ubdrv_get_devid_by_non_trans_handle(const void *chan)
 {
-    const UBDRV_MSG_HANDLE *msg_handle = (UBDRV_MSG_HANDLE*)&chan;
+    const UBDRV_MSG_HANDLE *msg_handle = (UBDRV_MSG_HANDLE *)&chan;
     return msg_handle->bits.dev_id;
 }
 
@@ -76,10 +76,10 @@ int ubdrv_get_msg_chan_devid(void *msg_chan)
     return ubdrv_get_devid_by_non_trans_handle(msg_chan);
 }
 
-void* ubdrv_get_msg_chan_priv(void *msg_chan)
+void *ubdrv_get_msg_chan_priv(void *msg_chan)
 {
     u32 dev_id = ubdrv_get_devid_by_non_trans_handle(msg_chan);
-    struct ubdrv_non_trans_chan* chan = NULL;
+    struct ubdrv_non_trans_chan *chan = NULL;
     void *priv = NULL;
     int ret;
 
@@ -102,7 +102,7 @@ void* ubdrv_get_msg_chan_priv(void *msg_chan)
 int ubdrv_set_msg_chan_priv(void *msg_chan, void *priv)
 {
     u32 dev_id = ubdrv_get_devid_by_non_trans_handle(msg_chan);
-    struct ubdrv_non_trans_chan* chan = NULL;
+    struct ubdrv_non_trans_chan *chan = NULL;
     int ret;
 
     ret = ubdrv_add_device_status_ref(dev_id);
@@ -198,9 +198,8 @@ void ubdrv_rao_msg_chan_uninit(struct ascend_ub_msg_dev *msg_dev)
     }
 }
 
-
-STATIC int ubdrv_set_non_trans_cfg(struct ubdrv_non_trans_chan *chan,
-    struct ascend_ub_sync_jetty *msg_jetty, const struct ubdrv_create_non_trans_cmd *cmd)
+STATIC int ubdrv_set_non_trans_cfg(struct ubdrv_non_trans_chan *chan, struct ascend_ub_sync_jetty *msg_jetty,
+                                   const struct ubdrv_create_non_trans_cmd *cmd)
 {
     struct ubcore_device *ubc_dev = chan->msg_dev->ubc_dev;
     u32 token;
@@ -216,7 +215,7 @@ STATIC int ubdrv_set_non_trans_cfg(struct ubdrv_non_trans_chan *chan,
     msg_jetty->send_jetty.send_msg_len = cmd->sq_size;
     msg_jetty->send_jetty.ubc_dev = ubc_dev;
     msg_jetty->send_jetty.eid_index = chan->msg_dev->idev->eid_index;
-    msg_jetty->send_jetty.msg_chan = (void*)chan;
+    msg_jetty->send_jetty.msg_chan = (void *)chan;
     msg_jetty->send_jetty.chan_mode = cmd->chan_mode;
     msg_jetty->send_jetty.rao_info = &chan->rao_info;
     msg_jetty->send_jetty.token_value = token;
@@ -227,7 +226,7 @@ STATIC int ubdrv_set_non_trans_cfg(struct ubdrv_non_trans_chan *chan,
     msg_jetty->recv_jetty.send_msg_len = cmd->sq_size;
     msg_jetty->recv_jetty.ubc_dev = ubc_dev;
     msg_jetty->recv_jetty.eid_index = chan->msg_dev->idev->eid_index;
-    msg_jetty->recv_jetty.msg_chan = (void*)chan;
+    msg_jetty->recv_jetty.msg_chan = (void *)chan;
     msg_jetty->recv_jetty.chan_mode = cmd->chan_mode;
     msg_jetty->recv_jetty.rao_info = &chan->rao_info;
     msg_jetty->recv_jetty.token_value = token;
@@ -241,19 +240,20 @@ STATIC int ubdrv_set_non_trans_cfg(struct ubdrv_non_trans_chan *chan,
     return 0;
 }
 
-STATIC int ubdrv_send_nontrans_reply_msg(u32 dev_id, struct ubdrv_non_trans_chan *chan, struct ascend_ub_jetty_ctrl *jetty_ctrl,
-    struct ascend_ub_msg_desc *src_desc, struct ubdrv_msg_chan_stat *stat)
+STATIC int ubdrv_send_nontrans_reply_msg(u32 dev_id, struct ubdrv_non_trans_chan *chan,
+                                         struct ascend_ub_jetty_ctrl *jetty_ctrl, struct ascend_ub_msg_desc *src_desc,
+                                         struct ubdrv_msg_chan_stat *stat)
 {
     struct ascend_ub_msg_desc *jfs_desc;
     struct send_wr_cfg wr_cfg = {0};
     u32 seg_id = 0;
     int ret;
 
-    jfs_desc = ubdrv_get_send_desc(jetty_ctrl, seg_id);  // jfs seg_id is 0
+    jfs_desc = ubdrv_get_send_desc(jetty_ctrl, seg_id); // jfs seg_id is 0
     ret = memcpy_s(jfs_desc, jetty_ctrl->send_msg_len, src_desc, jetty_ctrl->recv_msg_len);
     if (ret != 0) {
-        ubdrv_err("Copy result data to jfs_desc failed. (ret=%d;dst_len=%u;src_len=%u)",
-            ret, jetty_ctrl->send_msg_len, jetty_ctrl->recv_msg_len);
+        ubdrv_err("Copy result data to jfs_desc failed. (ret=%d;dst_len=%u;src_len=%u)", ret, jetty_ctrl->send_msg_len,
+                  jetty_ctrl->recv_msg_len);
         return ret;
     }
     wr_cfg.user_ctx = src_desc->msg_num;
@@ -268,7 +268,7 @@ STATIC int ubdrv_send_nontrans_reply_msg(u32 dev_id, struct ubdrv_non_trans_chan
 
 void ubdrv_non_trans_recv_prepare_process(struct ascend_ub_jetty_ctrl *cfg, struct ascend_ub_msg_desc *desc, u32 seg_id)
 {
-    struct ubdrv_non_trans_chan *chan = (struct ubdrv_non_trans_chan*)cfg->msg_chan;
+    struct ubdrv_non_trans_chan *chan = (struct ubdrv_non_trans_chan *)cfg->msg_chan;
     u32 max_send_len = chan->msg_jetty.send_jetty.send_msg_len - sizeof(struct ascend_ub_msg_desc);
     struct ubdrv_msg_chan_stat *stat = &chan->chan_stat;
     char dfx_info[UBDRV_DFX_INFO_LEN] = {0};
@@ -278,26 +278,24 @@ void ubdrv_non_trans_recv_prepare_process(struct ascend_ub_jetty_ctrl *cfg, stru
 
     if (ka_unlikely(ubdrv_get_device_status(dev_id)) == UBDRV_DEVICE_DEAD) {
         desc->status = UB_MSG_RECV_ABORT;
-        ubdrv_warn("Device is dead. (dev_id=%u;chan_id=%u;msg_type=%u)\n", dev_id,
-            chan->chan_id, chan->msg_type);
+        ubdrv_warn("Device is dead. (dev_id=%u;chan_id=%u;msg_type=%u)\n", dev_id, chan->chan_id, chan->msg_type);
         return;
     }
 
     ka_task_mutex_lock(&chan->rx_mutex);
     if (chan->rx_msg_process == NULL) {
         ka_task_mutex_unlock(&chan->rx_mutex);
-        ubdrv_err("Process func is NULL. (dev_id=%u;chan_id=%u;msg_type=%u)\n", dev_id,
-            chan->chan_id, chan->msg_type);
+        ubdrv_err("Process func is NULL. (dev_id=%u;chan_id=%u;msg_type=%u)\n", dev_id, chan->chan_id, chan->msg_type);
         desc->status = UB_MSG_NULL_PROCESS;
         stat->rx_null_process++;
         goto reply_non_trans_msg;
     }
     stat->rx_stamp = (u64)ka_jiffies;
-    ret = chan->rx_msg_process(ubdrv_get_non_trans_chan_handle(chan), (void*)desc->user_data,
-        desc->in_data_len, desc->out_data_len, &desc->real_data_len);
+    ret = chan->rx_msg_process(ubdrv_get_non_trans_chan_handle(chan), (void *)desc->user_data, desc->in_data_len,
+                               desc->out_data_len, &desc->real_data_len);
     ka_task_mutex_unlock(&chan->rx_mutex);
     (void)sprintf_s(dfx_info, UBDRV_DFX_INFO_LEN, "device-%u non_trans chan_id-%u chan_type-%u call process stamp",
-        dev_id, stat->chan_id, chan->msg_type);
+                    dev_id, stat->chan_id, chan->msg_type);
     cost_time = ubdrv_record_resq_time(stat->rx_stamp, dfx_info, UBDRV_SCEH_RESP_TIME);
     if (cost_time > stat->rx_max_time) {
         stat->rx_max_time = cost_time;
@@ -306,7 +304,7 @@ void ubdrv_non_trans_recv_prepare_process(struct ascend_ub_jetty_ctrl *cfg, stru
         desc->status = UB_MSG_PROCESS_FAILED;
         stat->rx_process_err++;
         ubdrv_err("Non trans process func error. (dev_id=%u;ret=%d;real_len=%u;max_len=%u;chan_id=%u;chan_type=%u)\n",
-            dev_id, ret, desc->real_data_len, max_send_len, chan->chan_id, chan->msg_type);
+                  dev_id, ret, desc->real_data_len, max_send_len, chan->chan_id, chan->msg_type);
         goto reply_non_trans_msg;
     }
     desc->status = UB_MSG_PROCESS_SUCCESS;
@@ -314,19 +312,19 @@ void ubdrv_non_trans_recv_prepare_process(struct ascend_ub_jetty_ctrl *cfg, stru
 reply_non_trans_msg:
     ret = ubdrv_send_nontrans_reply_msg(dev_id, chan, cfg, desc, stat);
     if (ret != 0) {
-        ubdrv_err("Send non trans reply msg failed. (ret=%d;dev_id=%u;chan_id=%u;chan_type=%u;msg_num=%u)\n",
-            ret, dev_id, chan->chan_id, chan->msg_type, desc->msg_num);
+        ubdrv_err("Send non trans reply msg failed. (ret=%d;dev_id=%u;chan_id=%u;chan_type=%u;msg_num=%u)\n", ret,
+                  dev_id, chan->chan_id, chan->msg_type, desc->msg_num);
     }
     return;
 }
 
-STATIC struct ubdrv_non_trans_chan* ubdrv_get_non_trans_chan_by_jfc(const struct ubcore_jfc *jfc)
+STATIC struct ubdrv_non_trans_chan *ubdrv_get_non_trans_chan_by_jfc(const struct ubcore_jfc *jfc)
 {
     struct ascend_ub_jetty_ctrl *jetty;
     struct ubdrv_non_trans_chan *chan;
 
     jetty = (struct ascend_ub_jetty_ctrl *)jfc->jfc_cfg.jfc_context;
-    chan = (struct ubdrv_non_trans_chan*)jetty->msg_chan;
+    chan = (struct ubdrv_non_trans_chan *)jetty->msg_chan;
     return chan;
 }
 
@@ -349,7 +347,7 @@ void ubdrv_non_trans_jfce_recv_handle(struct ubcore_jfc *jfc)
     if (chan->status != UBDRV_CHAN_ENABLE) {
         ka_base_atomic_sub(1, &chan->user_cnt);
         ubdrv_warn("Chan is unexpected status in jfce handle. (status=%d;dev_id=%u;chan_id=%u;chan_type=%u)\n",
-            chan->status, chan->dev_id, chan->chan_id, chan->msg_type);
+                   chan->status, chan->dev_id, chan->chan_id, chan->msg_type);
         return;
     }
 
@@ -361,8 +359,8 @@ void ubdrv_non_trans_jfce_recv_handle(struct ubcore_jfc *jfc)
     return;
 }
 
-int ubdrv_create_non_trans_jetty(struct ubcore_device *ubc_dev,
-    struct ubdrv_non_trans_chan *chan, struct ubdrv_create_non_trans_cmd *cmd)
+int ubdrv_create_non_trans_jetty(struct ubcore_device *ubc_dev, struct ubdrv_non_trans_chan *chan,
+                                 struct ubdrv_create_non_trans_cmd *cmd)
 {
     struct ascend_ub_sync_jetty *msg_jetty = &(chan->msg_jetty);
     int ret;
@@ -384,8 +382,7 @@ int ubdrv_create_non_trans_jetty(struct ubcore_device *ubc_dev,
     }
     chan->work_queue = ka_task_create_workqueue("ub_msg_workqueue");
     if (chan->work_queue == NULL) {
-        ubdrv_err("Create non trans msg chan workqueue fail. (dev_id=%u;chan_id=%u)\n",
-            chan->dev_id, chan->chan_id);
+        ubdrv_err("Create non trans msg chan workqueue fail. (dev_id=%u;chan_id=%u)\n", chan->dev_id, chan->chan_id);
         ret = -ENOMEM;
         goto recv_jetty_uninit;
     }
@@ -405,20 +402,19 @@ set_idle:
     return ret;
 }
 
-void ubdrv_delete_non_trans_jetty(struct ubdrv_non_trans_chan* chan)
+void ubdrv_delete_non_trans_jetty(struct ubdrv_non_trans_chan *chan)
 {
     struct ascend_ub_sync_jetty *msg_jetty = &(chan->msg_jetty);
     int ret;
 
     ret = ubdrv_clear_jetty(msg_jetty->send_jetty.jfs);
     if (ret != 0) {
-        ubdrv_err("Flush send jetty failed. (ret=%d;dev_id=%u;chan_id=%u)\n",
-            ret, chan->msg_dev->dev_id, chan->chan_id);
+        ubdrv_err("Flush send jetty failed. (ret=%d;dev_id=%u;chan_id=%u)\n", ret, chan->msg_dev->dev_id,
+                  chan->chan_id);
     }
     ret = ubdrv_clear_jetty(msg_jetty->recv_jetty.jfs);
     if (ret != 0) {
-        ubdrv_err("Flush recv jetty failed. (ret=%ddev_id=%u;chan_id=%u)\n",
-            ret, chan->msg_dev->dev_id, chan->chan_id);
+        ubdrv_err("Flush recv jetty failed. (ret=%ddev_id=%u;chan_id=%u)\n", ret, chan->msg_dev->dev_id, chan->chan_id);
     }
     chan->status = UBDRV_CHAN_DISABLE;
     ubdrv_wait_chan_jfce_user_cnt(&chan->user_cnt, chan->dev_id, chan->chan_id);
@@ -457,7 +453,7 @@ STATIC void ubdrv_free_non_trans_chan_msg_desc(struct ubdrv_non_trans_chan *chan
 }
 
 int ubdrv_init_non_trans_chan(struct ubdrv_non_trans_chan *chan, struct ubcore_device *ubc_dev,
-    struct ubdrv_create_non_trans_cmd *cmd, u32 dev_id, u32 msg_type)
+                              struct ubdrv_create_non_trans_cmd *cmd, u32 dev_id, u32 msg_type)
 {
     struct jetty_exchange_data *s_data = &cmd->s_jetty_data;
     struct jetty_exchange_data *r_data = &cmd->r_jetty_data;
@@ -470,7 +466,8 @@ int ubdrv_init_non_trans_chan(struct ubdrv_non_trans_chan *chan, struct ubcore_d
     }
     tjetty = ascend_import_jfr(ubc_dev, eid_index, s_data);
     if (KA_IS_ERR_OR_NULL(tjetty)) {
-        ubdrv_err("Import sjetty failed. (dev_id=%u;chan_id=%u;errno=%ld)\n", dev_id, chan->chan_id, KA_PTR_ERR(tjetty));
+        ubdrv_err("Import sjetty failed. (dev_id=%u;chan_id=%u;errno=%ld)\n", dev_id, chan->chan_id,
+                  KA_PTR_ERR(tjetty));
         goto free_msg_desc;
     }
     chan->s_tjetty = tjetty;
@@ -485,7 +482,8 @@ int ubdrv_init_non_trans_chan(struct ubdrv_non_trans_chan *chan, struct ubcore_d
 
     tjetty = ascend_import_jfr(ubc_dev, eid_index, r_data);
     if (KA_IS_ERR_OR_NULL(tjetty)) {
-        ubdrv_err("Import rjetty failed. (dev_id=%u;chan_id=%u;errno=%ld)\n", dev_id, chan->chan_id, KA_PTR_ERR(tjetty));
+        ubdrv_err("Import rjetty failed. (dev_id=%u;chan_id=%u;errno=%ld)\n", dev_id, chan->chan_id,
+                  KA_PTR_ERR(tjetty));
         goto unimport_r_tseg;
     }
     chan->r_tjetty = tjetty;
@@ -514,21 +512,18 @@ void ubdrv_uninit_non_trans_chan(struct ubdrv_non_trans_chan *chan, u32 dev_id)
 
     ret = ubcore_unimport_jfr(chan->s_tjetty);
     if (ret != 0) {
-        ubdrv_err("ubcore_unimport_jfr failed. (ret=%d;chan_id=%u;dev_id=%u)\n",
-            ret, chan->chan_id, dev_id);
+        ubdrv_err("ubcore_unimport_jfr failed. (ret=%d;chan_id=%u;dev_id=%u)\n", ret, chan->chan_id, dev_id);
     }
     chan->s_tjetty = NULL;
     ret = ubcore_unimport_jfr(chan->r_tjetty);
     if (ret != 0) {
-        ubdrv_err("ubcore_unimport_jfr failed. (ret=%d;chan_id=%u;dev_id=%u)\n",
-            ret, chan->chan_id, dev_id);
+        ubdrv_err("ubcore_unimport_jfr failed. (ret=%d;chan_id=%u;dev_id=%u)\n", ret, chan->chan_id, dev_id);
     }
     chan->r_tjetty = NULL;
     if (chan->s_tseg != NULL) {
         ret = ubcore_unimport_seg(chan->s_tseg);
         if (ret != 0) {
-            ubdrv_err("ubcore_unimport_seg failed. (ret=%d;chan_id=%u;dev_id=%u)\n",
-                ret, chan->chan_id, dev_id);
+            ubdrv_err("ubcore_unimport_seg failed. (ret=%d;chan_id=%u;dev_id=%u)\n", ret, chan->chan_id, dev_id);
         }
     }
     chan->s_tseg = NULL;
@@ -538,21 +533,20 @@ void ubdrv_uninit_non_trans_chan(struct ubdrv_non_trans_chan *chan, u32 dev_id)
     return;
 }
 
-int ubdrv_prepare_non_trans_jetty_info(struct ubdrv_non_trans_chan* chan,
-    struct ubdrv_create_non_trans_cmd* cmd)
+int ubdrv_prepare_non_trans_jetty_info(struct ubdrv_non_trans_chan *chan, struct ubdrv_create_non_trans_cmd *cmd)
 {
     int ret;
 
     ret = ubdrv_get_send_jetty_info(&chan->msg_jetty.send_jetty, &cmd->s_jetty_data);
     if (ret != 0) {
-        ubdrv_err("Get send jetty info failed. (ret=%d;chan_id=%u;dev_id=%u)\n",
-            ret, chan->chan_id, chan->msg_dev->dev_id);
+        ubdrv_err("Get send jetty info failed. (ret=%d;chan_id=%u;dev_id=%u)\n", ret, chan->chan_id,
+                  chan->msg_dev->dev_id);
         return ret;
     }
     ret = ubdrv_get_recv_jetty_info(&chan->msg_jetty.recv_jetty, &cmd->r_jetty_data);
     if (ret != 0) {
-        ubdrv_err("Get recv jetty info failed. (ret=%d;chan_id=%u;dev_id=%u)\n",
-            ret, chan->chan_id, chan->msg_dev->dev_id);
+        ubdrv_err("Get recv jetty info failed. (ret=%d;chan_id=%u;dev_id=%u)\n", ret, chan->chan_id,
+                  chan->msg_dev->dev_id);
         return ret;
     }
     return ret;
@@ -584,14 +578,13 @@ STATIC bool ubdrv_check_msg_chan_handle_valid(const void *chan_handle)
     }
     magic = msg_handle->bits.magic;
     if (magic != UBDRV_MSG_MAGIC) {
-        ubdrv_err("Invalid chan handle. (dev_id=%u;chan_id=%u;magic=%llu)\n",
-            dev_id, chan_id, magic);
+        ubdrv_err("Invalid chan handle. (dev_id=%u;chan_id=%u;magic=%llu)\n", dev_id, chan_id, magic);
         return false;
     }
     return true;
 }
 
-struct ubdrv_non_trans_chan* ubdrv_find_msg_chan_by_handle(void *chan_handle)
+struct ubdrv_non_trans_chan *ubdrv_find_msg_chan_by_handle(void *chan_handle)
 {
     struct ubdrv_non_trans_chan *chan = NULL;
     struct ascend_ub_msg_dev *msg_dev;
@@ -633,20 +626,20 @@ STATIC int ubdrv_non_trans_client_init(struct ubdrv_non_trans_chan *chan, u32 ms
 
     non_trans_client = ubdrv_find_non_trans_client_by_type(msg_type);
     if (non_trans_client == NULL) {
-        ubdrv_err("Find non trans message client failed. (dev_id=%d;type=%u;chan_id=%u)\n",
-            chan->msg_dev->dev_id, msg_type, chan->chan_id);
+        ubdrv_err("Find non trans message client failed. (dev_id=%d;type=%u;chan_id=%u)\n", chan->msg_dev->dev_id,
+                  msg_type, chan->chan_id);
         return -EINVAL;
     }
     if (non_trans_client->init_non_trans_msg_chan != NULL) {
         ret = non_trans_client->init_non_trans_msg_chan(ubdrv_get_non_trans_chan_handle(chan));
         if (ret != 0) {
             ubdrv_err("Call non trans client init failed. (dev_id=%d;ret=%d;type=%u;chan_id=%u)\n",
-                chan->msg_dev->dev_id, ret, msg_type, chan->chan_id);
+                      chan->msg_dev->dev_id, ret, msg_type, chan->chan_id);
             return ret;
         }
     } else {
-        ubdrv_warn("Non trans client init func is NULL. (dev_id=%d;type=%u;chan_id=%u)\n",
-            chan->msg_dev->dev_id, msg_type, chan->chan_id);
+        ubdrv_warn("Non trans client init func is NULL. (dev_id=%d;type=%u;chan_id=%u)\n", chan->msg_dev->dev_id,
+                   msg_type, chan->chan_id);
     }
     chan->rx_msg_process = non_trans_client->non_trans_msg_process;
     return 0;
@@ -659,15 +652,15 @@ STATIC int ubdrv_non_trans_client_uninit(struct ubdrv_non_trans_chan *chan)
 
     non_trans_client = ubdrv_find_non_trans_client_by_type(msg_type);
     if (non_trans_client == NULL) {
-        ubdrv_err("Find non trans message client failed. (dev_id=%d;type=%u;chan_id=%u)\n",
-            chan->msg_dev->dev_id, msg_type, chan->chan_id);
+        ubdrv_err("Find non trans message client failed. (dev_id=%d;type=%u;chan_id=%u)\n", chan->msg_dev->dev_id,
+                  msg_type, chan->chan_id);
         return -EINVAL;
     }
     if (non_trans_client->uninit_non_trans_msg_chan != NULL) {
         non_trans_client->uninit_non_trans_msg_chan(ubdrv_get_non_trans_chan_handle(chan));
     } else {
-        ubdrv_warn("Non trans client uninit func is NULL. (dev_id=%d;type=%u;chan_id=%u)\n",
-            chan->msg_dev->dev_id, msg_type, chan->chan_id);
+        ubdrv_warn("Non trans client uninit func is NULL. (dev_id=%d;type=%u;chan_id=%u)\n", chan->msg_dev->dev_id,
+                   msg_type, chan->chan_id);
     }
     chan->rx_msg_process = NULL;
     chan->msg_type = 0;
@@ -691,14 +684,14 @@ int ubdrv_msg_alloc_msg_queue_process(struct ubdrv_non_trans_chan *chan, struct 
 
     ret = ubdrv_create_non_trans_jetty(msg_dev->ubc_dev, chan, cmd);
     if (ret != 0) {
-        ubdrv_err("Create non trans jetty failed. (ret=%d;dev_id=%u;chan_id=%u;client_type=%u)\n",
-            ret, msg_dev->dev_id, chan->chan_id, cmd->msg_type);
+        ubdrv_err("Create non trans jetty failed. (ret=%d;dev_id=%u;chan_id=%u;client_type=%u)\n", ret, msg_dev->dev_id,
+                  chan->chan_id, cmd->msg_type);
         return -EINVAL;
     }
     ret = ubdrv_init_non_trans_chan(chan, msg_dev->ubc_dev, cmd, msg_dev->dev_id, cmd->msg_type);
     if (ret != 0) {
-        ubdrv_err("Init non trans chan failed. (ret=%d;dev_id=%u;chan_id=%u;client_type=%u)\n",
-            ret, msg_dev->dev_id, chan->chan_id, cmd->msg_type);
+        ubdrv_err("Init non trans chan failed. (ret=%d;dev_id=%u;chan_id=%u;client_type=%u)\n", ret, msg_dev->dev_id,
+                  chan->chan_id, cmd->msg_type);
         goto delet_jetty;
     }
     /* must rearm jfc at last */
@@ -728,30 +721,29 @@ int ubdrv_msg_alloc_msg_queue_para_check(struct ascend_ub_msg_dev *msg_dev, stru
     struct ubdrv_non_trans_chan *chan;
 
     if (desc->in_data_len != sizeof(struct ubdrv_create_non_trans_cmd)) {
-        ubdrv_err("Recv data len invalid. (dev_id=%u;len=%u)\n",
-            msg_dev->dev_id, desc->in_data_len);
+        ubdrv_err("Recv data len invalid. (dev_id=%u;len=%u)\n", msg_dev->dev_id, desc->in_data_len);
         return -EINVAL;
     }
-    cmd = (struct ubdrv_create_non_trans_cmd*)&desc->user_data;
+    cmd = (struct ubdrv_create_non_trans_cmd *)&desc->user_data;
     if (cmd->chan_mode == UBDRV_MSG_CHAN_FOR_RAO) {
         if (cmd->chan_id >= DEVDRV_RAO_CLIENT_MAX) {
-            ubdrv_err("Chan id is invalid. (dev_id=%u;client_type=%u;chan_id=%u)\n",
-                msg_dev->dev_id, cmd->msg_type, cmd->chan_id);
+            ubdrv_err("Chan id is invalid. (dev_id=%u;client_type=%u;chan_id=%u)\n", msg_dev->dev_id, cmd->msg_type,
+                      cmd->chan_id);
             return -EINVAL;
         }
         chan = &msg_dev->rao.rao_msg_chan[cmd->chan_id];
         /* rao chan addr info from user */
         if ((chan->rao_info.len == 0) || chan->rao_info.va == 0) {
-            ubdrv_err("RAO user va or len invalid. (dev_id=%u;client_type=%u;chan_id=%u;len=0x%llx)\n",
-                msg_dev->dev_id, cmd->msg_type, cmd->chan_id, chan->rao_info.len);
+            ubdrv_err("RAO user va or len invalid. (dev_id=%u;client_type=%u;chan_id=%u;len=0x%llx)\n", msg_dev->dev_id,
+                      cmd->msg_type, cmd->chan_id, chan->rao_info.len);
             return -EINVAL;
         }
         cmd->sq_size = (u32)chan->rao_info.len;
         cmd->cq_size = (u32)chan->rao_info.len;
     } else {
         if (cmd->chan_id >= msg_dev->chan_cnt) {
-            ubdrv_err("Chan id is invalid. (dev_id=%u;client_type=%u;chan_id=%u)\n",
-                msg_dev->dev_id, cmd->msg_type, cmd->chan_id);
+            ubdrv_err("Chan id is invalid. (dev_id=%u;client_type=%u;chan_id=%u)\n", msg_dev->dev_id, cmd->msg_type,
+                      cmd->chan_id);
             return -EINVAL;
         }
         chan = &msg_dev->non_trans_chan[cmd->chan_id];
@@ -759,12 +751,12 @@ int ubdrv_msg_alloc_msg_queue_para_check(struct ascend_ub_msg_dev *msg_dev, stru
 
     if ((cmd->sq_size != cmd->cq_size) || (cmd->sq_size <= ASCEND_UB_MSG_DESC_LEN)) {
         ubdrv_err("Chan info is invalid. (dev_id=%u;client_type=%u;chan_id=%u;sq_size=%u;cq_size=%u)\n",
-            msg_dev->dev_id, cmd->msg_type, cmd->chan_id, cmd->sq_size, cmd->cq_size);
+                  msg_dev->dev_id, cmd->msg_type, cmd->chan_id, cmd->sq_size, cmd->cq_size);
         return -EINVAL;
     }
     if (chan->status != UBDRV_CHAN_IDLE) {
-        ubdrv_err("Chan status is error. (dev_id=%u;client_type=%u;chan_id=%u;chan_status=%u)\n",
-            msg_dev->dev_id, cmd->msg_type, cmd->chan_id, chan->status);
+        ubdrv_err("Chan status is error. (dev_id=%u;client_type=%u;chan_id=%u;chan_status=%u)\n", msg_dev->dev_id,
+                  cmd->msg_type, cmd->chan_id, chan->status);
         return -EINVAL;
     }
 
@@ -774,7 +766,7 @@ int ubdrv_msg_alloc_msg_queue_para_check(struct ascend_ub_msg_dev *msg_dev, stru
 /* device interface alloc non_trans_chan */
 int ubdrv_msg_alloc_msg_queue(struct ascend_ub_msg_dev *msg_dev, void *data)
 {
-    struct ascend_ub_msg_desc *desc = (struct ascend_ub_msg_desc*)data;
+    struct ascend_ub_msg_desc *desc = (struct ascend_ub_msg_desc *)data;
     struct ubdrv_create_non_trans_cmd *cmd;
     struct ubdrv_non_trans_chan *chan;
     int ret;
@@ -784,7 +776,7 @@ int ubdrv_msg_alloc_msg_queue(struct ascend_ub_msg_dev *msg_dev, void *data)
         ubdrv_err("Device alloc msg chan para check failed. (ret=%d;dev_id=%u)\n", ret, msg_dev->dev_id);
         return ret;
     }
-    cmd = (struct ubdrv_create_non_trans_cmd*)&desc->user_data;
+    cmd = (struct ubdrv_create_non_trans_cmd *)&desc->user_data;
     if (cmd->chan_mode == UBDRV_MSG_CHAN_FOR_RAO) {
         chan = &msg_dev->rao.rao_msg_chan[cmd->chan_id];
         chan->send_jfce_handler = ubdrv_rao_chan_jfce_send_handle;
@@ -802,15 +794,15 @@ int ubdrv_msg_alloc_msg_queue(struct ascend_ub_msg_dev *msg_dev, void *data)
     }
 
     desc->real_data_len = sizeof(struct ubdrv_create_non_trans_cmd);
-    ubdrv_info("Device alloc msg chan success. (dev_id=%u;chan_id=%u;msg_type=%u)\n",
-        msg_dev->dev_id, chan->chan_id, chan->msg_type);
+    ubdrv_info("Device alloc msg chan success. (dev_id=%u;chan_id=%u;msg_type=%u)\n", msg_dev->dev_id, chan->chan_id,
+               chan->msg_type);
     return 0;
 }
 
 int ubdrv_enable_device_msg_chan(struct ascend_ub_msg_dev *msg_dev, void *data)
 {
-    struct ascend_ub_msg_desc *desc = (struct ascend_ub_msg_desc*)data;
-    struct ubdrv_create_non_trans_cmd *cmd = (struct ubdrv_create_non_trans_cmd*)&desc->user_data;
+    struct ascend_ub_msg_desc *desc = (struct ascend_ub_msg_desc *)data;
+    struct ubdrv_create_non_trans_cmd *cmd = (struct ubdrv_create_non_trans_cmd *)&desc->user_data;
     struct ubdrv_non_trans_chan *chan;
     u32 len = sizeof(struct ubdrv_create_non_trans_cmd);
     u32 dev_id = msg_dev->dev_id;
@@ -829,54 +821,53 @@ int ubdrv_enable_device_msg_chan(struct ascend_ub_msg_dev *msg_dev, void *data)
     chan_id = cmd->chan_id;
     ret = ubdrv_non_trans_client_init(chan, cmd->msg_type);
     if (ret != 0) {
-        ubdrv_err("Device trans init client failed. (dev_id=%u;chan_id=%u;ret=%d;msg_type=%u)\n",
-            dev_id, chan_id, ret, cmd->msg_type);
+        ubdrv_err("Device trans init client failed. (dev_id=%u;chan_id=%u;ret=%d;msg_type=%u)\n", dev_id, chan_id, ret,
+                  cmd->msg_type);
         return ret;
     }
-    ubdrv_info("Enable non trans msg chan success. (dev_id=%u;chan_id=%u;msg_type=%u)\n",
-        dev_id, chan_id, chan->msg_type);
+    ubdrv_info("Enable non trans msg chan success. (dev_id=%u;chan_id=%u;msg_type=%u)\n", dev_id, chan_id,
+               chan->msg_type);
     return 0;
 }
 
-int ubdrv_free_non_trans_chan_process(struct ubdrv_non_trans_chan *chan, enum ubdrv_msg_chan_mode chan_mode,
-    u32 dev_id, u32 chan_id)
+int ubdrv_free_non_trans_chan_process(struct ubdrv_non_trans_chan *chan, enum ubdrv_msg_chan_mode chan_mode, u32 dev_id,
+                                      u32 chan_id)
 {
     u32 msg_type = chan->msg_type;
     int ret = 0;
 
     ka_task_mutex_lock(&chan->tx_mutex);
     if (chan->status != UBDRV_CHAN_ENABLE) {
-        ubdrv_warn("Chan status is not enable. (dev_id=%u;chan_id=%u;chan_status=%u)\n",
-            dev_id, chan->chan_id, chan->status);
+        ubdrv_warn("Chan status is not enable. (dev_id=%u;chan_id=%u;chan_status=%u)\n", dev_id, chan->chan_id,
+                   chan->status);
         ka_task_mutex_unlock(&chan->tx_mutex);
         return 0;
     }
     if (chan_mode != UBDRV_MSG_CHAN_FOR_RAO) {
         ret = ubdrv_non_trans_client_uninit(chan);
         if (ret != 0) {
-            ubdrv_warn("ubdrv_non_trans_client_uninit failed. (ret=%d;dev_id=%u;chan_id=%u)\n",
-                ret, dev_id, chan->chan_id);
+            ubdrv_warn("ubdrv_non_trans_client_uninit failed. (ret=%d;dev_id=%u;chan_id=%u)\n", ret, dev_id,
+                       chan->chan_id);
         }
     }
     ubdrv_delete_non_trans_jetty(chan);
     ubdrv_uninit_non_trans_chan(chan, dev_id);
     ka_task_mutex_unlock(&chan->tx_mutex);
     ubdrv_clear_chan_dfx(&chan->chan_stat);
-    ubdrv_info("Device free msg chan success. (dev_id=%u;chan_id=%u;msg_type=%u)\n",
-        dev_id, chan->chan_id, msg_type);
+    ubdrv_info("Device free msg chan success. (dev_id=%u;chan_id=%u;msg_type=%u)\n", dev_id, chan->chan_id, msg_type);
     return 0;
 }
 
 int ubdrv_msg_free_msg_queue(struct ascend_ub_msg_dev *msg_dev, void *data)
 {
-    struct ascend_ub_msg_desc *desc = (struct ascend_ub_msg_desc*)data;
-    struct ubdrv_free_non_trans_cmd *cmd = (struct ubdrv_free_non_trans_cmd*)desc->user_data;
+    struct ascend_ub_msg_desc *desc = (struct ascend_ub_msg_desc *)data;
+    struct ubdrv_free_non_trans_cmd *cmd = (struct ubdrv_free_non_trans_cmd *)desc->user_data;
     struct ubdrv_non_trans_chan *chan;
     u32 max_chan_cnt;
 
     if (desc->in_data_len != sizeof(struct ubdrv_free_non_trans_cmd)) {
-        ubdrv_err("Recv data len invalid. (dev_id=%u;chan_id=%u;len=%u)\n",
-            msg_dev->dev_id, cmd->chan_id, desc->in_data_len);
+        ubdrv_err("Recv data len invalid. (dev_id=%u;chan_id=%u;len=%u)\n", msg_dev->dev_id, cmd->chan_id,
+                  desc->in_data_len);
         return -EINVAL;
     }
     if (cmd->chan_mode == UBDRV_MSG_CHAN_FOR_RAO) {
@@ -899,11 +890,11 @@ int ubdrv_msg_free_msg_queue(struct ascend_ub_msg_dev *msg_dev, void *data)
 }
 
 STATIC int ubdrv_non_trans_prepare_send(struct ubdrv_non_trans_chan *chan, struct ascend_ub_msg_desc *desc,
-    struct send_wr_cfg *wr_cfg, struct ascend_ub_user_data *user_data)
+                                        struct send_wr_cfg *wr_cfg, struct ascend_ub_user_data *user_data)
 {
     u32 chan_len = chan->msg_jetty.send_jetty.send_msg_len;
     u32 max_send_len = (chan_len > ASCEND_UB_MAX_SEND_LIMIT ? ASCEND_UB_MAX_SEND_LIMIT : chan_len) -
-        ASCEND_UB_MSG_DESC_LEN;
+                       ASCEND_UB_MSG_DESC_LEN;
     int ret;
 
     if (user_data->size > max_send_len) {
@@ -931,15 +922,14 @@ STATIC int ubdrv_non_trans_prepare_send(struct ubdrv_non_trans_chan *chan, struc
     return 0;
 }
 
-STATIC void ubdrv_non_trans_clear_user_data(struct ascend_ub_msg_desc *desc,
-    struct ubdrv_non_trans_chan *chan)
+STATIC void ubdrv_non_trans_clear_user_data(struct ascend_ub_msg_desc *desc, struct ubdrv_non_trans_chan *chan)
 {
     size_t len = chan->msg_jetty.send_jetty.send_msg_len - ASCEND_UB_MSG_DESC_LEN;
     (void)memset_s(&(desc->user_data), len, 0, len);
 }
 
-void ubdrv_sync_send_prepare_user_data(struct ascend_ub_user_data *user_data, void *data,
-    u32 in_data_len, u32 out_data_len, u32 msg_type)
+void ubdrv_sync_send_prepare_user_data(struct ascend_ub_user_data *user_data, void *data, u32 in_data_len,
+                                       u32 out_data_len, u32 msg_type)
 {
     user_data->cmd = data;
     user_data->reply = data;
@@ -951,16 +941,16 @@ void ubdrv_sync_send_prepare_user_data(struct ascend_ub_user_data *user_data, vo
 STATIC void ubdrv_msg_tx_dfx_info(struct ubdrv_msg_chan_stat *stat)
 {
     ubdrv_err("Msg chan id info. (dev_id=%u;chan_id=%u;tx_jfr=%u,tx_jfr_jfc=%u;tx_jfs=%u;tx_jfs_jfc=%u;rx_jfr=%u;\
-        rx_jfr_jfc=%u;rx_jfs=%u;rx_jfs_jfc=%u)\n", stat->dev_id, stat->chan_id, stat->tx_jfr_id, stat->tx_jfr_jfc_id,
-        stat->tx_jfs_id, stat->tx_jfs_jfc_id, stat->rx_jfr_id, stat->rx_jfr_jfc_id, stat->rx_jfs_id,
-        stat->rx_jfs_jfc_id);
-    ubdrv_err("Msg chan tx dfx info. (tx_total=%llu,post_err=%llu;cqe_cnt=%llu;cqe_timeout=%llu)\n",
-        stat->tx_total, stat->tx_post_send_err, stat->tx_cqe, stat->tx_cqe_timeout);
+        rx_jfr_jfc=%u;rx_jfs=%u;rx_jfs_jfc=%u)\n",
+              stat->dev_id, stat->chan_id, stat->tx_jfr_id, stat->tx_jfr_jfc_id, stat->tx_jfs_id, stat->tx_jfs_jfc_id,
+              stat->rx_jfr_id, stat->rx_jfr_jfc_id, stat->rx_jfs_id, stat->rx_jfs_jfc_id);
+    ubdrv_err("Msg chan tx dfx info. (tx_total=%llu,post_err=%llu;cqe_cnt=%llu;cqe_timeout=%llu)\n", stat->tx_total,
+              stat->tx_post_send_err, stat->tx_cqe, stat->tx_cqe_timeout);
     ubdrv_err("Msg chan tx dfx info. (poll_cqe_err=%llu,cqe_status_err=%llu;rebuild_jfs=%llu;recv_cqe_timeout=%llu)\n",
-        stat->tx_poll_cqe_err, stat->tx_cqe_status_err, stat->tx_rebuild_jfs, stat->tx_recv_cqe_timeout);
+              stat->tx_poll_cqe_err, stat->tx_cqe_status_err, stat->tx_rebuild_jfs, stat->tx_recv_cqe_timeout);
     ubdrv_err("Msg chan tx dfx info. (recv_cqe_cnt=%llu,recv_poll_cqe_err=%llu;recv_cqe_status_err=%llu;\
-        recv_data_err=%llu)\n", stat->tx_recv_cqe, stat->tx_recv_poll_cqe_err, stat->tx_recv_cqe_status_err,
-        stat->tx_recv_data_err);
+        recv_data_err=%llu)\n",
+              stat->tx_recv_cqe, stat->tx_recv_poll_cqe_err, stat->tx_recv_cqe_status_err, stat->tx_recv_data_err);
     return;
 }
 
@@ -988,23 +978,23 @@ int devdrv_sync_msg_send_inner(u32 dev_id, void *msg_chan, struct ascend_ub_user
     }
     ubdrv_mutex_lock_polling(dev_id, &chan->tx_mutex);
     if (chan->status != UBDRV_CHAN_ENABLE) {
-        ubdrv_err("Chan is invalid. (status=%u;dev_id=%u;chan_id=%u;chan_type=%u)\n",
-            chan->status, dev_id, chan->chan_id, chan->msg_type);
+        ubdrv_err("Chan is invalid. (status=%u;dev_id=%u;chan_id=%u;chan_type=%u)\n", chan->status, dev_id,
+                  chan->chan_id, chan->msg_type);
         goto chan_unlock;
     }
     msg_num = (u32)ka_base_atomic_inc_return(&chan->msg_num);
     stat = &chan->chan_stat;
-    desc = ubdrv_alloc_sync_send_seg(&chan->msg_jetty, dev_id, msg_num,
-        UBDRV_ALLOC_SEG_TRY_CNT, UBDRV_ALLOC_SEG_WAIT_PER_US);
+    desc = ubdrv_alloc_sync_send_seg(&chan->msg_jetty, dev_id, msg_num, UBDRV_ALLOC_SEG_TRY_CNT,
+                                     UBDRV_ALLOC_SEG_WAIT_PER_US);
     if (desc == NULL) {
-        ubdrv_err("Alloc send seg failed. (dev_id=%u;chan_id=%u;chan_type=%u)\n",
-            dev_id, chan->chan_id, chan->msg_type);
+        ubdrv_err("Alloc send seg failed. (dev_id=%u;chan_id=%u;chan_type=%u)\n", dev_id, chan->chan_id,
+                  chan->msg_type);
         goto chan_unlock;
     }
     ret = ubdrv_non_trans_prepare_send(chan, desc, &wr_cfg, user_data);
     if (ret != 0) {
-        ubdrv_err("ubdrv_prepare_send_data failed. (dev_id=%u;ret=%d;chan_id=%u;chan_type=%u)\n",
-            dev_id, ret, chan->chan_id, chan->msg_type);
+        ubdrv_err("ubdrv_prepare_send_data failed. (dev_id=%u;ret=%d;chan_id=%u;chan_type=%u)\n", dev_id, ret,
+                  chan->chan_id, chan->msg_type);
         goto free_send_seg;
     }
     stat->tx_total++;
@@ -1012,8 +1002,8 @@ nontrans_msg_tatimeout:
     ret = ubdrv_post_send_wr(&wr_cfg, dev_id);
     if (ret != 0) {
         stat->tx_post_send_err++;
-        ubdrv_err("Post send wr failed. (ret=%d;seg_id=%u;dev_id=%u;chan_id=%u;chan_type=%u;msg_sqe=%u)\n",
-        ret, desc->seg_id, dev_id, chan->chan_id, chan->msg_type, msg_num);
+        ubdrv_err("Post send wr failed. (ret=%d;seg_id=%u;dev_id=%u;chan_id=%u;chan_type=%u;msg_sqe=%u)\n", ret,
+                  desc->seg_id, dev_id, chan->chan_id, chan->msg_type, msg_num);
         goto clear_user_data;
     }
     jetty_ctrl = &chan->msg_jetty.send_jetty;
@@ -1023,8 +1013,9 @@ nontrans_msg_tatimeout:
         ta_timeout_cnt++;
         goto nontrans_msg_tatimeout;
     } else if ((ret != 0) || (cr.status != UBCORE_CR_SUCCESS)) {
-        ubdrv_warn("Non trans chan send unsuccess. (ret=%d;cr_status=%d;dev_id=%u;chan_id=%u;msg_type=%u;dev_name=%s)\n",
-            ret, cr.status, dev_id, chan->chan_id, chan->msg_type, jetty_ctrl->ubc_dev->dev_name);
+        ubdrv_warn(
+            "Non trans chan send unsuccess. (ret=%d;cr_status=%d;dev_id=%u;chan_id=%u;msg_type=%u;dev_name=%s)\n", ret,
+            cr.status, dev_id, chan->chan_id, chan->msg_type, jetty_ctrl->ubc_dev->dev_name);
         ret = ((ret != 0) ? ret : cr.status);
         goto clear_user_data;
     }
@@ -1039,14 +1030,14 @@ nontrans_msg_tatimeout:
     }
     ret = ubdrv_copy_rqe_data_to_user(rqe_desc, user_data, stat, jetty_ctrl->recv_msg_len);
     if (ret != 0) {
-        ubdrv_err("Copy rqe data failed. (ret=%u;dev_id=%u;chan_id=%u;msg_type=%u;dev_name=%s)\n",
-            ret, dev_id, chan->chan_id, chan->msg_type, jetty_ctrl->ubc_dev->dev_name);
+        ubdrv_err("Copy rqe data failed. (ret=%u;dev_id=%u;chan_id=%u;msg_type=%u;dev_name=%s)\n", ret, dev_id,
+                  chan->chan_id, chan->msg_type, jetty_ctrl->ubc_dev->dev_name);
     }
     *real_out_len = rqe_desc->real_data_len;
 nontrans_repost_jfr:
     ret = ubdrv_msg_result_process(ret, (int)rqe_desc->status, chan->msg_type);
-    (void)ubdrv_post_jfr_wr(jetty_ctrl->jfr, jetty_ctrl->recv_seg, rqe_desc,
-        jetty_ctrl->recv_msg_len, rqe_desc->seg_id);
+    (void)ubdrv_post_jfr_wr(jetty_ctrl->jfr, jetty_ctrl->recv_seg, rqe_desc, jetty_ctrl->recv_msg_len,
+                            rqe_desc->seg_id);
 clear_user_data:
     ubdrv_non_trans_clear_user_data(desc, chan);
 free_send_seg:

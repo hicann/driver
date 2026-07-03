@@ -15,8 +15,8 @@
 #include "ascend_ub_main.h"
 #include "ascend_ub_rao.h"
 
-void ubdrv_set_rao_chan_cmd_by_chan_info(struct ubdrv_create_non_trans_cmd *cmd,
-    enum devdrv_rao_client_type type, u64 len)
+void ubdrv_set_rao_chan_cmd_by_chan_info(struct ubdrv_create_non_trans_cmd *cmd, enum devdrv_rao_client_type type,
+                                         u64 len)
 {
     cmd->chan_id = type;
     cmd->sq_depth = 1;
@@ -28,7 +28,7 @@ void ubdrv_set_rao_chan_cmd_by_chan_info(struct ubdrv_create_non_trans_cmd *cmd,
 }
 
 int ubdrv_register_rao_client(u32 dev_id, enum devdrv_rao_client_type type, u64 va, u64 len,
-    enum devdrv_rao_permission_type perm)
+                              enum devdrv_rao_permission_type perm)
 {
     struct ubdrv_create_non_trans_cmd cmd = {0};
     rao_client_ctrl_arr_ptr client_ctrl;
@@ -110,11 +110,10 @@ int ubdrv_unregister_rao_client(u32 dev_id, enum devdrv_rao_client_type type)
     cmd.chan_mode = UBDRV_MSG_CHAN_FOR_RAO;
     ret = devdrv_ub_msg_free_non_trans_queue_process(chan, &cmd);
     if (ret != 0) {
-    ubdrv_err("Host free RAO msg chan failed. (dev_id=%u; type=%d; ret=%d; chan_id=%u)\n",
-        chan->msg_dev->dev_id, type, ret, chan->chan_id);
+        ubdrv_err("Host free RAO msg chan failed. (dev_id=%u; type=%d; ret=%d; chan_id=%u)\n", chan->msg_dev->dev_id,
+                  type, ret, chan->chan_id);
     } else {
-        ubdrv_info("Host free RAO msg chan finish. (dev_id=%u; type=%d; chan_id=%u)\n",
-        dev_id, type, chan->chan_id);
+        ubdrv_info("Host free RAO msg chan finish. (dev_id=%u; type=%d; chan_id=%u)\n", dev_id, type, chan->chan_id);
     }
 
     client_ctrl[dev_id][type].status = UBDRV_RAO_CLIENT_DISABLE;
@@ -135,22 +134,22 @@ void ubdrv_free_all_rao_chan(u32 dev_id)
     return;
 }
 
-STATIC void ubdrv_rao_wqe_prepare(struct ubdrv_non_trans_chan *chan, struct send_wr_cfg *wr_cfg,
-    u64 offset, u64 len, enum ubcore_opcode opcode)
+STATIC void ubdrv_rao_wqe_prepare(struct ubdrv_non_trans_chan *chan, struct send_wr_cfg *wr_cfg, u64 offset, u64 len,
+                                  enum ubcore_opcode opcode)
 {
     wr_cfg->user_ctx = 0;
-    wr_cfg->jfs = chan->msg_jetty.send_jetty.jfs;    // local send jetty
-    wr_cfg->tjetty = chan->r_tjetty;                 // remote recv jetty
+    wr_cfg->jfs = chan->msg_jetty.send_jetty.jfs; // local send jetty
+    wr_cfg->tjetty = chan->r_tjetty;              // remote recv jetty
     wr_cfg->len = len;
     if (opcode == UBCORE_OPC_READ) {
         wr_cfg->sseg = chan->s_tseg;                        // read src: remote
         wr_cfg->tseg = chan->msg_jetty.recv_jetty.recv_seg; // read dst: local
     } else {
-        wr_cfg->sseg = chan->msg_jetty.send_jetty.send_seg;  // write src: local
+        wr_cfg->sseg = chan->msg_jetty.send_jetty.send_seg; // write src: local
         wr_cfg->tseg = chan->s_tseg;                        // write dst: remote
     }
-    wr_cfg->sva = wr_cfg->sseg->seg.ubva.va + offset;   // read src: remote write src: local
-    wr_cfg->dva = wr_cfg->tseg->seg.ubva.va + offset;   // read dst: local write dst: remote
+    wr_cfg->sva = wr_cfg->sseg->seg.ubva.va + offset; // read src: remote write src: local
+    wr_cfg->dva = wr_cfg->tseg->seg.ubva.va + offset; // read dst: local write dst: remote
 }
 
 int ubdrv_rao_read_para_check(u32 dev_id, enum devdrv_rao_client_type type, u64 offset, u64 len)
@@ -175,8 +174,8 @@ int ubdrv_rao_read_para_check(u32 dev_id, enum devdrv_rao_client_type type, u64 
     chan = &msg_dev->rao.rao_msg_chan[type];
     if ((offset >= chan->rao_info.len) || (len == 0) || (len > chan->rao_info.len) ||
         (offset + len > chan->rao_info.len)) {
-        ubdrv_err("Invalid offset or len. (dev_id=%u; type=%d; offset=0x%llx; len=0x%llx)\n",
-            dev_id, type, offset, len);
+        ubdrv_err("Invalid offset or len. (dev_id=%u; type=%d; offset=0x%llx; len=0x%llx)\n", dev_id, type, offset,
+                  len);
         return -EINVAL;
     }
 
@@ -204,15 +203,15 @@ rao_msg_tatimeout:
         ubdrv_err("Post send wr failed. (ret=%d;dev_id=%u;chan_type=%u)\n", ret, dev_id, type);
         return ret;
     }
-    ret = ubdrv_interval_poll_send_jfs_jfc(&chan->msg_jetty.send_jetty,
-        (u64)wr_cfg.user_ctx, MSG_MAX_WAIT_CNT, &cr, stat, check_status);
+    ret = ubdrv_interval_poll_send_jfs_jfc(&chan->msg_jetty.send_jetty, (u64)wr_cfg.user_ctx, MSG_MAX_WAIT_CNT, &cr,
+                                           stat, check_status);
     if ((ret == 0) && (cr.status == UBCORE_CR_ACK_TIMEOUT_ERR) && (ta_timeout_cnt < ubdrv_get_msg_retry_cnt(dev_id))) {
         ubdrv_rebuild_chan_send_jetty(dev_id, chan->chan_id, stat, &chan->msg_jetty.send_jetty, &wr_cfg);
         ta_timeout_cnt++;
         goto rao_msg_tatimeout;
     } else if ((ret != 0) || (cr.status != UBCORE_CR_SUCCESS)) {
-        ubdrv_warn("Rao chan send unsuccess. (ret=%d;cr_status=%d;dev_id=%u;chan_id=%u)\n",
-            ret, cr.status, dev_id, chan->chan_id);
+        ubdrv_warn("Rao chan send unsuccess. (ret=%d;cr_status=%d;dev_id=%u;chan_id=%u)\n", ret, cr.status, dev_id,
+                   chan->chan_id);
         ret = ((cr.status != 0) ? cr.status : ret);
     }
 
@@ -220,7 +219,7 @@ rao_msg_tatimeout:
 }
 
 STATIC void ubdrv_rao_operate_pack(struct ubdrv_rao_operate *operate, enum devdrv_rao_client_type type,
-    enum ubcore_opcode opcode, u64 offset, u64 len)
+                                   enum ubcore_opcode opcode, u64 offset, u64 len)
 {
     operate->type = type;
     operate->opcode = opcode;
@@ -229,8 +228,8 @@ STATIC void ubdrv_rao_operate_pack(struct ubdrv_rao_operate *operate, enum devdr
     return;
 }
 
-STATIC int ubdrv_rao_chan_process(u32 dev_id, enum devdrv_rao_client_type type, enum ubcore_opcode opcode,
-    u64 offset, u64 len)
+STATIC int ubdrv_rao_chan_process(u32 dev_id, enum devdrv_rao_client_type type, enum ubcore_opcode opcode, u64 offset,
+                                  u64 len)
 {
     struct ubdrv_non_trans_chan *chan = NULL;
     struct ascend_ub_msg_dev *msg_dev = NULL;

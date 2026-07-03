@@ -101,7 +101,8 @@ drvError_t hdc_dfx_query_event_proc(uint32_t dev_id, void *msg, uint32_t msg_len
 // Only close use common thread to process close_session message, OTHER event no need to register
 static drvError_t (*g_hdc_event_proc[HDCDRV_NOTIFY_MSG_MAX])(uint32_t dev_id, void *msg, uint32_t msg_len) = {
     [HDCDRV_NOTIFY_MSG_CONNECT] = hdc_connect_event_proc,
-    [HDCDRV_NOTIFY_MSG_CLOSE] = hdc_remote_close_proc,  // process hdc remote close request, equal to crtl_msg_close in pcie
+    // process hdc remote close request, equal to crtl_msg_close in pcie
+    [HDCDRV_NOTIFY_MSG_CLOSE] = hdc_remote_close_proc,
     [HDCDRV_NOTIFY_MSG_DFX] = hdc_dfx_query_event_proc,
 };
 

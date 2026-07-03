@@ -48,5 +48,5 @@ ka_rw_semaphore_t *devdrv_get_common_msg_rw_sem(void);
 int devdrv_pci_register_common_msg_client(const struct devdrv_common_msg_client *msg_client);
 int devdrv_pci_unregister_common_msg_client(u32 index_id, const struct devdrv_common_msg_client *msg_client);
 int devdrv_pci_common_msg_send(u32 index_id, void *data, u32 in_data_len, u32 out_data_len, u32 *real_out_len,
-    enum devdrv_common_msg_type msg_type);
+                               enum devdrv_common_msg_type msg_type);
 #endif

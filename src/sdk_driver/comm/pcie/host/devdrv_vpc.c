@@ -56,7 +56,7 @@ STATIC struct devdrv_dma_channel *devdrv_vpc_get_dma_chan_by_id(struct devdrv_dm
 }
 
 int devdrv_vpc_dma_iova_addr_check(struct devdrv_pci_ctrl *pci_ctrl, struct devdrv_dma_sq_node *sq_node,
-    enum devdrv_dma_direction direction)
+                                   enum devdrv_dma_direction direction)
 {
     u64 dma_src_start_addr;
     u64 dma_src_end_addr;
@@ -86,15 +86,15 @@ int devdrv_vpc_dma_iova_addr_check(struct devdrv_pci_ctrl *pci_ctrl, struct devd
 
     if ((direction == DEVDRV_DMA_HOST_TO_DEVICE) || (sq_node->opcode == DEVDRV_DMA_READ)) {
         if (((src_addr >= dma_src_start_addr) && (src_addr < dma_src_end_addr)) ||
-            ((src_addr < dma_src_start_addr) && ((src_addr + dma_len > dma_src_start_addr) ||
-            (src_addr + dma_len <= src_addr)))) {
+            ((src_addr < dma_src_start_addr) &&
+             ((src_addr + dma_len > dma_src_start_addr) || (src_addr + dma_len <= src_addr)))) {
             devdrv_err_spinlock("DMA H2D, sq src addr check fail. (devid=%u)\n", pci_ctrl->dev_id);
             return -EINVAL;
         }
     } else if ((direction == DEVDRV_DMA_DEVICE_TO_HOST) || (sq_node->opcode == DEVDRV_DMA_WRITE)) {
         if (((dst_addr >= dma_src_start_addr) && (dst_addr < dma_src_end_addr)) ||
-            ((dst_addr < dma_src_start_addr) && ((dst_addr + dma_len > dma_src_start_addr) ||
-            (dst_addr + dma_len <= dst_addr)))) {
+            ((dst_addr < dma_src_start_addr) &&
+             ((dst_addr + dma_len > dma_src_start_addr) || (dst_addr + dma_len <= dst_addr)))) {
             devdrv_err_spinlock("DMA D2H, sq dst addr check fail. (devid=%u)\n", pci_ctrl->dev_id);
             return -EINVAL;
         }
@@ -136,8 +136,8 @@ STATIC int devdrv_vpc_dma_fill_sq_desc_and_submit(u32 dev_id, struct devdrv_vpc_
 
     sq_idle_bd_cnt = devdrv_dma_get_sq_idle_bd_cnt(dma_chan);
     if ((sq_idle_bd_cnt < 0) || ((u32)sq_idle_bd_cnt < node_cnt)) {
-        devdrv_warn("No space. (dev_id=%u; chan_id=%u; idle_bd=%d; need=%u)\n",
-            dev_id, chan_id, sq_idle_bd_cnt, node_cnt);
+        devdrv_warn("No space. (dev_id=%u; chan_id=%u; idle_bd=%d; need=%u)\n", dev_id, chan_id, sq_idle_bd_cnt,
+                    node_cnt);
         return -ENOSPC;
     }
 
@@ -275,8 +275,8 @@ STATIC int devdrv_vpc_dma_link_prepare(u32 dev_id, struct devdrv_vpc_cmd_dma_des
         return -EINVAL;
     }
 
-    dma_prepare = devdrv_dma_link_prepare_inner(dev_id, dma_info->type, &dma_info->dma_node[0],
-        node_cnt, dma_info->fill_status);
+    dma_prepare = devdrv_dma_link_prepare_inner(dev_id, dma_info->type, &dma_info->dma_node[0], node_cnt,
+                                                dma_info->fill_status);
     if (dma_prepare == NULL) {
         devdrv_err("Get dma_link_prepare failed. (devid=%u)\n", dev_id);
         return -EINVAL;
@@ -363,7 +363,8 @@ STATIC int devdrv_vpc_dma_fill_desc_of_sq(u32 dev_id, struct devdrv_vpc_cmd_dma_
 
     dma_prepare.sq_dma_addr = dma_info->dma_desc_info.sq_dma_addr;
     dma_prepare.sq_size = dma_info->dma_desc_info.sq_size;
-    ret = devdrv_dma_fill_desc_of_sq_inner(dev_id, &dma_prepare, &dma_info->dma_node[0], node_cnt, dma_info->fill_status);
+    ret = devdrv_dma_fill_desc_of_sq_inner(dev_id, &dma_prepare, &dma_info->dma_node[0], node_cnt,
+                                           dma_info->fill_status);
     if (ret != 0) {
         devdrv_err("Fill sq node failed. (dev_id=%u)\n", dev_id);
     }

@@ -36,7 +36,7 @@ STATIC int ascend_ub_backup_online(void *feature, char *in, u32 in_len, char *ou
         return -EINVAL;
     }
 
-    data = (struct dms_device_replace_stru*)in;
+    data = (struct dms_device_replace_stru *)in;
     dev_id = (u32)data->dst_dev_attr.phy_dev_id;
     if (dev_id >= ASCEND_UB_DEV_MAX_NUM) {
         ubdrv_err("Check dsmi data dev_id fail. (sdev_id=%u)\n", dev_id);
@@ -80,34 +80,14 @@ STATIC int ascend_ub_get_dev_id_info(void *feature, char *in, u32 in_len, char *
 
 BEGIN_DMS_MODULE_DECLARATION(ASCEND_UB_CMD_NAME)
 BEGIN_FEATURE_COMMAND()
-ADD_FEATURE_COMMAND(ASCEND_UB_CMD_NAME,
-    ASCEND_UB_CMD_BASIC,
-    ASCEND_UB_SUBCMD_GET_URMA_NAME,
-    NULL,
-    NULL,
-    DMS_SUPPORT_ALL,
-    ascend_ub_get_urma_name)
-ADD_FEATURE_COMMAND(ASCEND_UB_CMD_NAME,
-    ASCEND_UB_CMD_BASIC,
-    ASCEND_UB_SUBCMD_GET_EID_INDEX,
-    NULL,
-    NULL,
-    DMS_SUPPORT_ALL,
-    ascend_ub_get_eid_index)
-ADD_FEATURE_COMMAND(ASCEND_UB_CMD_NAME,
-    ASCEND_UB_CMD_BASIC,
-    ASCEND_UB_SUBCMD_HOST_DEVICE_RELINK,
-    NULL,
-    NULL,
-    DMS_SUPPORT_ROOT_PHY,
-    ascend_ub_backup_online)
-ADD_FEATURE_COMMAND(ASCEND_UB_CMD_NAME,
-    ASCEND_UB_CMD_BASIC,
-    ASCEND_UB_SUBCMD_GET_DEV_ID_INFO,
-    NULL,
-    NULL,
-    DMS_SUPPORT_ALL,
-    ascend_ub_get_dev_id_info)
+ADD_FEATURE_COMMAND(ASCEND_UB_CMD_NAME, ASCEND_UB_CMD_BASIC, ASCEND_UB_SUBCMD_GET_URMA_NAME, NULL, NULL,
+                    DMS_SUPPORT_ALL, ascend_ub_get_urma_name)
+ADD_FEATURE_COMMAND(ASCEND_UB_CMD_NAME, ASCEND_UB_CMD_BASIC, ASCEND_UB_SUBCMD_GET_EID_INDEX, NULL, NULL,
+                    DMS_SUPPORT_ALL, ascend_ub_get_eid_index)
+ADD_FEATURE_COMMAND(ASCEND_UB_CMD_NAME, ASCEND_UB_CMD_BASIC, ASCEND_UB_SUBCMD_HOST_DEVICE_RELINK, NULL, NULL,
+                    DMS_SUPPORT_ROOT_PHY, ascend_ub_backup_online)
+ADD_FEATURE_COMMAND(ASCEND_UB_CMD_NAME, ASCEND_UB_CMD_BASIC, ASCEND_UB_SUBCMD_GET_DEV_ID_INFO, NULL, NULL,
+                    DMS_SUPPORT_ALL, ascend_ub_get_dev_id_info)
 END_FEATURE_COMMAND()
 END_MODULE_DECLARATION()
 

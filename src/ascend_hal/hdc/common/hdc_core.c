@@ -902,11 +902,11 @@ STATIC void drv_hdc_mmap_fail_info_show(enum drvHdcMemType mem_type, unsigned in
     }
 }
 
-void *drvHdcMallocEx(enum drvHdcMemType mem_type, void *addr, unsigned int align, unsigned int len,
-    signed int devid, unsigned int flag)
+void *drvHdcMallocEx(enum drvHdcMemType mem_type, void *addr, unsigned int align, unsigned int len, signed int devid,
+                     unsigned int flag)
 {
     void *buf = NULL;
-    unsigned int alloc_len;  // page align
+    unsigned int alloc_len; // page align
     signed int map = 1;
     mmProcess fd = HDC_SESSION_FD_INVALID;
     signed int ret;
@@ -930,7 +930,7 @@ void *drvHdcMallocEx(enum drvHdcMemType mem_type, void *addr, unsigned int align
     fd = hdc_pcie_mem_bind_fd();
     if (fd == (mmProcess)EN_ERROR) {
         HDC_LOG_ERR("Set reference open pcie device failed. (errno=%d; StrError=\"%s\")\n", mm_get_error_code(),
-            StrError(mm_get_error_code()));
+                    StrError(mm_get_error_code()));
         return NULL;
     }
 
@@ -955,11 +955,11 @@ void *drvHdcMallocEx(enum drvHdcMemType mem_type, void *addr, unsigned int align
         fd = HDC_SESSION_FD_INVALID;
 
         HDC_LOG_ERR("Alloc memory failed. (len=%d; errno=%d; STRERROR=\"%s\"; len=%d; flag=%d; mem_type=%d)\n",
-            alloc_len, ret, STRERROR(ret), alloc_len, flag, mem_type);
+                    alloc_len, ret, STRERROR(ret), alloc_len, flag, mem_type);
 
         if (munmap(buf, alloc_len) != 0) {
-            HDC_LOG_ERR("Call munmap failed. (StrError=\"%s\"; errno=%d)\n",
-                        StrError(mm_get_error_code()), mm_get_error_code());
+            HDC_LOG_ERR("Call munmap failed. (StrError=\"%s\"; errno=%d)\n", StrError(mm_get_error_code()),
+                        mm_get_error_code());
         }
 
         buf = NULL;
@@ -1406,7 +1406,8 @@ hdcError_t drvHdcGetMsgBuffer(struct drvHdcMsg *msg, signed int index, char **pB
     return DRV_ERROR_NONE;
 }
 
-STATIC hdcError_t drv_hdc_recv_msg_len(struct hdc_session *pSession, unsigned int *msgLen, struct hdc_recv_config *recvConfig)
+STATIC hdcError_t drv_hdc_recv_msg_len(struct hdc_session *pSession, unsigned int *msgLen,
+                                       struct hdc_recv_config *recvConfig)
 {
     hdcError_t err = DRV_ERROR_SOCKET_CONNECT;
     signed int session_fd = pSession->sockfd;
@@ -1437,11 +1438,11 @@ STATIC hdcError_t drv_hdc_recv_msg_len(struct hdc_session *pSession, unsigned in
                 return DRV_ERROR_INVALID_HANDLE;
             } else if (ret == (-HDCDRV_DEVICE_NOT_READY)) {
                 return DRV_ERROR_DEVICE_NOT_READY;
-            }  else if (ret == (-HDCDRV_PEER_REBOOT)) {
+            } else if (ret == (-HDCDRV_PEER_REBOOT)) {
                 return DRV_ERROR_SOCKET_CLOSE;
             } else {
-                HDC_LOG_ERR("Got receive message length failed. (errno=%d; STRERROR=\"%s\"; session=%d)\n",
-                            ret, STRERROR(ret), session_fd);
+                HDC_LOG_ERR("Got receive message length failed. (errno=%d; STRERROR=\"%s\"; session=%d)\n", ret,
+                            STRERROR(ret), session_fd);
             }
 
             return ret;
@@ -1454,7 +1455,8 @@ STATIC hdcError_t drv_hdc_recv_msg_len(struct hdc_session *pSession, unsigned in
             return DRV_ERROR_SOCKET_CLOSE;
         }
     } else {
-        if ((err = hdc_socket_recv_peek(session_fd, &msg_len, recvConfig->wait, recvConfig->timeout)) != DRV_ERROR_NONE) {
+        if ((err = hdc_socket_recv_peek(session_fd, &msg_len, recvConfig->wait, recvConfig->timeout)) !=
+            DRV_ERROR_NONE) {
             if (err != DRV_ERROR_SOCKET_CLOSE) {
                 HDC_LOG_ERR("Got receive message length failed. (ret=%d)\n", err);
             }
@@ -2199,15 +2201,15 @@ hdcError_t halHdcFastSend(HDC_SESSION session, struct drvHdcFastSendMsg msg, UIN
  *  Modification         : New generated function
  *
  *****************************************************************************/
-hdcError_t halHdcRecvEx(HDC_SESSION session, struct drvHdcMsg *pMsg, signed int bufLen,
-    signed int *recvBufCount, struct drvHdcRecvConfig *userConfig)
+hdcError_t halHdcRecvEx(HDC_SESSION session, struct drvHdcMsg *pMsg, signed int bufLen, signed int *recvBufCount,
+                        struct drvHdcRecvConfig *userConfig)
 {
     struct hdc_session *pSession = (struct hdc_session *)session;
     struct hdc_msg_head *p_hdc_msg_head = NULL;
     struct hdc_recv_config p_recv_config = {0};
     hdcError_t ret = DRV_ERROR_INVALID_VALUE;
     unsigned int msg_len = 0;
-    char   *pBuf = NULL;
+    char *pBuf = NULL;
 
     (void)bufLen;
 
@@ -2258,8 +2260,8 @@ hdcError_t halHdcRecvEx(HDC_SESSION session, struct drvHdcMsg *pMsg, signed int 
     }
 
     /* change free from false to true */
-    p_hdc_msg_head = container_of(pMsg, struct hdc_msg_head, msg); //lint !e102 !e14 !e42 !e564
-    p_hdc_msg_head->freeBuf = true;        //lint !e413
+    p_hdc_msg_head = container_of(pMsg, struct hdc_msg_head, msg); // lint !e102 !e14 !e42 !e564
+    p_hdc_msg_head->freeBuf = true;                                // lint !e413
 
     ret = drv_hdc_recv_msg_body(pSession, pBuf, msg_len, (unsigned int *)&pMsg->bufList[0].len, &p_recv_config);
     if (ret != DRV_ERROR_NONE) {

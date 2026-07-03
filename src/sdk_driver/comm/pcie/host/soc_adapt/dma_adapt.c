@@ -67,8 +67,8 @@ void devdrv_dma_set_sq_attr(struct devdrv_dma_sq_node *sq_desc, struct devdrv_dm
     sq_desc->rd_barrier = sq_desc_info.rd_barrier;
 
     devdrv_debug_spinlock("Set sq attr ok. (opcode=%x; attr=%x; pf=%x; vf=%x; wd_barrier=%x; rd_barrier=%x)\n",
-        sq_desc_info.opcode, sq_desc_info.attr, sq_desc_info.pf, sq_desc_info.vf,
-        sq_desc_info.wd_barrier, sq_desc_info.rd_barrier);
+                          sq_desc_info.opcode, sq_desc_info.attr, sq_desc_info.pf, sq_desc_info.vf,
+                          sq_desc_info.wd_barrier, sq_desc_info.rd_barrier);
 }
 
 void devdrv_dma_set_sq_irq(struct devdrv_dma_sq_node *sq_desc, u32 rdie, u32 ldie, u32 msi)
@@ -80,8 +80,8 @@ void devdrv_dma_set_sq_irq(struct devdrv_dma_sq_node *sq_desc, u32 rdie, u32 ldi
     devdrv_debug_spinlock("Set sq_irq. (rdie=%x; ldie=%x; msi=%x)\n", rdie, ldie, msi);
 }
 
-void devdrv_dma_set_passid(struct devdrv_dma_sq_node *sq_desc, u32 loc_passid, int direction,
-                           int pava_flag, int connect_type)
+void devdrv_dma_set_passid(struct devdrv_dma_sq_node *sq_desc, u32 loc_passid, int direction, int pava_flag,
+                           int connect_type)
 {
     if (pava_flag == DEVDRV_DMA_PA_COPY) {
         sq_desc->pa_loc = DEVDRV_DMA_DES_PA_LOC_PA;
@@ -153,8 +153,7 @@ void devdrv_dma_ops_init(struct devdrv_dma_dev *dma_dev, u32 chip_type)
     dma_dev->ops.devdrv_dma_set_cq_invalid = devdrv_dma_set_cq_invalid_flip;
 }
 
-STATIC void devdrv_set_pf_dma_queue_chan_pause(void __ka_mm_iomem *dma_chan_base,
-    bool pause_flag, u32 chan_id)
+STATIC void devdrv_set_pf_dma_queue_chan_pause(void __ka_mm_iomem *dma_chan_base, bool pause_flag, u32 chan_id)
 {
     void __ka_mm_iomem *reg_addr = NULL;
     u32 regval;

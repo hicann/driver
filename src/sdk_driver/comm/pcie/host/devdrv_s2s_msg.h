@@ -28,13 +28,14 @@
 #define DEVDRV_S2S_SUPPORT_MAX_CHAN_NUM (DEVDRV_S2S_SUPPORT_MAX_CHAN_NUM_DEV + DEVDRV_S2S_SUPPORT_MAX_CHAN_NUM_HOST)
 #define DEVDRV_S2S_MAX_DEV_NUM (DEVDRV_S2S_MAX_CHIP_NUM * DEVDRV_S2S_DIE_NUM)
 
-#define DEVDRV_S2S_HOST_MSG_SIZE           0x800 /* 2K */
-#define DEVDRV_S2S_DEVICE_MSG_SIZE         0x1000 /* 4K */
+#define DEVDRV_S2S_HOST_MSG_SIZE 0x800            /* 2K */
+#define DEVDRV_S2S_DEVICE_MSG_SIZE 0x1000         /* 4K */
 #define DEVDRV_S2S_NON_TRANS_MSG_DESC_SIZE 0x1000 /* 4K */
 
 #define DEVDRV_S2S_SEND_MSG_ADDR_OFFSET 0 /* send queue offset, which is zero */
-#define DEVDRV_S2S_SEND_MSG_ADDR_SIZE (DEVDRV_S2S_HOST_MSG_SIZE * DEVDRV_S2S_SUPPORT_MAX_CHAN_NUM_HOST + \
-    DEVDRV_S2S_DEVICE_MSG_SIZE * DEVDRV_S2S_SUPPORT_MAX_CHAN_NUM_DEV)
+#define DEVDRV_S2S_SEND_MSG_ADDR_SIZE                                  \
+    (DEVDRV_S2S_HOST_MSG_SIZE * DEVDRV_S2S_SUPPORT_MAX_CHAN_NUM_HOST + \
+     DEVDRV_S2S_DEVICE_MSG_SIZE * DEVDRV_S2S_SUPPORT_MAX_CHAN_NUM_DEV)
 #define DEVDRV_S2S_RECV_MSG_ADDR_OFFSET DEVDRV_S2S_SEND_MSG_ADDR_SIZE /* recv queue is next to send queue */
 #define DEVDRV_S2S_RECV_MSG_ADDR_SIZE DEVDRV_S2S_SEND_MSG_ADDR_SIZE
 #define DEVDRV_S2S_MSG_ADDR_TOTAL_SIZE (DEVDRV_S2S_SEND_MSG_ADDR_SIZE + DEVDRV_S2S_RECV_MSG_ADDR_SIZE)
@@ -59,18 +60,18 @@
 
 #define DEVDRV_LOCAL_SUPER_NODE_START_ADDR 0x201054000000
 #define DEVDRV_S2S_SERVER_ADDR_BASE 0x300000000000
-#define DEVDRV_S2S_SERVER_ADDR_OFFSET 0x010000000000  /* 1T */
-#define DEVDRV_S2S_CHIP_ADDR_OFFSET 0x02000000000     /* 128G */
-#define DEVDRV_S2S_DIE_ADDR_OFFSET 0x01000000000      /* 64G */
+#define DEVDRV_S2S_SERVER_ADDR_OFFSET 0x010000000000 /* 1T */
+#define DEVDRV_S2S_CHIP_ADDR_OFFSET 0x02000000000    /* 128G */
+#define DEVDRV_S2S_DIE_ADDR_OFFSET 0x01000000000     /* 64G */
 
 #define DEVDRV_DB_ADD_OFFSET_ADDR 0x1000000
 #define DEVDRV_SERVER_DB_BASE_ADDR 0x400100000
 
-#define DEVDRV_S2S_HOST_CHAN_EACH 2  /* 2 channel for each die */
+#define DEVDRV_S2S_HOST_CHAN_EACH 2 /* 2 channel for each die */
 
-#define DEVDRV_S2S_NORMAL    0
+#define DEVDRV_S2S_NORMAL 0
 #define DEVDRV_S2S_PRE_RESET 1
-#define DEVDRV_S2S_ABORT     2
+#define DEVDRV_S2S_ABORT 2
 
 #define DEVDRV_S2S_CB_TIME 1000 /* ms */
 
@@ -84,8 +85,8 @@
 #define DEVDRV_S2S_NON_TRANS_MSG_CHAN_NUM 8 /* host/device must be the same */
 
 struct devdrv_msg_s2s_queue_info {
-    struct devdrv_s2s_msg *desc;        // map from union address each host for 16 devices, used for cq
-    struct devdrv_s2s_msg *data_buf;    // used for service data transfer
+    struct devdrv_s2s_msg *desc;     // map from union address each host for 16 devices, used for cq
+    struct devdrv_s2s_msg *data_buf; // used for service data transfer
     ka_dma_addr_t data_buf_addr;
     struct devdrv_s2s_msg *ack_buf;
     ka_dma_addr_t ack_addr;
@@ -153,15 +154,15 @@ struct devdrv_s2s_non_trans_msg {
 int devdrv_s2s_msg_chan_init(struct devdrv_pci_ctrl *pci_ctrl);
 void devdrv_s2s_msg_chan_uninit(struct devdrv_pci_ctrl *pci_ctrl);
 u64 devdrv_s2s_get_doobell_reg_addr_from_irqpool(u32 server_id, u32 chip_id, u32 die_id, u32 irq_idx);
-extern int devdrv_s2s_non_trans_msg_recv(void *msg_chan, void *data, u32 in_data_len,
-    u32 out_data_len, u32 *real_out_len);
+extern int devdrv_s2s_non_trans_msg_recv(void *msg_chan, void *data, u32 in_data_len, u32 out_data_len,
+                                         u32 *real_out_len);
 void devdrv_s2s_rwsem_init(void);
 void *devdrv_get_s2s_non_trans_chan(struct devdrv_msg_dev *msg_dev);
 void devdrv_set_s2s_chan_pre_reset(u32 dev_id);
 int devdrv_pci_register_s2s_msg_proc_func(enum devdrv_s2s_msg_type msg_type, s2s_msg_recv func);
 int devdrv_pci_unregister_s2s_msg_proc_func(enum devdrv_s2s_msg_type msg_type);
 int devdrv_pci_s2s_msg_send(u32 devid, u32 sdid, enum devdrv_s2s_msg_type msg_type, u32 direction,
-    struct data_input_info *data_info);
+                            struct data_input_info *data_info);
 int devdrv_pci_s2s_async_msg_recv(u32 devid, u32 sdid, enum devdrv_s2s_msg_type msg_type,
-    struct data_recv_info *data_info);
+                                  struct data_recv_info *data_info);
 #endif

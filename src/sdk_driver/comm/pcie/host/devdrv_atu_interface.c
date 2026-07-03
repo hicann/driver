@@ -17,8 +17,7 @@
 #include "devdrv_ctrl.h"
 #include "pbl/pbl_uda.h"
 
-int devdrv_get_atu_info(struct devdrv_pci_ctrl *pci_ctrl, int atu_type, struct devdrv_iob_atu **atu,
-    u64 *host_phy_base)
+int devdrv_get_atu_info(struct devdrv_pci_ctrl *pci_ctrl, int atu_type, struct devdrv_iob_atu **atu, u64 *host_phy_base)
 {
     int ret = 0;
     switch (atu_type) {
@@ -35,8 +34,8 @@ int devdrv_get_atu_info(struct devdrv_pci_ctrl *pci_ctrl, int atu_type, struct d
     return ret;
 }
 
-int devdrv_atu_base_to_target(struct devdrv_pci_ctrl *pci_ctrl, struct devdrv_iob_atu atu[], int num,
-    u64 base_addr, u64 *target_addr)
+int devdrv_atu_base_to_target(struct devdrv_pci_ctrl *pci_ctrl, struct devdrv_iob_atu atu[], int num, u64 base_addr,
+                              u64 *target_addr)
 {
     u64 bar_base;
     int i;
@@ -59,8 +58,8 @@ int devdrv_atu_base_to_target(struct devdrv_pci_ctrl *pci_ctrl, struct devdrv_io
     return -EINVAL;
 }
 
-int devdrv_atu_target_to_base(struct devdrv_pci_ctrl *pci_ctrl, struct devdrv_iob_atu atu[], int num,
-    u64 target_addr, u64 *base_addr)
+int devdrv_atu_target_to_base(struct devdrv_pci_ctrl *pci_ctrl, struct devdrv_iob_atu atu[], int num, u64 target_addr,
+                              u64 *base_addr)
 {
     u64 bar_base;
     int i;
@@ -114,8 +113,8 @@ int devdrv_devmem_addr_d2h(u32 udevid, phys_addr_t device_phy_addr, phys_addr_t 
         return -EINVAL;
     }
 
-    if (devdrv_atu_target_to_base(pci_ctrl, atu, DEVDRV_MAX_RX_ATU_NUM, (u64)device_phy_addr,
-                                  (u64 *)host_bar_addr) != 0) {
+    if (devdrv_atu_target_to_base(pci_ctrl, atu, DEVDRV_MAX_RX_ATU_NUM, (u64)device_phy_addr, (u64 *)host_bar_addr) !=
+        0) {
         devdrv_warn("device_phy_addr not found. (udevid=%u; index_id=%u)\n", udevid, index_id);
         return -EFAULT;
     }
@@ -156,7 +155,7 @@ int devdrv_devmem_addr_h2d(u32 udevid, phys_addr_t host_bar_addr, phys_addr_t *d
     }
 
     if (devdrv_atu_base_to_target(pci_ctrl, atu, DEVDRV_MAX_RX_ATU_NUM, (u64)(host_bar_addr - host_phy_base),
-        (u64 *)device_phy_addr) != 0) {
+                                  (u64 *)device_phy_addr) != 0) {
         devdrv_err("host_bar_addr not found. (udevid=%u; index_id=%u)\n", udevid, index_id);
         return -EINVAL;
     }

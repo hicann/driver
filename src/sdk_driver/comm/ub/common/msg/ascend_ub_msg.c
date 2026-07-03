@@ -28,8 +28,7 @@ void ubdrv_wait_chan_jfce_user_cnt(ka_atomic_t *user_cnt, u32 dev_id, u32 chan_i
         }
         ka_system_usleep_range(1, 2);
     }
-    ubdrv_warn("Wait msg chan jfce_recv user cnt timeout. (chan_id=%u;dev_id=%u)\n",
-        chan_id, dev_id);
+    ubdrv_warn("Wait msg chan jfce_recv user cnt timeout. (chan_id=%u;dev_id=%u)\n", chan_id, dev_id);
 }
 
 int ubdrv_copy_user_send(struct ascend_ub_msg_desc *desc, char *data, u32 len, u32 max_len)
@@ -40,22 +39,21 @@ int ubdrv_copy_user_send(struct ascend_ub_msg_desc *desc, char *data, u32 len, u
     return memcpy_s(&(desc->user_data), len, data, len);
 }
 
-int ubdrv_prepare_recv_data(struct ascend_ub_msg_desc *desc, struct ascend_ub_user_data *data,
-    u32 msg_num, u32 max_len)
+int ubdrv_prepare_recv_data(struct ascend_ub_msg_desc *desc, struct ascend_ub_user_data *data, u32 msg_num, u32 max_len)
 {
     u32 real_reply_size = desc->real_data_len;
 
     if (msg_num != desc->msg_num) {
-        ubdrv_err("Msg num check failed. (seg_id=%u;msg_num=%u;real_msg_num=%u)\n",
-            desc->seg_id, msg_num, desc->msg_num);
-            return -EAGAIN;
+        ubdrv_err("Msg num check failed. (seg_id=%u;msg_num=%u;real_msg_num=%u)\n", desc->seg_id, msg_num,
+                  desc->msg_num);
+        return -EAGAIN;
     }
     if ((data->reply == NULL) || (real_reply_size == 0)) {
         return 0;
     } else {
         if ((real_reply_size > data->reply_size) || (real_reply_size > max_len)) {
-            ubdrv_err("Reply data len invalid. (reply_size=%u;real_reply_size=%u)\n",
-                data->reply_size, real_reply_size);
+            ubdrv_err("Reply data len invalid. (reply_size=%u;real_reply_size=%u)\n", data->reply_size,
+                      real_reply_size);
             return -EINVAL;
         }
         return memcpy_s(data->reply, data->reply_size, &(desc->user_data), real_reply_size);
@@ -63,7 +61,7 @@ int ubdrv_prepare_recv_data(struct ascend_ub_msg_desc *desc, struct ascend_ub_us
 }
 
 int ubdrv_copy_rqe_data_to_user(struct ascend_ub_msg_desc *rqe_desc, struct ascend_ub_user_data *data,
-    struct ubdrv_msg_chan_stat *stat, u32 rqe_len)
+                                struct ubdrv_msg_chan_stat *stat, u32 rqe_len)
 {
     u32 real_reply_size = rqe_desc->real_data_len;
     u32 max_len;
@@ -78,16 +76,16 @@ int ubdrv_copy_rqe_data_to_user(struct ascend_ub_msg_desc *rqe_desc, struct asce
     }
     max_len = (rqe_len - ASCEND_UB_MSG_DESC_LEN);
     if ((real_reply_size > data->reply_size) || (real_reply_size > max_len)) {
-        ubdrv_err("Reply data len invalid. (expect_reply_size=%u;real_reply_size=%u;max_len=%u)\n",
-            data->reply_size, real_reply_size, max_len);
-            stat->tx_recv_data_err++;
+        ubdrv_err("Reply data len invalid. (expect_reply_size=%u;real_reply_size=%u;max_len=%u)\n", data->reply_size,
+                  real_reply_size, max_len);
+        stat->tx_recv_data_err++;
         return -EINVAL;
     }
     return memcpy_s(data->reply, data->reply_size, rqe_desc->user_data, real_reply_size);
 }
 
-struct ascend_ub_msg_desc *ubdrv_alloc_sync_send_seg(struct ascend_ub_sync_jetty *sync_jetty,
-    u32 dev_id, u32 msg_num, u32 try_cnt, u32 wait_per_us)
+struct ascend_ub_msg_desc *ubdrv_alloc_sync_send_seg(struct ascend_ub_sync_jetty *sync_jetty, u32 dev_id, u32 msg_num,
+                                                     u32 try_cnt, u32 wait_per_us)
 {
     u32 i;
     struct ascend_ub_jetty_ctrl *send_jetty;
@@ -133,8 +131,7 @@ retry:
     return tmp_desc;
 }
 
-void ubdrv_free_sync_send_seg(struct ascend_ub_sync_jetty *sync_jetty,
-    struct ascend_ub_msg_desc *desc)
+void ubdrv_free_sync_send_seg(struct ascend_ub_sync_jetty *sync_jetty, struct ascend_ub_msg_desc *desc)
 {
     ka_task_mutex_lock(&sync_jetty->mutex_lock);
     desc->status = UB_MSG_IDLE;
@@ -142,8 +139,7 @@ void ubdrv_free_sync_send_seg(struct ascend_ub_sync_jetty *sync_jetty,
     return;
 }
 
-void ubdrv_record_chan_jetty_info(struct ubdrv_msg_chan_stat *stat,
-    struct ascend_ub_sync_jetty *sync_jetty)
+void ubdrv_record_chan_jetty_info(struct ubdrv_msg_chan_stat *stat, struct ascend_ub_sync_jetty *sync_jetty)
 {
     struct ascend_ub_jetty_ctrl *send_jetty = &sync_jetty->send_jetty;
     struct ascend_ub_jetty_ctrl *recv_jetty = &sync_jetty->recv_jetty;
@@ -167,8 +163,7 @@ void ubdrv_clear_chan_dfx(struct ubdrv_msg_chan_stat *stat)
     return;
 }
 
-void ubdrv_recv_msg_call_process(struct ascend_ub_jetty_ctrl *cfg,
-    struct ascend_ub_msg_desc *desc, u32 seg_id)
+void ubdrv_recv_msg_call_process(struct ascend_ub_jetty_ctrl *cfg, struct ascend_ub_msg_desc *desc, u32 seg_id)
 {
     if (cfg->chan_mode == UBDRV_MSG_CHAN_FOR_ADMIN) {
         ubdrv_admin_recv_prepare_process(cfg, desc, seg_id);
@@ -181,8 +176,8 @@ void ubdrv_recv_msg_call_process(struct ascend_ub_jetty_ctrl *cfg,
     }
 }
 
-struct ascend_ub_msg_desc* ubdrv_copy_msg_from_rqe_to_chan(struct ascend_ub_jetty_ctrl *cfg,
-    struct ascend_ub_msg_desc *src_desc, u32 seg_id)
+struct ascend_ub_msg_desc *ubdrv_copy_msg_from_rqe_to_chan(struct ascend_ub_jetty_ctrl *cfg,
+                                                           struct ascend_ub_msg_desc *src_desc, u32 seg_id)
 {
     struct ubdrv_non_trans_chan *chan;
     struct ascend_ub_admin_chan *admin_chan;
@@ -190,7 +185,7 @@ struct ascend_ub_msg_desc* ubdrv_copy_msg_from_rqe_to_chan(struct ascend_ub_jett
     u32 dev_id = 0, chan_id = 0;
     int ret;
 
-     if ((cfg->chan_mode == UBDRV_MSG_CHAN_FOR_NON_TRANS) || ((cfg->chan_mode == UBDRV_MSG_CHAN_FOR_RAO))) {
+    if ((cfg->chan_mode == UBDRV_MSG_CHAN_FOR_NON_TRANS) || ((cfg->chan_mode == UBDRV_MSG_CHAN_FOR_RAO))) {
         chan = cfg->msg_chan;
         dst_desc = chan->msg_desc;
         dev_id = chan->dev_id;
@@ -202,28 +197,28 @@ struct ascend_ub_msg_desc* ubdrv_copy_msg_from_rqe_to_chan(struct ascend_ub_jett
         chan_id = (u32)-1;
     }
     if (dst_desc->msg_num == src_desc->msg_num) {
-        ubdrv_err("Recv repeat msg. (seg_id=%u;dev_id=%u;chan_id=%u;msg_num=%u)\n",
-            seg_id, dev_id, chan_id, dst_desc->msg_num);
+        ubdrv_err("Recv repeat msg. (seg_id=%u;dev_id=%u;chan_id=%u;msg_num=%u)\n", seg_id, dev_id, chan_id,
+                  dst_desc->msg_num);
         return NULL;
     }
     ret = memcpy_s(dst_desc, cfg->recv_msg_len, src_desc, cfg->recv_msg_len);
     if (ret != 0) {
-        ubdrv_err("Copy msg from rqe to chan fail. (seg_id=%u;dev_id=%u;chan_id=%u;ret=%d)\n",
-            seg_id, dev_id, chan_id, ret);
+        ubdrv_err("Copy msg from rqe to chan fail. (seg_id=%u;dev_id=%u;chan_id=%u;ret=%d)\n", seg_id, dev_id, chan_id,
+                  ret);
         return NULL;
     }
     return dst_desc;
 }
 
 void ubdrv_rebuild_chan_send_jetty(u32 dev_id, u32 chan_id, struct ubdrv_msg_chan_stat *stat,
-    struct ascend_ub_jetty_ctrl *jetty_ctrl, struct send_wr_cfg *wr_cfg)
+                                   struct ascend_ub_jetty_ctrl *jetty_ctrl, struct send_wr_cfg *wr_cfg)
 {
     int ret;
 
     stat->tx_rebuild_jfs++;
     ret = ubdrv_rebuild_jfs_jfc(dev_id, jetty_ctrl);
-    ubdrv_warn("Enter send jfs rebuild. (chan_id=%u;dev_id=%u;chan_mode=%u;dev_name=%s;ret=%d)\n",
-        chan_id, dev_id, jetty_ctrl->chan_mode, jetty_ctrl->ubc_dev->dev_name, ret);
+    ubdrv_warn("Enter send jfs rebuild. (chan_id=%u;dev_id=%u;chan_mode=%u;dev_name=%s;ret=%d)\n", chan_id, dev_id,
+               jetty_ctrl->chan_mode, jetty_ctrl->ubc_dev->dev_name, ret);
     if (ret != 0) {
         wr_cfg->jfs = NULL;
         return;
@@ -235,13 +230,13 @@ void ubdrv_rebuild_chan_send_jetty(u32 dev_id, u32 chan_id, struct ubdrv_msg_cha
 }
 
 STATIC void ubdrv_rebuild_chan_recv_jetty(u32 dev_id, u32 chan_id, struct ubdrv_msg_chan_stat *stat,
-    struct ascend_ub_jetty_ctrl *jetty_ctrl, struct send_wr_cfg *wr_cfg)
+                                          struct ascend_ub_jetty_ctrl *jetty_ctrl, struct send_wr_cfg *wr_cfg)
 {
     int ret;
 
     ret = ubdrv_rebuild_jfs_jfc(dev_id, jetty_ctrl);
-    ubdrv_warn("Enter recv jfs rebuild(chan_id=%u;dev_id=%u;chan_mode=%u;dev_name=%s;ret=%d)\n",
-        chan_id, dev_id, jetty_ctrl->chan_mode, jetty_ctrl->ubc_dev->dev_name, ret);
+    ubdrv_warn("Enter recv jfs rebuild(chan_id=%u;dev_id=%u;chan_mode=%u;dev_name=%s;ret=%d)\n", chan_id, dev_id,
+               jetty_ctrl->chan_mode, jetty_ctrl->ubc_dev->dev_name, ret);
     if (ret != 0) {
         wr_cfg->jfs = NULL;
         return;
@@ -252,8 +247,8 @@ STATIC void ubdrv_rebuild_chan_recv_jetty(u32 dev_id, u32 chan_id, struct ubdrv_
     return;
 }
 
-int ubdrv_send_reply_msg(u32 dev_id, u32 chan_id, struct send_wr_cfg *wr_cfg,
-    struct ascend_ub_jetty_ctrl *jetty_ctrl, struct ubdrv_msg_chan_stat *stat)
+int ubdrv_send_reply_msg(u32 dev_id, u32 chan_id, struct send_wr_cfg *wr_cfg, struct ascend_ub_jetty_ctrl *jetty_ctrl,
+                         struct ubdrv_msg_chan_stat *stat)
 {
     struct ubcore_cr cr = {0};
     u32 retry_cnt = 0;
@@ -286,19 +281,17 @@ int ubdrv_msg_result_process(int ret, int peer_status, u32 msg_type)
         return 0;
     } else if (peer_status == UB_MSG_PROCESS_FAILED) {
         ubdrv_warn("Msg send finish, process unsuccessful, Please check peer log. (process_ret=%d;msg_type=%u)\n",
-            peer_status, msg_type);
+                   peer_status, msg_type);
         return peer_status;
     } else if (peer_status == UB_MSG_NULL_PROCESS) {
-        ubdrv_warn("Msg send finish, no process cb. (process_ret=%d;msg_type=%u)\n",
-            peer_status, msg_type);
+        ubdrv_warn("Msg send finish, no process cb. (process_ret=%d;msg_type=%u)\n", peer_status, msg_type);
         return -EUNATCH;
     } else if (peer_status == UB_MSG_CHECK_VERSION_FAILED) {
-        ubdrv_warn("Msg send finish, perr check version not match. (process_ret=%d;msg_type=%u)\n",
-            peer_status, msg_type);
+        ubdrv_warn("Msg send finish, perr check version not match. (process_ret=%d;msg_type=%u)\n", peer_status,
+                   msg_type);
         return peer_status;
     } else {
-        ubdrv_warn("Msg send finish, invalid para. (process_ret=%d;msg_type=%u)\n",
-            peer_status, msg_type);
+        ubdrv_warn("Msg send finish, invalid para. (process_ret=%d;msg_type=%u)\n", peer_status, msg_type);
         return -ETIMEDOUT;
     }
     return 0;

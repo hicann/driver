@@ -37,7 +37,8 @@ struct vmng_msg_dev *vmngh_get_msg_dev_by_id(u32 dev_id, u32 fid)
 {
     struct vmng_msg_dev *pos;
 
-    ka_list_for_each_entry(pos, &g_vmngh_msg_dev_head.msg_dev_head, list) {
+    ka_list_for_each_entry(pos, &g_vmngh_msg_dev_head.msg_dev_head, list)
+    {
         if (pos->dev_id == dev_id && pos->fid == fid) {
             return pos;
         }
@@ -50,7 +51,8 @@ STATIC void vmngh_msg_dev_list_free(void)
     struct vmng_msg_dev *pos;
     struct vmng_msg_dev *n;
 
-    ka_list_for_each_entry_safe(pos, n, &g_vmngh_msg_dev_head.msg_dev_head, list) {
+    ka_list_for_each_entry_safe(pos, n, &g_vmngh_msg_dev_head.msg_dev_head, list)
+    {
         ka_list_del(&pos->list);
         vmng_kfree(pos);
         pos = NULL;

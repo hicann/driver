@@ -41,14 +41,13 @@ int ubdrv_rx_msg_common_msg_process(void *msg_chan, void *data, u32 in_data_len,
     }
     stat = ubdrv_get_common_stat_dfx(dev_id, desc->client_type);
     stat->rx_total++;
-    (void)sprintf_s(dfx_info, UBDRV_DFX_INFO_LEN, "device-%u common type-%u call process stamp",
-        dev_id, desc->client_type);
+    (void)sprintf_s(dfx_info, UBDRV_DFX_INFO_LEN, "device-%u common type-%u call process stamp", dev_id,
+                    desc->client_type);
     pre_stamp = ka_jiffies;
     ret = ubdrv_rx_msg_common_msg_process_proc(desc, stat, dev_id, data, in_data_len, out_data_len, real_out_len);
     (void)ubdrv_record_resq_time(pre_stamp, dfx_info, UBDRV_SCEH_RESP_TIME);
     if (ret != 0) {
-        ubdrv_err("Common rx_process error. (dev_id=%u;msg_type=%u;ret=%d)\n",
-            dev_id, desc->client_type, ret);
+        ubdrv_err("Common rx_process error. (dev_id=%u;msg_type=%u;ret=%d)\n", dev_id, desc->client_type, ret);
         stat->rx_cb_process_err++;
     }
     stat->rx_finish++;
@@ -82,16 +81,15 @@ STATIC void ubdrv_record_common_client_dfx(struct ubdrv_common_msg_stat *stat, i
     return;
 }
 
-void ubdrv_common_msg_send_ret_process(int ret, u32 dev_id,
-    u32 type, struct ubdrv_common_msg_stat *stat)
+void ubdrv_common_msg_send_ret_process(int ret, u32 dev_id, u32 type, struct ubdrv_common_msg_stat *stat)
 {
     if (ret == 0) {
         return;
     } else if (ret != -ENODEV) {
         ubdrv_err("Sync common msg send inner failed. (ret=%d;dev_id=%u;msg_type=%u)\n", ret, dev_id, type);
     } else {
-        ubdrv_warn("Sync common msg send unsuccessful, device status is normal. (ret=%d;dev_id=%u;msg_type=%u)\n",
-            ret, dev_id, type);
+        ubdrv_warn("Sync common msg send unsuccessful, device status is normal. (ret=%d;dev_id=%u;msg_type=%u)\n", ret,
+                   dev_id, type);
     }
     ubdrv_record_common_client_dfx(stat, ret);
     return;

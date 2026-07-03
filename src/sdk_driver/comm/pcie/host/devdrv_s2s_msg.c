@@ -29,9 +29,9 @@
 #include "pbl/pbl_uda.h"
 #include "devdrv_mem_alloc.h"
 
-#define SUPER_SERVER_BASE_ADDR 0x300000000000   // remote addr base
+#define SUPER_SERVER_BASE_ADDR 0x300000000000 // remote addr base
 
-#define LOCAL_SERVER_BASE_ADDR 0x201054000000   // local addr base
+#define LOCAL_SERVER_BASE_ADDR 0x201054000000 // local addr base
 
 STATIC s2s_msg_recv g_s2s_msg_recv_proc[DEVDRV_S2S_MSG_TYPE_MAX] = {
     NULL,
@@ -50,7 +50,7 @@ void devdrv_s2s_rwsem_init(void)
 STATIC u32 devdrv_get_s2s_host_chan_num(struct devdrv_pci_ctrl *pci_ctrl)
 {
     return pci_ctrl->ops.get_max_server_num(pci_ctrl) * DEVDRV_S2S_MAX_CHIP_NUM * DEVDRV_S2S_DIE_NUM *
-        DEVDRV_S2S_HOST_CHAN_EACH;
+           DEVDRV_S2S_HOST_CHAN_EACH;
 }
 
 void devdrv_set_s2s_chan_pre_reset(u32 dev_id)
@@ -125,7 +125,7 @@ int devdrv_pci_unregister_s2s_msg_proc_func(enum devdrv_s2s_msg_type msg_type)
 }
 
 STATIC void devdrv_fill_sq_data(struct devdrv_s2s_msg_chan *chan, enum devdrv_s2s_msg_type msg_type,
-    struct devdrv_s2s_msg_send_data_para *data_para, u32 in_len, struct spod_info s)
+                                struct devdrv_s2s_msg_send_data_para *data_para, u32 in_len, struct spod_info s)
 {
     chan->sq.data_buf->head_info.msg_type = (u32)msg_type;
     chan->sq.data_buf->head_info.buf_len = data_para->data_len;
@@ -140,66 +140,65 @@ STATIC void devdrv_fill_sq_data(struct devdrv_s2s_msg_chan *chan, enum devdrv_s2
     chan->sq.desc->head_info.status = DEVDRV_MSG_CMD_BEGIN;
 }
 
-STATIC void devdrv_s2s_msg_chan_send_status_handle(struct devdrv_s2s_msg_chan *chan,
-    enum devdrv_s2s_msg_type msg_type)
+STATIC void devdrv_s2s_msg_chan_send_status_handle(struct devdrv_s2s_msg_chan *chan, enum devdrv_s2s_msg_type msg_type)
 {
     int status = chan->sq.desc->head_info.status;
 
     if (status == DEVDRV_MSG_CMD_BEGIN) {
-        devdrv_warn("s2s message send finish, no resp. (msg_type=%d; status=%d; devid=%u; chan_id=%u)\n",
-            msg_type, status, chan->devid, chan->chan_id);
+        devdrv_warn("s2s message send finish, no resp. (msg_type=%d; status=%d; devid=%u; chan_id=%u)\n", msg_type,
+                    status, chan->devid, chan->chan_id);
     } else if (status == DEVDRV_MSG_CMD_INVALID_PARA) {
         devdrv_warn("s2s message send finish, para check invalid. (msg_type=%d; status=%d; devid=%u; chan_id=%u)\n",
-            msg_type, status, chan->devid, chan->chan_id);
+                    msg_type, status, chan->devid, chan->chan_id);
     } else if (status == DEVDRV_MSG_CMD_CB_PROCESS_FAILED) {
         devdrv_warn("s2s message send finish, cb process abnormal. (msg_type=%d; status=%d; devid=%u; chan_id=%u)\n",
-            msg_type, status, chan->devid, chan->chan_id);
+                    msg_type, status, chan->devid, chan->chan_id);
     } else if (status == DEVDRV_MSG_CMD_NULL_PROCESS_CB) {
-        devdrv_warn("s2s message send finish, no callback. (msg_type=%d; status=%d; devid=%u; chan_id=%u)\n",
-            msg_type, status, chan->devid, chan->chan_id);
+        devdrv_warn("s2s message send finish, no callback. (msg_type=%d; status=%d; devid=%u; chan_id=%u)\n", msg_type,
+                    status, chan->devid, chan->chan_id);
     } else if (status == DEVDRV_MSG_CMD_FINISH_FAILED) {
         devdrv_warn("s2s message send finish, need check remote flow. (msg_type=%d; status=%d; devid=%u; chan_id=%u)\n",
-            msg_type, status, chan->devid, chan->chan_id);
+                    msg_type, status, chan->devid, chan->chan_id);
     } else if (status == DEVDRV_MSG_CMD_SEND_HOST_FAILED) {
         devdrv_warn("s2s message send to remote host unsuccessful. (msg_type=%d; status=%d; devid=%u; chan_id=%u)\n",
-            msg_type, status, chan->devid, chan->chan_id);
+                    msg_type, status, chan->devid, chan->chan_id);
     } else if (status == DEVDRV_MSG_CMD_COPY_FAILED) {
         devdrv_warn("s2s message sdma copy to remote unsuccessful. (msg_type=%d; status=%d; devid=%u; chan_id=%u)\n",
-            msg_type, status, chan->devid, chan->chan_id);
+                    msg_type, status, chan->devid, chan->chan_id);
     } else {
-        devdrv_warn("s2s message send finish. (msg_type=%d; status=%d; devid=%u; chan_id=%u)\n",
-            msg_type, status, chan->devid, chan->chan_id);
+        devdrv_warn("s2s message send finish. (msg_type=%d; status=%d; devid=%u; chan_id=%u)\n", msg_type, status,
+                    chan->devid, chan->chan_id);
     }
 }
 
-STATIC int devdrv_s2s_msg_chan_ack_data(u32 devid, struct devdrv_s2s_msg_chan *chan,
-    void *data, u32 data_len, u32 *out_len)
+STATIC int devdrv_s2s_msg_chan_ack_data(u32 devid, struct devdrv_s2s_msg_chan *chan, void *data, u32 data_len,
+                                        u32 *out_len)
 {
     int ret;
 
     *out_len = chan->sq.desc->head_info.out_len;
     if (*out_len >= (DEVDRV_S2S_HOST_MSG_SIZE - DEVDRV_S2S_MSG_HEAD_LEN) || (*out_len > data_len)) {
-        devdrv_err("s2s out len is out of range.(devid=%u; chan_id=%u; data_len=%u; *out_len=%u)\n",
-            devid, chan->chan_id, data_len, *out_len);
+        devdrv_err("s2s out len is out of range.(devid=%u; chan_id=%u; data_len=%u; *out_len=%u)\n", devid,
+                   chan->chan_id, data_len, *out_len);
         return -EIO;
     }
 
     if (*out_len > 0) {
         if (chan->msg_dev->pci_ctrl->connect_protocol == CONNECT_PROTOCOL_HCCS) {
             ret = devdrv_dma_sync_copy_inner(devid, DEVDRV_DMA_DATA_PCIE_MSG, chan->sq_phy_addr, chan->sq.ack_addr,
-                *out_len + DEVDRV_S2S_MSG_HEAD_LEN, DEVDRV_DMA_SYS_TO_SYS);
+                                             *out_len + DEVDRV_S2S_MSG_HEAD_LEN, DEVDRV_DMA_SYS_TO_SYS);
             if (ret != 0) {
                 devdrv_err("s2s ack message recv failed.(devid=%u; chan_id=%u; ret=%d)\n", devid, chan->chan_id, ret);
                 return -EIO;
             }
 
-            ret = memcpy_s(data, data_len, (void*)chan->sq.ack_buf->data, *out_len);
+            ret = memcpy_s(data, data_len, (void *)chan->sq.ack_buf->data, *out_len);
             if (ret != 0) {
                 devdrv_err("memcpy_s failed.(devid=%u; chan_id=%u; ret=%d)\n", devid, chan->chan_id, ret);
                 return -EIO;
             }
         } else {
-            ret = memcpy_s(data, data_len, (void*)chan->sq.desc->data, *out_len);
+            ret = memcpy_s(data, data_len, (void *)chan->sq.desc->data, *out_len);
             if (ret != 0) {
                 devdrv_err("memcpy_s failed.(devid=%u; chan_id=%u;ret=%d)\n", devid, chan->chan_id, ret);
                 return -EIO;
@@ -226,10 +225,9 @@ STATIC int devdrv_s2s_submit_sq(u32 devid, u32 sdid, struct devdrv_s2s_msg_chan 
     non_trans_chan = devdrv_get_s2s_non_trans_chan(chan->msg_dev);
 
     ret = devdrv_sync_msg_send(non_trans_chan, &msg, sizeof(struct devdrv_s2s_non_trans_msg),
-        sizeof(struct devdrv_s2s_non_trans_msg), &real_out_len);
+                               sizeof(struct devdrv_s2s_non_trans_msg), &real_out_len);
     if (ret != 0) {
-        devdrv_err("Submit sq failed.(ret=%d; real_out_len=%u; msg_ret=%d)\n",
-            ret, real_out_len, msg.ret);
+        devdrv_err("Submit sq failed.(ret=%d; real_out_len=%u; msg_ret=%d)\n", ret, real_out_len, msg.ret);
         return -EINVAL;
     }
 
@@ -254,7 +252,7 @@ STATIC bool devdrv_is_s2s_msg_need_retry(struct devdrv_s2s_msg_chan *chan, u32 r
 }
 
 STATIC int devdrv_s2s_msg_chan_send(u32 devid, u32 sdid, struct devdrv_s2s_msg_chan *chan,
-    enum devdrv_s2s_msg_type msg_type, struct devdrv_s2s_msg_send_data_para *data_para)
+                                    enum devdrv_s2s_msg_type msg_type, struct devdrv_s2s_msg_send_data_para *data_para)
 {
     int timeout = (chan->status == DEVDRV_S2S_PRE_RESET) ? DEVDRV_S2S_MSG_TMOUT_SHORT : DEVDRV_S2S_MSG_TMOUT;
     u32 max_data_len = DEVDRV_S2S_HOST_MSG_SIZE - DEVDRV_S2S_MSG_HEAD_LEN;
@@ -272,16 +270,15 @@ STATIC int devdrv_s2s_msg_chan_send(u32 devid, u32 sdid, struct devdrv_s2s_msg_c
 
 s2s_retry:
     devdrv_fill_sq_data(chan, msg_type, data_para, in_len, s);
-    if ((in_len <= 0) || (memcpy_s((void*)chan->sq.data_buf + DEVDRV_S2S_MSG_HEAD_LEN,
-        max_data_len, data_para->data, in_len) != 0)) {
+    if ((in_len <= 0) ||
+        (memcpy_s((void *)chan->sq.data_buf + DEVDRV_S2S_MSG_HEAD_LEN, max_data_len, data_para->data, in_len) != 0)) {
         devdrv_err("in_len is invalid or memcpy_s failed.(dev_id=%u; in_len=%u)\n", devid, in_len);
         return -EINVAL;
     }
 
     ret = devdrv_s2s_submit_sq(devid, sdid, chan, in_len);
     if (ret != 0) {
-        devdrv_err("Submit s2s sq fail.(ret=%d; devid=%u; dst_sdid=%u; msg_type=%u)\n",
-            ret, devid, sdid, msg_type);
+        devdrv_err("Submit s2s sq fail.(ret=%d; devid=%u; dst_sdid=%u; msg_type=%u)\n", ret, devid, sdid, msg_type);
         return ret;
     }
 
@@ -324,8 +321,8 @@ s2s_retry:
 
     if (status != DEVDRV_MSG_CMD_FINISH_SUCCESS) {
         devdrv_s2s_msg_chan_send_status_handle(chan, msg_type);
-        devdrv_err("Get finish status remain time.(dev_id=%u; dst_sdid=%u; status=%d; time=%d(us))\n",
-            devid, sdid, status, timeout);
+        devdrv_err("Get finish status remain time.(dev_id=%u; dst_sdid=%u; status=%d; time=%d(us))\n", devid, sdid,
+                   status, timeout);
 #ifdef CFG_BUILD_DEBUG
         ka_base_dump_stack();
 #endif
@@ -342,15 +339,17 @@ s2s_retry:
 }
 
 STATIC u32 devdrv_calc_s2s_chan_id(u32 dst_server_id, u32 dst_chip_id, u32 dst_die_id,
-    enum devdrv_s2s_msg_type msg_type)
+                                   enum devdrv_s2s_msg_type msg_type)
 {
     /* DEVMM use channel N+0, others use channel N+1 */
     return (dst_server_id * DEVDRV_S2S_MAX_CHIP_NUM * DEVDRV_S2S_DIE_NUM + dst_chip_id * DEVDRV_S2S_DIE_NUM +
-        dst_die_id) * DEVDRV_S2S_HOST_CHAN_EACH + (msg_type == DEVDRV_S2S_MSG_DEVMM ? 0 : 1);
+            dst_die_id) *
+               DEVDRV_S2S_HOST_CHAN_EACH +
+           (msg_type == DEVDRV_S2S_MSG_DEVMM ? 0 : 1);
 }
 
 STATIC void devdrv_fill_s2s_data_para(struct devdrv_s2s_msg_send_data_para *data_para,
-    struct data_input_info *data_info, u32 direction)
+                                      struct data_input_info *data_info, u32 direction)
 {
     data_para->data = data_info->data;
     data_para->data_len = data_info->data_len;
@@ -361,7 +360,8 @@ STATIC void devdrv_fill_s2s_data_para(struct devdrv_s2s_msg_send_data_para *data
 }
 
 STATIC int devdrv_s2s_set_and_check_para(u32 devid, enum devdrv_s2s_msg_type msg_type, u32 direction,
-    struct data_input_info *data_info, struct devdrv_s2s_msg_send_data_para *data_para)
+                                         struct data_input_info *data_info,
+                                         struct devdrv_s2s_msg_send_data_para *data_para)
 {
     u32 max_data_len = DEVDRV_S2S_HOST_MSG_SIZE - sizeof(struct devdrv_s2s_msg);
 
@@ -378,8 +378,8 @@ STATIC int devdrv_s2s_set_and_check_para(u32 devid, enum devdrv_s2s_msg_type msg
     devdrv_fill_s2s_data_para(data_para, data_info, direction);
 
     if ((data_para->data_len > max_data_len) || (data_para->in_len > max_data_len)) {
-        devdrv_err("buf_len or in_len overflow.(devid=%u; max_data_len=%u, buf_len=%u; in_len=%d)\n",
-            devid, max_data_len, data_para->data_len, data_para->in_len);
+        devdrv_err("buf_len or in_len overflow.(devid=%u; max_data_len=%u, buf_len=%u; in_len=%d)\n", devid,
+                   max_data_len, data_para->data_len, data_para->in_len);
         return -EINVAL;
     }
 
@@ -407,7 +407,7 @@ STATIC int devdrv_s2s_set_and_check_para(u32 devid, enum devdrv_s2s_msg_type msg
 }
 
 STATIC struct devdrv_s2s_msg_chan *devdrv_find_s2s_chan(u32 devid, u32 sdid, struct devdrv_pci_ctrl *pci_ctrl,
-    enum devdrv_s2s_msg_type msg_type)
+                                                        enum devdrv_s2s_msg_type msg_type)
 {
     struct devdrv_s2s_msg_chan *chan = NULL;
     struct sdid_parse_info sdid_info;
@@ -445,7 +445,7 @@ STATIC struct devdrv_s2s_msg_chan *devdrv_find_s2s_chan(u32 devid, u32 sdid, str
         (sdid_info.die_id >= DEVDRV_S2S_DIE_NUM) || (sdid_info.udevid >= DEVDRV_S2S_MAX_UDEVID_NUM) ||
         ((sdid_info.chip_id * DEVDRV_S2S_DIE_NUM + sdid_info.die_id) != sdid_info.udevid)) {
         devdrv_err("sdid parse info is invalid.(server_id=%u; chip_id=%u; die_id=%u; udevid=%u)\n", sdid_info.server_id,
-            sdid_info.chip_id, sdid_info.die_id, sdid_info.udevid);
+                   sdid_info.chip_id, sdid_info.die_id, sdid_info.udevid);
         return NULL;
     }
 
@@ -485,7 +485,7 @@ STATIC void devdrv_s2s_msg_send_unlock(struct devdrv_s2s_msg_chan *chan, u32 msg
 }
 
 int devdrv_pci_s2s_msg_send(u32 devid, u32 sdid, enum devdrv_s2s_msg_type msg_type, u32 direction,
-    struct data_input_info *data_info)
+                            struct data_input_info *data_info)
 {
     struct devdrv_s2s_msg_send_data_para data_para = {0};
     struct devdrv_pci_ctrl *pci_ctrl = NULL;
@@ -504,15 +504,15 @@ int devdrv_pci_s2s_msg_send(u32 devid, u32 sdid, enum devdrv_s2s_msg_type msg_ty
 
     if (!devdrv_feature_is_support(pci_ctrl->features, DEVDRV_FEATURE_S2S)) {
         ret = -EOPNOTSUPP;
-        devdrv_err("s2s feature is not support. (devid=%u; dst_sdid=%u; msg_type=%u; ret=%d)\n",
-            devid, sdid, (u32)msg_type, ret);
+        devdrv_err("s2s feature is not support. (devid=%u; dst_sdid=%u; msg_type=%u; ret=%d)\n", devid, sdid,
+                   (u32)msg_type, ret);
         return ret;
     }
 
     ret = devdrv_s2s_set_and_check_para(devid, msg_type, direction, data_info, &data_para);
     if (ret != 0) {
-        devdrv_err("s2s para check failed. (devid=%u; dst_sdid=%u; msg_type=%u; ret=%d)\n",
-            devid, sdid, (u32)msg_type, ret);
+        devdrv_err("s2s para check failed. (devid=%u; dst_sdid=%u; msg_type=%u; ret=%d)\n", devid, sdid, (u32)msg_type,
+                   ret);
         devdrv_pci_ctrl_put(pci_ctrl);
         return ret;
     }
@@ -532,8 +532,8 @@ int devdrv_pci_s2s_msg_send(u32 devid, u32 sdid, enum devdrv_s2s_msg_type msg_ty
 
     ret = devdrv_s2s_msg_chan_send(devid, sdid, chan, msg_type, &data_para);
     if (ret != 0) {
-        devdrv_err("s2s send failed.(dev_id=%u; dst_sdid=%u; msg_type=%u; ret=%d; data_len=%u; out_len=%u)\n",
-            devid, sdid, msg_type, ret, data_info->data_len, data_info->out_len);
+        devdrv_err("s2s send failed.(dev_id=%u; dst_sdid=%u; msg_type=%u; ret=%d; data_len=%u; out_len=%u)\n", devid,
+                   sdid, msg_type, ret, data_info->data_len, data_info->out_len);
     }
 
     if (data_para.msg_mode == DEVDRV_S2S_SYNC_MODE) {
@@ -546,8 +546,7 @@ int devdrv_pci_s2s_msg_send(u32 devid, u32 sdid, enum devdrv_s2s_msg_type msg_ty
     return ret;
 }
 
-STATIC int devdrv_s2s_check_recv_para(u32 devid, enum devdrv_s2s_msg_type msg_type,
-    struct data_recv_info *data_info)
+STATIC int devdrv_s2s_check_recv_para(u32 devid, enum devdrv_s2s_msg_type msg_type, struct data_recv_info *data_info)
 {
     if (msg_type >= DEVDRV_S2S_MSG_TYPE_MAX) {
         devdrv_err("Msg type is not support yet. (devid=%u;msg_type=%u)\n", devid, (u32)msg_type);
@@ -573,7 +572,7 @@ STATIC int devdrv_s2s_check_recv_para(u32 devid, enum devdrv_s2s_msg_type msg_ty
 }
 
 int devdrv_pci_s2s_async_msg_recv(u32 devid, u32 sdid, enum devdrv_s2s_msg_type msg_type,
-    struct data_recv_info *data_info)
+                                  struct data_recv_info *data_info)
 {
     struct devdrv_pci_ctrl *pci_ctrl = NULL;
     struct devdrv_s2s_msg_chan *chan = NULL;
@@ -592,15 +591,15 @@ int devdrv_pci_s2s_async_msg_recv(u32 devid, u32 sdid, enum devdrv_s2s_msg_type 
 
     if (!devdrv_feature_is_support(pci_ctrl->features, DEVDRV_FEATURE_S2S)) {
         ret = -EOPNOTSUPP;
-        devdrv_err("s2s feature is not support. (devid=%u; dst_sdid=%u; msg_type=%u; ret=%d)\n",
-            devid, sdid, (u32)msg_type, ret);
+        devdrv_err("s2s feature is not support. (devid=%u; dst_sdid=%u; msg_type=%u; ret=%d)\n", devid, sdid,
+                   (u32)msg_type, ret);
         return ret;
     }
 
     ret = devdrv_s2s_check_recv_para(devid, msg_type, data_info);
     if (ret != 0) {
-        devdrv_err("s2s recv para check failed. (dev_id=%u; dst_sdid=%u; msg_type=%u; ret=%d)\n",
-            devid, sdid, (u32)msg_type, ret);
+        devdrv_err("s2s recv para check failed. (dev_id=%u; dst_sdid=%u; msg_type=%u; ret=%d)\n", devid, sdid,
+                   (u32)msg_type, ret);
         devdrv_pci_ctrl_put(pci_ctrl);
         return ret;
     }
@@ -613,8 +612,8 @@ int devdrv_pci_s2s_async_msg_recv(u32 devid, u32 sdid, enum devdrv_s2s_msg_type 
     }
 
     if (chan->msg_mode != DEVDRV_S2S_ASYNC_MODE) {
-        devdrv_err("Channel msg_mode is invalid. (devid=%u; dst_sdid=%u; msg_type=%u; msg_mode=%u)\n",
-            devid, sdid, (u32)msg_type, chan->msg_mode);
+        devdrv_err("Channel msg_mode is invalid. (devid=%u; dst_sdid=%u; msg_type=%u; msg_mode=%u)\n", devid, sdid,
+                   (u32)msg_type, chan->msg_mode);
         devdrv_pci_ctrl_put(pci_ctrl);
         return -EINVAL;
     }
@@ -627,8 +626,8 @@ int devdrv_pci_s2s_async_msg_recv(u32 devid, u32 sdid, enum devdrv_s2s_msg_type 
 
     if (status != DEVDRV_MSG_CMD_FINISH_SUCCESS) {
         devdrv_s2s_msg_chan_send_status_handle(chan, msg_type);
-        devdrv_err("Get finish status remain time.(dev_id=%u; dst_sdid=%u; msg_type=%u; status=%d)\n",
-            devid, sdid, (u32)msg_type, status);
+        devdrv_err("Get finish status remain time.(dev_id=%u; dst_sdid=%u; msg_type=%u; status=%d)\n", devid, sdid,
+                   (u32)msg_type, status);
         ret = -ENOSYS;
         goto msg_exit;
     }
@@ -661,8 +660,8 @@ STATIC phys_addr_t devdrv_s2s_get_msg_cq_addr(u32 dev_id, u32 chan_id)
         chan_id_use = chan_id;
     }
 
-    return DEVDRV_LOCAL_SUPER_NODE_START_ADDR + dev_id * DEVDRV_S2S_SERVER_ADDR_OFFSET +
-        base_addr + chan_id_use * msg_size + DEVDRV_S2S_RECV_MSG_ADDR_OFFSET;
+    return DEVDRV_LOCAL_SUPER_NODE_START_ADDR + dev_id * DEVDRV_S2S_SERVER_ADDR_OFFSET + base_addr +
+           chan_id_use * msg_size + DEVDRV_S2S_RECV_MSG_ADDR_OFFSET;
 }
 
 STATIC int devdrv_s2s_msg_edge_check(u32 devid, void *data, u32 in_data_len, u32 out_data_len, u32 *p_real_out_len)
@@ -683,8 +682,8 @@ STATIC int devdrv_s2s_msg_edge_check(u32 devid, void *data, u32 in_data_len, u32
 
     recv_msg = (struct devdrv_s2s_msg *)data;
     if (recv_msg->head_info.msg_type >= (u32)DEVDRV_S2S_MSG_TYPE_MAX) {
-        devdrv_err("S2S message channel recv message type is not support yet. (dev_id=%u;msg_type=%u)\n",
-            devid, recv_msg->head_info.msg_type);
+        devdrv_err("S2S message channel recv message type is not support yet. (dev_id=%u;msg_type=%u)\n", devid,
+                   recv_msg->head_info.msg_type);
         return -EOPNOTSUPP;
     }
 
@@ -753,23 +752,23 @@ int devdrv_s2s_non_trans_msg_recv(void *msg_chan, void *data, u32 in_data_len, u
         ret = g_s2s_msg_recv_proc[msg_type](devid, recv_msg->head_info.sdid, &data_info);
         resq_time = ka_system_jiffies_to_msecs(ka_jiffies - call_start);
         if (resq_time > DEVDRV_S2S_CB_TIME) {
-            devdrv_info("Get resq_time. (dev_id=%u; msg_type=%u; resq_time=%ums; cpu=%d)\n",
-                devid, msg_type, resq_time, ka_system_raw_smp_processor_id());
+            devdrv_info("Get resq_time. (dev_id=%u; msg_type=%u; resq_time=%ums; cpu=%d)\n", devid, msg_type, resq_time,
+                        ka_system_raw_smp_processor_id());
         }
         ka_task_up_read(&g_register_func_sem[msg_type]);
 
         recv_msg->head_info.out_len = data_info.out_len;
         if ((ret != 0) || (recv_msg->head_info.out_len > recv_msg->head_info.buf_len)) {
             devdrv_err("S2S msg process failed.(devid=%u; msg_type=%u; out_len=%u; buf_len=%u; in_len=%u; ret=%d)\n",
-                devid, msg_type, recv_msg->head_info.out_len, recv_msg->head_info.buf_len, recv_msg->head_info.in_len, ret);
+                       devid, msg_type, recv_msg->head_info.out_len, recv_msg->head_info.buf_len,
+                       recv_msg->head_info.in_len, ret);
             recv_msg->head_info.status = DEVDRV_MSG_CMD_CB_PROCESS_FAILED;
             devdrv_pci_ctrl_put(pci_ctrl);
             return -EINVAL;
         }
     } else {
         ka_task_up_read(&g_register_func_sem[msg_type]);
-        devdrv_err("s2s message channel recv message type not register.(devid=%u; msg_type=%u)\n",
-            devid, msg_type);
+        devdrv_err("s2s message channel recv message type not register.(devid=%u; msg_type=%u)\n", devid, msg_type);
         recv_msg->head_info.status = DEVDRV_MSG_CMD_NULL_PROCESS_CB;
         devdrv_pci_ctrl_put(pci_ctrl);
         return -EINVAL;
@@ -784,17 +783,17 @@ int devdrv_s2s_non_trans_msg_recv(void *msg_chan, void *data, u32 in_data_len, u
     data_dma_addr = non_trans_chan->cq_info.dma_handle + ka_offsetof(struct devdrv_non_trans_msg_desc, data);
 
     recv_msg->head_info.status = DEVDRV_MSG_CMD_FINISH_SUCCESS;
-    ret = devdrv_dma_sync_copy_inner(devid, data_type, data_dma_addr + sizeof(u32), recv_msg->head_info.cq_dma_addr + sizeof(u32),
+    ret = devdrv_dma_sync_copy_inner(
+        devid, data_type, data_dma_addr + sizeof(u32), recv_msg->head_info.cq_dma_addr + sizeof(u32),
         recv_msg->head_info.out_len + DEVDRV_S2S_MSG_HEAD_LEN - sizeof(u32), DEVDRV_DMA_HOST_TO_DEVICE);
     if (ret != 0) {
-        devdrv_err("s2s message channel recv reply failed.(devid=%u; msg_type=%u; ret=%d)\n",
-            devid, msg_type, ret);
+        devdrv_err("s2s message channel recv reply failed.(devid=%u; msg_type=%u; ret=%d)\n", devid, msg_type, ret);
         recv_msg->head_info.status = DEVDRV_MSG_CMD_FINISH_FAILED;
     }
 
     /* respond to host side to execute result status */
     ret = devdrv_dma_sync_copy_inner(devid, data_type, data_dma_addr, recv_msg->head_info.cq_dma_addr, sizeof(u32),
-        DEVDRV_DMA_HOST_TO_DEVICE);
+                                     DEVDRV_DMA_HOST_TO_DEVICE);
     if (ret != 0) {
         devdrv_err("s2s msg_chan recv reply status fail.(devid=%u; msg_type=%u; ret=%d)\n", devid, msg_type, ret);
     }
@@ -814,10 +813,10 @@ STATIC struct devdrv_non_trans_msg_chan_info devdrv_s2s_non_trans_msg_chan_info 
 
 STATIC u64 devdrv_s2s_base_addr_get(u32 server_id, u32 chip_id, u32 die_id)
 {
-    return (server_id * DEVDRV_S2S_SERVER_MEM_SIZE +    // server mem offset
-            chip_id * DEVDRV_S2S_CHIP_MEM_SIZE +        // chip mem offset
-            die_id * DEVDRV_S2S_DEV_MEM_SIZE +          // die mem offset
-            SUPER_SERVER_BASE_ADDR);                    // base offset
+    return (server_id * DEVDRV_S2S_SERVER_MEM_SIZE + // server mem offset
+            chip_id * DEVDRV_S2S_CHIP_MEM_SIZE +     // chip mem offset
+            die_id * DEVDRV_S2S_DEV_MEM_SIZE +       // die mem offset
+            SUPER_SERVER_BASE_ADDR);                 // base offset
 }
 
 STATIC u64 devdrv_s2s_get_dma_addr(struct sdid_parse_info src_sdid, struct sdid_parse_info dst_sdid, u64 offset)
@@ -828,9 +827,11 @@ STATIC u64 devdrv_s2s_get_dma_addr(struct sdid_parse_info src_sdid, struct sdid_
     addr_base = devdrv_s2s_base_addr_get(dst_sdid.server_id, dst_sdid.chip_id, dst_sdid.die_id);
 
     // get chan start addr in die
-    addr_base = addr_base + offset + (src_sdid.server_id * DEVDRV_S2S_MAX_DEV_NUM + src_sdid.chip_id *
-        DEVDRV_S2S_DIE_NUM + src_sdid.die_id) * DEVDRV_S2S_HOST_MSG_SIZE +
-        DEVDRV_S2S_SUPPORT_MAX_CHAN_NUM_DEV * DEVDRV_S2S_DEVICE_MSG_SIZE;
+    addr_base = addr_base + offset +
+                (src_sdid.server_id * DEVDRV_S2S_MAX_DEV_NUM + src_sdid.chip_id * DEVDRV_S2S_DIE_NUM +
+                 src_sdid.die_id) *
+                    DEVDRV_S2S_HOST_MSG_SIZE +
+                DEVDRV_S2S_SUPPORT_MAX_CHAN_NUM_DEV * DEVDRV_S2S_DEVICE_MSG_SIZE;
 
     return addr_base;
 }
@@ -840,24 +841,25 @@ STATIC u64 devdrv_s2s_get_local_dma_addr(struct sdid_parse_info src_sdid, u32 ch
     u64 addr_base;
 
     // get huge offset
-    addr_base = src_sdid.chip_id * DEVDRV_S2S_CHIP_MEM_SIZE_LOCAL +   // chip mem offset
-                src_sdid.die_id * DEVDRV_S2S_DEV_MEM_SIZE_LOCAL +     // die mem offset
+    addr_base = src_sdid.chip_id * DEVDRV_S2S_CHIP_MEM_SIZE_LOCAL + // chip mem offset
+                src_sdid.die_id * DEVDRV_S2S_DEV_MEM_SIZE_LOCAL +   // die mem offset
                 LOCAL_SERVER_BASE_ADDR;
 
     // get chan start addr in die
     addr_base = addr_base + offset + DEVDRV_S2S_SUPPORT_MAX_CHAN_NUM_DEV * DEVDRV_S2S_DEVICE_MSG_SIZE +
-        chan_id * DEVDRV_S2S_HOST_MSG_SIZE;
+                chan_id * DEVDRV_S2S_HOST_MSG_SIZE;
 
     return addr_base;
 }
 
-STATIC u64 devdrv_s2s_get_msg_bar_addr(struct sdid_parse_info src_sdid, struct devdrv_s2s_msg_chan *msg_chan, u64 offset)
+STATIC u64 devdrv_s2s_get_msg_bar_addr(struct sdid_parse_info src_sdid, struct devdrv_s2s_msg_chan *msg_chan,
+                                       u64 offset)
 {
     u64 bar_addr = msg_chan->msg_dev->pci_ctrl->res.s2s_msg.addr;
 
     // get chan start addr in die
     bar_addr = bar_addr + offset + DEVDRV_S2S_SUPPORT_MAX_CHAN_NUM_DEV * DEVDRV_S2S_DEVICE_MSG_SIZE +
-    msg_chan->chan_id * DEVDRV_S2S_HOST_MSG_SIZE;
+               msg_chan->chan_id * DEVDRV_S2S_HOST_MSG_SIZE;
 
     return bar_addr;
 }
@@ -890,7 +892,7 @@ void *devdrv_get_s2s_non_trans_chan(struct devdrv_msg_dev *msg_dev)
 }
 
 STATIC int devdrv_init_s2s_chan_sdma_addr(struct sdid_parse_info dst_sdid_info, struct sdid_parse_info src_sdid_info,
-    struct devdrv_s2s_msg_chan *msg_chan)
+                                          struct devdrv_s2s_msg_chan *msg_chan)
 {
     struct devdrv_s2s_non_trans_msg msg = {0};
     struct devdrv_s2s_init_msg *init_msg = &msg.msg_data.init_msg;
@@ -904,10 +906,10 @@ STATIC int devdrv_init_s2s_chan_sdma_addr(struct sdid_parse_info dst_sdid_info, 
     init_msg->chan_id = msg_chan->chan_id;
 
     ret = devdrv_sync_msg_send(non_trans_chan, (void *)&msg, sizeof(struct devdrv_s2s_non_trans_msg),
-        sizeof(struct devdrv_s2s_non_trans_msg), &real_out_len);
+                               sizeof(struct devdrv_s2s_non_trans_msg), &real_out_len);
     if ((ret != 0) || (real_out_len != sizeof(struct devdrv_s2s_non_trans_msg)) || (msg.ret != 0)) {
-        devdrv_err("Host sq SDMA addr init failed.(dev_id=%u; ret=%d; real_out_len=%u; msg_ret=%d)\n",
-            msg_chan->devid, ret, real_out_len, msg.ret);
+        devdrv_err("Host sq SDMA addr init failed.(dev_id=%u; ret=%d; real_out_len=%u; msg_ret=%d)\n", msg_chan->devid,
+                   ret, real_out_len, msg.ret);
         return -EINVAL;
     }
 
@@ -917,14 +919,15 @@ STATIC int devdrv_init_s2s_chan_sdma_addr(struct sdid_parse_info dst_sdid_info, 
 STATIC void devdrv_s2s_msg_chan_mem_uninit(struct devdrv_msg_dev *msg_dev, struct devdrv_s2s_msg_chan *msg_chan)
 {
     if (msg_chan->sq.ack_buf != NULL) {
-        devdrv_pci_dma_free_coherent(msg_dev->dev, DEVDRV_S2S_HOST_MSG_SIZE, (void*)msg_chan->sq.ack_buf, msg_chan->sq.ack_addr);
+        devdrv_pci_dma_free_coherent(msg_dev->dev, DEVDRV_S2S_HOST_MSG_SIZE, (void *)msg_chan->sq.ack_buf,
+                                     msg_chan->sq.ack_addr);
         msg_chan->sq.ack_buf = NULL;
         msg_chan->sq.ack_addr = (~(ka_dma_addr_t)0);
     }
 
     if (msg_chan->sq.data_buf != NULL) {
-        devdrv_pci_dma_free_coherent(msg_dev->dev, DEVDRV_S2S_HOST_MSG_SIZE, (void*)msg_chan->sq.data_buf,
-            msg_chan->sq.data_buf_addr);
+        devdrv_pci_dma_free_coherent(msg_dev->dev, DEVDRV_S2S_HOST_MSG_SIZE, (void *)msg_chan->sq.data_buf,
+                                     msg_chan->sq.data_buf_addr);
         msg_chan->sq.data_buf = NULL;
         msg_chan->sq.data_buf_addr = (~(ka_dma_addr_t)0);
     }
@@ -936,25 +939,25 @@ STATIC void devdrv_s2s_msg_chan_mem_uninit(struct devdrv_msg_dev *msg_dev, struc
 }
 
 STATIC int devdrv_s2s_msg_chan_mem_init(struct devdrv_msg_dev *msg_dev, struct devdrv_s2s_msg_chan *msg_chan,
-    struct sdid_parse_info src_sdid_info)
+                                        struct sdid_parse_info src_sdid_info)
 {
     struct sdid_parse_info dst_sdid_info;
     phys_addr_t sq_bar_addr;
     int ret = 0;
 
     // service data transfer through data_buf
-    msg_chan->sq.data_buf = (struct devdrv_s2s_msg *)devdrv_pci_dma_alloc_coherent(msg_dev->dev, DEVDRV_S2S_HOST_MSG_SIZE,
-        &msg_chan->sq.data_buf_addr, KA_GFP_KERNEL);
+    msg_chan->sq.data_buf = (struct devdrv_s2s_msg *)devdrv_pci_dma_alloc_coherent(
+        msg_dev->dev, DEVDRV_S2S_HOST_MSG_SIZE, &msg_chan->sq.data_buf_addr, KA_GFP_KERNEL);
     if (msg_chan->sq.data_buf == NULL) {
         devdrv_err("sq data_buf alloc failed.(devid=%u; chan=%u)\n", msg_chan->devid, msg_chan->chan_id);
         return -ENOMEM;
     }
 
-    msg_chan->sq.ack_buf = (struct devdrv_s2s_msg *)devdrv_pci_dma_alloc_coherent(msg_dev->dev, DEVDRV_S2S_HOST_MSG_SIZE,
-        &msg_chan->sq.ack_addr, KA_GFP_KERNEL);
+    msg_chan->sq.ack_buf = (struct devdrv_s2s_msg *)devdrv_pci_dma_alloc_coherent(
+        msg_dev->dev, DEVDRV_S2S_HOST_MSG_SIZE, &msg_chan->sq.ack_addr, KA_GFP_KERNEL);
     if (msg_chan->sq.ack_buf == NULL) {
-        devdrv_pci_dma_free_coherent(msg_dev->dev, DEVDRV_S2S_HOST_MSG_SIZE, (void*)msg_chan->sq.data_buf,
-            msg_chan->sq.data_buf_addr);
+        devdrv_pci_dma_free_coherent(msg_dev->dev, DEVDRV_S2S_HOST_MSG_SIZE, (void *)msg_chan->sq.data_buf,
+                                     msg_chan->sq.data_buf_addr);
         msg_chan->sq.data_buf = NULL;
         msg_chan->sq.data_buf_addr = (~(ka_dma_addr_t)0);
 
@@ -966,12 +969,12 @@ STATIC int devdrv_s2s_msg_chan_mem_init(struct devdrv_msg_dev *msg_dev, struct d
 
     // get remote addr
     msg_chan->remote_cq_msg_phy_addr = devdrv_s2s_get_dma_addr(src_sdid_info, dst_sdid_info,
-        DEVDRV_S2S_RECV_MSG_ADDR_OFFSET);
+                                                               DEVDRV_S2S_RECV_MSG_ADDR_OFFSET);
     msg_chan->remote_sq_msg_phy_addr = devdrv_s2s_get_dma_addr(src_sdid_info, dst_sdid_info,
-        DEVDRV_S2S_SEND_MSG_ADDR_OFFSET);
+                                                               DEVDRV_S2S_SEND_MSG_ADDR_OFFSET);
     // get local sq_addr
     msg_chan->sq_phy_addr = devdrv_s2s_get_local_dma_addr(src_sdid_info, msg_chan->chan_id,
-        DEVDRV_S2S_SEND_MSG_ADDR_OFFSET);
+                                                          DEVDRV_S2S_SEND_MSG_ADDR_OFFSET);
 
     sq_bar_addr = devdrv_s2s_get_msg_bar_addr(src_sdid_info, msg_chan, DEVDRV_S2S_SEND_MSG_ADDR_OFFSET);
     msg_chan->sq.desc = (struct devdrv_s2s_msg *)ka_mm_ioremap(sq_bar_addr, DEVDRV_S2S_HOST_MSG_SIZE);
@@ -999,7 +1002,7 @@ STATIC int devdrv_s2s_msg_mem_alloc(struct devdrv_pci_ctrl *pci_ctrl)
     struct devdrv_msg_dev *msg_dev = pci_ctrl->msg_dev;
 
     msg_dev->s2s_chan = devdrv_kzalloc(sizeof(struct devdrv_s2s_msg_chan) * DEVDRV_S2S_SUPPORT_MAX_CHAN_NUM,
-        KA_GFP_KERNEL);
+                                       KA_GFP_KERNEL);
     if (msg_dev->s2s_chan == NULL) {
         devdrv_err("s2s_chan devdrv_kzalloc failed. (dev_id=%u)\n", pci_ctrl->dev_id);
         return -ENOMEM;
@@ -1036,12 +1039,13 @@ STATIC int devdrv_s2s_get_sdid_parse_info(struct devdrv_pci_ctrl *pci_ctrl, stru
         server_id_max = pci_ctrl->ops.get_max_server_num(pci_ctrl);
         if (server_id_max > DEVDRV_S2S_MAX_SERVER_NUM) {
             devdrv_warn("Get max_server_num invalid.(support_max_server_num=%u, real_max_server_num=%u)\n",
-                (u32)DEVDRV_S2S_MAX_SERVER_NUM, pci_ctrl->ops.get_max_server_num(pci_ctrl));
+                        (u32)DEVDRV_S2S_MAX_SERVER_NUM, pci_ctrl->ops.get_max_server_num(pci_ctrl));
             return -EINVAL;
         }
         if (src_sdid_info->server_id >= server_id_max) {
             devdrv_warn("Invalid server_id or scale_type. set scale_type and server_id is matched"
-                "(support_max_server_id=%u, real_server_id=%u)\n", server_id_max - 1, src_sdid_info->server_id);
+                        "(support_max_server_id=%u, real_server_id=%u)\n",
+                        server_id_max - 1, src_sdid_info->server_id);
             return -EINVAL;
         }
     } else {
@@ -1053,8 +1057,8 @@ STATIC int devdrv_s2s_get_sdid_parse_info(struct devdrv_pci_ctrl *pci_ctrl, stru
     src_sdid_info->die_id = pci_ctrl->dev_id % DEVDRV_S2S_DIE_NUM;
 
     if (src_sdid_info->server_id >= DEVDRV_S2S_MAX_SERVER_NUM) {
-        devdrv_warn("server_id is invalid, s2s init failed(server_id=%u; devid=%u)\n",
-            src_sdid_info->server_id, pci_ctrl->dev_id);
+        devdrv_warn("server_id is invalid, s2s init failed(server_id=%u; devid=%u)\n", src_sdid_info->server_id,
+                    pci_ctrl->dev_id);
         return -EINVAL;
     }
 
@@ -1071,7 +1075,7 @@ int devdrv_s2s_msg_chan_init(struct devdrv_pci_ctrl *pci_ctrl)
 
     if ((pci_ctrl->addr_mode != DEVDRV_ADMODE_FULL_MATCH) || (pci_ctrl->virtfn_flag == DEVDRV_SRIOV_TYPE_VF)) {
         devdrv_warn("Only full match pf support this func. (dev_id=%u, addr_mode=%d, virtfn_flag=%u)\n",
-            pci_ctrl->dev_id, pci_ctrl->addr_mode, pci_ctrl->virtfn_flag);
+                    pci_ctrl->dev_id, pci_ctrl->addr_mode, pci_ctrl->virtfn_flag);
         return 0;
     }
 
@@ -1089,8 +1093,8 @@ int devdrv_s2s_msg_chan_init(struct devdrv_pci_ctrl *pci_ctrl)
     msg_dev->s2s_non_trans->last_use = 0;
 
     for (k = 0; k < DEVDRV_S2S_NON_TRANS_MSG_CHAN_NUM; k++) {
-        msg_dev->s2s_non_trans->chan[k] = devdrv_pcimsg_alloc_non_trans_queue_inner_msg(pci_ctrl->dev_id,
-            &devdrv_s2s_non_trans_msg_chan_info);
+        msg_dev->s2s_non_trans->chan[k] = devdrv_pcimsg_alloc_non_trans_queue_inner_msg(
+            pci_ctrl->dev_id, &devdrv_s2s_non_trans_msg_chan_info);
         if (msg_dev->s2s_non_trans->chan[k] == NULL) {
             devdrv_err("alloc trans queue for s2s failed.(dev_id=%u; chan_id=%d)\n", pci_ctrl->dev_id, k);
             goto s2s_non_trans_msg_fail;
@@ -1181,22 +1185,23 @@ int devdrv_s2s_npu_link_check(u32 dev_id, u32 sdid)
 
     pci_ctrl = devdrv_pci_ctrl_get(dev_id);
     if (pci_ctrl == NULL) {
-            devdrv_err("Get pci_ctrl failed. (dev_id=%u; pci_ctrl=NULL)\n", dev_id);
+        devdrv_err("Get pci_ctrl failed. (dev_id=%u; pci_ctrl=NULL)\n", dev_id);
         return -EINVAL;
     }
 
     if ((pci_ctrl->addr_mode != DEVDRV_ADMODE_FULL_MATCH) || (pci_ctrl->virtfn_flag == DEVDRV_SRIOV_TYPE_VF)) {
         devdrv_pci_ctrl_put(pci_ctrl);
         devdrv_warn("Only full match pf support this func. (dev_id=%u, addr_mode=%d, virtfn_flag=%u)\n",
-            pci_ctrl->dev_id, pci_ctrl->addr_mode, pci_ctrl->virtfn_flag);
+                    pci_ctrl->dev_id, pci_ctrl->addr_mode, pci_ctrl->virtfn_flag);
         return -EOPNOTSUPP;
     }
 
-    ret = devdrv_admin_msg_chan_send(pci_ctrl->msg_dev, DEVDRV_HCCS_LINK_CHECK, &sdid, sizeof(u32), &err_code, sizeof(u32));
+    ret = devdrv_admin_msg_chan_send(pci_ctrl->msg_dev, DEVDRV_HCCS_LINK_CHECK, &sdid, sizeof(u32), &err_code,
+                                     sizeof(u32));
     if ((ret != 0) || (err_code != 0)) {
         devdrv_pci_ctrl_put(pci_ctrl);
-        devdrv_err("s2s npu link check remote data failed. (devid=%u, sdid=%u, ret=%d, err_code=%u)\n",
-            dev_id, sdid, ret, err_code);
+        devdrv_err("s2s npu link check remote data failed. (devid=%u, sdid=%u, ret=%d, err_code=%u)\n", dev_id, sdid,
+                   ret, err_code);
         return -ETIMEDOUT;
     }
 

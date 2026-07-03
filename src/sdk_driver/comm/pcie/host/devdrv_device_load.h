@@ -96,8 +96,8 @@ extern struct devdrv_black_callback g_black_box;
 #endif
 #define DEVDRV_TIMER_EXPIRES (1 * KA_HZ)
 
-#define DEVDRV_OPEN_CFG_FILE_TIME_MS  100
-#define DEVDRV_OPEN_CFG_FILE_COUNT    50
+#define DEVDRV_OPEN_CFG_FILE_TIME_MS 100
+#define DEVDRV_OPEN_CFG_FILE_COUNT 50
 
 #define DEVDRV_ALIGN(addr, size) (((addr) + ((size) - 1)) & (~((typeof(addr))(size) - 1)))
 
@@ -142,7 +142,7 @@ struct devdrv_agent_load {
     struct devdrv_load_blocks *blocks;
 
     ka_timer_list_t load_timer; /* device os load time out timer */
-    int timer_remain;             /* timer_remain <= 0 means time out */
+    int timer_remain;           /* timer_remain <= 0 means time out */
     unsigned long timer_expires;
 
     struct devdrv_load_work load_work;

@@ -21,13 +21,13 @@
 
 #ifndef DRV_UT
 
-#define DEVDRV_PCIE_LINK_DOWN_STATE           0xFFFFFFFF
-#define DEVDRV_PCIE_LINK_INFO_OFFSET          0x50
+#define DEVDRV_PCIE_LINK_DOWN_STATE 0xFFFFFFFF
+#define DEVDRV_PCIE_LINK_INFO_OFFSET 0x50
 #define DEVDRV_CLOUD_V2_LINK_INFO_SPEED_SHIFT 16
-#define DEVDRV_CLOUD_V2_LINK_INFO_SPEED_MASK  0xF
+#define DEVDRV_CLOUD_V2_LINK_INFO_SPEED_MASK 0xF
 #define DEVDRV_CLOUD_V2_LINK_INFO_WIDTH_SHIFT 20
-#define DEVDRV_CLOUD_V2_LINK_INFO_WIDTH_MASK  0x3F
-#define DEVDRV_CLOUD_V2_LINK_STATUS_NORMAL    0x10
+#define DEVDRV_CLOUD_V2_LINK_INFO_WIDTH_MASK 0x3F
+#define DEVDRV_CLOUD_V2_LINK_STATUS_NORMAL 0x10
 
 #define DEVDRV_HCCS_CACHELINE_SIZE 128
 #define DEVDRV_HCCS_CACHELINE_MASK (DEVDRV_HCCS_CACHELINE_SIZE - 1)
@@ -37,26 +37,26 @@
 
 #define DEVDRV_CLOUD_V2_P2P_SUPPORT_MAX_DEVICE 16
 
-#define DEVDRV_CLOUD_V2_2DIE_DEVID_STRIDE_2  2
+#define DEVDRV_CLOUD_V2_2DIE_DEVID_STRIDE_2 2
 #define DEVDRV_CLOUD_V2_2DIE_2PCIE_MAINBOARD 0xE
-#define DEVDRV_CLOUD_V2_HW_INFO_SRAM_OFFSET  0x5800
-#define DEVDRV_CLOUD_V2_2DIE_BIT             0x80
-#define DEVDRV_CLOUD_V2_BOARD_TYPE_MASK      0x7
-#define DEVDRV_CLOUD_V2_BOARD_TYPE_OFFSET    4
-#define DEVDRV_CLOUD_V2_1DIE_EVB             0x0
+#define DEVDRV_CLOUD_V2_HW_INFO_SRAM_OFFSET 0x5800
+#define DEVDRV_CLOUD_V2_2DIE_BIT 0x80
+#define DEVDRV_CLOUD_V2_BOARD_TYPE_MASK 0x7
+#define DEVDRV_CLOUD_V2_BOARD_TYPE_OFFSET 4
+#define DEVDRV_CLOUD_V2_1DIE_EVB 0x0
 #define DEVDRV_CLOUD_V2_1DIE_TRAIN_PCIE_CARD 0x1
 #define DEVDRV_CLOUD_V2_1DIE_INFER_PCIE_CARD 0x2
-#define DEVDRV_CLOUD_V2_1DIE_SINGLE_MODULE   0x3
-#define DEVDRV_CLOUD_V2_1DIE_DOUBLE_MODULE   0x5
-#define DEVDRV_CLOUD_V2_2DIE_EVB             0x0
-#define DEVDRV_CLOUD_V2_2DIE_OAM_MODULE      0x1
-#define DEVDRV_CLOUD_V2_2DIE_HAM_MODULE_A    0x3
-#define DEVDRV_CLOUD_V2_2DIE_HAM_MODULE_B    0x5
+#define DEVDRV_CLOUD_V2_1DIE_SINGLE_MODULE 0x3
+#define DEVDRV_CLOUD_V2_1DIE_DOUBLE_MODULE 0x5
+#define DEVDRV_CLOUD_V2_2DIE_EVB 0x0
+#define DEVDRV_CLOUD_V2_2DIE_OAM_MODULE 0x1
+#define DEVDRV_CLOUD_V2_2DIE_HAM_MODULE_A 0x3
+#define DEVDRV_CLOUD_V2_2DIE_HAM_MODULE_B 0x5
 
-#define INVALID_CHIP_ID   0xFF
+#define INVALID_CHIP_ID 0xFF
 #define INVALID_MULTI_DIE 0xFF
-#define DEVDRV_INIT_HWINFO_RETRY_TIME 60   /* wait 60 times */
-#define DEVDRV_INIT_HWINFO_WAIT_TIME  1000 /* wait 1000ms */
+#define DEVDRV_INIT_HWINFO_RETRY_TIME 60  /* wait 60 times */
+#define DEVDRV_INIT_HWINFO_WAIT_TIME 1000 /* wait 1000ms */
 
 /* bios set, host use */
 typedef struct devdrv_hw_info {
@@ -150,13 +150,13 @@ STATIC u64 g_reserver_mem_msg_offset = DEVDRV_RESERVE_MEM_MSG_OFFSET;
 #define DEVDRV_RESERVE_MEM_TOTAL_SIZE (24 * 1024 * 1024)
 
 #define DEVDRV_RESERVE_MEM_TS_SQ_OFFSET 0
-#define DEVDRV_RESERVE_MEM_TS_SQ_SIZE   0
+#define DEVDRV_RESERVE_MEM_TS_SQ_SIZE 0
 
-#define DEVDRV_RESERVE_BBOX_OFFSET    (g_reserver_mem_msg_offset + DEVDRV_RESERVE_MEM_TOTAL_SIZE)
-#define DEVDRV_RESERVE_BBOX_SIZE      0x200000
+#define DEVDRV_RESERVE_BBOX_OFFSET (g_reserver_mem_msg_offset + DEVDRV_RESERVE_MEM_TOTAL_SIZE)
+#define DEVDRV_RESERVE_BBOX_SIZE 0x200000
 
-#define DEVDRV_RESERVE_BBOX_ALL_SIZE  0xB00000
-#define DEVDRV_RESERVE_BBOX_HDR_ADDR  0x800000
+#define DEVDRV_RESERVE_BBOX_ALL_SIZE 0xB00000
+#define DEVDRV_RESERVE_BBOX_HDR_ADDR 0x800000
 
 #define DEVDRV_BBOX_DDR_DUMP_OFFSET (DEVDRV_RESERVE_BBOX_OFFSET + DEVDRV_RESERVE_BBOX_SIZE)
 #define DEVDRV_BBOX_DDR_DUMP_SIZE 0x900000
@@ -173,8 +173,8 @@ STATIC u64 g_reserver_mem_msg_offset = DEVDRV_RESERVE_MEM_MSG_OFFSET;
 #define DEVDRV_BBOX_KDUMP_OFFSET (DEVDRV_RESERVE_HDR_OFFSET + DEVDRV_RESERVE_HDR_SIZE)
 #define DEVDRV_BBOX_KDUMP_SIZE 0x80000
 
-#define DEVDRV_BBOX_VMCORE_OFFSET (DEVDRV_BBOX_KDUMP_OFFSET +sizeof(unsigned int))
-#define DEVDRV_BBOX_VMCORE_SIZE   8
+#define DEVDRV_BBOX_VMCORE_OFFSET (DEVDRV_BBOX_KDUMP_OFFSET + sizeof(unsigned int))
+#define DEVDRV_BBOX_VMCORE_SIZE 8
 
 #define DEVDRV_RESERVE_RESERVE1_OFFSET (DEVDRV_RESERVE_BBOX_OFFSET + DEVDRV_RESERVE_BBOX_ALL_SIZE)
 #define DEVDRV_RESERVE_RESERVE1_SIZE 0x0
@@ -182,13 +182,13 @@ STATIC u64 g_reserver_mem_msg_offset = DEVDRV_RESERVE_MEM_MSG_OFFSET;
 #define DEVDRV_RESERVE_STARS_TOPIC_SCHED_OFFSET (0x1B000000 + g_reserver_mem_msg_offset)
 #define DEVDRV_RESERVE_STARS_TOPIC_SCHED_SIZE 0xC0000
 
-#define DEVDRV_RESERVE_DEVMNG_INFO_OFFSET  0x2400000
-#define DEVDRV_RESERVE_DEVMNG_INFO_SIZE    0x100000
+#define DEVDRV_RESERVE_DEVMNG_INFO_OFFSET 0x2400000
+#define DEVDRV_RESERVE_DEVMNG_INFO_SIZE 0x100000
 
 #define DEVDRV_RESERVE_HBM_TOTAL_SIZE 0x3100000 /* 49 * 1024 * 1024 */
 
 #define DEVDRV_RESERVE_S2S_MSG_OFFSET (0x1C000000 + g_reserver_mem_msg_offset)
-#define DEVDRV_RESERVE_S2S_MSG_SIZE 0x1000000   /* 16 * 1024 * 1024 */
+#define DEVDRV_RESERVE_S2S_MSG_SIZE 0x1000000 /* 16 * 1024 * 1024 */
 
 #define DEVDRV_RESERVE_IMU_LOG_SIZE 0x0
 #define DEVDRV_RESERVE_IMU_LOG_OFFSET (DEVDRV_RESERVE_HBM_TOTAL_SIZE - DEVDRV_RESERVE_IMU_LOG_SIZE)
@@ -202,7 +202,7 @@ STATIC u64 g_reserver_mem_msg_offset = DEVDRV_RESERVE_MEM_MSG_OFFSET;
 #define DEVDRV_RESERVE_REG_OFFSET (DEVDRV_RESERVE_UEFI_OFFSET - DEVDRV_RESERVE_RESERVE2_SIZE - DEVDRV_RESERVE_REG_SIZE)
 
 #define DEVDRV_IEP_SDI0_DB_OFFSET 0x1000
-#define DEVDRV_DB_IOMAP_SIZE  0x1000
+#define DEVDRV_DB_IOMAP_SIZE 0x1000
 
 /* vf mem */
 #define DEVDRV_VF_MDEV_RESERVE_MEM_SIZE 0x6000000
@@ -212,57 +212,57 @@ STATIC u64 g_reserver_mem_msg_offset = DEVDRV_RESERVE_MEM_MSG_OFFSET;
 #define DEVDRV_VF_MDEV_DVPP_SIZE 0x1800000
 
 #define DEVDRV_VF_MEM_MSG_OFFSET 0
-#define DEVDRV_VF_MEM_MSG_SIZE   (1 * 1024 * 1024)
+#define DEVDRV_VF_MEM_MSG_SIZE (1 * 1024 * 1024)
 
 #define DEVDRV_VF_RESERVE_MEM_TEST_OFFSET (DEVDRV_VF_MEM_MSG_OFFSET + DEVDRV_VF_MEM_MSG_SIZE - 4 * 1024)
 #define DEVDRV_VF_RESERVE_MEM_TEST_SIZE (4 * 1024)
 
 /* VF IO BASE */
 #define DEVDRV_VF_IO_STARS_REG_OFFSET 0X8000
-#define DEVDRV_VF_IO_STARS_REG_SIZE   (32 * 1024 * 1024)
+#define DEVDRV_VF_IO_STARS_REG_SIZE (32 * 1024 * 1024)
 
 #define DEVDRV_VF_IO_TS_DB_OFFSET 0X2008000
-#define DEVDRV_VF_IO_TS_DB_SIZE   (4 * 1024 * 1024)
+#define DEVDRV_VF_IO_TS_DB_SIZE (4 * 1024 * 1024)
 
 #define DEVDRV_VF_IO_HWTS_NOTIFY_OFFSET 0X2408000
-#define DEVDRV_VF_IO_HWTS_NOTIFY_SIZE   (64 * 1024)
+#define DEVDRV_VF_IO_HWTS_NOTIFY_SIZE (64 * 1024)
 
 #define DEVDRV_VF_IEP_DMA_OFFSET 0X2508000
-#define DEVDRV_VF_IEP_DMA_SIZE   0X100
+#define DEVDRV_VF_IEP_DMA_SIZE 0X100
 
 #define DEVDRV_VF_IEP_SDI0_OFFSET 0X2608000
-#define DEVDRV_VF_IEP_SDI0_SIZE   0x10000
+#define DEVDRV_VF_IEP_SDI0_SIZE 0x10000
 
 #define DEVDRV_VF_IO_TS_SRAM_OFFSET 0X2708000
-#define DEVDRV_VF_IO_TS_SRAM_SIZE   (2 * 1024)
+#define DEVDRV_VF_IO_TS_SRAM_SIZE (2 * 1024)
 
 #define DEVDRV_VF_IO_SOC_DOORBELL_OFFSET 0X2808000
-#define DEVDRV_VF_IO_SOC_DOORBELL_SIZE   (4 * 1024)
+#define DEVDRV_VF_IO_SOC_DOORBELL_SIZE (4 * 1024)
 
 #define DEVDRV_VF_IO_LOAD_SRAM_OFFSET 0X2908000
-#define DEVDRV_VF_IO_LOAD_SRAM_SIZE   (16 * 1024)
+#define DEVDRV_VF_IO_LOAD_SRAM_SIZE (16 * 1024)
 
 /* VF STARS REG */
 #define DEVDRV_VF_IO_STARS_SQCQ_OFFSET 0X0
-#define DEVDRV_VF_IO_STARS_SQCQ_SIZE   (8 * 1024 * 1024)
+#define DEVDRV_VF_IO_STARS_SQCQ_SIZE (8 * 1024 * 1024)
 
 #define DEVDRV_VF_IO_CDQ_INFO_OFFSET 0X800000
-#define DEVDRV_VF_IO_CDQ_INFO_SIZE   (2 * 1024 * 1024)
+#define DEVDRV_VF_IO_CDQ_INFO_SIZE (2 * 1024 * 1024)
 
 #define DEVDRV_VF_IO_RTSQINT_OFFSET 0XA00000
-#define DEVDRV_VF_IO_RTSQINT_SIZE   (2 * 1024 * 1024)
+#define DEVDRV_VF_IO_RTSQINT_SIZE (2 * 1024 * 1024)
 
 #define DEVDRV_VF_IO_ACSQINT_OFFSET 0XC00000
-#define DEVDRV_VF_IO_ACSQINT_SIZE   (2 * 1024 * 1024)
+#define DEVDRV_VF_IO_ACSQINT_SIZE (2 * 1024 * 1024)
 
 #define DEVDRV_VF_IO_CQINT_OFFSET 0XD00000
-#define DEVDRV_VF_IO_CQINT_SIZE   (2 * 1024 * 1024)
+#define DEVDRV_VF_IO_CQINT_SIZE (2 * 1024 * 1024)
 
 #define DEVDRV_VF_IO_TOPIC_INFO_OFFSET 0X1000000
-#define DEVDRV_VF_IO_TOPIC_INFO_SIZE   (2 * 1024 * 1024)
+#define DEVDRV_VF_IO_TOPIC_INFO_SIZE (2 * 1024 * 1024)
 
 #define DEVDRV_VF_IO_RSV_OFFSET 0X1000000
-#define DEVDRV_VF_IO_RSV_SIZE   0x10000
+#define DEVDRV_VF_IO_RSV_SIZE 0x10000
 
 /* ************ interrupt defined for normal host ************* */
 #define DEVDRV_MSI_X_MAX_VECTORS 256
@@ -357,12 +357,12 @@ STATIC u64 g_reserver_mem_msg_offset = DEVDRV_RESERVE_MEM_MSG_OFFSET;
 #define DEVDRV_MSG_MSI_X_PEH_VF_VECTOR_2_BASE 33
 
 #if defined(CFG_PLATFORM_ESL) || defined(CFG_PLATFORM_FPGA)
-#define DMA_CHAN_REMOTE_USED_NUM            2
-#define DMA_CHAN_REMOTE_USED_START_INDEX    2
+#define DMA_CHAN_REMOTE_USED_NUM 2
+#define DMA_CHAN_REMOTE_USED_START_INDEX 2
 #define DMA_CHAN_BAR_SPACE_USED_START_INDEX 0
 #else
-#define DMA_CHAN_REMOTE_USED_NUM            13
-#define DMA_CHAN_REMOTE_USED_START_INDEX    25
+#define DMA_CHAN_REMOTE_USED_NUM 13
+#define DMA_CHAN_REMOTE_USED_START_INDEX 25
 #define DMA_CHAN_BAR_SPACE_USED_START_INDEX 0
 #endif
 
@@ -370,51 +370,51 @@ STATIC u64 g_reserver_mem_msg_offset = DEVDRV_RESERVE_MEM_MSG_OFFSET;
 
 #define DEVDRV_MAX_DMA_CH_SQ_DEPTH 0x10000
 #define DEVDRV_MAX_DMA_CH_CQ_DEPTH 0x10000
-#define DEVDRV_DMA_CH_SQ_DESC_RSV  0x400
+#define DEVDRV_DMA_CH_SQ_DESC_RSV 0x400
 
-#define CLOUD_V2_BLOCKS_NUM        11
-#define CLOUD_V2_MODULE_NUM        8
-#define CLOUD_V2_VF_VM_MODULE_NUM  6
+#define CLOUD_V2_BLOCKS_NUM 11
+#define CLOUD_V2_MODULE_NUM 8
+#define CLOUD_V2_VF_VM_MODULE_NUM 6
 
 #define DEVDRV_MAX_MSG_PF_CHAN_CNT 46
 #define DEVDRV_MAX_MSG_VF_CHAN_CNT 16
 /* msg chan cnt for modules */
-#define DEVDRV_PCIVNIC_DEV_MSG_CHAN_CNT_MAX       1   /* non_trans:1 */
-#define DEVDRV_SMMU_DEV_MSG_CHAN_CNT_MAX          1   /* non_trans:1 */
-#define DEVDRV_DEVMM_DEV_MSG_CHAN_CNT_MAX         1   /* non_trans:1 */
-#define DEVDRV_COMMON_DEV_MSG_CHAN_CNT_MAX        1   /* non_trans:1 */
-#define DEVDRV_DEV_MAMAGER_MSG_CHAN_CNT_MAX       1   /* non_trans:1 */
-#define DEVDRV_TSDRV_MSG_CHAN_CNT_MAX             1   /* non_trans:1 */
-#define DEVDRV_DEV_HDC_PF_MSG_CHAN_CNT_MAX        25  /* trans:24 non_trans:1 */
-#define DEVDRV_QUEUE_MSG_CHAN_CNT_MAX             1   /* non_trans:1 */
-#define DEVDRV_S2S_MSG_CHAN_CNT_MAX  DEVDRV_S2S_NON_TRANS_MSG_CHAN_NUM   /* non_trans:8 */
+#define DEVDRV_PCIVNIC_DEV_MSG_CHAN_CNT_MAX 1                         /* non_trans:1 */
+#define DEVDRV_SMMU_DEV_MSG_CHAN_CNT_MAX 1                            /* non_trans:1 */
+#define DEVDRV_DEVMM_DEV_MSG_CHAN_CNT_MAX 1                           /* non_trans:1 */
+#define DEVDRV_COMMON_DEV_MSG_CHAN_CNT_MAX 1                          /* non_trans:1 */
+#define DEVDRV_DEV_MAMAGER_MSG_CHAN_CNT_MAX 1                         /* non_trans:1 */
+#define DEVDRV_TSDRV_MSG_CHAN_CNT_MAX 1                               /* non_trans:1 */
+#define DEVDRV_DEV_HDC_PF_MSG_CHAN_CNT_MAX 25                         /* trans:24 non_trans:1 */
+#define DEVDRV_QUEUE_MSG_CHAN_CNT_MAX 1                               /* non_trans:1 */
+#define DEVDRV_S2S_MSG_CHAN_CNT_MAX DEVDRV_S2S_NON_TRANS_MSG_CHAN_NUM /* non_trans:8 */
 
-#define DEVDRV_DEV_HDC_VF_MSG_CHAN_CNT_MAX        3   /* trans:2 non_trans:1 */
+#define DEVDRV_DEV_HDC_VF_MSG_CHAN_CNT_MAX 3 /* trans:2 non_trans:1 */
 
 #define CLOUD_V2_NVME_LOW_LEVEL_DB_IRQ_NUM 2
 #define CLOUD_V2_NVME_DB_IRQ_STRDE 8
 
 STATIC unsigned int devdrv_pf_msg_chan_cnt_cloud_v2[devdrv_msg_client_max] = {
-    DEVDRV_PCIVNIC_DEV_MSG_CHAN_CNT_MAX,    /* used for pcivnic */
-    DEVDRV_SMMU_DEV_MSG_CHAN_CNT_MAX,       /* used for test */
-    DEVDRV_DEVMM_DEV_MSG_CHAN_CNT_MAX,      /* used for svm */
-    DEVDRV_COMMON_DEV_MSG_CHAN_CNT_MAX,     /* used for common */
-    DEVDRV_DEV_MAMAGER_MSG_CHAN_CNT_MAX,    /* used for device manager */
-    DEVDRV_TSDRV_MSG_CHAN_CNT_MAX,          /* used for tsdrv */
-    DEVDRV_DEV_HDC_PF_MSG_CHAN_CNT_MAX,     /* used for hdc */
-    DEVDRV_QUEUE_MSG_CHAN_CNT_MAX,          /* used for queue */
-    DEVDRV_S2S_MSG_CHAN_CNT_MAX,            /* used for s2s */
+    DEVDRV_PCIVNIC_DEV_MSG_CHAN_CNT_MAX, /* used for pcivnic */
+    DEVDRV_SMMU_DEV_MSG_CHAN_CNT_MAX,    /* used for test */
+    DEVDRV_DEVMM_DEV_MSG_CHAN_CNT_MAX,   /* used for svm */
+    DEVDRV_COMMON_DEV_MSG_CHAN_CNT_MAX,  /* used for common */
+    DEVDRV_DEV_MAMAGER_MSG_CHAN_CNT_MAX, /* used for device manager */
+    DEVDRV_TSDRV_MSG_CHAN_CNT_MAX,       /* used for tsdrv */
+    DEVDRV_DEV_HDC_PF_MSG_CHAN_CNT_MAX,  /* used for hdc */
+    DEVDRV_QUEUE_MSG_CHAN_CNT_MAX,       /* used for queue */
+    DEVDRV_S2S_MSG_CHAN_CNT_MAX,         /* used for s2s */
 };
 
 STATIC unsigned int devdrv_vf_msg_chan_cnt_cloud_v2[devdrv_msg_client_max] = {
-    DEVDRV_PCIVNIC_DEV_MSG_CHAN_CNT_MAX,    /* used for pcivnic */
-    DEVDRV_SMMU_DEV_MSG_CHAN_CNT_MAX,       /* used for test */
-    DEVDRV_DEVMM_DEV_MSG_CHAN_CNT_MAX,      /* used for svm */
-    DEVDRV_COMMON_DEV_MSG_CHAN_CNT_MAX,     /* used for common */
-    DEVDRV_DEV_MAMAGER_MSG_CHAN_CNT_MAX,    /* used for device manager */
-    DEVDRV_TSDRV_MSG_CHAN_CNT_MAX,          /* used for tsdrv */
-    DEVDRV_DEV_HDC_VF_MSG_CHAN_CNT_MAX,     /* used for hdc */
-    DEVDRV_QUEUE_MSG_CHAN_CNT_MAX,          /* used for queue */
+    DEVDRV_PCIVNIC_DEV_MSG_CHAN_CNT_MAX, /* used for pcivnic */
+    DEVDRV_SMMU_DEV_MSG_CHAN_CNT_MAX,    /* used for test */
+    DEVDRV_DEVMM_DEV_MSG_CHAN_CNT_MAX,   /* used for svm */
+    DEVDRV_COMMON_DEV_MSG_CHAN_CNT_MAX,  /* used for common */
+    DEVDRV_DEV_MAMAGER_MSG_CHAN_CNT_MAX, /* used for device manager */
+    DEVDRV_TSDRV_MSG_CHAN_CNT_MAX,       /* used for tsdrv */
+    DEVDRV_DEV_HDC_VF_MSG_CHAN_CNT_MAX,  /* used for hdc */
+    DEVDRV_QUEUE_MSG_CHAN_CNT_MAX,       /* used for queue */
 };
 
 STATIC struct devdrv_load_file_cfg cloud_v2_910b_file[CLOUD_V2_BLOCKS_NUM] = {
@@ -711,29 +711,29 @@ void devdrv_cloud_v2_init_vf_bar_addr_info(struct devdrv_pci_ctrl *pci_ctrl)
     pci_ctrl->res.msg_mem.size = DEVDRV_VF_MEM_MSG_SIZE;
 
     pci_ctrl->res.stars_sqcq.addr = pci_ctrl->io_phy_base + DEVDRV_VF_IO_STARS_REG_OFFSET +
-        DEVDRV_VF_IO_STARS_SQCQ_OFFSET;
+                                    DEVDRV_VF_IO_STARS_SQCQ_OFFSET;
     pci_ctrl->res.stars_sqcq.size = DEVDRV_VF_IO_STARS_SQCQ_SIZE;
 
     pci_ctrl->res.stars_sqcq_intr.addr = pci_ctrl->io_phy_base + DEVDRV_VF_IO_STARS_REG_OFFSET +
-        DEVDRV_VF_IO_CQINT_OFFSET;
+                                         DEVDRV_VF_IO_CQINT_OFFSET;
     pci_ctrl->res.stars_sqcq_intr.size = DEVDRV_VF_IO_CQINT_SIZE;
 
     pci_ctrl->res.stars_topic_sched.addr = pci_ctrl->io_phy_base + DEVDRV_VF_IO_STARS_REG_OFFSET +
-        DEVDRV_VF_IO_TOPIC_INFO_OFFSET;
+                                           DEVDRV_VF_IO_TOPIC_INFO_OFFSET;
     pci_ctrl->res.stars_topic_sched.size = DEVDRV_VF_IO_TOPIC_INFO_SIZE;
 
     pci_ctrl->res.stars_topic_sched_cqe.addr = 0;
     pci_ctrl->res.stars_topic_sched_cqe.size = 0;
 
-    pci_ctrl->res.stars_topic_sched_rsv_mem.addr = pci_ctrl->rsv_mem_phy_base + DEVDRV_VF_IO_RSV_OFFSET + g_reserver_mem_msg_offset;
+    pci_ctrl->res.stars_topic_sched_rsv_mem.addr = pci_ctrl->rsv_mem_phy_base + DEVDRV_VF_IO_RSV_OFFSET +
+                                                   g_reserver_mem_msg_offset;
     pci_ctrl->res.stars_topic_sched_rsv_mem.size = DEVDRV_VF_IO_RSV_SIZE;
 
     pci_ctrl->res.stars_cdqm.addr = pci_ctrl->io_phy_base + DEVDRV_VF_IO_STARS_REG_OFFSET +
-        DEVDRV_VF_IO_CDQ_INFO_OFFSET;
+                                    DEVDRV_VF_IO_CDQ_INFO_OFFSET;
     pci_ctrl->res.stars_cdqm.size = DEVDRV_VF_IO_CDQ_INFO_SIZE;
 
-    pci_ctrl->res.stars_intr.addr = pci_ctrl->io_phy_base + DEVDRV_VF_IO_STARS_REG_OFFSET +
-        DEVDRV_VF_IO_RTSQINT_OFFSET;
+    pci_ctrl->res.stars_intr.addr = pci_ctrl->io_phy_base + DEVDRV_VF_IO_STARS_REG_OFFSET + DEVDRV_VF_IO_RTSQINT_OFFSET;
     pci_ctrl->res.stars_intr.size = DEVDRV_VF_IO_RTSQINT_SIZE;
 
     pci_ctrl->res.ts_db.addr = pci_ctrl->io_phy_base + DEVDRV_VF_IO_TS_DB_OFFSET;
@@ -742,7 +742,8 @@ void devdrv_cloud_v2_init_vf_bar_addr_info(struct devdrv_pci_ctrl *pci_ctrl)
     pci_ctrl->res.ts_sram.addr = pci_ctrl->io_phy_base + DEVDRV_VF_IO_TS_SRAM_OFFSET;
     pci_ctrl->res.ts_sram.size = DEVDRV_VF_IO_TS_SRAM_SIZE;
 
-    pci_ctrl->res.test.addr = pci_ctrl->rsv_mem_phy_base + DEVDRV_VF_RESERVE_MEM_TEST_OFFSET + g_reserver_mem_msg_offset;
+    pci_ctrl->res.test.addr = pci_ctrl->rsv_mem_phy_base + DEVDRV_VF_RESERVE_MEM_TEST_OFFSET +
+                              g_reserver_mem_msg_offset;
     pci_ctrl->res.test.size = DEVDRV_VF_RESERVE_MEM_TEST_SIZE;
 
     pci_ctrl->res.load_sram.addr = pci_ctrl->io_phy_base + DEVDRV_VF_IO_LOAD_SRAM_OFFSET;
@@ -1114,9 +1115,9 @@ STATIC int devdrv_get_cloud_v2_2die_2pcie_devid(struct devdrv_ctrl *ctrl_this)
     dev_id = g_hw_info.chip_id * DEVDRV_CLOUD_V2_2DIE_DEVID_STRIDE_2 + die_id;
     alloc_id = devdrv_alloc_devid_inturn((u32)dev_id, DEVDRV_CLOUD_V2_2DIE_DEVID_STRIDE_2);
 
-    devdrv_info("Alloc dev_id. (dev_id=%d, chip_id=%d, die_id=%d; bdf=%02x:%02x.%d)\n",
-        alloc_id, g_hw_info.chip_id, die_id, ka_pci_get_bus_number(pci_ctrl->pdev),
-        KA_PCI_SLOT(ka_pci_get_devfn(pci_ctrl->pdev)), KA_PCI_FUNC(ka_pci_get_devfn(pci_ctrl->pdev)));
+    devdrv_info("Alloc dev_id. (dev_id=%d, chip_id=%d, die_id=%d; bdf=%02x:%02x.%d)\n", alloc_id, g_hw_info.chip_id,
+                die_id, ka_pci_get_bus_number(pci_ctrl->pdev), KA_PCI_SLOT(ka_pci_get_devfn(pci_ctrl->pdev)),
+                KA_PCI_FUNC(ka_pci_get_devfn(pci_ctrl->pdev)));
 
     return alloc_id;
 }
@@ -1174,9 +1175,8 @@ int devdrv_cloud_v2_alloc_devid(struct devdrv_ctrl *ctrl_this)
         return devdrv_sriov_cloud_v2_alloc_vf_devid(pci_ctrl);
     }
 
-    devdrv_info("Get para value. (board_type=%d; node_id=%d; chip_id=%d; slot_id=%d)\n",
-        pci_ctrl->shr_para->board_type, pci_ctrl->shr_para->node_id,
-        pci_ctrl->shr_para->chip_id, pci_ctrl->shr_para->slot_id);
+    devdrv_info("Get para value. (board_type=%d; node_id=%d; chip_id=%d; slot_id=%d)\n", pci_ctrl->shr_para->board_type,
+                pci_ctrl->shr_para->node_id, pci_ctrl->shr_para->chip_id, pci_ctrl->shr_para->slot_id);
 
     board_type = pci_ctrl->shr_para->board_type;
     if ((board_type == BOARD_CLOUD_V2_MODE_8P) || (board_type == BOARD_CLOUD_V2_MODE_DUO_8P) ||
@@ -1204,18 +1204,18 @@ u32 devdrv_cloud_v2_get_p2p_support_max_devnum(void)
 int devdrv_cloud_v2_is_p2p_access_cap(struct devdrv_pci_ctrl *pci_ctrl, struct devdrv_pci_ctrl *peer_pci_ctrl)
 {
     if (((pci_ctrl->virtfn_flag == DEVDRV_SRIOV_TYPE_VF) &&
-        (pci_ctrl->env_boot_mode != DEVDRV_MDEV_FULL_SPEC_VF_VM_BOOT)) ||
+         (pci_ctrl->env_boot_mode != DEVDRV_MDEV_FULL_SPEC_VF_VM_BOOT)) ||
         ((peer_pci_ctrl->virtfn_flag == DEVDRV_SRIOV_TYPE_VF) &&
-        (peer_pci_ctrl->env_boot_mode != DEVDRV_MDEV_FULL_SPEC_VF_VM_BOOT))) {
-        devdrv_info("devid and peer_devid is vf, not support p2p. (dev_id=%u; peer_devid=%u)\n",
-            pci_ctrl->dev_id, peer_pci_ctrl->dev_id);
+         (peer_pci_ctrl->env_boot_mode != DEVDRV_MDEV_FULL_SPEC_VF_VM_BOOT))) {
+        devdrv_info("devid and peer_devid is vf, not support p2p. (dev_id=%u; peer_devid=%u)\n", pci_ctrl->dev_id,
+                    peer_pci_ctrl->dev_id);
         return DEVDRV_P2P_ACCESS_DISABLE;
     }
 
     if ((KA_PCI_FUNC(ka_pci_get_devfn(pci_ctrl->pdev)) > 0) ||
         (KA_PCI_FUNC(ka_pci_get_devfn(peer_pci_ctrl->pdev)) > 0)) {
         devdrv_info("devid and peer_devid is 1pf2die's die1, not support p2p. (dev_id=%u; peer_devid=%u)\n",
-            pci_ctrl->dev_id, peer_pci_ctrl->dev_id);
+                    pci_ctrl->dev_id, peer_pci_ctrl->dev_id);
         return DEVDRV_P2P_ACCESS_DISABLE;
     }
 
@@ -1224,8 +1224,7 @@ int devdrv_cloud_v2_is_p2p_access_cap(struct devdrv_pci_ctrl *pci_ctrl, struct d
 
 bool devdrv_cloud_v2_is_mdev_vm_full_spec(struct devdrv_pci_ctrl *pci_ctrl)
 {
-    if ((pci_ctrl->env_boot_mode == DEVDRV_MDEV_FULL_SPEC_VF_VM_BOOT) &&
-        (pci_ctrl->shr_para->vm_full_spec_flag == 1)) {
+    if ((pci_ctrl->env_boot_mode == DEVDRV_MDEV_FULL_SPEC_VF_VM_BOOT) && (pci_ctrl->shr_para->vm_full_spec_flag == 1)) {
         return true;
     } else {
         return false;
@@ -1240,10 +1239,7 @@ void devdrv_cloud_v2_hccs_flush_cache(u64 base, size_t len, u32 mode)
     addr_loop = base & (~DEVDRV_HCCS_CACHELINE_MASK);
     addr_end = (base + len + DEVDRV_HCCS_CACHELINE_MASK) & (~DEVDRV_HCCS_CACHELINE_MASK);
 
-    asm volatile("dsb st"
-                 :
-                 :
-                 : "memory");
+    asm volatile("dsb st" : : : "memory");
 
     if (mode == CACHE_INVALID) {
         for (; addr_loop < addr_end;) {
@@ -1261,10 +1257,7 @@ void devdrv_cloud_v2_hccs_flush_cache(u64 base, size_t len, u32 mode)
         }
     }
 
-    asm volatile("dsb st"
-                 :
-                 :
-                 : "memory");
+    asm volatile("dsb st" : : : "memory");
 #endif
 }
 
@@ -1303,15 +1296,16 @@ void devdrv_cloud_v2_set_dev_shr_info(struct devdrv_pci_ctrl *pci_ctrl)
     pci_ctrl->shr_para->host_io_bar_base = (u64)pci_ctrl->io_phy_base;
 }
 
-int devdrv_cloud_v2_get_p2p_addr(struct devdrv_pci_ctrl *pci_ctrl, u32 remote_dev_id, enum devdrv_p2p_addr_type type, phys_addr_t *phy_addr, size_t *size)
+int devdrv_cloud_v2_get_p2p_addr(struct devdrv_pci_ctrl *pci_ctrl, u32 remote_dev_id, enum devdrv_p2p_addr_type type,
+                                 phys_addr_t *phy_addr, size_t *size)
 {
     u32 dev_id = pci_ctrl->dev_id;
     u64 io_txatu_base;
 
     io_txatu_base = pci_ctrl->target_bar[remote_dev_id].io_txatu_base;
     if (io_txatu_base == 0) {
-        devdrv_err("Invalid io tx atu base. (dev_id=%u; remote_dev_id=%u; type=%u)\n",
-            dev_id, remote_dev_id, (u32)type);
+        devdrv_err("Invalid io tx atu base. (dev_id=%u; remote_dev_id=%u; type=%u)\n", dev_id, remote_dev_id,
+                   (u32)type);
         return -EINVAL;
     }
 
@@ -1329,8 +1323,8 @@ int devdrv_cloud_v2_get_p2p_addr(struct devdrv_pci_ctrl *pci_ctrl, u32 remote_de
             *size = DEVDRV_IO_HWTS_NOTIFY_SIZE;
             break;
         default:
-            devdrv_err("P2P address type not support. (dev_id=%u; remote_dev_id=%u; type=%u)\n",
-                dev_id, remote_dev_id, (u32)type);
+            devdrv_err("P2P address type not support. (dev_id=%u; remote_dev_id=%u; type=%u)\n", dev_id, remote_dev_id,
+                       (u32)type);
             return -EINVAL;
     }
 
@@ -1340,9 +1334,10 @@ int devdrv_cloud_v2_get_p2p_addr(struct devdrv_pci_ctrl *pci_ctrl, u32 remote_de
 unsigned devdrv_cloud_v2_get_server_id(struct devdrv_pci_ctrl *pci_ctrl)
 {
     devdrv_hw_info_t *hw_data = NULL;
-    void __ka_mm_iomem *hw_info_addr = pci_ctrl->io_base + DEVDRV_IO_LOAD_SRAM_OFFSET + DEVDRV_CLOUD_V2_HW_INFO_SRAM_OFFSET;
+    void __ka_mm_iomem *hw_info_addr = pci_ctrl->io_base + DEVDRV_IO_LOAD_SRAM_OFFSET +
+                                       DEVDRV_CLOUD_V2_HW_INFO_SRAM_OFFSET;
 
-    hw_data = (devdrv_hw_info_t*)hw_info_addr;
+    hw_data = (devdrv_hw_info_t *)hw_info_addr;
     g_hw_info.server_id = hw_data->server_id;
 
     return g_hw_info.server_id;
@@ -1351,9 +1346,10 @@ unsigned devdrv_cloud_v2_get_server_id(struct devdrv_pci_ctrl *pci_ctrl)
 unsigned devdrv_cloud_v2_get_max_server_num(struct devdrv_pci_ctrl *pci_ctrl)
 {
     devdrv_hw_info_t *hw_data = NULL;
-    void __ka_mm_iomem *hw_info_addr = pci_ctrl->io_base + DEVDRV_IO_LOAD_SRAM_OFFSET + DEVDRV_CLOUD_V2_HW_INFO_SRAM_OFFSET;
+    void __ka_mm_iomem *hw_info_addr = pci_ctrl->io_base + DEVDRV_IO_LOAD_SRAM_OFFSET +
+                                       DEVDRV_CLOUD_V2_HW_INFO_SRAM_OFFSET;
 
-    hw_data = (devdrv_hw_info_t*)hw_info_addr;
+    hw_data = (devdrv_hw_info_t *)hw_info_addr;
     g_hw_info.scale_type = hw_data->scale_type;
 
     return (g_hw_info.scale_type / DEVDRV_S2S_MAX_CHIP_NUM);
@@ -1383,7 +1379,7 @@ void devdrv_cloud_v2_init_virt_info(struct devdrv_pci_ctrl *pci_ctrl)
     ka_mm_writel(DEVDRV_VIRT_NUMA_MAGIC, &virt_para->numa_node);
     numa_node = (int)ka_mm_readl(&virt_para->numa_node);
     if (numa_node != DEVDRV_VIRT_NUMA_MAGIC) {
-        if (numa_node >=0 && numa_node < KA_MAX_NUMNODES) {
+        if (numa_node >= 0 && numa_node < KA_MAX_NUMNODES) {
             ka_base_set_dev_node(ka_pci_get_dev(pci_ctrl->pdev), numa_node);
         } else {
             devdrv_warn("invalid numa node: %d\n", numa_node);
@@ -1419,7 +1415,8 @@ void devdrv_cloud_v2_init_vf_msg_cnt(struct devdrv_pci_ctrl *pci_ctrl)
 
 STATIC int devdrv_init_hw_info(struct devdrv_pci_ctrl *pci_ctrl)
 {
-    void __ka_mm_iomem *hw_info_addr = pci_ctrl->io_base + DEVDRV_IO_LOAD_SRAM_OFFSET + DEVDRV_CLOUD_V2_HW_INFO_SRAM_OFFSET;
+    void __ka_mm_iomem *hw_info_addr = pci_ctrl->io_base + DEVDRV_IO_LOAD_SRAM_OFFSET +
+                                       DEVDRV_CLOUD_V2_HW_INFO_SRAM_OFFSET;
     devdrv_hw_info_t *hw_data = NULL;
     int retry_times = 0;
 
@@ -1449,8 +1446,8 @@ retry:
     pci_ctrl->connect_protocol = g_hw_info.connect_type;
     pci_ctrl->addr_mode = g_hw_info.addr_mode;
     pci_ctrl->multi_die = g_hw_info.multi_die;
-    devdrv_info("hw info:chip_id=%u, multi_die=%u, addr_mode=%u, connect_type=%u, retry_times=%d.\n",
-        g_hw_info.chip_id, g_hw_info.multi_die, g_hw_info.addr_mode, g_hw_info.connect_type, retry_times);
+    devdrv_info("hw info:chip_id=%u, multi_die=%u, addr_mode=%u, connect_type=%u, retry_times=%d.\n", g_hw_info.chip_id,
+                g_hw_info.multi_die, g_hw_info.addr_mode, g_hw_info.connect_type, retry_times);
 
     if (retry_times == DEVDRV_INIT_HWINFO_RETRY_TIME) {
         return -ENODEV;
@@ -1535,8 +1532,7 @@ void devdrv_cloud_v2_vf_boot_mode_rebuild(struct devdrv_pci_ctrl *pci_ctrl)
             pci_ctrl->env_boot_mode = DEVDRV_MDEV_VF_VM_BOOT;
         }
     } else {
-        if ((pci_ctrl->shr_para->vm_full_spec_flag == 1) &&
-            (pci_ctrl->env_boot_mode == DEVDRV_MDEV_VF_PM_BOOT)) {
+        if ((pci_ctrl->shr_para->vm_full_spec_flag == 1) && (pci_ctrl->env_boot_mode == DEVDRV_MDEV_VF_PM_BOOT)) {
             /* vf full spec mdev's phy */
             pci_ctrl->env_boot_mode = DEVDRV_MDEV_FULL_SPEC_VF_PM_BOOT;
         }
@@ -1561,8 +1557,8 @@ STATIC void devdrv_init_vf_hw_info(struct devdrv_pci_ctrl *pci_ctrl)
             g_reserver_mem_msg_offset = DEVDRV_RESERVE_MEM_MSG_OFFSET;
         }
 
-        devdrv_info("In mdev vm, vf hw info:multi_die=%u, addr_mode=%u, connect_type=%u.\n",
-            pci_ctrl->multi_die, pci_ctrl->addr_mode, pci_ctrl->connect_protocol);
+        devdrv_info("In mdev vm, vf hw info:multi_die=%u, addr_mode=%u, connect_type=%u.\n", pci_ctrl->multi_die,
+                    pci_ctrl->addr_mode, pci_ctrl->connect_protocol);
         return;
     }
 
@@ -1582,8 +1578,8 @@ STATIC void devdrv_init_vf_hw_info(struct devdrv_pci_ctrl *pci_ctrl)
     pci_ctrl->shr_para->connect_protocol = pci_ctrl->connect_protocol;
     pci_ctrl->shr_para->addr_mode = pci_ctrl->addr_mode;
 
-    devdrv_info("In mdev pm, vf hw info:multi_die=%u, addr_mode=%u, connect_type=%u.\n",
-        pci_ctrl->multi_die, pci_ctrl->addr_mode, pci_ctrl->connect_protocol);
+    devdrv_info("In mdev pm, vf hw info:multi_die=%u, addr_mode=%u, connect_type=%u.\n", pci_ctrl->multi_die,
+                pci_ctrl->addr_mode, pci_ctrl->connect_protocol);
     return;
 }
 
@@ -1624,8 +1620,8 @@ int devdrv_cloud_v2_init_vf_bar_info(struct devdrv_pci_ctrl *pci_ctrl)
         rsv_vpc_mem_offset = DEVDRV_VF_MDEV_RESERVE_MEM_SIZE;
     }
 
-    offset = ka_pci_resource_start(pci_ctrl->pdev, PCI_BAR_RSV_MEM) + DEVDRV_VF_MEM_MSG_OFFSET +
-        rsv_vpc_mem_offset + g_reserver_mem_msg_offset ;
+    offset = ka_pci_resource_start(pci_ctrl->pdev, PCI_BAR_RSV_MEM) + DEVDRV_VF_MEM_MSG_OFFSET + rsv_vpc_mem_offset +
+             g_reserver_mem_msg_offset;
     size = DEVDRV_VF_MEM_MSG_SIZE;
     pci_ctrl->mem_base = ka_mm_ioremap(offset, size);
     if (pci_ctrl->mem_base == NULL) {
@@ -1636,11 +1632,12 @@ int devdrv_cloud_v2_init_vf_bar_info(struct devdrv_pci_ctrl *pci_ctrl)
 
     if ((pci_ctrl->env_boot_mode == DEVDRV_MDEV_VF_VM_BOOT) ||
         (pci_ctrl->env_boot_mode == DEVDRV_MDEV_FULL_SPEC_VF_VM_BOOT)) {
-        pci_ctrl->mdev_rsv_mem_phy_base = (phys_addr_t)ka_pci_resource_start(pci_ctrl->pdev, PCI_BAR_RSV_MEM) ;
+        pci_ctrl->mdev_rsv_mem_phy_base = (phys_addr_t)ka_pci_resource_start(pci_ctrl->pdev, PCI_BAR_RSV_MEM);
         pci_ctrl->mdev_rsv_mem_phy_size = DEVDRV_VF_MDEV_RESERVE_MEM_SIZE;
     }
 
-    pci_ctrl->rsv_mem_phy_base = (phys_addr_t)ka_pci_resource_start(pci_ctrl->pdev, PCI_BAR_RSV_MEM) + rsv_vpc_mem_offset;
+    pci_ctrl->rsv_mem_phy_base = (phys_addr_t)ka_pci_resource_start(pci_ctrl->pdev, PCI_BAR_RSV_MEM) +
+                                 rsv_vpc_mem_offset;
     pci_ctrl->rsv_mem_phy_size = (u64)ka_pci_resource_len(pci_ctrl->pdev, PCI_BAR_RSV_MEM) - rsv_vpc_mem_offset;
 
     pci_ctrl->res.phy_match_flag_addr = (u8 *)pci_ctrl->shr_para + PHY_MATCH_FLAG_OFFSET_IN_SHR_MEM;
@@ -1668,13 +1665,13 @@ void devdrv_cloud_v2_init_vf_setup_runtime_info(struct devdrv_pci_ctrl *pci_ctrl
 
 #endif
 
-static const devdrv_feature_bitmap_t cloud_v2_features =
-    (1ULL << DEVDRV_FEATURE_AGENT_SMMU) |
-    (1ULL << DEVDRV_FEATURE_S2S) |
-    (1ULL << DEVDRV_FEATURE_DMA_COPY_SVA) |
-    (1ULL << DEVDRV_FEATURE_HCCS_LINK_INFO) |
-    (1ULL << DEVDRV_FEATURE_PRE_CFG);
+static const devdrv_feature_bitmap_t cloud_v2_features = (1ULL << DEVDRV_FEATURE_AGENT_SMMU) |
+                                                         (1ULL << DEVDRV_FEATURE_S2S) |
+                                                         (1ULL << DEVDRV_FEATURE_DMA_COPY_SVA) |
+                                                         (1ULL << DEVDRV_FEATURE_HCCS_LINK_INFO) |
+                                                         (1ULL << DEVDRV_FEATURE_PRE_CFG);
 
+// clang-format off
 #define DEVDRV_CLOUD_V2_OPS \
     .init_load_file_info = devdrv_cloud_v2_init_load_file_info, \
     .init_depend_module_info = devdrv_cloud_v2_init_depend_module_info, \
@@ -1780,6 +1777,7 @@ struct res_config cloud_v2_res_cfg[] = {
         },
     },
 };
+// clang-format on
 
 int devdrv_cloud_v2_res_init(struct devdrv_pci_ctrl *pci_ctrl)
 {
@@ -1799,8 +1797,7 @@ int devdrv_cloud_v2_res_init(struct devdrv_pci_ctrl *pci_ctrl)
     (void)memcpy_s(&pci_ctrl->ops, sizeof(struct devdrv_dev_ops), &res_cfg->ops, sizeof(struct devdrv_dev_ops));
     ret = res_cfg->ops.init_bar_info(pci_ctrl);
     if (ret != 0) {
-        devdrv_err("Init %s bar info failed.\n",
-            pci_ctrl->virtfn_flag == DEVDRV_SRIOV_TYPE_PF ? "pf" : "vf");
+        devdrv_err("Init %s bar info failed.\n", pci_ctrl->virtfn_flag == DEVDRV_SRIOV_TYPE_PF ? "pf" : "vf");
         return ret;
     }
 

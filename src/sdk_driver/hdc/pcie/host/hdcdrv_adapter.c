@@ -418,7 +418,8 @@ STATIC void vhdch_service_res_uninit(struct hdcdrv_service *service, int server_
     ka_list_head_t *pos = NULL, *n = NULL;
 
     if (!ka_list_empty_careful(&service->serv_list)) {
-        ka_list_for_each_safe(pos, n, &service->serv_list) {
+        ka_list_for_each_safe(pos, n, &service->serv_list)
+        {
             node = ka_list_entry(pos, struct hdcdrv_serv_list_node, list);
             ka_list_del(&node->list);
             hdcdrv_kvfree((void **)&node, KA_SUB_MODULE_TYPE_0);
@@ -513,7 +514,8 @@ struct hdcdrv_service *vhdch_search_service(u32 devid, u32 fid, int service_type
 
     ka_task_mutex_lock(&vdev->mutex);
     if (!ka_list_empty_careful(&service->serv_list)) {
-        ka_list_for_each_safe(pos, n, &service->serv_list) {
+        ka_list_for_each_safe(pos, n, &service->serv_list)
+        {
             node = ka_list_entry(pos, struct hdcdrv_serv_list_node, list);
             if (node->service.listen_pid == host_pid) {
                 ka_task_mutex_unlock(&vdev->mutex);
@@ -542,7 +544,8 @@ struct hdcdrv_service *vhdch_alloc_service(u32 devid, u32 fid, int service_type,
 
     /* Checking whether the process server with the Same hostpid exists */
     if (!ka_list_empty_careful(&service->serv_list)) {
-        ka_list_for_each_safe(pos, n, &service->serv_list) {
+        ka_list_for_each_safe(pos, n, &service->serv_list)
+        {
             node = ka_list_entry(pos, struct hdcdrv_serv_list_node, list);
             if (node->service.listen_pid == host_pid) {
                 ka_task_mutex_unlock(&vdev->mutex);
@@ -553,7 +556,8 @@ struct hdcdrv_service *vhdch_alloc_service(u32 devid, u32 fid, int service_type,
 
     /* Searching for an idle server */
     if (!ka_list_empty_careful(&service->serv_list)) {
-        ka_list_for_each_safe(pos, n, &service->serv_list) {
+        ka_list_for_each_safe(pos, n, &service->serv_list)
+        {
             node = ka_list_entry(pos, struct hdcdrv_serv_list_node, list);
             if (node->service.listen_pid == HDCDRV_INVALID) {
                 node->service.listen_pid = host_pid;
@@ -581,7 +585,8 @@ STATIC void vhdch_reset_process_server(struct vhdch_vdev *vdev, int service_type
 
     ka_task_mutex_lock(&vdev->mutex);
     if (!ka_list_empty_careful(&service->serv_list)) {
-        ka_list_for_each_safe(pos, n, &service->serv_list) {
+        ka_list_for_each_safe(pos, n, &service->serv_list)
+        {
             node = ka_list_entry(pos, struct hdcdrv_serv_list_node, list);
             if (node->service.listen_status == HDCDRV_VALID) {
                 (void)hdcdrv_server_free(&node->service, (int)vdev->dev_id, service_type);

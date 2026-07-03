@@ -34,7 +34,7 @@ struct ascend_ub_admin_chan {
     struct ascend_ub_msg_dev *msg_dev;
     struct ascend_ub_msg_desc *msg_desc;
     struct ascend_ub_sync_jetty *admin_jetty;
-    struct ubcore_tjetty *tjetty;  // peer
+    struct ubcore_tjetty *tjetty; // peer
     struct ubdrv_msg_chan_stat chan_stat;
     ka_workqueue_struct_t *work_queue;
     struct ubdrv_sync_jfce_work recv_work;
@@ -46,20 +46,20 @@ struct ubdrv_non_trans_chan {
     struct ascend_ub_msg_dev *msg_dev;
     struct ascend_ub_msg_desc *msg_desc;
     struct ascend_ub_sync_jetty msg_jetty; // local send & recv jetty
-    struct ubcore_tjetty *s_tjetty; // remote send target jetty
-    struct ubcore_tjetty *r_tjetty; // remote recv target jetty
-    struct ubcore_target_seg *s_tseg; // remote send_segment of send_jetty
+    struct ubcore_tjetty *s_tjetty;        // remote send target jetty
+    struct ubcore_tjetty *r_tjetty;        // remote recv target jetty
+    struct ubcore_target_seg *s_tseg;      // remote send_segment of send_jetty
     ka_workqueue_struct_t *work_queue;
     struct ubdrv_sync_jfce_work non_trans_r_work;
     u32 chan_id;
     u32 dev_id;
     enum ubdrv_chan_state status;
-    u32 msg_type;   /* enum devdrv_msg_client_type */
+    u32 msg_type; /* enum devdrv_msg_client_type */
     int (*rx_msg_process)(void *msg_chan, void *data, u32 in_data_len, u32 out_data_len, u32 *real_out_len);
     ka_mutex_t tx_mutex;
     ka_mutex_t rx_mutex;
     void *priv;
-    struct ubdrv_msg_chan_stat chan_stat;  // non_trans dfx
+    struct ubdrv_msg_chan_stat chan_stat; // non_trans dfx
     ubcore_comp_callback_t send_jfce_handler;
     ubcore_comp_callback_t recv_jfce_handler;
     enum ubdrv_msg_chan_mode chan_mode;

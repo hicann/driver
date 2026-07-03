@@ -27,4 +27,3 @@ void devdrv_set_cq_doorbell(void __ka_mm_iomem *io_base, u32 val)
 {
     devdrv_nvme_reg_wr(io_base, DEVDRV_MSG_CHAN_DB_OFFSET, val);
 }
-

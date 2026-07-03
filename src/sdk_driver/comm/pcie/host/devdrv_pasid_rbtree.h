@@ -19,7 +19,7 @@
 struct devdrv_dma_pasid_rbtree_node {
     ka_rb_node_t node;
     u32 dev_id;
-    u64 hash_va;  // process pasid
+    u64 hash_va; // process pasid
 };
 
 struct devdrv_dma_pasid_rbtree_ctrl {

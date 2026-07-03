@@ -23,31 +23,31 @@
 
 #include "ascend_ub_load_image_adapt.h"
 
-#define UBDRV_LOAD_HOST_READY 0x11111111U  // driver set:init finish
-#define UBDRV_BIOS_REQUIRE_FILE 0x22222222U  // bios set:request a file
-#define UBDRV_LOAD_FILE_PART_READY 0x33333333U  // driver set:file prepare part ready
+#define UBDRV_LOAD_HOST_READY 0x11111111U      // driver set:init finish
+#define UBDRV_BIOS_REQUIRE_FILE 0x22222222U    // bios set:request a file
+#define UBDRV_LOAD_FILE_PART_READY 0x33333333U // driver set:file prepare part ready
 
-#define UBDRV_LOAD_FILE_READY 0x44444444U  // driver set:file prepare ready
+#define UBDRV_LOAD_FILE_READY 0x44444444U        // driver set:file prepare ready
 #define UBDRV_BIOS_LOAD_FILE_FINISH 0x55555555U  // bios set:single or part file load finish
-#define UBDRV_BIOS_LOAD_FILE_SUCCESS 0x66666666U   // bios set:all files load finish
+#define UBDRV_BIOS_LOAD_FILE_SUCCESS 0x66666666U // bios set:all files load finish
 
 // DFX
-#define UBDRV_LOAD_NO_SUCH_FILE 0XAAAAAAAAU  // driver set: no such file
+#define UBDRV_LOAD_NO_SUCH_FILE 0XAAAAAAAAU      // driver set: no such file
 #define UBDRV_BIOS_LOAD_FILE_FAILED 0XBBBBBBBBU  // bios set: load failed
-#define UBDRV_BIOS_CHECK_FILE_FAILED 0XCCCCCCCCU  // bios set: file check failed
+#define UBDRV_BIOS_CHECK_FILE_FAILED 0XCCCCCCCCU // bios set: file check failed
 
 #define DEVDRV_HOST_FILE_PATH "/home/bios"
 
 #define UBDRV_STR_MAX_LEN 128ULL
-#define UBDRV_MAX_FILE_SIZE (48 * 1024ul * 1024ul)    // 48MB
+#define UBDRV_MAX_FILE_SIZE (48 * 1024ul * 1024ul) // 48MB
 
 #define UBDRV_LOAD_FILE_CHECK_TIME 20 // 20ms
 #if defined(CFG_PLATFORM_ESL) || defined(CFG_PLATFORM_FPGA)
 #define UBDRV_TIMER_SCHEDULE_TIMES 1800 // 30min
-#define UBDRV_LOAD_WAIT_CNT 18000 // 18000 * 20ms = 6min
+#define UBDRV_LOAD_WAIT_CNT 18000       // 18000 * 20ms = 6min
 #else
 #define UBDRV_TIMER_SCHEDULE_TIMES 300 // 5min
-#define UBDRV_LOAD_WAIT_CNT 3000 // 3000 * 20ms = 1min
+#define UBDRV_LOAD_WAIT_CNT 3000       // 3000 * 20ms = 1min
 #endif
 
 #define UBDRV_TIMER_EXPIRES (1 * KA_HZ)
@@ -84,7 +84,7 @@ struct ubdrv_load_sram_info {
     u32 cna;
     u32 upi;
     u32 tid;
-    u32 block_num;  // must at last; followed by 64bit dma_addr(s)
+    u32 block_num; // must at last; followed by 64bit dma_addr(s)
 };
 #pragma pack()
 
@@ -114,7 +114,7 @@ struct ubdrv_load_work {
 struct ubdrv_timer_work {
     struct ascend_ub_dev *udev;
     ka_timer_list_t load_timer; /* device os load time out timer */
-    int timer_remain;             /* timer_remain <= 0 means time out */
+    int timer_remain;           /* timer_remain <= 0 means time out */
     u32 timer_expires;
 };
 
@@ -135,8 +135,8 @@ struct ubdrv_load_file_cfg {
 
 /* uvb load msg cmd type */
 enum ubdrv_uvb_msg_type {
-    UBDRV_UVB_BIOS_REQUIRE_FILE = 0, // bios request a file
-    UBDRV_UVB_BIOS_LOAD_FILE_SUCCESS,    // bios finish load all files
+    UBDRV_UVB_BIOS_REQUIRE_FILE = 0,  // bios request a file
+    UBDRV_UVB_BIOS_LOAD_FILE_SUCCESS, // bios finish load all files
     UBDRV_UVB_BIOS_LOAD_FILE_FAILED,
     UBDRV_UVB_CMD_MAX
 };
@@ -159,7 +159,7 @@ struct ubdrv_uvb_get_file_info_input {
     u32 client_cna;
     u32 client_eid;
     u32 type;
-    char file_name[UBDRV_STR_MAX_LEN];  // file_id
+    char file_name[UBDRV_STR_MAX_LEN]; // file_id
     u32 module_id;
     u32 slot_id;
 };
@@ -199,7 +199,6 @@ int ubdrv_sdk_path_init(void);
 void ubdrv_free_load_segment(u32 dev_id, struct ubdrv_loader *loader);
 int ubdrv_alloc_load_segment(u32 dev_id, struct ubdrv_loader *loader, u32 seg_size);
 int ubdrv_single_file_path_init(char *file_path, u32 len, const u32 file_id);
-int ubdrv_load_get_file_size(u32 dev_id, const char *file_name, u32 file_id,
-    ka_file_t **p_file, loff_t *file_size);
+int ubdrv_load_get_file_size(u32 dev_id, const char *file_name, u32 file_id, ka_file_t **p_file, loff_t *file_size);
 
 #endif

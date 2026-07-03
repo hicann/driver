@@ -36,13 +36,7 @@ u32 g_session_fd = 0;
 u32 g_server_type = 0;
 
 static const char *g_hdc_ctrl_msg_status_str[HDCDRV_LINK_CTRL_MSG_STATUS_MAX] = {
-    "send_succ   ",
-    "send_fail   ",
-    "recv_succ   ",
-    "recv_fail   ",
-    "wait_succ   ",
-    "wait_timeout"
-};
+    "send_succ   ", "send_fail   ", "recv_succ   ", "recv_fail   ", "wait_succ   ", "wait_timeout"};
 
 STATIC void hdcdrv_add_stat(struct hdcdrv_stats *stat_all, const struct hdcdrv_stats *stat)
 {
@@ -588,7 +582,8 @@ STATIC ssize_t hdcdrv_fill_buf_session_chan_info(char *buf, u32 buf_len, const s
     ssize_t offset = 0;
 
     if (type == HDC_DFX_PRINT_IN_SYSFS) {
-        ret = snprintf_s(buf + offset, (size_t)(buf_len - offset), (size_t)(buf_len - offset - 1),
+        ret = snprintf_s(
+            buf + offset, (size_t)(buf_len - offset), (size_t)(buf_len - offset - 1),
             "msg_chan_send: %llu  \trx_msg_notify_task2: %llu\n"
             "rx_msg_notify_task4: %llu  \trx_msg_notify_task5: %llu\n"
             "rx_msg_notify_task6: %llu  \trx_msg_notify_task7: %llu\n"
@@ -607,7 +602,8 @@ STATIC ssize_t hdcdrv_fill_buf_session_chan_info(char *buf, u32 buf_len, const s
             stat->hdcdrv_tx_finish_notify_task7, stat->hdcdrv_tx_finish_notify_task8, stat->hdcdrv_recv_data_times,
             stat->hdcdrv_wait_mem_normal, stat->hdcdrv_wait_mem_fifo_full);
     } else {
-        hdcdrv_event("send:%llu; RX task2:%llu; task4:%llu; task5:%llu; task6:%llu; task7:%llu; task8:%llu; task9:%llu\n",
+        hdcdrv_event(
+            "send:%llu; RX task2:%llu; task4:%llu; task5:%llu; task6:%llu; task7:%llu; task8:%llu; task9:%llu\n",
             stat->hdcdrv_msg_chan_send1, stat->hdcdrv_rx_msg_notify_task2, stat->hdcdrv_rx_msg_notify_task4,
             stat->hdcdrv_rx_msg_notify_task5, stat->hdcdrv_rx_msg_notify_task6, stat->hdcdrv_rx_msg_notify_task7,
             stat->hdcdrv_rx_msg_notify_task8, stat->hdcdrv_rx_msg_notify_task9);
@@ -633,7 +629,8 @@ ssize_t hdcdrv_fill_buf_chan_info(char *buf, u32 buf_len, const struct hdcdrv_db
     int ret;
     ssize_t offset = 0;
 
-    ret = snprintf_s(buf + offset, (size_t)(buf_len - offset), (size_t)(buf_len - offset - 1),
+    ret = snprintf_s(
+        buf + offset, (size_t)(buf_len - offset), (size_t)(buf_len - offset - 1),
         "msg_chan_send1           :%llu\n"
         "msg_chan_send2           :%llu\n"
         "rx_msg_notify            :%llu\n"
@@ -1520,6 +1517,7 @@ static KA_DRIVER_DEVICE_ATTR(link_stat, HDCDRV_ATTR_RD, hdcdrv_sysfs_get_link_st
 static KA_DRIVER_DEVICE_ATTR(vdev_stat, HDCDRV_ATTR_RD, hdcdrv_sysfs_get_vdev_stat, NULL);
 static KA_DRIVER_DEVICE_ATTR(session_timetaken, HDCDRV_ATTR_RD, hdcdrv_sysfs_get_session_timetaken, NULL);
 
+// clang-format off
 static ka_attribute_t *g_hdcdrv_sysfs_attrs[] = {
     ka_fs_get_dev_attr(dev_attr_chan)
     ka_fs_get_dev_attr(dev_attr_session)
@@ -1540,6 +1538,7 @@ static const ka_attribute_group_t g_hdcdrv_sysfs_group = {
     ka_fs_init_ag_attrs(g_hdcdrv_sysfs_attrs)
     ka_fs_init_ag_name("hdc")
 };
+// clang-format on
 
 void hdcdrv_sysfs_init(ka_device_t *dev)
 {

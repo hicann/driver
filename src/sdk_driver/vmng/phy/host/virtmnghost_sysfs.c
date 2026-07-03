@@ -65,7 +65,8 @@ STATIC ssize_t vmngh_sysfs_mdev_info(ka_device_t *dev, ka_device_attribute_t *at
         if ((vd_dev != NULL) && (vd_dev->init_status != VMNG_STARTUP_UNPROBED)) {
             uuid = vd_dev->vascend_uuid;
 
-            ret = snprintf_s(buf + offset, KA_MM_PAGE_SIZE - offset, KA_MM_PAGE_SIZE - offset - 1,
+            ret = snprintf_s(
+                buf + offset, KA_MM_PAGE_SIZE - offset, KA_MM_PAGE_SIZE - offset - 1,
                 "[chip] 19e5:0x%04x %02x:%02x.%u id %2u: "
                 "[vd] uuid %02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x fid %2u dtype "
                 "d%u: ",
@@ -79,7 +80,8 @@ STATIC ssize_t vmngh_sysfs_mdev_info(ka_device_t *dev, ka_device_attribute_t *at
             }
 
             if (vd_dev->init_status == VMNG_STARTUP_BOTTOM_HALF_OK) {
-                ret = snprintf_s(buf + offset, KA_MM_PAGE_SIZE - offset, KA_MM_PAGE_SIZE - offset - 1,
+                ret = snprintf_s(
+                    buf + offset, KA_MM_PAGE_SIZE - offset, KA_MM_PAGE_SIZE - offset - 1,
                     "[vm] pid %6u vmid %2u [agent]: %04x %02x:%02x.%u id %2u.\n", vd_dev->vm_pid, vd_dev->vm_id,
                     vd_dev->agent_device, (vd_dev->agent_bdf >> VMNG_VDEV_AGENT_BDF_SHIFT_8),
                     KA_PCI_SLOT(vd_dev->agent_bdf & 0xff), KA_PCI_FUNC(vd_dev->agent_bdf & 0xff), vd_dev->agent_dev_id);
@@ -169,6 +171,7 @@ static KA_DRIVER_DEVICE_ATTR(vm_full_vf_enable, (KA_S_IWUSR | KA_S_IRUSR | KA_S_
                              vmngh_sysfs_vm_full_vf_enable_show, vmngh_sysfs_vm_full_vf_enable_store);
 #endif
 
+// clang-format off
 static ka_attribute_t *g_vmngh_sysfs_attrs[] = {
     ka_fs_get_dev_attr(dev_attr_mdev_info)
 #ifdef CFG_SOC_PLATFORM_CLOUD_V2
@@ -180,6 +183,7 @@ static ka_attribute_t *g_vmngh_sysfs_attrs[] = {
 static const ka_attribute_group_t g_vmngh_sysfs_group = {
     ka_fs_init_ag_attrs(g_vmngh_sysfs_attrs)
 };
+// clang-format on
 
 STATIC bool vmng_get_sysfs_creat_group_capbility(ka_pci_dev_t *pcidev, int dev_id)
 {

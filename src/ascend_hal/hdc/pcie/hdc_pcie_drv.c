@@ -297,7 +297,7 @@ signed int hdc_pcie_connect(mmProcess handle, signed int devId, signed int servi
             (void)clock_gettime(CLOCK_MONOTONIC, &now_time);
             cost_time = (unsigned int)((unsigned long)((now_time.tv_sec * CONVERT_MS_TO_S) +
                                                        (now_time.tv_nsec / CONVERT_MS_TO_NS)) -
-                                                       start_time);
+                                       start_time);
             if (cost_time > (hdcCmd.connect.timeout * CONVERT_MS_TO_S)) {
                 return -HDCDRV_CONNECT_TIMEOUT;
             }
@@ -361,7 +361,7 @@ retry:
             (void)clock_gettime(CLOCK_MONOTONIC, &now_time);
             cost_time = (unsigned int)((unsigned long)((now_time.tv_sec * CONVERT_MS_TO_S) +
                                                        (now_time.tv_nsec / CONVERT_MS_TO_NS)) -
-                                                       start_time);
+                                       start_time);
             if (cost_time < timeout) {
                 hdcCmd.send.timeout = timeout - cost_time;
                 goto retry;

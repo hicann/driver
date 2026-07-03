@@ -28,11 +28,11 @@
 #endif
 
 #if defined(CFG_PLATFORM_ESL) || defined(CFG_PLATFORM_FPGA)
-#define MSG_MAX_WAIT_CNT 100000U  // 100000 * 1000us = 100s
+#define MSG_MAX_WAIT_CNT 100000U // 100000 * 1000us = 100s
 #else
-#define MSG_MAX_WAIT_CNT 15000000U  // 15000000 * 1us = 15s
+#define MSG_MAX_WAIT_CNT 15000000U // 15000000 * 1us = 15s
 #endif
-#define MSG_RX_USER_CNT_WAIT_CNT 5000000U  // 5s
+#define MSG_RX_USER_CNT_WAIT_CNT 5000000U // 5s
 
 #define UBDRV_DEFAULT_JETTY_ID 0
 #define UBDRV_NON_TRANS_CHAN_CNT 32
@@ -73,23 +73,21 @@ struct ascend_ub_user_data {
 
 void ubdrv_wait_chan_jfce_user_cnt(ka_atomic_t *user_cnt, u32 dev_id, u32 chan_id);
 int ubdrv_copy_user_send(struct ascend_ub_msg_desc *desc, char *data, u32 len, u32 max_len);
-int ubdrv_prepare_recv_data(struct ascend_ub_msg_desc *desc, struct ascend_ub_user_data *data,
-    u32 msg_num, u32 max_len);
+int ubdrv_prepare_recv_data(struct ascend_ub_msg_desc *desc, struct ascend_ub_user_data *data, u32 msg_num,
+                            u32 max_len);
 int ubdrv_copy_rqe_data_to_user(struct ascend_ub_msg_desc *rqe_desc, struct ascend_ub_user_data *data,
-    struct ubdrv_msg_chan_stat *stat, u32 rqe_len);
-struct ascend_ub_msg_desc *ubdrv_alloc_sync_send_seg(struct ascend_ub_sync_jetty *sync_jetty, u32 dev_id,
-    u32 msg_num, u32 try_cnt, u32 wait_per_us);
+                                struct ubdrv_msg_chan_stat *stat, u32 rqe_len);
+struct ascend_ub_msg_desc *ubdrv_alloc_sync_send_seg(struct ascend_ub_sync_jetty *sync_jetty, u32 dev_id, u32 msg_num,
+                                                     u32 try_cnt, u32 wait_per_us);
 void ubdrv_free_sync_send_seg(struct ascend_ub_sync_jetty *sync_jetty, struct ascend_ub_msg_desc *desc);
-void ubdrv_record_chan_jetty_info(struct ubdrv_msg_chan_stat *stat,
-    struct ascend_ub_sync_jetty *sync_jetty);
+void ubdrv_record_chan_jetty_info(struct ubdrv_msg_chan_stat *stat, struct ascend_ub_sync_jetty *sync_jetty);
 void ubdrv_clear_chan_dfx(struct ubdrv_msg_chan_stat *stat);
-void ubdrv_recv_msg_call_process(struct ascend_ub_jetty_ctrl *cfg,
-    struct ascend_ub_msg_desc *desc, u32 seg_id);
-struct ascend_ub_msg_desc* ubdrv_copy_msg_from_rqe_to_chan(struct ascend_ub_jetty_ctrl *cfg,
-    struct ascend_ub_msg_desc *src_desc, u32 seg_id);
-int ubdrv_send_reply_msg(u32 dev_id, u32 chan_id, struct send_wr_cfg *wr_cfg,
-    struct ascend_ub_jetty_ctrl *jetty_ctrl, struct ubdrv_msg_chan_stat *stat);
+void ubdrv_recv_msg_call_process(struct ascend_ub_jetty_ctrl *cfg, struct ascend_ub_msg_desc *desc, u32 seg_id);
+struct ascend_ub_msg_desc *ubdrv_copy_msg_from_rqe_to_chan(struct ascend_ub_jetty_ctrl *cfg,
+                                                           struct ascend_ub_msg_desc *src_desc, u32 seg_id);
+int ubdrv_send_reply_msg(u32 dev_id, u32 chan_id, struct send_wr_cfg *wr_cfg, struct ascend_ub_jetty_ctrl *jetty_ctrl,
+                         struct ubdrv_msg_chan_stat *stat);
 void ubdrv_rebuild_chan_send_jetty(u32 dev_id, u32 chan_id, struct ubdrv_msg_chan_stat *stat,
-    struct ascend_ub_jetty_ctrl *jetty_ctrl, struct send_wr_cfg *wr_cfg);
+                                   struct ascend_ub_jetty_ctrl *jetty_ctrl, struct send_wr_cfg *wr_cfg);
 int ubdrv_msg_result_process(int ret, int peer_status, u32 msg_type);
 #endif

@@ -61,10 +61,46 @@ STATIC char *g_davinci_config_file = "/lib/davinci.conf";
  */
 
 struct ubdrv_load_file_cfg g_load_file[UBDRV_LOAD_FILE_NUM] = {
-    {.id = 0x0, .file_name = "",}, {.id = 0x1, .file_name = "",}, {.id = 0x2, .file_name = "",},
-    {.id = 0x3, .file_name = "",}, {.id = 0x4, .file_name = "",}, {.id = 0x5, .file_name = "",},
-    {.id = 0x6, .file_name = "",}, {.id = 0x7, .file_name = "",}, {.id = 0x8, .file_name = "",},
-    {.id = 0x9, .file_name = "",},
+    {
+        .id = 0x0,
+        .file_name = "",
+    },
+    {
+        .id = 0x1,
+        .file_name = "",
+    },
+    {
+        .id = 0x2,
+        .file_name = "",
+    },
+    {
+        .id = 0x3,
+        .file_name = "",
+    },
+    {
+        .id = 0x4,
+        .file_name = "",
+    },
+    {
+        .id = 0x5,
+        .file_name = "",
+    },
+    {
+        .id = 0x6,
+        .file_name = "",
+    },
+    {
+        .id = 0x7,
+        .file_name = "",
+    },
+    {
+        .id = 0x8,
+        .file_name = "",
+    },
+    {
+        .id = 0x9,
+        .file_name = "",
+    },
     {
         .id = 0xA,
         .file_name = "/driver/device/ascend_950_imu.bin",
@@ -75,8 +111,30 @@ struct ubdrv_load_file_cfg g_load_file[UBDRV_LOAD_FILE_NUM] = {
         .file_name = "/driver/device/ascend_950_lp.bin",
         .file_type = UBDRV_CRITICAL_FILE,
     },
-    {.id = 0xC, .file_name = "",}, {.id = 0xD, .file_name = "",}, {.id = 0xE, .file_name = "",},
-    {.id = 0xF, .file_name = "",}, {.id = 0x10, .file_name = "",}, {.id = 0x11, .file_name = "",},
+    {
+        .id = 0xC,
+        .file_name = "",
+    },
+    {
+        .id = 0xD,
+        .file_name = "",
+    },
+    {
+        .id = 0xE,
+        .file_name = "",
+    },
+    {
+        .id = 0xF,
+        .file_name = "",
+    },
+    {
+        .id = 0x10,
+        .file_name = "",
+    },
+    {
+        .id = 0x11,
+        .file_name = "",
+    },
     {
         .id = 0x12,
         .file_name = "/driver/device/ascend_950_tee.bin",
@@ -97,9 +155,18 @@ struct ubdrv_load_file_cfg g_load_file[UBDRV_LOAD_FILE_NUM] = {
         .file_name = "/driver/device/ascend_950_device_sw.bin",
         .file_type = UBDRV_CRITICAL_FILE,
     },
-    {.id = 0x16, .file_name = "",},
-    {.id = 0x17, .file_name = "",},
-    {.id = 0x18, .file_name = "",},
+    {
+        .id = 0x16,
+        .file_name = "",
+    },
+    {
+        .id = 0x17,
+        .file_name = "",
+    },
+    {
+        .id = 0x18,
+        .file_name = "",
+    },
     {
         .id = 0x19,
         .file_name = "/driver/device/ascend_cloud_v4.crl",
@@ -115,8 +182,22 @@ struct ubdrv_load_file_cfg g_load_file[UBDRV_LOAD_FILE_NUM] = {
         .file_name = "/driver/device/ascend_950_imp.bin",
         .file_type = UBDRV_CRITICAL_FILE,
     },
-    {.id = 0x1C, .file_name = "",}, {.id = 0x1D, .file_name = "",},
-    {.id = 0x1E, .file_name = "",}, {.id = 0x1F, .file_name = "",},
+    {
+        .id = 0x1C,
+        .file_name = "",
+    },
+    {
+        .id = 0x1D,
+        .file_name = "",
+    },
+    {
+        .id = 0x1E,
+        .file_name = "",
+    },
+    {
+        .id = 0x1F,
+        .file_name = "",
+    },
 };
 
 void ubdrv_set_load_abort(struct ubdrv_loader *loader)
@@ -154,8 +235,8 @@ static inline void ubdrv_fill_seg_to_sram(struct ubdrv_loader *loader)
     sram->cna = ubus_dev->ubc->uent->cna;
     sram->tid = loader->tid;
     ka_wmb();
-    ubdrv_info("Set load param to sram. (dev_id=%u;upi=%u;cna=%u;tid=%u)", loader->udev->dev_id,
-        ubus_dev->bi->info.upi, ubus_dev->ubc->uent->cna, loader->tid);
+    ubdrv_info("Set load param to sram. (dev_id=%u;upi=%u;cna=%u;tid=%u)", loader->udev->dev_id, ubus_dev->bi->info.upi,
+               ubus_dev->ubc->uent->cna, loader->tid);
 }
 
 STATIC void ubdrv_get_data_size(struct ubdrv_load_blocks *blocks, u64 file_size, u64 cnt)
@@ -221,20 +302,20 @@ int ubdrv_wait_for_flag_change(struct ubdrv_loader *loader, u32 flag_set, u32 fl
     }
     if (sram->flag == UBDRV_BIOS_LOAD_FILE_SUCCESS) {
         ubdrv_info("File load success.(dev_id=%u;flag_set=0x%x;flag_sram=0x%x;flag_expect=0x%x)\n",
-            loader->udev->dev_id, flag_set, sram->flag, flag_expect);
+                   loader->udev->dev_id, flag_set, sram->flag, flag_expect);
         return 0;
     }
     if ((cnt <= 0) || (sram->flag != flag_expect)) {
         ubdrv_err("Wait for bios single process timeout.(dev_id=%u;flag_set=0x%x;flag_sram=0x%x;flag_expect=0x%x)\n",
-            loader->udev->dev_id, flag_set, sram->flag, flag_expect);
+                  loader->udev->dev_id, flag_set, sram->flag, flag_expect);
         return -ETIMEDOUT;
     }
 
     return 0;
 }
 
-int ubdrv_load_file_fill_blocks(struct ubdrv_loader *loader, u32 dev_id, const char *file_name,
-    ka_file_t *p_file, loff_t *offset)
+int ubdrv_load_file_fill_blocks(struct ubdrv_loader *loader, u32 dev_id, const char *file_name, ka_file_t *p_file,
+                                loff_t *offset)
 {
     struct ubdrv_load_sram_info *sram = (struct ubdrv_load_sram_info *)loader->mem_sram_base;
     struct ubdrv_load_blocks *blocks = loader->blocks;
@@ -248,18 +329,18 @@ int ubdrv_load_file_fill_blocks(struct ubdrv_loader *loader, u32 dev_id, const c
     while (remain_size > 0) {
         translated_size = ubdrv_get_load_block_size(remain_size, blocks);
         sram->block_num = blocks->blocks_valid_num;
-        sram_dma_addr = (u64*)((char*)sram + sizeof(struct ubdrv_load_sram_info));
+        sram_dma_addr = (u64 *)((char *)sram + sizeof(struct ubdrv_load_sram_info));
 
         if (ubdrv_get_load_abort(loader)) {
             ubdrv_info("Device load abort, not read file. (dev_id=%u)\n", dev_id);
             goto fill_exit;
         }
         for (i = 0; i < blocks->blocks_valid_num; i++) {
-            len = ka_fs_kernel_read(p_file, blocks->blocks_addr[i].addr,
-                (size_t)blocks->blocks_addr[i].data_size, offset);
+            len = ka_fs_kernel_read(p_file, blocks->blocks_addr[i].addr, (size_t)blocks->blocks_addr[i].data_size,
+                                    offset);
             if ((len < 0) || (len != (ssize_t)blocks->blocks_addr[i].data_size)) {
-                ubdrv_err("Read file failed. (dev_id=%u;file_name=%s;len=%llu;data_size=%llu)\n",
-                    dev_id, file_name, (u64)len, blocks->blocks_addr[i].data_size);
+                ubdrv_err("Read file failed. (dev_id=%u;file_name=%s;len=%llu;data_size=%llu)\n", dev_id, file_name,
+                          (u64)len, blocks->blocks_addr[i].data_size);
                 ret = -EIO;
                 goto fill_exit;
             }
@@ -273,8 +354,8 @@ int ubdrv_load_file_fill_blocks(struct ubdrv_loader *loader, u32 dev_id, const c
             ubdrv_set_load_flag(loader, UBDRV_LOAD_FILE_PART_READY);
             ret = ubdrv_wait_for_flag_change(loader, UBDRV_LOAD_FILE_PART_READY, UBDRV_BIOS_LOAD_FILE_FINISH);
             if (ret != 0) {
-                ubdrv_err("Bios recv part file timeout. (dev_id=%u;file_name=%s;sram_flag=%u)\n",
-                    dev_id, file_name, sram->flag);
+                ubdrv_err("Bios recv part file timeout. (dev_id=%u;file_name=%s;sram_flag=%u)\n", dev_id, file_name,
+                          sram->flag);
                 goto fill_exit;
             }
         } else {
@@ -288,11 +369,9 @@ fill_exit:
 STATIC void ubdrv_file_read_ret_print(u32 dev_id, const char *file_name, u8 file_type)
 {
     if (file_type == UBDRV_CRITICAL_FILE) {
-        ubdrv_err("Critical file open fail. (dev_id=%u; file_name=%s)\n",
-            dev_id, file_name);
+        ubdrv_err("Critical file open fail. (dev_id=%u; file_name=%s)\n", dev_id, file_name);
     } else {
-        ubdrv_info("Non-critical file open unsuccess. (dev_id=%u; file_name=%s)\n",
-            dev_id, file_name);
+        ubdrv_info("Non-critical file open unsuccess. (dev_id=%u; file_name=%s)\n", dev_id, file_name);
     }
     return;
 }
@@ -336,7 +415,7 @@ direct_out:
 }
 
 STATIC int ubdrv_load_file_copy(struct ubdrv_loader *loader, u32 dev_id, const char *file_name, u32 file_id,
-    struct ubdrv_load_blocks *blocks)
+                                struct ubdrv_load_blocks *blocks)
 {
     loff_t offset = 0, file_size;
     ka_file_t *p_file = NULL;
@@ -354,14 +433,14 @@ STATIC int ubdrv_load_file_copy(struct ubdrv_loader *loader, u32 dev_id, const c
 
     ret = ubdrv_load_file_fill_blocks(loader, dev_id, file_name, p_file, &offset);
     if (ret != 0) {
-        ubdrv_err("Fill load blocks err. (dev_id=%u;file_name=%s;file_size=%lld; ret=%d)\n",
-            dev_id, file_name, file_size, ret);
+        ubdrv_err("Fill load blocks err. (dev_id=%u;file_name=%s;file_size=%lld; ret=%d)\n", dev_id, file_name,
+                  file_size, ret);
         goto close_file;
     }
 
     if (offset != file_size) {
-        ubdrv_err("Read file error. (dev_id=%u;file_name=%s;offset=%llu;file_size=%llu)\n",
-            dev_id, file_name, (u64)offset, (u64)file_size);
+        ubdrv_err("Read file error. (dev_id=%u;file_name=%s;offset=%llu;file_size=%llu)\n", dev_id, file_name,
+                  (u64)offset, (u64)file_size);
         ret = -EIO;
     }
 close_file:
@@ -400,7 +479,7 @@ STATIC int ubdrv_load_sva_alloc(u32 dev_id, struct ubdrv_loader *loader, u32 seg
         goto unbind_device;
     }
 
-    *buffer = (u64*)ubdrv_vmalloc(seg_size);
+    *buffer = (u64 *)ubdrv_vmalloc(seg_size);
     if (*buffer == NULL) {
         ubdrv_err("Malloc block failed. (dev_id=%u)\n", dev_id);
         ret = -EINVAL;
@@ -505,7 +584,7 @@ void ubdrv_free_load_segment(u32 dev_id, struct ubdrv_loader *loader)
     }
 
     ubdrv_ksva_iotlb_flush(loader->sva->handle.domain, (unsigned long)blocks->blocks_addr[0].addr,
-        blocks->blocks_addr[0].size);
+                           blocks->blocks_addr[0].size);
 
     ubdrv_vfree(blocks->blocks_addr[0].addr);
     blocks->blocks_addr[0].addr = NULL;
@@ -554,8 +633,8 @@ int ubdrv_single_file_path_init(char *file_path, u32 len, const u32 file_id)
 
     ret = strcat_s(file_path, UBDRV_STR_MAX_LEN, g_load_file[file_id].file_name);
     if (ret != 0) {
-        ubdrv_err("Strcat filed. (file_len=%ld;base_len=%ld;ret=%d)\n",
-            ka_base_strlen(g_load_file[file_id].file_name), ka_base_strlen(file_path), ret);
+        ubdrv_err("Strcat filed. (file_len=%ld;base_len=%ld;ret=%d)\n", ka_base_strlen(g_load_file[file_id].file_name),
+                  ka_base_strlen(file_path), ret);
         return ret;
     }
     return 0;
@@ -572,8 +651,7 @@ int ubdrv_load_single_file(struct ubdrv_loader *loader)
 
     ret = ubdrv_single_file_path_init(file_path, UBDRV_STR_MAX_LEN, file_id);
     if (ret != 0) {
-        ubdrv_err("ubdrv_single_file_path_init failed. (dev_id=%u;ret=%d)\n",
-            loader->udev->dev_id, ret);
+        ubdrv_err("ubdrv_single_file_path_init failed. (dev_id=%u;ret=%d)\n", loader->udev->dev_id, ret);
         return ret;
     }
 
@@ -605,8 +683,8 @@ int ubdrv_sdk_path_init(void)
 {
     int ret;
 
-    ret = ubdrv_get_env_value_from_file(g_davinci_config_file, "DAVINCI_HOME_PATH",
-        g_devdrv_sdk_path, (u32)sizeof(g_devdrv_sdk_path));
+    ret = ubdrv_get_env_value_from_file(g_davinci_config_file, "DAVINCI_HOME_PATH", g_devdrv_sdk_path,
+                                        (u32)sizeof(g_devdrv_sdk_path));
     if (ret != 0) {
         ret = strcpy_s(g_devdrv_sdk_path, UBDRV_STR_MAX_LEN, DEVDRV_HOST_FILE_PATH);
         if (ret != 0) {
@@ -625,8 +703,8 @@ int ubdrv_start_load_file(struct ubdrv_loader *loader)
     ubdrv_set_load_flag(loader, UBDRV_LOAD_HOST_READY);
     ret = ubdrv_wait_for_flag_change(loader, UBDRV_LOAD_HOST_READY, UBDRV_BIOS_REQUIRE_FILE);
     if (ret != 0) {
-        ubdrv_err("Wait for BIOS request file timeout. (dev_id=%u;ret=%d;flag=%#x)\n",
-            loader->udev->dev_id, ret, sram->flag);
+        ubdrv_err("Wait for BIOS request file timeout. (dev_id=%u;ret=%d;flag=%#x)\n", loader->udev->dev_id, ret,
+                  sram->flag);
         return ret;
     }
     devdrv_ub_set_device_boot_status(loader->udev->dev_id, DSMI_BOOT_STATUS_BIOS);
@@ -646,8 +724,7 @@ STATIC void ubdrv_timer_task(ka_timer_list_t *t)
 {
     struct ubdrv_timer_work *timer_work = ka_container_of(t, struct ubdrv_timer_work, load_timer);
     enum ubdrv_dev_startup_flag_type startup_flag = ubdrv_get_startup_flag(timer_work->udev->dev_id);
-    if ((startup_flag == UBDRV_DEV_STARTUP_BOTTOM_HALF_START) ||
-        (startup_flag == UBDRV_DEV_STARTUP_BOTTOM_HALF_OK)) {
+    if ((startup_flag == UBDRV_DEV_STARTUP_BOTTOM_HALF_START) || (startup_flag == UBDRV_DEV_STARTUP_BOTTOM_HALF_OK)) {
         ubdrv_info("Device os load success. (dev_id=%u)\n", timer_work->udev->dev_id);
         return;
     }
@@ -656,8 +733,7 @@ STATIC void ubdrv_timer_task(ka_timer_list_t *t)
         timer_work->load_timer.expires = ka_jiffies + timer_work->timer_expires;
         ka_system_add_timer(&timer_work->load_timer);
     } else {
-        ubdrv_err("Device os load failed. (dev_id=%u;startup_flag=%u)\n",
-            timer_work->udev->dev_id, startup_flag);
+        ubdrv_err("Device os load failed. (dev_id=%u;startup_flag=%u)\n", timer_work->udev->dev_id, startup_flag);
     }
 
     return;

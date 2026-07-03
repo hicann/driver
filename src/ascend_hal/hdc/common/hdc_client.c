@@ -49,7 +49,8 @@ STATIC hdcError_t drv_hdc_client_create_para_checker(const HDC_CLIENT *pClient, 
 
 /*****************************************************************************
  * Function Name        : drvHdcClientCreate
- * Function Description : Create an HDC client and initialize it based on the maximum number of sessions and service type
+ * Function Description : Create an HDC client and initialize it based on the maximum number of sessions and
+ *                        service type
  * Input Parameters     : int maxSessionNum  The maximum number of sessions currently required by Client
  *                        int serviceType  select service type
  *                        int flag         Reserved parameters, [bit0 - bit7] session connect timeout, other fixed to 0
@@ -379,14 +380,14 @@ hdcError_t halHdcSessionConnectEx(int peer_node, int peer_devid, int peer_pid, H
 /*****************************************************************************
  * Function Name         : drvHdcSessionConnect
  * Function Description  : Create HDC Session for Host and Device communication
- * Input Parameters      : signed int peer_node        The node number of the node where the Device is located. Currently
- *                                                only 1 node is supported. Remote nodes are not supported. You need
- *                                                to pass a fixed value of 0
- *                        signed int peer_devid       Device's uniform ID in the host (number in each node)
- *                        HDC_CLIENT client          HDC Client handle corresponding to the newly created Session
+ * Input Parameters      : signed int peer_node       The node number of the node where the Device is located.
+ *                         Currently only 1 node is supported. Remote nodes are not supported. You need
+ *                         to pass a fixed value of 0
+ *                         signed int peer_devid      Device's uniform ID in the host (number in each node)
+ *                         HDC_CLIENT client          HDC Client handle corresponding to the newly created Session
  * Output Parameters     : HDC_SESSION *session       Created session
  * Return Value          : DRV_ERROR_NONE
- *                        DRV_ERROR_INVALID_VALUE
+ *                         DRV_ERROR_INVALID_VALUE
  * Caller Function       :
  * Called Function       :
  *

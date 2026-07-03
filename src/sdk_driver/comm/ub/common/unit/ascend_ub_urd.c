@@ -27,7 +27,7 @@ int ascend_ub_get_urma_name(void *feature, char *in, u32 in_len, char *out, u32 
 {
     struct ascend_ub_msg_dev *msg_dev;
     const char *urma_name;
-    unsigned int dev_id;    // logical id
+    unsigned int dev_id; // logical id
     unsigned int udevid;
     int ret = 0;
 
@@ -90,7 +90,7 @@ int ascend_ub_get_eid_index(void *feature, char *in, u32 in_len, char *out, u32 
 {
     struct dev_eid_info *eid_info = NULL;
     struct dms_eid_query_info *query_info = NULL;
-    u32 dev_id;    // logical id
+    u32 dev_id; // logical id
     u32 udevid, i;
     int ret;
 

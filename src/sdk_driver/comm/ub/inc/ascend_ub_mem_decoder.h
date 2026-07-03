@@ -17,9 +17,9 @@
 #include "ascend_ub_unit_adapt.h"
 
 #define ASCEND_UB_MEM_NONLINEAR_NUM 36u
-#define UB_MEM_KEY_UB_BASE          "UBA_BASE"
-#define UB_MEM_KEY_UB_TID           "UB_TID"
-#define UB_MEM_KEY_UB_MEM_ID        "UB_MEM_ID"
+#define UB_MEM_KEY_UB_BASE "UBA_BASE"
+#define UB_MEM_KEY_UB_TID "UB_TID"
+#define UB_MEM_KEY_UB_MEM_ID "UB_MEM_ID"
 
 struct ubdrv_ubmem_set_decoder_info {
     u32 dev_id;
@@ -30,17 +30,17 @@ struct ubdrv_ubmem_set_decoder_info {
 };
 
 struct ubmem_nonlinear_pa_info {
-    u64 remote_id:16;
-    u64 to_host:1;
-    u64 rsv:47;
+    u64 remote_id : 16;
+    u64 to_host : 1;
+    u64 rsv : 47;
     u64 pa_base;
     u64 pa_size;
 };
 
 struct ubmem_decoder_msg_data {
     u32 version;
-    u16 super_pod_size;  // npu pod size
-    u16 mem_id;  // only use in ub mem_decoder info
+    u16 super_pod_size; // npu pod size
+    u16 mem_id;         // only use in ub mem_decoder info
     u32 tid;
     u64 max_share_mem_size;
     u64 uba;

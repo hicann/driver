@@ -36,8 +36,8 @@
 #include "ascend_ub_admin_msg.h"
 
 #define UBDRV_ADMIN_OPER_FUNC_MAX 2
-static int (*ubdrv_admin_oper_func[UBDRV_ADMIN_MSG_MAX][UBDRV_ADMIN_OPER_FUNC_MAX])
-    (struct ascend_ub_msg_dev *msg_dev, void *data) = {
+static int (*ubdrv_admin_oper_func[UBDRV_ADMIN_MSG_MAX][UBDRV_ADMIN_OPER_FUNC_MAX])(struct ascend_ub_msg_dev *msg_dev,
+                                                                                    void *data) = {
     [UBDRV_CREATE_MSG_QUEUE] = {ubdrv_msg_alloc_msg_queue, NULL},
     [UBDRV_FREE_MSG_QUEUE] = {ubdrv_msg_free_msg_queue, NULL},
     [UBDRV_ENABLE_MSG_QUEUE] = {ubdrv_enable_device_msg_chan, NULL},
@@ -62,8 +62,8 @@ STATIC void ubdrv_admin_jfce_recv_handle(struct ubcore_jfc *jfc)
         return;
     }
 
-    cfg = (struct ascend_ub_jetty_ctrl*)jfc->jfc_cfg.jfc_context;
-    msg_chan = (struct ascend_ub_admin_chan*)cfg->msg_chan;
+    cfg = (struct ascend_ub_jetty_ctrl *)jfc->jfc_cfg.jfc_context;
+    msg_chan = (struct ascend_ub_admin_chan *)cfg->msg_chan;
     if (msg_chan == NULL) {
         ubdrv_warn("Admin chan is null in jfce handle.\n");
         return;
@@ -71,8 +71,8 @@ STATIC void ubdrv_admin_jfce_recv_handle(struct ubcore_jfc *jfc)
     ka_base_atomic_add(1, &msg_chan->user_cnt);
     if (msg_chan->valid != UB_ADMIN_MSG_ENABLE) {
         ka_base_atomic_sub(1, &msg_chan->user_cnt);
-        ubdrv_warn("Chan is unexpected state in jfce handle. (status=%d;dev_id=%u)\n",
-            msg_chan->valid, msg_chan->dev_id);
+        ubdrv_warn("Chan is unexpected state in jfce handle. (status=%d;dev_id=%u)\n", msg_chan->valid,
+                   msg_chan->dev_id);
         return;
     }
 
@@ -201,8 +201,8 @@ int ubdrv_create_admin_jetty(struct ub_idev *idev, u32 dev_id, u32 jfr_id)
         ubdrv_err("Ascend admin jetty init failed. (ret=%d;dev_id=%u)\n", ret, dev_id);
         goto jetty_cfg_uninit;
     }
-    ubdrv_info("Admin jetty create success. (dev_id=%u;send_jfr_id=%u; rcv_jfc_id=%u)\n",
-        dev_id, send_jetty->jfr->jfr_id.id, recv_jetty->jfs_jfc->id);
+    ubdrv_info("Admin jetty create success. (dev_id=%u;send_jfr_id=%u; rcv_jfc_id=%u)\n", dev_id,
+               send_jetty->jfr->jfr_id.id, recv_jetty->jfs_jfc->id);
 
     return 0;
 
@@ -246,7 +246,7 @@ void ubdrv_delete_admin_jetty(u32 dev_id)
 }
 
 int ubdrv_admin_chan_import_jfr(struct ub_idev *idev, struct ascend_ub_admin_chan *msg_chan,
-    struct jetty_exchange_data *data, u32 dev_id, enum ubdrv_log_level log_level)
+                                struct jetty_exchange_data *data, u32 dev_id, enum ubdrv_log_level log_level)
 {
     struct ubcore_tjetty *tjetty;
     u32 eid_index = idev->eid_index;
@@ -358,8 +358,7 @@ STATIC void ubdrv_put_admin_msg_chan(struct ascend_ub_admin_chan *msg_chan)
     return;
 }
 
-STATIC void ubdrv_clear_user_data(struct ascend_ub_admin_chan *msg_chan,
-    struct ascend_ub_msg_desc *desc)
+STATIC void ubdrv_clear_user_data(struct ascend_ub_admin_chan *msg_chan, struct ascend_ub_msg_desc *desc)
 {
     u32 buf_len = msg_chan->admin_jetty->send_jetty.send_msg_len;
     u32 len = buf_len - ASCEND_UB_MSG_DESC_LEN;
@@ -369,7 +368,7 @@ STATIC void ubdrv_clear_user_data(struct ascend_ub_admin_chan *msg_chan,
 }
 
 STATIC void ubdrv_prepare_send_wr(struct send_wr_cfg *wr_cfg, struct ascend_ub_admin_chan *msg_chan,
-    struct ascend_ub_msg_desc *desc, u32 size)
+                                  struct ascend_ub_msg_desc *desc, u32 size)
 {
     wr_cfg->user_ctx = desc->seg_id;
     wr_cfg->tjetty = msg_chan->tjetty;
@@ -416,7 +415,7 @@ STATIC int ubdrv_check_amdin_msg(u32 dev_id, struct ascend_ub_user_data *data)
 }
 
 STATIC int ubdrv_prepare_send(struct ascend_ub_admin_chan *msg_chan, struct ascend_ub_msg_desc *desc,
-    struct send_wr_cfg *wr_cfg, struct ascend_ub_user_data *data, u32 dev_id)
+                              struct send_wr_cfg *wr_cfg, struct ascend_ub_user_data *data, u32 dev_id)
 {
     int ret;
 
@@ -429,8 +428,7 @@ STATIC int ubdrv_prepare_send(struct ascend_ub_admin_chan *msg_chan, struct asce
     return 0;
 }
 
-int ubdrv_basic_chan_send(u32 dev_id, struct ascend_ub_user_data *data,
-    struct ascend_ub_admin_chan *msg_chan)
+int ubdrv_basic_chan_send(u32 dev_id, struct ascend_ub_user_data *data, struct ascend_ub_admin_chan *msg_chan)
 {
     struct ascend_ub_jetty_ctrl *jetty_ctrl;
     struct ascend_ub_msg_desc *rqe_desc;
@@ -443,8 +441,8 @@ int ubdrv_basic_chan_send(u32 dev_id, struct ascend_ub_user_data *data,
     int ret;
 
     msg_num = (u32)ka_base_atomic_inc_return(&msg_chan->msg_num);
-    desc = ubdrv_alloc_sync_send_seg(msg_chan->admin_jetty, dev_id, msg_num,
-        UBDRV_ALLOC_SEG_TRY_CNT, UBDRV_ALLOC_SEG_WAIT_PER_US);
+    desc = ubdrv_alloc_sync_send_seg(msg_chan->admin_jetty, dev_id, msg_num, UBDRV_ALLOC_SEG_TRY_CNT,
+                                     UBDRV_ALLOC_SEG_WAIT_PER_US);
     if (desc == NULL) {
         ubdrv_err("ubdrv_alloc_sync_send_seg failed. (dev_id=%u)\n", dev_id);
         return -ENOMEM;
@@ -460,8 +458,7 @@ int ubdrv_basic_chan_send(u32 dev_id, struct ascend_ub_user_data *data,
 admin_msg_tatimeout:
     ret = ubdrv_post_send_wr(&wr_cfg, dev_id);
     if (ret != 0) {
-        ubdrv_err("ubcore_post_jfs_wr failed. (seg_id=%u;dev_id=%u)\n",
-            desc->seg_id, dev_id);
+        ubdrv_err("ubcore_post_jfs_wr failed. (seg_id=%u;dev_id=%u)\n", desc->seg_id, dev_id);
         stat->tx_post_send_err++;
         goto clear_user_data;
     }
@@ -472,8 +469,8 @@ admin_msg_tatimeout:
         ta_timeout_cnt++;
         goto admin_msg_tatimeout;
     } else if ((ret != 0) || (cr.status != UBCORE_CR_SUCCESS)) {
-        ubdrv_warn("Admin chan send unsuccess. (ret=%d;cr_status=%d;dev_id=%u;dev_name=%s)\n",
-            ret, cr.status, dev_id, jetty_ctrl->ubc_dev->dev_name);
+        ubdrv_warn("Admin chan send unsuccess. (ret=%d;cr_status=%d;dev_id=%u;dev_name=%s)\n", ret, cr.status, dev_id,
+                   jetty_ctrl->ubc_dev->dev_name);
         ret = ((cr.status != 0) ? cr.status : ret);
         goto clear_user_data;
     }
@@ -492,8 +489,8 @@ admin_msg_tatimeout:
 
 repost_jfr:
     ret = ubdrv_msg_result_process(ret, (int)rqe_desc->status, UBDRV_NONTRANS_TYPE_CNT);
-    (void)ubdrv_post_jfr_wr(jetty_ctrl->jfr, jetty_ctrl->recv_seg, rqe_desc,
-        jetty_ctrl->recv_msg_len, rqe_desc->seg_id);
+    (void)ubdrv_post_jfr_wr(jetty_ctrl->jfr, jetty_ctrl->recv_seg, rqe_desc, jetty_ctrl->recv_msg_len,
+                            rqe_desc->seg_id);
 clear_user_data:
     ubdrv_clear_user_data(msg_chan, desc);
 free_send_seg:
@@ -713,8 +710,7 @@ STATIC int ubdrv_admin_recv_process(struct ascend_ub_jetty_ctrl *cfg, struct asc
     return 0;
 }
 
-void ubdrv_admin_recv_finish_process(struct ascend_ub_jetty_ctrl *cfg,
-                                     struct ascend_ub_msg_desc *desc)
+void ubdrv_admin_recv_finish_process(struct ascend_ub_jetty_ctrl *cfg, struct ascend_ub_msg_desc *desc)
 {
     int ret;
     struct ascend_ub_admin_chan *chan = cfg->msg_chan;
@@ -749,8 +745,8 @@ STATIC int ubdrv_admin_recv_check_parm(struct ascend_ub_msg_desc *desc)
     return 0;
 }
 
-STATIC int ubdrv_send_admin_reply_msg(u32 dev_id, struct ascend_ub_jetty_ctrl *cfg,
-    struct ascend_ub_msg_desc *src_desc, struct ubdrv_msg_chan_stat *stat)
+STATIC int ubdrv_send_admin_reply_msg(u32 dev_id, struct ascend_ub_jetty_ctrl *cfg, struct ascend_ub_msg_desc *src_desc,
+                                      struct ubdrv_msg_chan_stat *stat)
 {
     struct ascend_ub_admin_chan *admin_chan;
     struct ascend_ub_jetty_ctrl *recv_jetty;
@@ -759,13 +755,13 @@ STATIC int ubdrv_send_admin_reply_msg(u32 dev_id, struct ascend_ub_jetty_ctrl *c
     u32 seg_id = 0;
     int ret;
 
-    admin_chan = (struct ascend_ub_admin_chan*)cfg->msg_chan;
+    admin_chan = (struct ascend_ub_admin_chan *)cfg->msg_chan;
     recv_jetty = &admin_chan->admin_jetty->recv_jetty;
-    jfs_desc = ubdrv_get_send_desc(recv_jetty, seg_id);  // jfs seg_id is 0
+    jfs_desc = ubdrv_get_send_desc(recv_jetty, seg_id); // jfs seg_id is 0
     ret = memcpy_s(jfs_desc, recv_jetty->send_msg_len, src_desc, recv_jetty->recv_msg_len);
     if (ret != 0) {
-        ubdrv_err("Copy result data to jfs_desc failed. (ret=%d;dst_len=%u;src_len=%u)",
-            ret, recv_jetty->send_msg_len, recv_jetty->recv_msg_len);
+        ubdrv_err("Copy result data to jfs_desc failed. (ret=%d;dst_len=%u;src_len=%u)", ret, recv_jetty->send_msg_len,
+                  recv_jetty->recv_msg_len);
         return ret;
     }
     wr_cfg.user_ctx = src_desc->msg_num;
@@ -778,10 +774,9 @@ STATIC int ubdrv_send_admin_reply_msg(u32 dev_id, struct ascend_ub_jetty_ctrl *c
     return ubdrv_send_reply_msg(dev_id, 0, &wr_cfg, cfg, stat);
 }
 
-void ubdrv_admin_recv_prepare_process(struct ascend_ub_jetty_ctrl *cfg,
-                                      struct ascend_ub_msg_desc *desc, u32 seg_id)
+void ubdrv_admin_recv_prepare_process(struct ascend_ub_jetty_ctrl *cfg, struct ascend_ub_msg_desc *desc, u32 seg_id)
 {
-    struct ascend_ub_admin_chan *chan = (struct ascend_ub_admin_chan*)cfg->msg_chan;
+    struct ascend_ub_admin_chan *chan = (struct ascend_ub_admin_chan *)cfg->msg_chan;
     struct ubdrv_msg_chan_stat *stat = &chan->chan_stat;
     char dfx_info[UBDRV_DFX_INFO_LEN] = {0};
     u32 cost_time;
@@ -801,8 +796,8 @@ void ubdrv_admin_recv_prepare_process(struct ascend_ub_jetty_ctrl *cfg,
         stat->rx_process_err++;
         goto reply_admin_msg;
     }
-    (void)sprintf_s(dfx_info, UBDRV_DFX_INFO_LEN, "device-%u admin call opcode-%u process stamp",
-        chan->dev_id, desc->opcode);
+    (void)sprintf_s(dfx_info, UBDRV_DFX_INFO_LEN, "device-%u admin call opcode-%u process stamp", chan->dev_id,
+                    desc->opcode);
     cost_time = ubdrv_record_resq_time(stat->rx_stamp, dfx_info, UBDRV_SCEH_RESP_TIME);
     if (cost_time > stat->rx_max_time) {
         stat->rx_max_time = cost_time;

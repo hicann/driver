@@ -23,6 +23,7 @@
 #include "hdcdrv_core_com_ub.h"
 #include "hdcdrv_proc_fs_ub.h"
 
+// clang-format off
 #define STATIC_PROCFS_FILE_FUNC_OPS(ops, open_func, write_func)     \
     static const ka_procfs_ops_t ops = {                            \
         ka_fs_init_pf_owner(KA_THIS_MODULE)                         \
@@ -32,6 +33,7 @@
         ka_fs_init_pf_release(ka_fs_single_release)                 \
         ka_fs_init_pf_write(write_func)                             \
     }
+// clang-format on
 
 // file directory : /proc/asdrv_hdc
 static ka_proc_dir_entry_t *ascend_hdc_entry = NULL;
@@ -168,8 +170,10 @@ STATIC void hdcdrv_info_proc_show(ka_seq_file_t *m, void *v, struct hdcdrv_dev *
 
     hdcdrv_fill_dev_stat(hdc_dev, &s_brief);
     ka_fs_seq_printf(m, "\n\tTotal session number: %d\n", HDCDRV_UB_SINGLE_DEV_MAX_SESSION);
-    ka_fs_seq_printf(m, "\tTotal active session number: %d\n"
-        "\tactive session list: ", s_brief.active_num);
+    ka_fs_seq_printf(m,
+                     "\tTotal active session number: %d\n"
+                     "\tactive session list: ",
+                     s_brief.active_num);
     for (i = 0; i < s_brief.active_num; i++) {
         ka_fs_seq_printf(m, "%d ", s_brief.active_list[i]);
     }

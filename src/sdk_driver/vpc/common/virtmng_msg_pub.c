@@ -216,8 +216,7 @@ int vmng_msg_reply_data(struct vmng_msg_chan_tx *msg_chan, void *data, u32 out_d
 
     *real_out_data_len = bd_desc->real_out_len;
     if ((*real_out_data_len > out_data_len) || (*real_out_data_len > VMNG_MSG_SQ_DATA_MAX_SIZE)) {
-        vmng_err("Real out length is overflow. (real_out_len=%d; out_date_len=%d)\n",
-            *real_out_data_len, out_data_len);
+        vmng_err("Real out length is overflow. (real_out_len=%d; out_date_len=%d)\n", *real_out_data_len, out_data_len);
         return -EINVAL;
     }
     /* real_out_len could be zero */
@@ -418,15 +417,15 @@ int vmng_sync_msg_send(struct vmng_msg_cluster *msg_cluster, struct vmng_tx_msg_
         ret = vmng_wait_tx_finish_irq(msg_chan);
     }
     if (ret < 0) {
-        vmng_err("Wait rx timeout. (dev_id=%u; fid=%u; status=0x%x)\n",
-            msg_cluster->dev_id, msg_cluster->fid, *p_sq_status);
+        vmng_err("Wait rx timeout. (dev_id=%u; fid=%u; status=0x%x)\n", msg_cluster->dev_id, msg_cluster->fid,
+                 *p_sq_status);
         goto wake_up_and_release_chan;
     }
 
     ret = vmng_msg_reply_data(msg_chan, tx_info->data, tx_info->out_data_len, &tx_info->real_out_len);
     if (ret < 0) {
-        vmng_err("Call vmng_msg_reply_data failed. (dev_id=%u; fid=%u; ret=%d)\n",
-                 msg_cluster->dev_id, msg_cluster->fid, ret);
+        vmng_err("Call vmng_msg_reply_data failed. (dev_id=%u; fid=%u; ret=%d)\n", msg_cluster->dev_id,
+                 msg_cluster->fid, ret);
         goto wake_up_and_release_chan;
     }
 

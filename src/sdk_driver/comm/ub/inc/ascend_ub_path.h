@@ -18,10 +18,9 @@
 #define UBDRV_MAX_CFG_FILE_SIZE (1024 * 100)
 #define UBDRV_CONFIG_OK 0
 #define UBDRV_CONFIG_FAIL 1
-#define UBDRV_OPEN_CFG_FILE_TIME_MS  100
-#define UBDRV_OPEN_CFG_FILE_COUNT    50
+#define UBDRV_OPEN_CFG_FILE_TIME_MS 100
+#define UBDRV_OPEN_CFG_FILE_COUNT 50
 #define UBDRV_CONFIG_NO_MATCH 1
 
-int ubdrv_get_env_value_from_file(char *file, const char *env_name,
-    char *env_val, u32 env_val_len);
+int ubdrv_get_env_value_from_file(char *file, const char *env_name, char *env_val, u32 env_val_len);
 #endif

@@ -123,8 +123,7 @@ exit:
     return file_buf;
 }
 
-STATIC int ubvdrv_get_env_value_from_buf(char *buf, u32 filesize, const char *env_name,
-    char *env_val, u32 env_val_len)
+STATIC int ubvdrv_get_env_value_from_buf(char *buf, u32 filesize, const char *env_name, char *env_val, u32 env_val_len)
 {
     u32 ret, len;
     char *tmp_buf = NULL;
@@ -204,14 +203,13 @@ retry:
     return filesize;
 }
 
-int ubdrv_get_env_value_from_file(char *file, const char *env_name,
-    char *env_val, u32 env_val_len)
+int ubdrv_get_env_value_from_file(char *file, const char *env_name, char *env_val, u32 env_val_len)
 {
     u32 ret;
     int filesize, ret_val;
     char *buf = NULL;
 
-    buf = (char*)ubdrv_vzalloc(UBDRV_MAX_CFG_FILE_SIZE);
+    buf = (char *)ubdrv_vzalloc(UBDRV_MAX_CFG_FILE_SIZE);
     if (buf == NULL) {
         ubdrv_err("Vzalloc failed\n");
         return UBDRV_CONFIG_FAIL;

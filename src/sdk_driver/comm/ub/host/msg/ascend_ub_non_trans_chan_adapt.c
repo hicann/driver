@@ -16,12 +16,12 @@
 #include "ascend_ub_admin_msg.h"
 #include "ascend_ub_non_trans_chan.h"
 
-struct ubdrv_non_trans_chan* ubdrv_get_non_trans_chan(struct ascend_ub_msg_dev *msg_dev)
+struct ubdrv_non_trans_chan *ubdrv_get_non_trans_chan(struct ascend_ub_msg_dev *msg_dev)
 {
     struct ubdrv_non_trans_chan *chan = NULL;
     u32 i;
 
-    for (i = 0; i< msg_dev->chan_cnt; ++i) {
+    for (i = 0; i < msg_dev->chan_cnt; ++i) {
         chan = &msg_dev->non_trans_chan[i];
         ka_task_mutex_lock(&chan->tx_mutex);
         if (chan->status == UBDRV_CHAN_IDLE) {
@@ -45,16 +45,15 @@ STATIC void ubdrv_put_non_trans_chan(struct ubdrv_non_trans_chan *chan)
     ka_task_mutex_unlock(&chan->tx_mutex);
 }
 
-STATIC int ubdrv_prepare_non_trans_alloc_data(struct ascend_ub_user_data *user_desc,
-    struct ubdrv_non_trans_chan *chan, struct ubdrv_create_non_trans_cmd *cmd, u32 dev_id)
+STATIC int ubdrv_prepare_non_trans_alloc_data(struct ascend_ub_user_data *user_desc, struct ubdrv_non_trans_chan *chan,
+                                              struct ubdrv_create_non_trans_cmd *cmd, u32 dev_id)
 {
     u32 len = sizeof(struct ubdrv_create_non_trans_cmd);
     int ret;
 
     ret = ubdrv_prepare_non_trans_jetty_info(chan, cmd);
     if (ret != 0) {
-        ubdrv_err("Prepare non trans jetty info failed. (chan_id=%u;dev_id=%u)\n",
-            chan->chan_id, dev_id);
+        ubdrv_err("Prepare non trans jetty info failed. (chan_id=%u;dev_id=%u)\n", chan->chan_id, dev_id);
         return ret;
     }
     user_desc->opcode = UBDRV_CREATE_MSG_QUEUE;
@@ -66,7 +65,7 @@ STATIC int ubdrv_prepare_non_trans_alloc_data(struct ascend_ub_user_data *user_d
 }
 
 STATIC void ubdrv_set_non_trans_cmd_by_chan_info(struct ubdrv_create_non_trans_cmd *cmd,
-    struct devdrv_non_trans_msg_chan_info *chan_info, u32 chan_id)
+                                                 struct devdrv_non_trans_msg_chan_info *chan_info, u32 chan_id)
 {
     cmd->chan_id = chan_id;
     cmd->sq_depth = UB_NON_TRANS_DEFAULT_DEPTH;
@@ -78,7 +77,7 @@ STATIC void ubdrv_set_non_trans_cmd_by_chan_info(struct ubdrv_create_non_trans_c
 }
 
 STATIC void ubdrv_prepare_non_trans_free_data(struct ascend_ub_user_data *user_desc,
-    struct ubdrv_free_non_trans_cmd *cmd)
+                                              struct ubdrv_free_non_trans_cmd *cmd)
 {
     u32 len = sizeof(struct ubdrv_free_non_trans_cmd);
     user_desc->opcode = UBDRV_FREE_MSG_QUEUE;
@@ -89,7 +88,7 @@ STATIC void ubdrv_prepare_non_trans_free_data(struct ascend_ub_user_data *user_d
 }
 
 STATIC int ubdrv_alloc_non_trans_param_check(const struct ascend_ub_msg_dev *msg_dev,
-    const struct devdrv_non_trans_msg_chan_info *chan_info, u32 dev_id)
+                                             const struct devdrv_non_trans_msg_chan_info *chan_info, u32 dev_id)
 {
     u32 type;
 
@@ -110,10 +109,9 @@ STATIC int ubdrv_alloc_non_trans_param_check(const struct ascend_ub_msg_dev *msg
         ubdrv_err("Chan msg type is not support yet. (dev_id=%u;msg_type=%u)\n", dev_id, type);
         return -EOPNOTSUPP;
     }
-    if ((chan_info->c_desc_size != chan_info->s_desc_size) ||
-        (chan_info->c_desc_size <= ASCEND_UB_MSG_DESC_LEN)) {
-        ubdrv_err("Invalid cq size and sq size. (dev_id=%u;msg_type=%u;cq_size=%u;sq_size=%u)\n",
-            dev_id, type, chan_info->c_desc_size, chan_info->s_desc_size);
+    if ((chan_info->c_desc_size != chan_info->s_desc_size) || (chan_info->c_desc_size <= ASCEND_UB_MSG_DESC_LEN)) {
+        ubdrv_err("Invalid cq size and sq size. (dev_id=%u;msg_type=%u;cq_size=%u;sq_size=%u)\n", dev_id, type,
+                  chan_info->c_desc_size, chan_info->s_desc_size);
         return -EINVAL;
     }
     return 0;
@@ -129,14 +127,14 @@ STATIC void ubdrv_free_device_non_trans(u32 dev_id, u32 chan_id, u32 type)
     ubdrv_prepare_non_trans_free_data(&user_desc, &cmd);
     ret = ubdrv_admin_send_msg(dev_id, &user_desc);
     if (ret != 0) {
-        ubdrv_err("Free device non trans error by admin msg. (ret=%d;dev_id=%u;chan_id=%u;msg_type=%u)\n",
-            ret, dev_id, chan_id, type);
+        ubdrv_err("Free device non trans error by admin msg. (ret=%d;dev_id=%u;chan_id=%u;msg_type=%u)\n", ret, dev_id,
+                  chan_id, type);
     }
     ubdrv_info("Free device non trans chan success. (dev_id=%u;chan_id=%u;type=%u)\n", dev_id, chan_id, type);
 }
 
 STATIC void ubdrv_prepare_enable_device_chan_data(struct ascend_ub_user_data *user_desc,
-    struct ubdrv_create_non_trans_cmd *cmd)
+                                                  struct ubdrv_create_non_trans_cmd *cmd)
 {
     user_desc->opcode = UBDRV_ENABLE_MSG_QUEUE;
     user_desc->size = sizeof(struct ubdrv_create_non_trans_cmd);
@@ -148,7 +146,7 @@ STATIC void ubdrv_prepare_enable_device_chan_data(struct ascend_ub_user_data *us
 
 /* host interface */
 int devdrv_ub_msg_alloc_non_trans_queue_process(struct ubdrv_non_trans_chan *chan,
-    struct ubdrv_create_non_trans_cmd *cmd)
+                                                struct ubdrv_create_non_trans_cmd *cmd)
 {
     struct ascend_ub_msg_dev *msg_dev;
     u32 dev_id;
@@ -233,8 +231,8 @@ void *devdrv_ub_msg_alloc_non_trans_queue(u32 dev_id, struct devdrv_non_trans_ms
         ubdrv_err("Host alloc msg chan failed. (ret=%d;dev_id=%u)\n", ret, dev_id);
         goto put_chan;
     }
-    ubdrv_info("Host alloc non trans chan success. (dev_id=%u;msg_type=%u;chan_id=%u)\n",
-        dev_id, chan_info->msg_type, chan->chan_id);
+    ubdrv_info("Host alloc non trans chan success. (dev_id=%u;msg_type=%u;chan_id=%u)\n", dev_id, chan_info->msg_type,
+               chan->chan_id);
     return ubdrv_get_non_trans_chan_handle(chan);
 
 put_chan:
@@ -254,8 +252,7 @@ int devdrv_ub_msg_free_non_trans_queue_process(struct ubdrv_non_trans_chan *chan
     dev_id = chan->msg_dev->dev_id;
     chan_id = chan->chan_id;
     if (chan->status != UBDRV_CHAN_ENABLE) {
-        ubdrv_warn("Chan don't need to free. (status=%u;dev_id=%u;chan_id=%u)\n",
-            chan->status, dev_id, chan_id);
+        ubdrv_warn("Chan don't need to free. (status=%u;dev_id=%u;chan_id=%u)\n", chan->status, dev_id, chan_id);
         ka_task_mutex_unlock(&chan->tx_mutex);
         return -EINVAL;
     }
@@ -264,8 +261,8 @@ int devdrv_ub_msg_free_non_trans_queue_process(struct ubdrv_non_trans_chan *chan
         /* only device in live, then send msg to device notice free chan */
         ret = ubdrv_admin_send_msg(dev_id, &user_desc);
         if (ret != 0) {
-            ubdrv_err("ubdrv_admin_send_msg failed, device free non_trans error. (ret=%d;dev_id=%u;chan_id=%u)\n",
-                ret, dev_id, chan_id);
+            ubdrv_err("ubdrv_admin_send_msg failed, device free non_trans error. (ret=%d;dev_id=%u;chan_id=%u)\n", ret,
+                      dev_id, chan_id);
         }
     }
     ubdrv_delete_non_trans_jetty(chan);
@@ -297,11 +294,11 @@ int devdrv_ub_msg_free_non_trans_queue(void *msg_chan)
     cmd.chan_mode = UBDRV_MSG_CHAN_FOR_NON_TRANS;
     ret = devdrv_ub_msg_free_non_trans_queue_process(chan, &cmd);
     if (ret != 0) {
-        ubdrv_err("Host free non trans chan failed. (dev_id=%u;ret=%d;msg_type=%u;chan_id=%u)\n",
-            chan->msg_dev->dev_id, ret, chan->msg_type, chan->chan_id);
+        ubdrv_err("Host free non trans chan failed. (dev_id=%u;ret=%d;msg_type=%u;chan_id=%u)\n", chan->msg_dev->dev_id,
+                  ret, chan->msg_type, chan->chan_id);
     } else {
-        ubdrv_info("Host free non trans chan finish. (dev_id=%u;msg_type=%u;chan_id=%u)\n",
-            chan->msg_dev->dev_id, chan->msg_type, chan->chan_id);
+        ubdrv_info("Host free non trans chan finish. (dev_id=%u;msg_type=%u;chan_id=%u)\n", chan->msg_dev->dev_id,
+                   chan->msg_type, chan->chan_id);
     }
     return ret;
 }

@@ -26,7 +26,7 @@
 
 #ifdef CFG_FEATURE_CDMA_LOAD_IMAGE
 STATIC int ubdrv_uvb_msg_check_para(const struct cis_message *msg, unsigned long expect_input_len,
-    unsigned long expect_output_len)
+                                    unsigned long expect_output_len)
 {
     if (msg == NULL) {
         ubdrv_err("UVB msg is null.\n");
@@ -53,7 +53,7 @@ STATIC int ubdrv_uvb_msg_check_para(const struct cis_message *msg, unsigned long
 
     if (*msg->p_output_size < expect_output_len) {
         ubdrv_err("UVB msg output_size is invalid.(input_size=%u; expect_len=%lu)\n", *msg->p_output_size,
-            expect_output_len);
+                  expect_output_len);
         return -EINVAL;
     }
 
@@ -88,12 +88,12 @@ STATIC int ubdrv_uvb_msg_process_part_load(struct ascend_dev *asd_dev, u32 offse
     file_len = ubdrv_uvb_get_file_trans_size(asd_dev->loader.remain_size, offset);
     len = ka_fs_kernel_read(p_file, blocks->blocks_addr[0].addr, file_len, &pos);
     if ((len < 0) || (len != (ssize_t)file_len)) {
-        ubdrv_err("Read file failed. (dev_id=%u; file_id=%u; data_size=%llu; read len=%llu)\n",
-            asd_dev->dev_id, file_id, (u64)file_len, (u64)len);
+        ubdrv_err("Read file failed. (dev_id=%u; file_id=%u; data_size=%llu; read len=%llu)\n", asd_dev->dev_id,
+                  file_id, (u64)file_len, (u64)len);
         ret = -EIO;
     } else {
-        ubdrv_info("Processed load file. (dev_id=%u; file_id=%u; data_size=%llu; total_file_len=%llu)\n", asd_dev->dev_id,
-            file_id, (u64)(offset + file_len), asd_dev->loader.remain_size);
+        ubdrv_info("Processed load file. (dev_id=%u; file_id=%u; data_size=%llu; total_file_len=%llu)\n",
+                   asd_dev->dev_id, file_id, (u64)(offset + file_len), asd_dev->loader.remain_size);
         ret = 0;
     }
 
@@ -116,7 +116,7 @@ STATIC int ubdrv_uvb_msg_get_final_state(struct cis_message *msg)
 
     if (msg->input_size < sizeof(struct ubdrv_uvb_get_final_state_input)) {
         ubdrv_err("UVB msg input_size is invalid.(input_size=%u; expect_len=%lu)\n", msg->input_size,
-            sizeof(struct ubdrv_uvb_get_final_state_input));
+                  sizeof(struct ubdrv_uvb_get_final_state_input));
         return -EINVAL;
     }
 
@@ -157,7 +157,7 @@ STATIC int ubdrv_uvb_msg_get_loading_state(struct cis_message *msg)
 
     if (msg->input_size < sizeof(struct ubdrv_uvb_get_loading_state_input)) {
         ubdrv_err("UVB msg input_size is invalid.(input_size=%u; expect_len=%lu)\n", msg->input_size,
-            sizeof(struct ubdrv_uvb_get_loading_state_input));
+                  sizeof(struct ubdrv_uvb_get_loading_state_input));
         return -EINVAL;
     }
 
@@ -182,7 +182,7 @@ STATIC int ubdrv_uvb_msg_get_loading_state(struct cis_message *msg)
         }
     } else if (load_input->state == 0) {
         ubdrv_info("File treansform succ. (dev_id=%u; state=%u; file_id=%d)\n", dev_id, load_input->state,
-            load_input->file_id);
+                   load_input->file_id);
         ret = 0;
     } else {
         ubdrv_err("State error. (dev_id=%u; state=%u)\n", dev_id, load_input->state);
@@ -216,7 +216,7 @@ STATIC int ubdrv_uvb_msg_get_file_info(struct cis_message *msg)
     int ret = -EINVAL;
 
     ret = ubdrv_uvb_msg_check_para(msg, sizeof(struct ubdrv_uvb_get_file_info_input),
-        sizeof(struct ubdrv_uvb_get_file_info_output));
+                                   sizeof(struct ubdrv_uvb_get_file_info_output));
     if (ret != 0) {
         ubdrv_err("UVB msg callback para check failed.\n");
         return ret;
@@ -225,8 +225,8 @@ STATIC int ubdrv_uvb_msg_get_file_info(struct cis_message *msg)
     load_output = (struct ubdrv_uvb_get_file_info_output *)msg->output;
     load_input = (struct ubdrv_uvb_get_file_info_input *)msg->input;
     dev_id = load_input->module_id;
-    ubdrv_info("UVB recv msg info. (dev_id=%u;type=%u;slot_id=%u;module_id=%u;server_eid=%u)\n",
-        dev_id, load_input->type, load_input->slot_id, load_input->module_id, load_input->server_eid);
+    ubdrv_info("UVB recv msg info. (dev_id=%u;type=%u;slot_id=%u;module_id=%u;server_eid=%u)\n", dev_id,
+               load_input->type, load_input->slot_id, load_input->module_id, load_input->server_eid);
 
     load_input->file_name[UBDRV_STR_MAX_LEN - 1] = '\0';
     file_id = ubdrv_uvb_get_file_id_by_name(load_input->file_name);
@@ -294,7 +294,7 @@ STATIC int ubdrv_uvb_msg_get_ability(struct cis_message *msg)
     int ret = -EINVAL;
 
     ret = ubdrv_uvb_msg_check_para(msg, sizeof(struct ubdrv_uvb_get_ability_input),
-        sizeof(struct ubdrv_uvb_get_ability_output));
+                                   sizeof(struct ubdrv_uvb_get_ability_output));
     if (ret != 0) {
         ubdrv_err("UVB msg callback para check failed.\n");
         return ret;
@@ -323,10 +323,10 @@ STATIC int ubdrv_cis_func_register(void)
     len = sizeof(g_ubdrv_uvb_func_list) / sizeof(ubdrv_uvb_msg_ctrl_t);
     for (i = 0; i < len; i++) {
         ret = register_local_cis_func(g_ubdrv_uvb_func_list[i].call_id, g_ubdrv_uvb_func_list[i].receiver_id,
-            g_ubdrv_uvb_func_list[i].func);
+                                      g_ubdrv_uvb_func_list[i].func);
         if (ret != 0) {
             ubdrv_err("Register uvb msg callback failed.(ret=%d; call_id=0x%x)\n", ret,
-                g_ubdrv_uvb_func_list[i].call_id);
+                      g_ubdrv_uvb_func_list[i].call_id);
             goto register_failed;
         }
     }
@@ -338,7 +338,7 @@ register_failed:
         ret_tmp = unregister_local_cis_func(g_ubdrv_uvb_func_list[i].call_id, g_ubdrv_uvb_func_list[i].receiver_id);
         if (ret_tmp != 0) {
             ubdrv_err("Unregister uvb msg callback failed. (ret=%d; call_id=0x%x)\n", ret_tmp,
-                g_ubdrv_uvb_func_list[i].call_id);
+                      g_ubdrv_uvb_func_list[i].call_id);
         }
     }
 
@@ -354,7 +354,7 @@ STATIC void ubdrv_cis_func_unregister(void)
         ret = unregister_local_cis_func(g_ubdrv_uvb_func_list[i].call_id, g_ubdrv_uvb_func_list[i].receiver_id);
         if (ret != 0) {
             ubdrv_warn("Unregister uvb msg callback has problem.(ret=%d; call_id=0x%x)\n", ret,
-                g_ubdrv_uvb_func_list[i].call_id);
+                       g_ubdrv_uvb_func_list[i].call_id);
         }
     }
 
@@ -388,7 +388,7 @@ void ubdrv_load_device_uninit(void)
     /* unregister image load UVB msg callback */
     ubdrv_cis_func_unregister();
 #endif
-    for (i = 0; i <  ASCEND_UB_DEV_MAX_NUM; i++) {
+    for (i = 0; i < ASCEND_UB_DEV_MAX_NUM; i++) {
         asd_dev = ubdrv_get_asd_dev_by_devid(i);
         ubdrv_free_load_segment(i, &asd_dev->loader);
     }

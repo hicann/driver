@@ -26,7 +26,7 @@ int ubdrv_device_free_urma_chan(struct ascend_ub_msg_dev *msg_dev, void *data);
 int ubdrv_alloc_urma_chan(u32 dev_id);
 void ubdrv_free_urma_chan(u32 dev_id);
 int ubdrv_urma_copy(u32 dev_id, enum devdrv_urma_chan_type type, enum devdrv_urma_copy_dir dir,
-    struct devdrv_urma_copy *local, struct devdrv_urma_copy *peer);
+                    struct devdrv_urma_copy *local, struct devdrv_urma_copy *peer);
 int ubdrv_register_seg(u32 dev_id, struct devdrv_seg_info *info, void **tseg, size_t *out_len);
 int ubdrv_unregister_seg(u32 dev_id, void *tseg, size_t in_len);
 void *ubdrv_import_seg(u32 dev_id, u32 peer_token, void *peer_seg, size_t in_len, size_t *out_len);

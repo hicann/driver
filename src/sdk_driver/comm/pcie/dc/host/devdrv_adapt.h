@@ -33,7 +33,7 @@
 /* Due to the impact of the previously unfinished dma task, the time-out period cannot
   be given based on the amount of data moved by the dma. Consider the influence of
   the PCIE bus bandwidth and the multi-channel of the DMA, giving a larger waiting time  */
-#define DEVDRV_DMA_COPY_TIMEOUT (KA_HZ * 50) /* 50s */
+#define DEVDRV_DMA_COPY_TIMEOUT (KA_HZ * 50)      /* 50s */
 #define DEVDRV_DMA_COPY_MAX_TIMEOUT (KA_HZ * 100) /* 100s */
 /* wait for dma chan SQ queue when full */
 #define DEVDRV_DMA_WAIT_CHAN_AVAIL_TIMEOUT 10000
@@ -46,26 +46,26 @@
 
 /* devdrv_msg_def.h */
 #if defined(CFG_PLATFORM_ESL) || defined(CFG_PLATFORM_FPGA)
-#define DEVDRV_MSG_TIMEOUT 200000000       /* 200s for fpga  */
-#define DEVDRV_ADMIN_MSG_TIMEOUT 200000000 /* 200s for fpga  */
+#define DEVDRV_MSG_TIMEOUT 200000000          /* 200s for fpga  */
+#define DEVDRV_ADMIN_MSG_TIMEOUT 200000000    /* 200s for fpga  */
 #define DEVDRV_ADMIN_MSG_IRQ_TIMEOUT 50000000 /* 50s */
-#define DEVDRV_MSG_WAIT_MIN_TIME 200       /* 200us */
-#define DEVDRV_MSG_WAIT_MAX_TIME 400       /* 400us */
-#define DEVDRV_ADMIN_MSG_WAIT_MIN_TIME 200 /* 200us */
-#define DEVDRV_ADMIN_MSG_WAIT_MAX_TIME 400 /* 400us */
+#define DEVDRV_MSG_WAIT_MIN_TIME 200          /* 200us */
+#define DEVDRV_MSG_WAIT_MAX_TIME 400          /* 400us */
+#define DEVDRV_ADMIN_MSG_WAIT_MIN_TIME 200    /* 200us */
+#define DEVDRV_ADMIN_MSG_WAIT_MAX_TIME 400    /* 400us */
 #else
 #ifdef CFG_BUILD_ASAN
-#define DEVDRV_MSG_TIMEOUT 60000000        /* 60s for asan */
-#define DEVDRV_ADMIN_MSG_TIMEOUT 60000000  /* 60s for asan */
+#define DEVDRV_MSG_TIMEOUT 60000000       /* 60s for asan */
+#define DEVDRV_ADMIN_MSG_TIMEOUT 60000000 /* 60s for asan */
 #else
 #define DEVDRV_MSG_TIMEOUT 5000000        /* 5s */
 #define DEVDRV_ADMIN_MSG_TIMEOUT 15000000 /* 15s for admin */
 #endif
 #define DEVDRV_ADMIN_MSG_IRQ_TIMEOUT 5000000 /* 5s for admin */
-#define DEVDRV_MSG_WAIT_MIN_TIME 1        /* 1us */
-#define DEVDRV_MSG_WAIT_MAX_TIME 2        /* 2us */
-#define DEVDRV_ADMIN_MSG_WAIT_MIN_TIME 10 /* 10us */
-#define DEVDRV_ADMIN_MSG_WAIT_MAX_TIME 11 /* 11us */
+#define DEVDRV_MSG_WAIT_MIN_TIME 1           /* 1us */
+#define DEVDRV_MSG_WAIT_MAX_TIME 2           /* 2us */
+#define DEVDRV_ADMIN_MSG_WAIT_MIN_TIME 10    /* 10us */
+#define DEVDRV_ADMIN_MSG_WAIT_MAX_TIME 11    /* 11us */
 #endif
 
 #define DEVDRV_ADMIN_MSG_TIMEOUT_LONG DEVDRV_ADMIN_MSG_TIMEOUT
@@ -92,47 +92,46 @@ void devdrv_load_half_resume(struct devdrv_pci_ctrl *pci_ctrl);
 int drv_pcie_suspend(ka_device_t *dev);
 int drv_pcie_resume_notify(ka_device_t *dev);
 
-#define DEVDRV_COMMON_OPS \
-    void (*init_load_file_info)(struct devdrv_pci_ctrl *pci_ctrl); \
-    void (*init_depend_module_info)(struct devdrv_pci_ctrl *pci_ctrl); \
-    int (*alloc_devid)(struct devdrv_ctrl *ctrl_this); \
-    int (*is_p2p_access_cap)(struct devdrv_pci_ctrl *pci_ctrl, struct devdrv_pci_ctrl *peer_pci_ctrl); \
-    enum devdrv_load_wait_mode (*get_load_wait_mode)(struct devdrv_pci_ctrl *pci_ctrl); \
-    int (*get_pf_max_msg_chan_cnt)(void); \
-    int (*get_vf_max_msg_chan_cnt)(void); \
-    u32 (*get_p2p_support_max_devnum)(void); \
-    void (*set_dev_shr_info)(struct devdrv_pci_ctrl *pci_ctrl); \
-    u32 (*get_nvme_low_level_db_irq_num)(void); \
-    u32 (*get_nvme_db_irq_strde)(void); \
-    void (*get_vf_dma_info)(struct devdrv_pci_ctrl *pci_ctrl); \
-    bool (*is_mdev_vm_full_spec)(struct devdrv_pci_ctrl *pci_ctrl); \
-    int (*get_p2p_addr)(struct devdrv_pci_ctrl *pci_ctrl, u32 remote_dev_id, enum devdrv_p2p_addr_type type, \
-        phys_addr_t *phy_addr, size_t *size); \
-    unsigned int (*get_server_id)(struct devdrv_pci_ctrl *pci_ctrl); \
-    unsigned int (*get_max_server_num)(struct devdrv_pci_ctrl *pci_ctrl); \
-    void (*init_virt_info)(struct devdrv_pci_ctrl *pci_ctrl); \
-    void (*init_link_info)(struct devdrv_pci_ctrl *pci_ctrl); \
-    int (*set_udevid_reorder_para)(struct devdrv_pci_ctrl *pci_ctrl); \
-    int (*devdrv_deal_suspend_handshake)(struct devdrv_pci_ctrl *pci_ctrl); \
-    int (*check_ep_suspend_status)(struct devdrv_pci_ctrl *pci_ctrl); \
-    int (*single_fault_init)(struct devdrv_pci_ctrl *pci_ctrl); \
-    int (*single_fault_uninit)(struct devdrv_pci_ctrl *pci_ctrl)
+#define DEVDRV_COMMON_OPS                                                                                     \
+    void (*init_load_file_info)(struct devdrv_pci_ctrl * pci_ctrl);                                           \
+    void (*init_depend_module_info)(struct devdrv_pci_ctrl * pci_ctrl);                                       \
+    int (*alloc_devid)(struct devdrv_ctrl * ctrl_this);                                                       \
+    int (*is_p2p_access_cap)(struct devdrv_pci_ctrl * pci_ctrl, struct devdrv_pci_ctrl * peer_pci_ctrl);      \
+    enum devdrv_load_wait_mode (*get_load_wait_mode)(struct devdrv_pci_ctrl * pci_ctrl);                      \
+    int (*get_pf_max_msg_chan_cnt)(void);                                                                     \
+    int (*get_vf_max_msg_chan_cnt)(void);                                                                     \
+    u32 (*get_p2p_support_max_devnum)(void);                                                                  \
+    void (*set_dev_shr_info)(struct devdrv_pci_ctrl * pci_ctrl);                                              \
+    u32 (*get_nvme_low_level_db_irq_num)(void);                                                               \
+    u32 (*get_nvme_db_irq_strde)(void);                                                                       \
+    void (*get_vf_dma_info)(struct devdrv_pci_ctrl * pci_ctrl);                                               \
+    bool (*is_mdev_vm_full_spec)(struct devdrv_pci_ctrl * pci_ctrl);                                          \
+    int (*get_p2p_addr)(struct devdrv_pci_ctrl * pci_ctrl, u32 remote_dev_id, enum devdrv_p2p_addr_type type, \
+                        phys_addr_t * phy_addr, size_t * size);                                               \
+    unsigned int (*get_server_id)(struct devdrv_pci_ctrl * pci_ctrl);                                         \
+    unsigned int (*get_max_server_num)(struct devdrv_pci_ctrl * pci_ctrl);                                    \
+    void (*init_virt_info)(struct devdrv_pci_ctrl * pci_ctrl);                                                \
+    void (*init_link_info)(struct devdrv_pci_ctrl * pci_ctrl);                                                \
+    int (*set_udevid_reorder_para)(struct devdrv_pci_ctrl * pci_ctrl);                                        \
+    int (*devdrv_deal_suspend_handshake)(struct devdrv_pci_ctrl * pci_ctrl);                                  \
+    int (*check_ep_suspend_status)(struct devdrv_pci_ctrl * pci_ctrl);                                        \
+    int (*single_fault_init)(struct devdrv_pci_ctrl * pci_ctrl);                                              \
+    int (*single_fault_uninit)(struct devdrv_pci_ctrl * pci_ctrl)
 
-#define DEVDRV_PFVF_COMMON_OPS \
-    int (*init_bar_info)(struct devdrv_pci_ctrl *pci_ctrl); \
-    void (*init_bar_addr_info)(struct devdrv_pci_ctrl *pci_ctrl); \
-    void (*init_msg_cnt)(struct devdrv_pci_ctrl *pci_ctrl); \
-    void (*boot_mode_rebuild)(struct devdrv_pci_ctrl *pci_ctrl); \
-    void (*init_dma_info)(struct devdrv_pci_ctrl *pci_ctrl); \
-    void (*init_setup_runtime_info)(struct devdrv_pci_ctrl *pci_ctrl)
+#define DEVDRV_PFVF_COMMON_OPS                                     \
+    int (*init_bar_info)(struct devdrv_pci_ctrl * pci_ctrl);       \
+    void (*init_bar_addr_info)(struct devdrv_pci_ctrl * pci_ctrl); \
+    void (*init_msg_cnt)(struct devdrv_pci_ctrl * pci_ctrl);       \
+    void (*boot_mode_rebuild)(struct devdrv_pci_ctrl * pci_ctrl);  \
+    void (*init_dma_info)(struct devdrv_pci_ctrl * pci_ctrl);      \
+    void (*init_setup_runtime_info)(struct devdrv_pci_ctrl * pci_ctrl)
 
-#define DEVDRV_CONNECT_PROTO_COMMON_OPS \
-    void (*flush_cache)(u64 base, size_t len, u32 mode); \
-    int (*get_peh_link_info)(ka_pci_dev_t *pdev, u32 *link_speed, u32 *link_width, u32 *link_status); \
-    void (*link_speed_slow_to_normal)(struct devdrv_pci_ctrl *pci_ctrl)
+#define DEVDRV_CONNECT_PROTO_COMMON_OPS                                                                   \
+    void (*flush_cache)(u64 base, size_t len, u32 mode);                                                  \
+    int (*get_peh_link_info)(ka_pci_dev_t * pdev, u32 * link_speed, u32 * link_width, u32 * link_status); \
+    void (*link_speed_slow_to_normal)(struct devdrv_pci_ctrl * pci_ctrl)
 
-#define DEVDRV_INIT_INTR_OPS \
-    void (*init_intr_info)(struct devdrv_pci_ctrl *pci_ctrl)
+#define DEVDRV_INIT_INTR_OPS void (*init_intr_info)(struct devdrv_pci_ctrl * pci_ctrl)
 
 struct devdrv_dev_ops {
     DEVDRV_COMMON_OPS;
@@ -146,7 +145,7 @@ struct res_config {
     struct devdrv_dev_ops ops;
 };
 
-struct res_config *devdrv_feature_get_res_cfg(struct devdrv_pci_ctrl *pci_ctrl,
-    struct res_config *res_cfg, size_t res_cfg_size);
+struct res_config *devdrv_feature_get_res_cfg(struct devdrv_pci_ctrl *pci_ctrl, struct res_config *res_cfg,
+                                              size_t res_cfg_size);
 
 #endif

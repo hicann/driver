@@ -32,8 +32,8 @@ __attribute__((unused)) STATIC pcie_dump_ltssm_tracer_fn g_pcie_dump_ltssm_trace
 void devdrv_get_pcie_dump_ltssm_tracer_symbol(void)
 {
 #ifdef CFG_FEATURE_PCIE_LINK_INFO
-    g_pcie_dump_ltssm_tracer_fn =
-        (pcie_dump_ltssm_tracer_fn)(uintptr_t)__ka_system_symbol_get(PCIE_DUMP_LTSSM_TRACER_FN_NAME);
+    g_pcie_dump_ltssm_tracer_fn = (pcie_dump_ltssm_tracer_fn)(uintptr_t)__ka_system_symbol_get(
+        PCIE_DUMP_LTSSM_TRACER_FN_NAME);
     if (g_pcie_dump_ltssm_tracer_fn == NULL) {
         devdrv_warn("pcie_dump_ltssm_tracer symbol not find.\n");
     }
@@ -138,7 +138,7 @@ STATIC int devdrv_get_pcie_mac_link_info(struct devdrv_pcie_link_info_para *pcie
     return 0;
 }
 
-int devdrv_get_pcie_link_info(u32 udevid, struct devdrv_pcie_link_info_para* pcie_link_info)
+int devdrv_get_pcie_link_info(u32 udevid, struct devdrv_pcie_link_info_para *pcie_link_info)
 {
     int ret;
 
@@ -252,18 +252,18 @@ int devdrv_force_linkdown(u32 udevid)
 KA_EXPORT_SYMBOL(devdrv_force_linkdown);
 
 STATIC int devdrv_check_get_bandwidth_para(struct dms_get_device_info_in *input, u32 in_len,
-    struct dms_get_device_info_out *output, u32 out_len)
+                                           struct dms_get_device_info_out *output, u32 out_len)
 {
     if ((input == NULL) || (in_len != sizeof(struct dms_get_device_info_in))) {
         devdrv_err("Input argument is null, or in_len is wrong. (in_len=%u)\n", in_len);
         return -EINVAL;
     }
-    
+
     if ((input->buff == NULL) || (input->buff_size < (sizeof(struct devdrv_pcie_link_info_para)))) {
         devdrv_err("Input argument buff is null, or buff_size is wrong. (buff_size=%u)\n", input->buff_size);
         return -EINVAL;
     }
-    
+
     if ((output == NULL) || (out_len != sizeof(struct dms_get_device_info_out))) {
         devdrv_err("Output argument is null, or out_len is wrong. (out_len=%u)\n", out_len);
         return -EINVAL;

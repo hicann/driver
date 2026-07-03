@@ -61,7 +61,7 @@ STATIC u32 devdrv_sysfs_get_devid_by_dev(ka_device_t *dev)
 STATIC int devdrv_sysfs_common_msg_send(u32 devid, void *data, u32 *real_out_len)
 {
     return devdrv_common_msg_send(devid, data, DEVDRV_SYSFS_MSG_IN_BYTES, (u32)sizeof(struct devdrv_sysfs_msg),
-        real_out_len, DEVDRV_COMMON_MSG_SYSFS);
+                                  real_out_len, DEVDRV_COMMON_MSG_SYSFS);
 }
 
 STATIC ssize_t devdrv_sysfs_link_info_show(ka_device_t *dev, ka_device_attribute_t *attr, char *buf)
@@ -256,8 +256,7 @@ STATIC ssize_t devdrv_sysfs_aer_cnt_show(ka_device_t *dev, ka_device_attribute_t
     return ret == -1 ? 0 : ret;
 }
 
-STATIC ssize_t devdrv_sysfs_aer_cnt_store(ka_device_t *dev, ka_device_attribute_t *attr, const char *buf,
-                                          size_t count)
+STATIC ssize_t devdrv_sysfs_aer_cnt_store(ka_device_t *dev, ka_device_attribute_t *attr, const char *buf, size_t count)
 {
     u32 devid;
     u32 real_out_len = 0;
@@ -273,8 +272,8 @@ STATIC ssize_t devdrv_sysfs_aer_cnt_store(ka_device_t *dev, ka_device_attribute_
 
     devid = devdrv_sysfs_get_devid_by_dev(dev);
     if (devid >= MAX_DEV_CNT) {
-        devdrv_err("Clear aer count failed, get dev_id failed. (dev_id=%u; uid=%u)\n",
-            devid, ka_task_get_current_cred_uid());
+        devdrv_err("Clear aer count failed, get dev_id failed. (dev_id=%u; uid=%u)\n", devid,
+                   ka_task_get_current_cred_uid());
         devdrv_kfree(msg);
         return -EINVAL;
     }
@@ -282,8 +281,8 @@ STATIC ssize_t devdrv_sysfs_aer_cnt_store(ka_device_t *dev, ka_device_attribute_
     if (ka_base_strcmp(buf, "clear") == 0) {
         ret = devdrv_sysfs_common_msg_send(devid, (void *)msg, &real_out_len);
         if (ret != 0) {
-            devdrv_err("Clear aer count failed, Common msg send failed. (dev_id=%u; uid=%u)\n",
-                devid, ka_task_get_current_cred_uid());
+            devdrv_err("Clear aer count failed, Common msg send failed. (dev_id=%u; uid=%u)\n", devid,
+                       ka_task_get_current_cred_uid());
             devdrv_kfree(msg);
             return -EINVAL;
         }
@@ -311,7 +310,7 @@ STATIC ssize_t devdrv_sysfs_profiling_is_enabled(ka_device_t *dev, ka_device_att
 }
 
 STATIC ssize_t devdrv_sysfs_set_profiling_enable(ka_device_t *dev, ka_device_attribute_t *attr, const char *buf,
-    size_t count)
+                                                 size_t count)
 {
     int ret;
     u32 real_out_len = 0, dev_id, val;
@@ -371,8 +370,7 @@ STATIC ssize_t devdrv_sysfs_bdf_to_devid_show(ka_device_t *dev, ka_device_attrib
 
     devdrv_info("devdrv sysfs show bdf and dev_id.\n");
 
-    ret = snprintf_s(buf + offset, KA_MM_PAGE_SIZE - offset, KA_MM_PAGE_SIZE - offset - 1,
-                    "bdf      udevid add_id\n");
+    ret = snprintf_s(buf + offset, KA_MM_PAGE_SIZE - offset, KA_MM_PAGE_SIZE - offset - 1, "bdf      udevid add_id\n");
     if (ret != -1) {
         offset += ret;
     }
@@ -391,7 +389,7 @@ STATIC ssize_t devdrv_sysfs_bdf_to_devid_show(ka_device_t *dev, ka_device_attrib
             add_id = ctrl->dev_id;
             (void)uda_add_id_to_udevid(add_id, &udevid);
             ret = snprintf_s(buf + offset, KA_MM_PAGE_SIZE - offset, KA_MM_PAGE_SIZE - offset - 1,
-                "%02x:%02x.%hhu  %-6u %-5u\n", bus_num, device_num, func_num, udevid, add_id);
+                             "%02x:%02x.%hhu  %-6u %-5u\n", bus_num, device_num, func_num, udevid, add_id);
             if (ret != -1) {
                 offset += ret;
             }
@@ -438,10 +436,8 @@ STATIC ssize_t devdrv_sysfs_get_davinci_dev_id(ka_device_t *dev, ka_device_attri
     return offset;
 }
 
-STATIC ssize_t devdrv_sysfs_set_davinci_dev_id(ka_device_t *dev,
-    ka_device_attribute_t *attr,
-    const char *buf,
-    size_t count)
+STATIC ssize_t devdrv_sysfs_set_davinci_dev_id(ka_device_t *dev, ka_device_attribute_t *attr, const char *buf,
+                                               size_t count)
 {
     u32 val = 0;
     int davinci_dev_num = devdrv_get_davinci_dev_num_by_pdev(ka_pci_to_pci_dev(dev));
@@ -451,12 +447,12 @@ STATIC ssize_t devdrv_sysfs_set_davinci_dev_id(ka_device_t *dev,
     }
     if (ka_base_kstrtou32(buf, 0, &val) < 0) {
         devdrv_err("Call ka_base_kstrtou32 failed.\n");
-        return  (ssize_t)count;
+        return (ssize_t)count;
     }
 
     if (val >= (u32)davinci_dev_num) {
         devdrv_err("Input parameter is invalid. (val=%u; devid max in pdev=%d)\n", val, davinci_dev_num);
-        return  (ssize_t)count;
+        return (ssize_t)count;
     }
 
     g_sysfs_davinci_dev_id = (int)val;
@@ -471,7 +467,8 @@ STATIC ssize_t devdrv_sysfs_get_davinci_dev_num(ka_device_t *dev, ka_device_attr
 
     (void)attr;
 
-    ret = snprintf_s(buf, KA_MM_PAGE_SIZE, KA_MM_PAGE_SIZE - 1, "%d\n", devdrv_get_davinci_dev_num_by_pdev(ka_pci_to_pci_dev(dev)));
+    ret = snprintf_s(buf, KA_MM_PAGE_SIZE, KA_MM_PAGE_SIZE - 1, "%d\n",
+                     devdrv_get_davinci_dev_num_by_pdev(ka_pci_to_pci_dev(dev)));
     if (ret >= 0) {
         offset += ret;
     }
@@ -534,7 +531,8 @@ STATIC ssize_t devdrv_sysfs_get_bus_name(ka_device_t *dev, ka_device_attribute_t
             return offset;
         }
         ret = snprintf_s(buf, KA_MM_PAGE_SIZE, KA_MM_PAGE_SIZE - 1, "%04x:%02x:%02x.%u\n", ka_pci_domain_nr(bus),
-            ka_pci_get_bus_number(pdev), KA_PCI_SLOT(ka_pci_get_devfn(pdev)), KA_PCI_FUNC(ka_pci_get_devfn(pdev)));
+                         ka_pci_get_bus_number(pdev), KA_PCI_SLOT(ka_pci_get_devfn(pdev)),
+                         KA_PCI_FUNC(ka_pci_get_devfn(pdev)));
         if (ret >= 0) {
             offset += ret;
         }
@@ -543,10 +541,8 @@ STATIC ssize_t devdrv_sysfs_get_bus_name(ka_device_t *dev, ka_device_attribute_t
     return offset;
 }
 
-STATIC ssize_t devdrv_sysfs_set_hotreset_flag(ka_device_t *dev,
-    ka_device_attribute_t *attr,
-    const char *buf,
-    size_t count)
+STATIC ssize_t devdrv_sysfs_set_hotreset_flag(ka_device_t *dev, ka_device_attribute_t *attr, const char *buf,
+                                              size_t count)
 {
     struct devdrv_pci_ctrl *pci_ctrl = devdrv_sysfs_get_pci_ctrl_by_dev(dev);
     unsigned long val = 0;
@@ -563,8 +559,8 @@ STATIC ssize_t devdrv_sysfs_set_hotreset_flag(ka_device_t *dev,
 
     result = ka_base_kstrtoul(buf, 0, &val);
     if (result < 0) {
-        devdrv_err("Set hotreset flag failed, ka_base_kstrtoul failed. (dev_id=%u; uid=%u; result=%ld)\n",
-            devid, ka_task_get_current_cred_uid(), result);
+        devdrv_err("Set hotreset flag failed, ka_base_kstrtoul failed. (dev_id=%u; uid=%u; result=%ld)\n", devid,
+                   ka_task_get_current_cred_uid(), result);
         return result;
     }
 
@@ -572,14 +568,15 @@ STATIC ssize_t devdrv_sysfs_set_hotreset_flag(ka_device_t *dev,
         if (pci_ctrl != NULL) {
             if (pci_ctrl->shr_para != NULL) {
                 pci_ctrl->shr_para->hot_reset_pcie_flag = DEVDRV_PCIE_HOT_RESET_FLAG;
-                devdrv_info("Set hotreset flag success. (dev_id=%u; uid=%u; val=%lu)\n",
-                    devid, ka_task_get_current_cred_uid(), val);
+                devdrv_info("Set hotreset flag success. (dev_id=%u; uid=%u; val=%lu)\n", devid,
+                            ka_task_get_current_cred_uid(), val);
                 return (ssize_t)count;
             }
         }
     }
 
-    devdrv_info("No need to set hotreset flag. (dev_id=%u; uid=%u; val=%lu)\n", devid, ka_task_get_current_cred_uid(), val);
+    devdrv_info("No need to set hotreset flag. (dev_id=%u; uid=%u; val=%lu)\n", devid, ka_task_get_current_cred_uid(),
+                val);
 
     return (ssize_t)count;
 }
@@ -604,10 +601,9 @@ STATIC ssize_t devdrv_sysfs_get_common_msg(ka_device_t *dev, ka_device_attribute
     u64 rx_success_cnt;
     u64 rx_work_max_time;
     u64 rx_work_delay_cnt;
-    char *common_str[DEVDRV_COMMON_MSG_TYPE_MAX] = {DEVDRV_PCIVNIC, DEVDRV_SMMU, DEVDRV_DEVMM, DEVDRV_VMNG,
-                                                    DEVDRV_PROFILE, DEVDRV_DEVMAN, DEVDRV_TSDRV, DEVDRV_HDC,
-                                                    DEVDRV_SYSFS, DEVDRV_ESCHED, DEVDRV_PROCMNG, DEVDRV_TEST,
-                                                    DEVDRV_UDIS};
+    char *common_str[DEVDRV_COMMON_MSG_TYPE_MAX] = {
+        DEVDRV_PCIVNIC, DEVDRV_SMMU,  DEVDRV_DEVMM,  DEVDRV_VMNG,    DEVDRV_PROFILE, DEVDRV_DEVMAN, DEVDRV_TSDRV,
+        DEVDRV_HDC,     DEVDRV_SYSFS, DEVDRV_ESCHED, DEVDRV_PROCMNG, DEVDRV_TEST,    DEVDRV_UDIS};
 
     (void)attr;
 
@@ -620,8 +616,8 @@ STATIC ssize_t devdrv_sysfs_get_common_msg(ka_device_t *dev, ka_device_attribute
 
     msg = (struct devdrv_sysfs_msg *)devdrv_kzalloc(sizeof(struct devdrv_sysfs_msg), KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
     if (msg == NULL) {
-            devdrv_err("devdrv_kzalloc failed.\n");
-            return 0;
+        devdrv_err("devdrv_kzalloc failed.\n");
+        return 0;
     }
 
     msg->type = DEVDRV_SYSFS_COMMON_MSG;
@@ -655,11 +651,12 @@ STATIC ssize_t devdrv_sysfs_get_common_msg(ka_device_t *dev, ka_device_attribute
         rx_work_max_time = pci_ctrl->msg_dev->common_msg.com_msg_stat[i].rx_work_max_time;
         rx_work_delay_cnt = pci_ctrl->msg_dev->common_msg.com_msg_stat[i].rx_work_delay_cnt;
 
-        ret = snprintf_s(buf + offset, KA_MM_PAGE_SIZE - offset, KA_MM_PAGE_SIZE - offset - 1, "  %s|%-16llu|%-16llu|%-8llu|"
+        ret = snprintf_s(buf + offset, KA_MM_PAGE_SIZE - offset, KA_MM_PAGE_SIZE - offset - 1,
+                         "  %s|%-16llu|%-16llu|%-8llu|"
                          "%-8llu|%-8llu|%-8llu|%-8llu|%-16llu|%-16llu|%-10llu|%-10llu\n",
-                         common_str[i], tx_total_cnt, tx_success_cnt, tx_failed_cnt1, tx_failed_cnt2,
-                         tx_failed_cnt3, tx_failed_cnt4, tx_failed_cnt5, rx_total_cnt, rx_success_cnt,
-                         rx_work_max_time, rx_work_delay_cnt);
+                         common_str[i], tx_total_cnt, tx_success_cnt, tx_failed_cnt1, tx_failed_cnt2, tx_failed_cnt3,
+                         tx_failed_cnt4, tx_failed_cnt5, rx_total_cnt, rx_success_cnt, rx_work_max_time,
+                         rx_work_delay_cnt);
         if (ret != -1) {
             offset += ret;
         }
@@ -685,11 +682,12 @@ STATIC ssize_t devdrv_sysfs_get_common_msg(ka_device_t *dev, ka_device_attribute
         rx_work_max_time = msg->common_stat[i].rx_work_max_time;
         rx_work_delay_cnt = msg->common_stat[i].rx_work_delay_cnt;
 
-        ret = snprintf_s(buf + offset, KA_MM_PAGE_SIZE - offset, KA_MM_PAGE_SIZE - offset - 1, "  %s|%-16llu|%-16llu|%-8llu|"
+        ret = snprintf_s(buf + offset, KA_MM_PAGE_SIZE - offset, KA_MM_PAGE_SIZE - offset - 1,
+                         "  %s|%-16llu|%-16llu|%-8llu|"
                          "%-8llu|%-8llu|%-8llu|%-8llu|%-16llu|%-16llu|%-10llu|%-10llu\n",
-                         common_str[i], tx_total_cnt, tx_success_cnt, tx_failed_cnt1, tx_failed_cnt2,
-                         tx_failed_cnt3, tx_failed_cnt4, tx_failed_cnt5, rx_total_cnt, rx_success_cnt,
-                         rx_work_max_time, rx_work_delay_cnt);
+                         common_str[i], tx_total_cnt, tx_success_cnt, tx_failed_cnt1, tx_failed_cnt2, tx_failed_cnt3,
+                         tx_failed_cnt4, tx_failed_cnt5, rx_total_cnt, rx_success_cnt, rx_work_max_time,
+                         rx_work_delay_cnt);
         if (ret != -1) {
             offset += ret;
         }
@@ -721,8 +719,8 @@ STATIC int devdrv_sysfs_fill_buf(struct devdrv_msg_dev *msg_dev, struct devdrv_s
     u32 msg_type;
     ssize_t offset = 0;
     struct devdrv_msg_chan *chan = NULL;
-    char *non_str[devdrv_msg_client_max] = {DEVDRV_PCIVNIC, DEVDRV_SMMU, DEVDRV_DEVMM, DEVDRV_COMMON,
-                                            DEVDRV_DEVMAN, DEVDRV_TSDRV, DEVDRV_HDC, DEVDRV_QUEUE, DEVDRV_S2S};
+    char *non_str[devdrv_msg_client_max] = {DEVDRV_PCIVNIC, DEVDRV_SMMU, DEVDRV_DEVMM, DEVDRV_COMMON, DEVDRV_DEVMAN,
+                                            DEVDRV_TSDRV,   DEVDRV_HDC,  DEVDRV_QUEUE, DEVDRV_S2S};
 
     ret = snprintf_s(buf + offset, KA_MM_PAGE_SIZE - offset, KA_MM_PAGE_SIZE - offset - 1,
                      "\nhost type|   tx_total   |  tx_success  |no_callback|len_err|stat_abno|irqtimeout|"
@@ -791,10 +789,10 @@ STATIC int devdrv_sysfs_fill_buf(struct devdrv_msg_dev *msg_dev, struct devdrv_s
 
         ret = snprintf_s(buf + offset, KA_MM_PAGE_SIZE - offset, KA_MM_PAGE_SIZE - offset - 1,
                          "  %s|%-14llu|%-14llu|%-11llu|%-7llu|%-9llu|%-10llu|%-7llu|%-8llu|%-9llu|%-14llu|"
-                         "%-14llu|%-8llu|%-9llu|%-10llu\n", non_str[msg_type], tx_total_cnt, tx_success_cnt,
-                         tx_no_callback, tx_failed_cnt1, tx_failed_cnt2, 0, tx_failed_cnt3, tx_failed_cnt4,
-                         tx_failed_cnt5, rx_total_cnt, rx_success_cnt, rx_para_err, rx_work_max_time,
-                         rx_work_delay_cnt);
+                         "%-14llu|%-8llu|%-9llu|%-10llu\n",
+                         non_str[msg_type], tx_total_cnt, tx_success_cnt, tx_no_callback, tx_failed_cnt1,
+                         tx_failed_cnt2, 0, tx_failed_cnt3, tx_failed_cnt4, tx_failed_cnt5, rx_total_cnt,
+                         rx_success_cnt, rx_para_err, rx_work_max_time, rx_work_delay_cnt);
         if (ret != -1) {
             offset += ret;
         }
@@ -824,8 +822,8 @@ STATIC ssize_t devdrv_sysfs_get_non_trans_msg(ka_device_t *dev, ka_device_attrib
 
     msg = (struct devdrv_sysfs_msg *)devdrv_kzalloc(sizeof(struct devdrv_sysfs_msg), KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
     if (msg == NULL) {
-            devdrv_err("malloc failed.\n");
-            return 0;
+        devdrv_err("malloc failed.\n");
+        return 0;
     }
 
     msg->type = DEVDRV_SYSFS_NON_TRANS_MSG;
@@ -848,122 +846,103 @@ STATIC ssize_t devdrv_sysfs_get_non_trans_msg(ka_device_t *dev, ka_device_attrib
 
 STATIC ssize_t devdrv_sysfs_sync_dma_info_show(ka_device_t *dev, ka_device_attribute_t *attr, char *buf)
 {
-        struct devdrv_pci_ctrl *pci_ctrl = devdrv_sysfs_get_pci_ctrl_by_dev(dev);
-        struct devdrv_sysfs_msg *msg = NULL;
-        struct devdrv_msg_dev *msg_dev = NULL;
-        struct devdrv_dma_dev *dma_dev = NULL;
-        u32 dev_id;
-        u32 real_out_len = 0;
-        int ret;
-        ssize_t offset = 0;
-        u32 i;
+    struct devdrv_pci_ctrl *pci_ctrl = devdrv_sysfs_get_pci_ctrl_by_dev(dev);
+    struct devdrv_sysfs_msg *msg = NULL;
+    struct devdrv_msg_dev *msg_dev = NULL;
+    struct devdrv_dma_dev *dma_dev = NULL;
+    u32 dev_id;
+    u32 real_out_len = 0;
+    int ret;
+    ssize_t offset = 0;
+    u32 i;
 
-        if (pci_ctrl == NULL) {
-            devdrv_err("Get pci_ctrl failed.\n");
-            return 0;
+    if (pci_ctrl == NULL) {
+        devdrv_err("Get pci_ctrl failed.\n");
+        return 0;
+    }
+
+    dev_id = pci_ctrl->dev_id;
+
+    msg_dev = pci_ctrl->msg_dev;
+    dma_dev = pci_ctrl->dma_dev;
+
+    msg = (struct devdrv_sysfs_msg *)devdrv_kzalloc(sizeof(struct devdrv_sysfs_msg), KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
+    if (msg == NULL) {
+        devdrv_err("malloc failed.\n");
+        return 0;
+    }
+
+    msg->type = DEVDRV_SYSFS_SYNC_DMA_INFO;
+
+    ret = devdrv_sysfs_common_msg_send(dev_id, (void *)msg, &real_out_len);
+    if (ret != 0) {
+        devdrv_err("Common msg send failed.\n");
+        ret = snprintf_s(buf, KA_MM_PAGE_SIZE, KA_MM_PAGE_SIZE - 1, "read dma info fail, ret:%d\n", ret);
+        devdrv_kfree(msg);
+        msg = NULL;
+        return (ret == -1) ? 0 : ret;
+    }
+
+    ret = snprintf_s(buf + offset, KA_MM_PAGE_SIZE - offset, KA_MM_PAGE_SIZE - offset - 1,
+                     "\ndev |syn_submit|asy_submit|sml_submit|tot_sync|trg_remot|trg_128|done_int|"
+                     "re_sched|done_work|syn_proc|max_cb|new_cb|cb_10s|cb_10ms|asy_proc|err_int|err_work|"
+                     "max_task|sq_idle\n");
+    if (ret != -1) {
+        offset += ret;
+    }
+    //  max device chan num is DEVDRV_SYSFS_DMA_CHAN_NUM-16
+    for (i = 0; i < DEVDRV_SYSFS_DMA_CHAN_NUM; i++) {
+        if (msg->sync_dma_stat[i].flag == DEVDRV_DISABLE) {
+            continue;
         }
-
-        dev_id = pci_ctrl->dev_id;
-
-        msg_dev = pci_ctrl->msg_dev;
-        dma_dev = pci_ctrl->dma_dev;
-
-        msg = (struct devdrv_sysfs_msg *)devdrv_kzalloc(sizeof(struct devdrv_sysfs_msg), KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
-        if (msg == NULL) {
-            devdrv_err("malloc failed.\n");
-            return 0;
-        }
-
-        msg->type = DEVDRV_SYSFS_SYNC_DMA_INFO;
-
-        ret = devdrv_sysfs_common_msg_send(dev_id, (void *)msg, &real_out_len);
-        if (ret != 0) {
-            devdrv_err("Common msg send failed.\n");
-            ret = snprintf_s(buf, KA_MM_PAGE_SIZE, KA_MM_PAGE_SIZE - 1,
-                                "read dma info fail, ret:%d\n", ret);
-            devdrv_kfree(msg);
-            msg = NULL;
-            return (ret == -1) ? 0 : ret;
-        }
-
         ret = snprintf_s(buf + offset, KA_MM_PAGE_SIZE - offset, KA_MM_PAGE_SIZE - offset - 1,
-            "\ndev |syn_submit|asy_submit|sml_submit|tot_sync|trg_remot|trg_128|done_int|"
-            "re_sched|done_work|syn_proc|max_cb|new_cb|cb_10s|cb_10ms|asy_proc|err_int|err_work|"
-            "max_task|sq_idle\n");
-        if (ret != -1) {
-                offset += ret;
-        }
-        //  max device chan num is DEVDRV_SYSFS_DMA_CHAN_NUM-16
-        for (i = 0; i < DEVDRV_SYSFS_DMA_CHAN_NUM; i++) {
-            if (msg->sync_dma_stat[i].flag == DEVDRV_DISABLE) {
-                continue;
-            }
-            ret = snprintf_s(buf + offset, KA_MM_PAGE_SIZE - offset, KA_MM_PAGE_SIZE - offset - 1,
-                " %-4u|%-10llu|%-10llu|%-10llu|%-8llu|%-9llu|%-7llu|%-8llu|%-8llu|%-9llu|"
-                "%-8llu|%-6llu|%-6llu|%-6llu|%-7llu|%-8llu|%-7llu|%-8llu|%-8llu|%-7llu\n",
-                i,
-                msg->sync_dma_stat[i].sync_submit_cnt,
-                msg->sync_dma_stat[i].async_submit_cnt,
-                msg->sync_dma_stat[i].sml_submit_cnt,
-                msg->sync_dma_stat[i].sync_submit_cnt + msg->sync_dma_stat[i].sml_submit_cnt,
-                msg->sync_dma_stat[i].trigger_remot_int_cnt,
-                msg->sync_dma_stat[i].trigger_local_128,
-                msg->sync_dma_stat[i].done_int_cnt,
-                msg->sync_dma_stat[i].re_schedule_cnt,
-                msg->sync_dma_stat[i].done_tasklet_in_cnt,
-                msg->sync_dma_stat[i].sync_sem_up_cnt,
-                msg->sync_dma_stat[i].max_callback_time,
-                msg->sync_dma_stat[i].new_callback_time,
-                msg->sync_dma_stat[i].callback_time_over10s,
-                msg->sync_dma_stat[i].callback_time_over10ms,
-                msg->sync_dma_stat[i].async_proc_cnt,
-                msg->sync_dma_stat[i].err_int_cnt,
-                msg->sync_dma_stat[i].err_work_cnt,
-                msg->sync_dma_stat[i].max_task_op_time,
-                msg->sync_dma_stat[i].sq_idle_bd_cnt);
-            if (ret != -1) {
-                offset += ret;
-            }
-        }
-
-        ret = snprintf_s(buf + offset, KA_MM_PAGE_SIZE - offset, KA_MM_PAGE_SIZE - offset - 1, "\nhost\n");
+                         " %-4u|%-10llu|%-10llu|%-10llu|%-8llu|%-9llu|%-7llu|%-8llu|%-8llu|%-9llu|"
+                         "%-8llu|%-6llu|%-6llu|%-6llu|%-7llu|%-8llu|%-7llu|%-8llu|%-8llu|%-7llu\n",
+                         i, msg->sync_dma_stat[i].sync_submit_cnt, msg->sync_dma_stat[i].async_submit_cnt,
+                         msg->sync_dma_stat[i].sml_submit_cnt,
+                         msg->sync_dma_stat[i].sync_submit_cnt + msg->sync_dma_stat[i].sml_submit_cnt,
+                         msg->sync_dma_stat[i].trigger_remot_int_cnt, msg->sync_dma_stat[i].trigger_local_128,
+                         msg->sync_dma_stat[i].done_int_cnt, msg->sync_dma_stat[i].re_schedule_cnt,
+                         msg->sync_dma_stat[i].done_tasklet_in_cnt, msg->sync_dma_stat[i].sync_sem_up_cnt,
+                         msg->sync_dma_stat[i].max_callback_time, msg->sync_dma_stat[i].new_callback_time,
+                         msg->sync_dma_stat[i].callback_time_over10s, msg->sync_dma_stat[i].callback_time_over10ms,
+                         msg->sync_dma_stat[i].async_proc_cnt, msg->sync_dma_stat[i].err_int_cnt,
+                         msg->sync_dma_stat[i].err_work_cnt, msg->sync_dma_stat[i].max_task_op_time,
+                         msg->sync_dma_stat[i].sq_idle_bd_cnt);
         if (ret != -1) {
             offset += ret;
         }
-        for (i = 0; i < dma_dev->remote_chan_num; i++) {
-            ret = snprintf_s(buf + offset, KA_MM_PAGE_SIZE - offset, KA_MM_PAGE_SIZE - offset - 1,
-                " %-4d|%-10llu|%-10llu|%-10llu|%-8llu|%-9llu|%-7llu|%-8llu|%-8llu|%-9llu|"
-                "%-8llu|%-6llu|%-6llu|%-6llu|%-7llu|%-8llu|%-7llu|%-8llu|%-8llu|%-7llu\n",
-                i,
-                dma_dev->dma_chan[i].status.sync_submit_cnt,
-                dma_dev->dma_chan[i].status.async_submit_cnt,
-                dma_dev->dma_chan[i].status.sml_submit_cnt,
-                dma_dev->dma_chan[i].status.sync_submit_cnt +
-                    dma_dev->dma_chan[i].status.sml_submit_cnt,
-                dma_dev->dma_chan[i].status.trigger_remot_int_cnt,
-                dma_dev->dma_chan[i].status.trigger_local_128,
-                dma_dev->dma_chan[i].status.done_int_cnt,
-                dma_dev->dma_chan[i].status.re_schedule_cnt,
-                dma_dev->dma_chan[i].status.done_tasklet_in_cnt,
-                dma_dev->dma_chan[i].status.sync_sem_up_cnt,
-                dma_dev->dma_chan[i].status.max_callback_time,
-                dma_dev->dma_chan[i].status.new_callback_time,
-                dma_dev->dma_chan[i].status.callback_time_over10s,
-                dma_dev->dma_chan[i].status.callback_time_over10ms,
-                dma_dev->dma_chan[i].status.async_proc_cnt,
-                dma_dev->dma_chan[i].status.err_int_cnt,
-                dma_dev->dma_chan[i].status.err_work_cnt,
-                dma_dev->dma_chan[i].status.max_task_op_time,
-                dma_dev->dma_chan[i].status.sq_idle_bd_cnt);
-            if (ret != -1) {
-                offset += ret;
-            }
+    }
+
+    ret = snprintf_s(buf + offset, KA_MM_PAGE_SIZE - offset, KA_MM_PAGE_SIZE - offset - 1, "\nhost\n");
+    if (ret != -1) {
+        offset += ret;
+    }
+    for (i = 0; i < dma_dev->remote_chan_num; i++) {
+        ret = snprintf_s(buf + offset, KA_MM_PAGE_SIZE - offset, KA_MM_PAGE_SIZE - offset - 1,
+                         " %-4d|%-10llu|%-10llu|%-10llu|%-8llu|%-9llu|%-7llu|%-8llu|%-8llu|%-9llu|"
+                         "%-8llu|%-6llu|%-6llu|%-6llu|%-7llu|%-8llu|%-7llu|%-8llu|%-8llu|%-7llu\n",
+                         i, dma_dev->dma_chan[i].status.sync_submit_cnt, dma_dev->dma_chan[i].status.async_submit_cnt,
+                         dma_dev->dma_chan[i].status.sml_submit_cnt,
+                         dma_dev->dma_chan[i].status.sync_submit_cnt + dma_dev->dma_chan[i].status.sml_submit_cnt,
+                         dma_dev->dma_chan[i].status.trigger_remot_int_cnt,
+                         dma_dev->dma_chan[i].status.trigger_local_128, dma_dev->dma_chan[i].status.done_int_cnt,
+                         dma_dev->dma_chan[i].status.re_schedule_cnt, dma_dev->dma_chan[i].status.done_tasklet_in_cnt,
+                         dma_dev->dma_chan[i].status.sync_sem_up_cnt, dma_dev->dma_chan[i].status.max_callback_time,
+                         dma_dev->dma_chan[i].status.new_callback_time,
+                         dma_dev->dma_chan[i].status.callback_time_over10s,
+                         dma_dev->dma_chan[i].status.callback_time_over10ms, dma_dev->dma_chan[i].status.async_proc_cnt,
+                         dma_dev->dma_chan[i].status.err_int_cnt, dma_dev->dma_chan[i].status.err_work_cnt,
+                         dma_dev->dma_chan[i].status.max_task_op_time, dma_dev->dma_chan[i].status.sq_idle_bd_cnt);
+        if (ret != -1) {
+            offset += ret;
         }
+    }
 
-        devdrv_kfree(msg);
-        msg = NULL;
+    devdrv_kfree(msg);
+    msg = NULL;
 
-        return offset;
+    return offset;
 }
 
 #define PCIE_AER_ROOT_ERR 1U
@@ -1017,7 +996,7 @@ STATIC ssize_t devdrv_sysfs_aer_info_show(ka_device_t *dev, ka_device_attribute_
     for (i = 0; i < num; i++) {
         if (g_pcie_aer_info_table[i].count != 0) {
             ret = snprintf_s(buf + offset, KA_MM_PAGE_SIZE - offset, KA_MM_PAGE_SIZE - offset - 1, "%-31s:%u\n",
-                g_pcie_aer_info_table[i].describe, g_pcie_aer_info_table[i].count);
+                             g_pcie_aer_info_table[i].describe, g_pcie_aer_info_table[i].count);
             if (ret != -1) {
                 offset += ret;
             }
@@ -1088,8 +1067,8 @@ STATIC ssize_t devdrv_sysfs_features_show(ka_device_t *dev, ka_device_attribute_
         }
     }
 
-    ret = snprintf_s(buf + offset, KA_MM_PAGE_SIZE - offset, KA_MM_PAGE_SIZE - offset - 1,
-                    "\n%-*s | %-*s | %s\n", max_name_width, "feature name", max_desc_width, "desc", "supported or not");
+    ret = snprintf_s(buf + offset, KA_MM_PAGE_SIZE - offset, KA_MM_PAGE_SIZE - offset - 1, "\n%-*s | %-*s | %s\n",
+                     max_name_width, "feature name", max_desc_width, "desc", "supported or not");
     if (ret != -1) {
         offset += ret;
     }
@@ -1097,8 +1076,7 @@ STATIC ssize_t devdrv_sysfs_features_show(ka_device_t *dev, ka_device_attribute_
     for (i = 0; i < DEVDRV_FEATURE_MAX; i++) {
         status_str = devdrv_feature_is_support(pci_ctrl->features, i) ? "supported" : "not";
         ret = snprintf_s(buf + offset, KA_MM_PAGE_SIZE - offset, KA_MM_PAGE_SIZE - offset - 1, "%-*s | %-*s | %s\n",
-                        max_name_width, meta[i].name,
-                        max_desc_width, meta[i].desc, status_str);
+                         max_name_width, meta[i].name, max_desc_width, meta[i].desc, status_str);
         if (ret != -1) {
             offset += ret;
         }
@@ -1116,15 +1094,15 @@ STATIC ssize_t devdrv_sysfs_features_bitmap_show(ka_device_t *dev, ka_device_att
 
     (void)attr;
 
-    ret = snprintf_s(buf + offset, KA_MM_PAGE_SIZE - offset, KA_MM_PAGE_SIZE - offset - 1,
-                    "\n%-30s | %s\n", "feature name", "bit");
+    ret = snprintf_s(buf + offset, KA_MM_PAGE_SIZE - offset, KA_MM_PAGE_SIZE - offset - 1, "\n%-30s | %s\n",
+                     "feature name", "bit");
     if (ret != -1) {
         offset += ret;
     }
 
     for (i = 0; i < DEVDRV_FEATURE_OPS_BIT_NUM; i++) {
         ret = snprintf_s(buf + offset, KA_MM_PAGE_SIZE - offset, KA_MM_PAGE_SIZE - offset - 1, "%-30s | %s\n",
-                        meta[i].name, meta[i].bit);
+                         meta[i].name, meta[i].bit);
         if (ret != -1) {
             offset += ret;
         }
@@ -1136,12 +1114,12 @@ STATIC ssize_t devdrv_sysfs_features_bitmap_show(ka_device_t *dev, ka_device_att
 static KA_DRIVER_DEVICE_ATTR(devdrv_sysfs_link_info, KA_S_IRUSR | KA_S_IRGRP, devdrv_sysfs_link_info_show, NULL);
 static KA_DRIVER_DEVICE_ATTR(devdrv_sysfs_rx_para_info, KA_S_IRUSR | KA_S_IRGRP, devdrv_sysfs_rx_para_show, NULL);
 static KA_DRIVER_DEVICE_ATTR(devdrv_sysfs_tx_para_info, KA_S_IRUSR | KA_S_IRGRP, devdrv_sysfs_tx_para_show, NULL);
-static KA_DRIVER_DEVICE_ATTR(devdrv_sysfs_aer_cnt_info, KA_S_IRUSR | KA_S_IRGRP | KA_S_IWUSR | KA_S_IWGRP, devdrv_sysfs_aer_cnt_show,
-                   devdrv_sysfs_aer_cnt_store);
+static KA_DRIVER_DEVICE_ATTR(devdrv_sysfs_aer_cnt_info, KA_S_IRUSR | KA_S_IRGRP | KA_S_IWUSR | KA_S_IWGRP,
+                             devdrv_sysfs_aer_cnt_show, devdrv_sysfs_aer_cnt_store);
 static KA_DRIVER_DEVICE_ATTR(devdrv_sysfs_bdf_to_devid, KA_S_IRUSR | KA_S_IRGRP, devdrv_sysfs_bdf_to_devid_show, NULL);
 
-static KA_DRIVER_DEVICE_ATTR(davinci_dev_id, KA_S_IRUSR | KA_S_IRGRP | KA_S_IWUSR | KA_S_IWGRP, devdrv_sysfs_get_davinci_dev_id,
-                   devdrv_sysfs_set_davinci_dev_id);
+static KA_DRIVER_DEVICE_ATTR(davinci_dev_id, KA_S_IRUSR | KA_S_IRGRP | KA_S_IWUSR | KA_S_IWGRP,
+                             devdrv_sysfs_get_davinci_dev_id, devdrv_sysfs_set_davinci_dev_id);
 static KA_DRIVER_DEVICE_ATTR(davinci_dev_num, KA_S_IRUSR | KA_S_IRGRP, devdrv_sysfs_get_davinci_dev_num, NULL);
 
 static KA_DRIVER_DEVICE_ATTR(dev_id, KA_S_IRUSR | KA_S_IRGRP, devdrv_sysfs_get_dev_id, NULL);
@@ -1151,7 +1129,7 @@ static KA_DRIVER_DEVICE_ATTR(hotreset_flag, KA_S_IWUSR | KA_S_IWGRP, NULL, devdr
 static KA_DRIVER_DEVICE_ATTR(common_msg, KA_S_IRUSR | KA_S_IRGRP, devdrv_sysfs_get_common_msg, NULL);
 static KA_DRIVER_DEVICE_ATTR(non_trans_msg, KA_S_IRUSR | KA_S_IRGRP, devdrv_sysfs_get_non_trans_msg, NULL);
 static KA_DRIVER_DEVICE_ATTR(profiling_enable_status, KA_S_IRUSR | KA_S_IRGRP | KA_S_IWUSR | KA_S_IWGRP,
-    devdrv_sysfs_profiling_is_enabled, devdrv_sysfs_set_profiling_enable);
+                             devdrv_sysfs_profiling_is_enabled, devdrv_sysfs_set_profiling_enable);
 static KA_DRIVER_DEVICE_ATTR(dma_info, KA_S_IRUGO, devdrv_sysfs_sync_dma_info_show, NULL);
 static KA_DRIVER_DEVICE_ATTR(aer_info, KA_S_IRUSR | KA_S_IRGRP, devdrv_sysfs_aer_info_show, NULL);
 static KA_DRIVER_DEVICE_ATTR(dump_dfx_part1, KA_S_IRUSR | KA_S_IRGRP, devdrv_sysfs_dump_dfx_part1_show, NULL);
@@ -1159,6 +1137,7 @@ static KA_DRIVER_DEVICE_ATTR(dump_dfx_part2, KA_S_IRUSR | KA_S_IRGRP, devdrv_sys
 static KA_DRIVER_DEVICE_ATTR(features, KA_S_IRUSR | KA_S_IRGRP, devdrv_sysfs_features_show, NULL);
 static KA_DRIVER_DEVICE_ATTR(features_bitmap, KA_S_IRUSR | KA_S_IRGRP, devdrv_sysfs_features_bitmap_show, NULL);
 
+// clang-format off
 static ka_attribute_t *g_devdrv_sysfs_attrs[] = {
     ka_fs_get_dev_attr(dev_attr_devdrv_sysfs_link_info)
     ka_fs_get_dev_attr(dev_attr_devdrv_sysfs_rx_para_info)
@@ -1195,18 +1174,19 @@ static const ka_attribute_group_t g_devdrv_sysfs_msg_group = {
     ka_fs_init_ag_attrs(g_devdrv_sysfs_msg_attrs)
     ka_fs_init_ag_name("msg")
 };
+// clang-format on
 
 int devdrv_sysfs_init(ka_pci_dev_t *pdev)
 {
     int ret;
 
-    ret =  ka_sysfs_create_group(ka_pci_get_dev_kobj(pdev), &g_devdrv_sysfs_group);
+    ret = ka_sysfs_create_group(ka_pci_get_dev_kobj(pdev), &g_devdrv_sysfs_group);
     if (ret != 0) {
         devdrv_err("Call ka_sysfs_create_group failed. (ret=%d)\n", ret);
         return -1;
     }
 
-    ret =  ka_sysfs_create_group(ka_pci_get_dev_kobj(pdev), &g_devdrv_sysfs_msg_group);
+    ret = ka_sysfs_create_group(ka_pci_get_dev_kobj(pdev), &g_devdrv_sysfs_msg_group);
     if (ret != 0) {
         devdrv_err("Call ka_sysfs_create_group failed. (ret=%d)\n", ret);
         return -1;

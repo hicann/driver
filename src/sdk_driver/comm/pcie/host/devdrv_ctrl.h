@@ -21,7 +21,7 @@
 
 #define DEVDRV_MAX_DELAY_COUNT 20
 #define DEVDRV_HOT_RESET_DELAY 3
-#define DEVDRV_HOT_RESET_LONG_DELAY 5  /* FOR HCCS over PCIE */
+#define DEVDRV_HOT_RESET_LONG_DELAY 5 /* FOR HCCS over PCIE */
 #define DEVDRV_HOT_RESET_AFTER_DELAY 10
 #define DEVDRV_HOT_RESAN_AFTER_DELAY 50
 #define MAX_OS_EACH_AISERVER 2
@@ -50,14 +50,14 @@
 #define DEVDRV_RESERVE_NUM 2
 #define DEVDRV_MOVE_BIT_32 32
 #define DEVDRV_MAX_FUNC_NUM 2
-#define DEVDRV_DMI_DEV_TYPE_DEV_SLOT (-4)   /* same value as DMI_DEV_TYPE_DEV_SLOT defined in dmi.h */
+#define DEVDRV_DMI_DEV_TYPE_DEV_SLOT (-4) /* same value as DMI_DEV_TYPE_DEV_SLOT defined in dmi.h */
 
 #define DEVDRV_MAX_CAPABILITY_VALUE_NUM 2
 #define DEVDRV_MAX_CAPABILITY_VALUE_OFFSET 4
 
 #define DEVDRV_P2P_CAPABILITY_SHIFT_32 32
 #define DEVDRV_P2P_ACCESS_DISABLE 0
-#define DEVDRV_P2P_ACCESS_ENABLE  1
+#define DEVDRV_P2P_ACCESS_ENABLE 1
 #define DEVDRV_P2P_ACCESS_UNKNOWN 2
 
 #define DEVDRV_H2D_ATTR_INVALID 0
@@ -68,10 +68,10 @@
 #define DEVDRV_P2P_GROUP_SIGN_BIT 51
 #define DEVDRV_P2P_GROUP_SIGN_VAL 0xF
 
-#define REF_CNT_CHECK_PRINT_FREQUENCY  1000  /* 1s */
-#define REF_CNT_CHECK_LIMIT 120000  /* 120s */
-#define REF_CNT_CHECK_WAIT_L 1000   /* 1000us */
-#define REF_CNT_CHECK_WAIT_H 1010   /* 1010us */
+#define REF_CNT_CHECK_PRINT_FREQUENCY 1000 /* 1s */
+#define REF_CNT_CHECK_LIMIT 120000         /* 120s */
+#define REF_CNT_CHECK_WAIT_L 1000          /* 1000us */
+#define REF_CNT_CHECK_WAIT_H 1010          /* 1010us */
 
 /* PCIe Speed value in regs */
 enum devdrv_pcie_speed_reg_enum {
@@ -86,12 +86,12 @@ enum devdrv_pcie_speed_reg_enum {
 
 /* PCIe Speed value define */
 #define DEVDRV_BANDW_INVALID_SPEED 0
-#define DEVDRV_BANDW_X1_SPEED_GEN1 (256 * 1024 * 1024ULL)       // 256MB/s
-#define DEVDRV_BANDW_X1_SPEED_GEN2 (512 * 1024 * 1024ULL)       // 512MB/s
-#define DEVDRV_BANDW_X1_SPEED_GEN3 (1 * 1024 * 1024 * 1024ULL)  // 1GB/s
-#define DEVDRV_BANDW_X1_SPEED_GEN4 (2 * 1024 * 1024 * 1024ULL)  // 2GB/s
-#define DEVDRV_BANDW_X1_SPEED_GEN5 (4 * 1024 * 1024 * 1024ULL)  // 4GB/s
-#define DEVDRV_BANDW_X1_SPEED_GEN6 (8 * 1024 * 1024 * 1024ULL)  // 8GB/s
+#define DEVDRV_BANDW_X1_SPEED_GEN1 (256 * 1024 * 1024ULL)      // 256MB/s
+#define DEVDRV_BANDW_X1_SPEED_GEN2 (512 * 1024 * 1024ULL)      // 512MB/s
+#define DEVDRV_BANDW_X1_SPEED_GEN3 (1 * 1024 * 1024 * 1024ULL) // 1GB/s
+#define DEVDRV_BANDW_X1_SPEED_GEN4 (2 * 1024 * 1024 * 1024ULL) // 2GB/s
+#define DEVDRV_BANDW_X1_SPEED_GEN5 (4 * 1024 * 1024 * 1024ULL) // 4GB/s
+#define DEVDRV_BANDW_X1_SPEED_GEN6 (8 * 1024 * 1024 * 1024ULL) // 8GB/s
 
 struct devdrv_ops {
     /* trans msg */
@@ -105,7 +105,7 @@ struct devdrv_ops {
 
 /* record startup mini and report to dev manager */
 #define DEVDRV_STATE_UNPROBE 0
-#define DEVDRV_STATE_PROBE   1
+#define DEVDRV_STATE_PROBE 1
 struct devdrv_dev_state_ctrl {
     /* total mini nums */
     u32 dev_num;
@@ -152,7 +152,7 @@ struct devdrv_p2p_config_info {
     u32 cnt;
 };
 
-#define DEVDRV_RES_GEAR_RESV_NUM  5
+#define DEVDRV_RES_GEAR_RESV_NUM 5
 
 struct devdrv_res_gear {
     u32 irq_res_gear;
@@ -160,7 +160,7 @@ struct devdrv_res_gear {
 };
 
 #define DEVDRV_DMA_IOVA_RANGE_UNINIT 0
-#define DEVDRV_DMA_IOVA_RANGE_INIT   1
+#define DEVDRV_DMA_IOVA_RANGE_INIT 1
 struct devdrv_dma_iova_addr_range {
     int init_flag;
     u64 start_addr;
@@ -253,13 +253,13 @@ int devdrv_hotreset_atomic_rescan(u32 dev_id);
 extern void *hw_dvt_hypervisor_dma_alloc_coherent(ka_device_t *dev, size_t size, ka_dma_addr_t *dma_addr, ka_gfp_t gfp);
 extern void hw_dvt_hypervisor_dma_free_coherent(ka_device_t *dev, size_t size, void *addr, ka_dma_addr_t dma_addr);
 extern ka_dma_addr_t hw_dvt_hypervisor_dma_map_single(ka_device_t *dev, void *ptr, size_t size,
-    ka_dma_data_direction_t dir);
+                                                      ka_dma_data_direction_t dir);
 extern void hw_dvt_hypervisor_dma_unmap_single(ka_device_t *dev, ka_dma_addr_t addr, size_t size,
-    ka_dma_data_direction_t dir);
+                                               ka_dma_data_direction_t dir);
 extern ka_dma_addr_t hw_dvt_hypervisor_dma_map_page(ka_device_t *dev, ka_page_t *page, size_t offset, size_t size,
-    ka_dma_data_direction_t dir);
+                                                    ka_dma_data_direction_t dir);
 extern void hw_dvt_hypervisor_dma_unmap_page(ka_device_t *dev, ka_dma_addr_t addr, size_t size,
-    ka_dma_data_direction_t dir);
+                                             ka_dma_data_direction_t dir);
 #endif
 void *devdrv_pci_msg_alloc_non_trans_queue(u32 index_id, struct devdrv_non_trans_msg_chan_info *chan_info);
 int devdrv_pci_msg_free_non_trans_queue(void *msg_chan);
@@ -286,27 +286,27 @@ int devdrv_get_bar_wc_flag_inner(u32 index_id, u32 *value);
 void devdrv_set_host_phy_mach_flag_inner(u32 index_id, u32 host_flag);
 int devdrv_get_master_devid_in_the_same_os_inner(u32 index_id, u32 *master_index_id);
 int devdrv_dma_sync_copy_inner(u32 index_id, enum devdrv_dma_data_type type, u64 src, u64 dst, u32 size,
-                                enum devdrv_dma_direction direction);
+                               enum devdrv_dma_direction direction);
 int devdrv_dma_async_copy_inner(u32 index_id, enum devdrv_dma_data_type type, u64 src, u64 dst, u32 size,
                                 enum devdrv_dma_direction direction, struct devdrv_asyn_dma_para_info *para_info);
 int devdrv_dma_sync_link_copy_inner(u32 index_id, enum devdrv_dma_data_type type, int wait_type,
                                     struct devdrv_dma_node *dma_node, u32 node_cnt);
 int devdrv_dma_async_link_copy_inner(u32 index_id, enum devdrv_dma_data_type type, struct devdrv_dma_node *dma_node,
-                                    u32 node_cnt, struct devdrv_asyn_dma_para_info *para_info);
+                                     u32 node_cnt, struct devdrv_asyn_dma_para_info *para_info);
 int devdrv_dma_sync_copy_plus_inner(u32 index_id, enum devdrv_dma_data_type type, int instance, u64 src, u64 dst,
                                     u32 size, enum devdrv_dma_direction direction);
 int devdrv_dma_async_copy_plus_inner(u32 index_id, enum devdrv_dma_data_type type, int instance, u64 src, u64 dst,
-                                    u32 size, enum devdrv_dma_direction direction,
-                                    struct devdrv_asyn_dma_para_info *para_info);
+                                     u32 size, enum devdrv_dma_direction direction,
+                                     struct devdrv_asyn_dma_para_info *para_info);
 int devdrv_dma_sync_link_copy_plus_inner(u32 index_id, enum devdrv_dma_data_type type, int wait_type, int instance,
-                                   struct devdrv_dma_node *dma_node, u32 node_cnt);
+                                         struct devdrv_dma_node *dma_node, u32 node_cnt);
 int devdrv_dma_async_link_copy_plus_inner(u32 index_id, enum devdrv_dma_data_type type, int instance,
-                                    struct devdrv_dma_node *dma_node, u32 node_cnt,
-                                    struct devdrv_asyn_dma_para_info *para_info);
+                                          struct devdrv_dma_node *dma_node, u32 node_cnt,
+                                          struct devdrv_asyn_dma_para_info *para_info);
 int devdrv_dma_sync_link_copy_extend_inner(u32 index_id, enum devdrv_dma_data_type type, int wait_type,
-    struct devdrv_dma_node *dma_node, u32 node_cnt);
-int devdrv_dma_sync_link_copy_plus_extend_inner(u32 index_id, enum devdrv_dma_data_type type, int wait_type, int instance,
-    struct devdrv_dma_node *dma_node, u32 node_cnt);
+                                           struct devdrv_dma_node *dma_node, u32 node_cnt);
+int devdrv_dma_sync_link_copy_plus_extend_inner(u32 index_id, enum devdrv_dma_data_type type, int wait_type,
+                                                int instance, struct devdrv_dma_node *dma_node, u32 node_cnt);
 int devdrv_dma_done_schedule_inner(u32 index_id, enum devdrv_dma_data_type type, int instance);
 
 int devdrv_get_pfvf_id_by_devid_inner(u32 index_id, u32 *pf_index_id, u32 *vf_index_id);
@@ -316,29 +316,31 @@ int devdrv_force_linkdown_inner(u32 index_id);
 void devdrv_hb_broken_stop_msg_send_inner(u32 index_id);
 int devdrv_dma_fill_desc_of_sq_inner(u32 index_id, struct devdrv_dma_prepare *dma_prepare,
                                      struct devdrv_dma_node *dma_node, u32 node_cnt, u32 fill_status);
-int devdrv_dma_fill_desc_of_sq_ext_inner(u32 index_id, void *sq_base, struct devdrv_dma_node *dma_node,
-    u32 node_cnt, u32 fill_status);
+int devdrv_dma_fill_desc_of_sq_ext_inner(u32 index_id, void *sq_base, struct devdrv_dma_node *dma_node, u32 node_cnt,
+                                         u32 fill_status);
 int devdrv_dma_link_free_inner(struct devdrv_dma_prepare *dma_prepare);
 int devdrv_dma_prepare_alloc_sq_addr_inner(u32 index_id, u32 node_cnt, struct devdrv_dma_prepare *dma_prepare);
 void devdrv_dma_prepare_free_sq_addr_inner(u32 index_id, struct devdrv_dma_prepare *dma_prepare);
 void *devdrv_pcimsg_alloc_trans_queue_inner(u32 index_id, struct devdrv_trans_msg_chan_info *chan_info);
 int devdrv_get_support_msg_chan_cnt_inner(u32 index_id, enum devdrv_msg_client_type module_type);
 struct devdrv_dma_prepare *devdrv_dma_link_prepare_inner(u32 index_id, enum devdrv_dma_data_type type,
-                                                   struct devdrv_dma_node *dma_node, u32 node_cnt, u32 fill_status);
+                                                         struct devdrv_dma_node *dma_node, u32 node_cnt,
+                                                         u32 fill_status);
 u32 devdrv_get_dev_chip_type_inner(u32 index_id);
-int devdrv_get_heartbeat_count_inner(u32 index_id, u64* count);
+int devdrv_get_heartbeat_count_inner(u32 index_id, u64 *count);
 int devdrv_set_heartbeat_count_inner(u32 index_id, u64 count);
 int devdrv_get_device_index_inner(u32 host_dev_id);
 int devdrv_devmem_addr_h2d_inner(u32 index_id, phys_addr_t host_bar_addr, phys_addr_t *device_phy_addr);
 int devdrv_devmem_addr_d2h_inner(u32 index_id, phys_addr_t device_phy_addr, phys_addr_t *host_bar_addr);
 ka_device_t *devdrv_get_pci_dev_by_devid_inner(u32 index_id);
-int devdrv_register_irq_by_vector_index_inner(u32 index_id, int vector_index, ka_irqreturn_t (*callback_func)(int, void *),
-                                        void *para, const char *name);
+int devdrv_register_irq_by_vector_index_inner(u32 index_id, int vector_index,
+                                              ka_irqreturn_t (*callback_func)(int, void *), void *para,
+                                              const char *name);
 int devdrv_get_addr_info_inner(u32 index_id, enum devdrv_addr_type type, u32 index, u64 *addr, size_t *size);
 int devdrv_pcie_reinit_inner(u32 index_id);
 int devdrv_unregister_irq_by_vector_index_inner(u32 index_id, int vector_index, void *para);
 int devdrv_get_bbox_reservd_mem_inner(unsigned int index_id, unsigned long long *dma_addr, ka_page_t **dma_pages,
-                                unsigned int *len);
+                                      unsigned int *len);
 bool devdrv_is_mdev_pm_boot_mode_inner(u32 index_id);
 ka_pci_dev_t *devdrv_get_pci_pdev_by_devid_inner(u32 index_id);
 int devdrv_get_devid_by_pfvf_id_inner(u32 pf_index_id, u32 vf_index_id, u32 *index_id);

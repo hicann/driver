@@ -62,15 +62,14 @@ void ubdrv_urma_chan_uninit(struct ascend_ub_msg_dev *msg_dev)
 }
 
 STATIC int ubdrv_urma_copy_para_check(u32 dev_id, enum devdrv_urma_chan_type type, enum devdrv_urma_copy_dir dir,
-    struct devdrv_urma_copy *local, struct devdrv_urma_copy *peer)
+                                      struct devdrv_urma_copy *local, struct devdrv_urma_copy *peer)
 {
     struct ubcore_target_seg *local_seg = NULL;
     struct ubcore_target_seg *peer_seg = NULL;
     u64 local_seg_len;
     u64 peer_seg_len;
 
-    if ((local == NULL) || (peer == NULL) || (local->seg == NULL) || (peer->seg == NULL))
-    {
+    if ((local == NULL) || (peer == NULL) || (local->seg == NULL) || (peer->seg == NULL)) {
         ubdrv_err("Check urma chan date fail, copy data is null. (dev_id=%u;type=%u)\n", dev_id, type);
         return -EINVAL;
     }
@@ -78,50 +77,50 @@ STATIC int ubdrv_urma_copy_para_check(u32 dev_id, enum devdrv_urma_chan_type typ
         ubdrv_err("Check urma chan type fail. (dev_id=%u;type=%u;dir=%u)\n", dev_id, type, dir);
         return -EINVAL;
     }
-    local_seg = (struct ubcore_target_seg*)local->seg;
-    peer_seg = (struct ubcore_target_seg*)peer->seg;
+    local_seg = (struct ubcore_target_seg *)local->seg;
+    peer_seg = (struct ubcore_target_seg *)peer->seg;
     local_seg_len = local_seg->seg.len;
     peer_seg_len = peer_seg->seg.len;
     if ((local->offset >= local_seg_len) || (local->len > local_seg_len) ||
         ((local->len + local->offset) > local_seg_len)) {
-        ubdrv_err("Check local copy len fail. (dev_id=%u;type=%u;len=%llu;offset=%llu;max_len=%llu)\n",
-            dev_id, type, local->len, local->offset, local_seg->seg.len);
+        ubdrv_err("Check local copy len fail. (dev_id=%u;type=%u;len=%llu;offset=%llu;max_len=%llu)\n", dev_id, type,
+                  local->len, local->offset, local_seg->seg.len);
         return -EINVAL;
     }
-    if ((peer->offset >= peer_seg_len) || (peer->len > peer_seg_len) ||
-        ((peer->len + peer->offset) > peer_seg_len)) {
-        ubdrv_err("Check peer copy len over. (dev_id=%u;type=%u;len=%llu;offset=%llu;max_len=%llu)\n",
-            dev_id, type, peer->len, peer->offset, peer_seg->seg.len);
+    if ((peer->offset >= peer_seg_len) || (peer->len > peer_seg_len) || ((peer->len + peer->offset) > peer_seg_len)) {
+        ubdrv_err("Check peer copy len over. (dev_id=%u;type=%u;len=%llu;offset=%llu;max_len=%llu)\n", dev_id, type,
+                  peer->len, peer->offset, peer_seg->seg.len);
         return -EINVAL;
     }
     if (local->len != peer->len) {
-        ubdrv_err("Check copy len fail. (dev_id=%u;type=%u;local_len=%llu;peer_len=%llu)\n",
-            dev_id, type, local->len, peer->len);
+        ubdrv_err("Check copy len fail. (dev_id=%u;type=%u;local_len=%llu;peer_len=%llu)\n", dev_id, type, local->len,
+                  peer->len);
         return -EINVAL;
     }
     return 0;
 }
 
 STATIC void ubdrv_urma_chan_wqe_prepare(struct send_wr_cfg *wr_cfg, struct ubdrv_urma_chan *urma_chan,
-    enum devdrv_urma_copy_dir dir, struct devdrv_urma_copy *local, struct devdrv_urma_copy *peer)
+                                        enum devdrv_urma_copy_dir dir, struct devdrv_urma_copy *local,
+                                        struct devdrv_urma_copy *peer)
 {
     struct ubcore_target_seg *local_seg = NULL;
     struct ubcore_target_seg *peer_seg = NULL;
 
-    local_seg = (struct ubcore_target_seg*)local->seg;
-    peer_seg = (struct ubcore_target_seg*)peer->seg;
+    local_seg = (struct ubcore_target_seg *)local->seg;
+    peer_seg = (struct ubcore_target_seg *)peer->seg;
     wr_cfg->user_ctx = 0;
-    wr_cfg->jfs = urma_chan->send_jetty.jfs;    // local send jetty
-    wr_cfg->tjetty = urma_chan->tjetty;         // remote recv jetty
+    wr_cfg->jfs = urma_chan->send_jetty.jfs; // local send jetty
+    wr_cfg->tjetty = urma_chan->tjetty;      // remote recv jetty
     wr_cfg->len = local->len;
     if (dir == PEER_TO_LOCAL) {
-        wr_cfg->sseg = peer_seg;                // read src: remote
-        wr_cfg->tseg = local_seg;               // read dst: local
+        wr_cfg->sseg = peer_seg;  // read src: remote
+        wr_cfg->tseg = local_seg; // read dst: local
         wr_cfg->sva = wr_cfg->sseg->seg.ubva.va + peer->offset;
         wr_cfg->dva = wr_cfg->tseg->seg.ubva.va + local->offset;
     } else {
-        wr_cfg->sseg = local_seg;               // write src: local
-        wr_cfg->tseg = peer_seg;                // write dst: remote
+        wr_cfg->sseg = local_seg; // write src: local
+        wr_cfg->tseg = peer_seg;  // write dst: remote
         wr_cfg->sva = wr_cfg->sseg->seg.ubva.va + local->offset;
         wr_cfg->dva = wr_cfg->tseg->seg.ubva.va + peer->offset;
     }
@@ -138,7 +137,7 @@ STATIC void ubdrv_urma_copy_para_opcode(enum devdrv_urma_copy_dir dir, enum ubco
 }
 
 int ubdrv_urma_copy(u32 dev_id, enum devdrv_urma_chan_type type, enum devdrv_urma_copy_dir dir,
-    struct devdrv_urma_copy *local, struct devdrv_urma_copy *peer)
+                    struct devdrv_urma_copy *local, struct devdrv_urma_copy *peer)
 {
     struct ascend_ub_msg_dev *msg_dev = NULL;
     struct ubdrv_urma_chan *urma_chan = NULL;
@@ -171,15 +170,16 @@ int ubdrv_urma_copy(u32 dev_id, enum devdrv_urma_chan_type type, enum devdrv_urm
     check_status = (type == URMA_CHAN_BBOX ? false : true);
     ret = ubdrv_post_rw_wr_process(&wr_cfg, opcode);
     if (ret != 0) {
-        ubdrv_err("Ub post jfs wr fail. (ret=%d;opcode=%u;dev_id=%u;chan_type=%u;jfs_id=%u;jfc_id=%u)\n",
-            ret, opcode, dev_id, type, stat->tx_jfs_id, stat->tx_jfs_jfc_id);
+        ubdrv_err("Ub post jfs wr fail. (ret=%d;opcode=%u;dev_id=%u;chan_type=%u;jfs_id=%u;jfc_id=%u)\n", ret, opcode,
+                  dev_id, type, stat->tx_jfs_id, stat->tx_jfs_jfc_id);
         goto urma_chan_unlock;
     }
-    ret = ubdrv_interval_poll_send_jfs_jfc(&urma_chan->send_jetty,
-        (u64)wr_cfg.user_ctx, MSG_MAX_WAIT_CNT, &cr, stat, check_status);
+    ret = ubdrv_interval_poll_send_jfs_jfc(&urma_chan->send_jetty, (u64)wr_cfg.user_ctx, MSG_MAX_WAIT_CNT, &cr, stat,
+                                           check_status);
     if ((ret != 0) || (cr.status != UBCORE_CR_SUCCESS)) {
         ubdrv_warn("Ub poll jfs_jfc cqe unsuccess. (ret=%d;opcode=%u;cr_status=%d;dev_id=%u;chan_type=%u;jfs_id=%u;\
-            jfc_id=%u)\n", ret, opcode, cr.status, dev_id, type, stat->tx_jfs_id, stat->tx_jfs_jfc_id);
+            jfc_id=%u)\n",
+                   ret, opcode, cr.status, dev_id, type, stat->tx_jfs_id, stat->tx_jfs_jfc_id);
         if (cr.status == UBCORE_CR_ACK_TIMEOUT_ERR) {
             ubdrv_rebuild_chan_send_jetty(dev_id, type, stat, &urma_chan->send_jetty, &wr_cfg);
         }
@@ -226,7 +226,7 @@ STATIC int ubdrv_set_urma_chan_cfg(u32 dev_id, struct ubdrv_urma_chan *urma_chan
     cfg->eid_index = idev->eid_index;
     cfg->token_value = token;
     cfg->access = MEM_ACCESS_LOCAL;
-    cfg->msg_chan = (void*)urma_chan;
+    cfg->msg_chan = (void *)urma_chan;
     cfg->chan_mode = UBDRV_MSG_CHAN_FOR_URMA;
     return 0;
 }
@@ -286,7 +286,7 @@ STATIC int ubdrv_check_urma_chan_msg_data(struct ascend_ub_msg_dev *msg_dev, str
         ubdrv_err("Recv data len invalid. (dev_id=%u;len=%u)\n", msg_dev->dev_id, desc->in_data_len);
         return -EINVAL;
     }
-    cmd = (struct ubdrv_create_urma_chan_cmd*)&desc->user_data;
+    cmd = (struct ubdrv_create_urma_chan_cmd *)&desc->user_data;
     if (cmd->chan_id >= URMA_CHAN_MAX) {
         ubdrv_err("Check chan id fail. (dev_id=%u;chan_id=%u)\n", msg_dev->dev_id, cmd->chan_id);
         return -EINVAL;
@@ -301,15 +301,15 @@ STATIC int ubdrv_check_urma_chan_status(struct ubdrv_urma_chan *urma_chan, enum 
         return -EINVAL;
     }
     if (urma_chan->status != expect_status) {
-        ubdrv_warn("Urma chan status err. (dev_id=%u;chan_id=%u;status=%u;expect_status=%u)\n",
-            urma_chan->dev_id, urma_chan->chan_id, urma_chan->status, expect_status);
+        ubdrv_warn("Urma chan status err. (dev_id=%u;chan_id=%u;status=%u;expect_status=%u)\n", urma_chan->dev_id,
+                   urma_chan->chan_id, urma_chan->status, expect_status);
         return -EINVAL;
     }
     return 0;
 }
 
-STATIC int ubdrv_urma_chan_import_jfr(struct ascend_ub_msg_dev *msg_dev,
-    struct ubdrv_urma_chan *urma_chan, struct jetty_exchange_data *data)
+STATIC int ubdrv_urma_chan_import_jfr(struct ascend_ub_msg_dev *msg_dev, struct ubdrv_urma_chan *urma_chan,
+                                      struct jetty_exchange_data *data)
 {
     u32 chan_id = urma_chan->chan_id;
     u32 dev_id = msg_dev->dev_id;
@@ -319,7 +319,8 @@ STATIC int ubdrv_urma_chan_import_jfr(struct ascend_ub_msg_dev *msg_dev,
     idev = msg_dev->idev;
     tjetty = ascend_import_jfr(idev->ubc_dev, idev->eid_index, data);
     if (KA_IS_ERR_OR_NULL(tjetty)) {
-        ubdrv_err("Urma chan import jfr failed. (dev_id=%u;chan_id=%u;errno=%ld)\n", dev_id, chan_id, KA_PTR_ERR(tjetty));
+        ubdrv_err("Urma chan import jfr failed. (dev_id=%u;chan_id=%u;errno=%ld)\n", dev_id, chan_id,
+                  KA_PTR_ERR(tjetty));
         return -EINVAL;
     }
     urma_chan->tjetty = tjetty;
@@ -343,7 +344,7 @@ STATIC void ubdrv_urma_chan_unimport_jfr(struct ubdrv_urma_chan *urma_chan)
 // device admin call
 int ubdrv_device_alloc_urma_chan(struct ascend_ub_msg_dev *msg_dev, void *data)
 {
-    struct ascend_ub_msg_desc *desc = (struct ascend_ub_msg_desc*)data;
+    struct ascend_ub_msg_desc *desc = (struct ascend_ub_msg_desc *)data;
     struct ubdrv_create_urma_chan_cmd *cmd;
     struct ascend_ub_jetty_ctrl *cfg;
     struct ubdrv_urma_chan *urma_chan;
@@ -353,7 +354,7 @@ int ubdrv_device_alloc_urma_chan(struct ascend_ub_msg_dev *msg_dev, void *data)
     if (ret != 0) {
         return ret;
     }
-    cmd = (struct ubdrv_create_urma_chan_cmd*)&desc->user_data;
+    cmd = (struct ubdrv_create_urma_chan_cmd *)&desc->user_data;
     urma_chan = &msg_dev->urma_chan[cmd->chan_id];
     ka_task_mutex_lock(&urma_chan->tx_mutex);
     ret = ubdrv_check_urma_chan_status(urma_chan, UBDRV_CHAN_IDLE);
@@ -391,7 +392,7 @@ urma_chan_unlock:
 
 int ubdrv_device_free_urma_chan(struct ascend_ub_msg_dev *msg_dev, void *data)
 {
-    struct ascend_ub_msg_desc *desc = (struct ascend_ub_msg_desc*)data;
+    struct ascend_ub_msg_desc *desc = (struct ascend_ub_msg_desc *)data;
     struct ubdrv_create_urma_chan_cmd *cmd;
     struct ubdrv_urma_chan *urma_chan;
     int ret;
@@ -400,7 +401,7 @@ int ubdrv_device_free_urma_chan(struct ascend_ub_msg_dev *msg_dev, void *data)
     if (ret != 0) {
         return ret;
     }
-    cmd = (struct ubdrv_create_urma_chan_cmd*)&desc->user_data;
+    cmd = (struct ubdrv_create_urma_chan_cmd *)&desc->user_data;
     urma_chan = &msg_dev->urma_chan[cmd->chan_id];
     ka_task_mutex_lock(&urma_chan->tx_mutex);
     ret = ubdrv_check_urma_chan_status(urma_chan, UBDRV_CHAN_ENABLE);
@@ -429,7 +430,7 @@ STATIC void ubdrv_urma_chan_admin_msg_pack(struct ascend_ub_user_data *user_desc
 }
 
 STATIC int ubdrv_send_admin_alloc_urma_chan(u32 dev_id, u32 chan_id, struct ascend_ub_jetty_ctrl *cfg,
-    struct ubdrv_create_urma_chan_cmd *cmd)
+                                            struct ubdrv_create_urma_chan_cmd *cmd)
 {
     u32 len = sizeof(struct ubdrv_create_urma_chan_cmd);
     struct ascend_ub_user_data user_desc = {0};
@@ -440,19 +441,19 @@ STATIC int ubdrv_send_admin_alloc_urma_chan(u32 dev_id, u32 chan_id, struct asce
         return ret;
     }
     cmd->dev_id = dev_id;
-    cmd->chan_id= chan_id;
+    cmd->chan_id = chan_id;
     ubdrv_urma_chan_admin_msg_pack(&user_desc, UBDRV_CREATE_URMA_CHAN, len, cmd);
     return ubdrv_admin_send_msg(dev_id, &user_desc);
 }
 
 STATIC int ubdrv_send_admin_free_urma_chan(u32 dev_id, u32 chan_id, struct ascend_ub_jetty_ctrl *cfg,
-    struct ubdrv_create_urma_chan_cmd *cmd)
+                                           struct ubdrv_create_urma_chan_cmd *cmd)
 {
     u32 len = sizeof(struct ubdrv_create_urma_chan_cmd);
     struct ascend_ub_user_data user_desc = {0};
 
     cmd->dev_id = dev_id;
-    cmd->chan_id= chan_id;
+    cmd->chan_id = chan_id;
     ubdrv_urma_chan_admin_msg_pack(&user_desc, UBDRV_FREE_URMA_CHAN, len, cmd);
     return ubdrv_admin_send_msg(dev_id, &user_desc);
 }
@@ -629,7 +630,7 @@ int ubdrv_unregister_seg(u32 dev_id, void *tseg, size_t in_len)
     return ubcore_unregister_seg((struct ubcore_target_seg *)tseg);
 }
 
-void* ubdrv_import_seg(u32 dev_id, u32 peer_token, void *peer_seg, size_t in_len, size_t *out_len)
+void *ubdrv_import_seg(u32 dev_id, u32 peer_token, void *peer_seg, size_t in_len, size_t *out_len)
 {
     size_t len = sizeof(struct ubcore_target_seg);
     struct ubcore_target_seg_cfg cfg = {0};
@@ -638,8 +639,7 @@ void* ubdrv_import_seg(u32 dev_id, u32 peer_token, void *peer_seg, size_t in_len
     struct ubcore_target_seg *p_seg;
     int ret;
 
-    if ((peer_seg == NULL) || ((out_len == NULL)) || (in_len != len ) ||
-        (dev_id >= ASCEND_UB_DEV_MAX_NUM)) {
+    if ((peer_seg == NULL) || ((out_len == NULL)) || (in_len != len) || (dev_id >= ASCEND_UB_DEV_MAX_NUM)) {
         ubdrv_err("Import seg para check fail. (dev_id=%u;len=%zu;in_len=%zu)\n", dev_id, len, in_len);
         return NULL;
     }
@@ -648,7 +648,7 @@ void* ubdrv_import_seg(u32 dev_id, u32 peer_token, void *peer_seg, size_t in_len
     if (ret != 0) {
         return NULL;
     }
-    p_seg = (struct ubcore_target_seg*)peer_seg;
+    p_seg = (struct ubcore_target_seg *)peer_seg;
     (void)memcpy_s(&cfg.seg, sizeof(struct ubcore_seg), &p_seg->seg, sizeof(struct ubcore_seg));
     cfg.token_value.token = peer_token;
     cfg.seg.attr.bs.token_policy = UBCORE_TOKEN_PLAIN_TEXT;
@@ -662,16 +662,16 @@ void* ubdrv_import_seg(u32 dev_id, u32 peer_token, void *peer_seg, size_t in_len
         *out_len = sizeof(struct ubcore_target_seg);
     }
     ubdrv_sub_device_status_ref(dev_id);
-    return (void*)seg;
+    return (void *)seg;
 }
 
 int ubdrv_unimport_seg(u32 dev_id, void *peer_tseg, size_t in_len)
 {
     size_t len = sizeof(struct ubcore_target_seg);
 
-    if ((peer_tseg == NULL) || (in_len != len ) || (dev_id >= ASCEND_UB_DEV_MAX_NUM)) {
+    if ((peer_tseg == NULL) || (in_len != len) || (dev_id >= ASCEND_UB_DEV_MAX_NUM)) {
         ubdrv_err("Unimport seg para check fail. (dev_id=%u;len=%zu;in_len=%zu)\n", dev_id, len, in_len);
         return -EINVAL;
     }
-    return ubcore_unimport_seg((struct ubcore_target_seg*)peer_tseg);
+    return ubcore_unimport_seg((struct ubcore_target_seg *)peer_tseg);
 }

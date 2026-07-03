@@ -16,6 +16,7 @@
 #include "vmng_mem_alloc_interface.h"
 #include "virtmnghost_proc_fs.h"
 
+// clang-format off
 #define STATIC_PROCFS_FILE_FUNC_OPS(ops, open_func, write_func)     \
     static const ka_procfs_ops_t ops = {                            \
         ka_fs_init_pf_owner(KA_THIS_MODULE)                         \
@@ -25,6 +26,7 @@
         ka_fs_init_pf_release(ka_fs_single_release)                 \
         ka_fs_init_pf_write(write_func)                             \
     }
+// clang-format on
 
 // file directory : /proc/vmng_host
 static ka_proc_dir_entry_t *vmng_host_entry = NULL;

@@ -33,8 +33,8 @@
 #define DEVDRV_SECOND_TO_MICROSECOND 1000000ULL
 #define DEVDRV_MICROSECOND_TO_NANOSECOND 1000ULL
 
-#define DEVDRV_LOG_DOWN_TIME_MAX        500000U    /* 500ms */
-#define DEVDRV_LOG_SYNC_DMA_COPY_TIME   500U    /* 500ms */
+#define DEVDRV_LOG_DOWN_TIME_MAX 500000U   /* 500ms */
+#define DEVDRV_LOG_SYNC_DMA_COPY_TIME 500U /* 500ms */
 #define DEVDRV_DMA_SQCQ_SIDE_BIT 0U
 #define DEVDRV_DMA_SML_PKT_BIT 1U
 
@@ -49,16 +49,16 @@
 #define DEVDRV_SOFTBD_STATUS_INVALID (-2)
 #define DEVDRV_DELAY_US 1000
 
-#define DEVDRV_CB_TIME_OVER_10MS 10    /* 10ms */
-#define DEVDRV_CB_TIME_OVER_10S  10000 /* 10s */
+#define DEVDRV_CB_TIME_OVER_10MS 10   /* 10ms */
+#define DEVDRV_CB_TIME_OVER_10S 10000 /* 10s */
 
 /* device is alive or dead */
 #define DEVDRV_DMA_ALIVE 0
 #define DEVDRV_DMA_DEAD 1
 
 /* dma chan is enabled or disabled */
-#define DEVDRV_DMA_CHAN_ENABLED   0
-#define DEVDRV_DMA_CHAN_DISABLED  1
+#define DEVDRV_DMA_CHAN_ENABLED 0
+#define DEVDRV_DMA_CHAN_DISABLED 1
 
 #define DEVDRV_DMA_SQ_TAIL_SUB_CNT 0
 #define DEVDRV_DMA_SQ_TAIL_ADD_CNT 1
@@ -88,14 +88,14 @@ enum devdrv_dma_process_status {
     DEVDRV_DMA_PROCESS_WAIT_TIMEOUT = 0x2
 };
 
-#define DEVDRV_DMA_TYPE_ERR  101
-#define DEVDRV_DMA_NO_PARA   102
+#define DEVDRV_DMA_TYPE_ERR 101
+#define DEVDRV_DMA_NO_PARA 102
 #define DEVDRV_DMA_NO_NOTIFY 103
-#define DEVDRV_DMA_NO_DEV    104
-#define DEVDRV_DMA_CNT_ERR   105
-#define DEVDRV_DMA_NO_NODE   106
-#define DEVDRV_DMA_SIZE_ERR  107
-#define DEVDRV_DMA_DIR_ERR   108
+#define DEVDRV_DMA_NO_DEV 104
+#define DEVDRV_DMA_CNT_ERR 105
+#define DEVDRV_DMA_NO_NODE 106
+#define DEVDRV_DMA_SIZE_ERR 107
+#define DEVDRV_DMA_DIR_ERR 108
 
 #define DEVDRV_DMA_SQ_DESC_SIZE sizeof(struct devdrv_dma_sq_node)
 #define DEVDRV_DMA_CQ_DESC_SIZE sizeof(struct devdrv_dma_cq_node)
@@ -143,11 +143,11 @@ struct devdrv_sync_dma_stat {
     u64 max_task_op_time;
     u64 last_soft_bd_proced;
     u64 sq_idle_bd_cnt;
-    u64 flag;  // 0 is invalid, 1 is valid
+    u64 flag; // 0 is invalid, 1 is valid
 };
 
-#define DEVDRV_IRQ_IS_INIT    1
-#define DEVDRV_IRQ_IS_UNINIT  0
+#define DEVDRV_IRQ_IS_INIT 1
+#define DEVDRV_IRQ_IS_UNINIT 0
 struct devdrv_dma_channel {
     ka_device_t *dev;
     void __ka_mm_iomem *io_base; /* the base address of DMA channel */
@@ -253,11 +253,11 @@ struct devdrv_dma_dev {
     u32 err_flag;
     struct devdrv_dma_sq_cq_info sq_cq_info;
     struct devdrv_dma_ops ops;
-    unsigned long dma_bitmap;            /* 0-irrelevant, 1-allocated */
+    unsigned long dma_bitmap; /* 0-irrelevant, 1-allocated */
     u32 local_chan_num;
     u32 local_chan[DEVDRV_DMA_MAX_CHAN_NUM];
-    u32 remote_chan_begin;               /* first remote dma channel in device hardware */
-    u32 remote_bar_begin;                /* first remote dma channel in bar space */
+    u32 remote_chan_begin; /* first remote dma channel in device hardware */
+    u32 remote_bar_begin;  /* first remote dma channel in bar space */
     u32 remote_chan_num;
     u32 remote_chan[DEVDRV_DMA_MAX_CHAN_NUM];
     u32 ts_chan_num;
@@ -267,13 +267,13 @@ struct devdrv_dma_dev {
     struct devdrv_dma_guard_work guard_work;
     ka_tasklet_struct_t single_fault_task;
     struct devdrv_dma_suppression suppression;
-    struct devdrv_dma_channel dma_chan[];  /* host:remote channel, device: local channel */
+    struct devdrv_dma_channel dma_chan[]; /* host:remote channel, device: local channel */
 };
 
 struct devdrv_dma_res {
     void __ka_mm_iomem *dma_addr;
     void __ka_mm_iomem *dma_chan_addr;
-    u32 dma_chan_start_id;       /* first dma channel in device hardware */
+    u32 dma_chan_start_id; /* first dma channel in device hardware */
     u32 chan_start_id;
     u32 use_chan[DEVDRV_DMA_MAX_CHAN_NUM];
     u32 dma_chan_num;
@@ -317,10 +317,10 @@ struct devdrv_dma_copy_para {
 
 bool is_need_dma_copy_retry(u32 dev_id, int wait_status);
 
-void devdrv_dma_copy_type_info_init(struct devdrv_dma_copy_para *para, enum devdrv_dma_data_type type,
-    int wait_type, int copy_type);
+void devdrv_dma_copy_type_info_init(struct devdrv_dma_copy_para *para, enum devdrv_dma_data_type type, int wait_type,
+                                    int copy_type);
 void devdrv_dma_copy_para_info_init(struct devdrv_dma_copy_para *para, int pava_flag, int instance,
-    struct devdrv_asyn_dma_para_info *asyn_info);
+                                    struct devdrv_asyn_dma_para_info *asyn_info);
 int devdrv_peh_dma_node_addr_check(struct devdrv_dma_node *dma_node);
 
 void devdrv_dma_config_axim_aruser_mode(void __ka_mm_iomem *io_base);
@@ -338,20 +338,20 @@ int devdrv_unregister_irq_func(void *drvdata, int vector_index, void *para);
 int devdrv_notify_dma_err_irq(void *drvdata, u32 dma_chan_id, int err_irq);
 int devdrv_check_dl_dlcmsm_state(void *drvdata);
 int devdrv_dma_copy(struct devdrv_dma_dev *dma_dev, struct devdrv_dma_node *dma_node, u32 node_cnt,
-    struct devdrv_dma_copy_para *para);
+                    struct devdrv_dma_copy_para *para);
 int devdrv_dma_copy_sml_pkt(struct devdrv_dma_dev *dma_dev, enum devdrv_dma_data_type type, ka_dma_addr_t dst,
                             const void *data, u32 size);
 int devdrv_dma_chan_copy(u32 dev_id, struct devdrv_dma_channel *dma_chan, struct devdrv_dma_node *dma_node,
-    u32 node_cnt, struct devdrv_dma_copy_para *para);
+                         u32 node_cnt, struct devdrv_dma_copy_para *para);
 struct devdrv_dma_channel *devdrv_dma_get_chan(u32 dev_id, enum devdrv_dma_data_type type);
 int devdrv_dma_get_sq_idle_bd_cnt(struct devdrv_dma_channel *dma_chan);
 int devdrv_dma_chan_copy_by_vpc(u32 dev_id, struct devdrv_dma_channel *dma_chan, struct devdrv_dma_node *dma_node,
-    u32 node_cnt, struct devdrv_dma_copy_para *para);
+                                u32 node_cnt, struct devdrv_dma_copy_para *para);
 void devdrv_dma_err_proc(struct devdrv_dma_channel *dma_chan);
 int devdrv_dma_para_check(u32 dev_id, enum devdrv_dma_data_type type, int copy_type,
-    const struct devdrv_asyn_dma_para_info *para_info);
+                          const struct devdrv_asyn_dma_para_info *para_info);
 int devdrv_dma_node_check(u32 dev_id, const struct devdrv_dma_node *dma_node, u32 node_cnt,
-    const struct devdrv_dma_dev *dma_dev);
+                          const struct devdrv_dma_dev *dma_dev);
 void devdrv_set_dma_status(struct devdrv_dma_dev *dma_dev, u32 status);
 void devdrv_set_dma_chan_status(struct devdrv_dma_channel *dma_chan, u32 status);
 

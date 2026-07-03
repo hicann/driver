@@ -36,7 +36,7 @@
 #define DEVDRV_SINGLE_DEV_TX_ATU_NUM 2
 
 #if defined(CFG_PLATFORM_ESL) || defined(CFG_PLATFORM_FPGA)
-#define DEVDRV_PCIE_DDR_ATU_OFFSET 0x1000000000  /* 64G */
+#define DEVDRV_PCIE_DDR_ATU_OFFSET 0x1000000000 /* 64G */
 #else
 #define DEVDRV_PCIE_DDR_ATU_OFFSET 0x10000000000 /* 1T */
 #endif
@@ -89,14 +89,14 @@ int devdrv_mem_rx_atu_init(u32 devid, void __ka_mm_iomem *apb_base, struct devdr
 int devdrv_rsv_mem_rx_atu_init(u32 devid, const void __ka_mm_iomem *apb_base, struct devdrv_iob_atu atu[], int num);
 int devdrv_io_rx_atu_init(u32 devid, const void __ka_mm_iomem *apb_base, struct devdrv_iob_atu atu[], int num);
 int devdrv_set_tx_atu(void __ka_mm_iomem *apb_base, struct devdrv_cfg_tx_atu_para *tx_para,
-    struct devdrv_tx_atu_cfg_cmd *cmd_data, struct devdrv_shr_para __ka_mm_iomem *para,
-    struct devdrv_tx_atu_cfg_cmd *reply_data);
+                      struct devdrv_tx_atu_cfg_cmd *cmd_data, struct devdrv_shr_para __ka_mm_iomem *para,
+                      struct devdrv_tx_atu_cfg_cmd *reply_data);
 int devdrv_get_dev_tx_atu(const void __ka_mm_iomem *apb_base, struct devdrv_iob_atu atu[], u32 len,
-    const struct devdrv_cfg_tx_atu_para *tx_para, u64 phy_addr);
+                          const struct devdrv_cfg_tx_atu_para *tx_para, u64 phy_addr);
 int devdrv_del_dev_tx_atu(void __ka_mm_iomem *apb_base, struct devdrv_iob_atu atu[], u32 len,
-    struct devdrv_cfg_tx_atu_para *tx_para, u64 target_addr);
+                          struct devdrv_cfg_tx_atu_para *tx_para, u64 target_addr);
 int devdrv_del_dev_h2d_tx_atu(void __ka_mm_iomem *apb_base, struct devdrv_iob_atu atu[], u32 len,
-    const struct devdrv_cfg_tx_atu_para *tx_para, ka_dma_addr_t target_addr);
+                              const struct devdrv_cfg_tx_atu_para *tx_para, ka_dma_addr_t target_addr);
 u32 devdrv_get_h2d_atu_id(u32 devid, ka_dma_addr_t addr);
 void devdrv_tx_atu_print_cfg_info(void);
 #endif

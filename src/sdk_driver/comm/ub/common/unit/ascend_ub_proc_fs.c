@@ -56,7 +56,7 @@ STATIC int ubdrv_procfs_pair_info(ka_inode_t *inode, ka_file_t *file)
 }
 
 STATIC int ubdrv_procfs_get_device_admin_chan_dfx(struct ubdrv_msg_chan_stat *stat_buf, u32 chan_num,
-    struct ascend_ub_msg_dev *msg_dev, struct ascend_ub_msg_desc *desc)
+                                                  struct ascend_ub_msg_dev *msg_dev, struct ascend_ub_msg_desc *desc)
 {
     size_t len = sizeof(struct ubdrv_msg_chan_stat);
     int ret;
@@ -71,8 +71,8 @@ STATIC int ubdrv_procfs_get_device_admin_chan_dfx(struct ubdrv_msg_chan_stat *st
     return 0;
 }
 
-STATIC int ubdrv_procfs_get_device_nontrans_chan_dfx(struct ubdrv_msg_chan_stat *stat_buf, u32 chan_num,
-    u32 chan_id, struct ascend_ub_msg_dev *msg_dev, struct ascend_ub_msg_desc *desc)
+STATIC int ubdrv_procfs_get_device_nontrans_chan_dfx(struct ubdrv_msg_chan_stat *stat_buf, u32 chan_num, u32 chan_id,
+                                                     struct ascend_ub_msg_dev *msg_dev, struct ascend_ub_msg_desc *desc)
 {
     size_t len = sizeof(struct ubdrv_msg_chan_stat);
     int ret;
@@ -91,8 +91,8 @@ STATIC int ubdrv_procfs_get_device_nontrans_chan_dfx(struct ubdrv_msg_chan_stat 
     return 0;
 }
 
-STATIC int ubdrv_procfs_get_device_common_chan_dfx(struct ubdrv_common_msg_stat *stat_buf, u32 chan_num,
-    u32 dev_id, struct ascend_ub_msg_desc *desc)
+STATIC int ubdrv_procfs_get_device_common_chan_dfx(struct ubdrv_common_msg_stat *stat_buf, u32 chan_num, u32 dev_id,
+                                                   struct ascend_ub_msg_desc *desc)
 {
     size_t len = sizeof(struct ubdrv_common_msg_stat);
     struct ubdrv_common_msg_stat *stat;
@@ -100,7 +100,7 @@ STATIC int ubdrv_procfs_get_device_common_chan_dfx(struct ubdrv_common_msg_stat 
     u32 i;
 
     for (i = 0; i < chan_num; i++) {
-        stat = ubdrv_get_common_stat_dfx(dev_id ,i);
+        stat = ubdrv_get_common_stat_dfx(dev_id, i);
         ret = memcpy_s(stat_buf, len, stat, len);
         if (ret != 0) {
             ubdrv_err("Memcpy client stat dfx error.(dev_id=%d;ret=%u)\n", dev_id, ret);
@@ -120,8 +120,8 @@ int ubdrv_procfs_device_dfx_info(struct ascend_ub_msg_dev *msg_dev, void *data)
     u32 dev_id = msg_dev->dev_id;
 
     if (desc->in_data_len != len) {
-        ubdrv_err("Recv data len invalid, when get dfx info. (dev_id=%u;len=%u;expect_len=%u)\n",
-            dev_id, desc->in_data_len, len);
+        ubdrv_err("Recv data len invalid, when get dfx info. (dev_id=%u;len=%u;expect_len=%u)\n", dev_id,
+                  desc->in_data_len, len);
         return -EINVAL;
     }
 
@@ -130,50 +130,50 @@ int ubdrv_procfs_device_dfx_info(struct ascend_ub_msg_dev *msg_dev, void *data)
         // admin only have one chan
         return ubdrv_procfs_get_device_admin_chan_dfx(&data_buf->stat.chan, 1, msg_dev, desc);
     } else if (data_buf->opcode == UBDRV_PROCFS_NONTRANS_CHAN_CMD) {
-        return ubdrv_procfs_get_device_nontrans_chan_dfx(&data_buf->stat.chan, msg_dev->chan_cnt,
-            data_buf->chan_id, msg_dev, desc);
+        return ubdrv_procfs_get_device_nontrans_chan_dfx(&data_buf->stat.chan, msg_dev->chan_cnt, data_buf->chan_id,
+                                                         msg_dev, desc);
     } else if (data_buf->opcode == UBDRV_PROCFS_COMMON_CHAN_CMD) {
-        return ubdrv_procfs_get_device_common_chan_dfx(data_buf->stat.client,
-            UBDRV_COMMON_CLIENT_CNT, dev_id, desc);
+        return ubdrv_procfs_get_device_common_chan_dfx(data_buf->stat.client, UBDRV_COMMON_CLIENT_CNT, dev_id, desc);
     } else {
         ubdrv_err("Recv data sub cmd invalid. (dev_id=%u;sub_cmd=%d)\n", dev_id, data_buf->opcode);
     }
     return 0;
 }
 
-void ubdrv_procfs_show_chan_dfx(ka_seq_file_t *seq, void *offset,
-    struct ubdrv_msg_chan_stat *stat, u32 chan_id, char *name)
+void ubdrv_procfs_show_chan_dfx(ka_seq_file_t *seq, void *offset, struct ubdrv_msg_chan_stat *stat, u32 chan_id,
+                                char *name)
 {
-    ka_fs_seq_printf(seq, "|%-8u|%-10s|%-9llu|%-7llu|%-7llu|%-15llu|%-16llu"
-        "|%-11llu|%-10llu|%-17llu|%-9llu|%-18llu|%-13llu|%-14llu"
-        "|%-9llu|%-8llu|%-16llu|%-11llu|%-12llu|%-13llu|%-10llu|%-16llu"
-        "|%-10llu|%-19llu|%-18llu|%-10llu|%-14llu|%-14llu"
-        "|%-12u|%-17u"
-        "|%-9u|%-7u|%-11u|%-7u|%-11u|%-7u|%-11u|%-7u|%-10u|\n",
-        chan_id, name, stat->tx_total, stat->tx_post_send_err,  stat->tx_cqe, stat->tx_cqe_timeout, stat->tx_poll_cqe_err,
-        stat->tx_cqe_status_err, stat->tx_rebuild_jfs, stat->tx_recv_cqe_timeout, stat->tx_recv_cqe, stat->tx_recv_poll_cqe_err, stat->tx_recv_cqe_status_err, stat->tx_recv_data_err,
-        stat->rx_total, stat->rx_work, stat->rx_poll_cqe_err, stat->rx_cqe_status_err, stat->rx_process_err, stat->rx_null_process,
-        stat->rx_work_finish, stat->rx_post_jfr_err,
-        stat->rx_tx_post_err, stat->rx_tx_poll_cqe_err, stat->rx_tx_cqe_timeout, stat->rx_tx_cqe, stat->rx_tx_cqe_status_err, stat->rx_tx_rebuild_jfs,
-        stat->rx_max_time, stat->rx_work_max_time,
-        stat->jfae_err, stat->tx_jfr_id, stat->tx_jfr_jfc_id, stat->tx_jfs_id, stat->tx_jfs_jfc_id, stat->rx_jfr_id,
-        stat->rx_jfr_jfc_id, stat->rx_jfs_id, stat->rx_jfs_jfc_id);
+    ka_fs_seq_printf(seq,
+                     "|%-8u|%-10s|%-9llu|%-7llu|%-7llu|%-15llu|%-16llu"
+                     "|%-11llu|%-10llu|%-17llu|%-9llu|%-18llu|%-13llu|%-14llu"
+                     "|%-9llu|%-8llu|%-16llu|%-11llu|%-12llu|%-13llu|%-10llu|%-16llu"
+                     "|%-10llu|%-19llu|%-18llu|%-10llu|%-14llu|%-14llu"
+                     "|%-12u|%-17u"
+                     "|%-9u|%-7u|%-11u|%-7u|%-11u|%-7u|%-11u|%-7u|%-10u|\n",
+                     chan_id, name, stat->tx_total, stat->tx_post_send_err, stat->tx_cqe, stat->tx_cqe_timeout,
+                     stat->tx_poll_cqe_err, stat->tx_cqe_status_err, stat->tx_rebuild_jfs, stat->tx_recv_cqe_timeout,
+                     stat->tx_recv_cqe, stat->tx_recv_poll_cqe_err, stat->tx_recv_cqe_status_err,
+                     stat->tx_recv_data_err, stat->rx_total, stat->rx_work, stat->rx_poll_cqe_err,
+                     stat->rx_cqe_status_err, stat->rx_process_err, stat->rx_null_process, stat->rx_work_finish,
+                     stat->rx_post_jfr_err, stat->rx_tx_post_err, stat->rx_tx_poll_cqe_err, stat->rx_tx_cqe_timeout,
+                     stat->rx_tx_cqe, stat->rx_tx_cqe_status_err, stat->rx_tx_rebuild_jfs, stat->rx_max_time,
+                     stat->rx_work_max_time, stat->jfae_err, stat->tx_jfr_id, stat->tx_jfr_jfc_id, stat->tx_jfs_id,
+                     stat->tx_jfs_jfc_id, stat->rx_jfr_id, stat->rx_jfr_jfc_id, stat->rx_jfs_id, stat->rx_jfs_jfc_id);
     return;
 }
 
 void ubdrv_procfs_show_common_chan_dfx_head(ka_seq_file_t *seq)
 {
     ka_fs_seq_printf(seq, "| client_type | tx_total | tx_check_data_err | tx_chan_null_err | tx_enodev_err "
-        "| tx_chan_err | rx_total | rx_cb_process_err | rx_null_cb_err | rx_finish |\n");
+                          "| tx_chan_err | rx_total | rx_cb_process_err | rx_null_cb_err | rx_finish |\n");
     return;
 }
 
-void ubdrv_procfs_show_common_chan_dfx(ka_seq_file_t *seq, void *offset,
-    struct ubdrv_common_msg_stat *stat, char *str)
+void ubdrv_procfs_show_common_chan_dfx(ka_seq_file_t *seq, void *offset, struct ubdrv_common_msg_stat *stat, char *str)
 {
-    ka_fs_seq_printf(seq, "|%-13s|%-10llu|%-19llu|%-18llu|%-15llu|%-13llu|%-10llu|%-19llu|%-16llu|%-11llu|\n",
-        str, stat->tx_total, stat->tx_check_data_err, stat->tx_chan_null_err, stat->tx_enodev_err,
-        stat->tx_chan_err, stat->rx_total, stat->rx_cb_process_err, stat->rx_null_cb_err, stat->rx_finish);
+    ka_fs_seq_printf(seq, "|%-13s|%-10llu|%-19llu|%-18llu|%-15llu|%-13llu|%-10llu|%-19llu|%-16llu|%-11llu|\n", str,
+                     stat->tx_total, stat->tx_check_data_err, stat->tx_chan_null_err, stat->tx_enodev_err,
+                     stat->tx_chan_err, stat->rx_total, stat->rx_cb_process_err, stat->rx_null_cb_err, stat->rx_finish);
     return;
 }
 
@@ -195,7 +195,8 @@ STATIC_PROCFS_FILE_FUNC_OPS(pair_info, ubdrv_procfs_pair_info, NULL);
 
 STATIC int ubdrv_proc_create_data(ka_proc_dir_entry_t *top_entry)
 {
-    g_procfs_entry.pair_info = ka_fs_proc_create_data("pair_info", KA_S_IRUSR, top_entry, &pair_info, &g_user_data.dev_id);
+    g_procfs_entry.pair_info = ka_fs_proc_create_data("pair_info", KA_S_IRUSR, top_entry, &pair_info,
+                                                      &g_user_data.dev_id);
     if (g_procfs_entry.pair_info == NULL) {
         ubdrv_err("Create proc pair_info data error.\n");
         return -EBADR;
