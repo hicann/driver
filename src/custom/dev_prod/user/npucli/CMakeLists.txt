@@ -76,8 +76,8 @@ target_link_libraries(npu-smi PRIVATE
     m
 )
 
-add_dependencies(npu-smi extract_driver_device_custom)
 target_link_directories(npu-smi PRIVATE ${CMAKE_BINARY_DIR}/lib/lib64/driver)
 
+set(INSTALL_RUNTIME_DIR bin)
 install(TARGETS npu-smi
-    LIBRARY DESTINATION ${INSTALL_RUNTIME_DIR} OPTIONAL)
+    RUNTIME DESTINATION ${INSTALL_RUNTIME_DIR} OPTIONAL)

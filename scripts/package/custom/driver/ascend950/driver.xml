@@ -61,6 +61,7 @@
     <file_info value="tools" copy_type="delivery" src_path="lib/tools" dst_path="driver/tools" install_path="driver/tools" pkg_mod="500"
         install_mod="500" install_own="$username:$usergroup">
         <file value="kmsagent" install_type="run"/>
+        <file value="hccn_tool" file_type="executable" src_path="bin" pkg_mod="555" install_mod="555" install_own="root:root" install_type="run"/>
     </file_info>
     <file_info value="lib64" copy_type="delivery" src_path="lib/lib64/inner" dst_path="driver/lib64/inner" install_path="driver/lib64/inner"
         install_mod="400" install_own="$username:$usergroup" install_type="run">
