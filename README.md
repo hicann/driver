@@ -1,8 +1,11 @@
 # driver
 
 ## 🔥Latest News
+- **[2026/06] 增加昇腾A5芯片（UB形态）支持**；
 
-- [2025/12] driver 项目首次上线。
+- [2026/03] 增加昇腾A5芯片（PCIE形态）支持
+
+- [2025/12] driver项目首次上线；
 
 ## 🚀概述
 
@@ -15,16 +18,17 @@ Driver 在 CANN 软件栈的位置参考[昇腾社区](https://www.hiascend.com/
 </center>
 
 ## 📖模块介绍
-
-- [RoCE（RDMA over Converged Ethernet）](./src/ascend_hal/roce/README.md)：昇腾 AI 处理器平台中的 RoCE 模块，用于减少延迟和提高数据传输效率。
-- [SVM (Shared Virtual Memory)](./src/ascend_hal/svm/README.md)：昇腾 AI 处理器平台中的内存管理模块，用于高效管理设备侧内存。
+- [RoCE（RDMA over Converged Ethernet）](./src/ascend_hal/roce/README.md)：昇腾 AI 处理器平台中的RoCE模块，用于减少延迟和提高数据传输效率。
+- [SVM (Shared Virtual Memory) ](./src/ascend_hal/svm/README.md)：昇腾 AI 处理器平台中的内存管理模块，用于高效管理设备侧内存。
 
 ## ⚡️快速入门
-
-若您希望快速体验 driver 的调用和开发过程，请访问如下文档获取简易教程。
-
+若您希望快速体验driver的调用和开发过程，请访问如下文档获取简易教程。
 - [QUICKSTART](./docs/zh/QUICKSTART.md)：端到端快速上手指南，包括搭建环境、编译部署、源码开发、调试、贡献等过程。
 - [参考用例](./examples/README.md)：介绍设备管理等模块基础用例。
+
+## 🔍FAQ
+- [FAQ](./docs/zh/FAQ.md)：汇总了源码编译、安装部署等问题(持续)。
+
 
 ## 📝目录结构
 
@@ -112,9 +116,6 @@ Driver 在 CANN 软件栈的位置参考[昇腾社区](https://www.hiascend.com/
 └── test                                           # UT用例文件目录
 ```
 
-## 🔍FAQ
-
-- [FAQ](./docs/zh/FAQ.md)：汇总了源码编译、安装部署等问题。
 
 ## 相关信息
 

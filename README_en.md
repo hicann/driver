@@ -2,6 +2,10 @@
 
 ## 🔥Latest News
 
+- **[2026/06] Added support for the Ascend A5 chip (in UB)**.
+
+- [2026/03] Added support for the Ascend A5 chip (in PCIe).
+
 - [2025/12] The driver project is first released.
 
 ## 🚀Overview
