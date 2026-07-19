@@ -132,7 +132,7 @@ uninstallationCompletionMessage() {
         drvColorEcho  "[INFO]\033[32mDriver package uninstalled successfully! Uninstallation takes effect immediately. \033[0m"
     else
         if [ "$hotreset_status"x = "ko_abort"x ]; then
-            drvColorEcho "[INFO]\033[32mDriver package uninstalled finished! \033[0m"
+            drvColorEcho "[INFO]\033[32mDriver package uninstallation finished! \033[0m"
             drvColorEcho "[WARNING]\033[33mKernel modules can not be removed, reboot needed for uninstallation to take effect! \033[0m"
         else
             drvColorEcho "[INFO]\033[32mDriver package uninstalled successfully! \033[0m\033[31mReboot needed for uninstallation to take effect! \033[0m"
