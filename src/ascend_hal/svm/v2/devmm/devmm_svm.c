@@ -3256,6 +3256,7 @@ static void devmm_heap_close(struct devmm_virt_heap_mgmt *p_heap_mgmt, uint32_t 
             (void)devmm_virt_destroy_heap(p_heap_mgmt, heap, true);
             heap_list->heap_cnt--;
         }
+        (void)__sync_fetch_and_add(&heap_list->version, 1);
         (void)pthread_rwlock_unlock(&heap_list->list_lock);
     }
 

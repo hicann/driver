@@ -44,6 +44,10 @@
 
 #define POOL_MGMT_INITED_FLAG 0xFF1234EEUL
 
+#ifndef unlikely
+#define unlikely(x) __builtin_expect(!!(x), 0)
+#endif
+
 enum devmm_heap_list_type {
     SVM_LIST,
     HOST_LIST,
@@ -230,6 +234,9 @@ struct devmm_heap_list {
     int heap_cnt;
     pthread_rwlock_t list_lock;
     struct devmm_virt_list_head heap_list;
+    volatile uint64_t version; /* used for checking whether the heap_list has been modified or some memory spaces
+                                  have been return to heaps in the heap_list by another thread, if so the heap_list
+                                  needs to be re-scanned before alloc a new heap in allocation path */
 };
 
 struct devmm_virt_heap_mgmt {

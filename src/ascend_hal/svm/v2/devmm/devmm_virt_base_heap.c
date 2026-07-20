@@ -212,6 +212,7 @@ STATIC virt_addr_t devmm_virt_set_alloced_mem_struct(struct devmm_virt_heap_mgmt
         (void)pthread_rwlock_wrlock(&heap_list->list_lock);
         devmm_virt_list_add(&heap->list, &heap_list->heap_list);
         heap_list->heap_cnt++;
+        (void)__sync_fetch_and_add(&heap_list->version, 1);
         (void)pthread_rwlock_unlock(&heap_list->list_lock);
     }
     DEVMM_DRV_SWITCH("Devmm alloc heap. (ret_ptr=0x%lx; alloc_ptr=0x%lx; alloc_size=%lu; real_alloc_size=%lu)\n",
@@ -318,6 +319,7 @@ DVresult devmm_free_to_base_heap(struct devmm_virt_heap_mgmt *mgmt, struct devmm
     }
     devmm_virt_list_del_init(&heap->list);
     heap_list->heap_cnt--;
+    (void)__sync_fetch_and_add(&heap_list->version, 1);
     (void)pthread_rwlock_unlock(&heap_list->list_lock);
 
     if (devmm_virt_heap_free_ops(heap, ptr) != 0) {

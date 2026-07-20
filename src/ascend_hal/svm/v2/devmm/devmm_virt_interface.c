@@ -402,6 +402,7 @@ static void devmm_virt_clear_sub_svm_type_heap(struct devmm_virt_heap_mgmt *mgmt
             devmm_virt_list_del_init(&(heap->list));
             (void)devmm_virt_destroy_heap(mgmt, heap, true); /* will free heap, Cannot be accessed anymore */
             heap_list->heap_cnt--;
+            (void)__sync_fetch_and_add(&heap_list->version, 1);
         }
     }
 
@@ -777,6 +778,7 @@ static void _devmm_virt_free_idle_heap(struct devmm_virt_heap_mgmt *mgmt, struct
         devmm_virt_list_del_init(&(heap->list));
         (void)devmm_virt_destroy_heap(mgmt, heap, true);
         heap_list->heap_cnt--;
+        (void)__sync_fetch_and_add(&heap_list->version, 1);
     }
 }
 
@@ -955,6 +957,7 @@ STATIC DVresult devmm_virt_init_mgmt_queue_and_lists(struct devmm_virt_heap_mgmt
             for (k = 0; k < DEVMM_MEM_TYPE_MAX; k++) {
                 SVM_INIT_LIST_HEAD(&mgmt->normal_list[i][j][k].heap_list);
                 mgmt->normal_list[i][j][k].heap_cnt = 0;
+                mgmt->normal_list[i][j][k].version = 0;
                 (void)pthread_rwlock_init(&mgmt->normal_list[i][j][k].list_lock, NULL);
 
                 SVM_INIT_LIST_HEAD(&mgmt->huge_list[i][j][k].heap_list);
@@ -1132,6 +1135,12 @@ DVresult devmm_free_to_normal_heap(struct devmm_virt_heap_mgmt *p_heap_mgmt, str
     /* use heap list lock to ensure heap do not destroy when oper pg */
     (void)pthread_rwlock_rdlock(&heap_list->list_lock);
     ret = devmm_free_mem(p, heap, free_len);
+    if (ret == DRV_ERROR_NONE) {
+        /* increase the heaplist version to denote that there is memory space returned to the heap
+           so the heaplist needs to be re-scanned before alloc a new heap and allocation path.
+        */
+        (void)__sync_fetch_and_add(&heap_list->version, 1);
+    }
     (void)pthread_rwlock_unlock(&heap_list->list_lock);
     if (ret != DRV_ERROR_NONE) {
         DEVMM_DRV_ERR("Virt_heap_free_mem failed. (ret=%d; va=0x%llx)\n", ret, p);
@@ -1394,6 +1403,7 @@ DVresult devmm_virt_init_heap_customize(struct devmm_virt_heap_mgmt *mgmt, struc
 
     devmm_virt_list_add(&heap->list, &heap_list->heap_list);
     heap_list->heap_cnt++;
+    (void)__sync_fetch_and_add(&heap_list->version, 1);
     (void)pthread_rwlock_unlock(&heap_list->list_lock);
     return DRV_ERROR_NONE;
 }
@@ -1511,6 +1521,7 @@ static void devmm_add_heap_to_list(struct devmm_virt_com_heap *heap, struct devm
 {
     devmm_virt_list_add(&heap->list, &heap_list->heap_list);
     heap_list->heap_cnt++;
+    (void)__sync_fetch_and_add(&heap_list->version, 1);
     DEVMM_DRV_SWITCH("Add heap list success. (heap_idx=%d)\n", heap->heap_idx);
 }
 
@@ -1581,26 +1592,30 @@ static DVdeviceptr _devmm_alloc_from_heaplist(struct devmm_heap_list *heap_list,
 
 /* If heaplist is out of virt mem, new heap to alloc */
 static DVdeviceptr devmm_alloc_from_heaplist(struct devmm_heap_list *heap_list, struct devmm_virt_heap_type *heap_type,
-                                             size_t bytesize, DVmem_advise advise, uint64_t va)
+                                             size_t bytesize, DVmem_advise advise, uint64_t va, uint64_t version)
 {
     struct devmm_virt_com_heap *heap = NULL;
     DVdeviceptr ptr;
     DVresult ret;
 
-    ptr = _devmm_alloc_from_heaplist(heap_list, bytesize, advise, va);
-    if (ptr_is_valid(ptr)) {
-        return ptr;
-    }
-
-    if (get_ptr_err(ptr) == DEVMM_OUT_OF_VIRT_MEM) {
-        ret = devmm_alloc_com_heap(heap_type, va, &heap);
-        if (ret != DRV_ERROR_NONE) {
-            return errcode_to_ptr(ret, DEVMM_INVALID_STOP);
+    uint64_t cur_version = __sync_fetch_and_add(&heap_list->version, 0);
+    if (unlikely(cur_version != version)) {
+        ptr = _devmm_alloc_from_heaplist(heap_list, bytesize, advise, va);
+        if (ptr_is_valid(ptr)) {
+            return ptr;
         }
-
-        ptr = devmm_alloc_from_tree(heap, bytesize, advise, DEVMM_IDLE_SIZE_TREE, va);
-        devmm_add_heap_to_list(heap, heap_list);
+        if (get_ptr_err(ptr) != DEVMM_OUT_OF_VIRT_MEM) {
+            return ptr; /* Device error */
+        }
     }
+
+    ret = devmm_alloc_com_heap(heap_type, va, &heap);
+    if (ret != DRV_ERROR_NONE) {
+        return errcode_to_ptr(ret, DEVMM_INVALID_STOP);
+    }
+
+    ptr = devmm_alloc_from_tree(heap, bytesize, advise, DEVMM_IDLE_SIZE_TREE, va);
+    devmm_add_heap_to_list(heap, heap_list);
     return ptr;
 }
 
@@ -1610,6 +1625,7 @@ virt_addr_t devmm_alloc_from_normal_heap(struct devmm_virt_heap_mgmt *p_heap_mgm
     struct devmm_heap_list *heap_list = NULL;
     DVdeviceptr ptr;
     DVresult ret;
+    uint64_t version;
 
     ret = devmm_get_heap_list_by_type(p_heap_mgmt, heap_type, &heap_list);
     if (ret != DRV_ERROR_NONE) {
@@ -1618,6 +1634,7 @@ virt_addr_t devmm_alloc_from_normal_heap(struct devmm_virt_heap_mgmt *p_heap_mgm
 
     /* To improve the perf of concurrency, hold with read lock. */
     (void)pthread_rwlock_rdlock(&heap_list->list_lock);
+    version = __sync_fetch_and_add(&heap_list->version, 0);
     ptr = _devmm_alloc_from_heaplist(heap_list, bytesize, advise, va);
     (void)pthread_rwlock_unlock(&heap_list->list_lock);
     if (ptr_is_valid(ptr)) {
@@ -1630,7 +1647,7 @@ virt_addr_t devmm_alloc_from_normal_heap(struct devmm_virt_heap_mgmt *p_heap_mgm
          * otherwise alloc svm heap will fail if there are too many concurrent threads.
          */
         (void)pthread_rwlock_wrlock(&heap_list->list_lock);
-        ptr = devmm_alloc_from_heaplist(heap_list, heap_type, bytesize, advise, va);
+        ptr = devmm_alloc_from_heaplist(heap_list, heap_type, bytesize, advise, va, version);
         (void)pthread_rwlock_unlock(&heap_list->list_lock);
     }
 
