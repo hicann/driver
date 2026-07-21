@@ -10,6 +10,7 @@
  * File Name     : ibv_extend.c
  * Description   : The implementation of ibverbs extended Function extension interface
  */
+
 #define _GNU_SOURCE
 
 #include <infiniband/verbs.h>
@@ -969,6 +970,11 @@ API_EXPORT int ibv_modify_qp_extend(struct ibv_context_extend *context,
             context->ops->version);
         return -EOPNOTSUPP;
     }
+  
+    if (attr_mask & ~(IBV_QP_ATTR_EXTEND_MAX - 1)) {
+        ibv_extend_warning("attr_mask 0x%x is not supported", attr_mask);
+        return -EOPNOTSUPP;
+    }
 
     if (context->ops->modify_qp == NULL) {
         ibv_extend_warning("modify_qp is not supported");
@@ -1006,6 +1012,11 @@ API_EXPORT int ibv_query_qp_extend(struct ibv_context_extend *context,
         return -EOPNOTSUPP;
     }
 
+    if (attr_mask & ~(IBV_QP_ATTR_EXTEND_MAX - 1)) {
+        ibv_extend_warning("attr_mask 0x%x is not supported", attr_mask);
+        return -EOPNOTSUPP;
+    }
+
     if (context->ops->query_qp == NULL) {
         ibv_extend_warning("query_qp is not supported");
         return -EOPNOTSUPP;
@@ -1013,6 +1024,86 @@ API_EXPORT int ibv_query_qp_extend(struct ibv_context_extend *context,
 
     // 调用底层驱动查询QP属性
     return context->ops->query_qp(context->context, attr, attr_mask);
+}
+
+/**
+ * @brief 查询网卡支持的高阶RoCE特性
+ * @param context 扩展上下文指针
+ * @param qp QP指针
+ * @param sl 服务等级
+ * @param tc 流量控制
+ * @param feature 返回支持的高阶RoCE特性
+ * @return 0-成功，其他值-失败
+ */
+API_EXPORT int ibv_query_qp_supported_hyroce_feature(struct ibv_context_extend *context,
+                                                     struct ibv_qp *qp,
+                                                     uint32_t sl, uint32_t tc,
+                                                     struct ibv_hyroce_feature *feature)
+{
+    if (context == NULL || qp == NULL || feature == NULL) {
+        ibv_extend_warning("invalid parameter for query qp supported hyroce feature");
+        return -EINVAL;
+    }
+
+    if (context->ops == NULL) {
+        ibv_extend_warning("no available ops for query qp supported hyroce feature");
+        return -EOPNOTSUPP;
+    }
+
+    /* 版本检查：高阶RoCE的qp_hyroce_feature 是 V3 新增功能，驱动版本必须 >= V3 */
+    if (context->ops->version < IBV_EXTEND_DRIVER_VERSION_V3) {
+        ibv_extend_warning("driver version %d does not support query qp hyroce feature (requires V3)",
+            context->ops->version);
+        return -EOPNOTSUPP;
+    }
+
+    if (context->ops->query_qp_supported_hyroce_feature == NULL) {
+        ibv_extend_warning("query_qp_supported_hyroce_feature is not supported");
+        return -EOPNOTSUPP;
+    }
+
+    return context->ops->query_qp_supported_hyroce_feature(context->context, qp, sl, tc, feature);
+}
+
+ /**
+ * @brief 网卡协商高阶RoCE特性
+ * @param context 扩展上下文指针
+ * @param qp QP指针
+ * @param input 输入的高阶RoCE特性
+ * @param output 协商完成后高阶RoCE特性
+ * @param need_more_nego 是否需要再次协商
+ * @return 0-成功，其他值-失败
+ */
+API_EXPORT int ibv_nego_qp_hyroce_feature(struct ibv_context_extend *context,
+                                          struct ibv_qp *qp,
+                                          const struct ibv_hyroce_feature *input,
+                                          struct ibv_hyroce_feature *output,
+                                          uint32_t *need_more_nego)
+{
+    if (context == NULL || qp == NULL ||
+        input == NULL || output == NULL || need_more_nego == NULL) {
+        ibv_extend_warning("invalid parameter for nego qp hyroce feature");
+        return -EINVAL;
+    }
+
+    if (context->ops == NULL) {
+        ibv_extend_warning("no available ops for nego qp hyroce feature");
+        return -EOPNOTSUPP;
+    }
+
+    /* 版本检查：高阶RoCE的qp_hyroce_feature 是 V3 新增功能，驱动版本必须 >= V3 */
+    if (context->ops->version < IBV_EXTEND_DRIVER_VERSION_V3) {
+        ibv_extend_warning("driver version %d does not support nego qp hyroce feature (requires V3)",
+            context->ops->version);
+        return -EOPNOTSUPP;
+    }
+
+    if (context->ops->nego_qp_hyroce_feature == NULL) {
+        ibv_extend_warning("nego_qp_hyroce_feature is not supported");
+        return -EOPNOTSUPP;
+    }
+
+    return context->ops->nego_qp_hyroce_feature(context->context, qp, input, output, need_more_nego);
 }
 
 /**

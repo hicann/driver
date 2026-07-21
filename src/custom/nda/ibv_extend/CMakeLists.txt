@@ -12,7 +12,7 @@
 # Description   : Build configuration for ibv_extend library
 
 cmake_minimum_required(VERSION 3.13)
-project(ibv_extend VERSION 4.1.0 LANGUAGES C)
+project(ibv_extend VERSION 4.2.0 LANGUAGES C)
 
 # 设置构建目录路径
 set(BUILD_INCLUDE ${PROJECT_BINARY_DIR}/include)

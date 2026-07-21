@@ -28,6 +28,9 @@
   - [North-bound Interfaces (Hyper RoCE)](#north-bound-interfaces-hyper-roce)
     - [ibv\_modify\_qp\_extend](#ibv_modify_qp_extend)
     - [ibv\_query\_qp\_extend](#ibv_query_qp_extend)
+  - [Northbound Interface (Hyper RoCE Negotiation)](#northbound-interface-hyper-roce-negotiation)
+    - [ibv\_query\_qp\_supported\_hyroce\_feature](#ibv_query_qp_supported_hyroce_feature)
+    - [ibv\_nego\_qp\_hyroce\_feature](#ibv_nego_qp_hyroce_feature)
   - [South-bound Interfaces (Driver Call)](#south-bound-interfaces-driver-call)
     - [verbs\_register\_driver\_extend](#verbs_register_driver_extend)
 - [Key Structure Description](#key-structure-description)
@@ -48,7 +51,7 @@
     - [ibv\_context\_extend\_ops](#ibv_context_extend_ops)
     - [verbs\_device\_extend\_ops](#verbs_device_extend_ops)
     - [ibv\_hyroce\_feature](#ibv_hyroce_feature)
-    - [ibv\_mp\_config](#ibv_mp_config)
+    - [ibv\_mpath\_config](#ibv_mpath_config)
     - [ibv\_ar\_config](#ibv_ar_config)
     - [ibv\_sack\_config](#ibv_sack_config)
     - [ibv\_qp\_attr\_extend](#ibv_qp_attr_extend)
@@ -737,8 +740,8 @@ int init_hyper_roce(struct ibv_context_extend *ext_ctx, struct ibv_qp *qp)
     /* 1. Configure advanced RoCE feature (type, version, SACK switch) */
     attr = (struct ibv_qp_attr_extend){0};
     attr.qp = qp;
-    attr.feature.type = IBV_HYPER_TYPE_VEROCE;
-    attr.feature.version = IBV_HYPER_VERSION_P2;
+    attr.feature.type = IBV_HYPER_FEAT_VEROCE;
+    attr.feature.version = IBV_HYPER_FEAT_V2;
     attr.feature.sack_enable = 1;  /* Enable selective retransmission */
 
     rc = ibv_modify_qp_extend(ext_ctx, &attr, IBV_QP_ATTR_EXTEND_HYROCE_FEATURE);
@@ -750,7 +753,7 @@ int init_hyper_roce(struct ibv_context_extend *ext_ctx, struct ibv_qp *qp)
     /* 2. Configure load balancing mode */
     attr = (struct ibv_qp_attr_extend){0};
     attr.qp = qp;
-    attr.lb_mode = IBV_LB_MODE_MP;  /* Multi-Path mode */
+    attr.lb_mode = IBV_LB_MODE_MPATH;  /* Multi-Path mode */
 
     rc = ibv_modify_qp_extend(ext_ctx, &attr, IBV_QP_ATTR_EXTEND_LB_MODE);
     if (rc < 0) {
@@ -827,6 +830,133 @@ int query_hyper_roce_info(struct ibv_context_extend *ext_ctx, struct ibv_qp *qp)
         return rc;
     }
     printf("LB mode=%d\n", attr.lb_mode);
+
+    return 0;
+}
+
+```
+
+## Northbound Interface (Hyper RoCE Negotiation)
+
+The Hyper RoCE negotiation interface supports advanced RoCE features for NIC negotiation. Usage:
+
+1) The NIC configures its supported advanced RoCE features through a tool.
+The application retrieves the NIC's supported advanced RoCE features via the ibv_query_qp_supported_hyroce_feature interface, for sending to the peer NIC.
+2) The application performs advanced RoCE negotiation with the NIC via the ibv_nego_qp_hyroce_feature interface, and the NIC returns the negotiated advanced RoCE features.
+3) The application configures and enables the advanced RoCE features on the NIC via ibv_modify_qp_extend using the features returned from negotiation.
+Calling these interfaces requires driver version >= IBV_EXTEND_DRIVER_VERSION_V3.
+
+### ibv\_query\_qp\_supported\_hyroce\_feature
+
+**Function Prototype**
+
+```c
+int ibv_query_qp_supported_hyroce_feature(struct ibv_context_extend *context,
+                                          struct ibv_qp *qp,
+                                          uint32_t sl,
+                                          uint32_t tc,
+                                          struct ibv_hyroce_feature *feature);
+```
+
+**Function**
+
+Query NIC-supported RoCE feature capabilities.
+
+**Parameters**
+
+- context：context: Extended context, must be created via ibv\_open\_extend, non-null.
+- qp: Verbs QP structure.
+- sl: Service Level.
+- tc: Traffic Class.
+- feature: Advanced RoCE feature.
+
+**Return Value**
+
+- 0: Success.
+- EINVAL: Invalid parameter.
+- EOPNOTSUPP: Driver version not supported (requires >= V3) or corresponding interface not implemented.
+
+**Usage Example**
+
+ibv\_query\_qp\_supported\_hyroce\_feature must be called before the QP enters RTR state.
+
+```c
+int query_qp_supported_hyroce_feature(struct ibv_context_extend *ext_ctx, struct ibv_qp *qp)
+{
+    int rc;
+    int sl = 3;
+    int tc = 10;
+    struct ibv_hyroce_feature feature = {0};
+
+    rc = ibv_query_qp_supported_hyroce_feature(ext_ctx, qp, sl, tc, &feature);
+    if (rc < 0) {
+        fprintf(stderr, "Failed to query QP Supported HYROCE feature, rc=%d\n", rc);
+        return rc;
+    }
+    printf("RoCE feature type=%d, version=%d, sack_enable=%d\n",
+           feature.type, feature.version, feature.sack_enable);
+
+    return 0;
+}
+```
+
+### ibv\_nego\_qp\_hyroce\_feature
+
+**Function Prototype**
+
+```c
+int ibv_nego_qp_hyroce_feature(struct ibv_context_extend *context,
+                               struct ibv_qp *qp,
+                               const struct ibv_hyroce_feature *input,
+                               struct ibv_hyroce_feature *output,
+                               uint32_t *need_more_nego)
+```
+
+**Function**
+
+Negotiates RoCE features for QP.
+
+**Parameters**
+
+- context: Extended context, must be created via ibv\_open\_extend non-null.
+- qp: Verbs QP structure.
+- input: Input RoCE feature.
+- output: RoCE feature after NIC negotiation.
+- need_more_nego: Whether further negotiation is needed.
+
+**Return Value**
+
+- 0: Success.
+- EINVAL: Invalid parameter.
+- EOPNOTSUPP: Driver version not supported (requires >= V3) or interface not implemented.
+
+**Usage Example**
+
+ibv\_nego\_qp\_hyroce\_feature is called before the QP reaches RTR state.
+
+```c
+int nego_qp_hyroce_feature(struct ibv_context_extend *ext_ctx, struct ibv_qp *qp)
+{
+    int rc;
+    uint32_t need_more_nego = 0;
+    struct ibv_hyroce_feature input = {
+        .type = IBV_HYPER_FEAT_HYPER_ROCE,
+        .version = IBV_HYPER_FEAT_V2,
+    };
+
+    struct ibv_hyroce_feature output = {0};
+
+    rc = ibv_nego_qp_hyroce_feature(ext_ctx, qp, &input, &output, &need_more_nego);
+    if (rc < 0) {
+        fprintf(stderr, "Failed to nego QP HYROCE feature, rc=%d\n", rc);
+        return rc;
+    }
+    if (need_more_nego != 0) {
+        printf("Should nego QP HYROCE feature again");
+    } else {
+        printf("RoCE feature type=%d, version=%d, sack_enable=%d\n",
+                output.type, output.version, output.sack_enable);
+    }
 
     return 0;
 }
@@ -937,9 +1067,9 @@ Advanced RoCE feature type enum, used to specify the advanced RoCE protocol type
 
 | Variable | Value | Description |
 | ---- | ---- | ---- |
-| IBV\_HYPER\_TYPE\_RoCEv2 | 0 | Standard RoCEv2 protocol. |
-| IBV\_HYPER\_TYPE\_VEROCE | 1 | RoCE for VelcEngine. |
-| IBV\_HYPER\_TYPE\_HCROCE | 2 | RoCE for HuaweiComputing. |
+| IBV\_HYPER\_FEAT\_RoCEv2 | 0 | Standard RoCEv2 protocol. |
+| IBV\_HYPER\_FEAT\_VEROCE | 1 | RoCE for VelcEngine. |
+| IBV\_HYPER\_FEAT\_HYPER_ROCE | 2 | Hyper RoCE. |
 
 ### ibv\_hyroce\_feature\_version
 
@@ -947,10 +1077,10 @@ Advanced RoCE feature version enum, used to specify the advanced RoCE protocol v
 
 | Variable | Value | Description |
 | ---- | ---- | ---- |
-| IBV\_HYPER\_VERSION\_UNUSE | 0 | Not used. |
-| IBV\_HYPER\_VERSION\_P1 | 1 | Version P1. |
-| IBV\_HYPER\_VERSION\_P2 | 2 | Version P2. |
-| IBV\_HYPER\_VERSION\_P3 | 3 | Version P3. |
+| IBV\_HYPER\_FEAT\_V0 | 0 | Not used. |
+| IBV\_HYPER\_FEAT\_V1 | 1 | Version P1. |
+| IBV\_HYPER\_FEAT\_V2 | 2 | Version P2. |
+| IBV\_HYPER\_FEAT\_V3 | 3 | Version P3. |
 
 ### ibv\_lb\_mode
 
@@ -959,7 +1089,7 @@ Load balancing mode enum, used to specify QP load balancing strategy.
 | Variable | Value | Description |
 | ---- | ---- | ---- |
 | IBV\_LB\_MODE\_DEFAULT | 0 | Network card default load balancing mode. |
-| IBV\_LB\_MODE\_MP | 1 | Multi-Path mode. |
+| IBV\_LB\_MODE\_MPATH | 1 | Multi-Path mode. |
 | IBV\_LB\_MODE\_AR | 2 | Adaptive-Routing mode. |
 
 ### ibv\_qp\_attr\_extend\_mask
@@ -971,7 +1101,7 @@ QP attribute extension mask enum, used to specify which attributes need to be co
 | IBV\_QP\_ATTR\_EXTEND\_UDP\_SRC\_PORT | 1 << 0 | Source UDP port number. |
 | IBV\_QP\_ATTR\_EXTEND\_HYROCE\_FEATURE | 1 << 1 | Advanced RoCE feature. |
 | IBV\_QP\_ATTR\_EXTEND\_LB\_MODE | 1 << 2 | Load balancing mode. |
-| IBV\_QP\_ATTR\_EXTEND\_MP\_CONFIG | 1 << 3 | Multi-Path configuration. |
+| IBV\_QP\_ATTR\_EXTEND\_MPATH\_CONFIG | 1 << 3 | Multi-Path configuration. |
 | IBV\_QP\_ATTR\_EXTEND\_AR\_CONFIG | 1 << 4 | Adaptive-Routing configuration. |
 | IBV\_QP\_ATTR\_EXTEND\_SACK\_CONFIG | 1 << 5 | Selective Ack configuration. |
 
@@ -1030,6 +1160,9 @@ South-bound interface, implemented by device driver, called by ibv\_extend modul
 | `int (*query_device)(struct ibv_context *context, struct ibv_device_attr_extend *ext_dev_attr)` | Query device extension attributes interface, V1 version supported, driver implemented, null means not supported. |
 | `int (*modify_qp)(struct ibv_context *context, struct ibv_qp_attr_extend *attr, int attr_mask)` | QP extended attribute modification interface, V2 version new addition, driver implemented, null means not supported. |
 | `int (*query_qp)(struct ibv_context *context, struct ibv_qp_attr_extend *attr, int attr_mask)` | QP extended attribute query interface, V2 version new addition, driver implemented, null means not supported. |
+| `int (*query_qp_supported_hyroce_feature)(struct ibv_context *context, struct ibv_qp *qp, uint32_t sl, uint32_t tc, struct ibv_hyroce_feature *feature);` | Query supported hyper RoCE feature , driver implemented, null means not supported. |
+| `int (*nego_qp_hyroce_feature)(struct ibv_context *context, struct ibv_qp *qp, const struct ibv_hyroce_feature *input, struct ibv_hyroce_feature *output, uint32_t *need_more_nego);` | Negotiate hyper RoCE feature , driver implemented, null means not supported. |
+
 
 ### verbs\_device\_extend\_ops
 
@@ -1052,7 +1185,7 @@ Advanced RoCE feature configuration structure, used in ibv\_modify\_qp\_extend a
 | sack\_enable | uint8\_t | Selective retransmission switch, 0-off, 1-on. |
 | resv | uint8\_t[] | Reserved field, for future feature extension. |
 
-### ibv\_mp\_config
+### ibv\_mpath\_config
 
 Multi-Path configuration parameter structure, used to configure QP multi-path load balancing parameters.
 
@@ -1093,10 +1226,11 @@ QP extended attribute structure, used for ibv\_modify\_qp\_extend and ibv\_query
 | udp\_src\_port | uint32\_t | Source UDP port number. |
 | feature | struct ibv\_hyroce\_feature | Advanced RoCE feature. |
 | lb\_mode | uint32\_t | Load balancing mode, value range: enum ibv\_lb\_mode. |
-| mp | struct ibv\_mp\_config | Multi-Path configuration. |
+| mpath | struct ibv\_mpath\_config | Multi-Path configuration. |
 | ar | struct ibv\_ar\_config | Adaptive Routing configuration. |
 | sack | struct ibv\_sack\_config | Selective Acknowledgment (SACK) configuration. |
 | resv | uint32\_t[] | Reserved field, for future extension. |
+| lag_port | uint32\_t | Bond mode QP binding network port. |
 
 # FAQ
 
