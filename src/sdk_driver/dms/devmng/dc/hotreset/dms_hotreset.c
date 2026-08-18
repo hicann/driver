@@ -35,8 +35,8 @@
 #include "dms_hotreset.h"
 
 #ifdef ENABLE_BUILD_PRODUCT
-#define DEVDRV_CLOUD_V2_BOARD_TYPE_MASK      0x7
-#define DEVDRV_CLOUD_V2_BOARD_TYPE_OFFSET    4
+#define DEVDRV_CLOUD_V2_BOARD_TYPE_MASK 0x7
+#define DEVDRV_CLOUD_V2_BOARD_TYPE_OFFSET 4
 #define DEVDRV_CLOUD_V2_1DIE_TRAIN_PCIE_CARD 0x1
 #define DEVDRV_CLOUD_V2_1DIE_INFER_PCIE_CARD 0x2
 #define DEVDRV_CLOUD_V2_BIT7_MASK 0x80 /* 用于提取bit7的掩码 */
@@ -45,76 +45,33 @@
 STATIC struct hotreset_task_info *g_device_task_info[ASCEND_DEV_MAX_NUM] = {0};
 STATIC bool g_hotreset_executing_flag[ASCEND_DEV_MAX_NUM] = {false};
 static ka_task_spinlock_t g_hotreset_executing_spinlock;
+static KA_TASK_DEFINE_MUTEX(g_device_task_info_mutex);
 
 BEGIN_DMS_MODULE_DECLARATION(DMS_MODULE_BASIC_POWER_INFO)
 BEGIN_FEATURE_COMMAND()
-ADD_FEATURE_COMMAND(DMS_MODULE_BASIC_POWER_INFO,
-    DMS_MAIN_CMD_HOTRESET,
-    DMS_SUBCMD_HOTRESET_SETFLAG,
-    NULL,
-    NULL,
-    DMS_ACC_ROOT_ONLY | DMS_ENV_PHYSICAL | DMS_ENV_ADMIN_DOCKER,
-    dms_hotreset_atomic_setflag)
-ADD_FEATURE_COMMAND(DMS_MODULE_BASIC_POWER_INFO,
-    DMS_MAIN_CMD_HOTRESET,
-    DMS_SUBCMD_HOTRESET_CLEARFLAG,
-    NULL,
-    NULL,
-    DMS_ACC_ROOT_ONLY | DMS_ENV_PHYSICAL | DMS_ENV_ADMIN_DOCKER,
-    dms_hotreset_atomic_clearflag)
-ADD_FEATURE_COMMAND(DMS_MODULE_BASIC_POWER_INFO,
-    DMS_MAIN_CMD_HOTRESET,
-    DMS_SUBCMD_PRERESET_ASSEMBLE,
-    NULL,
-    NULL,
-    DMS_ACC_ROOT_ONLY | DMS_ENV_PHYSICAL | DMS_ENV_ADMIN_DOCKER,
-    dms_power_pcie_pre_reset)
-ADD_FEATURE_COMMAND(DMS_MODULE_BASIC_POWER_INFO,
-    DMS_MAIN_CMD_HOTRESET,
-    DMS_SUBCMD_HOTRESET_ASSEMBLE,
-    NULL,
-    NULL,
+ADD_FEATURE_COMMAND(DMS_MODULE_BASIC_POWER_INFO, DMS_MAIN_CMD_HOTRESET, DMS_SUBCMD_HOTRESET_SETFLAG, NULL, NULL,
+                    DMS_ACC_ROOT_ONLY | DMS_ENV_PHYSICAL | DMS_ENV_ADMIN_DOCKER, dms_hotreset_atomic_setflag)
+ADD_FEATURE_COMMAND(DMS_MODULE_BASIC_POWER_INFO, DMS_MAIN_CMD_HOTRESET, DMS_SUBCMD_HOTRESET_CLEARFLAG, NULL, NULL,
+                    DMS_ACC_ROOT_ONLY | DMS_ENV_PHYSICAL | DMS_ENV_ADMIN_DOCKER, dms_hotreset_atomic_clearflag)
+ADD_FEATURE_COMMAND(DMS_MODULE_BASIC_POWER_INFO, DMS_MAIN_CMD_HOTRESET, DMS_SUBCMD_PRERESET_ASSEMBLE, NULL, NULL,
+                    DMS_ACC_ROOT_ONLY | DMS_ENV_PHYSICAL | DMS_ENV_ADMIN_DOCKER, dms_power_pcie_pre_reset)
+ADD_FEATURE_COMMAND(DMS_MODULE_BASIC_POWER_INFO, DMS_MAIN_CMD_HOTRESET, DMS_SUBCMD_HOTRESET_ASSEMBLE, NULL, NULL,
 #ifdef CFG_FEATURE_SRIOV
-    DMS_ENV_NOT_NORMAL_DOCKER | DMS_ACC_ROOT_ONLY | DMS_VDEV_VIRTUAL,
+                    DMS_ENV_NOT_NORMAL_DOCKER | DMS_ACC_ROOT_ONLY | DMS_VDEV_VIRTUAL,
 #else
-    DMS_ACC_ROOT_ONLY | DMS_ENV_PHYSICAL | DMS_ENV_ADMIN_DOCKER,
+                    DMS_ACC_ROOT_ONLY | DMS_ENV_PHYSICAL | DMS_ENV_ADMIN_DOCKER,
 #endif
-    dms_hotreset_assmemble)
-ADD_FEATURE_COMMAND(DMS_MODULE_BASIC_POWER_INFO,
-    DMS_MAIN_CMD_HOTRESET,
-    DMS_SUBCMD_PRERESET_ASSEMBLE1,
-    NULL,
-    NULL,
-    DMS_ACC_ROOT_ONLY | DMS_ENV_PHYSICAL | DMS_ENV_ADMIN_DOCKER,
-    dms_power_pcie_pre_reset_v1)
-ADD_FEATURE_COMMAND(DMS_MODULE_BASIC_POWER_INFO,
-    DMS_MAIN_CMD_HOTRESET,
-    DMS_SUBCMD_HOTRESET_RESCAN,
-    NULL,
-    NULL,
-    DMS_ACC_ROOT_ONLY | DMS_ENV_PHYSICAL | DMS_ENV_ADMIN_DOCKER,
-    dms_hotreset_atomic_rescan)
-ADD_FEATURE_COMMAND(DMS_MODULE_BASIC_POWER_INFO,
-    DMS_MAIN_CMD_HOTRESET,
-    DMS_SUBCMD_HOTRESET_UNBIND,
-    NULL,
-    NULL,
-    DMS_ACC_ROOT_ONLY | DMS_ENV_PHYSICAL | DMS_ENV_ADMIN_DOCKER,
-    dms_hotreset_atomic_unbind)
-ADD_FEATURE_COMMAND(DMS_MODULE_BASIC_POWER_INFO,
-    DMS_MAIN_CMD_HOTRESET,
-    DMS_SUBCMD_HOTRESET_RESET,
-    NULL,
-    NULL,
-    DMS_ACC_ROOT_ONLY | DMS_ENV_PHYSICAL | DMS_ENV_ADMIN_DOCKER,
-    dms_hotreset_atomic_reset)
-ADD_FEATURE_COMMAND(DMS_MODULE_BASIC_POWER_INFO,
-    DMS_MAIN_CMD_HOTRESET,
-    DMS_SUBCMD_HOTRESET_REMOVE,
-    NULL,
-    NULL,
-    DMS_ACC_ROOT_ONLY | DMS_ENV_PHYSICAL | DMS_ENV_ADMIN_DOCKER,
-    dms_hotreset_atomic_remove)
+                    dms_hotreset_assmemble)
+ADD_FEATURE_COMMAND(DMS_MODULE_BASIC_POWER_INFO, DMS_MAIN_CMD_HOTRESET, DMS_SUBCMD_PRERESET_ASSEMBLE1, NULL, NULL,
+                    DMS_ACC_ROOT_ONLY | DMS_ENV_PHYSICAL | DMS_ENV_ADMIN_DOCKER, dms_power_pcie_pre_reset_v1)
+ADD_FEATURE_COMMAND(DMS_MODULE_BASIC_POWER_INFO, DMS_MAIN_CMD_HOTRESET, DMS_SUBCMD_HOTRESET_RESCAN, NULL, NULL,
+                    DMS_ACC_ROOT_ONLY | DMS_ENV_PHYSICAL | DMS_ENV_ADMIN_DOCKER, dms_hotreset_atomic_rescan)
+ADD_FEATURE_COMMAND(DMS_MODULE_BASIC_POWER_INFO, DMS_MAIN_CMD_HOTRESET, DMS_SUBCMD_HOTRESET_UNBIND, NULL, NULL,
+                    DMS_ACC_ROOT_ONLY | DMS_ENV_PHYSICAL | DMS_ENV_ADMIN_DOCKER, dms_hotreset_atomic_unbind)
+ADD_FEATURE_COMMAND(DMS_MODULE_BASIC_POWER_INFO, DMS_MAIN_CMD_HOTRESET, DMS_SUBCMD_HOTRESET_RESET, NULL, NULL,
+                    DMS_ACC_ROOT_ONLY | DMS_ENV_PHYSICAL | DMS_ENV_ADMIN_DOCKER, dms_hotreset_atomic_reset)
+ADD_FEATURE_COMMAND(DMS_MODULE_BASIC_POWER_INFO, DMS_MAIN_CMD_HOTRESET, DMS_SUBCMD_HOTRESET_REMOVE, NULL, NULL,
+                    DMS_ACC_ROOT_ONLY | DMS_ENV_PHYSICAL | DMS_ENV_ADMIN_DOCKER, dms_hotreset_atomic_remove)
 END_FEATURE_COMMAND()
 END_MODULE_DECLARATION()
 
@@ -174,10 +131,8 @@ STATIC int dms_power_hotreset_notifier_handle(ka_notifier_block_t *self, unsigne
     struct devdrv_info *dev_info = NULL;
 
     dev_info = (struct devdrv_info *)data;
-    if ((data == NULL) || (event <= DMS_DEVICE_NOTIFIER_MIN) ||
-        (event >= DMS_DEVICE_NOTIFIER_MAX)) {
-        dms_err("Invalid parameter. (event=0x%lx; data=\"%s\")\n",
-            event, data == NULL ? "NULL" : "OK");
+    if ((data == NULL) || (event <= DMS_DEVICE_NOTIFIER_MIN) || (event >= DMS_DEVICE_NOTIFIER_MAX)) {
+        dms_err("Invalid parameter. (event=0x%lx; data=\"%s\")\n", event, data == NULL ? "NULL" : "OK");
         return KA_NOTIFY_BAD;
     }
 
@@ -289,7 +244,7 @@ int dms_power_check_phy_mach(unsigned int dev_id)
     }
 
     // upgrade_tool 拦截910B 标卡非物理机热复位流程
-    if (isCard == true && host_flag != DEVDRV_HOST_PHY_MACH_FLAG  ) {
+    if (isCard == true && host_flag != DEVDRV_HOST_PHY_MACH_FLAG) {
         dms_err("910_A2 Pcie card not phy mach not support hot_reset. (devid=%u; host_flag=0x%x)\n", dev_id, host_flag);
         return -EPERM;
     }
@@ -385,20 +340,25 @@ STATIC int devdrv_uda_all_dev_ctrl_hotreset(u32 max_dev)
     int ret;
     u32 i;
 
+    ka_task_mutex_lock(&g_device_task_info_mutex);
     for (i = 0; i < max_dev; i++) {
         if (!uda_is_udevid_exist(i) || (dms_get_device_task_info(i) == NULL)) {
             continue;
         }
 
         if (devdrv_check_hotreset_flag(i) == true) {
+            ka_task_mutex_unlock(&g_device_task_info_mutex);
             ret = uda_dev_ctrl(i, UDA_CTRL_HOTRESET);
+            ka_task_mutex_lock(&g_device_task_info_mutex);
             if (ret != 0) {
+                ka_task_mutex_unlock(&g_device_task_info_mutex);
                 devdrv_uda_all_dev_ctrl_hotreset_cancel(i);
                 devdrv_drv_err("Uda ctrl hotreset failed. (devid=%u; ret=%d)\n", i, ret);
                 return ret;
             }
         }
     }
+    ka_task_mutex_unlock(&g_device_task_info_mutex);
     return 0;
 }
 
@@ -430,7 +390,7 @@ STATIC int devdrv_get_brother_udevid(u32 udevid, u32 *bro_udevid)
 
         if (udevid_master_id == tmp_master_id) {
             devdrv_drv_info("get smp brother devid. (ori_devid=%u; bro_devid=%u; ori_masterid=%u; tmp_masterid=%u)\n",
-                udevid, i, udevid_master_id, tmp_master_id);
+                            udevid, i, udevid_master_id, tmp_master_id);
             *bro_udevid = i;
             return 0;
         }
@@ -443,13 +403,18 @@ int devdrv_uda_one_dev_ctrl_hotreset(u32 udevid)
     int ret;
     u32 bro_udevid;
 
+    ka_task_mutex_lock(&g_device_task_info_mutex);
     if (dms_get_device_task_info(udevid) == NULL) {
+        ka_task_mutex_unlock(&g_device_task_info_mutex);
         return 0;
     }
 
     if (devdrv_check_hotreset_flag(udevid) == true) {
+        ka_task_mutex_unlock(&g_device_task_info_mutex);
         ret = uda_dev_ctrl(udevid, UDA_CTRL_HOTRESET);
+        ka_task_mutex_lock(&g_device_task_info_mutex);
         if (ret != 0) {
+            ka_task_mutex_unlock(&g_device_task_info_mutex);
             devdrv_drv_err("Uda ctrl hotreset failed. (devid=%u; ret=%d)\n", udevid, ret);
             return ret;
         }
@@ -457,21 +422,27 @@ int devdrv_uda_one_dev_ctrl_hotreset(u32 udevid)
 
     ret = devdrv_get_brother_udevid(udevid, &bro_udevid);
     if (ret != 0) {
+        ka_task_mutex_unlock(&g_device_task_info_mutex);
         return 0;
     }
 
     if (dms_get_device_task_info(bro_udevid) == NULL) {
+        ka_task_mutex_unlock(&g_device_task_info_mutex);
         return 0;
     }
 
     if (devdrv_check_hotreset_flag(bro_udevid) == true) {
+        ka_task_mutex_unlock(&g_device_task_info_mutex);
         ret = uda_dev_ctrl(bro_udevid, UDA_CTRL_HOTRESET);
+        ka_task_mutex_lock(&g_device_task_info_mutex);
         if (ret != 0) {
+            ka_task_mutex_unlock(&g_device_task_info_mutex);
             (void)uda_dev_ctrl(udevid, UDA_CTRL_HOTRESET_CANCEL);
             devdrv_drv_err("Uda ctrl hotreset failed. (bro_udevid=%u; ret=%d)\n", bro_udevid, ret);
             return ret;
         }
     }
+    ka_task_mutex_unlock(&g_device_task_info_mutex);
 
     return 0;
 }
@@ -526,8 +497,7 @@ STATIC void dms_hotreset_one_dev_inform(void *feature, unsigned int dev_id)
     int ret;
 
     in = dev_id;
-    ret = dms_send_msg_to_device_by_h2d(feature, (char *)&in, sizeof(unsigned int),
-            (char *)&out, sizeof(unsigned int));
+    ret = dms_send_msg_to_device_by_h2d(feature, (char *)&in, sizeof(unsigned int), (char *)&out, sizeof(unsigned int));
     if (ret != 0) {
         dms_err("Hotreset inform device failed. (dev_id=%u; ret=%d)\n", dev_id, ret);
         return;
@@ -539,7 +509,7 @@ static bool dms_pcie_card_check(unsigned int udevid)
 {
     int ret;
     unsigned long long product_type;
-    
+
     ret = soc_resmng_dev_get_key_value(udevid, "PRODUCT_TYPE", &product_type);
     if (ret != 0) {
         dms_err("Get product type failed. (dev_id=%u; ret=%d)\n", udevid, ret);
@@ -721,7 +691,7 @@ STATIC int dms_power_set_single_hot_reset(void *feature, unsigned int virt_id)
 #endif
 
 #ifdef CFG_FEATURE_SUPPORT_HOTRESET_AO_INFORM
-    dms_hotreset_dev_inform(feature, virt_id);
+        dms_hotreset_dev_inform(feature, virt_id);
 #endif
 
         ret = devdrv_hot_reset_device(phy_id);
@@ -818,15 +788,20 @@ int dms_hotreset_assmemble(void *feature, char *in, unsigned int in_len, char *o
 
 void dms_notify_single_device_cancel_hotreset(unsigned int dev_id)
 {
-    clear_hotreset_task_flag(dev_id);
+    ka_task_mutex_lock(&g_device_task_info_mutex);
+    if (dms_get_device_task_info(dev_id) != NULL) {
+        clear_hotreset_task_flag(dev_id);
+    }
+    ka_task_mutex_unlock(&g_device_task_info_mutex);
     return;
 }
 
 int dms_hotreset_task_cnt_increase(unsigned int dev_id)
 {
     int flag;
-
+    ka_task_mutex_lock(&g_device_task_info_mutex);
     if (dms_get_device_task_info(dev_id) == NULL) {
+        ka_task_mutex_unlock(&g_device_task_info_mutex);
         dms_err("The device does not exist. (dev_id=%u)\n", dev_id);
         return -ENODEV;
     }
@@ -834,19 +809,22 @@ int dms_hotreset_task_cnt_increase(unsigned int dev_id)
     ka_task_down_write(&g_device_task_info[dev_id]->task_rw_sema);
     flag = get_hotreset_task_flag(dev_id);
     if (flag != 0) {
-        dms_err("Hotreset is running. (dev_id=%u; flag=%d)\n", dev_id, flag);
         ka_task_up_write(&g_device_task_info[dev_id]->task_rw_sema);
+        ka_task_mutex_unlock(&g_device_task_info_mutex);
+        dms_err("Hotreset is running. (dev_id=%u; flag=%d)\n", dev_id, flag);
         return -EBUSY;
     }
     g_device_task_info[dev_id]->task_ref_cnt++;
     ka_task_up_write(&g_device_task_info[dev_id]->task_rw_sema);
-
+    ka_task_mutex_unlock(&g_device_task_info_mutex);
     return 0;
 }
 
 void dms_hotreset_task_cnt_decrease(unsigned int dev_id)
 {
+    ka_task_mutex_lock(&g_device_task_info_mutex);
     if (dms_get_device_task_info(dev_id) == NULL) {
+        ka_task_mutex_unlock(&g_device_task_info_mutex);
         dms_err("The device does not exist. (dev_id=%u)\n", dev_id);
         return;
     }
@@ -854,6 +832,7 @@ void dms_hotreset_task_cnt_decrease(unsigned int dev_id)
     ka_task_down_write(&g_device_task_info[dev_id]->task_rw_sema);
     g_device_task_info[dev_id]->task_ref_cnt--;
     ka_task_up_write(&g_device_task_info[dev_id]->task_rw_sema);
+    ka_task_mutex_unlock(&g_device_task_info_mutex);
 }
 
 int dms_hotreset_atomic_setflag(void *feature, char *in, unsigned int in_len, char *out, unsigned int out_len)
@@ -920,7 +899,9 @@ int dms_notify_pre_device_hotreset(unsigned int dev_id)
     int flag;
     unsigned long task_cnt;
 
+    ka_task_mutex_lock(&g_device_task_info_mutex);
     if (dms_get_device_task_info(dev_id) == NULL) {
+        ka_task_mutex_unlock(&g_device_task_info_mutex);
         dms_err("The device does not exist. (dev_id=%u).\n", dev_id);
         return -EINVAL;
     }
@@ -929,6 +910,7 @@ int dms_notify_pre_device_hotreset(unsigned int dev_id)
     flag = get_hotreset_task_flag(dev_id);
     if (flag != 0) {
         ka_task_up_write(&g_device_task_info[dev_id]->task_rw_sema);
+        ka_task_mutex_unlock(&g_device_task_info_mutex);
         dms_info("Pre-hotreset has been triggered. (dev_id=%u)\n", dev_id);
         return 0;
     }
@@ -938,19 +920,21 @@ int dms_notify_pre_device_hotreset(unsigned int dev_id)
     if (task_cnt != 0) {
         clear_hotreset_task_flag(dev_id);
         ka_task_up_write(&g_device_task_info[dev_id]->task_rw_sema);
+        ka_task_mutex_unlock(&g_device_task_info_mutex);
         dms_err("Dms task_cnt not zero. (task_cnt=%lu; dev_id=%u)\n", task_cnt, dev_id);
         return -EINVAL;
     }
     ka_task_up_write(&g_device_task_info[dev_id]->task_rw_sema);
-
+    ka_task_mutex_unlock(&g_device_task_info_mutex);
     return 0;
 }
 
 int dms_notify_device_hotreset(unsigned int dev_id)
 {
     unsigned long task_cnt;
-
+    ka_task_mutex_lock(&g_device_task_info_mutex);
     if (dms_get_device_task_info(dev_id) == NULL) {
+        ka_task_mutex_unlock(&g_device_task_info_mutex);
         dms_err("The device does not exist. (dev_id=%u).\n", dev_id);
         return -EINVAL;
     }
@@ -963,11 +947,12 @@ int dms_notify_device_hotreset(unsigned int dev_id)
     if (task_cnt != 0) {
         clear_hotreset_task_flag(dev_id);
         ka_task_up_write(&g_device_task_info[dev_id]->task_rw_sema);
+        ka_task_mutex_unlock(&g_device_task_info_mutex);
         dms_err("Dms task_cnt not zero. (task_cnt=%lu; dev_id=%u)\n", task_cnt, dev_id);
         return -EINVAL;
     }
     ka_task_up_write(&g_device_task_info[dev_id]->task_rw_sema);
-
+    ka_task_mutex_unlock(&g_device_task_info_mutex);
     return 0;
 }
 
@@ -994,7 +979,7 @@ int dms_power_pcie_pre_reset_v1(void *feature, char *in, unsigned int in_len, ch
     if ((chip_type == HISI_CLOUD_V1) || (chip_type == HISI_CLOUD_V2)) {
         return 0;
     } else if ((chip_type == HISI_MINI_V2) || (chip_type == HISI_MINI_V3) || (chip_type == HISI_CLOUD_V4) ||
-        (chip_type == HISI_CLOUD_V5) || (chip_type == HISI_MINI_V4)) {
+               (chip_type == HISI_CLOUD_V5) || (chip_type == HISI_MINI_V4)) {
         ret = devdrv_uda_one_dev_ctrl_hotreset(udevid);
         if (ret != 0) {
             devdrv_drv_err("Call uda_dev_ctrl failed, (udevid=%u; ret=%d).\n", udevid, ret);
@@ -1038,12 +1023,14 @@ int dms_hotreset_task_init(unsigned int dev_id)
 {
     struct hotreset_task_info *device_task_info = NULL;
 
+    ka_task_mutex_lock(&g_device_task_info_mutex);
     device_task_info = dms_get_device_task_info(dev_id);
     if (device_task_info != NULL) {
         dms_info("Repeat init stop flag instance. (dev_id=%u)\n", dev_id);
     } else {
         device_task_info = dms_task_info_alloc(dev_id);
         if (device_task_info == NULL) {
+            ka_task_mutex_unlock(&g_device_task_info_mutex);
             dms_err("Alloc stop flag info mem fail. (dev_id=%u)\n", dev_id);
             return -ENOMEM;
         }
@@ -1053,6 +1040,7 @@ int dms_hotreset_task_init(unsigned int dev_id)
     clear_hotreset_task_flag(dev_id);
     dms_set_single_device_hotreset_excuting_flag(dev_id, dev_id, false);
     g_device_task_info[dev_id]->task_ref_cnt = 0;
+    ka_task_mutex_unlock(&g_device_task_info_mutex);
     dms_debug("Dms hotreset task init success. (dev_id=%u)\n", dev_id);
     return 0;
 }
@@ -1062,6 +1050,7 @@ void dms_hotreset_task_exit(void)
     struct hotreset_task_info *device_task_info = NULL;
     unsigned int i;
 
+    ka_task_mutex_lock(&g_device_task_info_mutex);
     for (i = 0; i < ASCEND_DEV_MAX_NUM; i++) {
         device_task_info = dms_get_device_task_info(i);
         if (device_task_info == NULL) {
@@ -1072,6 +1061,7 @@ void dms_hotreset_task_exit(void)
         dbl_kfree(device_task_info);
         device_task_info = NULL;
     }
+    ka_task_mutex_unlock(&g_device_task_info_mutex);
 
     dms_debug("Dms hotreset task exit success.\n");
 }
@@ -1080,14 +1070,17 @@ void dms_hotreset_vf_task_exit(unsigned int dev_id)
 {
     struct hotreset_task_info *device_task_info = NULL;
 
+    ka_task_mutex_lock(&g_device_task_info_mutex);
     device_task_info = dms_get_device_task_info(dev_id);
     if (device_task_info == NULL) {
+        ka_task_mutex_unlock(&g_device_task_info_mutex);
         return;
     }
 
     dms_set_device_task_info(dev_id, NULL);
     dbl_kfree(device_task_info);
     device_task_info = NULL;
+    ka_task_mutex_unlock(&g_device_task_info_mutex);
 
     dms_debug("Dms hotreset task exit success.\n");
 }
