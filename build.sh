@@ -186,6 +186,7 @@ prepare_src()
     return
   fi
   echo "prepare source"
+
   pushd $BASE_PATH
   # rpepare source for dsmi
   cp -rf ./src/custom/dev_prod/user/dsmi_product_ext ./src/ascend_hal/dmc/dsmi/
@@ -241,6 +242,7 @@ clean_src()
     return
   fi
   echo "clean source"
+
   pushd $BASE_PATH
   rm -rf ./src/ascend_hal/dmc/dsmi/dsmi_product_ext
   rm -rf ./src/sdk_driver/dms/devmng/drv_devmng/drv_devmng_host/ascend910/devdrv_manager_dev_share.c
@@ -264,11 +266,10 @@ clean_src()
 
 cleanup() {
     clean_src
-    exit 0
 }
 
-# cleanup temporary source files after pressing Ctrl+C
-trap cleanup INT
+# cleanup temporary source files before exit
+trap cleanup EXIT
 
 build_check_with_ube()
 {
@@ -397,7 +398,7 @@ g++ -v
 
 prepare_src
 
-build_npu_driver || { echo "npu_driver build failed."; clean_src; exit -1; }
+build_npu_driver || { echo "npu_driver build failed."; exit -1; }
 echo "---------------- npu_driver build finished ----------------"
 
 if [[ "X$ENABLE_GE_UT" = "Xn" && "$ENABLE_PACKAGE" = "TRUE" ]]; then
@@ -405,7 +406,5 @@ if [[ "X$ENABLE_GE_UT" = "Xn" && "$ENABLE_PACKAGE" = "TRUE" ]]; then
   generate_package
   echo "-------------- npu_driver package generate finished -------------"
 fi
-
-clean_src
 
 exit 0
