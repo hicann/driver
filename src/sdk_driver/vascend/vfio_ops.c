@@ -30,8 +30,8 @@
 #include "vfio_ops.h"
 
 struct vdavinci_monitor {
-    ka_atomic_t map_count;
-    ka_atomic_t pin_count;
+    ka_atomic64_t map_count;
+    ka_atomic64_t pin_count;
 };
 
 #if IS_VDAVINCI_VPMEM_SUPPORT
@@ -39,8 +39,8 @@ static bool (*pfn_is_vpmem_fn)(unsigned long pfn) = NULL;
 #endif
 
 STATIC struct vdavinci_monitor monitor = {
-    .map_count = KA_BASE_ATOMIC_INIT(0),
-    .pin_count = KA_BASE_ATOMIC_INIT(0),
+    .map_count = KA_BASE_ATOMIC64_INIT(0),
+    .pin_count = KA_BASE_ATOMIC64_INIT(0),
 };
 
 void vdavinci_iommu_unmap(ka_device_t *dev, unsigned long iova, size_t size)
@@ -48,31 +48,37 @@ void vdavinci_iommu_unmap(ka_device_t *dev, unsigned long iova, size_t size)
     size_t unmapped;
     ka_iommu_domain_t *domain = NULL;
 
-    ka_mm_dma_sync_single_for_cpu(dev, iova, size, KA_DMA_BIDIRECTIONAL);
     domain = ka_pci_iommu_get_domain_for_dev(dev);
+    if (domain == NULL) {
+        vascend_err(dev, "iommu domain is null\n");
+        return;
+    }
+    ka_mm_dma_sync_single_for_cpu(dev, iova, size, KA_DMA_BIDIRECTIONAL);
     unmapped = ka_iommu_unmap(domain, iova, size);
     KA_WARN_ON(unmapped != size);
-    ka_base_atomic_sub((int)unmapped, &monitor.map_count);
+    ka_base_atomic64_sub((long)unmapped, &monitor.map_count);
 }
 
-int vdavinci_iommu_map(ka_device_t *dev, unsigned long iova,
-                       phys_addr_t paddr, size_t size, int prot)
+int vdavinci_iommu_map(ka_device_t *dev, unsigned long iova, phys_addr_t paddr, size_t size, int prot)
 {
     int ret = 0;
     ka_iommu_domain_t *domain = ka_pci_iommu_get_domain_for_dev(dev);
 
+    if (domain == NULL) {
+        vascend_err(dev, "iommu domain is null\n");
+        return -ENODEV;
+    }
     ret = ka_iommu_map(domain, iova, paddr, size, prot, KA_GFP_KERNEL);
     if (ret == 0 && !ka_is_dev_dma_coherent(dev)) {
         ka_mm_dma_sync_single_for_device(dev, iova, size, KA_DMA_BIDIRECTIONAL);
     }
     if (ret == 0) {
-        ka_base_atomic_add((int)size, &monitor.map_count);
+        ka_base_atomic64_add((long)size, &monitor.map_count);
     }
     return ret;
 }
 
-STATIC int vdavinci_pin_vpmem_pages(struct hw_vdavinci *vdavinci,
-                                    ka_pin_info *pin_info)
+STATIC int vdavinci_pin_vpmem_pages(struct hw_vdavinci *vdavinci, ka_pin_info *pin_info)
 {
     unsigned long pfn = 0;
     int i = 0;
@@ -86,8 +92,7 @@ STATIC int vdavinci_pin_vpmem_pages(struct hw_vdavinci *vdavinci,
     for (i = 0; i < pin_info->npage; i++) {
         pfn = hw_dvt_hypervisor_gfn_to_mfn(vdavinci, pin_info->gfn + i);
         if (pfn == KVMDT_ERROR_PFN) {
-            vascend_err(vdavinci_to_dev(vdavinci), "error pfn: 0x%lx, gfn: 0x%lx\n",
-                        pfn, pin_info->gfn + i);
+            vascend_err(vdavinci_to_dev(vdavinci), "error pfn: 0x%lx, gfn: 0x%lx\n", pfn, pin_info->gfn + i);
             return -EFAULT;
         }
         pin_info->pages[i] = ka_mm_pfn_to_page(pfn);
@@ -96,8 +101,7 @@ STATIC int vdavinci_pin_vpmem_pages(struct hw_vdavinci *vdavinci,
     return pin_info->npage;
 }
 
-STATIC void vdavinci_unpin_vpmem_pages(struct hw_vdavinci *vdavinci,
-                                       ka_pin_info *pin_info)
+STATIC void vdavinci_unpin_vpmem_pages(struct hw_vdavinci *vdavinci, ka_pin_info *pin_info)
 {
     int i = 0;
 
@@ -109,8 +113,7 @@ STATIC void vdavinci_unpin_vpmem_pages(struct hw_vdavinci *vdavinci,
     }
 }
 
-STATIC int vdavinci_pin_hva_pages(struct hw_vdavinci *vdavinci,
-                                  ka_pin_info *pin_info)
+STATIC int vdavinci_pin_hva_pages(struct hw_vdavinci *vdavinci, ka_pin_info *pin_info)
 {
     int pins = -EFAULT;
 #if IS_VDAVINCI_PIN_HVA_SUPPORT
@@ -126,8 +129,7 @@ STATIC int vdavinci_pin_hva_pages(struct hw_vdavinci *vdavinci,
     }
     hva = kvmdt_gfn_to_hva(vdavinci->handle, pin_info->gfn);
     if (hva == KVMDT_ERROR_PFN) {
-        vascend_err(vdavinci_to_dev(vdavinci), "error hva: 0x%lx, gfn: 0x%lx\n",
-                    hva, pin_info->gfn);
+        vascend_err(vdavinci_to_dev(vdavinci), "error hva: 0x%lx, gfn: 0x%lx\n", hva, pin_info->gfn);
         return -EFAULT;
     }
     mm = vdavinci->mm;
@@ -135,8 +137,7 @@ STATIC int vdavinci_pin_hva_pages(struct hw_vdavinci *vdavinci,
         return -ENODEV;
     }
     ka_mm_mmap_read_lock(mm);
-    pins = ka_mm_pin_user_pages_remote(vdavinci->qemu_task, mm, hva, pin_info->npage,
-                                       KA_FOLL_WRITE | KA_FOLL_LONGTERM,
+    pins = ka_mm_pin_user_pages_remote(vdavinci->qemu_task, mm, hva, pin_info->npage, KA_FOLL_WRITE | KA_FOLL_LONGTERM,
                                        pin_info->pages, NULL);
     ka_mm_mmap_read_unlock(mm);
     ka_mm_mmput(mm);
@@ -144,8 +145,7 @@ STATIC int vdavinci_pin_hva_pages(struct hw_vdavinci *vdavinci,
         return pins;
     }
     if (pins != pin_info->npage) {
-        vascend_err(vdavinci_to_dev(vdavinci), "pin partial fail: total=%d, success=%d\n",
-                    pin_info->npage, pins);
+        vascend_err(vdavinci_to_dev(vdavinci), "pin partial fail: total=%d, success=%d\n", pin_info->npage, pins);
         for (i = 0; i < pins; i++) {
             ka_mm_unpin_user_page(pin_info->pages[i]);
         }
@@ -155,8 +155,7 @@ STATIC int vdavinci_pin_hva_pages(struct hw_vdavinci *vdavinci,
     return pins;
 }
 
-STATIC void vdavinci_unpin_hva_pages(struct hw_vdavinci *vdavinci,
-                                     ka_pin_info *pin_info)
+STATIC void vdavinci_unpin_hva_pages(struct hw_vdavinci *vdavinci, ka_pin_info *pin_info)
 {
 #if IS_VDAVINCI_PIN_HVA_SUPPORT
     int i;
@@ -193,7 +192,7 @@ void vdavinci_unpin_pages(struct hw_vdavinci *vdavinci, ka_pin_info *pin_info)
     } else {
         ka_vfio_unpin_pages(vdavinci->vdev.vfio_device, pin_info);
     }
-    ka_base_atomic_sub(pin_info->npage, &monitor.pin_count);
+    ka_base_atomic64_sub(pin_info->npage, &monitor.pin_count);
 }
 
 int vdavinci_pin_pages(struct hw_vdavinci *vdavinci, ka_pin_info *pin_info)
@@ -211,7 +210,7 @@ int vdavinci_pin_pages(struct hw_vdavinci *vdavinci, ka_pin_info *pin_info)
         ret = ka_vfio_pin_pages(vdavinci->vdev.vfio_device, pin_info);
     }
     if (ret > 0) {
-        ka_base_atomic_add(ret, &monitor.pin_count);
+        ka_base_atomic64_add(ret, &monitor.pin_count);
     }
     return ret;
 }
@@ -256,9 +255,7 @@ STATIC void vdavinci_clean_type_ops(ka_dvt_dev *dvt)
     dvt->type_ops = NULL;
 }
 
-int vdavinci_register_device(ka_device_t *dev,
-                             ka_dvt_dev *dvt,
-                             const char *name)
+int vdavinci_register_device(ka_device_t *dev, ka_dvt_dev *dvt, const char *name)
 {
     int ret = 0;
 
@@ -338,6 +335,7 @@ int vdavinci_group_notify(void *data, void *group_data)
         vm_dom = vm_dom_info_get(vdavinci->vdev.kvm);
         if (vm_dom == NULL) {
             vascend_err(vdavinci_to_dev(vdavinci), "vnpu init domain failed.\n");
+            return KA_NOTIFY_BAD;
         }
         vdavinci->vdev.domain = vm_dom;
     }
@@ -365,8 +363,10 @@ int vdavinci_register_vfio_group(struct hw_vdavinci *vdavinci)
     vdavinci->vdev.domain = NULL;
     ret = ka_vdev_register_vfio_group(&vdavinci->vdev);
     if (ret != 0) {
-        vascend_err(vdavinci_to_dev(vdavinci), "vfio register iommu notifier failed, "
-                    "vid: %u, ret: %d\n", vdavinci->id, ret);
+        vascend_err(vdavinci_to_dev(vdavinci),
+                    "vfio register iommu notifier failed, "
+                    "vid: %u, ret: %d\n",
+                    vdavinci->id, ret);
         return ret;
     }
     if (vdavinci->vdev.domain != NULL) {
@@ -381,7 +381,7 @@ int vdavinci_register_vfio_group(struct hw_vdavinci *vdavinci)
         vascend_err(vdavinci_to_dev(vdavinci), "get vm's domain failed\n");
         return -EINVAL;
     }
-    
+
     return 0;
 }
 
@@ -433,10 +433,9 @@ int vdavinci_get_vfio_device(struct hw_vdavinci *vdavinci)
     return 0;
 }
 
-int vdavinci_rw_gpa(struct kvmdt_guest_info *info, unsigned long gpa,
-                    void *buf, unsigned long len, bool write)
+int vdavinci_rw_gpa(struct kvmdt_guest_info *info, unsigned long gpa, void *buf, unsigned long len, bool write)
 {
-    ka_vfio_gpa info_gpa = { 0 };
+    ka_vfio_gpa info_gpa = {0};
 
     info_gpa.kvm = info->kvm;
     info_gpa.group = info->vdavinci->vdev.vfio_group;
@@ -445,8 +444,7 @@ int vdavinci_rw_gpa(struct kvmdt_guest_info *info, unsigned long gpa,
     return ka_vfio_rw_gpa(&info_gpa, gpa, buf, len, write);
 }
 
-ka_dentry_t *vdavinci_debugfs_create_dir(const char *name,
-                                           ka_dentry_t *parent)
+ka_dentry_t *vdavinci_debugfs_create_dir(const char *name, ka_dentry_t *parent)
 {
     ka_dentry_t *node = NULL;
 
@@ -468,16 +466,15 @@ void vdavinci_debugfs_remove(ka_dentry_t *dentry)
 
 void vdavinci_check(struct hw_vdavinci *vdavinci)
 {
-    int pin_count = ka_base_atomic_read(&monitor.pin_count);
-    int map_count = ka_base_atomic_read(&monitor.map_count);
+    long pin_count = ka_base_atomic64_read(&monitor.pin_count);
+    long map_count = ka_base_atomic64_read(&monitor.map_count);
 
-    ka_base_atomic_set(&monitor.pin_count, 0);
-    ka_base_atomic_set(&monitor.map_count, 0);
+    ka_base_atomic64_set(&monitor.pin_count, 0);
+    ka_base_atomic64_set(&monitor.map_count, 0);
     if (pin_count == 0 && map_count == 0) {
         return;
     }
-    vascend_warn(vdavinci_to_dev(vdavinci), "check warning: pin count: %d, map count: %d\n",
-                 pin_count, map_count);
+    vascend_warn(vdavinci_to_dev(vdavinci), "check warning: pin count: %ld, map count: %ld\n", pin_count, map_count);
 }
 
 bool vdavinci_pfn_is_vpmem(unsigned long pfn)

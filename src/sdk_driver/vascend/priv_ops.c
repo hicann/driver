@@ -24,8 +24,7 @@ static inline bool vdavinci_priv_check(struct vdavinci_priv *priv)
     return true;
 }
 
-int vdavinci_priv_vdev_create(struct hw_vdavinci *vdavinci,
-                              struct vdavinci_type *tp, ka_uuid_le_t uuid)
+int vdavinci_priv_vdev_create(struct hw_vdavinci *vdavinci, struct vdavinci_type *tp, ka_uuid_le_t uuid)
 {
     if (!vdavinci_priv_check(vdavinci->dvt->vdavinci_priv)) {
         return -EINVAL;
@@ -35,8 +34,7 @@ int vdavinci_priv_vdev_create(struct hw_vdavinci *vdavinci,
         return -EINVAL;
     }
 
-    return vdavinci->dvt->vdavinci_priv->ops->vdavinci_create(&vdavinci->dev, vdavinci,
-                                                              tp, uuid);
+    return vdavinci->dvt->vdavinci_priv->ops->vdavinci_create(&vdavinci->dev, vdavinci, tp, uuid);
 }
 
 void vdavinci_priv_vdev_destroy(struct hw_vdavinci *vdavinci)
@@ -104,8 +102,7 @@ void vdavinci_priv_vdev_notify(struct hw_vdavinci *vdavinci, int db_index)
     vdavinci->dvt->vdavinci_priv->ops->vdavinci_notify(&vdavinci->dev, db_index);
 }
 
-int vdavinci_priv_vdev_getmapinfo(struct hw_vdavinci *vdavinci,
-                                  struct vdavinci_type *tp, u32 bar_id,
+int vdavinci_priv_vdev_getmapinfo(struct hw_vdavinci *vdavinci, struct vdavinci_type *tp, u32 bar_id,
                                   struct vdavinci_mapinfo *map_info)
 {
     if (!vdavinci_priv_check(vdavinci->dvt->vdavinci_priv)) {
@@ -116,8 +113,7 @@ int vdavinci_priv_vdev_getmapinfo(struct hw_vdavinci *vdavinci,
         return -EINVAL;
     }
 
-    return vdavinci->dvt->vdavinci_priv->ops->vdavinci_getmapinfo(&vdavinci->dev, tp,
-                                                                  bar_id, map_info);
+    return vdavinci->dvt->vdavinci_priv->ops->vdavinci_getmapinfo(&vdavinci->dev, tp, bar_id, map_info);
 }
 
 int vdavinci_priv_vdev_putmapinfo(struct hw_vdavinci *vdavinci)
@@ -146,8 +142,7 @@ unsigned int vdavinci_priv_vdev_getdevnum(struct vdavinci_priv *priv, ka_device_
     return (unsigned int)priv->ops->davinci_getdevnum(dev);
 }
 
-int vdavinci_priv_vdev_getdevinfo(struct vdavinci_priv *priv,
-                                  ka_device_t *dev, u32 dev_index,
+int vdavinci_priv_vdev_getdevinfo(struct vdavinci_priv *priv, ka_device_t *dev, u32 dev_index,
                                   struct dvt_devinfo *dev_info)
 {
     if (!vdavinci_priv_check(priv)) {
@@ -161,8 +156,7 @@ int vdavinci_priv_vdev_getdevinfo(struct vdavinci_priv *priv,
     return priv->ops->davinci_getdevinfo(dev, dev_index, dev_info);
 }
 
-int vdavinci_priv_vdev_enable_sriov(struct vdavinci_priv *priv,
-                                    ka_pci_dev_t *pdev, int numvfs)
+int vdavinci_priv_vdev_enable_sriov(struct vdavinci_priv *priv, ka_pci_dev_t *pdev, int numvfs)
 {
     if (!vdavinci_priv_check(priv)) {
         return -EINVAL;

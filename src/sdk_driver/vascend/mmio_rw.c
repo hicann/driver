@@ -21,16 +21,15 @@
 #include "priv_ops.h"
 
 /* 10101 : bar0 bar2 bar4 */
-#define DVT_MMIO_ASCEND910_FEATURE_VAL              0x15
-#define DVT_MMIO_ASCEND910_93_XLOADER_OFFSET        0x2908430
-#define DVT_MMIO_ASCEND910_93_XLOADER_SIZE          0x4
-#define DVT_MMIO_ASCEND910_93_FEATURE_OFFSET        0x29085f8
-#define DVT_MMIO_ASCEND910_93_FEATURE_SIZE          0x4
-#define DVT_MMIO_ASCEND910_93_VIRT_MSG_OFFSET       0x2944ba0
-#define DVT_MMIO_ASCEND910_93_VIRT_MSG_SIZE         0x200
+#define DVT_MMIO_ASCEND910_FEATURE_VAL 0x15
+#define DVT_MMIO_ASCEND910_93_XLOADER_OFFSET 0x2908430
+#define DVT_MMIO_ASCEND910_93_XLOADER_SIZE 0x4
+#define DVT_MMIO_ASCEND910_93_FEATURE_OFFSET 0x29085f8
+#define DVT_MMIO_ASCEND910_93_FEATURE_SIZE 0x4
+#define DVT_MMIO_ASCEND910_93_VIRT_MSG_OFFSET 0x2944ba0
+#define DVT_MMIO_ASCEND910_93_VIRT_MSG_SIZE 0x200
 
-#define reg_is_mmio(dvt, reg)                                 \
-    ((reg) >= 0 && (reg) < (dvt)->device_info.mmio_size)
+#define reg_is_mmio(dvt, reg) ((reg) >= 0 && (reg) < (dvt)->device_info.mmio_size)
 
 typedef u32 (*mmio_quirk_read_cb)(struct hw_vdavinci *vdavinci, u32 offset);
 
@@ -42,25 +41,23 @@ struct mmio_quirk_entry {
     mmio_quirk_read_cb read_fn;
 };
 
-int hw_dvt_doorbell_write(struct hw_vdavinci *vdavinci, unsigned int offset,
-                          void *p_data, unsigned int bytes);
+int hw_dvt_doorbell_write(struct hw_vdavinci *vdavinci, unsigned int offset, void *p_data, unsigned int bytes);
 u32 hw_vdavinci_mmio_quirk_xloader_read(struct hw_vdavinci *vdavinci, u32 offset);
 u32 hw_vdavinci_mmio_quirk_feature_read(struct hw_vdavinci *vdavinci, u32 offset);
 u32 hw_vdavinci_mmio_quirk_virt_read(struct hw_vdavinci *vdavinci, u32 offset);
 
 static struct hw_dvt_mmio_info mmio_info_table[MMIO_INFO_TYPE_MAX] = {
-    {DOORBELL, 0, DOORBELL_MAX * DOORBELL_SIZE, 0, DOORBELL_SIZE, NULL, hw_dvt_doorbell_write},
+    {DOORBELL, 0, DOORBELL_MAX *DOORBELL_SIZE, 0, DOORBELL_SIZE, NULL, hw_dvt_doorbell_write},
 };
 
 static const struct mmio_quirk_entry common_quirks[] = {
-    { PCI_DEVICE_ID_ASCEND910_93, DVT_MMIO_ASCEND910_93_XLOADER_OFFSET,
-      DVT_MMIO_ASCEND910_93_XLOADER_SIZE, "xloader", hw_vdavinci_mmio_quirk_xloader_read },
-    { PCI_DEVICE_ID_ASCEND910_93, DVT_MMIO_ASCEND910_93_FEATURE_OFFSET,
-      DVT_MMIO_ASCEND910_93_FEATURE_SIZE, "feature", hw_vdavinci_mmio_quirk_feature_read },
-    { PCI_DEVICE_ID_ASCEND910_93, DVT_MMIO_ASCEND910_93_VIRT_MSG_OFFSET,
-      DVT_MMIO_ASCEND910_93_VIRT_MSG_SIZE, "virt msg", hw_vdavinci_mmio_quirk_virt_read },
-    { }
-};
+    {PCI_DEVICE_ID_ASCEND910_93, DVT_MMIO_ASCEND910_93_XLOADER_OFFSET, DVT_MMIO_ASCEND910_93_XLOADER_SIZE, "xloader",
+     hw_vdavinci_mmio_quirk_xloader_read},
+    {PCI_DEVICE_ID_ASCEND910_93, DVT_MMIO_ASCEND910_93_FEATURE_OFFSET, DVT_MMIO_ASCEND910_93_FEATURE_SIZE, "feature",
+     hw_vdavinci_mmio_quirk_feature_read},
+    {PCI_DEVICE_ID_ASCEND910_93, DVT_MMIO_ASCEND910_93_VIRT_MSG_OFFSET, DVT_MMIO_ASCEND910_93_VIRT_MSG_SIZE, "virt msg",
+     hw_vdavinci_mmio_quirk_virt_read},
+    {}};
 
 STATIC inline struct hw_dvt_mmio_info *find_mmio_info(struct hw_dvt *dvt, u32 offset)
 {
@@ -77,25 +74,24 @@ STATIC inline struct hw_dvt_mmio_info *find_mmio_info(struct hw_dvt *dvt, u32 of
 STATIC inline u64 hw_vdavinci_get_bar_gpa(struct hw_vdavinci *vdavinci, int bar)
 {
     /* We are 64bit bar. */
-    return (*(u64 *)(vdavinci->cfg_space.config + bar)) &
-                    KA_PCI_BASE_ADDRESS_MEM_MASK;
+    return (*(u64 *)(vdavinci->cfg_space.config + bar)) & KA_PCI_BASE_ADDRESS_MEM_MASK;
 }
 
-STATIC inline unsigned int hw_vdavinci_gpa_to_mmio_offset(struct hw_vdavinci *vdavinci,
-                                                   u64 gpa, int bar)
+STATIC inline unsigned int hw_vdavinci_gpa_to_mmio_offset(struct hw_vdavinci *vdavinci, u64 gpa, int bar)
 {
     return gpa - hw_vdavinci_get_bar_gpa(vdavinci, bar);
 }
 
-STATIC int hw_vdavinci_mmio_reg_read(struct hw_vdavinci *vdavinci, u32 offset,
-                                     void *pdata, unsigned int bytes)
+STATIC int hw_vdavinci_mmio_reg_read(struct hw_vdavinci *vdavinci, u32 offset, void *pdata, unsigned int bytes)
 {
     struct hw_dvt_mmio_info *info = find_mmio_info(vdavinci->dvt, offset);
 
     if (ka_unlikely(info == NULL || info->read == NULL)) {
-        vascend_err(vdavinci_to_dev(vdavinci), "untracked MMIO read, "
-            "offset: %08x, len: %d, vid: %u\n", offset, bytes, vdavinci->id);
-        return 0;
+        vascend_err(vdavinci_to_dev(vdavinci),
+                    "untracked MMIO read, "
+                    "offset: %08x, len: %d, vid: %u\n",
+                    offset, bytes, vdavinci->id);
+        return -ENXIO;
     }
 
     return info->read(vdavinci, offset, pdata, bytes);
@@ -125,20 +121,23 @@ u32 hw_vdavinci_mmio_quirk_feature_read(struct hw_vdavinci *vdavinci, u32 offset
 u32 hw_vdavinci_mmio_quirk_virt_read(struct hw_vdavinci *vdavinci, u32 offset)
 {
     ka_pci_dev_t *pdev = NULL;
+    ka_device_t *res_dev = NULL;
 
     if (ka_unlikely(vdavinci == NULL)) {
         return -1;
     }
-    pdev = ka_container_of(vdavinci_resource_dev(vdavinci), ka_pci_dev_t, dev);
-    if (pdev == NULL) {
+    res_dev = vdavinci_resource_dev(vdavinci);
+    if (ka_unlikely(res_dev == NULL)) {
         return -1;
     }
+    pdev = ka_container_of(res_dev, ka_pci_dev_t, dev);
 
     return ka_driver_dev_to_node(&pdev->dev);
 }
 
 STATIC void __ka_mm_iomem *hw_vdavinci_get_bar_io_addr(struct hw_vdavinci *vdavinci, int bar)
 {
+    ka_device_t *res_dev = NULL;
     ka_pci_dev_t *pdev = NULL;
     void __ka_mm_iomem *io_addr = NULL;
 
@@ -161,10 +160,11 @@ STATIC void __ka_mm_iomem *hw_vdavinci_get_bar_io_addr(struct hw_vdavinci *vdavi
     if (io_addr != NULL) {
         return io_addr;
     }
-    pdev = ka_container_of(vdavinci_resource_dev(vdavinci), ka_pci_dev_t, dev);
-    if (pdev == NULL) {
+    res_dev = vdavinci_resource_dev(vdavinci);
+    if (res_dev == NULL) {
         return NULL;
     }
+    pdev = ka_container_of(res_dev, ka_pci_dev_t, dev);
     io_addr = ka_mm_pci_iomap(pdev, bar, pci_resource_len(pdev, bar));
     if (io_addr == NULL) {
         return NULL;
@@ -180,19 +180,21 @@ STATIC void __ka_mm_iomem *hw_vdavinci_get_bar_io_addr(struct hw_vdavinci *vdavi
     return io_addr;
 }
 
-STATIC bool hw_vdavinci_bar_len_check(struct hw_vdavinci *vdavinci, int bar,
-                                      void *pdata, unsigned int bytes, u32 offset)
+STATIC bool hw_vdavinci_bar_len_check(struct hw_vdavinci *vdavinci, int bar, void *pdata, unsigned int bytes,
+                                      u32 offset)
 {
+    ka_device_t *res_dev = NULL;
     phys_addr_t bar_len = 0;
     ka_pci_dev_t *pdev = NULL;
 
     if (vdavinci == NULL || pdata == NULL) {
         return false;
     }
-    pdev = ka_container_of(vdavinci_resource_dev(vdavinci), ka_pci_dev_t, dev);
-    if (pdev == NULL) {
+    res_dev = vdavinci_resource_dev(vdavinci);
+    if (res_dev == NULL) {
         return false;
     }
+    pdev = ka_container_of(res_dev, ka_pci_dev_t, dev);
     if (bytes > sizeof(u64) || !ka_mm_is_power_of_2(bytes)) {
         vascend_warn(vdavinci_to_dev(vdavinci), "not support MMIO quirk read bytes: %u\n", bytes);
         return false;
@@ -205,8 +207,7 @@ STATIC bool hw_vdavinci_bar_len_check(struct hw_vdavinci *vdavinci, int bar,
     return true;
 }
 
-STATIC int hw_vdavinci_read_bar(struct hw_vdavinci *vdavinci, int bar,
-                                void *pdata, unsigned int bytes, u32 offset)
+STATIC int hw_vdavinci_read_bar(struct hw_vdavinci *vdavinci, int bar, void *pdata, unsigned int bytes, u32 offset)
 {
     void __ka_mm_iomem *io_addr = NULL;
     u64 val = 0;
@@ -234,8 +235,7 @@ STATIC int hw_vdavinci_read_bar(struct hw_vdavinci *vdavinci, int bar,
     return memcpy_s(pdata, bytes, &val, bytes);
 }
 
-STATIC int hw_vdavinci_write_bar(struct hw_vdavinci *vdavinci, int bar,
-                                 void *pdata, unsigned int bytes, u32 offset)
+STATIC int hw_vdavinci_write_bar(struct hw_vdavinci *vdavinci, int bar, void *pdata, unsigned int bytes, u32 offset)
 {
     void __ka_mm_iomem *io_addr = NULL;
     int ret = 0;
@@ -268,8 +268,7 @@ STATIC int hw_vdavinci_write_bar(struct hw_vdavinci *vdavinci, int bar,
     return 0;
 }
 
-STATIC bool hw_vdavinci_quirk_check(struct hw_vdavinci *vdavinci, u32 offset,
-                                    void *pdata, unsigned int bytes)
+STATIC bool hw_vdavinci_quirk_check(struct hw_vdavinci *vdavinci, u32 offset, void *pdata, unsigned int bytes)
 {
     unsigned int bar2_size;
 
@@ -291,8 +290,8 @@ STATIC bool hw_vdavinci_quirk_check(struct hw_vdavinci *vdavinci, u32 offset,
     return true;
 }
 
-STATIC inline const struct mmio_quirk_entry *
-hw_vdavinci_find_mmio_quirk(struct hw_vdavinci *vdavinci, u32 offset, unsigned int bytes)
+STATIC inline const struct mmio_quirk_entry *hw_vdavinci_find_mmio_quirk(struct hw_vdavinci *vdavinci, u32 offset,
+                                                                         unsigned int bytes)
 {
     int i;
     u32 q_start, q_end;
@@ -311,11 +310,10 @@ hw_vdavinci_find_mmio_quirk(struct hw_vdavinci *vdavinci, u32 offset, unsigned i
         }
     }
 
-	return NULL;
+    return NULL;
 }
 
-STATIC int hw_vdavinci_mmio_quirk_read(struct hw_vdavinci *vdavinci, u32 offset,
-                                       void *pdata, unsigned int bytes)
+STATIC int hw_vdavinci_mmio_quirk_read(struct hw_vdavinci *vdavinci, u32 offset, void *pdata, unsigned int bytes)
 {
     int i = 0;
     u64 val = 0;
@@ -332,7 +330,7 @@ STATIC int hw_vdavinci_mmio_quirk_read(struct hw_vdavinci *vdavinci, u32 offset,
             vascend_warn(vdavinci_to_dev(vdavinci), "not support MMIO quirk read bytes: %u\n", bytes);
             return -EINVAL;
         }
-        val = common_quirks[i].read_fn(vdavinci, offset);
+        val = quirk->read_fn(vdavinci, offset);
         return memcpy_s(pdata, bytes, &val, bytes);
     }
     for (i = 0; i < KA_BASE_ARRAY_SIZE(common_quirks); i++) {
@@ -344,13 +342,14 @@ STATIC int hw_vdavinci_mmio_quirk_read(struct hw_vdavinci *vdavinci, u32 offset,
         }
     }
 
-    vascend_err(vdavinci_to_dev(vdavinci), "untracked MMIO quirk read, "
-                "offset: %08x, len: %d, vid: %u\n", offset, bytes, vdavinci->id);
+    vascend_err(vdavinci_to_dev(vdavinci),
+                "untracked MMIO quirk read, "
+                "offset: %08x, len: %d, vid: %u\n",
+                offset, bytes, vdavinci->id);
     return -ENXIO;
 }
 
-STATIC int hw_vdavinci_mmio_quirk_write(struct hw_vdavinci *vdavinci, u32 offset,
-                                        void *pdata, unsigned int bytes)
+STATIC int hw_vdavinci_mmio_quirk_write(struct hw_vdavinci *vdavinci, u32 offset, void *pdata, unsigned int bytes)
 {
     int i = 0;
     const struct mmio_quirk_entry *quirk = NULL;
@@ -360,7 +359,7 @@ STATIC int hw_vdavinci_mmio_quirk_write(struct hw_vdavinci *vdavinci, u32 offset
     }
     quirk = hw_vdavinci_find_mmio_quirk(vdavinci, offset, bytes);
     if (quirk != NULL) {
-        vascend_warn(vdavinci_to_dev(vdavinci), "dropped write to quirk hole: %s\n", common_quirks[i].name);
+        vascend_warn(vdavinci_to_dev(vdavinci), "dropped write to quirk hole: %s\n", quirk->name);
         return 0;
     }
     for (i = 0; i < KA_BASE_ARRAY_SIZE(common_quirks); i++) {
@@ -372,89 +371,79 @@ STATIC int hw_vdavinci_mmio_quirk_write(struct hw_vdavinci *vdavinci, u32 offset
         }
     }
 
-    vascend_err(vdavinci_to_dev(vdavinci), "untracked MMIO quirk write, "
-                "offset: %08x, len: %d, vid: %u\n", offset, bytes, vdavinci->id);
+    vascend_err(vdavinci_to_dev(vdavinci),
+                "untracked MMIO quirk write, "
+                "offset: %08x, len: %d, vid: %u\n",
+                offset, bytes, vdavinci->id);
     return -ENXIO;
 }
 
-STATIC int hw_vdavinci_mmio_reg_write(struct hw_vdavinci *vdavinci, u32 offset,
-                                      void *pdata, unsigned int bytes)
+STATIC int hw_vdavinci_mmio_reg_write(struct hw_vdavinci *vdavinci, u32 offset, void *pdata, unsigned int bytes)
 {
     struct hw_dvt_mmio_info *info = find_mmio_info(vdavinci->dvt, offset);
 
     if (ka_unlikely(info == NULL || info->write == NULL)) {
-        vascend_err(vdavinci_to_dev(vdavinci), "untracked MMIO write, "
-            "offset: %08x, len: %d, vid: %u\n", offset, bytes, vdavinci->id);
-        return 0;
+        vascend_err(vdavinci_to_dev(vdavinci),
+                    "untracked MMIO write, "
+                    "offset: %08x, len: %d, vid: %u\n",
+                    offset, bytes, vdavinci->id);
+        return -ENXIO;
     }
 
     return info->write(vdavinci, offset, pdata, bytes);
 }
 
-STATIC int hw_vdavinci_emulate_mmio_rw(struct hw_vdavinci *vdavinci, u32 offset,
-                                       void *buf, unsigned int bytes, dvt_mmio_func fn)
+STATIC int hw_vdavinci_emulate_mmio_rw(struct hw_vdavinci *vdavinci, u32 offset, void *buf, unsigned int bytes,
+                                       dvt_mmio_func fn)
 {
-#define BYTES_MAX       8
-    int ret = -EINVAL;
-
-    ka_task_mutex_lock(&vdavinci->vdavinci_lock);
-    if (ka_unlikely(bytes > BYTES_MAX)) {
-        vascend_err(vdavinci_to_dev(vdavinci), "failed to emulate MMIO "
-            "read %08x len %d, vid %u\n", offset, bytes, vdavinci->id);
-        goto OUT;
+#define BYTES_MAX 8
+    if (ka_unlikely(bytes == 0 || bytes > BYTES_MAX)) {
+        vascend_err(vdavinci_to_dev(vdavinci),
+                    "failed to emulate MMIO "
+                    "read %08x len %d, vid %u\n",
+                    offset, bytes, vdavinci->id);
+        return -EINVAL;
+    }
+    if (ka_unlikely(!reg_is_mmio(vdavinci->dvt, offset) || !reg_is_mmio(vdavinci->dvt, offset + bytes - 1))) {
+        vascend_err(vdavinci_to_dev(vdavinci),
+                    "failed to emulate MMIO "
+                    "read %08x len %d, vid %u\n",
+                    offset, bytes, vdavinci->id);
+        return -EINVAL;
     }
 
-    if (ka_unlikely(!reg_is_mmio(vdavinci->dvt, offset) ||
-        !reg_is_mmio(vdavinci->dvt, offset + bytes - 1))) {
-        vascend_err(vdavinci_to_dev(vdavinci), "failed to emulate MMIO "
-            "read %08x len %d, vid %u\n", offset, bytes, vdavinci->id);
-        goto OUT;
-    }
-
-    ret = fn(vdavinci, offset, buf, bytes);
-OUT:
-    ka_task_mutex_unlock(&vdavinci->vdavinci_lock);
-    return ret;
+    return fn(vdavinci, offset, buf, bytes);
 }
 
-int hw_vdavinci_emulate_mmio_read(struct hw_vdavinci *vdavinci, uint64_t pa,
-                                  void *buf, unsigned int bytes)
+int hw_vdavinci_emulate_mmio_read(struct hw_vdavinci *vdavinci, uint64_t pa, void *buf, unsigned int bytes)
 {
     unsigned int offset = hw_vdavinci_gpa_to_mmio_offset(vdavinci, pa, KA_PCI_BASE_ADDRESS_0);
 
-    return hw_vdavinci_emulate_mmio_rw(vdavinci, offset, buf, bytes,
-                                       hw_vdavinci_mmio_reg_read);
+    return hw_vdavinci_emulate_mmio_rw(vdavinci, offset, buf, bytes, hw_vdavinci_mmio_reg_read);
 }
 
-int hw_vdavinci_emulate_mmio_write(struct hw_vdavinci *vdavinci, uint64_t pa,
-                                   void *buf, unsigned int bytes)
+int hw_vdavinci_emulate_mmio_write(struct hw_vdavinci *vdavinci, uint64_t pa, void *buf, unsigned int bytes)
 {
     unsigned int offset = hw_vdavinci_gpa_to_mmio_offset(vdavinci, pa, KA_PCI_BASE_ADDRESS_0);
 
-    return hw_vdavinci_emulate_mmio_rw(vdavinci, offset, buf, bytes,
-                                       hw_vdavinci_mmio_reg_write);
+    return hw_vdavinci_emulate_mmio_rw(vdavinci, offset, buf, bytes, hw_vdavinci_mmio_reg_write);
 }
 
-int hw_vdavinci_emulate_mmio_quirk_read(struct hw_vdavinci *vdavinci, uint64_t pa,
-                                        void *buf, unsigned int bytes)
+int hw_vdavinci_emulate_mmio_quirk_read(struct hw_vdavinci *vdavinci, uint64_t pa, void *buf, unsigned int bytes)
 {
     unsigned int offset = hw_vdavinci_gpa_to_mmio_offset(vdavinci, pa, KA_PCI_BASE_ADDRESS_2);
 
-    return hw_vdavinci_emulate_mmio_rw(vdavinci, offset, buf, bytes,
-                                       hw_vdavinci_mmio_quirk_read);
+    return hw_vdavinci_emulate_mmio_rw(vdavinci, offset, buf, bytes, hw_vdavinci_mmio_quirk_read);
 }
 
-int hw_vdavinci_emulate_mmio_quirk_write(struct hw_vdavinci *vdavinci, uint64_t pa,
-                                         void *buf, unsigned int bytes)
+int hw_vdavinci_emulate_mmio_quirk_write(struct hw_vdavinci *vdavinci, uint64_t pa, void *buf, unsigned int bytes)
 {
     unsigned int offset = hw_vdavinci_gpa_to_mmio_offset(vdavinci, pa, KA_PCI_BASE_ADDRESS_2);
 
-    return hw_vdavinci_emulate_mmio_rw(vdavinci, offset, buf, bytes,
-                                       hw_vdavinci_mmio_quirk_write);
+    return hw_vdavinci_emulate_mmio_rw(vdavinci, offset, buf, bytes, hw_vdavinci_mmio_quirk_write);
 }
 
-int hw_dvt_doorbell_write(struct hw_vdavinci *vdavinci, unsigned int offset,
-                          void *p_data, unsigned int bytes)
+int hw_dvt_doorbell_write(struct hw_vdavinci *vdavinci, unsigned int offset, void *p_data, unsigned int bytes)
 {
     unsigned int index = offset / DOORBELL_SIZE;
 
@@ -476,9 +465,8 @@ int hw_dvt_doorbell_write(struct hw_vdavinci *vdavinci, unsigned int offset,
  * @pfn_offset: The aligned page-frame-number offset of the quirk hole.
  * @base: Physical base address of the BAR region.
  */
-STATIC void hw_vdavinci_split_single_map(struct hw_vdavinci *vdavinci,
-                                         u64 *num_ptr, int idx,
-                                         size_t pfn_offset, phys_addr_t base)
+STATIC void hw_vdavinci_split_single_map(struct hw_vdavinci *vdavinci, u64 *num_ptr, int idx, size_t pfn_offset,
+                                         phys_addr_t base)
 {
     struct vdavinci_bar_map *map = vdavinci->mmio.bar2_sparse.map_info;
     size_t start = map[idx].offset;

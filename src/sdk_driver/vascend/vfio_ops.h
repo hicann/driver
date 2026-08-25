@@ -19,20 +19,15 @@
 #include "ka_memory_pub.h"
 
 void vdavinci_iommu_unmap(ka_device_t *dev, unsigned long iova, size_t size);
-int vdavinci_iommu_map(ka_device_t *dev, unsigned long iova,
-                       phys_addr_t paddr, size_t size, int prot);
+int vdavinci_iommu_map(ka_device_t *dev, unsigned long iova, phys_addr_t paddr, size_t size, int prot);
 void vdavinci_unpin_pages(struct hw_vdavinci *vdavinci, ka_pin_info *pin_info);
 int vdavinci_pin_pages(struct hw_vdavinci *vdavinci, ka_pin_info *pin_info);
-int vdavinci_register_device(ka_device_t *dev,
-                             ka_dvt_dev *dvt,
-                             const char *name);
+int vdavinci_register_device(ka_device_t *dev, ka_dvt_dev *dvt, const char *name);
 void vdavinci_unregister_device(ka_device_t *dev, ka_dvt_dev *dvt);
 int vdavinci_register_vfio_group(struct hw_vdavinci *vdavinci);
 void vdavinci_unregister_vfio_group(struct hw_vdavinci *vdavinci);
-int vdavinci_rw_gpa(struct kvmdt_guest_info *info, unsigned long gpa,
-                    void *buf, unsigned long len, bool write);
-ka_dentry_t *vdavinci_debugfs_create_dir(const char *name,
-                                           ka_dentry_t *parent);
+int vdavinci_rw_gpa(struct kvmdt_guest_info *info, unsigned long gpa, void *buf, unsigned long len, bool write);
+ka_dentry_t *vdavinci_debugfs_create_dir(const char *name, ka_dentry_t *parent);
 void vdavinci_debugfs_remove(ka_dentry_t *dentry);
 void vdavinci_put_vfio_device(struct hw_vdavinci *vdavinci);
 int vdavinci_get_vfio_device(struct hw_vdavinci *vdavinci);

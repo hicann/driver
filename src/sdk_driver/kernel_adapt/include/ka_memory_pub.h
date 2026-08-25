@@ -526,6 +526,7 @@ typedef struct ka_sysinfo {
 #define ka_mm_iommu_get_domain_for_dev(dev) iommu_get_domain_for_dev(dev)
 #define ka_mm_iommu_domain_alloc(bus) iommu_domain_alloc(bus)
 #define ka_mm_iommu_group_get(dev) iommu_group_get(dev)
+#define ka_mm_iommu_group_put(group) iommu_group_put(group)
 #define ka_mm_iommu_detach_group(domain, group) iommu_detach_group(domain, group)
 #define ka_mm_iommu_domain_free(domain) iommu_domain_free(domain)
 #define ka_mm_put_iova_domain(iovad) put_iova_domain(iovad)

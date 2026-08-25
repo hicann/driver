@@ -17,15 +17,11 @@
 #include "dma_pool.h"
 #include "dma_pool_map.h"
 
-STATIC void dev_map_scheduled(struct hw_vdavinci *vdavinci,
-                              unsigned long *count)
+STATIC void dev_map_scheduled(struct hw_vdavinci *vdavinci, unsigned long *count)
 {
     (*count)++;
-    if (hw_vdavinci_scheduled(vdavinci,
-                              (*count) * KA_VFIO_PIN_PAGES_MAX_ENTRIES,
-                              VDAVINCI_MAP_PAGES_OF_SCHEDULE,
-                              VDAVINCI_MAP_TIME_OF_SCHEDULE,
-                              NULL)) {
+    if (hw_vdavinci_scheduled(vdavinci, (*count) * KA_VFIO_PIN_PAGES_MAX_ENTRIES, VDAVINCI_MAP_PAGES_OF_SCHEDULE,
+                              VDAVINCI_MAP_TIME_OF_SCHEDULE, NULL)) {
         (*count) = 0;
     }
 }
@@ -46,8 +42,7 @@ STATIC void dev_unmap_2m(ka_device_t *dev, ka_sg_table_t *dma_sgt)
     ka_mm_kfree(dma_sgt);
 }
 
-STATIC int dev_map_2m(ka_device_t *dev, unsigned long gfn,
-                      ka_sg_table_t **dma_sgt,
+STATIC int dev_map_2m(ka_device_t *dev, unsigned long gfn, ka_sg_table_t **dma_sgt,
                       struct page_info_list *dma_page_list, unsigned long size)
 {
     int ret;
@@ -65,14 +60,15 @@ STATIC int dev_map_2m(ka_device_t *dev, unsigned long gfn,
 
     ret = ka_base_sg_alloc_table(*dma_sgt, dma_page_list->elem_num, KA_GFP_KERNEL);
     if (ret) {
-        vascend_err(dev, "ka_base_sg_alloc_table return error result, ret: %d, sg_len: %u",
-                    ret, dma_page_list->elem_num);
+        vascend_err(dev, "ka_base_sg_alloc_table return error result, ret: %d, sg_len: %u", ret,
+                    dma_page_list->elem_num);
         ret = -ENOMEM;
         goto err_free_sgt;
     }
 
     sgl = (*dma_sgt)->sgl;
-    ka_list_for_each_entry(dma_page_info, &dma_page_list->head, list) {
+    ka_list_for_each_entry(dma_page_info, &dma_page_list->head, list)
+    {
         ka_base_sg_set_page(sgl, dma_page_info->page, dma_page_info->length, 0);
         sgl = ka_base_sg_next(sgl);
     }
@@ -93,8 +89,7 @@ err_free_sgt:
     return ret;
 }
 
-void dev_dma_unmap_ram_range(struct hw_vdavinci *vdavinci,
-                             struct ram_range_info *ram_info)
+void dev_dma_unmap_ram_range(struct hw_vdavinci *vdavinci, struct ram_range_info *ram_info)
 {
     int i;
     bool found = false;
@@ -107,7 +102,8 @@ void dev_dma_unmap_ram_range(struct hw_vdavinci *vdavinci,
     if (ka_list_empty(&(vdavinci->vdev.dev_dma_info_list_head))) {
         return;
     }
-    ka_list_for_each_safe(pos, next, &(vdavinci->vdev.dev_dma_info_list_head)) {
+    ka_list_for_each_safe(pos, next, &(vdavinci->vdev.dev_dma_info_list_head))
+    {
         dma_info = ka_list_entry(pos, struct dev_dma_info, list);
         if (ram_info != dma_info->ram_info) {
             continue;
@@ -119,8 +115,10 @@ void dev_dma_unmap_ram_range(struct hw_vdavinci *vdavinci,
             dev_unmap_2m(dev, dev_dma_sgt->dma_sgt);
             ka_mm_kfree(dev_dma_sgt);
         }
+        ka_mm_kfree(dma_info->sgt_array);
         ka_mm_kfree(dma_info);
         found = true;
+        break;
     }
     if (!found) {
         return;
@@ -128,17 +126,14 @@ void dev_dma_unmap_ram_range(struct hw_vdavinci *vdavinci,
     ka_base_atomic_dec(&ram_info->map_count);
 }
 
-STATIC struct dev_dma_sgt *dev_map_sgt_2m(struct hw_vdavinci *vdavinci,
-                                          struct dma_info_2m *dma_array_node)
+STATIC struct dev_dma_sgt *dev_map_sgt_2m(struct hw_vdavinci *vdavinci, struct dma_info_2m *dma_array_node)
 {
     int ret = 0;
     ka_sg_table_t *dma_sgt = NULL;
     struct dev_dma_sgt *dev_dma_sgt = NULL;
     ka_device_t *dev = vdavinci_get_device(vdavinci);
 
-    ret = dev_map_2m(dev, dma_array_node->gfn, &dma_sgt,
-                     &dma_array_node->dma_page_list,
-                     dma_array_node->size);
+    ret = dev_map_2m(dev, dma_array_node->gfn, &dma_sgt, &dma_array_node->dma_page_list, dma_array_node->size);
     if (ret != 0) {
         goto out;
     }
@@ -159,13 +154,11 @@ STATIC struct dev_dma_sgt *dev_map_sgt_2m(struct hw_vdavinci *vdavinci,
 free:
     dev_unmap_2m(dev, dma_sgt);
 out:
-    vascend_err(dev, "dma map page failed, ret: %d, size: 0x%lx\n",
-                ret, dma_array_node->size);
+    vascend_err(dev, "dma map page failed, ret: %d, size: 0x%lx\n", ret, dma_array_node->size);
     return NULL;
 }
 
-int dev_dma_map_ram_range(struct hw_vdavinci *vdavinci,
-                          struct ram_range_info *ram_info)
+int dev_dma_map_ram_range(struct hw_vdavinci *vdavinci, struct ram_range_info *ram_info)
 {
     int ret = 0, i = 0, j = 0;
     unsigned long count = 0;
@@ -175,8 +168,8 @@ int dev_dma_map_ram_range(struct hw_vdavinci *vdavinci,
     ka_device_t *dev = vdavinci_get_device(vdavinci);
     struct dev_dma_info *dma_info = NULL;
 
-    sgt_array = (struct dev_dma_sgt **)
-        ka_mm_kzalloc(sizeof(struct dev_dma_sgt *) * ram_info->dma_array_len, KA_GFP_KERNEL);
+    sgt_array = (struct dev_dma_sgt **)ka_mm_kzalloc(sizeof(struct dev_dma_sgt *) * ram_info->dma_array_len,
+                                                     KA_GFP_KERNEL);
     if (sgt_array == NULL) {
         return -ENOMEM;
     }
@@ -215,14 +208,14 @@ free_sgt:
     return ret;
 }
 
-STATIC void vf_unmap_2m(ka_device_t *dev, ka_dma_addr_t base_2m_iova,
-                        struct page_info_list *dma_page_list)
+STATIC void vf_unmap_2m(ka_device_t *dev, ka_dma_addr_t base_2m_iova, struct page_info_list *dma_page_list)
 {
     struct page_info_entry *dma_page_info = NULL;
     ka_list_head_t *pos = NULL, *next = NULL;
     ka_dma_addr_t iova = base_2m_iova;
 
-    ka_list_for_each_safe(pos, next, &(dma_page_list->head)) {
+    ka_list_for_each_safe(pos, next, &(dma_page_list->head))
+    {
         dma_page_info = ka_list_entry(pos, struct page_info_entry, list);
         vdavinci_iommu_unmap(dev, iova, dma_page_info->length);
         iova += dma_page_info->length;
@@ -234,9 +227,7 @@ STATIC void vf_unmap_2m(ka_device_t *dev, ka_dma_addr_t base_2m_iova,
  * addresses. Then you can use this function to convert the pfn address to the iova
  * address of the corresponding pcie device.
  */
-STATIC int vf_map_2m(ka_device_t *dev,
-                     ka_dma_addr_t base_2m_iova, struct page_info_list *dma_page_list,
-                     int prot)
+STATIC int vf_map_2m(ka_device_t *dev, ka_dma_addr_t base_2m_iova, struct page_info_list *dma_page_list, int prot)
 {
     struct page_info_entry *dma_page_info = NULL;
     struct page_info_entry *dma_page_info_err = NULL;
@@ -248,7 +239,8 @@ STATIC int vf_map_2m(ka_device_t *dev,
         return -EINVAL;
     }
 
-    ka_list_for_each_safe(pos, next, &(dma_page_list->head)) {
+    ka_list_for_each_safe(pos, next, &(dma_page_list->head))
+    {
         dma_page_info = ka_list_entry(pos, struct page_info_entry, list);
 
         phys = ka_mm_page_to_phys(dma_page_info->page);
@@ -265,7 +257,8 @@ STATIC int vf_map_2m(ka_device_t *dev,
 
 unmap:
     iova = base_2m_iova;
-    ka_list_for_each_safe(pos, next, &(dma_page_list->head)) {
+    ka_list_for_each_safe(pos, next, &(dma_page_list->head))
+    {
         dma_page_info = ka_list_entry(pos, struct page_info_entry, list);
 
         if (dma_page_info != dma_page_info_err) {
@@ -279,8 +272,7 @@ unmap:
     return -EFAULT;
 }
 
-void vf_unmap_ram_range(struct hw_vdavinci *vdavinci,
-                        struct ram_range_info *ram_info)
+void vf_unmap_ram_range(struct hw_vdavinci *vdavinci, struct ram_range_info *ram_info)
 {
     int j;
     bool found = false;
@@ -293,7 +285,8 @@ void vf_unmap_ram_range(struct hw_vdavinci *vdavinci,
     if (ka_list_empty(&(vdavinci->vdev.dev_dma_info_list_head))) {
         return;
     }
-    ka_list_for_each_safe(pos, next, &(vdavinci->vdev.dev_dma_info_list_head)) {
+    ka_list_for_each_safe(pos, next, &(vdavinci->vdev.dev_dma_info_list_head))
+    {
         dma_info = ka_list_entry(pos, struct dev_dma_info, list);
         if (ram_info != dma_info->ram_info) {
             continue;
@@ -302,9 +295,8 @@ void vf_unmap_ram_range(struct hw_vdavinci *vdavinci,
         for (j = 0; j < ram_info->dma_array_len; j++) {
             dev_map_scheduled(vdavinci, &count);
             dma_array_node = ram_info->dma_array[j];
-            vf_unmap_2m(dev, dma_info->base_iova +
-                j * KA_VFIO_PIN_PAGES_MAX_ENTRIES * KA_MM_PAGE_SIZE,
-                &(dma_array_node->dma_page_list));
+            vf_unmap_2m(dev, dma_info->base_iova + j * KA_VFIO_PIN_PAGES_MAX_ENTRIES * KA_MM_PAGE_SIZE,
+                        &(dma_array_node->dma_page_list));
         }
         ka_mm_kfree(dma_info);
         found = true;
@@ -315,8 +307,7 @@ void vf_unmap_ram_range(struct hw_vdavinci *vdavinci,
     ka_base_atomic_dec(&ram_info->map_count);
 }
 
-int vf_map_ram_range(struct hw_vdavinci *vdavinci,
-                     struct ram_range_info *ram_info)
+int vf_map_ram_range(struct hw_vdavinci *vdavinci, struct ram_range_info *ram_info)
 {
     unsigned long count = 0;
     int i = 0, j = 0, ret = 0;
@@ -336,8 +327,7 @@ int vf_map_ram_range(struct hw_vdavinci *vdavinci,
         dev_map_scheduled(vdavinci, &count);
         dma_array_node = ram_info->dma_array[i];
         ret = vf_map_2m(dev, base_iova + i * KA_VFIO_PIN_PAGES_MAX_ENTRIES * KA_MM_PAGE_SIZE,
-                        &(dma_array_node->dma_page_list),
-                        prot);
+                        &(dma_array_node->dma_page_list), prot);
         if (ret != 0) {
             goto out;
         }

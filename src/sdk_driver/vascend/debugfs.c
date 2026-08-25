@@ -62,21 +62,23 @@ void hw_dvt_debugfs_add_vdavinci(struct hw_vdavinci *vdavinci)
     name = ka_mm_kzalloc(MAX_NAME_LEN, KA_GFP_KERNEL);
     if (!name) {
         ret = -ENOMEM;
-        vascend_err(vdavinci_to_dev(vdavinci), "add debugfs failed, "
-            "malloc name fialed, vid: %u, ret: %d\n", vdavinci->id, ret);
+        vascend_err(vdavinci_to_dev(vdavinci),
+                    "add debugfs failed, "
+                    "malloc name fialed, vid: %u, ret: %d\n",
+                    vdavinci->id, ret);
         return;
     }
 
     if (vdavinci->dvt->dvt_dev.dev_num > 1) {
-        ret = snprintf_s(name, MAX_NAME_LEN, MAX_NAME_LEN - 1, "vascend_p%u_%u",
-                         vdavinci->dev.dev_index, vdavinci->id);
+        ret = snprintf_s(name, MAX_NAME_LEN, MAX_NAME_LEN - 1, "vascend_p%u_%u", vdavinci->dev.dev_index, vdavinci->id);
     } else {
-        ret = snprintf_s(name, MAX_NAME_LEN, MAX_NAME_LEN - 1, "vascend%u",
-                         vdavinci->id);
+        ret = snprintf_s(name, MAX_NAME_LEN, MAX_NAME_LEN - 1, "vascend%u", vdavinci->id);
     }
     if (ret < 0) {
-        vascend_err(vdavinci_to_dev(vdavinci), "add debugfs failed, "
-            "vid: %u, ret: %d\n", vdavinci->id, ret);
+        vascend_err(vdavinci_to_dev(vdavinci),
+                    "add debugfs failed, "
+                    "vid: %u, ret: %d\n",
+                    vdavinci->id, ret);
         goto out;
     }
 
@@ -85,10 +87,8 @@ void hw_dvt_debugfs_add_vdavinci(struct hw_vdavinci *vdavinci)
         goto out;
     }
 
-    ka_debugfs_create_u64("notify_count", 0400, vdavinci->debugfs.debugfs,
-        &vdavinci->debugfs.notify_count);
-    ka_fs_debugfs_create_file("msix_count", 0400, vdavinci->debugfs.debugfs, vdavinci,
-        &vdavinci_msix_count_fops);
+    ka_debugfs_create_u64("notify_count", 0400, vdavinci->debugfs.debugfs, &vdavinci->debugfs.notify_count);
+    ka_fs_debugfs_create_file("msix_count", 0400, vdavinci->debugfs.debugfs, vdavinci, &vdavinci_msix_count_fops);
 out:
     ka_mm_kfree(name);
 }
@@ -123,6 +123,7 @@ void hw_dvt_debugfs_init(struct hw_dvt *dvt)
         ka_base_kref_init(&debugfs_ref);
         vascend_debugfs_root = vdavinci_debugfs_create_dir("vascend", NULL);
         if (vascend_debugfs_root == NULL) {
+            ka_task_mutex_unlock(&debugfs_vascend_lock);
             goto debugfs_root;
         }
     } else {
@@ -133,16 +134,20 @@ void hw_dvt_debugfs_init(struct hw_dvt *dvt)
     name = ka_mm_kzalloc(MAX_NAME_LEN, KA_GFP_KERNEL);
     if (!name) {
         ret = -ENOMEM;
-        vascend_err(vdavinci_priv->dev, "debugfs init failed, "
-                    "malloc name fialed, ret: %d\n", ret);
+        vascend_err(vdavinci_priv->dev,
+                    "debugfs init failed, "
+                    "malloc name fialed, ret: %d\n",
+                    ret);
         goto debugfs_root;
     }
 
-    ret = snprintf_s(name, MAX_NAME_LEN, MAX_NAME_LEN - 1, "vascend_%02x_%02x_%u",
-                     pdev->bus->number, KA_PCI_SLOT(pdev->devfn), KA_PCI_FUNC(pdev->devfn));
+    ret = snprintf_s(name, MAX_NAME_LEN, MAX_NAME_LEN - 1, "vascend_%02x_%02x_%u", pdev->bus->number,
+                     KA_PCI_SLOT(pdev->devfn), KA_PCI_FUNC(pdev->devfn));
     if (ret < 0) {
-        vascend_err(vdavinci_priv->dev, "debugfs init failed, "
-                    "snprientf_s fialed, ret: %d\n", ret);
+        vascend_err(vdavinci_priv->dev,
+                    "debugfs init failed, "
+                    "snprientf_s fialed, ret: %d\n",
+                    ret);
         goto free_name;
     }
 

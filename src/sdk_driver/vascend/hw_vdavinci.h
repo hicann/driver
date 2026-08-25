@@ -18,34 +18,34 @@
 #include "ka_kvm_pub.h"
 #include "ka_memory_pub.h"
 
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4,18,0))
-#define IS_VDAVINCI_KERNEL_VERSION_SUPPORT      1
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 18, 0))
+#define IS_VDAVINCI_KERNEL_VERSION_SUPPORT 1
 #else
-#define IS_VDAVINCI_KERNEL_VERSION_SUPPORT      0
+#define IS_VDAVINCI_KERNEL_VERSION_SUPPORT 0
 #endif
 
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5,8,0))
-#define IS_VDAVINCI_IODEV_SUPPORT               1
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 8, 0))
+#define IS_VDAVINCI_IODEV_SUPPORT 1
 #else
-#define IS_VDAVINCI_IODEV_SUPPORT               0
+#define IS_VDAVINCI_IODEV_SUPPORT 0
 #endif
 
 #ifdef VM_ALLOW_ANY_UNCACHED
-#define IS_VDAVINCI_NORMAL_NC_SUPPORT           1
+#define IS_VDAVINCI_NORMAL_NC_SUPPORT 1
 #else
-#define IS_VDAVINCI_NORMAL_NC_SUPPORT           0
+#define IS_VDAVINCI_NORMAL_NC_SUPPORT 0
 #endif
 
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5,10,0)) && defined(CONFIG_KEXEC_KERNEL_HOTUPGRADE)
-#define IS_VDAVINCI_VPMEM_SUPPORT               1
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 10, 0)) && defined(CONFIG_KEXEC_KERNEL_HOTUPGRADE)
+#define IS_VDAVINCI_VPMEM_SUPPORT 1
 #else
-#define IS_VDAVINCI_VPMEM_SUPPORT               0
+#define IS_VDAVINCI_VPMEM_SUPPORT 0
 #endif
 
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5,10,0))
-#define IS_VDAVINCI_PIN_HVA_SUPPORT             1
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 10, 0))
+#define IS_VDAVINCI_PIN_HVA_SUPPORT 1
 #else
-#define IS_VDAVINCI_PIN_HVA_SUPPORT             0
+#define IS_VDAVINCI_PIN_HVA_SUPPORT 0
 #endif
 
 #define RESERVE_SIZE 40
@@ -158,7 +158,7 @@ enum HW_VDAVINCI_TYPE_950_BIN0 {
     TYPE_VIR04_1C_15G_BIN0,
     TYPE_MAX_950_BIN0
 };
- 
+
 /* 32core, 128G */
 enum HW_VDAVINCI_TYPE_950_BIN1 {
     TYPE_VIR16_7C_60G_BIN1,
@@ -166,14 +166,14 @@ enum HW_VDAVINCI_TYPE_950_BIN1 {
     TYPE_VIR04_1C_15G_BIN1,
     TYPE_MAX_950_BIN1
 };
- 
+
 /* 28core, 128G */
 enum HW_VDAVINCI_TYPE_950_BIN2 {
     TYPE_VIR14_5C_60G_BIN2,
     TYPE_VIR07_2C_30G_BIN2,
     TYPE_MAX_950_BIN2
 };
- 
+
 /* 28core, 112G */
 enum HW_VDAVINCI_TYPE_950_BIN3 {
     TYPE_VIR14_5C_52G_BIN3,
@@ -199,7 +199,7 @@ struct vdavinci_type {
     int type;
     unsigned int bar0_size;
     unsigned int bar2_size;
-    unsigned long bar4_size;    /* if non-zero, use this value first */
+    unsigned long bar4_size; /* if non-zero, use this value first */
     unsigned int aicore_num;
     unsigned long mem_size;
     unsigned int aicpu_num;
@@ -208,7 +208,7 @@ struct vdavinci_type {
     unsigned int jpege_num;
     unsigned int venc_num;
     unsigned int vdec_num;
-    unsigned int share;         /* the minimum value is 1 */
+    unsigned int share; /* the minimum value is 1 */
     unsigned long ddrmem_size;
     unsigned long hbmmem_size;
 };
@@ -236,8 +236,8 @@ struct vdavinci_bar_map {
     size_t offset;
     enum HW_MAP_TYPE map_type;
     union {
-        u64 paddr;      /* vaild when map_type is MAP_TYPE_PASSTHROUGH */
-        void *vaddr;    /* vaild when map_type is MAP_TYPE_BACKEND */
+        u64 paddr;   /* vaild when map_type is MAP_TYPE_PASSTHROUGH */
+        void *vaddr; /* vaild when map_type is MAP_TYPE_BACKEND */
     };
     size_t size;
 };
@@ -259,20 +259,17 @@ struct vdavinci_dev {
  * dev_index value [0, 1 ...]
  */
 struct vdavinci_priv_ops {
-    int (*vdavinci_create)(struct vdavinci_dev *dev, void *vdavinci,
-                           struct vdavinci_type *type, ka_uuid_le_t uuid);
+    int (*vdavinci_create)(struct vdavinci_dev *dev, void *vdavinci, struct vdavinci_type *type, ka_uuid_le_t uuid);
     void (*vdavinci_destroy)(struct vdavinci_dev *dev);
     void (*vdavinci_release)(struct vdavinci_dev *dev);
     int (*vdavinci_reset)(struct vdavinci_dev *dev);
     int (*vdavinci_flr)(struct vdavinci_dev *dev);
     void (*vdavinci_notify)(struct vdavinci_dev *dev, int db_index);
-    int (*vdavinci_getmapinfo)(struct vdavinci_dev *dev,
-                               struct vdavinci_type *type, u32 bar_id,
+    int (*vdavinci_getmapinfo)(struct vdavinci_dev *dev, struct vdavinci_type *type, u32 bar_id,
                                struct vdavinci_mapinfo *mapinfo);
     int (*vdavinci_putmapinfo)(struct vdavinci_dev *dev);
     int (*davinci_getdevnum)(ka_device_t *dev);
-    int (*davinci_getdevinfo)(ka_device_t *dev, u32 dev_index,
-            struct dvt_devinfo* dev_info);
+    int (*davinci_getdevinfo)(ka_device_t *dev, u32 dev_index, struct dvt_devinfo *dev_info);
     int (*vascend_enable_sriov)(ka_pci_dev_t *pdev, int numvfs);
 };
 
@@ -304,8 +301,7 @@ int hw_dvt_hypervisor_inject_msix(void *__vdavinci, u32 vector, int irq);
  * Returns:
  * Zero on success, negative error code if failed.
  */
-int hw_dvt_hypervisor_read_gpa(void *__vdavinci, unsigned long gpa,
-                               void *buf, unsigned long len);
+int hw_dvt_hypervisor_read_gpa(void *__vdavinci, unsigned long gpa, void *buf, unsigned long len);
 
 /**
  * hw_dvt_hypervisor_write_gpa - copy data from host data buffer to GPA
@@ -317,8 +313,7 @@ int hw_dvt_hypervisor_read_gpa(void *__vdavinci, unsigned long gpa,
  * Returns:
  * Zero on success, negative error code if failed.
  */
-int hw_dvt_hypervisor_write_gpa(void *__vdavinci, unsigned long gpa,
-                                void *buf, unsigned long len);
+int hw_dvt_hypervisor_write_gpa(void *__vdavinci, unsigned long gpa, void *buf, unsigned long len);
 
 /**
  * hw_dvt_hypervisor_gfn_to_mfn - translate a GFN to MFN
@@ -328,8 +323,7 @@ int hw_dvt_hypervisor_write_gpa(void *__vdavinci, unsigned long gpa,
  * Returns:
  * MFN on success, hw_dvt_INVALID_ADDR if failed.
  */
-unsigned long hw_dvt_hypervisor_gfn_to_mfn(void *__vdavinci,
-                                           unsigned long gfn);
+unsigned long hw_dvt_hypervisor_gfn_to_mfn(void *__vdavinci, unsigned long gfn);
 
 /**
  * hw_dvt_hypervisor_dma_pool_init - dma pool init
@@ -356,8 +350,7 @@ void hw_dvt_hypervisor_dma_pool_uninit(void *__vdavinci);
  * Returns:
  * 0 on success, negative error code if failed.
  */
-int hw_dvt_hypervisor_dma_map_guest_page(void *__vdavinci, unsigned long gfn,
-                                         unsigned long size,
+int hw_dvt_hypervisor_dma_map_guest_page(void *__vdavinci, unsigned long gfn, unsigned long size,
                                          ka_sg_table_t **dma_sgt);
 
 /**
@@ -365,8 +358,7 @@ int hw_dvt_hypervisor_dma_map_guest_page(void *__vdavinci, unsigned long gfn,
  * @vdavinci: a vdavinci
  * @dma_sgt: the dma addr list(sg_table)
  */
-void hw_dvt_hypervisor_dma_unmap_guest_page(void *__vdavinci,
-                                            ka_sg_table_t *dma_sgt);
+void hw_dvt_hypervisor_dma_unmap_guest_page(void *__vdavinci, ka_sg_table_t *dma_sgt);
 
 /**
  * hw_dvt_hypervisor_dma_pool_active - dma pool active or not
@@ -388,9 +380,7 @@ bool hw_dvt_hypervisor_dma_pool_active(void *__vdavinci);
  * Returns:
  * 0 on success, negative error code if failed.
  */
-int hw_dvt_hypervisor_dma_map_guest_page_batch(void *__vdavinci,
-                                               unsigned long *gfn,
-                                               unsigned long *dma_addr,
+int hw_dvt_hypervisor_dma_map_guest_page_batch(void *__vdavinci, unsigned long *gfn, unsigned long *dma_addr,
                                                unsigned long count);
 
 /**
@@ -401,9 +391,7 @@ int hw_dvt_hypervisor_dma_map_guest_page_batch(void *__vdavinci,
  * @dma_addr: retrieve dma addr array
  * @count: array size
  */
-void hw_dvt_hypervisor_dma_unmap_guest_page_batch(void *__vdavinci,
-                                                  unsigned long *gfn,
-                                                  unsigned long *dma_addr,
+void hw_dvt_hypervisor_dma_unmap_guest_page_batch(void *__vdavinci, unsigned long *gfn, unsigned long *dma_addr,
                                                   unsigned long count);
 /**
  * hw_dvt_hypervisor_is_valid_gfn - check if a visible gfn
@@ -428,21 +416,14 @@ bool hw_dvt_hypervisor_is_valid_gfn(void *__vdavinci, unsigned long gfn);
 
 int hw_dvt_hypervisor_mmio_get(void **dst, int *size, void *__vdavinci, int bar);
 
-bool hw_dvt_hypervisor_is_vm_pfn_valid(ka_device_t *dev,
-                                       unsigned long pfn, unsigned long size);
+bool hw_dvt_hypervisor_is_vm_pfn_valid(ka_device_t *dev, unsigned long pfn, unsigned long size);
 
-
-void *vdavinci_dma_alloc_coherent(ka_device_t *dev, size_t size,
-    ka_dma_addr_t *dma_handle, ka_gfp_t flags);
-void vdavinci_dma_free_coherent(ka_device_t *dev, size_t size,
-    void *vaddr, ka_dma_addr_t dma_handle);
-ka_dma_addr_t vdavinci_dma_map_single(ka_device_t *dev, void *ptr, size_t size,
-    ka_dma_data_direction_t dir);
-ka_dma_addr_t vdavinci_dma_map_page(ka_device_t *dev, ka_page_t *page, size_t offset,
-    size_t size, ka_dma_data_direction_t dir);
-void vdavinci_dma_unmap_single(ka_device_t *dev, ka_dma_addr_t addr, size_t size,
-    ka_dma_data_direction_t dir);
-void vdavinci_dma_unmap_page(ka_device_t *dev, ka_dma_addr_t addr, size_t size,
-    ka_dma_data_direction_t dir);
+void *vdavinci_dma_alloc_coherent(ka_device_t *dev, size_t size, ka_dma_addr_t *dma_handle, ka_gfp_t flags);
+void vdavinci_dma_free_coherent(ka_device_t *dev, size_t size, void *vaddr, ka_dma_addr_t dma_handle);
+ka_dma_addr_t vdavinci_dma_map_single(ka_device_t *dev, void *ptr, size_t size, ka_dma_data_direction_t dir);
+ka_dma_addr_t vdavinci_dma_map_page(ka_device_t *dev, ka_page_t *page, size_t offset, size_t size,
+                                    ka_dma_data_direction_t dir);
+void vdavinci_dma_unmap_single(ka_device_t *dev, ka_dma_addr_t addr, size_t size, ka_dma_data_direction_t dir);
+void vdavinci_dma_unmap_page(ka_device_t *dev, ka_dma_addr_t addr, size_t size, ka_dma_data_direction_t dir);
 
 #endif /* HW_VDAVINCI_H_ */

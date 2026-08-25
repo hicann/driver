@@ -18,6 +18,5 @@ const ka_attribute_group_t **get_hw_vdavinci_groups(void);
 ssize_t available_instances_ops(ka_device_t *dev, const char *name, char *buf);
 ssize_t description_ops(ka_device_t *dev, const char *name, char *buf);
 ssize_t device_api_ops(ka_device_t *dev, char *buf);
-ssize_t vfg_id_store_ops(ka_device_t *dev, const char *name,
-                         const char *buf, size_t count);
+ssize_t vfg_id_store_ops(ka_device_t *dev, const char *name, const char *buf, size_t count);
 #endif

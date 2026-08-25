@@ -16,8 +16,7 @@
 #include "dvt.h"
 #include "dvt_sysfs.h"
 
-STATIC struct hw_vdavinci_type *get_vdavinci_type(ka_device_t *dev,
-                                                  const char *name)
+STATIC struct hw_vdavinci_type *get_vdavinci_type(ka_device_t *dev, const char *name)
 {
     struct hw_vdavinci_type *type = NULL;
     struct vdavinci_priv *priv = NULL;
@@ -66,11 +65,11 @@ ssize_t description_ops(ka_device_t *dev, const char *name, char *buf)
     }
 
     return snprintf_s(buf, KA_MM_PAGE_SIZE, KA_MM_PAGE_SIZE - 1,
-        "type name: %s\naicore num: %u\nmemory size: %luGB\naicpu num: %u\nvpc num: %u\n"\
-        "jpegd num: %u\njpege num: %u\nvenc num: %u\nvdec num: %u\nbar2 size: %uKB\nbar4 size: %luKB\n",
-        type->template_name, type->aicore_num, type->mem_size, type->aicpu_num, type->vpc_num,
-        type->jpegd_num, type->jpege_num, type->venc_num, type->vdec_num,
-        BYTES_TO_KB(type->bar2_size), BYTES_TO_KB(type->bar4_size));
+                      "type name: %s\naicore num: %u\nmemory size: %luGB\naicpu num: %u\nvpc num: %u\n"
+                      "jpegd num: %u\njpege num: %u\nvenc num: %u\nvdec num: %u\nbar2 size: %uKB\nbar4 size: %luKB\n",
+                      type->template_name, type->aicore_num, type->mem_size, type->aicpu_num, type->vpc_num,
+                      type->jpegd_num, type->jpege_num, type->venc_num, type->vdec_num, BYTES_TO_KB(type->bar2_size),
+                      BYTES_TO_KB(type->bar4_size));
 }
 
 ssize_t device_api_ops(ka_device_t *dev, char *buf)
@@ -80,13 +79,11 @@ ssize_t device_api_ops(ka_device_t *dev, char *buf)
     if (buf == NULL) {
         return 0;
     }
-    ret = snprintf_s(buf, KA_MM_PAGE_SIZE, KA_MM_PAGE_SIZE - 1, "%s\n",
-                     KA_VFIO_DEVICE_API_PCI_STRING);
+    ret = snprintf_s(buf, KA_MM_PAGE_SIZE, KA_MM_PAGE_SIZE - 1, "%s\n", KA_VFIO_DEVICE_API_PCI_STRING);
     return ret == -1 ? 0 : ret;
 }
 
-ssize_t vfg_id_store_ops(ka_device_t *dev, const char *name,
-                         const char *buf, size_t count)
+ssize_t vfg_id_store_ops(ka_device_t *dev, const char *name, const char *buf, size_t count)
 {
     unsigned int vfg_id;
     struct hw_vdavinci_type *type = NULL;
@@ -109,8 +106,7 @@ ssize_t vfg_id_store_ops(ka_device_t *dev, const char *name,
     return count;
 }
 
-STATIC ssize_t
-vdavinci_id_show(ka_device_t *dev, ka_device_attribute_t *attr, char *buf)
+STATIC ssize_t vdavinci_id_show(ka_device_t *dev, ka_device_attribute_t *attr, char *buf)
 {
     struct hw_vdavinci *vdavinci = get_vdavinci_from_dev(dev);
     int ret;
@@ -123,8 +119,7 @@ vdavinci_id_show(ka_device_t *dev, ka_device_attribute_t *attr, char *buf)
     return ret == -1 ? 0 : ret;
 }
 
-STATIC ssize_t
-hw_id_show(ka_device_t *dev, ka_device_attribute_t *attr, char *buf)
+STATIC ssize_t hw_id_show(ka_device_t *dev, ka_device_attribute_t *attr, char *buf)
 {
     struct hw_vdavinci *vdavinci = get_vdavinci_from_dev(dev);
     int ret;
@@ -132,15 +127,13 @@ hw_id_show(ka_device_t *dev, ka_device_attribute_t *attr, char *buf)
     if (vdavinci == NULL) {
         return 0;
     }
-    ret = snprintf_s(buf, KA_MM_PAGE_SIZE, KA_MM_PAGE_SIZE - 1,
-                     "Device [%x:%x]\n", vdavinci->dvt->vendor,
+    ret = snprintf_s(buf, KA_MM_PAGE_SIZE, KA_MM_PAGE_SIZE - 1, "Device [%x:%x]\n", vdavinci->dvt->vendor,
                      vdavinci->dvt->device);
 
     return ret == -1 ? 0 : ret;
 }
 
-STATIC ssize_t
-vfg_id_show(ka_device_t *dev, ka_device_attribute_t *attr, char *buf)
+STATIC ssize_t vfg_id_show(ka_device_t *dev, ka_device_attribute_t *attr, char *buf)
 {
     struct hw_vdavinci *vdavinci = get_vdavinci_from_dev(dev);
     int ret;
@@ -153,8 +146,7 @@ vfg_id_show(ka_device_t *dev, ka_device_attribute_t *attr, char *buf)
     return ret == -1 ? 0 : ret;
 }
 
-STATIC ssize_t
-vf_show(ka_device_t *dev, ka_device_attribute_t *attr, char *buf)
+STATIC ssize_t vf_show(ka_device_t *dev, ka_device_attribute_t *attr, char *buf)
 {
     struct hw_vdavinci *vdavinci = get_vdavinci_from_dev(dev);
     ka_pci_dev_t *pdev = NULL;
@@ -167,11 +159,14 @@ vf_show(ka_device_t *dev, ka_device_attribute_t *attr, char *buf)
     dvt = vdavinci->dvt;
     if (dvt->is_sriov_enabled && dvt->sriov.vf_num > 0) {
         pdev = vdavinci->vf.pdev;
-        ret = snprintf_s(buf, KA_MM_PAGE_SIZE, KA_MM_PAGE_SIZE - 1,
-            "%02x:%02x.%u\n", pdev->bus->number, KA_PCI_SLOT(pdev->devfn),
-            KA_PCI_FUNC(pdev->devfn));
+        if (pdev == NULL) {
+            goto out;
+        }
+        ret = snprintf_s(buf, KA_MM_PAGE_SIZE, KA_MM_PAGE_SIZE - 1, "%02x:%02x.%u\n", pdev->bus->number,
+                         KA_PCI_SLOT(pdev->devfn), KA_PCI_FUNC(pdev->devfn));
         return ret == -1 ? 0 : ret;
     }
+out:
     ret = snprintf_s(buf, KA_MM_PAGE_SIZE, KA_MM_PAGE_SIZE - 1, "\n");
     return ret == -1 ? 0 : ret;
 }
@@ -180,13 +175,8 @@ static KA_DEVICE_ATTR_RO(vdavinci_id);
 static KA_DEVICE_ATTR_RO(hw_id);
 static KA_DEVICE_ATTR_RO(vf);
 
-static ka_attribute_t *hw_vdavinci_attrs[] = {
-    &dev_attr_vdavinci_id.attr,
-    &dev_attr_hw_id.attr,
-    &dev_attr_vfg_id.attr,
-    &dev_attr_vf.attr,
-    NULL
-};
+static ka_attribute_t *hw_vdavinci_attrs[] = {&dev_attr_vdavinci_id.attr, &dev_attr_hw_id.attr, &dev_attr_vfg_id.attr,
+                                              &dev_attr_vf.attr, NULL};
 
 static ka_attribute_group_t hw_vdavinci_group = {
     .name = "hw_vdavinci",

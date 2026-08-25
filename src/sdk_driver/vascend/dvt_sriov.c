@@ -24,8 +24,7 @@ STATIC unsigned int sriov_virtfn_bus(ka_pci_dev_t *dev, unsigned int vf_id)
     if (!dev->is_physfn) {
         return -EINVAL;
     }
-    return dev->bus->number + ((dev->devfn + dev->sriov->offset +
-        dev->sriov->stride * vf_id) >> SHIFT);
+    return dev->bus->number + ((dev->devfn + dev->sriov->offset + dev->sriov->stride * vf_id) >> SHIFT);
 }
 
 STATIC unsigned int sriov_virtfn_devfn(ka_pci_dev_t *dev, unsigned int vf_id)
@@ -63,9 +62,7 @@ STATIC void hw_dvt_clean_vdavinci_vfs(struct hw_dvt *dvt)
     dvt->is_sriov_enabled = false;
 }
 
-STATIC int hw_dvt_sriov_init_vf_array(struct hw_dvt *dvt,
-                                      ka_pci_dev_t *dev,
-                                      int num_vfs)
+STATIC int hw_dvt_sriov_init_vf_array(struct hw_dvt *dvt, ka_pci_dev_t *dev, int num_vfs)
 {
     unsigned int i = 0, j = 0;
     ka_device_t *kdev = NULL;
@@ -80,8 +77,7 @@ STATIC int hw_dvt_sriov_init_vf_array(struct hw_dvt *dvt,
         return -ENOMEM;
     }
     for (i = 0; i < (unsigned int)num_vfs; i++) {
-        dvt->sriov.vf_array[i].vf = ka_pci_get_domain_bus_and_slot(ka_pci_domain_nr(dev->bus),
-                                                                   sriov_virtfn_bus(dev, i),
+        dvt->sriov.vf_array[i].vf = ka_pci_get_domain_bus_and_slot(ka_pci_domain_nr(dev->bus), sriov_virtfn_bus(dev, i),
                                                                    sriov_virtfn_devfn(dev, i));
         if (dvt->sriov.vf_array[i].vf == NULL) {
             vascend_err(kdev, "Failed to enable vf\n");
@@ -102,9 +98,7 @@ out_free_vf:
     return -EINVAL;
 }
 
-STATIC int hw_dvt_sriov_init_pf(struct hw_dvt *dvt,
-                                ka_pci_dev_t *dev,
-                                int num_vfs)
+STATIC int hw_dvt_sriov_init_pf(struct hw_dvt *dvt, ka_pci_dev_t *dev, int num_vfs)
 {
     int ret = 0;
     ka_device_t *kdev = NULL;

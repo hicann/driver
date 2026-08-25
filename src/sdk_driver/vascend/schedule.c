@@ -17,8 +17,7 @@
 #include "vfio_ops.h"
 #include "schedule.h"
 
-bool hw_vdavinci_changed_cpu(ka_task_struct_t *p,
-                             const ka_cpumask_t *next_mask)
+bool hw_vdavinci_changed_cpu(ka_task_struct_t *p, const ka_cpumask_t *next_mask)
 {
 #if (IS_VDAVINCI_KERNEL_VERSION_SUPPORT || (defined(DRV_UT)))
     if (ka_base_cpumask_empty(next_mask)) {
@@ -36,11 +35,8 @@ bool hw_vdavinci_changed_cpu(ka_task_struct_t *p,
     return true;
 }
 
-bool hw_vdavinci_scheduled(struct hw_vdavinci *vdavinci,
-                           unsigned long current_pages,
-                           unsigned long max_pages,
-                           unsigned int timeout,
-                           ka_page_t *page)
+bool hw_vdavinci_scheduled(struct hw_vdavinci *vdavinci, unsigned long current_pages, unsigned long max_pages,
+                           unsigned int timeout, ka_page_t *page)
 {
 #if (IS_VDAVINCI_KERNEL_VERSION_SUPPORT || (defined(DRV_UT)))
     ka_cpumask_var_t next_mask;
@@ -84,9 +80,7 @@ STATIC int get_page_node(ka_page_t *page)
 #endif /* VERSION_SUPPORT */
 #endif /* CONFIG_NUMA */
 
-bool get_node_cpu_by_page(struct hw_vdavinci *vdavinci,
-                          unsigned int current_cpu,
-                          ka_page_t *page,
+bool get_node_cpu_by_page(struct hw_vdavinci *vdavinci, unsigned int current_cpu, ka_page_t *page,
                           ka_cpumask_t *cpumask)
 {
 #ifdef CONFIG_NUMA
@@ -116,14 +110,17 @@ bool get_node_cpu_by_page(struct hw_vdavinci *vdavinci,
         }
         thread_mask = ka_get_cpumask(thread);
         ka_base_cpumask_or(&(vdavinci->vm_cpus_mask), &(vdavinci->vm_cpus_mask), thread_mask);
-    } ka_while_each_thread(me, thread);
-    ka_base_for_each_cpu(cpu, &(vdavinci->vm_cpus_mask)) {
+    }
+    ka_while_each_thread(me, thread);
+    ka_base_for_each_cpu(cpu, &(vdavinci->vm_cpus_mask))
+    {
         if (ka_system_cpu_to_node(cpu) == page_node) {
             ka_base_cpumask_set_cpu(cpu, cpumask);
         }
     }
     thread_mask = ka_get_cpumask(qemu_task);
-    ka_base_for_each_cpu(cpu, thread_mask) {
+    ka_base_for_each_cpu(cpu, thread_mask)
+    {
         if (ka_system_cpu_to_node(cpu) == page_node) {
             ka_base_cpumask_set_cpu(cpu, cpumask);
         }

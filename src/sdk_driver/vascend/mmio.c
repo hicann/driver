@@ -20,17 +20,17 @@
 #include "mmio.h"
 #include "priv_ops.h"
 
-#define VF_BAR2_SPARSE_SIZE         5
-#define VF_BAR2_STARS_OFFSET        0x8000
-#define VF_BAR2_STARS_SIZE          0x2000000
-#define VF_BAR2_TS_DOORBELL_OFFSET  0x2008000
-#define VF_BAR2_TS_DOORBELL_SIZE    0x40000
-#define VF_BAR2_HWTS_OFFSET         0x2408000
-#define VF_BAR2_HWTS_SIZE           0x10000
+#define VF_BAR2_SPARSE_SIZE 5
+#define VF_BAR2_STARS_OFFSET 0x8000
+#define VF_BAR2_STARS_SIZE 0x2000000
+#define VF_BAR2_TS_DOORBELL_OFFSET 0x2008000
+#define VF_BAR2_TS_DOORBELL_SIZE 0x40000
+#define VF_BAR2_HWTS_OFFSET 0x2408000
+#define VF_BAR2_HWTS_SIZE 0x10000
 #define VF_BAR2_SOC_DOORBELL_OFFSET 0x2808000
-#define VF_BAR2_SOC_DOORBELL_SIZE   0x1000
-#define VF_BAR2_PARA_OFFSET         0x2908000
-#define VF_BAR2_PARA_SIZE           0x4000
+#define VF_BAR2_SOC_DOORBELL_SIZE 0x1000
+#define VF_BAR2_PARA_OFFSET 0x2908000
+#define VF_BAR2_PARA_SIZE 0x4000
 
 #define DVT_MMIO_BAR0_SIZE_910B 0x40000000
 #define DVT_MMIO_BAR2_SIZE_910B 0x20000000
@@ -50,15 +50,13 @@ struct mmio_device_init_info {
 };
 
 STATIC const struct mmio_device_init_info mmio_init_info[] = {
-    { PCI_DEVICE_ID_ASCEND910B, KA_PCI_CFG_SPACE_EXP_SIZE, DVT_MMIO_BAR0_SIZE_910B, 0 },
-    { PCI_DEVICE_ID_ASCEND910_93, KA_PCI_CFG_SPACE_EXP_SIZE, DVT_MMIO_BAR0_SIZE_910_93, 0 },
-    { PCI_DEVICE_ID_ASCEND950, KA_PCI_CFG_SPACE_EXP_SIZE, DVT_MMIO_BAR0_SIZE_950, 0 },
-    { KA_PCI_ANY_ID, KA_PCI_CFG_SPACE_EXP_SIZE, DVT_MMIO_BAR0_SIZE, 0 },
-    {}
-};
+    {PCI_DEVICE_ID_ASCEND910B, KA_PCI_CFG_SPACE_EXP_SIZE, DVT_MMIO_BAR0_SIZE_910B, 0},
+    {PCI_DEVICE_ID_ASCEND910_93, KA_PCI_CFG_SPACE_EXP_SIZE, DVT_MMIO_BAR0_SIZE_910_93, 0},
+    {PCI_DEVICE_ID_ASCEND950, KA_PCI_CFG_SPACE_EXP_SIZE, DVT_MMIO_BAR0_SIZE_950, 0},
+    {KA_PCI_ANY_ID, KA_PCI_CFG_SPACE_EXP_SIZE, DVT_MMIO_BAR0_SIZE, 0},
+    {}};
 
-STATIC void hw_vdavinci_reset_sparse_mmio(struct hw_vdavinci *vdavinci,
-                                          struct vdavinci_mapinfo *mmio_map_info)
+STATIC void hw_vdavinci_reset_sparse_mmio(struct hw_vdavinci *vdavinci, struct vdavinci_mapinfo *mmio_map_info)
 {
     int ret = 0;
     u64 i = 0;
@@ -69,8 +67,10 @@ STATIC void hw_vdavinci_reset_sparse_mmio(struct hw_vdavinci *vdavinci,
         if (map->map_type == MAP_TYPE_BACKEND) {
             ret = memset_s(map->vaddr, map->size, 0, map->size);
             if (ret != 0) {
-                vascend_err(vdavinci_to_dev(vdavinci), "vdavinci reset mmio sapce "
-                            "failed, vid: %u, ret: %d\n", vdavinci->id, ret);
+                vascend_err(vdavinci_to_dev(vdavinci),
+                            "vdavinci reset mmio sapce "
+                            "failed, vid: %u, ret: %d\n",
+                            vdavinci->id, ret);
             }
         }
     }
@@ -94,17 +94,15 @@ STATIC int hw_vdavinci_mmio_check_sparse(struct hw_vdavinci *vdavinci)
     }
 
     if (vdavinci->mmio.mem_sparse.num > HW_BAR_SPARSE_MAP_MAX) {
-        vascend_err(vdavinci_to_dev(vdavinci),
-                    "invalid sparse num %llu\n", vdavinci->mmio.mem_sparse.num);
+        vascend_err(vdavinci_to_dev(vdavinci), "invalid sparse num %llu\n", vdavinci->mmio.mem_sparse.num);
         return -EINVAL;
     }
 
     for (i = 0; i < vdavinci->mmio.mem_sparse.num; i++) {
         map = &vdavinci->mmio.mem_sparse.map_info[i];
-        if (map->offset == 0 || map->offset > vdavinci->type->bar4_size ||
-            map->size == 0 || map->size > vdavinci->type->bar4_size - map->offset ||
-            !KA_MM_PAGE_ALIGNED(map->offset) || !KA_MM_PAGE_ALIGNED(map->size) ||
-            !KA_MM_PAGE_ALIGNED(map->paddr)) {
+        if (map->offset == 0 || map->offset > vdavinci->type->bar4_size || map->size == 0 ||
+            map->size > vdavinci->type->bar4_size - map->offset || !KA_MM_PAGE_ALIGNED(map->offset) ||
+            !KA_MM_PAGE_ALIGNED(map->size) || !KA_MM_PAGE_ALIGNED(map->paddr)) {
             vascend_err(vdavinci_to_dev(vdavinci),
                         "check sparse failed: invalid map: offset:%lx size:%lx paddr:%llx, bar4_size:%lx\n",
                         map->offset, map->size, map->paddr, vdavinci->type->bar4_size);
@@ -116,8 +114,7 @@ STATIC int hw_vdavinci_mmio_check_sparse(struct hw_vdavinci *vdavinci)
                 vascend_err(vdavinci_to_dev(vdavinci),
                             "check sparse failed: map not continuous:"
                             "offset:%lx size:%lx, next offset:%lx\n",
-                            map->offset, map->size,
-                            vdavinci->mmio.mem_sparse.map_info[i + 1].offset);
+                            map->offset, map->size, vdavinci->mmio.mem_sparse.map_info[i + 1].offset);
                 return -EINVAL;
             }
         }
@@ -146,23 +143,21 @@ STATIC int hw_dvt_vdavinci_getmapinfo(struct hw_vdavinci *vdavinci)
     if (ret != 0) {
         return ret;
     }
-    ret = vdavinci_priv_vdev_getmapinfo(vdavinci, &tp, VFIO_PCI_BAR4_REGION_INDEX,
-                                        &vdavinci->mmio.mem_sparse);
+    ret = vdavinci_priv_vdev_getmapinfo(vdavinci, &tp, VFIO_PCI_BAR4_REGION_INDEX, &vdavinci->mmio.mem_sparse);
     if (ret != 0) {
-        vascend_err(dvt->vdavinci_priv->dev,
-                    "get map info failed, vid:%u type bar4_size:%lx ret:%d\n",
-                    vdavinci->id, vdavinci->type->bar4_size, ret);
+        vascend_err(dvt->vdavinci_priv->dev, "get map info failed, vid:%u type bar4_size:%lx ret:%d\n", vdavinci->id,
+                    vdavinci->type->bar4_size, ret);
         return ret;
     }
 
     return 0;
 }
 
-STATIC void hw_vdavinci_sparse_mmio_uninit(struct hw_vdavinci *vdavinci,
-                                           struct vdavinci_mapinfo *mmio_map_info)
+STATIC void hw_vdavinci_sparse_mmio_uninit(struct hw_vdavinci *vdavinci, struct vdavinci_mapinfo *mmio_map_info)
 {
     u64 i = 0;
     ka_pci_dev_t *pdev = NULL;
+    ka_device_t *res_dev = NULL;
     struct vdavinci_bar_map *map;
 
     for (i = 0; i < mmio_map_info->num; i++) {
@@ -175,10 +170,11 @@ STATIC void hw_vdavinci_sparse_mmio_uninit(struct hw_vdavinci *vdavinci,
 
     mmio_map_info->num = 0;
     if (mmio_map_info->io_addr != NULL) {
-        pdev = ka_container_of(vdavinci_resource_dev(vdavinci), ka_pci_dev_t, dev);
-        if (pdev == NULL) {
+        res_dev = vdavinci_resource_dev(vdavinci);
+        if (res_dev == NULL) {
             return;
         }
+        pdev = ka_container_of(res_dev, ka_pci_dev_t, dev);
         ka_mm_pci_iounmap(pdev, mmio_map_info->io_addr);
         mmio_map_info->io_addr = NULL;
     }
@@ -217,20 +213,17 @@ int hw_vdavinci_310_mmio_init(struct hw_vdavinci *vdavinci)
     vdavinci->mmio.bar4_sparse.map_info[0].offset = 0;
     vdavinci->mmio.bar4_sparse.map_info[0].size = vdavinci->type->bar4_size;
 
-    vdavinci->mmio.bar0_sparse.map_info[0].vaddr =
-        ka_mm_vzalloc(vdavinci->mmio.bar0_sparse.map_info[0].size);
+    vdavinci->mmio.bar0_sparse.map_info[0].vaddr = ka_mm_vzalloc(vdavinci->mmio.bar0_sparse.map_info[0].size);
     if (!vdavinci->mmio.bar0_sparse.map_info[0].vaddr) {
         goto put_mapinfo;
     }
 
-    vdavinci->mmio.bar2_sparse.map_info[0].vaddr =
-        vmalloc_user(vdavinci->mmio.bar2_sparse.map_info[0].size);
+    vdavinci->mmio.bar2_sparse.map_info[0].vaddr = vmalloc_user(vdavinci->mmio.bar2_sparse.map_info[0].size);
     if (!vdavinci->mmio.bar2_sparse.map_info[0].vaddr) {
         goto io_failed;
     }
 
-    vdavinci->mmio.bar4_sparse.map_info[0].vaddr =
-        vmalloc_user(vdavinci->mmio.bar4_sparse.map_info[0].size);
+    vdavinci->mmio.bar4_sparse.map_info[0].vaddr = vmalloc_user(vdavinci->mmio.bar4_sparse.map_info[0].size);
     if (!vdavinci->mmio.bar4_sparse.map_info[0].vaddr) {
         goto mem_failed;
     }
@@ -309,14 +302,12 @@ int hw_vdavinci_310pro_mmio_init(struct hw_vdavinci *vdavinci)
     vdavinci->mmio.bar4_sparse.map_info[1].size = vdavinci->mmio.mem_sparse.map_info[0].size;
     vdavinci->mmio.bar4_sparse.map_info[1].paddr = vdavinci->mmio.mem_sparse.map_info[0].paddr;
 
-    vdavinci->mmio.bar2_sparse.map_info[0].vaddr =
-        vmalloc_user(vdavinci->mmio.bar2_sparse.map_info[0].size);
+    vdavinci->mmio.bar2_sparse.map_info[0].vaddr = vmalloc_user(vdavinci->mmio.bar2_sparse.map_info[0].size);
     if (!vdavinci->mmio.bar2_sparse.map_info[0].vaddr) {
         goto put_mapinfo;
     }
 
-    vdavinci->mmio.bar4_sparse.map_info[0].vaddr =
-        vmalloc_user(vdavinci->mmio.bar4_sparse.map_info[0].size);
+    vdavinci->mmio.bar4_sparse.map_info[0].vaddr = vmalloc_user(vdavinci->mmio.bar4_sparse.map_info[0].size);
     if (!vdavinci->mmio.bar4_sparse.map_info[0].vaddr) {
         goto mem_failed;
     }
@@ -381,14 +372,12 @@ int hw_vdavinci_910_mmio_init(struct hw_vdavinci *vdavinci)
     vdavinci->mmio.bar4_sparse.map_info[0].offset = 0;
     vdavinci->mmio.bar4_sparse.map_info[0].size = vdavinci->type->bar4_size;
 
-    vdavinci->mmio.bar2_sparse.map_info[0].vaddr =
-        vmalloc_user(vdavinci->mmio.bar2_sparse.map_info[0].size);
+    vdavinci->mmio.bar2_sparse.map_info[0].vaddr = vmalloc_user(vdavinci->mmio.bar2_sparse.map_info[0].size);
     if (!vdavinci->mmio.bar2_sparse.map_info[0].vaddr) {
         goto put_mapinfo;
     }
 
-    vdavinci->mmio.bar4_sparse.map_info[0].vaddr =
-        vmalloc_user(vdavinci->mmio.bar4_sparse.map_info[0].size);
+    vdavinci->mmio.bar4_sparse.map_info[0].vaddr = vmalloc_user(vdavinci->mmio.bar4_sparse.map_info[0].size);
     if (!vdavinci->mmio.bar4_sparse.map_info[0].vaddr) {
         goto mem_failed;
     }
@@ -450,15 +439,14 @@ void hw_vdavinci_950_vf_mmio_uninit(struct hw_vdavinci *vdavinci)
     hw_vdavinci_sparse_mmio_uninit(vdavinci, &vdavinci->mmio.bar0_sparse);
     hw_vdavinci_sparse_mmio_uninit(vdavinci, &vdavinci->mmio.bar2_sparse);
     hw_vdavinci_sparse_mmio_uninit(vdavinci, &vdavinci->mmio.bar4_sparse);
- 
+
     vdavinci->mmio.io_base = NULL;
     vdavinci->mmio.mem_base = NULL;
- 
+
     vascend_info(vdavinci_to_dev(vdavinci), "vf mmio uninit success\n");
 }
 
-STATIC int hw_vdavinci_vf_bar0_init(struct hw_vdavinci *vdavinci, phys_addr_t base,
-    int *io_base_idx, int *mem_base_idx)
+STATIC int hw_vdavinci_vf_bar0_init(struct hw_vdavinci *vdavinci, phys_addr_t base, int *io_base_idx, int *mem_base_idx)
 {
     int idx = 0;
     vdavinci->mmio.bar0_sparse.num = VF_BAR0_SPARSE_SIZE;
@@ -474,8 +462,7 @@ STATIC int hw_vdavinci_vf_bar0_init(struct hw_vdavinci *vdavinci, phys_addr_t ba
     vdavinci->mmio.bar0_sparse.map_info[idx].map_type = MAP_TYPE_BACKEND;
     vdavinci->mmio.bar0_sparse.map_info[idx].offset = VF_BAR0_VPC_OFFSET;
     vdavinci->mmio.bar0_sparse.map_info[idx].size = VF_BAR0_VPC_SIZE;
-    vdavinci->mmio.bar0_sparse.map_info[idx].vaddr =
-            vmalloc_user(vdavinci->mmio.bar0_sparse.map_info[idx].size);
+    vdavinci->mmio.bar0_sparse.map_info[idx].vaddr = vmalloc_user(vdavinci->mmio.bar0_sparse.map_info[idx].size);
     if (!vdavinci->mmio.bar0_sparse.map_info[idx].vaddr) {
         vascend_err(vdavinci_to_dev(vdavinci), "not enough memory");
         return -ENOMEM;
@@ -490,8 +477,7 @@ STATIC int hw_vdavinci_vf_bar0_init(struct hw_vdavinci *vdavinci, phys_addr_t ba
     vdavinci->mmio.bar0_sparse.map_info[idx].map_type = MAP_TYPE_BACKEND;
     vdavinci->mmio.bar0_sparse.map_info[idx].offset = VF_BAR0_DVPP_OFFSET;
     vdavinci->mmio.bar0_sparse.map_info[idx].size = VF_BAR0_DVPP_SIZE;
-    vdavinci->mmio.bar0_sparse.map_info[idx].vaddr =
-         vmalloc_user(vdavinci->mmio.bar0_sparse.map_info[idx].size);
+    vdavinci->mmio.bar0_sparse.map_info[idx].vaddr = vmalloc_user(vdavinci->mmio.bar0_sparse.map_info[idx].size);
     if (!vdavinci->mmio.bar0_sparse.map_info[idx].vaddr) {
         ka_mm_vfree(vdavinci->mmio.bar0_sparse.map_info[*io_base_idx].vaddr);
         vascend_err(vdavinci_to_dev(vdavinci), "not enough memory");
@@ -532,8 +518,8 @@ out_invaild_idx:
     return -EINVAL;
 }
 
-STATIC int hw_vdavinci_910_93_vf_bar0_init(struct hw_vdavinci *vdavinci, phys_addr_t base,
-                                         phys_addr_t len, int *io_base_idx, int *mem_base_idx)
+STATIC int hw_vdavinci_910_93_vf_bar0_init(struct hw_vdavinci *vdavinci, phys_addr_t base, phys_addr_t len,
+                                           int *io_base_idx, int *mem_base_idx)
 {
     int idx = 0;
     vdavinci->mmio.bar0_sparse.num = VF_BAR0_SPARSE_SIZE;
@@ -549,8 +535,7 @@ STATIC int hw_vdavinci_910_93_vf_bar0_init(struct hw_vdavinci *vdavinci, phys_ad
     vdavinci->mmio.bar0_sparse.map_info[idx].map_type = MAP_TYPE_BACKEND;
     vdavinci->mmio.bar0_sparse.map_info[idx].offset = VF_BAR0_VPC_OFFSET;
     vdavinci->mmio.bar0_sparse.map_info[idx].size = VF_BAR0_VPC_SIZE;
-    vdavinci->mmio.bar0_sparse.map_info[idx].vaddr =
-            vmalloc_user(vdavinci->mmio.bar0_sparse.map_info[idx].size);
+    vdavinci->mmio.bar0_sparse.map_info[idx].vaddr = vmalloc_user(vdavinci->mmio.bar0_sparse.map_info[idx].size);
     if (!vdavinci->mmio.bar0_sparse.map_info[idx].vaddr) {
         vascend_err(vdavinci_to_dev(vdavinci), "not enough memory");
         return -ENOMEM;
@@ -565,8 +550,7 @@ STATIC int hw_vdavinci_910_93_vf_bar0_init(struct hw_vdavinci *vdavinci, phys_ad
     vdavinci->mmio.bar0_sparse.map_info[idx].map_type = MAP_TYPE_BACKEND;
     vdavinci->mmio.bar0_sparse.map_info[idx].offset = VF_BAR0_DVPP_OFFSET;
     vdavinci->mmio.bar0_sparse.map_info[idx].size = VF_BAR0_DVPP_SIZE;
-    vdavinci->mmio.bar0_sparse.map_info[idx].vaddr =
-         vmalloc_user(vdavinci->mmio.bar0_sparse.map_info[idx].size);
+    vdavinci->mmio.bar0_sparse.map_info[idx].vaddr = vmalloc_user(vdavinci->mmio.bar0_sparse.map_info[idx].size);
     if (!vdavinci->mmio.bar0_sparse.map_info[idx].vaddr) {
         ka_mm_vfree(vdavinci->mmio.bar0_sparse.map_info[*io_base_idx].vaddr);
         vascend_err(vdavinci_to_dev(vdavinci), "not enough memory");
@@ -580,8 +564,8 @@ STATIC int hw_vdavinci_910_93_vf_bar0_init(struct hw_vdavinci *vdavinci, phys_ad
     /* map the remaining lengths */
     vdavinci->mmio.bar0_sparse.map_info[idx].map_type = MAP_TYPE_PASSTHROUGH;
     vdavinci->mmio.bar0_sparse.map_info[idx].offset = VF_BAR0_MSG_OFFSET;
-    vdavinci->mmio.bar0_sparse.map_info[idx].size =
-        ka_base_min((unsigned long)len, (unsigned long)(DVT_MMIO_BAR0_SIZE_910_93 - VF_BAR0_MSG_OFFSET));
+    vdavinci->mmio.bar0_sparse.map_info[idx].size = ka_base_min(
+        (unsigned long)len, (unsigned long)(DVT_MMIO_BAR0_SIZE_910_93 - VF_BAR0_MSG_OFFSET));
     vdavinci->mmio.bar0_sparse.map_info[idx].paddr = base;
     if (++idx >= vdavinci->mmio.bar0_sparse.num) {
         goto out_invaild_idx;
@@ -612,9 +596,9 @@ STATIC void hw_vdavinci_vf_bar2_init(struct hw_vdavinci *vdavinci, phys_addr_t b
     int i = 0;
 
     vdavinci->mmio.bar2_sparse.num = VF_BAR2_SPARSE_SIZE;
-    for (i = 0; i <  VF_BAR2_SPARSE_SIZE; i++) {
+    for (i = 0; i < VF_BAR2_SPARSE_SIZE; i++) {
         vdavinci->mmio.bar2_sparse.map_info[i].map_type = bar2_sparse_info[i].map_type;
-        vdavinci->mmio.bar2_sparse.map_info[i].offset =  bar2_sparse_info[i].offset;
+        vdavinci->mmio.bar2_sparse.map_info[i].offset = bar2_sparse_info[i].offset;
         vdavinci->mmio.bar2_sparse.map_info[i].size = bar2_sparse_info[i].size;
         vdavinci->mmio.bar2_sparse.map_info[i].paddr = base + bar2_sparse_info[i].offset;
     }
@@ -675,8 +659,7 @@ int hw_vdavinci_910_93_vf_mmio_init(struct hw_vdavinci *vdavinci)
     bar0_len = ka_pci_resource_len(pdev, VFIO_PCI_BAR0_REGION_INDEX);
     bar4_len = ka_pci_resource_len(pdev, VFIO_PCI_BAR4_REGION_INDEX);
 
-    ret = hw_vdavinci_910_93_vf_bar0_init(vdavinci, bar0_base, bar0_len,
-                                          &io_base_idx, &mem_base_idx);
+    ret = hw_vdavinci_910_93_vf_bar0_init(vdavinci, bar0_base, bar0_len, &io_base_idx, &mem_base_idx);
     if (ret != 0) {
         return ret;
     }
@@ -704,23 +687,23 @@ int hw_vdavinci_950_vf_mmio_init(struct hw_vdavinci *vdavinci)
     phys_addr_t bar0_base, bar2_base, bar4_base;
     int io_base_idx, mem_base_idx;
     int ret;
- 
+
     bar0_base = ka_pci_resource_start(pdev, VFIO_PCI_BAR0_REGION_INDEX);
     bar2_base = ka_pci_resource_start(pdev, VFIO_PCI_BAR2_REGION_INDEX);
     bar4_base = ka_pci_resource_start(pdev, VFIO_PCI_BAR4_REGION_INDEX);
- 
+
     ret = hw_vdavinci_vf_bar0_init(vdavinci, bar0_base, &io_base_idx, &mem_base_idx);
     if (ret != 0) {
         return ret;
     }
- 
+
     hw_vdavinci_vf_bar2_init(vdavinci, bar2_base);
     hw_vdavinci_vf_bar4_init(vdavinci, bar4_base);
- 
+
     /* mmio.io_base ref for vpc cqsq, mmio.mem_base ref for dvpp share memory */
     vdavinci->mmio.io_base = vdavinci->mmio.bar0_sparse.map_info[io_base_idx].vaddr;
     vdavinci->mmio.mem_base = vdavinci->mmio.bar0_sparse.map_info[mem_base_idx].vaddr;
- 
+
     vascend_info(vdavinci_to_dev(vdavinci), "VF mmio init success, vf_index: %d\n", vdavinci->vf_index);
     return 0;
 }
@@ -731,8 +714,7 @@ int hw_vdavinci_910b_mmio_init(struct hw_vdavinci *vdavinci)
 }
 
 void hw_vdavinci_910b_mmio_uninit(struct hw_vdavinci *vdavinci)
-{
-}
+{}
 
 int hw_vdavinci_910_93_mmio_init(struct hw_vdavinci *vdavinci)
 {
@@ -740,8 +722,7 @@ int hw_vdavinci_910_93_mmio_init(struct hw_vdavinci *vdavinci)
 }
 
 void hw_vdavinci_910_93_mmio_uninit(struct hw_vdavinci *vdavinci)
-{
-}
+{}
 
 int hw_vdavinci_950_mmio_init(struct hw_vdavinci *vdavinci)
 {
@@ -749,8 +730,7 @@ int hw_vdavinci_950_mmio_init(struct hw_vdavinci *vdavinci)
 }
 
 void hw_vdavinci_950_mmio_uninit(struct hw_vdavinci *vdavinci)
-{
-}
+{}
 
 int hw_dvt_set_mmio_device_info(struct hw_dvt *dvt)
 {
@@ -758,8 +738,7 @@ int hw_dvt_set_mmio_device_info(struct hw_dvt *dvt)
     struct hw_dvt_device_info *info = &dvt->device_info;
 
     for (i = 0; mmio_init_info[i].device != 0; i++) {
-        if (dvt->device == mmio_init_info[i].device ||
-            mmio_init_info[i].device == (unsigned short)KA_PCI_ANY_ID) {
+        if (dvt->device == mmio_init_info[i].device || mmio_init_info[i].device == (unsigned short)KA_PCI_ANY_ID) {
             info->cfg_space_size = mmio_init_info[i].cfg_space_size;
             info->mmio_bar = mmio_init_info[i].mmio_bar;
             info->mmio_size = mmio_init_info[i].mmio_size;

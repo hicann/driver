@@ -31,9 +31,9 @@ struct dev_dma_sgt {
 
 struct dev_dma_info {
     ka_device_t *dev;
-    ka_dma_addr_t base_iova;               /* for arm */
+    ka_dma_addr_t base_iova; /* for arm */
     struct ram_range_info *ram_info;
-    struct dev_dma_sgt **sgt_array;     /* for x86 */
+    struct dev_dma_sgt **sgt_array; /* for x86 */
     ka_list_head_t list;
 };
 
@@ -54,20 +54,16 @@ struct ram_range_info {
     unsigned long npages;
     unsigned long userspace_addr;
     int dma_array_len;
-    struct dma_info_2m** dma_array;
+    struct dma_info_2m **dma_array;
     ka_list_head_t list;
     ka_atomic_t map_count;
 };
 
-int dev_dma_map_ram_range(struct hw_vdavinci *vdavinci,
-                          struct ram_range_info *ram_info);
+int dev_dma_map_ram_range(struct hw_vdavinci *vdavinci, struct ram_range_info *ram_info);
 
-void dev_dma_unmap_ram_range(struct hw_vdavinci *vdavinci,
-                             struct ram_range_info *ram_info);
+void dev_dma_unmap_ram_range(struct hw_vdavinci *vdavinci, struct ram_range_info *ram_info);
 
-int vf_map_ram_range(struct hw_vdavinci *vdavinci,
-                     struct ram_range_info *ram_info);
+int vf_map_ram_range(struct hw_vdavinci *vdavinci, struct ram_range_info *ram_info);
 
-void vf_unmap_ram_range(struct hw_vdavinci *vdavinci,
-                        struct ram_range_info *ram_info);
+void vf_unmap_ram_range(struct hw_vdavinci *vdavinci, struct ram_range_info *ram_info);
 #endif

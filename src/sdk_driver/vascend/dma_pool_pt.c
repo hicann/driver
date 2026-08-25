@@ -31,6 +31,7 @@ void hw_vdavinci_iommu_detach_group(struct hw_vdavinci *vdavinci)
     ka_mm_iommu_domain_free(vf->domain);
     vf->domain = NULL;
     ka_mm_put_iova_domain(&vf->iovad);
+    ka_mm_iommu_group_put(group);
 }
 
 STATIC bool vfio_iommu_has_sw_msi(ka_iommu_group_t *group, phys_addr_t *base)
@@ -42,7 +43,8 @@ STATIC bool vfio_iommu_has_sw_msi(ka_iommu_group_t *group, phys_addr_t *base)
 
     KA_INIT_LIST_HEAD(&group_resv_regions);
     ka_mm_iommu_get_group_resv_regions(group, &group_resv_regions);
-    ka_list_for_each_entry(region, &group_resv_regions, list) {
+    ka_list_for_each_entry(region, &group_resv_regions, list)
+    {
         /*
          * The presence of any 'real' MSI regions should take
          * precedence over the software-managed one if the
@@ -59,7 +61,8 @@ STATIC bool vfio_iommu_has_sw_msi(ka_iommu_group_t *group, phys_addr_t *base)
         }
     }
 
-    ka_list_for_each_entry_safe(region, next, &group_resv_regions, list) {
+    ka_list_for_each_entry_safe(region, next, &group_resv_regions, list)
+    {
         ka_mm_kfree(region);
     }
 #endif
@@ -75,12 +78,35 @@ STATIC void init_vf_iovad(struct hw_vdavinci *vdavinci)
     ka_copy_reserved_iova(&vm_dom->iovad, &vf->iovad);
 }
 
+STATIC int hw_vdavinci_get_msi_cookie(struct hw_vdavinci *vdavinci, ka_iommu_group_t *group)
+{
+    int ret = 0;
+    struct hw_vf_info *vf = &vdavinci->vf;
+    bool resv_msi = false;
+    phys_addr_t resv_msi_base = 0;
+    ka_device_t *dev = vdavinci_resource_dev(vdavinci);
+
+    if (group == NULL) {
+        return -ENODEV;
+    }
+    resv_msi = vfio_iommu_has_sw_msi(group, &resv_msi_base);
+    if (resv_msi) {
+#if IS_VDAVINCI_KERNEL_VERSION_SUPPORT
+        ret = ka_mm_iommu_get_msi_cookie(vf->domain, resv_msi_base);
+#endif
+        if (ret != 0) {
+            vascend_err(dev, "Failed to allocate msi cookie.");
+            return ret;
+        }
+    }
+
+    return 0;
+}
+
 int hw_vdavinci_iommu_attach_group(struct hw_vdavinci *vdavinci)
 {
     struct hw_vf_info *vf = &vdavinci->vf;
     ka_iommu_group_t *group;
-    bool resv_msi = false;
-    phys_addr_t resv_msi_base = 0;
     ka_device_t *dev = vdavinci_resource_dev(vdavinci);
     int ret;
 
@@ -107,19 +133,13 @@ int hw_vdavinci_iommu_attach_group(struct hw_vdavinci *vdavinci)
         vascend_err(dev, "Failed to attach group.");
         goto out_domain;
     }
-
-    resv_msi = vfio_iommu_has_sw_msi(group, &resv_msi_base);
-    if (resv_msi) {
-#if IS_VDAVINCI_KERNEL_VERSION_SUPPORT
-        ret = ka_mm_iommu_get_msi_cookie(vf->domain, resv_msi_base);
-#endif
-        if (ret) {
-            vascend_err(dev, "Failed to allocate msi cookie.");
-            goto out_group;
-        }
+    ret = hw_vdavinci_get_msi_cookie(vdavinci, group);
+    if (ret != 0) {
+        goto out_group;
     }
-
     init_vf_iovad(vdavinci);
+    ka_mm_iommu_group_put(group);
+
     return 0;
 
 out_group:
@@ -127,6 +147,9 @@ out_group:
 out_domain:
     ka_mm_iommu_domain_free(vf->domain);
     vf->domain = NULL;
+    if (group != NULL) {
+        ka_mm_iommu_group_put(group);
+    }
     return ret;
 }
 
@@ -138,8 +161,8 @@ STATIC unsigned long aligned_nrpages(unsigned long addr, size_t size)
     return KA_MM_PAGE_ALIGN(page_addr + size) >> KA_MM_PAGE_SHIFT;
 }
 
-STATIC ka_dma_addr_t vdavinci_do_map(struct hw_vdavinci *vdavinci, phys_addr_t paddr,
-                                  size_t size, int dir, u64 dma_mask)
+STATIC ka_dma_addr_t vdavinci_do_map(struct hw_vdavinci *vdavinci, phys_addr_t paddr, size_t size, int dir,
+                                     u64 dma_mask)
 {
     ka_dma_addr_t iova_addr = 0, start_paddr = 0;
     int ret = 0, prot = 0;
@@ -149,8 +172,7 @@ STATIC ka_dma_addr_t vdavinci_do_map(struct hw_vdavinci *vdavinci, phys_addr_t p
     unsigned long nr_pages = aligned_nrpages(paddr, size);
     ka_device_t *dev = vdavinci_resource_dev(vdavinci);
 
-    new_iova = ka_alloc_iova(&vf->iovad, nr_pages,
-                             dma_mask >> KA_MM_PAGE_SHIFT, true);
+    new_iova = ka_alloc_iova(&vf->iovad, nr_pages, dma_mask >> KA_MM_PAGE_SHIFT, true);
     if (new_iova == NULL) {
         vascend_err(vdavinci_to_dev(vdavinci), "alloc iova failed");
         goto error;
@@ -166,9 +188,8 @@ STATIC ka_dma_addr_t vdavinci_do_map(struct hw_vdavinci *vdavinci, phys_addr_t p
         prot |= KA_IOMMU_WRITE;
     }
 
-    ret = vdavinci_iommu_map(dev, iova_pfn << KA_MM_PAGE_SHIFT,
-                             paddr_pfn << KA_MM_PAGE_SHIFT,
-                             KA_MM_PAGE_ALIGN(size), prot);
+    ret = vdavinci_iommu_map(dev, iova_pfn << KA_MM_PAGE_SHIFT, paddr_pfn << KA_MM_PAGE_SHIFT, KA_MM_PAGE_ALIGN(size),
+                             prot);
     if (ret != 0) {
         vascend_err(vdavinci_to_dev(vdavinci), "iommu map failed %d", ret);
         goto error;
@@ -186,8 +207,7 @@ error:
     return KA_DMA_MAPPING_ERROR;
 }
 
-STATIC ka_dma_addr_t vdavinci_do_map_single(ka_device_t *dev, phys_addr_t paddr,
-                                         size_t size, int dir, u64 dma_mask)
+STATIC ka_dma_addr_t vdavinci_do_map_single(ka_device_t *dev, phys_addr_t paddr, size_t size, int dir, u64 dma_mask)
 {
     struct hw_vdavinci *vdavinci = find_vdavinci(dev);
     struct vm_dom_info *vm_dom = NULL;
@@ -227,13 +247,12 @@ STATIC ka_dma_addr_t vdavinci_do_map_single(ka_device_t *dev, phys_addr_t paddr,
 error:
     ka_task_up_read(&vm_dom->sem);
 
-    vascend_err(dev, "Device request: %zx@%llx dir %d --- failed\n",
-                size, (unsigned long long)paddr, dir);
+    vascend_err(dev, "Device request: %zx@%llx dir %d --- failed\n", size, (unsigned long long)paddr, dir);
     return KA_DMA_MAPPING_ERROR;
 }
 
-ka_dma_addr_t vdavinci_dma_map_page(ka_device_t *dev, ka_page_t *page, size_t offset,
-                                 size_t size, ka_dma_data_direction_t dir)
+ka_dma_addr_t vdavinci_dma_map_page(ka_device_t *dev, ka_page_t *page, size_t offset, size_t size,
+                                    ka_dma_data_direction_t dir)
 {
     if (!ka_valid_dma_direction(dir)) {
         vascend_err(dev, "invalid dma direction %d\n", dir);
@@ -248,8 +267,7 @@ ka_dma_addr_t vdavinci_dma_map_page(ka_device_t *dev, ka_page_t *page, size_t of
     return vdavinci_do_map_single(dev, ka_mm_page_to_phys(page) + offset, size, dir, *dev->dma_mask);
 }
 
-ka_dma_addr_t vdavinci_dma_map_single(ka_device_t *dev, void *ptr, size_t size,
-                                   ka_dma_data_direction_t dir)
+ka_dma_addr_t vdavinci_dma_map_single(ka_device_t *dev, void *ptr, size_t size, ka_dma_data_direction_t dir)
 {
     ka_page_t *page;
     size_t offset;
@@ -268,6 +286,7 @@ ka_dma_addr_t vdavinci_dma_map_single(ka_device_t *dev, void *ptr, size_t size,
     offset = ka_mm_offset_in_page(ptr);
     if (offset != 0) {
         vascend_err(dev, "address should PAGE align, %zx\n", offset);
+        return KA_DMA_MAPPING_ERROR;
     }
 
     return vdavinci_do_map_single(dev, ka_mm_page_to_phys(page) + offset, size, dir, *dev->dma_mask);
@@ -289,20 +308,17 @@ STATIC void vdavinci_do_unmap(ka_device_t *dev, ka_dma_addr_t dev_addr, size_t s
     ka_free_iova(&vf->iovad, iova_pfn);
 }
 
-void vdavinci_dma_unmap_single(ka_device_t *dev, ka_dma_addr_t addr, size_t size,
-                               ka_dma_data_direction_t dir)
+void vdavinci_dma_unmap_single(ka_device_t *dev, ka_dma_addr_t addr, size_t size, ka_dma_data_direction_t dir)
 {
     vdavinci_do_unmap(dev, addr, size);
 }
 
-void vdavinci_dma_unmap_page(ka_device_t *dev, ka_dma_addr_t addr, size_t size,
-                             ka_dma_data_direction_t dir)
+void vdavinci_dma_unmap_page(ka_device_t *dev, ka_dma_addr_t addr, size_t size, ka_dma_data_direction_t dir)
 {
     vdavinci_do_unmap(dev, addr, size);
 }
 
-void *vdavinci_dma_alloc_coherent(ka_device_t *dev, size_t size,
-                                  ka_dma_addr_t *dma_handle, ka_gfp_t flags)
+void *vdavinci_dma_alloc_coherent(ka_device_t *dev, size_t size, ka_dma_addr_t *dma_handle, ka_gfp_t flags)
 {
     ka_page_t *page = NULL;
     size_t align_size = KA_MM_PAGE_ALIGN(size);
@@ -314,8 +330,7 @@ void *vdavinci_dma_alloc_coherent(ka_device_t *dev, size_t size,
         return NULL;
     }
 
-    *dma_handle = vdavinci_do_map_single(dev, ka_mm_page_to_phys(page),
-                                         align_size, KA_DMA_BIDIRECTIONAL,
+    *dma_handle = vdavinci_do_map_single(dev, ka_mm_page_to_phys(page), align_size, KA_DMA_BIDIRECTIONAL,
                                          dev->coherent_dma_mask);
     if (*dma_handle != KA_DMA_MAPPING_ERROR) {
         return ka_mm_page_address(page);
@@ -325,8 +340,7 @@ void *vdavinci_dma_alloc_coherent(ka_device_t *dev, size_t size,
     return NULL;
 }
 
-void vdavinci_dma_free_coherent(ka_device_t *dev, size_t size,
-                                void *vaddr, ka_dma_addr_t dma_handle)
+void vdavinci_dma_free_coherent(ka_device_t *dev, size_t size, void *vaddr, ka_dma_addr_t dma_handle)
 {
     size_t align_size = KA_MM_PAGE_ALIGN(size);
     int order = ka_mm_get_order(align_size);

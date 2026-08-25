@@ -15,8 +15,7 @@
 #define _VDAVINCI_H_
 
 void hw_vdavinci_unregister_iodev(struct hw_vdavinci *vdavinci);
-int hw_vdavinci_register_iodev(struct hw_vdavinci *vdavinci,
-                               gpa_t addr, int len, int index);
+int hw_vdavinci_register_iodev(struct hw_vdavinci *vdavinci, gpa_t addr, int len, int index);
 void vdavinci_module_exit(void);
 
-#endif 
+#endif

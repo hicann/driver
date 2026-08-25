@@ -28,10 +28,10 @@
 #include "vdavinci.h"
 #include "kvmdt.h"
 
-#define HW_VDAVINCI_READ_SUPPORT_TYPES          3
-#define HW_VDAVINCI_WRITE_SUPPORT_TYPES         2
+#define HW_VDAVINCI_READ_SUPPORT_TYPES 3
+#define HW_VDAVINCI_WRITE_SUPPORT_TYPES 2
 
-#define HW_VDAVINCI_IRQ_BYPASS_REGISTERED       0
+#define HW_VDAVINCI_IRQ_BYPASS_REGISTERED 0
 
 enum {
     IO_REGION_INDEX,
@@ -58,8 +58,7 @@ struct vdavinci_priv *kdev_to_davinci(ka_device_t *kdev)
     return (struct vdavinci_priv *)ka_pci_get_drvdata(pdev);
 }
 
-STATIC struct hw_vdavinci_type *
-hw_vdavinci_find_available_type(ka_device_t *dev, const char *name)
+STATIC struct hw_vdavinci_type *hw_vdavinci_find_available_type(ka_device_t *dev, const char *name)
 {
     struct hw_vdavinci_type *type = NULL;
     struct hw_dvt *dvt = kdev_to_davinci(dev)->dvt;
@@ -115,7 +114,7 @@ bool hw_vdavinci_is_enabled(struct hw_dvt *dvt)
 bool hw_vdavinci_priv_callback_check(struct vdavinci_priv *vdavinci_priv)
 {
     struct vdavinci_priv_ops *ops = NULL;
- 
+
     if (vdavinci_priv == NULL) {
         return false;
     }
@@ -123,16 +122,12 @@ bool hw_vdavinci_priv_callback_check(struct vdavinci_priv *vdavinci_priv)
         return false;
     }
     ops = vdavinci_priv->ops;
-    if (ops->vdavinci_create == NULL ||
-        ops->vdavinci_destroy == NULL ||
-        ops->vdavinci_release == NULL ||
-        ops->vdavinci_reset == NULL ||
-        ops->vdavinci_notify == NULL ||
-        ops->davinci_getdevnum == NULL ||
+    if (ops->vdavinci_create == NULL || ops->vdavinci_destroy == NULL || ops->vdavinci_release == NULL ||
+        ops->vdavinci_reset == NULL || ops->vdavinci_notify == NULL || ops->davinci_getdevnum == NULL ||
         ops->davinci_getdevinfo == NULL) {
         return false;
     }
- 
+
     return true;
 }
 
@@ -217,8 +212,7 @@ int hw_vdavinci_remove(ka_mdev_device_t *mdev)
     u32 vid = 0;
     ka_device_t *dev = NULL;
 
-    if (vdavinci == NULL || vdavinci->dvt == NULL || vdavinci->type == NULL ||
-        vdavinci->dvt->vdavinci_priv == NULL) {
+    if (vdavinci == NULL || vdavinci->dvt == NULL || vdavinci->type == NULL || vdavinci->dvt->vdavinci_priv == NULL) {
         return -EINVAL;
     }
     if (handle_valid(vdavinci->handle)) {
@@ -276,16 +270,17 @@ int hw_vdavinci_open(ka_mdev_device_t *mdev)
     }
     ret = kvmdt_guest_init(mdev);
     if (ret != 0) {
-        vascend_err(vdavinci_to_dev(vdavinci), "kvmdt_guest_init failed, "
-                    "vid: %u, ret: %d\n", vdavinci->id, ret);
+        vascend_err(vdavinci_to_dev(vdavinci),
+                    "kvmdt_guest_init failed, "
+                    "vid: %u, ret: %d\n",
+                    vdavinci->id, ret);
         goto undo_group;
     }
 
     g_hw_vdavinci_ops.vdavinci_activate(vdavinci);
     ka_mm_mmgrab(vdavinci->mm);
     ka_base_atomic_set(&vdavinci->vdev.released, 0);
-    vascend_info(vdavinci_to_dev(vdavinci), "leave open vdavinci, vid: %u\n",
-        vdavinci->id);
+    vascend_info(vdavinci_to_dev(vdavinci), "leave open vdavinci, vid: %u\n", vdavinci->id);
     return ret;
 
 undo_group:
@@ -321,8 +316,7 @@ STATIC void hw_vdavinci_release_trigger(ka_vdev_pci_irq_ctx *ctx)
         ka_irq_bypass_unregister_producer(&ctx->producer);
         ctx->producer.token = NULL;
         ctx->producer.irq = -1;
-        vascend_info(vdavinci_to_dev(vdavinci),
-                     "vdavinci unregister irq success, irq: %d\n", ctx->irq);
+        vascend_info(vdavinci_to_dev(vdavinci), "vdavinci unregister irq success, irq: %d\n", ctx->irq);
     }
     ka_eventfd_ctx_put(trigger);
     ctx->irq = -1;
@@ -359,8 +353,7 @@ STATIC void __hw_vdavinci_release(struct hw_vdavinci *vdavinci)
     if (vdavinci == NULL) {
         return;
     }
-    vascend_info(vdavinci_to_dev(vdavinci), "enter release vdavinci, vid: %u\n",
-                 vdavinci->id);
+    vascend_info(vdavinci_to_dev(vdavinci), "enter release vdavinci, vid: %u\n", vdavinci->id);
     if (!handle_valid(vdavinci->handle)) {
         return;
     }
@@ -368,9 +361,11 @@ STATIC void __hw_vdavinci_release(struct hw_vdavinci *vdavinci)
     if (ka_base_atomic_cmpxchg(&vdavinci->vdev.released, 0, 1)) {
         return;
     }
-
+    if (vdavinci->vdev.release_work.func != NULL) {
+        (void)ka_task_cancel_work_sync(&vdavinci->vdev.release_work);
+    }
     g_hw_vdavinci_ops.vdavinci_release(vdavinci);
-    info  = (struct kvmdt_guest_info *)vdavinci->handle;
+    info = (struct kvmdt_guest_info *)vdavinci->handle;
     vdavinci->handle = 0;
     kvmdt_guest_exit(info);
     vdavinci_unregister_vfio_group(vdavinci);
@@ -381,14 +376,14 @@ STATIC void __hw_vdavinci_release(struct hw_vdavinci *vdavinci)
     vdavinci->mm = NULL;
     vdavinci->vdev.kvm = NULL;
 
-    ka_list_for_each_entry_safe(ioeventfd, ioeventfd_tmp, &vdavinci->ioeventfds_list, next) {
+    ka_list_for_each_entry_safe(ioeventfd, ioeventfd_tmp, &vdavinci->ioeventfds_list, next)
+    {
 #if IS_VDAVINCI_KERNEL_VERSION_SUPPORT
         hw_vdavinci_ioeventfd_deactive(vdavinci, ioeventfd);
 #endif
     }
 
-    vascend_info(vdavinci_to_dev(vdavinci), "leave release vdavinci, vid: %u\n",
-                 vdavinci->id);
+    vascend_info(vdavinci_to_dev(vdavinci), "leave release vdavinci, vid: %u\n", vdavinci->id);
 }
 
 void hw_vdavinci_release(ka_mdev_device_t *mdev)
@@ -400,14 +395,12 @@ void hw_vdavinci_release(ka_mdev_device_t *mdev)
 
 STATIC void hw_vdavinci_release_work(ka_work_struct_t *work)
 {
-    struct hw_vdavinci *vdavinci = ka_container_of(work, struct hw_vdavinci,
-                    vdev.release_work);
+    struct hw_vdavinci *vdavinci = ka_container_of(work, struct hw_vdavinci, vdev.release_work);
 
     __hw_vdavinci_release(vdavinci);
 }
 
-ssize_t hw_vdavinci_read(ka_mdev_device_t *mdev, char __ka_user *buf,
-                         size_t count, loff_t *ppos)
+ssize_t hw_vdavinci_read(ka_mdev_device_t *mdev, char __ka_user *buf, size_t count, loff_t *ppos)
 {
     int i = 0;
     unsigned int done = 0;
@@ -450,9 +443,7 @@ ssize_t hw_vdavinci_read(ka_mdev_device_t *mdev, char __ka_user *buf,
     return done;
 }
 
-size_t hw_vdavinci_write(ka_mdev_device_t *mdev,
-                         const char __ka_user *buf,
-                         size_t count, loff_t *ppos)
+size_t hw_vdavinci_write(ka_mdev_device_t *mdev, const char __ka_user *buf, size_t count, loff_t *ppos)
 {
     int i = 0;
     unsigned int done = 0;
@@ -495,9 +486,7 @@ size_t hw_vdavinci_write(ka_mdev_device_t *mdev,
     return done;
 }
 
-STATIC struct vdavinci_bar_map *
-hw_vdavinci_find_bar_map(struct vdavinci_mapinfo *mmio_map_info,
-                         unsigned long offset)
+STATIC struct vdavinci_bar_map *hw_vdavinci_find_bar_map(struct vdavinci_mapinfo *mmio_map_info, unsigned long offset)
 {
     u64 i = 0;
     struct vdavinci_bar_map *map = NULL;
@@ -541,13 +530,11 @@ STATIC struct vdavinci_mapinfo *hw_vdavinci_get_bar_sparse(struct hw_vdavinci *v
     }
 }
 
-STATIC int hw_vdavinci_remap(struct hw_vdavinci *vdavinci,
-                             ka_vm_area_struct_t *vma,
-                             struct vdavinci_bar_map *map)
+STATIC int hw_vdavinci_remap(struct hw_vdavinci *vdavinci, ka_vm_area_struct_t *vma, struct vdavinci_bar_map *map)
 {
     int ret = 0;
     unsigned long size = vma->vm_end - vma->vm_start;
- 
+
     switch (map->map_type) {
         case MAP_TYPE_BACKEND:
             ret = ka_mm_remap_vmalloc_range(vma, map->vaddr, 0);
@@ -563,8 +550,7 @@ STATIC int hw_vdavinci_remap(struct hw_vdavinci *vdavinci,
                 vma->vm_page_prot = ka_mm_pgprot_noncached(vma->vm_page_prot);
             }
             vma->vm_pgoff = map->paddr >> KA_MM_PAGE_SHIFT;
-            ret = ka_mm_remap_pfn_range(vma, vma->vm_start, vma->vm_pgoff,
-                                  size, vma->vm_page_prot);
+            ret = ka_mm_remap_pfn_range(vma, vma->vm_start, vma->vm_pgoff, size, vma->vm_page_prot);
             break;
         }
         default:
@@ -572,9 +558,7 @@ STATIC int hw_vdavinci_remap(struct hw_vdavinci *vdavinci,
             break;
     }
     if (ret != 0) {
-        vascend_err(vdavinci_to_dev(vdavinci),
-                    "vdavinci remap error, map_type: %d, ret: %d",
-                    map->map_type, ret);
+        vascend_err(vdavinci_to_dev(vdavinci), "vdavinci remap error, map_type: %d, ret: %d", map->map_type, ret);
     }
 
     return ret;
@@ -606,14 +590,12 @@ int hw_vdavinci_mmap(ka_mdev_device_t *mdev, ka_vm_area_struct_t *vma)
     size = vma->vm_end - vma->vm_start;
     map = hw_vdavinci_find_bar_map(mmio_map_info, pgoff << KA_MM_PAGE_SHIFT);
     if (map == NULL || map->size == 0 || size != map->size) {
-        vascend_err(vdavinci_to_dev(vdavinci),
-                    "find no bar map for pgoff:0x%lx\n", pgoff);
+        vascend_err(vdavinci_to_dev(vdavinci), "find no bar map for pgoff:0x%lx\n", pgoff);
         return -EINVAL;
     }
     ret = hw_vdavinci_remap(vdavinci, vma, map);
     if (ret != 0) {
-        vascend_err(vdavinci_to_dev(vdavinci),
-                    "vdavinci mmap error, index: %lu, ret: %d\n", index, ret);
+        vascend_err(vdavinci_to_dev(vdavinci), "vdavinci mmap error, index: %lu, ret: %d\n", index, ret);
     }
 
     return ret;
@@ -621,47 +603,37 @@ int hw_vdavinci_mmap(ka_mdev_device_t *mdev, ka_vm_area_struct_t *vma)
 
 STATIC int hw_vdavinci_get_irq_count(struct hw_vdavinci *vdavinci, unsigned int type)
 {
-    u16 flags;
+    u16 flags = 0;
     const unsigned int byte_count = 2;
 
     if (type == VFIO_PCI_INTX_IRQ_INDEX) {
         return 1;
     } else if (type == VFIO_PCI_MSIX_IRQ_INDEX) {
-        g_hw_vdavinci_ops.emulate_cfg_read(vdavinci, DAVINCI_PCI_MSIX_FLAGS,
-                                           &flags, byte_count);
+        g_hw_vdavinci_ops.emulate_cfg_read(vdavinci, DAVINCI_PCI_MSIX_FLAGS, &flags, byte_count);
         return (flags & KA_PCI_MSIX_FLAGS_QSIZE) + 1;
-    } else if (type == VFIO_PCI_MSI_IRQ_INDEX ||
-               type == VFIO_PCI_ERR_IRQ_INDEX ||
-               type == VFIO_PCI_REQ_IRQ_INDEX) {
+    } else if (type == VFIO_PCI_MSI_IRQ_INDEX || type == VFIO_PCI_ERR_IRQ_INDEX || type == VFIO_PCI_REQ_IRQ_INDEX) {
         return 0;
     }
 
     return 0;
 }
 
-STATIC int hw_vdavinci_set_intx_mask(struct hw_vdavinci *vdavinci,
-                                     const ka_vfio_irq_set_t *hdr,
-                                     void *data)
+STATIC int hw_vdavinci_set_intx_mask(struct hw_vdavinci *vdavinci, const ka_vfio_irq_set_t *hdr, void *data)
 {
     return 0;
 }
 
-STATIC int hw_vdavinci_set_intx_unmask(struct hw_vdavinci *vdavinci,
-                                       const ka_vfio_irq_set_t *hdr,
-                                       void *data)
+STATIC int hw_vdavinci_set_intx_unmask(struct hw_vdavinci *vdavinci, const ka_vfio_irq_set_t *hdr, void *data)
 {
     return 0;
 }
 
-STATIC int hw_vdavinci_set_intx_trigger(struct hw_vdavinci *vdavinci,
-                                        const ka_vfio_irq_set_t *hdr,
-                                        void *data)
+STATIC int hw_vdavinci_set_intx_trigger(struct hw_vdavinci *vdavinci, const ka_vfio_irq_set_t *hdr, void *data)
 {
     return 0;
 }
 
-static void hw_vdavinci_put_msix_trigger(struct hw_vdavinci *vdavinci,
-                                         unsigned int end, unsigned int start)
+static void hw_vdavinci_put_msix_trigger(struct hw_vdavinci *vdavinci, unsigned int end, unsigned int start)
 {
     unsigned int i;
 
@@ -673,11 +645,11 @@ static void hw_vdavinci_put_msix_trigger(struct hw_vdavinci *vdavinci,
     }
 }
 
-STATIC int hw_vdavinci_check_msix(struct hw_vdavinci *vdavinci,
-                                  unsigned int start, unsigned int count)
+STATIC int hw_vdavinci_check_msix(struct hw_vdavinci *vdavinci, unsigned int start, unsigned int count)
 {
     unsigned int nnvec;
     int nvec, i;
+    bool ctx_alloced = false;
 
     nvec = hw_vdavinci_get_irq_count(vdavinci, VFIO_PCI_MSIX_IRQ_INDEX);
     nnvec = (unsigned int)nvec;
@@ -693,16 +665,19 @@ STATIC int hw_vdavinci_check_msix(struct hw_vdavinci *vdavinci,
         if (vdavinci->vdev.ctx == NULL) {
             return -ENOMEM;
         }
+        ctx_alloced = true;
         for (i = 0; i < nvec; i++) {
-             ka_task_spin_lock_init(&vdavinci->vdev.ctx[i].msix_lock);
+            ka_task_spin_lock_init(&vdavinci->vdev.ctx[i].msix_lock);
         }
     }
 
     if (!vdavinci->debugfs.msix_count) {
         vdavinci->debugfs.msix_count = ka_mm_kcalloc(nvec, sizeof(unsigned long long), KA_GFP_KERNEL);
         if (!vdavinci->debugfs.msix_count) {
-            ka_mm_kfree(vdavinci->vdev.ctx);
-            vdavinci->vdev.ctx = NULL;
+            if (ctx_alloced) {
+                ka_mm_kfree(vdavinci->vdev.ctx);
+                vdavinci->vdev.ctx = NULL;
+            }
             return -ENOMEM;
         }
     }
@@ -732,19 +707,15 @@ STATIC void vdavinci_irq_work_handler(ka_work_struct_t *work)
     ret = ka_irq_bypass_register_producer(&ctx->producer);
     if (ret != 0) {
         ctx->producer.token = KA_ERR_PTR(ret);
-        vascend_warn(vdavinci_to_dev(vdavinci),
-                     "vdavinci register irq error: %d, irq: %d\n", ret, ctx->irq);
+        vascend_warn(vdavinci_to_dev(vdavinci), "vdavinci register irq error: %d, irq: %d\n", ret, ctx->irq);
         return;
     }
 
-    vascend_info(vdavinci_to_dev(vdavinci),
-                 "vdavinci register irq success, irq: %d\n", ctx->irq);
+    vascend_info(vdavinci_to_dev(vdavinci), "vdavinci register irq success, irq: %d\n", ctx->irq);
 #endif
 }
 
-STATIC int hw_vdavinci_set_msix_trigger(struct hw_vdavinci *vdavinci,
-                                        const ka_vfio_irq_set_t *hdr,
-                                        void *data)
+STATIC int hw_vdavinci_set_msix_trigger(struct hw_vdavinci *vdavinci, const ka_vfio_irq_set_t *hdr, void *data)
 {
     int fd, ret;
     unsigned int i = 0, j = 0, start = hdr->start, count = hdr->count;
@@ -770,8 +741,10 @@ STATIC int hw_vdavinci_set_msix_trigger(struct hw_vdavinci *vdavinci,
 
             trigger = ka_eventfd_ctx_fdget(fd);
             if (KA_IS_ERR(trigger)) {
-                vascend_err(vdavinci_to_dev(vdavinci), "eventfd_ctx_fdget_failed, "
-                    "vid: %u, vector: %u 's eventfd can't be %d\n", vdavinci->id, i, fd);
+                vascend_err(vdavinci_to_dev(vdavinci),
+                            "eventfd_ctx_fdget_failed, "
+                            "vid: %u, vector: %u 's eventfd can't be %d\n",
+                            vdavinci->id, i, fd);
                 ret = KA_PTR_ERR(trigger);
                 goto release_eventfd;
             }
@@ -793,12 +766,9 @@ release_eventfd:
     return ret;
 }
 
-STATIC int hw_vdavinci_set_irqs(struct hw_vdavinci *vdavinci,
-                                ka_vfio_irq_set_t *hdr,
-                                void *data)
+STATIC int hw_vdavinci_set_irqs(struct hw_vdavinci *vdavinci, ka_vfio_irq_set_t *hdr, void *data)
 {
-    int (*func)(struct hw_vdavinci *vdavinci, const ka_vfio_irq_set_t *hdr,
-                void *data) = NULL;
+    int (*func)(struct hw_vdavinci *vdavinci, const ka_vfio_irq_set_t *hdr, void *data) = NULL;
 
     switch (hdr->index) {
         case VFIO_PCI_INTX_IRQ_INDEX:
@@ -836,8 +806,7 @@ STATIC int hw_vdavinci_set_irqs(struct hw_vdavinci *vdavinci,
     return func(vdavinci, hdr, data);
 }
 
-STATIC long _hw_vdavinci_device_get_info(uintptr_t arg,
-                                         struct hw_vdavinci* vdavinci)
+STATIC long _hw_vdavinci_device_get_info(uintptr_t arg, struct hw_vdavinci *vdavinci)
 {
     ka_vfio_device_info_t info;
     unsigned long minsz = ka_offsetofend(ka_vfio_device_info_t, num_irqs);
@@ -866,14 +835,13 @@ STATIC long _hw_vdavinci_device_get_info(uintptr_t arg,
     return 0;
 }
 
-STATIC int _hw_vdavinci_device_get_cap(int cap_type_id,
-                                       ka_vfio_region_info_cap_sparse_mmap_t *sparse,
+STATIC int _hw_vdavinci_device_get_cap(int cap_type_id, ka_vfio_region_info_cap_sparse_mmap_t *sparse,
                                        ka_vfio_region_info_t *info, uintptr_t arg)
 {
     int ret = 0;
 #if IS_VDAVINCI_KERNEL_VERSION_SUPPORT
     size_t size = 0;
-    ka_vfio_info_cap_t caps = { .buf = NULL, .size = 0 };
+    ka_vfio_info_cap_t caps = {.buf = NULL, .size = 0};
 
     if (cap_type_id != KA_VFIO_REGION_INFO_CAP_SPARSE_MMAP || sparse == NULL) {
         return -EINVAL;
@@ -893,8 +861,7 @@ STATIC int _hw_vdavinci_device_get_cap(int cap_type_id,
         goto out;
     }
     ka_driver_vfio_info_cap_shift(&caps, sizeof(*info));
-    if (ka_base_copy_to_user((void __ka_user *)(arg + sizeof(*info)), caps.buf,
-                             caps.size) != 0) {
+    if (ka_base_copy_to_user((void __ka_user *)(arg + sizeof(*info)), caps.buf, caps.size) != 0) {
         ret = -EFAULT;
         goto out;
     }
@@ -905,8 +872,8 @@ out:
     return ret;
 }
 
-STATIC ka_vfio_region_info_cap_sparse_mmap_t *
-hw_vdavinci_device_get_sparse_info(struct vdavinci_mapinfo *mmio_map_info, unsigned int map_num)
+STATIC ka_vfio_region_info_cap_sparse_mmap_t *hw_vdavinci_device_get_sparse_info(struct vdavinci_mapinfo *mmio_map_info,
+                                                                                 unsigned int map_num)
 {
     ka_vfio_region_info_cap_sparse_mmap_t *sparse = NULL;
     u64 i = 0, j = 0;
@@ -938,23 +905,20 @@ hw_vdavinci_device_get_sparse_info(struct vdavinci_mapinfo *mmio_map_info, unsig
     return sparse;
 }
 
-STATIC long hw_vdavinci_device_get_bar_info(struct hw_vdavinci *vdavinci,
-                                            ka_vfio_region_info_t *info)
+STATIC long hw_vdavinci_device_get_bar_info(struct hw_vdavinci *vdavinci, ka_vfio_region_info_t *info)
 {
     switch (info->index) {
         case VFIO_PCI_CONFIG_REGION_INDEX:
             info->offset = VFIO_PCI_INDEX_TO_OFFSET(info->index);
             info->size = vdavinci->dvt->device_info.cfg_space_size;
-            info->flags = KA_VFIO_REGION_INFO_FLAG_READ |
-                    KA_VFIO_REGION_INFO_FLAG_WRITE;
+            info->flags = KA_VFIO_REGION_INFO_FLAG_READ | KA_VFIO_REGION_INFO_FLAG_WRITE;
             break;
         case VFIO_PCI_BAR0_REGION_INDEX:
         case VFIO_PCI_BAR2_REGION_INDEX:
         case VFIO_PCI_BAR4_REGION_INDEX:
             info->offset = VFIO_PCI_INDEX_TO_OFFSET(info->index);
             info->size = vdavinci->cfg_space.bar[info->index].size;
-            info->flags = KA_VFIO_REGION_INFO_FLAG_READ |
-                    KA_VFIO_REGION_INFO_FLAG_WRITE;
+            info->flags = KA_VFIO_REGION_INFO_FLAG_READ | KA_VFIO_REGION_INFO_FLAG_WRITE;
             break;
         case VFIO_PCI_BAR1_REGION_INDEX:
         case VFIO_PCI_BAR3_REGION_INDEX:
@@ -1008,8 +972,7 @@ STATIC int hw_vdavinci_get_vfio_region_info(uintptr_t arg, ka_vfio_region_info_t
     return ret;
 }
 
-STATIC long _hw_vdavinci_device_get_region_info(uintptr_t arg,
-                                                struct hw_vdavinci* vdavinci)
+STATIC long _hw_vdavinci_device_get_region_info(uintptr_t arg, struct hw_vdavinci *vdavinci)
 {
     int ret = 0;
     ka_vfio_region_info_t info;
@@ -1045,8 +1008,7 @@ STATIC long _hw_vdavinci_device_get_region_info(uintptr_t arg,
     return ka_base_copy_to_user((void __ka_user *)arg, &info, minsz) ? -EFAULT : 0;
 }
 
-STATIC long _hw_vdavinci_device_get_irq_info(uintptr_t arg,
-                                             struct hw_vdavinci* vdavinci)
+STATIC long _hw_vdavinci_device_get_irq_info(uintptr_t arg, struct hw_vdavinci *vdavinci)
 {
     ka_vfio_irq_info_t info;
     u32 index = 0;
@@ -1085,8 +1047,7 @@ STATIC long _hw_vdavinci_device_get_irq_info(uintptr_t arg,
 }
 
 #if (IS_VDAVINCI_KERNEL_VERSION_SUPPORT || (defined(DRV_UT)))
-STATIC long _hw_vdavinci_device_set_ioeventfd(uintptr_t arg,
-                                              struct hw_vdavinci *vdavinci)
+STATIC long _hw_vdavinci_device_set_ioeventfd(uintptr_t arg, struct hw_vdavinci *vdavinci)
 {
     ka_vfio_device_ioeventfd_t efd;
     unsigned long minsz = ka_offsetofend(ka_vfio_device_ioeventfd_t, fd);
@@ -1110,13 +1071,11 @@ STATIC long _hw_vdavinci_device_set_ioeventfd(uintptr_t arg,
         return -EINVAL;
     }
 
-    return hw_vdavinci_set_ioeventfd(vdavinci, efd.offset, efd.data,
-                                     count, efd.fd);
+    return hw_vdavinci_set_ioeventfd(vdavinci, efd.offset, efd.data, count, efd.fd);
 }
 #endif
 
-STATIC long _hw_vdavinci_device_set_irqs(uintptr_t arg,
-                                         struct hw_vdavinci* vdavinci)
+STATIC long _hw_vdavinci_device_set_irqs(uintptr_t arg, struct hw_vdavinci *vdavinci)
 {
     ka_vfio_irq_set_t hdr;
     unsigned long minsz = ka_offsetofend(ka_vfio_irq_set_t, count);
@@ -1135,8 +1094,7 @@ STATIC long _hw_vdavinci_device_set_irqs(uintptr_t arg,
     if ((hdr.flags & KA_VFIO_IRQ_SET_DATA_NONE) == 0) {
         max = hw_vdavinci_get_irq_count(vdavinci, hdr.index);
 
-        ret = ka_driver_vfio_set_irqs_validate_and_prepare(&hdr, max,
-                                                           VFIO_PCI_NUM_IRQS, &data_size);
+        ret = ka_driver_vfio_set_irqs_validate_and_prepare(&hdr, max, VFIO_PCI_NUM_IRQS, &data_size);
         if (ret != 0) {
             return -EINVAL;
         }
@@ -1154,13 +1112,12 @@ STATIC long _hw_vdavinci_device_set_irqs(uintptr_t arg,
     return ret;
 }
 
-STATIC long _hw_vdavinci_device_reset(struct hw_vdavinci* vdavinci)
+STATIC long _hw_vdavinci_device_reset(struct hw_vdavinci *vdavinci)
 {
     return g_hw_vdavinci_ops.vdavinci_reset(vdavinci);
 }
 
-long hw_vdavinci_ioctl(ka_mdev_device_t *mdev, unsigned int cmd,
-                       unsigned long arg)
+long hw_vdavinci_ioctl(ka_mdev_device_t *mdev, unsigned int cmd, unsigned long arg)
 {
     struct hw_vdavinci *vdavinci = get_vdavinci_from_mdev(mdev);
     uintptr_t arg_uptr = arg;
@@ -1184,10 +1141,10 @@ long hw_vdavinci_ioctl(ka_mdev_device_t *mdev, unsigned int cmd,
             return ret;
         case KA_VFIO_DEVICE_RESET:
             return _hw_vdavinci_device_reset(vdavinci);
-        #if ((IS_VDAVINCI_KERNEL_VERSION_SUPPORT) || (defined(DRV_UT)))
+#if ((IS_VDAVINCI_KERNEL_VERSION_SUPPORT) || (defined(DRV_UT)))
         case KA_VFIO_DEVICE_IOEVENTFD:
             return _hw_vdavinci_device_set_ioeventfd(arg_uptr, vdavinci);
-        #endif
+#endif
         default:
             return -ENOTTY;
     }
@@ -1214,22 +1171,22 @@ STATIC int kvmdt_inject_msix(uintptr_t handle, u32 vector, int irq)
     if (ka_unlikely(!handle_valid(handle))) {
         return -ESRCH;
     }
-    info  = (struct kvmdt_guest_info *)handle;
+    info = (struct kvmdt_guest_info *)handle;
     vdavinci = info->vdavinci;
     if (ka_unlikely(vdavinci == NULL)) {
         return -EINVAL;
     }
     if (ka_unlikely(vector >= vdavinci->debugfs.nvec)) {
-        vascend_err(vdavinci_to_dev(vdavinci), "inject msix failed, "
-                    "wrong msix data: %d, vid: %u\n", vector, vdavinci->id);
+        vascend_err(vdavinci_to_dev(vdavinci),
+                    "inject msix failed, "
+                    "wrong msix data: %d, vid: %u\n",
+                    vector, vdavinci->id);
         return -EINVAL;
     }
-    if (ka_unlikely(vdavinci->vdev.ctx == NULL ||
-                    vdavinci->vdev.ctx[vector].trigger == NULL)) {
+    if (ka_unlikely(vdavinci->vdev.ctx == NULL || vdavinci->vdev.ctx[vector].trigger == NULL)) {
         return 0;
     }
-    if (irq > 0 &&
-        ka_test_and_clear_bit(HW_VDAVINCI_IRQ_BYPASS_REGISTERED, &vdavinci->vdev.ctx[vector].flags)) {
+    if (irq > 0 && ka_test_and_clear_bit(HW_VDAVINCI_IRQ_BYPASS_REGISTERED, &vdavinci->vdev.ctx[vector].flags)) {
         vdavinci->vdev.ctx[vector].irq = irq;
         vdavinci->vdev.ctx[vector].data = vdavinci;
         ka_task_schedule_work(&vdavinci->vdev.ctx[vector].work);
@@ -1245,8 +1202,7 @@ STATIC int kvmdt_inject_msix(uintptr_t handle, u32 vector, int irq)
     return 0;
 }
 
-STATIC int kvmdt_rw_gpa_common(uintptr_t handle, unsigned long gpa,
-                               void *buf, unsigned long len, bool write)
+STATIC int kvmdt_rw_gpa_common(uintptr_t handle, unsigned long gpa, void *buf, unsigned long len, bool write)
 {
     struct kvmdt_guest_info *info = NULL;
 
@@ -1257,14 +1213,12 @@ STATIC int kvmdt_rw_gpa_common(uintptr_t handle, unsigned long gpa,
     return vdavinci_rw_gpa(info, gpa, buf, len, write);
 }
 
-STATIC int kvmdt_read_gpa(uintptr_t handle, unsigned long gpa,
-                          void *buf, unsigned long len)
+STATIC int kvmdt_read_gpa(uintptr_t handle, unsigned long gpa, void *buf, unsigned long len)
 {
     return kvmdt_rw_gpa_common(handle, gpa, buf, len, false);
 }
 
-STATIC int kvmdt_write_gpa(uintptr_t handle, unsigned long gpa,
-                           void *buf, unsigned long len)
+STATIC int kvmdt_write_gpa(uintptr_t handle, unsigned long gpa, void *buf, unsigned long len)
 {
     return kvmdt_rw_gpa_common(handle, gpa, buf, len, true);
 }
@@ -1277,7 +1231,8 @@ STATIC unsigned long kvmdt_gfn_to_mfn_2m(struct page_info_list *dma_page_list, u
     if (ka_unlikely(dma_page_list == NULL || ka_list_empty(&dma_page_list->head))) {
         return KVMDT_ERROR_PFN;
     }
-    ka_list_for_each_entry(dma_page_info, &(dma_page_list->head), list) {
+    ka_list_for_each_entry(dma_page_info, &(dma_page_list->head), list)
+    {
         if (gfn >= dma_page_info->gfn && gfn < dma_page_info->gfn + dma_page_info->length) {
             return ka_mm_page_to_pfn(dma_page_info->page) + gfn - dma_page_info->gfn;
         }
@@ -1410,8 +1365,10 @@ STATIC int kvmdt_guest_init(ka_mdev_device_t *mdev)
 
     kvm = vdavinci->vdev.kvm;
     if (kvm == NULL || kvm->mm != ka_task_get_current_mm()) {
-        vascend_err(vdavinci_to_dev(vdavinci), "KVM is required to use huawei vdavinci, "
-            "vid: %u\n", vdavinci->id);
+        vascend_err(vdavinci_to_dev(vdavinci),
+                    "KVM is required to use huawei vdavinci, "
+                    "vid: %u\n",
+                    vdavinci->id);
         return -ESRCH;
     }
 
@@ -1419,7 +1376,6 @@ STATIC int kvmdt_guest_init(ka_mdev_device_t *mdev)
     if (info == NULL) {
         return -ENOMEM;
     }
-    ka_task_mutex_init(&vdavinci->vdev.cache_lock);
     vdavinci->handle = (uintptr_t)info;
     info->vdavinci = vdavinci;
     info->kvm = kvm;
@@ -1440,7 +1396,6 @@ STATIC void kvmdt_guest_exit(struct kvmdt_guest_info *info)
     ka_fs_debugfs_remove(info->debugfs_cache_entries);
     kvm_put_kvm(info->kvm);
     hw_vdavinci_dma_pool_uninit(info->vdavinci);
-    ka_task_mutex_destroy(&info->vdavinci->vdev.cache_lock);
     ka_mm_vfree(info);
 }
 

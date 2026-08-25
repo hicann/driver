@@ -15,21 +15,21 @@ KERNEL_DIR=/lib/modules/$(UNAME)/build
 KERNEL_SOURCE_DIR=/lib/modules/$(UNAME)/source
 
 ifneq ($(TOP_DIR),)
-    EXTRA_CFLAGS += -I$(TOP_DIR)/driver/driver/src/sdk_driver/kernel_adapt/include
+    ccflags-y += -I$(TOP_DIR)/driver/driver/src/sdk_driver/kernel_adapt/include
 endif
 
 ifeq ($(DAVINCI_HIAI_DKMS), y)
-    EXTRA_CFLAGS += -I$(HIAI_DKMS_DIR)/kernel_adapt/include
+    ccflags-y += -I$(HIAI_DKMS_DIR)/kernel_adapt/include
 else
-    EXTRA_CFLAGS += -I$(PWD)/../kernel_adapt/include
+    ccflags-y += -I$(PWD)/../kernel_adapt/include
 endif
 
 ifeq ($(ENABLE_OPEN_SRC), y)
-    EXTRA_CFLAGS += -I$(DRIVER_KERNEL_DIR)/kernel_adapt/include
+    ccflags-y += -I$(DRIVER_KERNEL_DIR)/kernel_adapt/include
 endif
 
 ifneq ($(NOT_SUPPORT_SP), y)
-    EXTRA_CFLAGS += -fstack-protector-all
+    ccflags-y += -fstack-protector-all
 endif
 
 ifeq ($(DAVINCI_TEST),y)

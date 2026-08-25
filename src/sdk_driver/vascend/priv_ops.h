@@ -16,22 +16,18 @@
 
 #include "dvt.h"
 
-int vdavinci_priv_vdev_create(struct hw_vdavinci *vdavinci,
-                              struct vdavinci_type *tp, ka_uuid_le_t uuid);
+int vdavinci_priv_vdev_create(struct hw_vdavinci *vdavinci, struct vdavinci_type *tp, ka_uuid_le_t uuid);
 void vdavinci_priv_vdev_destroy(struct hw_vdavinci *vdavinci);
 void vdavinci_priv_vdev_release(struct hw_vdavinci *vdavinci);
 int vdavinci_priv_vdev_reset(struct hw_vdavinci *vdavinci);
 int vdavinci_priv_vdev_flr(struct hw_vdavinci *vdavinci);
 void vdavinci_priv_vdev_notify(struct hw_vdavinci *vdavinci, int db_index);
-int vdavinci_priv_vdev_getmapinfo(struct hw_vdavinci *vdavinci,
-                                  struct vdavinci_type *tp, u32 bar_id,
+int vdavinci_priv_vdev_getmapinfo(struct hw_vdavinci *vdavinci, struct vdavinci_type *tp, u32 bar_id,
                                   struct vdavinci_mapinfo *map_info);
 int vdavinci_priv_vdev_putmapinfo(struct hw_vdavinci *vdavinci);
 unsigned int vdavinci_priv_vdev_getdevnum(struct vdavinci_priv *priv, ka_device_t *dev);
-int vdavinci_priv_vdev_getdevinfo(struct vdavinci_priv *priv,
-                                  ka_device_t *dev, u32 dev_index,
+int vdavinci_priv_vdev_getdevinfo(struct vdavinci_priv *priv, ka_device_t *dev, u32 dev_index,
                                   struct dvt_devinfo *dev_info);
-int vdavinci_priv_vdev_enable_sriov(struct vdavinci_priv *priv,
-                                    ka_pci_dev_t *pdev, int numvfs);
+int vdavinci_priv_vdev_enable_sriov(struct vdavinci_priv *priv, ka_pci_dev_t *pdev, int numvfs);
 
 #endif /* _PRIV_OPS_H_ */

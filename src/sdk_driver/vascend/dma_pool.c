@@ -27,12 +27,10 @@
  * try to get rwsem down lock or read lock,
  * the time will last forever if wait_mins is 0
  */
-STATIC int hw_vdavinci_rwsem_trylock(struct hw_vdavinci *vdavinci,
-                                     struct rw_semaphore *sem,
-                                     unsigned long wait_mins,
+STATIC int hw_vdavinci_rwsem_trylock(struct hw_vdavinci *vdavinci, struct rw_semaphore *sem, unsigned long wait_mins,
                                      bool is_write)
 {
-#define VDAVINCI_LOCK_INTERVAL      500
+#define VDAVINCI_LOCK_INTERVAL 500
 #define VDAVINCI_LOCK_WARN_INTERVAL (1 * 60 * 1000)
     unsigned long wait_time = 0;
 
@@ -50,17 +48,13 @@ STATIC int hw_vdavinci_rwsem_trylock(struct hw_vdavinci *vdavinci,
         ka_task_schedule_timeout((long)ka_system_msecs_to_jiffies(VDAVINCI_LOCK_INTERVAL));
         wait_time += VDAVINCI_LOCK_INTERVAL;
         if (wait_time % VDAVINCI_LOCK_WARN_INTERVAL == 0) {
-            vascend_warn(vdavinci_get_device(vdavinci),
-                         "the time of getting down %s lock is more than %lu minutes\n",
-                         is_write ? "write" : "read",
-                         wait_time / VDAVINCI_LOCK_WARN_INTERVAL);
+            vascend_warn(vdavinci_get_device(vdavinci), "the time of getting down %s lock is more than %lu minutes\n",
+                         is_write ? "write" : "read", wait_time / VDAVINCI_LOCK_WARN_INTERVAL);
         }
     }
 }
 
-STATIC void hw_vdavinci_rwsem_unlock(struct hw_vdavinci *vdavinci,
-                                     struct rw_semaphore *sem,
-                                     bool is_write)
+STATIC void hw_vdavinci_rwsem_unlock(struct hw_vdavinci *vdavinci, struct rw_semaphore *sem, bool is_write)
 {
     if (is_write) {
         ka_task_up_write(sem);
@@ -69,33 +63,23 @@ STATIC void hw_vdavinci_rwsem_unlock(struct hw_vdavinci *vdavinci,
     }
 }
 
-STATIC void dev_pin_scheduled(struct hw_vdavinci *vdavinci,
-                              unsigned long *count,
-                              ka_page_t *page)
+STATIC void dev_pin_scheduled(struct hw_vdavinci *vdavinci, unsigned long *count, ka_page_t *page)
 {
     (*count)++;
-    if (hw_vdavinci_scheduled(vdavinci,
-                              (*count) * KA_VFIO_PIN_PAGES_MAX_ENTRIES,
-                              VDAVINCI_PIN_PAGES_OF_SCHEDULE,
-                              VDAVINCI_PIN_TIME_OF_SCHEDULE,
-                              page)) {
+    if (hw_vdavinci_scheduled(vdavinci, (*count) * KA_VFIO_PIN_PAGES_MAX_ENTRIES, VDAVINCI_PIN_PAGES_OF_SCHEDULE,
+                              VDAVINCI_PIN_TIME_OF_SCHEDULE, page)) {
         (*count) = 0;
     }
 }
 
-STATIC void dev_unpin_scheduled(struct hw_vdavinci *vdavinci,
-                                unsigned long *count,
-                                ka_page_t *page)
+STATIC void dev_unpin_scheduled(struct hw_vdavinci *vdavinci, unsigned long *count, ka_page_t *page)
 {
     if (vdavinci_pfn_is_vpmem(ka_mm_page_to_pfn(page))) {
         return;
     }
     (*count)++;
-    if (hw_vdavinci_scheduled(vdavinci,
-                              (*count) * KA_VFIO_PIN_PAGES_MAX_ENTRIES,
-                              VDAVINCI_PIN_PAGES_OF_SCHEDULE,
-                              VDAVINCI_PIN_TIME_OF_SCHEDULE,
-                              page)) {
+    if (hw_vdavinci_scheduled(vdavinci, (*count) * KA_VFIO_PIN_PAGES_MAX_ENTRIES, VDAVINCI_PIN_PAGES_OF_SCHEDULE,
+                              VDAVINCI_PIN_TIME_OF_SCHEDULE, page)) {
         (*count) = 0;
     }
 }
@@ -112,14 +96,13 @@ STATIC bool hw_vdavinci_pfn_valid(ka_page_t *page)
     return false;
 }
 
-STATIC int hw_vdavinci_vfio_pin_pages(struct hw_vdavinci *vdavinci,
-                                      ka_pin_info *pin_info)
+STATIC int hw_vdavinci_vfio_pin_pages(struct hw_vdavinci *vdavinci, ka_pin_info *pin_info)
 {
     int ret = 0, i = 0;
 
     if (pin_info->npage <= 0 || pin_info->npage > (int)KA_VFIO_PIN_PAGES_MAX_ENTRIES) {
-        vascend_err(vdavinci_to_dev(vdavinci), "vdavinci error npage or gfn: %d, %lx\n",
-                    pin_info->npage, pin_info->gfn);
+        vascend_err(vdavinci_to_dev(vdavinci), "vdavinci error npage or gfn: %d, %lx\n", pin_info->npage,
+                    pin_info->gfn);
         return -EINVAL;
     }
     if (pin_info->pages == NULL) {
@@ -133,8 +116,8 @@ STATIC int hw_vdavinci_vfio_pin_pages(struct hw_vdavinci *vdavinci,
     }
     for (i = 0; i < pin_info->npage; i++) {
         if (!hw_vdavinci_pfn_valid(pin_info->pages[i])) {
-            vascend_warn(vdavinci_to_dev(vdavinci), "vid: %u pfn 0x%lx is not mem backed\n",
-                         vdavinci->id, ka_mm_page_to_pfn(pin_info->pages[i]));
+            vascend_warn(vdavinci_to_dev(vdavinci), "vid: %u pfn 0x%lx is not mem backed\n", vdavinci->id,
+                         ka_mm_page_to_pfn(pin_info->pages[i]));
             ret = -EFAULT;
             goto unpin;
         }
@@ -147,8 +130,7 @@ unpin:
     return ret;
 }
 
-STATIC void hw_vdavinci_vfio_unpin_pages(struct hw_vdavinci *vdavinci,
-                                         ka_pin_info *pin_info)
+STATIC void hw_vdavinci_vfio_unpin_pages(struct hw_vdavinci *vdavinci, ka_pin_info *pin_info)
 {
     if (pin_info->npage <= 0 || pin_info->npage > (int)KA_VFIO_PIN_PAGES_MAX_ENTRIES) {
         vascend_err(vdavinci_to_dev(vdavinci), "vdavinci error npage: %d\n", pin_info->npage);
@@ -157,13 +139,14 @@ STATIC void hw_vdavinci_vfio_unpin_pages(struct hw_vdavinci *vdavinci,
     vdavinci_unpin_pages(vdavinci, pin_info);
 }
 
-STATIC int add_dma_page_list(struct page_info_list *dma_page_list, unsigned long gfn,
-    unsigned int size, ka_page_t *page)
+STATIC int add_dma_page_list(struct page_info_list *dma_page_list, unsigned long gfn, unsigned int size,
+                             ka_page_t *page)
 {
     struct page_info_entry *dma_page_info = NULL;
 
     dma_page_info = ka_list_empty(&(dma_page_list->head)) == true ?
-        NULL : ka_list_last_entry(&(dma_page_list->head), struct page_info_entry, list);
+                        NULL :
+                        ka_list_last_entry(&(dma_page_list->head), struct page_info_entry, list);
     if (dma_page_info) {
         if (ka_mm_page_to_pfn(dma_page_info->page) == ka_mm_page_to_pfn(page)) {
             dma_page_info->length = size;
@@ -192,8 +175,7 @@ STATIC int add_dma_page_list(struct page_info_list *dma_page_list, unsigned long
  * dma_page_list. Return success only when all pfns has added to dma_page_list.
  * NOTICE: the dma_page_list must be and should be empty at first.
  */
-STATIC int hw_vdavinci_add_pfn_to_dma_list(struct hw_vdavinci *vdavinci,
-                                           struct page_info_list *dma_page_list,
+STATIC int hw_vdavinci_add_pfn_to_dma_list(struct hw_vdavinci *vdavinci, struct page_info_list *dma_page_list,
                                            ka_pin_info *pin_info)
 {
     int i, ret, last_end;
@@ -209,9 +191,9 @@ STATIC int hw_vdavinci_add_pfn_to_dma_list(struct hw_vdavinci *vdavinci,
     vm_dom = vdavinci->vdev.domain;
     last_end = -1;
     for (i = 0; i < pin_info->npage; i++) {
-         /* if launch the last pfn or find the pfn and the next pfn are
-          * discontinuous, add this region into list.
-          */
+        /* if launch the last pfn or find the pfn and the next pfn are
+         * discontinuous, add this region into list.
+         */
         if (i + 1 == pin_info->npage || ka_mm_page_to_pfn(pages[i]) + 1 != ka_mm_page_to_pfn(pages[i + 1])) {
             length = (unsigned int)(i - last_end) * KA_MM_PAGE_SIZE;
             gfn = pin_info->gfn + (last_end + 1);
@@ -219,8 +201,7 @@ STATIC int hw_vdavinci_add_pfn_to_dma_list(struct hw_vdavinci *vdavinci,
             if (ret != 0) {
                 goto clean_dma_page_list;
             }
-            ret = add_dma_page_list(dma_page_list, gfn,
-                                    length, pages[last_end + 1]);
+            ret = add_dma_page_list(dma_page_list, gfn, length, pages[last_end + 1]);
             if (ret != 0) {
                 goto clean_dma_page_list;
             }
@@ -231,7 +212,8 @@ STATIC int hw_vdavinci_add_pfn_to_dma_list(struct hw_vdavinci *vdavinci,
     return 0;
 
 clean_dma_page_list:
-    ka_list_for_each_entry_safe(dma_page_info, tmp, &dma_page_list->head, list) {
+    ka_list_for_each_entry_safe(dma_page_info, tmp, &dma_page_list->head, list)
+    {
         ka_list_del(&dma_page_info->list);
         ka_mm_kfree(dma_page_info);
     }
@@ -244,7 +226,7 @@ STATIC int hw_vdavinci_init_ram_dma_array(struct ram_range_info *ram_info)
     unsigned long total_steps = 0, npages = ram_info->npages;
 
     total_steps = KA_BASE_DIV_ROUND_UP(npages, KA_VFIO_PIN_PAGES_MAX_ENTRIES);
-    ram_info->dma_array = ka_mm_kzalloc(sizeof(struct dma_info_2m*) * total_steps, KA_GFP_KERNEL);
+    ram_info->dma_array = ka_mm_kzalloc(sizeof(struct dma_info_2m *) * total_steps, KA_GFP_KERNEL);
     if (ram_info->dma_array == NULL) {
         return -ENOMEM;
     }
@@ -262,8 +244,7 @@ STATIC void hw_vdavinci_clean_ram_dma_array(struct ram_range_info *ram_info)
     ram_info->dma_array = NULL;
 }
 
-STATIC int hw_vdavinci_init_pin_info(ka_pin_info *pin_info,
-                                     unsigned long gfn, int npage, bool is_alloc)
+STATIC int hw_vdavinci_init_pin_info(ka_pin_info *pin_info, unsigned long gfn, int npage, bool is_alloc)
 {
     if (npage <= 0 || npage > (int)KA_VFIO_PIN_PAGES_MAX_ENTRIES) {
         return -EINVAL;
@@ -308,8 +289,7 @@ STATIC void hw_vdavinci_clean_pin_info(ka_pin_info *pin_info)
  * The length entered by the user is not necessarily aligned with the page
  * and needs to be modified
  */
-STATIC int hw_vdavinci_pin_page_2m(struct hw_vdavinci *vdavinci,
-                                   ka_pin_info *pin_info,
+STATIC int hw_vdavinci_pin_page_2m(struct hw_vdavinci *vdavinci, ka_pin_info *pin_info,
                                    struct page_info_list *dma_page_list)
 {
     int ret = 0;
@@ -331,8 +311,7 @@ unpin:
     return ret;
 }
 
-STATIC void hw_vdavinci_unpin_page_2m(struct hw_vdavinci *vdavinci,
-                                      ka_pin_info *pin_info,
+STATIC void hw_vdavinci_unpin_page_2m(struct hw_vdavinci *vdavinci, ka_pin_info *pin_info,
                                       struct page_info_list *dma_page_list)
 {
     int ret = 0;
@@ -341,7 +320,8 @@ STATIC void hw_vdavinci_unpin_page_2m(struct hw_vdavinci *vdavinci,
     unsigned long pfn = 0;
     unsigned int i = 0, npage = 0;
 
-    ka_list_for_each_safe(pos, next, &(dma_page_list->head)) {
+    ka_list_for_each_safe(pos, next, &(dma_page_list->head))
+    {
         dma_page_info = ka_list_entry(pos, struct page_info_entry, list);
         npage = KA_BASE_DIV_ROUND_UP(dma_page_info->length, KA_MM_PAGE_SIZE);
         pfn = ka_mm_page_to_pfn(dma_page_info->page);
@@ -349,6 +329,8 @@ STATIC void hw_vdavinci_unpin_page_2m(struct hw_vdavinci *vdavinci,
         ret = hw_vdavinci_init_pin_info(pin_info, dma_page_info->gfn, (int)npage, true);
         if (ret != 0) {
             vascend_err(vdavinci_to_dev(vdavinci), "init pin info failed\n");
+            ka_list_del(pos);
+            ka_mm_kfree(dma_page_info);
             continue;
         }
         for (i = 0; i < npage; i++) {
@@ -362,21 +344,19 @@ STATIC void hw_vdavinci_unpin_page_2m(struct hw_vdavinci *vdavinci,
     hw_vdavinci_clean_pin_info(pin_info);
 }
 
-STATIC void hw_vdavinci_unpin_page_range(struct hw_vdavinci *vdavinci,
-                                         struct ram_range_info *ram_info)
+STATIC void hw_vdavinci_unpin_page_range(struct hw_vdavinci *vdavinci, struct ram_range_info *ram_info)
 {
     int j;
     unsigned long count = 0;
     unsigned int dma_start_cpu;
     struct dma_info_2m *dma_array_node = NULL;
     struct page_info_entry *dma_page_info = NULL;
-    ka_pin_info pin_info = { 0 };
+    ka_pin_info pin_info = {0};
 
     dma_start_cpu = ka_system_smp_processor_id();
     for (j = 0; j < ram_info->dma_array_len; j++) {
         dma_array_node = ram_info->dma_array[j];
-        dma_page_info = ka_list_first_entry(&(dma_array_node->dma_page_list.head),
-                                            struct page_info_entry, list);
+        dma_page_info = ka_list_first_entry(&(dma_array_node->dma_page_list.head), struct page_info_entry, list);
         dev_unpin_scheduled(vdavinci, &count, dma_page_info->page);
         hw_vdavinci_unpin_page_2m(vdavinci, &pin_info, &(dma_array_node->dma_page_list));
         ka_mm_kfree(dma_array_node);
@@ -386,15 +366,14 @@ STATIC void hw_vdavinci_unpin_page_range(struct hw_vdavinci *vdavinci,
     hw_vdavinci_clean_ram_dma_array(ram_info);
 }
 
-STATIC int hw_vdavinci_pin_page_range(struct hw_vdavinci *vdavinci,
-                                      struct ram_range_info *ram_info)
+STATIC int hw_vdavinci_pin_page_range(struct hw_vdavinci *vdavinci, struct ram_range_info *ram_info)
 {
     int ret = 0;
     unsigned int dma_start_cpu;
     gfn_t base_gfn = ram_info->base_gfn;
     unsigned long npages_step = 0, count = 0, npages = ram_info->npages;
     struct dma_info_2m *new = NULL, **dma_array_temp = NULL;
-    ka_pin_info pin_info = { 0 };
+    ka_pin_info pin_info = {0};
 
     ret = hw_vdavinci_init_ram_dma_array(ram_info);
     if (ret != 0) {
@@ -405,8 +384,7 @@ STATIC int hw_vdavinci_pin_page_range(struct hw_vdavinci *vdavinci,
     dma_start_cpu = ka_system_smp_processor_id();
 
     while (npages) {
-        npages_step = npages > KA_VFIO_PIN_PAGES_MAX_ENTRIES ?
-                        KA_VFIO_PIN_PAGES_MAX_ENTRIES : npages;
+        npages_step = npages > KA_VFIO_PIN_PAGES_MAX_ENTRIES ? KA_VFIO_PIN_PAGES_MAX_ENTRIES : npages;
         ret = hw_vdavinci_init_pin_info(&pin_info, base_gfn, (int)npages_step, true);
         if (ret != 0) {
             goto out;
@@ -426,7 +404,7 @@ STATIC int hw_vdavinci_pin_page_range(struct hw_vdavinci *vdavinci,
         }
 
         new->gfn = base_gfn;
-        new->size = npages_step * KA_MM_PAGE_SIZE;
+        new->size = npages_step *KA_MM_PAGE_SIZE;
         *dma_array_temp = new;
 
         npages -= npages_step;
@@ -455,7 +433,8 @@ STATIC void dma_dom_pool_unpin(struct hw_vdavinci *vdavinci, struct vm_dom_info 
         return;
     }
 
-    ka_list_for_each_safe(pos, next, &(vm_dom->ram_info_list->head)) {
+    ka_list_for_each_safe(pos, next, &(vm_dom->ram_info_list->head))
+    {
         ram_info = ka_list_entry(pos, struct ram_range_info, list);
         hw_vdavinci_unpin_page_range(vdavinci, ram_info);
         ka_list_del(pos);
@@ -535,7 +514,7 @@ STATIC int raminfo_init(struct ram_range_info **ram, ka_kvm_memory_slot_t *memsl
     return 0;
 }
 
-#define ASCEND_RESERVE_IOVA_LENGTH    0x10000000    /* 256M */
+#define ASCEND_RESERVE_IOVA_LENGTH 0x10000000 /* 256M */
 STATIC int get_reserve_iova(ka_device_t *dev, ka_dma_addr_t *iova_addr, size_t *size)
 {
     if (dev->coherent_dma_mask < ASCEND_RESERVE_IOVA_LENGTH) {
@@ -575,18 +554,18 @@ STATIC int vm_reserve_iova(struct hw_vdavinci *vdavinci, struct vm_dom_info *vm_
             return ret;
         }
 
-        ka_list_for_each_safe(pos, next, &(vm_dom->ram_info_list->head)) {
+        ka_list_for_each_safe(pos, next, &(vm_dom->ram_info_list->head))
+        {
             ram_info = ka_list_entry(pos, struct ram_range_info, list);
             if (ram_info->base_gfn > (iova_addr >> KA_MM_PAGE_SHIFT) ||
                 ram_info->base_gfn + ram_info->npages > (iova_addr >> KA_MM_PAGE_SHIFT)) {
-                vascend_err(dev, "reserve iova failed, ram base : 0x%llx, len : %ld\n",
-                            ram_info->base_gfn, ram_info->npages);
+                vascend_err(dev, "reserve iova failed, ram base : 0x%llx, len : %ld\n", ram_info->base_gfn,
+                            ram_info->npages);
                 return -EINVAL;
             }
         }
 
-        iova_re = ka_reserve_iova(&vm_dom->iovad, 0,
-                                  (iova_addr >> KA_MM_PAGE_SHIFT) - 1);
+        iova_re = ka_reserve_iova(&vm_dom->iovad, 0, (iova_addr >> KA_MM_PAGE_SHIFT) - 1);
         if (iova_re == NULL) {
             vascend_debug("dev iova reserve failed\n");
             return -EINVAL;
@@ -600,21 +579,20 @@ STATIC void raminfo_list_cleanup(ka_list_head_t *slot_ram_list)
     struct ram_range_info *ram_info = NULL;
     ka_list_head_t *pos = NULL, *next = NULL;
 
-    ka_list_for_each_safe(pos, next, slot_ram_list) {
+    ka_list_for_each_safe(pos, next, slot_ram_list)
+    {
         ram_info = ka_list_entry(pos, struct ram_range_info, list);
         ka_list_del(pos);
         ka_mm_kfree(ram_info);
     }
 }
 
-STATIC void raminfo_list_destroy(struct hw_vdavinci *vdavinci,
-                                 ka_list_head_t *slot_ram_list)
+STATIC void raminfo_list_destroy(struct hw_vdavinci *vdavinci, ka_list_head_t *slot_ram_list)
 {
     raminfo_list_cleanup(slot_ram_list);
 }
 
-STATIC int raminfo_list_init(struct hw_vdavinci *vdavinci,
-                             ka_list_head_t *slot_ram_list)
+STATIC int raminfo_list_init(struct hw_vdavinci *vdavinci, ka_list_head_t *slot_ram_list)
 {
     int ret = -1;
     struct ram_range_info *ram_info = NULL;
@@ -625,7 +603,8 @@ STATIC int raminfo_list_init(struct hw_vdavinci *vdavinci,
     ka_task_mutex_lock(&(vdavinci->vdev.kvm->slots_lock));
     slots = ka_kvm_memslots(vdavinci->vdev.kvm);
 
-    davinci_for_each_memslot(slot, slots, iter) {
+    davinci_for_each_memslot(slot, slots, iter)
+    {
         if (slot->flags & KA_KVM_MEM_READONLY) {
             continue;
         }
@@ -675,20 +654,18 @@ STATIC int dma_dom_pool_pin(struct hw_vdavinci *vdavinci, struct vm_dom_info *vm
         return ret;
     }
 
-    ka_list_for_each_safe(pos, next, &(slot_ram_list)) {
+    ka_list_for_each_safe(pos, next, &(slot_ram_list))
+    {
         ram_info = ka_list_entry(pos, struct ram_range_info, list);
         pfn = g_hw_kvmdt_ops.gfn_to_mfn(vdavinci->handle, ram_info->base_gfn);
         if (!dom_pfn_is_ram(pfn)) {
-            vascend_warn(vdavinci_to_dev(vdavinci),
-                         "page is not ram, npage: %lu", ram_info->npages);
+            vascend_warn(vdavinci_to_dev(vdavinci), "page is not ram, npage: %lu", ram_info->npages);
             continue;
         }
 
         ret_t = hw_vdavinci_pin_page_range(vdavinci, ram_info);
         if (ret_t) {
-            vascend_warn(vdavinci_to_dev(vdavinci),
-                         "page may not be ram : %lu, ret : %d\n",
-                         ram_info->npages, ret_t);
+            vascend_warn(vdavinci_to_dev(vdavinci), "page may not be ram : %lu, ret : %d\n", ram_info->npages, ret_t);
             continue;
         }
 
@@ -706,8 +683,7 @@ STATIC int dma_dom_pool_pin(struct hw_vdavinci *vdavinci, struct vm_dom_info *vm
     return 0;
 }
 
-STATIC void hw_vdavinci_set_dev_dom_ops(struct dev_dom_info *dom,
-                                        bool is_passthrough)
+STATIC void hw_vdavinci_set_dev_dom_ops(struct dev_dom_info *dom, bool is_passthrough)
 {
     dom->is_passthrough = is_passthrough;
     vascend_debug("set dom is vf passthrough %d\n", is_passthrough);
@@ -756,15 +732,13 @@ STATIC int hw_vdavinci_dma_pool_init_locked(struct hw_vdavinci *vdavinci)
         vascend_err(dev, "dev get dma domian failed, ret : %d", ret);
         goto unpin;
     }
-
+    hw_vdavinci_set_dev_dom_ops(dev_dom, vdavinci->is_passthrough);
     ret = vm_reserve_iova(vdavinci, vm_dom);
     if (ret) {
         vascend_err(dev, "reserve iova failed, ret : %d", ret);
         goto dom;
     }
     hw_vdavinci_rwsem_unlock(vdavinci, &vm_dom->sem, true);
-
-    hw_vdavinci_set_dev_dom_ops(dev_dom, vdavinci->is_passthrough);
     if (dev_dom->status == DOMAIN_MAP_STATUS_INVALID) {
         if (vdavinci->is_passthrough) {
             ret = hw_vdavinci_iommu_attach_group(vdavinci);
@@ -774,7 +748,8 @@ STATIC int hw_vdavinci_dma_pool_init_locked(struct hw_vdavinci *vdavinci)
             }
         }
         KA_INIT_LIST_HEAD(&(vdavinci->vdev.dev_dma_info_list_head));
-        ka_list_for_each_safe(pos, next, &(vm_dom->ram_info_list->head)) {
+        ka_list_for_each_safe(pos, next, &(vm_dom->ram_info_list->head))
+        {
             ram_info = ka_list_entry(pos, struct ram_range_info, list);
             ret = dev_dom->ops.dev_dma_map_ram_range(vdavinci, ram_info);
             if (ret) {
@@ -815,9 +790,7 @@ out:
     return ret;
 }
 
-struct ram_range_info *get_ram_range_by_gfn(struct vm_dom_info *vm_dom,
-                                            unsigned long gfn,
-                                            unsigned long size)
+struct ram_range_info *get_ram_range_by_gfn(struct vm_dom_info *vm_dom, unsigned long gfn, unsigned long size)
 {
     gfn_t npages = 0, range_end = 0;
     struct ram_range_info *ram_info = NULL;
@@ -830,7 +803,8 @@ struct ram_range_info *get_ram_range_by_gfn(struct vm_dom_info *vm_dom,
     if (ka_unlikely(npages == 0)) {
         return NULL;
     }
-    ka_list_for_each_safe(pos, next, &(vm_dom->ram_info_list->head)) {
+    ka_list_for_each_safe(pos, next, &(vm_dom->ram_info_list->head))
+    {
         ram_info = ka_list_entry(pos, struct ram_range_info, list);
         if (ram_info == NULL) {
             continue;
@@ -844,8 +818,7 @@ struct ram_range_info *get_ram_range_by_gfn(struct vm_dom_info *vm_dom,
     return NULL;
 }
 
-void hw_vdavinci_unplug_ram(struct hw_vdavinci *vdavinci,
-                            unsigned long start_gfn, unsigned long size)
+void hw_vdavinci_unplug_ram(struct hw_vdavinci *vdavinci, unsigned long start_gfn, unsigned long size)
 {
     struct ram_range_info *ram_info = NULL;
     struct dev_dom_info *dev_dom = NULL;
@@ -854,8 +827,7 @@ void hw_vdavinci_unplug_ram(struct hw_vdavinci *vdavinci,
     ka_task_down_write(&vm_dom->sem);
     ram_info = get_ram_range_by_gfn(vm_dom, start_gfn, size);
     if (ram_info == NULL) {
-        vascend_warn(vdavinci_to_dev(vdavinci),
-                     "ram range has already been unpluged, size %lu\n", size);
+        vascend_warn(vdavinci_to_dev(vdavinci), "ram range has already been unpluged, size %lu\n", size);
         ka_task_up_write(&vm_dom->sem);
         return;
     }
@@ -882,9 +854,7 @@ void hw_vdavinci_put_iova(ka_sg_table_t *dma_sgt)
     }
 }
 
-int hw_vdavinci_get_iova(struct hw_vdavinci *vdavinci,
-                         unsigned long gfn, unsigned long size,
-                         ka_sg_table_t **dma_sgt)
+int hw_vdavinci_get_iova(struct hw_vdavinci *vdavinci, unsigned long gfn, unsigned long size, ka_sg_table_t **dma_sgt)
 {
     int ret;
     struct vm_dom_info *vm_dom = NULL;
@@ -906,14 +876,12 @@ int hw_vdavinci_get_iova(struct hw_vdavinci *vdavinci,
 
     dev_dom = dev_dom_info_find(vm_dom, vdavinci);
     if (!dev_dom || dev_dom->status != DOMAIN_MAP_STATUS_READY) {
-        vascend_err(dev,
-            "dma pool not ready\n");
+        vascend_err(dev, "dma pool not ready\n");
         ret = -ENODEV;
         goto up_read;
     }
 
-    ret = dev_dom->ops.hw_vdavinci_get_iova_sg(vdavinci, vm_dom, gfn,
-                                               size, dma_sgt);
+    ret = dev_dom->ops.hw_vdavinci_get_iova_sg(vdavinci, vm_dom, gfn, size, dma_sgt);
 up_read:
     ka_task_up_read(&vm_dom->sem);
     return ret;
@@ -922,8 +890,7 @@ unlock:
     return ret;
 }
 
-int hw_vdavinci_get_iova_batch(struct hw_vdavinci *vdavinci,
-                               unsigned long *gfn, unsigned long *dma_addr,
+int hw_vdavinci_get_iova_batch(struct hw_vdavinci *vdavinci, unsigned long *gfn, unsigned long *dma_addr,
                                unsigned long count)
 {
     int ret;
@@ -949,8 +916,7 @@ int hw_vdavinci_get_iova_batch(struct hw_vdavinci *vdavinci,
         goto up_read;
     }
 
-    ret = dev_dom->ops.hw_vdavinci_get_iova_array(vdavinci, vm_dom,
-                                                  gfn, dma_addr, count);
+    ret = dev_dom->ops.hw_vdavinci_get_iova_array(vdavinci, vm_dom, gfn, dma_addr, count);
 up_read:
     ka_task_up_read(&vm_dom->sem);
     return ret;
@@ -963,9 +929,7 @@ unlock:
  * The 2M area can be composed of multiple consecutive sgs, to determine
  * whether the gfn is in these sgs
  */
-STATIC bool check_gfn_in_dma_sg(unsigned long gfn,
-                                unsigned long sg_gfn_base,
-                                unsigned long sg_gfn_len)
+STATIC bool check_gfn_in_dma_sg(unsigned long gfn, unsigned long sg_gfn_base, unsigned long sg_gfn_len)
 {
     if (gfn >= sg_gfn_base && gfn < (sg_gfn_base + sg_gfn_len)) {
         return true;
@@ -973,15 +937,12 @@ STATIC bool check_gfn_in_dma_sg(unsigned long gfn,
     return false;
 }
 
-STATIC unsigned long get_gfn_in_sg_offset(unsigned long gfn,
-                                          unsigned long sg_gfn_base)
+STATIC unsigned long get_gfn_in_sg_offset(unsigned long gfn, unsigned long sg_gfn_base)
 {
     return (gfn - sg_gfn_base) * KA_MM_PAGE_SIZE;
 }
 
-STATIC void set_gfn_sgl(ka_scatterlist_t *new,
-                        ka_scatterlist_t *ogn,
-                        unsigned int gfn_sg_offset)
+STATIC void set_gfn_sgl(ka_scatterlist_t *new, ka_scatterlist_t *ogn, unsigned int gfn_sg_offset)
 {
     if (new == NULL) {
         return;
@@ -994,8 +955,7 @@ STATIC void set_gfn_sgl(ka_scatterlist_t *new,
  * if iova_info->dma_sgt is not null, return sg length and sg table
  * otherwise return sg length
  */
-STATIC int hw_vdavinci_get_gfn_sg(struct hw_vdavinci *vdavinci,
-                                  struct vdavinci_iova_info *iova_info)
+STATIC int hw_vdavinci_get_gfn_sg(struct hw_vdavinci *vdavinci, struct vdavinci_iova_info *iova_info)
 {
     unsigned int i;
     unsigned int sg_len = 0;
@@ -1012,7 +972,8 @@ STATIC int hw_vdavinci_get_gfn_sg(struct hw_vdavinci *vdavinci,
     while (dma_length < iova_info->size) {
         sg_table_2m = (*sgt_array)->dma_sgt;
 
-        ka_base_for_each_sg(sg_table_2m->sgl, temp_sgl, sg_table_2m->nents, i) {
+        ka_base_for_each_sg(sg_table_2m->sgl, temp_sgl, sg_table_2m->nents, i)
+        {
             /* find the first sgl which gfn is in it, gfn_sg_offset is the
                intervel between the start of temp_sgl and gfn,
                so the gfn_sg_offset is caculated for only once */
@@ -1034,7 +995,7 @@ STATIC int hw_vdavinci_get_gfn_sg(struct hw_vdavinci *vdavinci,
             if (dma_length >= iova_info->size) {
                 if (out_sgl != NULL) { /* the last sgl */
                     ka_mm_sg_dma_len(out_sgl) = iova_info->size -
-                                          (dma_length - (ka_mm_sg_dma_len(temp_sgl) - gfn_sg_offset));
+                                                (dma_length - (ka_mm_sg_dma_len(temp_sgl) - gfn_sg_offset));
                 }
                 break;
             }
@@ -1049,13 +1010,13 @@ STATIC int hw_vdavinci_get_gfn_sg(struct hw_vdavinci *vdavinci,
     return 0;
 }
 
-STATIC struct dev_dma_info *get_dma_info_by_ram(struct ram_range_info *ram_info,
-                                                struct hw_vdavinci *vdavinci)
+STATIC struct dev_dma_info *get_dma_info_by_ram(struct ram_range_info *ram_info, struct hw_vdavinci *vdavinci)
 {
     struct dev_dma_info *dma_info = NULL;
     ka_list_head_t *pos = NULL, *next = NULL;
 
-    ka_list_for_each_safe(pos, next, &(vdavinci->vdev.dev_dma_info_list_head)) {
+    ka_list_for_each_safe(pos, next, &(vdavinci->vdev.dev_dma_info_list_head))
+    {
         dma_info = ka_list_entry(pos, struct dev_dma_info, list);
         if (dma_info->ram_info == ram_info) {
             return dma_info;
@@ -1065,8 +1026,7 @@ STATIC struct dev_dma_info *get_dma_info_by_ram(struct ram_range_info *ram_info,
     return NULL;
 }
 
-STATIC int get_iova_sgt_info(struct hw_vdavinci *vdavinci,
-                             struct vm_dom_info *vm_dom,
+STATIC int get_iova_sgt_info(struct hw_vdavinci *vdavinci, struct vm_dom_info *vm_dom,
                              struct vdavinci_iova_info *iova_info)
 {
     int ret = 0;
@@ -1099,8 +1059,7 @@ STATIC int get_iova_sgt_info(struct hw_vdavinci *vdavinci,
     return 0;
 }
 
-STATIC int set_iova_sgt_info(struct hw_vdavinci *vdavinci,
-                             ka_sg_table_t **dma_sgt,
+STATIC int set_iova_sgt_info(struct hw_vdavinci *vdavinci, ka_sg_table_t **dma_sgt,
                              struct vdavinci_iova_info *iova_info)
 {
     int ret;
@@ -1112,9 +1071,8 @@ STATIC int set_iova_sgt_info(struct hw_vdavinci *vdavinci,
 
     ret = ka_base_sg_alloc_table(*dma_sgt, iova_info->sg_len, KA_GFP_KERNEL);
     if (ret) {
-        vascend_err(vdavinci_to_dev(vdavinci),
-                    "ka_base_sg_alloc_table return error result, ret: %d, sg_len: %u",
-                    ret, iova_info->sg_len);
+        vascend_err(vdavinci_to_dev(vdavinci), "ka_base_sg_alloc_table return error result, ret: %d, sg_len: %u", ret,
+                    iova_info->sg_len);
         ret = -ENOMEM;
         goto sgt_free;
     }
@@ -1122,9 +1080,8 @@ STATIC int set_iova_sgt_info(struct hw_vdavinci *vdavinci,
     iova_info->dma_sgt = dma_sgt;
     ret = hw_vdavinci_get_gfn_sg(vdavinci, iova_info);
     if (ret) {
-        vascend_err(vdavinci_to_dev(vdavinci),
-                    "get sg list failed, ret: %d, gfn: 0x%lx, size: 0x%lx",
-                    ret, iova_info->gfn, iova_info->size);
+        vascend_err(vdavinci_to_dev(vdavinci), "get sg list failed, ret: %d, gfn: 0x%lx, size: 0x%lx", ret,
+                    iova_info->gfn, iova_info->size);
         ret = -ENOMEM;
         goto table_free;
     }
@@ -1138,10 +1095,8 @@ sgt_free:
     return ret;
 }
 
-int hw_vdavinci_get_iova_sg(struct hw_vdavinci *vdavinci,
-                            struct vm_dom_info *vm_dom,
-                            unsigned long gfn, unsigned long size,
-                            ka_sg_table_t **dma_sgt)
+int hw_vdavinci_get_iova_sg(struct hw_vdavinci *vdavinci, struct vm_dom_info *vm_dom, unsigned long gfn,
+                            unsigned long size, ka_sg_table_t **dma_sgt)
 {
     int ret;
     struct vdavinci_iova_info iova_info;
@@ -1153,24 +1108,21 @@ int hw_vdavinci_get_iova_sg(struct hw_vdavinci *vdavinci,
 
     ret = get_iova_sgt_info(vdavinci, vm_dom, &iova_info);
     if (ret) {
-        vascend_err(vdavinci_to_dev(vdavinci),
-                    "get iova sg table info failed, ret: %d, gfn: 0x%lx, size: 0x%lx",
-                    ret, iova_info.gfn, iova_info.size);
+        vascend_err(vdavinci_to_dev(vdavinci), "get iova sg table info failed, ret: %d, gfn: 0x%lx, size: 0x%lx", ret,
+                    iova_info.gfn, iova_info.size);
         return ret;
     }
     ret = set_iova_sgt_info(vdavinci, dma_sgt, &iova_info);
     if (ret) {
-        vascend_err(vdavinci_to_dev(vdavinci),
-                    "set iova sg table info failed, ret: %d", ret);
+        vascend_err(vdavinci_to_dev(vdavinci), "set iova sg table info failed, ret: %d", ret);
         return ret;
     }
 
     return ret;
 }
 
-STATIC int get_iova_by_sg(struct hw_vdavinci *vdavinci,
-                          struct dev_dma_sgt **sgt_array_base,
-                          unsigned long gfn, unsigned long *dma_addr)
+STATIC int get_iova_by_sg(struct hw_vdavinci *vdavinci, struct dev_dma_sgt **sgt_array_base, unsigned long gfn,
+                          unsigned long *dma_addr)
 {
     unsigned int i;
     unsigned long sg_gfn_len;
@@ -1186,7 +1138,8 @@ STATIC int get_iova_by_sg(struct hw_vdavinci *vdavinci,
     sgl_gfn_base = (*sgt_array_base)->gfn;
     sg_table_2m = (*sgt_array_base)->dma_sgt;
 
-    ka_base_for_each_sg(sg_table_2m->sgl, temp_sgl, sg_table_2m->nents, i) {
+    ka_base_for_each_sg(sg_table_2m->sgl, temp_sgl, sg_table_2m->nents, i)
+    {
         sg_gfn_len = ka_base_roundup(temp_sgl->length, KA_MM_PAGE_SIZE) / KA_MM_PAGE_SIZE;
         if (!check_gfn_in_dma_sg(gfn, sgl_gfn_base, sg_gfn_len)) {
             sgl_gfn_base += sg_gfn_len;
@@ -1198,17 +1151,13 @@ STATIC int get_iova_by_sg(struct hw_vdavinci *vdavinci,
         return 0;
     }
 
-    vascend_err(vdavinci_to_dev(vdavinci),
-                "can not find gfn in sg list, gfn: 0x%lx, the base gfn sgl: 0x%llx",
-                gfn, (*sgt_array_base)->gfn);
+    vascend_err(vdavinci_to_dev(vdavinci), "can not find gfn in sg list, gfn: 0x%lx, the base gfn sgl: 0x%llx", gfn,
+                (*sgt_array_base)->gfn);
     return -ENODEV;
 }
 
-int hw_vdavinci_get_iova_array(struct hw_vdavinci *vdavinci,
-                               struct vm_dom_info *vm_dom,
-                               unsigned long *gfn,
-                               unsigned long *dma_addr,
-                               unsigned long count)
+int hw_vdavinci_get_iova_array(struct hw_vdavinci *vdavinci, struct vm_dom_info *vm_dom, unsigned long *gfn,
+                               unsigned long *dma_addr, unsigned long count)
 {
     int ret = 0;
     unsigned long index = 0, array_base = 0;
@@ -1217,13 +1166,11 @@ int hw_vdavinci_get_iova_array(struct hw_vdavinci *vdavinci,
     struct dev_dma_info *dma_info = NULL;
 
     while (index != count) {
-        if (ram_info == NULL ||
-            gfn[index] < ram_info->base_gfn ||
+        if (ram_info == NULL || gfn[index] < ram_info->base_gfn ||
             gfn[index] >= ram_info->base_gfn + ram_info->npages) {
             ram_info = get_ram_range_by_gfn(vm_dom, gfn[index], KA_MM_PAGE_SIZE);
             if (ram_info == NULL) {
-                vascend_err(vdavinci_to_dev(vdavinci),
-                            "get iova batch failed, invalid gfn %lx\n", gfn[index]);
+                vascend_err(vdavinci_to_dev(vdavinci), "get iova batch failed, invalid gfn %lx\n", gfn[index]);
                 return -EINVAL;
             }
 
@@ -1239,8 +1186,7 @@ int hw_vdavinci_get_iova_array(struct hw_vdavinci *vdavinci,
 
         ret = get_iova_by_sg(vdavinci, sgt_array_base, gfn[index], &dma_addr[index]);
         if (ret) {
-            vascend_err(vdavinci_to_dev(vdavinci),
-                        "get iova batch failed, invalid gfn %lx\n", gfn[index]);
+            vascend_err(vdavinci_to_dev(vdavinci), "get iova batch failed, invalid gfn %lx\n", gfn[index]);
             return ret;
         }
         index++;
@@ -1249,9 +1195,7 @@ int hw_vdavinci_get_iova_array(struct hw_vdavinci *vdavinci,
     return ret;
 }
 
-int vf_get_iova_sg(struct hw_vdavinci *vdavinci,
-                   struct vm_dom_info *vm_dom,
-                   unsigned long gfn, unsigned long size,
+int vf_get_iova_sg(struct hw_vdavinci *vdavinci, struct vm_dom_info *vm_dom, unsigned long gfn, unsigned long size,
                    ka_sg_table_t **dma_sgt)
 {
     int ret;
@@ -1260,8 +1204,7 @@ int vf_get_iova_sg(struct hw_vdavinci *vdavinci,
 
     ram_info = get_ram_range_by_gfn(vm_dom, gfn, size);
     if (ram_info == NULL) {
-        vascend_err(vdavinci_to_dev(vdavinci),
-            "get iova failed, invalid gfn %llx\n", (unsigned long long)gfn);
+        vascend_err(vdavinci_to_dev(vdavinci), "get iova failed, invalid gfn %llx\n", (unsigned long long)gfn);
         return -EINVAL;
     }
 
@@ -1281,8 +1224,7 @@ int vf_get_iova_sg(struct hw_vdavinci *vdavinci,
         goto free_table;
     }
 
-    ka_mm_sg_dma_address((*dma_sgt)->sgl) = dma_info->base_iova +
-                (gfn - ram_info->base_gfn) * KA_MM_PAGE_SIZE;
+    ka_mm_sg_dma_address((*dma_sgt)->sgl) = dma_info->base_iova + (gfn - ram_info->base_gfn) * KA_MM_PAGE_SIZE;
     ka_mm_sg_dma_len((*dma_sgt)->sgl) = size;
 
     return 0;
@@ -1296,23 +1238,19 @@ free_sgt:
     return ret;
 }
 
-int vf_get_iova_array(struct hw_vdavinci *vdavinci,
-                      struct vm_dom_info *vm_dom,
-                      unsigned long *gfn, unsigned long *dma_addr,
-                      unsigned long count)
+int vf_get_iova_array(struct hw_vdavinci *vdavinci, struct vm_dom_info *vm_dom, unsigned long *gfn,
+                      unsigned long *dma_addr, unsigned long count)
 {
     unsigned long index = 0;
     struct ram_range_info *ram_info = NULL;
     struct dev_dma_info *dma_info = NULL;
 
     while (index != count) {
-        if (ram_info == NULL ||
-            gfn[index] < ram_info->base_gfn ||
+        if (ram_info == NULL || gfn[index] < ram_info->base_gfn ||
             gfn[index] >= ram_info->base_gfn + ram_info->npages) {
             ram_info = get_ram_range_by_gfn(vm_dom, gfn[index], KA_MM_PAGE_SIZE);
             if (ram_info == NULL) {
-                vascend_err(vdavinci_to_dev(vdavinci),
-                    "get iova array failed, invalid gfn %lx\n", gfn[index]);
+                vascend_err(vdavinci_to_dev(vdavinci), "get iova array failed, invalid gfn %lx\n", gfn[index]);
                 return -EINVAL;
             }
 
@@ -1322,16 +1260,14 @@ int vf_get_iova_array(struct hw_vdavinci *vdavinci,
             }
         }
 
-        dma_addr[index] = dma_info->base_iova +
-            (gfn[index] - ram_info->base_gfn) * KA_MM_PAGE_SIZE;
+        dma_addr[index] = dma_info->base_iova + (gfn[index] - ram_info->base_gfn) * KA_MM_PAGE_SIZE;
         index++;
     }
 
     return 0;
 }
 
-bool is_vm_pfn_valid(ka_device_t *dev,
-                     unsigned long pfn, unsigned long size)
+bool is_vm_pfn_valid(ka_device_t *dev, unsigned long pfn, unsigned long size)
 {
     bool ret = 0;
     struct vm_dom_info *vm_dom = NULL;

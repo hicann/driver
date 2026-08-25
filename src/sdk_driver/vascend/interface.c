@@ -35,8 +35,7 @@ int hw_dvt_hypervisor_inject_msix(void *__vdavinci, u32 vector, int irq)
         command = *(u16 *)(&vdavinci_cfg_space(vdavinci)[KA_PCI_COMMAND]);
         control = *(u16 *)(&vdavinci_cfg_space(vdavinci)[DAVINCI_PCI_MSIX_FLAGS]);
 
-        if (!(command & KA_PCI_COMMAND_INTX_DISABLE) ||
-            !(control & KA_PCI_MSIX_FLAGS_ENABLE) ||
+        if (!(command & KA_PCI_COMMAND_INTX_DISABLE) || !(control & KA_PCI_MSIX_FLAGS_ENABLE) ||
             (control & KA_PCI_MSIX_FLAGS_MASKALL)) {
             vascend_info(vdavinci->dvt->vdavinci_priv->dev, "msix cap flag did't support\n");
             return -EPERM;
@@ -57,8 +56,7 @@ int hw_dvt_hypervisor_inject_msix(void *__vdavinci, u32 vector, int irq)
  * Returns:
  * Zero on success, negative error code if failed.
  */
-int hw_dvt_hypervisor_read_gpa(void *__vdavinci,
-                               unsigned long gpa, void *buf, unsigned long len)
+int hw_dvt_hypervisor_read_gpa(void *__vdavinci, unsigned long gpa, void *buf, unsigned long len)
 {
     struct hw_vdavinci *vdavinci = (struct hw_vdavinci *)__vdavinci;
 
@@ -78,8 +76,7 @@ int hw_dvt_hypervisor_read_gpa(void *__vdavinci,
  * Returns:
  * Zero on success, negative error code if failed.
  */
-int hw_dvt_hypervisor_write_gpa(void *__vdavinci,
-                                unsigned long gpa, void *buf, unsigned long len)
+int hw_dvt_hypervisor_write_gpa(void *__vdavinci, unsigned long gpa, void *buf, unsigned long len)
 {
     struct hw_vdavinci *vdavinci = (struct hw_vdavinci *)__vdavinci;
 
@@ -149,8 +146,7 @@ void hw_dvt_hypervisor_dma_pool_uninit(void *__vdavinci)
  * Returns:
  * 0 on success, negative error code if failed.
  */
-int hw_dvt_hypervisor_dma_map_guest_page(void *__vdavinci,
-                                         unsigned long gfn, unsigned long size,
+int hw_dvt_hypervisor_dma_map_guest_page(void *__vdavinci, unsigned long gfn, unsigned long size,
                                          ka_sg_table_t **dma_sgt)
 {
     struct hw_vdavinci *vdavinci = (struct hw_vdavinci *)__vdavinci;
@@ -167,8 +163,7 @@ int hw_dvt_hypervisor_dma_map_guest_page(void *__vdavinci,
  * @vdavinci: a vdavinci
  * @dma_sgt: the dma addr list(sg_table)
  */
-void hw_dvt_hypervisor_dma_unmap_guest_page(void *__vdavinci,
-                                            ka_sg_table_t *dma_sgt)
+void hw_dvt_hypervisor_dma_unmap_guest_page(void *__vdavinci, ka_sg_table_t *dma_sgt)
 {
     if (__vdavinci == NULL || dma_sgt == NULL) {
         ka_dfx_pr_err("vdavinci or dma_sgt is null\n");
@@ -179,12 +174,12 @@ void hw_dvt_hypervisor_dma_unmap_guest_page(void *__vdavinci,
 }
 
 /**
-  * hw_dvt_hypervisor_dma_pool_active - dma pool active or not
-  * @__vdavinci: a vdavinci
-  *
-  * Returns:
-  * true on active, false on inactive.
-  */
+ * hw_dvt_hypervisor_dma_pool_active - dma pool active or not
+ * @__vdavinci: a vdavinci
+ *
+ * Returns:
+ * true on active, false on inactive.
+ */
 bool hw_dvt_hypervisor_dma_pool_active(void *__vdavinci)
 {
     if (__vdavinci == NULL) {
@@ -195,23 +190,22 @@ bool hw_dvt_hypervisor_dma_pool_active(void *__vdavinci)
 }
 
 /**
-  * hw_dvt_hypervisor_dma_map_guest_page_batch
-  * - setup dma map for guest page when dma pool is active
-  * @__vdavinci: a vdavinci
-  * @gfn: guest pfn array
-  * @dma_addr: retrieve dma addr array
-  * @count: array size
-  *
-  * Returns:
-  * 0 on success, negative error code if failed.
-  */
-int hw_dvt_hypervisor_dma_map_guest_page_batch(void *__vdavinci,
-    unsigned long *gfn, unsigned long *dma_addr, unsigned long count)
+ * hw_dvt_hypervisor_dma_map_guest_page_batch
+ * - setup dma map for guest page when dma pool is active
+ * @__vdavinci: a vdavinci
+ * @gfn: guest pfn array
+ * @dma_addr: retrieve dma addr array
+ * @count: array size
+ *
+ * Returns:
+ * 0 on success, negative error code if failed.
+ */
+int hw_dvt_hypervisor_dma_map_guest_page_batch(void *__vdavinci, unsigned long *gfn, unsigned long *dma_addr,
+                                               unsigned long count)
 {
     struct hw_vdavinci *vdavinci = (struct hw_vdavinci *)__vdavinci;
 
-    if (vdavinci == NULL || gfn == NULL || dma_addr == NULL
-            || count == 0) {
+    if (vdavinci == NULL || gfn == NULL || dma_addr == NULL || count == 0) {
         return -EINVAL;
     }
 
@@ -219,17 +213,16 @@ int hw_dvt_hypervisor_dma_map_guest_page_batch(void *__vdavinci,
 }
 
 /**
-  * hw_dvt_hypervisor_dma_unmap_guest_page_batch
-  * - cancel dma map for guest page when dma pool is active
-  * @__vdavinci: a vdavinci
-  * @gfn: guest pfn array
-  * @dma_addr: retrieve dma addr array
-  * @count: array size
-  */
-void hw_dvt_hypervisor_dma_unmap_guest_page_batch(void *__vdavinci, unsigned long *gfn,
-    unsigned long *dma_addr, unsigned long count)
-{
-}
+ * hw_dvt_hypervisor_dma_unmap_guest_page_batch
+ * - cancel dma map for guest page when dma pool is active
+ * @__vdavinci: a vdavinci
+ * @gfn: guest pfn array
+ * @dma_addr: retrieve dma addr array
+ * @count: array size
+ */
+void hw_dvt_hypervisor_dma_unmap_guest_page_batch(void *__vdavinci, unsigned long *gfn, unsigned long *dma_addr,
+                                                  unsigned long count)
+{}
 
 /**
  * hw_dvt_hypervisor_is_valid_gfn - check if a visible gfn
@@ -255,16 +248,14 @@ bool hw_dvt_hypervisor_is_valid_gfn(void *__vdavinci, unsigned long gfn)
 
 int hw_dvt_hypervisor_mmio_get(void **dst, int *size, void *__vdavinci, int bar)
 {
-    if (g_hw_kvmdt_ops.mmio_get == NULL || __vdavinci == NULL ||
-        dst == NULL || size == NULL) {
+    if (g_hw_kvmdt_ops.mmio_get == NULL || __vdavinci == NULL || dst == NULL || size == NULL) {
         return -EINVAL;
     }
 
     return g_hw_kvmdt_ops.mmio_get(dst, size, __vdavinci, bar);
 }
 
-bool hw_dvt_hypervisor_is_vm_pfn_valid(ka_device_t *dev,
-                                       unsigned long pfn, unsigned long size)
+bool hw_dvt_hypervisor_is_vm_pfn_valid(ka_device_t *dev, unsigned long pfn, unsigned long size)
 {
     if (ka_unlikely(dev == NULL || size == 0)) {
         return false;

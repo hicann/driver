@@ -20,10 +20,10 @@
 #include "vfio_ops.h"
 
 #define START(map) ((map)->start)
-#define LAST(map)  ((map)->end - 1)
+#define LAST(map) ((map)->end - 1)
 
-KA_INTERVAL_TREE_DEFINE(struct vm_pfn_node, rb, unsigned long, subtree_last,
-                        START, LAST, ka_maybe_unused static, pfn_tree)
+KA_INTERVAL_TREE_DEFINE(struct vm_pfn_node, rb, unsigned long, subtree_last, START, LAST, ka_maybe_unused static,
+                        pfn_tree)
 
 KA_LIST_HEAD(g_vm_domains);
 KA_TASK_DEFINE_MUTEX(g_vm_domains_lock);
@@ -45,18 +45,19 @@ void dev_dom_release(ka_kref_t *ref)
 
     ka_list_del(&dev_dom->list);
 
-    ka_list_for_each_entry(ram_info, &dev_dom->vm_dom->ram_info_list->head, list) {
+    ka_list_for_each_entry(ram_info, &dev_dom->vm_dom->ram_info_list->head, list)
+    {
         dev_dom->ops.dev_dma_unmap_ram_range(dev_dom->vdavinci, ram_info);
     }
     ka_mm_kfree(dev_dom);
 }
 
-struct dev_dom_info *dev_dom_info_find(struct vm_dom_info *vm_dom,
-                                       struct hw_vdavinci *vdavinci)
+struct dev_dom_info *dev_dom_info_find(struct vm_dom_info *vm_dom, struct hw_vdavinci *vdavinci)
 {
     struct dev_dom_info *dev_dom = NULL;
 
-    ka_list_for_each_entry(dev_dom, &vm_dom->dev_dom_list_head, list) {
+    ka_list_for_each_entry(dev_dom, &vm_dom->dev_dom_list_head, list)
+    {
         if (dev_dom->vdavinci == vdavinci) {
             return dev_dom;
         }
@@ -65,11 +66,9 @@ struct dev_dom_info *dev_dom_info_find(struct vm_dom_info *vm_dom,
     return NULL;
 }
 
-struct dev_dom_info *dev_dom_info_new(struct vm_dom_info *vm_dom,
-                                      struct hw_vdavinci *vdavinci)
+struct dev_dom_info *dev_dom_info_new(struct vm_dom_info *vm_dom, struct hw_vdavinci *vdavinci)
 {
-    struct dev_dom_info *dev_dom =
-        (struct dev_dom_info *)ka_mm_kzalloc(sizeof(struct dev_dom_info), KA_GFP_KERNEL);
+    struct dev_dom_info *dev_dom = (struct dev_dom_info *)ka_mm_kzalloc(sizeof(struct dev_dom_info), KA_GFP_KERNEL);
     if (!dev_dom) {
         return NULL;
     }
@@ -84,8 +83,7 @@ struct dev_dom_info *dev_dom_info_new(struct vm_dom_info *vm_dom,
 }
 
 /* hold vm_dom_info->rw_semaphore before call this function */
-struct dev_dom_info *dev_dom_info_get(struct vm_dom_info *vm_dom,
-                                      struct hw_vdavinci *vdavinci)
+struct dev_dom_info *dev_dom_info_get(struct vm_dom_info *vm_dom, struct hw_vdavinci *vdavinci)
 {
     struct dev_dom_info *dev_dom = NULL;
 
@@ -99,8 +97,7 @@ struct dev_dom_info *dev_dom_info_get(struct vm_dom_info *vm_dom,
 }
 
 /* hold vm_dom_info->rw_semaphore before call this function */
-void dev_dom_info_put(struct dev_dom_info *dev_dom,
-                      struct hw_vdavinci *vdavinci)
+void dev_dom_info_put(struct dev_dom_info *dev_dom, struct hw_vdavinci *vdavinci)
 {
     if (ka_base_kref_put(&dev_dom->ref, dev_dom_release)) {
         if (vdavinci->is_passthrough) {
@@ -149,7 +146,8 @@ struct vm_dom_info *vm_dom_info_find(const ka_kvm_t *kvm)
 {
     struct vm_dom_info *vm_dom = NULL;
 
-    ka_list_for_each_entry(vm_dom, &g_vm_domains, node) {
+    ka_list_for_each_entry(vm_dom, &g_vm_domains, node)
+    {
         if (vm_dom->kvm == kvm) {
             return vm_dom;
         }
@@ -167,8 +165,8 @@ struct vm_dom_info *vm_dom_info_new(ka_kvm_t *kvm)
         return NULL;
     }
 
-    vm_dom->ram_info_list = (struct ram_range_info_list *)
-        ka_mm_kzalloc(sizeof(struct ram_range_info_list), KA_GFP_KERNEL);
+    vm_dom->ram_info_list = (struct ram_range_info_list *)ka_mm_kzalloc(sizeof(struct ram_range_info_list),
+                                                                        KA_GFP_KERNEL);
     if (!vm_dom->ram_info_list) {
         ka_mm_kfree(vm_dom);
         return NULL;
@@ -208,8 +206,7 @@ out:
     return vm_dom;
 }
 
-int vm_add_and_merge_pfn(struct vm_dom_info *vm_dom,
-                         unsigned long pfn, unsigned long size)
+int vm_add_and_merge_pfn(struct vm_dom_info *vm_dom, unsigned long pfn, unsigned long size)
 {
 #if (IS_VDAVINCI_KERNEL_VERSION_SUPPORT || (defined(DRV_UT)))
     struct vm_pfn_node *node;
@@ -222,8 +219,7 @@ int vm_add_and_merge_pfn(struct vm_dom_info *vm_dom,
     }
     pfn_root = &vm_dom->pfn_root;
     while (true) {
-        node = pfn_tree_iter_first(pfn_root,
-                                   (start > 0) ? start - 1 : 0, end);
+        node = pfn_tree_iter_first(pfn_root, (start > 0) ? start - 1 : 0, end);
         if (node == NULL) {
             break;
         }
@@ -244,18 +240,25 @@ int vm_add_and_merge_pfn(struct vm_dom_info *vm_dom,
     return 0;
 }
 
-bool is_vm_pfn_managed(struct vm_dom_info *vm_dom,
-                       unsigned long pfn, unsigned long size)
+bool is_vm_pfn_managed(struct vm_dom_info *vm_dom, unsigned long pfn, unsigned long size)
 {
 #if (IS_VDAVINCI_KERNEL_VERSION_SUPPORT || (defined(DRV_UT)))
     ka_rb_root_cached_t *pfn_root;
+    struct vm_pfn_node *node;
 
     if (ka_unlikely(vm_dom == NULL || size == 0)) {
         return false;
     }
+    if (ka_unlikely(pfn + size < pfn)) {
+        return false;
+    }
     pfn_root = &vm_dom->pfn_root;
+    node = pfn_tree_iter_first(pfn_root, pfn, pfn + size - 1);
+    if (ka_unlikely(node == NULL)) {
+        return false;
+    }
 
-    return (pfn_tree_iter_first(pfn_root, pfn, pfn + size - 1) != NULL);
+    return (node->start <= pfn && (pfn + size) <= node->end);
 #else
     return false;
 #endif

@@ -21,19 +21,16 @@ int hw_dvt_init(void *vdavinci_priv)
         return -EINVAL;
     }
     if (!IS_ENABLED(CONFIG_VFIO_MDEV)) {
-        vascend_warn(((struct vdavinci_priv *)vdavinci_priv)->dev,
-                     "mdev is not enable");
+        vascend_warn(((struct vdavinci_priv *)vdavinci_priv)->dev, "mdev is not enable");
         return 0;
     }
     ret = hw_dvt_init_device((struct vdavinci_priv *)vdavinci_priv);
     if (ret == -ENOTSUPP) {
-        vascend_warn(((struct vdavinci_priv *)vdavinci_priv)->dev,
-                     "vdavinci is not support");
+        vascend_warn(((struct vdavinci_priv *)vdavinci_priv)->dev, "vdavinci: unsupported device");
         return 0;
     }
     if (ret) {
-        vascend_err(((struct vdavinci_priv *)vdavinci_priv)->dev,
-                    "Fail to init DVT device, ret: %d\n", ret);
+        vascend_err(((struct vdavinci_priv *)vdavinci_priv)->dev, "Fail to init DVT device, ret: %d\n", ret);
         return ret;
     }
 
@@ -49,8 +46,7 @@ int hw_dvt_uninit(void *vdavinci_priv)
     }
     ret = hw_dvt_uninit_device((struct vdavinci_priv *)vdavinci_priv);
     if (ret) {
-        vascend_err(((struct vdavinci_priv *)vdavinci_priv)->dev,
-                    "Fail to uninit DVT device, ret: %d\n", ret);
+        vascend_err(((struct vdavinci_priv *)vdavinci_priv)->dev, "Fail to uninit DVT device, ret: %d\n", ret);
         return ret;
     }
 
