@@ -37,7 +37,7 @@ usage() {
     echo "$(basename $0)                    Collect the default content."
     echo "$(basename $0) -p /home/tmp       Specify a path to store the generated content."
     echo "$(basename $0) --off host_info     Disable host os info."
-if [[ "$CHIP_NUM_910_95" -eq 0]]; then
+if [[ "$CHIP_NUM_910_95" -eq 0 ]]; then
     echo "$(basename $0) -m                 Collect the mcu logs."
     echo "$(basename $0) -l                 Collect the link_down logs."
 fi
@@ -59,7 +59,7 @@ function parse_args()
 {
     if [ $# -eq 0 ]; then
         echo "No arguments provided. Performing default action..."
-        main 
+        main
         exit 0
     fi
     while [ "$1" != "" ]; do
@@ -69,7 +69,7 @@ function parse_args()
                     usage
                     exit 1
                 elif [ ! -d "$2" ] && [ ! -h "$2" ]; then
-                    echo "Warning: The specified path is inexistent, this tool will create the directory." 
+                    echo "Warning: The specified path is inexistent, this tool will create the directory."
                     mkdir -p "$2"
                     chmod 440 "$2"
                 fi
@@ -149,7 +149,7 @@ function create_log_collect_dir()
     if [ ! -d "$LOG_COLLECT_DIR" ]; then
         mkdir -p $LOG_COLLECT_DIR
         if [ $? -ne 0 ]; then
-            echo "Error: Create log collect directory failed. Please check." 
+            echo "Error: Create log collect directory failed. Please check."
             exit 1
         fi
     fi
@@ -249,7 +249,7 @@ function collect_npu_info_log()
     j=0
     for dev_id in $dev_list
     do
-        echo "########### collect npu id $dev_id product info ###########" >> $LOG_COLLECT_DIR/npu_info_log/card_info.log 
+        echo "########### collect npu id $dev_id product info ###########" >> $LOG_COLLECT_DIR/npu_info_log/card_info.log
         echo "npu-smi info -t product -i $dev_id -c 0 1" >> $LOG_COLLECT_DIR/npu_info_log/card_info.log
         timeout 10s npu-smi info -t product -i $dev_id -c 0 1>> $LOG_COLLECT_DIR/npu_info_log/card_info.log 2>> $LOG_COLLECT_RUNING_INFO
 
@@ -300,7 +300,7 @@ function collect_mcu_log()
     for dev_id in $dev_list
     do
         (
-            npu-smi set -t collect-log -i $dev_id 1>> $LOG_COLLECT_RUNING_INFO 2>&1 
+            npu-smi set -t collect-log -i $dev_id 1>> $LOG_COLLECT_RUNING_INFO 2>&1
             mkdir -p $LOG_COLLECT_DIR/mcu_log/card_${dev_id}_mcu_log
             cp -f /run/mcu_log/error_log_${dev_id}_*.log /run/mcu_log/maintaince_log_${dev_id}_*.log /run/mcu_log/operate_log_${dev_id}_*.log $LOG_COLLECT_DIR/mcu_log/card_${dev_id}_mcu_log/ 1>> $LOG_COLLECT_RUNING_INFO 2>&1
         ) &
@@ -395,7 +395,7 @@ function main()
     green_echo "$(date)"
 }
 
-function collect_full() 
+function collect_full()
 {
     show_info
     get_install_variable
@@ -409,16 +409,16 @@ function collect_full()
     if [ "$CHIP_NUM_910_93" -ne 0 ]; then
         collect_lingqu_log &
     fi
-	
-    get_version_info 
+
+    get_version_info
 	get_path_env   &
     get_driver_log &
-	get_pcie_log 2>/dev/null &	 
+	get_pcie_log 2>/dev/null &
     get_os_info &
 	get_qemu_log &
 
-    wait  	  
-    get_device_log 
+    wait
+    get_device_log
     compress_file
     green_echo "$(date)"
 }
@@ -597,7 +597,7 @@ function network_info_collect()
     for i in $(seq 0 $npu_nums); do echo "====> $i" >> roce.log;timeout 10s hccn_tool -i $i -pfc_stat -g &>> roce.log;done
     echo "-----------collect pfc data packet info success---------------"
 
-    echo "-----------collect maximum size of the buffer info success---------------" 
+    echo "-----------collect maximum size of the buffer info success---------------"
     #查询网卡侧收发包状态，重定向输出到stat.log
     echo -e "\n-----------stat_extra---------------" >> stat.log
     for i in $(seq 0 $npu_nums); do echo "====> $i" >> stat.log;timeout 10s hccn_tool -i $i -stat_extra -g &>> stat.log;done
@@ -646,7 +646,7 @@ function get_path_env() {
 
 function get_version_info() {
 	date
-	
+
 	echo "--------------- cat drvier version.info ---------------"
 	which npu-smi > /dev/null 2>&1
 	if [ $? -eq 0 ];then
@@ -657,7 +657,7 @@ function get_version_info() {
 	timeout 20s ${INSTALL_PATH}/driver/tools/upgrade-tool --device_index -1 --system_version >> ${FILE_VERSION_LOG}
 	echo "--------------- firmware version ---------------"
 	timeout 20s ${INSTALL_PATH}/driver/tools/upgrade-tool --device_index -1 --component -1 --version >> ${FILE_VERSION_LOG}
-	bdf_list=$(lspci | egrep "d100|d500|d801|d802|d803|d806" | awk '{print $1}') 
+	bdf_list=$(lspci | egrep "d100|d500|d801|d802|d803|d806" | awk '{print $1}')
 	for bdf in $bdf_list ;do lspci -vvvs $bdf -xxx | grep 4e0 >> ${FILE_VERSION_LOG};done
 	for bdf in $bdf_list ;do lspci -vvvs $bdf -xxxx | grep 300  >> ${FILE_VERSION_LOG}; lspci -vvvs $bdf -xxxx | grep 320 >> ${FILE_VERSION_LOG}; lspci -vvvs $bdf -xxxx | grep 450 >> ${FILE_VERSION_LOG};done
 	lspci | egrep "d100|d500|d801|d802|d803|d806"  | awk '{print $1}' | xargs -i lspci -xxxx -s {} | grep 300 >> ${FILE_VERSION_LOG}
@@ -675,15 +675,15 @@ function get_version_info() {
 function get_pcie_log() {
 	green_echo "================ Collect PCIe log ==============" | tee -a $LOG_COLLECT_RUNING_INFO
 	date >> ${FILE_PCIE_LOG}
-	
+
     echo "--------------- lspci ---------------" 		>> ${FILE_PCIE_LOG}
 	lspci | egrep "d100|d500|d801|d802|d803|d806" 				>> ${FILE_PCIE_LOG}
 
 	echo "--------------- bdf_to_devid ---------------" 					>> ${FILE_PCIE_LOG}
 	bdf_list=($(lspci | egrep "d100|d500|d801|d802|d803|d806" | awk '{print $1}'))
 	cat /sys/bus/pci/devices/0000:${bdf_list[0]}/devdrv_sysfs_bdf_to_devid 	>> ${FILE_PCIE_LOG}
-	bdf_list=$(lspci | egrep "d100|d500|d801|d802|d803|d806" | awk '{print $1}') 
-	
+	bdf_list=$(lspci | egrep "d100|d500|d801|d802|d803|d806" | awk '{print $1}')
+
     echo "--------------- firmware version ---------------" 				>> ${FILE_PCIE_LOG}
 	for bdf in $bdf_list ;do lspci -vvvs $bdf -xxx | grep 4e0;done			>> ${FILE_PCIE_LOG}
 	for bdf in $bdf_list ;do lspci -vvvs $bdf -xxxx | grep 300 >> ${FILE_VERSION_LOG}; lspci -vvvs $bdf -xxxx | grep 320 >> ${FILE_VERSION_LOG}; lspci -vvvs $bdf -xxxx | grep 450 >> ${FILE_PCIE_LOG};done
@@ -693,7 +693,7 @@ function get_pcie_log() {
 
 	echo "--------------- LnkSta ---------------" >> ${FILE_PCIE_LOG}
 	date;lspci | egrep "d100|d500|d801|d802|d803|d806" | awk '{print $1}'|xargs -i lspci -vvvvs {}|grep -E 'LnkSta:'  >> ${FILE_PCIE_LOG}
-	
+
 	echo "--------------- NUMA ---------------" >> ${FILE_PCIE_LOG}
 	for bdf in $bdf_list ;do echo ====$bdf====;lspci -vvvs $bdf | egrep "Lnk|NUMA";done >> ${FILE_PCIE_LOG}
 	for bdf in $bdf_list ;do echo ====$bdf====;lspci -vvvs $bdf | egrep "NUMA";done >> ${FILE_PCIE_LOG}
@@ -771,7 +771,7 @@ function get_qemu_log() {
 
 function get_driver_log() {
 	green_echo "================ Collect driver log ==============" | tee -a $LOG_COLLECT_RUNING_INFO
-	cp -rf /var/log/npu "${LOG_FILE_PATH}" > /dev/null 2>&1 
+	cp -rf /var/log/npu "${LOG_FILE_PATH}" > /dev/null 2>&1
 	green_echo "================ Collect plog log ==============" | tee -a $LOG_COLLECT_RUNING_INFO
 	cp -rf ~/ascend "${LOG_FILE_PATH}" > /dev/null 2>&1
     green_echo "$(date) End collect driver log" | tee -a $LOG_COLLECT_RUNING_INFO
@@ -782,7 +782,7 @@ function get_device_log() {
 	green_echo "================ Collect device log ==============" | tee -a $LOG_COLLECT_RUNING_INFO
 	msnpureport -f
     for d in 0 1 2 3 4 5 6 7; do
-        msnpureport -r -d $d 
+        msnpureport -r -d $d
     done
 	cd ${TOP_PATH}
     green_echo "$(date) End collect device log" | tee -a $LOG_COLLECT_RUNING_INFO
