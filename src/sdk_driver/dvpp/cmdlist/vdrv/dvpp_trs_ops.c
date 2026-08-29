@@ -46,14 +46,14 @@ static int32_t get_svm_pa_list(ka_pid_t pid, dvpp_sqe_args *sqe_args, dvpp_share
         return -1;
     }
     mem_list_size = sizeof(uint64_t) * pa_num;
-    pa_info_size = sizeof(dvpp_svm_pa_info)  + mem_list_size * 2; // 2 mem_list_size
+    pa_info_size = sizeof(dvpp_svm_pa_info) + mem_list_size * 2; // 2 mem_list_size
     if (sqe_args->args_size + pa_info_size > blk->size) {
-        DVPP_CMDLIST_LOG_ERROR("args size:%llu and painfo size %llu bigger than blk size %llu\n",
-            sqe_args->args_size, pa_info_size, blk->size);
+        DVPP_CMDLIST_LOG_ERROR("args size:%llu and pa_info size %llu bigger than blk size %llu\n", sqe_args->args_size,
+                               pa_info_size, blk->size);
         return -1;
     }
 
-    pa_info = (dvpp_svm_pa_info*)(sqe_args->args_addr + sqe_args->args_size);
+    pa_info = (dvpp_svm_pa_info *)(sqe_args->args_addr + sqe_args->args_size);
     pa_info->pa_list = (uint64_t)(uintptr_t)(pa_info) + sizeof(dvpp_svm_pa_info);
     pa_info->size_list = (uint64_t)(uintptr_t)(pa_info->pa_list) + mem_list_size;
     pa_info->num = pa_num;
@@ -61,7 +61,7 @@ static int32_t get_svm_pa_list(ka_pid_t pid, dvpp_sqe_args *sqe_args, dvpp_share
     ret = dvpp_get_pa_list_from_svm_addr(pid, sqe_args->cmdbuf_uva, sqe_args->cmdbuf_size, pa_info);
     if (ret != 0) {
         DVPP_CMDLIST_LOG_ERROR("get phy addr list based on svm addr fail, uva:%pK, size:%u, ret:%d\n",
-            sqe_args->cmdbuf_uva, sqe_args->cmdbuf_size, ret);
+                               sqe_args->cmdbuf_uva, sqe_args->cmdbuf_size, ret);
         return -1;
     }
 
@@ -125,10 +125,10 @@ static int32_t dvpp_trs_sqe_update(uint32_t devid, uint32_t tsid, int32_t pid, v
     }
 
     // args内存拷贝到共享内存中
-    n = ka_base_copy_from_user((void*)blk->addr, sqe_args->args_addr, sqe_args->args_size);
+    n = ka_base_copy_from_user((void *)blk->addr, sqe_args->args_addr, sqe_args->args_size);
     if (n != 0) {
         DVPP_CMDLIST_LOG_ERROR("copy args from user fail, need copy size is %u, remain %u is not copied.\n",
-            sqe_args->args_size, n);
+                               sqe_args->args_size, n);
         return -1;
     }
     sqe_args->args_addr = blk->addr;
@@ -154,8 +154,8 @@ static int32_t dvpp_send_sqe_to_phy(uint32_t devid, int pid, struct dvpp_sqe *sq
     msg.msg_data_len = sizeof(struct dvpp_sqe);
     ret = memcpy_s((void *)&msg.msg_data[0], DVPP_VCM_MSG_DATA_MAXLEN, (void *)sqe, sizeof(struct dvpp_sqe));
     if (ret != EOK) {
-        DVPP_CMDLIST_LOG_ERROR("gen cmdlist devid=%u pid=%d memcpy failed. ret=%d,(%u,%lu)\n",
-            devid, pid, ret, DVPP_VCM_MSG_DATA_MAXLEN, sizeof(struct dvpp_sqe));
+        DVPP_CMDLIST_LOG_ERROR("gen cmdlist devid=%u pid=%d memcpy failed. ret=%d,(%u,%lu)\n", devid, pid, ret,
+                               DVPP_VCM_MSG_DATA_MAXLEN, sizeof(struct dvpp_sqe));
         return ret;
     }
 
@@ -173,8 +173,8 @@ static int32_t dvpp_send_sqe_to_phy(uint32_t devid, int pid, struct dvpp_sqe *sq
 
     ret = memcpy_s((void *)sqe, sizeof(struct dvpp_sqe), (void *)&msg.msg_data[0], msg.msg_data_len);
     if (ret != EOK) {
-        DVPP_CMDLIST_LOG_ERROR("gen cmdlist devid=%u pid=%u memcpy failed. ret=%d (%lu,%u)\n",
-            devid, pid, ret, sizeof(struct dvpp_sqe), msg.msg_data_len);
+        DVPP_CMDLIST_LOG_ERROR("gen cmdlist devid=%u pid=%u memcpy failed. ret=%d (%lu,%u)\n", devid, pid, ret,
+                               sizeof(struct dvpp_sqe), msg.msg_data_len);
         return ret;
     }
     return 0;
@@ -195,7 +195,7 @@ static int32_t dvpp_gen_cmdlist_handler(dvpp_cmdlist_ioctl_args *arg)
     }
 
     if (devid >= DVPP_VMNG_DEVICE_NUM_MAX) {
-        DVPP_CMDLIST_LOG_ERROR("invalid devid:%u must less than:%u\n", devid, DVPP_VMNG_DEVICE_NUM_MAX);
+        DVPP_CMDLIST_LOG_ERROR("invalid devid:%u must be less than:%u\n", devid, DVPP_VMNG_DEVICE_NUM_MAX);
         return -1;
     }
 

@@ -35,7 +35,7 @@ static int32_t check_addr_read_only(uint64_t addr, uint64_t len)
     return hal_kernel_svm_addr_is_read_only(addr, len);
 }
 
-static int32_t dvpp_sqe_update(uint32_t devid, uint32_t tsid, int pid, void* sqe, DVPP_MACHINE_SCENE scene)
+static int32_t dvpp_sqe_update(uint32_t devid, uint32_t tsid, int pid, void *sqe, DVPP_MACHINE_SCENE scene)
 {
     int32_t ret = 0;
     dvpp_sqe_args *sqe_args = NULL;
@@ -44,7 +44,7 @@ static int32_t dvpp_sqe_update(uint32_t devid, uint32_t tsid, int pid, void* sqe
         DVPP_CMDLIST_LOG_ERROR("sqe passed from outside is null.\n");
         return -1;
     }
-    sqe_args = (dvpp_sqe_args*)sqe;
+    sqe_args = (dvpp_sqe_args *)sqe;
 
     if (check_dvpp_sqe_args(sqe_args) != 0) {
         DVPP_CMDLIST_LOG_ERROR("check dvpp sqe args fail.\n");
@@ -76,7 +76,7 @@ static int32_t dvpp_sqe_update(uint32_t devid, uint32_t tsid, int pid, void* sqe
             break;
         }
         case DVPP_BUTT_MACHINE: {
-            DVPP_CMDLIST_LOG_ERROR("unknow machine scene.\n");
+            DVPP_CMDLIST_LOG_ERROR("unknown machine scene.\n");
             return -1;
         }
         default:
@@ -88,7 +88,7 @@ static int32_t dvpp_sqe_update(uint32_t devid, uint32_t tsid, int pid, void* sqe
 
 static int32_t dvpp_sqe_update_ts_check(uint32_t devid, uint32_t tsid, int pid, void *sqe)
 {
-    dvpp_sqe_args *sqe_args = (dvpp_sqe_args*)sqe;
+    dvpp_sqe_args *sqe_args = (dvpp_sqe_args *)sqe;
     if (sqe_args == NULL) {
         DVPP_CMDLIST_LOG_ERROR("sqe passed from outside is null.\n");
         return -1;

@@ -36,14 +36,14 @@ static int32_t dvpp_get_share_addr_info(uint32_t devid, uint64_t *addr, size_t *
     }
 
     if (*size < DVPP_SHARE_MEM_SIZE) {
-        DVPP_CMDLIST_LOG_ERROR("dvpp share memory size cannot be less %u\n", DVPP_SHARE_MEM_SIZE);
+        DVPP_CMDLIST_LOG_ERROR("dvpp share memory size cannot be less than %u\n", DVPP_SHARE_MEM_SIZE);
         return -1;
     }
 
     return 0;
 }
 
-dvpp_share_mem_pool* dvpp_init_share_mem_pool(uint32_t devid, dvpp_sqe_args *sqe_args)
+dvpp_share_mem_pool *dvpp_init_share_mem_pool(uint32_t devid, dvpp_sqe_args *sqe_args)
 {
     uint32_t m = 0;
     uint32_t n = 0;
@@ -65,7 +65,7 @@ dvpp_share_mem_pool* dvpp_init_share_mem_pool(uint32_t devid, dvpp_sqe_args *sqe
         return NULL;
     }
 
-    pool = (dvpp_share_mem_pool*)share_mem;
+    pool = (dvpp_share_mem_pool *)share_mem;
     pool->addr = (uintptr_t)share_mem + sizeof(dvpp_share_mem_pool);
     pool->size = size - sizeof(dvpp_share_mem_pool);
 
@@ -105,7 +105,7 @@ void dvpp_uninit_share_mem_pool(void)
     }
 }
 
-static dvpp_share_blk* dvpp_get_normal_blk_from_pool(dvpp_share_mem_pool *pool, dvpp_share_blk_mod mod_id)
+static dvpp_share_blk *dvpp_get_normal_blk_from_pool(dvpp_share_mem_pool *pool, dvpp_share_blk_mod mod_id)
 {
     uint32_t n = 0;
     ka_task_mutex_lock(&g_normal_blks_mutex[mod_id]);
@@ -122,7 +122,7 @@ static dvpp_share_blk* dvpp_get_normal_blk_from_pool(dvpp_share_mem_pool *pool, 
     return NULL;
 }
 
-static dvpp_share_blk* dvpp_get_super_blk_from_pool(dvpp_share_mem_pool *pool)
+static dvpp_share_blk *dvpp_get_super_blk_from_pool(dvpp_share_mem_pool *pool)
 {
     uint32_t n = 0;
     ka_task_mutex_lock(&g_super_blks_mutex);
@@ -138,8 +138,8 @@ static dvpp_share_blk* dvpp_get_super_blk_from_pool(dvpp_share_mem_pool *pool)
     return NULL;
 }
 
-dvpp_share_blk* dvpp_get_share_mem_blk_from_pool(
-    dvpp_share_blk_type type, dvpp_share_blk_mod mod_id, dvpp_share_mem_pool *pool)
+dvpp_share_blk *dvpp_get_share_mem_blk_from_pool(dvpp_share_blk_type type, dvpp_share_blk_mod mod_id,
+                                                 dvpp_share_mem_pool *pool)
 {
     dvpp_share_blk *blk = NULL;
     if (type == DVPP_SHARE_BLK_TYPE_NORMAL) {

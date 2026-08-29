@@ -21,7 +21,7 @@
 #include "pbl_kernel_interface.h"
 
 #define DVPP_CONTAINER_NOTIFIER "dvpp_container_notifier"
-#define DVPP_VIRTUAL_NOTIFIER   "dvpp_virtual_notifier"
+#define DVPP_VIRTUAL_NOTIFIER "dvpp_virtual_notifier"
 
 static int32_t dvpp_vmng_init_instance(uint32_t udevid)
 {
@@ -29,7 +29,7 @@ static int32_t dvpp_vmng_init_instance(uint32_t udevid)
     uint32_t fid = 0;
     int32_t ret;
 
-    DVPP_CMDLIST_LOG_INFO("dvpp vmnh vm online dev_id=%u, fid=%u", dev_id, fid);
+    DVPP_CMDLIST_LOG_INFO("dvpp vmng vm online dev_id=%u, fid=%u", dev_id, fid);
     // 虚拟机上线时，注册vpc通讯客户端，用于接收来自虚拟机的vpc通讯消息
     ret = dvpp_vcm_vpc_register_client(dev_id, fid);
     return ret;
@@ -40,7 +40,7 @@ static int32_t dvpp_vmng_uninit_instance(uint32_t udevid)
     uint32_t dev_id = udevid;
     uint32_t fid = 0;
 
-    DVPP_CMDLIST_LOG_INFO("dvpp vmnh vm offline dev_id=%u, fid=%u", dev_id, fid);
+    DVPP_CMDLIST_LOG_INFO("dvpp vmng vm offline dev_id=%u, fid=%u", dev_id, fid);
     (void)dvpp_vcm_vpc_unregister_client(dev_id, fid);
     return 0;
 }
@@ -73,7 +73,7 @@ static int32_t dvpp_vmng_init_container_instance(uint32_t dev_id, struct device 
     return 0;
 }
 
-static int32_t  dvpp_vmng_uninit_container_instance(uint32_t dev_id)
+static int32_t dvpp_vmng_uninit_container_instance(uint32_t dev_id)
 {
     // 使用device id为pool id管理不同的内存池
     dvpp_destroy_mem_pools_by_id(dev_id);

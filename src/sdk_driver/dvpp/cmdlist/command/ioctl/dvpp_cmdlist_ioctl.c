@@ -151,10 +151,7 @@ static long dvpp_cmdlist_ioctl(ka_file_t *file, unsigned int cmd, unsigned long 
 }
 
 static const ka_file_operations_t dvpp_cmdlist_fops = {
-    .open = dvpp_cmdlist_open,
-    .release = dvpp_cmdlist_close,
-    .unlocked_ioctl = dvpp_cmdlist_ioctl
-};
+    .open = dvpp_cmdlist_open, .release = dvpp_cmdlist_close, .unlocked_ioctl = dvpp_cmdlist_ioctl};
 
 int32_t dvpp_cmdlist_dev_init(void)
 {
@@ -187,8 +184,8 @@ int32_t dvpp_cmdlist_dev_init(void)
     }
 
     // 创建设备文件
-    g_dvpp_cmdlist_device = ka_driver_device_create(g_dvpp_cmdlist_class, NULL, g_dvpp_cmdlist_dev_num,
-        NULL, DVPP_CMDLIST_DEVICE_NAME);
+    g_dvpp_cmdlist_device = ka_driver_device_create(g_dvpp_cmdlist_class, NULL, g_dvpp_cmdlist_dev_num, NULL,
+                                                    DVPP_CMDLIST_DEVICE_NAME);
     if (KA_IS_ERR(g_dvpp_cmdlist_device)) {
         ret = -1;
         DVPP_CMDLIST_LOG_ERROR("device_create fail");
@@ -207,8 +204,8 @@ err_region:
     return ret;
 }
 
-int32_t dvpp_get_gen_cmdlist_info_from_ioctl(dvpp_cmdlist_ioctl_args *arg,
-    dvpp_gen_cmdlist_user_data *user_data, int32_t *pid, uint32_t *devid, uint32_t *phyid, struct dvpp_sqe *sqe)
+int32_t dvpp_get_gen_cmdlist_info_from_ioctl(dvpp_cmdlist_ioctl_args *arg, dvpp_gen_cmdlist_user_data *user_data,
+                                             int32_t *pid, uint32_t *devid, uint32_t *phyid, struct dvpp_sqe *sqe)
 {
     unsigned long ret;
     if (arg->user_data == NULL) {
@@ -312,7 +309,7 @@ void dvpp_get_version_init(void)
     cmd_case.handler = dvpp_get_cmdlist_version_handler;
     ret = dvpp_get_cmdlist_version_func(&cmd_case);
     if (ret != 0) {
-        DVPP_CMDLIST_LOG_ERROR("dvpp_get_cmdlist_version_func failed， cmd=%d\n", (int32_t)GET_CMDLIST_VERSION);
+        DVPP_CMDLIST_LOG_ERROR("dvpp_get_cmdlist_version_func failed, cmd=%d\n", (int32_t)GET_CMDLIST_VERSION);
         return;
     }
 }

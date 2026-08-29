@@ -17,10 +17,11 @@
 
 int32_t check_dvpp_sqe_args(dvpp_sqe_args *sqe_args)
 {
-    if ((sqe_args->cmdbuf_uva == 0) || (sqe_args->cmdbuf_size == 0) ||
-        (sqe_args->args_size == 0) || (sqe_args->args_addr == 0)) {
-        DVPP_CMDLIST_LOG_ERROR("para in sqe is illegal, address of cmdbuf or args may be null. cmdbuf_size:%u,"\
-            " args_size:%u\n", sqe_args->cmdbuf_size, sqe_args->args_size);
+    if ((sqe_args->cmdbuf_uva == 0) || (sqe_args->cmdbuf_size == 0) || (sqe_args->args_size == 0) ||
+        (sqe_args->args_addr == 0)) {
+        DVPP_CMDLIST_LOG_ERROR("para in sqe is illegal, address of cmdbuf or args may be null. cmdbuf_size:%u,"
+                               " args_size:%u\n",
+                               sqe_args->cmdbuf_size, sqe_args->args_size);
         return -1;
     }
 
@@ -30,20 +31,21 @@ int32_t check_dvpp_sqe_args(dvpp_sqe_args *sqe_args)
     }
 
     if ((sqe_args->cmdbuf_size > MEM_SIZE_4M) || (sqe_args->args_size > MEM_SIZE_4M)) {
-        DVPP_CMDLIST_LOG_ERROR("memory size can not beyond %u."
-            "cmdbuf_size:%u, args_size:%u\n", MEM_SIZE_4M, sqe_args->cmdbuf_size, sqe_args->args_size);
+        DVPP_CMDLIST_LOG_ERROR("memory size can not exceed %u."
+                               "cmdbuf_size:%u, args_size:%u\n",
+                               MEM_SIZE_4M, sqe_args->cmdbuf_size, sqe_args->args_size);
         return -1;
     }
 
     if (sqe_args->tlv_node_num > DVPP_MAX_NODE_NUM) {
-        DVPP_CMDLIST_LOG_ERROR("tlv_node_num %u should not be bigger than %u.\n",
-            sqe_args->tlv_node_num, DVPP_MAX_NODE_NUM);
+        DVPP_CMDLIST_LOG_ERROR("tlv_node_num %u should not be bigger than %u.\n", sqe_args->tlv_node_num,
+                               DVPP_MAX_NODE_NUM);
         return -1;
     }
 
 #ifdef BUILD_DEBUG
-    DVPP_CMDLIST_LOG_DEBUG("cmdbuf_uva:%pK, cmdbuf_size:%u, args_uva:%pK, args_size:%u",
-        (void*)(sqe_args->cmdbuf_uva), sqe_args->cmdbuf_size, (void*)(sqe_args->args_addr), sqe_args->args_size);
+    DVPP_CMDLIST_LOG_DEBUG("cmdbuf_uva:%pK, cmdbuf_size:%u, args_uva:%pK, args_size:%u", (void *)(sqe_args->cmdbuf_uva),
+                           sqe_args->cmdbuf_size, (void *)(sqe_args->args_addr), sqe_args->args_size);
 #endif
 
     return 0;

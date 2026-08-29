@@ -41,26 +41,26 @@ static int32_t param_check(dvpp_cmdlist_param_t *param, void *sqe)
     }
 
     if (param->node_cnt > DVPP_MAX_NODE_NUM) {
-        DVPP_CMDLIST_LOG_ERROR("node_cnt can not beyond %u, node_cnt: %u\n", DVPP_MAX_NODE_NUM, param->node_cnt);
+        DVPP_CMDLIST_LOG_ERROR("node_cnt can not exceed %u, node_cnt: %u\n", DVPP_MAX_NODE_NUM, param->node_cnt);
         return -1;
     }
 
     if ((param->batch_cnt < DVPP_MIN_BATCH_NUM) || (param->batch_cnt > DVPP_MAX_BATCH_NUM)) {
-        DVPP_CMDLIST_LOG_ERROR("batch_cnt should be in [%u, %u], batch_cnt: %u\n",
-                               DVPP_MIN_BATCH_NUM, DVPP_MAX_BATCH_NUM, param->batch_cnt);
+        DVPP_CMDLIST_LOG_ERROR("batch_cnt should be in [%u, %u], batch_cnt: %u\n", DVPP_MIN_BATCH_NUM,
+                               DVPP_MAX_BATCH_NUM, param->batch_cnt);
         return -1;
     }
 
     for (i = 0; i < param->batch_cnt; i++) {
         if (param->node_cnt_of_batch[i] > DVPP_MAX_NODE_NUM) {
-            DVPP_CMDLIST_LOG_ERROR("node_cnt_of_batch[%u] can not beyond %u, node_cnt_of_batch: %u\n",
-                                   i, DVPP_MAX_NODE_NUM, param->node_cnt_of_batch[i]);
+            DVPP_CMDLIST_LOG_ERROR("node_cnt_of_batch[%u] can not exceed %u, node_cnt_of_batch: %u\n", i,
+                                   DVPP_MAX_NODE_NUM, param->node_cnt_of_batch[i]);
             return -1;
         }
     }
-    DVPP_CMDLIST_LOG_DEBUG("node_cnt:%u, batch_cnt:%u\n",  param->node_cnt, param->batch_cnt);
-    DVPP_CMDLIST_LOG_DEBUG("cmdbuf_kva:%pK, cmdbuf_uva:%pK, cmdbuf_size:%u\n",
-        (void*)(param->cmdbuf_kva), (void*)(param->cmdbuf_uva), param->cmdbuf_size);
+    DVPP_CMDLIST_LOG_DEBUG("node_cnt:%u, batch_cnt:%u\n", param->node_cnt, param->batch_cnt);
+    DVPP_CMDLIST_LOG_DEBUG("cmdbuf_kva:%pK, cmdbuf_uva:%pK, cmdbuf_size:%u\n", (void *)(param->cmdbuf_kva),
+                           (void *)(param->cmdbuf_uva), param->cmdbuf_size);
 
     return 0;
 }
@@ -83,7 +83,7 @@ int32_t dvpp_gen_vpc_sqe(dvpp_cmdlist_param_t *param, void *sqe)
     vpu_dec.node_cnt_of_batch = param->node_cnt_of_batch;
     vpu_dec.mod = DVPP_MOD_TYPE_VPC;
 
-    dec.decoder = (void*)&vpu_dec;
+    dec.decoder = (void *)&vpu_dec;
     dec.protocol = DVPP_PROTOCOL_VPU;
 
     ret = dvpp_decode_args(&dec);
@@ -99,11 +99,11 @@ int32_t dvpp_gen_vpc_sqe(dvpp_cmdlist_param_t *param, void *sqe)
         return -1;
     }
 
-    (void)dvpp_gen_sqe(&dec, &cmd_buf, (struct dvpp_sqe*)sqe);
+    (void)dvpp_gen_sqe(&dec, &cmd_buf, (struct dvpp_sqe *)sqe);
 
 #ifdef BUILD_DEBUG
     dvpp_dump_cmdbuf(&cmd_buf);
-    dvpp_dump_sqe((struct dvpp_sqe*)sqe);
+    dvpp_dump_sqe((struct dvpp_sqe *)sqe);
     dvpp_dump_sqe_list(&cmd_buf);
 #endif
 
