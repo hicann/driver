@@ -29,8 +29,8 @@ int get_vf_info(u32 dev_id, u32 vf_id, struct vmng_soc_resource_enquire *vf_res)
     }
     ts_agent_info(
         "get vf info end, dev_id=%u, vf_id=%u, aicore_num=%u, vfg_id=%u, vf_aicpu_bitmap=%u, vfg_aicpu_bitmap=%u.",
-        dev_id, vf_id, vf_res->each.stars_static.aic, vf_res->each.vfg.vfg_id,
-        vf_res->each.stars_refresh.device_aicpu, vf_res->vfg.stars_refresh.device_aicpu);
+        dev_id, vf_id, vf_res->each.stars_static.aic, vf_res->each.vfg.vfg_id, vf_res->each.stars_refresh.device_aicpu,
+        vf_res->vfg.stars_refresh.device_aicpu);
 #endif
     return 0;
 }
@@ -45,13 +45,12 @@ int get_vf_vsq_num(u32 dev_id, u32 vf_id, u32 ts_id, u32 *vsq_num)
         return ret;
     }
     if (*vsq_num > TS_AGENT_MAX_SQ_NUM) {
-        ts_agent_err("Driver get vsq num=%u is out of range(0, %u], dev_id=%u, vf_id=%u, ts_id=%u.",
-                     *vsq_num, TS_AGENT_MAX_SQ_NUM, dev_id, vf_id, ts_id);
+        ts_agent_err("Driver get vsq num=%u is out of range(0, %u], dev_id=%u, vf_id=%u, ts_id=%u.", *vsq_num,
+                     TS_AGENT_MAX_SQ_NUM, dev_id, vf_id, ts_id);
         return -ERANGE;
     }
 
-    ts_agent_debug("get vf vsq num end, dev_id=%u, vf_id=%u, ts_id=%u, vsq_num=%u.",
-                   dev_id, vf_id, ts_id, *vsq_num);
+    ts_agent_debug("get vf vsq num end, dev_id=%u, vf_id=%u, ts_id=%u, vsq_num=%u.", dev_id, vf_id, ts_id, *vsq_num);
     return 0;
 }
 
@@ -65,17 +64,17 @@ static int convert_virt_to_phy(const vsq_base_info_t *vsq_base_info, enum tsdrv_
     v2p.phy_id = 0;
     ret = hal_kernel_hvtsdrv_resid_v2p(vsq_base_info->dev_id, vsq_base_info->vf_id, vsq_base_info->ts_id, &v2p);
     if (ret != 0) {
-        ts_agent_err("convert virt id failed, ret=%d, dev_id=%u, vf_id=%u, ts_id=%u, v_id=%u, id_type=%d.",
-                     ret, vsq_base_info->dev_id, vsq_base_info->vf_id, vsq_base_info->ts_id, v_id, id_type);
+        ts_agent_err("convert virt id failed, ret=%d, dev_id=%u, vf_id=%u, ts_id=%u, v_id=%u, id_type=%d.", ret,
+                     vsq_base_info->dev_id, vsq_base_info->vf_id, vsq_base_info->ts_id, v_id, id_type);
         return ret;
     }
     // 0xFFFFU is max value of uint16
     if (v2p.phy_id > 0xFFFFU) {
         ts_agent_err("Driver convert result phy_id=%u is out of range[0, %u], dev_id=%u, vf_id=%u, ts_id=%u, v_id=%u.",
-            v2p.phy_id, 0xFFFFU, vsq_base_info->dev_id, vsq_base_info->vf_id, vsq_base_info->ts_id, v_id);
+                     v2p.phy_id, 0xFFFFU, vsq_base_info->dev_id, vsq_base_info->vf_id, vsq_base_info->ts_id, v_id);
         return -ERANGE;
     }
-    *id = (u16) v2p.phy_id;
+    *id = (u16)v2p.phy_id;
     ts_agent_debug("convert id from virt to phy end, v_id=%u, phy_id=%u, id_type=%d.", v_id, *id, id_type);
     return 0;
 }
@@ -109,11 +108,11 @@ int fill_vsq_info(vsq_base_info_t *vsq_base_info)
 {
     struct hvtsdrv_vsq_info vsq_info = {0};
     int ret;
-    ret = hal_kernel_hvtsdrv_get_vsq_info(vsq_base_info->dev_id, vsq_base_info->vf_id,
-                               vsq_base_info->ts_id, vsq_base_info->vsq_id, &vsq_info);
+    ret = hal_kernel_hvtsdrv_get_vsq_info(vsq_base_info->dev_id, vsq_base_info->vf_id, vsq_base_info->ts_id,
+                                          vsq_base_info->vsq_id, &vsq_info);
     if (ret != 0) {
-        ts_agent_err("Driver get vsq info failed, ret=%d, dev_id=%u, vf_id=%u, ts_id=%u, v_id=%u.",
-                     ret, vsq_base_info->dev_id, vsq_base_info->vf_id, vsq_base_info->ts_id, vsq_base_info->vsq_id);
+        ts_agent_err("Driver get vsq info failed, ret=%d, dev_id=%u, vf_id=%u, ts_id=%u, v_id=%u.", ret,
+                     vsq_base_info->dev_id, vsq_base_info->vf_id, vsq_base_info->ts_id, vsq_base_info->vsq_id);
         return ret;
     }
     ts_agent_debug("Driver get vsq info end, dev_id=%u, vf_id=%u, ts_id=%u, v_id=%u,"
@@ -126,21 +125,21 @@ int fill_vsq_info(vsq_base_info_t *vsq_base_info)
         return EINVAL;
     }
     if (vsq_info.vsq_dep == 0) {
-        ts_agent_err("Driver get vsq info vsq_dep is 0, dev_id=%u, vf_id=%u, ts_id=%u, v_id=%u.",
-                     vsq_base_info->dev_id, vsq_base_info->vf_id, vsq_base_info->ts_id, vsq_base_info->vsq_id);
+        ts_agent_err("Driver get vsq info vsq_dep is 0, dev_id=%u, vf_id=%u, ts_id=%u, v_id=%u.", vsq_base_info->dev_id,
+                     vsq_base_info->vf_id, vsq_base_info->ts_id, vsq_base_info->vsq_id);
         return EINVAL;
     }
     if (vsq_info.vsq_slot_size < TS_TASK_COMMAND_SIZE || vsq_info.vsq_slot_size > TS_AGENT_MAX_VSQ_SLOT_SIZE) {
-        ts_agent_err("Driver get vsq info vsq_slot_size is out of range [%u, %u], "
+        ts_agent_err("Driver get vsq info vsq_slot_size is out of range [%u, %u], vsq_slot_size=%u, "
                      "dev_id=%u, vf_id=%u, ts_id=%u, v_id=%u.",
-                     TS_TASK_COMMAND_SIZE, TS_AGENT_MAX_VSQ_SLOT_SIZE,
-                     vsq_base_info->dev_id, vsq_base_info->vf_id, vsq_base_info->ts_id, vsq_base_info->vsq_id);
+                     TS_TASK_COMMAND_SIZE, TS_AGENT_MAX_VSQ_SLOT_SIZE, vsq_info.vsq_slot_size, vsq_base_info->dev_id,
+                     vsq_base_info->vf_id, vsq_base_info->ts_id, vsq_base_info->vsq_id);
         return EINVAL;
     }
     vsq_base_info->vsq_base_addr = vsq_info.vsq_base_addr;
     vsq_base_info->vsq_dep = vsq_info.vsq_dep;
     vsq_base_info->vsq_slot_size = vsq_info.vsq_slot_size;
-    vsq_base_info->vsq_type = NORMAL_VSQCQ_TYPE;     // default is normal sq.
+    vsq_base_info->vsq_type = NORMAL_VSQCQ_TYPE; // default is normal sq.
     return 0;
 }
 
@@ -148,32 +147,32 @@ int get_vsq_head_and_tail(const vsq_base_info_t *vsq_base_info, u32 *head, u32 *
 {
     struct hvtsdrv_vsq_head_tail head_tail = {0};
     int ret;
-    ret = hal_kernel_hvtsdrv_get_vsq_head_and_tail(vsq_base_info->dev_id, vsq_base_info->vf_id,
-                                        vsq_base_info->ts_id, vsq_base_info->vsq_id, &head_tail);
+    ret = hal_kernel_hvtsdrv_get_vsq_head_and_tail(vsq_base_info->dev_id, vsq_base_info->vf_id, vsq_base_info->ts_id,
+                                                   vsq_base_info->vsq_id, &head_tail);
     if (ret != 0) {
-        ts_agent_err("Driver get vsq head and tail failed, ret=%d, dev_id=%u, vf_id=%u, ts_id=%u, v_id=%u.",
-                     ret, vsq_base_info->dev_id, vsq_base_info->vf_id, vsq_base_info->ts_id, vsq_base_info->vsq_id);
+        ts_agent_err("Driver get vsq head and tail failed, ret=%d, dev_id=%u, vf_id=%u, ts_id=%u, v_id=%u.", ret,
+                     vsq_base_info->dev_id, vsq_base_info->vf_id, vsq_base_info->ts_id, vsq_base_info->vsq_id);
         return ret;
     }
     if (head_tail.head >= vsq_base_info->vsq_dep) {
         ts_agent_err("Driver get vsq head=%u is not less than vsq_dep=%u, "
                      "dev_id=%u, vf_id=%u, ts_id=%u, v_id=%u.",
-                     head_tail.head, vsq_base_info->vsq_dep,
-                     vsq_base_info->dev_id, vsq_base_info->vf_id, vsq_base_info->ts_id, vsq_base_info->vsq_id);
+                     head_tail.head, vsq_base_info->vsq_dep, vsq_base_info->dev_id, vsq_base_info->vf_id,
+                     vsq_base_info->ts_id, vsq_base_info->vsq_id);
         return EINVAL;
     }
 
     if (head_tail.tail >= vsq_base_info->vsq_dep) {
         ts_agent_err("Driver get vsq tail=%u is not less than vsq_dep=%u, "
                      "dev_id=%u, vf_id=%u, ts_id=%u, v_id=%u.",
-                     head_tail.tail, vsq_base_info->vsq_dep,
-                     vsq_base_info->dev_id, vsq_base_info->vf_id, vsq_base_info->ts_id, vsq_base_info->vsq_id);
+                     head_tail.tail, vsq_base_info->vsq_dep, vsq_base_info->dev_id, vsq_base_info->vf_id,
+                     vsq_base_info->ts_id, vsq_base_info->vsq_id);
         return EINVAL;
     }
     *head = head_tail.head;
     *tail = head_tail.tail;
     ts_agent_debug("get vsq head and tail end, dev_id=%u, vf_id=%u, ts_id=%u, vsq_id=%u, head=%u, tail=%u.",
-                   vsq_base_info->dev_id, vsq_base_info->vf_id, vsq_base_info->ts_id, vsq_base_info->vsq_id,
-                   *head, *tail);
+                   vsq_base_info->dev_id, vsq_base_info->vf_id, vsq_base_info->ts_id, vsq_base_info->vsq_id, *head,
+                   *tail);
     return 0;
 }

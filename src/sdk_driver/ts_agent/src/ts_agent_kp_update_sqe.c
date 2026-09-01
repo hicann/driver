@@ -22,9 +22,7 @@
 #endif
 
 #if defined(CFG_SOC_PLATFORM_KPSTARS)
-static struct ts_agent_update_sqe_ops g_kp_update_sqe_ops = {
-    .rdma_query_db_pa = NULL
-};
+static struct ts_agent_update_sqe_ops g_kp_update_sqe_ops = {.rdma_query_db_pa = NULL};
 
 // 多p场景下streamId(SID)的取值
 static u16 g_stars_smmu_sid[STARS_DEV_NUM] = {0xff32, 0xffb2, 0xfe32, 0xfeb2, 0xfd32, 0xfdb2, 0xfc32, 0xfcb2};
@@ -65,7 +63,7 @@ void ts_agent_update_sqe_register(struct ts_agent_update_sqe_ops *ops)
         ts_agent_info("Reg ops in ts_agent success.");
         return;
     }
-    ts_agent_info("No ops was registed in ts_agent.");
+    ts_agent_info("No ops was registered in ts_agent.");
 }
 KA_EXPORT_SYMBOL_GPL(ts_agent_update_sqe_register);
 
@@ -82,8 +80,8 @@ static int kp_check_and_update_sdma(ts_stars_sdma_sqe_t *sdma_sqe, int src_pid, 
     if (isRead) { // 本进程读操作
         bool valid = sdma_check_auth(dst_pid, &own_passid, src_pid, &sumitter_passid);
         if (!valid) {
-            ts_agent_err("sdma_check_auth failed, src_pid=%d, dst_pid=%d, sqe_id=%u",
-                         src_pid, dst_pid, sdma_sqe->sqe_id);
+            ts_agent_err("sdma_check_auth failed, src_pid=%d, dst_pid=%d, sqe_id=%u", src_pid, dst_pid,
+                         sdma_sqe->sqe_id);
             return -EINVAL;
         }
 
@@ -92,11 +90,11 @@ static int kp_check_and_update_sdma(ts_stars_sdma_sqe_t *sdma_sqe, int src_pid, 
     } else { // 本进程写操作
         bool valid = sdma_check_auth(src_pid, &own_passid, dst_pid, &sumitter_passid);
         if (!valid) {
-            ts_agent_err("sdma_check_auth failed, src_pid=%u, dst_pid=%u, sqe_id=%u",
-                         src_pid, dst_pid, sdma_sqe->sqe_id);
+            ts_agent_err("sdma_check_auth failed, src_pid=%u, dst_pid=%u, sqe_id=%u", src_pid, dst_pid,
+                         sdma_sqe->sqe_id);
             return -EINVAL;
         }
- 
+
         sdma_sqe->src_substreamid = own_passid;
         sdma_sqe->dst_substreamid = sumitter_passid;
     }
@@ -119,8 +117,8 @@ int kp_sqe_proc_sdma(u32 devid, u32 tsid, int pid, u32 sqid, ts_stars_sqe_t *sqe
 
     if ((pid != src_pid) && (pid != dst_pid)) {
         // 既不是源进程也不是目的进程
-        ts_agent_err("pid invalid, devid=%u, pid=%d, tsid=%u, src_pid=%d, dst_pid=%d",
-                     devid, pid, tsid, src_pid, dst_pid);
+        ts_agent_err("pid invalid, devid=%u, pid=%d, tsid=%u, src_pid=%d, dst_pid=%d", devid, pid, tsid, src_pid,
+                     dst_pid);
         return -EINVAL;
     }
 
@@ -129,8 +127,8 @@ int kp_sqe_proc_sdma(u32 devid, u32 tsid, int pid, u32 sqid, ts_stars_sqe_t *sqe
         u32 pasid;
         int ret = hal_kernel_trs_get_ssid(devid, tsid, pid, &pasid);
         if (ret != EOK) {
-            ts_agent_err("get ssid failed, ret=%d, devid=%u, pid=%d, tsid=%u, sqe_id=%u",
-                         ret, devid, pid, tsid, sdma_sqe->sqe_id);
+            ts_agent_err("get ssid failed, ret=%d, devid=%u, pid=%d, tsid=%u, sqe_id=%u", ret, devid, pid, tsid,
+                         sdma_sqe->sqe_id);
             return -EINVAL;
         }
 
@@ -150,4 +148,4 @@ int kp_sqe_proc_sdma(u32 devid, u32 tsid, int pid, u32 sqid, ts_stars_sqe_t *sqe
     }
 }
 
-#endif  // CFG_SOC_PLATFORM_KPSTARS
+#endif // CFG_SOC_PLATFORM_KPSTARS
