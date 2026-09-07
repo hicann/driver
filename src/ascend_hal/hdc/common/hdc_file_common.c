@@ -132,7 +132,7 @@ recv_flag_again:
         (void)drvHdcFreeMsg(p_rcvmsg);
         if ((fh->flags == FILE_FLAGS_ACK) && (retry_cnt == 0)) {
             retry_cnt++;
-            HDC_LOG_WARN("Receive ack flag, rply may in next time, retry recv.\n");
+            HDC_LOG_WARN("Receive ack flag, reply may in next time, retry recv.\n");
             goto recv_flag_again;
         }
         HDC_LOG_ERR("Receive packet isn't reply after retry. (flags=%d, retry_time=%d)\n", fh->flags, retry_cnt);
@@ -577,7 +577,7 @@ STATIC hdcError_t is_recv_side_ready(struct filesock *fs)
     }
 
     if (is_rcvok == FILE_OPT_NOSPC) {
-        HDC_LOG_ERR("There is no space on the destination side，exit.\n");
+        HDC_LOG_ERR("There is no space on the destination side, exit.\n");
         ret = DRV_ERROR_NO_FREE_SPACE;
     } else if (is_rcvok == FILE_OPT_WRPTH) {
         HDC_LOG_ERR("The destination path is illegal, exit. (dstpth=\"%s\")\n", fs->dstpth);

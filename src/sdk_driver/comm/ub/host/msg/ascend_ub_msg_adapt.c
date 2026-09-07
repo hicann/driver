@@ -102,7 +102,7 @@ int devdrv_ub_unregister_common_msg_client(u32 devid, const struct devdrv_common
     }
     type = (u32)msg_client->type;
     if (type >= DEVDRV_COMMON_MSG_TYPE_MAX) {
-        ubdrv_err("Msg client type is not support yet. (dev_id=%u; msg_client_type=%u)\n", devid, type);
+        ubdrv_err("Msg client type is not supported yet. (dev_id=%u;msg_client_type=%u)\n", devid, type);
         return -EOPNOTSUPP;
     }
     ka_task_down_write(&g_common_msg.rwlock[devid]);
@@ -132,7 +132,7 @@ int devdrv_ub_common_msg_send(u32 devid, void *data, u32 in_data_len, u32 out_da
         return -EINVAL;
     }
     if (msg_type_tmp >= DEVDRV_COMMON_MSG_TYPE_MAX) {
-        ubdrv_err("Msg client type is not support yet. (dev_id=%u; msg_client_type=%u)\n", devid, msg_type_tmp);
+        ubdrv_err("Msg client type is not supported yet. (dev_id=%u;msg_client_type=%u)\n", devid, msg_type_tmp);
         return -EOPNOTSUPP;
     }
     stat = ubdrv_get_common_stat_dfx(devid, msg_type_tmp);

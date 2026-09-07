@@ -449,7 +449,7 @@ STATIC int hdcdrv_alloc_trans_queue(u32 dev_id, u32 chan_num, char *chan[], u32 
         }
     }
 
-    hdcdrv_info("alloc chan. (dev_id=%u; chan_num=%u normal_chan_cnt=%u)\n", dev_id, chan_num, normal_chan_cnt[dev_id]);
+    hdcdrv_info("alloc chan. (dev_id=%u;chan_num=%u;normal_chan_cnt=%u)\n", dev_id, chan_num, normal_chan_cnt[dev_id]);
 out:
     *alloc_chan_num = i;
     return ret;
@@ -868,7 +868,8 @@ int hdcdrv_uninit_instance(u32 dev_id)
         msg.error_code = HDCDRV_OK;
         ret = hdcdrv_ctrl_msg_send(hdc_dev->dev_id, (void *)&msg, (u32)sizeof(msg), (u32)sizeof(msg), &len);
         if ((ret != HDCDRV_OK) || (len != sizeof(msg)) || (msg.error_code != HDCDRV_OK)) {
-            hdcdrv_info("Driver reset abnormal. (dev_driver=\"%s\")\n", ka_driver_dev_driver_string(hdc_dev->dev));
+            hdcdrv_info("Driver reset is not completed. (dev_driver=\"%s\")\n",
+                        ka_driver_dev_driver_string(hdc_dev->dev));
         }
     }
     hdcdrv_hotreset_stop_business(dev_id);

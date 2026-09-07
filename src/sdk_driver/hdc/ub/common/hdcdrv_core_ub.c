@@ -229,7 +229,7 @@ STATIC int hdcdrv_bind_server_ctx(struct hdcdrv_ctx *ctx, struct hdcdrv_service 
 {
     ka_task_mutex_lock(&ctx->ctx_lock);
     if (((ctx->service_type != HDCDRV_SERVICE_TYPE_INVALID) || (ctx->session_fd != HDCDRV_SESSION_FD_INVALID))) {
-        hdcdrv_err("ctx has been bind by other server or session.(dev_id=%d; session_id=%d; server_type=%d; "
+        hdcdrv_err("ctx has been bound by other server or session.(dev_id=%d;session_id=%d;server_type=%d; "
                    "pid=%llu)\n",
                    ctx->dev_id, ctx->session_fd, ctx->service_type, ctx->pid);
         ka_task_mutex_unlock(&ctx->ctx_lock);
@@ -260,7 +260,7 @@ STATIC int hdcdrv_bind_session_ctx(struct hdcdrv_ctx *ctx, struct hdcdrv_session
 {
     ka_task_mutex_lock(&ctx->ctx_lock);
     if (((ctx->service_type != HDCDRV_SERVICE_TYPE_INVALID) || (ctx->session_fd != HDCDRV_SESSION_FD_INVALID))) {
-        hdcdrv_err("ctx has been bind by other server or session.(dev_id=%d; session_id=%d; server_type=%d; "
+        hdcdrv_err("ctx has been bound by other server or session.(dev_id=%d;session_id=%d;server_type=%d; "
                    "pid=%llu)\n",
                    ctx->dev_id, ctx->session_fd, ctx->service_type, ctx->pid);
         ka_task_mutex_unlock(&ctx->ctx_lock);
@@ -416,7 +416,8 @@ STATIC long hdcdrv_ub_cmd_server_create(struct hdcdrv_ctx *ctx, union hdcdrv_cmd
     ka_task_mutex_lock(&service->mutex);
     if (service->listen_status == HDCDRV_VALID) {
         ka_task_mutex_unlock(&service->mutex);
-        hdcdrv_err("server has create.(dev_id=%u;type=%d;pid=%llu)\n", dev_id, cmd->service_type, cmd->pid);
+        hdcdrv_err("server has already been created.(dev_id=%u;type=%d;pid=%llu)\n", dev_id, cmd->service_type,
+                   cmd->pid);
         hdcdrv_put_dev(cmd->dev_id);
         return -HDCDRV_SERVICE_LISTENING;
     }
@@ -788,7 +789,7 @@ STATIC int hdcdrv_get_conn_info_from_server(struct hdcdrv_dev *dev, struct hdcdr
 
     node = hdcdrv_ub_get_conn_list_node(service, cmd->remote_session, cmd->unique_val);
     if (node == NULL) {
-        hdcdrv_err("No expect sessions in conn_list.(service_type=\"%s\"; dev_id=%u)\n",
+        hdcdrv_err("No expected sessions in conn_list.(service_type=\"%s\"; dev_id=%u)\n",
                    hdcdrv_sevice_str(cmd->service_type), dev->dev_id);
         ka_task_mutex_unlock(&service->mutex);
         return -HDCDRV_ERR;
@@ -1408,7 +1409,8 @@ STATIC int hdcdrv_mmap_param_check(ka_file_t *filep, ka_vm_area_struct_t *vma)
     }
 
     if ((ka_mm_get_vm_end(vma) - ka_mm_get_vm_start(vma)) != HDCDRV_UB_MEM_POOL_LEN) {
-        hdcdrv_err("vm range should be 128k, now is %ld\n", (ka_mm_get_vm_end(vma) - ka_mm_get_vm_start(vma)));
+        hdcdrv_err("vm range should be 128k bytes, now is %ld bytes\n",
+                   (ka_mm_get_vm_end(vma) - ka_mm_get_vm_start(vma)));
         return -EINVAL;
     }
 
@@ -1804,7 +1806,7 @@ STATIC u64 hdcdrv_get_peer_pid(u32 devid, u64 host_pid, u64 peer_pid, int servic
     }
 
     if (devdrv_query_process_by_host_pid(master_pid, devid, DEVDRV_PROCESS_CP1, 0, &local_pid) != HDCDRV_OK) {
-        hdcdrv_warn("devid %u hostpid %llu get localpid not success\n", devid, host_pid);
+        hdcdrv_warn("devid %u hostpid %llu failed to get localpid\n", devid, host_pid);
         return HDCDRV_INVALID_PEER_PID;
     }
 
@@ -1917,7 +1919,7 @@ STATIC int hdcdrv_notify_msg_connect_reply(u32 devid, struct hdcdrv_event_msg *m
 
     session = hdcdrv_get_session(devid, msg->connect_msg_reply.client_session);
     if (session == NULL) {
-        hdcdrv_err_limit("get session is failed.(session_fd=%u; dev_id=%u)\n", session_fd, devid);
+        hdcdrv_err_limit("Failed to get session. (session_fd=%u;dev_id=%u)\n", session_fd, devid);
         return HDCDRV_PARA_ERR;
     }
 
@@ -2380,7 +2382,7 @@ STATIC int hdcdrv_local_event_process_for_connect(u32 devid, struct hdcdrv_event
 
     session = hdcdrv_get_session(devid, session_id);
     if (session == NULL) {
-        hdcdrv_err_limit("get session is failed. (session_fd=%d; dev_id=%u)\n", session_id, devid);
+        hdcdrv_err_limit("Failed to get session. (session_fd=%u;dev_id=%u)\n", session_id, devid);
         ret = -HDCDRV_PARA_ERR;
         goto connect_put_dev;
     }
@@ -2435,7 +2437,7 @@ STATIC int hdcdrv_local_event_process_for_connect_reply(u32 devid, struct hdcdrv
 
     session = hdcdrv_get_session(devid, session_id);
     if (session == NULL) {
-        hdcdrv_err_limit("get session is failed. (session_fd=%d; dev_id=%u)\n", session_id, devid);
+        hdcdrv_err_limit("Failed to get session. (session_fd=%u;dev_id=%u)\n", session_id, devid);
         return -HDCDRV_PARA_ERR;
     }
 
@@ -2475,7 +2477,7 @@ STATIC int hdcdrv_local_event_process_for_close(u32 devid, struct hdcdrv_event_m
 
     session = hdcdrv_get_session(devid, session_id);
     if (session == NULL) {
-        hdcdrv_err_limit("get session is failed. (session_fd=%d; dev_id=%u)\n", session_id, devid);
+        hdcdrv_err_limit("Failed to get session. (session_fd=%u;dev_id=%u)\n", session_id, devid);
         return -HDCDRV_PARA_ERR;
     }
 
@@ -2531,7 +2533,7 @@ STATIC int hdcdrv_local_event_process_for_dfx(u32 devid, struct hdcdrv_event_msg
 
     session = hdcdrv_get_session(devid, session_id);
     if (session == NULL) {
-        hdcdrv_err_limit("get session is failed. (session_fd=%d; dev_id=%u)\n", session_id, devid);
+        hdcdrv_err_limit("Failed to get session. (session_fd=%u;dev_id=%u)\n", session_id, devid);
         ret = -HDCDRV_PARA_ERR;
         goto dfx_put_dev;
     }
@@ -2584,7 +2586,7 @@ STATIC int hdcdrv_local_event_process_for_dfx_reply(u32 devid, struct hdcdrv_eve
 
     session = hdcdrv_get_session(devid, session_id);
     if (session == NULL) {
-        hdcdrv_err_limit("get session is failed. (session_fd=%d; dev_id=%u)\n", session_id, devid);
+        hdcdrv_err_limit("Failed to get session. (session_fd=%u;dev_id=%u)\n", session_id, devid);
         return -HDCDRV_PARA_ERR;
     }
 

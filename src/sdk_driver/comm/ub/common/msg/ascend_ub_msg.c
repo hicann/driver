@@ -127,7 +127,7 @@ retry:
     tmp_desc->status = UB_MSG_SENDING;
     tmp_desc->msg_num = msg_num;
     ka_task_mutex_unlock(&sync_jetty->mutex_lock);
-    ubdrv_warn("Will using a over time seg. (msg_num=%u;dev_id=%u)", msg_num, dev_id);
+    ubdrv_warn("Will use an expired segment. (msg_num=%u;dev_id=%u)\n", msg_num, dev_id);
     return tmp_desc;
 }
 
@@ -287,7 +287,7 @@ int ubdrv_msg_result_process(int ret, int peer_status, u32 msg_type)
         ubdrv_warn("Msg send finish, no process cb. (process_ret=%d;msg_type=%u)\n", peer_status, msg_type);
         return -EUNATCH;
     } else if (peer_status == UB_MSG_CHECK_VERSION_FAILED) {
-        ubdrv_warn("Msg send finish, perr check version not match. (process_ret=%d;msg_type=%u)\n", peer_status,
+        ubdrv_warn("Msg send finish, peer check version not match. (process_ret=%d;msg_type=%u)\n", peer_status,
                    msg_type);
         return peer_status;
     } else {

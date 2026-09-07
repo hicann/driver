@@ -150,7 +150,7 @@ int devdrv_devmem_addr_h2d(u32 udevid, phys_addr_t host_bar_addr, phys_addr_t *d
     }
 
     if (host_bar_addr < host_phy_base) {
-        devdrv_err("host_bar_addr is small than host_phy_base. (udevid=%u; index_id=%u)\n", udevid, index_id);
+        devdrv_err("host_bar_addr is smaller than host_phy_base. (udevid=%u; index_id=%u)\n", udevid, index_id);
         return -EINVAL;
     }
 

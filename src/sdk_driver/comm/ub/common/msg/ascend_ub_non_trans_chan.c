@@ -414,7 +414,8 @@ void ubdrv_delete_non_trans_jetty(struct ubdrv_non_trans_chan *chan)
     }
     ret = ubdrv_clear_jetty(msg_jetty->recv_jetty.jfs);
     if (ret != 0) {
-        ubdrv_err("Flush recv jetty failed. (ret=%ddev_id=%u;chan_id=%u)\n", ret, chan->msg_dev->dev_id, chan->chan_id);
+        ubdrv_err("Flush recv jetty failed. (ret=%d;dev_id=%u;chan_id=%u)\n", ret, chan->msg_dev->dev_id,
+                  chan->chan_id);
     }
     chan->status = UBDRV_CHAN_DISABLE;
     ubdrv_wait_chan_jfce_user_cnt(&chan->user_cnt, chan->dev_id, chan->chan_id);

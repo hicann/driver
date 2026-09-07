@@ -386,7 +386,7 @@ STATIC void pcivnic_s2s_send_work(ka_work_struct_t *p_work)
 
         if (skb->len > PCIVNIC_MAX_PKT_SIZE) {
             ka_net_dev_kfree_skb_any(skb);
-            devdrv_err("Len is too big.(len=%u, devid=%u)\n", skb->len, pcidev->dev_id);
+            devdrv_err("Len is too big. (len=%u;max=%u;devid=%u)\n", skb->len, PCIVNIC_MAX_PKT_SIZE, pcidev->dev_id);
             continue;
         }
 
@@ -1372,7 +1372,7 @@ void pcivnic_net_timeout_new(ka_net_device_t *ndev, unsigned int txqueue)
 STATIC int pcivnic_net_change_mtu(ka_net_device_t *ndev, int new_mtu)
 {
     if ((new_mtu < PCIVNIC_MTU_LOW) || (new_mtu > PCIVNIC_MTU_HIGH)) {
-        devdrv_err("mtu value is invalid!\n");
+        devdrv_err("mtu value is invalid. (mtu=%d;min=%d;max=%d)\n", new_mtu, PCIVNIC_MTU_LOW, PCIVNIC_MTU_HIGH);
         return -EINVAL;
     }
     ka_net_netdev_set_mtu(ndev, (unsigned int)new_mtu);
@@ -1516,7 +1516,7 @@ void pcivnic_get_mac(unsigned char last_byte, unsigned char *mac)
     mac[PCIVNIC_MAC_5] = last_byte;
 
     if (pcivnic_is_valid_mac(mac, KA_ETH_ALEN) == 0) {
-        devdrv_warn("The MAC is invalid form file %s\n", PCIVNIC_MAC_FILE);
+        devdrv_warn("The MAC is invalid from file %s\n", PCIVNIC_MAC_FILE);
         goto free_buf;
     }
 

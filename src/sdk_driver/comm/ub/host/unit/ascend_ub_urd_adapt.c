@@ -59,7 +59,7 @@ STATIC int ascend_ub_get_dev_id_info(void *feature, char *in, u32 in_len, char *
     }
 
     if ((out == NULL) || (out_len != expect_out_len)) {
-        ubdrv_err("Input argument is null, or out_len is wrong. (out_len=%u;expect_len=%u)\n", in_len, expect_out_len);
+        ubdrv_err("Input argument is null, or out_len is wrong. (out_len=%u;expect_len=%u)\n", out_len, expect_out_len);
         return -EINVAL;
     }
     dev_id = *(unsigned int *)in;

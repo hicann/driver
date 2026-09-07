@@ -666,7 +666,7 @@ STATIC int devdrv_load_file_trans(struct devdrv_agent_load *loader)
         ret = devdrv_load_file_copy(loader, g_load_file[chip_type][i].file_name, blocks);
         if (ret < 0) {
             if (g_load_file[chip_type][i].file_type == DEVDRV_CRITICAL_FILE) {
-                devdrv_err("File copy error. (dev_id=%u; file=%d; name=\"%s\"; %d)\n", loader->dev_id, i,
+                devdrv_err("File copy error. (dev_id=%u;file=%d;name=\"%s\";ret=%d)\n", loader->dev_id, i,
                            g_load_file[chip_type][i].file_name, ret);
                 devdrv_load_blocks_free(loader);
                 return ret;
@@ -715,7 +715,7 @@ void devdrv_notify_blackbox_err(u32 devid, u32 code)
     stamp = ka_system_current_kernel_time();
 
     if (g_black_box.callback != NULL) {
-        devdrv_info("Get blackbox code. (dev_id=%u; blaclbox_code=%u)\n", devid, code);
+        devdrv_info("Get blackbox code. (dev_id=%u;blackbox_code=%u)\n", devid, code);
         g_black_box.callback(devid, code, stamp);
     }
 }
@@ -962,7 +962,7 @@ STATIC int devdrv_get_env_value_from_buf(char *buf, u32 filesize, const char *en
         }
         len = (u32)ka_base_strlen(tmp_val);
         if (env_val_len < (len + 1)) {
-            devdrv_err("Parameter env_val_len failed.\n");
+            devdrv_err("Parameter env_val_len check failed. (env_val_len=%d;len=%d)\n", env_val_len, len);
             return -EINVAL;
         }
         ret_val = strcpy_s(env_val, env_val_len, tmp_val);
@@ -1080,7 +1080,7 @@ STATIC int devdrv_sdk_path_init(struct devdrv_pci_ctrl *pci_ctrl)
 
         ret = strcat_s(g_load_file[chip_type][i].file_name, DEVDRV_STR_MAX_LEN, file_cfg->file_name);
         if (ret != 0) {
-            devdrv_err("strcat filed. (file_len=%ld; base_len=%ld)\n", ka_base_strlen(file_cfg->file_name),
+            devdrv_err("strcat failed. (file_len=%ld;base_len=%ld)\n", ka_base_strlen(file_cfg->file_name),
                        ka_base_strlen(g_devdrv_sdk_path));
             return ret;
         }

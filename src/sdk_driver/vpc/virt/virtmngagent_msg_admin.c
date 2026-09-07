@@ -56,7 +56,7 @@ STATIC int vmnga_fill_msg_cluster_res(struct vmng_msg_chan_res *res, u32 tx_base
     rx_max = rx_base + rx_num;
     if ((tx_base >= VMNG_MSG_CHAN_NUM_MAX) || (tx_num >= VMNG_MSG_CHAN_NUM_MAX) || (rx_base >= VMNG_MSG_CHAN_NUM_MAX) ||
         (rx_num >= VMNG_MSG_CHAN_NUM_MAX) || (tx_max > VMNG_MSG_CHAN_NUM_MAX) || (rx_max > VMNG_MSG_CHAN_NUM_MAX)) {
-        vmng_err("Prarmeter check failed. (tx_base=%u; tx_num=%u; rx_base=%u; rx_num=%u)\n", tx_base, tx_num, rx_base,
+        vmng_err("Parameter check failed. (tx_base=%u;tx_num=%u;rx_base=%u;rx_num=%u)\n", tx_base, tx_num, rx_base,
                  rx_num);
         return -EINVAL;
     }

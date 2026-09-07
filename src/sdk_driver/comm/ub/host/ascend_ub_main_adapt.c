@@ -580,8 +580,8 @@ int ubdrv_disable_p2p(int pid, u32 dev_id, u32 peer_dev_id)
     }
 
     if ((p2p_attr->proc_ref[index] <= 0) || (p2p_attr->ref <= 0)) {
-        ubdrv_err("p2p_attr is error. (dev_id=%u; peer_dev_id=%u; pid=%d; proc_ref=%d; total_ref=%d)\n", pid, dev_id,
-                  peer_dev_id, p2p_attr->proc_ref[index], p2p_attr->ref);
+        ubdrv_err("p2p_attr is invalid. (dev_id=%u;peer_dev_id=%u;pid=%d;proc_ref=%d;total_ref=%d)\n", dev_id,
+                  peer_dev_id, pid, p2p_attr->proc_ref[index], p2p_attr->ref);
         ret = -ESRCH;
         goto out;
     }

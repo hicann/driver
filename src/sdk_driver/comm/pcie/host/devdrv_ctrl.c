@@ -541,7 +541,8 @@ int devdrv_pcie_sriov_enable(u32 index_id, u32 boot_mode)
 
     total_vfs = ka_pci_sriov_get_totalvfs(pci_ctrl->pdev);
     if (total_vfs < DEVDRV_MAX_SRIOV_INSTANCE) {
-        devdrv_err("Vf total num less than max_num.(index_id=%u, total_vfs=%d)\n", index_id, total_vfs);
+        devdrv_err("Vf total num less than max_num. (index_id=%u;total_vfs=%d;max_num=%d)\n", index_id, total_vfs,
+                   DEVDRV_MAX_SRIOV_INSTANCE);
         return -EINVAL;
     }
 
@@ -734,7 +735,7 @@ int devdrv_mdev_pm_init_msi_interrupt(u32 dev_id)
                                          data_len);
         if (ret != 0) {
             devdrv_uninit_interrupt_normal(pci_ctrl);
-            devdrv_err("Msi irq table reset fail(devid=%u, ret=%d\n", pci_ctrl->dev_id, ret);
+            devdrv_err("Msi irq table reset failed. (devid=%u;ret=%d)\n", pci_ctrl->dev_id, ret);
             return ret;
         }
     }
@@ -1896,7 +1897,7 @@ int devdrv_register_black_callback(struct devdrv_black_callback *black_callback)
     }
 
     g_black_box.callback = black_callback->callback;
-    devdrv_info("bbox callback is register.\n");
+    devdrv_info("bbox callback is registered.\n");
 
     return 0;
 }
@@ -3083,7 +3084,8 @@ STATIC int devdrv_dma_fill_desc_of_sq_by_vpc(u32 devid, struct devdrv_dma_prepar
     int ret;
 
     if (node_cnt > DEVDRV_VPC_MAX_SQ_DMA_NODE_COUNT) {
-        devdrv_err("DMA node cnt is too big. (dev_id=%u, node_cnt=%u)\n", devid, node_cnt);
+        devdrv_err("DMA node cnt is too big. (dev_id=%u;node_cnt=%u;max=%u)\n", devid, node_cnt,
+                   DEVDRV_VPC_MAX_SQ_DMA_NODE_COUNT);
         return -EINVAL;
     }
 
@@ -3271,7 +3273,8 @@ STATIC struct devdrv_dma_prepare *devdrv_dma_link_prepare_by_vpc(u32 devid, enum
     int ret;
 
     if (node_cnt > DEVDRV_VPC_MAX_SQ_DMA_NODE_COUNT) {
-        devdrv_err("DMA node cnt is too big. (dev_id=%u, node_cnt=%u)\n", devid, node_cnt);
+        devdrv_err("DMA node cnt is too big. (dev_id=%u;node_cnt=%u;max=%u)\n", devid, node_cnt,
+                   DEVDRV_VPC_MAX_SQ_DMA_NODE_COUNT);
         return NULL;
     }
 
@@ -5186,7 +5189,7 @@ int devdrv_pcie_prereset(u32 index_id)
         return -ENODEV;
     }
 
-    devdrv_info("Call devdrv_pcie_prereset start. (index_id=%u)n", index_id);
+    devdrv_info("Call devdrv_pcie_prereset start. (index_id=%u)\n", index_id);
     devdrv_pci_stop_and_remove_bus_device_locked(pci_ctrl->pdev);
 
     return 0;
@@ -5440,7 +5443,7 @@ int devdrv_device_txatu_config(int pid, u32 udevid, ka_dma_addr_t host_dma_addr,
         return -EOPNOTSUPP;
     }
     if ((size == 0) || ((size % ATU_SIZE_ALIGN) != 0)) {
-        devdrv_err("Size is illegal. (pid=%d; udevid=%u; size=0x%llx)\n", pid, udevid, size);
+        devdrv_err("Size is illegal. (pid=%d;udevid=%u;size=0x%llx;align=0x%x)\n", pid, udevid, size, ATU_SIZE_ALIGN);
         return -EINVAL;
     }
     ka_task_mutex_lock(&g_devdrv_p2p_mutex);
@@ -6195,7 +6198,7 @@ void devdrv_set_hccs_link_status(u32 dev_id, u32 val)
 
     pci_ctrl = devdrv_get_bottom_half_pci_ctrl_by_id(dev_id);
     if ((pci_ctrl == NULL) || (pci_ctrl->shr_para == NULL)) {
-        devdrv_err("Gan pci_ctrl fail. (dev_id=%u)\n", dev_id);
+        devdrv_err("Get pci_ctrl failed. (dev_id=%u)\n", dev_id);
         return;
     }
 
@@ -6208,7 +6211,7 @@ STATIC int devdrv_get_hccs_link_status(u32 dev_id, u32 *val)
 
     pci_ctrl = devdrv_get_top_half_pci_ctrl_by_id(dev_id);
     if ((pci_ctrl == NULL) || (pci_ctrl->shr_para == NULL)) {
-        devdrv_err("Gan pci_ctrl fail. (dev_id=%u)\n", dev_id);
+        devdrv_err("Get pci_ctrl failed. (dev_id=%u)\n", dev_id);
         return -EINVAL;
     }
 
@@ -6656,7 +6659,7 @@ int devdrv_get_master_devid_in_the_same_os_inner(u32 index_id, u32 *master_index
             return 0;
         }
     }
-    devdrv_err("No find master index_id. (index_id=%u)\n", index_id);
+    devdrv_err("Can not find master index_id. (index_id=%u)\n", index_id);
     return -EINVAL;
 }
 

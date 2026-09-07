@@ -70,7 +70,7 @@ STATIC int ubdrv_urma_copy_para_check(u32 dev_id, enum devdrv_urma_chan_type typ
     u64 peer_seg_len;
 
     if ((local == NULL) || (peer == NULL) || (local->seg == NULL) || (peer->seg == NULL)) {
-        ubdrv_err("Check urma chan date fail, copy data is null. (dev_id=%u;type=%u)\n", dev_id, type);
+        ubdrv_err("Check urma chan data fail, copy data is null. (dev_id=%u;type=%u)\n", dev_id, type);
         return -EINVAL;
     }
     if ((dev_id >= ASCEND_UB_DEV_MAX_NUM) || (type >= URMA_CHAN_MAX) || (dir >= DIR_MAX)) {

@@ -90,10 +90,6 @@ STATIC void comment_trim(char *str, signed int len)
         return;
     }
 
-    /*
-     * 双引号内部的#和双斜杠不是注释
-     * 引号外的#和双斜杠是注释
-     */
     while ((i < str_len) &&
            ((uc_quote_flag == true) ||
             ((str[i] != '#') && (!((i < str_len - 1) && (str[i] == '/') && (str[(long)i + 1] == '/')))))) {
@@ -238,28 +234,26 @@ STATIC signed int Search(PCFGPARSE_CB_T handle, const char *str, char **value, s
 
     while ((memset_s(tmp, MAX_LINE_SIZE, 0, MAX_LINE_SIZE) == 0) && (fgets(tmp, MAX_LINE_SIZE, handle->fp) != NULL)) {
         tmp[MAX_LINE_SIZE - 1] = '\0';
-
-        // 首先去除前导空格、tab、后导空格，tab以及回车换行
+        /* Trim leading/trailing spaces, tabs, carriage returns and newlines */
         str_convert(tmp, MAX_LINE_SIZE);
-
-        // 去处每行的注释
+        /* Remove inline comments from each line */
         comment_trim(tmp, MAX_LINE_SIZE);
 
-        // 整行都是注释，则去除注释后每行字符串长度为0
+        /* If the entire line is a comment, the string length will be 0 after trimming */
         if (strlen(tmp) == 0) {
             continue;
         }
 
-        // 判断是否包含str字符串
+        /* Check if the line contains the target string */
         if (strstr(tmp, str) == NULL) {
             continue;
         }
-        // 取第一个分隔符前的部分
+        /* Extract the part before the first separator */
         if ((pvalue[0] = str_to_ok(tmp, separator, &p_save, MAX_LINE_SIZE)) == NULL) {
             continue;
         }
 
-        // 去除关键字中的前后导空格和tab等
+        /* Trim leading/trailing spaces and tabs from the keyword */
         str_convert(pvalue[0], MAX_LINE_SIZE);
 
         if (strcmp(pvalue[0], str) != 0) {
@@ -274,7 +268,7 @@ STATIC signed int Search(PCFGPARSE_CB_T handle, const char *str, char **value, s
             *value_num = i + 1;
 
             if (*value_num >= MAX_VALUE_NUM) {
-                HDC_LOG_ERR("Parameter value_num is out of range.\n");
+                HDC_LOG_ERR("Parameter value_num is out of range. (value_num=%d;max=%d)\n", *value_num, MAX_VALUE_NUM);
                 break;
             }
             i++;
@@ -298,7 +292,7 @@ signed int str_search(PCFGPARSE_CB_T handle, const char *str, char **value, sign
         return 0;
     }
 
-    // 初始化缓存空间
+    /* Initialize buffer space */
     for (j = 0; j < MAX_VALUE_NUM; j++) {
         if (memset_s(handle->value[j], MAX_LINE_SIZE, 0, MAX_LINE_SIZE) != 0) {
             HDC_LOG_ERR("Call memset_s error. (strerror=\"%s\")\n", strerror(errno));
@@ -306,10 +300,10 @@ signed int str_search(PCFGPARSE_CB_T handle, const char *str, char **value, sign
         }
     }
 
-    // 从指定位置开始读取
+    /* Read from the beginning of the file */
     (void)fseek(handle->fp, 0, SEEK_SET);
 
-    // 初始化值个数为0
+    /* Initialize value count to 0 */
     *value_num = 0;
 
     return Search(handle, str, value, value_num);

@@ -276,7 +276,7 @@ int vhdch_alloc_mem_vm(struct hdccom_alloc_mem_para *para, struct hdcdrv_buf_des
 
     ret = vmngh_common_msg_send((u32)para->dev_id, para->fid, VMNG_MSG_COMMON_TYPE_HDC, &tx_info);
     if ((ret != 0) || (msg.error_code != HDCDRV_OK)) {
-        hdcdrv_err("Calling vmngh_common_msg_send failed. (dev_id_%u; fid=%u; ret=%d; error_code=%d)\n", para->dev_id,
+        hdcdrv_err("Calling vmngh_common_msg_send failed. (dev_id=%u;fid=%u;ret=%d;error_code=%d)\n", para->dev_id,
                    para->fid, ret, msg.error_code);
         return HDCDRV_ERR;
     }
@@ -1117,7 +1117,7 @@ STATIC int vhdch_release_proxy(u32 dev_id, u32 fid, struct vhdc_ctrl_msg_release
     ctx = vhdch_ctx_get(vdev, vhdc_release->hash);
     if (ctx == NULL) {
         ka_task_mutex_unlock(&vdev->release_mutex);
-        hdcdrv_warn("Failed to found vhdch ctx. (dev_id=%u; fid=%u)\n", dev_id, fid);
+        hdcdrv_warn("Failed to find vhdch ctx. (dev_id=%u;fid=%u)\n", dev_id, fid);
         return HDCDRV_PARA_ERR;
     }
 
@@ -1267,7 +1267,7 @@ STATIC int vhdch_traffic_msg_para_check(u32 dev_id, u32 fid, const struct vmng_r
     if ((proc_info == NULL) || (proc_info->real_out_len == NULL) || (proc_info->data == NULL) ||
         (proc_info->in_data_len < sizeof(struct hdcdrv_ctrl_msg_sync_mem_info)) || (dev_id >= VMNG_PDEV_MAX) ||
         (fid >= VMNG_VDEV_MAX_PER_PDEV)) {
-        hdcdrv_err("Input parameter is error. (dev_id=%u; fid=%u)n", dev_id, fid);
+        hdcdrv_err("Input parameter is error. (dev_id=%u;fid=%u)\n", dev_id, fid);
         return HDCDRV_PARA_ERR;
     }
 

@@ -32,7 +32,7 @@ struct ubdrv_non_trans_chan *ubdrv_get_non_trans_chan(struct ascend_ub_msg_dev *
         ka_task_mutex_unlock(&chan->tx_mutex);
     }
     if (i >= msg_dev->chan_cnt) {
-        ubdrv_err("Can't find a idle non_trans chan. (dev_id=%u)\n", msg_dev->dev_id);
+        ubdrv_err("Can't find an idle non_trans chan. (dev_id=%u)\n", msg_dev->dev_id);
         return NULL;
     }
     return chan;
@@ -106,7 +106,7 @@ STATIC int ubdrv_alloc_non_trans_param_check(const struct ascend_ub_msg_dev *msg
     }
     type = chan_info->msg_type;
     if (type >= devdrv_msg_client_max) {
-        ubdrv_err("Chan msg type is not support yet. (dev_id=%u;msg_type=%u)\n", dev_id, type);
+        ubdrv_err("Chan msg type is not supported yet. (dev_id=%u;msg_type=%u)\n", dev_id, type);
         return -EOPNOTSUPP;
     }
     if ((chan_info->c_desc_size != chan_info->s_desc_size) || (chan_info->c_desc_size <= ASCEND_UB_MSG_DESC_LEN)) {
@@ -252,7 +252,7 @@ int devdrv_ub_msg_free_non_trans_queue_process(struct ubdrv_non_trans_chan *chan
     dev_id = chan->msg_dev->dev_id;
     chan_id = chan->chan_id;
     if (chan->status != UBDRV_CHAN_ENABLE) {
-        ubdrv_warn("Chan don't need to free. (status=%u;dev_id=%u;chan_id=%u)\n", chan->status, dev_id, chan_id);
+        ubdrv_warn("Chan doesn't need to free. (status=%u;dev_id=%u;chan_id=%u)\n", chan->status, dev_id, chan_id);
         ka_task_mutex_unlock(&chan->tx_mutex);
         return -EINVAL;
     }

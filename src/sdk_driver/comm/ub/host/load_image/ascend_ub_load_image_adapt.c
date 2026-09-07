@@ -52,7 +52,7 @@ STATIC int ubdrv_uvb_msg_check_para(const struct cis_message *msg, unsigned long
     }
 
     if (*msg->p_output_size < expect_output_len) {
-        ubdrv_err("UVB msg output_size is invalid.(input_size=%u; expect_len=%lu)\n", *msg->p_output_size,
+        ubdrv_err("UVB msg output_size is invalid. (output_size=%u;expect_len=%lu)\n", *msg->p_output_size,
                   expect_output_len);
         return -EINVAL;
     }
@@ -181,7 +181,7 @@ STATIC int ubdrv_uvb_msg_get_loading_state(struct cis_message *msg)
             ubdrv_err("Load file failed. (dev_id=%u; ret=%d)\n", dev_id, ret);
         }
     } else if (load_input->state == 0) {
-        ubdrv_info("File treansform succ. (dev_id=%u; state=%u; file_id=%d)\n", dev_id, load_input->state,
+        ubdrv_info("File transform succ. (dev_id=%u;state=%u;file_id=%d)\n", dev_id, load_input->state,
                    load_input->file_id);
         ret = 0;
     } else {

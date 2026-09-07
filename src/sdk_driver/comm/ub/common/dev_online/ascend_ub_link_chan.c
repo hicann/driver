@@ -368,7 +368,7 @@ STATIC void ubdrv_link_check_status_rollback(u32 dev_id)
         ubdrv_link_chan_exchange_data_process_rollback(dev_id);
         return;
     }
-    ubdrv_warn("Rollback is not support, uda call is finish. (dev_id=%u;dev_status=%d)\n", dev_id, dev_status);
+    ubdrv_warn("Rollback is not supported, uda call is finished. (dev_id=%u;dev_status=%d)\n", dev_id, dev_status);
 }
 
 STATIC void ubdrv_link_chan_exchange_data_process(u32 dev_id, struct ub_idev *idev,

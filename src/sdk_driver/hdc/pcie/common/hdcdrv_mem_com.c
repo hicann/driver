@@ -420,7 +420,7 @@ int hdcdrv_alloc_huge_page(struct hdcdrv_mem_pool *pool, int page_index)
 
     if (pool->page_list[page_index].valid != HDCDRV_PAGE_PRE_STATUS) {
         HDC_LOG_ERR_LIMIT(&g_alloc_huge_page_print_cnt, &g_alloc_huge_page_jiffies,
-                          "page status is not correct, now page_statu is %d.\n", pool->page_list[page_index].valid);
+                          "page status is not correct, now page_status is %d.\n", pool->page_list[page_index].valid);
         pool->page_list[page_index].valid = HDCDRV_PAGE_NOT_ALLOC;
         return HDCDRV_PARA_ERR;
     }
@@ -1571,14 +1571,14 @@ void hdcdrv_recycle_mem_work(ka_work_struct_t *p_work)
     }
 
     cost_time = ka_system_jiffies_to_msecs(ka_jiffies - stamp);
-    hdcdrv_info("Get memory work cost_time. (cost_time=%d; mask=0x%x; mem_type=%d; work_cnt=%lld)\n", cost_time,
+    hdcdrv_info("Get memory work cost_time. (cost_time=%d ms;mask=0x%x;mem_type=%d;work_cnt=%lld)\n", cost_time,
                 gfp_mask, g_mem_type, work_cnt);
 
 out:
     hdcdrv_fast_free_pages(mem, i);
     hdcdrv_kvfree((void **)&mem, KA_SUB_MODULE_TYPE_2);
     cost_time = ka_system_jiffies_to_msecs(ka_jiffies - stamp);
-    hdcdrv_info("Get memory work cost_time. (cost_time=%d; i=%d; mem_type=%d; work_cnt=%lld)\n", cost_time, i,
+    hdcdrv_info("Get memory work cost_time. (cost_time=%d ms;i=%d;mem_type=%d;work_cnt=%lld)\n", cost_time, i,
                 g_mem_type, work_cnt);
     hdcdrv_mem_stat_info_show();
 }
@@ -1696,7 +1696,7 @@ STATIC int hdcdrv_fast_alloc_normal_page_mem(struct hdcdrv_fast_mem *f_mem, u64 
 
     ret = hdcdrv_fast_alloc_pages(mem, va, len, type, f_mem);
     if (ret != HDCDRV_OK) {
-        hdcdrv_err("Calling hdcdrv_fast_alloc_pages failed. (dev=%u; addr_bum=%d)\n", devid, f_mem->phy_addr_num);
+        hdcdrv_err("Calling hdcdrv_fast_alloc_pages failed. (dev=%u;addr_num=%d)\n", devid, f_mem->phy_addr_num);
         goto fail;
     }
 

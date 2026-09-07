@@ -110,7 +110,7 @@ bool hw_dvt_check_host_is_uvp(void)
     ret = ka_fs_kernel_read(fp, uvp_version_buf, UVP_VERSION_INFO_SIZE, &pos);
     ka_fs_filp_close(fp, NULL);
     if ((ret <= 0) || (ret > UVP_VERSION_INFO_SIZE)) {
-        ka_dfx_pr_err("get cpuset file context failed, ret = %ld.\n", ret);
+        ka_dfx_pr_err("get cpuset file content failed. (ret=%ld)\n", ret);
         return false;
     }
 

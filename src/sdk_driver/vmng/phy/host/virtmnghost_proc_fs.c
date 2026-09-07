@@ -209,13 +209,13 @@ STATIC void vf_res_info_proc_show(ka_seq_file_t *m, void *v, struct vmngh_vdev_c
     ka_fs_seq_printf(m, "\tdtype =                %u\n", vdev_ctrl->dtype);
     ka_fs_seq_printf(m, "\tcore_num =             %u\n", vdev_ctrl->core_num);
     ka_fs_seq_printf(m, "\ttotal_core_num =       %u\n", vdev_ctrl->total_core_num);
-    ka_fs_seq_printf(m, "\tddr_size =             %#llx\n", vdev_ctrl->ddr_size);
-    ka_fs_seq_printf(m, "\thbm_size =             %#llx\n", vdev_ctrl->hbm_size);
+    ka_fs_seq_printf(m, "\tddr_size(MB) =          %#llx\n", vdev_ctrl->ddr_size);
+    ka_fs_seq_printf(m, "\thbm_size(MB) =          %#llx\n", vdev_ctrl->hbm_size);
     ka_fs_seq_printf(m, "\tbar0_size =            %#llx\n", vdev_ctrl->bar0_size);
     ka_fs_seq_printf(m, "\tbar2_size =            %#llx\n", vdev_ctrl->bar2_size);
     ka_fs_seq_printf(m, "\tbar4_size =            %#llx\n", vdev_ctrl->bar4_size);
 
-    ka_fs_seq_printf(m, "\tcapbility =            %u\n", vf_cfg->capbility);
+    ka_fs_seq_printf(m, "\tcapability =            %u\n", vf_cfg->capbility);
     ka_fs_seq_printf(m, "\tnuma_id.bitmap =       %#lx\n", ctrl->memory.numa_id.bitmap);
     vf_res_id_info_proc_show(m, v, &vf_cfg->id);
     vf_res_ac_info_proc_show(m, v, &vf_cfg->accelerator);

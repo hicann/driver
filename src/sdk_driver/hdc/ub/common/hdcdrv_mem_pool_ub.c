@@ -110,7 +110,7 @@ int hdcdrv_alloc_mem_pool_for_session(struct hdcdrv_session *session, struct hdc
     }
 
     if (mem_pool == NULL) {
-        hdcdrv_warn("mem pool resource exhaust.(devid=%d)\n", hdc_dev->dev_id);
+        hdcdrv_warn("mem pool resource exhausted.(devid=%d)\n", hdc_dev->dev_id);
         ret = -HDCDRV_DMA_MEM_ALLOC_FAIL;
         goto no_mem_pool;
     }

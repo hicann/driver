@@ -260,7 +260,7 @@ STATIC int vmng_alloc_chan_wait(struct vmng_msg_cluster *msg_cluster)
     struct vmng_msg_chan_tx *msg_chan = NULL;
 
     if (msg_cluster->res.tx_num == 0) {
-        vmng_err("chan_type no tx abitily. (dev_id=%u; fid=%u; chan_type=%u) \n", msg_cluster->dev_id, msg_cluster->fid,
+        vmng_err("chan_type no tx ability. (dev_id=%u;fid=%u;chan_type=%u) \n", msg_cluster->dev_id, msg_cluster->fid,
                  msg_cluster->chan_type);
         return -EINVAL;
     }
@@ -649,7 +649,7 @@ STATIC void vmng_init_msg_cluster_rx_chan(struct vmng_msg_cluster *msg_cluster, 
         msg_chan->rx_wq = ka_task_create_singlethread_workqueue("vpc_msg_chan_proc");
         if (msg_chan->rx_wq == NULL) {
             vmng_uninit_msg_cluster_rx_chan(msg_cluster, ops);
-            vmng_err("Creat workqueue failed. (dev_id=%u; fid=%u; chan_id=%u)\n", msg_cluster->dev_id, msg_cluster->fid,
+            vmng_err("Create workqueue failed. (dev_id=%u;fid=%u;chan_id=%u)\n", msg_cluster->dev_id, msg_cluster->fid,
                      msg_chan->chan_id);
             return;
         }

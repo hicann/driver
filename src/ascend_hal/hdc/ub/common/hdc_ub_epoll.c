@@ -155,7 +155,7 @@ STATIC drvError_t drv_hdc_ub_epoll_ctrl_connect_in(struct hdc_epoll_head *epoll_
     int ret;
 
     if (server_head == NULL) {
-        HDC_LOG_ERR("server is not exist.\n");
+        HDC_LOG_ERR("server not found.\n");
         return DRV_ERROR_INNER_ERR;
     }
 
@@ -199,7 +199,7 @@ STATIC drvError_t drv_hdc_ub_epoll_ctrl_data_in(struct hdc_epoll_head *epoll_hea
     int ret;
 
     if ((session_head == NULL) || (session_head->ub_session == NULL)) {
-        HDC_LOG_ERR("session is not exist.\n");
+        HDC_LOG_ERR("session not found.\n");
         return DRV_ERROR_INNER_ERR;
     }
 

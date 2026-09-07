@@ -1335,7 +1335,7 @@ void devdrv_load_half_probe(struct devdrv_pci_ctrl *pci_ctrl)
 
     pci_ctrl->dma_dev = devdrv_host_dma_init(pci_ctrl);
     if (pci_ctrl->dma_dev == NULL) {
-        devdrv_err("Dma device init. (dev_id=%u)\n", pci_ctrl->dev_id);
+        devdrv_err("Dma device init failed. (dev_id=%u)\n", pci_ctrl->dev_id);
         goto msg_exit;
     }
     pci_ctrl->dma_dev->dev_id = pci_ctrl->dev_id;

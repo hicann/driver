@@ -924,7 +924,7 @@ int vmngh_unregister_client(struct vmngh_client *client)
 
     ret = vmngh_uninit_instance_all_dev(client->type, client);
     if (ret != 0) {
-        vmng_err("Uinit all device error. (client_type=%u; ret=%d)\n", client->type, ret);
+        vmng_err("Uninit all device error. (client_type=%u;ret=%d)\n", client->type, ret);
         return ret;
     }
     g_vmngh_clients[client->type] = NULL;
@@ -1720,7 +1720,7 @@ STATIC int vmngh_destroy_single_container_vdev(u32 dev_id, u32 vfid)
     vmngh_ctrl_set_startup_flag(info.dev_id, info.vfid, VMNG_STARTUP_PROBED);
 
     if (vmng_ops_pci_offline(ops, dev_id, vfid) != 0) {
-        vmng_err("Uinit instance all client failed. (dev_id=%u; vfid=%u)\n", dev_id, vfid);
+        vmng_err("Uninit instance all client failed. (dev_id=%u;vfid=%u)\n", dev_id, vfid);
     }
 
     if (vmng_ops_free_vf(ops, dev_id, vfid) != 0) {
@@ -2196,7 +2196,7 @@ int vmngh_bw_set_token_limit(u32 dev_id, u32 vfid)
 
     ret = vmngh_bw_calcu_token_limit(dev_id, vfid, &flow_limit, &pack_limit);
     if (ret != 0) {
-        vmng_err("Calcu token limit error. (dev_id=%u; vfid=%u; ret=%d)\n", dev_id, vfid, ret);
+        vmng_err("Calculate token limit error. (dev_id=%u;vfid=%u;ret=%d)\n", dev_id, vfid, ret);
         return -EINVAL;
     }
 

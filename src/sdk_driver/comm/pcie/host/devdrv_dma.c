@@ -376,7 +376,7 @@ STATIC void devdrv_show_soft_sqe(struct devdrv_dma_channel *dma_chan)
         num = (int)(sizeof(struct devdrv_dma_sq_node) / sizeof(u32));
 
         for (i = 0; i < num; i++) {
-            devdrv_warn("Get current descriptor reg_val. (num=%dst; reg_val=0x%x)\n", i, sq_desc[i]);
+            devdrv_warn("Get current descriptor reg_val. (num=%d;reg_val=0x%x)\n", i, sq_desc[i]);
         }
     }
 }
@@ -1020,7 +1020,7 @@ int devdrv_dma_chan_copy_by_vpc(u32 dev_id, struct devdrv_dma_channel *dma_chan,
     u32 chan_id;
 
     if (node_cnt > DEVDRV_VPC_MAX_SQ_DMA_NODE_COUNT) {
-        devdrv_err("Dma node_cnt[%u] is too big.\n", node_cnt);
+        devdrv_err("Dma node_cnt[%u] is too big. (max=%u)\n", node_cnt, DEVDRV_VPC_MAX_SQ_DMA_NODE_COUNT);
         return -EINVAL;
     }
 
@@ -1404,7 +1404,7 @@ int devdrv_dma_copy_sml_pkt(struct devdrv_dma_dev *dma_dev, enum devdrv_dma_data
     }
 
     if (size > DEVDRV_DMA_SML_PKT_DATA_SIZE) {
-        devdrv_err("Size is too big. (dev_id=%u; size=%d)\n", dev_id, size);
+        devdrv_err("Size is too big. (dev_id=%u;size=%d;max=%d)\n", dev_id, size, DEVDRV_DMA_SML_PKT_DATA_SIZE);
         return -EINVAL;
     }
 
@@ -1471,7 +1471,7 @@ int devdrv_alloc_dma_sq_cq(struct devdrv_dma_channel *dma_chan)
     /* DMA_QUEUE_SQ_BASE/DMA_QUEUE_CQ_BASE Note:the address must be 64Bytes aligned. */
     if (((dma_chan->sq_desc_dma % DEVDRV_DMA_REG_ALIGN_SIZE) != 0) ||
         ((dma_chan->cq_desc_dma % DEVDRV_DMA_REG_ALIGN_SIZE) != 0)) {
-        devdrv_err("Address dont aligned with 64B. (driver_name=\"%s\"; chan_id=%d)\n",
+        devdrv_err("Address is not aligned with 64B. (driver_name=\"%s\";chan_id=%d)\n",
                    ka_driver_dev_driver_string(dev), dma_chan->chan_id);
         devdrv_free_dma_sq_cq(dma_chan);
         return -EFAULT;

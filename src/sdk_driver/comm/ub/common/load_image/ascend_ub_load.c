@@ -306,7 +306,7 @@ int ubdrv_wait_for_flag_change(struct ubdrv_loader *loader, u32 flag_set, u32 fl
         return 0;
     }
     if ((cnt <= 0) || (sram->flag != flag_expect)) {
-        ubdrv_err("Wait for bios single process timeout.(dev_id=%u;flag_set=0x%x;flag_sram=0x%x;flag_expect=0x%x)\n",
+        ubdrv_err("Wait for bios signal process timeout. (dev_id=%u;flag_set=0x%x;flag_sram=0x%x;flag_expect=0x%x)\n",
                   loader->udev->dev_id, flag_set, sram->flag, flag_expect);
         return -ETIMEDOUT;
     }
@@ -371,7 +371,7 @@ STATIC void ubdrv_file_read_ret_print(u32 dev_id, const char *file_name, u8 file
     if (file_type == UBDRV_CRITICAL_FILE) {
         ubdrv_err("Critical file open fail. (dev_id=%u; file_name=%s)\n", dev_id, file_name);
     } else {
-        ubdrv_info("Non-critical file open unsuccess. (dev_id=%u; file_name=%s)\n", dev_id, file_name);
+        ubdrv_info("Non-critical file open skipped. (dev_id=%u;file_name=%s)\n", dev_id, file_name);
     }
     return;
 }
@@ -633,7 +633,7 @@ int ubdrv_single_file_path_init(char *file_path, u32 len, const u32 file_id)
 
     ret = strcat_s(file_path, UBDRV_STR_MAX_LEN, g_load_file[file_id].file_name);
     if (ret != 0) {
-        ubdrv_err("Strcat filed. (file_len=%ld;base_len=%ld;ret=%d)\n", ka_base_strlen(g_load_file[file_id].file_name),
+        ubdrv_err("Strcat failed. (file_len=%ld;base_len=%ld;ret=%d)\n", ka_base_strlen(g_load_file[file_id].file_name),
                   ka_base_strlen(file_path), ret);
         return ret;
     }

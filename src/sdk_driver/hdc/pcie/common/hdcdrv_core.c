@@ -3463,7 +3463,7 @@ STATIC void hdcdrv_mod_msg_chan_session_cnt(int dev_id, u32 normal_chan_id, u32 
     }
 
     if ((dev->msg_chan[normal_chan_id] == NULL) || (dev->msg_chan[fast_chan_id] == NULL)) {
-        hdcdrv_warn("Input parameter is is invalid. (dev=%d)\n", dev_id);
+        hdcdrv_warn("Input parameter is invalid. (dev=%d)\n", dev_id);
         return;
     }
 
@@ -4476,7 +4476,7 @@ STATIC long hdcdrv_accept_wait(const struct hdcdrv_dev *dev, struct hdcdrv_servi
 
     if (service->listen_pid != check_pid) {
         ka_task_mutex_unlock(&service->mutex);
-        hdcdrv_err("Device has no permission for service. (dev_id=%d; pid=%llu; service_type=\"%s\"; pid=%llu)\n",
+        hdcdrv_err("Device has no permission for service. (dev_id=%d;pid=%llu;service_type=\"%s\";listen_pid=%llu)\n",
                    dev->dev_id, hdcdrv_get_pid(), hdcdrv_sevice_str(service_type), service->listen_pid);
         return HDCDRV_NO_PERMISSION;
     }
@@ -4570,7 +4570,7 @@ STATIC void hdcdrv_pfstat_session_init(u32 dev_id, u32 normal_chan_id, u32 fast_
     }
 
     if ((dev->msg_chan[normal_chan_id] == NULL) || (dev->msg_chan[fast_chan_id] == NULL)) {
-        hdcdrv_warn("Input parameter is is invalid. (dev=%d)\n", dev_id);
+        hdcdrv_warn("Input parameter is invalid. (dev=%d)\n", dev_id);
         return;
     }
 
@@ -5205,7 +5205,7 @@ again:
     }
 
     if (ka_unlikely((cmd->len > hdcdrv_mem_block_capacity()) || (cmd->len <= 0))) {
-        hdcdrv_err("Send length is too bigger. (session=%d; send_len=%d; max_segment=%d)\n", cmd->session, cmd->len,
+        hdcdrv_err("Send length is too big. (session=%d;send_len=%d;max_segment=%d)\n", cmd->session, cmd->len,
                    hdcdrv_mem_block_capacity());
         return HDCDRV_TX_LEN_ERR;
     }
@@ -5306,7 +5306,7 @@ STATIC long hdcdrv_recv_peek_wait(struct hdcdrv_session *session, struct hdcdrv_
                 (hdcdrv_session_alloc_idx_check(cmd->session, cmd->session_cur_alloc_idx) ==
                  HDCDRV_SESSION_HAS_CLOSED) ||
                 (unique_val != session->unique_val)) {
-                hdcdrv_warn_limit("Session has close.(dev=%d; session=%d, status=%d, service=%d; l_state=%d; "
+                hdcdrv_warn_limit("Session has closed. (dev=%d; session=%d, status=%d, service=%d; l_state=%d; "
                                   "r_state=%d; l_fd=%d; r_fd=%d.\n",
                                   session->dev_id, cmd->session, session_status, session->service_type,
                                   session->local_close_state, session->remote_close_state, session->local_session_fd,
@@ -7219,7 +7219,8 @@ int hdcdrv_add_msg_chan_to_dev(u32 dev_id, void *chan)
     hdcdrv_set_time_stamp(&(hdcdrv_get_init_stamp_info()->wait_mutex_end));
     if ((hdc_dev->msg_chan_cnt >= (int)HDCDRV_SUPPORT_MAX_DEV_MSG_CHAN) || (hdc_dev->msg_chan_cnt < 0)) {
         ka_task_mutex_unlock(&hdc_dev->mutex);
-        hdcdrv_err("Parameter msg_chan_cnt out of range. (msg_chan_cnt=%d)\n", hdc_dev->msg_chan_cnt);
+        hdcdrv_err("Parameter msg_chan_cnt out of range. (msg_chan_cnt=%d;max=%d)\n", hdc_dev->msg_chan_cnt,
+                   (int)HDCDRV_SUPPORT_MAX_DEV_MSG_CHAN);
         return HDCDRV_PARA_ERR;
     }
 
@@ -7402,7 +7403,7 @@ struct hdcdrv_dev *hdcdrv_add_dev(ka_device_t *dev, u32 dev_id)
         for (i = 0; i < HDCDRV_SUPPORT_MAX_SERVICE; i++) {
             if (hdcdrv_service_res_init(&hdc_dev->service[i], i) != 0) {
                 ka_task_mutex_unlock(&hdc_dev->mutex);
-                hdcdrv_err("Server resure init failed. (dev_id=%d; server=%d)\n", dev_id, i);
+                hdcdrv_err("Server resource init failed. (dev_id=%d;server=%d)\n", dev_id, i);
                 goto out;
             }
         }

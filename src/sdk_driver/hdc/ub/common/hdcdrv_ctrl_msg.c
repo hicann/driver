@@ -251,7 +251,7 @@ int hdcdrv_get_ctrl_msg_event(struct hdcdrv_dev *dev, struct hdcdrv_ctrl_msg_nod
     if (ret != 0) {
         block->fail_count++;
         ret = HDCDRV_COPY_TO_USER_FAIL;
-        hdcdrv_warn("Copy to User unsuccess.(dev_id=%u; retry_time=%u)\n", dev->dev_id, block->fail_count);
+        hdcdrv_warn("Copy to user was unsuccessful.(dev_id=%u;retry_time=%u)\n", dev->dev_id, block->fail_count);
         if (block->fail_count < HDCDRV_MAX_COPY_RETRY_TIME) {
             return ret;
         }

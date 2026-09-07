@@ -235,7 +235,7 @@ STATIC void vmngh_device_offline(const struct vmngh_vd_dev *vd_dev)
 
     ret = vmngh_uninit_instance_client_device(dev_id, vfid);
     if (ret != VMNG_OK) {
-        vmng_err("Unnit_instance_client_device failed. (dev_id=%u; vfid=%u)\n", dev_id, vfid);
+        vmng_err("Uninit_instance_client_device failed. (dev_id=%u;vfid=%u)\n", dev_id, vfid);
         return;
     }
 
@@ -489,7 +489,7 @@ STATIC int vmngh_service_online(struct vmngh_vd_dev *vd_dev)
         }
         ret = vmngh_ctrl_sriov_init_instance(dev_id, fid);
         if (ret != 0) {
-            vmng_err("Init pcie initstance failed. (ret=%d;dev_id=%u)\n", ret, dev_id);
+            vmng_err("Init pcie instance failed. (ret=%d;dev_id=%u)\n", ret, dev_id);
             vmngh_device_offline(vd_dev);
             return ret;
         }
@@ -553,7 +553,7 @@ STATIC void vmngh_service_offline(struct vmngh_vd_dev *vd_dev)
         vmngh_remove_sec_eh_dev(dev_id, fid);
         ret = vmngh_ctrl_sriov_uninit_instance(dev_id, fid);
         if (ret != 0) {
-            vmng_err("Uninit pcie initstance failed. (ret=%d;dev_id=%u)\n", ret, dev_id);
+            vmng_err("Uninit pcie instance failed. (ret=%d;dev_id=%u)\n", ret, dev_id);
         }
         vmngh_device_offline(vd_dev);
     } else {
@@ -813,7 +813,7 @@ STATIC int vmngh_enable_pcie_feature(struct vmngh_vd_dev *vd_dev)
     if (ret != 0) {
         vmngh_release_passthrough_to_vm_msix_irq(dev_id, vd_dev);
         devdrv_mdev_pm_uninit_msi_interrupt(dev_id);
-        vmng_err("Get iova reserver failed. (dev_id=%u;ret=%d)\n", dev_id, ret);
+        vmng_err("Get iova reserve failed. (dev_id=%u;ret=%d)\n", dev_id, ret);
         return ret;
     }
 
@@ -878,7 +878,7 @@ STATIC void vmngh_vdev_create_bottom(ka_work_struct_t *p_work)
 
     ret = vmngh_vdev_prepare(vd_dev);
     if (ret != 0) {
-        vmng_err("Prepara vdev failed. (dev_id=%u; fid=%u; ret=%d)\n", dev_id, fid, ret);
+        vmng_err("Prepare vdev failed. (dev_id=%u;fid=%u;ret=%d)\n", dev_id, fid, ret);
         goto msix_disable;
     }
 
@@ -1684,7 +1684,8 @@ STATIC void vmngh_vdev_notify(struct vdavinci_dev *vdev, int db_index)
     } else if ((db_index >= VMNG_DB_BASE_EXTERNAL) && (db_index < VMNG_DB_BASE_MAX)) {
         ret = vmngh_external_db_handler(vd_dev, db_index);
     } else {
-        vmng_err("Doorbell index is out of range. (dev_id=%d; fid=%u; db_index=%u)\n", dev_id, fid, db_index);
+        vmng_err("Doorbell index is out of range. (dev_id=%d;fid=%u;db_index=%u;max=%u)\n", dev_id, fid, db_index,
+                 VMNG_DB_BASE_MAX);
         return;
     }
     if (ret != 0) {

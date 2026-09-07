@@ -626,7 +626,7 @@ signed int drv_hdc_socket_send(signed int sockfd, const char *buf, signed int le
         } while ((ret < 0) && (mm_get_error_code() == EINTR));
 
         if (ret < 0) {
-            HDC_LOG_ERR("(Send data failed. (sockfd=%d; StrError=\"%s\"; errno=%d; sendLen=%ld; len=%d)\n", sockfd,
+            HDC_LOG_ERR("Send data failed. (sockfd=%d; StrError=\"%s\"; errno=%d; sendLen=%ld; len=%d)\n", sockfd,
                         StrError(mm_get_error_code()), mm_get_error_code(), (long)sendLen, len);
             return DRV_ERROR_SEND_MESG;
         }

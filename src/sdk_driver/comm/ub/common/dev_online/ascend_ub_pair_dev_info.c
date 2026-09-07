@@ -490,7 +490,7 @@ STATIC int ubdrv_set_dynamic_del_device_status(u32 dev_id)
         return 0;
     }
     ka_task_up_write(&status_mng->rw_sem);
-    ubdrv_warn("Device is process link msg, can't to del. (dev_id=%u;status=%d)\n", dev_id, status);
+    ubdrv_warn("Device is process link msg, can't delete. (dev_id=%u;status=%d)\n", dev_id, status);
     return -EAGAIN;
 }
 

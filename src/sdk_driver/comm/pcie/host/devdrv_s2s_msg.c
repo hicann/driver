@@ -671,7 +671,7 @@ STATIC int devdrv_s2s_msg_edge_check(u32 devid, void *data, u32 in_data_len, u32
     phys_addr_t cq_phy_addr;
 
     if ((devid >= DEVDRV_S2S_MAX_DEV_NUM) || (data == NULL) || (p_real_out_len == NULL)) {
-        devdrv_err("Input pararmter is error.(devid=%u)\n", devid);
+        devdrv_err("Input parameter is invalid. (devid=%u)\n", devid);
         return -EINVAL;
     }
 

@@ -49,7 +49,7 @@ int devdrv_pcimsg_realease_trans_queue(void *msg_chan)
     }
 
     if (dev_ops->ops.realease_trans_queue == NULL) {
-        devdrv_err("ops.realease_trans_queue is null.\n");
+        devdrv_err("ops.release_trans_queue is null.\n");
         devdrv_sub_ops_ref(dev_ops);
         return -EOPNOTSUPP;
     }

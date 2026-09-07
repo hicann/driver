@@ -37,7 +37,7 @@ struct devdrv_comm_dev_ops *devdrv_get_comm_ops()
 int devdrv_check_communication_api_proc(struct devdrv_comm_ops *ops)
 {
     if (ops->sync_msg_send == NULL) {
-        devdrv_err("Invalid ops, sync sned ops is null. (type=%u)\n", ops->comm_type);
+        devdrv_err("Invalid ops, sync send ops is null. (type=%u)\n", ops->comm_type);
         return -EINVAL;
     }
     if ((ops->register_common_msg_client == NULL) || (ops->unregister_common_msg_client == NULL) ||

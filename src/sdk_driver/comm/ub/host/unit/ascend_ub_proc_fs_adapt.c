@@ -113,7 +113,7 @@ STATIC void ubdrv_procfs_show_chan_dfx_head(ka_seq_file_t *seq)
 {
     ka_fs_seq_printf(
         seq, "|chan_id |chan_type |tx_total |tx_err |tx_cqe |tx_cqe_timeout |tx_poll_cqe_err |"
-             "tx_cqe_err |tx_rebuid |recv_cqe_timeout |recv_cqe |recv_poll_cqe_err |recv_cqe_err |recv_data_err |"
+             "tx_cqe_err |tx_rebuild |recv_cqe_timeout |recv_cqe |recv_poll_cqe_err |recv_cqe_err |recv_data_err |"
              "rx_total |rx_work |rx_poll_cqe_err |rx_cqe_err |rx_call_err |rx_null_call |rx_finish |rx_post_jfr_err |"
              "rx_tx_err |rx_tx_poll_cqe_err |rx_tx_cqe_timeout |rx_tx_cqe |rx_tx_cqe_err |rx_tx_rebuild |"
              "rx_max_time |rx_work_max_time |"

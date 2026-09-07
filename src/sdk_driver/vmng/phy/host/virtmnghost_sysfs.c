@@ -153,7 +153,7 @@ STATIC ssize_t vmngh_sysfs_vm_full_vf_enable_store(ka_device_t *dev, ka_device_a
             vmng_event("Enable full spec support, only full spec vf can select. (devid=%u; uid=%u)\n",
                        vmngh_pdev->dev_id, ka_task_get_current_cred_uid());
         } else {
-            vmng_err("Mdevs are may be alive, please remove all mdevs.(devid=%u; uid=%u)\n", vmngh_pdev->dev_id,
+            vmng_err("Mdevs may be alive, please remove all mdevs.(devid=%u;uid=%u)\n", vmngh_pdev->dev_id,
                      ka_task_get_current_cred_uid());
             ka_task_mutex_unlock(&vmngh_pdev->vpdev_mutex);
             return -1;
