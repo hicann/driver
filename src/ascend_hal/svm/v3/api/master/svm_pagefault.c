@@ -35,7 +35,7 @@ static int svm_pagefault_handle(u32 devid, u64 va)
     }
 
     if (prop.devid == devid) {
-        svm_run_info_ratelimited("Pagefault va is belong to device. (va=0x%llx; devid=%u)\n", va, devid);
+        svm_run_info_ratelimited("Pagefault va belongs to device. (va=0x%llx; devid=%u)\n", va, devid);
         return DRV_ERROR_PARA_ERROR;
     } else if (prop.devid == svm_get_host_devid()) {
         svm_run_info_ratelimited("Not support device pagefault access host mem. (va=0x%llx; host_devid=%u)\n", va,

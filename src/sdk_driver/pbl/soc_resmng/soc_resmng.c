@@ -1627,22 +1627,22 @@ KA_EXPORT_SYMBOL_GPL(soc_resmng_dev_get_reg_base);
 
 int soc_resmng_dev_set_irq_num(u32 devid, u32 irq_type, u32 irq_num)
 {
-    soc_err("No implement.\n");
+    soc_err("Not implemented.\n");
     return -EINVAL;
 }
 int soc_resmng_dev_get_irq_num(u32 devid, u32 irq_type, u32 *irq_num)
 {
-    soc_err("No implement.\n");
+    soc_err("Not implemented.\n");
     return -EINVAL;
 }
 int soc_resmng_dev_set_irq_by_index(u32 devid, u32 irq_type, u32 index, u32 irq)
 {
-    soc_err("No implement.\n");
+    soc_err("Not implemented.\n");
     return -EINVAL;
 }
 int soc_resmng_dev_get_irq_by_index(u32 devid, u32 irq_type, u32 index, u32 *irq)
 {
-    soc_err("No implement.\n");
+    soc_err("Not implemented.\n");
     return -EINVAL;
 }
 
@@ -2711,7 +2711,7 @@ int resmng_init_module(void)
     ka_task_mutex_init(&soc_resmng_mutex);
     resmng_init();
     if (soc_resnmg_ioctl_init() != 0) {
-        soc_err("soc_resnmg_ioctl_init failed\n");
+        soc_err("soc_resmng_ioctl_init failed\n");
         return -EFAULT;
     }
 #if defined(CFG_BUILD_DEBUG)

@@ -72,8 +72,8 @@ static void devmm_mem_stats_show(ka_seq_file_t *seq, struct devmm_svm_process *s
                                  mem_stats->alloc_cnt[module_id], mem_stats->free_cnt[module_id]);
         } else {
             devmm_drv_run_info(
-                "hostpid=%d logic_id=dev%u mem_type=%s module_name=%s module_id=%u current_alloced_size=%llu "
-                "alloced_peak_size=%llu alloc_cnt=%llu free_cnt=%llu\n",
+                "hostpid=%d logic_id=dev%u mem_type=%s module_name=%s module_id=%u current_alloced_size(bytes)=%llu "
+                "alloced_peak_size(bytes)=%llu alloc_cnt=%llu free_cnt=%llu\n",
                 svm_proc->process_id.hostpid, logic_id,
                 svm_get_mem_type_str(type->mem_val, type->page_type, type->phy_memtype),
                 SVM_GET_MODULE_NAME(svm_module_name, module_id), module_id, mem_stats->current_alloced_size[module_id],

@@ -784,7 +784,7 @@ static void trs_urma_poll_waited_jfc(uint32_t dev_id, urma_jfc_t *wait_jfc)
     (void)pthread_rwlock_rdlock(&sq_info->mutex);
 
     if (sq_info->valid == 0) {
-        trs_warn_limit("Sq has been freeed. (dev_id=%u; sq_id=%u)\n", dev_id, (uint32_t)wait_jfc->jfc_cfg.user_ctx);
+        trs_warn_limit("Sq has been freed. (dev_id=%u; sq_id=%u)\n", dev_id, (uint32_t)wait_jfc->jfc_cfg.user_ctx);
         trs_urma_jfc_ack(wait_jfc);
         goto unlock_sq_rwlock;
     }
@@ -1264,7 +1264,7 @@ int trs_urma_epoll_add_ctl(uint32_t dev_id)
     ret = epoll_ctl((signed int)g_trs_urma_epoll.epfd, EPOLL_CTL_ADD, urma_proc_ctx->jfce->fd, &ep_event);
     if (ret != 0) {
 #ifndef EMU_ST
-        trs_err("Call epoll_ctl for data_in failed. (ret=%d; dev_id=%d\n", ret, dev_id);
+        trs_err("Call epoll_ctl for data_in failed. (ret=%d; dev_id=%d)\n", ret, dev_id);
         return DRV_ERROR_INNER_ERR;
 #endif
     }

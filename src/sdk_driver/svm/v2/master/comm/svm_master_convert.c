@@ -678,7 +678,7 @@ static int devmm_ioctl_convert_para_check(struct devmm_mem_convrt_addr_para *par
         return -EINVAL;
     }
     if (para->fixed_size >= (para->len * para->height)) {
-        devmm_drv_err("Fixed_size should smaller than len*height. (fixed_size=%llu; len=%llu; height=%llu)\n",
+        devmm_drv_err("Fixed_size should be smaller than len*height. (fixed_size=%llu; len=%llu; height=%llu)\n",
                       para->fixed_size, para->len, para->height);
         return -EINVAL;
     }

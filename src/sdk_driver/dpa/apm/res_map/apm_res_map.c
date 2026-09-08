@@ -120,8 +120,8 @@ int apm_res_addr_map(u32 udevid, struct res_map_info_in *res_info, u64 *va, u32 
 
     /* check res perm */
     if (!apm_res_is_belong_to_proc(master_tgid, slave_tgid, udevid, res_info)) {
-        apm_err("Current not has res. (udevid=%u; res_type=%u; res_id=%u; proc_type=%d)\n", udevid, res_info->res_type,
-                res_info->res_id, res_info->target_proc_type);
+        apm_err("Current task does not own the resource. (udevid=%u; res_type=%u; res_id=%u; proc_type=%d)\n", udevid,
+                res_info->res_type, res_info->res_id, res_info->target_proc_type);
         return -EPERM;
     }
 
@@ -273,7 +273,7 @@ static int apm_init_res_map_info_priv(struct res_map_info_in *res_info)
 
     priv_buffer = apm_kmalloc(res_info->priv_len, KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
     if (priv_buffer == NULL) {
-        apm_err("Kmalloc priv bufferfailed. (len=0x%x)\n", res_info->priv_len);
+        apm_err("Kmalloc priv buffer failed. (len=0x%x)\n", res_info->priv_len);
         return -ENOMEM;
     }
 

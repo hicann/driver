@@ -70,7 +70,7 @@ static void devmm_destory_register_dma_node(struct devmm_register_dma_node *node
 
     devmm_destory_registered_dma_node_res(node);
     devmm_kvfree(node);
-    devmm_drv_debug("Destroy dma node. (va=0x%llx; size=%llu; dev_id=%d; kef=%u)\n", va, size, devid, ref);
+    devmm_drv_debug("Destroy dma node. (va=0x%llx; size=%llu; dev_id=%d; ref=%u)\n", va, size, devid, ref);
 }
 
 /* might call in tasklet of dma desc destroy, don't sleep */

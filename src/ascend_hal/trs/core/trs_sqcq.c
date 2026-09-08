@@ -2237,7 +2237,7 @@ static int trs_flush_user_sq(uint32_t dev_id, uint32_t sq_id, struct sqcq_usr_in
     struct sqcq_usr_info *bp_info = trs_get_sq_bp_ctx(dev_id, sq_id);
 
     if (bp_info == NULL) {
-        trs_err("Flash sq fail.(dev_id=%u; sq_id=%u)\n", dev_id, sq_id);
+        trs_err("Flush sq fail.(dev_id=%u; sq_id=%u)\n", dev_id, sq_id);
         return DRV_ERROR_NO_RESOURCES;
     }
     info->tail = bp_info->tail;
@@ -2340,7 +2340,7 @@ static int trs_sq_backup(uint32_t dev_id, struct stream_backup_info *in)
 
     ret = trs_sq_backup_uio(dev_id, in);
     if (ret != 0) {
-        trs_err("Failed to backup sq. (ret=%d; dev_id=%u\n", ret, dev_id);
+        trs_err("Failed to backup sq. (ret=%d; dev_id=%u)\n", ret, dev_id);
         free(g_backup_sq_mem[dev_id]);
         g_backup_sq_mem[dev_id] = NULL;
     }

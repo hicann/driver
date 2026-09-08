@@ -164,7 +164,7 @@ STATIC int udis_timer_check_task_para(const struct udis_timer_task *timer_task)
     }
 
     if (timer_task->period_ms < UDIS_TIMER_STEP_MS) {
-        udis_err("Task's period is less then timer step. (period=%ums; timer_step=%ums; task_name=%s)\n",
+        udis_err("Task's period is less than timer step. (period=%ums; timer_step=%ums; task_name=%s)\n",
                  timer_task->period_ms, UDIS_TIMER_STEP_MS, timer_task->task_name);
         return -EINVAL;
     }

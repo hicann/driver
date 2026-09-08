@@ -253,7 +253,7 @@ static int svm_ipc_format_name(char *name, u32 name_len, u64 key)
     }
 
     if (name_len <= (IPC_FORMAT_TOTAL_LEN + 1)) { /* '\0' + 1 */
-        svm_err("Not enough spcace. (name_len=%u; need=%u)\n", name_len, IPC_FORMAT_TOTAL_LEN);
+        svm_err("Not enough space. (name_len=%u; need=%u)\n", name_len, IPC_FORMAT_TOTAL_LEN);
         return DRV_ERROR_INVALID_VALUE;
     }
 

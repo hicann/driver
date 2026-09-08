@@ -1202,7 +1202,7 @@ DVresult halMemCpyAsyncWaitFinishInner(uint64_t copy_fd)
         ret = DRV_ERROR_INNER_ERR;
     }
     DEVMM_DRV_DEBUG_ARG("Asynchronous copy success. "
-                        "(dst=0x%llx; src=0x%llx; size=%lu; wait_time=%llu; dma_time=%llu; task_id=%d)\n",
+                        "(dst=0x%llx; src=0x%llx; size=%lu; wait_time=%lluus; dma_time=%lluus; task_id=%d)\n",
                         arg->data.async_copy_para.dst, arg->data.async_copy_para.src,
                         arg->data.async_copy_para.byte_count, (now_time - start_time),
                         now_time - arg->data.async_copy_para.start_time, arg->data.async_copy_para.task_id);
@@ -2701,7 +2701,7 @@ static DVresult devmm_get_mem_check_info_para_check(struct MemAddrInfo *info)
     }
 
     if ((info->cnt == 0) || (info->cnt > DEVMM_DEV_ADDR_NUM_MAX)) {
-        DEVMM_DRV_ERR("Cnt out of range. (cnt=%u)\n", info->cnt);
+        DEVMM_DRV_ERR("Cnt out of range. (cnt=%u; range=1-%u)\n", info->cnt, (uint32_t)DEVMM_DEV_ADDR_NUM_MAX);
         return DRV_ERROR_INVALID_VALUE;
     }
 
@@ -2748,7 +2748,7 @@ static DVresult devmm_mem_get_info_para_check(DVdevice devid, unsigned int type,
 {
     /* host agent not support get meminfo */
     if (devid >= DEVMM_MAX_PHY_DEVICE_NUM) {
-        DEVMM_DRV_ERR("Devid out of range. (devid=%u)\n", devid);
+        DEVMM_DRV_ERR("Devid is out of range. (devid=%u; range=0~%u)\n", devid, (UINT32)(DEVMM_MAX_PHY_DEVICE_NUM - 1));
         return DRV_ERROR_INVALID_VALUE;
     }
 
@@ -4302,7 +4302,7 @@ static drvError_t devmm_dev_set_advise(uint64_t flag, uint64_t size, uint32_t vi
         devmm_hbm_ddr_p2p_set_advise(flag, advise);
 
         if (devmm_continuty_mem_set_advise(flag, size, virt_mem_type, phy_page_type, advise) != DRV_ERROR_NONE) {
-            DEVMM_DRV_ERR("Invalid continuty size or huge page. (alloc_size=%llu; flag=0x%llx)\n", size, flag);
+            DEVMM_DRV_ERR("Invalid continuity size or huge page. (alloc_size=%llu; flag=0x%llx)\n", size, flag);
             return DRV_ERROR_INVALID_VALUE;
         }
         if (devmm_ts_mem_set_advise(flag, virt_mem_type, advise) != DRV_ERROR_NONE) {
@@ -4519,14 +4519,14 @@ STATIC INLINE DVresult devmm_check_memcpy2d_input_valid(struct drvMem2D *copy2d)
     }
 
     if ((copy2d->width > copy2d->dpitch) || (copy2d->width > copy2d->spitch)) {
-        DEVMM_DRV_ERR("Dpitch and spitch should both larger than width. (dpitch=%llu; spitch=%llu; "
+        DEVMM_DRV_ERR("Dpitch and spitch should both be larger than width. (dpitch=%llu; spitch=%llu; "
                       "width=%llu)\n",
                       copy2d->dpitch, copy2d->spitch, copy2d->width);
         return DRV_ERROR_INVALID_VALUE;
     }
 
     if ((copy2d->width == 0) || (copy2d->height == 0)) {
-        DEVMM_DRV_ERR("Width and height should both larger than 0. (width=%llu; height=%llu)\n", copy2d->width,
+        DEVMM_DRV_ERR("Width and height should both be larger than 0. (width=%llu; height=%llu)\n", copy2d->width,
                       copy2d->height);
         return DRV_ERROR_INVALID_VALUE;
     }
@@ -4617,7 +4617,7 @@ STATIC INLINE DVresult devmm_memcpy2d_convert(struct drvMem2DAsync *copy2d_async
         return DRV_ERROR_INVALID_VALUE;
     }
     if (copy2d->fixed_size >= len) {
-        DEVMM_DRV_ERR("Fixed_size should smaller than width*height. (fixed_size=%llu; width=%llu; "
+        DEVMM_DRV_ERR("Fixed_size should be smaller than width*height. (fixed_size=%llu; width=%llu; "
                       "height=%llu)\n",
                       copy2d->fixed_size, copy2d->width, copy2d->height);
         return DRV_ERROR_INVALID_VALUE;
@@ -4872,12 +4872,12 @@ static drvError_t devmm_giant_page_para_check(const struct drv_mem_prop *prop)
         }
 
         if (devmm_is_support_host_giant_page_feature() == false) {
-            DEVMM_RUN_INFO("Not support host giane page feature.\n");
+            DEVMM_RUN_INFO("Not support host giant page feature.\n");
             return DRV_ERROR_NOT_SUPPORT;
         }
     } else {
         if (devmm_is_support_agent_giant_page_feature(prop->devid) == false) {
-            DEVMM_RUN_INFO("Not support agent giane page feature. (devid=%u)\n", prop->devid);
+            DEVMM_RUN_INFO("Not support agent giant page feature. (devid=%u)\n", prop->devid);
             return DRV_ERROR_NOT_SUPPORT;
         }
     }
@@ -5007,9 +5007,9 @@ static drvError_t devmm_vmm_mem_create(const struct drv_mem_prop *prop, size_t s
     ret = devmm_svm_ioctl(g_devmm_mem_dev, DEVMM_SVM_MEM_CREATE, &arg);
     if (ret != DRV_ERROR_NONE) {
         DEVMM_RUN_INFO_IF((ret != DRV_ERROR_NOT_SUPPORT),
-                          "Mem create is unsuccessful. (ret=%d; size=%u; side=%u; "
+                          "Mem create completed. (size=%u; side=%u; "
                           "devid=%u; module_id=%u; pg_type=%u; mem_type=%u)\n",
-                          ret, real_size, prop->side, logic_devid, module_id, prop->pg_type, prop->mem_type);
+                          real_size, prop->side, logic_devid, module_id, prop->pg_type, prop->mem_type);
         if (devmm_is_mem_host_side(prop->side)) {
             svm_mem_stats_show_host();
         } else {

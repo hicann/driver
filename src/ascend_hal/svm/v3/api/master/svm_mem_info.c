@@ -80,7 +80,7 @@ int _get_mem_check_info(u32 devid, u32 type, struct MemAddrInfo *para)
         }
 
         if ((para->mem_type & svm_prop_to_mem_virt_mask(&prop)) == 0) {
-            svm_err("Mem type is not match. (va=0x%llx; cnt=%u; expext_mem_type=0x%x; real_mem_type=0x%x)\n",
+            svm_err("Mem type is not match. (va=0x%llx; cnt=%u; expect_mem_type=0x%x; real_mem_type=0x%x)\n",
                     (u64)(uintptr_t)para->addr[i], para->cnt, para->mem_type, svm_prop_to_mem_virt_mask(&prop));
             para->flag = false;
             return DRV_ERROR_INVALID_VALUE;

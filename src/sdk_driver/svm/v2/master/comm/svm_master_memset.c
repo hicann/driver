@@ -219,7 +219,7 @@ STATIC int devmm_ioctl_memset_process(struct devmm_svm_process *svm_pro, struct 
         return ret;
     }
     if (memset_para->count > attr.heap_size) {
-        devmm_drv_err("Count is bigger then heap_size. (count=%llu; heap_size=%llu; memset_para_dst=0x%llx)\n",
+        devmm_drv_err("Count is bigger than heap_size. (count=%llu; heap_size=%llu; memset_para_dst=0x%llx)\n",
                       memset_para->count, attr.heap_size, memset_para->dst);
         return -EINVAL;
     }

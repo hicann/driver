@@ -39,7 +39,7 @@ static inline int dma_desc_convert_2d_para_check(struct svm_dma_desc_convert_2d_
     u64 svm_va, svm_size;
 
     if ((para->width > para->dpitch) || (para->width > para->spitch)) {
-        svm_err("Dpitch and spitch should both larger than width. (dpitch=%llu; spitch=%llu; width=%llu)\n",
+        svm_err("Dpitch and spitch should both be larger than width. (dpitch=%llu; spitch=%llu; width=%llu)\n",
                 para->dpitch, para->spitch, para->width);
         return -EINVAL;
     }
@@ -61,7 +61,7 @@ static inline int dma_desc_convert_2d_para_check(struct svm_dma_desc_convert_2d_
     }
 
     if (para->fixed_size > (para->width * para->height)) {
-        svm_err("Fixed_size should smaller than width*height. (fixed_size=%llu; width=%llu; height=%llu)\n",
+        svm_err("Fixed_size should be smaller than width*height. (fixed_size=%llu; width=%llu; height=%llu)\n",
                 para->fixed_size, para->width, para->height);
         return -EINVAL;
     }

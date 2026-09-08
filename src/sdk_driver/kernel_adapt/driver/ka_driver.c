@@ -15,6 +15,7 @@
 #include "ka_base_pub.h"
 #include "ka_driver_pub.h"
 #include "ka_kvm_pub.h"
+#include "kernel_adapt_init.h"
 #include "ka_task_pub.h"
 
 #ifndef VFIO_IOMMU_NOTIFY_DMA_UNMAP
@@ -372,7 +373,7 @@ void ka_copy_reserved_iova(ka_iova_domain_t *from, ka_iova_domain_t *to)
 
         new_iova = reserve_iova(to, iova->pfn_lo, iova->pfn_hi);
         if (IS_ERR_OR_NULL(new_iova)) {
-            printk(KERN_ERR "Reserve iova range %lx@%lx failed\n", iova->pfn_lo, iova->pfn_hi);
+            ka_err("Reserve iova range %lx@%lx failed\n", iova->pfn_lo, iova->pfn_hi);
         }
     }
     spin_unlock_irqrestore(&from->iova_rbtree_lock, flags);

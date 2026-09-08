@@ -467,7 +467,7 @@ static void vmm_recycle_single(void *svmm_inst, u32 udevid)
     }
 
     if (recyle_num > 0) {
-        svm_info("Recycle success. (udevid=%u; recyle_num=%u)\n", udevid, recyle_num);
+        svm_info("Recycle success. (udevid=%u; recycle_num=%u)\n", udevid, recyle_num);
     }
 }
 
@@ -584,7 +584,7 @@ static int vmm_svmm_release(void *priv, bool force)
     if (recyle_num > 0) {
         u64 svmma_start, svmma_size, svm_flag;
         svm_svmm_parse_inst_info(svmm_inst, &svmma_start, &svmma_size, &svm_flag);
-        svm_info("Force release success. (va=0x%llx; size=0x%llx; recyle_num=%u)\n", svmma_start, svmma_size,
+        svm_info("Force release success. (va=0x%llx; size=0x%llx; recycle_num=%u)\n", svmma_start, svmma_size,
                  recyle_num);
     }
 

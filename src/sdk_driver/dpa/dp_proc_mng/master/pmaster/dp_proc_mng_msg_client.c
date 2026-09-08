@@ -67,8 +67,8 @@ STATIC int dp_proc_mng_host_msg_recv(u32 devid, void *data, u32 in_data_len, u32
 
     if (devid >= DP_PROC_MNG_MAX_DEVICE_NUM) {
 #ifndef EMU_ST
-        dp_proc_mng_drv_err("Device_id must less than DP_PROC_MNG_MAX_DEVICE_NUM. "
-                            "(devid=%u; DP_PROC_MNG_MAX_AGENT_DEVICE_NUM=%d)\n",
+        dp_proc_mng_drv_err("Device_id must be less than DP_PROC_MNG_MAX_DEVICE_NUM. "
+                            "(devid=%u; DP_PROC_MNG_MAX_DEVICE_NUM=%d)\n",
                             devid, DP_PROC_MNG_MAX_DEVICE_NUM);
         return -ENODEV;
 #endif

@@ -58,7 +58,7 @@ static void trs_sq_send_mode_to_xia(u32 chip_id, int mode)
 
     g_trs_sq_send_mode[chip_id] = mode;
     ka_task_up_write(&trs_mode_lock);
-    trs_info("Tsdrv sq send mode to xia, set sq send mode success. (chip_id=%u; mode=%d)\n", chip_id, mode);
+    trs_info("Set tsdrv sq send mode success (chip_id=%u; mode=%d)\n", chip_id, mode);
 }
 
 int trs_mode_config_to_sia(u32 chip_id)
@@ -139,7 +139,7 @@ int trs_mode_config_by_urd(void *feature, char *in, u32 in_len, char *out, u32 o
 
     info = (struct trsModeInfo *)in;
     if (info->mode_type >= TRS_MODE_TYPE_MAX) {
-        trs_err("The mode_type is invalid. (mode_type=%d; msx=%d)\n", info->mode_type, TRS_MODE_TYPE_MAX);
+        trs_err("The mode_type is invalid. (mode_type=%d; max=%d)\n", info->mode_type, TRS_MODE_TYPE_MAX);
         return -EINVAL;
     }
 
@@ -196,7 +196,7 @@ int trs_mode_query_by_urd(void *feature, char *in, u32 in_len, char *out, u32 ou
 
     in_info = (struct trsModeInfo *)in;
     if (in_info->mode_type >= TRS_MODE_TYPE_MAX) {
-        trs_err("The mode_type is invalid. (mode_type=%d; msx=%d)\n", in_info->mode_type, TRS_MODE_TYPE_MAX);
+        trs_err("The mode_type is invalid. (mode_type=%d; max=%d)\n", in_info->mode_type, TRS_MODE_TYPE_MAX);
         return -EINVAL;
     }
 

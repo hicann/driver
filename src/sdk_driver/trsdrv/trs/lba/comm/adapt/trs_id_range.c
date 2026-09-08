@@ -109,7 +109,7 @@ int trs_id_alloc_in_range(struct trs_id_inst *inst, int type, u32 *id, u32 vfid)
             }
         }
     }
-    trs_err("Failed to allloc id in range. (devid=%u; vfid=%u; type=%s; bitmap=0x%x; bit=%d; ret=%d)\n", inst->devid,
+    trs_err("Failed to alloc id in range. (devid=%u; vfid=%u; type=%s; bitmap=0x%x; bit=%d; ret=%d)\n", inst->devid,
             vfid, trs_id_type_to_name(type), bitmap, bit, ret);
     return ret;
 }

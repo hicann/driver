@@ -282,7 +282,7 @@ static int devmm_ipc_pod_msg_check(u32 devid, u32 sdid, struct data_input_info *
     }
     msg = (struct devmm_ipc_pod_msg_data *)data->data;
     if (ka_unlikely(msg->header.valid != DEVMM_IPC_POD_MSG_SEND_MAGIC)) {
-        devmm_drv_err("Invalid magic. (magic=0x%x; devid=%u; sdid=%u; cmdtype=%d)\n", msg->header.valid, devid, sdid,
+        devmm_drv_err("Invalid magic. (valid=0x%x; devid=%u; sdid=%u; cmdtype=%d)\n", msg->header.valid, devid, sdid,
                       msg->header.cmdtype);
         return -EINVAL;
     }

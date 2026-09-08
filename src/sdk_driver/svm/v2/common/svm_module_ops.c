@@ -662,7 +662,7 @@ STATIC int devmm_svm_init(void)
 
     ret = module_feature_auto_init();
     if (ret != 0) {
-        devmm_drv_err("Feature atuo init fail. (ret=%d)\n", ret);
+        devmm_drv_err("Feature auto init fail. (ret=%d)\n", ret);
         goto feature_init_fail;
     }
 

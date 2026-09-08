@@ -443,7 +443,7 @@ static struct devmm_ipc_node *_devmm_ipc_create_node(struct devmm_ipc_node_attr 
     ret = memcpy_s(&node->attr, sizeof(struct devmm_ipc_node_attr), attr, sizeof(struct devmm_ipc_node_attr));
     if (ret != EOK) {
         devmm_kvfree_ex(node);
-        devmm_drv_err("Ipc node attr copy fail. (ret=%d; size=%ld; name=%s\n", ret, sizeof(struct devmm_ipc_node_attr),
+        devmm_drv_err("Ipc node attr copy fail. (ret=%d; size=%ld; name=%s)\n", ret, sizeof(struct devmm_ipc_node_attr),
                       attr->name);
         return NULL;
     }
@@ -885,7 +885,7 @@ static int _devmm_ipc_node_close(struct devmm_ipc_node *node, struct devmm_svm_p
     }
 
     if (ka_unlikely(wlist->vptr != vptr)) {
-        devmm_drv_err("Invalid vptr. (wlist_vptr=0x%llx; vptr=0x%llx\n)\n", wlist->vptr, vptr);
+        devmm_drv_err("Invalid vptr. (wlist_vptr=0x%llx; vptr=0x%llx)\n", wlist->vptr, vptr);
         return -EFAULT;
     }
     wlist->vptr = 0;

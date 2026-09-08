@@ -201,12 +201,12 @@ STATIC int devmm_memcpy_para_check(struct devmm_svm_process *svm_proc, struct de
     }
 
     if (devmm_va_is_multi_dev_map(svm_proc, src_attr, byte_count)) {
-        devmm_drv_err("Can not use multi dev map va to memcpy. (src_va=0x%llx; byte_count=%llu\n", src_attr->va,
+        devmm_drv_err("Can not use multi dev map va to memcpy. (src_va=0x%llx; byte_count=%llu)\n", src_attr->va,
                       byte_count);
         return -EINVAL;
     }
     if (devmm_va_is_multi_dev_map(svm_proc, dst_attr, byte_count)) {
-        devmm_drv_err("Can not use multi dev map va to memcpy. (dst_va=0x%llx; byte_count=%llu\n", dst_attr->va,
+        devmm_drv_err("Can not use multi dev map va to memcpy. (dst_va=0x%llx; byte_count=%llu)\n", dst_attr->va,
                       byte_count);
         return -EINVAL;
     }
@@ -1835,13 +1835,13 @@ int devmm_ioctl_wait_convert_dma_result(struct devmm_svm_process *svm_proc, stru
 int devmm_check_memcpy2d_input(enum devmm_copy_direction dir, u64 spitch, u64 dpitch, u64 width, u64 height)
 {
     if ((width > dpitch) || (width > spitch)) {
-        devmm_drv_err("Dpitch and spitch should both larger than width. (dpitch=%llu; spitch=%llu; "
+        devmm_drv_err("Dpitch and spitch should both be larger than width. (dpitch=%llu; spitch=%llu; "
                       "width=%llu)\n",
                       dpitch, spitch, width);
         return -EINVAL;
     }
     if ((width == 0) || (height == 0)) {
-        devmm_drv_err("Width and height should both larger than 0. (width=%llu; height=%llu)\n", width, height);
+        devmm_drv_err("Width and height should both be larger than 0. (width=%llu; height=%llu)\n", width, height);
         return -EINVAL;
     }
     if ((dir <= DEVMM_COPY_HOST_TO_HOST) || (dir > DEVMM_COPY_INVILED_DIRECTION)) {

@@ -742,7 +742,7 @@ int svm_recycle_mem_by_dev(u32 devid)
     pthread_rwlock_unlock(&mng.rwlock);
 
     if (recyle_num > 0) {
-        svm_info("Recycle success. (devid=%u; recyle_num=%u)\n", devid, recyle_num);
+        svm_info("Recycle success. (devid=%u; recycle_num=%u)\n", devid, recyle_num);
     }
 
     return ret;

@@ -43,7 +43,7 @@ int dp_proc_mng_chan_msg_dispatch(void *msg, u32 in_data_len, u32 out_data_len, 
     }
 
     if (head_msg->process_id.vfid >= DP_PROC_MNG_MAX_VF_NUM) {
-        dp_proc_mng_drv_err("Message_id has invalid. (msg_id=%u; vfid=%d)\n", msg_id, head_msg->process_id.vfid);
+        dp_proc_mng_drv_err("Message_id is invalid. (msg_id=%u; vfid=%d)\n", msg_id, head_msg->process_id.vfid);
         ret = -EINVAL;
         goto save_msg_ret;
     }

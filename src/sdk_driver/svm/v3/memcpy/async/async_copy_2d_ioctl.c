@@ -30,7 +30,7 @@
 static inline int async_copy_2d_para_check(struct svm_async_copy_submit_2d_para *para)
 {
     if ((para->width > para->dpitch) || (para->width > para->spitch)) {
-        svm_err("Dpitch and spitch should both larger than width. (dpitch=%llu; spitch=%llu; width=%llu)\n",
+        svm_err("Dpitch and spitch should both be larger than width. (dpitch=%llu; spitch=%llu; width=%llu)\n",
                 para->dpitch, para->spitch, para->width);
         return -EINVAL;
     }

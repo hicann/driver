@@ -201,7 +201,7 @@ static int _trs_char_dev_open(uint32_t v_dev_id, int *fd, const char *intf_modul
         }
     } while (retry);
     if (ret != 0) {
-        trs_err("Ioctrl failed. (v_dev_id=%u; fd=%d; errno=%d, error=%s)\n", v_dev_id, *fd, errno, strerror(errno));
+        trs_err("Ioctl failed. (v_dev_id=%u; fd=%d; errno=%d, error=%s)\n", v_dev_id, *fd, errno, strerror(errno));
         share_log_read_err(HAL_MODULE_TYPE_TS_DRIVER);
         trs_file_close(*fd);
         return ret;
@@ -234,7 +234,7 @@ static int _trs_char_dev_close(uint32_t v_dev_id, int fd, const char *intf_modul
 
     ret = trs_ioctl_user(fd, DAVINCI_INTF_IOCTL_CLOSE, &arg);
     if (ret != 0) {
-        trs_warn("Ioctrl warn. (v_dev_id=%u; fd=%d; errno=%d, error=%s)\n", v_dev_id, fd, errno, strerror(errno));
+        trs_warn("Ioctl warn. (v_dev_id=%u; fd=%d; errno=%d, error=%s)\n", v_dev_id, fd, errno, strerror(errno));
         share_log_read_err(HAL_MODULE_TYPE_TS_DRIVER);
     }
 

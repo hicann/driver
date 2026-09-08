@@ -175,7 +175,7 @@ static void svm_task_release_check_feature(struct svm_task_ctx *t_ctx)
     for (i = 0; i < task_feature_num; i++) {
         struct svm_task_feature *feature = &t_ctx->feature[i];
         if (feature->valid) {
-            svm_warn("Feature not exit. (udevid=%u; tgid=%d; name=%s)\n", t_ctx->udevid, t_ctx->tgid, feature->name);
+            svm_warn("Feature not exist. (udevid=%u; tgid=%d; name=%s)\n", t_ctx->udevid, t_ctx->tgid, feature->name);
         }
     }
 }

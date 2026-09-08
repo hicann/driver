@@ -68,7 +68,7 @@ static int ubmm_map_host_pa_get(struct ubmm_node *node, int tgid, u64 va, u64 si
 
     pages = (ka_page_t **)svm_kvmalloc(page_num * sizeof(ka_page_t *), KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
     if (pages == NULL) {
-        svm_err("Mallc pages failed. (pages_num=%llu)\n", page_num);
+        svm_err("Malloc pages failed. (pages_num=%llu)\n", page_num);
         return -ENOMEM;
     }
 

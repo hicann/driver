@@ -79,8 +79,9 @@ static int um_smm_mmap_pre_handle(u32 udevid, int master_tgid, int slave_tgid, v
             } else { /* task grp map & smm */
                 ret = svm_smp_check_mem_exists(src_info->udevid, master_tgid, src_info->va, src_info->size);
                 if (ret != 0) {
-                    svm_err("Smp not exists, not allow to munmap. (udevid=%u; master_tgid=%d; va=0x%llx; size=%llu)\n",
-                            udevid, master_tgid, src_info->va, src_info->size);
+                    svm_err(
+                        "Smp does not exist, not allowed to munmap (udevid=%u; master_tgid=%d; va=0x%llx; size=%llu)\n",
+                        udevid, master_tgid, src_info->va, src_info->size);
                     return ret;
                 }
             }
@@ -193,8 +194,8 @@ static int um_smm_munmap_pre_handle(u32 udevid, int master_tgid, int slave_tgid,
         /* master or agent svm address */
         ret = svm_smp_check_mem_exists(src_info->udevid, master_tgid, src_info->va, src_info->size);
         if ((ret != 0) && (ret != -EOWNERDEAD)) {
-            svm_err("Smp not exists, not allow to munmap. (udevid=%u; master_tgid=%d; va=0x%llx; size=%llu)\n", udevid,
-                    master_tgid, src_info->va, src_info->size);
+            svm_err("Smp does not exist, not allowed to munmap (udevid=%u; master_tgid=%d; va=0x%llx; size=%llu)\n",
+                    udevid, master_tgid, src_info->va, src_info->size);
             return ret;
         }
     }

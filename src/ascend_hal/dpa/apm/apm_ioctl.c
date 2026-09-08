@@ -61,7 +61,7 @@ int apm_char_dev_open(void)
     }
     ret = apm_file_ioctl(fd, DAVINCI_INTF_IOCTL_OPEN, &arg);
     if (ret != 0) {
-        apm_err("Open ioctl fail. (ret=%d; erron=%d)\n", ret, errno);
+        apm_err("Open ioctl fail. (ret=%d; errno=%d)\n", ret, errno);
         apm_file_close(fd);
         return ret;
     }
@@ -84,7 +84,7 @@ void apm_char_dev_close(void)
         ret = apm_file_ioctl(apm_fd, DAVINCI_INTF_IOCTL_CLOSE, &arg);
         if (ret != 0) {
 #ifndef EMU_ST
-            apm_err("Close ioctl fail. (fd=%d; ret=%d; erron=%d)\n", apm_fd, ret, errno);
+            apm_err("Close ioctl fail. (fd=%d; ret=%d; errno=%d)\n", apm_fd, ret, errno);
 #endif
         }
     }

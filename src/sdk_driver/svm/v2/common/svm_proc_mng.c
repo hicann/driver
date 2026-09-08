@@ -1176,7 +1176,7 @@ int devmm_alloc_svm_proc_set_to_file(ka_file_t *file)
 
     devmm_set_svm_proc_state(svm_proc, DEVMM_SVM_PRE_INITING_FLAG);
     ((struct devmm_private_data *)ka_fs_get_file_private_data(file))->process = svm_proc;
-    devmm_drv_debug("Devmm_set_porcess details. (status=%u; proc_idx=%u)\n", svm_proc->notifier_reg_flag,
+    devmm_drv_debug("Devmm_set_process details. (status=%u; proc_idx=%u)\n", svm_proc->notifier_reg_flag,
                     svm_proc->proc_idx);
     return 0;
 }
@@ -1252,7 +1252,7 @@ static struct devmm_proc_states_info *devmm_get_proc_states_info(struct devmm_sv
         mia_para.sub_devid = vfid - 1;
         ret = uda_mia_devid_to_udevid(&mia_para, &udevid);
         if (ret != 0) {
-            devmm_drv_err("UDA mia devid to udevid failed. (ret=%d; devid=%u; vfid=%u)\n", ret, devid, vfid);
+            devmm_drv_err("UDA devid to udevid failed (ret=%d; devid=%u; vfid=%u)\n", ret, devid, vfid);
             return NULL;
         }
     } else {

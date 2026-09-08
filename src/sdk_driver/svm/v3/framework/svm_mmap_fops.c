@@ -170,7 +170,7 @@ void svm_register_vma_fault_handle(svm_fault_handle handle)
         }
     }
 
-    svm_warn("Overflow.\n");
+    svm_warn("Overflow. (handle_num=%d; max=%d)\n", i, SVM_FAULT_HANDLE_NUM);
 }
 
 static ka_vm_fault_t svm_vma_fault_handle(ka_vm_area_struct_t *vma, ka_vm_fault_struct_t *vmf, int huge_fault_flag)

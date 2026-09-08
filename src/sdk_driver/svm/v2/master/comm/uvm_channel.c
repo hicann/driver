@@ -172,7 +172,7 @@ static int uvm_chan_page_fault_device_process_normal(struct devmm_svm_process *s
 
     fault_msg->set_flag = PAGE_PTE_SET_NONE;
     if (!page_bitmap_get_alloced(page_info->page_bitmap)) {
-        devmm_drv_err("Page is not be alloced. (va=0x%llx; dev_id=%d)\n", fault_msg->va, fault_msg->head.dev_id);
+        devmm_drv_err("Page is not allocated. (va=0x%llx; dev_id=%d)\n", fault_msg->va, fault_msg->head.dev_id);
         return -EINVAL;
     }
 
@@ -283,7 +283,7 @@ static int uvm_chan_page_fault_device_process_read_mostly(struct devmm_svm_proce
     int ret = 0;
 
     if (!page_bitmap_get_alloced(page_info->page_bitmap)) {
-        devmm_drv_err("Page is not be alloced. (va=0x%llx; dev_id=%d)\n", fault_msg->va, fault_msg->head.dev_id);
+        devmm_drv_err("Page is not allocated. (va=0x%llx; dev_id=%d)\n", fault_msg->va, fault_msg->head.dev_id);
         return -EINVAL;
     }
 

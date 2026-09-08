@@ -147,7 +147,8 @@ static int get_type_by_name(const char *name, int *id_type)
 
     name_len = strnlen(name, SHR_ID_NSM_NAME_SIZE);
     if ((name_len == 0) || (name_len >= SHR_ID_NSM_NAME_SIZE)) {
-        trs_err("Length out of range. (name_len=%lu)\n", name_len);
+        trs_err("Length out of range. (name_len=%lu; range=1-%lu)\n", name_len,
+                (unsigned long)(SHR_ID_NSM_NAME_SIZE - 1));
         return -EINVAL;
     }
 

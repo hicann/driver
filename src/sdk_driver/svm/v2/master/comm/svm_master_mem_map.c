@@ -170,7 +170,7 @@ static int _devmm_h2d_access_mmap(struct devmm_svm_process *svm_proc, struct dev
 
         if (!devmm_h2d_access_mmap_check_pa_is_cont(src_palist, map_para, attr, vmma)) {
             devmm_h2d_access_mmap_src_pa_info_destroy(src_palist);
-            devmm_drv_err("Pa need check, but is not continue.\n");
+            devmm_drv_err("Pa need check, but is not continuous.\n");
             return -EFAULT;
         }
 
@@ -326,7 +326,7 @@ void devmm_access_munmap_all(struct devmm_svm_process *svm_proc, struct devmm_vm
         }
 
         if (uda_devid_to_udevid_ex(devid, &udevid) != 0) {
-            devmm_drv_err("Get udevid failed. (loggic_devid=%u)\n", devid);
+            devmm_drv_err("Get udevid failed. (logic_devid=%u)\n", devid);
             continue;
         }
 
@@ -397,7 +397,7 @@ static int devmm_mem_map_pg_bitmap_state_set(struct devmm_svm_heap *heap, struct
     for (i = 0; i < pg_cnt; i++) {
         ret = devmm_page_bitmap_check_and_set_flag(page_bitmap + i, flag | DEVMM_PAGE_ADVISE_POPULATE_MASK);
         if (ret != 0) {
-            devmm_drv_err("Already mapped. (already_maped=%llu; va=0x%llx; page_cnt=%llu)\n", i, para->va, pg_cnt);
+            devmm_drv_err("Already mapped. (already_mapped=%llu; va=0x%llx; page_cnt=%llu)\n", i, para->va, pg_cnt);
             ret = -EADDRINUSE;
             goto clear_bitmap;
         }
@@ -894,12 +894,12 @@ int devmm_ioctl_mem_set_access(struct devmm_svm_process *svm_proc, struct devmm_
 
     ret = uda_devid_to_udevid_ex(para->logic_devid, &udevid);
     if (ret != 0) {
-        devmm_drv_err("Get udevid failed. (loggic_devid=%u)\n", para->logic_devid);
+        devmm_drv_err("Get udevid failed. (logic_devid=%u)\n", para->logic_devid);
         return ret;
     }
 
     if ((para->logic_devid >= DEVMM_MAX_ACCESS_DEVICE_NUM) || (!devmm_is_mem_access_type_valid(para->type))) {
-        devmm_drv_err("Invalid para. (loggic_devid=%u; type=%u)\n", para->logic_devid, (u8)para->type);
+        devmm_drv_err("Invalid para. (logic_devid=%u; type=%u)\n", para->logic_devid, (u8)para->type);
         return -EINVAL;
     }
 

@@ -206,7 +206,7 @@ static int rmo_mem_sharing_disable(struct rmo_cmd_mem_sharing *mem_sharing)
     ret = rmo_mem_put_func[mem_sharing->accessor](id, (u64)(uintptr_t)mem_sharing->ptr, mem_sharing->size,
                                                   &info.sharing_pa);
     if (ret != 0) {
-        rmo_warn("Put addr warnning. (ret=%d; devid=%u; accessor=%u)\n", ret, id, mem_sharing->accessor);
+        rmo_warn("Put addr warning. (ret=%d; devid=%u; accessor=%u)\n", ret, id, mem_sharing->accessor);
     } else {
         rmo_debug("Disable success. (devid=%u; accessor=%u; len=%llu; enable_flag=%u; tgid=%d)\n", devid,
                   mem_sharing->accessor, mem_sharing->size, mem_sharing->enable_flag, tgid);

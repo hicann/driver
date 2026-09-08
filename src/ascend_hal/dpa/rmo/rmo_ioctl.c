@@ -63,7 +63,7 @@ static int rmo_char_dev_open(void)
     }
     ret = rmo_file_ioctl(fd, DAVINCI_INTF_IOCTL_OPEN, &arg);
     if (ret != 0) {
-        rmo_err("Open ioctl fail. (ret=%d; erron=%d)\n", ret, errno);
+        rmo_err("Open ioctl fail. (ret=%d; errno=%d)\n", ret, errno);
         rmo_file_close(fd);
         return ret;
     }
@@ -86,7 +86,7 @@ static void rmo_char_dev_close(void)
         ret = rmo_file_ioctl(rmo_fd, DAVINCI_INTF_IOCTL_CLOSE, &arg);
         if (ret != 0) {
 #ifndef EMU_ST
-            rmo_err("Close ioctl fail. (fd=%d; ret=%d; erron=%d)\n", rmo_fd, ret, errno);
+            rmo_err("Close ioctl fail. (fd=%d; ret=%d; errno=%d)\n", rmo_fd, ret, errno);
 #endif
         }
     }

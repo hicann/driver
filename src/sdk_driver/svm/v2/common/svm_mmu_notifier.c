@@ -45,10 +45,10 @@ void devmm_mmu_notifier_unregister_no_release(struct devmm_svm_process *svm_proc
 STATIC void devmm_svm_soma_unreg(struct devmm_svm_process *svm_proc)
 {
     if (svm_proc->soma_clean_resource_handler != NULL) {
-        devmm_drv_info("Invoke soma handler. (devpid=%d)\n", svm_proc->devpid);
+        devmm_drv_info("Invoke clean resource handler. (devpid=%d)\n", svm_proc->devpid);
         svm_proc->soma_clean_resource_handler(svm_proc->devpid);
     } else {
-        devmm_drv_info("Soma handler is NULL. (devpid=%d)\n", svm_proc->devpid);
+        devmm_drv_info("Clean resource handler is NULL. (devpid=%d)\n", svm_proc->devpid);
     }
     return;
 }

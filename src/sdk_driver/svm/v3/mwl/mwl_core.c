@@ -147,7 +147,7 @@ static int mwl_add_task_list(struct mwl_mem_node *mem_node, u32 server_id, int t
         }
 
         if ((entry->tgid == SVM_ANY_TASK_ID) && (tgid != SVM_ANY_TASK_ID)) {
-            svm_err("Had enable any task, add task not permitted.\n");
+            svm_err("A task has been enabled, adding task not permitted.\n");
             return -EPERM;
         }
 
@@ -344,7 +344,7 @@ static int svm_mwl_op_trusted_task(u32 udevid, int tgid, u64 id, u32 trusted_ser
     int ret;
 
     if (ka_unlikely(ka_task_get_current_tgid() != tgid)) {
-        svm_err("No creator have no permission to op wlist. (udevid=%u; tgid=%d)\n", udevid, tgid);
+        svm_err("Only the creator has permission to operate the wlist. (udevid=%u; tgid=%d)\n", udevid, tgid);
         return -EPERM;
     }
 

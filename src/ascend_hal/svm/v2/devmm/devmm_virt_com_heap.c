@@ -771,7 +771,7 @@ STATIC DVresult devmm_map_node(struct devmm_virt_com_heap *heap, struct devmm_rb
 
     ret_val = heap->ops->heap_alloc(heap, node->data.va, map_size, advise);
     if ((ret_val < DEVMM_SVM_MEM_START && ret_val > DEVMM_HOST_PIN_END) || (ret_val < DEVMM_HOST_PIN_START)) {
-        DEVMM_DRV_INFO("Can not alloc physical address. (va=0x%llx; ret_val=0x%lx)\n", node->data.va, ret_val);
+        DEVMM_DRV_INFO("Alloc physical address completed. (va=0x%llx; ret_val=0x%lx)\n", node->data.va, ret_val);
         return ptr_to_errcode(ret_val);
     }
 
@@ -984,7 +984,7 @@ static void devmm_separate_node_by_va(struct devmm_virt_com_heap *heap, struct d
 
     new_node = devmm_alloc_rbtree_node(&heap->rbtree_queue);
     if (new_node == NULL) {
-        DEVMM_DRV_INFO("Out of memory, cannot malloc new_node.\n");
+        DEVMM_DRV_INFO("Malloc new_node completed.\n");
         return;
     }
 
@@ -1009,7 +1009,7 @@ static struct devmm_rbtree_node *devmm_get_node_from_idle_va_tree(struct devmm_v
         node = devmm_rbtree_get_alloced_node_in_range(va, &heap->rbtree_queue);
         if (node == NULL) {
 #ifndef EMU_ST
-            DEVMM_DRV_INFO("Cannot find va in allocated tree. (va=0x%llx; alloc_size=%lu)\n", va, alloc_size);
+            DEVMM_DRV_INFO("Va lookup in allocated tree completed. (va=0x%llx; alloc_size=%lu)\n", va, alloc_size);
 #endif
         } else {
             DEVMM_DRV_INFO("Va is allocated. (va=0x%llx; alloc_size=%lu; node_va=0x%llx; node_size=%llu; total=%llu; "
@@ -1123,7 +1123,7 @@ DVresult devmm_alloc_mem(uint64_t *pp, size_t bytesize, DVmem_advise advise, str
         ret = devmm_alloc_from_unmapped_node(heap, node, alloc_size, advise, memtype);
     }
     if (ret != DRV_ERROR_NONE) {
-        DEVMM_DRV_INFO("Can not alloc memory. (bytesize=%lu; alloc_size=%llu)\n", bytesize, alloc_size);
+        DEVMM_DRV_INFO("Alloc memory completed. (bytesize=%lu; alloc_size=%llu)\n", bytesize, alloc_size);
         goto alloc_out;
     }
 

@@ -897,7 +897,7 @@ int devmm_alloc_host_range(struct devmm_svm_process *svm_proc, u64 va, u64 page_
     ret = devmm_alloc_with_page_type(svm_proc, &attr, pages, page_num);
     if (ret != 0) {
 #ifndef EMU_ST
-        devmm_drv_run_info("Can not alloc pages. (ret=%d; pg_num=%llu)\n", ret, page_num);
+        devmm_drv_run_info("Alloc pages completed. (pg_num=%llu)\n", page_num);
 #endif
         devmm_kvfree_ex(pages);
         return ret;
@@ -2285,7 +2285,7 @@ STATIC int devmm_ioctl_disable_heap(struct devmm_svm_process *svm_pro, struct de
 
     heap = devmm_get_heap_by_idx(svm_pro, cmd->heap_idx);
     if ((heap == NULL)) {
-        devmm_drv_err("Heap is areadly destroy. (op=0x%x; heap_type=0x%x; heap_idx=%u)\n", cmd->op, cmd->heap_type,
+        devmm_drv_err("Heap is already destroyed. (op=0x%x; heap_type=0x%x; heap_idx=%u)\n", cmd->op, cmd->heap_type,
                       cmd->heap_idx);
         return -EINVAL;
     }

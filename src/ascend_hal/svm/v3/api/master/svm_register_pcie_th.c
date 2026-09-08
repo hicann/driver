@@ -339,7 +339,7 @@ static int svm_register_pcie_th_check_va(u64 va, u64 size, u32 devid)
     }
 
     if ((va + size) > (prop.start + prop.size)) {
-        svm_err("Size if out of bounds. (va=0x%llx; size=0x%llx; prop start=0x%llx; size=0x%llx)\n", va, size,
+        svm_err("Size is out of bounds. (va=0x%llx; size=0x%llx; prop start=0x%llx; prop size=0x%llx)\n", va, size,
                 prop.start, prop.size);
         return DRV_ERROR_INVALID_VALUE;
     }

@@ -376,7 +376,7 @@ int dbi_init_dev(u32 udevid)
 
     dbi = (struct svm_device_basic_info *)svm_vzalloc(sizeof(*dbi));
     if (dbi == NULL) {
-        svm_err("Alloc failed failed.\n");
+        svm_err("Alloc failed.\n");
         return -ENOMEM;
     }
 

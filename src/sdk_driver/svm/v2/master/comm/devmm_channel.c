@@ -107,7 +107,7 @@ STATIC int devmm_chan_query_vaflgs_d2h_process(struct devmm_svm_process *svm_pro
     struct devmm_svm_heap *heap_tmp = NULL;
     int ret;
 
-    devmm_drv_debug("Host receive query_valfg message. (hostpid=%d; devid=%u; vfid=%u; va=0x%llx)\n",
+    devmm_drv_debug("Host receive query_vaflgs message. (hostpid=%d; devid=%u; vfid=%u; va=0x%llx)\n",
                     process_id->hostpid, process_id->devid, process_id->vfid, flg_msg->va);
 
     ka_task_down_read(&svm_proc->heap_sem);

@@ -140,7 +140,7 @@ static DVresult devmm_restore_enable_heap(struct devmm_virt_heap_mgmt *backup_mg
         ret = devmm_ioctl_enable_heap(heap->heap_idx, heap->heap_type, heap->heap_sub_type, heap->heap_size,
                                       heap->heap_list_type);
         if (ret != DRV_ERROR_NONE) {
-            DEVMM_RUN_INFO("Heap may had been enable. (idx=%u; size=%lu; i=%d; ret=%d)\n", heap->heap_idx,
+            DEVMM_RUN_INFO("Heap may have been enabled. (idx=%u; size=%lu; i=%d; ret=%d)\n", heap->heap_idx,
                            heap->heap_size, i, ret);
         } else {
             DEVMM_RUN_INFO("Restore heap. (idx=%u; size=%lu; i=%d)\n", heap->heap_idx, heap->heap_size, i);
@@ -426,13 +426,13 @@ DVresult devmm_virt_restore_heap_mgmt(void)
 
     ret = devmm_restore_enable_heap(g_backup_heap_mgmt);
     if (ret != DRV_ERROR_NONE) {
-        DEVMM_DRV_ERR("Restort enable heap failed. (ret=%d)\n", ret);
+        DEVMM_DRV_ERR("Restore enable heap failed. (ret=%d)\n", ret);
         return ret;
     }
 
     ret = devmm_virt_restore_heap_alloc_mem(g_backup_heap_mgmt);
     if (ret != DRV_ERROR_NONE) {
-        DEVMM_DRV_ERR("Restort devmm_virt_restore_heap_alloc_mem failed. (ret=%d)\n", ret);
+        DEVMM_DRV_ERR("Restore devmm_virt_restore_heap_alloc_mem failed. (ret=%d)\n", ret);
         return ret;
     }
 

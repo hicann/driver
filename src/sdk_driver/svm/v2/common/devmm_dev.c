@@ -704,7 +704,7 @@ static int _devmm_pages_remap_owner(struct devmm_svm_process *svm_proc, u64 va, 
 
     ret = devmm_insert_pages_to_vma_owner(vma, va, page_num, inpages, vm_page_prot);
     if (ret != 0) {
-        devmm_drv_info("Can not insert_pages_vma cp. (va=0x%llx; ret=%d)\n", va, ret);
+        devmm_drv_info("Insert pages vma cp completed. (va=0x%llx)\n", va);
         return ret;
     }
 
@@ -833,7 +833,7 @@ int devmm_pages_remap(struct devmm_svm_process *svm_proc, u64 va, u64 page_num, 
 
     ret = devmm_pages_remap_owner(svm_proc, va, page_num, inpages, page_prot);
     if (ret != 0) {
-        devmm_drv_info("Can not devmm_insert_pages_to_vma. (page_num=%llu; ret=%d)\n", page_num, ret);
+        devmm_drv_info("Devmm insert pages to vma completed. (page_num=%llu)\n", page_num);
         return ret;
     }
 #ifndef UVM_OPEN
@@ -1043,7 +1043,7 @@ void devmm_chan_set_host_device_page_size(void)
     devmm_svm->svm_page_shift = DEVMM_MAX(devmm_svm->host_page_shift, devmm_svm->device_page_shift);
 
     if (devmm_svm->device_hpage_shift < devmm_svm->host_page_shift) {
-        devmm_drv_err("Device_huge_page_shfit less than host_page_shfit. (device_hpage_shift=%u; "
+        devmm_drv_err("Device_huge_page_shift less than host_page_shift. (device_hpage_shift=%u; "
                       "host_page_shift=%u)\n",
                       devmm_svm->device_hpage_shift, devmm_svm->host_page_shift);
         return;
@@ -1072,7 +1072,7 @@ void devmm_chan_set_host_device_page_size(void)
 
     devmm_svm->page_size_inited = 1;
 
-    devmm_drv_info("Shift info. (host_page_shift=%u; host_hpage_shift=%u; evice_page_shift=%u; "
+    devmm_drv_info("Shift info. (host_page_shift=%u; host_hpage_shift=%u; device_page_shift=%u; "
                    "device_hpage_shift=%u; h2dh_adjustorder=%u; h2d_adjustorder=%u) \n",
                    devmm_svm->host_page_shift, devmm_svm->host_hpage_shift, devmm_svm->device_page_shift,
                    devmm_svm->device_hpage_shift, devmm_svm->host_page2device_hpage_order,
@@ -1308,7 +1308,7 @@ int devmm_chan_msg_dispatch(void *msg, u32 in_data_len, u32 out_data_len, u32 *a
 #endif
 
     if (head_msg->process_id.vfid >= DEVMM_MAX_VF_NUM) {
-        devmm_drv_err("Message_id has invalid. (msg_id=%u; vfid=%d)\n", msg_id, head_msg->process_id.vfid);
+        devmm_drv_err("Message_id is invalid. (msg_id=%u; vfid=%d)\n", msg_id, head_msg->process_id.vfid);
         ret = -EINVAL;
         goto save_msg_ret;
     }

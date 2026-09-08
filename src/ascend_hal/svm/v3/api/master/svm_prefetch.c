@@ -99,7 +99,7 @@ static void svm_prefetch_src_recycle(u32 devid, u32 udevid, void *svmm_inst)
     }
 
     if (recyle_num > 0) {
-        svm_info("Recycle success. (devid=%u; udevid=%u; recyle_num=%u)\n", devid, udevid, recyle_num);
+        svm_info("Recycle success. (devid=%u; udevid=%u; recycle_num=%u)\n", devid, udevid, recyle_num);
     }
 }
 
@@ -169,7 +169,7 @@ static int svm_prefetch_svmm_release(void *priv, bool force)
     if (recyle_num > 0) {
         u64 svmma_start, svmma_size, svm_flag;
         svm_svmm_parse_inst_info(svmm_inst, &svmma_start, &svmma_size, &svm_flag);
-        svm_info("Release success. (va=0x%llx; size=0x%llx; recyle_num=%u)\n", svmma_start, svmma_size, recyle_num);
+        svm_info("Release success. (va=0x%llx; size=0x%llx; recycle_num=%u)\n", svmma_start, svmma_size, recyle_num);
     }
 
     svm_prefetch_svmm_destroy(prefetch_node);
@@ -475,7 +475,7 @@ static int svm_prefetch_to_device(u64 va, u64 size, u32 devid)
     }
 
     if ((svm_is_valid_range(va, size) == false) || (va + size) > (prop.start + prop.size)) {
-        svm_err("Size if out of bounds. (va=0x%llx; align_size=0x%llx; prop start=0x%llx; size=0x%llx)\n", va,
+        svm_err("Size is out of bounds. (va=0x%llx; align_size=0x%llx; prop start=0x%llx; size=0x%llx)\n", va,
                 aligned_size, prop.start, prop.size);
         return DRV_ERROR_PARA_ERROR;
     }

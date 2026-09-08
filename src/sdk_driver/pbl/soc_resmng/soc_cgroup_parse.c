@@ -50,7 +50,7 @@ STATIC int dbl_get_available_cpumask(const char *file_path, ka_cpumask_var_t *cp
     file = NULL;
     /* if len small or equal 0, return */
     if (len <= 0) {
-        soc_err("Failed to len. \n");
+        soc_err("Failed to read len. (len=%d)\n", len);
         ka_mm_kfree(buf);
         buf = NULL;
         return -ENOENT;

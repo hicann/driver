@@ -381,7 +381,7 @@ static int svm_dma_map_query_host_bar_from_pa_cache(struct svm_global_va *dst_va
     } else {
         ret = uda_udevid_to_mia_devid(dst_va->udevid, &mia_para);
         if (ret != 0) {
-            svm_warn("Get mia devid not succ. (ret=%d; udevid=%u)\n", ret, dst_va->udevid);
+            svm_warn("Get device id failed. (ret=%d; udevid=%u)\n", ret, dst_va->udevid);
             goto out;
         }
         phy_devid = mia_para.phy_devid;

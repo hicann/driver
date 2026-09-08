@@ -543,7 +543,7 @@ STATIC int udis_alloc_discrete_info_block(unsigned int udevid, const struct udis
     if (ret != 0) {
         ka_task_up_write(&udis_cb->udis_info_lock);
         udis_err("Failed to fill info block's name. (udevid=%u; module_type=%u; name=%s, ret=%d)\n", udevid,
-                 addr_node->module_type, addr_node->name);
+                 addr_node->module_type, addr_node->name, ret);
         return ret;
     }
 

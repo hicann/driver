@@ -1366,7 +1366,7 @@ drvError_t trs_async_dma_jetty_create(uint32_t dev_id, struct halAsyncDmaJettyCr
                           trs_async_jetty_node_free);
     if (ret != 0) {
         (void)pthread_rwlock_unlock(&g_jetty_mng_ctx[dev_id].rw_mutex);
-        trs_err("Failed to instert jetty node. (dev_id=%u; ret=%d)\n", dev_id, ret);
+        trs_err("Failed to insert jetty node. (dev_id=%u; ret=%d)\n", dev_id, ret);
         ret = DRV_ERROR_INNER_ERR;
         goto unregister_seg;
     }

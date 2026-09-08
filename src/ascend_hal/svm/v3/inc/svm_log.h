@@ -61,9 +61,9 @@
 #define SVM_OUT_OF_MEM_ERR_MSG_ARG_NUM 2
 #define SVM_REPORT_BYTES_PER_KB 1024ULL
 #define SVM_INVALID_ADDR_REASON "The address is not correctly allocated or has been released"
-#define SVM_PROCESS_NOT_IN_TRUSTLIST_REASON                                     \
-    "The process where the share memory resides is not added to the trustist. " \
-    "Add the process to the trustist or disable trustist verification"
+#define SVM_PROCESS_NOT_IN_TRUSTLIST_REASON                                      \
+    "The process where the share memory resides is not added to the trustlist. " \
+    "Add the process to the trustlist or disable trustlist verification"
 
 static inline void svm_report_out_of_range(const char *func_name, const char *para_name, u64 para_value, u32 min_value,
                                            u32 max_value)

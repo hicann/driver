@@ -24,7 +24,7 @@ static void trs_sec_eh_get_id_range_by_bit(struct trs_sec_eh_id_info *id_info, u
         *start = id_info->start + bit * id_info->num_per_bit;
         *end = *start + id_info->num_per_bit;
     }
-    trs_debug("Get id rang. (bit=%u; type=%d; start=%u; end=%u; num_per_bit=%u)\n", bit, type, *start, *end,
+    trs_debug("Get id range. (bit=%u; type=%d; start=%u; end=%u; num_per_bit=%u)\n", bit, type, *start, *end,
               id_info->num_per_bit);
 }
 

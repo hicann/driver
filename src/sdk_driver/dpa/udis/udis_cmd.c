@@ -95,7 +95,7 @@ STATIC int udis_get_process_mem_name(unsigned int udevid, const char *in_name, c
     if (!uda_is_pf_dev(udevid)) {
         ret = uda_udevid_to_mia_devid(udevid, &mia_para);
         if (ret != 0) {
-            udis_err("The udevid to mia devid failed. (udev_id=%u; ret=%d)\n");
+            udis_err("Failed to convert udevid to device id. (udev_id=%u; ret=%d)\n", udevid, ret);
             return ret;
         }
 

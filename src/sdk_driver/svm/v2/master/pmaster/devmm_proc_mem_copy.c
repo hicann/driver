@@ -1818,7 +1818,7 @@ static int devmm_make_convert2d_para(struct devmm_ioctl_arg *arg, struct devmm_m
         convrt2d_para->dmaAddr.phyAddr.flag = 0;
         ret = devmm_convert2d_make_sqcq_addr(arg, convrt_para, res);
         if (ret != 0) {
-            devmm_drv_err("Convrt2d make sqcq fail. (address_num=%llu)\n", convrt2d_para->height);
+            devmm_drv_err("Convert2d make sqcq fail. (address_num=%llu)\n", convrt2d_para->height);
             return ret;
         }
         convrt2d_para->dmaAddr.phyAddr.src = (void *)(uintptr_t)res->dma_prepare->sq_dma_addr;

@@ -49,7 +49,7 @@ static struct trs_rsv_mem *trs_rsv_mem_create(struct trs_id_inst *inst, int type
     pool = ka_base_gen_pool_create(KA_MM_PAGE_SHIFT, KA_NUMA_NO_NODE);
     if (pool == NULL) {
         trs_kfree(rsv_mem);
-        trs_err("Gen pool creat fail. (devid=%u; tsid=%u; type=%d)\n", inst->devid, inst->tsid, type);
+        trs_err("Gen pool create fail. (devid=%u; tsid=%u; type=%d)\n", inst->devid, inst->tsid, type);
         return NULL;
     }
 

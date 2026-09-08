@@ -46,7 +46,7 @@ int svm_mpl_depopulate(u32 devid, u64 va, u64 size)
 
     ret = svm_cmd_ioctl(devid, SVM_MPL_DEPOPULATE, (void *)&para);
     if ((ret != 0) && (ret != DRV_ERROR_BUSY)) {
-        svm_err("Svm ioctl mem depopuplate failed. (ret=%d; va=0x%llx; size=%llu)\n", ret, va, size);
+        svm_err("Svm ioctl mem depopulate failed. (ret=%d; va=0x%llx; size=%llu)\n", ret, va, size);
     }
 
     return ret;

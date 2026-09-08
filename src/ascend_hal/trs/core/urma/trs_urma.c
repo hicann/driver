@@ -130,7 +130,7 @@ int _trs_create_jfs(urma_context_t *urma_ctx, struct trs_urma_jfs *trs_jfs)
 
     urma_ret = urma_active_jfs(trs_jfs->jfs);
     if (urma_ret != URMA_SUCCESS) {
-        trs_err("Failed to actice jfs. (ret=%d)\n", urma_ret);
+        trs_err("Failed to activate jfs. (ret=%d)\n", urma_ret);
         urma_free_jfs(trs_jfs->jfs);
         trs_jfs->jfs = NULL;
         return DRV_ERROR_INNER_ERR;

@@ -104,7 +104,7 @@ static int devmm_mem_release_proc(struct devmm_svm_process *svm_proc, struct dev
         free_tpye = SVM_PYH_ADDR_BLK_FREE_NO_PAGE;
     }
 
-    devmm_drv_debug("Agent mem release. (devid=%u; vfid=%u; id=%d; free_tpye=%u)\n", devids->devid, devids->vfid, id,
+    devmm_drv_debug("Agent mem release. (devid=%u; vfid=%u; id=%d; free_type=%u)\n", devids->devid, devids->vfid, id,
                     free_tpye);
     if (para->side == DEVMM_SIDE_MASTER) {
         ret = devmm_master_mem_release(svm_proc, pg_num, id, free_tpye);
@@ -115,7 +115,7 @@ static int devmm_mem_release_proc(struct devmm_svm_process *svm_proc, struct dev
         if (map_node != NULL) {
             devmm_share_id_map_node_put(map_node);
         }
-        devmm_drv_err("Agent mem release fail. (ret=%d; devid=%u; vfid=%u; host_pid=%d; id=%d; free_tpye=%u)\n", ret,
+        devmm_drv_err("Agent mem release fail. (ret=%d; devid=%u; vfid=%u; host_pid=%d; id=%d; free_type=%u)\n", ret,
                       devids->devid, devids->vfid, svm_proc->process_id.hostpid, id, free_tpye);
         return ret;
     }
@@ -130,7 +130,7 @@ static int devmm_mem_release_proc(struct devmm_svm_process *svm_proc, struct dev
         devmm_share_id_map_node_destroy(svm_proc, devids->devid, map_node);
         devmm_share_id_map_node_put(map_node);
 
-        devmm_drv_debug("Agent mem release. (devid=%u; vfid=%u; id=%d; free_tpye=%u; blk_type=%u; share_id=%d)\n",
+        devmm_drv_debug("Agent mem release. (devid=%u; vfid=%u; id=%d; free_type=%u; blk_type=%u; share_id=%d)\n",
                         devids->devid, devids->vfid, id, free_tpye, blk_type, share_id);
 #ifdef CFG_SOC_PLATFORM_CLOUD_V2
         if ((blk_type == SVM_PYH_ADDR_BLK_IMPORT_TYPE) && (!svm_is_sdid_in_local_server(devids->devid, share_sdid))) {

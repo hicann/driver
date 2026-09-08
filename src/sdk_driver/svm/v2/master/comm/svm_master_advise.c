@@ -139,7 +139,7 @@ STATIC int devmm_prefetch_to_device(struct devmm_svm_process *svm_proc, u64 dev_
     devmm_fill_attr_after_prefetch(svm_proc, query_arg, attr, &device_attr);
 
     if (!devmm_acquire_aligned_addr_and_cnt(dev_ptr, byte_cnt, attr->is_svm_huge, &aligned_down_addr, &aligned_cnt)) {
-        devmm_drv_err("Acquire aligned addr and cnt failed. (dev_ptr=0x%llx; byte_count=%llx\n", dev_ptr, byte_cnt);
+        devmm_drv_err("Acquire aligned addr and cnt failed. (dev_ptr=0x%llx; byte_count=%llx)\n", dev_ptr, byte_cnt);
         return -EINVAL;
     }
     devmm_set_device_maped(svm_proc, aligned_down_addr, aligned_cnt, device_attr.logical_devid, attr->page_size);
@@ -186,7 +186,7 @@ STATIC int devmm_prefetch_to_device_proc(struct devmm_svm_process *svm_pro, u64 
         return tmp_ret;
     }
     if (!devmm_acquire_aligned_addr_and_cnt(ptr, byte_count, attr.is_svm_huge, &aligned_down_addr, &aligned_count)) {
-        devmm_drv_err("Acquire aligned addr and cnt failed. (dev_ptr=0x%llx; byte_count=%llx\n", ptr, byte_count);
+        devmm_drv_err("Acquire aligned addr and cnt failed. (dev_ptr=0x%llx; byte_count=%llx)\n", ptr, byte_count);
         return -EINVAL;
     }
     per_max_cnt = DEVMM_PREFETCH_COPY_NUM * KA_MM_PAGE_SIZE;
@@ -598,7 +598,7 @@ static int devmm_advise_svm_check(struct devmm_svm_process *svm_proc, struct dev
     devid_from_bitmap = devmm_page_bitmap_get_phy_devid(svm_proc, fst_page_bitmap);
     if (devmm_dev_is_same_system(dev_id, devid_from_bitmap) == DEVMM_FALSE) {
 #ifndef EMU_ST
-        devmm_drv_run_info("Don't support advise to diffenent os. (devid=%u; devid_from_first_bitmap=%u)\n", dev_id,
+        devmm_drv_run_info("Don't support advise to different os. (devid=%u; devid_from_first_bitmap=%u)\n", dev_id,
                            devid_from_bitmap);
 #endif
         return -EOPNOTSUPP;
@@ -651,7 +651,7 @@ static int devmm_advise_check(struct devmm_svm_heap *heap, struct devmm_svm_proc
     if (((advise_para->advise & DV_ADVISE_POPULATE) != 0) && (heap->heap_sub_type == SUB_SVM_TYPE)) {
         int ret = devmm_advise_svm_check(svm_pro, advise_para, dev_id, arg->head.logical_devid);
         if (ret != 0) {
-            devmm_drv_err("Advise svm memory check failed. (devid=%u; locig_id=%u; ret=%d)\n", dev_id,
+            devmm_drv_err("Advise svm memory check failed. (devid=%u; logic_id=%u; ret=%d)\n", dev_id,
                           arg->head.logical_devid, ret);
             return ret;
         }
@@ -745,7 +745,7 @@ static int devmm_ioctl_advise_master(struct devmm_svm_process *svm_pro, struct d
     for (i = 0; i < chunk_page_cnt; i++) {
         if (devmm_page_bitmap_check_and_set_flag(page_bitmap + i,
                                                  DEVMM_PAGE_HOST_MAPPED_MASK | DEVMM_PAGE_LOCKED_HOST_MASK) != 0) {
-            devmm_drv_err("Already mapped. (already_maped=%llu; va=0x%llx; page_cnt=%llu)\n", i, ptr, chunk_page_cnt);
+            devmm_drv_err("Already mapped. (already_mapped=%llu; va=0x%llx; page_cnt=%llu)\n", i, ptr, chunk_page_cnt);
             ret = -EADDRINUSE;
             goto alloc_fail_handle;
         }

@@ -199,7 +199,7 @@ static int _trs_ub_cq_ctx_op(struct trs_id_inst *inst, u32 cq_id, u32 *data, u32
     }
 
     if (cq_id >= TRS_UB_HOST_CQ_MAX) {
-        trs_err("The cqid exceed range. (cq_id=%u; max=%d)\n", cq_id, TRS_UB_HOST_CQ_MAX);
+        trs_err("The cqid exceeds the range. (cq_id=%u; max=%d)\n", cq_id, TRS_UB_HOST_CQ_MAX);
         trs_put_ub_dev(ub_dev);
         return -EINVAL;
     }
@@ -325,7 +325,7 @@ int trs_ub_sqcq_info_update(struct trs_id_inst *inst, struct trs_chan_info *chan
     }
 
     if (chan_info->cq_info.cqid >= TRS_UB_HOST_CQ_MAX) {
-        trs_err("The cqid exceed range. (cq_id=%u; max=%d)\n", chan_info->cq_info.cqid, TRS_UB_HOST_CQ_MAX);
+        trs_err("The cqid exceeds the range. (cq_id=%u; max=%d)\n", chan_info->cq_info.cqid, TRS_UB_HOST_CQ_MAX);
         trs_put_ub_dev(ub_dev);
         return -EINVAL;
     }
@@ -487,12 +487,13 @@ static void trs_ub_cq_dispatch_task(unsigned long data)
         void *cqe_addr = (void *)(jetty_info->cq_seg.target_seg->seg.ubva.va + buff_index * TRS_UB_CQ_RECV_BUFFER_SIZE);
 
         if (buff_index >= TRS_UB_CQ_RECV_BUFFER_NUM) {
-            trs_err("The buffer index exceed range. (buff_index=%u; max=%u)\n", buff_index, TRS_UB_CQ_RECV_BUFFER_NUM);
+            trs_err("The buffer index exceeds the range. (buff_index=%u; max=%u)\n", buff_index,
+                    TRS_UB_CQ_RECV_BUFFER_NUM);
             continue;
         }
 
         if (cq_id >= TRS_UB_HOST_CQ_MAX) {
-            trs_err("The cqid exceed range. (cq_id=%u; max=%d)\n", cq_id, TRS_UB_HOST_CQ_MAX);
+            trs_err("The cqid exceeds the range. (cq_id=%u; max=%d)\n", cq_id, TRS_UB_HOST_CQ_MAX);
             goto import_jfr_seg;
         }
 

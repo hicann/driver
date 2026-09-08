@@ -533,7 +533,7 @@ static int svm_access_by_dma(u32 devid, u64 access_va, u64 local_va, u64 size, u
         }
 
         if (prop.devid != host_devid) {
-            svm_err("Va in not belong to host. (va=0x%llx; prop.devid=%u)\n", local_va, prop.devid);
+            svm_err("va does not belong to host. (va=0x%llx; prop.devid=%u)\n", local_va, prop.devid);
             return DRV_ERROR_INVALID_VALUE;
         }
 
@@ -629,7 +629,8 @@ drvError_t halSvmAccess(uint32_t devid, uint64_t access_va, uint64_t local_va, u
         }
 
         if (prop.devid != devid) {
-            svm_err("Va in not belong to device. (va=0x%llx; devid=%u; prop.devid=%u)\n", access_va, devid, prop.devid);
+            svm_err("va does not belong to device. (va=0x%llx; devid=%u; prop.devid=%u)\n", access_va, devid,
+                    prop.devid);
             return DRV_ERROR_INVALID_VALUE;
         }
 

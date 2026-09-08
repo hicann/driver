@@ -261,7 +261,7 @@ static int trs_chan_ops_hw_release_mbox_send(struct trs_id_inst *inst, struct tr
         if (ret == -ENXIO) {
             trs_warn("Mb chan is not exist. (devid=%u; tsid=%u; cmd=%u; ret=%d)\n", inst->devid, inst->tsid, cmd, ret);
         } else {
-            trs_err("Mbos send fail. (devid=%u; tsid=%u; cmd=%u; result=%u; ret=%d)\n", inst->devid, inst->tsid, cmd,
+            trs_err("Mbox send fail. (devid=%u; tsid=%u; cmd=%u; result=%u; ret=%d)\n", inst->devid, inst->tsid, cmd,
                     mbox_data.header.result, ret);
             ret = -EFAULT;
         }
@@ -301,7 +301,7 @@ static int trs_chan_ops_maint_create_mbox_send(struct trs_id_inst *inst, struct 
 
     ret = trs_mbox_send(inst, 0, &mbox_data, sizeof(struct trs_maint_sqcq_mbox), TRS_DEVICE_CHAN_MBOX_TIMEOUT_MS);
     if ((ret != 0) || (mbox_data.header.result != 0)) {
-        trs_err("Mbos send fail. (devid=%u; tsid=%u; cmd=%u; result=%u; ret=%d)\n", inst->devid, inst->tsid, cmd,
+        trs_err("Mbox send fail. (devid=%u; tsid=%u; cmd=%u; result=%u; ret=%d)\n", inst->devid, inst->tsid, cmd,
                 mbox_data.header.result, ret);
         ret = -EFAULT;
     }
@@ -327,7 +327,7 @@ static int trs_chan_ops_maint_release_mbox_send(struct trs_id_inst *inst, struct
 
     ret = trs_mbox_send(inst, 0, &mbox_data, sizeof(struct trs_maint_sqcq_mbox), TRS_DEVICE_CHAN_MBOX_TIMEOUT_MS);
     if ((ret != 0) || (mbox_data.header.result != 0)) {
-        trs_err("Mbos send fail. (devid=%u; tsid=%u; cmd=%u; result=%u; ret=%d)\n", inst->devid, inst->tsid, cmd,
+        trs_err("Mbox send fail. (devid=%u; tsid=%u; cmd=%u; result=%u; ret=%d)\n", inst->devid, inst->tsid, cmd,
                 mbox_data.header.result, ret);
         ret = -EFAULT;
     }
@@ -438,7 +438,7 @@ static int trs_chan_ops_task_sched_release_mbox_send(struct trs_id_inst *inst, s
 
     ret = trs_mbox_send(inst, 0, &mbox_data, sizeof(mbox_data), TRS_DEVICE_CHAN_MBOX_TIMEOUT_MS);
     if (ret != 0 || mbox_data.header.result != 0) {
-        trs_err("Mbos send fail. (devid=%u; tsid=%u; cmd=%u; result=%u; ret=%d)\n", inst->devid, inst->tsid, cmd,
+        trs_err("Mbox send fail. (devid=%u; tsid=%u; cmd=%u; result=%u; ret=%d)\n", inst->devid, inst->tsid, cmd,
                 mbox_data.header.result, ret);
         ret = -EFAULT;
     }

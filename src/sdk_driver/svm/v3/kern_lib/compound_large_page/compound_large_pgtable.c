@@ -49,7 +49,7 @@ static int svm_remap_compound_huge_pages(ka_vm_area_struct_t *vma, u64 va, u64 p
 
 static void svm_unmap_compound_huge_pages(ka_vm_area_struct_t *vma, u64 va, u64 page_num)
 {
-    svm_err("Should not came here, compound page use normal unmap. (va=0x%llx; page_num=%llu)\n", va, page_num);
+    svm_err("Should not come here, compound page uses normal unmap. (va=0x%llx; page_num=%llu)\n", va, page_num);
 }
 
 static const struct svm_page_table_ops compound_huge_pgtbl_ops = {

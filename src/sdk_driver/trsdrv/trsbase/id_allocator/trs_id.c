@@ -333,7 +333,7 @@ static struct trs_id_pool *trs_id_pool_create(struct trs_id_inst *inst, int type
         }
     } else {
         if ((attr->batch_num == 0) || (attr->batch_num > MAX_TRS_ID_BATCH_NUM)) {
-            trs_err("Batch num invalid. (batch_num=%u)\n", attr->batch_num);
+            trs_err("Batch num invalid. (batch_num=%u; range=1-%u)\n", attr->batch_num, MAX_TRS_ID_BATCH_NUM);
             goto out;
         }
         id_pool->ops = *ops;
@@ -949,7 +949,7 @@ static int trs_id_attr_check(struct trs_id_attr *attr)
     }
 
     if (attr->batch_num > MAX_TRS_ID_BATCH_NUM) {
-        trs_err("Invalid para. (batch_num=%u)\n", attr->batch_num);
+        trs_err("Invalid para. (batch_num=%u; max=%u)\n", attr->batch_num, MAX_TRS_ID_BATCH_NUM);
         return -EINVAL;
     }
 
@@ -1208,7 +1208,7 @@ int trs_id_flush_to_pool(struct trs_id_inst *inst)
     for (type = TRS_STREAM_ID; type < TRS_ID_TYPE_MAX; type++) {
         if (trs_id_free_batch_by_type(inst, type) != 0) {
             ret = -ENODEV;
-            trs_err("Id fush to pool fail. (devid=%u; tsid=%u; type=%s)\n", inst->devid, inst->tsid,
+            trs_err("Id flush to pool fail. (devid=%u; tsid=%u; type=%s)\n", inst->devid, inst->tsid,
                     trs_id_type_to_name(type));
         }
     }

@@ -850,7 +850,7 @@ int trs_sq_switch_stream_chan_update(struct trs_id_inst *inst, u32 chan_id, u32 
     }
 
     if (sq_depth > TRS_SQCQ_DEPTH_MAX) {
-        trs_err("Invalid sq depth. (sq_depth=%u)\n", sq_depth);
+        trs_err("Invalid sq depth. (sq_depth=%u; max=%u)\n", sq_depth, (u32)TRS_SQCQ_DEPTH_MAX);
         trs_chan_put(chan);
         return -EINVAL;
     }

@@ -1094,7 +1094,7 @@ static drvError_t svm_2d_convert(struct drvMem2DAsync *convert_2d)
     }
 
     if (info_2d->fixed_size >= (info_2d->width * info_2d->height)) {
-        svm_err("Fixed_size should smaller than width*height. (fixed_size=%llu; width=%llu; height=%llu)\n",
+        svm_err("Fixed_size should be smaller than width*height. (fixed_size=%llu; width=%llu; height=%llu)\n",
                 info_2d->fixed_size, info_2d->width, info_2d->height);
         return DRV_ERROR_INVALID_VALUE;
     }
@@ -1189,12 +1189,12 @@ static int svm_memcpy_2d_para_check(struct MEMCPY2D *p_copy)
     }
 
     if (handle_2d->dpitch < handle_2d->width) {
-        svm_err("Dpitch should larger than width. (dpitch=%llu; width=%llu)\n", handle_2d->dpitch, handle_2d->width);
+        svm_err("Dpitch should be larger than width. (dpitch=%llu; width=%llu)\n", handle_2d->dpitch, handle_2d->width);
         return DRV_ERROR_INVALID_VALUE;
     }
 
     if (handle_2d->spitch < handle_2d->width) {
-        svm_err("Spitch should larger than width. (spitch=%llu; width=%llu)\n", handle_2d->spitch, handle_2d->width);
+        svm_err("Spitch should be larger than width. (spitch=%llu; width=%llu)\n", handle_2d->spitch, handle_2d->width);
         return DRV_ERROR_INVALID_VALUE;
     }
 

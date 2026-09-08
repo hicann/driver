@@ -66,7 +66,7 @@ STATIC int devmm_rx_msg_process(void *msg_chan, void *data, u32 in_data_len, u32
 
     devmm_svm_stat_recv_inc();
     if (did >= DEVMM_MAX_DEVICE_NUM) {
-        devmm_drv_err("Deivice id must less than DEVMM_MAX_DEVICE_NUM. "
+        devmm_drv_err("Device id must be less than DEVMM_MAX_DEVICE_NUM. "
                       "(did=%d; DEVMM_MAX_DEVICE_NUM=%d)\n",
                       did, DEVMM_MAX_DEVICE_NUM);
         return -ENODEV;

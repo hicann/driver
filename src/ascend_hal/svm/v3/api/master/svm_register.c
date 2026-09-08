@@ -181,7 +181,7 @@ static void svm_register_dst_recycle_proc(u32 devid, u32 udevid, void *svmm_inst
     }
 
     if (recyle_num > 0) {
-        svm_info("Recycle success. (devid=%u; udevid=%u; recyle_num=%u)\n", devid, udevid, recyle_num);
+        svm_info("Recycle success. (devid=%u; udevid=%u; recycle_num=%u)\n", devid, udevid, recyle_num);
     }
 }
 
@@ -315,8 +315,8 @@ static int svm_register_svmm_inst_release(void *svmm_inst, u32 devid, bool force
     if (recyle_num > 0) {
         u64 svmma_start, svmma_size, svm_flag;
         svm_svmm_parse_inst_info(svmm_inst, &svmma_start, &svmma_size, &svm_flag);
-        svm_info("Release success. (va=0x%llx; size=0x%llx; devid=%u; recyle_num=%u)\n", svmma_start, svmma_size, devid,
-                 recyle_num);
+        svm_info("Release success. (va=0x%llx; size=0x%llx; devid=%u; recycle_num=%u)\n", svmma_start, svmma_size,
+                 devid, recyle_num);
     }
 
     return DRV_ERROR_NONE;
@@ -936,7 +936,7 @@ static int svm_register_svm_to_peer(u64 va, u64 size, u32 devid, u64 *dst_va)
     }
 
     if ((va + size) > (prop.start + prop.size)) {
-        svm_err("Size if out of bounds. (va=0x%llx; size=%d; align_size=0x%llx; prop start=0x%llx; prop size=0x%llx)\n",
+        svm_err("Size is out of bounds. (va=0x%llx; size=%d; align_size=0x%llx; prop start=0x%llx; prop size=0x%llx)\n",
                 va, size, aligned_size, prop.start, prop.size);
         return DRV_ERROR_PARA_ERROR;
     }

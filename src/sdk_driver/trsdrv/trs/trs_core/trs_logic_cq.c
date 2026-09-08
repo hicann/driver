@@ -120,7 +120,7 @@ static int trs_thread_bind_irq_init(struct trs_core_ts_inst *ts_inst)
     ret = ts_inst->ops.get_thread_bind_irq(inst, irq, TRS_MAX_THREAD_BIND_IRQ_NUM, &intr_mng->irq_num, &irq_type);
     if (ret != 0) {
         ka_task_mutex_destroy(&intr_mng->mutex);
-        trs_err("Get thread bind irq filed. (devid=%u; tsid=%u)\n", inst->devid, inst->tsid);
+        trs_err("Get thread bind irq failed. (devid=%u; tsid=%u)\n", inst->devid, inst->tsid);
         return ret;
     }
 
@@ -268,8 +268,8 @@ static int trs_logic_cq_recv_para_check(struct trs_proc_ctx *proc_ctx, struct tr
     }
 
     if (((para->timeout < 0) && (para->timeout != -1)) || (para->cqe_num == 0) || (para->cqe_addr == NULL)) {
-        trs_err("Invalid para. (devid=%u; tsid=%u; logic_cqid=%u; timeout=%d; cqe_num=%u)\n", inst->devid, inst->tsid,
-                para->cqId, para->timeout, para->cqe_num);
+        trs_err("Invalid para. (devid=%u; tsid=%u; logic_cqid=%u; timeout=%d(ms); cqe_num=%u)\n", inst->devid,
+                inst->tsid, para->cqId, para->timeout, para->cqe_num);
         return -EINVAL;
     }
 

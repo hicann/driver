@@ -22,7 +22,7 @@ int devmm_chan_report_process_status_d2h(struct devmm_svm_process *svm_process, 
 {
     struct devmm_chan_process_status *process_status = (struct devmm_chan_process_status *)msg;
 
-    devmm_drv_debug("rev process_status  (devid=%u, vifd=%u,status=%u, dev_pid=%u, dev_tid=%u)\n",
+    devmm_drv_debug("rev process_status  (devid=%u, vfid=%u,status=%u, dev_pid=%u, dev_tid=%u)\n",
                     process_status->head.dev_id, process_status->head.vfid, process_status->pid_status,
                     process_status->pid, process_status->tid);
 
@@ -46,7 +46,7 @@ STATIC int devmm_query_process_status(struct devmm_svm_process *svm_proc,
     ret = devmm_chan_msg_send(process_status, sizeof(struct devmm_chan_process_status),
                               sizeof(struct devmm_chan_process_status));
 
-    devmm_drv_debug("query process_status. (devid=%u, vifd=%u,status=%u, occur=%d)\n", process_status->head.dev_id,
+    devmm_drv_debug("query process_status. (devid=%u, vfid=%u,status=%u, occur=%d)\n", process_status->head.dev_id,
                     process_status->head.vfid, process_status->pid_status, process_status->status_occur);
 
     return ret;

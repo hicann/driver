@@ -192,7 +192,7 @@ int devmm_set_dev_capability(const u32 did, const u32 vfid, struct devmm_chan_ex
 
     devmm_drv_info(
         "Device capability info. (did=%u; vfid=%u; ts_shm_map_bar=%u; ts_shm_data_num=%u; "
-        "feature_phycial_address=0x%x; feature_pcie_th=%u; feature_bar_mem=%x; "
+        "feature_physical_address=0x%x; feature_pcie_th=%u; feature_bar_mem=%x; "
         "dvpp_memsize=%llu; svm_offset_num=%u; feature_read_mem=%u; feature_pcie_dma_support_sva=%u; "
         "feature_dev_mem_map_host=%u; feature_bar_huge_mem=%u; "
         "double_pgtable_offset=%llu; feature_giant_page=%u; "

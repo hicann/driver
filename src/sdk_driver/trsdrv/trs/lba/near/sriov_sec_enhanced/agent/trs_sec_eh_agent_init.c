@@ -51,7 +51,7 @@ static int trx_sec_eh_msg_para_check(u32 dev_id, u32 fid, struct vmng_rx_msg_pro
     }
 
     if (proc_info->in_data_len < sizeof(struct trs_sec_eh_msg_head)) {
-        trs_err("Check failed. (in_data_len=%u; expected_len=%u\n", proc_info->in_data_len,
+        trs_err("Check failed. (in_data_len=%u; expected_len=%u)\n", proc_info->in_data_len,
                 (u32)sizeof(struct trs_sec_eh_msg_head));
         return -EINVAL;
     }

@@ -2343,12 +2343,12 @@ static int _devmm_unmap_local_mem(struct devmm_svm_process *svm_proc, struct dev
                                   struct devmm_shm_node *node)
 {
     if (node->ref > 0) {
-        devmm_drv_debug("Shm still used by device. (src_va=0x%llx; src_va=0x%llx; ref=%llu; map_type=%u; devid=%u)\n",
+        devmm_drv_debug("Shm still used by device. (src_va=0x%llx; dst_va=0x%llx; ref=%llu; map_type=%u; devid=%u)\n",
                         node->src_va, node->dst_va, node->ref, node->map_type, devids->devid);
         return -EBUSY;
     }
-    devmm_drv_debug("Unmap local mem. (src_va=0x%llx; dst_va=0x%llx; unmap_type=%u; size=%llu; devid=%u)\n",
-                    node->src_va, node->dst_va, node->map_type, node->size, devids->devid);
+    devmm_drv_debug("Unmap local mem. (src_va=0x%llx; dst_va=0x%llx; map_type=%u; size=%llu; devid=%u)\n", node->src_va,
+                    node->dst_va, node->map_type, node->size, devids->devid);
 
     if ((node->map_type == HOST_MEM_MAP_DEV) || devmm_is_mem_map_by_pcie_th(node->map_type)) {
         devmm_unmap_local_host_mem(svm_proc, devids, node);
@@ -2396,7 +2396,7 @@ static int devmm_mem_remote_unmap_of_local_mem(struct devmm_svm_process *svm_pro
             return ret;
         }
     }
-    devmm_drv_err("Get shm node fail. (host_va=0x%llx; devid=%u; unmap_type=%u; ret=%d)\n", unmap_para->src_va,
+    devmm_drv_err("Get shm node fail. (src_va=0x%llx; devid=%u; map_type=%u; ret=%d)\n", unmap_para->src_va,
                   devids->devid, unmap_para->map_type, ret);
     return ret;
 }

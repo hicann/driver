@@ -185,7 +185,7 @@ int devmm_dev_res_mng_create(struct svm_id_inst *id_inst, ka_device_t *dev)
 
     mng = (struct devmm_dev_res_mng *)devmm_kvzalloc(sizeof(struct devmm_dev_res_mng));
     if (mng == NULL) {
-        devmm_drv_err("Repeate create. (devid=%u; vfid=%u)\n", id_inst->devid, id_inst->vfid);
+        devmm_drv_err("Repeat create. (devid=%u; vfid=%u)\n", id_inst->devid, id_inst->vfid);
         return -ENOMEM;
     }
 

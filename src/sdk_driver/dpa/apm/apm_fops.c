@@ -83,7 +83,7 @@ static long apm_ioctl(ka_file_t *file, u32 cmd, unsigned long arg)
 
     if (apm_ioctl_handler[_KA_IOC_NR(cmd)] == NULL) {
 #ifndef EMU_ST
-        apm_warn("The command is not support. (cmd=%u)\n", _KA_IOC_NR(cmd));
+        apm_warn("The command is not supported. (cmd=%u)\n", _KA_IOC_NR(cmd));
 #endif
         return -EOPNOTSUPP;
     }

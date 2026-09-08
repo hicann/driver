@@ -1848,7 +1848,7 @@ static int trs_hw_sq_trigger_init(struct trs_core_ts_inst *ts_inst)
     ts_inst->work_queue = ka_task_alloc_workqueue("dev%u_sq_send_wq",
                                                   trs_hw_sq_get_trigger_wq_flag(ts_inst->ts_inst_flag), 1, inst->devid);
     if (ts_inst->work_queue == NULL) {
-        trs_err("Createn wq failed. (devid=%u; tsid=%u)\n", inst->devid, inst->tsid);
+        trs_err("Create wq failed. (devid=%u; tsid=%u)\n", inst->devid, inst->tsid);
 #ifndef EMU_ST
         return -EFAULT;
 #endif

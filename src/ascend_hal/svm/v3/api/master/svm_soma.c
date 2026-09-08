@@ -195,7 +195,7 @@ static int _free_global_va(u64 start)
 
     ret = svm_free(start);
     if (ret) {
-        svm_soma_err("Free global va failed. (ret=%d; start%llx)\n", ret, start);
+        svm_soma_err("Free global va failed. (ret=%d; start=0x%llx)\n", ret, start);
     }
 
     return ret;
@@ -520,7 +520,7 @@ static int soma_pool_create_para_check(soma_mem_pool_t pool, soma_mem_pool_prop 
     }
 
     if (pool.devId != prop.mem_prop.devid) {
-        svm_soma_err("Pool devid is not equal Prop devid. (pool.devId=0x%u; prop.devIde=0x%u)\n", pool.devId,
+        svm_soma_err("Pool devid is not equal Prop devid. (pool.devId=0x%u; prop.devid=0x%u)\n", pool.devId,
                      prop.mem_prop.devid);
         return DRV_ERROR_INVALID_VALUE;
     }

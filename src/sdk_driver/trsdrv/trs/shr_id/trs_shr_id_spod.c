@@ -671,7 +671,7 @@ static void shadow_node_loop_for_async_send_recv(struct shr_id_spod_info *spod_i
         current_time = ka_system_ktime_get_ns();
         time_cost = current_time - start_time;
         if (time_cost >= MAX_LOOP_TIME) {
-            trs_debug("The async collection loop has timed out.(devid=%u, pid=%u, name=%s, time_cost=%llu)\n",
+            trs_debug("The async collection loop has timed out.(devid=%u, pid=%u, name=%s, time_cost=%lluns)\n",
                       spod_info->attr.inst.devid, spod_info->attr.pid, spod_info->attr.name, time_cost);
             is_timeout = true;
         }

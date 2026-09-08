@@ -38,7 +38,7 @@ static int um_mpl_populate_pre_handle(u32 udevid, int master_tgid, int slave_tgi
 
     ret = svm_smp_check_mem_exists(udevid, master_tgid, populate_msg->va, populate_msg->size);
     if (ret == 0) {
-        svm_err("Smp existed, not allow to populate. (udevid=%u; master_tgid=%d; va=0x%llx; size=%llu)\n", udevid,
+        svm_err("Smp existed, not allowed to populate (udevid=%u; master_tgid=%d; va=0x%llx; size=%llu)\n", udevid,
                 master_tgid, populate_msg->va, populate_msg->size);
         return -EADDRINUSE;
     }

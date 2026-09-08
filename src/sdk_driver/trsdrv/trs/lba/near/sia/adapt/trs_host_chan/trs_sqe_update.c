@@ -638,7 +638,7 @@ void trs_sqe_update_uninit(u32 devid)
     struct trs_rb_info *rb_info = trs_dma_desc_rb[devid];
 
     if (rb_info == NULL) {
-        trs_warn("Rb info is null. (devid=%u\n)", devid);
+        trs_warn("Rb info is null. (devid=%u)\n", devid);
         return;
     }
 

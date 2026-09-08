@@ -78,7 +78,7 @@ static void devmm_mem_repair_pages_cache_update(struct devmm_svm_process *svm_pr
 
     heap = devmm_svm_get_heap(svm_proc, mem_repair->addr);
     if (heap == NULL) {
-        devmm_drv_warn("Heap is null, no update page cache. (devid=%u; vifd=%u; repair_addr=0x%llx; len=%llx)\n",
+        devmm_drv_warn("Heap is null, no update page cache. (devid=%u; vfid=%u; repair_addr=0x%llx; len=%llx)\n",
                        arg->head.devid, arg->head.vfid, mem_repair->addr, mem_repair->len);
         return;
     }
@@ -141,11 +141,11 @@ static int devmm_agent_mem_repair(struct devmm_svm_process *svm_proc, struct dev
 
     ret = devmm_chan_msg_send(&mem_repair, sizeof(struct devmm_chan_mem_repair), sizeof(struct devmm_chan_mem_repair));
     if (ret != 0) {
-        devmm_drv_err("Mem repair h2d failed. (devid=%u; vifd=%u; repair_addr=0x%llx; len=%llx; svm_range=%d)\n",
+        devmm_drv_err("Mem repair h2d failed. (devid=%u; vfid=%u; repair_addr=0x%llx; len=%llx; svm_range=%d)\n",
                       arg->head.devid, arg->head.vfid, addr, len, svm_range);
         return ret;
     }
-    devmm_drv_debug("Mem repair succ. (devid=%u; vifd=%u; addr=0x%llx; len=%llx; svm_range=%d; cache_update=%d; "
+    devmm_drv_debug("Mem repair succ. (devid=%u; vfid=%u; addr=0x%llx; len=%llx; svm_range=%d; cache_update=%d; "
                     "is_giant_page=%d)\n",
                     arg->head.devid, arg->head.vfid, addr, len, svm_range, mem_repair.need_cache_update,
                     mem_repair.is_giant_page);
@@ -228,7 +228,7 @@ static bool devmm_svm_range_addr_is_support_repair(struct devmm_svm_process *svm
 
     heap = devmm_svm_get_heap(svm_proc, addr);
     if (heap == NULL) {
-        devmm_drv_err("Heap is null. (devid=%u; vifd=%u; repair_addr=%llx; len=%llx)\n", arg->head.devid,
+        devmm_drv_err("Heap is null. (devid=%u; vfid=%u; repair_addr=%llx; len=%llx)\n", arg->head.devid,
                       arg->head.vfid, addr, len);
         return false;
     }

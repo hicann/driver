@@ -445,7 +445,8 @@ int trs_stream_get_mem_pa_list(struct trs_proc_ctx *proc_ctx, struct trs_core_ts
     base_va = KA_DRIVER_ALIGN_DOWN((u64)(uintptr_t)stream_mem, TRS_STREAM_MEM_DEFAULT_PAGE_SIZE);
     if (((u64)(uintptr_t)stream_mem + depth * TRS_HW_SQE_SIZE) > (base_va + TRS_STREAM_MEM_DEFAULT_PAGE_SIZE)) {
 #ifndef EMU_ST
-        trs_err("The depth is invalid. (depth=%u; depth=%u)\n", depth, depth);
+        trs_err("The depth is invalid. (depth=%u, stream_mem_va=0x%llx, max_va=0x%llx)\n", depth,
+                (u64)(uintptr_t)stream_mem + depth * TRS_HW_SQE_SIZE, base_va + TRS_STREAM_MEM_DEFAULT_PAGE_SIZE);
         return -EINVAL;
 #endif
     }

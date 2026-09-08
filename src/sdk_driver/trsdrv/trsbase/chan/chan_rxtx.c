@@ -911,7 +911,7 @@ void trs_chan_cq_guard_work_proc(struct trs_chan_ts_inst *ts_inst)
         time_cost = trs_get_us_timestamp() - chan->interrupt_time_us;
         if ((cq_head != cq_tail) && (time_cost > 1000000) && (chan->tasklet_running == 0)) { /* 1s = 1000000us */
             trs_debug("Guard work process cq. (devid=%u; chan_id=%u; cqid=%u; cq_head=%llu; cq_tail=%llu; "
-                      "time_cost=%llu)\n",
+                      "time_cost_us=%llu)\n",
                       ts_inst->inst.devid, ts_inst->hw_cq_ctx[cqid].chan_id, cqid, cq_head, cq_tail, time_cost);
             ka_task_schedule_work(&chan->work);
         }

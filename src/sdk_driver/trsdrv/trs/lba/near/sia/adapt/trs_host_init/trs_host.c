@@ -135,7 +135,7 @@ static int trs_near_ts_inst_notifier(struct trs_id_inst *pm_inst, enum uda_notif
     } else if (action == UDA_TO_MIA) {
         ret = trs_set_ts_inst_feature_mode(pm_inst, TRS_INST_PART_FEATUR_MODE, TRS_SET_TS_INST_MODE_FORCE_LEVEL_NONE);
         if (ret != 0) {
-            trs_err("Failed to mia. (devid=%u; ret=%d)\n", pm_inst->devid, ret);
+            trs_err("Failed to set inst feature mode (devid=%u; ret=%d)\n", pm_inst->devid, ret);
             return ret;
         }
 #ifdef CFG_FEATURE_SUPPORT_UB_CONNECTION

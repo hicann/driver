@@ -166,7 +166,7 @@ static int topo_get_id_info(struct topo_id_info *id_info, unsigned int *hccs_lin
 
     ret = soc_resmng_dev_get_attr(id_info->dev_id, BOARD_HW_INFO, &soc_res_hw_info, sizeof(soc_res_hw_info));
     if (ret != 0) {
-        soc_err("Get hardware info form soc resmng failed. (dev_id=%u; ret=%d)\n", id_info->dev_id, ret);
+        soc_err("Get hardware info from soc resmng failed. (dev_id=%u; ret=%d)\n", id_info->dev_id, ret);
         return ret;
     }
     id_info->chip_id = soc_res_hw_info.chip_id;
