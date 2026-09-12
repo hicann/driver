@@ -151,8 +151,8 @@ void devdrv_host_black_box_close_check(ka_pid_t pid)
     ka_task_spin_unlock_irqrestore(&manager_info->black_box.spinlock, flags);
 }
 
-STATIC struct devdrv_exception *devdrv_host_black_box_alloc_exception_data(u32 devid, u32 code,
-    ka_timespec_t stamp, const void *data)
+STATIC struct devdrv_exception *devdrv_host_black_box_alloc_exception_data(u32 devid, u32 code, ka_timespec_t stamp,
+                                                                           const void *data)
 {
     int ret = 0;
     struct devdrv_exception *exception = NULL;
@@ -175,8 +175,8 @@ STATIC struct devdrv_exception *devdrv_host_black_box_alloc_exception_data(u32 d
             devdrv_drv_err_spinlock("alloc exception data failed.\n");
             return NULL;
         }
-        ret = memcpy_s(exception->data, sizeof(struct devdrv_black_box_devids),
-                       data, sizeof(struct devdrv_black_box_devids));
+        ret = memcpy_s(exception->data, sizeof(struct devdrv_black_box_devids), data,
+                       sizeof(struct devdrv_black_box_devids));
     } else if ((exception->code == DEVDRV_BB_DEVICE_STATE_INFORM) && (data != NULL)) {
         exception->data = dbl_kzalloc(sizeof(struct devdrv_black_box_state_info), KA_GFP_ATOMIC | __KA_GFP_ACCOUNT);
         if (exception->data == NULL) {
@@ -185,8 +185,8 @@ STATIC struct devdrv_exception *devdrv_host_black_box_alloc_exception_data(u32 d
             devdrv_drv_err_spinlock("alloc exception data failed.\n");
             return NULL;
         }
-        ret = memcpy_s(exception->data, sizeof(struct devdrv_black_box_state_info),
-                       data, sizeof(struct devdrv_black_box_state_info));
+        ret = memcpy_s(exception->data, sizeof(struct devdrv_black_box_state_info), data,
+                       sizeof(struct devdrv_black_box_state_info));
     } else {
         exception->data = NULL;
     }
@@ -206,8 +206,7 @@ STATIC struct devdrv_exception *devdrv_host_black_box_alloc_exception_data(u32 d
  * @data: must be alloced by user
  *
  */
-int devdrv_host_black_box_add_exception(u32 devid, u32 code,
-    ka_timespec_t stamp, const void *data)
+int devdrv_host_black_box_add_exception(u32 devid, u32 code, ka_timespec_t stamp, const void *data)
 {
     unsigned long flags;
     uint32_t i;
@@ -295,8 +294,7 @@ STATIC void devdrv_host_black_box_status_info_process(struct devdrv_black_box_us
         return;
     }
 
-    devdrv_drv_info("status is inform through pcie driver with"
-                    "dev id(%u), state(%u), code(0x%x).\n",
+    devdrv_drv_info("status is informed through pcie driver. (dev_id=%u; state=%u; code=0x%x)\n",
                     bbox_state_info->devId, (u32)bbox_state_info->state, black_box_user->exception_code);
     black_box_user->priv_data.bbox_state.state = bbox_state_info->state;
     black_box_user->priv_data.bbox_state.devId = bbox_state_info->devId;
@@ -364,8 +362,8 @@ void devdrv_host_black_box_get_exception(struct devdrv_black_box_user *black_box
             dbl_kfree(exception->data);
             exception->data = NULL;
         }
-        devdrv_drv_debug("black_box_get_exception. (code=0x%x; dev_id=%d; black_box.pid=%d)\n",
-            exception->code, exception->devid, manager_info->black_box.black_box_pid[index]);
+        devdrv_drv_debug("black_box_get_exception. (code=0x%x; dev_id=%d; black_box.pid=%d)\n", exception->code,
+                         exception->devid, manager_info->black_box.black_box_pid[index]);
         dbl_kfree(exception);
         exception = NULL;
         return;

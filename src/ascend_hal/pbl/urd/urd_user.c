@@ -56,7 +56,7 @@ STATIC int urd_check_module_init(const char *module_name)
     }
     name_len = strnlen(module_name, DEV_MODULE_INIT_INFO_LEN);
     if (name_len >= DEV_MODULE_INIT_INFO_LEN) {
-        urd_err("Length out range. (length=%ld)\n", name_len);
+        urd_err("Length out of range. (length=%ld)\n", name_len);
         return -1;
     }
     buff = (char *)malloc(DEV_MODULE_INIT_INFO_LEN);
@@ -168,9 +168,8 @@ STATIC mmProcess urd_open_intf(void)
     fd = mmOpen2(davinci_intf_get_dev_path(), M_RDWR | O_CLOEXEC, M_IRUSR);
     err = (__errno_location() != NULL ? errno : 0);
     if (!FdIsValid(fd)) {
-        urd_err(
-            "Open failed. (dev_name=%s; fd=%d; g_urd_fd=%d; errno=%d)\n", davinci_intf_get_dev_path(), fd, g_urd_fd,
-            err);
+        urd_err("Open failed. (dev_name=%s; fd=%d; g_urd_fd=%d; errno=%d)\n", davinci_intf_get_dev_path(), fd, g_urd_fd,
+                err);
         fd = (mmProcess)URD_INVALID_PID_OR_FD;
         goto out;
     }
@@ -218,7 +217,10 @@ STATIC void __attribute__((constructor)) urd_user_init(void)
     }
 }
 
-STATIC void __attribute__((destructor)) urd_user_uninit(void) { urd_close_intf(); }
+STATIC void __attribute__((destructor)) urd_user_uninit(void)
+{
+    urd_close_intf();
+}
 
 STATIC inline int is_valid_user_errno(int err)
 {
@@ -283,9 +285,8 @@ int urd_dev_usr_cmd(uint32_t devid, struct urd_cmd *cmd, struct urd_cmd_para *cm
     int ret;
 
     if ((cmd == NULL) || (cmd_para == NULL)) {
-        urd_err(
-            "Invalid cmd_para or cmd is NULL. (devid=%u, cmd=%s, cmd_para=%s)\n", devid, (cmd == NULL) ? "NULL" : "OK",
-            (cmd_para == NULL) ? "NULL" : "OK");
+        urd_err("Invalid cmd_para or cmd is NULL. (devid=%u, cmd=%s, cmd_para=%s)\n", devid,
+                (cmd == NULL) ? "NULL" : "OK", (cmd_para == NULL) ? "NULL" : "OK");
         return DRV_ERROR_PARA_ERROR;
     }
 
@@ -304,9 +305,8 @@ int urd_dev_usr_cmd(uint32_t devid, struct urd_cmd *cmd, struct urd_cmd_para *cm
 
     ret = urd_ioctl(URD_IOCTL_CMD, &ioarg);
     if (ret != 0) {
-        urd_ex_err(
-            ret, "Ioctl fail. (ret=%d; devid=%u; main_cmd=0x%x; sub_cmd=0x%x)\n", ret, devid, cmd->main_cmd,
-            cmd->sub_cmd);
+        urd_ex_err(ret, "Ioctl fail. (ret=%d; devid=%u; main_cmd=0x%x; sub_cmd=0x%x)\n", ret, devid, cmd->main_cmd,
+                   cmd->sub_cmd);
         return ret;
     }
     return 0;
@@ -318,9 +318,8 @@ int urd_dev_usr_cmd_ex(uint32_t devid, unsigned long ioctl_cmd, struct urd_cmd *
     int ret;
 
     if ((cmd == NULL) || (cmd_para == NULL)) {
-        urd_err(
-            "Invalid cmd_para or cmd is NULL. (devid=%u, cmd=%s, cmd_para=%s)\n", devid, (cmd == NULL) ? "NULL" : "OK",
-            (cmd_para == NULL) ? "NULL" : "OK");
+        urd_err("Invalid cmd_para or cmd is NULL. (devid=%u, cmd=%s, cmd_para=%s)\n", devid,
+                (cmd == NULL) ? "NULL" : "OK", (cmd_para == NULL) ? "NULL" : "OK");
         return DRV_ERROR_PARA_ERROR;
     }
 
@@ -339,9 +338,8 @@ int urd_dev_usr_cmd_ex(uint32_t devid, unsigned long ioctl_cmd, struct urd_cmd *
 
     ret = urd_ioctl(ioctl_cmd, &ioarg);
     if (ret != 0) {
-        urd_ex_err(
-            ret, "Ioctl fail. (ret=%d; devid=%u; main_cmd=0x%x; sub_cmd=0x%x)\n", ret, devid, cmd->main_cmd,
-            cmd->sub_cmd);
+        urd_ex_err(ret, "Ioctl fail. (ret=%d; devid=%u; main_cmd=0x%x; sub_cmd=0x%x)\n", ret, devid, cmd->main_cmd,
+                   cmd->sub_cmd);
         return ret;
     }
     return 0;

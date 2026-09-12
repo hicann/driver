@@ -29,8 +29,8 @@
 #include "ka_barrier_pub.h"
 #include "kernel_version_adapt.h"
 
-#define TIME_SYNC_TIMER_EXPIRE_MS   6000
-#define INVALID_TIMER_NODE_ID       0xFFFFFFFF
+#define TIME_SYNC_TIMER_EXPIRE_MS 6000
+#define INVALID_TIMER_NODE_ID 0xFFFFFFFF
 
 #ifdef CFG_SOC_PLATFORM_CLOUD_V2
 int g_heart_lost[ASCEND_DEV_MAX_NUM] = {0};
@@ -74,13 +74,15 @@ int dms_heartbeat_is_stop(u32 dev_id)
 
 int dms_time_sync_info_init(u32 dev_id)
 {
-    g_dms_time_sync_info[dev_id].pre_timezone = (char *)dbl_kzalloc(DMS_LOCALTIME_FILE_SIZE, KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
+    g_dms_time_sync_info[dev_id].pre_timezone = (char *)dbl_kzalloc(DMS_LOCALTIME_FILE_SIZE,
+                                                                    KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
     if (g_dms_time_sync_info[dev_id].pre_timezone == NULL) {
         dms_err("Kzalloc return NULL, failed to alloc mem for old localtime.\n");
         return -ENOMEM;
     }
 
-    g_dms_time_sync_info[dev_id].new_timezone = (char *)dbl_kzalloc(DMS_LOCALTIME_FILE_SIZE, KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
+    g_dms_time_sync_info[dev_id].new_timezone = (char *)dbl_kzalloc(DMS_LOCALTIME_FILE_SIZE,
+                                                                    KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
     if (g_dms_time_sync_info[dev_id].new_timezone == NULL) {
         dms_err("Kzalloc return NULL, failed to alloc mem for new localtime.\n");
         dbl_kfree(g_dms_time_sync_info[dev_id].pre_timezone);
@@ -110,7 +112,6 @@ void dms_time_sync_info_free(u32 dev_id)
     }
     ka_task_mutex_destroy(&g_dms_time_sync_info[dev_id].time_sync_lock);
 }
-
 
 /* dms init and pcie hot reset will call this function */
 void set_time_need_update(u32 dev_id)
@@ -143,8 +144,7 @@ STATIC void set_system_status(u32 dev_id, u32 status)
     g_dms_time_sync_info[dev_id].system_state = status;
 }
 
-
-struct dms_time_sync_info* dms_get_time_sync_info(u32 dev_id)
+struct dms_time_sync_info *dms_get_time_sync_info(u32 dev_id)
 {
     return &g_dms_time_sync_info[dev_id];
 }
@@ -169,9 +169,8 @@ STATIC int dms_send_time_msg(u32 dev_id, struct dms_h2d_msg *time_msg, u32 *out_
 {
     int ret;
 
-    ret = devdrv_common_msg_send(dev_id, time_msg, sizeof(struct dms_h2d_msg),
-                                 sizeof(struct dms_h2d_msg), (u32 *)out_len,
-                                 DEVDRV_COMMON_MSG_DEVDRV_MANAGER);
+    ret = devdrv_common_msg_send(dev_id, time_msg, sizeof(struct dms_h2d_msg), sizeof(struct dms_h2d_msg),
+                                 (u32 *)out_len, DEVDRV_COMMON_MSG_DEVDRV_MANAGER);
 
     return ret;
 }
@@ -206,14 +205,14 @@ STATIC int dms_send_timezone(u32 dev_id, const char *new_timezone, u16 read_size
         time_msg.header.result = read_size_tmp;
         ret = dms_send_time_msg(dev_id, &time_msg, &out_len);
         if (ret || (time_msg.header.result != 0)) {
-            dms_warn("Send msg unsuccessful. (dev_id=%u; ret=%d; result=%u; times=%u; sendtime=%u)\n",
-                dev_id, ret, time_msg.header.result, i, send_times);
+            dms_warn("Send msg unsuccessful. (dev_id=%u; ret=%d; result=%u; times=%u; sendtime=%u)\n", dev_id, ret,
+                     time_msg.header.result, i, send_times);
             return ret;
         }
     }
 
-    dms_info("Send localtime msg success. (dev_id=%u; result=%u; sendtime=%u)\n",
-        dev_id, time_msg.header.result, send_times);
+    dms_info("Send localtime msg success. (dev_id=%u; result=%u; sendtime=%u)\n", dev_id, time_msg.header.result,
+             send_times);
     return ret;
 }
 
@@ -282,8 +281,8 @@ STATIC int dms_timezone_sync(u32 dev_id, struct dms_time_sync_info *time_info)
             dms_warn("Send timezone to device unsuccessful. (dev_id=%u; ret=%d)\n", dev_id, ret);
             return ret;
         }
-        ret = memcpy_s(time_info->pre_timezone, DMS_LOCALTIME_FILE_SIZE,
-            time_info->new_timezone, DMS_LOCALTIME_FILE_SIZE);
+        ret = memcpy_s(time_info->pre_timezone, DMS_LOCALTIME_FILE_SIZE, time_info->new_timezone,
+                       DMS_LOCALTIME_FILE_SIZE);
         if (ret) {
             dms_err("Memcpy_s failed. (dev_id=%u; ret=%d)\n", dev_id, ret);
             return ret;
@@ -293,7 +292,6 @@ STATIC int dms_timezone_sync(u32 dev_id, struct dms_time_sync_info *time_info)
 
     return 0;
 }
-
 
 STATIC int dms_wall_time_sync(u32 dev_id)
 {
@@ -325,11 +323,10 @@ STATIC int dms_wall_time_sync(u32 dev_id)
     /* inform corresponding devid to device side */
     time_msg.header.dev_id = send_time_info->dev_id;
 
-    ret = memcpy_s(time_msg.payload, sizeof(time_msg.payload), send_time_info,
-                   sizeof(struct dms_walltime_info));
+    ret = memcpy_s(time_msg.payload, sizeof(time_msg.payload), send_time_info, sizeof(struct dms_walltime_info));
     if (ret != 0) {
         dms_err("Copy from time_info failed, (ret=%d; dev_id=%u).\n", ret, send_time_info->dev_id);
-        goto  out;
+        goto out;
     }
 
     ret = dms_send_time_msg(dev_id, &time_msg, &out_len);
@@ -374,7 +371,6 @@ int dms_time_sync_event(u64 user_data)
 
     return DRV_ERROR_NONE;
 }
-
 
 int dms_time_sync_init(u32 dev_id)
 {
@@ -440,7 +436,7 @@ void dms_time_sync_exit(u32 dev_id)
 
     g_dms_time_sync_info[dev_id].timer_node_id = INVALID_TIMER_NODE_ID;
 
-    dms_info("Time sync even unregister from timer. (dev_id=%u) \n", dev_id);
+    dms_info("Time sync event unregister from timer. (dev_id=%u)\n", dev_id);
 }
 
 int dms_time_sync_reboot_handle(void)
@@ -466,4 +462,3 @@ int dms_is_sync_timezone(void)
     }
     return false;
 }
-

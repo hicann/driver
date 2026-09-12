@@ -67,7 +67,7 @@ int hb_set_heart_beat_count(unsigned int dev_id, unsigned long long count)
     return devdrv_set_heartbeat_count(dev_id, count);
 }
 
-int hb_get_heart_beat_count(unsigned int dev_id, unsigned long long* heart_beat_count, unsigned int* hb_read_fail_count)
+int hb_get_heart_beat_count(unsigned int dev_id, unsigned long long *heart_beat_count, unsigned int *hb_read_fail_count)
 {
     int ret = 0;
 
@@ -90,7 +90,8 @@ int hb_get_heart_beat_count(unsigned int dev_id, unsigned long long* heart_beat_
     }
 
     if (devdrv_get_connect_protocol(dev_id) == CONNECT_PROTOCOL_UB) {
-        ret = devdrv_rao_read(dev_id, DEVDRV_RAO_CLIENT_DEVMNG, dev_info->shm_head->head_info.offset_heartbeat, sizeof(U_SHM_INFO_HEARTBEAT));
+        ret = devdrv_rao_read(dev_id, DEVDRV_RAO_CLIENT_DEVMNG, dev_info->shm_head->head_info.offset_heartbeat,
+                              sizeof(U_SHM_INFO_HEARTBEAT));
         if (ret != 0) {
             devdrv_put_dev_info_occupy(dev_info);
             (*hb_read_fail_count)++;
@@ -127,8 +128,8 @@ int check_and_update_link_abnormal_status(u32 dev_id, u64 count)
         }
 
         if ((status & DAVINCI_INTF_DEVICE_STATUS_LINK_ABNORMAL) == DAVINCI_INTF_DEVICE_STATUS_LINK_ABNORMAL) {
-            (void)ascend_intf_report_device_status(dev_id,
-                DAVINCI_INTF_DEVICE_CLEAR_STATUS | DAVINCI_INTF_DEVICE_STATUS_LINK_ABNORMAL);
+            (void)ascend_intf_report_device_status(
+                dev_id, DAVINCI_INTF_DEVICE_CLEAR_STATUS | DAVINCI_INTF_DEVICE_STATUS_LINK_ABNORMAL);
         }
     }
 
@@ -242,10 +243,10 @@ int hb_read_item_work_start(unsigned int dev_id, struct hb_read_block *hb_read_i
     hb_read_item->lost_count = 0;
     hb_read_item->total_lost_count = 0;
     hb_read_item->miss_read_count = 0;
-    hb_read_item->last_read_time = ka_system_ktime_get_raw_ns();;
-    (void)ascend_intf_report_device_status(dev_id,
-        DAVINCI_INTF_DEVICE_CLEAR_STATUS | DAVINCI_INTF_DEVICE_STATUS_HEARTBIT_LOST |
-            DAVINCI_INTF_DEVICE_STATUS_LINK_ABNORMAL);
+    hb_read_item->last_read_time = ka_system_ktime_get_raw_ns();
+    (void)ascend_intf_report_device_status(dev_id, DAVINCI_INTF_DEVICE_CLEAR_STATUS |
+                                                       DAVINCI_INTF_DEVICE_STATUS_HEARTBIT_LOST |
+                                                       DAVINCI_INTF_DEVICE_STATUS_LINK_ABNORMAL);
     return 0;
 }
 
@@ -255,10 +256,11 @@ STATIC int heartbeat_dev_node_config(unsigned int user_id, struct soft_dev *s_de
     int pid = ka_task_get_current_tgid();
     u32 len = DMS_SENSOR_DESCRIPT_LENGTH;
     struct dms_node_operations *soft_ops = soft_get_ops();
-    struct dms_node s_node = SOFT_NODE_DEF(DMS_DEV_TYPE_BASE_SERVCIE, "davinci", s_dev->dev_id,
-        s_dev->node_id, soft_ops);
-    struct dms_sensor_object_cfg s_cfg = SOFT_SENSOR_DEF(DMS_SEN_TYPE_HEARTBEAT, "dev0_heartbeat", 0UL,
-        user_id, SF_SUB_ID0, AST_MASK, DST_MASK, SF_SENSOR_SCAN_TIME, soft_fault_event_scan, pid);
+    struct dms_node s_node = SOFT_NODE_DEF(DMS_DEV_TYPE_BASE_SERVCIE, "davinci", s_dev->dev_id, s_dev->node_id,
+                                           soft_ops);
+    struct dms_sensor_object_cfg s_cfg = SOFT_SENSOR_DEF(DMS_SEN_TYPE_HEARTBEAT, "dev0_heartbeat", 0UL, user_id,
+                                                         SF_SUB_ID0, AST_MASK, DST_MASK, SF_SENSOR_SCAN_TIME,
+                                                         soft_fault_event_scan, pid);
 
     ret = snprintf_s(s_cfg.sensor_name, len, len - 1, "dev%u_heartbeat", s_dev->dev_id);
     if (ret <= 0) {
@@ -266,8 +268,8 @@ STATIC int heartbeat_dev_node_config(unsigned int user_id, struct soft_dev *s_de
         return ret;
     }
 
-    s_cfg.private_data =
-        soft_combine_private_data(s_dev->dev_id, user_id, DMS_DEV_TYPE_BASE_SERVCIE, s_dev->node_id, SF_SUB_ID0);
+    s_cfg.private_data = soft_combine_private_data(s_dev->dev_id, user_id, DMS_DEV_TYPE_BASE_SERVCIE, s_dev->node_id,
+                                                   SF_SUB_ID0);
     /* for kernel space, not used the pid, set default value -1 */
     s_cfg.pid = -1;
     s_node.pid = -1;
@@ -294,7 +296,7 @@ int heartbeat_dev_register(u32 dev_id)
         return 0;
     }
 
-    s_dev =  dbl_kzalloc(sizeof(struct soft_dev), KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
+    s_dev = dbl_kzalloc(sizeof(struct soft_dev), KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
     if (s_dev == NULL) {
         soft_drv_err("kzalloc soft_dev failed.\n");
         ka_task_mutex_unlock(&soft_ctrl->mutex[dev_id]);
@@ -376,17 +378,19 @@ STATIC int heart_beat_urgent_judge(u32 dev_id)
         return -EINVAL;
     }
 
-    ret = devdrv_rao_read(dev_id, DEVDRV_RAO_CLIENT_DEVMNG , dev_info->shm_head->head_info.offset_heartbeat, sizeof(U_SHM_INFO_HEARTBEAT));
+    ret = devdrv_rao_read(dev_id, DEVDRV_RAO_CLIENT_DEVMNG, dev_info->shm_head->head_info.offset_heartbeat,
+                          sizeof(U_SHM_INFO_HEARTBEAT));
     if (ret != 0) {
         devdrv_put_dev_info_occupy(dev_info);
         rao_read_fail_count[dev_id]++;
         dms_warn("Can not read rao data. (dev_id=%u; ret=%d; fail_cnt=%u)\n", dev_id, ret, rao_read_fail_count[dev_id]);
-  	    return DRV_ERROR_NONE;
+        return DRV_ERROR_NONE;
     } else {
         rao_read_fail_count[dev_id] = 0;
     }
 
-    if ((dev_info->shm_heartbeat->magic == DEVMNG_HEART_BEAT_MAGIC) && (dev_info->shm_heartbeat->heartbeat_lost_flag == DEVMNG_HEART_BEAT_LOST)) {
+    if ((dev_info->shm_heartbeat->magic == DEVMNG_HEART_BEAT_MAGIC) &&
+        (dev_info->shm_heartbeat->heartbeat_lost_flag == DEVMNG_HEART_BEAT_LOST)) {
         devdrv_put_dev_info_occupy(dev_info);
         ret = DRV_ERROR_NONE;
         goto HEARTBEAT_LOST;
@@ -410,7 +414,7 @@ STATIC int heart_beat_urgent_event(u64 dev_id)
     /* check device heartbeat */
     ret = heart_beat_urgent_judge((u32)dev_id);
     if (ret != 0) {
-        dms_err("The device does no exist! (device=%llu) \n", dev_id);
+        dms_err("The device does not exist. (dev_id=%llu)\n", dev_id);
         return ret;
     }
 
@@ -427,8 +431,7 @@ int heart_beat_register_urgent_timer(unsigned int dev_id)
     if (heartbeat_info == NULL) {
         return 0;
     }
-    if ((!uda_is_pf_dev(dev_id)) ||
-        (devdrv_get_connect_protocol(dev_id) != CONNECT_PROTOCOL_UB)) {
+    if ((!uda_is_pf_dev(dev_id)) || (devdrv_get_connect_protocol(dev_id) != CONNECT_PROTOCOL_UB)) {
         return 0;
     }
 

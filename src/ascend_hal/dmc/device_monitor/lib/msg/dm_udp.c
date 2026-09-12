@@ -33,13 +33,14 @@
 #define STATIC static
 #endif
 
-#define DM_UDP_MSG_RETRY_TIMES      3000    /* timeout 30s */
-#define DM_UDP_MSG_RETRY_ONCE       10000   /* 10ms */
+#define DM_UDP_MSG_RETRY_TIMES 3000 /* timeout 30s */
+#define DM_UDP_MSG_RETRY_ONCE 10000 /* 10ms */
+#define DM_TIMEOUT_TEN_TIMES 10
+
 typedef union tag_DMP_CMSGHDR_U {
     struct cmsghdr cmh;
     char control[CMSG_SPACE(sizeof(struct ucred)) + CMSG_SPACE(sizeof(int))];
 } DMP_CMSGHDR_U;
-
 
 STATIC void __format_udp_msg(UDP_MSG_T *udp_msg, DM_MSG_TYPE msg_type, const DM_UDP_ADDR_ST *dst_addr,
                              const DM_UDP_ADDR_ST *src_addr, const DM_MSG_ST *msg, signed long msgid)
@@ -99,7 +100,7 @@ STATIC int __dm_send_msg(int sockfd, void *buf, unsigned int buflen, struct sock
     }
 
     if (ret == -1) {
-        DEV_MON_ERR("sendmsg fail. (errno=%d; timeout=%d0ms)\n", err_buf, timeout);
+        DEV_MON_ERR("sendmsg fail. (errno=%d; timeout=%dms)\n", err_buf, timeout * DM_TIMEOUT_TEN_TIMES);
         return err_buf;
     }
 
@@ -107,7 +108,7 @@ STATIC int __dm_send_msg(int sockfd, void *buf, unsigned int buflen, struct sock
 }
 
 STATIC int __dm_udp_send(DM_INTF_S *intf, DM_MSG_TYPE msg_type, DM_ADDR_ST *addr, unsigned int addr_len,
-    const DM_MSG_ST *msg, signed long msgid)
+                         const DM_MSG_ST *msg, signed long msgid)
 {
     DM_UDP_ADDR_ST *to_addr = NULL;
     DM_UDP_ADDR_ST *my_addr = NULL;
@@ -151,15 +152,15 @@ STATIC int __dm_udp_send(DM_INTF_S *intf, DM_MSG_TYPE msg_type, DM_ADDR_ST *addr
 }
 
 STATIC int __dm_udp_settime_send(DM_INTF_S *intf, DM_MSG_TYPE msg_type, DM_ADDR_ST *addr, unsigned int addr_len,
-    const DM_MSG_ST *msg, int retries, unsigned int retry_time_ms, signed long msgid)
+                                 const DM_MSG_ST *msg, int retries, unsigned int retry_time_ms, signed long msgid)
 {
     (void)retries;
     (void)retry_time_ms;
     return __dm_udp_send(intf, msg_type, addr, addr_len, msg, msgid);
 }
 
-STATIC int __dm_udp_recv_set_irecv_data(UDP_MSG_T *msg,  DM_RECV_ST *irecv, struct sockaddr_un from,
-    socklen_t fromlen, struct ucred *cred)
+STATIC int __dm_udp_recv_set_irecv_data(UDP_MSG_T *msg, DM_RECV_ST *irecv, struct sockaddr_un from, socklen_t fromlen,
+                                        struct ucred *cred)
 {
     DM_UDP_ADDR_ST *addr = NULL;
     int err_buf;
@@ -194,8 +195,7 @@ STATIC int __dm_udp_recv_set_irecv_data(UDP_MSG_T *msg,  DM_RECV_ST *irecv, stru
     /* copy the src data to recv msg */
     if ((irecv->msg.data_len <= MAX_UDP_MSG_BUF) && (msg->data_len <= MAX_UDP_MSG_BUF) &&
         (irecv->msg.data_len >= msg->data_len)) {
-        ret = memcpy_s(irecv->msg.data, irecv->msg.data_len, msg->data,
-                       msg->data_len);
+        ret = memcpy_s(irecv->msg.data, irecv->msg.data_len, msg->data, msg->data_len);
         err_buf = errno;
         DRV_CHECK_RETV_DO_SOMETHING((ret == 0), err_buf, DEV_MON_ERR("memcpy_s error\n"));
     }
@@ -205,7 +205,7 @@ STATIC int __dm_udp_recv_set_irecv_data(UDP_MSG_T *msg,  DM_RECV_ST *irecv, stru
 }
 
 STATIC int __dm_recv_msg_with_cred(int sockfd, struct ucred *cred, void *buf, unsigned int buflen,
-    struct sockaddr_un *from, socklen_t *fromlen)
+                                   struct sockaddr_un *from, socklen_t *fromlen)
 {
     struct cmsghdr *cmsg = NULL;
     struct msghdr msg = {0};
@@ -237,7 +237,7 @@ STATIC int __dm_recv_msg_with_cred(int sockfd, struct ucred *cred, void *buf, un
     }
 
     if (ret == -1) {
-        DEV_MON_ERR("recvmsg fail. (errno=%d, timeout=%d0ms)\n", err_buf, timeout);
+        DEV_MON_ERR("recvmsg fail. (errno=%d; timeout=%dms)\n", err_buf, timeout * DM_TIMEOUT_TEN_TIMES);
         return err_buf;
     }
 
@@ -343,8 +343,7 @@ STATIC int __dm_udp_open(DM_INTF_S *intf)
     }
 
 #ifndef DEV_MON_UT
-    if ((fcntl(sockfd, F_SETFL,  O_NONBLOCK) < 0) ||
-        (fcntl(sockfd, F_SETFD,  FD_CLOEXEC) < 0)) {
+    if ((fcntl(sockfd, F_SETFL, O_NONBLOCK) < 0) || (fcntl(sockfd, F_SETFD, FD_CLOEXEC) < 0)) {
         err_buf = errno;
         (void)close(sockfd);
         sockfd = -1;
@@ -406,12 +405,12 @@ STATIC int dm_udp_init_check_para(DM_CB_S *cb, const DM_ADDR_ST *my_addr, const 
 }
 
 static int dm_udp_init_intf(DM_INTF_S **intf, DM_MSG_TIMEOUT_HNDL_T timeout_hndl, DM_CB_S *cb,
-    const DM_ADDR_ST *my_addr, const char *name, int name_len)
+                            const DM_ADDR_ST *my_addr, const char *name, int name_len)
 {
     int ret;
 
     if (name_len > DM_INTF_NAME_LEN) {
-        DEV_MON_ERR("name len %d is too large than %d\n", name_len, DM_INTF_NAME_LEN);
+        DEV_MON_ERR("name len exceeds max. (name_len=%d; max=%d)\n", name_len, DM_INTF_NAME_LEN);
         return EINVAL;
     }
 
@@ -429,9 +428,7 @@ static int dm_udp_init_intf(DM_INTF_S **intf, DM_MSG_TIMEOUT_HNDL_T timeout_hndl
     }
 
     ret = strncpy_s((*intf)->name, sizeof((*intf)->name), name, sizeof((*intf)->name) - 1);
-    DRV_CHECK_RETV_DO_SOMETHING((ret == 0), ret, free(*intf);
-                                *intf = NULL;
-                                DEV_MON_ERR("strncpy_s error\n"));
+    DRV_CHECK_RETV_DO_SOMETHING((ret == 0), ret, free(*intf); *intf = NULL; DEV_MON_ERR("strncpy_s error\n"));
     (*intf)->name[DM_INTF_NAME_LEN - 1] = '\0';
     (*intf)->my_addr = *my_addr;
     ret = __dm_udp_open(*intf);
@@ -462,7 +459,7 @@ int dm_udp_init(DM_INTF_S **my_intf, DM_CB_S *cb, DM_MSG_TIMEOUT_HNDL_T timeout_
     char name[sizeof(intf->name)] = {0};
     int ret;
 
-    ret  = dm_udp_init_check_para(cb, my_addr, my_name, name_len);
+    ret = dm_udp_init_check_para(cb, my_addr, my_name, name_len);
     DRV_CHECK_RETV_DO_SOMETHING((ret == 0), ret, DEV_MON_ERR("udp init fail ret = %d\n", ret));
 
     ret = strncpy_s(name, sizeof(intf->name), (const char *)(my_name ? my_name : DM_UDP_INTF), sizeof(name) - 1);

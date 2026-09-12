@@ -52,7 +52,7 @@ STATIC unsigned int g_dm_hdc_run = 1;
 
 typedef struct recv_msg_st {
     HDC_SESSION session;
-    DM_INTF_S* intf;
+    DM_INTF_S *intf;
 } RECV_MSG_ST;
 
 STATIC int dm_hdc_get_intf_name(int dev_id, char *intf_name, int name_len)
@@ -105,8 +105,8 @@ STATIC int __hdc_write_to_pipe(DM_INTF_S *intf, DM_MSG_TYPE msg_type, void *sess
             intf->stats.pipe_wr_fail++;
             if ((intf->stats.pipe_wr_fail >= DM_INTF_PIPE_WR_FAILED_CNT) &&
                 (intf->stats.pipe_wr_fail <= DM_INTF_PIPE_WR_FAILED_MAX)) {
-                DEV_MON_ERR("Unable to write to the pipe. (errno=%d; pipe_wr_fail=%u)\r\n",
-                    err_buf, intf->stats.pipe_wr_fail);
+                DEV_MON_ERR("Unable to write to the pipe. (errno=%d; pipe_wr_fail=%u)\r\n", err_buf,
+                            intf->stats.pipe_wr_fail);
             }
         } else {
             DEV_MON_ERR("Failed to write to the pipe. (errno=%d)\r\n", err_buf);
@@ -130,8 +130,8 @@ STATIC int __dm_session_hdc_recv_proc(HDC_SESSION session, struct drvHdcMsg **p_
 
     /* retry drvHdcRecv until exceed max num */
     while (recv_cnt < MAX_HDC_RECV_RETRY) {
-        ret = halHdcRecv(session, *p_rcvmsg, DM_HDC_RECV_BUF_LEN, HDC_FLAG_WAIT_TIMEOUT,
-                         &rcvbuf_count, HDC_MSG_TIMEOUT);
+        ret = halHdcRecv(session, *p_rcvmsg, DM_HDC_RECV_BUF_LEN, HDC_FLAG_WAIT_TIMEOUT, &rcvbuf_count,
+                         HDC_MSG_TIMEOUT);
         if (ret == OK) {
             break;
         } else if (ret == DRV_ERROR_WAIT_TIMEOUT) {
@@ -223,7 +223,7 @@ STATIC void hdc_thread_num_limit(void)
 
     while (g_hdc_thread_num >= HDC_ACCEPT_THREAD_MAX) {
         if (log_cnt % HDC_THREAD_WAIT_LOG_CNT == 0) {
-            DEV_MON_WARNING("HDC thread_num exceed limit, (thread_num=%d)\n", g_hdc_thread_num);
+            DEV_MON_WARNING("HDC thread_num exceeds limit. (thread_num=%d)\n", g_hdc_thread_num);
         }
         log_cnt++;
         (void)usleep(HDC_THREAD_WAIT_INTERVAL);
@@ -237,7 +237,7 @@ STATIC void *__dm_server_recv_msg_proc(void *arg)
 {
     int ret;
     HDC_SESSION session = NULL;
-    DM_INTF_S* intf = NULL;
+    DM_INTF_S *intf = NULL;
     RECV_MSG_ST *recv_msg = NULL;
 
     (void)prctl(PR_SET_NAME, "server_recv_msg_proc");
@@ -302,7 +302,7 @@ STATIC void *__dm_server_accept_proc(void *arg)
         (void)pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
         (void)pthread_attr_setstacksize(&attr, DEV_MON_ROOT_STACK_SIZE);
 
-        if ((pthread_create(&server_thread, &attr, __dm_server_recv_msg_proc, (void*)recv_msg_proc_st) != 0)) {
+        if ((pthread_create(&server_thread, &attr, __dm_server_recv_msg_proc, (void *)recv_msg_proc_st) != 0)) {
             DEV_MON_ERR("pthread_create fail errno=%d:%s\n", errno, strerror(errno));
             (void)drvHdcSessionClose(session);
             (void)pthread_attr_destroy(&attr);
@@ -414,16 +414,16 @@ STATIC int dm_hdc_session_connect(int peer_node, int peer_devid, HDC_CLIENT clie
 
     ret = drvGetDmpStarted((uint32_t)peer_devid, &dmp_started);
     if (ret != OK) {
-        DEV_MON_ERR("%s %d err, devid %d ret %d, dmp_started %u\n", __FUNCTION__, __LINE__,
-                    peer_devid, ret, dmp_started);
+        DEV_MON_ERR("%s %d err, devid %d ret %d, dmp_started %u\n", __FUNCTION__, __LINE__, peer_devid, ret,
+                    dmp_started);
         return DRV_ERROR_DEVICE_NOT_READY;
     }
 
 retry:
     ret = drvHdcSessionConnect(0, peer_devid, client, session);
     /* need to retry when Session connection not listen */
-    if ((ret == DRV_ERROR_REMOTE_NOT_LISTEN || ret == DRV_ERROR_DEVICE_NOT_READY) &&
-        (dmp_started == false) && (retry_i < DMHDC_CLIENT_SEND_RETRYTIME)) {
+    if ((ret == DRV_ERROR_REMOTE_NOT_LISTEN || ret == DRV_ERROR_DEVICE_NOT_READY) && (dmp_started == false) &&
+        (retry_i < DMHDC_CLIENT_SEND_RETRYTIME)) {
         retry_i++;
         (void)sleep(1);
         goto retry;
@@ -433,15 +433,15 @@ retry:
         goto retry;
     }
     if (ret != OK) {
-        DEV_MON_ERR("%s %d failed.(dev_id=%d ret=%d, retry_i=%d, retry_j=%d)\n", __FUNCTION__, __LINE__,
-                    peer_devid, ret, retry_i, retry_j);
+        DEV_MON_ERR("%s %d failed.(dev_id=%d ret=%d, retry_i=%d, retry_j=%d)\n", __FUNCTION__, __LINE__, peer_devid,
+                    ret, retry_i, retry_j);
         return ret;
     }
     return ret;
 }
 
-STATIC int dm_hdc_send_msg(const DM_ADDR_ST *addr, DM_INTF_S *intf, const DM_MSG_ST *msg,
-    DM_MSG_TYPE msg_type, signed long msgid, HDC_SESSION session)
+STATIC int dm_hdc_send_msg(const DM_ADDR_ST *addr, DM_INTF_S *intf, const DM_MSG_ST *msg, DM_MSG_TYPE msg_type,
+                           signed long msgid, HDC_SESSION session)
 {
     HDC_MSG_ST *hdc_msg = NULL;
     struct drvHdcMsg *p_msg_snd = NULL;
@@ -483,8 +483,8 @@ STATIC int dm_hdc_send_msg(const DM_ADDR_ST *addr, DM_INTF_S *intf, const DM_MSG
         break;
     }
     if (ret != OK) {
-        DEV_MON_ERR("Sending message was abnormal. (func=\"%s\"; line=%d; retry_count=%d; ret=%d)\n",
-                    __FUNCTION__, __LINE__, retry_times, ret);
+        DEV_MON_ERR("Sending message was abnormal. (func=\"%s\"; line=%d; retry_count=%d; ret=%d)\n", __FUNCTION__,
+                    __LINE__, retry_times, ret);
         goto FREE_MSG_SND;
     }
 
@@ -546,8 +546,8 @@ STATIC int __dm_hdc_server_send(DM_INTF_S *intf, DM_MSG_TYPE msg_type, DM_ADDR_S
     session = (HDC_SESSION)(uintptr_t)dstaddr->session;
 
     if (dstaddr->hdc_work_status == HDC_ADDR_CLOSE) {
-        DEV_MON_WARNING("__dm_hdc_server_send: session already close. hdc_status_status = %d\n",
-            dstaddr->hdc_work_status);
+        DEV_MON_WARNING("__dm_hdc_server_send: session already close. (hdc_work_status=%d)\n",
+                        dstaddr->hdc_work_status);
         return DRV_ERROR_INNER_ERR;
     }
 
@@ -645,24 +645,18 @@ STATIC int dm_get_session_propery(DM_RECV_ST *irecv, HDC_MSG_ST *msg)
     int ret;
 
     ret = halHdcGetSessionAttr((void *)(uintptr_t)msg->session, HDC_SESSION_ATTR_UID, &root_priv);
-    DRV_CHECK_RETV_DO_SOMETHING((ret == 0), -1, free(msg);
-        msg = NULL;
-        DEV_MON_ERR("get session uid failed and ret=%d\n", ret);
-        );
+    DRV_CHECK_RETV_DO_SOMETHING((ret == 0), -1, free(msg); msg = NULL;
+                                DEV_MON_ERR("get session uid failed and ret=%d\n", ret););
     irecv->host_root = root_priv;
 
     ret = halHdcGetSessionAttr((void *)(uintptr_t)msg->session, HDC_SESSION_ATTR_VFID, &vfid);
-    DRV_CHECK_RETV_DO_SOMETHING((ret == 0), -1, free(msg);
-        msg = NULL;
-        DEV_MON_ERR("get session vfid failed and ret=%d\n", ret);
-        );
+    DRV_CHECK_RETV_DO_SOMETHING((ret == 0), -1, free(msg); msg = NULL;
+                                DEV_MON_ERR("get session vfid failed and ret=%d\n", ret););
     irecv->vfid = (unsigned int)vfid;
 
     ret = halHdcGetSessionAttr((void *)(uintptr_t)msg->session, HDC_SESSION_ATTR_RUN_ENV, &run_env);
-    DRV_CHECK_RETV_DO_SOMETHING((ret == 0), -1, free(msg);
-        msg = NULL;
-        DEV_MON_ERR("get session run env failed and ret=%d\n", ret);
-        );
+    DRV_CHECK_RETV_DO_SOMETHING((ret == 0), -1, free(msg); msg = NULL;
+                                DEV_MON_ERR("get session run env failed and ret=%d\n", ret););
     switch (run_env) {
         case RUN_ENV_PHYSICAL_CONTAINER:
         case RUN_ENV_VIRTUAL_CONTAINER:
@@ -670,7 +664,7 @@ STATIC int dm_get_session_propery(DM_RECV_ST *irecv, HDC_MSG_ST *msg)
             irecv->session_prop = CONTAINER_PROP;
             break;
 #endif
-             /* except exceptions and host, the rest are guest */
+            /* except exceptions and host, the rest are guest */
         case RUN_ENV_VIRTUAL:
             irecv->session_prop = GUEST_PROP;
             break;
@@ -744,8 +738,7 @@ STATIC int __dm_hdc_recv(DM_INTF_S *intf, int fd, short revents, DM_RECV_ST *ire
         /* get session property from hdc in server */
         if (myaddr->hdc_type == DMP_SERVER) {
             ret = dm_get_session_propery(irecv, msg);
-            DRV_CHECK_RETV_DO_SOMETHING((ret == 0), ret,
-                                        (void)drvHdcSessionClose((HDC_SESSION)addr->session);
+            DRV_CHECK_RETV_DO_SOMETHING((ret == 0), ret, (void)drvHdcSessionClose((HDC_SESSION)addr->session);
                                         DEV_MON_ERR("get session property failed.\n"));
         }
 
@@ -754,18 +747,17 @@ STATIC int __dm_hdc_recv(DM_INTF_S *intf, int fd, short revents, DM_RECV_ST *ire
         }
 
         if (irecv->msg.data_len && (irecv->msg.data_len <= DM_MSG_DATA_MAX)) {
-            ret = memcpy_s(irecv->msg.data, irecv->msg.data_len, msg->data,
-                           irecv->msg.data_len);
-            DRV_CHECK_RETV_DO_SOMETHING((ret == 0), ret, free(msg);
-                                        msg = NULL;
+            ret = memcpy_s(irecv->msg.data, irecv->msg.data_len, msg->data, irecv->msg.data_len);
+            DRV_CHECK_RETV_DO_SOMETHING((ret == 0), ret, free(msg); msg = NULL;
                                         (void)drvHdcSessionClose((HDC_SESSION)addr->session);
                                         DEV_MON_ERR("memcpy_s error\n"));
         }
 
         // update content data_len for security reason
         msg_content = (DEV_MP_MSG_ST *)irecv->msg.data;
-        msg_content->length = (unsigned int)(irecv->msg.data_len < (unsigned short)(sizeof(DEV_MP_MSG_ST)) ? 0 :
-            irecv->msg.data_len - sizeof(DEV_MP_MSG_ST));
+        msg_content->length = (unsigned int)(irecv->msg.data_len < (unsigned short)(sizeof(DEV_MP_MSG_ST)) ?
+                                                 0 :
+                                                 irecv->msg.data_len - sizeof(DEV_MP_MSG_ST));
         free(msg);
         msg = NULL;
     }
@@ -851,9 +843,7 @@ int dm_hdc_init(DM_INTF_S **my_intf, DM_CB_S *cb, DM_MSG_TIMEOUT_HNDL_T timeout_
     }
 
     ret = strncpy_s(intf->name, sizeof(intf->name), name, sizeof(intf->name) - 1);
-    DRV_CHECK_RETV_DO_SOMETHING((ret == 0), ret, free(intf);
-                                intf = NULL;
-                                DEV_MON_ERR("strncpy_s error\n"));
+    DRV_CHECK_RETV_DO_SOMETHING((ret == 0), ret, free(intf); intf = NULL; DEV_MON_ERR("strncpy_s error\n"));
     intf->name[DM_INTF_NAME_LEN - 1] = '\0';
     intf->my_addr = *my_addr;
     ret = __dm_hdc_open(intf);
@@ -869,8 +859,7 @@ int dm_hdc_init(DM_INTF_S **my_intf, DM_CB_S *cb, DM_MSG_TIMEOUT_HNDL_T timeout_
     channel_max_trans_len = capacity.maxSegment > DM_MSG_DATA_MAX ? DM_MSG_DATA_MAX : capacity.maxSegment;
     DRV_CHECK_RETV_DO_SOMETHING((channel_max_trans_len > (unsigned int)HDCMSG_HEAD_SIZE), -EINVAL,
                                 DEV_MON_ERR("Hdc channel length is abnormal.\n");
-                                __dm_hdc_close(intf);
-                                free(intf); intf = NULL);
+                                __dm_hdc_close(intf); free(intf); intf = NULL);
     intf->max_trans_len = (unsigned int)(channel_max_trans_len - HDCMSG_HEAD_SIZE);
     intf->recv_msg = __dm_hdc_recv;
     intf->send_msg = __dm_hdc_send;

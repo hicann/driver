@@ -50,7 +50,7 @@ static struct hb_write_block g_hb_write_block[DEVICE_NUM_MAX] = {{0}};
 static struct hb_write_timer g_hb_write_timer = {{{{0}}}, {{0}}};
 #endif
 
-struct hb_write_block* hb_get_write_item(unsigned int dev_id)
+struct hb_write_block *hb_get_write_item(unsigned int dev_id)
 {
     return &g_hb_write_block[dev_id];
 }
@@ -71,7 +71,7 @@ int hb_update_heartbeat_count(void)
         ret = hb_set_heart_beat_count(dev_id, g_hb_write_block[dev_id].count);
         if (ret != 0) {
             soft_drv_err("Device heartbeat set failed. (count=%llu; ret=%d; device=%u)\n",
-                            g_hb_write_block[dev_id].count, ret, dev_id);
+                         g_hb_write_block[dev_id].count, ret, dev_id);
             return ret;
         }
     }
@@ -137,15 +137,17 @@ STATIC void heart_beart_write_dfx_handler(ka_work_struct_t *work)
     struct hb_write_timer *timer_info = NULL;
 
     timer_info = ka_container_of(work, struct hb_write_timer, work);
-    soft_drv_warn("Don't write heartbeat for a long time."
-        "(write heartbeat ret=%d; tatol forget count=%llu; last normal write time =%llds; last write time=%llds)\n",
-        timer_info->write_ret, timer_info->forget_count, timer_info->last_normal_time.tv_sec, timer_info->last_write_time.tv_sec);
+    soft_drv_warn(
+        "Don't write heartbeat for a long time."
+        "(write heartbeat ret=%d; total forget count=%llu; last_normal_write_time=%llds; last_write_time=%llds)\n",
+        timer_info->write_ret, timer_info->forget_count, timer_info->last_normal_time.tv_sec,
+        timer_info->last_write_time.tv_sec);
 }
 #endif
 
 void heart_beat_write_status_init(u32 dev_id)
 {
-    struct hb_write_block* write_item = NULL;
+    struct hb_write_block *write_item = NULL;
 
     write_item = hb_get_write_item(dev_id);
     if (write_item == NULL) {
@@ -157,7 +159,7 @@ void heart_beat_write_status_init(u32 dev_id)
 
 void heart_beat_write_status_uninit(u32 dev_id)
 {
-    struct hb_write_block* write_item = NULL;
+    struct hb_write_block *write_item = NULL;
 
     write_item = hb_get_write_item(dev_id);
     if (write_item == NULL) {
@@ -181,7 +183,8 @@ int heart_beat_write_timer_init(void)
     ka_system_hrtimer_init(&g_hb_write_timer.timer, KA_CLOCK_MONOTONIC, KA_HRTIMER_MODE_REL_TYPE);
     g_hb_write_timer.timer.function = heart_beat_write_count;
     KA_TASK_INIT_WORK(&g_hb_write_timer.work, heart_beart_write_dfx_handler);
-    ka_system_hrtimer_start(&g_hb_write_timer.timer, ka_system_ktime_set(HEART_BEAT_TIMER_EXPIRE_SEC, 0), KA_HRTIMER_MODE_REL_TYPE);
+    ka_system_hrtimer_start(&g_hb_write_timer.timer, ka_system_ktime_set(HEART_BEAT_TIMER_EXPIRE_SEC, 0),
+                            KA_HRTIMER_MODE_REL_TYPE);
     return DRV_ERROR_NONE;
 #else
     return 0;

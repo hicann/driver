@@ -96,16 +96,16 @@ int devdrv_manager_trans_and_check_id(u32 logical_dev_id, u32 *physical_dev_id, 
         return ret;
     }
     if (*physical_dev_id >= ASCEND_DEV_MAX_NUM) {
-        devdrv_drv_err("Wrong device id. (physical_dev_id = %u\n", *physical_dev_id);
+        devdrv_drv_err("Wrong device id. (physical_dev_id=%u)\n", *physical_dev_id);
         return -EINVAL;
     }
     if ((devdrv_get_manager_info() == NULL) || devdrv_get_devdrv_info_array(*physical_dev_id) == NULL) {
-        devdrv_drv_err("Device manager is not initialized. (dev_id=%u; device_manager_info=%d)\n",
-            *physical_dev_id, (devdrv_get_manager_info() == NULL));
+        devdrv_drv_err("Device manager is not initialized. (dev_id=%u; device_manager_info=%d)\n", *physical_dev_id,
+                       (devdrv_get_manager_info() == NULL));
         return -EINVAL;
     }
     if (devdrv_get_devdrv_info_array(*physical_dev_id)->status == 1) {
-        devdrv_drv_warn("The device status is 1. (dev_id=%u)\n", *physical_dev_id);
+        devdrv_drv_warn("The device status is DEVICE_STATUS_REMOVED. (dev_id=%u; status=%d)\n", *physical_dev_id, 1);
         return -EBUSY;
     }
     return 0;
@@ -116,14 +116,14 @@ STATIC int devdrv_manager_get_container_devids(unsigned long arg)
     struct devdrv_manager_devids *hccl_devinfo = NULL;
     int ret;
 
-    if ((ka_task_get_current_nsproxy() == NULL) || (!devdrv_manager_container_is_host_system(ka_task_get_current_mnt_ns()))) {
+    if ((ka_task_get_current_nsproxy() == NULL) ||
+        (!devdrv_manager_container_is_host_system(ka_task_get_current_mnt_ns()))) {
         devdrv_drv_err("Do not have permission in container or virtual machine.\n");
         return -EPERM;
     }
 
-    hccl_devinfo =
-        (struct devdrv_manager_devids *)dbl_kzalloc(sizeof(struct devdrv_manager_devids),
-            KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
+    hccl_devinfo = (struct devdrv_manager_devids *)dbl_kzalloc(sizeof(struct devdrv_manager_devids),
+                                                               KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
     if (hccl_devinfo == NULL) {
         devdrv_drv_err("Alloc memory for hccl device info failed.\n");
         return -ENOMEM;
@@ -163,7 +163,7 @@ STATIC int devdrv_manager_get_devinfo(unsigned long arg)
     int ret, connect_type;
 
     hccl_devinfo = (struct devdrv_manager_hccl_devinfo *)dbl_kzalloc(sizeof(struct devdrv_manager_hccl_devinfo),
-        KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
+                                                                     KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
     if (hccl_devinfo == NULL) {
         devdrv_drv_err("Alloc memory for hccl device info failed.\n");
         return -ENOMEM;
@@ -256,8 +256,7 @@ STATIC int devdrv_manager_get_devinfo(unsigned long arg)
 #if ((defined CFG_FEATURE_PCIE_HOST_DEVICE_COMM) || (defined CFG_FEATURE_UB_HOST_DEVICE_COMM))
     connect_type = devdrv_get_connect_protocol(phys_id);
     if (connect_type < 0) {
-        devdrv_drv_err("Get host device connect type failed. (dev_id=%u; type=%d)\n",
-            phys_id, connect_type);
+        devdrv_drv_err("Get host device connect type failed. (dev_id=%u; type=%d)\n", phys_id, connect_type);
         ret = -EINVAL;
         goto HOT_RESET_CNT_EXIT;
     }
@@ -267,8 +266,8 @@ STATIC int devdrv_manager_get_devinfo(unsigned long arg)
     hccl_devinfo->host_device_connect_type = connect_type;
 #ifdef CFG_FEATURE_PG
 #ifndef CFG_FEATURE_REFACTOR
-    ret = strncpy_s(hccl_devinfo->soc_version, SOC_VERSION_LENGTH,
-                    dev_info->pg_info.spePgInfo.socVersion, SOC_VERSION_LEN - 1);
+    ret = strncpy_s(hccl_devinfo->soc_version, SOC_VERSION_LENGTH, dev_info->pg_info.spePgInfo.socVersion,
+                    SOC_VERSION_LEN - 1);
 #else
     ret = strncpy_s(hccl_devinfo->soc_version, SOC_VERSION_LENGTH, dev_info->soc_version, SOC_VERSION_LEN - 1);
 #endif
@@ -360,11 +359,11 @@ static int devdrv_bind_master_para_check(struct devdrv_ioctl_para_bind_host_pid 
     }
 
     para_info->sign[DEVDRV_SIGN_LEN - 1] = '\0';
-    if ((para_info->len != PROCESS_SIGN_LENGTH) || (para_info->mode >= AICPUFW_MAX_PLAT) ||
-        (para_info->cp_type < 0) || (para_info->cp_type >= DEVDRV_PROCESS_CPTYPE_MAX)) {
+    if ((para_info->len != PROCESS_SIGN_LENGTH) || (para_info->mode >= AICPUFW_MAX_PLAT) || (para_info->cp_type < 0) ||
+        (para_info->cp_type >= DEVDRV_PROCESS_CPTYPE_MAX)) {
         devdrv_drv_err("Invalid parameter. (len=%u; mode=%d; cp_type=%d; dev_id=%u; vf_id=%u; master_pid=%d).\n",
-            para_info->len, para_info->mode, para_info->cp_type, para_info->chip_id,
-            para_info->vfid, para_info->host_pid);
+                       para_info->len, para_info->mode, para_info->cp_type, para_info->chip_id, para_info->vfid,
+                       para_info->host_pid);
         return -EINVAL;
     }
 
@@ -416,8 +415,8 @@ STATIC int devdrv_fop_bind_host_pid(ka_file_t *filep, unsigned int cmd, unsigned
     if (ret) {
         cost_stat.bind_end = ka_system_ktime_get();
         bind_cost_print(&cost_stat);
-        devdrv_drv_err("bind_hostpid error. dev_id:%u, ret:%d, host_pid:%d, cp_type:%d, current_pid:%d\n",
-            node_id, ret, para_info.host_pid, para_info.cp_type, ka_task_get_current_tgid());
+        devdrv_drv_err("bind_hostpid error. dev_id:%u, ret:%d, host_pid:%d, cp_type:%d, current_pid:%d\n", node_id, ret,
+                       para_info.host_pid, para_info.cp_type, ka_task_get_current_tgid());
         return ret;
     }
 
@@ -426,7 +425,7 @@ STATIC int devdrv_fop_bind_host_pid(ka_file_t *filep, unsigned int cmd, unsigned
 
 STATIC int devdrv_get_error_code(ka_file_t *filep, unsigned int cmd, unsigned long arg)
 {
-    struct devdrv_error_code_para user_arg = { 0, { 0 }, 0 };
+    struct devdrv_error_code_para user_arg = {0, {0}, 0};
     struct devdrv_info *dev_info = NULL;
     u32 phys_id, vfid;
     int ret, i;
@@ -470,19 +469,18 @@ STATIC int devdrv_get_error_code(ka_file_t *filep, unsigned int cmd, unsigned lo
     return 0;
 }
 
-int devmng_dms_get_event_code(u32 devid, u32 *health_code, u32 health_len,
-    struct shm_event_code *event_code, u32 event_len)
+int devmng_dms_get_event_code(u32 devid, u32 *health_code, u32 health_len, struct shm_event_code *event_code,
+                              u32 event_len)
 {
     struct devdrv_info *dev_info = NULL;
     int i, cnt, ret;
 
-    if ((devid >= ASCEND_DEV_MAX_NUM) || (health_code == NULL) ||
-        (health_len != VMNG_VDEV_MAX_PER_PDEV) || (event_code == NULL) ||
-        (event_len != DEVMNG_SHM_INFO_EVENT_CODE_LEN)) {
+    if ((devid >= ASCEND_DEV_MAX_NUM) || (health_code == NULL) || (health_len != VMNG_VDEV_MAX_PER_PDEV) ||
+        (event_code == NULL) || (event_len != DEVMNG_SHM_INFO_EVENT_CODE_LEN)) {
         devdrv_drv_err("Invalid parameter. (devid=%u; health_code=\"%s\"; health_len=%u; "
-                       "event_code=\"%s\"; event_len=%u)\n", devid,
-                       (health_code == NULL) ? "NULL" : "OK", health_len,
-                       (event_code == NULL) ? "NULL" : "OK", event_len);
+                       "event_code=\"%s\"; event_len=%u)\n",
+                       devid, (health_code == NULL) ? "NULL" : "OK", health_len, (event_code == NULL) ? "NULL" : "OK",
+                       event_len);
         return -EINVAL;
     }
 
@@ -502,8 +500,8 @@ int devmng_dms_get_event_code(u32 devid, u32 *health_code, u32 health_len,
     for (i = 0; i < VMNG_VDEV_MAX_PER_PDEV; i++) {
         health_code[i] = dev_info->shm_status->dms_health_status[i];
     }
-    cnt = (dev_info->shm_status->event_cnt > DEVMNG_SHM_INFO_EVENT_CODE_LEN) ?
-          DEVMNG_SHM_INFO_EVENT_CODE_LEN : dev_info->shm_status->event_cnt;
+    cnt = (dev_info->shm_status->event_cnt > DEVMNG_SHM_INFO_EVENT_CODE_LEN) ? DEVMNG_SHM_INFO_EVENT_CODE_LEN :
+                                                                               dev_info->shm_status->event_cnt;
     for (i = 0; i < cnt; i++) {
         event_code[i].event_code = dev_info->shm_status->event_code[i].event_code;
         event_code[i].fid = dev_info->shm_status->event_code[i].fid;
@@ -541,12 +539,14 @@ STATIC int devdrv_get_process_sign(struct devdrv_manager_info *d_info, char *sig
     int ret;
 
     if (!ka_list_empty_careful(&d_info->hostpid_list_header)) {
-        ka_list_for_each_safe(pos, n, &d_info->hostpid_list_header) {
+        ka_list_for_each_safe(pos, n, &d_info->hostpid_list_header)
+        {
             d_sign = ka_list_entry(pos, struct devdrv_process_sign, list);
             if (d_sign->hostpid == ka_task_get_current_tgid()) {
                 ret = strcpy_s(sign, len, d_sign->sign);
                 if (ret) {
-                    devdrv_drv_err("Copy hostpid sign failed. (docker_id=%u; hostpid=%d; ret=%d)\n", docker_id, d_sign->hostpid, ret);
+                    devdrv_drv_err("Copy hostpid sign failed. (docker_id=%u; hostpid=%d; ret=%d)\n", docker_id,
+                                   d_sign->hostpid, ret);
                     return -EINVAL;
                 }
 
@@ -560,13 +560,14 @@ STATIC int devdrv_get_process_sign(struct devdrv_manager_info *d_info, char *sig
         return -EINVAL;
     }
 
-    d_sign = dbl_vmalloc(sizeof(struct devdrv_process_sign), KA_GFP_KERNEL | __KA_GFP_ZERO | __KA_GFP_ACCOUNT, KA_PAGE_KERNEL);
+    d_sign = dbl_vmalloc(sizeof(struct devdrv_process_sign), KA_GFP_KERNEL | __KA_GFP_ZERO | __KA_GFP_ACCOUNT,
+                         KA_PAGE_KERNEL);
     if (d_sign == NULL) {
         devdrv_drv_err("vzalloc failed. (docker_id=%u)\n", docker_id);
         return -ENOMEM;
     }
     d_sign->hostpid = ka_task_get_current_tgid();
-#if (!defined (DEVMNG_UT)) && (!defined (DEVDRV_MANAGER_HOST_UT_TEST))
+#if (!defined(DEVMNG_UT)) && (!defined(DEVDRV_MANAGER_HOST_UT_TEST))
     d_sign->hostpid_start_time = ka_task_get_current_group_starttime();
 #endif
     d_sign->docker_id = docker_id;
@@ -639,7 +640,7 @@ STATIC int devdrv_manager_get_process_sign(ka_file_t *filep, unsigned int cmd, u
 }
 
 STATIC int devdrv_host_query_process_by_host_pid(struct devdrv_ioctl_para_query_pid *para_info,
-    struct devdrv_info *info)
+                                                 struct devdrv_info *info)
 {
     int ret;
     int out_len = 0;
@@ -662,7 +663,7 @@ STATIC int devdrv_host_query_process_by_host_pid(struct devdrv_ioctl_para_query_
     if ((para_info->cp_type == DEVDRV_PROCESS_CP1) && (para_info->vfid == 0)) { /* not support host cp query */
         /* host has cp, store device cp in dev_only */
         ret = devdrv_query_process_by_host_pid(para_info->host_pid, info->dev_id, DEVDRV_PROCESS_DEV_ONLY,
-            para_info->vfid, &para_info->pid);
+                                               para_info->vfid, &para_info->pid);
         if (ret == 0) {
             return 0;
         }
@@ -689,7 +690,7 @@ STATIC int devdrv_host_query_process_by_host_pid(struct devdrv_ioctl_para_query_
     }
     if (out_len != (sizeof(struct devdrv_ioctl_para_query_pid) + sizeof(struct devdrv_manager_msg_head))) {
         devdrv_drv_warn("receive response len %d is not equal = %ld.\n", out_len,
-            (sizeof(struct devdrv_ioctl_para_query_pid) + sizeof(struct devdrv_manager_msg_head)));
+                        (sizeof(struct devdrv_ioctl_para_query_pid) + sizeof(struct devdrv_manager_msg_head)));
         return -EINVAL;
     }
     if (dev_manager_msg_info.header.result != 0) {
@@ -735,8 +736,8 @@ int devdrv_host_query_devpid(ka_file_t *filep, unsigned int cmd, unsigned long a
     ret = devdrv_host_query_process_by_host_pid(&para_info, info);
     if (ret) {
 #ifndef DEVDRV_MANAGER_HOST_UT_TEST
-        devdrv_drv_warn("Can not query device_pid by host_pid. (ret=%d; host_pid=%u; cp_type=%u)\n",
-            ret, para_info.host_pid, para_info.cp_type);
+        devdrv_drv_warn("Can not query device_pid by host_pid. (ret=%d; host_pid=%u; cp_type=%u)\n", ret,
+                        para_info.host_pid, para_info.cp_type);
 #endif
         goto out;
     }
@@ -868,7 +869,7 @@ int devdrv_manager_ioctl_get_device_from_chip(ka_file_t *filep, unsigned int cmd
     struct devdrv_chip_dev_list *chip_dev_list = NULL;
 
     chip_dev_list = (struct devdrv_chip_dev_list *)dbl_kzalloc(sizeof(struct devdrv_chip_dev_list),
-        KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
+                                                               KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
     if (chip_dev_list == NULL) {
         devdrv_drv_err("Allocate memory for chip device list failed.\n");
         return -ENOMEM;
@@ -972,125 +973,125 @@ STATIC int devdrv_manager_get_container_flag(ka_file_t *filep, unsigned int cmd,
 }
 
 STATIC int (*const devdrv_manager_ioctl_handlers[DEVDRV_MANAGER_CMD_MAX_NR])(ka_file_t *filep, unsigned int cmd,
-    unsigned long arg) = {
-        [_KA_IOC_NR(DEVDRV_MANAGER_GET_PCIINFO)] = devdrv_manager_get_pci_info,
-        [_KA_IOC_NR(DEVDRV_MANAGER_GET_PLATINFO)] = devdrv_manager_ioctl_get_plat_info,
-        [_KA_IOC_NR(DEVDRV_MANAGER_DEVICE_STATUS)] = devdrv_manager_get_device_status,
-        [_KA_IOC_NR(DEVDRV_MANAGER_GET_CORE_SPEC)] = devdrv_manager_get_core,
-        [_KA_IOC_NR(DEVDRV_MANAGER_GET_CORE_INUSE)] = devdrv_manager_get_core,
-        [_KA_IOC_NR(DEVDRV_MANAGER_GET_CONTAINER_DEVIDS)] = devdrv_manager_devinfo_ioctl,
-        [_KA_IOC_NR(DEVDRV_MANAGER_GET_DEVINFO)] = devdrv_manager_devinfo_ioctl,
-        [_KA_IOC_NR(DEVDRV_MANAGER_GET_DEVID_BY_LOCALDEVID)] = NULL,
-        [_KA_IOC_NR(DEVDRV_MANAGER_GET_DEV_INFO_BY_PHYID)] = NULL,
-        [_KA_IOC_NR(DEVDRV_MANAGER_GET_PCIE_ID_INFO)] = devdrv_manager_devinfo_ioctl,
-        [_KA_IOC_NR(DEVDRV_MANAGER_GET_CORE_UTILIZATION)] = devdrv_manager_devinfo_ioctl,
-        [_KA_IOC_NR(DEVDRV_MANAGER_GET_VOLTAGE)] = NULL,
-        [_KA_IOC_NR(DEVDRV_MANAGER_GET_TEMPERATURE)] = NULL,
-        [_KA_IOC_NR(DEVDRV_MANAGER_GET_TSENSOR)] = NULL,
-        [_KA_IOC_NR(DEVDRV_MANAGER_GET_AI_USE_RATE)] = NULL,
-        [_KA_IOC_NR(DEVDRV_MANAGER_GET_FREQUENCY)] = NULL,
-        [_KA_IOC_NR(DEVDRV_MANAGER_GET_POWER)] = NULL,
-        [_KA_IOC_NR(DEVDRV_MANAGER_GET_HEALTH_CODE)] = NULL,
-        [_KA_IOC_NR(DEVDRV_MANAGER_GET_ERROR_CODE)] = devdrv_get_error_code,
-        [_KA_IOC_NR(DEVDRV_MANAGER_GET_DDR_CAPACITY)] = NULL,
-        [_KA_IOC_NR(DEVDRV_MANAGER_LPM3_SMOKE)] = NULL,
-        [_KA_IOC_NR(DEVDRV_MANAGER_BLACK_BOX_GET_EXCEPTION)] = devdrv_manager_black_box_get_exception,
-        [_KA_IOC_NR(DEVDRV_MANAGER_DEVICE_MEMORY_DUMP)] = devdrv_manager_device_memory_dump,
-        [_KA_IOC_NR(DEVDRV_MANAGER_DEVICE_VMCORE_DUMP)] = devdrv_manager_device_vmcore_dump,
-        [_KA_IOC_NR(DEVDRV_MANAGER_DEVICE_RESET_INFORM)] = devdrv_manager_device_reset_inform,
-        [_KA_IOC_NR(DEVDRV_MANAGER_GET_MODULE_STATUS)] = NULL,
-        [_KA_IOC_NR(DEVDRV_MANAGER_REG_DDR_READ)] = devdrv_manager_reg_ddr_read,
-        [_KA_IOC_NR(DEVDRV_MANAGER_GET_MINI_BOARD_ID)] = NULL,
-        [_KA_IOC_NR(DEVDRV_MANAGER_PCIE_PRE_RESET)] = devdrv_manager_pcie_pre_reset,
-        [_KA_IOC_NR(DEVDRV_MANAGER_PCIE_RESCAN)] = devdrv_manager_pcie_rescan,
-        [_KA_IOC_NR(DEVDRV_MANAGER_PCIE_HOT_RESET)] = NULL,
-        [_KA_IOC_NR(DEVDRV_MANAGER_P2P_ATTR)] = NULL,
-        [_KA_IOC_NR(DEVDRV_MANAGER_ALLOC_HOST_DMA_ADDR)] = NULL,
-        [_KA_IOC_NR(DEVDRV_MANAGER_PCIE_READ)] = drv_pcie_read,
-        [_KA_IOC_NR(DEVDRV_MANAGER_PCIE_SRAM_WRITE)] = NULL,
-        [_KA_IOC_NR(DEVDRV_MANAGER_PCIE_WRITE)] = drv_pcie_write,
-        [_KA_IOC_NR(DEVDRV_MANAGER_GET_EMMC_VOLTAGE)] = NULL,
-        [_KA_IOC_NR(DEVDRV_MANAGER_GET_DEVICE_BOOT_STATUS)] = drv_get_device_boot_status,
-        [_KA_IOC_NR(DEVDRV_MANAGER_ENABLE_EFUSE_LDO)] = NULL,
-        [_KA_IOC_NR(DEVDRV_MANAGER_DISABLE_EFUSE_LDO)] = NULL,
+                                                                             unsigned long arg) = {
+    [_KA_IOC_NR(DEVDRV_MANAGER_GET_PCIINFO)] = devdrv_manager_get_pci_info,
+    [_KA_IOC_NR(DEVDRV_MANAGER_GET_PLATINFO)] = devdrv_manager_ioctl_get_plat_info,
+    [_KA_IOC_NR(DEVDRV_MANAGER_DEVICE_STATUS)] = devdrv_manager_get_device_status,
+    [_KA_IOC_NR(DEVDRV_MANAGER_GET_CORE_SPEC)] = devdrv_manager_get_core,
+    [_KA_IOC_NR(DEVDRV_MANAGER_GET_CORE_INUSE)] = devdrv_manager_get_core,
+    [_KA_IOC_NR(DEVDRV_MANAGER_GET_CONTAINER_DEVIDS)] = devdrv_manager_devinfo_ioctl,
+    [_KA_IOC_NR(DEVDRV_MANAGER_GET_DEVINFO)] = devdrv_manager_devinfo_ioctl,
+    [_KA_IOC_NR(DEVDRV_MANAGER_GET_DEVID_BY_LOCALDEVID)] = NULL,
+    [_KA_IOC_NR(DEVDRV_MANAGER_GET_DEV_INFO_BY_PHYID)] = NULL,
+    [_KA_IOC_NR(DEVDRV_MANAGER_GET_PCIE_ID_INFO)] = devdrv_manager_devinfo_ioctl,
+    [_KA_IOC_NR(DEVDRV_MANAGER_GET_CORE_UTILIZATION)] = devdrv_manager_devinfo_ioctl,
+    [_KA_IOC_NR(DEVDRV_MANAGER_GET_VOLTAGE)] = NULL,
+    [_KA_IOC_NR(DEVDRV_MANAGER_GET_TEMPERATURE)] = NULL,
+    [_KA_IOC_NR(DEVDRV_MANAGER_GET_TSENSOR)] = NULL,
+    [_KA_IOC_NR(DEVDRV_MANAGER_GET_AI_USE_RATE)] = NULL,
+    [_KA_IOC_NR(DEVDRV_MANAGER_GET_FREQUENCY)] = NULL,
+    [_KA_IOC_NR(DEVDRV_MANAGER_GET_POWER)] = NULL,
+    [_KA_IOC_NR(DEVDRV_MANAGER_GET_HEALTH_CODE)] = NULL,
+    [_KA_IOC_NR(DEVDRV_MANAGER_GET_ERROR_CODE)] = devdrv_get_error_code,
+    [_KA_IOC_NR(DEVDRV_MANAGER_GET_DDR_CAPACITY)] = NULL,
+    [_KA_IOC_NR(DEVDRV_MANAGER_LPM3_SMOKE)] = NULL,
+    [_KA_IOC_NR(DEVDRV_MANAGER_BLACK_BOX_GET_EXCEPTION)] = devdrv_manager_black_box_get_exception,
+    [_KA_IOC_NR(DEVDRV_MANAGER_DEVICE_MEMORY_DUMP)] = devdrv_manager_device_memory_dump,
+    [_KA_IOC_NR(DEVDRV_MANAGER_DEVICE_VMCORE_DUMP)] = devdrv_manager_device_vmcore_dump,
+    [_KA_IOC_NR(DEVDRV_MANAGER_DEVICE_RESET_INFORM)] = devdrv_manager_device_reset_inform,
+    [_KA_IOC_NR(DEVDRV_MANAGER_GET_MODULE_STATUS)] = NULL,
+    [_KA_IOC_NR(DEVDRV_MANAGER_REG_DDR_READ)] = devdrv_manager_reg_ddr_read,
+    [_KA_IOC_NR(DEVDRV_MANAGER_GET_MINI_BOARD_ID)] = NULL,
+    [_KA_IOC_NR(DEVDRV_MANAGER_PCIE_PRE_RESET)] = devdrv_manager_pcie_pre_reset,
+    [_KA_IOC_NR(DEVDRV_MANAGER_PCIE_RESCAN)] = devdrv_manager_pcie_rescan,
+    [_KA_IOC_NR(DEVDRV_MANAGER_PCIE_HOT_RESET)] = NULL,
+    [_KA_IOC_NR(DEVDRV_MANAGER_P2P_ATTR)] = NULL,
+    [_KA_IOC_NR(DEVDRV_MANAGER_ALLOC_HOST_DMA_ADDR)] = NULL,
+    [_KA_IOC_NR(DEVDRV_MANAGER_PCIE_READ)] = drv_pcie_read,
+    [_KA_IOC_NR(DEVDRV_MANAGER_PCIE_SRAM_WRITE)] = NULL,
+    [_KA_IOC_NR(DEVDRV_MANAGER_PCIE_WRITE)] = drv_pcie_write,
+    [_KA_IOC_NR(DEVDRV_MANAGER_GET_EMMC_VOLTAGE)] = NULL,
+    [_KA_IOC_NR(DEVDRV_MANAGER_GET_DEVICE_BOOT_STATUS)] = drv_get_device_boot_status,
+    [_KA_IOC_NR(DEVDRV_MANAGER_ENABLE_EFUSE_LDO)] = NULL,
+    [_KA_IOC_NR(DEVDRV_MANAGER_DISABLE_EFUSE_LDO)] = NULL,
 
-        [_KA_IOC_NR(DEVDRV_MANAGER_CONTAINER_CMD)] = devdrv_manager_container_cmd,
-        [_KA_IOC_NR(DEVDRV_MANAGER_GET_HOST_PHY_MACH_FLAG)] = devdrv_manager_get_host_phy_mach_flag,
-        [_KA_IOC_NR(DEVDRV_MANAGER_GET_LOCAL_DEVICEIDS)] = NULL,
-        [_KA_IOC_NR(DEVDRV_MANAGER_IMU_SMOKE)] = NULL,
-        [_KA_IOC_NR(DEVDRV_MANAGER_SET_NEW_TIME)] = NULL,
+    [_KA_IOC_NR(DEVDRV_MANAGER_CONTAINER_CMD)] = devdrv_manager_container_cmd,
+    [_KA_IOC_NR(DEVDRV_MANAGER_GET_HOST_PHY_MACH_FLAG)] = devdrv_manager_get_host_phy_mach_flag,
+    [_KA_IOC_NR(DEVDRV_MANAGER_GET_LOCAL_DEVICEIDS)] = NULL,
+    [_KA_IOC_NR(DEVDRV_MANAGER_IMU_SMOKE)] = NULL,
+    [_KA_IOC_NR(DEVDRV_MANAGER_SET_NEW_TIME)] = NULL,
 #ifndef CFG_FEATURE_REFACTOR
-        [_KA_IOC_NR(DEVDRV_MANAGER_IPC_NOTIFY_CREATE)] = devdrv_manager_ipc_notify_ioctl,
-        [_KA_IOC_NR(DEVDRV_MANAGER_IPC_NOTIFY_OPEN)] = devdrv_manager_ipc_notify_ioctl,
-        [_KA_IOC_NR(DEVDRV_MANAGER_IPC_NOTIFY_CLOSE)] = devdrv_manager_ipc_notify_ioctl,
-        [_KA_IOC_NR(DEVDRV_MANAGER_IPC_NOTIFY_DESTROY)] = devdrv_manager_ipc_notify_ioctl,
-        [_KA_IOC_NR(DEVDRV_MANAGER_IPC_NOTIFY_SET_PID)] = devdrv_manager_ipc_notify_ioctl,
-        [_KA_IOC_NR(DEVDRV_MANAGER_IPC_NOTIFY_RECORD)] = devdrv_manager_ipc_notify_ioctl,
-        [_KA_IOC_NR(DEVDRV_MANAGER_IPC_NOTIFY_SET_ATTR)] = devdrv_manager_ipc_notify_ioctl,
-        [_KA_IOC_NR(DEVDRV_MANAGER_IPC_NOTIFY_GET_INFO)] = devdrv_manager_ipc_notify_ioctl,
-        [_KA_IOC_NR(DEVDRV_MANAGER_IPC_NOTIFY_GET_ATTR)] = devdrv_manager_ipc_notify_ioctl,
+    [_KA_IOC_NR(DEVDRV_MANAGER_IPC_NOTIFY_CREATE)] = devdrv_manager_ipc_notify_ioctl,
+    [_KA_IOC_NR(DEVDRV_MANAGER_IPC_NOTIFY_OPEN)] = devdrv_manager_ipc_notify_ioctl,
+    [_KA_IOC_NR(DEVDRV_MANAGER_IPC_NOTIFY_CLOSE)] = devdrv_manager_ipc_notify_ioctl,
+    [_KA_IOC_NR(DEVDRV_MANAGER_IPC_NOTIFY_DESTROY)] = devdrv_manager_ipc_notify_ioctl,
+    [_KA_IOC_NR(DEVDRV_MANAGER_IPC_NOTIFY_SET_PID)] = devdrv_manager_ipc_notify_ioctl,
+    [_KA_IOC_NR(DEVDRV_MANAGER_IPC_NOTIFY_RECORD)] = devdrv_manager_ipc_notify_ioctl,
+    [_KA_IOC_NR(DEVDRV_MANAGER_IPC_NOTIFY_SET_ATTR)] = devdrv_manager_ipc_notify_ioctl,
+    [_KA_IOC_NR(DEVDRV_MANAGER_IPC_NOTIFY_GET_INFO)] = devdrv_manager_ipc_notify_ioctl,
+    [_KA_IOC_NR(DEVDRV_MANAGER_IPC_NOTIFY_GET_ATTR)] = devdrv_manager_ipc_notify_ioctl,
 #else
-        [_KA_IOC_NR(DEVDRV_MANAGER_IPC_NOTIFY_CREATE)] = NULL,
-        [_KA_IOC_NR(DEVDRV_MANAGER_IPC_NOTIFY_OPEN)] = NULL,
-        [_KA_IOC_NR(DEVDRV_MANAGER_IPC_NOTIFY_CLOSE)] = NULL,
-        [_KA_IOC_NR(DEVDRV_MANAGER_IPC_NOTIFY_DESTROY)] = NULL,
-        [_KA_IOC_NR(DEVDRV_MANAGER_IPC_NOTIFY_SET_PID)] = NULL,
-        [_KA_IOC_NR(DEVDRV_MANAGER_IPC_NOTIFY_RECORD)] = NULL,
-        [_KA_IOC_NR(DEVDRV_MANAGER_IPC_NOTIFY_GET_INFO)] = NULL,
-        [_KA_IOC_NR(DEVDRV_MANAGER_IPC_NOTIFY_SET_ATTR)] = NULL,
-        [_KA_IOC_NR(DEVDRV_MANAGER_IPC_NOTIFY_GET_ATTR)] = NULL,
+    [_KA_IOC_NR(DEVDRV_MANAGER_IPC_NOTIFY_CREATE)] = NULL,
+    [_KA_IOC_NR(DEVDRV_MANAGER_IPC_NOTIFY_OPEN)] = NULL,
+    [_KA_IOC_NR(DEVDRV_MANAGER_IPC_NOTIFY_CLOSE)] = NULL,
+    [_KA_IOC_NR(DEVDRV_MANAGER_IPC_NOTIFY_DESTROY)] = NULL,
+    [_KA_IOC_NR(DEVDRV_MANAGER_IPC_NOTIFY_SET_PID)] = NULL,
+    [_KA_IOC_NR(DEVDRV_MANAGER_IPC_NOTIFY_RECORD)] = NULL,
+    [_KA_IOC_NR(DEVDRV_MANAGER_IPC_NOTIFY_GET_INFO)] = NULL,
+    [_KA_IOC_NR(DEVDRV_MANAGER_IPC_NOTIFY_SET_ATTR)] = NULL,
+    [_KA_IOC_NR(DEVDRV_MANAGER_IPC_NOTIFY_GET_ATTR)] = NULL,
 #endif
-        [_KA_IOC_NR(DEVDRV_MANAGER_GET_CPU_INFO)] = NULL,
-        [_KA_IOC_NR(DEVDRV_MANAGER_SEND_TO_IMU)] = NULL,
-        [_KA_IOC_NR(DEVDRV_MANAGER_RECV_FROM_IMU)] = NULL,
-        [_KA_IOC_NR(DEVDRV_MANAGER_GET_IMU_INFO)] = NULL,
-        [_KA_IOC_NR(DEVDRV_MANAGER_CONFIG_ECC_ENABLE)] = NULL,
-        [_KA_IOC_NR(DEVDRV_MANAGER_GET_PROBE_NUM)] = NULL,
-        [_KA_IOC_NR(DEVDRV_MANAGER_GET_PROBE_LIST)] = NULL,
-        [_KA_IOC_NR(DEVDRV_MANAGER_DEBUG_INFORM)] = NULL,
-        [_KA_IOC_NR(DEVDRV_MANAGER_COMPUTE_POWER)] = NULL,
-        [_KA_IOC_NR(DEVDRV_MANAGER_SYNC_MATRIX_DAEMON_READY)] = NULL,
-        [_KA_IOC_NR(DEVDRV_MANAGER_GET_BBOX_ERRSTR)] = NULL,
-        [_KA_IOC_NR(DEVDRV_MANAGER_PCIE_IMU_DDR_READ)] = drv_pcie_bbox_imu_ddr_read,
-        [_KA_IOC_NR(DEVDRV_MANAGER_GET_SLOT_ID)] = NULL,
-        [_KA_IOC_NR(DEVDRV_MANAGER_APPMON_BBOX_EXCEPTION_CMD)] = NULL,
-        [_KA_IOC_NR(DEVDRV_MANAGER_GET_CONTAINER_FLAG)] = devdrv_manager_get_container_flag,
-        [_KA_IOC_NR(DEVDRV_MANAGER_GET_PROCESS_SIGN)] = devdrv_manager_get_process_sign,
-        [_KA_IOC_NR(DEVDRV_MANAGER_GET_MASTER_DEV_IN_THE_SAME_OS)] = NULL,
-        [_KA_IOC_NR(DEVDRV_MANAGER_GET_LOCAL_DEV_ID_BY_HOST_DEV_ID)] = NULL,
-        [_KA_IOC_NR(DEVDRV_MANAGER_GET_BOOT_DEV_ID)] = devdrv_manager_online_get_devids,
-        [_KA_IOC_NR(DEVDRV_MANAGER_GET_TSDRV_DEV_COM_INFO)] = devdrv_manager_get_tsdrv_dev_com_info,
-        [_KA_IOC_NR(DEVDRV_MANAGER_GET_CAPABILITY_GROUP_INFO)] = devdrv_manager_get_ts_group_info,
-        [_KA_IOC_NR(DEVDRV_MANAGER_PASSTHRU_MCU)] = NULL,
-        [_KA_IOC_NR(DEVDRV_MANAGER_GET_P2P_CAPABILITY)] = NULL,
-        [_KA_IOC_NR(DEVDRV_MANAGER_GET_ETH_ID)] = NULL,
-        [_KA_IOC_NR(DEVDRV_MANAGER_BIND_PID_ID)] = devdrv_fop_bind_host_pid,
-        [_KA_IOC_NR(DEVDRV_MANAGER_QUERY_HOST_PID)] = devdrv_fop_query_host_pid,
-        [_KA_IOC_NR(DEVDRV_MANAGER_QUERY_DEV_PID)] = devdrv_host_query_devpid,
-        [_KA_IOC_NR(DEVDRV_MANAGER_GET_H2D_DEVINFO)] = devdrv_manager_devinfo_ioctl,
-        [_KA_IOC_NR(DEVDRV_MANAGER_GET_CONSOLE_LOG_LEVEL)] = devdrv_manager_ioctl_get_console_loglevel,
-        [_KA_IOC_NR(DEVDRV_MANAGER_CREATE_VDEV)] = devdrv_manager_ioctl_create_vdev,
-        [_KA_IOC_NR(DEVDRV_MANAGER_DESTROY_VDEV)] = devdrv_manager_ioctl_destroy_vdev,
-        [_KA_IOC_NR(DEVDRV_MANAGER_GET_VDEVINFO)] = devdrv_manager_ioctl_get_vdevinfo,
-        [_KA_IOC_NR(DEVDRV_MANAGER_GET_STARTUP_STATUS)] = devdrv_manager_get_device_startup_status,
-        [_KA_IOC_NR(DEVDRV_MANAGER_GET_DEVICE_HEALTH_STATUS)] = devdrv_manager_get_device_health_status,
-        [_KA_IOC_NR(DEVDRV_MANAGER_GET_DEV_RESOURCE_INFO)] = devdrv_manager_ioctl_get_dev_resource_info,
+    [_KA_IOC_NR(DEVDRV_MANAGER_GET_CPU_INFO)] = NULL,
+    [_KA_IOC_NR(DEVDRV_MANAGER_SEND_TO_IMU)] = NULL,
+    [_KA_IOC_NR(DEVDRV_MANAGER_RECV_FROM_IMU)] = NULL,
+    [_KA_IOC_NR(DEVDRV_MANAGER_GET_IMU_INFO)] = NULL,
+    [_KA_IOC_NR(DEVDRV_MANAGER_CONFIG_ECC_ENABLE)] = NULL,
+    [_KA_IOC_NR(DEVDRV_MANAGER_GET_PROBE_NUM)] = NULL,
+    [_KA_IOC_NR(DEVDRV_MANAGER_GET_PROBE_LIST)] = NULL,
+    [_KA_IOC_NR(DEVDRV_MANAGER_DEBUG_INFORM)] = NULL,
+    [_KA_IOC_NR(DEVDRV_MANAGER_COMPUTE_POWER)] = NULL,
+    [_KA_IOC_NR(DEVDRV_MANAGER_SYNC_MATRIX_DAEMON_READY)] = NULL,
+    [_KA_IOC_NR(DEVDRV_MANAGER_GET_BBOX_ERRSTR)] = NULL,
+    [_KA_IOC_NR(DEVDRV_MANAGER_PCIE_IMU_DDR_READ)] = drv_pcie_bbox_imu_ddr_read,
+    [_KA_IOC_NR(DEVDRV_MANAGER_GET_SLOT_ID)] = NULL,
+    [_KA_IOC_NR(DEVDRV_MANAGER_APPMON_BBOX_EXCEPTION_CMD)] = NULL,
+    [_KA_IOC_NR(DEVDRV_MANAGER_GET_CONTAINER_FLAG)] = devdrv_manager_get_container_flag,
+    [_KA_IOC_NR(DEVDRV_MANAGER_GET_PROCESS_SIGN)] = devdrv_manager_get_process_sign,
+    [_KA_IOC_NR(DEVDRV_MANAGER_GET_MASTER_DEV_IN_THE_SAME_OS)] = NULL,
+    [_KA_IOC_NR(DEVDRV_MANAGER_GET_LOCAL_DEV_ID_BY_HOST_DEV_ID)] = NULL,
+    [_KA_IOC_NR(DEVDRV_MANAGER_GET_BOOT_DEV_ID)] = devdrv_manager_online_get_devids,
+    [_KA_IOC_NR(DEVDRV_MANAGER_GET_TSDRV_DEV_COM_INFO)] = devdrv_manager_get_tsdrv_dev_com_info,
+    [_KA_IOC_NR(DEVDRV_MANAGER_GET_CAPABILITY_GROUP_INFO)] = devdrv_manager_get_ts_group_info,
+    [_KA_IOC_NR(DEVDRV_MANAGER_PASSTHRU_MCU)] = NULL,
+    [_KA_IOC_NR(DEVDRV_MANAGER_GET_P2P_CAPABILITY)] = NULL,
+    [_KA_IOC_NR(DEVDRV_MANAGER_GET_ETH_ID)] = NULL,
+    [_KA_IOC_NR(DEVDRV_MANAGER_BIND_PID_ID)] = devdrv_fop_bind_host_pid,
+    [_KA_IOC_NR(DEVDRV_MANAGER_QUERY_HOST_PID)] = devdrv_fop_query_host_pid,
+    [_KA_IOC_NR(DEVDRV_MANAGER_QUERY_DEV_PID)] = devdrv_host_query_devpid,
+    [_KA_IOC_NR(DEVDRV_MANAGER_GET_H2D_DEVINFO)] = devdrv_manager_devinfo_ioctl,
+    [_KA_IOC_NR(DEVDRV_MANAGER_GET_CONSOLE_LOG_LEVEL)] = devdrv_manager_ioctl_get_console_loglevel,
+    [_KA_IOC_NR(DEVDRV_MANAGER_CREATE_VDEV)] = devdrv_manager_ioctl_create_vdev,
+    [_KA_IOC_NR(DEVDRV_MANAGER_DESTROY_VDEV)] = devdrv_manager_ioctl_destroy_vdev,
+    [_KA_IOC_NR(DEVDRV_MANAGER_GET_VDEVINFO)] = devdrv_manager_ioctl_get_vdevinfo,
+    [_KA_IOC_NR(DEVDRV_MANAGER_GET_STARTUP_STATUS)] = devdrv_manager_get_device_startup_status,
+    [_KA_IOC_NR(DEVDRV_MANAGER_GET_DEVICE_HEALTH_STATUS)] = devdrv_manager_get_device_health_status,
+    [_KA_IOC_NR(DEVDRV_MANAGER_GET_DEV_RESOURCE_INFO)] = devdrv_manager_ioctl_get_dev_resource_info,
 #ifdef CFG_FEATURE_CHIP_DIE
-        [_KA_IOC_NR(DEVDRV_MANAGER_GET_CHIP_COUNT)] = devdrv_manager_ioctl_get_chip_count,
-        [_KA_IOC_NR(DEVDRV_MANAGER_GET_CHIP_LIST)] = devdrv_manager_ioctl_get_chip_list,
-        [_KA_IOC_NR(DEVDRV_MANAGER_GET_DEVICE_FROM_CHIP)] = devdrv_manager_ioctl_get_device_from_chip,
-        [_KA_IOC_NR(DEVDRV_MANAGER_GET_CHIP_FROM_DEVICE)] = devdrv_manager_ioctl_get_chip_from_device,
+    [_KA_IOC_NR(DEVDRV_MANAGER_GET_CHIP_COUNT)] = devdrv_manager_ioctl_get_chip_count,
+    [_KA_IOC_NR(DEVDRV_MANAGER_GET_CHIP_LIST)] = devdrv_manager_ioctl_get_chip_list,
+    [_KA_IOC_NR(DEVDRV_MANAGER_GET_DEVICE_FROM_CHIP)] = devdrv_manager_ioctl_get_device_from_chip,
+    [_KA_IOC_NR(DEVDRV_MANAGER_GET_CHIP_FROM_DEVICE)] = devdrv_manager_ioctl_get_chip_from_device,
 #endif
-        [_KA_IOC_NR(DEVDRV_MANAGER_SET_SVM_VDEVINFO)] = devdrv_manager_ioctl_set_vdevinfo,
-        [_KA_IOC_NR(DEVDRV_MANAGER_GET_SVM_VDEVINFO)] = devdrv_manager_ioctl_get_svm_vdevinfo,
+    [_KA_IOC_NR(DEVDRV_MANAGER_SET_SVM_VDEVINFO)] = devdrv_manager_ioctl_set_vdevinfo,
+    [_KA_IOC_NR(DEVDRV_MANAGER_GET_SVM_VDEVINFO)] = devdrv_manager_ioctl_get_svm_vdevinfo,
 #ifdef CFG_FEATURE_VASCEND
-        [_KA_IOC_NR(DEVDRV_MANAGER_SET_VDEVMODE)] = devdrv_manager_ioctl_set_vdevmode,
-        [_KA_IOC_NR(DEVDRV_MANAGER_GET_VDEVMODE)] = devdrv_manager_ioctl_get_vdevmode,
+    [_KA_IOC_NR(DEVDRV_MANAGER_SET_VDEVMODE)] = devdrv_manager_ioctl_set_vdevmode,
+    [_KA_IOC_NR(DEVDRV_MANAGER_GET_VDEVMODE)] = devdrv_manager_ioctl_get_vdevmode,
 #endif
-        [_KA_IOC_NR(DEVDRV_MANAGER_GET_VDEVIDS)] = devdrv_manager_devinfo_ioctl,
-        [_KA_IOC_NR(DEVDRV_MANAGER_TS_LOG_DUMP)] = devdrv_manager_tslog_dump,
+    [_KA_IOC_NR(DEVDRV_MANAGER_GET_VDEVIDS)] = devdrv_manager_devinfo_ioctl,
+    [_KA_IOC_NR(DEVDRV_MANAGER_TS_LOG_DUMP)] = devdrv_manager_tslog_dump,
 #ifdef CFG_FEATURE_DEVICE_SHARE
-        [_KA_IOC_NR(DEVDRV_MANAGER_CONFIG_DEVICE_SHARE)] = devdrv_manager_config_device_share,
+    [_KA_IOC_NR(DEVDRV_MANAGER_CONFIG_DEVICE_SHARE)] = devdrv_manager_config_device_share,
 #endif
 };
 
@@ -1116,4 +1117,3 @@ long devdrv_manager_ioctl(ka_file_t *filep, unsigned int cmd, unsigned long arg)
 
     return devdrv_manager_ioctl_handlers[_KA_IOC_NR(cmd)](filep, cmd, arg);
 }
-

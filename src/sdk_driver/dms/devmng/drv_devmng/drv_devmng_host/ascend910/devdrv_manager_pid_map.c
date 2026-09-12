@@ -13,9 +13,9 @@
 
 #include "securec.h"
 #ifndef DEVDRV_MANAGER_HOST_UT_TEST
-    #ifndef CFG_HOST_ENV
-    #include "drv_whitelist.h"
-    #endif
+#ifndef CFG_HOST_ENV
+#include "drv_whitelist.h"
+#endif
 #endif
 #include "pbl/pbl_uda.h"
 #include "pbl/pbl_runenv_config.h"
@@ -39,9 +39,9 @@
 
 extern struct devdrv_manager_info *dev_manager_info;
 
-#if (!defined (DEVMNG_UT)) && (!defined (DEVDRV_MANAGER_HOST_UT_TEST))
+#if (!defined(DEVMNG_UT)) && (!defined(DEVDRV_MANAGER_HOST_UT_TEST))
 #if defined(CFG_HOST_ENV)
-STATIC int get_pid_start_time(ka_pid_t pid, u64* start_time)
+STATIC int get_pid_start_time(ka_pid_t pid, u64 *start_time)
 {
     ka_struct_pid_t *pid_struct;
     ka_task_struct_t *task;
@@ -67,15 +67,15 @@ STATIC int get_pid_start_time(ka_pid_t pid, u64* start_time)
 }
 #endif
 
-STATIC struct devdrv_process_sign *devdrv_find_process_sign(struct devdrv_manager_info *d_info,
-    ka_pid_t hostpid)
+STATIC struct devdrv_process_sign *devdrv_find_process_sign(struct devdrv_manager_info *d_info, ka_pid_t hostpid)
 {
     struct devdrv_process_sign *proc_sign = NULL;
     u32 key;
 
     key = (u32)hostpid & DEVDRV_PROC_HASH_TABLE_MASK;
     /*lint -e666 */
-    ka_hash_for_each_possible(d_info->proc_hash_table, proc_sign, link, key) {
+    ka_hash_for_each_possible(d_info->proc_hash_table, proc_sign, link, key)
+    {
         if (proc_sign->hostpid == hostpid) {
             return proc_sign;
         }
@@ -84,14 +84,15 @@ STATIC struct devdrv_process_sign *devdrv_find_process_sign(struct devdrv_manage
 }
 
 STATIC struct devdrv_process_sign *devdrv_create_process_sign(struct devdrv_manager_info *d_info,
-    struct devdrv_ioctl_para_bind_host_pid para_info)
+                                                              struct devdrv_ioctl_para_bind_host_pid para_info)
 {
     struct devdrv_process_sign *d_sign = NULL;
     int ret;
     enum devdrv_process_type k;
     int i, j;
 
-    d_sign = dbl_vmalloc(sizeof(struct devdrv_process_sign), KA_GFP_KERNEL | __KA_GFP_ZERO | __KA_GFP_ACCOUNT, KA_PAGE_KERNEL);
+    d_sign = dbl_vmalloc(sizeof(struct devdrv_process_sign), KA_GFP_KERNEL | __KA_GFP_ZERO | __KA_GFP_ACCOUNT,
+                         KA_PAGE_KERNEL);
     if (d_sign == NULL) {
         return NULL;
     }
@@ -145,8 +146,8 @@ static struct devdrv_process_user_info *devdrv_get_user_proc(struct devdrv_proce
 }
 
 /* side: host 1 device 0 */
-STATIC struct devdrv_process_user_info *devdrv_query_user_proc(struct devdrv_process_sign *d_sign,
-    int slave_side, ka_pid_t devpid)
+STATIC struct devdrv_process_user_info *devdrv_query_user_proc(struct devdrv_process_sign *d_sign, int slave_side,
+                                                               ka_pid_t devpid)
 {
     struct devdrv_process_user_info *user_proc = devdrv_get_user_proc(d_sign, slave_side);
     int i;
@@ -160,7 +161,7 @@ STATIC struct devdrv_process_user_info *devdrv_query_user_proc(struct devdrv_pro
     return NULL;
 }
 
-STATIC int set_udevid_to_d_info(u32 dev_num, u32* udevids, struct devdrv_process_user_info *user_proc, int idx)
+STATIC int set_udevid_to_d_info(u32 dev_num, u32 *udevids, struct devdrv_process_user_info *user_proc, int idx)
 {
     int j;
 
@@ -176,8 +177,8 @@ STATIC int set_udevid_to_d_info(u32 dev_num, u32* udevids, struct devdrv_process
     return 0;
 }
 #ifdef CFG_HOST_ENV
-STATIC int get_udevid_and_dev_num(u32* dev_num, u32* udevids, ka_pid_t slave_pid,
-    struct devdrv_ioctl_para_bind_host_pid *para_info)
+STATIC int get_udevid_and_dev_num(u32 *dev_num, u32 *udevids, ka_pid_t slave_pid,
+                                  struct devdrv_ioctl_para_bind_host_pid *para_info)
 {
     struct devdrv_process_sign *d_sign = NULL;
     struct devdrv_manager_info *d_info = devdrv_get_manager_info();
@@ -242,17 +243,17 @@ static int devdrv_get_curr_ns_dev_info(struct devdrv_curr_ns_dev_info *curr_dev_
     return 0;
 }
 
-static int devdrv_bind_user_proc(struct devdrv_process_sign *d_sign,
-    struct devdrv_ioctl_para_bind_host_pid para_info, ka_pid_t devpid, u64 slave_start_time, int slave_side,
-    struct devdrv_curr_ns_dev_info curr_dev_info)
+static int devdrv_bind_user_proc(struct devdrv_process_sign *d_sign, struct devdrv_ioctl_para_bind_host_pid para_info,
+                                 ka_pid_t devpid, u64 slave_start_time, int slave_side,
+                                 struct devdrv_curr_ns_dev_info curr_dev_info)
 {
     struct devdrv_process_user_info *user_proc = devdrv_get_user_proc(d_sign, slave_side);
     int i;
     int ret;
 
     for (i = 0; i < DEVMNG_USER_PROC_MAX; i++) {
-        if ((user_proc[i].valid == 1) && (user_proc[i].pid == devpid) &&
-            (user_proc[i].devid == para_info.chip_id) && (user_proc[i].vfid == para_info.vfid)) {
+        if ((user_proc[i].valid == 1) && (user_proc[i].pid == devpid) && (user_proc[i].devid == para_info.chip_id) &&
+            (user_proc[i].vfid == para_info.vfid)) {
             return 0;
         }
     }
@@ -296,15 +297,15 @@ static int devdrv_bind_user_proc(struct devdrv_process_sign *d_sign,
     return 0;
 }
 
-static int devdrv_unbind_user_proc(struct devdrv_process_sign *d_sign, u32 devid,
-    u32 vfid, ka_pid_t devpid, int slave_side)
+static int devdrv_unbind_user_proc(struct devdrv_process_sign *d_sign, u32 devid, u32 vfid, ka_pid_t devpid,
+                                   int slave_side)
 {
     struct devdrv_process_user_info *user_proc = devdrv_get_user_proc(d_sign, slave_side);
     int i;
 
     for (i = 0; i < DEVMNG_USER_PROC_MAX; i++) {
-        if ((user_proc[i].valid == 1) && (user_proc[i].pid == devpid)
-            && (user_proc[i].devid == devid) && (user_proc[i].vfid == vfid)) {
+        if ((user_proc[i].valid == 1) && (user_proc[i].pid == devpid) && (user_proc[i].devid == devid) &&
+            (user_proc[i].vfid == vfid)) {
             break;
         }
     }
@@ -336,7 +337,7 @@ struct devdrv_bind_para {
  * Notice:Cannot print because it is called in Spinlock
  */
 STATIC int devdrv_check_and_bind_hostpid(struct devdrv_process_sign *d_sign, struct devdrv_bind_para bind_para,
-    ka_pid_t *bound_devpid)
+                                         ka_pid_t *bound_devpid)
 {
     struct devdrv_ioctl_para_bind_host_pid para_info = bind_para.para_info;
     ka_pid_t devpid = bind_para.devpid;
@@ -430,7 +431,8 @@ STATIC int devdrv_verify_sign(char *sign, int mode, ka_pid_t host_pid, ka_pid_t 
         ret = whitelist_process_handler(process_name, WHITE_LIST_PROCESS_NUM_FOR_BIND_PID);
         if (ret != 0) {
             devdrv_drv_err("whitelist_process_handler error or Invalid parameter."
-                " (ret=%d; dev_pid=%d)\n", ret, pid_tmp);
+                           " (ret=%d; dev_pid=%d)\n",
+                           ret, pid_tmp);
             return ret;
         }
 #endif
@@ -452,13 +454,13 @@ STATIC int devdrv_verify_sign(char *sign, int mode, ka_pid_t host_pid, ka_pid_t 
 STATIC int devdrv_pid_map_sync_result_check(int ret, struct devdrv_manager_msg_info *dev_manager_msg_info, int out_len)
 {
     if (ret != 0) {
-        devdrv_drv_warn("Can't no send msg to remote. (ret=%d)\n", ret);
+        devdrv_drv_warn("Can not send msg to remote. (ret=%d)\n", ret);
         return ret;
     }
 
     if (out_len != (sizeof(struct devdrv_pid_map_sync) + sizeof(struct devdrv_manager_msg_head))) {
         devdrv_drv_warn("receive length not equal expected. (out_len=%d; exp_len=%ld)\n", out_len,
-            (sizeof(struct devdrv_ioctl_para_query_pid) + sizeof(struct devdrv_manager_msg_head)));
+                        (sizeof(struct devdrv_ioctl_para_query_pid) + sizeof(struct devdrv_manager_msg_head)));
         return -EINVAL;
     }
 
@@ -535,7 +537,8 @@ STATIC int devdrv_pid_map_sync_to_peer(struct devdrv_ioctl_para_bind_host_pid *p
             return -EINVAL;
         }
 
-        udevids = dbl_vmalloc(sizeof(u32) * dev_num, KA_GFP_KERNEL|__KA_GFP_HIGHMEM|__KA_GFP_ACCOUNT, KA_PAGE_KERNEL);
+        udevids = dbl_vmalloc(sizeof(u32) * dev_num, KA_GFP_KERNEL | __KA_GFP_HIGHMEM | __KA_GFP_ACCOUNT,
+                              KA_PAGE_KERNEL);
         if (udevids == NULL) {
             devdrv_drv_err("Alloc udevids failed. (pid=%d; dev_num=%u)\n", pid, dev_num);
             return -ENOMEM;
@@ -548,7 +551,8 @@ STATIC int devdrv_pid_map_sync_to_peer(struct devdrv_ioctl_para_bind_host_pid *p
             return ret;
         }
     } else {
-        udevids = dbl_vmalloc(sizeof(u32) * PID_MAP_DEVNUM, KA_GFP_KERNEL|__KA_GFP_HIGHMEM|__KA_GFP_ACCOUNT, KA_PAGE_KERNEL);
+        udevids = dbl_vmalloc(sizeof(u32) * PID_MAP_DEVNUM, KA_GFP_KERNEL | __KA_GFP_HIGHMEM | __KA_GFP_ACCOUNT,
+                              KA_PAGE_KERNEL);
         if (udevids == NULL) {
             devdrv_drv_err("Alloc udevids failed.\n");
             return -ENOMEM;
@@ -615,8 +619,8 @@ STATIC int devdrv_pid_map_sync_to_peer(struct devdrv_ioctl_para_bind_host_pid *p
     sync->pid = pid;
     sync->op = op;
 
-    devdrv_drv_info("Sync pid map. (op=%d; host_pid=%d; pid=%d; cp_type=%u; devid=%u)\n",
-        sync->op, sync->host_pid, sync->pid, sync->cp_type, sync->chip_id);
+    devdrv_drv_info("Sync pid map. (op=%d; host_pid=%d; pid=%d; cp_type=%u; devid=%u)\n", sync->op, sync->host_pid,
+                    sync->pid, sync->cp_type, sync->chip_id);
     dev_manager_msg_info.header.dev_id = para_info->chip_id;
 
     ret = devdrv_manager_wait_host_ready_event(para_info->chip_id);
@@ -625,7 +629,8 @@ STATIC int devdrv_pid_map_sync_to_peer(struct devdrv_ioctl_para_bind_host_pid *p
     }
 
     ret = agentdrv_common_msg_send(para_info->chip_id, &dev_manager_msg_info, sizeof(struct devdrv_manager_msg_info),
-        sizeof(struct devdrv_manager_msg_info), (u32 *)&out_len, DEVDRV_COMMON_MSG_DEVDRV_MANAGER);
+                                   sizeof(struct devdrv_manager_msg_info), (u32 *)&out_len,
+                                   DEVDRV_COMMON_MSG_DEVDRV_MANAGER);
 
     return devdrv_pid_map_sync_result_check(ret, &dev_manager_msg_info, out_len);
 #endif
@@ -639,7 +644,8 @@ STATIC bool devdrv_is_master_pid(ka_pid_t master_pid)
     struct devdrv_process_sign *d_sign = NULL;
 
     ka_task_mutex_lock(&d_info->devdrv_sign_list_lock);
-    ka_list_for_each_entry(d_sign, &d_info->hostpid_list_header, list) {
+    ka_list_for_each_entry(d_sign, &d_info->hostpid_list_header, list)
+    {
         if (d_sign->hostpid == master_pid) {
             ka_task_mutex_unlock(&d_info->devdrv_sign_list_lock);
             return true;
@@ -650,8 +656,8 @@ STATIC bool devdrv_is_master_pid(ka_pid_t master_pid)
 }
 #endif
 
-#define MAX_BIND_WAIT_TIMES  2800 /* max wait time 28s, equal to operator timeout interval  */
-#define MAX_BIND_WAIT_ONCE   10
+#define MAX_BIND_WAIT_TIMES 2800 /* max wait time 28s, equal to operator timeout interval  */
+#define MAX_BIND_WAIT_ONCE 10
 
 STATIC int devdrv_wait_pid_init(ka_pid_t proc_pid, ka_pid_t proc_tgid, int mode)
 {
@@ -681,7 +687,6 @@ STATIC int devdrv_wait_pid_init(ka_pid_t proc_pid, ka_pid_t proc_tgid, int mode)
     ka_print_dump_task(proc_tgid);
     return -ETIME;
 }
-
 
 #ifdef CFG_HOST_ENV
 static int check_parent_child_relationship(ka_pid_t master_pid, char *sign)
@@ -731,7 +736,7 @@ static int check_parent_child_relationship(ka_pid_t master_pid, char *sign)
     /* the slave process must be a child of the current process */
     if (tsk->real_parent->tgid != cur_tgid) {
         devdrv_drv_err("slave pid's parent is not master pid. (master_pid=%d; slave_pid=%d, parent_pid=%d)\n",
-            master_pid, slave_pid, tsk->real_parent->tgid);
+                       master_pid, slave_pid, tsk->real_parent->tgid);
         ret = -EINVAL;
         goto OUT;
     }
@@ -756,15 +761,16 @@ STATIC int devdrv_query_master_pid_by_slave_pid(ka_pid_t slave_pid, ka_pid_t *ma
     struct devdrv_manager_info *d_info = devdrv_get_manager_info();
     int current_side = devdrv_get_cur_run_side();
 
-    ka_hash_for_each(d_info->proc_hash_table, bkt, d_sign, link) {
+    ka_hash_for_each(d_info->proc_hash_table, bkt, d_sign, link)
+    {
         for (i = 0; i < PID_MAP_DEVNUM; i++) {
             for (j = 0; j < VFID_NUM_MAX; j++) {
                 if ((d_sign->devpid[i][j][DEVDRV_PROCESS_CP1].slave_pid == slave_pid) ||
-                (d_sign->devpid[i][j][DEVDRV_PROCESS_CP2].slave_pid == slave_pid) ||
-                (d_sign->devpid[i][j][DEVDRV_PROCESS_QS].slave_pid == slave_pid) ||
-                (d_sign->devpid[i][j][DEVDRV_PROCESS_HCCP].slave_pid == slave_pid) ||
-                ((current_side == DEVICE_SIDE) &&
-                    (d_sign->devpid[i][j][DEVDRV_PROCESS_DEV_ONLY].slave_pid == slave_pid))) {
+                    (d_sign->devpid[i][j][DEVDRV_PROCESS_CP2].slave_pid == slave_pid) ||
+                    (d_sign->devpid[i][j][DEVDRV_PROCESS_QS].slave_pid == slave_pid) ||
+                    (d_sign->devpid[i][j][DEVDRV_PROCESS_HCCP].slave_pid == slave_pid) ||
+                    ((current_side == DEVICE_SIDE) &&
+                     (d_sign->devpid[i][j][DEVDRV_PROCESS_DEV_ONLY].slave_pid == slave_pid))) {
                     *master_pid = d_sign->hostpid;
                     return 0;
                 }
@@ -806,20 +812,20 @@ static int devdrv_get_master_deployment_location(unsigned int mode)
     }
 }
 
-#define DEVDRV_PID_MAP_COST_TIME_MAX    1000    /* 1000 ms */
+#define DEVDRV_PID_MAP_COST_TIME_MAX 1000 /* 1000 ms */
 void bind_cost_print(struct bind_cost_statistics *cost_stat)
 {
     if (ka_system_ktime_to_ms(ktime_sub(cost_stat->bind_end, cost_stat->bind_start)) < DEVDRV_PID_MAP_COST_TIME_MAX) {
         return;
     }
 
-    devdrv_drv_warn("Binding time exceeds %d ms. (cost_time=%lldms; bind_start=%lldus; bind_end=%lldus; "
-                    "check_master_start=%lldus; check_master_end=%lldus; "
-                    "check_slave_start=%lldus; check_slave_end=%lldus; "
-                    "sync_start=%lldus; sync_end=%lldus; "
-                    "update_hash_start=%lldus; update_hash_end=%lldus)\n",
-        DEVDRV_PID_MAP_COST_TIME_MAX,
-        ka_system_ktime_to_ms(ktime_sub(cost_stat->bind_end, cost_stat->bind_start)),
+    devdrv_drv_warn(
+        "Binding time exceeds %d ms. (cost_time=%lldms; bind_start=%lldus; bind_end=%lldus; "
+        "check_master_start=%lldus; check_master_end=%lldus; "
+        "check_slave_start=%lldus; check_slave_end=%lldus; "
+        "sync_start=%lldus; sync_end=%lldus; "
+        "update_hash_start=%lldus; update_hash_end=%lldus)\n",
+        DEVDRV_PID_MAP_COST_TIME_MAX, ka_system_ktime_to_ms(ktime_sub(cost_stat->bind_end, cost_stat->bind_start)),
         ka_system_ktime_to_us(cost_stat->bind_start), ka_system_ktime_to_us(cost_stat->bind_end),
         ka_system_ktime_to_us(cost_stat->check_master_start), ka_system_ktime_to_us(cost_stat->check_master_end),
         ka_system_ktime_to_us(cost_stat->check_slave_start), ka_system_ktime_to_us(cost_stat->check_slave_end),
@@ -841,7 +847,7 @@ int devdrv_bind_hostpid(struct devdrv_ioctl_para_bind_host_pid para_info, struct
     ka_pid_t dev_tgid = -1;
     int master_location = DEVDRV_HOST_MASTER;
     int current_side = devdrv_get_cur_run_side();
-    struct devdrv_bind_para bind_para = { {0}, 0, 0, 0, {0} };
+    struct devdrv_bind_para bind_para = {{0}, 0, 0, 0, {0}};
 
 #if (defined CFG_FEATURE_BIND_TGID) || (defined CFG_HOST_ENV)
     ka_pid_t tgid = 0;
@@ -879,9 +885,9 @@ int devdrv_bind_hostpid(struct devdrv_ioctl_para_bind_host_pid para_info, struct
         /* dev_only type for tsdaemon save in host master table, other no save. */
         if (para_info.cp_type != DEVDRV_PROCESS_DEV_ONLY) {
             devdrv_drv_info("Bind pid success. "
-                "(host_pid=%d; dev_tgid=%d; cp_type=%d; dev_id=%u; vfid=%u; mode=%d; master_location=%d)\n",
-                para_info.host_pid, dev_tgid, para_info.cp_type, para_info.chip_id, para_info.vfid, para_info.mode,
-                master_location);
+                            "(host_pid=%d; dev_tgid=%d; cp_type=%d; dev_id=%u; vfid=%u; mode=%d; master_location=%d)\n",
+                            para_info.host_pid, dev_tgid, para_info.cp_type, para_info.chip_id, para_info.vfid,
+                            para_info.mode, master_location);
             return 0;
         }
     }
@@ -895,14 +901,14 @@ int devdrv_bind_hostpid(struct devdrv_ioctl_para_bind_host_pid para_info, struct
     }
     cost_stat->check_slave_end = ka_system_ktime_get();
 
-    if ((para_info.cp_type == DEVDRV_PROCESS_USER) && (current_side == HOST_SIDE)
-        && (para_info.chip_id == HAL_BIND_ALL_DEVICE)) {
+    if ((para_info.cp_type == DEVDRV_PROCESS_USER) && (current_side == HOST_SIDE) &&
+        (para_info.chip_id == HAL_BIND_ALL_DEVICE)) {
         ret = devdrv_get_curr_ns_dev_info(&bind_para.curr_dev_info);
         if (ret != 0) {
             devdrv_drv_err("Get all device list failed. "
-                "(ret=%d, host_pid=%d; dev_tgid=%d; cp_type=%d; dev_id=%u; vfid=%u; mode=%d)\n",
-                ret, para_info.host_pid, dev_tgid, para_info.cp_type,
-                para_info.chip_id, para_info.vfid, para_info.mode);
+                           "(ret=%d, host_pid=%d; dev_tgid=%d; cp_type=%d; dev_id=%u; vfid=%u; mode=%d)\n",
+                           ret, para_info.host_pid, dev_tgid, para_info.cp_type, para_info.chip_id, para_info.vfid,
+                           para_info.mode);
             return ret;
         }
     }
@@ -910,8 +916,8 @@ int devdrv_bind_hostpid(struct devdrv_ioctl_para_bind_host_pid para_info, struct
     key = (u32)para_info.host_pid & DEVDRV_PROC_HASH_TABLE_MASK;
     d_sign_create = devdrv_create_process_sign(d_info, para_info);
     if (d_sign_create == NULL) {
-        devdrv_drv_err("Create sign failed or invalid sign. (chip_id=%u; hostpid=%d)\n",
-            para_info.chip_id, para_info.host_pid);
+        devdrv_drv_err("Create sign failed or invalid sign. (chip_id=%u; hostpid=%d)\n", para_info.chip_id,
+                       para_info.host_pid);
         return -EINVAL;
     }
 
@@ -919,8 +925,9 @@ int devdrv_bind_hostpid(struct devdrv_ioctl_para_bind_host_pid para_info, struct
     ret_sync = devdrv_pid_map_sync_to_peer(&para_info, dev_tgid, ADD_PID);
     if (ret_sync != 0) {
         devdrv_drv_warn("Sync to peer unsuccessfully."
-            "(host_pid=%d; dev_tgid=%d; cp_type=%d; dev_id=%u; vfid=%u; mode=%d)\n",
-            para_info.host_pid, dev_tgid, para_info.cp_type, para_info.chip_id, para_info.vfid, para_info.mode);
+                        "(host_pid=%d; dev_tgid=%d; cp_type=%d; dev_id=%u; vfid=%u; mode=%d)\n",
+                        para_info.host_pid, dev_tgid, para_info.cp_type, para_info.chip_id, para_info.vfid,
+                        para_info.mode);
     }
     cost_stat->sync_end = ka_system_ktime_get();
 
@@ -936,19 +943,19 @@ int devdrv_bind_hostpid(struct devdrv_ioctl_para_bind_host_pid para_info, struct
         is_multi_bind = is_multi_bind_master(dev_tgid, para_info.host_pid, &bound_masterpid);
         ret = (is_multi_bind) ? -EINVAL : devdrv_check_and_bind_hostpid(d_sign, bind_para, &bound_devpid);
         ka_task_spin_unlock_bh(&d_info->proc_hash_table_lock);
-        devdrv_drv_debug("Destroy master pid ctx when exist. (master_pid=%d)\n", para_info.host_pid);
+        devdrv_drv_debug("Destroy master pid ctx when exit. (master_pid=%d)\n", para_info.host_pid);
         dbl_vfree(d_sign_create);
         d_sign_create = NULL;
         if (ret == -EBUSY) {
             devdrv_drv_warn("Hostpid has already bound current devpid. "
-                "(hostpid=%d; devpid=%d; cp_type=%d; chip_id=%u; vfid=%u)\n",
-                para_info.host_pid, dev_tgid, para_info.cp_type, para_info.chip_id, para_info.vfid);
+                            "(hostpid=%d; devpid=%d; cp_type=%d; chip_id=%u; vfid=%u)\n",
+                            para_info.host_pid, dev_tgid, para_info.cp_type, para_info.chip_id, para_info.vfid);
         } else if (ret != 0) {
             devdrv_drv_err("Bind failed or already bound another m/s process. "
-                "(ret=%d; host_pid=%d; cp_type=%d; bound_devpid=%d; bound_masterpid=%d; dev_tgid=%d;"
-                " dev_id=%u; vfid=%u).\n",
-                ret, para_info.host_pid, para_info.cp_type, bound_devpid, bound_masterpid, dev_tgid,
-                    para_info.chip_id, para_info.vfid);
+                           "(ret=%d; host_pid=%d; cp_type=%d; bound_devpid=%d; bound_masterpid=%d; dev_tgid=%d;"
+                           " dev_id=%u; vfid=%u).\n",
+                           ret, para_info.host_pid, para_info.cp_type, bound_devpid, bound_masterpid, dev_tgid,
+                           para_info.chip_id, para_info.vfid);
             goto BIND_FAILED;
         }
         goto bind_succ;
@@ -959,15 +966,15 @@ int devdrv_bind_hostpid(struct devdrv_ioctl_para_bind_host_pid para_info, struct
     if (ret != 0) {
         ka_task_spin_unlock_bh(&d_info->proc_hash_table_lock);
         devdrv_drv_err("Bind failed or already bound another m/s process. "
-            "(ret=%d; host_pid=%d; cp_type=%d; bound_devpid=%d; bound_masterpid=%d; dev_tgid=%d;"
-            " dev_id=%u; vfid=%u).\n",
-            ret, para_info.host_pid, para_info.cp_type, bound_devpid, bound_masterpid, dev_tgid,
-                para_info.chip_id, para_info.vfid);
+                       "(ret=%d; host_pid=%d; cp_type=%d; bound_devpid=%d; bound_masterpid=%d; dev_tgid=%d;"
+                       " dev_id=%u; vfid=%u).\n",
+                       ret, para_info.host_pid, para_info.cp_type, bound_devpid, bound_masterpid, dev_tgid,
+                       para_info.chip_id, para_info.vfid);
         dbl_vfree(d_sign_create);
         d_sign_create = NULL;
         goto BIND_FAILED;
     }
-    ka_hash_add(d_info->proc_hash_table, &d_sign_create->link, key); //lint !e666
+    ka_hash_add(d_info->proc_hash_table, &d_sign_create->link, key); // lint !e666
     ka_task_spin_unlock_bh(&d_info->proc_hash_table_lock);
     cost_stat->update_hash_end = ka_system_ktime_get();
 
@@ -976,17 +983,18 @@ bind_succ:
         ret = devdrv_pid_map_sync_to_peer(&para_info, dev_tgid, ADD_PID);
         if (ret != 0) {
             devdrv_drv_warn("Sync to peer unsuccessfully."
-                "(host_pid=%d; dev_tgid=%d; cp_type=%d; dev_id=%u; vfid=%u; mode=%d)\n",
-                para_info.host_pid, dev_tgid, para_info.cp_type, para_info.chip_id, para_info.vfid, para_info.mode);
+                            "(host_pid=%d; dev_tgid=%d; cp_type=%d; dev_id=%u; vfid=%u; mode=%d)\n",
+                            para_info.host_pid, dev_tgid, para_info.cp_type, para_info.chip_id, para_info.vfid,
+                            para_info.mode);
         }
     }
     cost_stat->bind_end = ka_system_ktime_get();
     bind_cost_print(cost_stat);
 
     devdrv_drv_info("Bind pid success. "
-        "(host_pid=%d; dev_tgid=%d; cp_type=%d; dev_id=%u; vfid=%u; mode=%d; master_location=%d)\n",
-        para_info.host_pid, dev_tgid, para_info.cp_type, para_info.chip_id, para_info.vfid, para_info.mode,
-        master_location);
+                    "(host_pid=%d; dev_tgid=%d; cp_type=%d; dev_id=%u; vfid=%u; mode=%d; master_location=%d)\n",
+                    para_info.host_pid, dev_tgid, para_info.cp_type, para_info.chip_id, para_info.vfid, para_info.mode,
+                    master_location);
     return 0;
 
 BIND_FAILED:
@@ -994,15 +1002,16 @@ BIND_FAILED:
         ret_sync = devdrv_pid_map_sync_to_peer(&para_info, dev_tgid, DELETE_PID);
         if (ret_sync != 0) {
             devdrv_drv_warn("Sync to peer to unbind unsuccessfully."
-                "(host_pid=%d; dev_tgid=%d; cp_type=%d; dev_id=%u; vfid=%u; mode=%d)\n",
-                para_info.host_pid, dev_tgid, para_info.cp_type, para_info.chip_id, para_info.vfid, para_info.mode);
+                            "(host_pid=%d; dev_tgid=%d; cp_type=%d; dev_id=%u; vfid=%u; mode=%d)\n",
+                            para_info.host_pid, dev_tgid, para_info.cp_type, para_info.chip_id, para_info.vfid,
+                            para_info.mode);
         }
     }
     return ret;
 }
 
-static int devdrv_release_single_devpid(ka_pid_t host_pid, ka_pid_t dev_pid,
-    unsigned int dev_id, unsigned int vf_id, enum devdrv_process_type cp_type, int slave_side)
+static int devdrv_release_single_devpid(ka_pid_t host_pid, ka_pid_t dev_pid, unsigned int dev_id, unsigned int vf_id,
+                                        enum devdrv_process_type cp_type, int slave_side)
 {
     struct devdrv_manager_info *d_info = devdrv_get_manager_info();
     struct devdrv_process_sign *d_sign = NULL;
@@ -1019,8 +1028,8 @@ static int devdrv_release_single_devpid(ka_pid_t host_pid, ka_pid_t dev_pid,
     if (d_sign == NULL) {
         ka_task_spin_unlock_bh(&d_info->proc_hash_table_lock);
         devdrv_drv_warn("Can't find host_pid in table, please check interface parameters. "
-                       "(host_pid=%d; dev_pid=%d; dev_id=%u; vf_id=%u; cp_type=%d)\n",
-                       host_pid, dev_pid, dev_id, vf_id, cp_type);
+                        "(host_pid=%d; dev_pid=%d; dev_id=%u; vf_id=%u; cp_type=%d)\n",
+                        host_pid, dev_pid, dev_id, vf_id, cp_type);
         return -EINVAL;
     }
 
@@ -1034,7 +1043,7 @@ static int devdrv_release_single_devpid(ka_pid_t host_pid, ka_pid_t dev_pid,
                 d_sign->cp_count -= (devdrv_is_update_slave_proc_num(slave_side)) ? 1 : 0;
                 d_sign->sync_proc_cnt -= (!devdrv_is_update_slave_proc_num(slave_side)) ? 1 : 0;
             } else if ((cp_type == DEVDRV_PROCESS_CP2) &&
-                        (d_sign->devpid[dev_id][vf_id][DEVDRV_PROCESS_CP1].slave_pid != DEVMNG_PID_INVALID)) {
+                       (d_sign->devpid[dev_id][vf_id][DEVDRV_PROCESS_CP1].slave_pid != DEVMNG_PID_INVALID)) {
                 d_sign->devpid[dev_id][vf_id][DEVDRV_PROCESS_CP2].slave_pid = DEVMNG_PID_START_ONCE;
             } else if (cp_type == DEVDRV_PROCESS_CP2) {
                 d_sign->devpid[dev_id][vf_id][DEVDRV_PROCESS_CP2].slave_pid = DEVMNG_PID_INVALID;
@@ -1071,7 +1080,7 @@ static int devdrv_release_single_devpid(ka_pid_t host_pid, ka_pid_t dev_pid,
     } else {
         ka_task_spin_unlock_bh(&d_info->proc_hash_table_lock);
         devdrv_drv_info("Find process sign is abnormal. (dev_pid=%d)\n",
-            d_sign_check->devpid[dev_id][vf_id][cp_type].slave_pid);
+                        d_sign_check->devpid[dev_id][vf_id][cp_type].slave_pid);
         ret = -EINVAL;
         goto release_exit;
     }
@@ -1098,8 +1107,8 @@ int devdrv_unbind_hostpid(struct devdrv_ioctl_para_bind_host_pid para_info)
     if (para_info.chip_id < PID_MAP_DEVNUM) {
         ret = devdrv_manager_trans_and_check_id(para_info.chip_id, &phys_id, &vf_id, ALSO_DOES_SUPPORT_VF);
         if (ret != 0) {
-            devdrv_drv_err("Failed to transfer logical ID to physical ID. (dev_id=%u; ret=%d)\n",
-                para_info.chip_id, ret);
+            devdrv_drv_err("Failed to transfer logical ID to physical ID. (dev_id=%u; ret=%d)\n", para_info.chip_id,
+                           ret);
             return ret;
         }
     }
@@ -1126,7 +1135,8 @@ int devdrv_unbind_hostpid(struct devdrv_ioctl_para_bind_host_pid para_info)
         int sync_ret = devdrv_pid_map_sync_to_peer(&para_info, dev_tgid, DELETE_PID);
         if (sync_ret != 0) {
             devdrv_drv_warn("Sync failed. (host_pid=%d; dev_tgid=%d; cp_type=%d; dev_id=%u; vfid=%u; mode=%d)\n",
-                para_info.host_pid, dev_tgid, para_info.cp_type, para_info.chip_id, para_info.vfid, para_info.mode);
+                            para_info.host_pid, dev_tgid, para_info.cp_type, para_info.chip_id, para_info.vfid,
+                            para_info.mode);
         }
     }
 
@@ -1138,7 +1148,7 @@ static int devdrv_pid_map_sync_add(struct devdrv_pid_map_sync *sync)
 {
     struct devdrv_manager_info *d_info = devdrv_get_manager_info();
     struct devdrv_ioctl_para_bind_host_pid para_info = {0};
-    struct devdrv_bind_para bind_para = { {0}, 0, 0, 0, {0} };
+    struct devdrv_bind_para bind_para = {{0}, 0, 0, 0, {0}};
     struct devdrv_process_sign *d_sign = NULL, *d_sign_tmp = NULL;
     int ret = 0, create_flag = 0;
     int sync_side = (devdrv_get_cur_run_side() == DEVICE_SIDE) ? HOST_SIDE : DEVICE_SIDE;
@@ -1171,7 +1181,7 @@ static int devdrv_pid_map_sync_add(struct devdrv_pid_map_sync *sync)
     bind_para.slave_side = sync_side;
     ret = devdrv_check_and_bind_hostpid(d_sign, bind_para, &bound_devpid);
     if ((ret == 0) && (create_flag == 1)) {
-        ka_hash_add(d_info->proc_hash_table, &d_sign->link, sync->host_pid & DEVDRV_PROC_HASH_TABLE_MASK); //lint !e666
+        ka_hash_add(d_info->proc_hash_table, &d_sign->link, sync->host_pid & DEVDRV_PROC_HASH_TABLE_MASK); // lint !e666
     }
     ka_task_spin_unlock_bh(&d_info->proc_hash_table_lock);
 
@@ -1180,8 +1190,8 @@ static int devdrv_pid_map_sync_add(struct devdrv_pid_map_sync *sync)
         dbl_vfree(d_sign_tmp);
     }
 
-    devdrv_drv_info("Sync finish. (op=%d; host_pid=%d; pid=%d; cp_type=%u; devid=%u; ret=%d)\n",
-        sync->op, sync->host_pid, sync->pid, sync->cp_type, sync->chip_id, ret);
+    devdrv_drv_info("Sync finish. (op=%d; host_pid=%d; pid=%d; cp_type=%u; devid=%u; ret=%d)\n", sync->op,
+                    sync->host_pid, sync->pid, sync->cp_type, sync->chip_id, ret);
 
     return ret;
 }
@@ -1191,10 +1201,9 @@ static int devdrv_pid_map_sync_del(struct devdrv_pid_map_sync *sync)
     int sync_side = (devdrv_get_cur_run_side() == DEVICE_SIDE) ? HOST_SIDE : DEVICE_SIDE;
     int ret;
 
-    ret = devdrv_release_single_devpid(sync->host_pid, sync->pid, sync->chip_id, sync->vfid,
-        sync->cp_type, sync_side);
-    devdrv_drv_info("Sync finish. (op=%d; host_pid=%d; pid=%d; cp_type=%u; devid=%u; ret=%d)\n",
-        sync->op, sync->host_pid, sync->pid, sync->cp_type, sync->chip_id, ret);
+    ret = devdrv_release_single_devpid(sync->host_pid, sync->pid, sync->chip_id, sync->vfid, sync->cp_type, sync_side);
+    devdrv_drv_info("Sync finish. (op=%d; host_pid=%d; pid=%d; cp_type=%u; devid=%u; ret=%d)\n", sync->op,
+                    sync->host_pid, sync->pid, sync->cp_type, sync->chip_id, ret);
 
     return ret;
 }
@@ -1217,8 +1226,8 @@ int devdrv_pid_map_sync_proc(u32 devid, void *msg, u32 in_len, u32 *ack_len)
 
 #ifndef CFG_HOST_ENV
     if (in_len < sizeof(struct devdrv_manager_msg_info)) {
-        devdrv_drv_err("Invalid message from host. (dev_id=%u; valid=%u; in_len=%u)\n",
-                       devid, dev_manager_msg_info->header.valid, in_len);
+        devdrv_drv_err("Invalid message from host. (dev_id=%u; valid=%u; in_len=%u)\n", devid,
+                       dev_manager_msg_info->header.valid, in_len);
         return -EINVAL;
     }
     sync = (struct devdrv_pid_map_sync *)dev_manager_msg_info->payload;
@@ -1238,8 +1247,8 @@ int devdrv_pid_map_sync_proc(u32 devid, void *msg, u32 in_len, u32 *ack_len)
     }
 
     if ((sync->vfid >= VFID_NUM_MAX) || (sync->cp_type >= DEVDRV_PROCESS_CPTYPE_MAX)) {
-        devdrv_drv_err("Invalid parameter. (host_pid=%d; pid=%d; cp_type=%u; devid=%u; vfid=%u)\n",
-            sync->host_pid, sync->pid, sync->cp_type, sync->chip_id, sync->vfid);
+        devdrv_drv_err("Invalid parameter. (host_pid=%d; pid=%d; cp_type=%u; devid=%u; vfid=%u)\n", sync->host_pid,
+                       sync->pid, sync->cp_type, sync->chip_id, sync->vfid);
         return -EINVAL;
     }
 
@@ -1265,13 +1274,13 @@ int devdrv_query_slave_by_map_info(const devdrv_pid_map_info_t *q_info, ka_pid_t
 
     if ((q_info == NULL) || (slave_pid == NULL) || (mode == NULL) || (d_info == NULL)) {
         devdrv_drv_err("null ptr. (q_info_is_null=%d; pid_is_null=%d; mode_is_null=%d; d_info_is_null=%d)\n",
-            (q_info == NULL), (slave_pid == NULL), (mode == NULL), (d_info == NULL));
+                       (q_info == NULL), (slave_pid == NULL), (mode == NULL), (d_info == NULL));
         return -EINVAL;
     }
 
     if ((q_info->cp_type >= DEVDRV_PROCESS_CPTYPE_MAX) || (q_info->vf_id >= VFID_NUM_MAX)) {
-        devdrv_drv_err("Invalid para. (dev_id=%u; vf_id=%u; cp_type=%u; master_pid=%d)\n",
-                    q_info->dev_id, q_info->vf_id, q_info->cp_type, q_info->master_pid);
+        devdrv_drv_err("Invalid para. (dev_id=%u; vf_id=%u; cp_type=%u; master_pid=%d)\n", q_info->dev_id,
+                       q_info->vf_id, q_info->cp_type, q_info->master_pid);
         return -EINVAL;
     }
 
@@ -1283,7 +1292,8 @@ int devdrv_query_slave_by_map_info(const devdrv_pid_map_info_t *q_info, ka_pid_t
     key = (u32)q_info->master_pid & DEVDRV_PROC_HASH_TABLE_MASK;
     ka_task_spin_lock_bh(&d_info->proc_hash_table_lock);
     /*lint -e666 */
-    ka_hash_for_each_possible(d_info->proc_hash_table, d_sign, link, key) {
+    ka_hash_for_each_possible(d_info->proc_hash_table, d_sign, link, key)
+    {
         if (d_sign->hostpid == q_info->master_pid) {
             *slave_pid = d_sign->devpid[q_info->dev_id][q_info->vf_id][q_info->cp_type].slave_pid;
             *mode = d_sign->devpid[q_info->dev_id][q_info->vf_id][q_info->cp_type].mode;
@@ -1294,8 +1304,8 @@ int devdrv_query_slave_by_map_info(const devdrv_pid_map_info_t *q_info, ka_pid_t
             ka_task_spin_unlock_bh(&d_info->proc_hash_table_lock);
             if (*slave_pid == DEVMNG_PID_INVALID) {
                 devdrv_drv_debug("The hostpid didn't bind this type device pid. "
-                    "(master=%u; dev_id=%u; vf_id=%u; cp_type=%u)\n",
-                    q_info->master_pid, q_info->dev_id, q_info->vf_id, q_info->cp_type);
+                                 "(master=%u; dev_id=%u; vf_id=%u; cp_type=%u)\n",
+                                 q_info->master_pid, q_info->dev_id, q_info->vf_id, q_info->cp_type);
                 return DRV_ERROR_NO_PROCESS;
             }
             return 0;
@@ -1303,16 +1313,16 @@ int devdrv_query_slave_by_map_info(const devdrv_pid_map_info_t *q_info, ka_pid_t
     }
     ka_task_spin_unlock_bh(&d_info->proc_hash_table_lock);
     devdrv_drv_debug("Cannot find the host pid in hashtable. (master=%u; dev_id=%u; vf_id=%u; cp_type=%u)\n",
-        q_info->master_pid, q_info->dev_id, q_info->vf_id, q_info->cp_type);
+                     q_info->master_pid, q_info->dev_id, q_info->vf_id, q_info->cp_type);
 
     return DRV_ERROR_NO_PROCESS;
 }
 
 #ifndef CFG_FEATURE_APM_SUPP_PID
-int hal_kernel_devdrv_query_process_by_host_pid_kernel(unsigned int host_pid,
-    unsigned int chip_id, enum devdrv_process_type cp_type, unsigned int vfid, int *pid)
+int hal_kernel_devdrv_query_process_by_host_pid_kernel(unsigned int host_pid, unsigned int chip_id,
+                                                       enum devdrv_process_type cp_type, unsigned int vfid, int *pid)
 {
-    devdrv_pid_map_info_t q_info = { 0 };
+    devdrv_pid_map_info_t q_info = {0};
     ka_pid_t slave_pid = -1;
     unsigned int mode = AICPUFW_MAX_PLAT;
     int ret = 0;
@@ -1336,8 +1346,8 @@ int hal_kernel_devdrv_query_process_by_host_pid_kernel(unsigned int host_pid,
 }
 #endif
 
-int devdrv_query_process_by_host_pid_user(unsigned int host_pid,
-    unsigned int chip_id, enum devdrv_process_type cp_type, unsigned int vfid, int *pid)
+int devdrv_query_process_by_host_pid_user(unsigned int host_pid, unsigned int chip_id, enum devdrv_process_type cp_type,
+                                          unsigned int vfid, int *pid)
 {
     int ret;
 
@@ -1370,14 +1380,14 @@ int devdrv_query_process_by_host_pid_user(unsigned int host_pid,
 }
 
 #ifndef CFG_FEATURE_APM_SUPP_PID
-int devdrv_query_process_by_host_pid(unsigned int host_pid,
-    unsigned int chip_id, enum devdrv_process_type cp_type, unsigned int vfid, int *pid)
+int devdrv_query_process_by_host_pid(unsigned int host_pid, unsigned int chip_id, enum devdrv_process_type cp_type,
+                                     unsigned int vfid, int *pid)
 {
     return hal_kernel_devdrv_query_process_by_host_pid_kernel(host_pid, chip_id, cp_type, vfid, pid);
 }
 
 int hal_kernel_devdrv_query_process_host_pid(int pid, unsigned int *chip_id, unsigned int *vfid, unsigned int *host_pid,
-    enum devdrv_process_type *cp_type)
+                                             enum devdrv_process_type *cp_type)
 {
     struct devdrv_manager_info *d_info = devdrv_get_manager_info();
     struct devdrv_process_sign *d_sign = NULL;
@@ -1392,7 +1402,8 @@ int hal_kernel_devdrv_query_process_host_pid(int pid, unsigned int *chip_id, uns
 
     ka_task_spin_lock_bh(&d_info->proc_hash_table_lock);
 
-    ka_hash_for_each(d_info->proc_hash_table, bkt, d_sign, link) {
+    ka_hash_for_each(d_info->proc_hash_table, bkt, d_sign, link)
+    {
         struct devdrv_process_user_info *user_proc = NULL;
         for (i = 0; i < PID_MAP_DEVNUM; i++) {
             for (j = 0; j < VFID_NUM_MAX; j++) {
@@ -1402,7 +1413,8 @@ int hal_kernel_devdrv_query_process_host_pid(int pid, unsigned int *chip_id, uns
                     *cp_type = DEVDRV_PROCESS_CP2;
                 } else if (d_sign->devpid[i][j][DEVDRV_PROCESS_QS].slave_pid == pid) {
                     *cp_type = DEVDRV_PROCESS_QS;
-                } else if ((d_sign->devpid[i][j][DEVDRV_PROCESS_DEV_ONLY].slave_pid == pid) && (current_side == DEVICE_SIDE)) {
+                } else if ((d_sign->devpid[i][j][DEVDRV_PROCESS_DEV_ONLY].slave_pid == pid) &&
+                           (current_side == DEVICE_SIDE)) {
                     *cp_type = DEVDRV_PROCESS_DEV_ONLY;
                 } else if (d_sign->devpid[i][j][DEVDRV_PROCESS_HCCP].slave_pid == pid) {
                     *cp_type = DEVDRV_PROCESS_HCCP;
@@ -1447,15 +1459,15 @@ int devdrv_query_master_location(const devdrv_pid_map_info_t *q_info, unsigned i
     int current_side = devdrv_get_cur_run_side();
 
     if ((location == NULL) || (q_info == NULL) || (d_info == NULL)) {
-        devdrv_drv_err("null ptr. (location_is_null=%d; q_info_is_null=%d; d_info_is_null=%d)\n",
-            (location == NULL), (q_info == NULL), (q_info == NULL));
+        devdrv_drv_err("null ptr. (location_is_null=%d; q_info_is_null=%d; d_info_is_null=%d)\n", (location == NULL),
+                       (q_info == NULL), (q_info == NULL));
         return -EINVAL;
     }
 
     if ((q_info->dev_id >= PID_MAP_DEVNUM) || (q_info->vf_id >= VFID_NUM_MAX) ||
         (q_info->cp_type >= DEVDRV_PROCESS_CPTYPE_MAX) || (q_info->slave_pid <= 0) || (q_info->master_pid <= 0)) {
-        devdrv_drv_err("Invalid para. (dev_id=%u; vf_id=%u; cp_type=%u; slave_pid=%d; master_pid=%d)\n",
-            q_info->dev_id, q_info->vf_id, q_info->cp_type, q_info->slave_pid, q_info->master_pid);
+        devdrv_drv_err("Invalid para. (dev_id=%u; vf_id=%u; cp_type=%u; slave_pid=%d; master_pid=%d)\n", q_info->dev_id,
+                       q_info->vf_id, q_info->cp_type, q_info->slave_pid, q_info->master_pid);
         return -EINVAL;
     }
 
@@ -1465,7 +1477,8 @@ int devdrv_query_master_location(const devdrv_pid_map_info_t *q_info, unsigned i
 
     key = (u32)q_info->master_pid & DEVDRV_PROC_HASH_TABLE_MASK;
     ka_task_spin_lock_bh(&d_info->proc_hash_table_lock);
-    ka_hash_for_each_possible(d_info->proc_hash_table, d_sign, link, key) {
+    ka_hash_for_each_possible(d_info->proc_hash_table, d_sign, link, key)
+    {
         if (d_sign->hostpid != q_info->master_pid) {
             continue;
         }
@@ -1480,8 +1493,8 @@ int devdrv_query_master_location(const devdrv_pid_map_info_t *q_info, unsigned i
         } else {
             user_proc = devdrv_query_user_proc(d_sign, current_side, q_info->slave_pid);
             if ((user_proc != NULL) &&
-                    ((user_proc->devid == HAL_BIND_ALL_DEVICE) || (user_proc->devid == q_info->dev_id)) &&
-                    (user_proc->vfid == q_info->vf_id)) {
+                ((user_proc->devid == HAL_BIND_ALL_DEVICE) || (user_proc->devid == q_info->dev_id)) &&
+                (user_proc->vfid == q_info->vf_id)) {
                 *location = devdrv_get_master_deployment_location(user_proc->mode);
                 ka_task_spin_unlock_bh(&d_info->proc_hash_table_lock);
                 return 0;
@@ -1530,7 +1543,8 @@ int devdrv_query_master_pid_by_device_slave(u32 udevid, int slave_pid, u32 *mast
 
     ka_task_spin_lock_bh(&d_info->proc_hash_table_lock);
 
-    ka_hash_for_each(d_info->proc_hash_table, bkt, d_sign, link) {
+    ka_hash_for_each(d_info->proc_hash_table, bkt, d_sign, link)
+    {
         /* host has cp, store device cp in dev_only */
         if (d_sign->devpid[udevid][vfid][DEVDRV_PROCESS_DEV_ONLY].slave_pid == slave_pid) {
             *master_pid = d_sign->hostpid;
@@ -1557,7 +1571,8 @@ int devdrv_query_master_pid_by_host_slave(int slave_pid, u32 *master_pid)
     }
 
     ka_task_spin_lock_bh(&d_info->proc_hash_table_lock);
-    ka_hash_for_each(d_info->proc_hash_table, bkt, d_sign, link) {
+    ka_hash_for_each(d_info->proc_hash_table, bkt, d_sign, link)
+    {
         struct devdrv_process_user_info *user_proc = devdrv_get_user_proc(d_sign, HOST_SIDE);
         int i;
 
@@ -1577,7 +1592,8 @@ int devdrv_query_master_pid_by_host_slave(int slave_pid, u32 *master_pid)
 #endif
 
 STATIC unsigned int devdrv_query_process_host_pids_detail_by_pid(struct devdrv_process_sign *d_sign, int pid,
-    unsigned int node, unsigned int vfid, devdrv_host_pids_info_t *host_pids_info)
+                                                                 unsigned int node, unsigned int vfid,
+                                                                 devdrv_host_pids_info_t *host_pids_info)
 {
     unsigned int i;
     unsigned int query_count = 0;
@@ -1611,7 +1627,8 @@ int devdrv_query_process_host_pids_by_pid(int pid, devdrv_host_pids_info_t *host
 
     host_pids_info->vaild_num = 0;
     ka_task_spin_lock_bh(&d_info->proc_hash_table_lock);
-    ka_hash_for_each(d_info->proc_hash_table, bkt, d_sign, link) {
+    ka_hash_for_each(d_info->proc_hash_table, bkt, d_sign, link)
+    {
         for (i = 0; i < PID_MAP_DEVNUM; i++) {
             for (j = 0; j < VFID_NUM_MAX; j++) {
                 query_count = devdrv_query_process_host_pids_detail_by_pid(d_sign, pid, i, j, host_pids_info);
@@ -1665,7 +1682,8 @@ int devdrv_check_hostpid(ka_pid_t hostpid, unsigned int chip_id, unsigned int vf
     key = (u32)hostpid & DEVDRV_PROC_HASH_TABLE_MASK;
     ka_task_spin_lock_bh(&d_info->proc_hash_table_lock);
     /*lint -e666 */
-    ka_hash_for_each_possible(d_info->proc_hash_table, d_sign, link, key) {
+    ka_hash_for_each_possible(d_info->proc_hash_table, d_sign, link, key)
+    {
         if (d_sign->hostpid != hostpid) {
             continue;
         }
@@ -1688,15 +1706,16 @@ int devdrv_check_sign(ka_pid_t hostpid, const char *sign, u32 len)
     u32 key;
 
     if ((sign == NULL) || (len != PROCESS_SIGN_LENGTH) || (d_info == NULL)) {
-        devdrv_drv_err("sign is NULL(%d) or invalid length(%u) or d_info is NULL(%d).\n",
-            (sign == NULL), len, (d_info == NULL));
+        devdrv_drv_err("sign is NULL(%d) or invalid length(%u) or d_info is NULL(%d).\n", (sign == NULL), len,
+                       (d_info == NULL));
         return -EINVAL;
     }
 
     key = (u32)hostpid & DEVDRV_PROC_HASH_TABLE_MASK;
     ka_task_spin_lock_bh(&d_info->proc_hash_table_lock);
     /*lint -e666 */
-    ka_hash_for_each_possible(d_info->proc_hash_table, d_sign, link, key) {
+    ka_hash_for_each_possible(d_info->proc_hash_table, d_sign, link, key)
+    {
         if (d_sign->hostpid == hostpid) {
             /* The sign is not used, not need check. */
             ka_task_spin_unlock_bh(&d_info->proc_hash_table_lock);
@@ -1719,7 +1738,8 @@ int devdrv_get_dev_process(ka_pid_t devpid)
     }
 
     ka_task_spin_lock_bh(&d_info->proc_hash_table_lock);
-    ka_hash_for_each(d_info->proc_hash_table, bkt, d_sign, link) {
+    ka_hash_for_each(d_info->proc_hash_table, bkt, d_sign, link)
+    {
         for (i = 0; i < PID_MAP_DEVNUM; i++) {
             for (j = 0; j < VFID_NUM_MAX; j++) {
                 if ((d_sign->devpid[i][j][DEVDRV_PROCESS_CP1].slave_pid != devpid) &&
@@ -1757,7 +1777,8 @@ void devdrv_put_dev_process(ka_pid_t devpid)
     }
 
     ka_task_spin_lock_bh(&d_info->proc_hash_table_lock);
-    ka_hash_for_each(d_info->proc_hash_table, bkt, d_sign, link) {
+    ka_hash_for_each(d_info->proc_hash_table, bkt, d_sign, link)
+    {
         for (i = 0; i < PID_MAP_DEVNUM; i++) {
             for (j = 0; j < VFID_NUM_MAX; j++) {
                 if ((d_sign->devpid[i][j][DEVDRV_PROCESS_CP1].slave_pid != devpid) &&
@@ -1767,8 +1788,7 @@ void devdrv_put_dev_process(ka_pid_t devpid)
                     (d_sign->devpid[i][j][DEVDRV_PROCESS_HCCP].slave_pid != devpid)) {
                     continue;
                 }
-                d_sign->in_use_count =
-                    (d_sign->in_use_count == 0) ? 0 : d_sign->in_use_count - 1;
+                d_sign->in_use_count = (d_sign->in_use_count == 0) ? 0 : d_sign->in_use_count - 1;
                 ka_task_spin_unlock_bh(&d_info->proc_hash_table_lock);
                 return;
             }
@@ -1820,7 +1840,8 @@ int devdrv_notice_process_exit(u32 dev_id, u32 host_pid)
     }
 
     ka_task_spin_lock_bh(&d_info->proc_hash_table_lock);
-    ka_hash_for_each_possible(d_info->proc_hash_table, d_sign, link, key) {
+    ka_hash_for_each_possible(d_info->proc_hash_table, d_sign, link, key)
+    {
         if (d_sign->hostpid != host_pid) {
             continue;
         }
@@ -1855,8 +1876,7 @@ int devdrv_fop_query_host_pid(ka_file_t *filep, unsigned int cmd, unsigned long 
         return -EOPNOTSUPP;
     }
 
-    if (copy_from_user_safe(&para_info, (void *)(uintptr_t)arg,
-        sizeof(struct devdrv_ioctl_para_query_pid)) != 0) {
+    if (copy_from_user_safe(&para_info, (void *)(uintptr_t)arg, sizeof(struct devdrv_ioctl_para_query_pid)) != 0) {
         devdrv_drv_err("copy_from_user error. dev_id:%d\n", node_id);
         return -EINVAL;
     }
@@ -1876,13 +1896,13 @@ int devdrv_fop_query_host_pid(ka_file_t *filep, unsigned int cmd, unsigned long 
 #endif
 
     ret = hal_kernel_devdrv_query_process_host_pid(tgid, &para_info.chip_id, &para_info.vfid, &para_info.host_pid,
-        &para_info.cp_type);
+                                                   &para_info.cp_type);
     if (ret != 0) {
         return -ESRCH;
     }
     devdrv_drv_debug("Query host_pid information. "
-        "(node_id=%d; dev_id=%u, dev_pid=%d, tgid=%d, vfid=%u, hostpid=%d)",
-        node_id, para_info.chip_id, tgid, ka_task_get_current_tgid(), para_info.vfid, para_info.host_pid);
+                     "(node_id=%d; dev_id=%u, dev_pid=%d, tgid=%d, vfid=%u, hostpid=%d)",
+                     node_id, para_info.chip_id, tgid, ka_task_get_current_tgid(), para_info.vfid, para_info.host_pid);
 #if defined(CFG_HOST_ENV) || defined(CFG_FEATURE_DEVICE_CONTAINER)
     if (devdrv_devpid_container_convert(&para_info.host_pid) != 0) {
         devdrv_drv_err("Failed to convert devpid. (pid=%d)\n", para_info.host_pid);
@@ -1900,11 +1920,11 @@ int devdrv_fop_query_host_pid(ka_file_t *filep, unsigned int cmd, unsigned long 
 }
 
 #ifdef UT_VCAST
-STATIC void devdrv_manager_set_sign_print(struct devdrv_process_sign *d_sign, u32 cp_type,
-    u32 chip_id, u32 vfid, struct devdrv_process_sign *sign_print)
+STATIC void devdrv_manager_set_sign_print(struct devdrv_process_sign *d_sign, u32 cp_type, u32 chip_id, u32 vfid,
+                                          struct devdrv_process_sign *sign_print)
 #else
-STATIC inline void devdrv_manager_set_sign_print(struct devdrv_process_sign *d_sign, u32 cp_type,
-    u32 chip_id, u32 vfid, struct devdrv_process_sign *sign_print)
+STATIC inline void devdrv_manager_set_sign_print(struct devdrv_process_sign *d_sign, u32 cp_type, u32 chip_id, u32 vfid,
+                                                 struct devdrv_process_sign *sign_print)
 #endif
 {
     if (sign_print == NULL) {
@@ -1916,8 +1936,8 @@ STATIC inline void devdrv_manager_set_sign_print(struct devdrv_process_sign *d_s
 }
 
 #ifndef CFG_FEATURE_APM_SUPP_PID
-STATIC void devdrv_release_sync_to_peer(ka_pid_t master_pid, ka_pid_t slave_pid,
-    unsigned int dev_id, unsigned int vf_id, enum devdrv_process_type cp_type)
+STATIC void devdrv_release_sync_to_peer(ka_pid_t master_pid, ka_pid_t slave_pid, unsigned int dev_id,
+                                        unsigned int vf_id, enum devdrv_process_type cp_type)
 {
     struct devdrv_ioctl_para_bind_host_pid para_info;
     para_info.chip_id = dev_id;
@@ -1926,8 +1946,8 @@ STATIC void devdrv_release_sync_to_peer(ka_pid_t master_pid, ka_pid_t slave_pid,
     para_info.host_pid = master_pid;
     para_info.mode = AICPUFW_ONLINE_PLAT;
 
-    devdrv_drv_info("Release sync. (master_pid=%d; slave_pid=%d; dev_id=%u; vf_id=%u; cp_type=%d)\n",
-        master_pid, slave_pid, dev_id, vf_id, cp_type);
+    devdrv_drv_info("Release sync. (master_pid=%d; slave_pid=%d; dev_id=%u; vf_id=%u; cp_type=%d)\n", master_pid,
+                    slave_pid, dev_id, vf_id, cp_type);
 
     (void)devdrv_pid_map_sync_to_peer(&para_info, slave_pid, DELETE_PID);
 }
@@ -1961,7 +1981,8 @@ void devdrv_release_try_to_sync_to_peer(ka_pid_t slave_pid)
 #endif
 
 STATIC void devdrv_manager_release_devpid(struct devdrv_process_sign *d_sign, ka_pid_t devpid,
-    struct devdrv_process_sign *sign_print, u32 *out_chip_id, u32 *out_vfid, ka_list_head_t *free_list)
+                                          struct devdrv_process_sign *sign_print, u32 *out_chip_id, u32 *out_vfid,
+                                          ka_list_head_t *free_list)
 {
     int current_side = devdrv_get_cur_run_side();
     struct devdrv_process_user_info *user_proc = devdrv_query_user_proc(d_sign, current_side, devpid);
@@ -1985,7 +2006,7 @@ STATIC void devdrv_manager_release_devpid(struct devdrv_process_sign *d_sign, ka
                 *out_chip_id = chip_id;
                 *out_vfid = vfid;
             } else if ((d_sign->devpid[chip_id][vfid][DEVDRV_PROCESS_CP2].slave_pid == devpid) &&
-                (d_sign->devpid[chip_id][vfid][DEVDRV_PROCESS_CP1].slave_pid != DEVMNG_PID_INVALID)) {
+                       (d_sign->devpid[chip_id][vfid][DEVDRV_PROCESS_CP1].slave_pid != DEVMNG_PID_INVALID)) {
                 devdrv_manager_set_sign_print(d_sign, DEVDRV_PROCESS_CP2, chip_id, vfid, sign_print);
                 d_sign->devpid[chip_id][vfid][DEVDRV_PROCESS_CP2].slave_pid = DEVMNG_PID_START_ONCE;
                 *out_chip_id = chip_id;
@@ -2029,14 +2050,15 @@ STATIC void devdrv_manager_release_devpid(struct devdrv_process_sign *d_sign, ka
 
 /* The devdrv_release_pid_with_start_time function is used only by the host. */
 void devdrv_release_pid_with_start_time(struct devdrv_process_sign *d_sign, ka_pid_t devpid, u64 start_time,
-    ka_list_head_t *free_list, int *release_flag)
+                                        ka_list_head_t *free_list, int *release_flag)
 {
     int current_side = devdrv_get_cur_run_side();
     struct devdrv_process_user_info *user_proc = devdrv_query_user_proc(d_sign, current_side, devpid);
     u32 chip_id, vfid;
 
     if (user_proc != NULL && user_proc->start_time != start_time) {
-        devdrv_drv_err("[debug] Release user slave pid. (usrpid=%d; cur_pid=%d; usr_proc_time=%llu; cur_start_time=%llu)\n",
+        devdrv_drv_err(
+            "[debug] Release user slave pid. (usrpid=%d; cur_pid=%d; usr_proc_time=%llu; cur_start_time=%llu)\n",
             user_proc->pid, devpid, user_proc->start_time, start_time);
         d_sign->cp_count--;
         user_proc->valid = 0;
@@ -2053,12 +2075,12 @@ void devdrv_release_pid_with_start_time(struct devdrv_process_sign *d_sign, ka_p
                 d_sign->devpid[chip_id][vfid][DEVDRV_PROCESS_CP2].pid_start_time = 0;
                 d_sign->cp_count--;
             } else if ((d_sign->devpid[chip_id][vfid][DEVDRV_PROCESS_CP2].slave_pid == devpid) &&
-                (d_sign->devpid[chip_id][vfid][DEVDRV_PROCESS_CP2].pid_start_time != start_time) &&
-                (d_sign->devpid[chip_id][vfid][DEVDRV_PROCESS_CP1].slave_pid != DEVMNG_PID_INVALID)) {
+                       (d_sign->devpid[chip_id][vfid][DEVDRV_PROCESS_CP2].pid_start_time != start_time) &&
+                       (d_sign->devpid[chip_id][vfid][DEVDRV_PROCESS_CP1].slave_pid != DEVMNG_PID_INVALID)) {
                 d_sign->devpid[chip_id][vfid][DEVDRV_PROCESS_CP2].slave_pid = DEVMNG_PID_START_ONCE;
                 d_sign->devpid[chip_id][vfid][DEVDRV_PROCESS_CP2].pid_start_time = 0;
             } else if ((d_sign->devpid[chip_id][vfid][DEVDRV_PROCESS_CP2].slave_pid == devpid) &&
-                (d_sign->devpid[chip_id][vfid][DEVDRV_PROCESS_CP2].pid_start_time != start_time)) {
+                       (d_sign->devpid[chip_id][vfid][DEVDRV_PROCESS_CP2].pid_start_time != start_time)) {
                 d_sign->devpid[chip_id][vfid][DEVDRV_PROCESS_CP2].slave_pid = DEVMNG_PID_INVALID;
                 d_sign->devpid[chip_id][vfid][DEVDRV_PROCESS_CP2].pid_start_time = 0;
             }
@@ -2090,7 +2112,6 @@ void devdrv_release_pid_with_start_time(struct devdrv_process_sign *d_sign, ka_p
     }
 }
 
-
 void devdrv_manager_process_sign_release(ka_pid_t devpid)
 {
     struct devdrv_manager_info *d_info = devdrv_get_manager_info();
@@ -2114,7 +2135,8 @@ void devdrv_manager_process_sign_release(ka_pid_t devpid)
     /* for host side */
     ka_task_mutex_lock(&d_info->devdrv_sign_list_lock);
     if (!ka_list_empty_careful(&d_info->hostpid_list_header)) {
-        ka_list_for_each_safe(pos, n, &d_info->hostpid_list_header) {
+        ka_list_for_each_safe(pos, n, &d_info->hostpid_list_header)
+        {
             d_sign_hostpid = ka_list_entry(pos, struct devdrv_process_sign, list);
             if (d_sign_hostpid->hostpid == devpid) {
                 devdrv_drv_info("Delete hostpid sign list node. (hostpid=%d)\n", d_sign_hostpid->hostpid);
@@ -2131,19 +2153,22 @@ void devdrv_manager_process_sign_release(ka_pid_t devpid)
 #ifndef CFG_FEATURE_APM_SUPP_PID
     devdrv_release_try_to_sync_to_peer(devpid);
 #endif
-    sign_print = dbl_vmalloc(sizeof(struct devdrv_process_sign), KA_GFP_KERNEL | __KA_GFP_ZERO | __KA_GFP_ACCOUNT, KA_PAGE_KERNEL);
+    sign_print = dbl_vmalloc(sizeof(struct devdrv_process_sign), KA_GFP_KERNEL | __KA_GFP_ZERO | __KA_GFP_ACCOUNT,
+                             KA_PAGE_KERNEL);
     if (sign_print == NULL) {
         devdrv_drv_warn("Can not malloc for print, continue to release.");
     }
 
     ka_task_spin_lock_bh(&d_info->proc_hash_table_lock);
-    ka_hash_for_each_safe(d_info->proc_hash_table, bkt, local_sign, d_sign_devpid, link) {
+    ka_hash_for_each_safe(d_info->proc_hash_table, bkt, local_sign, d_sign_devpid, link)
+    {
         /* release devpid if match */
         devdrv_manager_release_devpid(d_sign_devpid, devpid, sign_print, &chip_id, &vfid, &free_list_head);
     }
     ka_task_spin_unlock_bh(&d_info->proc_hash_table_lock);
 
-    ka_list_for_each_entry_safe(free_sign, free_sign_tmp, &free_list_head, list) {
+    ka_list_for_each_entry_safe(free_sign, free_sign_tmp, &free_list_head, list)
+    {
         ka_list_del(&free_sign->list);
         devdrv_drv_info("Destroy master pid ctx when proc exit. (hostpid=%d; devpid=%d)", free_sign->hostpid, devpid);
         dbl_vfree(free_sign);
@@ -2154,14 +2179,12 @@ void devdrv_manager_process_sign_release(ka_pid_t devpid)
     if (sign_print != NULL && sign_print->hostpid != 0) {
         devdrv_drv_info("Release slave pid. (hostpid=%d; devpid=%d; cp1_pid=%d; cp2_pid=%d; "
                         "dev_only_pid=%d; qs_pid=%d; hccp_pid=%d; user=%d; chip_id=%u; vfid=%u).\n",
-                        sign_print->hostpid, devpid,
-                        sign_print->devpid[chip_id][vfid][DEVDRV_PROCESS_CP1].slave_pid,
+                        sign_print->hostpid, devpid, sign_print->devpid[chip_id][vfid][DEVDRV_PROCESS_CP1].slave_pid,
                         sign_print->devpid[chip_id][vfid][DEVDRV_PROCESS_CP2].slave_pid,
                         sign_print->devpid[chip_id][vfid][DEVDRV_PROCESS_DEV_ONLY].slave_pid,
                         sign_print->devpid[chip_id][vfid][DEVDRV_PROCESS_QS].slave_pid,
                         sign_print->devpid[chip_id][vfid][DEVDRV_PROCESS_HCCP].slave_pid,
-                        sign_print->devpid[chip_id][vfid][DEVDRV_PROCESS_USER].slave_pid,
-                        chip_id, vfid);
+                        sign_print->devpid[chip_id][vfid][DEVDRV_PROCESS_USER].slave_pid, chip_id, vfid);
     }
 
     if (sign_print != NULL) {
@@ -2183,7 +2206,8 @@ void devdrv_manager_free_hashtable(void)
         return;
     }
 
-    ka_hash_for_each_safe(dev_manager_info->proc_hash_table, bkt, local_sign, d_sign, link) {
+    ka_hash_for_each_safe(dev_manager_info->proc_hash_table, bkt, local_sign, d_sign, link)
+    {
         ka_hash_del(&d_sign->link);
         dbl_vfree(d_sign);
         d_sign = NULL;
@@ -2196,8 +2220,8 @@ int devdrv_manager_pid_map(void)
     return 0;
 }
 
-int devdrv_query_process_by_host_pid(unsigned int host_pid,
-    unsigned int chip_id, enum devdrv_process_type cp_type, unsigned int vfid, int *pid)
+int devdrv_query_process_by_host_pid(unsigned int host_pid, unsigned int chip_id, enum devdrv_process_type cp_type,
+                                     unsigned int vfid, int *pid)
 {
     return 0;
 }

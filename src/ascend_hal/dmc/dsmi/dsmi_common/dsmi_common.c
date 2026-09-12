@@ -35,8 +35,6 @@
 #include "hdc_user_interface.h"
 #include "dms_user_interface.h"
 
-
-
 #ifdef IAM_CONFIG
 #include "dev_mon_iam.h"
 #include "dm_iam.h"
@@ -69,7 +67,7 @@ STATIC DM_CB_S *g_dm_cb = NULL;
 STATIC pthread_mutex_t g_init_lock = PTHREAD_MUTEX_INITIALIZER;
 #define DSMI_TIME_SECOND_TO_US_SCALE 1000000
 
-STATIC LIST_T *g_cmd_req_list = NULL;  /* cmd register list */
+STATIC LIST_T *g_cmd_req_list = NULL; /* cmd register list */
 
 /* global variables definition */
 STATIC DM_INTF_S *g_dsmi_intf = NULL;
@@ -93,12 +91,13 @@ STATIC struct timespec g_dsmi_timeout_time = {
     .tv_nsec = 0,
 };
 
-#define DSMI_FILE_NULL(pfile) do {                            \
-    if ((pfile) == NULL) {                                  \
-        DEV_MON_ERR(" local copy file param is null \n"); \
-        return DRV_ERROR_PARA_ERROR;                                \
-    }                                                     \
-} while (0)
+#define DSMI_FILE_NULL(pfile)                                 \
+    do {                                                      \
+        if ((pfile) == NULL) {                                \
+            DEV_MON_ERR(" local copy file param is null \n"); \
+            return DRV_ERROR_PARA_ERROR;                      \
+        }                                                     \
+    } while (0)
 
 STATIC int dsmi_dmp_buff_cmp(const void *item1, const void *item2)
 {
@@ -233,15 +232,14 @@ STATIC int dsmi_check_out_valid(DSMI_DFT_RES_CMD *response_msg, unsigned short o
     if (response_msg->error_code != 0) {
         if (response_msg->error_code != DRV_ERROR_NOT_EXIST) {
             DEV_MON_EX_NOTSUPPORT_ERR(response_msg->error_code,
-                "recv msg data error code %d, recv msg data opcode 0x%x, opcode 0x%x.\n",
-                response_msg->error_code, response_msg->opcode, opcode);
+                                      "recv msg data error code %d, recv msg data opcode 0x%x, opcode 0x%x.\n",
+                                      response_msg->error_code, response_msg->opcode, opcode);
         }
         return response_msg->error_code;
     }
 
     if (response_msg->opcode != opcode) {
-        DEV_MON_ERR("recv msg data opcode not match 0x%x, opcode 0x%x.\n",
-                    response_msg->opcode, opcode);
+        DEV_MON_ERR("recv msg data opcode not match 0x%x, opcode 0x%x.\n", response_msg->opcode, opcode);
         return DRV_ERROR_INNER_ERR;
     }
 
@@ -266,8 +264,7 @@ STATIC int dsmi_init_udp_dest_addr(DM_ADDR_ST *dest_addr, int device_id)
 #ifdef CFG_FEATURE_DMP_UDP_DOUBLE_SOCKET
     user = getpwnam(DM_USER);
     cur_uid = user_prop_check();
-    if ((cur_uid == ROOT_USER) ||
-        ((user != NULL) && (cur_uid == user->pw_uid))) {
+    if ((cur_uid == ROOT_USER) || ((user != NULL) && (cur_uid == user->pw_uid))) {
         dmp_socket_path = DMP_SERVER_PATH_MANAGEMENT;
     }
 #endif
@@ -295,8 +292,7 @@ STATIC int dsmi_init_iam_dest_addr(DM_ADDR_ST *dest_addr, int device_id, const D
 
     send_msg = (DSMI_CMD_CODE *)msg->data;
     ret = memset_s(iam_addr, sizeof(DM_IAM_ADDR_ST), 0, sizeof(DM_IAM_ADDR_ST));
-    DRV_CHECK_RETV_DO_SOMETHING(ret == 0, DRV_ERROR_INNER_ERR,
-                                DEV_MON_ERR("DSMI call safe fun fail, ret = %d\n", ret));
+    DRV_CHECK_RETV_DO_SOMETHING(ret == 0, DRV_ERROR_INNER_ERR, DEV_MON_ERR("DSMI call safe fun fail, ret = %d\n", ret));
 
     iam_addr->addr_type = DM_IAM_ADDR_TYPE;
     iam_addr->channel = DM_IAM_CHANNEL;
@@ -313,8 +309,8 @@ STATIC int dsmi_init_hdc_dest_addr(DM_ADDR_ST *dest_addr, int device_id)
     DM_HDC_ADDR_ST *hdc_addr = (DM_HDC_ADDR_ST *)dest_addr;
 
     ret = memset_s(hdc_addr, sizeof(DM_HDC_ADDR_ST), 0, sizeof(DM_HDC_ADDR_ST));
-    DRV_CHECK_RETV_DO_SOMETHING(
-        ret == 0, DRV_ERROR_INNER_ERR, DEV_MON_ERR("DSMI call safe fun fail. (ret = %d)\n", ret));
+    DRV_CHECK_RETV_DO_SOMETHING(ret == 0, DRV_ERROR_INNER_ERR,
+                                DEV_MON_ERR("DSMI call safe fun fail. (ret = %d)\n", ret));
 
     hdc_addr->addr_type = DM_HDC_ADDR_TYPE;
     hdc_addr->channel = DM_HDC_CHANNEL;
@@ -453,8 +449,8 @@ int dsmi_check_device_id(int device_id)
     ret = dsmi_get_device_count(&device_count);
     CHECK_DEVICE_BUSY(device_id, ret);
     if (ret != 0 || (device_count == 0)) {
-        DEV_MON_ERR("devid %d dsmi_get_device_count,test_fail, ret  = %d, device_count = %d\n",
-                    device_id_temp, ret, device_count);
+        DEV_MON_ERR("devid %d dsmi_get_device_count,test_fail, ret  = %d, device_count = %d\n", device_id_temp, ret,
+                    device_count);
         return DRV_ERROR_INVALID_DEVICE;
     }
 
@@ -464,7 +460,8 @@ int dsmi_check_device_id(int device_id)
         return DRV_ERROR_MALLOC_FAIL;
     }
 
-    ret = memset_s(device_list, (unsigned long)device_count * sizeof(int), INVALID_DEVICE_ID, (unsigned long)device_count * sizeof(int));
+    ret = memset_s(device_list, (unsigned long)device_count * sizeof(int), INVALID_DEVICE_ID,
+                   (unsigned long)device_count * sizeof(int));
     if (ret != 0) {
         DEV_MON_ERR("devid %d memset fail, ret = %d\n", device_id_temp, ret);
         goto check_device_id_resource_free;
@@ -510,7 +507,7 @@ DSMI_DMP_COMMAND_ST *dmp_command_init(unsigned int device_index, unsigned short 
     DRV_CHECK_RETV(dmp, NULL);
     ret = memset_s(dmp, sizeof(DSMI_DMP_COMMAND_ST), 0, sizeof(DSMI_DMP_COMMAND_ST));
     DRV_CHECK_RETV_DO_SOMETHING((ret == 0), NULL, free(dmp); dmp = NULL;
-        DEV_MON_ERR("devid %d memset_s failed, ret = %d\r\n", device_index, ret));
+                                DEV_MON_ERR("devid %d memset_s failed, ret = %d\r\n", device_index, ret));
 
     dmp->send_msg.data_len = (unsigned short)(sizeof(DSMI_CMD_CODE) + input_len);
     dmp->recv_msg.data_len = (unsigned short)(sizeof(DSMI_DFT_RES_CMD) + output_len);
@@ -559,15 +556,14 @@ STATIC int dsmi_wait_receive(struct dsmi_dmp_command_st *dmp)
         if (send_msg_wait > DSMI_MSG_WAIT_MAX) {
             (void)clock_gettime(CLOCK_MONOTONIC, &g_dsmi_timeout_time);
             DEV_MON_ERR("DSMI recv timeout."
-                " (dev_id=%u; recv_data_len=%u; recv_cnt=%u; recv_succ_cnt=%u; send_cnt=%u)\n",
-                dmp->device_index, dmp->recv_msg.data_len, g_dsmi_msg_recv_cnt, g_dsmi_msg_recv_success_cnt,
-                g_dsmi_msg_send_cnt);
+                        " (dev_id=%u; recv_data_len=%u; recv_cnt=%u; recv_succ_cnt=%u; send_cnt=%u)\n",
+                        dmp->device_index, dmp->recv_msg.data_len, g_dsmi_msg_recv_cnt, g_dsmi_msg_recv_success_cnt,
+                        g_dsmi_msg_send_cnt);
             DEV_MON_ERR("Time Consumed."
-                " (send_time=%lds, %ldns; recv_time=%lds, %ldns; reok_time=%lds, %ldns; tout_time=%lds, %ldns)",
-                g_dsmi_send_time.tv_sec, g_dsmi_send_time.tv_nsec,
-                g_dsmi_recv_time.tv_sec, g_dsmi_recv_time.tv_nsec,
-                g_dsmi_recv_ok_time.tv_sec, g_dsmi_recv_ok_time.tv_nsec,
-                g_dsmi_timeout_time.tv_sec, g_dsmi_timeout_time.tv_nsec);
+                        " (send_time=%lds, %ldns; recv_time=%lds, %ldns; reok_time=%lds, %ldns; tout_time=%lds, %ldns)",
+                        g_dsmi_send_time.tv_sec, g_dsmi_send_time.tv_nsec, g_dsmi_recv_time.tv_sec,
+                        g_dsmi_recv_time.tv_nsec, g_dsmi_recv_ok_time.tv_sec, g_dsmi_recv_ok_time.tv_nsec,
+                        g_dsmi_timeout_time.tv_sec, g_dsmi_timeout_time.tv_nsec);
             return DRV_ERROR_WAIT_TIMEOUT;
         }
     }
@@ -582,7 +578,7 @@ STATIC int _dsmi_send_msg_rec_res(struct dsmi_dmp_command_st *dmp)
     mmTimeval start = {0};
     mmTimeval end = {0};
     DM_ADDR_ST dest_addr = {0};
-    DSMI_COMMAND_CTL_ST cmd_ctl = { NULL, 0 };
+    DSMI_COMMAND_CTL_ST cmd_ctl = {NULL, 0};
 
     DRV_CHECK_RETV((dmp != NULL), DRV_ERROR_PARA_ERROR);
     DRV_CHECK_RETV((dmp->recv_msg.data != NULL), DRV_ERROR_PARA_ERROR);
@@ -610,7 +606,7 @@ STATIC int _dsmi_send_msg_rec_res(struct dsmi_dmp_command_st *dmp)
                                (void *)&cmd_ctl, sizeof(DSMI_COMMAND_CTL_ST));
     if (ret != 0) {
         if (ret == DRV_ERROR_REMOTE_NO_SESSION) {
-            DEV_MON_WARNING("dsmi/dmp aisle is busing, not available hdc session, please try later.\n");
+            DEV_MON_WARNING("dsmi/dmp aisle is busy, no available hdc session, please try later.\n");
         } else {
             ret = DRV_ERROR_SEND_MESG;
             DEV_MON_ERR("call dev_mon_send_request error:%d.\n", ret);
@@ -631,7 +627,8 @@ STATIC int _dsmi_send_msg_rec_res(struct dsmi_dmp_command_st *dmp)
     ret_r = mmGetTimeOfDay(&end, NULL);
     DRV_CHECK_CHK(ret_r == 0);
 
-    DEV_MON_DEBUG("Time consumptionoption. (code=0x%X; time_cost=%uus)\n", dmp->op_code,
+    DEV_MON_DEBUG(
+        "Time consumption option. (code=0x%X; time_cost=%uus)\n", dmp->op_code,
         (unsigned int)((end.tv_sec - start.tv_sec) * DSMI_TIME_SECOND_TO_US_SCALE + (end.tv_usec - start.tv_usec)));
 
     /* result handle */
@@ -680,8 +677,8 @@ void clear_all_blank(char *str)
     str[j] = '\0';
 }
 
-int split_by_char(const char *src, char *path, unsigned int path_len_max,
-                  char *value, unsigned int value_len_max, char split_char)
+int split_by_char(const char *src, char *path, unsigned int path_len_max, char *value, unsigned int value_len_max,
+                  char split_char)
 {
     char *split_point = NULL;
     char *end_char = NULL;
@@ -723,9 +720,8 @@ int split_by_char(const char *src, char *path, unsigned int path_len_max,
         return 0;
     }
     // there is no description of component names and types in this row; no symbols:
-    DEV_MON_DEBUG(
-        " fun split_by_char, src = %s, should contain : maybe have blank line in cfg file, is not problem\n",
-        str_tmp);
+    DEV_MON_DEBUG("fun split_by_char, src = %s, should contain : maybe have blank line in cfg file, is not problem\n",
+                  str_tmp);
     return DRV_ERROR_CONFIG_READ_FAIL;
 }
 
@@ -844,8 +840,8 @@ STATIC int write_copy_file(int device_id, const char *dst_file, const char *buff
 
     rw_len = (int)fwrite(buffer, 1, (size_t)buff_len, fp_w);
     if (buff_len != rw_len) {
-        DEV_MON_ERR(
-            "Write file failed. (dst_file=%s; errno=%d; rw_len=%d; file_len=%ld)\n", dst_file, errno, rw_len, buff_len);
+        DEV_MON_ERR("Write file failed. (dst_file=%s; errno=%d; rw_len=%d; file_len=%ld)\n", dst_file, errno, rw_len,
+                    buff_len);
         (void)fclose(fp_w);
         fp_w = NULL;
         return DRV_ERROR_FILE_OPS;
@@ -856,8 +852,8 @@ STATIC int write_copy_file(int device_id, const char *dst_file, const char *buff
 
     ret = chmod(dst_file, S_IRUSR | S_IWUSR | S_IRGRP);
     if (ret != 0) {
-        DEV_MON_ERR("Call chmod failed. (dst_file=%s; ret=%d; errno=%d; err_mesg=%s)\n",
-                    dst_file, ret, errno, strerror(errno));
+        DEV_MON_ERR("Call chmod failed. (dst_file=%s; ret=%d; errno=%d; err_mesg=%s)\n", dst_file, ret, errno,
+                    strerror(errno));
         return DRV_ERROR_FILE_OPS;
     }
 
@@ -900,8 +896,7 @@ int local_copy_file(int device_id, const char *src_file, const char *dst_file)
 
     buffer = (char *)calloc((unsigned long)(flen + 1), sizeof(char));
     DRV_CHECK_RETV_DO_SOMETHING(buffer != NULL, DRV_ERROR_MALLOC_FAIL, DEV_MON_ERR("Call calloc failed.\n");
-                                (void)fclose(fp_r);
-                                fp_r = NULL);
+                                (void)fclose(fp_r); fp_r = NULL);
 
     ret = read_copy_file(fp_r, flen, buffer);
     if (ret != 0) {
@@ -947,7 +942,7 @@ int dsmi_mutex_p(key_t sem_tag, int *sem_id, unsigned int timeout)
     int semid = 0;
     int semno = 0;
     int val;
-    struct sembuf smbf[2] = {{0}};  // 2 smbf size
+    struct sembuf smbf[2] = {{0}}; // 2 smbf size
 
     DRV_CHECK_RETV(sem_id != NULL, -EINVAL);
 #ifndef DEV_MON_UT
@@ -986,7 +981,7 @@ int dsmi_mutex_p(key_t sem_tag, int *sem_id, unsigned int timeout)
         return 0;
     } else if (errno == EAGAIN) {
         dev_upgrade_err("There are multiple same processes going on. (devid=0x%x)\n",
-            (sem_tag - DSMI_UPGRADE_LOCK_TAG));
+                        (sem_tag - DSMI_UPGRADE_LOCK_TAG));
     } else if (errno == EACCES) {
         dev_upgrade_err("Operation not permitted. (devid=0x%x)\n", (sem_tag - DSMI_UPGRADE_LOCK_TAG));
         return DRV_ERROR_OPER_NOT_PERMITTED;
@@ -1044,8 +1039,7 @@ DEV_INFO_MAIN_CMD_TYPE dsmi_get_dev_info_main_cmd_type(unsigned int main_cmd, un
         ((main_cmd == DSMI_MAIN_CMD_UB) && (sub_cmd == DSMI_UB_INFO_SUB_CMD_PORT_STATUS)) ||
         ((main_cmd == DSMI_MAIN_CMD_UB) && (sub_cmd == DSMI_UB_INFO_SUB_CMD_ID)) ||
         ((main_cmd == DSMI_MAIN_CMD_UB) && (sub_cmd == DSMI_UB_INFO_SUB_CMD_URMA_DEV_NAME)) ||
-        ((main_cmd == DSMI_MAIN_CMD_UPGRADE) && (sub_cmd == DSMI_UPGRADE_SUB_TYPE_SWPLUGIN_POLICY))
-        ) {
+        ((main_cmd == DSMI_MAIN_CMD_UPGRADE) && (sub_cmd == DSMI_UPGRADE_SUB_TYPE_SWPLUGIN_POLICY))) {
         return MAIN_CMD_TYPE_HOST_DEVMNG;
     }
 
@@ -1109,8 +1103,7 @@ static int dsmi_init_channel(DM_ADDR_ST *my_addr)
 
     user = getpwnam(DM_USER);
     cur_uid = user_prop_check();
-    if ((cur_uid == ROOT_USER) ||
-        ((user != NULL) && (cur_uid == user->pw_uid))) {
+    if ((cur_uid == ROOT_USER) || ((user != NULL) && (cur_uid == user->pw_uid))) {
         socket_name = DM_UDP_MANAGEMENT_INTF;
     }
 #endif
@@ -1119,8 +1112,7 @@ static int dsmi_init_channel(DM_ADDR_ST *my_addr)
     udp_addr->service_type = DM_CLIENT;
     udp_addr->sock_addr.sun_family = AF_LOCAL;
 
-    ret = dm_udp_init(&g_dsmi_intf, g_dm_cb, dm_command_time_out_print,
-        my_addr, socket_name, (int)strlen(socket_name));
+    ret = dm_udp_init(&g_dsmi_intf, g_dm_cb, dm_command_time_out_print, my_addr, socket_name, (int)strlen(socket_name));
     if (ret) {
         DEV_MON_ERR("call dm_udp_init fail ret = %d.\n", ret);
         return ret;
@@ -1264,7 +1256,7 @@ static __attribute__((destructor)) void dsmi_exit(void)
 }
 
 int dsmi_udis_get_hbm_isolated_pages_info(int dev_id, unsigned char module_type,
-    struct dsmi_ecc_pages_stru *pdevice_ecc_pages_statistics)
+                                          struct dsmi_ecc_pages_stru *pdevice_ecc_pages_statistics)
 {
     int ret;
     struct udis_dev_info get_info = {0};
@@ -1281,14 +1273,14 @@ int dsmi_udis_get_hbm_isolated_pages_info(int dev_id, unsigned char module_type,
         return ret;
     }
 
-    if (get_info.data_len != sizeof(struct dsmi_ecc_pages_stru) ) {
-        DEV_MON_WARNING("Expected data_len != actual data_len for isolated_pages_info. (dev_id=%u;module_type=%u;)\n",
-                            dev_id, module_type);
+    if (get_info.data_len != sizeof(struct dsmi_ecc_pages_stru)) {
+        DEV_MON_WARNING("Expected data_len != actual data_len for isolated_pages_info. (dev_id=%u; module_type=%u; "
+                        "expected_len=%u; actual_len=%u)\n",
+                        dev_id, module_type, (unsigned int)sizeof(struct dsmi_ecc_pages_stru), get_info.data_len);
         return DRV_ERROR_INNER_ERR;
     }
 
-    ret = memcpy_s(pdevice_ecc_pages_statistics, sizeof(struct dsmi_ecc_pages_stru),
-                get_info.data, get_info.data_len);
+    ret = memcpy_s(pdevice_ecc_pages_statistics, sizeof(struct dsmi_ecc_pages_stru), get_info.data, get_info.data_len);
     if (ret != 0) {
         DEV_MON_WARNING("Memcpy to ecc_statistics_all not success. (dev_id=%u;)\n", dev_id);
         return DRV_ERROR_INVALID_HANDLE;
@@ -1301,10 +1293,10 @@ int dsmi_udis_get_single_ecc_info(int dev_id, struct ecc_common_data *dsmi_ecc_c
 {
     int ret;
     struct udis_dev_info get_info = {0};
-    struct ecc_single_data_info single_ecc_data[HBM_ECC_RECORD_MAX_NUMS] = { 0 };
+    struct ecc_single_data_info single_ecc_data[HBM_ECC_RECORD_MAX_NUMS] = {0};
     int idx = 0;
 
-    for(idx = 0; idx < SINGLE_ECC_INFO_BLOCK_NUMS; idx++) {
+    for (idx = 0; idx < SINGLE_ECC_INFO_BLOCK_NUMS; idx++) {
         ret = sprintf_s(get_info.name, UDIS_MAX_NAME_LEN, "%s%d", "single_ecc", idx);
         if (ret < 0) {
             DEV_MON_WARNING("sprintf to udis get_info.name not success. (dev_id=%u;)\n", dev_id);
@@ -1318,21 +1310,24 @@ int dsmi_udis_get_single_ecc_info(int dev_id, struct ecc_common_data *dsmi_ecc_c
             return ret;
         }
 
-        if (get_info.data_len != sizeof(struct ecc_single_data_info) * SINGLE_ECC_INFO_BLOCK_NUMS ) {
-            DEV_MON_WARNING("Expected data_len != actual data_len for isolated_pages_info. (dev_id=%u)\n",
-                                dev_id);
+        if (get_info.data_len != sizeof(struct ecc_single_data_info) * SINGLE_ECC_INFO_BLOCK_NUMS) {
+            DEV_MON_WARNING("Expected data_len != actual data_len for isolated_pages_info. (dev_id=%u; "
+                            "expected_len=%u; actual_len=%u)\n",
+                            dev_id, (unsigned int)(sizeof(struct ecc_single_data_info) * SINGLE_ECC_INFO_BLOCK_NUMS),
+                            get_info.data_len);
             return DRV_ERROR_INNER_ERR;
         }
 
-        ret = memcpy_s(&single_ecc_data[idx * SINGLE_ECC_INFO_BLOCK_NUMS], sizeof(struct ecc_single_data_info) * SINGLE_ECC_INFO_BLOCK_SIZE,
-                    get_info.data, get_info.data_len);
+        ret = memcpy_s(&single_ecc_data[idx * SINGLE_ECC_INFO_BLOCK_NUMS],
+                       sizeof(struct ecc_single_data_info) * SINGLE_ECC_INFO_BLOCK_SIZE, get_info.data,
+                       get_info.data_len);
         if (ret != 0) {
             DEV_MON_WARNING("Memcpy to ecc_common_data not success. (dev_id=%u;)\n", dev_id);
             return DRV_ERROR_INVALID_HANDLE;
         }
     }
 
-    for(idx = 0; idx < HBM_ECC_RECORD_MAX_NUMS; idx++) {
+    for (idx = 0; idx < HBM_ECC_RECORD_MAX_NUMS; idx++) {
         dsmi_ecc_common_data_s[idx].physical_addr = 0;
         dsmi_ecc_common_data_s[idx].stack_pc_id = single_ecc_data[idx].hbmc_id;
         dsmi_ecc_common_data_s[idx].reg_addr_h = single_ecc_data[idx].single_bit_high_addr;
@@ -1347,10 +1342,10 @@ int dsmi_udis_get_multi_ecc_info(int dev_id, struct ecc_common_data *dsmi_ecc_co
 {
     int ret;
     struct udis_dev_info get_info = {0};
-    struct ecc_double_data_info double_ecc_data[HBM_ECC_RECORD_MAX_NUMS] = { 0 };
+    struct ecc_double_data_info double_ecc_data[HBM_ECC_RECORD_MAX_NUMS] = {0};
     int idx = 0;
 
-    for(; idx < DOUBLE_ECC_INFO_BLOCK_NUMS; idx++) {
+    for (; idx < DOUBLE_ECC_INFO_BLOCK_NUMS; idx++) {
         ret = sprintf_s(get_info.name, UDIS_MAX_NAME_LEN, "%s%d", "multi_ecc", idx);
         if (ret < 0) {
             DEV_MON_WARNING("sprintf to udis get_info.name not success. (dev_id=%u;)\n", dev_id);
@@ -1365,28 +1360,30 @@ int dsmi_udis_get_multi_ecc_info(int dev_id, struct ecc_common_data *dsmi_ecc_co
         }
 
         if (get_info.data_len != sizeof(struct ecc_double_data_info) * DOUBLE_ECC_INFO_BLOCK_SIZE) {
-            DEV_MON_WARNING("Expected data_len != actual data_len for isolated_pages_info. (dev_id=%u)\n",
-                                dev_id);
+            DEV_MON_WARNING("Expected data_len != actual data_len for isolated_pages_info. (dev_id=%u; "
+                            "expected_len=%u; actual_len=%u)\n",
+                            dev_id, (unsigned int)(sizeof(struct ecc_double_data_info) * DOUBLE_ECC_INFO_BLOCK_SIZE),
+                            get_info.data_len);
             return DRV_ERROR_INNER_ERR;
         }
 
-        ret = memcpy_s(&double_ecc_data[idx * DOUBLE_ECC_INFO_BLOCK_SIZE], get_info.data_len,
-                    get_info.data, get_info.data_len);
+        ret = memcpy_s(&double_ecc_data[idx * DOUBLE_ECC_INFO_BLOCK_SIZE], get_info.data_len, get_info.data,
+                       get_info.data_len);
         if (ret != 0) {
             DEV_MON_WARNING("Memcpy to ecc_common_data not success. (dev_id=%u;)\n", dev_id);
             return DRV_ERROR_INVALID_HANDLE;
         }
     }
 
-    for(idx = 0; idx < HBM_ECC_RECORD_MAX_NUMS; idx++) {
+    for (idx = 0; idx < HBM_ECC_RECORD_MAX_NUMS; idx++) {
         dsmi_ecc_common_data_s[idx].stack_pc_id = 0;
         dsmi_ecc_common_data_s[idx].ecc_count = 0;
         dsmi_ecc_common_data_s[idx].physical_addr = double_ecc_data[idx].physical_addr;
         dsmi_ecc_common_data_s[idx].timestamp = double_ecc_data[idx].timer_stamp;
         dsmi_ecc_common_data_s[idx].reg_addr_h = (uint32_t)(double_ecc_data[idx].row << HIGH_ADDR_COLUMN_BITS_COUNT) |
-            double_ecc_data[idx].column;
+                                                 double_ecc_data[idx].column;
         dsmi_ecc_common_data_s[idx].reg_addr_l = (uint32_t)(double_ecc_data[idx].rank << LOW_ADDR_RANK_BITS_OFFSET) |
-            double_ecc_data[idx].bank;
+                                                 double_ecc_data[idx].bank;
     }
 
     return 0;
@@ -1398,7 +1395,7 @@ int dsmi_udis_multi_ecc_time_info(int dev_id, struct udis_multi_ecc_time_data *m
     struct udis_dev_info get_info = {0};
     int idx = 0;
 
-    for(idx = 0; idx < DOUBLE_ECC_TIME_INFO_BLOCK_NUMS; idx++) {
+    for (idx = 0; idx < DOUBLE_ECC_TIME_INFO_BLOCK_NUMS; idx++) {
         ret = sprintf_s(get_info.name, UDIS_MAX_NAME_LEN, "%s%d", "multi_time", idx);
         if (ret < 0) {
             DEV_MON_WARNING("sprintf to udis get_info.name not success. (dev_id=%u;)\n", dev_id);
@@ -1412,13 +1409,15 @@ int dsmi_udis_multi_ecc_time_info(int dev_id, struct udis_multi_ecc_time_data *m
         }
 
         if (get_info.data_len != sizeof(unsigned int) * DOUBLE_ECC_TIME_INFO_BLOCK_SIZE) {
-            DEV_MON_WARNING("Expected data_len != actual data_len for isolated_pages_info. (dev_id=%u)\n",
-                                dev_id);
+            DEV_MON_WARNING("Expected data_len != actual data_len for isolated_pages_info. (dev_id=%u; "
+                            "expected_len=%u; actual_len=%u)\n",
+                            dev_id, (unsigned int)(sizeof(unsigned int) * DOUBLE_ECC_TIME_INFO_BLOCK_SIZE),
+                            get_info.data_len);
             return DRV_ERROR_INNER_ERR;
         }
 
-        ret = memcpy_s(&multi_ecc_time_data->multi_ecc_times[idx * DOUBLE_ECC_TIME_INFO_BLOCK_SIZE], sizeof(unsigned int) * DOUBLE_ECC_TIME_INFO_BLOCK_SIZE,
-                    get_info.data, get_info.data_len);
+        ret = memcpy_s(&multi_ecc_time_data->multi_ecc_times[idx * DOUBLE_ECC_TIME_INFO_BLOCK_SIZE],
+                       sizeof(unsigned int) * DOUBLE_ECC_TIME_INFO_BLOCK_SIZE, get_info.data, get_info.data_len);
         if (ret != 0) {
             DEV_MON_WARNING("Memcpy to ecc_common_data not success. (dev_id=%u;)\n", dev_id);
             return DRV_ERROR_INVALID_HANDLE;
@@ -1437,13 +1436,13 @@ int dsmi_udis_multi_ecc_time_info(int dev_id, struct udis_multi_ecc_time_data *m
     }
 
     if (get_info.data_len != sizeof(unsigned int)) {
-        DEV_MON_WARNING("Expected data_len != actual data_len for isolated_pages_info. (dev_id=%u)\n",
-                            dev_id);
+        DEV_MON_WARNING("Expected data_len != actual data_len for isolated_pages_info. (dev_id=%u; expected_len=%u; "
+                        "actual_len=%u)\n",
+                        dev_id, (unsigned int)sizeof(unsigned int), get_info.data_len);
         return DRV_ERROR_INNER_ERR;
     }
 
-    ret = memcpy_s(&multi_ecc_time_data->multi_record_count, sizeof(unsigned int),
-                get_info.data, get_info.data_len);
+    ret = memcpy_s(&multi_ecc_time_data->multi_record_count, sizeof(unsigned int), get_info.data, get_info.data_len);
     if (ret != 0) {
         DEV_MON_WARNING("Memcpy to ecc_common_data not success. (dev_id=%u;)\n", dev_id);
         return DRV_ERROR_INVALID_HANDLE;

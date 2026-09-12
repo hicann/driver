@@ -79,14 +79,14 @@ int devdrv_get_tgid_by_pid(int pid, int *tgid)
 
     pro_id = ka_task_find_get_pid(pid);
     if (pro_id == NULL) {
-        devdrv_drv_err("Failed to find get pid. (pid=%d)\n", pid);
+        devdrv_drv_err("Failed to get pid. (pid=%d)\n", pid);
         return -EINVAL;
     }
 
     /*
-    * The value of tsk is NULL, which means the PID and current process are not in the same pid_ns.
-    * Even if we find it, it doesn't mean it really is, because each container may has its own pid_ns.
-    */
+     * The value of tsk is NULL, which means the PID and current process are not in the same pid_ns.
+     * Even if we find it, it doesn't mean it really is, because each container may has its own pid_ns.
+     */
     tsk = ka_task_get_pid_task(pro_id, KA_PIDTYPE_PID);
     if (tsk == NULL) {
         devdrv_drv_err("Failed to find task struct in current process's pid_ns. (pid=%d)\n", pid);
@@ -203,9 +203,10 @@ STATIC void devdrv_manager_get_container_id(unsigned long long *container_id)
 STATIC int devdrv_manager_container_check_current(void)
 {
     /* current->nsproxy is NULL when the release function is called */
-    if (ka_task_get_current() == NULL || ka_task_get_current_nsproxy() == NULL || ka_task_get_current_mnt_ns() == NULL) {
+    if (ka_task_get_current() == NULL || ka_task_get_current_nsproxy() == NULL ||
+        ka_task_get_current_mnt_ns() == NULL) {
         devdrv_drv_warn("(current == NULL) is %d, (current->nsproxy == NULL) is %d\n", (ka_task_get_current() == NULL),
-        ((ka_task_get_current() == NULL) ? (-EINVAL) : (ka_task_get_current_nsproxy() == NULL)));
+                        ((ka_task_get_current() == NULL) ? (-EINVAL) : (ka_task_get_current_nsproxy() == NULL)));
         return -EINVAL;
     }
 
@@ -392,16 +393,17 @@ int devdrv_manager_container_check_devid_in_container(u32 devid, ka_pid_t hostpi
 KA_EXPORT_SYMBOL(devdrv_manager_container_check_devid_in_container);
 int devdrv_manager_container_check_devid_in_container_ns(u32 devid, ka_task_struct_t *task)
 {
-    bool ret = (task == ka_task_get_current()) ? uda_can_access_udevid(devid) : uda_proc_can_access_udevid(task->tgid, devid);
+    bool ret = (task == ka_task_get_current()) ? uda_can_access_udevid(devid) :
+                                                 uda_proc_can_access_udevid(task->tgid, devid);
     return ret ? 0 : -EINVAL;
 }
 KA_EXPORT_SYMBOL(devdrv_manager_container_check_devid_in_container_ns);
 
 STATIC int (*CONST devdrv_manager_container_process_handler[DEVDRV_CONTAINER_MAX_CMD])(
     struct devdrv_container_para *cmd) = {
-        [DEVDRV_CONTAINER_GET_BARE_PID] = devdrv_manager_container_get_bare_pid,
-        [DEVDRV_CONTAINER_GET_BARE_TGID] = devdrv_manager_container_get_bare_tgid,
-    };
+    [DEVDRV_CONTAINER_GET_BARE_PID] = devdrv_manager_container_get_bare_pid,
+    [DEVDRV_CONTAINER_GET_BARE_TGID] = devdrv_manager_container_get_bare_tgid,
+};
 
 int devdrv_manager_container_process(ka_file_t *filep, unsigned long arg)
 {

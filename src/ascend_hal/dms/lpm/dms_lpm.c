@@ -74,8 +74,8 @@ drvError_t DmsGetLpmInfo(struct dms_lpm_info_in *in, void *result, unsigned int 
 #ifdef CFG_FEATURE_SRIOV
     if (in->dev_id >= ASCEND_VDEV_ID_START) {
         /*
-        * VF device id is start from ASCEND_VDEV_ID_START, each PF has VDAVINCI_MAX_VFID_NUM of VFs
-        */
+         * VF device id is start from ASCEND_VDEV_ID_START, each PF has VDAVINCI_MAX_VFID_NUM of VFs
+         */
         in->dev_id = (in->dev_id - ASCEND_VDEV_ID_START) / VDAVINCI_MAX_VFID_NUM;
     }
 #endif
@@ -99,9 +99,10 @@ drvError_t DmsGetLpmInfo(struct dms_lpm_info_in *in, void *result, unsigned int 
     ret = DmsIoctl(DMS_IOCTL_CMD, &ioarg);
     if (ret != 0) {
         user_errno = errno_to_user_errno(ret);
-        DMS_EX_NOTSUPPORT_ERR(user_errno, "Dms get device lpm info failed."
-            "(dev_id=%u; sub_cmd=%u; core_id=%u; ret=%d; user_errno=%d)\n",
-            in->dev_id, in->sub_cmd, in->core_id, ret, user_errno);
+        DMS_EX_NOTSUPPORT_ERR(user_errno,
+                              "Dms get device lpm info failed."
+                              "(dev_id=%u; sub_cmd=%u; core_id=%u; ret=%d; user_errno=%d)\n",
+                              in->dev_id, in->sub_cmd, in->core_id, ret, user_errno);
         return user_errno;
     }
 
@@ -129,23 +130,24 @@ drvError_t dms_get_lpm_freq_v2(struct dms_lpm_info_in_v2 *in, unsigned int *freq
 
     ret = errno_to_user_errno(DmsIoctl(DMS_IOCTL_CMD, &ioarg));
     if (ret != 0) {
-        DMS_EX_NOTSUPPORT_ERR(ret, "Dms get device lpm freq failed."
-            "(dev_id=%u; part_id=%u; core_id=%u; ret=%d;)\n",
-            in->dev_id, in->part_id, in->core_id, ret);
+        DMS_EX_NOTSUPPORT_ERR(ret,
+                              "Dms get device lpm freq failed."
+                              "(dev_id=%u; part_id=%u; core_id=%u; ret=%d;)\n",
+                              in->dev_id, in->part_id, in->core_id, ret);
         return ret;
     }
 
-    DMS_DEBUG("Dms get device lpm freq success. (dev_id=%u; part_id=%u; core_id=%u;)\n",
-            in->dev_id, in->part_id, in->core_id);
+    DMS_DEBUG("Dms get device lpm freq success. (dev_id=%u; part_id=%u; core_id=%u;)\n", in->dev_id, in->part_id,
+              in->core_id);
     return DRV_ERROR_NONE;
 }
 
-#define BUFSIZE_MIN                 8
-#define LP_ERRCODE_LENGTH           16
+#define BUFSIZE_MIN 8
+#define LP_ERRCODE_LENGTH 16
 
-#define LP_ERRCODE_QUERY_FAIL       1
-#define LP_ERRCODE_QUERY_TIMEOUT    2
-#define LP_ERRCODE_QUERY_PARA_ERR   3
+#define LP_ERRCODE_QUERY_FAIL 1
+#define LP_ERRCODE_QUERY_TIMEOUT 2
+#define LP_ERRCODE_QUERY_PARA_ERR 3
 #define LP_ERRCODE_QUERY_NONSUPPORT 4
 
 STATIC int dms_get_dsmi_errcode(u32 err_code)
@@ -205,7 +207,7 @@ STATIC int DmsCheckLpErrcode(struct ioctl_arg *arg)
 }
 
 STATIC int dms_get_voltage_current_from_lp(unsigned int dev_id, unsigned int sub_cmd, void *out_buf,
-                                      unsigned int *buf_size)
+                                           unsigned int *buf_size)
 {
     int ret;
     struct ioctl_arg arg = {0};
@@ -289,7 +291,7 @@ STATIC int dms_get_acg_from_lp(unsigned int dev_id, unsigned int sub_cmd, void *
     return DRV_ERROR_NONE;
 }
 int DmsGetInfoFromLp(unsigned int dev_id, unsigned int vfid, unsigned int sub_cmd, void *out_buf,
-    unsigned int *buf_size)
+                     unsigned int *buf_size)
 {
     int ret;
     (void)vfid;
@@ -387,8 +389,8 @@ STATIC int DmsGetDdrTemperature(unsigned int dev_id, unsigned int sub_cmd, void 
 
     /* length of actually read data from kernel ipc may exceed out_buf size */
     if (arg.commoninfo_len > *buf_size) {
-        DMS_ERR("actual data length(%u) larger than *ret_size(%u), devid(%u).\n",
-                arg.commoninfo_len, *buf_size, dev_id);
+        DMS_ERR("actual data length(%u) larger than *ret_size(%u), devid(%u).\n", arg.commoninfo_len, *buf_size,
+                dev_id);
         return DRV_ERROR_INVALID_VALUE;
     }
     ret = memcpy_s(out_buf, *buf_size, ddr_temp, sizeof(ddr_temp));
@@ -418,8 +420,8 @@ STATIC int DmsGetTemperatureThreshold(unsigned int dev_id, unsigned int sub_cmd,
         return DRV_ERROR_INVALID_VALUE;
     }
 
-    if ((sub_cmd != DSMI_TEMP_SUB_CMD_DDR_THOLD) && (sub_cmd != DSMI_TEMP_SUB_CMD_SOC_THOLD)
-        && (sub_cmd != DSMI_TEMP_SUB_CMD_SOC_MIN_THOLD)) {
+    if ((sub_cmd != DSMI_TEMP_SUB_CMD_DDR_THOLD) && (sub_cmd != DSMI_TEMP_SUB_CMD_SOC_THOLD) &&
+        (sub_cmd != DSMI_TEMP_SUB_CMD_SOC_MIN_THOLD)) {
         DMS_ERR("DmsGetTemperatureThreshold sub_cmd %d err, devid %d.\n", sub_cmd, dev_id);
         return DRV_ERROR_INVALID_VALUE;
     }
@@ -441,7 +443,7 @@ STATIC int DmsGetTemperatureThreshold(unsigned int dev_id, unsigned int sub_cmd,
 }
 
 int DmsGetTemperature(unsigned int dev_id, unsigned int vfid, unsigned int sub_cmd, void *out_buf,
-    unsigned int *buf_size)
+                      unsigned int *buf_size)
 {
     int ret;
     (void)vfid;
@@ -476,8 +478,7 @@ int DmsGetTempFromLp(unsigned int dev_id, unsigned int vfid, unsigned int sub_cm
     return DmsGetDeviceInfoEx(dev_id, DMS_MAIN_CMD_TEMP, sub_cmd, buf, size);
 }
 
-int DmsGetLowPowerInfo(unsigned int dev_id, unsigned int vfid, unsigned int sub_cmd, void *buf,
-    unsigned int *size)
+int DmsGetLowPowerInfo(unsigned int dev_id, unsigned int vfid, unsigned int sub_cmd, void *buf, unsigned int *size)
 {
     (void)vfid;
     int ret;
@@ -503,8 +504,8 @@ int DmsSetLowPowerInfo(unsigned int dev_id, unsigned int sub_cmd, void *buf, uns
 }
 
 #ifdef CFG_FEATURE_PASS_THROUGH_MCU_BY_IMU
-int DmsLpmPassThroughMcu(unsigned char rw_flag, unsigned char *buf, unsigned char buf_len,
-    unsigned char *resp_buff, unsigned char *recv_len)
+int DmsLpmPassThroughMcu(unsigned char rw_flag, unsigned char *buf, unsigned char buf_len, unsigned char *resp_buff,
+                         unsigned char *recv_len)
 {
     int ret;
     unsigned int dev_id = 0;
@@ -519,8 +520,8 @@ int DmsLpmPassThroughMcu(unsigned char rw_flag, unsigned char *buf, unsigned cha
     }
 
     if (buf == NULL || recv_len == NULL || resp_buff == NULL || dev_id >= ASCEND_DEV_MAX_NUM) {
-        DMS_ERR("Parameter is invalid. (dev_id=%u; buf_is_null=%d; resp_buff_is_null=%d; recv_len_is_null=%d)\n",
-            dev_id, (buf != NULL), (resp_buff != NULL), (recv_len != NULL));
+        DMS_ERR("Parameter is invalid. (dev_id=%u; buf_not_null=%d; resp_buff_not_null=%d; recv_len_not_null=%d)\n",
+                dev_id, (buf != NULL), (resp_buff != NULL), (recv_len != NULL));
         return DRV_ERROR_INVALID_VALUE;
     }
 
@@ -575,8 +576,8 @@ int dms_lpm_get_ai_core_curr_freq(unsigned int devId, void *buf, unsigned int *s
     unsigned int curr_freq = 0;
 
     if (devId >= ASCEND_PDEV_MAX_NUM || buf == NULL || size == NULL) {
-        DMS_ERR("Invalid parameters. (dev_id=%u, buf%s, size%s)\n",
-            devId, buf == NULL ? "=NULL" : "!=NULL", size == NULL ? "=NULL" : "!=NULL");
+        DMS_ERR("Invalid parameters. (dev_id=%u, buf%s, size%s)\n", devId, buf == NULL ? "=NULL" : "!=NULL",
+                size == NULL ? "=NULL" : "!=NULL");
         return DRV_ERROR_INVALID_VALUE;
     }
     if (*size != sizeof(unsigned int)) {

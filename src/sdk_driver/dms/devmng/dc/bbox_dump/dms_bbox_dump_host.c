@@ -301,7 +301,7 @@ STATIC int bbox_check_dev_info(struct devdrv_info *dev_info)
         return -ENODEV;
     }
     if (dev_info->status == DEVINFO_STATUS_REMOVED) {
-        dms_warn("Device has ben reset. (dev_id=%u)\n", (u32)dev_info->dev_id);
+        dms_warn("Device has been reset. (dev_id=%u)\n", (u32)dev_info->dev_id);
         return -EINVAL;
     }
     return 0;

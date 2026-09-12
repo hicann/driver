@@ -45,7 +45,7 @@
 #include "pbl/pbl_feature_loader.h"
 #include "davinci_interface.h"
 #include "dms_init.h"
-#define MAX_EVENT_CONFIG_SIZE  (2*1024*1024)
+#define MAX_EVENT_CONFIG_SIZE (2 * 1024 * 1024)
 
 STATIC int dms_event_config_verify(u32 event_code, u32 severity, int config_cnt)
 {
@@ -95,7 +95,7 @@ STATIC int dms_parse_event_config(const char *line_buf, int size, struct dms_eve
     (*cnt)++;
     if (*cnt >= EVENT_INFO_ARRAY_MAX) {
         dms_err("The number of input event config is greater than the max array size. (max_array_size=%d)\n",
-            EVENT_INFO_ARRAY_MAX);
+                EVENT_INFO_ARRAY_MAX);
         return -EFBIG;
     }
 
@@ -167,8 +167,7 @@ free_tmp_buf:
 
 STATIC int cmp(const void *a, const void *b)
 {
-    return (*(struct dms_event_config*)a).event_code -
-        (*(struct dms_event_config*)b).event_code;
+    return (*(struct dms_event_config *)a).event_code - (*(struct dms_event_config *)b).event_code;
 }
 
 STATIC int get_file_size(size_t *buf_size)
@@ -178,8 +177,8 @@ STATIC int get_file_size(size_t *buf_size)
 
     ret = ka_fs_get_file_kstat(&src_stat, EVENT_INFO_CONFIG_PATH);
     if (ret != 0) {
-        dms_err("vfs_getattr failed. (file: %s, src_stat.size = %lld, ret = %d)\n",
-            EVENT_INFO_CONFIG_PATH, src_stat.size, ret);
+        dms_err("vfs_getattr failed. (file: %s, src_stat.size = %lld, ret = %d)\n", EVENT_INFO_CONFIG_PATH,
+                src_stat.size, ret);
         if (ret == -ENOENT) {
             return -ENOENT;
         }
@@ -226,7 +225,7 @@ int get_eventinfo_from_config(void)
 
     ret = get_file_size(&file_size);
     if (ret == -ENOENT) {
-        dms_err("event config file is not exit.\n");
+        dms_err("event config file does not exist.\n");
         return 0;
     }
 
@@ -260,8 +259,8 @@ int get_eventinfo_from_config(void)
 
     dbl_kfree(config_buf);
     config_buf = NULL;
-    ka_base_sort(g_event_configs.event_configs, g_event_configs.config_cnt,
-        sizeof(g_event_configs.event_configs[0]), cmp, NULL);
+    ka_base_sort(g_event_configs.event_configs, g_event_configs.config_cnt, sizeof(g_event_configs.event_configs[0]),
+                 cmp, NULL);
 
     return 0;
 
@@ -301,12 +300,12 @@ STATIC int dms_init_submodule(void)
 
     for (index = 0; index < table_size; index++) {
         ret = g_sub_table[index].init();
-        if  (ret != 0) {
+        if (ret != 0) {
             goto out;
         }
     }
     return 0;
- out:
+out:
     for (; index > 0; index--) {
         g_sub_table[index - 1].uninit();
     }
@@ -353,14 +352,14 @@ int dms_init(void)
     }
     dms_event_adapt_init();
 #ifndef DEVDRV_MANAGER_HOST_UT_TEST
-    #ifdef CFG_FEATURE_GET_CURRENT_EVENTINFO
+#ifdef CFG_FEATURE_GET_CURRENT_EVENTINFO
     ret = dms_remote_event_save_in_local_init();
     if (ret != 0) {
         dms_err("dms_remote_event_save_in_local_init failed. (ret=%d)\n", ret);
         dms_exit_submodule();
         goto register_notify_fail;
     }
-    #endif
+#endif
 #endif
     /* Initialize sensor global resources */
     CALL_INIT_MODULE(DMS_MODULE_BASIC_INFO);
@@ -384,9 +383,9 @@ void dms_exit(void)
     dms_info("dms_exit start.\n");
     CALL_EXIT_MODULE(DMS_MODULE_BASIC_INFO);
 #ifndef DEVDRV_MANAGER_HOST_UT_TEST
-    #ifdef CFG_FEATURE_GET_CURRENT_EVENTINFO
+#ifdef CFG_FEATURE_GET_CURRENT_EVENTINFO
     dms_remote_event_save_in_local_exit();
-    #endif
+#endif
 #endif
     dms_event_adapt_exit();
     dms_exit_submodule();
@@ -400,4 +399,3 @@ void dms_exit(void)
     dms_info("Dms driver exit success.\n");
     return;
 }
-

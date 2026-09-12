@@ -15,24 +15,24 @@
 #include "pbl_uda_user.h"
 
 #ifndef __linux
-    #pragma comment(lib, "libc_sec.lib")
-    #include "devdrv_manager_win.h"
-    #define PTHREAD_MUTEX_INITIALIZER NULL
-    #define FdIsValid(fd) fd != (mmProcess)DEVDRV_INVALID_FD_OR_INDEX
+#pragma comment(lib, "libc_sec.lib")
+#include "devdrv_manager_win.h"
+#define PTHREAD_MUTEX_INITIALIZER NULL
+#define FdIsValid(fd) fd != (mmProcess)DEVDRV_INVALID_FD_OR_INDEX
 #else
-    #include <sys/prctl.h>
-    #include <errno.h>
-    #include <stdio.h>
-    #include <syslog.h>
-    #include <sys/types.h>
-    #include <poll.h>
-    #include <stdlib.h>
-    #include <sys/ioctl.h>
-    #include <unistd.h>
-    #include <sys/wait.h>
-    #include <fcntl.h>
+#include <sys/prctl.h>
+#include <errno.h>
+#include <stdio.h>
+#include <syslog.h>
+#include <sys/types.h>
+#include <poll.h>
+#include <stdlib.h>
+#include <sys/ioctl.h>
+#include <unistd.h>
+#include <sys/wait.h>
+#include <fcntl.h>
 
-    #define FdIsValid(fd) ((fd) >= 0)
+#define FdIsValid(fd) ((fd) >= 0)
 #endif
 
 #include "securec.h"
@@ -93,7 +93,7 @@ STATIC mmProcess dms_open_intf(void)
 
     /* to improve performance */
     if (FdIsValid(g_dms_fd) && (g_dms_tgid == getpid())) {
-            return g_dms_fd;
+        return g_dms_fd;
     }
 
 #ifndef __linux
@@ -111,7 +111,7 @@ STATIC mmProcess dms_open_intf(void)
         }
     }
 #ifdef __linux
-    fd = mmOpen2(DMS_DEVICE_FILE_NAME, M_RDWR|O_CLOEXEC, M_IRUSR);
+    fd = mmOpen2(DMS_DEVICE_FILE_NAME, M_RDWR | O_CLOEXEC, M_IRUSR);
     err = (__errno_location() != NULL ? errno : 0);
     ret = dms_ioctl_open(fd);
 #else
@@ -221,7 +221,7 @@ int DmsIoctl(int cmd, struct dms_ioctl_arg *ioarg)
 
 static inline int is_valid_user_errno(int err)
 {
-    return ((err >=0) && (err <= DRV_ERROR_POWER_OP_FAIL)) || (err == DRV_ERROR_NOT_SUPPORT);
+    return ((err >= 0) && (err <= DRV_ERROR_POWER_OP_FAIL)) || (err == DRV_ERROR_NOT_SUPPORT);
 }
 
 /*
@@ -279,7 +279,7 @@ int dmanage_check_module_init(const char *module_name)
     char *buff = NULL;
     FILE *fp = NULL;
     size_t name_len;
-    int retry_times= -1;
+    int retry_times = -1;
 
     if (module_name == NULL) {
         DMS_ERR("para is NULL.\n");
@@ -287,7 +287,7 @@ int dmanage_check_module_init(const char *module_name)
     }
     name_len = strnlen(module_name, DEV_MODULE_INIT_INFO_LEN);
     if (name_len >= DEV_MODULE_INIT_INFO_LEN) {
-        DMS_ERR("length out range. (length=%d)\n", name_len);
+        DMS_ERR("length out of range. (length=%d; max=%d)\n", name_len, DEV_MODULE_INIT_INFO_LEN);
         return -1;
     }
     buff = (char *)malloc(DEV_MODULE_INIT_INFO_LEN);
@@ -302,8 +302,7 @@ int dmanage_check_module_init(const char *module_name)
     } while (fp == NULL && retry_times < MAX_FOPEN_RETRY_TIMES);
 
     if (fp == NULL) {
-        DMS_ERR("fopen error. (file=\"%s\"; errno:%d, retry_times=%d.)\n",
-            PROC_MOUDULE_FILE_NAME, errno, retry_times);
+        DMS_ERR("fopen error. (file=\"%s\"; errno:%d, retry_times=%d.)\n", PROC_MOUDULE_FILE_NAME, errno, retry_times);
         (void)free(buff);
         buff = NULL;
         return -1;
@@ -331,7 +330,7 @@ int dms_run_proc(const char **arg)
     unsigned int status1;
     pid_t tftpchildpid;
     pid_t wait_ppid;
-    char *envp[] = { 0, NULL };
+    char *envp[] = {0, NULL};
 
     if (arg == NULL) {
         DMS_ERR("arg is null.\n");
@@ -371,7 +370,7 @@ int dms_run_proc_normal_user(char **arg)
     unsigned int status1;
     pid_t tftpchildpid;
     pid_t wait_ppid;
-    char *envp[] = { 0, NULL };
+    char *envp[] = {0, NULL};
 
     if (arg == NULL) {
         DMS_ERR("arg is null.\n");
@@ -426,7 +425,7 @@ drvError_t dmsCloseRestoreHandler(uint32_t devid, halDevCloseIn *in)
     ret = devdrv_close_restore_device_manager();
     if (ret != 0) {
         dms_close_intf();
-        DMS_ERR("Close restore deveice manager failed.\n");
+        DMS_ERR("Close restore device manager failed.\n");
         return ret;
     }
     drvClearBareTgid();
@@ -449,8 +448,8 @@ drvError_t dms_res_rollback_p2p(u32 target_dev_id, u32 target_peer_id, u32 tmp_c
             while (remaining_cnt > 0) {
                 ret = DmsDisableP2P(dev_id, peer_phy_id, p2p_type);
                 if (ret != 0) {
-                    DMS_ERR("p2p resotre rollback fail. (dev_id=%u; peer_phy_id=%u; ret=%d)\n",
-                        dev_id, peer_phy_id, ret);
+                    DMS_ERR("p2p restore rollback fail. (dev_id=%u; peer_phy_id=%u; ret=%d)\n", dev_id, peer_phy_id,
+                            ret);
                     return ret;
                 }
                 remaining_cnt--;
@@ -475,8 +474,8 @@ drvError_t dms_res_enable_p2p(u32 dev_num)
             while (remaining_cnt > 0) {
                 ret = DmsEnableP2P(dev_id, peer_phy_id, p2p_type);
                 if (ret != 0) {
-                    DMS_ERR("p2p resotre enable fail, ready to rollback. (dev_id=%u; peer_phy_id=%u; ret=%d)\n",
-                        dev_id, peer_phy_id, ret);
+                    DMS_ERR("p2p restore enable fail, ready to rollback. (dev_id=%u; peer_phy_id=%u; ret=%d)\n", dev_id,
+                            peer_phy_id, ret);
                     (void)dms_res_rollback_p2p(dev_id, peer_phy_id, remaining_cnt);
                     return ret;
                 }
@@ -484,7 +483,7 @@ drvError_t dms_res_enable_p2p(u32 dev_num)
             }
         }
     }
-    DMS_INFO("p2p resotre success.\n");
+    DMS_INFO("p2p restore success.\n");
 
     return DRV_ERROR_NONE;
 }
@@ -510,10 +509,7 @@ drvError_t dmsProcResRestoreHandler(halProcResRestoreInfo *info)
 void hal_report_not_support(const char *func_name, const char *reason)
 {
     const char *keys[] = {"func_name", "reason"};
-    const char *values[] = {
-        func_name,
-        reason
-    };
+    const char *values[] = {func_name, reason};
 
     REPORT_PREDEFINED_ERR_MSG("EL0021", keys, values, 2UL);
 }
@@ -538,12 +534,7 @@ void hal_report_invalid_dev_id(const char *func_name, uint32_t devId, uint32_t m
     char dev_id_str[16] = {0};
     char reason[128] = {0};
     const char *keys[] = {"func_name", "para_value", "para_name", "reason"};
-    const char *values[] = {
-        func_name,
-        dev_id_str,
-        "devId",
-        reason
-    };
+    const char *values[] = {func_name, dev_id_str, "devId", reason};
 
     ret = snprintf_s(dev_id_str, sizeof(dev_id_str), sizeof(dev_id_str) - 1, "%u", devId);
     if (ret < 0) {
@@ -551,7 +542,7 @@ void hal_report_invalid_dev_id(const char *func_name, uint32_t devId, uint32_t m
     }
 
     ret = snprintf_s(reason, sizeof(reason), sizeof(reason) - 1,
-        "The parameter value is out of range. The valid range is [0, %u]", max_devid);
+                     "The parameter value is out of range. The valid range is [0, %u]", max_devid);
     if (ret < 0) {
         return;
     }

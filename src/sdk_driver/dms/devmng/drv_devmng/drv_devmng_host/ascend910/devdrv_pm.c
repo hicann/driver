@@ -119,7 +119,8 @@ STATIC int devdrv_host_manager_suspend(struct devdrv_info *info)
     tsdrv_set_ts_status(info->dev_id, tsid, TS_SUSPEND);
 
     ka_task_mutex_lock(&d_info->pm_list_lock);
-    ka_list_for_each_safe(pos, n, &d_info->pm_list_header) {
+    ka_list_for_each_safe(pos, n, &d_info->pm_list_header)
+    {
         stop = pos;
         pm = ka_list_entry(pos, struct devdrv_pm, list);
         if (pm->suspend != NULL) {
@@ -139,7 +140,8 @@ STATIC int devdrv_host_manager_suspend(struct devdrv_info *info)
 
 error:
     ka_task_mutex_lock(&d_info->pm_list_lock);
-    ka_list_for_each_safe(pos, n, &d_info->pm_list_header) {
+    ka_list_for_each_safe(pos, n, &d_info->pm_list_header)
+    {
         pm = ka_list_entry(pos, struct devdrv_pm, list);
         if (pm->resume != NULL) {
             (void)pm->resume(info->dev_id);
@@ -170,7 +172,8 @@ STATIC int devdrv_host_manager_resume(struct devdrv_info *info)
     tsdrv_set_ts_status(info->dev_id, tsid, TS_WORK);
     /* 3. resume all registered resume callback func */
     ka_task_mutex_lock(&d_info->pm_list_lock);
-    ka_list_for_each_safe(pos, n, &d_info->pm_list_header) {
+    ka_list_for_each_safe(pos, n, &d_info->pm_list_header)
+    {
         pm = ka_list_entry(pos, struct devdrv_pm, list);
         if (pm->resume != NULL) {
             (void)pm->resume(info->dev_id);
@@ -204,7 +207,8 @@ void devdrv_host_manager_device_exception(struct devdrv_info *info)
 
     ka_task_mutex_lock(&d_info->pm_list_lock);
     if (!ka_list_empty_careful(&d_info->pm_list_header)) {
-        ka_list_for_each_safe(pos, n, &d_info->pm_list_header) {
+        ka_list_for_each_safe(pos, n, &d_info->pm_list_header)
+        {
             pm = ka_list_entry(pos, struct devdrv_pm, list);
 #ifndef DEVDRV_MANAGER_HOST_UT_TEST
             if (pm->ts_status_notify != NULL) {
@@ -234,7 +238,7 @@ STATIC void devdrv_manager_update_ai_info(struct devdrv_aicore_info *aicore_info
     info = d_info->dev_info[aicore_info->dev_id];
     if (info == NULL) {
         devdrv_drv_err("dev_info is NULL. (dev_id=%u)\n", aicore_info->dev_id);
-        return ;
+        return;
     }
 
     if (cq->aicpu_heart_beat_exception) {
@@ -254,7 +258,7 @@ STATIC void devdrv_manager_update_ai_info(struct devdrv_aicore_info *aicore_info
         aicore_num_max = info->inuse.ai_core_num + __ka_base_sw_hweight32(info->inuse.ai_core_error_bitmap);
         if (aicore_num_max > KA_BITS_PER_BYTE * sizeof(u32)) {
             devdrv_drv_err("Aicore num and error bitmap not valid. (dev_id=%u; num=%u; err_bitmap=0x%x)\n",
-                info->dev_id, info->inuse.ai_core_num, info->inuse.ai_core_error_bitmap);
+                           info->dev_id, info->inuse.ai_core_num, info->inuse.ai_core_error_bitmap);
             aicore_num_max = KA_BITS_PER_BYTE * sizeof(u32);
         }
 
@@ -314,8 +318,7 @@ STATIC void devdrv_refresh_aicore_info_work(ka_work_struct_t *work)
     dev_manager_msg_info.header.dev_id = info->dev_id;
 
     ret = devdrv_common_msg_send(info->dev_id, &dev_manager_msg_info, sizeof(struct devdrv_manager_msg_info),
-                                 sizeof(struct devdrv_manager_msg_info), &out_len,
-                                 DEVDRV_COMMON_MSG_DEVDRV_MANAGER);
+                                 sizeof(struct devdrv_manager_msg_info), &out_len, DEVDRV_COMMON_MSG_DEVDRV_MANAGER);
     if (ret || dev_manager_msg_info.header.result != 0) {
         devdrv_drv_warn("devdrv_manager_send_msg unsuccessful. (ret=%d; dev_id=%u)\n", ret, info->dev_id);
     }
@@ -337,7 +340,7 @@ STATIC ka_hrtimer_restart_t devdrv_refresh_aicore_info(ka_hrtimer_t *t)
     /* Call the heartbeat function of the new framework to determine the heartbeat status.
        When the heartbeat is lost, stop sending messages; otherwise, it will spam the chat */
     if (dms_heartbeat_is_stop(info->dev_id)) {
-        devdrv_drv_info("(Device=%u heart beat is lost, stop send h2d message \n", info->dev_id);
+        devdrv_drv_info("heart beat is lost, stop sending h2d message. (dev_id=%u)\n", info->dev_id);
         return KA_HRTIMER_NORESTART;
     }
     ka_task_queue_work(info->aicore_info_wq, &info->work);
@@ -384,7 +387,8 @@ int devdrv_refresh_aicore_info_init(u32 dev_id)
 
     ka_system_hrtimer_init(&g_aicore_info[dev_id]->hrtimer, KA_CLOCK_MONOTONIC, KA_HRTIMER_MODE_REL);
     g_aicore_info[dev_id]->hrtimer.function = devdrv_refresh_aicore_info;
-    ka_system_hrtimer_start(&g_aicore_info[dev_id]->hrtimer, ka_system_ktime_set(DEVDRV_H2D_CYCLE, 0), KA_HRTIMER_MODE_REL);
+    ka_system_hrtimer_start(&g_aicore_info[dev_id]->hrtimer, ka_system_ktime_set(DEVDRV_H2D_CYCLE, 0),
+                            KA_HRTIMER_MODE_REL);
 
     g_aicore_info[dev_id]->inited_flag = 1;
 
@@ -418,4 +422,3 @@ void devdrv_refresh_aicore_info_exit(u32 dev_id)
 
 #endif
 }
-

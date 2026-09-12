@@ -21,8 +21,8 @@
 #include <time.h>
 
 #ifdef CFG_DSMI_DEVICE_ENV
-#  include "drvfault_fault.h"
-#  include "drvfault_msg.h"
+#include "drvfault_fault.h"
+#include "drvfault_msg.h"
 #endif
 #include "ascend_hal.h"
 #include "drv_type.h"
@@ -34,7 +34,7 @@
 #include "dsmi_adapt.h"
 
 #if defined(CFG_FEATURE_GPIO_STATUS)
-#define KEY_CHIP_TYPE_INDEX       (8U)
+#define KEY_CHIP_TYPE_INDEX (8U)
 #define FAULT_INJECT_INFO_NUM_MAX (64U)
 #endif
 
@@ -93,7 +93,7 @@ STATIC struct dsmi_fault_event_thread g_fault_thread_para = {
     .device_id = -1,
     .run_flg = false,
     .result = DSMI_FAULT_THREAD_INIT_VAL,
-    .filter = { 0 },
+    .filter = {0},
     .handler = NULL,
     .thread_lock = PTHREAD_MUTEX_INITIALIZER,
     .thread_id = 0,
@@ -117,8 +117,8 @@ STATIC thread_running_state dsmi_get_fault_event_thread_state(void)
     return g_fault_event_running_flag;
 }
 
-STATIC int dsmi_thread_read_fault_event(struct dsmi_fault_event_thread *thread_para,
-    int timeout, struct dsmi_event *event)
+STATIC int dsmi_thread_read_fault_event(struct dsmi_fault_event_thread *thread_para, int timeout,
+                                        struct dsmi_event *event)
 {
     int ret;
 
@@ -179,7 +179,7 @@ STATIC void *dsmi_fault_event_thread_func(void *data)
             return NULL;
         }
 
-        pthread_testcancel();   /* set thread cancel point */
+        pthread_testcancel(); /* set thread cancel point */
     }
     dsmi_set_fault_event_thread_state(THREAD_STOPPED);
     thread_para->run_flg = false;
@@ -209,7 +209,7 @@ STATIC int dsmi_unsubscribe_fault_event(struct dsmi_fault_event_thread *thread_p
     return 0;
 }
 
-#define DSMI_FAULT_EVENT_THREAD_PRIORITY  (10)
+#define DSMI_FAULT_EVENT_THREAD_PRIORITY (10)
 
 int dsmi_subscribe_fault_event(int device_id, struct dsmi_event_filter filter, fault_event_callback handler)
 {
@@ -232,19 +232,19 @@ int dsmi_subscribe_fault_event(int device_id, struct dsmi_event_filter filter, f
         ret = dsmi_check_device_id(device_id);
         CHECK_DEVICE_BUSY(device_id, ret);
         if (ret != 0) {
-            DEV_MON_ERR("Have not this device. (dev_id=0x%x; ret=%d)\n", device_id, ret);
+            DEV_MON_ERR("Device does not exist. (dev_id=0x%x; ret=%d)\n", device_id, ret);
             return DRV_ERROR_INVALID_DEVICE;
         }
     }
 
     if (pthread_mutex_trylock(&thread_para->thread_lock) != 0) {
-        DEV_MON_ERR("Has start one thread before.\n");
+        DEV_MON_ERR("A thread has already been started.\n");
         return DRV_ERROR_RESOURCE_OCCUPIED;
     }
 
     if (thread_para->run_flg == true) {
         (void)pthread_mutex_unlock(&thread_para->thread_lock);
-        DEV_MON_ERR("Has start one thread before.\n");
+        DEV_MON_ERR("A thread has already been started.\n");
         return DRV_ERROR_RESOURCE_OCCUPIED;
     }
 
@@ -310,12 +310,12 @@ STATIC int dsmi_fault_event_data_fill(struct dsmi_event *event_buf, struct halFa
         event_buf[i].event_t.dms_event.node_type_ex = event_info[i].node_type;
         event_buf[i].event_t.dms_event.sub_node_type_ex = event_info[i].sub_node_type;
         if (sprintf_s(event_buf[i].event_t.dms_event.event_name, DMS_MAX_EVENT_NAME_LENGTH, "deviceid=%u, %s",
-            event_info[i].deviceid, event_info[i].event_name) < 0) {
+                      event_info[i].deviceid, event_info[i].event_name) < 0) {
             DEV_MON_ERR("sprintf_s event_name failed.\n");
             return DRV_ERROR_INNER_ERR;
         }
         ret = memcpy_s(event_buf[i].event_t.dms_event.additional_info, DMS_MAX_EVENT_DATA_LENGTH,
-            event_info[i].additional_info, DMS_MAX_EVENT_DATA_LENGTH);
+                       event_info[i].additional_info, DMS_MAX_EVENT_DATA_LENGTH);
         if (ret != 0) {
             DEV_MON_ERR("memcpy_s additional_Info failed.\n");
             return DRV_ERROR_INNER_ERR;
@@ -339,22 +339,22 @@ STATIC int dsmi_get_fault_event_on_host(int device_id, struct dsmi_event *event_
     }
 
     ret = halGetFaultEvent((unsigned int)device_id, &filter, event_info, (unsigned int)max_event_cnt,
-        (unsigned int *)event_cnt);
+                           (unsigned int *)event_cnt);
     if (ret != 0) {
         DEV_MON_EX_NOTSUPPORT_ERR(ret, "Failed to obtain fault events. (dev_id=%d; ret=%d)\n", device_id, ret);
         goto FREE_EVENT_INFO;
     }
 
     if (*event_cnt > max_event_cnt) {
-        DEV_MON_WARNING("Event count exceeds max event count. (dev_id=%d; event_cnt=%d; max_event_cnt=%d)\n",
-            device_id, *event_cnt, max_event_cnt);
+        DEV_MON_WARNING("Event count exceeds max event count. (dev_id=%d; event_cnt=%d; max_event_cnt=%d)\n", device_id,
+                        *event_cnt, max_event_cnt);
         *event_cnt = max_event_cnt;
     }
 
     ret = dsmi_fault_event_data_fill(event_buf, event_info, *event_cnt);
     if (ret != 0) {
-        DEV_MON_ERR("Failed to fill DSMI fault event data. (dev_id=%d; event_cnt=%d; ret=%d)\n",
-            device_id, *event_cnt, ret);
+        DEV_MON_ERR("Failed to fill DSMI fault event data. (dev_id=%d; event_cnt=%d; ret=%d)\n", device_id, *event_cnt,
+                    ret);
         goto FREE_EVENT_INFO;
     }
 
@@ -384,14 +384,13 @@ int dsmi_get_fault_event(int device_id, int max_event_cnt, struct dsmi_event *ev
     }
 
     if (max_event_cnt <= 0) {
-        DEV_MON_ERR("Invalid parameter. max_event_cnt need to be greater than 0, but now is %d.\n",
-            max_event_cnt);
+        DEV_MON_ERR("Invalid parameter. max_event_cnt need to be greater than 0, but now is %d.\n", max_event_cnt);
         return DRV_ERROR_PARA_ERROR;
     }
 
     if (input_event_cnt > MAX_EVENT_COUNT_OF_GET_FAULT_EVENT) {
-        DEV_MON_WARNING("Reset max_event_cnt to %d, because it(%d) exceed %d.\n",
-            MAX_EVENT_COUNT_OF_GET_FAULT_EVENT, input_event_cnt, MAX_EVENT_COUNT_OF_GET_FAULT_EVENT);
+        DEV_MON_WARNING("Reset max_event_cnt to %d, because it(%d) exceed %d.\n", MAX_EVENT_COUNT_OF_GET_FAULT_EVENT,
+                        input_event_cnt, MAX_EVENT_COUNT_OF_GET_FAULT_EVENT);
         input_event_cnt = MAX_EVENT_COUNT_OF_GET_FAULT_EVENT;
     }
 
@@ -417,10 +416,10 @@ int dsmi_get_fault_event(int device_id, int max_event_cnt, struct dsmi_event *ev
 #endif
 }
 
-static int get_remain_time(int timeout, struct timespec* time_last)
+static int get_remain_time(int timeout, struct timespec *time_last)
 {
     long times_gap;
-    struct timespec time_current = { 0, 0 };
+    struct timespec time_current = {0, 0};
 
     if (timeout == DSMI_READ_FAULT_NO_TIMEOUT_FLAG) {
         return DSMI_READ_FAULT_NO_TIMEOUT_FLAG;
@@ -441,19 +440,17 @@ static int get_remain_time(int timeout, struct timespec* time_last)
     }
 }
 
-int dsmi_read_fault_event(int device_id, int timeout, struct dsmi_event_filter filter,
-    struct dsmi_event *event)
+int dsmi_read_fault_event(int device_id, int timeout, struct dsmi_event_filter filter, struct dsmi_event *event)
 {
     struct dms_fault_event event_buf = {0};
-    struct timespec time_last = { 0, 0 };
+    struct timespec time_last = {0, 0};
     struct dms_event_filter dms_filter = {0};
     int remain_time = timeout;
     int ret;
 
-    if (((device_id < 0) && (device_id != DSMI_READ_FAULT_DEVICE_ALL)) ||
-        (event == NULL)) {
-        DEV_MON_ERR("Invalid parameter. (device_id=%d; timeout=%dms; event=%s)\n",
-                    device_id, timeout, event == NULL ? "NULL" : "OK");
+    if (((device_id < 0) && (device_id != DSMI_READ_FAULT_DEVICE_ALL)) || (event == NULL)) {
+        DEV_MON_ERR("Invalid parameter. (device_id=%d; timeout=%dms; event=%s)\n", device_id, timeout,
+                    event == NULL ? "NULL" : "OK");
         return DRV_ERROR_PARA_ERROR;
     }
 
@@ -488,8 +485,8 @@ int dsmi_read_fault_event(int device_id, int timeout, struct dsmi_event_filter f
     } while ((remain_time > 0) || (remain_time == DSMI_READ_FAULT_NO_TIMEOUT_FLAG));
 
     if (ret == 0) {
-        if (memcpy_s(&event->event_t.dms_event, sizeof(struct dms_fault_event),
-                     &event_buf, sizeof(struct dms_fault_event)) != 0) {
+        if (memcpy_s(&event->event_t.dms_event, sizeof(struct dms_fault_event), &event_buf,
+                     sizeof(struct dms_fault_event)) != 0) {
             DEV_MON_ERR("memcpy_s failed.\n");
             return DRV_ERROR_INNER_ERR;
         }
@@ -509,8 +506,8 @@ void dsmi_stop_fault_event_thread(void)
     }
 }
 
-int dsmi_get_fault_inject_info(unsigned int device_id, unsigned int max_info_cnt,
-    DSMI_FAULT_INJECT_INFO *info_buf, unsigned int *real_info_cnt)
+int dsmi_get_fault_inject_info(unsigned int device_id, unsigned int max_info_cnt, DSMI_FAULT_INJECT_INFO *info_buf,
+                               unsigned int *real_info_cnt)
 {
     return _dsmi_get_fault_inject_info(device_id, max_info_cnt, info_buf, real_info_cnt);
 }

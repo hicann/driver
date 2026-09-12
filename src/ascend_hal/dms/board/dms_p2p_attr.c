@@ -20,18 +20,18 @@ static drvError_t dms_p2p_attr_operate(struct urd_p2p_attr *p2p_attr)
     int ret;
 
     if ((p2p_attr->dev_id >= ASCEND_DEV_MAX_NUM) || (p2p_attr->peer_dev_id >= ASCEND_DEV_MAX_NUM)) {
-        DMS_ERR("Invalid parameter. (dev_id=%u; peer_phy_id=%u; max_dev_num=%u)\n",
-            p2p_attr->dev_id, p2p_attr->peer_dev_id, ASCEND_DEV_MAX_NUM);
+        DMS_ERR("Invalid parameter. (dev_id=%u; peer_phy_id=%u; max_dev_num=%u)\n", p2p_attr->dev_id,
+                p2p_attr->peer_dev_id, ASCEND_DEV_MAX_NUM);
         return DRV_ERROR_INVALID_DEVICE;
     }
 
     urd_usr_cmd_fill(&cmd, DMS_MAIN_CMD_BASIC, DMS_SUBCMD_DEV_P2P_ATTR, NULL, 0);
-    urd_usr_cmd_para_fill(&cmd_para, (void *)p2p_attr, sizeof(struct urd_p2p_attr),
-        (void *)p2p_attr, sizeof(struct urd_p2p_attr));
+    urd_usr_cmd_para_fill(&cmd_para, (void *)p2p_attr, sizeof(struct urd_p2p_attr), (void *)p2p_attr,
+                          sizeof(struct urd_p2p_attr));
     ret = urd_usr_cmd(&cmd, &cmd_para);
     if (ret != 0) {
-        DMS_EX_NOTSUPPORT_ERR(ret, "P2p operate ioctl failed. (dev_id=%u; peer_dev=%u; ret=%d)\n",
-            p2p_attr->dev_id, p2p_attr->peer_dev_id, ret);
+        DMS_EX_NOTSUPPORT_ERR(ret, "P2p operate ioctl failed. (dev_id=%u; peer_dev=%u; ret=%d)\n", p2p_attr->dev_id,
+                              p2p_attr->peer_dev_id, ret);
 #ifdef CFG_FEATURE_ERR_CODE_NOT_OPTIMIZATION
         if (p2p_attr->op == DEVDRV_P2P_CAPABILITY_QUERY) {
             return DRV_ERROR_INVALID_VALUE;
@@ -100,7 +100,7 @@ drvError_t DmsGetP2PCapbility(unsigned int dev_id, unsigned long long *capbility
         return ret;
     }
     *capbility = p2p_attr.capability;
-    DMS_DEBUG("Succeeded in obtaining the P2P capability. (capbility=0x%llx)\n", *capbility);
+    DMS_DEBUG("Succeeded in obtaining the P2P capability. (capability=0x%llx)\n", *capbility);
 
     return DRV_ERROR_NONE;
 }

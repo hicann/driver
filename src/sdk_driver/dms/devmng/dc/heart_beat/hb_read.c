@@ -56,7 +56,7 @@ struct hb_read_block *get_heart_beat_read_item(unsigned int dev_id)
 }
 
 #ifndef DMS_UT
-void hb_read_item_work_stop(unsigned int dev_id, struct hb_read_block* hb_read_item)
+void hb_read_item_work_stop(unsigned int dev_id, struct hb_read_block *hb_read_item)
 {
     hb_read_item->hb_stutas = HEART_BEAT_LOST;
     hb_read_item->old_count = 0;
@@ -85,24 +85,26 @@ bool hb_is_need_judge(unsigned long cur_time, struct hb_read_block *hb_info)
     return true;
 }
 
-static void log_heart_beat_debug_info(struct hb_read_block *hb_info, unsigned long long cur_time, unsigned long long last_time)
+static void log_heart_beat_debug_info(struct hb_read_block *hb_info, unsigned long long cur_time,
+                                      unsigned long long last_time)
 {
     unsigned long long interval_time = (cur_time - last_time) / KA_NSEC_PER_SEC;
 
     /* If the interval between two read work over 12s, record the dfx log */
     if (interval_time >= HB_FORGET_READ_JUDGE_TIME) {
         soft_drv_warn("miss read heart beat over %ds. (dev_id=%u; interval_time=%llus, miss times=%llu) \n",
-            HB_FORGET_READ_JUDGE_TIME, hb_info->dev_id, interval_time, hb_info->miss_read_count);
+                      HB_FORGET_READ_JUDGE_TIME, hb_info->dev_id, interval_time, hb_info->miss_read_count);
     }
 
     if (hb_info->lost_count > 0) {
         soft_drv_warn("heart beat debug info. (lost count=%u; total lost count=%llu; total miss read count=%llu)\n",
-                       hb_info->lost_count, hb_info->total_lost_count, hb_info->miss_read_count);
+                      hb_info->lost_count, hb_info->total_lost_count, hb_info->miss_read_count);
     }
     return;
 }
 
-static bool check_is_need_read(unsigned int dev_id, struct devdrv_manager_info *manager_info, struct hb_read_block *hb_read_item)
+static bool check_is_need_read(unsigned int dev_id, struct devdrv_manager_info *manager_info,
+                               struct hb_read_block *hb_read_item)
 {
     unsigned long cur_time = 0;
 
@@ -115,7 +117,8 @@ static bool check_is_need_read(unsigned int dev_id, struct devdrv_manager_info *
         return false;
     }
 #else
-    if ((manager_info->dev_info[dev_id] == NULL) || (manager_info->dev_info[dev_id]->dev_ready != DEVDRV_DEV_READY_WORK)) {
+    if ((manager_info->dev_info[dev_id] == NULL) ||
+        (manager_info->dev_info[dev_id]->dev_ready != DEVDRV_DEV_READY_WORK)) {
         return false;
     }
 #endif
@@ -177,9 +180,9 @@ void hb_read_one_device_count(unsigned int dev_id)
 
     ret = hb_get_heart_beat_count(dev_id, &cur_count, &hb_read_fail_count[dev_id]);
     if (ret != 0) {
-        if (hb_read_fail_count[dev_id] == max_lost_count) {	 
- 	        goto HEARTBEAT_LOST;
- 	    }
+        if (hb_read_fail_count[dev_id] == max_lost_count) {
+            goto HEARTBEAT_LOST;
+        }
 
         ka_task_mutex_unlock(&hb_read_item->mutex);
         return;
@@ -199,22 +202,21 @@ void hb_read_one_device_count(unsigned int dev_id)
 
     ka_task_mutex_unlock(&hb_read_item->mutex);
     return;
- HEARTBEAT_LOST:	 
- 	soft_drv_err(
- 	    "Heartbeat lost! (device_id=%u; old_count=%llu; current_count=%llu; lost_count=%d; "
- 	    "total_lost_count=%llu; miss_read_count=%llu; hb_read_fail_count=%u).\n",
- 	    dev_id, hb_read_item->old_count, cur_count, hb_read_item->lost_count,
- 	    hb_read_item->total_lost_count, hb_read_item->miss_read_count, hb_read_fail_count[dev_id]);
- 	manager_info->device_status[dev_id] = DRV_STATUS_COMMUNICATION_LOST;
- 	hb_read_item_work_stop(dev_id, hb_read_item);
+HEARTBEAT_LOST:
+    soft_drv_err("Heartbeat lost! (device_id=%u; old_count=%llu; current_count=%llu; lost_count=%d; "
+                 "total_lost_count=%llu; miss_read_count=%llu; hb_read_fail_count=%u).\n",
+                 dev_id, hb_read_item->old_count, cur_count, hb_read_item->lost_count, hb_read_item->total_lost_count,
+                 hb_read_item->miss_read_count, hb_read_fail_count[dev_id]);
+    manager_info->device_status[dev_id] = DRV_STATUS_COMMUNICATION_LOST;
+    hb_read_item_work_stop(dev_id, hb_read_item);
     if (hb_read_item->hb_lost_wq != NULL) {
         ka_task_queue_work(hb_read_item->hb_lost_wq, &hb_read_item->hb_lost_work);
     } else {
         soft_drv_err("Heart beat lost workqueue has been destroyed. (dev_id=%u)\n", dev_id);
     }
- 	
+
     ka_task_mutex_unlock(&hb_read_item->mutex);
- 	return;
+    return;
 }
 
 static void heart_beat_read_work(ka_work_struct_t *hb_read_work)
@@ -313,7 +315,7 @@ int heart_beat_read_timer_init(void)
     }
 
     if (g_heart_beat_switch != 1) {
-        soft_drv_warn("Heat beat is not enabled.\n");
+        soft_drv_warn("Heart beat is not enabled.\n");
         return 0;
     }
 
@@ -322,7 +324,8 @@ int heart_beat_read_timer_init(void)
     KA_TASK_INIT_WORK(&g_hb_read_timer.hb_read_work, heart_beat_read_work);
     g_hb_read_timer.hb_read_wq = ka_task_alloc_workqueue("%s", WQ_HIGHPRI, 1, "hb_read_work");
 
-    ka_system_hrtimer_start(&g_hb_read_timer.timer, ka_system_ktime_set(HEART_BEAT_READ_TIMER_EXPIRE_SEC, 0), KA_HRTIMER_MODE_REL);
+    ka_system_hrtimer_start(&g_hb_read_timer.timer, ka_system_ktime_set(HEART_BEAT_READ_TIMER_EXPIRE_SEC, 0),
+                            KA_HRTIMER_MODE_REL);
     return 0;
 #else
     return 0;

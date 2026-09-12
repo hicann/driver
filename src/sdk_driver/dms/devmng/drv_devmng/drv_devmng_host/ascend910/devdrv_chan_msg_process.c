@@ -133,14 +133,15 @@ STATIC int devdrv_manager_check_process_sign(void *msg, u32 *ack_len)
         devdrv_drv_err("Hostpid sign list is empty. (dev_id=%u; hostpid=%d)\n", dev_id, process_sign->tgid);
         goto out;
     }
-    ka_list_for_each_safe(pos, n, &d_info->hostpid_list_header) {
+    ka_list_for_each_safe(pos, n, &d_info->hostpid_list_header)
+    {
         d_sign = ka_list_entry(pos, struct devdrv_process_sign, list);
         if (d_sign->hostpid == process_sign->tgid) {
             ret = devdrv_manager_container_check_devid_in_container(dev_id, d_sign->hostpid);
             if (ret != 0) {
                 result = EINVAL;
-                devdrv_drv_err("Device id and hostpid mismatch in container. (dev_id=%u; hostpid=%d; ret=%d)\n",
-                    dev_id, d_sign->hostpid, ret);
+                devdrv_drv_err("Device id and hostpid mismatch in container. (dev_id=%u; hostpid=%d; ret=%d)\n", dev_id,
+                               d_sign->hostpid, ret);
             } else {
                 result = 0;
                 devdrv_drv_info("Process sign check success. (dev_id=%u; hostpid=%d)\n", dev_id, process_sign->tgid);
@@ -346,7 +347,7 @@ STATIC int (*devdrv_manager_chan_msg_processes[DEVDRV_MANAGER_CHAN_MAX_ID + 1])(
     [DEVDRV_MANAGER_CHAN_D2H_DMS_EVENT_DISTRIBUTE] = dms_event_get_exception_from_device,
     [DEVDRV_MANAGER_CHAN_D2H_SEND_TSLOG_ADDR] = devdrv_manager_receive_tslog_addr,
     [DEVDRV_MANAGER_CHAN_D2H_SEND_DEVLOG_ADDR] = devdrv_manager_receive_devlog_addr,
-#if (!defined (DEVMNG_UT)) && (!defined (DEVDRV_MANAGER_HOST_UT_TEST))
+#if (!defined(DEVMNG_UT)) && (!defined(DEVDRV_MANAGER_HOST_UT_TEST))
     [DEVDRV_MANAGER_CHAN_PID_MAP_SYNC] = devdrv_pid_map_sync_proc,
 #endif
     [DEVDRV_MANAGER_CHAN_D2H_SET_HOST_AICPU_NUM] = devdrv_set_host_aicpu_num_from_device,
@@ -360,16 +361,15 @@ STATIC int devdrv_chan_msg_dispatch(void *data, u32 *real_out_len)
     return devdrv_manager_chan_msg_processes[msg_id](data, real_out_len);
 }
 
-int devdrv_manager_rx_common_msg_process(u32 dev_id, void *data, u32 in_data_len, u32 out_data_len,
-    u32 *real_out_len)
+int devdrv_manager_rx_common_msg_process(u32 dev_id, void *data, u32 in_data_len, u32 out_data_len, u32 *real_out_len)
 {
     struct devdrv_manager_msg_info *dev_manager_msg_info = NULL;
     u32 msg_id;
 
     if ((dev_id >= ASCEND_DEV_MAX_NUM) || (data == NULL) || (real_out_len == NULL) ||
         (in_data_len < sizeof(struct devdrv_manager_msg_info))) {
-        devdrv_drv_err("date(%pK) or real_out_len(%pK) is NULL, devid(%u), in_data_len(%u)\n",
-            data, real_out_len, dev_id, in_data_len);
+        devdrv_drv_err("data(%pK) or real_out_len(%pK) is NULL, devid(%u), in_data_len(%u)\n", data, real_out_len,
+                       dev_id, in_data_len);
         return -EINVAL;
     }
     msg_id = ((struct devdrv_manager_msg_head *)data)->msg_id;
@@ -389,8 +389,7 @@ int devdrv_manager_rx_common_msg_process(u32 dev_id, void *data, u32 in_data_len
 }
 EXPORT_SYMBOL_UNRELEASE(devdrv_manager_rx_common_msg_process);
 
-int devdrv_manager_rx_msg_process(void *msg_chan, void *data, u32 in_data_len, u32 out_data_len,
-    u32 *real_out_len)
+int devdrv_manager_rx_msg_process(void *msg_chan, void *data, u32 in_data_len, u32 out_data_len, u32 *real_out_len)
 {
     struct devdrv_manager_msg_info *dev_manager_msg_info = NULL;
     struct devdrv_info *dev_info = NULL;
@@ -399,7 +398,8 @@ int devdrv_manager_rx_msg_process(void *msg_chan, void *data, u32 in_data_len, u
 
     if ((msg_chan == NULL) || (data == NULL) || (real_out_len == NULL) ||
         (in_data_len < sizeof(struct devdrv_manager_msg_info))) {
-        devdrv_drv_err("msg_chan(%pK) or data(%pK) or real_out_len(%pK) is NULL, in_date_len(%u)\n",
+        devdrv_drv_err(
+            "msg_chan or data or real_out_len is NULL. (msg_chan=%pK; data=%pK; real_out_len=%pK; in_data_len=%u)\n",
             msg_chan, data, real_out_len, in_data_len);
         return -EINVAL;
     }
@@ -440,8 +440,7 @@ struct devdrv_non_trans_msg_chan_info dev_manager_msg_chan_info = {
 };
 
 STATIC void devdrv_manager_msg_chan_notify(u32 dev_id, int status)
-{
-}
+{}
 
 void devdrv_manager_common_chan_init(void)
 {
@@ -493,8 +492,8 @@ int devdrv_agent_sync_msg_send(u32 dev_id, struct devdrv_manager_msg_info *msg_i
 
     if ((dev_id >= ASCEND_DEV_MAX_NUM) || (msg_info == NULL) || (out_len == NULL) ||
         (payload_len > sizeof(msg_info->payload))) {
-        devdrv_drv_err("invalid dev_id(%u) or msg_info(%pK) is null or out_len(%pK) is null.\n",
-            dev_id, msg_info, out_len);
+        devdrv_drv_err("invalid dev_id(%u) or msg_info(%pK) is null or out_len(%pK) is null.\n", dev_id, msg_info,
+                       out_len);
         return -EINVAL;
     }
 
@@ -537,8 +536,8 @@ int devdrv_manager_none_trans_init(u32 dev_id)
 
     dev_info = devdrv_get_devdrv_info_array(dev_id);
     if (dev_info == NULL) {
-        devdrv_drv_err("Device is not initialize. (dev_id=%u)\n", dev_id);
-       return -ENODEV;
+        devdrv_drv_err("Device is not initialized. (dev_id=%u)\n", dev_id);
+        return -ENODEV;
     }
 
     no_trans_chan = devdrv_pcimsg_alloc_non_trans_queue(dev_id, &dev_manager_msg_chan_info);

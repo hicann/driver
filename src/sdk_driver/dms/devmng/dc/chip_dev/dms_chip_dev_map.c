@@ -77,8 +77,7 @@ STATIC int dms_get_dev_num_and_list(unsigned int *dev_num, unsigned int *dev_id_
     return 0;
 }
 
-STATIC int dms_get_all_dev_random_num(dms_chip_dev_node_t *dev_info,
-    unsigned int *dev_id_list, unsigned int dev_num)
+STATIC int dms_get_all_dev_random_num(dms_chip_dev_node_t *dev_info, unsigned int *dev_id_list, unsigned int dev_num)
 {
     unsigned int i;
     dms_chip_dev_node_t *dev_info_node = NULL;
@@ -136,8 +135,8 @@ STATIC int dms_dev_list_init(dms_chip_dev_map_t *map_info)
     /* dfx info */
     for (i = 0; i < map_info->dev_num; i++) {
         dev_node_cur = dev_list_head + i;
-        dms_debug("dev[%u] chip_flag[%u] chip_id[%u].\n", dev_node_cur->dev_id,
-            dev_node_cur->assign_to_chip_flag, dev_node_cur->belong_to_chip);
+        dms_debug("dev[%u] chip_flag[%u] chip_id[%u].\n", dev_node_cur->dev_id, dev_node_cur->assign_to_chip_flag,
+                  dev_node_cur->belong_to_chip);
     }
 
     return 0;
@@ -180,14 +179,16 @@ STATIC int dms_creat_chip_and_dev_linklist(dms_chip_dev_map_t *map_info)
         return 0;
     }
 
-    ka_list_for_each_safe(pos, n, &map_info->chip_head) {
+    ka_list_for_each_safe(pos, n, &map_info->chip_head)
+    {
         chip_node = ka_list_entry(pos, dms_chip_node_t, chip_node_list);
         if (ka_list_empty_careful(&chip_node->dev_head)) {
             dms_debug("Device link list is empty.\n");
             continue;
         }
 
-        ka_list_for_each_safe(pos_dev, n_dev, &chip_node->dev_head) {
+        ka_list_for_each_safe(pos_dev, n_dev, &chip_node->dev_head)
+        {
             dev_node = ka_list_entry(pos_dev, dms_chip_dev_node_t, dev_node_list);
             dms_debug("Dev[%u] belong to chip[%u].\n", dev_node->dev_id, dev_node->belong_to_chip);
         }
@@ -207,7 +208,8 @@ void dms_chip_dev_map_resource_free(dms_chip_dev_map_t **map_info)
     }
     chip_dev_map = *map_info;
     if (!ka_list_empty_careful(&chip_dev_map->chip_head)) {
-        ka_list_for_each_safe(pos, n, &chip_dev_map->chip_head) {
+        ka_list_for_each_safe(pos, n, &chip_dev_map->chip_head)
+        {
             chip_node = ka_list_entry(pos, dms_chip_node_t, chip_node_list);
             ka_list_del(&chip_node->chip_node_list);
             ka_mm_kfree(chip_node);
@@ -240,7 +242,8 @@ int dms_creat_chip_dev_map(dms_chip_dev_map_t *chip_dev_map)
     }
 
     /* 1 get device number and device id list */
-    dev_id_list = (unsigned int*)ka_mm_kzalloc(sizeof(unsigned int) * ASCEND_DEV_MAX_NUM, KA_GFP_ATOMIC | __KA_GFP_ACCOUNT);
+    dev_id_list = (unsigned int *)ka_mm_kzalloc(sizeof(unsigned int) * ASCEND_DEV_MAX_NUM,
+                                                KA_GFP_ATOMIC | __KA_GFP_ACCOUNT);
     if (dev_id_list == NULL) {
         dms_err("Allocate memory for device list failed.\n");
         return -ENOMEM;
@@ -254,7 +257,8 @@ int dms_creat_chip_dev_map(dms_chip_dev_map_t *chip_dev_map)
     }
 
     /* 2 get random num of all device */
-    dev_node = (dms_chip_dev_node_t *)ka_mm_kzalloc(dev_num * sizeof(dms_chip_dev_node_t),  KA_GFP_ATOMIC | __KA_GFP_ACCOUNT);
+    dev_node = (dms_chip_dev_node_t *)ka_mm_kzalloc(dev_num * sizeof(dms_chip_dev_node_t),
+                                                    KA_GFP_ATOMIC | __KA_GFP_ACCOUNT);
     if (dev_node == NULL) {
         ka_mm_kfree(dev_id_list);
         dev_id_list = NULL;
@@ -281,7 +285,7 @@ int dms_creat_chip_dev_map(dms_chip_dev_map_t *chip_dev_map)
     /* 4 compute device list for each chip */
     ret = dms_creat_chip_and_dev_linklist(chip_dev_map);
     if (ret != 0) {
-        dms_err("dms_creat_chip_and_dev_linklist fail. (ret=%d)\n", ret);
+        dms_err("Dms create chip and device linklist fail. (ret=%d)\n", ret);
         goto FREE_EXIT;
     }
 
@@ -309,7 +313,7 @@ int dms_get_chip_count(int *count)
     /* 2 build the relationship between device and chip */
     ret = dms_creat_chip_dev_map(chip_dev_map);
     if (ret != 0) {
-        dms_err("Fail to creat chip dev map. (ret=%d)\n", ret);
+        dms_err("Failed to create chip dev map. (ret=%d)\n", ret);
         dms_chip_dev_map_resource_free(&chip_dev_map);
         return ret;
     }
@@ -335,14 +339,15 @@ int dms_get_chip_list(struct devdrv_chip_list *chip_info)
 
     /* 2 build the relationship between device and chip */
     if (dms_creat_chip_dev_map(chip_dev_map) != 0) {
-        dms_err("Creat chip device map failed.\n");
+        dms_err("Create chip device map failed.\n");
         dms_chip_dev_map_resource_free(&chip_dev_map);
         return -EINVAL;
     }
 
     if (!ka_list_empty_careful(&chip_dev_map->chip_head)) {
         int num = 0;
-        ka_list_for_each_safe(pos, n, &chip_dev_map->chip_head) {
+        ka_list_for_each_safe(pos, n, &chip_dev_map->chip_head)
+        {
             chip_node = ka_list_entry(pos, dms_chip_node_t, chip_node_list);
             if (num >= VDAVINCI_VDEV_OFFSET) {
                 dms_err("chip node num invalid. (num=%d)\n", num);
@@ -385,7 +390,7 @@ int dms_get_device_from_chip(struct devdrv_chip_dev_list *chip_dev_list)
 
     /* 2 build the relationship between device and chip */
     if (dms_creat_chip_dev_map(chip_dev_map) != 0) {
-        dms_err("Creat chip device map failed.\n");
+        dms_err("Create chip device map failed.\n");
         goto ERROR_OUT;
     }
 
@@ -393,7 +398,8 @@ int dms_get_device_from_chip(struct devdrv_chip_dev_list *chip_dev_list)
         dms_err("Chip head list is empty.\n");
         goto ERROR_OUT;
     }
-    ka_list_for_each_safe(pos_chip, n_chip, &chip_dev_map->chip_head) {
+    ka_list_for_each_safe(pos_chip, n_chip, &chip_dev_map->chip_head)
+    {
         chip_node = ka_list_entry(pos_chip, dms_chip_node_t, chip_node_list);
         if (chip_node->chip_id == chip_dev_list->chip_id) {
             if (ka_list_empty_careful(&chip_node->dev_head)) {
@@ -401,7 +407,8 @@ int dms_get_device_from_chip(struct devdrv_chip_dev_list *chip_dev_list)
                 goto ERROR_OUT;
             }
 
-            ka_list_for_each_safe(pos_dev, n_dev, &chip_node->dev_head) {
+            ka_list_for_each_safe(pos_dev, n_dev, &chip_node->dev_head)
+            {
                 if (num >= DEVDRV_MAX_DAVINCI_NUM) {
                     dms_err("chip node num invalid. (num=%d)\n", num);
                     goto ERROR_OUT;
@@ -445,7 +452,7 @@ int dms_get_chip_from_device(struct devdrv_get_dev_chip_id *chip_from_dev)
 
     /* 2 build the relationship between device and chip */
     if (dms_creat_chip_dev_map(chip_dev_map) != 0) {
-        dms_err("Creat chip device map failed.\n");
+        dms_err("Create chip device map failed.\n");
         goto ERR_OUT;
     }
 
@@ -454,14 +461,16 @@ int dms_get_chip_from_device(struct devdrv_get_dev_chip_id *chip_from_dev)
         dms_err("Chip head list is empty.\n");
         goto ERR_OUT;
     }
-    ka_list_for_each_safe(pos_chip, n_chip, &chip_dev_map->chip_head) {
+    ka_list_for_each_safe(pos_chip, n_chip, &chip_dev_map->chip_head)
+    {
         chip_node = ka_list_entry(pos_chip, dms_chip_node_t, chip_node_list);
         if (ka_list_empty_careful(&chip_node->dev_head)) {
             dms_err("Device link list is empty.\n");
             goto ERR_OUT;
         }
 
-        ka_list_for_each_safe(pos_dev, n_dev, &chip_node->dev_head) {
+        ka_list_for_each_safe(pos_dev, n_dev, &chip_node->dev_head)
+        {
             dev_node = ka_list_entry(pos_dev, dms_chip_dev_node_t, dev_node_list);
             if (chip_from_dev->dev_id == dev_node->dev_id) {
                 chip_from_dev->chip_id = chip_node->chip_id;

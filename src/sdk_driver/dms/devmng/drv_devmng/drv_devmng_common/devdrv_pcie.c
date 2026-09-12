@@ -167,11 +167,11 @@ int devdrv_manager_check_and_disable_sriov(unsigned int dev_id)
 #define DEVDRV_BBOX_DDR_DUMP_LEN 0x900000UL
 #else
 #define DEVDRV_HBM_BBOX_VMCORE_STAT_LEN 0 /* not support */
-#define DEVDRV_HBM_BBOX_VMCORE_LEN 0 /* not support */
-#define DEVDRV_HBM_BBOX_KDUMP_LEN 0 /* not support */
-#define DEVDRV_BBOX_CHIP_DFX_FULL_LEN 0 /* not support */
-#define DEVDRV_BBOX_TS_LOG_LEN 0 /* not support */
-#define DEVDRV_BBOX_DDR_DUMP_LEN 0 /* not support */
+#define DEVDRV_HBM_BBOX_VMCORE_LEN 0      /* not support */
+#define DEVDRV_HBM_BBOX_KDUMP_LEN 0       /* not support */
+#define DEVDRV_BBOX_CHIP_DFX_FULL_LEN 0   /* not support */
+#define DEVDRV_BBOX_TS_LOG_LEN 0          /* not support */
+#define DEVDRV_BBOX_DDR_DUMP_LEN 0        /* not support */
 #endif
 
 STATIC int drv_pcie_para_check(u32 phys_id, struct devdrv_pcie_read_para *pcie_read_para)
@@ -193,32 +193,31 @@ STATIC int drv_pcie_para_check(u32 phys_id, struct devdrv_pcie_read_para *pcie_r
 
     if ((pcie_read_para->type == DEVDRV_PCIE_READ_TYPE_REG_SRAM) &&
         devdrv_manager_check_capability(phys_id, DEVDRV_CAP_IMU_REG_EXPORT)) {
-        devdrv_drv_err("do not support read reg sram, dev_id:%u, read type:%u.\n",
-            phys_id, pcie_read_para->type);
+        devdrv_drv_err("do not support read reg sram, dev_id:%u, read type:%u.\n", phys_id, pcie_read_para->type);
         return -EINVAL;
     }
 
     if ((pcie_read_para->type == DEVDRV_PCIE_READ_TYPE_HBOOT_SRAM) &&
         !((pcie_read_para->offset <= DEVDRV_SRAM_BBOX_HBOOT_LEN) &&
-        ((u64)pcie_read_para->offset + (u64)pcie_read_para->len) <= DEVDRV_SRAM_BBOX_HBOOT_LEN)) {
+          ((u64)pcie_read_para->offset + (u64)pcie_read_para->len) <= DEVDRV_SRAM_BBOX_HBOOT_LEN)) {
         devdrv_drv_err("Can not access sram. (dev_id=%u; offset=%u; len=%u)\n", phys_id, pcie_read_para->offset,
-            pcie_read_para->len);
+                       pcie_read_para->len);
         return -EINVAL;
     }
 
     if ((pcie_read_para->type == DEVDRV_PCIE_READ_TYPE_VMCORE_STAT) &&
         !((pcie_read_para->offset <= DEVDRV_HBM_BBOX_VMCORE_STAT_LEN) &&
-        ((u64)pcie_read_para->offset + (u64)pcie_read_para->len) <= DEVDRV_HBM_BBOX_VMCORE_STAT_LEN)) {
-        devdrv_drv_err("Can not access hbm to read vmcore stat. (dev_id=%u; offset=%u; len=%u)\n", phys_id, pcie_read_para->offset,
-            pcie_read_para->len);
+          ((u64)pcie_read_para->offset + (u64)pcie_read_para->len) <= DEVDRV_HBM_BBOX_VMCORE_STAT_LEN)) {
+        devdrv_drv_err("Can not access hbm to read vmcore stat. (dev_id=%u; offset=%u; len=%u)\n", phys_id,
+                       pcie_read_para->offset, pcie_read_para->len);
         return -EINVAL;
     }
 
     if ((pcie_read_para->type == DEVDRV_PCIE_READ_TYPE_VMCORE_FILE) &&
         !((pcie_read_para->offset <= DEVDRV_HBM_BBOX_VMCORE_LEN) &&
-        ((u64)pcie_read_para->offset + (u64)pcie_read_para->len) <= DEVDRV_HBM_BBOX_VMCORE_LEN)) {
-        devdrv_drv_err("Can not access hbm to read vmcore. (dev_id=%u; offset=%u; len=%u)\n", phys_id, pcie_read_para->offset,
-            pcie_read_para->len);
+          ((u64)pcie_read_para->offset + (u64)pcie_read_para->len) <= DEVDRV_HBM_BBOX_VMCORE_LEN)) {
+        devdrv_drv_err("Can not access hbm to read vmcore. (dev_id=%u; offset=%u; len=%u)\n", phys_id,
+                       pcie_read_para->offset, pcie_read_para->len);
         return -EINVAL;
     }
 
@@ -241,13 +240,13 @@ STATIC int drv_get_data_addr_info(u32 phys_id, enum devdrv_pcie_read_type type, 
         *addr_type = DEVDRV_ADDR_HDR_BASE;
     }
 
-#if defined(CFG_HOST_ENV) && defined (CFG_SOC_PLATFORM_CLOUD_V2)
+#if defined(CFG_HOST_ENV) && defined(CFG_SOC_PLATFORM_CLOUD_V2)
     if (type == DEVDRV_PCIE_READ_TYPE_HBOOT_SRAM) {
         *addr_type = DEVDRV_ADDR_HBOOT_SRAM_MEM;
     }
 #endif
 
-#if defined (CFG_SOC_PLATFORM_CLOUD_V2)
+#if defined(CFG_SOC_PLATFORM_CLOUD_V2)
     if (type == DEVDRV_PCIE_READ_TYPE_VMCORE_STAT) {
         *addr_type = DEVDRV_ADDR_VMCORE_STAT_HBM_MEM;
     } else if (type == DEVDRV_PCIE_READ_TYPE_CHIP_DFX_LOG) {
@@ -262,7 +261,7 @@ STATIC int drv_get_data_addr_info(u32 phys_id, enum devdrv_pcie_read_type type, 
     return 0;
 }
 
-STATIC int drv_pcie_read_proc(struct devdrv_pcie_read_para* para)
+STATIC int drv_pcie_read_proc(struct devdrv_pcie_read_para *para)
 {
     u32 type;
     int ret;
@@ -293,11 +292,10 @@ int drv_pcie_read(ka_file_t *filep, unsigned int cmd, unsigned long arg)
 
     /* bbox is not support container */
     if (devdrv_manager_container_is_in_container()) {
-        devdrv_drv_err("bbox read interface is not support container\n");
+        devdrv_drv_err("bbox read interface does not support container\n");
         return -EPERM;
     }
-    ret = copy_from_user_safe(&pcie_read_para, (void *)((uintptr_t)arg),
-                              sizeof(struct devdrv_pcie_read_para));
+    ret = copy_from_user_safe(&pcie_read_para, (void *)((uintptr_t)arg), sizeof(struct devdrv_pcie_read_para));
     if (ret) {
         devdrv_drv_err("copy pcie from user failed, ret(%d).\n", ret);
         return -EINVAL;
@@ -327,8 +325,8 @@ int drv_pcie_read(ka_file_t *filep, unsigned int cmd, unsigned long arg)
 STATIC int drv_pcir_log_size_check(struct devdrv_bbox_pcie_logdump *in, unsigned int len_ev)
 {
     if ((KA_U32_MAX - in->offset <= in->len) || (in->offset + in->len > len_ev)) {
-        devdrv_drv_err("Failed to verify the log length. (dev_id=%u; offset=%u; len=%u; log_type=%u)\n",
-            in->devid, in->offset, in->len, len_ev);
+        devdrv_drv_err("Failed to verify the log length. (dev_id=%u; offset=%u; len=%u; log_type=%u)\n", in->devid,
+                       in->offset, in->len, len_ev);
         return -EINVAL;
     }
 
@@ -341,7 +339,7 @@ STATIC int drv_pcie_log_dump_check(struct devdrv_bbox_pcie_logdump *in)
 
     if (in->devid >= ASCEND_PDEV_MAX_NUM || in->type >= DEVDRV_MAX_PCIE_READ_TYPE || in->len == 0) {
         devdrv_drv_err("Invalid parameter. (dev_id=%u; dev_maxnum=%d; log_type=%u; logtype_maxnum=%d; len=%u)\n",
-            in->devid, ASCEND_PDEV_MAX_NUM, in->type, DEVDRV_MAX_PCIE_READ_TYPE, in->len);
+                       in->devid, ASCEND_PDEV_MAX_NUM, in->type, DEVDRV_MAX_PCIE_READ_TYPE, in->len);
         return -EINVAL;
     }
 
@@ -379,8 +377,7 @@ int devdrv_pcie_devlog_dump(struct devdrv_bbox_pcie_logdump *in)
 
     ret = drv_get_data_addr_info(in->devid, in->type, &addr_type);
     if (ret != 0) {
-        devdrv_drv_err("Get addr info type failed. (dev_id=%u; type=%d; ret=%d)\n",
-            in->devid, in->type, ret);
+        devdrv_drv_err("Get addr info type failed. (dev_id=%u; type=%d; ret=%d)\n", in->devid, in->type, ret);
         return ret;
     }
 
@@ -392,7 +389,7 @@ int devdrv_pcie_devlog_dump(struct devdrv_bbox_pcie_logdump *in)
 
     if ((KA_U32_MAX - in->offset <= in->len) || (in->offset + in->len > phy_addr_size)) {
         devdrv_drv_err("Para offset len check failed. (dev_id=%u; log_type=%d; offset=%u; len=%u; max_offset=%lu)\n",
-            in->devid, in->type, in->offset, in->len, phy_addr_size);
+                       in->devid, in->type, in->offset, in->len, phy_addr_size);
         return -EINVAL;
     }
 
@@ -421,9 +418,9 @@ int drv_pcie_write_para_check(u32 phys_id, struct devdrv_pcie_write_para *pcie_w
 
     if ((pcie_write_para->type == DEVDRV_PCIE_WRITE_TYPE_KDUMP) &&
         !((pcie_write_para->offset <= DEVDRV_HBM_BBOX_KDUMP_LEN) &&
-        ((u64)pcie_write_para->offset + (u64)pcie_write_para->len) <= DEVDRV_HBM_BBOX_KDUMP_LEN)) {
-        devdrv_drv_err("Can not access hbm to write kdump flag. (dev_id=%u; offset=%u; len=%u)\n", phys_id, pcie_write_para->offset,
-            pcie_write_para->len);
+          ((u64)pcie_write_para->offset + (u64)pcie_write_para->len) <= DEVDRV_HBM_BBOX_KDUMP_LEN)) {
+        devdrv_drv_err("Can not access hbm to write kdump flag. (dev_id=%u; offset=%u; len=%u)\n", phys_id,
+                       pcie_write_para->offset, pcie_write_para->len);
         return -EINVAL;
     }
 
@@ -441,7 +438,7 @@ STATIC int drv_get_write_data_addr_info(u32 phys_id, enum devdrv_pcie_write_type
     return -EINVAL;
 }
 
-int drv_pcie_write_proc(struct devdrv_pcie_write_para* para)
+int drv_pcie_write_proc(struct devdrv_pcie_write_para *para)
 {
     u32 type;
     int ret;
@@ -477,8 +474,7 @@ int drv_pcie_write(ka_file_t *filep, unsigned int cmd, unsigned long arg)
         return ret;
     }
 
-    ret = copy_from_user_safe(&pcie_write_para, (void *)((uintptr_t)arg),
-                              sizeof(struct devdrv_pcie_write_para));
+    ret = copy_from_user_safe(&pcie_write_para, (void *)((uintptr_t)arg), sizeof(struct devdrv_pcie_write_para));
     if (ret) {
         devdrv_drv_err("Copy pcie from user failed. (ret=%d)\n", ret);
         return -EINVAL;
@@ -512,7 +508,7 @@ int drv_pcie_write(ka_file_t *filep, unsigned int cmd, unsigned long arg)
 #endif
 }
 
-int drv_pcie_bbox_imu_ddr_read_proc(struct devdrv_pcie_imu_ddr_read_para* para)
+int drv_pcie_bbox_imu_ddr_read_proc(struct devdrv_pcie_imu_ddr_read_para *para)
 {
     int ret;
 
@@ -534,7 +530,7 @@ int drv_pcie_bbox_imu_ddr_read(ka_file_t *filep, unsigned int cmd, unsigned long
 
     /* bbox is not support container */
     if (devdrv_manager_container_is_in_container()) {
-        devdrv_drv_err("bbox imu ddr read interface is not support container\n");
+        devdrv_drv_err("bbox imu ddr read interface does not support container\n");
         return -EPERM;
     }
     ret = copy_from_user_safe(&imu_ddr_read_para, (void *)((uintptr_t)arg),
@@ -579,14 +575,14 @@ int drv_get_device_boot_status(ka_file_t *filep, unsigned int cmd, unsigned long
 
     phys_id = boot_status_para.devId;
     if (phys_id >= ASCEND_DEV_MAX_NUM) {
-        devdrv_drv_err("phys_id is invalid. (phy_is=%d)\n", phys_id);
+        devdrv_drv_err("phys_id is invalid. (phy_id=%d)\n", phys_id);
         return -EINVAL;
     }
 
     /* only judge the physical id is available in container */
     if (devdrv_manager_container_is_in_container()) {
         if (!uda_task_can_access_udevid_inherit(ka_task_get_current(), phys_id)) {
-            devdrv_drv_err("device phyid is not belong to current docker. (phy_is=%d)\n", phys_id);
+            devdrv_drv_err("device phyid is not belong to current docker. (phy_id=%d)\n", phys_id);
             return -EFAULT;
         }
     }
@@ -766,7 +762,7 @@ bool devdrv_manager_is_mdev_vf_vm_mode(unsigned int dev_id)
 {
 #ifndef DEVDRV_MANAGER_HOST_UT_TEST
     return ((devdrv_get_env_boot_type(dev_id) == DEVDRV_MDEV_VF_VM_BOOT) ||
-        (devdrv_get_env_boot_type(dev_id) == DEVDRV_MDEV_FULL_SPEC_VF_VM_BOOT));
+            (devdrv_get_env_boot_type(dev_id) == DEVDRV_MDEV_FULL_SPEC_VF_VM_BOOT));
 #endif
 }
 

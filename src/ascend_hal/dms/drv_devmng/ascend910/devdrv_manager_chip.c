@@ -64,13 +64,13 @@ drvError_t drv_get_core_utilization(uint32_t dev_id, struct devdrv_core_utilizat
     for (i = 0; i < table_size; i++) {
         if (g_udis_get_core_util_info_table[i].core_type == utilization_info->core_type) {
             ret = g_udis_get_core_util_info_table[i].callback(dev_id, g_udis_get_core_util_info_table[i].name,
-                &utilization_info->utilization);
+                                                              &utilization_info->utilization);
             if (ret == 0) {
                 return ret;
             }
             if (!g_udis_get_core_util_info_table[i].enable_dmp) {
-                DEVDRV_DRV_ERR("Failed to get davinchi info from udis. (dev_id=%d; core_type=%d; ret=%d)\n",
-                    dev_id, utilization_info->core_type, ret);
+                DEVDRV_DRV_ERR("Failed to get davinci info from udis. (dev_id=%d; core_type=%d; ret=%d)\n", dev_id,
+                               utilization_info->core_type, ret);
                 return ret;
             }
         }
@@ -79,7 +79,7 @@ drvError_t drv_get_core_utilization(uint32_t dev_id, struct devdrv_core_utilizat
 #ifdef DRV_HOST
     util_info.dev_id = dev_id;
     util_info.core_type = utilization_info->core_type;
-    drv_ioctl_param_init(&util_info_buf, (void*)&util_info, sizeof(struct devdrv_core_utilization));
+    drv_ioctl_param_init(&util_info_buf, (void *)&util_info, sizeof(struct devdrv_core_utilization));
 #ifndef CFG_FEATURE_AIC_AIV_UTIL_FROM_TS
     if (utilization_info->core_type == DEV_DRV_TYPE_AIVECTOR) {
         return DRV_ERROR_NOT_SUPPORT;
@@ -94,12 +94,11 @@ drvError_t drv_get_core_utilization(uint32_t dev_id, struct devdrv_core_utilizat
     if (utilization_info->core_type == DEV_DRV_TYPE_AICPU) {
         ret = dms_get_aicpu_utilization(dev_id, &(util_info.utilization));
         if (ret != 0) {
-            DEVDRV_DRV_EX_NOTSUPPORT_ERR(ret, "Failed to get aicpu utilization. (dev_id=%u; ret=%d)\n",
-                dev_id, ret);
+            DEVDRV_DRV_EX_NOTSUPPORT_ERR(ret, "Failed to get aicpu utilization. (dev_id=%u; ret=%d)\n", dev_id, ret);
             return ret;
         }
     } else if (utilization_info->core_type == DEV_DRV_TYPE_AICORE ||
-        utilization_info->core_type == DEV_DRV_TYPE_AIVECTOR) {
+               utilization_info->core_type == DEV_DRV_TYPE_AIVECTOR) {
 #ifdef CFG_FEATURE_AIC_AIV_UTIL_FROM_TS
         ret = dms_get_average_util_from_ts(dev_id, 0, utilization_info->core_type, &(util_info.utilization));
 #else
@@ -110,8 +109,8 @@ drvError_t drv_get_core_utilization(uint32_t dev_id, struct devdrv_core_utilizat
         }
 #endif
         if (ret != 0) {
-            DEVDRV_DRV_ERR("Failed to get utilization. (dev_id=%u; core_type=%u; ret=%d)\n",
-                dev_id, utilization_info->core_type, ret);
+            DEVDRV_DRV_ERR("Failed to get utilization. (dev_id=%u; core_type=%u; ret=%d)\n", dev_id,
+                           utilization_info->core_type, ret);
             return ret;
         }
     }
@@ -124,7 +123,7 @@ drvError_t drv_get_core_utilization(uint32_t dev_id, struct devdrv_core_utilizat
 
 drvError_t drv_get_osc_freq(uint32_t devId, int32_t info_type, uint64_t *value)
 {
-#if defined CFG_FEATURE_OSC_FREQ && (defined (DRV_HOST) || defined (CFG_FEATURE_RC_MODE))
+#if defined CFG_FEATURE_OSC_FREQ && (defined(DRV_HOST) || defined(CFG_FEATURE_RC_MODE))
     int ret;
     unsigned int sub_cmd;
     int ioctl_cmd;
@@ -133,7 +132,8 @@ drvError_t drv_get_osc_freq(uint32_t devId, int32_t info_type, uint64_t *value)
     struct dms_osc_freq freq = {0};
 
     freq.dev_id = devId;
-    freq.sub_cmd = (info_type == INFO_TYPE_HOST_OSC_FREQUE) ? DMS_SUBCMD_GET_HOST_OSC_FREQ : DMS_SUBCMD_GET_DEV_OSC_FREQ;
+    freq.sub_cmd = (info_type == INFO_TYPE_HOST_OSC_FREQUE) ? DMS_SUBCMD_GET_HOST_OSC_FREQ :
+                                                              DMS_SUBCMD_GET_DEV_OSC_FREQ;
     if (DmsGetVirtFlag() != 0) {
         ret = dmanage_common_ioctl(DEVDRV_MANAGER_GET_OSC_FREQ, &freq);
         if (ret != 0) {
@@ -159,7 +159,7 @@ drvError_t drv_get_osc_freq(uint32_t devId, int32_t info_type, uint64_t *value)
     ioarg.output_len = sizeof(uint64_t);
     ret = DmsIoctl(ioctl_cmd, &ioarg);
     if (ret != 0) {
-        if ((ret != EOPNOTSUPP) && ( ret != EAGAIN)) {
+        if ((ret != EOPNOTSUPP) && (ret != EAGAIN)) {
             DEVDRV_DRV_ERR("DmsIoctl failed. (devId=%u; ret=%d)\n", devId, ret);
         }
         return errno_to_user_errno(ret);
@@ -191,8 +191,8 @@ drvError_t drv_get_cc_info(uint32_t devId, int32_t info_type, void *buf, unsigne
     }
 
     if (ret != 0) {
-        DEVDRV_DRV_EX_NOTSUPPORT_ERR(ret,
-            "Get cc info unsuccessful. (dev_id=%u; ret=%d; info_type=%d).\n", devId, ret, info_type);
+        DEVDRV_DRV_EX_NOTSUPPORT_ERR(ret, "Get cc info unsuccessful. (dev_id=%u; ret=%d; info_type=%d).\n", devId, ret,
+                                     info_type);
         return ret;
     }
 
@@ -212,8 +212,8 @@ drvError_t drv_get_l_2_buff_info(uint32_t devId, int32_t info_type, void *buf, u
     }
 
     if (ret != 0) {
-        DEVDRV_DRV_EX_NOTSUPPORT_ERR(ret,
-            "Get l2buff info unsuccessful. (dev_id=%u; ret=%d; info_type=%d).\n", devId, ret, info_type);
+        DEVDRV_DRV_EX_NOTSUPPORT_ERR(ret, "Get l2buff info unsuccessful. (dev_id=%u; ret=%d; info_type=%d).\n", devId,
+                                     ret, info_type);
     }
     return ret;
 }
@@ -231,20 +231,20 @@ drvError_t drv_set_l_2_buff_info(uint32_t devId, int32_t info_type, void *buf, u
     }
 
     if (ret != 0) {
-        DEVDRV_DRV_EX_NOTSUPPORT_ERR(ret, "Failed to set l2buff info. (devId=%u, infoType=%d, ret=%d)\n",
-            devId, info_type, ret);
+        DEVDRV_DRV_EX_NOTSUPPORT_ERR(ret, "Failed to set l2buff info. (devId=%u, infoType=%d, ret=%d)\n", devId,
+                                     info_type, ret);
     }
     return ret;
 }
 
-drvError_t hal_get_uuid_cmd(unsigned int dev_id, unsigned int main_cmd,
-    unsigned int sub_cmd, void *buf, unsigned int *size)
+drvError_t hal_get_uuid_cmd(unsigned int dev_id, unsigned int main_cmd, unsigned int sub_cmd, void *buf,
+                            unsigned int *size)
 {
     return halGetDeviceInfoByBuff(dev_id, MODULE_TYPE_SYSTEM, INFO_TYPE_UUID, buf, (int32_t *)size);
 }
 
-drvError_t hal_get_swplugin_upgrade(unsigned int dev_id, unsigned int main_cmd,
-    unsigned int sub_cmd, void *buf, unsigned int *size)
+drvError_t hal_get_swplugin_upgrade(unsigned int dev_id, unsigned int main_cmd, unsigned int sub_cmd, void *buf,
+                                    unsigned int *size)
 {
     (void)main_cmd;
     (void)sub_cmd;
@@ -384,7 +384,8 @@ drvError_t halGetChipList(int chip_list[], int count)
         return DRV_ERROR_INNER_ERR;
     }
 
-    ret = memcpy_s(chip_list, (unsigned int)(count * sizeof(int)), chip_list_info.chip_list, (unsigned int)(chip_list_info.count * sizeof(int)));
+    ret = memcpy_s(chip_list, (unsigned int)(count * sizeof(int)), chip_list_info.chip_list,
+                   (unsigned int)(chip_list_info.count * sizeof(int)));
     if (ret != EOK) {
         DEVDRV_DRV_ERR("Memcpy_s fail. (ret=%d)\n", ret);
         return DRV_ERROR_INNER_ERR;
@@ -417,8 +418,8 @@ drvError_t halGetDeviceCountFromChip(int chip_id, int *device_count)
 
     chip_dev_list.chip_id = chip_id;
     urd_usr_cmd_fill(&cmd, DMS_MAIN_CMD_BASIC, DMS_SUBCMD_GET_DEVICE_FROM_CHIP, NULL, 0);
-    urd_usr_cmd_para_fill(&cmd_para, (void *)&chip_dev_list.chip_id, sizeof(int),
-        (void *)&chip_dev_list, sizeof(struct devdrv_chip_dev_list));
+    urd_usr_cmd_para_fill(&cmd_para, (void *)&chip_dev_list.chip_id, sizeof(int), (void *)&chip_dev_list,
+                          sizeof(struct devdrv_chip_dev_list));
     ret = urd_usr_cmd(&cmd, &cmd_para);
     if (ret == DRV_ERROR_RESOURCE_OCCUPIED) {
         DEVDRV_DRV_ERR("Ioctl failed, device is busy. (ret=%d)\n", ret);
@@ -454,14 +455,14 @@ drvError_t halGetDeviceFromChip(int chip_id, int device_list[], int count)
 
     if ((device_list == NULL) || (chip_id < 0) || (chip_id >= DEVDRV_MAX_CHIP_NUM) || (count <= 0)) {
         DEVDRV_DRV_ERR("Input chip id or count or device list err. (chip id=%d; count=%d; device_list_is_null=%d)\n",
-            chip_id, count, device_list == NULL);
+                       chip_id, count, device_list == NULL);
         return DRV_ERROR_PARA_ERROR;
     }
 
     chip_dev_list.chip_id = chip_id;
     urd_usr_cmd_fill(&cmd, DMS_MAIN_CMD_BASIC, DMS_SUBCMD_GET_DEVICE_FROM_CHIP, NULL, 0);
-    urd_usr_cmd_para_fill(&cmd_para, (void *)&chip_dev_list.chip_id, sizeof(int),
-        (void *)&chip_dev_list, sizeof(struct devdrv_chip_dev_list));
+    urd_usr_cmd_para_fill(&cmd_para, (void *)&chip_dev_list.chip_id, sizeof(int), (void *)&chip_dev_list,
+                          sizeof(struct devdrv_chip_dev_list));
     ret = urd_usr_cmd(&cmd, &cmd_para);
     if (ret == DRV_ERROR_RESOURCE_OCCUPIED) {
         DEVDRV_DRV_ERR("Ioctl failed, device is busy.(ret=%d)\n", ret);
@@ -478,7 +479,8 @@ drvError_t halGetDeviceFromChip(int chip_id, int device_list[], int count)
         return DRV_ERROR_INNER_ERR;
     }
 
-    ret = memcpy_s(device_list, (unsigned int)(count * sizeof(int)), chip_dev_list.dev_list, (unsigned int)(chip_dev_list.count * sizeof(int)));
+    ret = memcpy_s(device_list, (unsigned int)(count * sizeof(int)), chip_dev_list.dev_list,
+                   (unsigned int)(chip_dev_list.count * sizeof(int)));
     if (ret != EOK) {
         DEVDRV_DRV_ERR("Memcpy_s fail. (ret=%d)\n", ret);
         return DRV_ERROR_INNER_ERR;
@@ -506,15 +508,15 @@ drvError_t halGetChipFromDevice(int device_id, int *chip_id)
     struct devdrv_get_dev_chip_id chip_id_from_dev = {0};
 
     if ((chip_id == NULL) || (device_id < 0) || (device_id >= ASCEND_DEV_MAX_NUM)) {
-        DEVDRV_DRV_ERR("Input Dev_id or chip_id invalid. (device_id=%d; chip_id_is_null=%d)\n",
-            device_id, (chip_id == NULL));
+        DEVDRV_DRV_ERR("Input Dev_id or chip_id invalid. (device_id=%d; chip_id_is_null=%d)\n", device_id,
+                       (chip_id == NULL));
         return DRV_ERROR_PARA_ERROR;
     }
 
     chip_id_from_dev.dev_id = device_id;
     urd_usr_cmd_fill(&cmd, DMS_MAIN_CMD_BASIC, DMS_SUBCMD_GET_CHIP_FROM_DEVICE, NULL, 0);
     urd_usr_cmd_para_fill(&cmd_para, (void *)&chip_id_from_dev, sizeof(struct devdrv_get_dev_chip_id),
-        (void *)&chip_id_from_dev, sizeof(struct devdrv_get_dev_chip_id));
+                          (void *)&chip_id_from_dev, sizeof(struct devdrv_get_dev_chip_id));
     ret = urd_usr_cmd(&cmd, &cmd_para);
     if (ret == DRV_ERROR_RESOURCE_OCCUPIED) {
         DEVDRV_DRV_ERR("Ioctl failed, device is busy. (ret=%d)\n", ret);
@@ -540,8 +542,8 @@ drvError_t halGetChipFromDevice(int device_id, int *chip_id)
 #endif
 }
 
-drvError_t hal_get_chip_from_device_cmd(unsigned int dev_id, unsigned int main_cmd,
-    unsigned int sub_cmd, void *buf, unsigned int *size)
+drvError_t hal_get_chip_from_device_cmd(unsigned int dev_id, unsigned int main_cmd, unsigned int sub_cmd, void *buf,
+                                        unsigned int *size)
 {
     int ret;
     (void)main_cmd;

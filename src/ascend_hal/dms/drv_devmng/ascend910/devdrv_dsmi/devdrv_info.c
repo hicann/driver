@@ -150,9 +150,9 @@ int dmanage_get_device_health(unsigned int dev_id, unsigned int *phealth)
  * If there are more than one, give them all at a time
  */
 int dmanage_get_device_errorcode(unsigned int dev_id, int *p_error_code_count, unsigned int *p_error_code,
-    int p_error_code_len)
+                                 int p_error_code_len)
 {
-    struct devdrv_error_code_para error_code_para = { 0, {0}, 0, {0} };
+    struct devdrv_error_code_para error_code_para = {0, {0}, 0, {0}};
     int ret;
     int i;
 
@@ -162,8 +162,8 @@ int dmanage_get_device_errorcode(unsigned int dev_id, int *p_error_code_count, u
     }
 
     if ((p_error_code_count == NULL) || (p_error_code == NULL)) {
-        DEVDRV_DRV_ERR("Parameter invalid. (p_error_code_count_is_null=%d; p_error_code_count_is_null=%d; devid=%u)\n",
-            (p_error_code_count == NULL), (p_error_code == NULL), dev_id);
+        DEVDRV_DRV_ERR("Parameter invalid. (p_error_code_count_is_null=%d; p_error_code_is_null=%d; devid=%u)\n",
+                       (p_error_code_count == NULL), (p_error_code == NULL), dev_id);
         return DRV_ERROR_INVALID_HANDLE;
     }
 
@@ -177,7 +177,7 @@ int dmanage_get_device_errorcode(unsigned int dev_id, int *p_error_code_count, u
     if (error_code_para.error_code_count > DMANAGE_ERROR_ARRAY_NUM ||
         error_code_para.error_code_count > p_error_code_len) {
         DEVDRV_DRV_WARN("bbox errcode_length exceeds input_length. (dev_id=%u; errcode_length=%d; input_length=%d).\n",
-            dev_id, error_code_para.error_code_count, p_error_code_len);
+                        dev_id, error_code_para.error_code_count, p_error_code_len);
         *p_error_code_count = (p_error_code_len < DMANAGE_ERROR_ARRAY_NUM ? p_error_code_len : DMANAGE_ERROR_ARRAY_NUM);
     } else {
         *p_error_code_count = error_code_para.error_code_count;
@@ -196,8 +196,8 @@ int devdrv_lpm3_smoke_ipc(unsigned char *send, unsigned char *ack, unsigned int 
     u32 i;
 
     if (send == NULL || ack == NULL || len != LPM3_SMOKE_IPC_LEN) {
-        DEVDRV_DRV_ERR("Parameter is invalid. (send_is_null=%d; ack_is_null=%d; len=%u)\n",
-            (send == NULL), (ack == NULL), len);
+        DEVDRV_DRV_ERR("Parameter is invalid. (send_is_null=%d; ack_is_null=%d; len=%u)\n", (send == NULL),
+                       (ack == NULL), len);
         return DRV_ERROR_INVALID_VALUE;
     }
 
@@ -264,10 +264,10 @@ int dmanage_get_container_flag(unsigned int *flag)
 int dmanage_get_emmc_voltage(int *emmc_vcc, int *emmc_vccq)
 {
     int ret;
-    struct devdrv_emmc_voltage_para devdrv_emmc_voltage = { 0, 0 };
+    struct devdrv_emmc_voltage_para devdrv_emmc_voltage = {0, 0};
     if ((emmc_vcc == NULL) || (emmc_vccq == NULL)) {
-        DEVDRV_DRV_ERR("Parameter is invalid. (emmc_vcc_is_null=%d; emmc_vccq_is_null=%d)\n",
-            (emmc_vcc == NULL), (emmc_vccq == NULL));
+        DEVDRV_DRV_ERR("Parameter is invalid. (emmc_vcc_is_null=%d; emmc_vccq_is_null=%d)\n", (emmc_vcc == NULL),
+                       (emmc_vccq == NULL));
         return DRV_ERROR_INVALID_HANDLE;
     }
 
@@ -320,8 +320,9 @@ int devdrv_imu_smoke_ipc(unsigned int dev_id, const unsigned char *send, unsigne
 
     if (send == NULL || ack == NULL || dev_id >= ASCEND_DEV_MAX_NUM || send_len > DEVDRV_IMU_CMD_LEN ||
         ack_len == NULL) {
-        DEVDRV_DRV_ERR("Parameter invalid. devid=%u; send_len=%u, send_is_null=%d; ack_is_null=%d; ack_len_is_null=%d",
-            dev_id, send_len, (send == NULL), (ack == NULL), (ack_len == NULL));
+        DEVDRV_DRV_ERR("Parameter invalid. (devid=%u; send_len=%u; send_is_null=%d; ack_is_null=%d; "
+                       "ack_len_is_null=%d; ack_min_len=%u)\n",
+                       dev_id, send_len, (send == NULL), (ack == NULL), (ack_len == NULL), DEVDRV_IMU_CMD_LEN);
         return DRV_ERROR_INVALID_VALUE;
     }
     if (*ack_len < DEVDRV_IMU_CMD_LEN) {
@@ -364,8 +365,8 @@ int dmanage_get_imu_info(unsigned int dev_id, unsigned char *send, unsigned int 
     if (send == NULL || ack == NULL || dev_id >= ASCEND_DEV_MAX_NUM || send_len > DEVDRV_IMU_CMD_LEN ||
         ack_len == NULL) {
         DEVDRV_DRV_ERR("Parameter is invalid. "
-            "(devid=%u; send_len=%u; send_is_null=%d; ack_is_null=%d; ack_len_is_null=%d)\n",
-            dev_id, send_len, (send == NULL), (ack == NULL), (ack_len == NULL));
+                       "(devid=%u; send_len=%u; send_is_null=%d; ack_is_null=%d; ack_len_is_null=%d)\n",
+                       dev_id, send_len, (send == NULL), (ack == NULL), (ack_len == NULL));
         return DRV_ERROR_INVALID_VALUE;
     }
 
@@ -393,8 +394,8 @@ int dmanage_get_imu_info(unsigned int dev_id, unsigned char *send, unsigned int 
     return DRV_ERROR_NONE;
 }
 
-STATIC int dmanage_get_eth_name(unsigned int dev_id, struct dmanager_card_info card_info,
-                                char *eth_name_buf, unsigned int buf_size)
+STATIC int dmanage_get_eth_name(unsigned int dev_id, struct dmanager_card_info card_info, char *eth_name_buf,
+                                unsigned int buf_size)
 {
     unsigned int hostDevid = 0;
     int ret = -1;
@@ -414,8 +415,7 @@ STATIC int dmanage_get_eth_name(unsigned int dev_id, struct dmanager_card_info c
     if (card_info.card_type == DEVDRV_VNIC) {
         ret = drvGetDevIDByLocalDevID(dev_id, &hostDevid);
         if (ret != 0) {
-            DEVDRV_DRV_EX_NOTSUPPORT_ERR(ret,
-                "get hostDevid by dev_id failed. dev_id(%d), ret(%d)\n", dev_id, ret);
+            DEVDRV_DRV_EX_NOTSUPPORT_ERR(ret, "get hostDevid by dev_id failed. dev_id(%d), ret(%d)\n", dev_id, ret);
             return -1;
         }
         ret = sprintf_s(eth_name_buf, buf_size, "end%uv%u", hostDevid, dev_id);
@@ -541,7 +541,7 @@ STATIC int dmanage_execute_set_ip_cmd(char **clean, char **set, char **up, char 
 }
 
 STATIC int dmanage_set_ip_info_check(unsigned int dev_id, struct dmanager_card_info card_info,
-    struct dmanager_ip_info config_info, char *eth_name, int len)
+                                     struct dmanager_ip_info config_info, char *eth_name, int len)
 {
     int ret;
     if (config_info.ip_type != IPADDR_TYPE_V4 && config_info.ip_type != IPADDR_TYPE_V6) {
@@ -549,7 +549,7 @@ STATIC int dmanage_set_ip_info_check(unsigned int dev_id, struct dmanager_card_i
     }
 
     if (dev_id >= MAX_DAVINCI_NUM_OF_ONE_CHIP) {
-        DEVDRV_DRV_ERR("The dev_id is out range. (devid=%u)\n", dev_id);
+        DEVDRV_DRV_ERR("dev_id is out of range. (devid=%u; max=%u)\n", dev_id, MAX_DAVINCI_NUM_OF_ONE_CHIP);
         return DRV_ERROR_INVALID_HANDLE;
     }
 
@@ -569,7 +569,7 @@ STATIC int dmanage_set_ip_info_check(unsigned int dev_id, struct dmanager_card_i
 
 #define LLDPTOOL_IPV4_STR "ipv4="
 #define LLDPTOOL_IPV6_STR "ipv6="
-#define LLDPTOOL_STR_LEN  (5)
+#define LLDPTOOL_STR_LEN (5)
 STATIC int dmanage_set_ipv4_info(unsigned int dev_id, struct dmanager_ip_info config_info, const char *eth_name)
 {
     int ret;
@@ -577,36 +577,34 @@ STATIC int dmanage_set_ipv4_info(unsigned int dev_id, struct dmanager_ip_info co
     char mask_addr[INET6_ADDRSTRLEN] = {0};
     char lldptool_mng_addr[INET6_ADDRSTRLEN + LLDPTOOL_STR_LEN] = {0};
     const char *ipv4_cmd_set_ip[] = {
-        "sudo", "/var/dmp_sudo_config.sh", "/sbin/ifconfig", eth_name, ip_addr, "netmask", mask_addr, NULL };
-    const char *ipvx_cmd_eth_up[] = {
-        "sudo", "/var/dmp_sudo_config.sh", "/sbin/ifconfig", eth_name, "up", NULL };
+        "sudo", "/var/dmp_sudo_config.sh", "/sbin/ifconfig", eth_name, ip_addr, "netmask", mask_addr, NULL};
+    const char *ipvx_cmd_eth_up[] = {"sudo", "/var/dmp_sudo_config.sh", "/sbin/ifconfig", eth_name, "up", NULL};
     const char *ipvx_cmd_lldptool[] = {
-        "sudo", "/var/dmp_sudo_config.sh", "/sbin/lldptool", "-T", "-i", eth_name,
-            "-V", "mngAddr", lldptool_mng_addr, NULL };
+        "sudo", "/var/dmp_sudo_config.sh", "/sbin/lldptool", "-T", "-i", eth_name, "-V", "mngAddr", lldptool_mng_addr,
+        NULL};
 
     (void)inet_ntop(AF_INET, &config_info.ip_addr, ip_addr, INET_ADDRSTRLEN);
     (void)inet_ntop(AF_INET, &config_info.mask_addr, mask_addr, INET_ADDRSTRLEN);
-    ret = sprintf_s(lldptool_mng_addr, INET6_ADDRSTRLEN + LLDPTOOL_STR_LEN, "%s%s", LLDPTOOL_IPV4_STR,
-        ip_addr);
+    ret = sprintf_s(lldptool_mng_addr, INET6_ADDRSTRLEN + LLDPTOOL_STR_LEN, "%s%s", LLDPTOOL_IPV4_STR, ip_addr);
     if (ret <= 0) {
         DEVDRV_DRV_ERR("sprintf failed. (devid=%u; eth_name=\"%s\"; ret=%d)\n", dev_id, eth_name, ret);
         return ret;
     }
     (void)pthread_mutex_lock(&g_dmanage_address_mutex);
-    ret = dmanage_execute_set_ip_cmd(NULL, (char**)ipv4_cmd_set_ip, (char**)ipvx_cmd_eth_up,
-        (char**)ipvx_cmd_lldptool, ip_addr);
+    ret = dmanage_execute_set_ip_cmd(NULL, (char **)ipv4_cmd_set_ip, (char **)ipvx_cmd_eth_up,
+                                     (char **)ipvx_cmd_lldptool, ip_addr);
     (void)pthread_mutex_unlock(&g_dmanage_address_mutex);
     if (ret != 0) {
-        DEVDRV_DRV_ERR("Failed to invoke dmanage_execute_set_ip_cmd. (devid=%u; eth_name=\"%s\"; ret=%d)\n",
-            dev_id, eth_name, ret);
+        DEVDRV_DRV_ERR("Failed to invoke dmanage_execute_set_ip_cmd. (devid=%u; eth_name=\"%s\"; ret=%d)\n", dev_id,
+                       eth_name, ret);
         return ret;
     }
 
     return DRV_ERROR_NONE;
 }
 
-STATIC int dmanage_ipv6_cmd_format(struct dmanager_ip_info config_info,
-    char *cmd_ip_set, int set_len, char *cmd_lldptool, int lld_len)
+STATIC int dmanage_ipv6_cmd_format(struct dmanager_ip_info config_info, char *cmd_ip_set, int set_len,
+                                   char *cmd_lldptool, int lld_len)
 {
     int ret;
     char ip_addr[INET6_ADDRSTRLEN] = {0};
@@ -636,22 +634,20 @@ STATIC int dmanage_set_ipv6_info(unsigned int dev_id, struct dmanager_ip_info co
     char old_ip_and_netmask[INET6_ADDRSTRLEN] = {0};
     char lldptool_mng_addr[INET6_ADDRSTRLEN + LLDPTOOL_STR_LEN] = {0};
     const char *ipv6_cmd_clean[] = {
-        "sudo", "/var/dmp_sudo_config.sh", "/sbin/ip", "-6", "addr", "flush", "dev", eth_name, "scope", "global",
-        NULL };
+        "sudo", "/var/dmp_sudo_config.sh", "/sbin/ip", "-6", "addr", "flush", "dev", eth_name, "scope", "global", NULL};
     const char *ipv6_cmd_set_ip[] = {
-        "sudo", "/var/dmp_sudo_config.sh", "/sbin/ifconfig", eth_name, "add", ip_and_netmask, NULL };
+        "sudo", "/var/dmp_sudo_config.sh", "/sbin/ifconfig", eth_name, "add", ip_and_netmask, NULL};
     const char *ipv6_cmd_rollback_ip[] = {
-        "sudo", "/var/dmp_sudo_config.sh", "/sbin/ifconfig", eth_name, "add", old_ip_and_netmask, NULL };
-    const char *ipvx_cmd_eth_up[] = {
-        "sudo", "/var/dmp_sudo_config.sh", "/sbin/ifconfig", eth_name, "up", NULL };
+        "sudo", "/var/dmp_sudo_config.sh", "/sbin/ifconfig", eth_name, "add", old_ip_and_netmask, NULL};
+    const char *ipvx_cmd_eth_up[] = {"sudo", "/var/dmp_sudo_config.sh", "/sbin/ifconfig", eth_name, "up", NULL};
     const char *ipvx_cmd_lldptool[] = {
-        "sudo", "/var/dmp_sudo_config.sh", "/sbin/lldptool", "-T", "-i", eth_name,
-            "-V", "mngAddr", lldptool_mng_addr, NULL };
+        "sudo", "/var/dmp_sudo_config.sh", "/sbin/lldptool", "-T", "-i", eth_name, "-V", "mngAddr", lldptool_mng_addr,
+        NULL};
     struct dmanager_ip_info old_ip_info = {0};
 
     old_ip_info.ip_type = DEVDRV_IPV6;
-    ret_tmp = dmanage_ipv6_cmd_format(config_info,
-        ip_and_netmask, INET6_ADDRSTRLEN, lldptool_mng_addr, INET6_ADDRSTRLEN + LLDPTOOL_STR_LEN);
+    ret_tmp = dmanage_ipv6_cmd_format(config_info, ip_and_netmask, INET6_ADDRSTRLEN, lldptool_mng_addr,
+                                      INET6_ADDRSTRLEN + LLDPTOOL_STR_LEN);
     if (ret_tmp != 0) {
         DEVDRV_DRV_ERR("Failed format ipv6 cmd. (devid=%u; eth_name=\"%s\"; ret=%d)\n", dev_id, eth_name, ret_tmp);
         return DRV_ERROR_MEMORY_OPT_FAIL;
@@ -659,30 +655,30 @@ STATIC int dmanage_set_ipv6_info(unsigned int dev_id, struct dmanager_ip_info co
 
     ret_tmp = devdrv_get_ip_address(eth_name, &old_ip_info);
     if (ret_tmp != 0 && ret_tmp != DRV_ERROR_NO_DEVICE) {
-        DEVDRV_DRV_ERR("Failed to get old ip info. (devid=%u; eth_name=\"%s\"; ret_tmp=%d)\n",
-            dev_id, eth_name, ret_tmp);
+        DEVDRV_DRV_ERR("Failed to get old ip info. (devid=%u; eth_name=\"%s\"; ret_tmp=%d)\n", dev_id, eth_name,
+                       ret_tmp);
         return ret_tmp;
     }
 
     (void)pthread_mutex_lock(&g_dmanage_address_mutex);
-    ret = dmanage_execute_set_ip_cmd((char**)ipv6_cmd_clean, (char**)ipv6_cmd_set_ip, (char**)ipvx_cmd_eth_up,
-        (char**)ipvx_cmd_lldptool, ip_addr);
+    ret = dmanage_execute_set_ip_cmd((char **)ipv6_cmd_clean, (char **)ipv6_cmd_set_ip, (char **)ipvx_cmd_eth_up,
+                                     (char **)ipvx_cmd_lldptool, ip_addr);
     if (ret != 0 && ret_tmp != DRV_ERROR_NO_DEVICE) {
         DEVDRV_DRV_ERR("dmanage_execute_set_ip_cmd failed, (ip_and_netmask=\"%s\"; ret=%d, ret_tmp=%d)\n",
-            ip_and_netmask, ret, ret_tmp);
-        ret_tmp = dmanage_ipv6_cmd_format(old_ip_info,
-            old_ip_and_netmask, INET6_ADDRSTRLEN, lldptool_mng_addr, INET6_ADDRSTRLEN + LLDPTOOL_STR_LEN);
+                       ip_and_netmask, ret, ret_tmp);
+        ret_tmp = dmanage_ipv6_cmd_format(old_ip_info, old_ip_and_netmask, INET6_ADDRSTRLEN, lldptool_mng_addr,
+                                          INET6_ADDRSTRLEN + LLDPTOOL_STR_LEN);
         if (ret_tmp != 0) {
             (void)pthread_mutex_unlock(&g_dmanage_address_mutex);
             DEVDRV_DRV_ERR("Failed format ipv6 cmd. (eth_name=\"%s\"; ret=%d)\n", eth_name, ret_tmp);
             return DRV_ERROR_MEMORY_OPT_FAIL;
         }
 
-        ret_tmp = dmanage_execute_set_ip_cmd((char**)ipv6_cmd_clean, (char**)ipv6_cmd_rollback_ip,
-                                             (char**)ipvx_cmd_eth_up, (char**)ipvx_cmd_lldptool, ip_addr);
+        ret_tmp = dmanage_execute_set_ip_cmd((char **)ipv6_cmd_clean, (char **)ipv6_cmd_rollback_ip,
+                                             (char **)ipvx_cmd_eth_up, (char **)ipvx_cmd_lldptool, ip_addr);
         if (ret_tmp != 0) {
-            DEVDRV_DRV_ERR("rollback failed. (eth_name=\"%s\"; ret_tmp=%d, old_ip_and_netmask=\"%s\")\n",
-                eth_name, ret_tmp, old_ip_and_netmask);
+            DEVDRV_DRV_ERR("rollback failed. (eth_name=\"%s\"; ret_tmp=%d, old_ip_and_netmask=\"%s\")\n", eth_name,
+                           ret_tmp, old_ip_and_netmask);
         } else {
             DEVDRV_DRV_INFO("rollback success.\n");
         }
@@ -700,8 +696,8 @@ int dmanage_set_ip_address(unsigned int dev_id, struct dmanager_card_info card_i
 
     ret = dmanage_set_ip_info_check(dev_id, card_info, config_info, eth_name, DEVDRV_MAX_ETH_NAME_LEN);
     if (ret != 0) {
-        DEVDRV_DRV_EX_NOTSUPPORT_ERR(ret,
-            "dmanage_set_ip_info_check failed. devid=%u; eth_name=\"%s\"; ret=%d\n", dev_id, eth_name, ret);
+        DEVDRV_DRV_EX_NOTSUPPORT_ERR(ret, "dmanage_set_ip_info_check failed. devid=%u; eth_name=\"%s\"; ret=%d\n",
+                                     dev_id, eth_name, ret);
         return ret;
     }
 
@@ -715,8 +711,8 @@ int dmanage_set_ip_address(unsigned int dev_id, struct dmanager_card_info card_i
         ret = dmanage_set_ipv6_info(dev_id, config_info, eth_name);
     }
     if (ret != 0) {
-        DEVDRV_DRV_ERR("Failed to invoke dmanage_execute_set_ip_cmd. (devid=%u; eth_name=\"%s\"; ret=%d)\n",
-            dev_id, eth_name, ret);
+        DEVDRV_DRV_ERR("Failed to invoke dmanage_execute_set_ip_cmd. (devid=%u; eth_name=\"%s\"; ret=%d)\n", dev_id,
+                       eth_name, ret);
         return ret;
     }
 
@@ -767,15 +763,15 @@ int dmanage_set_gateway_address(unsigned int dev_id, struct dmanager_card_info c
     char gtw_addr_add[DEVDRV_MAX_IP_LEN] = {0};
     char gtw_addr_del[DEVDRV_MAX_IP_LEN] = {0};
     char eth_name[DEVDRV_MAX_ETH_NAME_LEN] = {0};
-    const char *argv_add[] = { "sudo", "/var/dmp_sudo_config.sh",
-        "/sbin/route", "add", "default", "gw", gtw_addr_add, eth_name, NULL };
-    const char *argv_del[] = { "sudo", "/var/dmp_sudo_config.sh",
-        "/sbin/route", "del", "default", "gw", gtw_addr_del, eth_name, NULL };
+    const char *argv_add[] = {
+        "sudo", "/var/dmp_sudo_config.sh", "/sbin/route", "add", "default", "gw", gtw_addr_add, eth_name, NULL};
+    const char *argv_del[] = {
+        "sudo", "/var/dmp_sudo_config.sh", "/sbin/route", "del", "default", "gw", gtw_addr_del, eth_name, NULL};
     struct dmanager_gtw_info cur_data = {0};
     int ret;
 
     if (dev_id >= MAX_DAVINCI_NUM_OF_ONE_CHIP) {
-        DEVDRV_DRV_ERR("dev_id is out range. dev_id = %u\n", dev_id);
+        DEVDRV_DRV_ERR("dev_id is out of range. (dev_id=%u; max=%u)\n", dev_id, MAX_DAVINCI_NUM_OF_ONE_CHIP);
         return DRV_ERROR_INVALID_HANDLE;
     }
 
@@ -803,7 +799,7 @@ int dmanage_set_gateway_address(unsigned int dev_id, struct dmanager_card_info c
             return ret;
         }
 
-        ret = dmanage_run_proc((char**)argv_del);
+        ret = dmanage_run_proc((char **)argv_del);
         if (ret != 0) {
             (void)pthread_mutex_unlock(&g_dmanage_gateway_mutex);
             DEVDRV_DRV_ERR("run cmd failed, devid(%u), ret(%d).\n", dev_id, ret);
@@ -820,7 +816,7 @@ int dmanage_set_gateway_address(unsigned int dev_id, struct dmanager_card_info c
         return ret;
     }
 
-    ret = dmanage_run_proc((char**)argv_add);
+    ret = dmanage_run_proc((char **)argv_add);
     if (ret != 0) {
         (void)pthread_mutex_unlock(&g_dmanage_gateway_mutex);
         DEVDRV_DRV_ERR("run cmd failed, devid(%u), ret(%d).\n", dev_id, ret);
@@ -832,7 +828,7 @@ int dmanage_set_gateway_address(unsigned int dev_id, struct dmanager_card_info c
 }
 
 int dmanage_set_gateway_address6(unsigned int dev_id, struct dmanager_card_info card_info,
-    struct dmanager_gtw_info config_info)
+                                 struct dmanager_gtw_info config_info)
 {
     int ret;
     int roll_back_flag;
@@ -840,15 +836,13 @@ int dmanage_set_gateway_address6(unsigned int dev_id, struct dmanager_card_info 
     char ipv6_new_gw_addr[INET6_ADDRSTRLEN] = {0};
     char ipv6_zero_gw_addr[INET6_ADDRSTRLEN] = {0};
     char ethname[DEVDRV_MAX_ETH_NAME_LEN] = {0};
-    const char *ipv6_gw_del[] = {
-        "sudo", "/var/dmp_sudo_config.sh", "/sbin/route", "-A", "inet6", "del", "default", "gw",
-        ipv6_old_gw_addr, "dev", ethname, NULL };
-    const char *ipv6_gw_set[] = {
-        "sudo", "/var/dmp_sudo_config.sh", "/sbin/route", "-A", "inet6", "add", "default", "gw",
-        ipv6_new_gw_addr, "dev", ethname, NULL };
+    const char *ipv6_gw_del[] = {"sudo", "/var/dmp_sudo_config.sh", "/sbin/route", "-A",    "inet6", "del", "default",
+                                 "gw",   ipv6_old_gw_addr,          "dev",         ethname, NULL};
+    const char *ipv6_gw_set[] = {"sudo", "/var/dmp_sudo_config.sh", "/sbin/route", "-A",    "inet6", "add", "default",
+                                 "gw",   ipv6_new_gw_addr,          "dev",         ethname, NULL};
     const char *ipv6_gw_rollback[] = {
-        "sudo", "/var/dmp_sudo_config.sh", "/sbin/route", "-A", "inet6", "add", "default", "gw",
-        ipv6_old_gw_addr, "dev", ethname, NULL };
+        "sudo", "/var/dmp_sudo_config.sh", "/sbin/route", "-A",    "inet6", "add", "default",
+        "gw",   ipv6_old_gw_addr,          "dev",         ethname, NULL};
     struct dmanager_ip_info ipv6_ip_info = {0};
     struct dmanager_gtw_info ipv6_old_gw_info = {0};
     ipaddr_t ip_addr_zero = {0};
@@ -890,29 +884,29 @@ int dmanage_set_gateway_address6(unsigned int dev_id, struct dmanager_card_info 
     (void)inet_ntop(AF_INET6, &config_info.gtw_addr, ipv6_new_gw_addr, INET6_ADDRSTRLEN);
     (void)inet_ntop(AF_INET6, &ipv6_old_gw_info.gtw_addr, ipv6_old_gw_addr, INET6_ADDRSTRLEN);
     if (strcmp(ipv6_old_gw_addr, ipv6_zero_gw_addr) == 0) { /* if default gateway is NULL. */
-        ret = dmanage_run_proc((char**)ipv6_gw_set);
+        ret = dmanage_run_proc((char **)ipv6_gw_set);
         if (ret != 0) {
-            DEVDRV_DRV_ERR("Failed to set the gateway, (ipv6_new_gw_addr=\"%s\"; ethname=\"%s\")\n",
-                ipv6_new_gw_addr, ethname);
+            DEVDRV_DRV_ERR("Failed to set the gateway, (ipv6_new_gw_addr=\"%s\"; ethname=\"%s\")\n", ipv6_new_gw_addr,
+                           ethname);
             goto OUT;
         }
     } else {
-        ret = dmanage_run_proc((char**)ipv6_gw_del);
+        ret = dmanage_run_proc((char **)ipv6_gw_del);
         if (ret != 0) {
             DEVDRV_DRV_ERR("Failed to delete the gateway. (ipv6_old_gw_addr=\"%s\"; ethname=\"%s\")\n",
-                ipv6_old_gw_addr, ethname);
+                           ipv6_old_gw_addr, ethname);
             goto OUT;
         }
 
-        ret = dmanage_run_proc((char**)ipv6_gw_set);
+        ret = dmanage_run_proc((char **)ipv6_gw_set);
         if (ret != 0) {
             DEVDRV_DRV_ERR("Failed to set the gateway. (ipv6_new_gw_addr=\"%s\"; ethname=\"%s\", ret=%d)\n",
-                ipv6_new_gw_addr, ethname, ret);
+                           ipv6_new_gw_addr, ethname, ret);
 
-            roll_back_flag = dmanage_run_proc((char**)ipv6_gw_rollback);
+            roll_back_flag = dmanage_run_proc((char **)ipv6_gw_rollback);
             if (roll_back_flag != 0) {
-                DEVDRV_DRV_ERR("gateway rollback failed. (ipv6_old_gw_addr=\"%s\"; ethname=\"%s\")\n",
-                    ipv6_old_gw_addr, ethname);
+                DEVDRV_DRV_ERR("gateway rollback failed. (ipv6_old_gw_addr=\"%s\"; ethname=\"%s\")\n", ipv6_old_gw_addr,
+                               ethname);
             }
             goto OUT;
         }
@@ -1198,10 +1192,10 @@ int dmanage_set_device_sign(unsigned int dev_id, unsigned int subcmd, void *buf,
 #endif
 }
 
-#define PKCS_SIGN_TYPE_OFF  1
-#define PKCS_SIGN_TYPE_ON   0
+#define PKCS_SIGN_TYPE_OFF 1
+#define PKCS_SIGN_TYPE_ON 0
 int dmanage_get_device_sign(unsigned int dev_id, unsigned int vfid, unsigned int subcmd, void *buf,
-    unsigned int *buf_size)
+                            unsigned int *buf_size)
 {
     (void)vfid;
 #if defined(CFG_FEATURE_PSS_SIGN) && defined(CFG_FEATURE_PKCS_SIGN)
@@ -1258,8 +1252,8 @@ int dmanage_set_device_sec_info(unsigned int dev_id, unsigned int sub_cmd, void 
             return DRV_ERROR_NOT_SUPPORT;
     }
     if (ret != 0) {
-        DEVDRV_DRV_EX_NOTSUPPORT_ERR(ret, "Failed to set sec information. (dev_id=%u; sub_cmd=%u; ret=%d)\n",
-            dev_id, sub_cmd, ret);
+        DEVDRV_DRV_EX_NOTSUPPORT_ERR(ret, "Failed to set sec information. (dev_id=%u; sub_cmd=%u; ret=%d)\n", dev_id,
+                                     sub_cmd, ret);
         return ret;
     }
 
@@ -1267,7 +1261,7 @@ int dmanage_set_device_sec_info(unsigned int dev_id, unsigned int sub_cmd, void 
 }
 
 int dmanage_get_device_sec_info(unsigned int dev_id, unsigned int vfid, unsigned int sub_cmd, void *buf,
-    unsigned int *buf_size)
+                                unsigned int *buf_size)
 {
     int ret = 0;
 
@@ -1284,8 +1278,8 @@ int dmanage_get_device_sec_info(unsigned int dev_id, unsigned int vfid, unsigned
             return DRV_ERROR_NOT_SUPPORT;
     }
     if (ret != 0) {
-        DEVDRV_DRV_EX_NOTSUPPORT_ERR(ret, "Failed to set sec information. (dev_id=%u; sub_cmd=%u; ret=%d)\n",
-            dev_id, sub_cmd, ret);
+        DEVDRV_DRV_EX_NOTSUPPORT_ERR(ret, "Failed to set sec information. (dev_id=%u; sub_cmd=%u; ret=%d)\n", dev_id,
+                                     sub_cmd, ret);
         return ret;
     }
 

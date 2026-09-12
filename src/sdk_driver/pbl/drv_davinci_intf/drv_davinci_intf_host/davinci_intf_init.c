@@ -47,9 +47,9 @@ static ka_cdev_t g_cdev_extra;
 #endif
 
 /* Check group id */
-unsigned int g_authorized_group_id[DAVINIC_CONFIRM_USER_NUM] = {DAVINIC_NOT_CONFIRM_USER_ID,
-    DAVINIC_NOT_CONFIRM_USER_ID, DAVINIC_NOT_CONFIRM_USER_ID};
-static int  g_authorized_group_id_num = 3;
+unsigned int g_authorized_group_id[DAVINIC_CONFIRM_USER_NUM] = {
+    DAVINIC_NOT_CONFIRM_USER_ID, DAVINIC_NOT_CONFIRM_USER_ID, DAVINIC_NOT_CONFIRM_USER_ID};
+static int g_authorized_group_id_num = 3;
 ka_module_param_array(g_authorized_group_id, int, &g_authorized_group_id_num, 0644);
 KA_MODULE_PARM_DESC(g_authorized_group_id, "Group ID of system user \"HwHiAiUser\", \"HwDmUser\", \"HwBaseUser\"");
 
@@ -57,27 +57,18 @@ KA_MODULE_PARM_DESC(g_authorized_group_id, "Group ID of system user \"HwHiAiUser
 STATIC ka_workqueue_struct_t *g_recycle_wq[MAX_RECYCLE_WORKQUEUE];
 STATIC ka_atomic64_t g_recycle_wq_idx;
 
-STATIC int drv_ascend_intf_ioctl_open_cmd(
-    ka_file_t *filep,
-    unsigned int cmd,
-    unsigned long arg);
-STATIC int drv_ascend_intf_ioctl_close_cmd(
-    ka_file_t *filep,
-    unsigned int cmd,
-    unsigned long arg);
-int drv_ascend_intf_ioctl_check_module_no_use(
-    ka_file_t *filep,
-    unsigned int cmd,
-    unsigned long arg);
+STATIC int drv_ascend_intf_ioctl_open_cmd(ka_file_t *filep, unsigned int cmd, unsigned long arg);
+STATIC int drv_ascend_intf_ioctl_close_cmd(ka_file_t *filep, unsigned int cmd, unsigned long arg);
+int drv_ascend_intf_ioctl_check_module_no_use(ka_file_t *filep, unsigned int cmd, unsigned long arg);
 extern void svm_process_exit_clean_slots(int pid);
 int drv_ascend_intf_init(void);
 void drv_davinci_intf_exit(void);
 
 STATIC int (*const g_davinci_ioctl_handlers[DAVINCI_INTF_IOCTL_CMD_MAX_NR])(ka_file_t *filep, unsigned int cmd,
-    unsigned long arg) = {
-        [_KA_IOC_NR(DAVINCI_INTF_IOCTL_OPEN)] = drv_ascend_intf_ioctl_open_cmd,
-        [_KA_IOC_NR(DAVINCI_INTF_IOCTL_CLOSE)] = drv_ascend_intf_ioctl_close_cmd,
-        [_KA_IOC_NR(DAVINCI_INTF_IOCTL_GET_MODULE_STATUS)] = drv_ascend_intf_ioctl_check_module_no_use,
+                                                                            unsigned long arg) = {
+    [_KA_IOC_NR(DAVINCI_INTF_IOCTL_OPEN)] = drv_ascend_intf_ioctl_open_cmd,
+    [_KA_IOC_NR(DAVINCI_INTF_IOCTL_CLOSE)] = drv_ascend_intf_ioctl_close_cmd,
+    [_KA_IOC_NR(DAVINCI_INTF_IOCTL_GET_MODULE_STATUS)] = drv_ascend_intf_ioctl_check_module_no_use,
 };
 
 STATIC void drv_davinci_svm_process_exit_clean(int pid)
@@ -88,8 +79,8 @@ STATIC void drv_davinci_svm_process_exit_clean(int pid)
     return;
 }
 
-STATIC int check_proc_open_module_count(
-    ka_pid_t owner_pid, TASK_TIME_TYPE start_time, const char *module_name, unsigned int max)
+STATIC int check_proc_open_module_count(ka_pid_t owner_pid, TASK_TIME_TYPE start_time, const char *module_name,
+                                        unsigned int max)
 {
     struct davinci_intf_process_stru *proc = NULL;
     unsigned int cnt;
@@ -105,15 +96,14 @@ STATIC int check_proc_open_module_count(
 
     cnt = get_file_module_cnt(proc, module_name);
     if (cnt >= max) {
-        log_intf_err("process open module cnt exceeded. (module_name=\"%s\"; pid=%d; cnt=%u; max=%u)\n",
-            module_name, owner_pid, cnt, max);
+        log_intf_err("process open module cnt exceeded. (module_name=\"%s\"; pid=%d; cnt=%u; max=%u)\n", module_name,
+                     owner_pid, cnt, max);
         return -EBADF;
     }
     return 0;
 }
 
-STATIC int drv_ascend_set_file_ops(const char *module_name,
-    struct davinci_intf_private_stru *prvi)
+STATIC int drv_ascend_set_file_ops(const char *module_name, struct davinci_intf_private_stru *prvi)
 {
     int ret = -1;
     struct davinci_intf_sub_module_stru *node_info = NULL;
@@ -132,21 +122,18 @@ STATIC int drv_ascend_set_file_ops(const char *module_name,
         return -EINVAL;
     }
 
-    ka_list_for_each_entry_safe(node_info, node_info_next, &g_davinci_intf_cb.module_list, list) {
+    ka_list_for_each_entry_safe(node_info, node_info_next, &g_davinci_intf_cb.module_list, list)
+    {
         /* Find the module and save the ops */
         if (ka_base_strncmp(node_info->module_name, module_name, DAVINIC_MODULE_NAME_MAX) == 0) {
-            ret = check_proc_open_module_count(prvi->owner_pid, prvi->start_time, module_name, node_info->open_module_max);
+            ret = check_proc_open_module_count(prvi->owner_pid, prvi->start_time, module_name,
+                                               node_info->open_module_max);
             if (ret != 0) {
                 return -EINVAL;
             }
-            ret = memcpy_s(ops,
-                sizeof(ka_file_operations_t),
-                &node_info->ops,
-                sizeof(ka_file_operations_t));
+            ret = memcpy_s(ops, sizeof(ka_file_operations_t), &node_info->ops, sizeof(ka_file_operations_t));
             if (ret != 0) {
-                log_intf_err("memcpy_s error. (module_name=\"%s\"; ret=%d)\n",
-                    module_name,
-                    ret);
+                log_intf_err("memcpy_s error. (module_name=\"%s\"; ret=%d)\n", module_name, ret);
                 return -EINVAL;
             }
             prvi->notifier = node_info->notifier;
@@ -155,7 +142,7 @@ STATIC int drv_ascend_set_file_ops(const char *module_name,
         }
     }
     log_intf_err("Module not init. (module_name=\"%s\")\n", module_name);
-    return  -EINVAL;
+    return -EINVAL;
 }
 
 STATIC void drv_davinci_unset_file_ops(struct davinci_intf_private_stru *file_private)
@@ -169,9 +156,9 @@ STATIC void drv_davinci_unset_file_ops(struct davinci_intf_private_stru *file_pr
 #ifdef CFG_FEATURE_MANAGE_EXTRA
 /* To create /dev/davinci_manager_docker or npu_device_cust. */
 #ifdef CFG_FEATURE_MANAGE_DOCKER
-#define DAVINCI_MANAGER_EXTRA_NAME      "davinci_manager_docker"
+#define DAVINCI_MANAGER_EXTRA_NAME "davinci_manager_docker"
 #else
-#define DAVINCI_MANAGER_EXTRA_NAME      "npu_device_cust"
+#define DAVINCI_MANAGER_EXTRA_NAME "npu_device_cust"
 #endif
 
 STATIC signed int drv_ascend_intf_extra_setup_cdev(const ka_file_operations_t *fops)
@@ -311,25 +298,21 @@ STATIC signed int drv_ascend_intf_cleanup_cdev(struct davinci_intf_stru *cb)
     return 0;
 }
 
-
 STATIC long drv_ascend_wait_work_finish(struct davinci_intf_private_stru *file_private)
 {
     int wait_count = 0;
     /* Check file not in used */
-    while ((ka_base_atomic_read(&file_private->work_count) != 0) &&
-        (wait_count < DAVINIC_CONFIRM_MAX_TIME)) {
+    while ((ka_base_atomic_read(&file_private->work_count) != 0) && (wait_count < DAVINIC_CONFIRM_MAX_TIME)) {
         wait_count++;
         if ((wait_count % DAVINIC_CONFIRM_WARN_MASK) != 0) {
-            log_intf_warn("Waiting ioctl finish. (module_name=\"%s\"; work_count=%d)\n",
-                file_private->module_name,
-                ka_base_atomic_read(&file_private->work_count));
+            log_intf_warn("Waiting ioctl finish. (module_name=\"%s\"; work_count=%d)\n", file_private->module_name,
+                          ka_base_atomic_read(&file_private->work_count));
         };
         ka_system_msleep(DAVINIC_CONFIRM_EACH_TIME);
     }
     if (wait_count >= DAVINIC_CONFIRM_MAX_TIME) {
-        log_intf_err("Wait ioctl finish timeout. (module_name=\"%s\"; work_count=%d)\n",
-            file_private->module_name,
-            ka_base_atomic_read(&file_private->work_count));
+        log_intf_err("Wait ioctl finish timeout. (module_name=\"%s\"; work_count=%d)\n", file_private->module_name,
+                     ka_base_atomic_read(&file_private->work_count));
         return -EBUSY;
     }
 
@@ -400,15 +383,15 @@ STATIC int drv_ascend_intf_call_release(struct davinci_intf_private_stru **file_
     if (file_private->fops.release != NULL) {
         if (drv_ascend_wait_work_finish(file_private) != 0) {
             log_intf_err("Dev is busy, cannot close. (module_name=\"%s\"; owner_pid=%d; work_count=%d)\n",
-                file_private->module_name, file_private->owner_pid,
-                ka_base_atomic_read(&file_private->work_count));
+                         file_private->module_name, file_private->owner_pid,
+                         ka_base_atomic_read(&file_private->work_count));
             return -EBUSY;
         }
         /* Call file release */
         ret = file_private->fops.release(0, &file_private->priv_filep);
         if (ret != 0) {
-            log_intf_err("Release failed. (module_name=\"%s\"; owner_pid=%d; ret=%d)\n",
-                file_private->module_name, file_private->owner_pid, ret);
+            log_intf_err("Release failed. (module_name=\"%s\"; owner_pid=%d; ret=%d)\n", file_private->module_name,
+                         file_private->owner_pid, ret);
         }
     }
 
@@ -446,14 +429,14 @@ STATIC long drv_ascend_intf_sub_module_release(struct davinci_intf_free_file_str
 
     file_private = file_node->file_private;
     if (file_private == NULL) {
-        log_intf_err("Invalid file_private_data. (module_name=\"%s\"; owner_pid=%d;)\n",
-            file_node->module_name, file_node->owner_pid);
+        log_intf_err("Invalid file_private_data. (module_name=\"%s\"; owner_pid=%d;)\n", file_node->module_name,
+                     file_node->owner_pid);
         return 0;
     }
 
     ret = drv_ascend_intf_call_release(&file_private);
-    log_intf_debug("Call release module. (module_name=\"%s\"; pid=%d; ret=%d)\n",
-        file_node->module_name, file_node->owner_pid, ret);
+    log_intf_debug("Call release module. (module_name=\"%s\"; pid=%d; ret=%d)\n", file_node->module_name,
+                   file_node->owner_pid, ret);
 
     return ret;
 }
@@ -480,8 +463,7 @@ STATIC void drv_davinci_run_release(ka_work_struct_t *work)
 
 /* set release task cpumask,ensure that run in the CTRLCPU */
 #ifdef CFG_FEATURE_BIND_CPU_ENABLE
-static inline void drv_bind_task_by_mask(ka_task_struct_t *release_task,
-    cpumask_var_t cpu_mask)
+static inline void drv_bind_task_by_mask(ka_task_struct_t *release_task, cpumask_var_t cpu_mask)
 {
 #ifndef CFG_HOST_ENV
     if (KA_IS_ERR(release_task) || (release_task == NULL)) {
@@ -519,14 +501,13 @@ STATIC int drv_davinci_release_run(void *arg)
 static inline int drv_ascend_wait_finish(struct davinci_intf_free_list_stru *free_list)
 {
     unsigned int count = 0;
-    while ((ka_base_atomic_read(&free_list->current_count) > 0) &&
-        (count < DAVINIC_FREE_WAIT_MAX_TIME)) {
+    while ((ka_base_atomic_read(&free_list->current_count) > 0) && (count < DAVINIC_FREE_WAIT_MAX_TIME)) {
         ka_system_msleep(DAVINIC_FREE_WAIT_EACH_TIME);
         count++;
     }
     if (count >= DAVINIC_FREE_WAIT_MAX_TIME) {
-        log_intf_err("Waiting for the previous task to ka_task_complete timed out. (owner_pid=%d; count=%u)\n",
-            free_list->owner_pid, count);
+        log_intf_err("Waiting for the previous task to complete timed out. (owner_pid=%d; count=%u)\n",
+                     free_list->owner_pid, count);
         return -EINVAL;
     } else {
         return 0;
@@ -559,9 +540,10 @@ STATIC long drv_ascend_intf_release_file(struct davinci_intf_free_file_stru *fil
         return ret;
     } else {
         /* create async free task */
-        release_task = ka_task_kthread_create(drv_davinci_release_run, (void*)file_node, "davinci_sub_recycle");
+        release_task = ka_task_kthread_create(drv_davinci_release_run, (void *)file_node, "davinci_sub_recycle");
         if (KA_IS_ERR(release_task) || (release_task == NULL)) {
-            log_intf_warn("Kthread_create not ka_task_up to expectations. (pid=%d, num=%ld)\n", file_node->owner_pid, KA_PTR_ERR(release_task));
+            log_intf_warn("Kthread_create result does not meet expectations. (pid=%d; err=%ld)\n", file_node->owner_pid,
+                          KA_PTR_ERR(release_task));
             ret = drv_ascend_intf_sub_module_release(file_node);
             ka_base_atomic_dec(&file_node->owner_list->current_count);
             dbl_kfree(file_node);
@@ -628,7 +610,8 @@ STATIC struct davinci_intf_sub_module_stru *drv_davinci_get_module(const char *m
         return NULL;
     }
 
-    ka_list_for_each_entry_safe(node_info, node_info_next, &g_davinci_intf_cb.module_list, list) {
+    ka_list_for_each_entry_safe(node_info, node_info_next, &g_davinci_intf_cb.module_list, list)
+    {
         if (ka_base_strcmp(node_info->module_name, module_name) == 0) {
             ka_task_up_write(&g_davinci_intf_cb.cb_sem);
             return node_info;
@@ -646,8 +629,8 @@ STATIC int check_notifier(struct davinci_intf_private_stru *file_private, struct
 
     module_stru = drv_davinci_get_module(file_private->module_name);
     if (module_stru == NULL) {
-        log_intf_err("not found module struct. (module_name=\"%s\";pid=%d)\n",
-            file_private->module_name, file_private->owner_pid);
+        log_intf_err("not found module struct. (module_name=\"%s\";pid=%d)\n", file_private->module_name,
+                     file_private->owner_pid);
         return -ESRCH;
     }
 
@@ -662,15 +645,13 @@ STATIC int check_notifier(struct davinci_intf_private_stru *file_private, struct
     }
 
     log_intf_err("check notifier fail. (module_name=\"%s\"; pid=%d; diff owner=%d; fun=%d)\n",
-        file_private->module_name, file_private->owner_pid, noti->owner != file_private->notifier.owner,
-        noti->notifier_call != file_private->notifier.notifier_call);
+                 file_private->module_name, file_private->owner_pid, noti->owner != file_private->notifier.owner,
+                 noti->notifier_call != file_private->notifier.notifier_call);
 
     return -EBADF;
 }
 
-STATIC void drv_ascend_intf_call_notifier(
-    struct davinci_intf_private_stru *file_private,
-    unsigned long mode)
+STATIC void drv_ascend_intf_call_notifier(struct davinci_intf_private_stru *file_private, unsigned long mode)
 {
     int ret;
     struct notifier_operations verified_notifier = {0};
@@ -687,8 +668,8 @@ STATIC void drv_ascend_intf_call_notifier(
     /* Call notifier_call */
     ret = verified_notifier.notifier_call(&file_private->priv_filep, mode);
     if (ret != 0) {
-        log_intf_err("Notify sub module failed. (module_name=\"%s\"; mode=0x%lx; ret=%d)\n",
-            file_private->module_name, mode, ret);
+        log_intf_err("Notify sub module failed. (module_name=\"%s\"; mode=0x%lx; ret=%d)\n", file_private->module_name,
+                     mode, ret);
         return;
     }
 }
@@ -699,7 +680,8 @@ STATIC void drv_davinci_notify_release_work(struct davinci_intf_free_list_stru *
     struct davinci_intf_free_file_stru *file_pos = NULL;
     ka_list_head_t *file_list = NULL;
     file_list = &free_list->list;
-    ka_list_for_each_entry_safe(file_pos, file_next, file_list, list) {
+    ka_list_for_each_entry_safe(file_pos, file_next, file_list, list)
+    {
         drv_ascend_intf_call_notifier(file_pos->file_private, NOTIFY_MODE_RELEASE_PREPARE);
     }
 }
@@ -728,7 +710,7 @@ static void init_ctrl_cpumask(struct davinci_intf_stru *cb)
 
     /* alloc cpumask var */
     if (!ka_base_zalloc_cpumask_var(&cb->cpumask, KA_GFP_KERNEL)) {
-        log_intf_info("cpumask variable not be alloced, The CPU affinity will not be set.\n");
+        log_intf_info("cpumask variable was not allocated. The CPU affinity will not be set.\n");
         return;
     }
     ka_base_cpumask_copy(cb->cpumask, &ctrl_cpumask);
@@ -754,7 +736,7 @@ STATIC void intf_recycle_workqueue_affinity(ka_workqueue_struct_t *wq)
     }
 
     if (set_workqueue_affinity(wq, 0, &wq_cpumask) != 0) {
-        log_intf_warn("bind workqueue dms_timer_common warn\n");
+        log_intf_warn("bind workqueue dms_timer_common failed.\n");
     }
 }
 #endif
@@ -763,7 +745,7 @@ STATIC void drv_ascend_run_release_work(struct davinci_intf_free_list_stru *free
 {
     uint64_t idx = 0;
     /* when the file list is null,means already released */
-    if(free_list == NULL) {
+    if (free_list == NULL) {
         log_intf_err("free_list is NULL\n");
         return;
     }
@@ -836,8 +818,7 @@ void drv_ascend_free_file_node(ka_file_t *file)
     return;
 }
 
-void drv_intf_trans_free_list_nodes(struct davinci_intf_process_stru *proc,
-    ka_file_t *file, unsigned int free_index)
+void drv_intf_trans_free_list_nodes(struct davinci_intf_process_stru *proc, ka_file_t *file, unsigned int free_index)
 {
     struct davinci_intf_free_list_stru *proc_free_list = proc->free_list;
     struct davinci_intf_private_stru *file_private_data = NULL;
@@ -866,7 +847,8 @@ void drv_intf_trans_free_list_nodes(struct davinci_intf_process_stru *proc,
         return;
     }
 
-    ka_list_for_each_entry_safe(file_pos, file_next, &file_free_list->list, list) {
+    ka_list_for_each_entry_safe(file_pos, file_next, &file_free_list->list, list)
+    {
         ka_list_del(&file_pos->list);
 
         file_pos->free_index = free_index;
@@ -910,7 +892,8 @@ void free_uninit_file_pos(struct davinci_intf_process_stru *proc, ka_file_t *fil
         return;
     }
 
-    ka_list_for_each_entry_safe(file_pos, file_next, &file_free_list->list, list) {
+    ka_list_for_each_entry_safe(file_pos, file_next, &file_free_list->list, list)
+    {
         ka_list_del(&file_pos->list);
         dbl_kfree(file_pos);
     }
@@ -953,8 +936,8 @@ int drv_ascend_add_release_list_all(struct davinci_intf_process_stru *proc, ka_f
         {
             if ((ka_base_strcmp(node_info->module_name, file_pos->module_name) != 0)) {
                 if ((ka_base_strcmp(DAVINIC_UNINIT_FILE, file_pos->module_name) == 0)) {
-                    log_intf_warn("free uninit file pos. (pid=%d; module_name=\"%s\")\n",
-                        file_pos->owner_pid, file_pos->module_name);
+                    log_intf_warn("free uninit file pos. (pid=%d; module_name=\"%s\")\n", file_pos->owner_pid,
+                                  file_pos->module_name);
                     ka_list_del(&file_pos->list);
                     free_uninit_file_pos(proc, file_pos->file_op);
                     dbl_kfree(file_pos);
@@ -968,9 +951,10 @@ int drv_ascend_add_release_list_all(struct davinci_intf_process_stru *proc, ka_f
             drv_intf_trans_free_list_nodes(proc, file_pos->file_op, free_index);
 
             log_intf_debug("Add release list success. (pid=%d; module_name=\"%s\"; "
-                "seq=%u; time=%u ms; cur=%u ms; trig=%d; mm=%d)\n",
-                file_pos->owner_pid, file_pos->module_name, file_pos->seq,
-                file_pos->open_time, ka_system_jiffies_to_msecs(ka_jiffies), file_pos->file_op == file, ka_task_get_current_mm() != NULL);
+                           "seq=%u; time=%u ms; cur=%u ms; trig=%d; mm=%d)\n",
+                           file_pos->owner_pid, file_pos->module_name, file_pos->seq, file_pos->open_time,
+                           ka_system_jiffies_to_msecs(ka_jiffies), file_pos->file_op == file,
+                           ka_task_get_current_mm() != NULL);
 
             buff_len = (MODULE_NAME_MAX_LEN > buff_index) ? (MODULE_NAME_MAX_LEN - buff_index) : 0;
             ret_sprintf = sprintf_s(buff + buff_index, buff_len, "%s[%d] ", file_pos->module_name, file_pos->owner_pid);
@@ -990,9 +974,8 @@ int drv_ascend_add_release_list_all(struct davinci_intf_process_stru *proc, ka_f
     return ret;
 }
 
-STATIC struct davinci_intf_free_list_stru *drv_ascend_make_release_list(
-    struct davinci_intf_process_stru *proc,
-    ka_file_t *file, int all_flag)
+STATIC struct davinci_intf_free_list_stru *drv_ascend_make_release_list(struct davinci_intf_process_stru *proc,
+                                                                        ka_file_t *file, int all_flag)
 {
     int ret;
     struct davinci_intf_private_stru *file_private_data = file->private_data;
@@ -1046,7 +1029,8 @@ void release_file_free_list(struct davinci_intf_free_list_stru *file_free_list)
         if (ka_list_empty(&file_free_list->list) != 0) {
             return;
         } else {
-            ka_list_for_each_entry_safe(file_pos, file_next, &file_free_list->list, list) {
+            ka_list_for_each_entry_safe(file_pos, file_next, &file_free_list->list, list)
+            {
                 ka_list_del(&file_pos->list);
                 dbl_kfree(file_pos);
                 file_pos = NULL;
@@ -1069,8 +1053,8 @@ STATIC int drv_ascend_intf_open(ka_inode_t *inode, ka_file_t *file)
         return ret;
     }
 
-    file_private_data = (struct davinci_intf_private_stru *)dbl_kzalloc(
-        sizeof(struct davinci_intf_private_stru), KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
+    file_private_data = (struct davinci_intf_private_stru *)dbl_kzalloc(sizeof(struct davinci_intf_private_stru),
+                                                                        KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
     if (file_private_data == NULL) {
         log_intf_err("ka_mm_kzalloc failed. (size=%lu)\n", sizeof(struct davinci_intf_private_stru));
         ka_system_module_put(KA_THIS_MODULE);
@@ -1085,12 +1069,9 @@ STATIC int drv_ascend_intf_open(ka_inode_t *inode, ka_file_t *file)
     file_private_data->release_status = FALSE;
     ka_base_atomic_set(&file_private_data->work_count, 0);
     file_private_data->priv_filep = *file;
-    ret = strcpy_s(file_private_data->module_name, DAVINIC_MODULE_NAME_MAX,
-        DAVINIC_UNINIT_FILE);
+    ret = strcpy_s(file_private_data->module_name, DAVINIC_MODULE_NAME_MAX, DAVINIC_UNINIT_FILE);
     if (ret != 0) {
-        log_intf_err("strcpy_s failed. (module_name=\"%s\"; ret=%d)\n",
-            file_private_data->module_name,
-            ret);
+        log_intf_err("strcpy_s failed. (module_name=\"%s\"; ret=%d)\n", file_private_data->module_name, ret);
         ret = -ENOSYS;
         goto out_err;
     }
@@ -1159,8 +1140,8 @@ STATIC int drv_ascend_intf_release(ka_inode_t *inode, ka_file_t *file)
     free_list = drv_ascend_make_release_list(proc, file, all_flag);
     if (free_list == NULL) {
         ka_task_up_write(&cb->cb_sem);
-        log_intf_err("Make free list failed. (module_name=\"%s\"; pid=%d)\n",
-            file_private_data->module_name, file_private_data->owner_pid);
+        log_intf_err("Make free list failed. (module_name=\"%s\"; pid=%d)\n", file_private_data->module_name,
+                     file_private_data->owner_pid);
         return -EBADFD;
     }
     /* inc process work count */
@@ -1170,8 +1151,8 @@ STATIC int drv_ascend_intf_release(ka_inode_t *inode, ka_file_t *file)
     return 0;
 }
 
-STATIC int drv_ascend_intf_init_file_private(struct davinci_intf_private_stru *file_private,
-    const char *module_name, int device_id)
+STATIC int drv_ascend_intf_init_file_private(struct davinci_intf_private_stru *file_private, const char *module_name,
+                                             int device_id)
 {
     int ret;
     struct davinci_intf_free_list_stru *file_free_list = file_private->free_list;
@@ -1181,18 +1162,15 @@ STATIC int drv_ascend_intf_init_file_private(struct davinci_intf_private_stru *f
     ka_task_mutex_lock(&file_private->fmutex);
     if (file_private->close_flag != DAVINIC_NOT_INIT_BY_OPENCMD) {
         ka_task_mutex_unlock(&file_private->fmutex);
-        log_intf_err("Already call open command. (module_name=\"%s\"; new_name=\"%s\")\n",
-            file_private->module_name,
-            module_name);
+        log_intf_err("Already call open command. (module_name=\"%s\"; new_name=\"%s\")\n", file_private->module_name,
+                     module_name);
         return -ENOSYS;
     }
 
     ret = drv_ascend_set_file_ops(module_name, file_private);
     if (ret != 0) {
         ka_task_mutex_unlock(&file_private->fmutex);
-        log_intf_err("set file ops failed. (module_name=\"%s\"; ret=%d)\n",
-            module_name,
-            ret);
+        log_intf_err("set file ops failed. (module_name=\"%s\"; ret=%d)\n", module_name, ret);
         return ret;
     }
 
@@ -1203,7 +1181,8 @@ STATIC int drv_ascend_intf_init_file_private(struct davinci_intf_private_stru *f
         return -ENOSYS;
     }
 
-    ka_list_for_each_entry_safe(file_pos, file_next, &file_free_list->list, list) {
+    ka_list_for_each_entry_safe(file_pos, file_next, &file_free_list->list, list)
+    {
         ret = strcpy_s(file_pos->module_name, DAVINIC_MODULE_NAME_MAX, module_name);
         if (ret != 0) {
             ka_task_mutex_unlock(&file_private->fmutex);
@@ -1223,16 +1202,16 @@ STATIC int drv_ascend_intf_open_private(struct davinci_intf_private_stru *file_p
 
     if (file_private->fops.owner != NULL) {
         if (!ka_system_try_module_get(file_private->fops.owner)) {
-            log_intf_err("module is busy. (module_name=\"%s\"; owner_pid=%d)\n",
-                 file_private->module_name, file_private->owner_pid);
+            log_intf_err("module is busy. (module_name=\"%s\"; owner_pid=%d)\n", file_private->module_name,
+                         file_private->owner_pid);
             return -EBUSY;
         }
     }
 
     if (file_private->notifier.owner != NULL) {
         if (!ka_system_try_module_get(file_private->notifier.owner)) {
-            log_intf_err("notify module is busy. (module_name=\"%s\"; owner_pid=%d)\n",
-                 file_private->module_name, file_private->owner_pid);
+            log_intf_err("notify module is busy. (module_name=\"%s\"; owner_pid=%d)\n", file_private->module_name,
+                         file_private->owner_pid);
             return -EBUSY;
         }
     }
@@ -1240,8 +1219,7 @@ STATIC int drv_ascend_intf_open_private(struct davinci_intf_private_stru *file_p
     if (file_private->fops.open != NULL) {
         ret = file_private->fops.open(file_private->priv_filep.f_inode, &file_private->priv_filep);
         if (ret != 0) {
-            log_intf_warn("open detail info. (module_name=\"%s\"; ret=%d)\n",
-                file_private->module_name, ret);
+            log_intf_warn("open detail info. (module_name=\"%s\"; ret=%d)\n", file_private->module_name, ret);
         }
         return ret;
     }
@@ -1249,10 +1227,7 @@ STATIC int drv_ascend_intf_open_private(struct davinci_intf_private_stru *file_p
     return -EINVAL;
 }
 
-int drv_ascend_intf_ioctl_open_cmd(
-    ka_file_t *filep,
-    unsigned int cmd,
-    unsigned long arg)
+int drv_ascend_intf_ioctl_open_cmd(ka_file_t *filep, unsigned int cmd, unsigned long arg)
 {
     int ret;
     struct davinci_intf_open_arg module_para = {{0}};
@@ -1272,8 +1247,7 @@ int drv_ascend_intf_ioctl_open_cmd(
         return -EINVAL;
     }
 
-    if (ka_base_copy_from_user(&module_para, (void *)(uintptr_t)arg,
-        sizeof(struct davinci_intf_open_arg)) != 0) {
+    if (ka_base_copy_from_user(&module_para, (void *)(uintptr_t)arg, sizeof(struct davinci_intf_open_arg)) != 0) {
         log_intf_err("ka_base_copy_from_user failed. (size=%lu)\n", sizeof(struct davinci_intf_open_arg));
         ka_task_up_write(&g_davinci_intf_cb.cb_sem);
         return -EFAULT;
@@ -1286,29 +1260,23 @@ int drv_ascend_intf_ioctl_open_cmd(
         return -EINVAL;
     }
 
-    ret = drv_ascend_intf_init_file_private(file_private,
-        module_para.module_name,
-        module_para.device_id);
+    ret = drv_ascend_intf_init_file_private(file_private, module_para.module_name, module_para.device_id);
     if (ret != 0) {
-        log_intf_err("Init file_private failed. (module_name=\"%s\"; ret=%d)\n",
-            module_para.module_name, ret);
+        log_intf_err("Init file_private failed. (module_name=\"%s\"; ret=%d)\n", module_para.module_name, ret);
         ka_task_up_write(&g_davinci_intf_cb.cb_sem);
         return ret;
     }
 
     ret = drv_ascend_intf_open_private(file_private);
     if (ret != 0) {
-        log_intf_warn("Call open function detail info. (module_name=\"%s\"; ret=%d)\n",
-            file_private->module_name, ret);
+        log_intf_warn("Call open function detail info. (module_name=\"%s\"; ret=%d)\n", file_private->module_name, ret);
         ka_task_up_write(&g_davinci_intf_cb.cb_sem);
         return ret;
     }
 
-    ret = add_module_to_list(&g_davinci_intf_cb, file_private,
-        filep, (char *)module_para.module_name);
+    ret = add_module_to_list(&g_davinci_intf_cb, file_private, filep, (char *)module_para.module_name);
     if (ret != 0) {
-        log_intf_err("add_module_to_list failed. (module_name=\"%s\"; ret=%d)\n",
-            module_para.module_name, ret);
+        log_intf_err("add_module_to_list failed. (module_name=\"%s\"; ret=%d)\n", module_para.module_name, ret);
         ka_task_up_write(&g_davinci_intf_cb.cb_sem);
         return ret;
     }
@@ -1321,9 +1289,7 @@ int drv_ascend_intf_ioctl_open_cmd(
     return 0;
 }
 
-int drv_ascend_intf_ioctl_close_cmd(ka_file_t *filep,
-    unsigned int cmd,
-    unsigned long arg)
+int drv_ascend_intf_ioctl_close_cmd(ka_file_t *filep, unsigned int cmd, unsigned long arg)
 {
     struct davinci_intf_private_stru *file_private = NULL;
     ka_task_down_write(&g_davinci_intf_cb.cb_sem);
@@ -1346,10 +1312,7 @@ int drv_ascend_intf_ioctl_close_cmd(ka_file_t *filep,
     return 0;
 }
 
-int drv_ascend_intf_ioctl_check_module_no_use(
-    ka_file_t *filep,
-    unsigned int cmd,
-    unsigned long arg)
+int drv_ascend_intf_ioctl_check_module_no_use(ka_file_t *filep, unsigned int cmd, unsigned long arg)
 {
     struct davinci_intf_check_no_use_arg module_para = {{0}};
     struct davinci_intf_private_stru *file_private = NULL;
@@ -1366,8 +1329,8 @@ int drv_ascend_intf_ioctl_check_module_no_use(
         return -EINVAL;
     }
 
-    if (ka_base_copy_from_user(&module_para, (void *)(uintptr_t)arg,
-        sizeof(struct davinci_intf_check_no_use_arg)) != 0) {
+    if (ka_base_copy_from_user(&module_para, (void *)(uintptr_t)arg, sizeof(struct davinci_intf_check_no_use_arg)) !=
+        0) {
         log_intf_err("ka_base_copy_from_user failed. (size=%lu)\n", sizeof(struct davinci_intf_check_no_use_arg));
         return -EFAULT;
     }
@@ -1379,17 +1342,14 @@ int drv_ascend_intf_ioctl_check_module_no_use(
     ka_task_down_read(&g_davinci_intf_cb.cb_sem);
     module_para.status = check_module_file_close(&g_davinci_intf_cb, module_para.module_name);
     ka_task_up_read(&g_davinci_intf_cb.cb_sem);
-    if (ka_base_copy_to_user((void *)(uintptr_t)arg, &module_para,
-        sizeof(struct davinci_intf_check_no_use_arg)) != 0) {
+    if (ka_base_copy_to_user((void *)(uintptr_t)arg, &module_para, sizeof(struct davinci_intf_check_no_use_arg)) != 0) {
         log_intf_err("ka_base_copy_to_user failed. (size=%lu)\n", sizeof(struct davinci_intf_check_no_use_arg));
         return -EFAULT;
     }
     return 0;
 }
 
-STATIC long drv_ascend_intf_ioctl_local(ka_file_t *filep,
-    unsigned int cmd,
-    unsigned long arg)
+STATIC long drv_ascend_intf_ioctl_local(ka_file_t *filep, unsigned int cmd, unsigned long arg)
 {
     if (_KA_IOC_NR(cmd) >= DAVINCI_INTF_IOCTL_CMD_MAX_NR) {
         log_intf_err("invalid cmd,out of range. (cmd=%u)\n", _KA_IOC_NR(cmd));
@@ -1426,9 +1386,7 @@ STATIC long drv_ascend_intf_ioctl(ka_file_t *filep, unsigned int cmd, unsigned l
             }
             ret = drv_davinci_inc_work_count(file_private);
             if (ret != 0) {
-                log_intf_err("Call is not allowed in released state. (cmd=%u; ret=%ld)\n",
-                    _KA_IOC_NR(cmd),
-                    ret);
+                log_intf_err("Call is not allowed in released state. (cmd=%u; ret=%ld)\n", _KA_IOC_NR(cmd), ret);
                 return -ENODEV;
             }
             ret = file_private->fops.unlocked_ioctl(&file_private->priv_filep, cmd, arg);
@@ -1452,8 +1410,7 @@ STATIC int drv_ascend_intf_mmap(ka_file_t *filep, ka_vm_area_struct_t *vma)
 
     ret = drv_davinci_inc_work_count(file_private);
     if (ret != 0) {
-        log_intf_err("Call is not allowed in released state. (ret=%ld)\n",
-            ret);
+        log_intf_err("Call is not allowed in released state. (ret=%ld)\n", ret);
         return -ENODEV;
     }
     ret = file_private->fops.mmap(&file_private->priv_filep, vma);
@@ -1462,8 +1419,8 @@ STATIC int drv_ascend_intf_mmap(ka_file_t *filep, ka_vm_area_struct_t *vma)
     return ret;
 }
 
-STATIC unsigned long drv_ascend_intf_get_unmapped_area(ka_file_t *filep, 
-    unsigned long addr, unsigned long len, unsigned long pgoff, unsigned long flags)
+STATIC unsigned long drv_ascend_intf_get_unmapped_area(ka_file_t *filep, unsigned long addr, unsigned long len,
+                                                       unsigned long pgoff, unsigned long flags)
 {
     if ((flags & KA_MAP_FIXED) != 0) {
         log_intf_err("Not support KA_MAP_FIXED flag. (flags=0x%lx)\n", flags);
@@ -1473,9 +1430,7 @@ STATIC unsigned long drv_ascend_intf_get_unmapped_area(ka_file_t *filep,
     return ka_task_get_current_get_unmapped_area(filep, addr, len, pgoff, flags);
 }
 
-STATIC unsigned int drv_ascend_intf_poll(
-    ka_file_t *filep,
-    ka_poll_table_struct_t *wait)
+STATIC unsigned int drv_ascend_intf_poll(ka_file_t *filep, ka_poll_table_struct_t *wait)
 {
     struct davinci_intf_private_stru *file_private = NULL;
     long ret;
@@ -1490,8 +1445,7 @@ STATIC unsigned int drv_ascend_intf_poll(
 
     ret = drv_davinci_inc_work_count(file_private);
     if (ret != 0) {
-        log_intf_err("Call is not allowed in released state. (ret=%ld)\n",
-            ret);
+        log_intf_err("Call is not allowed in released state. (ret=%ld)\n", ret);
         return KA_POLLERR;
     }
     ret = file_private->fops.poll(&file_private->priv_filep, wait);
@@ -1500,14 +1454,10 @@ STATIC unsigned int drv_ascend_intf_poll(
 }
 
 static const ka_file_operations_t g_davinci_intf_fops = {
-    ka_fs_init_f_owner(KA_THIS_MODULE)
-    ka_fs_init_f_open(drv_ascend_intf_open)
-    ka_fs_init_f_release(drv_ascend_intf_release)
-    ka_fs_init_f_unlocked_ioctl(drv_ascend_intf_ioctl)
-    ka_fs_init_f_mmap(drv_ascend_intf_mmap)
-    ka_fs_init_f_get_unmapped_area(drv_ascend_intf_get_unmapped_area)
-    ka_fs_init_f_poll(drv_ascend_intf_poll)
-};
+    ka_fs_init_f_owner(KA_THIS_MODULE) ka_fs_init_f_open(drv_ascend_intf_open)
+        ka_fs_init_f_release(drv_ascend_intf_release) ka_fs_init_f_unlocked_ioctl(drv_ascend_intf_ioctl)
+            ka_fs_init_f_mmap(drv_ascend_intf_mmap) ka_fs_init_f_get_unmapped_area(drv_ascend_intf_get_unmapped_area)
+                ka_fs_init_f_poll(drv_ascend_intf_poll)};
 
 STATIC int drv_davinci_check_module_init(const char *module_name)
 {
@@ -1518,45 +1468,35 @@ STATIC int drv_davinci_check_module_init(const char *module_name)
         return FALSE;
     }
 
-    ka_list_for_each_entry_safe(node_info, node_info_next, &g_davinci_intf_cb.module_list, list) {
+    ka_list_for_each_entry_safe(node_info, node_info_next, &g_davinci_intf_cb.module_list, list)
+    {
         if (ka_base_strcmp(node_info->module_name, module_name) == 0) {
             return TRUE;
         }
     }
-    return  FALSE;
+    return FALSE;
 }
 
-STATIC struct davinci_intf_sub_module_stru *alloc_module_node(
-    const char *module_name,
-    const ka_file_operations_t *ops)
+STATIC struct davinci_intf_sub_module_stru *alloc_module_node(const char *module_name, const ka_file_operations_t *ops)
 {
     struct davinci_intf_sub_module_stru *node = NULL;
     int ret;
 
-    node = (struct davinci_intf_sub_module_stru *)dbl_kzalloc(
-        sizeof(struct davinci_intf_sub_module_stru),
-        KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
+    node = (struct davinci_intf_sub_module_stru *)dbl_kzalloc(sizeof(struct davinci_intf_sub_module_stru),
+                                                              KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
     if (node == NULL) {
-        log_intf_err("ka_mm_kzalloc failed. (module_name=\"%s\"; size=%lu)\n",
-            module_name,
-            sizeof(struct davinci_intf_sub_module_stru));
+        log_intf_err("ka_mm_kzalloc failed. (module_name=\"%s\"; size=%lu)\n", module_name,
+                     sizeof(struct davinci_intf_sub_module_stru));
         return NULL;
     }
     ret = strcpy_s(node->module_name, DAVINIC_MODULE_NAME_MAX, module_name);
     if (ret != 0) {
-        log_intf_err("strcpy_s error. (module_name=\"%s\"; ret=%d)\n",
-            module_name,
-            ret);
+        log_intf_err("strcpy_s error. (module_name=\"%s\"; ret=%d)\n", module_name, ret);
         goto out_err;
     }
-    ret = memcpy_s(&node->ops,
-        sizeof(ka_file_operations_t),
-        ops,
-        sizeof(ka_file_operations_t));
+    ret = memcpy_s(&node->ops, sizeof(ka_file_operations_t), ops, sizeof(ka_file_operations_t));
     if (ret != 0) {
-        log_intf_err("memcpy_s error. (module_name=\"%s\"; ret=%d)\n",
-            module_name,
-            ret);
+        log_intf_err("memcpy_s error. (module_name=\"%s\"; ret=%d)\n", module_name, ret);
         goto out_err;
     }
     node->valid = VALID;
@@ -1566,21 +1506,19 @@ out_err:
     node = NULL;
     return NULL;
 }
-STATIC int drv_ascend_register_module(
-    const char *module_name,
-    const ka_file_operations_t *ops, unsigned int free_type, unsigned int open_module_max)
+STATIC int drv_ascend_register_module(const char *module_name, const ka_file_operations_t *ops, unsigned int free_type,
+                                      unsigned int open_module_max)
 {
     struct davinci_intf_sub_module_stru *node = NULL;
 
-    if (module_name == NULL || ops == NULL
-        || ((free_type != DAVINIC_FREE_IN_PARALLEL) && (free_type != DAVINIC_FREE_IN_ORDER))) {
+    if (module_name == NULL || ops == NULL ||
+        ((free_type != DAVINIC_FREE_IN_PARALLEL) && (free_type != DAVINIC_FREE_IN_ORDER))) {
         log_intf_err("Input parameter is null.\n");
         return -EINVAL;
     }
 
     if (ka_base_strnlen(module_name, DAVINIC_MODULE_NAME_MAX) >= DAVINIC_MODULE_NAME_MAX) {
-        log_intf_err("Length out of range. (length=%lu)\n",
-            ka_base_strnlen(module_name, DAVINIC_MODULE_NAME_MAX));
+        log_intf_err("Length out of range. (length=%lu)\n", ka_base_strnlen(module_name, DAVINIC_MODULE_NAME_MAX));
         return -EINVAL;
     }
 
@@ -1593,8 +1531,7 @@ STATIC int drv_ascend_register_module(
     node = alloc_module_node(module_name, ops);
     if (node == NULL) {
         ka_task_up_write(&g_davinci_intf_cb.cb_sem);
-        log_intf_err("alloc_module_node failed. (module_name=\"%s\")\n",
-            module_name);
+        log_intf_err("alloc_module_node failed. (module_name=\"%s\")\n", module_name);
         return -ENOMEM;
     }
     node->free_type = free_type;
@@ -1607,26 +1544,20 @@ STATIC int drv_ascend_register_module(
     ka_task_up_write(&g_davinci_intf_cb.cb_sem);
     return 0;
 }
-int drv_davinci_register_sub_module_cnt(
-    const char *module_name,
-    const ka_file_operations_t *ops,
-    unsigned int open_module_max)
+int drv_davinci_register_sub_module_cnt(const char *module_name, const ka_file_operations_t *ops,
+                                        unsigned int open_module_max)
 {
     return drv_ascend_register_module(module_name, ops, DAVINIC_FREE_IN_ORDER, open_module_max);
 }
 KA_EXPORT_SYMBOL_GPL(drv_davinci_register_sub_module_cnt);
 
-int drv_davinci_register_sub_module(
-    const char *module_name,
-    const ka_file_operations_t *ops)
+int drv_davinci_register_sub_module(const char *module_name, const ka_file_operations_t *ops)
 {
     return drv_ascend_register_module(module_name, ops, DAVINIC_FREE_IN_ORDER, 0);
 }
 KA_EXPORT_SYMBOL_GPL(drv_davinci_register_sub_module);
 
-int drv_davinci_register_sub_parallel_module(
-    const char *module_name,
-    const ka_file_operations_t *ops)
+int drv_davinci_register_sub_parallel_module(const char *module_name, const ka_file_operations_t *ops)
 {
     return drv_ascend_register_module(module_name, ops, DAVINIC_FREE_IN_PARALLEL, 0);
 }
@@ -1655,7 +1586,8 @@ int drv_ascend_unregister_sub_module(const char *module_name)
         return -EINVAL;
     }
     /* Release module */
-    ka_list_for_each_entry_safe(node_info, node_info_next, &g_davinci_intf_cb.module_list, list) {
+    ka_list_for_each_entry_safe(node_info, node_info_next, &g_davinci_intf_cb.module_list, list)
+    {
         if (ka_base_strncmp(node_info->module_name, module_name, DAVINIC_MODULE_NAME_MAX) == 0) {
             ka_list_del(&node_info->list);
             ka_task_up_write(&g_davinci_intf_cb.cb_sem);
@@ -1665,13 +1597,11 @@ int drv_ascend_unregister_sub_module(const char *module_name)
         }
     }
     ka_task_up_write(&g_davinci_intf_cb.cb_sem);
-    return  0;
+    return 0;
 }
 KA_EXPORT_SYMBOL_GPL(drv_ascend_unregister_sub_module);
 
-int drv_ascend_register_notify(
-    const char *module_name,
-    const struct notifier_operations *notifier)
+int drv_ascend_register_notify(const char *module_name, const struct notifier_operations *notifier)
 {
     struct davinci_intf_sub_module_stru *node_info = NULL;
     struct davinci_intf_sub_module_stru *node_info_next = NULL;
@@ -1684,13 +1614,14 @@ int drv_ascend_register_notify(
 
     ka_task_down_write(&g_davinci_intf_cb.cb_sem);
     /* replace module fops */
-    ka_list_for_each_entry_safe(node_info, node_info_next, &g_davinci_intf_cb.module_list, list) {
+    ka_list_for_each_entry_safe(node_info, node_info_next, &g_davinci_intf_cb.module_list, list)
+    {
         if (ka_base_strncmp(node_info->module_name, module_name, DAVINIC_MODULE_NAME_MAX) == 0) {
             if (node_info->notifier.notifier_call != NULL) {
                 log_intf_warn("duplicate register notify. (module_name=\"%s\")\n", module_name);
             }
-            ret = memcpy_s(&node_info->notifier, sizeof(struct notifier_operations),
-                notifier, sizeof(struct notifier_operations));
+            ret = memcpy_s(&node_info->notifier, sizeof(struct notifier_operations), notifier,
+                           sizeof(struct notifier_operations));
             ka_task_up_write(&g_davinci_intf_cb.cb_sem);
             if (ret != 0) {
                 log_intf_err("memcpy_s error. (module_name=\"%s\"; ret=%d)\n", module_name, ret);
@@ -1717,13 +1648,14 @@ int drv_ascend_unregister_notify(const char *module_name)
 
     ka_task_down_write(&g_davinci_intf_cb.cb_sem);
     /* replace module fops */
-    ka_list_for_each_entry_safe(node_info, node_info_next, &g_davinci_intf_cb.module_list, list) {
+    ka_list_for_each_entry_safe(node_info, node_info_next, &g_davinci_intf_cb.module_list, list)
+    {
         if (ka_base_strncmp(node_info->module_name, module_name, DAVINIC_MODULE_NAME_MAX) == 0) {
             if (node_info->notifier.notifier_call == NULL) {
                 log_intf_warn("duplicate unregister notify. (module_name=\"%s\")\n", module_name);
             }
-            (void)memset_s(&node_info->notifier, sizeof(struct notifier_operations),
-                0, sizeof(struct notifier_operations));
+            (void)memset_s(&node_info->notifier, sizeof(struct notifier_operations), 0,
+                           sizeof(struct notifier_operations));
             ka_task_up_write(&g_davinci_intf_cb.cb_sem);
             return 0;
         }
@@ -1734,8 +1666,7 @@ int drv_ascend_unregister_notify(const char *module_name)
 }
 KA_EXPORT_SYMBOL_GPL(drv_ascend_unregister_notify);
 
-int drv_ascend_replace_sub_module_fops(const char *module_name,
-    const ka_file_operations_t *ops)
+int drv_ascend_replace_sub_module_fops(const char *module_name, const ka_file_operations_t *ops)
 {
     struct davinci_intf_sub_module_stru *node_info = NULL;
     struct davinci_intf_sub_module_stru *node_info_next = NULL;
@@ -1748,10 +1679,10 @@ int drv_ascend_replace_sub_module_fops(const char *module_name,
 
     ka_task_down_write(&g_davinci_intf_cb.cb_sem);
     /* replace module fops */
-    ka_list_for_each_entry_safe(node_info, node_info_next, &g_davinci_intf_cb.module_list, list) {
+    ka_list_for_each_entry_safe(node_info, node_info_next, &g_davinci_intf_cb.module_list, list)
+    {
         if (ka_base_strncmp(node_info->module_name, module_name, DAVINIC_MODULE_NAME_MAX) == 0) {
-            ret = memcpy_s(&node_info->ops, sizeof(ka_file_operations_t), ops,
-                sizeof(ka_file_operations_t));
+            ret = memcpy_s(&node_info->ops, sizeof(ka_file_operations_t), ops, sizeof(ka_file_operations_t));
             ka_task_up_write(&g_davinci_intf_cb.cb_sem);
             if (ret != 0) {
                 log_intf_err("memcpy_s error. (module_name=\"%s\"; ret=%d)\n", module_name, ret);
@@ -1867,14 +1798,15 @@ KA_EXPORT_SYMBOL_GPL(ascend_intf_report_device_status);
 
 int ascend_intf_get_status(struct ascend_intf_get_status_para para, unsigned int *status)
 {
-    if (((para.type == DAVINCI_STATUS_TYPE_DEVICE) && (para.para.device_id >= ASCEND_DEV_MAX_NUM)) || (status == NULL)) {
+    if (((para.type == DAVINCI_STATUS_TYPE_DEVICE) && (para.para.device_id >= ASCEND_DEV_MAX_NUM)) ||
+        (status == NULL)) {
         log_intf_err("Input parameter is error. (device_id=%u)\n", para.para.device_id);
         return -EINVAL;
     }
 
     switch (para.type) {
         case DAVINCI_STATUS_TYPE_PROCESS:
-            return  ascend_intf_get_process_status(para.para.process_id, status);
+            return ascend_intf_get_process_status(para.para.process_id, status);
         case DAVINCI_STATUS_TYPE_DEVICE:
             *status = g_davinci_intf_cb.device_status[para.para.device_id];
             return 0;
@@ -1908,7 +1840,7 @@ KA_EXPORT_SYMBOL_GPL(ascend_intf_is_pid_init);
 bool ascend_intf_is_restrict_access(ka_file_t *filep)
 {
     if ((filep == NULL) || (filep->f_path.dentry == NULL)) {
-        log_intf_warn("Can't get dev name, restricte access.\n");
+        log_intf_warn("Can't get dev name, restrict access.\n");
         return true;
     }
 

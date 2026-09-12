@@ -32,11 +32,11 @@
  Return Value : 0 success
 
 *****************************************************************************/
-int dsmi_cmd_dft_get_elabel(int device_id, unsigned char item_type, unsigned int eeprom_index,
-    char *elabel_data, int *len)
+int dsmi_cmd_dft_get_elabel(int device_id, unsigned char item_type, unsigned int eeprom_index, char *elabel_data,
+                            int *len)
 {
     DM_COMMAND_BIGIN(DEV_MON_CMD_READ_LABEL_DATA, device_id, (sizeof(unsigned int) + sizeof(unsigned char)),
-        ELABLE_DATA_MAX_LENGTH)
+                     ELABLE_DATA_MAX_LENGTH)
     DM_COMMAND_ADD_REQ(&item_type, (sizeof(unsigned char)))
     DM_COMMAND_ADD_REQ(&eeprom_index, (sizeof(unsigned int)))
     DM_COMMAND_SEND()
@@ -270,8 +270,8 @@ int dsmi_cmd_config_enable(int device_id, DSMI_CONFIG_PARA config_info)
 *****************************************************************************/
 int dsmi_cmd_get_enable(int device_id, unsigned char device_type, unsigned char config_item, unsigned char *enable_flag)
 {
-    DM_COMMAND_BIGIN(DEV_MON_CMD_D_GET_ENABLE, device_id, (sizeof(unsigned char) +
-        sizeof (unsigned char)), sizeof(unsigned char))
+    DM_COMMAND_BIGIN(DEV_MON_CMD_D_GET_ENABLE, device_id, (sizeof(unsigned char) + sizeof(unsigned char)),
+                     sizeof(unsigned char))
     DM_COMMAND_ADD_REQ(&device_type, sizeof(unsigned char))
     DM_COMMAND_ADD_REQ(&config_item, sizeof(unsigned char))
     DM_COMMAND_SEND()
@@ -321,7 +321,7 @@ int dsmi_cmd_get_mac_count(int device_id, unsigned char *count)
 *****************************************************************************/
 int dsmi_cmd_get_mac_addr(int device_id, int mac_id, char *pmac_addr)
 {
-    DSMI_MAC_PARA mac_para = { 0 };
+    DSMI_MAC_PARA mac_para = {0};
     mac_para.mac_type = MAC_INFO_TYPE;
     mac_para.mac_id = mac_id;
 
@@ -357,7 +357,7 @@ int dsmi_cmd_set_device_ip_address(int device_id, DSMI_PORT_PARA port_para, IPAD
 int dsmi_cmd_get_device_ip_address(int device_id, DSMI_PORT_PARA port_para, IPADDR_ST *ip_addr, IPADDR_ST *netmask)
 {
     DM_COMMAND_BIGIN(DEV_MON_CMD_D_GET_IP_ADDR, device_id, (sizeof(DSMI_PORT_PARA)),
-        (sizeof(IPADDR_ST) + sizeof(IPADDR_ST)))
+                     (sizeof(IPADDR_ST) + sizeof(IPADDR_ST)))
     DM_COMMAND_ADD_REQ(&port_para, sizeof(DSMI_PORT_PARA))
     DM_COMMAND_SEND()
     DM_COMMAND_PUSH_OUT(ip_addr, sizeof(IPADDR_ST))
@@ -401,8 +401,9 @@ Description  : get device gateway address command proc
  Return Value : 0 success
 
 *****************************************************************************/
-__attribute__((visibility("default"))) int dsmi_cmd_get_network_device_info(int device_id, const char *inbuf, unsigned int size_in, char *outbuf,
-                                     unsigned int *size_out)
+__attribute__((visibility("default"))) int dsmi_cmd_get_network_device_info(int device_id, const char *inbuf,
+                                                                            unsigned int size_in, char *outbuf,
+                                                                            unsigned int *size_out)
 {
     unsigned int out_length = 0;
 
@@ -411,7 +412,8 @@ __attribute__((visibility("default"))) int dsmi_cmd_get_network_device_info(int 
         return -EINVAL;
     }
 
-    DM_COMMAND_BIGIN(DEV_MON_CMD_D_GET_NET_DEV_INFO, device_id, (unsigned short)(sizeof(unsigned int) + size_in + sizeof(unsigned int)),
+    DM_COMMAND_BIGIN(DEV_MON_CMD_D_GET_NET_DEV_INFO, device_id,
+                     (unsigned short)(sizeof(unsigned int) + size_in + sizeof(unsigned int)),
                      (unsigned short)(sizeof(unsigned int) + (*size_out)))
 
     DM_COMMAND_ADD_REQ(&size_in, sizeof(unsigned int))
@@ -500,8 +502,8 @@ int dsmi_cmd_update_send_file_name(int device_id, unsigned char component_type, 
 {
     unsigned char ctl = TRANSMIT_FILE;
 
-    DM_COMMAND_BIGIN(DMP_LSB_OP_CODE_UPGRADE_CTRL, device_id, (unsigned short)((sizeof(unsigned char) +
-        sizeof(unsigned char)) + data_len), 0)
+    DM_COMMAND_BIGIN(DMP_LSB_OP_CODE_UPGRADE_CTRL, device_id,
+                     (unsigned short)((sizeof(unsigned char) + sizeof(unsigned char)) + data_len), 0)
     DM_COMMAND_ADD_REQ(&ctl, sizeof(unsigned char))
     DM_COMMAND_ADD_REQ(&component_type, sizeof(unsigned char))
     DM_COMMAND_ADD_REQ(file_name, data_len)
@@ -532,7 +534,8 @@ int dsmi_cmd_load_mami_patch(int device_id, unsigned char mami_patch_type, const
 {
     unsigned char ctl = UPGRADE_MAMI_PACH;
 
-    DM_COMMAND_BIGIN(DEV_MON_CMD_ABL_MAMI_PATCH_OPERATION, device_id, (unsigned short)(sizeof(unsigned char) + sizeof(unsigned char) + data_len), 0)
+    DM_COMMAND_BIGIN(DEV_MON_CMD_ABL_MAMI_PATCH_OPERATION, device_id,
+                     (unsigned short)(sizeof(unsigned char) + sizeof(unsigned char) + data_len), 0)
     DM_COMMAND_ADD_REQ(&ctl, sizeof(unsigned char))
     DM_COMMAND_ADD_REQ(&mami_patch_type, sizeof(unsigned char))
     DM_COMMAND_ADD_REQ(file_name, data_len)
@@ -548,8 +551,8 @@ int dsmi_cmd_load_mami_patch(int device_id, unsigned char mami_patch_type, const
 int dsmi_cmd_upgrade_get_state(int device_id, unsigned char com_type, unsigned char *schedule,
                                unsigned char *upgrade_status)
 {
-    DM_COMMAND_BIGIN(DMP_LSB_OP_CODE_UPGRADE_STATE, device_id, sizeof(unsigned char), (sizeof(unsigned char) +
-        sizeof(unsigned char)))
+    DM_COMMAND_BIGIN(DMP_LSB_OP_CODE_UPGRADE_STATE, device_id, sizeof(unsigned char),
+                     (sizeof(unsigned char) + sizeof(unsigned char)))
     DM_COMMAND_ADD_REQ(&com_type, sizeof(unsigned char))
     DM_COMMAND_SEND()
     DM_COMMAND_PUSH_OUT(upgrade_status, sizeof(unsigned char))
@@ -563,8 +566,8 @@ int dsmi_cmd_upgrade_get_state(int device_id, unsigned char com_type, unsigned c
  Return Value : 0 success
 
 *****************************************************************************/
-int dsmi_cmd_upgrade_get_version(int device_id, unsigned char component_type,
-                                 unsigned char *version_str, unsigned int *len)
+int dsmi_cmd_upgrade_get_version(int device_id, unsigned char component_type, unsigned char *version_str,
+                                 unsigned int *len)
 {
     DM_COMMAND_BIGIN(DMP_LSB_OP_CODE_UPGRADE_VERSION, device_id, sizeof(unsigned char), FW_VERSION_MAX_LENGTH)
     DM_COMMAND_ADD_REQ(&component_type, sizeof(unsigned char))
@@ -629,7 +632,8 @@ int dsmi_cmd_get_user_config(int device_id, unsigned char config_name_len, const
     unsigned int config_name_len_tmp = (unsigned int)config_name_len;
 
     DM_COMMAND_BIGIN(DMP_MON_CMD_GET_USER_CONFIG, device_id,
-                     (unsigned short)((unsigned int)config_name_len_tmp + sizeof(char) + sizeof(int)), (unsigned short)(*p_buf_size))
+                     (unsigned short)((unsigned int)config_name_len_tmp + sizeof(char) + sizeof(int)),
+                     (unsigned short)(*p_buf_size))
     DM_COMMAND_ADD_REQ(p_buf_size, sizeof(int))
     DM_COMMAND_ADD_REQ(&config_name_len, sizeof(char))
     DM_COMMAND_ADD_REQ(config_name, config_name_len)
@@ -648,8 +652,8 @@ int dsmi_cmd_get_user_config(int device_id, unsigned char config_name_len, const
 int dsmi_cmd_set_user_config(int device_id, unsigned char config_name_len, const char *config_name,
                              unsigned int buf_size, const unsigned char *buf)
 {
-    DM_COMMAND_BIGIN(DMP_MON_CMD_SET_USER_CONFIG, device_id, (unsigned short)(config_name_len + buf_size + sizeof(char) + sizeof(int)),
-                     0)
+    DM_COMMAND_BIGIN(DMP_MON_CMD_SET_USER_CONFIG, device_id,
+                     (unsigned short)(config_name_len + buf_size + sizeof(char) + sizeof(int)), 0)
     DM_COMMAND_ADD_REQ(&config_name_len, sizeof(char))
     DM_COMMAND_ADD_REQ(&buf_size, sizeof(int))
     DM_COMMAND_ADD_REQ(config_name, config_name_len)
@@ -667,7 +671,8 @@ int dsmi_cmd_set_user_config(int device_id, unsigned char config_name_len, const
 int dsmi_cmd_clear_user_config(int device_id, unsigned char config_name_len, const char *config_name)
 {
     unsigned int config_name_len_tmp = (unsigned int)config_name_len;
-    DM_COMMAND_BIGIN(DMP_MON_CMD_CLEAR_USER_CONFIG, device_id, (unsigned short)((unsigned int)config_name_len_tmp + sizeof(char)), 0)
+    DM_COMMAND_BIGIN(DMP_MON_CMD_CLEAR_USER_CONFIG, device_id,
+                     (unsigned short)((unsigned int)config_name_len_tmp + sizeof(char)), 0)
     DM_COMMAND_ADD_REQ(&config_name_len, sizeof(char))
     DM_COMMAND_ADD_REQ(config_name, config_name_len)
     DM_COMMAND_SEND()
@@ -696,7 +701,8 @@ int dsmi_cmd_get_network_health(int device_id, unsigned int *presult)
 *****************************************************************************/
 int dsmi_cmd_get_errorstring(int device_id, unsigned int errcode, unsigned char *perrinfo, int buffsize)
 {
-    DM_COMMAND_BIGIN(DEV_MON_CMD_GET_ERRSTR, device_id, (unsigned short)(sizeof(unsigned int) + sizeof(int)), (unsigned short)(buffsize))
+    DM_COMMAND_BIGIN(DEV_MON_CMD_GET_ERRSTR, device_id, (unsigned short)(sizeof(unsigned int) + sizeof(int)),
+                     (unsigned short)(buffsize))
     DM_COMMAND_ADD_REQ(&errcode, sizeof(unsigned int))
     DM_COMMAND_ADD_REQ(&buffsize, sizeof(int))
     DM_COMMAND_SEND()
@@ -733,8 +739,8 @@ int dsmi_cmd_get_aicpu_info(int device_id, struct dsmi_aicpu_info_stru *pdevice_
                 not 0 : fail
 
 *****************************************************************************/
-int dsmi_cmd_set_sec_revocation(int device_id, DSMI_REVOCATION_TYPE revo_type,
-                                const unsigned char *file_data, unsigned int file_size)
+int dsmi_cmd_set_sec_revocation(int device_id, DSMI_REVOCATION_TYPE revo_type, const unsigned char *file_data,
+                                unsigned int file_size)
 {
     DM_COMMAND_BIGIN(DEV_MON_CMD_D_SET_REVOCATION, device_id,
                      (unsigned short)(sizeof(DSMI_REVOCATION_TYPE) + sizeof(unsigned int) + file_size), 0)
@@ -770,10 +776,10 @@ int dsmi_cmd_get_lp_status(int device_id, struct dsmi_lp_status_stru *lp_status_
 }
 
 int dsmi_cmd_get_can_status(int device_id, const char *name, unsigned int name_len,
-    struct dsmi_can_status_stru *canstatus_data)
+                            struct dsmi_can_status_stru *canstatus_data)
 {
     DM_COMMAND_BIGIN(DEV_MON_CMD_D_GET_CAN_STATUS, device_id, (unsigned short)(sizeof(unsigned int) + name_len),
-        (unsigned short)(sizeof(struct dsmi_can_status_stru)))
+                     (unsigned short)(sizeof(struct dsmi_can_status_stru)))
     DM_COMMAND_ADD_REQ(&name_len, sizeof(unsigned int))
     DM_COMMAND_ADD_REQ(name, name_len)
     DM_COMMAND_SEND()
@@ -798,10 +804,10 @@ int dsmi_cmd_get_sensorhub_status(int device_id, struct dsmi_sensorhub_status_st
 }
 
 int dsmi_cmd_get_can_config(int device_id, const char *name, unsigned int name_len,
-    struct dsmi_can_config_stru *canconfig_data)
+                            struct dsmi_can_config_stru *canconfig_data)
 {
     DM_COMMAND_BIGIN(DEV_MON_CMD_D_GET_CAN_CONFIG, device_id, (unsigned short)(sizeof(unsigned int) + name_len),
-        (unsigned short)(sizeof(struct dsmi_can_config_stru)))
+                     (unsigned short)(sizeof(struct dsmi_can_config_stru)))
     DM_COMMAND_ADD_REQ(&name_len, sizeof(unsigned int))
     DM_COMMAND_ADD_REQ(name, name_len)
     DM_COMMAND_SEND()
@@ -850,16 +856,17 @@ int dsmi_cmd_get_device_cgroup_info(int device_id, struct tag_cgroup_info *cg_in
     DM_COMMAND_END()
 }
 
-int dsmi_cmd_set_device_info(unsigned int dev_id, DSMI_MAIN_CMD main_cmd, unsigned int sub_cmd,
-    const void *buf, unsigned int buf_size)
+int dsmi_cmd_set_device_info(unsigned int dev_id, DSMI_MAIN_CMD main_cmd, unsigned int sub_cmd, const void *buf,
+                             unsigned int buf_size)
 {
     if (buf == NULL || buf_size > USHORT_MAX) {
         DEV_MON_ERR("devid %d para error.\n", dev_id);
         return DRV_ERROR_PARA_ERROR;
     }
 
-    DM_COMMAND_BIGIN(DEV_MON_CMD_D_SET_DEVICE_INFO, dev_id, (unsigned short)(sizeof(DSMI_MAIN_CMD) + sizeof(unsigned int) +
-                     sizeof(unsigned int) + buf_size), 0)
+    DM_COMMAND_BIGIN(DEV_MON_CMD_D_SET_DEVICE_INFO, dev_id,
+                     (unsigned short)(sizeof(DSMI_MAIN_CMD) + sizeof(unsigned int) + sizeof(unsigned int) + buf_size),
+                     0)
     DM_COMMAND_ADD_REQ(&main_cmd, sizeof(DSMI_MAIN_CMD))
     DM_COMMAND_ADD_REQ(&sub_cmd, sizeof(unsigned int))
     DM_COMMAND_ADD_REQ(&buf_size, sizeof(unsigned int))
@@ -869,15 +876,16 @@ int dsmi_cmd_set_device_info(unsigned int dev_id, DSMI_MAIN_CMD main_cmd, unsign
 }
 
 drvError_t dsmi_cmd_set_device_info_ex(unsigned int dev_id, DSMI_MAIN_CMD main_cmd, unsigned int sub_cmd,
-    const void *buf, unsigned int buf_size)
+                                       const void *buf, unsigned int buf_size)
 {
     if (buf == NULL || buf_size > USHORT_MAX) {
         DEV_MON_ERR("Parameter error. (devid=%u; buf_size=%u; buf_size_max=%u)\n", dev_id, buf_size, USHORT_MAX);
         return DRV_ERROR_PARA_ERROR;
     }
 
-    DM_COMMAND_BIGIN(DEV_MON_CMD_D_SET_DEVICE_INFO_EX, dev_id, (unsigned short)(sizeof(DSMI_MAIN_CMD) + sizeof(unsigned int) +
-                     sizeof(unsigned int) + buf_size), 0)
+    DM_COMMAND_BIGIN(DEV_MON_CMD_D_SET_DEVICE_INFO_EX, dev_id,
+                     (unsigned short)(sizeof(DSMI_MAIN_CMD) + sizeof(unsigned int) + sizeof(unsigned int) + buf_size),
+                     0)
     DM_COMMAND_ADD_REQ(&main_cmd, sizeof(DSMI_MAIN_CMD))
     DM_COMMAND_ADD_REQ(&sub_cmd, sizeof(unsigned int))
     DM_COMMAND_ADD_REQ(&buf_size, sizeof(unsigned int))
@@ -886,8 +894,8 @@ drvError_t dsmi_cmd_set_device_info_ex(unsigned int dev_id, DSMI_MAIN_CMD main_c
     DM_COMMAND_END()
 }
 
-int dsmi_cmd_get_device_info_critical(unsigned int dev_id, DSMI_MAIN_CMD main_cmd, unsigned int sub_cmd,
-    void *buf, unsigned int *size)
+int dsmi_cmd_get_device_info_critical(unsigned int dev_id, DSMI_MAIN_CMD main_cmd, unsigned int sub_cmd, void *buf,
+                                      unsigned int *size)
 {
     unsigned int out_length = 0;
 
@@ -896,8 +904,9 @@ int dsmi_cmd_get_device_info_critical(unsigned int dev_id, DSMI_MAIN_CMD main_cm
         return DRV_ERROR_PARA_ERROR;
     }
 
-    DM_COMMAND_BIGIN(DEV_MON_CMD_D_GET_DEVICE_INFO_CRITICAL, (int)dev_id, (unsigned short)(sizeof(DSMI_MAIN_CMD) + sizeof(unsigned int) +
-                        sizeof(unsigned int) + *size), (unsigned short)(sizeof(unsigned int) + (*size)))
+    DM_COMMAND_BIGIN(DEV_MON_CMD_D_GET_DEVICE_INFO_CRITICAL, (int)dev_id,
+                     (unsigned short)(sizeof(DSMI_MAIN_CMD) + sizeof(unsigned int) + sizeof(unsigned int) + *size),
+                     (unsigned short)(sizeof(unsigned int) + (*size)))
     DM_COMMAND_ADD_REQ(&main_cmd, sizeof(DSMI_MAIN_CMD))
     DM_COMMAND_ADD_REQ(&sub_cmd, sizeof(unsigned int))
     DM_COMMAND_ADD_REQ(size, sizeof(unsigned int))
@@ -916,15 +925,16 @@ int dsmi_cmd_get_device_info_critical(unsigned int dev_id, DSMI_MAIN_CMD main_cm
 }
 
 drvError_t dsmi_cmd_set_device_info_critical(unsigned int dev_id, DSMI_MAIN_CMD main_cmd, unsigned int sub_cmd,
-    const void *buf, unsigned int buf_size)
+                                             const void *buf, unsigned int buf_size)
 {
     if (buf == NULL || buf_size > USHORT_MAX) {
         DEV_MON_ERR("Para error (devid=%u, buf_size=%u).\n", dev_id, buf_size);
         return DRV_ERROR_PARA_ERROR;
     }
 
-    DM_COMMAND_BIGIN(DEV_MON_CMD_D_SET_DEVICE_INFO_CRITICAL, (int)dev_id, (unsigned short)(sizeof(DSMI_MAIN_CMD) + sizeof(unsigned int) +
-                     sizeof(unsigned int) + buf_size), 0)
+    DM_COMMAND_BIGIN(DEV_MON_CMD_D_SET_DEVICE_INFO_CRITICAL, (int)dev_id,
+                     (unsigned short)(sizeof(DSMI_MAIN_CMD) + sizeof(unsigned int) + sizeof(unsigned int) + buf_size),
+                     0)
     DM_COMMAND_ADD_REQ(&main_cmd, sizeof(DSMI_MAIN_CMD))
     DM_COMMAND_ADD_REQ(&sub_cmd, sizeof(unsigned int))
     DM_COMMAND_ADD_REQ(&buf_size, sizeof(unsigned int))
@@ -933,8 +943,8 @@ drvError_t dsmi_cmd_set_device_info_critical(unsigned int dev_id, DSMI_MAIN_CMD 
     DM_COMMAND_END()
 }
 
-int dsmi_cmd_get_device_info(unsigned int dev_id, DSMI_MAIN_CMD main_cmd, unsigned int sub_cmd,
-    void *buf, unsigned int *size)
+int dsmi_cmd_get_device_info(unsigned int dev_id, DSMI_MAIN_CMD main_cmd, unsigned int sub_cmd, void *buf,
+                             unsigned int *size)
 {
     unsigned int out_length = 0;
 
@@ -943,8 +953,9 @@ int dsmi_cmd_get_device_info(unsigned int dev_id, DSMI_MAIN_CMD main_cmd, unsign
         return DRV_ERROR_PARA_ERROR;
     }
 
-    DM_COMMAND_BIGIN(DEV_MON_CMD_D_GET_DEVICE_INFO, dev_id, (unsigned short)(sizeof(DSMI_MAIN_CMD) + sizeof(unsigned int) +
-                        sizeof(unsigned int) + *size), (unsigned short)(sizeof(unsigned int) + (*size)))
+    DM_COMMAND_BIGIN(DEV_MON_CMD_D_GET_DEVICE_INFO, dev_id,
+                     (unsigned short)(sizeof(DSMI_MAIN_CMD) + sizeof(unsigned int) + sizeof(unsigned int) + *size),
+                     (unsigned short)(sizeof(unsigned int) + (*size)))
     DM_COMMAND_ADD_REQ(&main_cmd, sizeof(DSMI_MAIN_CMD))
     DM_COMMAND_ADD_REQ(&sub_cmd, sizeof(unsigned int))
     DM_COMMAND_ADD_REQ(size, sizeof(unsigned int))
@@ -965,7 +976,7 @@ int dsmi_cmd_get_device_info(unsigned int dev_id, DSMI_MAIN_CMD main_cmd, unsign
 int dsmi_cmd_create_capability_group(int device_id, int ts_id, struct dsmi_capability_group_info *group_info)
 {
     DM_COMMAND_BIGIN(DEV_MON_CMD_D_CREATE_CAPABILITY_GROUP, device_id,
-        sizeof(int) + sizeof(struct dsmi_capability_group_info), 0)
+                     sizeof(int) + sizeof(struct dsmi_capability_group_info), 0)
     DM_COMMAND_ADD_REQ(&ts_id, sizeof(int))
     DM_COMMAND_ADD_REQ(group_info, sizeof(struct dsmi_capability_group_info))
     DM_COMMAND_SEND()
@@ -1006,7 +1017,8 @@ int dsmi_cmd_get_last_bootstate(int device_id, BOOT_TYPE boot_type, unsigned int
 
 int dsmi_cmd_ctrl_device_node(int device_id, struct dsmi_dtm_node_s dtm_node, DSMI_DTM_OPCODE opcode, IN_OUT_BUF buf)
 {
-    DM_COMMAND_BIGIN(DEV_MON_CMD_D_CTRL_DEVICE_NODE, device_id,
+    DM_COMMAND_BIGIN(
+        DEV_MON_CMD_D_CTRL_DEVICE_NODE, device_id,
         (unsigned short)(sizeof(struct dsmi_dtm_node_s) + sizeof(DSMI_DTM_OPCODE) + sizeof(unsigned int) + buf.in_size),
         (unsigned short)(sizeof(unsigned int) + buf.in_size))
     DM_COMMAND_ADD_REQ(&dtm_node, sizeof(struct dsmi_dtm_node_s))
@@ -1019,8 +1031,8 @@ int dsmi_cmd_ctrl_device_node(int device_id, struct dsmi_dtm_node_s dtm_node, DS
     DM_COMMAND_END()
 }
 
-int dsmi_cmd_get_all_device_node(int device_id, DEV_DTM_CAP capability,
-    struct dsmi_dtm_node_s node_info[], unsigned int *size)
+int dsmi_cmd_get_all_device_node(int device_id, DEV_DTM_CAP capability, struct dsmi_dtm_node_s node_info[],
+                                 unsigned int *size)
 {
     unsigned int out_length = 0;
 
@@ -1028,7 +1040,8 @@ int dsmi_cmd_get_all_device_node(int device_id, DEV_DTM_CAP capability,
         DEV_MON_ERR("device_id %d para error.\n", device_id);
         return DRV_ERROR_PARA_ERROR;
     }
-    DM_COMMAND_BIGIN(DEV_MON_CMD_D_GET_ALL_DEVICE_NODE, device_id,
+    DM_COMMAND_BIGIN(
+        DEV_MON_CMD_D_GET_ALL_DEVICE_NODE, device_id,
         (unsigned short)(sizeof(unsigned int) + sizeof(unsigned int) + sizeof(struct dsmi_dtm_node_s) * (*size)),
         (unsigned short)(sizeof(unsigned int) + (*size) * sizeof(struct dsmi_dtm_node_s)))
     DM_COMMAND_ADD_REQ(&capability, sizeof(DEV_DTM_CAP))
@@ -1056,12 +1069,12 @@ int dsmi_cmd_get_reboot_reason(int device_id, struct dsmi_reboot_reason *reboot_
 int dsmi_cmd_set_bist_info(int device_id, DSMI_BIST_CMD cmd, const void *buf, unsigned int buf_size)
 {
     if (buf_size > USHORT_MAX) {
-        DEV_MON_ERR("size %d is out of range.\n", buf_size);
+        DEV_MON_ERR("size %d is out of range. (max=%u)\n", buf_size, USHORT_MAX);
         return DRV_ERROR_PARA_ERROR;
     }
 
-    DM_COMMAND_BIGIN(DEV_MON_CMD_D_SET_BIST_INFO, device_id, (unsigned short)(sizeof(DSMI_BIST_CMD) +
-                     sizeof(unsigned int) + buf_size), 0)
+    DM_COMMAND_BIGIN(DEV_MON_CMD_D_SET_BIST_INFO, device_id,
+                     (unsigned short)(sizeof(DSMI_BIST_CMD) + sizeof(unsigned int) + buf_size), 0)
     DM_COMMAND_ADD_REQ(&cmd, sizeof(DSMI_BIST_CMD))
     DM_COMMAND_ADD_REQ(&buf_size, sizeof(unsigned int))
     DM_COMMAND_ADD_REQ(buf, buf_size)
@@ -1074,11 +1087,12 @@ int dsmi_cmd_get_bist_info(int device_id, DSMI_BIST_CMD cmd, void *buf, unsigned
     unsigned int out_length = 0;
 
     if (*size > USHORT_MAX) {
-        DEV_MON_ERR("size %d is out of range.\n", *size);
+        DEV_MON_ERR("size is out of range. (size=%d; min=%u; max=%u)\n", *size, (unsigned int)0, USHORT_MAX);
         return DRV_ERROR_PARA_ERROR;
     }
 
-    DM_COMMAND_BIGIN(DEV_MON_CMD_D_GET_BIST_INFO, device_id, (unsigned short)(sizeof(DSMI_BIST_CMD) + sizeof(unsigned int) + *size),
+    DM_COMMAND_BIGIN(DEV_MON_CMD_D_GET_BIST_INFO, device_id,
+                     (unsigned short)(sizeof(DSMI_BIST_CMD) + sizeof(unsigned int) + *size),
                      (unsigned short)(sizeof(unsigned int) + (*size)))
     DM_COMMAND_ADD_REQ(&cmd, sizeof(DSMI_BIST_CMD))
     DM_COMMAND_ADD_REQ(size, sizeof(unsigned int))
@@ -1098,10 +1112,10 @@ int dsmi_cmd_get_bist_info(int device_id, DSMI_BIST_CMD cmd, void *buf, unsigned
 
 #if defined CFG_FEATURE_ECC_HBM_INFO || defined CFG_FEATURE_ECC_DDR_INFO
 int dsmi_cmd_get_total_ecc_isolated_pages_info(int device_id, unsigned char module_type,
-    struct dsmi_ecc_pages_stru *pdevice_ecc_pages_statistics)
+                                               struct dsmi_ecc_pages_stru *pdevice_ecc_pages_statistics)
 {
     DM_COMMAND_BIGIN(DEV_MON_CMD_GET_ISOLATED_PAGES_INFO, device_id, sizeof(unsigned char),
-        sizeof(struct dsmi_ecc_pages_stru))
+                     sizeof(struct dsmi_ecc_pages_stru))
     DM_COMMAND_ADD_REQ(&module_type, sizeof(unsigned char))
     DM_COMMAND_SEND()
     DM_COMMAND_PUSH_OUT(pdevice_ecc_pages_statistics, sizeof(struct dsmi_ecc_pages_stru))
@@ -1124,11 +1138,12 @@ int dsmi_cmd_fault_inject(DSMI_FAULT_INJECT_INFO info)
     DM_COMMAND_END()
 }
 
-int dsmi_cmd_get_flash_content(int device_id, DSMI_FLASH_CONTENT* content_info)
+int dsmi_cmd_get_flash_content(int device_id, DSMI_FLASH_CONTENT *content_info)
 {
     DM_COMMAND_BIGIN(DEV_MON_CMD_D_GET_FLASH_CONTENT, device_id,
-        (unsigned short)(content_info->size * sizeof(unsigned char) + sizeof(unsigned int) + sizeof(unsigned int) + sizeof(unsigned int)),
-        (unsigned short)(content_info->size * sizeof(unsigned char)))
+                     (unsigned short)(content_info->size * sizeof(unsigned char) + sizeof(unsigned int) +
+                                      sizeof(unsigned int) + sizeof(unsigned int)),
+                     (unsigned short)(content_info->size * sizeof(unsigned char)))
     DM_COMMAND_ADD_REQ(&(content_info->type), sizeof(unsigned int))
     DM_COMMAND_ADD_REQ(&(content_info->size), sizeof(unsigned int))
     DM_COMMAND_ADD_REQ(&(content_info->offset), sizeof(unsigned int))
@@ -1138,11 +1153,12 @@ int dsmi_cmd_get_flash_content(int device_id, DSMI_FLASH_CONTENT* content_info)
     DM_COMMAND_END()
 }
 
-int dsmi_cmd_set_flash_content(int device_id, DSMI_FLASH_CONTENT* content_info)
+int dsmi_cmd_set_flash_content(int device_id, DSMI_FLASH_CONTENT *content_info)
 {
     DM_COMMAND_BIGIN(DEV_MON_CMD_D_SET_FLASH_CONTENT, device_id,
-        (unsigned short)(content_info->size * sizeof(unsigned char) + sizeof(unsigned int) +
-        sizeof(unsigned int) + sizeof(unsigned int)), 0)
+                     (unsigned short)(content_info->size * sizeof(unsigned char) + sizeof(unsigned int) +
+                                      sizeof(unsigned int) + sizeof(unsigned int)),
+                     0)
     DM_COMMAND_ADD_REQ(&(content_info->type), sizeof(unsigned int))
     DM_COMMAND_ADD_REQ(&(content_info->size), sizeof(unsigned int))
     DM_COMMAND_ADD_REQ(&(content_info->offset), sizeof(unsigned int))
@@ -1153,8 +1169,8 @@ int dsmi_cmd_set_flash_content(int device_id, DSMI_FLASH_CONTENT* content_info)
 
 int dsmi_cmd_get_device_state(int device_id, void *in_buf, unsigned long in_size, unsigned long *out_size)
 {
-    DM_COMMAND_BIGIN(DEV_MON_CMD_D_GET_DEVICE_STATE, device_id,
-        (unsigned short)(sizeof(unsigned long) + in_size), (unsigned short)(sizeof(unsigned long) + in_size))
+    DM_COMMAND_BIGIN(DEV_MON_CMD_D_GET_DEVICE_STATE, device_id, (unsigned short)(sizeof(unsigned long) + in_size),
+                     (unsigned short)(sizeof(unsigned long) + in_size))
     DM_COMMAND_ADD_REQ(&in_size, sizeof(unsigned long))
     DM_COMMAND_ADD_REQ(in_buf, in_size)
     DM_COMMAND_SEND()
@@ -1165,16 +1181,17 @@ int dsmi_cmd_get_device_state(int device_id, void *in_buf, unsigned long in_size
     DM_COMMAND_END()
 }
 
-int dsmi_cmd_set_detect_info(unsigned int dev_id, DSMI_DETECT_MAIN_CMD main_cmd, unsigned int sub_cmd,
-    const void *buf, unsigned int buf_size)
+int dsmi_cmd_set_detect_info(unsigned int dev_id, DSMI_DETECT_MAIN_CMD main_cmd, unsigned int sub_cmd, const void *buf,
+                             unsigned int buf_size)
 {
     if ((buf == NULL) || (buf_size > USHORT_MAX)) {
         DEV_MON_ERR("para error, (devid=%u, buf_size=%u).\n", dev_id, buf_size);
         return DRV_ERROR_PARA_ERROR;
     }
 
-    DM_COMMAND_BIGIN(DEV_MON_CMD_D_SET_DETECT_INFO, dev_id, (unsigned short)(sizeof(DSMI_DETECT_MAIN_CMD) + sizeof(unsigned int) +
-                     sizeof(unsigned int) + buf_size), 0)
+    DM_COMMAND_BIGIN(
+        DEV_MON_CMD_D_SET_DETECT_INFO, dev_id,
+        (unsigned short)(sizeof(DSMI_DETECT_MAIN_CMD) + sizeof(unsigned int) + sizeof(unsigned int) + buf_size), 0)
     DM_COMMAND_ADD_REQ(&main_cmd, sizeof(DSMI_DETECT_MAIN_CMD))
     DM_COMMAND_ADD_REQ(&sub_cmd, sizeof(unsigned int))
     DM_COMMAND_ADD_REQ(&buf_size, sizeof(unsigned int))
@@ -1183,18 +1200,20 @@ int dsmi_cmd_set_detect_info(unsigned int dev_id, DSMI_DETECT_MAIN_CMD main_cmd,
     DM_COMMAND_END()
 }
 
-int dsmi_cmd_get_detect_info(unsigned int dev_id, DSMI_DETECT_MAIN_CMD main_cmd, unsigned int sub_cmd,
-    void *buf, unsigned int *size)
+int dsmi_cmd_get_detect_info(unsigned int dev_id, DSMI_DETECT_MAIN_CMD main_cmd, unsigned int sub_cmd, void *buf,
+                             unsigned int *size)
 {
     unsigned int out_length = 0;
 
     if ((buf == NULL) || (size == NULL) || (*size > USHORT_MAX)) {
-        DEV_MON_ERR("para error, (devid=%u, buf=%d; size=%d).\n", dev_id, (buf != NULL), (size != NULL));
+        DEV_MON_ERR("para error. (devid=%u; buf_is_null=%d; size_is_null=%d)\n", dev_id, (buf == NULL), (size == NULL));
         return DRV_ERROR_PARA_ERROR;
     }
 
-    DM_COMMAND_BIGIN(DEV_MON_CMD_D_GET_DETECT_INFO, dev_id, (unsigned short)(sizeof(DSMI_DETECT_MAIN_CMD) + sizeof(unsigned int) +
-                        sizeof(unsigned int) + *size), (unsigned short)(sizeof(unsigned int) + (*size)))
+    DM_COMMAND_BIGIN(
+        DEV_MON_CMD_D_GET_DETECT_INFO, dev_id,
+        (unsigned short)(sizeof(DSMI_DETECT_MAIN_CMD) + sizeof(unsigned int) + sizeof(unsigned int) + *size),
+        (unsigned short)(sizeof(unsigned int) + (*size)))
     DM_COMMAND_ADD_REQ(&main_cmd, sizeof(DSMI_DETECT_MAIN_CMD))
     DM_COMMAND_ADD_REQ(&sub_cmd, sizeof(unsigned int))
     DM_COMMAND_ADD_REQ(size, sizeof(unsigned int))

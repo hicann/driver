@@ -25,39 +25,39 @@
 #include "ka_kernel_def_pub.h"
 #include "ka_base_pub.h"
 
-STATIC DMS_FEATURE_NODE_S* feature_get_key_node(const char* key)
+STATIC DMS_FEATURE_NODE_S *feature_get_key_node(const char *key)
 {
-    DMS_FEATURE_NODE_S* node = NULL;
+    DMS_FEATURE_NODE_S *node = NULL;
     int ret;
-    ret = dms_kv_get(key, (void*)&node, sizeof(DMS_FEATURE_NODE_S*));
+    ret = dms_kv_get(key, (void *)&node, sizeof(DMS_FEATURE_NODE_S *));
     if ((ret != 0) || (node == NULL)) {
         return NULL;
     }
     return node;
 }
 
-STATIC DMS_FEATURE_NODE_S* feature_get_key_node_ex(const char* key)
+STATIC DMS_FEATURE_NODE_S *feature_get_key_node_ex(const char *key)
 {
-    DMS_FEATURE_NODE_S* node = NULL;
+    DMS_FEATURE_NODE_S *node = NULL;
     int ret;
-    ret = dms_kv_get_ex(key, (void*)&node, sizeof(DMS_FEATURE_NODE_S*));
+    ret = dms_kv_get_ex(key, (void *)&node, sizeof(DMS_FEATURE_NODE_S *));
     if ((ret != 0) || (node == NULL)) {
         return NULL;
     }
     return node;
 }
 
-STATIC int feature_add_key_node(const char* key, DMS_FEATURE_NODE_S* node)
+STATIC int feature_add_key_node(const char *key, DMS_FEATURE_NODE_S *node)
 {
-    return dms_kv_set(key, (void*)&node, sizeof(DMS_FEATURE_NODE_S*));
+    return dms_kv_set(key, (void *)&node, sizeof(DMS_FEATURE_NODE_S *));
 }
 
-STATIC int feature_del_key_node(const char* key)
+STATIC int feature_del_key_node(const char *key)
 {
     return dms_kv_del(key);
 }
 
-STATIC int feature_check_para(DMS_FEATURE_S* feature)
+STATIC int feature_check_para(DMS_FEATURE_S *feature)
 {
     if (feature == NULL) {
         dms_err("Invalid Parameter. (feature=NULL)\n");
@@ -70,7 +70,7 @@ STATIC int feature_check_para(DMS_FEATURE_S* feature)
     }
 
     if ((feature->handler_type != URD_HANDLER) && (feature->handler_type != URD_DEV_HANDLER)) {
-        dms_err("Invalid Parameter handler_type invalid. (handler_type=%u))\n", feature->handler_type);
+        dms_err("Invalid parameter. (handler_type=%u)\n", feature->handler_type);
         return -EINVAL;
     }
 
@@ -81,11 +81,11 @@ STATIC int feature_check_para(DMS_FEATURE_S* feature)
     return 0;
 }
 
-STATIC DMS_FEATURE_NODE_S* feature_alloc_feature_node(DMS_FEATURE_S* feature)
+STATIC DMS_FEATURE_NODE_S *feature_alloc_feature_node(DMS_FEATURE_S *feature)
 {
-    DMS_FEATURE_NODE_S* node = NULL;
+    DMS_FEATURE_NODE_S *node = NULL;
     int ret;
-    node = (DMS_FEATURE_NODE_S*)ka_mm_kzalloc(sizeof(DMS_FEATURE_NODE_S), KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
+    node = (DMS_FEATURE_NODE_S *)ka_mm_kzalloc(sizeof(DMS_FEATURE_NODE_S), KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
     if (node == NULL) {
         dms_err("ka_mm_kzalloc failed.\n");
         return NULL;
@@ -103,7 +103,7 @@ STATIC DMS_FEATURE_NODE_S* feature_alloc_feature_node(DMS_FEATURE_S* feature)
     return node;
 }
 
-STATIC void feature_free_feature_node(DMS_FEATURE_NODE_S* node)
+STATIC void feature_free_feature_node(DMS_FEATURE_NODE_S *node)
 {
     if (node->proc_ctrl != NULL) {
         ka_mm_kfree(node->proc_ctrl);
@@ -118,12 +118,12 @@ STATIC void feature_free_feature_node(DMS_FEATURE_NODE_S* node)
     return;
 }
 
-static inline void feature_set_state(DMS_FEATURE_NODE_S* node, u32 state)
+static inline void feature_set_state(DMS_FEATURE_NODE_S *node, u32 state)
 {
     node->state = state;
 }
 
-int feature_inc_work(DMS_FEATURE_NODE_S* node)
+int feature_inc_work(DMS_FEATURE_NODE_S *node)
 {
     /* If state was not "STATE_ACTIVE",no more work are allowed. */
     if (node->state != STATE_ACTIVE) {
@@ -134,13 +134,13 @@ int feature_inc_work(DMS_FEATURE_NODE_S* node)
     return 0;
 }
 
-static inline void feature_dec_work(DMS_FEATURE_NODE_S* node)
+static inline void feature_dec_work(DMS_FEATURE_NODE_S *node)
 {
     ka_base_atomic_dec(&node->count);
     return;
 }
 
-STATIC int feature_wait_work_finish(DMS_FEATURE_NODE_S* node)
+STATIC int feature_wait_work_finish(DMS_FEATURE_NODE_S *node)
 {
     int wait_count = 0;
     /* Check file not in used */
@@ -149,17 +149,13 @@ STATIC int feature_wait_work_finish(DMS_FEATURE_NODE_S* node)
         if ((wait_count % FEATURE_CONFIRM_WARN_MASK) == 0) {
             dms_warn("Wait process finish. (main_cmd=%u; sub_cmd=%u; "
                      "work_count=%d)\n",
-                node->feature->main_cmd,
-                node->feature->sub_cmd,
-                ka_base_atomic_read(&node->count));
+                     node->feature->main_cmd, node->feature->sub_cmd, ka_base_atomic_read(&node->count));
         }
         ka_system_msleep(FEATURE_WAIT_EACH_TIME);
     }
     if (wait_count >= FEATURE_WAIT_MAX_TIME) {
-        dms_err("Wait process time out. (main_cmd=%u; sub_cmd=%u; work_count=%d)\n",
-            node->feature->main_cmd,
-            node->feature->sub_cmd,
-            ka_base_atomic_read(&node->count));
+        dms_err("Wait process time out. (main_cmd=%u; sub_cmd=%u; work_count=%d)\n", node->feature->main_cmd,
+                node->feature->sub_cmd, ka_base_atomic_read(&node->count));
         return -EBUSY;
     }
     return 0;
@@ -167,15 +163,15 @@ STATIC int feature_wait_work_finish(DMS_FEATURE_NODE_S* node)
 
 STATIC ssize_t dms_feature_print_feature(void *data, char *buf, ssize_t *offset)
 {
-    DMS_FEATURE_NODE_S* node = *((DMS_FEATURE_NODE_S **)data);
+    DMS_FEATURE_NODE_S *node = *((DMS_FEATURE_NODE_S **)data);
     ssize_t buf_ret = 0;
     buf_ret = snprintf_s(buf + *offset, KA_MM_PAGE_SIZE - *offset, KA_MM_PAGE_SIZE - 1 - *offset,
-        "%s\t0x%x\t0x%x\t%s\t%s\t0x%x\t%u\t%d\t%llu\t%llu\t%llu\t%llu\t%llu\t%d\n",
-        node->feature->owner_name, node->feature->main_cmd, node->feature->sub_cmd,
-        (node->feature->filter == NULL) ? "null" : node->feature->filter,
-        (node->feature->proc_ctrl_str == NULL) ? "null" : node->feature->proc_ctrl_str,
-        node->feature->privilege, node->state, node->count,
-        node->s.used, node->s.failed, node->s.time_max, node->s.time_min, node->s.time_last, node->s.last_ret);
+                         "%s\t0x%x\t0x%x\t%s\t%s\t0x%x\t%u\t%d\t%llu\t%llu\t%llu\t%llu\t%llu\t%d\n",
+                         node->feature->owner_name, node->feature->main_cmd, node->feature->sub_cmd,
+                         (node->feature->filter == NULL) ? "null" : node->feature->filter,
+                         (node->feature->proc_ctrl_str == NULL) ? "null" : node->feature->proc_ctrl_str,
+                         node->feature->privilege, node->state, node->count, node->s.used, node->s.failed,
+                         node->s.time_max, node->s.time_min, node->s.time_last, node->s.last_ret);
     if (buf_ret >= 0) {
         *offset += buf_ret;
     }
@@ -186,8 +182,8 @@ ssize_t dms_feature_print_feature_list(char *buf)
 {
     ssize_t offset = 0;
     offset = snprintf_s(buf, KA_MM_PAGE_SIZE, KA_MM_PAGE_SIZE - 1,
-        "owner\tmain\tsub\tfilter\tprocess\tpri\tstate"
-        "\tcount\ttotal\tfailed\ts-max\ts-ka_base_min\ts-last\ts_l_ret\n");
+                        "owner\tmain\tsub\tfilter\tprocess\tpri\tstate"
+                        "\tcount\ttotal\tfailed\ts-max\ts-ka_base_min\ts-last\ts_l_ret\n");
     if (offset >= 0) {
         dms_kv_dump(buf, &offset, dms_feature_print_feature);
     }
@@ -195,10 +191,10 @@ ssize_t dms_feature_print_feature_list(char *buf)
 }
 KA_EXPORT_SYMBOL(dms_feature_print_feature_list);
 
-int dms_feature_register(DMS_FEATURE_S* feature)
+int dms_feature_register(DMS_FEATURE_S *feature)
 {
     char key[KV_KEY_MAX_LEN + 1] = {0};
-    DMS_FEATURE_NODE_S* node = NULL;
+    DMS_FEATURE_NODE_S *node = NULL;
     int ret;
 
     ret = feature_check_para(feature);
@@ -227,19 +223,18 @@ int dms_feature_register(DMS_FEATURE_S* feature)
     feature_set_state(node, STATE_ACTIVE);
 
     dms_info("register OK. (owner_name=%s; main_cmd=%u; sub_cmd=%u; filter=%s; proc_ctrl_str=%s; privilege=%u)\n",
-        feature->owner_name, feature->main_cmd, feature->sub_cmd,
-        (feature->filter == NULL) ? "null" : feature->filter,
-        (feature->proc_ctrl_str == NULL) ? "null" : feature->proc_ctrl_str,
-        feature->privilege);
+             feature->owner_name, feature->main_cmd, feature->sub_cmd,
+             (feature->filter == NULL) ? "null" : feature->filter,
+             (feature->proc_ctrl_str == NULL) ? "null" : feature->proc_ctrl_str, feature->privilege);
     return 0;
 }
 KA_EXPORT_SYMBOL_GPL(dms_feature_register);
 
-int dms_feature_unregister(DMS_FEATURE_S* feature)
+int dms_feature_unregister(DMS_FEATURE_S *feature)
 {
     int ret;
     char key[KV_KEY_MAX_LEN + 1] = {0};
-    DMS_FEATURE_NODE_S* node = NULL;
+    DMS_FEATURE_NODE_S *node = NULL;
 
     ret = feature_check_para(feature);
     if (ret != 0) {
@@ -279,8 +274,7 @@ int dms_feature_unregister(DMS_FEATURE_S* feature)
 }
 KA_EXPORT_SYMBOL_GPL(dms_feature_unregister);
 
-STATIC void dms_update_static(FEATURE_STATISTIC_S *s,
-    int ret, u64 start, u64 end)
+STATIC void dms_update_static(FEATURE_STATISTIC_S *s, int ret, u64 start, u64 end)
 {
     s->last_ret = ret;
     s->used++;
@@ -300,8 +294,8 @@ STATIC void dms_update_static(FEATURE_STATISTIC_S *s,
     }
 }
 
-STATIC void urd_feature_make_handle_para(DMS_FEATURE_ARG_S* arg, DMS_FEATURE_S* feature,
-                                         struct urd_cmd *cmd, struct urd_cmd_para *cmd_para)
+STATIC void urd_feature_make_handle_para(DMS_FEATURE_ARG_S *arg, DMS_FEATURE_S *feature, struct urd_cmd *cmd,
+                                         struct urd_cmd_para *cmd_para)
 {
     cmd->filter = feature->filter;
     cmd->filter_len = (feature->filter != NULL) ? ka_base_strlen(feature->filter) : 0;
@@ -341,7 +335,7 @@ STATIC int urd_feature_make_handle_devid(u32 msg_source, u32 devid, struct urd_c
     return 0;
 }
 
-STATIC int urd_feature_handle(DMS_FEATURE_ARG_S* arg, DMS_FEATURE_S* feature)
+STATIC int urd_feature_handle(DMS_FEATURE_ARG_S *arg, DMS_FEATURE_S *feature)
 {
     int ret;
 
@@ -372,10 +366,10 @@ STATIC int urd_feature_handle(DMS_FEATURE_ARG_S* arg, DMS_FEATURE_S* feature)
     return ret;
 }
 
-int dms_feature_process(DMS_FEATURE_ARG_S* arg)
+int dms_feature_process(DMS_FEATURE_ARG_S *arg)
 {
-    DMS_FEATURE_S* feature = NULL;
-    DMS_FEATURE_NODE_S* node = NULL;
+    DMS_FEATURE_S *feature = NULL;
+    DMS_FEATURE_NODE_S *node = NULL;
     u64 start, end;
     int ret;
     if ((arg == NULL) || (arg->key == NULL)) {
@@ -391,7 +385,7 @@ int dms_feature_process(DMS_FEATURE_ARG_S* arg)
 
     if (arg->msg_source == MSG_FROM_USER || arg->msg_source == MSG_FROM_USER_REST_ACC) {
         /* whitelist check */
-        ret = dms_feature_whitelist_check((const char**)node->proc_ctrl, node->proc_num);
+        ret = dms_feature_whitelist_check((const char **)node->proc_ctrl, node->proc_num);
         if (ret != 0) {
             feature_dec_work(node);
             dms_err("Operation not permitted. (key=\"%s\")\n", arg->key);
@@ -402,9 +396,8 @@ int dms_feature_process(DMS_FEATURE_ARG_S* arg)
         ret = dms_feature_access_identify(feature->privilege, arg->msg_source);
         if (ret != 0) {
             feature_dec_work(node);
-            dms_ex_notsupport_err(ret, "Operation not permitted. (key=\"%s\"; privilege=%08x)\n",
-                arg->key,
-                feature->privilege);
+            dms_ex_notsupport_err(ret, "Operation not permitted. (key=\"%s\"; privilege=%08x)\n", arg->key,
+                                  feature->privilege);
             return ret;
         }
     }
@@ -418,7 +411,7 @@ int dms_feature_process(DMS_FEATURE_ARG_S* arg)
     return ret;
 }
 
-int dms_feature_make_key(u32 main_cmd, u32 sub_cmd, const char* filter, char* key, u32 len)
+int dms_feature_make_key(u32 main_cmd, u32 sub_cmd, const char *filter, char *key, u32 len)
 {
     int ret;
     if ((key == NULL) || (len <= 1) || (len > (KV_KEY_MAX_LEN + 1))) {

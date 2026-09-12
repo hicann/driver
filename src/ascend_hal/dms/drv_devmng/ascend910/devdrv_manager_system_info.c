@@ -23,12 +23,12 @@
 #define STATIC static
 #endif
 
-#define DMS_SDK_EX_VERSION_LEN_MAX      128
+#define DMS_SDK_EX_VERSION_LEN_MAX 128
 
 STATIC drvError_t drv_get_sdk_ex_version(unsigned int dev_id, void *buf, unsigned int *size)
 {
     int ret;
-    char sdk_ex_ver[DMS_SDK_EX_VERSION_LEN_MAX + 1] = { 0 };
+    char sdk_ex_ver[DMS_SDK_EX_VERSION_LEN_MAX + 1] = {0};
     unsigned int ver_len = DMS_SDK_EX_VERSION_LEN_MAX;
 
     if (*size == 0) {
@@ -48,8 +48,8 @@ STATIC drvError_t drv_get_sdk_ex_version(unsigned int dev_id, void *buf, unsigne
     }
 
     if (*size < ver_len || ver_len > DMS_SDK_EX_VERSION_LEN_MAX) {
-        DEVDRV_DRV_ERR("The buff len is too small. (size=%d; ver_len=%d; buf_len_max=%u)\n",
-            *size, ver_len, DMS_SDK_EX_VERSION_LEN_MAX);
+        DEVDRV_DRV_ERR("The buff len is too small. (size=%d; ver_len=%d; buf_len_max=%u)\n", *size, ver_len,
+                       DMS_SDK_EX_VERSION_LEN_MAX);
         return DRV_ERROR_INVALID_VALUE;
     }
 
@@ -107,12 +107,14 @@ drvError_t drv_get_cpu_topo(unsigned int dev_id, void *buf, unsigned int *size)
     char single_cpu_name[UDIS_MAX_NAME_LEN];
 
     if (*size < sizeof(struct halCpuTopologyInfo) || buf == NULL) {
-        DEVDRV_DRV_ERR("Size is invalid or buf is NULL. (dev_id=%u; data_len=%u; size=%u, buf_is_null=%d)\n", dev_id, sizeof(struct halCpuTopologyInfo), *size, buf == NULL);
+        DEVDRV_DRV_ERR("Size is invalid or buf is NULL. (dev_id=%u; data_len=%u; size=%u, buf_is_null=%d)\n", dev_id,
+                       sizeof(struct halCpuTopologyInfo), *size, buf == NULL);
         return DRV_ERROR_INVALID_VALUE;
     }
     ret = drv_get_udis_cpu_topo(dev_id, "cpu_topo_num", &cpu_topo_num, &cpu_topo_num_size);
     if (ret != 0) {
-        DEVDRV_DRV_EX_NOTSUPPORT_ERR(ret, "Failed to get cpu topo num. (dev_id=%u; ret=%d; cpu_topo_num=%u)\n", dev_id, ret, cpu_topo_num);
+        DEVDRV_DRV_EX_NOTSUPPORT_ERR(ret, "Failed to get cpu topo num. (dev_id=%u; ret=%d; cpu_topo_num=%u)\n", dev_id,
+                                     ret, cpu_topo_num);
         return ret;
     }
     if (cpu_topo_num == 0 || cpu_topo_num > HAL_MAX_CPU_TOPO_NUM) {
@@ -120,7 +122,7 @@ drvError_t drv_get_cpu_topo(unsigned int dev_id, void *buf, unsigned int *size)
         return DRV_ERROR_INVALID_VALUE;
     }
     cpu_topo.total_nums = cpu_topo_num;
-    for(; i < cpu_topo_num; i++) {
+    for (; i < cpu_topo_num; i++) {
         ret = sprintf_s(single_cpu_name, UDIS_MAX_NAME_LEN, "cpu_topo_%u", i);
         if (ret < 0) {
             DEVDRV_DRV_ERR("Cpu topo %u sprintf_s failed. (dev_id=%u; ret=%d)\n", i, dev_id, ret);
@@ -161,8 +163,8 @@ drvError_t drv_get_system_info_ex(uint32_t devId, int32_t info_type, void *buf, 
     }
 
     if (ret != 0) {
-        DEVDRV_DRV_EX_NOTSUPPORT_ERR(ret, "Failed to set get version info. (devId=%u; infoType=%d; ret=%d)\n",
-            devId, info_type, ret);
+        DEVDRV_DRV_EX_NOTSUPPORT_ERR(ret, "Failed to set get version info. (devId=%u; infoType=%d; ret=%d)\n", devId,
+                                     info_type, ret);
     }
 
     return ret;
@@ -174,8 +176,8 @@ STATIC drvError_t drv_set_sdk_ex_version(unsigned int dev_id, const void *buf, u
     char set_buf[DMS_SDK_EX_VERSION_LEN_MAX + 1] = {0};
 
     if ((size == 0) || (size > DMS_SDK_EX_VERSION_LEN_MAX)) {
-        DEVDRV_DRV_ERR("Invalid parameter. (dev_id=%u; size=%u; buf_len_max=%u)\n",
-            dev_id, size, DMS_SDK_EX_VERSION_LEN_MAX);
+        DEVDRV_DRV_ERR("Invalid parameter. (dev_id=%u; size=%u; buf_len_max=%u)\n", dev_id, size,
+                       DMS_SDK_EX_VERSION_LEN_MAX);
         return DRV_ERROR_INVALID_VALUE;
     }
 
@@ -191,7 +193,7 @@ STATIC drvError_t drv_set_sdk_ex_version(unsigned int dev_id, const void *buf, u
         return ret;
     }
 
-    DEVDRV_DRV_EVENT("Set SDK Ex Ex version [%s] success. (dev_id=%u)\n", set_buf, dev_id);
+    DEVDRV_DRV_EVENT("Set SDK Ex version [%s] success. (dev_id=%u)\n", set_buf, dev_id);
 
     return DRV_ERROR_NONE;
 }
@@ -208,7 +210,7 @@ STATIC drvError_t drv_event_resume(unsigned int dev_id, const void *buf, unsigne
 
     if ((buf == NULL) || (size != sizeof(struct hal_fault_event_resume))) {
         DEVDRV_DRV_ERR("Invalid parameter. (dev_id=%u; buf=%s; size=%u; expect_size=%u)\n", dev_id,
-            (buf == NULL) ? "NULL" : "OK", size, sizeof(struct hal_fault_event_resume));
+                       (buf == NULL) ? "NULL" : "OK", size, sizeof(struct hal_fault_event_resume));
         return DRV_ERROR_INVALID_VALUE;
     }
 
@@ -219,13 +221,13 @@ STATIC drvError_t drv_event_resume(unsigned int dev_id, const void *buf, unsigne
     ret = memcpy_s((void *)in.payload, sizeof(struct hal_fault_event_resume), buf, size);
     if (ret != 0) {
         DEVDRV_DRV_ERR("Memcpy buf to payload failed. (dev_id=%u; ret=%d)\n", dev_id, ret);
-        return  DRV_ERROR_INNER_ERR;
+        return DRV_ERROR_INNER_ERR;
     }
 
     DMS_MAKE_UP_FILTER_HAL_DEV_INFO_EX(&filter, MODULE_TYPE_SYSTEM, INFO_TYPE_EVENT_RESUME);
     urd_usr_cmd_fill(&cmd, DMS_GET_SET_DEVICE_INFO_CMD, ZERO_CMD, &filter.filter[0], filter.filter_len);
-    urd_usr_cmd_para_fill(&cmd_para, (void *)&in, sizeof(struct dms_hal_device_info_stru),
-            (void *)&out, sizeof(struct dms_hal_device_info_stru));
+    urd_usr_cmd_para_fill(&cmd_para, (void *)&in, sizeof(struct dms_hal_device_info_stru), (void *)&out,
+                          sizeof(struct dms_hal_device_info_stru));
     ret = urd_dev_usr_cmd(dev_id, &cmd, &cmd_para);
     if (ret != 0) {
         DMS_EX_NOTSUPPORT_ERR(ret, "Resume fault event failed. (dev_id=%u; ret=%d)\n", dev_id, ret);
@@ -262,7 +264,7 @@ drvError_t drv_set_system_info_ex(uint32_t devId, int32_t info_type, void *buf, 
 
     if (ret != 0) {
         DEVDRV_DRV_EX_NOTSUPPORT_ERR(ret, "Failed to set system info. (dev_id=%u; infoType=%d; ret=%d; size=%u)\n",
-            devId, info_type, ret, size);
+                                     devId, info_type, ret, size);
     }
 
     return ret;

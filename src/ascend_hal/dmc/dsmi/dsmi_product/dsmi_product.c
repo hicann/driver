@@ -24,7 +24,7 @@ DSMI_CMD_DEF_DAVINCI_INSTANCE(DEV_MON_CMD_D_SENDMSG, CMD_LENGTH_INVALID, CMD_LEN
 #define DSMI_CTRL_PRINT_TIME 20
 
 int __attribute__((weak)) dsmi_product_set_device_info(unsigned int device_id, DSMI_MAIN_CMD main_cmd,
-    unsigned int sub_cmd, const void *buf, unsigned int buf_size)
+                                                       unsigned int sub_cmd, const void *buf, unsigned int buf_size)
 {
     (void)device_id;
     (void)main_cmd;
@@ -35,7 +35,7 @@ int __attribute__((weak)) dsmi_product_set_device_info(unsigned int device_id, D
 }
 
 int __attribute__((weak)) dsmi_product_get_device_info(unsigned int device_id, DSMI_MAIN_CMD main_cmd,
-    unsigned int sub_cmd, void *buf, unsigned int *size)
+                                                       unsigned int sub_cmd, void *buf, unsigned int *size)
 {
     (void)device_id;
     (void)main_cmd;
@@ -73,7 +73,7 @@ int dsmi_cmd_passthru_mcu(int device_id, unsigned char pass_para, struct passthr
     DRV_CHECK_RETV((passthru_message->src_len <= sizeof(struct dmp_message_stru)), DRV_ERROR_PARA_ERROR)
 
     DM_COMMAND_BIGIN(DEV_MON_CMD_D_SENDMSG, device_id, (unsigned short)(passthru_message->src_len + 1UL),
-        sizeof(struct dmp_message_stru))
+                     sizeof(struct dmp_message_stru))
     DM_COMMAND_ADD_REQ(&pass_para, sizeof(unsigned char))
     DM_COMMAND_ADD_REQ(&(passthru_message->src_message.data.req), (passthru_message->src_len))
     DM_COMMAND_SEND()
@@ -107,8 +107,8 @@ int dsmi_get_mini2mcu_heartbeat_status(int device_id, unsigned char *status, uns
 
 int dsmi_passthru_mcu(int device_id, struct passthru_message_stru *passthru_message)
 {
-    static struct timespec tp_last = { 0 };
-    static struct timespec tp_now = { 0 };
+    static struct timespec tp_last = {0};
+    static struct timespec tp_now = {0};
     static unsigned long counts = 0;
     unsigned char pass_para;
     long time_gap;
@@ -123,16 +123,17 @@ int dsmi_passthru_mcu(int device_id, struct passthru_message_stru *passthru_mess
     time_gap = tp_now.tv_sec - tp_last.tv_sec;
     if (time_gap > DSMI_CTRL_PRINT_TIME) {
         tp_last.tv_sec = tp_now.tv_sec;
-        DEV_MON_DEBUG("Dsmi transmit to mcu. (user_id=%d; device_id=%d; rw_flag=%d; transmit_count=%lu)\n",
-            getuid(), device_id, passthru_message->rw_flag, counts);
+        DEV_MON_DEBUG("Dsmi transmit to mcu. (user_id=%d; device_id=%d; rw_flag=%d; transmit_count=%lu)\n", getuid(),
+                      device_id, passthru_message->rw_flag, counts);
     }
 
     if (passthru_message->rw_flag > 1) { // 1 rw_flag support  0 read ,1 write , if greater than 1, then not support
-        DEV_MON_WARNING("rw_flag is out of compliance. (device_id=%d; rw_flag=%u)\n",
-                        device_id, passthru_message->rw_flag);
+        DEV_MON_WARNING("rw_flag is out of compliance. (device_id=%d; rw_flag=%u; valid_range=[0, 1])\n", device_id,
+                        passthru_message->rw_flag);
         return DRV_ERROR_NOT_SUPPORT;
     }
-    pass_para = (unsigned char)(passthru_message->rw_flag << 7U) | (unsigned char)(MCU); // 7 if rw_flag equal 1 then offset 7 bit
+    pass_para = (unsigned char)(passthru_message->rw_flag << 7U) |
+                (unsigned char)(MCU); // 7 if rw_flag equal 1 then offset 7 bit
 
     return dsmi_cmd_passthru_mcu(device_id, pass_para, passthru_message);
 }
@@ -145,7 +146,7 @@ bool __attribute__((weak)) is_product_user_config_item_by_name(const char *confi
 }
 
 int __attribute__((weak)) dsmi_product_set_user_config(int device_id, const char *config_name, unsigned int buf_size,
-    unsigned char *buf)
+                                                       unsigned char *buf)
 {
     (void)device_id;
     (void)config_name;
@@ -155,7 +156,7 @@ int __attribute__((weak)) dsmi_product_set_user_config(int device_id, const char
 }
 
 int __attribute__((weak)) dsmi_product_get_user_config(int device_id, const char *config_name, unsigned int buf_size,
-    unsigned char *buf)
+                                                       unsigned char *buf)
 {
     (void)device_id;
     (void)config_name;

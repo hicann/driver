@@ -56,10 +56,8 @@ void hccs_reg_write(unsigned long vir_addr, unsigned int val)
     }
 }
 #else
-STATIC unsigned long pcs_phy_addr[PCS_NUM] = {
-    PCS0_BASE_ADDR, PCS1_BASE_ADDR, PCS2_BASE_ADDR, PCS3_BASE_ADDR,
-    PCS4_BASE_ADDR, PCS5_BASE_ADDR, PCS6_BASE_ADDR, PCS7_BASE_ADDR
-    };
+STATIC unsigned long pcs_phy_addr[PCS_NUM] = {PCS0_BASE_ADDR, PCS1_BASE_ADDR, PCS2_BASE_ADDR, PCS3_BASE_ADDR,
+                                              PCS4_BASE_ADDR, PCS5_BASE_ADDR, PCS6_BASE_ADDR, PCS7_BASE_ADDR};
 
 /*
 |HPCS4  HPCS5 | HPCS6  HPCS7 | HPCS0  HPCS1 | HPCS2  HPCS3 |
@@ -70,11 +68,9 @@ STATIC unsigned long pcs_phy_addr[PCS_NUM] = {
 link_num = pcs_index % 2
 */
 STATIC const unsigned long hdlc_phy_addr[PCS_NUM] = {
-    HDLC2_BASE_ADDR, HDLC2_BASE_ADDR,
-    HDLC3_BASE_ADDR, HDLC3_BASE_ADDR,
-    HDLC0_BASE_ADDR, HDLC0_BASE_ADDR,
-    HDLC1_BASE_ADDR, HDLC1_BASE_ADDR,
-    };
+    HDLC2_BASE_ADDR, HDLC2_BASE_ADDR, HDLC3_BASE_ADDR, HDLC3_BASE_ADDR,
+    HDLC0_BASE_ADDR, HDLC0_BASE_ADDR, HDLC1_BASE_ADDR, HDLC1_BASE_ADDR,
+};
 #endif
 
 #ifdef CFG_FEATURE_GET_PCS_BITMAP_BY_BOARD_TYPE
@@ -102,19 +98,18 @@ int dms_get_hpcs_bitmap_by_board_type(unsigned int dev_id, unsigned long long *b
     dev_cb = dms_get_dev_cb(dev_id);
     if (dev_cb == NULL) {
         dms_err("Get device ctrl block failed. (dev_id=%u)\n", dev_id);
-        return -ENODEV ;
+        return -ENODEV;
     }
 
     if (dev_cb->dev_info == NULL) {
         dms_err("Device ctrl dev_info is null. (dev_id=%u)\n", dev_id);
-        return -ENODEV ;
+        return -ENODEV;
     }
 
     dev_info = (struct devdrv_info *)dev_cb->dev_info;
     board_id = dev_info->board_id;
     board_type = (board_id & BOARD_ID_TYPE_MASK) >> BOARD_ID_TYPE_OFFSET;
-    if ((board_type == BOARD_TYPE_EVB_SINGLE_DIE) ||
-        (board_type == BOARD_TYPE_EVB_DOUBLE_DIE) ||
+    if ((board_type == BOARD_TYPE_EVB_SINGLE_DIE) || (board_type == BOARD_TYPE_EVB_DOUBLE_DIE) ||
         (board_type == BOARD_TYPE_PCIE_SINGLE_DIE)) {
         *bitmap = PCS_BITMAP_PCIE_EVB;
     } else {
@@ -134,8 +129,9 @@ int dms_get_hpcs_bitmap_default(unsigned int dev_id, unsigned long long *bitmap)
 #endif
 
 #ifdef CFG_FEATURE_HCCS_GET_STATUS
-#define BIOS_HPCS_BITMAP_EFFECT_VER     (2)
-int dms_get_hpcs_status_by_dev_id(unsigned int dev_id, unsigned long long pcs_bitmap, unsigned long long phy_addr_offset, hccs_info_t *hccs_status)
+#define BIOS_HPCS_BITMAP_EFFECT_VER (2)
+int dms_get_hpcs_status_by_dev_id(unsigned int dev_id, unsigned long long pcs_bitmap,
+                                  unsigned long long phy_addr_offset, hccs_info_t *hccs_status)
 {
     int i;
     u32 pcs_status_reg;
@@ -161,15 +157,18 @@ int dms_get_hpcs_status_by_dev_id(unsigned int dev_id, unsigned long long pcs_bi
             hccs_status->pcs_status = 0;
         } else {
             hccs_status->pcs_status = (1 << PCS_STATUS_OFFSET) | (i << PCS_INDEX_OFFSET) |
-                (((hccs_pcs_status_reg_t *)&pcs_status_reg)->st_pcs_mode_working << PCS_MODE_WORKING_OFFSET) |
-                (((hccs_pcs_status_reg_t *)&pcs_status_reg)->st_pcs_use_working << PCS_USE_WORKING_OFFSET);
+                                      (((hccs_pcs_status_reg_t *)&pcs_status_reg)->st_pcs_mode_working
+                                       << PCS_MODE_WORKING_OFFSET) |
+                                      (((hccs_pcs_status_reg_t *)&pcs_status_reg)->st_pcs_use_working
+                                       << PCS_USE_WORKING_OFFSET);
             break;
         }
     }
     return 0;
 }
 
-int dms_get_hdlc_status_by_dev_id(unsigned int dev_id, unsigned long long pcs_bitmap, unsigned long long phy_addr_offset, hccs_info_t *hccs_status)
+int dms_get_hdlc_status_by_dev_id(unsigned int dev_id, unsigned long long pcs_bitmap,
+                                  unsigned long long phy_addr_offset, hccs_info_t *hccs_status)
 {
     int i;
     u32 hdlc_status_reg;
@@ -263,11 +262,11 @@ STATIC int dms_get_hccs_status(struct dms_get_device_info_in *in, unsigned int *
 #endif
 
 #ifdef CFG_FEATURE_HCCS_GET_LANE_INFO
-#define PCS_USED_FOR_HCCS               (1)
-#define PCS_USED_NOT_FOR_HCCS           (0)
-#define LANE_INFO_MODE_CHANGE_OFFSET    (0)
-#define LANE_INFO_USED_LANE_OFFSET      (1)
-#define LANE_INFO_MODE_WORK_OFFSET      (9)
+#define PCS_USED_FOR_HCCS (1)
+#define PCS_USED_NOT_FOR_HCCS (0)
+#define LANE_INFO_MODE_CHANGE_OFFSET (0)
+#define LANE_INFO_USED_LANE_OFFSET (1)
+#define LANE_INFO_MODE_WORK_OFFSET (9)
 int dms_get_hccs_lane_details(unsigned int dev_id, hccs_lane_info_t *hccs_lane_info)
 {
     int i = 0, j = 0, ret;
@@ -318,12 +317,12 @@ int dms_get_hccs_lane_details(unsigned int dev_id, hccs_lane_info_t *hccs_lane_i
             hccs_lane_info->pcs_lane_bitmap[j++] = 0;
             continue;
         }
-        hccs_lane_info->pcs_lane_bitmap[j] |=
-            (((hccs_pcs_status_reg_t *)&pcs_status_reg)->st_pcs_mode_change_done << LANE_INFO_MODE_CHANGE_OFFSET);
-        hccs_lane_info->pcs_lane_bitmap[j] |=
-            (((hccs_pcs_status_reg_t *)&pcs_status_reg)->st_pcs_use_working << LANE_INFO_USED_LANE_OFFSET);
-        hccs_lane_info->pcs_lane_bitmap[j] |=
-            (((hccs_pcs_status_reg_t *)&pcs_status_reg)->st_pcs_mode_working << LANE_INFO_MODE_WORK_OFFSET);
+        hccs_lane_info->pcs_lane_bitmap[j] |= (((hccs_pcs_status_reg_t *)&pcs_status_reg)->st_pcs_mode_change_done
+                                               << LANE_INFO_MODE_CHANGE_OFFSET);
+        hccs_lane_info->pcs_lane_bitmap[j] |= (((hccs_pcs_status_reg_t *)&pcs_status_reg)->st_pcs_use_working
+                                               << LANE_INFO_USED_LANE_OFFSET);
+        hccs_lane_info->pcs_lane_bitmap[j] |= (((hccs_pcs_status_reg_t *)&pcs_status_reg)->st_pcs_mode_working
+                                               << LANE_INFO_MODE_WORK_OFFSET);
         j++;
     }
     return 0;
@@ -358,7 +357,7 @@ STATIC int dms_get_hccs_lane_info(struct dms_get_device_info_in *in, unsigned in
 #endif
 
 #define HCCS_STATISTIC_TIMER_EXPIRE_MS 500
-#define HCCS_STATISTIC_READ_ERR_MAX_CNT 6   /* 500ms * 6 */
+#define HCCS_STATISTIC_READ_ERR_MAX_CNT 6 /* 500ms * 6 */
 
 #define DMS_TIMER_TASK_INVALID_ID KA_UINT_MAX
 
@@ -369,13 +368,11 @@ STATIC int dms_get_hccs_lane_info(struct dms_get_device_info_in *in, unsigned in
 #ifdef CFG_FEATURE_HCCS_GET_STATISTIC_BY_CHANNEL
 #define HCCS_CHANNEL_NUM 3
 
-STATIC const unsigned long hdlc_tx_chan_addr[HCCS_CHANNEL_NUM] = {
-    HDLC_TX_CNT_CH0_ADDR, HDLC_TX_CNT_CH1_ADDR, HDLC_TX_CNT_CH2_ADDR
-};
+STATIC const unsigned long hdlc_tx_chan_addr[HCCS_CHANNEL_NUM] = {HDLC_TX_CNT_CH0_ADDR, HDLC_TX_CNT_CH1_ADDR,
+                                                                  HDLC_TX_CNT_CH2_ADDR};
 
-STATIC const unsigned long hdlc_rx_chan_addr[HCCS_CHANNEL_NUM] = {
-    HDLC_RX_CNT_CH0_ADDR, HDLC_RX_CNT_CH1_ADDR, HDLC_RX_CNT_CH2_ADDR
-};
+STATIC const unsigned long hdlc_rx_chan_addr[HCCS_CHANNEL_NUM] = {HDLC_RX_CNT_CH0_ADDR, HDLC_RX_CNT_CH1_ADDR,
+                                                                  HDLC_RX_CNT_CH2_ADDR};
 #endif
 
 struct hccs_statistic_cache {
@@ -446,8 +443,10 @@ STATIC int read_hccs_statistic_info(unsigned int dev_id, struct hccs_statistic_c
         cache->info.tx_cnt[i] = 0;
         cache->info.rx_cnt[i] = 0;
         for (chan = 0; chan < HCCS_CHANNEL_NUM; chan++) {
-            HCCS_REG_RD_ACC(&cache->chan_tx_cnt[i][chan], hccs_base_addr, hdlc_tx_chan_addr[chan] + (i * HDLC_REG_SIZE));
-            HCCS_REG_RD_ACC(&cache->chan_rx_cnt[i][chan], hccs_base_addr, hdlc_rx_chan_addr[chan] + (i * HDLC_REG_SIZE));
+            HCCS_REG_RD_ACC(&cache->chan_tx_cnt[i][chan], hccs_base_addr,
+                            hdlc_tx_chan_addr[chan] + (i * HDLC_REG_SIZE));
+            HCCS_REG_RD_ACC(&cache->chan_rx_cnt[i][chan], hccs_base_addr,
+                            hdlc_rx_chan_addr[chan] + (i * HDLC_REG_SIZE));
             cache->info.tx_cnt[i] += cache->chan_tx_cnt[i][chan];
             cache->info.rx_cnt[i] += cache->chan_rx_cnt[i][chan];
         }
@@ -461,8 +460,10 @@ STATIC int read_hccs_statistic_info(unsigned int dev_id, struct hccs_statistic_c
         ka_mm_iounmap(hccs_base_addr);
         hccs_base_addr = NULL;
 
-        dms_debug("Get hccs staticstic info. (hpcs_id=%d; tx_cnt=0x%llx; rx_cnt=0x%llx; retry_cnt=0x%llx; crc_err_cnt=0x%llx)\n", i,
-            cache->info.tx_cnt[i], cache->info.rx_cnt[i], cache->info.retry_cnt[i], cache->info.crc_err_cnt[i]);
+        dms_debug("Get hccs statistic info. (hpcs_id=%d; tx_cnt=0x%llx; rx_cnt=0x%llx; retry_cnt=0x%llx; "
+                  "crc_err_cnt=0x%llx)\n",
+                  i, cache->info.tx_cnt[i], cache->info.rx_cnt[i], cache->info.retry_cnt[i],
+                  cache->info.crc_err_cnt[i]);
     }
 
     return 0;
@@ -491,7 +492,7 @@ STATIC int dms_refresh_hccs_statistic_cache(u64 user_data)
         if (cache->read_err_cnt >= HCCS_STATISTIC_READ_ERR_MAX_CNT) {
             cache->read_status = ret;
             dms_err("Read hccs statistic info failed consecutively %d times, stopped the timer. (devid=%u; ret=%d)\n",
-                HCCS_STATISTIC_READ_ERR_MAX_CNT, dev_id, ret);
+                    HCCS_STATISTIC_READ_ERR_MAX_CNT, dev_id, ret);
         }
     } else {
         cache->read_err_cnt = 0;
@@ -508,8 +509,8 @@ STATIC int dms_get_hccs_statistic_info_ext(struct dms_get_device_info_in *in, un
     struct hccs_statistic_cache *cache;
 
     if (in->buff_size < sizeof(hccs_statistic_info_ext_t)) {
-        dms_err("The buff_size is too small. (buff_size=%u; min_size=%zu)\n",
-            in->buff_size, sizeof(hccs_statistic_info_ext_t));
+        dms_err("The buff_size is too small. (buff_size=%u; min_size=%zu)\n", in->buff_size,
+                sizeof(hccs_statistic_info_ext_t));
         return -EINVAL;
     }
 
@@ -573,8 +574,8 @@ STATIC int dms_get_hccs_statistic_info(struct dms_get_device_info_in *in, unsign
     hccs_statistic_info_t hccs_statistic_info = {0};
 
     if (in->buff_size < sizeof(hccs_statistic_info_t)) {
-        dms_err("The buff_size is too small. (buff_size=%u; min_size=%zu)\n",
-            in->buff_size, sizeof(hccs_statistic_info_t));
+        dms_err("The buff_size is too small. (buff_size=%u; min_size=%zu)\n", in->buff_size,
+                sizeof(hccs_statistic_info_t));
         return -EINVAL;
     }
 
@@ -610,7 +611,7 @@ int dms_feature_get_hccs_info(void *feature, char *in, u32 in_len, char *out, u3
     input = (struct dms_get_device_info_in *)in;
     if (input->buff == NULL) {
         dms_err("Input buffer is null or buffer size is not valid. (buff_is_null=%d; buff_size=%u)\n",
-            (input->buff != NULL), input->buff_size);
+                (input->buff != NULL), input->buff_size);
         return -EINVAL;
     }
 
@@ -623,7 +624,7 @@ int dms_feature_get_hccs_info(void *feature, char *in, u32 in_len, char *out, u3
     ret = uda_devid_to_phy_devid(input->dev_id, &physical_dev_id, &vfid);
     if (ret != 0) {
         dms_err("Failed to convert the logical_id to the physical_id (logical_id=%u; physical_id=%u; ret=%d)\n",
-            input->dev_id, physical_dev_id, ret);
+                input->dev_id, physical_dev_id, ret);
         return -EINVAL;
     }
     input->dev_id = physical_dev_id;
@@ -717,7 +718,7 @@ int dms_hccs_statistic_task_register(u32 dev_id)
 
     ret = dms_timer_task_register(&hccs_statistic_task, &cache->task_id);
     if (ret != 0) {
-        cache->read_status = ret;  /* ENOSPC or ENOMEM */
+        cache->read_status = ret; /* ENOSPC or ENOMEM */
         cache->task_id = DMS_TIMER_TASK_INVALID_ID;
         dms_err("Dms timer hccs statistic task register failed. (ret=%d)\n", ret);
     }

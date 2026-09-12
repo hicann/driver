@@ -104,7 +104,7 @@ int devdrv_manager_get_core_utilization(unsigned long arg)
     struct devdrv_core_utilization util_info = {0};
     struct devdrv_info *dev_info = NULL;
 
-    ret = copy_from_user_safe(&util_info, (void*)(uintptr_t)arg, sizeof(struct devdrv_core_utilization));
+    ret = copy_from_user_safe(&util_info, (void *)(uintptr_t)arg, sizeof(struct devdrv_core_utilization));
     if (ret != 0) {
         devdrv_drv_err("Copy from user failed. (ret=%d)\n", ret);
         return ret;
@@ -275,7 +275,7 @@ KA_EXPORT_SYMBOL(devdrv_get_core_spec);
 
 #ifdef CFG_FEATURE_DEVMNG_IOCTL
 STATIC void devdrv_manager_set_computing_value(struct devdrv_manager_hccl_devinfo *hccl_devinfo,
-    struct devdrv_info *dev_info, bool valid)
+                                               struct devdrv_info *dev_info, bool valid)
 {
     int i;
 
@@ -301,7 +301,7 @@ int devdrv_manager_get_h2d_devinfo(unsigned long arg)
     int ret;
 
     hccl_devinfo = (struct devdrv_manager_hccl_devinfo *)dbl_kzalloc(sizeof(struct devdrv_manager_hccl_devinfo),
-        KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
+                                                                     KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
     if (hccl_devinfo == NULL) {
         devdrv_drv_err("Alloc memory for hccl device info failed.\n");
         return -ENOMEM;
@@ -398,8 +398,7 @@ FREE_DEV_INFO_EXIT:
 }
 #endif
 
-int devdrv_manager_get_tsdrv_dev_com_info(ka_file_t *filep,
-    unsigned int cmd, unsigned long arg)
+int devdrv_manager_get_tsdrv_dev_com_info(ka_file_t *filep, unsigned int cmd, unsigned long arg)
 {
     struct tsdrv_dev_com_info dev_com_info;
 
@@ -415,7 +414,7 @@ int devdrv_manager_get_tsdrv_dev_com_info(ka_file_t *filep,
 }
 
 int devdrv_manager_host_get_group_info(struct devdrv_manager_msg_info *dev_manager_msg_info,
-    struct get_ts_group_para *group_para, struct devdrv_info *info)
+                                       struct get_ts_group_para *group_para, struct devdrv_info *info)
 {
     int ret;
     int out_len = 0;
@@ -427,8 +426,8 @@ int devdrv_manager_host_get_group_info(struct devdrv_manager_msg_info *dev_manag
     /* inform corresponding devid to device side */
     dev_manager_msg_info->header.dev_id = info->dev_id;
 
-    ret = memcpy_s(dev_manager_msg_info->payload, DEVDRV_MANAGER_INFO_PAYLOAD_LEN,
-                   group_para, sizeof(struct get_ts_group_para));
+    ret = memcpy_s(dev_manager_msg_info->payload, DEVDRV_MANAGER_INFO_PAYLOAD_LEN, group_para,
+                   sizeof(struct get_ts_group_para));
     if (ret != 0) {
         devdrv_drv_err("memcpy failed ret = %d\n", ret);
         return -EFAULT;
@@ -440,7 +439,7 @@ int devdrv_manager_host_get_group_info(struct devdrv_manager_msg_info *dev_manag
         return ret;
     }
     if (out_len != (DEVDRV_TS_GROUP_NUM * sizeof(struct ts_group_info) + sizeof(struct devdrv_manager_msg_head))) {
-        devdrv_drv_err("receive response len %d is not equal = %ld\n", out_len,
+        devdrv_drv_err("received response len is not equal to expected. (len=%d; expected=%ld)\n", out_len,
                        DEVDRV_TS_GROUP_NUM * sizeof(struct ts_group_info));
         return -EINVAL;
     }
@@ -452,7 +451,7 @@ int devdrv_manager_host_get_group_info(struct devdrv_manager_msg_info *dev_manag
 }
 
 int devdrv_manager_get_group_para(struct devdrv_ioctl_info *ioctl_buf, struct get_ts_group_para *group_para,
-                                         unsigned long arg)
+                                  unsigned long arg)
 {
     int ret;
 
@@ -463,8 +462,8 @@ int devdrv_manager_get_group_para(struct devdrv_ioctl_info *ioctl_buf, struct ge
     }
     if ((ioctl_buf->input_len != sizeof(struct get_ts_group_para)) ||
         (ioctl_buf->input_len > DEVDRV_MANAGER_INFO_PAYLOAD_LEN)) {
-        devdrv_drv_err("input_len %d is invalid should equal %ld, and less than %ld\n", ioctl_buf->input_len,
-                       sizeof(struct get_ts_group_para), DEVDRV_MANAGER_INFO_PAYLOAD_LEN);
+        devdrv_drv_err("input_len is invalid: should equal %ld and be less than %ld. (input_len=%d)\n",
+                       sizeof(struct get_ts_group_para), DEVDRV_MANAGER_INFO_PAYLOAD_LEN, ioctl_buf->input_len);
         return -EINVAL;
     }
     ret = copy_from_user_safe((void *)group_para, (void *)(ioctl_buf->input_buf), ioctl_buf->input_len);
@@ -475,10 +474,9 @@ int devdrv_manager_get_group_para(struct devdrv_ioctl_info *ioctl_buf, struct ge
     return 0;
 }
 
-int devdrv_manager_get_ts_group_info(ka_file_t *filep,
-    unsigned int cmd, unsigned long arg)
+int devdrv_manager_get_ts_group_info(ka_file_t *filep, unsigned int cmd, unsigned long arg)
 {
-    struct devdrv_ioctl_info ioctl_buf = { 0, NULL, 0, NULL, 0, {0}};
+    struct devdrv_ioctl_info ioctl_buf = {0, NULL, 0, NULL, 0, {0}};
     struct get_ts_group_para group_para = {0};
     int ret;
     struct devdrv_manager_msg_info dev_manager_msg_info = {{0}, {0}};
@@ -500,16 +498,16 @@ int devdrv_manager_get_ts_group_info(ka_file_t *filep,
 
     d_info = devdrv_get_manager_info();
     if (d_info == NULL) {
-        devdrv_drv_err("info is NULL! the wrong dev_id is null\n");
+        devdrv_drv_err("info is NULL: cannot get dev_info.\n");
         return -EINVAL;
     }
     if (phy_id >= ASCEND_DEV_MAX_NUM) {
-        devdrv_drv_err("group_para phy device_id %d must less than %d\n", phy_id, ASCEND_DEV_MAX_NUM);
+        devdrv_drv_err("phy device_id must be less than max. (phy_id=%d; max=%d)\n", phy_id, ASCEND_DEV_MAX_NUM);
         return -EINVAL;
     }
     info = d_info->dev_info[phy_id];
     if (info == NULL) {
-        devdrv_drv_err("info is NULL! the wrong vir device id = %d, phy dev_id is %u\n",
+        devdrv_drv_err("info is NULL: invalid virtual device id. (vir_dev_id=%d; phy_dev_id=%u)\n",
                        group_para.device_id, phy_id);
         return -EINVAL;
     }
@@ -519,7 +517,7 @@ int devdrv_manager_get_ts_group_info(ka_file_t *filep,
         return ret;
     }
     if (ioctl_buf.out_len > DEVDRV_MANAGER_INFO_PAYLOAD_LEN) {
-        devdrv_drv_err("out len %d is invalid should less than %ld\n", ioctl_buf.out_len,
+        devdrv_drv_err("out len is invalid: should be less than max. (out_len=%d; max=%ld)\n", ioctl_buf.out_len,
                        DEVDRV_MANAGER_INFO_PAYLOAD_LEN);
         return -EINVAL;
     }
@@ -561,9 +559,8 @@ u32 devdrv_get_ts_num(void)
 #ifndef CFG_SOC_PLATFORM_MINIV2
     tsid = DEVDRV_MAX_TS_NUM;
 #else
-    tsid = 1;  // tsid should be transferred from dev side later
+    tsid = 1; // tsid should be transferred from dev side later
 #endif /* CFG_SOC_PLATFORM_MINIV2 */
     return tsid;
 }
 #endif
-

@@ -40,23 +40,23 @@ STATIC int urd_forward_ubmem_map_route_check(void *feature, char *in, u32 in_len
 BEGIN_DMS_MODULE_DECLARATION(DMS_URD_FORWARD_CMD_NAME)
 BEGIN_FEATURE_COMMAND()
 #ifdef CFG_FEATURE_QUERY_FREQ_INFO
-ADD_FEATURE_COMMAND(DMS_URD_FORWARD_CMD_NAME, DMS_MAIN_CMD_LPM, DMS_SUBCMD_GET_FREQUENCY, NULL, NULL,
-                    DMS_SUPPORT_ALL, dms_send_msg_to_device_by_h2d)
+ADD_FEATURE_COMMAND(DMS_URD_FORWARD_CMD_NAME, DMS_MAIN_CMD_LPM, DMS_SUBCMD_GET_FREQUENCY, NULL, NULL, DMS_SUPPORT_ALL,
+                    dms_send_msg_to_device_by_h2d)
 #endif
 #ifdef CFG_FEATURE_QUERY_QOS_CFG_INFO
-ADD_FEATURE_COMMAND(DMS_URD_FORWARD_CMD_NAME, DMS_MAIN_CMD_QOS, DMS_SUBCMD_GET_CONFIG_INFO, NULL, NULL,
-                    DMS_SUPPORT_ALL, dms_send_msg_to_device_by_h2d)
+ADD_FEATURE_COMMAND(DMS_URD_FORWARD_CMD_NAME, DMS_MAIN_CMD_QOS, DMS_SUBCMD_GET_CONFIG_INFO, NULL, NULL, DMS_SUPPORT_ALL,
+                    dms_send_msg_to_device_by_h2d)
 #endif
 #ifdef CFG_FEATURE_GET_QOS_MASTER_CFG
 ADD_FEATURE_COMMAND(DMS_URD_FORWARD_CMD_NAME, DMS_GET_GET_DEVICE_INFO_CMD, ZERO_CMD, "module=0x9,info=0x3a", NULL,
                     DMS_SUPPORT_ALL, dms_send_msg_to_device_by_h2d)
 #endif
 #ifdef CFG_FEATURE_QUERY_VA_INFO
-ADD_FEATURE_COMMAND(DMS_URD_FORWARD_CMD_NAME, DMS_MAIN_CMD_MEMORY, DMS_SUBCMD_HBM_GET_VA, NULL, NULL,
-                    DMS_SUPPORT_ALL, dms_send_msg_to_device_by_h2d_get_va)
+ADD_FEATURE_COMMAND(DMS_URD_FORWARD_CMD_NAME, DMS_MAIN_CMD_MEMORY, DMS_SUBCMD_HBM_GET_VA, NULL, NULL, DMS_SUPPORT_ALL,
+                    dms_send_msg_to_device_by_h2d_get_va)
 #endif
-ADD_FEATURE_COMMAND(DMS_URD_FORWARD_CMD_NAME, DMS_MAIN_CMD_MEMORY, DMS_SUBCMD_DEV_MEM_INFO, NULL, NULL,
-                    DMS_SUPPORT_ALL, dms_send_msg_to_device_by_h2d)
+ADD_FEATURE_COMMAND(DMS_URD_FORWARD_CMD_NAME, DMS_MAIN_CMD_MEMORY, DMS_SUBCMD_DEV_MEM_INFO, NULL, NULL, DMS_SUPPORT_ALL,
+                    dms_send_msg_to_device_by_h2d)
 #ifdef CFG_FEATURE_GET_CURRENT_EVENTINFO
 ADD_FEATURE_COMMAND(DMS_URD_FORWARD_CMD_NAME, DMS_MAIN_CMD_MEMORY, DMS_SUBCMD_GET_FAULT_SYSCNT, NULL, NULL,
                     DMS_ACC_NOT_LIMIT_USER | DMS_ENV_ALL | DMS_VDEV_NOTSUPPORT, urd_forward_get_memory_fault_syscnt)
@@ -89,7 +89,7 @@ ADD_FEATURE_COMMAND(DMS_URD_FORWARD_CMD_NAME, DMS_GET_GET_DEVICE_INFO_CMD, ZERO_
 ADD_FEATURE_COMMAND(DMS_URD_FORWARD_CMD_NAME, DMS_GET_GET_DEVICE_INFO_CMD, ZERO_CMD, "module=0x0,info=0x36", NULL,
                     DMS_SUPPORT_ALL, dms_send_msg_to_device_by_h2d)
 ADD_FEATURE_COMMAND(DMS_URD_FORWARD_CMD_NAME, DMS_GET_SET_DEVICE_INFO_CMD, ZERO_CMD, "module=0x0,info=0x3b", NULL,
- 	  	            DMS_SUPPORT_ALL, dms_send_msg_to_device_fault_event_resume)
+                    DMS_SUPPORT_ALL, dms_send_msg_to_device_fault_event_resume)
 ADD_FEATURE_COMMAND(DMS_URD_FORWARD_CMD_NAME, URD_UBMEM_REPAIR_FAULT_CMD, ZERO_CMD, NULL, NULL,
                     DMS_ACC_ROOT | DMS_ENV_PHYSICAL | DMS_VDEV_NOTSUPPORT, urd_forward_ubmem_dev_repair)
 ADD_FEATURE_COMMAND(DMS_URD_FORWARD_CMD_NAME, URD_UBMEM_MAP_ROUTE_CHECK_CMD, ZERO_CMD, NULL, NULL,
@@ -144,13 +144,13 @@ STATIC int dms_urd_forward_para_check(void *feature, char *in, u32 in_len, char 
     }
     if (in == NULL || in_len < sizeof(u32)) {
         dms_err("Input data is null or input data length is not enough. (in%s; in_len=%u)\n",
-            in == NULL ? "=NULL" : "!=NULL", in_len);
+                in == NULL ? "=NULL" : "!=NULL", in_len);
         return -EINVAL;
     }
 
     if (out == NULL || out_len < sizeof(char)) {
         dms_err("Output data is null or output data length is not enough. (out%s; out_len=%u)\n",
-            out == NULL ? "=NULL" : "!=NULL", out_len);
+                out == NULL ? "=NULL" : "!=NULL", out_len);
         return -EINVAL;
     }
 
@@ -179,7 +179,7 @@ int dms_set_urd_msg(DMS_FEATURE_S *feature_cfg, char *in, u32 in_len, u32 out_le
     }
 
     if (in != NULL) {
-        ret = memcpy_s((void*)&(urd_msg->payload[0]), PAYLOAD_LEN_MAX, (void*)in, in_len);
+        ret = memcpy_s((void *)&(urd_msg->payload[0]), PAYLOAD_LEN_MAX, (void *)in, in_len);
         if (ret != 0) {
             dms_err("memcpy_s failed. (size=%d, ret=%d)\n", in_len, ret);
             return ret;
@@ -201,11 +201,11 @@ int dms_urd_forward_send_to_device(u32 phy_id, u32 vfid, struct urd_forward_msg 
     }
 
     if (urd_msg->payload_len > out_len) {
-        dms_err("size of payload is bigger than out_buff. (phy_id=%u; payload_len=%u; out_len=%u)\n",
-            phy_id, urd_msg->payload_len, out_len);
+        dms_err("size of payload is bigger than out_buff. (phy_id=%u; payload_len=%u; out_len=%u)\n", phy_id,
+                urd_msg->payload_len, out_len);
         return -EINVAL;
     }
-    ret = memcpy_s((void*)out, out_len, (void*)&(urd_msg->payload[0]), urd_msg->payload_len);
+    ret = memcpy_s((void *)out, out_len, (void *)&(urd_msg->payload[0]), urd_msg->payload_len);
     if (ret != 0) {
         dms_err("memcpy_s failed. (phy_id=%u; ret=%d; out_len=%u)\n", phy_id, ret, out_len);
     }
@@ -263,8 +263,10 @@ int dms_send_msg_to_device_by_h2d(void *feature, char *in, u32 in_len, char *out
 
     ret = dms_urd_forward_send_to_device(phys_id, vfid, &urd_msg, out, out_len);
     if (ret != 0) {
-        dms_ex_notsupport_err(ret, "Failed to send device by urd_forward. "
-            "(phys_id=%u; ret=%d; main_cmd=%u; sub_cmd=%u)\n", phys_id, ret, urd_msg.main_cmd, urd_msg.sub_cmd);
+        dms_ex_notsupport_err(ret,
+                              "Failed to send device by urd_forward. "
+                              "(phys_id=%u; ret=%d; main_cmd=%u; sub_cmd=%u)\n",
+                              phys_id, ret, urd_msg.main_cmd, urd_msg.sub_cmd);
         goto OCCUPY_AND_TASK_CNT_OUT;
     }
 
@@ -281,10 +283,10 @@ STATIC int urd_forward_ubmem_dev_repair(void *feature, char *in, u32 in_len, cha
     u32 devid, chip_type;
     u32 udevid = 0;
 
-    if ((feature == NULL) || (in == NULL) || (in_len < sizeof(struct ubmem_dev_repair_msg_in)) ||
-        (out == NULL) || (out_len < sizeof(struct ubmem_dev_repair_msg_out))) {
+    if ((feature == NULL) || (in == NULL) || (in_len < sizeof(struct ubmem_dev_repair_msg_in)) || (out == NULL) ||
+        (out_len < sizeof(struct ubmem_dev_repair_msg_out))) {
         dms_err("Invalid para. (feature=%d; in=%d; in_len=%u; out=%d; out_len=%u)\n", feature != NULL, in != NULL,
-            in_len, out != NULL, out_len);
+                in_len, out != NULL, out_len);
         return -EINVAL;
     }
 
@@ -302,7 +304,7 @@ STATIC int urd_forward_ubmem_dev_repair(void *feature, char *in, u32 in_len, cha
 
     chip_type = uda_get_chip_type(udevid);
     if ((chip_type != HISI_CLOUD_V4) && (chip_type != HISI_MINI_V4)) {
-        dms_info("Chip type is not support. (udevid=%u; chip_type=%u)\n", udevid, chip_type);
+        dms_info("Chip type is not supported. (udevid=%u; chip_type=%u)\n", udevid, chip_type);
         return -EOPNOTSUPP;
     }
 
@@ -319,9 +321,8 @@ STATIC int urd_forward_ubmem_dev_repair(void *feature, char *in, u32 in_len, cha
 
     ret = dms_send_msg_to_device_by_h2d(feature, in, in_len, out, out_len);
     if (ret != 0) {
-        dms_ex_notsupport_err(ret,
-            "ubmem repair send to device failed. (udevid=%u; cp1_tgid=%d; ret=%d)\n",
-            udevid, cp1_tgid, ret);
+        dms_ex_notsupport_err(ret, "ubmem repair send to device failed. (udevid=%u; cp1_tgid=%d; ret=%d)\n", udevid,
+                              cp1_tgid, ret);
     }
 
     return ret;
@@ -332,9 +333,8 @@ STATIC int urd_forward_ubmem_map_route_check(void *feature, char *in, u32 in_len
     struct ubmem_map_route_check_msg_in *msg_in = (struct ubmem_map_route_check_msg_in *)in;
     int ret;
 
-    if ((feature == NULL) ||
-        (in == NULL) || (in_len < sizeof(struct ubmem_map_route_check_msg_in)) ||
-        (out == NULL) || (out_len < sizeof(struct ubmem_map_route_check_msg_out))) {
+    if ((feature == NULL) || (in == NULL) || (in_len < sizeof(struct ubmem_map_route_check_msg_in)) || (out == NULL) ||
+        (out_len < sizeof(struct ubmem_map_route_check_msg_out))) {
         dms_err("Invalid para. (feature=%d; in=%d; in_len=%u)\n", feature != NULL, in != NULL, in_len);
         return -EINVAL;
     }
@@ -390,8 +390,10 @@ int dms_send_msg_to_device_by_h2d_kernel(void *feature, char *in, u32 in_len, ch
 
     ret = dms_urd_forward_send_to_device(dev_id, 0, &urd_msg, out, out_len);
     if (ret != 0) {
-        dms_ex_notsupport_err(ret, "Failed to send device by urd_forward. "
-            "(dev_id=%u; ret=%d; main_cmd=%u; sub_cmd=%u)\n", dev_id, ret, urd_msg.main_cmd, urd_msg.sub_cmd);
+        dms_ex_notsupport_err(ret,
+                              "Failed to send device by urd_forward. "
+                              "(dev_id=%u; ret=%d; main_cmd=%u; sub_cmd=%u)\n",
+                              dev_id, ret, urd_msg.main_cmd, urd_msg.sub_cmd);
         goto OCCUPY_AND_TASK_CNT_OUT;
     }
 
@@ -421,7 +423,7 @@ int dms_send_msg_to_device_by_h2d_get_va(void *feature, char *in, u32 in_len, ch
     return ret;
 }
 
-struct lpm_soc_stress_hal_cfg_in{
+struct lpm_soc_stress_hal_cfg_in {
     unsigned int pid;
     unsigned int is_offline;
 };
@@ -487,10 +489,10 @@ int dms_get_l2buff_m_ecc_resume_cnt(void *feature, char *in, u32 in_len, char *o
     u32 phy_devid, vfid;
     int ret = 0;
 
-    if ((feature == NULL) || (in == NULL) || (out == NULL) ||
-        (in_len < (DMS_HAL_DEV_INFO_HEAD_LEN + sizeof(int))) || (out_len < (DMS_HAL_DEV_INFO_HEAD_LEN + sizeof(int)))) {
-        dms_err("Param invalid. (feature=%d; in=%d; in_len=%u; out=%d, out_len=%u)\n",
-            feature != NULL, in != NULL, in_len, out != NULL, out_len);
+    if ((feature == NULL) || (in == NULL) || (out == NULL) || (in_len < (DMS_HAL_DEV_INFO_HEAD_LEN + sizeof(int))) ||
+        (out_len < (DMS_HAL_DEV_INFO_HEAD_LEN + sizeof(int)))) {
+        dms_err("Param invalid. (feature=%d; in=%d; in_len=%u; out=%d, out_len=%u)\n", feature != NULL, in != NULL,
+                in_len, out != NULL, out_len);
         return -EINVAL;
     }
 
@@ -515,7 +517,7 @@ int dms_get_l2buff_m_ecc_resume_cnt(void *feature, char *in, u32 in_len, char *o
 #ifdef CFG_FEATURE_GET_CURRENT_EVENTINFO
 int urd_forward_get_memory_fault_syscnt(void *feature, char *in, u32 in_len, char *out, u32 out_len)
 {
-    struct memory_fault_timestamp* mem_para = NULL;
+    struct memory_fault_timestamp *mem_para = NULL;
     int ret;
 
     if (feature == NULL || in == NULL || out == NULL) {
@@ -524,8 +526,8 @@ int urd_forward_get_memory_fault_syscnt(void *feature, char *in, u32 in_len, cha
     }
 
     if (in_len != sizeof(struct memory_fault_timestamp) || out_len != sizeof(struct memory_fault_timestamp)) {
-        dms_err("Invalid len. (in_len=%u; expected=%lu; out_len=%u; expected=%lu)\n",
-                in_len, sizeof(struct memory_fault_timestamp), out_len, sizeof(struct memory_fault_timestamp));
+        dms_err("Invalid len. (in_len=%u; expected=%lu; out_len=%u; expected=%lu)\n", in_len,
+                sizeof(struct memory_fault_timestamp), out_len, sizeof(struct memory_fault_timestamp));
         return -EINVAL;
     }
 
@@ -549,12 +551,11 @@ STATIC int dms_send_msg_to_device_get_sdk_ex_version(void *feature, char *in, u3
     unsigned int udevid, vf_id, soc_type;
     struct dms_hal_device_info_stru *cfg_in = NULL;
 
-    if ((feature == NULL) ||
-        (in == NULL) || (in_len != (DMS_HAL_DEV_INFO_HEAD_LEN + DMS_SDK_EX_VERSION_LEN_MAX)) ||
+    if ((feature == NULL) || (in == NULL) || (in_len != (DMS_HAL_DEV_INFO_HEAD_LEN + DMS_SDK_EX_VERSION_LEN_MAX)) ||
         (out == NULL) || (out_len != (DMS_HAL_DEV_INFO_HEAD_LEN + DMS_SDK_EX_VERSION_LEN_MAX))) {
         dms_err("Invalid parameter. (feature=%s; in=%s; in_len=%u; out=%s; out_len=%u)\n",
-            (feature == NULL) ? "NULL" : "OK",
-            (in == NULL) ? "NULL" : "OK", in_len, (out == NULL) ? "NULL" : "OK", out_len);
+                (feature == NULL) ? "NULL" : "OK", (in == NULL) ? "NULL" : "OK", in_len, (out == NULL) ? "NULL" : "OK",
+                out_len);
         return -EINVAL;
     }
 
@@ -619,16 +620,11 @@ int dms_send_msg_to_device_by_h2d_multi_packets(void *feature, char *in, u32 in_
             dms_err("Copy from user fail.(ret=%d;param_size=%u)\n", ret, len);
             return -EINVAL;
         }
-        dms_info("Set sign cert current_packet=%d, buff_size=%d, total_size=%d.\n",
-            cfg_in_temp.current_packet,
-            cfg_in_temp.buff_size,
-            cfg_in_temp.total_size);
+        dms_info("Set sign cert current_packet=%d, buff_size=%d, total_size=%d.\n", cfg_in_temp.current_packet,
+                 cfg_in_temp.buff_size, cfg_in_temp.total_size);
 
-        ret = dms_send_msg_to_device_by_h2d(feature,
-            (char *)&cfg_in_temp,
-            sizeof(cfg_in_temp),
-            (char *)&cfg_in_temp,
-            sizeof(cfg_in_temp));
+        ret = dms_send_msg_to_device_by_h2d(feature, (char *)&cfg_in_temp, sizeof(cfg_in_temp), (char *)&cfg_in_temp,
+                                            sizeof(cfg_in_temp));
         if (ret != 0) {
             return ret;
         }
@@ -663,11 +659,8 @@ int dms_send_msg_to_device_by_h2d_multi_packets_kernel(void *feature, char *in, 
             dms_err("Memcpy fail.(ret=%d;param_size=%u)\n", ret, len);
             return -EINVAL;
         }
-        ret = dms_send_msg_to_device_by_h2d_kernel(feature,
-            (char *)&cfg_in_temp,
-            sizeof(cfg_in_temp),
-            (char *)&cfg_in_temp,
-            sizeof(cfg_in_temp));
+        ret = dms_send_msg_to_device_by_h2d_kernel(feature, (char *)&cfg_in_temp, sizeof(cfg_in_temp),
+                                                   (char *)&cfg_in_temp, sizeof(cfg_in_temp));
         if (ret != 0) {
             return ret;
         }
@@ -697,10 +690,12 @@ STATIC bool event_in_whiltlist(unsigned int event_id)
     return false;
 }
 
-STATIC void make_up_filter_fault_event(struct dms_filter_st *filter, int module_type, int info_type, unsigned short node_type)
+STATIC void make_up_filter_fault_event(struct dms_filter_st *filter, int module_type, int info_type,
+                                       unsigned short node_type)
 {
-    filter->filter_len = (unsigned int)sprintf_s(filter->filter, sizeof(filter->filter), "module=0x%x,info=0x%x,node_type=0x%x",
-        (unsigned int)module_type, (unsigned int)info_type, (unsigned int)node_type);
+    filter->filter_len = (unsigned int)sprintf_s(filter->filter, sizeof(filter->filter),
+                                                 "module=0x%x,info=0x%x,node_type=0x%x", (unsigned int)module_type,
+                                                 (unsigned int)info_type, (unsigned int)node_type);
 }
 
 STATIC int dms_send_msg_to_device_fault_event_resume(void *feature, char *in, u32 in_len, char *out, u32 out_len)
@@ -719,13 +714,13 @@ STATIC int dms_send_msg_to_device_fault_event_resume(void *feature, char *in, u3
 
     if (!event_in_whiltlist(((struct fault_event_resume *)(info_in->payload))->event_id)) {
         if (ka_task_get_current_cred_euid() != 0) {
-            dms_debug("Event_id is not in whiltlist, and it cannot be invoked by non-root user.\n");
+            dms_debug("Event_id is not in whitelist, and it cannot be invoked by non-root user.\n");
             return -EOPNOTSUPP;
         }
     }
 
     make_up_filter_fault_event(&filter, info_in->module_type, info_in->info_type,
-            ((struct fault_event_resume *)(info_in->payload))->node_type);
+                               ((struct fault_event_resume *)(info_in->payload))->node_type);
 
     feature_cfg = (DMS_FEATURE_S *)feature;
     feature_cfg->filter = (char *)&filter;

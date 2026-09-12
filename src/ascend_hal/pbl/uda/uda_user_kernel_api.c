@@ -139,7 +139,7 @@ static int uda_char_dev_open(void)
 
     ret = uda_ioctl(uda_dev_fd, DAVINCI_INTF_IOCTL_OPEN, &arg);
     if (ret != 0) {
-        uda_err("Ioctrl failed. (fd=%d; errno=%d)\n", uda_dev_fd, errno);
+        uda_err("Ioctl failed. (fd=%d; errno=%d)\n", uda_dev_fd, errno);
         uda_file_close(uda_dev_fd);
         uda_dev_fd = -1;
         return DRV_ERROR_IOCRL_FAIL;
@@ -164,7 +164,7 @@ static void uda_char_dev_close(void)
 
     ret = uda_ioctl(uda_dev_fd, DAVINCI_INTF_IOCTL_CLOSE, &arg);
     if (ret != 0) {
-        uda_err("Ioctrl failed. (fd=%d; errno=%d)\n", uda_dev_fd, errno);
+        uda_err("Ioctl failed. (fd=%d; errno=%d)\n", uda_dev_fd, errno);
     }
 
     uda_file_close(uda_dev_fd);
@@ -311,12 +311,8 @@ static int _uda_init(void)
 
     uda_info("User info. (admin_flag=%u; local_flag=%u; max_dev_num=%u; max_udev_num=%u; "
              "uda_dev_num_davinci=%u; uda_dev_num_kunpeng=%u)\n",
-        user_info.admin_flag,
-        user_info.local_flag,
-        user_info.max_dev_num,
-        user_info.max_udev_num,
-        uda_dev_num_davinci,
-        uda_dev_num_kunpeng);
+             user_info.admin_flag, user_info.local_flag, user_info.max_dev_num, user_info.max_udev_num,
+             uda_dev_num_davinci, uda_dev_num_kunpeng);
 
     return 0;
 }
@@ -368,8 +364,8 @@ static void __attribute__((destructor)) uda_user_uninit(void)
     uda_uninit();
 }
 
-static void uda_get_dev_IDs(
-    struct uda_logic_dev *dev, uint32_t max_dev_num, uint32_t hw_type, uint32_t *id, uint32_t idLen)
+static void uda_get_dev_IDs(struct uda_logic_dev *dev, uint32_t max_dev_num, uint32_t hw_type, uint32_t *id,
+                            uint32_t idLen)
 {
     uint32_t i, num = 0;
 
@@ -486,8 +482,8 @@ int uda_user_get_vdev_num(uint32_t *devNum)
         return ret;
     }
 
-    *devNum = uda_get_dev_num_from_dev_list(
-        &logic_dev[user_info.max_dev_num], user_info.max_udev_num - user_info.max_dev_num, UDA_HW_DAVINCI);
+    *devNum = uda_get_dev_num_from_dev_list(&logic_dev[user_info.max_dev_num],
+                                            user_info.max_udev_num - user_info.max_dev_num, UDA_HW_DAVINCI);
 
     return DRV_ERROR_NONE;
 }
@@ -516,11 +512,8 @@ int uda_user_get_vdev_ids(uint32_t *devices, uint32_t len)
         return ret;
     }
 
-    uda_get_dev_IDs(&logic_dev[user_info.max_dev_num],
-        user_info.max_udev_num - user_info.max_dev_num,
-        UDA_HW_DAVINCI,
-        devices,
-        len);
+    uda_get_dev_IDs(&logic_dev[user_info.max_dev_num], user_info.max_udev_num - user_info.max_dev_num, UDA_HW_DAVINCI,
+                    devices, len);
 
     return DRV_ERROR_NONE;
 }
@@ -611,8 +604,8 @@ int uda_get_devid_by_mia_dev(uint32_t phy_devid, uint32_t sub_devid, uint32_t *d
 
     max_dev_num = uda_get_max_dev_num();
     for (i = user_info.max_dev_num; i < max_dev_num; i++) {
-        if ((logic_dev[i].valid == 1)
-            && (logic_dev[i].phy_devid == phy_devid) && (logic_dev[i].sub_devid == sub_devid)) {
+        if ((logic_dev[i].valid == 1) && (logic_dev[i].phy_devid == phy_devid) &&
+            (logic_dev[i].sub_devid == sub_devid)) {
             *devid = logic_dev[i].devid;
             return DRV_ERROR_NONE;
         }
@@ -676,7 +669,7 @@ int uda_get_raw_proc_is_contain(uint32_t *flag)
     int ret;
 
     if (flag == NULL) {
-        uda_err("flag in NULL\n");
+        uda_err("flag is NULL\n");
         return -EINVAL;
     }
 
@@ -753,10 +746,8 @@ int uda_user_get_devid_by_local_devid(uint32_t local_devid, uint32_t *remote_ude
     }
 
     if (remote_udevid == NULL || local_devid >= user_info.max_udev_num) {
-        uda_err("Param invalid.(remote_udevid=%d; local_devid=%u; max=%u)\n",
-            remote_udevid != NULL,
-            local_devid,
-            user_info.max_udev_num);
+        uda_err("Param invalid.(remote_udevid=%d; local_devid=%u; max=%u)\n", remote_udevid != NULL, local_devid,
+                user_info.max_udev_num);
         return DRV_ERROR_INVALID_VALUE;
     }
 

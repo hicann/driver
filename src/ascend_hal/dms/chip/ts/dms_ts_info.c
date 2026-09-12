@@ -28,7 +28,7 @@
 #ifdef STATIC_SKIP
 #define STATIC
 #else
-#define STATIC    static
+#define STATIC static
 #endif
 #endif
 #ifdef CFG_FEATURE_AIC_AIV_CONTINUOUS_UTILIZATION
@@ -56,8 +56,7 @@ STATIC int dms_set_core_utilization_asyn(unsigned int dev_id, unsigned int sub_c
 
     ret = DmsIoctl(DMS_IOCTL_CMD, &ioarg);
     if (ret != 0) {
-        DMS_EX_NOTSUPPORT_ERR(ret, "Ioctl failed. (ret=%d; user_errno=%d)\n",
-            ret, errno_to_user_errno(ret));
+        DMS_EX_NOTSUPPORT_ERR(ret, "Ioctl failed. (ret=%d; user_errno=%d)\n", ret, errno_to_user_errno(ret));
         return errno_to_user_errno(ret);
     }
     return DRV_ERROR_NONE;
@@ -98,7 +97,7 @@ STATIC int dms_get_core_utilization_asyn(unsigned int dev_id, unsigned int sub_c
 #endif
 
 #ifdef CFG_FEATURE_SET_STL_RUNNING_STATUS
-static drvError_t tsdrv_check_stl_params( unsigned int sub_cmd, uint32_t devId, void *buf, unsigned int paramSize)
+static drvError_t tsdrv_check_stl_params(unsigned int sub_cmd, uint32_t devId, void *buf, unsigned int paramSize)
 {
     struct ts_stl_start_info *info = (struct ts_stl_start_info *)buf;
 
@@ -205,7 +204,8 @@ int dms_get_ts_info(unsigned int dev_id, unsigned int vfid, unsigned int sub_cmd
         case DSMI_TS_SUB_CMD_NPU_MULTI_UTILIZATION_RATE:
             ret = dms_get_single_util_from_ts(dev_id, vfid, sub_cmd, out_buf, size);
             if (ret != 0) {
-                DMS_EX_NOTSUPPORT_ERR(ret, "Get single util from ts failed. (dev_id=%u; vfid=%u; ret=%d)\n", dev_id, vfid, ret);
+                DMS_EX_NOTSUPPORT_ERR(ret, "Get single util from ts failed. (dev_id=%u; vfid=%u; ret=%d)\n", dev_id,
+                                      vfid, ret);
                 return ret;
             }
             break;
@@ -219,7 +219,8 @@ int dms_get_ts_info(unsigned int dev_id, unsigned int vfid, unsigned int sub_cmd
         case DSMI_TS_SUB_CMD_GET_FAULT_MASK:
             ret = DmsGetDeviceInfo(dev_id, DSMI_MAIN_CMD_TS, sub_cmd, out_buf, size);
             if (ret != 0) {
-                DEV_MON_EX_NOTSUPPORT_ERR(ret, "Get ts fault mask failed. (dev_id=%u; vfid=%u; ret=%d)\n", dev_id, vfid, ret);
+                DEV_MON_EX_NOTSUPPORT_ERR(ret, "Get ts fault mask failed. (dev_id=%u; vfid=%u; ret=%d)\n", dev_id, vfid,
+                                          ret);
                 return ret;
             }
             break;
@@ -257,14 +258,14 @@ int dms_set_ts_info(unsigned int dev_id, unsigned int sub_cmd, void *buf, unsign
             if (ret != 0) {
                 DMS_ERR("Start STL test fail. (dev_id=%u; ret=%d)\n", dev_id, ret);
             }
-            break;              
+            break;
         case DSMI_TS_SUB_CMD_STOP_PERIOD_AICORE_STL:
             ret = dms_set_stl_running_status(dev_id, sub_cmd, buf, size);
             if (ret != 0) {
                 DMS_ERR("Stop STL test fail. (dev_id=%u; ret=%d)\n", dev_id, ret);
             }
-            break;  
-#endif            
+            break;
+#endif
 #ifdef CFG_FEATURE_AIC_AIV_CONTINUOUS_UTILIZATION
         case DSMI_TS_SUB_CMD_AIC_UTILIZATION_RATE_ASYN:
         case DSMI_TS_SUB_CMD_AIV_UTILIZATION_RATE_ASYN:
@@ -278,8 +279,8 @@ int dms_set_ts_info(unsigned int dev_id, unsigned int sub_cmd, void *buf, unsign
     return ret;
 }
 
-int dms_get_single_util_from_ts(unsigned int dev_id, unsigned int vfid, unsigned int sub_cmd,
-    void *out_buf, unsigned int *size)
+int dms_get_single_util_from_ts(unsigned int dev_id, unsigned int vfid, unsigned int sub_cmd, void *out_buf,
+                                unsigned int *size)
 {
     int ret;
     struct dms_ioctl_arg ioarg = {0};
@@ -321,7 +322,7 @@ int dms_get_single_util_from_ts(unsigned int dev_id, unsigned int vfid, unsigned
     return DRV_ERROR_NONE;
 }
 
-static unsigned int dms_calculate_average_utilization(unsigned char* core_util, unsigned int core_num)
+static unsigned int dms_calculate_average_utilization(unsigned char *core_util, unsigned int core_num)
 {
     unsigned int value = 0;
     unsigned int damaged_count = 0;
@@ -338,7 +339,7 @@ static unsigned int dms_calculate_average_utilization(unsigned char* core_util, 
             return value;
         } else if (core_util[i] > 100) { /* 100: Utilization can never over 100% */
             invalid_count++;
-            DMS_WARN("The utilization of core %u more than 100%%.\n", i);
+            DMS_WARN("The utilization of core is more than 100%%. (core=%u)\n", i);
             continue;
         } else {
             sum_utl += core_util[i];
@@ -349,8 +350,8 @@ static unsigned int dms_calculate_average_utilization(unsigned char* core_util, 
         value = sum_utl / (core_num - damaged_count - invalid_count);
     } else {
         value = 0;
-        DMS_EVENT("Average utilization is 0. (total_count=%u; invalid_count=%u; damaged_count=%u)\n",
-                  core_num, invalid_count, damaged_count);
+        DMS_EVENT("Average utilization is 0. (total_count=%u; invalid_count=%u; damaged_count=%u)\n", core_num,
+                  invalid_count, damaged_count);
     }
 
     return value;

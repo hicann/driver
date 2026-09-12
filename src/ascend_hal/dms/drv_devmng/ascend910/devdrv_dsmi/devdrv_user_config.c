@@ -188,13 +188,14 @@ int halGetUserConfig(unsigned int devId, const char *name, unsigned char *buf, u
     }
 
     if (devId >= DEVDRV_UC_CHIP_MAX) {
-        DEVDRV_DRV_ERR("dev_id[%u] out of range.\n", devId);
+        DEVDRV_DRV_ERR("dev_id out of range. (dev_id=%u; max=%u)\n", devId, DEVDRV_UC_CHIP_MAX);
         return -EINVAL;
     }
 
     name_len = (u32)strlen(name) + 1;
     if (name_len > (DEVDRV_USER_CONFIG_NAME_MAX)) {
-        DEVDRV_DRV_ERR("dev_id[%u], name len is too long, name_len: %u.\n", devId, name_len);
+        DEVDRV_DRV_ERR("name len is too long. (dev_id=%u; name_len=%u; max=%u)\n", devId, name_len,
+                       DEVDRV_USER_CONFIG_NAME_MAX);
         return -EINVAL;
     }
 
@@ -261,13 +262,14 @@ int halSetUserConfig(unsigned int devId, const char *name, unsigned char *buf, u
     }
 
     if (devId >= DEVDRV_UC_CHIP_MAX) {
-        DEVDRV_DRV_ERR("dev_id[%u] out of range.\n", devId);
+        DEVDRV_DRV_ERR("dev_id out of range. (dev_id=%u; max=%u)\n", devId, DEVDRV_UC_CHIP_MAX);
         return -EINVAL;
     }
 
     name_len = (u32)strlen(name) + 1;
     if (name_len > DEVDRV_USER_CONFIG_NAME_MAX) {
-        DEVDRV_DRV_ERR("dev_id[%u], name len is too long, name_len: %u.\n", devId, name_len);
+        DEVDRV_DRV_ERR("name len is too long. (dev_id=%u; name_len=%u; max=%u)\n", devId, name_len,
+                       DEVDRV_USER_CONFIG_NAME_MAX);
         return -EINVAL;
     }
 
@@ -316,13 +318,14 @@ int halClearUserConfig(unsigned int devId, const char *name)
     }
 
     if (devId >= DEVDRV_UC_CHIP_MAX) {
-        DEVDRV_DRV_ERR("dev_id[%u] out of range.\n", devId);
+        DEVDRV_DRV_ERR("dev_id out of range. (dev_id=%u; max=%u)\n", devId, DEVDRV_UC_CHIP_MAX);
         return -EINVAL;
     }
 
     name_len = (u32)strlen(name) + 1;
     if (name_len > DEVDRV_USER_CONFIG_NAME_MAX) {
-        DEVDRV_DRV_ERR("dev_id[%u], name len is too long, name_len: %u.\n", devId, name_len);
+        DEVDRV_DRV_ERR("name len is too long. (dev_id=%u; name_len=%u; max=%u)\n", devId, name_len,
+                       DEVDRV_USER_CONFIG_NAME_MAX);
         return -EINVAL;
     }
 
@@ -441,8 +444,11 @@ STATIC int devdrv_check_cpu_nums(uc_cpu_cfg_t *cpu_cfg, unsigned int cpu_nums_su
         DEVDRV_DRV_ERR("drv_get_h2d_dev_info failed. (ret=%d)\n", ret);
         return ret;
     }
-    if ((PLAT_GET_CHIP(dev_info.hardware_version) == CHIP_CLOUD_V4 || PLAT_GET_CHIP(dev_info.hardware_version) == CHIP_CLOUD_V5) && cpu_cfg->data_cpu_num < DATA_CPU_NUM_MIN) {
-        DEVDRV_DRV_ERR("data cpu number is not valid. (data_cpu_num=%u, data_cpu_num_min=%u)\n", cpu_cfg->data_cpu_num, DATA_CPU_NUM_MIN);
+    if ((PLAT_GET_CHIP(dev_info.hardware_version) == CHIP_CLOUD_V4 ||
+         PLAT_GET_CHIP(dev_info.hardware_version) == CHIP_CLOUD_V5) &&
+        cpu_cfg->data_cpu_num < DATA_CPU_NUM_MIN) {
+        DEVDRV_DRV_ERR("data cpu number is not valid. (data_cpu_num=%u, data_cpu_num_min=%u)\n", cpu_cfg->data_cpu_num,
+                       DATA_CPU_NUM_MIN);
         return DRV_ERROR_INVALID_VALUE;
     }
     ret = devdrv_get_total_cpu_cores(&total_cpu_cores);
@@ -486,8 +492,8 @@ STATIC int devdrv_cpu_nums_check_para(unsigned char *buf, unsigned int buf_size)
         return DRV_ERROR_INVALID_VALUE;
     }
 
-    DEVDRV_DRV_INFO("ctrl_cpu: %u, data_cpu: %u, ai_cpu: %u.\n",
-        cpu_cfg->ctrl_cpu_num, cpu_cfg->data_cpu_num, cpu_cfg->ai_cpu_num);
+    DEVDRV_DRV_INFO("ctrl_cpu: %u, data_cpu: %u, ai_cpu: %u.\n", cpu_cfg->ctrl_cpu_num, cpu_cfg->data_cpu_num,
+                    cpu_cfg->ai_cpu_num);
 #ifdef CFG_FEATURE_COM_CPU_CONFIG
     cpu_nums_sum = cpu_cfg->ctrl_cpu_num + cpu_cfg->data_cpu_num + cpu_cfg->ai_cpu_num + cpu_cfg->com_cpu_num;
     if (memcmp(cpu_cfg->reserved_2, cpu_check.reserved_2, sizeof(cpu_check.reserved_2)) != 0) {
@@ -527,9 +533,8 @@ STATIC int devdrv_check_user_config_authority(const char *name)
 #ifdef CFG_SOC_PLATFORM_CLOUD
     int i;
     const char *verify_item_name[NETWORK_ITEM_NAME_NUM] = {
-        CERT_ITEM_NAME_S0, CERT_ITEM_NAME_S1, CERT_ITEM_NAME_S2, CERT_ITEM_NAME_S3,
-        DIGITAL_ITEM_NAME_S0, DIGITAL_ITEM_NAME_S1, DIGITAL_ITEM_NAME_S2
-    };
+        CERT_ITEM_NAME_S0,    CERT_ITEM_NAME_S1,    CERT_ITEM_NAME_S2,   CERT_ITEM_NAME_S3,
+        DIGITAL_ITEM_NAME_S0, DIGITAL_ITEM_NAME_S1, DIGITAL_ITEM_NAME_S2};
     int verify_num = NETWORK_ITEM_NAME_NUM;
 
     /* cert item for dsmi, not permit to read/write/clear */
@@ -622,7 +627,8 @@ STATIC int devdrv_p2p_mem_cfg_para_check(unsigned char *buf, unsigned int buf_si
     }
 
     if (i >= P2P_MEM_LEVEL_MAX) {
-        DEVDRV_DRV_ERR("Unsupported p2p memory size. (p2p_mem_size=%uM)\n", *(unsigned int *)buf);
+        DEVDRV_DRV_ERR("Unsupported p2p memory size. (p2p_mem_size=%uM; supported=%s)\n", *(unsigned int *)buf,
+                       "0M,1024M,2048M");
         return DRV_ERROR_INVALID_VALUE;
     }
 
@@ -673,8 +679,8 @@ STATIC uint16_t CRC16(const uint8_t *pdata, uint16_t datalen)
 #define MAC_INFO_CRC_BUF_LEN 9
 #define BUF_MIN_LEN 16
 #define CRC_CODE_MASK 0xFF
-#define MAC_INFO_CONFIG_NAME        "mac_info"
-#define MAC_INFO_1_CONFIG_NAME      "mac_info_1"
+#define MAC_INFO_CONFIG_NAME "mac_info"
+#define MAC_INFO_1_CONFIG_NAME "mac_info_1"
 STATIC int devdrv_check_mac_info_crc(const char *name, unsigned char *buf, unsigned int buf_size)
 {
     int ret;
@@ -698,8 +704,8 @@ STATIC int devdrv_check_mac_info_crc(const char *name, unsigned char *buf, unsig
     crc_buf[0] = MAC_INFO_CRC_BUF_LEN;
     crc_buf[1] = mac_id;
     crc_buf[MAC_INFO_TYPE_INDEX] = 0;
-    ret = memcpy_s(crc_buf + MAC_ADDR_OFFSET, MAC_INFO_CRC_BUF_LEN - MAC_ADDR_OFFSET,
-        buf + BUF_MAC_ADDR_OFFSET, MAC_ADDR_LEN);
+    ret = memcpy_s(crc_buf + MAC_ADDR_OFFSET, MAC_INFO_CRC_BUF_LEN - MAC_ADDR_OFFSET, buf + BUF_MAC_ADDR_OFFSET,
+                   MAC_ADDR_LEN);
     if (ret != DRV_ERROR_NONE) {
         DEVDRV_DRV_ERR("Failed to invoke memcpy_s (ret=%d).\n", ret);
         return DRV_ERROR_MEMORY_OPT_FAIL;
@@ -788,8 +794,8 @@ int devdrv_user_config_common_check(unsigned int dev_id, const char *name)
     if (strcmp(name, P2P_MEM_CONFIG_NAME) == 0) {
         ret = devdrv_p2p_mem_check_env(dev_id);
         if (ret != 0) {
-            DEVDRV_DRV_EX_NOTSUPPORT_ERR(ret,
-                "In 2P scenes, p2p memory only support for P0. (devid=%u; ret=%d)\n", dev_id, ret);
+            DEVDRV_DRV_EX_NOTSUPPORT_ERR(ret, "In 2P scenes, p2p memory only supports P0. (devid=%u; ret=%d)\n", dev_id,
+                                         ret);
             return ret;
         }
     }

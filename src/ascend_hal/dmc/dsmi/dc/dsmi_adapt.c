@@ -37,8 +37,8 @@
 #define UPGRADE_DST_PATH "/home/drv/upgrade/firmware/device"
 #endif
 
-int _dsmi_get_fault_inject_info(unsigned int device_id, unsigned int max_info_cnt,
-    DSMI_FAULT_INJECT_INFO *info_buf, unsigned int *real_info_cnt)
+int _dsmi_get_fault_inject_info(unsigned int device_id, unsigned int max_info_cnt, DSMI_FAULT_INJECT_INFO *info_buf,
+                                unsigned int *real_info_cnt)
 {
     (void)device_id;
     (void)max_info_cnt;
@@ -81,9 +81,9 @@ int find_file_name(int device_id, const char *path_name, char *dst_name)
 #else
         ret = sprintf_s(dst_name, PATH_MAX, UPGRADE_DST_PATH "%d/%s", device_id, name_start);
 #endif
-        DRV_CHECK_RETV_DO_SOMETHING(ret >= 0, DSMI_SAFE_FUN_FAIL,
-                                    DEV_MON_ERR("DSMI call safe fun fail, ret = %d\n", ret);
-                                    free(base_path); base_path = NULL);
+        DRV_CHECK_RETV_DO_SOMETHING(
+            ret >= 0, DSMI_SAFE_FUN_FAIL, DEV_MON_ERR("DSMI call safe fun fail, ret = %d\n", ret); free(base_path);
+            base_path = NULL);
     } else if (ret == PCIE_EP_MODE) {
         ret = drvHdcGetTrustedBasePathEx(0xFF, 0, device_id, base_path, PATH_MAX);
         if (ret != DRV_ERROR_NONE) {
@@ -113,7 +113,7 @@ int find_file_name(int device_id, const char *path_name, char *dst_name)
 }
 
 int parse_cfg_file(int devices_id, CFG_FILE_DES *component_des, const char *file_name,
-    DSMI_COMPONENT_TYPE component_type)
+                   DSMI_COMPONENT_TYPE component_type)
 {
     unsigned int i;
     FILE *fd = NULL;
@@ -135,12 +135,10 @@ int parse_cfg_file(int devices_id, CFG_FILE_DES *component_des, const char *file
                                 dev_upgrade_err("get component des param is null\n"));
 
     tmp_path = (char *)calloc(PATH_MAX, sizeof(char));
-    DRV_CHECK_RETV_DO_SOMETHING((tmp_path != NULL), DRV_ERROR_MALLOC_FAIL,
-                                dev_upgrade_err("tmp_path calloc fail\n"));
+    DRV_CHECK_RETV_DO_SOMETHING((tmp_path != NULL), DRV_ERROR_MALLOC_FAIL, dev_upgrade_err("tmp_path calloc fail\n"));
 
     value = (char *)calloc(PATH_MAX, sizeof(char));
-    DRV_CHECK_RETV_DO_SOMETHING((value != NULL), DRV_ERROR_MALLOC_FAIL,
-                                dev_upgrade_err("value calloc fail\n");
+    DRV_CHECK_RETV_DO_SOMETHING((value != NULL), DRV_ERROR_MALLOC_FAIL, dev_upgrade_err("value calloc fail\n");
                                 DSMI_FREE(tmp_path));
 
     dev_mon_fopen(&fd, file_name, "r");
@@ -158,12 +156,10 @@ int parse_cfg_file(int devices_id, CFG_FILE_DES *component_des, const char *file
     while ((str = fgets(str, MAX_LINE_LEN, fd)) != NULL) {
         if (!split_by_char(buf, (char *)tmp_path, PATH_MAX, (char *)value, PATH_MAX, ':')) {
             DRV_CHECK_DO_SOMETHING(i < MAX_COMPONENT_NUM, ret = DRV_ERROR_NOT_SUPPORT;
-                    dev_upgrade_ex_notsupport_err(ret, "i:%d >= MAX_COMPONENT_NUM\n", i);
-                    goto out);
+                                   dev_upgrade_ex_notsupport_err(ret, "i:%d >= MAX_COMPONENT_NUM\n", i); goto out);
 
             (void)component_type;
-            ret = strncpy_s(component_des[i].src_component_path, PATH_MAX, tmp_path,
-                            strnlen(tmp_path, PATH_MAX - 1));
+            ret = strncpy_s(component_des[i].src_component_path, PATH_MAX, tmp_path, strnlen(tmp_path, PATH_MAX - 1));
             if (ret != 0) {
                 dev_upgrade_err("strncpy_s error ret = %d\n", ret);
                 goto out;
@@ -233,8 +229,8 @@ int check_component_type(DSMI_COMPONENT_TYPE component_type, int device_id)
 
     ret = dsmi_get_component_count(device_id, &component_num);
     if (ret || (component_num > MAX_COMPONENT_NUM) || (component_num == 0)) {
-        dev_upgrade_err("get device %d component count fail ret = %d, component_num = %u!\n",
-                        device_id, ret, component_num);
+        dev_upgrade_err("get device %d component count fail ret = %d, component_num = %u!\n", device_id, ret,
+                        component_num);
         return ret;
     }
 
@@ -245,7 +241,7 @@ int check_component_type(DSMI_COMPONENT_TYPE component_type, int device_id)
     }
     ret = check_component_type_validity(component_list, component_type, component_num);
     if (ret != 0) {
-        dev_upgrade_debug("Component type is not validity. (dev_id=%d, ret=0x%x)\n", device_id, ret);
+        dev_upgrade_debug("Component type is not valid. (dev_id=%d; ret=0x%x)\n", device_id, ret);
         return ret;
     }
     return ret;
@@ -268,20 +264,20 @@ int check_dst_file_path(int device_id, const char *src_path)
 #else
     ret = sprintf_s(dst_path, PATH_MAX, UPGRADE_DST_PATH "%d/", device_id);
 #endif
-    DRV_CHECK_RETV_DO_SOMETHING(ret >= 0, DSMI_SAFE_FUN_FAIL,
-                                DEV_MON_ERR("DSMI call safe fun fail. (ret=%d)\n", ret);
+    DRV_CHECK_RETV_DO_SOMETHING(ret >= 0, DSMI_SAFE_FUN_FAIL, DEV_MON_ERR("DSMI call safe fun fail. (ret=%d)\n", ret);
                                 DSMI_FREE(dst_path));
     if (access(dst_path, F_OK) != 0) {
         ret = mkdir(dst_path, S_IRWXU | S_IRGRP | S_IXGRP);
-        DRV_CHECK_RETV_DO_SOMETHING(ret >= 0, DRV_ERROR_FILE_OPS,
+        DRV_CHECK_RETV_DO_SOMETHING(
+            ret >= 0, DRV_ERROR_FILE_OPS,
             DEV_MON_ERR("Call mkdir failed. (dev_id=%d; dst_path=%s; errno=%d)\n", device_id, dst_path, errno);
             DSMI_FREE(dst_path));
     }
 
     ret = strncmp(src_path, dst_path, strlen(dst_path));
     if (ret != 0) {
-        DEV_MON_ERR("The file path is not in the expected path. (dev_id=%d; src_path=%s; dst_path=%s)\n",
-            device_id, src_path, dst_path);
+        DEV_MON_ERR("The file path is not in the expected path. (dev_id=%d; src_path=%s; dst_path=%s)\n", device_id,
+                    src_path, dst_path);
         DSMI_FREE(dst_path);
         return DRV_ERROR_PARA_ERROR;
     }
@@ -320,7 +316,6 @@ int _dsmi_set_flash_content(int device_id, DSMI_FLASH_CONTENT content_info)
     return DRV_ERROR_NOT_SUPPORT;
 }
 
-
 int dsmi_upgrade_cmd_send(int device_id, DSMI_COMPONENT_TYPE component_type, const char *file_name)
 {
     int ret;
@@ -332,7 +327,8 @@ int dsmi_upgrade_cmd_send(int device_id, DSMI_COMPONENT_TYPE component_type, con
 
     ret = check_upgrade_component_type_and_state(device_id, &upgrade_schedule, &upgrade_status, component_type);
     if (ret != 0) {
-        dev_upgrade_ex_notsupport_err(ret,
+        dev_upgrade_ex_notsupport_err(
+            ret,
             "check upgrade state fail, current status not support upgrade. (device=0x%x; ret=%d; upgrade_status=%u)\n",
             device_id, ret, upgrade_status);
         return ret;
@@ -341,24 +337,21 @@ int dsmi_upgrade_cmd_send(int device_id, DSMI_COMPONENT_TYPE component_type, con
     // 1 prepare upgrade, device clear component list saved by previous upgrade process
     ret = dsmi_update_no_response_data(device_id, UPGRADE_PREPARE);
     if (ret != 0) {
-        dev_upgrade_ex_notsupport_err(ret,
-            "send prepare upgrade info failed. (dev_id=%d; ret=%d)!\n", device_id, ret);
+        dev_upgrade_ex_notsupport_err(ret, "send prepare upgrade info failed. (dev_id=%d; ret=%d)!\n", device_id, ret);
         return ret;
     }
 
     // 2 get type  from device
     ret = dsmi_get_component_count(device_id, &component_num);
     if (ret || (component_num > MAX_COMPONENT_NUM) || (component_num == 0)) {
-        dev_upgrade_ex_notsupport_err(ret,
-            "get device %d component list fail ret = %d, component_num = %u!\n",
-            device_id, ret, component_num);
+        dev_upgrade_ex_notsupport_err(ret, "get device %d component list fail ret = %d, component_num = %u!\n",
+                                      device_id, ret, component_num);
         return ret;
     }
 
     ret = dsmi_get_component_list(device_id, component_list, component_num);
     if (ret != 0) {
-        dev_upgrade_ex_notsupport_err(ret,
-            "get device %d component list fail ret = %d!\n", device_id, ret);
+        dev_upgrade_ex_notsupport_err(ret, "get device %d component list fail ret = %d!\n", device_id, ret);
         return ret;
     }
 
@@ -367,15 +360,14 @@ int dsmi_upgrade_cmd_send(int device_id, DSMI_COMPONENT_TYPE component_type, con
         // check component_type is support or not
         ret = upgrade_single_component(device_id, file_name, component_list, component_num, component_type);
         if (ret) {
-            dev_upgrade_ex_notsupport_err(ret,
-                "update device %d of  component %s fail ret = %d\n", device_id, file_name, ret);
+            dev_upgrade_ex_notsupport_err(ret, "update device %d of  component %s fail ret = %d\n", device_id,
+                                          file_name, ret);
             return ret;
         }
     } else {
         ret = upgrade_all_component(device_id, file_name, component_list, component_num, component_type);
         if (ret) {
-            dev_upgrade_ex_notsupport_err(ret, "update device %d of all component fail ret = %d\n",
-                device_id, ret);
+            dev_upgrade_ex_notsupport_err(ret, "update device %d of all component fail ret = %d\n", device_id, ret);
             return DRV_ERROR_INNER_ERR;
         }
     }
@@ -384,8 +376,8 @@ int dsmi_upgrade_cmd_send(int device_id, DSMI_COMPONENT_TYPE component_type, con
     control_cmd = (component_type != UPGRADE_AND_RESET_ALL_COMPONENT) ? START_UPDATE : START_UPDATE_AND_RESET;
     ret = dsmi_update_no_response_data(device_id, control_cmd);
     if (ret != 0) {
-        dev_upgrade_ex_notsupport_err(ret,
-            "update device %d when send start update cmd (0x4) fail ret = %d!\n", device_id, ret);
+        dev_upgrade_ex_notsupport_err(ret, "update device %d when send start update cmd (0x4) fail ret = %d!\n",
+                                      device_id, ret);
         return ret;
     }
 
@@ -425,8 +417,8 @@ int _dsmi_ctrl_device_node(int device_id, struct dsmi_dtm_node_s dtm_node, DSMI_
     return DRV_ERROR_NOT_SUPPORT;
 }
 
-int _dsmi_get_all_device_node(int device_id, DEV_DTM_CAP capability,
-    struct dsmi_dtm_node_s node_info[], unsigned int *size)
+int _dsmi_get_all_device_node(int device_id, DEV_DTM_CAP capability, struct dsmi_dtm_node_s node_info[],
+                              unsigned int *size)
 {
     (void)device_id;
     (void)capability;
@@ -441,8 +433,7 @@ int _dsmi_fault_inject(DSMI_FAULT_INJECT_INFO fault_inject_info)
     return DRV_ERROR_NOT_SUPPORT;
 }
 
-int _dsmi_get_device_state(int device_id, DSMI_DEV_NODE_STATE *node_state,
-    unsigned int max_num, unsigned int *num)
+int _dsmi_get_device_state(int device_id, DSMI_DEV_NODE_STATE *node_state, unsigned int max_num, unsigned int *num)
 {
     (void)device_id;
     (void)node_state;
@@ -450,7 +441,6 @@ int _dsmi_get_device_state(int device_id, DSMI_DEV_NODE_STATE *node_state,
     (void)num;
     return DRV_ERROR_NOT_SUPPORT;
 }
-
 
 int _dsmi_set_bist_info(int device_id, DSMI_BIST_CMD cmd, const void *buf, unsigned int buf_size)
 {
@@ -514,12 +504,12 @@ int _dsmi_get_ufs_status(int device_id, struct dsmi_ufs_status_stru *ufs_status_
     return dsmi_cmd_get_ufs_status(device_id, ufs_status_data);
 }
 
-int _dsmi_set_device_info(unsigned int device_id, DSMI_MAIN_CMD main_cmd, unsigned int sub_cmd,
-    const void *buf, unsigned int buf_size)
+int _dsmi_set_device_info(unsigned int device_id, DSMI_MAIN_CMD main_cmd, unsigned int sub_cmd, const void *buf,
+                          unsigned int buf_size)
 {
     int ret;
-    DEV_MON_EVENT("set device info, (user id=%u; device_id=0x%x; main cmd=%u; sub cmd=%u\n",
-                  getuid(), device_id, (unsigned int)main_cmd, sub_cmd);
+    DEV_MON_EVENT("set device info, (user id=%u; device_id=0x%x; main cmd=%u; sub cmd=%u\n", getuid(), device_id,
+                  (unsigned int)main_cmd, sub_cmd);
 
     ret = dsmi_check_device_id((int)device_id);
     CHECK_DEVICE_BUSY(device_id, ret);
@@ -531,14 +521,14 @@ int _dsmi_set_device_info(unsigned int device_id, DSMI_MAIN_CMD main_cmd, unsign
     ret = dsmi_cmd_set_device_info_method(device_id, main_cmd, sub_cmd, buf, buf_size);
     if (ret != 0) {
         DEV_MON_EX_NOTSUPPORT_ERR(ret, "Failed to set dev info. (dev_id=%u; main_cmd=%u; sub_main=%u; ret=%d)\n",
-            device_id, main_cmd, sub_cmd, ret);
+                                  device_id, main_cmd, sub_cmd, ret);
     }
 
     return ret;
 }
 
-int _dsmi_get_device_info(unsigned int device_id, DSMI_MAIN_CMD main_cmd, unsigned int sub_cmd,
-    void *buf, unsigned int *size)
+int _dsmi_get_device_info(unsigned int device_id, DSMI_MAIN_CMD main_cmd, unsigned int sub_cmd, void *buf,
+                          unsigned int *size)
 {
     int ret = 0;
     DEV_INFO_MAIN_CMD_TYPE cmd_type;
@@ -581,9 +571,8 @@ int _dsmi_get_device_info(unsigned int device_id, DSMI_MAIN_CMD main_cmd, unsign
     }
 
     if (ret != 0) {
-        DEV_MON_EX_NOTSUPPORT_ERR(ret,
-            "devid %d cmd_type %d get device info fail, main_cmd=%d, sub_cmd=%d, ret=%d.\n",
-            device_id, cmd_type, main_cmd, sub_cmd, ret);
+        DEV_MON_EX_NOTSUPPORT_ERR(ret, "devid %d cmd_type %d get device info fail, main_cmd=%d, sub_cmd=%d, ret=%d.\n",
+                                  device_id, cmd_type, main_cmd, sub_cmd, ret);
     }
 
     return ret;
@@ -597,7 +586,7 @@ int dsmi_get_device_die_v2(struct dsmi_device_info device_info, struct dsmi_soc_
 }
 
 int dsmi_get_ecc_info_v2(struct dsmi_device_info device_info, int device_type,
-    struct dsmi_ecc_info_stru *pdevice_ecc_info)
+                         struct dsmi_ecc_info_stru *pdevice_ecc_info)
 {
     (void)device_info;
     (void)device_type;
@@ -605,8 +594,7 @@ int dsmi_get_ecc_info_v2(struct dsmi_device_info device_info, int device_type,
     return DRV_ERROR_NOT_SUPPORT;
 }
 
-int dsmi_get_device_frequency_v2(struct dsmi_device_info device_info, int device_type,
-    unsigned int *pfrequency)
+int dsmi_get_device_frequency_v2(struct dsmi_device_info device_info, int device_type, unsigned int *pfrequency)
 {
     (void)device_info;
     (void)device_type;

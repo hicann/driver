@@ -89,13 +89,13 @@ static const char *g_user_config_no_support_list[] = {
 
 #define HIGH_16_BITS 16
 #ifndef CHECK_DEVICE_BUSY
-#define CHECK_DEVICE_BUSY((devid), (ret))                                              \
-{                                                                                      \
-    if ((ret) == (int)DRV_ERROR_RESOURCE_OCCUPIED) {                                   \
-        DEV_MON_ERR("Device is busy. (device_id=%d, ret=%d)\n", (devid), (ret));       \
-        return (ret);                                                                  \
-    }                                                                                  \
-}
+#define CHECK_DEVICE_BUSY((devid), (ret))                                            \
+    {                                                                                \
+        if ((ret) == (int)DRV_ERROR_RESOURCE_OCCUPIED) {                             \
+            DEV_MON_ERR("Device is busy. (device_id=%d, ret=%d)\n", (devid), (ret)); \
+            return (ret);                                                            \
+        }                                                                            \
+    }
 #endif
 
 typedef struct {
@@ -123,7 +123,7 @@ struct udis_device_info_adapter {
 };
 
 /* Max means not limit */
-#define DSMI_DEV_INFO_SUB_CMD_MAX                   (0xffffffff)
+#define DSMI_DEV_INFO_SUB_CMD_MAX (0xffffffff)
 
 int dsmi_dft_get_elable(int device_id, int item_type, char *elabel_data, int *len)
 {
@@ -186,8 +186,8 @@ int dsmi_get_all_device_count(int *all_device_count)
     *all_device_count = 0; // only stub at present, wait for implementation
     ret = drvGetDevProbeNum((uint32_t *)all_device_count);
     if (ret != DRV_ERROR_NONE) {
-        dev_upgrade_ex_notsupport_err(ret,
-            "drvGetDevProbeNum call error!, ret = 0x%x, all_device_count = 0x%x\n", ret, *all_device_count);
+        dev_upgrade_ex_notsupport_err(ret, "drvGetDevProbeNum call error!, ret = 0x%x, all_device_count = 0x%x\n", ret,
+                                      *all_device_count);
         return ret;
     }
 
@@ -230,7 +230,7 @@ int dsmi_list_all_device(int device_ids[], int count)
 
     ret = DmsGetAllDeviceList(device_ids, count);
     if (ret != 0) {
-        dev_upgrade_ex_notsupport_err(ret, "Get all device listfail. (ret = %d)\n", ret);
+        dev_upgrade_ex_notsupport_err(ret, "Get all device list fail. (ret=%d)\n", ret);
         return ret;
     }
     return 0;
@@ -261,22 +261,19 @@ int dsmi_get_logicid_from_phyid(unsigned int phyid, unsigned int *logicid)
 }
 
 int dsmi_create_vdevice(unsigned int devid, unsigned int vdev_id, struct dsmi_create_vdev_res_stru *vdev_res,
-    struct dsmi_create_vdev_result *vdev_result)
+                        struct dsmi_create_vdev_result *vdev_result)
 {
-    DEV_MON_EVENT("The create-virtual-device details. (uid=%u; devid=%u; vdev_id=%u)\n",
-                  getuid(), devid, vdev_id);
+    DEV_MON_EVENT("The create-virtual-device details. (uid=%u; devid=%u; vdev_id=%u)\n", getuid(), devid, vdev_id);
     return drvCreateVdevice(devid, vdev_id, vdev_res, vdev_result);
 }
 
 int dsmi_destroy_vdevice(unsigned int devid, unsigned int vdevid)
 {
-    DEV_MON_EVENT("The destroy-virtual-device details. (uid=%u; devid=%u; vdev_id=%u)\n",
-                  getuid(), devid, vdevid);
+    DEV_MON_EVENT("The destroy-virtual-device details. (uid=%u; devid=%u; vdev_id=%u)\n", getuid(), devid, vdevid);
     return drvDestroyVdevice(devid, vdevid);
 }
 
-int dsmi_get_resource_info(unsigned int devid, struct dsmi_resource_para *para,
-    struct dsmi_resource_info *info)
+int dsmi_get_resource_info(unsigned int devid, struct dsmi_resource_para *para, struct dsmi_resource_info *info)
 {
     return drvGetDeviceResourceInfo(devid, para, info);
 }
@@ -381,8 +378,8 @@ int dsmi_get_device_health(int device_id, unsigned int *phealth)
 #ifndef CFG_FEATURE_NEW_EVENT_CODE
     ret = drvDeviceHealthStatus(device_id, phealth);
     if (ret) {
-        DEV_MON_EX_NOTSUPPORT_ERR(ret,
-            "Failed to invoke drvDeviceHealthStatus. (device_id=%d; ret=%d)\n", device_id, ret);
+        DEV_MON_EX_NOTSUPPORT_ERR(ret, "Failed to invoke drvDeviceHealthStatus. (device_id=%d; ret=%d)\n", device_id,
+                                  ret);
         return ret;
     }
 #else
@@ -410,7 +407,7 @@ int dsmi_get_device_errorcode(int device_id, int *errorcount, unsigned int *perr
 #endif
     if (errorcount == NULL || perrorcode == NULL) {
         DEV_MON_ERR("The errorcount or perrorcode is NULL. (errorcount_is_null=%d; perrorcode_is_null=%d)\n",
-            errorcount == NULL, perrorcode == NULL);
+                    errorcount == NULL, perrorcode == NULL);
         return DRV_ERROR_INVALID_HANDLE;
     }
     *errorcount = 0;
@@ -440,8 +437,8 @@ int dsmi_get_device_errorcode(int device_id, int *errorcount, unsigned int *perr
     for (i = *errorcount, j = 0; (i < DMANAGE_ERROR_ARRAY_NUM) && (j < event_cnt); i++, j++) {
         perrorcode[i] = event_code[j];
     }
-    *errorcount = (*errorcount + event_cnt) > DMANAGE_ERROR_ARRAY_NUM ? \
-                  DMANAGE_ERROR_ARRAY_NUM : (*errorcount + event_cnt);
+    *errorcount = (*errorcount + event_cnt) > DMANAGE_ERROR_ARRAY_NUM ? DMANAGE_ERROR_ARRAY_NUM :
+                                                                        (*errorcount + event_cnt);
 #endif
 #ifdef ENABLE_BUILD_PRODUCT
     ret = error_code_filter(perrorcode, errorcount);
@@ -481,20 +478,20 @@ STATIC int udis_get_dev_info(int dev_id, struct udis_dev_info *info, void *buf, 
     ret = udis_get_device_info((unsigned int)dev_id, info);
     if (ret != 0) {
         DEV_MON_EX_NOTSUPPORT_ERR(ret, "Failed to get udis info. (dev_id=%d; module_type=%u; name=%s; ret=%d)\n",
-            dev_id, info->module_type, info->name, ret);
+                                  dev_id, info->module_type, info->name, ret);
         return ret;
     }
 
     if (info->data_len != buf_size) {
         DEV_MON_ERR("Data len is not equal to bufsize(dev_id=%d; module_type=%u; name=%s; data_len=%u; buf_size=%u)\n",
-            dev_id, info->module_type, info->name, info->data_len, buf_size);
+                    dev_id, info->module_type, info->name, info->data_len, buf_size);
         return DRV_ERROR_PARA_ERROR;
     }
 
     ret = memcpy_s(buf, buf_size, info->data, info->data_len);
     if (ret != 0) {
-        DEV_MON_ERR("Failed to invoke memcpy_s to copy data. (dev_id=%d; module_type=%u; name=%s; ret=%d)\n",
-            dev_id, info->module_type, info->name, ret);
+        DEV_MON_ERR("Failed to invoke memcpy_s to copy data. (dev_id=%d; module_type=%u; name=%s; ret=%d)\n", dev_id,
+                    info->module_type, info->name, ret);
         return DRV_ERROR_PARA_ERROR;
     }
 
@@ -507,16 +504,16 @@ STATIC int udis_get_lp_info(int device_id, const char *name, void *buf, unsigned
     struct udis_dev_info info = {0};
 
     if ((name == NULL) || (buf == NULL)) {
-        DEV_MON_ERR("name or buf is NULL. (device_id=%d; name_is_null=%d; buf_is_null=%d)\n",
-            device_id, name == NULL, buf == NULL);
+        DEV_MON_ERR("name or buf is NULL. (device_id=%d; name_is_null=%d; buf_is_null=%d)\n", device_id, name == NULL,
+                    buf == NULL);
         return DRV_ERROR_PARA_ERROR;
     }
 
     info.module_type = UDIS_MODULE_LP;
     ret = strcpy_s(info.name, UDIS_MAX_NAME_LEN, name);
     if (ret != 0) {
-        DEV_MON_ERR("Failed to invoke strcpy_s to copy info name. (dev_id=%d; name=%s; ret=%d)\n",
-            device_id, name, ret);
+        DEV_MON_ERR("Failed to invoke strcpy_s to copy info name. (dev_id=%d; name=%s; ret=%d)\n", device_id, name,
+                    ret);
         return DRV_ERROR_PARA_ERROR;
     }
 
@@ -599,8 +596,7 @@ int dsmi_get_pcie_info(int device_id, struct tag_pcie_idinfo *pcie_idinfo)
     /* get bus, deviceid and func */
     ret = drvDeviceGetPcieIdInfo((uint32_t)device_id, pcie_idinfo);
     if (ret != 0) {
-        DEV_MON_EX_NOTSUPPORT_ERR(ret, "devid %d drvDeviceGetPcieIdInfo call error ret = %d!\n",
-            device_id, ret);
+        DEV_MON_EX_NOTSUPPORT_ERR(ret, "devid %d drvDeviceGetPcieIdInfo call error ret = %d!\n", device_id, ret);
         return ret;
     }
 
@@ -704,8 +700,8 @@ STATIC int dsmi_udis_get_hbm_size(unsigned int device_id, const char *name, void
     (void)name;
 
     if (buf == NULL || *size < sizeof(struct dsmi_memory_info)) {
-        DEV_MON_ERR("The input parameters are incorrect. (dev_id=%u; buf_is_null=%d; size=%u)\n",
-            device_id, buf == NULL, *size);
+        DEV_MON_ERR("The input parameters are incorrect. (dev_id=%u; buf_is_null=%d; size=%u)\n", device_id,
+                    buf == NULL, *size);
         return DRV_ERROR_PARA_ERROR;
     }
 
@@ -741,7 +737,7 @@ static struct udis_davinci_info_adapter g_udis_get_davinci_info_table[] = {
 
 int dsmi_get_davinchi_info(int device_id, int device_type, int info_type, unsigned int *result_data)
 {
-    DSMI_DAVINCHI_INFO davinchi_data = { { 0 } };
+    DSMI_DAVINCHI_INFO davinchi_data = {{0}};
     int ret;
     unsigned int i;
     unsigned int table_size = sizeof(g_udis_get_davinci_info_table) / sizeof(g_udis_get_davinci_info_table[0]);
@@ -755,21 +751,21 @@ int dsmi_get_davinchi_info(int device_id, int device_type, int info_type, unsign
     for (i = 0; i < table_size; i++) {
         if ((g_udis_get_davinci_info_table[i].device_type == device_type) &&
             (g_udis_get_davinci_info_table[i].info_type == info_type)) {
-            ret = g_udis_get_davinci_info_table[i].callback((unsigned int)device_id, g_udis_get_davinci_info_table[i].name,
-                result_data);
+            ret = g_udis_get_davinci_info_table[i].callback((unsigned int)device_id,
+                                                            g_udis_get_davinci_info_table[i].name, result_data);
             if (ret == 0) {
                 return ret;
             }
             if (!g_udis_get_davinci_info_table[i].enable_dmp) {
-                DEV_MON_ERR("Failed to get davinchi info from udis. (dev_id=%d; device_type=%d; info_type=%d; ret=%d)\n",
-                    device_id, device_type, info_type, ret);
+                DEV_MON_ERR("Failed to get davinci info from udis. (dev_id=%d; device_type=%d; info_type=%d; ret=%d)\n",
+                            device_id, device_type, info_type, ret);
                 return ret;
             }
         }
     }
 
     davinchi_data.info.device_type = (unsigned char)device_type & 0xFu; /* bit field: 4 */
-    davinchi_data.info.info_type = (unsigned char)info_type & 0xFu; /* bit field: 4 */
+    davinchi_data.info.info_type = (unsigned char)info_type & 0xFu;     /* bit field: 4 */
 
     return dsmi_cmd_get_davinchi_info(device_id, davinchi_data.data, result_data);
 }
@@ -876,7 +872,7 @@ STATIC int dsmi_get_hbm_temp(int device_id, int *temp)
 {
     int ret;
     short hbm_temp = 0;
-    TAG_SENSOR_INFO sensor_info = { 0 };
+    TAG_SENSOR_INFO sensor_info = {0};
 
     ret = udis_get_lp_info(device_id, "hbm_temp", &hbm_temp, sizeof(hbm_temp));
     if (ret == 0) {
@@ -1021,8 +1017,8 @@ int dsmi_get_enable(int device_id, CONFIG_ITEM config_item, DSMI_DEVICE_TYPE dev
     int ret;
 
     if (((device_type != DSMI_DEVICE_TYPE_NONE) && (device_type != DSMI_DEVICE_TYPE_SRAM) &&
-        (device_type != DSMI_DEVICE_TYPE_HBM) && (device_type != DSMI_DEVICE_TYPE_NPU) &&
-        (device_type != DSMI_DEVICE_TYPE_DDR)) ||
+         (device_type != DSMI_DEVICE_TYPE_HBM) && (device_type != DSMI_DEVICE_TYPE_NPU) &&
+         (device_type != DSMI_DEVICE_TYPE_DDR)) ||
         (enable_flag == NULL)) {
         DEV_MON_ERR("devid %d dsmi_get_enable parameter error!\n", device_id);
         return DRV_ERROR_PARA_ERROR;
@@ -1064,8 +1060,7 @@ STATIC int udis_get_ecc_cont_info(int device_id, int device_type, DSMI_ECC_STATI
     info.module_type = UDIS_MODULE_MEMORY;
     ret = strcpy_s(info.name, UDIS_MAX_NAME_LEN, "ecc_rlt_cnt");
     if (ret != 0) {
-        DEV_MON_ERR("Failed to invoke strcpy_s to copy info name. (dev_id=%d; ret=%d)\n",
-            device_id, ret);
+        DEV_MON_ERR("Failed to invoke strcpy_s to copy info name. (dev_id=%d; ret=%d)\n", device_id, ret);
         return DRV_ERROR_INNER_ERR;
     }
 
@@ -1083,7 +1078,7 @@ STATIC int udis_get_ecc_cont_info(int device_id, int device_type, DSMI_ECC_STATI
 STATIC int dsmi_get_ecc_bit_cnt(int device_id, int device_type, DSMI_ECC_STATICS_RESULT *ecc_result)
 {
     int ret;
-    DSMI_ECC_STATICS ecc_static = { { 0 } };
+    DSMI_ECC_STATICS ecc_static = {{0}};
 
     ret = udis_get_ecc_cont_info(device_id, device_type, ecc_result);
     if (ret == 0) {
@@ -1103,7 +1098,7 @@ STATIC int dsmi_get_ecc_bit_cnt(int device_id, int device_type, DSMI_ECC_STATICS
 
 int dsmi_get_ecc_info(int device_id, int device_type, struct dsmi_ecc_info_stru *pdevice_ecc_info)
 {
-    DSMI_ECC_STATICS_RESULT ecc_result = { 0 };
+    DSMI_ECC_STATICS_RESULT ecc_result = {0};
     int ecc_enable_flag = 1;
     int ret;
 
@@ -1139,14 +1134,14 @@ int dsmi_get_system_time(int device_id, unsigned int *ntime_stamp)
 
 int dsmi_config_enable(int device_id, CONFIG_ITEM config_item, DSMI_DEVICE_TYPE device_type, int enable_flag)
 {
-    DSMI_CONFIG_PARA config_enable = { 0 };
+    DSMI_CONFIG_PARA config_enable = {0};
 
     DEV_MON_EVENT("config enable, (user id=%u; device_id=0x%x; item=0x%x; device_type=0x%x, enable_flag=0x%x)\n",
-        getuid(), device_id, config_item, device_type, enable_flag);
+                  getuid(), device_id, config_item, device_type, enable_flag);
 
     if (((device_type != DSMI_DEVICE_TYPE_NONE) && (device_type != DSMI_DEVICE_TYPE_SRAM) &&
-        (device_type != DSMI_DEVICE_TYPE_HBM) && (device_type != DSMI_DEVICE_TYPE_NPU) &&
-        (device_type != DSMI_DEVICE_TYPE_DDR)) ||
+         (device_type != DSMI_DEVICE_TYPE_HBM) && (device_type != DSMI_DEVICE_TYPE_NPU) &&
+         (device_type != DSMI_DEVICE_TYPE_DDR)) ||
         ((enable_flag != 0) && (enable_flag != 1))) {
         DEV_MON_ERR("devid %d parameter error!\n", device_id);
         return DRV_ERROR_PARA_ERROR;
@@ -1165,8 +1160,8 @@ int dsmi_config_enable(int device_id, CONFIG_ITEM config_item, DSMI_DEVICE_TYPE 
 
 int dsmi_config_ecc_enable(int device_id, DSMI_DEVICE_TYPE device_type, int enable_flag)
 {
-    DEV_MON_EVENT("config ecc enable, (user id=%u; device_id=%d; device_type=%u; enable_flag=%d)\n",
-        getuid(), device_id, device_type, enable_flag);
+    DEV_MON_EVENT("config ecc enable, (user id=%u; device_id=%d; device_type=%u; enable_flag=%d)\n", getuid(),
+                  device_id, device_type, enable_flag);
 
     return dsmi_config_enable(device_id, ECC_CONFIG_ITEM, device_type, enable_flag);
 }
@@ -1181,7 +1176,7 @@ int dsmi_set_mac_addr(int device_id, int mac_id, const char *pmac_addr, unsigned
     (void)mac_addr_len;
     return DRV_ERROR_NOT_SUPPORT;
 #else
-    DSMI_MAC_PARA mac_para = { 0 };
+    DSMI_MAC_PARA mac_para = {0};
 
     DRV_CHECK_RETV((pmac_addr != NULL), DRV_ERROR_PARA_ERROR);
     DRV_CHECK_RETV(((mac_id >= 0) && (mac_id <= UCHAR_MAX)), DRV_ERROR_PARA_ERROR);
@@ -1248,24 +1243,24 @@ int dsmi_get_mac_addr(int device_id, int mac_id, char *pmac_addr, unsigned int m
 
 int dsmi_set_device_ip_address(int device_id, int port_type, int port_id, ip_addr_t ip_address, ip_addr_t mask_address)
 {
-    DSMI_PORT_PARA port_para = { 0 };
-    IPADDR_ST mask_addr = { 0 };
-    IPADDR_ST ip_addr = { 0 };
+    DSMI_PORT_PARA port_para = {0};
+    IPADDR_ST mask_addr = {0};
+    IPADDR_ST ip_addr = {0};
     int ret;
 
-    DEV_MON_EVENT("set device ip addr, (user id=%u, device_id=%d; port_type=%d; port_id=%d; ip_type=%u)\n",
-                  getuid(), device_id, port_type, port_id, ip_address.ip_type);
+    DEV_MON_EVENT("set device ip addr, (user id=%u, device_id=%d; port_type=%d; port_id=%d; ip_type=%u)\n", getuid(),
+                  device_id, port_type, port_id, ip_address.ip_type);
 
     DRV_CHECK_RETV(((port_type >= 0) && (port_type <= UCHAR_MAX)), DRV_ERROR_PARA_ERROR);
     DRV_CHECK_RETV(((port_id >= 0) && (port_id <= UCHAR_MAX)), DRV_ERROR_PARA_ERROR);
 
 #ifdef CFG_FEATURE_NETWORK_ROCE
     DRV_CHECK_RETV_DO_SOMETHING((port_type == DEVDRV_ROCE || port_type == DEVDRV_BOND), DRV_ERROR_PARA_ERROR,
-        DEV_MON_ERR("Can not set non-roce ip. (devid=%d; port_id=%d)\n", device_id, port_type));
+                                DEV_MON_ERR("Can not set non-roce ip. (devid=%d; port_id=%d)\n", device_id, port_type));
 #endif
 #ifdef CFG_SOC_PLATFORM_MINI
     DRV_CHECK_RETV_DO_SOMETHING((port_type == DEVDRV_VNIC), DRV_ERROR_PARA_ERROR,
-        DEV_MON_ERR("Can not set non-vnic ip. (devid=%d; port_id=%d)\n", device_id, port_type));
+                                DEV_MON_ERR("Can not set non-vnic ip. (devid=%d; port_id=%d)\n", device_id, port_type));
 #endif
 
     if ((ip_address.ip_type != IPADDR_TYPE_V4) && (ip_address.ip_type != IPADDR_TYPE_V6)) {
@@ -1274,7 +1269,7 @@ int dsmi_set_device_ip_address(int device_id, int port_type, int port_id, ip_add
     }
 
     port_para.card_type = (unsigned char)port_type;
-    port_para.card_info.fields.card_id = (unsigned char)port_id & 0x3Fu; /* bit field: 6 */
+    port_para.card_info.fields.card_id = (unsigned char)port_id & 0x3Fu;           /* bit field: 6 */
     port_para.card_info.fields.ip_type = (unsigned char)ip_address.ip_type & 0x3u; /* bit field: 2 */
 
     ret = memcpy_s(&ip_addr, sizeof(IPADDR_ST), &ip_address.u_addr, sizeof(IPADDR_ST));
@@ -1293,7 +1288,7 @@ int dsmi_set_device_ip_address(int device_id, int port_type, int port_id, ip_add
 }
 
 int dsmi_get_device_ip_address_from_udis(int device_id, DSMI_PORT_PARA *port_para, IPADDR_ST *ip_addr,
-    IPADDR_ST *netmask)
+                                         IPADDR_ST *netmask)
 {
     int ret = 0;
     struct udis_dev_info get_info = {0};
@@ -1309,8 +1304,8 @@ int dsmi_get_device_ip_address_from_udis(int device_id, DSMI_PORT_PARA *port_par
         return DRV_ERROR_NOT_SUPPORT;
     }
 
-    ret = sprintf_s(get_info.name, sizeof(get_info.name), "%s_%u_%u",
-                    ip_type, port_para->card_type, port_para->card_info.fields.card_id);
+    ret = sprintf_s(get_info.name, sizeof(get_info.name), "%s_%u_%u", ip_type, port_para->card_type,
+                    port_para->card_info.fields.card_id);
     if (ret < 0) {
         DEV_MON_WARNING("sprintf_s failed. (ret=%d)\n", ret);
         return DRV_ERROR_MEMORY_OPT_FAIL;
@@ -1333,16 +1328,16 @@ int dsmi_get_device_ip_address_from_udis(int device_id, DSMI_PORT_PARA *port_par
 }
 
 int dsmi_get_device_ip_address(int device_id, int port_type, int port_id, ip_addr_t *ip_address,
-    ip_addr_t *mask_address)
+                               ip_addr_t *mask_address)
 {
-    DSMI_PORT_PARA port_para = { 0 };
-    IPADDR_ST mask_addr = { 0 };
-    IPADDR_ST ip_addr = { 0 };
+    DSMI_PORT_PARA port_para = {0};
+    IPADDR_ST mask_addr = {0};
+    IPADDR_ST ip_addr = {0};
     int ret, i;
 
     if (ip_address == NULL || mask_address == NULL) {
-        DEV_MON_ERR("Parameter is invalid. (devid=%d; ip_is_null=%d; mask_is_null=%d)\n",
-            device_id, (ip_address == NULL), (mask_address == NULL));
+        DEV_MON_ERR("Parameter is invalid. (devid=%d; ip_is_null=%d; mask_is_null=%d)\n", device_id,
+                    (ip_address == NULL), (mask_address == NULL));
         return DRV_ERROR_PARA_ERROR;
     }
 
@@ -1350,7 +1345,8 @@ int dsmi_get_device_ip_address(int device_id, int port_type, int port_id, ip_add
     DRV_CHECK_RETV(((port_id >= 0) && (port_id <= UCHAR_MAX)), DRV_ERROR_PARA_ERROR);
 
 #ifdef CFG_SOC_PLATFORM_MINI
-    DRV_CHECK_RETV_DO_SOMETHING((port_type == DEVDRV_VNIC), DRV_ERROR_PARA_ERROR,
+    DRV_CHECK_RETV_DO_SOMETHING(
+        (port_type == DEVDRV_VNIC), DRV_ERROR_PARA_ERROR,
         DEV_MON_ERR("Can not get non-vnic ip. (devid=%d; port_id=%d).\n", device_id, port_type));
 #endif
 
@@ -1360,7 +1356,7 @@ int dsmi_get_device_ip_address(int device_id, int port_type, int port_id, ip_add
     }
 
     port_para.card_type = (unsigned char)port_type;
-    port_para.card_info.fields.card_id = (unsigned char)port_id & 0x3Fu; /* bit field: 6 */
+    port_para.card_info.fields.card_id = (unsigned char)port_id & 0x3Fu;            /* bit field: 6 */
     port_para.card_info.fields.ip_type = (unsigned char)ip_address->ip_type & 0x3u; /* bit field: 2 */
 
     ret = dsmi_cmd_get_device_ip_address(device_id, port_para, &ip_addr, &mask_addr);
@@ -1393,19 +1389,21 @@ int dsmi_get_device_ip_address(int device_id, int port_type, int port_id, ip_add
 
 int dsmi_set_gateway_addr(int device_id, int port_type, int port_id, ip_addr_t gtw_address)
 {
-    DSMI_PORT_PARA port_para = { 0 };
-    IPADDR_ST gtw_addr = { 0 };
+    DSMI_PORT_PARA port_para = {0};
+    IPADDR_ST gtw_addr = {0};
     int ret;
 
-    DEV_MON_EVENT("set gateway addr, (user id=%u; device_id=%d; port_type=%d; port_id=%d; ip_type=%u)\n",
-                  getuid(), device_id, port_type, port_id, gtw_address.ip_type);
+    DEV_MON_EVENT("set gateway addr, (user id=%u; device_id=%d; port_type=%d; port_id=%d; ip_type=%u)\n", getuid(),
+                  device_id, port_type, port_id, gtw_address.ip_type);
 
 #ifdef CFG_FEATURE_NETWORK_ROCE
-    DRV_CHECK_RETV_DO_SOMETHING((port_type == DEVDRV_ROCE), DRV_ERROR_PARA_ERROR,
+    DRV_CHECK_RETV_DO_SOMETHING(
+        (port_type == DEVDRV_ROCE), DRV_ERROR_PARA_ERROR,
         DEV_MON_ERR("devid %d Cloud can not set non-roce ip, port_id %d.\n", device_id, port_type));
 #endif
 #ifdef CFG_SOC_PLATFORM_MINI
-    DRV_CHECK_RETV_DO_SOMETHING((port_type == DEVDRV_VNIC), DRV_ERROR_PARA_ERROR,
+    DRV_CHECK_RETV_DO_SOMETHING(
+        (port_type == DEVDRV_VNIC), DRV_ERROR_PARA_ERROR,
         DEV_MON_ERR("devid %d Mini can not set non-vnic ip, port_id %d.\n", device_id, port_type));
 #endif
 
@@ -1415,7 +1413,7 @@ int dsmi_set_gateway_addr(int device_id, int port_type, int port_id, ip_addr_t g
     }
 
     port_para.card_type = (unsigned char)port_type;
-    port_para.card_info.fields.card_id = (unsigned char)port_id & 0x3Fu; /* bit field: 6 */
+    port_para.card_info.fields.card_id = (unsigned char)port_id & 0x3Fu;            /* bit field: 6 */
     port_para.card_info.fields.ip_type = (unsigned char)gtw_address.ip_type & 0x3u; /* bit field: 2 */
 
     ret = memcpy_s(&gtw_addr, sizeof(IPADDR_ST), &gtw_address.u_addr, sizeof(IPADDR_ST));
@@ -1429,8 +1427,8 @@ int dsmi_set_gateway_addr(int device_id, int port_type, int port_id, ip_addr_t g
 
 int dsmi_get_gateway_addr(int device_id, int port_type, int port_id, ip_addr_t *gtw_address)
 {
-    DSMI_PORT_PARA port_para = { 0 };
-    IPADDR_ST gtw_addr = { 0 };
+    DSMI_PORT_PARA port_para = {0};
+    IPADDR_ST gtw_addr = {0};
     int ret;
     int i;
 
@@ -1443,11 +1441,13 @@ int dsmi_get_gateway_addr(int device_id, int port_type, int port_id, ip_addr_t *
     DRV_CHECK_RETV(((port_id >= 0) && (port_id <= UCHAR_MAX)), DRV_ERROR_PARA_ERROR);
 /* 910_A5/910/910B/910_A3: ROCE */
 #if defined(CFG_FEATURE_NETWORK_ROCE)
-    DRV_CHECK_RETV_DO_SOMETHING((port_type == DEVDRV_ROCE), DRV_ERROR_PARA_ERROR,
+    DRV_CHECK_RETV_DO_SOMETHING(
+        (port_type == DEVDRV_ROCE), DRV_ERROR_PARA_ERROR,
         DEV_MON_ERR("devid %d Cloud can not set non-roce ip, port_id %d.\n", device_id, port_type));
 #endif
 #ifdef CFG_SOC_PLATFORM_MINI
-    DRV_CHECK_RETV_DO_SOMETHING((port_type == DEVDRV_VNIC), DRV_ERROR_PARA_ERROR,
+    DRV_CHECK_RETV_DO_SOMETHING(
+        (port_type == DEVDRV_VNIC), DRV_ERROR_PARA_ERROR,
         DEV_MON_ERR("devid %d Mini can not set non-vnic ip, port_id %d.\n", device_id, port_type));
 #endif
 
@@ -1457,13 +1457,12 @@ int dsmi_get_gateway_addr(int device_id, int port_type, int port_id, ip_addr_t *
     }
 
     port_para.card_type = (unsigned char)port_type;
-    port_para.card_info.fields.card_id = (unsigned char)port_id & 0x3Fu; /* bit field: 6 */
+    port_para.card_info.fields.card_id = (unsigned char)port_id & 0x3Fu;             /* bit field: 6 */
     port_para.card_info.fields.ip_type = (unsigned char)gtw_address->ip_type & 0x3u; /* bit field: 2 */
 
     ret = dsmi_cmd_get_device_gtw_address(device_id, port_para, &gtw_addr);
     if (ret != 0) {
-        DEV_MON_EX_NOTSUPPORT_ERR(ret,
-            "devid %d dsmi_cmd_get_device_ip_address return %d error!\n", device_id, ret);
+        DEV_MON_EX_NOTSUPPORT_ERR(ret, "devid %d dsmi_cmd_get_device_ip_address return %d error!\n", device_id, ret);
         return ret;
     }
 
@@ -1484,7 +1483,7 @@ int dsmi_get_gateway_addr(int device_id, int port_type, int port_id, ip_addr_t *
 
 STATIC int dsmi_get_device_fan_info(int device_id, int message_type, int fan_id, int *count_speed)
 {
-    DSMI_FAN_INFO chip_fan_info = { 0 };
+    DSMI_FAN_INFO chip_fan_info = {0};
     unsigned int fan_speed_sum = 0;
     unsigned int i = 0;
     int ret;
@@ -1563,9 +1562,9 @@ int dsmi_hot_reset_soc(int device_id)
 {
     DEV_MON_EVENT("hot reset soc, (user id=%u; device_id=%d)\n", getuid(), device_id);
 #ifdef CFG_FEATURE_VFIO_SOC
-    struct dsmi_create_vdev_res_stru vdev_creat_info = { 0 };
-    struct dsmi_create_vdev_result vdev_result = { 0 };
-    struct dsmi_vdev_query_stru vdev_info = { 0 };
+    struct dsmi_create_vdev_res_stru vdev_creat_info = {0};
+    struct dsmi_create_vdev_result vdev_result = {0};
+    struct dsmi_vdev_query_stru vdev_info = {0};
     unsigned int buf_size = sizeof(struct dsmi_vdev_query_stru);
     unsigned int pf_id;
     int ret;
@@ -1578,8 +1577,8 @@ int dsmi_hot_reset_soc(int device_id)
     pf_id = 0;
     vdev_info.vdev_id = device_id;
 
-    ret = drvGetSingleVdevInfo(pf_id, DSMI_MAIN_CMD_VDEV_MNG, DSMI_VMNG_SUB_CMD_GET_VDEV_RESOURCE,
-        &vdev_info, &buf_size);
+    ret = drvGetSingleVdevInfo(pf_id, DSMI_MAIN_CMD_VDEV_MNG, DSMI_VMNG_SUB_CMD_GET_VDEV_RESOURCE, &vdev_info,
+                               &buf_size);
     if (ret != 0) {
         /* No vdev device is available, and reset is not supported. */
         return DRV_ERROR_NOT_SUPPORT;
@@ -1628,7 +1627,7 @@ STATIC int dsmi_pcie_inform_bbox(int device_id)
             return ret;
         }
         for (i = 0; i < device_count; i++) {
-            ret = drvDeviceResetInform((uint32_t) i);
+            ret = drvDeviceResetInform((uint32_t)i);
             if (ret != 0) {
                 DEV_MON_ERR("drvDeviceResetInform fail.(devid=%d; ret=%d)\n", i, ret);
                 return ret;
@@ -1636,10 +1635,10 @@ STATIC int dsmi_pcie_inform_bbox(int device_id)
         }
     } else {
         /* device id chip alone hot reset report bbox */
-        ret = drvDeviceResetInform((uint32_t) device_id);
+        ret = drvDeviceResetInform((uint32_t)device_id);
         if (ret != 0) {
 #ifndef DEV_MON_UT
-            DEV_MON_EX_NOTSUPPORT_ERR(ret, "device id %d report bbox fail, uid=%d\n", device_id, ret);
+            DEV_MON_EX_NOTSUPPORT_ERR(ret, "device id %d report bbox fail. (ret=%d)\n", device_id, ret);
 #endif
             return ret;
         }
@@ -1647,41 +1646,34 @@ STATIC int dsmi_pcie_inform_bbox(int device_id)
 
     return DRV_ERROR_NONE;
 }
-int g_dsmi_hotreset_cmd_convert[DSMI_SUBCMD_HOTRESET_BUTT] =
-    {   DMS_SUBCMD_HOTRESET_ASSEMBLE,
-        DMS_SUBCMD_HOTRESET_SETFLAG,
-        DMS_SUBCMD_HOTRESET_CLEARFLAG,
-        DMS_SUBCMD_HOTRESET_UNBIND,
-        DMS_SUBCMD_HOTRESET_RESET,
-        DMS_SUBCMD_HOTRESET_REMOVE,
-        DMS_SUBCMD_HOTRESET_RESCAN,
-        DMS_SUBCMD_PRERESET_ASSEMBLE,
-        DMS_SUBCMD_PRERESET_ASSEMBLE1
-    };
+int g_dsmi_hotreset_cmd_convert[DSMI_SUBCMD_HOTRESET_BUTT] = {
+    DMS_SUBCMD_HOTRESET_ASSEMBLE, DMS_SUBCMD_HOTRESET_SETFLAG,  DMS_SUBCMD_HOTRESET_CLEARFLAG,
+    DMS_SUBCMD_HOTRESET_UNBIND,   DMS_SUBCMD_HOTRESET_RESET,    DMS_SUBCMD_HOTRESET_REMOVE,
+    DMS_SUBCMD_HOTRESET_RESCAN,   DMS_SUBCMD_PRERESET_ASSEMBLE, DMS_SUBCMD_PRERESET_ASSEMBLE1};
 
 int dsmi_hot_reset_atomic(int device_id, int dsmi_hotreset_subcmd)
 {
-    DEV_MON_EVENT("dsmi_hot_reset_atomic, (user id=%u; device_id=%d, dsmi_hotreset_subcmd=%d)\n",
-                getuid(), device_id, dsmi_hotreset_subcmd);
+    DEV_MON_EVENT("dsmi_hot_reset_atomic, (user id=%u; device_id=%d, dsmi_hotreset_subcmd=%d)\n", getuid(), device_id,
+                  dsmi_hotreset_subcmd);
 
     if (((device_id >= ASCEND_DEV_MAX_NUM) || (device_id < DEVDRV_MIN_DAVINCI_NUM)) &&
-        (device_id != (int)ALL_DEVICE_RESET_FLAG)){
+        (device_id != (int)ALL_DEVICE_RESET_FLAG)) {
         DEV_MON_ERR("Invalid device id, (dev_id=%d)\n", device_id);
         return DRV_ERROR_PARA_ERROR;
     }
-    if (dsmi_hotreset_subcmd >= DSMI_SUBCMD_HOTRESET_BUTT){
+    if (dsmi_hotreset_subcmd >= DSMI_SUBCMD_HOTRESET_BUTT) {
         DEV_MON_ERR("Invalid dsmi_hotreset_subcmd, (dsmi_hotreset_subcmd=%d)\n", dsmi_hotreset_subcmd);
     }
     int ioctl_sub_cmd = g_dsmi_hotreset_cmd_convert[dsmi_hotreset_subcmd];
     int ret;
-    if ((ioctl_sub_cmd == DMS_SUBCMD_HOTRESET_ASSEMBLE)||(ioctl_sub_cmd == DMS_SUBCMD_HOTRESET_RESET)){
+    if ((ioctl_sub_cmd == DMS_SUBCMD_HOTRESET_ASSEMBLE) || (ioctl_sub_cmd == DMS_SUBCMD_HOTRESET_RESET)) {
         ret = dsmi_pcie_inform_bbox(device_id);
         if (ret != DRV_ERROR_NONE) {
             DEV_MON_ERR("Dsmi_pcie_inform_bbox failed. (ret=%d)\n", ret);
             return ret;
         }
     }
-    ret = dms_power_hotreset_common((unsigned int) device_id, ioctl_sub_cmd);
+    ret = dms_power_hotreset_common((unsigned int)device_id, ioctl_sub_cmd);
     return ret;
 }
 
@@ -1712,8 +1704,8 @@ int dsmi_get_device_boot_status(int device_id, enum dsmi_boot_status *boot_statu
 
     ret = (int)drvGetDeviceBootStatus((int)phy_id, &dev_boot_status);
     if (ret != 0) {
-        DEV_MON_EX_NOTSUPPORT_ERR(ret,
-            "devid %d phy_id %u device_boot_status failed ret = %d!\n", device_id, phy_id, ret);
+        DEV_MON_EX_NOTSUPPORT_ERR(ret, "devid %d phy_id %u device_boot_status failed ret = %d!\n", device_id, phy_id,
+                                  ret);
         return ret;
     }
     *boot_status = dev_boot_status;
@@ -1730,8 +1722,8 @@ int dsmi_get_device_boot_status(int device_id, enum dsmi_boot_status *boot_statu
             *boot_status = (unsigned int)DSMI_SYSTEM_START_FINISH;
         }
     } else {
-        DEV_MON_ERR("The status obtained by the DSMI is incorrect. (dev_id=%d; boot_status=%d)\n",
-                    device_id, dev_boot_status);
+        DEV_MON_ERR("The status obtained by the DSMI is incorrect. (dev_id=%d; boot_status=%d)\n", device_id,
+                    dev_boot_status);
         return DRV_ERROR_PARA_ERROR;
     }
 
@@ -1743,7 +1735,8 @@ int dsmi_get_soc_sensor_info(int device_id, int sensor_id, TAG_SENSOR_INFO *tsen
     unsigned char sensorid;
     int ret;
     signed short chip_temp_data;
-    DRV_CHECK_RETV(((sensor_id >= 0) && (sensor_id < (int)INVALID_TSENSOR_ID) && (tsensor_info != NULL)), DRV_ERROR_PARA_ERROR);
+    DRV_CHECK_RETV(((sensor_id >= 0) && (sensor_id < (int)INVALID_TSENSOR_ID) && (tsensor_info != NULL)),
+                   DRV_ERROR_PARA_ERROR);
     sensorid = (unsigned char)sensor_id;
     if (sensorid == SOC_TEMP_ID) {
         ret = udis_get_lp_info(device_id, "soc_max_temp", &chip_temp_data, sizeof(chip_temp_data));
@@ -1756,7 +1749,7 @@ int dsmi_get_soc_sensor_info(int device_id, int sensor_id, TAG_SENSOR_INFO *tsen
 }
 
 STATIC int dsmi_parse_version_str(int device_id, unsigned char *version_str, unsigned int *len,
-    struct udis_dev_info *get_info)
+                                  struct udis_dev_info *get_info)
 {
     int ret;
     ret = udis_get_device_info((unsigned int)device_id, get_info);
@@ -1780,7 +1773,7 @@ STATIC int dsmi_parse_version_str(int device_id, unsigned char *version_str, uns
 }
 
 STATIC int dsmi_get_version_from_udis(int device_id, unsigned char component_type, unsigned char *version_str,
-    unsigned int *len)
+                                      unsigned int *len)
 {
     int ret;
     struct udis_dev_info get_info = {0};
@@ -1838,11 +1831,11 @@ int dsmi_get_version(int device_id, char *version_str, unsigned int version_len,
         return DRV_ERROR_PARA_ERROR;
     }
 
-    ret = dsmi_get_version_from_udis(device_id, (unsigned char)DAVINCHI_SYS_VERSION, (unsigned char*)version_str,
-        ret_len);
+    ret = dsmi_get_version_from_udis(device_id, (unsigned char)DAVINCHI_SYS_VERSION, (unsigned char *)version_str,
+                                     ret_len);
     if (ret != OK) {
-        ret = dsmi_cmd_upgrade_get_version(device_id, (unsigned char)DAVINCHI_SYS_VERSION,
-            (unsigned char*)version_str, ret_len);
+        ret = dsmi_cmd_upgrade_get_version(device_id, (unsigned char)DAVINCHI_SYS_VERSION, (unsigned char *)version_str,
+                                           ret_len);
         if (ret != OK) {
             DEV_MON_EX_NOTSUPPORT_ERR(ret, "devid %d dsmi_cmd_upgrade_get_version failed %d\n", device_id, ret);
             return ret;
@@ -1874,7 +1867,8 @@ int dsmi_get_board_id(int device_id, unsigned int *board_id)
         return DRV_ERROR_PARA_ERROR;
     }
 
-    ret = dms_get_basic_info_host((unsigned int)device_id, board_id, DMS_SUBCMD_GET_BOARD_ID_HOST, sizeof(unsigned int));
+    ret = dms_get_basic_info_host((unsigned int)device_id, board_id, DMS_SUBCMD_GET_BOARD_ID_HOST,
+                                  sizeof(unsigned int));
     if (ret == 0) {
         return 0;
     }
@@ -1929,9 +1923,11 @@ STATIC int dsmi_get_board_information(int device_id, unsigned char info_type, un
     }
 
     if (info_type == DEV_MON_GET_BOARD_INFO_BOM_ID) {
-        ret = dms_get_basic_info_host((unsigned int)device_id, id_value, DMS_SUBCMD_GET_BOM_ID_HOST, sizeof(unsigned int));
+        ret = dms_get_basic_info_host((unsigned int)device_id, id_value, DMS_SUBCMD_GET_BOM_ID_HOST,
+                                      sizeof(unsigned int));
     } else if (info_type == DEV_MON_GET_BOARD_INFO_SLOT_ID) {
-        ret = dms_get_basic_info_host((unsigned int)device_id, id_value, DMS_SUBCMD_GET_SLOT_ID_HOST, sizeof(unsigned int));
+        ret = dms_get_basic_info_host((unsigned int)device_id, id_value, DMS_SUBCMD_GET_SLOT_ID_HOST,
+                                      sizeof(unsigned int));
     }
     if (ret == 0) {
         return 0;
@@ -2006,7 +2002,7 @@ FROM_MEM:
 #endif
 }
 
-#if defined(CFG_FEATURE_UPGRADE_PATCH_CONFIG) || defined (CFG_FEATURE_UPGRADE_MAMI_PATCH_CONFIG)
+#if defined(CFG_FEATURE_UPGRADE_PATCH_CONFIG) || defined(CFG_FEATURE_UPGRADE_MAMI_PATCH_CONFIG)
 STATIC int dsmi_load_patch_cmd_send(int device_id, int pach_type, const char *file_name)
 {
     int ret = -EINVAL;
@@ -2020,7 +2016,7 @@ STATIC int dsmi_load_patch_cmd_send(int device_id, int pach_type, const char *fi
     }
     if (ret) {
         dev_upgrade_ex_notsupport_err(ret, "transmit file to device patch failed. (device_id=%d; ret=%d; file_name=%s)",
-            device_id, ret, file_name);
+                                      device_id, ret, file_name);
     }
 
     return ret;
@@ -2104,8 +2100,7 @@ STATIC int dsmi_load_one_device_patch(int device_id, int pach_type, const char *
 
     ret = dsmi_load_patch_cmd_send(device_id, pach_type, file_name_local);
     if (ret != 0) {
-        dev_upgrade_ex_notsupport_err(ret,
-            "dsmi_load_patch_cmd_send failed. (devid=%d; ret=0x%x)\n", device_id, ret);
+        dev_upgrade_ex_notsupport_err(ret, "dsmi_load_patch_cmd_send failed. (devid=%d; ret=0x%x)\n", device_id, ret);
         (void)dsmi_mutex_v(sem_id);
         DSMI_FREE(file_name_local);
         return ret;
@@ -2138,8 +2133,7 @@ STATIC int dsmi_unload_one_device_patch(int device_id)
 
     ret = dsmi_cmd_unload_patch(device_id, UNLOAD_PATCH);
     if (ret) {
-        dev_upgrade_ex_notsupport_err(ret, "Send start update cmd failed. (devid=%d; ret = %d)\n",
-            device_id, ret);
+        dev_upgrade_ex_notsupport_err(ret, "Send start update cmd failed. (devid=%d; ret = %d)\n", device_id, ret);
         (void)dsmi_mutex_v(sem_id);
         return ret;
     }
@@ -2177,35 +2171,37 @@ STATIC bool dsmi_is_need_upgrade_mami_package(unsigned int device_id)
     /* is pcie card */
     ret = halGetDeviceInfo(device_id, MODULE_TYPE_SYSTEM, INFO_TYPE_PRODUCT_TYPE, &value);
     if (ret != 0 || value != HAL_PRODUCT_TYPE_PCIE_CARD) {
-        DEV_MON_WARNING("Get product type faild, or is not pcie card, no need to upgrade ube mgmt. (ret=%d; dev_id=%u)\n",
-            ret, device_id);
+        DEV_MON_WARNING(
+            "Get product type failed, or is not pcie card, no need to upgrade UB package. (ret=%d; dev_id=%u)\n", ret,
+            device_id);
         return false;
     }
 
     /* is not pure pcie card */
     ret = halGetDeviceInfo(device_id, MODULE_TYPE_SYSTEM, INFO_TYPE_MAINBOARD_ID, &value);
     if (ret != 0 || value == PCIE_CARD_MAIN_BOARD_ID_1P) {
-        DEV_MON_WARNING("Get board id faild, or is pcie card 1P, no need to upgrade ube mgmt. (ret=%d; dev_id=%u)\n",
-            ret, device_id);
+        DEV_MON_WARNING("Get board id failed, or is pcie card 1P, no need to upgrade UB package. (ret=%d; dev_id=%u)\n",
+                        ret, device_id);
         return false;
     }
 
     /* is need link */
     ret = dsmi_get_device_info(device_id, DSMI_MAIN_CMD_UB, DSMI_UB_INFO_SUB_CMD_PORT_STATUS, (void *)&buff, &size);
     if (ret != 0 || buff.ub_link_status == DSMI_UB_NO_NEED_LINK) {
-        DEV_MON_WARNING("Get port status faild, or is no need link, no need to upgrade ube mgmt. (ret=%d; dev_id=%u)\n",
-            ret, device_id);
+        DEV_MON_WARNING(
+            "Get port status failed, or is no need link, no need to upgrade UB package. (ret=%d; dev_id=%u)\n", ret,
+            device_id);
         return false;
     }
 
-    DEV_MON_INFO("Need to upgrade ube mgmt. (device_id=%u)\n", device_id);
+    DEV_MON_INFO("Need to upgrade UB package. (device_id=%u)\n", device_id);
     return true;
 }
 #endif
 
 int dsmi_load_package(int device_id, int pack_type, const char *file_name)
 {
-#if defined(CFG_FEATURE_UPGRADE_PATCH_CONFIG) || defined (CFG_FEATURE_UPGRADE_MAMI_PATCH_CONFIG)
+#if defined(CFG_FEATURE_UPGRADE_PATCH_CONFIG) || defined(CFG_FEATURE_UPGRADE_MAMI_PATCH_CONFIG)
     int ret, i, device_count;
     int *device_list = NULL;
     if (((unsigned int)device_id != DSMI_SET_ALL_DEVICE) || (file_name == NULL)) {
@@ -2232,7 +2228,8 @@ int dsmi_load_package(int device_id, int pack_type, const char *file_name)
         DEV_MON_ERR("Failed to invoke malloc function.\n");
         return DRV_ERROR_MALLOC_FAIL;
     }
-    ret = memset_s(device_list, (unsigned long)device_count * sizeof(int), INVALID_DEVICE_ID, (unsigned long)device_count * sizeof(int));
+    ret = memset_s(device_list, (unsigned long)device_count * sizeof(int), INVALID_DEVICE_ID,
+                   (unsigned long)device_count * sizeof(int));
     if (ret != 0) {
         DEV_MON_ERR("memset_s failed. (ret=%d)\n", ret);
         goto device_id_resource_free;
@@ -2244,7 +2241,8 @@ int dsmi_load_package(int device_id, int pack_type, const char *file_name)
     }
     for (i = 0; i < device_count; i++) {
 #ifdef CFG_FEATURE_UPGRADE_MAMI_PATCH_CONFIG
-        if (pack_type == PACKAGE_TYPE_ABL_UBE_MGMT_PATCH && dsmi_is_need_upgrade_mami_package((unsigned int)i) == false) {
+        if (pack_type == PACKAGE_TYPE_ABL_UBE_MGMT_PATCH &&
+            dsmi_is_need_upgrade_mami_package((unsigned int)i) == false) {
             continue;
         }
 #endif
@@ -2292,7 +2290,8 @@ int dsmi_unload_package(int device_id, int pack_type)
         return DRV_ERROR_MALLOC_FAIL;
     }
 
-    ret = memset_s(device_list, (unsigned long)device_count * sizeof(int), INVALID_DEVICE_ID, (unsigned long)device_count * sizeof(int));
+    ret = memset_s(device_list, (unsigned long)device_count * sizeof(int), INVALID_DEVICE_ID,
+                   (unsigned long)device_count * sizeof(int));
     if (ret != 0) {
         DEV_MON_ERR("memset_s failed. (ret=%d)\n", ret);
         goto device_id_resource_free;
@@ -2308,7 +2307,7 @@ int dsmi_unload_package(int device_id, int pack_type)
         ret = dsmi_unload_one_device_patch(device_list[i]);
         if (ret != 0) {
             DEV_MON_EX_NOTSUPPORT_ERR(ret, "Failed to invoke dsmi_unload_one_device_patch. (device_id=%d; ret=%d)",
-                device_list[i], ret);
+                                      device_list[i], ret);
             goto device_id_resource_free;
         }
     }
@@ -2353,8 +2352,8 @@ int dsmi_upgrade_start(int device_id, DSMI_COMPONENT_TYPE component_type, const 
         return DRV_ERROR_INNER_ERR;
     }
 
-    dev_upgrade_event("It is to upgrade firmware. (device_id=%d; uid=%u; component_type=%d)\n",
-                      device_id, getuid(), component_type);
+    dev_upgrade_event("It is to upgrade firmware. (device_id=%d; uid=%u; component_type=%d)\n", device_id, getuid(),
+                      component_type);
 
     ret = dsmi_check_device_id(device_id);
     if (ret == (int)DRV_ERROR_RESOURCE_OCCUPIED) {
@@ -2378,8 +2377,7 @@ int dsmi_upgrade_start(int device_id, DSMI_COMPONENT_TYPE component_type, const 
 
     ret = dsmi_upgrade_cmd_send(device_id, component_type, file_name_local);
     if (ret != 0) {
-        dev_upgrade_ex_notsupport_err(ret, "device_id(%u) dsmi_upgrade_cmd_send fail ret = %d!\n",
-            device_id, ret);
+        dev_upgrade_ex_notsupport_err(ret, "device_id(%u) dsmi_upgrade_cmd_send fail ret = %d!\n", device_id, ret);
         (void)dsmi_mutex_v(sem_id);
         DSMI_FREE(file_name_local);
         return ret;
@@ -2411,8 +2409,8 @@ int dsmi_ctrl_device_node(int device_id, struct dsmi_dtm_node_s dtm_node, DSMI_D
     return _dsmi_ctrl_device_node(device_id, dtm_node, opcode, buf);
 }
 
-int dsmi_get_all_device_node(int device_id, DEV_DTM_CAP capability,
-    struct dsmi_dtm_node_s node_info[], unsigned int *size)
+int dsmi_get_all_device_node(int device_id, DEV_DTM_CAP capability, struct dsmi_dtm_node_s node_info[],
+                             unsigned int *size)
 {
     return _dsmi_get_all_device_node(device_id, capability, node_info, size);
 }
@@ -2470,8 +2468,7 @@ int dsmi_get_component_count(int device_id, unsigned int *component_count)
 
     ret = dsmi_cmd_get_component_list(device_id, &bitmap);
     if (ret != OK) {
-        dev_upgrade_ex_notsupport_err(ret,
-            "dsmi_get_component_count fail, device id 0x%x ret = %d\n", device_id, ret);
+        dev_upgrade_ex_notsupport_err(ret, "dsmi_get_component_count fail, device id 0x%x ret = %d\n", device_id, ret);
         return ret;
     }
 
@@ -2507,16 +2504,15 @@ int dsmi_get_component_list(int device_id, DSMI_COMPONENT_TYPE *component_table,
 
     ret = dsmi_cmd_get_component_list(device_id, &bitmap);
     if (ret != OK) {
-        dev_upgrade_ex_notsupport_err(ret,
-            "dsmi_cmd_get_component_list fail, device id %d ret = %d\n", device_id, ret);
+        dev_upgrade_ex_notsupport_err(ret, "dsmi_cmd_get_component_list fail, device id %d ret = %d\n", device_id, ret);
         return ret;
     }
 
     for (i = 0; i < (unsigned int)(sizeof(bitmap) * BIT_NUM_OF_BYTE); i++) {
         if (BIT_IF_ONE(bitmap, i) == 0x1) {
             if (j >= component_count) {
-                dev_upgrade_warn("devid %d, input param component_count = %d, exceed support count = %d\n",
-                    device_id, component_count, j);
+                dev_upgrade_warn("devid %d, input param component_count = %d, exceed support count = %d\n", device_id,
+                                 component_count, j);
                 return DRV_ERROR_NONE;
             }
             component_table[j] = i;
@@ -2545,14 +2541,15 @@ int dsmi_upgrade_get_state(int device_id, unsigned char *schedule, unsigned char
     }
 
     ret = dsmi_cmd_upgrade_get_state(device_id, 0, schedule, upgrade_status);
-    dev_upgrade_event("upgrade get state, (device_id=0x%x; status=0x%x; schedule=%u; ret=%d)\n",
-        device_id, *upgrade_status, *schedule, ret);
+    dev_upgrade_event("upgrade get state, (device_id=0x%x; status=0x%x; schedule=%u; ret=%d)\n", device_id,
+                      *upgrade_status, *schedule, ret);
 
     return ret;
 }
 
 int dsmi_upgrade_get_component_static_version(int device_id, DSMI_COMPONENT_TYPE component_type,
-    unsigned char *version_str, unsigned int version_len, unsigned int *ret_len)
+                                              unsigned char *version_str, unsigned int version_len,
+                                              unsigned int *ret_len)
 {
     int ret;
 
@@ -2568,8 +2565,8 @@ int dsmi_upgrade_get_component_static_version(int device_id, DSMI_COMPONENT_TYPE
 
     ret = check_component_type(component_type, device_id);
     if (ret != 0) {
-        dev_upgrade_ex_notsupport_err(ret, "The component type is error. (dev_id=%d; type=0x%x; ret=%d)\n",
-            device_id, component_type, ret);
+        dev_upgrade_ex_notsupport_err(ret, "The component type is error. (dev_id=%d; type=0x%x; ret=%d)\n", device_id,
+                                      component_type, ret);
         return ret;
     }
 
@@ -2621,15 +2618,13 @@ int dsmi_get_user_config(int device_id, const char *config_name, unsigned int bu
 
     ret = dsmi_cmd_get_user_config(device_id, (unsigned char)config_name_len, config_name, &buf_size_tmp, buf);
     if (buf_size < buf_size_tmp) {
-        DEV_MON_EX_NOTSUPPORT_ERR(ret,
-            "devid %d dsmi_cmd_get_user_config size failed, set size=%d, return size=%d\n",
-            device_id, buf_size, buf_size_tmp);
+        DEV_MON_EX_NOTSUPPORT_ERR(ret, "devid %d dsmi_cmd_get_user_config size failed, set size=%d, return size=%d\n",
+                                  device_id, buf_size, buf_size_tmp);
         return DRV_ERROR_PARA_ERROR;
     }
 
     if (ret != 0) {
-        DEV_MON_EX_NOTSUPPORT_ERR(ret,
-            "devid %d dsmi_cmd_get_user_config failed ret = %d\n", device_id, ret);
+        DEV_MON_EX_NOTSUPPORT_ERR(ret, "devid %d dsmi_cmd_get_user_config failed ret = %d\n", device_id, ret);
         return ret;
     }
 
@@ -2738,7 +2733,7 @@ int dsmi_get_network_health(int device_id, DSMI_NET_HEALTH_STATUS *presult)
 int dsmi_get_llc_perf_para(int device_id, DSMI_LLC_PERF_INFO *perf_para)
 {
     int ret;
-    DSMI_LLC_RX_RESULT rx_result = { 0 };
+    DSMI_LLC_RX_RESULT rx_result = {0};
 
     if (perf_para == NULL) {
         DEV_MON_ERR("devid %d dsmi_get_llc_perf_para parameter error!\n", device_id);
@@ -2771,14 +2766,14 @@ int dsmi_get_device_die(int device_id, struct dsmi_soc_die_stru *pdevice_die)
     dev_index = (int)(((unsigned int)device_id) & (0xFFFFU));
     soc_type = (int)((unsigned int)device_id >> 16); // 16 high bit is soc_type
     if (soc_type > UCHAR_MAX) {
-        DEV_MON_ERR("input soc_type(%d) exceed than UCHAR_MAX(%d).\n", soc_type, UCHAR_MAX);
+        DEV_MON_ERR("input soc_type exceeds UCHAR_MAX. (soc_type=%d; max=%d)\n", soc_type, UCHAR_MAX);
         return DRV_ERROR_PARA_ERROR;
     }
     return dsmi_cmd_get_device_die(dev_index, soc_type, pdevice_die);
 }
 
 int dsmi_set_sec_revocation(int device_id, DSMI_REVOCATION_TYPE revo_type, const unsigned char *file_data,
-    unsigned int file_size)
+                            unsigned int file_size)
 {
     int ret;
 
@@ -2793,7 +2788,8 @@ int dsmi_set_sec_revocation(int device_id, DSMI_REVOCATION_TYPE revo_type, const
     }
 
     if ((file_size == 0) || (file_size > REVOCATION_FILE_LEN_MAX)) {
-        DEV_MON_ERR("device_id %d file size[%u] is out of range.\n", device_id, file_size);
+        DEV_MON_ERR("file size is out of range. (device_id=%d; file_size=%u; max=%u)\n", device_id, file_size,
+                    REVOCATION_FILE_LEN_MAX);
         return DRV_ERROR_PARA_ERROR;
     }
 
@@ -2820,19 +2816,19 @@ STATIC int dsmi_set_poweroff_reset(int devid, struct dsmi_power_state_info_stru 
     char *argv_reset[] = {DSMI_DMP_POWER_SET_SCRIPT, DSMI_DMP_POWER_CMD_RESET, NULL};
 
     if (access(DSMI_DMP_POWER_SET_SCRIPT, X_OK) != 0) {
-        DEV_MON_CRIT_ERR("dsmi set power no exec permission, (devid=%d; type=%u; error=%s).\n",
-            devid, type, strerror(errno));
+        DEV_MON_CRIT_ERR("dsmi set power no exec permission, (devid=%d; type=%u; error=%s).\n", devid, type,
+                         strerror(errno));
         return DRV_ERROR_OPER_NOT_PERMITTED;
     }
 
     ret = dsmi_cmd_set_power_state(devid, power_info);
     if (ret == DRV_ERROR_NOT_SUPPORT) {
-        DEV_MON_CRIT_EVENT("dsmi set power state not support, (devid=%d; type=%u; mode=%u).\n",
-                devid, type, (u32)power_info->mode);
+        DEV_MON_CRIT_EVENT("dsmi set power state not support, (devid=%d; type=%u; mode=%u).\n", devid, type,
+                           (u32)power_info->mode);
         return DRV_ERROR_NOT_SUPPORT;
     } else if (ret != 0) {
-        DEV_MON_CRIT_EVENT("set power state not ok, (devid=%d; type=%u; mode=%u, ret=%d).\n",
-                devid, type, (u32)power_info->mode, ret);
+        DEV_MON_CRIT_EVENT("set power state not ok, (devid=%d; type=%u; mode=%u, ret=%d).\n", devid, type,
+                           (u32)power_info->mode, ret);
     }
 
     if (type == (unsigned int)POWER_STATE_POWEROFF) {
@@ -2893,8 +2889,8 @@ int dsmi_set_power_state(int device_id, DSMI_POWER_STATE type)
 
 int dsmi_set_power_state_v2(int device_id, struct dsmi_power_state_info_stru power_info)
 {
-    DEV_MON_CRIT_EVENT("dsmi set power state exec v2, (user=%u; devid=%d; type=%u).\n",
-        getuid(), device_id, power_info.type);
+    DEV_MON_CRIT_EVENT("dsmi set power state exec v2, (user=%u; devid=%d; type=%u).\n", getuid(), device_id,
+                       power_info.type);
     return dsmi_set_power_state_base(device_id, &power_info);
 }
 
@@ -3012,10 +3008,10 @@ int dsmi_get_device_cgroup_info(int device_id, struct tag_cgroup_info *cg_info)
 
 #define PKCS_SIGN_ON "pkcs=on"
 #define PKCS_SIGN_OFF "pkcs=off"
-#define PKCS_ON_LEN     7
-#define PKCS_OFF_LEN    8
-#define MAX_LINE_SIZE   1024
-#define SIGN_KEY_WORDS  "pkcs"
+#define PKCS_ON_LEN 7
+#define PKCS_OFF_LEN 8
+#define MAX_LINE_SIZE 1024
+#define SIGN_KEY_WORDS "pkcs"
 #define INVALID_SIGN_VALUE 2
 STATIC int dsmi_main_cmd_sec_update_sign(const void *buf, unsigned int buf_size)
 {
@@ -3086,7 +3082,7 @@ STATIC int search_key_and_get_value(FILE *fp, const char *split, const char *key
             continue;
         }
         /* Take the first part of the separator. */
-        left  = strtok_r(tmp, split, &p_save);
+        left = strtok_r(tmp, split, &p_save);
         if (left == NULL) {
             continue;
         }
@@ -3154,7 +3150,7 @@ STATIC int dsmi_get_local_sign(unsigned char *sign)
 }
 
 STATIC drvError_t dsmi_set_muti_device_info(unsigned int device_id, DSMI_MAIN_CMD main_cmd, unsigned int sub_cmd,
-    const void *buf, unsigned int buf_size)
+                                            const void *buf, unsigned int buf_size)
 {
     int ret, i = 0, device_count = 0, sem_id = 0;
     int *device_list = NULL;
@@ -3177,7 +3173,8 @@ STATIC drvError_t dsmi_set_muti_device_info(unsigned int device_id, DSMI_MAIN_CM
         return DRV_ERROR_MALLOC_FAIL;
     }
 
-    ret = memset_s(device_list, (unsigned long)device_count * sizeof(int), INVALID_DEVICE_ID, (unsigned long)device_count * sizeof(int));
+    ret = memset_s(device_list, (unsigned long)device_count * sizeof(int), INVALID_DEVICE_ID,
+                   (unsigned long)device_count * sizeof(int));
     if (ret != 0) {
         DEV_MON_ERR("memset_s failed. (ret=%d)\n", ret);
         goto device_id_resource_free;
@@ -3199,7 +3196,7 @@ STATIC drvError_t dsmi_set_muti_device_info(unsigned int device_id, DSMI_MAIN_CM
         ret = dsmi_cmd_set_device_info((unsigned int)device_list[i], main_cmd, sub_cmd, buf, buf_size);
         if (ret != 0) {
             DEV_MON_EX_NOTSUPPORT_ERR(ret, "Failed to invoke dsmi_cmd_set_device_info. (device_id=%d; ret=%d)\n",
-                device_list[i], ret);
+                                      device_list[i], ret);
             goto sem_free;
         }
     }
@@ -3217,8 +3214,8 @@ device_id_resource_free:
     return (drvError_t)ret;
 }
 
-int dsmi_get_muti_device_info(unsigned int device_id, DSMI_MAIN_CMD main_cmd, unsigned int sub_cmd,
-    void *buf, unsigned int *size)
+int dsmi_get_muti_device_info(unsigned int device_id, DSMI_MAIN_CMD main_cmd, unsigned int sub_cmd, void *buf,
+                              unsigned int *size)
 {
     int ret;
     int device_count = 0;
@@ -3250,7 +3247,8 @@ int dsmi_get_muti_device_info(unsigned int device_id, DSMI_MAIN_CMD main_cmd, un
         return DRV_ERROR_MALLOC_FAIL;
     }
 
-    ret = memset_s(device_list, (size_t)device_count * sizeof(int), INVALID_DEVICE_ID, (unsigned long)device_count * sizeof(int));
+    ret = memset_s(device_list, (size_t)device_count * sizeof(int), INVALID_DEVICE_ID,
+                   (unsigned long)device_count * sizeof(int));
     if (ret != 0) {
         DEV_MON_ERR("memset_s failed. (ret=%d)\n", ret);
         goto device_id_resource_free;
@@ -3265,8 +3263,8 @@ int dsmi_get_muti_device_info(unsigned int device_id, DSMI_MAIN_CMD main_cmd, un
     for (i = 0; i < device_count; i++) {
         ret = dsmi_cmd_get_device_info((unsigned int)device_list[i], main_cmd, sub_cmd, buf, size);
         if (ret != 0) {
-            DEV_MON_EX_NOTSUPPORT_ERR(ret,
-                "Failed to invoke dsmi_cmd_get_device_info. (device_id=%d; ret=%d)", device_list[i], ret);
+            DEV_MON_EX_NOTSUPPORT_ERR(ret, "Failed to invoke dsmi_cmd_get_device_info. (device_id=%d; ret=%d)",
+                                      device_list[i], ret);
             goto device_id_resource_free;
         }
 
@@ -3285,33 +3283,34 @@ device_id_resource_free:
 
 /* The sub_cmd range is set as follows：[ sub_cmd_start, sub_cmd_end ]  */
 drv_set_dev_info_cmd_t g_set_dev_info_cmd[] = {
-    { DSMI_MAIN_CMD_SVM, 0, DSMI_DEV_INFO_SUB_CMD_MAX, drvSetDeviceInfo, NULL },
-    { DSMI_MAIN_CMD_VDEV_MNG, 0, DSMI_DEV_INFO_SUB_CMD_MAX, drvSetDeviceInfo, NULL },
-    { DSMI_MAIN_CMD_HOST_AICPU, 0, DSMI_DEV_INFO_SUB_CMD_MAX, drvSetDeviceInfo, NULL },
-    { DSMI_MAIN_CMD_SEC, DSMI_SEC_SUB_CMD_PSS, DSMI_SEC_SUB_CMD_PSS, dsmi_set_muti_device_info, NULL },
-    { DSMI_MAIN_CMD_SEC, DSMI_SEC_SUB_CMD_CC, DSMI_SEC_SUB_CMD_CC, dsmi_cmd_set_device_info_ex, NULL },
-    { DSMI_MAIN_CMD_SEC, DSMI_SEC_SUB_CMD_CUST_SIGN_FLAG, DSMI_SEC_SUB_CMD_CUST_SIGN_FLAG, dsmi_cmd_set_custom_sign_flag, NULL },
-    { DSMI_MAIN_CMD_SEC, DSMI_SEC_SUB_CMD_CUST_SIGN_USER_CERT, DSMI_SEC_SUB_CMD_CUST_SIGN_USER_CERT, dsmi_cmd_set_custom_sign_cert, NULL },
-    { DSMI_MAIN_CMD_UPGRADE, DSMI_UPGRADE_SUB_TYPE_SWPLUGIN_POLICY, DSMI_UPGRADE_SUB_TYPE_SWPLUGIN_POLICY, drvSetDeviceInfo, NULL },
-    { DSMI_MAIN_CMD_UPGRADE, 0, DSMI_DEV_INFO_SUB_CMD_MAX, dsmi_cmd_set_device_info_critical, NULL },
-    { DSMI_MAIN_CMD_RECOVERY, 0, DSMI_DEV_INFO_SUB_CMD_MAX, dsmi_cmd_set_device_info_critical, NULL },
-    { DSMI_MAIN_CMD_MEMORY, DSMI_SUB_CMD_MEMORY_CLEAR_HUGE_PAGE, DSMI_SUB_CMD_MEMORY_CLEAR_HUGE_PAGE,
-        dsmi_cmd_set_device_info_ex, NULL },
-    { DSMI_MAIN_CMD_MEMORY, DSMI_SUB_CMD_MEMORY_SET_HPAGE_RATIO, DSMI_SUB_CMD_MEMORY_SET_HPAGE_RATIO,
-        dsmi_cmd_set_device_info_ex, NULL },
-    { DSMI_MAIN_CMD_SOC_INFO, DSMI_SOC_INFO_SUB_CMD_CUST_OP_ENHANCE, DSMI_SOC_INFO_SUB_CMD_CUST_OP_ENHANCE,
-        drvSetDeviceInfoToDmsHal, NULL },
-    { DSMI_MAIN_CMD_CHIP_INF, DSMI_CHIP_INF_SUB_CMD_SPOD_NODE_STATUS, DSMI_CHIP_INF_SUB_CMD_SPOD_NODE_STATUS,
-        drvSetDeviceInfo, NULL },
-    { DSMI_MAIN_CMD_TRS, DSMI_TRS_SUB_CMD_KERNEL_LAUNCH_MODE, DSMI_TRS_SUB_CMD_KERNEL_LAUNCH_MODE,
-        DmsSetTrsMode, NULL },
-    { DSMI_MAIN_CMD_TS, DSMI_TS_SUB_CMD_COMMON_MSG, DSMI_TS_SUB_CMD_COMMON_MSG,
-        drvSetDeviceInfo, NULL },
+    {DSMI_MAIN_CMD_SVM, 0, DSMI_DEV_INFO_SUB_CMD_MAX, drvSetDeviceInfo, NULL},
+    {DSMI_MAIN_CMD_VDEV_MNG, 0, DSMI_DEV_INFO_SUB_CMD_MAX, drvSetDeviceInfo, NULL},
+    {DSMI_MAIN_CMD_HOST_AICPU, 0, DSMI_DEV_INFO_SUB_CMD_MAX, drvSetDeviceInfo, NULL},
+    {DSMI_MAIN_CMD_SEC, DSMI_SEC_SUB_CMD_PSS, DSMI_SEC_SUB_CMD_PSS, dsmi_set_muti_device_info, NULL},
+    {DSMI_MAIN_CMD_SEC, DSMI_SEC_SUB_CMD_CC, DSMI_SEC_SUB_CMD_CC, dsmi_cmd_set_device_info_ex, NULL},
+    {DSMI_MAIN_CMD_SEC, DSMI_SEC_SUB_CMD_CUST_SIGN_FLAG, DSMI_SEC_SUB_CMD_CUST_SIGN_FLAG, dsmi_cmd_set_custom_sign_flag,
+     NULL},
+    {DSMI_MAIN_CMD_SEC, DSMI_SEC_SUB_CMD_CUST_SIGN_USER_CERT, DSMI_SEC_SUB_CMD_CUST_SIGN_USER_CERT,
+     dsmi_cmd_set_custom_sign_cert, NULL},
+    {DSMI_MAIN_CMD_UPGRADE, DSMI_UPGRADE_SUB_TYPE_SWPLUGIN_POLICY, DSMI_UPGRADE_SUB_TYPE_SWPLUGIN_POLICY,
+     drvSetDeviceInfo, NULL},
+    {DSMI_MAIN_CMD_UPGRADE, 0, DSMI_DEV_INFO_SUB_CMD_MAX, dsmi_cmd_set_device_info_critical, NULL},
+    {DSMI_MAIN_CMD_RECOVERY, 0, DSMI_DEV_INFO_SUB_CMD_MAX, dsmi_cmd_set_device_info_critical, NULL},
+    {DSMI_MAIN_CMD_MEMORY, DSMI_SUB_CMD_MEMORY_CLEAR_HUGE_PAGE, DSMI_SUB_CMD_MEMORY_CLEAR_HUGE_PAGE,
+     dsmi_cmd_set_device_info_ex, NULL},
+    {DSMI_MAIN_CMD_MEMORY, DSMI_SUB_CMD_MEMORY_SET_HPAGE_RATIO, DSMI_SUB_CMD_MEMORY_SET_HPAGE_RATIO,
+     dsmi_cmd_set_device_info_ex, NULL},
+    {DSMI_MAIN_CMD_SOC_INFO, DSMI_SOC_INFO_SUB_CMD_CUST_OP_ENHANCE, DSMI_SOC_INFO_SUB_CMD_CUST_OP_ENHANCE,
+     drvSetDeviceInfoToDmsHal, NULL},
+    {DSMI_MAIN_CMD_CHIP_INF, DSMI_CHIP_INF_SUB_CMD_SPOD_NODE_STATUS, DSMI_CHIP_INF_SUB_CMD_SPOD_NODE_STATUS,
+     drvSetDeviceInfo, NULL},
+    {DSMI_MAIN_CMD_TRS, DSMI_TRS_SUB_CMD_KERNEL_LAUNCH_MODE, DSMI_TRS_SUB_CMD_KERNEL_LAUNCH_MODE, DmsSetTrsMode, NULL},
+    {DSMI_MAIN_CMD_TS, DSMI_TS_SUB_CMD_COMMON_MSG, DSMI_TS_SUB_CMD_COMMON_MSG, drvSetDeviceInfo, NULL},
     /* default used dsmi_cmd_set_device_info */
 };
 
-int dsmi_cmd_set_device_info_method(unsigned int dev_id, DSMI_MAIN_CMD main_cmd, unsigned int sub_cmd,
-    const void *buf, unsigned int buf_size)
+int dsmi_cmd_set_device_info_method(unsigned int dev_id, DSMI_MAIN_CMD main_cmd, unsigned int sub_cmd, const void *buf,
+                                    unsigned int buf_size)
 {
     int ret;
     unsigned int i, size;
@@ -3333,8 +3332,10 @@ int dsmi_cmd_set_device_info_method(unsigned int dev_id, DSMI_MAIN_CMD main_cmd,
         if (g_set_dev_info_cmd[i].cmd_check != NULL) {
             ret = g_set_dev_info_cmd[i].cmd_check();
             if (ret != 0) {
-                DEV_MON_EX_NOTSUPPORT_ERR(ret, "Set device info check failed. "
-                    "(dev_id=%u; main_cmd=%u; sub_cmd=%u; ret=%d).\n", dev_id, main_cmd, sub_cmd, ret);
+                DEV_MON_EX_NOTSUPPORT_ERR(ret,
+                                          "Set device info check failed. "
+                                          "(dev_id=%u; main_cmd=%u; sub_cmd=%u; ret=%d).\n",
+                                          dev_id, main_cmd, sub_cmd, ret);
                 return ret;
             }
         }
@@ -3345,8 +3346,8 @@ int dsmi_cmd_set_device_info_method(unsigned int dev_id, DSMI_MAIN_CMD main_cmd,
     }
 }
 
-int dsmi_set_device_info(unsigned int device_id, DSMI_MAIN_CMD main_cmd, unsigned int sub_cmd,
-    const void *buf, unsigned int buf_size)
+int dsmi_set_device_info(unsigned int device_id, DSMI_MAIN_CMD main_cmd, unsigned int sub_cmd, const void *buf,
+                         unsigned int buf_size)
 {
     return _dsmi_set_device_info(device_id, main_cmd, sub_cmd, buf, buf_size);
 }
@@ -3361,11 +3362,11 @@ bool dsmi_get_device_info_is_critical(DSMI_MAIN_CMD main_cmd, unsigned int sub_c
     return false;
 }
 
-int dsmi_cmd_get_flash_erase_count(unsigned int device_id, DSMI_MAIN_CMD main_cmd, unsigned int sub_cmd, 
-    void *buf, unsigned int *size)
+int dsmi_cmd_get_flash_erase_count(unsigned int device_id, DSMI_MAIN_CMD main_cmd, unsigned int sub_cmd, void *buf,
+                                   unsigned int *size)
 {
-#define DSMI_READ_TIMES   4
-#define DSMI_OUT_LEN_EACH_READ  (2*1024)
+#define DSMI_READ_TIMES 4
+#define DSMI_OUT_LEN_EACH_READ (2 * 1024)
     int ret;
     int sem_id = 0;
     unsigned int i;
@@ -3396,8 +3397,8 @@ int dsmi_cmd_get_flash_erase_count(unsigned int device_id, DSMI_MAIN_CMD main_cm
 
     for (i = 0; i < DSMI_READ_TIMES; i++) {
         temp_size = DSMI_OUT_LEN_EACH_READ;
-        ret = dsmi_cmd_get_device_info(device_id, main_cmd, i,
-            ((unsigned char *)buf) + (i * DSMI_OUT_LEN_EACH_READ), &temp_size);
+        ret = dsmi_cmd_get_device_info(device_id, main_cmd, i, ((unsigned char *)buf) + (i * DSMI_OUT_LEN_EACH_READ),
+                                       &temp_size);
         if (ret != 0) {
             DEV_MON_EX_NOTSUPPORT_ERR(ret, "get flash info fail. (i=%d; ret=%d)\n", i, ret);
             (void)dsmi_mutex_v(sem_id);
@@ -3410,8 +3411,8 @@ int dsmi_cmd_get_flash_erase_count(unsigned int device_id, DSMI_MAIN_CMD main_cm
     return DRV_ERROR_NONE;
 }
 
-int dsmi_cmd_get_flash_info(unsigned int device_id, DSMI_MAIN_CMD main_cmd, unsigned int sub_cmd, 
-    void *buf, unsigned int *size)
+int dsmi_cmd_get_flash_info(unsigned int device_id, DSMI_MAIN_CMD main_cmd, unsigned int sub_cmd, void *buf,
+                            unsigned int *size)
 {
     int ret;
     switch (sub_cmd) {
@@ -3421,7 +3422,7 @@ int dsmi_cmd_get_flash_info(unsigned int device_id, DSMI_MAIN_CMD main_cmd, unsi
         case DSMI_FLASH_SUB_CMD_FW_WRITE_PROTECTION:
             ret = dsmi_cmd_get_device_info(device_id, main_cmd, sub_cmd, buf, size);
             break;
-        default :
+        default:
             return DRV_ERROR_NOT_SUPPORT;
     }
 
@@ -3475,34 +3476,37 @@ static struct udis_device_info_adapter g_get_device_info_table[] = {
 #ifdef CFG_FEATURE_UDIS_UTIL_FROM_TS
     {DSMI_MAIN_CMD_TS, DSMI_TS_SUB_CMD_AICORE_UTILIZATION_RATE, "aic_util", false, dms_get_ts_info_from_udis},
     {DSMI_MAIN_CMD_TS, DSMI_TS_SUB_CMD_VECTORCORE_UTILIZATION_RATE, "aiv_util", false, dms_get_ts_info_from_udis},
-    {DSMI_MAIN_CMD_TS, DSMI_TS_SUB_CMD_NPU_MULTI_UTILIZATION_RATE, "npu_multi_util", true, dms_get_npu_multi_util_from_udis},
-    {DSMI_MAIN_CMD_TS, DSMI_TS_SUB_CMD_NPU_MULTI_UTILIZATION_RATE_V2, "npu_multi_util_v2", true, dms_get_npu_multi_util_from_udis},
+    {DSMI_MAIN_CMD_TS, DSMI_TS_SUB_CMD_NPU_MULTI_UTILIZATION_RATE, "npu_multi_util", true,
+     dms_get_npu_multi_util_from_udis},
+    {DSMI_MAIN_CMD_TS, DSMI_TS_SUB_CMD_NPU_MULTI_UTILIZATION_RATE_V2, "npu_multi_util_v2", true,
+     dms_get_npu_multi_util_from_udis},
 #endif
 };
 
-int dsmi_get_device_info(unsigned int device_id, DSMI_MAIN_CMD main_cmd, unsigned int sub_cmd,
-    void *buf, unsigned int *size)
+int dsmi_get_device_info(unsigned int device_id, DSMI_MAIN_CMD main_cmd, unsigned int sub_cmd, void *buf,
+                         unsigned int *size)
 {
     int ret = 0;
     unsigned int i;
     unsigned int table_size = sizeof(g_get_device_info_table) / sizeof(g_get_device_info_table[0]);
 
     if ((buf == NULL) || (size == NULL)) {
-        DEV_MON_ERR("Invalid parameter. (dev_id=%u; main_cmd=%u; sub_cmd=%u; buf=%d; size=%d)\n", device_id, main_cmd, sub_cmd, (buf != NULL), (size != NULL));
+        DEV_MON_ERR("Invalid parameter. (dev_id=%u; main_cmd=%u; sub_cmd=%u; buf=%d; size=%d)\n", device_id, main_cmd,
+                    sub_cmd, (buf != NULL), (size != NULL));
         return DRV_ERROR_PARA_ERROR;
     }
 
     for (i = 0; i < table_size; i++) {
-        if ((g_get_device_info_table[i].main_cmd == main_cmd) &&
-            (g_get_device_info_table[i].sub_cmd == sub_cmd)) {
-            ret = g_get_device_info_table[i].callback(device_id, g_get_device_info_table[i].name,
-                buf, size);
+        if ((g_get_device_info_table[i].main_cmd == main_cmd) && (g_get_device_info_table[i].sub_cmd == sub_cmd)) {
+            ret = g_get_device_info_table[i].callback(device_id, g_get_device_info_table[i].name, buf, size);
             if (ret == 0) {
                 return ret;
             }
             if (!g_get_device_info_table[i].enable_dmp) {
-                DEV_MON_EX_NOTSUPPORT_ERR(ret, "Failed to get device info. "
-                    "(dev_id=%d; main_cmd=%d; sub_cmd=%d; ret=%d)\n", device_id, main_cmd, sub_cmd, ret);
+                DEV_MON_EX_NOTSUPPORT_ERR(ret,
+                                          "Failed to get device info. "
+                                          "(dev_id=%d; main_cmd=%d; sub_cmd=%d; ret=%d)\n",
+                                          device_id, main_cmd, sub_cmd, ret);
                 return ret;
             }
         }
@@ -3518,15 +3522,15 @@ int dsmi_create_capability_group(int device_id, int ts_id, struct dsmi_capabilit
         DEV_MON_ERR("group info is null\n");
         return DRV_ERROR_PARA_ERROR;
     }
-    DEV_MON_EVENT("device id %d is create ts group, ts_id=%d,group_id=%d,state=%d,extend_attribute=%d,"
-			      "aicore_number=%d,aivector_number=%d,sdma_number=%d,aicpu_number=%d\n",
+    DEV_MON_EVENT("create ts group for device id. (device_id=%d; ts_id=%d; group_id=%d; state=%d; extend_attribute=%d; "
+                  "aicore_number=%d; aivector_number=%d; sdma_number=%d; aicpu_number=%d)\n",
                   device_id, ts_id, group_info->group_id, group_info->state, group_info->extend_attribute,
-                  group_info->aicore_number, group_info->aivector_number,
-                  group_info->sdma_number, group_info->aicpu_number);
+                  group_info->aicore_number, group_info->aivector_number, group_info->sdma_number,
+                  group_info->aicpu_number);
     ret = dsmi_cmd_create_capability_group(device_id, ts_id, group_info);
     if (ret != 0) {
-        DEV_MON_ERR("Dsmi create capability group fail. (device_id=%d, ts_id=%d, group_id=%u, ret=%d)\n",
-                    device_id, ts_id, group_info->group_id, ret);
+        DEV_MON_ERR("Dsmi create capability group fail. (device_id=%d, ts_id=%d, group_id=%u, ret=%d)\n", device_id,
+                    ts_id, group_info->group_id, ret);
         return ret;
     }
 
@@ -3537,11 +3541,11 @@ int dsmi_delete_capability_group(int device_id, int ts_id, int group_id)
 {
     int ret;
 
-    DEV_MON_EVENT("device id %d is delete ts group, ts_id=%d,group_id=%d", device_id, ts_id, group_id);
+    DEV_MON_EVENT("delete ts group for device id %d. (ts_id=%d; group_id=%d)\n", device_id, ts_id, group_id);
     ret = dsmi_cmd_delete_capability_group(device_id, ts_id, group_id);
     if (ret != 0) {
-        DEV_MON_ERR("Dsmi delete capability group fail. (device_id=%d, ts_id=%d, group_id=%d, ret=%d)\n",
-                    device_id, ts_id, group_id, ret);
+        DEV_MON_ERR("Dsmi delete capability group fail. (device_id=%d, ts_id=%d, group_id=%d, ret=%d)\n", device_id,
+                    ts_id, group_id, ret);
         return ret;
     }
 
@@ -3549,7 +3553,7 @@ int dsmi_delete_capability_group(int device_id, int ts_id, int group_id)
 }
 
 int dsmi_get_capability_group_info(int device_id, int ts_id, int group_id,
-    struct dsmi_capability_group_info *group_info, int group_count)
+                                   struct dsmi_capability_group_info *group_info, int group_count)
 {
     if (group_info == NULL) {
         DEV_MON_ERR("group info is null\n");
@@ -3559,7 +3563,7 @@ int dsmi_get_capability_group_info(int device_id, int ts_id, int group_id,
 }
 
 int dsmi_get_total_ecc_isolated_pages_info(int device_id, int module_type,
-    struct dsmi_ecc_pages_stru *pdevice_ecc_pages_statistics)
+                                           struct dsmi_ecc_pages_stru *pdevice_ecc_pages_statistics)
 {
 #if defined CFG_FEATURE_ECC_HBM_INFO || defined CFG_FEATURE_ECC_DDR_INFO
     int ret;
@@ -3580,17 +3584,17 @@ int dsmi_get_total_ecc_isolated_pages_info(int device_id, int module_type,
 
     if (module_type == DSMI_DEVICE_TYPE_HBM) {
         ret = dsmi_udis_get_hbm_isolated_pages_info(device_id, (unsigned char)module_type,
-            pdevice_ecc_pages_statistics);
+                                                    pdevice_ecc_pages_statistics);
         if (ret == 0) {
             return 0;
         }
     }
 
     ret = dsmi_cmd_get_total_ecc_isolated_pages_info(device_id, (unsigned char)module_type,
-        pdevice_ecc_pages_statistics);
+                                                     pdevice_ecc_pages_statistics);
     if (ret) {
-        DEV_MON_EX_NOTSUPPORT_ERR(ret,
-            "devid %d dsmi_get_total_ecc_isolated_pages_info call error ret = %d!\n", device_id, ret);
+        DEV_MON_EX_NOTSUPPORT_ERR(ret, "devid %d dsmi_get_total_ecc_isolated_pages_info call error ret = %d!\n",
+                                  device_id, ret);
         return ret;
     }
 
@@ -3610,8 +3614,8 @@ int dsmi_clear_ecc_isolated_statistics_info(int device_id)
 
     ret = dsmi_cmd_clear_ecc_isolated_info(device_id);
     if (ret) {
-        DEV_MON_EX_NOTSUPPORT_ERR(ret,
-            "devid %d dsmi_clear_ecc_isolated_statistics_info call error ret = %d!\n", device_id, ret);
+        DEV_MON_EX_NOTSUPPORT_ERR(ret, "devid %d dsmi_clear_ecc_isolated_statistics_info call error ret = %d!\n",
+                                  device_id, ret);
         return ret;
     }
     return OK;
@@ -3666,18 +3670,17 @@ int dsmi_set_flash_content(int device_id, DSMI_FLASH_CONTENT content_info)
     return _dsmi_set_flash_content(device_id, content_info);
 }
 
-int dsmi_get_device_state(int device_id, DSMI_DEV_NODE_STATE *node_state,
-    unsigned int max_num, unsigned int *num)
+int dsmi_get_device_state(int device_id, DSMI_DEV_NODE_STATE *node_state, unsigned int max_num, unsigned int *num)
 {
     return _dsmi_get_device_state(device_id, node_state, max_num, num);
 }
 
-int dsmi_set_detect_info(unsigned int device_id, DSMI_DETECT_MAIN_CMD main_cmd,
-    unsigned int sub_cmd, const void *buf, unsigned int buf_size)
+int dsmi_set_detect_info(unsigned int device_id, DSMI_DETECT_MAIN_CMD main_cmd, unsigned int sub_cmd, const void *buf,
+                         unsigned int buf_size)
 {
     int ret;
-    DEV_MON_EVENT("Set detect info, (user id=%u; device_id=%u; main cmd=%u; sub cmd=%u; buf_size=%u\n",
-                  getuid(), device_id, (unsigned int)main_cmd, sub_cmd, buf_size);
+    DEV_MON_EVENT("Set detect info, (user id=%u; device_id=%u; main cmd=%u; sub cmd=%u; buf_size=%u\n", getuid(),
+                  device_id, (unsigned int)main_cmd, sub_cmd, buf_size);
 
     ret = dsmi_check_device_id((int)device_id);
     CHECK_DEVICE_BUSY(device_id, ret);
@@ -3694,14 +3697,14 @@ int dsmi_set_detect_info(unsigned int device_id, DSMI_DETECT_MAIN_CMD main_cmd,
     ret = dsmi_cmd_set_detect_info(device_id, main_cmd, sub_cmd, buf, buf_size);
     if (ret != 0) {
         DEV_MON_EX_NOTSUPPORT_ERR(ret, "Set detect info fail, (devid=%u, main_cmd=%u, sub_cmd=%u, ret=%d).\n",
-            device_id, main_cmd, sub_cmd, ret);
+                                  device_id, main_cmd, sub_cmd, ret);
     }
 
     return ret;
 }
 
-int dsmi_get_detect_info(unsigned int device_id, DSMI_DETECT_MAIN_CMD main_cmd,
-    unsigned int sub_cmd, void *buf, unsigned int *buf_size)
+int dsmi_get_detect_info(unsigned int device_id, DSMI_DETECT_MAIN_CMD main_cmd, unsigned int sub_cmd, void *buf,
+                         unsigned int *buf_size)
 {
     int ret = 0;
 
@@ -3712,9 +3715,8 @@ int dsmi_get_detect_info(unsigned int device_id, DSMI_DETECT_MAIN_CMD main_cmd,
 
     ret = dsmi_cmd_get_detect_info(device_id, main_cmd, sub_cmd, buf, buf_size);
     if (ret != 0) {
-        DEV_MON_EX_NOTSUPPORT_ERR(ret,
-            "Get detect info fail, (devid=%u, main_cmd=%u, sub_cmd=%u, ret=%d).\n",
-            device_id, main_cmd, sub_cmd, ret);
+        DEV_MON_EX_NOTSUPPORT_ERR(ret, "Get detect info fail, (devid=%u, main_cmd=%u, sub_cmd=%u, ret=%d).\n",
+                                  device_id, main_cmd, sub_cmd, ret);
     }
 
     return ret;
@@ -3732,8 +3734,8 @@ int dsmi_get_platform_info(DSMI_PLATFORM_INFO *info)
     return ret;
 }
 
-int dsmi_cmd_get_sec_info(unsigned int device_id, DSMI_MAIN_CMD main_cmd, unsigned int sub_cmd, 
-    void *buf, unsigned int *size)
+int dsmi_cmd_get_sec_info(unsigned int device_id, DSMI_MAIN_CMD main_cmd, unsigned int sub_cmd, void *buf,
+                          unsigned int *size)
 {
     int ret;
     switch (sub_cmd) {
@@ -3755,8 +3757,8 @@ int dsmi_cmd_get_sec_info(unsigned int device_id, DSMI_MAIN_CMD main_cmd, unsign
     return ret;
 }
 
-int dsmi_cmd_get_custom_sign_flag(
-    unsigned int device_id, DSMI_MAIN_CMD main_cmd, unsigned int sub_cmd, void *buf, unsigned int *size)
+int dsmi_cmd_get_custom_sign_flag(unsigned int device_id, DSMI_MAIN_CMD main_cmd, unsigned int sub_cmd, void *buf,
+                                  unsigned int *size)
 {
     int ret = 0;
 
@@ -3767,7 +3769,7 @@ int dsmi_cmd_get_custom_sign_flag(
 
     ret = dsmi_check_device_id((int)device_id);
     if (ret != 0) {
-        DEV_MON_ERR("Device is not exist. (device_id=%d; ret=%d)\n", device_id, ret);
+        DEV_MON_ERR("Device does not exist. (device_id=%d; ret=%d)\n", device_id, ret);
         return DRV_ERROR_PARA_ERROR;
     }
 
@@ -3780,34 +3782,34 @@ int dsmi_cmd_get_custom_sign_flag(
     return 0;
 }
 
-drvError_t dsmi_cmd_set_custom_sign_flag(
-    unsigned int device_id, DSMI_MAIN_CMD main_cmd, unsigned int sub_cmd, const void *buf, unsigned int size)
+drvError_t dsmi_cmd_set_custom_sign_flag(unsigned int device_id, DSMI_MAIN_CMD main_cmd, unsigned int sub_cmd,
+                                         const void *buf, unsigned int size)
 {
     int ret = 0;
     drvError_t err = DRV_ERROR_NONE;
     unsigned int sign_flag = 0;
- 
+
     if (buf == NULL || size > USHORT_MAX) {
         DEV_MON_ERR("Parameter error. (devid=%u; buf_size=%u; buf_size_max=%u)\n", device_id, size, USHORT_MAX);
         return DRV_ERROR_PARA_ERROR;
     }
- 
+
     if (getuid() != 0) {
         DEV_MON_ERR("Permission denied. (devid=%u)\n", device_id);
         return DRV_ERROR_OPER_NOT_PERMITTED;
     }
- 
+
     ret = memcpy_s(&sign_flag, sizeof(unsigned int), buf, size);
     if (ret != 0) {
         DEV_MON_ERR("Failed to invoke memcpy. (ret=%d)\n", ret);
         return DRV_ERROR_INNER_ERR;
     }
- 
+
     if (sign_flag >= SIGN_FLAG_MAX) {
         DEV_MON_ERR("Parameter error. (devid=%u; sign_flag=%u)\n", device_id, sign_flag);
         return DRV_ERROR_PARA_ERROR;
     }
- 
+
     err = dms_set_sign_flag_ioctl(device_id, main_cmd, sub_cmd, buf, size);
     if (err != DRV_ERROR_NONE) {
         DEV_MON_ERR("Failed to invoke dms_set_sign_flag_ioctl. (devid=%u; ret=%d)\n", device_id, (int)err);
@@ -3816,8 +3818,8 @@ drvError_t dsmi_cmd_set_custom_sign_flag(
     return DRV_ERROR_NONE;
 }
 
-drvError_t dsmi_cmd_set_custom_sign_cert(
-    unsigned int device_id, DSMI_MAIN_CMD main_cmd, unsigned int sub_cmd, const void *buf, unsigned int size)
+drvError_t dsmi_cmd_set_custom_sign_cert(unsigned int device_id, DSMI_MAIN_CMD main_cmd, unsigned int sub_cmd,
+                                         const void *buf, unsigned int size)
 {
     drvError_t err = DRV_ERROR_NONE;
 
@@ -3825,7 +3827,7 @@ drvError_t dsmi_cmd_set_custom_sign_cert(
         DEV_MON_ERR("Parameter error. (devid=%u; buf_size=%u; buf_size_max=%u)\n", device_id, size, USHORT_MAX);
         return DRV_ERROR_PARA_ERROR;
     }
- 
+
     if (getuid() != 0) {
         DEV_MON_ERR("Permission denied. (devid=%u)\n", device_id);
         return DRV_ERROR_OPER_NOT_PERMITTED;
@@ -3839,8 +3841,8 @@ drvError_t dsmi_cmd_set_custom_sign_cert(
     return err;
 }
 
-int dsmi_cmd_get_sign_cert(
-    unsigned int device_id, DSMI_MAIN_CMD main_cmd, unsigned int sub_cmd, void *buf, unsigned int *size)
+int dsmi_cmd_get_sign_cert(unsigned int device_id, DSMI_MAIN_CMD main_cmd, unsigned int sub_cmd, void *buf,
+                           unsigned int *size)
 {
     int ret = 0;
 
@@ -3851,7 +3853,7 @@ int dsmi_cmd_get_sign_cert(
 
     ret = dsmi_check_device_id((int)device_id);
     if (ret != 0) {
-        DEV_MON_ERR("Device is not exist. (device_id=%d; ret=%d)\n", device_id, ret);
+        DEV_MON_ERR("Device does not exist. (device_id=%d; ret=%d)\n", device_id, ret);
         return DRV_ERROR_PARA_ERROR;
     }
 

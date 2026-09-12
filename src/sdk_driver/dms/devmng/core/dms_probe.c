@@ -32,26 +32,26 @@ int dms_get_devid_from_data(void *data)
 }
 KA_EXPORT_SYMBOL(dms_get_devid_from_data);
 
-static int dms_create_device(struct devdrv_info* dev_info)
+static int dms_create_device(struct devdrv_info *dev_info)
 {
     int ret;
     int dev_id;
-    struct dms_system_ctrl_block* cb = dms_get_sys_ctrl_cb();
+    struct dms_system_ctrl_block *cb = dms_get_sys_ctrl_cb();
 
     dev_id = dev_info->dev_id;
     ret = dms_check_device_id(dev_id);
     if (ret != 0) {
-        dms_err("dev_id out of range. (ret=%d; dev_id=%d)\n", ret, dev_id);
+        dms_err("dev_id out of range. (ret=%d; dev_id=%d; max=%u)\n", ret, dev_id, ASCEND_DEV_MAX_NUM);
         return ret;
     }
     cb->dev_cb_table[dev_id].state = DMS_IN_USED;
-    cb->dev_cb_table[dev_id].dev_info = (void*)dev_info;
+    cb->dev_cb_table[dev_id].dev_info = (void *)dev_info;
     return 0;
 }
 
-static int dms_destroy_device(struct devdrv_info* dev_info)
+static int dms_destroy_device(struct devdrv_info *dev_info)
 {
-    struct dms_system_ctrl_block* cb = dms_get_sys_ctrl_cb();
+    struct dms_system_ctrl_block *cb = dms_get_sys_ctrl_cb();
     int ret;
     int dev_id;
     dev_id = dev_info->dev_id;
@@ -62,7 +62,7 @@ static int dms_destroy_device(struct devdrv_info* dev_info)
 
     ret = dms_check_device_id(dev_id);
     if (ret != 0) {
-        dms_err("dev_id out of range. (ret=%d; dev_id=%d)\n", ret, dev_id);
+        dms_err("dev_id out of range. (ret=%d; dev_id=%d; max=%u)\n", ret, dev_id, ASCEND_DEV_MAX_NUM);
         return ret;
     }
     cb->dev_cb_table[dev_id].state = DMS_NOT_USED;
@@ -71,7 +71,7 @@ static int dms_destroy_device(struct devdrv_info* dev_info)
     return 0;
 }
 
-static int dms_notify_device_up(struct devdrv_info* dev)
+static int dms_notify_device_up(struct devdrv_info *dev)
 {
     int ret;
     int dev_id = dev->dev_id;
@@ -100,7 +100,7 @@ static int dms_notify_device_up(struct devdrv_info* dev)
     return 0;
 }
 
-static int dms_notify_device_down(struct devdrv_info* dev)
+static int dms_notify_device_down(struct devdrv_info *dev)
 {
     int ret;
     int dev_id = dev->dev_id;
@@ -128,7 +128,7 @@ static int dms_notify_device_down(struct devdrv_info* dev)
     return 0;
 }
 
-int dms_device_register(struct devdrv_info* dev)
+int dms_device_register(struct devdrv_info *dev)
 {
     int ret;
     int dev_id;
@@ -139,7 +139,7 @@ int dms_device_register(struct devdrv_info* dev)
     dev_id = dev->dev_id;
     ret = dms_check_device_id(dev_id);
     if (ret != 0) {
-        dms_err("dev_id out of range. (ret=%d; dev_id=%d)\n", ret, dev_id);
+        dms_err("dev_id out of range. (ret=%d; dev_id=%d; max=%u)\n", ret, dev_id, ASCEND_DEV_MAX_NUM);
         return ret;
     }
 
@@ -158,7 +158,7 @@ int dms_device_register(struct devdrv_info* dev)
 }
 KA_EXPORT_SYMBOL(dms_device_register);
 
-void dms_device_unregister(struct devdrv_info* dev)
+void dms_device_unregister(struct devdrv_info *dev)
 {
     int ret;
     int dev_id;
@@ -169,7 +169,7 @@ void dms_device_unregister(struct devdrv_info* dev)
     dev_id = dev->dev_id;
     ret = dms_check_device_id(dev_id);
     if (ret != 0) {
-        dms_err("dev_id out of range. (ret=%d; dev_id=%d)\n", ret, dev_id);
+        dms_err("dev_id out of range. (ret=%d; dev_id=%d; max=%u)\n", ret, dev_id, ASCEND_DEV_MAX_NUM);
         return;
     }
 

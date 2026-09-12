@@ -35,7 +35,7 @@
 
 #include "vmng_kernel_interface.h"
 #include "adapter_api.h"
-#if defined (CFG_FEATURE_CAPABILITY_GROUP) && defined (CFG_FEATURE_SOC_RESMNG_CAPA_GROUP_INFO)
+#if defined(CFG_FEATURE_CAPABILITY_GROUP) && defined(CFG_FEATURE_SOC_RESMNG_CAPA_GROUP_INFO)
 #include "ascend_platform.h"
 #endif
 #include "pbl/pbl_soc_res.h"
@@ -78,11 +78,11 @@ STATIC int get_device_split_mode(u32 dev_id, u32 phy_id)
 #ifndef CFG_FEATURE_VFIO
     return VMNG_NORMAL_NONE_SPLIT_MODE;
 #else
-    #if !defined(CFG_HOST_ENV) && !defined(CFG_FEATURE_VFIO_SOC)
+#if !defined(CFG_HOST_ENV) && !defined(CFG_FEATURE_VFIO_SOC)
     return dms_get_split_mode_in_device(dev_id);
-    #else
+#else
     return vmng_get_device_split_mode(phy_id);
-    #endif
+#endif
 #endif
 }
 
@@ -112,8 +112,7 @@ STATIC int dms_get_device_split_mode(void *feature, char *in, u32 in_len, char *
     return 0;
 }
 
-STATIC s32 dms_get_gpio_status(void *feature, char *in,
-    u32 in_len, char *out, u32 out_len)
+STATIC s32 dms_get_gpio_status(void *feature, char *in, u32 in_len, char *out, u32 out_len)
 {
     struct dms_get_gpio *arg = (struct dms_get_gpio *)in;
     unsigned int *status = (unsigned int *)out;
@@ -121,10 +120,9 @@ STATIC s32 dms_get_gpio_status(void *feature, char *in,
     unsigned int gpio_num;
     int ret;
 
-    if ((in == NULL) || (in_len != sizeof(struct dms_get_gpio)) ||
-        (out == NULL) || (out_len != sizeof(unsigned int))) {
-        dms_err("Invalid para. (in=%s; in_len=%u; out=%s; out_len=%u)\n",
-            (in == NULL) ? "NULL" : "OK", in_len, (out == NULL) ? "NULL" : "OK", out_len);
+    if ((in == NULL) || (in_len != sizeof(struct dms_get_gpio)) || (out == NULL) || (out_len != sizeof(unsigned int))) {
+        dms_err("Invalid para. (in=%s; in_len=%u; out=%s; out_len=%u)\n", (in == NULL) ? "NULL" : "OK", in_len,
+                (out == NULL) ? "NULL" : "OK", out_len);
         return -EINVAL;
     }
     if (arg->dev_id >= ASCEND_DEV_MAX_NUM) {
@@ -161,8 +159,8 @@ STATIC int dms_get_device_init_status(void *feature, char *in, u32 in_len, char 
     u32 vf_id = 0;
 
     if ((in == NULL) || (in_len != sizeof(u32)) || (out == NULL) || (out_len != sizeof(u32))) {
-        dms_err("Invalid parameter. (in=%s; in_len=%u; out=%s; out_len=%u)\n",
-            (in == NULL) ? "NULL" : "OK", in_len, (out == NULL) ? "NULL" : "OK", out_len);
+        dms_err("Invalid parameter. (in=%s; in_len=%u; out=%s; out_len=%u)\n", (in == NULL) ? "NULL" : "OK", in_len,
+                (out == NULL) ? "NULL" : "OK", out_len);
         return -EINVAL;
     }
 
@@ -199,8 +197,8 @@ STATIC int dms_get_basic_info(unsigned int dev_id, int sub_cmd, unsigned int *ba
     struct devdrv_board_info_cache *basic_info_host = NULL;
 
     if (dev_id >= ASCEND_DEV_MAX_NUM || basic_buffer == NULL) {
-        dms_err("Invalid parameter. (dev_id=%u; dev_maxnum=%d; basic_buffer=%s)\n",
-             dev_id, ASCEND_DEV_MAX_NUM, (basic_buffer == NULL) ? "NULL" : "OK");
+        dms_err("Invalid parameter. (dev_id=%u; dev_maxnum=%d; basic_buffer=%s)\n", dev_id, ASCEND_DEV_MAX_NUM,
+                (basic_buffer == NULL) ? "NULL" : "OK");
         return -EINVAL;
     }
 
@@ -242,19 +240,19 @@ STATIC int dms_get_basic_info_op(void *feature, char *in, unsigned int in_len, c
     unsigned int dev_id;
 
     if (in == NULL || out == NULL || feature == NULL) {
-        dms_err("Invalid parameter. (in=%s; out=%s; feature=%s)\n",
-            (in == NULL) ? "NULL" : "OK", (out == NULL) ? "NULL" : "OK", (feature == NULL) ? "NULL" : "OK");
+        dms_err("Invalid parameter. (in=%s; out=%s; feature=%s)\n", (in == NULL) ? "NULL" : "OK",
+                (out == NULL) ? "NULL" : "OK", (feature == NULL) ? "NULL" : "OK");
         return -EINVAL;
     }
 
     if (in_len != sizeof(unsigned int) || out_len != sizeof(unsigned int)) {
-        dms_err("Error parameter. (in_len=%u; correct in_len=%lu; out_len=%u; correct out_len=%lu)\n",
-            in_len, sizeof(unsigned int), out_len, sizeof(unsigned int));
+        dms_err("Error parameter. (in_len=%u; correct in_len=%lu; out_len=%u; correct out_len=%lu)\n", in_len,
+                sizeof(unsigned int), out_len, sizeof(unsigned int));
         return -EINVAL;
     }
 
     dev_id = *(unsigned int *)in;
-    sub_cmd = ((DMS_FEATURE_S*)feature)->sub_cmd;
+    sub_cmd = ((DMS_FEATURE_S *)feature)->sub_cmd;
     ret = dms_get_basic_info(dev_id, sub_cmd, (unsigned int *)out);
     if (ret != 0) {
         dms_ex_notsupport_err(ret, "Get basic info failed. (ret=%d)\n", ret);
@@ -292,14 +290,14 @@ STATIC int dms_get_master_dev(void *feature, char *in, u32 in_len, char *out, u3
 #endif
 
 #ifdef CFG_FEATURE_AICORE_DIE_NUM
-STATIC int dms_get_aicore_die_num(const struct urd_cmd *cmd,
-    struct urd_cmd_kernel_para *kernel_para, struct urd_cmd_para *para)
+STATIC int dms_get_aicore_die_num(const struct urd_cmd *cmd, struct urd_cmd_kernel_para *kernel_para,
+                                  struct urd_cmd_para *para)
 {
     unsigned long long die_num = 0;
     int ret = 0;
 
     if ((cmd == NULL) || (kernel_para == NULL) || (para == NULL)) {
-        dms_err("Input urd argument is null.\n");
+        dms_err("Input urd(user request forward) argument is null.\n");
         return -EINVAL;
     }
 
@@ -325,14 +323,14 @@ STATIC int dms_get_aicore_die_num(const struct urd_cmd *cmd,
 #endif
 
 #ifdef CFG_FEATURE_CPU_WORK_MODE_CONFIG
-STATIC int dms_get_cpu_work_mode(const struct urd_cmd *cmd,
-    struct urd_cmd_kernel_para *kernel_para, struct urd_cmd_para *para)
+STATIC int dms_get_cpu_work_mode(const struct urd_cmd *cmd, struct urd_cmd_kernel_para *kernel_para,
+                                 struct urd_cmd_para *para)
 {
     unsigned long long type = 0;
     int ret = 0;
 
     if ((cmd == NULL) || (kernel_para == NULL) || (para == NULL)) {
-        dms_err("Input urd argument is null.\n");
+        dms_err("Input urd(user request forward) argument is null.\n");
         return -EINVAL;
     }
 
@@ -354,8 +352,7 @@ STATIC int dms_get_cpu_work_mode(const struct urd_cmd *cmd,
 #endif
 
 #ifdef CFG_FEATURE_DEVICE_PCIE_INFO
-STATIC int dms_soc_get_pcie_info(void *feature, char *in, u32 in_len,
-    char *out, u32 out_len)
+STATIC int dms_soc_get_pcie_info(void *feature, char *in, u32 in_len, char *out, u32 out_len)
 {
     struct dmanage_pcie_id_info pcie_id_info = {0};
     struct devdrv_pcie_id_info id_info = {0};
@@ -409,14 +406,14 @@ STATIC int dms_soc_get_pcie_info(void *feature, char *in, u32 in_len,
 #endif
 
 #ifdef CFG_FEATURE_COM_CPU_CONFIG
-STATIC int dms_soc_get_hcom_cpu_num(const struct urd_cmd *cmd,
-    struct urd_cmd_kernel_para *kernel_para, struct urd_cmd_para *para)
+STATIC int dms_soc_get_hcom_cpu_num(const struct urd_cmd *cmd, struct urd_cmd_kernel_para *kernel_para,
+                                    struct urd_cmd_para *para)
 {
     struct soc_mia_res_info_ex info = {0};
     int ret = 0;
 
     if ((cmd == NULL) || (kernel_para == NULL) || (para == NULL)) {
-        dms_err("Input urd argument is null.\n");
+        dms_err("Input urd(user request forward) argument is null.\n");
         return -EINVAL;
     }
 
@@ -440,159 +437,70 @@ STATIC int dms_soc_get_hcom_cpu_num(const struct urd_cmd *cmd,
 BEGIN_DMS_MODULE_DECLARATION(DMS_MODULE_BASIC_INFO)
 BEGIN_FEATURE_COMMAND()
 #ifdef CFG_HOST_ENV
-ADD_FEATURE_COMMAND(DMS_MODULE_BASIC_INFO,
-    DMS_MAIN_CMD_BASIC,
-    DMS_SUBCMD_GET_BOARD_ID_HOST,
-    NULL,
-    NULL,
-    DMS_SUPPORT_ALL,
-    dms_get_basic_info_op)
-ADD_FEATURE_COMMAND(DMS_MODULE_BASIC_INFO,
-    DMS_MAIN_CMD_BASIC,
-    DMS_SUBCMD_GET_SLOT_ID_HOST,
-    NULL,
-    NULL,
-    DMS_SUPPORT_ALL,
-    dms_get_basic_info_op)
-ADD_FEATURE_COMMAND(DMS_MODULE_BASIC_INFO,
-    DMS_MAIN_CMD_BASIC,
-    DMS_SUBCMD_GET_BOM_ID_HOST,
-    NULL,
-    NULL,
-    DMS_SUPPORT_ALL,
-    dms_get_basic_info_op)
-ADD_FEATURE_COMMAND(DMS_MODULE_BASIC_INFO,
-    DMS_MAIN_CMD_BASIC,
-    DMS_SUBCMD_GET_PCB_ID_HOST,
-    NULL,
-    NULL,
-    DMS_SUPPORT_ALL,
-    dms_get_basic_info_op)
+ADD_FEATURE_COMMAND(DMS_MODULE_BASIC_INFO, DMS_MAIN_CMD_BASIC, DMS_SUBCMD_GET_BOARD_ID_HOST, NULL, NULL,
+                    DMS_SUPPORT_ALL, dms_get_basic_info_op)
+ADD_FEATURE_COMMAND(DMS_MODULE_BASIC_INFO, DMS_MAIN_CMD_BASIC, DMS_SUBCMD_GET_SLOT_ID_HOST, NULL, NULL, DMS_SUPPORT_ALL,
+                    dms_get_basic_info_op)
+ADD_FEATURE_COMMAND(DMS_MODULE_BASIC_INFO, DMS_MAIN_CMD_BASIC, DMS_SUBCMD_GET_BOM_ID_HOST, NULL, NULL, DMS_SUPPORT_ALL,
+                    dms_get_basic_info_op)
+ADD_FEATURE_COMMAND(DMS_MODULE_BASIC_INFO, DMS_MAIN_CMD_BASIC, DMS_SUBCMD_GET_PCB_ID_HOST, NULL, NULL, DMS_SUPPORT_ALL,
+                    dms_get_basic_info_op)
 #endif
-ADD_FEATURE_COMMAND(DMS_MODULE_BASIC_INFO,
-    DMS_MAIN_CMD_BASIC,
-    DMS_SUBCMD_GET_DEV_SPLIT_MODE,
-    NULL,
-    NULL,
-    DMS_SUPPORT_ALL,
-    dms_get_device_split_mode)
-ADD_FEATURE_COMMAND(DMS_MODULE_BASIC_INFO,
-    DMS_GET_GET_GPIO_STATUS_CMD,
-    ZERO_CMD,
-    NULL,
-    NULL,
-    DMS_SUPPORT_ROOT_ONLY,
-    dms_get_gpio_status)
+ADD_FEATURE_COMMAND(DMS_MODULE_BASIC_INFO, DMS_MAIN_CMD_BASIC, DMS_SUBCMD_GET_DEV_SPLIT_MODE, NULL, NULL,
+                    DMS_SUPPORT_ALL, dms_get_device_split_mode)
+ADD_FEATURE_COMMAND(DMS_MODULE_BASIC_INFO, DMS_GET_GET_GPIO_STATUS_CMD, ZERO_CMD, NULL, NULL, DMS_SUPPORT_ROOT_ONLY,
+                    dms_get_gpio_status)
 #ifdef CFG_FEATURE_VDEV_MEM
-ADD_FEATURE_COMMAND(DMS_MODULE_BASIC_INFO,
-    DMS_MAIN_CMD_BASIC,
-    DMS_GET_VDEVICE_INFO,
-    NULL,
-    "dmp_daemon",
-    DMS_SUPPORT_ALL,
-    dms_drv_get_vdevice_info)
+ADD_FEATURE_COMMAND(DMS_MODULE_BASIC_INFO, DMS_MAIN_CMD_BASIC, DMS_GET_VDEVICE_INFO, NULL, "dmp_daemon",
+                    DMS_SUPPORT_ALL, dms_drv_get_vdevice_info)
 #endif
 #ifdef CFG_FEATURE_DEV_TOPOLOGY
-ADD_FEATURE_COMMAND(DMS_MODULE_BASIC_INFO,
-    DMS_MAIN_CMD_BASIC,
-    DMS_SUBCMD_GET_DEV_TOPOLOGY,
-    NULL,
-    NULL,
-    DMS_SUPPORT_ALL,
-    dms_feature_get_dev_topology)
+ADD_FEATURE_COMMAND(DMS_MODULE_BASIC_INFO, DMS_MAIN_CMD_BASIC, DMS_SUBCMD_GET_DEV_TOPOLOGY, NULL, NULL, DMS_SUPPORT_ALL,
+                    dms_feature_get_dev_topology)
 
-ADD_FEATURE_COMMAND(DMS_MODULE_BASIC_INFO,
-    DMS_MAIN_CMD_BASIC,
-    DMS_SUBCMD_GET_DEVICES_TOPOLOGY,
-    NULL,
-    NULL,
-    DMS_SUPPORT_ALL,
-    dms_feature_get_phy_devices_topology)
+ADD_FEATURE_COMMAND(DMS_MODULE_BASIC_INFO, DMS_MAIN_CMD_BASIC, DMS_SUBCMD_GET_DEVICES_TOPOLOGY, NULL, NULL,
+                    DMS_SUPPORT_ALL, dms_feature_get_phy_devices_topology)
 
 #endif
 #if defined(CFG_HOST_ENV) && defined(CFG_FEATURE_SRIOV)
-ADD_FEATURE_COMMAND(DMS_MODULE_BASIC_INFO,
-    DMS_MAIN_CMD_BASIC,
-    DMS_SUBCMD_SRIOV_SWITCH,
-    NULL,
-    NULL,
-    DMS_SUPPORT_ROOT_PHY | DMS_ENV_ADMIN_DOCKER,
-    dms_feature_set_sriov_switch)
+ADD_FEATURE_COMMAND(DMS_MODULE_BASIC_INFO, DMS_MAIN_CMD_BASIC, DMS_SUBCMD_SRIOV_SWITCH, NULL, NULL,
+                    DMS_SUPPORT_ROOT_PHY | DMS_ENV_ADMIN_DOCKER, dms_feature_set_sriov_switch)
 #endif
 #ifndef CFG_HOST_ENV
 
-ADD_FEATURE_COMMAND(DMS_MODULE_BASIC_INFO,
-    DMS_GET_GET_DEVICE_INFO_CMD,
-    ZERO_CMD,
-    "module=0x0,info=0x2d",
-    NULL,
-    DMS_SUPPORT_ALL,
-    dms_get_sdk_ex_version)
-ADD_FEATURE_COMMAND(DMS_MODULE_BASIC_INFO,
-    DMS_GET_SET_DEVICE_INFO_CMD,
-    ZERO_CMD,
-    "module=0x0,info=0x2d",
+ADD_FEATURE_COMMAND(DMS_MODULE_BASIC_INFO, DMS_GET_GET_DEVICE_INFO_CMD, ZERO_CMD, "module=0x0,info=0x2d", NULL,
+                    DMS_SUPPORT_ALL, dms_get_sdk_ex_version)
+ADD_FEATURE_COMMAND(DMS_MODULE_BASIC_INFO, DMS_GET_SET_DEVICE_INFO_CMD, ZERO_CMD, "module=0x0,info=0x2d",
 #ifdef CFG_BUILD_DEBUG
-    "tsdaemon,drv_tsd_daemon",
+                    "tsdaemon,drv_tsd_daemon",
 #else
-    "tsdaemon",
+                    "tsdaemon",
 #endif
-    DMS_SUPPORT_ALL,
-    dms_set_sdk_ex_version)
+                    DMS_SUPPORT_ALL, dms_set_sdk_ex_version)
 #endif
 #ifdef CFG_FEATURE_TRS_HB_REFACTOR
-ADD_FEATURE_COMMAND(DMS_MODULE_BASIC_INFO,
-    DMS_MAIN_CMD_BASIC,
-    DMS_SUBCMD_GET_DEV_INIT_STATUS,
-    NULL,
-    NULL,
-    DMS_SUPPORT_ALL_USER,
-    dms_get_device_init_status)
+ADD_FEATURE_COMMAND(DMS_MODULE_BASIC_INFO, DMS_MAIN_CMD_BASIC, DMS_SUBCMD_GET_DEV_INIT_STATUS, NULL, NULL,
+                    DMS_SUPPORT_ALL_USER, dms_get_device_init_status)
 #endif
 #ifdef CFG_HOST_ENV
-ADD_FEATURE_COMMAND(DMS_MODULE_BASIC_INFO,
-    DMS_MAIN_CMD_BASIC,
-    DMS_SUBCMD_GET_MASTER_DEV,
-    NULL,
-    NULL,
-    DMS_ACC_ALL | DMS_ENV_ALL,
-    dms_get_master_dev)
+ADD_FEATURE_COMMAND(DMS_MODULE_BASIC_INFO, DMS_MAIN_CMD_BASIC, DMS_SUBCMD_GET_MASTER_DEV, NULL, NULL,
+                    DMS_ACC_ALL | DMS_ENV_ALL, dms_get_master_dev)
 #endif
 #ifdef CFG_FEATURE_AICORE_DIE_NUM
-ADD_DEV_FEATURE_COMMAND(DMS_MODULE_BASIC_INFO,
-    DMS_MAIN_CMD_BASIC,
-    DMS_SUBCMD_GET_AICORE_DIE_NUM,
-    NULL,
-    NULL,
-    DMS_SUPPORT_ALL,
-    dms_get_aicore_die_num)
+ADD_DEV_FEATURE_COMMAND(DMS_MODULE_BASIC_INFO, DMS_MAIN_CMD_BASIC, DMS_SUBCMD_GET_AICORE_DIE_NUM, NULL, NULL,
+                        DMS_SUPPORT_ALL, dms_get_aicore_die_num)
 #endif
 #ifdef CFG_FEATURE_CPU_WORK_MODE_CONFIG
-ADD_DEV_FEATURE_COMMAND(DMS_MODULE_BASIC_INFO,
-    DMS_MAIN_CMD_BASIC,
-    DMS_SUBCMD_GET_CPU_WORK_MODE,
-    NULL,
-    NULL,
-    DMS_ACC_ALL | DMS_ENV_ALL,
-    dms_get_cpu_work_mode)
+ADD_DEV_FEATURE_COMMAND(DMS_MODULE_BASIC_INFO, DMS_MAIN_CMD_BASIC, DMS_SUBCMD_GET_CPU_WORK_MODE, NULL, NULL,
+                        DMS_ACC_ALL | DMS_ENV_ALL, dms_get_cpu_work_mode)
 #endif
 #ifdef CFG_FEATURE_DEVICE_PCIE_INFO
-ADD_FEATURE_COMMAND(DMS_MODULE_BASIC_INFO,
-    DMS_MAIN_CMD_BASIC,
-    DMS_SUBCMD_GET_PCIE_INFO,
-    NULL,
-    NULL,
-    DMS_SUPPORT_ALL,
-    dms_soc_get_pcie_info)
+ADD_FEATURE_COMMAND(DMS_MODULE_BASIC_INFO, DMS_MAIN_CMD_BASIC, DMS_SUBCMD_GET_PCIE_INFO, NULL, NULL, DMS_SUPPORT_ALL,
+                    dms_soc_get_pcie_info)
 #endif
 #ifdef CFG_FEATURE_COM_CPU_CONFIG
-ADD_DEV_FEATURE_COMMAND(DMS_MODULE_BASIC_INFO,
-    DMS_MAIN_CMD_BASIC,
-    DMS_SUBCMD_GET_HCOM_CPU_NUM,
-    NULL,
-    NULL,
-    DMS_SUPPORT_ALL,
-    dms_soc_get_hcom_cpu_num)
+ADD_DEV_FEATURE_COMMAND(DMS_MODULE_BASIC_INFO, DMS_MAIN_CMD_BASIC, DMS_SUBCMD_GET_HCOM_CPU_NUM, NULL, NULL,
+                        DMS_SUPPORT_ALL, dms_soc_get_hcom_cpu_num)
 #endif
 END_FEATURE_COMMAND()
 END_MODULE_DECLARATION()

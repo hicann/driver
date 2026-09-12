@@ -53,7 +53,7 @@ STATIC u64 get_local_system_freq(void)
 {
     u64 freq = 0;
 
-    asm volatile("mrs %0, cntfrq_el0" : "=r" (freq));
+    asm volatile("mrs %0, cntfrq_el0" : "=r"(freq));
     return freq;
 }
 #endif
@@ -63,12 +63,12 @@ STATIC u64 get_host_osc_cycles(void)
     u64 cycles = 0;
 
 #if defined(__aarch64__)
-    asm volatile("mrs %0, cntvct_el0" : "=r" (cycles));
+    asm volatile("mrs %0, cntvct_el0" : "=r"(cycles));
 #elif defined(__x86_64__)
     const u32 uint32Bits = 32;
     u32 hi = 0;
     u32 lo = 0;
-    __asm__ __volatile__("rdtsc" : "=a" (lo), "=d" (hi));
+    __asm__ __volatile__("rdtsc" : "=a"(lo), "=d"(hi));
     cycles = (uint64_t)(lo) | ((uint64_t)(hi) << uint32Bits);
 #endif
 
@@ -88,7 +88,7 @@ STATIC int dms_h2d_get_device_osc_cycles(u32 devid, u64 *cycles)
 
     ret = devdrv_manager_h2d_sync_get_devinfo(dev_info);
     if (ret != 0) {
-        dms_err("H2D get device info failed. (devid=%u) \n",  devid);
+        dms_err("H2D get device info failed. (devid=%u) \n", devid);
         return ret;
     }
 
@@ -134,7 +134,7 @@ STATIC int dms_check_and_update_freq(u32 dev_id)
     }
 
     dms_info("Calculate osc frequency. (dev_id=%u; host_osc_freq=%llu; device_osc_freq=%llu; dev_nominal_freq=%llu)\n",
-        dev_id, g_host_osc_freq[dev_id], g_device_osc_freq[dev_id], dev_nominal_osc_freq);
+             dev_id, g_host_osc_freq[dev_id], g_device_osc_freq[dev_id], dev_nominal_osc_freq);
     /*
      * if device calculate freq and nominal_freq deviation exceeds 1%, host_freq return 0, dev freq return nominal val;
      * others, return calculate freq;
@@ -147,8 +147,8 @@ STATIC int dms_check_and_update_freq(u32 dev_id)
         g_device_osc_freq[dev_id] = g_device_osc_freq[dev_id] / FREQ_TO_KHZ;
     }
 
-    dms_info("Final osc frequency. (devid=%u; host_osc_freq=%llu; device_osc_freq=%llu)\n",
-        dev_id, g_host_osc_freq[dev_id], g_device_osc_freq[dev_id]);
+    dms_info("Final osc frequency. (devid=%u; host_osc_freq=%llu; device_osc_freq=%llu)\n", dev_id,
+             g_host_osc_freq[dev_id], g_device_osc_freq[dev_id]);
     return 0;
 }
 #endif
@@ -161,8 +161,8 @@ STATIC int dms_osc_freq_calculate_task(void *arg)
     devid = *(u32 *)arg;
     g_device_osc_freq[devid] = get_local_system_freq() / FREQ_TO_KHZ;
     g_host_osc_freq[devid] = g_device_osc_freq[devid];
-    dms_info("Final osc frequency. (devid=%u; host_osc_freq=%llu; device_osc_freq=%llu)\n",
-        devid, g_host_osc_freq[devid], g_device_osc_freq[devid]);
+    dms_info("Final osc frequency. (devid=%u; host_osc_freq=%llu; device_osc_freq=%llu)\n", devid,
+             g_host_osc_freq[devid], g_device_osc_freq[devid]);
 #else
 #if defined(__x86_64__)
     u64 host_tick_start1, host_tick_start2, host_tick_end1, host_tick_end2;
@@ -214,18 +214,19 @@ STATIC int dms_osc_freq_calculate_task(void *arg)
 #if defined(__aarch64__)
     g_host_osc_freq[devid] = get_local_system_freq();
 #elif defined(__x86_64__)
-    g_host_osc_freq[devid] = (((host_tick_end1 + host_tick_end2) - (host_tick_start1 + host_tick_start2)) *\
-        SEC_TO_USEC) / (AVERAGE_2X * (host_end_time - host_start_time));
-    dms_info("Host info. (devid=%u; start1=%llu; start2=%llu; end1=%llu; end2=%llu; t_start=%llu; t_end=%llu)\n",
-        devid, host_tick_start1, host_tick_start2, host_tick_end1, host_tick_end2, host_start_time, host_end_time);
+    g_host_osc_freq[devid] = (((host_tick_end1 + host_tick_end2) - (host_tick_start1 + host_tick_start2)) *
+                              SEC_TO_USEC) /
+                             (AVERAGE_2X * (host_end_time - host_start_time));
+    dms_info("Host info. (devid=%u; start1=%llu; start2=%llu; end1=%llu; end2=%llu; t_start=%llu; t_end=%llu)\n", devid,
+             host_tick_start1, host_tick_start2, host_tick_end1, host_tick_end2, host_start_time, host_end_time);
 #endif
 
     g_device_osc_freq[devid] = (AVERAGE_2X * g_host_osc_freq[devid] * (device_osc_cycles_2 - device_osc_cycles_1)) /
-        ((host_osc_cycles_4 + host_osc_cycles_3) - (host_osc_cycles_2 + host_osc_cycles_1));
+                               ((host_osc_cycles_4 + host_osc_cycles_3) - (host_osc_cycles_2 + host_osc_cycles_1));
 
     dms_info("Device info. (devid=%u; tick_1=%llu; tick_2=%llu; tick_3=%llu; tick_4=%llu; dev_t1=%llu; dev_t2=%llu)\n",
-        devid, host_osc_cycles_1, host_osc_cycles_2, host_osc_cycles_3, host_osc_cycles_4,
-        device_osc_cycles_1, device_osc_cycles_2);
+             devid, host_osc_cycles_1, host_osc_cycles_2, host_osc_cycles_3, host_osc_cycles_4, device_osc_cycles_1,
+             device_osc_cycles_2);
 
     dms_check_and_update_freq(devid);
     ka_system_module_put(KA_THIS_MODULE);
@@ -256,7 +257,7 @@ STATIC int osc_freq_notifier(ka_notifier_block_t *nb, unsigned long mode, void *
     switch (mode) {
         case DMS_DEVICE_UP0:
             calculate_osc_freq_task[dev->dev_id] = ka_task_kthread_create(dms_osc_freq_calculate_task, &(dev->dev_id),
-            "dms_osc_freq_calc_task_%u", dev->dev_id);
+                                                                          "dms_osc_freq_calc_task_%u", dev->dev_id);
             if (KA_IS_ERR_OR_NULL(calculate_osc_freq_task[dev->dev_id])) {
                 dms_err("Create thread for cpu freq calculate failed.\n");
                 return -EINVAL;
@@ -302,15 +303,14 @@ STATIC int get_device_osc_freq(void *feature, char *in, u32 in_len, char *out, u
 
     ret = devdrv_manager_container_logical_id_to_physical_id(devid, &phy_id, &vfid);
     if (ret != 0) {
-        dms_err("Logical id to physical id failed or container env. (ret=%d; devid=%u; vfid=%u)\n",
-            ret, devid, vfid);
+        dms_err("Logical id to physical id failed or container env. (ret=%d; devid=%u; vfid=%u)\n", ret, devid, vfid);
         return -EINVAL;
     }
 
     if (!uda_is_phy_dev(phy_id)) {
         ret = uda_udevid_to_mia_devid(phy_id, &mia_dev);
         if (ret != 0) {
-            dms_err("Udevid to mia devid failed. (ret=%d; phy_id=%u)\n", ret, phy_id);
+            dms_err("Udevid to MIA(multi-instance access) devid failed. (ret=%d; phy_id=%u)\n", ret, phy_id);
             return -EINVAL;
         }
         phy_id = mia_dev.phy_devid;
@@ -436,20 +436,10 @@ DECLAER_FEATURE_AUTO_UNINIT(osc_freq_exit, FEATURE_LOADER_STAGE_5);
 
 BEGIN_DMS_MODULE_DECLARATION(DMS_MODULE_OSC_FREQ)
 BEGIN_FEATURE_COMMAND()
-ADD_FEATURE_COMMAND(DMS_MODULE_OSC_FREQ,
-    DMS_MAIN_CMD_BASIC,
-    DMS_SUBCMD_GET_HOST_OSC_FREQ,
-    NULL,
-    NULL,
-    DMS_SUPPORT_ALL,
-    get_host_osc_freq)
-ADD_FEATURE_COMMAND(DMS_MODULE_OSC_FREQ,
-    DMS_MAIN_CMD_BASIC,
-    DMS_SUBCMD_GET_DEV_OSC_FREQ,
-    NULL,
-    NULL,
-    DMS_SUPPORT_ALL,
-    get_device_osc_freq)
+ADD_FEATURE_COMMAND(DMS_MODULE_OSC_FREQ, DMS_MAIN_CMD_BASIC, DMS_SUBCMD_GET_HOST_OSC_FREQ, NULL, NULL, DMS_SUPPORT_ALL,
+                    get_host_osc_freq)
+ADD_FEATURE_COMMAND(DMS_MODULE_OSC_FREQ, DMS_MAIN_CMD_BASIC, DMS_SUBCMD_GET_DEV_OSC_FREQ, NULL, NULL, DMS_SUPPORT_ALL,
+                    get_device_osc_freq)
 END_FEATURE_COMMAND()
 END_MODULE_DECLARATION()
 #else

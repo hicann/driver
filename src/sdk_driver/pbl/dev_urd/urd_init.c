@@ -61,9 +61,9 @@ int (*copy_func_from[MSG_FROM_TYPE_MAX])(void *to, unsigned long to_len, const v
     copy_from_user_local,
 };
 
-STATIC int dms_open(ka_inode_t* inode, ka_file_t* filep)
+STATIC int dms_open(ka_inode_t *inode, ka_file_t *filep)
 {
-    struct urd_file_private_stru* file_private = NULL;
+    struct urd_file_private_stru *file_private = NULL;
     if (filep == NULL) {
         return -EINVAL;
     }
@@ -72,8 +72,8 @@ STATIC int dms_open(ka_inode_t* inode, ka_file_t* filep)
         return -EBUSY;
     }
 
-    file_private =
-        (struct urd_file_private_stru*)ka_mm_kzalloc(sizeof(struct urd_file_private_stru), KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
+    file_private = (struct urd_file_private_stru *)ka_mm_kzalloc(sizeof(struct urd_file_private_stru),
+                                                                 KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
     if (file_private == NULL) {
         dms_err("ka_mm_kzalloc failed. (size=%lu)\n", sizeof(struct urd_file_private_stru));
         ka_system_module_put(KA_THIS_MODULE);
@@ -85,9 +85,9 @@ STATIC int dms_open(ka_inode_t* inode, ka_file_t* filep)
     return 0;
 }
 
-STATIC int dms_release(ka_inode_t* inode, ka_file_t* filep)
+STATIC int dms_release(ka_inode_t *inode, ka_file_t *filep)
 {
-    struct urd_file_private_stru* file_private = NULL;
+    struct urd_file_private_stru *file_private = NULL;
 
     if (filep == NULL) {
         return -EINVAL;
@@ -105,21 +105,21 @@ STATIC int dms_release(ka_inode_t* inode, ka_file_t* filep)
     return 0;
 }
 
-STATIC unsigned int dms_msg_poll(ka_file_t* filep, ka_poll_table_struct_t* wait)
+STATIC unsigned int dms_msg_poll(ka_file_t *filep, ka_poll_table_struct_t *wait)
 {
     return KA_POLLERR;
 }
 
-STATIC int dms_make_feature_key(struct urd_cmd* cmd, DMS_FEATURE_ARG_S* arg)
+STATIC int dms_make_feature_key(struct urd_cmd *cmd, DMS_FEATURE_ARG_S *arg)
 {
     int ret;
-    char* filter = NULL;
+    char *filter = NULL;
 
     if ((cmd->filter_len > FILTER_MAX_LEN) || ((cmd->filter_len == 0) && (cmd->filter != NULL))) {
         dms_err("filter_len is error. (filter_len=%u)", cmd->filter_len);
         return -EINVAL;
     }
-    arg->key = (char*)ka_mm_kzalloc(KV_KEY_MAX_LEN + 1, KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
+    arg->key = (char *)ka_mm_kzalloc(KV_KEY_MAX_LEN + 1, KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
     if (arg->key == NULL) {
         dms_err("ka_mm_kzalloc failed. (size=%d)\n", KV_KEY_MAX_LEN);
         return -ENOMEM;
@@ -132,8 +132,8 @@ STATIC int dms_make_feature_key(struct urd_cmd* cmd, DMS_FEATURE_ARG_S* arg)
             arg->key = NULL;
             return -ENOMEM;
         }
-        ret = copy_func_from[arg->msg_source]((void*)filter, (unsigned long)cmd->filter_len + 1,
-            (void*)cmd->filter, (unsigned long)cmd->filter_len);
+        ret = copy_func_from[arg->msg_source]((void *)filter, (unsigned long)cmd->filter_len + 1, (void *)cmd->filter,
+                                              (unsigned long)cmd->filter_len);
         if (ret != 0) {
             dms_err("copy_func_from failed. (ret=%d; size=%u)\n", ret, cmd->filter_len);
             ka_mm_kfree(arg->key);
@@ -145,8 +145,7 @@ STATIC int dms_make_feature_key(struct urd_cmd* cmd, DMS_FEATURE_ARG_S* arg)
     }
     ret = dms_feature_make_key(cmd->main_cmd, cmd->sub_cmd, filter, arg->key, KV_KEY_MAX_LEN + 1);
     if (ret != 0) {
-        dms_err(
-            "make feature's key failed. (ret=%d; main_cmd=%u; sub_cmd=%u)\n", ret, cmd->main_cmd, cmd->sub_cmd);
+        dms_err("make feature's key failed. (ret=%d; main_cmd=%u; sub_cmd=%u)\n", ret, cmd->main_cmd, cmd->sub_cmd);
         ka_mm_kfree(arg->key);
         arg->key = NULL;
     }
@@ -157,7 +156,7 @@ STATIC int dms_make_feature_key(struct urd_cmd* cmd, DMS_FEATURE_ARG_S* arg)
     return ret;
 }
 
-STATIC int dms_make_feature_input(struct urd_cmd_para* cmd_para, DMS_FEATURE_ARG_S* arg)
+STATIC int dms_make_feature_input(struct urd_cmd_para *cmd_para, DMS_FEATURE_ARG_S *arg)
 {
     int ret;
     arg->input = NULL;
@@ -174,8 +173,8 @@ STATIC int dms_make_feature_input(struct urd_cmd_para* cmd_para, DMS_FEATURE_ARG
             return -ENOMEM;
         }
         arg->input_len = cmd_para->input_len;
-        ret = copy_func_from[arg->msg_source]((void*)arg->input, (unsigned long)arg->input_len,
-            (void*)cmd_para->input, (unsigned long)cmd_para->input_len);
+        ret = copy_func_from[arg->msg_source]((void *)arg->input, (unsigned long)arg->input_len,
+                                              (void *)cmd_para->input, (unsigned long)cmd_para->input_len);
         if (ret != 0) {
             dms_err("copy_func_from failed. (ret=%d; size=%u)\n", ret, cmd_para->input_len);
             ka_mm_kfree(arg->input);
@@ -191,7 +190,7 @@ STATIC int dms_make_feature_input(struct urd_cmd_para* cmd_para, DMS_FEATURE_ARG
 
 #define DMS_OUTPUT_2M_LIMIT (2 * 1024 * 1024)
 // apply high-capacity memory for output
-STATIC int dms_make_feature_max_output(struct urd_cmd_para* cmd_para, DMS_FEATURE_ARG_S* arg)
+STATIC int dms_make_feature_max_output(struct urd_cmd_para *cmd_para, DMS_FEATURE_ARG_S *arg)
 {
     if (cmd_para->output_len > DMS_OUTPUT_2M_LIMIT) {
         dms_err("Output len is larger than 2M limit. (output_len=%u)\n", cmd_para->output_len);
@@ -208,7 +207,7 @@ STATIC int dms_make_feature_max_output(struct urd_cmd_para* cmd_para, DMS_FEATUR
 }
 
 // if need high-capacity memory(greater than DMS_MAX_OUTPUT_LEN) return true
-static bool dms_is_need_high_capacity_memory(struct urd_cmd* cmd)
+static bool dms_is_need_high_capacity_memory(struct urd_cmd *cmd)
 {
     //  get history fault event info need high-capacity memory
     if ((cmd->main_cmd == DMS_MAIN_CMD_BASIC && cmd->sub_cmd == DMS_SUBCMD_GET_HISTORY_FAULT_EVENT) ||
@@ -223,7 +222,7 @@ static bool dms_is_need_high_capacity_memory(struct urd_cmd* cmd)
     return false;
 }
 
-STATIC int dms_make_feature_output(struct urd_cmd *cmd, struct urd_cmd_para *cmd_para, DMS_FEATURE_ARG_S* arg)
+STATIC int dms_make_feature_output(struct urd_cmd *cmd, struct urd_cmd_para *cmd_para, DMS_FEATURE_ARG_S *arg)
 {
     arg->output = NULL;
     arg->output_len = 0;
@@ -252,13 +251,13 @@ STATIC int dms_make_feature_output(struct urd_cmd *cmd, struct urd_cmd_para *cmd
     }
 }
 
-STATIC int dms_proc_feature_output(struct urd_cmd_para *cmd_para, DMS_FEATURE_ARG_S* arg)
+STATIC int dms_proc_feature_output(struct urd_cmd_para *cmd_para, DMS_FEATURE_ARG_S *arg)
 {
     int ret;
 
     if (cmd_para->output != NULL) {
-        ret = copy_func_to[arg->msg_source]((void*)cmd_para->output, (unsigned long)cmd_para->output_len,
-            (void*)arg->output, (unsigned long)cmd_para->output_len);
+        ret = copy_func_to[arg->msg_source]((void *)cmd_para->output, (unsigned long)cmd_para->output_len,
+                                            (void *)arg->output, (unsigned long)cmd_para->output_len);
         if (ret != 0) {
             dms_err("copy_func_to failed. (size=%u)\n", cmd_para->output_len);
             return -EFAULT;
@@ -268,7 +267,7 @@ STATIC int dms_proc_feature_output(struct urd_cmd_para *cmd_para, DMS_FEATURE_AR
     return 0;
 }
 
-STATIC void dms_free_msg(DMS_FEATURE_ARG_S* arg)
+STATIC void dms_free_msg(DMS_FEATURE_ARG_S *arg)
 {
     if (arg->key != NULL) {
         ka_mm_kfree(arg->key);
@@ -285,7 +284,7 @@ STATIC void dms_free_msg(DMS_FEATURE_ARG_S* arg)
     return;
 }
 
-STATIC int dms_make_up_msg_arg(struct urd_cmd *cmd, struct urd_cmd_para *cmd_para, DMS_FEATURE_ARG_S* arg)
+STATIC int dms_make_up_msg_arg(struct urd_cmd *cmd, struct urd_cmd_para *cmd_para, DMS_FEATURE_ARG_S *arg)
 {
     int ret;
     ret = dms_make_feature_key(cmd, arg);
@@ -364,7 +363,7 @@ int dms_cmd_process_from_kernel(u32 devid, struct urd_cmd *cmd, struct urd_cmd_p
 }
 KA_EXPORT_SYMBOL(dms_cmd_process_from_kernel);
 
-STATIC long dms_ioctl(ka_file_t* filep, unsigned int ioctl_cmd, unsigned long arg)
+STATIC long dms_ioctl(ka_file_t *filep, unsigned int ioctl_cmd, unsigned long arg)
 {
     int ret;
     struct urd_ioctl_arg ctl_arg = {0};
@@ -376,7 +375,7 @@ STATIC long dms_ioctl(ka_file_t* filep, unsigned int ioctl_cmd, unsigned long ar
     }
 
     /* copy ioctl arg from user */
-    ret = ka_base_copy_from_user(&ctl_arg, (void*)((uintptr_t)arg), sizeof(struct urd_ioctl_arg));
+    ret = ka_base_copy_from_user(&ctl_arg, (void *)((uintptr_t)arg), sizeof(struct urd_ioctl_arg));
     if (ret != 0) {
         dms_err("copy_from_user_safe failed.\n");
         return ret;
@@ -385,19 +384,15 @@ STATIC long dms_ioctl(ka_file_t* filep, unsigned int ioctl_cmd, unsigned long ar
         msg_source = (ascend_intf_is_restrict_access(filep) ? MSG_FROM_USER_REST_ACC : MSG_FROM_USER);
         ret = dms_cmd_process(ctl_arg.devid, &ctl_arg.cmd, &ctl_arg.cmd_para, msg_source);
     } else {
-        dms_err("Invalid commmad. (command=%u; main_cmd=%u; sub_cmd=%u)\n", ioctl_cmd, ctl_arg.cmd.main_cmd, ctl_arg.cmd.sub_cmd);
+        dms_err("Invalid command. (command=%u; main_cmd=%u; sub_cmd=%u)\n", ioctl_cmd, ctl_arg.cmd.main_cmd,
+                ctl_arg.cmd.sub_cmd);
         ret = -ENODEV;
     }
     return ret;
 }
 
-const ka_file_operations_t g_dms_file_operations = {
-    ka_fs_init_f_owner(KA_THIS_MODULE)
-    ka_fs_init_f_open(dms_open)
-    ka_fs_init_f_release(dms_release)
-    ka_fs_init_f_poll(dms_msg_poll)
-    ka_fs_init_f_unlocked_ioctl(dms_ioctl)
-};
+const ka_file_operations_t g_dms_file_operations = {ka_fs_init_f_owner(KA_THIS_MODULE) ka_fs_init_f_open(
+    dms_open) ka_fs_init_f_release(dms_release) ka_fs_init_f_poll(dms_msg_poll) ka_fs_init_f_unlocked_ioctl(dms_ioctl)};
 
 STATIC int urd_release_prepare(ka_file_t *file_op, unsigned long mode)
 {

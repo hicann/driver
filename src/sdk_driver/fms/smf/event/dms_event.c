@@ -57,24 +57,15 @@ struct {
     ka_wait_queue_head_t wait;
 } g_event_task;
 
-int dms_event_get_fault_event(void *feature, char *in, u32 in_len,
-    char *out, u32 out_len);
-int dms_event_get_history_fault_event(void *feature, char *in, u32 in_len,
-    char *out, u32 out_len);
-int dms_get_error_code(void *feature, char *in, u32 in_len,
-    char *out, u32 out_len);
-int dms_get_device_health(void *feature, char *in, u32 in_len,
-    char *out, u32 out_len);
-int dms_query_error_str(void *feature, char *in, u32 in_len,
-    char *out, u32 out_len);
-int dms_event_clear_fault_event(void *feature, char *in, u32 in_len,
-    char *out, u32 out_len);
-int dms_event_disable_fault_event(void *feature, char *in, u32 in_len,
-    char *out, u32 out_len);
-int dms_event_enable_fault_event(void *feature, char *in, u32 in_len,
-    char *out, u32 out_len);
-int dms_event_get_current_fault_event(void *feature, char *in, u32 in_len,
-    char *out, u32 out_len);
+int dms_event_get_fault_event(void *feature, char *in, u32 in_len, char *out, u32 out_len);
+int dms_event_get_history_fault_event(void *feature, char *in, u32 in_len, char *out, u32 out_len);
+int dms_get_error_code(void *feature, char *in, u32 in_len, char *out, u32 out_len);
+int dms_get_device_health(void *feature, char *in, u32 in_len, char *out, u32 out_len);
+int dms_query_error_str(void *feature, char *in, u32 in_len, char *out, u32 out_len);
+int dms_event_clear_fault_event(void *feature, char *in, u32 in_len, char *out, u32 out_len);
+int dms_event_disable_fault_event(void *feature, char *in, u32 in_len, char *out, u32 out_len);
+int dms_event_enable_fault_event(void *feature, char *in, u32 in_len, char *out, u32 out_len);
+int dms_event_get_current_fault_event(void *feature, char *in, u32 in_len, char *out, u32 out_len);
 int dms_get_device_state(void *feature, char *in, u32 in_len, char *out, u32 out_len);
 
 INIT_MODULE_FUNC(DMS_EVENT_CMD_NAME);
@@ -145,9 +136,9 @@ int dms_event_report(struct dms_event_obj *event_obj)
     if ((DMS_EVENT_OBJ_TYPE(event_obj->node_type) != DMS_EVENT_OBJ_KERNEL) && (event_num >= DMS_EVENT_NUM_KERNEL)) {
         dms_event("Dms event kfifo is over 80 percent, drop user event. (dev_id=%u; node_type=0x%X; node_id=0x%X; \
             sensor_type=0x%X; event_state=%u; assertion=%u; alarm_serial_num=%u; event_num=%u)\n",
-            event_obj->deviceid, event_obj->node_type, event_obj->node_id,
-            event_obj->event.sensor_event.sensor_type, event_obj->event.sensor_event.event_state,
-            event_obj->event.sensor_event.assertion, event_obj->alarm_serial_num, event_num);
+                  event_obj->deviceid, event_obj->node_type, event_obj->node_id,
+                  event_obj->event.sensor_event.sensor_type, event_obj->event.sensor_event.event_state,
+                  event_obj->event.sensor_event.assertion, event_obj->alarm_serial_num, event_num);
         return DRV_ERROR_NONE;
     }
 
@@ -158,9 +149,9 @@ int dms_event_report(struct dms_event_obj *event_obj)
         }
         dms_event("Dms event is covered. (dev_id=%u; node_type=0x%X; node_id=0x%X; "
                   "sensor_type=0x%X; event_state=%u; assertion=%u; alarm_serial_num=%u)\n",
-                  obj_buf.deviceid, obj_buf.node_type, obj_buf.node_id,
-                  obj_buf.event.sensor_event.sensor_type, obj_buf.event.sensor_event.event_state,
-                  obj_buf.event.sensor_event.assertion, obj_buf.alarm_serial_num);
+                  obj_buf.deviceid, obj_buf.node_type, obj_buf.node_id, obj_buf.event.sensor_event.sensor_type,
+                  obj_buf.event.sensor_event.event_state, obj_buf.event.sensor_event.assertion,
+                  obj_buf.alarm_serial_num);
     }
 
     ka_base_kfifo_in(&g_event_task.kfifo, event_obj, DMS_EVENT_KFIFO_CELL);
@@ -173,12 +164,11 @@ int dms_event_report(struct dms_event_obj *event_obj)
 KA_EXPORT_SYMBOL(dms_event_report);
 
 static inline unsigned char dms_event_convert_assertion(const struct dms_sensor_object_cb *p_sensor_obj_cb,
-    unsigned char event_state)
+                                                        unsigned char event_state)
 {
     const struct dms_sensor_object_cfg *obj_cfg = &p_sensor_obj_cb->sensor_object_cfg;
 
-    if ((obj_cfg->assert_event_mask & (1 << event_state)) &&
-        !(obj_cfg->deassert_event_mask & (1 << event_state))) {
+    if ((obj_cfg->assert_event_mask & (1 << event_state)) && !(obj_cfg->deassert_event_mask & (1 << event_state))) {
         return DMS_EVENT_TYPE_ONE_TIME;
     }
 
@@ -186,10 +176,11 @@ static inline unsigned char dms_event_convert_assertion(const struct dms_sensor_
 }
 
 STATIC int dms_event_get_events_by_sensor(const struct dms_sensor_object_cb *psensor_obj_cb,
-    struct dms_event_para *fault_event_buf, int max_event_num, int *curr_event_num)
+                                          struct dms_event_para *fault_event_buf, int max_event_num,
+                                          int *curr_event_num)
 {
     DMS_EVENT_LIST_ITEM *event_item = psensor_obj_cb->p_event_list;
-    DMS_EVENT_NODE_STRU  exception_node = {0};
+    DMS_EVENT_NODE_STRU exception_node = {0};
     struct dms_event_obj sensor_event;
     unsigned char assertion = 0;
     int event_index = (*curr_event_num);
@@ -197,7 +188,7 @@ STATIC int dms_event_get_events_by_sensor(const struct dms_sensor_object_cb *pse
 
     while (event_item != NULL) {
         if (event_index >= max_event_num) {
-            dms_info("has get(%d) fault event number. not need to get continue.\n", max_event_num);
+            dms_info("Already got %d fault events, no need to get more.\n", max_event_num);
             return 0;
         }
 
@@ -216,7 +207,7 @@ STATIC int dms_event_get_events_by_sensor(const struct dms_sensor_object_cb *pse
 
         /* copy the current exception node to fault_event_buf */
         ret = memcpy_s((void *)&fault_event_buf[event_index], sizeof(struct dms_event_para),
-            (void *)&exception_node.event, sizeof(struct dms_event_para));
+                       (void *)&exception_node.event, sizeof(struct dms_event_para));
         if (ret != 0) {
             dms_err("Call memcpy_s failed. (ret=%d)\n", ret);
             return ret;
@@ -232,25 +223,25 @@ STATIC int dms_event_get_events_by_sensor(const struct dms_sensor_object_cb *pse
 }
 
 STATIC int dms_event_get_events_by_node(const struct dms_node_sensor_cb *pnode_sensor_cb,
-    struct dms_event_para *fault_event_buf, int max_event_num, int *curr_event_num)
+                                        struct dms_event_para *fault_event_buf, int max_event_num, int *curr_event_num)
 {
     struct dms_sensor_object_cb *tmp_sensor_ctl = NULL;
     struct dms_sensor_object_cb *psensor_obj_cb = NULL;
     int ret;
 
-    ka_list_for_each_entry_safe(psensor_obj_cb, tmp_sensor_ctl, &(pnode_sensor_cb->sensor_object_table), list) {
+    ka_list_for_each_entry_safe(psensor_obj_cb, tmp_sensor_ctl, &(pnode_sensor_cb->sensor_object_table), list)
+    {
         if ((psensor_obj_cb == NULL) || (psensor_obj_cb->p_event_list == NULL)) {
             continue;
         }
 
-        dms_debug("get event by sensor. (node_type=0x%x, node_id=%u, sensor type=0x%x)\n",
-            pnode_sensor_cb->node_type, pnode_sensor_cb->node_id,
-            psensor_obj_cb->sensor_object_cfg.sensor_type);
+        dms_debug("get event by sensor. (node_type=0x%x, node_id=%u, sensor type=0x%x)\n", pnode_sensor_cb->node_type,
+                  pnode_sensor_cb->node_id, psensor_obj_cb->sensor_object_cfg.sensor_type);
         ret = dms_event_get_events_by_sensor(psensor_obj_cb, fault_event_buf, max_event_num, curr_event_num);
         if (ret != 0) {
             dms_err("get event by sensor failed. (node_type=0x%x, node_id=%u, sensor=0x%x, ret=%d)\n",
-                pnode_sensor_cb->node_type, pnode_sensor_cb->node_id,
-                psensor_obj_cb->sensor_object_cfg.sensor_type, ret);
+                    pnode_sensor_cb->node_type, pnode_sensor_cb->node_id, psensor_obj_cb->sensor_object_cfg.sensor_type,
+                    ret);
             return ret;
         }
     }
@@ -264,43 +255,44 @@ STATIC int dms_event_get_history_fault_events(int dev_id, struct dms_event_para 
     struct dms_dev_sensor_cb *dev_sensor_cb;
     struct dms_node_sensor_cb *pnode_sensor_cb = NULL;
     struct dms_node_sensor_cb *tmp_ctl = NULL;
-    int  event_count = 0;
-    int  ret = DRV_ERROR_NONE;
+    int event_count = 0;
+    int ret = DRV_ERROR_NONE;
 
     if (dev_id != 0) {
         dms_err("only support dev_id  = 0, but now is %d .\n", dev_id);
         return DRV_ERROR_PARA_ERROR;
     }
     dev_cb = dms_get_dev_cb(dev_id);
-    if (dev_cb  == NULL) {
+    if (dev_cb == NULL) {
         dms_err("dms_get_dev_cb(devid=%d) failed.\n", dev_id);
         return DRV_ERROR_INNER_ERR;
     }
 
     dev_sensor_cb = &dev_cb->dev_sensor_cb;
     ka_task_mutex_lock(&dev_sensor_cb->dms_sensor_mutex);
-    ka_list_for_each_entry_safe(pnode_sensor_cb, tmp_ctl, &(dev_sensor_cb->dms_node_sensor_cb_list), list) {
+    ka_list_for_each_entry_safe(pnode_sensor_cb, tmp_ctl, &(dev_sensor_cb->dms_node_sensor_cb_list), list)
+    {
         if (event_count >= max_event_num) {
-            dms_info("has get(%d) fault event number. not need to get continue.\n", max_event_num);
+            dms_info("Already got %d fault events, no need to get more.\n", max_event_num);
             goto out;
         }
 
         /* get all the events from current dms node */
-        dms_debug("get events from one dms node. (node_type=0x%x, node id=%u)\n",
-            pnode_sensor_cb->node_type, pnode_sensor_cb->node_id);
+        dms_debug("get events from one dms node. (node_type=0x%x, node id=%u)\n", pnode_sensor_cb->node_type,
+                  pnode_sensor_cb->node_id);
         ret = dms_event_get_events_by_node(pnode_sensor_cb, fault_event_buf, max_event_num, &event_count);
         if (ret != 0) {
             dms_err("get events from one dms node failed. (node_type=0x%x, node id=%u, ret=%d)\n",
-                pnode_sensor_cb->node_type, pnode_sensor_cb->node_id, ret);
+                    pnode_sensor_cb->node_type, pnode_sensor_cb->node_id, ret);
             goto out;
         }
     }
 
     if (event_count < max_event_num) {
-        fault_event_buf[event_count].event_id = 0xFFFFFFFFU;  // set event is invalid flag
+        fault_event_buf[event_count].event_id = 0xFFFFFFFFU; // set event is invalid flag
         dms_debug("The number of %d fault event is invalid.\n", event_count);
     }
-    dms_info("There is %d fault events.\n", event_count);
+    dms_info("There are %d fault events.\n", event_count);
 
 out:
     ka_task_mutex_unlock(&dev_sensor_cb->dms_sensor_mutex);
@@ -309,8 +301,7 @@ out:
 
 #define MAX_EVENT_COUNT_OF_GET_FAULT_EVENT (1024)
 #define MIN_EVENT_COUNT_OF_GET_FAULT_EVENT (1)
-int dms_event_get_history_fault_event(void *feature, char *in, u32 in_len,
-    char *out, u32 out_len)
+int dms_event_get_history_fault_event(void *feature, char *in, u32 in_len, char *out, u32 out_len)
 {
     struct dms_event_para *event_para_buf;
     int event_buf_size = 0;
@@ -318,8 +309,8 @@ int dms_event_get_history_fault_event(void *feature, char *in, u32 in_len,
     int ret;
 
     if ((in == NULL) || (out == NULL) || (in_len != sizeof(int))) {
-        dms_err("Invalid parameter. (in_buff=%s; out_buff=%s; in_len=%u)\n",
-            (in == NULL) ? "NULL" : "OK", (out == NULL) ? "NULL" : "OK", in_len);
+        dms_err("Invalid parameter. (in_buff=%s; out_buff=%s; in_len=%u)\n", (in == NULL) ? "NULL" : "OK",
+                (out == NULL) ? "NULL" : "OK", in_len);
         return DRV_ERROR_PARA_ERROR;
     }
 
@@ -329,25 +320,24 @@ int dms_event_get_history_fault_event(void *feature, char *in, u32 in_len,
         return DRV_ERROR_INNER_ERR;
     }
     event_buf_size = out_len / sizeof(struct dms_event_para);
-    if  (event_buf_size < MIN_EVENT_COUNT_OF_GET_FAULT_EVENT  ||
-         event_buf_size > MAX_EVENT_COUNT_OF_GET_FAULT_EVENT) {
+    if (event_buf_size < MIN_EVENT_COUNT_OF_GET_FAULT_EVENT || event_buf_size > MAX_EVENT_COUNT_OF_GET_FAULT_EVENT) {
         dms_err("history_max_event_size(%d)  is invalid.\n", event_buf_size);
         return DRV_ERROR_PARA_ERROR;
     }
 
-    if  ((unsigned long)event_buf_size * sizeof(struct dms_event_para)  != out_len)  {
+    if ((unsigned long)event_buf_size * sizeof(struct dms_event_para) != out_len) {
         dms_err("out_len(%d)  is not equal to expect(%d).\n", out_len,
-            (int)(event_buf_size * sizeof(struct dms_event_para)));
+                (int)(event_buf_size * sizeof(struct dms_event_para)));
         return DRV_ERROR_PARA_ERROR;
     }
 
     dms_info("history_max_event_size is %d.\n", event_buf_size);
-    event_para_buf  = (struct dms_event_para*)out;
+    event_para_buf = (struct dms_event_para *)out;
     ret = dms_event_get_history_fault_events(dev_id, event_para_buf, event_buf_size);
     if (ret != DRV_ERROR_NONE) {
         return DRV_ERROR_INNER_ERR;
     }
-    return  DRV_ERROR_NONE;
+    return DRV_ERROR_NONE;
 }
 
 int dms_event_get_fault_event(void *feature, char *in, u32 in_len, char *out, u32 out_len)
@@ -357,10 +347,10 @@ int dms_event_get_fault_event(void *feature, char *in, u32 in_len, char *out, u3
     u64 start_syscnt;
     int ret;
 
-    if ((in == NULL) || (out == NULL) ||
-        (in_len != sizeof(struct dms_read_event_ioctl)) || (out_len != sizeof(struct dms_event_para))) {
-        dms_err("Invalid parameter. (in_buff=%s; in_len=%u;out_buff=%s; out_len=%u)\n",
-                (in == NULL) ? "NULL" : "OK", in_len, (out == NULL) ? "NULL" : "OK", out_len);
+    if ((in == NULL) || (out == NULL) || (in_len != sizeof(struct dms_read_event_ioctl)) ||
+        (out_len != sizeof(struct dms_event_para))) {
+        dms_err("Invalid parameter. (in_buff=%s; in_len=%u;out_buff=%s; out_len=%u)\n", (in == NULL) ? "NULL" : "OK",
+                in_len, (out == NULL) ? "NULL" : "OK", out_len);
         return DRV_ERROR_PARA_ERROR;
     }
     start_syscnt = get_syscnt();
@@ -371,7 +361,7 @@ int dms_event_get_fault_event(void *feature, char *in, u32 in_len, char *out, u3
     }
 
     if ((input.cmd_src != FROM_DSMI) && (input.cmd_src != FROM_HAL)) {
-        dms_err("Invalid parameter. (cmd_srouce=%d)\n", input.cmd_src);
+        dms_err("Invalid parameter. (cmd_source=%d)\n", input.cmd_src);
         return DRV_ERROR_PARA_ERROR;
     }
 
@@ -391,8 +381,8 @@ int dms_event_get_fault_event(void *feature, char *in, u32 in_len, char *out, u3
         dms_err("Call memcpy_s failed. (ret=%d)\n", ret);
         return DRV_ERROR_INNER_ERR;
     }
-    dms_warn("read fault event success.(dev_id=%u; event_id=0x%x; start=%llu; end=%llu)\n",
-             fault_event.deviceid, fault_event.event_id, start_syscnt, get_syscnt());
+    dms_warn("read fault event success.(dev_id=%u; event_id=0x%x; start=%llu; end=%llu)\n", fault_event.deviceid,
+             fault_event.event_id, start_syscnt, get_syscnt());
 
     return DRV_ERROR_NONE;
 }
@@ -420,7 +410,7 @@ STATIC int check_and_trans_devid(char *in, u32 in_len, u32 *phy_id)
 }
 
 STATIC int add_events_to_event_para(struct dms_event_para *dms_event, u32 event_num,
-    struct devdrv_event_obj_para *event_para)
+                                    struct devdrv_event_obj_para *event_para)
 {
     int ret;
     u32 i;
@@ -430,8 +420,8 @@ STATIC int add_events_to_event_para(struct dms_event_para *dms_event, u32 event_
         if (num >= DMS_MAX_EVENT_ARRAY_LENGTH) {
             return 0;
         }
-        ret = memcpy_s(&event_para->dms_event[num], sizeof(struct dms_event_para),
-                       &dms_event[i], sizeof(struct dms_event_para));
+        ret = memcpy_s(&event_para->dms_event[num], sizeof(struct dms_event_para), &dms_event[i],
+                       sizeof(struct dms_event_para));
         if (ret != 0) {
             dms_err("Call memcpy_s failed. (ret=%d)\n", ret);
             return ret;
@@ -451,7 +441,8 @@ STATIC int dms_get_remote_fault_event(u32 phy_id, struct devdrv_event_obj_para *
     int ret;
 
     dms_event_remote = (struct dms_event_para *)dbl_vmalloc(sizeof(struct dms_event_para) * DMS_MAX_EVENT_ARRAY_LENGTH,
-                                                           KA_GFP_KERNEL | __KA_GFP_ZERO | __KA_GFP_ACCOUNT, KA_PAGE_KERNEL);
+                                                            KA_GFP_KERNEL | __KA_GFP_ZERO | __KA_GFP_ACCOUNT,
+                                                            KA_PAGE_KERNEL);
     if (dms_event_remote == NULL) {
         dms_err("Call ka_vmalloc failed. (phy_id=%u)\n", phy_id);
         return DRV_ERROR_OUT_OF_MEMORY;
@@ -462,7 +453,7 @@ STATIC int dms_get_remote_fault_event(u32 phy_id, struct devdrv_event_obj_para *
         dms_err("Get fault event para failed. (phy_id=%u; ret=%d)\n", phy_id, ret);
         goto GET_EVENT_FAIL;
     }
-    
+
     ret = add_events_to_event_para(dms_event_remote, event_num_remote, event_para);
     if (ret != 0) {
         dms_err("Add remote events to event_pars failed. (phy_id=%u; ret=%d)\n", phy_id, ret);
@@ -474,8 +465,8 @@ GET_EVENT_FAIL:
     return ret;
 }
 #else
-STATIC int dms_get_event_para_from_local_sensor(int dev_id, struct dms_event_para *dms_event,
-                                                u32 in_cnt, u32 *event_num)
+STATIC int dms_get_event_para_from_local_sensor(int dev_id, struct dms_event_para *dms_event, u32 in_cnt,
+                                                u32 *event_num)
 {
     struct dms_dev_ctrl_block *dev_cb = NULL;
     struct dms_event_obj *event_buff = NULL;
@@ -483,30 +474,30 @@ STATIC int dms_get_event_para_from_local_sensor(int dev_id, struct dms_event_par
     u32 out_cnt = 0;
     int ret;
     int i;
- 
+
     dev_cb = dms_get_dev_cb(dev_id);
     if (dev_cb == NULL) {
         dms_err("Get dev_ctrl block failed. (dev_id=%u)\n", dev_id);
         return DRV_ERROR_NO_DEVICE;
     }
-    event_buff = (struct dms_event_obj *)dbl_kzalloc(sizeof(struct dms_event_obj) *
-                                                 DMS_EVENT_ERROR_ARRAY_NUM, KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
+    event_buff = (struct dms_event_obj *)dbl_kzalloc(sizeof(struct dms_event_obj) * DMS_EVENT_ERROR_ARRAY_NUM,
+                                                     KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
     if (event_buff == NULL) {
         dms_err("Call ka_mm_kzalloc failed. (dev_id=%u)\n", dev_id);
         return DRV_ERROR_OUT_OF_MEMORY;
     }
- 
+
     ret = dms_sensor_get_health_events(&dev_cb->dev_sensor_cb, event_buff, DMS_EVENT_ERROR_ARRAY_NUM, &out_cnt);
     if (ret != 0) {
         dms_err("Get health events failed. (dev_id=%u; ret=%d)\n", dev_id, ret);
         goto FREE_BUFF;
     }
- 
+
     if (out_cnt > in_cnt) {
         out_cnt = in_cnt;
     }
- 
-    for (i = 0 ; i < out_cnt; i++) {
+
+    for (i = 0; i < out_cnt; i++) {
         ret = dms_event_obj_to_exception(&event_buff[i], &exception_node);
         if (ret != 0) {
             dms_err("dms_event_obj_to_exception failed. (dev_id=%u; ret=%d)\n", dev_id, ret);
@@ -522,7 +513,7 @@ STATIC int dms_get_event_para_from_local_sensor(int dev_id, struct dms_event_par
         }
     }
     *event_num = out_cnt;
- 
+
 FREE_BUFF:
     dbl_kfree(event_buff);
     event_buff = NULL;
@@ -536,7 +527,8 @@ STATIC int dms_get_local_fault_event(u32 phy_id, struct devdrv_event_obj_para *e
     int ret;
 
     dms_event_local = (struct dms_event_para *)dbl_vmalloc(sizeof(struct dms_event_para) * DMS_MAX_EVENT_ARRAY_LENGTH,
-                                                          KA_GFP_KERNEL | __KA_GFP_ZERO | __KA_GFP_ACCOUNT, KA_PAGE_KERNEL);
+                                                           KA_GFP_KERNEL | __KA_GFP_ZERO | __KA_GFP_ACCOUNT,
+                                                           KA_PAGE_KERNEL);
     if (dms_event_local == NULL) {
         dms_err("Call ka_vmalloc failed. (phy_id=%u)\n", phy_id);
         return DRV_ERROR_OUT_OF_MEMORY;
@@ -586,14 +578,14 @@ int dms_event_get_current_fault_event(void *feature, char *in, u32 in_len, char 
     int ret = 0;
 
     if ((in == NULL) || (out == NULL)) {
-        dms_err("Invalid parameter. (in_buff=%s; out_buff=%s)\n",
-                (in == NULL) ? "NULL" : "OK", (out == NULL) ? "NULL" : "OK");
+        dms_err("Invalid parameter. (in_buff=%s; out_buff=%s)\n", (in == NULL) ? "NULL" : "OK",
+                (out == NULL) ? "NULL" : "OK");
         return DRV_ERROR_PARA_ERROR;
     }
 
     if ((in_len != sizeof(int)) || (out_len != sizeof(struct devdrv_event_obj_para))) {
-        dms_err("Invalid parameter. (expected in_len=%lu; in_len=%u; expected out_len=%lu; out_len=%u)\n",
-                sizeof(int), in_len, sizeof(struct devdrv_event_obj_para), out_len);
+        dms_err("Invalid parameter. (expected in_len=%lu; in_len=%u; expected out_len=%lu; out_len=%u)\n", sizeof(int),
+                in_len, sizeof(struct devdrv_event_obj_para), out_len);
         return DRV_ERROR_PARA_ERROR;
     }
 
@@ -649,7 +641,7 @@ int dms_event_clear_by_phyid(u32 phyid)
     dms_release_one_device_remote_event(phyid);
 #endif
     if (smf_event_distribute_to_bar(phyid) != 0) {
-        dms_err("Distribute event to bar failed. (dev_id=%u)\n", phyid);
+        dms_err("Distribute event to bar failed. (phy_id=%u)\n", phyid);
         return DRV_ERROR_INNER_ERR;
     }
 
@@ -678,8 +670,7 @@ static int dms_event_get_logic_id_and_covert_to_phy_id(char *in, u32 in_len, u32
     return DRV_ERROR_NONE;
 }
 
-int dms_event_clear_fault_event(void *feature, char *in, u32 in_len,
-    char *out, u32 out_len)
+int dms_event_clear_fault_event(void *feature, char *in, u32 in_len, char *out, u32 out_len)
 {
     u32 devid = 0;
     u32 phyid = 0;
@@ -732,8 +723,7 @@ int dms_event_mask_by_phyid(u32 phyid, u32 event_id, u8 mask)
     event_state = DMS_EVENT_ID_TO_EVENT_STATE(event_id);
     ret = dms_sensor_mask_events(&dev_cb->dev_sensor_cb, mask, (u16)node_type, (u8)sensor_type, (u8)event_state);
     if (ret != 0) {
-        dms_err("Mask event code failed. (phyid=%u; event_id=0x%x; mask=%u; ret=%d)\n",
-                phyid, event_id, mask, ret);
+        dms_err("Mask event code failed. (phyid=%u; event_id=0x%x; mask=%u; ret=%d)\n", phyid, event_id, mask, ret);
         return ret;
     }
 
@@ -749,18 +739,16 @@ int dms_event_mask_by_phyid(u32 phyid, u32 event_id, u8 mask)
     }
 
     if (smf_event_distribute_to_bar(phyid) != 0) {
-        dms_err("Distribute event to bar failed. (dev_id=%u)\n", phyid);
+        dms_err("Distribute event to bar failed. (phy_id=%u)\n", phyid);
         return DRV_ERROR_INNER_ERR;
     }
 
-    dms_event("Mask event_id success. (phyid=%u; event_id=0x%X; mask=%u; ret=%d)\n",
-              phyid, event_id, mask, ret);
+    dms_event("Mask event_id success. (phyid=%u; event_id=0x%X; mask=%u; ret=%d)\n", phyid, event_id, mask, ret);
     return DRV_ERROR_NONE;
 }
 KA_EXPORT_SYMBOL(dms_event_mask_by_phyid);
 
-int dms_event_disable_fault_event(void *feature, char *in, u32 in_len,
-    char *out, u32 out_len)
+int dms_event_disable_fault_event(void *feature, char *in, u32 in_len, char *out, u32 out_len)
 {
     struct dms_event_ioctrl para = {0};
     u32 locid, phyid, fid;
@@ -776,8 +764,7 @@ int dms_event_disable_fault_event(void *feature, char *in, u32 in_len,
         return ret;
     }
 
-    ret = dms_event_get_logic_id_and_covert_to_phy_id((char *)&para.devid,
-                                                      sizeof(para.devid), &locid, &phyid, &fid);
+    ret = dms_event_get_logic_id_and_covert_to_phy_id((char *)&para.devid, sizeof(para.devid), &locid, &phyid, &fid);
     if (ret != 0) {
         dms_err("Disable logical id or convert to physical id failed. (ret=%d)\n", ret);
         return ret;
@@ -785,16 +772,14 @@ int dms_event_disable_fault_event(void *feature, char *in, u32 in_len,
 
     ret = smf_event_mask_event_code(phyid, para.event_code, EVENT_CONVERGE_NODE_DISENABLE);
     if (ret != 0) {
-        dms_err("Disable event code failed. (phyid=%u; event_code=0x%x; ret=%d)\n",
-                phyid, para.event_code, ret);
+        dms_err("Disable event code failed. (phyid=%u; event_code=0x%x; ret=%d)\n", phyid, para.event_code, ret);
         return ret;
     }
 
     return DRV_ERROR_NONE;
 }
 
-int dms_event_enable_fault_event(void *feature, char *in, u32 in_len,
-    char *out, u32 out_len)
+int dms_event_enable_fault_event(void *feature, char *in, u32 in_len, char *out, u32 out_len)
 {
     struct dms_event_ioctrl para = {0};
     u32 locid, phyid, fid;
@@ -810,8 +795,7 @@ int dms_event_enable_fault_event(void *feature, char *in, u32 in_len,
         return ret;
     }
 
-    ret = dms_event_get_logic_id_and_covert_to_phy_id((char *)&para.devid,
-                                                      sizeof(para.devid), &locid, &phyid, &fid);
+    ret = dms_event_get_logic_id_and_covert_to_phy_id((char *)&para.devid, sizeof(para.devid), &locid, &phyid, &fid);
     if (ret != 0) {
         dms_err("Enable logical id or convert to physical id failed. (ret=%d)\n", ret);
         return ret;
@@ -819,41 +803,39 @@ int dms_event_enable_fault_event(void *feature, char *in, u32 in_len,
 
     ret = smf_event_mask_event_code(phyid, para.event_code, EVENT_CONVERGE_NODE_ENABLE);
     if (ret != 0) {
-        dms_err("Enable event code failed. (phyid=%u; event_code=0x%x; ret=%d)\n",
-                phyid, para.event_code, ret);
+        dms_err("Enable event code failed. (phyid=%u; event_code=0x%x; ret=%d)\n", phyid, para.event_code, ret);
         return ret;
     }
 
     return DRV_ERROR_NONE;
 }
 
-int dms_get_code_from_sensor_check(u32 devid, u32 *health_code, u32 health_len,
-    struct shm_event_code *event_code, u32 event_len)
+int dms_get_code_from_sensor_check(u32 devid, u32 *health_code, u32 health_len, struct shm_event_code *event_code,
+                                   u32 event_len)
 {
-    if ((devid >= ASCEND_DEV_MAX_NUM) || (health_code == NULL) ||
-        (health_len != VMNG_VDEV_MAX_PER_PDEV) || (event_code == NULL) ||
-        (event_len != DEVMNG_SHM_INFO_EVENT_CODE_LEN)) {
+    if ((devid >= ASCEND_DEV_MAX_NUM) || (health_code == NULL) || (health_len != VMNG_VDEV_MAX_PER_PDEV) ||
+        (event_code == NULL) || (event_len != DEVMNG_SHM_INFO_EVENT_CODE_LEN)) {
         dms_err("Invalid parameter. (devid=%u; health_code=\"%s\"; health_len=%u; "
-                "event_code=\"%s\"; event_len=%u;)\n", devid, (health_code == NULL) ? "NULL" : "OK",
-                health_len, (event_code == NULL) ? "NULL" : "OK", event_len);
+                "event_code=\"%s\"; event_len=%u;)\n",
+                devid, (health_code == NULL) ? "NULL" : "OK", health_len, (event_code == NULL) ? "NULL" : "OK",
+                event_len);
         return DRV_ERROR_PARA_ERROR;
     }
 
-    (void)memset_s(event_code, sizeof(struct shm_event_code) * event_len,
-                   0, sizeof(struct shm_event_code) * event_len);
+    (void)memset_s(event_code, sizeof(struct shm_event_code) * event_len, 0, sizeof(struct shm_event_code) * event_len);
     (void)memset_s(health_code, sizeof(u32) * health_len, 0, sizeof(u32) * health_len);
 
     return DRV_ERROR_NONE;
 }
 
-static int dms_event_obj_to_health_code(struct dms_event_obj *event_buff,
-    u32 event_cnt, u32 *health_code, struct shm_event_code *event_code)
+static int dms_event_obj_to_health_code(struct dms_event_obj *event_buff, u32 event_cnt, u32 *health_code,
+                                        struct shm_event_code *event_code)
 {
     u32 fid_buf = 0;
     u32 i, severity;
 
     if (event_cnt > DEVMNG_SHM_INFO_EVENT_CODE_LEN) {
-        dms_err("The number of events is invalid. (cnt=%u)\n", event_cnt);
+        dms_err("The number of events is invalid. (cnt=%u; max=%u)\n", event_cnt, DEVMNG_SHM_INFO_EVENT_CODE_LEN);
         return DRV_ERROR_INNER_ERR;
     }
 
@@ -875,8 +857,8 @@ static int dms_event_obj_to_health_code(struct dms_event_obj *event_buff,
     return DRV_ERROR_NONE;
 }
 
-int dms_get_event_code_from_sensor(u32 devid, u32 *health_code, u32 health_len,
-    struct shm_event_code *event_code, u32 event_len)
+int dms_get_event_code_from_sensor(u32 devid, u32 *health_code, u32 health_len, struct shm_event_code *event_code,
+                                   u32 event_len)
 {
     struct dms_dev_ctrl_block *dev_cb = NULL;
     struct dms_event_obj *event_buff = NULL;
@@ -894,14 +876,15 @@ int dms_get_event_code_from_sensor(u32 devid, u32 *health_code, u32 health_len,
         return DRV_ERROR_NO_DEVICE;
     }
 
-    event_buff = (struct dms_event_obj *)dbl_kzalloc(sizeof(struct dms_event_obj) *
-                                                 DMS_EVENT_ERROR_ARRAY_NUM, KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
+    event_buff = (struct dms_event_obj *)dbl_kzalloc(sizeof(struct dms_event_obj) * DMS_EVENT_ERROR_ARRAY_NUM,
+                                                     KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
     if (event_buff == NULL) {
         dms_err("Call ka_mm_kzalloc failed. (dev_id=%u)\n", devid);
         return DRV_ERROR_OUT_OF_MEMORY;
     }
 
-    ret = dms_sensor_get_health_events(&dev_cb->dev_sensor_cb, event_buff, (unsigned int)DMS_EVENT_ERROR_ARRAY_NUM, &out_cnt);
+    ret = dms_sensor_get_health_events(&dev_cb->dev_sensor_cb, event_buff, (unsigned int)DMS_EVENT_ERROR_ARRAY_NUM,
+                                       &out_cnt);
     if (ret != 0) {
         dms_err("Get health events failed. (dev_id=%u; ret=%d)\n", devid, ret);
         goto free_buff;
@@ -909,8 +892,7 @@ int dms_get_event_code_from_sensor(u32 devid, u32 *health_code, u32 health_len,
 
     ret = dms_event_obj_to_health_code(event_buff, out_cnt, health_code, event_code);
     if (ret != 0) {
-        dms_err("Transform event_obj to health code failed. (dev_id=%u; ret=%d)\n",
-                devid, ret);
+        dms_err("Transform event_obj to health code failed. (dev_id=%u; ret=%d)\n", devid, ret);
         goto free_buff;
     }
 
@@ -921,23 +903,21 @@ free_buff:
 }
 KA_EXPORT_SYMBOL(dms_get_event_code_from_sensor);
 
-static int dms_get_event_code_para_check(u32 devid, u32 fid, u32 *health_code,
-    struct devdrv_error_code_para *code_para)
+static int dms_get_event_code_para_check(u32 devid, u32 fid, u32 *health_code, struct devdrv_error_code_para *code_para)
 {
-    if ((devid >= ASCEND_DEV_MAX_NUM) || (fid >= VMNG_VDEV_MAX_PER_PDEV) ||
-        (health_code == NULL) || (code_para == NULL)) {
-        dms_err("Invalid parameter. (dev_id=%u; fid=%u; health_code=\"%s\"; code_para=\"%s\")\n",
-                devid, fid, (health_code == NULL) ? "NULL" : "OK", (code_para == NULL) ? "NULL" : "OK");
+    if ((devid >= ASCEND_DEV_MAX_NUM) || (fid >= VMNG_VDEV_MAX_PER_PDEV) || (health_code == NULL) ||
+        (code_para == NULL)) {
+        dms_err("Invalid parameter. (dev_id=%u; fid=%u; health_code=\"%s\"; code_para=\"%s\")\n", devid, fid,
+                (health_code == NULL) ? "NULL" : "OK", (code_para == NULL) ? "NULL" : "OK");
         return DRV_ERROR_PARA_ERROR;
     }
 
-    (void)memset_s(code_para, sizeof(struct devdrv_error_code_para),
-                   0, sizeof(struct devdrv_error_code_para));
+    (void)memset_s(code_para, sizeof(struct devdrv_error_code_para), 0, sizeof(struct devdrv_error_code_para));
     return DRV_ERROR_NONE;
 }
 
-STATIC int smf_get_event_code(u32 devid, u32 *sensor_health, u32 *dev_health,
-    struct shm_event_code *sensor_event, struct shm_event_code *dev_event)
+STATIC int smf_get_event_code(u32 devid, u32 *sensor_health, u32 *dev_health, struct shm_event_code *sensor_event,
+                              struct shm_event_code *dev_event)
 {
     int connect_type = CONNECT_PROTOCOL_UNKNOWN;
     int ret = 0;
@@ -950,22 +930,22 @@ STATIC int smf_get_event_code(u32 devid, u32 *sensor_health, u32 *dev_health,
         ret = smf_get_event_code_from_local(devid, dev_health, dev_event, DEVMNG_SHM_INFO_EVENT_CODE_LEN);
     } else {
         if (dms_event_is_converge() != 0) {
-            ret = dms_get_event_code_from_event_cb(devid, sensor_health, VMNG_VDEV_MAX_PER_PDEV,
-                sensor_event, DEVMNG_SHM_INFO_EVENT_CODE_LEN);
+            ret = dms_get_event_code_from_event_cb(devid, sensor_health, VMNG_VDEV_MAX_PER_PDEV, sensor_event,
+                                                   DEVMNG_SHM_INFO_EVENT_CODE_LEN);
             if (ret != 0) {
                 dms_err("Get event code from event cb failed. (dev_id=%u; ret=%d)\n", devid, ret);
                 return ret;
             }
         } else {
-            ret = dms_get_event_code_from_sensor(devid, sensor_health, VMNG_VDEV_MAX_PER_PDEV,
-                sensor_event, DEVMNG_SHM_INFO_EVENT_CODE_LEN);
+            ret = dms_get_event_code_from_sensor(devid, sensor_health, VMNG_VDEV_MAX_PER_PDEV, sensor_event,
+                                                 DEVMNG_SHM_INFO_EVENT_CODE_LEN);
             if (ret != 0) {
                 dms_err("Get event code from sensor manager failed. (dev_id=%u; ret=%d)\n", devid, ret);
                 return ret;
             }
         }
-        ret = smf_get_event_code_from_bar(devid, dev_health, VMNG_VDEV_MAX_PER_PDEV,
-            dev_event, DEVMNG_SHM_INFO_EVENT_CODE_LEN);
+        ret = smf_get_event_code_from_bar(devid, dev_health, VMNG_VDEV_MAX_PER_PDEV, dev_event,
+                                          DEVMNG_SHM_INFO_EVENT_CODE_LEN);
     }
     if (ret != 0) {
         dms_err("Get event code failed. (dev_id=%u; ret=%d)\n", devid, ret);
@@ -989,14 +969,13 @@ STATIC int smf_get_health_code(u32 devid, u32 *health_code, u32 health_len)
     }
 }
 
-static void dms_event_combine_event_code(u32 fid, struct shm_event_code *sensor_event,
-    struct shm_event_code *bar_event, struct devdrv_error_code_para *code_para)
+static void dms_event_combine_event_code(u32 fid, struct shm_event_code *sensor_event, struct shm_event_code *bar_event,
+                                         struct devdrv_error_code_para *code_para)
 {
     int sum_cnt = 0;
     int i;
 
-    for (i = 0; (i < DEVMNG_SHM_INFO_EVENT_CODE_LEN) &&
-        (sum_cnt < DMANAGE_ERROR_ARRAY_NUM); i++) {
+    for (i = 0; (i < DEVMNG_SHM_INFO_EVENT_CODE_LEN) && (sum_cnt < DMANAGE_ERROR_ARRAY_NUM); i++) {
         if (sensor_event[i].event_code == 0) {
             break;
         }
@@ -1005,8 +984,7 @@ static void dms_event_combine_event_code(u32 fid, struct shm_event_code *sensor_
         }
     }
 
-    for (i = 0; (i < DEVMNG_SHM_INFO_EVENT_CODE_LEN) &&
-        (sum_cnt < DMANAGE_ERROR_ARRAY_NUM); i++) {
+    for (i = 0; (i < DEVMNG_SHM_INFO_EVENT_CODE_LEN) && (sum_cnt < DMANAGE_ERROR_ARRAY_NUM); i++) {
         if (bar_event[i].event_code == 0) {
             break;
         }
@@ -1017,8 +995,7 @@ static void dms_event_combine_event_code(u32 fid, struct shm_event_code *sensor_
     code_para->error_code_count = sum_cnt;
 }
 
-STATIC int dms_get_event_code(u32 devid, u32 fid, u32 *health_code,
-    struct devdrv_error_code_para *code_para)
+STATIC int dms_get_event_code(u32 devid, u32 fid, u32 *health_code, struct devdrv_error_code_para *code_para)
 {
     struct shm_event_code *sensor_event, *bar_event;
     u32 sensor_health[VMNG_VDEV_MAX_PER_PDEV] = {0};
@@ -1030,15 +1007,15 @@ STATIC int dms_get_event_code(u32 devid, u32 fid, u32 *health_code,
         return DRV_ERROR_PARA_ERROR;
     }
 
-    sensor_event = (struct shm_event_code *)dbl_kzalloc(sizeof(struct shm_event_code) * \
-                                                    DEVMNG_SHM_INFO_EVENT_CODE_LEN, KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
+    sensor_event = (struct shm_event_code *)dbl_kzalloc(sizeof(struct shm_event_code) * DEVMNG_SHM_INFO_EVENT_CODE_LEN,
+                                                        KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
     if (sensor_event == NULL) {
         dms_err("Call ka_mm_kzalloc sensor_event failed. (dev_id=%u)\n", devid);
         return DRV_ERROR_OUT_OF_MEMORY;
     }
 
-    bar_event = (struct shm_event_code *)dbl_kzalloc(sizeof(struct shm_event_code) * \
-                                                 DEVMNG_SHM_INFO_EVENT_CODE_LEN, KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
+    bar_event = (struct shm_event_code *)dbl_kzalloc(sizeof(struct shm_event_code) * DEVMNG_SHM_INFO_EVENT_CODE_LEN,
+                                                     KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
     if (bar_event == NULL) {
         dbl_kfree(sensor_event);
         dms_err("Call ka_mm_kzalloc bar_event failed. (dev_id=%u)\n", devid);
@@ -1060,8 +1037,7 @@ out:
     return ret;
 }
 
-int dms_get_error_code(void *feature, char *in, u32 in_len,
-    char *out, u32 out_len)
+int dms_get_error_code(void *feature, char *in, u32 in_len, char *out, u32 out_len)
 {
     int ret;
     u32 devid = 0;
@@ -1072,8 +1048,8 @@ int dms_get_error_code(void *feature, char *in, u32 in_len,
 
     if ((in == NULL) || (out == NULL) || (in_len != sizeof(u32)) ||
         (out_len != sizeof(struct devdrv_error_code_para))) {
-        dms_err("Invalid parameter. (in_buff=%s; in_len=%u;out_buff=%s; out_len=%u)\n",
-                (in == NULL) ? "NULL" : "OK", in_len, (out == NULL) ? "NULL" : "OK", out_len);
+        dms_err("Invalid parameter. (in_buff=%s; in_len=%u;out_buff=%s; out_len=%u)\n", (in == NULL) ? "NULL" : "OK",
+                in_len, (out == NULL) ? "NULL" : "OK", out_len);
         return DRV_ERROR_PARA_ERROR;
     }
     ret = dms_event_get_logic_id_and_covert_to_phy_id(in, in_len, &devid, &phyid, &fid);
@@ -1125,8 +1101,7 @@ static int dms_get_health_code(u32 phyid, u32 fid, u32 *health_code)
     return DRV_ERROR_NONE;
 }
 
-int dms_get_device_health(void *feature, char *in, u32 in_len,
-    char *out, u32 out_len)
+int dms_get_device_health(void *feature, char *in, u32 in_len, char *out, u32 out_len)
 {
     int ret;
     u32 devid = 0;
@@ -1135,8 +1110,8 @@ int dms_get_device_health(void *feature, char *in, u32 in_len,
     u32 health_code = 0;
 
     if ((in == NULL) || (out == NULL) || (in_len != sizeof(u32)) || (out_len != sizeof(u32))) {
-        dms_err("Invalid parameter. (in_buff=%s; in_len=%u;out_buff=%s; out_len=%u)\n",
-                (in == NULL) ? "NULL" : "OK", in_len, (out == NULL) ? "NULL" : "OK", out_len);
+        dms_err("Invalid parameter. (in_buff=%s; in_len=%u;out_buff=%s; out_len=%u)\n", (in == NULL) ? "NULL" : "OK",
+                in_len, (out == NULL) ? "NULL" : "OK", out_len);
         return DRV_ERROR_PARA_ERROR;
     }
     ret = dms_event_get_logic_id_and_covert_to_phy_id(in, in_len, &devid, &phyid, &fid);
@@ -1161,16 +1136,15 @@ int dms_get_device_health(void *feature, char *in, u32 in_len,
     return DRV_ERROR_NONE;
 }
 
-int dms_query_error_str(void *feature, char *in, u32 in_len,
-    char *out, u32 out_len)
+int dms_query_error_str(void *feature, char *in, u32 in_len, char *out, u32 out_len)
 {
     struct dms_event_ioctrl para = {0};
     u32 locid, phyid, fid;
     int ret;
 
     if ((in == NULL) || (out == NULL) || (in_len != sizeof(struct dms_event_ioctrl))) {
-        dms_err("Invalid parameter. (in_buff=%s; out_buff=%s; in_len=%u)\n",
-            (in == NULL) ? "NULL" : "OK", (out == NULL) ? "NULL" : "OK", in_len);
+        dms_err("Invalid parameter. (in_buff=%s; out_buff=%s; in_len=%u)\n", (in == NULL) ? "NULL" : "OK",
+                (out == NULL) ? "NULL" : "OK", in_len);
         return DRV_ERROR_PARA_ERROR;
     }
     ret = memcpy_s((void *)&para, sizeof(struct dms_event_ioctrl), (void *)in, in_len);
@@ -1180,12 +1154,11 @@ int dms_query_error_str(void *feature, char *in, u32 in_len,
     }
 
     if (DMS_EVENT_ID_IS_BBOX_CODE(para.event_code) != 0) {
-        dms_debug("The event code is bbox code. (devi_id=%u; event_code=0x%x)\n", para.devid, para.event_code);
+        dms_debug("The event code is bbox code. (dev_id=%u; event_code=0x%x)\n", para.devid, para.event_code);
         return DRV_ERROR_NO_EVENT;
     }
 
-    ret = dms_event_get_logic_id_and_covert_to_phy_id((char *)&para.devid,
-                                                      sizeof(para.devid), &locid, &phyid, &fid);
+    ret = dms_event_get_logic_id_and_covert_to_phy_id((char *)&para.devid, sizeof(para.devid), &locid, &phyid, &fid);
     if (ret != 0) {
         dms_err("Get logical id or convert to physical id failed. (ret=%d)\n", ret);
         return ret;
@@ -1253,7 +1226,8 @@ STATIC int dms_get_item_state(struct dms_node_state *state, struct state_item *i
         }
         ret = node->ops->get_init_state(node, &state[i].init_state);
         if (ret != 0) {
-            dms_warn("state table call init func warn, (node_type=%d; node_id=%d; ret=%d)\n", node->node_type, node->node_id, ret);
+            dms_warn("state table call init func warn, (node_type=%d; node_id=%d; ret=%d)\n", node->node_type,
+                     node->node_id, ret);
             state[i].init_state = (uint32_t)DMS_DEV_INIT_NOT_REGISTER;
         }
     }
@@ -1263,7 +1237,7 @@ STATIC int dms_get_item_state(struct dms_node_state *state, struct state_item *i
 
 STATIC int dms_get_device_state_table(struct dms_device_state_out *state_out, uint32_t out_len)
 {
-    struct dms_node_state *state = NULL; 
+    struct dms_node_state *state = NULL;
     struct dms_state_table *table = dms_get_state_table();
     struct state_item *item = table->item;
     size_t state_size;
@@ -1274,7 +1248,7 @@ STATIC int dms_get_device_state_table(struct dms_device_state_out *state_out, ui
         state_out->buf_size = 0;
         return 0;
     }
-    max_num = (out_len - sizeof(unsigned long))/ sizeof(struct dms_node_state);
+    max_num = (out_len - sizeof(unsigned long)) / sizeof(struct dms_node_state);
     out_num = (max_num < table->num) ? max_num : table->num;
     state_size = out_num * sizeof(struct dms_node_state);
 
@@ -1335,24 +1309,15 @@ static int dms_event_poll_event(struct dms_event_obj *event_obj, u32 wait_time, 
 }
 
 #ifdef CFG_FEATURE_LOG_STANDARD_FAULT_EVENT
-static const char *g_event_severity_name[DMS_EVENT_MAX] = {
-    "OK",
-    "Warning",
-    "Alarm",
-    "Critical"
-};
+static const char *g_event_severity_name[DMS_EVENT_MAX] = {"OK", "Warning", "Alarm", "Critical"};
 
-static const char *g_event_assertion_name[DMS_EVENT_TYPE_MAX] = {
-    "Event resume",
-    "Event occur",
-    "One time event"
-};
+static const char *g_event_assertion_name[DMS_EVENT_TYPE_MAX] = {"Event resume", "Event occur", "One time event"};
 
 static void dms_get_assertion_name(unsigned char assertion, char *assertion_name, unsigned int buf_len)
 {
     if (assertion >= DMS_EVENT_TYPE_MAX || buf_len == 0 || assertion_name == NULL) {
-        dms_err("Invalid para. (assertion=%u; buf_len=%u; assertion_name is NULL=%d)\n",
-            assertion, buf_len, assertion_name == NULL);
+        dms_err("Invalid para. (assertion=%u; buf_len=%u; assertion_name is NULL=%d)\n", assertion, buf_len,
+                assertion_name == NULL);
         return;
     }
 
@@ -1366,8 +1331,8 @@ static void dms_get_assertion_name(unsigned char assertion, char *assertion_name
 static void dms_get_severity_name(unsigned int severity, char *severity_name, unsigned int buf_len)
 {
     if (severity >= DMS_EVENT_MAX || buf_len == 0 || severity_name == NULL) {
-        dms_err("Invalid severity. (severity=%u; buf_len=%u; severity_name is NULL=%d)\n",
-            severity, buf_len, severity_name == NULL);
+        dms_err("Invalid severity. (severity=%u; buf_len=%u; severity_name is NULL=%d)\n", severity, buf_len,
+                severity_name == NULL);
         return;
     }
 
@@ -1407,12 +1372,14 @@ static void dms_record_fault_event_log(DMS_EVENT_NODE_STRU *exception_node)
     dms_get_severity_name(event.severity, severity_name, DMS_MAX_SEVERITY_LEN);
     dms_get_assertion_name(event.assertion, assertion_name, DMS_MAX_ASSERTION_LEN);
 
-    dms_fault_mng_event(event.assertion, "event_id=0x%x; device_id=%u; node_type=0x%x[%s]; node_id=%u; sub_node_id=%u; "
+    dms_fault_mng_event(
+        event.assertion,
+        "event_id=0x%x; device_id=%u; node_type=0x%x[%s]; node_id=%u; sub_node_id=%u; "
         "event_type=0x%x[%s]; severity=%u[%s]; assertion=%u[%s]; description=[%s]; os_id=%u; event_serial_num=%d; "
         "notify_serial_num=%d; event_raised_time=%llu ms.\n",
-        event.event_id, event.deviceid, event.node_type, node_type_name, event.node_id, event.sub_node_id,
-        event_type, event_type_string, event.severity, severity_name, event.assertion, assertion_name, 
-        event.additional_info, os_id, event.event_serial_num, event.notify_serial_num, event.alarm_raised_time);
+        event.event_id, event.deviceid, event.node_type, node_type_name, event.node_id, event.sub_node_id, event_type,
+        event_type_string, event.severity, severity_name, event.assertion, assertion_name, event.additional_info, os_id,
+        event.event_serial_num, event.notify_serial_num, event.alarm_raised_time);
 }
 #endif
 
@@ -1488,7 +1455,7 @@ static int dms_event_task_init(void)
     }
     ka_base_kfifo_reset(&g_event_task.kfifo);
     ka_task_mutex_unlock(&g_event_task.lock);
-#if defined(CFG_FEATURE_EP_MODE) && !defined (CFG_EDGE_HOST)
+#if defined(CFG_FEATURE_EP_MODE) && !defined(CFG_EDGE_HOST)
     ka_base_atomic_set(&g_event_task.poll_flag, EVENT_POLL_EXIT);
 #else
     ka_base_atomic_set(&g_event_task.poll_flag, EVENT_POLL_WORK);
@@ -1551,7 +1518,8 @@ void dms_event_ctrl_converge_list_free(struct dms_converge_event_list *event_lis
     event_list->event_num = 0;
     event_list->health_code = 0;
     if (!ka_list_empty_careful(&event_list->head)) {
-        ka_list_for_each_safe(pos, n, &event_list->head) {
+        ka_list_for_each_safe(pos, n, &event_list->head)
+        {
             exception_node = ka_list_entry(pos, DMS_EVENT_NODE_STRU, node);
             ka_list_del(&exception_node->node);
             dbl_kfree(exception_node);
@@ -1571,7 +1539,8 @@ void dms_event_sensor_reported_list_free(struct dms_sensor_reported_list *report
     ka_task_mutex_lock(&reported_list->lock);
     reported_list->reported_num = 0;
     if (!ka_list_empty_careful(&reported_list->head)) {
-        ka_list_for_each_safe(pos, n, &reported_list->head) {
+        ka_list_for_each_safe(pos, n, &reported_list->head)
+        {
             event_node = ka_list_entry(pos, struct dms_event_sensor_reported, node);
             ka_list_del(&event_node->node);
             dbl_kfree(event_node);
@@ -1709,32 +1678,28 @@ static int dms_event_device_down2(struct devdrv_info *dev_info)
     return DRV_ERROR_NONE;
 }
 
-static int (*const dms_event_notifier_handle_func[DMS_DEVICE_NOTIFIER_MAX]) \
-    (struct devdrv_info *dev_info) = {
-        [DMS_DEVICE_REBOOT] = NULL,
-        [DMS_DRIVER_REMOVE] = NULL,
-        [DMS_DEVICE_SUSPEND] = NULL,
-        [DMS_DEVICE_RESUME] = NULL,
-        [DMS_DEVICE_UP0] = NULL,
-        [DMS_DEVICE_UP1] = NULL,
-        [DMS_DEVICE_UP2] = dms_event_device_up2,
-        [DMS_DEVICE_UP3] = dms_event_device_up3,
-        [DMS_DEVICE_DOWN0] = NULL,
-        [DMS_DEVICE_DOWN1] = NULL,
-        [DMS_DEVICE_DOWN2] = dms_event_device_down2,
-        [DMS_DEVICE_DOWN3] = NULL,
+static int (*const dms_event_notifier_handle_func[DMS_DEVICE_NOTIFIER_MAX])(struct devdrv_info *dev_info) = {
+    [DMS_DEVICE_REBOOT] = NULL,
+    [DMS_DRIVER_REMOVE] = NULL,
+    [DMS_DEVICE_SUSPEND] = NULL,
+    [DMS_DEVICE_RESUME] = NULL,
+    [DMS_DEVICE_UP0] = NULL,
+    [DMS_DEVICE_UP1] = NULL,
+    [DMS_DEVICE_UP2] = dms_event_device_up2,
+    [DMS_DEVICE_UP3] = dms_event_device_up3,
+    [DMS_DEVICE_DOWN0] = NULL,
+    [DMS_DEVICE_DOWN1] = NULL,
+    [DMS_DEVICE_DOWN2] = dms_event_device_down2,
+    [DMS_DEVICE_DOWN3] = NULL,
 };
 
-static int dms_event_notifier_handle(ka_notifier_block_t *self,
-    unsigned long event, void *data)
+static int dms_event_notifier_handle(ka_notifier_block_t *self, unsigned long event, void *data)
 {
     struct devdrv_info *dev_info = (struct devdrv_info *)data;
     int ret;
 
-    if ((data == NULL) || (event <= DMS_DEVICE_NOTIFIER_MIN) ||
-        (event >= DMS_DEVICE_NOTIFIER_MAX)) {
-        dms_err("Invalid parameter. (event=0x%lx; data=\"%s\")\n",
-                event, data == NULL ? "NULL" : "OK");
+    if ((data == NULL) || (event <= DMS_DEVICE_NOTIFIER_MIN) || (event >= DMS_DEVICE_NOTIFIER_MAX)) {
+        dms_err("Invalid parameter. (event=0x%lx; data=\"%s\")\n", event, data == NULL ? "NULL" : "OK");
         return KA_NOTIFY_BAD;
     }
 
@@ -1744,13 +1709,11 @@ static int dms_event_notifier_handle(ka_notifier_block_t *self,
 
     ret = dms_event_notifier_handle_func[event](dev_info);
     if (ret != 0) {
-        dms_err("Notifier handle failed. (event=0x%lx; dev_id=%u)\n",
-                event, dev_info->dev_id);
+        dms_err("Notifier handle failed. (event=0x%lx; dev_id=%u)\n", event, dev_info->dev_id);
         return KA_NOTIFY_BAD;
     }
 
-    dms_debug("Notifier handle success. (event=0x%lx; dev_id=%u)\n",
-              event, dev_info->dev_id);
+    dms_debug("Notifier handle success. (event=0x%lx; dev_id=%u)\n", event, dev_info->dev_id);
     return KA_NOTIFY_DONE;
 }
 
@@ -1827,4 +1790,3 @@ void dms_event_exit(void)
     dms_event_ctrl_uninit();
     dms_event_convergent_diagrams_exit();
 }
-

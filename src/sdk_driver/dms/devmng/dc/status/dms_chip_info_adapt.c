@@ -61,7 +61,6 @@ typedef enum {
     UPGRADE_POLICY_MAX,
 } SWPLUGIN_UPGRADE_POLICY;
 
-
 #define DEV_AICORE_FREQ_LEVEL_CLOUD 1
 #define DEV_AICORE_FREQ_LEVEL_MINIV2 2
 
@@ -70,21 +69,16 @@ typedef enum {
 #define AICORE_FREQ_LEVEL_PRO 1100
 #define AICORE_FREQ_LEVEL_PRE 1200
 
-#define AICORE_LEVEL_LIMIT(num_level, freq_level) (((num_level) > 0) &&    \
-    ((num_level) < CORE_NUM_LEVEL_MAX) && ((freq_level) > 0) &&          \
-    ((freq_level) < CORE_FREQ_LEVEL_MAX))
+#define AICORE_LEVEL_LIMIT(num_level, freq_level)                                     \
+    (((num_level) > 0) && ((num_level) < CORE_NUM_LEVEL_MAX) && ((freq_level) > 0) && \
+     ((freq_level) < CORE_FREQ_LEVEL_MAX))
 
 STATIC char *g_aicore_num_level[] = {"NULL", "A", "B", "C"};
 STATIC char *g_aicore_freq_level[] = {"NULL", "", "Pro", "Premium"};
 STATIC char *g_ai_computing_level[] = {"1", "2", "3", "4"};
 
 STATIC chip_value_name_map_t g_chip_value_name_map[] = {
-    { 6416, "310" },
-    { 6528, "910" },
-    { 6481, "310P" },
-    { 6417, "310B" },
-    { 6529, "910B" },
-    { 6514, "950" },
+    {6416, "310"}, {6528, "910"}, {6481, "310P"}, {6417, "310B"}, {6529, "910B"}, {6514, "950"},
 };
 
 struct dms_cust_board_info g_cust_board_info[ASCEND_PDEV_MAX_NUM] = {0};
@@ -97,11 +91,11 @@ STATIC char g_mac_info[ASCEND_PDEV_MAX_NUM][UUID_MAX_LEN];
 STATIC ka_atomic_t g_mac_init_flag[ASCEND_PDEV_MAX_NUM] = {KA_BASE_ATOMIC_INIT(0)};
 #define UUID_VENDOR_ID 0xCC08
 #define GUID_BASE_ADDR 0x24804181E38
-#define GUID_BASE_LEN  0x04
+#define GUID_BASE_LEN 0x04
 #endif
 
 STATIC int dms_get_chip_aicore_info(unsigned int dev_id, unsigned int vfid, bool is_container_split,
-    dms_chip_aicore_info_t *chip_aicore_info)
+                                    dms_chip_aicore_info_t *chip_aicore_info)
 {
     int ret;
     struct devdrv_info *dev_info = NULL;
@@ -147,13 +141,13 @@ STATIC int dms_get_chip_aicore_info(unsigned int dev_id, unsigned int vfid, bool
     }
 
     dms_debug("(Freq level=%u; num_level=%u; num=%u; freq=%u; chip_name=0x%x; chip_ver=%u)\n",
-        chip_aicore_info->freq_level, chip_aicore_info->num_level, chip_aicore_info->num, chip_aicore_info->freq,
-        chip_aicore_info->chip_name, chip_aicore_info->chip_ver);
+              chip_aicore_info->freq_level, chip_aicore_info->num_level, chip_aicore_info->num, chip_aicore_info->freq,
+              chip_aicore_info->chip_name, chip_aicore_info->chip_ver);
     return 0;
 }
 
 STATIC int dms_set_chip_name_by_aicore_num_and_freq(devdrv_query_chip_info_t *chip_info,
-    dms_chip_aicore_info_t *chip_aicore_info)
+                                                    dms_chip_aicore_info_t *chip_aicore_info)
 {
     int ret;
     unsigned char *chip_name = chip_info->info.name;
@@ -180,8 +174,8 @@ STATIC int dms_set_chip_name_by_aicore_num_and_freq(devdrv_query_chip_info_t *ch
         }
 
         if (ret < 0) {
-            dms_err("Strcat chip name by aicore freq fail. (dev_id=%u; frequency=%u; ret=%d)\n",
-                chip_info->dev_id, chip_aicore_info->freq, ret);
+            dms_err("Strcat chip name by aicore freq fail. (dev_id=%u; frequency=%u; ret=%d)\n", chip_info->dev_id,
+                    chip_aicore_info->freq, ret);
             return ret;
         }
 
@@ -192,8 +186,8 @@ STATIC int dms_set_chip_name_by_aicore_num_and_freq(devdrv_query_chip_info_t *ch
         }
 
         if (ret < 0) {
-            dms_err("Strcat chip name by aicore num fail. (dev_id=%u; num=%u; ret=%d)\n",
-                chip_info->dev_id, chip_aicore_info->num, ret);
+            dms_err("Strcat chip name by aicore num fail. (dev_id=%u; num=%u; ret=%d)\n", chip_info->dev_id,
+                    chip_aicore_info->num, ret);
             return ret;
         }
     }
@@ -202,7 +196,7 @@ STATIC int dms_set_chip_name_by_aicore_num_and_freq(devdrv_query_chip_info_t *ch
 }
 
 STATIC int dms_set_chip_name_only_by_aicore_num(devdrv_query_chip_info_t *chip_info,
-    dms_chip_aicore_info_t *chip_aicore_info)
+                                                dms_chip_aicore_info_t *chip_aicore_info)
 {
     int ret;
     unsigned int ai_core_num = chip_aicore_info->num;
@@ -211,15 +205,15 @@ STATIC int dms_set_chip_name_only_by_aicore_num(devdrv_query_chip_info_t *chip_i
     if (ai_core_num == MINIV2_PRO_CORE_NUM) {
         ret = strcat_s((char *)chip_name, MAX_CHIP_NAME, g_ai_computing_level[AI_COMPUTING_LEVEL1]);
         if (ret < 0) {
-            dms_err("Strcat by aicore freq failed. (dev_id=%u; aicore_num=%u; ret=%d)\n",
-                chip_info->dev_id, ai_core_num, ret);
+            dms_err("Strcat by aicore freq failed. (dev_id=%u; aicore_num=%u; ret=%d)\n", chip_info->dev_id,
+                    ai_core_num, ret);
             return ret;
         }
     } else if (ai_core_num == MINIV2_CORE_NUM) {
         ret = strcat_s((char *)chip_name, MAX_CHIP_NAME, g_ai_computing_level[AI_COMPUTING_LEVEL3]);
         if (ret < 0) {
-            dms_err("Strcat by aicore freq failed. (dev_id=%u; aicore_num=%u; ret=%d)\n",
-                chip_info->dev_id, ai_core_num, ret);
+            dms_err("Strcat by aicore freq failed. (dev_id=%u; aicore_num=%u; ret=%d)\n", chip_info->dev_id,
+                    ai_core_num, ret);
             return ret;
         }
     } else {
@@ -230,7 +224,7 @@ STATIC int dms_set_chip_name_only_by_aicore_num(devdrv_query_chip_info_t *chip_i
     return 0;
 }
 
-#if defined (CFG_FEATURE_PG)
+#if defined(CFG_FEATURE_PG)
 static int dms_set_chip_name_by_soc_version(u32 dev_id, u8 *chip_name)
 {
     int ret;
@@ -344,7 +338,7 @@ STATIC int dms_set_chip_type(u32 dev_id, devdrv_query_chip_info_t *chip_info, un
 }
 
 STATIC int dms_set_chip_name(devdrv_query_chip_info_t *chip_info, bool is_container_split,
-    dms_chip_aicore_info_t *chip_aicore_info, unsigned int virt_id)
+                             dms_chip_aicore_info_t *chip_aicore_info, unsigned int virt_id)
 {
 #ifndef DMS_UT
     int ret = 0;
@@ -356,7 +350,7 @@ STATIC int dms_set_chip_name(devdrv_query_chip_info_t *chip_info, bool is_contai
         return ret;
     }
 
-#if defined (CFG_FEATURE_PG)
+#if defined(CFG_FEATURE_PG)
     ret = dms_set_chip_name_by_soc_version(chip_info->dev_id, (u8 *)chip_info->info.name);
     if (ret) {
         dms_err("Set chip name by soc version failed. (dev_id=%u)\n", chip_info->dev_id);
@@ -373,10 +367,9 @@ STATIC int dms_set_chip_name(devdrv_query_chip_info_t *chip_info, bool is_contai
         if (is_container_split == true) {
 #ifndef CFG_FEATURE_VFG
             ret = sprintf_s((char *)chip_info->info.name, MAX_CHIP_NAME, "%svir%02u",
-                g_chip_value_name_map[i].chip_name, chip_aicore_info->num);
+                            g_chip_value_name_map[i].chip_name, chip_aicore_info->num);
 #else
-            ret = sprintf_s((char *)chip_info->info.name, MAX_CHIP_NAME, "%s",
-                g_chip_value_name_map[i].chip_name);
+            ret = sprintf_s((char *)chip_info->info.name, MAX_CHIP_NAME, "%s", g_chip_value_name_map[i].chip_name);
 #endif
             if (ret < 0) {
                 dms_err("Translate chip name failed. (dev_id=%u; ret=%d)\n", chip_info->dev_id, ret);
@@ -454,8 +447,8 @@ int dms_get_chip_info(unsigned int virt_id, devdrv_query_chip_info_t *chip_info)
 
     ret = dms_get_chip_aicore_info(chip_info->dev_id, vfid, is_container_split, &chip_aicore_info);
     if (ret != 0) {
-        dms_err("Get chip version register info fail. (virt_id=%u; dev_id=%u; ret=%d)\n",
-            virt_id, chip_info->dev_id, ret);
+        dms_err("Get chip version register info fail. (virt_id=%u; dev_id=%u; ret=%d)\n", virt_id, chip_info->dev_id,
+                ret);
         return ret;
     }
 
@@ -493,12 +486,11 @@ STATIC int dms_get_phy_device_info(void *feature, char *in, u32 in_len, char *ou
     struct dms_dev_ctrl_block *dev_cb = NULL;
     struct dms_get_phy_dev_info_out *output = (struct dms_get_phy_dev_info_out *)out;
 
-    if ((feature == NULL) ||
-        (in == NULL) || (in_len < sizeof(unsigned int)) ||
-        (out == NULL) || (out_len < sizeof(struct dms_get_phy_dev_info_out))) {
+    if ((feature == NULL) || (in == NULL) || (in_len < sizeof(unsigned int)) || (out == NULL) ||
+        (out_len < sizeof(struct dms_get_phy_dev_info_out))) {
         dms_err("Invalid parameter. (feature=%s; in=%s; in_len=%u; out=%s; out_len=%u)\n",
-            (feature == NULL) ? "NULL" : "OK",
-            (in == NULL) ? "NULL" : "OK", in_len, (out == NULL) ? "NULL" : "OK", out_len);
+                (feature == NULL) ? "NULL" : "OK", (in == NULL) ? "NULL" : "OK", in_len, (out == NULL) ? "NULL" : "OK",
+                out_len);
         return -EINVAL;
     }
 
@@ -565,7 +557,7 @@ STATIC int dms_make_up_uuid_by_guid(unsigned int phy_id, unsigned int vfid, char
         dms_err("memset_s failed. (phy_id=%u; vfid=%u; ret=%d)\n", phy_id, vfid, ret);
         return -EINVAL;
     }
-    for(int i = 0; i < UUID_MAX_LEN / GUID_BASE_LEN; i++) {
+    for (int i = 0; i < UUID_MAX_LEN / GUID_BASE_LEN; i++) {
         guid_addr = ka_mm_ioremap(GUID_BASE_ADDR + GUID_BASE_LEN * i, GUID_BASE_LEN);
         if (guid_addr == NULL) {
             dms_err("guid addr ioremap fail. (phy_id=%u; vfid=%u)\n", phy_id, vfid);
@@ -600,7 +592,7 @@ STATIC int dms_make_up_uuid_by_devid(unsigned int device_id, unsigned int phy_id
     uuid_info[8] = (((uint8_t)vfid) & 0x3F) << 2;
 
     /* The UUID starts with SN at index 10, and the MAC address starts at index 5, 48 bits in total.*/
-    for(int i = 0; i < 6; i++) {
+    for (int i = 0; i < 6; i++) {
         uuid_info[10 + i] = g_mac_info[phy_id][5 + i];
     }
     return 0;
@@ -618,11 +610,11 @@ STATIC int dms_make_up_uuid(unsigned int phy_id, unsigned int vfid, unsigned int
         return -EINVAL;
     }
 
-     if (soc_type == SOC_TYPE_CLOUD_V3) { 
-         device_id = 0xD001; 
-     } else { 
-         device_id = 0xD000; 
-     }
+    if (soc_type == SOC_TYPE_CLOUD_V3) {
+        device_id = 0xD001;
+    } else {
+        device_id = 0xD000;
+    }
 
     ret = memset_s(uuid_info, UUID_MAX_LEN, 0, UUID_MAX_LEN);
     if (ret != 0) {
@@ -642,8 +634,7 @@ STATIC int dms_make_up_uuid(unsigned int phy_id, unsigned int vfid, unsigned int
 
     ret = memcpy_s(output->payload, sizeof(output->payload), uuid_info, UUID_MAX_LEN);
     if (ret != 0) {
-        dms_err("Failed to invoke memcpy_s to copy uuid info. (phy_id=%u; vfid=%u; ret=%d)\n",
-            phy_id, vfid, ret);
+        dms_err("Failed to invoke memcpy_s to copy uuid info. (phy_id=%u; vfid=%u; ret=%d)\n", phy_id, vfid, ret);
         return -EINVAL;
     }
 
@@ -660,12 +651,11 @@ STATIC int dms_get_device_uuid(void *feature, char *in, u32 in_len, char *out, u
     struct dms_hal_device_info_stru *input = (struct dms_hal_device_info_stru *)in;
     struct dms_hal_device_info_stru *output = (struct dms_hal_device_info_stru *)out;
 
-    if ((feature == NULL) ||
-        (in == NULL) || (in_len < DMS_HAL_DEV_INFO_HEAD_LEN) ||
-        (out == NULL) || (out_len < DMS_HAL_DEV_INFO_HEAD_LEN)) {
+    if ((feature == NULL) || (in == NULL) || (in_len < DMS_HAL_DEV_INFO_HEAD_LEN) || (out == NULL) ||
+        (out_len < DMS_HAL_DEV_INFO_HEAD_LEN)) {
         dms_err("Invalid parameter. (feature=%s; in=%s; in_len=%u; out=%s; out_len=%u)\n",
-            (feature == NULL) ? "NULL" : "OK",
-            (in == NULL) ? "NULL" : "OK", in_len, (out == NULL) ? "NULL" : "OK", out_len);
+                (feature == NULL) ? "NULL" : "OK", (in == NULL) ? "NULL" : "OK", in_len, (out == NULL) ? "NULL" : "OK",
+                out_len);
         return -EINVAL;
     }
 
@@ -678,7 +668,7 @@ STATIC int dms_get_device_uuid(void *feature, char *in, u32 in_len, char *out, u
     if (!uda_is_pf_dev(input->dev_id)) {
         ret = uda_udevid_to_mia_devid(input->dev_id, &mia_para);
         if (ret != 0) {
-            dms_err("The udevid to mia devid failed. (udev_id=%u; ret=%d)", input->dev_id, ret);
+            dms_err("Failed to convert udevid to mia devid. (udev_id=%u; ret=%d)\n", input->dev_id, ret);
             return ret;
         }
         phy_id = mia_para.phy_devid;
@@ -753,13 +743,12 @@ STATIC void dms_mac_info_uninit(unsigned int dev_id)
 
 STATIC int dms_get_index_in_group_para_check(void *feature, char *in, u32 in_len, char *out, u32 out_len)
 {
-    if ((feature ==NULL) ||
-        (in == NULL) || (in_len != sizeof(struct dms_get_device_info_in)) ||
-        (out == NULL) || (out_len != sizeof(struct dms_get_device_info_out))) {
-            dms_err("Invalid parameter. (feature=%s; in=%s; in_len=%u; out=%s;out_len=%u)\n",
-                (feature == NULL) ? "NULL" : "OK",
-                (in == NULL) ? "NULL" : "OK", in_len, (out == NULL) ? "NULL" : "OK", out_len);
-            return -EINVAL;
+    if ((feature == NULL) || (in == NULL) || (in_len != sizeof(struct dms_get_device_info_in)) || (out == NULL) ||
+        (out_len != sizeof(struct dms_get_device_info_out))) {
+        dms_err("Invalid parameter. (feature=%s; in=%s; in_len=%u; out=%s;out_len=%u)\n",
+                (feature == NULL) ? "NULL" : "OK", (in == NULL) ? "NULL" : "OK", in_len, (out == NULL) ? "NULL" : "OK",
+                out_len);
+        return -EINVAL;
     }
     return 0;
 }
@@ -779,7 +768,8 @@ STATIC int dms_get_device_index_in_group(void *feature, char *in, u32 in_len, ch
 
     input = (struct dms_get_device_info_in *)in;
     if ((input->buff == NULL) || (input->buff_size == 0)) {
-        dms_err("Input buff is NULL or buff_size is zero. (dev_id=%u; buff_size=%u)\n", input->dev_id, input->buff_size);
+        dms_err("Input buff is NULL or buff_size is zero. (dev_id=%u; buff_size=%u)\n", input->dev_id,
+                input->buff_size);
         return -EINVAL;
     }
 
@@ -820,7 +810,7 @@ STATIC int dms_cust_board_id_check(unsigned int dev_id, unsigned int *udevid)
 
     ret = uda_devid_to_udevid(dev_id, udevid);
     if (ret != 0) {
-        dms_err("Fail to cnvert devid to udevid. (devid=%u; ret=%u)\n", dev_id, ret);
+        dms_err("Failed to convert devid to udevid. (devid=%u; ret=%u)\n", dev_id, ret);
         return -EINVAL;
     }
 
@@ -844,11 +834,12 @@ STATIC int dms_get_cust_board_info(void *feature, char *in, u32 in_len, char *ou
     unsigned int udevid;
     int ret;
 
-    if ((in == NULL) || (in_len != sizeof(struct dms_get_device_info_in)) ||
-        (out == NULL) || (out_len != sizeof(struct dms_get_device_info_out))) {
+    if ((in == NULL) || (in_len != sizeof(struct dms_get_device_info_in)) || (out == NULL) ||
+        (out_len != sizeof(struct dms_get_device_info_out))) {
         dms_err("Invalid parameter. (in_is_null=%d; in_len_invalid=%u; in_len_valid=%zu; "
-            "out_is_null=%d; out_len_invalid=%u; out_len_valid=%zu)\n", in == NULL, in_len,
-            sizeof(struct dms_get_device_info_in), out == NULL, out_len, sizeof(struct dms_get_device_info_out));
+                "out_is_null=%d; out_len_invalid=%u; out_len_valid=%zu)\n",
+                in == NULL, in_len, sizeof(struct dms_get_device_info_in), out == NULL, out_len,
+                sizeof(struct dms_get_device_info_out));
         return -EINVAL;
     }
 
@@ -870,8 +861,8 @@ STATIC int dms_get_cust_board_info(void *feature, char *in, u32 in_len, char *ou
 
     if (input->buff_size < g_cust_board_info[udevid].size) {
         ka_task_mutex_unlock(&g_cust_board_info[udevid].lock);
-        dms_err("Invalid parameter. (input_buff_size=%u; cust_board_info_size=%u)\n",
-            input->buff_size, g_cust_board_info[udevid].size);
+        dms_err("Invalid parameter. (input_buff_size=%u; cust_board_info_size=%u)\n", input->buff_size,
+                g_cust_board_info[udevid].size);
         return -EINVAL;
     }
 
@@ -893,14 +884,14 @@ STATIC int dms_set_cust_board_info(void *feature, char *in, u32 in_len, char *ou
     int ret;
 
     if ((in == NULL) || (in_len != sizeof(struct dms_set_device_info_in))) {
-        dms_err("Invalid parameter. (in_is_null=%d; in_len_invalid=%u; in_len_valid=%zu)\n",
-            in == NULL, in_len, sizeof(struct dms_set_device_info_in));
+        dms_err("Invalid parameter. (in_is_null=%d; in_len_invalid=%u; in_len_valid=%zu)\n", in == NULL, in_len,
+                sizeof(struct dms_set_device_info_in));
         return -EINVAL;
     }
 
     if ((input->buff == NULL) || (input->buff_size > DMS_CUST_BOARD_INFO_MAX_SIZE)) {
         dms_err("The buffer is NULL or the data is too large. (buf_is_NULL=%d; buff_size=%u; max_size=%d)\n",
-            (input->buff == NULL), input->buff_size, DMS_CUST_BOARD_INFO_MAX_SIZE);
+                (input->buff == NULL), input->buff_size, DMS_CUST_BOARD_INFO_MAX_SIZE);
         return -EINVAL;
     }
 
@@ -912,7 +903,7 @@ STATIC int dms_set_cust_board_info(void *feature, char *in, u32 in_len, char *ou
     ka_task_mutex_lock(&g_cust_board_info[udevid].lock);
     if (g_cust_board_info[udevid].data == NULL) {
         g_cust_board_info[udevid].data = (u8 *)dbl_kzalloc(DMS_CUST_BOARD_INFO_MAX_SIZE,
-            KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
+                                                           KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
         if (g_cust_board_info[udevid].data == NULL) {
             ka_task_mutex_unlock(&g_cust_board_info[udevid].lock);
             dms_err("Kzalloc failed. (udevid=%u)\n", udevid);
@@ -945,12 +936,11 @@ STATIC int dms_get_swplugin_upgrade_policy(void *feature, char *in, u32 in_len, 
     struct dms_hal_device_info_stru *input = (struct dms_hal_device_info_stru *)in;
     struct dms_hal_device_info_stru *output = (struct dms_hal_device_info_stru *)out;
 
-    if ((feature == NULL) ||
-        (in == NULL) || (in_len < DMS_HAL_DEV_INFO_HEAD_LEN) ||
-        (out == NULL) || (out_len < DMS_HAL_DEV_INFO_HEAD_LEN)) {
+    if ((feature == NULL) || (in == NULL) || (in_len < DMS_HAL_DEV_INFO_HEAD_LEN) || (out == NULL) ||
+        (out_len < DMS_HAL_DEV_INFO_HEAD_LEN)) {
         dms_err("Invalid parameter. (feature=%s; in=%s; in_len=%u; out=%s; out_len=%u)\n",
-            (feature == NULL) ? "NULL" : "OK",
-            (in == NULL) ? "NULL" : "OK", in_len, (out == NULL) ? "NULL" : "OK", out_len);
+                (feature == NULL) ? "NULL" : "OK", (in == NULL) ? "NULL" : "OK", in_len, (out == NULL) ? "NULL" : "OK",
+                out_len);
         return -EINVAL;
     }
 
@@ -969,8 +959,8 @@ STATIC int dms_get_swplugin_upgrade_policy(void *feature, char *in, u32 in_len, 
     tmp_value = (unsigned int)ka_base_atomic_read(&g_swplugin_upgrade_policy[phy_id]);
     ret = memcpy_s(output->payload, sizeof(output->payload), &tmp_value, sizeof(tmp_value));
     if (ret != 0) {
-        dms_err("Failed to invoke memcpy_s to copy swplugin upgrade policy. (phy_id=%u; vfid=%u; ret=%d)\n",
-            phy_id, vfid, ret);
+        dms_err("Failed to invoke memcpy_s to copy swplugin upgrade policy. (phy_id=%u; vfid=%u; ret=%d)\n", phy_id,
+                vfid, ret);
         return -EINVAL;
     }
 
@@ -985,12 +975,11 @@ STATIC int dms_set_swplugin_upgrade_policy(void *feature, char *in, u32 in_len, 
     unsigned int tmp_value;
     struct dms_hal_device_info_stru *input = (struct dms_hal_device_info_stru *)in;
 
-    if ((feature == NULL) ||
-        (in == NULL) || (in_len < DMS_HAL_DEV_INFO_HEAD_LEN) ||
-        (out == NULL) || (out_len < DMS_HAL_DEV_INFO_HEAD_LEN)) {
+    if ((feature == NULL) || (in == NULL) || (in_len < DMS_HAL_DEV_INFO_HEAD_LEN) || (out == NULL) ||
+        (out_len < DMS_HAL_DEV_INFO_HEAD_LEN)) {
         dms_err("Invalid parameter. (feature=%s; in=%s; in_len=%u; out=%s; out_len=%u)\n",
-            (feature == NULL) ? "NULL" : "OK",
-            (in == NULL) ? "NULL" : "OK", in_len, (out == NULL) ? "NULL" : "OK", out_len);
+                (feature == NULL) ? "NULL" : "OK", (in == NULL) ? "NULL" : "OK", in_len, (out == NULL) ? "NULL" : "OK",
+                out_len);
         return -EINVAL;
     }
 
@@ -1007,13 +996,14 @@ STATIC int dms_set_swplugin_upgrade_policy(void *feature, char *in, u32 in_len, 
 
     ret = memcpy_s(&tmp_value, sizeof(tmp_value), input->payload, input->buff_size);
     if (ret != 0) {
-        dms_err("Failed to invoke memcpy_s to copy swplugin upgrade policy. (phy_id=%u; vfid=%u; ret=%d)\n",
-            phy_id, vfid, ret);
+        dms_err("Failed to invoke memcpy_s to copy swplugin upgrade policy. (phy_id=%u; vfid=%u; ret=%d)\n", phy_id,
+                vfid, ret);
         return -EINVAL;
     }
 
     if (tmp_value >= UPGRADE_POLICY_MAX) {
-        dms_err("Invalid swplugin upgrade policy. (upgrade_policy=%d; upgrade_policy_max=%u)\n", tmp_value, UPGRADE_POLICY_MAX - 1);
+        dms_err("Invalid swplugin upgrade policy. (upgrade_policy=%d; upgrade_policy_max=%u)\n", tmp_value,
+                UPGRADE_POLICY_MAX - 1);
         return -EINVAL;
     }
 
@@ -1027,61 +1017,28 @@ STATIC int dms_set_swplugin_upgrade_policy(void *feature, char *in, u32 in_len, 
 BEGIN_DMS_MODULE_DECLARATION(DMS_CHIP_INFO_CMD_NAME)
 BEGIN_FEATURE_COMMAND()
 #ifdef CFG_FEATURE_GET_DEV_UUID
-ADD_FEATURE_COMMAND(DMS_CHIP_INFO_CMD_NAME,
-    DMS_GET_GET_DEVICE_INFO_CMD,
-    ZERO_CMD,
-    "module=0x0,info=0x36",
-    NULL,
-    DMS_SUPPORT_ALL,
-    dms_get_device_uuid)
+ADD_FEATURE_COMMAND(DMS_CHIP_INFO_CMD_NAME, DMS_GET_GET_DEVICE_INFO_CMD, ZERO_CMD, "module=0x0,info=0x36", NULL,
+                    DMS_SUPPORT_ALL, dms_get_device_uuid)
 #endif
-ADD_FEATURE_COMMAND(DMS_CHIP_INFO_CMD_NAME,
-    DMS_MAIN_CMD_BASIC,
-    DMS_SUBCMD_GET_PHY_DEVICE_INFO,
-    NULL,
-    NULL,
-    DMS_SUPPORT_ALL_USER,
-    dms_get_phy_device_info)
+ADD_FEATURE_COMMAND(DMS_CHIP_INFO_CMD_NAME, DMS_MAIN_CMD_BASIC, DMS_SUBCMD_GET_PHY_DEVICE_INFO, NULL, NULL,
+                    DMS_SUPPORT_ALL_USER, dms_get_phy_device_info)
 #ifdef CFG_FEATURE_GET_DEV_INDEX_IN_GROUP
-ADD_FEATURE_COMMAND(DMS_CHIP_INFO_CMD_NAME,
-    DMS_GET_GET_DEVICE_INFO_CMD,
-    ZERO_CMD,
-    "main_cmd=0xc,sub_cmd=0x5",
-    NULL,
-    DMS_ACC_NOT_LIMIT_USER | DMS_ENV_ALL | DMS_VDEV_NOTSUPPORT,
-    dms_get_device_index_in_group)
+ADD_FEATURE_COMMAND(DMS_CHIP_INFO_CMD_NAME, DMS_GET_GET_DEVICE_INFO_CMD, ZERO_CMD, "main_cmd=0xc,sub_cmd=0x5", NULL,
+                    DMS_ACC_NOT_LIMIT_USER | DMS_ENV_ALL | DMS_VDEV_NOTSUPPORT, dms_get_device_index_in_group)
 #endif
 #ifdef CFG_HOST_ENV
-ADD_FEATURE_COMMAND(DMS_CHIP_INFO_CMD_NAME,
-    DMS_GET_GET_DEVICE_INFO_CMD,
-    ZERO_CMD,
-    "main_cmd=0xc,sub_cmd=0x3", /* DSMI_MAIN_CMD_CHIP_INF,DSMI_CHIP_INF_SUB_CMD_CUST_BOARD_INF */
-    NULL,
-    DMS_SUPPORT_ALL,
-    dms_get_cust_board_info)
-ADD_FEATURE_COMMAND(DMS_CHIP_INFO_CMD_NAME,
-    DMS_GET_SET_DEVICE_INFO_CMD,
-    ZERO_CMD,
-    "main_cmd=0xc,sub_cmd=0x3", /* DSMI_MAIN_CMD_CHIP_INF,DSMI_CHIP_INF_SUB_CMD_CUST_BOARD_INF */
-    NULL,
-    DMS_SUPPORT_ALL,
-    dms_set_cust_board_info)
+ADD_FEATURE_COMMAND(DMS_CHIP_INFO_CMD_NAME, DMS_GET_GET_DEVICE_INFO_CMD, ZERO_CMD,
+                    "main_cmd=0xc,sub_cmd=0x3", /* DSMI_MAIN_CMD_CHIP_INF,DSMI_CHIP_INF_SUB_CMD_CUST_BOARD_INF */
+                    NULL, DMS_SUPPORT_ALL, dms_get_cust_board_info)
+ADD_FEATURE_COMMAND(DMS_CHIP_INFO_CMD_NAME, DMS_GET_SET_DEVICE_INFO_CMD, ZERO_CMD,
+                    "main_cmd=0xc,sub_cmd=0x3", /* DSMI_MAIN_CMD_CHIP_INF,DSMI_CHIP_INF_SUB_CMD_CUST_BOARD_INF */
+                    NULL, DMS_SUPPORT_ALL, dms_set_cust_board_info)
 #endif
 #if (defined CFG_FEATURE_UPGRADE_SWPLUGIN_POLICY) && (!defined CFG_HOST_ENV)
-ADD_FEATURE_COMMAND(DMS_CHIP_INFO_CMD_NAME,
-    DMS_GET_GET_DEVICE_INFO_CMD,
-    ZERO_CMD,
-    "module=0x0,info=0x3e",
-    NULL,
-    DMS_SUPPORT_ALL,
-    dms_get_swplugin_upgrade_policy)
-ADD_FEATURE_COMMAND(DMS_CHIP_INFO_CMD_NAME,
-    DMS_GET_SET_DEVICE_INFO_CMD,
-    ZERO_CMD,
-    "module=0x0,info=0x3e",
-    NULL,
-    DMS_ACC_ROOT | DMS_ENV_NOT_NORMAL_DOCKER | DMS_VDEV_NOTSUPPORT,
-    dms_set_swplugin_upgrade_policy)
+ADD_FEATURE_COMMAND(DMS_CHIP_INFO_CMD_NAME, DMS_GET_GET_DEVICE_INFO_CMD, ZERO_CMD, "module=0x0,info=0x3e", NULL,
+                    DMS_SUPPORT_ALL, dms_get_swplugin_upgrade_policy)
+ADD_FEATURE_COMMAND(DMS_CHIP_INFO_CMD_NAME, DMS_GET_SET_DEVICE_INFO_CMD, ZERO_CMD, "module=0x0,info=0x3e", NULL,
+                    DMS_ACC_ROOT | DMS_ENV_NOT_NORMAL_DOCKER | DMS_VDEV_NOTSUPPORT, dms_set_swplugin_upgrade_policy)
 #endif
 END_FEATURE_COMMAND()
 END_MODULE_DECLARATION()

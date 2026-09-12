@@ -7,7 +7,7 @@
  * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
  */
- 
+
 #include "securec.h"
 #include "mmpa_api.h"
 #include "devmng_common.h"
@@ -28,24 +28,24 @@
 #include "devdrv_manager_chip.h"
 
 #ifndef __linux
-    #pragma comment(lib, "libc_sec.lib")
-    #define PTHREAD_MUTEX_INITIALIZER NULL
-    #define DEVDRV_BB_DEVICE_ID_INFORM 0x66020004
-    #define DEVDRV_BB_DEVICE_STATE_INFORM 0x66020008
-    #define fd_is_invalid(fd) (fd == (mmProcess)DEVDRV_INVALID_FD_OR_INDEX)
+#pragma comment(lib, "libc_sec.lib")
+#define PTHREAD_MUTEX_INITIALIZER NULL
+#define DEVDRV_BB_DEVICE_ID_INFORM 0x66020004
+#define DEVDRV_BB_DEVICE_STATE_INFORM 0x66020008
+#define fd_is_invalid(fd) (fd == (mmProcess)DEVDRV_INVALID_FD_OR_INDEX)
 #else
-    #include <sys/prctl.h>
-    #include <errno.h>
-    #include <stdio.h>
-    #include <syslog.h>
-    #include <sys/types.h>
-    #include <poll.h>
-    #include <sys/ioctl.h>
-    #include "devdrv_user_common.h"
-    #include "dms/dms_drv_internal.h"
-    #define DAVINCI_COMMON_DRV_NAME "asdrv_pbl"
-    #define DAVINCI_COMMON_VDRV_NAME "asdrv_vpbl"
-    #define fd_is_invalid(fd) ((fd) < 0)
+#include <sys/prctl.h>
+#include <errno.h>
+#include <stdio.h>
+#include <syslog.h>
+#include <sys/types.h>
+#include <poll.h>
+#include <sys/ioctl.h>
+#include "devdrv_user_common.h"
+#include "dms/dms_drv_internal.h"
+#define DAVINCI_COMMON_DRV_NAME "asdrv_pbl"
+#define DAVINCI_COMMON_VDRV_NAME "asdrv_vpbl"
+#define fd_is_invalid(fd) ((fd) < 0)
 #endif
 
 #ifdef STATIC_SKIP
@@ -297,8 +297,8 @@ drvError_t drv_get_container_dev_ids(uint32_t *devices, uint32_t len, uint32_t *
     int ret;
 
     if (devices == NULL || len > ASCEND_DEV_MAX_NUM || num == NULL) {
-        DEVDRV_DRV_ERR("Parameter is invalid. (len=%u; devices_is_null=%d; num_is_null=%d)\n",
-            len, (devices == NULL), (num == NULL));
+        DEVDRV_DRV_ERR("Parameter is invalid. (len=%u; devices_is_null=%d; num_is_null=%d)\n", len, (devices == NULL),
+                       (num == NULL));
         return DRV_ERROR_INVALID_VALUE;
     }
 
@@ -350,8 +350,8 @@ drvError_t drv_get_h2d_dev_info(uint32_t devId, struct devdrv_device_info *info)
     }
 #else
     urd_usr_cmd_fill(&cmd, DMS_MAIN_CMD_BASIC, DMS_SUBCMD_GET_H2D_DEV_INFO, NULL, 0);
-    urd_usr_cmd_para_fill(&cmd_para, (void *)&devId, sizeof(uint32_t),
-        (void *)&dev_info, sizeof(struct devdrv_manager_hccl_devinfo));
+    urd_usr_cmd_para_fill(&cmd_para, (void *)&devId, sizeof(uint32_t), (void *)&dev_info,
+                          sizeof(struct devdrv_manager_hccl_devinfo));
     ret = urd_dev_usr_cmd(devId, &cmd, &cmd_para);
     if (ret != 0) {
         DMS_EX_NOTSUPPORT_ERR(ret, "Ioctl failed. (ret=%d; devId=%u)\n", ret, devId);
@@ -387,7 +387,7 @@ drvError_t drv_get_h2d_dev_info(uint32_t devId, struct devdrv_device_info *info)
 drvError_t drv_get_info_from_dev_info(uint32_t devId, int32_t info_type, int64_t *value)
 {
     int ret;
-    struct devdrv_device_info info = { 0 };
+    struct devdrv_device_info info = {0};
 
     ret = drvGetDevInfo(devId, &info);
     if (ret != 0) {
@@ -471,8 +471,8 @@ drvError_t drv_get_system_info(uint32_t devId, int32_t info_type, int64_t *value
         case INFO_TYPE_MASTERID:
             ret = DmsGetMasterDevInTheSameOs(devId, &tmp);
             if (ret != 0) {
-                DEVDRV_DRV_EX_NOTSUPPORT_ERR(ret, "drvGetMasterDeviceInTheSameOS failed. (dev_id=%u; ret=%d)\n",
-                    devId, ret);
+                DEVDRV_DRV_EX_NOTSUPPORT_ERR(ret, "drvGetMasterDeviceInTheSameOS failed. (dev_id=%u; ret=%d)\n", devId,
+                                             ret);
                 return ret;
             }
 
@@ -544,7 +544,7 @@ drvError_t drv_get_system_info(uint32_t devId, int32_t info_type, int64_t *value
             ret = DmsHalGetDeviceInfoEx(devId, MODULE_TYPE_SYSTEM, info_type, &tmp, &tmp_len);
             if ((ret != 0) || (tmp_len != sizeof(tmp))) {
                 DEVDRV_DRV_EX_NOTSUPPORT_ERR(ret, "Failed to get cust op enhance. (dev_id=%u; ret=%d; tmp_len=%u)\n",
-                    devId, ret, tmp_len);
+                                             devId, ret, tmp_len);
                 return ret;
             }
             *value = tmp;
@@ -566,7 +566,7 @@ drvError_t drv_get_system_info(uint32_t devId, int32_t info_type, int64_t *value
         case INFO_TYPE_BOARD_ID:
             ret = DmsGetBoardId(devId, &tmp);
             if (ret != 0) {
-                DEVDRV_DRV_EX_NOTSUPPORT_ERR(ret, "Failed to board id. (dev_id=%u; ret=%d)\n", devId, ret);
+                DEVDRV_DRV_EX_NOTSUPPORT_ERR(ret, "Failed to get board id. (dev_id=%u; ret=%d)\n", devId, ret);
                 return ret;
             }
             *value = tmp;
@@ -575,7 +575,7 @@ drvError_t drv_get_system_info(uint32_t devId, int32_t info_type, int64_t *value
         case INFO_TYPE_VNIC_IP:
             ret = devdrv_get_vnic_ip(devId, &tmp);
             if (ret != 0) {
-                DEVDRV_DRV_EX_NOTSUPPORT_ERR(ret, "Failed to vnic ip. (dev_id=%u; ret=%d)\n", devId, ret);
+                DEVDRV_DRV_EX_NOTSUPPORT_ERR(ret, "Failed to get vnic ip. (dev_id=%u; ret=%d)\n", devId, ret);
                 return ret;
             }
             *value = tmp;
@@ -584,7 +584,7 @@ drvError_t drv_get_system_info(uint32_t devId, int32_t info_type, int64_t *value
         case INFO_TYPE_SPOD_VNIC_IP:
             ret = devdrv_get_vnic_ip_by_sdid(devId, &tmp);
             if (ret != 0) {
-                DEVDRV_DRV_EX_NOTSUPPORT_ERR(ret, "Failed to vnic ip by sdid. (dev_id=%u; ret=%d)\n", devId, ret);
+                DEVDRV_DRV_EX_NOTSUPPORT_ERR(ret, "Failed to get vnic ip by sdid. (dev_id=%u; ret=%d)\n", devId, ret);
                 return ret;
             }
             *value = tmp;
@@ -605,8 +605,8 @@ drvError_t drv_get_system_info(uint32_t devId, int32_t info_type, int64_t *value
         case INFO_TYPE_SWPLUGIN_UPGRADE_POLICY:
             ret = DmsGetSWPluginUpgrade(devId, &tmp);
             if (ret != 0) {
-                DEVDRV_DRV_EX_NOTSUPPORT_ERR(ret, "Failed to get swplugin upgrade policy. (dev_id=%u; ret=%d)\n",
-                        devId, ret);
+                DEVDRV_DRV_EX_NOTSUPPORT_ERR(ret, "Failed to get swplugin upgrade policy. (dev_id=%u; ret=%d)\n", devId,
+                                             ret);
                 return ret;
             }
             *value = tmp;
@@ -721,8 +721,7 @@ drvError_t halGetOnlineDevList(unsigned int *devBuf, unsigned int bufCnt, unsign
     }
 
     *devCnt = valid_dev_num;
-    ret = memcpy_s(devBuf, bufCnt * sizeof(unsigned int),
-                   dev_buf_tmp, *devCnt * sizeof(unsigned int));
+    ret = memcpy_s(devBuf, bufCnt * sizeof(unsigned int), dev_buf_tmp, *devCnt * sizeof(unsigned int));
     if (ret != EOK) {
         DEVDRV_DRV_ERR("buf_cnt[%u] is shorter than actual dev_num[%u].\n", bufCnt, valid_dev_num);
         return DRV_ERROR_NO_DEVICE;
@@ -856,16 +855,16 @@ drvError_t drvDeviceHealthStatus(uint32_t devId, unsigned int *healthStatus)
     return DRV_ERROR_NONE;
 }
 
-drvError_t hal_get_ub_status_cmd(unsigned int dev_id, unsigned int main_cmd,
-    unsigned int sub_cmd, void *buf, unsigned int *size)
+drvError_t hal_get_ub_status_cmd(unsigned int dev_id, unsigned int main_cmd, unsigned int sub_cmd, void *buf,
+                                 unsigned int *size)
 {
     (void)main_cmd;
     (void)sub_cmd;
     return halGetDeviceInfoByBuff(dev_id, MODULE_TYPE_UB, INFO_TYPE_UB_STATUS, buf, (int32_t *)size);
 }
 
-drvError_t dms_get_ub_id_info(unsigned int dev_id, unsigned int main_cmd,
-    unsigned int sub_cmd, void *buf, unsigned int *size)
+drvError_t dms_get_ub_id_info(unsigned int dev_id, unsigned int main_cmd, unsigned int sub_cmd, void *buf,
+                              unsigned int *size)
 {
     (void)main_cmd;
     (void)sub_cmd;
@@ -885,9 +884,8 @@ drvError_t dms_get_ub_id_info(unsigned int dev_id, unsigned int main_cmd,
 
     ret = memcpy_s(buf, *size, &info, sizeof(struct dms_ubdev_id_info));
     if (ret != 0) {
-        DEVDRV_DRV_ERR("Failed to invoke memcpy_s to copy ubdev_id data. (dev_id=%d; ret=%d)\n",
-            dev_id, ret);
-        return DRV_ERROR_INVALID_HANDLE; 
+        DEVDRV_DRV_ERR("Failed to invoke memcpy_s to copy ubdev_id data. (dev_id=%d; ret=%d)\n", dev_id, ret);
+        return DRV_ERROR_INVALID_HANDLE;
     }
 
     return DRV_ERROR_NONE;
@@ -967,8 +965,8 @@ int halGetDeviceVfList(unsigned int devId, unsigned int *vf_list, unsigned int l
     u32 i;
 
     if ((vf_list == NULL) || (vf_num == NULL) || drvCheckDevid(devId) != 0) {
-        DEVDRV_DRV_ERR("Parameter is invalid. (dev_id=%u; vf_list=%s; vf_num=%s)\n",
-                       devId, vf_list == NULL ? "NULL" : "OK", vf_num == NULL ? "NULL" : "OK");
+        DEVDRV_DRV_ERR("Parameter is invalid. (dev_id=%u; vf_list=%s; vf_num=%s)\n", devId,
+                       vf_list == NULL ? "NULL" : "OK", vf_num == NULL ? "NULL" : "OK");
         return DRV_ERROR_PARA_ERROR;
     }
 
@@ -981,8 +979,8 @@ int halGetDeviceVfList(unsigned int devId, unsigned int *vf_list, unsigned int l
     }
 
     if ((get_vf_list.vf_num > list_len) || (get_vf_list.vf_num > VDAVINCI_MAX_VFID_NUM)) {
-        DEVDRV_DRV_ERR("Parameter is invalid. (dev_id=%u; list_len=%u; vf_num=%u)\n",
-                       devId, list_len, get_vf_list.vf_num);
+        DEVDRV_DRV_ERR("Parameter is invalid. (dev_id=%u; list_len=%u; vf_num=%u)\n", devId, list_len,
+                       get_vf_list.vf_num);
         return DRV_ERROR_PARA_ERROR;
     }
 
@@ -1010,7 +1008,7 @@ drvError_t drv_get_qos_info(uint32_t devId, int32_t info_type, void *buf, unsign
 #ifdef CFG_FEATURE_GET_QOS_MASTER_CFG
         case INFO_TYPE_QOS_MASTER_CONFIG:
             ret = DmsHalGetDeviceInfoEx(devId, MODULE_TYPE_QOS, info_type, buf, size);
-            if(ret != 0) {
+            if (ret != 0) {
                 DEVDRV_DRV_EX_NOTSUPPORT_ERR(ret, "Failed to get master qos config. (dev_id=%u; ret=%d)\n", devId, ret);
                 return ret;
             }
