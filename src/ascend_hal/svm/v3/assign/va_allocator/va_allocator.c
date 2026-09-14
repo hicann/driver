@@ -124,7 +124,7 @@ u32 svm_get_va_allocator_type(u64 va, u64 size, u32 devid, u32 flag, int op)
 {
     if ((flag & SVM_VA_ALLOCATOR_FLAG_MASTER_UVA) != 0) {
         if ((flag & SVM_VA_ALLOCATOR_FLAG_WITH_MASTER) == 0) {
-            svm_err("Master uva must with master. (va=0x%llx; flag=%x)\n", va, flag);
+            svm_err("Master uva must be with master. (va=0x%llx; flag=%x)\n", va, flag);
             return VA_ALLOCATOR_TYPE_UNKNOWN;
         }
     }

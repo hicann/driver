@@ -167,14 +167,14 @@ static int devmm_mem_map_info_check(struct devmm_phy_addr_blk *blk, struct devmm
 
     /* check handle's pg_num */
     if (info->phy_addr_blk_pg_num != blk->pg_num) {
-        devmm_drv_err("Handle's pg_num is not match. (handle->pg_num=%llu; blk->pg_num=%llu)\n",
+        devmm_drv_err("Handle's pg_num does not match. (handle->pg_num=%llu; blk->pg_num=%llu)\n",
                       info->phy_addr_blk_pg_num, blk->pg_num);
         return -EINVAL;
     }
 
     /* check handle's module_id */
     if (info->module_id != blk->attr.module_id) {
-        devmm_drv_err("Handle's module_id is not match. (handle->module_id=%u; blk->module_id=%u)\n", info->module_id,
+        devmm_drv_err("Handle's module_id does not match. (handle->module_id=%u; blk->module_id=%u)\n", info->module_id,
                       blk->attr.module_id);
         return -EINVAL;
     }

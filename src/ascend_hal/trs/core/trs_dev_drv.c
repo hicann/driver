@@ -767,7 +767,7 @@ drvError_t halTsdrvCtl(uint32_t devId, int cmd, void *param, size_t paramSize, v
         case TSDRV_CTL_CMD_CTRL_MSG:
             return trs_mbox_msg_ctrl(devId, param, paramSize, out, outSize);
         default:
-            trs_warn("Cmd_type is not support, (devid=%u, type=%d).\n", devId, cmd_type);
+            trs_warn("Cmd_type is not supported, (devid=%u, type=%d).\n", devId, cmd_type);
             return DRV_ERROR_NOT_SUPPORT;
     }
 }
@@ -794,7 +794,7 @@ static drvError_t trs_mode_op_by_urd(struct trs_mode_info *info, enum urd_main_c
     (void)pthread_mutex_lock(&trs_dev_mutex);
     ret = urd_usr_cmd(&cmd, &cmd_para);
     if ((ret != 0) && (ret != DRV_ERROR_NOT_SUPPORT)) {
-        trs_err("Op mode by urd failed. (dev_id=%u; ts_id=%u; ret=%d)\n", info->dev_id, info->ts_id, ret);
+        trs_err("Op mode failed. (dev_id=%u; ts_id=%u; ret=%d)\n", info->dev_id, info->ts_id, ret);
     }
 
     (void)pthread_mutex_unlock(&trs_dev_mutex);

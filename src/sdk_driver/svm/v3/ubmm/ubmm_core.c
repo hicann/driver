@@ -75,7 +75,7 @@ static int ubmm_map_host_pa_get(struct ubmm_node *node, int tgid, u64 va, u64 si
     ret = svm_get_user_pages(tgid, va, page_num, (void **)pages, &is_remap_addr);
     if (ret != 0) {
         svm_kvfree(pages);
-        svm_err("Get user pages failed. (ret=%d; va=0x%llx; size=%llu)\n", ret, va, size);
+        svm_err("Get user pages failed. (ret=%d; va=0x%llx; size=%llu bytes)\n", ret, va, size);
         return ret;
     }
 

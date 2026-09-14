@@ -32,7 +32,7 @@ static int _pma_ub_ubdevshm_acquire(int master_tgid, u64 va, u64 size, int (*inv
 
     ret = svm_query_va_udevid(master_tgid, va, size, &udevid);
     if (ret != 0) {
-        svm_err("Get va udevid failed. (ret=%d; va=0x%llx; size=%llu)\n", ret, va, size);
+        svm_err("Get va udevid failed. (ret=%d; va=0x%llx; size=%llu bytes)\n", ret, va, size);
         return ret;
     }
     if (udevid == uda_get_host_id()) {
@@ -64,7 +64,7 @@ static int _pma_ub_ubdevshm_release(int master_tgid, u64 va, u64 size)
 
     ret = svm_query_va_udevid(master_tgid, va, size, &udevid);
     if (ret != 0) {
-        svm_err("Get va udevid failed. (ret=%d; va=0x%llx; size=%llu)\n", ret, va, size);
+        svm_err("Get va udevid failed. (ret=%d; va=0x%llx; size=%llu bytes)\n", ret, va, size);
         return ret;
     }
     if (udevid == uda_get_host_id()) {

@@ -99,7 +99,7 @@ static int trs_get_segment(struct trs_urma_ctx *urma_ctx, uint64_t va, uint64_t 
 
     ret = halMemGetSeg(urma_ctx->devid, va, (uint64_t)size, seg, token);
     if (ret != 0) {
-        trs_err("Get segment failed. (devid=%u; va=0x%llx; size=%llu; ret=%d)\n", urma_ctx->devid, va, size, ret);
+        trs_err("Get segment failed. (devid=%u; va=0x%llx; size=%llu bytes; ret=%d)\n", urma_ctx->devid, va, size, ret);
         return ret;
     }
 
@@ -1173,8 +1173,8 @@ static drvError_t trs_async_dma_wqe_batch_2d_destory(uint32_t dev_id, struct trs
     struct trs_async_ctx *async_ctx = NULL;
 
     if (para->async_batch_para->ci >= TRS_UB_PI_CI_DEPTH) {
-        trs_err("The ci exceed. (dev_id=%u; sq_id=%u; ci=%u; max=%d)\n", dev_id, para->sqId, para->async_batch_para->ci,
-                TRS_UB_PI_CI_DEPTH);
+        trs_err("The ci exceeds. (dev_id=%u; sq_id=%u; ci=%u; max=%d)\n", dev_id, para->sqId,
+                para->async_batch_para->ci, TRS_UB_PI_CI_DEPTH);
         return DRV_ERROR_PARA_ERROR;
     }
 

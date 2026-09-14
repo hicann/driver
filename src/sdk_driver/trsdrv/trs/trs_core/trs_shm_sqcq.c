@@ -288,7 +288,7 @@ int trs_shm_sqcq_alloc(struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *t
     int ret;
 
     if (trs_is_stars_inst(ts_inst)) {
-        trs_err("Stars not support shm. (devid=%u; tsid=%u)\n", inst->devid, inst->tsid);
+        trs_err("Stars does not support shm. (devid=%u; tsid=%u)\n", inst->devid, inst->tsid);
         return -EINVAL;
     }
 

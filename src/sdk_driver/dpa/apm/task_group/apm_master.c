@@ -145,7 +145,7 @@ static int apm_master_ctx_add_slave(struct task_ctx *ctx, void *priv)
 
     if (m_ctx->master_exit_stage != 0) {
 #ifndef EMU_ST
-        apm_err("Master in exit stage, not support. (master_pid=%d)\n", m_ctx->master_pid);
+        apm_err("Master in exit stage, does not support. (master_pid=%d)\n", m_ctx->master_pid);
         return -EOPNOTSUPP;
 #endif
     }
@@ -157,7 +157,7 @@ static int apm_master_ctx_add_slave(struct task_ctx *ctx, void *priv)
 
     if (para->proc_type == PROCESS_USER) {
         if (m_ctx->user_slave_num >= MAX_USER_SLAVE_NUM) {
-            apm_err("Process user slave count exceed limit. (count=%u; max=%u; master_pid=%d; slave_pid=%d)\n",
+            apm_err("Process user slave count exceeds limit. (count=%u; max=%u; master_pid=%d; slave_pid=%d)\n",
                     m_ctx->user_slave_num, MAX_USER_SLAVE_NUM, para->master_pid, para->slave_pid);
             return -EINVAL;
         }
@@ -194,8 +194,8 @@ static int apm_master_ctx_add_slave(struct task_ctx *ctx, void *priv)
         if (para->proc_type == PROCESS_CP2) {
             slave_info = &m_ctx->dev_ctx[para->devid].slave_info[PROCESS_CP1];
             if (slave_info->valid == 0) {
-                apm_err("Bind custom cp, cp not bind. (proc_type=%d; master_pid=%d; slave_pid=%d)\n", para->proc_type,
-                        para->master_pid, para->slave_pid);
+                apm_err("Bind custom cp, cp is not bound. (proc_type=%d; master_pid=%d; slave_pid=%d)\n",
+                        para->proc_type, para->master_pid, para->slave_pid);
                 return -EINVAL;
             }
         }

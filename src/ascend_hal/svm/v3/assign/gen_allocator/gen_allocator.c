@@ -581,12 +581,12 @@ static int ga_alloc_by_size(struct ga_inst *inst, u64 size, u64 *addr)
 static int ga_alloc_para_check(struct ga_inst *inst, u32 flag, u64 *addr, u64 size)
 {
     if (ga_flag_is_fixed_addr(flag) && (ga_addr_is_aligned(inst, *addr) == false)) {
-        svm_err("Add should aligned by gran_size. (addr=%llu; gran_size=%llu)\n", *addr, inst->attr.gran_size);
+        svm_err("Add should be aligned by gran_size. (addr=%llu; gran_size=%llu)\n", *addr, inst->attr.gran_size);
         return DRV_ERROR_PARA_ERROR;
     }
 
     if (ga_addr_is_aligned(inst, size) == false) {
-        svm_err("Size should aligned by gran_size. (size=%llu; gran_size=%llu)\n", size, inst->attr.gran_size);
+        svm_err("Size should be aligned by gran_size. (size=%llu; gran_size=%llu)\n", size, inst->attr.gran_size);
         return DRV_ERROR_PARA_ERROR;
     }
 
@@ -623,12 +623,12 @@ int svm_ga_alloc(void *ga_inst, u32 flag, u64 *addr, u64 size)
 static int ga_free_para_check(struct ga_inst *inst, u64 addr, u64 size)
 {
     if (ga_addr_is_aligned(inst, addr) == false) {
-        svm_err("Add should aligned by gran_size. (addr=%llu; gran_size=%llu)\n", addr, inst->attr.gran_size);
+        svm_err("Add should be aligned by gran_size. (addr=%llu; gran_size=%llu)\n", addr, inst->attr.gran_size);
         return DRV_ERROR_PARA_ERROR;
     }
 
     if (ga_addr_is_aligned(inst, size) == false) {
-        svm_err("Size should aligned by gran_size. (size=%llu; gran_size=%llu)\n", size, inst->attr.gran_size);
+        svm_err("Size should be aligned by gran_size. (size=%llu; gran_size=%llu)\n", size, inst->attr.gran_size);
         return DRV_ERROR_PARA_ERROR;
     }
 

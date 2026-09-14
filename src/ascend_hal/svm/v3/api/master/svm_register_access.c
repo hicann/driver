@@ -203,7 +203,7 @@ static int register_check_svm_va_prop_cap(u32 devid, u64 va, u64 size)
     }
 
     if (!svm_flag_cap_is_support_register_access(prop.flag)) {
-        svm_run_info("Addr cap is not support register peer. (va=0x%llx)\n", va);
+        svm_run_info("Addr cap does not support register peer. (va=0x%llx)\n", va);
         return DRV_ERROR_NOT_SUPPORT;
     }
 
@@ -238,13 +238,13 @@ static int svm_register_unregister_common_para_check(u32 devid, u64 va, u64 flag
     }
 
     if (!svm_register_flag_is_support(flag)) {
-        svm_run_info("Flag not support. (flag=0x%llx)\n", flag);
+        svm_run_info("Flag does not support. (flag=0x%llx)\n", flag);
         return DRV_ERROR_NOT_SUPPORT;
     }
 
 #ifndef EMU_ST /* emu_st support svm addr */
     if (is_svm_va) {
-        svm_run_info("Svm addr not support. (flag=0x%llx)\n", flag);
+        svm_run_info("Svm addr is not supported. (flag=0x%llx)\n", flag);
         return DRV_ERROR_NOT_SUPPORT;
     }
 #endif
@@ -476,7 +476,7 @@ static int svm_access_check_local_svm_va(u64 local_va, u64 size)
         }
 
         if ((prop.flag & SVM_FLAG_CAP_SYNC_COPY) == 0) {
-            svm_err("Va not support cur cap. (va=0x%llx; prop.flag=0x%llx)\n", va, prop.flag);
+            svm_err("Va does not support cur cap. (va=0x%llx; prop.flag=0x%llx)\n", va, prop.flag);
             return DRV_ERROR_PARA_ERROR;
         }
         if (prop.devid != host_devid) {

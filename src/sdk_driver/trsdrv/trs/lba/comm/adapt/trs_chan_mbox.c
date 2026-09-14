@@ -259,7 +259,8 @@ static int trs_chan_ops_hw_release_mbox_send(struct trs_id_inst *inst, struct tr
     ret = trs_mbox_send(inst, 0, &mbox_data, sizeof(struct trs_normal_cqsq_mailbox), TRS_DEVICE_CHAN_MBOX_TIMEOUT_MS);
     if (ret != 0 || mbox_data.header.result != 0) {
         if (ret == -ENXIO) {
-            trs_warn("Mb chan is not exist. (devid=%u; tsid=%u; cmd=%u; ret=%d)\n", inst->devid, inst->tsid, cmd, ret);
+            trs_warn("Mb chan does not exist. (devid=%u; tsid=%u; cmd=%u; ret=%d)\n", inst->devid, inst->tsid, cmd,
+                     ret);
         } else {
             trs_err("Mbox send fail. (devid=%u; tsid=%u; cmd=%u; result=%u; ret=%d)\n", inst->devid, inst->tsid, cmd,
                     mbox_data.header.result, ret);
@@ -396,7 +397,7 @@ static int trs_chan_ops_task_sched_create_mbox_send(struct trs_id_inst *inst, st
 
     ret = trs_chan_ops_get_hw_irq(inst, chan_info->irq_type, chan_info->cq_info.irq, &mbox_data.cq_irq);
     if (ret != 0) {
-        trs_err("Get hwirq fail. (devid=%u; tsid=%u; ret=%d)\n", inst->devid, inst->tsid, ret);
+        trs_err("Get hwirq failed. (devid=%u; tsid=%u; ret=%d)\n", inst->devid, inst->tsid, ret);
         return ret;
     }
 

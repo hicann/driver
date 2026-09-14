@@ -59,7 +59,7 @@ static int svm_ub_copy_urma_tseg_get(u32 src_devid, u32 dst_devid, struct svm_ur
     svm_dst_va_pack(src_devid, PROCESS_CP1, submit_para->src, submit_para->size, &dst_va);
     ret = svm_urma_get_tseg(user_devid, &dst_va, &submit_para->src_tseg);
     if (ret != DRV_ERROR_NONE) {
-        svm_err("Get src tseg failed. (ret=%d; src_devid=%u; src_va=0x%llx; size=%llu)\n", ret, src_devid,
+        svm_err("Get src tseg failed. (ret=%d; src_devid=%u; src_va=0x%llx; size=%llu bytes)\n", ret, src_devid,
                 submit_para->src, submit_para->size);
         return ret;
     }

@@ -57,7 +57,7 @@ static struct trs_host_msg *trs_host_msg_create(u32 devid, struct devdrv_non_tra
     if (ret != 0) {
         (void)devdrv_pcimsg_free_non_trans_queue(chan);
         trs_kfree(host_msg);
-        trs_err("Set msg chan priv fail. (devid=%u; ret=%d)\n", devid, ret);
+        trs_err("Set msg chan priv failed. (devid=%u; ret=%d)\n", devid, ret);
         return NULL;
     }
     host_msg->devid = devid;

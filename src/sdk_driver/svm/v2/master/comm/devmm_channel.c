@@ -285,7 +285,7 @@ STATIC int devmm_chan_page_fault_d2h_process(struct devmm_svm_process *svm_proce
 
     if (devmm_page_fault_get_va_ref(svm_process, fault_msg->va) != 0) {
         ka_task_up_read(&svm_process->heap_sem);
-        devmm_drv_err("Va don't allow fault by device, va is in operation. (hostpid=%d; va=0x%llx; devid=%u)\n",
+        devmm_drv_err("Va doesn't allow fault by device, va is in operation. (hostpid=%d; va=0x%llx; devid=%u)\n",
                       svm_process->process_id.hostpid, fault_msg->va, fault_msg->head.dev_id);
         return -EINVAL;
     }
@@ -386,8 +386,8 @@ static int devmm_chan_shm_get_pages_d2h_process(struct devmm_svm_process *svm_pr
             return ret;
         }
     }
-    devmm_drv_err("Get share memory failed. (dev_va=0x%llx; size=%llu; devid=%u; vfid=%u)\n", get_pages_msg->dev_va,
-                  get_pages_msg->size, get_pages_msg->head.dev_id, get_pages_msg->head.vfid);
+    devmm_drv_err("Get share memory failed. (dev_va=0x%llx; size=%llu bytes; devid=%u; vfid=%u)\n",
+                  get_pages_msg->dev_va, get_pages_msg->size, get_pages_msg->head.dev_id, get_pages_msg->head.vfid);
     return -EINVAL;
 }
 

@@ -488,12 +488,12 @@ static int soma_pool_create_para_check(soma_mem_pool_t pool, soma_mem_pool_prop 
 
     ret = svm_get_prop(prop.va, &va_prop);
     if (ret != 0) {
-        svm_soma_err("Get prop failed when create pool. (va=%llx)\n", prop.va);
+        svm_soma_err("Get prop failed when creating pool. (va=%llx)\n", prop.va);
         return ret;
     }
 
     if (!svm_flag_cap_is_support_vmm_map(va_prop.flag)) {
-        svm_soma_err("Addr cap is not support vmm map. (va=0x%llx)\n", prop.va);
+        svm_soma_err("Addr cap does not support vmm map. (va=0x%llx)\n", prop.va);
         return DRV_ERROR_INVALID_VALUE;
     }
 
@@ -520,7 +520,7 @@ static int soma_pool_create_para_check(soma_mem_pool_t pool, soma_mem_pool_prop 
     }
 
     if (pool.devId != prop.mem_prop.devid) {
-        svm_soma_err("Pool devid is not equal Prop devid. (pool.devId=0x%u; prop.devid=0x%u)\n", pool.devId,
+        svm_soma_err("Pool devid is not equal to Prop devid. (pool.devId=0x%u; prop.devid=0x%u)\n", pool.devId,
                      prop.mem_prop.devid);
         return DRV_ERROR_INVALID_VALUE;
     }
@@ -798,7 +798,7 @@ static int soma_mem_malloc_cfg(u64 va, u64 size, drv_mem_handle_t *handle)
     }
 
     if (!svm_flag_cap_is_support_vmm_map(src_prop.flag)) {
-        svm_soma_err("Addr cap is not support vmm map. (handle_start=0x%llx)\n", handle_start);
+        svm_soma_err("Addr cap does not support vmm map. (handle_start=0x%llx)\n", handle_start);
         return DRV_ERROR_INVALID_VALUE;
     }
 
@@ -836,7 +836,9 @@ static int soma_validate_cfg_params(u64 va, u64 size, const soma_mem_handle *som
     end = va + size;
     pool_end = soma_handle->pool_va + soma_handle->pool_size;
     if ((va < soma_handle->pool_va) || (end > pool_end)) {
-        svm_soma_err("Pool cfg addr out of range. (pool_id=%llu)\n", soma_handle->pool_id);
+        svm_soma_err(
+            "Pool cfg addr out of range. (pool_id=%llu; va=0x%llx; size=%llu; pool_va=0x%llx; pool_size=%llu)\n",
+            soma_handle->pool_id, va, size, soma_handle->pool_va, soma_handle->pool_size);
         return DRV_ERROR_INVALID_VALUE;
     }
 
@@ -878,7 +880,7 @@ static int _soma_mem_free_cfg(u32 devid, void *va_handle, u64 va, u64 size)
     src_info.udevid = SVM_INVALID_UDEVID;
     ret = svm_svmm_get_seg(svmm_inst, &devid, &start, &svm_flag, &src_info);
     if (ret != 0) {
-        svm_soma_err("Get seg failed. (devid=%u; va=0x%llx; size=0x%llx)\n", devid, va, size);
+        svm_soma_err("Get seg failed. (devid=%u; va=0x%llx; size=0x%llx bytes)\n", devid, va, size);
         return ret;
     }
 

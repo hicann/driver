@@ -170,7 +170,7 @@ static int _devmm_h2d_access_mmap(struct devmm_svm_process *svm_proc, struct dev
 
         if (!devmm_h2d_access_mmap_check_pa_is_cont(src_palist, map_para, attr, vmma)) {
             devmm_h2d_access_mmap_src_pa_info_destroy(src_palist);
-            devmm_drv_err("Pa need check, but is not continuous.\n");
+            devmm_drv_err("Pa need to check, but is not continuous.\n");
             return -EFAULT;
         }
 
@@ -209,7 +209,7 @@ static int devmm_h2d_access_mmap(struct devmm_svm_process *svm_proc, struct devm
 
     ret = devmm_get_memory_attributes(svm_proc, para->va, &attr);
     if (ret != 0) {
-        devmm_drv_err("Get attributes fail. (src_va=0x%llx; ret=%d)\n", para->va, ret);
+        devmm_drv_err("Get attributes failed. (src_va=0x%llx; ret=%d)\n", para->va, ret);
         return ret;
     }
 
@@ -247,7 +247,7 @@ static int devmm_d2h_access_mmap(struct devmm_svm_process *svm_proc, struct devm
 
     ret = devmm_get_memory_attributes(svm_proc, para->va, &attr);
     if (ret != 0) {
-        devmm_drv_err("Get attributes fail. (src_va=0x%llx; ret=%d)\n", para->va, ret);
+        devmm_drv_err("Get attributes failed. (src_va=0x%llx; ret=%d)\n", para->va, ret);
         return ret;
     }
 
@@ -347,7 +347,7 @@ static int devmm_page_bitmap_mem_mapped_state_set(u32 *page_bitmap, u32 logic_de
     }
 
     if (logic_devid != devmm_page_bitmap_get_devid(page_bitmap)) {
-        devmm_drv_err("Could only mem mapped by one side. (devid=%u)\n", devmm_page_bitmap_get_devid(page_bitmap));
+        devmm_drv_err("Could only be mem mapped by one side. (devid=%u)\n", devmm_page_bitmap_get_devid(page_bitmap));
         devmm_page_bitmap_unlock(page_bitmap);
         return -EINVAL;
     }

@@ -96,7 +96,7 @@ static int trs_ts_init(struct trs_id_inst *inst)
     }
     ret = trs_ts_func_init(inst);
     if (ret != 0) {
-        trs_err("Failed to func. (devid=%u; tsid=%u)\n", inst->devid, inst->tsid);
+        trs_err("Failed to init func. (devid=%u; tsid=%u)\n", inst->devid, inst->tsid);
         trs_ts_hw_uninit(inst);
         return ret;
     }

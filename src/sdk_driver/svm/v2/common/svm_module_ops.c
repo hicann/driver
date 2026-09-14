@@ -414,7 +414,7 @@ static int devmm_dispatch_ioctl_use_svm_proc(struct devmm_svm_process *svm_proc,
     int ret = 0;
 
     if (devmm_ioctl_handlers[cmd_id].ioctl_handler == NULL) {
-        devmm_drv_err("Cmd not support. (cmd=0x%x; cmd_id=0x%x)\n", cmd, cmd_id);
+        devmm_drv_err("Cmd does not support. (cmd=0x%x; cmd_id=0x%x)\n", cmd, cmd_id);
         return -EOPNOTSUPP;
     }
     cmd_flag = devmm_ioctl_handlers[cmd_id].cmd_flag;
@@ -486,7 +486,7 @@ STATIC long devmm_svm_ioctl(ka_file_t *file, u32 cmd, unsigned long arg)
     }
 
     if ((_KA_IOC_TYPE(cmd) != DEVMM_SVM_MAGIC) || (cmd_id >= DEVMM_SVM_CMD_MAX_CMD)) {
-        devmm_drv_err("Cmd not support. (cmd=0x%x; cmd_id=0x%x)\n", cmd, cmd_id);
+        devmm_drv_err("Cmd does not support. (cmd=0x%x; cmd_id=0x%x)\n", cmd, cmd_id);
         return -EINVAL;
     }
 

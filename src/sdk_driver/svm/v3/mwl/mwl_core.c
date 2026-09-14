@@ -152,14 +152,15 @@ static int mwl_add_task_list(struct mwl_mem_node *mem_node, u32 server_id, int t
         }
 
         if ((entry->tgid != SVM_ANY_TASK_ID) && (tgid == SVM_ANY_TASK_ID)) {
-            svm_err("Had set pid not allow to enable any task.\n");
+            svm_err("Had set pid not allowed to enable any task.\n");
             return -EPERM;
         }
     }
 
     if (mem_node->node_num >= MWL_MAX_TASK_NODE_NUM) {
-        svm_err("Task node num out of range. (tgid=%d; va=%llx; size=%llx)\n", tgid, mwl_mem_get_key_start(mem_node),
-                mwl_mem_get_key_size(mem_node));
+        svm_err("Task node num out of range. (tgid=%d; va=%llx; size=%llx; node_num=%u; max_num=%u)\n", tgid,
+                mwl_mem_get_key_start(mem_node), mwl_mem_get_key_size(mem_node), mem_node->node_num,
+                MWL_MAX_TASK_NODE_NUM);
         return -EINVAL;
     }
 

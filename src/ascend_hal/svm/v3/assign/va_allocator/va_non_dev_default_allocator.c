@@ -122,7 +122,7 @@ int va_non_dev_default_alloc(u64 align, u64 size, u64 *va)
 int va_non_dev_default_free(u64 va, u64 size, u64 align)
 {
     if (g_non_dev_default_mga_inst == NULL) {
-        svm_err("Hasn't inited.\n");
+        svm_err("Hasn't been inited.\n");
         return DRV_ERROR_INVALID_VALUE;
     }
 

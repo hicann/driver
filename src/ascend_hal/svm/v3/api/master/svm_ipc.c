@@ -300,7 +300,7 @@ static int svm_ipc_create_handle(u64 va, u64 size, u64 *key)
     }
 
     if (!svm_flag_cap_is_support_ipc_create(prop.flag)) {
-        svm_err("Addr cap is not support ipc create. (va=0x%llx)\n", va);
+        svm_err("Addr cap does not support ipc create. (va=0x%llx)\n", va);
         return DRV_ERROR_PARA_ERROR;
     }
 
@@ -449,13 +449,13 @@ static int svm_ipc_close_handle(u64 opened_va)
     }
 
     if (!svm_flag_cap_is_support_ipc_close(prop.flag)) {
-        svm_err("Addr cap is not support ipc close. (opened_va=0x%llx)\n", opened_va);
+        svm_err("Addr cap does not support ipc close. (opened_va=0x%llx)\n", opened_va);
         return DRV_ERROR_PARA_ERROR;
     }
 
     ret = _svm_ipc_query_src_info(prop.start, &src_va);
     if (ret != 0) {
-        svm_err("Src_info is not exist. (va=0x%llx)\n", prop.start);
+        svm_err("Src_info does not exist. (va=0x%llx)\n", prop.start);
         return DRV_ERROR_NOT_EXIST;
     }
 
@@ -619,7 +619,7 @@ static int svm_ipc_open_para_check(u32 devid, const char *name, u64 *vptr, u64 f
 
     if ((map_route != MEM_MAP_DEFAULT_PATH) && (map_route != MEM_MAP_UB_ONE_PORT_PATH) &&
         (map_route != MEM_MAP_UB_MULTI_PORT_PATH)) {
-        svm_debug("Open flag is not support. (map_route=%u)\n", map_route);
+        svm_debug("Open flag is not supported. (map_route=%u)\n", map_route);
         return DRV_ERROR_NOT_SUPPORT;
     }
 

@@ -169,7 +169,7 @@ static int svm_parse_alloc_svm_flag(u64 flag, u64 *svm_flag)
         }
 
         if ((flag & MEM_PAGE_HUGE) || (flag & MEM_PAGE_GIANT)) {
-            svm_run_info("Dev cp only not support huge/giant page. (flag=0x%llx)\n", flag);
+            svm_run_info("Dev cp only does not support huge/giant page. (flag=0x%llx)\n", flag);
             return DRV_ERROR_NOT_SUPPORT;
         }
     }
@@ -281,7 +281,7 @@ int svm_mem_free(void *va)
     }
 
     if (!svm_flag_cap_is_support_normal_free(prop.flag)) {
-        svm_err("Addr cap is not support normal free. (va=0x%llx)\n", start);
+        svm_err("Addr cap does not support normal free. (va=0x%llx)\n", start);
         return DRV_ERROR_INVALID_VALUE;
     }
 

@@ -200,7 +200,7 @@ int trs_sq_send_trigger_db_init(struct trs_id_inst *inst)
     ret |= soc_resmng_get_hwirq(&res_inst, TS_SQ_SEND_TRIGGER_IRQ, irq, &hwirq);
     if (ret != 0) {
         trs_ts_db_uninit(inst, TRS_DB_TRIGGER_SQ);
-        trs_err("Get irq fail. (devid=%u; tsid=%u; ret=%d)\n", inst->devid, inst->tsid, ret);
+        trs_err("Get irq failed. (devid=%u; tsid=%u; ret=%d)\n", inst->devid, inst->tsid, ret);
         return ret;
     }
 

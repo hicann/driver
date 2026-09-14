@@ -177,7 +177,7 @@ static int vmm_check_map_route(drv_mem_handle_t *handle, u32 map_route)
 
     if ((map_route != MEM_MAP_DEFAULT_PATH) && (map_route != MEM_MAP_UB_ONE_PORT_PATH) &&
         (map_route != MEM_MAP_UB_MULTI_PORT_PATH)) {
-        svm_debug("Map route not support. (map_route=%u)\n", map_route);
+        svm_debug("Map route is not supported. (map_route=%u)\n", map_route);
         return DRV_ERROR_NOT_EXIST;
     }
 
@@ -769,7 +769,7 @@ static int vmm_free_va(void *va)
     }
 
     if (!svm_flag_cap_is_support_vmm_va_free(prop.flag)) {
-        svm_err("Addr cap is not support vmm va free. (va=0x%llx)\n", start);
+        svm_err("Addr cap does not support vmm va free. (va=0x%llx)\n", start);
         return DRV_ERROR_INVALID_VALUE;
     }
 
@@ -979,7 +979,7 @@ static int vmm_free_pa(drv_mem_handle_t *handle)
     }
 
     if (!svm_flag_cap_is_support_vmm_pa_free(prop.flag)) {
-        svm_err("Addr cap is not support vmm pa free. (start=0x%llx)\n", start);
+        svm_err("Addr cap does not support vmm pa free. (start=0x%llx)\n", start);
         return DRV_ERROR_INVALID_VALUE;
     }
 
@@ -1446,7 +1446,7 @@ static int _vmm_single_app_unmap(u32 devid, void *va_handle, u64 va, u64 size)
     src_info.udevid = SVM_INVALID_UDEVID;
     ret = svm_svmm_get_seg(svmm_inst, &devid, &start, &svm_flag, &src_info);
     if (ret != 0) {
-        svm_err("Get seg failed. (devid=%u; va=0x%llx; size=0x%llx)\n", devid, va, size);
+        svm_err("Get seg failed. (devid=%u; va=0x%llx; size=0x%llx bytes)\n", devid, va, size);
         return ret;
     }
 
@@ -1504,12 +1504,12 @@ static int vmm_single_app_mmap(u64 va, u64 size, drv_mem_handle_t *handle, u64 o
     }
 
     if (offset >= src_prop.size) {
-        svm_err("Map offset size is overflow. (offset=0x%llx; pa_size=0x%llx)\n", offset, src_prop.size);
+        svm_err("Map offset size overflows. (offset=0x%llx; pa_size=0x%llx)\n", offset, src_prop.size);
         return DRV_ERROR_INVALID_VALUE;
     }
 
     if ((size + offset) > src_prop.size) {
-        svm_err("Map size is overflow. (size=0x%llx; pa_size=0x%llx; offset=0x%llx)\n", size, src_prop.size, offset);
+        svm_err("Map size overflows. (size=0x%llx; pa_size=0x%llx; offset=0x%llx)\n", size, src_prop.size, offset);
         return DRV_ERROR_INVALID_VALUE;
     }
 
@@ -1578,12 +1578,12 @@ static int _vmm_cross_app_mmap(void *va_handle, u64 va, u64 size, drv_mem_handle
     }
 
     if (offset >= src_info.size) {
-        svm_err("Map offset size is overflow. (offset=0x%llx; pa_size=0x%llx)\n", offset, src_info.size);
+        svm_err("Map offset size overflows. (offset=0x%llx; pa_size=0x%llx)\n", offset, src_info.size);
         return DRV_ERROR_INVALID_VALUE;
     }
 
     if ((size + offset) > src_info.size) {
-        svm_err("Map size is overflow. (size=0x%llx; pa_size=0x%llx; offset=0x%llx)\n", size, src_info.size, offset);
+        svm_err("Map size overflows. (size=0x%llx; pa_size=0x%llx; offset=0x%llx)\n", size, src_info.size, offset);
         return DRV_ERROR_INVALID_VALUE;
     }
 
@@ -1624,7 +1624,7 @@ static int _vmm_cross_app_unmap(u32 devid, void *va_handle, u64 va, u64 size)
     src_info.udevid = SVM_INVALID_UDEVID;
     ret = svm_svmm_get_seg(svmm_inst, &devid, &start, &svm_flag, &src_info);
     if (ret != 0) {
-        svm_err("Get seg failed. (ret=%d; devid=%u; va=0x%llx; size=0x%llx)\n", ret, devid, va, size);
+        svm_err("Get seg failed. (ret=%d; devid=%u; va=0x%llx; size=0x%llx bytes)\n", ret, devid, va, size);
         return ret;
     }
 
@@ -1695,7 +1695,7 @@ static int vmm_mmap(void *va, u64 size, drv_mem_handle_t *handle, u64 offset)
     }
 
     if (!svm_flag_cap_is_support_vmm_map(prop.flag)) {
-        svm_err("Addr cap is not support vmm map. (start=0x%llx)\n", start);
+        svm_err("Addr cap does not support vmm map. (start=0x%llx)\n", start);
         return DRV_ERROR_PARA_ERROR;
     }
 
@@ -1907,7 +1907,7 @@ static int vmm_export(drv_mem_handle_t *handle, drv_mem_handle_type handle_type,
     }
 
     if (!svm_flag_cap_is_support_vmm_export(prop.flag)) {
-        svm_err("Addr cap is not support vmm export. (start=0x%llx)\n", start);
+        svm_err("Addr cap does not support vmm export. (start=0x%llx)\n", start);
         return DRV_ERROR_PARA_ERROR;
     }
 
@@ -2610,7 +2610,7 @@ static int vmm_access_node_handle(void *ptr, int (*func)(struct svm_vmm_access_n
     }
 
     if ((!svm_flag_cap_is_support_vmm_unmap(prop.flag)) && (!svm_flag_cap_is_support_vmm_ipc_unmap(prop.flag))) {
-        svm_err("Addr cap is not support set access, it is not vmm map address. (va=0x%llx)\n", va);
+        svm_err("Addr cap does not support set access, it is not vmm map address. (va=0x%llx)\n", va);
         return DRV_ERROR_PARA_ERROR;
     }
 
@@ -2632,8 +2632,8 @@ static int vmm_set_access_check(struct svm_vmm_access_node *access_node, u64 va,
     u32 i;
 
     if ((va != access_node->va) || (size != access_node->size)) {
-        svm_err("va and size not same with mmap. (va=0x%llx; size=0x%llx; mmap start=0x%llx; size=0x%llx)\n", va, size,
-                access_node->va, access_node->size);
+        svm_err("va and size not the same as mmap. (va=0x%llx; size=0x%llx; mmap start=0x%llx; size=0x%llx)\n", va,
+                size, access_node->va, access_node->size);
         return DRV_ERROR_PARA_ERROR;
     }
 
@@ -2834,8 +2834,8 @@ drvError_t halMemGetAddressReserveRange(void **ptr, size_t *size, drv_mem_addr_r
 
     *ptr = (void *)(uintptr_t)get_va;
     *size = (size_t)get_size;
-    svm_debug("GetAddressReserveRange. (va=0x%llx; size=%llu; type=%u; flag=0x%llx)\n", get_va, get_size, (u32)type,
-              flag);
+    svm_debug("GetAddressReserveRange. (va=0x%llx; size=%llu bytes; type=%u; flag=0x%llx)\n", get_va, get_size,
+              (u32)type, flag);
     return DRV_ERROR_NONE;
 }
 

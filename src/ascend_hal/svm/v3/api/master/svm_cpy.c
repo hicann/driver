@@ -142,7 +142,7 @@ static int svm_copy_check_addr_prop_cap(u64 va, u64 size, u64 cap_mask)
         }
 
         if ((prop.flag & cap_mask) == 0) {
-            svm_err("Va not support cur cap. (va=0x%llx; prop.flag=0x%llx)\n", va, prop.flag);
+            svm_err("Va does not support cur cap. (va=0x%llx; prop.flag=0x%llx)\n", va, prop.flag);
             return DRV_ERROR_PARA_ERROR;
         }
 
@@ -200,7 +200,7 @@ static int svm_copy_real_info_pack(const struct svm_global_va *src_info, struct 
     int ret;
 
     if ((src_info->server_id != SVM_INVALID_SERVER_ID) && (src_info->server_id != svm_get_cur_server_id())) {
-        svm_info("Cross server shared memcpy is not support. (server_id=%u; cur_server_id=%u)\n", src_info->server_id,
+        svm_info("Cross server shared memcpy is not supported. (server_id=%u; cur_server_id=%u)\n", src_info->server_id,
                  svm_get_cur_server_id());
         return DRV_ERROR_NOT_SUPPORT;
     }
@@ -299,9 +299,9 @@ static int svm_mem_sync_copy_local_resolved(struct svm_copy_va_info *src_info, s
 
     if (((src_info->host_tgid != 0) && (src_info->host_tgid != cur_tgid)) ||
         ((dst_info->host_tgid != 0) && (dst_info->host_tgid != cur_tgid))) {
-        svm_info(
-            "Resolved local copy tgid not match current process. (src_host_tgid=%d; dst_host_tgid=%d; cur_tgid=%d)\n",
-            src_info->host_tgid, dst_info->host_tgid, cur_tgid);
+        svm_info("Resolved local copy tgid does not match current process. (src_host_tgid=%d; dst_host_tgid=%d; "
+                 "cur_tgid=%d)\n",
+                 src_info->host_tgid, dst_info->host_tgid, cur_tgid);
         return DRV_ERROR_NOT_SUPPORT; /* todo: later adapt */
     }
 
@@ -1264,7 +1264,7 @@ static int svm_cpy_batch_para_prop_check(u64 dst[], u64 src[], u64 size[], u64 c
         }
 
         if ((svm_va_is_in_range(src[i], size[i]) == false) && (svm_va_is_in_range(dst[i], size[i]) == false)) {
-            svm_debug("Memcpy batch not support h2h. (dst=0x%llx; src=0x%llx; index=%u)\n", dst[i], src[i], i);
+            svm_debug("Memcpy batch does not support h2h. (dst=0x%llx; src=0x%llx; index=%u)\n", dst[i], src[i], i);
             return DRV_ERROR_NOT_SUPPORT;
         }
 

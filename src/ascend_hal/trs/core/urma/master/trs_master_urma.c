@@ -1077,7 +1077,7 @@ drvError_t trs_sq_task_args_async_copy(uint32_t dev_id, struct halSqTaskArgsInfo
     int ret;
 
     if (wr_num > TRS_URMA_ARGS_CPY_WR_MAX_NUM) {
-        trs_err("Size exceed depth. (depth=%u; size=%u; num=%u)\n", TRS_URMA_ARGS_CPY_WR_MAX_NUM, info->size, wr_num);
+        trs_err("Size exceeds depth. (depth=%u; size=%u; num=%u)\n", TRS_URMA_ARGS_CPY_WR_MAX_NUM, info->size, wr_num);
         return DRV_ERROR_INVALID_VALUE;
     }
 

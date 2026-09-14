@@ -86,7 +86,7 @@ static int _svm_urma_insert_client_seg(struct seg_node_mng *mng, u64 va, u64 siz
     node = svm_get_urma_seg_node(mng, va, size);
     if (node != NULL) {
         if (is_remote) {
-            svm_err("Remote is not allow repeat. (va=0x%llx; size=%llu)\n", va, size);
+            svm_err("Remote does not allow repeat. (va=0x%llx; size=%llu)\n", va, size);
             (void)pthread_rwlock_unlock(&mng->rwlock);
             return DRV_ERROR_BUSY;
         }
@@ -140,7 +140,7 @@ static int _svm_urma_erase_client_seg(struct seg_node_mng *mng, u64 va, u64 size
 
     if (atomic_load(&node->ref) > 1) {
         if (is_remote) {
-            svm_err("Remote is not allow repeat. (va=0x%llx; size=%llu)\n", va, size);
+            svm_err("Remote does not allow repeat. (va=0x%llx; size=%llu)\n", va, size);
             (void)pthread_rwlock_unlock(&mng->rwlock);
             return DRV_ERROR_BUSY;
         }

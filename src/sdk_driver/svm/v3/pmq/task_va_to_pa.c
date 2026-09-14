@@ -178,7 +178,7 @@ int hal_kernel_svm_get_user_pages(int pid, u64 va, u32 nr_pages, void **pages, b
 
     ret = svm_get_user_pages(pid, va, (u64)nr_pages, pages, is_remap_addr);
     if (ret != 0) {
-        svm_err("Get user pages failed. (ret=%d; pid=%d; va=0%llx; size=%llu; is_pfn_map=%u)\n", ret, pid, va,
+        svm_err("Get user pages failed. (ret=%d; pid=%d; va=0x%llx; size=%llu bytes; is_pfn_map=%u)\n", ret, pid, va,
                 KA_MM_PAGE_SIZE * (u64)nr_pages, (u32)*is_remap_addr);
     }
 

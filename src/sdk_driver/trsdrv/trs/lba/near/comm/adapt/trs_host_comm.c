@@ -161,12 +161,12 @@ int trs_host_res_is_check_msg_proc(u32 devid, struct trs_msg_data *data)
 
     trs_id_inst_pack(&inst, devid, data->header.tsid);
     if (trs_res_is_belong_to_proc(&inst, id_msg->hpid, id_msg->id_type, id_msg->res_id)) {
-        trs_debug("Res id belong to master process. (master_tgid=%u; type=%s; id=%d)\n", id_msg->hpid,
+        trs_debug("Res id belongs to master process. (master_tgid=%u; type=%s; id=%d)\n", id_msg->hpid,
                   trs_id_type_to_name(id_msg->id_type), id_msg->res_id);
         return 0;
     }
 #ifndef ENU_ST
-    trs_err("Res id not belong to master process. (master_tgid=%u; type=%s; id=%d)\n", id_msg->hpid,
+    trs_err("Res id does not belong to master process. (master_tgid=%u; type=%s; id=%d)\n", id_msg->hpid,
             trs_id_type_to_name(id_msg->id_type), id_msg->res_id);
     return -1;
 #endif

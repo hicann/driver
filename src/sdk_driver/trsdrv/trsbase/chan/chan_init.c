@@ -998,7 +998,7 @@ int trs_chan_get_sq_info(struct trs_id_inst *inst, int chan_id, struct trs_chan_
 
     if (!trs_chan_has_sq(chan)) {
         trs_chan_put(chan);
-        trs_err("Chan not has sq\n");
+        trs_err("Chan has no sq\n");
         return -EINVAL;
     }
 
@@ -1062,7 +1062,7 @@ int trs_chan_get_cq_info(struct trs_id_inst *inst, int chan_id, struct trs_chan_
 
     if (!trs_chan_has_cq(chan)) {
         trs_chan_put(chan);
-        trs_err("Chan not has cq\n");
+        trs_err("Chan has no cq\n");
         return -EINVAL;
     }
 

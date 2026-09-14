@@ -1038,7 +1038,7 @@ drvError_t halSqTaskSend(uint32_t devId, struct halTaskSendInfo *info)
     }
 
     if ((!trs_is_sq_support_send(sq_info)) || (trs_is_sq_init_without_sq_mem(sq_info->flag))) {
-        trs_warn("Sq is only id type, not support task send. (dev_id=%u; ts_id=%u; sq_id=%u; flag=%u)\n", devId,
+        trs_warn("Sq is only id type, does not support task send. (dev_id=%u; ts_id=%u; sq_id=%u; flag=%u)\n", devId,
                  info->tsId, info->sqId, sq_info->flag);
         return DRV_ERROR_NOT_SUPPORT;
     }

@@ -313,7 +313,7 @@ int devmm_ioctl_register_dma(struct devmm_svm_process *svm_proc, struct devmm_io
     int ret;
 
     if (!ka_mm_is_support_pin_user_memory() && devmm_va_is_in_svm_range(para->vaddr) == false) {
-        devmm_drv_run_info("Devmm register os malloc va to dma is not support in Linux versions below 5.19."
+        devmm_drv_run_info("Devmm register os malloc va to dma is not supported in Linux versions below 5.19."
                            "(va=0x%llx; size=0x%llx; devid=%u)\n",
                            para->vaddr, para->size, devid);
         return -EOPNOTSUPP;

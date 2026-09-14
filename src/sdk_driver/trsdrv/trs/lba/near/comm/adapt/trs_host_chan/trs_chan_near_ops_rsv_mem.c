@@ -44,7 +44,7 @@ static int trs_chan_ops_set_sqcq_rsv_mem_dev_addr(struct trs_id_inst *inst, phys
     ret = soc_resmng_set_rsv_mem(&res_inst, "DEV_TS_SQCQ_MEM", &rsv_mem);
     if (ret != 0) {
 #ifndef EMU_ST
-        trs_info("Set rsv mem not success. (devid=%u; tsid=%u)\n", inst->devid, inst->tsid);
+        trs_info("Set rsv mem failed. (devid=%u; tsid=%u)\n", inst->devid, inst->tsid);
 #endif
         return ret;
     }

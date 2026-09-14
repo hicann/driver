@@ -56,14 +56,14 @@ int halMemGetSeg(uint32_t devid, uint64_t va, uint64_t size, urma_seg_t *seg, ur
         svm_dst_va_pack(prop.devid, PROCESS_CP1, prop.start, prop.size, &dst_va);
         ret = svm_urma_get_seg_with_token_info(user_devid, &dst_va, &tmp_seg, &token_id, &token_val);
         if (ret != DRV_ERROR_NONE) {
-            svm_err("Get svm_urma_seg failed. (user_devid=%u; devid=%u; va=0x%llx; size=%llu)\n", user_devid,
+            svm_err("Get svm_urma_seg failed. (user_devid=%u; devid=%u; va=0x%llx; size=%llu bytes)\n", user_devid,
                     dst_va.devid, dst_va.va, dst_va.size);
             return ret;
         }
 
         if ((tmp_va != va) && ((memcmp(&pre_seg, &tmp_seg, sizeof(urma_seg_t)) != 0) || (pre_token_id != token_id) ||
                                (pre_token_val != token_val) || (pre_prop.devid != prop.devid))) {
-            svm_err("The va prop is not match. (va=0x%llx; tmp_va=0x%llx; size=0x%llx)\n", va, tmp_va, size);
+            svm_err("The va prop does not match. (va=0x%llx; tmp_va=0x%llx; size=0x%llx)\n", va, tmp_va, size);
             return DRV_ERROR_INVALID_VALUE;
         }
 

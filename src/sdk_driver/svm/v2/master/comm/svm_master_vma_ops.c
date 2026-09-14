@@ -97,7 +97,7 @@ STATIC int devmm_svm_vm_fault_host_proc(struct devmm_svm_process *svm_proc, stru
 
     page_bitmap = devmm_get_page_bitmap_with_heap(heap, start);
     if (page_bitmap == NULL) {
-        devmm_drv_err("Heap is error. (start=0x%llx; heap_idx=%u)\n", start, heap->heap_idx);
+        devmm_drv_err("Heap is invalid. (start=0x%llx; heap_idx=%u)\n", start, heap->heap_idx);
         return -EINVAL;
     }
 

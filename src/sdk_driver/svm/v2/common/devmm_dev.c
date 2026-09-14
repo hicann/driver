@@ -1007,7 +1007,7 @@ int devmm_svm_proc_and_heap_get(struct devmm_svm_process_id *process_id, u64 va,
 {
     *svm_proc = devmm_svm_proc_get_by_process_id_ex(process_id);
     if (*svm_proc == NULL) {
-        devmm_drv_err("Process is exit. (va=0x%llx; hostpid=%d; devid=%d; vfid=%d)\n", va, process_id->hostpid,
+        devmm_drv_err("Process has exited. (va=0x%llx; hostpid=%d; devid=%d; vfid=%d)\n", va, process_id->hostpid,
                       process_id->devid, process_id->vfid);
         return -ESRCH;
     }
@@ -1100,7 +1100,7 @@ STATIC int devmm_svm_get_channel_lock(struct devmm_svm_process *svm_proc, const 
     if (devmm_svm_mem_is_enable(svm_proc) == false) {
 #ifndef EMU_ST
         devmm_drv_err_if(((msg_bitmap & DEVMM_MSG_RETURN_OK_MASK) == 0),
-                         "Mmap failed, svm is disable.(hostpid=%d; devid=%d; vfid=%d; msg_id=%u).\n",
+                         "Mmap failed, svm is disabled.(hostpid=%d; devid=%d; vfid=%d; msg_id=%u).\n",
                          svm_proc->process_id.hostpid, svm_proc->process_id.devid, svm_proc->process_id.vfid, msg_id);
         /* errcode ESRCH return to user */
         return -ESRCH;

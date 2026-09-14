@@ -594,7 +594,7 @@ static int svm_unregister(void *svmm_inst, u64 va, u32 devid)
 
     ret = svm_svmm_get_seg_by_va(svmm_inst, &devid, &start, &svm_flag, &src_info);
     if (ret != 0) {
-        svm_err("Addr is not register. (va=0x%llx; devid=%u)\n", start, devid);
+        svm_err("Addr is not registered. (va=0x%llx; devid=%u)\n", start, devid);
         return DRV_ERROR_PARA_ERROR;
     }
     if (va != start) {
@@ -777,7 +777,7 @@ static int svm_register_user_malloc_para_check(u64 va, u64 size, u32 devid)
     }
 
     if (SVM_IS_ALIGNED(va, npage_size) == false) {
-        svm_err("Src_va not page alignment. (src_va=0x%llx; page_size=%llu)\n", va, npage_size);
+        svm_err("Src_va not page-aligned. (src_va=0x%llx; page_size=%llu)\n", va, npage_size);
         return DRV_ERROR_PARA_ERROR;
     }
 
@@ -812,7 +812,7 @@ static int svm_register_user_malloc_to_peer(u64 va, u64 size, u32 devid, u64 *ds
     svm_global_va_pack(host_devid, svm_getpid(), va, aligned_size, &src_info);
     ret = svm_svmm_get_seg_by_src_udevid_and_va(svmm_inst, &devid, &tmp_va, &svm_flag, &src_info);
     if (ret == 0) {
-        svm_err("Addr is already register to device. (va=0x%llx; devid=%u)\n", va, devid);
+        svm_err("Addr is already registered to device. (va=0x%llx; devid=%u)\n", va, devid);
         return DRV_ERROR_REPEATED_USERD;
     }
 
@@ -854,7 +854,7 @@ static int svm_unregister_user_malloc_to_peer(u64 va, u32 devid)
     svm_global_va_pack(host_devid, svm_getpid(), va, 0, &src_info);
     ret = svm_svmm_get_seg_by_src_udevid_and_va(svmm_inst, &devid, &dst_va, &svm_flag, &src_info);
     if (ret != 0) {
-        svm_err("Hasn't register. (va=0x%llx; devid=%u)\n", va, devid);
+        svm_err("Hasn't registered. (va=0x%llx; devid=%u)\n", va, devid);
         return ret;
     }
 
@@ -886,7 +886,7 @@ static int svm_register_svm_to_peer_para_check(u64 va, u64 size, u32 devid)
     }
 
     if (!svm_flag_cap_is_support_register(prop.flag)) {
-        svm_err("Addr cap is not support register. (va=0x%llx)\n", va);
+        svm_err("Addr cap does not support register. (va=0x%llx)\n", va);
         return DRV_ERROR_PARA_ERROR;
     }
 

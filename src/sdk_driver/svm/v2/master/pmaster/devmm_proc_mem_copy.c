@@ -140,7 +140,7 @@ static void devmm_mmap_convert_bar_addr(u32 dev_id, struct devmm_share_memory_he
         for (i = 0; i < convert_mng->total_block_num; i++) {
             ret = devdrv_devmem_addr_d2h(dev_id, info->ts_shm_addr[i], &(convert_mng->block_addr[i]));
             if (ret != 0) {
-                devmm_drv_info("Devdrv_devmem_addr_d2h not support, not write by bar.\n");
+                devmm_drv_info("Devdrv_devmem_addr_d2h does not support, not write by bar.\n");
                 return;
             }
         }
@@ -376,7 +376,7 @@ static bool devmm_convert_index_can_recycle(struct devmm_share_memory_head *conv
 {
     if ((convert_mng->share_memory_mng[index].va != 0) &&
         (convert_mng->share_memory_mng[index].data_type == DEVMM_DMA)) {
-        devmm_drv_debug("Offset is in used by convert.\n");
+        devmm_drv_debug("Offset is in use by convert.\n");
         return false;
     }
 
@@ -394,7 +394,7 @@ static bool devmm_convert_index_can_recycle(struct devmm_share_memory_head *conv
     if ((data->data_type == DEVMM_NON_DMA) && (data->image_word == DEVMM_FIN_MAGIC_WORD)) {
         return true;
     }
-    devmm_drv_debug("Offset is still in using. (data_type=%u; image_word=%u)\n", data->data_type, data->image_word);
+    devmm_drv_debug("Offset is still in use. (data_type=%u; image_word=%u)\n", data->data_type, data->image_word);
 #else
     return true;
 #endif
@@ -764,10 +764,11 @@ int devmm_clear_translate_pa_addr_inner(u32 dev_id, u32 vfid, u64 va, u64 len, u
         if (data.image_word == DEVMM_READED_MAGIC_WORD) {
             /* The log cannot be modified, because in the failure mode library. */
 #ifndef EMU_ST
-            devmm_drv_err("Vaddress is not finish image word, please GE and RUNTIME call unbind_stream before rtfree. "
-                          "(devid=%u; idx=%d; host_pid=%d; va=%llx; image_word=%x; offset=%llu)\n",
-                          dev_id, i, host_pid, convert_mng->share_memory_mng[i].va, data.image_word,
-                          devmm_convert_index_to_offset(dev_id, i));
+            devmm_drv_err(
+                "Vaddress is not finished image word, please GE and RUNTIME call unbind_stream before rtfree. "
+                "(devid=%u; idx=%d; host_pid=%d; va=%llx; image_word=%x; offset=%llu)\n",
+                dev_id, i, host_pid, convert_mng->share_memory_mng[i].va, data.image_word,
+                devmm_convert_index_to_offset(dev_id, i));
 #endif
             return -EBUSY;
         }
@@ -790,7 +791,7 @@ static int devmm_va_to_palist_check(struct devmm_svm_process *svm_proc, u64 va, 
 
     heap = devmm_svm_get_heap(svm_proc, va);
     if (heap == NULL) {
-        devmm_drv_err("Oper may out heap size. (src=0x%llx; count=%llu)\n", va, sz);
+        devmm_drv_err("Oper may exceed heap size. (src=0x%llx; count=%llu)\n", va, sz);
         return -EADDRNOTAVAIL;
     }
     bitmap = devmm_get_page_bitmap_with_heap(heap, va);
@@ -963,13 +964,13 @@ static int devmm_d2d_pa_to_bar_dma(u32 src_dev_id, u32 dst_dev_id, u64 dst_pa, u
     if (devmm_is_pcie_connect(dst_dev_id)) {
         ret = devdrv_devmem_addr_d2h(dst_dev_id, dst_pa, dst_dma);
         if (ret != 0) {
-            devmm_drv_err("Pcie fill pa-to-barpa fail. (dev_id=%u; ret=%d)\n", dst_dev_id, ret);
+            devmm_drv_err("Pcie fill pa-to-barpa failed. (dev_id=%u; ret=%d)\n", dst_dev_id, ret);
             return ret;
         }
 
         ret = devdrv_devmem_addr_bar_to_dma(src_dev_id, dst_dev_id, *dst_dma, dst_dma);
         if (ret != 0) {
-            devmm_drv_err("Pcie fill bar2dma fail. (src_dev_id=%u; dst_dev_id=%u; ret=%d)\n", src_dev_id, dst_dev_id,
+            devmm_drv_err("Pcie fill bar2dma failed. (src_dev_id=%u; dst_dev_id=%u; ret=%d)\n", src_dev_id, dst_dev_id,
                           ret);
             return ret;
         }
@@ -1010,7 +1011,7 @@ static int devmm_fill_dmanode(struct devmm_dma_block *blks, struct devmm_dma_blo
         dma_node->direction = DEVDRV_DMA_DEVICE_TO_HOST;
         dma_node->loc_passid = (u32)blks->ssid;
     } else {
-        devmm_drv_err("The copy direction not support. (copy_direction=%d)\n", copy_direction);
+        devmm_drv_err("The copy direction is not supported. (copy_direction=%d)\n", copy_direction);
         return -EINVAL;
     }
 
@@ -1301,7 +1302,8 @@ int devmm_get_non_svm_addr_pa_list(struct devmm_svm_process *svm_proc, u64 va, u
 
     ret = devmm_get_user_pages(svm_proc, va, side->num, write, pages);
     if (ret != 0) {
-        devmm_drv_err("Get user pages fail. (ret=%d; va=0x%llx; size=0x%llx; num=%d)\n", ret, va, size, side->num);
+        devmm_drv_err("Get user pages fail. (ret=%d; va=0x%llx; size=0x%llx bytes; num=%d)\n", ret, va, size,
+                      side->num);
         devmm_kvfree(pages);
         return ret;
     }
@@ -3232,7 +3234,7 @@ int devmm_sumbit_convert_dma_proc(struct devmm_svm_process *svm_proc, struct DMA
 
     copy_res = (struct devmm_copy_res *)convert_node->info.dma_addr.phyAddr.priv;
     if ((sync_flag == MEMCPY_SUMBIT_ASYNC) && (devmm_proc_dev_is_async_allow(svm_proc, copy_res->dev_id) == false)) {
-        devmm_drv_err("Device is reset, async copy is not allow. (phy_devid=%d)\n", copy_res->dev_id);
+        devmm_drv_err("Device is reset, async copy is not allowed. (phy_devid=%d)\n", copy_res->dev_id);
         (void)devmm_convert_node_state_trans(convert_node, CONVERT_NODE_PREPARE_SUBMIT, CONVERT_NODE_IDLE);
         devmm_convert_node_put(convert_node);
         return -EFAULT;

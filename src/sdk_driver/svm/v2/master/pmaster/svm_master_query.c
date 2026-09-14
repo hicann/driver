@@ -220,7 +220,7 @@ void devmm_svm_put_pa_list(struct devmm_svm_process_id *process_id, u64 va, u64 
 
     svm_process = devmm_svm_proc_get_by_process_id_ex(process_id);
     if (svm_process == NULL) {
-        devmm_drv_err("Process is exit. (va=0x%llx; hostpid=%d; devid=%u; vfid=%u)\n", va, process_id->hostpid,
+        devmm_drv_err("Process has exited. (va=0x%llx; hostpid=%d; devid=%u; vfid=%u)\n", va, process_id->hostpid,
                       process_id->devid, process_id->vfid);
         return;
     }
@@ -344,7 +344,7 @@ static int devmm_init_p2p_page_table(struct devmm_svm_process *svm_proc, struct 
 
     heap = devmm_svm_heap_get(svm_proc, mem_info->va);
     if (heap == NULL) {
-        devmm_drv_err("Get heap fail. (va=0x%llx; hostpid=%u)\n", mem_info->va, svm_proc->process_id.hostpid);
+        devmm_drv_err("Get heap failed. (va=0x%llx; hostpid=%u)\n", mem_info->va, svm_proc->process_id.hostpid);
         return -EINVAL;
     }
     page_table->version = P2P_GET_PAGE_VERSION;

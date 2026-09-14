@@ -1860,8 +1860,8 @@ drvError_t halSqMemGet(uint32_t devId, struct halSqMemGetInput *in, struct halSq
     }
 
     if (!trs_is_sq_support_send(sq_info)) {
-        trs_warn("Sq is only id type, not support mem get. (dev_id=%u; ts_id=%u; sq_id=%u; flag=%u)\n", devId, in->tsId,
-                 in->sqId, sq_info->flag);
+        trs_warn("Sq is only id type, does not support mem get. (dev_id=%u; ts_id=%u; sq_id=%u; flag=%u)\n", devId,
+                 in->tsId, in->sqId, sq_info->flag);
         return DRV_ERROR_NOT_SUPPORT;
     }
 
@@ -1910,8 +1910,8 @@ drvError_t halSqMsgSend(uint32_t devId, struct halSqMsgInfo *info)
     }
 
     if ((!trs_is_sq_support_send(sq_info)) || (trs_is_sq_init_without_sq_mem(sq_info->flag))) {
-        trs_warn("Sq is only id type, not support send. (dev_id=%u; ts_id=%u; sq_id=%u; flag=%u)\n", devId, info->tsId,
-                 info->sqId, sq_info->flag);
+        trs_warn("Sq is only id type, does not support send. (dev_id=%u; ts_id=%u; sq_id=%u; flag=%u)\n", devId,
+                 info->tsId, info->sqId, sq_info->flag);
         return DRV_ERROR_NOT_SUPPORT;
     }
 

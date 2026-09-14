@@ -252,7 +252,7 @@ static struct devmm_ipc_node *_devmm_ipc_node_get(const char *name)
 
     ret = devmm_ipc_node_get_inst_by_name(name, &inst);
     if (ka_unlikely(ret != 0)) {
-        devmm_drv_err("Get inst by name fail. (ret=%d; name=%s)\n", ret, name);
+        devmm_drv_err("Get inst by name failed. (ret=%d; name=%s)\n", ret, name);
         return NULL;
     }
 
@@ -611,7 +611,7 @@ int devmm_ipc_set_no_wlist_in_server_attr(const char *name, u64 attr)
 
     if (node->attr.pid != devmm_get_current_pid()) {
         _devmm_ipc_node_put(node);
-        devmm_drv_err("No creator not allow to set attr. (name=%s; attr=%llu)\n", name, attr);
+        devmm_drv_err("No creator is not allowed to set attr. (name=%s; attr=%llu)\n", name, attr);
         return -EPERM;
     }
 
@@ -624,7 +624,7 @@ int devmm_ipc_set_no_wlist_in_server_attr(const char *name, u64 attr)
     ka_task_mutex_lock(&node->mutex);
     /* Not allow to set attr if had called halShmemSetPid or halShmemSetPodPid */
     if ((attr == SHMEM_NO_WLIST_ENABLE) && ((node->attr.need_set_wlist) && (node->wlist_num != 0))) {
-        devmm_drv_err("Had set pid not allow to set attr. (name=%s; attr=%llu; wlist_num=%u)\n", name, attr,
+        devmm_drv_err("Had set pid not allowed to set attr. (name=%s; attr=%llu; wlist_num=%u)\n", name, attr,
                       node->wlist_num);
         ka_task_mutex_unlock(&node->mutex);
         _devmm_ipc_node_put(node);
@@ -676,7 +676,7 @@ static int devmm_ipc_node_heap_check(struct devmm_svm_process *svm_proc, u64 va,
 
     heap = devmm_svm_get_heap(svm_proc, va);
     if (ka_unlikely(heap == NULL)) {
-        devmm_drv_err("Get heap fail. (va=0x%llx)\n", va);
+        devmm_drv_err("Get heap failed. (va=0x%llx)\n", va);
         return -ENOMEM;
     }
 
@@ -1041,7 +1041,7 @@ static int _devmm_ipc_node_set_pids(struct devmm_ipc_node *node, u32 devid, u32 
         }
         ret = _devmm_ipc_node_set_pid(node, sdid_to_set, pid[i]);
         if (ret != 0) {
-            devmm_drv_err("Set pid fail. (name=%s; i=%d; pid=%d; pid_num=%d)\n", node->attr.name, i, pid[i], pid_num);
+            devmm_drv_err("Set pid failed. (name=%s; i=%d; pid=%d; pid_num=%d)\n", node->attr.name, i, pid[i], pid_num);
             return ret;
         }
         set_pid_num++;

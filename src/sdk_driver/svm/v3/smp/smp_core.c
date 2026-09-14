@@ -307,7 +307,7 @@ static int smp_check_mem(struct smp_ctx *smp_ctx, u64 va, u64 size, bool is_dev_
     }
 
     if (((mem_node->flag & SVM_SMP_FLAG_DEV_CP_ONLY) != 0) != is_dev_cp_only) {
-        svm_err("Flag not match. (flag=%u; is_dev_cp_only=%d)\n", mem_node->flag, is_dev_cp_only);
+        svm_err("Flag does not match. (flag=%u; is_dev_cp_only=%d)\n", mem_node->flag, is_dev_cp_only);
         ret = -EINVAL;
     } else if (mem_node->status == 0) {
         ret = -EOWNERDEAD;

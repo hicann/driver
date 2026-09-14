@@ -719,7 +719,7 @@ static int devmm_uvm_memcpy_check_source(struct devmm_svm_process *svm_proc, str
 
     if (copy_info->src_attr.is_uvm_non_page) {
 #ifndef EMU_ST
-        devmm_drv_err("Src addr is no mapped. (va=0x%llx)\n", copy_info->src_attr.va);
+        devmm_drv_err("Src addr is not mapped. (va=0x%llx)\n", copy_info->src_attr.va);
         return -EFAULT;
 #endif
     }
@@ -1533,7 +1533,7 @@ int devmm_ioctl_memcpy_proc(struct devmm_svm_process *svm_proc, struct devmm_ioc
     if (copy_para->is_support_dev_local_addr) {
         if (copy_para->direction != DEVMM_COPY_DEVICE_TO_HOST) {
 #ifndef EMU_ST
-            devmm_drv_run_info("Dev local addr copy only support d2h. (dir=%u)\n", copy_para->direction);
+            devmm_drv_run_info("Dev local addr copy only supports d2h. (dir=%u)\n", copy_para->direction);
 #endif
             return -EOPNOTSUPP;
         }

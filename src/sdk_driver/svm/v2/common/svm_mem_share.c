@@ -147,7 +147,7 @@ int devmm_target_blk_query_pa_process(u32 devid, struct devmm_chan_target_blk_qu
         share_blk = devmm_share_phy_addr_blk_get(devid, msg->share_id);
     }
     if (share_blk == NULL) {
-        devmm_drv_err("Share id doesn't exist. (devid=%u; share_id=%d;side=%d)\n", devid, msg->share_id, side);
+        devmm_drv_err("Share id doesn't exist. (devid=%u; share_id=%d; side=%d)\n", devid, msg->share_id, side);
         return -EBADR;
     }
 

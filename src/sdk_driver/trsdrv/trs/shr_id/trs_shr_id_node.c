@@ -667,7 +667,7 @@ int shr_id_node_open(const char *name, ka_pid_t pid, unsigned long start_time, s
                 node->need_wlist);
         _shr_id_node_put(node);
     } else {
-        trs_debug("Open succeed. (devid=%u; tsid=%u; name=%s; type=%d; id=%u)\n", attr->inst.devid, attr->inst.tsid,
+        trs_debug("Open succeeded. (devid=%u; tsid=%u; name=%s; type=%d; id=%u)\n", attr->inst.devid, attr->inst.tsid,
                   name, attr->type, attr->id);
     }
 
@@ -705,7 +705,7 @@ int shr_id_node_close(const char *name, int type, ka_pid_t pid)
         if (ret == 0) {
             /* Decrease ref when shr_id_node opened. */
             _shr_id_node_put(node);
-            trs_debug("Close succeed. (devid=%u; tsid=%u; name=%s; type=%d; id=%u)\n", node->attr.inst.devid,
+            trs_debug("Close succeeded. (devid=%u; tsid=%u; name=%s; type=%d; id=%u)\n", node->attr.inst.devid,
                       node->attr.inst.tsid, name, type, node->attr.id);
         }
         _shr_id_node_put(node);

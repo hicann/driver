@@ -32,7 +32,7 @@ int trs_soc_get_chip_type(u32 phy_devid)
 {
     u32 chip_type = uda_get_chip_type(phy_devid);
     if (chip_type >= HISI_CHIP_UNKNOWN) {
-        trs_err("Get chip type fail. (devid=%u; chip_type=%u)\n", phy_devid, chip_type);
+        trs_err("Get chip type failed. (devid=%u; chip_type=%u)\n", phy_devid, chip_type);
         return TRS_CHIP_TYPE_UNKNOWN;
     }
     return trs_soc_chip_type[chip_type];

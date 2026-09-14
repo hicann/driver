@@ -294,7 +294,7 @@ static int svm_pte_entry_of_query_pages(ka_pte_t *pte, u64 addr, u64 next, enum 
     }
 
     if (!SVM_IS_ALIGNED(pa, page_size)) {
-        svm_err("Pa not page align. (tmp_va=0x%llx; page_size=0x%llx)\n", addr, page_size);
+        svm_err("Pa is not page aligned. (tmp_va=0x%llx; page_size=0x%llx)\n", addr, page_size);
         return -EFAULT;
     }
 

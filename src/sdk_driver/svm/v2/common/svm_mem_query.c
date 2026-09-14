@@ -148,7 +148,7 @@ STATIC u32 devmm_svm_get_dev_mem_page_size(struct devmm_svm_process_id *process_
     heap = devmm_svm_heap_get(svm_process, addr);
     if (heap == NULL) {
         devmm_svm_proc_put(svm_process);
-        devmm_drv_err("Get heap fail. (va=0x%llx; hostpid=%d; devid=%d; vfid=%d)\n", addr, process_id->hostpid,
+        devmm_drv_err("Get heap failed. (va=0x%llx; hostpid=%d; devid=%d; vfid=%d)\n", addr, process_id->hostpid,
                       process_id->devid, process_id->vfid);
         return 0;
     }

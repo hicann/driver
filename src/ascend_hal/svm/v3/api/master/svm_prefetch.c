@@ -463,7 +463,7 @@ static int svm_prefetch_to_device(u64 va, u64 size, u32 devid)
     }
 
     if (!svm_flag_cap_is_support_prefetch(prop.flag)) {
-        svm_err("Addr cap is not support prefetch. (va=0x%llx)\n", va);
+        svm_err("Addr cap does not support prefetch. (va=0x%llx)\n", va);
         return DRV_ERROR_INVALID_VALUE;
     }
 

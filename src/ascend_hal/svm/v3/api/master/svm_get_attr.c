@@ -19,7 +19,7 @@
 static int svm_addr_prop_check(struct svm_prop *prop, u64 va)
 {
     if (svm_flag_cap_is_support_get_attr(prop->flag) == false) {
-        svm_err("Addr cap is not support get attr. (va=0x%llx)\n", va);
+        svm_err("Addr cap does not support get attr. (va=0x%llx)\n", va);
         return DRV_ERROR_PARA_ERROR;
     }
 

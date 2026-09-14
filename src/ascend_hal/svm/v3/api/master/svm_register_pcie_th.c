@@ -329,7 +329,7 @@ static int svm_register_pcie_th_check_va(u64 va, u64 size, u32 devid)
     }
 
     if (!svm_flag_cap_is_support_register(prop.flag)) {
-        svm_run_info("Addr cap is not support register. (va=0x%llx)\n", va);
+        svm_run_info("Addr cap does not support register. (va=0x%llx)\n", va);
         return DRV_ERROR_NOT_SUPPORT;
     }
 
@@ -385,7 +385,7 @@ static int _svm_register_pcie_th_locked(u64 va, u64 size, u32 flag, u32 devid, b
     svm_global_va_pack(host_devid, (int)drvDeviceGetBareTgid(), va, aligned_size, &src_info);
     ret = svm_svmm_get_seg_by_src_udevid_and_va(pcie_th_svmm[devid], &devid, &query_va, &svm_flag, &src_info);
     if (ret == 0) {
-        svm_err("Addr is already register to device. (va=0x%llx; devid=%u)\n", va, devid);
+        svm_err("Addr is already registered to device. (va=0x%llx; devid=%u)\n", va, devid);
         return DRV_ERROR_REPEATED_USERD;
     }
 
@@ -497,7 +497,7 @@ static int svm_unregister_pcie_th_locked(u64 va, u32 devid, bool is_malloc_va)
 
     ret = svm_query_register_dev_pcie_th_addr(devid, va, 0, &dst_va, &seg_priv, &src_info);
     if (ret != 0) {
-        svm_err("Addr is not register to device. (va=0x%llx; devid=%u)\n", va, devid);
+        svm_err("Addr is not registered to device. (va=0x%llx; devid=%u)\n", va, devid);
         return ret;
     }
 
@@ -576,7 +576,7 @@ static int _svm_register_pcie_th(u64 va, u64 size, u32 flag, u32 devid, u64 *dst
 #ifndef CFG_BUILD_DEBUG
         /* support host svm addr for io va register test in debug version */
         if ((flag & SVM_REGISTER_PCIE_TH_FLAG_VA_IO_MAP) != 0) {
-            svm_err("Svm addr not support va io map. (devid=%u; va=0x%llx; size=%llu)\n", devid, va, size);
+            svm_err("Svm addr does not support va io map. (devid=%u; va=0x%llx; size=%llu)\n", devid, va, size);
             return DRV_ERROR_PARA_ERROR;
         }
 #endif

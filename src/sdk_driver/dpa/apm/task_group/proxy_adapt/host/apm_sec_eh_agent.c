@@ -47,7 +47,7 @@ static int apm_sec_eh_dev_init(u32 udevid)
 
     ret = uda_udevid_to_mia_devid(udevid, &mia_para);
     if (ret != 0) {
-        apm_err("Failed to get mia para. (udevid=%u)\n", udevid);
+        apm_err("Device init failed. (udevid=%u)\n", udevid);
         return ret;
     }
 
@@ -73,7 +73,7 @@ static void apm_sec_eh_dev_uninit(u32 udevid)
 
     ret = uda_udevid_to_mia_devid(udevid, &mia_para);
     if (ret != 0) {
-        apm_warn("Failed to get mia para. (udevid=%u)\n", udevid);
+        apm_warn("Device uninit failed. (udevid=%u)\n", udevid);
     }
 
     ret = apm_sec_eh_notice_device_vmid(mia_para.phy_devid, &mia_para, -1);

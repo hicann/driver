@@ -114,7 +114,7 @@ static int smm_slave_permission_check(u32 udevid, int tgid, struct svm_global_va
     }
 
     if (slave_tgid != src_info->tgid) {
-        svm_err("Tgid not match. (udevid=%u; tgid=%d; slave_tgid=%d; src_tgid=%d)\n", udevid, tgid, slave_tgid,
+        svm_err("Tgid does not match. (udevid=%u; tgid=%d; slave_tgid=%d; src_tgid=%d)\n", udevid, tgid, slave_tgid,
                 src_info->tgid);
         return -EACCES;
     }

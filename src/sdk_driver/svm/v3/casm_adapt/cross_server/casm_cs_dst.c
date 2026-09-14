@@ -399,7 +399,8 @@ static int casm_ioctl_cs_set_src(u32 udevid, u32 cmd, unsigned long arg)
     }
 
     if (casm_cs_parse_server_id_from_key(para.key) != para.src_va.server_id) {
-        svm_err("Key and src info server id not match. (key=%llx; server_id=%u)\n", para.key, para.src_va.server_id);
+        svm_err("Key and src info server id does not match. (key=%llx; server_id=%u)\n", para.key,
+                para.src_va.server_id);
         return -EINVAL;
     }
 

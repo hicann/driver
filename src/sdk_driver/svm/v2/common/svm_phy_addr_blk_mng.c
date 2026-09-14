@@ -443,13 +443,13 @@ ka_page_t **devmm_phy_addr_blk_get_pages(struct devmm_phy_addr_blk *blk, u64 off
         if (devmm_phy_addr_blk_not_holes(pg_info, offset, pg_num)) {
             return &pg_info->pages[offset];
         }
-        devmm_drv_err("Not so much pages. (offset=%llu; to_pg_num=%llu; save_pg_num=%llu)\n", offset, pg_num,
+        devmm_drv_err("Not so many pages. (offset=%llu; to_pg_num=%llu; save_pg_num=%llu)\n", offset, pg_num,
                       pg_info->saved_num);
         return NULL;
     }
 
     if (pg_num > (pg_info->saved_num - offset)) {
-        devmm_drv_err("Not so much pages. (offset=%llu; to_pg_num=%llu; save_pg_num=%llu)\n", offset, pg_num,
+        devmm_drv_err("Not so many pages. (offset=%llu; to_pg_num=%llu; save_pg_num=%llu)\n", offset, pg_num,
                       pg_info->saved_num);
         return NULL;
     }
@@ -462,13 +462,13 @@ u64 *devmm_phy_addr_blk_get_target_addr(struct devmm_phy_addr_blk *blk, u64 offs
     struct devmm_target_addr_info *addr_info = &blk->addr_info;
 
     if (offset >= addr_info->saved_num) {
-        devmm_drv_err("Not so much pages. (offset=%llu; to_pg_num=%llu; save_pg_num=%llu)\n", offset, pg_num,
+        devmm_drv_err("Not so many pages. (offset=%llu; to_pg_num=%llu; save_pg_num=%llu)\n", offset, pg_num,
                       addr_info->saved_num);
         return NULL;
     }
 
     if (pg_num > (addr_info->saved_num - offset)) {
-        devmm_drv_err("Not so much pages. (offset=%llu; to_pg_num=%llu; save_pg_num=%llu)\n", offset, pg_num,
+        devmm_drv_err("Not so many pages. (offset=%llu; to_pg_num=%llu; save_pg_num=%llu)\n", offset, pg_num,
                       addr_info->saved_num);
         return NULL;
     }

@@ -203,7 +203,7 @@ static struct devmm_shm_node *devmm_get_shm_node(struct devmm_shm_head *shm_head
     {
         node = ka_list_entry(pos, struct devmm_shm_node, list);
         if ((node->dev_id == devid) && (node->vfid == vfid) && (node->src_va == src_va)) {
-            devmm_drv_debug("Get shm success. (node_src_va=0x%llx; dst_va=0x%llx; size=%llu)\n", node->src_va,
+            devmm_drv_debug("Get shm success. (node_src_va=0x%llx; dst_va=0x%llx; size=%llu bytes)\n", node->src_va,
                             node->dst_va, node->size);
             return node;
         }
@@ -227,7 +227,7 @@ struct devmm_shm_node *devmm_get_shm_node_by_dva(struct devmm_shm_head *shm_head
         node = ka_list_entry(pos, struct devmm_shm_node, list);
         if ((node->dev_id == devid) && (node->vfid == vfid) && (dst_va >= node->dst_va) && (size <= node->size) &&
             ((dst_va + size) <= (node->dst_va + node->size))) {
-            devmm_drv_debug("Get shm success. (node_src_va=0x%llx; device_va=0x%llx; size=%llu)\n", node->src_va,
+            devmm_drv_debug("Get shm success. (node_src_va=0x%llx; device_va=0x%llx; size=%llu bytes)\n", node->src_va,
                             node->dst_va, node->size);
             return node;
         }
@@ -447,7 +447,7 @@ static int devmm_shm_send_info_to_dev(struct devmm_svm_process *svm_proc, struct
                 ret = devmm_fill_pa_in_shm_node(perpared_num, queried_num, page_size, node, send_info);
                 if (ret != 0) {
 #ifndef EMU_ST
-                    devmm_drv_err("Get pa failed. (perpared_num=%llu; queried_num=%llu; page_size=%u)\n", perpared_num,
+                    devmm_drv_err("Get pa failed. (prepared_num=%llu; queried_num=%llu; page_size=%u)\n", perpared_num,
                                   queried_num, page_size);
                     return ret;
 #endif
@@ -541,7 +541,7 @@ static bool devmm_judge_shm_node_overlap(struct devmm_shm_head *shm_head, struct
         node = ka_list_entry(pos, struct devmm_shm_node, list);
         if ((node->dev_id == devids->devid) && (node->vfid == devids->vfid) &&
             (map_para->src_va < node->src_va + node->size) && (node->src_va < map_para->src_va + map_para->size)) {
-            devmm_drv_debug("Get shm success. (node_src_va=0x%llx; device_va=0x%llx; size=%llu)\n", node->src_va,
+            devmm_drv_debug("Get shm success. (node_src_va=0x%llx; device_va=0x%llx; size=%llu bytes)\n", node->src_va,
                             node->dst_va, node->size);
             return true;
         }
@@ -1552,7 +1552,7 @@ static int devmm_local_va_to_pages_list(struct devmm_svm_process *svm_proc, stru
         ret = devmm_pin_user_pages_fast(node->src_va, node->page_num, write, node->pages);
     }
     if (ret != 0) {
-        devmm_drv_err("Get pages fail. (va=0x%llx; expected_num=%llu; ret=%d)\n", node->src_va, node->page_num, ret);
+        devmm_drv_err("Get pages failed. (va=0x%llx; expected_num=%llu; ret=%d)\n", node->src_va, node->page_num, ret);
         return -EFAULT;
     }
     return 0;
@@ -1585,7 +1585,7 @@ static int devmm_io_va_to_pages_list(struct devmm_svm_process *svm_proc, struct 
     node->src_pa_is_ram = false;
     ret = devmm_user_va_to_pa_list(svm_proc, node->src_va, node->page_num, node->pa_list);
     if (ret != 0) {
-        devmm_drv_err("Get pages fail. (va=0x%llx; expected_num=%llu; ret=%d)\n", node->src_va, node->page_num, ret);
+        devmm_drv_err("Get pages failed. (va=0x%llx; expected_num=%llu; ret=%d)\n", node->src_va, node->page_num, ret);
         return -EFAULT;
     }
     ret = devmm_pfn_is_io_mem(svm_proc, node->src_va, node->page_num, &is_ram_mem);
@@ -1617,8 +1617,8 @@ static int devmm_map_host_mem_to_device(struct devmm_svm_process *svm_proc, stru
     }
     if (ret != 0) {
 #ifndef EMU_ST
-        devmm_drv_err_if((ret != -EOPNOTSUPP), "Get pages fail. (va=0x%llx; expected_num=%llu; ret=%d)\n", node->src_va,
-                         node->page_num, ret);
+        devmm_drv_err_if((ret != -EOPNOTSUPP), "Get pages failed. (va=0x%llx; expected_num=%llu; ret=%d)\n",
+                         node->src_va, node->page_num, ret);
 #endif
         goto exit;
     }
@@ -1878,7 +1878,7 @@ static int devmm_svm_mem_map_para_check(struct devmm_devid *devids, struct devmm
 
     if ((attr->is_locked_host && (map_type != HOST_SVM_MAP_DEV) && (devmm_is_mem_map_by_pcie_th(map_type) == false)) ||
         (attr->is_locked_device && (map_type != DEV_SVM_MAP_HOST))) {
-        devmm_drv_err("Map_type not match with va_attr. (map_type=%u; is_locked_host=%d; is_locked_device=%d)\n",
+        devmm_drv_err("Map_type does not match with va_attr. (map_type=%u; is_locked_host=%d; is_locked_device=%d)\n",
                       map_type, attr->is_locked_host, attr->is_locked_device);
         return -EINVAL;
     }
@@ -1895,7 +1895,7 @@ static int devmm_svm_mem_map_para_check(struct devmm_devid *devids, struct devmm
     }
 
     if (proc_type != DEVDRV_PROCESS_CP1) {
-        devmm_drv_run_info("Svm mem not support current proc_type. (devid=%u; proc_type=%u)\n", devids->devid,
+        devmm_drv_run_info("Svm mem does not support current proc_type. (devid=%u; proc_type=%u)\n", devids->devid,
                            proc_type);
         return -EOPNOTSUPP;
     }
@@ -1949,7 +1949,7 @@ static int devmm_local_dev_map_para_check(struct devmm_devid *devids, struct dev
     u64 size = map_para->size;
 
     if (devmm_is_host_agent(devids->devid)) {
-        devmm_drv_err("Map type not support host agent. (devid=%u; map_type=%u)\n", devids->devid, map_type);
+        devmm_drv_err("Map type does not support host agent. (devid=%u; map_type=%u)\n", devids->devid, map_type);
         return -EOPNOTSUPP;
     }
 
@@ -1964,7 +1964,7 @@ static int devmm_local_dev_map_para_check(struct devmm_devid *devids, struct dev
     }
 
     if ((src_va == 0) || (KA_MM_PAGE_ALIGNED(src_va) == false)) {
-        devmm_drv_err("Src_va is zero or not page alignment. (src_va=0x%llx)\n", src_va);
+        devmm_drv_err("Src_va is zero or not page-aligned. (src_va=0x%llx)\n", src_va);
         return -EINVAL;
     }
 
@@ -1974,8 +1974,9 @@ static int devmm_local_dev_map_para_check(struct devmm_devid *devids, struct dev
     }
 
     if (proc_type != DEVDRV_PROCESS_HCCP) {
-        devmm_drv_run_info("Local dev not support current proc_type. (current_proc_type=%u; expect_proc_type=%u)\n",
-                           proc_type, DEVDRV_PROCESS_HCCP);
+        devmm_drv_run_info(
+            "Local dev does not support current proc_type. (current_proc_type=%u; expect_proc_type=%u)\n", proc_type,
+            DEVDRV_PROCESS_HCCP);
         return -EOPNOTSUPP;
     }
 
@@ -1996,24 +1997,24 @@ static int devmm_local_host_map_para_check(struct devmm_devid *devids, struct de
     u64 size = map_para->size;
 
     if ((map_type != HOST_MEM_MAP_DEV) && (devmm_is_mem_map_by_pcie_th(map_type) == false)) {
-        devmm_drv_err("Map_type not match with va_attr. (map_type=%u)\n", map_type);
+        devmm_drv_err("Map_type does not match with va_attr. (map_type=%u)\n", map_type);
         return -EINVAL;
     }
 
     if (devmm_is_host_agent(devids->devid)) {
-        devmm_drv_run_info("Map type not support host agent. (devid=%u; map_type=%u)\n", devids->devid, map_type);
+        devmm_drv_run_info("Map type does not support host agent. (devid=%u; map_type=%u)\n", devids->devid, map_type);
         return -EOPNOTSUPP;
     }
 
     if ((src_va == 0) || (KA_MM_PAGE_ALIGNED(src_va) == false) || (size == 0)) {
-        devmm_drv_err("Src_va is zero or not page alignment, or map size is zero. (src_va=0x%llx; "
+        devmm_drv_err("Src_va is zero or not page-aligned, or map size is zero. (src_va=0x%llx; "
                       "page_size=%lu; size=%llu)\n",
                       src_va, KA_MM_PAGE_SIZE, size);
         return -EINVAL;
     }
 
     if (proc_type != DEVDRV_PROCESS_CP1) {
-        devmm_drv_run_info("Local host not support current proc_type. (devid=%u; proc_type=%u)\n", devids->devid,
+        devmm_drv_run_info("Local host does not support current proc_type. (devid=%u; proc_type=%u)\n", devids->devid,
                            proc_type);
         return -EOPNOTSUPP;
     }
@@ -2036,7 +2037,7 @@ static int devmm_local_host_map_para_check(struct devmm_devid *devids, struct de
             return -EOPNOTSUPP;
         }
     } else {
-        devmm_drv_run_info("Local host Not support current map type. (dev_id=%u; map_type=%u)\n", devids->devid,
+        devmm_drv_run_info("Local host does not support current map type. (dev_id=%u; map_type=%u)\n", devids->devid,
                            map_type);
         return -EOPNOTSUPP;
     }
@@ -2059,7 +2060,7 @@ static int devmm_check_map_para(struct devmm_devid *devids, struct devmm_memory_
 
     mem_type = devmm_get_remote_mem_type(attr, map_para->map_type);
     if (mem_type >= DEVMM_MAX_MEM_TYPE) {
-        devmm_drv_run_info("Current src_va isn't support remote map. (src_va=0x%llx)\n", map_para->src_va);
+        devmm_drv_run_info("Current src_va doesn't support remote map. (src_va=0x%llx)\n", map_para->src_va);
         return -EOPNOTSUPP;
     }
 
@@ -2172,7 +2173,7 @@ STATIC int devmm_host_remap_to_agent_enable_config(struct devmm_svm_process *svm
 
         if (devmm_smmu_is_opening()) {
 #ifndef EMU_ST
-            devmm_drv_run_info("Mem_remote_map not support SMMU open. (smmu_status=%u)\n", devmm_svm->smmu_status);
+            devmm_drv_run_info("Mem_remote_map does not support SMMU open. (smmu_status=%u)\n", devmm_svm->smmu_status);
 #endif
             return -EOPNOTSUPP;
         }
@@ -2232,7 +2233,7 @@ int devmm_ioctl_mem_remote_map(struct devmm_svm_process *svm_proc, struct devmm_
     if (devmm_is_local_dev_mem_type(map_type) == false) {
         ret = devmm_get_memory_attributes(svm_proc, map_para->src_va, &attr);
         if (ret != 0) {
-            devmm_drv_err("Get attributes fail. (src_va=0x%llx; ret=%d)\n", map_para->src_va, ret);
+            devmm_drv_err("Get attributes failed. (src_va=0x%llx; ret=%d)\n", map_para->src_va, ret);
             return ret;
         }
     }
@@ -2274,7 +2275,7 @@ STATIC int devmm_check_unmap_para_of_svm_mem(struct devmm_svm_process *svm_proc,
                                              u64 src_va)
 {
     if ((src_va & (attr->page_size - 1)) != 0) {
-        devmm_drv_err("Src_va is not page alignment. (src_va=0x%llx; page_size=%u)\n", src_va, attr->page_size);
+        devmm_drv_err("Src_va is not page-aligned. (src_va=0x%llx; page_size=%u)\n", src_va, attr->page_size);
         return -EINVAL;
     }
 
@@ -2303,8 +2304,8 @@ static void devmm_unmap_local_host_mem(struct devmm_svm_process *svm_proc, struc
 
     ret = devmm_local_host_unmap(svm_proc, devids, node);
     if (ret != 0) {
-        devmm_drv_warn("Send message fail. (src_va=0x%llx; size=%llu; dst_va=0x%llx; devid=%u; ret=%d)\n", node->src_va,
-                       node->size, node->dst_va, devids->devid, ret);
+        devmm_drv_warn("Send message failed. (src_va=0x%llx; size=%llu; dst_va=0x%llx; devid=%u; ret=%d)\n",
+                       node->src_va, node->size, node->dst_va, devids->devid, ret);
         /* host should unpin page when msg send failed */
     }
     devmm_dma_unmap_pages_by_node(node);
@@ -2464,7 +2465,7 @@ static int devmm_mem_remote_unmap_of_svm_mem(struct devmm_svm_process *svm_proc,
 
     size = devmm_get_remote_map_size_from_va(heap, bitmap, unmap_para->src_va);
     if (size == 0) {
-        devmm_drv_err("Get alloced_size fail. (src_va=0x%llx)\n", unmap_para->src_va);
+        devmm_drv_err("Get alloced_size failed. (src_va=0x%llx)\n", unmap_para->src_va);
         return -EINVAL;
     }
 
@@ -2504,7 +2505,7 @@ int devmm_ioctl_mem_remote_unmap(struct devmm_svm_process *svm_proc, struct devm
     if (devmm_is_local_dev_mem_type(unmap_type) == false) {
         ret = devmm_get_memory_attributes(svm_proc, unmap_para->src_va, &attr);
         if (ret != 0) {
-            devmm_drv_err("Get attributes fail. (src_va=0x%llx; ret=%d)\n", unmap_para->src_va, ret);
+            devmm_drv_err("Get attributes failed. (src_va=0x%llx; ret=%d)\n", unmap_para->src_va, ret);
             return ret;
         }
     }
@@ -2524,7 +2525,7 @@ int devmm_ioctl_mem_remote_unmap(struct devmm_svm_process *svm_proc, struct devm
         return devmm_mem_remote_unmap_of_svm_mem(svm_proc, &devids, unmap_para, &attr);
     } else {
 #ifndef EMU_ST
-        devmm_drv_run_info("Current src_va isn't support remote unmap. (src_va=0x%llx)\n", unmap_para->src_va);
+        devmm_drv_run_info("Current src_va doesn't support remote unmap. (src_va=0x%llx)\n", unmap_para->src_va);
 #endif
         return -EOPNOTSUPP;
     }

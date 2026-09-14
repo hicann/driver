@@ -163,7 +163,7 @@ static int trs_sq_send_proc(struct trs_core_ts_inst *ts_inst, enum trs_sq_send_s
 static void trs_set_thread_priority(struct trs_id_inst *inst)
 {
     if (ka_task_sched_set_fifo_low(ka_task_get_current()) != 0) {
-        trs_err("Set priority fail. (devid=%u; tsid=%u)\n", inst->devid, inst->tsid);
+        trs_err("Set priority failed. (devid=%u; tsid=%u)\n", inst->devid, inst->tsid);
     }
 }
 
@@ -1130,7 +1130,7 @@ static bool trs_stream_mem_is_need_update(struct trs_core_ts_inst *ts_inst, u64 
             u32 host_flag;
             int ret = ts_inst->ops.get_host_mach_flag(&ts_inst->inst, &host_flag);
             if (ret != 0) {
-                trs_warn("Get host flag not support. (ret=%d; devid=%u)\n", ret, ts_inst->inst.devid);
+                trs_warn("Get host flag is not supported. (ret=%d; devid=%u)\n", ret, ts_inst->inst.devid);
                 return false;
             }
             if (host_flag != DEVDRV_HOST_PHY_MACH_FLAG) {
@@ -1217,7 +1217,7 @@ int trs_sq_switch_stream(struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst 
             get_mem_flag = true;
         } else {
             if ((info->stream_mem != NULL) && (new_stream_ctx->stream_base_addr != (u64)(uintptr_t)info->stream_mem)) {
-                trs_err("Stream and memory not match. (devid=%u; stream_id=%u)\n", proc_ctx->devid, info->stream_id);
+                trs_err("Stream and memory do not match. (devid=%u; stream_id=%u)\n", proc_ctx->devid, info->stream_id);
                 return -EINVAL;
             }
         }

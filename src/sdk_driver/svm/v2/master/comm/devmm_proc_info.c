@@ -116,7 +116,7 @@ int devmm_remap_giant_pages(struct devmm_svm_process *svm_proc, u64 va, ka_page_
     int ret;
 
     if (has_interval) {
-        devmm_drv_err("not support interval. (va=0x%llx; page_num=%llu)\n", va, pg_num);
+        devmm_drv_err("does not support interval. (va=0x%llx; page_num=%llu)\n", va, pg_num);
         return -EINVAL;
     }
 
@@ -527,14 +527,14 @@ int devmm_dev_page_fault_get_vaflgs(struct devmm_svm_process *svm_process, struc
     page_bitmap = devmm_get_page_bitmap_with_heap(heap, va);
     if (page_bitmap == NULL) {
         devmm_drv_err_if((svm_process->device_fault_printf != 0),
-                         "Va don't allow fault by device, bitmap is null. (hostpid=%d; va=0x%lx; devid=%u)\n",
+                         "Va doesn't allow fault by device, bitmap is null. (hostpid=%d; va=0x%lx; devid=%u)\n",
                          process_id->hostpid, va, dev_id);
         return -EINVAL;
     }
 #ifndef EMU_ST
     if (devmm_dev_page_fault_check_va_bitmap(svm_process, page_bitmap, va) != 0) {
         devmm_drv_err_if((svm_process->device_fault_printf != 0),
-                         "Va error don't allow fault by device. (hostpid=%d; va=0x%lx; devid=%u; bitmap=0x%x)\n",
+                         "Va error doesn't allow fault by device. (hostpid=%d; va=0x%lx; devid=%u; bitmap=0x%x)\n",
                          process_id->hostpid, va, dev_id, devmm_page_read_bitmap(page_bitmap));
         devmm_print_pre_alloced_va(svm_process, va);
         return -EINVAL;
@@ -996,7 +996,7 @@ int devmm_get_local_dev_mem_attrs(struct devmm_svm_process *svm_proc, u64 addr, 
     }
 
     if ((!devmm_is_in_share_pool_range(addr, size)) && (!devmm_is_in_dcache_range(addr, size))) {
-        devmm_drv_run_info("Dev local addr copy support sharepool addr or dcache addr. (addr=0x%llx)\n", addr);
+        devmm_drv_run_info("Dev local addr copy supports sharepool addr or dcache addr. (addr=0x%llx)\n", addr);
         return -EOPNOTSUPP;
     }
 
@@ -1317,7 +1317,7 @@ int devmm_insert_host_page_range(struct devmm_svm_process *svm_pro, u64 dst, u64
     adjust_order = fst_attr->is_svm_huge ? devmm_host_hugepage_fault_adjust_order() : 0;
     ret = devmm_check_status_va_info(svm_pro, aligned_addr, aligned_count);
     if (ret != 0) {
-        devmm_drv_err("Va may out of the size of heap. (ret=%d; aligned_addr=0x%llx; aligned_count=%llu)\n", ret,
+        devmm_drv_err("Va may be out of the size of heap. (ret=%d; aligned_addr=0x%llx; aligned_count=%llu)\n", ret,
                       aligned_addr, aligned_count);
         return ret;
     }
@@ -1507,8 +1507,8 @@ STATIC int devmm_ioctl_translate(struct devmm_svm_process *svm_pro, struct devmm
     }
 
     if (devmm_is_host_agent(attr.devid)) {
-        devmm_drv_err("Vaddr attr_devid is host agent, not support translate. (vaddr=0x%lx; attr_devid=%d)\n", vaddr,
-                      attr.devid);
+        devmm_drv_err("Vaddr attr_devid is host agent, does not support translate. (vaddr=0x%lx; attr_devid=%d)\n",
+                      vaddr, attr.devid);
         return -EINVAL;
     }
 
@@ -2395,7 +2395,7 @@ static int devmm_ioctl_init_process(struct devmm_svm_process *svm_process, struc
 
     err = devmm_add_svm_proc_pid(svm_process, &process_id, devmm_get_current_pid());
     if (err != 0) {
-        devmm_drv_err("Set svm proc pid fail. (err=%d)\n", err);
+        devmm_drv_err("Set svm proc pid failed. (err=%d)\n", err);
         ka_task_mutex_unlock(&svm_process->proc_lock);
         return err;
     }
@@ -2422,9 +2422,10 @@ static int devmm_ioctl_init_process(struct devmm_svm_process *svm_process, struc
     err = devmm_mmu_notifier_register(svm_process);
     if (err != 0) {
         err = (err == -EINTR) ? -EAGAIN : err; // Interrupted by signals. Retry in user mode.
-        devmm_drv_no_err_if((err == -EAGAIN),
-                            "Mmu_notifier_register not success, recycle function will invalid. (err=%d; hostpid=%d)\n",
-                            err, devmm_get_current_pid());
+        devmm_drv_no_err_if(
+            (err == -EAGAIN),
+            "Mmu_notifier_register not success, recycle function will be invalid. (err=%d; hostpid=%d)\n", err,
+            devmm_get_current_pid());
         goto mmu_notifier_register_failed;
     }
 
@@ -2627,8 +2628,8 @@ static int devmm_check_meminfo(struct devmm_svm_process *svm_proc, struct devmm_
         }
 
         if (devmm_heap_subtype_is_matched(heap->heap_sub_type, info->heap_subtype_mask) == false) {
-            devmm_drv_err("Heap type is not match. (i=%u; va=0x%llx; heap_subtype_mask=0x%llx; heap_sub_type=%u)\n", i,
-                          info->va[i], (u64)info->heap_subtype_mask, heap->heap_sub_type);
+            devmm_drv_err("Heap type does not match. (i=%u; va=0x%llx; heap_subtype_mask=0x%llx; heap_sub_type=%u)\n",
+                          i, info->va[i], (u64)info->heap_subtype_mask, heap->heap_sub_type);
             goto invalid_addr;
         }
 #ifndef EMU_ST
@@ -2636,8 +2637,8 @@ static int devmm_check_meminfo(struct devmm_svm_process *svm_proc, struct devmm_
             (heap->heap_sub_type == SUB_SVM_TYPE && devmm_page_bitmap_is_dev_mapped(page_bitmap)) ||
             (heap->heap_sub_type == SUB_RESERVE_TYPE && devmm_page_bitmap_is_dev_mapped(page_bitmap))) {
             if (devmm_page_bitmap_get_phy_devid(svm_proc, page_bitmap) != devid) {
-                devmm_drv_err("Addr isn't belong to dev. (i=%u; va=0x%llx; in para's devid=%u; actually devid=%u)\n", i,
-                              info->va[i], devid, devmm_page_bitmap_get_phy_devid(svm_proc, page_bitmap));
+                devmm_drv_err("Addr doesn't belong to dev. (i=%u; va=0x%llx; in para's devid=%u; actually devid=%u)\n",
+                              i, info->va[i], devid, devmm_page_bitmap_get_phy_devid(svm_proc, page_bitmap));
                 goto invalid_addr;
             }
         }

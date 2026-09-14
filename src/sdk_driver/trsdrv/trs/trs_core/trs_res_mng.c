@@ -877,7 +877,8 @@ static int trs_stream_cfg(struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst
 
     ret = trs_res_id_get(inst, TRS_STREAM, stream_id);
     if (ret != 0) {
-        trs_err("Stream not belong to proc. (devid=%u; tsid=%u; stream_id=%u)\n", inst->devid, inst->tsid, stream_id);
+        trs_err("Stream does not belong to proc. (devid=%u; tsid=%u; stream_id=%u)\n", inst->devid, inst->tsid,
+                stream_id);
         return -EINVAL;
     }
 
@@ -1019,8 +1020,8 @@ static int trs_stream_id_ctrl(struct trs_proc_ctx *proc_ctx, struct trs_core_ts_
 
     if (!trs_proc_has_res(proc_ctx, ts_inst, TRS_STREAM, stream_id)) {
         if (!trs_is_host_pid_match(proc_ctx->pid, stream_ctx->host_pid)) {
-            trs_err("Stream not belong to proc. (devid=%u; tsid=%u; stream_id=%u; pid=%d)\n", inst->devid, inst->tsid,
-                    stream_id, stream_ctx->host_pid);
+            trs_err("Stream does not belong to proc. (devid=%u; tsid=%u; stream_id=%u; pid=%d)\n", inst->devid,
+                    inst->tsid, stream_id, stream_ctx->host_pid);
             return -EINVAL;
         }
     }
@@ -1134,7 +1135,7 @@ int trs_get_stream_ctx(struct trs_proc_ctx *proc_ctx, struct trs_core_ts_inst *t
     struct trs_stream_ctx *stream_ctx = NULL;
 
     if (trs_proc_has_res(proc_ctx, ts_inst, TRS_STREAM, stream_id) == false) {
-        trs_err("Stream is not belong to proc. (devid=%u; tsid=%u; stream_id=%u)\n", inst->devid, inst->tsid,
+        trs_err("Stream does not belong to proc. (devid=%u; tsid=%u; stream_id=%u)\n", inst->devid, inst->tsid,
                 stream_id);
         return -EINVAL;
     }

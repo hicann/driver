@@ -617,7 +617,7 @@ static int devmm_advise_check(struct devmm_svm_heap *heap, struct devmm_svm_proc
     if (devmm_is_host_agent(dev_id) &&
         ((heap->heap_sub_type != SUB_DEVICE_TYPE) || heap->heap_type != DEVMM_HEAP_CHUNK_PAGE)) {
 #ifndef EMU_ST
-        devmm_drv_run_info("Host agent only support heap SUB_DEVICE_TYPE DEVMM_HEAP_CHUNK_PAGE."
+        devmm_drv_run_info("Host agent only supports heap SUB_DEVICE_TYPE DEVMM_HEAP_CHUNK_PAGE."
                            " (heap_sub_type=%u; heap_type=%u)\n",
                            heap->heap_sub_type, heap->heap_type);
 #endif

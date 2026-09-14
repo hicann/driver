@@ -169,7 +169,7 @@ u64 devmm_get_pagecount_by_size(u64 vptr, u64 sizes, u32 page_size)
     u64 tem_byte;
 
     if ((page_size == 0) || ((vptr < (DEVMM_SVM_MEM_START + DEVMM_SVM_MEM_SIZE)) && (sizes > DEVMM_MAX_MAPPED_RANGE))) {
-        devmm_drv_err("Chunk_page_size or byte_count is error. "
+        devmm_drv_err("Chunk_page_size or byte_count is invalid. "
                       "(chunk_page_size=%u; byte_count=%llu)",
                       page_size, sizes);
         return chunk_cnt;
@@ -308,13 +308,13 @@ static bool devmm_check_common_input_heap_info(struct devmm_svm_process *svm_pro
 {
     if ((cmd->op == DEVMM_HEAP_ENABLE) && (devmm_svm_mem_is_enable(svm_pro) == false) &&
         cmd->heap_sub_type == SUB_HOST_TYPE) {
-        devmm_drv_err("Host svm mem is disable.\n");
+        devmm_drv_err("Host svm mem is disabled.\n");
         return false;
     }
 
     if ((cmd->op == DEVMM_HEAP_ENABLE) && devmm_is_host_agent(devid) &&
         ((cmd->heap_sub_type != SUB_DEVICE_TYPE) || (cmd->heap_type != DEVMM_HEAP_CHUNK_PAGE))) {
-        devmm_drv_err("Host agent only support heap SUB_DEVICE_TYPE DEVMM_HEAP_CHUNK_PAGE."
+        devmm_drv_err("Host agent only supports heap SUB_DEVICE_TYPE DEVMM_HEAP_CHUNK_PAGE."
                       " (heap_sub_type=%u; heap_type=%u).\n",
                       cmd->heap_sub_type, cmd->heap_type);
         return false;

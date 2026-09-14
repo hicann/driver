@@ -569,7 +569,7 @@ static int devmm_share_agent_blk_create(struct devmm_share_mem_info *info)
     svm_id_inst_pack(&id_inst, blk->devid, 0);
     dev_res_mng = devmm_dev_res_mng_get(&id_inst);
     if (dev_res_mng == NULL) {
-        devmm_drv_err("Get dev res mng fail. (devid=%u)\n", blk->devid);
+        devmm_drv_err("Get dev res mng failed. (devid=%u)\n", blk->devid);
         devmm_share_agent_blk_node_uninit(blk);
         devmm_kvfree_ex(blk);
         return -ENODEV;
@@ -632,7 +632,7 @@ static struct devmm_share_phy_addr_agent_blk *devmm_share_agent_blk_get(u32 devi
     svm_id_inst_pack(&id_inst, devid, 0);
     dev_res_mng = devmm_dev_res_mng_get(&id_inst);
     if (dev_res_mng == NULL) {
-        devmm_drv_err("Get dev res mng fail. (devid=%u)\n", devid);
+        devmm_drv_err("Get dev res mng failed. (devid=%u)\n", devid);
         return NULL;
     }
 
@@ -668,7 +668,7 @@ int devmm_share_agent_blk_put_with_share_id(u32 share_devid, int share_id, int h
     svm_id_inst_pack(&id_inst, share_devid, 0);
     dev_res_mng = devmm_dev_res_mng_get(&id_inst);
     if (dev_res_mng == NULL) {
-        devmm_drv_err("Get dev res mng fail. (devid=%u)\n", share_devid);
+        devmm_drv_err("Get dev res mng failed. (devid=%u)\n", share_devid);
         return -ENXIO;
     }
 
@@ -899,7 +899,7 @@ static int devmm_s2s_host_addr_trans(u32 sdid, u64 addr, u64 *trans_addr)
 
     ret = dbl_parse_sdid(sdid, &parse);
     if (ret != 0) {
-        devmm_drv_err("Parse sdid fail. (ret=%d; owner_sdid=%u;)\n", ret, sdid);
+        devmm_drv_err("Parse sdid failed. (ret=%d; owner_sdid=%u;)\n", ret, sdid);
         return ret;
     }
 
@@ -997,7 +997,7 @@ static int devmm_get_cs_host_target_blk_info(struct devmm_share_mem_info *info, 
 
         ret = devmm_s2s_msg_sync_send(blk->attr.devid, info->sdid, &msg, sizeof(struct devmm_ipc_pod_msg_data));
         if ((ret != 0) || (msg.header.result != 0) || (msg.header.valid != DEVMM_IPC_POD_MSG_RCV_MAGIC)) {
-            devmm_drv_err("Send fail. (ret=%d; result=%d; valid=0x%x; devid=%u; sdid=%u)\n", ret, msg.header.result,
+            devmm_drv_err("Send failed. (ret=%d; result=%d; valid=0x%x; devid=%u; sdid=%u)\n", ret, msg.header.result,
                           msg.header.valid, blk->attr.devid, info->sdid);
             return -EFAULT;
         }
@@ -1193,7 +1193,7 @@ static int devmm_ioctl_mem_import_local_server(struct devmm_svm_process *svm_pro
 
     ret = devmm_pid_set_share_status(blk, devmm_get_current_pid(), arg->head.devid, true);
     if (ret != 0) {
-        devmm_drv_err("Current process not add in pid list. (pid=%d)\n", devmm_get_current_pid());
+        devmm_drv_err("Current process was not added in pid list. (pid=%d)\n", devmm_get_current_pid());
         goto set_share_status_fail;
     }
 
@@ -1249,7 +1249,7 @@ static int devmm_get_remote_share_mem_info(u32 devid, u32 share_id, u32 share_sd
 
     ret = devmm_s2s_msg_sync_send(devid, share_sdid, &msg, sizeof(struct devmm_ipc_pod_msg_data));
     if ((ret != 0) || (msg.header.result != 0) || (msg.header.valid != DEVMM_IPC_POD_MSG_RCV_MAGIC)) {
-        devmm_drv_err("Send fail. (ret=%d; result=%d; valid=0x%x; devid=%u; sdid=%u)\n", ret, msg.header.result,
+        devmm_drv_err("Send failed. (ret=%d; result=%d; valid=0x%x; devid=%u; sdid=%u)\n", ret, msg.header.result,
                       msg.header.valid, devid, share_sdid);
         return -EFAULT;
     }
@@ -1331,7 +1331,7 @@ int devmm_put_remote_share_mem_info(u32 devid, u32 share_id, u32 share_sdid, u32
 
     ret = devmm_s2s_msg_sync_send(devid, share_sdid, &msg, sizeof(struct devmm_ipc_pod_msg_data));
     if ((ret != 0) || (msg.header.result != 0) || (msg.header.valid != DEVMM_IPC_POD_MSG_RCV_MAGIC)) {
-        devmm_drv_err("Send fail. (ret=%d; result=%d; valid=0x%x; devid=%u; sdid=%u)\n", ret, msg.header.result,
+        devmm_drv_err("Send failed. (ret=%d; result=%d; valid=0x%x; devid=%u; sdid=%u)\n", ret, msg.header.result,
                       msg.header.valid, devid, share_sdid);
         return -EFAULT;
     }
@@ -1650,7 +1650,7 @@ static int devmm_set_pids(struct devmm_share_phy_addr_agent_blk *blk, int *pid_l
         if (ret != 0) {
             /* cannot erase pid, will delete pid which is set.
                devmm_pid_list_erase_all will recycle resource. */
-            devmm_drv_err("Set pid fail. (export_pid=%d; ret=%d; i=%u; pid=%d)\n", blk->export_pid, ret, i,
+            devmm_drv_err("Set pid failed. (export_pid=%d; ret=%d; i=%u; pid=%d)\n", blk->export_pid, ret, i,
                           pid_list[i]);
             return ret;
         }
@@ -1737,7 +1737,7 @@ static int devmm_share_mem_set_attr_no_wlist_in_server(struct devmm_share_phy_ad
     /* Not allow to set attr if had called halMemSetPidToShareableHandle */
     if ((para->attr.enableFlag == SHR_HANDLE_NO_WLIST_ENABLE) &&
         ((pid_mng->need_set_wlist) && (pid_mng->pid_cnt != 0))) {
-        devmm_drv_err("Had set pid not allow to set attr. (devid=%u; share_id=%d; wlist_num=%u)\n", blk->devid,
+        devmm_drv_err("Had set pid not allowed to set attr. (devid=%u; share_id=%d; wlist_num=%u)\n", blk->devid,
                       blk->share_id, pid_mng->pid_cnt);
         ka_task_up_write(&pid_mng->rw_sem);
         return -EPERM;

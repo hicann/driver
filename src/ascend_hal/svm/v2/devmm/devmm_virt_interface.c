@@ -1485,7 +1485,7 @@ static DVresult devmm_alloc_com_heap(struct devmm_virt_heap_type *heap_type, uin
     heap = devmm_virt_get_free_heap(mgmt, heap_type, heap_size, va);
     if (heap == NULL) {
         if (devmm_is_specified_va_alloc(va) == false) {
-            DEVMM_DRV_ERR("Get free heap fail. (heap_size=%llu)\n", heap_size);
+            DEVMM_DRV_ERR("Get free heap failed. (heap_size=%llu)\n", heap_size);
             return DRV_ERROR_INNER_ERR;
         } else {
             return DRV_ERROR_BUSY;

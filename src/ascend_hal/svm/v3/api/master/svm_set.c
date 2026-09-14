@@ -57,7 +57,7 @@ static int svm_memset_check_addr_prop_cap(u64 va, u64 size, u64 cap_mask)
         }
 
         if ((prop.flag & cap_mask) == 0) {
-            svm_err("Va not support cur cap. (va=0x%llx; prop.flag=0x%llx)\n", va, prop.flag);
+            svm_err("Va does not support cur cap. (va=0x%llx; prop.flag=0x%llx)\n", va, prop.flag);
             return DRV_ERROR_PARA_ERROR;
         }
 

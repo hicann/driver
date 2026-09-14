@@ -216,7 +216,7 @@ STATIC int shr_id_create_shadow_node_msg_send(struct shr_id_node_op_attr *attr, 
 
     ret = trs_pod_msg_send(attr->inst.devid, sdid, &msg, sizeof(struct trs_pod_msg_data));
     if (ret != 0) {
-        trs_err("Send fail. (devid=%u; sdid=0x%x; ret=%d; result=%d)\n", attr->inst.devid, sdid, ret,
+        trs_err("Send failed. (devid=%u; sdid=0x%x; ret=%d; result=%d)\n", attr->inst.devid, sdid, ret,
                 msg.header.result);
         return ret;
     }
@@ -242,7 +242,8 @@ STATIC int shr_id_pod_set_pid_msg_send(struct shr_id_node_op_attr *attr, u32 sdi
 
     ret = trs_pod_msg_send(attr->inst.devid, sdid, &msg, sizeof(struct trs_pod_msg_data));
     if (ret != 0) {
-        trs_err("Send fail. (devid=%u; sdid=%u; ret=%d; result=%d)\n", attr->inst.devid, sdid, ret, msg.header.result);
+        trs_err("Send failed. (devid=%u; sdid=%u; ret=%d; result=%d)\n", attr->inst.devid, sdid, ret,
+                msg.header.result);
         return ret;
     }
     return 0;
@@ -969,7 +970,7 @@ STATIC int shr_id_set_pod_pid(struct shr_id_proc_ctx *proc_ctx, unsigned long ar
     ret = dbl_parse_sdid(ioctl_info.sdid, &parse);
 #endif
     if ((ret != 0) || (parse.server_id >= SHR_ID_PID_SERVER_ID_MAX_NUM)) {
-        trs_err("Parse fail. (ret=%d; server_id=%u; server id range is [0, %u].)\n", ret, parse.server_id,
+        trs_err("Parse failed. (ret=%d; server_id=%u; server id range is [0, %u].)\n", ret, parse.server_id,
                 (SHR_ID_PID_SERVER_ID_MAX_NUM - 1));
         return -EINVAL;
     }

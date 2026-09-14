@@ -150,7 +150,7 @@ static int mem_advise_check(u32 devid, u64 va, u64 size, u64 *aligned_size)
 
     ret = svm_get_aligned_size(devid, prop.flag, size, aligned_size);
     if (ret != 0) {
-        svm_err("Get aligned size fail. (va=0x%llx; size=%llu; flag=0x%llx)\n", va, size, prop.flag);
+        svm_err("Get aligned size failed. (va=0x%llx; size=%llu; flag=0x%llx)\n", va, size, prop.flag);
         return DRV_ERROR_INVALID_VALUE;
     }
 
@@ -162,7 +162,7 @@ static int mem_advise_check(u32 devid, u64 va, u64 size, u64 *aligned_size)
     }
 
     if (!svm_flag_cap_is_support_madvise(prop.flag)) {
-        svm_run_info("Addr cap is not support madvise. (va=0x%llx; flag=0x%llx)\n", va, prop.flag);
+        svm_run_info("Addr cap does not support madvise. (va=0x%llx; flag=0x%llx)\n", va, prop.flag);
         return DRV_ERROR_NOT_SUPPORT;
     }
 

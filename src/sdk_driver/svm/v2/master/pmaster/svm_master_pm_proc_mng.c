@@ -286,7 +286,7 @@ int devmm_chan_page_fault_d2h_process_dma_copy(struct devmm_chan_page_fault *fau
         max_num = num;
     } else {
         if (fault_msg->num > DEVMM_PAGE_NUM_PER_FAULT) {
-            devmm_drv_err("Fault page num too large. (num=%u)\n", fault_msg->num);
+            devmm_drv_err("Fault page num too large. (num=%u; max_num=%u)\n", fault_msg->num, DEVMM_PAGE_NUM_PER_FAULT);
             devmm_kfree_ex(dma_nodes);
             dma_nodes = NULL;
             return -EINVAL;

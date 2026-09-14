@@ -294,7 +294,7 @@ static int svm_dma_map_pin_non_svm_pa(struct dma_map_node *map_node)
     struct svm_global_va *dst_va = &map_node->align_dst_va;
 
     if (svm_is_host_va(dst_va) == false) {
-        svm_err("Device only support svm addr. (udevid=%u; start=0x%llx; size=0x%llx)\n", dst_va->udevid, dst_va->va,
+        svm_err("Device only supports svm addr. (udevid=%u; start=0x%llx; size=0x%llx)\n", dst_va->udevid, dst_va->va,
                 dst_va->size);
         return -EINVAL;
     }
@@ -370,7 +370,7 @@ static int svm_dma_map_query_host_bar_from_pa_cache(struct svm_global_va *dst_va
     ret = svm_smp_query_mem_pa(dst_va->udevid, ka_task_get_current_tgid(), dst_va->va, dst_va->size, pa_seg,
                                &tmp_seg_num);
     if (ret != 0) {
-        svm_warn("Pa cache not exist. (ret=%d; udevid=%u; tgid=%d; va=0x%llx; size=0x%llx)\n", ret, dst_va->udevid,
+        svm_warn("Pa cache does not exist. (ret=%d; udevid=%u; tgid=%d; va=0x%llx; size=0x%llx)\n", ret, dst_va->udevid,
                  ka_task_get_current_tgid(), dst_va->va, dst_va->size);
         return ret;
     }
@@ -390,8 +390,8 @@ static int svm_dma_map_query_host_bar_from_pa_cache(struct svm_global_va *dst_va
     for (i = 0; i < tmp_seg_num; i++) {
         ret = devdrv_devmem_addr_d2h(phy_devid, pa_seg[i].pa, &pa_seg[i].pa);
         if (ret != 0) {
-            svm_warn("Pa to host bar not succ. (ret=%d; phy_devid=%u; dst_va=0x%llx; size=%llu)\n", ret, phy_devid,
-                     dst_va->va, dst_va->size);
+            svm_warn("Pa to host bar is not successful. (ret=%d; phy_devid=%u; dst_va=0x%llx; size=%llu)\n", ret,
+                     phy_devid, dst_va->va, dst_va->size);
             goto out;
         }
     }
@@ -536,7 +536,7 @@ static int svm_device_dma_map_proc(u32 udevid, struct dma_map_node *map_node, st
 
     if (dst_udevid != udevid) {
         if ((uda_is_pf_dev(udevid) == false) || (uda_is_pf_dev(dst_udevid) == false)) {
-            svm_err("Vf not support. (src_udevid=%u; dst_udevid=%u)\n", udevid, dst_udevid);
+            svm_err("Vf does not support. (src_udevid=%u; dst_udevid=%u)\n", udevid, dst_udevid);
             return -EINVAL;
         }
     }
@@ -932,7 +932,7 @@ static int _svm_dma_addr_get(struct dma_map_ctx *ctx, struct svm_global_va *dst_
     map_node = dma_map_node_search(ctx, dst_va);
     if (map_node == NULL) {
         ka_task_read_unlock_bh(&ctx->lock);
-        svm_debug("Search not success. (udevid=%u; tgid=%d; start=0x%llx; size=0x%llx)\n", ctx->udevid, ctx->tgid,
+        svm_debug("Search failed. (udevid=%u; tgid=%d; start=0x%llx; size=0x%llx)\n", ctx->udevid, ctx->tgid,
                   dst_va->va, dst_va->size);
         return -EINVAL;
     }
@@ -941,7 +941,7 @@ static int _svm_dma_addr_get(struct dma_map_ctx *ctx, struct svm_global_va *dst_
     if (refcnt < 0) {
         ka_base_atomic_dec(&map_node->refcnt);
         ka_task_read_unlock_bh(&ctx->lock);
-        svm_err("Get too much. (udevid=%u; tgid=%d; va=%llx; size=%llx; refcnt=%d)\n", ctx->udevid, ctx->tgid,
+        svm_err("Get too much. (udevid=%u; tgid=%d; va=%llx; size=%llx bytes; refcnt=%d)\n", ctx->udevid, ctx->tgid,
                 dst_va->va, dst_va->size, refcnt);
         return -EINVAL;
     }
@@ -980,7 +980,7 @@ static void _svm_dma_addr_put(struct dma_map_ctx *ctx, struct svm_global_va *dst
     map_node = dma_map_node_search(ctx, dst_va);
     if (map_node == NULL) {
         ka_task_read_unlock_bh(&ctx->lock);
-        svm_info("Search not success. (udevid=%u; tgid=%d; start=%llx)\n", ctx->udevid, ctx->tgid, dst_va->va);
+        svm_info("Search failed. (udevid=%u; tgid=%d; start=%llx)\n", ctx->udevid, ctx->tgid, dst_va->va);
         return;
     }
 

@@ -46,7 +46,7 @@ static void svm_mmu_notifier_mem_recycle(ka_vm_area_struct_t *vma, int tgid)
     /*  munmap full range, but not depopulate all mem. */
     u64 recycle_size = svm_mem_recycle(vma, tgid);
     if (recycle_size > 0) {
-        svm_warn("Unnormal munmap, recycle. (vm_start=0x%lx; vm_end=0x%lx; recycle_size=0x%llx)\n",
+        svm_warn("Abnormal munmap, recycle. (vm_start=0x%lx; vm_end=0x%lx; recycle_size=0x%llx)\n",
                  ka_mm_get_vm_start(vma), ka_mm_get_vm_end(vma), recycle_size);
     }
 }

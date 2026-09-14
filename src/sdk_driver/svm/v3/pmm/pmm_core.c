@@ -45,14 +45,14 @@ static int _pmm_seg_bit_stats_op(struct pmm_ctx *pmm_ctx, u64 bit, u64 size, u32
 {
     if (op == PMM_SEG_BIT_STATS_OP_ADD) {
         if ((u64)(pmm_ctx->bit_size_stats[bit] + (u32)size) > PMM_MEM_SIZE_PER_BIT) {
-            svm_err("Pmm add fail. (stats.size=%u; sz=%llu)\n", pmm_ctx->bit_size_stats[bit], size);
+            svm_err("Pmm add failed. (stats.size=%u; sz=%llu)\n", pmm_ctx->bit_size_stats[bit], size);
             return -EINVAL;
         }
 
         pmm_ctx->bit_size_stats[bit] += (u32)size;
     } else {
         if (pmm_ctx->bit_size_stats[bit] < (u32)size) {
-            svm_err("Pmm del fail. (stats.size=%u; sz=%llu)\n", pmm_ctx->bit_size_stats[bit], size);
+            svm_err("Pmm del failed. (stats.size=%u; sz=%llu)\n", pmm_ctx->bit_size_stats[bit], size);
             return -EINVAL;
         }
 

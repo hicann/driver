@@ -80,7 +80,7 @@ int _get_mem_check_info(u32 devid, u32 type, struct MemAddrInfo *para)
         }
 
         if ((para->mem_type & svm_prop_to_mem_virt_mask(&prop)) == 0) {
-            svm_err("Mem type is not match. (va=0x%llx; cnt=%u; expect_mem_type=0x%x; real_mem_type=0x%x)\n",
+            svm_err("Mem type does not match. (va=0x%llx; cnt=%u; expect_mem_type=0x%x; real_mem_type=0x%x)\n",
                     (u64)(uintptr_t)para->addr[i], para->cnt, para->mem_type, svm_prop_to_mem_virt_mask(&prop));
             para->flag = false;
             return DRV_ERROR_INVALID_VALUE;
@@ -134,7 +134,7 @@ static int get_mem_token_info(u32 devid, u32 type, struct MemInfo *info)
         }
 
         if (devid != prop.devid) {
-            svm_err("devid is not match. (devid=%u; prop.devid=%u)\n", devid, prop.devid);
+            svm_err("devid does not match. (devid=%u; prop.devid=%u)\n", devid, prop.devid);
             return DRV_ERROR_INVALID_VALUE;
         }
 
@@ -219,7 +219,7 @@ drvError_t halMemGetAddressRange(DVdeviceptr ptr, DVdeviceptr *pbase, size_t *ps
 
     if (!svm_flag_cap_is_support_normal_free(prop.flag) && !svm_flag_cap_is_support_vmm_unmap(prop.flag) &&
         !svm_flag_cap_is_support_vmm_ipc_unmap(prop.flag) && !svm_flag_cap_is_support_ipc_close(prop.flag)) {
-        svm_err("Va not support. (va=0x%llx)\n", va);
+        svm_err("Va does not support. (va=0x%llx)\n", va);
         return DRV_ERROR_INVALID_VALUE;
     }
 

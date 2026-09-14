@@ -363,7 +363,7 @@ int casm_mem_unpin(u32 udevid, int tgid, u64 va, u64 size) /* for ut test, canno
     ret = casm_get_src_info(dst_ctx, &range_node, &key, &src_va, &ex_info);
     if (ret != 0) {
         casm_ctx_put(ctx);
-        svm_err("Get src failed. (udevid=%u; va=0x%llx; size=0x%llx)\n", udevid, va, size);
+        svm_err("Get src failed. (udevid=%u; va=0x%llx; size=0x%llx bytes)\n", udevid, va, size);
         return ret;
     }
 

@@ -59,7 +59,7 @@ STATIC int devmm_map_dev_reserve(struct devmm_svm_process *svm_process, struct d
 
     if (((addr_type == ADDR_MAP_TYPE_REG_AIC_CTRL) || (addr_type == ADDR_MAP_TYPE_REG_AIC_PMU_CTRL)) &&
         (devmm_dev_capability_support_aic_reg_map(devid) == false)) {
-        devmm_drv_run_info("Aic reg map capability might had been closed. (addr_type=%u; devid=%u)\n", addr_type,
+        devmm_drv_run_info("Aic reg map capability might have been closed. (addr_type=%u; devid=%u)\n", addr_type,
                            devid);
         return -EOPNOTSUPP;
     }

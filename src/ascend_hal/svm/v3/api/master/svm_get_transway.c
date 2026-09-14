@@ -30,7 +30,7 @@ static int svm_get_transway(u32 src_devid, u32 dst_devid, u8 *trans_type)
     } else if (hd_connect_type == HOST_DEVICE_CONNECT_TYPE_PCIE) {
         *trans_type = MEM_TRANS_TYPE_PCIE_DMA;
     } else {
-        svm_info("Connect type is not support. (devid=%u; hd_connect_type=%u)\n", src_devid, hd_connect_type);
+        svm_info("Connect type is not supported. (devid=%u; hd_connect_type=%u)\n", src_devid, hd_connect_type);
         return DRV_ERROR_NOT_SUPPORT;
     }
     return 0;
@@ -51,7 +51,7 @@ static int svm_get_transway_cap_check(struct svm_prop *src_prop, struct svm_prop
     }
 
     if (svm_flag_cap_is_support_get_d2d_transway(dst_prop->flag) == false) {
-        svm_info("Dst va is not support get transway.\n");
+        svm_info("Dst va does not support getting transway.\n");
         return DRV_ERROR_NOT_SUPPORT;
     }
 

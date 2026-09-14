@@ -678,7 +678,7 @@ static int uvm_prefetch_d2h(struct devmm_svm_process *svm_proc, struct devmm_uvm
 #endif
 
     if (batch_info->is_readmostly) {
-        devmm_drv_err("Uvm do not support prefetch d2h in readmostly scene.\n");
+        devmm_drv_err("Uvm does not support prefetch d2h in readmostly scene.\n");
         return -EFAULT;
     }
 
@@ -1066,7 +1066,7 @@ int devmm_uvm_ioctl_prefetch(struct devmm_svm_process *svm_proc, struct devmm_io
 
     if (!devmm_vaddr_and_size_is_in_uvm_range(prefetch_para->va, prefetch_para->size)) {
 #ifndef EMU_ST
-        devmm_drv_err("Prefetch addr and size is not in uvm range. (va=0x%llx, size=%llu)\n", prefetch_para->va,
+        devmm_drv_err("Prefetch addr and size are not in uvm range. (va=0x%llx, size=%llu)\n", prefetch_para->va,
                       prefetch_para->size);
         return -EADDRNOTAVAIL;
 #endif
@@ -1120,7 +1120,7 @@ static int uvm_prefetch_batch_prefetch_for_one(struct devmm_svm_process *svm_pro
     }
 
     if (!devmm_vaddr_and_size_is_in_uvm_range(prefetch_para.va, prefetch_para.size)) {
-        devmm_drv_err("Prefetch addr and size is not in uvm range. (va=0x%llx, size=%llu)\n", prefetch_para.va,
+        devmm_drv_err("Prefetch addr and size are not in uvm range. (va=0x%llx, size=%llu)\n", prefetch_para.va,
                       prefetch_para.size);
         return -EADDRNOTAVAIL;
     }

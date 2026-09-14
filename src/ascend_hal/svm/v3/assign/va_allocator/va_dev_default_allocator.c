@@ -194,7 +194,7 @@ int va_dev_default_alloc(u32 devid, u64 align, u64 size, u64 *va)
 
     mga_inst = g_dev_default_mga_inst[devid];
     if (mga_inst == NULL) {
-        svm_err("Hasn't inited. (devid=%u)\n", devid);
+        svm_err("Hasn't been inited. (devid=%u)\n", devid);
         return DRV_ERROR_INVALID_VALUE;
     }
 
@@ -212,7 +212,7 @@ int va_dev_default_free(u32 devid, u64 va, u64 size, u64 align)
 
     mga_inst = g_dev_default_mga_inst[devid];
     if (mga_inst == NULL) {
-        svm_warn("Hasn't inited. (devid=%u)\n", devid);
+        svm_warn("Hasn't been inited. (devid=%u)\n", devid);
         return DRV_ERROR_INVALID_VALUE;
     }
 

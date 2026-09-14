@@ -1530,7 +1530,7 @@ STATIC void devmm_add_mem_advise_record(DVdeviceptr ptr, size_t count, DVmem_adv
 
     record_node = (struct devmm_advise_record_node *)malloc(sizeof(struct devmm_advise_record_node));
     if (record_node == NULL) {
-        DEVMM_DRV_WARN("Malloc not success, not add advise record.\n");
+        DEVMM_DRV_WARN("Malloc not success, did not add advise record.\n");
         pthread_mutex_unlock(&advise_record_lock[device]);
         return;
     }
@@ -1835,7 +1835,7 @@ drvError_t halMemManagedPrefetch(DVdeviceptr ptr, size_t size, struct drv_uvm_lo
     DVresult ret;
 
     if (!DEVMM_IS_UVM_ADDR(ptr) || !DEVMM_IS_UVM_ADDR(ptr + size - 1)) {
-        DEVMM_DRV_ERR("Ptr is error. (ptr=0x%llx; len=%lu)\n", ptr, size);
+        DEVMM_DRV_ERR("Ptr is invalid. (ptr=0x%llx; len=%lu)\n", ptr, size);
         return DRV_ERROR_INVALID_VALUE;
     }
     if (location.type == DRV_UVM_LOCATION_TYPE_DEVICE) {
@@ -1873,7 +1873,7 @@ drvError_t halMemManagedPrefetchBatch(DVdeviceptr *ptrs, size_t *sizes, size_t c
 
     for (i = 0; i < count; i++) {
         if (!DEVMM_IS_UVM_ADDR(ptrs[i]) || !DEVMM_IS_UVM_ADDR(ptrs[i] + sizes[i] - 1)) {
-            DEVMM_DRV_ERR("Ptr is error. (i=%d, ptr=0x%llx; len=%lu)\n", i, ptrs[i], sizes[i]);
+            DEVMM_DRV_ERR("Ptr is invalid. (i=%d, ptr=0x%llx; len=%lu)\n", i, ptrs[i], sizes[i]);
             return DRV_ERROR_INVALID_VALUE;
         }
     }
@@ -2911,7 +2911,7 @@ static DVresult devmm_get_double_pgtable_offset_para_check(void *param_value, si
     }
 
     if (param_value_size != sizeof(uint32_t)) {
-        DEVMM_DRV_ERR("Param_value_size not equal sizeof(uint32_t). \n");
+        DEVMM_DRV_ERR("Param_value_size is not equal to sizeof(uint32_t). \n");
         return DRV_ERROR_INVALID_VALUE;
     }
     return DRV_ERROR_NONE;
@@ -4690,7 +4690,8 @@ static drvError_t devmm_batch_va_is_svm(uint64_t dst[], uint64_t src[], size_t s
 #endif
         }
         if ((devmm_va_is_svm(dst[i]) == 0) && (devmm_va_is_svm(src[i]) == 0)) {
-            DEVMM_RUN_INFO("Memcpy batch not support h2h. (dst=0x%llx; src=0x%llx; index=%u)\n", dst[i], src[i], i);
+            DEVMM_RUN_INFO("Memcpy batch does not support h2h. (dst=0x%llx; src=0x%llx; index=%u)\n", dst[i], src[i],
+                           i);
             return DRV_ERROR_NOT_SUPPORT;
         }
     }
@@ -4866,7 +4867,7 @@ static drvError_t devmm_giant_page_para_check(const struct drv_mem_prop *prop)
 {
     if (prop->side != MEM_DEV_SIDE) {
         if (prop->mem_type != MEM_P2P_DDR_TYPE) {
-            DEVMM_RUN_INFO("Only p2p ddr support host giant page. (side=%u; mem_type=%u)\n", prop->side,
+            DEVMM_RUN_INFO("Only p2p ddr supports host giant page. (side=%u; mem_type=%u)\n", prop->side,
                            prop->mem_type);
             return DRV_ERROR_NOT_SUPPORT;
         }

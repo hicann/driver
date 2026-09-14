@@ -192,7 +192,7 @@ static int devmm_master_mem_create(struct devmm_svm_process *svm_proc, struct de
     }
 
     if (KA_DRIVER_IS_ALIGNED(size, page_size) == false) {
-        devmm_drv_err("Size should aligned by page_size. (size=%llu; page_size=%u)\n", size, page_size);
+        devmm_drv_err("Size should be aligned by page_size. (size=%llu; page_size=%u)\n", size, page_size);
         return -EINVAL;
     }
 
@@ -313,7 +313,7 @@ static int devmm_ioctl_mem_create_para_check(struct devmm_mem_create_para *para,
     if ((para->pg_type == MEM_NORMAL_PAGE_TYPE) &&
         KA_DRIVER_IS_ALIGNED(para->size, devmm_svm->host_page_size) == false) {
         /* The log cannot be modified, because in the failure mode library. */
-        devmm_drv_err("Size should aligned by granularity_size. (size=%llu; granularity_size=%u)\n", para->size,
+        devmm_drv_err("Size should be aligned by granularity_size. (size=%llu; granularity_size=%u)\n", para->size,
                       devmm_svm->host_page_size);
         return -EINVAL;
     }
@@ -321,7 +321,7 @@ static int devmm_ioctl_mem_create_para_check(struct devmm_mem_create_para *para,
     if ((para->pg_type != MEM_NORMAL_PAGE_TYPE) &&
         KA_DRIVER_IS_ALIGNED(para->size, devmm_svm->device_hpage_size) == false) {
         /* The log cannot be modified, because in the failure mode library. */
-        devmm_drv_err("Size should aligned by granularity_size. (size=%llu; granularity_size=%u)\n", para->size,
+        devmm_drv_err("Size should be aligned by granularity_size. (size=%llu; granularity_size=%u)\n", para->size,
                       devmm_svm->device_hpage_size);
         return -EINVAL;
     }

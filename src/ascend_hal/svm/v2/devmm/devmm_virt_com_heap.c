@@ -1346,13 +1346,13 @@ DVresult devmm_free_mem(uint64_t va, struct devmm_virt_com_heap *heap, uint64_t 
 
     DEVMM_DRV_SWITCH("Free memory. (va=0x%llx)\n", va);
     if (heap == NULL) {
-        DEVMM_DRV_ERR("Heap is NULL, is error.\n");
+        DEVMM_DRV_ERR("Heap is NULL, is incorrect.\n");
         return DRV_ERROR_INVALID_VALUE;
     }
     (void)pthread_rwlock_rdlock(&heap->heap_rw_lock);
     if (heap->heap_type == DEVMM_HEAP_IDLE) {
         (void)pthread_rwlock_unlock(&heap->heap_rw_lock);
-        DEVMM_DRV_ERR("Heap is destroy, is error.\n");
+        DEVMM_DRV_ERR("Heap is destroyed, is incorrect.\n");
         return DRV_ERROR_INVALID_VALUE;
     }
 

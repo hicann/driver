@@ -117,7 +117,7 @@ static void trs_sec_eh_irq_unrequest(u32 devid)
     int i;
 
     if (inject == NULL) {
-        trs_err("Irq is repeated free. (devid=%u)\n", devid);
+        trs_err("Irq is repeatedly freed. (devid=%u)\n", devid);
         return;
     }
 

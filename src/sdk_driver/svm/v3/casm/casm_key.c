@@ -245,8 +245,8 @@ static int casm_destroy_permission_check(struct casm_key_ctx *key_ctx, u32 id, b
         }
 
         if (ka_unlikely(ka_task_get_current_tgid() != src_node->src_ex.owner_tgid)) {
-            svm_err("No creator have no permission to destroy key. (udevid=%u; id=%d; owner_tgid=%d)\n",
-                    key_ctx->udevid, id, src_node->src_ex.owner_tgid);
+            svm_err("No creator has permission to destroy key. (udevid=%u; id=%d; owner_tgid=%d)\n", key_ctx->udevid,
+                    id, src_node->src_ex.owner_tgid);
             return -EPERM;
         }
     }

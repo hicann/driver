@@ -327,7 +327,7 @@ static int trs_chan_check_sqcq_mem_size(struct trs_id_inst *inst, u32 mem_side, 
     if (devdrv_get_connect_protocol(inst->devid) == CONNECT_PROTOCOL_HCCS) {
         /* host_flag == 0 means in virtual machine */
         if (devdrv_get_host_phy_mach_flag(inst->devid, &host_flag) != 0) {
-            trs_err("Get host flag not support. (devid=%u;)\n", inst->devid);
+            trs_err("Get host flag is not supported. (devid=%u;)\n", inst->devid);
             return -EINVAL;
         }
         /* In HCCS connection, virtual machine and using host mem, sqcq size should be less or equal 4K */
