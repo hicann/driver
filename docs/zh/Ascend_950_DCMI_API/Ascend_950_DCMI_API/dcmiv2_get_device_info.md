@@ -1113,7 +1113,7 @@ DCMI_QOS_SUB_CONFIG_DONE, //配置完成指令
 <td class="cellrowborder" valign="top" width="40%" headers="mcps1.2.5.1.4 "><a name="ul1553122412134"></a><a name="ul1553122412134"></a><ul id="ul1553122412134"><li>master：master ID，表示芯片加速器的枚举值，支持项：vpc=2,jpge=3,jpgd=4,pcie=7,aic_data=9,aic_ins=10,aiv_data=11,aiv_ins=12,sdma=13,stars=14,ub_mem=33,pcie_ibr=40,pcie_ibw=41</li></ul>
 <a name="ul13380123561319"></a><a name="ul13380123561319"></a><ul id="ul13380123561319"><li>mpamid：识别芯片加速器数据流的标签，取值范围为[0,127]。<div class="note" id="note19682131512477"><a name="note19682131512477"></a><a name="note19682131512477"></a><span class="notetitle"> 说明： </span><div class="notebody"><p id="zh-cn_topic_0000002314204790_p6682191518479"><a name="zh-cn_topic_0000002314204790_p6682191518479"></a><a name="zh-cn_topic_0000002314204790_p6682191518479"></a>当master取值为pcie、pcie_ibr、pcie_ibw时，对应mpamid的取值范围为[0,31]。</p>
 </div></div>
-</li><li>qos：带宽调度优先级，取值范围为[0,7]，0作为hardlimit专用qos，7为调度绿色通道qos。</li><li>pmg：mpamid分组，取值范围为[0,3](当前不支持)。</li><li>bitmap：指定设置目标核的bitmap，因框架限制，不支持。</li></ul>
+</li><li>qos：带宽调度优先级，取值范围为[0,7]，0作为hardlimit专用qos，7为调度绿色通道qos。</li><li>pmg：mpamid分组，取值范围为[0,3]，(当前不支持)。</li><li>bitmap：指定设置目标核的bitmap，因框架限制，不支持。</li></ul>
 </td>
 </tr>
 <tr id="row185991417153117"><td class="cellrowborder" valign="top" width="20%" headers="mcps1.2.5.1.1 "><p id="p777812501311"><a name="p777812501311"></a><a name="p777812501311"></a>((mpamid &lt;&lt; 8) | DCMI_QOS_SUB_BW_DATA)</p>
